@@ -197,6 +197,34 @@ escape v!;
 ]],
     run = 20,
 }
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var _int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var _int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : types mismatch (`_int&´ <= `_int&?´)',
+}
 --do return end
 
 Test { [[

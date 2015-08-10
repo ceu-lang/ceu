@@ -1103,10 +1103,14 @@ F = {
             fr.tp = to.tp -- return type is not known at compile time
 
         else    -- set == 'exp'
-            local to_tp_opt, isopt = TP.pop(to.tp, '?')
-            local ok, msg = TP.contains(to_tp_opt,
-                                        isopt and TP.pop(fr_tp,'?') or fr_tp)
-            ASR(ok, me, msg)
+            local to_tp_noopt, to_isopt = TP.pop(to.tp, '?')
+            if to_isopt then
+                local ok, msg = TP.contains(to_tp_noopt, TP.pop(fr_tp,'?'))
+                ASR(ok, me, msg)
+            else
+                local ok, msg = TP.contains(to.tp, fr_tp)
+                ASR(ok, me, msg)
+            end
         end
 
         if not lua_str then

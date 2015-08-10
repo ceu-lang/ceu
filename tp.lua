@@ -451,7 +451,15 @@ function TP.contains (tp1, tp2)
     elseif TP.is_ext(tp1,'_') and TP.check(tp1,id1) or
            TP.is_ext(tp2,'_') and TP.check(tp2,id2)
     then
-        return true
+        if id1 == id2 then
+            if TP.check(tp2,id1) and TP.check(tp1,id2) then
+                return true
+            else
+                return false, __err(TP1, TP2)
+            end
+        else
+            return true
+        end
 
     -- "any" type (calls, Lua scripts)
     elseif TP.is_ext(tp1,'@') or TP.is_ext(tp2,'@') then
