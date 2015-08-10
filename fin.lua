@@ -43,11 +43,11 @@ function ISPTR (node_or_var)
     local tp = node_or_var.tp
     local tp_id = TP.id(tp)
 
-    -- type with '*' anywhere
+    -- type with '&&' anywhere
     for _, v in ipairs(tp.tt) do
-        if v == '*' then
+        if v == '&&' then
             -- skip [var T*? ptr], [var T*?[] ts]
-            if ENV.clss[tp_id] and TP.check(tp,tp_id,'*','?','-[]') then
+            if ENV.clss[tp_id] and TP.check(tp,tp_id,'&&','?','-[]') then
             else
                 return true
             end
@@ -268,9 +268,9 @@ F = {
                 (fr.org and                   -- "global:*" is global
                  fr.org.cls.id=='Global')  or
                 (ENV.clss[to_tp_id] and       -- organisms must use "watching"
-                 fr.tag~='Op1_&')          or -- (but avoid &org)
+                 fr.tag~='Op1_&&')         or -- (but avoid &org)
                 (ENV.adts[to_tp_id] and       -- adts must use "watching"
-                 fr.tag~='Op1_&')          or -- (but avoid &adt)
+                 fr.tag~='Op1_&&')         or -- (but avoid &adt)
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
                         (   to_blk.__depth >= fr_blk.__depth            -- to <= fr

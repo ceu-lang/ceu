@@ -78,7 +78,7 @@ function TP.check (tp, ...)
     return true
 end
 
-local __toc = { ['*']='ptr', ['[]']='arr', ['&']='ref', ['?']='opt' }
+local __toc = { ['&&']='ptr', ['[]']='arr', ['&']='ref', ['?']='opt' }
 function TP.opt2adt (tp)
     local tt = tp.tt
     assert(TP.check(tp,'?'), 'bug found')
@@ -99,10 +99,10 @@ function TP.get (id)
 end
 
 local __tmod = {
-    ['*']  = { ['*']=true,  ['[]']=true,  ['&']=true,  ['?']=true  },
-    ['[]'] = { ['*']=true,  ['[]']=false, ['&']=true,  ['?']=false },
-    ['&']  = { ['*']=false, ['[]']=false, ['&']=false, ['?']=true  },
-    ['?']  = { ['*']=false, ['[]']=true,  ['&']=false, ['?']=false },
+    ['&&'] = { ['&&']=true,  ['[]']=true,  ['&']=true,  ['?']=true  },
+    ['[]'] = { ['&&']=true,  ['[]']=false, ['&']=true,  ['?']=false },
+    ['&']  = { ['&&']=false, ['[]']=false, ['&']=false, ['?']=true  },
+    ['?']  = { ['&&']=false, ['[]']=true,  ['&']=false, ['?']=false },
 }
 
 function TP.new (me, dont_generate)
@@ -272,7 +272,7 @@ function TP.toc (tp)
         end
 
         tp, v = TP.pop(tp)
-        if v=='[]' or v=='*' or v=='&' then
+        if v=='[]' or v=='&&' or v=='&' then
             ret = '*'..ret
         else
             error 'bug found'
@@ -387,7 +387,7 @@ function TP.contains (tp1, tp2)
                    (cls1.is_ifc and ENV.ifc_vs_cls_or_ifc(cls1,cls2))
         if ok then
             -- pointers
-            if TP.check(tp1,'*') and TP.check(tp2,'*') then
+            if TP.check(tp1,'&&') and TP.check(tp2,'&&') then
                 -- compatible pointers, check arity, "char" renaming trick
                 local tp1, tp2 = TP.copy(tp1), TP.copy(tp2)
                 tp1.tt[1], tp2.tt[1] = 'char', 'char'
@@ -469,20 +469,20 @@ function TP.contains (tp1, tp2)
     -- _tp[] = _tp*
     -- _tp*  = _tp[]
     elseif id1 == id2 and (
-            (TP.check(tp1,id1,'*') and TP.check(tp2,id2,'[]') and TP.is_ext(tp2,'_','@')) or
-            (TP.check(tp2,id2,'*') and TP.check(tp1,id1,'[]') and TP.is_ext(tp1,'_','@'))
+            (TP.check(tp1,id1,'&&') and TP.check(tp2,id2,'[]') and TP.is_ext(tp2,'_','@')) or
+            (TP.check(tp2,id2,'&&') and TP.check(tp1,id1,'[]') and TP.is_ext(tp1,'_','@'))
            )
     then
         return true
 
     -- any pointer can be used with "null"
-    elseif TP.check(tp1,'*') and TP.check(tp2,'null','*') or
-           TP.check(tp2,'*') and TP.check(tp1,'null','*')
+    elseif TP.check(tp1,'&&') and TP.check(tp2,'null','&&') or
+           TP.check(tp2,'&&') and TP.check(tp1,'null','&&')
     then
         return true
 
     -- single-pointer casts
-    elseif TP.check(tp1,id1,'*') and TP.check(tp2,id2,'*') then
+    elseif TP.check(tp1,id1,'&&') and TP.check(tp2,id2,'&&') then
         -- TODO: allows any cast to char* and void*
         --       is it correct?
         --       (I think "void*" should fail)

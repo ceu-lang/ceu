@@ -122,7 +122,7 @@ F = {
             -- var int& i = *p;     // dereference
             -- var D& d = D(...);   // adt-constr
             if (not TP.check(fr.tp,'&')) then
-                ASR(fr.lval or fr.tag=='Op1_&' or fr.tag=='Op2_call' or
+                ASR(fr.lval or fr.tag=='Op1_&&' or fr.tag=='Op2_call' or
                         (fr.lst and (fr.lst.tag=='Outer' or
                                      fr.lst.var and (fr.lst.var.cls or fr.lst.var.adt))),
                                                -- orgs/adts are not lval

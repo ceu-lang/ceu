@@ -1,4 +1,4 @@
-local _ceu2c = { ['or']='||', ['and']='&&', ['not']='!' }
+local _ceu2c = { ['&&']='&', ['or']='||', ['and']='&&', ['not']='!' }
 local function ceu2c (op)
     return _ceu2c[op] or op
 end
@@ -160,7 +160,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
                         VAL = '('..cast..'('..VAL..').root)'
                     end
                 end
-            elseif not (TP.check(var.tp,'*') or TP.check(var.tp,'&')) then
+            elseif not (TP.check(var.tp,'&&') or TP.check(var.tp,'&')) then
                 VAL = '(&'..VAL..')'
                 VAL = '((tceu_pool_*)'..VAL..')'
             end
@@ -352,7 +352,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
         or TP.is_ext(arr.tp,'_','@')
         then
             VAL = V(arr)..'['..V(idx)..']'
-            if cls and (not TP.check(me.tp,'*')) then
+            if cls and (not TP.check(me.tp,'&&')) then
                 VAL = '(&'..VAL..')'
                     -- class accesses must be normalized to references
             end
@@ -398,7 +398,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
     ['Op1_*'] = function (me, CTX)
         local op, e1 = unpack(me)
         local tp_id = TP.id(me.tp)
-        if ENV.clss[tp_id] and TP.check(e1.tp,tp_id,'*','-&') then
+        if ENV.clss[tp_id] and TP.check(e1.tp,tp_id,'&&','-&') then
             return V(e1,CTX) -- class accesses should remain normalized to references
         elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
             return V(e1,CTX) -- adt pool accesses should remain normalized to references
@@ -409,7 +409,18 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
         local tp_id = TP.id(e1.tp)
-        if ENV.clss[tp_id] and (not TP.check(e1.tp,'*','-&')) then
+        if ENV.clss[tp_id] and (not TP.check(e1.tp,'&&','-&')) then
+            return V(e1) -- class accesses are already normalized to references
+        elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
+            return V(e1) -- adt pool accesses are already normalized to references
+        else
+            return '('..ceu2c(op)..V(e1)..')'
+        end
+    end,
+    ['Op1_&&'] = function (me)
+        local op, e1 = unpack(me)
+        local tp_id = TP.id(e1.tp)
+        if ENV.clss[tp_id] and (not TP.check(e1.tp,'&&','-&')) then
             return V(e1) -- class accesses are already normalized to references
         elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
             return V(e1) -- adt pool accesses are already normalized to references
@@ -483,7 +494,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
         local tp, exp = unpack(me)
         local VAL = V(exp, CTX)
 
-        local cls = (TP.check(tp,'*','-&') and ENV.clss[TP.id(tp)])
+        local cls = (TP.check(tp,'&&','-&') and ENV.clss[TP.id(tp)])
         if cls then
             if cls.is_ifc then
                 -- TODO: out of bounds acc

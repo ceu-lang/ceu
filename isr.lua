@@ -23,7 +23,7 @@ F = {
     Var = function (me)
         if inIsr(me) then
             accs[me.var] = true
-            local isPtr = (TP.check(me.var.tp,'*','-&') and
+            local isPtr = (TP.check(me.var.tp,'&&','-&') and
                             (not TP.check(me.var.tp,'[]','-&')))
             WRN(not isPtr, me, 'pointer access '..msg)
         end
@@ -60,7 +60,7 @@ G = {
                     'access to "'..me.id..'" must be atomic' )
         end
     end,
-    ['Op1_&'] = function (me)
+    ['Op1_&&'] = function (me)
         if accs[me.lst.var] then
             WRN(false, me, 'reference access '..msg)
         end

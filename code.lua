@@ -181,7 +181,7 @@ end
 local function FIND_ADT_POOL (fst)
     local adt = ENV.adts[TP.id(fst.tp)]
     local tp = fst.tp
-    if adt and (TP.check(tp,'[]') or TP.check(tp,'*') or TP.check(tp,'&')) then
+    if adt and (TP.check(tp,'[]') or TP.check(tp,'&&') or TP.check(tp,'&')) then
         return fst
     else
         assert(fst.__par, 'bug found')
@@ -635,7 +635,7 @@ case ]]..me.lbl.id..[[:;
             LINE(me, [[
     ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
 ]])
-        elseif TP.check(pool.var.tp,'*') or TP.check(pool.var.tp,'&') then
+        elseif TP.check(pool.var.tp,'&&') or TP.check(pool.var.tp,'&') then
             -- pointer don't know if is dynamic or static
             LINE(me, [[
 #if !defined(CEU_ORGS_NEWS_MALLOC)
@@ -782,7 +782,7 @@ _STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
                 end
 
                 -- OPTION TO ORG or ORG[]
-                if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+                if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
                     -- TODO: repeated with Block_pos
                     LINE(me, [[
 /*  RESET OPT-ORG TO NULL */
@@ -936,7 +936,7 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
             local is_dyn = (var.tp.arr=='[]')
 
             local tp_id = TP.id(var.tp)
-            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
                 -- TODO: BUG: id should be saved together with the pointer
                 LINE(me, [[
 if (0) {
@@ -1165,7 +1165,7 @@ case ]]..SET.lbl_cnt.id..[[:;
                     LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
                 else
 local to_tp_id = TP.id(to.tp)
-if ENV.clss[to_tp_id] and TP.check(to.tp,to_tp_id,'*','?','-[]') then
+if ENV.clss[to_tp_id] and TP.check(to.tp,to_tp_id,'&&','?','-[]') then
     LINE(me, [[
 if (((tceu_org*)]]..V(fr)..[[)->isAlive) {
     ]]..V(to)..' = '..string.upper(TP.toc(to.tp))..[[_pack(]]..V(fr)..[[);
@@ -1969,7 +1969,7 @@ case ]]..me.lbl.id..[[:;
                     val = '(_ceu_app->wclk_late'..suf..')'
                 elseif e.tag=='Ext' then
                     if e[1] == '_ok_killed' then
-                        if TP.tostr(set_to.tp)=='(void*)' then
+                        if TP.tostr(set_to.tp)=='(void&&)' then
                             -- ADT
                             val = '(*((tceu_org**)_STK->evt_buf))'
                         else
@@ -2194,11 +2194,11 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 LINE(me, [[
         ceu_lua_pushstring(_ceu_app->lua,(char*)]]..V(p)..[[->mem);
 ]])
-            elseif TP.check(p.tp,'char','*','-&') then
+            elseif TP.check(p.tp,'char','&&','-&') then
                 LINE(me, [[
         ceu_lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
 ]])
-            elseif TP.check(p.tp,'*','-&') then
+            elseif TP.check(p.tp,'&&','-&') then
                 LINE(me, [[
         ceu_lua_pushlightuserdata(_ceu_app->lua,]]..V(p)..[[);
 ]])
@@ -2248,7 +2248,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             }
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
-            elseif TP.check(set_to.tp,'*','-&') then
+            elseif TP.check(set_to.tp,'&&','-&') then
                 LINE(me, [[
             void* ret;
             int is;

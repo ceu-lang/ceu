@@ -150,9 +150,9 @@ local function check (me, pre, tp)
     local void_ok = (tp_id=='void' and
                     (pre=='event' or pre=='function' or pre=='input' or
                      pre=='output' or pre=='isr' or
-                     tp.tt[2]=='*'))
+                     tp.tt[2]=='&&'))
 
-    ASR(TP.get(tp_id).len~=0 or TP.check(tp,'*') or TP.check(tp,'&') or void_ok,
+    ASR(TP.get(tp_id).len~=0 or TP.check(tp,'&&') or TP.check(tp,'&') or void_ok,
         me, 'cannot instantiate type "'..tp_id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 
@@ -386,7 +386,7 @@ F = {
             { '_ORG',       nil          },
             { '_ORG_PSED',  nil          },
             { '_CLEAR',     nil          },
-            { '_ok_killed', {'void','*'} },
+            { '_ok_killed', {'void','&&'} },
         -- input / runtime
             { '_INIT',      nil,     'seqno' }, -- _INIT = HIGHER EXTERNAL
             { '_ASYNC',     nil,     'seqno' },
@@ -629,7 +629,7 @@ F = {
     Global = function (me)
         ASR(ENV.clss.Global and ENV.clss.Global.is_ifc, me,
             'interface "Global" is not defined')
-        me.tp   = TP.new{'Global','*'}
+        me.tp   = TP.new{'Global','&&'}
         me.lval = false
         me.blk  = AST.root
     end,
@@ -732,7 +732,7 @@ F = {
 
             local tp_ = TP.new(tp)
             local tp_id = TP.id(tp_)
-            local top = not (TP.check(tp_,'*') or TP.check(tp_,'&'))
+            local top = not (TP.check(tp_,'&&') or TP.check(tp_,'&'))
             ASR(tp_id=='_TOP_POOL' or top,
                 me, 'undeclared type `'..(tp_id or '?')..'´')
         end
@@ -740,7 +740,7 @@ F = {
 
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
-        ASR(TP.check(tp,'[]','-*','-&'), me, 'missing `pool´ dimension')
+        ASR(TP.check(tp,'[]','-&&','-&'), me, 'missing `pool´ dimension')
         F.__dcl_var(me)
     end,
 
@@ -751,7 +751,7 @@ F = {
         end
         assert(tp.tup, 'bug found')
         for _, t in ipairs(tp.tup) do
-            ASR((TP.isNumeric(t) or TP.check(t,'*')),
+            ASR((TP.isNumeric(t) or TP.check(t,'&&')),
                 me, 'invalid event type')
         end
         local _
@@ -870,7 +870,7 @@ F = {
         -- HACK_5: figure out iter type
         local pool = unpack(me)
         pool = pool.lst
-        ASR(pool.var and TP.check(pool.tp,TP.id(pool.tp),'[]','-*','-&'),
+        ASR(pool.var and TP.check(pool.tp,TP.id(pool.tp),'[]','-&&','-&'),
             me, 'invalid pool')
 
         local blki = AST.asr(me.__par,'Stmts', 3,'Stmts', 1,'Dcl_cls',
@@ -945,7 +945,7 @@ F = {
             end
 
             if e.evt.ins.tup then
-                me.tp = TP.new{'_'..TP.toc(e.evt.ins),'*'} -- convert to pointer
+                me.tp = TP.new{'_'..TP.toc(e.evt.ins),'&&'} -- convert to pointer
             else
                 me.tp = e.evt.ins
             end
@@ -954,7 +954,7 @@ F = {
             ASR(e.var and e.var.pre=='event', me,
                 'event "'..(e.var and e.var.id or '?')..'" is not declared')
             if e.var.evt.ins.tup then
-                me.tp = TP.new{'_'..TP.toc(e.var.evt.ins),'*'} -- convert to pointer
+                me.tp = TP.new{'_'..TP.toc(e.var.evt.ins),'&&'} -- convert to pointer
             else
                 me.tp = e.var.evt.ins
             end
@@ -1062,7 +1062,7 @@ F = {
         elseif ENV.adts[to_tp_id] and (not to_is_opt) then
 -- TODO: rewrite all
             if ENV.adts[to_tp_id].is_rec then
-                if to.var and (TP.check(to.var.tp,'&') or TP.check(to.var.tp,'*')) then
+                if to.var and (TP.check(to.var.tp,'&') or TP.check(to.var.tp,'&&')) then
                     if to.var.pre=='pool' then
                         me[2] = 'adt-alias'
                         local fr_tp_id = TP.id(fr_tp)
@@ -1073,8 +1073,8 @@ F = {
                         assert(me[2]=='exp')
                         local fr_tp_id = TP.id(fr_tp)
                         if to_tp_id == fr_tp_id and (
-                            (TP.check(to.tp,to_tp_id,'*') and TP.check(fr_tp,fr_tp_id,'[]')) or
-                            (TP.check(fr_tp,fr_tp_id,'*') and TP.check(to.tp,to_tp_id,'[]'))
+                            (TP.check(to.tp,to_tp_id,'&&') and TP.check(fr_tp,fr_tp_id,'[]')) or
+                            (TP.check(fr_tp,fr_tp_id,'&&') and TP.check(to.tp,to_tp_id,'[]'))
                         ) then
                             return  -- checked in adt.lua
                         end
@@ -1097,7 +1097,7 @@ F = {
             end
 
             ASR(TP.isNumeric(to.tp,'&') or TP.check(to.tp,'bool','-&') or
-                TP.check(to.tp, to_tp_id, '*', '-&') or
+                TP.check(to.tp, to_tp_id, '&&', '-&') or
                 lua_str,
                 me, 'invalid attribution')
             fr.tp = to.tp -- return type is not known at compile time
@@ -1125,7 +1125,7 @@ F = {
     Free = function (me)
         local exp = unpack(me)
         local tp_id = TP.id(exp.tp)
-        ASR(TT.check(exp.tp,id,'*','-&'), me,
+        ASR(TT.check(exp.tp,id,'&&','-&'), me,
             'invalid `free´')
         me.cls = ASR(ENV.clss[tp_id], me,
                         'class "'..id..'" is not declared')
@@ -1137,7 +1137,7 @@ F = {
         me.cls = ENV.clss[id]
         ASR(me.cls, me, 'undeclared type `'..id..'´')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
-        me.tp = TP.new{id,'*'}  -- class id
+        me.tp = TP.new{id,'&&'}  -- class id
     end,
     Spawn = function (me)
         local _, pool, _ = unpack(me)
@@ -1216,7 +1216,7 @@ F = {
                 local stmts = me.__par[1]
 
                 local dcl_cur = AST.node('Dcl_var', me.ln, 'var',
-                                    AST.node('Type', me.ln, cls.id, '*'),
+                                    AST.node('Type', me.ln, cls.id, '&&'),
                                     to[1])
                 dcl_cur.read_only = true
                 AST.visit(F, dcl_cur)
@@ -1236,7 +1236,7 @@ F = {
             ASR(iter.lst and iter.lst.var and iter.lst.var.pre=='pool',
                 me, 'invalid pool')
 
-        elseif iter and TP.check(iter.tp,'*') then
+        elseif iter and TP.check(iter.tp,'&&') then
             me.iter_tp = 'data'
             if to then
                 local dcl = AST.node('Dcl_var', me.ln, 'var',
@@ -1294,8 +1294,8 @@ F = {
                 if ttag.tup[i] and ttag.tup[i].is_rec then
                     ASR(p.tag == 'Adt_constr_one', me,
                         'invalid constructor : recursive field "'..id_tag..'" must be new data')
-                    --p.tp.tt[#p.tp.tt+1] = '*'
-                    --params[i].tp = TP.new(TP.push(p.tp,'*'))
+                    --p.tp.tt[#p.tp.tt+1] = '&&'
+                    --params[i].tp = TP.new(TP.push(p.tp,'&&'))
                 end
             end
             tup = ttag.tup
@@ -1350,7 +1350,7 @@ F = {
         local _, arr, idx = unpack(me)
         local tp_id = TP.id(arr.tp)
 
-        local ok = TP.check(arr.tp, '*', '-&') or
+        local ok = TP.check(arr.tp, '&&', '-&') or
                    TP.check(arr.tp, '[]', '-&')
         ASR(ok or TP.is_ext(arr.tp,'_','@'), me,
             'cannot index a non array')
@@ -1361,7 +1361,7 @@ F = {
         if TP.check(tp,'[]') then
             tp = TP.pop(tp, '[]')
         else
-            tp = TP.pop(tp, '*')
+            tp = TP.pop(tp, '&&')
         end
 
         if ENV.v_or_ref(tp,'cls') then
@@ -1471,7 +1471,7 @@ F = {
 
         -- remove *
         local tp = TP.pop(e1.tp,'&')
-        tp,ok = TP.pop(tp, '*')
+        tp,ok = TP.pop(tp, '&&')
 
 --[[
         -- pool L[]* l;
@@ -1497,8 +1497,19 @@ F = {
     ['Op1_&'] = function (me)
         local op, e1 = unpack(me)
 
+        ASR(e1.lval, me,
+            'invalid operand to unary "&"')
+        me.lval = e1.lval
+        me.tp = TP.push(e1.tp,'&')
+        me.fst = e1.fst
+        me.lst = e1.lst
+    end,
+
+    ['Op1_&&'] = function (me)
+        local op, e1 = unpack(me)
+
         ASR(not TP.check(e1.tp,'?'), me,
-            'invalid operand to unary "&"'..
+            'invalid operand to unary "&&"'..
             ' : option type')
 
         -- invalid: address of vector elements: &vec[i]
@@ -1510,7 +1521,7 @@ F = {
                 -- TODO: not checking if the function is really native
                 -- TODO: not checking if in format (<cast>)&e
                 if not AST.par(me,'ExpList') then
-                    ASR(false, me, 'invalid operand to unary "&"'..
+                    ASR(false, me, 'invalid operand to unary "&&"'..
                                    ' : vector elements are not addressable')
                 end
             end
@@ -1519,9 +1530,9 @@ F = {
         local e1_tp_id = TP.id(e1.tp)
         ASR(e1.lval and (not TP.check(e1.tp,'[]','-&')) or
             ENV.clss[e1_tp_id] or ENV.adts[e1_tp_id], me,
-            'invalid operand to unary "&"')
+            'invalid operand to unary "&&"')
         me.lval = false
-        me.tp = TP.new(TP.push(TP.pop(e1.tp,'&'),'*'))
+        me.tp = TP.new(TP.push(TP.pop(e1.tp,'&'),'&&'))
         me.fst = e1.fst
         me.lst = e1.lst
         me.lst.amp = true
@@ -1620,8 +1631,8 @@ F = {
             -- rect.x = 1 (_SDL_Rect)
             me.tp = TP.new{'@'}
             local tp = TP.get(TP.id(e1.tp))
-            if tp.plain and (not TP.check(e1.tp,'*')) then
-                me.tp = TP.new(TP.pop(me.tp,'*'))
+            if tp.plain and (not TP.check(e1.tp,'&&')) then
+                me.tp = TP.new(TP.pop(me.tp,'&&'))
                 me.tp.plain = true
             end
             me.lval = me--e1.lval
@@ -1651,7 +1662,7 @@ F = {
         local tp, exp = unpack(me)
         me.tp   = tp
         me.lval = exp.lval
-        if TP.check(tp,'*','-&') then
+        if TP.check(tp,'&&','-&') then
             me.lval = exp      -- *((u32*)0x100)=v
         end
 
@@ -1688,7 +1699,7 @@ F = {
     end,
 
     STRING = function (me)
-        me.tp   = TP.new{'char','*'}
+        me.tp   = TP.new{'char','&&'}
         me.lval = false
         me.isConst = true
     end,
@@ -1704,7 +1715,7 @@ F = {
         me.isConst = true
     end,
     NULL = function (me)
-        me.tp   = TP.new{'null','*'}
+        me.tp   = TP.new{'null','&&'}
         me.lval = false
         me.isConst = true
     end,

@@ -31,7 +31,7 @@ F = {
                 --      var List* l;
                 --  becomes
                 --      var tceu_adt_root l = {pool=x, root=y}
-                ASR(TP.check(me.var.tp,tp_id,'*'), me,
+                ASR(TP.check(me.var.tp,tp_id,'&&'), me,
                     'invalid recursive data declaration : variable "'..me.var.id..'" must be a pointer or pool')
             end
         end
@@ -84,7 +84,7 @@ F = {
             -- [OK]: ptr  = l2.*
             -- [OK]: l1.* = l1.*
             -- [NO]: l1.* = l2.*
-            ASR((TP.check(to.tp,'*','-&') and to.lst.var==to.var) or
+            ASR((TP.check(to.tp,'&&','-&') and to.lst.var==to.var) or
                  to.fst.var==fr.fst.var, me,
                 'cannot mix recursive data sources')
 
@@ -93,11 +93,11 @@ F = {
             --      l.CONS.tail = l     // NO
             local to = AST.par({__par=to.fst},
                         function (me)
-                            return TP.check(me.tp,'[]','-*','-&')
+                            return TP.check(me.tp,'[]','-&&','-&')
                         end)
             local fr = AST.par({__par=fr.fst},
                         function (me)
-                            return TP.check(me.tp,'[]','-*','-&')
+                            return TP.check(me.tp,'[]','-&&','-&')
                         end)
 
             assert(to.var and fr.var, 'bug found')

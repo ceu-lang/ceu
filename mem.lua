@@ -214,7 +214,7 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
         local xx = me.__adj_from_opt
         xx =  xx and TP.pop(xx, '[]')
         --local xx = me.__adj_from_opt
-        if xx and (TP.check(xx,'*','?') or TP.check(xx,'&','?')) then
+        if xx and (TP.check(xx,'&&','?') or TP.check(xx,'&','?')) then
             local ID = string.upper(TP.opt2adt(xx))
             local tp = 'CEU_'..TP.opt2adt(xx)
             local some = TP.toc(me[4][2][1][1][2])
@@ -543,7 +543,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                              or (ENV.c[_tp] and ENV.c[_tp].len
                                  or TP.types.word.len)) -- defaults to word
 ]]
-            elseif (TP.check(var.tp,'*') or TP.check(var.tp,'&')) then
+            elseif (TP.check(var.tp,'&&') or TP.check(var.tp,'&')) then
                 len = TP.types.pointer.len
             elseif (not var.adt) and TP.check(TP.id(var.tp)) and ENV.adts[TP.id(var.tp)] then
                 -- var List l
@@ -586,18 +586,18 @@ typedef union CEU_]]..me.id..[[_delayed {
                 if cls and (not cls.is_ifc) and (DCL.id ~= tp_id) then
                     dcl = dcl..'struct ' -- due to recursive spawn
                 end
-                if TP.check(var.tp,'[]','-*','-&') then
+                if TP.check(var.tp,'[]','-&&','-&') then
                     local tp_elem = TP.pop( TP.pop(var.tp,'&'), '[]' )
                     local cls = cls and TP.check(tp_elem,tp_id)
                     if cls or TP.is_ext(var.tp,'_') then
-                        if TP.check(var.tp,'*') or TP.check(var.tp,'&') then
+                        if TP.check(var.tp,'&&') or TP.check(var.tp,'&') then
                             dcl = dcl .. tp_c..' '..var.id_
                         else
                             local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
                             dcl = dcl .. tp_c..' '..var.id_..'['..var.tp.arr.cval..']'
                         end
                     else
-                        if TP.check(var.tp,'*') or TP.check(var.tp,'&') then
+                        if TP.check(var.tp,'&&') or TP.check(var.tp,'&') then
                             dcl = dcl .. 'tceu_vector* '..var.id_
                         else
                             local max = (var.tp.arr.cval or 0)
@@ -626,7 +626,7 @@ CEU_VECTOR_DCL(]]..var.id_..','..tp_c..','..max..[[)
                 -- tceu_adt_root id = { root=?, pool=_id };
                 -- CEU_POOL_DCL(_id);
                 if adt then
-                    assert(not TP.check(var.tp,'*','*'), 'bug found')
+                    assert(not TP.check(var.tp,'&&','&&'), 'bug found')
                     local ptr = (TP.check(var.tp,'&') and '*') or ''
                     DCL.struct = DCL.struct .. [[
 /*
@@ -656,11 +656,11 @@ CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..','..var.tp.arr.sval..[[)
                 elseif (not adt) then   -- (top_pool or cls)
                     -- ADT doesn't require this NULL pool field
                     --  (already has root->pool=NULL)
-                    if TP.check(var.tp,'*') or TP.check(var.tp,'&') then
+                    if TP.check(var.tp,'&&') or TP.check(var.tp,'&') then
                         local ptr = ''
                         for i=#var.tp.tt, 1, -1 do
                             local v = var.tp.tt[i]
-                            if v=='*' or v=='&' then
+                            if v=='&&' or v=='&' then
                                 ptr = ptr..'*'
                             else
                                 break

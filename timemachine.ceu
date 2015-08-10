@@ -70,7 +70,7 @@ native @nohold _snap_seek();
 interface IIOTimeMachine with
     event void         go_on;
     event void         go_off;
-    event _tceu_queue* go_queue;
+    event _tceu_queue&& go_queue;
 end
 #endif
 
@@ -127,7 +127,7 @@ class TimeMachine with
     var int time_now;
 do
 #ifdef TM_SNAP
-    _snap_init((u8*)&this.app)
+    _snap_init((u8&&)&&this.app)
         finalize with
             nothing;    // app is supposed to live longer than TM
         end;
@@ -138,14 +138,14 @@ do
     native do
         CEU_App CEU_APP_0;      /* saves application state-0 */
     end
-    _CEU_APP_0 = *((CEU_App*)&this.app);
+    _CEU_APP_0 = *((CEU_App&&)&&this.app);
 #ifdef TM_QUEUE
     _queue_seek(0);
 #endif
 #endif  // TM_SNAP
 
 #ifdef TM_DIFF
-    _diff_init((u8*)&this.app)
+    _diff_init((u8&&)&&this.app)
         finalize with
             nothing;    // app is supposed to live longer than TM
         end;
@@ -181,9 +181,9 @@ do
 
 #ifdef TM_QUEUE
 #ifdef TM_SNAP
-                _queue_put(_CEU_IN__WCLOCK, 0, &dt, brk_time)
+                _queue_put(_CEU_IN__WCLOCK, 0, &&dt, brk_time)
 #else
-                _queue_put(_CEU_IN__WCLOCK, 0, &dt)
+                _queue_put(_CEU_IN__WCLOCK, 0, &&dt)
 #endif
 #endif
                     finalize with
@@ -263,11 +263,11 @@ do
 
 #if   defined TM_QUEUE
                         var u32 queue;
-                        this.time_now = _snap_seek(time_req, &queue);
+                        this.time_now = _snap_seek(time_req, &&queue);
                         _queue_seek(queue);
 #elif defined TM_DIFF
                         var u32 diffs;
-                        this.time_now = _snap_seek(time_req, &diffs);
+                        this.time_now = _snap_seek(time_req, &&diffs);
                         _DIFF.nxt = diffs;
                         _memcpy(_DIFF.data_old, _DIFF.data, sizeof(_CEU_App));
                         this.time_now = _diff_seek(time_req);
@@ -278,7 +278,7 @@ do
 #else   // !TM_SNAP
 
 #if   defined TM_QUEUE
-                        *((_CEU_App*)&app) = _CEU_APP_0;
+                        *((_CEU_App&&)&&app) = _CEU_APP_0;
                         _queue_seek(0);
                         this.time_now = 0;
 #elif defined TM_DIFF
@@ -339,7 +339,7 @@ do
 #ifdef TM_QUEUE_WCLOCK_REUSE
                                 dt = (1000/_CEU_FPS);
 #else
-                                dt = ((_tceu_queue_dt*)&qu!):dt;
+                                dt = ((_tceu_queue_dt&&)&&qu!):dt;
 #endif
                                 _assert(dt >= 0);
                                 time_now = time_now + dt;
@@ -350,7 +350,7 @@ do
                                 end
                                 this.locked = false;
                             else
-                                emit io.go_queue => &(qu!);
+                                emit io.go_queue => &&(qu!);
                             end
 
 #elif defined TM_DIFF

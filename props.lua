@@ -158,7 +158,7 @@ F = {
                 me.needs_clr = true
             end
             if var.pre == 'var' then
-                if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+                if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
                     PROPS.has_orgs_watching = true
                 end
 
@@ -416,7 +416,7 @@ F = {
 
     Op1_cast = function (me)
         local tp, _ = unpack(me)
-        if ENV.clss[TP.id(tp)] and TP.check(tp,'*') then
+        if ENV.clss[TP.id(tp)] and TP.check(tp,'&&') then
             PROPS.has_ifcs = true      -- cast must check org->cls_id
         end
     end,

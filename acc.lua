@@ -130,13 +130,13 @@ F = {
         CHG(f.lst.acc, 'cl')
         me.acc = f.lst.acc
         for _, exp in ipairs(exps) do
-            if TP.check(exp.tp,'*') then
+            if TP.check(exp.tp,'&&') then
                 local v = exp.lst
                 if v and v.acc then   -- ignore constants
 --DBG(exp.tag, exp.lst)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     CHG(v.acc, (me.c and me.c.mod=='@pure' and 'rd') or 'wr')
-                    v.acc.tp = TP.pop(exp.tp,'*')
+                    v.acc.tp = TP.pop(exp.tp,'&&')
                 end
             end
         end
@@ -195,7 +195,7 @@ F = {
             me.lst.acc.tp = me[2][2].tp  -- change to uncast type
         end
     end,
-    ['Op1_&'] = function (me)
+    ['Op1_&&'] = function (me)
         CHG(me.lst.acc, 'no')
     end,
 

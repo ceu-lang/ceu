@@ -105,7 +105,7 @@ error'not implemented (locals inside iter)'
 
         local v = VARS[var]
 
-        local op = AST.iter'Op1_&'()
+        local op = AST.iter'Op1_&&'()
         local isRef = op and (op.base == me)
 
         local AwaitInt = function ()
@@ -148,7 +148,7 @@ error'not implemented (locals inside iter)'
         end
     end,
 
-    ['Op1_&'] = function (me)
+    ['Op1_&&'] = function (me)
         local op, e1 = unpack(me)
         if e1.fst.var then
             e1.fst.var.isTmp = false    -- assigned to a pointer

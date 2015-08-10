@@ -69,7 +69,7 @@ F = {
             end
 
             local tp_id = TP.id(var.tp)
-            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
                 me.trails_n = me.trails_n + 1
             elseif var.adt and var.pre=='pool' then
                 me.trails_n = me.trails_n + 1
@@ -157,7 +157,7 @@ G = {
             end
 
             local tp_id = TP.id(var.tp)
-            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
                 var.trl_optorg = { t0, t0 }
                 t0 = t0 + 1
 

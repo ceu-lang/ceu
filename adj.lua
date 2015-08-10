@@ -362,7 +362,7 @@ me.blk_body = me.blk_body or blk_body
 
         if root_tag == 'adt' then
             dcl_to = node('_Dcl_pool', me.ln, 'pool',
-                        node('Type', me.ln, 'TODO-ADT-TYPE', '[]','*'),
+                        node('Type', me.ln, 'TODO-ADT-TYPE', '[]','&&'),
                                         -- unknown (depends on "root")
                         to[1])
 
@@ -399,7 +399,7 @@ me.blk_body = me.blk_body or blk_body
         -- unpacked below
         ifc = ifc or node('Stmts',me.ln)
 
-        local tp = node('Type', me.ln, 'TODO-ADT-TYPE', '[]','*')
+        local tp = node('Type', me.ln, 'TODO-ADT-TYPE', '[]','&&')
         local cls = node('Dcl_cls', me.ln, false, 'Body_'..me.n,
                         node('BlockI', me.ln,
                             node('Stmts', me.ln,
@@ -407,7 +407,7 @@ me.blk_body = me.blk_body or blk_body
                                     node('Type', me.ln, 'Body_'..me.n, root_pool,'&'),
                                     '_bodies'),
                                 node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, 'Scope', '*'),
+                                    node('Type', me.ln, 'Scope', '&&'),
                                         -- TODO: should be opt type
                                     '_parent'),
                                 dcl_to,
@@ -446,7 +446,7 @@ me.blk_body = me.blk_body or blk_body
                                                 node('This', me.ln, true),
                                                 '_parent'),
                                             '=', 'exp',
-                                            node('Op1_&', me.ln, '&',
+                                            node('Op1_&&', me.ln, '&&',
                                                 node('Var', me.ln, '_s'))),
                                                 --node('This', me.ln, true))),
                                         node('_Set', me.ln,
@@ -529,7 +529,7 @@ me.blk_body = me.blk_body or blk_body
                         node('Type', me.ln, 'Scope'),
                         '_s'),
                     node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, cls_id, '*','?'),
+                        node('Type', me.ln, cls_id, '&&','?'),
                         '_body_'..me.n),
                     node('_Set', me.ln,
                         node('Var', me.ln, '_body_'..me.n),
@@ -594,7 +594,7 @@ me.blk_body = me.blk_body or blk_body
                                                 node('This', me.ln, true),
                                                 '_parent'),
                                             '=', 'exp',
-                                            node('Op1_&', me.ln, '&',
+                                            node('Op1_&&', me.ln, '&&',
                                                 node('Var', me.ln, '_s'))),
                                                 --node('Outer', me.ln, true))),
                                         node('_Set', me.ln,
@@ -1055,7 +1055,7 @@ me.blk_body = me.blk_body or blk_body
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
                                         node('Dcl_var', me.ln, 'var',
-                                            node('Type', me.ln, 'void', '*','?'),
+                                            node('Type', me.ln, 'void', '&&','?'),
                                             'ok_'),
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'ok_'),
@@ -1241,8 +1241,8 @@ me.blk_body = me.blk_body or blk_body
                             node('Op2_.', me.ln, '.',
                                 node('Op1_*', me.ln, '*',
                                     node('Op1_cast', me.ln,
-                                        node('Type', me.ln, '_tceu_org', '*'),
-                                        node('Op1_&', me.ln, '&',
+                                        node('Type', me.ln, '_tceu_org', '&&'),
+                                        node('Op1_&&', me.ln, '&&',
                                             AST.copy(var)))),
                                 'ret')),
                         AST.copy(to))
@@ -1267,15 +1267,15 @@ me.blk_body = me.blk_body or blk_body
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Dcl_var', me.ln, 'var',
-                                node('Type', me.ln, 'void', '*'),
+                                node('Type', me.ln, 'void', '&&'),
                                 '__old_adt_'..me.n),
                             node('Set', me.ln, '=', 'exp',
                                 node('Op1_cast', me.ln,
-                                    node('Type', me.ln, 'void', '*'),
+                                    node('Type', me.ln, 'void', '&&'),
                                     AST.copy(var)),
                                 node('Var', me.ln, '__old_adt_'..me.n)),
                             node('Dcl_var', me.ln, 'var',
-                                node('Type', me.ln, 'void', '*'),
+                                node('Type', me.ln, 'void', '&&'),
                                 '__awk_adt_'..me.n,
                                 false,
                                 true), -- isTmp
@@ -1302,7 +1302,7 @@ me.blk_body = me.blk_body or blk_body
                                     -- this cast confuses acc.lua (see Op1_* there)
                                     -- TODO: HACK_3
                                     node('Op1_cast', me.ln,
-                                        node('Type', me.ln, '_tceu_org', '*'),
+                                        node('Type', me.ln, '_tceu_org', '&&'),
                                         AST.copy(var))),
                                 'isAlive')),
                         node('Block', me.ln,
@@ -1319,11 +1319,11 @@ me.blk_body = me.blk_body or blk_body
                                     node('Op2_.', me.ln, '.',
                                         node('Op1_*', me.ln, '*',
                                             node('Op1_cast', me.ln,
-                                                node('Type', me.ln, '_tceu_org', '*'),
+                                                node('Type', me.ln, '_tceu_org', '&&'),
                                                 AST.copy(var))),
                                         'id')),
                                 node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, '_tceu_org_kill', '*'),
+                                    node('Type', me.ln, '_tceu_org_kill', '&&'),
                                     '__awk_org_'..me.n,
                                     false,
                                     true),  -- isTmp

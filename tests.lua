@@ -459,10 +459,22 @@ escape 1;
     env = 'line 1 : invalid type modifier : `[]?´',
 }
 Test { [[
-var int&* v;
+var int* v;
 escape 1;
 ]],
-    env = 'line 1 : invalid type modifier : `&*´',
+    parser = 'after `int´ : expected identifier',
+}
+Test { [[
+var int&&& v;
+escape 1;
+]],
+    parser = 'line 1 : after `int´ : expected identifier',
+}
+Test { [[
+var int&& & v;
+escape 1;
+]],
+    run = 1,
 }
 Test { [[
 var int&[] v;
@@ -471,16 +483,16 @@ escape 1;
     env = 'line 1 : invalid type modifier : `&[]´',
 }
 Test { [[
-var int&& v;
+var int& & v;
 escape 1;
 ]],
     env = 'line 1 : invalid type modifier : `&&´',
 }
 Test { [[
-var int?* v;
+var int?&& v;
 escape 1;
 ]],
-    env = 'line 1 : invalid type modifier : `?*´',
+    env = 'line 1 : invalid type modifier : `?&&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
@@ -3763,7 +3775,7 @@ escape ret;
 Test { [[
 input void OS_START;
 
-event int* e;
+event int&& e;
 var int ret = 0;
 
 par/or do
@@ -3771,9 +3783,9 @@ par/or do
         var int i = 10;
         par/or do
             await OS_START;
-            emit e => &i;           // stacked
+            emit e => &&i;           // stacked
         with
-            var int* pi = await e;
+            var int&& pi = await e;
             ret = *pi;
         end                         // has to remove from stack
     end
@@ -3783,7 +3795,7 @@ par/or do
         i = i + 1;
     end
 with
-    var int* i = await e;           // to avoid awaking here
+    var int&& i = await e;           // to avoid awaking here
     escape *i;
 end
 escape ret;
@@ -14444,11 +14456,11 @@ escape v;
 
 Test { [[
 var int a = 1;
-var int& b = &a;
+var int& b = &&a;
 a = 2;
 escape b;
 ]],
-    env = 'line 2 : types mismatch (`int&´ <= `int*´)',
+    env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
     --run = 2,
 }
 Test { [[
@@ -14459,7 +14471,7 @@ var int& v;
 v = &_V;
 escape v;
 ]],
-    --env = 'line 5 : invalid attribution (int& vs _*)',
+    --env = 'line 5 : invalid attribution (int& vs _&&)',
     run = 10;
 }
 
@@ -14493,13 +14505,13 @@ escape v;
 
 Test { [[
 var int& a;
-var int* b = null;
+var int&& b = null;
 a = b;
 await 1s;
-var int* c = a;
+var int&& c = a;
 escape 1;
 ]],
-    env = 'line 3 : types mismatch (`int&´ <= `int*´)',
+    env = 'line 3 : types mismatch (`int&´ <= `int&&´)',
     --run = { ['~>1s']=1 },
 }
 Test { [[
@@ -14508,14 +14520,14 @@ native do
 end
 var int vv = 10;
 var int& v;
-v = &vv;
+v = &&vv;
 await 1s;
 do
     var int vvv = 1;
 end
 escape *v;
 ]],
-    env = 'line 6 : types mismatch (`int&´ <= `int*´)'
+    env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
 }
 Test { [[
 native do
@@ -14758,7 +14770,7 @@ native do
     }
 end
 var int   v = 1;
-var int*  p = &v;
+var int&& p = &&v;
 var int&? r;
 finalize
     r = _fff(*p);
@@ -14779,7 +14791,7 @@ native do
     }
 end
 var int   v = 1;
-var int*  p = &v;
+var int&& p = &&v;
 var int&? r;
 finalize
     r = _fff(*p);
@@ -14867,7 +14879,7 @@ Test { [[
     var _message_t msg;
     loop do
         await 1s;
-        var _Cnt* snd = _Radio_getPayload(&msg, sizeof(_Cnt));
+        var _Cnt&& snd = _Radio_getPayload(&msg, sizeof(_Cnt));
     end
 ]],
     --fin = 'line 5 : pointer access across `await´',
@@ -14881,7 +14893,7 @@ Test { [[
     var _message_t msg;
     loop do
         await 1s;
-        var _Cnt* snd = _Radio_getPayload(&msg, sizeof(_Cnt));
+        var _Cnt&& snd = _Radio_getPayload(&msg, sizeof(_Cnt));
     end
 ]],
     _ana = {
@@ -14907,7 +14919,7 @@ escape 0;
 }
 
 Test { [[
-var int* ptr = _malloc();
+var int&& ptr = _malloc();
 ]],
     fin = 'line 1 : must assign to a option reference (declared with `&?´)',
 }
@@ -14915,7 +14927,7 @@ var int* ptr = _malloc();
 Test { [[
 native _f();
 do
-    var int* a;
+    var int&& a;
     finalize
         a = _f();
     with
@@ -14971,9 +14983,9 @@ end
 
 Test { [[
 loop do
-    var int* a;
+    var int&& a;
     do
-        var int* b = null;
+        var int&& b = null;
             a = b;
     end
 end
@@ -14986,7 +14998,7 @@ end
 
 Test { [[
 var int v = 10;
-var int* ptr = &v;
+var int&& ptr = &&v;
 await 1s;
 escape *ptr;
 ]],
@@ -14994,22 +15006,22 @@ escape *ptr;
 }
 
 Test { [[
-var int* a;
-var int* b = null;
+var int&& a;
+var int&& b = null;
 a = b;
 await 1s;
-var int* c = a;
+var int&& c = a;
 escape 1;
 ]],
     fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
 Test { [[
-var int* a;
-var int* b = null;
+var int&& a;
+var int&& b = null;
 a = b;
 await 1s;
-var int* c = a;
+var int&& c = a;
 escape 1;
 ]],
     fin = 'line 5 : unsafe access to pointer "a" across `await´',
@@ -15017,7 +15029,7 @@ escape 1;
 
 Test { [[
 var int v = 1;
-var int* x = &v;
+var int&& x = &&v;
 loop i in 10 do
     *x = *x + 1;
     await 1s;
@@ -15030,7 +15042,7 @@ escape v;
 Test { [[
 event void e;
 var int v = 1;
-var int* x = &v;
+var int&& x = &&v;
 loop i in 10 do
     *x = *x + 1;
     emit e;
@@ -15043,7 +15055,7 @@ escape v;
 Test { [[
 event void e;
 var int v = 1;
-var int* x = &v;
+var int&& x = &&v;
 loop i in *x do
     await 1s;
 end
@@ -15067,9 +15079,9 @@ escape this.n!;
 
 Test { [[
 loop do
-    var int* a;
+    var int&& a;
     do
-        var int* b = null;
+        var int&& b = null;
         finalize
             a = b;
         with
@@ -15086,9 +15098,9 @@ end
 
 Test { [[
 loop do
-    var int* a;
+    var int&& a;
     do
-        var int* b = null;
+        var int&& b = null;
         finalize
             a := b;
         with
@@ -15155,7 +15167,7 @@ native _t = 4;
 var _t v = _f;
 await 1s;
 var int a;
-v(&a) finalize with nothing; end;
+v(&&a) finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -15175,7 +15187,7 @@ native _t = 4;
 var _t v = _f;
 await 1s;
 var int a;
-v(&a) finalize with nothing; end;
+v(&&a) finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -15193,7 +15205,7 @@ native _t = 4;
 var _t v = _f;
 await 1s;
 var int a;
-_f(&a) finalize with nothing; end;
+_f(&&a) finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -15212,7 +15224,7 @@ end
 native _t = 4;
 var _t v = _f;
 var int a;
-v(&a) finalize with nothing; end;
+v(&&a) finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -15465,7 +15477,7 @@ Test { [[
 native _f();
 native do void f (void* p) {} end
 
-var void* p=null;
+var void&& p=null;
 _f(p) finalize with nothing;
     end;
 escape 1;
@@ -15477,7 +15489,7 @@ Test { [[
 native _f();
 native do void f () {} end
 
-var void* p = null;
+var void&& p = null;
 _f(p!=null) finalize with nothing;
     end;
 escape 1;
@@ -15489,9 +15501,9 @@ escape 1;
 Test { [[
 native _f();
 do
-    var int* p1 = null;
+    var int&& p1 = null;
     do
-        var int* p2 = null;
+        var int&& p2 = null;
         _f(p1, p2);
     end
 end
@@ -15500,7 +15512,7 @@ escape 1;
     fin = 'line 6 : invalid call (multiple scopes)',
 }
 Test { [[
-var char* buf;
+var char&& buf;
 _enqueue(buf);
 escape 1;
 ]],
@@ -15518,9 +15530,9 @@ escape 1;
 Test { [[
 native _f();
 do
-    var int* p1 = null;
+    var int&& p1 = null;
     do
-        var int* p2 = null;
+        var int&& p2 = null;
         _f(p1, p2);
     end
 end
@@ -15569,7 +15581,7 @@ native do
         return NULL;
     }
 end
-var int* v = _f(0);
+var int&& v = _f(0);
 escape v == null;
 ]],
     run = 1,
@@ -15597,7 +15609,7 @@ native do
     }
 end
 var int v;
-escape _f(&v) == 1;
+escape _f(&&v) == 1;
 ]],
     fin = 'line 8 : call requires `finalize´',
 }
@@ -15610,7 +15622,7 @@ native do
     }
 end
 var int v;
-escape _f(&v) == 1;
+escape _f(&&v) == 1;
 ]],
     run = 1,
 }
@@ -15625,14 +15637,14 @@ native do
     }
 end
 var int v;
-escape _f(&v) == _V;
+escape _f(&&v) == _V;
 ]],
     run = 1,
 }
 
 Test { [[
 var int ret = 0;
-var int* pa;
+var int&& pa;
 do
     var int v;
     if 1 then
@@ -15652,18 +15664,18 @@ escape ret;
 
 Test { [[
 var int ret = 0;
-var int* pa;
+var int&& pa;
 do
     var int v;
     if 1 then
         finalize
-            pa = &v;
+            pa = &&v;
         with
             ret = ret + 1;
     end
     else
         finalize
-            pa = &v;
+            pa = &&v;
         with
             ret = ret + 2;
     end
@@ -15676,13 +15688,13 @@ escape ret;
 }
 Test { [[
 var int ret = 0;
-var int* pa;
+var int&& pa;
 do
     var int v;
     if 1 then
-            pa = &v;
+            pa = &&v;
     else
-            pa = &v;
+            pa = &&v;
     end
 end
 escape ret;
@@ -16505,7 +16517,7 @@ var _t v = _f;
 var int ret;
 do
     var int a;
-    v(&a)
+    v(&&a)
         finalize with nothing; end;
     ret = a;
 end
@@ -16525,12 +16537,12 @@ native do
 end
 var int ret = 0;
 if _A then
-    ret = ret + *(int*)_A;
+    ret = ret + *(int&&)_A;
 end
 do
     var int a = 10;;
     var _t v = _f;
-    v(&a)
+    v(&&a)
         finalize with
             do
                 ret = ret + a;
@@ -16538,11 +16550,11 @@ do
         end
             end;
     if _A then
-        a = a + *(int*)_A;
+        a = a + *(int&&)_A;
     end
 end
 if _A then
-    ret = ret + *(int*)_A;
+    ret = ret + *(int&&)_A;
 end
 escape(ret);
 ]],
@@ -16561,12 +16573,12 @@ native do
 end
 var int ret = 0;
 if _A then
-    ret = ret + *(int*)_A;
+    ret = ret + *(int&&)_A;
 end
 par/or do
         var int a = 10;;
         var _t v = _f;
-        v(&a)
+        v(&&a)
             finalize with
                 do
                     ret = ret + a;
@@ -16574,14 +16586,14 @@ par/or do
             end
                 end;
         if _A then
-            a = a + *(int*)_A;
+            a = a + *(int&&)_A;
         end
         await FOREVER;
 with
     await OS_START;
 end
 if _A then
-    ret = ret + *(int*)_A;
+    ret = ret + *(int&&)_A;
 end
 escape(ret);
 ]],
@@ -16593,7 +16605,7 @@ var int v = 1;
 par/or do
     nothing;
 with
-    v = *(int*)null;
+    v = *(int&&)null;
 end
 escape v;
 ]],
@@ -16619,7 +16631,7 @@ end
 var int ret = 10;
 do
     var int x = 5;
-    _f(&x) finalize with
+    _f(&&x) finalize with
         _V = _V + 1;
     end;
 end
@@ -16629,16 +16641,16 @@ escape ret + _V;
 }
 
 Test { [[
-event void* e;
-var void* v = await e;
+event void&& e;
+var void&& v = await e;
 escape 1;
 ]],
     run = 0,
 }
 
 Test { [[
-event void* e;
-var void* v = await e;
+event void&& e;
+var void&& v = await e;
 await e;
 escape 1;
 ]],
@@ -16647,8 +16659,8 @@ escape 1;
 }
 
 Test { [[
-event int* e;
-var int* v = await e;
+event int&& e;
+var int&& v = await e;
 await e;
 escape *v;
 ]],
@@ -16658,9 +16670,9 @@ escape *v;
 }
 
 Test { [[
-var int* p;
+var int&& p;
 do
-    event int* e;
+    event int&& e;
     p = await e;
 end
 escape 1;
@@ -16670,10 +16682,10 @@ escape 1;
 }
 
 Test { [[
-var int* p1;
+var int&& p1;
 do
-    var int* p;
-    event int* e;
+    var int&& p;
+    event int&& e;
     p = await e;
     p1 = p;
     await e;
@@ -16687,10 +16699,10 @@ escape 1;
 }
 
 Test { [[
-var int* p1 = null;
+var int&& p1 = null;
 do
-    var int* p;
-    event int* e;
+    var int&& p;
+    event int&& e;
     p = await e;
     _f(p);
     await e;
@@ -16702,9 +16714,9 @@ escape 1;
 }
 
 Test { [[
-var int* p;
+var int&& p;
 do
-    event int* e;
+    event int&& e;
     p = await e;
 end
 await 1s;
@@ -16716,11 +16728,11 @@ escape 1;
 
 Test { [[
 var int x = 10;
-var int* p = &x;
+var int&& p = &&x;
 par/or do
     await 1s;
 with
-    event int* e;
+    event int&& e;
     p = await e;
 end
 escape x;
@@ -16732,18 +16744,18 @@ escape x;
 }
 
 Test { [[
-input int* A;
+input int&& A;
 var int v;
 par/or do
     do
-        var int* p = await A;
+        var int&& p = await A;
         v = *p;
     end
     await A;
 with
     async do
         var int v = 10;
-        emit A => &v;
+        emit A => &&v;
         emit A => null;
     end
 end
@@ -16754,18 +16766,18 @@ escape v;
 }
 
 Test { [[
-input int* A;
+input int&& A;
 var int v;
 par/or do
     do
-        var int* p = await A;
+        var int&& p = await A;
         v = *p;
     end
     await A;
 with
     async do
         var int v = 10;
-        emit A => &v;
+        emit A => &&v;
         emit A => null;
     end
 end
@@ -16780,18 +16792,18 @@ escape v;
 }
 
 Test { [[
-input int* A;
+input int&& A;
 var int v;
 par/or do
     do
-        var int* p = await A;
+        var int&& p = await A;
         v = *p;
     end
     await A;
 with
     async do
         var int v = 10;
-        emit A => (void*) &v;
+        emit A => (void&&) &&v;
         emit A => null;
     end
 end
@@ -16803,22 +16815,22 @@ escape v;
 }
 
 Test { [[
-var int* p;
+var int&& p;
 var int ret;
 input void OS_START;
 do
-    event int* e;
+    event int&& e;
     par/and do
         finalize
             p = await e;
         with
             ret = *p;
-            p = &ret;
+            p = &&ret;
         end
     with
         await OS_START;
         var int i = 1;
-        emit e => &i;
+        emit e => &&i;
     end
 end
 escape ret + *p;
@@ -16831,16 +16843,16 @@ escape ret + *p;
 
 Test { [[
 var int ret;
-var int* p = &ret;
+var int&& p = &&ret;
 input void OS_START;
 do
-    event int* e;
+    event int&& e;
     par/and do
         p = await e;
     with
         await OS_START;
         var int i = 1;
-        emit e => &i;
+        emit e => &&i;
     end
 end
 escape ret + *p;
@@ -16852,13 +16864,13 @@ escape ret + *p;
 }
 
 Test { [[
-var void* p;
+var void&& p;
 var int i;
 input void OS_START;
 do
     var int r;
     do
-        event (int,void*) ptr;
+        event (int,void&&) ptr;
         par/or do
             finalize
                 (i,p) = await ptr;
@@ -16880,18 +16892,18 @@ end
 }
 
 Test { [[
-var int* p;
+var int&& p;
 var int ret;
 input void OS_START;
 do
-    event int* e;
+    event int&& e;
     par/and do
         p = await e;
         ret = *p;
     with
         await OS_START;
         var int i = 1;
-        emit e => &i;
+        emit e => &&i;
     end
 end
 escape ret;
@@ -16902,18 +16914,18 @@ escape ret;
 }
 
 Test { [[
-var int* p;
+var int&& p;
 var int ret;
 input void OS_START;
 do
-    event int* e;
+    event int&& e;
     par/and do
         p = await e;
         ret = *p;
     with
         await OS_START;
         var int i = 1;
-        emit e => &i;
+        emit e => &&i;
     end
 end
 escape ret;
@@ -16945,8 +16957,8 @@ escape ret;
 
 Test { [[
 input void OS_START;
-event (int,void*) ptr;
-var void* p;
+event (int,void&&) ptr;
+var void&& p;
 var int i;
 par/or do
     (i,p) = await ptr;
@@ -16962,11 +16974,11 @@ escape i;
 }
 Test { [[
 input void OS_START;
-event (int,void*) ptr;
-var void* p;
+event (int,void&&) ptr;
+var void&& p;
 var int i;
 par/or do
-    var void* p1;
+    var void&& p1;
     (i,p1) = await ptr;
     p := p1;
 with
@@ -16980,8 +16992,8 @@ escape i;
 }
 
 Test { [[
-event (int,void*) ptr;
-var void* p;
+event (int,void&&) ptr;
+var void&& p;
 var int i;
 (i,p) = await ptr;
 await 1s;
@@ -16993,11 +17005,11 @@ escape i;
 
 Test { [[
 input void OS_START;
-event (int,void*) ptr;
-var void* p;
+event (int,void&&) ptr;
+var void&& p;
 var int i;
 par/or do
-    var void* p1;
+    var void&& p1;
     (i,p1) = await ptr;
     p := p1;
 with
@@ -17012,11 +17024,11 @@ escape i;
 }
 
 Test { [[
-var void* p;
+var void&& p;
 var int i;
 input void OS_START;
 do
-    event (int,void*) ptr;
+    event (int,void&&) ptr;
     par/or do
         (i,p) := await ptr;
     with
@@ -17032,13 +17044,13 @@ escape i;
 }
 
 Test { [[
-var void* p;
+var void&& p;
 var int i;
 input void OS_START;
 do
-    event (int,void*) ptr;
+    event (int,void&&) ptr;
     par/or do
-        var void* p1;
+        var void&& p1;
         (i,p1) = await ptr;
         p := p1;
     with
@@ -17054,19 +17066,19 @@ escape i;
 }
 
 Test { [[
-var int* p;
+var int&& p;
 var int i;
 input void OS_START;
 do
-    event (int,int*) ptr;
+    event (int,int&&) ptr;
     par/or do
-        var int* p1;
+        var int&& p1;
         (i,p1) = await ptr;
         p := p1;
     with
         await OS_START;
         var int v = 10;
-        emit ptr => (1, &v);
+        emit ptr => (1, &&v);
     end
     i = *p;
 end
@@ -17079,7 +17091,7 @@ escape i;
 }
 
 Test { [[
-input (int,int,int*) A;
+input (int,int,int&&) A;
 async do
     emit A =>
         (1, 1, null);
@@ -17091,7 +17103,7 @@ escape 1;
 
 Test { [[
 native do
-    void* ptr;
+    void&& ptr;
 end
 _ptr = _malloc(1);
 escape 1;
@@ -17128,12 +17140,12 @@ var int&? tex;
 finalize
     tex = _alloc(1);    // v=2
 with
-    _dealloc(&tex);
+    _dealloc(&&tex);
 end
 
 escape 1;
 ]],
-    env = 'line 15 : invalid operand to unary "&" : option type',
+    env = 'line 15 : invalid operand to unary "&&" : option type',
 }
 
 Test { [[
@@ -18369,8 +18381,8 @@ escape ret;
 }
 
 Test { [[
-input void* E;
-event _tceu_queue* go;
+input void&& E;
+event _tceu_queue&& go;
 every qu_ in go do
     var _tceu_queue qu = * qu_;
     async(qu) do
@@ -18384,9 +18396,9 @@ end
 }
 
 Test { [[
-input void* E;
+input void&& E;
 native @plain _tceu_queue;
-event _tceu_queue* go;
+event _tceu_queue&& go;
 every qu_ in go do
     var _tceu_queue qu = * qu_;
     async(qu) do
@@ -18402,7 +18414,7 @@ end
 -- HIDDEN
 Test { [[
 var int a = 1;
-var int* b = &a;
+var int&& b = &&a;
 do
 var int a = 0;
 end
@@ -18485,7 +18497,7 @@ escape(1);
     parser = 'line 1 : after `output´ : expected type',
 }
 Test { [[
-output _t* A;
+output _t&& A;
 emit A => 1;
 escape(1);
 ]],
@@ -18520,7 +18532,7 @@ escape(1);
 Test { [[
 output int A;
 var int a;
-emit A => &a;
+emit A => &&a;
 escape(1);
 ]],
     env = 'line 3 : wrong argument #1',
@@ -18528,7 +18540,7 @@ escape(1);
 Test { [[
 output int A;
 var int a;
-if emit A => &a then
+if emit A => &&a then
     escape 0;
 end
 escape(1);
@@ -18576,14 +18588,14 @@ native do
     }
 end
 native _t = 8;
-output _t* A;
+output _t&& A;
 output int B;
 var int a, b;
 
 var _t v;
 v.a = 1;
 v.b = -1;
-a = emit A => &v;
+a = emit A => &&v;
 b = emit B => 5;
 escape a + b;
 ]],
@@ -18722,9 +18734,9 @@ native do
     }
 end
 
-output (int*,  int*) RADIO_SEND;
+output (int&&,  int&&) RADIO_SEND;
 var int a=1,b=1;
-emit RADIO_SEND => (&a,&b);
+emit RADIO_SEND => (&&a,&&b);
 
 escape a + b;
 ]],
@@ -18741,9 +18753,9 @@ native do
     }
 end
 
-output (int*,  int*) RADIO_SEND;
+output (int&&,  int&&) RADIO_SEND;
 var int a=1,b=1;
-emit RADIO_SEND => (&a,&b);
+emit RADIO_SEND => (&&a,&&b);
 
 escape a + b;
 ]],
@@ -18814,19 +18826,19 @@ end
 
 Test { [[
 native _F();
-output int* F,G;
+output int&& F,G;
 @safe _F with F,G;
 int a = 1;
-int* b;
+int&& b;
 native do
     void F (int v) {};
 end
 par do
-    _F(&a);
+    _F(&&a);
 with
     emit F => b;
 with
-    emit G => &a;
+    emit G => &&a;
 end
 ]],
     todo = true,
@@ -18839,18 +18851,18 @@ end
 Test { [[
 native _F();
 @pure _F;
-output int* F,G;
+output int&& F,G;
 int a = 1;
-int* b;
+int&& b;
 native do
     void F (int v) {};
 end
 par do
-    _F(&a);
+    _F(&&a);
 with
     emit F => b;
 with
-    emit G => &a;
+    emit G => &&a;
 end
 ]],
     todo = true,
@@ -19250,14 +19262,14 @@ escape ret;
 
 Test { [[
 
-input (int tilex, int tiley, bool vertical, int lock, int door, word* position) DOOR_SPAWN;
+input (int tilex, int tiley, bool vertical, int lock, int door, word&& position) DOOR_SPAWN;
 
     var int tilex;
     var int tiley;
     var bool vertical;
     var int lock;
     var int door;
-    var word* position;
+    var word&& position;
     every (tilex,tiley,vertical,lock,door,position) in DOOR_SPAWN do
     end
 ]],
@@ -19270,48 +19282,48 @@ input (int tilex, int tiley, bool vertical, int lock, int door, word* position) 
     -- POINTERS & ARRAYS
 
 -- int_int
-Test { [[var int*p; escape p/10;]],  env='invalid operands to binary "/"'}
-Test { [[var int*p; escape p|10;]],  env='invalid operands to binary "|"'}
-Test { [[var int*p; escape p>>10;]], env='invalid operands to binary ">>"'}
-Test { [[var int*p; escape p^10;]],  env='invalid operands to binary "^"'}
-Test { [[var int*p; escape ~p;]],    env='invalid operand to unary "~"'}
+Test { [[var int&&p; escape p/10;]],  env='invalid operands to binary "/"'}
+Test { [[var int&&p; escape p|10;]],  env='invalid operands to binary "|"'}
+Test { [[var int&&p; escape p>>10;]], env='invalid operands to binary ">>"'}
+Test { [[var int&&p; escape p^10;]],  env='invalid operands to binary "^"'}
+Test { [[var int&&p; escape ~p;]],    env='invalid operand to unary "~"'}
 
 -- same
-Test { [[var int*p; var int a; escape p==a;]],
+Test { [[var int&&p; var int a; escape p==a;]],
         env='invalid operands to binary "=="'}
-Test { [[var int*p; var int a; escape p!=a;]],
+Test { [[var int&&p; var int a; escape p!=a;]],
         env='invalid operands to binary "!="'}
-Test { [[var int*p; var int a; escape p>a;]],
+Test { [[var int&&p; var int a; escape p>a;]],
         env='invalid operands to binary ">"'}
 
 -- any
-Test { [[var int*p=null; escape p or 10;]], run=1 }
-Test { [[var int*p=null; escape p and 0;]],  run=0 }
-Test { [[var int*p=null; escape not p;]], run=1 }
+Test { [[var int&&p=null; escape p or 10;]], run=1 }
+Test { [[var int&&p=null; escape p and 0;]],  run=0 }
+Test { [[var int&&p=null; escape not p;]], run=1 }
 
 -- arith
-Test { [[var int*p; escape p+p;]],     env='invalid operands to binary'}--TODO: "+"'}
-Test { [[var int*p; escape p+10;]],    env='invalid operands to binary'}
-Test { [[var int*p; escape p+10 and 0;]], env='invalid operands to binary' }
+Test { [[var int&&p; escape p+p;]],     env='invalid operands to binary'}--TODO: "+"'}
+Test { [[var int&&p; escape p+10;]],    env='invalid operands to binary'}
+Test { [[var int&&p; escape p+10 and 0;]], env='invalid operands to binary' }
 
 -- ptr
 Test { [[var int a; escape *a;]], env='invalid operand to unary "*"' }
-Test { [[var int a; var int*pa; (pa+10)=&a; escape a;]],
+Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
         env='invalid operands to binary'}
-Test { [[var int a; var int*pa; a=1; pa=&a; *pa=3; escape a;]], run=3 }
+Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
 Test { [[
-*((u32*)0x100) = _V;
+*((u32&&)0x100) = _V;
 escape 1;
 ]],
     gcc = 'error: ‘V’ undeclared (first use in this function)',
 }
 
-Test { [[var int  a;  var int* pa=a; escape a;]], env='types mismatch' }
-Test { [[var int* pa; var int a=pa;  escape a;]], env='types mismatch' }
+Test { [[var int  a;  var int&& pa=a; escape a;]], env='types mismatch' }
+Test { [[var int&& pa; var int a=pa;  escape a;]], env='types mismatch' }
 Test { [[
 var int a;
-var int* pa = do
+var int&& pa = do
     escape a;
 end;
 escape a;
@@ -19319,7 +19331,7 @@ escape a;
     env='types mismatch'
 }
 Test { [[
-var int* pa;
+var int&& pa;
 var int a = do
     escape pa;
 end;
@@ -19329,7 +19341,7 @@ escape a;
 }
 
 Test { [[
-var int* a;
+var int&& a;
 a = null;
 if a then
     escape 1;
@@ -19343,9 +19355,9 @@ end;
 Test { [[
 native _char = 1;
 var int i;
-var int* pi;
+var int&& pi;
 var _char c=10;
-var _char* pc;
+var _char&& pc;
 i = c;
 c = i;
 i = (int) c;
@@ -19359,9 +19371,9 @@ escape c;
 Test { [[
 native _char = 1;
 var int i;
-var int* pi;
+var int&& pi;
 var _char c;
-var _char* pc;
+var _char&& pc;
 i = (int) c;
 c = (_char) i;
 escape 10;
@@ -19370,8 +19382,8 @@ escape 10;
 }
 
 Test { [[
-var int* ptr1=null;
-var void* ptr2=null;
+var int&& ptr1=null;
+var void&& ptr2=null;
 if 1 then
     ptr2 = ptr1;
 else
@@ -19385,10 +19397,10 @@ escape 1;
 }
 
 Test { [[
-var int* ptr1 = null;
-var void* ptr2 = null;
+var int&& ptr1 = null;
+var void&& ptr2 = null;
 if 1 then
-    ptr2 = (void*)ptr1;
+    ptr2 = (void&&)ptr1;
 else
     ptr2 = ptr2;
 end;
@@ -19399,68 +19411,68 @@ escape 1;
 }
 
 Test { [[
-var int* ptr1;
-var void* ptr2;
-ptr1 = (int*)ptr2;
-ptr2 = (void*)ptr1;
+var int&& ptr1;
+var void&& ptr2;
+ptr1 = (int&&)ptr2;
+ptr2 = (void&&)ptr1;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-var void* ptr1;
-var int* ptr2;
+var void&& ptr1;
+var int&& ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
 escape 1;
 ]],
-    env = 'line 4 : types mismatch (`int*´ <= `void*´)',
+    env = 'line 4 : types mismatch (`int&&´ <= `void&&´)',
     run = 1,
 }
 
 Test { [[
 native _char=1;
-var _char* ptr1;
-var int* ptr2=(void*)0xFF;
+var _char&& ptr1;
+var int&& ptr2=(void&&)0xFF;
 ptr1 = ptr2;
 ptr2 = ptr1;
 escape (int)ptr2;
 ]],
-    env = 'line 3 : types mismatch (`int*´ <= `void*´)',
+    env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
     gcc = 'error: assignment from incompatible pointer type'
 }
 Test { [[
 native _char=1;
-var _char* ptr1;
-var int* ptr2=(void*)0xFF;
-ptr1 = (_char*)ptr2;
-ptr2 = (int*) ptr1;
+var _char&& ptr1;
+var int&& ptr2=(void&&)0xFF;
+ptr1 = (_char&&)ptr2;
+ptr2 = (int&&) ptr1;
 escape (int)ptr2;
 ]],
-    env = 'line 3 : types mismatch (`int*´ <= `void*´)',
+    env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
     gcc = 'error: cast from pointer to integer of different size',
 }
 Test { [[
 native _char=1;
-var _char* ptr1;
-var int* ptr2;
-ptr1 = (_char*)ptr2;
-ptr2 = (int*)ptr1;
+var _char&& ptr1;
+var int&& ptr2;
+ptr1 = (_char&&)ptr2;
+ptr2 = (int&&)ptr1;
 escape 1;
 ]],
     run = 1,
 }
 Test { [[
 native _char=1;
-var int* ptr1;
-var _char* ptr2;
-ptr1 = (int*) ptr2;
-ptr2 = (_char*) ptr1;
+var int&& ptr1;
+var _char&& ptr2;
+ptr1 = (int&&) ptr2;
+ptr2 = (_char&&) ptr1;
 escape 1;
 ]],
     run = 1,
@@ -19468,13 +19480,13 @@ escape 1;
 
 Test { [[
 native _FILE=0;
-var int* ptr1;
-var _FILE* ptr2;
+var int&& ptr1;
+var _FILE&& ptr2;
 ptr1 = ptr2;
 ptr2 = ptr1;
 escape 1;
 ]],
-    --env = 'line 4 : invalid attribution (int* vs _FILE*)',
+    --env = 'line 4 : invalid attribution (int&& vs _FILE&&)',
     gcc = 'error: assignment from incompatible pointer type',
     --run = 1,
     --env = 'line 4 : invalid attribution',
@@ -19482,10 +19494,10 @@ escape 1;
 
 Test { [[
 native _FILE=0;
-var int* ptr1;
-var _FILE* ptr2;
-ptr1 = (int*)ptr2;
-ptr2 = (_FILE*)ptr1;
+var int&& ptr1;
+var _FILE&& ptr2;
+ptr1 = (int&&)ptr2;
+ptr2 = (_FILE&&)ptr1;
 escape 1;
 ]],
     run = 1,
@@ -19494,7 +19506,7 @@ escape 1;
 
 Test { [[
 var int a = 1;
-var int* b = &a;
+var int&& b = &&a;
 *b = 2;
 escape a;
 ]],
@@ -19503,11 +19515,11 @@ escape a;
 
 Test { [[
 var int a;
-var int* pa;
+var int&& pa;
 par/or do
     a = 1;
 with
-    pa = &a;
+    pa = &&a;
 end;
 escape a;
 ]],
@@ -19519,7 +19531,7 @@ escape a;
 
 Test { [[
 var int b = 1;
-var int* a = &b;
+var int&& a = &&b;
 par/or do
     b = 1;
 with
@@ -19537,7 +19549,7 @@ escape b;
 Test { [[
 var int b = 1;
 var int c = 2;
-var int* a = &c;
+var int&& a = &&c;
 @safe b with a, c;
 par/and do
     b = 1;
@@ -19558,9 +19570,9 @@ native do
 end
 var int a, b;
 par/and do
-    _f(&b);
+    _f(&&b);
 with
-    _f(&a);
+    _f(&&a);
 end
 escape a + b;
 ]],
@@ -19578,13 +19590,13 @@ native do
     }
 end
 var int a, b;
-var int* pb = &b;
+var int&& pb = &&b;
 par/and do
     a = 1;              // 10
 with
-    _f(&b);             // 12
+    _f(&&b);             // 12
 with
-    _f(&a);             // 14
+    _f(&&a);             // 14
 with
     _f(pb);             // 16
 end
@@ -19604,13 +19616,13 @@ native do
     }
 end
 var int a, b=0;
-var int* pb = &b;
+var int&& pb = &&b;
 par/or do
     a = 1;
 with
-    _f(&b);
+    _f(&&b);
 with
-    _f(&a);
+    _f(&&a);
 with
     _f(pb);
 end
@@ -19631,13 +19643,13 @@ native do
     }
 end
 var int a, b;
-var int* pb = &b;
+var int&& pb = &&b;
 par/and do
     a = 1;
 with
-    _f(&b);
+    _f(&&b);
 with
-    _f(&a);
+    _f(&&a);
 with
     _f(pb);
 end
@@ -19658,13 +19670,13 @@ native do
     }
 end
 var int a, b;
-var int* pb = &b;
+var int&& pb = &&b;
 par/or do
     a = 1;
 with
-    _f(&b);
+    _f(&&b);
 with
-    _f(&a);
+    _f(&&a);
 with
     _f(pb);
 end
@@ -19679,8 +19691,8 @@ escape a + b;
 
 Test { [[
 var int b = 10;
-var int* a = (int*) &b;
-var int* c = &b;
+var int&& a = (int&&) &&b;
+var int&& c = &&b;
 escape *a + *c;
 ]],
     run = 20;
@@ -19761,7 +19773,7 @@ native do
         return &a;
     }
 end
-var int* p;
+var int&& p;
     p = _f();
 escape *p;
 ]],
@@ -19848,7 +19860,7 @@ escape 1;
 
 Test { [[
 native _char = 1;
-var _char* p;
+var _char&& p;
 *(p:a) = (_char)1;
 escape 1;
 ]],
@@ -19884,11 +19896,11 @@ Test { [[var int[0] v; escape 0;]],
 Test { [[var int[2] v; escape v;]],
     env = 'types mismatch'
 }
-Test { [[var _u8[2] v; escape &v;]],
-    env = 'invalid operand to unary "&"',
+Test { [[var _u8[2] v; escape &&v;]],
+    env = 'invalid operand to unary "&&"',
 }
-Test { [[var u8[2] v; escape &v;]],
-    env = 'invalid operand to unary "&"',
+Test { [[var u8[2] v; escape &&v;]],
+    env = 'invalid operand to unary "&&"',
 }
 
 Test { [[
@@ -19997,7 +20009,7 @@ Test { [[var _int[2] v; escape v[v];]], env='invalid array index' }
 
 Test { [[
 var _int[2] v ;
-escape v == &v[0] ;
+escape v == &&v[0] ;
 ]],
     run = 1,
 }
@@ -20143,18 +20155,18 @@ escape 1;
 
 Test { [[
 var int x;
-var u8[10] vec = [ &x ];
+var u8[10] vec = [ &&x ];
 escape 1;
 ]],
-    env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int*´)',
+    env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int&&´)',
 }
 
 Test { [[
-var int*[] v1;
+var int&&[] v1;
 var int[]  v2 = []..v1;
 escape 1;
 ]],
-    env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int*´)',
+    env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int&&´)',
 }
 
 Test { [[
@@ -20315,9 +20327,9 @@ escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 
 Test { [[
 var int[2] v ;
-escape v == &v[0] ;
+escape v == &&v[0] ;
 ]],
-    env = 'line 2 : invalid operand to unary "&" : vector elements are not addressable',
+    env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
 }
 
 Test { [[
@@ -20401,7 +20413,7 @@ var T t with
 end;
 t.v = t.v + 2;
 
-var I* i = &t;
+var I&& i = &&t;
 i:v = i:v * 3;
 
 escape t.v;
@@ -20438,7 +20450,7 @@ var T t with
 end;
 t.vs[0] = t.vs[0] + 2;
 
-var I* i = &t;
+var I&& i = &&t;
 
 i:vs[0] = i:vs[0] * 3;
 
@@ -20471,7 +20483,7 @@ escape [1]..[2];
 }
 
 Test { [[
-escape [1]..[&this];
+escape [1]..[&&this];
 ]],
     parser = 'line 1 : after `escape´ : expected expression',
 }
@@ -20567,7 +20579,7 @@ Test { [[
 class T with
 do
 end
-var T*[]  ts;
+var T&&[]  ts;
 escape 1;
 ]],
     run = 1,
@@ -20576,7 +20588,7 @@ Test { [[
 class T with
 do
 end
-var T*[] ts;
+var T&&[] ts;
 var int x = $ts;
 escape x+$ts+1;
 ]],
@@ -20586,20 +20598,20 @@ Test { [[
 class T with
 do
 end
-var T*[] ts;
+var T&&[] ts;
 var T t;
 ts = ts .. [t];
 escape $ts+1;
 ]],
-    env = 'line 6 : wrong argument #1 : types mismatch (`T*´ <= `T´)',
+    env = 'line 6 : wrong argument #1 : types mismatch (`T&&´ <= `T´)',
 }
 Test { [[
 class T with
 do
 end
-var T*[] ts;
+var T&&[] ts;
 var T t;
-ts = ts .. [&t];
+ts = ts .. [&&t];
 escape $ts+1;
 ]],
     run = 2,
@@ -20609,11 +20621,11 @@ Test { [[
 class T with
 do
 end
-var T*[] ts;
+var T&&[] ts;
 var T t;
-ts = ts .. [&t];
-var T* p = ts[0];
-escape p == &t;
+ts = ts .. [&&t];
+var T&& p = ts[0];
+escape p == &&t;
 ]],
     run = 1,
 }
@@ -20622,11 +20634,11 @@ Test { [[
 class T with
 do
 end
-var T*[] ts;
+var T&&[] ts;
 var T t;
-ts = ts .. [&t];
-var T* p = ts[1];
-escape p == &t;
+ts = ts .. [&&t];
+var T&& p = ts[1];
+escape p == &&t;
 ]],
     run = '7] runtime error: access out of bounds',
 }
@@ -20635,12 +20647,12 @@ Test { [[
 class T with
 do
 end
-var T*[] ts;
+var T&&[] ts;
 var T t;
-ts = ts .. [&t];
+ts = ts .. [&&t];
 await 1s;
-var T* p = ts[0];
-escape p == &t;
+var T&& p = ts[0];
+escape p == &&t;
 ]],
     fin = 'line 8 : unsafe access to pointer "ts" across `await´ (tests.lua : 7)',
 }
@@ -20652,7 +20664,7 @@ do
 end
 
 var T t;
-var T*? p = &t;
+var T&&? p = &&t;
 
 escape t.v + p!:v;
 ]],
@@ -20666,7 +20678,7 @@ do
 end
 
 var T t;
-var T*? p = &t;
+var T&&? p = &&t;
 
 escape t.v + p!:v;
 ]],
@@ -20680,7 +20692,7 @@ do
 end
 
 var T t;
-var T*? p = &t;
+var T&&? p = &&t;
 
 await 500ms;
 
@@ -20695,7 +20707,7 @@ do
 end
 
 var T t;
-var T*? p = &t;
+var T&&? p = &&t;
 
 await 500ms;
 
@@ -20712,7 +20724,7 @@ do
 end
 
 var T t;
-var T*? p = &t;
+var T&&? p = &&t;
 
 await 1s;
 
@@ -20734,7 +20746,7 @@ end
 
 var U u;
 var T t;
-var U*? p = &u;
+var U&&? p = &&u;
 
 await 1s;
 
@@ -20748,8 +20760,8 @@ class T with
 do
 end
 //var T[]   ts;
-var T*[]  ts1;
-var T*?[] ts2;
+var T&&[]  ts1;
+var T&&?[] ts2;
 escape 1;
 ]],
     run = 1,
@@ -20759,9 +20771,9 @@ Test { [[
 class T with
 do
 end
-var T*?[] ts;
+var T&&?[] ts;
 var T t;
-ts = [] .. [&t];
+ts = [] .. [&&t];
 escape $ts;
 ]],
     run = 1,
@@ -20771,12 +20783,12 @@ Test { [[
 class T with
 do
 end
-var T*?[] ts;
+var T&&?[] ts;
 
 var T t;
-ts = [] .. [&t];
+ts = [] .. [&&t];
 
-escape ts[0] == &t;
+escape ts[0] == &&t;
 ]],
     env = 'line 9 : invalid operands to binary "=="',
 }
@@ -20786,10 +20798,10 @@ class T with
 do
     await FOREVER;
 end
-var T*?[] ts;
+var T&&?[] ts;
 var T t;
-ts = [] .. [&t];
-escape ts[0]! == &t;
+ts = [] .. [&&t];
+escape ts[0]! == &&t;
 ]],
     run = 1,
 }
@@ -20798,10 +20810,10 @@ Test { [[
 class T with
 do
 end
-var T*?[] ts;
+var T&&?[] ts;
 var T t;
-ts = [] .. [&t];
-escape ts[0]! == &t;
+ts = [] .. [&&t];
+escape ts[0]! == &&t;
 ]],
     run = '7] runtime error: invalid tag',
 }
@@ -20810,10 +20822,10 @@ Test { [[
 class T with
 do
 end
-var T*?[] ts;
+var T&&?[] ts;
 var T t;
-ts = [] .. [&t] .. [&t];
-escape ts[1]! == &t;
+ts = [] .. [&&t] .. [&&t];
+escape ts[1]! == &&t;
 ]],
     run = '7] runtime error: invalid tag',
 }
@@ -20822,11 +20834,11 @@ Test { [[
 class T with
 do
 end
-var T*?[] ts;
+var T&&?[] ts;
 var T t1,t2;
-ts = [] .. [&t1];
-ts[0]! = &t2;
-escape ts[0]! == &t2;
+ts = [] .. [&&t1];
+ts[0]! = &&t2;
+escape ts[0]! == &&t2;
 ]],
     run = '7] runtime error: invalid tag',
 }
@@ -20836,11 +20848,11 @@ class T with
 do
     await 1s;
 end
-var T*?[] ts;
+var T&&?[] ts;
 var T t;
-ts = [] .. [&t];
+ts = [] .. [&&t];
 await 1s;
-escape ts[0]! == &t;
+escape ts[0]! == &&t;
 ]],
     run = { ['~>1s']='10] runtime error: invalid tag' },
 }
@@ -20853,8 +20865,8 @@ do
 end
 
 var T t;
-var I*?[] is;
-is = [&t];
+var I&&?[] is;
+is = [&&t];
 
 escape is[0]? + 1;
 ]],
@@ -20880,8 +20892,8 @@ var T t;
 var U u;
 var V v;
 
-var I*?[] is;
-is = [&t, &u, &v];
+var I&&?[] is;
+is = [&&t, &&u, &&v];
 
 var int ret = 0;
 
@@ -20933,7 +20945,7 @@ end
 var SDL_Rect ri;
 ri = SDL_Rect(10);
 var SDL_Rect[1] rcs = [ri];
-escape _f((int*)&rcs[0]);
+escape _f((int&&)&&rcs[0]);
 ]],
     run = 10,
 }
@@ -20945,8 +20957,8 @@ escape _f((int*)&rcs[0]);
 Test { [[
 native @nohold _printf(), _strlen();
 var char[] v = ['a','b','c','\0'];
-_printf("v = %s\n", (char*)v);
-escape _strlen((char*)v);
+_printf("v = %s\n", (char&&)v);
+escape _strlen((char&&)v);
 ]],
     run = 3,
 }
@@ -21017,7 +21029,7 @@ var char[] v = "abc";
 _printf("v = %s\n", v);
 escape _strlen(v);
 ]],
-    env = 'line 2 : types mismatch (`char[]´ <= `char*´)',
+    env = 'line 2 : types mismatch (`char[]´ <= `char&&´)',
     --run = 3,
 }
 Test { [[
@@ -21420,7 +21432,7 @@ Test { [[
 native do
     void* V;
 end
-var void* v;
+var void&& v;
 _V = v;
 escape 1;
 ]],
@@ -21431,7 +21443,7 @@ Test { [[
 native do
     void* V;
 end
-var void* v=null;
+var void&& v=null;
 _V = v;
 await 1s;
 escape _V==null;
@@ -21442,8 +21454,8 @@ escape _V==null;
 
 Test { [[
 do
-    var int* p, p1;
-    event int* e;
+    var int&& p, p1;
+    event int&& e;
     p = await e;
     p1 = p;
     await e;
@@ -21458,7 +21470,7 @@ Test { [[
 native do
     typedef int tp;
 end
-var _tp* v;
+var _tp&& v;
 _a = v;
 await 1s;
 _b = _a;    // _a pode ter escopo menor e nao reclama de FIN
@@ -21472,7 +21484,7 @@ await FOREVER;
 
 Test { [[
 var int v = 10;
-var int* x = &v;
+var int&& x = &&v;
 event void e;
 var int ret;
 if 1 then
@@ -21489,7 +21501,7 @@ escape ret;
 
 Test { [[
 var int v = 10;
-var int* x = &v;
+var int&& x = &&v;
 event void e;
 var int ret;
 if 1 then
@@ -21505,7 +21517,7 @@ escape ret;
 
 Test { [[
 var int v = 10;
-var int* x = &v;
+var int&& x = &&v;
 event void e;
 var int ret;
 par do
@@ -21521,7 +21533,7 @@ end
 
 Test { [[
 var int v = 10;
-var int* x = &v;
+var int&& x = &&v;
 event void e;
 var int ret;
 par do
@@ -21608,19 +21620,19 @@ native do
     F* fff;
 end
 
-input (char* path, char* mode)=>_F* OPEN do
+input (char&& path, char&& mode)=>_F&& OPEN do
     return _fff;
 end
 
-input (_F* f)=>int CLOSE do
+input (_F&& f)=>int CLOSE do
     return 1;
 end
 
-input (_F* f)=>int SIZE do
+input (_F&& f)=>int SIZE do
     return 1;
 end
 
-input (void* ptr, int size, int nmemb, _F* f)=>int READ do
+input (void&& ptr, int size, int nmemb, _F&& f)=>int READ do
     return 1;
 end
 
@@ -21639,7 +21651,7 @@ native/pre do
     } draw_string_t;
 end
 
-input (_draw_string_t* ptr)=>void DRAW_STRING do
+input (_draw_string_t&& ptr)=>void DRAW_STRING do
 end
 
 var _draw_string_t v;
@@ -21647,7 +21659,7 @@ var _draw_string_t v;
     v.length = 20;
     v.x = 100;
     v.y = 100;
-call DRAW_STRING => &v;
+call DRAW_STRING => &&v;
 
 escape 1;
 ]],
@@ -21725,12 +21737,12 @@ escape _idx(va,0) + _idx(va,1);
 
 Test { [[
 int a, b;
-int* pa, pb;
+int&& pa, pb;
 
 par/or do
-    pa = &a;
+    pa = &&a;
 with
-    pb = &b;
+    pb = &&b;
 end;
 escape 1;
 ]],
@@ -21761,13 +21773,13 @@ end
 Test { PRE .. [[
 int a = 1;
 int b = 2;
-escape _f1(&a,&b);
+escape _f1(&&a,&&b);
 ]],
     run = 3,
 }
 
 Test { PRE .. [[
-int* pa;
+int&& pa;
 par/or do
     _f4(pa);
 with
@@ -21782,7 +21794,7 @@ escape 0;
 Test { PRE .. [[
 int a;
 par/or do
-    _f4(&a);
+    _f4(&&a);
 with
     int v = a;
 end;
@@ -21795,7 +21807,7 @@ escape 0;
 Test { PRE .. [[
 int a, b;
 par/or do
-    _f5(&a);
+    _f5(&&a);
 with
     a = 1;
 end;
@@ -21808,7 +21820,7 @@ escape 0;
 Test { PRE .. [[
 int a = 10;
 par/or do
-    _f5(&a);
+    _f5(&&a);
 with
     escape a;
 end;
@@ -21821,7 +21833,7 @@ escape 0;
 }
 Test { PRE .. [[
 int a;
-int* pa;
+int&& pa;
 par/or do
     _f5(pa);
 with
@@ -21837,7 +21849,7 @@ escape 0;
 Test { PRE .. [[
 int a, b;
 par/or do
-    _f4(&a);
+    _f4(&&a);
 with
     int v = b;
 end;
@@ -21848,7 +21860,7 @@ escape 0;
 Test { PRE .. [[
 int a, b;
 par/or do
-    _f5(&a);
+    _f5(&&a);
 with
     b = 1;
 end;
@@ -21860,7 +21872,7 @@ escape 0;
 Test { PRE .. [[
 int a, b;
 par/or do
-    _f5(&a);
+    _f5(&&a);
 with
     int v = b;
 end;
@@ -21869,10 +21881,10 @@ escape 0;
     run = 0,
 }
 Test { PRE .. [[
-int* pa;
+int&& pa;
 do
     int a;
-    pa = &a;
+    pa = &&a;
 end;
 escape 1;
 ]],
@@ -21882,7 +21894,7 @@ escape 1;
 Test { PRE .. [[
 int a=1;
 do
-    int* pa = &a;
+    int&& pa = &&a;
     *pa = 2;
 end;
 escape a;
@@ -21892,7 +21904,7 @@ escape a;
 
 Test { PRE .. [[
 int a;
-int* pa;
+int&& pa;
 par/or do
     _f4(pa);
 with
@@ -21906,7 +21918,7 @@ escape 0;
 }
 Test { PRE .. [[
 int a;
-int* pa;
+int&& pa;
 par/or do
     _f5(pa);
 with
@@ -21920,7 +21932,7 @@ escape a;
 }
 Test { PRE .. [[
 int a;
-int* pa;
+int&& pa;
 par do
     escape _f5(pa);
 with
@@ -21936,9 +21948,9 @@ end;
 Test { PRE .. [[
 int a=1, b=5;
 par/or do
-    _f4(&a);
+    _f4(&&a);
 with
-    _f4(&b);
+    _f4(&&b);
 end;
 escape a+b;
 ]],
@@ -21953,9 +21965,9 @@ int a = 1;
 int b = 2;
 int v1, v2;
 par/and do
-    v1 = _f1(&a,&b);
+    v1 = _f1(&&a,&&b);
 with
-    v2 = _f1(&a,&b);
+    v2 = _f1(&&a,&&b);
 end;
 escape v1 + v2;
 ]],
@@ -21969,9 +21981,9 @@ int a = 1;
 int b = 2;
 int v1, v2;
 par/and do
-    v1 = _f2(&a,&b);
+    v1 = _f2(&&a,&&b);
 with
-    v2 = _f2(&a,&b);
+    v2 = _f2(&&a,&&b);
 end;
 escape v1 + v2;
 ]],
@@ -21985,9 +21997,9 @@ int a = 1;
 int b = 2;
 int v1, v2;
 par/and do
-    v1 = _f3(&a,&b);
+    v1 = _f3(&&a,&&b);
 with
-    v2 = _f3(&a,&b);
+    v2 = _f3(&&a,&&b);
 end;
 escape v1 + v2;
 ]],
@@ -21999,9 +22011,9 @@ int a = 2;
 int b = 2;
 int v1, v2;
 par/and do
-    v1 = _f4(&a);
+    v1 = _f4(&&a);
 with
-    v2 = _f4(&b);
+    v2 = _f4(&&b);
 end;
 escape a+b;
 ]],
@@ -22016,9 +22028,9 @@ int a = 2;
 int b = 2;
 int v1, v2;
 par/and do
-    v1 = _f4(&a);
+    v1 = _f4(&&a);
 with
-    v2 = _f4(&a);
+    v2 = _f4(&&a);
 end;
 escape a+a;
 ]],
@@ -22032,9 +22044,9 @@ int a = 2;
 int b = 2;
 int v1, v2;
 par/and do
-    v1 = _f5(&a);
+    v1 = _f5(&&a);
 with
-    v2 = _f5(&a);
+    v2 = _f5(&&a);
 end;
 escape a+a;
 ]],
@@ -22043,11 +22055,11 @@ escape a+a;
 
 Test { PRE .. [[
 int a;
-int* pa = &a;
+int&& pa = &&a;
 a = 2;
 int v1,v2;
 par/and do
-    v1 = _f4(&a);
+    v1 = _f4(&&a);
 with
     v2 = _f4(pa);
 end;
@@ -22060,11 +22072,11 @@ escape v1+v2;
 
 Test { PRE .. [[
 int a;
-int* pa = &a;
+int&& pa = &&a;
 a = 2;
 int v1,v2;
 par/and do
-    v1 = _f5(&a);
+    v1 = _f5(&&a);
 with
     v2 = _f5(pa);
 end;
@@ -22257,12 +22269,12 @@ var _char[10] a;
 a = "oioioi";
 escape 1;
 ]],
-    env = 'line 2 : types mismatch (`_char[]´ <= `char*´)',
+    env = 'line 2 : types mismatch (`_char[]´ <= `char&&´)',
     --env = 'line 2 : invalid attribution',
 }
 
 Test { [[
-var char* a;
+var char&& a;
 a = "oioioi";
 escape 1;
 ]],
@@ -22274,20 +22286,20 @@ var int a;
 a = "oioioi";
 escape 1;
 ]],
-    env = 'line 2 : types mismatch (`int´ <= `char*´)',
+    env = 'line 2 : types mismatch (`int´ <= `char&&´)',
 }
 
 Test { [[
 native _char=1;
-var _char* a = "Abcd12" ;
+var _char&& a = "Abcd12" ;
 escape 1;
 ]],
-    --env = 'line 2 : invalid attribution (_char* vs char*)',
+    --env = 'line 2 : invalid attribution (_char&& vs char&&)',
     run = 1,
 }
 Test { [[
 native _char=1;
-var _char* a = (_char*)"Abcd12" ;
+var _char&& a = (_char&&)"Abcd12" ;
 escape 1;
 ]],
     run = 1
@@ -22331,8 +22343,8 @@ var _char[30] d;
 
 var int len = 0;
 _strcpy(d,a);
-_strcpy(&d[_strlen(d)], b);
-_strcpy(&d[_strlen(d)], c);
+_strcpy(&&d[_strlen(d)], b);
+_strcpy(&&d[_strlen(d)], c);
 _printf("END: %d %s\n", (int)_strlen(d), d);
 escape 0;
 ]],
@@ -22474,10 +22486,10 @@ escape vs.a + vs.b + sizeof(_s) + sizeof(vs) + sizeof(vs.a);
 
 Test { [[
 native _SZ;
-native _aaa = (sizeof<void*,u16>) * 2;
+native _aaa = (sizeof<void&&,u16>) * 2;
 native do
     typedef struct {
-        void* a;
+        void&& a;
         u16 b;
     } t1;
     typedef struct {
@@ -22500,7 +22512,7 @@ native do
 end
 native _Payload = 18;
 var _Payload final;
-var u8* neighs = &(final.data[4]);
+var u8&& neighs = &&(final.data[4]);
 escape 1;
 ]],
     run = 1;
@@ -22556,8 +22568,8 @@ native do
 end
 native _mys = 4;
 var _mys v;
-var _mys* pv;
-pv = &v;
+var _mys&& pv;
+pv = &&v;
 v.a = 10;
 (*pv).a = 20;
 pv:a = pv:a + v.a;
@@ -22664,20 +22676,20 @@ end
     -- POINTER ASSIGNMENTS
 
 Test { [[
-var int* p;
+var int&& p;
 do
     var int i;
-    p = &i;
+    p = &&i;
 end
 escape 1;
 ]],
     fin = 'line 4 : attribution to pointer with greater scope',
 }
 Test { [[
-var int* p;
+var int&& p;
 do
     var int i;
-    p := &i;
+    p := &&i;
 end
 escape 1;
 ]],
@@ -22708,20 +22720,20 @@ escape 1;
     fin = 'line 3 : attribution does not require `finalize´',
 }
 Test { [[
-var int* a := null;
+var int&& a := null;
 escape 1;
 ]],
     fin = 'line 1 : wrong operator',
 }
 Test { [[
-var int* a;
+var int&& a;
 a := null;
 escape 1;
 ]],
     fin = 'line 2 : wrong operator',
 }
 Test { [[
-var int* a;
+var int&& a;
 finalize
     a = null;
 with
@@ -22733,7 +22745,7 @@ escape 1;
 }
 Test { [[
 function (void)=>void faca do
-    var int* a;
+    var int&& a;
     a := null;
 end
 escape 1;
@@ -22742,7 +22754,7 @@ escape 1;
 }
 Test { [[
 var int a;
-var int* pa := &a;
+var int&& pa := &&a;
 escape 1;
 ]],
     fin = 'line 2 : wrong operator',
@@ -22750,9 +22762,9 @@ escape 1;
 }
 Test { [[
 var int a;
-var int* pa;
+var int&& pa;
 finalize
-    pa = &a;
+    pa = &&a;
 with
     nothing;
 end
@@ -22761,8 +22773,8 @@ escape 1;
     fin = 'line 4 : attribution does not require `finalize´',
 }
 Test { [[
-function (void* o1)=>void f do
-    var void* tmp := o1;
+function (void&& o1)=>void f do
+    var void&& tmp := o1;
 end
 escape 1;
 ]],
@@ -22771,27 +22783,27 @@ escape 1;
 }
 
 Test { [[
-var _int* u;
+var _int&& u;
 var _int[1] i;
 await 1s;
 u = i;
 escape 1;
 ]],
-    --env = 'line 4 : types mismatch (`int*´ <= `_int[]´)',
+    --env = 'line 4 : types mismatch (`int&&´ <= `_int[]´)',
     run = { ['~>1s']=1 },
 }
 Test { [[
-var int* u;
+var int&& u;
 var int[1] i;
 await 1s;
 u = i;
 escape 1;
 ]],
-    env = 'line 4 : types mismatch (`int*´ <= `int[]´)',
+    env = 'line 4 : types mismatch (`int&&´ <= `int[]´)',
     --run = { ['~>1s']=1 },
 }
 Test { [[
-var _int* u;
+var _int&& u;
 do
     var _int[1] i;
     i[0] = 2;
@@ -22815,9 +22827,9 @@ escape key;
 }
 
 Test { [[
-input int* SDL_KEYUP;
+input int&& SDL_KEYUP;
 par/or do
-    var int* key;
+    var int&& key;
     key = await SDL_KEYUP;
 with
     async do
@@ -22830,7 +22842,7 @@ escape 1;
 }
 
 Test { [[
-input _SDL_KeyboardEvent* SDL_KEYUP;
+input _SDL_KeyboardEvent&& SDL_KEYUP;
 every key in SDL_KEYUP do
     if key:keysym.sym == 1 then
     else/if key:keysym.sym == 1 then
@@ -22843,11 +22855,11 @@ end
 }
 
 Test { [[
-function (int id, void** o1, void** o2)=>int getVS do
+function (int id, void&& && o1, void&& && o2)=>int getVS do
     if (*o1) then
         return 1;
     else/if (*o2) then
-        var void* tmp = *o1;
+        var void&& tmp = *o1;
         *o1 = *o2;
         *o2 := tmp;
             // tmp is an alias to "o1"
@@ -22867,7 +22879,7 @@ escape 1;
 
 Test { [[
 #define _OBJ_N + 2
-var void*[_OBJ_N] objs;
+var void&&[_OBJ_N] objs;
 escape 1;
 ]],
     run = 1,
@@ -22876,7 +22888,7 @@ escape 1;
 Test { [[
 #define _OBJ_N + 2 \
                + 1
-var void*[_OBJ_N] objs;
+var void&&[_OBJ_N] objs;
 escape 1;
 ]],
     run = 1,
@@ -22953,7 +22965,7 @@ escape ret;
 
 Test { [[
 #define UART0_BASE 0x20201000
-#define UART0_CR ((u32*)(UART0_BASE + 0x30))
+#define UART0_CR ((u32&&)(UART0_BASE + 0x30))
 *UART0_CR = 0x00000000;
 escape 1;
 ]],
@@ -23411,7 +23423,7 @@ escape 1;
 }
 
 Test { [[
-input int* SDL_KEYDOWN_;
+input int&& SDL_KEYDOWN_;
 event bool in_tm;
 
 pause/if in_tm do
@@ -23899,11 +23911,11 @@ escape x.a;
 }
 
 Test { [[
-input _SDL_MouseButtonEvent* SDL_MOUSEBUTTONUP;
+input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
 class UITexture with
     var int pad_y = 0;
 do
-    var _SDL_MouseButtonEvent* but = await SDL_MOUSEBUTTONUP;
+    var _SDL_MouseButtonEvent&& but = await SDL_MOUSEBUTTONUP;
 end
 await FOREVER;
 ]],
@@ -24442,10 +24454,10 @@ class T2 with
 do
 end
 class T with
-    var T2* x;
+    var T2&& x;
 do
     var T2 xx;
-    this.x = &xx;
+    this.x = &&xx;
 end
 var T a;
 escape 1;
@@ -24483,18 +24495,18 @@ class T3 with
 do
 end
 class T2 with
-    var T3* t3;
+    var T3&& t3;
     var int v;
 do
     var T3 t33;
-    this.t3 = &t33;
+    this.t3 = &&t33;
 end
 class T with
     var int v,v2;
-    var T2* x;
+    var T2&& x;
 do
     var T2 xx;
-    x = &xx;
+    x = &&xx;
 end
 var T a;
 a.v = 5;
@@ -24551,7 +24563,7 @@ do
 end
 
 class Baz with
-  var Foo* qux;
+  var Foo&& qux;
 do
   await (*qux).bar;
 end
@@ -24610,12 +24622,12 @@ end
 
 class T with
     var int v=5;
-    var U* u;
+    var U&& u;
 do
     var U uu with
         this.x = 20;
     end;
-    this.u = &uu;
+    this.u = &&uu;
     this.v = 100;
 end
 var T t with
@@ -24632,19 +24644,19 @@ do
 end
 
 var T   t;
-var T*  p  = &t;
-var T** pp = &p;
+var T&&  p  = &&t;
+var T&& && pp = &&p;
 
-escape (p==&t and pp==&p and *pp==&t);
+escape (p==&&t and pp==&&p and *pp==&&t);
 ]],
     run = 1,
 }
 
 Test { [[
-var int* v;
+var int&& v;
 do
     var int i = 1;
-    v = &i;
+    v = &&i;
 end
 escape *v;
 ]],
@@ -24739,7 +24751,7 @@ do
     var int v = 10;
     i = v;
 end
-var T*? p = spawn T;
+var T&&? p = spawn T;
 escape p!:i;
 ]],
     ref = 'line 8 : field "i" must be assigned',
@@ -24935,7 +24947,7 @@ var int i = 1;
 var int& v = i;
 
 class T with
-    var int* p = null;
+    var int&& p = null;
     var int& v = null;
 do
 end
@@ -24947,7 +24959,7 @@ end;
 
 escape *(t.p) + *(t.v);
 ]],
-    env = 'line 6 : types mismatch (`int&´ <= `null*´)',
+    env = 'line 6 : types mismatch (`int&´ <= `null&&´)',
 }
 
 Test { [[
@@ -24955,13 +24967,13 @@ var int i = 1;
 var int& v = i;
 
 class T with
-    var int* p = null;
+    var int&& p = null;
     var int& v;
 do
 end
 
 var T t with
-    this.p = &v;
+    this.p = &&v;
     this.v = v;
 end;
 
@@ -24975,7 +24987,7 @@ var int i = 1;
 var int& v = i;
 
 class T with
-    var int* p = null;
+    var int&& p = null;
     var int& v;
 do
     await 1s;
@@ -24984,7 +24996,7 @@ do
 end
 
 var T t with
-    this.p := &v;
+    this.p := &&v;
     this.v = v;
 end;
 
@@ -24995,9 +25007,9 @@ escape *(t.p) + (t.v);
 
 Test { [[
 class T with
-    var _SDL_Rect* cell_rects = null;
+    var _SDL_Rect&& cell_rects = null;
 do
-    var _SDL_Rect* cell_rect = &this.cell_rects[1];
+    var _SDL_Rect&& cell_rect = &&this.cell_rects[1];
 end
 escape 1;
 ]],
@@ -25019,7 +25031,7 @@ native do
     typedef int* t;
 end
 var int v = 2;
-var _t p = &v;
+var _t p = &&v;
 escape *p;
 ]],
     run = 2,
@@ -25335,10 +25347,10 @@ do
 end
 
 class Image_media with
-    var Sm* sm;
+    var Sm&& sm;
 do
     var Sm smm;
-    this.sm = &smm;
+    this.sm = &&smm;
 end
 
 var Image_media img1;
@@ -25379,10 +25391,10 @@ do
 end
 
 class Image_media with
-    var Sm* sm;
+    var Sm&& sm;
 do
     var Sm smm;
-    this.sm = &smm;
+    this.sm = &&smm;
 end
 
 var Image_media img1;
@@ -25433,10 +25445,10 @@ do
 end
 
 class Image_media with
-    var Sm* sm;
+    var Sm&& sm;
 do
     var Sm smm;
-    this.sm = &smm;
+    this.sm = &&smm;
     par do with with with with end
 end
 
@@ -25465,7 +25477,7 @@ end
 
 var T t;
     t.v = 10;
-var T* p = &t;
+var T&& p = &&t;
 escape p:v;
 ]],
     run = 10,
@@ -25487,11 +25499,11 @@ escape t1.v+t2.v;
 
 Test { [[
 class T with
-    var _char* ptr;
+    var _char&& ptr;
 do
 end
 
-var _char* ptr=null;
+var _char&& ptr=null;
 var T t with
     this.ptr = ptr;
 end;
@@ -25503,13 +25515,13 @@ escape 1;
 }
 Test { [[
 class T with
-    var _char* ptr;
+    var _char&& ptr;
 do
 end
 
 var T t with
     do
-        var _char* ptr=null;
+        var _char&& ptr=null;
         this.ptr = ptr;
     end
 end;
@@ -26330,7 +26342,7 @@ escape a;
 Test { [[
 class T with do end
 var T a;
-var T* p = a;
+var T&& p = a;
 ]],
     env = 'line 3 : types mismatch',
 }
@@ -26361,7 +26373,7 @@ Test { [[
 class T with do end;
 do
     var int a = 1;
-    var int* pa = &a;
+    var int&& pa = &&a;
     var T t;
     var int ret = *pa;
     escape ret;
@@ -26383,11 +26395,11 @@ end
 
 var int i;
 i = 10;
-var int* pi = &i;
+var int&& pi = &&i;
 
 var T t;
 t.a = 10;
-var T* p = &t;
+var T&& p = &&t;
 _c = t.a;
 _d = p:a;
 escape p:a + t.a + _c + _d;
@@ -26573,14 +26585,14 @@ end
 class T with
 do
     await OS_START;
-    _f(&this);       // 9
+    _f(&&this);       // 9
 end
 var T[2] ts;
 await OS_START;
 par/and do
-    _f(&ts[0]);     // 14
+    _f(&&ts[0]);     // 14
 with
-    _f(&ts[1]);     // 16
+    _f(&&ts[1]);     // 16
 end
 escape 10;
 ]],
@@ -26599,14 +26611,14 @@ end
 class T with
 do
     await OS_START;
-    _f(&this);       // 9
+    _f(&&this);       // 9
 end
 var T t0,t1;
 await OS_START;
 par/and do
-    _f(&t0);     // 14
+    _f(&&t0);     // 14
 with
-    _f(&t1);     // 16
+    _f(&&t1);     // 16
 end
 escape 10;
 ]],
@@ -26990,7 +27002,7 @@ with
 with
     await b.ok;
 end
-escape _f((char*)&a.a,(char*)&b.a);
+escape _f((char&&)&&a.a,(char&&)&&b.a);
 ]],
     run = 2,
 }
@@ -27738,7 +27750,7 @@ end
 class V with
     var U& u;
 do
-    var U* p = &u;
+    var U&& p = &&u;
     p:t.x = 2;
 end
 
@@ -28105,9 +28117,9 @@ escape ret;
 
 Test { [[
 class T with
-    var int* a1;
+    var int&& a1;
 do
-    var int* a2=null;
+    var int&& a2=null;
     a1 = a2;
 end
 escape 10;
@@ -28294,10 +28306,10 @@ do
 end
 pool T[] ts;
 
-var T*? t1 = spawn T;
-var T*? t2 = spawn T;
+var T&&? t1 = spawn T;
+var T&&? t2 = spawn T;
 await *(t2!);
-var T*? t3 = spawn T;
+var T&&? t3 = spawn T;
 await *(t3!);
 
 escape 1;
@@ -28319,10 +28331,10 @@ do
 end
 pool T[] ts;
 
-var T*? t1 = spawn T;
-var T*? t2 = spawn T;
+var T&&? t1 = spawn T;
+var T&&? t2 = spawn T;
 await *t2!;
-var T*? t3 = spawn T;
+var T&&? t3 = spawn T;
 await *t3!;
 
 escape 1;
@@ -28392,7 +28404,7 @@ interface I with
 end
 
 class U with
-    var I* i;
+    var I&& i;
 do
 end
 
@@ -28400,9 +28412,9 @@ class T with
     var int ret = 0;
 do
     var U u with
-        this.i = &outer;
+        this.i = &&outer;
     end;
-    this.ret = u.i == &this;
+    this.ret = u.i == &&this;
 end
 
 var T t;
@@ -28502,13 +28514,13 @@ do
     finalize
         ptr = _myalloc();
     with
-        _myfree(&ptr);
+        _myfree(&&ptr);
     end
 end
 var T t;
 escape t.x;
 ]],
-    env = 'line 18 : invalid operand to unary "&" : option type',
+    env = 'line 18 : invalid operand to unary "&&" : option type',
 }
 
 Test { [[
@@ -28529,7 +28541,7 @@ do
     finalize
         ptr = _myalloc();
     with
-        _myfree(&ptr!);
+        _myfree(&&ptr!);
     end
 end
 var T t;
@@ -28731,7 +28743,7 @@ end
 
 Test { [[
 class T with do end
-var T* ok = spawn T;
+var T&& ok = spawn T;
 escape ok != null;
 ]],
     env = 'line 2 : must assign to option pointer',
@@ -28751,17 +28763,17 @@ escape 1;
 Test { [[
 class U with do end
 class T with do end
-var U*? ok = spawn T;
+var U&&? ok = spawn T;
 escape ok != null;
 ]],
-    env = 'line 3 : types mismatch (`U*´ <= `T*´)',
+    env = 'line 3 : types mismatch (`U&&´ <= `T&&´)',
     --run = 1,
 }
 
 Test { [[
 class T with do end
 pool T[0] ts;
-var T*? ok = spawn T in ts;
+var T&&? ok = spawn T in ts;
 if ok? then
     escape 0;
 else
@@ -28773,8 +28785,8 @@ end
 
 Test { [[
 class T with do end
-var T*? ok = spawn T;
-escape &(ok!) != null;
+var T&&? ok = spawn T;
+escape &&(ok!) != null;
 ]],
     asr = '3] runtime error: invalid tag',
     --run = 1,
@@ -28782,7 +28794,7 @@ escape &(ok!) != null;
 
 Test { [[
 class Body with do end;
-var Body*? tail = spawn Body;
+var Body&&? tail = spawn Body;
 await *(tail!);
 escape 1;
 ]],
@@ -28792,7 +28804,7 @@ escape 1;
 
 Test { [[
 class T with do end
-var T*? ok;
+var T&&? ok;
 var bool ok_;
 do
     ok = spawn T;
@@ -28805,7 +28817,7 @@ escape ok_+1;
 
 Test { [[
 class T with do end
-var T*? ok;
+var T&&? ok;
 do
     ok = spawn T;
 end
@@ -28819,7 +28831,7 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var T*? ok;
+var T&&? ok;
 native _assert();
 do
     loop i in 5 do
@@ -28836,7 +28848,7 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var T*? ok;
+var T&&? ok;
 var bool ok_;
 native _assert();
 do
@@ -28855,14 +28867,14 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var T*? ok;
+var T&&? ok;
 var bool ok_;
 native _assert();
 do
     loop i in 100 do
         ok = spawn T;
     end
-    var T*? ok1 = spawn T;
+    var T&&? ok1 = spawn T;
     ok_ = (ok1?);
 end
 escape ok_+1;
@@ -28874,7 +28886,7 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var T*? ok;
+var T&&? ok;
 native _assert();
 do
     loop i in 100 do
@@ -28895,7 +28907,7 @@ class T with
 do
     this.a = 1;
 end
-var T*? t = spawn T;
+var T&&? t = spawn T;
 escape t!:a;
 ]],
     asr = '7] runtime error: invalid tag',
@@ -28909,7 +28921,7 @@ class T with
 do
     this.a = 1;
 end
-var T*? t = spawn T;
+var T&&? t = spawn T;
 await OS_START;
 escape t!:a;
 ]],
@@ -28920,7 +28932,7 @@ escape t!:a;
 Test { [[
 class T with do end
 do
-    var T*? t;
+    var T&&? t;
     t = spawn T;
 end
 escape 10;
@@ -28930,7 +28942,7 @@ escape 10;
 
 Test { [[
 class T with do end
-var T*? t;
+var T&&? t;
 t = spawn T;
 escape 10;
 ]],
@@ -28948,7 +28960,7 @@ do
         await 10s;
     end
 end
-var T*? t;
+var T&&? t;
     t = spawn T;
     t = spawn T;
     t = spawn T;
@@ -28968,7 +28980,7 @@ do
         await 10s;
     end
 end
-var T*? t;
+var T&&? t;
 do
     t = spawn T;
     t = spawn T;
@@ -28993,7 +29005,7 @@ _f(spawn T);
 
 Test { [[
 class T with do end
-var T*? a;
+var T&&? a;
 a = spawn U;
 ]],
     env = 'line 3 : undeclared type `U´',
@@ -29002,7 +29014,7 @@ a = spawn U;
 Test { [[
 class T with do end
 do
-    var T*? t;
+    var T&&? t;
     t = spawn T;
 end
 escape 10;
@@ -29015,7 +29027,7 @@ class T with
 do
 end
 
-var T*? t = spawn T;
+var T&&? t = spawn T;
 if not t? then
     escape 10;
 end
@@ -29031,7 +29043,7 @@ do
     await FOREVER;
 end
 
-var T*? t = spawn T;
+var T&&? t = spawn T;
 if not t? then
     escape 10;
 end
@@ -29046,7 +29058,7 @@ class T with
 do
 end
 
-var T*? t = spawn T;
+var T&&? t = spawn T;
 await *(t!);
 escape 1;
 ]],
@@ -29101,8 +29113,8 @@ class T with
 do
 end
 pool T[1] t;
-var T*? ok1 = spawn T in t with end;
-var T*? ok2 = spawn T in t;
+var T&&? ok1 = spawn T in t with end;
+var T&&? ok2 = spawn T in t;
 escape (ok1?) + (ok2?) + 1;
 ]],
     run = 1,
@@ -29114,11 +29126,11 @@ class T with
 do
 end
 pool T[1] t;
-var T*? ok1 = spawn T in t with end;
+var T&&? ok1 = spawn T in t with end;
 var int sum = 1;
 if ok1? then
     watching *(ok1!) do
-        var T*? ok2 = spawn T in t;
+        var T&&? ok2 = spawn T in t;
         sum = sum + (ok1?) + (ok2?);
     end
 end
@@ -29147,12 +29159,12 @@ class T with
 do
 end
 pool T[1] ts;
-var T*?  ok1 = spawn T in ts with
+var T&&?  ok1 = spawn T in ts with
                 this.v = 10;
               end;
 var int ok2 = 0;// spawn T in ts;
 var int ret = 0;
-loop (T*)t in ts do
+loop (T&&)t in ts do
     ret = ret + t:v;
 end
 escape (ok1?) + ok2 + ret;
@@ -29167,7 +29179,7 @@ class T with
 do
 end
 pool T[1] ts;
-var T*?  ok1 = spawn T in ts with
+var T&&?  ok1 = spawn T in ts with
                 this.v = 10;
               end;
 var int ok2 = 0;// spawn T in ts;
@@ -29299,7 +29311,7 @@ class T with
 do
     this.a = 1;
 end
-var T*? t = spawn T in ts;
+var T&&? t = spawn T in ts;
 escape not t?;
 ]],
     env = 'line 1 : undeclared type `T´',
@@ -29312,7 +29324,7 @@ do
     this.a = 1;
 end
 pool T[0] ts;
-var T*? t = spawn T in ts;
+var T&&? t = spawn T in ts;
 escape not t?;
 ]],
     run = 1,
@@ -29326,10 +29338,10 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T*? a = spawn T in ts;
+var T&&? a = spawn T in ts;
 var int sum = 0;
 watching *(a!) do
-    var T*? b = spawn T in ts;
+    var T&&? b = spawn T in ts;
     sum = a? and (not b?);
 end
 escape sum;
@@ -29346,7 +29358,7 @@ do
 end
 do
 pool T[0] ts;
-var T*? t = spawn T in ts;
+var T&&? t = spawn T in ts;
 escape not t?;
 end
 ]],
@@ -29362,11 +29374,11 @@ do
 end
 pool T[1] as;
 pool T[0] bs;
-var T*? a = spawn T in as;
+var T&&? a = spawn T in as;
 var int sum = 0;
 if a? then
     watching *a! do
-        var T*? b = spawn T in bs;
+        var T&&? b = spawn T in bs;
         sum = a? and (not b?);
     end
 end
@@ -29383,12 +29395,12 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T*? a = spawn T in ts;
+var T&&? a = spawn T in ts;
 //free(a);
 var int sum = 0;
 if a? then
     watching *a! do
-        var T*? b = spawn T in ts;   // fails (a is freed on end)
+        var T&&? b = spawn T in ts;   // fails (a is freed on end)
         sum = a? and (not b?);
     end
 end
@@ -29405,15 +29417,15 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T* a = null;
+var T&& a = null;
 do
-    var T*? aa = spawn T in ts;
+    var T&&? aa = spawn T in ts;
         a = aa!;
 end
 var int sum = 0;
 if a != null then
     watching *a do
-        var T*? b = spawn T in ts;   // fails (a is free on end)
+        var T&&? b = spawn T in ts;   // fails (a is free on end)
         sum = a!=null and (not b?) and a!=b!;
     end
 end
@@ -29432,9 +29444,9 @@ do
     await FOREVER;
 end
 pool T[2] ts;
-var T* a = null;
+var T&& a = null;
 do
-    var T*? aa = spawn T in ts;
+    var T&&? aa = spawn T in ts;
         a = aa!;
 end
 watching *a do
@@ -29453,15 +29465,15 @@ do
     await FOREVER;
 end
 pool T[2] ts;
-var T* a = null;
+var T&& a = null;
 do
-    var T*? aa = spawn T in ts;
+    var T&&? aa = spawn T in ts;
         a = aa!;
 end
 var int sum = 0;
 if a != null then
     watching *a do
-        var T*? b = spawn T in ts;   // fails (a is free on end)
+        var T&&? b = spawn T in ts;   // fails (a is free on end)
         sum = a!=null and (b?) and a!=b!;
     end
 end
@@ -29476,7 +29488,7 @@ class T with
 do
 end
 do
-    var T*? aa = spawn T;
+    var T&&? aa = spawn T;
 end
 par/or do
 with
@@ -29494,15 +29506,15 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T*? a;
+var T&&? a;
 do
-    var T*? aa = spawn T in ts;
+    var T&&? aa = spawn T in ts;
         a = aa;
 end
 var int sum = 0;
 if a? then
     watching *a! do
-        var T*? b = spawn T in ts;   // fails (a is free on end)
+        var T&&? b = spawn T in ts;   // fails (a is free on end)
         sum = a? and (not b?);// and a! !=b;
     end
 end
@@ -29519,12 +29531,12 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T* a;
+var T&& a;
 do
-    var T*? aa = spawn T in ts;
+    var T&&? aa = spawn T in ts;
         a = aa!;
 end
-var T*? b = spawn T in ts;   // fails (a is free on end)
+var T&&? b = spawn T in ts;   // fails (a is free on end)
 escape (not b?);
 ]],
     run = 1,
@@ -29538,20 +29550,20 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T* a=null, b=null;
+var T&& a=null, b=null;
 var int sum = 0;
 do
     do
-        var T*? aa = spawn T in ts;
+        var T&&? aa = spawn T in ts;
             a = aa!;
     end
     sum = a!=null;
-    var T*? bb = spawn T in ts;  // fails
+    var T&&? bb = spawn T in ts;  // fails
         b = bb!;
 end
 if b != null then
     watching *b do
-        var T*? c = spawn T in ts;       // fails
+        var T&&? c = spawn T in ts;       // fails
         sum = (b==null) and (not c?);// and a!=b and b==c;
     end
 end
@@ -29570,19 +29582,19 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T*? a, b;
+var T&&? a, b;
 var int sum = 0;
 do
     do
-        var T*? aa = spawn T in ts;
+        var T&&? aa = spawn T in ts;
             a = aa!;
     end
     sum = a?;
-    var T*? bb = spawn T in ts;  // fails
+    var T&&? bb = spawn T in ts;  // fails
         b = bb;
     sum = sum and (not b?);
 end
-var T*? c = spawn T in ts;       // fails
+var T&&? c = spawn T in ts;       // fails
 escape sum and (not c?);
 ]],
     --fin = 'line 19 : pointer access across `await´',
@@ -29596,17 +29608,17 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T*? a, b;
+var T&&? a, b;
 var bool b_;
 do
     do
-        var T*? aa = spawn T in ts;
+        var T&&? aa = spawn T in ts;
             a = aa!;
     end
-    var T*? bb = spawn T in ts;  // fails
+    var T&&? bb = spawn T in ts;  // fails
     b_ = (bb?);
 end
-var T*? c = spawn T in ts;       // fails
+var T&&? c = spawn T in ts;       // fails
 //native @nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
 escape b_==false and (not c?);
@@ -29622,14 +29634,14 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T*? a;
+var T&&? a;
 var int sum = 0;
 do
-    var T*? aa = spawn T in ts;
+    var T&&? aa = spawn T in ts;
         a = aa!;
     sum = a?;
 end
-var T*? b = spawn T in ts;   // fails
+var T&&? b = spawn T in ts;   // fails
 escape sum and (not b?);
 ]],
     --fin = 'line 13 : pointer access across `await´',
@@ -29643,12 +29655,12 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T* a;
+var T&& a;
 do
-    var T*? aa = spawn T in ts;
+    var T&&? aa = spawn T in ts;
         a = aa!;
 end
-var T*? b = spawn T in ts;   // fails
+var T&&? b = spawn T in ts;   // fails
 escape (not b?);
 ]],
     run = 1,
@@ -29713,7 +29725,7 @@ end
 do
     pool T[1] ts;
     loop i in 1000 do
-        var T*? ok = spawn T in ts;  // 999 fails
+        var T&&? ok = spawn T in ts;  // 999 fails
         if (not ok?) then
             escape 0;
         end
@@ -29761,7 +29773,7 @@ end
 pool T[1] ts;
 do
     loop i in 1000 do
-        var T*? ok = spawn T in ts;
+        var T&&? ok = spawn T in ts;
         if not ok? then
             escape 10;
         end
@@ -29838,7 +29850,7 @@ do
     await FOREVER;
 end
 
-var T*? t =
+var T&&? t =
     spawn T with
         this.a = 10;
     end;
@@ -29889,8 +29901,8 @@ do
     await OS_START;
     _V = _V + 1;
 end
-var T*? t1 = spawn T;
-var T*? t2 = spawn T;
+var T&&? t1 = spawn T;
+var T&&? t2 = spawn T;
 await OS_START;
 escape _V;
 ]],
@@ -29953,7 +29965,7 @@ escape 1;
 
 Test { [[
 class T with do end
-var T* a = null;
+var T&& a = null;
 //free a;
 escape 10;
 ]],
@@ -29962,7 +29974,7 @@ escape 10;
 
 Test { [[
 class T with do end
-var T*? a = spawn T;
+var T&&? a = spawn T;
 //free a;
 escape 10;
 ]],
@@ -29971,9 +29983,9 @@ escape 10;
 
 Test { [[
 class T with do end
-var T*? a = spawn T;
+var T&&? a = spawn T;
 //free a;
-var T*? b = spawn T;
+var T&&? b = spawn T;
 //free b;
 escape 10;
 ]],
@@ -29982,8 +29994,8 @@ escape 10;
 
 Test { [[
 class T with do end
-var T*? a = spawn T;
-var T*? b = spawn T;
+var T&&? a = spawn T;
+var T&&? b = spawn T;
 //free a;
 //free b;
 escape 10;
@@ -29993,8 +30005,8 @@ escape 10;
 
 Test { [[
 class T with do end
-var T*? a = spawn T;
-var T*? b = spawn T;
+var T&&? a = spawn T;
+var T&&? b = spawn T;
 //free b;
 //free a;
 escape 10;
@@ -30014,7 +30026,7 @@ do
     end
 end
 
-var T*? a = spawn T;
+var T&&? a = spawn T;
 //free a;
 escape _V;
 ]],
@@ -30033,8 +30045,8 @@ do
     end
 end
 
-var T*? a = spawn T;
-var T*? b = spawn T;
+var T&&? a = spawn T;
+var T&&? b = spawn T;
 //free b;
 //free a;
 escape _V;
@@ -30150,7 +30162,7 @@ class Body with
     var   int&    sum;
     event int     ok;
 do
-    var X*? nested =
+    var X&&? nested =
         spawn X in bodies with
         end;
     sum = sum + 1;
@@ -30228,7 +30240,7 @@ class Body with
     var   int&    sum;
     event int     ok;
 do
-    var Body*? nested =
+    var Body&&? nested =
         spawn Body in bodies with
             this.bodies = bodies;
             this.sum    = sum;
@@ -30261,7 +30273,7 @@ class Body with
     pool Body[]& bodies;
     var  int&     sum;
 do
-    var Body*? nested =
+    var Body&&? nested =
         spawn Body in bodies with
             this.bodies = bodies;
             this.sum    = sum;
@@ -30309,7 +30321,7 @@ class Body with
     pool Body[1]& bodies;
     var  int&     sum;
 do
-    var Body*? nested =
+    var Body&&? nested =
         spawn Body in bodies with
             this.bodies = bodies;
             this.sum    = sum;
@@ -30337,7 +30349,7 @@ class Body with
     pool Body[1]& bodies;
     var  int&     sum;
 do
-    var Body*? nested =
+    var Body&&? nested =
         spawn Body in bodies with
             this.bodies = bodies;
             this.sum    = sum;
@@ -30363,7 +30375,7 @@ class Body with
     pool Body[1]& bodies;
     var  int&     sum;
 do
-    var Body*? nested =
+    var Body&&? nested =
         spawn Body in bodies with
             this.bodies = bodies;
             this.sum    = sum;
@@ -30447,7 +30459,7 @@ class Body with
 do
     sum = sum + 1;
     loop do
-        var Body*? t = spawn Body in bodies with
+        var Body&&? t = spawn Body in bodies with
             this.bodies = bodies;
             this.sum    = sum;
         end;
@@ -30472,7 +30484,7 @@ escape sum;
 
 Test { [[
 class Sum with
-    var int* v;
+    var int&& v;
 do
     await FOREVER;
 end
@@ -30490,7 +30502,7 @@ end
 
 var int v = 0;
 var Sum sum with
-    this.v = &v;
+    this.v = &&v;
 end;
 
 pool Body[7] bodies;
@@ -30507,7 +30519,7 @@ escape v;
 }
 Test { [[
 class Sum with
-    var int* v;
+    var int&& v;
 do
     await FOREVER;
 end
@@ -30526,7 +30538,7 @@ end
 
 var int v = 0;
 var Sum sum with
-    this.v = &v;
+    this.v = &&v;
 end;
 
 pool Body[7] bodies;
@@ -30556,14 +30568,14 @@ tree = new Tree.NODE(1,
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
 class Sum with
-    var int* v;
+    var int&& v;
 do
     await FOREVER;
 end
 
 class Body with
     pool  Body[]& bodies;
-    var   Tree*   n;
+    var   Tree&&   n;
     var   Sum&    sum;
 do
     watching *n do
@@ -30571,7 +30583,7 @@ do
             *this.sum.v = *this.sum.v + n:NODE.v;
             spawn Body in this.bodies with
                 this.bodies = bodies;
-                this.n      = &n:NODE.left;
+                this.n      = &&n:NODE.left;
                 this.sum    = sum;
             end;
         end
@@ -30580,7 +30592,7 @@ end
 
 var int v = 0;
 var Sum sum with
-    this.v = &v;
+    this.v = &&v;
 end;
 
 pool Body[7] bodies;
@@ -30648,15 +30660,15 @@ class T with
 do
 end
 
-event T* e;
+event T&& e;
 
 par/or do
     await OS_START;
     var T a;
-    emit e => &a;
+    emit e => &&a;
     await FOREVER;
 with
-    var T* pa = await e;
+    var T&& pa = await e;
     watching *pa do
         await FOREVER;
     end
@@ -30676,10 +30688,10 @@ do
     await 1s;
 end
 
-event T* e;
+event T&& e;
 
 par do
-    var T* pa = await e;
+    var T&& pa = await e;
     watching *pa do
         await FOREVER;
     end
@@ -30688,7 +30700,7 @@ with
     await OS_START;
     do
         var T a;
-        emit e => &a;
+        emit e => &&a;
     end
     await 2s;
     escape 1;
@@ -30702,10 +30714,10 @@ class T with
 do
 end
 var T a;
-var int* v = await a;
+var int&& v = await a;
 escape 1;
 ]],
-    env = 'line 5 : types mismatch (`int*´ <= `int´)',
+    env = 'line 5 : types mismatch (`int&&´ <= `int´)',
 }
 
 Test { [[
@@ -30786,7 +30798,7 @@ do
 end
 do
     pool T[] ts;
-    var T*? t = spawn T in ts;
+    var T&&? t = spawn T in ts;
 end
 escape _V;
 ]],
@@ -30804,7 +30816,7 @@ do
     end
     await FOREVER;
 end
-var T*? t = spawn T;
+var T&&? t = spawn T;
 kill *t!;
 escape _V;
 ]],
@@ -30860,17 +30872,17 @@ do
 end
 
 input void OS_START;
-event T* e;
+event T&& e;
 
 var int ret = 2;
 
 par/and do
     await OS_START;
-    var T*? t = spawn T;
+    var T&&? t = spawn T;
     emit e => t!;
     ret = ret + t!:v;
 with
-    var T* t1 = await e;
+    var T&& t1 = await e;
     ret = ret * 2;
 end
 
@@ -30888,13 +30900,13 @@ do
 end
 
 input void OS_START;
-event T* e;
+event T&& e;
 
 var int ret = 1;
 
 par/and do
     await OS_START;
-    var T*? t = spawn T;
+    var T&&? t = spawn T;
     watching *t! do
         emit e => t!;
         ret = ret + t!:v;
@@ -30902,7 +30914,7 @@ par/and do
         ret = ret + 1;
     end
 with
-    var T* t1 = await e;
+    var T&& t1 = await e;
     ret = ret * 2;
 end
 
@@ -30918,7 +30930,7 @@ do
     await FOREVER;
 end
 
-var T*? t = spawn T;
+var T&&? t = spawn T;
 finalize with
     kill *t!;
 end
@@ -30936,13 +30948,13 @@ do
 end
 
 input void OS_START;
-event T* e;
+event T&& e;
 
 var int ret = 1;
 
 par/and do
     await OS_START;
-    var T*? t = spawn T;
+    var T&&? t = spawn T;
     ret = ret * 2;
     watching *t! do
         emit e => t!;
@@ -30952,7 +30964,7 @@ par/and do
     end
     ret = ret * 2;
 with
-    var T* t1 = await e;
+    var T&& t1 = await e;
     ret = ret + t1:v;
     kill *t1;
     ret = ret + 1;
@@ -30978,7 +30990,7 @@ loop i do
         await FOREVER;
     end
 
-    var T*? t = spawn T;
+    var T&&? t = spawn T;
     par/or do
         await *t!;
     with
@@ -31013,7 +31025,7 @@ loop i do
         await FOREVER;
     end
 
-    var T*? t = spawn T;
+    var T&&? t = spawn T;
     par/or do
         if t? then
             await *t!;
@@ -31228,12 +31240,12 @@ do
     await OS_START;
     escape 10;
 end
-var int* v = do T with
+var int&& v = do T with
     this.v = 10;
 end;
 escape *v;
 ]],
-    env = 'line 8 : types mismatch (`int*´ <= `int´)',
+    env = 'line 8 : types mismatch (`int&&´ <= `int´)',
 }
 
 Test { [[
@@ -31314,7 +31326,7 @@ Test { [[
 class T with do
     await FOREVER;
 end
-var T*? ok;
+var T&&? ok;
 native do ##include <assert.h> end
 native _assert();
 do
@@ -31353,25 +31365,25 @@ native do ##include <assert.h> end
 native _assert();
 do
     loop i in 100 do
-        var T*? ok;
+        var T&&? ok;
         ok = spawn T;
         _assert(ok?);
     end
-    var T*? ok1 = spawn T;
+    var T&&? ok1 = spawn T;
     _assert(not ok1?);
-    var T*? ok2 = spawn T;
+    var T&&? ok2 = spawn T;
     _assert(not ok2?);
 end
 do
     loop i in 100 do
-        var T*? ok;
+        var T&&? ok;
         ok = spawn T;
         _assert(ok?);
     end
 end
 do
     loop i in 101 do
-        var T*? ok;
+        var T&&? ok;
         ok = spawn T;
         _assert(i<100 or (not ok?));
     end
@@ -31392,19 +31404,19 @@ native _assert();
 do
     pool T[] ts;
     loop i in 100 do
-        var T*? ok;
+        var T&&? ok;
         ok = spawn T in ts;
         _assert(not ok?);
     end
-    var T*? ok1 = spawn T;
+    var T&&? ok1 = spawn T;
     _assert(not ok1?);
-    var T*? ok2 = spawn T;
+    var T&&? ok2 = spawn T;
     _assert(not ok2?);
 end
 do
     pool T[] ts;
     loop i in 100 do
-        var T*? ok;
+        var T&&? ok;
         ok = spawn T in ts;
         _assert(ok?);
     end
@@ -31412,7 +31424,7 @@ end
 do
     pool T[] ts;
     loop i in 101 do
-        var T*? ok;
+        var T&&? ok;
         ok = spawn T in ts;
         if i < 100 then
             _assert(ok?);
@@ -31446,7 +31458,7 @@ var int v = 0;
 do
     pool T[] ts;
     loop i in 200 do
-        var T*? ok =
+        var T&&? ok =
             spawn T in ts with
                 this.inc = 1;
             end;
@@ -31548,8 +31560,8 @@ escape _V;
 Test { [[
 class T with do end;
 var T a;
-var T* b;
-b = &a;
+var T&& b;
+b = &&a;
 escape 1;
 ]],
     run = 1,
@@ -31560,8 +31572,8 @@ Test { [[
 class T with do
     await FOREVER;
 end;
-var T*? a = spawn T;
-var T* b;
+var T&&? a = spawn T;
+var T&& b;
 b = a!;
 escape 10;
 ]],
@@ -31570,8 +31582,8 @@ escape 10;
 
 Test { [[
 class T with do end;
-var T*? a = spawn T;
-var T* b;
+var T&&? a = spawn T;
+var T&& b;
 b = a!;
 escape 10;
 ]],
@@ -31585,9 +31597,9 @@ do
     await FOREVER;
 end
 
-var T* a;
+var T&& a;
 do
-    var T*? b = spawn T;
+    var T&&? b = spawn T;
     b!:v = 10;
     a = b!;
 end
@@ -31604,9 +31616,9 @@ do
     await FOREVER;
 end
 
-var T* a;
+var T&& a;
 do
-    var T*? b = spawn T;
+    var T&&? b = spawn T;
     b!:v = 10;
     a = b!;
     escape a:v;
@@ -31622,9 +31634,9 @@ class T with
 do
 end
 
-var T* a;
+var T&& a;
 do
-    var T*? b = spawn T;
+    var T&&? b = spawn T;
     b!:v = 10;
     a = b!;
 end
@@ -31641,17 +31653,17 @@ do
     await FOREVER;
 end
 
-var T* a;
+var T&& a;
 var T aa;
 do
-    var T*? b = spawn T;
+    var T&&? b = spawn T;
     b!:v = 10;
     finalize
         a = b!;
     with
         do
             aa.v = b!:v;
-            a = &aa;
+            a = &&aa;
         end
     end
 end
@@ -31675,11 +31687,11 @@ do
     await FOREVER;
 end
 
-var T* a;
+var T&& a;
 var T aa;
 do
     pool T[] ts;
-    var T*? b = spawn T in ts;
+    var T&&? b = spawn T in ts;
     b!:v = 10;
         a = b!;
 end
@@ -31703,11 +31715,11 @@ do
     await FOREVER;
 end
 
-var T* a;
+var T&& a;
 var T aa;
 do
     pool T[] ts;
-    var T*? b = spawn T in ts;
+    var T&&? b = spawn T in ts;
     b!:v = 10;
         a = b!;
     await OS_START;
@@ -31731,10 +31743,10 @@ do
     await FOREVER;
 end
 
-var T* a;
+var T&& a;
 do
     pool T[] ts;
-    var T*? b = spawn T in ts;
+    var T&&? b = spawn T in ts;
     b!:v = 10;
         a = b!;
 end
@@ -31757,10 +31769,10 @@ do
     await FOREVER;
 end
 
-var T* a;
+var T&& a;
 do
     pool T[] ts;
-    var T*? b = spawn T in ts;
+    var T&&? b = spawn T in ts;
     b!:v = 10;
         a = b!;
     await OS_START;
@@ -31771,10 +31783,10 @@ escape _V;
 }
 Test { [[
 class T with
-    var int* i1;
+    var int&& i1;
 do
     var int i2;
-    i1 = &i2;
+    i1 = &&i2;
 end
 var T a;
 escape 10;
@@ -31784,11 +31796,11 @@ escape 10;
 
 Test { [[
 class T with do end
-var T* t1;
+var T&& t1;
 do
 do
     var T t2;
-    t1 = &t2;
+    t1 = &&t2;
 end
 end
 escape 10;
@@ -31799,12 +31811,12 @@ escape 10;
 
 Test { [[
 class T with do end
-var T* t1;
+var T&& t1;
 do
 do
     var T t2;
     //finalize
-        t1 = &t2;
+        t1 = &&t2;
     //with
         //nothing;
     //end
@@ -31818,7 +31830,7 @@ escape 10;
 
 Test { [[
 class T with do end
-var T*? t;
+var T&&? t;
 do
     t = spawn T;
 end
@@ -31830,7 +31842,7 @@ escape 10;
 
 Test { [[
 class T with do end
-var T*? a = spawn T;
+var T&&? a = spawn T;
 escape 10;
 ]],
     run = 10,
@@ -31839,7 +31851,7 @@ escape 10;
 Test { [[
 class T with do end
 class U with do end
-var T*? a;
+var T&&? a;
 a = spawn U;
 ]],
     env = 'line 4 : types mismatch',
@@ -31864,7 +31876,7 @@ end
 var int ret = 0;
 
 do
-    var T*? o;
+    var T&&? o;
     o = spawn T;
     await OS_START;
     ret = o!:a;
@@ -31898,7 +31910,7 @@ var int ret = 0;
 
 par/or do
     pool T[] ts;
-    var T*? o;
+    var T&&? o;
     o = spawn T in ts;
     //await OS_START;
     ret = o!:a;
@@ -31931,7 +31943,7 @@ end
 var int ret = 0;
 
 par/or do
-    var T*? o;
+    var T&&? o;
     o = spawn T;
     //await OS_START;
     ret = o!:a;
@@ -31949,7 +31961,7 @@ class V with
 do
 end
 
-var V*? v;
+var V&&? v;
 v = spawn V;
 await 1s;
 
@@ -31965,9 +31977,9 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
 end
 
 class T with
@@ -31988,16 +32000,16 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     var U uu;
-    this.u = &uu;
+    this.u = &&uu;
 end
 
 var T t;
@@ -32025,9 +32037,9 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
@@ -32035,7 +32047,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
@@ -32063,19 +32075,19 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     var U uu;
-    u = &uu;
+    u = &&uu;
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
@@ -32103,7 +32115,7 @@ end
 class U with
     var V v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
@@ -32137,19 +32149,19 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
     var V vv1;
-    v = &vv1;
-    var V*? vv = spawn V;
+    v = &&vv1;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     var U uu;
-    u = &uu;
+    u = &&uu;
     await FOREVER;
 end
 
@@ -32182,9 +32194,9 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
@@ -32192,7 +32204,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
@@ -32224,19 +32236,19 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     var U uu;
-    u = &uu;
+    u = &&uu;
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
@@ -32255,7 +32267,7 @@ do
 end
 class U with
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
 end
 var U u;
 escape 2;
@@ -32272,7 +32284,7 @@ end
 
 class U with
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
 end
 
 
@@ -32305,9 +32317,9 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
@@ -32315,7 +32327,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
@@ -32348,19 +32360,19 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     var U uu;
-    u = &uu;
+    u = &&uu;
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
@@ -32394,9 +32406,9 @@ do
 end
 
 class U with
-    var V* x;
+    var V&& x;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
@@ -32404,14 +32416,14 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
 var T t;
 do
     await OS_START;
-    var V* v = t.u.x;
+    var V&& v = t.u.x;
 end
 
 escape _V;
@@ -32439,26 +32451,26 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     var U uu;
-    u = &uu;
+    u = &&uu;
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
 var T t;
 do
     await OS_START;
-    var V* v = t.u:v;
+    var V&& v = t.u:v;
 end
 
 escape _V;
@@ -32486,9 +32498,9 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
@@ -32496,7 +32508,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
@@ -32534,9 +32546,9 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
@@ -32544,7 +32556,7 @@ class T with
     var U u;
 do
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
@@ -32583,19 +32595,19 @@ do
 end
 
 class U with
-    var V* v;
+    var V&& v;
 do
-    var V*? vv = spawn V;
+    var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     var U uu;
-    u = &uu;
+    u = &&uu;
     //u.v = spawn V;
-    var V*? v = spawn V;
+    var V&&? v = spawn V;
     await FOREVER;
 end
 
@@ -32621,7 +32633,7 @@ do
 end
 
 class T with
-    var V*? v;
+    var V&&? v;
 do
     await 1s;
     v = spawn V;
@@ -32644,12 +32656,12 @@ end
 
 input void OS_START;
 class U with
-    var V*? v;
+    var V&&? v;
 do
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     await OS_START;
     u:v = spawn V;
@@ -32658,7 +32670,7 @@ end
 do
     var U u;
     var T t;
-        t.u = &u;
+        t.u = &&u;
     await OS_START;
 end
 
@@ -32674,13 +32686,13 @@ end
 
 input void A, OS_START;
 class U with
-    var V*? v;
+    var V&&? v;
 do
     await A;
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     await OS_START;
     u:v = spawn V;
@@ -32689,7 +32701,7 @@ end
 do
     var U u;
     var T t;
-        t.u = &u;
+        t.u = &&u;
     await OS_START;
 end
 
@@ -32712,12 +32724,12 @@ do
 end
 
 class U with
-    var V*? v;
+    var V&&? v;
 do
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     await 1s;
     u:v = spawn V;
@@ -32727,7 +32739,7 @@ do
     var U u;
     do              // 26
         var T t;
-        t.u = &u;
+        t.u = &&u;
         await 2s;
     end
     _assert(_V == 10);
@@ -32756,7 +32768,7 @@ do
 end
 
 do
-    var T*? a;
+    var T&&? a;
     a = spawn T;
     //free a;
     _assert(_V == 10);
@@ -32787,7 +32799,7 @@ end
 
 do
     pool T[] ts;
-    var T*? a;
+    var T&&? a;
     a = spawn T in ts;
     //free a;
     _assert(_V == 10);
@@ -32818,7 +32830,7 @@ do
 end
 
 do
-    var T*? ptr;
+    var T&&? ptr;
     loop i in 100 do
         if ptr? then
             //free ptr;
@@ -32856,7 +32868,7 @@ end
 
 do
     pool T[] ts;
-    var T*? ptr;
+    var T&&? ptr;
     loop i in 100 do
         if ptr? then
             //free ptr;
@@ -32893,7 +32905,7 @@ do
 end
 
 do
-    var T*? ptr;
+    var T&&? ptr;
     loop i in 100 do
         if ptr? then
             //free ptr;
@@ -32914,14 +32926,14 @@ escape 10;
 Test { [[
 class U with do end;
 class T with
-    var U* u;
+    var U&& u;
 do
 end
 
 do
     var U u;
     spawn T with
-        this.u = &u;
+        this.u = &&u;
     end;
 end
 escape 1;
@@ -32954,13 +32966,13 @@ escape 1;
 Test { [[
 class U with do end;
 class T with
-    var U* u;
+    var U&& u;
 do
 end
 
     var U u;
     spawn T with
-        this.u = &u;
+        this.u = &&u;
     end;
 escape 1;
 ]],
@@ -32986,16 +32998,16 @@ escape 1;
 Test { [[
 class U with do end;
 class T with
-    var U* u;
+    var U&& u;
 do
-    var U* u1 = u;
+    var U&& u1 = u;
     await 1s;
 end
 
 do
     var U u;
     spawn T with
-        this.u = &u;
+        this.u = &&u;
     end;
 end
 escape 1;
@@ -33008,15 +33020,15 @@ escape 1;
 Test { [[
 class U with do end;
 class T with
-    var U* u;
+    var U&& u;
 do
-    var U* u1 = u;
+    var U&& u1 = u;
     await 1s;
 end
 
     var U u;
     spawn T with
-        this.u = &u;
+        this.u = &&u;
     end;
 escape 1;
 ]],
@@ -33026,17 +33038,17 @@ escape 1;
 Test { [[
 class U with do end;
 class T with
-    var U* u;
+    var U&& u;
 do
-    var U* u1 = u;
+    var U&& u1 = u;
     await 1s;
-    var U* u2 = u;
+    var U&& u2 = u;
 end
 
 do
     var U u;
     spawn T with
-        this.u = &u;
+        this.u = &&u;
     end;
 end
 escape 1;
@@ -33071,7 +33083,7 @@ escape n;
 -- TODO: mem out e mem ever
 --[=[
 Test { [[
-var void* ptr;
+var void&& ptr;
 class T with
 do
 end
@@ -33106,7 +33118,7 @@ do
 end
 do
     pool T[] ts;
-    var T*? p;
+    var T&&? p;
     p = spawn T in ts;
     p!:v = 1;
     p = spawn T in ts;
@@ -33127,7 +33139,7 @@ Test { [[
 class T with
 do
 end
-var T*? t;
+var T&&? t;
 t = spawn T;
 escape t!.v;
 ]],
@@ -33141,12 +33153,12 @@ do
     await FOREVER;
 end
 
-var _void*[10] ts;
-var T*? t;
+var _void&&[10] ts;
+var T&&? t;
 t = spawn T;
 t!:v = 10;
-ts[0] = (void*)(t!);
-escape t!:v + ((T*)ts[0]):v;
+ts[0] = (void&&)(t!);
+escape t!:v + ((T&&)ts[0]):v;
 ]],
     run = 20,
 }
@@ -33188,12 +33200,12 @@ escape _V;
 
 Test { [[
 class T with
-    var int* ptr = null;
+    var int&& ptr = null;
 do
 end
 do
-    var int* p = null;
-    var T*? ui = spawn T with
+    var int&& p = null;
+    var T&&? ui = spawn T with
         this.ptr = p;   // ptr > p
     end;
 end
@@ -33206,13 +33218,13 @@ escape 10;
 
 Test { [[
 class T with
-    var void* ptr = null;
+    var void&& ptr = null;
 do
 end
 do
     pool T[] ts;
-    var void* p = null;
-    var T*? ui;
+    var void&& p = null;
+    var T&&? ui;
     ui = spawn T in ts with
         this.ptr = p;
     end;
@@ -33230,13 +33242,13 @@ native do
 end
 
 class T with
-    var _s* ptr = null;
+    var _s&& ptr = null;
 do
 end
 
 do
-    var _s* p = null;
-    var T*? ui = spawn T with
+    var _s&& p = null;
+    var T&&? ui = spawn T with
         this.ptr = p;
     end;
 end
@@ -33255,13 +33267,13 @@ native do
 end
 
 class T with
-    var _s* ptr = null;
+    var _s&& ptr = null;
 do
 end
 
-var T*? ui;
+var T&&? ui;
 do
-    var _s* p = null;
+    var _s&& p = null;
     do
         ui = spawn T with
             this.ptr = p;
@@ -33283,13 +33295,13 @@ native do
 end
 
 class T with
-    var _s* ptr = null;
+    var _s&& ptr = null;
 do
 end
 
 do
     loop i in 10 do
-        var _s* p = null;
+        var _s&& p = null;
         spawn T with
             this.ptr = p;
         end;
@@ -33340,7 +33352,7 @@ native do
 end
 
 class T with
-    var _s* ptr = null;
+    var _s&& ptr = null;
 do
     _V = _V + 1;
 end
@@ -33353,7 +33365,7 @@ end
 
 do
     loop i in 10 do
-        var _s* p = null;
+        var _s&& p = null;
         spawn T with
             this.ptr = p;
         end;
@@ -33371,7 +33383,7 @@ escape _V;
 
 Test { [[
 class T with
-    var void* ptr;
+    var void&& ptr;
 do
 end
 
@@ -33390,7 +33402,7 @@ end;
 
 Test { [[
 class T with
-    var void* ptr;
+    var void&& ptr;
 do
 end
 
@@ -33414,7 +33426,7 @@ native do
 end
 
 class T with
-    var _s* ptr = null;
+    var _s&& ptr = null;
 do
 end
 
@@ -33426,7 +33438,7 @@ end
 
 do
     loop i in 10 do
-        var _s* p = null;
+        var _s&& p = null;
         spawn T with
             finalize
                 this.ptr = p;
@@ -33447,9 +33459,9 @@ escape _V;
 }
 
 Test { [[
-    var _s* p = null;
+    var _s&& p = null;
     loop i in 10 do
-        var _s* p1 = p;
+        var _s&& p1 = p;
         await 1s;
     end
 
@@ -33466,7 +33478,7 @@ native do
 end
 
 class T with
-    var _s* ptr = null;
+    var _s&& ptr = null;
 do
     _V = _V + 1;
 end
@@ -33477,10 +33489,10 @@ native do
     int V=0;
 end
 
-var T*? ui;
+var T&&? ui;
 do
     loop i in 10 do
-        var _s* p = null;
+        var _s&& p = null;
         ui = spawn T with
             this.ptr = p;
         end;
@@ -33502,7 +33514,7 @@ native do
 end
 
 class T with
-    var _s* ptr = null;
+    var _s&& ptr = null;
 do
 end
 
@@ -33512,9 +33524,9 @@ native do
     int V=0;
 end
 
-var T*? ui;
+var T&&? ui;
 do
-    var _s* p = null;
+    var _s&& p = null;
     loop i in 10 do
         ui = spawn T with
             finalize
@@ -33543,7 +33555,7 @@ native do
 end
 
 class T with
-    var _s* ptr = null;
+    var _s&& ptr = null;
 do
 end
 
@@ -33555,8 +33567,8 @@ end
 
 do
     loop i in 10 do
-        var _s* p = null;
-        var T*? ui = spawn T with
+        var _s&& p = null;
+        var T&&? ui = spawn T with
             finalize
                 this.ptr = p;   // p == ptr
             with
@@ -33577,14 +33589,14 @@ escape _V;
 
 Test { [[
 class Game with
-    event (int,int,int*) go;
+    event (int,int,int&&) go;
 do
 end
 
 var Game game;
 par/or do
     var int a,b;
-    var int* c;
+    var int&& c;
     (a, b, c) = await game.go;
 with
     nothing;
@@ -33596,7 +33608,7 @@ escape 1;
 
 Test { [[
 class Game with
-    event (int,int,int*) go;
+    event (int,int,int&&) go;
 do
 end
 
@@ -33612,10 +33624,10 @@ class Unit with
     event int move;
 do
 end
-var Unit* u;
+var Unit&& u;
 do
     var Unit unit;
-    u = &unit;
+    u = &&unit;
     await 1min;
 end
 emit u:move => 0;
@@ -33631,7 +33643,7 @@ class Unit with
     event int move;
 do
 end
-var Unit*? u;
+var Unit&&? u;
 do
     pool Unit[] units;
     u = spawn Unit in units;  // deveria falhar aqui!
@@ -34088,7 +34100,7 @@ class T with
 do
     await FOREVER;
 end
-var T*? t = spawn T with
+var T&&? t = spawn T with
              this.v = 10;
            end;
 //free(t);
@@ -34127,7 +34139,7 @@ escape ret;
 
 Test { [[
 class T with
-    var T* t;
+    var T&& t;
     event void e;
 do
     watching *t do
@@ -34139,10 +34151,10 @@ pool T[] ts;
 
 var int ret = 1;
 
-var T*? t1 = spawn T in ts with
-                this.t = &this;
+var T&&? t1 = spawn T in ts with
+                this.t = &&this;
             end;
-var T*? t2 = spawn T in ts with
+var T&&? t2 = spawn T in ts with
                 this.t = t1!;
             end;
 
@@ -34329,7 +34341,7 @@ end
 ]]..str..[[
 
 var Class]]..i..[[ instance;
-var I* target = &instance;
+var I&& target = &&instance;
 escape target:x;
 ]],
             run = 10,
@@ -34364,7 +34376,7 @@ var T t with
     this.c1 = 5;
     this.c2 = 6;
 end;
-var I*? i = &t;
+var I&&? i = &&t;
 escape i!:a1+i!:a2+i!:b1+i!:b2+i!:c1+i!:c2;
 ]],
     run = 21,
@@ -34395,7 +34407,7 @@ var T t with
     this.c1 = 5;
     this.c2 = 6;
 end;
-var I* i = &t;
+var I&& i = &&t;
 escape i:a1+i:a2+i:b1+i:b2+i:c1+i:c2;
 ]],
     run = 21,
@@ -34424,7 +34436,7 @@ end
 interface I with
     event void e;
 end
-var J* i = _ptr;
+var J&& i = _ptr;
 escape 10;
 ]],
     env = 'line 8 : undeclared type `J´',
@@ -34438,7 +34450,7 @@ end
 interface I with
     event void e;
 end
-var I* i = _ptr;
+var I&& i = _ptr;
 escape 10;
 ]],
     --env = 'line 8 : invalid attribution',
@@ -34454,7 +34466,7 @@ end
 interface I with
     event int e;
 end
-var I* i = (I*) _ptr;
+var I&& i = (I&&) _ptr;
 escape 10;
 ]],
     run = 10;
@@ -34479,14 +34491,14 @@ end
 
 var T1 t1;
 var T2 t2;
-var T* t;
+var T&& t;
 
-t = &t1;
-var T1* x1 = (T1*) t;
+t = &&t1;
+var T1&& x1 = (T1&&) t;
 _assert(x1 != null);
 
-t = &t1;
-var T2* x2 = (T2*) t;
+t = &&t1;
+var T2&& x2 = (T2&&) t;
 _assert(x2 == null);
 
 escape 10;
@@ -34498,13 +34510,13 @@ Test { [[
 interface I with
 end
 class T with
-    var I* parent;
+    var I&& parent;
 do
 end
 class U with
 do
     var T move with
-        this.parent = &outer;
+        this.parent = &&outer;
     end;
 end
 escape 1;
@@ -34538,8 +34550,8 @@ interface J with
     interface I;
 end
 
-var I* i;
-var J* j = i;
+var I&& i;
+var J&& j = i;
 
 escape 1;
 ]],
@@ -34561,15 +34573,15 @@ do
 end
 class T with
     event int a_;
-    var Global* g;
+    var Global&& g;
 do
     await OS_START;
     emit g:a_  =>  10;
 end
 var U u;
-var Global* g = &u;
+var Global&& g = &&u;
 var T t;
-t.g = &u;
+t.g = &&u;
 var int v = await g:a_;
 escape v;
 ]],
@@ -34579,13 +34591,13 @@ escape v;
 
 Test { [[
 interface Global with
-    var int* a;
+    var int&& a;
 end
-var int* a;
-var int* b;
+var int&& a;
+var int&& b;
 b = global:a;
 do
-    var int* c;
+    var int&& c;
     c = global:a;
 end
 escape 1;
@@ -34594,13 +34606,13 @@ escape 1;
 }
 Test { [[
 interface Global with
-    var int* a;
+    var int&& a;
 end
-var int* a;
-var int* b;
+var int&& a;
+var int&& b;
 global:a = b;       // don't use global
 do
-    var int* c=null;
+    var int&& c=null;
     global:a = c;
 end
 escape 1;
@@ -34611,13 +34623,13 @@ escape 1;
 }
 Test { [[
 interface Global with
-    var int* a;
+    var int&& a;
 end
-var int* a;
-var int* b;
+var int&& a;
+var int&& b;
 global:a = b;       // don't use global
 do
-    var int* c;
+    var int&& c;
     await 1s;
     global:a = c;
 end
@@ -34628,14 +34640,14 @@ escape 1;
 }
 Test { [[
 interface Global with
-    var int* a;
+    var int&& a;
 end
 class T with
 do
-    var int* b;
+    var int&& b;
     b = global:a;
 end
-var int* a;
+var int&& a;
 escape 1;
 ]],
     fin = 'line 7 : unsafe access to pointer "a" across `class´ (tests.lua : 4)',
@@ -34643,14 +34655,14 @@ escape 1;
 }
 Test { [[
 interface Global with
-    var int* a;
+    var int&& a;
 end
 class T with
 do
-    var int* b;
+    var int&& b;
     global:a = b;
 end
-var int* a;
+var int&& a;
 escape 1;
 ]],
     fin = 'line 7 : attribution to pointer with greater scope',
@@ -34881,7 +34893,7 @@ Test { [[
 interface I with
     event int a;
 end
-var I*? t;
+var I&&? t;
 t = spawn I;
 escape 10;
 ]],
@@ -34897,9 +34909,9 @@ interface I with
     event int a;
 end
 
-var I* i;
+var I&& i;
 var T t;
-i = &t;
+i = &&t;
 escape 10;
 ]],
     env = 'line 11 : types mismatch',
@@ -34915,9 +34927,9 @@ interface I with
     event int a;
 end
 
-var I* i;
+var I&& i;
 var T t;
-i = &t;
+i = &&t;
 escape 10;
 ]],
     env = 'line 12 : types mismatch',
@@ -34933,7 +34945,7 @@ interface I with
     event int a;
 end
 
-var I* i;
+var I&& i;
 var T t;
 i = t;
 escape 10;
@@ -34951,9 +34963,9 @@ interface I with
     event int a;
 end
 
-var I* i;
+var I&& i;
 var T t;
-i = &t;
+i = &&t;
 escape 10;
 ]],
     run = 10;
@@ -34972,10 +34984,10 @@ interface J with
     event int a;
 end
 
-var I* i;
+var I&& i;
 var T t;
-i = &t;
-var J* j = i;
+i = &&t;
+var J&& j = i;
 escape 10;
 ]],
     run = 10;
@@ -34991,13 +35003,13 @@ interface I with
     event int a;
 end
 interface J with
-    event int* a;
+    event int&& a;
 end
 
-var I* i;
+var I&& i;
 var T t;
-i = &t;
-var J* j = i;
+i = &&t;
+var J&& j = i;
 escape 10;
 ]],
     env = 'line 16 : types mismatch',
@@ -35006,7 +35018,7 @@ escape 10;
 Test { [[
 class T with
     var int v;
-    var int* x;
+    var int&& x;
     event int a;
 do
     a = 10;
@@ -35020,10 +35032,10 @@ interface J with
     var int v;
 end
 
-var I* i;
+var I&& i;
 var T t;
-i = &t;
-var J* j = i;
+i = &&t;
+var J&& j = i;
 escape 0;
 ]],
     env = 'line 6 : types mismatch',
@@ -35047,10 +35059,10 @@ interface J with
     var int aa;
 end
 
-var I* i;
+var I&& i;
 var T t;
-i = &t;
-var J* j = i;
+i = &&t;
+var J&& j = i;
 escape i:aa + j:aa + t.aa;
 ]],
     run = 30,
@@ -35074,10 +35086,10 @@ interface J with
     var int aa;
 end
 
-var I* i;
+var I&& i;
 var T t;
-i = &t;
-var J* j = i;
+i = &&t;
+var J&& j = i;
 await OS_START;
 escape i:aa + j:aa + t.aa;
 ]],
@@ -35088,7 +35100,7 @@ Test { [[
 input void OS_START;
 class T with
     var int v;
-    var int* x;
+    var int&& x;
     var int a;
 do
     a = 10;
@@ -35103,10 +35115,10 @@ interface J with
     var int a;
 end
 
-var I* i;
+var I&& i;
 var T t;
-i = &t;
-var J* j = i;
+i = &&t;
+var J&& j = i;
 escape i:a + j:a + t.a + i:v + t.v;
 ]],
     run = 32,
@@ -35116,7 +35128,7 @@ Test { [[
 input void OS_START;
 class T with
     var int v;
-    var int* x;
+    var int&& x;
     var int a;
 do
     a = 10;
@@ -35131,10 +35143,10 @@ interface J with
     var int a;
 end
 
-var I* i;
+var I&& i;
 var T t;
-i = &t;
-var J* j = i;
+i = &&t;
+var J&& j = i;
 await OS_START;
 escape i:a + j:a + t.a + i:v + t.v;
 ]],
@@ -35158,7 +35170,7 @@ class Sm with
 do
 end
 interface Media with
-    var Sm* sm;
+    var Sm&& sm;
 end
 escape 10;
 ]],
@@ -35188,7 +35200,7 @@ end
 class MenuGames with
     interface MenuGamesListener;
 do
-    var MenuGamesListener* lst = &this;
+    var MenuGamesListener&& lst = &&this;
 end
 escape 1;
 ]],
@@ -35224,7 +35236,7 @@ end
 
 var T t;
     t.v = 10;
-var I* i = &t;
+var I&& i = &&t;
 escape t._ins();
 ]],
     --env = 'line 13 : native function "CEU_T__ins" is not declared',
@@ -35242,7 +35254,7 @@ end
 
 var T t;
     t.v = 10;
-var I* i = &t;
+var I&& i = &&t;
 escape i:_ins();
 ]],
     --env = 'line 13 : native function "CEU_I__ins" is not declared',
@@ -35261,9 +35273,9 @@ escape 0;
 
 Test { [[
 interface Global with
-    var G* g;
+    var G&& g;
 end
-var G* g;
+var G&& g;
 escape 1;
 ]],
     env = 'line 2 : undeclared type `G´',
@@ -35271,9 +35283,9 @@ escape 1;
 
 Test { [[
 interface Global with
-    event (G*,int) g;
+    event (G&&,int) g;
 end
-event (G*,int) g;
+event (G&&,int) g;
 escape 1;
 ]],
     --env = 'line 2 : undeclared type `G´',
@@ -35292,7 +35304,7 @@ do
     this.c = 1;
 end
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 escape i:c == 1;
 ]],
     run = 1,
@@ -35301,9 +35313,9 @@ escape i:c == 1;
 -- XXX: T-vs-Opt
 
 Test { [[
-input _vldoor_t* T_VERTICAL_DOOR;
+input _vldoor_t&& T_VERTICAL_DOOR;
 class T_VerticalDoor with
-    var void* v;
+    var void&& v;
 do
 end
 
@@ -35315,7 +35327,7 @@ do
     end
 end
 ]],
-    --env = 'line 11 : invalid attribution (void* vs _vldoor_t*)',
+    --env = 'line 11 : invalid attribution (void&& vs _vldoor_t&&)',
     --fin = 'line 11 : attribution to pointer with greater scope',
     --fin = 'line 9 : invalid block for awoken pointer "door"',
     _ana = {
@@ -35324,16 +35336,16 @@ end
 }
 
 Test { [[
-input _vldoor_t* T_VERTICAL_DOOR;
+input _vldoor_t&& T_VERTICAL_DOOR;
 class T_VerticalDoor with
-    var void* v;
+    var void&& v;
 do
 end
 
 do
     every door in T_VERTICAL_DOOR do
         spawn T_VerticalDoor with
-            this.v = (void*)door;
+            this.v = (void&&)door;
         end;
     end
 end
@@ -35347,13 +35359,13 @@ end
 
 Test { [[
 class T with
-    var void* v;
+    var void&& v;
 do
 end
 
 var T t;
 t.v = null;
-var void* ptr = null;
+var void&& ptr = null;
 t.v = ptr;
 escape 1;
 ]],
@@ -35363,14 +35375,14 @@ escape 1;
 }
 Test { [[
 class T with
-    var void* v;
+    var void&& v;
 do
 end
 
 var T t with
     this.v = null;
 end;
-var void* ptr = null;
+var void&& ptr = null;
 t.v = ptr;
 escape 1;
 ]],
@@ -35381,7 +35393,7 @@ escape 1;
 
 Test { [[
 class T with
-    var void* v;
+    var void&& v;
 do
 end
 
@@ -35399,15 +35411,15 @@ interface I with
 end
 
 interface Global with
-    var I* t;
+    var I&& t;
 end
 
 class T with
 do
-    global:t = &this;
+    global:t = &&this;
 end
 
-var I* t;
+var I&& t;
 
 escape 1;
 ]],
@@ -35434,7 +35446,7 @@ escape 1;
 
 Test { [[
 class T with
-    var char * str;
+    var char && str;
 do
     str = "oioi";
     this.str = "oioi";
@@ -35448,8 +35460,8 @@ Test { [[
 class T with
 do
 end
-var int*& v;
-var T*& t;
+var int&& & v;
+var T&& & t;
 escape 1;
 ]],
     run = 1;
@@ -35459,22 +35471,22 @@ Test { [[
 class T with
 do
 end
-var int&* v;
-var T&* t;
+var int& && v;
+var T& && t;
 escape 1;
 ]],
-    env = 'line 4 : invalid type modifier : `&*´',
+    env = 'line 4 : invalid type modifier : `&&&´',
 }
 
 Test { [[
 class T with
-    var char* str;
+    var char&& str;
 do
 end
 
 do
     spawn T with
-        var char* s = "str";
+        var char&& s = "str";
         this.str = s;
     end;
 end
@@ -35486,7 +35498,7 @@ escape 1;
 
 Test { [[
 class T with
-    var int* v;
+    var int&& v;
 do
     *v = 1;
     await 1s;
@@ -35499,11 +35511,11 @@ escape 1;
 
 Test { [[
 interface Global with
-    var int* a;
+    var int&& a;
 end
-var int* a;
+var int&& a;
 class T with
-    var int* v;
+    var int&& v;
 do
 end
 var T t with
@@ -35517,11 +35529,11 @@ escape 1;
 Test { [[
 input void OS_START;
 interface Global with
-    var int* a;
+    var int&& a;
 end
-var int* a = null;
+var int&& a = null;
 class T with
-    var int* v;
+    var int&& v;
 do
 end
 await OS_START;
@@ -35536,10 +35548,10 @@ escape 1;
 Test { [[
 input void OS_START;
 interface Global with
-    var int* p;
+    var int&& p;
 end
 var int i = 1;
-var int* p = null;
+var int&& p = null;
 await OS_START;
 p = p;
 escape *p;
@@ -35550,12 +35562,12 @@ escape *p;
 Test { [[
 input void OS_START;
 interface Global with
-    var int* p;
+    var int&& p;
 end
 var int i = 1;
-var int* p = null;
+var int&& p = null;
 await OS_START;
-p = &i;
+p = &&i;
 escape *p;
 ]],
     run = 1,
@@ -35564,7 +35576,7 @@ escape *p;
 Test { [[
 input void OS_START;
 class T with
-    var int* p;
+    var int&& p;
 do
 end
 var int i = 1;
@@ -35572,7 +35584,7 @@ var T t with
     this.p = null;
 end;
 await OS_START;
-t.p = &i;
+t.p = &&i;
 escape *t.p;
 ]],
     run = 1,
@@ -35584,9 +35596,9 @@ native do
     void* V;
 end
 class T with
-    function (void* v)=>void f;
+    function (void&& v)=>void f;
 do
-    function (void* v)=>void f do
+    function (void&& v)=>void f do
         _V := v;
     end
 end
@@ -35604,11 +35616,11 @@ end
 
 native @nohold _memcpy();
 
-input _pkt_t* RECEIVE;
+input _pkt_t&& RECEIVE;
 
 every inc in RECEIVE do
     spawn Forwarder with
-        _memcpy(&this.out, inc, inc:len);
+        _memcpy(&&this.out, inc, inc:len);
     end;
 end
 ]],
@@ -35619,7 +35631,7 @@ end
 
 Test { [[
 class Unit with
-    var _SDL_Texture* tex;
+    var _SDL_Texture&& tex;
 do
 end
 
@@ -35659,7 +35671,7 @@ Test { [[
 interface I with end
 class T with do end
 pool T[] ts;
-var I* p;
+var I&& p;
 do
     loop i in ts do
         p = i;
@@ -35699,7 +35711,7 @@ escape ret;
 Test { [[
 class Unit with do end
 pool Unit[] us;
-var Unit* p;
+var Unit&& p;
 do
     loop i in us do
         p = i;
@@ -35802,8 +35814,8 @@ end
 var T t;
 var U u;
 
-var I* i1 = &t;
-var I* i2 = (I*) &u;
+var I&& i1 = &&t;
+var I&& i2 = (I&&) &&u;
 
 native @pure _f();
 native do
@@ -35812,13 +35824,13 @@ native do
     }
 end
 
-var I* i3 = (I*) _f(&t);
-var I* i4 = (I*) _f(&u);
+var I&& i3 = (I&&) _f(&&t);
+var I&& i4 = (I&&) _f(&&u);
 
-var T* i5 = (T*) _f(&t);
-var T* i6 = (T*) _f(&u);
+var T&& i5 = (T&&) _f(&&t);
+var T&& i6 = (T&&) _f(&&u);
 
-escape i1==&t and i2==null and i3==&t and i4==null and i5==&t and i6==null;
+escape i1==&&t and i2==null and i3==&&t and i4==null and i5==&&t and i6==null;
 ]],
     run = 1,
 }
@@ -36157,7 +36169,7 @@ Test { [[
 function (int v)=>int f do
     return v+1;
 end
-var int* ptr;
+var int&& ptr;
 escape f(ptr);
 ]],
     env = 'line 5 : wrong argument #1',
@@ -36373,8 +36385,8 @@ escape fff(x);
     run = 12,
 }
 Test { [[
-output (int*,char*)=>void LUA_GETGLOBAL;
-function @rec (int* l)=>void load do
+output (int&&,char&&)=>void LUA_GETGLOBAL;
+function @rec (int&& l)=>void load do
     loop i do
     end
 end
@@ -36391,8 +36403,8 @@ native do
     ##define ceu_out_call_LUA_GETGLOBAL
 end
 
-output (int*,char*)=>void LUA_GETGLOBAL;
-function @rec (int* l)=>void load do
+output (int&&,char&&)=>void LUA_GETGLOBAL;
+function @rec (int&& l)=>void load do
     // TODO: load file
     call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
     call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
@@ -36471,7 +36483,7 @@ Test { [[
 class T with do end;
 
 function (void)=>void fff do
-    var T* ttt = null;
+    var T&& ttt = null;
 end
 
 do
@@ -36647,7 +36659,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 escape t.f() + i:f();
 ]],
     tight = 'line 9 : function must be declared with `recursive´',
@@ -36671,7 +36683,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 escape t.f() + i:f();
 ]],
     run = 2,
@@ -36684,7 +36696,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function (int v)=>int g do
         if (v == 1) then
@@ -36695,7 +36707,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape i:g(5);
 ]],
@@ -36710,7 +36722,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function (int v)=>int g do
         if (v == 1) then
@@ -36721,7 +36733,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape i:g(5);
 ]],
@@ -36736,7 +36748,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function @rec (int v)=>int g do
         if (v == 1) then
@@ -36747,7 +36759,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape i:g(5);
 ]],
@@ -36762,7 +36774,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function @rec (int v)=>int g do
         if (v == 1) then
@@ -36773,7 +36785,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape i:g(5);
 ]],
@@ -36788,7 +36800,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function @rec (int v)=>int g do
         return 1;
@@ -36796,7 +36808,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape i:g(5);
 ]],
@@ -36810,7 +36822,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function @rec (int v)=>int g do
         return 1;
@@ -36818,7 +36830,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape i:g(5);
 ]],
@@ -36833,7 +36845,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function @rec (int v)=>int g do
         return v;
@@ -36841,7 +36853,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape call/rec i:g(5);
 ]],
@@ -36859,7 +36871,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function @rec (int v)=>int g do
         return v;
@@ -36867,7 +36879,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape call/rec i:g(5);
 ]],
@@ -36884,7 +36896,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function (int v)=>int g do
         return 1;
@@ -36892,7 +36904,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape i:g(5);
 ]],
@@ -36908,7 +36920,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function (int v)=>int g do
         return 1;
@@ -36916,7 +36928,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape i:g(5);
 ]],
@@ -36931,7 +36943,7 @@ end
 
 class U with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function (int v)=>int g do
         return 1;
@@ -36940,7 +36952,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function (int v)=>int g do
         if (v == 1) then
@@ -36951,11 +36963,11 @@ do
 end
 
 var T t;
-var I* i1 = &t;
+var I&& i1 = &&t;
 t.i = i1;
 
 var U u;
-var I* i2 = &u;
+var I&& i2 = &&u;
 t.i = i2;
 
 escape i1:g(5) + i2:g(5);
@@ -36971,7 +36983,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function (int v)=>int g do
         if (v == 1) then
@@ -36983,7 +36995,7 @@ end
 
 class U with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function (int v)=>int g do
         return 1;
@@ -36991,11 +37003,11 @@ do
 end
 
 var T t;
-var I* i1 = &t;
+var I&& i1 = &&t;
 t.i = i1;
 
 var U u;
-var I* i2 = &u;
+var I&& i2 = &&u;
 t.i = i2;
 
 escape i1:g(5) + i2:g(5);
@@ -37012,7 +37024,7 @@ end
 
 class T with
     interface I;
-    var I* i;
+    var I&& i;
 do
     function @rec (int v)=>int g do
         if (v == 1) then
@@ -37023,7 +37035,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 t.i = i;
 escape i:g(5);
 ]],
@@ -37109,11 +37121,11 @@ end
 
 var T t;
     t.v = 10;
-var I* i = &t;
+var I&& i = &&t;
 escape i:_ins() + t._ins();;
 ]],
     --env = 'line 14 : native function "CEU_T__ins" is not declared',
-    env = 'line 13 : types mismatch (`I*´ <= `T*´)',
+    env = 'line 13 : types mismatch (`I&&´ <= `T&&´)',
 }
 
 Test { [[
@@ -37134,7 +37146,7 @@ end
 
 var T t;
     t.v = 10;
-var I* i = &t;
+var I&& i = &&t;
 escape i:ins() + t.ins();
 ]],
     run = 20,
@@ -37167,7 +37179,7 @@ end
 
 var T t1;
 
-var F* f = &t1;
+var F&& f = &&t1;
 f:f(3);
 
 escape t1.i + f:i;
@@ -37194,7 +37206,7 @@ end
 
 var T t1;
 
-var F* f = &t1;
+var F&& f = &&t1;
 f:f(3);
 
 escape t1.i + f:i;
@@ -37207,7 +37219,7 @@ Test { [[
 native do
     void* V;
 end
-function (void* v)=>void f do
+function (void&& v)=>void f do
     _V = v;
 end
 escape 1;
@@ -37220,7 +37232,7 @@ Test { [[
 native do
     void* V;
 end
-function (void* v)=>void f do
+function (void&& v)=>void f do
 end
 escape 1;
 ]],
@@ -37233,9 +37245,9 @@ native do
     void* V;
 end
 class T with
-    function (void* v)=>void f;
+    function (void&& v)=>void f;
 do
-    function (void* v)=>void f do
+    function (void&& v)=>void f do
         _V = v;
     end
 end
@@ -37247,10 +37259,10 @@ escape 1;
 
 Test { [[
 class T with
-    var void* v;
-    function (void* v)=>void f;
+    var void&& v;
+    function (void&& v)=>void f;
 do
-    function (void* v)=>void f do
+    function (void&& v)=>void f do
     end
 end
 var T t;
@@ -37264,11 +37276,11 @@ escape 1;
 
 Test { [[
 class T with
-    var void* a;
-    function (void* v)=>void f;
+    var void&& a;
+    function (void&& v)=>void f;
 do
-    function (void* v)=>void f do
-        var void* a = v;
+    function (void&& v)=>void f do
+        var void&& a = v;
     end
 end
 escape 1;
@@ -37279,11 +37291,11 @@ escape 1;
 
 Test { [[
 class T with
-    var void* a;
+    var void&& a;
     function (void)=>void f;
 do
     function (void)=>void f do
-        var void* v;
+        var void&& v;
         a = v;
     end
 end
@@ -37294,10 +37306,10 @@ escape 1;
 }
 Test { [[
 class T with
-    var void* a;
-    function (void* v)=>void f;
+    var void&& a;
+    function (void&& v)=>void f;
 do
-    function (void* v)=>void f do
+    function (void&& v)=>void f do
         a = v;
     end
 end
@@ -37309,10 +37321,10 @@ escape 1;
 }
 Test { [[
 class T with
-    var void* a;
-    function (void* v)=>void f;
+    var void&& a;
+    function (void&& v)=>void f;
 do
-    function (void* v)=>void f do
+    function (void&& v)=>void f do
         a := v;
     end
 end
@@ -37323,10 +37335,10 @@ escape 1;
 }
 Test { [[
 class T with
-    var void* a;
-    function (@hold void* v)=>void f;
+    var void&& a;
+    function (@hold void&& v)=>void f;
 do
-    function (@hold void* v)=>void f do
+    function (@hold void&& v)=>void f do
         a := v;
     end
 end
@@ -37337,10 +37349,10 @@ escape 1;
 
 Test { [[
 class T with
-    var void* v;
-    function (void* v)=>void f;
+    var void&& v;
+    function (void&& v)=>void f;
 do
-    function (@hold void* v)=>void f do
+    function (@hold void&& v)=>void f do
         this.v = v;
     end
 end
@@ -37352,19 +37364,19 @@ escape 1;
 
 Test { [[
 class T with
-    var void* v;
-    function (@hold void* v)=>void f;
+    var void&& v;
+    function (@hold void&& v)=>void f;
 do
-    function (@hold void* v)=>void f do
+    function (@hold void&& v)=>void f do
         this.v := v;
     end
 end
-var void* v;
+var void&& v;
 var T t;
 t.f(null);
 t.f(v);
 do
-    var void* v;
+    var void&& v;
     t.f(v);
 end
 escape 1;
@@ -37377,19 +37389,19 @@ escape 1;
 
 Test { [[
 class T with
-    var void* v;
-    function (@hold void* v)=>void f;
+    var void&& v;
+    function (@hold void&& v)=>void f;
 do
-    function (@hold void* v)=>void f do
+    function (@hold void&& v)=>void f do
         this.v := v;
     end
 end
-var void* v;
+var void&& v;
 var T t;
 t.f(null);
 t.f(v);
 do
-    var void* v;
+    var void&& v;
     t.f(v)
         finalize with
             nothing;
@@ -37407,12 +37419,12 @@ Test { [[
 native do
     void* V;
 end
-function (void* v)=>void f do
+function (void&& v)=>void f do
     _V := v;
 end
-var void* x;
-f((void*)5);
-escape _V==(void*)5;
+var void&& x;
+f((void&&)5);
+escape _V==(void&&)5;
 ]],
     fin = 'line 5 : parameter must be `hold´',
     --fin = 'line 5 : invalid attribution',
@@ -37423,13 +37435,13 @@ Test { [[
 native do
     void* V;
 end
-function (@hold void* v)=>void f do
+function (@hold void&& v)=>void f do
     _V := v;
 end
-var void* x;
-f((void*)5)
+var void&& x;
+f((void&&)5)
     finalize with nothing; end;
-escape _V==(void*)5;
+escape _V==(void&&)5;
 ]],
     fin = 'line 8 : invalid `finalize´',
 }
@@ -37441,7 +37453,7 @@ end
 function (int v)=>void f do
     _V = v;
 end
-var void* x;
+var void&& x;
 f(5);
 escape _V==5;
 ]],
@@ -37467,7 +37479,7 @@ end
 var T t;
 call/rec t.f();
 
-var I* i = &t;
+var I&& i = &&t;
 call i:f();
 
 escape 1;
@@ -37495,7 +37507,7 @@ end
 var T t;
 call/rec t.f();
 
-var I* i = &t;
+var I&& i = &&t;
 call i:f();
 
 escape 1;
@@ -37522,7 +37534,7 @@ end
 var T t;
 call/rec t.f();
 
-var I* i = &t;
+var I&& i = &&t;
 call/rec i:f();
 
 escape 1;
@@ -37546,7 +37558,7 @@ end
 var T t;
 call t.f();
 
-var I* i = &t;
+var I&& i = &&t;
 call/rec i:f();
 
 escape 1;
@@ -37572,7 +37584,7 @@ end
 var T t;
 call t.f();
 
-var I* i = &t;
+var I&& i = &&t;
 call/rec i:f();
 
 escape 1;
@@ -37653,7 +37665,7 @@ escape call/rec f(5);
 
 Test { [[
 interface IWorld with
-    function (PinguHolder*) => PinguHolder* get_pingus;
+    function (PinguHolder&&) => PinguHolder&& get_pingus;
 end
 
 class PinguHolder with
@@ -37663,7 +37675,7 @@ class World with
     interface IWorld;
 do end
 
-var IWorld*? ptr = spawn World with end;
+var IWorld&&? ptr = spawn World with end;
 
 escape 1;
 ]],
@@ -37672,7 +37684,7 @@ escape 1;
 
 Test { [[
 interface IWorld with
-    function (void) => PinguHolder* get_pingus;
+    function (void) => PinguHolder&& get_pingus;
 end
 
 class PinguHolder with
@@ -37682,7 +37694,7 @@ class World with
     interface IWorld;
 do end
 
-var IWorld*? ptr = spawn World with end;
+var IWorld&&? ptr = spawn World with end;
 
 escape 1;
 ]],
@@ -37691,7 +37703,7 @@ escape 1;
 
 Test { [[
 interface IWorld with
-    function (PinguHolder*) => void get_pingus;
+    function (PinguHolder&&) => void get_pingus;
 end
 
 class PinguHolder with
@@ -37701,7 +37713,7 @@ class World with
     interface IWorld;
 do end
 
-var IWorld*? ptr = spawn World with end;
+var IWorld&&? ptr = spawn World with end;
 
 escape 1;
 ]],
@@ -37713,14 +37725,14 @@ class PinguHolder with
 do end
 
 interface IWorld with
-    function (PinguHolder*) => PinguHolder* get_pingus;
+    function (PinguHolder&&) => PinguHolder&& get_pingus;
 end
 
 class World with
     interface IWorld;
 do end
 
-var IWorld*? ptr = spawn World with end;
+var IWorld&&? ptr = spawn World with end;
 
 escape 1;
 ]],
@@ -37738,7 +37750,7 @@ do
     await FOREVER;
 end
 
-var IWorld*? ptr = spawn World with
+var IWorld&&? ptr = spawn World with
                     this.x = 10;
                   end;
 escape ptr!:x;     // escapes with "10"
@@ -37756,10 +37768,10 @@ do
     await FOREVER;
 end
 
-var World*? ptr = spawn World with
+var World&&? ptr = spawn World with
                     this.x = 10;
                   end;
-var IWorld* w = ptr!;
+var IWorld&& w = ptr!;
 escape w:x;     // escapes with "10"
 ]],
     run = 10,
@@ -37929,7 +37941,7 @@ escape v;
 }
 
 Test { [[
-var int* v;
+var int&& v;
 function isr [20] do
     *v = 1;
 end
@@ -38055,10 +38067,10 @@ escape v;
 
 Test { [[
 var int v;
-var int* p;
+var int&& p;
 atomic do
     v = 2;
-    p = &v;
+    p = &&v;
 end
 function isr [20] do
     this.v = 1;
@@ -38070,16 +38082,16 @@ escape 1;
 
 Test { [[
 var int[10] v;
-var int* p;
+var int&& p;
 atomic do
-    p = &v;
+    p = &&v;
 end
 function isr [20] do
     this.v[1] = 1;
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid operand to unary "&"',
+    env = 'line 4 : invalid operand to unary "&&"',
 }
 
 Test { [[
@@ -38102,7 +38114,7 @@ interface UI with
 end
 
 class UIGridItem with
-    var UI*  ui;
+    var UI&&  ui;
 do
 end
 
@@ -38151,7 +38163,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 spawn U in i:us;
 
 escape 1;
@@ -38183,7 +38195,7 @@ global:vs[0] = 1;
 var T t;
 t.vs[0] = 1;
 
-var I* i = &t;
+var I&& i = &&t;
 i:vs[0] = 1;
 
 escape 1;
@@ -38219,7 +38231,7 @@ spawn U in us1;
 var T t;
 spawn U in t.us;
 
-var I* i = &t;
+var I&& i = &&t;
 spawn U in i:us;
 
 escape 1;
@@ -38619,7 +38631,7 @@ class Unit with
     var int rect;
 do
     loop oth in global:units do
-        if oth!=&this then
+        if oth!=&&this then
             spawn V in global:units;
         end
     end
@@ -38666,7 +38678,7 @@ Test { [[
 Test { [[
     class Queue with
     do
-        var Queue* q;
+        var Queue&& q;
     end
     var Queue q;
     escape 1;
@@ -38937,7 +38949,7 @@ escape ret;
 -- if it is not the case, simply use void* and the other application casts back 
 -- to T*
 Test { [[
-event T* e;
+event T&& e;
 var int ret = -1;
 watching e do
     await 1s;
@@ -38971,7 +38983,7 @@ spawn U in t.us2 with
     this.v = 1;
 end;
 
-var I* i = &t;
+var I&& i = &&t;
 spawn U in i:us2 with
     this.v = 2;
 end;
@@ -39014,7 +39026,7 @@ spawn U in t.us2 with
     this.v = 1;
 end;
 
-var I* i = &t;
+var I&& i = &&t;
 
 var int ret = 1;
 
@@ -39059,7 +39071,7 @@ spawn U in t.us2 with
     this.v = 1;
 end;
 
-var I* i = &t;
+var I&& i = &&t;
 
 var int ret = 1;
 
@@ -39088,7 +39100,7 @@ class T with
 do
 end
 
-event T* e;
+event T&& e;
 var int ret = 0;
 
 par/or do
@@ -39096,9 +39108,9 @@ par/or do
         this.v = 10;
     end;
     async do end;
-    emit e => &t;
+    emit e => &&t;
 with
-    var T* p = await e;
+    var T&& p = await e;
     ret = p:v;
 end
 
@@ -39113,7 +39125,7 @@ class T with
 do
 end
 
-event T* e;
+event T&& e;
 var int ret = 0;
 
 par/or do
@@ -39121,9 +39133,9 @@ par/or do
         this.v = 10;
     end;
     async do end;
-    emit e => &t;
+    emit e => &&t;
 with
-    var T* p = await e;
+    var T&& p = await e;
     ret = p:v;
 end
 
@@ -39139,7 +39151,7 @@ class T with
 do
 end
 
-event T* e;
+event T&& e;
 var int ret = 0;
 
 par/or do
@@ -39147,9 +39159,9 @@ par/or do
         this.v = 10;
     end;
     async do end;
-    emit e => &t;
+    emit e => &&t;
 with
-    var T* p = await e;
+    var T&& p = await e;
     async do end;
     ret = p:v;
 end
@@ -39169,7 +39181,7 @@ class T with
 do
 end
 
-event T* e;
+event T&& e;
 var int ret = 0;
 
 par/or do
@@ -39177,9 +39189,9 @@ par/or do
         this.v = 10;
     end;
     async do end;
-    emit e => &t;
+    emit e => &&t;
 with
-    var I* p = await e;
+    var I&& p = await e;
     async do end;
     ret = p:v;
 end
@@ -39200,7 +39212,7 @@ do
     await FOREVER;
 end
 
-var I*? p = spawn T with
+var I&&? p = spawn T with
     this.v = 10;
 end;
 escape p!:v;
@@ -39222,7 +39234,7 @@ do
 end
 
 pool T[1] ts;
-var T*? t = spawn T in ts with
+var T&&? t = spawn T in ts with
     this.id = 10;
 end;
 
@@ -39247,7 +39259,7 @@ do
 end
 
 pool T[1] ts;
-var T*? t = spawn T in ts with
+var T&&? t = spawn T in ts with
     this.id = 10000;
 end;
 
@@ -39271,10 +39283,10 @@ do
 end
 
 pool T[2] ts;
-var T*? t1 = spawn T in ts with
+var T&&? t1 = spawn T in ts with
     this.id = 10000;
 end;
-var T*? t = spawn T in ts with
+var T&&? t = spawn T in ts with
     this.id = 10000;
 end;
 
@@ -39302,10 +39314,10 @@ do
 end
 
 pool T[10000] ts;
-var T* t0 = null;
-var T* tF = null;
+var T&& t0 = null;
+var T&& tF = null;
 loop i in 10000 do
-    var T*? t = spawn T in ts with
+    var T&&? t = spawn T in ts with
         this.id = 10000-i;
     end;
     if t0 == null then
@@ -39342,10 +39354,10 @@ do
 end
 
 pool T[10000] ts;
-var T* tF = null;
+var T&& tF = null;
 loop i in 10000 do
-var T* t0 = null;
-    var T*? t = spawn T in ts with
+var T&& t0 = null;
+    var T&&? t = spawn T in ts with
         this.id = 10000-i;
     end;
     if t0 == null then
@@ -39379,7 +39391,7 @@ do
     await FOREVER;
 end
 
-var I*? p = spawn T;
+var I&&? p = spawn T;
 escape p!:v;
 ]],
     run = 10,
@@ -39395,7 +39407,7 @@ class T with
 do
 end
 
-var I*? p = spawn T with
+var I&&? p = spawn T with
     p!:v = 10;
 end;
 async do end;
@@ -39412,7 +39424,7 @@ class Unit with
     event int move;
 do
 end
-var Unit*? u;
+var Unit&&? u;
 do
     pool Unit[] units;
     u = spawn Unit in units;
@@ -39431,7 +39443,7 @@ class Unit with
     event int move;
 do
 end
-var Unit*? u;
+var Unit&&? u;
 do
     pool Unit[] units;
     u = spawn Unit in units;
@@ -39454,7 +39466,7 @@ interface I with
 end
 
 class T with
-    var I* i = null;
+    var I&& i = null;
 do
     watching *i do
         var int v = i:v;
@@ -39472,7 +39484,7 @@ interface I with
 end
 
 class T with
-    var I* i = null;
+    var I&& i = null;
 do
     await 1s;
     watching *i do
@@ -39491,7 +39503,7 @@ interface I with
 end
 
 class T with
-    var I* i = null;
+    var I&& i = null;
 do
     watching *i do
         await 1s;
@@ -39510,7 +39522,7 @@ interface I with
     event void e;
 end
 
-var I* i=null;
+var I&& i=null;
 
 await 1s;
 
@@ -39531,7 +39543,7 @@ interface I with
     event void e;
 end
 
-var I* i=null;
+var I&& i=null;
 
 await 1s;
 
@@ -39550,7 +39562,7 @@ interface I with
     var int v;
 end
 
-var I* i=null;
+var I&& i=null;
 
 par/or do
     watching *i do
@@ -39585,7 +39597,7 @@ class T with
 do
 end
 
-event T* e;
+event T&& e;
 var int ret = 1;
 
 par/and do
@@ -39593,10 +39605,10 @@ par/and do
     var T t with
         this.v = 10;
     end;
-    emit e => &t;
+    emit e => &&t;
     await 1s;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 1 then
@@ -39619,7 +39631,7 @@ class T with
 do
 end
 
-event T* e;
+event T&& e;
 var int ret = 1;
 
 par/and do
@@ -39627,10 +39639,10 @@ par/and do
     var T t with
         this.v = 10;
     end;
-    emit e => &t;
+    emit e => &&t;
     await 1s;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 1 then
@@ -39654,7 +39666,7 @@ class T with
 do
 end
 
-event T* e;
+event T&& e;
 var int ret = 1;
 
 par/and do
@@ -39662,9 +39674,9 @@ par/and do
     var T t with
         this.v = 10;
     end;
-    emit e => &t;
+    emit e => &&t;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 1 then
@@ -39688,7 +39700,7 @@ do
     await 5s;
 end
 
-event T* e;
+event T&& e;
 var int ret = 0;
 
 par/and do
@@ -39696,10 +39708,10 @@ par/and do
     var T t with
         this.v = 10;
     end;
-    emit e => &t;
+    emit e => &&t;
     await 6s;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 0 then
@@ -39723,7 +39735,7 @@ do
     await 4s;
 end
 
-event T* e;
+event T&& e;
 var int ret = 0;
 
 par/and do
@@ -39731,10 +39743,10 @@ par/and do
     var T t with
         this.v = 10;
     end;
-    emit e => &t;
+    emit e => &&t;
     await 6s;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 0 then
@@ -39758,7 +39770,7 @@ do
     await 6s;
 end
 
-event T* e;
+event T&& e;
 var int ret = 0;
 
 par/and do
@@ -39766,10 +39778,10 @@ par/and do
     var T t with
         this.v = 10;
     end;
-    emit e => &t;
+    emit e => &&t;
     await 6s;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 0 then
@@ -39792,7 +39804,7 @@ class T with
 do
 end
 
-event T* e;
+event T&& e;
 emit e => null;
 escape 1;
 ]],
@@ -39806,19 +39818,19 @@ do
     async do end
 end
 
-event T* e;
+event T&& e;
 var int ret = 1;
 
 par/and do
     async do end;
     pool T[] ts;
-    var T*? t = spawn T in ts with
+    var T&&? t = spawn T in ts with
         this.v = 10;
     end;
     emit e => t!;
     await 1s;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 1 then
@@ -39842,18 +39854,18 @@ do
     async do end
 end
 
-event T* e;
+event T&& e;
 var int ret = 1;
 
 par/and do
     async do end;
     pool T[] ts;
-    var T*? t = spawn T in ts with
+    var T&&? t = spawn T in ts with
         this.v = 10;
     end;
     emit e => t!;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 0 then
@@ -39877,19 +39889,19 @@ do
     await 4s;
 end
 
-event T* e;
+event T&& e;
 var int ret = 0;
 
 par/and do
     async do end;
     pool T[] ts;
-    var T*? t = spawn T in ts with
+    var T&&? t = spawn T in ts with
         this.v = 10;
     end;
     emit e => t!;
     await 6s;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 0 then
@@ -39913,19 +39925,19 @@ do
     await 6s;
 end
 
-event T* e;
+event T&& e;
 var int ret = 0;
 
 par/and do
     async do end;
     pool T[] ts;
-    var T*? t = spawn T in ts with
+    var T&&? t = spawn T in ts with
         this.v = 10;
     end;
     emit e => t!;
     await 6s;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 0 then
@@ -39949,18 +39961,18 @@ do
     await 6s;
 end
 
-event T* e;
+event T&& e;
 var int ret = 0;
 
 par/and do
     async do end;
     pool T[] ts;
-    var T*? t = spawn T in ts with
+    var T&&? t = spawn T in ts with
         this.v = 10;
     end;
     emit e => t!;
 with
-    var T* p = await e;
+    var T&& p = await e;
     watching *p do
         finalize with
             if ret == 0 then
@@ -39985,7 +39997,7 @@ native do
     int V = 0;
 end
 class Item with
-    var U* u;
+    var U&& u;
 do
     watching *u do
         await FOREVER;
@@ -39995,7 +40007,7 @@ end
 do
     var U u;
     spawn Item with
-        this.u = &u;
+        this.u = &&u;
     end;
     await 1s;
 end
@@ -40014,7 +40026,7 @@ native do
     int V = 0;
 end
 class Item with
-    var U* u;
+    var U&& u;
 do
     watching *u do
         await FOREVER;
@@ -40024,7 +40036,7 @@ end
 do
     var U u;
     spawn Item with
-        this.u = &u;
+        this.u = &&u;
     end;
     await 1s;
 end
@@ -40038,7 +40050,7 @@ escape 1;
 Test { [[
 class U with do end;
 class T with
-    var U* u;
+    var U&& u;
 do
     watching *u do
         await FOREVER;
@@ -40053,7 +40065,7 @@ end
 do
     var U u;
     spawn T with
-        this.u = &u;
+        this.u = &&u;
     end;
     await 1s;
 end
@@ -40069,7 +40081,7 @@ native do
 end
 class U with do end;
 class T with
-    var U* u;
+    var U&& u;
 do
     watching *u do
         await FOREVER;
@@ -40079,7 +40091,7 @@ end
 do
     var U u;
     spawn T with
-        this.u = &u;
+        this.u = &&u;
     end;
     await 1s;
 end
@@ -40092,7 +40104,7 @@ escape 1;
 Test { [[
 class U with do end;
 class T with
-    var U* u;
+    var U&& u;
 do
     watching *u do
         await FOREVER;
@@ -40102,7 +40114,7 @@ end
 do
     var U u;
     spawn T with
-        this.u = &u;
+        this.u = &&u;
     end;
 end
 escape 1;
@@ -40113,7 +40125,7 @@ escape 1;
 Test { [[
 class U with do end;
 class T with
-    var U* u;
+    var U&& u;
 do
     watching *u do
         await FOREVER;
@@ -40130,7 +40142,7 @@ var X x;
 do
     var U u;
     spawn T in x.ts with
-        this.u = &u;
+        this.u = &&u;
     end;
 end
 escape 1;
@@ -40179,7 +40191,7 @@ class Unit with
     event int move;
 do
 end
-var Unit*? u;
+var Unit&&? u;
 pool Unit[] units;
 u = spawn Unit in units;
 await 2s;
@@ -40199,7 +40211,7 @@ class Unit with
 do
     await FOREVER;
 end
-var Unit*? u;
+var Unit&&? u;
 pool Unit[] units;
 u = spawn Unit in units;
 watching *u! do
@@ -40215,10 +40227,10 @@ class Unit with
     var int pos;
 do end;
 
-var Unit* ptr;
+var Unit&& ptr;
 do
     var Unit u;
-    ptr = &u;
+    ptr = &&u;
 end
 ptr:pos = 0;
 escape 1;
@@ -40232,10 +40244,10 @@ class Unit with
 do end;
 
 class T with
-    event Unit* org;
+    event Unit&& org;
     event int   ok;
 do
-    var Unit* u = await org;
+    var Unit&& u = await org;
     var int pos = 1;
     watching *u do
         pos = u:pos;
@@ -40251,7 +40263,7 @@ do
     var Unit u with
         this.pos = 10;
     end;
-    emit t.org => &u;
+    emit t.org => &&u;
 end
 
 var int v = await t.ok;
@@ -40278,8 +40290,8 @@ do
     await FOREVER;
 end
 var T a;
-var T* ptr;
-ptr = &a;
+var T&& ptr;
+ptr = &&a;
 watching *ptr do
     var int ret = 0;
     par/and do
@@ -40316,11 +40328,11 @@ class Unit with
     var int pos;
 do end;
 
-var Unit* ptr;
+var Unit&& ptr;
 do
     var Unit u;
     u.pos = 10;
-    ptr = &u;
+    ptr = &&u;
 end
 do
     var int[100] v;
@@ -40348,8 +40360,8 @@ do
     emit ok;
 end
 var T a;
-var T* ptr;
-ptr = &a;
+var T&& ptr;
+ptr = &&a;
 watching *ptr do
     par/or do
         await OS_START;
@@ -40376,7 +40388,7 @@ do
     await FOREVER;
 end
 pool T[1] ts;
-var T*? ok1 = spawn T in ts with
+var T&&? ok1 = spawn T in ts with
                 this.v = 10;
               end;
 watching *ok1! do
@@ -40402,7 +40414,7 @@ do
     async do end;
 end
 pool T[1] ts;
-var T*? ok1 = spawn T in ts with
+var T&&? ok1 = spawn T in ts with
                 this.v = 10;
               end;
 watching *ok1! do
@@ -40430,7 +40442,7 @@ do
     emit this.ok_game => (1,2);
 end
 var T t;
-var T* i = &t;
+var T&& i = &&t;
 var int a,b;
 watching *i do
     (a,b) = await i:ok_game;
@@ -40475,7 +40487,7 @@ do
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     watching *u do
         await OS_START;
@@ -40486,7 +40498,7 @@ end
 do
     var U u;
     var T t with
-        this.u = &u;
+        this.u = &&u;
     end;
     await OS_START;
 end
@@ -40504,7 +40516,7 @@ end
 
 input void OS_START;
 class U with
-    var V*? v;
+    var V&&? v;
     event void x;
 do
     loop do
@@ -40515,7 +40527,7 @@ do
 end
 
 class T with
-    var U* u;
+    var U&& u;
 do
     watching *u do
         await OS_START;
@@ -40527,7 +40539,7 @@ end
 do
     var U u;
     var T t with
-        this.u = &u;
+        this.u = &&u;
     end;
     await OS_START;
 end
@@ -40549,7 +40561,7 @@ do
 end
 
 class UIGridItem with
-    var UI* ui;
+    var UI&& ui;
 do
     watching *ui do
         await FOREVER;
@@ -40575,7 +40587,7 @@ do
 
     var T g2;
     spawn UIGridItem in g1.uis.all with
-        this.ui = &g2;
+        this.ui = &&g2;
     end;
 end
 
@@ -40594,7 +40606,7 @@ do
 end
 
 class UIGridItem with
-    var UI* ui;
+    var UI&& ui;
 do
     watching *ui do
         await FOREVER;
@@ -40619,7 +40631,7 @@ end
 
     var T g2;
     spawn UIGridItem in g1.uis.all with
-        this.ui = &g2;
+        this.ui = &&g2;
     end;
 escape 1;
 ]],
@@ -40641,7 +40653,7 @@ class WorldmapScreen with
 do
 end
 
-var WorldmapScreen*? ws = spawn WorldmapScreen with
+var WorldmapScreen&&? ws = spawn WorldmapScreen with
     this.me = _new_GUIScreen();
 end;
 
@@ -40659,7 +40671,7 @@ do
 end
 
 class UIGridItem with
-    var UI* ui;
+    var UI&& ui;
 do
     watching *ui do
         await FOREVER;
@@ -40685,7 +40697,7 @@ do
 
     var T g2;
     spawn UIGridItem in pool1.all with
-        this.ui = &g2;
+        this.ui = &&g2;
     end;
 end
 
@@ -40712,7 +40724,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 watching *i do
     await OS_START;
     _V = i:e;
@@ -40746,7 +40758,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 
 watching *i do
     await OS_START;
@@ -40783,7 +40795,7 @@ do
 end
 
 var T t1;
-var I* i1 = &t1;
+var I&& i1 = &&t1;
 
 watching *i1 do
     var int ret = 0;
@@ -40825,10 +40837,10 @@ do
 end
 
 var T t1, t2;
-var I* i1 = &t1;
+var I&& i1 = &&t1;
 
 watching *i1 do
-    var I* i2 = &t2;
+    var I&& i2 = &&t2;
     watching *i2 do
         var int ret = 0;
         par/and do
@@ -40881,7 +40893,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 input void OS_START;
 watching *i do
     await OS_START;
@@ -40919,7 +40931,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 input void OS_START;
 watching *i do
     await OS_START;
@@ -40954,7 +40966,7 @@ do
 end
 
 var T t;
-var I* i = &t;
+var I&& i = &&t;
 var int v = i:v;
 i:set(100);
 escape v + i:get();
@@ -40999,14 +41011,14 @@ end
 
 var T t;
 var U u;
-var I* i = &t;
+var I&& i = &&t;
 input void OS_START;
 watching *i do
     await OS_START;
     i:f(100);
     var int ret = i:v;
 
-    i=&u;
+    i=&&u;
     i:f(200);
     _V = ret + i:v;
     escape ret + i:v;
@@ -41026,7 +41038,7 @@ do
 end
 
 var int ret = 1;
-var T*? t = spawn T;
+var T&&? t = spawn T;
 if t? then
     watching *t! do
         finalize with
@@ -41048,7 +41060,7 @@ do
     this.v = 10;
 end
 
-var T*? t = spawn T;
+var T&&? t = spawn T;
 watching *t! do
     await FOREVER;
 end
@@ -41066,7 +41078,7 @@ do
     this.v = 10;
 end
 
-var T*? t = spawn T;
+var T&&? t = spawn T;
 watching *t! do
     await FOREVER;
 end
@@ -41088,9 +41100,9 @@ do
 end
 
 pool T[9999] ts;
-var T* t0 = null;
+var T&& t0 = null;
 loop i in 9999 do
-    var T*? t = spawn T with
+    var T&&? t = spawn T with
         this.id = 9999-i;
     end;
     if t0 == null then
@@ -41119,8 +41131,8 @@ end
 
 pool T[9999] ts;
 loop i in 9999 do
-    var T* t0 = null;
-    var T*? t = spawn T with
+    var T&& t0 = null;
+    var T&&? t = spawn T with
         this.id = 9999-i;
     end;
     if t0 == null then
@@ -41287,12 +41299,12 @@ do
 end
 
 var KeyController c;
-var Controller*   i;
-i = &c;
+var Controller&&   i;
+i = &&c;
 escape 1;
 ]],
     wrn = true,
-    env = 'line 12 : types mismatch (`Controller*´ <= `KeyController*´)',
+    env = 'line 12 : types mismatch (`Controller&&´ <= `KeyController&&´)',
 }
 
 Test { [[
@@ -41306,8 +41318,8 @@ do
 end
 
 var KeyController c;
-var Controller*   i;
-i = &c;
+var Controller&&   i;
+i = &&c;
 escape 1;
 ]],
     wrn = true,
@@ -41401,7 +41413,7 @@ escape 1;
 
 Test { [[
 input void OS_START;
-var int* x = await (10ms) or (OS_START);
+var int&& x = await (10ms) or (OS_START);
 escape 1;
 ]],
     env = 'line 2 : invalid attribution',
@@ -41843,8 +41855,8 @@ escape 1;
 }
 
 Test { [[
-input (int*,int) A;
-event (int,int*) a;
+input (int&&,int) A;
+event (int,int&&) a;
 escape 1;
 ]],
     run = 1;
@@ -41885,7 +41897,7 @@ escape 1;
 }
 
 Test { [[
-input (int,int*) A;
+input (int,int&&) A;
 par/or do
     var int a,b;
     (a,b) = await A;
@@ -41901,7 +41913,7 @@ escape 1;
 }
 
 Test { [[
-input (int,int*) A;
+input (int,int&&) A;
 par/or do
     var int a,b;
     (a,b) = await A;
@@ -41909,7 +41921,7 @@ par/or do
 with
     async do
         var int x = 2;
-        emit A=> (1,&x);
+        emit A=> (1,&&x);
     end
 end
 escape 1;
@@ -42387,7 +42399,7 @@ escape a + b + p;
 
 Test { [[
 var int  a=10, b=5;
-var int* p = &b;
+var int&& p = &&b;
 async/thread (p) do
     *p = 1;
 end
@@ -43052,7 +43064,7 @@ escape ret;
 
 Test { [[
 var _int[2] v;
-var _int* p = v;
+var _int&& p = v;
 par/and do
     v[0] = 1;
 with
@@ -43071,7 +43083,7 @@ var _int[2] v;
 par/and do
     v[0] = 1;
 with
-    var _int* p = v;
+    var _int&& p = v;
     p[1] = 2;
 end
 escape v[0] + v[1];
@@ -43201,7 +43213,7 @@ escape x;
 
 Test { [[
 var int x  = 0;
-var int* p = &x;
+var int&& p = &&x;
 par/and do
     *p = 1;
 with
@@ -43346,7 +43358,7 @@ escape 1;
 }
 
 Test { [[
-var int* p;
+var int&& p;
 var int& i = *p;
 escape 1;
 ]],
@@ -43390,7 +43402,7 @@ escape 1;
 Test { [[
 interface I with end;
 class T with
-    var I* i = null;
+    var I&& i = null;
 do
 end
 
@@ -43405,12 +43417,12 @@ escape 1;
 Test { [[
 interface I with end;
 class T with
-    var I* i = null;
+    var I&& i = null;
 do
 end
 
 var T t;
-var I* i = t.i;
+var I&& i = t.i;
 await 1s;
 _assert(t.i == null);
 escape 1;
@@ -43422,12 +43434,12 @@ escape 1;
 Test { [[
 interface I with end;
 class T with
-    var I* i = null;
+    var I&& i = null;
 do
 end
 
 var T t;
-var I* i = t.i;
+var I&& i = t.i;
 await 1s;
 _assert(i == null);
 escape 1;
@@ -43445,9 +43457,9 @@ do
 end
 
 interface Global with
-    var Pool* p;
+    var Pool&& p;
 end
-var Pool* p = null;
+var Pool&& p = null;
 
 class S with
 do
@@ -43487,7 +43499,7 @@ class Map with
 do
 end
 
-var Map* m;
+var Map&& m;
 emit m:go_xy => (1,1);
 
 escape 1;
@@ -43538,7 +43550,7 @@ interface Object with
     var _SDL_Rect rect;
 end
 class MoveObject with
-    var Object* obj = null;
+    var Object&& obj = null;
 do
     _assert(this.obj != null);
     await 1s;
@@ -43629,7 +43641,7 @@ escape o.v;
 -- REQUESTS
 
 Test { [[
-input/output [10] (int max)=>char* LINE;
+input/output [10] (int max)=>char&& LINE;
 request LINE;
 escape 1;
 ]],
@@ -43638,7 +43650,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char* LINE;
+input/output [10] (int max)=>char&& LINE;
 request LINE => "oi";
 escape 1;
 ]],
@@ -43646,7 +43658,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char* LINE;
+input/output [10] (int max)=>char&& LINE;
 request LINE => 10;
 escape 1;
 ]],
@@ -43657,7 +43669,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) 1
 end
-output/input [10] (int max)=>char* LINE;
+output/input [10] (int max)=>char&& LINE;
 par/or do
     request LINE => 10;
 with
@@ -43668,12 +43680,12 @@ escape 1;
 }
 
 Test { [[
-input void* A;
+input void&& A;
 do
-    var void* p;
+    var void&& p;
     p = await A
         until p==null;
-    var void* p1 = p;
+    var void&& p1 = p;
 end
 await FOREVER;
 ]],
@@ -43683,11 +43695,11 @@ await FOREVER;
 }
 
 Test { [[
-output/input [10] (int max)=>char* LINE;
+output/input [10] (int max)=>char&& LINE;
 var u8 err;
-var char* ret = null;
+var char&& ret = null;
 par/or do
-    var char* ret1;
+    var char&& ret1;
     (err, ret1) = request LINE => 10;
     ret := ret1;
 with
@@ -43700,13 +43712,13 @@ escape *ret;
 }
 
 Test { [[
-output/input [10] (int max)=>char* LINE;
+output/input [10] (int max)=>char&& LINE;
 native do
     ##define ceu_out_emit(a,b,c,d) 1
 end
 var u8 err;
 par/or do
-    var char* ret;
+    var char&& ret;
     (err, ret) = request LINE => 10;
 with
 end
@@ -43716,7 +43728,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char* LINE;
+input/output [10] (int max)=>char&& LINE;
 request LINE;
 escape 1;
 ]],
@@ -43725,7 +43737,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char* LINE;
+input/output [10] (int max)=>char&& LINE;
 request LINE => "oi";
 escape 1;
 ]],
@@ -43733,7 +43745,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char* LINE;
+input/output [10] (int max)=>char&& LINE;
 request LINE => 10;
 escape 1;
 ]],
@@ -43744,7 +43756,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) 1
 end
-output/input [10] (int max)=>char* LINE;
+output/input [10] (int max)=>char&& LINE;
 par/or do
     request LINE => 10;
 with
@@ -43755,13 +43767,13 @@ escape 1;
 }
 
 Test { [[
-output/input [10] (int max)=>char* LINE;
+output/input [10] (int max)=>char&& LINE;
 var u8 err, ret;
 (err, ret) = request LINE => 10;
 escape 1;
 ]],
     env = 'line 3 : wrong argument #3',
-    --env = 'line 3 : invalid attribution (u8 vs char*)',
+    --env = 'line 3 : invalid attribution (u8 vs char&&)',
 }
 
 Test { [[
@@ -44371,7 +44383,7 @@ escape ret;
 
 Test { [=[
 native @nohold _strcmp();
-var char* str = "oioioi";
+var char&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 var char[10] cpy = [[ str ]];
@@ -44387,11 +44399,11 @@ _strcpy(str,"oioioi");
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 var char[10] cpy;
-var char* ptr = cpy;
+var char&& ptr = cpy;
 ptr = [[ str ]];
 escape ret and (not _strcmp(str,cpy));
 ]=],
-    env = 'line 7 : types mismatch (`char*´ <= `char[]´)',
+    env = 'line 7 : types mismatch (`char&&´ <= `char[]´)',
 }
 
 Test { [=[
@@ -44473,10 +44485,10 @@ escape ret;
 
 Test { [=[
 var int a;
-var void* ptr1 = &a;
+var void&& ptr1 = &&a;
 [[ ptr = @ptr1 ]];
-var void* ptr2 = [[ ptr ]];
-escape ptr2==&a;
+var void&& ptr2 = [[ ptr ]];
+escape ptr2==&&a;
 ]=],
     run = 1,
 }
@@ -44496,7 +44508,7 @@ data Opt with
     tag NIL;
 or
     tag PTR with
-        var void* v;
+        var void&& v;
     end
 end
 
@@ -44625,7 +44637,7 @@ data Opt with
     tag Nil;
 or
     tag Ptr with
-        var void* v;
+        var void&& v;
     end
 end
 escape 1;
@@ -44638,7 +44650,7 @@ data Opt with
     tag NIL;
 or
     tag PTR with
-        var void* v;
+        var void&& v;
     end
 end
 escape 1;
@@ -44798,7 +44810,7 @@ var List l = List.CONS(1,
 escape l.CONS.tail.CONS.head;
 ]],
     adt = 'line 9 : invalid constructor : recursive data must use `new´',
-    --env = 'line 9 : types mismatch (`List´ <= `List*´)',
+    --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
 }
 
 Test { [[
@@ -44815,7 +44827,7 @@ var List l = new List.CONS(1,
                    List.NIL()));
 escape l.CONS.tail.CONS.head;
 ]],
-    --env = 'line 9 : types mismatch (`List´ <= `List*´)',
+    --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
     adt = 'line 9 : invalid attribution : must assign to recursive field',
 }
 
@@ -44828,12 +44840,12 @@ or
         var List tail;
     end
 end
-var List* l = List.CONS(1,
+var List&& l = List.CONS(1,
                 List.CONS(2,
                     List.NIL()));
 escape l:CONS.tail.CONS.head;
 ]],
-    env = 'line 9 : types mismatch (`List*´ <= `List´)',
+    env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
 }
 
@@ -44846,12 +44858,12 @@ or
         var List tail;
     end
 end
-var List* l = new List.CONS(1,
+var List&& l = new List.CONS(1,
                    List.CONS(2,
                     List.NIL()));
 escape l:CONS.tail.CONS.head;
 ]],
-    env = 'line 9 : types mismatch (`List*´ <= `List´)',
+    env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
 }
 
@@ -44926,7 +44938,7 @@ data Stack with
     tag EMPTY;
 or
     tag NONEMPTY with
-        var Stack* nxt;
+        var Stack&& nxt;
     end
 end
 
@@ -45180,13 +45192,13 @@ data E with
     tag NOTHING;
 or
     tag X with
-        var D* d;
+        var D&& d;
     end
 end
 
 var E e = E.X(null);
     var D d = D(10);
-    e.X.d = &d;
+    e.X.d = &&d;
 
 escape e.X.d:x;
 ]],
@@ -45202,14 +45214,14 @@ data E with
     tag NOTHING;
 or
     tag X with
-        var D* d;
+        var D&& d;
     end
 end
 
 var E e;
 do
     var D d = D(1);
-    e.X.d = &d;
+    e.X.d = &&d;
 end
 
 escape 1;
@@ -45290,7 +45302,7 @@ escape 1;
 Test { DATA..[[
 var Pair p1 = Pair(1,2);        /* struct, no tags */
 var Opt  o1 = Opt.NIL();        /* unions, explicit tag */
-var Opt  o2 = Opt.PTR(&p1);
+var Opt  o2 = Opt.PTR(&&p1);
 pool List[] l1;
 l1 = new List.NIL();       /* recursive union */
 pool List[] l2 = new List.CONS(1, l1);
@@ -45305,7 +45317,7 @@ escape 1;
 Test { DATA..[[
 pool List[] l1 = new List.NIL();
 pool List[] l2;
-l2 = new List.CONS(1, l1);     /* should be &l1 */
+l2 = new List.CONS(1, l1);     /* should be &&l1 */
 escape 1;
 ]],
     env = 'line 53 : invalid constructor : recursive field "CONS" must be new data',
@@ -45465,7 +45477,7 @@ escape o.PTR.x;
 Test { DATA..[[
 var Pair p1 = Pair(1,2);
 var Opt  o1 = Opt.NIL();
-var Opt  o2 = Opt.PTR(&p1);
+var Opt  o2 = Opt.PTR(&&p1);
 pool List[] l1 = new List.NIL();
 pool List[] l2;
 l2 = new List.CONS(1, List.NIL());
@@ -45475,7 +45487,7 @@ var int ret = 0;                                // 0
 
 ret = ret + p1.x + p1.y;                        // 3
 ret = ret + o1.NIL;                             // 4
-ret = ret + (o2.PTR.v==&p1);                    // 5
+ret = ret + (o2.PTR.v==&&p1);                    // 5
 ret = ret + l1.NIL;                             // 6
 ret = ret + l2.CONS.head + l2.CONS.tail.NIL;    // 8
 ret = ret + l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;   // 12
@@ -45509,7 +45521,7 @@ escape l.CONS.head;
 Test { DATA..[[
 var Pair p  = Pair(1,2);
 var Opt  o1 = Opt.NIL();
-var Opt  o2 = Opt.PTR(&p);
+var Opt  o2 = Opt.PTR(&&p);
 pool List[] l1;
 l1 = new List.NIL();
 pool List[] l2 = new List.CONS(1, List.NIL());
@@ -45533,7 +45545,7 @@ if o2.NIL then
     _assert(0);             // never reachable
 else/if o2.PTR then
     ret = ret + 1;          // 5
-    _assert(o2.PTR.v==&p);
+    _assert(o2.PTR.v==&&p);
 end
 
 if l1.NIL then
@@ -45591,17 +45603,17 @@ escape ret;
 -- cannot cross await statements
 Test { DATA..[[
 pool List[] l = new List.CONS(1, List.NIL());
-var List* p = l.CONS.tail;
+var List&& p = l.CONS.tail;
 await 1s;
 escape p:CONS.head;
 ]],
     --adt = 'line 52 : cannot mix recursive data sources',
     --fin = 'line 54 : unsafe access to pointer "p" across `await´',
-    env = 'line 52 : types mismatch (`List*´ <= `List´)',
+    env = 'line 52 : types mismatch (`List&&´ <= `List´)',
 }
 Test { DATA..[[
 pool List[] l = new List.CONS(1, List.NIL());
-var List* p = &l.CONS.tail;
+var List&& p = &&l.CONS.tail;
 await 1s;
 escape p:CONS.head;
 ]],
@@ -45837,7 +45849,7 @@ l = List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
     adt = 'line 52 : invalid constructor : recursive data must use `new´',
-    --env = 'line 52 : invalid call parameter #2 (List vs List*)',
+    --env = 'line 52 : invalid call parameter #2 (List vs List&&)',
 }
 -- cannot assign "l" directly (in the pool declaration)
 Test { DATA..[[
@@ -45922,7 +45934,7 @@ data T with
 or
     tag NXT with
         var int v;
-        var T*  nxt;
+        var T&&  nxt;
     end
 end
 pool T[] ts;
@@ -46096,7 +46108,7 @@ data OptionPtr with
     tag NIL;
 or
     tag SOME with
-        var int* v;
+        var int&& v;
     end
 end
 
@@ -46109,11 +46121,11 @@ ret = ret + i.NIL + p.NIL;  // 2
 i = OptionInt.SOME(3);
 ret = ret + i.SOME.v;       // 5
 
-p = OptionPtr.SOME(&ret);
+p = OptionPtr.SOME(&&ret);
 *p.SOME.v = *p.SOME.v + 2;    // 7
 
 var int v = 10;
-p = OptionPtr.SOME(&v);
+p = OptionPtr.SOME(&&v);
 *p.SOME.v = *p.SOME.v + 1;
 
 ret = ret + v;              // 18
@@ -46383,7 +46395,7 @@ var void&? v;
 finalize
     v = _myalloc();
 with
-    _myfree(&v!);
+    _myfree(&&v!);
 end
 
 escape 1;
@@ -46406,7 +46418,7 @@ finalize
     v = _myalloc();
 with
     if v? then
-        _myfree(&v!);
+        _myfree(&&v!);
     end
 end
 
@@ -46462,8 +46474,8 @@ var int&? v4;
         nothing;
     end
 
-escape (not v1?) + (not v3?) + v2? + v4? + (&v2! ==_V2) + (&v4! ==_V2) + v2! + 
-v4!;
+escape (not v1?) + (not v3?) + v2? + v4? + (&&v2! ==_V2) + (&&v4! ==_V2) + v2!  
++ v4!;
 ]],
     run = 26,
 }
@@ -46567,7 +46579,7 @@ data OptionPtr with
     tag NIL;
 or
     tag SOME with
-        var int* v;
+        var int&& v;
     end
 end
 
@@ -46707,7 +46719,7 @@ end
 class EnterLeave with
     var IGUI_Component& gui;
 do
-    var _void* g = &gui.nat!;
+    var _void&& g = &&gui.nat!;
 end
 escape 1;
 ]],
@@ -46833,7 +46845,7 @@ end
 var U u with
     this.v = 10;
 end;
-var I* i = &u;
+var I&& i = &&u;
 
 escape i:v!;
 ]],
@@ -46862,7 +46874,7 @@ end;
 var U u with
     this.t = t;
 end;
-var I* i = &u;
+var I&& i = &&u;
 
 escape ((*i).t).x!;
 ]],
@@ -46880,12 +46892,12 @@ or
 end
 
 pool List[] list;
-var List* l = list;
+var List&& l = list;
 
 escape 1;
 ]],
     run = 1,
-    --env = 'line 15 : invalid operand to unary "*"',
+    --env = 'line 15 : invalid operand to unary "&&"',
     --env = 'line 15 : data must be a pointer',
 }
 
@@ -46902,7 +46914,7 @@ end
 pool List[] list
 
 = new List.CONS(10, List.NIL());
-var List* l = list;
+var List&& l = list;
 
 watching l do
     await 1s;
@@ -46911,7 +46923,7 @@ end
 escape 0;
 ]],
     env = 'line 15 : not a struct',
-    --env = 'line 15 : invalid operand to unary "*"',
+    --env = 'line 15 : invalid operand to unary "&&"',
     --env = 'line 15 : data must be a pointer',
 }
 
@@ -46949,7 +46961,7 @@ pool List[] list;
 
 list = new List.CONS(10, List.NIL());
 
-pool List[]* lll = &list;
+pool List[]&& lll = &&list;
 
 escape lll:CONS.head;
 ]],
@@ -46969,7 +46981,7 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]* l = &list;
+pool List[]&& l = &&list;
 
 l:CONS.tail = new List.CONS(9, List.NIL());
 l = l:CONS.tail;
@@ -46998,7 +47010,7 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]* l = &list;
+pool List[]&& l = &&list;
 
 l:CONS.tail = new List.CONS(9, List.NIL());
 l = l:CONS.tail;
@@ -47033,7 +47045,7 @@ end
 pool List[10] list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]* lll = &list;
+pool List[]&& lll = &&list;
 
 lll:CONS.tail = new List.CONS(9, List.NIL());
 lll = lll:CONS.tail;
@@ -47071,7 +47083,7 @@ or
 end
 
 pool List[] list = new List.CONS(10, List.NIL());
-pool List[]* lll = &list;
+pool List[]&& lll = &&list;
 
 lll:CONS.tail = new List.CONS(9, List.NIL());
 lll = lll:CONS.tail;
@@ -47124,7 +47136,7 @@ do
     await FOREVER;
 end
 
-event T* e;
+event T&& e;
 
 input void OS_START;
 
@@ -47133,10 +47145,10 @@ par do
         par/or do
             await OS_START;
             pool T[1] ts;
-            var T*? ptr = spawn T in ts;
+            var T&&? ptr = spawn T in ts;
             emit e => ptr!;
         with
-            var T* t = await e;
+            var T&& t = await e;
         end
     end
     do
@@ -47148,7 +47160,7 @@ par do
     await 1s;
     escape 1;
 with
-    var T* t = await e;
+    var T&& t = await e;
     var int ret = await *t;     // crash!
     escape ret;
 end
@@ -47168,7 +47180,7 @@ end
 pool Widget[] widgets;
 traverse widget in widgets do
     watching *widget do
-        var int v1 = traverse &widget:ROW.w1;
+        var int v1 = traverse &&widget:ROW.w1;
     end
 end
 
@@ -47255,7 +47267,7 @@ class Body with
 do
     finalize with end;
 
-    var Body*? nested =
+    var Body&&? nested =
         spawn Body in bodies with
             this.bodies = bodies;
             this.sum    = sum;
@@ -47293,7 +47305,7 @@ class Body with
 do
     finalize with end;
 
-    var Body*? nested =
+    var Body&&? nested =
         spawn Body in bodies with
             this.bodies = bodies;
             this.sum    = sum;
@@ -47341,17 +47353,17 @@ tree = new Tree.NODE(1,
 
 class Body with
     pool  Body[]& bodies;
-    var   Tree*   n;
+    var   Tree&&   n;
     var   int&    sum;
     event int     ok;
 do
     watching *n do
         var int i = this.sum;
         if n:NODE then
-            var Body*? left =
+            var Body&&? left =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &n:NODE.left;
+                    this.n      = &&n:NODE.left;
                     this.sum    = sum;
                 end;
             if left? then
@@ -47362,10 +47374,10 @@ do
 
             this.sum = this.sum + i + n:NODE.v;
 
-            var Body*? right =
+            var Body&&? right =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &n:NODE.right;
+                    this.n      = &&n:NODE.right;
                     this.sum    = sum;
                 end;
             if right? then
@@ -47427,17 +47439,17 @@ pool Tree[3] tree = new Tree.NODE(1,
 
 class Body with
     pool  Body[7]& bodies;
-    var   Tree*    n;
+    var   Tree&&    n;
     var   int&     sum;
     event int      ok;
 do
     watching *n do
         var int i = this.sum;
         if n:NODE then
-            var Body*? left =
+            var Body&&? left =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &n:NODE.left;
+                    this.n      = &&n:NODE.left;
                     this.sum    = sum;
                 end;
             if left? then
@@ -47448,10 +47460,10 @@ do
 
             this.sum = this.sum + i + n:NODE.v;
 
-            var Body*? right =
+            var Body&&? right =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &n:NODE.right;
+                    this.n      = &&n:NODE.right;
                     this.sum    = sum;
                 end;
             if right? then
@@ -47513,7 +47525,7 @@ pool List[3] list
 
 class Body with
     pool  Body[]& bodies;
-    var   List*   n;
+    var   List&&   n;
 do
     await 1s;
     if n:NIL then
@@ -47522,7 +47534,7 @@ do
         if n:CONS then
             spawn Body in this.bodies with
                 this.bodies = bodies;
-                this.n      = &n:CONS.tail;
+                this.n      = &&n:CONS.tail;
             end;
         end
     end
@@ -47555,7 +47567,7 @@ pool List[3] list
 
 class Body with
     pool  Body[]& bodies;
-    var   List*   n;
+    var   List&&   n;
 do
     if n:NIL then
     end
@@ -47563,7 +47575,7 @@ do
         if n:CONS then
             spawn Body in this.bodies with
                 this.bodies = bodies;
-                this.n      = &n:CONS.tail;
+                this.n      = &&n:CONS.tail;
             end;
         end
     end
@@ -47602,7 +47614,7 @@ traverse n in list do
     sum = sum + 1;
     if n:CONS then
         sum = sum + n:CONS.head;
-        traverse &n:CONS.tail;
+        traverse &&n:CONS.tail;
     end
 end
 
@@ -47632,7 +47644,7 @@ traverse n in list do
     if n:CONS then
         sum = sum + n:CONS.head;
         await 1s;
-        traverse &n:CONS.tail;
+        traverse &&n:CONS.tail;
     end
 end
 
@@ -47662,7 +47674,7 @@ traverse n in list do
     await 1s;
     if n:CONS then
         sum = sum + n:CONS.head;
-        traverse &n:CONS.tail;
+        traverse &&n:CONS.tail;
     end
 end
 
@@ -47693,7 +47705,7 @@ traverse n in list do
         sum = sum + n:CONS.head;
         watching *n do
             await 1s;
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         end
     end
 end
@@ -47725,7 +47737,7 @@ traverse n in list do
         //await 1s;
         if n:CONS then
             sum = sum + n:CONS.head;
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         end
     //end
 end
@@ -47757,7 +47769,7 @@ traverse n in list do
         await 1s;
         if n:CONS then
             sum = sum + n:CONS.head;
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         end
     //end
 end
@@ -47790,7 +47802,7 @@ traverse n in list do
     watching *n do
         if n:CONS then
             sum = sum + n:CONS.head;
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         end
     end
 end
@@ -47819,13 +47831,13 @@ pool Tree[3] tree =
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
 var int  v = 0;
-var int* ptr = &v;
+var int&& ptr = &&v;
 
 traverse t in tree do
     *ptr = *ptr + 1;
     if t:NODE then
-        traverse &t:NODE.left;
-        traverse &t:NODE.right;
+        traverse &&t:NODE.left;
+        traverse &&t:NODE.right;
     end
 end
 
@@ -47852,14 +47864,14 @@ pool Tree[3] tree =
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
 var int  v = 0;
-var int* ptr = &v;
+var int&& ptr = &&v;
 
 traverse t in tree do
     *ptr = *ptr + 1;
     if t:NODE then
         watching *t do
-            traverse &t:NODE.left;
-            traverse &t:NODE.right;
+            traverse &&t:NODE.left;
+            traverse &&t:NODE.right;
         end
     end
 end
@@ -47894,14 +47906,14 @@ traverse n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
-        traverse &n:CONS.tail;
+        traverse &&n:CONS.tail;
     end
 end
 */
 
 class Body with
     pool  Body[3]& bodies;
-    var   List*    n;
+    var   List&&    n;
 do
     if n:NIL then
         _V = _V * 2;
@@ -47911,10 +47923,10 @@ do
         if n:CONS then
             _V = _V + n:CONS.head;
 
-            var Body*? tail =
+            var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &n:CONS.tail;
+                    this.n      = &&n:CONS.tail;
                 end;
             if tail? then
                 await *tail!;
@@ -47961,14 +47973,14 @@ traverse n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
-        traverse &n:CONS.tail;
+        traverse &&n:CONS.tail;
     end
 end
 */
 
 class Body with
     pool  Body[4]& bodies;
-    var   List*    n;
+    var   List&&    n;
 do
     watching *n do
         if n:NIL then
@@ -47977,10 +47989,10 @@ do
             _V = _V + 1;
             _V = _V + n:CONS.head;
 
-            var Body*? tail =
+            var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &n:CONS.tail;
+                    this.n      = &&n:CONS.tail;
                 end;
             if tail? then
                 await *tail!;
@@ -48024,24 +48036,24 @@ traverse n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
-        traverse &n:CONS.tail;
+        traverse &&n:CONS.tail;
     end
 end
 
 /*
 class Body with
     pool  Body[]& bodies;
-    var   List*   n;
+    var   List&&   n;
 do
     watching *n do
         _V = _V + 1;
         if n:CONS then
             _V = _V + n:CONS.head;
 
-            var Body*? tail =
+            var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &n:CONS.tail;
+                    this.n      = &&n:CONS.tail;
                 end;
             if tail? then
                 await *tail!;
@@ -48085,24 +48097,24 @@ traverse n in list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
-        traverse &n:CONS.tail;
+        traverse &&n:CONS.tail;
     end
 end
 
 /*
 class Body with
     pool  Body[]& bodies;
-    var   List*   n;
+    var   List&&   n;
 do
     watching *n do
         _V = _V + 1;
         if n:CONS then
             _V = _V + n:CONS.head;
 
-            var Body*? tail =
+            var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &n:CONS.tail;
+                    this.n      = &&n:CONS.tail;
                 end;
             if tail? then
                 await *tail!;
@@ -48146,7 +48158,7 @@ traverse n in list do
         await 1s;
         if n:CONS then
             sum = sum + n:CONS.head;
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         end
     end
 end
@@ -48179,7 +48191,7 @@ traverse n in list do
         await 1s;
         if n:CONS then
             sum = sum + n:CONS.head;
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         end
     //end
 end
@@ -48217,7 +48229,7 @@ traverse n in list do
         await 1s;
         if n:CONS then
             sum = sum + n:CONS.head;
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
             sum = sum + n:CONS.head;
         end
     end
@@ -48258,7 +48270,7 @@ do
             await 1s;
             if n:CONS then
                 sum = sum + n:CONS.head;
-                traverse &n:CONS.tail;
+                traverse &&n:CONS.tail;
                 sum = sum + n:CONS.head;
             end
         end
@@ -48295,9 +48307,9 @@ traverse n in tree do
     sum = sum + 1;
     watching *n do
         if n:NODE then
-            traverse &n:NODE.left;
+            traverse &&n:NODE.left;
             sum = sum + n:NODE.v;
-            traverse &n:NODE.right;
+            traverse &&n:NODE.right;
         end
     end
 end
@@ -48327,9 +48339,9 @@ traverse n in tree do
     sum = sum + 1;
     watching *n do
         if n:NODE then
-            traverse &n:NODE.left;
+            traverse &&n:NODE.left;
             sum = sum + n:NODE.v;
-            traverse &n:NODE.right;
+            traverse &&n:NODE.right;
         end
     end
 end
@@ -48361,9 +48373,9 @@ traverse n in tree do
     watching *n do
         if n:NODE then
             await 1s;
-            traverse &n:NODE.left;
+            traverse &&n:NODE.left;
             sum = sum + n:NODE.v;
-            traverse &n:NODE.right;
+            traverse &&n:NODE.right;
         end
     end
 end
@@ -48394,9 +48406,9 @@ var int sum = 1;
 traverse n in tree do
     watching *n do
         if n:NODE then
-            traverse &n:NODE.left;
+            traverse &&n:NODE.left;
             sum = sum * n:NODE.v + n:NODE.v;
-            traverse &n:NODE.right;
+            traverse &&n:NODE.right;
         end
     end
 end
@@ -48427,9 +48439,9 @@ var int sum = 1;
 traverse n in tree do
     watching *n do
         if n:NODE then
-            traverse &n:NODE.left;
+            traverse &&n:NODE.left;
             sum = sum * n:NODE.v + n:NODE.v;
-            traverse &n:NODE.right;
+            traverse &&n:NODE.right;
         end
     end
 end
@@ -48445,18 +48457,18 @@ data T with
 or
     tag NXT with
         var int v;
-        var T*  nxt;
+        var T&&  nxt;
     end
 end
 
 pool T[] ts;
 
-var void* p1 = (void*)this;
+var void&& p1 = (void&&)this;
 
 traverse t in ts do
-    _assert(p1 == (void*)this);
+    _assert(p1 == (void&&)this);
     if t:NXT then
-        traverse &t:NXT.nxt;
+        traverse &&t:NXT.nxt;
     end
 end
 
@@ -48489,9 +48501,9 @@ with
 end
 
 traverse t in ts do
-    _assert(&p1! == (void*)this);
+    _assert(&&p1! == (void&&)this);
     if t:NXT then
-        traverse &t:NXT.nxt;
+        traverse &&t:NXT.nxt;
     end
 end
 
@@ -48523,9 +48535,9 @@ with
 end
 
 traverse t in ts do
-    _assert(&p1! == (void*)this);
+    _assert(&&p1! == (void&&)this);
     if t:NXT then
-        traverse &t:NXT.nxt;
+        traverse &&t:NXT.nxt;
     end
 end
 
@@ -48564,7 +48576,7 @@ class X with
 do end
 
 traverse t in ts do
-    _assert(&p1! == (void*)this);
+    _assert(&&p1! == (void&&)this);
     var int v1 = 1;
     var int v3 = 0;
     var X x with
@@ -48574,7 +48586,7 @@ traverse t in ts do
     end;
     _assert(x.v1 + x.v2 + x.v3 == 6);
     if t:NXT then
-        traverse &t:NXT.nxt;
+        traverse &&t:NXT.nxt;
     end
 end
 
@@ -48613,7 +48625,7 @@ class X with
 do end
 
 traverse t in ts do
-    _assert(&p1! == (void*)this);
+    _assert(&&p1! == (void&&)this);
     var int v1 = 1;
     var int v3 = 0;
     var X x with
@@ -48623,7 +48635,7 @@ traverse t in ts do
     end;
     _assert(x.v1 + x.v2 + x.v3 == 6);
     if t:NXT then
-        traverse &t:NXT.nxt;
+        traverse &&t:NXT.nxt;
     end
 end
 
@@ -48653,9 +48665,9 @@ traverse n in tree do
     watching *n do
         await 1s;
         if n:NODE then
-            traverse &n:NODE.left;
+            traverse &&n:NODE.left;
             sum = sum * n:NODE.v + n:NODE.v;
-            traverse &n:NODE.right;
+            traverse &&n:NODE.right;
         end
     end
 end
@@ -48686,9 +48698,9 @@ traverse n in tree do
     await 1s;
     watching *n do
         if n:NODE then
-            traverse &n:NODE.left;
+            traverse &&n:NODE.left;
             sum = sum * n:NODE.v + n:NODE.v;
-            traverse &n:NODE.right;
+            traverse &&n:NODE.right;
         end
     end
 end
@@ -48721,9 +48733,9 @@ do
         watching *n do
             await 1s;
             if n:NODE then
-                traverse &n:NODE.left;
+                traverse &&n:NODE.left;
                 sum = sum * n:NODE.v + n:NODE.v;
-                traverse &n:NODE.right;
+                traverse &&n:NODE.right;
             end
         end
     end
@@ -48756,9 +48768,9 @@ par/and do
         watching *n do
             if n:NODE then
                 await 1s;
-                traverse &n:NODE.left;
+                traverse &&n:NODE.left;
                 sum = sum * n:NODE.v + n:NODE.v;
-                traverse &n:NODE.right;
+                traverse &&n:NODE.right;
                 await 1s;
             end
         end
@@ -48803,7 +48815,7 @@ traverse n in list do
     if n:CONS then
         sum = sum + n:CONS.head;
         loop i in 1 do
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         end
     end
 end
@@ -48834,7 +48846,7 @@ traverse n in list do
     if n:CONS then
         sum = sum + n:CONS.head;
         //loop i in 1 do
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         //end
     end
 end
@@ -48866,7 +48878,7 @@ traverse n in list do
     if n:CONS then
         sum = sum + n:CONS.head;
         //loop i in 1 do
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         //end
     end
 end
@@ -48923,10 +48935,10 @@ do
             nothing;
 
         else/if widget:SEQ then
-            traverse &widget:SEQ.w1 with
+            traverse &&widget:SEQ.w1 with
                 this.param = param + 1;
             end;
-            traverse &widget:SEQ.w2 with
+            traverse &&widget:SEQ.w2 with
                 this.param = param + 1;
             end;
 
@@ -48964,10 +48976,10 @@ do
 
     watching *widget do
         if widget:SEQ then
-            traverse &widget:SEQ.w1 with
+            traverse &&widget:SEQ.w1 with
                 this.param = param + 1;
             end;
-            traverse &widget:SEQ.w2 with
+            traverse &&widget:SEQ.w2 with
                 this.param = param + 1;
             end;
 
@@ -49007,10 +49019,10 @@ do
 
     watching *widget do
         if widget:SEQ then
-            traverse &widget:SEQ.w1 with
+            traverse &&widget:SEQ.w1 with
                 this.param = param + 1;
             end;
-            traverse &widget:SEQ.w2 with
+            traverse &&widget:SEQ.w2 with
                 this.param = param + 1;
             end;
 
@@ -49051,10 +49063,10 @@ do
 
     watching *widget do
         if widget:SEQ then
-            traverse &widget:SEQ.w1 with
+            traverse &&widget:SEQ.w1 with
                 this.param = param + 1;
             end;
-            traverse &widget:SEQ.w2 with
+            traverse &&widget:SEQ.w2 with
                 this.param = param + 1;
             end;
 
@@ -49093,10 +49105,10 @@ do
 
     watching *widget do
         if widget:SEQ then
-            traverse &widget:SEQ.w1 with
+            traverse &&widget:SEQ.w1 with
                 this.param = param + 1;
             end;
-            traverse &widget:SEQ.w2 with
+            traverse &&widget:SEQ.w2 with
                 this.param = param + 1;
             end;
 
@@ -49240,9 +49252,9 @@ with
                 else/if widget:ROW then
                     var int v1, v2;
                     par/and do
-                        v1 = traverse &widget:ROW.w1;
+                        v1 = traverse &&widget:ROW.w1;
                     with
-                        v2 = traverse &widget:ROW.w2;
+                        v2 = traverse &&widget:ROW.w2;
                     end
                     escape v1 + v2;
 
@@ -49296,12 +49308,12 @@ with
             else/if widget:ROW then
                 loop do
                     par/or do
-                        var int ret = traverse &widget:ROW.w1;
+                        var int ret = traverse &&widget:ROW.w1;
                         if ret == 0 then
                             await FOREVER;
                         end
                     with
-                        var int ret = traverse &widget:ROW.w2;
+                        var int ret = traverse &&widget:ROW.w2;
                         if ret == 0 then
                             await FOREVER;
                         end
@@ -49346,7 +49358,7 @@ par/or do
 
             else/if e:CONS then
                 loop do
-                    traverse &e:CONS.tail;
+                    traverse &&e:CONS.tail;
                     _ceu_out_assert(0, "0");
                 end
             else
@@ -49399,14 +49411,14 @@ par/or do
             else/if widget:SEQ then
                 loop do
                     par/or do
-                        traverse &widget:SEQ.w1 with
+                        traverse &&widget:SEQ.w1 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w1.NIL then
     await FOREVER;
 end
                     with
-                        traverse &widget:SEQ.w2 with
+                        traverse &&widget:SEQ.w2 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w2.NIL then
@@ -49463,14 +49475,14 @@ par/or do
             else/if widget:SEQ then
                 loop do
                     par/or do
-                        traverse &widget:SEQ.w1 with
+                        traverse &&widget:SEQ.w1 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w1.NIL then
     await FOREVER;
 end
                     with
-                        traverse &widget:SEQ.w2 with
+                        traverse &&widget:SEQ.w2 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w2.NIL then
@@ -49528,7 +49540,7 @@ par/or do
             else/if widget:SEQ then
                 loop do
                     par/or do
-                        traverse &widget:SEQ.w1 with
+                        traverse &&widget:SEQ.w1 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w1.NIL then
@@ -49536,7 +49548,7 @@ _ceu_out_assert(0, "ok\n");
     await FOREVER;
 end
                     with
-                        traverse &widget:SEQ.w2 with
+                        traverse &&widget:SEQ.w2 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w2.NIL then
@@ -49594,7 +49606,7 @@ par/or do
             else/if widget:SEQ then
                 loop do
                     par/or do
-                        traverse &widget:SEQ.w1 with
+                        traverse &&widget:SEQ.w1 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w1.NIL then
@@ -49602,7 +49614,7 @@ _ceu_out_assert(0, "ok\n");
     await FOREVER;
 end
                     with
-                        traverse &widget:SEQ.w2 with
+                        traverse &&widget:SEQ.w2 with
                             this.param = param + 1;
                         end;
 if widget:SEQ.w2.NIL then
@@ -49654,7 +49666,7 @@ par/or do
                 await FOREVER;
 
             else/if cmd:SEQUENCE then
-                traverse &cmd:SEQUENCE.one;
+                traverse &&cmd:SEQUENCE.one;
 
             else
             end
@@ -49702,9 +49714,9 @@ with
                 await FOREVER;
 
             else/if cmd:SEQUENCE then
-                traverse &cmd:SEQUENCE.one;
+                traverse &&cmd:SEQUENCE.one;
                 _ceu_out_assert(0, "bug found"); // cmds has to die entirely before children
-                traverse &cmd:SEQUENCE.two;
+                traverse &&cmd:SEQUENCE.two;
             end
         end
     end
@@ -49749,8 +49761,8 @@ with
                 await FOREVER;
 
             else/if cmd:SEQUENCE then
-                traverse &cmd:SEQUENCE.one;
-                traverse &cmd:SEQUENCE.two;
+                traverse &&cmd:SEQUENCE.one;
+                traverse &&cmd:SEQUENCE.two;
             end
         end
     end
@@ -49789,8 +49801,8 @@ traverse cmd in cmds do
             do TurtleTurn;
 
         else/if cmd:REPEAT then
-            traverse &cmd:REPEAT.command;
-            traverse &cmd:REPEAT.command;
+            traverse &&cmd:REPEAT.command;
+            traverse &&cmd:REPEAT.command;
 
         else
             _ceu_out_assert(0, "not implemented");
@@ -49968,12 +49980,12 @@ with
                 end;
 
             else/if cmd:SEQUENCE then
-                traverse &cmd:SEQUENCE.one;
-                traverse &cmd:SEQUENCE.two;
+                traverse &&cmd:SEQUENCE.one;
+                traverse &&cmd:SEQUENCE.two;
 
             else/if cmd:REPEAT then
                 loop i in cmd:REPEAT.times do
-                    traverse &cmd:REPEAT.command;
+                    traverse &&cmd:REPEAT.command;
                 end
 
             else
@@ -50030,13 +50042,13 @@ traverse cmd in cmds do
 
         else/if cmd:SEQUENCE then
             ret = ret + 2;
-            traverse &cmd:SEQUENCE.one;
-            traverse &cmd:SEQUENCE.two;
+            traverse &&cmd:SEQUENCE.one;
+            traverse &&cmd:SEQUENCE.two;
 
         else/if cmd:REPEAT then
             loop i in cmd:REPEAT.times do
                 ret = ret + 3;
-                traverse &cmd:REPEAT.command;
+                traverse &&cmd:REPEAT.command;
             end
 
         else
@@ -50058,7 +50070,7 @@ var void&? ptr;
 finalize
     ptr = _malloc(10000);
 with
-    _free(&ptr!);
+    _free(&&ptr!);
 end
 
 data Command with
@@ -50097,13 +50109,13 @@ traverse cmd in cmds do
 
         else/if cmd:SEQUENCE then
             ret = ret + 2;
-            traverse &cmd:SEQUENCE.one;
-            traverse &cmd:SEQUENCE.two;
+            traverse &&cmd:SEQUENCE.one;
+            traverse &&cmd:SEQUENCE.two;
 
         else/if cmd:REPEAT then
             loop i in cmd:REPEAT.times do
                 ret = ret + 3;
-                traverse &cmd:REPEAT.command;
+                traverse &&cmd:REPEAT.command;
             end
 
         else
@@ -50137,7 +50149,7 @@ traverse l in ls do
     else
         watching *l do
             par/or do
-                traverse &l:CONS.tail;
+                traverse &&l:CONS.tail;
             with
                 await 1s;
             end
@@ -50179,7 +50191,7 @@ traverse l in ls do
             await FOREVER;
         else
             par/or do
-                traverse &l:CONS.tail;
+                traverse &&l:CONS.tail;
             with
                 await 1s;
             end
@@ -50220,7 +50232,7 @@ traverse l in ls do
             await FOREVER;
         else
             par/or do
-                traverse &l:CONS.tail;
+                traverse &&l:CONS.tail;
             with
                 await 1s;
             end
@@ -50253,7 +50265,7 @@ loop i in 10 do
             if l:CONS.tail.NIL then
                 l:CONS.tail = new List.CONS(i, List.NIL());
             else
-                traverse &l:CONS.tail;
+                traverse &&l:CONS.tail;
             end
         end
     end
@@ -50264,7 +50276,7 @@ var int sum = 0;
 traverse l in list do
     if l:CONS then
         sum = sum + l:CONS.head;
-        traverse &l:CONS.tail;
+        traverse &&l:CONS.tail;
     end
 end
 
@@ -50295,7 +50307,7 @@ end
 
 class Body with
     pool  Body[]& bodies;
-    var   List*   n;
+    var   List&&   n;
 do
     watching *n do
         if n:NIL then
@@ -50304,10 +50316,10 @@ do
             _V = _V + 1;
             _V = _V + n:CONS.head;
 
-            var Body*? tail =
+            var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &n:CONS.tail;
+                    this.n      = &&n:CONS.tail;
                 end;
             if tail? then
                 await *tail!;
@@ -50349,7 +50361,7 @@ end
 
 class Body with
     pool  Body[]& bodies;
-    var   List*   n;
+    var   List&&   n;
 do
     watching *n do
         if n:NIL then
@@ -50358,10 +50370,10 @@ do
             _V = _V + 1;
             _V = _V + n:CONS.head;
 
-            var Body*? tail =
+            var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &n:CONS.tail;
+                    this.n      = &&n:CONS.tail;
                 end;
             if tail? then
                 await *tail!;
@@ -50409,7 +50421,7 @@ traverse n in list do
             _V = _V * 2;
         else/if n:CONS then
             _V = _V + n:CONS.head;
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         end
     end
     await 1s;
@@ -50448,7 +50460,7 @@ traverse n in list do
             _V = _V * 2;
         else/if n:CONS then
             _V = _V + n:CONS.head;
-            traverse &n:CONS.tail;
+            traverse &&n:CONS.tail;
         end
     end
     await 1s;
@@ -50473,13 +50485,13 @@ end
 pool L[] ls;
 
 var int v = 10;
-var int* p = &v;
+var int&& p = &&v;
 
 traverse l in ls do
     await 1s;
     *p = 1;
     if l:VAL then
-        traverse &l:VAL.l;
+        traverse &&l:VAL.l;
     end
 end
 
@@ -50491,9 +50503,9 @@ escape v;
 Test { [[
 class A with
     var int v = 10;
-    var int* p;
+    var int&& p;
 do
-    this.p = &v;
+    this.p = &&v;
 end
 
 class B with
@@ -50511,9 +50523,9 @@ escape 1;
 Test { [[
 class A with
     var int v = 10;
-    var int* p;
+    var int&& p;
 do
-    this.p = &v;
+    this.p = &&v;
 end
 
 class B with
@@ -50551,7 +50563,7 @@ var int s1 =
             escape 0;
         else
             watching *l do
-                var int sum_tail = traverse &l:CONS.tail;
+                var int sum_tail = traverse &&l:CONS.tail;
                 s2 = s2 + l:CONS.head;
                 escape sum_tail + l:CONS.head;
             end
@@ -50648,7 +50660,7 @@ class Turtle with
     var _SDL_Renderer& ren;
 do
     every 1s do
-        _f(&ren);
+        _f(&&ren);
     end
 end
 escape 1;
@@ -50730,7 +50742,7 @@ pool Stmt[] stmts =
 
 traverse stmt in stmts do
     if stmt:SEQ then
-        traverse &stmt:SEQ.s1;
+        traverse &&stmt:SEQ.s1;
     else/if stmt:PRINT then
         var int v = traverse stmt:PRINT.e;
     end
@@ -50890,7 +50902,7 @@ end
 }
 
 Test { [[
-var int* vs;
+var int&& vs;
 traverse v in [10] do
     traverse 1;
 end
@@ -50919,13 +50931,13 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-pool List[]* lll = list.CONS.tail;
+pool List[]&& lll = list.CONS.tail;
 
 traverse n in lll do
     sum = sum + 1;
     if n:CONS then
         sum = sum + n:CONS.head;
-        traverse &n:CONS.tail;
+        traverse &&n:CONS.tail;
     end
 end
 
@@ -51358,13 +51370,13 @@ var int sum = 0;
 traverse cmd in cmds1 do
     if cmd:NEXT then
         sum = sum + 1;
-        traverse &cmd:NEXT.nxt;
+        traverse &&cmd:NEXT.nxt;
     end
 end
 traverse cmd in cmds2 do
     if cmd:NEXT then
         sum = sum + 1;
-        traverse &cmd:NEXT.nxt;
+        traverse &&cmd:NEXT.nxt;
     end
 end
 
@@ -51393,7 +51405,7 @@ do
     traverse cmd111 in cmds1 do
         if cmd111:NEXT then
             sum = sum + 1;
-            traverse &cmd111:NEXT.nxt;
+            traverse &&cmd111:NEXT.nxt;
         end
     end
     escape sum;
@@ -51449,7 +51461,7 @@ do
     traverse cmd in cmds do
         if cmd:NEXT then
             sum = sum + 1;
-            traverse &cmd:NEXT.nxt;
+            traverse &&cmd:NEXT.nxt;
         end
     end
     escape sum;
@@ -51495,7 +51507,7 @@ do
 
         else/if cmd:PAROR then
             par/or do
-                traverse &cmd:PAROR.one;
+                traverse &&cmd:PAROR.one;
             with
             end
         end
@@ -51589,7 +51601,7 @@ do
     traverse t in this.btree do
         if t:SEQ then
             ret = ret + 1;
-            traverse &t:SEQ.nxt;
+            traverse &&t:SEQ.nxt;
         end
     end
     escape ret;
@@ -51619,10 +51631,10 @@ var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 
 var int sum = 0;
 
-loop/1 i in &l do
+loop/1 i in &&l do
     if i:CONS then
         sum = sum + i:CONS.head;
-        traverse &i:CONS.tail;
+        traverse &&i:CONS.tail;
     end
 end
 
@@ -51644,10 +51656,10 @@ var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 
 var int sum = 0;
 
-loop/3 i in &l do
+loop/3 i in &&l do
     if i:CONS then
         sum = sum + i:CONS.head;
-        traverse &i:CONS.tail;
+        traverse &&i:CONS.tail;
     end
 end
 
@@ -51669,10 +51681,10 @@ var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 
 var int sum = 0;
 
-loop i in &l do
+loop i in &&l do
     if i:CONS then
         sum = sum + i:CONS.head;
-        traverse &i:CONS.tail;
+        traverse &&i:CONS.tail;
     end
 end
 
@@ -51701,11 +51713,11 @@ var int sum = 0;
 
     finalize with end;
 
-loop i in &t do
+loop i in &&t do
     if i:NODE then
-        traverse &i:NODE.left;
+        traverse &&i:NODE.left;
         sum = sum + i:NODE.v;
-        traverse &i:NODE.right;
+        traverse &&i:NODE.right;
     end
 end
 
@@ -51732,7 +51744,7 @@ var int sum = 0;
 loop i in l do
     if i:CONS then
         sum = sum + i:CONS.head;
-        traverse &i:CONS.tail;
+        traverse &&i:CONS.tail;
     end
 end
 
@@ -51761,9 +51773,9 @@ var int sum = 0;
 
 loop i in t do
     if i:NODE then
-        traverse &i:NODE.left;
+        traverse &&i:NODE.left;
         sum = sum + i:NODE.v;
-        traverse &i:NODE.right;
+        traverse &&i:NODE.right;
     end
 end
 
@@ -52672,7 +52684,7 @@ native do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
-input int* KEY;
+input int&& KEY;
 class App with
     var int v = 0;
 do
@@ -52717,7 +52729,7 @@ do
             watching this.go_on do
                 every key in KEY do
                     _queue_put(_CEU_IN_KEY,
-                               sizeof(int), (byte*)key
+                               sizeof(int), (byte&&)key
 #ifdef TM_SNAP
                                 ,0
 #endif
@@ -52731,10 +52743,10 @@ do
         end
     with
         every qu in this.go_queue do
-            var int v = *((int*)qu:buf);
+            var int v = *((int&&)qu:buf);
             if qu:evt == _CEU_IN_KEY then
                 async(v) do
-                    emit KEY => &v;
+                    emit KEY => &&v;
                 end
             else
                 _assert(0);
@@ -52759,13 +52771,13 @@ par/or do
             emit DT => 10;
         end
         var int v = 1;
-        emit KEY => &v;
+        emit KEY => &&v;
         loop i in 300 do
             emit 10ms;
             emit DT => 10;
         end
         v = 2;
-        emit KEY => &v;
+        emit KEY => &&v;
         loop i in 300 do
             emit 10ms;
             emit DT => 10;
