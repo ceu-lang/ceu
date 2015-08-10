@@ -423,11 +423,11 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
         return '('..V(e1)..'.tag != CEU_'..ID..'_NIL)'
     end,
 
-    ['Op1_!'] = function (me)
+    ['Op1_!'] = function (me, CTX)
         local _, e1 = unpack(me)
         local var = e1.var or e1
         local ID = string.upper(TP.opt2adt(var.tp))
-        local op = (TP.check(var.tp,'&','?') and '*') or ''
+        local op = (TP.check(var.tp,'&','?') and (not CTX.byref) and '*') or ''
         return '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
                   ..V(e1)..',__FILE__,__LINE__)->SOME.v))'
     end,

@@ -8,6 +8,197 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--[===[
+--]===]
+
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+escape v!;
+]],
+    run = 10,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v1;
+finalize
+    v1 = _getV();
+with
+    nothing;
+end
+v1 = 20;
+
+var int&? v2;
+finalize
+    v2 = _getV();
+with
+    nothing;
+end
+
+escape v1!+v2!;
+]],
+    run = 40,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : types mismatch (`int&´ <= `int&?´)',
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v = 20;
+end
+do T with
+    this.v = v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v = 20;
+end
+do T with
+    this.v = v;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : types mismatch (`int&´ <= `int&?´)',
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = _getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+--do return end
+
 Test { [[
 input int* SDL_KEYDOWN_;
 event bool in_tm;
@@ -68,9 +259,6 @@ escape _f((int*)&rcs[0]);
 ]],
     run = 10,
 }
-
---[===[
---]===]
 
 --do return end
 

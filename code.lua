@@ -1152,23 +1152,17 @@ case ]]..SET.lbl_cnt.id..[[:;
         if TP.check(to.tp,'?') then
             local ID = string.upper(TP.opt2adt(to.tp))
             if TP.check(fr.tp,'?') then
-                LINE(me, V(to,byref)..' = '..V(fr,byref)..';')
+                LINE(me, V(to)..' = '..V(fr)..';')
             elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp) then
                 -- var _t&? = _f(...);
                 -- var T*? = spawn <...>;
                 LINE(me, V(to,byref)..' = '..V(fr)..';')
             else
-                local tag
-                if fr.tag == 'NIL' then
-error'oioioi'
-                    tag = 'NIL'
+                local tag = 'SOME'
+                if me.__ref_byref then
+                    LINE(me, '('..V(to)..'.SOME.v) = '..V(fr,byref)..';')
                     LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
                 else
-                    tag = 'SOME'
-                    if me.__ref_byref then
-                        LINE(me, '('..V(to)..'.SOME.v) = '..V(fr,byref)..';')
-                        LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
-                    else
 local to_tp_id = TP.id(to.tp)
 if ENV.clss[to_tp_id] and TP.check(to.tp,to_tp_id,'*','?','-[]') then
     LINE(me, [[
@@ -1179,12 +1173,11 @@ if (((tceu_org*)]]..V(fr)..[[)->isAlive) {
 }
 ]])
 else
-                        local var = to.var or to
-                        local op = (TP.check(var.tp,'&','?') and '*') or ''
-                        LINE(me, op..'('..V(to,byref)..'.SOME.v) = '..V(fr,byref)..';')
-                        LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
+                    local var = to.var or to
+                    local op = (TP.check(var.tp,'&','?') and '*') or ''
+                    LINE(me, op..'('..V(to,byref)..'.SOME.v) = '..V(fr,byref)..';')
+                    LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
 end
-                    end
                 end
             end
 
