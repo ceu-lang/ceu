@@ -18,20 +18,31 @@ F = {
         end
 
         VARS[var] = true
-        var.isTmp = true
+        if var.isTmp ~= false then  -- already preset as false
+            var.isTmp = true
+        end
 
-        if AST.par(me,'Dcl_adt') then
+        -- declarations inside ADTs are never temporary (always part of the data)
+        if AST.par(me, 'Dcl_adt') then
             var.isTmp = false
+            assert(not AST.par(me,'Dcl_fun'), 'bug found: mixing adt/fun')
+
+        -- declarations inside functions are always temporary (no awaits inside)
+        elseif AST.par(me, 'Dcl_fun') then
+            var.isTmp = true
+        end
+
+        -- inside a recursive loop
+        -- TODO: check if tmp is crossed by "recurse" (otherwise could be tmp)
+        for loop in AST.iter'Loop' do
+            if loop.iter_tp == 'data' then
+error'not implemented (locals inside iter)'
+                var.isTmp = false
+                break;
+            end
         end
     end,
 
-    Var_pos = function (me)
-        -- force __ceu_adt_* to be tmp
-        -- (even if in top level block)
-        if string.sub(me.var.id,1,10) == '__ceu_adt_' then
-            me.var.isTmp = true
-        end
-    end,
     Var = function (me)
         local var = me.var
 
@@ -143,9 +154,9 @@ F = {
             e1.fst.var.isTmp = false    -- assigned to a pointer
         end
     end,
-    SetExp = function (me)
-        local _, fr, _ = unpack(me)
-        if fr.byRef and fr.fst.var then
+    Set = function (me)
+        local _, _, fr = unpack(me)
+        if me.__ref_byref and fr.fst.var then
             fr.fst.var.isTmp = false    -- assigned to a pointer
         end
     end,

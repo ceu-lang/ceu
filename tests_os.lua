@@ -95,7 +95,7 @@ var int a=await A;
 escape a;
 ]],
 	lnks = {
-        { 1, 1, 2, 243 },
+        { 1, 1, 2, 242 },
 	},
 	run = 3,
 }
@@ -105,8 +105,8 @@ Test {
 	[[input  int A; var int a=await A; escape a;]],
 	[[input  int A; var int a=await A; escape a;]],
 	lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 1, 3, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 1, 3, 242 },
 	},
 	run = 5,
 }
@@ -126,8 +126,8 @@ end
 escape ret;
 ]],
 	lnks = {
-        { 1, 1, 2, 243 },
-		{ 1, 1, 2, 242 },
+        { 1, 1, 2, 242 },
+		{ 1, 1, 2, 241 },
 	},
 	run = 6,
 }
@@ -146,7 +146,7 @@ await OS_START;
 escape 1;
 ]],
 	lnks = {
-		{ 1, 1, 2, 243 },
+		{ 1, 1, 2, 242 },
         -- src app
         -- src evt
         -- dst app
@@ -167,7 +167,7 @@ end
 escape 1;
 ]],
 	lnks = {
-		{ 1, 1, 2, 243 },
+        { 1, 1, 2, 242 },
         -- src app
         -- src evt
         -- dst app
@@ -192,7 +192,7 @@ await OS_START;
 escape 1;
 ]],
 	lnks = {
-		{ 1, 1, 2, 243 },
+        { 1, 1, 2, 242 },
         -- src app
         -- src evt
         -- dst app
@@ -215,7 +215,7 @@ escape 1;
 ]],
     todo = 'load/init/start',
 	lnks = {
-		{ 1, 1, 2, 243 },
+        { 1, 1, 2, 242 },
         -- src app
         -- src evt
         -- dst app
@@ -238,7 +238,7 @@ end
 escape 1;
 ]],
 	lnks = {
-        { 1, 1, 2, 243 },
+        { 1, 1, 2, 242 },
         -- src app
         -- src evt
         -- dst app
@@ -263,7 +263,7 @@ end
 escape inc;
 ]],
 	lnks = {
-        { 1, 1, 2, 243 },
+        { 1, 1, 2, 242 },
         -- src app
         -- src evt
         -- dst app
@@ -288,7 +288,7 @@ var int ret = call A=>2;
 escape ret;
 ]],
 	lnks = {
-        { 2, 1, 1, 243 },
+        { 2, 1, 1, 242 },
         -- src app
         -- src evt
         -- dst app
@@ -321,8 +321,8 @@ await OS_START;
 escape v;
 ]],
 	lnks = {
-        { 1, 1, 2, 243 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 2, 1, 1, 242 },
         -- src app
         -- src evt
         -- dst app
@@ -347,7 +347,7 @@ call A;
 escape 1;
 ]],
     run = 1,
-    lnks = { { 2,1, 1,243 } },
+    lnks = { { 2,1, 1,242 } },
 }
 Test {
 [[
@@ -365,7 +365,7 @@ await OS_START;
 escape v;
 ]],
     run = 2,
-    lnks = { { 1,1, 2,243 } },
+    lnks = { { 1,1, 2,242 } },
 }
 Test {
 [[
@@ -394,7 +394,7 @@ end
 escape ret;
 ]],
     run = 3,
-    lnks = { { 1,1, 2,243 } },
+    lnks = { { 1,1, 2,242 } },
 }
 
 Test {
@@ -429,7 +429,7 @@ end
 escape ret;
 ]],
     run = 3,
-    lnks = { { 1,1, 2,243 } },
+    lnks = { { 1,1, 2,242 } },
 }
 
 Test {
@@ -466,7 +466,7 @@ end
 escape ret;
 ]],
     run = 3,
-    lnks = { { 1,1, 2,243 } },
+    lnks = { { 1,1, 2,242 } },
 }
 
 Test {
@@ -498,7 +498,7 @@ end
 escape ret;
 ]],
     run = 20,
-    lnks = { { 1,1, 2,243 } },
+    lnks = { { 1,1, 2,242 } },
 }
 
 Test {
@@ -531,7 +531,7 @@ end
 escape ret;
 ]],
     run = 20,
-    lnks = { { 1,1, 2,243 } },
+    lnks = { { 1,1, 2,242 } },
 }
 
 Test {
@@ -567,8 +567,8 @@ escape ret;
 ]],
     run = 600,
     lnks = {
-        { 1,1, 2,243 },
-        { 1,2, 2,242 },
+        { 1,1, 2,242 },
+        { 1,2, 2,241 },
     },
 }
 
@@ -604,8 +604,8 @@ escape ret;
 ]],
     run = 13640,
     lnks = {
-        { 1,1, 2,243 },
-        { 1,2, 2,242 },
+        { 1,1, 2,242 },
+        { 1,2, 2,241 },
     },
 }
 
@@ -643,8 +643,8 @@ escape ret;
 ]],
     run = 13640,
     lnks = {
-        { 1,1, 2,243 },
-        { 1,2, 2,242 },
+        { 1,1, 2,242 },
+        { 1,2, 2,241 },
     },
 }
 
@@ -675,7 +675,7 @@ end
 escape ret;
 ]],
     run = 6000,
-    lnks = { { 1,1, 2,243 } },
+    lnks = { { 1,1, 2,242 } },
 }
 
 Test {
@@ -727,8 +727,8 @@ escape ret;
 ]],
     run = 19640,
     lnks = {
-        { 1,1, 2,243 },
-        { 1,2, 2,242 },
+        { 1,1, 2,242 },
+        { 1,2, 2,241 },
     },
 }
 
@@ -763,7 +763,7 @@ end
 escape ret;
 ]],
     run = 3597,
-    lnks = { { 1,1, 2,243 } },
+    lnks = { { 1,1, 2,242 } },
 }
 
 Test { [[
@@ -805,7 +805,7 @@ await 20ms;
 escape 1;
 ]],
     lnks = {
-		{ 2, 1, 1, 243 },
+        { 2, 1, 1, 242 },
 	},
     run = 6;
 }
@@ -904,7 +904,7 @@ emit F;
 escape 10;
 ]],
     lnks = {
-		{ 2, 1, 1, 243 },
+        { 2, 1, 1, 242 },
 	},
     run = 29,
 }
@@ -956,7 +956,6 @@ escape _strlen1("123");
 
 Test { [[
 input void OS_START;
-native @nohold _ceu_out_log();
 
 output (void)=>int* LUA_NEW;
 output (int* l, int v)=>void LUA_PUSHNUMBER;
@@ -973,7 +972,6 @@ escape v;
 ----
 [[
 input void OS_START;
-native @nohold _ceu_out_log();
 var int v;
 input (void)=>int* NEW do
     return &v;
@@ -990,9 +988,9 @@ await OS_START;
 escape v;
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 1, 3, 2, 241 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 1, 3, 2, 240 },
 	},
     run = 20,
 }
@@ -1096,9 +1094,9 @@ await 100ms;
 escape 200;
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 2,
 }
@@ -1151,15 +1149,13 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         every (id,param) in REQUEST do
             ret = param;
-            var Line* ok = spawn Line with
+            var Line*? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit RETURN => (id,err,0);
             end
@@ -1171,9 +1167,9 @@ end
 escape ret;
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 41,
 }
@@ -1231,15 +1227,13 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         every (id,param) in REQUEST do
             ret = param;    // 10
-            var Line* ok = spawn Line with
+            var Line*? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit RETURN => (id,err,0);
             end
@@ -1251,9 +1245,9 @@ end
 escape ret;     // 10
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 16,
 }
@@ -1311,16 +1305,14 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         pool Line[0] lines;
         every (id,param) in REQUEST do
             ret = param;    // 10
-            var Line* ok = spawn Line in lines with
+            var Line*? ok = spawn Line in lines with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit RETURN => (id,err,0);  // 5,2,0
             end
@@ -1332,9 +1324,9 @@ end
 escape ret;     // 10
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 17,
 }
@@ -1396,15 +1388,13 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         every (id,param) in REQUEST do
             ret = param;
-            var Line* ok = spawn Line with
+            var Line*? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit RETURN => (id,err,0);
             end
@@ -1419,9 +1409,9 @@ end
 escape ret;
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 35,
 }
@@ -1472,9 +1462,9 @@ await 100ms;
 escape 200;
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 2,
 }
@@ -1523,15 +1513,13 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         every (id,param) in EVT_REQUEST do
             ret = param;
-            var Line* ok = spawn Line with
+            var Line*? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -1543,9 +1531,9 @@ end
 escape ret;
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 41,
 }
@@ -1599,15 +1587,13 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var Line* ok = spawn Line with
+            var Line*? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -1619,9 +1605,9 @@ end
 escape ret;     // 10
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 16,
 }
@@ -1675,16 +1661,14 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         pool Line[0] lines;
         every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var Line* ok = spawn Line in lines with
+            var Line*? ok = spawn Line in lines with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);  // 5,2,0
             end
@@ -1696,9 +1680,9 @@ end
 escape ret;     // 10
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 17,
 }
@@ -1756,15 +1740,13 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         every (id,param) in EVT_REQUEST do
             ret = param;
-            var Line* ok = spawn Line with
+            var Line*? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -1779,9 +1761,9 @@ end
 escape ret;
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 35,
 }
@@ -1818,9 +1800,9 @@ await 100ms;
 escape 200;
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 2,
 }
@@ -1869,15 +1851,13 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         every (id,param) in EVT_REQUEST do
             ret = param;
-            var Line* ok = spawn Line with
+            var Line*? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -1889,9 +1869,9 @@ end
 escape ret;
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 41,
 }
@@ -1945,15 +1925,13 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var Line* ok = spawn Line with
+            var Line*? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -1965,9 +1943,9 @@ end
 escape ret;     // 10
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 16,
 }
@@ -2021,16 +1999,14 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         pool Line[0] lines;
         every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var Line* ok = spawn Line in lines with
+            var Line*? ok = spawn Line in lines with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);  // 5,2,0
             end
@@ -2042,9 +2018,9 @@ end
 escape ret;     // 10
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 17,
 }
@@ -2102,15 +2078,13 @@ end
 var int ret = 0;
 do
     par/or do
-        var int id;
-        var int param;
         every (id,param) in EVT_REQUEST do
             ret = param;
-            var Line* ok = spawn Line with
+            var Line*? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
-            if ok == null then
+            if not ok? then
                 var int err = 2;
                 emit EVT_RETURN => (id,err,0);
             end
@@ -2125,9 +2099,9 @@ end
 escape ret;
 ]],
     lnks = {
-        { 1, 1, 2, 243 },
-        { 1, 2, 2, 242 },
-        { 2, 1, 1, 243 },
+        { 1, 1, 2, 242 },
+        { 1, 2, 2, 241 },
+        { 2, 1, 1, 242 },
     },
     run = 35,
 }
@@ -2154,7 +2128,8 @@ escape 1;
 output/input [10] (int max)=>int LINE;
 var int ret = 1;
 par/or do
-    ret = request LINE=>10;
+    var int err;
+    (err,ret) = request LINE=>10;
 with
 end
 escape ret;
@@ -2193,9 +2168,9 @@ escape ret;
 ]],
     run = 12,
     lnks = {
-        { 2,1 , 1,243},
-        { 2,2 , 1,242},
-        { 1,1 , 2,243},
+        { 2,1 , 1,242},
+        { 2,2 , 1,241},
+        { 1,1 , 2,242},
     },
 }
 
@@ -2225,9 +2200,9 @@ escape ret;
 ]],
     run = 231,
     lnks = {
-        { 2,1 , 1,243},
-        { 2,2 , 1,242},
-        { 1,1 , 2,243},
+        { 2,1 , 1,242},
+        { 2,2 , 1,241},
+        { 1,1 , 2,242},
     },
 }
 
@@ -2258,9 +2233,9 @@ escape ret;
 ]],
     run = 116,
     lnks = {
-        { 2,1 , 1,243},
-        { 2,2 , 1,242},
-        { 1,1 , 2,243},
+        { 2,1 , 1,242},
+        { 2,2 , 1,241},
+        { 1,1 , 2,242},
     },
 }
 
@@ -2291,9 +2266,9 @@ escape ret;
 ]],
     run = 172,
     lnks = {
-        { 2,1 , 1,243},
-        { 2,2 , 1,242},
-        { 1,1 , 2,243},
+        { 2,1 , 1,242},
+        { 2,2 , 1,241},
+        { 1,1 , 2,242},
     },
 }
 
@@ -2339,9 +2314,9 @@ escape ret;
 ]],
     run = 240+1+1,
     lnks = {
-        { 2,1 , 1,243},
-        { 2,2 , 1,242},
-        { 1,1 , 2,243},
+        { 2,1 , 1,242},
+        { 2,2 , 1,241},
+        { 1,1 , 2,242},
     },
 }
 
@@ -2387,9 +2362,9 @@ escape ret;
 ]],
     run = 1104,
     lnks = {
-        { 2,1 , 1,243},
-        { 2,2 , 1,242},
-        { 1,1 , 2,243},
+        { 2,1 , 1,242},
+        { 2,2 , 1,241},
+        { 1,1 , 2,242},
     },
 }
 
@@ -2435,9 +2410,9 @@ escape ret;
 ]],
     run = 1006,
     lnks = {
-        { 2,1 , 1,243},
-        { 2,2 , 1,242},
-        { 1,1 , 2,243},
+        { 2,1 , 1,242},
+        { 2,2 , 1,241},
+        { 1,1 , 2,242},
     },
 }
 
@@ -2466,9 +2441,9 @@ escape ret;
 ]],
     run = 1040,
     lnks = {
-        { 2,1 , 1,243},
-        { 2,2 , 1,242},
-        { 1,1 , 2,243},
+        { 2,1 , 1,242},
+        { 2,2 , 1,241},
+        { 1,1 , 2,242},
     },
 }
 
@@ -2507,8 +2482,8 @@ escape ret;
 ]],
     run = 1081,
     lnks = {
-        { 2,1 , 1,243},
-        { 2,2 , 1,242},
-        { 1,1 , 2,243},
+        { 2,1 , 1,242},
+        { 2,2 , 1,241},
+        { 1,1 , 2,242},
     },
 }

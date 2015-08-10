@@ -11,7 +11,13 @@ PROPS = {
     has_ret     = false,
     has_lua     = false,
     has_orgs_watching = false,
+    has_adts_watching = {},
     has_enums   = false,
+    has_pool_iterator = false,
+
+    has_vector        = false,
+    has_vector_pool   = false,
+    has_vector_malloc = false,
 
     has_orgs_news        = false,
     has_orgs_news_pool   = false,
@@ -40,15 +46,17 @@ local NO_fun = {
     Await=true, AwaitN=true,
     EmitInt=true, --EmitExt=true,
     Pause=true,
+    Spawn=true,
 }
 
 local NO_fin = {
     Finalize=true, Finally=true,
-    Host=true, Escape=true, Async=true, Thread=true,
+    Host=true, Async=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
     Await=true, AwaitN=true,
     EmitInt=true,
     Pause=true,
+    Kill=true,
 }
 
 local NO_async = {
@@ -145,13 +153,28 @@ F = {
         end
 
         for _, var in ipairs(me.vars) do
+            local tp_id = TP.id(var.tp)
             if var.cls then
                 me.needs_clr = true
-                PROPS.has_clear = true
             end
-            if var.pre=='pool' then
+            if var.pre == 'var' then
+                if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+                    PROPS.has_orgs_watching = true
+                end
+
+                if TP.check(var.tp,'[]','-&') and (not TP.is_ext(var.tp,'_')) then
+                    PROPS.has_vector = true
+                    me.needs_clr = true
+                    PROPS.has_clear = true
+                    if var.tp.arr.cval then
+                        PROPS.has_vector_pool   = true
+                    else
+                        PROPS.has_vector_malloc = true
+                    end
+                end
+            elseif var.pre == 'pool' then
                 local s
-                if ENV.clss[var.tp.id] or var.tp.id=='_TOP_POOL' then
+                if ENV.clss[tp_id] or tp_id=='_TOP_POOL' then
                     s = 'orgs'
                 else
                     me.needs_clr = true
@@ -159,10 +182,14 @@ F = {
                     s = 'adts'
                 end
                 PROPS['has_'..s..'_news'] = true
-                if var.tp.arr==true then
-                    PROPS['has_'..s..'_news_malloc'] = true  -- pool T[] ts
-                else
-                    PROPS['has_'..s..'_news_pool'] = true    -- pool T[N] ts
+                if TP.check(var.tp,'[]') then
+-- TODO: recurse-type
+                    --if var.tp[#var.tp.tt]==true then
+                    if var.tp.arr=='[]' then
+                        PROPS['has_'..s..'_news_malloc'] = true  -- pool T[] ts
+                    else
+                        PROPS['has_'..s..'_news_pool'] = true    -- pool T[N] ts
+                    end
                 end
             end
         end
@@ -173,9 +200,8 @@ F = {
     end,
     Spawn = function (me)
         local _,pool,_ = unpack(me)
-        --PROPS.has_clear = true   (var.cls does this)
         --me.blk.needs_clr = true   (var.cls does this)
-        ASR(not AST.iter'BlockI'(), me,
+        ASR(not AST.par(me,'BlockI'), me,
                 'not permitted inside an interface')
     end,
 
@@ -203,13 +229,11 @@ F = {
     ParOr = function (me)
         me.needs_clr = true
         PROPS.has_clear = true
+    end,
 
-        -- detects if "isWatching" an org
-        if me.isWatching then
-            local tp = me.isWatching.tp
-            if (tp and tp.ptr==1 and ENV.clss[tp.id]) then
-                PROPS.has_orgs_watching = true
-            end
+    Loop = function (me)
+        if me.iter_tp == 'org' then
+            PROPS.has_pool_iterator = true
         end
     end,
 
@@ -217,17 +241,19 @@ F = {
         me.brks = {}
     end,
     Break = function (me)
-        local loop = AST.iter'Loop'()
-        ASR(loop, me, 'break without loop')
+        local loop = AST.par(me,'Loop')
+        ASR(loop, me, '`break´ without loop')
         loop.brks[me] = true
         loop.has_break = true
 
         NEEDS_CLR(loop)
 
-        local fin = AST.iter'Finally'()
-        ASR(not fin or fin.__depth<loop.__depth, me,
+        local fin = AST.par(me, 'Finally')
+        ASR((not fin) or AST.isParent(fin, loop), me,
                 'not permitted inside `finalize´')
-        -- TODO: same for return
+
+        ASR(not loop.isEvery, me,
+                'not permitted inside `every´')
 
         local async = AST.iter(AST.pred_async)()
         if async then
@@ -238,13 +264,21 @@ F = {
 
     SetBlock_pre = function (me)
         me.rets = {}
-        ASR(not AST.iter'BlockI'(), me,
+        ASR(not AST.par(me,'BlockI'), me,
                 'not permitted inside an interface')
     end,
     Escape = function (me)
         local blk = AST.iter'SetBlock'()
         blk.rets[me] = true
         blk.has_escape = true
+
+        local fin = AST.par(me, 'Finally')
+        ASR((not fin) or AST.isParent(fin, blk), me,
+                'not permitted inside `finalize´')
+
+        local evr = AST.iter(function (me) return me.tag=='Loop' and me.isEvery end)()
+        ASR((not evr) or AST.isParent(evr,blk), me,
+                'not permitted inside `every´')
 
         NEEDS_CLR(blk)
     end,
@@ -261,8 +295,8 @@ F = {
 
     Dcl_cls = function (me)
         if me.id ~= 'Main' then
-            PROPS.has_orgs = true
-            PROPS.has_ints = true      -- all have "emit _ok"
+            PROPS.has_orgs  = true
+            PROPS.has_clear = true
         end
         if me.is_ifc then
             PROPS.has_ifcs = true
@@ -274,13 +308,14 @@ F = {
     end,
 
     Dcl_var = function (me)
-        if me.var.cls then
-            -- <class T with var U u; end>
-            ASR(not AST.iter'BlockI'(), me,
-                    'not permitted inside an interface')
-        end
-        if AST.iter'BlockI'() and me.var.tp.opt then
-            CLS().has_pre = true   -- code for pre (before constr)
+        if AST.par(me, 'BlockI') then
+            ASR(not TP.check(me.var.tp,'[]') or TP.is_ext(me.var.tp,'_','@'), me,
+                'not permitted inside an interface : vectors')
+            ASR(not me.var.cls, me,
+                'not permitted inside an interface : organisms')
+            if TP.check(me.var.tp,'?') then
+                CLS().has_pre = true   -- code for pre (before constr)
+            end
         end
     end,
 
@@ -298,11 +333,29 @@ F = {
         PROPS.has_pses = true
     end,
 
+    Nothing = function (me)
+        -- detects if "watching" an org/adt
+        local watch = me.__env_watching
+        if watch then
+            if watch == true then
+                PROPS.has_orgs_watching = true
+            else
+                PROPS.has_adts_watching[watch] = true
+                for id in pairs(ENV.adts[watch].subs or {}) do
+                    PROPS.has_adts_watching[id] = true
+                end
+            end
+        end
+    end,
+
     _loop1 = function (me)
         for loop in AST.iter'Loop' do
             if loop.isEvery then
                 ASR(me.isEvery, me,
                     '`every´ cannot contain `await´')
+            elseif loop.iter_tp == 'org' then
+                ASR(false, me,
+                    'pool iterator cannot contain `await´')
             end
         end
     end,
@@ -314,7 +367,12 @@ F = {
         elseif dt then
             PROPS.has_wclocks = true
         end
-        F._loop1(me)
+
+        if e.tag=='Ext' and e[1]=='_ok_killed' then
+            return
+        else
+            F._loop1(me)
+        end
     end,
     AwaitN = function (me)
         F._loop1(me)
@@ -337,19 +395,17 @@ F = {
         end
     end,
 
-    SetExp = function (me)
-        local _, fr, to = unpack(me)
+    Set = function (me)
+        local _, set, fr, to = unpack(me)
         local thr = AST.par(me, 'Thread')
         if thr and (not to) then
             ASR( thr.__depth <= AST.iter'SetBlock'().__depth+1, me,
                     'invalid access from `thread´')
         end
 
-        if AST.iter'BlockI'() then
+        if AST.par(me,'BlockI') then
             CLS().has_pre = true   -- code for pre (before constr)
-
-            -- new, spawn, async, await
-            ASR(fr.tag ~= 'Ref',
+            ASR(set=='exp' or set=='adt-constr',
                 me, 'not permitted inside an interface')
         end
 
@@ -360,7 +416,7 @@ F = {
 
     Op1_cast = function (me)
         local tp, _ = unpack(me)
-        if tp.ptr>0 and ENV.clss[tp.id] then
+        if ENV.clss[TP.id(tp)] and TP.check(tp,'*') then
             PROPS.has_ifcs = true      -- cast must check org->cls_id
         end
     end,

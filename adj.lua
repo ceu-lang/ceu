@@ -1,105 +1,22 @@
 local node = AST.node
+local TRAVERSE_ALREADY_GENERATED = false
 
 -- TODO: remove
 MAIN = nil
-
-function REQUEST (me)
-    --[[
-    --      (err, v) = (request LINE=>10);
-    -- becomes
-    --      var _reqid id = _ceu_sys_request();
-    --      var _reqid id';
-    --      emit _LINE_request => (id, 10);
-    --      finalize with
-    --          _ceu_sys_unrequest(id);
-    --          emit _LINE_cancel => id;
-    --      end
-    --      (id', err, v) = await LINE_return
-    --                      until id == id';
-    --]]
-
-    local to, op, _, emit
-    if me.tag == 'EmitExt' then
-        to   = nil
-        emit = me
-    else
-        -- _Set
-        to, op, _, emit = unpack(me)
-    end
-
-    local op_emt, e, ps = unpack(emit)
-    local id_evt = e[1]
-    local id_req  = '_reqid_'..me.n
-    local id_req2 = '_reqid2_'..me.n
-
-    local tp_req = node('Type', me.ln, 'int', 0, false, false)
-
-    if ps then
-        -- insert "id" into "emit REQUEST => (id,...)"
-        if ps.tag == 'ExpList' then
-            table.insert(ps, 1, node('Var',me.ln,id_req))
-        else
-            ps = node('ExpList', me.ln,
-                    node('Var', me.ln, id_req),
-                    ps)
-        end
-    end
-
-    local awt = node('Await', me.ln,
-                    node('Ext', me.ln, id_evt..'_RETURN'),
-                    false,
-                    node('Op2_==', me.ln, '==',
-                        node('Var', me.ln, id_req),
-                        node('Var', me.ln, id_req2)))
-    if to then
-        -- v = await RETURN
-
-        -- insert "id" into "v = await RETURN"
-        if to.tag ~= 'VarList' then
-            to = node('VarList', me.ln, to)
-        end
-        table.insert(to, 1, node('Var',me.ln,id_req2))
-
-        awt = node('_Set', me.ln, to, op, '__SetAwait', awt, false, false)
-    end
-
-    return node('Stmts', me.ln,
-            node('Dcl_var', me.ln, 'var', tp_req, id_req),
-            node('Dcl_var', me.ln, 'var', tp_req, id_req2),
-            node('SetExp', me.ln, '=',
-                node('RawExp', me.ln, 'ceu_out_req()'),
-                node('Var', me.ln, id_req)),
-            node('EmitExt', me.ln, 'emit',
-                node('Ext', me.ln, id_evt..'_REQUEST'),
-                ps),
-            node('Finalize', me.ln,
-                false,
-                node('Finally', me.ln,
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Nothing', me.ln), -- TODO: unrequest
-                            node('EmitExt', me.ln, 'emit',
-                                node('Ext', me.ln, id_evt..'_CANCEL'),
-                                node('Var', me.ln, id_req)))))),
-            awt
-    )
-end
 
 F = {
 -- 1, Root --------------------------------------------------
 
     ['1_pre'] = function (me)
         local spc, stmts = unpack(me)
-        local blk_ifc_body = node('Block', me.ln,       -- same structure of
-                                node('Stmts', me.ln,    -- other classes
-                                    node('BlockI', me.ln),
-                                    stmts))
-        local ret = blk_ifc_body
+
+        local BLK_IFC = node('Block', me.ln, stmts)
+        local RET = BLK_IFC
 
         -- for OS: <par/or do [blk_ifc_body] with await OS_STOP; escape 1; end>
         if OPTS.os then
-            ret = node('ParOr', me.ln,
-                        node('Block', me.ln, ret),
+            RET = node('ParOr', me.ln,
+                        AST.asr(RET, 'Block'),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Await', me.ln,
@@ -110,22 +27,10 @@ F = {
                                     node('NUMBER',me.ln,1)))))
         end
 
-        -- enclose the main block with <ret = do ... end>
-        local blk = node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Dcl_var', me.ln, 'var',
-                                node('Type', me.ln, 'int', 0, false, false),
-                                '_ret'),
-                            node('SetBlock', me.ln,
-                                ret,
-                                node('Var', me.ln,'_ret'))))
-
         --[[
-        -- Prepare request loops to run in "par/or" with the Block->Stmts
-        -- above:
-        --
+        -- Prepare request loops to run in "par/or" with the STMT above:
         -- par/or do
-        --      <ret>
+        --      <RET>
         -- with
         --      par do
         --          every REQ1 do ... end
@@ -135,13 +40,21 @@ F = {
         -- end
         --]]
         do
-            local stmts = blk[1]
-            local paror = node('ParOr', me.ln,
-                            node('Block', me.ln, stmts),
-                            node('Block', me.ln, node('Stmts',me.ln,node('XXX',me.ln))))
-                                                -- XXX = Par or Stmts
-            blk[1] = paror
-            ADJ_REQS = { blk=blk, orig=stmts, reqs=paror[2][1][1] }
+            local ORIG = RET
+            RET = node('Stmts', me.ln,
+                    node('ParEver', me.ln,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                RET)),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('XXX',me.ln)))))
+                                -- XXX = ParEver or Stmts
+            ADJ_REQS = {
+                me   = RET,
+                orig = ORIG,
+                reqs = AST.asr(RET,'Stmts', 1,'ParEver', 2,'Block', 1,'Stmts', 1,'XXX')
+            }
                 --[[
                 -- Use "ADJ_REQS" to hold the "par/or", which can be
                 -- substituted by the original "stmts" if there are no requests
@@ -152,11 +65,14 @@ F = {
 
         -- enclose the program with the "Main" class
         MAIN = node('Dcl_cls', me.ln, false,
-                      'Main',
-                      node('Nothing', me.ln),
-                      blk)
-        MAIN.blk_ifc  = blk_ifc_body   -- Main has no ifc:
-        MAIN.blk_body = blk_ifc_body   -- ifc/body are the same
+                    'Main',
+                    node('BlockI', me.ln,
+                        node('Stmts', me.ln)),
+                    node('Block', me.ln,        -- same structure of
+                        node('Stmts', me.ln,    -- other classes
+                            RET)))
+        MAIN.blk_ifc  = BLK_IFC
+        MAIN.blk_body = BLK_IFC
 
         -- [1] => ['Root']
         AST.root = node('Root', me.ln, MAIN)
@@ -166,11 +82,11 @@ F = {
     Root = function (me)
         if #ADJ_REQS.reqs == 0 then
             -- no requests, substitute the "par/or" by the original "stmts"
-            ADJ_REQS.blk[1] = ADJ_REQS.orig
+            ADJ_REQS.me[1] = ADJ_REQS.orig
         elseif #ADJ_REQS.reqs == 1 then
             ADJ_REQS.reqs.tag = 'Stmts'
         else
-            ADJ_REQS.reqs.tag = 'Par'
+            ADJ_REQS.reqs.tag = 'ParEver'
         end
     end,
 
@@ -178,12 +94,9 @@ F = {
 
     -- global do end
 
-    Dcl_cls_pre = function (me)
-        me.__globaldos = {}
-    end,
     _GlobalDo_pos = function (me)
         local cls = AST.iter'Dcl_cls'()
-        assert(me[1][1].tag == 'Stmts')
+        AST.asr(me,'', 1,'Block', 1,'Stmts')
         if cls == MAIN then
             return me[1][1]
                     -- remove "global do ... end" and Block
@@ -193,6 +106,27 @@ F = {
             return AST.node('Nothing', me.ln)
         end
     end,
+
+    Dcl_cls_pre = function (me)
+        local is_ifc, id, blk_ifc, blk_body = unpack(me)
+-- TODO
+me.blk_body = me.blk_body or blk_body
+
+        me.__globaldos = {}
+
+        -- enclose the main block with <ret = do ... end>
+        blk_body = node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        node('Dcl_var', me.ln, 'var',
+                            node('Type', me.ln, 'int'),
+                            '_ret'),
+                        node('SetBlock', me.ln,
+                            blk_body,
+                            node('Var', me.ln,'_ret'),
+                            true))) -- true=cls-block
+        me[4] = blk_body
+    end,
+
     Dcl_cls_pos = function (me)
         local par = AST.iter'Dcl_cls'()
         assert(me ~= par)
@@ -203,47 +137,39 @@ F = {
                 for _, v in ipairs(me.__globaldos) do
                     par.__globaldos[#par.__globaldos+1] = v
                 end
+                return node('Stmts', me.ln, me)
             end
         end
     end,
-
-    -- class declaration
 
     _Dcl_ifc = 'Dcl_cls',
     Dcl_cls = function (me)
         local is_ifc, id, blk_ifc, blk_body = unpack(me)
         local blk = node('Block', me.ln,
                          node('Stmts',me.ln,blk_ifc,blk_body))
-
-        if not me.blk_ifc then  -- Main already set
-            me.blk_ifc  = blk   -- top-most block for `this´
-        end
+        me.blk_ifc  = me.blk_ifc  or blk
         me.blk_body = me.blk_body or blk_body
         me.tag = 'Dcl_cls'  -- Dcl_ifc => Dcl_cls
         me[3]  = blk        -- both blocks 'ifc' and 'body'
         me[4]  = nil        -- remove 'body'
 
-        assert(me.blk_ifc.tag == 'Block' and
-               me.blk_ifc[1]    and me.blk_ifc[1].tag   =='Stmts' and
-               me.blk_ifc[1][1] and me.blk_ifc[1][1].tag=='BlockI')
+-- TODO
+        if is_ifc then
+            return
+        end
 
-        -- All orgs have an implicit event emitted automatically on
-        -- their termination:
-        -- event void _ok;
-        -- The idx must be constant as the runtime uses it blindly.
-        -- (generated in env.ceu)
-        --if not is_ifc then
-            table.insert(me.blk_ifc[1][1], 1,
-                node('Dcl_int', me.ln, 'event',
-                    node('Type', me.ln, 'void', 0, false, false),
-                    '_ok'))
-        --end
+        -- remove SetBlock if no escapes
+        if id~='Main' and (not me.has_escape) then
+            local setblock = AST.asr(blk_body,'Block', 1,'Stmts', 2,'SetBlock')
+            blk_body[1] = node('Stmts', me.ln, setblock[1])
+        end
 
         -- insert class pool for orphan spawn
+        local stmts = AST.asr(blk_ifc,'BlockI', 1,'Stmts')
         if me.__ast_has_malloc then
-            table.insert(me.blk_ifc[1][1], 2,
+            table.insert(stmts, 1,
                 node('Dcl_pool', me.ln, 'pool',
-                    node('Type', me.ln, '_TOP_POOL', 0, true, false),
+                    node('Type', me.ln, '_TOP_POOL', '[]'),
                     '_top_pool'))
         end
     end,
@@ -255,6 +181,7 @@ F = {
 
         local cls = AST.par(me, 'Dcl_cls')
         local set = AST.par(me, 'SetBlock')
+        cls.has_escape = (set[3] == true);
         ASR(set and set.__depth>cls.__depth,
             me, 'invalid `escape´')
 
@@ -270,9 +197,6 @@ F = {
         --]]
         to.__ast_blk = set
 
--- TODO: remove
-        to.ret = true
-
         --[[
         --      a = do ...; escape 1; end
         -- becomes
@@ -280,7 +204,7 @@ F = {
         --]]
 
         return node('Stmts', me.ln,
-                    node('SetExp', me.ln, '=', exp, to, fr),
+                    node('Set', me.ln, '=', 'exp', exp, to, fr),
                     node('Escape', me.ln))
     end,
 
@@ -288,47 +212,36 @@ F = {
 
     _Watching_pre = function (me)
         --[[
-        --      watching <EVT>|<ORG> do
+        --      watching <v> in <EVT> do
         --          ...
         --      end
         -- becomes
         --      par/or do
-        --          ...     // has the chance to execute/finalize even if
-        --                  // the org terminated just after the spawn
+        --          <v> = await <EVT>;  // strong abortion
         --      with
-        --          if <ORG>->isAlive
-        --              await <EVT>|<ORG>.ok;
-        --          end
+        --          ...                 // no chance to execute on <EVT>
         --      end
         --
         -- TODO: because the order is inverted, if the same error occurs in
         -- both sides, the message will point to "..." which appears after in
         -- the code
         --]]
-        local e, dt, blk = unpack(me)
-        local var = e or dt     -- TODO: hacky
+        local to, e, dt, blk = unpack(me)
 
         local awt = node('Await', me.ln, e, dt, false)
-        awt.isWatching = true -- converts "await org" to "await org._ok" in env.lua
+        local set
+        if to then
+            set = node('_Set', me.ln, to, '=', 'await', awt)
+        else
+            set = awt
+        end
 
         local ret = node('ParOr', me.ln,
-                        blk,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                var,  -- "var" needs to be parsed before "awt"
-                                node('If', me.ln,
-                                    -- HACK_6: changes to "true" if normal event in env.lua
-                                    node('Op2_.', me.ln, '.',
-                                        node('Op1_*', me.ln, '*',
-                                            -- this cast confuses acc.lua (see Op1_* there)
-                                            -- TODO: HACK_3
-                                            node('Op1_cast', me.ln,
-                                                node('Type', me.ln, '_tceu_org', 1, false, false),
-                                                AST.copy(var))),
-                                        'isAlive'),
-                                    node('Block',me.ln,node('Stmts',me.ln,awt)),
-                                    node('Block',me.ln,node('Stmts',me.ln,node('Nothing', me.ln)))))))
-        ret.isWatching = var
+                                set)),
+                        blk)
+        ret.__adj_watching = (e or dt)
         return ret
     end,
 
@@ -348,82 +261,363 @@ F = {
 
         local set
         if to then
-            set = node('_Set', me.ln, to, '=', '__SetAwait', awt, false)
+            set = node('_Set', me.ln, to, '=', 'await', awt)
         else
             set = awt
         end
 
         local ret = node('_Loop', me.ln, false, to, AST.copy(e or dt), body)
-        assert(body[1].tag == 'Stmts')
+        AST.asr(body[1], 'Stmts')
         table.insert(body[1], 1, set)
         ret.isEvery = true  -- refuses other "awaits"
-
+                            -- auto declares "to"
         return ret
     end,
 
--- Iter --------------------------------------------------
-
---[=[
-    _Iter_pre = function (me)
-        local to_tp, to_id, fr_exp, blk = unpack(me)
-
-        local fr_id = '_iter_'..me.n
-        local fr_tp = '_tceu_org*'
-
-        local fr_fvar = function() return node('Var', me.ln, fr_id) end
-        local to_fvar = function() return node('Var', me.ln, to_id) end
-
-        local fr_dcl = node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, fr_tp, 0, false, false),
-                        fr_id)
-        local to_dcl = node('Dcl_var', me.ln, 'var', to_tp, to_id)
-        to_dcl.read_only = true
-
-        local fr_ini = node('SetExp', me.ln, '=',
-                                        node('IterIni', me.ln, fr_exp),
-                                        fr_fvar())
-              fr_ini.__ast_iter = true  -- don't check in fin.lua
-        local to_ini = node('SetExp', me.ln, '=',
-                        node('Op1_cast', me.ln, to_tp, fr_fvar()),
-                        to_fvar())
-        to_ini.read_only = true   -- accept this write
-
-        local fr_nxt = node('SetExp', me.ln, '=',
-                                        node('IterNxt', me.ln, fr_fvar()),
-                                        fr_fvar())
-              fr_nxt.__ast_iter = true  -- don't check in fin.lua
-        fr_nxt[2].iter_nxt = fr_nxt[3]
-        local to_nxt = node('SetExp', me.ln, '=',
-                        node('Op1_cast', me.ln, to_tp, fr_fvar()),
-                        to_fvar())
-        to_nxt.read_only = true   -- accept this write
-
-        local loop = node('Loop', me.ln,
-                        node('Stmts', me.ln,
-                            node('If', me.ln,
-                                node('Op2_==', me.ln, '==',
-                                                   fr_fvar(),
-                                                   node('NULL', me.ln)),
-                                node('Break', me.ln),
-                                node('Nothing', me.ln)),
-                            node('If', me.ln,
-                                node('Op2_==', me.ln, '==',
-                                                   to_fvar(),
-                                                   node('NULL', me.ln)),
-                                node('Nothing', me.ln),
-                                blk),
-                            fr_nxt,to_nxt))
-        loop.blk = blk      -- continue
-        loop.bound = true   -- guaranteed to be bounded
-        loop.isEvery = true  -- refuses other "awaits"
-
-        return node('Block', me.ln, node('Stmts', me.ln, fr_dcl,to_dcl,
-                                                         fr_ini,to_ini,
-                                                         loop))
-    end,
-]=]
-
 -- Loop --------------------------------------------------
+
+    This_pre = function (me)
+        local in_rec = unpack(me)
+        if AST.par(me,'Dcl_constr') or in_rec then
+            return  -- inside constructor or already recognized as in_rec
+        end
+
+        -- "this" inside "loop/adt" should refer to outer class
+        local cls = AST.par(me, 'Dcl_cls')
+        if cls.__adj_out then
+            return node('Op2_.', me.ln, '.',
+                    node('This', me.ln, true),
+                    '_out')
+        end
+    end,
+
+    Outer_pre = function (me)
+        local in_rec = unpack(me)
+        if in_rec then
+            return  -- already recognized as in_rec
+        end
+
+        -- "outer" inside "traverse" should refer to outer class
+        local cls = AST.par(me, 'Dcl_cls')
+        if cls.__adj_out then
+            return node('Var', me.ln, '_out')
+        end
+    end,
+
+    _TraverseLoop_pre = function (me)
+        --[[
+        --  ret = traverse <n> in <adt> with
+        --      or
+        --  ret = traverse <n> in <[N]> with
+        --
+        --      <interface>
+        --  do
+        --      <body>
+        --          traverse <exp>;
+        --  end;
+        --      ... becomes ...
+        --  class Body with
+        --      pool Body[?]&   bodies;
+        --      var  Body*      parent;       // TODO: should be "Body*?" (opt)
+        --      var  Outer&     out;
+        --
+        --      var  <adt_t>[]* <n>;
+        --        or
+        --      var  int        <n>;
+        --      <interface>
+        --  do
+        --      watching *this.parent do
+        --          <body>
+        --              traverse <exp>;
+        --      end
+        --      escape 0;
+        --  end
+        --
+        --  do
+        --      var Scope s;
+        --      pool Body[?] bodies;
+        --      var Body*? _body_;
+        --      _body_ = spawn Body in _bodies with
+        --          this._bodies = bodies;
+        --          this._scope  = &s;      // watch my enclosing scope
+        --          this.<n>     = <n>;
+        --      end;
+        --      if _body_? then
+        --          ret = await *_body_!;
+        --      else
+        --          ret = _ceu_app->ret;
+        --              // result of immediate spawn termination
+        --              // TODO: what if spawn did fail? (ret=garbage?)
+        --      end
+        --  end
+        --]]
+
+        local to, root_tag, root, ifc, body, ret = unpack(me)
+        local out = AST.par(me, 'Dcl_cls')
+
+        local dcl_to        -- dcl of "to" control variable
+        local root_constr   -- initial "to" value
+        local root_pool     -- [] or [N]
+        local dcl_pool      -- pool of Bodies/stack-frames
+
+        if root_tag == 'adt' then
+            dcl_to = node('_Dcl_pool', me.ln, 'pool',
+                        node('Type', me.ln, 'TODO-ADT-TYPE', '[]','*'),
+                                        -- unknown (depends on "root")
+                        to[1])
+
+            -- This => Outer
+            --  traverse x in this.xs
+            --      becomes
+            --  do T with
+            --      this.xs = outer.xs
+            --  end;
+            root_constr = AST.copy(root)  -- avoid conflict with TMP_ITER below
+            if root_constr.tag=='Op2_.' and root_constr[2].tag=='This' then
+                root_constr[2].tag = 'Outer'
+            end
+
+            -- HACK_5: figure out root type and dimension
+            root = node('_TMP_ITER', me.ln, AST.copy(root))
+            root_pool = '[]'
+            dcl_pool = node('Dcl_pool', me.ln, 'pool',
+                        node('Type', me.ln, 'Body_'..me.n, '[]'),
+                        '_pool_'..me.n)
+        else
+            assert(root_tag == 'number', 'bug found')
+            dcl_to = node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, 'int'),
+                        to[1])
+            root_constr = AST.node('NUMBER', me.ln, '0')
+            root_pool = root
+            dcl_pool = node('Dcl_pool', me.ln, 'pool',
+                        node('Type', me.ln, 'Body_'..me.n, root),
+                        '_pool_'..me.n)
+            root = node('Nothing', me.ln)
+        end
+
+        -- unpacked below
+        ifc = ifc or node('Stmts',me.ln)
+
+        local tp = node('Type', me.ln, 'TODO-ADT-TYPE', '[]','*')
+        local cls = node('Dcl_cls', me.ln, false, 'Body_'..me.n,
+                        node('BlockI', me.ln,
+                            node('Stmts', me.ln,
+                                node('Dcl_pool', me.ln, 'pool',
+                                    node('Type', me.ln, 'Body_'..me.n, root_pool,'&'),
+                                    '_bodies'),
+                                node('Dcl_var', me.ln, 'var',
+                                    node('Type', me.ln, 'Scope', '*'),
+                                        -- TODO: should be opt type
+                                    '_parent'),
+                                dcl_to,
+                                node('Dcl_var', me.ln, 'var',
+                                    node('Type', me.ln, out[2], '&'),
+                                    '_out'),
+                                unpack(ifc))),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('_Watching', me.ln,
+                                    false,
+                                    node('Op1_*', me.ln, '*',
+                                        node('Var', me.ln, '_parent')),
+                                    false,
+                                    node('Block', me.ln,
+                                        node('Stmts', me.ln,
+                                            body))),
+                                node('_Escape', me.ln,
+                                    node('NUMBER', me.ln, '0')))))
+        cls.__adj_out = AST.par(me, 'Block')
+        cls.is_traverse = true
+
+        local spawn = node('Spawn', me.ln, 'Body_'..me.n,
+                            node('Var', me.ln, '_pool_'..me.n),
+                            node('Dcl_constr', me.ln,
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                '_bodies'),
+                                            '=', 'exp',
+                                            node('Var', me.ln, '_pool_'..me.n)),
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                '_parent'),
+                                            '=', 'exp',
+                                            node('Op1_&', me.ln, '&',
+                                                node('Var', me.ln, '_s'))),
+                                                --node('This', me.ln, true))),
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                to[1]),
+                                            '=', 'exp',
+                                            root_constr)))))
+--[[
+    -- now set manually before "_pre"
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                '_out'),
+                                            '=', 'exp',
+                                            node('Outer', me.ln, true))
+]]
+        spawn.__adj_is_traverse_root = true -- see code.lua
+        local doorg = F.__traverse_spawn_await(me, 'Body_'..me.n, spawn, ret)
+
+        local cls_scope = node('Nothing', me.ln)
+        if not TRAVERSE_ALREADY_GENERATED then
+            TRAVERSE_ALREADY_GENERATED = true
+            cls_scope = node('Dcl_cls', me.ln, false,
+                            'Scope',
+                            node('BlockI', me.ln,
+                                node('Stmts', me.ln)),
+                            node('Block', me.ln,        -- same structure of
+                                node('Stmts', me.ln,    -- other classes
+                                    node('AwaitN', me.ln))))
+        end
+
+        return node('Stmts', me.ln, cls_scope, root, cls, dcl_pool, doorg)
+    end,
+
+    --[[
+    --  ret = traverse <exp> with
+    --      <constr>
+    --  end;
+    --      ... becomes ...
+    --  do
+    --      var Scope s;
+    --      var Body*? _body_;
+    --      _body_ = spawn Body in _bodies with
+    --          this._bodies = outer._bodies;
+    --          this._scope  = &s;   // watch my enclosing scope
+    --          this.<n>     = <n>;
+    --          <constr>
+    --      end;
+    --      if _body_? then
+    --          ret = await *_body_!;
+    --      else
+    --          ret = _ceu_app->ret;
+    --              // result of immediate spawn termination
+    --              // TODO: what if spawn did fail? (ret=garbage?)
+    --      end
+    --  end
+    --]]
+    __traverse_spawn_await = function (me, cls_id, spawn, ret)
+        local SET_AWAIT = node('Await', me.ln,
+                            node('Op1_*', me.ln, '*',
+                                node('Op1_!', me.ln, '!',
+                                    node('Var', me.ln, '_body_'..me.n))),
+                            false,
+                            false)
+        local SET_DEAD = node('Nothing', me.ln)
+        if ret then
+            SET_AWAIT = node('_Set', me.ln, ret, '=', 'await',
+                            SET_AWAIT)
+            SET_DEAD  = node('_Set', me.ln, ret, '=', 'exp',
+                            node('RawExp', me.ln, '_ceu_app->ret'))
+                                -- HACK_10: (see ceu_os.c)
+                                -- restores return value from global
+                                -- (in case spawn terminates immediately)
+        end
+
+        return node('Block', me.ln,
+                node('Stmts', me.ln,
+                    node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, 'Scope'),
+                        '_s'),
+                    node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, cls_id, '*','?'),
+                        '_body_'..me.n),
+                    node('_Set', me.ln,
+                        node('Var', me.ln, '_body_'..me.n),
+                        '=', 'spawn',
+                        spawn),
+                    node('If', me.ln,
+                        node('Op1_?', me.ln, '?',
+                            node('Var', me.ln, '_body_'..me.n)),
+                        --node('Nothing', me.ln),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                SET_AWAIT)),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                SET_DEAD)))))
+    end,
+
+    _TraverseRec_pre = function (me)
+        local n, exp, constr, ret = unpack(me)
+
+        -- unpacked below
+        constr = constr or node('Block', me.ln,
+                            node('Stmts', me.ln))
+        constr = AST.asr(constr,'Block', 1,'Stmts')
+
+        -- take n-th traverse above
+        n = (n==false and 0) or (AST.asr(n,'NUMBER')[1])
+        local it = AST.iter(
+                    function (me)
+                        return me.tag=='Dcl_cls' and me.__adj_out
+                    end)
+        local cls
+        for i=0, n do
+            cls = it()
+            if not cls then
+                break
+            end
+        end
+        ASR(cls, me, 'missing enclosing `traverse´ block')
+
+        local dcl = AST.asr(cls,'Dcl_cls', 3,'BlockI', 1,'Stmts')[3]
+        assert(dcl.tag=='Dcl_pool' or dcl.tag=='Dcl_var')
+        local _,_, to_id = unpack(dcl)
+
+        local cls_id = cls[2]
+
+        local spawn = node('Spawn', me.ln, cls_id,
+                            node('Var', me.ln, '_bodies'),
+                            node('Dcl_constr', me.ln,
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                '_bodies'),
+                                            '=', 'exp',
+                                            node('Op2_.', me.ln, '.',
+                                                node('Outer', me.ln, true),
+                                                '_bodies')),
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                '_parent'),
+                                            '=', 'exp',
+                                            node('Op1_&', me.ln, '&',
+                                                node('Var', me.ln, '_s'))),
+                                                --node('Outer', me.ln, true))),
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                to_id),
+                                            '=', 'exp',
+                                            exp),
+--[[
+                                        node('_Set', me.ln,
+                                            node('Op2_.', me.ln, '.',
+                                                node('This', me.ln, true),
+                                                '_out'),
+                                            '=', 'exp',
+                                            node('Op2_.', me.ln, '.',
+                                                node('Outer', me.ln, true),
+                                                '_out')),
+]]
+                                        unpack(constr)))))
+        spawn.__adj_is_traverse_rec = true  -- see code.lua
+
+        return F.__traverse_spawn_await(me, cls_id, spawn, ret)
+    end,
 
     _Loop_pre = function (me)
         local max, to, iter, body = unpack(me)
@@ -431,97 +625,12 @@ F = {
         local loop = node('Loop', me.ln, max, iter, to, body)
         loop.isEvery      = me.isEvery
         loop.isAwaitUntil = me.isAwaitUntil
+
         return node('Block', me.ln,
                 node('Stmts', me.ln,
                     node('Stmts', me.ln),   -- to insert all pre-declarations
                     loop))
     end,
---[=[
-        local max, _i, _j, blk = unpack(me)
-        local bound = max and { true, max }
-                                -- must be limited to "max" (must have sval)
-
-        if not _i then
-            ASR(not max, me, 'not implemented')
-            local n = node('Loop', me.ln, blk)
-            n.blk = blk     -- continue
-            return n
-        end
-
-        local i = function() return node('Var', me.ln, _i) end
-        local dcl_i = node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, 'int', 0, false, false),
-                        _i)
-        dcl_i.read_only = true
-        local set_i = node('SetExp', me.ln, '=', node('NUMBER', me.ln,0), i())
-        set_i.read_only = true  -- accept this write
-        local nxt_i = node('SetExp', me.ln, '=',
-                        node('Op2_+', me.ln, '+', i(), node('NUMBER', me.ln,1)),
-                        i())
-        nxt_i.read_only = true  -- accept this write
-
-        if max then
-            max = node('CallStmt', me.ln,
-                    node('Op2_call', me.ln, 'call',
-                        node('Nat', me.ln, '_assert'),
-                        node('ExpList', me.ln,
-                            node('Op2_<', me.ln, '<', i(),
-                                max))))
-        else
-            max = node('Nothing', me.ln)
-        end
-
-        if not _j then
-            local n = node('Loop', me.ln,
-                        node('Stmts', me.ln,
-                            max,
-                            blk,
-                            nxt_i))
-            n.blk = blk     -- _Continue needs this
-            n.bound = bound
-            return node('Block', me.ln,
-                    node('Stmts', me.ln, dcl_i, set_i, n))
-        end
-
-        bound = bound or { false, _j }
-                            -- may be limited to "_j" (if has sval)
-        local dcl_j, set_j, j
-
-        if _j.tag == 'NUMBER' then
-            ASR(tonumber(_j[1]) > 0, me.ln,
-                'constant should not be `0´')
-            j = function () return _j end
-            dcl_j = node('Nothing', me.ln)
-            set_j = node('Nothing', me.ln)
-        else
-            local j_name = '_j'..blk.n
-            j = function() return node('Var', me.ln, j_name) end
-            dcl_j = node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln ,'int', 0, false, false),
-                        j_name)
-            set_j = node('SetExp', me.ln, '=', _j, j())
-        end
-
-        local cmp = node('Op2_>=', me.ln, '>=', i(), j())
-
-        local loop = node('Loop', me.ln,
-                        node('Stmts', me.ln,
-                            node('If', me.ln, cmp,
-                                node('Break', me.ln),
-                                node('Nothing', me.ln)),
-                            max,
-                            blk,
-                            nxt_i))
-        loop.blk = blk      -- continue
-        loop.bound = bound
-
-        return node('Block', me.ln,
-                node('Stmts', me.ln,
-                    dcl_i, set_i,
-                    dcl_j, set_j,
-                    loop))
-    end,
-]=]
 
 -- Continue --------------------------------------------------
 
@@ -618,7 +727,7 @@ F = {
 
 -- DoOrg ------------------------------------------------------------
 
-    DoOrg_pre = function (me, to)
+    _DoOrg_pre = function (me, to)
         --[[
         --  x = do T ... (handled on _Set_pre)
         --
@@ -628,26 +737,24 @@ F = {
         --
         --  do
         --      var T t with ... end;
-        --      await t.ok;
+        --      x = await t;
         --  end
         --]]
         local id_cls, constr = unpack(me);
 
         local awt = node('Await', me.ln,
-                        node('Op2_.', me.ln, '.',
-                            node('Var', me.ln, '_org_'..me.n),
-                            'ok'),
+                        node('Var', me.ln, '_org_'..me.n),
                         false,
                         false)
         if to then
-            awt = node('_Set', me.ln, to, '=', '__SetAwait', awt, false, false)
+            awt = node('_Set', me.ln, to, '=', 'await', awt)
         end
 
         return node('Do', me.ln,
                 node('Block', me.ln,
                     node('Stmts', me.ln,
                         node('Dcl_var', me.ln, 'var',
-                            node('Type', me.ln, id_cls, 0, false, false),
+                            node('Type', me.ln, id_cls),
                             '_org_'..me.n,
                             constr),
                         awt)))
@@ -655,10 +762,17 @@ F = {
 
 -- BlockI ------------------------------------------------------------
 
+    _BlockI_pre = function (me)
+        return node('BlockI', me.ln,
+                node('Stmts', me.ln,
+                    unpack(me)))
+    end,
+
     -- expand collapsed declarations inside Stmts
     BlockI_pos = function (me)
+        local stmts = AST.asr(me,'', 1,'Stmts')
         local new = {}
-        for _, dcl in ipairs(me) do
+        for _, dcl in ipairs(stmts) do
             if dcl.tag == 'Stmts' then
                 for _, v in ipairs(dcl) do
                     new[#new+1] = v
@@ -675,7 +789,7 @@ F = {
         end
 ]]
         -- changes the node reference
-        return node('BlockI', me.ln, unpack(new))
+        me[1] = node('Stmts', me.ln, unpack(new))
     end,
 
 -- Dcl_fun, Dcl_ext --------------------------------------------------------
@@ -699,9 +813,9 @@ F = {
                 me[2] = rec
                 me[3] = node('TupleType', me.ln,
                             node('TupleTypeItem', me.ln, false,
-                                node('Type', me.ln, 'void', 0, false, false),
+                                node('Type', me.ln, 'void'),
                                 false))
-                me[4] = node('Type', me.ln, 'void', 0, false, false)
+                me[4] = node('Type', me.ln, 'void')
                 me[5] = n
                 me[6] = blk
 
@@ -739,8 +853,8 @@ F = {
 
         -- Type => TupleType
         if ins.tag == 'Type' then
-            local id, ptr, arr, ref = unpack(ins)
-            if id=='void' and ptr=='' and arr==false and ref==false then
+            local id, any = unpack(ins)
+            if id=='void' and (not any) then
                 ins = node('TupleType', ins.ln)
             else
                 ins = node('TupleType', ins.ln,
@@ -774,7 +888,7 @@ F = {
                 local d1, d2 = string.match(dir, '([^/]*)/(.*)')
                 assert(out)
                 assert(rec == false)
-                local tp_req = node('Type', me.ln, 'int', 0, false, false)
+                local tp_req = node('Type', me.ln, 'int')
 
                 local ins_req = node('TupleType', me.ln,
                                     node('TupleTypeItem', me.ln,
@@ -787,7 +901,7 @@ F = {
                                     node('TupleTypeItem', me.ln,
                                         false,AST.copy(tp_req),false),
                                     node('TupleTypeItem', me.ln,
-                                        false,node('Type',me.ln,'u8',0,false,false),false),
+                                        false,node('Type',me.ln,'u8'),false),
                                     node('TupleTypeItem', me.ln,
                                         false, out, false))
 
@@ -827,7 +941,7 @@ F = {
             -- end
             --]]
             local id_cls = string.sub(id_evt,1,1)..string.lower(string.sub(id_evt,2,-1))
-            local tp_req = node('Type', me.ln, 'int', 0, false, false)
+            local tp_req = node('Type', me.ln, 'int')
             local id_req = '_req_'..me.n
 
             local ifc = {
@@ -835,14 +949,17 @@ F = {
             }
             for _, t in ipairs(ins) do
                 local mod, tp, id = unpack(t)
-                ASR(tp.id=='void' or id, me, 'missing parameter identifier')
+                local tp_id = unpack(tp)
+                ASR(tp_id=='void' or id, me, 'missing parameter identifier')
                 --id = '_'..id..'_'..me.n
                 ifc[#ifc+1] = node('Dcl_var', me.ln, 'var', tp, id)
             end
 
             local cls =
                 node('Dcl_cls', me.ln, false, id_cls,
-                    node('BlockI', me.ln, unpack(ifc)),
+                    node('BlockI', me.ln,
+                        node('Stmts', me.ln,
+                            unpack(ifc))),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Finalize', me.ln,
@@ -865,7 +982,7 @@ F = {
                                         node('Dcl_var', me.ln, 'var', tp_req, 'id_req'),
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'id_req'),
-                                            '=', '__SetAwait',
+                                            '=', 'await',
                                             node('Await', me.ln,
                                                 node('Ext', me.ln, id_evt..'_CANCEL'),
                                                 false,
@@ -887,11 +1004,11 @@ F = {
             --     var tp_req id_req_;
             --     var tpN, idN_;
             --     every (id_req,idN) = _LINE_request do
-            --         var Line* new = spawn Line in _Lines with
+            --         var Line*? new = spawn Line in _Lines with
             --             this.id_req = id_req_;
             --             this.idN    = idN_;
             --         end
-            --         if new==null then
+            --         if not new? then
             --             emit _LINE_return => (id_req,err,0);
             --         end
             --     end
@@ -905,12 +1022,12 @@ F = {
             local sets = {
                 node('_Set', me.ln,
                     node('Op2_.', me.ln, '.', node('This',me.ln), id_req),
-                    '=', 'SetExp',
+                    '=', 'exp',
                     node('Var', me.ln, id_req))
             }
             for _, t in ipairs(ins) do
                 local mod, tp, id = unpack(t)
-                ASR(tp.id=='void' and tp.ptr==0 or id, me,
+                ASR(TP.check({tt=tp},'void') or id, me,
                     'missing parameter identifier')
                 local _id = '_'..id..'_'..me.n
                 --dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, _id)
@@ -919,7 +1036,7 @@ F = {
                                     node('Op2_.', me.ln, '.',
                                         node('This',me.ln),
                                         id),
-                                    '=', 'SetExp',
+                                    '=', 'exp',
                                     node('Var', me.ln, _id))
             end
 
@@ -929,7 +1046,7 @@ F = {
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             node('Dcl_pool', me.ln, 'pool',
-                                node('Type', me.ln, id_cls, 0, (spw or true), false),
+                                node('Type', me.ln, id_cls, (spw or '[]')),
                                 '_'..id_cls..'s'),
                             node('Stmts', me.ln, unpack(dcls)),
                             node('_Every', me.ln, vars,
@@ -938,18 +1055,18 @@ F = {
                                 node('Block', me.ln,
                                     node('Stmts', me.ln,
                                         node('Dcl_var', me.ln, 'var',
-                                            node('Type', me.ln, 'void', 1, false, false),
+                                            node('Type', me.ln, 'void', '*','?'),
                                             'ok_'),
                                         node('_Set', me.ln,
                                             node('Var', me.ln, 'ok_'),
-                                            '=', '__SetSpawn',
+                                            '=', 'spawn',
                                             node('Spawn', me.ln, id_cls,
                                                 node('Var', me.ln, '_'..id_cls..'s'),
                                                 node('Dcl_constr', me.ln, unpack(sets)))),
                                         node('If', me.ln,
-                                            node('Op2_==', me.ln, '==',
-                                                node('Var', me.ln, 'ok_'),
-                                                node('NULL',me.ln)),
+                                            node('Op1_not', me.ln, 'not',
+                                                node('Op1_?', me.ln, '?',
+                                                    node('Var', me.ln, 'ok_'))),
                                             node('Block', me.ln,
                                                 node('EmitExt', me.ln, 'emit',
                                                     node('Ext', me.ln, id_evt..'_RETURN'),
@@ -1017,8 +1134,17 @@ F = {
         local pre, tp = unpack(me)
         local ret = {}
         local t = { unpack(me,3) }  -- skip "pre","tp"
-        for i=1, #t do
-            ret[#ret+1] = node('Dcl_pool', me.ln, pre, tp, t[i])
+
+        -- id, op, tag, exp
+        for i=1, #t, 4 do
+            ret[#ret+1] = node('Dcl_pool', me.ln, pre, AST.copy(tp), t[i])
+            if t[i+1] then
+                ret[#ret+1] = node('_Set', me.ln,
+                                node('Var', me.ln, t[i]),  -- var
+                                t[i+1],                 -- op
+                                t[i+2],                 -- tag
+                                t[i+3] )                -- exp    (fr)
+            end
         end
         return node('Stmts', me.ln, unpack(ret))
     end,
@@ -1035,17 +1161,15 @@ F = {
             return
         end
 
-        -- id, op, tag, exp, constr
-        for i=1, #t, 5 do
+        -- id, op, tag, exp
+        for i=1, #t, 4 do
             ret[#ret+1] = node('Dcl_var', me.ln, pre, AST.copy(tp), t[i])
             if t[i+1] then
-                ret[#ret].__adj_set = true  -- var int x = <something>
                 ret[#ret+1] = node('_Set', me.ln,
                                 node('Var', me.ln, t[i]),  -- var
                                 t[i+1],                 -- op
                                 t[i+2],                 -- tag
-                                t[i+3],                 -- exp    (p1)
-                                t[i+4] )                -- constr (p2)
+                                t[i+3] )                -- exp    (fr)
             end
         end
         return node('Stmts', me.ln, unpack(ret))
@@ -1053,13 +1177,170 @@ F = {
 
 -- Tuples ---------------------
 
-    _TupleTypeItem_2 = '_TupleItem_1',
+    _TupleTypeItem_2 = '_TupleTypeItem_1',
     _TupleTypeItem_1 = function (me)
         me.tag = 'TupleTypeItem'
     end,
     _TupleType_2 = '_TupleType_1',
     _TupleType_1 = function (me)
         me.tag = 'TupleType'
+    end,
+
+    --  <v> = await <E> until <CND>
+    --      -- becomes --
+    --  loop do
+    --      <v> = await <E>;
+    --      if <CND> then
+    --          break;
+    --      end
+    --  end
+    __await_until = function (me, stmt)
+        local _, _, cnd = unpack(me)
+        if cnd then
+            me[3] = nil
+            local ret = node('_Loop', me.ln, false, false, false,
+                            node('Stmts', me.ln,
+                                stmt,
+                                node('If', me.ln, cnd,
+                                    node('Break', me.ln),
+                                    node('Nothing', me.ln))))
+            ret.isAwaitUntil = true -- see tmps/fins
+            return ret
+        else
+            return nil
+        end
+    end,
+
+    __await_opts = function (me, stmt)
+        local e, dt, cnd, ok = unpack(me)
+
+        -- TODO: ugly hack
+        if ok then return end
+        me[4] = true
+
+        -- HACK_6: figure out if OPT-1 or OPT-2 or OPT-3:
+        --      await <EVT>
+        --      await <ADT>
+        --      await <ORG>
+        local var = e or dt     -- TODO: hacky
+        local tst = node('_TMP_AWAIT', me.ln, var)
+
+        local SET_KILL = node('Nothing', me.ln)
+        local SET_DEAD = node('Nothing', me.ln)
+        if stmt.tag == 'Set' then
+            local to = AST.asr(stmt,'Set', 4,'VarList', 1,'Var')
+            SET_KILL = node('Set', me.ln, '=', 'exp',
+                        node('Op2_.', me.ln, '.',
+                            node('Op1_*', me.ln, '*',
+                                node('Var', me.ln, '__awk_org_'..me.n)),
+                            'ret'),
+                        AST.copy(to))
+            SET_DEAD = node('Set', me.ln, '=', 'exp',
+                        node('Op1_cast', me.ln,
+                            node('Type', me.ln, 'int'),
+                            node('Op2_.', me.ln, '.',
+                                node('Op1_*', me.ln, '*',
+                                    node('Op1_cast', me.ln,
+                                        node('Type', me.ln, '_tceu_org', '*'),
+                                        node('Op1_&', me.ln, '&',
+                                            AST.copy(var)))),
+                                'ret')),
+                        AST.copy(to))
+        end
+
+        return
+            node('Stmts', me.ln,
+                -- HACK_6: figure out if OPT-1 or OPT-2 or OPT-3
+                tst,  -- "var" needs to be parsed before OPT-[123]
+
+                -- OPT-1
+                stmt,
+
+                -- OPT-2
+                node('If', me.ln,
+                    node('Op2_.', me.ln, '.',
+                        AST.copy(var),
+                        'HACK_6-NIL'),
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Nothing', me.ln))),
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Dcl_var', me.ln, 'var',
+                                node('Type', me.ln, 'void', '*'),
+                                '__old_adt_'..me.n),
+                            node('Set', me.ln, '=', 'exp',
+                                node('Op1_cast', me.ln,
+                                    node('Type', me.ln, 'void', '*'),
+                                    AST.copy(var)),
+                                node('Var', me.ln, '__old_adt_'..me.n)),
+                            node('Dcl_var', me.ln, 'var',
+                                node('Type', me.ln, 'void', '*'),
+                                '__awk_adt_'..me.n,
+                                false,
+                                true), -- isTmp
+                            node('_Set', me.ln,
+                                node('Var', me.ln, '__awk_adt_'..me.n),
+                                '=', 'await',
+                                node('Await', me.ln,
+                                    node('Ext', me.ln, '_ok_killed'),
+                                    false,
+                                    node('Op2_==', me.ln, '==',
+                                        node('Var', me.ln, '__old_adt_'..me.n),
+                                        node('Var', me.ln, 
+                                        '__awk_adt_'..me.n)),
+                                    true))))),
+
+                -- OPT-3
+-- TODO: workaround bug do IF-then-else com await no then e ptr no else
+-- *not* isAlive para inverter then/else
+                node('Stmts', me.ln,
+                    node('If', me.ln,
+                        node('Op1_not', me.ln, 'not',
+                            node('Op2_.', me.ln, '.',
+                                node('Op1_*', me.ln, '*',
+                                    -- this cast confuses acc.lua (see Op1_* there)
+                                    -- TODO: HACK_3
+                                    node('Op1_cast', me.ln,
+                                        node('Type', me.ln, '_tceu_org', '*'),
+                                        AST.copy(var))),
+                                'isAlive')),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                SET_DEAD)),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Dcl_var', me.ln, 'var',
+                                    node('Type', me.ln, 'u32'),
+                                    '__org_id_'..me.n),
+                                node('_Set', me.ln,
+                                    node('Var', me.ln, '__org_id_'..me.n),
+                                    '=', 'exp',
+                                    node('Op2_.', me.ln, '.',
+                                        node('Op1_*', me.ln, '*',
+                                            node('Op1_cast', me.ln,
+                                                node('Type', me.ln, '_tceu_org', '*'),
+                                                AST.copy(var))),
+                                        'id')),
+                                node('Dcl_var', me.ln, 'var',
+                                    node('Type', me.ln, '_tceu_org_kill', '*'),
+                                    '__awk_org_'..me.n,
+                                    false,
+                                    true),  -- isTmp
+                                node('_Set', me.ln,
+                                    node('Var', me.ln, '__awk_org_'..me.n),
+                                    '=', 'await',
+                                    node('Await', me.ln,
+                                        node('Ext', me.ln, '_ok_killed'),
+                                        false,
+                                        node('Op2_==', me.ln, '==',
+                                            node('Op2_.', me.ln, '.',
+                                                node('Op1_*', me.ln, '*',
+                                                    node('Var', me.ln, '__awk_org_'..me.n)),
+                                                'org'),
+                                            node('Var', me.ln, '__org_id_'..me.n)),
+                                        true)),
+                                SET_KILL)))))
     end,
 
     Await_pre = function (me)
@@ -1069,176 +1350,88 @@ F = {
         if dt then
             me[1] = node('Ext', me.ln, '_WCLOCK')
         end
-        me[3] = nil   -- remove "cnd" from "Await"
 
-        assert(me[1].tag ~= 'Ref', 'bug found')
-
-        if not cnd then
-            return me
+        --  await <E> until <CND>
+        --      -- becomes --
+        --  loop do
+        --      await <E>;
+        --      if <CND> then
+        --          break;
+        --      end
+        --  end
+        local ret = F.__await_until(me,me)
+        if ret then
+            return ret
         end
-        if AST.par(me, '_Set_pre') then
-            return me   -- TODO: join code below with _Set_pre
-        end
 
-        -- <await until> => loop
-
-        return node('_Loop', me.ln, false, false, false,
-                node('Stmts', me.ln,
-                    me,
-                    node('If', me.ln, cnd,
-                        node('Break', me.ln),
-                        node('Nothing', me.ln))))
+        return F.__await_opts(me, me)
     end,
 
     _Set_pre = function (me)
-        local to, op, tag, p1, p2, p3 = unpack(me)
+        local to, op, tag, fr = unpack(me)
 
-        if tag == 'SetExp' then
-            return node(tag, me.ln, op, p1, to)
+        if tag == 'exp' then
+            return node('Set', me.ln, op, tag, fr, to)
 
-        elseif tag == '__SetAwait' then
+        elseif tag == 'await' then
+            local ret   -- Set or Loop (await-until)
 
-            local ret
-            local awt = p1
-            local T = node('Stmts', me.ln)
+            --local ret
+            --local awt = fr
+            --local T = node('Stmts', me.ln)
 
             if to.tag ~= 'VarList' then
                 to = node('VarList', me.ln, to)
             end
+            ret = node('Set', me.ln, op, tag, fr, to)
 
-            -- <await until> => loop
-            local cnd = awt[#awt]
-            awt[#awt] = false   -- remove "cnd" from "Await"
-            if cnd then
-                ret = node('_Loop', me.ln, false, false, false,
-                            node('Stmts', me.ln,
-                                T,
-                                node('If', me.ln, cnd,
-                                    node('Break', me.ln),
-                                    node('Nothing', me.ln))))
-                ret.isAwaitUntil = true     -- see tmps.lua
-            else
-                ret = T
-            end
-
-            -- (v1, v2) = await e;
-            --      <becomes>
-            -- <e>;                 // required by tup_tp
-            -- var _tup_tp* tup_id; // requires type of "e"
-            -- tup_id = await e;
-            -- v1 = tup_id->_1;
-            -- v2 = tup_id->_2;
-            -- vn = tup_id->_n;
-
-            -- <e>;
-            local e, dt = unpack(awt) -- determines type before traversing tup
-            local var = e or dt       -- TODO: hacky
-            T[#T+1] = AST.copy(var)
-            --assert(var.tag=='Ext' or var.tag=='Var' or
-                   --var.tag=='WCLOCKK' or var.tag=='WCLOCKE',
-                    --'TODO: org.evt tambem: '..var.tag)
-
-            -- var _tup_tp* tup_id;
-            local tup_id = '_tup_'..me.n
-            local tup_tp
-            if var.tag=='WCLOCKK' or var.tag=='WCLOCKE' then
-                tup_tp = AST.node('Type', me.ln, '_tceu__s32', 1, false, false)
-            else
-                tup_tp = {__ast_pending=true, PAR=T, I=#T, ptr=1} -- pointer to receive
-                            -- HACK_5: substitute with type of "var" (env.lua)
-            end
-            T[#T+1] = node('Dcl_var', me.ln, 'var', tup_tp, tup_id)
-
-            -- tup_id = await e;
-            --      <becomes>
-            -- await e; tup_id=<e>;
-            T[#T+1] = awt
-            T[#T+1] = node('SetExp', me.ln, '=',
-                            node('Ref', me.ln, awt),
-                            node('Var', me.ln, tup_id))
-                            -- assignment to struct must be '='
-            T[#T].__ast_tuple = true
-
-            -- v1 = tup_id->_1;
-            -- v2 = tup_id->_2;
-            -- vn = tup_id->_n;
-            for i, v in ipairs(to) do
-                T[#T+1] = node('SetExp', me.ln, op,
-                            node('Op2_.', me.ln, '.',
-                                node('Op1_*', me.ln, '*',
-                                    node('Var', me.ln, tup_id)),
-                                '_'..i),
-                            v)
-                T[#T].__ast_tuple = true
-                -- HACK_7: tup_id->i looses type information (see env.lua)
-                T[#T].__ast_original_fr = {PAR=awt, I=(e and 1 or 2), i=i};
-                --local op2_dot = T[#T][2]
-                --op2_dot.__ast_pending = v   -- same type of
--- TODO: entender esse __ast
-                T[#T][2].__ast_fr = p1    -- p1 is an AwaitX
-            end
+            ret = F.__await_until(fr,ret) or ret
+            ret = F.__await_opts(fr,ret)  or ret
 
             return ret
 
-        elseif tag == 'SetBlock' then
-            return node(tag, me.ln, p1, to)
+        elseif tag == 'block' then
+            return node('SetBlock', me.ln, fr, to)
 
-        elseif tag == '__SetThread' then
-            return node('Stmts', me.ln,
-                        p1,
-                        node('SetExp', me.ln, op,
-                            node('Ref', me.ln, p1),
-                            to))
+        elseif tag == 'thread' then
+            return node('Set', me.ln, op, tag, fr, to)
 
-        elseif tag == '__SetEmitExt' then
-            assert(p1.tag == 'EmitExt')
-            local op_emt, e, ps = unpack(p1)
+        elseif tag == 'emit-ext' then
+            AST.asr(fr, 'EmitExt')
+            local op_emt, e, ps = unpack(fr)
             if op_emt == 'request' then
-                return REQUEST(me)
+                return F.__REQUEST(me)
 
             else
-                --[[
-                --      v = call A(1,2);
-                -- becomes
-                --      do
-                --          var _tup t;
-                --          t._1 = 1;
-                --          t._2 = 2;
-                --          emit E => &t;
-                --          v = <ret>
-                --      end
-                --]]
-                p1.__ast_set = true
-                return node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                p1,  -- Dcl_var, Sets, EmitExt
-                                node('SetExp', me.ln, op,
-                                    node('Ref', me.ln, p1),
-                                    to)))
+                return node('Set', me.ln, op, tag, fr, to)
             end
 
-        elseif tag=='__SetSpawn' then
-            p1[#p1+1] = node('SetExp', me.ln, op,
-                            node('Ref', me.ln, p1),
-                            to)
-            return p1
+        elseif tag=='spawn' then
+            return node('Set', me.ln, op, tag, fr, to)
 
-        elseif tag=='__SetAdtConstr' then
--- TODO: do the same for SetSpawn?
-            local set = node('SetExp', me.ln, op,
-                            false,  -- Adt_constr will set to its var
-                            to)
-            if p1[1] then   -- new?
-                assert(p1[2][1].tag == 'Adt', 'bug found')
-            end
-            return node('Stmts', me.ln, p1, set)
+        elseif tag=='adt-constr' then
+            return node('Set', me.ln, op, tag, fr, to)
 
-        elseif tag == '__SetDoOrg' then
-            return F.DoOrg_pre(p1, to)
+        elseif tag == 'do-org' then
+            return F._DoOrg_pre(fr, to)
 
-        elseif tag == '__SetLua' then
-            p1.ret = to     -- node Lua will assign to "to"
-            return node('Stmts', me.ln, to, p1)
+        elseif tag == 'lua' then
+            return node('Set', me.ln, op, tag, fr, to)
+
+        elseif tag == '__trav_rec' then
+            local rec = AST.asr(me,'_Set', 4,'_TraverseRec')
+            assert(op == '=', 'bug found')
+            rec[#rec+1] = to;
+            return rec
+
+        elseif tag == '__trav_loop' then
+            local rec = AST.asr(me,'_Set', 4,'_TraverseLoop')
+            assert(op == '=', 'bug found')
+            rec[#rec+1] = to;
+            return rec
+
+        elseif tag == 'vector' then
+            return node('Set', me.ln, op, tag, fr, to)
 
         else
             error 'not implemented'
@@ -1285,14 +1478,12 @@ F = {
 
 -- EmitExt --------------------------------------------------------
 
-    EmitInt_pre = 'EmitExt_pre',
     EmitExt_pre = function (me)
         local op, e, ps = unpack(me)
 
         -- wclock event, set "e"
         if e == false then
             me[2] = node('Ext', me.ln, '_WCLOCK')
-            me.__adj_orig_ps = ps
         end
 
         -- adjust to ExpList
@@ -1309,72 +1500,113 @@ F = {
         end
         me[3] = ps
 
-        if op ~= 'request' then
-            return
+        if op == 'request' then
+            return F.__REQUEST(me)
         end
-        return REQUEST(me)
     end,
+    _EmitInt_pre = function (me)
+        me.tag = 'EmitInt'
+        me = F.EmitExt_pre(me) or me
+        --[[
+        -- TODO-RESEARCH-1:
+        -- If an "emit" is on the stack and its enclosing block "self-aborts",
+        -- we need to remove the "emit" from the stack because its associated
+        -- payload may have gone out of scope:
+        --
+        --  par/or do
+        --      par/or do
+        --          var int x;
+        --          emit e => &x;
+        --      with
+        --          await e;    // aborts "emit" block w/ "x"
+        --      end
+        --  with
+        --      px = await e;
+        --      *px;            // "x" is out of scope
+        --  end
+        --
+        -- To remove, we need to "finalize" the "emit" removing itself from the
+        -- stack:
 
-    EmitInt_pos = 'EmitExt_pos',
-    EmitExt_pos = function (me)
-        local op, e, ps = unpack(me)
-        me.__ast_original_params = ps  -- save for arity check
-        assert(ps.tag == 'ExpList', ps.tag)
-
-        if #ps == 0 then
-            me[3] = false   -- nothing to pass
-            return
-        end
-
-        -- statements to assign the parameters
-        local T = node('Stmts', me.ln)
-
-        -- emit e => (v1,v2);
-        --      <becomes>
-        -- <e>;                 // required by tup_tp
-        -- var _tup_tp tup_id;  // requires type of "e"
-        -- tup_id._1 = v1;
-        -- tup_id._2 = v2;
-        -- emit e => &tup_id;
-
-        -- <e>;
-        T[#T+1] = AST.copy(e) -- determines type before traversing tup
-        --assert(e.tag=='Ext' or e.tag=='Var', 'TODO: org.evt tambem')
-
-        -- var _tup_tp* tup_id;
-        local tup_id = '_tup_'..me.n
-        local tup_tp = {__ast_pending=true, PAR=T, I=#T, ptr=0} -- plain var to emit
-                            -- HACK_5: substitute with type of "var" (env.lua)
-        T[#T+1] = node('Dcl_var', me.ln, 'var', tup_tp, tup_id)
-        T[#T].__ast_tmp = true
-
--- TODO: understand this again
-        -- avoid emitting tmps (see tmps.lua)
-        if me.tag == 'EmitInt' then
-            T[#T+1] = node('EmitNoTmp', me.ln)
-        end
-
-        for i, p in ipairs(ps) do
-            T[#T+1] = node('SetExp', me.ln, '=',
-                        p,
-                        node('Op2_.', me.ln, '.', node('Var',me.ln,tup_id),
-                            '_'..i))
--- TODO: understand this again
-            --T[#T][3].__ast_chk = { {T,I}, i }
-        end
-
-        me[3] = node('Op1_&', me.ln, '&',
-                    node('Var', me.ln, tup_id))
-            T[#T+1] = me
-
-        return T
+        --  emit x;
+        --      ... becomes ...
+        --  do
+        --      var int fin = stack_nxti() + sizeof(tceu_stk);
+        --                      /* TODO: two levels up */
+        --      finalize with
+        --          if (fin != CEU_STACK_MAX) then
+        --              stack_get(fin)->evt = IN_NONE;
+        --          end
+        --      end
+        --      emit x;
+        --      fin = CEU_STACK_MAX;
+        --  end
+        --
+        -- Alternatives:
+        --      - forbid pointers in payloads: we could then allow an "emit" to
+        --        stay in the stack even if its surrounding block aborts
+        --      - statically detect if an "emit" can be aborted
+        --          - generate a warning ("slow code") and the code above if it
+        --            is the case
+        --
+        -- TODO: this may have solved the problem with await/awake in the same reaction
+        --]]
+        return
+            node('Block', me.ln,
+                node('Stmts', me.ln,
+                    node('_Dcl_nat', me.ln, '@plain', 'unk', '_tceu_nstk', false),
+                    node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, '_tceu_nstk'),
+                        '_emit_fin_'..me.n),
+                    node('_Set', me.ln,
+                        node('Var', me.ln, '_emit_fin_'..me.n),
+                        '=', 'exp',
+                        node('RawExp', me.ln,
+                            '(stack_nxti(_ceu_go)+sizeof(tceu_stk))',
+                            true)),
+                    node('Finalize', me.ln,
+                        false,
+                        node('Finally', me.ln,
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('_Dcl_nat', me.ln, '@nohold', 'func', '_stack_get', false),
+                                    node('If', me.ln,
+                                        node('Op2_==', me.ln, '==',
+                                            node('Var', me.ln, '_emit_fin_'..me.n),
+                                            node('Nat', me.ln, '_CEU_STACK_MAX')),
+                                        node('Block', me.ln,
+                                            node('Stmts', me.ln,
+                                                node('Nothing', me.ln))),
+                                        node('Block', me.ln,
+                                            node('Stmts', me.ln,
+                                                node('_Set', me.ln,
+                                                    node('Op2_.', me.ln, '.',
+                                                        node('Op1_*', me.ln, '*',
+                                                            node('Op2_call', 
+                                                                me.ln,
+                                                                'call',
+                                                                node('Nat', me.ln, '_stack_get', true),
+                                                                node('ExpList', me.ln,
+                                                                    node('Nat', me.ln, '__ceu_go', true),
+                                                                    node('Var', me.ln, '_emit_fin_'..me.n)))),
+                                                        'evt'),
+                                                    '=', 'exp',
+                                                    node('Nat', me.ln, '_CEU_IN__NONE', true))))))))),
+                    me,
+                    node('_Set', me.ln,
+                        node('Var', me.ln, '_emit_fin_'..me.n),
+                        '=', 'exp',
+                        node('Nat', me.ln, '_CEU_STACK_MAX'))))
     end,
 
 -- Finalize ------------------------------------------------------
 
     Finalize_pos = function (me)
-        ASR( (not me[1]) or (me[1].tag=='SetExp'),
-            me, 'invalid `finalize´')
+        local sub = unpack(me)
+        if sub then
+            local _,set,fr,to = unpack(sub)
+            ASR(set=='exp', me, 'invalid `finalize´')
+        end
     end,
 
 -- Pause ---------------------------------------------------------
@@ -1383,7 +1615,7 @@ F = {
         local evt, blk = unpack(me)
         local cur_id  = '_cur_'..blk.n
         local cur_dcl = node('Dcl_var', me.ln, 'var',
-                            node('Type', me.ln, 'bool', 0, false, false),
+                            node('Type', me.ln, 'bool'),
                             cur_id)
 
         local PSE = node('Pause', me.ln, blk)
@@ -1398,7 +1630,7 @@ F = {
             node('Block', me.ln,
                 node('Stmts', me.ln,
                     cur_dcl,    -- Dcl_var(cur_id)
-                    node('SetExp', me.ln, '=',
+                    node('Set', me.ln, '=', 'exp',
                         node('NUMBER', me.ln, 0),
                         node('Var', me.ln, cur_id)),
                     node('ParOr', me.ln,
@@ -1406,9 +1638,8 @@ F = {
                             node('Stmts', me.ln,
                                 node('_Set', me.ln,
                                     node('Var', me.ln, cur_id),
-                                    '=', '__SetAwait',
-                                    node('Await', me.ln, evt, false),
-                                    false, false),
+                                    '=', 'await',
+                                    node('Await', me.ln, evt, false)),
                                 node('If', me.ln,
                                     node('Var', me.ln, cur_id),
                                     on,
@@ -1442,72 +1673,93 @@ F = {
                 fld)
     end,
 
--- VarList ------------------------------------------------------------
+-- REQUEST
 
--- TODO: remove
-    VarList = function (me)
-        -- { var1, var2, ... }
-        for _,var in ipairs(me) do
-            local id = unpack(var)
-            me[id] = true           -- for async boundary check
+    __REQUEST = function (me)
+    --[[
+    --      (err, v) = (request LINE=>10);
+    -- becomes
+    --      var _reqid id = _ceu_sys_request();
+    --      var _reqid id';
+    --      emit _LINE_request => (id, 10);
+    --      finalize with
+    --          _ceu_sys_unrequest(id);
+    --          emit _LINE_cancel => id;
+    --      end
+    --      (id', err, v) = await LINE_return
+    --                      until id == id';
+    --]]
+
+    local to, op, _, emit
+    if me.tag == 'EmitExt' then
+        to   = nil
+        emit = me
+    else
+        -- _Set
+        to, op, _, emit = unpack(me)
+    end
+
+    local op_emt, e, ps = unpack(emit)
+    local id_evt = e[1]
+    local id_req  = '_reqid_'..me.n
+    local id_req2 = '_reqid2_'..me.n
+
+    local tp_req = node('Type', me.ln, 'int')
+
+    if ps then
+        -- insert "id" into "emit REQUEST => (id,...)"
+        if ps.tag == 'ExpList' then
+            table.insert(ps, 1, node('Var',me.ln,id_req))
+        else
+            ps = node('ExpList', me.ln,
+                    node('Var', me.ln, id_req),
+                    ps)
         end
-    end,
+    end
 
--- STRING ------------------------------------------------------------
+    local awt = node('Await', me.ln,
+                    node('Ext', me.ln, id_evt..'_RETURN'),
+                    false,
+                    node('Op2_==', me.ln, '==',
+                        node('Var', me.ln, id_req),
+                        node('Var', me.ln, id_req2)))
+    if to then
+        -- v = await RETURN
 
-    STRING_pos = function (me)
-do return end
-        if not OPTS.os then
-            return
+        -- insert "id" into "v = await RETURN"
+        if to.tag ~= 'VarList' then
+            to = node('VarList', me.ln, to)
         end
+        table.insert(to, 1, node('Var',me.ln,id_req2))
 
-        -- <"abc"> => <var str[4]; str[0]='a';str[1]='b';str[2]='c';str[3]='\0'>
+        awt = node('_Set', me.ln, to, op, 'await', awt)
+    else
+-- TODO: bug (removing session check)
+        awt[3] = false
+    end
 
-        local str = loadstring('return '..me[1])()  -- eval `"´ and '\xx'
-        local len = string.len(str)
-        local id = '_str_'..me.n
+    return node('Stmts', me.ln,
+            node('Dcl_var', me.ln, 'var', tp_req, id_req),
+            node('Dcl_var', me.ln, 'var', tp_req, id_req2),
+            node('Set', me.ln, '=', 'exp',
+                node('RawExp', me.ln, 'ceu_out_req()'),
+                node('Var', me.ln, id_req)),
+            node('EmitExt', me.ln, 'emit',
+                node('Ext', me.ln, id_evt..'_REQUEST'),
+                ps),
+            node('Finalize', me.ln,
+                false,
+                node('Finally', me.ln,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Nothing', me.ln), -- TODO: unrequest
+                            node('EmitExt', me.ln, 'emit',
+                                node('Ext', me.ln, id_evt..'_CANCEL'),
+                                node('Var', me.ln, id_req)))))),
+            awt
+    )
+end
 
-        local t = {
-            node('Dcl_var', me.ln, 'var',
-                node('Type', me.ln, 'char', 0, node('NUMBER',me.ln,len+1), false),
-                id)
-        }
-
-        for i=1, len do
-            -- str[(i-1)] = str[i]  (lua => C)
-            t[#t+1] = node('SetExp', me.ln, '=',
-                        node('NUMBER', me.ln, string.byte(str,i)),
-                        node('Op2_idx', me.ln, 'idx',
-                            node('Var',me.ln,id),
-                            node('NUMBER',me.ln,i-1)))
-        end
-
-        -- str[len] = '\0'
-        t[#t+1] = node('SetExp', me.ln, '=',
-                    node('NUMBER', me.ln, 0),
-                    node('Op2_idx', me.ln, 'idx',
-                        node('Var',me.ln,id),
-                        node('NUMBER',me.ln,len)))
-
-        -- include this string into the enclosing block
-        local stmt = AST.par(me, 'Stmts')
-        local strs = stmt.__ast_strings or {}
-        stmt.__ast_strings = strs
-        strs[#strs+1] = node('Stmts', me.ln, unpack(t))
-
-        return node('Var',me.ln,id)
-    end,
-
-    Stmts = function (me)
-        local strs = me.__ast_strings
-        me.__ast_strings = nil
-        if strs then
-            -- insert all strings in the beginning of the block
-            for i, str in ipairs(strs) do
-                table.insert(me, i, str)
-            end
-        end
-    end,
 }
 
 AST.visit(F)
@@ -1516,65 +1768,105 @@ AST.visit(F)
 -- separate visit because of "?" types
 
 -- ADTs created implicitly by "?" option type declarations
---  - must be included in the head of the root
 local ADTS = {}
 
 G = {
-    Type_pos = function (me)
-        local id, ptr, arr, ref, opt = unpack(me)
-        if not opt then
-            return
+    Stmts_pos = function (me)
+        if me.__add then
+            for i=#me.__add, 1, -1 do
+                table.insert(me, 1, me.__add[i])
+            end
+            me.__add = nil
         end
-        me[5] = nil
+    end,
 
-        local tp = id..'__'..ptr..'__'..tostring(arr)..'__'..tostring(ref)
-        local n = ADTS[tp]
-
-        if not n then
-            n = #ADTS + 1
-            ADTS[tp] = n
-            ADTS[#ADTS+1] = node('Dcl_adt', me.ln, '_Option_'..n,
-                                'union',
+    Type_pre = function (me)
+        --
+        -- Check if has '?' inside:
+        --  - create implicit _Option_*
+        --
+        local with, without = {}, {}
+        for _, v in ipairs(me) do
+            with[#with+1] = v
+            if v == '?' then
+                local id_adt = TP.opt2adt({tt={unpack(with)}})
+                if not ADTS[id_adt] then
+                    local adt = node('Dcl_adt', me.ln, id_adt,
+                                    'union',
                                     node('Dcl_adt_tag', me.ln, 'NIL'),
                                     node('Dcl_adt_tag', me.ln, 'SOME',
                                         node('Stmts', me.ln,
-                                            node('Dcl_var', me.ln, 'var', me, 'v'))))
-            ADTS[#ADTS].__adj_opt = me
+                                            node('Dcl_var', me.ln, 'var',
+                                                node('Type', me.ln,  unpack(without)),
+                                                'v'))))
+                    adt.__adj_from_opt = me
+                    ADTS[id_adt] = adt
 
-            -- insert in the parent Stmts just before the use of the type
-            local stmts = AST.par(me, 'Stmts')
-            if stmts[1].tag == 'BlockI' then
-                -- TODO: go up one more level if inside a class interface
-                -- (avoid changing the position of a BlockI)
-                stmts = AST.par(stmts, 'Stmts')
-            end
-
-            local ok = false
-            assert(stmts, 'bug found')
-            for i, stmt in ipairs(stmts) do
-                if AST.isParent(stmt, me) then
-                    ADTS[#ADTS].__toinsert = { stmts, i }
-                    ok = true
-                    break;
+                    -- add declarations on enclosing "Stmts"
+                    local stmts = assert(AST.par(me,'Stmts'))
+                    stmts.__add = stmts.__add or {}
+                    stmts.__add[#stmts.__add+1] = adt
                 end
             end
-            assert(ok, 'bug found')
+            without[#without+1] = v
         end
-
-        return node('Type', me.ln, '_Option_'..n, 0, false, false, me)
-                                                                   -- opt
     end,
 }
+
+local CLSS = {}  -- holds all clss
+local function id2ifc (id)
+    for _, cls in ipairs(CLSS) do
+        local _,id2 = unpack(cls)
+        if id2 == id then
+            return cls
+        end
+    end
+    return nil
+end
+
 H = {
-    -- insert all ? types in the beginning
-    ['Root_pre'] = function (me)
-        -- traverse in reverse order to avoid problems with insert(j)
-        for i=#ADTS, 1, -1 do
-            local adt = ADTS[i]
-            local stmts, j = unpack(adt.__toinsert)
-            table.insert(stmts, j, adt)
+    -----------------------------------------------------------------------
+    -- substitutes all Dcl_imp for the referred fields
+    -----------------------------------------------------------------------
+    Dcl_cls_pos = function (me)
+        CLSS[#CLSS+1] = me
+    end,
+    Root = function (me)
+        for _, cls in ipairs(CLSS) do
+            if cls.tag=='Dcl_cls' and cls[2]~='Main' then   -- "Main" has no Dcl_imp's
+                local dcls1 = AST.asr(cls.blk_ifc[1][1],'BlockI')[1]
+                local i = 1
+                while i <= #dcls1 do
+                    local imp = dcls1[i]
+                    if imp.tag == '_Dcl_imp' then
+                        -- interface A,B,...
+                        for _,dcl in ipairs(imp) do
+                            local ifc = id2ifc(dcl)  -- interface must exist
+                            ASR(ifc and ifc[1]==true,
+                                imp, 'interface "'..dcl..'" is not declared')
+                            local dcls2 = AST.asr(ifc.blk_ifc[1][1],'BlockI')[1]
+                            for _, dcl2 in ipairs(dcls2) do
+                                assert(dcl2.tag ~= 'Dcl_imp')   -- impossible because I'm going in order
+                                if dcl2.tag == 'Dcl_adt' then
+                                    -- skip ADT implicit declarations to avoid duplication
+                                else
+                                    local new = AST.copy(dcl2)
+                                    dcls1[#dcls1+1] = new -- fields from interface should go to the end
+                                    new.isImp = true      -- to avoid redeclaration warnings indeed
+                                end
+                            end
+                        end
+                        table.remove(dcls1, i) -- remove _Dcl_imp
+                        i = i - 1                    -- repeat
+                    else
+                    end
+                    i = i + 1
+                end
+            end
         end
     end,
+
+    -----------------------------------------------------------------------
 
     Dcl_adt_pos = function (me)
         -- id, op, ...
@@ -1594,7 +1886,7 @@ H = {
         else
             assert(op == 'union')
             for i=3, #me do
-                assert(me[i].tag == 'Dcl_adt_tag')
+                AST.asr(me[i], 'Dcl_adt_tag')
                 local n = #me[i]
                 -- variable declarations require a block
                 if n == 1 then
@@ -1611,87 +1903,8 @@ H = {
         end
     end,
 
-    _Adt_constr_root_pre = function (me)
-        local dyn, constr = unpack(me)
-        local adt = unpack(constr)
-        local id  = unpack(adt)
-        me.__adj_adt_id = id
-    end,
-    _Adt_constr_root_pos = function (me)
-        local dyn, constr = unpack(me)
-        local me_, set = unpack(me.__par)
-        assert(me_ == me)
-
-        -- root must set SetExp variable
-        assert(set.tag=='SetExp', 'bug found')
-        set[2] = node('Var', me.ln, '__ceu_adt_'..me.n)
-        set[2].__adj_is_constr = true
-        return node('Stmts', me.ln,
-                node('Dcl_var', me.ln, 'var',
-                    node('Type', me.ln, me.__adj_adt_id, (dyn and 1) or 0, false, false),
-                    '__ceu_adt_'..me.n),
-                constr) -- substitute by 1st constr
-    end,
     _Adt_explist_pos = function (me)
         me.tag = 'ExpList'
-    end,
-    Adt_constr_pos = function (me)
-        local adt, params = unpack(me)
-        local id = unpack(adt)
-
-        -- Nested constructors:
-        --      Data.TAG1(v, Data.TAG2(...))
-        -- becomes (static)
-        --      var Data* data0;            // root
-        --          var Data* data1;        // TAG1
-        --          data0 = new(...);
-        --              var Data* data2;    // TAG2
-        --              data1 = new(...);
-        --          data1->rec = data2;
-        --      data0->rec = data1;
-
-        local dyn,_ = unpack(AST.par(me,'_Adt_constr_root'))
-
-        -- nested constructors
-        local nested = AST.node('Stmts', me.ln)
-        for i, p in ipairs(params) do
-            if p.tag == 'Stmts' then
-                -- subst nested stmts
-                -- for Var:__ceu_adt_n
-                nested[#nested+1] = p
-                if dyn then
-                    params[i] = node('Var', me.ln, '__ceu_adt_'..me.n)
-                else
-                    params[i] = node('Op1_&', me.ln, '&',
-                                    node('Var', me.ln, '__ceu_adt_'..me.n))
-                end
-            end
-        end
-
-        -- parent constructor
-        local par = (me.__par.tag=='_Adt_constr_root' and me.__par)
-                        or me.__par.__par
-
-        return node('Stmts', me.ln,
-                node('Dcl_var', me.ln, 'var',
-                    node('Type', me.ln, id, (dyn and 1) or 0, false, false),
-                    '__ceu_adt_'..me.n),
-                node('Adt_constr', me.ln, adt, params,
-                    node('Var', me.ln, '__ceu_adt_'..par.n),
-                    dyn, nested))
-    end,
-
-    -- Sufix recursive ADT with "*"
-    Dcl_var = function (me)
-        local pre, tp, id = unpack(me)
-        local adt = AST.par(me, 'Dcl_adt')
-        if adt then
-            local adt_id = unpack(adt)
-            local id, ptr, arr, ref = unpack(tp)
-            if (adt_id==id) and (ptr==0) and (not arr) and (not ref) then
-                me[2][2] = 1
-            end
-        end
     end,
 }
 AST.visit(G)

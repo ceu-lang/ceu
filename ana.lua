@@ -7,6 +7,25 @@ ANA = {
     },
 }
 
+function ANA.dbg_one (p)
+    for e in pairs(p) do
+        if e == true then
+            DBG('', '$$$')
+        else
+            for _,t in pairs(e) do
+                DBG('', _, t.id)
+            end
+        end
+    end
+end
+function ANA.dbg (me)
+    DBG('== '..me.tag, me)
+    DBG('-- PRE')
+    ANA.dbg_one(me.ana.pre)
+    DBG('-- POS')
+    ANA.dbg_one(me.ana.pos)
+end
+
 -- avoids counting twice (due to loops)
 -- TODO: remove
 local __inc = {}
@@ -60,7 +79,7 @@ end
 
 local LST = {
     Do=true, Stmts=true, Block=true, Root=true, Dcl_cls=true,
-    Pause=true,
+    Pause=true, Set=true,
 }
 
 F = {
@@ -82,13 +101,27 @@ F = {
         if me.ana.pos then
             return
         end
-        if LST[me.tag] and me[#me] then
-            me.ana.pos = COPY(me[#me].ana.pos)  -- copy lst child pos
+        local lst
+        for i=#me, 1, -1 do
+            if AST.isNode(me[i]) then
+                lst = me[i]
+                break
+            end
+        end
+        if LST[me.tag] and lst then
+            me.ana.pos = COPY(lst.ana.pos)  -- copy lst child pos
         else
             me.ana.pos = COPY(me.ana.pre)       -- or copy own pre
         end
     end,
 
+    Dcl_cls_pos = function (me)
+        local _,id = unpack(me)
+        if id ~= 'Main' then
+            me.ana.pos = COPY(me.ana.pre) -- no effect on enclosing class
+-- TODO: evaluate class termination as well
+        end
+    end,
     Dcl_cls_pre = function (me)
         if me ~= MAIN then
             me.ana.pre = { [me.id]=true }
@@ -204,15 +237,43 @@ F = {
 
     Loop = function (me)
         local max,iter,_,body = unpack(me)
-        if me.is_bounded then
-            me.ana.pos = COPY(body.ana.pos)
-            return      -- guaranteed to terminate
+
+        -- if eventually terminates (max or iter) and
+        --   loop iteration is reachable (not body.pos[false]),
+        -- then me.pos=U(me.pre,body.pos)
+        -- ('number','org','data' are bounded, 'event' is not)
+        if (max or iter and me.iter_tp~='event') and
+            (not body.ana.pos[false])
+        then
+            -- union(me.ana.pre, body.ana.pos)
+            me.ana.pos = COPY(me.ana.pre)
+            OR(me, body)
+            return
         end
 
         if body.ana.pos[false] then
             --ANA.ana.unreachs = ANA.ana.unreachs + 1
             WRN( INC(me, 'unreachs'),
                  me, '`loop´ iteration is not reachable')
+        end
+    end,
+
+    -- warn if recursive spawn w/o await path
+    Spawn = function (me)
+        local id, pool, _,_ = unpack(me)
+        local cls = CLS()
+
+        -- recursive spawn (spawn T inside T)
+        if id == cls.id then
+            -- no await from the begin to spawn
+            if me.ana.pre[id] == true then
+                local tp = TP.pop(pool.tp,'&')
+                assert(TP.check(tp,'[]'))
+                if pool.tp.arr == '[]' then
+                    -- pool is unbounded
+                    WRN(false, me, 'unbounded recursive spawn')
+                end
+            end
         end
     end,
 
@@ -245,6 +306,16 @@ F = {
         if cnd then
             cnd.ana = {
                 pre = COPY(t),
+            }
+        end
+    end,
+
+    -- TODO: behaves similarly to Stmts
+    --  join code
+    Set_aft = function (me, sub, i)
+        if sub.tag == 'Await' then
+            me[i+1].ana = {
+                pre = COPY(sub.ana.pos)
             }
         end
     end,

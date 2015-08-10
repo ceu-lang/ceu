@@ -37,8 +37,11 @@ F = {
     Block = function (me)
         MAX_all(me)
 
-        -- [ CLR | ORG_STATS_I | ORG_POOL_I | ... | STMTS | FIN ]
+        -- [ CLR | ADT_I | VEC_I | ORG_STATS_I | ORG_POOL_I | ... | STMTS | FIN ]
         -- clear trail
+        -- adt finalization
+        -- vector finalization
+        -- org*? reset to NULL
         -- pointer to contiguous static orgs
         -- pointers to each of the pools
         -- statements
@@ -49,16 +52,28 @@ F = {
         -- var  T b;
         -- First execute a, then all ts, then b.
 
-        me.has_orgs = false
         for i=1, #me.vars do
             local var = me.vars[i]
 
-            if var.pre=='pool' and var.adt then
-                me.fins = me.fins or {}     -- release adts
+            local is_arr_dyn = (TP.check(var.tp,'[]')           and
+                               (var.pre == 'var')               and
+                               (not TP.is_ext(var.tp,'_','@'))) and 
+                               (var.tp.arr=='[]')               and
+                               (not var.cls)
+            if is_arr_dyn then
+                me.trails_n = me.trails_n + 1
             end
 
-            if var.cls then
-                me.has_orgs = true
+            if var.pre=='pool' or is_arr_dyn then
+                me.fins = me.fins or {}     -- release adts/vectors
+            end
+
+            local tp_id = TP.id(var.tp)
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+                me.trails_n = me.trails_n + 1
+            elseif var.adt and var.pre=='pool' then
+                me.trails_n = me.trails_n + 1
+            elseif var.cls then
                 me.trails_n = me.trails_n + 1   -- ORG_POOL_I/ORG_STATS_I
                 var.trl_orgs_first = true       -- avoids repetition in initialization of STATS
 
@@ -74,9 +89,6 @@ F = {
                     end
                 end
             end
-        end
-        if me.has_orgs then
-            me.trails_n = me.trails_n + 1           -- CLR
         end
 
         if me.fins then
@@ -125,20 +137,35 @@ G = {
 
         local t0 = me.trails[1]
 
-        -- [ CLR | ORG_STATS | ORG_POOL_I | STMTS | FIN ]
-        -- clear trail
+        -- [ ORG_STATS | ORG_POOL_I | STMTS | FIN ]
         -- pointer to all static orgs
         -- pointers to each of the pools
         -- statements
         -- finalization
 
-        if me.has_orgs then
-            t0 = t0 + 1                             -- CLR
-        end
         for i=1, #me.vars do
             local var = me.vars[i]
 
-            if var.cls then
+            local is_arr_dyn = (TP.check(var.tp,'[]')           and
+                               (var.pre == 'var')               and
+                               (not TP.is_ext(var.tp,'_','@'))) and 
+                               (var.tp.arr=='[]')               and
+                               (not var.cls)
+            if is_arr_dyn then
+                var.trl_vector = { t0, t0 }
+                t0 = t0 + 1
+            end
+
+            local tp_id = TP.id(var.tp)
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+                var.trl_optorg = { t0, t0 }
+                t0 = t0 + 1
+
+            elseif var.adt and var.pre=='pool' then
+                var.trl_adt = { t0, t0 }
+                t0 = t0 + 1
+
+            elseif var.cls then
                 var.trl_orgs = { t0, t0 }   -- ORG_POOL_I/ORG_STATS_I
                 t0 = t0 + 1
 

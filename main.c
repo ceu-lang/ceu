@@ -25,5 +25,10 @@ int main (int argc, char *argv[])
     #include <unistd.h>
     sleep(1);  /* use when testing threads+valgrind */
 #endif
+#ifdef CEU_THREADS
+    fflush(stdout);
+    pthread_exit(&ret);
+    while(1);
+#endif
     return ret;
 }

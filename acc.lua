@@ -37,13 +37,11 @@ function CHG (acc, md)
     if AST.iter'Thread'() then
         return
     end
-    if acc.md == 'no' then
-        if acc.id.id and string.sub(acc.id.id,1,5) == '_tup_' then
-            return  -- _tup
-        end
-        -- TODO: should this apply to all "no"?
+    if acc.md == 'nv' then
+        return
+    else
+        acc.md = md
     end
-    acc.md = md
 end
 
 F = {
@@ -110,7 +108,7 @@ F = {
             path = me.ana.pre,
             id  = e1.evt.id,    -- like functions (not table events)
             md  = 'cl',
-            tp  = TP.fromstr'@',
+            tp  = TP.new{'@'},
             any = false,
             err = ERR(me, 'event `'..e1.evt.id..'´')
         }
@@ -132,14 +130,13 @@ F = {
         CHG(f.lst.acc, 'cl')
         me.acc = f.lst.acc
         for _, exp in ipairs(exps) do
-            if exp.tp.ptr>0 then
+            if TP.check(exp.tp,'*') then
                 local v = exp.lst
                 if v and v.acc then   -- ignore constants
 --DBG(exp.tag, exp.lst)
                     v.acc.any = exp.lval    -- f(&x) // a[N] f(a) // not "any"
                     CHG(v.acc, (me.c and me.c.mod=='@pure' and 'rd') or 'wr')
-                    v.acc.tp = TP.copy(exp.tp)
-                    v.acc.tp.ptr = v.acc.tp.ptr - 1     -- f may deref exp
+                    v.acc.tp = TP.pop(exp.tp,'*')
                 end
             end
         end
@@ -150,7 +147,7 @@ F = {
             path = me.ana.pre,
             id  = f,
             md  = 'cl',
-            tp  = TP.fromstr'@',
+            tp  = TP.new{'@'},
             any = true,
             err = 'call to `'..f.id..'´ (line '..me.ln[2]..')',
         }
@@ -164,17 +161,21 @@ F = {
         me.emtChk = false
     end,
 
-    SetExp = function (me)
-        local _,_,to = unpack(me)
-        if to.lst.acc and to.lst.acc.md~='no' then
-            CHG(to.lst.acc, 'wr')
-        else
-            -- *((u32*)0x100) = v  (no acc)
+    Set = function (me)
+        local _,_,_,to = unpack(me)
+        to = (to.tag=='VarList' and to) or {to}
+        for _, v in ipairs(to) do
+            if v.lst.acc and v.lst.acc.md~='no' and v.lst.acc.md~='nv' then
+                CHG(v.lst.acc, 'wr')
+            else
+                -- *((u32*)0x100) = v  (no acc)
+            end
         end
     end,
 
     ['Op2_idx'] = function (me)
-        if not (me.lst.var and me.lst.var.tp.arr) then
+        local tp = me.lst.var and me.lst.var.tp
+        if not (tp and TP.check(tp,'[]','-&')) then
             me.lst.acc.any = true
         end
         me.lst.acc.tp = me.tp  -- deptr'd
@@ -225,13 +226,10 @@ F = {
     end,
 
     This = function (me)
-        if AST.iter'Dcl_constr'() then
-            return  -- org being created cannot be in parallel
-        end
         me.acc = INS {
             path = me.ana.pre,
             id  = me,
-            md  = 'rd',
+            md  = (AST.par(me,'Dcl_constr') and 'nv') or 'rd',
             tp  = me.tp,
             any = true,
             err = ERR(me, 'variable `this´'),
@@ -245,12 +243,14 @@ F = {
             return  -- <async (v)> is not an access
         end
 
+        local generated = (string.sub(me.var.id,1,1) == '_') and (me.var.id~='_ret')
+
         me.acc = INS {
             path = me.ana.pre,
             id  = me.var,
-            md  = 'rd',
+            md  = (generated and 'nv') or 'rd',
             tp  = me.var.tp,
-            any = REF(me.var.tp),
+            any = TP.check(me.var.tp,'&'),
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
 
@@ -258,20 +258,16 @@ F = {
             -- variable being allocated cannot be in parallel with anyone
             me.acc.md = 'no'
         end
-
-        if string.sub(me.var.id,1,5) == '_tup_' then
-            -- TODO: ignore tuple assignments for now "(a,b)=await A"
-            me.acc.md = 'no'
-        end
     end,
 
     RawExp = 'Nat',
     Nat = function (me)
+        local _, generated = unpack(me);
         me.acc = INS {
             path = me.ana.pre,
             id  = me[1],
-            md  = 'rd',
-            tp  = TP.fromstr'@',
+            md  = (generated and 'nv') or 'rd',
+            tp  = TP.new{'@'},
             any = false,
             err = ERR(me, 'symbol `'..me[1]..'´'),
         }
@@ -340,9 +336,10 @@ local ND = {
         rd  = { cl=2, tr=false, wr=2,     rd=false, aw=false },
         aw  = { cl=2, tr=1,     wr=false, rd=false, aw=false },
         no  = {},   -- never ND ('ref')
+        nv  = {},   -- never ND ('ref')
     },
 
-    flw = { cl={},tr={},wr={},rd={},aw={},no={},
+    flw = { cl={},tr={},wr={},rd={},aw={},no={},nv={},
         par = { par=false, awk=false, esc=1 },
         awk = { par=false, awk=false, esc=1 },
         esc = { par=1,     awk=1,     esc=1 },

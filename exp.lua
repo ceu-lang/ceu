@@ -1,9 +1,9 @@
 F = {
-    SetExp = function (me)
-        local _, fr, to = unpack(me)
-        if fr.tag=='Ref' and fr[1].tag=='Spawn' then
+    Set = function (me)
+        local _, set, fr, to = unpack(me)
+        if set == 'spawn' then
             -- a = spawn T
-            fr[1].blk = to.lst.var.blk   -- to = me.__par[3]
+            fr.blk = to.lst.var.blk   -- to = me.__par[3]
 
             -- refuses (x.ptr = spawn T;)
             ASR( AST.isParent(CLS(),to.lst.var.blk), me,
@@ -18,10 +18,10 @@ F = {
     end,
     Loop = function (me)
         local _, iter, _, _ = unpack(me)
-        local cls = iter and iter.tp and ENV.clss[iter.tp.id]
+        local cls = iter and iter.tp and ENV.clss[TP.id(iter.tp)]
         if cls then
             ASR(iter.lst and iter.lst.var and iter.lst.var.pre=='pool',
-            me, 'invalid pool')
+                me, 'invalid pool')
         end
     end,
 
@@ -36,6 +36,12 @@ F = {
         local _, arr, idx = unpack(me)
         me.fst = arr.fst
         me.lst = arr.lst
+    end,
+
+    ['Op1_!'] = function (me)
+        local op, e1 = unpack(me)
+        me.fst = e1.fst
+        me.lst = e1.lst
     end,
 
     ['Op1_*'] = function (me)

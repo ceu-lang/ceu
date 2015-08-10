@@ -122,6 +122,8 @@ print(cmd)
               --'-I '..LIBC..'/include '..
               '-Wa,--execstack '..
               '-fpie -nostartfiles '..
+-- TODO: understand why this is necessary
+'-Wno-strict-aliasing '..
               --'-mcall-prologues -mshort-calls '..
               --'-nostdlib '..
               --'-static-libgcc -static-libstdc++ '..

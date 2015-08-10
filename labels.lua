@@ -61,8 +61,25 @@ F = {
         local blk = unpack(me)
 
         if me.fins then
-            me.lbl_fin     = new{'Block__fin', __depth=me.__depth}
-            me.lbl_fin_cnt = new{'Block_fin_cnt'}
+            me.lbl_fin = new{'Block__fin', __depth=me.__depth}
+        end
+
+        for _, var in ipairs(me.vars) do
+            local is_arr_dyn = (TP.check(var.tp,'[]')           and
+                               (var.pre == 'var')               and
+                               (not TP.is_ext(var.tp,'_','@'))) and 
+                               (var.tp.arr=='[]')               and
+                               (not var.cls)
+            if is_arr_dyn then
+                var.lbl_fin_free = new{'vector_fin_free'}
+            end
+
+            local tp_id = TP.id(var.tp)
+            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'*','?','-[]') then
+                var.lbl_optorg_reset = new{'optorg_reset'}
+            elseif var.adt and var.pre=='pool' then
+                var.lbl_fin_kill_free = new{'adt_fin_kill_free'}
+            end
         end
     end,
 
@@ -80,12 +97,21 @@ F = {
     Spawn = function (me)
         me.lbls_cnt = new{me.tag..'_cont'}
     end,
-    Free  = function (me)
-        me.lbl_clr = new{'Free_clr'}
+    Kill = function (me)
+        me.lbl = new{'Kill'}
     end,
 
     SetBlock_pre = function (me)
         me.lbl_out = new{'Set_out',  prio=me.__depth}
+    end,
+
+    Set = function (me)
+        local _, set, _, to = unpack(me)
+        if set=='adt-mut' or set=='adt-constr' then
+            if PROPS.has_adts_watching[TP.id(to.tp)] then
+                me.lbl_cnt = new{'Set_adt'}
+            end
+        end
     end,
 
     _Par_pre = function (me)
@@ -110,7 +136,10 @@ F = {
         me.lbl_out = new{'ParAnd_out'}
     end,
 
-    Thread = 'Async',
+    Thread = function (me)
+        me.lbl = new{'Thread'}
+        me.lbl_out = new{'Thread_out'}
+    end,
     Async = function (me)
         me.lbl = new{'Async'}
     end,
@@ -119,6 +148,12 @@ F = {
         if AST.iter'Async'() then
             me.lbl_asy = new{'Async_cnt'}
         end
+        if me.iter_tp == 'data' then
+            me.lbl_rec = new{'Recurse'}
+        end
+    end,
+    Recurse = function (me)
+        me.lbl = new{'Recurse'}
     end,
 
     EmitExt = function (me)

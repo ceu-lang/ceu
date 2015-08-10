@@ -2,19 +2,28 @@ AST = {
     root = nil,
 }
 
-local MT = {
-    __index = function (t,k)
-        if t.tag == 'Ref' then
-            return t[1][k]
-        end
-    end,
-}
+local MT = {}
 
 local STACK = {}
 
 function AST.isNode (node)
     return (getmetatable(node) == MT) and node.tag
 end
+
+AST.tag2id = {
+    EmitInt = 'emit',
+    Spawn   = 'spawn',
+    Kill    = 'kill',
+    Await   = 'await',
+    AwaitN  = 'await',
+    Async   = 'async',
+    Thread  = 'async/thread',
+    ParOr   = 'par/or',
+    ParAnd  = 'par/and',
+    ParEver = 'par',
+    Loop    = 'loop',
+    Dcl_cls = 'class',
+}
 
 function AST.isParent (n1, n2)
     return n1 == n2
@@ -32,6 +41,7 @@ function AST.node (tag, ln, ...)
         me = setmetatable({ ... }, MT)
     end
     me.n = _N
+    --me.xxx = debug.traceback()
     _N = _N + 1
     me.ln  = ln
     --me.ln[2] = me.n
@@ -40,22 +50,48 @@ function AST.node (tag, ln, ...)
 end
 
 function AST.copy (node, ln)
+    if not AST.isNode(node) then
+        return node
+    end
+
     local ret = setmetatable({}, MT)
-    ret.n = _N
+    local N = _N
     _N = _N + 1
+
     for k, v in pairs(node) do
-        if k == '__par' then
+        if type(k) ~= 'number' then
             ret[k] = v
-        elseif AST.isNode(v) then
-            if v.tag == 'Ref' then
-                ret[k] = v
-            else
-                ret[k] = AST.copy(v, ln)
+        else
+            ret[k] = AST.copy(v, ln)
+            if AST.isNode(v) then
                 ret[k].ln = ln or ret[k].ln
             end
-        else
-            ret[k] = v
         end
+    end
+    ret.n = N
+
+    return ret
+end
+
+function AST.get (me, tag, ...)
+    local idx, tag2 = ...
+
+    if not (AST.isNode(me) and (me.tag==tag or tag=='')) then
+        return nil, tag, ((AST.isNode(me) and me.tag) or 'none')
+    end
+
+    if idx then
+        return AST.get(me[idx], tag2, select(3,...))
+    else
+        return me
+    end
+end
+
+function AST.asr (me, tag, ...)
+    local ret, tag1, tag2 = AST.get(me, tag, ...)
+    if not ret then
+        DBG(debug.traceback())
+        error('bug (expected: '..tag1..' | found: '..tag2..')')
     end
     return ret
 end
@@ -93,9 +129,10 @@ function AST.child (me, pred)
         return me
     end
     for i, sub in ipairs(me) do
-        if AST.isNode(sub) and sub.tag~='Ref' then
-            if AST.child(sub,pred) then
-                return sub
+        if AST.isNode(sub) then
+            local child = AST.child(sub,pred)
+            if child then
+                return child
             end
         end
     end
@@ -156,13 +193,19 @@ end
 --
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
     DBG(string.rep(' ',spc)..me.tag..
+--[[
+        '')
+]]
         ' (ln='..me.ln[2]..' n='..me.n..
-                           ' d='..(me.__depth or 0)..
-                           ' p='..(me.__par and me.__par.n or '')..
+                           --' d='..(me.__depth or 0)..
+                           --' p='..(me.__par and me.__par.n or '')..
                            ') '..ks)
+--DBG'---'
+--DBG(me.xxx)
+--DBG'---'
     for i, sub in ipairs(me) do
-        if me.tag~='Ref' and AST.isNode(sub) then
-            AST.dump(sub, spc+2)   -- 'Ref' create cycles
+        if AST.isNode(sub) then
+            AST.dump(sub, spc+2)
         else
             DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
         end
@@ -206,8 +249,9 @@ local function visit_aux (me, F)
 
     for i, sub in ipairs(me) do
         if bef then assert(bef(me, sub, i)==nil) end
-        if AST.isNode(sub) and sub.tag~='Ref' then
-            me[i] = visit_aux(sub, F)
+        if AST.isNode(sub) then
+            sub = visit_aux(sub, F)
+            me[i] = sub
         end
         if aft then assert(aft(me, sub, i)==nil) end
     end
@@ -272,6 +316,8 @@ local function f (ln, v1, op, v2, v3, ...)
             ret = f(ln, AST.node('Op2_'..op,ln,op,v1,v2,v3), ...)
         elseif op == '?' then
             ret = f(ln, AST.node('Op1_'..op,ln,op,v1) ,v2, v3, ...)
+        elseif op == '!' then
+            ret = f(ln, AST.node('Op1_'..op,ln,op,v1) ,v2, v3, ...)
         else
             ret = f(ln, AST.node('Op2_'..op,ln,op,v1,v2), v3, ...)
         end
@@ -284,7 +330,6 @@ local function f (ln, v1, op, v2, v3, ...)
             ret = AST.node('Op1_'..op, ln, op, f(ln,v2,v3,...))
         end
     end
-    ret.__ast_isexp = true
     return ret
 end
 
@@ -294,4 +339,4 @@ for i=1, 12 do
 end
 
 AST.root = m.P(GG):match(OPTS.source)
---DBG('oi',AST.root)
+AST.visit({})

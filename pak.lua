@@ -15,16 +15,14 @@ subst 'lines.lua'
 subst 'parser.lua'
 subst 'ast.lua'
 subst 'adj.lua'
-subst 'tops.lua'
+subst 'sval.lua'
 subst 'env.lua'
-subst 'exp.lua'
 subst 'adt.lua'
 subst 'ref.lua'
-subst 'sval.lua'
+subst 'cval.lua'
 subst 'isr.lua'
 subst 'tight.lua'
 subst 'fin.lua'
---subst 'awaits.lua'
 subst 'props.lua'
 subst 'ana.lua'
 subst 'acc.lua'
@@ -51,6 +49,12 @@ FILES = {
         [====[]]..'\n'..assert(io.open'ceu_pool.h'):read'*a'..[[]====],
     ceu_pool_c =
         [====[]]..'\n'..assert(io.open'ceu_pool.c'):read'*a'..[[]====],
+    ceu_vector_h =
+        [====[]]..'\n'..assert(io.open'ceu_vector.h'):read'*a'..[[]====],
+    ceu_vector_c =
+        [====[]]..'\n'..assert(io.open'ceu_vector.c'):read'*a'..[[]====],
+    ceu_threads_h =
+        [====[]]..'\n'..assert(io.open'ceu_threads.h'):read'*a'..[[]====],
 }
 ]]..fin
 

@@ -84,6 +84,10 @@ if OPTS.version then
     os.exit(0)
 end
 
+if OPTS.safety then
+    OPTS.safety = assert(tonumber(OPTS.safety), '`--safety´ must be a number')
+end
+
 if OPTS.os_luaifc then
     assert(OPTS.os, '`--os-luaifc´ requires `--os´')
 end
@@ -147,16 +151,14 @@ do
     dofile 'parser.lua'
     dofile 'ast.lua'
     dofile 'adj.lua'
-    dofile 'tops.lua'
+    dofile 'sval.lua'
     dofile 'env.lua'
-    dofile 'exp.lua'
     dofile 'adt.lua'
     dofile 'ref.lua'
-    dofile 'sval.lua'
+    dofile 'cval.lua'
     dofile 'isr.lua'
     dofile 'tight.lua'
     dofile 'fin.lua'
-    --dofile 'awaits.lua'
     dofile 'props.lua'
     dofile 'ana.lua'
     dofile 'acc.lua'
@@ -185,7 +187,9 @@ local HH, CC
 -- TEMPLATE.H
 do
     HH = FILES.template_h
-    HH = SUB(HH, '#include "ceu_os.h"', FILES.ceu_os_h)
+    HH = SUB(HH, '#include "ceu_os.h"',      FILES.ceu_os_h)
+    HH = SUB(HH, '#include "ceu_threads.h"', FILES.ceu_threads_h)
+
 
     local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
     HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[TP.types.tceu_nlbl.len])
@@ -216,6 +220,12 @@ do
             has_ret     = 'CEU_RET',
             has_lua     = 'CEU_LUA',
             has_orgs_watching = 'CEU_ORGS_WATCHING',
+            has_pool_iterator = 'CEU_ORGS_POOL_ITERATOR',
+
+            has_vector        = 'CEU_VECTOR',
+            has_vector_pool   = 'CEU_VECTOR_POOL',
+            has_vector_malloc = 'CEU_VECTOR_MALLOC',
+
             -- code.lua
             has_goto    = 'CEU_GOTO',
         }
@@ -223,6 +233,13 @@ do
             if PROPS[k] or CODE[k] then
                 str = str .. '#define ' .. s .. '\n'
             end
+        end
+
+        if next(PROPS.has_adts_watching) then
+            str = str .. '#define CEU_ADTS_WATCHING\n'
+        end
+        for id in pairs(PROPS.has_adts_watching) do
+            str = str .. '#define CEU_ADTS_WATCHING_' .. id .. '\n'
         end
 
         -- TODO: goto OPTS
@@ -289,7 +306,9 @@ do
                 if OPTS.verbose and i > 9 then
                     DBG('', s)
                 end
-                str = str..s..'\n'
+                if not (evt.os and OPTS.os) then
+                    str = str..s..'\n'
+                end
             else
                 outs = outs + 1
                 evt.n = outs
@@ -297,11 +316,19 @@ do
                 if OPTS.verbose then
                     DBG('', s)
                 end
-                str = str..s..'\n'
+                if not (evt.os and OPTS.os) then
+                    str = str..s..'\n'
+                end
             end
             assert(evt.pre=='input' or evt.pre=='output')
             ASR(ins+outs < 255, me, 'too many events')
         end
+
+        if not OPTS.os then
+            str = str..'#define CEU_IN_higher CEU_IN__INIT\n'   -- _INIT = HIGHER EXTERNAL
+            str = str..'#define CEU_IN_lower '..(256-ins)..'\n'
+        end
+
         --str = str..'#define CEU_IN_n  '..ins..'\n'
         str = str..'#define CEU_OUT_n '..outs..'\n'
 
@@ -323,11 +350,12 @@ do
     do
         local str = ''
         for _,T in pairs(TP.types) do
-            if T.tup and #T.tup>0 and (not T.__dont_gen_c) then
+            if T.tup and #T.tup>0 then
                 str = str .. 'typedef struct {\n'
                 for i, t in ipairs(T.tup) do
                     local tmp = TP.toc(t)
-                    if ENV.clss[t.id] then
+                    local tp_id = TP.id(t)
+                    if ENV.clss[tp_id] then
                         -- T* => void*
                         -- T** => void**
                         tmp = 'void'..string.match(tmp,'(%*+)')
@@ -350,9 +378,8 @@ do
 
     CC = SUB(CC, '=== LABELS_ENUM ===', LBLS.code_enum)
 
-    CC = SUB(CC, '=== ADTS_DEFS ===',  MEM.adts)   -- TODO: move to HH
-    CC = SUB(CC, '=== ADTS_INIT ===',  MEM.adts_init)
-    CC = SUB(CC, '=== CLSS_DEFS ===',  MEM.clss)   -- TODO: move to HH
+    CC = SUB(CC, '=== TOPS_DEFS ===',  MEM.tops)   -- TODO: move to HH
+    CC = SUB(CC, '=== TOPS_INIT ===',  MEM.tops_init)
 
     CC = SUB(CC, '=== CONSTRS_C ===',   CODE.constrs)
     CC = SUB(CC, '=== PRES_C ===',      CODE.pres)
@@ -384,9 +411,6 @@ do
             for i=1, #ENV.ifcs.funs do
                 funs[i] = 'NULL'
             end
-            for i=1, #ENV.ifcs.trls do
-                trls[i] = 0
-            end
             for _, var in ipairs(cls.blk_ifc.vars) do
                 if var.pre == 'event' then
                     local i = ENV.ifcs.evts[var.ifc_id]
@@ -394,23 +418,14 @@ do
                         evts[i+1] = var.evt.idx
                     end
                 elseif var.pre=='var' or var.pre=='pool' then
-                    if var.pre=='var' or (type(var.tp.arr)=='table') then
-                                        -- malloc pools are not vars
-                        local i = ENV.ifcs.flds[var.ifc_id]
-                        if i then
-                            flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
-                        end
-                    end
-                    if var.pre == 'pool' then
-                        local i = ENV.ifcs.trls[var.ifc_id]
-                        if i then
-                            trls[i+1] = var.trl_orgs[1]
-                        end
+                    local i = ENV.ifcs.flds[var.ifc_id]
+                    if i then
+                        flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
                     end
                 elseif var.pre == 'function' then
                     local i = ENV.ifcs.funs[var.ifc_id]
                     if i then
-                        funs[i+1] = '(void*)'..var.val
+                        funs[i+1] = '(void*)CEU_'..cls.id..'_'..var.id
                     end
                 else
                     error 'not implemented'
@@ -433,7 +448,6 @@ do
         CC = SUB(CC, '=== IFCS_NFLDS ===',   #ENV.ifcs.flds)
         CC = SUB(CC, '=== IFCS_NEVTS ===',   #ENV.ifcs.evts)
         CC = SUB(CC, '=== IFCS_NFUNS ===',   #ENV.ifcs.funs)
-        CC = SUB(CC, '=== IFCS_NTRLS ===',   #ENV.ifcs.trls)
         CC = SUB(CC, '=== IFCS_CLSS ===',    table.concat(CLSS,',\n'))
         CC = SUB(CC, '=== IFCS_FLDS ===',    table.concat(FLDS,',\n'))
         CC = SUB(CC, '=== IFCS_EVTS ===',    table.concat(EVTS,',\n'))
@@ -442,19 +456,26 @@ do
     end
 
     if not OPTS.os then
-        FILES.ceu_os_c = SUB(FILES.ceu_os_c,
-                                      '#include "ceu_os.h"',
-                                      FILES.ceu_os_h)
-        CC = SUB(CC, '#include "ceu_types.h"',
-                             FILES.ceu_types_h)
+        FILES.ceu_os_c = SUB(FILES.ceu_os_c, '#include "ceu_os.h"',
+                                             FILES.ceu_os_h)
+        CC = SUB(CC, '#include "ceu_types.h"', FILES.ceu_types_h)
         CC = SUB(CC, '#include "ceu_os.h"',
-                             FILES.ceu_os_h..'\n'..FILES.ceu_os_c)
+                     FILES.ceu_os_h..'\n'..FILES.ceu_os_c)
     end
 
     -- TODO: ceu_pool_* => ceu_sys_pool_*
+    FILES.ceu_pool_h = SUB(FILES.ceu_pool_h, '#include "ceu_os.h"',
+                                             FILES.ceu_os_h)
     FILES.ceu_pool_c = SUB(FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
     CC = SUB(CC, '#include "ceu_pool.h"',
                          FILES.ceu_pool_h..'\n'..FILES.ceu_pool_c)
+
+    -- TODO: ceu_vector_* => ceu_sys_vector_*
+    FILES.ceu_vector_h = SUB(FILES.ceu_vector_h, '#include "ceu_os.h"',
+                                                 FILES.ceu_os_h)
+    FILES.ceu_vector_c = SUB(FILES.ceu_vector_c, '#include "ceu_vector.h"', '')
+    CC = SUB(CC, '#include "ceu_vector.h"',
+                         FILES.ceu_vector_h..'\n'..FILES.ceu_vector_c)
 
     if OPTS.out_s ~= 'CEU_SIZE' then
         CC = SUB(CC, 'CEU_SIZE', OPTS.out_s)

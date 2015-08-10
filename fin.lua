@@ -6,19 +6,109 @@ local TRACK = {
                       --   now, any access to "var" yields error
 }
 
--- TODO: TRACK por classe?
+local function GET ()
+    return TRACK[#TRACK]
+end
+
+local function JOIN (me)
+    local TOP = GET()
+    for T in pairs(me.__tojoin) do
+        for k,v in pairs(T) do
+            -- awaits have higher priority to catch more errors
+            if type(TOP[k]) ~= 'table' then
+                TOP[k] = v
+            end
+        end
+    end
+end
+
+
+local function PUSH (me)
+    local old = TRACK[#TRACK]
+    local new = setmetatable({}, {__index=old})
+    TRACK[#TRACK+1] = new
+    if me then
+        me.__tojoin[new] = true
+    end
+end
+local function POP ()
+    TRACK[#TRACK] = nil
+end
+
+function ISPTR (node_or_var)
+    if node_or_var.tag == 'Adt_constr_root' then
+        return false
+    end
+
+    local tp = node_or_var.tp
+    local tp_id = TP.id(tp)
+
+    -- type with '*' anywhere
+    for _, v in ipairs(tp.tt) do
+        if v == '*' then
+            -- skip [var T*? ptr], [var T*?[] ts]
+            if ENV.clss[tp_id] and TP.check(tp,tp_id,'*','?','-[]') then
+            else
+                return true
+            end
+        end
+    end
+
+    -- either native dcl or derived
+    -- _SDL_Renderer&?: "_ext &?" should not be considered a pointer
+    if TP.is_ext(tp,'_','@') and
+       (not (TP.get(tp_id).plain or tp.plain or TP.check(tp,'&','?')))
+    then
+        if node_or_var.id == '_top_pool' then
+            return false    -- TODO: should not be considered "is_ext"
+        end
+        return true
+    end
+
+    return false
+end
+
+--  ptr = ...;
+--  loop do             // works as await
+--      *ptr = ...;     // crosses loop/await
+--      await X;
+--  end
+local E
+E = {
+    __await = function ()
+        for loop in AST.iter'Loop' do
+            loop.__fin_awaits = true
+        end
+    end,
+    EmitInt = '__await',
+    Kill    = '__await',
+    Spawn   = '__await',
+    AwaitN   = '__await',
+    Await   = function (me)
+        if me.tl_awaits then
+            E.__await(me)
+        end
+    end,
+}
+AST.visit(E)
 
 F = {
     Dcl_cls_pre = function (me)
-        TRACK = {}  -- restart tracking for each class
+        me.__fin_straight = true
+        PUSH()
+    end,
+    Dcl_cls_pos = function (me)
+        POP()
     end,
 
-    SetExp = function (me)
-        local op, fr, to = unpack(me)
+    Set = function (me)
+        local op, set, fr, to = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
 
-        if fr.tag == 'Ref' then
-            fr = fr[1]  -- Spawn, Thread, EmitExt
+        -- TODO
+        if set=='await' or set=='vector' then
+            ASR(op == '=', me, 1103, 'wrong operator')
+            return
         end
 
         local cls = CLS()
@@ -27,16 +117,9 @@ F = {
     -- NON-POINTER ATTRIBUTIONS (always safe)
     --
 
-        local noptr =  (to.tp.ptr==0 and (not to.tp.arr) and (not REF(to.tp)) and
-                        ((not to.tp.ext) or TP.get(to.tp.id).plain or to.tp.plain))
-                                            -- either native dcl or derived
-                                            -- from s.field
         -- _r.x = (int) ...;
-        noptr = noptr or
-                       (fr.tp.ptr==0 and (not fr.tp.arr) and (not REF(fr.tp)) and
-                        ((not fr.tp.ext) or TP.get(fr.tp.id).plain or fr.tp.plain))
-
-        if noptr then
+        if not (ISPTR(to) or TP.check(to.tp,'&','?')) or
+           not (ISPTR(fr) or TP.check(TP.pop(fr.tp,'&'),'[]')) then
             ASR(op == '=', me, 1101, 'wrong operator')
             ASR(not me.fin, me, 1102, 'attribution does not require `finalize´')
             return
@@ -46,16 +129,18 @@ F = {
     -- POINTER ATTRIBUTIONS
     --
 
-        -- attribution in pool iterators
-        if me.__ast_iter then
-            return
-        end
-
         -- an attribution restarts tracking accesses to "to"
         -- variables or native symbols
-        if (to.var and (not REF(to.var.tp))) or to.c then
+        if (to.var and (not TP.check(to.var.tp,'&'))) or to.c then
                         -- do not track references
-            TRACK[to.var or to.id] = true
+-- TODO: repeated with Var?
+            if to.var and ENV.clss[TP.id(to.var.tp)] then
+                local old = GET()[to.var]
+                -- do not restart in case of pointers to organisms
+                GET()[to.var] = old or 'accessed'
+            else
+                GET()[to.var or to.id] = 'accessed'
+            end
         end
 
         -- constants are safe
@@ -81,7 +166,7 @@ F = {
             if dcl then
                 to_blk = dcl.var.blk
             else
-                assert(constr.__par.tag=='Spawn')
+                AST.asr(constr.__par, 'Spawn')
                 local _,pool,_ = unpack(constr.__par)
                 assert(assert(pool.lst).var)
                 to_blk = pool.lst.var.blk
@@ -119,7 +204,7 @@ F = {
             --  end
         end
 
--- TODO: move to exp/ref.lua
+        -- TODO: move to exp/ref.lua
         if func_impure or input_call or fr.tag=='RawExp' then
             -- We assume that a impure function that returns a global pointer
             -- creates memory (e.g. malloc, fopen):
@@ -131,16 +216,15 @@ F = {
             -- the local goes out of scope, hence, we require finalization.
             -- The "to" pointers must be option types `&?´.
 
-            if to.tp.opt and to.tp.opt.ref then
+            if TP.check(to.tp,'&','?') then
                 T.__fin_opt_tp = to.tp  -- return value must be packed in the "&?" type
             else
-                ASR(to.tp.id == '@', me, 1105,
+                ASR(TP.id(to.tp)=='@', me, 1105,
                     'must assign to a option reference (declared with `&?´)')
                 -- var void* ptr = _malloc(1);  // no
                 -- _ptr = _malloc(1);           // ok
             end
 
--- TODO: error code
             ASR(me.fin, me, 'attribution requires `finalize´')
                 -- var void&? ptr = _malloc(1);
             if me.fin then
@@ -149,7 +233,6 @@ F = {
             end
             return
         end
--- TODO: error code
         ASR(not me.fin, me, 'attribution does not require `finalize´')
 
 
@@ -163,7 +246,6 @@ F = {
         -- other assignments are spread in multiple bodies
 --[[
         if to.org and to.fst.tag~='This' then
--- TODO: error code
             ASR(op==':=', me,
                 'organism pointer attribution only inside constructors')
                 -- var T t;
@@ -176,17 +258,19 @@ F = {
             -- int a; int* pa; pa=&a;
             -- int a; do int* pa; pa=&a; end
 -- TODO: this code is duplicated with "ref.lua"
+            local to_tp_id = TP.id(to.tp)
             if not (
-                fr.const                   or -- constants are globals
+                fr.isConst                 or -- constants are globals
                 fr.fst.tag == 'Nat'        or -- natives are globals
                 (fr.tag=='Op2_call' and       -- native calls are globals
                  fr[2].fst.tag=='Nat')     or
                 AST.iter'Dcl_constr'()     or -- org bodies can't hold
                 (fr.org and                   -- "global:*" is global
                  fr.org.cls.id=='Global')  or
-                (ENV.clss[to.tp.id] and       -- organisms must use "watching"
+                (ENV.clss[to_tp_id] and       -- organisms must use "watching"
                  fr.tag~='Op1_&')          or -- (but avoid &org)
-                me.__ast_tuple             or -- tuple attribution ok
+                (ENV.adts[to_tp_id] and       -- adts must use "watching"
+                 fr.tag~='Op1_&')          or -- (but avoid &adt)
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
                         (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
@@ -203,7 +287,6 @@ F = {
                     --     p = &i;
                     -- end
             else
--- TODO: error code
                 ASR(op=='=', me, 'wrong operator')
             end
         --end
@@ -232,75 +315,151 @@ F = {
         end
     end,
 
+    Dcl_pool = 'Dcl_var',
     Dcl_var = function (me)
-        if me.var.tp.ptr > 0 then
-            TRACK[me.var] = true
+        if AST.par(me,'BlockI') then
+            F.Var(me)
         end
     end,
-
     Var = function (me)
-        local set = AST.iter'SetExp'()
-        if set and set[3] == me then
-            return  -- re-setting variable
+        if not ISPTR(me.var) then
+            return
         end
-        if not TRACK[me.var] then
-            return  -- not tracking this var (not a pointer)
+        if me.var.pre=='function' then
+            return
         end
-        if TRACK[me.var]==true then
+
+        -- re-setting variable
+        local set = AST.par(me,'Set')
+        local to  = set and set[4]
+        if to and AST.isParent(to,me) then
+            local ok = (to==me)
+            ok = ok or (to.tag=='Field' and to.var==me.var)
+            ok = ok or (to.tag=='VarList' and AST.isParent(to, me))
+            if ok then
+-- TODO: repeated with Set?
+                if ENV.clss[TP.id(me.var.tp)] then
+                    local old = GET()[me.var]
+                    -- do not restart in case of pointers to organisms
+                    GET()[me.var] = old or 'accessed'
+                else
+                    GET()[me.var] = 'accessed'
+                end
+                --GET()[me.var] = 'accessed'
+                -- set[4] is VarList or Var
+                return
+            end
+        end
+        if AST.par(me,'Dcl_constr') and me.__par.fst.tag=='This' then
+            return  -- constructor access
+        end
+
+        local loop = AST.par(me, 'Loop')
+        local ext  = AST.get(loop,'Loop', 4,'Stmts', 1,'Set', 3,'Await', 1,'Ext')
+        if loop and loop.isAwaitUntil and ext and ext[1]=='_ok_killed' then
+-- TODO: bug: what if the "o" expression contains other pointers?
+            return  -- o'=await o until o==o'
+        end
+
+        -- access to pointer defined in variable outside the class boundary
+        local cls = CLS()
+        local acc = GET()[me.var]
+        if (not acc) and (not AST.isParent(cls,me.var.blk)) then
+            acc = cls
+        end
+
+        if type(acc) ~= 'table' then
+            GET()[me.var] = 'accessed'
             return  -- no await happened yet
         end
-        if me.var.tp.arr then
-            return  -- ignore tracked vars with []
-        end
-        if string.sub(me.var.id,1,5)=='_tup_' then
-            return  -- ignore tuple acesses
-        end
 
-        if AST.iter'Dcl_constr'() and me.__par.fst.tag=='This' then
-            return  -- constructor access
+        -- access in the beginning of recursive class
+        -- check if enclosing par/or is a "watching me.var"
+        -- if so, this access is safe
+        if acc.tag == 'Dcl_cls' then
+            for paror in AST.iter('ParOr') do
+                if paror and AST.isParent(paror[1],me) then
+                    local var = paror.__adj_watching and 
+                                                     paror.__adj_watching.lst
+                                                     and paror.__adj_watching.lst.var
+                    if var and var==me.var then
+                        -- sets all accesses to "me.var" in the recursive class
+                        -- table (acc.GET) to point to the "watching"
+                        -- (so that they become child of it)
+                        acc.GET[me.var] = paror
+
+                        -- make this access safe
+                        acc = paror
+                    end
+                end
+            end
         end
 
         -- possible dangling pointer "me.var" is accessed across await
 
-        if me.tp.ptr>0 and ENV.clss[me.tp.id] then
+        local tp_id = TP.id(me.tp)
+        if (ENV.clss[tp_id] or ENV.adts[tp_id]) then
             -- pointer to org: check if it is enclosed by "watching me.var"
             -- since before the first await
-            for n in AST.iter('ParOr') do
-                local var = n.isWatching and n.isWatching.lst and n.isWatching.lst.var
-                if var==me.var and AST.isParent(n,TRACK[me.var]) then
+            for paror in AST.iter('ParOr') do
+                local var = paror.__adj_watching and paror.__adj_watching.lst
+                                                 and paror.__adj_watching.lst.var
+                if var==me.var and AST.isParent(paror,acc) then
                     return      -- ok, I'm safely watching "me.var"
                 end
             end
         end
 
         -- invalid access!
-        ASR(false, me, 1107, 'pointer access across `await´')
+        local acc_id = assert(AST.tag2id[acc.tag], 'bug found')
+        ASR(false, me, 1107,
+            'unsafe access to pointer "'..me.var.id..'" across `'..
+                acc_id..'´ ('..acc.ln[1]..' : '..acc.ln[2]..')')
     end,
 
-    Await = function (me)
-        if me.tl_awaits then
-            for var, _ in pairs(TRACK) do
-                if TRACK[var]==true then
-                    TRACK[var] = me   -- tracks the *first* await
+    __await = function (me)
+        CLS().__fin_straight = false
+        for _, T in ipairs(TRACK) do        -- search in all levels
+            for var, v in pairs(T) do
+                if v == 'accessed' then
+                    GET()[var] = me   -- tracks the *first* await
                 end
             end
         end
+        GET()['_'] = me
     end,
-    AwaitN   = 'Await',
+    EmitInt = '__await',
+    Kill    = '__await',
 
-    --Block    = 'Await',
-    Async_pre  = 'Await',
-    Thread_pre = 'Await',
-    ParOr    = 'Await',
-    ParAnd   = 'Await',
-    Par      = 'Await',
-
-    --Loop     = 'Await',
-    Loop = function (me)
-        if me.isAwaitUntil then
+    Spawn = function (me)
+        if me.cls.is_traverse and me.cls.__fin_straight then
             return
         else
-            F.Await(me)
+            F.__await(me)
+        end
+    end,
+
+    Await = function (me)
+        if me.tl_awaits or me.__fin_awaits then
+            if me.__env_org then
+                local id = TP.id(me.__env_org.tp)
+                if ENV.clss[id].__fin_straight then
+                    return
+                end
+            end
+            F.__await(me)
+        end
+    end,
+    AwaitN   = 'Await',
+    Async_pre  = 'Await',
+    Thread_pre = 'Await',
+
+    Loop_bef = function (me, sub, i)
+        -- skip iter exp (loop i in <exp> do ... end)
+        if i==3 or (i<3 and i==#me) then
+            if not me.isAwaitUntil then
+                F.Await(me)
+            end
         end
     end,
 
@@ -308,11 +467,9 @@ F = {
         if not fin then
             set, fin = unpack(me)
         end
-        assert(fin[1].tag == 'Block')
-        assert(fin[1][1].tag == 'Stmts')
-        fin.active = fin[1] and fin[1][1] and
-                        (#fin[1][1]>1 or
-                         fin[1][1][1] and fin[1][1][1].tag~='Nothing')
+        AST.asr(fin[1],'Block', 1,'Stmts')
+        fin.active = (#fin[1][1]>1 or
+                      fin[1][1][1] and fin[1][1][1].tag~='Nothing')
 
         if AST.iter'Dcl_constr'() then
             ASR(not fin.active, me, 1108,
@@ -322,7 +479,7 @@ F = {
         if set then
             -- EmitExt changes the AST
             if set.tag=='Block' then
-                set = set[1][2] -- Block->Stmt->SetExp
+                set = set[1][2] -- Block->Stmt->Set
             end
             set.fin = fin                   -- let call/set handle
         elseif fin.active then
@@ -349,7 +506,7 @@ F = {
             if hold then
                 -- int* pa; _f(pa);
                 --  (`pa´ termination must consider `_f´)
-                local r = (param.tp.ptr>0 or param.tp.ext or param.tp.arr) and
+                local r = (ISPTR(param) or TP.check(TP.pop(param.tp,'&'),'[]')) and
                           (not param.isConst) and
                           (not param.c or param.c.mod~='const')
                                 -- except constants
@@ -357,7 +514,6 @@ F = {
                 r = r and param.fst and param.fst.blk or
                     r and param.fst and param.fst.var and param.fst.var.blk
                             -- need to hold block
--- TODO: ERR 10xx
                 WRN( (not r) or (not req) or (r==req),
                         me, 'invalid call (multiple scopes)')
                 req = req or r
@@ -378,7 +534,7 @@ F = {
                     params)
         end
 
--- TODO: should yield error if requires finalize and is inside Thread?
+        -- TODO: should yield error if requires finalize and is inside Thread?
         if AST.iter'Thread'() then
             req = false     -- impossible to run finalizers on threads
         end
@@ -392,6 +548,41 @@ F = {
             table.insert(req.fins, 1, fin)
         end
     end,
+
+    ParEver_pre = function (me)
+        me.__tojoin = {}
+    end,
+    ParEver_pos = function (me)
+        JOIN(me)
+    end,
+    ParEver_bef = function (me)
+        PUSH(me)
+    end,
+    ParEver_aft = function (me)
+        POP()
+    end,
+    ParAnd_pre = 'ParEver_pre',
+    ParAnd_bef = 'ParEver_bef',
+    ParAnd_aft = 'ParEver_aft',
+    ParAnd_pos = 'ParEver_pos',
+    ParOr_pre  = 'ParEver_pre',
+    ParOr_bef  = 'ParEver_bef',
+    ParOr_aft  = 'ParEver_aft',
+    ParOr_pos  = 'ParEver_pos',
+
+    -- skip condition (i>1)
+    If_bef = function (me, _, i)
+        if i > 1 then
+            PUSH(me)
+        end
+    end,
+    If_aft = function (me, _, i)
+        if i > 1 then
+            POP()
+        end
+    end,
+    If_pre = 'ParEver_pre',
+    If_pos = 'ParEver_pos',
 }
 
 AST.visit(F)

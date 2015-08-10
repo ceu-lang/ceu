@@ -7,6 +7,7 @@ RUNTESTS = true
 -- Execution option for the tests:
 --VALGRIND = true
 --LUACOV = '-lluacov'
+COMPLETE = true
 OS = false   -- false, true, nil(random)
 
 dofile 'pak.lua'
@@ -36,9 +37,21 @@ end
 
 Test = function (t)
     T = t
+
+    --assert(T.todo == nil)
+    if T.todo then
+        return
+    end
+    if T.complete and (not COMPLETE) then
+        return  -- only run "t.complete=true" with the "COMPLETE=true" flag
+    end
+
     local source = T[1]
-    --local source = 'C _fprintf(), _stderr;'..T[1]
-    print('\n=============\n---\n'..source..'\n---\n')
+    if not T.complete then
+        -- do not print large files
+        --local source = 'C _fprintf(), _stderr;'..T[1]
+        print('\n=============\n---\n'..source..'\n---\n')
+    end
 
     OPTS = {
         tp_word = 4,
@@ -53,11 +66,6 @@ Test = function (t)
         source  = source,
     }
 
-    --assert(T.todo == nil)
-    if T.todo then
-        return
-    end
-
     STATS.count = STATS.count   + 1
 
     dofile 'tp.lua'
@@ -70,23 +78,17 @@ Test = function (t)
 
     if not check('parser')   then return end
     if not check('ast')      then return end
-    --DBG'======= AST'
-    --AST.dump(AST.root)
     if not check('adj')      then return end
-    --DBG'======= ADJ'
-    --AST.dump(AST.root)
-    if not check('tops')     then return end
-    --DBG'======= TOPS'
-    --AST.dump(AST.root)
+    if not check('sval')     then return end
     if not check('env')      then return end
+    --AST.dump(AST.root)
     if not check('exp')      then return end
     if not check('adt')      then return end
     if not check('ref')      then return end
-    if not check('sval')     then return end
+    if not check('cval')     then return end
     if not check('isr')      then return end
     if not check('tight')    then return end
     if not check('fin')      then return end
-    --dofile 'awaits.lua'
     if not check('props')    then return end
     if not check('ana')      then return end
     dofile 'acc.lua'
@@ -96,9 +98,6 @@ Test = function (t)
     if not check('tmps')     then return end
     if not check('mem')      then return end
     if not check('val')      then return end
-    --DBG'======= VAL'
-    --AST.dump(AST.root)
---do return end
     if not check('code')     then return end
 
     if (not t.wrn) and (not t._ana) then
@@ -237,6 +236,11 @@ end
             return  -- T.run==true, do not run
         end
 
+        -- skip "threads" tests with VALGRIND on
+        if PROPS.has_threads and VALGRIND then
+            return
+        end
+
         if T.asr then
             local exe = os.execute(EXE)
             assert(exe ~= 256)  -- 256 = OK
@@ -259,7 +263,7 @@ end
         print(source)
         go(source, T.run)
     else
-        local par = (T.awaits and T.awaits>0 and 'par') or 'par/or'
+        local par = 'par'--(T.awaits and T.awaits>0 and 'par') or 'par/or'
         source =
             par .. [[ do
                 ]]..source..[[
@@ -311,40 +315,30 @@ os.execute('rm -f /tmp/_ceu_*')
 --[[
 -- FULL
 STATS = {
-    count   = 2290,
+    count   = 2543,
     mem     = 0,
-    trails  = 4776,
-    bytes   = 46311980,
+    trails  = 6446,
+    bytes   = 53986810,
 }
 
 
-real	11m48.154s
-user	10m55.035s
-sys	1m53.727s
+real	15m5.267s
+user	15m22.006s
+sys	2m10.014s
 
--- no ADTs
-STATS = {
-    count   = 2134,
-    mem     = 0,
-    trails  = 4129,
-    bytes   = 21598904,
-}
-
-
-real	9m37.466s
-user	9m8.733s
-sys	1m42.707s
 
 -- no TM
+
 STATS = {
-    count   = 2201,
+    count   = 2392,
     mem     = 0,
-    trails  = 4171,
-    bytes   = 22134290,
+    trails  = 5350,
+    bytes   = 29771950,
 }
 
 
-real	9m31.195s
-user	8m47.733s
-sys	1m48.085s
+real	12m35.119s
+user	12m57.313s
+sys	2m8.698s
+
 ]]

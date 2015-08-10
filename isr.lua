@@ -23,7 +23,8 @@ F = {
     Var = function (me)
         if inIsr(me) then
             accs[me.var] = true
-            local isPtr = me.var.tp.ptr>0 and (not me.var.tp.arr)
+            local isPtr = (TP.check(me.var.tp,'*','-&') and
+                            (not TP.check(me.var.tp,'[]','-&')))
             WRN(not isPtr, me, 'pointer access '..msg)
         end
     end,

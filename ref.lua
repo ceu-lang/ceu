@@ -1,7 +1,3 @@
--- TODO:
---  - remove interface binding?
---      - only used for null hack?
-
 function NODE2BLK (n)
     return n.fst and n.fst.blk or
            n.fst and n.fst.var and n.fst.var.blk or
@@ -10,12 +6,44 @@ end
 
 F = {
     -- before Var
-    SetExp_pre = function (me)
-        local _, fr, to = unpack(me)
-        if not REF(to.tp) then
+    Set_pre = function (me)
+        local _, _, _, to = unpack(me)
+        local TO = (to.tag=='VarList' and to) or {to}
+        for _, to in ipairs(TO) do
+            F.__Set_pre(me, to)
+        end
+    end,
+    __Set_pre = function (me, TO)
+        local _, set, fr, _ = unpack(me)
+        to = TO
+        if not TP.check(to.tp,'&','-?') then
             return
         end
         assert(to.lst.var, 'bug found')
+        local cls = CLS()
+
+        -- Detect source of assignment/binding:
+        --  - internal:  assignment from body to normal variable (v, this.v)
+        --  - constr:    assignment from constructor to interface variable (this.v)
+        --  - interface: assignment from interface (var int v = <default value>)
+        --  - outer:     assignment from outer body (t.v)
+
+        local constr    = AST.par(me, 'Dcl_constr')
+              constr    = constr and (constr.cls.blk_ifc.vars[to.lst.var.id]==to.lst.var) and constr
+        local global    = to.tag=='Field' and to.org.cls.id=='Global' and cls.id=='Main'
+        local outer     = (not constr) and to.tag=='Field' and to.org.cls~=cls and (not global)
+        local interface = AST.par(me, 'BlockI')
+        local internal  = not (constr or outer or interface)
+
+        -- IGNORE NON-FIRST ASSIGNMENTS
+        --  class T with
+        --      var int& ref;
+        --  do
+        --      this.ref = <...>;   // this is not a first assignment
+        --  end
+        if (not constr) and to.lst.var.blk==cls.blk_ifc and (cls.id~='Main') then
+            return
+        end
 
         -- refuse first assignment inside loop with declaration outside it:
         --      var t& v;
@@ -30,37 +58,18 @@ F = {
         --          end;
         --      end
         local loop = AST.par(me, 'Loop')
-        if (not to.lst.var.bind) and loop and (not AST.par(me,'Dcl_constr')) then
-            ASR(AST.isParent(loop, to.lst.var.blk), me,
-                'reference declaration and first binding cannot be separated by loops')
+        if loop then
+            if (not to.lst.var.bind) and (not AST.par(me,'Dcl_constr')) then
+                ASR(AST.isParent(loop, to.lst.var.blk), me,
+                    'reference declaration and first binding cannot be separated by loops')
+            end
         end
 
-        -- Detect source of assignment/binding:
-        --  - internal:  assignment from body to normal variable (v, this.v)
-        --  - constr:    assignment from constructor to interface variable (this.v)
-        --  - interface: assignment from interface (var int v = <default value>)
-        --  - outer:     assignment from outer body (t.v)
+        -- ALREADY HAS BINDING
 
-        local constr    = AST.par(me, 'Dcl_constr')
-              constr    = constr and (constr.cls.blk_ifc.vars[to.lst.var.id]==to.lst.var) and constr
-        local global    = to.tag=='Field' and to.org.cls.id=='Global' and CLS().id=='Main'
-        local outer     = (not constr) and to.tag=='Field' and to.org.cls~=CLS() and (not global)
-        local interface = AST.par(me, 'BlockI')
-        local internal  = not (constr or outer or interface)
-
-        -- ALREADY HAS INTERNAL BINDING
-
-        if to.lst.var.bind=='internal' then
-            -- Bounded inside the class body, refuse external assignments:
-            --  - constructor
-            --      var T t with
-            --          this.v = ...;   // v was bounded in T
-            --      end;
-            --  - outer body
-            --      var T t;
-            --      t.v = ...;          // v was bounded in T
-            ASR(internal or interface, me,
-                'cannot assign to reference bounded inside the class')
+        if to.lst.var.bind == 'internal' then
+            assert(cls.id=='Main' or (to.blk ~= cls.blk_ifc))
+        elseif outer then
 
         -- NO INTERNAL BINDING
         --  first assignment
@@ -70,7 +79,9 @@ F = {
             if if_ and (if_.__depth > to.lst.var.blk.__depth) and
                ((not constr) or if_.__depth > constr.__depth) and
                ((not to.lst.var.bind) or to.lst.var.bind=='partial')
-            then else
+            then
+                -- nothing
+            else
                 if_ = false
             end
             if if_ and AST.isParent(if_[2],me) then
@@ -81,6 +92,7 @@ F = {
             -- set source of binding
             elseif internal then
                 to.lst.var.bind = 'internal'
+                assert(cls.id=='Main' or (to.blk ~= cls.blk_ifc))
             elseif constr then
                 if not to.lst.var.bind then
                     to.lst.var.bind = 'constr'
@@ -102,29 +114,29 @@ F = {
                 t[#t+1] = me
             end
 
-            -- first assignment (and only first assignment) is byRef
-            to.byRef = true
-            fr.byRef = true
+            -- first assignment (and only first assignment) is "by ref"
+            me.__ref_byref = true
 
             -- refuses first assignment from constants and dereferences:
-            -- var int& i = 1;
-            -- var int& i = *p;
-            if (not REF(fr.tp)) then
+            -- var int& i = 1;      // constant
+            -- var int& i = *p;     // dereference
+            -- var D& d = D(...);   // adt-constr
+            if (not TP.check(fr.tp,'&')) then
                 ASR(fr.lval or fr.tag=='Op1_&' or fr.tag=='Op2_call' or
                         (fr.lst and (fr.lst.tag=='Outer' or
-                                     fr.lst.var and fr.lst.var.cls)),
-                                               -- orgs are not lval
+                                     fr.lst.var and (fr.lst.var.cls or fr.lst.var.adt))),
+                                               -- orgs/adts are not lval
                     me, 'invalid attribution (not a reference)')
+-- TODO: err msg, separate with : inteado of (
                 ASR(fr.tag ~= 'Op1_*', me, 'invalid attribution')
             end
 
             -- refuses first assignment from awaits:
             -- var int& i = await <...>;
-            ASR(not me.__ast_tuple, me, 'invalid attribution')
+            ASR(set~='await', me, 'invalid attribution')
 
             -- check scopes
 -- TODO: this code is duplicated with "fin.lua"
-            local cls = CLS()
             local fr_blk = NODE2BLK(fr)
             local to_blk = NODE2BLK(to)
             local org_blk
@@ -136,7 +148,7 @@ F = {
                         org_blk = dcl.var.blk
                     else
                         local spw = AST.par(constr, 'Spawn')
-                        org_blk = spw[2].blk or MAIN.blk_body    -- pool.blk
+                        org_blk = spw[2].var.blk or MAIN.blk_body    -- pool.blk
                     end
                 end
             end
@@ -149,7 +161,6 @@ F = {
                 fr_blk == MAIN.blk_body    or
                 (org_blk and
                  org_blk.__depth>=fr_blk.__depth) or
-                --me.__ast_tuple             or -- tuple attribution ok
                 (   -- same class and scope of "to" <= "fr"
                     (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
                         (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
@@ -196,11 +207,16 @@ F = {
     __constr = function (me, cls, constr)
         constr.__bounded = constr.__bounded or {}
         for _, var in ipairs(cls.blk_ifc.vars) do
-            if REF(var.tp) and (not var.tp.opt)
-                           and (var.bind=='constr' or (not var.bind))
-            then
-                ASR(constr.__bounded[var], me,
-                    'field "'..var.id..'" must be assigned')
+            if var.pre == 'var' then
+                if TP.check(var.tp,'&') and
+                   (var.bind=='constr' or (not var.bind))
+                then
+                    -- '_out' is set by the compiler, before the constructor
+                    if var.id ~= '_out' then
+                        ASR(constr.__bounded[var], me,
+                            'field "'..var.id..'" must be assigned')
+                    end
+                end
             end
         end
     end,
@@ -213,11 +229,11 @@ F = {
         -- ensures that global "ref" vars are initialized
         local glb = ENV.clss.Global
         local cls = CLS()   -- might be an ADT declaration
-        if REF(me.var.tp) and glb and cls and cls.id=='Main' then
+        if TP.check(me.var.tp,'&') and glb and cls and cls.id=='Main' then
             local var = glb.blk_ifc.vars[me.var.id]
             if var then
                 local set = me.__par and me.__par[1]==me and
-                            me.__par[2] and me.__par[2].tag=='SetExp'
+                            me.__par[2] and me.__par[2].tag=='Set'
                 ASR(set, me,
                     'global references must be bounded on declaration')
             end
@@ -230,8 +246,11 @@ F = {
 
     -- Ensures that &ref var is bound before use.
     Var = function (me)
+        if me.var.pre ~= 'var' then
+            return
+        end
         local cls = CLS()
-        if REF(me.var.tp) and (not me.var.tp.opt) then
+        if TP.check(me.var.tp,'&') then
             -- ignore interface variables outside Main
             -- (they are guaranteed to be bounded)
             local inifc = (me.var.blk == cls.blk_ifc)

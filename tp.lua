@@ -2,58 +2,192 @@ TP = {
     types = {}
 }
 
+function TP.id (tp)
+    return tp.tt[1]
+end
+function TP.is_ext (tp, v1, v2)
+    assert(v1, 'bug found')
+    local _tp, at
+    if v1=='@' or v2=='@' then
+        at = TP.id(tp)=='@'
+    end
+    if v1=='_' or v2=='_' then
+        _tp = string.sub(TP.id(tp),1,1) == '_'
+    end
+    return _tp or at
+end
+
+local function TT_copy (tt)
+    local ret = {}
+    for i=1, #tt do
+        ret[i] = tt[i]
+    end
+    return ret
+end
+function TP.pop (tp, v)
+    if tp.tup then
+        return tp, false
+    end
+    if v == nil then
+        v = tp.tt[#tp.tt]
+    end
+
+    tp = TP.copy(tp)
+    if tp.tt[#tp.tt] == v then
+        tp.tt[#tp.tt] = nil
+        if v == '[]' then
+            tp.arr = nil
+        end
+        return tp, v
+    else
+        return tp, false
+    end
+end
+function TP.push (tp, v)
+    tp = TP.copy(tp)
+    tp.tt[#tp.tt+1] = v
+    return tp
+end
+function TP.check (tp, ...)
+    if tp.tup then
+        return false
+    end
+
+    local tt = tp.tt
+
+    local E = { ... }
+    local j = 0
+    for i=0, #E-1 do
+        local v = tt[#tt-j]
+        local e = E[#E-i]
+        local opt = false
+        if string.sub(e,1,1) == '-' then
+            e   = string.sub(e,2)
+            opt = true
+        end
+
+        if v ~= e then
+            if opt then
+                j = j - 1
+            else
+                return false
+            end
+        end
+        j = j + 1
+    end
+    return true
+end
+
+local __toc = { ['*']='ptr', ['[]']='arr', ['&']='ref', ['?']='opt' }
+function TP.opt2adt (tp)
+    local tt = tp.tt
+    assert(TP.check(tp,'?'), 'bug found')
+    local ret = '_Option__'..tt[1]
+    for i=2, #tt-1 do
+        local p = tt[i]
+        if type(p)=='table' then
+            p = '[]'
+        end
+        ret = ret .. '__' .. __toc[p]
+    end
+    return ret
+end
+
 local __empty = {}
 function TP.get (id)
     return TP.types[id] or __empty
 end
 
-function TP.new (me)
-    if me.tag == 'Type' then
-        local id, ptr, arr, ref, opt = unpack(me)
+local __tmod = {
+    ['*']  = { ['*']=true,  ['[]']=true,  ['&']=true,  ['?']=true  },
+    ['[]'] = { ['*']=true,  ['[]']=false, ['&']=true,  ['?']=false },
+    ['&']  = { ['*']=false, ['[]']=false, ['&']=false, ['?']=true  },
+    ['?']  = { ['*']=false, ['[]']=true,  ['&']=false, ['?']=false },
+}
 
-        me.id  = id
-        me.ptr = ptr
-        me.arr = arr
-        me.ref = ref
-        me.opt = opt
-        me.ext = (id=='@') or
-                 (string.sub(id,1,1)=='_' and string.sub(id,1,8)~='_Option_')
-        me.hold = true      -- holds by default
+function TP.new (me, dont_generate)
+    if me.tag ~= 'TupleType' then
+        -- Save actual type in "tt", because of
+        -- array [N] which has to be in me[i] to be tracked.
+        -- id, (*, [], &, ?)^0
+        if not me.tt then
+            me.tt = { unpack(me) }
+        end
+
+        -- me.arr = []|table
+        -- me.tt[i] = '[]'
+        for i=2, #me.tt do
+            local v = me.tt[i]
+            if v=='[]' or type(v)=='table' then
+                me.tt[i] = '[]'
+                me.arr = v
+            end
+        end
+
+        -- validate type modifiers
+        if AST and AST.par(me, 'Dcl_var') then
+            local last = me.tt[2]
+            if last then
+                for i=3, #me.tt do
+                    local cur = me.tt[i]
+                    ASR(__tmod[last][cur], me,
+                        'invalid type modifier : `'..last..cur..'´')
+                    last = cur
+                end
+            end
+        end
+
+        -- TODO: refusing multiple '?' inside
+        -- TODO: refusing multiple '[]' inside
+        local arr = false
+        for i=2, #me do
+            local v = me[i]
+            if v == '?' then
+                --ASR(i==#me, me, 'not implemented : `?´ must be last modifier')
+            elseif v=='[]' or type(v)=='table' then
+                ASR(not arr, me, 'not implemented : multiple `[]´')
+                    -- me[1] will contain the only []
+                arr = true
+            end
+        end
 
         -- set from outside (see "types" above and Dcl_nat in env.lua)
         me.prim  = false     -- if primitive
         me.num   = false     -- if numeric
         me.len   = nil       -- sizeof type
         me.plain = false     -- if plain type (no pointers inside it)
+        me.hold  = true      -- holds by default
 
 -- TODO: remove?
-        if ENV and me.ext and (not ENV.c[me.id]) then
-            ENV.c[me.id] = { tag='type', id=me.id, len=nil, mod=nil }
+        local tp_id = TP.id(me)
+        if ENV and TP.is_ext(me,'_','@') and (not ENV.c[tp_id]) then
+            ENV.c[tp_id] = { tag='type', id=tp_id, len=nil, mod=nil }
         end
 
     else
-        assert(me.tag == 'TupleType')
-        me.id  = nil
-        me.ptr = (#me==1 and 0) or 1
+        AST.asr(me, 'TupleType')
         me.arr = false
-        me.ref = false
-        me.ext = false
 
         me.tup = {}
         for i, t in ipairs(me) do
             local hold, tp, _ = unpack(t)
             tp.hold = hold
 
-            if tp.id=='void' and tp.ptr==0 then
+            if TP.check(tp,'void','-&') then
                 ASR(#me==1, me, 'invalid type')
                 me[1] = nil     -- empty tuple
                 break
             end
 
+            -- TODO: workaround: error when generating nested ADTs
+            if ENV.adts[TP.id(tp)] then
+                dont_generate = true
+            end
+
             me.tup[#me.tup+1] = tp
         end
 
-        if not AST.par(me,'Dcl_fun') then
+        if not (dont_generate or AST.par(me,'Dcl_fun')) then
             TP.types[TP.toc(me)] = me     -- dump typedefs
         end
     end
@@ -89,7 +223,7 @@ local types = {
     tceu_nlbl = { false, false, true }, -- len set in "labels.lua"
 }
 for id, t in pairs(types) do
-    TP.types[id] = TP.new{ tag='Type', id, 0, false, false }
+    TP.types[id] = TP.new{ id }
     TP.types[id].prim = t[1]
     TP.types[id].num  = t[2]
     TP.types[id].len  = t[3]
@@ -106,19 +240,16 @@ function TP.n2bytes (n)
     error'out of bounds'
 end
 
-function TP.copy (t)
+function TP.copy (tp)
     local ret = {}
-    for k,v in pairs(t) do
-        ret[k] = v
+    for k, v in pairs(tp) do
+        if k == 'tt' then
+            ret.tt = TT_copy(tp.tt)
+        else
+            ret[k] = v
+        end
     end
     return ret
-end
-
-function TP.fromstr (str)
-    local id, ptr = string.match(str, '^(.-)(%**)$')
-    assert(id and ptr)
-    ptr = (id=='@' and 1) or string.len(ptr);
-    return TP.new{ tag='Type', id, ptr, false, false }
 end
 
 function TP.toc (tp)
@@ -133,58 +264,79 @@ function TP.toc (tp)
         return string.gsub(table.concat(t,'__'),'%*','_')
     end
 
-    local ret = tp.id
+    local v
+    local ret = ''
+    for i=#tp.tt, 2, -1 do
+        if tp.tt[i] == '?' then
+            return 'CEU_'..TP.opt2adt(tp)..ret
+        end
 
-    if TOPS[tp.id] then
+        tp, v = TP.pop(tp)
+        if v=='[]' or v=='*' or v=='&' then
+            ret = '*'..ret
+        else
+            error 'bug found'
+        end
+    end
+
+    local id = TP.id(tp)
+
+    ret = id..ret
+
+    if ENV.clss[id] or ENV.adts[id] then
         ret = 'CEU_'..ret
     end
 
-    ret = ret .. string.rep('*',tp.ptr)
-
-    if tp.arr then
-        --error'not implemented'
-        ret = ret .. '*'
-    end
-
-    if tp.ref then
-        ret = ret .. '*'
-    end
-
-    return (string.gsub(ret,'^_', ''))
+    ret = string.gsub(ret,'^_', '')
+    return ret
 end
 
 function TP.tostr (tp)
     if tp.tup then
-        local ret = {}
-        for _, t in ipairs(tp.tup) do
-            ret[#ret+1] = TP.tostr(t)
+        local t = {}
+        for _, v in ipairs(tp.tup) do
+            t[#t+1] = TP.tostr(v)
         end
-        return '('..table.concat(ret,',')..')'
+        return '('..table.concat(t,',')..')'
     end
 
-    local ret = tp.id
-    ret = ret .. string.rep('*',tp.ptr)
-    if tp.arr then
-        ret = ret .. '[]'
+    return table.concat(tp.tt)
+end
+
+function TP.isFloat (tp, pop)
+    local tt = (pop and TP.pop(tp, pop)) or tp.tt
+    local id = unpack(tt)
+    return #tt==1 and (id=='float' or id=='f32' or id=='f64')
+end
+
+function TP.isNumeric (tp, pop)
+    tp = (pop and TP.pop(tp, pop)) or tp
+    local id = TP.id(tp)
+    return TP.check(tp,id) and (TP.get(id).num or TP.is_ext(tp,'_'))
+            or TP.is_ext(tp,'@')
+end
+
+function TP.t2tup (t)
+    local tup = {}
+    for _, v in ipairs(t) do
+        tup[#tup+1] = v.tp
+        assert(v.tp)
     end
-    if tp.ref then
-        ret = ret .. '&'
+    return tup
+end
+
+local function __err (tp1, tp2)
+    return 'types mismatch (`'..TP.tostr(tp1)..'´ <= `'..TP.tostr(tp2)..'´)'
+end
+local function __norefs (tt)
+    tt = TT_copy(tt)
+    for i=#tt, 1, -1 do
+        if tt[i] == '&' then
+            table.remove(tt, i)
+        end
     end
-    return ret
+    return tt
 end
-
-function TP.isFloat (tp)
-    return (tp.id=='float' or tp.id=='f32' or tp.id=='f64')
-            and tp.ptr==0 and (not tp.arr)
-end
-
-function TP.isNumeric (tp)
-    return TP.get(tp.id).num and tp.ptr==0 and (not tp.arr)
-            or (tp.ptr==0 and tp.opt and TP.isNumeric(tp.opt))
-            or (tp.ext and tp.ptr==0)
-            or tp.id=='@'
-end
-
 function TP.contains (tp1, tp2)
     if tp1.tup or tp2.tup then
         if tp1.tup and tp2.tup then
@@ -192,90 +344,169 @@ function TP.contains (tp1, tp2)
                 for i=1, #tp1.tup do
                     local t1 = tp1.tup[i]
                     local t2 = tp2.tup[i]
-                    if not TP.contains(t1,t2) then
-                        return false
+                    local ok, msg = TP.contains(t1,t2)
+                    if not ok then
+                        return false, 'wrong argument #'..i..' : '..msg
                     end
                 end
                 return true
             end
         end
-        return false
+        return false, 'arity mismatch'
     end
+
+    -- original types (for error msgs)
+    local TP1, TP2 = tp1, tp2
+    --local tp1,ok  = TP.pop(tp1, '?')
+    local tp1  = TP.copy(tp1)
+    local tp2  = TP.copy(tp2)
+
+    local id1  = TP.id(tp1)
+    local id2  = TP.id(tp2)
+    local cls1 = ENV.clss[id1]
+    local cls2 = ENV.clss[id2]
+
+    -- TODO: required for external calls
+    --       remove it!
+    if TP.check(TP1,'?') and TP.check(TP2,'?') then
+        -- overwrides tp2 above
+        tp2 = TP.pop(TP2, '?')
+    end
+
+    tp1 = { tt=__norefs(tp1.tt) }
+    tp2 = { tt=__norefs(tp2.tt) }
+
+    -- BIG SWITCH --
+
+    -- compatible classes
+    if cls1 and cls2 and
+        (not ((TP.check(tp1,'[]') or TP.check(tp2,'[]'))))
+            -- arrays/pools are handled below
+    then
+        local ok = (id1==id2) or
+                   (cls1.is_ifc and ENV.ifc_vs_cls_or_ifc(cls1,cls2))
+        if ok then
+            -- pointers
+            if TP.check(tp1,'*') and TP.check(tp2,'*') then
+                -- compatible pointers, check arity, "char" renaming trick
+                local tp1, tp2 = TP.copy(tp1), TP.copy(tp2)
+                tp1.tt[1], tp2.tt[1] = 'char', 'char'
+                return TP.contains(tp1, tp2)
+            -- non-pointers
+            elseif TP.check(TP1,id1,'&') then
+                return true
+            else
+                return false, __err(TP1, TP2)
+            end
+        else
+            return false, __err(TP1, TP2)
+        end
+
+    -- vec& = vec
+    elseif TP.check(TP1,'[]','&') and (not TP.is_ext(tp1,'_','@')) and
+           TP.check(tp2,'[]')     and (not TP.is_ext(tp2,'_','@')) and
+            (not (cls1 or cls2)) -- TODO: TP.pre()
+    then
+        -- to == fr
+        local ok = (TP1.arr=='[]') or
+                   (TP2.arr~='[]' and TP1.arr.sval==TP2.arr.sval)
+        if not ok then
+            return false, __err(TP1,TP2)..' : dimension mismatch'
+        end
+        return TP.contains( TP.pop(tp1,'[]'),
+                            TP.pop(tp2,'[]') )
 
     -- same type
-    if tp1.id==tp2.id and tp1.ptr==tp2.ptr and tp1.arr==tp2.arr then
-                                              -- i.e. false
-        return true
-    end
-
-    -- tp? vs tp
-    if (tp1.opt or tp2.opt) and (tp1.ptr==tp2.ptr) then
-        return TP.contains(tp1.opt or tp1, tp2.opt or tp2)
-    end
-
-    -- var tp& v = &/*/<any-ext-value>
-    if tp1.ref and tp2.id=='@' then
-        return true
-    end
-
-    -- tp[] = tp*
-    -- tp*  = tp[]
-    if tp1.id==tp2.id and ((tp1.ptr==1 and tp2.arr) or (tp2.ptr==1 and tp1.arr))
-                      and tp1.ref==tp2.ref then
-        return true
-    end
-
-    -- any type (calls, Lua scripts)
-    if tp1.id=='@' or tp2.id=='@' then
-        return true
-    end
-
-    -- both are numeric
-    if TP.isNumeric(tp1) and TP.isNumeric(tp2) then
-        return true
-    end
-
-    -- compatible classes (same classes is handled above)
-    local cls1 = ENV.clss[tp1.id]
-    local cls2 = ENV.clss[tp2.id]
-    if cls1 and cls2 then
-        if tp1.ref or tp2.ref or (tp1.ptr>0 and tp2.ptr>0) then
-            if tp1.ptr == tp2.ptr then
-                return cls1.is_ifc and ENV.ifc_vs_cls_or_ifc(cls1,cls2)
+    elseif TP.tostr(tp1) == TP.tostr(tp2) then
+        if TP.check(tp1,'[]') or TP.check(tp2,'[]') then
+            assert(TP.check(tp1,'[]'), 'bug found')
+            if TP.check(TP1,'&') then
+                if TP1.arr == '[]' then
+                    -- var X[]& = ...
+                    return true
+                elseif type(TP1.arr)=='table' and type(TP2.arr)=='table' then
+                    assert(type(TP1.arr)=='table', 'bug found')
+                    -- pool X[10]  arr
+                    -- pool X[10]& ref = arr;
+                    if TP1.arr[1] == TP2.arr[1] then
+                        return true
+                    else
+                        return false, __err(TP1, TP2)
+                    end
+                else
+                    return false, __err(TP1, TP2)
+                end
+            else
+                return false, __err(TP1, TP2)   -- refuse x[]=y[]
             end
-        end
-        return false
-    end
-
-    -- both are pointers
-    local ptr2 = (tp2.ptr>0 and tp2.ptr) or (tp2.arr and tp2.ptr+1) or 0
-    if tp1.ptr>0 and ptr2>0 then
-        if tp1.id=='char' and tp1.ptr==1 -- cast to char*
-        or tp1.id=='void' and tp1.ptr==1 -- cast to void*
-        or tp1.ext or tp2.ext then       -- let gcc handle
-            return true
-            -- TODO: void* too???
-        end
-        if tp2.id == 'null' then
-            return true     -- any pointer can be assigned "null"
-        end
-        return false
-    elseif tp1.ptr>0 or ptr2>0 then
-        if tp1.ptr>0 and tp2.ext then
-            return true
-        elseif ptr2>0 and tp1.ext then
-            return true
         else
-            return false
+            return true
         end
-    end
 
-    -- let external types be handled by gcc
-    if tp1.ext or tp2.ext then
+    -- numerical type
+    elseif TP.isNumeric(tp1) and TP.isNumeric(tp2) then
         return true
-    end
 
-    return false
+    -- external non-pointers: let "gcc" handle it
+    elseif TP.is_ext(tp1,'_') and TP.check(tp1,id1) or
+           TP.is_ext(tp2,'_') and TP.check(tp2,id2)
+    then
+        if id1 == id2 then
+            if TP.check(tp2,id1) and TP.check(tp1,id2) then
+                return true
+            else
+                return false, __err(TP1, TP2)
+            end
+        else
+            return true
+        end
+
+    -- "any" type (calls, Lua scripts)
+    elseif TP.is_ext(tp1,'@') or TP.is_ext(tp2,'@') then
+        return true
+
+    -- array <=> single-pointer conversions
+    -- _tp[] = _tp*
+    -- _tp*  = _tp[]
+    elseif id1 == id2 and (
+            (TP.check(tp1,id1,'*') and TP.check(tp2,id2,'[]') and TP.is_ext(tp2,'_','@')) or
+            (TP.check(tp2,id2,'*') and TP.check(tp1,id1,'[]') and TP.is_ext(tp1,'_','@'))
+           )
+    then
+        return true
+
+    -- any pointer can be used with "null"
+    elseif TP.check(tp1,'*') and TP.check(tp2,'null','*') or
+           TP.check(tp2,'*') and TP.check(tp1,'null','*')
+    then
+        return true
+
+    -- single-pointer casts
+    elseif TP.check(tp1,id1,'*') and TP.check(tp2,id2,'*') then
+        -- TODO: allows any cast to char* and void*
+        --       is it correct?
+        --       (I think "void*" should fail)
+        if id1 == 'char' then
+            local tp2 = TP.copy(tp2)
+            tp2.tt[1] = 'char'
+            return TP.contains(tp1, tp2)
+        elseif id1 == 'void' then
+            local tp2 = TP.copy(tp2)
+            tp2.tt[1] = 'void'
+            return TP.contains(tp1, tp2)
+
+        -- both are external types: let "gcc" handle it
+        elseif TP.is_ext(tp1,'_') or TP.is_ext(tp2,'_') then
+            return true
+
+        else
+            return false, __err(tp1, tp2)
+        end
+
+    -- error
+    else
+        return false, __err(TP1, TP2)
+    end
 end
 
 function TP.max (tp1, tp2)

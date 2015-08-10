@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 #ifdef CEU_DEBUG
-#include <stdio.h>      /* fprintf */
+#include <stdio.h>      /* printf */
 #include <signal.h>     /* signal */
 #endif
 #ifdef CEU_RUNTESTS
@@ -25,6 +25,10 @@
 #include "ceu_pool.h"
 #endif
 
+#ifdef CEU_VECTOR
+#include "ceu_vector.h"
+#endif
+
 #ifdef CEU_IFCS
 #include <stddef.h>
 /* TODO: === direto? */
@@ -34,13 +38,10 @@
 /* native code from the Main class */
 === NATIVE ===
 
-/* adts definitions */
-=== ADTS_DEFS ===
-
-/* class definitions */
+/* class/adts definitions */
 /* may use types defined above in "NATIVE" */
 /* each class may define new native code that appear after its struct declaration */
-=== CLSS_DEFS ===
+=== TOPS_DEFS ===
 
 /* goto labels */
 enum {
@@ -61,7 +62,6 @@ typedef struct {
     u16       ifcs_flds[CEU_NCLS][=== IFCS_NFLDS ===];
     u16       ifcs_evts[CEU_NCLS][=== IFCS_NEVTS ===];
     void*     ifcs_funs[CEU_NCLS][=== IFCS_NFUNS ===];
-    tceu_ntrl ifcs_trls[CEU_NCLS][=== IFCS_NTRLS ===];
 #endif
 } _tceu_app;
 
@@ -82,9 +82,6 @@ static _tceu_app _CEU_APP = {
     },
     {
 === IFCS_FUNS ===
-    },
-    {
-=== IFCS_TRLS ===
     }
 #endif
 };
@@ -96,9 +93,9 @@ static _tceu_app _CEU_APP = {
 tceu_app* CEU_APP_SIG = NULL;
 static void ceu_segfault (int sig_num) {
 #ifdef CEU_ORGS
-    fprintf(stderr, "SEGFAULT on %p : %d\n", CEU_APP_SIG->lst.org, CEU_APP_SIG->lst.lbl);
+    printf("SEGFAULT on %p : %d\n", CEU_APP_SIG->lst.org, CEU_APP_SIG->lst.lbl);
 #else
-    fprintf(stderr, "SEGFAULT on %d\n", CEU_APP_SIG->lst.lbl);
+    printf("SEGFAULT on %d\n", CEU_APP_SIG->lst.lbl);
 #endif
     exit(0);
 }
@@ -131,7 +128,7 @@ static void ceu_stack_clr () {
 === FUNCTIONS_C ===
 
 #ifdef CEU_OS_APP
-static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp param) {
+static void* ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, void* param) {
     switch (evt) {
         /* STUBS */
         === STUBS ===
@@ -149,7 +146,7 @@ static tceu_evtp ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, tceu_evtp par
 #endif
 
 static int ceu_app_go (tceu_app* _ceu_app , tceu_go* _ceu_go) {
-    int _CEU_LBL = _STK.trl->lbl;
+    int _CEU_LBL = _STK->trl->lbl;
 #ifdef CEU_GOTO
 _CEU_GOTO_:
 #endif
@@ -159,12 +156,12 @@ _CEU_GOTO_:
 #ifdef CEU_ORGS
     _ceu_app->lst.org = _STK_ORG;
 #endif
-    _ceu_app->lst.trl = _STK.trl;
+    _ceu_app->lst.trl = _STK->trl;
     _ceu_app->lst.lbl = _CEU_LBL;
 #endif
 #ifdef CEU_DEBUG_TRAILS
 #ifndef CEU_OS_APP
-fprintf(stderr, "OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
+printf("OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
 #endif
 #endif
 #endif
@@ -177,7 +174,7 @@ fprintf(stderr, "OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
         === CODE ===
     }
 #ifdef CEU_DEBUG
-    ceu_out_assert(0, NULL);
+    ceu_out_assert(0, "no return");
 #endif
     return RET_HALT;    /* TODO: should never be reached anyways */
 }
@@ -221,7 +218,7 @@ ceu_app_init (tceu_app* _ceu_app)
     CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 #endif
 
-    === ADTS_INIT ===
+    === TOPS_INIT ===
 
 #ifdef CEU_OS_APP
 
@@ -246,11 +243,9 @@ ceu_app_init (tceu_app* _ceu_app)
 #endif
 #endif
 
-    ceu_out_org(_ceu_app, _ceu_app->data, CEU_NTRAILS, Class_Main, 0,
-#ifdef CEU_ORGS_NEWS
-                0,
-#endif
-                NULL, 0);
+    ceu_out_org(_ceu_app, _ceu_app->data, CEU_NTRAILS, Class_Main,
+                0, 0,
+                NULL, NULL);
 
 #ifdef CEU_LUA
     ceu_luaL_newstate(_ceu_app->lua);
