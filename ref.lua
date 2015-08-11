@@ -11,11 +11,14 @@ F = {
         local TO = (to.tag=='VarList' and to) or {to}
         for _, to in ipairs(TO) do
             F.__Set_pre(me, to)
+
+-- TODO: remove all above along with all references to __ref_byref
             if me.__ref_byref then
                 assert(fr.tag == 'Op1_&', 'bug found')
             else
-                ASR(fr.tag ~= 'Op1_&', me,
-                    'invalid attribution : not alias binding')
+                assert(fr.tag ~= 'Op1_&', 'bug found')
+                --ASR(fr.tag ~= 'Op1_&', me,
+                    --'invalid attribution : not alias binding')
             end
         end
     end,
