@@ -20,6 +20,7 @@ function V (me, ...)
             CTX[ctx] = true
         end
     end
+    --assert(CTX.lval or CTX.rval)
 
     local f = assert(F[me.tag], 'bug found : V('..me.tag..')')
     while type(f) == 'string' do
@@ -218,7 +219,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
     end,
 
     Field = function (me, CTX)
-        local gen = '((tceu_org*)'..V(me.org)..')'
+        local gen = '((tceu_org*)'..V(me.org,CTX)..')'
         if me.org.cls and me.org.cls.is_ifc then
             if me.var.pre == 'var'
             or me.var.pre == 'pool' then
@@ -238,7 +239,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
                     VAL = [[(
 (]]..cast..[[) (
 #line ]]..me.org.ln[2]..' "'..me.org.ln[1]..[["
-    ((byte*)]]..V(me.org)..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
+    ((byte*)]]..V(me.org,CTX)..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
         ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
     ]
 ))]]
@@ -246,7 +247,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
                     VAL = [[(*(
 (]]..TP.toc(me.var.tp)..[[*) (
 #line ]]..me.org.ln[2]..' "'..me.org.ln[1]..[["
-    ((byte*)]]..V(me.org)..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
+    ((byte*)]]..V(me.org,CTX)..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
         ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
     ]
         )
@@ -280,7 +281,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
                 VAL = me.c.id_
             else
                 assert(me.var, 'bug found')
-                VAL = '('..V(me.org)..'->'..me.var.id_..')'
+                VAL = '('..V(me.org,CTX)..'->'..me.var.id_..')'
                 VAL = F.__var(me, VAL, CTX)
             end
         end
@@ -289,21 +290,21 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
 
     ----------------------------------------------------------------------
 
-    Adt_constr_one = function (me)
+    Adt_constr_one = function (me, CTX)
         return me.val   -- set by hand in code.lua
     end,
 
     ----------------------------------------------------------------------
 
-    Global = function (me)
+    Global = function (me, CTX)
         return '(_ceu_app->data)'
     end,
 
-    Outer = function (me)
+    Outer = function (me, CTX)
         return '(('..TP.toc(me.tp)..'*)_STK_ORG)'
     end,
 
-    This = function (me)
+    This = function (me, CTX)
         local VAL
         if AST.iter'Dcl_constr'() then
             VAL = '__ceu_org'    -- set when calling constr
@@ -315,14 +316,14 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
 
     ----------------------------------------------------------------------
 
-    Op2_call = function (me)
+    Op2_call = function (me, CTX)
         local _, f, exps = unpack(me)
         local ps = {}
         if f.var and f.var.fun then
             -- (tceu_app*, tceu_org*, ...)
             ps[#ps+1] = '_ceu_app'
             if f.org then
-                ps[#ps+1] = V(f.org)   -- only native
+                ps[#ps+1] = V(f.org,CTX)   -- only native
             else
                 ps[#ps+1] = CUR(me)
             end
@@ -333,7 +334,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
                             -- ext context:
                             -- vectors become pointers to internal mem
         end
-        VAL = V(f)..'('..table.concat(ps,',')..')'
+        VAL = V(f,CTX)..'('..table.concat(ps,',')..')'
 
         if me.__fin_opt_tp then
             local ID = string.upper(TP.opt2adt(me.__fin_opt_tp))
@@ -342,7 +343,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
         return VAL
     end,
 
-    Op2_idx = function (me)
+    Op2_idx = function (me, CTX)
         local _, arr, idx = unpack(me)
         local VAL
 
@@ -351,21 +352,21 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
         if cls and TP.check(me.tp,TP.id(me.tp))
         or TP.is_ext(arr.tp,'_','@')
         then
-            VAL = V(arr)..'['..V(idx)..']'
+            VAL = V(arr,CTX)..'['..V(idx,CTX)..']'
             if cls and (not TP.check(me.tp,'&&')) then
                 VAL = '(&'..VAL..')'
                     -- class accesses must be normalized to references
             end
         else
-            VAL = '(*(('..TP.toc(me.tp)..'*)ceu_vector_geti_ex('..V(arr)..','..V(idx)..',__FILE__,__LINE__)))'
+            VAL = '(*(('..TP.toc(me.tp)..'*)ceu_vector_geti_ex('..V(arr,CTX)..','..V(idx,CTX)..',__FILE__,__LINE__)))'
         end
 
         return VAL
     end,
 
-    Op2_any = function (me)
+    Op2_any = function (me, CTX)
         local op, e1, e2 = unpack(me)
-        return '('..V(e1)..ceu2c(op)..V(e2)..')'
+        return '('..V(e1,CTX)..ceu2c(op)..V(e2,CTX)..')'
     end,
     ['Op2_-']   = 'Op2_any',
     ['Op2_+']   = 'Op2_any',
@@ -386,9 +387,9 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
     ['Op2_or']  = 'Op2_any',
     ['Op2_and'] = 'Op2_any',
 
-    Op1_any = function (me)
+    Op1_any = function (me, CTX)
         local op, e1 = unpack(me)
-        return '('..ceu2c(op)..V(e1)..')'
+        return '('..ceu2c(op)..V(e1,CTX)..')'
     end,
     ['Op1_~']   = 'Op1_any',
     ['Op1_-']   = 'Op1_any',
@@ -409,22 +410,34 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
     ['Op1_&'] = function (me, CTX)
         local op, e1 = unpack(me)
         return V(e1, CTX)
+--[[
+        local tp_id = TP.id(e1.tp)
+        if ENV.clss[tp_id] and (not TP.check(e1.tp,'&&','-&')) then
+            return V(e1,CTX) -- class accesses are already normalized to 
+        references
+        elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
+            return V(e1,CTX) -- adt pool accesses are already normalized to 
+        references
+        else
+            return '('..ceu2c(op)..V(e1,CTX)..')'
+        end
+]]
     end,
-    ['Op1_&&'] = function (me)
+    ['Op1_&&'] = function (me, CTX)
         local op, e1 = unpack(me)
         local tp_id = TP.id(e1.tp)
         if ENV.clss[tp_id] and (not TP.check(e1.tp,'&&','-&')) then
-            return V(e1) -- class accesses are already normalized to references
+            return V(e1,CTX) -- class accesses are already normalized to references
         elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
-            return V(e1) -- adt pool accesses are already normalized to references
+            return V(e1,CTX) -- adt pool accesses are already normalized to references
         else
             return '('..ceu2c(op)..V(e1)..')'
         end
     end,
-    ['Op1_?'] = function (me)
+    ['Op1_?'] = function (me, CTX)
         local op, e1 = unpack(me)
         local ID = string.upper(TP.opt2adt(e1.tp))
-        return '('..V(e1)..'.tag != CEU_'..ID..'_NIL)'
+        return '('..V(e1,CTX)..'.tag != CEU_'..ID..'_NIL)'
     end,
 
     ['Op1_!'] = function (me, CTX)
@@ -436,13 +449,13 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
                   ..V(e1)..',__FILE__,__LINE__)->SOME.v))'
     end,
 
-    ['Op1_$'] = function (me)
+    ['Op1_$'] = function (me, CTX)
         local op, e1 = unpack(me)
-        return '(ceu_vector_getlen('..V(e1)..'))'
+        return '(ceu_vector_getlen('..V(e1,CTX)..'))'
     end,
-    ['Op1_$$'] = function (me)
+    ['Op1_$$'] = function (me, CTX)
         local op, e1 = unpack(me)
-        return '(ceu_vector_getmax('..V(e1)..'))'
+        return '(ceu_vector_getmax('..V(e1,CTX)..'))'
     end,
 
     ['Op2_.'] = function (me, CTX)
@@ -508,37 +521,37 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
 
     ----------------------------------------------------------------------
 
-    WCLOCKK = function (me)
+    WCLOCKK = function (me, CTX)
         return '((s32)'..me.us..')'
     end,
 
-    WCLOCKE = function (me)
+    WCLOCKE = function (me, CTX)
         local exp, unit = unpack(me)
-        return '((s32)'.. V(exp) .. ')*' .. SVAL.t2n[unit]
+        return '((s32)'.. V(exp,CTX) .. ')*' .. SVAL.t2n[unit]
     end,
 
-    RawExp = function (me)
+    RawExp = function (me, CTX)
         return (unpack(me))
     end,
 
-    Type = function (me)
+    Type = function (me, CTX)
         return TP.toc(me)
     end,
 
-    Nat = function (me)
+    Nat = function (me, CTX)
         return string.sub(me[1], 2)
     end,
-    SIZEOF = function (me)
+    SIZEOF = function (me, CTX)
         local tp = unpack(me)
-        return 'sizeof('..V(tp)..')'
+        return 'sizeof('..V(tp,CTX)..')'
     end,
-    STRING = function (me)
+    STRING = function (me, CTX)
         return me[1]
     end,
-    NUMBER = function (me)
+    NUMBER = function (me, CTX)
         return me[1]
     end,
-    NULL = function (me)
+    NULL = function (me, CTX)
         return 'NULL'
     end,
 }
