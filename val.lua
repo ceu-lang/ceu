@@ -18,9 +18,12 @@ function V (me, ...)
     local CTX = ...
     if type(CTX) ~= 'table' then
         CTX = {}
-        for _, ctx in ipairs{...} do
-            assert(type(ctx)=='string', 'bug found')
-            CTX[ctx] = ctx
+        for i=1, select('#',...) do
+            local ctx = select(i,...)
+            if ctx then
+                assert(type(ctx)=='string', 'bug found')
+                CTX[ctx] = ctx
+            end
         end
     end
 --DBG()
@@ -38,6 +41,9 @@ function V (me, ...)
 end
 
 local function tpctx2op (tp, CTX)
+    local tp_id = TP.id(tp)
+    local adt = TP.check(tp,tp_id) and ENV.adts[tp_id]
+
     if TP.check(tp,'&') then
         if CTX.lval then
             return ''
@@ -52,6 +58,8 @@ local function tpctx2op (tp, CTX)
         if CTX.lval then
             if TP.check(tp,'[]') and TP.is_ext(tp,'_') then
                 return ''
+            elseif adt and adt.is_rec then
+                return ''
             else
                 return '&'
             end
@@ -63,6 +71,7 @@ end
 
 F =
 {
+-- TODO: remove?
     -- TODO: rewrite it all
     -- called by Var, Field, Dcl_var
     __var = function (me, VAL, CTX)
@@ -72,6 +81,7 @@ F =
         if var.pre=='var' or var.pre=='pool' then
             local op = tpctx2op(var.tp, CTX)
             VAL = '('..op..VAL..')'
+--DBG('>>', me.ln[2], CTX.lval, CTX.rval, TP.tostr(me.tp), op, VAL)
 
 --[[
         elseif var.pre == 'pool' then
@@ -122,8 +132,11 @@ F =
         local var = me.var
         local VAL
 
+        local tp_id = TP.id(var.tp)
+        local adt = ENV.adts[tp_id]
+
         -- TODO: move to __var
-        if CTX.adt_pool then
+        if adt and adt.is_rec and CTX.adt_pool then
             VAL = CUR(me, '_'..var.id_)
         elseif var.isTmp then
             VAL = '__ceu_'..var.id..'_'..var.n
@@ -134,6 +147,21 @@ F =
         local field = AST.par(me, 'Field')
         if not (field and field[3]==me) then
             VAL = F.__var(me, VAL, CTX)
+        end
+
+        if adt and adt.is_rec then
+            if CTX.adt_pool then
+                VAL = '((tceu_pool_*)'..VAL..')'
+            elseif CTX.adt_root then
+                local cast = CTX.no_cast and '' or '(CEU_'..TP.id(var.tp)..'*)'
+                if CTX.lval then
+                    VAL = '('..cast..'((tceu_adt_root*)'..VAL..')->root)'
+                else
+                    VAL = '('..cast..'((tceu_adt_root*)&'..VAL..')->root)'
+                end
+            else
+                --assert(CTX.adt_all, 'bug found')
+            end
         end
 
         return VAL
@@ -178,6 +206,7 @@ error'oi'
         ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
     ]
         )
+#line ]]..me.org.ln[2]..' "'..me.org.ln[1]..[["
 )]]
                 -- RVAL
                 if TP.check(me.var.tp,'[]') and TP.is_ext(me.var.tp,'_') then
@@ -207,7 +236,7 @@ error'oi'
             end
 
             if TP.check(me.var.tp,'?') then
-                VAL = F.__var(me, VAL, CTX)
+                --VAL = F.__var(me, VAL, CTX)
             end
         else
             if me.c then
@@ -357,31 +386,39 @@ error'oi'
 
     ['Op1_*'] = function (me, CTX)
         local op, e1 = unpack(me)
-        local tp_id = TP.id(me.tp)
-        return '('..ceu2c(op)..V(e1,CTX)..')'
---[[
-        if ENV.clss[tp_id] and TP.check(e1.tp,tp_id,'&&','-&') then
-            return V(e1,CTX) -- class accesses should remain normalized to references
-        elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
-            return V(e1,CTX) -- adt pool accesses should remain normalized to references
-        else
-            return '('..ceu2c(op)..V(e1,CTX)..')'
+
+-- TODO: hacky
+        local var = e1.var
+        if var then
+            local tp_id = TP.id(var.tp)
+            local adt = ENV.adts[tp_id]
+            if adt and adt.is_rec then
+                if TP.check(e1.tp,tp_id,'-[]','-&','&&') then
+                    -- pool List[]&& lll;
+                    -- lll:*
+                    op = ''
+                end
+            end
         end
-]]
+
+        return '('..ceu2c(op)..V(e1,CTX)..')'
     end,
     ['Op1_&'] = function (me, CTX)
         local op, e1 = unpack(me)
-        local ret = V(e1, 'lval')
+        local ret = V(e1, 'lval',CTX.adt_root,CTX.adt_all,CTX.adt_pool)
         if e1.var and e1.var.pre=='pool' then
-            ret = '((tceu_pool_*)'..ret..')'
+            if ENV.clss[TP.id(e1.var.tp)] then
+                ret = '((tceu_pool_*)'..ret..')'
+            else
+                ret = '((tceu_adt_root*)'..ret..')'
+            end
         end
         return ret
     end,
     ['Op1_&&'] = function (me, CTX)
         assert(CTX.rval, 'bug found')
         local op, e1 = unpack(me)
-        local tp_id = TP.id(e1.tp)
-        return V(e1,'lval')
+        return V(e1,'lval',CTX.adt_root,CTX.adt_all,CTX.adt_pool)
     end,
     ['Op1_?'] = function (me, CTX)
         local op, e1 = unpack(me)
@@ -414,6 +451,7 @@ error'oi'
         if me.__env_tag then
             local op_fld = '.'
             local op_ptr = '&'
+-- TODO: REMOVE both above
             local tag
             -- [union.TAG].field is 'void'
             if TP.tostr(e1.tp) ~= 'void' then
@@ -426,23 +464,17 @@ error'oi'
             end
 
             if me.__env_tag == 'test' then
-                VAL  = '('..V(e1)..op_fld..'tag == '..tag..')'
+                VAL  = '('..V(e1,'lval','adt_root')..'->tag == '..tag..')'
             elseif me.__env_tag == 'assert' then
-                VAL  = '('..tag..'_assert(_ceu_app, '..op_ptr..V(e1)..', __FILE__, __LINE__)->'..id..')'
-                --VAL  = '('..tag..'_assert('..V(e1)..')'..ceu2c(op)..id..')'
+                VAL  = '('..tag..'_assert(_ceu_app, '..V(e1,'lval','adt_root')..', __FILE__, __LINE__)->'..id..')'
             elseif me.__env_tag == 'field' then
-                if TP.check(e1.union_tag_blk.vars[id].tp,'&') then
-                    VAL  = '('..'*('..V(e1)..')'..op_fld..id..')'
-                else
-                    VAL  = '('..V(e1)..op_fld..id..')'
-                end
+                VAL  = '('..V(e1,'rval','adt_root')..op_fld..id..')'
             end
         else
             VAL  = '('..V(e1,'rval')..'.'..id..')'
         end
-        if CTX.lval then
-            VAL = '(&'..VAL..')'
-        end
+        local op = tpctx2op(me.tp,CTX)
+        VAL = '('..op..VAL..')'
         return VAL
     end,
 

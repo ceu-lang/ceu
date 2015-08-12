@@ -10,6 +10,339 @@ end
 
 --[===[
 
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var Tree left;
+    end
+end
+var Tree&& n;
+if false then
+    await *n;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var Tree left;
+    end
+end
+class Body with
+    var Tree&& n;
+do
+    if false then
+        await *(this.n);
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree  left;
+        var Tree  right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Body with
+    pool  Body[]& bodies;
+    var   Tree&&   n;
+    var   int&    sum;
+    event int     ok;
+do
+    watching *n do
+        var int i = this.sum;
+        if n:NODE then
+            var Body&&? left =
+                spawn Body in this.bodies with
+                    this.bodies = &bodies;
+                    this.n      = &&n:NODE.left;
+                    this.sum    = &sum;
+                end;
+            if left? then
+                watching *left! do
+                    await left!:ok;
+                end
+            end
+
+            this.sum = this.sum + i + n:NODE.v;
+
+            var Body&&? right =
+                spawn Body in this.bodies with
+                    this.bodies = &bodies;
+                    this.n      = &&n:NODE.right;
+                    this.sum    = &sum;
+                end;
+            if right? then
+                watching *right! do
+                    await right!:ok;
+                end
+            end
+
+            //do/spawn Body in this.bodies with
+                //this.n = n:NODE.left;
+            //end;
+        end
+    end
+    await 1s;
+    emit this.ok => 1;
+end
+
+var int sum = 0;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = &bodies;
+    this.n      = tree;
+    this.sum    = &sum;
+end;
+
+escape sum;
+
+/*
+var int sum = 0;
+traverse n in tree do
+    var int i = sum;
+    if n:NODE then
+        traverse n:NODE.left;
+        sum = i + n:NODE.v;
+        traverse n:NODE.right;
+    end
+end
+escape sum;
+*/
+]],
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>10s'] = 9 },
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+
+pool List[]& lll = &list;
+
+escape lll.CONS.head;
+]],
+    run = 10,
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+
+pool List[]&& lll = &&list;
+
+escape lll:CONS.head;
+]],
+    run = 10,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+var List&& l = list;
+
+escape 1;
+]],
+    run = 1,
+    --env = 'line 15 : invalid operand to unary "&&"',
+    --env = 'line 15 : data must be a pointer',
+}
+Test { [[
+interface IGUI_Component with
+    var _void&? nat;
+end
+
+class EnterLeave with
+    var IGUI_Component& gui;
+do
+    var _void&& g = &&(gui.nat!);
+end
+escape 1;
+]],
+    run = 1,
+}
+-- 47370
+Test { [[
+var int? i = 1;
+escape i!;
+]],
+    run = 1,
+}
+-- 46363
+Test { [[
+data Ball with
+    var int x;
+end
+
+data Leaf with
+    tag NOTHING;
+or
+    tag TWEEN with
+        var Ball& ball;
+    end
+end
+
+class LeafHandler with
+    var Leaf& leaf;
+do
+    var Ball& ball = &leaf.TWEEN.ball;
+    escape ball.x;
+end
+
+var Ball ball = Ball(10);
+var Leaf leaf = Leaf.TWEEN(&ball);
+
+var int x = do LeafHandler with
+                this.leaf = &leaf;
+            end;
+
+escape x;
+]],
+    run = 10,
+}
+-- 46241
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D& d;
+    end
+end
+
+var D d = D(10);
+var E e = E.X(&d);
+
+escape e.X.d.x;
+]],
+    run = 10,
+}
+Test { [[
+data Split with
+    tag HORIZONTAL;
+or
+    tag VERTICAL;
+end
+
+data Grid with
+    tag EMPTY;
+or
+    tag SPLIT with
+        var Split dir;
+        var Grid  one;
+        var Grid  two;
+    end
+end
+
+pool Grid[] g;
+g = new Grid.SPLIT(Split.HORIZONTAL(), Grid.EMPTY(), Grid.EMPTY());
+
+escape g.SPLIT.one.EMPTY + g.SPLIT.two.EMPTY + g.SPLIT.dir.HORIZONTAL;
+]],
+    run = 3,
+}
+Test { [[
+class T with
+    var float& v;
+do
+    await FOREVER;
+end
+
+data D with
+    var float v;
+end
+
+var D d;
+var T _ with
+    this.v = &d.v;   // 13
+end;
+
+escape 1;
+]],
+    run = 1,
+}
+-- 45890
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+pool List[10] lll;
+escape lll.NIL;
+]],
+    run = 1,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+pool List[10] lll;
+lll = new List.CONS(1,
+            List.CONS(2,
+                List.NIL()));
+escape lll.CONS.tail.CONS.head;
+]],
+    run = 2,
+}
 -- 21290
 Test { [[
 interface I with
@@ -200,37 +533,6 @@ escape sum;
 ]],
     wrn = 'line 6 : unbounded recursive spawn',
     run = 101,
-}
--- 15884
--- BUG: should complain of this.v=&v
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v! = 20;
-end
-do T with
-    this.v = &v;
-end;
-
-escape v!;
-]],
-    todo = 'bug',
-    run = 20,
 }
 
 Test { [[
@@ -777,6 +1079,69 @@ escape global:v;
     run = 1,
 }
 
+-- BUG: must enforce alias
+Test { [[
+data Ball with
+    var int x;
+end
+
+data Leaf with
+    tag NOTHING;
+or
+    tag TWEEN with
+        var Ball& ball;
+    end
+end
+
+class LeafHandler with
+    var Leaf& leaf;
+do
+    var Ball& ball = &leaf.TWEEN.ball;
+    escape ball.x;
+end
+
+var Ball ball = Ball(10);
+var Leaf leaf = Leaf.TWEEN(ball);   // must be alias
+
+var int x = do LeafHandler with
+                this.leaf = &leaf;
+            end;
+
+escape x;
+]],
+    todo = 'bug',
+    env = 'error',
+}
+-- BUG: should complain of this.v=&v
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v;
+end;
+
+escape v!;
+]],
+    todo = 'bug',
+    run = 20,
+}
 --do return end
 
 -------------------------------------------------------------------------------
@@ -44064,10 +44429,9 @@ escape ret;
 
 -- ASYNC/NONDET
 
---]===]
 Test { [[
 var _int[2] v;
-var _int&& p = v;
+var _int&& p = &&v[0];
 par/and do
     v[0] = 1;
 with
@@ -44086,13 +44450,13 @@ var _int[2] v;
 par/and do
     v[0] = 1;
 with
-    var _int&& p = v;
+    var _int&& p = &&v[0];
     p[1] = 2;
 end
 escape v[0] + v[1];
 ]],
     _ana = {
-        acc = 2,
+        acc = 1,
     },
     run = 3,
 }
@@ -45390,7 +45754,7 @@ var char&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 var char[10] cpy = [[ str ]];
-escape ret and (not _strcmp(str,cpy));
+escape ret and (not _strcmp(str,&&cpy));
 ]=],
     run = 1,
 }
@@ -45398,13 +45762,13 @@ escape ret and (not _strcmp(str,cpy));
 Test { [=[
 native @nohold _strcmp(), _strcpy();
 var char[10] str;
-_strcpy(str,"oioioi");
+_strcpy(&&str,"oioioi");
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 var char[10] cpy;
 var char&& ptr = cpy;
 ptr = [[ str ]];
-escape ret and (not _strcmp(str,cpy));
+escape ret and (not _strcmp(&&str,&&cpy));
 ]=],
     env = 'line 7 : types mismatch (`char&&´ <= `char[]´)',
 }
@@ -45417,7 +45781,7 @@ var bool ret = [[ str == 'oioioi' ]];
 var char[10] cpy;
 var char[10]& ptr = &cpy;
 ptr = [[ str ]];
-escape ret and (not _strcmp(str,cpy));
+escape ret and (not _strcmp(&&str,&&cpy));
 ]=],
     run = 1,
 }
@@ -45426,7 +45790,7 @@ Test { [=[
 native @nohold _strcmp();
 [[ str = '1234567890' ]]
 var char[2] cpy = [[ str ]];
-escape (_strcmp(cpy,"1") == 0);
+escape (_strcmp(&&cpy,"1") == 0);
 ]=],
     run = '3] runtime error: access out of bounds',
 }
@@ -45438,7 +45802,7 @@ var char[2] cpy;
 var char[20] cpy_;
 var char[]& ptr = &cpy;
 ptr = [[ str ]];
-escape (not _strcmp(cpy,"1234567890"));
+escape (not _strcmp(&&cpy,"1234567890"));
 ]=],
     run = '6] runtime error: access out of bounds',
 }
@@ -45471,7 +45835,7 @@ var int v_from_ceu = [[v_from_lua]];
 str_from_lua = 'string from lua'
 ]]
 var char[100] str_from_ceu = [[str_from_lua]];
-_assert(not _strcmp(str_from_ceu, "string from lua"));
+_assert(not _strcmp(&&str_from_ceu, "string from lua"));
 
 [[
 print(@v_from_ceu)
@@ -46253,7 +46617,7 @@ do
 end
 
 var Ball ball = Ball(10);
-var Leaf leaf = Leaf.TWEEN(ball);
+var Leaf leaf = Leaf.TWEEN(&ball);
 
 var int x = do LeafHandler with
                 this.leaf = &leaf;
@@ -47212,7 +47576,8 @@ var int&? i = &v1;
 i! = v2;
 escape v1;
 ]],
-    code = 'line 4 : invalid operand in assignment',
+    run = 1,
+    --code = 'line 4 : invalid operand in assignment',
 }
 
 Test { [[
@@ -47220,6 +47585,25 @@ var int v1 = 0;
 var int v2 = 1;
 var int&? i = &v1;
 i = v2;
+escape v1;
+]],
+    env = 'line 4 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+}
+Test { [[
+var int v1 = 0;
+var int v2 = 1;
+var int&? i = &v1;
+i = &v2;
+escape v1;
+]],
+    ref = 'line 4 : invalid attribution : l-value already bounded',
+}
+
+Test { [[
+var int v1 = 0;
+var int v2 = 1;
+var int&? i = &v1;
+i! = v2;
 escape v1;
 ]],
     run = 1,
@@ -47245,8 +47629,8 @@ Test { [[
 var int v1 = 10;
 var int v2 =  1;
 var int&? i = &v1;
-i = v2;
-i = 10;
+i! = v2;
+i! = 10;
 var int ret = i!;
 escape v1 + v2 + ret;
 ]],
@@ -47258,7 +47642,7 @@ class T with
     var int&? i;
 do
     var int v = 10;
-    this.i = v;
+    this.i! = v;
 end
 var T t;
 escape t.i!;
@@ -47279,7 +47663,7 @@ var T t with
 end;
 escape t.i!;
 ]],
-    code = 'line 5 : invalid operand in assignment',
+    --code = 'line 5 : invalid operand in assignment',
     --asr = ':5] runtime error: invalid tag',
     run = 10,
 }
@@ -47342,7 +47726,7 @@ var _SDL_Texture&? t_enemy_0, t_enemy_1;
 finalize
     t_enemy_1 = &_f();
 with
-    _g(&t_enemy_1!);
+    _g(&&t_enemy_1!);
 end
 escape 1;
 ]],
@@ -47563,7 +47947,7 @@ escape _fff(ui.bg_clr!).v;
 Test { [[
 var int ret;
 var int&? p = &ret;
-p = p!;
+p! = p!;
 escape 1;
 ]],
     run = 1,
@@ -47597,13 +47981,13 @@ ret = ret + i!;      // 5
 
 // first
 p = &ret;
-p = p! + 2;          // 7
+p! = p! + 2;          // 7
 _assert(ret == 7);
 
 // second
 var int v = 10;
-p = v;              // 10
-p = p! + 1;          // 11
+p! = v;              // 10
+p! = p! + 1;          // 11
 
 ret = ret + v;      // 21
 escape ret;
@@ -47722,7 +48106,7 @@ end
 class EnterLeave with
     var IGUI_Component& gui;
 do
-    var _void&& g = &&gui.nat!;
+    var _void&& g = &&(gui.nat!);
 end
 escape 1;
 ]],
@@ -48338,6 +48722,41 @@ escape sum;
     run = { ['~>10s'] = 3 },
 }
 
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var Tree left;
+    end
+end
+var Tree&& n;
+if false then
+    await *n;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var Tree left;
+    end
+end
+class Body with
+    var Tree&& n;
+do
+    if false then
+        await *(this.n);
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
 Test { [[
 data Tree with
     tag NIL;
@@ -49478,6 +49897,34 @@ end
 escape 1;
 ]],
     --fin = 'line 15 : unsafe access to pointer "p1" across `class´ (tests.lua : 14)',
+    gcc = '12:5: error: cannot convert to a pointer type',
+    wrn = true,
+    run = 1,
+}
+Test { [[
+data T with
+    tag NIL;
+or
+    tag NXT with
+        var int v;
+        var T&&  nxt;
+    end
+end
+
+pool T[] ts;
+
+var void&& p1 = (void&&)&&this;
+
+traverse t in ts do
+    _assert(p1 == (void&&)&&this);
+    if t:NXT then
+        traverse &&t:NXT.nxt;
+    end
+end
+
+escape 1;
+]],
+    --fin = 'line 15 : unsafe access to pointer "p1" across `class´ (tests.lua : 14)',
     wrn = true,
     run = 1,
 }
@@ -49494,7 +49941,7 @@ end
 pool T[] ts;
 
 native do
-    ##define PTR2REF(x) x
+    ##define PTR2REF(x) &x
 end
 var void&? p1;
 finalize
@@ -49504,7 +49951,7 @@ with
 end
 
 traverse t in ts do
-    _assert(&&p1! == (void&&)this);
+    _assert(&&p1! == (void&&)&&this);
     if t:NXT then
         traverse &&t:NXT.nxt;
     end
@@ -49528,7 +49975,7 @@ end
 pool T[1] ts;
 
 native do
-    ##define PTR2REF(x) x
+    ##define PTR2REF(x) &x
 end
 var void&? p1;
 finalize
@@ -49538,7 +49985,7 @@ with
 end
 
 traverse t in ts do
-    _assert(&&p1! == (void&&)this);
+    _assert(&&p1! == (void&&)&&this);
     if t:NXT then
         traverse &&t:NXT.nxt;
     end
@@ -49562,7 +50009,7 @@ end
 pool T[] ts;
 
 native do
-    ##define PTR2REF(x) x
+    ##define PTR2REF(x) &x
 end
 var void&? p1;
 finalize
@@ -49579,7 +50026,7 @@ class X with
 do end
 
 traverse t in ts do
-    _assert(&&p1! == (void&&)this);
+    _assert(&&p1! == (void&&)&&this);
     var int v1 = 1;
     var int v3 = 0;
     var X x with
@@ -49611,7 +50058,7 @@ end
 pool T[1] ts;
 
 native do
-    ##define PTR2REF(x) x
+    ##define PTR2REF(x) &x
 end
 var void&? p1;
 finalize
@@ -49628,7 +50075,7 @@ class X with
 do end
 
 traverse t in ts do
-    _assert(&&p1! == (void&&)this);
+    _assert(&&p1! == (void&&)&&this);
     var int v1 = 1;
     var int v3 = 0;
     var X x with
@@ -51248,6 +51695,7 @@ escape ret;
     run = { ['~>5s']=4 },
 }
 
+--]===]
 Test { [[
 data List with
     tag NIL;

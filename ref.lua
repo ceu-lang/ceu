@@ -16,9 +16,9 @@ F = {
             if me.__ref_byref then
                 assert(fr.tag == 'Op1_&', 'bug found')
             else
-                assert(fr.tag ~= 'Op1_&', 'bug found')
-                --ASR(fr.tag ~= 'Op1_&', me,
-                    --'invalid attribution : not alias binding')
+                --assert(fr.tag ~= 'Op1_&', 'bug found')
+                ASR(fr.tag ~= 'Op1_&', me,
+                    'invalid attribution : l-value already bounded')
             end
         end
     end,

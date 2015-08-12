@@ -482,7 +482,7 @@ me.tp = var.tp
             -- initialize to nil
             local ID = string.upper(TP.opt2adt(var.tp))
             LINE(me, [[
-]]..V({tag='Var',tp=var.tp,var=var},'rval')..[[.tag = CEU_]]..ID..[[_NIL;
+]]..V({tag='Var',tp=var.tp,var=var},'rval','adt_root')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
         end
     end,
@@ -550,7 +550,7 @@ me.val..' = &CEU_'..string.upper(id)..[[_BASE;
                 local set = assert( AST.par(me,'Set'), 'bug found' )
                 local _,_,_,to = unpack(set)
                 local pool = FIND_ADT_POOL(to.fst)
-                pool = '('..V(pool,'adt_root')..'->pool)'
+                pool = '('..V(pool,'lval','adt_all')..'->pool)'
 
                 LINE(me, [[
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
@@ -597,9 +597,8 @@ if (]]..me.val..[[ == NULL) {
         end
         for i, p in ipairs(params) do
             local field = blk.vars[i]
-error'TODO'
-            local amp = (TP.check(field.tp,'&') and '&') or ''
-            LINE(me, me.val..op..tag..field.id..' = '..amp..V(p)..';')
+            local amp = ''--(TP.check(field.tp,'&') and '&') or ''
+            LINE(me, me.val..op..tag..field.id..' = '..amp..V(p,'rval')..';')
         end
 
         LINE(me, '}')   -- will ignore if allocation fails
@@ -762,7 +761,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
                         -- has to execute before org initialization in Dcl_var
                         local ID = string.upper(TP.opt2adt(var.tp))
                         LINE(me, [[
-]]..V({tag='Var',tp=var.tp,var=var},'rval')..[[.tag = CEU_]]..ID..[[_NIL;
+]]..V({tag='Var',tp=var.tp,var=var},'rval','adt_root')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
                     end
 
@@ -850,21 +849,21 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..
                         error'bug found'
                     end
 
-                    local VAL_root = V({tag='Var',tp=var.tp,var=var}, 'adt_root')
-                    local VAL_pool = V({tag='Var',tp=var.tp,var=var}, 'adt_pool')
+                    local VAL_all  = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_all')
+                    local VAL_pool = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_pool')
                     if (not is_dyn) then
                         LINE(me, [[
-    ]]..VAL_root..[[->pool = ]]..VAL_pool..[[;
+    ]]..VAL_all..[[->pool = ]]..VAL_pool..[[;
 ]])
                     else
                         LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
-    ]]..VAL_root..[[->pool = NULL;
+    ]]..VAL_all..[[->pool = NULL;
 #endif
 ]])
                     end
                     LINE(me, [[
-    ]]..VAL_root..[[->root = __ceu_adt;
+    ]]..VAL_all..[[->root = __ceu_adt;
 }
 /*  FINALIZE ADT */
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt = CEU_IN__CLEAR;
@@ -1002,26 +1001,26 @@ ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0);
                 local id, op = unpack(var.adt)
                 CASE(me, var.lbl_fin_kill_free)
 
-                local VAL      = V({tag='Var',tp=var.tp,var=var}, 'lval')
-                local VAL_root = V({tag='Var',tp=var.tp,var=var}, 'adt_root')
+                local VAL_root = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_root')
+                local VAL_all  = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_all')
                 if PROPS.has_adts_watching[var.adt.id] then
                     LINE(me, [[
 #if 0
 "kill" only while in scope
-CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..VAL..[[);
+CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..VAL_root..[[);
 #endif
 ]])
                 end
                 if is_dyn then
                     LINE(me, [[
-CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..VAL..[[);
+CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..VAL_root..[[);
 ]])
                 else
 -- TODO: required???
 --[=[
-                    local pool = '('..VAL_root..'->pool)'
+                    local pool = '('..VAL_all..'->pool)'
                     LINE(me, [[
-CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL..','..pool..[[);
+CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
 ]])
 ]=]
                 end
@@ -1067,11 +1066,11 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         local to_tp_id = TP.id(to.tp)
 
         local pool = FIND_ADT_POOL(to.fst)
-        pool = '('..V(pool,'adt_root')..'->pool)'
+        pool = '('..V(pool,'lval','adt_all')..'->pool)'
 
         LINE(me, [[
 {
-    void* __ceu_old = ]]..V(to,'lval')..[[;    /* will kill/free old */
+    void* __ceu_old = ]]..V(to,'lval','adt_root')..[[;    /* will kill/free old */
 ]])
 
         -- HACK: _STK_ORG overwritten by _kill
@@ -1085,8 +1084,8 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
             -- remove "fr" from tree (set parent link to NIL)
             LINE(me, [[
     void* __ceu_new = ]]..V(fr,'lval')..[[;
-    ]]..V(fr,'lval')..[[ = &CEU_]]..string.upper(TP.id(fr.tp))..[[_BASE;
-    ]]..V(to,'lval')..[[ = __ceu_new;
+    ]]..V(fr,'lval','adt_root')..[[ = &CEU_]]..string.upper(TP.id(fr.tp))..[[_BASE;
+    ]]..V(to,'lval','adt_root','no_cast')..[[ = __ceu_new;
 ]])
         end
 
@@ -1125,7 +1124,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         CONC(me, fr)
         if set == 'adt-constr' then
             LINE(me, [[
-]]..V(to,'lval')..' = '..V(fr,'lval')..[[;
+]]..V(to,'lval','adt_root','no_cast')..' = '..V(fr,'lval')..[[;
 ]])
         end
 
@@ -1177,8 +1176,11 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
 ]])
                 else
                     local ID = string.upper(TP.opt2adt(to.tp))
-                    local fr_val = '(CEU_'..ID..'_pack('..V(fr,'rval')..'))'
-                    LINE(me, V(to,'rval')..' = '..fr_val..';')
+                    --local fr_val = '(CEU_'..ID..'_pack('..V(fr,'rval')..'))'
+                    --LINE(me, V(to,'rval')..' = '..fr_val..';')
+                    LINE(me, V(to,'rval')..'.tag = CEU_'..ID..'_SOME;')
+                    LINE(me, V(to,'rval')..'.SOME.v = '..V(fr,'rval')..';')
+
 do return end
 DBG(me.ln[2], TP.tostr(to.tp), fr.fst.tag)
 error'TODO'
@@ -1201,7 +1203,7 @@ error'TODO'
         else
             -- normal types
             local l_or_r = (is_byref and 'lval') or 'rval'
-            LINE(me, V(to,l_or_r)..' = '..V(fr,'rval')..';')
+            LINE(me, V(to,l_or_r)..' = '..V(fr,'rval','adt_root')..';')
                                             -- & makes 'lval' on this side
         end
 
@@ -1333,16 +1335,15 @@ ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "acce
             local pool = FIND_ADT_POOL(fr.fst)
             assert(to.var.pre=='pool', 'bug found')
             if TP.check(to.var.tp,'&') then
-error'TODO'
                 LINE(me, [[
-]]..V(to,'lval','adt_root')..' = '..V(fr,'adt_root')..[[;
+]]..V(to,'lval','adt_all')..' = '..V(fr,'lval','adt_all')..[[;
 ]])
             else
                 LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
-]]..V(to,'lval','adt_root')..'->pool = '..V(pool,'adt_root')..[[->pool;
+]]..V(to,'lval','adt_all')..'->pool = '..V(pool,'rval','adt_all')..[[.pool;
 #endif
-]]..V(to,'lval','adt_root')..'->root = '..V(fr)..[[;
+]]..V(to,'lval','adt_all')..'->root = '..V(fr,'rval','adt_root')..[[;
 ]])
             end
 

@@ -205,6 +205,12 @@ F = {
                 'not permitted inside an interface')
     end,
 
+    Dcl_adt = function (me)
+        if me.is_rec then
+            PROPS.has_clear = true
+            PROPS.has_adts_news = true
+        end
+    end,
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
         local tid = tp[1]
@@ -217,7 +223,6 @@ F = {
                 PROPS.has_orgs_news_pool = true         -- pool T[N] ts
             end
         elseif ENV.adts[tid] then
-            PROPS.has_adts_news = true
             if is_unbounded then
                 PROPS.has_adts_news_malloc = true       -- pool T[]  ts
             else
