@@ -89,7 +89,7 @@ function AWAIT_PAUSE (me, no)
         end
         COMM(me, 'PAUSE: '..pse.dcl.var.id)
         LINE(me, [[
-if (]]..V(pse.dcl)..[[) {
+if (]]..V(pse.dcl,'rval')..[[) {
     goto ]]..no..[[;
 }
 ]])
@@ -278,7 +278,7 @@ case CEU_IN_]]..id..[[:
     end,
     Return = function (me)
         local exp = unpack(me)
-        LINE(me, 'return '..(exp and V(exp) or '')..';')
+        LINE(me, 'return '..(exp and V(exp,'rval') or '')..';')
     end,
 
     Dcl_cls_pos = function (me)
@@ -404,7 +404,7 @@ end;
 
         -- ceu_out_org, _ceu_constr_
         local org = t.arr and '((tceu_org*) &'..t.val..'['..t.val_i..']'..')'
-                           or '((tceu_org*) '..t.val..')'
+                           or '((tceu_org*) &'..t.val..')'
         -- each org has its own trail on enclosing block
         if t.arr then
             LINE(me, [[
@@ -462,15 +462,17 @@ case ]]..me.lbls_cnt.id..[[:;
     Dcl_var = function (me)
         local _,_,_,constr = unpack(me)
         local var = me.var
+-- TODO
+me.tp = var.tp
         if var.cls then
             F._ORG(me, {
                 id     = var.id,
                 isDyn  = 0,
                 cls    = var.cls,
-                val    = V(me),
+                val    = V(me,'rval'),
                 constr = constr,
                 arr    = var.tp.arr,
-                val_i  = TP.check(var.tp,'[]') and V({tag='Var',var=var.constructor_iterator}),
+                val_i  = TP.check(var.tp,'[]') and V({tag='Var',tp=var.tp,var=var.constructor_iterator},'rval'),
                 lnks   = '&_STK_ORG->trls['..var.trl_orgs[1]..'].lnks'
             })
 
@@ -480,7 +482,7 @@ case ]]..me.lbls_cnt.id..[[:;
             -- initialize to nil
             local ID = string.upper(TP.opt2adt(var.tp))
             LINE(me, [[
-]]..V({tag='Var',var=var},'opt_raw')..[[.tag = CEU_]]..ID..[[_NIL;
+]]..V({tag='Var',tp=var.tp,var=var},'rval')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
         end
     end,
@@ -595,6 +597,7 @@ if (]]..me.val..[[ == NULL) {
         end
         for i, p in ipairs(params) do
             local field = blk.vars[i]
+error'TODO'
             local amp = (TP.check(field.tp,'&') and '&') or ''
             LINE(me, me.val..op..tag..field.id..' = '..amp..V(p)..';')
         end
@@ -606,12 +609,12 @@ if (]]..me.val..[[ == NULL) {
         local org, exp = unpack(me)
         if exp then
             LINE(me, [[
-((tceu_org*)]]..V(org)..')->ret = '..V(exp)..[[;
+((tceu_org*)]]..V(org,'lval')..')->ret = '..V(exp,'rval')..[[;
 ]])
         end
         LINE(me, [[
 {
-    tceu_org* __ceu_org = (tceu_org*)]]..V(org)..[[;
+    tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
     return ceu_out_clear(_ceu_go, ]]..me.lbl.id..[[, __ceu_org,
                              &__ceu_org->trls[0],
                              __ceu_org);
@@ -633,20 +636,20 @@ case ]]..me.lbl.id..[[:;
         if pool and (type(pool.var.tp.arr)=='table') then
             -- static
             LINE(me, [[
-    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
+    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)&]]..V(pool,'rval')..[[);
 ]])
         elseif TP.check(pool.var.tp,'&&') or TP.check(pool.var.tp,'&') then
             -- pointer don't know if is dynamic or static
             LINE(me, [[
 #if !defined(CEU_ORGS_NEWS_MALLOC)
-    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
+    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)&]]..V(pool,'rval')..[[);
 #elif !defined(CEU_ORGS_NEWS_POOL)
     ]]..ID..[[ = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
 #else
-    if (]]..V(pool)..[[->queue == NULL) {
+    if ((&]]..V(pool,'rval')..[[)->queue == NULL) {
         ]]..ID..[[ = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
     } else {
-        ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)]]..V(pool)..[[);
+        ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)&]]..V(pool,'rval')..[[);
     }
 #endif
 ]])
@@ -659,7 +662,7 @@ case ]]..me.lbl.id..[[:;
 
         if set then
             local set_to = set[4]
-            LINE(me, V(set_to)..' = '..
+            LINE(me, V(set_to,'rval')..' = '..
                 '('..string.upper(TP.toc(set_to.tp))..'_pack('..
                     '((CEU_'..id..'*)__ceu_new_'..me.n..')));')
         end
@@ -671,23 +674,23 @@ case ]]..me.lbl.id..[[:;
         if pool and (type(pool.var.tp.arr)=='table') or
            PROPS.has_orgs_news_pool or OPTS.os then
             LINE(me, [[
-        ]]..ID..[[->pool = (tceu_pool_*)]]..V(pool)..[[;
+        ]]..ID..[[->pool = (tceu_pool_*)&]]..V(pool,'rval')..[[;
 ]])
         end
 
         local org = '_STK_ORG'
         if pool and pool.org then
-            org = '((tceu_org*)'..V(pool.org)..')'
+            org = '((tceu_org*)&'..V(pool.org,'rval')..')'
         end
 
         F._ORG(me, {
             id     = 'dyn',
             isDyn  = 1,
             cls    = me.cls,
-            val    = ID,
+            val    = '(*((CEU_'..id..'*)'..ID..'))',
             constr = constr,
             arr    = false,
-            lnks   = '(((tceu_pool_*)'..V(pool)..')->lnks)',
+            lnks   = '((((tceu_pool_*)&'..V(pool,'rval')..'))->lnks)',
         })
         LINE(me, [[
     }
@@ -697,11 +700,10 @@ case ]]..me.lbl.id..[[:;
             local set_to = set[4]
             LINE(me, [[
 /* HACK_9: see above */
-if (]]..V(set_to)..[[.tag != ]]..string.upper(TP.toc(set_to.tp))..[[_NIL) {
+if (]]..V(set_to,'rval')..[[.tag != ]]..string.upper(TP.toc(set_to.tp))..[[_NIL) {
     tceu_stk* stk = stack_nxt(_ceu_go);
     if (stk->evt == CEU_IN__NONE) {
-        ]]..V(set_to)..' = '..              
-            string.upper(TP.toc(set_to.tp))..[[_pack(NULL);
+        ]]..V(set_to,'rval')..' = '..string.upper(TP.toc(set_to.tp))..[[_pack(NULL);
     }
 }
 ]])
@@ -760,7 +762,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
                         -- has to execute before org initialization in Dcl_var
                         local ID = string.upper(TP.opt2adt(var.tp))
                         LINE(me, [[
-]]..V({tag='Var',var=var},'opt_raw')..[[.tag = CEU_]]..ID..[[_NIL;
+]]..V({tag='Var',tp=var.tp,var=var},'rval')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
                     end
 
@@ -848,8 +850,8 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..
                         error'bug found'
                     end
 
-                    local VAL_root = V({tag='Var',var=var}, 'adt_root')
-                    local VAL_pool = V({tag='Var',var=var}, 'adt_pool')
+                    local VAL_root = V({tag='Var',tp=var.tp,var=var}, 'adt_root')
+                    local VAL_pool = V({tag='Var',tp=var.tp,var=var}, 'adt_pool')
                     if (not is_dyn) then
                         LINE(me, [[
     ]]..VAL_root..[[->pool = ]]..VAL_pool..[[;
@@ -942,11 +944,11 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 if (0) {
 ]])
                 CASE(me, var.lbl_optorg_reset)
-                local val = V({tag='Var',var=var})
                 local tp_opt = TP.pop(var.tp,'[]')
                 local ID = string.upper(TP.opt2adt(tp_opt))
 
                 if TP.check(var.tp,'[]') then
+                    local val = V({tag='Var',tp=var.tp,var=var}, 'lval')
                     LINE(me, [[
     int __ceu_i;
     for (__ceu_i=0; __ceu_i<ceu_vector_getlen(]]..val..[[); __ceu_i++) {
@@ -966,6 +968,7 @@ if (0) {
 ]])
 
                 else
+                    local val = V({tag='Var',tp=var.tp,var=var}, 'rval')
                     LINE(me, [[
     if (]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
         ((tceu_org*)(]]..val..[[.SOME.v))->id==((tceu_org_kill*)_STK->evt_buf)->org)
@@ -990,7 +993,7 @@ _STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id.
             if is_arr and is_dyn then
                 CASE(me, var.lbl_fin_free)
                 LINE(me, [[
-ceu_vector_setlen(]]..V({tag='Var',var=var})..[[, 0);
+ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0);
 ]])
                 HALT(me)
 
@@ -999,8 +1002,8 @@ ceu_vector_setlen(]]..V({tag='Var',var=var})..[[, 0);
                 local id, op = unpack(var.adt)
                 CASE(me, var.lbl_fin_kill_free)
 
-                local VAL      = V({tag='Var',var=var})
-                local VAL_root = V({tag='Var',var=var}, 'adt_root')
+                local VAL      = V({tag='Var',tp=var.tp,var=var}, 'lval')
+                local VAL_root = V({tag='Var',tp=var.tp,var=var}, 'adt_root')
                 if PROPS.has_adts_watching[var.adt.id] then
                     LINE(me, [[
 #if 0
@@ -1068,7 +1071,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
 
         LINE(me, [[
 {
-    void* __ceu_old = ]]..V(to)..[[;    /* will kill/free old */
+    void* __ceu_old = ]]..V(to,'lval')..[[;    /* will kill/free old */
 ]])
 
         -- HACK: _STK_ORG overwritten by _kill
@@ -1081,8 +1084,8 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         if set ~= 'adt-constr' then
             -- remove "fr" from tree (set parent link to NIL)
             LINE(me, [[
-    void* __ceu_new = ]]..V(fr)..[[;
-    ]]..V(fr)..[[ = &CEU_]]..string.upper(TP.id(fr.tp))..[[_BASE;
+    void* __ceu_new = ]]..V(fr,'lval')..[[;
+    ]]..V(fr,'lval')..[[ = &CEU_]]..string.upper(TP.id(fr.tp))..[[_BASE;
     ]]..V(to,'lval')..[[ = __ceu_new;
 ]])
         end
@@ -1122,7 +1125,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         CONC(me, fr)
         if set == 'adt-constr' then
             LINE(me, [[
-]]..V(to,'lval')..' = '..V(fr)..[[;
+]]..V(to,'lval')..' = '..V(fr,'lval')..[[;
 ]])
         end
 
@@ -1147,58 +1150,72 @@ case ]]..SET.lbl_cnt.id..[[:;
     end,
 
     __set = function (me, fr, to)
-        local byref = (me.__ref_byref and 'byref') or ''
+        local is_byref = (fr.tag=='Op1_&')
 
         -- optional types
         if TP.check(to.tp,'?') then
-            local ID = string.upper(TP.opt2adt(to.tp))
             if TP.check(fr.tp,'?') then
-                LINE(me, V(to)..' = '..V(fr)..';')
-            elseif (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp) then
-                -- var _t&? = _f(...);
-                -- var T*? = spawn <...>;
-                LINE(me, V(to,byref)..' = '..V(fr)..';')
+                LINE(me, V(to,'rval')..' = '..V(fr,'rval')..';')
             else
-                local tag = 'SOME'
-                if me.__ref_byref then
-                    LINE(me, '('..V(to)..'.SOME.v) = '..V(fr,byref)..';')
-                    LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
-                else
-local to_tp_id = TP.id(to.tp)
-if ENV.clss[to_tp_id] and TP.check(to.tp,to_tp_id,'&&','?','-[]') then
-    LINE(me, [[
-if (((tceu_org*)]]..V(fr)..[[)->isAlive) {
-    ]]..V(to)..' = '..string.upper(TP.toc(to.tp))..[[_pack(]]..V(fr)..[[);
+                local to_tp_id = TP.id(to.tp)
+                if TP.check(to.tp,'&','?') and fr.fst.tag=='Op2_call' then
+                    -- var _t&? = _f(...);
+                    -- var T*? = spawn <...>;
+                    local ID = string.upper(TP.opt2adt(fr.fst.__fin_opt_tp))
+                    local fr_val = '(CEU_'..ID..'_pack('..V(fr,'rval')..'))'
+                    LINE(me, V(to,'rval')..' = '..fr_val..';')
+                elseif ENV.clss[to_tp_id] and 
+                       TP.check(to.tp,to_tp_id,'&&','?','-[]')
+                then
+                    -- var T&&? p = &&t;
+                    LINE(me, [[
+if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
+]]..V(to,'rval')..' = '..string.upper(TP.toc(to.tp))..[[_pack(]]..V(fr,'rval')..[[);
 } else {
-    ]]..V(to)..' = '..string.upper(TP.toc(to.tp))..[[_pack(NULL);
+]]..V(to,'rval')..' = '..string.upper(TP.toc(to.tp))..[[_pack(NULL);
 }
 ]])
-else
-                    local var = to.var or to
-                    local op = (TP.check(var.tp,'&','?') and '*') or ''
-                    LINE(me, op..'('..V(to,byref)..'.SOME.v) = '..V(fr,byref)..';')
-                    LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
-end
+                else
+                    local ID = string.upper(TP.opt2adt(to.tp))
+                    local fr_val = '(CEU_'..ID..'_pack('..V(fr,'rval')..'))'
+                    LINE(me, V(to,'rval')..' = '..fr_val..';')
+do return end
+DBG(me.ln[2], TP.tostr(to.tp), fr.fst.tag)
+error'TODO'
+                    local tag = 'SOME'
+                    if me.__ref_byref then
+                        LINE(me, '('..V(to)..'.SOME.v) = '..V(fr,byref)..';')
+                        LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
+                    else
+                        if ptr2org then
+                        else
+                            error'TODO'
+                            local var = to.var or to
+                            local op = (TP.check(var.tp,'&','?') and '*') or ''
+                            LINE(me, op..'('..V(to,byref)..'.SOME.v) = '..V(fr,byref)..';')
+                            LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
+                        end
+                    end
                 end
             end
-
-        -- normal types
         else
-            LINE(me, V(to,'lval',byref)..' = '..V(fr,byref)..';')
+            -- normal types
+            local l_or_r = (is_byref and 'lval') or 'rval'
+            LINE(me, V(to,l_or_r)..' = '..V(fr,'rval')..';')
+                                            -- & makes 'lval' on this side
         end
 
         if to.tag=='Var' and to.var.id=='_ret' then
-            assert(byref == '', 'bug found')
             if CLS().id == 'Main' then
                 LINE(me, [[
 #ifdef CEU_RET
-    _ceu_app->ret = ]]..V(to)..[[;
+    _ceu_app->ret = ]]..V(to,'rval')..[[;
 #endif
 ]])
             else
                 LINE(me, [[
 #ifdef CEU_ORGS_WATCHING
-    _STK_ORG->ret = ]]..V(to)..[[;
+    _STK_ORG->ret = ]]..V(to,'rval')..[[;
 #endif
 ]])
             end
@@ -1213,26 +1230,26 @@ end
             CONC(me, fr)                -- TODO: remove?
 
             -- vec[x] = ...
-            local _, arr, _ = unpack(to)
+            local _, vec, _ = unpack(to)
             if to.tag=='Op2_idx' and
-               TP.check(arr.tp,'[]','-&') and (not TP.is_ext(arr.tp,'_','@'))
+               TP.check(vec.tp,'[]','-&') and (not TP.is_ext(vec.tp,'_','@'))
             then
                 AST.asr(to, 'Op2_idx')
                 local _, vec, idx = unpack(to)
                 LINE(me, [[
 {
-    ]]..TP.toc(fr.tp)..' __ceu_p = '..V(fr)..[[;
+    ]]..TP.toc(fr.tp)..' __ceu_p = '..V(fr,'rval')..[[;
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-    ceu_out_assert( ceu_vector_seti(]]..V(vec)..','..V(idx)..[[, (byte*)&__ceu_p), "access out of bounds");
+    ceu_out_assert( ceu_vector_seti(]]..V(vec,'lval')..','..V(idx,'rval')..[[, (byte*)&__ceu_p), "access out of bounds");
 }
 ]])
 
             -- $vec = ...
             elseif to.tag == 'Op1_$' then
                 -- $vec = ...
-                local _,arr = unpack(to)
+                local _,vec = unpack(to)
                 LINE(me, [[
-ceu_out_assert( ceu_vector_setlen(]]..V(arr)..','..V(fr)..[[), "invalid attribution : vector size can only shrink" );
+ceu_out_assert( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..[[), "invalid attribution : vector size can only shrink" );
 ]])
 
             -- all other
@@ -1250,17 +1267,17 @@ ceu_out_assert( ceu_vector_setlen(]]..V(arr)..','..V(fr)..[[), "invalid attribut
                             if first then
                                 first = false
                                 LINE(me, [[
-ceu_vector_setlen(]]..V(to)..[[, 0);
+ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
 ]])
                             end
                             LINE(me, [[
 {
-]]..TP.toc(TP.pop(TP.pop(to.tp,'&'),'[]'))..' __ceu_p; /* = '..V(ee)..[[;*/
+]]..TP.toc(TP.pop(TP.pop(to.tp,'&'),'[]'))..[[ __ceu_p;
 ]])
                             F.__set(me, ee, {tag='RawExp', tp=TP.pop(to.tp,'[]'), '__ceu_p'})
                             LINE(me, [[
 #line ]]..fr.ln[2]..' "'..fr.ln[1]..[["
-ceu_out_assert( ceu_vector_push(]]..V(to)..[[, (byte*)&__ceu_p), "access out of bounds");
+ceu_out_assert( ceu_vector_push(]]..V(to,'lval')..[[, (byte*)&__ceu_p), "access out of bounds");
 }
 ]])
                         end
@@ -1269,24 +1286,24 @@ ceu_out_assert( ceu_vector_push(]]..V(to)..[[, (byte*)&__ceu_p), "access out of 
                     if e.tag == 'STRING' then
                         if first then
                             LINE(me, [[
-ceu_vector_setlen(]]..V(to)..[[, 0);
+ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
 ]])
                         end
                         LINE(me, [[
 #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-ceu_out_assert( ceu_vector_concat_buffer(]]..V(to)..','..V(e)..[[, strlen(]]..V(e)..[[)), "access out of bounds" );
+ceu_out_assert( ceu_vector_concat_buffer(]]..V(to,'lval')..','..V(e,'lval')..[[, strlen(]]..V(e,'lval')..[[)), "access out of bounds" );
 ]])
                     else
                         assert(TP.check(e.tp,'[]','-&'), 'bug found')
                         if first then
                             LINE(me, [[
-if (]]..V(to)..' != '..V(e)..[[) {
-    ceu_vector_setlen(]]..V(to)..[[, 0);
+if (]]..V(to,'lval')..' != '..V(e,'lval')..[[) {
+    ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
 ]])
                         end
                         LINE(me, [[
 #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-ceu_out_assert( ceu_vector_concat(]]..V(to)..','..V(e)..[[), "access out of bounds" );
+ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "access out of bounds" );
 ]])
                         if first then
                             LINE(me, [[
@@ -1316,6 +1333,7 @@ ceu_out_assert( ceu_vector_concat(]]..V(to)..','..V(e)..[[), "access out of boun
             local pool = FIND_ADT_POOL(fr.fst)
             assert(to.var.pre=='pool', 'bug found')
             if TP.check(to.var.tp,'&') then
+error'TODO'
                 LINE(me, [[
 ]]..V(to,'lval','adt_root')..' = '..V(fr,'adt_root')..[[;
 ]])
@@ -1446,41 +1464,13 @@ _STK->trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
         -- TODO: If cond assert(c==ptr or int)
 
         LINE(me, [[
-if (]]..V(c)..[[) {
+if (]]..V(c,'rval')..[[) {
 ]]    ..t.code..[[
 } else {
 ]]    ..f.code..[[
 }
 ]])
     end,
-
---[=[
-    Recurse = function (me)
-        local exp = unpack(me)
-        local loop = AST.par(me, 'Loop')
-        local _,_,to,_ = unpack(loop)
-
-        -- vec[top].lbl  = <lbl-continuation>
-        -- vec[top].data = <cur-to>
-        -- top++;
-        local nxt = CUR(me,'__recurse_nxt_'..loop.n)
-        local vec = CUR(me,'__recurse_vec_'..loop.n)..'['..nxt..']'
-        LINE(me, [[
-ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
-    "loop overflow", __FILE__, __LINE__);
-]]..vec..'.lbl  = '..me.lbl.id..[[;
-]]..vec..'.data = '..V(to)..[[;
-]]..nxt..[[++;
-]])
-
-        -- <cur-to> = <exp>
-        -- next;
-        LINE(me, V(to)..' = '..V(exp)..';')
-        GOTO(me, loop.lbl_rec.id)
-
-        CASE(me, me.lbl)
-    end,
-]=]
 
     Loop_pos = function (me)
         local max,iter,to,body = unpack(me)
@@ -1490,8 +1480,8 @@ ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
         local cnd = ''
 
         if me.i_var then
-            ini[#ini+1] = V(me.i_var)..' = 0'
-            nxt[#nxt+1] = V(me.i_var)..'++'
+            ini[#ini+1] = V(me.i_var,'rval')..' = 0'
+            nxt[#nxt+1] = V(me.i_var,'rval')..'++'
         end
 
         if iter then
@@ -1499,17 +1489,17 @@ ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
                 -- nothing to do
 
             elseif me.iter_tp == 'number' then
-                cnd = V(me.i_var)..' < '..V(iter)
+                cnd = V(me.i_var,'rval')..' < '..V(iter,'rval')
 
             elseif me.iter_tp == 'org' then
                 -- INI
                 local var = iter.lst.var
 
-                local org_cur = '((tceu_org*)'..V(to)..')'
-                local org_nxt = '('..V(me.var_nxt)..'.org)'
+                local org_cur = '((tceu_org*)'..V(to,'rval')..')'
+                local org_nxt = '('..V(me.var_nxt,'rval')..'.org)'
 
-                local lnks = '(((tceu_pool_*)'..V(iter)..')->lnks)'
-                ini[#ini+1] = V(to)..[[ = (]]..TP.toc(iter.tp)..[[)(
+                local lnks = '(((tceu_pool_*)'..V(iter,'lval')..')->lnks)'
+                ini[#ini+1] = V(to,'rval')..[[ = (]]..TP.toc(iter.tp)..[[)(
     ((*]]..lnks..[[)[0].nxt->n == 0) ?
         NULL :    /* marks end of linked list */
         (*]]..lnks..[[)[0].nxt
@@ -1524,23 +1514,14 @@ ceu_out_assert_ex(]]..nxt..' < '..loop.iter_max..[[,
                     --  "cur" may terminate and be freed
 
                 -- CND
-                cnd = '('..V(to)..' != NULL)'
+                cnd = '('..V(to,'rval')..' != NULL)'
 
                 -- NXT
-                nxt[#nxt+1] = V(to)..' = ('..TP.toc(to.tp)..')'..org_nxt
+                nxt[#nxt+1] = V(to,'rval')..' = ('..TP.toc(to.tp)..')'..org_nxt
                 nxt[#nxt+1] = org_nxt..' = '..
                                 '('..org_cur..'==NULL || '..org_cur..'->nxt->n==0) ?  '..
                                     'NULL : '..
                                     org_cur..'->nxt'
-
-            elseif me.iter_tp == 'data' then
-error'bug found'
-                local nxt = CUR(me,'__recurse_nxt_'..me.n)
-                local vec = CUR(me,'__recurse_vec_'..me.n)..'['..nxt..']'
-                ini[#ini+1] = V(to)..' = '..V(iter)     -- initial pointer
-                ini[#ini+1] = nxt..' = 0'               -- reset stack
-                ini[#ini+1] = vec..'.lbl = 0'           -- initial dummy element
-                ini[#ini+1] = nxt..'++'                 -- not empty
 
             else
                 error'not implemented'
@@ -1557,39 +1538,17 @@ error'bug found'
 
         if me.iter_tp == 'org' then
             LINE(me, [[
-ceu_pool_iterator_enter(&]]..V(me.var_nxt)..[[);
+ceu_pool_iterator_enter(]]..V(me.var_nxt,'lval')..[[);
 ]])
         end
 
         LINE(me, [[
 for (]]..ini..';'..cnd..';'..nxt..[[) {
 ]])
-        if me.iter_tp == 'data' then
-error'not implemented'
-            local nxt = CUR(me,'__recurse_nxt_'..me.n)
-            local vec = CUR(me,'__recurse_vec_'..me.n)..'['..nxt..']'
-            LINE(me, [[
-if (]]..nxt..[[ > 0) {
-    ]]..nxt..[[--;
-    if (]]..vec..[[.lbl == 0) {
-        /* initial dummy element, do nothing */
-    } else {
-        ]]..V(to)..[[ = ]]..vec..[[.data;
-]])
-        GOTO(me, vec..'.lbl')
-            LINE(me, [[
-    }
-} else {
-    break;
-}
-]])
-            CASE(me, me.lbl_rec)
-        end
 
         if max then
             LINE(me, [[
-    ceu_out_assert_ex(]]..V(me.i_var)..' < '..V(max)..[[,
-        "loop overflow", __FILE__, __LINE__);
+    ceu_out_assert_ex(]]..V(me.i_var,'rval')..' < '..V(max,'rval')..[[, "loop overflow", __FILE__, __LINE__);
 ]])
         end
 
@@ -1618,7 +1577,7 @@ if (]]..nxt..[[ > 0) {
 
         if me.iter_tp == 'org' then
             LINE(me, [[
-ceu_pool_iterator_leave(&]]..V(me.var_nxt)..[[);
+ceu_pool_iterator_leave(]]..V(me.var_nxt,'lval')..[[);
 ]])
         end
 
@@ -1636,7 +1595,7 @@ ceu_pool_iterator_leave(&]]..V(me.var_nxt)..[[);
 
     CallStmt = function (me)
         local call = unpack(me)
-        LINE(me, V(call)..';')
+        LINE(me, V(call,'rval')..';')
     end,
 
     __emit_ps = function (me)
@@ -1645,7 +1604,7 @@ ceu_pool_iterator_leave(&]]..V(me.var_nxt)..[[);
         if ps and #ps>0 then
             local PS = {}
             for _, p in ipairs(ps) do
-                PS[#PS+1] = V(p)
+                PS[#PS+1] = V(p,'rval')
             end
             LINE(me, [[
 ]]..TP.toc((e.var or e).evt.ins)..' '..val..[[;
@@ -1744,7 +1703,7 @@ ceu_pool_iterator_leave(&]]..V(me.var_nxt)..[[);
             local set = AST.par(me, 'Set')
             if set then
                 local set_to = set[4]
-                LINE(me, V(set_to)..' = '..VAL..';')
+                LINE(me, V(set_to,'rval')..' = '..VAL..';')
             else
                 LINE(me, VAL..';')
             end
@@ -1766,7 +1725,7 @@ _STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
             LINE(me, [[
 #ifdef CEU_WCLOCKS
 {
-    u32 __ceu_tmp_]]..me.n..' = '..V(ps[1])..[[;
+    u32 __ceu_tmp_]]..me.n..' = '..V(ps[1],'rval')..[[;
     ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[);
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
@@ -1821,10 +1780,10 @@ _STK->trl->stk = stack_curi(_ceu_go);
 /* trigger the event */
 {
     tceu_stk stk;
-             stk.evt  = ]]..V(int,'ifc_idx')..[[;
+             stk.evt  = ]]..V(int,'evt')..[[;
 #ifdef CEU_ORGS
 #line ]]..int.ln[2]..' "'..int.ln[1]..[["
-             stk.evto = (tceu_org*) ]]..((int.org and V(int.org)) or '_STK_ORG')..[[;
+             stk.evto = (tceu_org*) ]]..((int.org and V(int.org,'lval')) or '_STK_ORG')..[[;
 #endif
 #ifdef CEU_ORGS
              stk.org  = _ceu_app->data;   /* TODO(speed): check if is_ifc */
@@ -1864,7 +1823,7 @@ case ]]..me.lbl_cnt.id..[[:;
 
     __AwaitInt = function (me)
         local e = unpack(me)
-        local org = (e.org and V(e.org)) or '_STK_ORG'
+        local org = (e.org and V(e.org,'lval')) or '_STK_ORG'
         local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
@@ -1883,7 +1842,7 @@ case ]]..me.lbl_cnt.id..[[:;
 
         LINE(me, [[
 ]]..no..[[:
-    _STK->trl->evt   = ]]..V(e,'ifc_idx')..[[;
+    _STK->trl->evt   = ]]..V(e,'evt')..[[;
     _STK->trl->lbl   = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
@@ -1914,7 +1873,7 @@ case ]]..me.lbl.id..[[:;
 
         if dt then
             LINE(me, [[
-ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt)..[[, &]]..val..[[, NULL);
+ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NULL);
 ]])
         end
 
@@ -1982,7 +1941,7 @@ case ]]..me.lbl.id..[[:;
                 else
                     val = '((('..TP.toc(me.tp)..')_STK->evt_buf)->_'..i..')'
                 end
-                LINE(me, V(v)..' = '..val..';')
+                LINE(me, V(v,'rval')..' = '..val..';')
             end
         end
     end,
@@ -2013,7 +1972,7 @@ case ]]..me.lbl.id..[[:;
             for i=1, #vars, 2 do
                 local isRef, n = vars[i], vars[i+1]
                 if not isRef then
-                    LINE(me, V(n.new)..' = '..V(n.var)..';')
+                    LINE(me, V(n.new,'rval')..' = '..V(n.var,'rval')..';')
                         -- copy async parameters
                 end
             end
@@ -2072,7 +2031,7 @@ case ]]..me.lbl.id..[[:;
         local set = AST.par(me, 'Set')
         if set then
             local set_to = set[4]
-            LINE(me, V(set_to)..' = (*('..me.thread_st..') > 0);')
+            LINE(me, V(set_to,'rval')..' = (*('..me.thread_st..') > 0);')
         end
 
         -- thread function
@@ -2188,19 +2147,19 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
             ASR(TP.id(p.tp)~='@', me, 'unknown type')
             if TP.isNumeric(p.tp) then
                 LINE(me, [[
-        ceu_lua_pushnumber(_ceu_app->lua,]]..V(p)..[[);
+        ceu_lua_pushnumber(_ceu_app->lua,]]..V(p,'rval')..[[);
 ]])
             elseif TP.check(p.tp,'char','[]','-&') then
                 LINE(me, [[
-        ceu_lua_pushstring(_ceu_app->lua,(char*)]]..V(p)..[[->mem);
+        ceu_lua_pushstring(_ceu_app->lua,(char*)]]..V(p,'lval')..[[->mem);
 ]])
             elseif TP.check(p.tp,'char','&&','-&') then
                 LINE(me, [[
-        ceu_lua_pushstring(_ceu_app->lua,]]..V(p)..[[);
+        ceu_lua_pushstring(_ceu_app->lua,]]..V(p,'rval')..[[);
 ]])
             elseif TP.check(p.tp,'&&','-&') then
                 LINE(me, [[
-        ceu_lua_pushlightuserdata(_ceu_app->lua,]]..V(p)..[[);
+        ceu_lua_pushlightuserdata(_ceu_app->lua,]]..V(p,'rval')..[[);
 ]])
             else
                 error 'not implemented'
@@ -2228,7 +2187,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                     err = 1;
                 }
             }
-            ]]..V(set_to)..[[ = ret;
+            ]]..V(set_to,'rval')..[[ = ret;
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
             elseif TP.check(set_to.tp,'char','[]','-&') then
@@ -2241,7 +2200,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 ceu_lua_objlen(len, _ceu_app->lua, -1);
                 ceu_lua_tostring(ret, _ceu_app->lua, -1);
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-                ceu_out_assert( ceu_vector_concat_buffer(]]..V(set_to)..[[, ret, len), "access out of bounds" );
+                ceu_out_assert( ceu_vector_concat_buffer(]]..V(set_to,'lval')..[[, ret, len), "access out of bounds" );
             } else {
                 ceu_lua_pushstring(_ceu_app->lua, "not implemented [2]");
                 err = 1;
@@ -2259,7 +2218,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 ceu_lua_pushstring(_ceu_app->lua, "not implemented [3]");
                 err = 1;
             }
-            ]]..V(set_to)..[[ = ret;
+            ]]..V(set_to,'rval')..[[ = ret;
             ceu_lua_pop(_ceu_app->lua, 1);
 ]])
             else

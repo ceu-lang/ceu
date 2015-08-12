@@ -1,3 +1,12 @@
+-- TODO:
+-- remove opt_raw, adt_*
+-- remove V({tag='Var',...})
+-- CTX virar so rval/lval => ctx='lval'|'rval'
+--      - talvez nem isso, remover tudo
+--      - ficar so com rval e usar & qdo necessario
+-- colocar asserts de rval/lval impossiveis?
+
+
 local _ceu2c = { ['&&']='&', ['or']='||', ['and']='&&', ['not']='!' }
 local function ceu2c (op)
     return _ceu2c[op] or op
@@ -5,22 +14,17 @@ end
 
 local F
 
--- TODO:
---  - change all accesses to byref by default
---      - only deref on return
---  - byref check only once (inside V())
---
-
 function V (me, ...)
     local CTX = ...
     if type(CTX) ~= 'table' then
         CTX = {}
         for _, ctx in ipairs{...} do
             assert(type(ctx)=='string', 'bug found')
-            CTX[ctx] = true
+            CTX[ctx] = ctx
         end
     end
-    --assert(CTX.lval or CTX.rval)
+--DBG()
+    assert(CTX.lval or CTX.rval or CTX.evt)
 
     local f = assert(F[me.tag], 'bug found : V('..me.tag..')')
     while type(f) == 'string' do
@@ -33,6 +37,30 @@ function V (me, ...)
             -- (&(*(...))) => (((...)))
 end
 
+local function tpctx2op (tp, CTX)
+    if TP.check(tp,'&') then
+        if CTX.lval then
+            return ''
+        else
+            if TP.check(tp,'[]','&') and TP.is_ext(tp,'_') then
+                return ''
+            else
+                return '*'
+            end
+        end
+    else
+        if CTX.lval then
+            if TP.check(tp,'[]') and TP.is_ext(tp,'_') then
+                return ''
+            else
+                return '&'
+            end
+        else
+            return ''
+        end
+    end
+end
+
 F =
 {
     -- TODO: rewrite it all
@@ -40,113 +68,18 @@ F =
     __var = function (me, VAL, CTX)
         local cls = (me.org and me.org.cls) or CLS()
         local var = me.var or me
-        if var.pre == 'var' then
-            if var.tp.arr then
-                -- normalize all arrays acesses to pointers to arr[0]
-                -- (because of interface accesses that must be done through a pointer)
-                local is_ref = TP.check(var.tp,'&')
-                if var.cls or TP.is_ext(var.tp,'_') then
-                    if not is_ref then
-                        VAL = '(&'..VAL..'[0])'
-                    end
-                else
-                    if CTX.ext then
-                        local cast = TP.toc(TP.pop(var.tp,'&'))
-                        if is_ref then
-                            VAL = '(('..cast..')'..VAL..'->mem)'
-                        else
-                            VAL = '(('..cast..')'..VAL..'.mem)'
-                        end
-                    elseif not is_ref then
-                        VAL = '(&'..VAL..')'
-                    end
-                end
-            elseif var.cls then
-                -- normalize all org acesses to pointers to it
-                -- (because of interface accesses that must be done through a pointer)
-                VAL = '(&'..VAL..')'
-            elseif TP.check(var.tp,'?') then
-            elseif TP.check(var.tp,'&') then
-                if ENV.clss[TP.id(var.tp)] or ENV.clss[TP.id(var.tp)] then
-                    -- orgs vars byRef, do nothing
-                    -- (normalized to pointer)
-                else
-                    -- normal vars byRef
-                    VAL = '(*('..VAL..'))'
-                end
-            end
+        --local is_ref = TP.check(var.tp,'&')
+        if var.pre=='var' or var.pre=='pool' then
+            local op = tpctx2op(var.tp, CTX)
+            VAL = '('..op..VAL..')'
 
-            -- variable with option type (var tp? id)
-            if TP.check(var.tp,'?') then
-                local ID = string.upper(TP.opt2adt(var.tp))
-                local op = (TP.check(var.tp,'&','?') and '*') or ''
-
-                if CTX.opt_raw then
-                    return VAL
-                end
-
-                -- set
-                local set = AST.par(me, 'Set')
-                local _, to, fr, is_to, are_both_opt
-                if set then
-                    _, _, fr, to = unpack(set)
-                    is_to = (to.lst.var == var)
-                    is_fr = (fr.lst.var == var)
-                    are_both_opt = (TP.check(to.tp,'?') and TP.check(fr.tp,'?'))
-                end
-
-                -- call
-                local call = AST.par(me, 'Op2_call')
-                if call and TP.id(call.tp)=='@' then
-                    local _,_,params = unpack(call)
-                    call = false
-                    for _, p in ipairs(params) do
-                        --if TP.contains(p.tp,me.tp) and (p.lst==me) then
-                        if TP.contains(TP.pop(var.tp,'?'),
-                                       TP.pop(p.tp,'?'))
-                            and (p==me)
-                        then
-                        --if TP.contains(var.tp,p.tp) and (p==me) then
-                            call = true
-                            break
-                        end
-                    end
-                end
-
-                -- SET
-                if are_both_opt then
-                    -- do nothing, both are opt
-                elseif is_to then
-                    if (fr.fst.tag=='Op2_call' and fr.fst.__fin_opt_tp)
-                    or (fr.tag=='Spawn')
-                    then
-                        -- var _t&? = _f(...);
-                        -- var T*? = spawn <...>;
-                        VAL = '('..op..'('..VAL..'))'
-                    else
-                        -- xxx.me = v
--- TODO: move to env.lua
-ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
-                    end
-
-                -- CALL
-                -- _f(xxx.me)
-                elseif call and TP.check(me.tp,'&','?') then
-                    -- reference option type -> pointer
-                    -- var tp&? v;
-                    -- _f(v);
-                    --      - NULL,   if v==nil
-                    --      - SOME.v, if v!=nil
-                    VAL = '(CEU_'..ID..'_unpack('..VAL..'))'
-
-                end
-            end
+--[[
         elseif var.pre == 'pool' then
             -- normalize all pool acesses to pointers to it
             -- (because of interface accesses that must be done through a pointer)
             if ENV.adts[TP.id(var.tp)] then
                 if CTX.adt_pool then
-                    VAL = '((tceu_pool_*)&'..VAL..')'
+                    VAL = '((tceu_pool_*)'..VAL..')'
                 elseif CTX.adt_root then
                     if TP.check(var.tp,'&') then
                         VAL = '('..VAL..')'
@@ -162,15 +95,16 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
                     end
                 end
             elseif not (TP.check(var.tp,'&&') or TP.check(var.tp,'&')) then
-                VAL = '(&'..VAL..')'
+                VAL = '('..VAL..')'
                 VAL = '((tceu_pool_*)'..VAL..')'
             end
+]]
         elseif var.pre == 'function' then
             VAL = 'CEU_'..cls.id..'_'..var.id
         elseif var.pre == 'isr' then
             VAL = 'CEU_'..cls.id..'_'..var.id
         elseif var.pre == 'event' then
-            assert(CTX.ifc_idx)
+            assert(CTX.evt)
             return var.evt.idx
         elseif var.pre == 'output' then
             VAL = nil
@@ -178,19 +112,6 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
             VAL = nil
         else
             error 'not implemented'
-        end
-
-        local tp_id = me.tp and TP.id(me.tp)
-        local ref = me.tp and TP.check(me.tp,'&') and tp_id
-        if CTX.byref            and
-            (not CTX.opt_raw)   and
-            (not me.tp.arr)     and
-            (not (ENV.clss[tp_id] or (ref and ENV.clss[ref]) or
-                  --ENV.adts[tp_id] or (ref and ENV.adts[ref]) or
-                  tp_id=='@'))
-                 -- already by ref
-        then
-            VAL = '(&'..VAL..')'
         end
 
         return VAL
@@ -219,13 +140,14 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
     end,
 
     Field = function (me, CTX)
-        local gen = '((tceu_org*)'..V(me.org,CTX)..')'
+        local gen = '((tceu_org*)'..V(me.org,'lval')..')'
         if me.org.cls and me.org.cls.is_ifc then
             if me.var.pre == 'var'
             or me.var.pre == 'pool' then
-                if me.var.tp.arr or me.var.pre=='pool' then
-                    local cast = TP.toc(me.var.tp)
-                    if me.var.tp.arr and (not TP.is_ext(me.var.tp,'_','@')) then
+                local cast = TP.toc(me.var.tp)..'*'
+                if me.var.pre=='var' and me.var.tp.arr then
+                    cast = TP.toc(me.var.tp)
+                    if (not TP.is_ext(me.var.tp,'_','@')) then
                         local cls = ENV.clss[TP.id(me.var.tp)] and
                                     TP.check(TP.pop(me.var.tp,'&'),TP.id(me.var.tp),'[]')
                         if not cls then
@@ -235,27 +157,38 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
                             end
                         end
                     end
+                end
 
+--[=[
+error'oi'
                     VAL = [[(
 (]]..cast..[[) (
 #line ]]..me.org.ln[2]..' "'..me.org.ln[1]..[["
-    ((byte*)]]..V(me.org,CTX)..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
+    ((byte*)]]..gen..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
         ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
     ]
 ))]]
-                else
-                    VAL = [[(*(
-(]]..TP.toc(me.var.tp)..[[*) (
+]=]
+                --else
+                -- LVAL
+                VAL = [[(
+(]]..cast..[[) (
 #line ]]..me.org.ln[2]..' "'..me.org.ln[1]..[["
-    ((byte*)]]..V(me.org,CTX)..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
+    ((byte*)]]..gen..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
         ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
     ]
         )
-))]]
-                end
-                if TP.check(me.var.tp,'&') and (not ENV.clss[TP.id(me.var.tp)]) then
+)]]
+                -- RVAL
+                if TP.check(me.var.tp,'[]') and TP.is_ext(me.var.tp,'_') then
+                    -- LVAL==RVAL
+                else
                     VAL = '(*'..VAL..')'
                 end
+
+                --end
+                local op = tpctx2op(me.var.tp, CTX)
+                VAL = '('..op..VAL..')'
             elseif me.var.pre == 'function' then
                 VAL = [[(*(
 (]]..TP.toc(me.var.tp)..[[*) (
@@ -265,7 +198,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
         )
 ))]]
             elseif me.var.pre == 'event' then
-                assert(CTX.ifc_idx)
+                assert(CTX.evt)
                 return '(_CEU_APP.ifcs_evts['..gen..'->cls]['
                                 ..ENV.ifcs.evts[me.var.ifc_id]
                            ..'])'
@@ -281,7 +214,7 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
                 VAL = me.c.id_
             else
                 assert(me.var, 'bug found')
-                VAL = '('..V(me.org,CTX)..'->'..me.var.id_..')'
+                VAL = '('..V(me.org,'rval')..'.'..me.var.id_..')'
                 VAL = F.__var(me, VAL, CTX)
             end
         end
@@ -297,11 +230,19 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
     ----------------------------------------------------------------------
 
     Global = function (me, CTX)
-        return '(_ceu_app->data)'
+        if CTX.lval then
+            return '(&(_ceu_app->data))'
+        else
+            return '(_ceu_app->data)'
+        end
     end,
 
     Outer = function (me, CTX)
-        return '(('..TP.toc(me.tp)..'*)_STK_ORG)'
+        if CTX.lval then
+            return '(('..TP.toc(me.tp)..'*)_STK_ORG)'
+        else
+            return '(*(('..TP.toc(me.tp)..'*)_STK_ORG))'
+        end
     end,
 
     This = function (me, CTX)
@@ -311,7 +252,11 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
         else
             VAL = '_STK_ORG'
         end
-        return '(('..TP.toc(me.tp)..'*)'..VAL..')'
+        if CTX.lval then
+            return '(('..TP.toc(me.tp)..'*)'..VAL..')'
+        else
+            return '(*(('..TP.toc(me.tp)..'*)'..VAL..'))'
+        end
     end,
 
     ----------------------------------------------------------------------
@@ -323,24 +268,28 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
             -- (tceu_app*, tceu_org*, ...)
             ps[#ps+1] = '_ceu_app'
             if f.org then
-                ps[#ps+1] = V(f.org,CTX)   -- only native
+                ps[#ps+1] = V(f.org,'lval')   -- only native
             else
                 ps[#ps+1] = CUR(me)
             end
             ps[#ps] = '(tceu_org*)'..ps[#ps]
         end
         for i, exp in ipairs(exps) do
-            ps[#ps+1] = V(exp, (TP.is_ext(f.tp,'_','@') and 'ext'))
-                            -- ext context:
-                            -- vectors become pointers to internal mem
-        end
-        VAL = V(f,CTX)..'('..table.concat(ps,',')..')'
+            ps[#ps+1] = V(exp, 'rval')
 
-        if me.__fin_opt_tp then
-            local ID = string.upper(TP.opt2adt(me.__fin_opt_tp))
-            VAL = '(CEU_'..ID..'_pack('..VAL..'))'
+            if TP.check(exp.tp,'[]','&&','-&') then
+                if ENV.clss[TP.id(exp.tp)] and
+                  TP.check(exp.tp, TP.id(exp.tp),'[]','&&','-&')
+                then
+                    error'bug found'
+                elseif not TP.is_ext(exp.tp,'_') then
+                    -- f(&&vec);
+                    local cast = TP.toc(TP.pop(TP.pop(exp.tp,'&'),'&&'))
+                    ps[#ps] = '(('..cast..')'..ps[#ps]..'->mem)'
+                end
+            end
         end
-        return VAL
+        return V(f,CTX)..'('..table.concat(ps,',')..')'
     end,
 
     Op2_idx = function (me, CTX)
@@ -352,13 +301,23 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
         if cls and TP.check(me.tp,TP.id(me.tp))
         or TP.is_ext(arr.tp,'_','@')
         then
-            VAL = V(arr,CTX)..'['..V(idx,CTX)..']'
+            VAL = V(arr,'rval')..'['..V(idx,'rval')..']'
+            if CTX.lval then
+                VAL = '(&'..VAL..')'
+            end
+--[[
+            VAL = V(arr,'lval')..'['..V(idx,'rval')..']'
             if cls and (not TP.check(me.tp,'&&')) then
                 VAL = '(&'..VAL..')'
                     -- class accesses must be normalized to references
             end
+]]
         else
-            VAL = '(*(('..TP.toc(me.tp)..'*)ceu_vector_geti_ex('..V(arr,CTX)..','..V(idx,CTX)..',__FILE__,__LINE__)))'
+            if CTX.lval then
+                VAL = '(('..TP.toc(me.tp)..'*)ceu_vector_geti_ex('..V(arr,'lval')..','..V(idx,'rval')..',__FILE__,__LINE__))'
+            else
+                VAL = '(*(('..TP.toc(me.tp)..'*)ceu_vector_geti_ex('..V(arr,'lval')..','..V(idx,'rval')..',__FILE__,__LINE__)))'
+            end
         end
 
         return VAL
@@ -399,6 +358,8 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
     ['Op1_*'] = function (me, CTX)
         local op, e1 = unpack(me)
         local tp_id = TP.id(me.tp)
+        return '('..ceu2c(op)..V(e1,CTX)..')'
+--[[
         if ENV.clss[tp_id] and TP.check(e1.tp,tp_id,'&&','-&') then
             return V(e1,CTX) -- class accesses should remain normalized to references
         elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
@@ -406,33 +367,21 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
         else
             return '('..ceu2c(op)..V(e1,CTX)..')'
         end
+]]
     end,
     ['Op1_&'] = function (me, CTX)
         local op, e1 = unpack(me)
-        return V(e1, CTX)
---[[
-        local tp_id = TP.id(e1.tp)
-        if ENV.clss[tp_id] and (not TP.check(e1.tp,'&&','-&')) then
-            return V(e1,CTX) -- class accesses are already normalized to 
-        references
-        elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
-            return V(e1,CTX) -- adt pool accesses are already normalized to 
-        references
-        else
-            return '('..ceu2c(op)..V(e1,CTX)..')'
+        local ret = V(e1, 'lval')
+        if e1.var and e1.var.pre=='pool' then
+            ret = '((tceu_pool_*)'..ret..')'
         end
-]]
+        return ret
     end,
     ['Op1_&&'] = function (me, CTX)
+        assert(CTX.rval, 'bug found')
         local op, e1 = unpack(me)
         local tp_id = TP.id(e1.tp)
-        if ENV.clss[tp_id] and (not TP.check(e1.tp,'&&','-&')) then
-            return V(e1,CTX) -- class accesses are already normalized to references
-        elseif ENV.adts[tp_id] and ENV.adts[tp_id].is_rec then
-            return V(e1,CTX) -- adt pool accesses are already normalized to references
-        else
-            return '('..ceu2c(op)..V(e1)..')'
-        end
+        return V(e1,'lval')
     end,
     ['Op1_?'] = function (me, CTX)
         local op, e1 = unpack(me)
@@ -444,18 +393,19 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
         local _, e1 = unpack(me)
         local var = e1.var or e1
         local ID = string.upper(TP.opt2adt(var.tp))
-        local op = (TP.check(var.tp,'&','?') and (not CTX.byref) and '*') or ''
-        return '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, &'
-                  ..V(e1)..',__FILE__,__LINE__)->SOME.v))'
+
+        local op = tpctx2op(TP.pop(var.tp,'?'), CTX)
+        return '('..op..'(CEU_'..ID..'_SOME_assert(_ceu_app, '
+                  ..V(e1,'lval')..',__FILE__,__LINE__)->SOME.v))'
     end,
 
     ['Op1_$'] = function (me, CTX)
         local op, e1 = unpack(me)
-        return '(ceu_vector_getlen('..V(e1,CTX)..'))'
+        return '(ceu_vector_getlen('..V(e1,'lval')..'))'
     end,
     ['Op1_$$'] = function (me, CTX)
         local op, e1 = unpack(me)
-        return '(ceu_vector_getmax('..V(e1,CTX)..'))'
+        return '(ceu_vector_getmax('..V(e1,'lval')..'))'
     end,
 
     ['Op2_.'] = function (me, CTX)
@@ -488,9 +438,9 @@ ASR(to.tag ~= 'Op1_!', me, 'invalid operand in assignment')
                 end
             end
         else
-            VAL  = '('..V(e1)..'.'..id..')'
+            VAL  = '('..V(e1,'rval')..'.'..id..')'
         end
-        if CTX.byref then
+        if CTX.lval then
             VAL = '(&'..VAL..')'
         end
         return VAL

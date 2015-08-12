@@ -465,16 +465,6 @@ function TP.contains (tp1, tp2)
     elseif TP.is_ext(tp1,'@') or TP.is_ext(tp2,'@') then
         return true
 
-    -- array <=> single-pointer conversions
-    -- _tp[] = _tp*
-    -- _tp*  = _tp[]
-    elseif id1 == id2 and (
-            (TP.check(tp1,id1,'&&') and TP.check(tp2,id2,'[]') and TP.is_ext(tp2,'_','@')) or
-            (TP.check(tp2,id2,'&&') and TP.check(tp1,id1,'[]') and TP.is_ext(tp1,'_','@'))
-           )
-    then
-        return true
-
     -- any pointer can be used with "null"
     elseif TP.check(tp1,'&&') and TP.check(tp2,'null','&&') or
            TP.check(tp2,'&&') and TP.check(tp1,'null','&&')

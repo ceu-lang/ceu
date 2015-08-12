@@ -9,8 +9,775 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+
+-- 21290
+Test { [[
+interface I with
+    var _int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+end
+
+var _int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+
+var I&& i = &&t;
+
+i:vs[0] = 3;
+
+escape i:vs[0];
+]],
+    run = 3,
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+
+var I&& i = &&t;
+
+i:vs = [ 0 ];
+i:vs[0] = 3;
+
+escape i:vs[0];
+]],
+    run = 3,
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+    this.vs = [1];
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+t.vs[0] = t.vs[0] + 2;
+
+var I&& i = &&t;
+
+i:vs[0] = i:vs[0] * 3;
+
+escape t.vs[0];
+]],
+    run = 9,
+}
+-- 39800
+Test { [[
+native @plain _int;
+
+interface Global with
+    var _int[10] vs;
+end
+var _int[10]  vs;
+
+global:vs[0] = 1;
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+native @plain _int;
+
+interface I with
+    var _int[10] vs;
+end
+
+interface Global with
+    interface I;
+end
+var _int[10]  vs;
+
+class T with
+    interface I;
+do
+    global:vs[0] = 1;
+end
+
+vs[0] = 1;
+global:vs[0] = 1;
+
+var T t;
+t.vs[0] = 1;
+
+var I&& i = &&t;
+i:vs[0] = 1;
+
+escape 1;
+]],
+    run = 1,
+}
+
+-- 31965
+
+Test { [[
+class U with do end;
+
+interface I with
+    pool U[10] us;
+end
+
+class T with
+    interface I;
+do
+end
+
+var T t;
+var I&& i = &&t;
+spawn U in i:us;
+
+escape 1;
+]],
+    run = 1,
+}
+
+-- 31033
+Test { [[
+class T with do end;
+class U with
+    pool T[]& ts;
+do
+end
+pool T[] ts1;
+pool T[2] ts2;
+var U _ with
+    this.ts = &ts1;
+end;
+var U _ with
+    this.ts = &ts2;
+end;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class Body with
+    pool Body[]& bodies;
+    var  int&     sum;
+do
+    var Body&&? nested =
+        spawn Body in bodies with
+            this.bodies = &bodies;
+            this.sum    = &sum;
+        end;
+    if nested? then
+        await *nested!;
+    end
+    sum = sum + 1;
+end
+
+pool Body[] bodies;
+var  int     sum = 0;
+
+var Body b with
+    this.bodies = &bodies;
+    this.sum    = &sum;
+end;
+
+escape sum;
+]],
+    wrn = 'line 6 : unbounded recursive spawn',
+    run = 101,
+}
+-- 15884
+-- BUG: should complain of this.v=&v
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v;
+end;
+
+escape v!;
+]],
+    todo = 'bug',
+    run = 20,
+}
+
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+
+-- 30176
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+    await FOREVER;
+end
+pool T[1] ts;
+var T&&? a;
+do
+    var T&&? aa = spawn T in ts;
+        a = aa;
+end
+var int sum = 0;
+if a? then
+    watching *a! do
+        var T&&? b = spawn T in ts;   // fails (a is free on end)
+        sum = a? and (not b?);// and a! !=b;
+    end
+end
+escape sum;
+]],
+    --fin = 'line 15 : pointer access across `await´',
+    run = 1,
+}
+-- 29832
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var T&&?  ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+var int ok2 = 0;// spawn T in ts;
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:v;
+end
+escape (ok1?) + ok2 + ret + 1;
+]],
+    --fin = 'line 14 : pointer access across `await´',
+    run = 1,
+}
+-- 28318
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+interface Global with
+    var T& t;
+end
+
+var T t_;
+var T& t = &t_;
+global:t = &t;
+
+escape global:t.v;
+]],
+    run = 10,
+}
+
+-- 21393
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t];
+escape ts[0]! == &&t;
+]],
+    run = 1,
+}
+-- 21242
+Test { [[
+class T with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+var T t;
+var T&&? p = &&t;
+
+escape t.v + p!:v;
+]],
+    run = 20,
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+var T&&? p = &&t;
+
+escape t.v + p!:v;
+]],
+    run = '9] runtime error: invalid tag',
+}
+-- 20942
+Test { [[
+interface I with
+    var int& v;
+end
+
+class T with
+    interface I;
+do
+    this.v = 1;
+end
+
+var int v;
+var T t with
+    this.v = &v;
+end;
+t.v = t.v + 2;
+
+var I&& i = &&t;
+i:v = i:v * 3;
+
+escape t.v;
+]],
+    run = 9,
+}
+
+-- 25292
+Test { [[
+var int i = 0;
+class T with
+    var int& i;
+do
+    var int v = 10;
+    i = v;
+end
+var T t with
+    this.i = &outer.i;
+end;
+escape i;
+]],
+    --ref = 'line 9 : cannot assign to reference bounded inside the class',
+    run = 10,
+}
+-- 25257
+Test { [[
+class T with
+do
+end
+spawn T;
+escape 10;
+]],
+    --ref = 'line 7 : field "i" must be assigned',
+    run = 10,
+}
+-- 24983
+Test { [[
+class T3 with
+    var int v3;
+do
+end
+class T2 with
+    var T3&& t3;
+    var int v;
+do
+    var T3 t33;
+    this.t3 = &&t33;
+end
+class T with
+    var int v,v2;
+    var T2&& x;
+do
+    var T2 xx;
+    x = &&xx;
+end
+var T a;
+a.v = 5;
+a.x:v = 5;
+a.v2 = 10;
+a.x:t3:v3 = 15;
+escape a . v + a.x :v + a .v2 + a.x  :  t3 : v3;
+]],
+    run = 35,
+}
+
+-- 24427
+Test { [[
+class T with
+    var int a, b;
+do
+end
+
+var int i = 0;
+
+var T[2] y with
+    i = i + 1;
+    this.a = i*10;
+end;
+
+var T x;
+    x.a = 30;
+
+escape x.a + y[0].a + y[1].a;
+]],
+    run = 60,
+}
+
+-- 24390
+Test { [[
+class T with
+    var int a, b;
+do
+end
+
+var T[2] y;
+    y[0].a = 10;
+    y[1].a = 20;
+
+var T x;
+    x.a = 30;
+
+escape x.a + y[0].a + y[1].a;
+]],
+    run = 60,
+}
+
+-- 24324
+Test { [[
+class T with
+    var int a, b;
+do
+end
+
+var T y;
+
+var T x;
+    x.a = 10;
+
+input void OS_START;
+await OS_START;
+
+escape x.a;
+]],
+    run = 10,
+}
+
+-- 21526
+Test { [[
+native _V;
+native do
+    int V[2][2] = { {1, 2}, {3, 4} };
+end
+
+_V[0][1] = 5;
+escape _V[1][0] + _V[0][1];
+]],
+    run = 8,
+}
+
+-- 15549
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+-- 24308
+Test { [[
+class T with
+    var int a, b;
+do
+end
+
+var T[2] y;
+    y[0].a = 10;
+    y[1].a = 20;
+
+var T x;
+    x.a = 30;
+
+escape x.a + y[0].a + y[1].a;
+]],
+    run = 60,
+}
+
+-- 20660
+Test { [[
+native @nohold _f();
+native do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+var int[2] a = [1,2];
+_f(&&a);
+escape a[0] + a[1];
+]],
+    run = 5,
+}
+
+-- 20298
+Test { [[
+native @nohold _f();
+native do
+    void f (int* p) {
+        *p = 1;
+    }
+end
+var _int[2] a;
+var int b;
+par/and do
+    b = 2;
+with
+    _f(&&a);
+end
+escape a[0] + b;
+]],
+    run = 3,
+}
+
+-- 20229
+Test { [[
+native do
+    typedef struct {
+        int v[10];
+        int c;
+    } T;
+end
+native _T = 44;
+
+var _T[10] vec;
+var int i = 110;
+
+vec[3].v[5] = 10;
+vec[9].c = 100;
+escape i + vec[9].c + vec[3].v[5];
+]],
+    run = 220,
+}
+
+-- 17508
+Test { [[
+native do
+    void* f () {
+        return NULL;
+    }
+end
+
+var void&? ptr;
+finalize
+    ptr = &_f();
+with
+    nothing;
+end
+
+escape &&ptr! == &&ptr!;  // ptr.SOME fails
+]],
+    asr = true,
+}
+
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+-- 15315
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v1;
+finalize
+    v1 = &_getV();
+with
+    nothing;
+end
+v1 = 20;
+
+var int&? v2;
+finalize
+    v2 = &_getV();
+with
+    nothing;
+end
+
+escape v1!+v2!+_V;
+]],
+    env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+}
+-- 14825
+Test { [[
+native do
+    int V = 10;
+    int* fff (int v) {
+        V += v;
+        return &V;
+    }
+end
+var int   v = 1;
+var int&& p = &&v;
+var int&? r;
+finalize
+    r = &_fff(*p);
+with
+    nothing;
+end
+escape r!;
+]],
+    run = 11,
+}
+
+Test { [[
+var int a;
+var int& pa = &a;
+async (pa) do
+    emit 1min;
+    pa = 10;
+end;
+escape a + 1;
+]],
+    run = 11,
+}
+
+Test { [[
+interface I with
+    var int& v;
+end
+
+class T with
+    interface I;
+do
+    this.v = 1;
+end
+
+var int v;
+var T t with
+    this.v = &v;
+end;
+t.v = t.v + 2;
+
+var I&& i = &&t;
+i:v = i:v * 3;
+
+escape t.v;
+]],
+    run = 9,
+}
+-- 28174
+Test { [[
+interface Global with
+    var int& v;
+end
+var int  um = 1;
+var int& v = &um;
+escape global:v;
+]],
+    run = 1,
+}
+
 --do return end
---]===]
 
 -------------------------------------------------------------------------------
 
@@ -14636,7 +15403,7 @@ end
 v = 1;
 escape _V1+_V2;
 ]],
-    gcc = '7:34: error: assignment makes pointer from integer without a cast',
+    gcc = 'error: assignment makes pointer from integer without a cast',
     --run = 6,
 }
 
@@ -14756,7 +15523,7 @@ every 1s do
     finalize
         sfc = &_TTF_RenderText_Blended();
     with
-        _SDL_FreeSurface(&(sfc!));
+        _SDL_FreeSurface(&&(sfc!));
     end
 end
 escape 1;
@@ -14868,7 +15635,7 @@ var _SDL_Renderer&? ren;
     end
 
 await 1s;
-_g(&(ren!));
+_g(&&(ren!));
 
 escape 1;
 ]],
@@ -14882,7 +15649,7 @@ Test { [[
     var _message_t msg;
     loop do
         await 1s;
-        var _Cnt&& snd = _Radio_getPayload(&msg, sizeof(_Cnt));
+        var _Cnt&& snd = _Radio_getPayload(&&msg, sizeof(_Cnt));
     end
 ]],
     --fin = 'line 5 : pointer access across `await´',
@@ -14896,7 +15663,7 @@ Test { [[
     var _message_t msg;
     loop do
         await 1s;
-        var _Cnt&& snd = _Radio_getPayload(&msg, sizeof(_Cnt));
+        var _Cnt&& snd = _Radio_getPayload(&&msg, sizeof(_Cnt));
     end
 ]],
     _ana = {
@@ -15276,9 +16043,37 @@ with
     nothing;
 end
 
-escape v1!+v2!;
+escape v1!+v2!+_V;
 ]],
-    run = 40,
+    env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    --run = 60,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v1;
+finalize
+    v1 = &_getV();
+with
+    nothing;
+end
+v1! = 20;
+
+var int&? v2;
+finalize
+    v2 = &_getV();
+with
+    nothing;
+end
+
+escape v1!+v2!+_V;
+]],
+    run = 60,
 }
 Test { [[
 native do
@@ -15326,7 +16121,7 @@ end
 class T with
     var int&? v;
 do
-    v = 20;
+    v! = 20;
 end
 do T with
     this.v = &v!;
@@ -15354,10 +16149,10 @@ end
 class T with
     var int&? v;
 do
-    v = 20;
+    v! = 20;
 end
 do T with
-    this.v = &v;
+    this.v = &v!;
 end;
 
 escape v!;
@@ -15525,6 +16320,14 @@ escape 1;
 Test { [[
 var char[255] buf;
 _enqueue(buf);
+escape 1;
+]],
+    env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
+    --fin = 'line 2 : call requires `finalize´',
+}
+Test { [[
+var char[255] buf;
+_enqueue(&&buf);
 escape 1;
 ]],
     fin = 'line 2 : call requires `finalize´',
@@ -17141,7 +17944,7 @@ native @nohold _dealloc();
 
 var int&? tex;
 finalize
-    tex = _alloc(1);    // v=2
+    tex = &_alloc(1);    // v=2
 with
     _dealloc(&&tex);
 end
@@ -17221,7 +18024,66 @@ end
 
 escape _V;
 ]],
-    run = 1,
+    env = 'line 19 : wrong argument #1 : cannot pass option values to native calls',
+    --run = 1,
+}
+
+Test { [[
+native do
+    int* alloc (int ok) {
+        return NULL;
+    }
+    int V = 0;
+    void dealloc (int* ptr) {
+        if (ptr == NULL) {
+            V = 1;
+        }
+    }
+end
+native @nohold _dealloc();
+
+do
+    var int&? tex;
+    finalize
+        tex = &_alloc(1);
+    with
+        _dealloc(&tex!);
+    end
+end
+
+escape _V;
+]],
+    env = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
+    --run = '19] runtime error: invalid tag',
+}
+
+Test { [[
+native do
+    int* alloc (int ok) {
+        return NULL;
+    }
+    int V = 0;
+    void dealloc (int* ptr) {
+        if (ptr == NULL) {
+            V = 1;
+        }
+    }
+end
+native @nohold _dealloc();
+
+do
+    var int&? tex;
+    finalize
+        tex = &_alloc(1);
+    with
+        _dealloc(&&tex!);
+    end
+end
+
+escape _V;
+]],
+    --env = 'line 19 : wrong argument #1 : cannot pass option type',
+    run = '19] runtime error: invalid tag',
 }
 
 Test { [[
@@ -17252,7 +18114,7 @@ do
     finalize
         tex = &_alloc(1);    // v=2
     with
-        _dealloc(tex);
+        _dealloc(&&tex!);
     end
     ret = ret + _V;         // ret=3
     if not tex? then
@@ -17268,7 +18130,7 @@ do
         tex = &_alloc(0);    // v=4
     with
         if tex? then
-            _dealloc(tex);
+            _dealloc(&&tex!);
         end
     end
     ret = ret + _V;         // ret=11
@@ -17381,7 +18243,7 @@ do
         ptr = &_f();
     with
         if ptr? then
-            _g(ptr);
+            _g(&&ptr!);
         else
             ret = ret + 1;
         end
@@ -17468,7 +18330,7 @@ do
     finalize
         tex = &_alloc(1);    // v=2
     with
-        _dealloc(tex);
+        _dealloc(&&tex!);
     end
     ret = ret + _V;         // ret=3
     if not tex? then
@@ -17484,7 +18346,7 @@ do
         tex = &_alloc(0);    // v=4
     with
         if tex? then
-            _dealloc(tex);
+            _dealloc(&&tex!);
         end
     end
     ret = ret + _V;         // ret=11
@@ -19731,6 +20593,20 @@ end
 var int&? p = _f();
 escape p;
 ]],
+    env = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+}
+
+Test { [[
+native _f();
+native do
+    int* f () {
+        int a = 10;
+        escape &a;
+    }
+end
+var int&? p = &_f();
+escape p;
+]],
     env = 'line 9 : types mismatch (`int´ <= `int&?´)',
 }
 
@@ -19919,10 +20795,12 @@ Test { [[var int[2] v; escape v;]],
     env = 'types mismatch'
 }
 Test { [[var _u8[2] v; escape &&v;]],
-    env = 'invalid operand to unary "&&"',
+    env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
+    --env = 'invalid operand to unary "&&"',
 }
 Test { [[var u8[2] v; escape &&v;]],
-    env = 'invalid operand to unary "&&"',
+    env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
+    --env = 'invalid operand to unary "&&"',
 }
 
 Test { [[
@@ -20033,7 +20911,8 @@ Test { [[
 var _int[2] v ;
 escape v == &&v[0] ;
 ]],
-    run = 1,
+    env = 'line 2 : invalid operands to binary "=="',
+    --run = 1,
 }
 
 Test { [[
@@ -20048,7 +20927,7 @@ var int b;
 par/and do
     b = 2;
 with
-    _f(a);
+    _f(&&a);
 end
 escape a[0] + b;
 ]],
@@ -20070,6 +20949,32 @@ par/or do
     b = 2;
 with
     _f(a);
+end
+escape a[0] + b;
+]],
+    _ana = {
+        abrt = 1,
+    },
+    env = 'line 14 : wrong argument #1 : cannot pass plain vectors to native calls',
+    --code = 'line 14 : invalid value : vectors are not copyable',
+    --run = 3,
+}
+
+Test { [[
+native @nohold _f();
+native do
+    void f (int* p) {
+        *p = 1;
+    }
+end
+var _int[2] a;
+a[0] = 0;
+a[1] = 0;
+var int b;
+par/or do
+    b = 2;
+with
+    _f(&&a);
 end
 escape a[0] + b;
 ]],
@@ -20363,7 +21268,7 @@ native do
     }
 end
 var int[2] a = [1,2];
-_f(a);
+_f(&&a);
 escape a[0] + a[1];
 ]],
     run = 5,
@@ -20379,7 +21284,7 @@ native do
 end
 var int[2] a  = [1,2];
 var int[2]& b = &a;
-_f(b);
+_f(&&b);
 escape b[0] + b[1];
 ]],
     run = 5,
@@ -20454,6 +21359,54 @@ rs[0] = rs[0] * 3;
 escape vs[0];
 ]],
     run = 9,
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+
+var I&& i = &&t;
+
+i:vs = [ 0 ];
+i:vs[0] = 3;
+
+escape i:vs[0];
+]],
+    run = 3,
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+
+var I&& i = &&t;
+
+i:vs[0] = 3;
+
+escape 1;
+]],
+    run = '17] runtime error: access out of bounds',
+    -- TODO: not 20, 17!
 }
 Test { [[
 interface I with
@@ -20683,19 +21636,6 @@ Test { [[
 class T with
     var int v = 10;
 do
-end
-
-var T t;
-var T&&? p = &&t;
-
-escape t.v + p!:v;
-]],
-    run = '9] runtime error: invalid tag',
-}
-Test { [[
-class T with
-    var int v = 10;
-do
     await FOREVER;
 end
 
@@ -20705,6 +21645,19 @@ var T&&? p = &&t;
 escape t.v + p!:v;
 ]],
     run = 20,
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+var T&&? p = &&t;
+
+escape t.v + p!:v;
+]],
+    run = '9] runtime error: invalid tag',
 }
 Test { [[
 class T with
@@ -20979,16 +21932,16 @@ escape _f((int&&)&&rcs[0]);
 Test { [[
 native @nohold _printf(), _strlen();
 var char[] v = ['a','b','c','\0'];
-_printf("v = %s\n", (char&&)v);
-escape _strlen((char&&)v);
+_printf("v = %s\n", &&v);
+escape _strlen(&&v);
 ]],
     run = 3,
 }
 Test { [[
 native @nohold _printf(), _strlen();
 var char[] v = ['a','b','c','\0'];
-_printf("v = %s\n", v);
-escape _strlen(v);
+_printf("v = %s\n", &&v);
+escape _strlen(&&v);
 ]],
     run = 3,
 }
@@ -21007,9 +21960,9 @@ end
 
 var char[10] v;
 var char[10] v_;
-_garbage(v);
+_garbage(&&v);
 v = ['a','b','c'];
-escape _strlen(v);
+escape _strlen(&&v);
 ]],
     run = 3,
 }
@@ -21057,8 +22010,8 @@ escape _strlen(v);
 Test { [[
 native @nohold _printf(), _strlen();
 var char[] v = [].."abc";
-_printf("v = %s\n", v);
-escape _strlen(v);
+_printf("v = %s\n", &&v);
+escape _strlen(&&v);
 ]],
     run = 3,
 }
@@ -21066,8 +22019,8 @@ Test { [[
 native @nohold _printf(), _strlen();
 var char[] v = [].."abc";
 v = v .. "def";
-_printf("v = %s\n", v);
-escape _strlen(v);
+_printf("v = %s\n", &&v);
+escape _strlen(&&v);
 ]],
     run = 6,
 }
@@ -21119,7 +22072,7 @@ escape _V;
 Test { [[
 var void&? p;
 finalize
-    p = { NULL };
+    p = &{ NULL };
 with
     nothing;
 end
@@ -21135,7 +22088,8 @@ p := { NULL };
 escape 1;
 //escape p==null;
 ]],
-    ref = 'line 2 : invalid attribution : requires the alias operator `&´',
+    env = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    --ref = 'line 2 : invalid attribution : requires the alias operator `&´',
     --fin = 'line 2 : attribution requires `finalize´',
 }
 
@@ -21446,7 +22400,7 @@ end
 var _u8[2] v;
 v[0] = 8;
 v[1] = 5;
-escape _f2(&&v[0],&&v[1]) + _f1(v) + _f1(&&v[0]);
+escape _f2(&&v[0],&&v[1]) + _f1(&&v) + _f1(&&v[0]);
 ]],
     run = 39,
 }
@@ -22349,8 +23303,8 @@ Test { [[
 native @nohold _strncpy(), _printf(), _strlen();
 native _char = 1;
 var _char[10] str;
-_strncpy(str, "123", 4);
-_printf("END: %d %s\n", (int)_strlen(str), str);
+_strncpy(&&str, "123", 4);
+_printf("END: %d %s\n", (int)_strlen(&&str), &&str);
 escape 0;
 ]],
     run = '3 123'
@@ -22359,16 +23313,16 @@ escape 0;
 Test { [[
 native @nohold _strncpy(), _printf(), _strlen(), _strcpy();
 native _char = 1;
-var _char[6] a; _strcpy(a, "Hello");
-var _char[2] b; _strcpy(b, " ");
-var _char[7] c; _strcpy(c, "World!");
+var _char[6] a; _strcpy(&&a, "Hello");
+var _char[2] b; _strcpy(&&b, " ");
+var _char[7] c; _strcpy(&&c, "World!");
 var _char[30] d;
 
 var int len = 0;
-_strcpy(d,a);
-_strcpy(&&d[_strlen(d)], b);
-_strcpy(&&d[_strlen(d)], c);
-_printf("END: %d %s\n", (int)_strlen(d), d);
+_strcpy(&&d,&&a);
+_strcpy(&&d[_strlen(&&d)], &&b);
+_strcpy(&&d[_strlen(&&d)], &&c);
+_printf("END: %d %s\n", (int)_strlen(&&d), &&d);
 escape 0;
 ]],
     run = '12 Hello World!'
@@ -22812,7 +23766,16 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    --env = 'line 4 : types mismatch (`int&&´ <= `_int[]´)',
+    env = 'line 4 : types mismatch (`_int&&´ <= `_int[]´)',
+    --run = { ['~>1s']=1 },
+}
+Test { [[
+var _int&& u;
+var _int[1] i;
+await 1s;
+u = &&i[0];
+escape 1;
+]],
     run = { ['~>1s']=1 },
 }
 Test { [[
@@ -22831,6 +23794,21 @@ do
     var _int[1] i;
     i[0] = 2;
     u = i;
+end
+do
+    var _int[1] i;
+    i[0] = 5;
+end
+escape *u;
+]],
+    env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
+}
+Test { [[
+var _int&& u;
+do
+    var _int[1] i;
+    i[0] = 2;
+    u = &&i[0];
 end
 do
     var _int[1] i;
@@ -24855,7 +25833,7 @@ class T with
     var int&? i;
 do
     var int v = 10;
-    i = v;
+    i! = v;
 end
 
 var int ret = 0;
@@ -24889,7 +25867,7 @@ class T with
 do
     var int v = 10;
     if i? then
-        i = i! + v;
+        i! = i! + v;
     end
 end
 
@@ -27492,7 +28470,7 @@ class T with
     var int&? i;
 do
     var int v = 10;
-    i = v;
+    i! = v;
 end
 var T t;
 escape t.i!;
@@ -27507,7 +28485,7 @@ class T with
 do
     _assert(not i?);
     var int v = 10;
-    i = v;
+    i! = v;
 end
 var T t;
 escape t.i!;
@@ -28535,7 +29513,7 @@ class T with
 do
     var void&? ptr;
     finalize
-        ptr = _myalloc();
+        ptr = &_myalloc();
     with
         _myfree(&&ptr);
     end
@@ -38114,7 +39092,8 @@ function isr [20] do
 end
 escape 1;
 ]],
-    env = 'line 4 : invalid operand to unary "&&"',
+    env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
+    --env = 'line 4 : invalid operand to unary "&&"',
 }
 
 Test { [[
@@ -43085,6 +44064,7 @@ escape ret;
 
 -- ASYNC/NONDET
 
+--]===]
 Test { [[
 var _int[2] v;
 var _int&& p = v;

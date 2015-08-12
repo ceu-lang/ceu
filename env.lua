@@ -1105,16 +1105,24 @@ F = {
         else    -- set == 'exp'
             local to_tp_noopt, to_isopt = TP.pop(to.tp, '?')
             if to_isopt then
+                local _, to_isoptref = TP.pop(to_tp_noopt, '&')
                 local ok, msg = TP.contains(to_tp_noopt, TP.pop(fr_tp,'?'))
                 ASR(ok, me, msg)
+                if to_isoptref then
+                    -- var int&? v = <...>;
+                    -- v = 10;  -- refuse
+                    ASR(fr.tag=='Op1_&', me,
+                        'invalid attribution : missing `!´ (in the left) or `&´ (in the right)')
+                end
             else
                 local ok, msg = TP.contains(to.tp, fr_tp)
                 ASR(ok, me, msg)
             end
         end
 
-        if not lua_str then
-            ASR(to and to.lval, me, 'invalid attribution : not assignable')
+        if (not lua_str) and (fr.tag~='Op1_&') then
+            ASR(to and to.lval, me,
+                'invalid attribution : not assignable')
             ASR(me.read_only or (not to.lval.read_only), me,
                 'read-only variable')
         end
@@ -1334,6 +1342,15 @@ F = {
         if ins then
             local ok, msg = TP.contains(ins, params)
             ASR(ok, me, msg)
+        else
+            for i, v in ipairs(params) do
+                ASR(not TP.check(v.tp,'?'), me,
+                    'wrong argument #'..i..' : cannot pass option values to native calls')
+                ASR(v.tag~='Op1_&', me,
+                    'wrong argument #'..i..' : cannot pass aliases to native calls')
+                ASR(not TP.check(v.tp,'[]','-&'), me,
+                    'wrong argument #'..i..' : cannot pass plain vectors to native calls')
+            end
         end
 
         if not me.c then
@@ -1505,7 +1522,10 @@ F = {
         -- var int& i = 1;      // constant
         -- var int& i = *p;     // dereference
         -- var D& d = D(...);   // adt-constr
+        -- ok:
+        -- var _int[]& ref = vec;   // TP.check(e1.tp,'[]')
         ASR(TP.check(e1.tp,'&') or e1.lval or e1.tag=='Op1_&&' or e1.tag=='Op2_call' or
+            TP.check(e1.tp,'[]') or
                 (e1.lst and (e1.lst.tag=='Outer' or
                              e1.lst.var and (e1.lst.var.cls or e1.lst.var.adt))),
                                                -- orgs/adts are not lval
@@ -1542,7 +1562,7 @@ F = {
         end
 
         local e1_tp_id = TP.id(e1.tp)
-        ASR(e1.lval and (not TP.check(e1.tp,'[]','-&')) or
+        ASR(e1.lval or TP.check(e1.tp,'[]','-&') or
             ENV.clss[e1_tp_id] or ENV.adts[e1_tp_id], me,
             'invalid operand to unary "&&"')
         me.lval = false

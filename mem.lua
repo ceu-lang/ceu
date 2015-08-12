@@ -234,6 +234,8 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
     }
     return ret;
 }
+#if 0
+// TODO: noew requires explicit conversions
 ]]..some..[[ CEU_]]..ID..[[_unpack (]]..tp..[[ me) {
     if (me.tag == CEU_]]..ID..[[_NIL) {
         return NULL;
@@ -241,6 +243,7 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
         return me.SOME.v;
     }
 }
+#endif
 ]]
         end
 
@@ -587,10 +590,12 @@ typedef union CEU_]]..me.id..[[_delayed {
                     dcl = dcl..'struct ' -- due to recursive spawn
                 end
                 if TP.check(var.tp,'[]','-&&','-&') then
+                    local tp_vec  = var.tp
                     local tp_elem = TP.pop( TP.pop(var.tp,'&'), '[]' )
                     local cls = cls and TP.check(tp_elem,tp_id)
                     if cls or TP.is_ext(var.tp,'_') then
                         if TP.check(var.tp,'&&') or TP.check(var.tp,'&') then
+                            local tp_c = TP.toc( TP.pop(tp_vec) )
                             dcl = dcl .. tp_c..' '..var.id_
                         else
                             local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
