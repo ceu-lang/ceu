@@ -482,7 +482,7 @@ me.tp = var.tp
             -- initialize to nil
             local ID = string.upper(TP.opt2adt(var.tp))
             LINE(me, [[
-]]..V({tag='Var',tp=var.tp,var=var},'rval','adt_root')..[[.tag = CEU_]]..ID..[[_NIL;
+]]..V({tag='Var',tp=var.tp,var=var},'rval')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
         end
     end,
@@ -550,7 +550,7 @@ me.val..' = &CEU_'..string.upper(id)..[[_BASE;
                 local set = assert( AST.par(me,'Set'), 'bug found' )
                 local _,_,_,to = unpack(set)
                 local pool = FIND_ADT_POOL(to.fst)
-                pool = '('..V(pool,'lval','adt_all')..'->pool)'
+                pool = '('..V(pool,'lval','adt_top')..'->pool)'
 
                 LINE(me, [[
 #if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
@@ -761,7 +761,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
                         -- has to execute before org initialization in Dcl_var
                         local ID = string.upper(TP.opt2adt(var.tp))
                         LINE(me, [[
-]]..V({tag='Var',tp=var.tp,var=var},'rval','adt_root')..[[.tag = CEU_]]..ID..[[_NIL;
+]]..V({tag='Var',tp=var.tp,var=var},'rval')..[[.tag = CEU_]]..ID..[[_NIL;
 ]])
                     end
 
@@ -849,7 +849,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..
                         error'bug found'
                     end
 
-                    local VAL_all  = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_all')
+                    local VAL_all  = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_top')
                     local VAL_pool = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_pool')
                     if (not is_dyn) then
                         LINE(me, [[
@@ -1001,8 +1001,8 @@ ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0);
                 local id, op = unpack(var.adt)
                 CASE(me, var.lbl_fin_kill_free)
 
-                local VAL_root = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_root')
-                local VAL_all  = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_all')
+                local VAL_root = V({tag='Var',tp=var.tp,var=var}, 'lval')
+                local VAL_all  = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_top')
                 if PROPS.has_adts_watching[var.adt.id] then
                     LINE(me, [[
 #if 0
@@ -1066,11 +1066,11 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         local to_tp_id = TP.id(to.tp)
 
         local pool = FIND_ADT_POOL(to.fst)
-        pool = '('..V(pool,'lval','adt_all')..'->pool)'
+        pool = '('..V(pool,'lval','adt_top')..'->pool)'
 
         LINE(me, [[
 {
-    void* __ceu_old = ]]..V(to,'lval','adt_root')..[[;    /* will kill/free old */
+    void* __ceu_old = ]]..V(to,'lval')..[[;    /* will kill/free old */
 ]])
 
         -- HACK: _STK_ORG overwritten by _kill
@@ -1084,8 +1084,8 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
             -- remove "fr" from tree (set parent link to NIL)
             LINE(me, [[
     void* __ceu_new = ]]..V(fr,'lval')..[[;
-    ]]..V(fr,'lval','adt_root')..[[ = &CEU_]]..string.upper(TP.id(fr.tp))..[[_BASE;
-    ]]..V(to,'lval','adt_root','no_cast')..[[ = __ceu_new;
+    ]]..V(fr,'lval')..[[ = &CEU_]]..string.upper(TP.id(fr.tp))..[[_BASE;
+    ]]..V(to,'lval','no_cast')..[[ = __ceu_new;
 ]])
         end
 
@@ -1124,7 +1124,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         CONC(me, fr)
         if set == 'adt-constr' then
             LINE(me, [[
-]]..V(to,'lval','adt_root','no_cast')..' = '..V(fr,'lval')..[[;
+]]..V(to,'lval','no_cast')..' = '..V(fr,'lval')..[[;
 ]])
         end
 
@@ -1203,7 +1203,7 @@ error'TODO'
         else
             -- normal types
             local l_or_r = (is_byref and 'lval') or 'rval'
-            LINE(me, V(to,l_or_r)..' = '..V(fr,'rval','adt_root')..';')
+            LINE(me, V(to,l_or_r)..' = '..V(fr,'rval')..';')
                                             -- & makes 'lval' on this side
         end
 
@@ -1336,14 +1336,14 @@ ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "acce
             assert(to.var.pre=='pool', 'bug found')
             if TP.check(to.var.tp,'&') then
                 LINE(me, [[
-]]..V(to,'lval','adt_all')..' = '..V(fr,'lval','adt_all')..[[;
+]]..V(to,'lval','adt_top')..' = '..V(fr,'lval','adt_top')..[[;
 ]])
             else
                 LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
-]]..V(to,'lval','adt_all')..'->pool = '..V(pool,'rval','adt_all')..[[.pool;
+]]..V(to,'lval','adt_top')..'->pool = '..V(pool,'rval','adt_top')..[[.pool;
 #endif
-]]..V(to,'lval','adt_all')..'->root = '..V(fr,'rval','adt_root')..[[;
+]]..V(to,'lval','adt_top')..'->root = '..V(fr,'rval')..[[;
 ]])
             end
 

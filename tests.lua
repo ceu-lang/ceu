@@ -11,6 +11,27 @@ end
 --[===[
 
 Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List  tail;
+    end
+end
+
+pool List[10] list;
+
+var int i = 10;
+traverse l in list do
+    list = new List.CONS(i, List.NIL());
+end
+
+escape 1;
+]],
+    run = 45,
+}
+Test { [[
 data Tree with
     tag NIL;
 or
@@ -192,6 +213,7 @@ escape 1;
     --env = 'line 15 : invalid operand to unary "&&"',
     --env = 'line 15 : data must be a pointer',
 }
+--]===]
 Test { [[
 interface IGUI_Component with
     var _void&? nat;
@@ -51695,7 +51717,27 @@ escape ret;
     run = { ['~>5s']=4 },
 }
 
---]===]
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List  tail;
+    end
+end
+
+pool List[10] list;
+
+var int i = 10;
+traverse l in list do
+    list = new List.CONS(i, List.NIL());
+end
+
+escape 1;
+]],
+    run = 45,
+}
 Test { [[
 data List with
     tag NIL;

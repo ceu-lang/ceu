@@ -129,14 +129,11 @@ F =
 
     Dcl_var = 'Var',
     Var = function (me, CTX)
+-- TODO: move to __var
         local var = me.var
         local VAL
 
-        local tp_id = TP.id(var.tp)
-        local adt = ENV.adts[tp_id]
-
-        -- TODO: move to __var
-        if adt and adt.is_rec and CTX.adt_pool then
+        if var.adt and var.adt.is_rec and CTX.adt_pool then
             VAL = CUR(me, '_'..var.id_)
         elseif var.isTmp then
             VAL = '__ceu_'..var.id..'_'..var.n
@@ -149,18 +146,17 @@ F =
             VAL = F.__var(me, VAL, CTX)
         end
 
-        if adt and adt.is_rec then
+        if var.adt and var.adt.is_rec and var.adt then
             if CTX.adt_pool then
                 VAL = '((tceu_pool_*)'..VAL..')'
-            elseif CTX.adt_root then
+            elseif CTX.adt_top then
+            else -- adt_root
                 local cast = CTX.no_cast and '' or '(CEU_'..TP.id(var.tp)..'*)'
                 if CTX.lval then
                     VAL = '('..cast..'((tceu_adt_root*)'..VAL..')->root)'
                 else
                     VAL = '('..cast..'((tceu_adt_root*)&'..VAL..')->root)'
                 end
-            else
-                --assert(CTX.adt_all, 'bug found')
             end
         end
 
@@ -405,7 +401,7 @@ error'oi'
     end,
     ['Op1_&'] = function (me, CTX)
         local op, e1 = unpack(me)
-        local ret = V(e1, 'lval',CTX.adt_root,CTX.adt_all,CTX.adt_pool)
+        local ret = V(e1, 'lval',CTX.adt_top,CTX.adt_pool)
         if e1.var and e1.var.pre=='pool' then
             if ENV.clss[TP.id(e1.var.tp)] then
                 ret = '((tceu_pool_*)'..ret..')'
@@ -418,7 +414,7 @@ error'oi'
     ['Op1_&&'] = function (me, CTX)
         assert(CTX.rval, 'bug found')
         local op, e1 = unpack(me)
-        return V(e1,'lval',CTX.adt_root,CTX.adt_all,CTX.adt_pool)
+        return V(e1,'lval',CTX.adt_top,CTX.adt_pool)
     end,
     ['Op1_?'] = function (me, CTX)
         local op, e1 = unpack(me)
@@ -464,11 +460,11 @@ error'oi'
             end
 
             if me.__env_tag == 'test' then
-                VAL  = '('..V(e1,'lval','adt_root')..'->tag == '..tag..')'
+                VAL  = '('..V(e1,'lval')..'->tag == '..tag..')'
             elseif me.__env_tag == 'assert' then
-                VAL  = '('..tag..'_assert(_ceu_app, '..V(e1,'lval','adt_root')..', __FILE__, __LINE__)->'..id..')'
+                VAL  = '('..tag..'_assert(_ceu_app, '..V(e1,'lval')..', __FILE__, __LINE__)->'..id..')'
             elseif me.__env_tag == 'field' then
-                VAL  = '('..V(e1,'rval','adt_root')..op_fld..id..')'
+                VAL  = '('..V(e1,'rval')..op_fld..id..')'
             end
         else
             VAL  = '('..V(e1,'rval')..'.'..id..')'
