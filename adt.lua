@@ -21,23 +21,6 @@ F = {
         end
     end,
 
---[[
-    Dcl_var = function (me)
-        local tp_id = TP.id(me.var.tp)
-        local adt = ENV.adts[tp_id]
-        if adt and adt.is_rec then
-            if me.var.pre == 'var' then
-                -- Pointer to recursive ADT pool declaration:
-                --      var List* l;
-                --  becomes
-                --      var tceu_adt_root l = {pool=x, root=y}
-                ASR(TP.check(me.var.tp,tp_id,'&&'), me,
-                    'invalid recursive data declaration : variable "'..me.var.id..'" must be a pointer or pool')
-            end
-        end
-    end,
-]]
-
     Adt_constr_root = function (me)
         local dyn, one  = unpack(me)
         local adt, _    = unpack(one)
@@ -51,16 +34,19 @@ F = {
     Set = function (me)
         local _, set, fr, to = unpack(me)
     
-        if not (set=='adt-constr' or set=='adt-mut') then
+        if not (set=='adt-constr' or set=='adt-mut' or set=='adt-alias') then
             return      -- handled in env.lua
         end
 
-        local adt = ENV.adts[TP.id(to.tp)]
-        if not (adt and adt.is_rec) then
+        local adt = assert(ENV.adts[TP.id(to.tp)], 'bug found')
+        if not adt.is_rec then
+            assert(set == 'adt-constr')
             return  -- ignore non-adt or non-recursive-adt
         end
 
-        if set == 'adt-constr' then
+        if set == 'adt-alias' then
+            -- OK
+        elseif set == 'adt-constr' then
             if to.lst.var.pre == 'pool' then
                 -- [OK]
                 -- var pool[] L l;
@@ -75,12 +61,12 @@ F = {
                 return
             else
                 -- [NO]
-                -- var L* l = <...>;
+                -- var L&& l = <...>;
                 -- l = new (...)
                 ASR(false, me, 'invalid attribution : must assign to recursive field')
             end
 
-        else -- set == 'adt-mut'
+        elseif set == 'adt-mut' then
             -- [OK]: ptr  = l2.*
             -- [OK]: l1.* = l1.*
             -- [NO]: l1.* = l2.*
@@ -137,6 +123,8 @@ F = {
                 end
             end
             ASR(ok, me, 'cannot assign parent to child')
+        else
+            error'bug found'
         end
     end,
 

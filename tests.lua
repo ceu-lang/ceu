@@ -29,7 +29,7 @@ end
 
 escape 1;
 ]],
-    run = 45,
+    run = 1,
 }
 Test { [[
 data Tree with
@@ -61,6 +61,50 @@ do
     if false then
         await *(this.n);
     end
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree  left;
+        var Tree  right;
+    end
+end
+
+pool Tree[3] tree;
+var Tree&& n1;
+var Tree&& n2;
+
+n1 = n2;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree  left;
+        var Tree  right;
+    end
+end
+
+pool Tree[3] tree;
+
+class Body with
+    var Tree&& n;
+do
+    spawn Body with
+        this.n = &&n:NODE.left;
+    end;
 end
 escape 1;
 ]],
@@ -136,19 +180,6 @@ do Body with
 end;
 
 escape sum;
-
-/*
-var int sum = 0;
-traverse n in tree do
-    var int i = sum;
-    if n:NODE then
-        traverse n:NODE.left;
-        sum = i + n:NODE.v;
-        traverse n:NODE.right;
-    end
-end
-escape sum;
-*/
 ]],
     wrn = 'line 26 : unbounded recursive spawn',
     run = { ['~>10s'] = 9 },
@@ -213,7 +244,10 @@ escape 1;
     --env = 'line 15 : invalid operand to unary "&&"',
     --env = 'line 15 : data must be a pointer',
 }
+
+--=-=-=-=-=-=-
 --]===]
+
 Test { [[
 interface IGUI_Component with
     var _void&? nat;
@@ -1163,6 +1197,63 @@ escape v!;
 ]],
     todo = 'bug',
     run = 20,
+}
+-- BUG: should be type error, T&& <= T[]
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree  left;
+        var Tree  right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Sum with
+    var int&& v;
+do
+    await FOREVER;
+end
+
+class Body with
+    pool  Body[]& bodies;
+    var   Tree&&   n;
+    var   Sum&    sum;
+do
+    watching *n do
+        if n:NODE then
+            *this.sum.v = *this.sum.v + n:NODE.v;
+            spawn Body in this.bodies with
+                this.bodies = &bodies;
+                this.n      = &&n:NODE.left;
+                this.sum    = &sum;
+            end;
+        end
+    end
+end
+
+var int v = 0;
+var Sum sum with
+    this.v = &&v;
+end;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = &bodies;
+    this.n      = &&tree;
+    this.sum    = &sum;
+end;
+
+escape v;
+]],
+    todo = 'bug',
+    fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
 }
 --do return end
 
@@ -31994,6 +32085,7 @@ escape v;
 ]],
     fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
 }
+
     -- AWAIT/KILL ORG
 
 Test { [[

@@ -42,7 +42,9 @@ end
 
 local function tpctx2op (tp, CTX)
     local tp_id = TP.id(tp)
-    local adt = TP.check(tp,tp_id) and ENV.adts[tp_id]
+    local adt = ENV.adts[tp_id]
+    --local adt = TP.check(tp,tp_id) and ENV.adts[tp_id]
+    local adt_plain = adt and TP.check(tp,tp_id)
 
     if TP.check(tp,'&') then
         if CTX.lval then
@@ -59,12 +61,24 @@ local function tpctx2op (tp, CTX)
             if TP.check(tp,'[]') and TP.is_ext(tp,'_') then
                 return ''
             elseif adt and adt.is_rec then
-                return ''
+                if TP.check(tp,'&&','-&') then
+--error'not tested'
+                    return ''
+                elseif adt_plain then
+                    return ''
+                else
+                    return '&'
+                end
             else
                 return '&'
             end
         else
-            return ''
+            if adt and adt.is_rec and TP.check(tp,'&&','-&') then
+--error'not tested'
+                return ''
+            else
+                return ''
+            end
         end
     end
 end
@@ -81,7 +95,28 @@ F =
         if var.pre=='var' or var.pre=='pool' then
             local op = tpctx2op(var.tp, CTX)
             VAL = '('..op..VAL..')'
---DBG('>>', me.ln[2], CTX.lval, CTX.rval, TP.tostr(me.tp), op, VAL)
+
+            local tp_id = TP.id(var.tp)
+            local adt = ENV.adts[tp_id]
+            --local adt_plain = adt and var.adt --TP.check(var.tp,tp_id)
+            if adt and adt.is_rec then
+                if CTX.adt_pool then
+                    VAL = '((tceu_pool_*)'..VAL..')'
+                elseif CTX.adt_top then
+                    if TP.check(var.tp,'&&','-&') then
+                        return '(&'..VAL..')'
+                    end
+                else -- adt_root
+                    local OP  = TP.check(var.tp,'&&','-&') and '&'  or ''
+                    local PTR = TP.check(var.tp,'&&','-&') and '**' or '*'
+                    local cast = CTX.no_cast and '' or '(CEU_'..TP.id(var.tp)..PTR..')'
+                    if CTX.lval then
+                        VAL = '('..cast..OP..'((tceu_adt_root*)'..VAL..')->root)'
+                    else
+                        VAL = '('..cast..OP..'((tceu_adt_root*)&'..VAL..')->root)'
+                    end
+                end
+            end
 
 --[[
         elseif var.pre == 'pool' then
@@ -133,7 +168,11 @@ F =
         local var = me.var
         local VAL
 
-        if var.adt and var.adt.is_rec and CTX.adt_pool then
+        local tp_id = TP.id(var.tp)
+        local adt = ENV.adts[tp_id]
+        --local adt_plain = adt and var.adt --TP.check(var.tp,tp_id)
+
+        if adt and adt.is_rec and CTX.adt_pool then
             VAL = CUR(me, '_'..var.id_)
         elseif var.isTmp then
             VAL = '__ceu_'..var.id..'_'..var.n
@@ -144,20 +183,6 @@ F =
         local field = AST.par(me, 'Field')
         if not (field and field[3]==me) then
             VAL = F.__var(me, VAL, CTX)
-        end
-
-        if var.adt and var.adt.is_rec and var.adt then
-            if CTX.adt_pool then
-                VAL = '((tceu_pool_*)'..VAL..')'
-            elseif CTX.adt_top then
-            else -- adt_root
-                local cast = CTX.no_cast and '' or '(CEU_'..TP.id(var.tp)..'*)'
-                if CTX.lval then
-                    VAL = '('..cast..'((tceu_adt_root*)'..VAL..')->root)'
-                else
-                    VAL = '('..cast..'((tceu_adt_root*)&'..VAL..')->root)'
-                end
-            end
         end
 
         return VAL
@@ -384,6 +409,7 @@ error'oi'
         local op, e1 = unpack(me)
 
 -- TODO: hacky
+--[[
         local var = e1.var
         if var then
             local tp_id = TP.id(var.tp)
@@ -396,6 +422,7 @@ error'oi'
                 end
             end
         end
+]]
 
         return '('..ceu2c(op)..V(e1,CTX)..')'
     end,
@@ -460,7 +487,7 @@ error'oi'
             end
 
             if me.__env_tag == 'test' then
-                VAL  = '('..V(e1,'lval')..'->tag == '..tag..')'
+                VAL  = '('..V(e1,'lval')..'->tag == '..tag..') /* XXXX */'
             elseif me.__env_tag == 'assert' then
                 VAL  = '('..tag..'_assert(_ceu_app, '..V(e1,'lval')..', __FILE__, __LINE__)->'..id..')'
             elseif me.__env_tag == 'field' then

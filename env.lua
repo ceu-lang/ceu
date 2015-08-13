@@ -1002,6 +1002,9 @@ F = {
             local e = unpack(fr)
             fr_tp = (e.var or e).evt.ins
 
+        elseif set == 'emit-ext' then
+            -- ok
+
         elseif set == 'thread' then
             fr_tp = TP.new{'int'}       -- 0/1
 
@@ -1014,12 +1017,6 @@ F = {
             -- refuses (x.ptr = spawn T;)
             ASR( AST.isParent(CLS(),to.lst.var.blk), me,
                     'invalid attribution (no scope)' )
-
-        elseif set == 'adt-constr' then
-            if to.lst.var and to.lst.var.pre == 'pool' then
-                return  -- TODO: not enough
-            end
-            --return  -- checked in adt.lua
 
         elseif set == 'vector' then
             -- TODO: TP.pre() (only pool?)
@@ -1059,9 +1056,31 @@ F = {
 
             return
 
-        elseif ENV.adts[to_tp_id] and (not to_is_opt) then
--- TODO: rewrite all
-            if ENV.adts[to_tp_id].is_rec then
+        elseif set == 'adt-constr' then
+            if to.lst.var and to.lst.var.pre == 'pool' then
+                return  -- TODO: not enough
+            end
+-- TODO: should be only this below
+            --return  -- checked in adt.lua
+
+        else
+            assert(set == 'exp', 'bug found')
+
+            -- transform into 'adt-alias' or 'adt-mut'
+            local adt = ENV.adts[to_tp_id]
+            if adt and adt.is_rec then
+                if to_is_opt then
+                    error'not tested: originaly, it would remain "exp"'
+                end
+                if to.fst.var and to.fst.var==fr.fst.var then
+                    me[2] = 'adt-mut'
+                else
+                    me[2] = 'adt-alias'
+                end
+                return
+            end
+
+--[[
                 if to.var and (TP.check(to.var.tp,'&') or TP.check(to.var.tp,'&&')) then
                     if to.var.pre=='pool' then
                         me[2] = 'adt-alias'
@@ -1083,10 +1102,8 @@ F = {
                     me[2] = 'adt-mut'
                     return  -- checked in adt.lua
                 end
-            else
-                -- non-recursive ADT: fallback to normal 'exp' attribution
-                assert(me[2]=='exp')
             end
+]]
         end
 
         local lua_str = false
