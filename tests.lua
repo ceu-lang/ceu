@@ -246,7 +246,6 @@ escape 1;
 }
 
 --=-=-=-=-=-=-
---]===]
 
 Test { [[
 interface IGUI_Component with
@@ -45975,6 +45974,7 @@ escape ptr2==&&a;
 }
 
 -- ALGEBRAIC DATATYPES (ADTS)
+--]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -46034,7 +46034,6 @@ end
 
 --[==[
 -- HERE:
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -46326,8 +46325,8 @@ var List&& l = List.CONS(1,
                     List.NIL()));
 escape l:CONS.tail.CONS.head;
 ]],
-    env = 'line 9 : types mismatch (`List&&´ <= `List´)',
-    --adt = 'line 9 : invalid constructor : recursive data must use `new´',
+    --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
+    adt = 'line 9 : invalid constructor : recursive data must use `new´',
 }
 
 Test { [[
@@ -46344,8 +46343,9 @@ var List&& l = new List.CONS(1,
                     List.NIL()));
 escape l:CONS.tail.CONS.head;
 ]],
-    env = 'line 9 : types mismatch (`List&&´ <= `List´)',
+    --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
+    adt = 'line 9 : invalid attribution : must assign to recursive field',
 }
 
 Test { [[
@@ -47089,8 +47089,8 @@ await 1s;
 escape p:CONS.head;
 ]],
     --adt = 'line 52 : cannot mix recursive data sources',
-    --fin = 'line 54 : unsafe access to pointer "p" across `await´',
-    env = 'line 52 : types mismatch (`List&&´ <= `List´)',
+    fin = 'line 54 : unsafe access to pointer "p" across `await´',
+    --env = 'line 52 : types mismatch (`List&&´ <= `List´)',
 }
 Test { DATA..[[
 pool List[] l = new List.CONS(1, List.NIL());
@@ -47141,7 +47141,8 @@ pool List[] l3 = new List.CONS(2, List.CONS(1, List.NIL()));
 l3.CONS.tail = l1;
 escape l3.CONS.head + l3.CONS.tail.NIL;
 ]],
-    adt = 'line 54 : cannot mix recursive data sources',
+    adt = 'line 54 : invalid attribution : new reference only to root',
+    --adt = 'line 54 : cannot mix recursive data sources',
     run = 3,
 }
 
@@ -47154,7 +47155,8 @@ l2 = new List.CONS(1, List.NIL());
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1);
 ]],
-    adt = 'line 55 : cannot mix recursive data sources',
+    adt = 'line 55 : invalid attribution : new reference only to pointer or alias',
+    --adt = 'line 55 : cannot mix recursive data sources',
     run = 2,
 }
 Test { DATA..[[
@@ -47163,7 +47165,8 @@ pool List[] l1 = new List.NIL(),
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
 ]],
-    adt = 'line 53 : cannot mix recursive data sources',
+    adt = 'line 53 : invalid attribution : new reference only to pointer or alias',
+    --adt = 'line 53 : cannot mix recursive data sources',
     run = 3,
 }
 
@@ -47176,7 +47179,8 @@ escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
        (l2.CONS.head==2) + (l2.CONS.tail.CONS.head==1) +
        (l1.CONS.tail.CONS.tail.CONS.tail.CONS.head==2);
 ]],
-    adt = 'line 53 : cannot mix recursive data sources',
+    adt = 'line 53 : invalid attribution : new reference only to root',
+    --adt = 'line 53 : cannot mix recursive data sources',
     run = 5,
 }
 
@@ -47190,7 +47194,8 @@ l2.CONS.tail = l1;
 
 escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.head;
 ]],
-    adt = 'line 54 : cannot mix recursive data sources',
+    adt = 'line 54 : invalid attribution : new reference only to root',
+    --adt = 'line 54 : cannot mix recursive data sources',
     run = 6,
 }
 
@@ -47202,7 +47207,8 @@ l2 = new List.CONS(1, List.NIL());
 l1 = l2.CONS.tail;
 escape l1.NIL;
 ]],
-    adt = 'line 54 : cannot mix recursive data sources',
+    adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
+    --adt = 'line 54 : cannot mix recursive data sources',
     run = 1,
 }
 
@@ -48135,7 +48141,8 @@ l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
 escape l1.CONS.tail.CONS.head;
 ]],
-    adt = 'line 54 : cannot mix recursive data sources',
+    adt = 'line 54 : invalid attribution : new reference only to root',
+    --adt = 'line 54 : cannot mix recursive data sources',
 }
 Test { DATA..[[
 pool List[] l1 = new List.CONS(1, List.NIL());
@@ -48146,7 +48153,8 @@ do
 end
 escape l1.CONS.tail.CONS.head;
 ]],
-    adt = 'line 55 : cannot mix recursive data sources',
+    adt = 'line 55 : invalid attribution : new reference only to root',
+    --adt = 'line 55 : cannot mix recursive data sources',
     --fin = 'line 54 : attribution to pointer with greater scope',
 }
 Test { DATA..[[
@@ -48156,7 +48164,8 @@ pool List[2] l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
 escape l1.CONS.tail.CONS.head;
 ]],
-    adt = 'line 54 : cannot mix recursive data sources',
+    adt = 'line 54 : invalid attribution : new reference only to root',
+    --adt = 'line 54 : cannot mix recursive data sources',
 }
 Test { DATA..[[
 pool List[2] l1;
@@ -48166,7 +48175,8 @@ l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
 escape l1.CONS.tail.CONS.head;
 ]],
-    adt = 'line 55 : cannot mix recursive data sources',
+    adt = 'line 55 : invalid attribution : new reference only to root',
+    --adt = 'line 55 : cannot mix recursive data sources',
 }
 
 Test { DATA..[[
@@ -48208,7 +48218,8 @@ l.CONS.tail.CONS.tail.CONS.tail =
 
 escape ret;
 ]],
-    adt = 'line 72 : cannot mix recursive data sources',
+    adt = 'line 72 : invalid attribution : new reference only to root',
+    --adt = 'line 72 : cannot mix recursive data sources',
     run = -1,
 }
 
@@ -48382,6 +48393,7 @@ escape ((*i).t).x!;
     run = 10,
 }
 
+]==]
 Test { [[
 data List with
     tag NIL;

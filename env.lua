@@ -990,6 +990,7 @@ F = {
         local _, set, fr, to = unpack(me)
         to = to or AST.iter'SetBlock'()[1]
 
+        local lua_str = false
         local fr_tp = fr.tp
 
         local to_tp_id, to_is_opt
@@ -1056,6 +1057,18 @@ F = {
 
             return
 
+        elseif set == 'lua' then
+            lua_str = TP.check(to.tp,'char','[]','-&')
+            if not lua_str then
+                ASR(to and to.lval, me, 'invalid attribution')
+            end
+
+            ASR(TP.isNumeric(to.tp,'&') or TP.check(to.tp,'bool','-&') or
+                TP.check(to.tp, to_tp_id, '&&', '-&') or
+                lua_str,
+                me, 'invalid attribution')
+            fr.tp = to.tp -- return type is not known at compile time
+
         elseif set == 'adt-constr' then
             if to.lst.var and to.lst.var.pre == 'pool' then
                 return  -- TODO: not enough
@@ -1066,24 +1079,42 @@ F = {
         else
             assert(set == 'exp', 'bug found')
 
-            -- transform into 'adt-alias' or 'adt-mut'
+            -- transform into 'adt-ref' or 'adt-mut'
             local adt = ENV.adts[to_tp_id]
             if adt and adt.is_rec then
                 if to_is_opt then
                     error'not tested: originaly, it would remain "exp"'
                 end
+--DBG(to.fst.var.id, fr.fst.var.id)
                 if to.fst.var and to.fst.var==fr.fst.var then
                     me[2] = 'adt-mut'
                 else
-                    me[2] = 'adt-alias'
+                    me[2] = 'adt-ref'
                 end
+DBG(me.ln[2], me[2])
                 return
+            end
+
+            local to_tp_noopt, to_isopt = TP.pop(to.tp, '?')
+            if to_isopt then
+                local _, to_isoptref = TP.pop(to_tp_noopt, '&')
+                local ok, msg = TP.contains(to_tp_noopt, TP.pop(fr_tp,'?'))
+                ASR(ok, me, msg)
+                if to_isoptref then
+                    -- var int&? v = <...>;
+                    -- v = 10;  -- refuse
+                    ASR(fr.tag=='Op1_&', me,
+                        'invalid attribution : missing `!´ (in the left) or `&´ (in the right)')
+                end
+            else
+                local ok, msg = TP.contains(to.tp, fr_tp)
+                ASR(ok, me, msg)
             end
 
 --[[
                 if to.var and (TP.check(to.var.tp,'&') or TP.check(to.var.tp,'&&')) then
                     if to.var.pre=='pool' then
-                        me[2] = 'adt-alias'
+                        me[2] = 'adt-ref'
                         local fr_tp_id = TP.id(fr_tp)
                         ASR(to_tp_id==fr_tp_id, me,
                             'invalid attribution : `'..to_tp_id..'´ <= `'..fr_tp_id..'´')
@@ -1104,37 +1135,6 @@ F = {
                 end
             end
 ]]
-        end
-
-        local lua_str = false
-        if set == 'lua' then
-            lua_str = TP.check(to.tp,'char','[]','-&')
-            if not lua_str then
-                ASR(to and to.lval, me, 'invalid attribution')
-            end
-
-            ASR(TP.isNumeric(to.tp,'&') or TP.check(to.tp,'bool','-&') or
-                TP.check(to.tp, to_tp_id, '&&', '-&') or
-                lua_str,
-                me, 'invalid attribution')
-            fr.tp = to.tp -- return type is not known at compile time
-
-        else    -- set == 'exp'
-            local to_tp_noopt, to_isopt = TP.pop(to.tp, '?')
-            if to_isopt then
-                local _, to_isoptref = TP.pop(to_tp_noopt, '&')
-                local ok, msg = TP.contains(to_tp_noopt, TP.pop(fr_tp,'?'))
-                ASR(ok, me, msg)
-                if to_isoptref then
-                    -- var int&? v = <...>;
-                    -- v = 10;  -- refuse
-                    ASR(fr.tag=='Op1_&', me,
-                        'invalid attribution : missing `!´ (in the left) or `&´ (in the right)')
-                end
-            else
-                local ok, msg = TP.contains(to.tp, fr_tp)
-                ASR(ok, me, msg)
-            end
         end
 
         if (not lua_str) and (fr.tag~='Op1_&') then

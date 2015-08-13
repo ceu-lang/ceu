@@ -34,7 +34,7 @@ F = {
     Set = function (me)
         local _, set, fr, to = unpack(me)
     
-        if not (set=='adt-constr' or set=='adt-mut' or set=='adt-alias') then
+        if not (set=='adt-constr' or set=='adt-mut' or set=='adt-ref') then
             return      -- handled in env.lua
         end
 
@@ -44,9 +44,15 @@ F = {
             return  -- ignore non-adt or non-recursive-adt
         end
 
-        if set == 'adt-alias' then
-            -- OK
+        if set == 'adt-ref' then
+            ASR(to == to.fst, me,
+                'invalid attribution : new reference only to root')
+            ASR(TP.check(to.tp,'&') or TP.check(to.tp,'&&','-&'), me,
+                'invalid attribution : new reference only to pointer or alias')
+-- TODO: same test for fr.tp (many tests will fail correctly, including the BUG on top of tests.lua)
+
         elseif set == 'adt-constr' then
+-- TODO: no constructor to non-pool pointers
             if to.lst.var.pre == 'pool' then
                 -- [OK]
                 -- var pool[] L l;

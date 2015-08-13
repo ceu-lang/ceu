@@ -181,7 +181,9 @@ end
 local function FIND_ADT_POOL (fst)
     local adt = ENV.adts[TP.id(fst.tp)]
     local tp = fst.tp
+DBG(TP.tostr(tp))
     if adt and (TP.check(tp,'[]') or TP.check(tp,'&&') or TP.check(tp,'&')) then
+DBG('', fst)
         return fst
     else
         assert(fst.__par, 'bug found')
@@ -1317,7 +1319,7 @@ ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "acce
                 end
             end
 
-        elseif set == 'adt-alias' then
+        elseif set == 'adt-ref' then
             CONC(me, fr)                -- TODO: remove?
 
             --[[
@@ -1339,6 +1341,8 @@ ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "acce
 ]]..V(to,'lval','adt_top')..' = '..V(fr,'lval','adt_top')..[[;
 ]])
             else
+error'oi'
+DBG('>>>', to.var.id)
                 LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
 ]]..V(to,'lval','adt_top')..'->pool = '..V(pool,'rval','adt_top')..[[.pool;
