@@ -1092,7 +1092,6 @@ F = {
                 else
                     me[2] = 'adt-mut'
                 end
-DBG(me.ln[2], me[2])
                 return
             end
 

@@ -1158,28 +1158,8 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
 ]])
                 else
                     local ID = string.upper(TP.opt2adt(to.tp))
-                    --local fr_val = '(CEU_'..ID..'_pack('..V(fr,'rval')..'))'
-                    --LINE(me, V(to,'rval')..' = '..fr_val..';')
                     LINE(me, V(to,'rval')..'.tag = CEU_'..ID..'_SOME;')
                     LINE(me, V(to,'rval')..'.SOME.v = '..V(fr,'rval')..';')
-
-do return end
-DBG(me.ln[2], TP.tostr(to.tp), fr.fst.tag)
-error'TODO'
-                    local tag = 'SOME'
-                    if me.__ref_byref then
-                        LINE(me, '('..V(to)..'.SOME.v) = '..V(fr,byref)..';')
-                        LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
-                    else
-                        if ptr2org then
-                        else
-                            error'TODO'
-                            local var = to.var or to
-                            local op = (TP.check(var.tp,'&','?') and '*') or ''
-                            LINE(me, op..'('..V(to,byref)..'.SOME.v) = '..V(fr,byref)..';')
-                            LINE(me, V(to,'opt_raw')..'.tag = CEU_'..ID..'_'..tag..';')
-                        end
-                    end
                 end
             end
         else

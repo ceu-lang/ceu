@@ -36207,7 +36207,6 @@ escape i1==&&t and i2==null and i3==&&t and i4==null and i5==&&t and i6==null;
 ]],
     run = 1,
 }
-
 Test { [[
 interface I with
     var int v;

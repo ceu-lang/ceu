@@ -1,10 +1,6 @@
 -- TODO:
--- remove opt_raw, adt_*
 -- remove V({tag='Var',...})
--- CTX virar so rval/lval => ctx='lval'|'rval'
---      - talvez nem isso, remover tudo
---      - ficar so com rval e usar & qdo necessario
--- colocar asserts de rval/lval impossiveis?
+-- ficar so com rval e usar & qdo necessario
 
 
 local _ceu2c = { ['&&']='&', ['or']='||', ['and']='&&', ['not']='!' }
@@ -14,6 +10,11 @@ end
 
 local F
 
+-- val=[lval,rval]
+-- evt
+-- adt_top
+-- adt_pool
+-- no_cast
 function V (me, ...)
     local CTX = ...
     if type(CTX) ~= 'table' then
@@ -22,12 +23,15 @@ function V (me, ...)
             local ctx = select(i,...)
             if ctx then
                 assert(type(ctx)=='string', 'bug found')
-                CTX[ctx] = ctx
+                if ctx=='lval' or ctx=='rval' then
+                    CTX.val = ctx
+                else
+                    CTX[ctx] = ctx
+                end
             end
         end
     end
---DBG()
-    assert(CTX.lval or CTX.rval or CTX.evt)
+    assert(CTX.val or CTX.evt)
 
     local f = assert(F[me.tag], 'bug found : V('..me.tag..')')
     while type(f) == 'string' do
@@ -40,12 +44,20 @@ function V (me, ...)
             -- (&(*(...))) => (((...)))
 end
 
+local function ctx_copy (CTX)
+    local ret = {}
+    for k,v in pairs(CTX) do
+        ret[k] = v
+    end
+    return ret
+end
+
 local function tpctx2op (tp, CTX)
     local tp_id = TP.id(tp)
     local adt = ENV.adts[tp_id]
     local adt_isrec = adt and adt.is_rec
 
-    if CTX.lval then
+    if CTX.val == 'lval' then
         if TP.check(tp,'&') then
             return ''
         else
@@ -64,6 +76,7 @@ local function tpctx2op (tp, CTX)
             end
         end
     else  -- rval
+        assert(CTX.val == 'rval', 'bug found')
         if TP.check(tp,'&') then
             if TP.check(tp,'[]','&') and TP.is_ext(tp,'_') then
                 return ''
@@ -86,42 +99,39 @@ F =
         local cls = (me.org and me.org.cls) or CLS()
         local var = me.var or me
 
+        local tp_id = TP.id(var.tp)
+        local adt = ENV.adts[tp_id]
+        local adt_isrec = adt and adt.is_rec
+
         if var.pre=='var' or var.pre=='pool' then
+
             local op = tpctx2op(var.tp, CTX)
             VAL = '('..op..VAL..')'
 
-            local tp_id = TP.id(var.tp)
-            local adt = ENV.adts[tp_id]
-            --local adt_plain = adt and var.adt --TP.check(var.tp,tp_id)
+            -- handles adt_top, adt_root, adt_pool
             if var.pre=='pool' and adt and adt.is_rec then
                 if CTX.adt_pool then
                     VAL = '((tceu_pool_*)'..VAL..')'
                 elseif CTX.adt_top then
-                    if TP.check(var.tp,'&&','-&') then
-                        --return '(&'..VAL..')'
-                    end
+                    -- VAL
                 else -- adt_root
                     local is_ptr = TP.check(var.tp,'&&','-&')
                     local tp_id = 'CEU_'..TP.id(var.tp)
                     local CAST
-                    if CTX.lval then
+                    if CTX.val == 'lval' then
                         if is_ptr then
---local ln = me.ln and me.ln[2] or 0
---DBG(ln, var.id, '=== 1')
-CAST = '('..tp_id..'**)'
-VAL  = '(& ((tceu_adt_root*) '..VAL..')->root)'
+                            CAST = '('..tp_id..'**)'
+                            VAL  = '(& ((tceu_adt_root*) '..VAL..')->root)'
                         else
---DBG(ln, var.id, '=== 2')
-CAST = '('..tp_id..' *)'
-VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
+                            CAST = '('..tp_id..' *)'
+                            VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
                         end
                     else
                         if is_ptr then
---DBG(ln, var.id, '=== 3')
-CAST = '('..tp_id..' *)'
-VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
+                            CAST = '('..tp_id..' *)'
+                            VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
                         else
-error'TODO'
+                            error'bug found'
                         end
                     end
                     if not CTX.no_cast then
@@ -192,17 +202,6 @@ error'TODO'
                     end
                 end
 
---[=[
-error'oi'
-                    VAL = [[(
-(]]..cast..[[) (
-#line ]]..me.org.ln[2]..' "'..me.org.ln[1]..[["
-    ((byte*)]]..gen..[[) + _CEU_APP.ifcs_flds[]]..gen..[[->cls][
-        ]]..ENV.ifcs.flds[me.var.ifc_id]..[[
-    ]
-))]]
-]=]
-                --else
                 -- LVAL
                 VAL = [[(
 (]]..cast..[[) (
@@ -239,10 +238,6 @@ error'oi'
             else
                 error 'not implemented'
             end
-
-            if TP.check(me.var.tp,'?') then
-                --VAL = F.__var(me, VAL, CTX)
-            end
         else
             if me.c then
                 VAL = me.c.id_
@@ -264,7 +259,7 @@ error'oi'
     ----------------------------------------------------------------------
 
     Global = function (me, CTX)
-        if CTX.lval then
+        if CTX.val == 'lval' then
             return '(&(_ceu_app->data))'
         else
             return '(_ceu_app->data)'
@@ -272,7 +267,7 @@ error'oi'
     end,
 
     Outer = function (me, CTX)
-        if CTX.lval then
+        if CTX.val == 'lval' then
             return '(('..TP.toc(me.tp)..'*)_STK_ORG)'
         else
             return '(*(('..TP.toc(me.tp)..'*)_STK_ORG))'
@@ -286,7 +281,7 @@ error'oi'
         else
             VAL = '_STK_ORG'
         end
-        if CTX.lval then
+        if CTX.val == 'lval' then
             return '(('..TP.toc(me.tp)..'*)'..VAL..')'
         else
             return '(*(('..TP.toc(me.tp)..'*)'..VAL..'))'
@@ -336,11 +331,11 @@ error'oi'
         or TP.is_ext(arr.tp,'_','@')
         then
             VAL = V(arr,'rval')..'['..V(idx,'rval')..']'
-            if CTX.lval then
+            if CTX.val == 'lval' then
                 VAL = '(&'..VAL..')'
             end
         else
-            if CTX.lval then
+            if CTX.val == 'lval' then
                 VAL = '(('..TP.toc(me.tp)..'*)ceu_vector_geti_ex('..V(arr,'lval')..','..V(idx,'rval')..',__FILE__,__LINE__))'
             else
                 VAL = '(*(('..TP.toc(me.tp)..'*)ceu_vector_geti_ex('..V(arr,'lval')..','..V(idx,'rval')..',__FILE__,__LINE__)))'
@@ -388,7 +383,9 @@ error'oi'
     end,
     ['Op1_&'] = function (me, CTX)
         local op, e1 = unpack(me)
-        local ret = V(e1, 'lval',CTX.adt_top,CTX.adt_pool)
+        CTX = ctx_copy(CTX)
+        CTX.val = 'lval'
+        local ret = V(e1, CTX)
         if e1.var and e1.var.pre=='pool' then
             if ENV.clss[TP.id(e1.var.tp)] then
                 ret = '((tceu_pool_*)'..ret..')'
@@ -399,9 +396,10 @@ error'oi'
         return ret
     end,
     ['Op1_&&'] = function (me, CTX)
-        assert(CTX.rval, 'bug found')
         local op, e1 = unpack(me)
-        return V(e1,'lval',CTX.adt_top,CTX.adt_pool)
+        CTX = ctx_copy(CTX)
+        CTX.val = 'lval'
+        return V(e1, CTX)
     end,
     ['Op1_?'] = function (me, CTX)
         local op, e1 = unpack(me)
@@ -484,36 +482,45 @@ error'oi'
     ----------------------------------------------------------------------
 
     WCLOCKK = function (me, CTX)
+        assert(CTX.val == 'rval', 'bug found')
         return '((s32)'..me.us..')'
     end,
 
     WCLOCKE = function (me, CTX)
+        assert(CTX.val == 'rval', 'bug found')
         local exp, unit = unpack(me)
         return '((s32)'.. V(exp,CTX) .. ')*' .. SVAL.t2n[unit]
     end,
 
     RawExp = function (me, CTX)
+        assert(CTX.val == 'rval', 'bug found')
         return (unpack(me))
     end,
 
     Type = function (me, CTX)
+        assert(CTX.val == 'rval', 'bug found')
         return TP.toc(me)
     end,
 
     Nat = function (me, CTX)
+        --assert(CTX.val == 'rval', 'bug found')
         return string.sub(me[1], 2)
     end,
     SIZEOF = function (me, CTX)
+        assert(CTX.val == 'rval', 'bug found')
         local tp = unpack(me)
         return 'sizeof('..V(tp,CTX)..')'
     end,
     STRING = function (me, CTX)
+        --assert(CTX.val == 'rval', 'bug found')
         return me[1]
     end,
     NUMBER = function (me, CTX)
+        assert(CTX.val == 'rval', 'bug found')
         return me[1]
     end,
     NULL = function (me, CTX)
+        --assert(CTX.val == 'rval', 'bug found')
         return 'NULL'
     end,
 }
