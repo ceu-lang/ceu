@@ -302,6 +302,8 @@ F =
                 ps[#ps+1] = CUR(me)
             end
             ps[#ps] = '(tceu_org*)'..ps[#ps]
+        else
+            f.is_call = true
         end
         for i, exp in ipairs(exps) do
             ps[#ps+1] = V(exp, 'rval')
@@ -398,8 +400,14 @@ F =
     ['Op1_&&'] = function (me, CTX)
         local op, e1 = unpack(me)
         CTX = ctx_copy(CTX)
-        CTX.val = 'lval'
-        return V(e1, CTX)
+
+-- TODO: just use the first case?
+        --if CTX.val == 'lval' then
+            --return '(&'..V(e1, CTX)..')'
+        --else
+            CTX.val = 'lval'
+            return V(e1, CTX)
+        --end
     end,
     ['Op1_?'] = function (me, CTX)
         local op, e1 = unpack(me)
@@ -504,7 +512,11 @@ F =
 
     Nat = function (me, CTX)
         --assert(CTX.val == 'rval', 'bug found')
-        return string.sub(me[1], 2)
+        local VAL = string.sub(me[1], 2)
+        if CTX.val=='lval' and (not me.is_call) then
+            VAL = '(&'..VAL..')'
+        end
+        return VAL
     end,
     SIZEOF = function (me, CTX)
         assert(CTX.val == 'rval', 'bug found')

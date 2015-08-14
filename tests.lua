@@ -14588,8 +14588,21 @@ end
 var int& v = &_V;
 escape v;
 ]],
-    gcc = 'error: assignment makes pointer from integer without a cast',
-    --run = 10;
+    --gcc = 'error: assignment makes pointer from integer without a cast',
+    run = 10;
+}
+
+Test { [[
+native do
+    int V = 0;
+    void f (int* v) {
+        *v = 10;
+    }
+end
+_f(&&_V);
+escape _V;
+]],
+    run = 10,
 }
 
 Test { [[
@@ -14609,9 +14622,9 @@ var int& v;
 v = &_V;
 escape v;
 ]],
-    gcc = 'error: assignment makes pointer from integer without a cast',
+    --gcc = 'error: assignment makes pointer from integer without a cast',
     --env = 'line 5 : invalid attribution (int& vs _&&)',
-    --run = 10;
+    run = 10;
 }
 
 Test { [[
@@ -14639,8 +14652,8 @@ var int& v;
 v = &_V;
 escape v;
 ]],
-    gcc = 'error: assignment makes pointer from integer without a cast',
-    --run = 10;
+    --gcc = 'error: assignment makes pointer from integer without a cast',
+    run = 10;
 }
 
 Test { [[
@@ -14774,8 +14787,8 @@ end
 v = 1;
 escape _V1+_V2;
 ]],
-    gcc = 'error: assignment makes pointer from integer without a cast',
-    --run = 6,
+    --gcc = 'error: assignment makes pointer from integer without a cast',
+    run = 6,
 }
 
 Test { [[
