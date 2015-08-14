@@ -3910,6 +3910,7 @@ escape ret;
 }
 
 -- "emit e" on the stack has to die
+-- RESEARCH-1:
 Test { [[
 input void OS_START;
 
@@ -3938,7 +3939,8 @@ with
 end
 escape ret;
 ]],
-    run = { ['~>1s']=10 },
+    env = 'line 11 : wrong argument : cannot pass pointers',
+    --run = { ['~>1s']=10 },
 }
 
 Test { [[
@@ -14983,7 +14985,7 @@ do
 end
 escape v1.v+v2.v+v3.v;
 ]],
-    ref = 'line 5 : invalid attribution : requires the alias operator `&´',
+    ref = 'line 5 : invalid attribution : missing alias operator `&´',
     --run = 6,
 }
 
@@ -17047,7 +17049,8 @@ do
 end
 escape ret + *p;
 ]],
-    fin = 'line 14 : unsafe access to pointer "p" across `emit´ (tests.lua : 11)',
+    env = 'line 11 : wrong argument : cannot pass pointers',
+    --fin = 'line 14 : unsafe access to pointer "p" across `emit´ (tests.lua : 11)',
     --fin = 'line 14 : unsafe access to pointer "p" across `par/and´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
     --fin = 'line 14 : cannot `await´ again on this block',
@@ -17098,9 +17101,10 @@ do
 end
 escape ret;
 ]],
+    env = 'line 12 : wrong argument : cannot pass pointers',
     --fin = 'line 7 : invalid block for awoken pointer "p"',
     --fin = 'line 7 : wrong operator',
-    run = 1,
+    --run = 1,
 }
 
 Test { [[
@@ -17120,9 +17124,10 @@ do
 end
 escape ret;
 ]],
+    env = 'line 12 : wrong argument : cannot pass pointers',
     --fin = 'line 7 : invalid block for awoken pointer "p"',
     --fin = 'line 7 : wrong operator',
-    run = 1,
+    --run = 1,
     safety = 2,
     _ana = {
         acc = 1,
@@ -17158,9 +17163,10 @@ with
 end
 escape i;
 ]],
+    env = 'line 9 : wrong argument #2 : cannot pass pointers',
     --fin = 'line 6 : invalid block for awoken pointer "p"',
     --fin = 'line 6 : attribution to pointer with greater scope',
-    run = 1,
+    --run = 1,
 }
 Test { [[
 input void OS_START;
@@ -17177,8 +17183,9 @@ with
 end
 escape i;
 ]],
+    env = 'line 11 : wrong argument #2 : cannot pass pointers',
     --fin = 'line 6 : invalid block for awoken pointer "p"',
-    run = 1,
+    --run = 1,
 }
 
 Test { [[
@@ -17209,7 +17216,8 @@ end
 await 1s;
 escape i;
 ]],
-    run = 0,
+    env = 'line 11 : wrong argument #2 : cannot pass pointers',
+    --run = 0,
     --fin = 'line 6 : invalid block for awoken pointer "p"',
 }
 
@@ -17228,7 +17236,8 @@ do
 end
 escape i;
 ]],
-    fin = 'line 7 : wrong operator',
+    env = 'line 10 : wrong argument #2 : cannot pass pointers',
+    --fin = 'line 7 : wrong operator',
     --fin = 'line 7 : attribution does not require `finalize´',
     --run = 1,
 }
@@ -17252,7 +17261,8 @@ escape i;
 ]],
     --fin = 'line 7 : wrong operator',
     --fin = 'line 7 : attribution does not require `finalize´',
-    run = 1,
+    env = 'line 12 : wrong argument #2 : cannot pass pointers',
+    --run = 1,
 }
 
 Test { [[
@@ -17277,7 +17287,8 @@ escape i;
     --fin = 'line 7 : wrong operator',
     --fin = 'line 7 : attribution does not require `finalize´',
     --fin = 'line 14 : pointer access across `await´',
-    run = 10,
+    env = 'line 13 : wrong argument #2 : cannot pass pointers',
+    --run = 10,
 }
 
 Test { [[
@@ -21473,7 +21484,7 @@ escape 1;
 //escape p==null;
 ]],
     env = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    --ref = 'line 2 : invalid attribution : requires the alias operator `&´',
+    --ref = 'line 2 : invalid attribution : missing alias operator `&´',
     --fin = 'line 2 : attribution requires `finalize´',
 }
 
@@ -31062,7 +31073,8 @@ end
 
 escape 1;
 ]],
-    run = 1,
+    env = 'line 13 : wrong argument : cannot pass pointers',
+    --run = 1,
 }
 
 Test { [[
@@ -31092,7 +31104,8 @@ with
     escape 1;
 end
 ]],
-    run = { ['~>2s']=1 },
+    env = 'line 21 : wrong argument : cannot pass pointers',
+    --run = { ['~>2s']=1 },
 }
 
 Test { [[
@@ -31274,7 +31287,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s'] = 14 },
+    env = 'line 15 : wrong argument : cannot pass pointers',
+    --run = { ['~>1s'] = 14 },
     --fin = 'line 16 : unsafe access to pointer "t" across `emit´',
 }
 
@@ -31306,7 +31320,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s'] = 12 },
+    env = 'line 16 : wrong argument : cannot pass pointers',
+    --run = { ['~>1s'] = 12 },
 }
 
 Test { [[
@@ -31358,7 +31373,8 @@ end
 
 escape ret;
 ]],
-    run = 25,
+    env = 'line 17 : wrong argument : cannot pass pointers',
+    --run = 25,
 }
 
 Test { [[
@@ -34002,7 +34018,8 @@ var Game game;
 emit game.go => (1, 1, null);
 escape 1;
 ]],
-    run = 1;
+    env = 'line 7 : wrong argument #3 : cannot pass pointers',
+    --run = 1;
 }
 
 Test { [[
@@ -39502,7 +39519,8 @@ end
 
 escape ret;
 ]],
-    run = 10,
+    env = 'line 14 : wrong argument : cannot pass pointers',
+    --run = 10,
 }
 
 Test { [[
@@ -39527,7 +39545,8 @@ end
 
 escape ret;
 ]],
-    run = 10,
+    env = 'line 14 : wrong argument : cannot pass pointers',
+    --run = 10,
     safety = 2,
 }
 
@@ -39554,7 +39573,8 @@ end
 
 escape ret;
 ]],
-    fin = 'line 18 : unsafe access to pointer "p" across `async´'
+    env = 'line 14 : wrong argument : cannot pass pointers',
+    --fin = 'line 18 : unsafe access to pointer "p" across `async´'
 }
 
 Test { [[
@@ -39584,7 +39604,8 @@ end
 
 escape ret;
 ]],
-    fin = 'line 22 : unsafe access to pointer "p" across `async´',
+    env = 'line 18 : wrong argument : cannot pass pointers',
+    --fin = 'line 22 : unsafe access to pointer "p" across `async´',
 }
 
 Test { [[
@@ -40008,7 +40029,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>5s']=1 },
+    env = 'line 14 : wrong argument : cannot pass pointers',
+    --run = { ['~>5s']=1 },
 }
 
 Test { [[
@@ -40042,7 +40064,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>5s']=1 },
+    env = 'line 14 : wrong argument : cannot pass pointers',
+    --run = { ['~>5s']=1 },
     safety = 2,
 }
 
@@ -40076,7 +40099,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>5s']=1 },
+    env = 'line 14 : wrong argument : cannot pass pointers',
+    --run = { ['~>5s']=1 },
 }
 
 Test { [[
@@ -40111,7 +40135,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>10s']=10 },
+    env = 'line 15 : wrong argument : cannot pass pointers',
+    --run = { ['~>10s']=10 },
 }
 
 Test { [[
@@ -40146,7 +40171,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>10s']=-1 },
+    env = 'line 15 : wrong argument : cannot pass pointers',
+    --run = { ['~>10s']=-1 },
 }
 
 Test { [[
@@ -40181,7 +40207,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>10s']=10 },
+    env = 'line 15 : wrong argument : cannot pass pointers',
+    --run = { ['~>10s']=10 },
 }
 
 Test { [[
@@ -40194,7 +40221,8 @@ event T&& e;
 emit e => null;
 escape 1;
 ]],
-    run = 1;
+    env = 'line 7 : wrong argument : cannot pass pointers',
+    --run = 1;
 }
 
 Test { [[
@@ -40230,7 +40258,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+    env = 'line 16 : wrong argument : cannot pass pointers',
+    --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
 Test { [[
@@ -40265,7 +40294,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=1 },
+    env = 'line 16 : wrong argument : cannot pass pointers',
+    --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=1 },
 }
 
 Test { [[
@@ -40301,7 +40331,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+    env = 'line 16 : wrong argument : cannot pass pointers',
+    --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
 Test { [[
@@ -40337,7 +40368,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=10 },
+    env = 'line 16 : wrong argument : cannot pass pointers',
+    --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=10 },
 }
 
 Test { [[
@@ -40372,7 +40404,8 @@ end
 
 escape ret;
 ]],
-    run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
+    env = 'line 16 : wrong argument : cannot pass pointers',
+    --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
 Test { [[
@@ -40655,7 +40688,8 @@ end
 var int v = await t.ok;
 escape v;
 ]],
-    run = { ['~>2s']=1 },
+    env = 'line 25 : wrong argument : cannot pass pointers',
+    --run = { ['~>2s']=1 },
 }
 
 Test { [[
@@ -47710,7 +47744,8 @@ with
     escape ret;
 end
 ]],
-    run = { ['~>1s']=1 },
+    env = 'line 16 : wrong argument : cannot pass pointers',
+    --run = { ['~>1s']=1 },
 }
 
 Test { [[
@@ -53398,9 +53433,9 @@ do
             await this.go_off;
         end
     with
-        every qu in this.go_queue do
-            var int v = *((int&&)qu:buf);
-            if qu:evt == _CEU_IN_KEY then
+        every this.go_queue do
+            var int v = *(_QU:buf);
+            if _QU:evt == _CEU_IN_KEY then
                 async(v) do
                     emit KEY => &&v;
                 end

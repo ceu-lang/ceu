@@ -968,6 +968,21 @@ F = {
             'event "'..(var and var.id or '?')..'" is not declared')
         local ok, msg = TP.contains(var.evt.ins, ps)
         ASR(ok, me, msg)
+
+        -- NO: emit x => &&x
+        for i, t in ipairs(ps.tup) do
+            for _, v in ipairs(t.tt) do
+                if v == '&&' then
+                    if #ps.tup > 1 then
+                        ASR(false, me,
+                            'wrong argument #'..i..' : cannot pass pointers')
+                    else
+                        ASR(false, me,
+                            'wrong argument : cannot pass pointers')
+                    end
+                end
+            end
+        end
     end,
 
     EmitExt = function (me)

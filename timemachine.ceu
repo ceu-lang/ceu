@@ -68,9 +68,9 @@ native @nohold _snap_seek();
 
 #ifdef TM_QUEUE
 interface IIOTimeMachine with
-    event void         go_on;
-    event void         go_off;
-    event _tceu_queue&& go_queue;
+    event void go_on;
+    event void go_off;
+    event void go_queue;
 end
 #endif
 
@@ -350,7 +350,8 @@ do
                                 end
                                 this.locked = false;
                             else
-                                emit io.go_queue => &&(qu!);
+                                _QU := &&qu!;
+                                emit io.go_queue;
                             end
 
 #elif defined TM_DIFF
@@ -531,6 +532,7 @@ do
             u8   nxt_n;
 #endif
         } tceu_queue_state;
+        tceu_queue* QU = NULL;
     end
 
     native do

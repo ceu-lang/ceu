@@ -127,7 +127,7 @@ F = {
             me.__ref_byref = true
 
             ASR(fr.tag == 'Op1_&', me,
-                'invalid attribution : requires the alias operator `&´')
+                'invalid attribution : missing alias operator `&´')
 
             -- check scopes
 -- TODO: this code is duplicated with "fin.lua"
