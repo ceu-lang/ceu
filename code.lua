@@ -531,7 +531,7 @@ me.val..' = &CEU_'..string.upper(id)..[[_BASE;
                 --      to.root.pool
                 local set = assert( AST.par(me,'Set'), 'bug found' )
                 local _,_,_,to = unpack(set)
-                local pool = ADT.find_pool(to.fst)
+                local pool = ADT.find_pool(to)
                 pool = '('..V(pool,'lval','adt_top')..'->pool)'
 
                 LINE(me, [[
@@ -1047,7 +1047,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         local _,set,_,to = unpack(SET)
         local to_tp_id = TP.id(to.tp)
 
-        local pool = ADT.find_pool(to.fst)
+        local pool = ADT.find_pool(to)
         pool = '('..V(pool,'lval','adt_top')..'->pool)'
 
         LINE(me, [[
@@ -1299,7 +1299,7 @@ ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "acce
 ]]..V(to,'lval','adt_top')..' = '..V(fr,'lval','adt_top')..[[;
 ]])
                 else
-                    local pool = ADT.find_pool(fr.fst)
+                    local pool = ADT.find_pool(fr)
                     local pool_op = TP.check(pool.tp,'&&','-&') and '->' or '.'
                     LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL

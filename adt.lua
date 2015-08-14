@@ -7,18 +7,25 @@ ADT = {}
 -- l:CONS.tail = new List.CONS(...)
 -- ^      ^-- matches, but not first
 -- ^-- first
-function ADT.find_pool (fst)
-    local adt = ENV.adts[TP.id(fst.tp)]
-    if fst.var then
-        if adt and fst.var and fst.var.pre=='pool' and TP.check(fst.tp,'[]','-&&','-&') then
-            return fst
+local function __find_pool (lst)
+    local adt = ENV.adts[TP.id(lst.tp)]
+    if lst.var then
+        if adt and lst.var.pre=='pool' and TP.check(lst.tp,'[]','-&&','-&') then
+            if lst.__par.tag == 'Field' then
+                return lst.__par
+            else
+                return lst
+            end
         else
             return nil
         end
     else
-        assert(fst.__par, 'bug found')
-        return ADT.find_pool(fst.__par)
+        assert(lst.__par, 'bug found')
+        return ADT.find_pool(lst.__par)
     end
+end
+function ADT.find_pool (node)
+    return __find_pool(node.lst)
 end
 
 F = {
@@ -68,7 +75,7 @@ F = {
         end
 
         if set == 'adt-ref' then
-            local to_is_pool = ADT.find_pool(to.lst)
+            local to_is_pool = ADT.find_pool(to)
             if to_is_pool then
                 me[2] = 'adt-ref-pool'
             else
@@ -94,7 +101,7 @@ F = {
             ASR(ok, me, 'invalid attribution : reference : '..(msg or ''))
 
         elseif set == 'adt-constr' then
-            ASR(ADT.find_pool(to.fst), me, 'invalid attribution : not a pool')
+            ASR(ADT.find_pool(to), me, 'invalid attribution : not a pool')
 
 -- TODO: no constructor to non-pool pointers
             if to.lst.var.pre == 'pool' then

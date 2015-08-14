@@ -306,7 +306,7 @@ me.blk_body = me.blk_body or blk_body
 
     _TraverseLoop_pre = function (me)
         --[[
-        --  ret = traverse <n> in <adt> with
+        --  ret = traverse <n> in <root> with
         --      or
         --  ret = traverse <n> in <[N]> with
         --
@@ -321,7 +321,7 @@ me.blk_body = me.blk_body or blk_body
         --      var  Body*      parent;       // TODO: should be "Body*?" (opt)
         --      var  Outer&     out;
         --
-        --      var  <adt_t>[]* <n>;
+        --      var  <root_t>[]* <n>;
         --        or
         --      var  int        <n>;
         --      <interface>
@@ -373,8 +373,13 @@ me.blk_body = me.blk_body or blk_body
             --      this.xs = outer.xs
             --  end;
             root_constr = AST.copy(root)  -- avoid conflict with TMP_ITER below
-            if root_constr.tag=='Op2_.' and root_constr[2].tag=='This' then
-                root_constr[2].tag = 'Outer'
+            local _n = root_constr
+            if _n.tag == 'Op1_&&' then
+                _n = _n[2]
+            end
+            -- TODO: incomplete
+            if _n.tag=='Op2_.' and _n[2].tag=='This' then
+                _n[2].tag = 'Outer'
             end
 
             -- HACK_5: figure out root type and dimension

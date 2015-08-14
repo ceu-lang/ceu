@@ -50859,7 +50859,7 @@ end
 
 escape 1;
 ]],
-    run = 45,
+    run = 1,
 }
 Test { [[
 data List with
@@ -52198,6 +52198,32 @@ end
 escape 1;
 ]],
     env = 'line 8 : invalid pool : non-recursive data',
+}
+
+Test { [[
+data BTree with
+    tag NIL;
+or
+    tag SEQ with
+        var BTree  nxt;
+    end
+end
+
+class BTreeTraverse with
+    pool BTree[3]& btree;
+    var int x;
+do
+    var int a = this.x;
+    pool BTree[3]& btree2 = &this.btree;
+    traverse t in &&this.btree do
+        var int a = this.x;
+    end
+    escape 1;
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
