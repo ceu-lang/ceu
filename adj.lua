@@ -1517,50 +1517,7 @@ me.blk_body = me.blk_body or blk_body
     _EmitInt_pre = function (me)
         me.tag = 'EmitInt'
         me = F.EmitExt_pre(me) or me
-        --[[
         -- TODO-RESEARCH-1:
-        -- If an "emit" is on the stack and its enclosing block "self-aborts",
-        -- we need to remove the "emit" from the stack because its associated
-        -- payload may have gone out of scope:
-        --
-        --  par/or do
-        --      par/or do
-        --          var int x;
-        --          emit e => &x;
-        --      with
-        --          await e;    // aborts "emit" block w/ "x"
-        --      end
-        --  with
-        --      px = await e;
-        --      *px;            // "x" is out of scope
-        --  end
-        --
-        -- To remove, we need to "finalize" the "emit" removing itself from the
-        -- stack:
-
-        --  emit x;
-        --      ... becomes ...
-        --  do
-        --      var int fin = stack_nxti() + sizeof(tceu_stk);
-        --                      /* TODO: two levels up */
-        --      finalize with
-        --          if (fin != CEU_STACK_MAX) then
-        --              stack_get(fin)->evt = IN_NONE;
-        --          end
-        --      end
-        --      emit x;
-        --      fin = CEU_STACK_MAX;
-        --  end
-        --
-        -- Alternatives:
-        --      - forbid pointers in payloads: we could then allow an "emit" to
-        --        stay in the stack even if its surrounding block aborts
-        --      - statically detect if an "emit" can be aborted
-        --          - generate a warning ("slow code") and the code above if it
-        --            is the case
-        --
-        -- TODO: this may have solved the problem with await/awake in the same reaction
-        --]]
         return
             node('Block', me.ln,
                 node('Stmts', me.ln,

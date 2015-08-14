@@ -339,28 +339,7 @@ if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
             HALT(me, 'RET_RESTART')
         end
 
-        --[[
         -- TODO-RESEARCH-2:
-        -- When an organism dies naturally, some pending traversals might
-        -- remain in the stack with dangling pointers to the released organism:
-        --
-        --  class T with
-        --  do
-        --      par/or do
-        --          // aborts and terminates the organism
-        --      with
-        --          // continuation is cleared but still has to be traversed
-        --      end
-        --  end
-        --
-        -- The "stack_clear_org" modifies all pending traversals to the
-        -- organism to go in sequence.
-        --
-        -- Alternatives:
-        --      - TODO: currently not organism in sequence, but restart from Main
-        --          (#if 0/1 above and in ceu_stack_clear_org)
-        --      - ?
-        --]]
     end,
 
     -- TODO: C function?
