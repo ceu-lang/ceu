@@ -7,7 +7,7 @@ RUNTESTS = true
 -- Execution option for the tests:
 --VALGRIND = true
 --LUACOV = '-lluacov'
-COMPLETE = true
+--COMPLETE = true
 OS = false   -- false, true, nil(random)
 
 dofile 'pak.lua'
@@ -313,6 +313,21 @@ end
 os.execute('rm -f /tmp/_ceu_*')
 
 --[[
+-- COMPLETE=false, VALGRIND=false
+STATS = {
+    count   = 2694,
+    mem     = 0,
+    trails  = 6522,
+    bytes   = 40228346,
+}
+real	18m43.844s
+user	18m3.222s
+sys	2m24.000s
+
+
+
+
+
 -- FULL
 STATS = {
     count   = 2543,
