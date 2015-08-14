@@ -1074,7 +1074,7 @@ F = {
                 return  -- TODO: not enough
             end
 -- TODO: should be only this below
-            --return  -- checked in adt.lua
+            return  -- checked in adt.lua
 
         else
             assert(set == 'exp', 'bug found')
@@ -1085,30 +1085,15 @@ F = {
                 if to_is_opt then
                     error'not tested: originaly, it would remain "exp"'
                 end
---DBG(to.fst.var.id, fr.fst.var.id)
-                if to.fst.var and to.fst.var==fr.fst.var then
-                    me[2] = 'adt-mut'
-                else
+                if TP.check(fr.tp,'&&','-&') or fr.tag=='Op1_&' then
+                    -- <...> = & <...>
+                    -- <...> = && <...>
                     me[2] = 'adt-ref'
+                else
+                    me[2] = 'adt-mut'
                 end
 DBG(me.ln[2], me[2])
                 return
-            end
-
-            local to_tp_noopt, to_isopt = TP.pop(to.tp, '?')
-            if to_isopt then
-                local _, to_isoptref = TP.pop(to_tp_noopt, '&')
-                local ok, msg = TP.contains(to_tp_noopt, TP.pop(fr_tp,'?'))
-                ASR(ok, me, msg)
-                if to_isoptref then
-                    -- var int&? v = <...>;
-                    -- v = 10;  -- refuse
-                    ASR(fr.tag=='Op1_&', me,
-                        'invalid attribution : missing `!´ (in the left) or `&´ (in the right)')
-                end
-            else
-                local ok, msg = TP.contains(to.tp, fr_tp)
-                ASR(ok, me, msg)
             end
 
 --[[
@@ -1135,6 +1120,24 @@ DBG(me.ln[2], me[2])
                 end
             end
 ]]
+        end
+
+        if set ~= 'lua' then
+            local to_tp_noopt, to_isopt = TP.pop(to.tp, '?')
+            if to_isopt then
+                local _, to_isoptref = TP.pop(to_tp_noopt, '&')
+                local ok, msg = TP.contains(to_tp_noopt, TP.pop(fr_tp,'?'))
+                ASR(ok, me, msg)
+                if to_isoptref then
+                    -- var int&? v = <...>;
+                    -- v = 10;  -- refuse
+                    ASR(fr.tag=='Op1_&', me,
+                        'invalid attribution : missing `!´ (in the left) or `&´ (in the right)')
+                end
+            else
+                local ok, msg = TP.contains(to.tp, fr_tp)
+                ASR(ok, me, msg)
+            end
         end
 
         if (not lua_str) and (fr.tag~='Op1_&') then
@@ -1693,6 +1696,8 @@ DBG(me.ln[2], me[2])
             local node = AST.node('Var', me.ln, '$'..id)
             node.var = VAR
             node.tp  = VAR.tp
+            node.fst = node
+            node.lst = node
             node.__ast_blk = BLK[1]
             me[3] = node
         end

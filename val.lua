@@ -43,28 +43,18 @@ end
 local function tpctx2op (tp, CTX)
     local tp_id = TP.id(tp)
     local adt = ENV.adts[tp_id]
-    --local adt = TP.check(tp,tp_id) and ENV.adts[tp_id]
-    local adt_plain = adt and TP.check(tp,tp_id)
+    local adt_isrec = adt and adt.is_rec
 
-    if TP.check(tp,'&') then
-        if CTX.lval then
+    if CTX.lval then
+        if TP.check(tp,'&') then
             return ''
         else
-            if TP.check(tp,'[]','&') and TP.is_ext(tp,'_') then
-                return ''
-            else
-                return '*'
-            end
-        end
-    else
-        if CTX.lval then
             if TP.check(tp,'[]') and TP.is_ext(tp,'_') then
                 return ''
-            elseif adt and adt.is_rec then
-                if TP.check(tp,'&&','-&') then
---error'not tested'
-                    return ''
-                elseif adt_plain then
+            elseif adt_isrec then
+                if TP.check(tp,tp_id) then
+                    -- lll.CONS.tail
+                    -- has type "List", but in C is actually already "List*"
                     return ''
                 else
                     return '&'
@@ -72,10 +62,17 @@ local function tpctx2op (tp, CTX)
             else
                 return '&'
             end
-        else
-            if adt and adt.is_rec and TP.check(tp,'&&','-&') then
---error'not tested'
+        end
+    else  -- rval
+        if TP.check(tp,'&') then
+            if TP.check(tp,'[]','&') and TP.is_ext(tp,'_') then
                 return ''
+            else
+                return '*'
+            end
+        else
+            if adt_isrec and TP.check(tp,'[]','&&','-&') then
+                return '&'
             else
                 return ''
             end
@@ -85,13 +82,10 @@ end
 
 F =
 {
--- TODO: remove?
-    -- TODO: rewrite it all
-    -- called by Var, Field, Dcl_var
     __var = function (me, VAL, CTX)
         local cls = (me.org and me.org.cls) or CLS()
         local var = me.var or me
-        --local is_ref = TP.check(var.tp,'&')
+
         if var.pre=='var' or var.pre=='pool' then
             local op = tpctx2op(var.tp, CTX)
             VAL = '('..op..VAL..')'
@@ -99,51 +93,43 @@ F =
             local tp_id = TP.id(var.tp)
             local adt = ENV.adts[tp_id]
             --local adt_plain = adt and var.adt --TP.check(var.tp,tp_id)
-            if adt and adt.is_rec then
+            if var.pre=='pool' and adt and adt.is_rec then
                 if CTX.adt_pool then
                     VAL = '((tceu_pool_*)'..VAL..')'
                 elseif CTX.adt_top then
                     if TP.check(var.tp,'&&','-&') then
-                        return '(&'..VAL..')'
+                        --return '(&'..VAL..')'
                     end
                 else -- adt_root
-                    local OP  = TP.check(var.tp,'&&','-&') and '&'  or ''
-                    local PTR = TP.check(var.tp,'&&','-&') and '**' or '*'
-                    local cast = CTX.no_cast and '' or '(CEU_'..TP.id(var.tp)..PTR..')'
+                    local is_ptr = TP.check(var.tp,'&&','-&')
+                    local tp_id = 'CEU_'..TP.id(var.tp)
+                    local CAST
                     if CTX.lval then
-                        VAL = '('..cast..OP..'((tceu_adt_root*)'..VAL..')->root)'
+                        if is_ptr then
+--local ln = me.ln and me.ln[2] or 0
+--DBG(ln, var.id, '=== 1')
+CAST = '('..tp_id..'**)'
+VAL  = '(& ((tceu_adt_root*) '..VAL..')->root)'
+                        else
+--DBG(ln, var.id, '=== 2')
+CAST = '('..tp_id..' *)'
+VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
+                        end
                     else
-                        VAL = '('..cast..OP..'((tceu_adt_root*)&'..VAL..')->root)'
+                        if is_ptr then
+--DBG(ln, var.id, '=== 3')
+CAST = '('..tp_id..' *)'
+VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
+                        else
+error'TODO'
+                        end
+                    end
+                    if not CTX.no_cast then
+                        VAL = '('..CAST..VAL..')'
                     end
                 end
             end
 
---[[
-        elseif var.pre == 'pool' then
-            -- normalize all pool acesses to pointers to it
-            -- (because of interface accesses that must be done through a pointer)
-            if ENV.adts[TP.id(var.tp)] then
-                if CTX.adt_pool then
-                    VAL = '((tceu_pool_*)'..VAL..')'
-                elseif CTX.adt_root then
-                    if TP.check(var.tp,'&') then
-                        VAL = '('..VAL..')'
-                    else
-                        VAL = '(&'..VAL..')'
-                    end
-                else
-                    local cast = ((CTX.lval and '') or '(CEU_'..TP.id(var.tp)..'*)')
-                    if TP.check(var.tp,'&') then
-                        VAL = '('..cast..'('..VAL..')->root)'
-                    else
-                        VAL = '('..cast..'('..VAL..').root)'
-                    end
-                end
-            elseif not (TP.check(var.tp,'&&') or TP.check(var.tp,'&')) then
-                VAL = '('..VAL..')'
-                VAL = '((tceu_pool_*)'..VAL..')'
-            end
-]]
         elseif var.pre == 'function' then
             VAL = 'CEU_'..cls.id..'_'..var.id
         elseif var.pre == 'isr' then
@@ -164,14 +150,12 @@ F =
 
     Dcl_var = 'Var',
     Var = function (me, CTX)
--- TODO: move to __var
         local var = me.var
-        local VAL
 
         local tp_id = TP.id(var.tp)
         local adt = ENV.adts[tp_id]
-        --local adt_plain = adt and var.adt --TP.check(var.tp,tp_id)
 
+        local VAL
         if adt and adt.is_rec and CTX.adt_pool then
             VAL = CUR(me, '_'..var.id_)
         elseif var.isTmp then
@@ -355,13 +339,6 @@ error'oi'
             if CTX.lval then
                 VAL = '(&'..VAL..')'
             end
---[[
-            VAL = V(arr,'lval')..'['..V(idx,'rval')..']'
-            if cls and (not TP.check(me.tp,'&&')) then
-                VAL = '(&'..VAL..')'
-                    -- class accesses must be normalized to references
-            end
-]]
         else
             if CTX.lval then
                 VAL = '(('..TP.toc(me.tp)..'*)ceu_vector_geti_ex('..V(arr,'lval')..','..V(idx,'rval')..',__FILE__,__LINE__))'
@@ -407,23 +384,6 @@ error'oi'
 
     ['Op1_*'] = function (me, CTX)
         local op, e1 = unpack(me)
-
--- TODO: hacky
---[[
-        local var = e1.var
-        if var then
-            local tp_id = TP.id(var.tp)
-            local adt = ENV.adts[tp_id]
-            if adt and adt.is_rec then
-                if TP.check(e1.tp,tp_id,'-[]','-&','&&') then
-                    -- pool List[]&& lll;
-                    -- lll:*
-                    op = ''
-                end
-            end
-        end
-]]
-
         return '('..ceu2c(op)..V(e1,CTX)..')'
     end,
     ['Op1_&'] = function (me, CTX)
@@ -472,9 +432,7 @@ error'oi'
         local op, e1, id = unpack(me)
         local VAL
         if me.__env_tag then
-            local op_fld = '.'
-            local op_ptr = '&'
--- TODO: REMOVE both above
+            local op_fld = '.' -- TODO: REMOVE
             local tag
             -- [union.TAG].field is 'void'
             if TP.tostr(e1.tp) ~= 'void' then
@@ -482,7 +440,6 @@ error'oi'
                 local adt = ENV.adts[TP.id(e1.tp)]
                 if adt.is_rec then
                     op_fld  = '->'
-                    op_ptr  = ''
                 end
             end
 

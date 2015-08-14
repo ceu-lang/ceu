@@ -1,3 +1,26 @@
+ADT = {}
+
+-- attributions/constructors need access to the pool
+-- the pool is the first "e1" that matches adt type:
+-- l = new List.CONS(...)
+-- ^-- first
+-- l:CONS.tail = new List.CONS(...)
+-- ^      ^-- matches, but not first
+-- ^-- first
+function ADT.find_pool (fst)
+    local adt = ENV.adts[TP.id(fst.tp)]
+    if fst.var then
+        if adt and fst.var and fst.var.pre=='pool' and TP.check(fst.tp,'[]','-&&','-&') then
+            return fst
+        else
+            return nil
+        end
+    else
+        assert(fst.__par, 'bug found')
+        return ADT.find_pool(fst.__par)
+    end
+end
+
 F = {
     Dcl_adt = function (me)
         local id, op = unpack(me)
@@ -45,13 +68,34 @@ F = {
         end
 
         if set == 'adt-ref' then
-            ASR(to == to.fst, me,
-                'invalid attribution : new reference only to root')
+            local to_is_pool = ADT.find_pool(to.lst)
+            if to_is_pool then
+                me[2] = 'adt-ref-pool'
+            else
+                me[2] = 'adt-ref-var'
+            end
+
             ASR(TP.check(to.tp,'&') or TP.check(to.tp,'&&','-&'), me,
-                'invalid attribution : new reference only to pointer or alias')
--- TODO: same test for fr.tp (many tests will fail correctly, including the BUG on top of tests.lua)
+                'invalid attribution : destination is not a reference')
+
+            -- TODO: incomplete
+            if to.lst.__par.tag == 'Op2_.' then
+                if to.lst.__par[2] == to.lst then
+                    -- l.CONS.tail = <...>
+                    ASR(false, me,
+                        'invalid attribution : destination must be the root')
+                end
+            end
+
+            -- T [] && &  =>  T
+            local to_tp = TP.pop(TP.pop(TP.pop(to.tp,'&'),'&&'),'[]')
+            local fr_tp = TP.pop(TP.pop(TP.pop(fr.tp,'&'),'&&'),'[]')
+            local ok, msg = TP.contains(to_tp, fr_tp)
+            ASR(ok, me, 'invalid attribution : reference : '..(msg or ''))
 
         elseif set == 'adt-constr' then
+            ASR(ADT.find_pool(to.fst), me, 'invalid attribution : not a pool')
+
 -- TODO: no constructor to non-pool pointers
             if to.lst.var.pre == 'pool' then
                 -- [OK]
@@ -69,16 +113,31 @@ F = {
                 -- [NO]
                 -- var L&& l = <...>;
                 -- l = new (...)
+error'bug found'
+-- not reachable anymore, remove ASR
                 ASR(false, me, 'invalid attribution : must assign to recursive field')
             end
 
         elseif set == 'adt-mut' then
+             ASR(to.fst.var==fr.fst.var, me,
+                'invalid attribution : mutation : cannot mix data sources')
+
+            -- pool List[]&& l;
+            -- l = ...
+            if TP.check(to.tp,'&&','-&') then
+                if to.__par.tag ~= 'Op2_.' then     -- TODO: incomplete
+                    ASR(false, me,
+                        'invalid attribution : mutation : destination cannot be a pointer')
+                end
+            end
+
             -- [OK]: ptr  = l2.*
             -- [OK]: l1.* = l1.*
             -- [NO]: l1.* = l2.*
             ASR((TP.check(to.tp,'&&','-&') and to.lst.var==to.var) or
                  to.fst.var==fr.fst.var, me,
-                'cannot mix recursive data sources')
+                'bug found') -- shouldn't be reachable, otherwise change to msg
+                --'cannot mix recursive data sources')
 
             --  [OK]: "to" is prefix of "fr" (changing parent to a child)
             --      l = l.CONS.tail     // OK
@@ -95,9 +154,12 @@ F = {
             assert(to.var and fr.var, 'bug found')
             local ok = (to.var == fr.var)
             if to.__par.tag == 'Op1_*' then
-                -- l:*
+                -- l:* = l:*
                 assert(fr.__par.tag=='Op1_*', 'bug found')
                 to = to.__par
+                fr = fr.__par
+            elseif fr.__par.tag == 'Op1_*' then
+                -- l = l:*
                 fr = fr.__par
             end
 

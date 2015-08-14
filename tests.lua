@@ -9,1130 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int   head;
-        var List  tail;
-    end
-end
-
-pool List[10] list;
-
-var int i = 10;
-traverse l in list do
-    list = new List.CONS(i, List.NIL());
-end
-
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var Tree left;
-    end
-end
-var Tree&& n;
-if false then
-    await *n;
-end
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var Tree left;
-    end
-end
-class Body with
-    var Tree&& n;
-do
-    if false then
-        await *(this.n);
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree  left;
-        var Tree  right;
-    end
-end
-
-pool Tree[3] tree;
-var Tree&& n1;
-var Tree&& n2;
-
-n1 = n2;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree  left;
-        var Tree  right;
-    end
-end
-
-pool Tree[3] tree;
-
-class Body with
-    var Tree&& n;
-do
-    spawn Body with
-        this.n = &&n:NODE.left;
-    end;
-end
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree  left;
-        var Tree  right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-class Body with
-    pool  Body[]& bodies;
-    var   Tree&&   n;
-    var   int&    sum;
-    event int     ok;
-do
-    watching *n do
-        var int i = this.sum;
-        if n:NODE then
-            var Body&&? left =
-                spawn Body in this.bodies with
-                    this.bodies = &bodies;
-                    this.n      = &&n:NODE.left;
-                    this.sum    = &sum;
-                end;
-            if left? then
-                watching *left! do
-                    await left!:ok;
-                end
-            end
-
-            this.sum = this.sum + i + n:NODE.v;
-
-            var Body&&? right =
-                spawn Body in this.bodies with
-                    this.bodies = &bodies;
-                    this.n      = &&n:NODE.right;
-                    this.sum    = &sum;
-                end;
-            if right? then
-                watching *right! do
-                    await right!:ok;
-                end
-            end
-
-            //do/spawn Body in this.bodies with
-                //this.n = n:NODE.left;
-            //end;
-        end
-    end
-    await 1s;
-    emit this.ok => 1;
-end
-
-var int sum = 0;
-
-pool Body[7] bodies;
-do Body with
-    this.bodies = &bodies;
-    this.n      = tree;
-    this.sum    = &sum;
-end;
-
-escape sum;
-]],
-    wrn = 'line 26 : unbounded recursive spawn',
-    run = { ['~>10s'] = 9 },
-}
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
-end
-
-pool List[] list;
-
-list = new List.CONS(10, List.NIL());
-
-pool List[]& lll = &list;
-
-escape lll.CONS.head;
-]],
-    run = 10,
-}
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
-end
-
-pool List[] list;
-
-list = new List.CONS(10, List.NIL());
-
-pool List[]&& lll = &&list;
-
-escape lll:CONS.head;
-]],
-    run = 10,
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
-end
-
-pool List[] list;
-var List&& l = list;
-
-escape 1;
-]],
-    run = 1,
-    --env = 'line 15 : invalid operand to unary "&&"',
-    --env = 'line 15 : data must be a pointer',
-}
-
---=-=-=-=-=-=-
-
-Test { [[
-interface IGUI_Component with
-    var _void&? nat;
-end
-
-class EnterLeave with
-    var IGUI_Component& gui;
-do
-    var _void&& g = &&(gui.nat!);
-end
-escape 1;
-]],
-    run = 1,
-}
--- 47370
-Test { [[
-var int? i = 1;
-escape i!;
-]],
-    run = 1,
-}
--- 46363
-Test { [[
-data Ball with
-    var int x;
-end
-
-data Leaf with
-    tag NOTHING;
-or
-    tag TWEEN with
-        var Ball& ball;
-    end
-end
-
-class LeafHandler with
-    var Leaf& leaf;
-do
-    var Ball& ball = &leaf.TWEEN.ball;
-    escape ball.x;
-end
-
-var Ball ball = Ball(10);
-var Leaf leaf = Leaf.TWEEN(&ball);
-
-var int x = do LeafHandler with
-                this.leaf = &leaf;
-            end;
-
-escape x;
-]],
-    run = 10,
-}
--- 46241
-Test { [[
-data D with
-    var int x;
-end
-
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var D& d;
-    end
-end
-
-var D d = D(10);
-var E e = E.X(&d);
-
-escape e.X.d.x;
-]],
-    run = 10,
-}
-Test { [[
-data Split with
-    tag HORIZONTAL;
-or
-    tag VERTICAL;
-end
-
-data Grid with
-    tag EMPTY;
-or
-    tag SPLIT with
-        var Split dir;
-        var Grid  one;
-        var Grid  two;
-    end
-end
-
-pool Grid[] g;
-g = new Grid.SPLIT(Split.HORIZONTAL(), Grid.EMPTY(), Grid.EMPTY());
-
-escape g.SPLIT.one.EMPTY + g.SPLIT.two.EMPTY + g.SPLIT.dir.HORIZONTAL;
-]],
-    run = 3,
-}
-Test { [[
-class T with
-    var float& v;
-do
-    await FOREVER;
-end
-
-data D with
-    var float v;
-end
-
-var D d;
-var T _ with
-    this.v = &d.v;   // 13
-end;
-
-escape 1;
-]],
-    run = 1,
-}
--- 45890
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
-end
-pool List[10] lll;
-escape lll.NIL;
-]],
-    run = 1,
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
-end
-pool List[10] lll;
-lll = new List.CONS(1,
-            List.CONS(2,
-                List.NIL()));
-escape lll.CONS.tail.CONS.head;
-]],
-    run = 2,
-}
--- 21290
-Test { [[
-interface I with
-    var _int[10]& vs;
-end
-
-class T with
-    interface I;
-do
-end
-
-var _int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-
-var I&& i = &&t;
-
-i:vs[0] = 3;
-
-escape i:vs[0];
-]],
-    run = 3,
-}
-Test { [[
-interface I with
-    var int[10]& vs;
-end
-
-class T with
-    interface I;
-do
-end
-
-var int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-
-var I&& i = &&t;
-
-i:vs = [ 0 ];
-i:vs[0] = 3;
-
-escape i:vs[0];
-]],
-    run = 3,
-}
-Test { [[
-interface I with
-    var int[10]& vs;
-end
-
-class T with
-    interface I;
-do
-    this.vs = [1];
-end
-
-var int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-t.vs[0] = t.vs[0] + 2;
-
-var I&& i = &&t;
-
-i:vs[0] = i:vs[0] * 3;
-
-escape t.vs[0];
-]],
-    run = 9,
-}
--- 39800
-Test { [[
-native @plain _int;
-
-interface Global with
-    var _int[10] vs;
-end
-var _int[10]  vs;
-
-global:vs[0] = 1;
-
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-native @plain _int;
-
-interface I with
-    var _int[10] vs;
-end
-
-interface Global with
-    interface I;
-end
-var _int[10]  vs;
-
-class T with
-    interface I;
-do
-    global:vs[0] = 1;
-end
-
-vs[0] = 1;
-global:vs[0] = 1;
-
-var T t;
-t.vs[0] = 1;
-
-var I&& i = &&t;
-i:vs[0] = 1;
-
-escape 1;
-]],
-    run = 1,
-}
-
--- 31965
-
-Test { [[
-class U with do end;
-
-interface I with
-    pool U[10] us;
-end
-
-class T with
-    interface I;
-do
-end
-
-var T t;
-var I&& i = &&t;
-spawn U in i:us;
-
-escape 1;
-]],
-    run = 1,
-}
-
--- 31033
-Test { [[
-class T with do end;
-class U with
-    pool T[]& ts;
-do
-end
-pool T[] ts1;
-pool T[2] ts2;
-var U _ with
-    this.ts = &ts1;
-end;
-var U _ with
-    this.ts = &ts2;
-end;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-class Body with
-    pool Body[]& bodies;
-    var  int&     sum;
-do
-    var Body&&? nested =
-        spawn Body in bodies with
-            this.bodies = &bodies;
-            this.sum    = &sum;
-        end;
-    if nested? then
-        await *nested!;
-    end
-    sum = sum + 1;
-end
-
-pool Body[] bodies;
-var  int     sum = 0;
-
-var Body b with
-    this.bodies = &bodies;
-    this.sum    = &sum;
-end;
-
-escape sum;
-]],
-    wrn = 'line 6 : unbounded recursive spawn',
-    run = 101,
-}
-
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v! = 20;
-end
-do T with
-    this.v = &v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-
--- 30176
-Test { [[
-class T with
-    var int a;
-do
-    this.a = 1;
-    await FOREVER;
-end
-pool T[1] ts;
-var T&&? a;
-do
-    var T&&? aa = spawn T in ts;
-        a = aa;
-end
-var int sum = 0;
-if a? then
-    watching *a! do
-        var T&&? b = spawn T in ts;   // fails (a is free on end)
-        sum = a? and (not b?);// and a! !=b;
-    end
-end
-escape sum;
-]],
-    --fin = 'line 15 : pointer access across `await´',
-    run = 1,
-}
--- 29832
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-pool T[1] ts;
-var T&&?  ok1 = spawn T in ts with
-                this.v = 10;
-              end;
-var int ok2 = 0;// spawn T in ts;
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
-end
-escape (ok1?) + ok2 + ret + 1;
-]],
-    --fin = 'line 14 : pointer access across `await´',
-    run = 1,
-}
--- 28318
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-interface Global with
-    var T& t;
-end
-
-var T t_;
-var T& t = &t_;
-global:t = &t;
-
-escape global:t.v;
-]],
-    run = 10,
-}
-
--- 21393
-Test { [[
-class T with
-do
-    await FOREVER;
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t];
-escape ts[0]! == &&t;
-]],
-    run = 1,
-}
--- 21242
-Test { [[
-class T with
-    var int v = 10;
-do
-    await FOREVER;
-end
-
-var T t;
-var T&&? p = &&t;
-
-escape t.v + p!:v;
-]],
-    run = 20,
-}
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-var T t;
-var T&&? p = &&t;
-
-escape t.v + p!:v;
-]],
-    run = '9] runtime error: invalid tag',
-}
--- 20942
-Test { [[
-interface I with
-    var int& v;
-end
-
-class T with
-    interface I;
-do
-    this.v = 1;
-end
-
-var int v;
-var T t with
-    this.v = &v;
-end;
-t.v = t.v + 2;
-
-var I&& i = &&t;
-i:v = i:v * 3;
-
-escape t.v;
-]],
-    run = 9,
-}
-
--- 25292
-Test { [[
-var int i = 0;
-class T with
-    var int& i;
-do
-    var int v = 10;
-    i = v;
-end
-var T t with
-    this.i = &outer.i;
-end;
-escape i;
-]],
-    --ref = 'line 9 : cannot assign to reference bounded inside the class',
-    run = 10,
-}
--- 25257
-Test { [[
-class T with
-do
-end
-spawn T;
-escape 10;
-]],
-    --ref = 'line 7 : field "i" must be assigned',
-    run = 10,
-}
--- 24983
-Test { [[
-class T3 with
-    var int v3;
-do
-end
-class T2 with
-    var T3&& t3;
-    var int v;
-do
-    var T3 t33;
-    this.t3 = &&t33;
-end
-class T with
-    var int v,v2;
-    var T2&& x;
-do
-    var T2 xx;
-    x = &&xx;
-end
-var T a;
-a.v = 5;
-a.x:v = 5;
-a.v2 = 10;
-a.x:t3:v3 = 15;
-escape a . v + a.x :v + a .v2 + a.x  :  t3 : v3;
-]],
-    run = 35,
-}
-
--- 24427
-Test { [[
-class T with
-    var int a, b;
-do
-end
-
-var int i = 0;
-
-var T[2] y with
-    i = i + 1;
-    this.a = i*10;
-end;
-
-var T x;
-    x.a = 30;
-
-escape x.a + y[0].a + y[1].a;
-]],
-    run = 60,
-}
-
--- 24390
-Test { [[
-class T with
-    var int a, b;
-do
-end
-
-var T[2] y;
-    y[0].a = 10;
-    y[1].a = 20;
-
-var T x;
-    x.a = 30;
-
-escape x.a + y[0].a + y[1].a;
-]],
-    run = 60,
-}
-
--- 24324
-Test { [[
-class T with
-    var int a, b;
-do
-end
-
-var T y;
-
-var T x;
-    x.a = 10;
-
-input void OS_START;
-await OS_START;
-
-escape x.a;
-]],
-    run = 10,
-}
-
--- 21526
-Test { [[
-native _V;
-native do
-    int V[2][2] = { {1, 2}, {3, 4} };
-end
-
-_V[0][1] = 5;
-escape _V[1][0] + _V[0][1];
-]],
-    run = 8,
-}
-
--- 15549
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v! = 20;
-end
-do T with
-    this.v = &v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
--- 24308
-Test { [[
-class T with
-    var int a, b;
-do
-end
-
-var T[2] y;
-    y[0].a = 10;
-    y[1].a = 20;
-
-var T x;
-    x.a = 30;
-
-escape x.a + y[0].a + y[1].a;
-]],
-    run = 60,
-}
-
--- 20660
-Test { [[
-native @nohold _f();
-native do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-var int[2] a = [1,2];
-_f(&&a);
-escape a[0] + a[1];
-]],
-    run = 5,
-}
-
--- 20298
-Test { [[
-native @nohold _f();
-native do
-    void f (int* p) {
-        *p = 1;
-    }
-end
-var _int[2] a;
-var int b;
-par/and do
-    b = 2;
-with
-    _f(&&a);
-end
-escape a[0] + b;
-]],
-    run = 3,
-}
-
--- 20229
-Test { [[
-native do
-    typedef struct {
-        int v[10];
-        int c;
-    } T;
-end
-native _T = 44;
-
-var _T[10] vec;
-var int i = 110;
-
-vec[3].v[5] = 10;
-vec[9].c = 100;
-escape i + vec[9].c + vec[3].v[5];
-]],
-    run = 220,
-}
-
--- 17508
-Test { [[
-native do
-    void* f () {
-        return NULL;
-    }
-end
-
-var void&? ptr;
-finalize
-    ptr = &_f();
-with
-    nothing;
-end
-
-escape &&ptr! == &&ptr!;  // ptr.SOME fails
-]],
-    asr = true,
-}
-
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v! = 20;
-end
-do T with
-    this.v = &v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
--- 15315
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v1;
-finalize
-    v1 = &_getV();
-with
-    nothing;
-end
-v1 = 20;
-
-var int&? v2;
-finalize
-    v2 = &_getV();
-with
-    nothing;
-end
-
-escape v1!+v2!+_V;
-]],
-    env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-}
--- 14825
-Test { [[
-native do
-    int V = 10;
-    int* fff (int v) {
-        V += v;
-        return &V;
-    }
-end
-var int   v = 1;
-var int&& p = &&v;
-var int&? r;
-finalize
-    r = &_fff(*p);
-with
-    nothing;
-end
-escape r!;
-]],
-    run = 11,
-}
-
-Test { [[
-var int a;
-var int& pa = &a;
-async (pa) do
-    emit 1min;
-    pa = 10;
-end;
-escape a + 1;
-]],
-    run = 11,
-}
-
-Test { [[
-interface I with
-    var int& v;
-end
-
-class T with
-    interface I;
-do
-    this.v = 1;
-end
-
-var int v;
-var T t with
-    this.v = &v;
-end;
-t.v = t.v + 2;
-
-var I&& i = &&t;
-i:v = i:v * 3;
-
-escape t.v;
-]],
-    run = 9,
-}
--- 28174
-Test { [[
-interface Global with
-    var int& v;
-end
-var int  um = 1;
-var int& v = &um;
-escape global:v;
-]],
-    run = 1,
-}
+--]===]
 
 -- BUG: must enforce alias
 Test { [[
@@ -1254,6 +131,23 @@ escape v;
     todo = 'bug',
     fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
 }
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+var List l;
+escape 1;
+]],
+    todo = 'List is recursive',
+    run = 1,
+}
+
 --do return end
 
 -------------------------------------------------------------------------------
@@ -32076,7 +30970,7 @@ end;
 pool Body[7] bodies;
 do Body with
     this.bodies = &bodies;
-    this.n      = tree;
+    this.n      = &&tree;
     this.sum    = &sum;
 end;
 
@@ -45974,7 +44868,6 @@ escape ptr2==&&a;
 }
 
 -- ALGEBRAIC DATATYPES (ADTS)
---]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -46034,6 +44927,7 @@ end
 
 --[==[
 -- HERE:
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -46308,7 +45202,8 @@ var List l = new List.CONS(1,
 escape l.CONS.tail.CONS.head;
 ]],
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
-    adt = 'line 9 : invalid attribution : must assign to recursive field',
+    --adt = 'line 9 : invalid attribution : must assign to recursive field',
+    adt = 'line 9 : invalid attribution : not a pool',
 }
 
 Test { [[
@@ -46345,7 +45240,8 @@ escape l:CONS.tail.CONS.head;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
-    adt = 'line 9 : invalid attribution : must assign to recursive field',
+    --adt = 'line 9 : invalid attribution : must assign to recursive field',
+    adt = 'line 9 : invalid attribution : not a pool',
 }
 
 Test { [[
@@ -47088,9 +45984,19 @@ var List&& p = l.CONS.tail;
 await 1s;
 escape p:CONS.head;
 ]],
-    --adt = 'line 52 : cannot mix recursive data sources',
+    adt = 'line 52 : invalid attribution : mutation : cannot mix data sources',
+    --fin = 'line 54 : unsafe access to pointer "p" across `await´',
+    --adt = 'line 52 : invalid attribution : value is not a reference',
+}
+Test { DATA..[[
+pool List[] l = new List.CONS(1, List.NIL());
+var List&& p = &&l.CONS.tail;
+await 1s;
+escape p:CONS.head;
+]],
+    --adt = 'line 52 : mutation : cannot mix data sources',
     fin = 'line 54 : unsafe access to pointer "p" across `await´',
-    --env = 'line 52 : types mismatch (`List&&´ <= `List´)',
+    --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
 pool List[] l = new List.CONS(1, List.NIL());
@@ -47141,7 +46047,19 @@ pool List[] l3 = new List.CONS(2, List.CONS(1, List.NIL()));
 l3.CONS.tail = l1;
 escape l3.CONS.head + l3.CONS.tail.NIL;
 ]],
-    adt = 'line 54 : invalid attribution : new reference only to root',
+    --adt = 'line 54 : invalid attribution : value is not a reference',
+    --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
+    adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
+    run = 3,
+}
+Test { DATA..[[
+pool List[] l1;
+l1 = new List.NIL();
+pool List[] l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+l3.CONS.tail = &&l1;
+escape l3.CONS.head + l3.CONS.tail.NIL;
+]],
+    adt = 'line 54 : invalid attribution : destination is not a reference',
     --adt = 'line 54 : cannot mix recursive data sources',
     run = 3,
 }
@@ -47155,7 +46073,20 @@ l2 = new List.CONS(1, List.NIL());
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1);
 ]],
-    adt = 'line 55 : invalid attribution : new reference only to pointer or alias',
+    --adt = 'line 55 : invalid attribution : value is not a reference',
+    adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
+    run = 2,
+}
+Test { DATA..[[
+pool List[] l1;
+pool List[] l2;
+l1 = new List.NIL();
+l2 = new List.CONS(1, List.NIL());
+l1 = &&l2;
+escape l1.CONS + (l1.CONS.head==1);
+]],
+    adt = 'line 55 : invalid attribution : destination is not a reference',
+    --adt = 'line 55 : invalid attribution : new reference only to pointer or alias',
     --adt = 'line 55 : cannot mix recursive data sources',
     run = 2,
 }
@@ -47165,8 +46096,8 @@ pool List[] l1 = new List.NIL(),
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
 ]],
-    adt = 'line 53 : invalid attribution : new reference only to pointer or alias',
-    --adt = 'line 53 : cannot mix recursive data sources',
+    adt = 'line 53 : invalid attribution : value is not a reference',
+    adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
     run = 3,
 }
 
@@ -47179,7 +46110,20 @@ escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
        (l2.CONS.head==2) + (l2.CONS.tail.CONS.head==1) +
        (l1.CONS.tail.CONS.tail.CONS.tail.CONS.head==2);
 ]],
-    adt = 'line 53 : invalid attribution : new reference only to root',
+    --adt = 'line 53 : invalid attribution : value is not a reference',
+    adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
+    run = 5,
+}
+
+Test { DATA..[[
+pool List[] l1 = new List.CONS(1, List.NIL()),
+            l2 = new List.CONS(2, List.NIL());
+l1.CONS.tail = &&l2;
+escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
+       (l2.CONS.head==2) + (l2.CONS.tail.CONS.head==1) +
+       (l1.CONS.tail.CONS.tail.CONS.tail.CONS.head==2);
+]],
+    adt = 'line 53 : invalid attribution : destination is not a reference',
     --adt = 'line 53 : cannot mix recursive data sources',
     run = 5,
 }
@@ -47194,8 +46138,9 @@ l2.CONS.tail = l1;
 
 escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.head;
 ]],
-    adt = 'line 54 : invalid attribution : new reference only to root',
-    --adt = 'line 54 : cannot mix recursive data sources',
+    --adt = 'line 54 : invalid attribution : value is not a reference',
+    --adt = 'line 54 : invalid attribution : new reference only to root',
+    adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
     run = 6,
 }
 
@@ -47207,7 +46152,22 @@ l2 = new List.CONS(1, List.NIL());
 l1 = l2.CONS.tail;
 escape l1.NIL;
 ]],
-    adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
+    --adt = 'line 54 : invalid attribution : value is not a reference',
+    --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
+    adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
+    run = 1,
+}
+
+-- not circular
+Test { DATA..[[
+pool List[] l1, l2;
+l1 = new List.NIL();
+l2 = new List.CONS(1, List.NIL());
+l1 = &&l2.CONS.tail;
+escape l1.NIL;
+]],
+    adt = 'line 54 : invalid attribution : destination is not a reference',
+    --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
     --adt = 'line 54 : cannot mix recursive data sources',
     run = 1,
 }
@@ -48141,19 +47101,19 @@ l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
 escape l1.CONS.tail.CONS.head;
 ]],
-    adt = 'line 54 : invalid attribution : new reference only to root',
-    --adt = 'line 54 : cannot mix recursive data sources',
+    --adt = 'line 54 : invalid attribution : value is not a reference',
+    adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
 }
 Test { DATA..[[
 pool List[] l1 = new List.CONS(1, List.NIL());
 do
     pool List[] l2;
     l2 = new List.CONS(2, List.NIL());
-    l1.CONS.tail = l2;
+    l1.CONS.tail = &&l2;
 end
 escape l1.CONS.tail.CONS.head;
 ]],
-    adt = 'line 55 : invalid attribution : new reference only to root',
+    adt = 'line 55 : invalid attribution : destination is not a reference',
     --adt = 'line 55 : cannot mix recursive data sources',
     --fin = 'line 54 : attribution to pointer with greater scope',
 }
@@ -48164,8 +47124,8 @@ pool List[2] l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
 escape l1.CONS.tail.CONS.head;
 ]],
-    adt = 'line 54 : invalid attribution : new reference only to root',
-    --adt = 'line 54 : cannot mix recursive data sources',
+    --adt = 'line 54 : invalid attribution : value is not a reference',
+    adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
 }
 Test { DATA..[[
 pool List[2] l1;
@@ -48175,8 +47135,8 @@ l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
 escape l1.CONS.tail.CONS.head;
 ]],
-    adt = 'line 55 : invalid attribution : new reference only to root',
-    --adt = 'line 55 : cannot mix recursive data sources',
+    --adt = 'line 55 : invalid attribution : value is not a reference',
+    adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
 }
 
 Test { DATA..[[
@@ -48201,7 +47161,7 @@ l.CONS.tail.CONS.tail = new List.CONS(4, List.NIL());
                                 // 10
 
 pool List[] l3 = new List.CONS(3, List.NIL());
-l.CONS.tail.CONS.tail = l3;
+l.CONS.tail.CONS.tail = &&l3;
 _assert(l.CONS.tail.CONS.head == 3);
 _assert(l.CONS.tail.CONS.tail.CONS.head == 4);
 ret = ret + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.CONS.head;
@@ -48218,7 +47178,8 @@ l.CONS.tail.CONS.tail.CONS.tail =
 
 escape ret;
 ]],
-    adt = 'line 72 : invalid attribution : new reference only to root',
+    adt = 'line 72 : invalid attribution : destination is not a reference',
+    --adt = 'line 72 : invalid attribution : new reference only to root',
     --adt = 'line 72 : cannot mix recursive data sources',
     run = -1,
 }
@@ -48393,7 +47354,6 @@ escape ((*i).t).x!;
     run = 10,
 }
 
-]==]
 Test { [[
 data List with
     tag NIL;
@@ -48405,11 +47365,32 @@ or
 end
 
 pool List[] list;
-var List&& l = list;
+var List&& lll = &&list;
 
 escape 1;
 ]],
     run = 1,
+    --env = 'line 15 : invalid operand to unary "&&"',
+    --env = 'line 15 : data must be a pointer',
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+var List&& lll = list;
+
+escape 1;
+]],
+    adt = 'line 11 : invalid attribution : mutation : cannot mix data sources',
+    --adt = 'line 11 : invalid attribution : types mismatch (`List&&´ <= `List[]´)',
+    --run = 1,
     --env = 'line 15 : invalid operand to unary "&&"',
     --env = 'line 15 : data must be a pointer',
 }
@@ -48507,6 +47488,62 @@ escape l:CONS +
         list.CONS.tail.CONS.head +
         list.CONS.tail.CONS.tail.CONS.head;
 ]],
+    adt = 'line 16 : invalid attribution : mutation : destination cannot be a pointer',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+pool List[]&& l = &&list;
+
+l:CONS.tail = new List.CONS(9, List.NIL());
+*l = l:CONS.tail;
+
+l:CONS.tail = new List.CONS(8, List.NIL());
+*l = l:CONS.tail;
+
+escape l:CONS +
+        list.CONS.head +
+        list.CONS.tail.NIL;
+]],
+    run = 10,
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+pool List[]&& l = &&list;
+
+l:CONS.tail = new List.CONS(9, List.NIL());
+l = &&l:CONS.tail;
+
+l:CONS.tail = new List.CONS(8, List.NIL());
+l = &&l:CONS.tail;
+
+escape l:CONS +
+        list.CONS.head +
+        list.CONS.tail.CONS.head +
+        list.CONS.tail.CONS.tail.CONS.head;
+]],
     run = 28,
 }
 
@@ -48526,13 +47563,13 @@ list = new List.CONS(10, List.NIL());
 pool List[]&& l = &&list;
 
 l:CONS.tail = new List.CONS(9, List.NIL());
-l = l:CONS.tail;
+l = &&l:CONS.tail;
 
 watching *l do
     await 1s;
 
     l:CONS.tail = new List.CONS(8, List.NIL());
-    l = l:CONS.tail;
+    l = &&l:CONS.tail;
 
     escape l:CONS.head +
             list.CONS.head +
@@ -48561,14 +47598,14 @@ list = new List.CONS(10, List.NIL());
 pool List[]&& lll = &&list;
 
 lll:CONS.tail = new List.CONS(9, List.NIL());
-lll = lll:CONS.tail;
+lll = &&lll:CONS.tail;
 
 par do
     watching *lll do
         await 1s;
 
         lll:CONS.tail = new List.CONS(8, List.NIL());
-        lll = lll:CONS.tail;
+        lll = &&lll:CONS.tail;
 
         escape lll:CONS.head +
                 list.CONS.head +
@@ -48599,14 +47636,14 @@ pool List[] list = new List.CONS(10, List.NIL());
 pool List[]&& lll = &&list;
 
 lll:CONS.tail = new List.CONS(9, List.NIL());
-lll = lll:CONS.tail;
+lll = &&lll:CONS.tail;
 
 par do
     watching *lll do
         await 1s;
 
         lll:CONS.tail = new List.CONS(8, List.NIL());
-        lll = lll:CONS.tail;
+        lll = &&lll:CONS.tail;
 
         escape lll:CONS.head +
                 list.CONS.head +
@@ -48621,23 +47658,6 @@ end
 ]],
     _ana = {acc=true},
     run = 1,
-}
-
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
-end
-
-var List l;
-escape 1;
-]],
-    todo = 'what kind of error?',
-    adt = 'line 10 : invalid recursive data declaration : variable "l" must be a pointer or pool',
 }
 
 -- ADTS / RECURSE / TRAVERSE
@@ -48691,7 +47711,7 @@ or
 end
 
 pool Widget[] widgets;
-traverse widget in widgets do
+traverse widget in &&widgets do
     watching *widget do
         var int v1 = traverse &&widget:ROW.w1;
     end
@@ -48948,7 +47968,7 @@ var int sum = 0;
 pool Body[7] bodies;
 do Body with
     this.bodies = &bodies;
-    this.n      = tree;
+    this.n      = &&tree;
     this.sum    = &sum;
 end;
 
@@ -49034,7 +48054,7 @@ var int sum = 0;
 pool Body[7] bodies;
 do Body with
     this.bodies = &bodies;
-    this.n      = tree;
+    this.n      = &&tree;
     this.sum    = &sum;
 end;
 
@@ -49091,7 +48111,7 @@ end
 pool Body[3] bodies;
 do Body with
     this.bodies = &bodies;
-    this.n      = list;
+    this.n      = &&list;
 end;
 
 escape 1;
@@ -49132,7 +48152,7 @@ end
 pool Body[3] bodies;
 do Body with
     this.bodies = &bodies;
-    this.n      = list;
+    this.n      = &&list;
 end;
 
 escape 1;
@@ -49158,7 +48178,7 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     if n:CONS then
         sum = sum + n:CONS.head;
@@ -49187,7 +48207,7 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     if n:CONS then
         sum = sum + n:CONS.head;
@@ -49217,7 +48237,7 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     await 1s;
     if n:CONS then
@@ -49247,7 +48267,7 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     if n:CONS then
         sum = sum + n:CONS.head;
@@ -49279,7 +48299,7 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         //await 1s;
@@ -49311,7 +48331,7 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         await 1s;
@@ -49343,7 +48363,7 @@ pool List[3] list
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     if n:NIL then
         sum = sum * 2;
     end
@@ -49381,7 +48401,7 @@ pool Tree[3] tree =
 var int  v = 0;
 var int&& ptr = &&v;
 
-traverse t in tree do
+traverse t in &&tree do
     *ptr = *ptr + 1;
     if t:NODE then
         traverse &&t:NODE.left;
@@ -49414,7 +48434,7 @@ pool Tree[3] tree =
 var int  v = 0;
 var int&& ptr = &&v;
 
-traverse t in tree do
+traverse t in &&tree do
     *ptr = *ptr + 1;
     if t:NODE then
         watching *t do
@@ -49450,7 +48470,7 @@ native do
 end
 
 /*
-traverse n in list do
+traverse n in &&list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
@@ -49486,7 +48506,7 @@ end
 pool Body[3] bodies;
 do Body with
     this.bodies = &bodies;
-    this.n      = list;
+    this.n      = &&list;
 end;
 
 escape _V;
@@ -49517,7 +48537,7 @@ native do
 end
 
 /*
-traverse n in list do
+traverse n in &&list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
@@ -49552,7 +48572,7 @@ end
 pool Body[4] bodies;
 do Body with
     this.bodies = &bodies;
-    this.n      = list;
+    this.n      = &&list;
 end;
 
 escape _V;
@@ -49580,7 +48600,7 @@ native do
     int V = 0;
 end
 
-traverse n in list do
+traverse n in &&list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
@@ -49613,7 +48633,7 @@ end
 pool Body[3] bodies;
 do Body with
     this.bodies = &bodies;
-    this.n      = list;
+    this.n      = &&list;
 end;
 */
 
@@ -49641,7 +48661,7 @@ native do
     int V = 0;
 end
 
-traverse n in list do
+traverse n in &&list do
     _V = _V + 1;
     if n:CONS then
         _V = _V + n:CONS.head;
@@ -49674,7 +48694,7 @@ end
 pool Body[3] bodies;
 do Body with
     this.bodies = &bodies;
-    this.n      = list;
+    this.n      = &&list;
 end;
 */
 
@@ -49700,7 +48720,7 @@ pool List[3] list = new List.CONS(1,
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     watching *n do
         await 1s;
@@ -49733,7 +48753,7 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         await 1s;
@@ -49771,7 +48791,7 @@ pool List[3] list = new List.CONS(1,
                 List.CONS(3, List.NIL())));
 
 var int sum = 0;
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     watching *n do
         await 1s;
@@ -49812,7 +48832,7 @@ do
                     List.CONS(3, List.NIL())));
 
     var int sum = 0;
-    traverse n in list do
+    traverse n in &&list do
         sum = sum + 1;
         watching *n do
             await 1s;
@@ -49851,7 +48871,7 @@ tree = new Tree.NODE(1,
 
 var int sum = 0;
 
-traverse n in tree do
+traverse n in &&tree do
     sum = sum + 1;
     watching *n do
         if n:NODE then
@@ -49883,7 +48903,7 @@ pool Tree[3] tree = new Tree.NODE(1,
 
 var int sum = 0;
 
-traverse n in tree do
+traverse n in &&tree do
     sum = sum + 1;
     watching *n do
         if n:NODE then
@@ -49916,7 +48936,7 @@ pool Tree[3] tree = new Tree.NODE(1,
 
 var int sum = 0;
 
-traverse n in tree do
+traverse n in &&tree do
     sum = sum + 1;
     watching *n do
         if n:NODE then
@@ -49951,7 +48971,7 @@ tree = new Tree.NODE(1,
 
 var int sum = 1;
 
-traverse n in tree do
+traverse n in &&tree do
     watching *n do
         if n:NODE then
             traverse &&n:NODE.left;
@@ -49984,7 +49004,7 @@ tree = new Tree.NODE(1,
 
 var int sum = 1;
 
-traverse n in tree do
+traverse n in &&tree do
     watching *n do
         if n:NODE then
             traverse &&n:NODE.left;
@@ -50005,7 +49025,7 @@ data T with
 or
     tag NXT with
         var int v;
-        var T&&  nxt;
+        var T   nxt;
     end
 end
 
@@ -50013,7 +49033,7 @@ pool T[] ts;
 
 var void&& p1 = (void&&)this;
 
-traverse t in ts do
+traverse t in &&ts do
     _assert(p1 == (void&&)this);
     if t:NXT then
         traverse &&t:NXT.nxt;
@@ -50033,7 +49053,7 @@ data T with
 or
     tag NXT with
         var int v;
-        var T&&  nxt;
+        var T   nxt;
     end
 end
 
@@ -50041,7 +49061,7 @@ pool T[] ts;
 
 var void&& p1 = (void&&)&&this;
 
-traverse t in ts do
+traverse t in &&ts do
     _assert(p1 == (void&&)&&this);
     if t:NXT then
         traverse &&t:NXT.nxt;
@@ -50076,7 +49096,7 @@ with
     nothing;
 end
 
-traverse t in ts do
+traverse t in &&ts do
     _assert(&&p1! == (void&&)&&this);
     if t:NXT then
         traverse &&t:NXT.nxt;
@@ -50110,7 +49130,7 @@ with
     nothing;
 end
 
-traverse t in ts do
+traverse t in &&ts do
     _assert(&&p1! == (void&&)&&this);
     if t:NXT then
         traverse &&t:NXT.nxt;
@@ -50151,7 +49171,7 @@ class X with
     var int v1, v2, v3;
 do end
 
-traverse t in ts do
+traverse t in &&ts do
     _assert(&&p1! == (void&&)&&this);
     var int v1 = 1;
     var int v3 = 0;
@@ -50200,7 +49220,7 @@ class X with
     var int v1, v2, v3;
 do end
 
-traverse t in ts do
+traverse t in &&ts do
     _assert(&&p1! == (void&&)&&this);
     var int v1 = 1;
     var int v3 = 0;
@@ -50237,7 +49257,7 @@ pool Tree[3] tree = new Tree.NODE(1,
 
 var int sum = 1;
 
-traverse n in tree do
+traverse n in &&tree do
     watching *n do
         await 1s;
         if n:NODE then
@@ -50270,7 +49290,7 @@ pool Tree[3] tree = new Tree.NODE(1,
 
 var int sum = 1;
 
-traverse n in tree do
+traverse n in &&tree do
     await 1s;
     watching *n do
         if n:NODE then
@@ -50305,7 +49325,7 @@ tree = new Tree.NODE(1,
 var int sum = 1;
 
 do
-    traverse n in tree do
+    traverse n in &&tree do
         watching *n do
             await 1s;
             if n:NODE then
@@ -50340,7 +49360,7 @@ pool Tree[3] tree = new Tree.NODE(1,
 var int sum = 1;
 
 par/and do
-    traverse n in tree do
+    traverse n in &&tree do
         watching *n do
             if n:NODE then
                 await 1s;
@@ -50386,7 +49406,7 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     if n:CONS then
         sum = sum + n:CONS.head;
@@ -50417,7 +49437,7 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     if n:CONS then
         sum = sum + n:CONS.head;
@@ -50449,7 +49469,7 @@ pool List[3] list
 
 var int sum = 0;
 
-traverse n in list do
+traverse n in &&list do
     sum = sum + 1;
     if n:CONS then
         sum = sum + n:CONS.head;
@@ -50501,7 +49521,7 @@ widgets = new Widget.SEQ(
 
 var int ret = 0;
 
-traverse widget in widgets with
+traverse widget in &&widgets with
     var int param = 1;
 do
     ret = ret + param;
@@ -50545,7 +49565,7 @@ widgets = new Widget.SEQ(
 
 var int ret = 0;
 
-traverse widget in widgets with
+traverse widget in &&widgets with
     var int param = 1;
 do
     ret = ret + param;
@@ -50588,7 +49608,7 @@ widgets = new Widget.SEQ(
 
 var int ret = 0;
 
-traverse widget in widgets with
+traverse widget in &&widgets with
     var int param = 1;
 do
     ret = ret + param;
@@ -50632,7 +49652,7 @@ pool Widget[] widgets
 
 var int ret = 0;
 
-traverse widget in widgets with
+traverse widget in &&widgets with
     var int param = 1;
 do
     ret = ret + param;
@@ -50674,7 +49694,7 @@ pool Widget[10] widgets = new Widget.SEQ(
 
 var int ret = 0;
 
-traverse widget in widgets with
+traverse widget in &&widgets with
     var int param = 1;
 do
     ret = ret + param;
@@ -50819,7 +49839,7 @@ with
                     Widget.V(20));
 
     var int ret =
-        traverse widget in widgets do
+        traverse widget in &&widgets do
             watching *widget do
                 if widget:V then
                     await (widget:V.v)s;
@@ -50874,7 +49894,7 @@ with
                     Widget.EMPTY(),
                     Widget.EMPTY());
 
-    traverse widget in widgets do
+    traverse widget in &&widgets do
         watching *widget do
             if widget:NIL then
                 await FOREVER;
@@ -50927,7 +49947,7 @@ end
 pool List[] l = new List.CONS(1, List.EMPTY());
 
 par/or do
-    traverse e in l do
+    traverse e in &&l do
         watching *e do
             if e:EMPTY then
                 await FOREVER;
@@ -50975,7 +49995,7 @@ par/or do
                 Widget.EMPTY(),
                 Widget.EMPTY());
 
-    traverse widget in widgets with
+    traverse widget in &&widgets with
         var int param = 1;
     do
         ret = ret + param;
@@ -51039,7 +50059,7 @@ par/or do
                 Widget.EMPTY(),
                 Widget.EMPTY());
 
-    traverse widget in widgets with
+    traverse widget in &&widgets with
         var int param = 1;
     do
         ret = ret + param;
@@ -51104,7 +50124,7 @@ widgets = new Widget.SEQ(
 var int ret = 0;
 
 par/or do
-    traverse widget in widgets with
+    traverse widget in &&widgets with
         var int param = 1;
     do
         ret = ret + param;
@@ -51170,7 +50190,7 @@ pool Widget[10] widgets = new Widget.SEQ(
 var int ret = 0;
 
 par/or do
-    traverse widget in widgets with
+    traverse widget in &&widgets with
         var int param = 1;
     do
         ret = ret + param;
@@ -51236,7 +50256,7 @@ cmds = new Command.SEQUENCE(
             Command.FORWARD(500));
 
 par/or do
-    traverse cmd in cmds do
+    traverse cmd in &&cmds do
         watching *cmd do
             if cmd:FORWARD then
                 await FOREVER;
@@ -51284,7 +50304,7 @@ pool Command[] cmds = new Command.SEQUENCE(
 par/or do
     await 100s;
 with
-    traverse cmd in cmds do
+    traverse cmd in &&cmds do
         watching *cmd do
             if cmd:FORWARD then
                 await FOREVER;
@@ -51331,7 +50351,7 @@ cmds = new Command.SEQUENCE(
 par/or do
     await 100s;
 with
-    traverse cmd in cmds do
+    traverse cmd in &&cmds do
         watching *cmd do
             if cmd:FORWARD then
                 await FOREVER;
@@ -51371,7 +50391,7 @@ do
     await 1us;
 end
 
-traverse cmd in cmds do
+traverse cmd in &&cmds do
     watching *cmd do
         if cmd:LEFT then
             do TurtleTurn;
@@ -51524,7 +50544,7 @@ par/or do
 with
     var Turtle turtle;
 
-    traverse cmd in cmds do
+    traverse cmd in &&cmds do
         watching *cmd do
             if cmd:AWAIT then
                 await (cmd:AWAIT.ms) ms;
@@ -51610,7 +50630,7 @@ cmds = new Command.REPEAT(2,
 
 var int ret = 0;
 
-traverse cmd in cmds do
+traverse cmd in &&cmds do
     watching *cmd do
         if cmd:AWAIT then
             await (cmd:AWAIT.ms) ms;
@@ -51677,7 +50697,7 @@ pool Command[] cmds = new Command.REPEAT(2,
 
 var int ret = 0;
 
-traverse cmd in cmds do
+traverse cmd in &&cmds do
     watching *cmd do
         if cmd:AWAIT then
             await (cmd:AWAIT.ms) ms;
@@ -51719,7 +50739,7 @@ end
 pool List[] ls;
 ls = new List.CONS(List.NIL());
 
-traverse l in ls do
+traverse l in &&ls do
     if l:NIL then
         await FOREVER;
     else
@@ -51757,7 +50777,7 @@ ls = new List.CONS(1,
 
 var int ret = 0;
 
-traverse l in ls do
+traverse l in &&ls do
     ret = ret + 1;
     watching *l do
         if l:HOLD then
@@ -51798,7 +50818,7 @@ pool List[10] ls = new List.CONS(1,
 
 var int ret = 0;
 
-traverse l in ls do
+traverse l in &&ls do
     ret = ret + 1;
     watching *l do
         if l:HOLD then
@@ -51834,7 +50854,7 @@ end
 pool List[10] list;
 
 var int i = 10;
-traverse l in list do
+traverse l in &&list do
     list = new List.CONS(i, List.NIL());
 end
 
@@ -51855,7 +50875,7 @@ end
 pool List[10] list;
 
 loop i in 10 do
-    traverse l in list do
+    traverse l in &&list do
         if l:NIL then
             list = new List.CONS(i, List.NIL());
         else/if l:CONS then
@@ -51870,7 +50890,7 @@ end
 
 var int sum = 0;
 
-traverse l in list do
+traverse l in &&list do
     if l:CONS then
         sum = sum + l:CONS.head;
         traverse &&l:CONS.tail;
@@ -51928,7 +50948,7 @@ end
 pool Body[3] bodies;
 do Body with
     this.bodies = bodies;
-    this.n      = list;
+    this.n      = &&list;
 end;
 
 escape _V;
@@ -51982,7 +51002,7 @@ end
 pool Body[4] bodies;
 do Body with
     this.bodies = &bodies;
-    this.n      = list;
+    this.n      = &&list;
 end;
 
 escape _V;
@@ -52011,7 +51031,7 @@ native do
     int V = 0;
 end
 
-traverse n in list do
+traverse n in &&list do
     _V = _V + 1;
     watching *n do
         if n:NIL then
@@ -52050,7 +51070,7 @@ native do
     int V = 0;
 end
 
-traverse n in list do
+traverse n in &&list do
     _V = _V + 1;
     watching *n do
         if n:NIL then
@@ -52084,7 +51104,7 @@ pool L[] ls;
 var int v = 10;
 var int&& p = &&v;
 
-traverse l in ls do
+traverse l in &&ls do
     await 1s;
     *p = 1;
     if l:VAL then
@@ -52155,7 +51175,7 @@ pool List[3] list = new
 
 var int s2 = 0;
 var int s1 =
-    traverse l in list do
+    traverse l in &&list do
         if l:NIL then
             escape 0;
         else
@@ -52233,7 +51253,7 @@ pool Command[100] cmds = new
 
                 cmds.STREAM_ROOT.nxt = new Command.STREAM_END();
 
-    traverse cmd in cmds do
+    traverse cmd in &&cmds do
         watching *cmd do
             if cmd:AWAIT then
                 await (cmd:AWAIT.ms) ms;
@@ -52286,7 +51306,7 @@ end
 pool Command[] cmds;
 cmds.STREAM_ROOT.now.STREAM_NEXT.one = cmds.STREAM_ROOT.nxt;
 cmds.STREAM_ROOT.run = cmds.STREAM_ROOT.nxt.STREAM_NEXT.two;
-traverse cmd in cmds do
+traverse cmd in &&cmds do
     cmd:STREAM_ROOT.now.STREAM_NEXT.one = cmd:STREAM_ROOT.nxt;
     cmd:STREAM_ROOT.run = cmd:STREAM_ROOT.nxt.STREAM_NEXT.two;
     cmds.STREAM_ROOT.now.STREAM_NEXT.one = cmds.STREAM_ROOT.nxt;
@@ -52341,13 +51361,13 @@ traverse stmt in stmts do
     if stmt:SEQ then
         traverse &&stmt:SEQ.s1;
     else/if stmt:PRINT then
-        var int v = traverse stmt:PRINT.e;
+        var int v = traverse &&stmt:PRINT.e;
     end
 end
 
 escape 1;
 ]],
-    env = 'line 43 : invalid attribution : `Stmt´ <= `Exp´',
+    adt = 'line 43 : invalid attribution : reference : types mismatch (`Stmt´ <= `Exp´)',
 }
 
 -- par/or kills (2) which should be aborted
@@ -52370,14 +51390,14 @@ var int ret = 0;
 pool Exp[] exps = new
     Exp.ADD(Exp.NIL(), Exp.V(20));
 
-traverse e in exps do
+traverse e in &&exps do
     watching *e do
         if e:ADD then
             ret = ret + 1;
             par/or do
-                traverse e:ADD.e2;
+                traverse &&e:ADD.e2;
             with
-                traverse e:ADD.e1;
+                traverse &&e:ADD.e1;
             end
             await 5s;
         else/if e:V then
@@ -52414,7 +51434,7 @@ or
 end
 
     pool Stmt[] stmts;
-    traverse stmt in stmts do
+    traverse stmt in &&stmts do
         watching *stmt do
         end
     end
@@ -52439,7 +51459,7 @@ pool Stmt[] stmts = new Stmt.NIL();
 var int v1 = 10;
 
 var int ret =
-    traverse stmt in stmts with
+    traverse stmt in &&stmts with
         var int v2 = v1;
     do
         escape v1+v2;
@@ -52528,7 +51548,7 @@ list = new List.CONS(1,
 
 var int sum = 0;
 
-pool List[]&& lll = list.CONS.tail;
+pool List[]&& lll = &&list.CONS.tail;
 
 traverse n in lll do
     sum = sum + 1;
@@ -52965,13 +51985,13 @@ cmds2 = new Command.NEXT(
 
 var int sum = 0;
 
-traverse cmd in cmds1 do
+traverse cmd in &&cmds1 do
     if cmd:NEXT then
         sum = sum + 1;
         traverse &&cmd:NEXT.nxt;
     end
 end
-traverse cmd in cmds2 do
+traverse cmd in &&cmds2 do
     if cmd:NEXT then
         sum = sum + 1;
         traverse &&cmd:NEXT.nxt;
@@ -53000,7 +52020,7 @@ do
                 Command.NEXT(
                     Command.NOTHING()));
     var int sum = 0;
-    traverse cmd111 in cmds1 do
+    traverse cmd111 in &&cmds1 do
         if cmd111:NEXT then
             sum = sum + 1;
             traverse &&cmd111:NEXT.nxt;
@@ -53011,7 +52031,7 @@ end
 
 pool Command[] cmds;
 
-traverse cmd222 in cmds do
+traverse cmd222 in &&cmds do
 end
 
 var int ret = do Run with
@@ -53034,7 +52054,7 @@ or
 end
 
     pool Command[] cmds;
-    traverse cmd in cmds do
+    traverse cmd in &&cmds do
     end
 
 escape 1;
@@ -53056,7 +52076,7 @@ class Run with
     pool Command[]& cmds;
 do
     var int sum = 0;
-    traverse cmd in cmds do
+    traverse cmd in &&cmds do
         if cmd:NEXT then
             sum = sum + 1;
             traverse &&cmd:NEXT.nxt;
@@ -53099,7 +52119,7 @@ cmds = new Command.PAROR(
 class Run with
     pool Command[]& cmds;
 do
-    traverse cmd in cmds do
+    traverse cmd in &&cmds do
         if cmd:AWAIT then
             await 1ms;
 
@@ -53141,7 +52161,7 @@ var int xxx = 0;
 
 input void OS_START;
 
-traverse d in ds with
+traverse d in &&ds with
     var int idx = 0;
 do
     if idx < 3 then
@@ -53196,7 +52216,7 @@ class BTreeTraverse with
     pool BTree[3]& btree;
 do
     var int ret = 0;
-    traverse t in this.btree do
+    traverse t in &&this.btree do
         if t:SEQ then
             ret = ret + 1;
             traverse &&t:SEQ.nxt;
@@ -56214,7 +55234,7 @@ var int sum = 0;
 pool Body[7] bodies;
 do Body with
     this.bodies = bodies;
-    this.n      = tree;
+    this.n      = &&tree;
     this.sum    = sum;
 end;
 
@@ -56222,7 +55242,7 @@ escape sum;
 
 /*
 var int sum = 0;
-loop n in tree do
+loop n in &&tree do
     var int i = sum;
     if n:NODE then
         traverse &n:NODE.left;

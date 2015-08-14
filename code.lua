@@ -171,26 +171,6 @@ _STK->trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
 end
 
 
--- attributions/constructors need access to the pool
--- the pool is the first "e1" that matches adt type:
--- l = new List.CONS(...)
--- ^-- first
--- l:CONS.tail = new List.CONS(...)
--- ^      ^-- matches, but not first
--- ^-- first
-local function FIND_ADT_POOL (fst)
-    local adt = ENV.adts[TP.id(fst.tp)]
-    local tp = fst.tp
-DBG(TP.tostr(tp))
-    if adt and (TP.check(tp,'[]') or TP.check(tp,'&&') or TP.check(tp,'&')) then
-DBG('', fst)
-        return fst
-    else
-        assert(fst.__par, 'bug found')
-        return FIND_ADT_POOL(fst.__par)
-    end
-end
-
 F = {
     Node_pre = function (me)
         me.code = '/* NODE: '..me.tag..' '..me.n..' */\n'
@@ -551,7 +531,7 @@ me.val..' = &CEU_'..string.upper(id)..[[_BASE;
                 --      to.root.pool
                 local set = assert( AST.par(me,'Set'), 'bug found' )
                 local _,_,_,to = unpack(set)
-                local pool = FIND_ADT_POOL(to.fst)
+                local pool = ADT.find_pool(to.fst)
                 pool = '('..V(pool,'lval','adt_top')..'->pool)'
 
                 LINE(me, [[
@@ -1067,7 +1047,7 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         local _,set,_,to = unpack(SET)
         local to_tp_id = TP.id(to.tp)
 
-        local pool = FIND_ADT_POOL(to.fst)
+        local pool = ADT.find_pool(to.fst)
         pool = '('..V(pool,'lval','adt_top')..'->pool)'
 
         LINE(me, [[
@@ -1319,7 +1299,7 @@ ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "acce
                 end
             end
 
-        elseif set == 'adt-ref' then
+        elseif set == 'adt-ref-pool' then
             CONC(me, fr)                -- TODO: remove?
 
             --[[
@@ -1334,22 +1314,24 @@ ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "acce
             --      l = &list
             --]]
 
-            local pool = FIND_ADT_POOL(fr.fst)
-            assert(to.var.pre=='pool', 'bug found')
             if TP.check(to.var.tp,'&') then
-                LINE(me, [[
+                    LINE(me, [[
 ]]..V(to,'lval','adt_top')..' = '..V(fr,'lval','adt_top')..[[;
 ]])
-            else
-error'oi'
-DBG('>>>', to.var.id)
-                LINE(me, [[
+                else
+                    local pool = ADT.find_pool(fr.fst)
+                    local pool_op = TP.check(pool.tp,'&&','-&') and '->' or '.'
+                    LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
-]]..V(to,'lval','adt_top')..'->pool = '..V(pool,'rval','adt_top')..[[.pool;
+]]..V(to,'lval','adt_top')..'->pool = '..V(pool,'rval','adt_top')..pool_op..[[pool;
 #endif
 ]]..V(to,'lval','adt_top')..'->root = '..V(fr,'rval')..[[;
 ]])
-            end
+                end
+        elseif set == 'adt-ref-var' then
+            LINE(me, [[
+]]..V(to,'rval')..' = '..V(fr,'rval')..[[;
+]])
 
         elseif set == 'adt-mut' then
             F.__set_adt_mut_conc_fr(me, me, fr)
