@@ -1488,6 +1488,7 @@ me.blk_body = me.blk_body or blk_body
 
 -- EmitExt --------------------------------------------------------
 
+    EmitInt_pre = 'EmitExt_pre',
     EmitExt_pre = function (me)
         local op, e, ps = unpack(me)
 
@@ -1514,6 +1515,7 @@ me.blk_body = me.blk_body or blk_body
             return F.__REQUEST(me)
         end
     end,
+--[=[
     _EmitInt_pre = function (me)
         me.tag = 'EmitInt'
         me = F.EmitExt_pre(me) or me
@@ -1565,6 +1567,7 @@ me.blk_body = me.blk_body or blk_body
                         '=', 'exp',
                         node('Nat', me.ln, '_CEU_STACK_MAX'))))
     end,
+]=]
 
 -- Finalize ------------------------------------------------------
 

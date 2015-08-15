@@ -3899,14 +3899,15 @@ with
     await FOREVER;
 with
     var int v = await e;
-    ret = ret * v;              // 3*2
+    ret = ret * v;              // 3*[2,3]
 end
 
 escape ret;
 ]],
     --_ana = {acc=3},
     _ana = {acc=true},
-    run = 6,
+    --run = 6,
+    run = 9,
 }
 
 -- "emit e" on the stack has to die
@@ -4728,7 +4729,8 @@ with
 end
 escape ret;
 ]],
-    run = { ['~>2s']=10 },
+    --run = { ['~>2s']=10 },
+    run = { ['~>2s']=2 },
 }
 
 Test { [[

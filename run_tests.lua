@@ -324,6 +324,14 @@ real	18m43.844s
 user	18m3.222s
 sys	2m24.000s
 
+-- ROCKS
+> cd ../ceu-sdl/rocks/
+> make test
+> /usr/bin/time --format='(%C: %Us %Mk)' ./rocks.exe
+SCORE = 56 vs 49
+(./rocks.exe: 3.01s 31924k)
+> ls -l rocks.exe
+365015
 
 
 
