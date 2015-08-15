@@ -9,7 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
 
 --do return end
 
@@ -3876,6 +3875,46 @@ escape ret>1.0 and ret<1.2;
     run = 1,
 }
 
+-- RESEARCH-5
+Test { [[
+input void OS_START;
+event int e;
+par do
+    await OS_START;
+    emit e => 1;
+    escape -1;
+with
+    await e;
+    emit e => 2;
+    escape -2;
+with
+    var int v = await e;
+    escape v;   // 1
+end
+]],
+    _ana = {acc=true},
+    run = -2,
+}
+Test { [[
+input void OS_START;
+event int e;
+par do
+    await OS_START;
+    emit e => 1;
+    escape -1;
+with
+    await e;
+    emit e => 2;
+    await FOREVER;
+with
+    var int v = await e;
+    escape v;   // 1
+end
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
 -- the inner "emit e" is aborted and the outer "emit e"
 -- awakes the last "await e"
 Test { [[
@@ -3893,7 +3932,7 @@ with
     par/or do
         await e;
         emit e => 3;
-        escape -1;
+        escape -2;
     with
         var int v = await e;
         ret = ret + v;          // 0+3
@@ -3909,7 +3948,43 @@ escape ret;
     --_ana = {acc=3},
     _ana = {acc=true},
     --run = 6,
-    run = 9,
+    --run = 9,
+    run = -2,
+}
+
+Test { [[
+input void OS_START;
+
+event int e;
+
+var int ret = 0;
+
+par/or do
+    await OS_START;
+    emit e => 2;
+    escape -1;
+with
+    par/or do
+        await e;
+        emit e => 3;
+        await FOREVER;
+    with
+        var int v = await e;
+        ret = ret + v;          // 0+3
+    end
+    await FOREVER;
+with
+    var int v = await e;
+    ret = ret * v;              // 3*[2,3]
+end
+
+escape ret;
+]],
+    --_ana = {acc=3},
+    _ana = {acc=true},
+    --run = 6,
+    --run = 9,
+    run = 4,
 }
 
 -- "emit e" on the stack has to die
@@ -21329,17 +21404,15 @@ escape _f((int&&)&&rcs[0]);
 -- STRINGS
 
 Test { [[
-native @nohold _printf(), _strlen();
+native @nohold _strlen();
 var char[] v = ['a','b','c','\0'];
-_printf("v = %s\n", &&v);
 escape _strlen(&&v);
 ]],
     run = 3,
 }
 Test { [[
-native @nohold _printf(), _strlen();
+native @nohold _strlen();
 var char[] v = ['a','b','c','\0'];
-_printf("v = %s\n", &&v);
 escape _strlen(&&v);
 ]],
     run = 3,
@@ -21398,27 +21471,24 @@ escape 1;
 }
 
 Test { [[
-native @nohold _printf(), _strlen();
+native @nohold _strlen();
 var char[] v = "abc";
-_printf("v = %s\n", v);
 escape _strlen(v);
 ]],
     env = 'line 2 : types mismatch (`char[]´ <= `char&&´)',
     --run = 3,
 }
 Test { [[
-native @nohold _printf(), _strlen();
+native @nohold _strlen();
 var char[] v = [].."abc";
-_printf("v = %s\n", &&v);
 escape _strlen(&&v);
 ]],
     run = 3,
 }
 Test { [[
-native @nohold _printf(), _strlen();
+native @nohold _strlen();
 var char[] v = [].."abc";
 v = v .. "def";
-_printf("v = %s\n", &&v);
 escape _strlen(&&v);
 ]],
     run = 6,
@@ -28717,6 +28787,7 @@ escape 1;
     run = { ['~>2us']=1 },
 }
 
+--]===]
 Test { [[
 input void OS_START;
 

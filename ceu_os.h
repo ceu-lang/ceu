@@ -578,6 +578,7 @@ typedef struct tceu_go {
 #define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
 #define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
 #define STK_LBL (STK->trl->lbl)
+#define _STK_LBL (_STK->trl->lbl)
 
 /* TCEU_LST */
 
