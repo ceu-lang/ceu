@@ -313,28 +313,47 @@ end
 os.execute('rm -f /tmp/_ceu_*')
 
 --[[
+===
+
 -- COMPLETE=false, VALGRIND=false
+> /usr/bin/time --format='(%C: %Us %Mk)' ./run_tests.lua
+
+--- no internal finalize
+STATS = {
+    count   = 2694,
+    mem     = 0,
+    trails  = 5999,
+    bytes   = 39172913,
+}
+(./run_tests.lua: 1051.96s 55808k)
+
+--- internal finalize
 STATS = {
     count   = 2694,
     mem     = 0,
     trails  = 6522,
     bytes   = 40228346,
 }
-real	18m43.844s
-user	18m3.222s
-sys	2m24.000s
+(./run_tests.lua: 1083.22s ?k)
+
+===
 
 -- ROCKS
 > cd ../ceu-sdl/rocks/
 > make test
+
+--- no internal finalize
 > /usr/bin/time --format='(%C: %Us %Mk)' ./rocks.exe
 SCORE = 56 vs 49
 (./rocks.exe: 3.01s 31924k)
 > ls -l rocks.exe
 365015
+--- internal finalize
+SCORE = 56 vs 49
+(./rocks.exe: 3.07s 31932k)
+378063
 
-
-
+=== (OLD)
 
 -- FULL
 STATS = {

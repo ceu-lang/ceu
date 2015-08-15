@@ -23871,7 +23871,7 @@ loop i in v do end
     tight = 'line 2 : tight loop',
 }
 
--- INFINITE EXECUTION
+-- INFINITE LOOP/EXECUTION
 Test { [[
 event void e, f;
 par do
