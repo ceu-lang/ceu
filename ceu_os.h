@@ -531,13 +531,6 @@ typedef struct {
 } tceu_org_kill;
 #endif
 
-#ifdef CEU_ORGS_POOL_ITERATOR
-typedef struct tceu_pool_iterator {
-    struct tceu_pool_iterator* prv; /* previous active pool iterator in the stack */
-    tceu_org* org; /* org to be traversed next in this iterator */
-} tceu_pool_iterator;
-#endif
-
 /* TCEU_GO */
 
 /* TODO: tceu_go => tceu_stk? */

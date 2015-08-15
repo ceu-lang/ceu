@@ -178,21 +178,7 @@ error'not implemented (locals inside iter)'
     end,
 
     Loop_pre = function (me)
-        local awaits = false
-        AST.visit(
-            {
-                Await = function (me)
-                    awaits = true
-                end,
-                AwaitN   = 'Await',
-                EmitInt  = 'Await',
-                Async    = 'Await',
-                Thread   = 'Await',
-                Spawn    = 'Await',
-            },
-            me)
-
-        if ((not awaits) and (not AST.iter(AST.pred_async)())) or
+        if ((not me.has_yield) and (not AST.iter(AST.pred_async)())) or
             me.isAwaitUntil then
             return      -- OK: (tight loop outside Async) or (await ... until)
         end

@@ -1440,10 +1440,6 @@ if (]]..V(c,'rval')..[[) {
             elseif me.iter_tp == 'org' then
                 -- INI
                 local var = iter.lst.var
-
-                local org_cur = '((tceu_org*)'..V(to,'rval')..')'
-                local org_nxt = '('..V(me.var_nxt,'rval')..'.org)'
-
                 local lnks = '(((tceu_pool_*)'..V(iter,'lval')..')->lnks)'
                 ini[#ini+1] = V(to,'rval')..[[ = (]]..TP.toc(iter.tp)..[[)(
     ((*]]..lnks..[[)[0].nxt->n == 0) ?
@@ -1451,23 +1447,14 @@ if (]]..V(c,'rval')..[[) {
         (*]]..lnks..[[)[0].nxt
 )
 ]]
-                ini[#ini+1] = org_nxt..' = '..
-                                '('..org_cur..'==NULL || '..
-                                     org_cur..'->nxt->n==0) ?'..
-                                        'NULL : '..
-                                        org_cur..'->nxt'
-                    -- assign to "nxt" before traversing "cur":
-                    --  "cur" may terminate and be freed
-
                 -- CND
                 cnd = '('..V(to,'rval')..' != NULL)'
 
                 -- NXT
-                nxt[#nxt+1] = V(to,'rval')..' = ('..TP.toc(to.tp)..')'..org_nxt
-                nxt[#nxt+1] = org_nxt..' = '..
-                                '('..org_cur..'==NULL || '..org_cur..'->nxt->n==0) ?  '..
-                                    'NULL : '..
-                                    org_cur..'->nxt'
+                local org = '((tceu_org*)'..V(to,'rval')..')'
+                nxt[#nxt+1] = '('..V(to,'rval')..' = ('..TP.toc(iter.tp)..')'..
+                                '(('..org..'->nxt->n==0) ? '..
+                                    'NULL : '..org..'->nxt))'
 
             else
                 error'not implemented'
@@ -1480,12 +1467,6 @@ if (]]..V(c,'rval')..[[) {
         -- ensures that cval is constant
         if max then
             LINE(me, 'int __'..me.n..'['..max.cval..'] = {};')
-        end
-
-        if me.iter_tp == 'org' then
-            LINE(me, [[
-ceu_pool_iterator_enter(]]..V(me.var_nxt,'lval')..[[);
-]])
         end
 
         LINE(me, [[
@@ -1520,12 +1501,6 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
         LINE(me, [[
 }
 ]])
-
-        if me.iter_tp == 'org' then
-            LINE(me, [[
-ceu_pool_iterator_leave(]]..V(me.var_nxt,'lval')..[[);
-]])
-        end
 
         if me.has_break and ( not (AST.iter(AST.pred_async)()
                                 or AST.iter'Dcl_fun'()) )

@@ -318,6 +318,15 @@ os.execute('rm -f /tmp/_ceu_*')
 -- COMPLETE=false, VALGRIND=false
 > /usr/bin/time --format='(%C: %Us %Mk)' ./run_tests.lua
 
+--- no yields in pool iterators
+STATS = {
+    count   = 2695,
+    mem     = 0,
+    trails  = 5946,
+    bytes   = 38860835,
+}
+(./run_tests.lua: 899.19s 52176k)
+
 --- no internal finalize
 STATS = {
     count   = 2694,
@@ -342,12 +351,19 @@ STATS = {
 > cd ../ceu-sdl/rocks/
 > make test
 
+--- no yields in pool iterators
+SCORE = 56 vs 49
+(./rocks.exe: 1.91s 31908k)
+> ls -l rocks.exe
+363837
+
 --- no internal finalize
 > /usr/bin/time --format='(%C: %Us %Mk)' ./rocks.exe
 SCORE = 56 vs 49
 (./rocks.exe: 3.01s 31924k)
 > ls -l rocks.exe
 365015
+
 --- internal finalize
 SCORE = 56 vs 49
 (./rocks.exe: 3.07s 31932k)

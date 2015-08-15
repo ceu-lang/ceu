@@ -11,6 +11,8 @@ end
 --[===[
 --]===]
 
+--do return end
+
 -- BUG: must enforce alias
 Test { [[
 data Ball with
@@ -29537,6 +29539,8 @@ escape sum;
     run = 1,
 }
 
+-- POOL ITERATORS
+
 Test { [[
 class T with
     var int v = 0;
@@ -29590,6 +29594,21 @@ escape (ok1?) + ok2 + ret + 1;
     --fin = 'line 14 : pointer access across `await´',
     run = 1,
 }
+Test { [[
+class T with do await FOREVER; end;
+pool T[] ts;
+event void e;
+spawn T in ts;
+var int ret = 0;
+loop t in ts do
+    ret = ret + 1;
+    spawn T in ts;
+end
+escape ret;
+]],
+    props = 'line 6 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+}
+
 Test { [[
 class T with
 do
@@ -31516,7 +31535,8 @@ end
 
 escape 1;
 ]],
-    run = 1,
+    props = 'line 8 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 1,
 }
 
 -- DO T
@@ -34539,7 +34559,8 @@ end
 
 escape ret;
 ]],
-    run = 2,
+    props = 'line 14 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 2,
 }
 
 Test { [[
@@ -34575,7 +34596,8 @@ end
 
 escape ret;
 ]],
-    run = 2,
+    props = 'line 23 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 2,
 }
 
 Test { [[
@@ -34605,7 +34627,8 @@ do
 end
 escape ret;
 ]],
-    run = 10,
+    props = 'line 17 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 10,
 }
 
 Test { [[
@@ -34657,7 +34680,8 @@ end
 
 escape ret;
 ]],
-    run = 3,
+    props = 'line 15 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 3,
 }
 Test { [[
 class T with
@@ -34687,7 +34711,8 @@ end
 
 escape ret;
 ]],
-    run = 3,
+    props = 'line 15 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 3,
 }
 
 Test { [[
@@ -34717,7 +34742,8 @@ end
 
 escape ret;
 ]],
-    run = 3,
+    props = 'line 15 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 3,
 }
 
 -- TODO pause hierarquico dentro de um org
@@ -36448,8 +36474,9 @@ do
 end
 escape ret;
 ]],
+    props = 'line 28 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
     --run = 7,
-    run = 13,
+    --run = 13,
 }
 Test { [[
 input void A,F;
@@ -36490,8 +36517,9 @@ do
 end
 escape ret;
 ]],
+    props = 'line 29 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
     --run = 7,
-    run = 13,
+    --run = 13,
 }
 Test { [[
 input void A,F;
@@ -36536,8 +36564,9 @@ do
 end
 escape ret;
 ]],
+    props = 'line 32 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
     --run = { ['~>3s;~>F'] = 16 },
-    run = { ['~>3s;~>F'] = 13 },
+    --run = { ['~>3s;~>F'] = 13 },
 }
 
 Test { [[
@@ -39045,7 +39074,8 @@ end
 pool U[] units;
 escape 1;
 ]],
-    run = 1,
+    props = 'line 17 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    --run = 1,
 }
 
 -- declaration order for clss, ifcs, pools

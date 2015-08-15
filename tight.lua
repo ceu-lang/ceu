@@ -203,3 +203,30 @@ F = {
 }
 
 AST.visit(F)
+
+-- YIELD inside LOOPS:
+--  - BAD for pointers
+--  ptr = ...;
+--  loop do             // works as await
+--      *ptr = ...;     // crosses loop/await
+--      await X;
+--  end
+--  - BAD for pool iterators
+local E
+E = {
+    __await = function ()
+        for loop in AST.iter'Loop' do
+            loop.has_yield = true
+        end
+    end,
+    EmitInt = '__await',
+    Kill    = '__await',
+    Spawn   = '__await',
+    AwaitN   = '__await',
+    Await   = function (me)
+        if me.tl_awaits then
+            E.__await(me)
+        end
+    end,
+}
+AST.visit(E)

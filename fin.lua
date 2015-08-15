@@ -68,30 +68,6 @@ function ISPTR (node_or_var)
     return false
 end
 
---  ptr = ...;
---  loop do             // works as await
---      *ptr = ...;     // crosses loop/await
---      await X;
---  end
-local E
-E = {
-    __await = function ()
-        for loop in AST.iter'Loop' do
-            loop.__fin_awaits = true
-        end
-    end,
-    EmitInt = '__await',
-    Kill    = '__await',
-    Spawn   = '__await',
-    AwaitN   = '__await',
-    Await   = function (me)
-        if me.tl_awaits then
-            E.__await(me)
-        end
-    end,
-}
-AST.visit(E)
-
 F = {
     Dcl_cls_pre = function (me)
         me.__fin_straight = true
@@ -440,7 +416,7 @@ F = {
     end,
 
     Await = function (me)
-        if me.tl_awaits or me.__fin_awaits then
+        if me.tl_awaits or me.has_yield then
             if me.__env_org then
                 local id = TP.id(me.__env_org.tp)
                 if ENV.clss[id].__fin_straight then

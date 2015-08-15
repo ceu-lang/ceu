@@ -220,7 +220,6 @@ do
             has_ret     = 'CEU_RET',
             has_lua     = 'CEU_LUA',
             has_orgs_watching = 'CEU_ORGS_WATCHING',
-            has_pool_iterator = 'CEU_ORGS_POOL_ITERATOR',
 
             has_vector        = 'CEU_VECTOR',
             has_vector_pool   = 'CEU_VECTOR_POOL',

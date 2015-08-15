@@ -13,7 +13,6 @@ PROPS = {
     has_orgs_watching = false,
     has_adts_watching = {},
     has_enums   = false,
-    has_pool_iterator = false,
 
     has_vector        = false,
     has_vector_pool   = false,
@@ -236,14 +235,13 @@ F = {
         PROPS.has_clear = true
     end,
 
-    Loop = function (me)
-        if me.iter_tp == 'org' then
-            PROPS.has_pool_iterator = true
-        end
-    end,
-
     Loop_pre = function (me)
         me.brks = {}
+
+        if me.iter_tp == 'org' then
+            ASR(not me.has_yield, me,
+                'pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)')
+        end
     end,
     Break = function (me)
         local loop = AST.par(me,'Loop')
@@ -358,9 +356,6 @@ F = {
             if loop.isEvery then
                 ASR(me.isEvery, me,
                     '`every´ cannot contain `await´')
-            elseif loop.iter_tp == 'org' then
-                ASR(false, me,
-                    'pool iterator cannot contain `await´')
             end
         end
     end,

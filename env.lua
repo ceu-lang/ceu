@@ -1255,24 +1255,13 @@ F = {
         elseif cls then
             me.iter_tp = 'org'
             if to then
+                local dcl = AST.node('Dcl_var', me.ln, 'var',
+                                AST.node('Type', me.ln, cls.id, '&&'),
+                                to[1])
+                dcl.read_only = true
+                AST.visit(F, dcl)
                 local stmts = me.__par[1]
-
-                local dcl_cur = AST.node('Dcl_var', me.ln, 'var',
-                                    AST.node('Type', me.ln, cls.id, '&&'),
-                                    to[1])
-                dcl_cur.read_only = true
-                AST.visit(F, dcl_cur)
-                stmts[#stmts+1] = dcl_cur
-
-                local dcl_nxt = AST.node('Dcl_var', me.ln, 'var',
-                                    AST.node('Type', me.ln, '_tceu_pool_iterator'),
-                                    '__it_'..me.n)
-                local var_nxt = AST.node('Var', me.ln, '__it_'..me.n)
-                AST.visit(F, dcl_nxt)
-                AST.visit(F, var_nxt)
-                stmts[#stmts+1] = dcl_nxt
-                stmts[#stmts+1] = var_nxt
-                me.var_nxt = var_nxt
+                stmts[#stmts+1] = dcl
             end
 
             ASR(iter.lst and iter.lst.var and iter.lst.var.pre=='pool',
