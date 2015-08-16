@@ -295,6 +295,11 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
                  stk.stop = NULL;
                  stk.evt_sz = sizeof(tceu_kill);
         tceu_kill ps = { org, org->ret };
+#if 0
+if (_STK->evt == CEU_IN__ok_killed) {
+    stack_pop(_ceu_go);
+}
+#endif
         ceu_sys_bcast(_ceu_app, _ceu_go, &stk, &ps);
             /* param "org" is pointer to what to kill */
     }
@@ -604,54 +609,45 @@ printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
         }
 #endif /* CEU_ORGS */
 
-        /* EXECUTE THIS TRAIL */
-/* TODO: simplify */
-        if ( (_STK->trl->evt != CEU_IN__NONE) &&
+        /* EXECUTE THIS TRAIL ? */
+
+        if (_STK->trl->evt != _STK->evt) {
+            goto _CEU_GO_NO_;
+        }
+        if (_STK->trl->evt == CEU_IN__NONE) {
 /* TODO: remove: make it work w/o the test above */
 /* i.e., make sure that I never emit IN__NONE */
-             (_STK->evt != CEU_IN__STK) &&
-             (_STK->trl->evt==_STK->evt) &&
-             (
+            goto _CEU_GO_NO_;
+        }
+        if (_STK->evt == CEU_IN__STK) {
+/* TODO: remove: make it work w/o the test above */
+/* i.e., make sure that I never emit IN__STK */
+            goto _CEU_GO_NO_;  /* 2nd pass */
+        }
 #ifdef CEU_WATCHING
-                (_STK->evt==CEU_IN__ok_killed &&
-                 (((tceu_kill*)evtp)->org_or_adt == _STK->trl->org_or_adt))
-             ||
-                (_STK->evt!=CEU_IN__ok_killed &&
-#else
-                (
+        if (_STK->evt == CEU_IN__ok_killed) {
+            if (((tceu_kill*)evtp)->org_or_adt != _STK->trl->org_or_adt) {
+                goto _CEU_GO_NO_;
+            }
+        }
+        else
 #endif
-                 (_STK->trl->seqno!=_ceu_app->seqno))
-                  /* same event and awaiting-before */
-             )
-        ) {
-#if 0
-if (_STK->evt==CEU_IN__ok_killed) {
-    printf(">>> OK_KILL %p vs %p\n",
-        ((tceu_kill*)evtp)->org_or_adt, _STK->trl->org_or_adt);
-}
-#endif
-            /* execute this trail in the 2nd pass */
-            _STK->trl->evt = CEU_IN__STK;
-            _STK->trl->stk = stack_curi(_ceu_go);
+        {
+            if (_STK->trl->seqno == _ceu_app->seqno) {
+                goto _CEU_GO_NO_;
+            }
+        }
+
+        /* execute this trail in the 2nd pass */
+        _STK->trl->evt = CEU_IN__STK;
+        _STK->trl->stk = stack_curi(_ceu_go);
 #ifdef CEU_DEBUG_TRAILS
 printf("\t>>> OK\n");
 #endif
-        }
-        else
-        {
-/*
-if (_STK->evt==CEU_IN__ok_killed && _STK->trl->evt==CEU_IN__ok_killed) {
-    printf("\t\tzzzz: %p vs %p\n",
-        ((tceu_org_kill*)evtp)->org , _STK->trl->org_or_adt);
-}
-*/
-#ifdef CEU_DEBUG_TRAILS
-printf("\t>>> NO\n");
-#endif
-        }
 
-        /* NEXT TRAIL */
-        _STK->trl++;
+_CEU_GO_NO_:
+
+        _STK->trl++; /* next trail */
     }
 
     /* restore to initial state (org/trl/stop) */

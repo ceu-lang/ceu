@@ -37,6 +37,7 @@ escape l:CONS +
     run = 10,
 }
 --]===]
+-- stack overflow
 Test { [[
 class T with do
     await FOREVER;
