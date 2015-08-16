@@ -750,6 +750,7 @@ _STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
 /*  RESET OPT-ORG TO NULL */
 _STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
 _STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
+_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
 ]])
                 end
 
@@ -944,7 +945,9 @@ if (0) {
             LINE(me, [[
 /*  RESET OPT-ORG TO NULL */
 _STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
+#if 0
 _STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
+#endif
 ]])
                 HALT(me)
                 LINE(me, [[

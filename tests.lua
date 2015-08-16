@@ -36,7 +36,6 @@ escape l:CONS +
 ]],
     run = 10,
 }
---]===]
 -- stack overflow
 Test { [[
 class T with do
@@ -21212,6 +21211,7 @@ escape t.v + p!:v;
     run = { ['~>1s'] = '12] runtime error: invalid tag', },
 }
 
+--]===]
 Test { [[
 class T with
     var int v = 10;

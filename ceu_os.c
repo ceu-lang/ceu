@@ -626,7 +626,9 @@ printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
         }
 #ifdef CEU_WATCHING
         if (_STK->evt == CEU_IN__ok_killed) {
-            if (((tceu_kill*)evtp)->org_or_adt != _STK->trl->org_or_adt) {
+            if (_STK->trl->org_or_adt != NULL &&
+                _STK->trl->org_or_adt != ((tceu_kill*)evtp)->org_or_adt)
+            {
                 goto _CEU_GO_NO_;
             }
         }
