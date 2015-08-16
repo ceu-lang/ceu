@@ -29,6 +29,9 @@
 #if defined(CEU_ORGS_NEWS_POOL) || defined(CEU_ADTS_NEWS_POOL)
 #define CEU_NEWS_POOL
 #endif
+#if defined(CEU_ORGS_WATCHING) || defined(CEU_ADTS_WATCHING)
+#define CEU_WATCHING
+#endif
 
 #ifdef CEU_OS
 
@@ -408,6 +411,15 @@ typedef union tceu_trl {
         struct tceu_org_lnk* lnks;
     };
 #endif
+
+    /* _ok_killed */
+#ifdef CEU_WATCHING
+    struct {
+        tceu_nevt evt4;
+        tceu_nlbl lbl4;
+        void*     org_or_adt;
+    };
+#endif
 } tceu_trl;
 
 /* TCEU_RECURSE */
@@ -508,14 +520,6 @@ typedef struct tceu_org
 
 #ifdef CEU_ORGS_WATCHING
     int ret;
-    u32 id;
-        /* TODO: couldn't find a way to use the address as an identifier
-         * when killing an organism. The "free" happens before the "kill"
-         * completes and the address can be reused in the meantime.
-         * It could happen that an await on a newly created organism awakes
-         * from the previous "kill".
-         * Couldn't reproduce on "tests.lua", but "turtle.ceu" does.
-         */
 #endif
 
 #endif  /* CEU_ORGS */
@@ -524,18 +528,18 @@ typedef struct tceu_org
 
 } tceu_org;
 
-#ifdef CEU_ORGS_WATCHING
+#ifdef CEU_WATCHING
 typedef struct {
-    u32 org;
+    void* org_or_adt;
     int ret;
-} tceu_org_kill;
+} tceu_kill;
 #endif
 
 /* TCEU_GO */
 
 /* TODO: tceu_go => tceu_stk? */
 typedef struct tceu_go {
-    #define CEU_STACK_MAX   128*sizeof(tceu_stk)
+    #define CEU_STACK_MAX   1024*sizeof(tceu_stk)
         /* TODO: possible to calculate (not is CEU_ORGS_NEWS)
         #define CEU_STACK_MAX   (CEU_NTRAILS+1) // current +1 for each trail
         */

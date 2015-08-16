@@ -315,18 +315,7 @@ void ]]..enum..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
 
         -- kill myself before my recursive fields (push myself after)
         kill = kill .. [[
-    {
-        tceu_stk stk;
-                 stk.evt  = CEU_IN__ok_killed;
-    #ifdef CEU_ORGS
-                 stk.org  = _ceu_app->data;
-    #endif
-                 stk.trl  = &_ceu_app->data->trls[0];
-                 stk.stop = NULL;
-                 stk.evt_sz = sizeof(me);
-        stack_push(go, &stk, &me);
-            /* param is pointer to what to kill */
-    }
+    ceu_sys_adt_kill(_ceu_app, go, me);
 }
 #endif
 ]]

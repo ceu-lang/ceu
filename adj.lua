@@ -1232,16 +1232,18 @@ me.blk_body = me.blk_body or blk_body
         local var = e or dt     -- TODO: hacky
         local tst = node('_TMP_AWAIT', me.ln, var)
 
-        local SET_KILL = node('Nothing', me.ln)
+        local AWT_KILL = node('Await', me.ln,
+                             node('Ext', me.ln, '_ok_killed', false, AST.copy(var)),
+                             false,
+                             false,
+                             true)
         local SET_DEAD = node('Nothing', me.ln)
         if stmt.tag == 'Set' then
             local to = AST.asr(stmt,'Set', 4,'VarList', 1,'Var')
-            SET_KILL = node('Set', me.ln, '=', 'exp',
-                        node('Op2_.', me.ln, '.',
-                            node('Op1_*', me.ln, '*',
-                                node('Var', me.ln, '__awk_org_'..me.n)),
-                            'ret'),
-                        AST.copy(to))
+            AWT_KILL = node('_Set', me.ln,
+                            AST.copy(to),
+                            '=', 'await',
+                            AWT_KILL)
             SET_DEAD = node('Set', me.ln, '=', 'exp',
                         node('Op1_cast', me.ln,
                             node('Type', me.ln, 'int'),
@@ -1255,6 +1257,7 @@ me.blk_body = me.blk_body or blk_body
                         AST.copy(to))
         end
 
+-- TODO: REMOVE awk/org code
         return
             node('Stmts', me.ln,
                 -- HACK_6: figure out if OPT-1 or OPT-2 or OPT-3
@@ -1273,31 +1276,7 @@ me.blk_body = me.blk_body or blk_body
                             node('Nothing', me.ln))),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
-                            node('Dcl_var', me.ln, 'var',
-                                node('Type', me.ln, 'void', '&&'),
-                                '__old_adt_'..me.n),
-                            node('Set', me.ln, '=', 'exp',
-                                node('Op1_cast', me.ln,
-                                    node('Type', me.ln, 'void', '&&'),
-                                        node('Op1_&&', me.ln, '&&',
-                                            AST.copy(var))),
-                                node('Var', me.ln, '__old_adt_'..me.n)),
-                            node('Dcl_var', me.ln, 'var',
-                                node('Type', me.ln, 'void', '&&'),
-                                '__awk_adt_'..me.n,
-                                false,
-                                true), -- isTmp
-                            node('_Set', me.ln,
-                                node('Var', me.ln, '__awk_adt_'..me.n),
-                                '=', 'await',
-                                node('Await', me.ln,
-                                    node('Ext', me.ln, '_ok_killed'),
-                                    false,
-                                    node('Op2_==', me.ln, '==',
-                                        node('Var', me.ln, '__old_adt_'..me.n),
-                                        node('Var', me.ln, 
-                                        '__awk_adt_'..me.n)),
-                                    true))))),
+                            AWT_KILL))),
 
                 -- OPT-3
 -- TODO: workaround bug do IF-then-else com await no then e ptr no else
@@ -1319,38 +1298,7 @@ me.blk_body = me.blk_body or blk_body
                                 SET_DEAD)),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, 'u32'),
-                                    '__org_id_'..me.n),
-                                node('_Set', me.ln,
-                                    node('Var', me.ln, '__org_id_'..me.n),
-                                    '=', 'exp',
-                                    node('Op2_.', me.ln, '.',
-                                        node('Op1_*', me.ln, '*',
-                                            node('Op1_cast', me.ln,
-                                                node('Type', me.ln, '_tceu_org', '&&'),
-                                                node('Op1_&&', me.ln, '&&',
-                                                    AST.copy(var)))),
-                                        'id')),
-                                node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, '_tceu_org_kill', '&&'),
-                                    '__awk_org_'..me.n,
-                                    false,
-                                    true),  -- isTmp
-                                node('_Set', me.ln,
-                                    node('Var', me.ln, '__awk_org_'..me.n),
-                                    '=', 'await',
-                                    node('Await', me.ln,
-                                        node('Ext', me.ln, '_ok_killed'),
-                                        false,
-                                        node('Op2_==', me.ln, '==',
-                                            node('Op2_.', me.ln, '.',
-                                                node('Op1_*', me.ln, '*',
-                                                    node('Var', me.ln, '__awk_org_'..me.n)),
-                                                'org'),
-                                            node('Var', me.ln, '__org_id_'..me.n)),
-                                        true)),
-                                SET_KILL)))))
+                            AWT_KILL)))))
     end,
 
     Await_pre = function (me)
@@ -1515,59 +1463,6 @@ me.blk_body = me.blk_body or blk_body
             return F.__REQUEST(me)
         end
     end,
---[=[
-    _EmitInt_pre = function (me)
-        me.tag = 'EmitInt'
-        me = F.EmitExt_pre(me) or me
-        -- TODO-RESEARCH-1:
-        return
-            node('Block', me.ln,
-                node('Stmts', me.ln,
-                    node('_Dcl_nat', me.ln, '@plain', 'unk', '_tceu_nstk', false),
-                    node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, '_tceu_nstk'),
-                        '_emit_fin_'..me.n),
-                    node('_Set', me.ln,
-                        node('Var', me.ln, '_emit_fin_'..me.n),
-                        '=', 'exp',
-                        node('RawExp', me.ln,
-                            '(stack_nxti(_ceu_go)+sizeof(tceu_stk))',
-                            true)),
-                    node('Finalize', me.ln,
-                        false,
-                        node('Finally', me.ln,
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('_Dcl_nat', me.ln, '@nohold', 'func', '_stack_get', false),
-                                    node('If', me.ln,
-                                        node('Op2_==', me.ln, '==',
-                                            node('Var', me.ln, '_emit_fin_'..me.n),
-                                            node('Nat', me.ln, '_CEU_STACK_MAX')),
-                                        node('Block', me.ln,
-                                            node('Stmts', me.ln,
-                                                node('Nothing', me.ln))),
-                                        node('Block', me.ln,
-                                            node('Stmts', me.ln,
-                                                node('_Set', me.ln,
-                                                    node('Op2_.', me.ln, '.',
-                                                        node('Op1_*', me.ln, '*',
-                                                            node('Op2_call', 
-                                                                me.ln,
-                                                                'call',
-                                                                node('Nat', me.ln, '_stack_get', true),
-                                                                node('ExpList', me.ln,
-                                                                    node('Nat', me.ln, '__ceu_go', true),
-                                                                    node('Var', me.ln, '_emit_fin_'..me.n)))),
-                                                        'evt'),
-                                                    '=', 'exp',
-                                                    node('Nat', me.ln, '_CEU_IN__NONE', true))))))))),
-                    me,
-                    node('_Set', me.ln,
-                        node('Var', me.ln, '_emit_fin_'..me.n),
-                        '=', 'exp',
-                        node('Nat', me.ln, '_CEU_STACK_MAX'))))
-    end,
-]=]
 
 -- Finalize ------------------------------------------------------
 

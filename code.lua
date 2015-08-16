@@ -899,7 +899,9 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 
             local tp_id = TP.id(var.tp)
             if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
-                -- TODO: BUG: id should be saved together with the pointer
+                assert(var.pre ~= 'pool')
+-- TODO: review both cases (vec vs no-vec
+-- TODO: BUG: id should be saved together with the pointer
                 LINE(me, [[
 if (0) {
 ]])
@@ -915,8 +917,8 @@ if (0) {
         ]]..TP.toc(tp_opt)..[[* __ceu_one = (]]..TP.toc(tp_opt)..[[*)
                                             ceu_vector_geti(]]..val..[[, __ceu_i);
         if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
-             ( ((tceu_org*)(__ceu_one->SOME.v))->id ==
-               ((tceu_org_kill*)_STK->evt_buf)->org ) )
+             ( ((tceu_org*)(__ceu_one->SOME.v)) ==
+               ((tceu_kill*)_STK->evt_buf)->org_or_adt ) )
         {
             __ceu_one->tag = CEU_]]..ID..[[_NIL;
 /*
@@ -931,7 +933,7 @@ if (0) {
                     local val = V({tag='Var',tp=var.tp,var=var}, 'rval')
                     LINE(me, [[
     if (]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
-        ((tceu_org*)(]]..val..[[.SOME.v))->id==((tceu_org_kill*)_STK->evt_buf)->org)
+        ((tceu_org*)(]]..val..[[.SOME.v))==((tceu_kill*)_STK->evt_buf)->org_or_adt)
     {
         ]]..val..' = '..string.upper(TP.toc(var.tp))..[[_pack(NULL);
     }
@@ -1725,7 +1727,6 @@ _STK->trl->stk = stack_curi(_ceu_go);
         else
             LINE(me, [[
             stk.evt_sz = 0;
-printf(">>> emit\n");
             ceu_sys_bcast(_ceu_app, _ceu_go, &stk, NULL);
 ]])
         end
@@ -1789,7 +1790,7 @@ case ]]..me.lbl.id..[[:;
     end,
 
     __AwaitExt = function (me)
-        local e, dt = unpack(me)
+        local e, dt, _, org = unpack(me)
         local suf = (dt and dt.tm and '_') or ''  -- timemachine "WCLOCK_"
 
         local par_pause  = AST.par(me,'Pause')
@@ -1811,13 +1812,18 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
     _STK->trl->lbl   = ]]..me.lbl.id..[[;
     _STK->trl->seqno =
 ]])
-        if me.isEvery or e.evt.id=='_ok_killed' then
+        if me.isEvery then
             LINE(me, [[
         _ceu_app->seqno-1;   /* always ready to awake */
 ]])
         else
             LINE(me, [[
         _ceu_app->seqno;
+]])
+        end
+        if e[1] == '_ok_killed' then
+            LINE(me, [[
+    _STK->trl->org_or_adt = (void*)]]..V(e[3],'lval')..[[;
 ]])
         end
         HALT(me)
@@ -1861,7 +1867,7 @@ case ]]..me.lbl.id..[[:;
                             val = '(*((tceu_org**)_STK->evt_buf))'
                         else
                             -- ORG
-                            val = '(((tceu_org_kill*)_STK->evt_buf))'
+                            val = '(((tceu_kill*)_STK->evt_buf)->ret)'
                         end
                     else
                         val = '((*(('..TP.toc(me.tp)..'*)_STK->evt_buf))->_'..i..')'

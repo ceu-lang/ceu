@@ -10,6 +10,52 @@ end
 
 --[===[
 
+-- BUG: mutation in the root of &&
+--  also, the other way around is unsafe
+--   which is a problem
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+pool List[]&& l = &&list;
+
+*l = l:CONS.tail;
+
+escape l:CONS +
+        list.CONS.head +
+        list.CONS.tail.NIL;
+]],
+    run = 10,
+}
+--]===]
+Test { [[
+class T with do
+    await FOREVER;
+end
+var T&&? ok;
+var bool ok_;
+native _assert();
+do
+    loop i in 100 do
+        ok = spawn T;
+    end
+    var T&&? ok1 = spawn T;
+    ok_ = (ok1?);
+end
+escape ok_+1;
+]],
+    --loop = 1,
+    run = 1,
+}
 --do return end
 
 -- BUG: must enforce alias
@@ -28787,26 +28833,31 @@ escape 1;
     run = { ['~>2us']=1 },
 }
 
---]===]
 Test { [[
 input void OS_START;
 
 class U with
 do
     await 1us;
+_printf("1\n");
 end
 
 class T with
 do
     do U;
+_printf("2\n");
 end
 pool T[] ts;
 
 var T&&? t1 = spawn T;
 var T&&? t2 = spawn T;
+_printf("AAA\n");
 await *t2!;
+_printf("BBB\n");
 var T&&? t3 = spawn T;
+_printf("CCC\n");
 await *t3!;
+_printf("DDD\n");
 
 escape 1;
 ]],
@@ -31039,61 +31090,6 @@ escape v;
 ]],
     fin = 'line 12 : unsafe access to pointer "v" across `class´ (tests.lua : 7)',
 }
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree  left;
-        var Tree  right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-class Sum with
-    var int&& v;
-do
-    await FOREVER;
-end
-
-class Body with
-    pool  Body[]& bodies;
-    var   Tree&&   n;
-    var   Sum&    sum;
-do
-    watching *n do
-        if n:NODE then
-            *this.sum.v = *this.sum.v + n:NODE.v;
-            spawn Body in this.bodies with
-                this.bodies = &bodies;
-                this.n      = &&n:NODE.left;
-                this.sum    = &sum;
-            end;
-        end
-    end
-end
-
-var int v = 0;
-var Sum sum with
-    this.v = &&v;
-end;
-
-pool Body[7] bodies;
-do Body with
-    this.bodies = &bodies;
-    this.n      = &&tree;
-    this.sum    = &sum;
-end;
-
-escape v;
-]],
-    fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
-}
 
     -- AWAIT/KILL ORG
 
@@ -31219,19 +31215,19 @@ do
     await FOREVER;
 end
 var T a;
-var int ret = 0;
+var int rrr = 0;
 par/and do
     var int v = await a;
-    ret = ret + v;
+    rrr = rrr + v;
 with
     kill a => 10;
 with
     var int v = await a;
-    ret = ret + v;
+    rrr = rrr + v;
 end
-escape ret;
+escape rrr;
 ]],
-    _ana = { acc=3 },
+    _ana = { acc=true },
     run = 20,
 }
 
@@ -45813,6 +45809,61 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree  left;
+        var Tree  right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Sum with
+    var int&& v;
+do
+    await FOREVER;
+end
+
+class Body with
+    pool  Body[]& bodies;
+    var   Tree&&   n;
+    var   Sum&    sum;
+do
+    watching *n do
+        if n:NODE then
+            *this.sum.v = *this.sum.v + n:NODE.v;
+            spawn Body in this.bodies with
+                this.bodies = &bodies;
+                this.n      = &&n:NODE.left;
+                this.sum    = &sum;
+            end;
+        end
+    end
+end
+
+var int v = 0;
+var Sum sum with
+    this.v = &&v;
+end;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = &bodies;
+    this.n      = &&tree;
+    this.sum    = &sum;
+end;
+
+escape v;
+]],
+    fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
+}
 -- << ADT : MISC
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")
@@ -47655,6 +47706,29 @@ pool List[] list;
 list = new List.CONS(10, List.NIL());
 pool List[]&& l = &&list;
 
+*l = l:CONS.tail;
+
+escape l:CONS +
+        list.CONS.head +
+        list.CONS.tail.NIL;
+]],
+    run = 10,
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+pool List[]&& l = &&list;
+
 l:CONS.tail = new List.CONS(9, List.NIL());
 *l = l:CONS.tail;
 
@@ -47966,7 +48040,7 @@ do
 end
 
 
-pool Body[] bodies;
+pool Body[100] bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -47982,7 +48056,7 @@ escape sum;
 }
 Test { [[
 class Body with
-    pool  Body[2]& bodies;
+    pool  Body[]& bodies;
     var   int&    sum;
     event int     ok;
 do
@@ -48004,17 +48078,56 @@ do
 end
 
 
-pool Body[2] bodies;
+pool Body[] bodies;
 var  int     sum = 0;
 
 var Body b with
     this.bodies = &bodies;
-    this.sum    =& sum;
+    this.sum    = &sum;
 end;
 await b;
 
 escape sum;
 ]],
+    wrn = 'line 9 : unbounded recursive spawn',
+    run = { ['~>200s'] = 101 },
+}
+Test { [[
+class Body with
+    pool  Body[3]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+    finalize with end;
+
+    var Body&&? nested =
+        spawn Body in bodies with
+            this.bodies = &bodies;
+            this.sum    = &sum;
+        end;
+    if nested? then
+        watching *nested! do
+            await nested!:ok;
+        end
+    end
+    await 1s;
+    sum = sum + 1;
+    emit this.ok => 1;
+end
+
+
+pool Body[3] bodies;
+var  int     sum = 0;
+
+var Body&&? b = spawn Body in bodies with
+    this.bodies = &bodies;
+    this.sum    =& sum;
+end;
+await *b!;
+
+escape sum;
+]],
+    _ana = {acc=true},
     run = { ['~>10s'] = 3 },
 }
 
@@ -48103,10 +48216,6 @@ do
                     await right!:ok;
                 end
             end
-
-            //do/spawn Body in this.bodies with
-                //this.n = n:NODE.left;
-            //end;
         end
     end
     await 1s;
@@ -48123,19 +48232,6 @@ do Body with
 end;
 
 escape sum;
-
-/*
-var int sum = 0;
-traverse n in tree do
-    var int i = sum;
-    if n:NODE then
-        traverse n:NODE.left;
-        sum = i + n:NODE.v;
-        traverse n:NODE.right;
-    end
-end
-escape sum;
-*/
 ]],
     wrn = 'line 26 : unbounded recursive spawn',
     run = { ['~>10s'] = 9 },
@@ -48209,19 +48305,6 @@ do Body with
 end;
 
 escape sum;
-
-/*
-var int sum = 0;
-traverse n in tree do
-    var int i = sum;
-    if n:NODE then
-        traverse n:NODE.left;
-        sum = i + n:NODE.v;
-        traverse n:NODE.right;
-    end
-end
-escape sum;
-*/
 ]],
     run = { ['~>10s'] = 9 },
 }
@@ -49036,7 +49119,9 @@ escape sum;
 ]],
     wrn = 'line 22/24 : unbounded recursive spawn',
     run = 13,
-}Test { [[
+}
+
+Test { [[
 data Tree with
     tag NIL;
 or

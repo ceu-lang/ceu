@@ -231,10 +231,6 @@ int ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* neworg, tc
 
 #endif
 
-#ifdef CEU_ORGS_WATCHING
-static u32 CEU_ORGS_ID = 0;;
-#endif
-
 void ceu_sys_org (tceu_org* org, int n, int lbl,
                   int cls, int isDyn,
                   tceu_org* parent, tceu_org_lnk** lnks)
@@ -253,9 +249,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
     org->isAlive = 1;
 #endif
 #ifdef CEU_ORGS_WATCHING
-    org->ret = 0;
-    org->id  = CEU_ORGS_ID++;
-    ceu_out_assert(CEU_ORGS_ID > 0, "orgs overflow");
+    org->ret = 0;   /* TODO: ainda preciso disso? */
 #endif
 #ifdef CEU_ORGS_NEWS
     org->isDyn = isDyn;
@@ -281,9 +275,9 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #endif  /* CEU_ORGS */
 }
 
-#ifdef CEU_ORGS
 static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* stk, void* evtp);
 
+#ifdef CEU_ORGS
 void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
 {
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
@@ -299,8 +293,8 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
                  stk.org  = _ceu_app->data;
                  stk.trl  = &_ceu_app->data->trls[0];
                  stk.stop = NULL;
-                 stk.evt_sz = sizeof(tceu_org_kill);
-        tceu_org_kill ps = { org->id, org->ret };
+                 stk.evt_sz = sizeof(tceu_kill);
+        tceu_kill ps = { org, org->ret };
         ceu_sys_bcast(_ceu_app, _ceu_go, &stk, &ps);
             /* param "org" is pointer to what to kill */
     }
@@ -332,6 +326,23 @@ void ceu_sys_org_free (tceu_org* org)
 }
 #endif /* CEU_ORGS_NEWS */
 
+#endif /* CEU_ORGS */
+
+/**********************************************************************/
+
+#ifdef CEU_ADTS_WATCHING
+void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* adt)
+{
+    tceu_stk stk;
+             stk.evt  = CEU_IN__ok_killed;
+#ifdef CEU_ORGS
+             stk.org  = _ceu_app->data;
+#endif
+             stk.trl  = &_ceu_app->data->trls[0];
+             stk.stop = NULL;
+             stk.evt_sz = sizeof(tceu_kill);
+    ceu_sys_bcast(_ceu_app, _ceu_go, &stk, &adt);
+}
 #endif
 
 /**********************************************************************/
@@ -521,6 +532,7 @@ static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* stk, 
             break;  /* invalidated emit or freed organism */
         }
 
+#if 0
 #ifdef CEU_DEBUG_TRAILS
 printf("=== 1\n");
 printf("STACK[%d]: evt=%d : seqno=%d\n",
@@ -530,6 +542,7 @@ printf("\torg=%p/%d : [%d/%p]\n",
     _STK_ORG, _STK_ORG==_ceu_app->data, _STK_ORG->n, _STK_ORG->trls);
 #else
 printf("\tntrls=%d\n", CEU_NTRAILS);
+#endif
 #endif
 #endif
 
@@ -592,15 +605,31 @@ printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
 #endif /* CEU_ORGS */
 
         /* EXECUTE THIS TRAIL */
-        if ( (_STK->trl->evt != CEU_IN__NONE)
+/* TODO: simplify */
+        if ( (_STK->trl->evt != CEU_IN__NONE) &&
 /* TODO: remove: make it work w/o the test above */
 /* i.e., make sure that I never emit IN__NONE */
-                    /* something to execute */
-        &&   (_STK->trl->evt==_STK->evt && _STK->evt!=CEU_IN__STK &&
-              _STK->trl->seqno!=_ceu_app->seqno
+             (_STK->evt != CEU_IN__STK) &&
+             (_STK->trl->evt==_STK->evt) &&
+             (
+#ifdef CEU_WATCHING
+                (_STK->evt==CEU_IN__ok_killed &&
+                 (((tceu_kill*)evtp)->org_or_adt == _STK->trl->org_or_adt))
+             ||
+                (_STK->evt!=CEU_IN__ok_killed &&
+#else
+                (
+#endif
+                 (_STK->trl->seqno!=_ceu_app->seqno))
+                  /* same event and awaiting-before */
              )
-                  /* same event and (clear||await-before) */
         ) {
+#if 0
+if (_STK->evt==CEU_IN__ok_killed) {
+    printf(">>> OK_KILL %p vs %p\n",
+        ((tceu_kill*)evtp)->org_or_adt, _STK->trl->org_or_adt);
+}
+#endif
             /* execute this trail in the 2nd pass */
             _STK->trl->evt = CEU_IN__STK;
             _STK->trl->stk = stack_curi(_ceu_go);
@@ -610,6 +639,12 @@ printf("\t>>> OK\n");
         }
         else
         {
+/*
+if (_STK->evt==CEU_IN__ok_killed && _STK->trl->evt==CEU_IN__ok_killed) {
+    printf("\t\tzzzz: %p vs %p\n",
+        ((tceu_org_kill*)evtp)->org , _STK->trl->org_or_adt);
+}
+*/
 #ifdef CEU_DEBUG_TRAILS
 printf("\t>>> NO\n");
 #endif
@@ -626,7 +661,6 @@ printf("\t>>> NO\n");
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
     tceu_go go;
-printf("===========================\n");
 
     switch (evt) {
 #ifdef CEU_ASYNCS
@@ -682,12 +716,14 @@ printf("===========================\n");
             }
 
 #ifdef CEU_DEBUG_TRAILS
+#if 0
 printf("=== 2\n");
+#endif
 printf("STACK[%d]: evt=%d : seqno=%d\n",
     stack_curi(&go), STK->evt, app->seqno);
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
 printf("\torg=%p/%d : [%d/%p]\n",
-    STK_ORG, STK_ORG==_ceu_app->data, STK_ORG->n, STK_ORG->trls);
+    STK_ORG, STK_ORG==app->data, STK_ORG->n, STK_ORG->trls);
 #else
 printf("\tntrls=%d\n", CEU_NTRAILS);
 #endif
@@ -752,6 +788,7 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                     if (to_kill_free) {
 #ifdef CEU_ORGS_WATCHING
                         tceu_stk stk = *stack_cur(&go);
+                            /* TODO: ??? */
                         stack_pop(&go); /* only if "kill" emit ok_killed */
 #endif
                         ceu_sys_org_kill(app, &go, old);

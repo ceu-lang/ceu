@@ -386,7 +386,7 @@ F = {
             { '_ORG',       nil          },
             { '_ORG_PSED',  nil          },
             { '_CLEAR',     nil          },
-            { '_ok_killed', {'void','&&'} },
+            { '_ok_killed', {'int'}      },
         -- input / runtime
             { '_INIT',      nil,     'seqno' }, -- _INIT = HIGHER EXTERNAL
             { '_ASYNC',     nil,     'seqno' },
@@ -910,10 +910,10 @@ F = {
             stmts[2] = AST.node('Nothing', me.ln)       -- remove OPT-1
             stmts[3] = AST.node('Nothing', me.ln)       -- remove OPT-2
             me.__env_watching = true    -- see props.lua
-            local awt = AST.asr(stmts,'', 4,'Stmts', 1,'If',    3,'Block',
-                                          1,'Stmts', 4,'Block', 1,'Stmts',
-                                          2,'Loop',  4,'Stmts', 1,'Set',
-                                          3,'Await')
+            local awt = AST.asr(stmts,'', 4,'Stmts', 1,'If', 3,'Block', 1,'Stmts')[1]
+            if awt.tag ~= 'Await' then
+                awt = AST.asr(awt,'Set', 3,'Await')
+            end
             awt.__env_org = me[1]   -- see fin.lua
         elseif tp and ENV.adts[tp_id] then
             --ASR(tp.ptr==1, me, 'data must be a pointer')
@@ -937,27 +937,24 @@ F = {
 
     Await = function (me)
         local e = unpack(me)
+        local ins
         if e.tag == 'Ext' then
             if e.evt.id == '_ok_killed' then
                 me.awt_tp = 'org/adt'
             else
                 me.awt_tp = 'evt'
             end
-
-            if e.evt.ins.tup then
-                me.tp = TP.new{'_'..TP.toc(e.evt.ins),'&&'} -- convert to pointer
-            else
-                me.tp = e.evt.ins
-            end
+            ins = e.evt.ins
         else
             me.awt_tp = 'evt'
             ASR(e.var and e.var.pre=='event', me,
                 'event "'..(e.var and e.var.id or '?')..'" is not declared')
-            if e.var.evt.ins.tup then
-                me.tp = TP.new{'_'..TP.toc(e.var.evt.ins),'&&'} -- convert to pointer
-            else
-                me.tp = e.var.evt.ins
-            end
+            ins = e.var.evt.ins
+        end
+        if ins.tup then
+            me.tp = TP.new{'_'..TP.toc(ins),'&&'} -- convert to pointer
+        else
+            me.tp = ins
         end
     end,
 
@@ -1109,31 +1106,6 @@ F = {
                 end
                 return
             end
-
---[[
-                if to.var and (TP.check(to.var.tp,'&') or TP.check(to.var.tp,'&&')) then
-                    if to.var.pre=='pool' then
-                        me[2] = 'adt-ref'
-                        local fr_tp_id = TP.id(fr_tp)
-                        ASR(to_tp_id==fr_tp_id, me,
-                            'invalid attribution : `'..to_tp_id..'´ <= `'..fr_tp_id..'´')
-                        return  -- checked in adt.lua
-                    else
-                        assert(me[2]=='exp')
-                        local fr_tp_id = TP.id(fr_tp)
-                        if to_tp_id == fr_tp_id and (
-                            (TP.check(to.tp,to_tp_id,'&&') and TP.check(fr_tp,fr_tp_id,'[]')) or
-                            (TP.check(fr_tp,fr_tp_id,'&&') and TP.check(to.tp,to_tp_id,'[]'))
-                        ) then
-                            return  -- checked in adt.lua
-                        end
-                    end
-                else
-                    me[2] = 'adt-mut'
-                    return  -- checked in adt.lua
-                end
-            end
-]]
         end
 
         if set ~= 'lua' then
