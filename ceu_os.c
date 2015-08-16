@@ -278,10 +278,10 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* stk, void* evtp);
 
 #ifdef CEU_ORGS
-void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
+void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* me)
 {
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
-    org->isAlive = 0;
+    me->isAlive = 0;
 #endif
 
     /* awake listeners after clear (this is a stack!) */
@@ -294,38 +294,42 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* org)
                  stk.trl  = &_ceu_app->data->trls[0];
                  stk.stop = NULL;
                  stk.evt_sz = sizeof(tceu_kill);
-        tceu_kill ps = { org, org->ret };
-#if 0
-if (_STK->evt == CEU_IN__ok_killed) {
-    stack_pop(_ceu_go);
-}
-#endif
+        tceu_kill ps = { me, me->ret };
+
+        /* Reuse the same stack level for multiple "kill" in sequence:
+         *  - pools
+         *  - TODO: incomplete? (nested kills?, kill adt+org?)
+         *      - should not be reused in those cases?
+         */
+        if (_STK->evt == CEU_IN__ok_killed) {
+            stack_pop(_ceu_go);
+        }
+
         ceu_sys_bcast(_ceu_app, _ceu_go, &stk, &ps);
-            /* param "org" is pointer to what to kill */
     }
 #endif
 }
 
 #ifdef CEU_ORGS_NEWS
-void ceu_sys_org_free (tceu_org* org)
+void ceu_sys_org_free (tceu_org* me)
 {
     /* free org */
-    if (org->isDyn) {
+    if (me->isDyn) {
         /* re-link PRV <-> NXT */
-        org->prv->nxt = org->nxt;
-        org->nxt->prv = org->prv;
+        me->prv->nxt = me->nxt;
+        me->nxt->prv = me->prv;
 
         /* free */
 #if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
-        ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+        ceu_pool_free((tceu_pool*)me->pool, (byte*)me);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-        if (org->pool->queue == NULL) {
-            ceu_sys_realloc(org, 0);
+        if (me->pool->queue == NULL) {
+            ceu_sys_realloc(me, 0);
         } else {
-            ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+            ceu_pool_free((tceu_pool*)me->pool, (byte*)me);
         }
 #elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-        ceu_sys_realloc(org, 0);
+        ceu_sys_realloc(me, 0);
 #endif
     }
 }
@@ -336,7 +340,7 @@ void ceu_sys_org_free (tceu_org* org)
 /**********************************************************************/
 
 #ifdef CEU_ADTS_WATCHING
-void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* adt)
+void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
 {
     tceu_stk stk;
              stk.evt  = CEU_IN__ok_killed;
@@ -346,7 +350,7 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* adt)
              stk.trl  = &_ceu_app->data->trls[0];
              stk.stop = NULL;
              stk.evt_sz = sizeof(tceu_kill);
-    ceu_sys_bcast(_ceu_app, _ceu_go, &stk, &adt);
+    ceu_sys_bcast(_ceu_app, _ceu_go, &stk, &me);
 }
 #endif
 

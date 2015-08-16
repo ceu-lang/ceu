@@ -539,7 +539,7 @@ typedef struct {
 
 /* TODO: tceu_go => tceu_stk? */
 typedef struct tceu_go {
-    #define CEU_STACK_MAX   1024*sizeof(tceu_stk)
+    #define CEU_STACK_MAX   128*sizeof(tceu_stk)
         /* TODO: possible to calculate (not is CEU_ORGS_NEWS)
         #define CEU_STACK_MAX   (CEU_NTRAILS+1) // current +1 for each trail
         */

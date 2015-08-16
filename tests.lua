@@ -9,7 +9,9 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--]===]
 
+-- XXXX_LIST
 -- BUG: mutation in the root of &&
 --  also, the other way around is unsafe
 --   which is a problem
@@ -21211,7 +21213,6 @@ escape t.v + p!:v;
     run = { ['~>1s'] = '12] runtime error: invalid tag', },
 }
 
---]===]
 Test { [[
 class T with
     var int v = 10;
@@ -28834,31 +28835,26 @@ escape 1;
     run = { ['~>2us']=1 },
 }
 
+-- problems w/o ceu_sys_stack_clear_org
 Test { [[
 input void OS_START;
 
 class U with
 do
     await 1us;
-_printf("1\n");
 end
 
 class T with
 do
     do U;
-_printf("2\n");
 end
 pool T[] ts;
 
 var T&&? t1 = spawn T;
 var T&&? t2 = spawn T;
-_printf("AAA\n");
 await *t2!;
-_printf("BBB\n");
 var T&&? t3 = spawn T;
-_printf("CCC\n");
 await *t3!;
-_printf("DDD\n");
 
 escape 1;
 ]],
@@ -47692,6 +47688,7 @@ escape l:CONS +
     adt = 'line 16 : invalid attribution : mutation : destination cannot be a pointer',
 }
 
+-- XXXX_LIST
 Test { [[
 data List with
     tag NIL;
@@ -47713,6 +47710,7 @@ escape l:CONS +
         list.CONS.head +
         list.CONS.tail.NIL;
 ]],
+    todo = true,
     run = 10,
 }
 Test { [[
