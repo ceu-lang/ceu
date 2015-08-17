@@ -695,9 +695,10 @@ typedef struct {
 
 #ifdef CEU_ADTS_NEWS
 typedef struct {
-    void* root;
+    void** root;    /* points to root_ */
+    void*  root_;   /* TODO: not required for &&/& */
 #ifdef CEU_ADTS_NEWS_POOL
-    void* pool;
+    void*  pool;
 #endif
 } tceu_adt_root;
 #endif

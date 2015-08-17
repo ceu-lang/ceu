@@ -128,6 +128,8 @@ error'bug found'
         elseif set == 'adt-mut' then
              ASR(to.fst.var==fr.fst.var, me,
                 'invalid attribution : mutation : cannot mix data sources')
+            ASR(to.lst.var.pre == 'pool', me,
+                'invalid attribution : mutation : cannot mutate from pointers')
 
             -- pool List[]&& l;
             -- l = ...

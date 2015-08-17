@@ -321,7 +321,7 @@ me.blk_body = me.blk_body or blk_body
         --      var  Body*      parent;       // TODO: should be "Body*?" (opt)
         --      var  Outer&     out;
         --
-        --      var  <root_t>[]* <n>;
+        --      pool <root_t>[]* <n>;
         --        or
         --      var  int        <n>;
         --      <interface>

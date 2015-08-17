@@ -9,36 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
-
--- XXXX_LIST
--- BUG: mutation in the root of &&
---  also, the other way around is unsafe
---   which is a problem
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
-end
-
-pool List[] list;
-
-list = new List.CONS(10, List.NIL());
-pool List[]&& l = &&list;
-
-*l = l:CONS.tail;
-
-escape l:CONS +
-        list.CONS.head +
-        list.CONS.tail.NIL;
-]],
-    todo = true,
-    run = 10,
-}
 
 -- BUG: must enforce alias
 Test { [[
@@ -44990,6 +44960,7 @@ escape ptr2==&&a;
 }
 
 -- ALGEBRAIC DATATYPES (ADTS)
+--]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -45049,7 +45020,6 @@ end
 
 --[==[
 -- HERE:
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -47668,7 +47638,9 @@ escape l:CONS +
     adt = 'line 16 : invalid attribution : mutation : destination cannot be a pointer',
 }
 
--- XXXX_LIST
+-- BUG: mutation in the root of &&
+--  also, the other way around is unsafe
+--   which is a problem
 Test { [[
 data List with
     tag NIL;
@@ -47682,11 +47654,57 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]&& l = &&list;
+pool List[]&& lll = &&list;
 
-*l = l:CONS.tail;
+*lll = lll:CONS.tail;
 
-escape l:CONS +
+escape lll:CONS +
+        list.CONS.head +
+        list.CONS.tail.NIL;
+]],
+    run = '17] runtime error: invalid tag',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+var List[]&& lll = &&list;
+
+*lll = lll:CONS.tail;
+
+escape lll:CONS + list.CONS + 1;
+]],
+    adt = 'line 15 : invalid attribution : mutation : cannot mutate from pointers',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+pool List[]&& lll = &&list;
+
+*lll = lll:CONS.tail;
+
+escape lll:CONS +
         list.CONS.head +
         list.CONS.tail.NIL;
 ]],
@@ -47706,15 +47724,15 @@ end
 pool List[] list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]&& l = &&list;
+pool List[]&& lll = &&list;
 
-l:CONS.tail = new List.CONS(9, List.NIL());
-*l = l:CONS.tail;
+lll:CONS.tail = new List.CONS(9, List.NIL());
+*lll = lll:CONS.tail;
 
-l:CONS.tail = new List.CONS(8, List.NIL());
-*l = l:CONS.tail;
+lll:CONS.tail = new List.CONS(8, List.NIL());
+*lll = lll:CONS.tail;
 
-escape l:CONS +
+escape lll:CONS +
         list.CONS.head +
         list.CONS.tail.NIL;
 ]],
@@ -51745,6 +51763,7 @@ escape 1;
 --<< TRAVERSE / NUMERIC
 
 -->> TRAVERSE / NESTED-RECURSIVE-ADTS
+]==]
 Test { [[
 data List with
     tag NIL;
@@ -51763,10 +51782,13 @@ list = new List.CONS(1,
 var int sum = 0;
 
 pool List[]&& lll = &&list.CONS.tail;
+_printf("cons %d\n", list:CONS.head);
+_printf("cons %d\n", lll:CONS.head);
 
 traverse n in lll do
     sum = sum + 1;
     if n:CONS then
+_printf("cons %d\n", n:CONS.head);
         sum = sum + n:CONS.head;
         traverse &&n:CONS.tail;
     end

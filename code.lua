@@ -797,37 +797,27 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..
                     -- create base case NIL and assign to "*l"
                     local tag = unpack( AST.asr(adt,'Dcl_adt', 3,'Dcl_adt_tag') )
                     local tp = 'CEU_'..adt.id
-                    LINE(me, [[
-{
-    ]]..tp..[[* __ceu_adt;
-]])
-                    -- base case: use preallocated static variable
-                    if adt.is_rec and tag==adt.tags[1] then
-                        LINE(me, [[
-    __ceu_adt = &CEU_]]..string.upper(adt.id)..[[_BASE;
-]])
 
-                    -- other cases: must allocate
-                    else
-                        error'bug found'
-                    end
+                    -- base case: use preallocated static variable
+                    assert(adt.is_rec and tag==adt.tags[1], 'bug found')
 
                     local VAL_all  = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_top')
                     local VAL_pool = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_pool')
                     if (not is_dyn) then
                         LINE(me, [[
-    ]]..VAL_all..[[->pool = ]]..VAL_pool..[[;
+]]..VAL_all..[[->pool = ]]..VAL_pool..[[;
 ]])
                     else
                         LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
-    ]]..VAL_all..[[->pool = NULL;
+]]..VAL_all..[[->pool = NULL;
 #endif
 ]])
                     end
                     LINE(me, [[
-    ]]..VAL_all..[[->root = __ceu_adt;
-}
+]]..VAL_all..[[->root_ = &CEU_]]..string.upper(adt.id)..[[_BASE;
+]]..VAL_all..[[->root  = &]]..VAL_all..[[->root_;
+
 /*  FINALIZE ADT */
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt = CEU_IN__CLEAR;
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl = ]]..var.lbl_fin_kill_free.id..[[;
@@ -902,8 +892,8 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
             local tp_id = TP.id(var.tp)
             if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
                 assert(var.pre ~= 'pool')
--- TODO: review both cases (vec vs no-vec
--- TODO: BUG: id should be saved together with the pointer
+-- TODO: review both cases (vec vs no-vec)
+-- possible BUG: pointer is tested after free
                 LINE(me, [[
 if (0) {
 ]])
@@ -1290,7 +1280,7 @@ ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "acce
 #ifdef CEU_ADTS_NEWS_POOL
 ]]..V(to,'lval','adt_top')..'->pool = '..V(pool,'rval','adt_top')..pool_op..[[pool;
 #endif
-]]..V(to,'lval','adt_top')..'->root = '..V(fr,'rval')..[[;
+]]..V(to,'lval','adt_top')..'->root = (void**)&'..V(fr,'lval','no_cast')..[[;
 ]])
                 end
         elseif set == 'adt-ref-var' then

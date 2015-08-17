@@ -5,7 +5,7 @@
 RUNTESTS = true
 
 -- Execution option for the tests:
---VALGRIND = true
+VALGRIND = true
 --LUACOV = '-lluacov'
 --COMPLETE = true
 OS = false   -- false, true, nil(random)
