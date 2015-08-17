@@ -46,8 +46,8 @@ function ISPTR (node_or_var)
     -- type with '&&' anywhere
     for _, v in ipairs(tp.tt) do
         if v == '&&' then
-            -- skip [var T*? ptr], [var T*?[] ts]
             if ENV.clss[tp_id] and TP.check(tp,tp_id,'&&','?','-[]') then
+                -- skip [var T*? ptr], [var T*?[] ts]
             else
                 return true
             end
@@ -406,7 +406,12 @@ F = {
     end,
     EmitInt = '__await',
     Kill    = '__await',
-    --Set_pos = '__await',    -- 'adt-mut'
+
+    Set_pos = function (me)
+        if me.has_yield then
+            F__await(me)  -- 'adt-mut'
+        end
+    end,
 
     Spawn = function (me)
         if me.cls.is_traverse and me.cls.__fin_straight then

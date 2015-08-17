@@ -9,6 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--]===]
 
 -- BUG: must enforce alias
 Test { [[
@@ -44960,7 +44961,6 @@ escape ptr2==&&a;
 }
 
 -- ALGEBRAIC DATATYPES (ADTS)
---]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -47639,7 +47639,34 @@ escape l:CONS +
     adt = 'line 16 : invalid attribution : mutation : destination cannot be a pointer',
 }
 
--- BUG: mutation in the root of &&
+-- mutation in the root of &&
+--  also, the other way around is unsafe
+--   which is a problem
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.NIL());
+
+pool List[]&& l1 = &&list;
+pool List[]&  l2 = &list;
+
+list = new List.NIL();
+
+escape l1:CONS+l2.CONS+list.CONS+1;
+]],
+    run = 1,
+}
+
+-- mutation in the root of &&
 --  also, the other way around is unsafe
 --   which is a problem
 Test { [[

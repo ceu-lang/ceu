@@ -294,13 +294,7 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
         LINE(me, [[
 #ifdef CEU_ORGS
 {
-    tceu_stk stk;
-             stk.evt    = CEU_IN__CLEAR;
-             stk.cnt    = NULL;
-             stk.org    = _STK_ORG;
-             stk.trl    = &_STK_ORG->trls[0];
-             stk.stop   = _STK_ORG;
-             stk.evt_sz = 0;
+    tceu_org* old = _STK_ORG;
 ]])
 
         if me ~= MAIN then
@@ -328,6 +322,13 @@ if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
         end
 
         LINE(me, [[
+    tceu_stk stk;
+             stk.evt    = CEU_IN__CLEAR;
+             stk.cnt    = NULL;
+             stk.org    = old;
+             stk.trl    = &old->trls[0];
+             stk.stop   = old;
+             stk.evt_sz = 0;
     stack_push(_ceu_go, &stk, NULL);
 }
 #endif

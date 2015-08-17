@@ -229,9 +229,12 @@ E = {
         end
     end,
     Set = function (me)
-        local _, set = unpack(me)
+        local _, set, fr, to = unpack(me)
         if set == 'adt-mut' then
-            E.__await(me)
+            local adt = assert(ENV.adts[TP.id(to.tp)], 'bug found')
+            if adt.is_rec then
+                E.__await(me)
+            end
         end
     end,
 }
