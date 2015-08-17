@@ -121,15 +121,15 @@ F =
                     if CTX.val == 'lval' then
                         if is_ptr then
                             CAST = '('..tp_id..'**)'
-                            VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
+                            VAL  = '(& ((tceu_adt_root*) '..VAL..')->root)'
                         else
                             CAST = '('..tp_id..' *)'
-                            VAL  = '(* ((tceu_adt_root*) '..VAL..')->root)'
+                            VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
                         end
                     else
                         if is_ptr then
                             CAST = '('..tp_id..' *)'
-                            VAL  = '(* ((tceu_adt_root*) '..VAL..')->root)'
+                            VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
                         else
                             error'bug found'
                         end

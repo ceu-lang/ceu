@@ -222,9 +222,15 @@ E = {
     EmitInt = '__await',
     Kill    = '__await',
     Spawn   = '__await',
-    AwaitN   = '__await',
+    AwaitN  = '__await',
     Await   = function (me)
         if me.tl_awaits then
+            E.__await(me)
+        end
+    end,
+    Set = function (me)
+        local _, set = unpack(me)
+        if set == 'adt-mut' then
             E.__await(me)
         end
     end,

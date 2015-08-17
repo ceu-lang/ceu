@@ -406,6 +406,7 @@ F = {
     end,
     EmitInt = '__await',
     Kill    = '__await',
+    --Set_pos = '__await',    -- 'adt-mut'
 
     Spawn = function (me)
         if me.cls.is_traverse and me.cls.__fin_straight then

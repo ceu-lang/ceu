@@ -815,8 +815,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..
 ]])
                     end
                     LINE(me, [[
-]]..VAL_all..[[->root_ = &CEU_]]..string.upper(adt.id)..[[_BASE;
-]]..VAL_all..[[->root  = &]]..VAL_all..[[->root_;
+]]..VAL_all..[[->root = &CEU_]]..string.upper(adt.id)..[[_BASE;
 
 /*  FINALIZE ADT */
 _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt = CEU_IN__CLEAR;
@@ -1280,7 +1279,7 @@ ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "acce
 #ifdef CEU_ADTS_NEWS_POOL
 ]]..V(to,'lval','adt_top')..'->pool = '..V(pool,'rval','adt_top')..pool_op..[[pool;
 #endif
-]]..V(to,'lval','adt_top')..'->root = (void**)&'..V(fr,'lval','no_cast')..[[;
+]]..V(to,'lval','adt_top')..'->root = '..V(fr,'rval')..[[;
 ]])
                 end
         elseif set == 'adt-ref-var' then

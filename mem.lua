@@ -629,7 +629,6 @@ CEU_VECTOR_DCL(]]..var.id_..','..tp_c..','..max..[[)
  * PTR:
  * tceu_adt_root x;   // pool: the same // root: may point to the middle
  */
-/* TODO: "root_" field not required (see ceu_os.h) */
 tceu_adt_root]]..ptr..' '..var.id_..[[;
 ]]
                 end

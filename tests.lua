@@ -45020,6 +45020,7 @@ end
 
 --[==[
 -- HERE:
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -47662,7 +47663,32 @@ escape lll:CONS +
         list.CONS.head +
         list.CONS.tail.NIL;
 ]],
-    run = '17] runtime error: invalid tag',
+    adt = 'line 15 : invalid attribution : mutation : cannot mutate root of a reference',
+    --run = '17] runtime error: invalid tag',
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+pool List[] list;
+
+list = new List.CONS(10, List.CONS(20, List.NIL()));
+pool List[]&& lll = &&list;
+
+lll:CONS.tail = lll:CONS.tail.CONS.tail;
+
+escape lll:CONS +
+        list.CONS.head +
+        list.CONS.tail.NIL;
+]],
+    run = 12,
 }
 
 Test { [[
@@ -47708,8 +47734,8 @@ escape lll:CONS +
         list.CONS.head +
         list.CONS.tail.NIL;
 ]],
-    todo = true,
-    run = 10,
+    --run = 10,
+    adt = 'line 15 : invalid attribution : mutation : cannot mutate root of a reference',
 }
 Test { [[
 data List with
@@ -47736,7 +47762,7 @@ escape lll:CONS +
         list.CONS.head +
         list.CONS.tail.NIL;
 ]],
-    run = 10,
+    adt = 'line 16 : invalid attribution : mutation : cannot mutate root of a reference',
 }
 Test { [[
 data List with
@@ -51763,7 +51789,6 @@ escape 1;
 --<< TRAVERSE / NUMERIC
 
 -->> TRAVERSE / NESTED-RECURSIVE-ADTS
-]==]
 Test { [[
 data List with
     tag NIL;
@@ -51782,13 +51807,10 @@ list = new List.CONS(1,
 var int sum = 0;
 
 pool List[]&& lll = &&list.CONS.tail;
-_printf("cons %d\n", list:CONS.head);
-_printf("cons %d\n", lll:CONS.head);
 
 traverse n in lll do
     sum = sum + 1;
     if n:CONS then
-_printf("cons %d\n", n:CONS.head);
         sum = sum + n:CONS.head;
         traverse &&n:CONS.tail;
     end

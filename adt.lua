@@ -132,7 +132,7 @@ error'bug found'
                 'invalid attribution : mutation : cannot mutate from pointers')
 
             -- pool List[]&& l;
-            -- l = ...
+            -- [NO]: l = ...
             if TP.check(to.tp,'&&','-&') then
                 if to.__par.tag ~= 'Op2_.' then     -- TODO: incomplete
                     ASR(false, me,
@@ -172,6 +172,9 @@ error'bug found'
                 fr = fr.__par
             end
 
+            -- see below
+            local is_root = true
+
             -- skip while if already "not ok"
             while ok do
                 if fr.__par.tag ~= 'Op2_.' then
@@ -182,6 +185,10 @@ error'bug found'
                     -- l = l:CONS.tail
                     ok = true       -- end of to
                     break
+                else
+                    -- at least on field in to:
+                    -- l.* = ...
+                    is_root = false
                 end
                 to = AST.asr(to.__par,'Op2_.')
                 fr = AST.asr(fr.__par,'Op2_.')
@@ -200,6 +207,14 @@ error'bug found'
                 end
             end
             ASR(ok, me, 'cannot assign parent to child')
+
+            -- pool List[]&& l;
+            -- [NO]: *l = ...
+            if TP.check(to.lst.var.tp,'&&','-&') then
+                ASR((not is_root), me,
+                    'invalid attribution : mutation : cannot mutate root of a reference')
+            end
+
         else
             error'bug found'
         end
