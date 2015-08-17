@@ -36,29 +36,9 @@ escape l:CONS +
         list.CONS.head +
         list.CONS.tail.NIL;
 ]],
+    todo = true,
     run = 10,
 }
--- stack overflow
-Test { [[
-class T with do
-    await FOREVER;
-end
-var T&&? ok;
-var bool ok_;
-native _assert();
-do
-    loop i in 100 do
-        ok = spawn T;
-    end
-    var T&&? ok1 = spawn T;
-    ok_ = (ok1?);
-end
-escape ok_+1;
-]],
-    --loop = 1,
-    run = 1,
-}
---do return end
 
 -- BUG: must enforce alias
 Test { [[

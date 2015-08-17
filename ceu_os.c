@@ -360,16 +360,6 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
 int ceu_sys_clear (tceu_go* _ceu_go, tceu_nlbl cnt,
                    tceu_org* org, tceu_trl* from, void* stop)
 {
-    if (_STK->evt < CEU_IN_lower) {
-        /* need this extra level in the case we are in an internal event and
-         * the emit sets the current level to NONE when aborted */
-        tceu_stk stk        = *_STK;
-_STK->trl++;
-                 stk.evt    = CEU_IN__STK;
-                 stk.evt_sz = 0;
-        stack_push(_ceu_go, &stk, NULL);
-    }
-
     /* save the continuation to run after the clear */
     /* trails[1] points to ORG blk ("clear trail") */
     _STK->trl->evt = CEU_IN__STK;
@@ -618,16 +608,11 @@ printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
         if (_STK->trl->evt != _STK->evt) {
             goto _CEU_GO_NO_;
         }
+#ifdef CEU_OS
         if (_STK->trl->evt == CEU_IN__NONE) {
-/* TODO: remove: make it work w/o the test above */
-/* i.e., make sure that I never emit IN__NONE */
-            goto _CEU_GO_NO_;
+            goto _CEU_GO_NO_; /* OS can emit NONE (to fill queue gaps) */
         }
-        if (_STK->evt == CEU_IN__STK) {
-/* TODO: remove: make it work w/o the test above */
-/* i.e., make sure that I never emit IN__STK */
-            goto _CEU_GO_NO_;  /* 2nd pass */
-        }
+#endif
 #ifdef CEU_WATCHING
         if (_STK->evt == CEU_IN__ok_killed) {
             if (_STK->trl->org_or_adt != NULL &&
@@ -755,54 +740,61 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                 }
 
 #ifdef CEU_ORGS
+                /* end of current org */
                 else {
                     /* save current org before setting the next traversal */
                     tceu_org* old = STK_ORG;
+
+#if 0
+                    /*
+                     * Test is commented to simplify the code.
+                     * "traverse-next-org" only required on that condition.
+                     */
                     int to_kill_free = (STK->evt==CEU_IN__CLEAR && old->n!=0);
-
-                    /* should pop this level as it was a
-                     * bounded CLEAR on the given ORG */
-/* TODO: check for CLEAR only because we only use STOP in CLEAR events */
-                    if (to_kill_free && STK->stop==(void*)old) {
-                        stack_pop(&go);
-                        ceu_sys_org_kill(app, &go, old);
-                            /* has bcast/push */
-#ifdef CEU_ORGS_WATCHING
-                        /* HACK_10: (see adj.lua)
-                         * save return value as global
-                         * (in case spawn terminates immediately)
-                         */
-                        app->ret = old->ret;
+                    int stop_now = (STK->stop==(void*)old);
+                    if (to_kill_free && stop_now) {
+                    } else
 #endif
+                    {
+                        /* traverse next org */
+                        STK_ORG_ATTR = old->nxt;
+                        STK->trl = &((tceu_org*)old->nxt)->trls [
+                                    (old->n == 0) ?
+                                    ((tceu_org_lnk*)old)->lnk : 0
+                                  ];
+                    }
+
+                    if (STK->evt==CEU_IN__CLEAR && old->n!=0) {
+                        if (STK->stop==(void*)old) {
+#ifdef CEU_ORGS_WATCHING
+                            /* HACK_10: (see adj.lua)
+                             * save return value as global
+                             * (in case spawn terminates immediately)
+                             */
+                            app->ret = old->ret;
+#endif
+                            /* should pop this level as it was a
+                             * bounded CLEAR on the given ORG
+                             * nothing else to do in this level */
+                            stack_pop(&go);
+                            ceu_sys_org_kill(app, &go, old); /* has bcast/push */
+                        } else {
+                            /* pop/kill/push:
+                             * terminate current CLEAR before kill */
+#ifdef CEU_ORGS_WATCHING
+                            tceu_stk stk = *stack_cur(&go);
+                            stack_pop(&go); /* only if "kill" emit ok_killed */
+#endif
+                            ceu_sys_org_kill(app, &go, old); /* has bcast/push */
+#ifdef CEU_ORGS_WATCHING
+                            stack_push(&go, &stk, NULL);
+#endif
+                        }
 #ifdef CEU_ORGS_NEWS
                         ceu_sys_org_free(old);
 #endif
-                        continue;   /* restart with kill */
                     }
-
-                    /* traverse next org */
-                    STK_ORG_ATTR = old->nxt;
-                    STK->trl = &((tceu_org*)old->nxt)->trls [
-                                (old->n == 0) ?
-                                ((tceu_org_lnk*)old)->lnk : 0
-                              ];
-#ifdef CEU_ORGS_NEWS
-                    if (to_kill_free) {
-#ifdef CEU_ORGS_WATCHING
-                        tceu_stk stk = *stack_cur(&go);
-                            /* TODO: ??? */
-                        stack_pop(&go); /* only if "kill" emit ok_killed */
-#endif
-                        ceu_sys_org_kill(app, &go, old);
-                            /* has bcast/push */
-                        ceu_sys_org_free(old);
-#ifdef CEU_ORGS_WATCHING
-                        stack_push(&go, &stk, NULL);
-                            /* TODO: ??? */
-#endif
-                    }
-#endif
-                    continue;
+                    continue;   /* restart with kill */
                 }
 #endif  /* CEU_ORGS */
             }

@@ -290,6 +290,7 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
 
         -- might need "free"
 
+-- TODO: ceu_sys_clear
         LINE(me, [[
 #ifdef CEU_ORGS
 {
@@ -1688,18 +1689,6 @@ case ]]..me.lbl_cnt.id..[[:;
 
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[
-#if 0
-{
-    tceu_stk stk        = *_STK;
-_STK->trl++;
-    /* create this level to allow incrementing the previous trail traversal */
-             stk.evt    = CEU_IN__STK;
-             stk.evt_sz = 0;
-    stack_push(_ceu_go, &stk, NULL);
-}
-/* TODO: remove above */
-#endif
-
 /* save the continuation to run after the emit */
 _STK->trl->evt = CEU_IN__STK;
 _STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
@@ -1739,13 +1728,6 @@ _STK->trl->stk = stack_curi(_ceu_go);
 return RET_RESTART;
 
 case ]]..me.lbl_cnt.id..[[:;
-#if 0
-/* TODO: remove below */
-    /* Above push can only awake myself, so I can pop.
-     * Have to trl-- to reexecute myself. */
-    stack_pop(_ceu_go);
-    _STK->trl--;
-#endif
 ]])
     end,
 
