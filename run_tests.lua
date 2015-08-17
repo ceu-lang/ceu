@@ -5,9 +5,9 @@
 RUNTESTS = true
 
 -- Execution option for the tests:
---VALGRIND = true
+VALGRIND = true
 --LUACOV = '-lluacov'
---COMPLETE = true
+COMPLETE = true
 OS = false   -- false, true, nil(random)
 
 dofile 'pak.lua'
@@ -318,6 +318,15 @@ os.execute('rm -f /tmp/_ceu_*')
 -- COMPLETE=false, VALGRIND=false
 > /usr/bin/time --format='(%C: %Us %Mk)' ./run_tests.lua
 
+--- two-pass scheduler
+STATS = {
+    count   = 2705,
+    mem     = 0,
+    trails  = 5968,
+    bytes   = 38703890,
+}
+(./run_tests.lua: 959.80s 55044k)
+
 --- no yields in pool iterators
 STATS = {
     count   = 2695,
@@ -350,6 +359,11 @@ STATS = {
 -- ROCKS
 > cd ../ceu-sdl/rocks/
 > make test
+
+--- two-pass scheduler
+SCORE = 56 vs 49
+(./rocks.exe: 2.34s 31924k)
+296007
 
 --- no yields in pool iterators
 SCORE = 56 vs 49

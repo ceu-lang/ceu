@@ -9,7 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
 
 -- BUG: must enforce alias
 Test { [[
@@ -47649,6 +47648,7 @@ escape l:CONS +
 -- mutation in the root of &&
 --  also, the other way around is unsafe
 --   which is a problem
+--]===]
 Test { [[
 data List with
     tag NIL;
