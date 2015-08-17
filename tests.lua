@@ -2469,6 +2469,13 @@ escape 1;
 }
 
 Test { [[
+loop/10000000 i in 0 do
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
 var int ret = 0;
 loop/3 do
     ret = ret + 1;

@@ -1462,7 +1462,7 @@ if (]]..V(c,'rval')..[[) {
 
         -- ensures that cval is constant
         if max then
-            LINE(me, 'int __'..me.n..'['..max.cval..'] = {};')
+            LINE(me, 'int __'..me.n..'['..max.cval..'/'..max.cval..'] = {};')
         end
 
         LINE(me, [[
