@@ -1257,7 +1257,6 @@ me.blk_body = me.blk_body or blk_body
                         AST.copy(to))
         end
 
--- TODO: REMOVE awk/org code
         return
             node('Stmts', me.ln,
                 -- HACK_6: figure out if OPT-1 or OPT-2 or OPT-3
