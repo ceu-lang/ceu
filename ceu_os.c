@@ -146,6 +146,7 @@ void ceu_stack_dump (tceu_go* go) {
 
 /* TODO: move from 1=>0 (change also in code.lua) */
 #ifdef CEU_ORGS
+#ifndef CEU_ANA_NO_NESTED_TERMINATION
 /*
  * All traversals for the "org" being cleared (as well as nested ones) must 
  * continue with the org in sequence.
@@ -187,6 +188,7 @@ void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* old, int lim) {
         }
     }
 }
+#endif
 #endif
 
 /**********************************************************************/
@@ -773,9 +775,8 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                              */
                             app->ret = old->ret;
 #endif
-                            /* should pop this level as it was a
-                             * bounded CLEAR on the given ORG
-                             * nothing else to do in this level */
+                            /* pop this level as it was a bounded CLEAR on the
+                             * given ORG nothing else to do in this level */
                             stack_pop(&go);
                             ceu_sys_org_kill(app, &go, old); /* has bcast/push */
                         } else {

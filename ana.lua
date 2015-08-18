@@ -5,6 +5,7 @@ ANA = {
         reachs   = 0,      -- unexpected reaches
         unreachs = 0,      -- unexpected unreaches
     },
+    no_nested_termination = true,
 }
 
 function ANA.dbg_one (p)
@@ -12,8 +13,12 @@ function ANA.dbg_one (p)
         if e == true then
             DBG('', '$$$')
         else
-            for _,t in pairs(e) do
-                DBG('', _, t.id)
+            if type(e) == 'table' then
+                for _,t in pairs(e) do
+                    DBG('', _, t.id)
+                end
+            else
+                DBG('', e)
             end
         end
     end
@@ -117,12 +122,42 @@ F = {
 
     Dcl_cls_pos = function (me)
         local _,id = unpack(me)
+
+        -- TODO: evaluated when this is "true" for sure
+        ANA.no_nested_termination = false
+        me.no_nested_termination  = false
+
+--[[
+        DBG('>>>', id)
+        for k,v in pairs(me.ana.pos) do
+            DBG('',k, v)
+            if type(k)=='table' then
+                for kk,vv in pairs(k) do
+                    DBG('','',kk,vv)
+                    if type(vv)=='table' then
+                        for kkk,vvv in pairs(vv) do
+                            DBG('','','',kkk,vvv)
+                        end
+                        if vv.id == '_ok_killed' then
+ANA.no_nested_termination = false
+me.no_nested_termination = false
+WRN(true, me,
+    'class "'..id..'" may terminate from nested organisms')
+print('class "'..id..'" may terminate from nested organisms')
+                        end
+                    end
+                end
+            end
+        end
+]]
+
         if id ~= 'Main' then
             me.ana.pos = COPY(me.ana.pre) -- no effect on enclosing class
 -- TODO: evaluate class termination as well
         end
     end,
     Dcl_cls_pre = function (me)
+        me.no_nested_termination = true
         if me ~= MAIN then
             me.ana.pre = { [me.id]=true }
         end
@@ -148,6 +183,16 @@ F = {
             -- other subs follow previous
             sub.ana = {
                 pre = COPY(me[i-1].ana.pos)
+            }
+        end
+    end,
+
+    -- TODO: behaves similarly to Stmts
+    --  join code
+    Set_aft = function (me, sub, i)
+        if sub.tag == 'Await' then
+            me[i+1].ana = {
+                pre = COPY(sub.ana.pos)
             }
         end
     end,
@@ -306,16 +351,6 @@ F = {
         if cnd then
             cnd.ana = {
                 pre = COPY(t),
-            }
-        end
-    end,
-
-    -- TODO: behaves similarly to Stmts
-    --  join code
-    Set_aft = function (me, sub, i)
-        if sub.tag == 'Await' then
-            me[i+1].ana = {
-                pre = COPY(sub.ana.pos)
             }
         end
     end,

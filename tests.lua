@@ -28806,6 +28806,36 @@ class T with
 do
     do U;
 end
+
+do
+    var T t1;
+    var T t2;
+    await t2;
+end
+do
+    var _char[1000] v;
+    native @nohold _memset();
+    _memset(&&v, 0, 1000);
+    var T t3;
+    await t3;
+end
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+Test { [[
+input void OS_START;
+
+class U with
+do
+    await 1us;
+end
+
+class T with
+do
+    do U;
+end
 pool T[] ts;
 
 var T&&? t1 = spawn T;

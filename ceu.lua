@@ -241,6 +241,10 @@ do
             str = str .. '#define CEU_ADTS_WATCHING_' .. id .. '\n'
         end
 
+        if ANA.no_nested_termination then
+            str = str .. '#define CEU_ANA_NO_NESTED_TERMINATION\n'
+        end
+
         -- TODO: goto OPTS
         --str = str .. '#define CEU_DEBUG_TRAILS\n'
         --str = str .. '#define CEU_NOLINES\n'
