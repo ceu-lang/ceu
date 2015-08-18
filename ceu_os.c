@@ -86,6 +86,7 @@ void* ceu_sys_realloc (void* ptr, size_t size) {
 #ifdef CEU_RUNTESTS
     if (size == 0) {
         if (ptr != NULL) {
+printf("--- %p\n", ptr);
             _ceu_dyns_--;
         }
     } else {
@@ -96,7 +97,11 @@ void* ceu_sys_realloc (void* ptr, size_t size) {
     }
 #endif
 #endif
-    return realloc(ptr, size);
+    void* ret = realloc(ptr, size);
+if (size > 0) {
+printf("+++ %p\n", ret);
+}
+    return ret;
 }
 #endif
 
@@ -315,25 +320,22 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* me)
 #ifdef CEU_ORGS_NEWS
 void ceu_sys_org_free (tceu_org* me)
 {
-    /* free org */
-    if (me->isDyn) {
-        /* re-link PRV <-> NXT */
-        me->prv->nxt = me->nxt;
-        me->nxt->prv = me->prv;
+    /* re-link PRV <-> NXT */
+    me->prv->nxt = me->nxt;
+    me->nxt->prv = me->prv;
 
-        /* free */
+    /* free */
 #if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
-        ceu_pool_free((tceu_pool*)me->pool, (byte*)me);
+    ceu_pool_free((tceu_pool*)me->pool, (byte*)me);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-        if (me->pool->queue == NULL) {
-            ceu_sys_realloc(me, 0);
-        } else {
-            ceu_pool_free((tceu_pool*)me->pool, (byte*)me);
-        }
-#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+    if (me->pool->queue == NULL) {
         ceu_sys_realloc(me, 0);
-#endif
+    } else {
+        ceu_pool_free((tceu_pool*)me->pool, (byte*)me);
     }
+#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+    ceu_sys_realloc(me, 0);
+#endif
 }
 #endif /* CEU_ORGS_NEWS */
 
@@ -791,8 +793,11 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                             stack_push(&go, &stk, NULL);
 #endif
                         }
+                        ceu_sys_stack_clear_org(&go, old, stack_nxti(&go));
 #ifdef CEU_ORGS_NEWS
-                        ceu_sys_org_free(old);
+                        if (old->isDyn) {
+                            ceu_sys_org_free(old);
+                        }
 #endif
                     }
                     continue;   /* restart with kill */

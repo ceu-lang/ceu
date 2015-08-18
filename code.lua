@@ -336,7 +336,9 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
                 LINE(me, [[
 /* R-6 */
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
+#if 0
     ceu_out_stack_clear_org(_ceu_go, _STK_ORG, __ceu_stki);
+#endif
 #endif
 ]])
             end
