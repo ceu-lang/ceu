@@ -769,6 +769,7 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                     }
 
                     if (STK->evt==CEU_IN__CLEAR && old->n!=0) {
+                        ceu_sys_stack_clear_org(&go, old, stack_curi(&go));
                         if (STK->stop==(void*)old) {
 #ifdef CEU_ORGS_WATCHING
                             /* HACK_10: (see adj.lua)
@@ -793,7 +794,6 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                             stack_push(&go, &stk, NULL);
 #endif
                         }
-                        ceu_sys_stack_clear_org(&go, old, stack_nxti(&go));
 #ifdef CEU_ORGS_NEWS
                         if (old->isDyn) {
                             ceu_sys_org_free(old);

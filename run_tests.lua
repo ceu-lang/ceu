@@ -5,7 +5,7 @@
 RUNTESTS = true
 
 -- Execution option for the tests:
-VALGRIND = true
+--VALGRIND = true
 --LUACOV = '-lluacov'
 --COMPLETE = true
 OS = false   -- false, true, nil(random)
@@ -318,6 +318,15 @@ os.execute('rm -f /tmp/_ceu_*')
 -- COMPLETE=false, VALGRIND=false
 > /usr/bin/time --format='(%C: %Us %Mk)' ./run_tests.lua
 
+--- two-pass scheduler + clear_org
+STATS = {
+    count   = 2706,
+    mem     = 0,
+    trails  = 5971,
+    bytes   = 38703823,
+}
+(./run_tests.lua: 818.99s 57016k)
+
 --- two-pass scheduler
 STATS = {
     count   = 2705,
@@ -359,6 +368,11 @@ STATS = {
 -- ROCKS
 > cd ../ceu-sdl/rocks/
 > make test
+
+--- two-pass scheduler + clear_org
+SCORE = 56 vs 49
+(./rocks.exe: 2.45 31916)
+294367
 
 --- two-pass scheduler
 SCORE = 56 vs 49

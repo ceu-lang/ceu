@@ -290,67 +290,35 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
 
         -- might need "free"
 
-        LINE(me, [[
-#ifdef CEU_ORGS
-{
-    tceu_org* __ceu_old = _STK_ORG;
-]])
-
         if me ~= MAIN then
-            if (not me.no_nested_termination) then
-                LINE(me, [[
-    /* R-6 */
-#ifndef CEU_ANA_NO_NESTED_TERMINATION
-    int __ceu_stki = stack_nxti(_ceu_go);     /* remove all */
-#endif
-]])
-            end
             LINE(me, [[
 #ifdef CEU_ORGS_NEWS
-    /* HACK_9:
-     * If the stack top is the initial spawn state of the organism, it means that 
-     * the organism terminated on start and the spawn must return NULL.
-     * In this case, we mark it with "CEU_IN__NONE" to be recognized in the spawn 
-     * continuation below.
-     */
-    if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
-        && _STK->trl==&_STK_ORG->trls[0]
-        && _STK->stop==&_STK_ORG->trls[_STK_ORG->n]
-        )
-    {
-        _STK->evt = CEU_IN__NONE;
-]])
-            if (not me.no_nested_termination) then
-                LINE(me, [[
-        /* R-6 */
-#ifndef CEU_ANA_NO_NESTED_TERMINATION
-        __ceu_stki = stack_curi(_ceu_go);   /* remove all but me (HACK_9) */
+/* HACK_9:
+ * If the stack top is the initial spawn state of the organism, it means that 
+ * the organism terminated on start and the spawn must return NULL.
+ * In this case, we mark it with "CEU_IN__NONE" to be recognized in the spawn 
+ * continuation below.
+ */
+if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
+    && _STK->trl==&_STK_ORG->trls[0]
+    && _STK->stop==&_STK_ORG->trls[_STK_ORG->n]
+    )
+{
+    _STK->evt = CEU_IN__NONE;
+}
 #endif
 ]])
-            end
-            LINE(me, [[
-    }
-#endif
-]])
-            if (not me.no_nested_termination) then
-                LINE(me, [[
-/* R-6 */
-#ifndef CEU_ANA_NO_NESTED_TERMINATION
-#if 0
-    ceu_out_stack_clear_org(_ceu_go, _STK_ORG, __ceu_stki);
-#endif
-#endif
-]])
-            end
         end
 
-        LINE(me, [[
+    LINE(me, [[
+#ifdef CEU_ORGS
+{
     tceu_stk stk;
              stk.evt    = CEU_IN__CLEAR;
              stk.cnt    = NULL;
-             stk.org    = __ceu_old;
-             stk.trl    = &__ceu_old->trls[0];
-             stk.stop   = __ceu_old;
+             stk.org    = _STK_ORG;
+             stk.trl    = &_STK_ORG->trls[0];
+             stk.stop   = _STK_ORG;
              stk.evt_sz = 0;
     stack_push(_ceu_go, &stk, NULL);
 }

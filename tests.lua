@@ -9,7 +9,9 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--]===]
 
+-- BUG: generate bug for opt ptrs
 Test { [[
 class T with
     var int v = 10;
@@ -26,10 +28,9 @@ await 200ms;
 
 escape ptr!:v;
 ]],
+    todo = true,
     run = { ['~>10s']=1 },
 }
-
-do return end
 
 -- BUG: must enforce alias
 Test { [[
@@ -50232,45 +50233,6 @@ escape 0;
     run = {['~>21s;'] = 30},
 }
 
---]===]
-Test { [[
-input void OS_START;
-
-data Widget with
-    tag NIL_;
-or
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag ROW with
-        var Widget  w1;
-        var Widget  w2;
-    end
-end
-
-pool Widget[] widgets;
-widgets = new Widget.ROW(
-                Widget.EMPTY(),
-                Widget.EMPTY());
-traverse widget in &&widgets do
-    if widget:NIL then
-        await FOREVER;
-    else/if widget:EMPTY then
-        await FOREVER;
-    else/if widget:ROW then
-        traverse &&widget:ROW.w1;
-    else
-        _ceu_out_assert(0, "not implemented");
-    end
-end
-
-escape 1;
-]],
-    _ana = {acc=true},
-    wrn = true,
-    run = 10,
-}
 Test { [[
 input void OS_START;
 
