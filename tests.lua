@@ -9,6 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--]===]
 
 -- BUG: must enforce alias
 Test { [[
@@ -47648,7 +47649,6 @@ escape l:CONS +
 -- mutation in the root of &&
 --  also, the other way around is unsafe
 --   which is a problem
---]===]
 Test { [[
 data List with
     tag NIL;
@@ -47670,7 +47670,8 @@ list = new List.NIL();
 
 escape l1:CONS+l2.CONS+list.CONS+1;
 ]],
-    run = 1,
+    --run = 1,
+    fin = 'line 19 : unsafe access to pointer "l1" across `assignment´ (tests.lua : 17)',
 }
 
 -- mutation in the root of &&
@@ -47691,13 +47692,18 @@ pool List[] list;
 list = new List.CONS(10, List.NIL());
 pool List[]&& lll = &&list;
 
-*lll = lll:CONS.tail;
+var int ret = 0;
 
-escape lll:CONS +
-        list.CONS.head +
-        list.CONS.tail.NIL;
+watching *lll do
+    *lll = lll:CONS.tail;
+    ret = lll:CONS +
+            list.CONS.head +
+            list.CONS.tail.NIL;
+end
+
+escape ret;
 ]],
-    adt = 'line 15 : invalid attribution : mutation : cannot mutate root of a reference',
+    adt = 'line 18 : invalid attribution : mutation : cannot mutate root of a reference',
     --run = '17] runtime error: invalid tag',
 }
 
@@ -47716,12 +47722,16 @@ pool List[] list;
 list = new List.CONS(10, List.CONS(20, List.NIL()));
 pool List[]&& lll = &&list;
 
-lll:CONS.tail = lll:CONS.tail.CONS.tail;
-
-escape lll:CONS +
-        list.CONS.head +
-        list.CONS.tail.NIL;
+var int ret = 0;
+watching *lll do
+    lll:CONS.tail = lll:CONS.tail.CONS.tail;
+    ret = lll:CONS +
+            list.CONS.head +
+            list.CONS.tail.NIL;
+end
+escape ret;
 ]],
+    _ana = {acc=true},
     run = 12,
 }
 
@@ -47813,17 +47823,23 @@ pool List[] list;
 list = new List.CONS(10, List.NIL());
 pool List[]&& l = &&list;
 
-l:CONS.tail = new List.CONS(9, List.NIL());
-l = &&l:CONS.tail;
+var int ret = 0;
 
-l:CONS.tail = new List.CONS(8, List.NIL());
-l = &&l:CONS.tail;
+watching *l do
+    l:CONS.tail = new List.CONS(9, List.NIL());
+    l = &&l:CONS.tail;
 
-escape l:CONS +
-        list.CONS.head +
-        list.CONS.tail.CONS.head +
-        list.CONS.tail.CONS.tail.CONS.head;
+    l:CONS.tail = new List.CONS(8, List.NIL());
+    l = &&l:CONS.tail;
+
+    ret = l:CONS +
+            list.CONS.head +
+            list.CONS.tail.CONS.head +
+            list.CONS.tail.CONS.tail.CONS.head;
+end
+escape ret;
 ]],
+    _ana = {acc=true},
     run = 28,
 }
 
@@ -47842,10 +47858,10 @@ pool List[] list;
 list = new List.CONS(10, List.NIL());
 pool List[]&& l = &&list;
 
-l:CONS.tail = new List.CONS(9, List.NIL());
-l = &&l:CONS.tail;
-
 watching *l do
+    l:CONS.tail = new List.CONS(9, List.NIL());
+    l = &&l:CONS.tail;
+
     await 1s;
 
     l:CONS.tail = new List.CONS(8, List.NIL());
@@ -47859,6 +47875,7 @@ end
 
 escape 0;
 ]],
+    _ana = {acc=true},
     run = { ['~>1s'] = 35 },
 }
 
@@ -47877,29 +47894,32 @@ pool List[10] list;
 list = new List.CONS(10, List.NIL());
 pool List[]&& lll = &&list;
 
-lll:CONS.tail = new List.CONS(9, List.NIL());
-lll = &&lll:CONS.tail;
+watching *lll do
+    lll:CONS.tail = new List.CONS(9, List.NIL());
+    lll = &&lll:CONS.tail;
 
-par do
-    watching *lll do
-        await 1s;
+    par do
+        watching *lll do
+            await 1s;
 
-        lll:CONS.tail = new List.CONS(8, List.NIL());
-        lll = &&lll:CONS.tail;
+            lll:CONS.tail = new List.CONS(8, List.NIL());
+            lll = &&lll:CONS.tail;
 
-        escape lll:CONS.head +
-                list.CONS.head +
-                list.CONS.tail.CONS.head +
-                list.CONS.tail.CONS.tail.CONS.head;
+            escape lll:CONS.head +
+                    list.CONS.head +
+                    list.CONS.tail.CONS.head +
+                    list.CONS.tail.CONS.tail.CONS.head;
+        end
+        escape 1;
+    with
+        list = new List.NIL();
+        await FOREVER;
     end
-    escape 1;
-with
-    list = new List.NIL();
-    await FOREVER;
 end
+escape -1;
 ]],
     _ana = {acc=true},
-    run = 1,
+    run = -1,
 }
 
 Test { [[
@@ -47915,11 +47935,11 @@ end
 pool List[] list = new List.CONS(10, List.NIL());
 pool List[]&& lll = &&list;
 
-lll:CONS.tail = new List.CONS(9, List.NIL());
-lll = &&lll:CONS.tail;
+watching *lll do
+    lll:CONS.tail = new List.CONS(9, List.NIL());
+    lll = &&lll:CONS.tail;
 
-par do
-    watching *lll do
+    par do
         await 1s;
 
         lll:CONS.tail = new List.CONS(8, List.NIL());
@@ -47929,15 +47949,15 @@ par do
                 list.CONS.head +
                 list.CONS.tail.CONS.head +
                 list.CONS.tail.CONS.tail.CONS.head;
+    with
+        list = new List.NIL();
+        await FOREVER;
     end
-    escape 1;
-with
-    list = new List.NIL();
-    await FOREVER;
 end
+escape -1;
 ]],
     _ana = {acc=true},
-    run = 1,
+    run = -1,
 }
 
 -- ADTS / RECURSE / TRAVERSE

@@ -230,9 +230,10 @@ E = {
     end,
     Set = function (me)
         local _, set, fr, to = unpack(me)
-        if set == 'adt-mut' then
+        if set=='adt-mut' or set=='adt-constr' then
             local adt = assert(ENV.adts[TP.id(to.tp)], 'bug found')
             if adt.is_rec then
+                me.has_yield = true
                 E.__await(me)
             end
         end

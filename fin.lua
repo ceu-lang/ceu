@@ -409,7 +409,7 @@ F = {
 
     Set_pos = function (me)
         if me.has_yield then
-            F__await(me)  -- 'adt-mut'
+            F.__await(me)  -- 'adt-mut/constr'
         end
     end,
 
