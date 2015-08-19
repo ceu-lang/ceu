@@ -325,7 +325,12 @@ F =
         if f.var and f.var.fun then
             op = tpctx2op (f.var.fun.out, CTX)
         end
-        return '('..op..V(f,CTX)..'('..table.concat(ps,',')..'))'
+        if op == '' then
+            -- avoid paranthesis because of macro expansions
+            return V(f,CTX)..'('..table.concat(ps,',')..')'
+        else
+            return '('..op..V(f,CTX)..'('..table.concat(ps,',')..'))'
+        end
     end,
 
     Op2_idx = function (me, CTX)
@@ -386,7 +391,11 @@ F =
 
     ['Op1_*'] = function (me, CTX)
         local op, e1 = unpack(me)
-        return '('..ceu2c(op)..V(e1,CTX)..')'
+        op = (CTX.val=='lval' and '') or ceu2c(op)
+        CTX = ctx_copy(CTX)
+        CTX.val = 'rval'
+        local ret = '('..op..V(e1,CTX)..')'
+        return ret
     end,
     ['Op1_&'] = function (me, CTX)
         local op, e1 = unpack(me)
@@ -473,6 +482,7 @@ F =
         local tp, exp = unpack(me)
         local VAL = V(exp, CTX)
 
+--[[
         local cls = (TP.check(tp,'&&','-&') and ENV.clss[TP.id(tp)])
         if cls then
             if cls.is_ifc then
@@ -488,6 +498,7 @@ F =
                       ')'
             end
         end
+]]
 
         return '(('..TP.toc(tp)..')'..VAL..')'
     end,

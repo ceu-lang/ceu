@@ -11,6 +11,95 @@ end
 --[===[
 
 Test { [[
+native do
+    typedef struct t {
+        void* ceu;
+    } t;
+end
+var _t   t;
+var _t&& ptr = &&t;
+var int v = 10;
+ptr:ceu = &v;
+escape *((int&&)(ptr:ceu));
+]],
+    run = 10,
+}
+Test { [[
+native do
+    typedef struct t {
+        void* xxx;
+    } t;
+end
+
+class C with
+    var int v = 10;
+do
+end
+var C c;
+
+var _t   t;
+var _t&& ptr = &&t;
+
+ptr:xxx = &c;
+
+escape ((C&&)ptr:xxx):v;
+]],
+    run = 10,
+}
+Test { [[
+native do
+    typedef struct t {
+        void* xxx;
+    } t;
+end
+
+class C with
+    var int v = 10;
+    event int e;
+do
+end
+var C c;
+
+var _t   t;
+var _t&& ptr = &&t;
+
+ptr:xxx = &c;
+
+emit ((C&&)ptr:xxx):e => 1;
+
+escape ((C&&)ptr:xxx):v;
+]],
+    run = 10,
+}
+--do return end
+
+-- BUG: should be &dir
+Test { [[
+class Dir with
+    var int value;
+do
+end
+interface IPingu with
+    function (void)=>Dir& get;
+end
+class Pingu with
+    interface IPingu;
+do
+    var Dir dir with
+        this.value = 10;
+    end;
+    function (void)=>Dir& get do
+        return &&dir;
+    end
+end
+var Pingu p;
+escape p.get().value;
+]],
+    run = 10,
+}
+--do return end
+
+Test { [[
 native @pure _f();
 native do
     typedef struct t {
@@ -46,17 +135,21 @@ escape 1;
 }
 
 Test { [[
+native do
+    int* new_Int() {
+        return NULL;
+    }
+end
     function (void) => void parse_file do
-            var _std__string&? intro_story_str;
+            var int&? intro_story_str;
             finalize
-                intro_story_str = &_new_String();
+                intro_story_str = &_new_Int();
             with
                 nothing;    /* deleted below */
             end
     end
 escape 1;
 ]],
-    gcc = '',
     run = 1,
 }
 
@@ -72,6 +165,7 @@ escape 1;
     gcc = '',
 }
 --do return end
+--]===]
 
 -- BUG: generate bug for opt ptrs
 Test { [[
@@ -232,7 +326,6 @@ escape 1;
 }
 
 --do return end
---]===]
 
 -------------------------------------------------------------------------------
 

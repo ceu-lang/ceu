@@ -239,10 +239,11 @@ F = {
         me.brks = {}
 
         if me.iter_tp == 'org' then
---[[
-]]
             ASR(not me.has_yield, me,
                 'pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)')
+--[[
+-- TODO(pingus)
+]]
         end
     end,
     Break = function (me)

@@ -203,7 +203,7 @@ F = {
 
             ASR(me.fin, me, 'attribution requires `finalize´')
                 -- var void&? ptr = _malloc(1);
-            if me.fin then
+            if me.fin and me.fin.active then
                 to_blk.fins = to_blk.fins or {}
                 table.insert(to_blk.fins, 1, me.fin)
             end
@@ -255,9 +255,10 @@ F = {
                         )
                 )
             ) then
---[[
-]]
                 ASR(op==':=', me, 'attribution to pointer with greater scope')
+--[[
+-- TODO(pingus)
+]]
                     -- NO:
                     -- var int* p;
                     -- do
@@ -390,11 +391,12 @@ F = {
 
         -- invalid access!
         local acc_id = assert(AST.tag2id[acc.tag], 'bug found')
---[[
-]]
         ASR(false, me, 1107,
             'unsafe access to pointer "'..me.var.id..'" across `'..
                 acc_id..'´ ('..acc.ln[1]..' : '..acc.ln[2]..')')
+--[[
+-- TODO(pingus)
+]]
     end,
 
     __await = function (me)
