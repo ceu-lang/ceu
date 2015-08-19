@@ -320,7 +320,12 @@ F =
                 end
             end
         end
-        return V(f,CTX)..'('..table.concat(ps,',')..')'
+
+        local op = ''
+        if f.var and f.var.fun then
+            op = tpctx2op (f.var.fun.out, CTX)
+        end
+        return '('..op..V(f,CTX)..'('..table.concat(ps,',')..'))'
     end,
 
     Op2_idx = function (me, CTX)
