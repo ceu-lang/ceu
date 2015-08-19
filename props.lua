@@ -39,7 +39,7 @@ local NO_atomic = {
 }
 
 local NO_fun = {
-    Finalize=true, Finally=true,
+    --Finalize=true, Finally=true,
     Host=true, Thread=true,
     ParEver=true, ParOr=true, ParAnd=true,
     Await=true, AwaitN=true,
@@ -239,6 +239,8 @@ F = {
         me.brks = {}
 
         if me.iter_tp == 'org' then
+--[[
+]]
             ASR(not me.has_yield, me,
                 'pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)')
         end

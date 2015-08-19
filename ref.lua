@@ -17,6 +17,8 @@ F = {
                 assert(fr.tag == 'Op1_&', 'bug found')
             else
                 --assert(fr.tag ~= 'Op1_&', 'bug found')
+--[[
+]]
                 ASR(fr.tag ~= 'Op1_&', me,
                     'invalid attribution : l-value already bounded')
             end
@@ -185,7 +187,10 @@ F = {
 
         local T1 = me.__ref_bounded or {}
         for var,t in pairs(T1) do
+--[[
+]]
             ASR(#t==2, t[1], 'reference must be bounded in the other if-else branch')
+-- TODO: "must also bound the reference in the other ..."
 
             -- pass to parent
             if if_ then

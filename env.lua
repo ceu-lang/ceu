@@ -970,6 +970,8 @@ F = {
         for i, t in ipairs(ps.tup) do
             for _, v in ipairs(t.tt) do
                 if v == '&&' then
+--[[
+]]
                     if #ps.tup > 1 then
                         ASR(false, me,
                             'wrong argument #'..i..' : cannot pass pointers')

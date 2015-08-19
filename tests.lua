@@ -9,7 +9,69 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
+
+Test { [[
+native @pure _f();
+native do
+    typedef struct t {
+        int* ptr;
+    } t;
+    int* f (int* ptr) {
+        return ptr;
+    }
+end
+var int v = 10;
+var _t t;
+t.ptr = &_f(&&v);
+escape *(t.ptr);
+]],
+    run = 10,
+    --todo = true,
+}
+--do return end
+
+Test { [[
+class T with do end
+spawn T with
+            var _std__string&? intro_story_str;
+            finalize
+                intro_story_str = &_new_String();
+            with
+            end
+    end;
+escape 1;
+]],
+    gcc = '',
+    run = 1,
+}
+
+Test { [[
+    function (void) => void parse_file do
+            var _std__string&? intro_story_str;
+            finalize
+                intro_story_str = &_new_String();
+            with
+                nothing;    /* deleted below */
+            end
+    end
+escape 1;
+]],
+    gcc = '',
+    run = 1,
+}
+
+Test { [[
+native @pure _new_String();
+class String with
+do
+    var _std__string&? ss = &_new_String();
+end
+escape 1;
+]],
+    wrn = true,
+    gcc = '',
+}
+--do return end
 
 -- BUG: generate bug for opt ptrs
 Test { [[
@@ -170,6 +232,7 @@ escape 1;
 }
 
 --do return end
+--]===]
 
 -------------------------------------------------------------------------------
 

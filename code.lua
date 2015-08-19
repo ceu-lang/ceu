@@ -1108,7 +1108,15 @@ case ]]..SET.lbl_cnt.id..[[:;
                 if TP.check(to.tp,'&','?') and fr.fst.tag=='Op2_call' then
                     -- var _t&? = _f(...);
                     -- var T*? = spawn <...>;
-                    local ID = string.upper(TP.opt2adt(fr.fst.__fin_opt_tp))
+                    WRN(fr.fst.__fin_opt_tp, me, 'missing `finalize´')
+                    local ID
+                    if fr.fst.__fin_opt_tp then
+-- precisa desse caso?
+                        ID = string.upper(TP.opt2adt(fr.fst.__fin_opt_tp))
+                    else
+-- esse nao esta mais correto?
+                        ID = string.upper(TP.opt2adt(to.tp))
+                    end
                     local fr_val = '(CEU_'..ID..'_pack('..V(fr,'rval')..'))'
                     LINE(me, V(to,'rval')..' = '..fr_val..';')
                 elseif ENV.clss[to_tp_id] and 
@@ -1130,7 +1138,8 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
             end
         else
             -- normal types
-            local l_or_r = (is_byref and 'lval') or 'rval'
+            local l_or_r = (is_byref and TP.check(to.tp,'&') and 'lval')
+                                or 'rval'
             LINE(me, V(to,l_or_r)..' = '..V(fr,'rval')..';')
                                             -- & makes 'lval' on this side
         end

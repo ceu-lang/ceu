@@ -255,6 +255,8 @@ F = {
                         )
                 )
             ) then
+--[[
+]]
                 ASR(op==':=', me, 'attribution to pointer with greater scope')
                     -- NO:
                     -- var int* p;
@@ -388,6 +390,8 @@ F = {
 
         -- invalid access!
         local acc_id = assert(AST.tag2id[acc.tag], 'bug found')
+--[[
+]]
         ASR(false, me, 1107,
             'unsafe access to pointer "'..me.var.id..'" across `'..
                 acc_id..'´ ('..acc.ln[1]..' : '..acc.ln[2]..')')
@@ -453,9 +457,13 @@ F = {
         fin.active = (#fin[1][1]>1 or
                       fin[1][1][1] and fin[1][1][1].tag~='Nothing')
 
-        if AST.iter'Dcl_constr'() then
+        if AST.par(me,'Dcl_constr') then
             ASR(not fin.active, me, 1108,
                     'constructor cannot contain `finalize´')
+        end
+        if AST.par(me,'Dcl_fun') then
+            ASR(not fin.active, me,
+                    'function cannot contain `finalize´')
         end
 
         if set then
