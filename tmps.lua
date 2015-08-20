@@ -1,5 +1,7 @@
 local VARS = {}
 
+--do return end     -- uncomment to force all as NO-TMP
+
 if not ANA then
     return          -- isTmp=false for all vars
 end

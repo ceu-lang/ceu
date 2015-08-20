@@ -11,6 +11,23 @@ end
 --[===[
 --]===]
 
+Test { [[
+input int&& SPRITE_DELETE;
+class Sprite with
+    var int& me;
+do
+    par/or do
+        var int&& me = await SPRITE_DELETE
+                      until me == &&this.me;
+    with
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+--do return end
 
 Test { [[
 native do

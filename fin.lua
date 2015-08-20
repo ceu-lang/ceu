@@ -422,6 +422,21 @@ F = {
     end,
 
     Await = function (me)
+        local loop = AST.par(me,'Loop')
+        if loop and loop.isAwaitUntil then
+            --  await E until ptr==<...>
+            -- becomes
+            --  loop do
+            --      ptr = await E;
+            --      if ptr==<...> then
+            --          break;
+            --      end
+            --  end
+            --
+            --  "ptr" can be used until after the loop
+            return
+        end
+
         if me.tl_awaits or me.has_yield then
             if me.__env_org then
                 local id = TP.id(me.__env_org.tp)

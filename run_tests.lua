@@ -320,12 +320,13 @@ os.execute('rm -f /tmp/_ceu_*')
 
 --- two-pass scheduler + clear_org
 STATS = {
-    count   = 2706,
+    count   = 2713,
     mem     = 0,
-    trails  = 5971,
-    bytes   = 38703823,
+    trails  = 5961,
+    bytes   = 38688001,
 }
-(./run_tests.lua: 818.99s 57016k)
+(./run_tests.lua: 799.29s 55944k)
+
 
 --- two-pass scheduler
 STATS = {

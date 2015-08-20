@@ -97,11 +97,7 @@ printf("--- %p\n", ptr);
     }
 #endif
 #endif
-    void* ret = realloc(ptr, size);
-if (size > 0) {
-printf("+++ %p\n", ret);
-}
-    return ret;
+    return realloc(ptr, size);
 }
 #endif
 
