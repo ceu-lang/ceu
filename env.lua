@@ -977,9 +977,6 @@ F = {
                         ASR(false, me,
                             'wrong argument : cannot pass pointers')
                     end
---[[
--- TODO(pingus)
-]]
                 end
             end
         end

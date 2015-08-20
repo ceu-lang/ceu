@@ -9,6 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--]===]
+
 
 Test { [[
 native do
@@ -22,7 +24,8 @@ var int v = 10;
 ptr:ceu = &v;
 escape *((int&&)(ptr:ceu));
 ]],
-    run = 10,
+    ref = 'line 9 : invalid attribution : l-value already bounded',
+    --run = 10,
 }
 Test { [[
 native do
@@ -44,7 +47,8 @@ ptr:xxx = &c;
 
 escape ((C&&)ptr:xxx):v;
 ]],
-    run = 10,
+    --run = 10,
+    ref = 'line 16 : invalid attribution : l-value already bounded',
 }
 Test { [[
 native do
@@ -69,7 +73,8 @@ emit ((C&&)ptr:xxx):e => 1;
 
 escape ((C&&)ptr:xxx):v;
 ]],
-    run = 10,
+    ref = 'line 17 : invalid attribution : l-value already bounded',
+    --run = 10,
 }
 --do return end
 
@@ -114,8 +119,8 @@ var _t t;
 t.ptr = &_f(&&v);
 escape *(t.ptr);
 ]],
-    run = 10,
-    --todo = true,
+    ref = 'line 12 : invalid attribution : l-value already bounded',
+    --run = 10,
 }
 --do return end
 
@@ -130,6 +135,7 @@ spawn T with
     end;
 escape 1;
 ]],
+    todo = 'qual o erro que deve dar?',
     gcc = '',
     run = 1,
 }
@@ -161,11 +167,11 @@ do
 end
 escape 1;
 ]],
+    todo = 'qual o erro que deve dar?',
     wrn = true,
     gcc = '',
 }
 --do return end
---]===]
 
 -- BUG: generate bug for opt ptrs
 Test { [[

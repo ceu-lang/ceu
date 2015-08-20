@@ -256,9 +256,6 @@ F = {
                 )
             ) then
                 ASR(op==':=', me, 'attribution to pointer with greater scope')
---[[
--- TODO(pingus)
-]]
                     -- NO:
                     -- var int* p;
                     -- do
@@ -394,9 +391,6 @@ F = {
         ASR(false, me, 1107,
             'unsafe access to pointer "'..me.var.id..'" across `'..
                 acc_id..'´ ('..acc.ln[1]..' : '..acc.ln[2]..')')
---[[
--- TODO(pingus)
-]]
     end,
 
     __await = function (me)

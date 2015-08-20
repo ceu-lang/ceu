@@ -482,7 +482,6 @@ F =
         local tp, exp = unpack(me)
         local VAL = V(exp, CTX)
 
---[[
         local cls = (TP.check(tp,'&&','-&') and ENV.clss[TP.id(tp)])
         if cls then
             if cls.is_ifc then
@@ -498,7 +497,6 @@ F =
                       ')'
             end
         end
-]]
 
         return '(('..TP.toc(tp)..')'..VAL..')'
     end,

@@ -19,9 +19,6 @@ F = {
                 --assert(fr.tag ~= 'Op1_&', 'bug found')
                 ASR(fr.tag ~= 'Op1_&', me,
                     'invalid attribution : l-value already bounded')
---[[
--- TODO(pingus)
-]]
             end
         end
     end,
@@ -191,9 +188,6 @@ F = {
             ASR(#t==2, t[1],
                 'reference must be bounded in the other if-else branch')
 -- TODO: "must also bound the reference in the other ..."
---[[
--- TODO(pingus)
-]]
 
             -- pass to parent
             if if_ then
