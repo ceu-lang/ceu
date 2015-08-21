@@ -1496,9 +1496,25 @@ F = {
 ]]
 
         if not ok then
-            ASR((TP.is_ext(e1.tp,'_','@') and (not e1.tp.plain)
-                                          and (not TP.get(tp_id).plain)),
-                me, 'invalid operand to unary "*"')
+            --[[
+                native do
+                    typedef struct t {
+                        int* x;
+                    } t;
+                end
+                native @plain _t, _int_ptr;
+                var _t       t = <...>
+                var _int_ptr v = <...>
+                await 1s;
+                *t.x = <...>    // OK: "t" is plain, but accept nested pointers
+                                // (more or less unsafe)
+                *v   = <...>    // NO: "int_ptr" is said to be plain
+                                // (unsafe)
+            ]]
+            local plain = (e1.tp.plain or TP.get(tp_id).plain)
+                            and (e1.tag~='Op2_.')
+            ASR(TP.is_ext(e1.tp,'_','@') and (not plain), me,
+                'invalid operand to unary "*"')
         end
 
         me.tp  = TP.new(tp)

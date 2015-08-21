@@ -12,6 +12,105 @@ end
 --]===]
 
 Test { [[
+class T with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+var T t;
+
+await 1s;
+
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+Test { [[
+input int E,F;
+
+par do
+    async do
+        emit E => 10;
+    end
+    await FOREVER;
+with
+    var int ret = 0;
+    par/and do
+        var int v = await E;
+        var int x = 1000;
+        _ceu_sys_go(__ceu_app, _CEU_IN_F, &&x)
+            finalize with nothing; end;
+        ret = ret + v;
+    with
+        var int v = await E;
+        ret = ret + v;
+    end
+    escape ret;
+end
+]],
+    wrn = true,
+    _ana = {acc=true},
+    run = 20,
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T&&? p = &&t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = 20 },
+}
+--do return end
+
+Test { [[
+native do
+    typedef struct t {
+        int* x;
+    } t;
+end
+native @plain _t;
+var int v = 10;
+var _t t;
+t.x = &&v;
+await 1s;
+escape *t.x;
+]],
+    run = {['~>1s']=10},
+}
+
+-- BUG: nao esta obrigando binding p/ pool
+Test { [[
+class T with do end
+
+pool T[] ts;
+
+class U with
+    pool T[]& ts;
+do
+    var T&&? t =
+        spawn T in ts with
+        end;
+end
+
+var U u;
+
+escape 1;
+]],
+    todo = true,
+    run = 1,
+}
+
+Test { [[
 input int&& SPRITE_DELETE;
 class Sprite with
     var int& me;
@@ -25728,13 +25827,16 @@ Test { [[
 native @plain _rect;
 native do
     typedef struct rect {
-        int x, y;
-    };
+        int* x, y;
+    } rect;
 end
+var int v = 10;
 var _rect r;
+r.x = &&v;
 escape *(r.x);
 ]],
-    env = 'line 8 : invalid operand to unary "*"',
+    --env = 'line 8 : invalid operand to unary "*"',
+    run = 10,
 }
 
 Test { [[

@@ -1,3 +1,5 @@
+#define CEU_STACK_STACK
+
 #ifndef _CEU_OS_H
 #define _CEU_OS_H
 
@@ -129,11 +131,11 @@
 #endif
 
 #ifdef CEU_CLEAR
-    #define ceu_out_clear(go,cnt,org,from,stop) \
-        ((__typeof__(ceu_sys_clear)*)((_ceu_app)->sys_vec[CEU_SYS_CLEAR]))(go,cnt,org,from,stop)
+    #define ceu_out_clear(app,go,cnt,org,from,stop) \
+        ((__typeof__(ceu_sys_clear)*)((app)->sys_vec[CEU_SYS_CLEAR]))(app,go,cnt,org,from,stop)
 #endif
-    #define ceu_out_stack_push(go,elem,ptr) \
-        ((__typeof__(ceu_sys_stack_push)*)((_ceu_app)->sys_vec[CEU_SYS_STACK_PUSH]))(go,elem,ptr)
+    #define ceu_out_stack_push(app,go,elem,ptr) \
+        ((__typeof__(ceu_sys_stack_push)*)((app)->sys_vec[CEU_SYS_STACK_PUSH]))(app,go,elem,ptr)
 #ifdef CEU_ORGS
     #define ceu_out_stack_clear_org(go,org,lim) \
         ((__typeof__(ceu_sys_stack_clear_org)*)((_ceu_app)->sys_vec[CEU_SYS_STACK_CLEAR_ORG]))(go,org,lim)
@@ -146,8 +148,8 @@
     #define ceu_out_org_trail(org,idx,lnk) \
         ((__typeof__(ceu_sys_org_trail)*)((_ceu_app)->sys_vec[CEU_SYS_ORG_TRAIL]))(org,idx,lnk)
 
-    #define ceu_out_org_spawn(go, lbl_cnt, org, lbl_org) \
-        ((__typeof__(ceu_sys_org_spawn)*)((_ceu_app)->sys_vec[CEU_SYS_ORG_SPAWN]))(go,lbl_cnt,org,lbl_org)
+    #define ceu_out_org_spawn(app, go, lbl_cnt, org, lbl_org) \
+        ((__typeof__(ceu_sys_org_spawn)*)((app)->sys_vec[CEU_SYS_ORG_SPAWN]))(app,go,lbl_cnt,org,lbl_org)
 #endif
 
     #define ceu_out_start(app) \
@@ -200,11 +202,11 @@
             ceu_sys_req()
 
 #ifdef CEU_CLEAR
-    #define ceu_out_clear(go,cnt,org,from,stop) \
-            ceu_sys_clear(go,cnt,org,from,stop)
+    #define ceu_out_clear(app,go,cnt,org,from,stop) \
+            ceu_sys_clear(app,go,cnt,org,from,stop)
 #endif
-    #define ceu_out_stack_push(go,elem,ptr) \
-            ceu_sys_stack_push(go,elem,ptr)
+    #define ceu_out_stack_push(app,go,elem,ptr) \
+            ceu_sys_stack_push(app,go,elem,ptr)
 #ifdef CEU_ORGS
     #define ceu_out_stack_clear_org(go,org,lim) \
             ceu_sys_stack_clear_org(go,org,lim)
@@ -216,8 +218,8 @@
 #ifdef CEU_ORGS
     #define ceu_out_org_trail(org,idx,lnk) \
             ceu_sys_org_trail(org,idx,lnk)
-    #define ceu_out_org_spawn(go, lbl_cnt, org, lbl_org) \
-            ceu_sys_org_spawn(go, lbl_cnt, org, lbl_org)
+    #define ceu_out_org_spawn(app, go, lbl_cnt, org, lbl_org) \
+            ceu_sys_org_spawn(app, go, lbl_cnt, org, lbl_org)
 #endif
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
@@ -433,32 +435,35 @@ typedef struct {
 
 /* TODO(speed): hold nxt trl to run */
 typedef struct tceu_stk {
-    tceu_nevt evt;  /* TODO: small in the end of struct? */
-    u8        evt_sz;
-    u8        offset;
-    tceu_trl* trl;  /* trail being traversed */
+    struct {
+        tceu_nevt evt;  /* TODO: small in the end of struct? */
+        u8        evt_sz;
+        u8        offset;
+        tceu_trl* trl;  /* trail being traversed */
 
-    union {
-        struct {
-#ifdef CEU_CLEAR
-            void* cnt;  /* dont clear the continuation trail */
-#endif
-#if defined(CEU_CLEAR) || defined(CEU_ORGS)
-            void* stop;     /* stop at this trl/org */
-                /* traversals may be bounded to org/trl
-                 * default (NULL) is to traverse everything */
-                /* TODO: could be shared w/ evto */
-#endif
+        union {
+            struct {
+    #ifdef CEU_CLEAR
+                void* cnt;  /* dont clear the continuation trail */
+    #endif
+    #if defined(CEU_CLEAR) || defined(CEU_ORGS)
+                void* stop;     /* stop at this trl/org */
+                    /* traversals may be bounded to org/trl
+                     * default (NULL) is to traverse everything */
+                    /* TODO: could be shared w/ evto */
+    #endif
+            };
+    #if defined(CEU_ORGS) && defined(CEU_INTS)
+            void* evto; /* emitting org */
+    #endif
         };
-#if defined(CEU_ORGS) && defined(CEU_INTS)
-        void* evto; /* emitting org */
-#endif
+
+    #ifdef CEU_ORGS
+        void* org;      /* org being traversed */
+    #endif
     };
 
-#ifdef CEU_ORGS
-    void* org;      /* org being traversed */
-#endif
-
+    /* out of "struct{...}" to be aligned */
     byte  evt_buf[0];
 } tceu_stk;
 /* TODO: see if fields can be reused in union */
@@ -542,36 +547,42 @@ typedef struct {
 
 /* TODO: tceu_go => tceu_stk? */
 typedef struct tceu_go {
-    #define CEU_STACK_MAX   128*sizeof(tceu_stk)
-        /* TODO: possible to calculate (not is CEU_ORGS_NEWS)
-        #define CEU_STACK_MAX   (CEU_NTRAILS+1) // current +1 for each trail
-        */
-    byte stk[CEU_STACK_MAX];
+    byte*     stk;
     tceu_nstk stk_nxti;
     tceu_nstk stk_curi;
 } tceu_go;
 
-#define stack_init(go)    (go)->stk_curi = (go)->stk_nxti = 0
-#define stack_empty(go)   ((go)->stk_curi == (go)->stk_nxti)
-#define stack_get(go,i)   (((tceu_stk*)&((go)->stk[i])))
-#define stack_cur(go)     stack_get((go),(go)->stk_curi)
-#define stack_nxt(go)     stack_get((go),(go)->stk_nxti)
-#define stack_sz(go,i)    ((tceu_nstk)(sizeof(tceu_stk)+stack_get((go),i)->evt_sz))
-#define stack_curi(go)    ((go)->stk_curi)
-#define stack_nxti(go)    ((go)->stk_nxti)
-#define stack_pushi(go,e) ((go)->stk_nxti + sizeof(tceu_stk) + (e)->evt_sz)
-#define stack_full(go,e)  (stack_pushi((go),(e)) >= CEU_STACK_MAX)
+#define CEU_STACK_MAX   128*sizeof(tceu_stk)
+    /* TODO: possible to calculate (not is CEU_ORGS_NEWS)
+    #define CEU_STACK_MAX   (CEU_NTRAILS+1) // current +1 for each trail
+    */
+static byte CEU_STK[CEU_STACK_MAX];
+
+#ifdef CEU_STACK_STACK
+#define stack_init(app,go) (go)->stk_curi = (go)->stk_nxti = (app)->stki
+#else
+#define stack_init(app,go) (go)->stk_curi = (go)->stk_nxti
+#endif
+#define stack_empty(go)    ((go)->stk_curi == (go)->stk_nxti)
+#define stack_get(go,i)    (((tceu_stk*)&((go)->stk[i])))
+#define stack_cur(go)      stack_get((go),(go)->stk_curi)
+#define stack_nxt(go)      stack_get((go),(go)->stk_nxti)
+#define stack_sz(go,i)     ((tceu_nstk)(sizeof(tceu_stk)+stack_get((go),i)->evt_sz))
+#define stack_curi(go)     ((go)->stk_curi)
+#define stack_nxti(go)     ((go)->stk_nxti)
+#define stack_pushi(go,e)  ((go)->stk_nxti + sizeof(tceu_stk) + (e)->evt_sz)
+#define stack_full(go,e)   (stack_pushi((go),(e)) >= CEU_STACK_MAX)
 
 #define stack_prvi(go)                                          \
     ((go)->stk_curi - stack_cur((go))->offset)
 
-#define stack_pop(go)                                           \
+#define stack_pop(app,go)                                       \
     ceu_out_assert(!stack_empty(go), "stack underflow");        \
-    ceu_stack_pop_f((go));
+    ceu_stack_pop_f((app),(go));
 
-#define stack_push(go,elem,ptr)                                 \
+#define stack_push(app,go,elem,ptr)                             \
     ceu_out_assert(!stack_full((go),(elem)), "stack overflow"); \
-    ceu_out_stack_push((go),(elem),(ptr));
+    ceu_out_stack_push((app),(go),(elem),(ptr));
 
 #define STK  stack_cur(&go)
 #define _STK stack_cur(_ceu_go)
@@ -618,7 +629,11 @@ typedef struct tceu_app {
     struct tceu_app* nxt;
 #endif
 
-#ifdef CEU_RET
+#ifdef CEU_STACK_STACK
+    tceu_nstk stki;
+#endif
+
+#if defined(CEU_RET) || defined(CEU_ORGS_WATCHING)
     int ret;
 #endif
 
@@ -772,9 +787,9 @@ tceu_app* ceu_sys_load      (void* addr);
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
 #ifdef CEU_CLEAR
-int       ceu_sys_clear     (tceu_go* _ceu_go, tceu_nlbl cnt, tceu_org* org, tceu_trl* from, void* stop);
+int       ceu_sys_clear     (tceu_app* app, tceu_go* _ceu_go, tceu_nlbl cnt, tceu_org* org, tceu_trl* from, void* stop);
 #endif
-void      ceu_sys_stack_push (tceu_go* go, tceu_stk* elem, void* ptr);
+void      ceu_sys_stack_push (tceu_app* app, tceu_go* go, tceu_stk* elem, void* ptr);
 #ifdef CEU_ORGS
 void      ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim);
 #endif
@@ -782,7 +797,7 @@ void      ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim);
 void      ceu_sys_org       (tceu_org* org, int n, int lbl, int cls, int isDyn, tceu_org* parent, tceu_org_lnk** lnks);
 #ifdef CEU_ORGS
 void      ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk);
-int       ceu_sys_org_spawn (tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org);
+int       ceu_sys_org_spawn (tceu_app* app, tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org);
 #endif
 void      ceu_sys_start     (tceu_app* app);
 int       ceu_sys_link      (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);

@@ -515,7 +515,7 @@ F =
     end,
 
     RawExp = function (me, CTX)
-        assert(CTX.val == 'rval', 'bug found')
+        --assert(CTX.val == 'rval', 'bug found')
         return (unpack(me))
     end,
 
