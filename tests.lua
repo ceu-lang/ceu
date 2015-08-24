@@ -10,6 +10,47 @@ end
 
 --[===[
 --]===]
+Test { [[
+escape 1;
+function (void) => int f do
+    return 1;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+function (void) => void f do
+    escape 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ID(x) x
+end
+native @pure _ID(), _strlen();
+var char[] str = [] .. "abc"
+                    .. (char&&)_ID("def");
+var char&& str2 = _ID(&&str);
+escape _strlen(&&str) + _strlen(str2);
+]],
+    run = 12,
+}
+
+Test { [[
+var char[] str;
+var char[] str;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+do return end
+
 
 Test { [[
 class T with

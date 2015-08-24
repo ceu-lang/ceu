@@ -174,7 +174,8 @@ print('class "'..id..'" may terminate from nested organisms')
             }
         else
             -- broken sequences
-            if sub.tag~='Host' and me[i-1].ana.pos[false] and (not me[i-1].ana.pre[false]) then
+            if sub.tag~='Host' and sub.tag~='Dcl_fun' and
+               me[i-1].ana.pos[false] and (not me[i-1].ana.pre[false]) then
                 --ANA.ana.unreachs = ANA.ana.unreachs + 1
                 me.__unreach = true
                 WRN( INC(me, 'unreachs'),

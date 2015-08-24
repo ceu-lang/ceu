@@ -1222,7 +1222,7 @@ ceu_out_assert( ceu_vector_push(]]..V(to,'lval')..[[, (byte*)&__ceu_p), "access 
                         end
                     end
                 else
-                    if e.tag == 'STRING' then
+                    if TP.check(e.tp,'char','&&','-&') then
                         if first then
                             LINE(me, [[
 ceu_vector_setlen(]]..V(to,'lval')..[[, 0);

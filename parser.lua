@@ -168,7 +168,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  * ( V'__LstStmt' * (EK';'*K';'^0) +
                      V'__LstStmtB' * (K';'^0)
                    )^-1
-                 * V'Host'^0 )
+                 * (V'Host'+V'_Dcl_fun1')^0 )
     , Block  = V'_Stmts'
 
     , Do     = V'__Do'

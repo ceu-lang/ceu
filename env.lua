@@ -1053,7 +1053,7 @@ F = {
                         end
                     end
                 else -- vector
-                    local is_str = (e.tag=='STRING')
+                    local is_str = TP.check(e.tp,'char','&&','-&')
                     local is_vec = TP.check(e.tp,'[]','-&') and
                                    (not TP.is_ext(e.tp,'_','@'))
                     local msg1 = (#fr>0 and 'wrong argument #'..i..' : ') or ''

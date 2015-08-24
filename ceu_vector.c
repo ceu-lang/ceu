@@ -34,7 +34,7 @@ static void* ceu_vector_resize (tceu_vector* vector, int n) {
         }
 
         vector->max = -n;
-        vector->mem = ceu_out_realloc(vector->mem, n*vector->unit + 1);
+        vector->mem = (byte*)ceu_out_realloc(vector->mem, n*vector->unit + 1);
                                                         /* [STRING] +1 */
     }
 
@@ -122,7 +122,7 @@ int ceu_vector_concat (tceu_vector* to, tceu_vector* fr) {
         /* TODO: memcpy */
         int i;
         for (i=0; i<fr->nxt; i++) {
-            void* v = ceu_vector_geti(fr, i);
+            byte* v = ceu_vector_geti(fr, i);
             if (v == NULL) {
                 return 0;
             } else if (!ceu_vector_push(to,v)) {
