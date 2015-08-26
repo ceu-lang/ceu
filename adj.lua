@@ -1239,7 +1239,7 @@ me.blk_body = me.blk_body or blk_body
                              true)
         local SET_DEAD = node('Nothing', me.ln)
         if stmt.tag == 'Set' then
-            local to = AST.asr(stmt,'Set', 4,'VarList', 1,'Var')
+            local to = AST.asr(stmt,'Set', 4,'VarList', 1,'')
             AWT_KILL = node('_Set', me.ln,
                             AST.copy(to),
                             '=', 'await',

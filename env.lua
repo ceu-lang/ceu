@@ -184,8 +184,11 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
                     --'variable/event "'..var.id..
                     --'" is already declared at --line '..var.ln)
                 if var.id == id then
-                    local fun = pre=='function' and stmt==ME.blk_ifc -- dcl
-                                                and blk==ME.blk_ifc  -- body
+                    local fun = (pre=='function') and (
+                                    (stmt==ME.blk_ifc and blk==ME.blk_ifc) -- dcl/body
+                                or
+                                    (stmt==ME.blk_body and blk==ME.blk_body) -- dcl/body
+                                )
                     if fun or id=='_ok' or isImp then
                         -- no problem with hide
                     elseif isEvery then

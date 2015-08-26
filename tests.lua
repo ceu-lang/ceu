@@ -9,7 +9,61 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
+Test { [[
+escape 1;
+function (int x)=>int f do
+    loop i in 10 do
+    end
+    return 1;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+native @pure _strlen();
+class T with
+    var char[] str;
+do
+    escape _strlen(&&this.str);
+end
+var int n = do T with
+                this.str = [] .. "1234";
+            end;
+escape n;
+]],
+    run = 1,
+}
+
+do return end
+Test { [[
+class T with
+do
+    function (int)=>int f;
+    function (int x)=>int f do
+        return x;
+    end
+    escape f(10);
+end
+var int x = do T;
+escape x;
+]],
+    run = {['~>1s']=10},
+}
+
+Test { [[
+class T with
+    var int x;
+do
+    this.x = await 999ms;
+end
+var T t;
+await 1s;
+escape t.x;
+]],
+    run = {['~>1s']=1000},
+}
+
 Test { [[
 escape 1;
 function (void) => int f do
@@ -494,6 +548,7 @@ escape 1;
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }

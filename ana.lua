@@ -166,6 +166,15 @@ print('class "'..id..'" may terminate from nested organisms')
         me.ana.pos = { [false]=true }       -- orgs run forever
     end,
 
+    Dcl_fun_pre = function (me)
+        me.ana.pos = COPY(me.ana.pre)
+        me.__ana_saved = me.ana
+        me.ana = { pre={ [true]=true } }
+    end,
+    Dcl_fun_pos = function (me)
+        me.ana = me.__ana_saved
+    end,
+
     Stmts_bef = function (me, sub, i)
         if i == 1 then
             -- first sub copies parent
