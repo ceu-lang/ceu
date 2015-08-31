@@ -9,19 +9,18 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-Test { [[
-var u8 cnt;
-var u8[3] v;
 
-v = [] .. v .. [17];
-v = [] .. v .. [9];
-
-cnt = #v;
-_printf("oi\n");
-escape cnt;
-]],
-    run = 2,
-}
+tag conversion values
+    function @rec (void)=>bool is_tumbling do
+this.pingu = &this.pingu in constructors
+funcao receber char[], char[]&
+var bool has_changed = (this.current_pingu != cur);
+bug $$items
+bug # no fim de linha
+returning & from function
+returning &&? from function
+retorno de funcao requer finalize? (playfield.ceu)
+pools dentro de funcoes
 
 Test { [[
 escape 1;
@@ -563,7 +562,6 @@ escape 1;
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -1235,6 +1233,7 @@ escape a;
 
     -- EVENTS
 
+--]===]
 Test { [[input int A=1;]], parser="line 1 : after `A´ : expected `;´" }
 Test { [[
 input int A;
@@ -15111,6 +15110,14 @@ escape b;
     --run = 2,
 }
 Test { [[
+var int x = 10;
+var int& y = &&x;
+escape y;
+]],
+    env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
+}
+
+Test { [[
 native do
     int V = 10;
 end
@@ -23761,6 +23768,20 @@ escape 1;
 }
 
     -- CPP / DEFINE / PREPROCESSOR
+
+Test { [[
+var u8 cnt;
+var u8[3] v;
+
+v = [] .. v .. [17];
+v = [] .. v .. [9];
+
+cnt = #v;
+_printf("oi\n");
+escape cnt;
+]],
+    parser = 'line 7 : after `=´ : expected expression',
+}
 
 Test { [[
 #define _OBJ_N + 2
@@ -37328,7 +37349,7 @@ escape 1;
     run = 1,
 }
 
--- METHODS
+-->>> METHODS
 
 Test { [[
 class T with
@@ -38673,6 +38694,74 @@ escape w:x;     // escapes with "10"
 ]],
     run = 10,
 }
+
+Test { [[
+function (void)=>int&& f do
+    return 1;
+end
+escape 10;
+]],
+    env = 'line 2 : invalid return value : types mismatch (`int&&´ <= `int´)',
+}
+
+Test { [[
+var int x = 10;
+
+function (void)=>int& f do
+    return &this.x;
+end
+
+escape f();
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    function (void)=>int& f;
+do
+    var int x = 10;
+    function (void)=>int& f do
+        return &this.x;
+    end
+end
+
+var T t;
+
+escape t.f();
+]],
+    run = 10,
+}
+
+Test { [[
+var int x = 10;
+
+function (void)=>int& f do
+    return &&this.x;
+end
+
+escape f();
+]],
+    env = 'line 4 : invalid return value : types mismatch (`int&´ <= `int&&´)',
+}
+Test { [[
+class T with
+    function (void)=>int&& f;
+do
+    var int x = 10;
+    function (void)=>int&& f do
+        return &this.x;
+    end
+end
+
+var T t;
+
+escape t.f();
+]],
+    env = 'line 6 : invalid return value : types mismatch (`int&&´ <= `int´)',
+}
+
+--<<< METHODS
+
 -- ISR / ATOMIC
 
 Test { [[

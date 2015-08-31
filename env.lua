@@ -761,13 +761,16 @@ F = {
         _, me.var = newint(me, AST.iter'Block'(), pre, tp, id, me.isImp)
     end,
 
-    Dcl_fun = function (me)
+    Dcl_fun_aft = function (me, sub, i)
+        if i ~= 5 then
+            return  -- evaulate just before "blk" so that "return" can be checked
+        end
         local pre, rec, ins, out, id, blk = unpack(me)
         local cls = CLS()
 
         -- implementation cannot be inside interface, so,
         -- if it appears on blk_body, make it be in blk_ifc
-        local up = AST.iter'Block'()
+        local up = AST.par(me, 'Block')
         if blk and cls.blk_body==up and cls.blk_ifc.vars[id] then
             up = cls.blk_ifc
         end
@@ -783,15 +786,20 @@ F = {
             end
         end
 
-        if not blk then
-            return
-        end
-
         -- full definitions must contain parameter ids
-        for _, v in ipairs(ins) do
-            local _, tp, id = unpack(v)
-            ASR(tp=='void' or id, me, 'missing parameter identifier')
+        if blk then
+            for _, v in ipairs(ins) do
+                local _, tp, id = unpack(v)
+                ASR(tp=='void' or id, me, 'missing parameter identifier')
+            end
         end
+    end,
+
+    Return = function (me)
+        local exp = unpack(me)
+        local dcl = AST.par(me, 'Dcl_fun')
+        local ok, msg = TP.contains(dcl.var.fun.out, exp.tp)
+        ASR(ok, me, 'invalid return value : '..(msg or ''))
     end,
 
     Ext = function (me)
@@ -1529,7 +1537,7 @@ F = {
         local op, e1 = unpack(me)
 
         -- ExpList in adt-constr
-        ASR(me.__par.tag=='Set' or me.__par.tag=='ExpList', me,
+        ASR(me.__par.tag=='Set' or me.__par.tag=='ExpList' or me.__par.tag=='Return', me,
             'invalid use of operator "&" : not a binding assignment : (use "&&" for "address of")')
 
         -- refuses first assignment from constants and dereferences:
