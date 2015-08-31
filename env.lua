@@ -797,9 +797,18 @@ F = {
 
     Return = function (me)
         local exp = unpack(me)
+
         local dcl = AST.par(me, 'Dcl_fun')
-        local ok, msg = TP.contains(dcl.var.fun.out, exp.tp)
-        ASR(ok, me, 'invalid return value : '..(msg or ''))
+        if not dcl then
+            return  -- checked in props.lua
+        end
+
+        if (not exp) and TP.check(dcl.var.fun.out,'void') then
+            return
+        else
+            local ok, msg = TP.contains(dcl.var.fun.out, exp.tp)
+            ASR(ok, me, 'invalid return value : '..(msg or ''))
+        end
     end,
 
     Ext = function (me)

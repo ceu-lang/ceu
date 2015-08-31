@@ -537,9 +537,10 @@ end
     , _CEND = m.Cmt(C(V'_CSEP') * m.Cb'mark',
                     function (s,i,a,b) return a == b end)
 
-    , __SPACES = (  m.S'\t\n\r '
-                + ('//' * (P(1)-'\n')^0 * P'\n'^-1)
-                + ('#'  * (P(1)-'\n')^0 * P'\n'^-1) -- TODO: set of #'s/only after spaces
+    , __SPACES = (('\n' * (V'__comm'+m.S'\t\n\r ')^0 *
+                    '#' * (P(1)-'\n')^0)
+                + ('//' * (P(1)-'\n')^0)
+                + m.S'\t\n\r '
                 + V'__comm'
                 )^0
 
@@ -576,7 +577,8 @@ end
 if RUNTESTS then
     assert(m.P(GG):match(OPTS.source), err())
 else
-    if not m.P(GG):match(OPTS.source) then     -- TODO: match only in ast.lua?
+    if not m.P(GG):match(OPTS.source) then
+             -- TODO: match only in ast.lua?
         DBG(err())
         os.exit(1)
     end

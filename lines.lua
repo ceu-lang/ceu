@@ -1,7 +1,6 @@
 m = require 'lpeg'
 m.setmaxstack(1000)
 
-local CNT  = 1
 local LINE = 1
 local FILE = OPTS.input
 local patt
@@ -10,29 +9,12 @@ LINES = {
     i2l = {},
 }
 
-local open = m.Cmt('/*{-{*/',
-    function ()
-        if OPTS.join then
-            CNT = CNT - 1
-        end
-        return true
-    end )
-local close = m.Cmt('/*}-}*/',
-    function ()
-        if OPTS.join then
-            CNT = CNT + 1
-        end
-        return true
-    end )
-
 local line = m.Cmt('\n',
     function (s,i)
         for i=#LINES.i2l, i do
             LINES.i2l[i] = { FILE, LINE }
         end
-        if CNT > 0 then
-            LINE = LINE + 1
-        end
+        LINE = LINE + 1
         return true
     end )
 
@@ -52,9 +34,10 @@ local dir_lins = m.Cmt( m.P'#' *SS* m.P'line'^-1
         return true
     end )
 
-patt = (line + open + close + dir_lins + 1)^0
+patt = (line + dir_lins + 1)^0
 
-OPTS.source = '#line 1 "'..OPTS.input..'"\n'..OPTS.source
+-- pre-append extra line to match #
+OPTS.source = '\n#line 1 "'..OPTS.input..'"\n'..OPTS.source
 
 if OPTS.cpp or OPTS.cpp_args then
     local args = OPTS.cpp_args or ''
@@ -86,8 +69,9 @@ if OPTS.cpp or OPTS.cpp_args then
     assert(ret == 0 or ret == true, assert(io.open(ferr)):read'*a')
     os.remove(ferr)
 
+    -- pre-append extra line to match #
     -- remove blank lines of #define's (because of "-dD")
-    OPTS.source = assert(io.open(fout)):read'*a'
+    OPTS.source = '\n'..assert(io.open(fout)):read'*a'
     --OPTS.source = string.gsub(OPTS.source, '(#define[^\n]*)(\n)(\n)', '%1%3')
     os.remove(fout)
     --print(OPTS.source)

@@ -562,6 +562,7 @@ escape 1;
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -1233,8 +1234,24 @@ escape a;
 
     -- EVENTS
 
---]===]
-Test { [[input int A=1;]], parser="line 1 : after `A´ : expected `;´" }
+Test { [[input int A=1;
+]],
+    parser="line 1 : after `A´ : expected `;´"
+}
+
+Test { [[input int A=1;]],
+    parser="line 1 : after `A´ : expected `;´"
+}
+
+Test { [[
+input int A;
+
+
+A=1;
+]],
+    parser = 'line 1 : after `;´ : expected statement (usually a missing `var´ or C prefix `_´)',
+}
+
 Test { [[
 input int A;
 A=1;
@@ -37182,7 +37199,8 @@ function (void) => void f do
 end
 escape 1;
 ]],
-    gcc = 'error: ‘return’ with a value, in function returning void',
+    --gcc = 'error: ‘return’ with a value, in function returning void',
+    env = 'line 2 : invalid return value : types mismatch (`void´ <= `int´)',
 }
 
 Test { [[
