@@ -10,6 +10,66 @@ end
 
 --[===[
 
+-- reference to vectors as argument (OK)
+Test { [[
+var char[] str = [0,1,2];
+
+function (int[]& vec)=>int f do
+    return vec[1];
+end
+
+escape f(str);
+]],
+    run = 1,
+}
+Test { [[
+var char[] str = [0,1,2];
+
+function (void) => char[] f do
+    return &this.str;
+end
+
+var char[]& ref = &f();
+
+escape ref[1];
+]],
+    env = 'error',
+}
+
+-- vectors as argument (NO)
+Test { [[
+var char[] str = [0,1,2];
+
+function (int[] vec)=>int f do
+    return vec[1];
+end
+
+escape f(str);
+]],
+    env = 'error',
+}
+
+Test { [[
+var int x;
+
+function (void)=>void f1;
+function (void)=>void f2;
+
+function (void)=>void f1 do
+    this.f2();
+end
+
+function (void)=>void f2 do
+    this.f1();
+end
+
+this.f1();
+
+escape 0;
+]],
+    run = 1,
+}
+
 tag conversion values
     function @rec (void)=>bool is_tumbling do
 this.pingu = &this.pingu in constructors
@@ -15148,6 +15208,23 @@ escape v;
 }
 
 Test { [[
+native do
+    int f (int v) {
+        return v + 1;
+    }
+    typedef struct {
+        int (*f) (int);
+    } tp;
+    tp T = { f };
+end
+var int v = 1;
+var int& ref = &v;
+escape _T.f(v);
+]],
+    run = 2,
+}
+
+Test { [[
 var int a = 1;
 var int& b;
 escape b;
@@ -21459,6 +21536,102 @@ var SDL_Rect[] cell_rects = [r1];
 escape cell_rects[0].x;
 ]],
     run = 10,
+}
+
+Test { [[
+native do
+    char* f (void) {
+        return "ola";
+    }
+    typedef struct {
+        char* (*f) (void);
+    } tp;
+    tp T = { f };
+end
+var char[] str = [] .. (char&&)_T.f() .. "oi";
+escape str[4]=='i';
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    char* f (void) {
+        return "ola";
+    }
+end
+var char[]  str;
+var char[]& ref = &str;
+ref = [] .. (char&&){f}() .. "oi";
+native @pure _strlen();
+escape _strlen(&&str);
+]],
+    run = 5,
+}
+
+Test { [[
+var char[] str = [0,1,2];
+
+function (void) => char[]& f do
+    return &this.str;
+end
+
+var char[]& ref = &f();
+
+escape ref[1];
+]],
+    run = 1,
+}
+
+Test { [[
+var char[] str = [0,1,2];
+
+function (void) => char[]& f do
+    return &this.str;
+end
+
+var char[]& ref = &f();
+ref = [3, 4, 5];
+
+escape str[1];
+]],
+    run = 4,
+}
+
+Test { [[
+var char[] str = [0,1,2];
+
+function (void) => char[]& f do
+    return &this.str;
+end
+
+var char[]& ref = &f();
+ref = [] .. "ola";
+
+escape str[1] == 'l';
+]],
+    run = 1,
+}
+
+Test { [[
+var char[] str = [0,1,2];
+
+native do
+    char* g () {
+        return "ola";
+    }
+end
+
+function (void) => char[]& f do
+    return &this.str;
+end
+
+var char[]& ref = &f();
+ref = [] .. (char&&){g}() .. "ola";
+
+escape str[3] == 'o';
+]],
+    run = 1,
 }
 
 -- VECTORS FOR POINTERS TO ORGS

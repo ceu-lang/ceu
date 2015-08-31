@@ -1230,7 +1230,7 @@ ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
                         end
                         LINE(me, [[
 #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-ceu_out_assert( ceu_vector_concat_buffer(]]..V(to,'lval')..','..V(e,'lval')..[[, strlen(]]..V(e,'lval')..[[)), "access out of bounds" );
+ceu_out_assert( ceu_vector_concat_buffer(]]..V(to,'lval')..','..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[)), "access out of bounds" );
 ]])
                     else
                         assert(TP.check(e.tp,'[]','-&'), 'bug found')

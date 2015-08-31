@@ -453,10 +453,22 @@ typedef union CEU_]]..me.id..[[_delayed {
         end
         dcl = table.concat(dcl,  ', ')
 
+        local tp_out = TP.toc(out)
+        if TP.check(out,'[]','-&&','-&') then
+            assert(TP.check(out,'&&') or TP.check(out,'&'), 'bug found')
+            if ENV.clss[TP.id(out)] then
+                ASR(false, me, 'not implemented')
+            elseif TP.is_ext(out,'_') then
+                -- ok
+            else
+                tp_out = 'tceu_vector*'
+            end
+        end
+
         -- TODO: static?
         me.id = 'CEU_'..cls.id..'_'..id
         me.proto = [[
-]]..TP.toc(out)..' '..me.id..' ('..dcl..[[)
+]]..tp_out..' '..me.id..' ('..dcl..[[)
 ]]
         if OPTS.os and ENV.exts[id] and ENV.exts[id].pre=='output' then
             -- defined elsewhere
