@@ -21001,7 +21001,7 @@ escape a;
     run = 1,
 }
 
--- VECTORS / STRINGS
+-->>> VECTORS / STRINGS
 
 Test { [[
 var u8 v;
@@ -21634,7 +21634,28 @@ escape str[3] == 'o';
     run = 1,
 }
 
--- VECTORS FOR POINTERS TO ORGS
+Test { [[
+var char[] str;
+
+function (void)=>char[]& f1 do
+    return &this.str;
+end
+
+function (void)=>void f2 do
+    var char[]& ref = &f1();
+    ref = [] .. "ola" .. "mundo";
+end
+
+f2();
+
+escape str[4] == 'u';
+]],
+    run = 1,
+}
+
+--<<< VECTORS / STRINGS
+
+-->>> VECTORS FOR POINTERS TO ORGS
 
 Test { [[
 class T with

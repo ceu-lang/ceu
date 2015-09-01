@@ -163,8 +163,10 @@ F = {
 
                 if TP.check(var.tp,'[]','-&') and (not TP.is_ext(var.tp,'_')) then
                     PROPS.has_vector = true
-                    me.needs_clr = true
-                    PROPS.has_clear = true
+                    if not TP.check(var.tp,'&') then
+                        me.needs_clr = true
+                        PROPS.has_clear = true
+                    end
                     if var.tp.arr.cval then
                         PROPS.has_vector_pool   = true
                     else
