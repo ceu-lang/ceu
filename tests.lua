@@ -8,50 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[===[
-
-Test { [[
-interface Human with
-    function (void)=>int walk;
-    function (void)=>int breath;
-    var int n;
-end
-
-class CommonThings with
-    function (Human& h)=>int walk;
-    function (Human& h)=>int breath;
-do
-    function (Human& h)=>int walk do
-        return h.n;
-    end
-    function (Human& h)=>int breath do
-        return h.n;
-    end
-    await FOREVER;
-end
-
-class Man with
-    interface Human;
-    var CommonThings& ct;
-    var int n = 100;
-do
-    function (void)=>int walk do
-        return 200; // override
-    end
-    function (void)=>int breath do
-        return this.ct.breath(&this); // delegate
-    end
-end
-
-var CommonThings ct;
-var Man m with
-    this.ct = ct;
-end;
-escape m.walk() + m.breath();
-]],
-    run = 300,
-}
-do return end
 
 -- reference to vectors as argument (OK)
 Test { [[
@@ -65,6 +21,7 @@ escape f(str);
 ]],
     run = 1,
 }
+--[===[
 Test { [[
 var char[] str = [0,1,2];
 
@@ -16268,6 +16225,72 @@ escape v!;
     env = 'line 21 : types mismatch (`_int&´ <= `_int&?´)',
 }
 
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+function (T& t)=>int f do
+    return t.v * 2;
+end
+
+var T t;
+var int ret = f(&t);
+
+do
+    var T u with
+        this.v = 20;
+    end;
+    ret = ret + f(&u);
+end
+
+escape ret;
+]],
+    run = 60,
+}
+
+Test { [[
+interface Human with
+    function (void)=>int walk;
+    function (void)=>int breath;
+    var int n;
+end
+
+class CommonThings with
+    function (Human& h)=>int walk;
+    function (Human& h)=>int breath;
+do
+    function (Human& h)=>int walk do
+        return h.n;
+    end
+    function (Human& h)=>int breath do
+        return h.n;
+    end
+    await FOREVER;
+end
+
+class Man with
+    interface Human;
+    var CommonThings& ct;
+    var int n = 100;
+do
+    function (void)=>int walk do
+        return 200; // override
+    end
+    function (void)=>int breath do
+        return this.ct.breath(&this); // delegate
+    end
+end
+
+var CommonThings ct;
+var Man m with
+    this.ct = &ct;
+end;
+escape m.walk() + m.breath();
+]],
+    run = 300,
+}
 --<<< REFERENCES / REFS / &
 
 Test { [[

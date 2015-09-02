@@ -252,6 +252,10 @@ F = {
             local inifc = (me.var.blk == cls.blk_ifc)
             inifc = inifc and cls.id~='Main'
 
+            -- ignore function arguments
+            -- (they are guaranteed to be bounded)
+            local infun = AST.par(me.var.blk, 'Dcl_fun')
+
             -- ignore global variables
             -- (they are guaranteed to be bounded)
             local glb = ENV.clss.Global
@@ -273,7 +277,7 @@ F = {
             -- (they are guaranteed to be bounded)
             local fld = (me.__par.tag=='Field' and me.__par[3]==me)
 
-            if not (inifc or glb or fld) then
+            if not (inifc or infun or glb or fld) then
                 ASR(me.var.bind, me, 'reference must be bounded before use')
             end
         end

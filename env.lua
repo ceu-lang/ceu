@@ -1555,12 +1555,13 @@ F = {
         -- var D& d = D(...);   // adt-constr
         -- ok:
         -- var _int[]& ref = vec;   // TP.check(e1.tp,'[]')
-        ASR(TP.check(e1.tp,'&') or e1.lval or e1.tag=='Op1_&&' or e1.tag=='Op2_call' or
-            TP.check(e1.tp,'[]') or
-                (e1.lst and (e1.lst.tag=='Outer' or
+        ASR(TP.check(e1.tp,'&') or e1.lval or e1.tag=='Op1_&&' or
+            e1.tag=='Op2_call' or TP.check(e1.tp,'[]') or
+                (e1.lst and (e1.lst.tag=='Outer' or e1.lst.tag=='This' or
                              e1.lst.var and (e1.lst.var.cls or e1.lst.var.adt))),
                                                -- orgs/adts are not lval
             me, 'invalid operand to unary "&" : cannot be aliased')
+
         ASR(e1.tag ~= 'Op1_*', me,
             'invalid operand to unary "&" : cannot be aliased')
 
