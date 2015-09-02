@@ -8,6 +8,32 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--[===[
+
+-- BUG: should be &dir
+Test { [[
+class Dir with
+    var int value;
+do
+end
+interface IPingu with
+    function (void)=>Dir& get;
+end
+class Pingu with
+    interface IPingu;
+do
+    var Dir dir with
+        this.value = 10;
+    end;
+    function (void)=>Dir& get do
+        return &&dir;
+    end
+end
+var Pingu p;
+escape p.get().value;
+]],
+    run = 10,
+}
 
 -- reference to vectors as argument (OK)
 Test { [[
@@ -21,7 +47,6 @@ escape f(str);
 ]],
     run = 1,
 }
---[===[
 Test { [[
 var char[] str = [0,1,2];
 
@@ -70,6 +95,7 @@ escape 0;
     run = 1,
 }
 
+--[[
 tag conversion values
     function @rec (void)=>bool is_tumbling do
 this.pingu = &this.pingu in constructors
@@ -81,6 +107,7 @@ returning & from function
 returning &&? from function
 retorno de funcao requer finalize? (playfield.ceu)
 pools dentro de funcoes
+]]
 
 Test { [[
 escape 1;
@@ -108,7 +135,6 @@ escape n;
     run = 1,
 }
 
-do return end
 Test { [[
 class T with
 do
@@ -155,107 +181,6 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-native do
-    ##define ID(x) x
-end
-native @pure _ID(), _strlen();
-var char[] str = [] .. "abc"
-                    .. (char&&)_ID("def");
-var char&& str2 = _ID(&&str);
-escape _strlen(&&str) + _strlen(str2);
-]],
-    run = 12,
-}
-
-Test { [[
-var char[] str;
-var char[] str;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-do return end
-
-
-Test { [[
-class T with
-    var int v = 10;
-do
-    await FOREVER;
-end
-
-var T t;
-
-await 1s;
-
-escape 1;
-]],
-    run = { ['~>1s'] = 1 },
-}
-Test { [[
-input int E,F;
-
-par do
-    async do
-        emit E => 10;
-    end
-    await FOREVER;
-with
-    var int ret = 0;
-    par/and do
-        var int v = await E;
-        var int x = 1000;
-        _ceu_sys_go(__ceu_app, _CEU_IN_F, &&x)
-            finalize with nothing; end;
-        ret = ret + v;
-    with
-        var int v = await E;
-        ret = ret + v;
-    end
-    escape ret;
-end
-]],
-    wrn = true,
-    _ana = {acc=true},
-    run = 20,
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var T t;
-var T&&? p = &&t;
-
-await 500ms;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s'] = 20 },
-}
---do return end
-
-Test { [[
-native do
-    typedef struct t {
-        int* x;
-    } t;
-end
-native @plain _t;
-var int v = 10;
-var _t t;
-t.x = &&v;
-await 1s;
-escape *t.x;
-]],
-    run = {['~>1s']=10},
-}
-
 -- BUG: nao esta obrigando binding p/ pool
 Test { [[
 class T with do end
@@ -278,134 +203,7 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-input int&& SPRITE_DELETE;
-class Sprite with
-    var int& me;
-do
-    par/or do
-        var int&& me = await SPRITE_DELETE
-                      until me == &&this.me;
-    with
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
 --do return end
-
-Test { [[
-native do
-    typedef struct t {
-        void* ceu;
-    } t;
-end
-var _t   t;
-var _t&& ptr = &&t;
-var int v = 10;
-ptr:ceu = &v;
-escape *((int&&)(ptr:ceu));
-]],
-    ref = 'line 9 : invalid attribution : l-value already bounded',
-    --run = 10,
-}
-Test { [[
-native do
-    typedef struct t {
-        void* xxx;
-    } t;
-end
-
-class C with
-    var int v = 10;
-do
-end
-var C c;
-
-var _t   t;
-var _t&& ptr = &&t;
-
-ptr:xxx = &c;
-
-escape ((C&&)ptr:xxx):v;
-]],
-    --run = 10,
-    ref = 'line 16 : invalid attribution : l-value already bounded',
-}
-Test { [[
-native do
-    typedef struct t {
-        void* xxx;
-    } t;
-end
-
-class C with
-    var int v = 10;
-    event int e;
-do
-end
-var C c;
-
-var _t   t;
-var _t&& ptr = &&t;
-
-ptr:xxx = &c;
-
-emit ((C&&)ptr:xxx):e => 1;
-
-escape ((C&&)ptr:xxx):v;
-]],
-    ref = 'line 17 : invalid attribution : l-value already bounded',
-    --run = 10,
-}
---do return end
-
--- BUG: should be &dir
-Test { [[
-class Dir with
-    var int value;
-do
-end
-interface IPingu with
-    function (void)=>Dir& get;
-end
-class Pingu with
-    interface IPingu;
-do
-    var Dir dir with
-        this.value = 10;
-    end;
-    function (void)=>Dir& get do
-        return &&dir;
-    end
-end
-var Pingu p;
-escape p.get().value;
-]],
-    run = 10,
-}
---do return end
-
-Test { [[
-native @pure _f();
-native do
-    typedef struct t {
-        int* ptr;
-    } t;
-    int* f (int* ptr) {
-        return ptr;
-    }
-end
-var int v = 10;
-var _t t;
-t.ptr = &_f(&&v);
-escape *(t.ptr);
-]],
-    ref = 'line 12 : invalid attribution : l-value already bounded',
-    --run = 10,
-}
 --do return end
 
 Test { [[
@@ -16291,6 +16089,91 @@ escape m.walk() + m.breath();
 ]],
     run = 300,
 }
+
+Test { [[
+native do
+    typedef struct t {
+        void* ceu;
+    } t;
+end
+var _t   t;
+var _t&& ptr = &&t;
+var int v = 10;
+ptr:ceu = &v;
+escape *((int&&)(ptr:ceu));
+]],
+    ref = 'line 9 : invalid attribution : l-value already bounded',
+    --run = 10,
+}
+
+Test { [[
+native do
+    typedef struct t {
+        void* xxx;
+    } t;
+end
+
+class C with
+    var int v = 10;
+do
+end
+var C c;
+
+var _t   t;
+var _t&& ptr = &&t;
+
+ptr:xxx = &c;
+
+escape ((C&&)ptr:xxx):v;
+]],
+    --run = 10,
+    ref = 'line 16 : invalid attribution : l-value already bounded',
+}
+
+Test { [[
+native do
+    typedef struct t {
+        void* xxx;
+    } t;
+end
+
+class C with
+    var int v = 10;
+    event int e;
+do
+end
+var C c;
+
+var _t   t;
+var _t&& ptr = &&t;
+
+ptr:xxx = &c;
+
+emit ((C&&)ptr:xxx):e => 1;
+
+escape ((C&&)ptr:xxx):v;
+]],
+    ref = 'line 17 : invalid attribution : l-value already bounded',
+    --run = 10,
+}
+Test { [[
+native @pure _f();
+native do
+    typedef struct t {
+        int* ptr;
+    } t;
+    int* f (int* ptr) {
+        return ptr;
+    }
+end
+var int v = 10;
+var _t t;
+t.ptr = &_f(&&v);
+escape *(t.ptr);
+]],
+    ref = 'line 12 : invalid attribution : l-value already bounded',
+    --run = 10,
+}
 --<<< REFERENCES / REFS / &
 
 Test { [[
@@ -17665,6 +17548,23 @@ escape v;
     env = 'line 12 : wrong argument #1',
     --wrn = true,
     --run = 10,
+}
+
+Test { [[
+input int&& SPRITE_DELETE;
+class Sprite with
+    var int& me;
+do
+    par/or do
+        var int&& me = await SPRITE_DELETE
+                      until me == &&this.me;
+    with
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
 }
 
 Test { [[
@@ -21719,6 +21619,29 @@ escape str[4] == 'u';
     run = 1,
 }
 
+Test { [[
+native do
+    ##define ID(x) x
+end
+native @pure _ID(), _strlen();
+var char[] str = [] .. "abc"
+                    .. (char&&)_ID("def");
+var char&& str2 = _ID(&&str);
+escape _strlen(&&str) + _strlen(str2);
+]],
+    run = 12,
+}
+
+Test { [[
+var char[] str;
+var char[] str;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+
 --<<< VECTORS / STRINGS
 
 -->>> VECTORS FOR POINTERS TO ORGS
@@ -21880,6 +21803,24 @@ escape t.v + p!:v;
 ]],
     run = { ['~>1s']='13] runtime error: invalid tag' },
 }
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T&&? p = &&t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = 20 },
+}
+
 Test { [[
 class U with
     var int v = 10;
@@ -25110,6 +25051,21 @@ await FOREVER;
 
 Test { [[
 class T with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+var T t;
+
+await 1s;
+
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+Test { [[
+class T with
     var int a;
 do
 end
@@ -26245,6 +26201,22 @@ escape *(r.x);
 ]],
     --env = 'line 8 : invalid operand to unary "*"',
     run = 10,
+}
+
+Test { [[
+native do
+    typedef struct t {
+        int* x;
+    } t;
+end
+native @plain _t;
+var int v = 10;
+var _t t;
+t.x = &&v;
+await 1s;
+escape *t.x;
+]],
+    run = {['~>1s']=10},
 }
 
 Test { [[
@@ -38932,7 +38904,7 @@ var IWorld&&? ptr = spawn World with end;
 
 escape 1;
 ]],
-    gcc = '25: error: ‘CEU_World_get_pingus’ used but never defined',
+    gcc = '33: error: ‘CEU_World_get_pingus’ used but never defined',
 }
 
 Test { [[
@@ -43558,6 +43530,38 @@ escape 1;
 ]],
     run = 1,
 }
+
+-->>> STACK STACK
+
+Test { [[
+input int E,F;
+
+par do
+    async do
+        emit E => 10;
+    end
+    await FOREVER;
+with
+    var int ret = 0;
+    par/and do
+        var int v = await E;
+        var int x = 1000;
+        _ceu_sys_go(__ceu_app, _CEU_IN_F, &&x)
+            finalize with nothing; end;
+        ret = ret + v;
+    with
+        var int v = await E;
+        ret = ret + v;
+    end
+    escape ret;
+end
+]],
+    wrn = true,
+    _ana = {acc=true},
+    run = 20,
+}
+
+--<<< STACK STACK
 
 -- ASYNCS // THREADS
 

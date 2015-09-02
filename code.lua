@@ -688,32 +688,14 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
         LINE(me, '{')       -- close in Block_pos
         for _, var in ipairs(me.vars) do
             if var.isTmp then
-                -- TODO: join with code in "mem.lua" for non-tmp vars
-
-                if TP.check(var.tp,'[]','-&&','-&') then
-                    local tp_out
-                    assert(TP.check(var.tp,'&&') or TP.check(var.tp,'&'), 'bug found')
-                    if ENV.clss[TP.id(var.tp)] then
-                        ASR(false, me, 'not implemented')
-                    elseif TP.is_ext(var.tp,'_') then
-                        tp_out = TP.toc(var.tp)
-                    else
-                        tp_out = 'tceu_vector*'
-                    end
-                    LINE(me, tp_out..' __ceu_'..var.id..'_'..var.n)
-                elseif TP.check(var.tp,'[]','-?') then
-                    local tp_ = TP.toc(var.tp)
-                    local tp_ = string.sub(tp_,1,-2)  -- remove leading `*´
-                    LINE(me, tp_..' '..var.id_..'['..var.tp.arr.cval..']')
-                else
-                    LINE(me, TP.toc(var.tp)..' __ceu_'..var.id..'_'..var.n)
-                end
+                local ID = '__ceu_'..var.id..'_'..var.n
+                LINE(me, MEM.tp2dcl(var.pre, var.tp, ID, nil, var.adt, var.cls)
+                        ..';\n')
                 if var.isFun then
                     -- function parameter
                     -- __ceu_a = a
-                    LINE(me, ' = '..var.id)
+                    LINE(me, ID..' = '..var.id..';')
                 end
-                LINE(me, ';')
             end
 
             if var.pre == 'var' then

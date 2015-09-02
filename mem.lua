@@ -20,6 +20,117 @@ function CUR (me, id)
     end
 end
 
+function MEM.tp2dcl (pre, tp, id, _dcl_id, _adt, _cls)
+    local dcl = ''
+
+    local tp_id = TP.id(tp)
+    local tp_c  = TP.toc(tp)
+    local cls = ENV.clss[tp_id]
+    local adt = ENV.adts[tp_id]
+    local top = adt or cls
+
+    if _dcl_id == tp_id then
+        tp_c = 'struct '..tp_c  -- for types w/ pointers for themselves
+    end
+
+    if pre == 'var' then
+
+-- TODO: OPT
+        if cls and (not cls.is_ifc) and (_dcl_id ~= tp_id) then
+            dcl = dcl..'struct ' -- due to recursive spawn
+        end
+
+        if TP.check(tp,'[]','-&&','-&') then
+            local tp_elem = TP.pop( TP.pop(tp,'&'), '[]' )
+            local cls = cls and TP.check(tp_elem,tp_id)
+            if cls or TP.is_ext(tp,'_') then
+                if TP.check(tp,'&&') or TP.check(tp,'&') then
+                    local tp_c = TP.toc( TP.pop(tp) )
+                    return dcl .. tp_c..' '..id
+                else
+                    local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
+                    return dcl .. tp_c..' '..id..'['..tp.arr.cval..']'
+                end
+            else
+                if TP.check(tp,'&&') or TP.check(tp,'&') then
+                    return dcl .. 'tceu_vector* '..id
+                else
+                    local max = (tp.arr.cval or 0)
+                    local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
+                    return dcl .. [[
+CEU_VECTOR_DCL(]]..id..','..tp_c..','..max..[[)
+]]
+                end
+            end
+        elseif (not _adt) and TP.check(tp,TP.id(tp)) and ENV.adts[TP.id(tp)] then
+            -- var List list;
+            return dcl .. tp_c..'* '..id
+        else
+            return dcl .. tp_c..' '..id
+        end
+
+    elseif pre == 'pool' then
+
+        -- ADT:
+        -- tceu_adt_root id = { root=?, pool=_id };
+        -- CEU_POOL_DCL(_id);
+        if adt then
+            assert(not TP.check(tp,'&&','&&'), 'bug found')
+            local ptr = (TP.check(tp,'&') and '*') or ''
+            dcl = dcl .. [[
+/*
+ * REF:
+ * tceu_adt_root* x;  // root/pool always the same as the parent
+ * PTR:
+ * tceu_adt_root x;   // pool: the same // root: may point to the middle
+ */
+tceu_adt_root]]..ptr..' '..id..[[;
+]]
+        end
+
+        -- static pool: "var T[N] ts"
+        if (_adt or _cls) and type(tp.arr)=='table' then
+            local ID = (adt and '_' or '') .. id  -- _id for ADT pools
+            if top.is_ifc then
+                return dcl .. [[
+CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..'_delayed,'..tp.arr.sval..[[)
+]]
+                       -- TODO: bad (explicit CEU_)
+            else
+                return dcl .. [[
+CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..','..tp.arr.sval..[[)
+]]
+                       -- TODO: bad (explicit CEU_)
+            end
+        elseif (not adt) then   -- (top_pool or cls)
+            -- ADT doesn't require this NULL pool field
+            --  (already has root->pool=NULL)
+            if TP.check(tp,'&&') or TP.check(tp,'&') then
+                local ptr = ''
+                for i=#tp.tt, 1, -1 do
+                    local v = tp.tt[i]
+                    if v=='&&' or v=='&' then
+                        ptr = ptr..'*'
+                    else
+                        break
+                    end
+                end
+                return dcl .. [[
+tceu_pool_]]..ptr..' '..id..[[;
+]]
+            else
+                return dcl .. [[
+tceu_pool_ ]]..id..[[;
+]]
+            end
+        else
+            return dcl
+        end
+    else
+        error'bug found'
+    end
+end
+
 F = {
     Host = function (me)
         local pre, code = unpack(me)
@@ -449,21 +560,11 @@ typedef union CEU_]]..me.id..[[_delayed {
         local dcl = { 'tceu_app* _ceu_app', 'tceu_org* __ceu_org' }
         for _, v in ipairs(ins) do
             local _, tp, id = unpack(v)
-            dcl[#dcl+1] = TP.toc(tp)..' '..(id or '')
+            dcl[#dcl+1] = MEM.tp2dcl('var', tp, (id or ''), nil, nil, nil)
         end
         dcl = table.concat(dcl,  ', ')
 
-        local tp_out = TP.toc(out)
-        if TP.check(out,'[]','-&&','-&') then
-            assert(TP.check(out,'&&') or TP.check(out,'&'), 'bug found')
-            if ENV.clss[TP.id(out)] then
-                ASR(false, me, 'not implemented')
-            elseif TP.is_ext(out,'_') then
-                -- ok
-            else
-                tp_out = 'tceu_vector*'
-            end
-        end
+        local tp_out = MEM.tp2dcl('var', out, '', nil, nil, nil)
 
         -- TODO: static?
         me.id = 'CEU_'..cls.id..'_'..id
@@ -577,110 +678,10 @@ typedef union CEU_]]..me.id..[[_delayed {
                     -- otherwise use counter to avoid clash inside struct/union
             end
 
-            if DCL.id == tp_id then
-                tp_c = 'struct '..tp_c  -- for types w/ pointers for themselves
-            end
-
-            if var.pre=='var' and (not var.isTmp) then
-                local dcl = [[
-#line ]]..var.ln[2]..' "'..var.ln[1]..[["
-]]
-                local cls = ENV.clss[tp_id]
--- TODO: OPT
-                if cls and (not cls.is_ifc) and (DCL.id ~= tp_id) then
-                    dcl = dcl..'struct ' -- due to recursive spawn
-                end
-                if TP.check(var.tp,'[]','-&&','-&') then
-                    local tp_vec  = var.tp
-                    local tp_elem = TP.pop( TP.pop(var.tp,'&'), '[]' )
-                    local cls = cls and TP.check(tp_elem,tp_id)
-                    if cls or TP.is_ext(var.tp,'_') then
-                        if TP.check(var.tp,'&&') or TP.check(var.tp,'&') then
-                            local tp_c = TP.toc( TP.pop(tp_vec) )
-                            dcl = dcl .. tp_c..' '..var.id_
-                        else
-                            local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
-                            dcl = dcl .. tp_c..' '..var.id_..'['..var.tp.arr.cval..']'
-                        end
-                    else
-                        if TP.check(var.tp,'&&') or TP.check(var.tp,'&') then
-                            dcl = dcl .. 'tceu_vector* '..var.id_
-                        else
-                            local max = (var.tp.arr.cval or 0)
-                            local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
-                            dcl = dcl .. [[
-CEU_VECTOR_DCL(]]..var.id_..','..tp_c..','..max..[[)
-]]
-                        end
-                    end
-                elseif (not var.adt) and TP.check(var.tp,TP.id(var.tp)) and 
-                    ENV.adts[TP.id(var.tp)] then
-                    -- var List list;
-                    dcl = dcl .. tp_c..'* '..var.id_
-                else
-                    dcl = dcl .. tp_c..' '..var.id_
-                end
-
-                DCL.struct = DCL.struct..SPC()..'  '..dcl..';\n'
-
-            elseif var.pre=='pool' then
-                local adt = ENV.adts[tp_id]
-                local cls = ENV.clss[tp_id]
-                local top = adt or cls
-
-                -- ADT:
-                -- tceu_adt_root id = { root=?, pool=_id };
-                -- CEU_POOL_DCL(_id);
-                if adt then
-                    assert(not TP.check(var.tp,'&&','&&'), 'bug found')
-                    local ptr = (TP.check(var.tp,'&') and '*') or ''
-                    DCL.struct = DCL.struct .. [[
-/*
- * REF:
- * tceu_adt_root* x;  // root/pool always the same as the parent
- * PTR:
- * tceu_adt_root x;   // pool: the same // root: may point to the middle
- */
-tceu_adt_root]]..ptr..' '..var.id_..[[;
-]]
-                end
-
-                -- static pool: "var T[N] ts"
-                if (var.adt or var.cls) and type(var.tp.arr)=='table' then
-                    local ID = (adt and '_' or '') .. var.id_  -- _id for ADT pools
-                    if top.is_ifc then
-                        DCL.struct = DCL.struct .. [[
-CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..'_delayed,'..var.tp.arr.sval..[[)
-]]
-                               -- TODO: bad (explicit CEU_)
-                    else
-                        DCL.struct = DCL.struct .. [[
-CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..','..var.tp.arr.sval..[[)
-]]
-                               -- TODO: bad (explicit CEU_)
-                    end
-                elseif (not adt) then   -- (top_pool or cls)
-                    -- ADT doesn't require this NULL pool field
-                    --  (already has root->pool=NULL)
-                    if TP.check(var.tp,'&&') or TP.check(var.tp,'&') then
-                        local ptr = ''
-                        for i=#var.tp.tt, 1, -1 do
-                            local v = var.tp.tt[i]
-                            if v=='&&' or v=='&' then
-                                ptr = ptr..'*'
-                            else
-                                break
-                            end
-                        end
-                        DCL.struct = DCL.struct .. [[
-tceu_pool_]]..ptr..' '..var.id_..[[;
-]]
-                    else
-                        DCL.struct = DCL.struct .. [[
-tceu_pool_ ]]..var.id_..[[;
-]]
-                    end
-                end
+            if var.pre=='var' or var.pre=='pool' then
+                DCL.struct = DCL.struct .. SPC() .. '  ' ..
+                              MEM.tp2dcl(var.pre, var.tp, var.id_, DCL.id, var.adt, var.cls)
+                             ..  ';\n'
             end
 
             -- pointers ini/end to list of orgs
