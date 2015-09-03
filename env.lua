@@ -304,7 +304,7 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
     if old then
         ASR(TP.toc(ins)==TP.toc(old.fun.ins) and
             TP.toc(out)==TP.toc(old.fun.out) and
-            (rec==old.fun.mod.rec or (not old.fun.mod.rec)),
+            rec == old.fun.mod.rec,
             me, 'function declaration does not match the one at "'..
                 old.ln[1]..':'..old.ln[2]..'"')
         -- Accept rec mismatch if old is not (old is the concrete impl):

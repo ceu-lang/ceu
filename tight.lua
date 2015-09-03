@@ -111,6 +111,13 @@ F = {
     end,
     AwaitN = 'Await',
 
+    --[[
+    -- fin.isTight (for function declarations):
+    --      - true      (body parsed and known to be recursive)
+    --      - false     (body parsed and known to be not recursive)
+    --      - 'maybe'   (body parsed, but calls body unparsed)
+    --      - nil       (body unparsed)
+    --]]
     Op2_call = function (me)
         local op, f, _ = unpack(me)
 
@@ -121,10 +128,22 @@ F = {
         -- if calling a tight (or unknown) function,
         --  then the top function is also tight
         local dcl = AST.iter'Dcl_fun'()
-        if dcl and (f.var.fun.isTight or f.var.fun.isTight==nil) then
-            dcl.var.fun.isTight = true
-            ASR(dcl.var.fun.mod.rec == true,
-                dcl, 'function must be declared with `recursive´')
+        if dcl then
+            if (f.var.fun.isTight==true or f.var.fun.isTight=='maybe' or dcl.var.fun==f.var.fun) then
+                dcl.var.fun.isTight = true
+                f.var.fun.isTight   = true
+                ASR(dcl.var.fun.mod.rec == true,
+                    dcl, 'function must be annotated as `@rec´ (recursive)')
+
+                -- f must be re-checked after dcl completes
+                dcl.__tight_calls = dcl.__tight_calls or {}
+                dcl.__tight_calls[#dcl.__tight_calls+1] = f
+            elseif f.var.fun.isTight == nil then
+                dcl.var.fun.isTight = 'maybe'
+            else
+                assert(f.var.fun.isTight   == false)
+                assert(dcl.var.fun.isTight == nil)      -- remains nil
+            end
         end
 
         -- assert that the call is using call/rec correctly
@@ -142,16 +161,26 @@ F = {
             return          -- pure declarations
         end
 
-        -- if I'm not discovered as tight, then I'm not tight
+        -- if I'm not discovered as tight or maybe, then I'm not tight
         if me.var.fun.isTight == nil then
             me.var.fun.isTight = false
         end
-        if me.var.fun.isTight then
+        if me.var.fun.isTight == true then
             ASR(me.var.fun.mod.rec == me.var.fun.isTight,
-                me, 'function must be declared with `recursive´')
-        else
-            WRN(me.var.fun.mod.rec == me.var.fun.isTight,
+                me, 'function must be annotated as `@rec´ (recursive)')
+            if me.__tight_calls then
+                for _,f in ipairs(me.__tight_calls) do
+DBG('OIOI', f.var.fun)
+for k,v in pairs(f.var.fun) do DBG('',k,v) end
+                    ASR(f.var.fun.mod.rec == f.var.fun.isTight,
+                        f.var.fun, 'function must be annotated as `@rec´ (recursive)')
+                end
+            end
+        elseif me.var.fun.isTight == false then
+            WRN(me.var.fun.mod.rec == false,
                 me, 'function may be declared without `recursive´')
+        else
+            assert(me.var.fun.isTight == 'maybe', 'bug found')
         end
 
         -- copy isTight to all matching interfaces with method "id"
@@ -193,7 +222,7 @@ F = {
                     else
                         for _, isTight in ipairs(t) do
                             ASR((not isTight), var.ln,
-                                'function must be declared with `recursive´')
+                                'function must be annotated as `@rec´ (recursive)')
                         end
                     end
                 end

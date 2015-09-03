@@ -9,26 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-Test { [[
-var int x;
-
-function (void)=>void f1;
-function (void)=>void f2;
-
-function (void)=>void f1 do
-    this.f2();
-end
-
-function (void)=>void f2 do
-    this.f1();
-end
-
-this.f1();
-
-escape 0;
-]],
-    run = 1,
-}
 
 Test { [[
 native @pure _strlen();
@@ -273,7 +253,6 @@ escape 1;
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -37728,6 +37707,117 @@ escape 1;
 
 --<<< FUNCTIONS
 
+-->>> RECURSIVE / FUNCTIONS
+
+Test { [[
+function @rec (void)=>void f;
+function @rec (void)=>void f;
+function      (void)=>void g;
+function @rec (void)=>void g;
+escape 1;
+]],
+    env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
+}
+Test { [[
+function @rec (void)=>void f;
+function @rec (void)=>void f;
+function @rec (void)=>void g;
+function      (void)=>void g;
+escape 1;
+]],
+    env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
+}
+Test { [[
+var int x;
+
+function @rec (void)=>void f1;
+function @rec (void)=>void f2;
+
+function @rec (void)=>void f1 do
+    if false then
+        call/rec this.f2();
+    end
+end
+
+function @rec (void)=>void f2 do
+    call/rec this.f1();
+end
+
+call/rec this.f1();
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x;
+
+function (void)=>void f1;
+function (void)=>void f2;
+
+function (void)=>void f1 do
+    this.f2();
+end
+
+function (void)=>void f2 do
+end
+
+this.f1();
+
+escape 1;
+]],
+    run = 1,
+}
+
+--]===]
+Test { [[
+var int x;
+
+function (void)=>void f1;
+function (void)=>void f2;
+
+function (void)=>void f1 do
+    this.f2();
+end
+
+function (void)=>void f2 do
+    this.f1();
+end
+
+this.f1();
+
+escape 1;
+]],
+    tight = 'line 10 : function must be annotated as `@rec´ (recursive)',
+}
+
+Test { [[
+var int x;
+
+function (void)=>void f1;
+function @rec (void)=>void f2;
+
+function (void)=>void f1 do
+    if false then
+        call/rec this.f2();
+    end
+end
+
+function @rec (void)=>void f2 do
+    this.f1();
+end
+
+this.f1();
+
+escape 1;
+]],
+    run = 1,
+}
+do return end
+
+--<<< RECURSIVE / FUNCTIONS
+
 -->>> METHODS
 
 Test { [[
@@ -37959,7 +38049,7 @@ var T t;
 var I&& i = &&t;
 escape t.f() + i:f();
 ]],
-    tight = 'line 9 : function must be declared with `recursive´',
+    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
 }
 
 Test { [[
@@ -38009,7 +38099,7 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    tight = 'line 9 : function must be declared with `recursive´',
+    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
 }
 
 Test { [[
@@ -38061,7 +38151,58 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    tight = 'line 9 : function must be declared with `recursive´',
+    env = 'line 9 : function declaration does not match the one at "tests.lua:2"',
+}
+
+Test { [[
+interface I with
+    function (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I&& i;
+do
+    function (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+var T t;
+var I&& i = &&t;
+t.i = i;
+escape i:g(5);
+]],
+    --run = 120,
+    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
+}
+
+Test { [[
+interface I with
+    function @rec (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I&& i;
+do
+    function @rec (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * (call/rec i:g(v-1));
+    end
+end
+
+var T t;
+var I&& i = &&t;
+t.i = i;
+escape call/rec i:g(5);
+]],
+    run = 120,
 }
 
 Test { [[
@@ -38270,7 +38411,7 @@ t.i = i2;
 escape i1:g(5) + i2:g(5);
 ]],
     --run = 120,
-    tight = 'line 18 : function must be declared with `recursive´',
+    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
 }
 
 Test { [[
@@ -38310,7 +38451,7 @@ t.i = i2;
 escape i1:g(5) + i2:g(5);
 ]],
     --run = 120,
-    tight = 'line 9 : function must be declared with `recursive´',
+    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
 }
 
 
@@ -38860,6 +39001,54 @@ call/rec i:f();
 
 escape 1;
 ]],
+    env = 'line 2 : function declaration does not match the one at "tests.lua:7"',
+}
+
+Test { [[
+interface I with
+    function (void)=>void f;
+end
+
+class T with
+    interface I;
+    function (void)=>void f; // ignored
+do
+    function (void)=>void f do
+    end
+end
+
+var T t;
+call t.f();
+
+var I&& i = &&t;
+call/rec i:f();
+
+escape 1;
+]],
+    tight = 'line 17 : `call/rec´ is not required for "f"',
+}
+
+Test { [[
+interface I with
+    function (void)=>void f;
+end
+
+class T with
+    interface I;
+    function (void)=>void f; // ignored
+do
+    function (void)=>void f do
+    end
+end
+
+var T t;
+call t.f();
+
+var I&& i = &&t;
+i:f();
+
+escape 1;
+]],
     wrn = true,
     --tight = 'line 9 : function may be declared without `recursive´',
     run = 1,
@@ -38871,15 +39060,41 @@ interface I with
 end
 
 class T with
-    function (void)=>void f;
     interface I;
+    function @rec (void)=>void f; // ignored
 do
-    function (void)=>void f do
+    function @rec (void)=>void f do
     end
 end
 
 var T t;
-call t.f();
+call/rec t.f();
+
+var I&& i = &&t;
+call/rec i:f();
+
+escape 1;
+]],
+    wrn = true,
+    --tight = 'line 9 : function may be declared without `recursive´',
+    run = 1,
+}
+
+Test { [[
+interface I with
+    function @rec (void)=>void f;
+end
+
+class T with
+    function @rec (void)=>void f;
+    interface I;
+do
+    function @rec (void)=>void f do
+    end
+end
+
+var T t;
+call/rec t.f();
 
 var I&& i = &&t;
 call/rec i:f();
@@ -38900,7 +39115,7 @@ function (int v)=>int f do
 end
 escape f(5);
 ]],
-    tight = 'line 2 : function must be declared with `recursive´',
+    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
     --run = 120,
 }
 Test { [[
