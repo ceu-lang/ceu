@@ -1722,9 +1722,19 @@ case ]]..me.lbl_cnt.id..[[:;
     __AwaitInt = function (me)
         local e = unpack(me)
         local org = (e.org and V(e.org,'lval')) or '_STK_ORG'
-        local no = '_CEU_NO_'..me.n..'_'
+
+        local par_pause  = AST.par(me,'Pause')
+        local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
+        local has_pause = par_pause and (par_pause.__depth > par_dclcls.__depth)
+        local no = has_pause and '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
+]]..(no and no..':' or '')..[[
+    _STK->trl->evt   = ]]..V(e,'evt')..[[;
+    _STK->trl->lbl   = ]]..me.lbl.id..[[;
+#ifdef CEU_ORGS
+    _STK->trl->evto  = ]]..org..[[;
+#endif
     _STK->trl->seqno =
 ]])
         if me.isEvery then
@@ -1737,22 +1747,10 @@ case ]]..me.lbl_cnt.id..[[:;
                             /* (before the label below) */
 ]])
         end
-
-        LINE(me, [[
-]]..no..[[:
-    _STK->trl->evt   = ]]..V(e,'evt')..[[;
-    _STK->trl->lbl   = ]]..me.lbl.id..[[;
-]])
         HALT(me)
 
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
-#ifdef CEU_ORGS
-    if ((tceu_org*)]]..org..[[ != _STK->evto) {
-        _STK->trl->seqno = _ceu_app->seqno-1;   /* awake again */
-        goto ]]..no..[[;
-    }
-#endif
 ]])
         AWAIT_PAUSE(me, no)
         DEBUG_TRAILS(me)

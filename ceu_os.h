@@ -397,6 +397,9 @@ typedef union tceu_trl {
         tceu_nevt evt1;
         tceu_nlbl lbl;
         u8        seqno;        /* TODO(ram): 2 bits is enough */
+#if defined(CEU_INTS) && defined(CEU_ORGS)
+        void*     evto;
+#endif
     };
 
     /* IN__STK */

@@ -612,7 +612,11 @@ printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
 
         /* EXECUTE THIS TRAIL ? */
 
-        if (_STK->trl->evt != _STK->evt) {
+        if (_STK->trl->evt != _STK->evt
+#if defined(CEU_INTS) && defined(CEU_ORGS)
+        ||  (_STK->evt<CEU_IN_lower && _STK->evto!=_STK->trl->evto)
+#endif
+        ) {
             goto _CEU_GO_NO_;
         }
 #ifdef CEU_OS

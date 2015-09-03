@@ -9,8 +9,35 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---do return end
 --]===]
+
+Test { [[
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+event void f;
+
+var T t;
+
+par do
+    par/or do
+        await t.e;
+    with
+        await 1s;
+        emit t.e;
+    end
+    emit f;
+    escape -1;
+with
+    await f;
+    escape 10;
+end
+]],
+    run = { ['~>10s'] = 10 },
+}
 
 -------------------------------------------------------------------------------
 
