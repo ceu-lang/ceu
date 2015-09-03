@@ -253,6 +253,7 @@ escape 1;
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -37770,7 +37771,6 @@ escape 1;
     run = 1,
 }
 
---]===]
 Test { [[
 var int x;
 
@@ -37812,9 +37812,8 @@ this.f1();
 
 escape 1;
 ]],
-    run = 1,
+    tight = 'line 3 : function must be annotated as `@rec´ (recursive)',
 }
-do return end
 
 --<<< RECURSIVE / FUNCTIONS
 

@@ -173,7 +173,7 @@ F = {
 DBG('OIOI', f.var.fun)
 for k,v in pairs(f.var.fun) do DBG('',k,v) end
                     ASR(f.var.fun.mod.rec == f.var.fun.isTight,
-                        f.var.fun, 'function must be annotated as `@rec´ (recursive)')
+                        f.var.dcl, 'function must be annotated as `@rec´ (recursive)')
                 end
             end
         elseif me.var.fun.isTight == false then

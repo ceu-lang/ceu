@@ -255,6 +255,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         isTmp = false,
         --arr   = arr,
         n     = _N,
+        dcl   = me,
     }
 
     local tp, is_ref = TP.pop(tp, '&')   -- only *,& after []
