@@ -689,7 +689,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 local ID = '__ceu_'..var.id..'_'..var.n
-                LINE(me, MEM.tp2dcl(var.pre, var.tp, ID, nil, var.adt, var.cls)
+                LINE(me, MEM.tp2dcl(var.pre, var.tp, ID, nil)
                         ..';\n')
                 if var.isFun then
                     -- function parameter

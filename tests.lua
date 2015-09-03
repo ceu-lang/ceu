@@ -9,7 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-
 Test { [[
 var int x;
 
@@ -46118,7 +46117,7 @@ escape 1;
     adt = 'line 1 : invalid recursive base case : no parameters allowed',
 }
 
--- MISC
+-->>> MISC
 
 Test { [[
 data SDL_Rect with
@@ -46195,6 +46194,22 @@ end
 escape sum;
 ]],
     run = 536,
+}
+
+Test { [[
+data T with
+    var int x;
+end
+
+function (void)=>T f do
+    var T t = T(10);
+    return t;
+end
+
+var T t = f();
+escape t.x;
+]],
+    run = 10,
 }
 
 Test { [[

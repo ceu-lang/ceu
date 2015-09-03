@@ -20,7 +20,7 @@ function CUR (me, id)
     end
 end
 
-function MEM.tp2dcl (pre, tp, id, _dcl_id, _adt, _cls)
+function MEM.tp2dcl (pre, tp, id, _dcl_id)
     local dcl = ''
 
     local tp_id = TP.id(tp)
@@ -28,6 +28,9 @@ function MEM.tp2dcl (pre, tp, id, _dcl_id, _adt, _cls)
     local cls = ENV.clss[tp_id]
     local adt = ENV.adts[tp_id]
     local top = adt or cls
+
+    local _adt = adt and ENV.top(tp, nil, pre)
+    local _cls = cls and ENV.top(tp, nil, pre)
 
     if _dcl_id == tp_id then
         tp_c = 'struct '..tp_c  -- for types w/ pointers for themselves
@@ -680,7 +683,7 @@ typedef union CEU_]]..me.id..[[_delayed {
 
             if var.pre=='var' or var.pre=='pool' then
                 DCL.struct = DCL.struct .. SPC() .. '  ' ..
-                              MEM.tp2dcl(var.pre, var.tp, var.id_, DCL.id, var.adt, var.cls)
+                              MEM.tp2dcl(var.pre, var.tp, var.id_, DCL.id)
                              ..  ';\n'
             end
 

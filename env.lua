@@ -114,6 +114,34 @@ end
 local _N = 0
 local _E = 1    -- 0=NONE
 
+function ENV.top (tp, me, pre)
+    local tp_id = TP.id(tp)
+    local adt = ENV.adts[tp_id]
+    local cls = ENV.clss[tp_id]
+
+    local plain = TP.check(tp, tp_id, '-[]')
+    if not plain then
+        return nil
+    end
+
+    if cls then
+        return cls
+    elseif adt then
+        if adt.is_rec or (me and AST.isParent(adt,me)) then
+            if pre == 'pool' then
+                return adt
+            else
+                return nil
+            end
+        else
+            -- var D id;
+            return adt
+        end
+    else
+        return nil
+    end
+end
+
 local function check (me, pre, tp)
     if tp.tag == 'TupleType' then
         for _, item in ipairs(tp) do
@@ -143,8 +171,6 @@ local function check (me, pre, tp)
             ASR(pre == 'pool', me,
                 'cannot instantiate an interface')
         end
-    else
-        top = nil
     end
 
     local void_ok = (tp_id=='void' and
@@ -155,8 +181,6 @@ local function check (me, pre, tp)
     ASR(TP.get(tp_id).len~=0 or TP.check(tp,'&&') or TP.check(tp,'&') or void_ok,
         me, 'cannot instantiate type "'..tp_id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
-
-    return top
 end
 
 function ENV.v_or_ref (tp, cls_or_adt)
@@ -207,7 +231,8 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         end
     end
 
-    local top = check(me, pre, tp)
+    check(me, pre, tp)
+    local top = ENV.top(tp, me, pre)
 
     -- Class definitions take priority over interface definitions:
     --      * consts
@@ -221,8 +246,9 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         id    = id,
         blk   = blk,
         tp    = tp,
+-- TODO: remove, use ENV.top()
         cls   = (top and top.tag=='Dcl_cls' and top) or (id=='_top_pool'),
-        adt   = false, -- see below
+        adt   = (top and top.tag=='Dcl_adt' and top),
         pre   = pre,
         inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body) or AST.par(me,'Dcl_adt'),
                 -- (never "tmp")
@@ -230,18 +256,6 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         --arr   = arr,
         n     = _N,
     }
-
-    if top and top.tag=='Dcl_adt' then
-        if top.is_rec or AST.isParent(top,me) then
-            if pre == 'pool' then
-                -- pool List[] id;
-                var.adt = top
-            end
-        else
-            -- var D id;
-            var.adt = top
-        end
-    end
 
     local tp, is_ref = TP.pop(tp, '&')   -- only *,& after []
     local is_arr = TP.check(tp, '[]')
