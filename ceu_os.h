@@ -396,9 +396,11 @@ typedef union tceu_trl {
     struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt1;
         tceu_nlbl lbl;
+#ifdef CEU_INTS                 /* R-9: size of trails for internal events */
         u8        seqno;        /* TODO(ram): 2 bits is enough */
-#if defined(CEU_INTS) && defined(CEU_ORGS)
+#ifdef CEU_ORGS
         void*     evto;
+#endif
 #endif
     };
 
@@ -620,7 +622,9 @@ typedef struct tceu_app {
      * awaiting trails matches only if trl->seqno < seqno,
      * i.e., previously awaiting the event
      */
+#ifdef CEU_INTS
     u8 seqno:         2;
+#endif
 #if defined(CEU_RET) || defined(CEU_OS)
     u8 isAlive:       1;
 #endif

@@ -589,13 +589,13 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
 #ifdef CEU_ORGS
 if (_STK->trl->evt==CEU_IN__ORG) {
 printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d : org=%p->%p\n",
-    _STK->trl, _STK->trl->evt, _STK->trl->stk, _STK->trl->seqno, _STK_LBL,
+    _STK->trl, _STK->trl->evt, _STK->trl->stk, 0, _STK_LBL,
     &_STK->trl->lnks[0], &_STK->trl->lnks[1]);
 } else
 #endif
 {
 printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
-    _STK->trl, _STK->trl->evt, _STK->trl->stk, _STK->trl->seqno, _STK_LBL);
+    _STK->trl, _STK->trl->evt, _STK->trl->stk, 0, _STK_LBL);
 }
 #endif
 
@@ -635,9 +635,11 @@ printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
         else
 #endif
         {
-            if (_STK->trl->seqno == _ceu_app->seqno) {
+#ifdef CEU_INTS
+            if (_STK->evt<CEU_IN_lower && _STK->trl->seqno==_ceu_app->seqno) {
                 goto _CEU_GO_NO_;
             }
+#endif
         }
 
         /* execute this trail in the 2nd pass */
@@ -687,7 +689,9 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 #endif
     }
 
+#ifdef CEU_INTS
     app->seqno++;
+#endif
 
 #ifdef CEU_STACK_STACK
     tceu_nstk stki = app->stki;
@@ -723,7 +727,7 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 printf("=== 2\n");
 #endif
 printf("STACK[%d]: evt=%d : seqno=%d\n",
-    stack_curi(&go), STK->evt, app->seqno);
+    stack_curi(&go), STK->evt, 0);
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
 printf("\torg=%p/%d : [%d/%p]\n",
     STK_ORG, STK_ORG==app->data, STK_ORG->n, STK_ORG->trls);
@@ -911,9 +915,11 @@ printf("\t<<< NO\n");
 
             /* NEXT TRAIL */
 
-            if (STK->trl->evt!=CEU_IN__STK && STK->trl->seqno!=app->seqno) {
+#ifdef CEU_INTS
+            if (STK->trl->evt<CEU_IN_lower && STK->trl->seqno!=app->seqno) {
                 STK->trl->seqno = app->seqno-1;   /* keeps the gap tight */
             }
+#endif
 
             STK->trl++;
         }

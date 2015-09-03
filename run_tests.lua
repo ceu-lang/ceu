@@ -323,55 +323,10 @@ STATS = {
     count   = 2776,
     mem     = 0,
     trails  = 6052,
-    bytes   = 38632229,
+    bytes   = 38337317,
 }
 
-(./run_tests.lua: 1034.72s 54412k)
-
-STATS = {
-    count   = 2713,
-    mem     = 0,
-    trails  = 5961,
-    bytes   = 38688001,
-}
-(./run_tests.lua: 799.29s 55944k)
-
-
---- two-pass scheduler
-STATS = {
-    count   = 2705,
-    mem     = 0,
-    trails  = 5968,
-    bytes   = 38703890,
-}
-(./run_tests.lua: 959.80s 55044k)
-
---- no yields in pool iterators
-STATS = {
-    count   = 2695,
-    mem     = 0,
-    trails  = 5946,
-    bytes   = 38860835,
-}
-(./run_tests.lua: 899.19s 52176k)
-
---- no internal finalize
-STATS = {
-    count   = 2694,
-    mem     = 0,
-    trails  = 5999,
-    bytes   = 39172913,
-}
-(./run_tests.lua: 1051.96s 55808k)
-
---- internal finalize
-STATS = {
-    count   = 2694,
-    mem     = 0,
-    trails  = 6522,
-    bytes   = 40228346,
-}
-(./run_tests.lua: 1083.22s ?k)
+(./run_tests.lua: 991.86s 52192k)
 
 ===
 

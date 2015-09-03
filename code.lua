@@ -1775,19 +1775,9 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
 
         LINE(me, [[
 ]]..(no and no..':' or '')..[[
-    _STK->trl->evt   = CEU_IN_]]..e.evt.id..suf..[[;
-    _STK->trl->lbl   = ]]..me.lbl.id..[[;
-    _STK->trl->seqno =
+    _STK->trl->evt = CEU_IN_]]..e.evt.id..suf..[[;
+    _STK->trl->lbl = ]]..me.lbl.id..[[;
 ]])
-        if me.isEvery then
-            LINE(me, [[
-        _ceu_app->seqno-1;   /* always ready to awake */
-]])
-        else
-            LINE(me, [[
-        _ceu_app->seqno;
-]])
-        end
         if e[1] == '_ok_killed' then
             LINE(me, [[
     _STK->trl->org_or_adt = (void*)]]..V(e[3],'lval')..[[;
