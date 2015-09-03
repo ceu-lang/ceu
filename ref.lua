@@ -174,6 +174,48 @@ F = {
         end
     end,
 
+    Return_pre = function (me)
+        local exp = unpack(me)
+        local dcl = AST.par(me, 'Dcl_fun')
+        if not dcl then
+            return  -- checked in props.lua
+        end
+
+        -- return <x>
+        --      becomes
+        -- <var-in-ifc> = <x>
+        local var = AST.node('Var', me.ln, '_')
+        var.tp = dcl.var.fun.out
+        var.lst = var
+        var.var = {blk=CLS().blk_ifc, tp=var.tp}
+        F.__Set_pre(AST.node('Return', me.ln, '=', 'set', exp), var)
+    end,
+
+    __check_params = function (me, ins, params, f)
+        for i, param in ipairs(params) do
+            -- f(<x>)
+            --      becomes
+            -- <var-in-ifc> = <x>
+            if ins then
+                local var = AST.node('Var', me.ln, '_')
+                var.tp = ins.tup[i]
+                var.lst = var
+                var.var = {blk=AST.par(f,'Dcl_cls').blk_ifc, tp=var.tp}
+                F.__Set_pre(AST.node('Return', me.ln, '=', 'set', param), var)
+            end
+        end
+    end,
+    Op2_call = function (me)
+        local _, f, params, fin = unpack(me)
+        if not (me.c and (me.c.mod=='@pure' or me.c.mod=='@nohold')) then
+            req = F.__check_params(
+                    me,
+                    f.var and f.var.fun and f.var.fun.ins,
+                    params,
+                    f)
+        end
+    end,
+
     If = function (me)
         -- prepare to pass to parent
         local if_ = AST.par(me,'If')

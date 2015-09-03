@@ -10,70 +10,6 @@ end
 
 --[===[
 
--- BUG: should be &dir
-Test { [[
-class Dir with
-    var int value;
-do
-end
-interface IPingu with
-    function (void)=>Dir& get;
-end
-class Pingu with
-    interface IPingu;
-do
-    var Dir dir with
-        this.value = 10;
-    end;
-    function (void)=>Dir& get do
-        return &&dir;
-    end
-end
-var Pingu p;
-escape p.get().value;
-]],
-    run = 10,
-}
-
--- reference to vectors as argument (OK)
-Test { [[
-var char[] str = [0,1,2];
-
-function (int[]& vec)=>int f do
-    return vec[1];
-end
-
-escape f(str);
-]],
-    run = 1,
-}
-Test { [[
-var char[] str = [0,1,2];
-
-function (void) => char[] f do
-    return &this.str;
-end
-
-var char[]& ref = &f();
-
-escape ref[1];
-]],
-    env = 'error',
-}
-
--- vectors as argument (NO)
-Test { [[
-var char[] str = [0,1,2];
-
-function (int[] vec)=>int f do
-    return vec[1];
-end
-
-escape f(str);
-]],
-    env = 'error',
-}
-
 Test { [[
 var int x;
 
@@ -95,31 +31,6 @@ escape 0;
     run = 1,
 }
 
---[[
-tag conversion values
-    function @rec (void)=>bool is_tumbling do
-this.pingu = &this.pingu in constructors
-funcao receber char[], char[]&
-var bool has_changed = (this.current_pingu != cur);
-bug $$items
-bug # no fim de linha
-returning & from function
-returning &&? from function
-retorno de funcao requer finalize? (playfield.ceu)
-pools dentro de funcoes
-]]
-
-Test { [[
-escape 1;
-function (int x)=>int f do
-    loop i in 10 do
-    end
-    return 1;
-end
-]],
-    run = 1,
-}
-
 Test { [[
 native @pure _strlen();
 class T with
@@ -131,52 +42,6 @@ var int n = do T with
                 this.str = [] .. "1234";
             end;
 escape n;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-    function (int)=>int f;
-    function (int x)=>int f do
-        return x;
-    end
-    escape f(10);
-end
-var int x = do T;
-escape x;
-]],
-    run = {['~>1s']=10},
-}
-
-Test { [[
-class T with
-    var int x;
-do
-    this.x = await 999ms;
-end
-var T t;
-await 1s;
-escape t.x;
-]],
-    run = {['~>1s']=1000},
-}
-
-Test { [[
-escape 1;
-function (void) => int f do
-    return 1;
-end
-]],
-    run = 1,
-}
-
-Test { [[
-function (void) => void f do
-    escape 1;
-end
-escape 1;
 ]],
     run = 1,
 }
@@ -199,28 +64,19 @@ var U u;
 
 escape 1;
 ]],
-    todo = true,
     run = 1,
 }
 
---do return end
---do return end
-
-Test { [[
-class T with do end
-spawn T with
-            var _std__string&? intro_story_str;
-            finalize
-                intro_story_str = &_new_String();
-            with
-            end
-    end;
-escape 1;
-]],
-    todo = 'qual o erro que deve dar?',
-    gcc = '',
-    run = 1,
-}
+--[[
+tag conversion values
+    function @rec (void)=>bool is_tumbling do
+this.pingu = &this.pingu in constructors
+var bool has_changed = (this.current_pingu != cur);
+bug $$items
+returning &&? from function
+retorno de funcao requer finalize? (playfield.ceu)
+pools dentro de funcoes
+]]
 
 Test { [[
 native do
@@ -249,9 +105,8 @@ do
 end
 escape 1;
 ]],
-    todo = 'qual o erro que deve dar?',
     wrn = true,
-    gcc = '',
+    run = 1,
 }
 --do return end
 
@@ -272,7 +127,6 @@ await 200ms;
 
 escape ptr!:v;
 ]],
-    todo = true,
     run = { ['~>10s']=1 },
 }
 
@@ -306,8 +160,7 @@ var int x = do LeafHandler with
 
 escape x;
 ]],
-    todo = 'bug',
-    env = 'error',
+    run = 1,
 }
 -- BUG: should complain of this.v=&v
 Test { [[
@@ -336,9 +189,10 @@ end;
 
 escape v!;
 ]],
-    todo = 'bug',
     run = 20,
 }
+
+---------------------------------------------------
 -- BUG: should be type error, T&& <= T[]
 Test { [[
 data Tree with
@@ -15312,6 +15166,24 @@ escape 1;
 
 Test { [[
 native do
+    int f() { return 1; }
+end
+class T with do end
+spawn T with
+            var _int&? intro_story_str;
+            finalize
+                intro_story_str = &_f();
+            with
+            end
+    end;
+escape 1;
+]],
+    gcc = '24: note: expected ‘int *’ but argument is of type ‘int’',
+    --run = 1,
+}
+
+Test { [[
+native do
     int V = 10;
     int* fff (int v) {
         V += v;
@@ -15753,6 +15625,28 @@ end
 native _t = 4;
 var _t v = _f;
 await 1s;
+do
+    var int a;
+    _f(&&a) finalize with nothing; end;
+    escape(a);
+end
+]],
+    --env = 'line 8 : native variable/function "_f" is not declared',
+    --fin = 'line 8 : attribution to pointer with greater scope',
+    --fin = 'line 11 : pointer access across `await´',
+    run = { ['~>1s']=10 },
+}
+
+Test { [[
+native do
+    void f (int* a) {
+        *a = 10;
+    }
+    typedef void (*t)(int*);
+end
+native _t = 4;
+var _t v = _f;
+await 1s;
 var int a;
 _f(&&a) finalize with nothing; end;
 escape(a);
@@ -16036,11 +15930,59 @@ end
 var T t;
 var int ret = f(&t);
 
+    var T u with
+        this.v = 20;
+    end;
+    ret = ret + f(&u);
+
+escape ret;
+]],
+    run = 60,
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+function (T& t)=>int f do
+    return t.v * 2;
+end
+
+var T t;
+var int ret = f(&t);
+
 do
     var T u with
         this.v = 20;
     end;
     ret = ret + f(&u);
+end
+
+escape ret;
+]],
+    ref = 'line 17 : attribution to reference with greater scope',
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+function (T&& t)=>int f do
+    return t:v * 2;
+end
+
+var T t;
+var int ret = f(&&t);
+
+do
+    var T u with
+        this.v = 20;
+    end;
+    ret = ret + f(&&u);
 end
 
 escape ret;
@@ -16174,6 +16116,135 @@ escape *(t.ptr);
     ref = 'line 12 : invalid attribution : l-value already bounded',
     --run = 10,
 }
+
+Test { [[
+function (void)=>int&& get do
+    var int x;
+    return &&x;
+end
+escape 10;
+]],
+    fin = 'line 3 : attribution to pointer with greater scope',
+}
+
+Test { [[
+function (void)=>int& get do
+    var int x;
+    return &x;
+end
+escape 10;
+]],
+    ref = 'line 3 : attribution to reference with greater scope',
+}
+
+Test { [[
+var char[] str = [0,1,2];
+
+function (char[]& vec)=>int f do
+    return vec[1];
+end
+
+escape f(&str);
+]],
+    run = 1,
+}
+Test { [[
+var char[] str = [0,1,2];
+
+function (int[]& vec)=>int f do
+    return vec[1];
+end
+
+escape f(&str);
+]],
+    env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `char´)',
+}
+Test { [[
+var char[] str = [0,1,2];
+
+function (char[]& vec)=>int f do
+    return vec[1];
+end
+
+escape f(str);
+]],
+    ref = 'line 7 : invalid attribution : missing alias operator `&´',
+}
+Test { [[
+var char[] str = [0,1,2];
+
+function (void) => char[] f do
+    return &this.str;
+end
+
+var char[]& ref = &f();
+
+escape ref[1];
+]],
+    env = 'line 4 : invalid return value : types mismatch (`char[]´ <= `char[]´)',
+}
+
+-- vectors as argument (NO)
+Test { [[
+var char[] str = [0,1,2];
+
+function (int[] vec)=>int f do
+    return vec[1];
+end
+
+escape f(str);
+]],
+    env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `char[]´)',
+}
+
+Test { [[
+class Dir with
+    var int value;
+do
+end
+interface IPingu with
+    function (void)=>Dir& get;
+end
+class Pingu with
+    interface IPingu;
+do
+    var Dir dir with
+        this.value = 10;
+    end;
+    function (void)=>Dir& get do
+        return &&dir;
+    end
+end
+var Pingu p;
+escape p.get().value;
+]],
+    env = 'line 15 : invalid return value : types mismatch (`Dir&´ <= `Dir&&´)',
+}
+
+Test { [[
+class Dir with
+    var int value;
+do
+end
+interface IPingu with
+    function (void)=>Dir& get;
+end
+class Pingu with
+    interface IPingu;
+do
+    var Dir dir with
+        this.value = 10;
+    end;
+    function (void)=>Dir& get do
+        return &dir;
+    end
+end
+var Pingu p;
+escape p.get().value;
+]],
+    run = 10,
+}
+
 --<<< REFERENCES / REFS / &
 
 Test { [[
@@ -25443,6 +25514,19 @@ await OS_START;
 escape 1;
 ]],
     run = 1;
+}
+
+Test { [[
+class T with
+    var int x;
+do
+    this.x = await 999ms;
+end
+var T t;
+await 1s;
+escape t.x;
+]],
+    run = {['~>1s']=1000},
 }
 
 Test { [[
@@ -37321,7 +37405,7 @@ escape 10;
     run = 10;
 }
 
--- FUNCTIONS
+-->>> FUNCTIONS
 
 Test { [[
 function (int v)=>int f do
@@ -37598,6 +37682,52 @@ escape 1;
     tight = 'tight loop',
     run = 1,
 }
+
+Test { [[
+escape 1;
+function (int x)=>int f do
+    loop i in 10 do
+    end
+    return 1;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+    function (int)=>int f;
+    function (int x)=>int f do
+        return x;
+    end
+    escape f(10);
+end
+var int x = do T;
+escape x;
+]],
+    run = {['~>1s']=10},
+}
+
+Test { [[
+escape 1;
+function (void) => int f do
+    return 1;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+function (void) => void f do
+    escape 1;
+end
+escape 1;
+]],
+    props = 'line 2 : not permitted across function declaration',
+}
+
+--<<< FUNCTIONS
 
 -->>> METHODS
 

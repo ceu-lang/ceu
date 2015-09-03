@@ -291,6 +291,22 @@ F = {
         end
     end,
 
+    Return = function (me)
+        local exp = unpack(me)
+        local dcl = AST.par(me, 'Dcl_fun')
+        if not dcl then
+            return  -- checked in props.lua
+        end
+
+        -- return <x>
+        --      becomes
+        -- <var-in-ifc> = <x>
+        local var = AST.node('Var', me.ln, '_')
+        var.tp = dcl.var.fun.out
+        var.var = {blk=CLS().blk_ifc, tp=var.tp}
+        F.Set(AST.node('Return', me.ln, '=', 'set', exp, var))
+    end,
+
     Dcl_pool = 'Dcl_var',
     Dcl_var = function (me)
         if AST.par(me,'BlockI') then
@@ -497,7 +513,7 @@ F = {
         end
     end,
 
-    __check_params = function (me, ins, params)
+    __check_params = function (me, ins, params, f)
         local req = false
         for i, param in ipairs(params) do
             local hold = true
@@ -518,6 +534,16 @@ F = {
                 WRN( (not r) or (not req) or (r==req),
                         me, 'invalid call (multiple scopes)')
                 req = req or r
+
+                -- f(<x>)
+                --      becomes
+                -- <var-in-ifc> = <x>
+                if ins then
+                    local var = AST.node('Var', me.ln, '_')
+                    var.tp = ins.tup[i]
+                    var.var = {blk=AST.par(f,'Dcl_cls').blk_ifc, tp=var.tp}
+                    F.Set(AST.node('Return', me.ln, '=', 'set', param, var))
+                end
             end
         end
         return req
@@ -532,7 +558,8 @@ F = {
             req = F.__check_params(
                     me,
                     f.var and f.var.fun and f.var.fun.ins,
-                    params)
+                    params,
+                    f)
         end
 
         -- TODO: should yield error if requires finalize and is inside Thread?

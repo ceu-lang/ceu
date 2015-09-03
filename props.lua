@@ -273,17 +273,27 @@ F = {
                 'not permitted inside an interface')
     end,
     Escape = function (me)
-        local blk = AST.iter'SetBlock'()
+        local blk = AST.par(me, 'SetBlock')
         blk.rets[me] = true
         blk.has_escape = true
 
+        local fun = AST.par(me, 'Dcl_fun')
+        if fun then
+            ASR(blk.__depth > fun.__depth, me,
+                    'not permitted across function declaration')
+        end
+
         local fin = AST.par(me, 'Finally')
-        ASR((not fin) or AST.isParent(fin, blk), me,
+        if fin then
+            ASR(AST.isParent(fin, blk), me,
                 'not permitted inside `finalize´')
+        end
 
         local evr = AST.iter(function (me) return me.tag=='Loop' and me.isEvery end)()
-        ASR((not evr) or AST.isParent(evr,blk), me,
-                'not permitted inside `every´')
+        if evr then
+            ASR(AST.isParent(evr,blk), me,
+                    'not permitted inside `every´')
+        end
 
         NEEDS_CLR(blk)
     end,
