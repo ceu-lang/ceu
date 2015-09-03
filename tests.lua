@@ -9,209 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--do return end
 --]===]
-
---[[
-tag conversion values
-    function @rec (void)=>bool is_tumbling do
-this.pingu = &this.pingu in constructors
-var bool has_changed = (this.current_pingu != cur);
-bug $$items
-returning &&? from function
-retorno de funcao requer finalize? (playfield.ceu)
-pools dentro de funcoes
-]]
-
-Test { [[
-native do
-    int* new_Int() {
-        return NULL;
-    }
-end
-    function (void) => void parse_file do
-            var int&? intro_story_str;
-            finalize
-                intro_story_str = &_new_Int();
-            with
-                nothing;    /* deleted below */
-            end
-    end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native @pure _new_String();
-class String with
-do
-    var _std__string&? ss = &_new_String();
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
---do return end
-
--- BUG: generate bug for opt ptrs
-Test { [[
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var T t1;
-var T&&? ptr = &&t1;
-await 1s;
-var T t2;
-ptr = &&t2;
-await 200ms;
-
-escape ptr!:v;
-]],
-    run = { ['~>10s']=1 },
-}
-
--- BUG: must enforce alias
-Test { [[
-data Ball with
-    var int x;
-end
-
-data Leaf with
-    tag NOTHING;
-or
-    tag TWEEN with
-        var Ball& ball;
-    end
-end
-
-class LeafHandler with
-    var Leaf& leaf;
-do
-    var Ball& ball = &leaf.TWEEN.ball;
-    escape ball.x;
-end
-
-var Ball ball = Ball(10);
-var Leaf leaf = Leaf.TWEEN(ball);   // must be alias
-
-var int x = do LeafHandler with
-                this.leaf = &leaf;
-            end;
-
-escape x;
-]],
-    run = 1,
-}
--- BUG: should complain of this.v=&v
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v! = 20;
-end
-do T with
-    this.v = &v;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-
----------------------------------------------------
--- BUG: should be type error, T&& <= T[]
-Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree  left;
-        var Tree  right;
-    end
-end
-
-pool Tree[3] tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
-
-class Sum with
-    var int&& v;
-do
-    await FOREVER;
-end
-
-class Body with
-    pool  Body[]& bodies;
-    var   Tree&&   n;
-    var   Sum&    sum;
-do
-    watching *n do
-        if n:NODE then
-            *this.sum.v = *this.sum.v + n:NODE.v;
-            spawn Body in this.bodies with
-                this.bodies = &bodies;
-                this.n      = &&n:NODE.left;
-                this.sum    = &sum;
-            end;
-        end
-    end
-end
-
-var int v = 0;
-var Sum sum with
-    this.v = &&v;
-end;
-
-pool Body[7] bodies;
-do Body with
-    this.bodies = &bodies;
-    this.n      = &&tree;
-    this.sum    = &sum;
-end;
-
-escape v;
-]],
-    todo = 'bug',
-    fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
-}
-Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
-end
-
-var List l;
-escape 1;
-]],
-    todo = 'List is recursive',
-    run = 1,
-}
-
---do return end
 
 -------------------------------------------------------------------------------
 
@@ -15236,7 +15035,7 @@ escape 1;
     gcc = 'error: unknown type name ‘SDL_Renderer’',
 }
 
--- FINALLY / FINALIZE
+-->>> FINALLY / FINALIZE
 
 Test { [[
     native @pure _Radio_getPayload();
@@ -15717,7 +15516,7 @@ end;
 
 escape v!;
 ]],
-    env = 'line 21 : types mismatch (`int&´ <= `int&?´)',
+    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
 Test { [[
 native do
@@ -15801,7 +15600,7 @@ end;
 
 escape v!;
 ]],
-    env = 'line 21 : types mismatch (`int&´ <= `int&?´)',
+    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
 Test { [[
 native do
@@ -15857,8 +15656,41 @@ end;
 
 escape v!;
 ]],
-    env = 'line 21 : types mismatch (`_int&´ <= `_int&?´)',
+    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
+
+Test { [[
+native do
+    int* new_Int() {
+        return NULL;
+    }
+end
+    function (void) => void parse_file do
+            var int&? intro_story_str;
+            finalize
+                intro_story_str = &_new_Int();
+            with
+                nothing;    /* deleted below */
+            end
+    end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native @pure _new_String();
+class String with
+do
+    var _std__string&? ss = &_new_String();
+end
+escape 1;
+]],
+    fin = 'line 4 : attribution to pointer with greater scope',
+    run = 1,
+}
+
+--<<< FINALLY / FINALIZE
 
 Test { [[
 class T with
@@ -42745,6 +42577,25 @@ escape 1;
     --run = 9999,
 }
 
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t1;
+var T&&? ptr = &&t1;
+await 1s;
+var T t2;
+ptr = &&t2;
+await 200ms;
+
+escape ptr!:v;
+]],
+    run = { ['~>10s']=10 },
+}
+
 -- UNTIL
 
 Test { [[
@@ -47868,7 +47719,7 @@ escape 1;
     adt = 'line 53 : cannot assign parent to child',
 }
 
--- OPTION TYPES
+-->>> OPTION TYPES
 
 Test { [[
 data OptionInt with
@@ -48402,6 +48253,84 @@ escape ret;
 ]],
     run = 21,
 }
+
+Test { [[
+var int? v1 = 10;
+var int? v2 = v1;
+escape v2!;
+]],
+    run = 10;
+}
+
+Test { [[
+var int? v1 = 10;
+var int? v2;
+var int ret = v1? + v1!;
+v1 = v2;
+escape ret+v1?+1;
+]],
+    run = 12;
+}
+
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+}
+
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+
+--<<< OPTION TYPES
 
 -- cannot compare ADTs
 Test { DATA..[[
@@ -54966,6 +54895,114 @@ do return end
 
 -- async dentro de pause
 -- async thread spawn falhou, e ai?
+
+-- BUG: must enforce alias
+Test { [[
+data Ball with
+    var int x;
+end
+
+data Leaf with
+    tag NOTHING;
+or
+    tag TWEEN with
+        var Ball& ball;
+    end
+end
+
+class LeafHandler with
+    var Leaf& leaf;
+do
+    var Ball& ball = &leaf.TWEEN.ball;
+    escape ball.x;
+end
+
+var Ball ball = Ball(10);
+var Leaf leaf = Leaf.TWEEN(ball);   // must be alias
+
+var int x = do LeafHandler with
+                this.leaf = &outer.leaf;
+            end;
+
+escape x;
+]],
+    todo = 'bug',
+    run = 1,
+}
+---------------------------------------------------
+-- BUG: should be type error, T&& <= T[]
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree  left;
+        var Tree  right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Sum with
+    var int&& v;
+do
+    await FOREVER;
+end
+
+class Body with
+    pool  Body[]& bodies;
+    var   Tree&&   n;
+    var   Sum&    sum;
+do
+    watching *n do
+        if n:NODE then
+            *this.sum.v = *this.sum.v + n:NODE.v;
+            spawn Body in this.bodies with
+                this.bodies = &bodies;
+                this.n      = &&n:NODE.left;
+                this.sum    = &sum;
+            end;
+        end
+    end
+end
+
+var int v = 0;
+var Sum sum with
+    this.v = &&v;
+end;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = &bodies;
+    this.n      = &&tree;
+    this.sum    = &sum;
+end;
+
+escape v;
+]],
+    todo = 'bug',
+    fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int  head;
+        var List tail;
+    end
+end
+
+var List l;
+escape 1;
+]],
+    todo = 'List is recursive',
+    run = 1,
+}
 
 -- TODO: vectors in the class interface
 Test { [[

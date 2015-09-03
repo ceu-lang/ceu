@@ -1568,10 +1568,12 @@ F = {
         -- var int& i = 1;      // constant
         -- var int& i = *p;     // dereference
         -- var D& d = D(...);   // adt-constr
+        -- var int&? v;
+        -- var int& i = &v;     // option
         -- ok:
         -- var _int[]& ref = vec;   // TP.check(e1.tp,'[]')
-        ASR(TP.check(e1.tp,'&') or e1.lval or e1.tag=='Op1_&&' or
-            e1.tag=='Op2_call' or TP.check(e1.tp,'[]') or
+        ASR(TP.check(e1.tp,'&') or (e1.lval and (not TP.check(e1.tp,'?'))) or
+            e1.tag=='Op1_&&' or e1.tag=='Op2_call' or TP.check(e1.tp,'[]') or
                 (e1.lst and (e1.lst.tag=='Outer' or e1.lst.tag=='This' or
                              e1.lst.var and (e1.lst.var.cls or e1.lst.var.adt))),
                                                -- orgs/adts are not lval
