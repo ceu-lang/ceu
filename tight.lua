@@ -170,8 +170,6 @@ F = {
                 me, 'function must be annotated as `@rec´ (recursive)')
             if me.__tight_calls then
                 for _,f in ipairs(me.__tight_calls) do
-DBG('OIOI', f.var.fun)
-for k,v in pairs(f.var.fun) do DBG('',k,v) end
                     ASR(f.var.fun.mod.rec == f.var.fun.isTight,
                         f.var.dcl, 'function must be annotated as `@rec´ (recursive)')
                 end

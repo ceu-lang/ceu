@@ -9,42 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-
-Test { [[
-native @pure _strlen();
-class T with
-    var char[] str;
-do
-    escape _strlen(&&this.str);
-end
-var int n = do T with
-                this.str = [] .. "1234";
-            end;
-escape n;
-]],
-    run = 1,
-}
-
--- BUG: nao esta obrigando binding p/ pool
-Test { [[
-class T with do end
-
-pool T[] ts;
-
-class U with
-    pool T[]& ts;
-do
-    var T&&? t =
-        spawn T in ts with
-        end;
-end
-
-var U u;
-
-escape 1;
-]],
-    run = 1,
-}
+--]===]
 
 --[[
 tag conversion values
@@ -253,7 +218,6 @@ escape 1;
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -16222,6 +16186,43 @@ var Pingu p;
 escape p.get().value;
 ]],
     run = 10,
+}
+
+Test { [[
+class T with do end
+
+pool T[] ts;
+
+class U with
+    var int& ts;
+do
+end
+
+var U u;
+
+escape 1;
+]],
+    ref = 'line 10 : field "ts" must be assigned',
+}
+
+Test { [[
+class T with do end
+
+pool T[] ts;
+
+class U with
+    pool T[]& ts;
+do
+    var T&&? t =
+        spawn T in ts with
+        end;
+end
+
+var U u;
+
+escape 1;
+]],
+    ref = 'line 13 : field "ts" must be assigned',
 }
 
 --<<< REFERENCES / REFS / &
@@ -54965,6 +54966,22 @@ do return end
 
 -- async dentro de pause
 -- async thread spawn falhou, e ai?
+
+-- TODO: vectors in the class interface
+Test { [[
+native @pure _strlen();
+class T with
+    var char[] str;
+do
+    escape _strlen(&&this.str);
+end
+var int n = do T with
+                this.str = [] .. "1234";
+            end;
+escape n;
+]],
+    run = 1,
+}
 
 -- BUG: same id
 -- BUG: unassigned var (should be int?)

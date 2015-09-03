@@ -245,7 +245,7 @@ F = {
     __constr = function (me, cls, constr)
         constr.__bounded = constr.__bounded or {}
         for _, var in ipairs(cls.blk_ifc.vars) do
-            if var.pre == 'var' then
+            if var.pre=='var' or var.pre=='pool' then
                 if TP.check(var.tp,'&') and
                    (var.bind=='constr' or (not var.bind))
                 then
@@ -284,7 +284,7 @@ F = {
 
     -- Ensures that &ref var is bound before use.
     Var = function (me)
-        if me.var.pre ~= 'var' then
+        if not (me.var.pre=='var' or me.var.pre=='pool') then
             return
         end
         local cls = CLS()
