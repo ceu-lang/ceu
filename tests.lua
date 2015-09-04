@@ -11,33 +11,28 @@ end
 --[===[
 --]===]
 
+-- PRECEDENCE (TODO)
 Test { [[
-class T with
-    event void e;
-do
-    await FOREVER;
-end
+var int v1 = 1 + 1 and 0;    // 0
+_assert(v1 == 0);
 
-event void f;
+var int v2 = 1 + 1 or  0;    // 1
+_assert(v2 == 1);
 
-var T t;
+var int v3 = 0 and 0 or 1;   // 1
+_assert(v3 == 1);
 
-par do
-    par/or do
-        await t.e;
-    with
-        await 1s;
-        emit t.e;
-    end
-    emit f;
-    escape -1;
-with
-    await f;
-    escape 10;
-end
+var int v4 = 0 == 0 | 1;     // 0
+_assert(v4 == 0);
+
+var int v5 = 0 == 0 & 0;     // 1
+_assert(v5 == 1);
+
+escape 1;
 ]],
-    run = { ['~>10s'] = 10 },
+    run = 1,
 }
+--do return end
 
 -------------------------------------------------------------------------------
 
@@ -3602,7 +3597,7 @@ escape a+f;
     run = { ['1~>A;5~>A;1~>F'] = 2 },
 }
 
--- INTERNAL EVENTS
+-->>> INTERNAL EVENTS
 
 Test { [[
 input void OS_START;
@@ -4051,6 +4046,35 @@ escape ret;
     run = 10,
 }
 
+--<<< INTERNAL EVENTS
+
+Test { [[
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+event void f;
+
+var T t;
+
+par do
+    par/or do
+        await t.e;
+    with
+        await 1s;
+        emit t.e;
+    end
+    emit f;
+    escape -1;
+with
+    await f;
+    escape 10;
+end
+]],
+    run = { ['~>10s'] = 10 },
+}
 
 -- ParOr
 
@@ -46072,7 +46096,7 @@ end
 escape 1;
 ]],
     -- TODO: better error message
-    parser = 'line 1 : after `data´ : expected `;´'
+    parser = 'line 1 : after `data´ : expected identifier'
 }
 Test { [[
 data T with
@@ -53193,7 +53217,8 @@ pool Command[]& cmds2
 
 escape 1;
 ]],
-    parser = 'line 10 : after `new´ : expected `;´'
+    parser = 'line 10 : before `&´ : expected expression',
+    --parser = 'line 10 : after `new´ : expected `;´'
     --ref = 'line 9 : invalid attribution (not a reference)',
     --ref = 'line 10 : reference must be bounded before use',
 }

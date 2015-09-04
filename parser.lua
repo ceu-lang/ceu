@@ -64,6 +64,7 @@ local _V2NAME = {
     --__LstStmtB = 'statement',
     Ext = 'event',
     Var = 'variable/event',
+    __ID_adt  = 'identifier',
     __ID_nat  = 'identifier',
     __ID_var  = 'identifier',
     __ID_ext  = 'identifier',
@@ -112,43 +113,35 @@ TYPES = P'void' + 'char' + 'byte' + 'bool' + 'word'
       + 's8' + 's16' + 's32' + 's64'
       + 'float' + 'f32' + 'f64'
 
-KEYS = P'and'     + 'async'    + 'await'    + 'break'    + 'native' + 'native/pre'
-     + 'continue' + 'do'
-     + 'else'     + 'else/if'  + 'emit'     + 'end'      + 'event'
-     + 'every'    + 'finalize' + 'FOREVER'  + 'if'       + 'input'
-     + 'loop'     + 'not'      + 'nothing'  + 'null'
-     + 'or'       + 'output'   + 'par'      + 'par/and'  + 'par/or'
-     + 'pause/if' + 'escape'   + 'sizeof'   + 'then'
-     + 'until'    + 'var'      + 'with'
-     + TYPES
--- ceu-orgs only
-     + 'class'    + 'global'   + 'interface'
-     + 'kill'     + 'this' + 'outer'
-     + 'spawn'
---
--- export / version
-     + 'thread'   + 'sync'
--- functions
-     + 'function' + 'call' + 'return' + 'call/rec'
--- isrs
-     + 'isr' + 'atomic'
--- bool
-     + 'true' + 'false'
--- requests
+KEYS = P'nothing' + 'escape' + 'return' + 'break' + 'continue'
+     + 'var' + 'pool' + 'event' + 'input' + 'output'
      + 'input/output' + 'output/input'
--- time
-     --+ 'h' + 'min' + 's' + 'ms' + 'us'
--- loop/every
-     + 'in'
--- pool
-     + 'pool'
+     + 'function'
+     + 'class' + 'interface'
+     + 'data' + 'tag'
+     + 'native' + 'native/pre'
+     + 'call' + 'call/rec'
+     + 'await' + 'emit' + 'until' + 'FOREVER' + 'request'
+     + 'spawn' + 'kill'
+     + 'new' + 'traverse'
+     + 'do' + 'end'
+     + 'if' + 'then' + 'else' + 'else/if'
+     + 'loop' + 'in' + 'every'
+     + 'finalize'
+     + 'par' + 'par/and' + 'par/or' + 'with'
      + 'watching'
--- traverse
-     + 'traverse'
---
+     + 'pause/if'
+     + 'async' + 'async/thread' + 'sync'
+     + 'isr' + 'atomic'
+     + 'or' + P'and' + 'not'
+     + 'sizeof'
+     + 'null'
+     + 'global' + 'this' + 'outer'
+     + 'true' + 'false'
      + P'@' * (
          P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'rec' + 'safe'
        )
+     + TYPES
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -320,20 +313,21 @@ end
     , __Exp    = V'__1'
     , __1      = V'__2'  * (CKEY'or'  * EV'__2')^0
     , __2      = V'__3'  * (CKEY'and' * EV'__3')^0
-    , __3      = V'__4'  * ((CK'|'-'||') * EV'__4')^0
-    , __4      = V'__5'  * (CK'^' * EV'__5')^0
-    , __5      = V'__6'  * (CK'&' * EV'__6')^0
-    , __6      = V'__7'  * ((CK'!='+CK'=='-'!==') * EV'__7')^0
-    , __7      = V'__8'  * ((CK'<='+CK'>='+(CK'<'-'<<')+(CK'>'-'>>')) * EV'__8')^0
-    , __8      = V'__9'  * ((CK'>>'+CK'<<') * EV'__9')^0
-    , __9      = V'__10' * ((CK'+'+CK'-') * EV'__10')^0
-    , __10     = V'__11' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * EV'__11')^0
-    , __11     = ( Cc(false) * (CKEY'not'+CK'-'+CK'+'+CK'~'+CK'*'+
+    , __3      = V'__4'  * ( ( (CK'!='-'!==')+CK'=='+CK'<='+CK'>='
+                             + (CK'<'-'<<')+(CK'>'-'>>')
+                             ) * EV'__4')^0
+    , __4      = V'__5'  * ((CK'|'-'||') * EV'__5')^0
+    , __5      = V'__6'  * (CK'^' * EV'__6')^0
+    , __6      = V'__7'  * (CK'&' * EV'__7')^0
+    , __7      = V'__8'  * ((CK'>>'+CK'<<') * EV'__8')^0
+    , __8      = V'__9'  * ((CK'+'+CK'-') * EV'__9')^0
+    , __9      = V'__10' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * EV'__10')^0
+    , __10     = ( Cc(false) * (CKEY'not'+CK'-'+CK'+'+CK'~'+CK'*'+
                                 (CK'&&'-P'&'^3) + (CK'&'-'&&') +
                                 CK'$$' + (CK'$'-'$$')
                              + Cc'cast'*(K'('*V'Type'*K')') )
-                )^0 * V'__12'
-    , __12     = V'__13' *
+                )^0 * V'__11'
+    , __11     = V'__12' *
                     (
                         K'(' * Cc'call' * EV'ExpList' * EK')' *
                             ( KEY'finalize' * EKEY'with' * V'Finally' * EKEY'end'
@@ -342,7 +336,7 @@ end
                         (CK':' + (CK'.'-'..')) * EV'__ID_field' +
                         CK'?' + (CK'!'-'!=')
                     )^0
-    , __13     = V'__Prim'
+    , __12     = V'__Prim'
     , __Prim   = V'__Parens' + V'SIZEOF'
               + V'Var'     + V'Nat'
               + V'NULL'    + V'NUMBER' + V'STRING'
@@ -440,18 +434,20 @@ end
 
     -------
 
-    , _Dcl_pool = CKEY'pool' * EV'Type' * V'__dcl_var' * (K','*EV'__dcl_var')^0
-    , _Dcl_var  = CKEY'var'  * EV'Type' *
-                 (
-                    Cc(true)  * EV'__ID_var' * EKEY'with' * V'Dcl_constr' * EKEY'end'
-                 +
-                    Cc(false) * V'__dcl_var' * (K','*V'__dcl_var')^0
-                 )
+    , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__dcl_var_set' * (K','*EV'__dcl_var_set')^0
+
+    , _Dcl_var  = (V'__Dcl_var_org' + V'__Dcl_var_plain_set' + V'_Dcl_var_plain')
+    , __Dcl_var_org   = CKEY'var'  * EV'Type' * Cc(true)  * EV'__ID_var' *
+                            EKEY'with' * V'Dcl_constr' * EKEY'end'
+    , __Dcl_var_plain_set = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var_set' 
+                                * (K','*V'__dcl_var_set')^0
+    , _Dcl_var_plain = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var' *
+                            (K','*V'__dcl_var')^0
 
     , Dcl_constr = V'Block'
 
-    , __dcl_var = EV'__ID_var' * (V'__Sets' +
-                                Cc(false)*Cc(false)*Cc(false))
+    , __dcl_var_set = EV'__ID_var' * (V'__Sets' + Cc(false)*Cc(false)*Cc(false))
+    , __dcl_var     = EV'__ID_var' * Cc(false)*Cc(false)*Cc(false)
     -------
 
     , _Dcl_imp = KEY'interface' * EV'__ID_cls' * (K',' * EV'__ID_cls')^0
@@ -475,10 +471,10 @@ end
                * EKEY'with' * V'_BlockI' * V'__Do'
     -------
 
-    , __Dcl_adt_struct = Cc'struct' * (V'_Dcl_var' * (EK';'*K';'^0))^1
+    , __Dcl_adt_struct = Cc'struct' * (V'_Dcl_var_plain' * (EK';'*K';'^0))^1
     , __Dcl_adt_union  = Cc'union'  * V'Dcl_adt_tag' * (EKEY'or' * EV'Dcl_adt_tag')^0
     , Dcl_adt_tag    = KEY'tag' * EV'__ID_tag' * EKEY'with'
-                      *   (V'_Dcl_var' * (EK';'*K';'^0))^0
+                      *   (V'_Dcl_var_plain' * (EK';'*K';'^0))^0
                       * EKEY'end'
                       + KEY'tag' * EV'__ID_tag' * (EK';'*K';'^0)
 

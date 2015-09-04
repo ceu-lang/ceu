@@ -1157,6 +1157,7 @@ me.blk_body = me.blk_body or blk_body
     end,
 
     -- "_pre" because of SetBlock assignment
+    _Dcl_var_plain_pre = '_Dcl_var_pre',
     _Dcl_var_pre = function (me)
         local pre, tp, hasConstr = unpack(me)
         local ret = {}
