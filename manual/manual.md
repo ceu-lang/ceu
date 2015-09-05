@@ -261,8 +261,7 @@ The interface exposes public variables, methods, and internal events, just like
 objects.
 The body can contain any valid code in Céu, which starts on the organism 
 instantiation and executes in parallel with the program.
-Organism instantiation can be either [static](#variables) or 
-[dynamic](#dynamic-execution).
+Organism instantiation can be either [static](#variables) or [dynamic](#spawn).
 
 The example below (in the right) blinks two LEDs in parallel with different 
 frequencies.
@@ -355,8 +354,8 @@ The `_Blink` type corresponds to a simple datatype without execution body
 (i.e., conventional *structs* or *records* or objects).
 
 See also [Organism declarations](#organisms), [Class and Interface 
-declarations](#classes-and-interfaces), and [Dynamic 
-execution](#dynamic-execution).
+declarations](#classes-and-interfaces), and [Organisms 
+instantiation](#organism-instantiation).
 
 <!-- TODO
 \footnote{\code{FOREVER} is a reserved keyword in \CEU, and represents an 
@@ -384,6 +383,8 @@ Keywords in Céu are reserved names that cannot be used as identifiers (e.g.,
 variable and class names):
 
 <pre><code><b>
+TODO(pre)
+
         and             async           async/thread    atomic          await
 
         bool            break           byte            call            call/rec
@@ -673,6 +674,13 @@ A block can be explicitly created with the `do-end` statement:
 <pre><code>Do ::= <b>do</b> Block <b>end</b>
 </code></pre>
 
+### Pre
+
+TODO ("static code" appended in sequence to the beginning)
+
+<pre><code>Pre ::= <b>pre do</b> Block <b>end</b>
+</code></pre>
+
 Nothing
 -------
 
@@ -786,8 +794,8 @@ expression `outer` refers to the enclosing organism creating the new organism:
 
 ### Pools
 
-A pool is a container for [dynamic instances of organisms](#dynamic-execution) 
-and [recursive data](#TODO) of the same type:
+A pool is a container for [dynamic instances of organisms](#spawn) and 
+[recursive data](#TODO) of the same type:
 
 <pre><code>DclPool ::= <b>pool</b> Type ID_var [`=´ Assignment] { `,´ ID_var [`=´ Assignment] }
 </code></pre>
@@ -820,7 +828,7 @@ declared.
 When a pool of organisms goes out of scope, all organism bodies are 
 automatically aborted.
 
-See [Dynamic execution](#dynamic-execution) for organisms allocation.
+See [Dynamic execution](#spawn) for organisms allocation.
 See [TODO](#TODO) for recursive data allocation.
 
 ### Functions
@@ -1000,7 +1008,46 @@ DclTag ::= <b>tag</b> ID_tag <b>with</b>
            <b>end</b>
 </code></pre>
 
-### Native symbols
+### Native declarations
+
+#### Native blocks
+
+`TODO (native/pre)`
+
+Native blocks define new types, variables, and functions in C:
+
+<pre><code>Native ::= (<b>native</b> | <b>native/pre</b>) <b>do</b>
+               &lt;code_in_C&gt;
+           <b>end</b>
+</code></pre>
+
+<!--
+Whatever is written inside a C block is placed on the top of the final output of the Céu parser (which is a C file).
+-->
+
+Example:
+
+<pre><code><b>native do</b>
+    #include <assert.h>
+    int inc (int i) {
+        return i+1;
+    }
+<b>end</b>
+_assert(_inc(0) == 1);
+</code></pre>
+
+If the code in C contains the terminating `end` keyword of Céu, the `native`
+block should be delimited with any matching comments to avoid confusing the 
+parser:
+
+<pre><code><b>native do</b>
+    /*** c code ***/
+    char str = "This `end` confuses the parser";
+    /*** c code ***/
+<b>end</b>
+</code></pre>
+
+#### Native annotations
 
 Native declarations provide additional information about external C symbols.
 A declaration is an annotation followed by a list of symbols:
@@ -1050,7 +1097,7 @@ Examples:
 
 <span id="sec.stmts.decls.det"></span>
 
-### Safe annotations
+### Deterministic annotations
 
 A variable or function can be declared as `@safe` with a set of other functions 
 or variables:
@@ -1082,7 +1129,9 @@ Assignments
 
 Céu supports many kinds of assignments:
 
-<pre><code>Set ::= Exp `=´ Assignment
+<pre><code>Set ::= (Exp | `(´VarList`)´) `=´ Assignment
+
+VarList ::= ID_var  { `,´ ID_var } `)´
 
 Assignment ::= Exp
              | AssignableBlock
@@ -1103,6 +1152,8 @@ Assignment ::= Exp
 
 The expression on the left side must be [assignable](#assignable).
 
+TODO (Exp, VarList)
+
 ### Simple assignment
 
 The simpler form of assignment uses [expressions](#expressions) as values.
@@ -1117,7 +1168,7 @@ a = b + 1;
 
 A whole block can be used as an assignment value by escaping from it.
 The following block statements can be used in assignments: [`do-end`](#do-end) 
-[`if-then-else`](#conditional), [`loop`](#repetition), [`every`](#every), and 
+[`if-then-else`](#conditional), [`loop`](#loop), [`every`](#every), and 
 [`par`](#par):
 
 <pre><code>AssignableBlock ::= &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt; | &lt;every&gt; | &lt;par&gt;
@@ -1201,7 +1252,7 @@ Item   ::= Exp | `[´ [ExpList] `]´
 
 ### Spawn assignment
 
-See [Dynamic execution](#dynamic-execution).
+See [Spawn](#spawn).
 
 ### Thread assignment
 
@@ -1280,8 +1331,6 @@ time, [input event](#external), or [internal event](#internal) occurs.
           ) [ <b>until</b> Exp ]
        | <b>await</b> <b>FOREVER</b>
 
-VarList ::= `(´ ID_var  { `,´ ID_var } `)´
-
 WCLOCKK ::= [NUM <b>h</b>] [NUM <b>min</b>] [NUM <b>s</b>] [NUM <b>ms</b>] [NUM <b>us</b>]
 WCLOCKE ::= `(´ Exp `)´ (<b>h</b>|<b>min</b>|<b>s</b>|<b>ms</b>|<b>us</b>)
 </code></pre>
@@ -1326,6 +1375,8 @@ The `await` evaluates to the type of the event.
 (v,ptr) = <b>await</b> e;
 </code></pre>
 
+`TODO (awake rule for internal events, unless "every")`
+
 #### Await time
 
 For await statements with *wall-clock* time (i.e., time measured in minutes, 
@@ -1351,6 +1402,10 @@ time.
 
 <span id="sec.stmts.events.await.forever"></span>
 
+#### Await organism
+
+`TODO`
+
 #### Await FOREVER
 
 The `await FOREVER` halts the running trail forever.
@@ -1362,8 +1417,8 @@ The `emit` statement triggers the referred *wall-clock* time, [input
 event](#external), or [internal event](#internal), awaking all trails waiting 
 for it.
 
-<pre><code>Emit ::= <b>emit</b> Exp    [ `=>´ (Exp | `(´ ExpList `)´)
-      |  <b>emit</b> ID_ext [ `=>´ (Exp | `(´ ExpList `)´)
+<pre><code>Emit ::= <b>emit</b> Exp    [ `=>´ (Exp | `(´ [ExpList] `)´)
+      |  <b>emit</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
       |  <b>emit</b> (WCLOCKK|WCLOCKE)
 </code></pre>
 
@@ -1413,6 +1468,65 @@ as described in [Await time](#await-time).
 Like input events, time can only be emitted inside [asynchronous 
 blocks](#asynchronous-blocks).
 
+### Requests
+
+`TODO (emit+await)`
+
+<pre><code>Request ::= <b>request</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
+</code></pre>
+
+Organism instantiation
+----------------------
+
+### Do organism
+
+`TODO`
+
+<pre><code>DoOrg ::= <b>do</b> ID_cls [<b>with</b>
+              Constructor
+          <b>end</b>]
+</code></pre>
+
+### Spawn
+
+The `spawn` statement creates instances of organisms dynamically:
+
+<pre><code>Spawn ::= <b>spawn</b> ID_cls [<b>in</b> Exp] [<b>with</b>
+              Constructor
+          <b>end</b>]
+</code></pre>
+
+TODO(option return)
+<!--
+The `spawn` returns a pointer to the allocated organism, or `null` in the case 
+of failure.
+-->
+
+The optional `in` clause allows the statement to specify in which 
+[pool](#pools) the organisms will live.
+If absent, the organism is allocated on an implicit pool in the outermost block 
+of the class the allocation happens.
+
+On allocation, the body of the organism starts to execute in parallel with the 
+rest of the application, just like [static organisms](#organisms).
+The constructor clause is also the same as for [static 
+organisms](#constructors).
+
+In contrast to static organisms, the lifetime of a dynamic instance is attached 
+to the scope of the pool and not to the scope of the `spawn` instantiation.
+Furthermore, a dynamic organism is automatically deallocated when its execution 
+body terminates.
+
+See [Static analysis](#organisms-references) for the restrictions on 
+manipulating pointers and references to organisms.
+
+### Kill
+
+`TODO`
+
+<pre><code><b>kill</b> * Exp * [ `=>´ Exp ]
+</code></pre>
+
 Conditional
 -----------
 
@@ -1432,19 +1546,20 @@ evaluates to a non-zero value.
 Otherwise, the same process holds each `else/if` alternative.
 Finally, it they all fail, the block following the `else` executes.
 
-Repetition
-----------
+Loop
+----
 
 A `loop` continuously executes its body block:
 
-<pre><code>Loop ::= <b>loop</b> [ Iterator ] <b>do</b>
+<pre><code>Loop ::= <b>loop</b>[`/´ Exp] [ ID_var [<b>in</b> Exp] ] <b>do</b>
              Block
          <b>end</b>
-Iterator ::= [`(´ Type `)´] ID_var [<b>in</b> Exp]
 </code></pre>
 
 A `loop` terminates when it reaches a [`break`](#break) or its (optional) 
 [iterator](#iterators) terminates.
+
+`TODO (hard limit)`
 
 ### break
 
@@ -1536,18 +1651,19 @@ Example:
 
 #### Pool instances
 
-For iterators in which `Exp` evaluates to a pool, `ID_var´ evaluates to the 
-instances on the pool, one at a time, from the oldest to the newest.
+For iterators in which `Exp` evaluates to a pool of organisms, `ID_var´ 
+evaluates to pointers to instances in the pool, one at a time, from the oldest 
+to the newest created.
 `ID_var` is automatically declared read-only, with visibility restricted to the 
 loop body.
 
-The optional typecast tries
+`TODO (example)`
 
 ### every
 
 The `every` statement continuously awaits an event and executes its body:
 
-<pre><code>Every ::= <b>every</b> (Exp|VarList) <b>in</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
+<pre><code>Every ::= <b>every</b> (Var | `(´VarList`)´) <b>in</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
               Block
           <b>end</b>
 </code></pre>
@@ -1575,6 +1691,24 @@ An `every` expands to a `loop` as illustrated below:
 
 The body of an `every` cannot contain an `await`, ensuring that no occurrences 
 of `&lt;event&gt;` are ever missed.
+
+`TODO (restrictions, escape/break)`
+
+`TODO (exception to the rule for internal events)`
+
+### Traverse
+
+`TODO`
+
+<pre><code>TraverseLoop ::= <b>traverse</b> ID_var <b>in</b> (`[´ Exp `]´ | Exp)
+                    [ <b>with</b> Dcls <b>end</b> ]
+                 <b>do</b>
+                     Block
+                 <b>end</b>
+TraverseRec  ::= <b>traverse</b>['/' NUM] Exp
+                     [ <b>with</b> Block <b>end</b> ]
+</code></pre>
+
 
 Finalization
 ------------
@@ -1662,17 +1796,17 @@ parallel are supposed to run forever:
 
 The `watching` statement aborts its body when its associated event occurs:
 
-<pre><code>Watching ::= <b>watching</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
+<pre><code> Watching ::= <b>watching</b> [ (Var | `(´VarList`)´) <b>in</b> ] (WCLOCKK|WCLOCKE|ID_ext|Exp)
                  Block
              <b>end</b>
 </code></pre>
 
-A `wacthing` expands to a `par/or` as illustrated below:
+A `watching` expands to a `par/or` as illustrated below:
 
 <table width="100%">
 <tr valign="top">
 <td>
-<pre><code><b>watching</b> &lt;event&gt; <b>do</b>
+<pre><code><b>watching</b> &lt;...&gt; in &lt;event&gt; <b>do</b>
     &lt;block&gt;
 <b>end</b>
 </code></pre>
@@ -1680,16 +1814,20 @@ A `wacthing` expands to a `par/or` as illustrated below:
 
 <td>
 <pre><code><b>par/or do</b>
-    &lt;block&gt;
+    &lt;...&gt; <b>await</b> &lt;event&gt;
 <b>with</b>
-    <b>await</b> &lt;event&gt;
+    &lt;block&gt;
 <b>end</b>
 </code></pre>
 </td>
 </tr>
 </table>
 
-`TODO (supports org refs)`
+`TODO (Var/VarList is implicitly declared)`
+
+`TODO: strong abortion`
+
+`TODO: see Await for supported events`
 
 pause/if
 --------
@@ -1701,36 +1839,6 @@ pause/if
           <b>end</b>
 </code></pre>
 
-Dynamic execution
------------------
-
-The `spawn` statement creates instances of organisms dynamically:
-
-<pre><code>Dyn ::= <b>spawn</b> ID_cls [<b>in</b> Exp]
-            [ <b>with</b> Constructor <b>end</b> ]
-</code></pre>
-
-The `spawn` returns a pointer to the allocated organism, or `null` in the case 
-of failure.
-
-The optional `in` clause allows the statement to specify in which 
-[pool](#pools) the organisms will live.
-If absent, the organism is allocated on an implicit pool in the outermost block 
-of the class the allocation happens.
-
-On allocation, the body of the organism starts to execute in parallel with the 
-rest of the application, just like happens for [static organisms](#organisms).
-The constructor clause is also the same as for [static 
-organisms](#constructors).
-
-A dynamic organism is also automatically deallocated when its execution body 
-terminates.
-
-See [Static analysis](#organisms-references) for the restrictions on 
-manipulating pointers and references to organisms.
-
-<!-- TODO [free] -->
-
 Asynchronous execution
 ----------------------
 
@@ -1738,11 +1846,9 @@ Asynchronous execution permit that programs execute time consuming computations
 without interfering with the *synchronous side* of applications (i.e., 
 everything, except asynchronous statements).
 
-<pre><code>Async ::= <b>async</b> [<b>thread</b>] [RefVarList] <b>do</b>
+<pre><code>Async ::= (<b>async</b> | <b>async/thread</b>) [ `(´VarList`)´ ] <b>do</b>
               Block
           <b>end</b>
-
-RefVarList ::= `(´ [`&´] ID_var { `,´ [`&´] ID_var } `)´
 </code></pre>
 
 ### Asynchronous blocks
@@ -1831,7 +1937,7 @@ The example prints the `v = <v+i>` message exactly 103 times.
 
 ### Threads
 
-`TODO`
+`TODO(async/thread)`
 
 #### Synchronous blocks
 
@@ -1842,40 +1948,31 @@ The example prints the `v = <v+i>` message exactly 103 times.
          <b>end</b>
 </code></pre>
 
-Native blocks
--------------
+#### Atomic blocks
 
-Native blocks define new types, variables, and functions in C:
+`TODO(mutual exclusion isr and sync)`
 
-<pre><code>Native ::= <b>native</b> <b>do</b>
-               &lt;code_in_C&gt;
-           <b>end</b>
+<pre><code>Atomic ::= <b>atomic do</b>
+             Block
+         <b>end</b>
 </code></pre>
 
-<!--
-Whatever is written inside a C block is placed on the top of the final output of the Céu parser (which is a C file).
--->
+C statements
+------------
 
-Example:
+`TODO`
 
-<pre><code><b>native do</b>
-    #include <assert.h>
-    int inc (int i) {
-        return i+1;
-    }
-<b>end</b>
-_assert(_inc(0) == 1);
+<pre><code>C ::= `{´ &lt;C code&gt; `}´
 </code></pre>
 
-If the code in C contains the terminating `end` keyword of Céu, the `native`
-block should be delimited with any matching comments to avoid confusing the 
-parser:
+Lua statements
+--------------
 
-<pre><code><b>native do</b>
-    /*** c code ***/
-    char str = "This `end` confuses the parser";
-    /*** c code ***/
-<b>end</b>
+`TODO`
+
+<pre><code>Lua ::= `[´ {`=´} `[´
+                       { <i>&lt;lua code&gt;</i> | `@´ Exp }
+                   `]´ {`=´} `]´
 </code></pre>
 
 ------------------------------------------------------------------------------
@@ -1886,41 +1983,39 @@ Expressions
 The syntax for expressions in Céu is as follows:
 
 <pre><code>Exp ::= Prim
-     |  Exp (<b>or</b>|<b>and</b>) Exp
-     |  Exp (`|´|`^´|`&´) Exp
-     |  Exp (`!=´|`==´) Exp
-     |  Exp (`&lt;=´|`&lt;´|`&gt;´|`&gt;=´) Exp
-     |  Exp (`&lt;&lt;´|`&gt;&gt;´) Exp
-     |  Exp (`+´|`-´) Exp
-     |  Exp (`*´|`/´|`%´) Exp
-     |  <b>not</b> Exp
-     |  `&´ Exp
-     |  (`-´|`+´) Exp
-     |  `~´ Exp
-     |  `*´ Exp
-     |  `(´ Type `)´ Exp
-     |  Exp `(´ ExpList `)´ [<b>finalize with</b> Block <b>end</b>]
-     |  Exp `[´ Exp `]´
-     |  Exp (`.´|`:´) ID
+        |  Exp <b>or</b> Exp
+        |  Exp <b>and</b> Exp
+        |  Exp (`!=´|`==´|`&lt;=´|`&lt;´|`&gt;´|`&gt;=´) Exp
+        |  Exp `|´ Exp
+        |  Exp `^´ Exp
+        |  Exp `&´ Exp
+        |  Exp (`&lt;&lt;´|`&gt;&gt;´) Exp
+        |  Exp (`+´|`-´) Exp
+        |  Exp (`*´|`/´|`%´) Exp
+        |  (<b>not</b>|`+´|`-´|`~´|`*´|`&&´|`&´|`$$´|`$´) Exp
+        |  `(´ Type `)´ Exp     /* same precedence as previous */
+        |  Exp `[´ Exp `]´      /* same precedence for all following */
+        |  Exp (`.´|`:´) (ID_field | ID_tag)
+        |  Exp (`?´|`!´)
+        |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
 
 Prim ::= `(´ Exp `)´
-      |  <b>sizeof</b> `(´ (Type|Exp) `)´
-      |  ID_var | ID_nat
-      |  <b>null</b> | NUM | String
-      |  <b>global</b> | <b>this</b> | <b>outer</b>
-      |  (<b>call</b> | <b>call/rec</b>) Exp
+        |  <b>sizeof</b> `(´ (Type|Exp) `)´
+        |  ID_var | ID_nat
+        |  <b>null</b> | NUM | String
+        |  <b>true</b> | <b>false</b>
+        |  <b>global</b> | <b>this</b> | <b>outer</b>
+        |  (<b>call</b> | <b>call/rec</b>) Exp
+        |  &lt;c-stat&gt
 </code></pre>
-
-<!--TODO: RawExp-->
-
-Most operators follow the same semantics of C.
 
 *Note: assignments are not expressions in Céu.*
 
 Primary
 -------
 
-`TODO: global, this, outer,`
+`TODO: global, this, outer, ID_var, ID_nat, null, NUM, String, true, false, 
+call/call/rec/finalize, C, parens`
 
 Arithmetic
 ----------
@@ -1984,20 +2079,42 @@ The expression on the left side is expected to evaluate to a vector.
 Vector indexes start at zero.
 <!-- TODO: limites e recolocar "pointer arith" -->
 
-Pointer referencing and dereferencing
--------------------------------------
+References
+----------
 
-The operator `*` dereferences its pointer operand, while the operator `&amp;` returns a pointer to its operand:
+`TODO`
+
+### Aliasing
+
+`TODO`
 
 ```
-Deref ::= `*´ Exp
-Ref   ::= `&´ Exp
+Alias ::= `&´ Exp
 ```
 
-The operand to `&amp;` must be an [[#sec.exps.assignable|assignable expression]].
+The operand to `&amp;` must be an [[#sec.exps.assignable|assignable 
+expression]].
+
+### Pointer referencing and dereferencing
+-----------------------------------------
+
+`TODO`
+
+The operator `&amp;&amp;` returns the address of its operand, while the
+operator `*` dereferences its pointer operand.
+
+```
+Address ::= `&&´ Exp
+Deref   ::= `*´ Exp
+```
+
+The operand to `&amp;&amp;` must be an [[#sec.exps.assignable|assignable 
+expression]].
 
 Fields
 ------
+
+`TODO (tags,fields)`
 
 ### Structs
 
@@ -2032,6 +2149,11 @@ p:v = 0;
 
 `TODO (index clash)`
 
+Option
+------
+
+`TODO (?!)`
+
 Type casting
 ------------
 
@@ -2057,35 +2179,32 @@ Precedence
 
 Céu follows the same precedence of C operators:
 
-<pre><code>    /* lower to higer precedence */
-    
+<pre><code>    
+    /* lowest priority */
+
     <b>or</b>
-        
+
     <b>and</b>
-        
+
+    !=    ==    &lt;=    &gt;=    &lt;     &gt;
+
     |
-    
+
     ^
-    
+
     &
-    
-    !=    ==
-    
-    &lt;=    &gt;=    &lt;     &gt;
-    
+
     &gt;&gt;    &lt;&lt;
-    
-    +     -                // binary
-    
+
+    +     -
+
     *     /     %
-    
-    <b>not</b>     &
-    
-    +     -                // unary
-    
-    &lt;&gt;                     // typecast
-    
-    ()    []    :    .     // call, index
+
+    <b>not</b>    +    -    ~    *    &&    &    $$    $    (Type)
+
+    ()    []    :    .    ?    !
+
+    /* highest priority */
 </code></pre>
 
 Assignable expressions
@@ -2728,22 +2847,35 @@ Stmt ::= &lt;empty-string&gt;
 
       /* internal/external emit */
       | <b>emit</b> Exp    [ `=>´ (Exp | `(´ [ExpList] `)´)
-      | <b>emit</b> (WCLOCKK|WCLOCKE)
       | <b>emit</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
+      | <b>emit</b> (WCLOCKK|WCLOCKE)
 
       /* external request */
       | <b>request</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
 
-  /* Dynamic execution */
+  /* Organism instantiation */
 
+      /* do organism */
+      | <b>do</b> ID_cls <b>with</b>
+            Block
+        <b>end</b>
+
+      /* spawn */
       | <b>spawn</b> * ID_cls * [<b>in</b> Exp]
             [ <b>with</b> Block <b>end</b> ]
+
+      /* kill */
       | <b>kill</b> * Exp * [ `=>´ Exp ]
 
   /* Flow control */
 
       /* explicit block */
       |  <b>do</b> Block <b>end</b>
+
+      /* pre (top level) execution */
+      | <b>pre do</b>
+            Block
+        <b>end</b>
 
       /* conditional */
       | <b>if</b> Exp <b>then</b>
@@ -2794,24 +2926,16 @@ Stmt ::= &lt;empty-string&gt;
             Block
         <b>end</b>
 
-      /* do organism */
-      | <b>do</b> ID_cls <b>with</b>
-            Block
-        <b>end</b>
-
       /* asynchronous execution */
       | (<b>async</b> | [<b>async/thread</b>]) [ `(´VarList`)´ ] <b>do</b>
             Block
         <b>end</b>
+
+      /* synchronization */
       | <b>sync do</b>
             Block
         <b>end</b>
       | <b>atomic do</b>
-            Block
-        <b>end</b>
-
-      /* global (top level) execution */
-      | <b>global</b> <b>do</b>
             Block
         <b>end</b>
 
@@ -2866,28 +2990,14 @@ WCLOCKE ::= `(´ Exp `)´ (<b>h</b>|<b>min</b>|<b>s</b>|<b>ms</b>|<b>us</b>)
 /* Expressions */
 
 Exp ::= Prim
-        |  Exp <b>or</b> Exp
-        |  Exp <b>and</b> Exp
-        |  Exp (`!=´|`==´|`&lt;=´|`&lt;´|`&gt;´|`&gt;=´) Exp
-        |  Exp `|´ Exp
-        |  Exp `^´ Exp
-        |  Exp `&´ Exp
-        |  Exp (`&lt;&lt;´|`&gt;&gt;´) Exp
-        |  Exp (`+´|`-´) Exp
-        |  Exp (`*´|`/´|`%´) Exp
-        |  (<b>not</b>|`+´|`-´|`~´|`*´|`&&´|`&´|`$$´|`$´) Exp
-        |  `(´ Type `)´ Exp     /* same precedence as previous */
-        |  Exp `[´ Exp `]´      /* same precedence for all following */
-        |  Exp (`.´|`:´) ID_field
+        |  (`$$´|`$´) Exp
         |  Exp (`?´|`!´)
         |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
 
 Prim ::= `(´ Exp `)´
-        |  <b>sizeof</b> `(´ (Type|Exp) `)´
         |  ID_var | ID_nat
         |  <b>null</b> | NUM | String
         |  <b>true</b> | <b>false</b>
-        |  <b>global</b> | <b>this</b> | <b>outer</b>
         |  (<b>call</b> | <b>call/rec</b>) Exp
         |  &lt;c-code&gt
 
@@ -2904,7 +3014,8 @@ Prim ::= `(´ Exp `)´
     +     -
     *     /     %
     <b>not</b>    +    -    ~    *    &&    &    $$    $    (Type)
-    ()    []    :    .    ?    !     // call, index
+    ()    []    :    .    ?    !
+    /* highest priority */
 
 /* Other */
 
