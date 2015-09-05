@@ -259,7 +259,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Set  = (V'__Exp' + V'VarList') * V'__Sets'
     , __Sets = (CK'='+CK':=') * (
-                Cc'await'      * V'Await'
+                Cc'block'      * V'__SetBlock'
+              + Cc'await'      * V'Await'
               + Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
               + Cc'adt-constr' * V'Adt_constr_root'
               + Cc'vector'     * V'Vector_constr'   -- before exp
@@ -268,12 +269,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'spawn'      * V'Spawn'
               + Cc'thread'     * V'_Thread'
               + Cc'exp'        * V'__Exp'
-              + Cc'block'      * V'__SetBlock'
               + Cc'__trav_loop' * V'_TraverseLoop'  -- before Rec
               + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
               + EM'expression'
               )
-    , __SetBlock = V'Do' + V'ParEver' + V'If' + V'_Loop' + V'_Every'
+    , __SetBlock = V'Do' + V'If' + V'_Loop' + V'_Every' + V'ParEver'
 
     -- adt-constr
     , Adt_constr_root = (CKEY'new'+Cc(false)) * V'Adt_constr_one'
