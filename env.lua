@@ -175,7 +175,7 @@ local function check (me, pre, tp)
 
     local void_ok = (tp_id=='void' and
                     (pre=='event' or pre=='function' or pre=='input' or
-                     pre=='output' or pre=='isr' or
+                     pre=='output' or pre=='interrupt' or
                      tp.tt[2]=='&&'))
 
     ASR(TP.get(tp_id).len~=0 or TP.check(tp,'&&') or TP.check(tp,'&') or void_ok,

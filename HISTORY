@@ -19,6 +19,7 @@
         (^) expects value (instead of pointer to value)
     (^) `emit´, `kill´, `spawn´ count as yielding statements (besides `await´)
     (^) pass by reference also for pools
+    (^) interrupt routine syntax changed from `function isr` to `interrupt´
     (^) new "two-pass" scheduler implementation
     (-) pointers in internal events
     (-) pool iterators cannot yield

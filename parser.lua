@@ -107,11 +107,10 @@ local EM = function (msg)
         end)
 end
 
-TYPES = P'void' + 'char' + 'byte' + 'bool' + 'word'
-      + 'int' + 'uint'
-      + 'u8' + 'u16' + 'u32' + 'u64'
-      + 's8' + 's16' + 's32' + 's64'
-      + 'float' + 'f32' + 'f64'
+TYPES = P'bool' + 'byte' + 'char' + 'f32' + 'f64'
+      + 'float' + 'int'  + 's16'  + 's32' + 's64'
+      + 's8'    + 'u16'  + 'u32'  + 'u64' + 'u8'
+      + 'uint'  + 'void' + 'word'
 
 KEYS = P'nothing' + 'escape' + 'return' + 'break' + 'continue'
      + 'var' + 'pool' + 'event' + 'input' + 'output'
@@ -132,7 +131,7 @@ KEYS = P'nothing' + 'escape' + 'return' + 'break' + 'continue'
      + 'watching'
      + 'pause/if'
      + 'async' + 'async/thread' + 'sync'
-     + 'isr' + 'atomic'
+     + 'interrupt' + 'atomic'
      + 'or' + P'and' + 'not'
      + 'sizeof'
      + 'null'
@@ -183,14 +182,21 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_int  = CKEY'event' * (V'_TupleType_1'+EV'Type') *
                     EV'__ID_var' * (K','*EV'__ID_var')^0
 
-    -- functions
-    , _Dcl_fun0 = KEY'function' * CKEY'isr' * EK'[' * NUM * EK']' * (CKEY'@rec'+Cc(false))
+    -- internal functions / interrupts
+    , _Dcl_fun0 = CKEY'interrupt' * EK'[' * NUM * EK']' * (CKEY'@rec'+Cc(false))
                 + CKEY'function' * (CKEY'@rec'+Cc(false))
                                * EV'_TupleType_2' * EK'=>' * EV'Type'
                                * V'__ID_var'
     , _Dcl_fun1 = V'_Dcl_fun0' * V'__Do'
 
-    -- external requests/calls/events
+    -- external functions
+    , __Dcl_ext_call = (CKEY'input'+CKEY'output')
+                     * Cc(false)     -- spawn array
+                     * (CKEY'@rec'+Cc(false))
+                     * V'_TupleType_2' * K'=>' * EV'Type'
+                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+
+    -- external requests/events
     , _Dcl_ext0 = V'__Dcl_ext_io' + V'__Dcl_ext_call' + V'__Dcl_ext_evt'
     , _Dcl_ext1 = V'_Dcl_ext0' * V'__Do'
 
@@ -199,13 +205,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                      * Cc(false)     -- spawn array
                      * Cc(false)     -- recursive
                      * (V'_TupleType_1'+EV'Type') * Cc(false)
-                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
-
-    -- external calls
-    , __Dcl_ext_call = (CKEY'input'+CKEY'output')
-                     * Cc(false)     -- spawn array
-                     * (CKEY'@rec'+Cc(false))
-                     * V'_TupleType_2' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
     -- external requests
@@ -438,7 +437,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __ID_tag   = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
     , __ID_nat   = CK(  P'_' *Alphanum^1)
     , __ID_field = CK(Alpha * (Alphanum)^0)
-    , __ID_type  = CK(TYPES) + V'__ID_nat' + V'__ID_cls'
+    , __ID_type  = CK(TYPES) + V'__ID_nat' + V'__ID_cls' + V'__ID_adt'
 
 -- Types
 

@@ -142,7 +142,7 @@ F =
 
         elseif var.pre == 'function' then
             VAL = 'CEU_'..cls.id..'_'..var.id
-        elseif var.pre == 'isr' then
+        elseif var.pre == 'interrupt' then
             VAL = 'CEU_'..cls.id..'_'..var.id
         elseif var.pre == 'event' then
             assert(CTX.evt)

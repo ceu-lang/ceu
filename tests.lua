@@ -39320,7 +39320,7 @@ escape 1;
 Test { [[
 function @rec (void)=>void f;
 var int a;
-function isr [20] do
+interrupt [20] do
     a = 1;
 end
 escape 1;
@@ -39337,7 +39337,7 @@ native do
 end
 var int a;
 do
-    function isr [20] do
+    interrupt [20] do
         a = 1;
     end
 end             // TODO: forcing finalize out_isr(null)
@@ -39349,7 +39349,7 @@ escape _V;
 Test { [[
 var int[10] v;
 v[0] = 2;
-function isr [20] do
+interrupt [20] do
     v[0] = 1;
 end
 escape v[0];
@@ -39362,7 +39362,7 @@ var int[10] v;
 atomic do
     v[0] = 2;
 end
-function isr [20] do
+interrupt [20] do
     v[0] = 1;
 end
 atomic do
@@ -39381,7 +39381,7 @@ var _int[10] v;
 atomic do
     v[0] = 2;
 end
-function isr [20] do
+interrupt [20] do
     v[0] = 1;
 end
 var int ret;
@@ -39395,7 +39395,7 @@ escape ret;
 
 Test { [[
 var int v = 2;
-function isr [20] do
+interrupt [20] do
     v = 1;
 end
 escape v;
@@ -39405,7 +39405,7 @@ escape v;
 
 Test { [[
 var int&& v;
-function isr [20] do
+interrupt [20] do
     *v = 1;
 end
 escape 1;
@@ -39418,7 +39418,7 @@ function (void)=>int f do
     return 2;
 end
 var int v = f();
-function isr [20] do
+interrupt [20] do
     f();
 end
 escape v;
@@ -39431,7 +39431,7 @@ function (void)=>int f do
     return 2;
 end
 var int v = f();
-function isr [20] do
+interrupt [20] do
     f();
 end
 escape v;
@@ -39442,7 +39442,7 @@ escape v;
 
 Test { [[
 var int v = _f();
-function isr [20] do
+interrupt [20] do
     _f();
 end
 escape v;
@@ -39461,7 +39461,7 @@ native do
     }
 end
 var int v = _f();
-function isr [20] do
+interrupt [20] do
     _f();
 end
 escape v;
@@ -39472,7 +39472,7 @@ escape v;
 Test { [[
 var int v;
 v = 2;
-function isr [20] do
+interrupt [20] do
     v = 1;
 end
 escape v;
@@ -39485,7 +39485,7 @@ var int v;
 atomic do
     v = 2;
 end
-function isr [20] do
+interrupt [20] do
     this.v = 1;
 end
 escape v;
@@ -39502,7 +39502,7 @@ var int v;
 atomic do
     v = 2;
 end
-function isr [20] do
+interrupt [20] do
     this.v = 1;
     v = 1;
 end
@@ -39520,7 +39520,7 @@ var int v;
 atomic do
     v = 2;
 end
-function isr [20] do
+interrupt [20] do
     this.v = 1;
 end
 escape v;
@@ -39535,7 +39535,7 @@ atomic do
     v = 2;
     p = &&v;
 end
-function isr [20] do
+interrupt [20] do
     this.v = 1;
 end
 escape 1;
@@ -39549,7 +39549,7 @@ var int&& p;
 atomic do
     p = &&v;
 end
-function isr [20] do
+interrupt [20] do
     this.v[1] = 1;
 end
 escape 1;

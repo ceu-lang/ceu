@@ -811,10 +811,10 @@ me.blk_body = me.blk_body or blk_body
     _Dcl_fun0_pre = function (me)
         me.tag = 'Dcl_fun'
 
-        local isr, n, rec, blk = unpack(me)
+        local pre, n, rec, blk = unpack(me)
 
         -- ISR: include "ceu_out_isr(id)"
-        if isr == 'isr' then
+        if pre == 'interrupt' then
             -- convert to 'function'
                 --me[1] = 'function'
                 me[2] = rec
