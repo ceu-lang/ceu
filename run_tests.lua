@@ -318,15 +318,14 @@ os.execute('rm -f /tmp/_ceu_*')
 -- COMPLETE=false, VALGRIND=false
 > /usr/bin/time --format='(%C: %Us %Mk)' ./run_tests.lua
 
---- two-pass scheduler + clear_org
 STATS = {
-    count   = 2776,
+    count   = 2777,
     mem     = 0,
-    trails  = 6052,
-    bytes   = 38337317,
+    trails  = 6053,
+    bytes   = 38351043,
 }
 
-(./run_tests.lua: 991.86s 52192k)
+(./run_tests.lua: 827.86s 53972k)
 
 ===
 

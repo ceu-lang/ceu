@@ -310,7 +310,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __emit_ps = ( K'=>' * (V'__Exp' + K'(' * V'ExpList' * EK')')
                 +   Cc(false) )
 
--- Dynamic execution
+-- Organism instantiation
+
+    -- do organism
+    , _DoOrg = KEY'do' * EV'__ID_cls'
+             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+
+    -- spawn / kill
     , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
     , Kill  = KEY'kill' * EV'__Exp' * (EK'=>'*EV'__Exp' + Cc(false))
@@ -393,10 +399,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- pause
     , _Pause   = KEY'pause/if' * EV'__Exp' * V'__Do'
-
-    -- do organism
-    , _DoOrg = KEY'do' * EV'__ID_cls'
-             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 
     -- asynchronous execution
     , Async   = KEY'async' * (-P'/thread') * (V'VarList'+Cc(false)) * V'__Do'
