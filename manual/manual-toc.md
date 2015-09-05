@@ -2704,22 +2704,31 @@ Stmt ::= &lt;empty-string&gt;
 
     /* Declarations */
 
-        /* variable, organisms, events, and pools */
+        /* variables, organisms, pools, and internal events */
         | <b>var</b> Type ID_var [`=´ SetExp] { `,´ ID_var [`=´ SetExp] }
         | <b>var</b> Type ID_var <b>with</b>
               Block
           <b>end</b>
-        | <b>input</b> (Type|TypeList) ID_ext { `,´ ID_ext }
-        | <b>output</b> Type ID_ext { `,´ ID_ext }
-        | <b>event</b> (Type|TypeList) ID_var { `,´ ID_var }
         | <b>pool</b> Type ID_var { `,´ ID_var }
+        | <b>event</b> (Type|TypeList) ID_var { `,´ ID_var }
 
         /* functions */
         | <b>function</b> [<b>@rec</b>] ParList `=>´ Type ID_var
               [ `do´ Block `end´ ]
-            <i>where</i>
-                ParList     ::= `(´ ParListItem [ { `,´ ParListItem } ] `)´
-                ParListItem ::= [<b>@hold</b>] Type [ID_var]
+
+        /* external events */
+        | <b>output</b> (Type|TypeList) ID_ext { `,´ ID_ext }
+        | <b>input</b> (Type|TypeList) ID_ext { `,´ ID_ext }
+
+        /* external calls */
+        | <b>output</b> [<b>@rec</b>] ParList `=>´ Type ID_var ID_ext { `,´ ID_ext }
+        | <b>input</b> [<b>@rec</b>] ParList `=>´ Type ID_var ID_ext { `,´ ID_ext }
+              [ `do´ Block `end´ ]
+
+        /* external requests */
+        | <b>output/input</b> `[´ [Exp] `]´ ParList `=>´ Type ID_ext { `,´ ID_ext }
+        | <b>input/output</b> `[´ [Exp] `]´ ParList `=>´ Type ID_ext { `,´ ID_ext }
+              [ `do´ Block `end´ ]
 
         /* classes & interfaces */
         | <b>class</b> ID_cls <b>with</b>
@@ -2731,8 +2740,21 @@ Stmt ::= &lt;empty-string&gt;
               Dcls
           <b>end</b>
             <i>where</i>
-                Dcls    ::= { (&lt;var&gt; | &lt;event&gt; | &lt;pool&gt; | &lt;function&gt; | Dcl_imp) `;´ }
-                Dcl_imp ::= <b>interface</b> ID_cls { `,´ ID_cls }
+                Dcls   ::= { (&lt;var&gt; | &lt;event&gt; | &lt;pool&gt; | &lt;function&gt; | Dcl_imp) `;´ }
+                DclImp ::= <b>interface</b> ID_cls { `,´ ID_cls }
+
+        /* data types */
+        | <b>data</b> ID_adt <b>with</b>
+              (Struct | Union)
+          <b>end</b>
+            <i>where</i>
+                Struct ::= DclVar `;´ { DclVar `;´ }
+                Union  ::= DclTag { <b>or</b> DclTag }
+                    <i>where</i>
+                        DclTag ::= <b>tag</b> ID_tag <b>with</b>
+                                       DclVar `;´ { DclVar `;´ }
+                                   <b>end</b>
+                        DclVar ::= <b>var</b> Type ID_var { `,´ ID_var }
 
         /* native symbols */
         | <b>native</b> [<b>@pure</b>|<b>@const</b>|<b>@nohold</b>|<b>@plain</b>] Nat_list
@@ -2741,13 +2763,25 @@ Stmt ::= &lt;empty-string&gt;
                 Nat_type  ::= ID_nat `=´ NUM
                 Nat_func  ::= ID_nat `(´ `)´
                 Nat_var   ::= ID_nat
+        | (<b>native/pre</b> | <b>native<b>) <b>do</b>
+              <i>-- native code definitions</i>
+          <b>end</end>
 
         /* deterministic annotations */
         | <b>@safe</b> ID <b>with</b> ID { `,´ ID }
 
     /* Assignments */
 
-        | (Exp|VarList) `=´ SetExp
+        | (Exp|VarList) `=´ ( Exp
+                            | &lt;Await&gt;
+                            | &lt;EmitExt&gt | &lt;CallExt&gt; | &lt;RequestExt&gt;;
+                            | &lt;spawn&gt;
+                            | &lt;adt&gt;
+                            | &lt;thread&gt;
+                            | SetBlock
+                            )
+            <i>where</i>
+                SetBlock ::= &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;par&gt; | &lt;loop&gt; | &lt;every&gt;
 
     /* Function calls */
 
@@ -2755,7 +2789,7 @@ Stmt ::= &lt;empty-string&gt;
 
     /* Event handling */
 
-        /* await */
+        /* Await ::= */
         | (
             <b>await</b> ID_ext |
             <b>await</b> Exp    |
@@ -2763,14 +2797,24 @@ Stmt ::= &lt;empty-string&gt;
           ) [ <b>until</b> Exp ]
         | <b>await</b> <b>FOREVER</b>
 
-        /* emit */
+        /* EmitExt ::= */
         | <b>emit</b> Exp    [ `=>´ (Exp | `(´ ExpList `)´)
         | <b>emit</b> (WCLOCKK|WCLOCKE)
         | <b>emit</b> ID_ext [ `=>´ (Exp | `(´ ExpList `)´)
 
+        /* CallExt */
+        | <b>call</b>+<b>call/rec</b> ID_ext [ `=>´ (Exp | `(´ ExpList `)´)
+
+        /* RequestExt */
+        | <b>request</b> ID_ext [ `=>´ (Exp | `(´ ExpList `)´)
+
     /* Dynamic execution */
+
         | <b>spawn</b> * ID_cls * [<b>in</b> Exp]
               [ <b>with</b> Constructor <b>end</b> ]
+        | <b>kill</b> * Exp * [ `=>´ Exp ]
+
+// new / traverse
 
     /* Flow control */
 
@@ -2817,6 +2861,7 @@ Stmt ::= &lt;empty-string&gt;
           <b>end</b>
 
         /* asynchronous execution */
+// async/thread
         | <b>async</b> [<b>thread</b>] [RefVarList] <b>do</b>
               Block
           <b>end</b>
@@ -2825,11 +2870,9 @@ Stmt ::= &lt;empty-string&gt;
           <b>end</b>
             <i>where</i>
                 RefVarList ::= `(´ [`&´] ID_var { `,´ [`&´] ID_var } `)´
+// isr / atomic
 
 VarList ::= `(´ ID_var  { `,´ ID_var } `)´
-SetExp  ::= Exp | &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt;
-                | &lt;every&gt;  | &lt;par&gt; | &lt;await&gt; | &lt;emit (output)&gt;
-                | &lt;thread&gt; | &lt;spawn&gt; )
 
 WCLOCKK ::= [NUM <b>h</b>] [NUM <b>min</b>] [NUM <b>s</b>] [NUM <b>ms</b>] [NUM <b>us</b>]
 WCLOCKE ::= `(´ Exp `)´ (<b>h</b>|<b>min</b>|<b>s</b>|<b>ms</b>|<b>us</b>)
@@ -2838,6 +2881,8 @@ ID      ::= &lt;a-z, A-Z, 0-9, _&gt; +
 ID_var  ::= ID    // beginning with a lowercase letter
 ID_ext  ::= ID    // all in uppercase, not beginning with a digit
 ID_cls  ::= ID    // beginning with an uppercase letter
+ID_adt  ::= ID    // beginning with an uppercase letter
+ID_tag  ::= ID    // all in uppercase, not beginning with a digit
 ID_nat  ::= ID    // beginning with an underscore
 
 Type    ::= ID_type ( {`*´} | `&´ | `[´ `]´ | `[´ NUM `]´ )
@@ -2847,47 +2892,50 @@ ID_type ::= ( ID_nat | ID_cls |
             | <b>s8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>   | <b>u8</b>    |
             | <b>uint</b>  | <b>void</b>  | <b>word</b> )
 
+TypeList    ::= `(´ Type { `,´ Type } `)´
+ParList     ::= `(´ ParListItem { `,´ ParListItem } `)´
+                    <i>where</i>
+                        ParListItem ::= [<b>@hold</b>] Type [ID_var] 
+
 Exp ::= Prim
-        |  Exp (<b>or</b>|<b>and</b>) Exp
-        |  Exp (`|´|`^´|`&´) Exp
-        |  Exp (`!=´|`==´) Exp
-        |  Exp (`&lt;=´|`&lt;´|`&gt;´|`&gt;=´) Exp
+        |  Exp <b>or</b> Exp
+        |  Exp <b>and</b> Exp
+        |  Exp (`!=´|`==´|`&lt;=´|`&lt;´|`&gt;´|`&gt;=´) Exp
+        |  Exp `|´ Exp
+        |  Exp `^´ Exp
+        |  Exp `&´ Exp
         |  Exp (`&lt;&lt;´|`&gt;&gt;´) Exp
         |  Exp (`+´|`-´) Exp
         |  Exp (`*´|`/´|`%´) Exp
-        |  <b>not</b> Exp
-        |  `&´ Exp
-        |  (`-´|`+´) Exp
-        |  `~´ Exp
-        |  `*´ Exp
-        |  `(´ Type `)´ Exp
-        |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
-        |  Exp `[´ Exp `]´
+        |  (<b>not</b>|`+´|`-´|`~´|`*´|`&&´|`&´|`$$´|`$´) Exp
+        |  `(´ Type `)´ Exp     /* same precedence as previous */
+        |  Exp `[´ Exp `]´      /* same precedence for all following */
         |  Exp (`.´|`:´) ID
+        |  Exp (`?´|`!´)
+        |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
 
 Prim ::= `(´ Exp `)´
         |  <b>sizeof</b> `(´ (Type|Exp) `)´
         |  ID_var | ID_nat
         |  <b>null</b> | NUM | String
+        |  <b>true</b> | <b>false</b>
         |  <b>global</b> | <b>this</b> | <b>outer</b>
         |  (<b>call</b> | <b>call/rec</b>) Exp
 
-/* The operators follow the same precedence of C. */
+/* Operator precedence */
 
-    <b>or</b>              /* lowest priority */
+    /* lowest priority */
+    <b>or</b>
     <b>and</b>
+    !=    ==    &lt;=    &gt;=    &lt;     &gt;
     |
     ^
     &
-    !=    ==
-    &lt;=    &gt;=    &lt;     &gt;
     &gt;&gt;    &lt;&lt;
-    +     -                // binary
+    +     -
     *     /     %
-    <b>not</b>     &
-    +     -                // unary
-    &lt;&gt;                     // typecast
-    ()    []    :    .     // call, index
+    <b>not</b>    +    -    ~    *    &&    &    $$    $    (Type)
+    ()    []    :    .    ?    !     // call, index
 
 </code></pre>
 

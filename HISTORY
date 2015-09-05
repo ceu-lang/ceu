@@ -1,4 +1,29 @@
-* v0.9 (apr'15)
+* v0.10 (sep'15)
+    (+) `kill´ statement for organisms
+    (+) `escape´ statement for organisms
+    (+) operator `!´ to retrieve value from option types
+    (+) experimental: vectors
+    (+) experimental: tagged unions
+    (+) experimental: `traverse´ blocks for recursive tagged unions
+    (+) experimental: reentrant `ceu_sys_go()´
+    (^) explicit aliasing and pointer operations
+        (^) `&` as alias-of operator
+        (^) `&&` as pointer type modifier
+        (^) `&&` as address-of operator
+    (^) new precedence rules for operators (follows Lua)
+    (^) `every´ loops can awake multiple times in the same reaction
+    (^) `spawn´ return value is of option type
+    (^) `watching´:
+        (^) <evt> strongly aborts <body> (instead of weak abortion)
+        (^) accepts assignment (`watching <v> in <evt>´)
+        (^) expects value (instead of pointer to value)
+    (^) `emit´, `kill´, `spawn´ count as yielding statements (besides `await´)
+    (^) pass by reference also for pools
+    (^) new "two-pass" scheduler implementation
+    (-) pointers in internal events
+    (-) pool iterators cannot yield
+
+* v0.9 (apr'15, but never publicly released)
     (+) option types (`?´ suffix for types)
     (+) `native/pre´ blocks
     (+) native blocks per class

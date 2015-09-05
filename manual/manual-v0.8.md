@@ -1,5 +1,14 @@
-<title>Céu 0.10 - Reference Manual</title>
+<title>Céu 0.8 - Reference Manual</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></p>
+
+<!--
+TODO:
+- loop/N
+- `_´ identifier
+- rawstmt, atomic,
+- lua,
+- rawexp, luaexp
+-->
 
 Introduction
 ============
@@ -389,41 +398,40 @@ Keywords in Céu are reserved names that cannot be used as identifiers (e.g.,
 variable and class names):
 
 <pre><code><b>
-        and          async        async/thread atomic       await
+        and         async       atomic      await       bool
 
-        bool         break        byte         call         call/rec
+        break       byte        call        call/rec    char
 
-        char         class        continue     data         do
+        class       continue    do          else        else/if
 
-        else         else/if      emit         end          escape
+        emit        end         escape      event       every
 
-        event        every        f32          f64          false
+        f32         f64         false       finalize    float
 
-        finalize     float        FOREVER      function     global
+        FOREVER     free        function    global      if
 
-        if           in           input        input/output int
+        in          input       input/output    int     interface
 
-        interface    isr          kill         loop         native
+        isr         loop        native      not         nothing
 
-        native/pre   new          not          nothing      null
+        null        or          outer       output      output/input
 
-        or           outer        output       output/input par
+        par         par/and     par/or      pause/if    pool
 
-        par/and      par/or       pause/if     pool         return
+        return      s16         s32         s64         s8
 
-        s16          s32          s64          s8           request
+        sizeof      spawn       sync        then        this
 
-        sizeof       spawn        sync         tag          then
+        thread      true        u16         u32         u64
 
-        this         traverse     true         u16          u32
+        u8          uint        until       var         void
 
-        u64          u8           uint         until        var
+        watching    with        word
 
-        void         watching     with         word         @const
+        @const      @hold       @nohold     @plain      @pure
 
-        @hold        @nohold      @plain       @pure        @rec
+        @rec        @safe
 
-        @safe
 </b></code></pre>
 
 Identifiers
@@ -1112,7 +1120,7 @@ Calls
 
 The syntax for function calls is as follows:
 
-<pre><code>Call ::= [ <b>call</b>|<b>call/rec</b> ] Exp * `(´ ExpList `)´
+<pre><code>Call ::= [ <b>call</b>|<b>call/rec</b> ] Exp * `(´ [ExpList] `)´
 ExpList = Exp { `,´ Exp }
 </code></pre>
 
@@ -1737,7 +1745,7 @@ The syntax for expressions in Céu is as follows:
      |  `~´ Exp
      |  `*´ Exp
      |  `(´ Type `)´ Exp
-     |  Exp `(´ ExpList `)´ [<b>finalize with</b> Block <b>end</b>]
+     |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
      |  Exp `[´ Exp `]´
      |  Exp (`.´|`:´) ID
 
@@ -2432,313 +2440,201 @@ Syntax
 ======
 
 <pre><code>
-Stmt ::= &lt;empty-string&gt;
-      |  <b>nothing</b>
-      |  <b>escape</b> Exp
-      |  <b>return</b> [Exp]
-      |  <b>break</b>
-      |  <b>continue</b>
-
-  /* Declarations */
-
-      /* variables, organisms, pools, and internal events */
-      | <b>var</b> Type ID_var [`=´ &lt;r-assignment&gt;] { `,´ ID_var [`=´ &lt;r-assignment&gt;] }
-      | <b>var</b> Type ID_var <b>with</b>
-            Block
-        <b>end</b>
-      | <b>pool</b> Type ID_var [`=´ &lt;r-assignment&gt;] { `,´ ID_var [`=´ &lt;r-assignment&gt;] }
-      | <b>event</b> (Type|TypeList) ID_var { `,´ ID_var }
-
-      /* functions / interrupts */
-      | <b>function</b> [ <b>isr</b> `[´ NUM `]´ ] [<b>@rec</b>]
-            `(´ParList`)´ `=>´ Type ID_var
-            [ `do´ Block `end´ ]
-
-      /* external events */
-      | <b>output</b> (Type|TypeList) ID_ext { `,´ ID_ext }
-      | <b>input</b> (Type|TypeList) ID_ext { `,´ ID_ext }
-
-      /* external calls */
-      | <b>output</b> [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var ID_ext { `,´ ID_ext }
-      | <b>input</b> [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var ID_ext { `,´ ID_ext }
-            [ `do´ Block `end´ ]
-
-      /* external requests */
-      | <b>output/input</b> `[´ [Exp] `]´ `(´ParList`)´ `=>´ Type ID_ext { `,´ ID_ext }
-      | <b>input/output</b> `[´ [Exp] `]´ `(´ParList`)´ `=>´ Type ID_ext { `,´ ID_ext }
-            [ `do´ Block `end´ ]
-
-      /* classes & interfaces */
-      | <b>class</b> ID_cls <b>with</b>
-            Dcls
-        <b>do</b>
-            Block
-        <b>end</b>
-      | <b>interface</b> ID_cls <b>with</b>
-            Dcls
-        <b>end</b>
-          <i>where</i>
-              Dcls   ::= { (&lt;var&gt; | &lt;event-int&gt; | &lt;pool&gt; | &lt;function&gt; | DclImp) `;´ }
-              DclImp ::= <b>interface</b> ID_cls { `,´ ID_cls }
-
-      /* data types */
-      | <b>data</b> ID_data <b>with</b>
-            (Struct | Union)
-        <b>end</b>
-          <i>where</i>
-              Struct ::= DclVar `;´ { DclVar `;´ }
-              Union  ::= DclTag { <b>or</b> DclTag }
-                  <i>where</i>
-                      DclVar ::= <b>var</b> Type ID_var { `,´ ID_var }
-                      DclTag ::= <b>tag</b> ID_tag <b>with</b>
-                                     DclVar `;´ { DclVar `;´ }
-                                 <b>end</b>
-
-      /* C integration */
-      | <b>native</b> [<b>@pure</b>|<b>@const</b>|<b>@nohold</b>|<b>@plain</b>] Nat_list
-          <i>where</i>
-              Nat_list  ::= (Nat_type|Nat_func|Nat_var) { `,` (Nat_type|Nat_func|Nat_var) }
-              Nat_type  ::= ID_nat `=´ NUM
-              Nat_func  ::= ID_nat `(´ `)´
-              Nat_var   ::= ID_nat
-      | (<b>native/pre</b> | <b>native<b>) <b>do</b>
-            <i>&lt;C code definitions&gt;</i>
-        <b>end</end>
-
-      /* deterministic annotations */
-      | <b>@safe</b> ID <b>with</b> ID { `,´ ID }
-
-  /* Assignments */
-
-        <i>&lt;assignment&gt; ::= &lt;l-assignment&gt; `=´ &lt;r-assignment&gt;</i>
-      | (Exp | `(´VarList`)´) `=´
-          ( Exp
-          | &lt;await&gt;
-          | ( [ `(´ ] &lt;emit-ext&gt
-                    | &lt;call-ext&gt;
-                    | &lt;request-ext&gt;
-              [ `)´ ] )
-          | &lt;lua&gt;
-          | &lt;do-org&gt;
-          | &lt;spawn&gt;
-          | &lt;thread&gt;
-          | [ `new´ ] Data
-          | Vector
-          | SetBlock
-          )
-              <i>where</i>
-                  Data ::= ID_data [`.´ ID_tag] `(´ List `)´
-                  List ::= [ (Data|Exp) { `,´ (Data|Exp) } ]
-
-                  Vector ::= Item { `..´ Item }
-                  Item   ::= Exp | `[´ [ExpList] `]´
-
-                  SetBlock ::= &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;par&gt; | &lt;loop&gt; | &lt;every&gt;
-
-  /* Function calls */
-
-      | [<b>call</b>|<b>call/rec</b>] Exp * `(´ [ExpList] `)´
-
-  /* Event handling */
-
-      /* internal/external await */
-      | ( <b>await</b> ID_ext
-        | <b>await</b> Exp
-        | <b>await</b> (WCLOCKK|WCLOCKE)
-        ) [ <b>until</b> Exp ]
-      | <b>await</b> <b>FOREVER</b>
-
-      /* internal/external emit */
-      | <b>emit</b> Exp    [ `=>´ (Exp | `(´ [ExpList] `)´)
-      | <b>emit</b> (WCLOCKK|WCLOCKE)
-      | <b>emit</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
-
-      /* external calls */
-      | <b>call</b>+<b>call/rec</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
-
-      /* external request */
-      | <b>request</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
-
-  /* Dynamic execution */
-
-      | <b>spawn</b> * ID_cls * [<b>in</b> Exp]
-            [ <b>with</b> Block <b>end</b> ]
-      | <b>kill</b> * Exp * [ `=>´ Exp ]
-
-  /* Flow control */
-
-      /* explicit block */
-      |  <b>do</b> Block <b>end</b>
-
-      /* conditional */
-      | <b>if</b> Exp <b>then</b>
-            Block
-        { <b>else/if</b> Exp <b>then</b>
-            Block }
-        [ <b>else</b>
-            Block ]
-        <b>end</b>
-
-      /* loops */
-      | <b>loop</b>[`/´ Exp] [ ID_var [<b>in</b> Exp] ] <b>do</b>
-            Block
-        <b>end</b>
-      | <b>every</b> (Var | `(´VarList`)´) <b>in</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
-            Block
-        <b>end</b>
-
-      /* traverse */
-      | <b>traverse</b> ID_var <b>in</b> (`[´ Exp `]´ | Exp)
-            [ <b>with</b> Dcls <b>end</b> ]
-            <b>do</b>
-                Block
-            <b>end</b>
-      | <b>traverse</b>['/' NUM] Exp
-            [ <b>with</b> Block <b>end</b> ]
-
-      /* finalization */
-      | <b>finalize</b> [&lt;assignment&gt;] <b>with</b>
-            Block
-        <b>end</b>
-
-      /* parallel compositions */
-      | (<b>par/and</b>|<b>par/or</b>|<b>par</b>) <b>do</b>
-            Block
-        <b>with</b>
-            Block
-        { <b>with</b>
-            Block }
-         <b>end</b>
-      | <b>watching</b> [ (Var | `(´VarList`)´) <b>in</b> ] (WCLOCKK|WCLOCKE|ID_ext|Exp)
-        <b>do</b>
-            Block
-        <b>end</b>
-
-      /* pause */
-      | <b>pause/if</b> Exp <b>do</b>
-            Block
-        <b>end</b>
-
-      /* do organism */
-      | <b>do</b> ID_cls <b>with</b>
-            Block
-        <b>end</b>
-
-      /* asynchronous execution */
-      | (<b>async</b> | [<b>async/thread</b>]) [ `(´VarList`)´ ] <b>do</b>
-            Block
-        <b>end</b>
-      | <b>sync do</b>
-            Block
-        <b>end</b>
-      | <b>atomic do</b>
-            Block
-        <b>end</b>
-
-      /* global (top level) execution */
-      | <b>global</b> <b>do</b>
-            Block
-        <b>end</b>
-
-  /* C integration */
-
-     | `{´ &lt;C code&gt; `}´
-
-  /* Lua integration */
-
-      | `[´ {`=´} `[´
-            { <i>&lt;lua code&gt;</i> | `@´ Exp }
-        `]´ {`=´} `]´
-
-/* Block */
-
 Block ::= { Stmt `;´ }
 
-/* Identifiers */
+Stmt ::= &lt;empty-string&gt;
+        |  <b>nothing</b>
+        |  <b>escape</b> Exp
+        |  <b>return</b> [Exp]
+        |  <b>break</b>
+        |  <b>continue</b>
 
-ID      ::= &lt;a-z, A-Z, 0-9, _&gt; +
-ID_var  ::= `_´ | ID    // beginning with a lowercase letter
-ID_ext  ::= ID          // all in uppercase, not beginning with a digit
-ID_cls  ::= ID          // beginning with an uppercase letter
-ID_data ::= ID          // beginning with an uppercase letter
-ID_tag  ::= ID          // all in uppercase, not beginning with a digit
-ID_nat  ::= ID          // beginning with an underscore
+    /* Declarations */
 
-/* Types */
+        /* variable, organisms, events, and pools */
+        | <b>var</b> Type ID_var [`=´ SetExp] { `,´ ID_var [`=´ SetExp] }
+        | <b>var</b> Type ID_var <b>with</b>
+              Block
+          <b>end</b>
+        | <b>input</b> (Type|TypeList) ID_ext { `,´ ID_ext }
+        | <b>output</b> Type ID_ext { `,´ ID_ext }
+        | <b>event</b> (Type|TypeList) ID_var { `,´ ID_var }
+        | <b>pool</b> Type ID_var { `,´ ID_var }
 
-TypeList ::= `(´ Type { `,´ Type } `)´
-Type     ::= ID_type ( {`*´} | `&´ | `[´ `]´ | `[´ NUM `]´ )
-ID_type  ::= ( ID_nat | ID_cls |
-             | <b>bool</b>  | <b>byte</b>  | <b>char</b>  | <b>f32</b>   | <b>f64</b>   |
-             | <b>float</b> | <b>int</b>   | <b>s16</b>   | <b>s32</b>   | <b>s64</b>   |
-             | <b>s8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>   | <b>u8</b>    |
-             | <b>uint</b>  | <b>void</b>  | <b>word</b> )
+        /* functions */
+        | <b>function</b> [<b>@rec</b>] ParList `=>´ Type ID_var
+              [ `do´ Block `end´ ]
+            <i>where</i>
+                ParList     ::= `(´ ParListItem [ { `,´ ParListItem } ] `)´
+                ParListItem ::= [<b>@hold</b>] Type [ID_var]
 
-/* Lists */
+        /* classes & interfaces */
+        | <b>class</b> ID_cls <b>with</b>
+              Dcls
+          <b>do</b>
+              Block
+          <b>end</b>
+        | <b>interface</b> ID_cls <b>with</b>
+              Dcls
+          <b>end</b>
+            <i>where</i>
+                Dcls    ::= { (&lt;var&gt; | &lt;event&gt; | &lt;pool&gt; | &lt;function&gt; | Dcl_imp) `;´ }
+                Dcl_imp ::= <b>interface</b> ID_cls { `,´ ID_cls }
 
-ExpList  ::= Exp     { `,´ Exp }
-VarList  ::= ID_var  { `,´ ID_var }
-ParList  ::= ParItem { `,´ ParItem }
-                <i>where</i>
-                    ParItem ::= [<b>@hold</b>] Type [ID_var] 
+        /* native symbols */
+        | <b>native</b> [<b>@pure</b>|<b>@const</b>|<b>@nohold</b>|<b>@plain</b>] Nat_list
+            <i>where</i>
+                Nat_list  ::= (Nat_type|Nat_func|Nat_var) { `,` (Nat_type|Nat_func|Nat_var) }
+                Nat_type  ::= ID_nat `=´ NUM
+                Nat_func  ::= ID_nat `(´ `)´
+                Nat_var   ::= ID_nat
 
-/* Wall-clock values */
+        /* deterministic annotations */
+        | <b>@safe</b> ID <b>with</b> ID { `,´ ID }
+
+    /* Assignments */
+
+        | (Exp|VarList) `=´ SetExp
+
+    /* Function calls */
+
+        | [<b>call</b>|<b>call/rec</b>] Exp * `(´ [ExpList] `)´ ExpList = Exp { `,´ Exp }
+
+    /* Event handling */
+
+        /* await */
+        | (
+            <b>await</b> ID_ext |
+            <b>await</b> Exp    |
+            <b>await</b> (WCLOCKK|WCLOCKE)
+          ) [ <b>until</b> Exp ]
+        | <b>await</b> <b>FOREVER</b>
+
+        /* emit */
+        | <b>emit</b> Exp    [ `=>´ (Exp | `(´ ExpList `)´)
+        | <b>emit</b> (WCLOCKK|WCLOCKE)
+        | <b>emit</b> ID_ext [ `=>´ (Exp | `(´ ExpList `)´)
+
+    /* Dynamic execution */
+        | <b>spawn</b> * ID_cls * [<b>in</b> Exp]
+              [ <b>with</b> Constructor <b>end</b> ]
+
+    /* Flow control */
+
+        /* explicit block */
+        |  <b>do</b> Block <b>end</b>
+
+        /* conditional */
+        | <b>if</b> Exp <b>then</b>
+              Block
+          { <b>else/if</b> Exp <b>then</b>
+              Block }
+          [ <b>else</b>
+              Block ]
+          <b>end</b>
+
+        /* loops */
+        | <b>loop</b> [ [`(´ Type `)´] ID_var [<b>in</b> Exp] ] <b>do</b>
+              Block
+          <b>end</b>
+        | <b>every</b> (Exp|VarList) <b>in</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
+              Block
+          <b>end</b>
+
+        /* finalization */
+        | <b>finalize</b> [Exp `=´ SetExp] <b>with</b>
+              Block
+          <b>end</b>
+
+        /* parallel compositions */
+        | (<b>par/and</b>|<b>par/or</b>|<b>par</b>) <b>do</b>
+              Block
+          <b>with</b>
+              Block
+          { <b>with</b>
+              Block }
+           <b>end</b>
+        | <b>watching</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
+              Block
+          <b>end</b>
+
+        /* pause */
+        | <b>pause/if</b> Exp <b>do</b>
+              Block
+          <b>end</b>
+
+        /* asynchronous execution */
+        | <b>async</b> [<b>thread</b>] [RefVarList] <b>do</b>
+              Block
+          <b>end</b>
+        | <b>sync do</b>
+              Block
+          <b>end</b>
+            <i>where</i>
+                RefVarList ::= `(´ [`&´] ID_var { `,´ [`&´] ID_var } `)´
+
+VarList ::= `(´ ID_var  { `,´ ID_var } `)´
+SetExp  ::= Exp | &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt;
+                | &lt;every&gt;  | &lt;par&gt; | &lt;await&gt; | &lt;emit (output)&gt;
+                | &lt;thread&gt; | &lt;spawn&gt; )
 
 WCLOCKK ::= [NUM <b>h</b>] [NUM <b>min</b>] [NUM <b>s</b>] [NUM <b>ms</b>] [NUM <b>us</b>]
 WCLOCKE ::= `(´ Exp `)´ (<b>h</b>|<b>min</b>|<b>s</b>|<b>ms</b>|<b>us</b>)
 
-/* Expressions */
+ID      ::= &lt;a-z, A-Z, 0-9, _&gt; +
+ID_var  ::= ID    // beginning with a lowercase letter
+ID_ext  ::= ID    // all in uppercase, not beginning with a digit
+ID_cls  ::= ID    // beginning with an uppercase letter
+ID_nat  ::= ID    // beginning with an underscore
+
+Type    ::= ID_type ( {`*´} | `&´ | `[´ `]´ | `[´ NUM `]´ )
+ID_type ::= ( ID_nat | ID_cls |
+            | <b>bool</b>  | <b>byte</b>  | <b>char</b>  | <b>f32</b>   | <b>f64</b>   |
+            | <b>float</b> | <b>int</b>   | <b>s16</b>   | <b>s32</b>   | <b>s64</b>   |
+            | <b>s8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>   | <b>u8</b>    |
+            | <b>uint</b>  | <b>void</b>  | <b>word</b> )
 
 Exp ::= Prim
-        |  Exp <b>or</b> Exp
-        |  Exp <b>and</b> Exp
-        |  Exp (`!=´|`==´|`&lt;=´|`&lt;´|`&gt;´|`&gt;=´) Exp
-        |  Exp `|´ Exp
-        |  Exp `^´ Exp
-        |  Exp `&´ Exp
+        |  Exp (<b>or</b>|<b>and</b>) Exp
+        |  Exp (`|´|`^´|`&´) Exp
+        |  Exp (`!=´|`==´) Exp
+        |  Exp (`&lt;=´|`&lt;´|`&gt;´|`&gt;=´) Exp
         |  Exp (`&lt;&lt;´|`&gt;&gt;´) Exp
         |  Exp (`+´|`-´) Exp
         |  Exp (`*´|`/´|`%´) Exp
-        |  (<b>not</b>|`+´|`-´|`~´|`*´|`&&´|`&´|`$$´|`$´) Exp
-        |  `(´ Type `)´ Exp     /* same precedence as previous */
-        |  Exp `[´ Exp `]´      /* same precedence for all following */
-        |  Exp (`.´|`:´) ID
-        |  Exp (`?´|`!´)
+        |  <b>not</b> Exp
+        |  `&´ Exp
+        |  (`-´|`+´) Exp
+        |  `~´ Exp
+        |  `*´ Exp
+        |  `(´ Type `)´ Exp
         |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
+        |  Exp `[´ Exp `]´
+        |  Exp (`.´|`:´) ID
 
 Prim ::= `(´ Exp `)´
         |  <b>sizeof</b> `(´ (Type|Exp) `)´
         |  ID_var | ID_nat
         |  <b>null</b> | NUM | String
-        |  <b>true</b> | <b>false</b>
         |  <b>global</b> | <b>this</b> | <b>outer</b>
         |  (<b>call</b> | <b>call/rec</b>) Exp
-        |  &lt;c-code&gt
 
-/* Operator precedence */
+/* The operators follow the same precedence of C. */
 
-    /* lowest priority */
-    <b>or</b>
+    <b>or</b>              /* lowest priority */
     <b>and</b>
-    !=    ==    &lt;=    &gt;=    &lt;     &gt;
     |
     ^
     &
+    !=    ==
+    &lt;=    &gt;=    &lt;     &gt;
     &gt;&gt;    &lt;&lt;
-    +     -
+    +     -                // binary
     *     /     %
-    <b>not</b>    +    -    ~    *    &&    &    $$    $    (Type)
-    ()    []    :    .    ?    !     // call, index
-
-/* Other */
-
-    // single-line comment
-
-    /** nested
-        /* multi-line */
-        comments **/
-
-    # preprocessor directive
+    <b>not</b>     &
+    +     -                // unary
+    &lt;&gt;                     // typecast
+    ()    []    :    .     // call, index
 
 </code></pre>
 
