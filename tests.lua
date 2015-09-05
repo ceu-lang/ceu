@@ -9,9 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---]===]
-
 --do return end
+--]===]
 
 -------------------------------------------------------------------------------
 
@@ -29688,12 +29687,12 @@ escape t.x;
 
 -- TODO: bounded loop on finally
 
-    -- GLOBAL-DO-END
+-->>> GLOBAL-DO-END / DO-PRE
 
 Test { [[
 var int tot = 1;                // 1
 
-global do
+pre do
     tot = tot + 2;              // 3
 end
 
@@ -29707,13 +29706,13 @@ escape tot;
 Test { [[
 var int tot = 1;                // 1
 
-global do
+pre do
     tot = tot + 2;              // 3
 end
 
 class T with
 do
-    global do
+    pre do
         tot = tot * 2;          // 6
         var int tot2 = 10;
     end
@@ -29721,7 +29720,7 @@ end
 
 tot = tot + tot2;               // 16
 
-global do
+pre do
     tot = tot + tot2;           // 26
 end
 
@@ -29734,13 +29733,13 @@ Test { [[
 var int tot = 1;                // 1
 var int tot2;
 
-global do
+pre do
     tot = tot + 2;              // 3
 end
 
 class T with
 do
-    global do
+pre do
         tot = tot * 2;          // 6
         tot2 = 10;
     end
@@ -29748,7 +29747,7 @@ end
 
 tot = tot + tot2;               // 16
 
-global do
+pre do
     tot = tot + tot2;           // 26
 end
 
@@ -29761,7 +29760,7 @@ Test { [[
 var int tot = 1;                // 1
 var int tot2 = 1;                       // 1
 
-global do
+pre do
     tot = tot + 2;              // 3
 end
 
@@ -29769,20 +29768,20 @@ class T with
 do
     class U with
     do
-        global do
+pre do
             tot = tot + 1;      // 4
             tot = tot + tot2;   // 5
         end
     end
 
-    global do
+pre do
         tot = tot * 2;          // 10
         tot2 = tot2+9;                  // 10
     end
 
     class V with
     do
-        global do
+pre do
             tot = tot + 5;      // 15
         end
     end
@@ -29790,7 +29789,7 @@ end
 
 tot = tot + tot2;               // 25
 
-global do
+pre do
     tot = tot + tot2;           // 35
     tot2 = tot2 / 2;                    // 5
 end
@@ -29802,6 +29801,7 @@ escape tot + tot2;              // 36
     run = 36
 }
 
+--<<< GLOBAL-DO-END / DO-PRE
 
 -- SPAWN
 

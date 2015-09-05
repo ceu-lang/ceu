@@ -123,7 +123,7 @@ KEYS = P'nothing' + 'escape' + 'return' + 'break' + 'continue'
      + 'await' + 'emit' + 'until' + 'FOREVER' + 'request'
      + 'spawn' + 'kill'
      + 'new' + 'traverse'
-     + 'do' + 'end'
+     + 'do' + 'end' + 'do/pre'
      + 'if' + 'then' + 'else' + 'else/if'
      + 'loop' + 'in' + 'every'
      + 'finalize'
@@ -299,7 +299,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     * (KEY'until'*EV'__Exp' + Cc(false))
     , AwaitN   = KEY'await' * KEY'FOREVER'
     , __awaits = Cc(false) * (V'WCLOCKK'+V'WCLOCKE')  -- false,   wclock
-               + (EV'Ext'+EV'__Exp') * Cc(false)      -- ext/int, false
+               + (EV'Ext'+EV'__Exp') * Cc(false)      -- ext/int/org, false
 
     -- internal/external emit/call/request
     -- TODO: emit/await, move from "false"=>"_WCLOCK"
@@ -327,6 +327,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Do    = V'__Do'
     , __Do  = KEY'do' * V'Block' * KEY'end'
     , Block = V'_Stmts'
+
+    -- global (top level) execution
+    , _DoPre = KEY'pre' * V'__Do'
 
     -- conditional
     , If = KEY'if' * EV'__Exp' * EKEY'then' *
@@ -405,9 +408,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Thread = KEY'async/thread'          * (V'VarList'+Cc(false)) * V'__Do'
     , Sync    = KEY'sync'   * V'__Do'
     , Atomic  = KEY'atomic' * V'__Do'
-
-    -- global (top level) execution
-    , _GlobalDo = KEY'global' * V'__Do'
 
     -- C integration
     , RawStmt = K'{' * C((P(1)-'}')^0) * EK'}'
@@ -564,7 +564,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + V'ParOr' + V'ParAnd' + V'_Watching'
               + V'_Pause'
               + V'Async' + V'_Thread' + V'Sync' + V'Atomic'
-              + V'_GlobalDo'
+              + V'_DoPre'
               + V'_LuaStmt'
 
     --, _C = '/******/' * (P(1)-'/******/')^0 * '/******/'

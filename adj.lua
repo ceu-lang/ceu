@@ -94,7 +94,7 @@ F = {
 
     -- global do end
 
-    _GlobalDo_pos = function (me)
+    _DoPre_pos = function (me)
         local cls = AST.iter'Dcl_cls'()
         AST.asr(me,'', 1,'Block', 1,'Stmts')
         if cls == MAIN then
