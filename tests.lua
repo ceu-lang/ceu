@@ -11,27 +11,6 @@ end
 --[===[
 --]===]
 
--- PRECEDENCE (TODO)
-Test { [[
-var int v1 = 1 + 1 and 0;    // 0
-_assert(v1 == 0);
-
-var int v2 = 1 + 1 or  0;    // 1
-_assert(v2 == 1);
-
-var int v3 = 0 and 0 or 1;   // 1
-_assert(v3 == 1);
-
-var int v4 = 0 == 0 | 1;     // 0
-_assert(v4 == 0);
-
-var int v5 = 0 == 0 & 0;     // 1
-_assert(v5 == 1);
-
-escape 1;
-]],
-    run = 1,
-}
 --do return end
 
 -------------------------------------------------------------------------------
@@ -131,6 +110,27 @@ Test { [[var int sizeof;]],
 Test { [[escape sizeof(int);]], run=4 }
 Test { [[escape 1<2>3;]], run=0 }
 
+-- PRECEDENCE (TODO)
+Test { [[
+var int v1 = 1 + 1 and 0;    // 0
+_assert(v1 == 0);
+
+var int v2 = 1 + 1 or  0;    // 1
+_assert(v2 == 1);
+
+var int v3 = 0 and 0 or 1;   // 1
+_assert(v3 == 1);
+
+var int v4 = 0 == 0 | 1;     // 0
+_assert(v4 == 0);
+
+var int v5 = 0 == 0 & 0;     // 1
+_assert(v5 == 1);
+
+escape 1;
+]],
+    run = 1,
+}
 Test { [[var int a;]],
     ana = 'line 1 : missing `escape´ statement for the block',
 }

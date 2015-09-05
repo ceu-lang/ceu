@@ -154,129 +154,195 @@ NUM = CK(m.R'09'^1) / tonumber
 
 GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
-                -- "Ct" as a special case to avoid "too many captures" (HACK_1)
-    , _Stmts  = Ct (( V'__StmtS' * (EK';'*K';'^0) +
-                      V'__StmtB' * (K';'^0)
-                   )^0
-                 * ( V'__LstStmt' * (EK';'*K';'^0) +
-                     V'__LstStmtB' * (K';'^0)
-                   )^-1
-                 * (V'Host'+V'_Dcl_fun1')^0 )
-    , Block  = V'_Stmts'
-
-    , Do     = V'__Do'
-    , __Do    = KEY'do' * V'Block' * KEY'end'
-
-    , _GlobalDo = KEY'global' * V'__Do'
-
     , Nothing = KEY'nothing'
+    , _Escape = KEY'escape' * EV'__Exp'
+    , Return  = KEY'return' * EV'__Exp'^-1
+    , Break     = KEY'break'
+    , _Continue = KEY'continue'
 
-    , __StmtS = V'Await'
-             + V'EmitExt'  + V'EmitInt'
-             + V'_Dcl_nat' + V'_Dcl_ext0'
-             + V'_Dcl_int' + V'_Dcl_var' + V'_Dcl_pool'
-             + V'Dcl_det'
-             --+ V'Call'
-             + V'_Set'
-             + V'Spawn'    + V'Kill'
-             + V'_DoOrg'
-             + V'Nothing'
-             + V'RawStmt'
-             + V'_TraverseRec'
-             + V'_Dcl_fun0'
-             + V'CallStmt' -- last
-             --+ EM'statement'-- (missing `_´?)'
-             + EM'statement (usually a missing `var´ or C prefix `_´)'
+-- Declarations
 
-    , __StmtB = V'Do'   + V'Host'    + V'_GlobalDo'
-             + V'Async' + V'_Thread' + V'Sync' + V'Atomic'
-             + V'ParOr' + V'ParAnd'  + V'_Watching'
-             + V'If'    + V'_Loop'   + V'_Every'
-             + V'_Pause'
-             + V'_Dcl_ifc' + V'Dcl_cls'
-             + V'Dcl_adt'
-             + V'Finalize'
-             + V'_Dcl_fun1' + V'_Dcl_ext1'
-             + V'_LuaStmt'
-             + V'_TraverseLoop'
+    -- variables, organisms
+    , _Dcl_var  = (V'__Dcl_var_org' + V'__Dcl_var_plain_set' + V'_Dcl_var_plain')
+    , __Dcl_var_org   = CKEY'var'  * EV'Type' * Cc(true)  * EV'__ID_var' *
+                            EKEY'with' * V'Dcl_constr' * EKEY'end'
+    , __Dcl_var_plain_set = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var_set' 
+                                * (K','*V'__dcl_var_set')^0
+    , _Dcl_var_plain = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var' *
+                            (K','*V'__dcl_var')^0
 
-    , __LstStmt  = V'_Escape' + V'Break' + V'_Continue' + V'AwaitN' + V'Return'
-    , __LstStmtB = V'ParEver' + V'_Continue'
+    -- auxiliary
+    , Dcl_constr = V'Block'
+    , __dcl_var_set = EV'__ID_var' * (V'__Sets' + Cc(false)*Cc(false)*Cc(false))
+    , __dcl_var     = EV'__ID_var' * Cc(false)*Cc(false)*Cc(false)
 
-    , __SetBlock  = V'Do' + V'ParEver' + V'If' + V'_Loop' + V'_Every'
+    -- pools
+    , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__dcl_var_set' * (K','*EV'__dcl_var_set')^0
 
-    , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )
+    -- internal events
+    , _Dcl_int  = CKEY'event' * (V'_TupleType_1'+EV'Type') *
+                    EV'__ID_var' * (K','*EV'__ID_var')^0
+
+    -- functions
+    , _Dcl_fun0 = KEY'function' * CKEY'isr' * EK'[' * NUM * EK']' * (CKEY'@rec'+Cc(false))
+                + CKEY'function' * (CKEY'@rec'+Cc(false))
+                               * EV'_TupleType_2' * EK'=>' * EV'Type'
+                               * V'__ID_var'
+    , _Dcl_fun1 = V'_Dcl_fun0' * V'__Do'
+
+    -- external requests/calls/events
+    , _Dcl_ext0 = V'__Dcl_ext_io' + V'__Dcl_ext_call' + V'__Dcl_ext_evt'
+    , _Dcl_ext1 = V'_Dcl_ext0' * V'__Do'
+
+    -- external events
+    , __Dcl_ext_evt  = (CKEY'input'+CKEY'output')
+                     * Cc(false)     -- spawn array
+                     * Cc(false)     -- recursive
+                     * (V'_TupleType_1'+EV'Type') * Cc(false)
+                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+
+    -- external calls
+    , __Dcl_ext_call = (CKEY'input'+CKEY'output')
+                     * Cc(false)     -- spawn array
+                     * (CKEY'@rec'+Cc(false))
+                     * V'_TupleType_2' * K'=>' * EV'Type'
+                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+
+    -- external requests
+    , __Dcl_ext_io   = (CKEY'input/output'+CKEY'output/input')
+                     * ('['*(V'__Exp'+Cc(true))*EK']'+Cc(false))
+                     * Cc(false)     -- recursive
+                     * V'_TupleType_2' * K'=>' * EV'Type'
+                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+
+    -- classes / interfaces
+    , Dcl_cls  = KEY'class'     * Cc(false)
+               * EV'__ID_cls'
+               * EKEY'with' * V'_BlockI' * V'__Do'
+    , _Dcl_ifc = KEY'interface' * Cc(true)
+               * EV'__ID_cls'
+               * EKEY'with' * V'_BlockI' * EKEY'end'
+    , _BlockI = ( (EV'_Dcl_var'+V'_Dcl_int'+V'_Dcl_pool'+V'_Dcl_fun0'+V'_Dcl_imp')
+                  * (EK';'*K';'^0)
+               )^0
+    , _Dcl_imp = KEY'interface' * EV'__ID_cls' * (K',' * EV'__ID_cls')^0
+
+    -- data types
+    , Dcl_adt = KEY'data' * EV'__ID_adt' * EKEY'with'
+               *    (V'__Dcl_adt_struct' + V'__Dcl_adt_union')
+               * EKEY'end'
+    , __Dcl_adt_struct = Cc'struct' * (V'_Dcl_var_plain' * (EK';'*K';'^0))^1
+    , __Dcl_adt_union  = Cc'union'  * V'Dcl_adt_tag' * (EKEY'or' * EV'Dcl_adt_tag')^0
+    , Dcl_adt_tag    = KEY'tag' * EV'__ID_tag' * EKEY'with'
+                      *   (V'_Dcl_var_plain' * (EK';'*K';'^0))^0
+                      * EKEY'end'
+                      + KEY'tag' * EV'__ID_tag' * (EK';'*K';'^0)
+
+    -- C integration
+    , _Dcl_nat = KEY'native' * (CKEY'@pure'+CKEY'@const'+CKEY'@nohold'+CK'@plain'+Cc(false))
+                   * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
+    , __Dcl_nat = Cc'type' * V'__ID_nat' * K'=' * NUM
+                + Cc'func' * V'__ID_nat' * '()' * Cc(false)
+                + Cc'unk'  * V'__ID_nat'        * Cc(false)
+
+    , Host    = (KEY'native/pre'*Cc(true) + KEY'native'*Cc(false))
+                * (#EKEY'do')*'do' * --m.S' \n\t'^0 *
+                    ( C(V'_C') + C((P(1)-(m.S'\t\n\r '*'end'*P';'^0*'\n'))^0) )
+                *S* EKEY'end'
+
+    -- deterministic annotations
+    , Dcl_det  = KEY'@safe' * EV'__ID' * EKEY'with' *
+                     EV'__ID' * (K',' * EV'__ID')^0
+    , __ID     = V'__ID_nat' + V'__ID_ext' + V'Var'
+
+
+-- Assignments
 
     , _Set  = (V'__Exp' + V'VarList') * V'__Sets'
     , __Sets = (CK'='+CK':=') * (
                 Cc'await'      * V'Await'
-              + Cc'thread'     * V'_Thread'
               + Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
-              + Cc'spawn'      * V'Spawn'
               + Cc'adt-constr' * V'Adt_constr_root'
-              + Cc'do-org'     * V'_DoOrg'
-              + Cc'block'      * V'__SetBlock'
               + Cc'vector'     * V'Vector_constr'   -- before exp
-              + Cc'exp'        * V'__Exp'
               + Cc'lua'        * V'_LuaExp'
+              + Cc'do-org'     * V'_DoOrg'
+              + Cc'spawn'      * V'Spawn'
+              + Cc'thread'     * V'_Thread'
+              + Cc'exp'        * V'__Exp'
+              + Cc'block'      * V'__SetBlock'
               + Cc'__trav_loop' * V'_TraverseLoop'  -- before Rec
               + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
               + EM'expression'
               )
+    , __SetBlock = V'Do' + V'ParEver' + V'If' + V'_Loop' + V'_Every'
 
-    , Finalize = KEY'finalize' * (V'_Set'*EK';'*K';'^0 + Cc(false))
-               * EKEY'with' * EV'Finally' * EKEY'end'
-    , Finally  = V'Block'
+    -- adt-constr
+    , Adt_constr_root = (CKEY'new'+Cc(false)) * V'Adt_constr_one'
+    , Adt_constr_one  = V'Adt' * EK'(' * EV'_Adt_explist' * EK')'
+    , Adt             = V'__ID_adt' * ((K'.'-'..')*V'__ID_tag' + Cc(false))
+    , __adt_expitem   = (V'Adt_constr_one' + V'__Exp')
+    , _Adt_explist    = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
 
-    , Kill  = KEY'kill' * EV'__Exp' * (EK'=>'*EV'__Exp' + Cc(false))
-    , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
-            * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+    -- vector-constr
+    , Vector_tup = (K'['-('['*P'='^0*'[')) * EV'ExpList' * EK']'
+    , __vector_one = V'Vector_tup' + V'__Exp'
+    , Vector_constr = V'__vector_one'*(K'..'*EV'__vector_one')^1
+                    + V'Vector_tup'
 
-    , _DoOrg = KEY'do' * EV'__ID_cls'
-             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
-
+-- Function calls
 
     , CallStmt = V'__Exp'
 
-    , Atomic  = KEY'atomic' * V'__Do'
-    , Sync    = KEY'sync'   * V'__Do'
-    , _Thread = KEY'async/thread'          * (V'VarList'+Cc(false)) * V'__Do'
-    , Async   = KEY'async' * (-P'/thread') * (V'VarList'+Cc(false)) * V'__Do'
+-- Event handling
 
-    , _Escape = KEY'escape' * EV'__Exp'
+    -- internal/external await
+    , Await    = KEY'await' * V'__awaits'
+                    * (KEY'until'*EV'__Exp' + Cc(false))
+    , AwaitN   = KEY'await' * KEY'FOREVER'
+    , __awaits = Cc(false) * (V'WCLOCKK'+V'WCLOCKE')  -- false,   wclock
+               + (EV'Ext'+EV'__Exp') * Cc(false)      -- ext/int, false
 
-    , _Watching = KEY'watching' * ( (EV'Var'+V'VarList') * EKEY'in'
-                                  + Cc(false) )
-                * V'__awaits'
-                * V'__Do'
+    -- internal/external emit/call/request
+    -- TODO: emit/await, move from "false"=>"_WCLOCK"
+    , EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
+               * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
+                 + EV'Ext' * V'__emit_ps' )
+    , EmitInt  = CKEY'emit' * EV'__Exp' * V'__emit_ps'
+    , __emit_ps = ( K'=>' * (V'__Exp' + K'(' * V'ExpList' * EK')')
+                +   Cc(false) )
 
-    , ParOr     = KEY'par/or' * EKEY'do' *
-                      V'Block' * (EKEY'with' * V'Block')^1 *
-                  EKEY'end'
+-- Dynamic execution
+    , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
+            * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+    , Kill  = KEY'kill' * EV'__Exp' * (EK'=>'*EV'__Exp' + Cc(false))
 
-    , ParAnd  = KEY'par/and' * EKEY'do' *
-                    V'Block' * (EKEY'with' * V'Block')^1 *
-                EKEY'end'
-    , ParEver = KEY'par' * EKEY'do' *
-                    V'Block' * (EKEY'with' * V'Block')^1 *
-                EKEY'end'
+-- Flow control
 
-    , If      = KEY'if' * EV'__Exp' * EKEY'then' *
-                    V'Block' *
-                (KEY'else/if' * EV'__Exp' * EKEY'then' *
-                    V'Block')^0 *
-                (KEY'else' *
-                    V'Block' + Cc(false)) *
-                EKEY'end'-- - V'_Continue'
+    -- explicit block
+    , Do    = V'__Do'
+    , __Do  = KEY'do' * V'Block' * KEY'end'
+    , Block = V'_Stmts'
 
-    , Break     = KEY'break'
-    , _Continue = KEY'continue'
+    -- conditional
+    , If = KEY'if' * EV'__Exp' * EKEY'then' *
+            V'Block' *
+           (KEY'else/if' * EV'__Exp' * EKEY'then' *
+            V'Block')^0 *
+           (KEY'else' *
+            V'Block' + Cc(false)) *
+           EKEY'end'-- - V'_Continue'
 
+    -- loops
     , _Loop   = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
                     (V'Var' * (EKEY'in'*EV'__Exp' + Cc(false))
                     + Cc(false)*Cc(false)) *
                 V'__Do'
+    , _Every  = KEY'every' * ( (EV'Var'+V'VarList') * EKEY'in'
+                            + Cc(false) )
+              * V'__awaits'
+              * V'__Do'
 
+    -- traverse
     , _TraverseLoop = KEY'traverse' * V'Var' * EKEY'in' * (
                         Cc'number' * (K'['*(V'__Exp'+Cc'[]')*EK']')
                       +
@@ -287,88 +353,114 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _TraverseRec  = KEY'traverse' * ('/'*V'NUMBER'+Cc(false)) * EV'__Exp'
                     * (KEY'with'*V'Block'*EKEY'end' + Cc(false))
 
---[[
-loop/N i in <e-num> do
-    ...
-end
-loop (T*)i in <e-pool-org> do
-    ...
-end
-loop i in <e-rec-data> do
-    ...
-end
-loop (a,b,c) in <e-evt> do
-    ...
-end
-    , _Iter   = KEY'loop' * K'('*EV'Type'*EK')'
-              *     V'__ID_var' * KEY'in' * EV'__Exp'
-              * V'__Do'
-]]
+        --[[
+        loop/N i in <e-num> do
+            ...
+        end
+        loop (T*)i in <e-pool-org> do
+            ...
+        end
+        loop i in <e-rec-data> do
+            ...
+        end
+        loop (a,b,c) in <e-evt> do
+            ...
+        end
+            , _Iter   = KEY'loop' * K'('*EV'Type'*EK')'
+                      *     V'__ID_var' * KEY'in' * EV'__Exp'
+                      * V'__Do'
+        ]]
 
-    , _Every  = KEY'every' * ( (EV'Var'+V'VarList') * EKEY'in'
-                            + Cc(false) )
-              * V'__awaits'
-              * V'__Do'
+    -- finalization
+    , Finalize = KEY'finalize' * (V'_Set'*EK';'*K';'^0 + Cc(false))
+               * EKEY'with' * EV'Finally' * EKEY'end'
+    , Finally  = V'Block'
 
-    , __Exp    = V'__1'
-    , __1      = V'__2'  * (CKEY'or'  * EV'__2')^0
-    , __2      = V'__3'  * (CKEY'and' * EV'__3')^0
-    , __3      = V'__4'  * ( ( (CK'!='-'!==')+CK'=='+CK'<='+CK'>='
-                             + (CK'<'-'<<')+(CK'>'-'>>')
-                             ) * EV'__4')^0
-    , __4      = V'__5'  * ((CK'|'-'||') * EV'__5')^0
-    , __5      = V'__6'  * (CK'^' * EV'__6')^0
-    , __6      = V'__7'  * (CK'&' * EV'__7')^0
-    , __7      = V'__8'  * ((CK'>>'+CK'<<') * EV'__8')^0
-    , __8      = V'__9'  * ((CK'+'+CK'-') * EV'__9')^0
-    , __9      = V'__10' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * EV'__10')^0
-    , __10     = ( Cc(false) * (CKEY'not'+CK'-'+CK'+'+CK'~'+CK'*'+
-                                (CK'&&'-P'&'^3) + (CK'&'-'&&') +
-                                CK'$$' + (CK'$'-'$$')
-                             + Cc'cast'*(K'('*V'Type'*K')') )
-                )^0 * V'__11'
-    , __11     = V'__12' *
-                    (
-                        K'(' * Cc'call' * EV'ExpList' * EK')' *
-                            ( KEY'finalize' * EKEY'with' * V'Finally' * EKEY'end'
-                              + Cc(false)) +
-                        K'[' * Cc'idx'  * EV'__Exp'    * EK']' +
-                        (CK':' + (CK'.'-'..')) * EV'__ID_field' +
-                        CK'?' + (CK'!'-'!=')
-                    )^0
-    , __12     = V'__Prim'
-    , __Prim   = V'__Parens' + V'SIZEOF'
-              + V'Var'     + V'Nat'
-              + V'NULL'    + V'NUMBER' + V'STRING'
-              + V'Global'  + V'This'   + V'Outer'
-              + V'RawExp'
-              + CKEY'call'     * EV'__Exp'
-              + CKEY'call/rec' * EV'__Exp'
+    -- parallel compositions
+    , ParOr     = KEY'par/or' * EKEY'do' *
+                      V'Block' * (EKEY'with' * V'Block')^1 *
+                  EKEY'end'
+    , ParAnd  = KEY'par/and' * EKEY'do' *
+                    V'Block' * (EKEY'with' * V'Block')^1 *
+                EKEY'end'
+    , ParEver = KEY'par' * EKEY'do' *
+                    V'Block' * (EKEY'with' * V'Block')^1 *
+                EKEY'end'
+    , _Watching = KEY'watching' * ( (EV'Var'+V'VarList') * EKEY'in'
+                                  + Cc(false) )
+                * V'__awaits'
+                * V'__Do'
 
-    , Adt_constr_root = (CKEY'new'+Cc(false)) * V'Adt_constr_one'
-    , Adt_constr_one = V'Adt' * EK'(' * EV'_Adt_explist' * EK')'
-    , Adt         = V'__ID_adt' * ((K'.'-'..')*V'__ID_tag' + Cc(false))
 
-    , __adt_expitem = (V'Adt_constr_one' + V'__Exp')
-    , _Adt_explist = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
+    -- pause
+    , _Pause   = KEY'pause/if' * EV'__Exp' * V'__Do'
 
+    -- do organism
+    , _DoOrg = KEY'do' * EV'__ID_cls'
+             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+
+    -- asynchronous execution
+    , Async   = KEY'async' * (-P'/thread') * (V'VarList'+Cc(false)) * V'__Do'
+    , _Thread = KEY'async/thread'          * (V'VarList'+Cc(false)) * V'__Do'
+    , Sync    = KEY'sync'   * V'__Do'
+    , Atomic  = KEY'atomic' * V'__Do'
+
+    -- global (top level) execution
+    , _GlobalDo = KEY'global' * V'__Do'
+
+    -- C integration
+    , RawStmt = K'{' * C((P(1)-'}')^0) * EK'}'
+    , RawExp  = K'{' * C((P(1)-'}')^0) * EK'}'
+
+    -- Lua integration
+    -- Stmt/Exp differ only by the "return" and are re-unified in "adj.lua"
+    , _LuaStmt = V'__lua'
+    , _LuaExp  = Cc'return ' * V'__lua'
+
+    , __lua    = K'[' * m.Cg(P'='^0,'lua') * '[' *
+                ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
+                 * (V'__luacl'/function()end) *S
+    , __luaext = K'@' * V'__Exp'
+    , __luacl  = ']' * C(P'='^0) * EK']'
+    , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
+                    function (s,i,a,b) return a == b end)
+
+-- Identifiers
+
+    , Ext     = V'__ID_ext'
+    , Var     = V'__ID_var'
+    , Nat     = V'__ID_nat'
+
+    , __ID_var   = (-KEYS * CK(m.R'az'*Alphanum^0) + CK('_'*-Alphanum))
+    , __ID_ext   = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
+    , __ID_cls   = -KEYS * CK(m.R'AZ'*Alphanum^0)
+    , __ID_adt   = -KEYS * CK(m.R'AZ'*Alphanum^0)
+    , __ID_tag   = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
+    , __ID_nat   = CK(  P'_' *Alphanum^1)
+    , __ID_field = CK(Alpha * (Alphanum)^0)
+    , __ID_type  = CK(TYPES) + V'__ID_nat' + V'__ID_cls'
+
+-- Types
+
+    , Type = V'__ID_type'               -- id (* + [k] + & + ?)^0
+           * ( (CK'&&'-P'&'^3) + (CK'&'-'&&') + CK'?'
+             + K'['*(V'__Exp'+Cc('[]'))*K']'
+             )^0
+
+-- Lists
+
+    , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
-    , __Parens  = K'(' * EV'__Exp' * EK')'
 
-    , Vector_tup = (K'['-('['*P'='^0*'[')) * EV'ExpList' * EK']'
-    , __vector_one = V'Vector_tup' + V'__Exp'
-    , Vector_constr = V'__vector_one'*(K'..'*EV'__vector_one')^1
-                    + V'Vector_tup'
+    -- (int, void*)
+    , _TupleTypeItem_1 = Cc(false) * EV'Type' * Cc(false)
+    , _TupleType_1 = K'(' * EV'_TupleTypeItem_1' * (EK','*V'_TupleTypeItem_1')^0 * EK')'
 
-    , SIZEOF = KEY'sizeof' * EK'(' * (V'Type' + V'__Exp') * EK')'
+    -- (int v, nohold void* ptr)
+    , _TupleTypeItem_2 = (CKEY'@hold'+Cc(false)) * EV'Type' * (EV'__ID_var'+Cc(false))
+    , _TupleType_2 = K'(' * EV'_TupleTypeItem_2' * (EK','*V'_TupleTypeItem_2')^0 * EK')'
 
-    , NUMBER = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af'+(P'.'-'..')
-                                      +(m.S'Ee'*'-')+m.S'Ee')^1 )
-            + CK( "'" * (P(1)-"'")^0 * "'" )
-            + KEY'false' / function() return 0 end
-            + KEY'true'  / function() return 1 end
-
-    , NULL = CKEY'null'     -- TODO: the idea is to get rid of this
+-- Wall-clock values
 
     , WCLOCKK = #NUM *
                 (NUM * K'h'   + Cc(0)) *
@@ -382,148 +474,97 @@ end
                   + EM'<h,min,s,ms,us>'
               ) * (CK'_' + Cc(false))
 
-    , _Pause   = KEY'pause/if' * EV'__Exp' * V'__Do'
+-- Expressions
 
-    , AwaitN   = KEY'await' * KEY'FOREVER'
+    , __Exp  = V'__1'
+    , __1    = V'__2'  * (CKEY'or'  * EV'__2')^0
+    , __2    = V'__3'  * (CKEY'and' * EV'__3')^0
+    , __3    = V'__4'  * ( ( (CK'!='-'!==')+CK'=='+CK'<='+CK'>='
+                           + (CK'<'-'<<')+(CK'>'-'>>')
+                           ) * EV'__4')^0
+    , __4    = V'__5'  * ((CK'|'-'||') * EV'__5')^0
+    , __5    = V'__6'  * (CK'^' * EV'__6')^0
+    , __6    = V'__7'  * (CK'&' * EV'__7')^0
+    , __7    = V'__8'  * ((CK'>>'+CK'<<') * EV'__8')^0
+    , __8    = V'__9'  * ((CK'+'+CK'-') * EV'__9')^0
+    , __9    = V'__10' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * EV'__10')^0
+    , __10   = ( Cc(false) * (CKEY'not'+CK'-'+CK'+'+CK'~'+CK'*'+
+                              (CK'&&'-P'&'^3) + (CK'&'-'&&') +
+                              CK'$$' + (CK'$'-'$$')
+                           + Cc'cast'*(K'('*V'Type'*K')') )
+              )^0 * V'__11'
+    , __11   = V'__12' *
+                  (
+                      K'(' * Cc'call' * EV'ExpList' * EK')' *
+                          ( KEY'finalize' * EKEY'with' * V'Finally' * EKEY'end'
+                            + Cc(false)) +
+                      K'[' * Cc'idx'  * EV'__Exp'    * EK']' +
+                      (CK':' + (CK'.'-'..')) * EV'__ID_field' +
+                      CK'?' + (CK'!'-'!=')
+                  )^0
+    , __12   = V'__Prim'
 
-    , __awaits = Cc(false) * (V'WCLOCKK'+V'WCLOCKE')  -- false,   wclock
-               + (EV'Ext'+EV'__Exp') * Cc(false)      -- ext/int, false
-    , Await    = KEY'await' * V'__awaits'
-                    * (KEY'until'*EV'__Exp' + Cc(false))
+    , __Prim = K'(' * EV'__Exp' * EK')'
+             + V'SIZEOF'
+             + V'Var'     + V'Nat'
+             + V'NULL'    + V'NUMBER' + V'STRING'
+             + V'Global'  + V'This'   + V'Outer'
+             + V'RawExp'
+             + CKEY'call'     * EV'__Exp'
+             + CKEY'call/rec' * EV'__Exp'
 
-    -- TODO: emit/await, move from "false"=>"_WCLOCK"
-    , EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
-               * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
-                 + EV'Ext' * V'__emit_ps' )
-    , EmitInt  = CKEY'emit' * EV'__Exp' * V'__emit_ps'
-    , __emit_ps = ( K'=>' * (V'__Exp' + K'(' * V'ExpList' * EK')')
-                +   Cc(false) )
+    , SIZEOF = KEY'sizeof' * EK'(' * (V'Type' + V'__Exp') * EK')'
+    , NULL   = CKEY'null'     -- TODO: the idea is to get rid of this
+    , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
-    , __ID     = V'__ID_nat' + V'__ID_ext' + V'Var'
-    , Dcl_det  = KEY'@safe' * EV'__ID' * EKEY'with' *
-                     EV'__ID' * (K',' * EV'__ID')^0
-
-    , __Dcl_nat = Cc'type' * V'__ID_nat' * K'=' * NUM
-                + Cc'func' * V'__ID_nat' * '()' * Cc(false)
-                + Cc'unk'  * V'__ID_nat'        * Cc(false)
-
-    , _Dcl_nat = KEY'native' * (CKEY'@pure'+CKEY'@const'+CKEY'@nohold'+CK'@plain'+Cc(false))
-                   * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
-
-    , __Dcl_ext_call = (CKEY'input'+CKEY'output')
-                     * Cc(false)     -- spawn array
-                     * (CKEY'@rec'+Cc(false))
-                     * V'_TupleType_2' * K'=>' * EV'Type'
-                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
-    , __Dcl_ext_evt  = (CKEY'input'+CKEY'output')
-                     * Cc(false)     -- spawn array
-                     * Cc(false)     -- recursive
-                     * (V'_TupleType_1'+EV'Type') * Cc(false)
-                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
-    , __Dcl_ext_io   = (CKEY'input/output'+CKEY'output/input')
-                     * ('['*(V'__Exp'+Cc(true))*EK']'+Cc(false))
-                     * Cc(false)     -- recursive
-                     * V'_TupleType_2' * K'=>' * EV'Type'
-                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
-
-    , _Dcl_ext0 = V'__Dcl_ext_io' + V'__Dcl_ext_call' + V'__Dcl_ext_evt'
-    , _Dcl_ext1 = V'_Dcl_ext0' * V'__Do'
-
-    , _Dcl_int  = CKEY'event' * (V'_TupleType_1'+EV'Type') *
-                    EV'__ID_var' * (K','*EV'__ID_var')^0
-
-    -------
-
-    , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__dcl_var_set' * (K','*EV'__dcl_var_set')^0
-
-    , _Dcl_var  = (V'__Dcl_var_org' + V'__Dcl_var_plain_set' + V'_Dcl_var_plain')
-    , __Dcl_var_org   = CKEY'var'  * EV'Type' * Cc(true)  * EV'__ID_var' *
-                            EKEY'with' * V'Dcl_constr' * EKEY'end'
-    , __Dcl_var_plain_set = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var_set' 
-                                * (K','*V'__dcl_var_set')^0
-    , _Dcl_var_plain = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var' *
-                            (K','*V'__dcl_var')^0
-
-    , Dcl_constr = V'Block'
-
-    , __dcl_var_set = EV'__ID_var' * (V'__Sets' + Cc(false)*Cc(false)*Cc(false))
-    , __dcl_var     = EV'__ID_var' * Cc(false)*Cc(false)*Cc(false)
-    -------
-
-    , _Dcl_imp = KEY'interface' * EV'__ID_cls' * (K',' * EV'__ID_cls')^0
-
-    , _Dcl_fun0 = KEY'function' * CKEY'isr' * EK'[' * NUM * EK']' * (CKEY'@rec'+Cc(false))
-                + CKEY'function' * (CKEY'@rec'+Cc(false))
-                               * EV'_TupleType_2' * EK'=>' * EV'Type'
-                               * V'__ID_var'
-
-    , _Dcl_fun1 = V'_Dcl_fun0' * V'__Do'
-    , Return  = KEY'return' * EV'__Exp'^-1
-
-    , _BlockI = ( (EV'_Dcl_var'+V'_Dcl_int'+V'_Dcl_pool'+V'_Dcl_fun0'+V'_Dcl_imp')
-                  * (EK';'*K';'^0)
-               )^0
-    , _Dcl_ifc = KEY'interface' * Cc(true)
-               * EV'__ID_cls'
-               * EKEY'with' * V'_BlockI' * EKEY'end'
-    , Dcl_cls  = KEY'class'     * Cc(false)
-               * EV'__ID_cls'
-               * EKEY'with' * V'_BlockI' * V'__Do'
-    -------
-
-    , __Dcl_adt_struct = Cc'struct' * (V'_Dcl_var_plain' * (EK';'*K';'^0))^1
-    , __Dcl_adt_union  = Cc'union'  * V'Dcl_adt_tag' * (EKEY'or' * EV'Dcl_adt_tag')^0
-    , Dcl_adt_tag    = KEY'tag' * EV'__ID_tag' * EKEY'with'
-                      *   (V'_Dcl_var_plain' * (EK';'*K';'^0))^0
-                      * EKEY'end'
-                      + KEY'tag' * EV'__ID_tag' * (EK';'*K';'^0)
-
-    , Dcl_adt = KEY'data' * EV'__ID_adt' * EKEY'with'
-               *    (V'__Dcl_adt_struct' + V'__Dcl_adt_union')
-               * EKEY'end'
-    -------
+    , NUMBER = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af'+(P'.'-'..')
+                                      +(m.S'Ee'*'-')+m.S'Ee')^1 )
+             + CK( "'" * (P(1)-"'")^0 * "'" )
+             + KEY'false' / function() return 0 end
+             + KEY'true'  / function() return 1 end
 
     , Global  = KEY'global'
     , This    = KEY'this' * Cc(false)
     , Outer   = KEY'outer'
 
-    , Ext     = V'__ID_ext'
-    , Var     = V'__ID_var'
-    , Nat     = V'__ID_nat'
+---------
+                -- "Ct" as a special case to avoid "too many captures" (HACK_1)
+    , _Stmts  = Ct (( V'__StmtS' * (EK';'*K';'^0) +
+                      V'__StmtB' * (K';'^0)
+                   )^0
+                 * ( V'__LstStmt' * (EK';'*K';'^0) +
+                     V'__LstStmtB' * (K';'^0)
+                   )^-1
+                 * (V'Host'+V'_Dcl_fun1')^0 )
 
-    , __ID_cls  = -KEYS * CK(m.R'AZ'*Alphanum^0)
-    , __ID_ext  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
-    , __ID_var  = (-KEYS * CK(m.R'az'*Alphanum^0) + CK('_'*-Alphanum))
-    , __ID_nat  = CK(  P'_' *Alphanum^1)
-    , __ID_type = CK(TYPES) + V'__ID_nat' + V'__ID_cls'
+    , __LstStmt  = V'_Escape' + V'Return' + V'Break' + V'_Continue' + V'AwaitN'
+    , __LstStmtB = V'ParEver'
+    , __StmtS    = V'Nothing'
+                 + V'_Dcl_var'  + V'_Dcl_pool' + V'_Dcl_int'
+                 + V'_Dcl_fun0' + V'_Dcl_ext0'
+                 + V'_Dcl_nat'  + V'Dcl_det'
+                 + V'_Set'
+                 + V'Await' + V'EmitExt' + V'EmitInt'
+                 + V'Spawn' + V'Kill'
+                 + V'_TraverseRec'
+                 + V'_DoOrg'
+                 + V'RawStmt'
 
-    , __ID_adt = -KEYS * CK(m.R'AZ'*Alphanum^0)
-    , __ID_tag = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
+             + V'CallStmt' -- last
+             --+ EM'statement'-- (missing `_´?)'
+             + EM'statement (usually a missing `var´ or C prefix `_´)'
 
-    , Type = V'__ID_type'               -- id (* + [k] + & + ?)^0
-           * ( (CK'&&'-P'&'^3) + (CK'&'-'&&') + CK'?'
-             + K'['*(V'__Exp'+Cc('[]'))*K']'
-             )^0
-
-    , __ID_field = CK(Alpha * (Alphanum)^0)
-
-    -- (int, void*)
-    , _TupleTypeItem_1 = Cc(false) * EV'Type' * Cc(false)
-    , _TupleType_1 = K'(' * EV'_TupleTypeItem_1' * (EK','*V'_TupleTypeItem_1')^0 * EK')'
-
-    -- (int v, nohold void* ptr)
-    , _TupleTypeItem_2 = (CKEY'@hold'+Cc(false)) * EV'Type' * (EV'__ID_var'+Cc(false))
-    , _TupleType_2 = K'(' * EV'_TupleTypeItem_2' * (EK','*V'_TupleTypeItem_2')^0 * EK')'
-
-    , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
-
-    , Host    = (KEY'native/pre'*Cc(true) + KEY'native'*Cc(false))
-                * (#EKEY'do')*'do' * --m.S' \n\t'^0 *
-                    ( C(V'_C') + C((P(1)-(m.S'\t\n\r '*'end'*P';'^0*'\n'))^0) )
-                *S* EKEY'end'
-
-    , RawStmt = K'{' * C((P(1)-'}')^0) * EK'}'
-    , RawExp  = K'{' * C((P(1)-'}')^0) * EK'}'
+    , __StmtB = V'_Dcl_fun1' + V'_Dcl_ext1'
+              + V'_Dcl_ifc'  + V'Dcl_cls' + V'Dcl_adt'
+              + V'Host'
+              + V'Do'    + V'If'
+              + V'_Loop' + V'_Every' + V'_TraverseLoop'
+              + V'Finalize'
+              + V'ParOr' + V'ParAnd' + V'_Watching'
+              + V'_Pause'
+              + V'Async' + V'_Thread' + V'Sync' + V'Atomic'
+              + V'_GlobalDo'
+              + V'_LuaStmt'
 
     --, _C = '/******/' * (P(1)-'/******/')^0 * '/******/'
     , _C      = m.Cg(V'_CSEP','mark') *
@@ -547,17 +588,6 @@ end
     , __commcmp = m.Cmt(V'__commcl' * m.Cb'comm',
                     function (s,i,a,b) return a == b end)
 
-    -- Stmt/Exp differ only by the "return" and are re-unified in "adj.lua"
-    , _LuaStmt = V'__lua'
-    , _LuaExp  = Cc'return ' * V'__lua'
-
-    , __lua    = K'[' * m.Cg(P'='^0,'lua') * '[' *
-                ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
-                 * (V'__luacl'/function()end) *S
-    , __luaext = K'@' * V'__Exp'
-    , __luacl  = ']' * C(P'='^0) * EK']'
-    , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
-                    function (s,i,a,b) return a == b end)
 }
 
 function err ()
