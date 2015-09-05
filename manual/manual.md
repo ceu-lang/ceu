@@ -4,39 +4,20 @@
 Introduction
 ============
 
-Céu is a programming language for reactive applications and intends to offer a 
-higher-level and safer alternative to C.
-The two main peculiarities of Céu are the [synchronous execution 
-model](#synchronous-execution-model) and the use of [organisms as 
-abstractions](#organisms-as-abstractions).
-
-Reactive applications interact in real time and continuously with external 
-stimuli from the environment.
-They represent a wide range of software areas and platforms: from games in 
-powerful desktops, *"apps"* in capable smart phones, to the emerging internet 
-of things in constrained embedded systems.
-
-Céu supports concurrent lines of execution---known as *trails*---that react 
-continuously to input events from the environment.
+Céu is an imperative, concurrent and reactive language in which then lines of 
+execution, known as *trails*, react together continuously and in synchronous 
+steps to external input events from the environment.
 Waiting for an event halts the running trail until that event occurs.
 The environment broadcasts an occurring event to all active trails, which share 
 a single global time reference (the event itself).
+
 The synchronous concurrency model of Céu greatly diverges from conventional 
 multithreading (e.g. *pthreads* and *Java threads*) and the actor model (e.g.  
 *erlang* and *Go*).
 On the one hand, trails can share variables in a deterministic and seamless way 
 (e.g. no need for locks or semaphores).
 On the other hand, there is no real parallelism (e.g. multi-core execution) in 
-the standard synchronous operation mode of the language.
-Céu is a language for real-time concurrency with complex control 
-specifications, but not for algorithm-intensive or distributed applications.
-
-<!--
-TODO (organisms)
-
-TODO (emphasize synchronous+organisms)
-
--->
+the standard synchronous execution mode of the language.
 
 Céu integrates well with C, being possible to define and call C functions from 
 within Céu programs.
@@ -44,12 +25,27 @@ within Céu programs.
 Céu is [free software](#license).
 
 <!--
+Céu is a language for real-time concurrency with complex control 
+specifications, but not for algorithm-intensive or distributed applications.
+ "Structured Synchronous Reactive Programming"
+(safe and deterministic concurrency with side effects)
+Céu supports mutable data, with static memory and safe pointer manipulation.
+Céu is a programming language for reactive applications and intends to offer a 
+higher-level and safer alternative to C.
+The two main peculiarities of Céu are the [synchronous execution 
+model](#synchronous-execution-model) and the use of [organisms as 
+abstractions](#organisms-as-abstractions).
+Reactive applications interact in real time and continuously with external 
+stimuli from the environment.
+They represent a wide range of software areas and platforms: from games in 
+powerful desktops, *"apps"* in capable smart phones, to the emerging internet 
+of things in constrained embedded systems.
+Céu supports concurrent lines of execution---known as *trails*---that react 
+continuously to input events from the environment.
 Céu has a memory footprint of around 2Kb of ROM and 50b of RAM (on embedded 
 platform such as Arduino).
-
 For a gentle introduction about Céu, see the [interactive 
 tutorial](http://www.ceu-lang.org/try.php).
-
 See also the complete [Syntax](#syntax) of Céu.
 -->
 
@@ -59,19 +55,24 @@ Synchronous execution model
 Céu is grounded on a precise definition of *logical time* as a discrete 
 sequence of external input events:
 a sequence because only a single input event is handled at a logical time; 
-discrete because reactions to events are guaranteed to execute in bounded time 
-(here the human notion of time, see [Bounded execution](#bounded-execution)).
+discrete because reactions to events are guaranteed to execute in bounded real 
+time (see [Bounded execution](#bounded-execution)).
 
 The execution model for Céu programs is as follows:
 
 1. The program initiates the *boot reaction* from the first line of code in a
       single trail.
-2. Active trails, one after another, execute until they await or terminate.
+2. Active trails<sup>1</sup>, one after another, execute until they await or 
+      terminate.
       This step is named a *reaction chain*, and always runs in bounded time.
 3. The program goes idle and the environment takes control.
 4. On the occurrence of a new external input event, the environment awakes 
       *all* trails awaiting that event.
       It then goes to step 2.
+
+(<sup>1</sup>
+*Trails can be created with [parallel 
+compositions](#parallel-compositions-and-abortion).*)
 
 The synchronous execution model of Céu is based on the hypothesis that internal 
 reactions run *infinitely faster* in comparison to the rate of external events.
@@ -84,9 +85,7 @@ When multiple trails are active at a logical time (i.e. awaking on the same
 event), Céu schedules them in the order they appear in the program text.
 This policy is somewhat arbitrary, but provides a priority scheme for trails, 
 and also ensures deterministic and reproducible execution for programs.
-Note that, at any time, at most one trail is executing.
-Trails are created with [parallel 
-compositions](#parallel-compositions-and-abortion).
+At any time, at most one trail is executing.
 
 The program and diagram below illustrate the behavior of the scheduler of Céu:
 
@@ -175,9 +174,9 @@ Before aborting, a trail has a last opportunity to execute all active
 [finalization statements](finalization).
 
 As mentioned in the introduction and emphasized in the execution model, trails 
-inside parallel compositions do execute with real parallelism.
-It is more accurate to think of parallel compositions as *trails awaiting in 
-parallel*, given that conceptually trails are always awaiting.
+inside parallel compositions do not execute with real parallelism.
+Therefore, inside compositions trails are *awaiting in parallel*, rather than 
+*executing in parallel*.
 
 ### Bounded execution
 
@@ -220,11 +219,11 @@ event.
 
 An `emit` starts a new *internal reaction* in the program:
 
-1. On an `emit`, the scheduler saves the statement following it to execute 
-later.
+1. On an `emit`, the scheduler remembers the statement following it to execute 
+later (i.e., its continuation).
 2. All trails awaiting the emitted event awake and execute (like rule 2 for 
 external reactions).
-3. The emitting trail resumes execution on the saved statement.
+3. The emitting trail resumes execution from its continuation.
 
 If an awaking trail emits another internal event, a new internal reaction 
 starts.
@@ -264,10 +263,10 @@ lines of execution (control state).
 
 A class of organisms is composed of an *interface* and a single *execution 
 body*.
-The interface exposes public variables, methods, and internal events, like in 
-object oriented programming.
-The body can contain any valid code in Céu (including parallel compositions) 
-and starts on organism instantiation, executing in parallel with the program.
+The interface exposes public variables, methods, and internal events, just like 
+objects.
+The body can contain any valid code in Céu, which starts on the organism 
+instantiation and executes in parallel with the program.
 Organism instantiation can be either [static](#variables) or 
 [dynamic](#dynamic-execution).
 
@@ -282,14 +281,14 @@ Each blinking LED is a static instance organism of the `Blink` class:
  1:  <b>class</b> Blink <b>with</b>
  2:      <b>var int</b> led;
  3:      <b>var int</b> freq;
- 4:  <b>do</b><font style="background-color: yellow">
+ 4:  <b>do</b>
  5:      <b>loop do</b>
  6:          _on(<b>this</b>.led);
  7:          <b>await</b> (<b>this</b>.freq)s;
  8:          _off(<b>this</b>.led);
  9:          <b>await</b> (<b>this</b>.freq/2)s;
 10:      <b>end</b>
-11:  <b>end</b></font>
+11:  <b>end</b>
 12:
 13:  <b>var</b> Blink b1 <b>with</b>
 14:       <b>this</b>.led  = 0;
@@ -379,6 +378,8 @@ The allocation and deallocation of organisms is static, with no runtime
 overhead such as garbage collection.
 -->
 
+------------------------------------------------------------------------------
+
 Lexical rules
 =============
 
@@ -389,39 +390,39 @@ Keywords in Céu are reserved names that cannot be used as identifiers (e.g.,
 variable and class names):
 
 <pre><code><b>
-        and          async        async/thread atomic       await
+        and             async           async/thread    atomic          await
 
-        bool         break        byte         call         call/rec
+        bool            break           byte            call            call/rec
 
-        char         class        continue     data         do
+        char            class           continue        data            do
 
-        else         else/if      emit         end          escape
+        else            else/if         emit            end             escape
 
-        event        every        f32          f64          false
+        event           every           f32             f64             false
 
-        finalize     float        FOREVER      function     global
+        finalize        float           FOREVER         function        global
 
-        if           in           input        input/output int
+        if              in              input           input/output    int
 
-        interface    isr          kill         loop         native
+        interface       isr             kill            loop            native
 
-        native/pre   new          not          nothing      null
+        native/pre      new             not             nothing         null
 
-        or           outer        output       output/input par
+        or              outer           output          output/input    par
 
-        par/and      par/or       pause/if     pool         return
+        par/and         par/or          pause/if        pool            return
 
-        s16          s32          s64          s8           request
+        s16             s32             s64             s8              request
 
-        sizeof       spawn        sync         tag          then
+        sizeof          spawn           sync            tag             then
 
-        this         traverse     true         u16          u32
+        this            traverse        true            u16             u32
 
-        u64          u8           uint         until        var
+        u64             u8              uint            until           var
 
-        void         watching     with         word         @const
+        void            watching        with            word            @const
 
-        @hold        @nohold      @plain       @pure        @rec
+        @hold           @nohold         @plain          @pure           @rec
 
         @safe
 </b></code></pre>
@@ -522,6 +523,8 @@ a = 1;
 **/
 </code></pre>
 
+
+------------------------------------------------------------------------------
 
 Types
 =====
@@ -634,6 +637,8 @@ Example:
 </code></pre>
 
 *Note: currently, Céu has no syntax for initializing vectors.*
+
+------------------------------------------------------------------------------
 
 Statements
 ==========
@@ -1440,7 +1445,7 @@ Example:
 <pre><code>
 <b>input int</b> A;
 <b>par/or do</b>
-    <b>var _FILE* f;
+    <b>var</b> _FILE* f;
     <b>finalize</b>
         f = _fopen("/tmp/test.txt");
     <b>with</b>
@@ -1454,7 +1459,7 @@ Example:
 <b>end</b>
 </code></pre>
 
-The program open `f` and writes to it on every occurrence of `A`.
+The program opens `f` and writes to it on every occurrence of `A`.
 The writing trail is aborted after one second, but the `finalize` safely closes
 the file, because it is associated to the block that declares `f`.
 
@@ -1718,6 +1723,8 @@ parser:
 <b>end</b>
 </code></pre>
 
+------------------------------------------------------------------------------
+
 Expressions
 ===========
 
@@ -1950,6 +1957,7 @@ s.v = 1;
 ps:v = 1;
 </code></pre>
 
+------------------------------------------------------------------------------
 
 Static analysis
 ===============
@@ -1979,6 +1987,8 @@ Organisms references
 --------------------
 
 TODO
+
+------------------------------------------------------------------------------
 
 Environment
 ===========
@@ -2208,6 +2218,8 @@ The command line options for the compiler are as follows:
 
 The values in parenthesis show the defaults for the options that are omitted.
 
+------------------------------------------------------------------------------
+
 Errors
 ======
 
@@ -2299,9 +2311,9 @@ Examples:
 
 <pre><code><b>class</b> T <b>with</b>
     <b>var void</b>* ptr;
-    <b>function</b> (<b>void* v)=><b>void</b> f;
+    <b>function</b> (<b>void</b>* v)=><b>void</b> f;
 <b>do</b>
-    <b>function</b> (<b>void* v)=><b>void</b> f <b>do</b>
+    <b>function</b> (<b>void</b>* v)=><b>void</b> f <b>do</b>
         ptr := v;
     <b>end</b>
 <b>end</b>
@@ -2428,6 +2440,8 @@ Example:
 >>> ERR [1010] : file.ceu : line 1 : invalid `finalize´
 </code></pre>
 
+------------------------------------------------------------------------------
+
 Syntax
 ======
 
@@ -2501,9 +2515,9 @@ Stmt ::= &lt;empty-string&gt;
               Nat_type  ::= ID_nat `=´ NUM
               Nat_func  ::= ID_nat `(´ `)´
               Nat_var   ::= ID_nat
-      | (<b>native/pre</b> | <b>native<b>) <b>do</b>
+      | (<b>native/pre</b> | <b>native</b>) <b>do</b>
             <i>&lt;C code definitions&gt;</i>
-        <b>end</end>
+        <b>end</b>
 
       /* deterministic annotations */
       | <b>@safe</b> ID <b>with</b> ID { `,´ ID }
@@ -2741,6 +2755,8 @@ Prim ::= `(´ Exp `)´
     # preprocessor directive
 
 </code></pre>
+
+------------------------------------------------------------------------------
 
 License
 =======
