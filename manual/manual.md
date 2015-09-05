@@ -171,7 +171,7 @@ The termination of a trail inside a `par/or` aborts the other trails in
 parallel, which must be necessarily awaiting (from rule 2 of [Execution 
 model](#synchronous-execution-model)).
 Before aborting, a trail has a last opportunity to execute all active 
-[finalization statements](finalization).
+[finalization statements](#finalization).
 
 As mentioned in the introduction and emphasized in the execution model, trails 
 inside parallel compositions do not execute with real parallelism.
@@ -202,13 +202,7 @@ execution](#asynchronous-execution).
 
 ### Deterministic execution
 
-TODO (deterministic scheduler + optional static analysis)
-
-<!--
-Shared-memory concurrency
-
-TODO
--->
+`TODO (shared memory + deterministic scheduler + optional static analysis)`
 
 ### Internal reactions
 
@@ -404,7 +398,7 @@ variable and class names):
 
         if              in              input           input/output    int
 
-        interface       isr             kill            loop            native
+        interface       interrupt       kill            loop            native
 
         native/pre      new             not             nothing         null
 
@@ -431,22 +425,36 @@ Identifiers
 -----------
 
 Céu uses identifiers to refer to *variables*, *internal events*, *external 
-events*,  *classes/interfaces*, and *native symbols*.
+events*,  *classes/interfaces*, *data types*, *data tags*, *fields*, and 
+*native symbols*.
 
 ```
-ID      ::= <a-z, A-Z, 0-9, _> +
-ID_var  ::= ID    // beginning with a lowercase letter (variables and internal events)
-ID_ext  ::= ID    // all in uppercase, not beginning with a digit (external events)
-ID_cls  ::= ID    // beginning with an uppercase letter (classes)
-ID_nat  ::= ID    // beginning with an underscore (native symbols)
+ID       ::= <a-z, A-Z, 0-9, _>+
+ID_var   ::= `_´ | ID           // [variables and internal events] beginning with a lowercase letter
+ID_ext   ::= ID                 // [external events] all in uppercase, not beginning with a digit
+ID_cls   ::= ID                 // [classes and interfaces] beginning with an uppercase letter
+ID_data  ::= ID                 // [data types] beginning with an uppercase letter
+ID_tag   ::= ID                 // [data tags] all in uppercase, not beginning with a digit
+ID_field ::= ID                 // [fields] not beginning with a digit
+ID_nat   ::= ID                 // [native symbols] beginning with an underscore
+ID_type  ::= ( ID_nat | ID_cls  // [types]
+             | <b>bool</b>  | <b>byte</b>  | <b>char</b>  | <b>f32</b>   | <b>f64</b>   |
+             | <b>float</b> | <b>int</b>   | <b>s16</b>   | <b>s32</b>   | <b>s64</b>   |
+             | <b>s8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>   | <b>u8</b>    |
+             | <b>uint</b>  | <b>void</b>  | <b>word</b> )
 ```
+
+Class, interface, and data [declarations] create new [types] which can be used 
+as type identifiers.
 
 Examples:
 
-<pre><code><b>var int</b> a;                    // "a" is a variable
+<pre><code><b>var int</b> a;                    // "a" is a variable, "int" is a type
 <b>emit</b> e;                       // "e" is an internal event
 <b>await</b> E;                      // "E" is an external input event
-<b>var</b> T t;                      // "T" is a class
+<b>var</b> Sprite s;                 // "Sprite" is a class and a type
+<b>var</b> List l;                   // "List" is a data type and a type
+<b>return</b> list.CONS.head;        // "CONS" is a tag, "head" is a field
 _printf("hello world!\n");    // "_printf" is a native symbol
 </code></pre>
 
@@ -466,7 +474,7 @@ Integer values can be written in different bases and also as ASCII characters:
 * Octals are prefixed with <tt>0</tt>.
 * Hexadecimals are prefixed with <tt>0x</tt>.
 * ASCII characters and escape sequences are surrounded by apostrophes.
-* TODO: "1e10"
+* `TODO: "1e10"`
 
 Examples:
 
@@ -482,11 +490,11 @@ c = '\n';
 
 ### Floats
 
-TODO (like C)
+`TODO (like C)`
 
 ### Null pointer
 
-The `null` literal represents null [pointers](#pointers).
+The `null` literal represents null [pointers](#pointer).
 
 ### Strings
 
@@ -531,20 +539,16 @@ Types
 
 Céu is statically typed, requiring all variables and events to be declared before they are used.
 
-<!--
-[ TODO ]
-, the [[Assignable expressions]] in the left and the assigning expression in the right must match the [[#sec.type|types]].
--->
+A type is composed of an identifier with a sequence of optional modifiers:
 
-A type is composed of an identifier with an optional modifier:
-
-<pre><code>Type ::= ID_type ( {`*´} | `&´ | `[´ `]´ | `[´ NUM `]´ )
+<pre><code>Type ::= ID_type ( `&&´ | `&´ | `?´ | `[´ [NUM] `]´ )
 </code></pre>
 
 A type identifier can be a [native identifier](#identifiers), a [class 
-identifier](#identifiers), or one of the primitive types:
+identifier](#identifiers), a [data type identifier](#identifiers) or one of the 
+primitive types:
 
-<pre><code>ID_type ::= ( ID_nat | ID_cls |
+<pre><code>ID_type ::= ( ID_nat | ID_cls | ID_data
               <b>bool</b>  | <b>byte</b>  | <b>char</b>  | <b>f32</b>   | <b>f64</b>   |
               <b>float</b> | <b>int</b>   | <b>s16</b>   | <b>s32</b>   | <b>s64</b>   |
               <b>s8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>   | <b>u8</b>    |
@@ -555,8 +559,9 @@ Examples:
 
 <pre><code><b>var u8</b> v;       // "v" is of 8-bit unsigned integer type
 <b>var</b> _rect r;    // "r" is of external native type "rect"
-<b>var char</b>* buf;  // "buf" is a pointer to a "char"
-<b>var</b> T t;        // "t" is an organism of class "T"
+<b>var char</b>&& buf; // "buf" is a pointer to a "char"
+<b>var</b> Send s;     // "s" is an organism of class "Send"
+<b>var</b> Tree t;     // "t" is a data of type "Tree"
 </code></pre>
 
 Primitive types
@@ -604,28 +609,30 @@ Example:
 Class and Interface types
 -------------------------
 
-TODO (brief description)
+`TODO (brief description)`
 
 See [Classes and Interfaces](#classes-and-interfaces).
 
 Type modifiers
 --------------
 
-Types can be suffixed with the following modifiers: `*`, `&`, `[]`, and `[N]`.
+Types can be suffixed with the following modifiers: `&&`, `&`, `?`, and `[N]`.
 
-### Pointers
+### Pointer
 
-TODO (like C)
+`TODO (like C)`
 
-### References
+### Alias
 
-TODO (more or less like C++)
+`TODO (like C++ references)`
 
-### Buffer pointers
+### Option
 
-TODO (more or less like pointers)
+`TODO (like Maybe)`
 
-### Vectors
+### Dimension
+
+`TODO (vectors, pools)`
 
 One-dimensional vectors are declared by suffixing the variable type with the 
 vector length surrounded by `[` and `]`.
@@ -635,8 +642,6 @@ Example:
 
 <pre><code><b>var int</b>[2] v;       // declares a vector "v" of 2 integers
 </code></pre>
-
-*Note: currently, Céu has no syntax for initializing vectors.*
 
 ------------------------------------------------------------------------------
 
@@ -683,11 +688,11 @@ Declarations
 
 The syntax for the definition of variables is as follows:
 
-<pre><code>Dcl_var ::= <b>var</b> Type ID_var [`=´ SetExp] { `,´ ID_var [`=´ SetExp] }
+<pre><code>DclVar ::= <b>var</b> Type ID_var [`=´ Assignment] { `,´ ID_var [`=´ Assignment] }
 </code></pre>
 
-A variable must have an associated [type](#types) and can be optionally 
-initialized (see [Assignments](#assignments)).
+A variable has an associated [type](#types) and can be optionally initialized 
+(see [Assignments](#assignments)).
 
 Variables are only visible inside the [block](#blocks) they are defined.
 
@@ -703,9 +708,9 @@ An organism is a variable whose type is the identifier of a [class
 declaration](#classes-and-interfaces).
 An optional constructor can initialize the organism fields:
 
-<pre><code>Dcl_org ::= <b>var</b> Type ID_var [ <b>with</b>
+<pre><code>DclOrg ::= <b>var</b> Type ID_var [ <b>with</b>
               Block
-            <b>end</b> ]
+           <b>end</b> ]
 </code></pre>
 
 Example:
@@ -720,10 +725,10 @@ Example:
 <b>end</b>
 </code></pre>
 
-After the declaration, the body of an organism starts to execute in parallel 
-with the rest of the application.
+After the declaration, the body of an organism starts to execute in 
+[parallel](#parallel-compositions] with the rest of the application.
 The table below shows the equivalent expansion of an organism declaration to a 
-[`par/or`](#par/or) composition containing the class body:
+[`par/or`](#paror) containing the class body:
 
 <table width="100%">
 <tr valign="top">
@@ -751,17 +756,18 @@ The table below shows the equivalent expansion of an organism declaration to a
 </table>
 
 Given that an organism is a variable, the block it is declared restricts its 
-life.
+lifetime.
 In the expansion, the `par/or` makes the organism to go out of scope when 
-`&lt;code-pos-declaration&gt;` terminates.
+`<code-pos-declaration>` terminates.
 
-TODO (assumes code-pos-declaration closes the block exactly on the end)
-TODO (vectors of organisms: copy the declaration N times)
+`TODO (assumes code-pos-declaration closes the block exactly on the end)`
+
+`TODO (vectors of organisms: copy the declaration N times)`
 
 ##### Constructors
 
 Inside constructors the expression `this` refers to the new organism, while the 
-expression `outer` refers to the organism creating the new organism:
+expression `outer` refers to the enclosing organism creating the new organism:
 
 <pre><code><b>class</b> U <b>with</b>
     <b>var int</b> v;
@@ -778,9 +784,106 @@ expression `outer` refers to the organism creating the new organism:
 <b>end</b>
 </code></pre>
 
+### Pools
+
+A pool is a container for [dynamic instances of organisms](#dynamic-execution) 
+and [recursive data](#TODO) of the same type:
+
+<pre><code>DclPool ::= <b>pool</b> Type ID_var [`=´ Assignment] { `,´ ID_var [`=´ Assignment] }
+</code></pre>
+
+The type has to be a [class, interface, or data type identifier](#identifiers) 
+followed by a [dimension modifier](#dimension).
+For pools of classes and recursive data types, the number inside the dimension 
+brackets represents the maximum number of instances supported by the pool.
+For pools of interfaces, the number represents the maximum number of bytes for 
+all instances (as each instance may have a different size).
+
+The number inside the vector modifier brackets is optional.
+If not specified, the number of instances in the pool is unbounded and all 
+allocations go to the heap.
+When specified, allocation goes to a static memory pool preallocated at compile 
+time.
+
+Examples:
+
+<code><pre><b>pool</b> T[10]  ts;      // a pool of at most 10 instances of class "T"
+<b>pool</b> T[]    ts;      // an unbounded pool of instances of class "T"
+<b>pool</b> I[100] is;      // a pool of at most 100 bytes of instances of interface "I"
+<b>pool</b> I[]    is;      // an unbounded pool of instances of interface "I"
+<b>pool</b> D[100] ds;      // a pool of at most 100 instances of recursive data type "D"
+<b>pool</b> D[]    ds;      // an unbounded pool of instances of recursive data type "D"
+</code></pre>
+
+The lifetime of all instances inside a pool is restricted to the block it is 
+declared.
+When a pool of organisms goes out of scope, all organism bodies are 
+automatically aborted.
+
+See [Dynamic execution](#dynamic-execution) for organisms allocation.
+See [TODO](#TODO) for recursive data allocation.
+
+### Functions
+
+`TODO (intro/prototype/implementation)`
+
+<pre><code>/* internal functions */
+DclFun ::= <b>function</b> [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var
+              [ `do´ Block `end´ ]
+
+/* external functions */
+DclFunExt ::= <b>output</b> [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var ID_ext { `,´ ID_ext }
+            | <b>input</b>  [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var ID_ext { `,´ ID_ext }
+                 [ `do´ Block `end´ ]
+
+Return ::= <b>return</b> [Exp]
+
+ParList ::= ParItem { `,´ ParItem }
+ParItem ::= [<b>@hold</b>] Type [ID_var]
+</code></pre>
+
+#### Internal functions
+
+`TODO (like functions in any language)`
+
+#### External functions
+
+`TODO (more or less like dynamically loaded functions)`
+
+##### return
+
+`TODO (like return in any language)`
+
+### Interrupt service routines
+
+`TODO`
+
+<pre><code>DclIsr ::= <b>interrupt</b> `[´ NUM `]´ [<b>@rec</b>]
+              [ `do´ Block `end´ ]
+</code></pre>
+
 ### Events
 
 See also [Event handling](#event-handling).
+
+#### Internal events
+
+Internal events have the same purpose of external events, but for 
+[communication within trails in a program](#internal-reactions).
+
+The declaration of internal events is as follows:
+
+<pre><code>DclInt ::= <b>event</b> (Type | `(´ TypeList `)´) ID_var { `,´ ID_var }
+</code></pre>
+
+In contrast with external events, an internal event is for input and output at 
+the same time.
+
+Internal events cannot be of a vector type.
+
+*Note: <tt>void</tt> is a valid type for signal-only internal events.*
+
+<span id="sec.stmts.decls.c"></span>
 
 #### External events
 
@@ -791,19 +894,14 @@ real world:
 * *output* events represent output devices, such as LEDs, motors, etc.
 
 Being reactive, programs in Céu have input events as their sole entry points 
-through [await statements](#await).
-
-An external event is either of type input or output, never being both at the 
-same time.
-For devices that perform input and output (e.g. radio transceivers), the 
-underlying platform must provide different events for each functionality.
+through [await statements](#await-statements).
 
 The declaration of input and output events is as follows:
 
-<pre><code>Dcl_ext ::= <b>input</b> (Type|TypeList) ID_ext { `,´ ID_ext }
-         |  <b>output</b> Type ID_ext { `,´ ID_ext }
+<pre><code>DclExt ::= <b>output</b> (Type | `(´ TypeList `)´) ID_ext { `,´ ID_ext }
+         | <b>input</b>  (Type | `(´ TypeList `)´) ID_ext { `,´ ID_ext }
 
-TypeList ::= `(´ Type { `,´ Type } `)´
+TypeList ::= Type { `,´ Type }
 </code></pre>
 
 Events communicate values between the environment and the application (and 
@@ -828,131 +926,86 @@ program.
 Refer to [Environment](#environment) for information about interfacing with 
 external events in the platform level.
 
-##### Requests
+##### External Requests
 
-TODO (emit + await)
+`TODO (emit + await)`
 
-#### Internal events
-
-Internal events have the same purpose of external events, but for 
-[communication within trails in a program](#internal-reactions).
-
-The declaration of internal events is as follows:
-
-<pre><code>Dcl_int ::= <b>event</b> (Type|TypeList) ID_var { `,´ ID_var }
+<pre><code>DclReq ::= <b>output/input</b> `[´ [Exp] `]´ `(´ParList`)´ `=>´ Type ID_ext { `,´ ID_ext }
+         | <b>input/output</b> `[´ [Exp] `]´ `(´ParList`)´ `=>´ Type ID_ext { `,´ ID_ext }
+            [ `do´ Block `end´ ]
 </code></pre>
 
-In contrast with external events, an internal event is for input and output at 
-the same time.
-
-Internal events cannot be of a vector type.
-
-*Note: <tt>void</tt> is a valid type for signal-only internal events.*
-
-<span id="sec.stmts.decls.c"></span>
-
-### Functions
-
-#### Internal functions
-
-TODO (like functions in any language)
-
-<pre><code>Dcl_fun ::= <b>function</b> [<b>@rec</b>] ParList `=>´ Type ID_var
-            [ <b>do</b> Block <b>end</b> ]
-
-ParList     ::= `(´ ParListItem [ { `,´ ParListItem } ] `)´
-ParListItem ::= [<b>@hold</b>] Type [ID_var]
-</code></pre>
-
-##### return
-
-TODO (like return in any language)
-
-<pre><code>Return ::= <b>return</b> [Exp]
-</code></pre>
-
-#### External functions
-
-TODO (more or less like dynamically loaded functions)
-
-#### Interrupt service routines
-
-TODO (special/restricted functions)
+<!--
+An external event is either of type input or output, never being both at the 
+same time.
+For devices that perform input and output (e.g. radio transceivers), the 
+underlying platform must provide different events for each functionality.
+-->
 
 ### Classes and Interfaces
 
 A `class` is a template for creating organisms.
 It contains an *interface* and a *body* common to all instances of the class.
-The interface connects an organism with the rest of the application, exposing 
-internal variable, events, and methods that other organisms can manipulate 
-directly.
+The interface exposes internal variables, events, and methods that other 
+organisms can manipulate directly.
 The body specifies the behavior of the organism and executes when it is 
 instantiated.
 
-An `interface` is a template for classes that shares the same interface (as 
-described above, the term *interface* is overloaded here).
-The body and methods implementations may vary across classes sharing the same 
+An `interface` is a template for classes that shares the same 
+interface<sup>1</sup>.
+The body and method implementations may vary among classes sharing the same 
 interface.
+
+(<sup>1</sup>
+*The term "interface" is overload with two possible meanings: the set of 
+members exposed by a class; and a template that defines a set of members that 
+classes can reuse.*)
 
 The declaration of classes and interfaces is as follows:
 
-<pre><code>Dcl_cls ::= <b>class</b> ID_cls <b>with</b>
+<pre><code>DclCls ::= <b>class</b> ID_cls <b>with</b>
                 Dcls    // interface
             <b>do</b>
                 Block   // body
             <b>end</b>
 
-Dcl_ifc ::= <b>interface</b> ID_cls <b>with</b>
+DclIfc ::= <b>interface</b> ID_cls <b>with</b>
                 Dcls    // interface
             <b>end</b>
 
-Dcls ::= { (Dcl_var | Dcl_int | Dcl_pool | Dcl_fun | Dcl_imp) `;´ }
+Dcls ::= { (DclVar | DclInt | DclPool | DclFun | DclImp) `;´ }
 
-Dcl_imp ::= <b>interface</b> ID_cls { `,´ ID_cls }
+DclImp ::= <b>interface</b> ID_cls { `,´ ID_cls }
 </code></pre>
 
 `Dcls` is a sequence of variables, events, pools, and functions (methods) 
 declarations.
-It can also refer other interfaces through a `Dcl_imp` clause, which copies all 
-declarations from the referred interfaces (similarly to the `implements` clause 
-of Java).
+It can also refer to other interfaces through a `DclImp` clause, which copies 
+all declarations from the referred interfaces.
 
-### Pools
+### Data Types
 
-A pool is a container for dynamic instances of organisms of the same type:
+`TODO`
 
-<pre><code>Dcl_pool ::= <b>pool</b> Type ID_var { `,´ ID_var }
+<pre><code>DclData ::= <b>data</b> ID_data <b>with</b>
+                (Struct | Union)
+            <b>end</b>
+
+Struct ::= DclVar `;´ { DclVar `;´ }
+Union  ::= DclTag { <b>or</b> DclTag }
+
+DclVar ::= <b>var</b> Type ID_var { `,´ ID_var }
+DclTag ::= <b>tag</b> ID_tag <b>with</b>
+               DclVar `;´ { DclVar `;´ }
+           <b>end</b>
 </code></pre>
-
-The type has to be a [class or interface identifier](#identifiers) followed by 
-a [vector modifier](#vectors).
-For pools of classes, the number inside the vector brackets represents the 
-maximum number of instances supported by the pool.
-For pools of interfaces, the number represents the maximum number of bytes for 
-all instances (as each instance may have a different size).
-The number inside the vector modifier brackets is optional, though.
-In this case, the number of instances in the pool is unbounded.
-
-Examples:
-
-<code><pre><b>pool</b> T[10]  ts;      // a pool of at most 10 instances of class "T"
-<b>pool</b> T[]    ts;      // an unbounded pool of instances of class "T"
-<b>pool</b> I[100] is;      // a pool of at most 100 bytes of instances of interface "I"
-<b>pool</b> I[]    is;      // an unbounded pool of instances of interface "I"
-</code></pre>
-
-The life of all organisms inside a pool is restricted to the block it is 
-declared.
-When the pool goes out of scope, all organism bodies are aborted.
-
-See [Dynamic execution](#dynamic-execution) for organisms allocation.
 
 ### Native symbols
 
 Native declarations provide additional information about external C symbols.
 A declaration is an annotation followed by a list of symbols:
 
-<pre><code>Dcl_nat   ::= <b>native</b> [<b>@pure</b>|<b>@const</b>|<b>@nohold</b>|<b>@plain</b>] Nat_list
+<pre><code>DclNat   ::= <b>native</b> [<b>@pure</b>|<b>@const</b>|<b>@nohold</b>|<b>@plain</b>] Nat_list
 Nat_list  ::= (Nat_type|Nat_func|Nat_var) { `,` (Nat_type|Nat_func|Nat_var) }
 Nat_type  ::= ID_nat `=´ NUM
 Nat_func  ::= ID_nat `(´ `)´
@@ -969,7 +1022,7 @@ Functions and variables are distinguished by the `()` that follows function decl
 Native symbols can have the following annotations:
 
 **@plain** states that the type is not a pointer to another type.
-**@const** states that the variable is actually a constants (e.g. a `#define`).
+**@const** states that the symbol is a constant (e.g. a `#define`).
 **@pure** states that the function has no side effects.
 **@nohold** states that the function does not hold pointers passed as parameters.
 
@@ -1002,7 +1055,7 @@ Examples:
 A variable or function can be declared as `@safe` with a set of other functions 
 or variables:
 
-<pre><code>Dcl_det ::= <b>@safe</b> ID <b>with</b> ID { `,´ ID }
+<pre><code>DclDet ::= <b>@safe</b> ID <b>with</b> ID { `,´ ID }
 </code></pre>
 
 Example:
@@ -1029,13 +1082,24 @@ Assignments
 
 Céu supports many kinds of assignments:
 
-<pre><code>Set ::= Exp `=´ SetExp
-SetExp ::= Exp | &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt;
-               | &lt;every&gt;  | &lt;par&gt; | &lt;await&gt; | &lt;emit (output)&gt;
-               | &lt;thread&gt; | &lt;spawn&gt; )
-</code></pre>
+<pre><code>Set ::= Exp `=´ Assignment
 
-<!-- TODO: Lua -->
+Assignment ::= Exp
+             | AssignableBlock
+             | &lt;await&gt;
+             | ( [ `(´ ] &lt;emit-ext&gt
+                       | &lt;call-ext&gt;
+                       | &lt;request-ext&gt;
+                 [ `)´ ] )
+             | [ `new´ ] Data
+             | &lt;traverse-loop&gt;
+             | &lt;traverse-rec&gt;
+             | Vector
+             | &lt;lua&gt;
+             | &lt;do-org&gt;
+             | &lt;spawn&gt;
+             | &lt;thread&gt;
+</code></pre>
 
 The expression on the left side must be [assignable](#assignable).
 
@@ -1052,9 +1116,12 @@ a = b + 1;
 ### Block assignment
 
 A whole block can be used as an assignment value by escaping from it.
-The following block statements can be used in assignments: [`do-end´](#do-end) 
+The following block statements can be used in assignments: [`do-end`](#do-end) 
 [`if-then-else`](#conditional), [`loop`](#repetition), [`every`](#every), and 
-[`par`](#par).
+[`par`](#par):
+
+<pre><code>AssignableBlock ::= &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt; | &lt;every&gt; | &lt;par&gt;
+</code></pre>
 
 #### escape
 
@@ -1104,27 +1171,62 @@ See [Await statements](#await-statements).
 
 See [Emit statements](#emit-statements).
 
-### Thread assignment
+### Data assignment
 
-See [Threads](#threads).
+`TODO`
+
+<pre><code>Data ::= ID_data [`.´ ID_tag] `(´ List `)´
+List ::= [ (Data|Exp) { `,´ (Data|Exp) } ]
+</code></pre>
+
+### Traverse assignment
+
+`TODO`
+
+### Vector assignment
+
+`TODO`
+
+<pre><code>Vector ::= Item { `..´ Item }
+Item   ::= Exp | `[´ [ExpList] `]´
+</code></pre>
+
+### Lua assignment
+
+`TODO`
+
+### Do organism assignment
+
+`TODO`
 
 ### Spawn assignment
 
 See [Dynamic execution](#dynamic-execution).
+
+### Thread assignment
+
+See [Threads](#threads).
 
 Calls
 -----
 
 The syntax for function calls is as follows:
 
-<pre><code>Call ::= [ <b>call</b>|<b>call/rec</b> ] Exp * `(´ ExpList `)´
+<pre><code>/* internal calls */
+CallInt ::= [<b>call</b>|<b>call/rec</b>] Exp * `(´ [ExpList] `)´
+
+/* external calls */
+CallExt ::= (<b>call</b>+<b>call/rec</b>) ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
+
 ExpList = Exp { `,´ Exp }
 </code></pre>
 
+<!--
 The called expression has to evaluate to a [internal](#internal-functions), 
 [external](#external-functions)), or [native](#native-symbols) function.
-The `call` operator is optional, but recursive functions must use the 
-`call/rec` operator (see [Static analysis](#static-analysis)).
+For internal and native calls, the `call` operator is optional, but recursive 
+functions must use the `call/rec` operator (see [Static 
+analysis](#static-analysis)).
 
 Examples:
 
@@ -1134,7 +1236,6 @@ o.f();                      // calls method "f" of organism "o"
 F(1,2,3);                   // calls external function "F"
 ```
 
-<!--
 TODO: unbounded execution
 Native functions cannot be \CEU does not extend the bounded execution analysis 
 to $C$ function calls.
@@ -1143,6 +1244,14 @@ responsive.
 On the other hand, they also provide means to circumvent the rigor of \CEU in a
 well-marked way (the special underscore syntax).
 -->
+
+### Internal calls
+
+`TODO`
+
+### External calls
+
+`TODO`
 
 Event handling
 --------------
@@ -1279,7 +1388,7 @@ blocks](#asynchronous-blocks).
 The emission of internal events start new [internal 
 reactions](#internal-reactions).
 
-TODO (emit output evaluates to "int")
+`TODO (emit output evaluates to "int")`
 
 <!--
 : An emit on an output event returns immediately a status code of the action 
@@ -1339,7 +1448,10 @@ A `loop` terminates when it reaches a [`break`](#break) or its (optional)
 
 ### break
 
-A `break` escapes the innermost enclosing loop.
+A `break` escapes the innermost enclosing loop:
+
+<pre><code>Break ::= <b>break</b>
+</code></pre>
 
 Example:
 
@@ -1349,6 +1461,7 @@ Example:
         <b>if</b> &lt;cond-1&gt; <b>then</b>
             <b>break</b>;        // escapes loop 2
         <b>end</b>
+        ...
     <b>end</b>
     ...
     <b>if</b> &lt;cond-2&gt; <b>then</b>
@@ -1357,6 +1470,48 @@ Example:
     ...
 <b>end</b>
 </code></pre>
+
+### continue
+
+A `continue` restarts the innermost enclosing loop:
+
+<pre><code>Continue ::= <b>continue</b>
+</code></pre>
+
+Example:
+
+<pre><code><b>loop do</b>                   // loop 1
+    ...
+    <b>loop do</b>               // loop 2
+        <b>if</b> &lt;cond-1&gt; <b>then</b>
+            <b>continue</b>;        // restarts loop 2
+        <b>end</b>
+        ...
+    <b>end</b>
+    ...
+    <b>if</b> &lt;cond-2&gt; <b>then</b>
+        <b>break</b>;            // restarts loop 1
+    <b>end</b>
+    ...
+<b>end</b>
+</code></pre>
+
+A `continue` can only be used inside an [`if-then-else`](#conditional) with an 
+empty `else` branch and exactly one level deeper than the enclosing `loop`:
+
+<pre><code><b>loop do</b>
+    <b>par do</b>    // makes the "continue" illegal
+        <b>if</b> &lt;cond&gt; <b>then</b>
+            <b>continue</b>;
+        <b>else</b>  // makes the "continue" illegal
+            ...
+        <b>end</b>
+    <b>with</b>
+        ...
+    <b>end</b>
+<b>end</b>
+</code></pre>
+
 
 ### Iterators
 
@@ -1428,7 +1583,7 @@ The `finalize` statement postpones the execution of its body to happen when its
 associated block goes out of scope:
 
 <pre><code>Finalize ::= <b>finalize</b>
-                 [Exp `=´ SetExp]
+                 [Exp `=´ Assignment]
              <b>with</b>
                  Block
              <b>end</b>
@@ -1534,12 +1689,12 @@ A `wacthing` expands to a `par/or` as illustrated below:
 </tr>
 </table>
 
-TODO (supports org refs)
+`TODO (supports org refs)`
 
 pause/if
 --------
 
-TODO
+`TODO`
 
 <pre><code>Pause ::= <b>pause/if</b> Exp <b>do</b>
               Block
@@ -1676,11 +1831,11 @@ The example prints the `v = <v+i>` message exactly 103 times.
 
 ### Threads
 
-TODO
+`TODO`
 
 #### Synchronous blocks
 
-TODO
+`TODO`
 
 <pre><code>Sync ::= <b>sync do</b>
              Block
@@ -1765,7 +1920,7 @@ Most operators follow the same semantics of C.
 Primary
 -------
 
-TODO: global, this, outer,
+`TODO: global, this, outer,`
 
 Arithmetic
 ----------
@@ -1873,9 +2028,9 @@ p:v = 0;
 
 ### Organisms
 
-TODO
+`TODO`
 
-TODO (index clash)
+`TODO (index clash)`
 
 Type casting
 ------------
@@ -1962,31 +2117,31 @@ ps:v = 1;
 Static analysis
 ===============
 
-TODO (introduction)
+`TODO (introduction)`
 
 Types
 -----
 
-TODO (weakly typed, like C)
+`TODO (weakly typed, like C)`
 
-TODO (index clash)
+`TODO (index clash)`
 
 Loops
 -----
 
-TODO
+`TODO`
 
 Finalization
 ------------
 
-TODO
+`TODO`
 
-TODO (index clash)
+`TODO (index clash)`
 
 Organisms references
 --------------------
 
-TODO
+`TODO`
 
 ------------------------------------------------------------------------------
 
@@ -2044,27 +2199,27 @@ int occurring (int evt_id) {
 The field `app.data` expects a pointer to the memory of the application, which 
 has to be previously declared.
 
-TODO
+`TODO`
 
 ### Types
 
-TODO
+`TODO`
 
-TODO (index clash)
+`TODO (index clash)`
 
 ### Functions
 
-TODO
+`TODO`
 
-TODO (index clash)
+`TODO (index clash)`
 
 ### Macros
 
-TODO
+`TODO`
 
 ### Constants and Defines
 
-TODO
+`TODO`
 
 <!--
 
@@ -2456,26 +2611,29 @@ Stmt ::= &lt;empty-string&gt;
   /* Declarations */
 
       /* variables, organisms, pools, and internal events */
-      | <b>var</b> Type ID_var [`=´ &lt;r-assignment&gt;] { `,´ ID_var [`=´ &lt;r-assignment&gt;] }
+      | <b>var</b> Type ID_var [`=´ &lt;Assignment&gt;] { `,´ ID_var [`=´ &lt;Assignment&gt;] }
       | <b>var</b> Type ID_var <b>with</b>
             Block
         <b>end</b>
-      | <b>pool</b> Type ID_var [`=´ &lt;r-assignment&gt;] { `,´ ID_var [`=´ &lt;r-assignment&gt;] }
-      | <b>event</b> (Type|TypeList) ID_var { `,´ ID_var }
+      | <b>pool</b> Type ID_var [`=´ &lt;Assignment&gt;] { `,´ ID_var [`=´ &lt;Assignment&gt;] }
+      | <b>event</b> (Type | `(´ TypeList `)´) ID_var { `,´ ID_var }
 
-      /* functions / interrupts */
-      | <b>function</b> [ <b>isr</b> `[´ NUM `]´ ] [<b>@rec</b>]
-            `(´ParList`)´ `=>´ Type ID_var
+      /* internal functions */
+      | <b>function</b> [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var
+            [ `do´ Block `end´ ]
+
+      /* external functions */
+      | <b>output</b> [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var ID_ext { `,´ ID_ext }
+      | <b>input</b>  [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var ID_ext { `,´ ID_ext }
+            [ `do´ Block `end´ ]
+
+      /* interrupts */
+      | <b>interrupt</b> `[´ NUM `]´ [<b>@rec</b>]
             [ `do´ Block `end´ ]
 
       /* external events */
-      | <b>output</b> (Type|TypeList) ID_ext { `,´ ID_ext }
-      | <b>input</b> (Type|TypeList) ID_ext { `,´ ID_ext }
-
-      /* external calls */
-      | <b>output</b> [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var ID_ext { `,´ ID_ext }
-      | <b>input</b> [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var ID_ext { `,´ ID_ext }
-            [ `do´ Block `end´ ]
+      | <b>output</b> (Type | `(´ TypeList `)´) ID_ext { `,´ ID_ext }
+      | <b>input</b>  (Type | `(´ TypeList `)´) ID_ext { `,´ ID_ext }
 
       /* external requests */
       | <b>output/input</b> `[´ [Exp] `]´ `(´ParList`)´ `=>´ Type ID_ext { `,´ ID_ext }
@@ -2524,21 +2682,23 @@ Stmt ::= &lt;empty-string&gt;
 
   /* Assignments */
 
-        <i>&lt;assignment&gt; ::= &lt;l-assignment&gt; `=´ &lt;r-assignment&gt;</i>
       | (Exp | `(´VarList`)´) `=´
+          /* <i>Assignment</i> */
           ( Exp
+          | AssignableBlock
           | &lt;await&gt;
           | ( [ `(´ ] &lt;emit-ext&gt
                     | &lt;call-ext&gt;
                     | &lt;request-ext&gt;
               [ `)´ ] )
+          | [ `new´ ] Data
+          | &lt;traverse-loop&gt;
+          | &lt;traverse-rec&gt;
+          | Vector
           | &lt;lua&gt;
           | &lt;do-org&gt;
           | &lt;spawn&gt;
           | &lt;thread&gt;
-          | [ `new´ ] Data
-          | Vector
-          | SetBlock
           )
               <i>where</i>
                   Data ::= ID_data [`.´ ID_tag] `(´ List `)´
@@ -2547,11 +2707,15 @@ Stmt ::= &lt;empty-string&gt;
                   Vector ::= Item { `..´ Item }
                   Item   ::= Exp | `[´ [ExpList] `]´
 
-                  SetBlock ::= &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;par&gt; | &lt;loop&gt; | &lt;every&gt;
+                  AssignableBlock ::= &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt; | &lt;every&gt; | &lt;par&gt;
 
   /* Function calls */
 
+      /* internal calls */
       | [<b>call</b>|<b>call/rec</b>] Exp * `(´ [ExpList] `)´
+
+      /* external calls */
+      | (<b>call</b>+<b>call/rec</b>) ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
 
   /* Event handling */
 
@@ -2566,9 +2730,6 @@ Stmt ::= &lt;empty-string&gt;
       | <b>emit</b> Exp    [ `=>´ (Exp | `(´ [ExpList] `)´)
       | <b>emit</b> (WCLOCKK|WCLOCKE)
       | <b>emit</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
-
-      /* external calls */
-      | <b>call</b>+<b>call/rec</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
 
       /* external request */
       | <b>request</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
@@ -2670,28 +2831,29 @@ Block ::= { Stmt `;´ }
 
 /* Identifiers */
 
-ID      ::= &lt;a-z, A-Z, 0-9, _&gt; +
-ID_var  ::= `_´ | ID    // beginning with a lowercase letter
-ID_ext  ::= ID          // all in uppercase, not beginning with a digit
-ID_cls  ::= ID          // beginning with an uppercase letter
-ID_data ::= ID          // beginning with an uppercase letter
-ID_tag  ::= ID          // all in uppercase, not beginning with a digit
-ID_nat  ::= ID          // beginning with an underscore
-
-/* Types */
-
-TypeList ::= `(´ Type { `,´ Type } `)´
-Type     ::= ID_type ( {`*´} | `&´ | `[´ `]´ | `[´ NUM `]´ )
-ID_type  ::= ( ID_nat | ID_cls |
+ID       ::= &lt;a-z, A-Z, 0-9, _&gt; +
+ID_var   ::= `_´ | ID    // beginning with a lowercase letter
+ID_ext   ::= ID          // all in uppercase, not beginning with a digit
+ID_cls   ::= ID          // beginning with an uppercase letter
+ID_data  ::= ID          // beginning with an uppercase letter
+ID_tag   ::= ID          // all in uppercase, not beginning with a digit
+ID_field ::= ID          // not beginning with a digit
+ID_nat   ::= ID          // beginning with an underscore
+ID_type  ::= ( ID_nat | ID_cls | ID_data
              | <b>bool</b>  | <b>byte</b>  | <b>char</b>  | <b>f32</b>   | <b>f64</b>   |
              | <b>float</b> | <b>int</b>   | <b>s16</b>   | <b>s32</b>   | <b>s64</b>   |
              | <b>s8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>   | <b>u8</b>    |
              | <b>uint</b>  | <b>void</b>  | <b>word</b> )
 
+/* Types */
+
+Type ::= ID_type ( `&&´ | `&´ | `?´ | `[´ [NUM] `]´ )
+
 /* Lists */
 
-ExpList  ::= Exp     { `,´ Exp }
-VarList  ::= ID_var  { `,´ ID_var }
+TypeList ::= Type    { `,´ Type    }
+ExpList  ::= Exp     { `,´ Exp     }
+VarList  ::= ID_var  { `,´ ID_var  }
 ParList  ::= ParItem { `,´ ParItem }
                 <i>where</i>
                     ParItem ::= [<b>@hold</b>] Type [ID_var] 
@@ -2716,7 +2878,7 @@ Exp ::= Prim
         |  (<b>not</b>|`+´|`-´|`~´|`*´|`&&´|`&´|`$$´|`$´) Exp
         |  `(´ Type `)´ Exp     /* same precedence as previous */
         |  Exp `[´ Exp `]´      /* same precedence for all following */
-        |  Exp (`.´|`:´) ID
+        |  Exp (`.´|`:´) ID_field
         |  Exp (`?´|`!´)
         |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
 
