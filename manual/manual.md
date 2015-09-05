@@ -1651,7 +1651,7 @@ Example:
 
 #### Pool instances
 
-For iterators in which `Exp` evaluates to a pool of organisms, `ID_var´ 
+For iterators in which `Exp` evaluates to a pool of organisms, `ID_var`
 evaluates to pointers to instances in the pool, one at a time, from the oldest 
 to the newest created.
 `ID_var` is automatically declared read-only, with visibility restricted to the 
@@ -1690,7 +1690,7 @@ An `every` expands to a `loop` as illustrated below:
 </table>
 
 The body of an `every` cannot contain an `await`, ensuring that no occurrences 
-of `&lt;event&gt;` are ever missed.
+of `<event>` are ever missed.
 
 `TODO (restrictions, escape/break)`
 
@@ -2179,8 +2179,7 @@ Precedence
 
 Céu follows the same precedence of C operators:
 
-<pre><code>    
-    /* lowest priority */
+<pre><code>    /* lowest priority */
 
     <b>or</b>
 
@@ -2221,13 +2220,13 @@ a = 1;
 <b>var int</b>[2] v;
 v[0] = 1;
 
-<b>var int</b>* p;
+<b>var int</b>&& p;
 *p = 1;
 
 <b>var</b> _mystruct s;
 s.v = 1;
 
-<b>var</b> _mystruct* ps;
+<b>var</b> _mystruct&& ps;
 ps:v = 1;
 </code></pre>
 
