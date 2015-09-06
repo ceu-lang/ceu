@@ -661,9 +661,8 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
 #ifdef CEU_REENTRANT
     static
-#else
-    byte CEU_STK[CEU_STACK_MAX];
 #endif
+    byte CEU_STK[CEU_STACK_MAX];
 
     tceu_go go;
             go.stk = CEU_STK;
