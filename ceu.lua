@@ -22,6 +22,8 @@ OPTS_NPARAMS = {
     os_luaifc = 0,
 
     timemachine = 0,
+
+    reentrant = 0,
 }
 
 OPTS = {
@@ -47,6 +49,8 @@ OPTS = {
     os_luaifc = false,
 
     timemachine = false,
+
+    reentrant = false,
 }
 
 local params = {...}
@@ -119,6 +123,8 @@ if not OPTS.input then
         --os-luaifc            # TODO
 
         --timemachine          # TODO
+
+        --reentrant            # TODO
 ]])
     os.exit(1)
 end
@@ -268,6 +274,14 @@ do
             str = str .. [[
 #ifndef CEU_TIMEMACHINE
 #define CEU_TIMEMACHINE
+#endif
+]]
+        end
+
+        if OPTS.reentrant then
+            str = str .. [[
+#ifndef CEU_REENTRANT
+#define CEU_REENTRANT
 #endif
 ]]
         end

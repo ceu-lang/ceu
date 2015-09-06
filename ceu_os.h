@@ -1,5 +1,3 @@
-#define CEU_STACK_STACK
-
 #ifndef _CEU_OS_H
 #define _CEU_OS_H
 
@@ -112,7 +110,7 @@
                 ceu_out_log(0, (long)(msg));             \
                 ceu_out_log(0, (long)"\n");              \
             }                                            \
-            ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(__ceu_v) \
+            ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(__ceu_v); \
         }
     #define ceu_out_assert(v,msg) ceu_out_assert_ex((v),(msg),__FILE__,__LINE__)
 
@@ -561,12 +559,11 @@ typedef struct tceu_go {
     /* TODO: possible to calculate (not is CEU_ORGS_NEWS)
     #define CEU_STACK_MAX   (CEU_NTRAILS+1) // current +1 for each trail
     */
-static byte CEU_STK[CEU_STACK_MAX];
 
-#ifdef CEU_STACK_STACK
+#ifdef CEU_REENTRANT
 #define stack_init(app,go) (go)->stk_curi = (go)->stk_nxti = (app)->stki
 #else
-#define stack_init(app,go) (go)->stk_curi = (go)->stk_nxti
+#define stack_init(app,go) (go)->stk_curi = (go)->stk_nxti = 0
 #endif
 #define stack_empty(go)    ((go)->stk_curi == (go)->stk_nxti)
 #define stack_get(go,i)    (((tceu_stk*)&((go)->stk[i])))
@@ -636,7 +633,7 @@ typedef struct tceu_app {
     struct tceu_app* nxt;
 #endif
 
-#ifdef CEU_STACK_STACK
+#ifdef CEU_REENTRANT
     tceu_nstk stki;
 #endif
 

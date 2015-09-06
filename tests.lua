@@ -43777,7 +43777,9 @@ escape 1;
     run = 1,
 }
 
--->>> STACK STACK
+-->>> REENTRANT
+
+if REENTRANT then
 
 Test { [[
 input int E,F;
@@ -43807,7 +43809,9 @@ end
     run = 20,
 }
 
---<<< STACK STACK
+end
+
+--<<< REENTRANT
 
 -- ASYNCS // THREADS
 

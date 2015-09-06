@@ -86,7 +86,6 @@ void* ceu_sys_realloc (void* ptr, size_t size) {
 #ifdef CEU_RUNTESTS
     if (size == 0) {
         if (ptr != NULL) {
-printf("--- %p\n", ptr);
             _ceu_dyns_--;
         }
     } else {
@@ -122,7 +121,7 @@ int ceu_sys_req (void) {
 
 void ceu_stack_pop_f (tceu_app* app, tceu_go* go) {
     go->stk_nxti = go->stk_curi;
-#ifdef CEU_STACK_STACK
+#ifdef CEU_REENTRANT
     app->stki = go->stk_nxti;
 #endif
     go->stk_curi -= stack_cur(go)->offset;
@@ -132,7 +131,7 @@ void ceu_sys_stack_push (tceu_app* app, tceu_go* go, tceu_stk* elem, void* ptr) 
     elem->offset = go->stk_nxti - go->stk_curi;
     go->stk_curi = go->stk_nxti;
     go->stk_nxti = stack_pushi(go, elem);
-#ifdef CEU_STACK_STACK
+#ifdef CEU_REENTRANT
     app->stki = go->stk_nxti;
 #endif
     *stack_cur(go) = *elem;
@@ -660,6 +659,12 @@ _CEU_GO_NO_:
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
+#ifdef CEU_REENTRANT
+    static
+#else
+    byte CEU_STK[CEU_STACK_MAX];
+#endif
+
     tceu_go go;
             go.stk = CEU_STK;
 
@@ -691,10 +696,6 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 
 #ifdef CEU_INTS
     app->seqno++;
-#endif
-
-#ifdef CEU_STACK_STACK
-    tceu_nstk stki = app->stki;
 #endif
 
     stack_init(app, &go);
@@ -850,7 +851,7 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                 STK->trl->evt = CEU_IN__NONE;  /* clear trail */
 
 #ifdef CEU_DEBUG_TRAILS
-printf("\t<<< OK\n");
+printf("\t<<< OK %d\n", STK->trl->lbl);
 #endif
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)

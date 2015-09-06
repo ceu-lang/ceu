@@ -194,7 +194,7 @@ ceu_app_init (tceu_app* _ceu_app)
 #ifdef CEU_ASYNCS
     _ceu_app->pendingAsyncs = 1;
 #endif
-#ifdef CEU_STACK_STACK
+#ifdef CEU_REENTRANT
     _ceu_app->stki = 0;
 #endif
 #ifdef CEU_RET

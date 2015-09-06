@@ -6,6 +6,7 @@ RUNTESTS = true
 
 -- Execution option for the tests:
 --VALGRIND = true
+--REENTRANT = true
 --LUACOV = '-lluacov'
 --COMPLETE = true
 OS = false   -- false, true, nil(random)
@@ -195,7 +196,9 @@ end
         CEU = 'lua '..(LUACOV or '')..' ceu _ceu_tmp.ceu '..cpp..' --run-tests --os '..tm..' 2>&1'
         GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe main.c ceu_os.c _ceu_app.c 2>&1'
     else
-        CEU = 'lua '..(LUACOV or '')..' ceu _ceu_tmp.ceu '..cpp..' --run-tests '..tm..' 2>&1'
+        CEU = 'lua '..(LUACOV or '')..' ceu _ceu_tmp.ceu '..cpp
+                ..(REENTRANT and '--reentrant' or '')
+                ..' --run-tests '..tm..' 2>&1'
         GCC = 'gcc '..O..' -o ceu.exe main.c 2>&1'
     end
     --local line = debug.getinfo(2).currentline
