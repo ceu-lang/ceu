@@ -923,7 +923,7 @@ escape ret;
 -- STRINGS / STDLIB
 
 Test { [[
-var char* a;
+var char&& a;
 a = "o";
 escape 1;
 ]],
@@ -932,7 +932,7 @@ escape 1;
 
 Test { [[
 native _char=1;
-var _char* a = (_char*)"Abcd12" ;
+var _char&& a = (_char&&)"Abcd12" ;
 escape 1;
 ]],
     run = 1
@@ -957,13 +957,13 @@ escape _strlen1("123");
 Test { [[
 input void OS_START;
 
-output (void)=>int* LUA_NEW;
-output (int* l, int v)=>void LUA_PUSHNUMBER;
-output (int* l, int index)=>int LUA_TONUMBER;
+output (void)=>int&& LUA_NEW;
+output (int&& l, int v)=>void LUA_PUSHNUMBER;
+output (int&& l, int index)=>int LUA_TONUMBER;
 
 await OS_START;
 
-var int* l = (call LUA_NEW);
+var int&& l = (call LUA_NEW);
 
 call LUA_PUSHNUMBER => (l, 10);
 var int v = (call LUA_TONUMBER => (l, -1));
@@ -973,15 +973,15 @@ escape v;
 [[
 input void OS_START;
 var int v;
-input (void)=>int* NEW do
-    return &v;
+input (void)=>int&& NEW do
+    return &&v;
 end
 
-input (int* l, int v)=>void PUSHNUMBER do
+input (int&& l, int v)=>void PUSHNUMBER do
     *l = v;
 end
 
-input (int* l, int idx)=>int TONUMBER do
+input (int&& l, int idx)=>int TONUMBER do
     return *l;
 end
 await OS_START;
@@ -1001,7 +1001,7 @@ native/pre do
     void lua_pushnil (lua_State* l) {}
 end
 
-input (_lua_State* l)=>void PUSHNIL do
+input (_lua_State&& l)=>void PUSHNIL do
     _lua_pushnil(l);
 end
 escape 1;
@@ -1151,7 +1151,7 @@ do
     par/or do
         every (id,param) in REQUEST do
             ret = param;
-            var Line*? ok = spawn Line with
+            var Line&&? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
@@ -1229,7 +1229,7 @@ do
     par/or do
         every (id,param) in REQUEST do
             ret = param;    // 10
-            var Line*? ok = spawn Line with
+            var Line&&? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
@@ -1308,7 +1308,7 @@ do
         pool Line[0] lines;
         every (id,param) in REQUEST do
             ret = param;    // 10
-            var Line*? ok = spawn Line in lines with
+            var Line&&? ok = spawn Line in lines with
                 this.id = id;
                 this.param = param;
             end;
@@ -1390,7 +1390,7 @@ do
     par/or do
         every (id,param) in REQUEST do
             ret = param;
-            var Line*? ok = spawn Line with
+            var Line&&? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
@@ -1419,14 +1419,14 @@ escape ret;
 -- REQUESTS / DCLS
 
 Test { [[
-input/output (int max)=>char* [10] LINE;
+input/output (int max)=>char&& [10] LINE;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-input/output (int max)=>char* [10] LINE1, LINE2;
+input/output (int max)=>char&& [10] LINE1, LINE2;
 escape 1;
 ]],
     run = 1,
@@ -1515,7 +1515,7 @@ do
     par/or do
         every (id,param) in EVT_REQUEST do
             ret = param;
-            var Line*? ok = spawn Line with
+            var Line&&? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
@@ -1589,7 +1589,7 @@ do
     par/or do
         every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var Line*? ok = spawn Line with
+            var Line&&? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
@@ -1664,7 +1664,7 @@ do
         pool Line[0] lines;
         every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var Line*? ok = spawn Line in lines with
+            var Line&&? ok = spawn Line in lines with
                 this.id = id;
                 this.param = param;
             end;
@@ -1742,7 +1742,7 @@ do
     par/or do
         every (id,param) in EVT_REQUEST do
             ret = param;
-            var Line*? ok = spawn Line with
+            var Line&&? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
@@ -1853,7 +1853,7 @@ do
     par/or do
         every (id,param) in EVT_REQUEST do
             ret = param;
-            var Line*? ok = spawn Line with
+            var Line&&? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
@@ -1927,7 +1927,7 @@ do
     par/or do
         every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var Line*? ok = spawn Line with
+            var Line&&? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;
@@ -2002,7 +2002,7 @@ do
         pool Line[0] lines;
         every (id,param) in EVT_REQUEST do
             ret = param;    // 10
-            var Line*? ok = spawn Line in lines with
+            var Line&&? ok = spawn Line in lines with
                 this.id = id;
                 this.param = param;
             end;
@@ -2080,7 +2080,7 @@ do
     par/or do
         every (id,param) in EVT_REQUEST do
             ret = param;
-            var Line*? ok = spawn Line with
+            var Line&&? ok = spawn Line with
                 this.id = id;
                 this.param = param;
             end;

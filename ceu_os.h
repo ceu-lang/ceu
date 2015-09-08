@@ -54,6 +54,9 @@
     #define CEU_ADTS_NEWS
     #define CEU_ADTS_NEWS_MALLOC
     #define CEU_ADTS_NEWS_POOL
+    #define CEU_ORGS_WATCHING
+    #define CEU_ADTS_WATCHING
+    #define CEU_WATCHING
 /*
     #define CEU_THREADS
 */
