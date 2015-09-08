@@ -322,10 +322,10 @@ os.execute('rm -f /tmp/_ceu_*')
 > /usr/bin/time --format='(%C: %Us %Mk)' ./run_tests.lua
 
 STATS = {
-    count   = 2777,
+    count   = 2776,
     mem     = 0,
-    trails  = 6053,
-    bytes   = 38351043,
+    trails  = 6050,
+    bytes   = 37904155,
 }
 
 (./run_tests.lua: 827.86s 53972k)

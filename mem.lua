@@ -504,7 +504,9 @@ void ]]..enum..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* pool)
     Dcl_cls_pre = function (me)
         me.struct = [[
 typedef struct CEU_]]..me.id..[[ {
+#ifdef CEU_ORGS
   struct tceu_org org;
+#endif
   tceu_trl trls_[ ]]..me.trails_n..[[ ];
 ]]
         me.native = { [true]='', [false]='' }
@@ -682,9 +684,18 @@ typedef union CEU_]]..me.id..[[_delayed {
             end
 
             if var.pre=='var' or var.pre=='pool' then
-                DCL.struct = DCL.struct .. SPC() .. '  ' ..
-                              MEM.tp2dcl(var.pre, var.tp, var.id_, DCL.id)
-                             ..  ';\n'
+                -- avoid main "ret" if not assigned
+                local go = true
+                if var.id == '_ret' then
+                    local setblock = AST.asr(me,'', 1,'Stmts', 2,'SetBlock')
+                    go = setblock.has_escape
+                end
+
+                if go then
+                    DCL.struct = DCL.struct .. SPC() .. '  ' ..
+                                  MEM.tp2dcl(var.pre, var.tp, var.id_, DCL.id)
+                                 ..  ';\n'
+                end
             end
 
             -- pointers ini/end to list of orgs
