@@ -151,10 +151,10 @@ end
 
 function CLEAR_AFT (me)
     if ANA and me.ana.pos[false] then
-        --return
+        return
     end
     if not me.needs_clr then
-        --return
+        return
     end
     if me.lbl_clr then
         LINE(me, [[

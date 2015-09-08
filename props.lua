@@ -158,6 +158,7 @@ F = {
             end
             if var.pre == 'var' then
                 if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
+                    me.needs_clr = true
                     PROPS.has_orgs_watching = true
                 end
 
