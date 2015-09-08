@@ -1173,7 +1173,7 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
 {
     ]]..TP.toc(fr.tp)..' __ceu_p = '..V(fr,'rval')..[[;
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-    ceu_out_assert( ceu_vector_seti(]]..V(vec,'lval')..','..V(idx,'rval')..[[, (byte*)&__ceu_p), "access out of bounds");
+    ceu_out_assert_msg( ceu_vector_seti(]]..V(vec,'lval')..','..V(idx,'rval')..[[, (byte*)&__ceu_p), "access out of bounds");
 }
 ]])
 
@@ -1182,7 +1182,7 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
                 -- $vec = ...
                 local _,vec = unpack(to)
                 LINE(me, [[
-ceu_out_assert( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..[[), "invalid attribution : vector size can only shrink" );
+ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..[[), "invalid attribution : vector size can only shrink" );
 ]])
 
             -- all other
@@ -1210,7 +1210,7 @@ ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
                             F.__set(me, ee, {tag='RawExp', tp=TP.pop(to.tp,'[]'), '__ceu_p'})
                             LINE(me, [[
 #line ]]..fr.ln[2]..' "'..fr.ln[1]..[["
-ceu_out_assert( ceu_vector_push(]]..V(to,'lval')..[[, (byte*)&__ceu_p), "access out of bounds");
+ceu_out_assert_msg( ceu_vector_push(]]..V(to,'lval')..[[, (byte*)&__ceu_p), "access out of bounds");
 }
 ]])
                         end
@@ -1224,7 +1224,7 @@ ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
                         end
                         LINE(me, [[
 #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-ceu_out_assert( ceu_vector_concat_buffer(]]..V(to,'lval')..','..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[)), "access out of bounds" );
+ceu_out_assert_msg( ceu_vector_concat_buffer(]]..V(to,'lval')..','..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[)), "access out of bounds" );
 ]])
                     else
                         assert(TP.check(e.tp,'[]','-&'), 'bug found')
@@ -1236,7 +1236,7 @@ if (]]..V(to,'lval')..' != '..V(e,'lval')..[[) {
                         end
                         LINE(me, [[
 #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "access out of bounds" );
+ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "access out of bounds" );
 ]])
                         if first then
                             LINE(me, [[
@@ -1317,7 +1317,7 @@ ceu_out_assert( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "acce
     trl->lbl = ]]..me.lbls_in[i].id..[[;
     trl->stk = stack_curi(_ceu_go);   /* awake in the same level as we are now */
 #ifdef CEU_DEBUG
-    ceu_out_assert(trl > _STK->trl, "bug found");
+    ceu_out_assert_msg(trl > _STK->trl, "bug found");
 #endif
 }
 ]])
@@ -1465,7 +1465,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
         if max then
             LINE(me, [[
-    ceu_out_assert_ex(]]..V(me.i_var,'rval')..' < '..V(max,'rval')..[[, "loop overflow", __FILE__, __LINE__);
+    ceu_out_assert_msg_ex(]]..V(me.i_var,'rval')..' < '..V(max,'rval')..[[, "loop overflow", __FILE__, __LINE__);
 ]])
         end
 
@@ -1881,7 +1881,7 @@ case ]]..me.lbl.id..[[:;
     if (ret == 0)
     {
         int v = CEU_THREADS_DETACH(]]..me.thread_id..[[);
-        ceu_out_assert(v == 0, "bug found");
+        ceu_out_assert_msg(v == 0, "bug found");
         _ceu_app->threads_n++;
 
         /* wait for "p" to be copied inside the thread */
@@ -2001,7 +2001,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
             me[1] = [[
 if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
     *]]..me.thread.thread_st..[[ = 3;
-    ceu_out_assert( pthread_cancel(]]..me.thread.thread_id..[[) == 0 , "bug found")
+    ceu_out_assert_msg( pthread_cancel(]]..me.thread.thread_id..[[) == 0 , "bug found")
 } else {
     ceu_out_realloc(]]..me.thread.thread_st..[[, 0); /* thr finished, I free */
     _ceu_app->threads_n--;
@@ -2091,7 +2091,7 @@ if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
                 ceu_lua_objlen(len, _ceu_app->lua, -1);
                 ceu_lua_tostring(ret, _ceu_app->lua, -1);
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-                ceu_out_assert( ceu_vector_concat_buffer(]]..V(set_to,'lval')..[[, ret, len), "access out of bounds" );
+                ceu_out_assert_msg( ceu_vector_concat_buffer(]]..V(set_to,'lval')..[[, ret, len), "access out of bounds" );
             } else {
                 ceu_lua_pushstring(_ceu_app->lua, "not implemented [2]");
                 err = 1;

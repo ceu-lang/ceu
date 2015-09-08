@@ -174,7 +174,7 @@ printf("OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
         === CODE ===
     }
 #ifdef CEU_DEBUG
-    ceu_out_assert(0, "no return");
+    ceu_out_assert_msg(0, "no return");
 #endif
     return RET_HALT;    /* TODO: should never be reached anyways */
 }
@@ -254,7 +254,7 @@ ceu_app_init (tceu_app* _ceu_app)
 
 #ifdef CEU_LUA
     ceu_luaL_newstate(_ceu_app->lua);
-    ceu_out_assert(_ceu_app->lua != NULL, NULL);
+    ceu_out_assert(_ceu_app->lua != NULL);
     ceu_luaL_openlibs(_ceu_app->lua);
     ceu_lua_atpanic(_ceu_app->lua, ceu_lua_atpanic_f);    /* TODO: CEU_OS */
 #endif

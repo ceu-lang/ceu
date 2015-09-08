@@ -231,7 +231,7 @@ void CEU_]]..id..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
             kill = kill .. [[
 #ifdef CEU_DEBUG
         default:
-            ceu_out_assert(0, "invalid tag");
+            ceu_out_assert_msg(0, "invalid tag");
 #endif
     }
 ]]
@@ -276,7 +276,7 @@ void CEU_]]..id..'_free_dynamic (tceu_app* _ceu_app, CEU_'..id..[[* me) {
             free = free .. [[
 #ifdef CEU_DEBUG
         default:
-            ceu_out_assert(0, "invalid tag");
+            ceu_out_assert_msg(0, "invalid tag");
 #endif
     }
 ]]
@@ -390,7 +390,7 @@ CEU_]]..string.upper(id)..[[_BASE.tag = CEU_]]..string.upper(id..'_'..me.tags[1]
         -- _ceu_app is required because of OS/assert
         top.auxs[#top.auxs+1] = [[
 CEU_]]..id..'* '..enum..'_assert (tceu_app* _ceu_app, CEU_'..id..[[* me, char* file, int line) {
-    ceu_out_assert_ex(me->tag == ]]..enum..[[, "invalid tag", file, line);
+    ceu_out_assert_msg_ex(me->tag == ]]..enum..[[, "invalid tag", file, line);
     return me;
 }
 ]]

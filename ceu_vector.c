@@ -17,7 +17,7 @@ void ceu_vector_init (tceu_vector* vector, int max, int unit, byte* mem) {
 
 #ifdef CEU_VECTOR_MALLOC
 static void* ceu_vector_resize (tceu_vector* vector, int n) {
-    ceu_out_assert(vector->max <= 0, "bug found");
+    ceu_out_assert_msg(vector->max <= 0, "bug found");
 
     if (n == 0) {
         /* free */

@@ -100,7 +100,7 @@
     #define ceu_out_log(mode,str) \
         ((__typeof__(ceu_sys_log)*)((_ceu_app)->sys_vec[CEU_SYS_LOG]))(mode,str)
 
-    #define ceu_out_assert_ex(v,msg,file,line)           \
+    #define ceu_out_assert_msg_ex(v,msg,file,line)       \
         {                                                \
             int __ceu_v = v;                             \
             if ((!(__ceu_v)) && ((msg)!=NULL)) {         \
@@ -115,7 +115,7 @@
             }                                            \
             ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(__ceu_v); \
         }
-    #define ceu_out_assert(v,msg) ceu_out_assert_ex((v),(msg),__FILE__,__LINE__)
+    #define ceu_out_assert_msg(v,msg) ceu_out_assert_msg_ex((v),(msg),__FILE__,__LINE__)
 
     #define ceu_out_realloc(ptr, size) \
         ((__typeof__(ceu_sys_realloc)*)((_ceu_app)->sys_vec[CEU_SYS_REALLOC]))(ptr,size)
@@ -177,10 +177,7 @@
 
 #else /* ! CEU_OS_APP (!CEU_OS||CEU_OS_KERNEL) */
 
-    #define ceu_out_log(mode,str) \
-            ceu_sys_log(mode,str)
-
-    #define ceu_out_assert_ex(v,msg,file,line)              \
+    #define ceu_out_assert_msg_ex(v,msg,file,line)          \
         {                                                   \
             int __ceu_v = v;                                \
             if ((!(__ceu_v)) && ((msg)!=NULL)) {            \
@@ -193,9 +190,9 @@
                 ceu_out_log(0, (long)(msg));                \
                 ceu_out_log(0, (long)"\n");                 \
             }                                               \
-            ceu_sys_assert(__ceu_v);                        \
+            ceu_out_assert(__ceu_v);                        \
         }
-    #define ceu_out_assert(v,msg) ceu_out_assert_ex((v),(msg),__FILE__,__LINE__)
+    #define ceu_out_assert_msg(v,msg) ceu_out_assert_msg_ex((v),(msg),__FILE__,__LINE__)
 
     #define ceu_out_realloc(ptr,size) \
             ceu_sys_realloc(ptr,size)
@@ -237,6 +234,14 @@
 
 #define ceu_in_emit(app,id,n,buf) \
     ceu_out_go(app,id,buf)
+
+#ifndef ceu_out_assert
+#error "Missing definition for macro \"ceu_out_assert\"."
+#endif
+
+#ifndef ceu_out_log
+#error "Missing definition for macro \"ceu_out_log\"."
+#endif
 
 #ifdef CEU_THREADS
 /* TODO: app */
@@ -582,11 +587,11 @@ typedef struct tceu_go {
     ((go)->stk_curi - stack_cur((go))->offset)
 
 #define stack_pop(app,go)                                       \
-    ceu_out_assert(!stack_empty(go), "stack underflow");        \
+    ceu_out_assert_msg(!stack_empty(go), "stack underflow");    \
     ceu_stack_pop_f((app),(go));
 
 #define stack_push(app,go,elem,ptr)                             \
-    ceu_out_assert(!stack_full((go),(elem)), "stack overflow"); \
+    ceu_out_assert_msg(!stack_full((go),(elem)), "stack overflow"); \
     ceu_out_stack_push((app),(go),(elem),(ptr));
 
 #define STK  stack_cur(&go)

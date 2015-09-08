@@ -50,29 +50,6 @@ void *realloc(void *ptr, size_t size);
 
 #ifndef CEU_NOSTDLIB
 
-void ceu_sys_assert (int v) {
-#ifdef CEU_DEBUG
-    assert(v);
-#else
-    (void)v;
-#endif
-}
-
-#include <stdio.h>
-void ceu_sys_log (int mode, long s) {
-    switch (mode) {
-        case 0:
-            printf("%s", (char*)s);
-            break;
-        case 1:
-            printf("%lX", s);
-            break;
-        case 2:
-            printf("%ld", s);
-            break;
-    }
-}
-
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 #define CEU_MAX_DYNS 100
@@ -106,7 +83,7 @@ void* ceu_sys_realloc (void* ptr, size_t size) {
 #include "ceu_vector.h"
 byte* ceu_vector_geti_ex (tceu_vector* vector, int idx, char* file, int line) {
     byte* ret = ceu_vector_geti(vector, idx);
-    ceu_out_assert_ex(ret!=NULL, "access out of bounds", file, line);
+    ceu_out_assert_msg_ex(ret!=NULL, "access out of bounds", file, line);
     return ret;
 }
 #endif
@@ -185,7 +162,7 @@ void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* old, int lim) {
 #if 0
 /* TODO: BUG: _STK_ORG is not necessarily the parent for pool allocations */
 /* TODO: remove if-0 when solved */
-                ceu_out_assert(!__ceu_isParent(old, stk->org),
+                ceu_out_msg_assert(!__ceu_isParent(old, stk->org),
                                 "bug found [001]" );
 #endif
             } else {                        /* ignore local traversals */
@@ -472,11 +449,11 @@ int ceu_lua_atpanic_f (lua_State* lua) {
     char msg[255] = "LUA_ATPANIC: ";
     strncat(msg, lua_tostring(lua,-1), 100);
     strncat(msg, "\n", 1);
-    ceu_out_assert(0, msg);
+    ceu_out_assert_msg(0, msg);
 /*
 */
 #else
-    ceu_out_assert(0, "bug found");
+    ceu_out_assert_msg(0, "bug found");
 #endif
     return 0;
 }
@@ -892,7 +869,7 @@ printf("\t<<< OK %d\n", STK->trl->lbl);
 #endif
                     default:
 #ifdef CEU_DEBUG
-                        ceu_sys_assert(0);
+                        ceu_out_assert(0);
 #endif
                         break;
                 }
@@ -1000,7 +977,7 @@ int ceu_go_all (tceu_app* app)
 
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
-    ceu_out_assert(_ceu_dyns_ == 0, "memory leak");
+    ceu_out_assert_msg(_ceu_dyns_ == 0, "memory leak");
 #endif
 #endif
 
