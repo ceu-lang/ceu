@@ -47680,9 +47680,9 @@ escape l.CONS.head;
 -- 4-5-6-NIL => NIL     (all fail)
 Test { DATA..[[
 pool List[2] l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
-_ceu_out_assert(l.CONS.tail.CONS.tail.NIL, "1");
+_ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
 l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // 6 fails
-_ceu_out_assert(l.CONS.tail.CONS.tail.NIL, "2");
+_ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "2");
 escape l.CONS.tail.CONS.head;
 ]],
     run = 5,
@@ -50843,13 +50843,13 @@ par/and do
     sum = sum - 1;
 with
     await 1s;
-    _ceu_out_assert(sum == 1, "1");
+    _ceu_out_assert_msg(sum == 1, "1");
     await 1s;
-    _ceu_out_assert(sum == 4, "2");
+    _ceu_out_assert_msg(sum == 4, "2");
     await 1s;
-    _ceu_out_assert(sum == 5, "3");
+    _ceu_out_assert_msg(sum == 5, "3");
     tree = new Tree.NIL();
-    _ceu_out_assert(sum == 4, "4");
+    _ceu_out_assert_msg(sum == 4, "4");
 end
 
 escape sum;
@@ -51008,7 +51008,7 @@ do
             end;
 
         else
-            _ceu_out_assert(0, "not implemented");
+            _ceu_out_assert_msg(0, "not implemented");
         end
     end
 end
@@ -51049,7 +51049,7 @@ do
             end;
 
         else
-            _ceu_out_assert(0, "not implemented");
+            _ceu_out_assert_msg(0, "not implemented");
         end
     end
 end
@@ -51092,7 +51092,7 @@ do
             end;
 
         else
-            _ceu_out_assert(0, "not implemented");
+            _ceu_out_assert_msg(0, "not implemented");
         end
     end
 end
@@ -51136,7 +51136,7 @@ do
             end;
 
         else
-            _ceu_out_assert(0, "not implemented");
+            _ceu_out_assert_msg(0, "not implemented");
         end
     end
 end
@@ -51178,7 +51178,7 @@ do
             end;
 
         else
-            _ceu_out_assert(0, "not implemented");
+            _ceu_out_assert_msg(0, "not implemented");
         end
     end
 end
@@ -51245,32 +51245,32 @@ var int ret = 0;
 par/or do
     await l.CONS.tail.CONS.tail;
     ret = ret + l.CONS.tail.CONS.tail.CONS.head;    // 0+4
-    _ceu_out_assert(ret == 4, "1");
+    _ceu_out_assert_msg(ret == 4, "1");
     l.CONS.tail.CONS.tail = l.CONS.tail.CONS.tail.CONS.tail;
     ret = ret + l.CONS.tail.CONS.tail.CONS.head;    // 0+4+5
-    _ceu_out_assert(ret == 9, "2");
+    _ceu_out_assert_msg(ret == 9, "2");
 
     await l.CONS.tail.CONS.tail;
     ret = ret + l.CONS.tail.CONS.tail.NIL;          // 0+4+5+5+1
-    _ceu_out_assert(ret == 15, "4");
+    _ceu_out_assert_msg(ret == 15, "4");
     await FOREVER;
 with
     await l.CONS.tail.CONS.tail;
-    _ceu_out_assert(ret == 9, "3");
+    _ceu_out_assert_msg(ret == 9, "3");
     ret = ret + l.CONS.tail.CONS.tail.CONS.head;    // 0+4+5+5
     l.CONS.tail.CONS.tail = new List.NIL();
 
-    _ceu_out_assert(ret == 15, "5");
+    _ceu_out_assert_msg(ret == 15, "5");
     await l.CONS.tail.CONS.tail;
     // never reached
-    _ceu_out_assert(ret == 15, "6");
+    _ceu_out_assert_msg(ret == 15, "6");
     await FOREVER;
 with
     await l.CONS.tail.CONS.tail;
     ret = ret + l.CONS.tail.CONS.tail.NIL;          // 0+4+5+5+1+1
 
     await l.CONS.tail.CONS.tail;
-    _ceu_out_assert(ret == 16, "7");
+    _ceu_out_assert_msg(ret == 16, "7");
     await FOREVER;
 with
     l.CONS.tail.CONS.tail = l.CONS.tail.CONS.tail.CONS.tail;
@@ -51324,7 +51324,7 @@ with
                     escape v1 + v2;
 
                 else
-                    _ceu_out_assert(0, "not implemented");
+                    _ceu_out_assert_msg(0, "not implemented");
                 end
             end
             escape 0;
@@ -51386,7 +51386,7 @@ with
                 end
 
             else
-                _ceu_out_assert(0, "not implemented");
+                _ceu_out_assert_msg(0, "not implemented");
             end
         end
     end
@@ -51424,10 +51424,10 @@ par/or do
             else/if e:CONS then
                 loop do
                     traverse &&e:CONS.tail;
-                    _ceu_out_assert(0, "0");
+                    _ceu_out_assert_msg(0, "0");
                 end
             else
-                _ceu_out_assert(0, "1");
+                _ceu_out_assert_msg(0, "1");
             end
         end
     end
@@ -51493,7 +51493,7 @@ end
                 end
 
             else
-                _ceu_out_assert(0, "not implemented");
+                _ceu_out_assert_msg(0, "not implemented");
             end
         end
     end
@@ -51557,7 +51557,7 @@ end
                 end
 
             else
-                _ceu_out_assert(0, "not implemented");
+                _ceu_out_assert_msg(0, "not implemented");
             end
         end
     end
@@ -51609,7 +51609,7 @@ par/or do
                             this.param = param + 1;
                         end;
 if widget:SEQ.w1.NIL then
-_ceu_out_assert(0, "ok\n");
+_ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     with
@@ -51617,14 +51617,14 @@ end
                             this.param = param + 1;
                         end;
 if widget:SEQ.w2.NIL then
-_ceu_out_assert(0, "ok\n");
+_ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     end
                 end
 
             else
-                _ceu_out_assert(0, "not implemented");
+                _ceu_out_assert_msg(0, "not implemented");
             end
         end
     end
@@ -51675,7 +51675,7 @@ par/or do
                             this.param = param + 1;
                         end;
 if widget:SEQ.w1.NIL then
-_ceu_out_assert(0, "ok\n");
+_ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     with
@@ -51683,14 +51683,14 @@ end
                             this.param = param + 1;
                         end;
 if widget:SEQ.w2.NIL then
-_ceu_out_assert(0, "ok\n");
+_ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     end
                 end
 
             else
-                _ceu_out_assert(0, "not implemented");
+                _ceu_out_assert_msg(0, "not implemented");
             end
         end
     end
@@ -51780,7 +51780,7 @@ with
 
             else/if cmd:SEQUENCE then
                 traverse &&cmd:SEQUENCE.one;
-                _ceu_out_assert(0, "bug found"); // cmds has to die entirely before children
+                _ceu_out_assert_msg(0, "bug found"); // cmds has to die entirely before children
                 traverse &&cmd:SEQUENCE.two;
             end
         end
@@ -51870,7 +51870,7 @@ traverse cmd in &&cmds do
             traverse &&cmd:REPEAT.command;
 
         else
-            _ceu_out_assert(0, "not implemented");
+            _ceu_out_assert_msg(0, "not implemented");
         end
     end
 end
@@ -51985,7 +51985,7 @@ do
     else
         inc = -1;
     end
-    _ceu_out_assert(this.pixels > 0, "pixels");
+    _ceu_out_assert_msg(this.pixels > 0, "pixels");
 
     var float sum = 0;
     var float x = turtle.pos_x;
@@ -52054,7 +52054,7 @@ with
                 end
 
             else
-                _ceu_out_assert(0, "not implemented");
+                _ceu_out_assert_msg(0, "not implemented");
             end
         end
     end
@@ -52117,7 +52117,7 @@ traverse cmd in &&cmds do
             end
 
         else
-            _ceu_out_assert(0, "not implemented");
+            _ceu_out_assert_msg(0, "not implemented");
         end
     end
 end
@@ -52184,7 +52184,7 @@ traverse cmd in &&cmds do
             end
 
         else
-            _ceu_out_assert(0, "not implemented");
+            _ceu_out_assert_msg(0, "not implemented");
         end
     end
 end

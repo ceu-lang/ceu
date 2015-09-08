@@ -1315,7 +1315,9 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
     tceu_trl* trl = &_STK_ORG->trls[ ]]..sub.trails[1]..[[ ];
     trl->evt = CEU_IN__STK;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
+#ifdef CEU_STACK
     trl->stk = stack_curi(_ceu_go);   /* awake in the same level as we are now */
+#endif
 #ifdef CEU_DEBUG
     ceu_out_assert_msg(trl > _STK->trl, "bug found");
 #endif

@@ -96,6 +96,8 @@ int ceu_sys_req (void) {
 
 /**********************************************************************/
 
+#ifdef CEU_STACK
+
 void ceu_stack_pop_f (tceu_app* app, tceu_go* go) {
     go->stk_nxti = go->stk_curi;
 #ifdef CEU_REENTRANT
@@ -173,6 +175,8 @@ void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* old, int lim) {
 }
 #endif
 #endif
+
+#endif  /* CEU_STACK */
 
 /**********************************************************************/
 
@@ -501,11 +505,18 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
+#ifdef CEU_OS_KERNEL
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
+#endif
 
 static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* stk, void* evtp)
 {
+#ifdef CEU_STACK
     stack_push(_ceu_app, _ceu_go, stk, evtp);
+#else
+    stk->evt_buf = evtp;
+    *_ceu_go = *stk;
+#endif
     for (;;)
     {
 /* TODO: remove: no more invalidation? */
@@ -620,7 +631,9 @@ printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
 
         /* execute this trail in the 2nd pass */
         _STK->trl->evt = CEU_IN__STK;
+#ifdef CEU_STACK
         _STK->trl->stk = stack_curi(_ceu_go);
+#endif
 #ifdef CEU_DEBUG_TRAILS
 printf("\t>>> OK\n");
 #endif
@@ -636,13 +649,17 @@ _CEU_GO_NO_:
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
+#ifdef CEU_STACK
 #ifdef CEU_REENTRANT
     static
 #endif
     byte CEU_STK[CEU_STACK_MAX];
+#endif
 
     tceu_go go;
+#ifdef CEU_STACK
             go.stk = CEU_STK;
+#endif
 
     switch (evt) {
 #ifdef CEU_ASYNCS
@@ -674,7 +691,9 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
     app->seqno++;
 #endif
 
+#ifdef CEU_STACK
     stack_init(app, &go);
+#endif
     {
         tceu_stk stk;
                  stk.evt  = evt;
@@ -685,12 +704,16 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 #ifdef CEU_CLEAR
                  stk.stop = NULL;  /* traverse all (don't stop) */
 #endif
+#ifdef CEU_STACK
                  stk.evt_sz = sizeof(evtp);
+#endif
         ceu_sys_bcast(app, &go, &stk, &evtp);
     }
 
+#ifdef CEU_STACK
     for (;;)
     {
+#endif
         for (;;)
         {
 /* TODO: remove: no more invalidation? */
@@ -819,8 +842,15 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
 #endif /* CEU_ORGS */
 
             /* EXECUTE THIS TRAIL */
-            if (  (STK->evt==CEU_IN__CLEAR && STK->trl->evt==CEU_IN__CLEAR)
-               || (STK->trl->evt==CEU_IN__STK && STK->trl->stk==stack_curi(&go))
+            if (
+#ifdef CEU_CLEAR
+                (STK->evt==CEU_IN__CLEAR && STK->trl->evt==CEU_IN__CLEAR) ||
+#endif
+                (STK->trl->evt==CEU_IN__STK
+#ifdef CEU_STACK
+                 && STK->trl->stk==stack_curi(&go)
+#endif
+                )
                )
             {
                 int _ret;
@@ -860,7 +890,9 @@ printf("\t<<< OK %d\n", STK->trl->lbl);
                     case RET_QUIT:
 #if defined(CEU_RET) || defined(CEU_OS_KERNEL)
                         app->isAlive = 0;
+#ifdef CEU_OS_KERNEL
                         CEU_GC = 1;
+#endif
 #endif
 #ifdef CEU_LUA
                         lua_close(app->lua);
@@ -881,13 +913,11 @@ printf("\t<<< OK %d\n", STK->trl->lbl);
 #ifdef CEU_DEBUG_TRAILS
 printf("\t<<< NO\n");
 #endif
-                if (STK->evt==CEU_IN__CLEAR
 #ifdef CEU_CLEAR
-                    && STK->cnt!=STK->trl
-#endif
-                    ) {
+                if (STK->evt==CEU_IN__CLEAR && STK->cnt!=STK->trl) {
                     STK->trl->evt = CEU_IN__NONE;    /* trail cleared */
                 }
+#endif
             }
 
             /* NEXT TRAIL */
@@ -901,11 +931,13 @@ printf("\t<<< NO\n");
             STK->trl++;
         }
 
+#ifdef CEU_STACK
         stack_pop(app, &go);
         if (stack_empty(&go)) {
             break;      /* reaction has terminated */
         }
     }
+#endif
 
 _CEU_GO_QUIT_:;
 

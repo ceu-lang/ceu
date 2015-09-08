@@ -19,6 +19,10 @@
 #define CEU_ISR_OFF()
 #endif
 
+#if defined(CEU_CLEAR) || defined(CEU_INTS) || defined(CEU_ORGS) || defined(CEU_REENTRANT)
+#define CEU_STACK
+#endif
+
 #if defined(CEU_OS_KERNEL) || defined(CEU_OS_APP)
 #define CEU_OS
 #endif
@@ -135,11 +139,14 @@
     #define ceu_out_clear(app,go,cnt,org,from,stop) \
         ((__typeof__(ceu_sys_clear)*)((app)->sys_vec[CEU_SYS_CLEAR]))(app,go,cnt,org,from,stop)
 #endif
+
+#ifdef CEU_STACK
     #define ceu_out_stack_push(app,go,elem,ptr) \
         ((__typeof__(ceu_sys_stack_push)*)((app)->sys_vec[CEU_SYS_STACK_PUSH]))(app,go,elem,ptr)
 #ifdef CEU_ORGS
     #define ceu_out_stack_clear_org(go,org,lim) \
         ((__typeof__(ceu_sys_stack_clear_org)*)((_ceu_app)->sys_vec[CEU_SYS_STACK_CLEAR_ORG]))(go,org,lim)
+#endif
 #endif
 
     #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,lnks) \
@@ -203,11 +210,14 @@
     #define ceu_out_clear(app,go,cnt,org,from,stop) \
             ceu_sys_clear(app,go,cnt,org,from,stop)
 #endif
+
+#ifdef CEU_STACK
     #define ceu_out_stack_push(app,go,elem,ptr) \
             ceu_sys_stack_push(app,go,elem,ptr)
 #ifdef CEU_ORGS
     #define ceu_out_stack_clear_org(go,org,lim) \
             ceu_sys_stack_clear_org(go,org,lim)
+#endif
 #endif
 
     #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,lnks) \
@@ -383,8 +393,10 @@ typedef u8 tceu_nevt;   /* max number of events */
 typedef u8 tceu_ntrl;   /* max number of trails per class */
                         /* TODO: should "u8" be fixed? */
 
+#ifdef CEU_STACK
 typedef u16 tceu_nstk;  /* max size of internal stack in bytes */
                         /* TODO: should "u16" be fixed? */
+#endif
 
 #ifdef __cplusplus
 #define CEU_WCLOCK_INACTIVE 0x7fffffffL     /* TODO */
@@ -411,11 +423,13 @@ typedef union tceu_trl {
     };
 
     /* IN__STK */
+#ifdef CEU_STACK
     struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt2;
         tceu_nlbl lbl2;
         tceu_nstk stk;
     };
+#endif
 
     /* IN__ORG */
 #ifdef CEU_ORGS
@@ -448,34 +462,40 @@ typedef struct {
 typedef struct tceu_stk {
     struct {
         tceu_nevt evt;  /* TODO: small in the end of struct? */
+#ifdef CEU_STACK
         u8        evt_sz;
         u8        offset;
+#endif
         tceu_trl* trl;  /* trail being traversed */
 
         union {
             struct {
-    #ifdef CEU_CLEAR
+#ifdef CEU_CLEAR
                 void* cnt;  /* dont clear the continuation trail */
-    #endif
-    #if defined(CEU_CLEAR) || defined(CEU_ORGS)
+#endif
+#if defined(CEU_CLEAR) || defined(CEU_ORGS)
                 void* stop;     /* stop at this trl/org */
                     /* traversals may be bounded to org/trl
                      * default (NULL) is to traverse everything */
                     /* TODO: could be shared w/ evto */
-    #endif
+#endif
             };
-    #if defined(CEU_ORGS) && defined(CEU_INTS)
+#if defined(CEU_ORGS) && defined(CEU_INTS)
             void* evto; /* emitting org */
-    #endif
+#endif
         };
 
-    #ifdef CEU_ORGS
+#ifdef CEU_ORGS
         void* org;      /* org being traversed */
-    #endif
+#endif
     };
 
     /* out of "struct{...}" to be aligned */
+#ifdef CEU_STACK
     byte  evt_buf[0];
+#else
+    void* evt_buf;
+#endif
 } tceu_stk;
 /* TODO: see if fields can be reused in union */
 
@@ -556,6 +576,8 @@ typedef struct {
 
 /* TCEU_GO */
 
+#ifdef CEU_STACK
+
 /* TODO: tceu_go => tceu_stk? */
 typedef struct tceu_go {
     byte*     stk;
@@ -607,6 +629,21 @@ typedef struct tceu_go {
 #define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
 #define STK_LBL (STK->trl->lbl)
 #define _STK_LBL (_STK->trl->lbl)
+
+#else   /* !CEU_STACK */
+
+typedef tceu_stk tceu_go;
+
+#define STK  (&go)
+#define _STK (_ceu_go)
+#define STK_ORG_ATTR  (app->data)
+#define _STK_ORG_ATTR (_ceu_app->data)
+#define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
+#define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
+#define STK_LBL (STK->trl->lbl)
+#define _STK_LBL (_STK->trl->lbl)
+
+#endif  /* CEU_STACK */
 
 /* TCEU_LST */
 
@@ -801,9 +838,12 @@ int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #ifdef CEU_CLEAR
 int       ceu_sys_clear     (tceu_app* app, tceu_go* _ceu_go, tceu_nlbl cnt, tceu_org* org, tceu_trl* from, void* stop);
 #endif
+
+#ifdef CEU_STACK
 void      ceu_sys_stack_push (tceu_app* app, tceu_go* go, tceu_stk* elem, void* ptr);
 #ifdef CEU_ORGS
 void      ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim);
+#endif
 #endif
 
 void      ceu_sys_org       (tceu_org* org, int n, int lbl, int cls, int isDyn, tceu_org* parent, tceu_org_lnk** lnks);
