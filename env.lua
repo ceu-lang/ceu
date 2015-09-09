@@ -252,7 +252,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         pre   = pre,
         inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body) or AST.par(me,'Dcl_adt'),
                 -- (never "tmp")
-        isTmp = false,
+        --isTmp = false,
         --arr   = arr,
         n     = _N,
         dcl   = me,

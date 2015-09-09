@@ -66,8 +66,8 @@ typedef struct {
 } _tceu_app;
 
 /* TODO: remove from RAM */
-static _tceu_app _CEU_APP = {
 #ifdef CEU_IFCS
+static _tceu_app _CEU_APP = {
 #ifdef CEU_OS_APP
 #error remove from RAM!
 #endif
@@ -83,8 +83,8 @@ static _tceu_app _CEU_APP = {
     {
 === IFCS_FUNS ===
     }
-#endif
 };
+#endif
 
 /**********************************************************************/
 

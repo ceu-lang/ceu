@@ -9,8 +9,9 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---do return end
 --]===]
+
+--do return end
 
 -------------------------------------------------------------------------------
 
@@ -1153,6 +1154,15 @@ Test { [[await FOREVER;]],
         isForever = true,
     },
 }
+
+-- tests var.isTmp
+Test { [[
+var int a = await 999ms;
+escape a + ___ceu_a_1;
+]],
+    run = { ['~>1s']=2000 },
+}
+
 Test { [[await FOREVER; await FOREVER;]],
     parser = "line 1 : before `;´ : expected event",
 }

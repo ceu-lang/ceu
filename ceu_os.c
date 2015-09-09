@@ -939,7 +939,9 @@ printf("\t<<< NO\n");
     }
 #endif
 
+#ifdef CEU_RET
 _CEU_GO_QUIT_:;
+#endif
 
 #ifdef CEU_WCLOCKS
     if (evt==CEU_IN__WCLOCK) {

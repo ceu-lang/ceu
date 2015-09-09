@@ -172,6 +172,7 @@ end
     -- TODO: pedantic
     local O = ' -Wall -Wextra -Wformat=2 -Wstrict-overflow=3 -Werror '
             ..' -Wno-missing-field-initializers'
+            ..' -Wno-maybe-uninitialized'
             ..' -Wno-unused'
             ..' -Wno-unused-parameter'
             ..' -ansi'
@@ -322,13 +323,13 @@ os.execute('rm -f /tmp/_ceu_*')
 > /usr/bin/time --format='(%C: %Us %Mk)' ./run_tests.lua
 
 STATS = {
-    count   = 2776,
+    count   = 2777,
     mem     = 0,
-    trails  = 6050,
-    bytes   = 37904155,
+    trails  = 6051,
+    bytes   = 37888306,
 }
 
-(./run_tests.lua: 827.86s 53972k)
+(./run_tests.lua: 731.00s 52912k)
 
 ===
 

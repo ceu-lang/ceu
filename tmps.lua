@@ -7,6 +7,24 @@ if not ANA then
 end
 
 F = {
+    Set_bef = function (me, sub, i)
+        if i ~= 4 then
+            return
+        end
+        if sub.tag ~= 'VarList' then
+            sub = { sub }
+        end
+        for _, v in ipairs(sub) do
+            if v.fst.tag == 'Var' then
+                local dcl = v.fst.var.dcl
+                local loop = AST.par(me, 'Loop')
+                if loop and dcl.__depth>loop.__depth then
+                    VARS[v.fst.var] = v.fst.ana.pre
+                end
+            end
+        end
+    end,
+
     Dcl_var_pre = function (me)
         local var = me.var
 
@@ -92,8 +110,8 @@ error'not implemented (locals inside iter)'
             (var.blk==ENV.clss.Main.blk_ifc and glb and glb.is_ifc and
              glb.blk_ifc.vars[var.id])
         then
-            var.isTmp = false
-            return                  -- vars in interfaces cannot be tmp
+            --var.isTmp = false
+            --return                  -- vars in interfaces cannot be tmp
         end
 
         local dcl = AST.iter'Dcl_var'()
@@ -200,8 +218,12 @@ error'not implemented (locals inside iter)'
             return x;
         ]]
     end,
---[[
-]]
+    Loop = function (me)
+        local _,_,iter,body = unpack(me)
+        if iter and (not ANA.CMP(body.ana.pre,body.ana.pos)) then
+            iter.var.isTmp = false
+        end
+    end,
 
     ParOr_pre = function (me)
         for var, v in pairs(VARS) do

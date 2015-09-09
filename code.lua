@@ -689,8 +689,13 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
         for _, var in ipairs(me.vars) do
             if var.isTmp then
                 local ID = '__ceu_'..var.id..'_'..var.n
-                LINE(me, MEM.tp2dcl(var.pre, var.tp, ID, nil)
-                        ..';\n')
+                if var.id == '_ret' then
+                    LINE(me,'#ifdef CEU_RET\n')     -- avoids "unused" warning
+                end
+                LINE(me, MEM.tp2dcl(var.pre, var.tp,ID,nil)..';\n')
+                if var.id == '_ret' then
+                    LINE(me,'#endif\n')             -- avoids "unused" warning
+                end
                 if var.isFun then
                     -- function parameter
                     -- __ceu_a = a
@@ -717,9 +722,11 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
                 elseif TP.check(var.tp,'[]') and (not (var.cls or TP.is_ext(var.tp,'_'))) then
                     local tp_elem = TP.pop( TP.pop(var.tp,'&'), '[]' )
                     local max = (var.tp.arr.cval or 0)
+                    local ID = (var.isTmp and '__ceu_'..var.id..'_'..var.n) or
+                               CUR(me,var.id_)
                     LINE(me, [[
-ceu_vector_init(]]..'&'..CUR(me,var.id_)..','..max..',sizeof('..TP.toc(tp_elem)..[[),
-                (byte*)]]..CUR(me,var.id_)..[[_mem);
+ceu_vector_init(]]..'&'..ID..','..max..',sizeof('..TP.toc(tp_elem)..[[),
+                (byte*)]]..ID..[[_mem);
 ]])
                     if var.tp.arr == '[]' then
                         LINE(me, [[
@@ -1484,6 +1491,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 #endif
     {
 ]]..no..[[:
+        if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
         _STK->trl->evt = CEU_IN__ASYNC;
         _STK->trl->lbl = ]]..me.lbl_asy.id..[[;
 ]])
@@ -1574,7 +1582,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 {
 ]])
 
-        if ps and #ps>0 then
+        if ps and #ps>0 and e[1]~='_WCLOCK' then
             local val = F.__emit_ps(me)
             t1[#t1+1] = val
             if op ~= 'call' then
@@ -1643,6 +1651,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
         LINE(me, [[
 ]]..no..[[:
+if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
 _STK->trl->evt = CEU_IN__ASYNC;
 _STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
@@ -1752,11 +1761,11 @@ case ]]..me.lbl_cnt.id..[[:;
 
         local par_pause  = AST.par(me,'Pause')
         local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
-        local has_pause = par_pause and (par_pause.__depth > par_dclcls.__depth)
-        local no = has_pause and '_CEU_NO_'..me.n..'_'
+        local no = '_CEU_NO_'..me.n..'_'
 
         LINE(me, [[
-]]..(no and no..':' or '')..[[
+]]..no..[[:
+    if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
     _STK->trl->evt   = ]]..V(e,'evt')..[[;
     _STK->trl->lbl   = ]]..me.lbl.id..[[;
 #ifdef CEU_ORGS
@@ -1789,8 +1798,7 @@ case ]]..me.lbl.id..[[:;
 
         local par_pause  = AST.par(me,'Pause')
         local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
-        local has_pause = par_pause and (par_pause.__depth > par_dclcls.__depth)
-        local no = (dt or has_pause) and '_CEU_NO_'..me.n..'_'
+        local no = '_CEU_NO_'..me.n..'_'
 
         local val = CUR(me, '__wclk_'..me.n)
 
@@ -1801,7 +1809,8 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
         end
 
         LINE(me, [[
-]]..(no and no..':' or '')..[[
+]]..no..[[:
+    if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
     _STK->trl->evt = CEU_IN_]]..e.evt.id..suf..[[;
     _STK->trl->lbl = ]]..me.lbl.id..[[;
 ]])
@@ -1890,6 +1899,7 @@ case ]]..me.lbl.id..[[:;
 
         LINE(me, [[
 ]]..no..[[:
+if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
 _STK->trl->evt = CEU_IN__ASYNC;
 _STK->trl->lbl = ]]..me.lbl.id..[[;
 ]])

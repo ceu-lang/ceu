@@ -683,7 +683,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                     -- otherwise use counter to avoid clash inside struct/union
             end
 
-            if var.pre=='var' or var.pre=='pool' then
+            if (var.pre=='var' and (not var.isTmp)) or var.pre=='pool' then
                 -- avoid main "ret" if not assigned
                 local go = true
                 if var.id == '_ret' then
