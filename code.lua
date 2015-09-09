@@ -893,9 +893,10 @@ if (0) {
     for (__ceu_i=0; __ceu_i<ceu_vector_getlen(]]..val..[[); __ceu_i++) {
         ]]..TP.toc(tp_opt)..[[* __ceu_one = (]]..TP.toc(tp_opt)..[[*)
                                             ceu_vector_geti(]]..val..[[, __ceu_i);
+        tceu_kill* __ceu_casted = (tceu_kill*)_STK->evt_buf;
         if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
              ( ((tceu_org*)(__ceu_one->SOME.v)) ==
-               ((tceu_kill*)_STK->evt_buf)->org_or_adt ) )
+               (__ceu_casted)->org_or_adt ) )
         {
             __ceu_one->tag = CEU_]]..ID..[[_NIL;
 /*
@@ -909,10 +910,13 @@ if (0) {
                 else
                     local val = V({tag='Var',tp=var.tp,var=var}, 'rval')
                     LINE(me, [[
-    if (]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
-        ((tceu_org*)(]]..val..[[.SOME.v))==((tceu_kill*)_STK->evt_buf)->org_or_adt)
     {
-        ]]..val..' = '..string.upper(TP.toc(var.tp))..[[_pack(NULL);
+        tceu_kill* __ceu_casted = (tceu_kill*)_STK->evt_buf;
+        if (]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
+            ((tceu_org*)(]]..val..[[.SOME.v))==(__ceu_casted)->org_or_adt)
+        {
+            ]]..val..' = '..string.upper(TP.toc(var.tp))..[[_pack(NULL);
+        }
     }
 ]])
                 end
@@ -1565,6 +1569,11 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
         local t2 = { ptr, 'CEU_'..DIR..'_'..e.evt.id }
 
+        -- block for __emit_ps
+        LINE(me, [[
+{
+]])
+
         if ps and #ps>0 then
             local val = F.__emit_ps(me)
             t1[#t1+1] = val
@@ -1620,6 +1629,11 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
             else
                 LINE(me, VAL..';')
             end
+
+            -- block for __emit_ps
+            LINE(me, [[
+}
+]])
             return
         end
 
@@ -1655,6 +1669,11 @@ _STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
             LINE(me, VAL..';')
         end
 
+        -- block for __emit_ps
+        LINE(me, [[
+}
+]])
+
         LINE(me, [[
 #if defined(CEU_RET) || defined(CEU_OS)
 if (! _ceu_app->isAlive) {
@@ -1671,6 +1690,11 @@ case ]]..me.lbl_cnt.id..[[:;
 
     EmitInt = function (me)
         local _, int, ps = unpack(me)
+
+        -- block for __emit_ps
+        LINE(me, [[
+{
+]])
         local val = F.__emit_ps(me)
 
         -- [ ... | me=stk | ... | oth=stk ]
@@ -1709,6 +1733,7 @@ _STK->trl->stk = stack_curi(_ceu_go);
 ]])
         end
         LINE(me, [[
+}
 }
 
 return RET_RESTART;
@@ -1795,8 +1820,12 @@ case ]]..me.lbl.id..[[:;
         if dt then
             LINE(me, [[
     /* subtract time and check if I have to awake */
-    if (!ceu_out_wclock]]..suf..[[(_ceu_app, *(*((s32**)_STK->evt_buf)), NULL, &]]..val..[[) )
-        goto ]]..no..[[;
+    {
+        s32** __ceu_casted = (s32**)_STK->evt_buf;
+        if (!ceu_out_wclock]]..suf..[[(_ceu_app, *(*__ceu_casted), NULL, &]]..val..[[) ) {
+            goto ]]..no..[[;
+        }
+    }
 ]])
         end
 
@@ -1815,6 +1844,7 @@ case ]]..me.lbl.id..[[:;
         if set then
             local set_to = set[4]
             for i, v in ipairs(set_to) do
+                local tp
                 local val
                 if dt then
                     local suf = (dt.tm and '_') or ''
@@ -1823,18 +1853,33 @@ case ]]..me.lbl.id..[[:;
                     if e[1] == '_ok_killed' then
                         if TP.tostr(set_to.tp)=='(void&&)' then
                             -- ADT
-                            val = '(*((tceu_org**)_STK->evt_buf))'
+                            tp = 'tceu_org**'
+                            val = '(*(__ceu_casted))'
                         else
                             -- ORG
-                            val = '(((tceu_kill*)_STK->evt_buf)->ret)'
+                            tp = 'tceu_kill*'
+                            val = '((__ceu_casted)->ret)'
                         end
                     else
-                        val = '((*(('..TP.toc(me.tp)..'*)_STK->evt_buf))->_'..i..')'
+                        tp = TP.toc(me.tp)..'*'
+                        val = '((*(__ceu_casted))->_'..i..')'
                     end
                 else
-                    val = '((('..TP.toc(me.tp)..')_STK->evt_buf)->_'..i..')'
+                    tp = TP.toc(me.tp)
+                    val = '((__ceu_casted)->_'..i..')'
                 end
-                LINE(me, V(v,'rval')..' = '..val..';')
+                LINE(me, [[
+{
+]])
+                if tp then
+                    LINE(me, [[
+    ]]..tp..[[ __ceu_casted = (]]..tp..[[) _STK->evt_buf;
+]])
+                end
+                LINE(me, [[
+    ]]..V(v,'rval')..' = '..val..[[;
+}
+]])
             end
         end
     end,
@@ -1913,8 +1958,11 @@ case ]]..me.lbl.id..[[:;
         -- continue
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
-        if (*(*((CEU_THREADS_T**)_STK->evt_buf)) != ]]..me.thread_id..[[) {
-            goto ]]..no..[[; /* another thread is terminating: await again */
+        {
+            CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_STK->evt_buf;
+            if (*(*(__ceu_casted)) != ]]..me.thread_id..[[) {
+                goto ]]..no..[[; /* another thread is terminating: await again */
+            }
         }
     }
 }
