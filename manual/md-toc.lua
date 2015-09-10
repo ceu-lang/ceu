@@ -60,7 +60,7 @@ for _, t in ipairs(T) do
 --io.stderr:write('depois '..lnk..'\n')
           lnk = string.lower(lnk)
     v = spc..'* '..idx..' ['..v..'](#'..lnk..')'
-    print(v)
+    --print(v)
     TOC = TOC .. v .. '\n'
 end
 
