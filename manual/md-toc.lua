@@ -17,15 +17,23 @@ G = {
     h6 = P(false)
 }
 
+local SECTIONS = {}
+
 for lvl=1, 6 do
     local hi = 'h'..lvl
     local str = P(string.rep('#',lvl))
     G[hi] = G[hi] + P'\n' * Cp() * str * P' '^1 *
                         C((P(1) - (P' '^-1 * (str+'\n')))^0)
-    G[hi] = G[hi] / function(pos, v) return {lvl,pos,v} end
+    G[hi] = G[hi] / function(pos, v)
+        if SECTIONS[v] then
+            io.stderr:write('ERROR: '..lvl..' '..v..'\n')
+        end
+        SECTIONS[v] = true
+        return {lvl,pos,v}
+    end
 end
 
-local MANUAL = assert(io.open('manual.md')):read'*a'
+local MANUAL = assert(io.open('manual-v0.10.md')):read'*a'
 local T = { P(G):match(MANUAL) }
 
 local toc = { 0 }
@@ -63,6 +71,6 @@ for i=#T, 1, -1 do
              string.sub(MANUAL,pos)
 end
 
-local f = assert(io.open('manual-toc.md','w'))
+local f = assert(io.open('manual-toc-v0.10.md','w'))
 f:write(TOC..'\n\n'..MANUAL)
 f:close()
