@@ -45,6 +45,7 @@
     #define CEU_ASYNCS
     #define CEU_RET
     #define CEU_CLEAR
+    #define CEU_STACK
 #ifndef __AVR
 #endif
     #define CEU_INTS
@@ -103,6 +104,9 @@
 
     #define ceu_out_log(mode,str) \
         ((__typeof__(ceu_sys_log)*)((_ceu_app)->sys_vec[CEU_SYS_LOG]))(mode,str)
+
+    #define ceu_out_assert(v) \
+        ((__typeof__(ceu_sys_assert)*)((_ceu_app)->sys_vec[CEU_SYS_ASSERT]))(v)
 
     #define ceu_out_assert_msg_ex(v,msg,file,line)       \
         {                                                \
@@ -184,6 +188,14 @@
 
 #else /* ! CEU_OS_APP (!CEU_OS||CEU_OS_KERNEL) */
 
+    #ifndef ceu_out_assert
+        #error "Missing definition for macro \"ceu_out_assert\"."
+    #endif
+
+    #ifndef ceu_out_log
+        #error "Missing definition for macro \"ceu_out_log\"."
+    #endif
+
     #define ceu_out_assert_msg_ex(v,msg,file,line)          \
         {                                                   \
             int __ceu_v = v;                                \
@@ -244,14 +256,6 @@
 
 #define ceu_in_emit(app,id,n,buf) \
     ceu_out_go(app,id,buf)
-
-#ifndef ceu_out_assert
-#error "Missing definition for macro \"ceu_out_assert\"."
-#endif
-
-#ifndef ceu_out_log
-#error "Missing definition for macro \"ceu_out_log\"."
-#endif
 
 #ifdef CEU_THREADS
 /* TODO: app */

@@ -30968,7 +30968,7 @@ pool I[10] is;
 spawn T in is;
 spawn U in is;
 
-escape sizeof(CEU_T) > sizeof(CEU_U);
+escape sizeof(CEU_T) >= sizeof(CEU_U);
 ]],
     run = 1,
 }
@@ -31000,7 +31000,7 @@ spawn T in is;
 spawn U in is;
 spawn V in is;
 
-escape sizeof(CEU_T) > sizeof(CEU_U);
+escape sizeof(CEU_T) >= sizeof(CEU_U);
 ]],
     run = 1,
 }

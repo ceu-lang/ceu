@@ -31,4 +31,5 @@ void ceu_pool_init (tceu_pool* pool, int size, int unit, tceu_org_lnk** lnks,
                     byte** queue, byte* mem);
 byte* ceu_pool_alloc (tceu_pool* pool);
 void ceu_pool_free (tceu_pool* pool, byte* val);
+
 #endif

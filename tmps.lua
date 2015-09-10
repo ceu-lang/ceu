@@ -8,7 +8,12 @@ end
 
 F = {
     Set_bef = function (me, sub, i)
+        local _, set, fr, to = unpack(me)
         if i ~= 4 then
+            return
+        end
+        if set=='thread' or set=='spawn' then
+            VARS[sub.fst.var] = nil     -- remove previously accessed vars
             return
         end
         if sub.tag ~= 'VarList' then
@@ -19,6 +24,7 @@ F = {
                 local dcl = v.fst.var.dcl
                 local loop = AST.par(me, 'Loop')
                 if loop and dcl.__depth>loop.__depth then
+                    -- reset last access
                     VARS[v.fst.var] = v.fst.ana.pre
                 end
             end
@@ -28,48 +34,62 @@ F = {
     Dcl_var_pre = function (me)
         local var = me.var
 
-        if var.cls then
-            VARS = {}       -- org dcls eliminate all current possible tmps
-            return
-        end
-
-        if var.pre~='var' or var.cls or var.inTop then
-            return                  -- only normal vars can be tmp
-        end
-
-        VARS[var] = true
-        if var.isTmp ~= false then  -- already preset as false
-            var.isTmp = true
-        end
-
-        -- declarations inside ADTs are never temporary (always part of the data)
-        if AST.par(me, 'Dcl_adt') then
+        -- EXTERNAL OPTION
+        -- ignore all optimizations
+        if not OPTS.tmp_vars then
             var.isTmp = false
-            assert(not AST.par(me,'Dcl_fun'), 'bug found: mixing adt/fun')
+        end
 
-        -- declarations inside functions are always temporary (no awaits inside)
+        local cls = ENV.clss[TP.id(var.tp)]
+
+        local is_arr = (TP.check(var.tp,'[]')           and
+                       (var.pre == 'var')               and
+                       (not TP.is_ext(var.tp,'_','@'))) and
+                       (not var.cls)
+        local is_dyn = (var.tp.arr=='[]')
+
+        -- ALWAYS PERSISTENT (isTmp=false)
+        if var.pre ~= 'var' then
+            var.isTmp = false       -- non 'var' variables
+        elseif var.cls then
+            var.isTmp = false       -- plain 'cls' variables
+        elseif (cls and TP.check(var.tp,'&&','?')) then
+            var.isTmp = false       -- option pointer to cls (T&&?)
+        elseif is_arr and is_dyn then
+            var.isTmp = false       -- dynamic vector
+        elseif AST.par(me,'Dcl_adt') then
+            var.isTmp = false       -- ADT field declaration
+        elseif var.id == '_out' then
+            var.isTmp = false       -- recursive ADT '_out' field
+
+        -- ALWAYS TEMPORARY (isTmp=true)
         elseif AST.par(me, 'Dcl_fun') then
+            var.isTmp = true        -- functions vars (no yields inside)
+        end
+
+        -- NOT SET, DEFAULT=true
+        if var.isTmp == nil then
             var.isTmp = true
         end
 
-        -- inside a recursive loop
-        -- TODO: check if tmp is crossed by "recurse" (otherwise could be tmp)
-        for loop in AST.iter'Loop' do
-            if loop.iter_tp == 'data' then
-error'not implemented (locals inside iter)'
-                var.isTmp = false
-                break;
-            end
+        -- start tracking the var
+
+        -- crossing a class limit,
+        --  eliminate all current possible tmps
+        if var.cls then
+            VARS = {}
         end
+        VARS[var] = true
     end,
 
     Var = function (me)
         local var = me.var
 
-        -- uses inside threads
-        local thr = AST.iter'Thread'()
-        if thr then
-            if me.var.blk.__depth < thr.__depth then
+        -- uses inside threads or methods
+        -- ("or" is ok because threads/methods are mutually exlusive)
+        local node = AST.par(me,'Thread') or AST.par(me,'Dcl_fun')
+        if node then
+            if me.var.blk.__depth < node.__depth then
                 var.isTmp = false
                 return              -- defined outside: isTmp=false
             else
@@ -103,15 +123,6 @@ error'not implemented (locals inside iter)'
                     var.isTmp = false
                 end
             end
-        end
-
-        local glb = ENV.clss.Global
-        if var.inTop or
-            (var.blk==ENV.clss.Main.blk_ifc and glb and glb.is_ifc and
-             glb.blk_ifc.vars[var.id])
-        then
-            --var.isTmp = false
-            --return                  -- vars in interfaces cannot be tmp
         end
 
         local dcl = AST.iter'Dcl_var'()
@@ -168,6 +179,7 @@ error'not implemented (locals inside iter)'
         end
     end,
 
+    ['Op1_&'] = 'Op1_&&',
     ['Op1_&&'] = function (me)
         local op, e1 = unpack(me)
         if e1.fst.var then
@@ -225,22 +237,46 @@ error'not implemented (locals inside iter)'
         end
     end,
 
-    ParOr_pre = function (me)
+    __remove = function (me)
         for var, v in pairs(VARS) do
             if v ~= true then
                 VARS[var] = nil     -- remove previously accessed vars
             end
         end
     end,
-    ParAnd_pre  = 'ParOr_pre',
-    ParEver_pre = 'ParOr_pre',
-    ParOr   = 'ParOr_pre',
-    ParAnd  = 'ParOr_pre',
-    ParEver = 'ParOr_pre',
+    Do_pre      = '__remove',       -- TODO: because of ADTs
+    ParOr_pre   = '__remove',
+    ParAnd_pre  = '__remove',
+    ParEver_pre = '__remove',
+    Do      = '__remove',
+    ParOr   = '__remove',
+    ParAnd  = '__remove',
+    ParEver = '__remove',
+    Finally = '__remove',
 
     -- TODO: should pre's be already different?
-    Async_pre = 'ParOr_pre',
-    Async     = 'ParOr_pre',
+    Async_pre = '__remove',
+    Async     = '__remove',
+    Thread_pre = '__remove',
+    Thread    = '__remove',
+
+    Dcl_cls = function (me)
+        if not me.is_ifc then
+            return
+        end
+
+        for _, cls in ipairs(ENV.clss) do
+            if me.matches[cls] then
+                -- all accessed interface vars in the interface
+                -- are also acessed in the matching class (isTmp=false)
+                for _, var in ipairs(me.blk_ifc.vars) do
+                    if var.isTmp == false then
+                        cls.blk_ifc.vars[var.id].isTmp = false
+                    end
+                end
+            end
+        end
+    end,
 }
 
 AST.visit(F)

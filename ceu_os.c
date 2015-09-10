@@ -14,13 +14,9 @@ void* CEU_APP_ADDR = NULL;
 
 #ifdef CEU_DEBUG
 #include <stdio.h>      /* printf */
-#ifndef CEU_NOSTDLIB
-#include <assert.h>     /* sys_assert */
-#endif
 #endif
 
 #if defined(CEU_DEBUG) || defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS_KERNEL)
-#include <stdlib.h>     /* realloc, exit */
 void *realloc(void *ptr, size_t size);
 #endif
 
@@ -48,8 +44,6 @@ void *realloc(void *ptr, size_t size);
 
 #ifndef CEU_OS_APP
 
-#ifndef CEU_NOSTDLIB
-
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
 #define CEU_MAX_DYNS 100
@@ -76,8 +70,6 @@ void* ceu_sys_realloc (void* ptr, size_t size) {
     return realloc(ptr, size);
 }
 #endif
-
-#endif /* ifndef CEU_NOSTDLIB */
 
 #ifdef CEU_VECTOR
 #include "ceu_vector.h"
@@ -1032,8 +1024,8 @@ int ceu_go_all (tceu_app* app)
  * SYS_VECTOR:
  */
 void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
-    (void*) &ceu_sys_assert,
-    (void*) &ceu_sys_log,
+    (void*) &ceu_out_assert,
+    (void*) &ceu_out_log,
     (void*) &ceu_sys_realloc,
     (void*) &ceu_sys_req,
     (void*) &ceu_sys_load,

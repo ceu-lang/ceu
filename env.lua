@@ -1659,6 +1659,7 @@ F = {
             me.var  = VAR
             me.tp   = VAR.tp
             me.lval = VAR.lval
+            VAR.isTmp = false
 
         elseif adt then
             local ID, op, blk = unpack(adt)

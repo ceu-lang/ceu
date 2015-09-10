@@ -432,12 +432,14 @@ me.tp = var.tp
 
         -- TODO: similar code in Block_pre for !BlockI
         elseif AST.par(me,'BlockI') and TP.check(var.tp,'?') then
-            -- has be part of cls_pre to execute before possible binding in constructor
-            -- initialize to nil
-            local ID = string.upper(TP.opt2adt(var.tp))
-            LINE(me, [[
-]]..V({tag='Var',tp=var.tp,var=var},'rval')..[[.tag = CEU_]]..ID..[[_NIL;
-]])
+            if not var.isTmp then   -- ignore unused var
+                -- has be part of cls_pre to execute before possible binding in constructor
+                -- initialize to nil
+                local ID = string.upper(TP.opt2adt(var.tp))
+                LINE(me, [[
+    ]]..V({tag='Var',tp=var.tp,var=var},'rval')..[[.tag = CEU_]]..ID..[[_NIL;
+    ]])
+            end
         end
     end,
 
@@ -1103,6 +1105,13 @@ case ]]..SET.lbl_cnt.id..[[:;
 
     __set = function (me, fr, to)
         local is_byref = (fr.tag=='Op1_&')
+
+        if AST.par(me, 'BlockI') then
+            assert(to.tag == 'Var', 'bug found')
+            if to.var.isTmp == true then
+                return  -- not accessed anywhere, so I'll skip it
+            end
+        end
 
         -- optional types
         if TP.check(to.tp,'?') then

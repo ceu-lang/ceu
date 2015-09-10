@@ -7,6 +7,7 @@ OPTS_NPARAMS = {
     out_s     = 1,
     out_f     = 1,
 
+    tmp_vars  = 0,
     join      = 0,
     c_calls   = 1,
 
@@ -34,6 +35,7 @@ OPTS = {
     out_s     = 'CEU_SIZE',
     out_f     = 'ceu_app_init',
 
+    tmp_vars  = true,
     join      = true,
     c_calls   = nil,    -- [nil=accept]
 
@@ -106,6 +108,7 @@ if not OPTS.input then
         --out-s <NAME>         # TODO (CEU_SIZE)
         --out-f <NAME>         # TODO (ceu_app_init)
     
+        --tmp-vars (--no-tmp-vars) # TODO
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
         --c-calls              # TODO
 
@@ -437,7 +440,11 @@ do
                 elseif var.pre=='var' or var.pre=='pool' then
                     local i = ENV.ifcs.flds[var.ifc_id]
                     if i then
-                        flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
+                        if var.isTmp then
+                            flds[i+1] = '0' -- never acessed
+                        else
+                            flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
+                        end
                     end
                 elseif var.pre == 'function' then
                     local i = ENV.ifcs.funs[var.ifc_id]
@@ -478,21 +485,21 @@ do
         CC = SUB(CC, '#include "ceu_types.h"', FILES.ceu_types_h)
         CC = SUB(CC, '#include "ceu_os.h"',
                      FILES.ceu_os_h..'\n'..FILES.ceu_os_c)
-    end
 
-    -- TODO: ceu_pool_* => ceu_sys_pool_*
-    FILES.ceu_pool_h = SUB(FILES.ceu_pool_h, '#include "ceu_os.h"',
-                                             FILES.ceu_os_h)
-    FILES.ceu_pool_c = SUB(FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
-    CC = SUB(CC, '#include "ceu_pool.h"',
-                         FILES.ceu_pool_h..'\n'..FILES.ceu_pool_c)
-
-    -- TODO: ceu_vector_* => ceu_sys_vector_*
-    FILES.ceu_vector_h = SUB(FILES.ceu_vector_h, '#include "ceu_os.h"',
+        -- TODO: ceu_pool_* => ceu_sys_pool_*
+        FILES.ceu_pool_h = SUB(FILES.ceu_pool_h, '#include "ceu_os.h"',
                                                  FILES.ceu_os_h)
-    FILES.ceu_vector_c = SUB(FILES.ceu_vector_c, '#include "ceu_vector.h"', '')
-    CC = SUB(CC, '#include "ceu_vector.h"',
-                         FILES.ceu_vector_h..'\n'..FILES.ceu_vector_c)
+        FILES.ceu_pool_c = SUB(FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
+        CC = SUB(CC, '#include "ceu_pool.h"',
+                             FILES.ceu_pool_h..'\n'..FILES.ceu_pool_c)
+
+        -- TODO: ceu_vector_* => ceu_sys_vector_*
+        FILES.ceu_vector_h = SUB(FILES.ceu_vector_h, '#include "ceu_os.h"',
+                                                     FILES.ceu_os_h)
+        FILES.ceu_vector_c = SUB(FILES.ceu_vector_c, '#include "ceu_vector.h"', '')
+        CC = SUB(CC, '#include "ceu_vector.h"',
+                             FILES.ceu_vector_h..'\n'..FILES.ceu_vector_c)
+    end
 
     if OPTS.out_s ~= 'CEU_SIZE' then
         CC = SUB(CC, 'CEU_SIZE', OPTS.out_s)
