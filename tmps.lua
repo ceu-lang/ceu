@@ -243,28 +243,14 @@ F = {
         end
     end,
 
-    __remove = function (me)
+    -- Pars,Finally,Async,Thread,Block
+    Block_pre = function (me)
         for var, v in pairs(VARS) do
             if v ~= true then
                 VARS[var] = nil     -- remove previously accessed vars
             end
         end
     end,
-    Do_pre      = '__remove',       -- TODO: because of ADTs
-    ParOr_pre   = '__remove',
-    ParAnd_pre  = '__remove',
-    ParEver_pre = '__remove',
-    Do      = '__remove',
-    ParOr   = '__remove',
-    ParAnd  = '__remove',
-    ParEver = '__remove',
-    Finally = '__remove',
-
-    -- TODO: should pre's be already different?
-    Async_pre = '__remove',
-    Async     = '__remove',
-    Thread_pre = '__remove',
-    Thread    = '__remove',
 
     Dcl_cls = function (me)
         if not me.is_ifc then

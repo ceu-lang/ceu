@@ -323,13 +323,13 @@ os.execute('rm -f /tmp/_ceu_*')
 > /usr/bin/time --format='(%C: %Us %Mk)' ./run_tests.lua
 
 STATS = {
-    count   = 2777,
+    count   = 2778,
     mem     = 0,
-    trails  = 6051,
-    bytes   = 37886762,
+    trails  = 6056,
+    bytes   = 37922864,
 }
 
-(./run_tests.lua: 734.51s 52744k)
+(./run_tests.lua: 731.85s 53040k)
 
 ===
 
