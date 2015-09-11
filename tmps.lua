@@ -251,6 +251,7 @@ F = {
             end
         end
     end,
+    Block = 'Block_pre',
 
     Dcl_cls = function (me)
         if not me.is_ifc then
