@@ -70,7 +70,7 @@ function COPY (n)
 end
 
 function ANA.CMP (n1, n2)
-    return ANA.HAS(n1, n2) and ANA.HAS(n2, n1)
+    return ANA.HAS(n1,n2) and ANA.HAS(n2,n1)
 end
 
 function ANA.HAS (n1, n2)

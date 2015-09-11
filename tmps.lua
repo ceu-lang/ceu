@@ -162,15 +162,21 @@ F = {
         --      var int ret;
         --      start t
         --      ret = 1;
+--- TODO: still required?
         for _,oth in pairs(var.blk.vars) do
             if oth.cls then
                 v = false
             end
         end
+---
 
         if v == true then
-            VARS[var] = me.ana.pre
-            return                  -- first access
+            if var.blk == CLS().blk_ifc then
+                v = false
+            else
+                VARS[var] = me.ana.pre
+                return                  -- first access
+            end
         end
 
         if not (v and ANA.CMP(v,me.ana.pre)) then
