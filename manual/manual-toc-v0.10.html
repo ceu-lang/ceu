@@ -224,13 +224,16 @@
 <li>10 <a href="#license">License</a></li>
 </ul>
 <title>
-Céu 0.10 - Reference Manual
+Céu 0.10 - Reference Manual - (warning, incomplete!)
 </title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 </p>
 
 <h2 id="section">1</h2>
 <h1 id="introduction">Introduction</h1>
+<blockquote>
+<p><em>Warning:</em> <em>This manual is under a rewriting process and still mostly reflects version 0.8.</em></p>
+</blockquote>
 <p>Céu is an imperative, concurrent and reactive language in which then lines of execution, known as <em>trails</em>, react together continuously and in synchronous steps to external input events from the environment. Waiting for an event halts the running trail until that event occurs. The environment broadcasts an occurring event to all active trails, which share a single global time reference (the event itself).</p>
 <p>The synchronous concurrency model of Céu greatly diverges from conventional multithreading (e.g. <em>pthreads</em> and <em>Java threads</em>) and the actor model (e.g.<br /><em>erlang</em> and <em>Go</em>). On the one hand, trails can share variables in a deterministic and seamless way (e.g. no need for locks or semaphores). On the other hand, there is no real parallelism (e.g. multi-core execution) in the standard synchronous execution mode of the language.</p>
 <p>Céu integrates well with C, being possible to define and call C functions from within Céu programs.</p>

@@ -326,10 +326,10 @@ STATS = {
     count   = 2777,
     mem     = 0,
     trails  = 6051,
-    bytes   = 37888306,
+    bytes   = 37886762,
 }
 
-(./run_tests.lua: 731.00s 52912k)
+(./run_tests.lua: 734.51s 52744k)
 
 ===
 

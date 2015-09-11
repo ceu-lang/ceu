@@ -1,8 +1,11 @@
-<title>Céu 0.10 - Reference Manual</title>
+<title>Céu 0.10 - Reference Manual - (warning, incomplete!)</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></p>
 
 Introduction
 ============
+
+> *Warning:*
+*This manual is under a rewriting process and still mostly reflects version 0.8.*
 
 Céu is an imperative, concurrent and reactive language in which then lines of 
 execution, known as *trails*, react together continuously and in synchronous 

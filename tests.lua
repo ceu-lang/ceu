@@ -22461,7 +22461,7 @@ Test { [[
 native do
     void* V;
 end
-var void&& v;
+var void&& v = null;
 _V = v;
 escape 1;
 ]],
@@ -35672,7 +35672,7 @@ interface J with
     interface I;
 end
 
-var I&& i;
+var I&& i = null;
 var J&& j = i;
 
 escape 1;
@@ -45046,7 +45046,8 @@ class Map with
 do
 end
 
-var Map&& m;
+var Map m1;
+var Map&& m=&&m1;
 emit m:go_xy => (1,1);
 
 escape 1;
@@ -45119,6 +45120,29 @@ do
     await 1s;
     obj.v = 1;
 end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+native @plain _int;
+interface Object with
+    var _int v;
+end
+class MoveObject with
+    var Object& obj;
+do
+    await 1s;
+    obj.v = 1;
+end
+class X with
+    interface Object;
+do
+end
+var X xxx;
+var MoveObject m with
+    this.obj = &xxx;
+end;
 escape 1;
 ]],
     run = 1,
