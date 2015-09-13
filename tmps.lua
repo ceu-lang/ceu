@@ -110,18 +110,14 @@ F = {
 
         --[[
         --  var int i;
-        --  var T[2] t with
-        --      i = i + 1;      // "i" cannot be tmp
+        --  var T t with
+        --      i = i + 1;  // "i" cannot be tmp (argument to static _constr)
         --  end;
         --]]
-        local constr = AST.par(me, 'Dcl_constr')
-        if constr and (var.blk.__depth < constr.__depth) then
-            local org = AST.par(me, 'Dcl_var')
-            if org then
-                local _, tp = unpack(org)
-                if tp.arr then
-                    var.isTmp = false
-                end
+        if AST.par(me, 'Dcl_constr') then
+            if AST.isParent(var.blk, me) then
+                var.isTmp = false
+                return
             end
         end
 
