@@ -301,7 +301,7 @@ F =
             else
                 ps[#ps+1] = CUR(me)
             end
-            ps[#ps] = ps[#ps]
+            --ps[#ps] = '(tceu_org*)'..ps[#ps]
         else
             f.is_call = true
         end

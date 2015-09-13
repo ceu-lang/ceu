@@ -1567,7 +1567,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
             DIR = 'IN'
             dir = 'in'
             if op == 'call' then
-                ptr = '_ceu_app->data'
+                ptr = '(CEU_Main*)_ceu_app->data'
             else
                 ptr = '_ceu_app'
             end

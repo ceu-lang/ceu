@@ -11,70 +11,6 @@ end
 --[===[
 --]===]
 
-Test { [[
-native do
-    int fff (CEU_T* t, int v) {
-        return CEU_T_fff(NULL, t, v);
-    }
-    int iii (CEU_III* i, int v) {
-        return CEU_III__fff(i)(NULL, i, v);
-    }
-    int vvv (CEU_III* i) {
-        return *CEU_III__vvv(i);
-    }
-end
-native @pure _fff(), _iii(), _vvv();
-
-interface III with
-    var int vvv;
-    function (int)=>int fff;
-end
-
-class T with
-    var int vvv;
-    function (int)=>int fff;
-do
-    function (int v)=>int fff do
-        return this.vvv + v;
-    end
-    await FOREVER;
-end
-
-var T t with
-    this.vvv = 100;
-end;
-
-var III&& i = &&t;
-
-escape t.fff(10) + _fff(&&t, 10) + _iii(i, 10) + _vvv(i);
-]],
-    run = 430,
-}
-
-Test { [[
-class T with
-    var int v;
-do
-end
-
-input int E;
-
-par/or do
-var int yyy;
-    every xxx in E do
-        spawn T with
-            yyy = 1;
-            xxx = 1;
-        end;
-    end;
-with
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
 --do return end
 
 -------------------------------------------------------------------------------
@@ -30275,6 +30211,30 @@ escape 1;
     asr = 'runtime error: invalid tag',
 }
 
+Test { [[
+class T with
+    var int v;
+do
+end
+
+input int E;
+
+par/or do
+    var int yyy;
+    every xxx in E do
+        spawn T with
+            yyy = 1;
+            xxx = 1;
+        end;
+    end;
+with
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 -- MEM/MEMORY POOL
 
 Test { [[
@@ -35987,6 +35947,46 @@ end
 
 Test { [[
 native do
+    int fff (CEU_T* t, int v) {
+        return CEU_T_fff(NULL, t, v);
+    }
+    int iii (CEU_III* i, int v) {
+        return CEU_III__fff(i)(NULL, i, v);
+    }
+    int vvv (CEU_III* i) {
+        return *CEU_III__vvv(i);
+    }
+end
+native @pure _fff(), _iii(), _vvv();
+
+interface III with
+    var int vvv;
+    function (int)=>int fff;
+end
+
+class T with
+    var int vvv;
+    function (int)=>int fff;
+do
+    function (int v)=>int fff do
+        return this.vvv + v;
+    end
+    await FOREVER;
+end
+
+var T t with
+    this.vvv = 100;
+end;
+
+var III&& i = &&t;
+
+escape t.fff(10) + _fff(&&t, 10) + _iii(i, 10) + _vvv(i);
+]],
+    run = 430,
+}
+
+Test { [[
+native do
     int V = 10;
 end
 
@@ -39205,7 +39205,7 @@ var IWorld&&? ptr = spawn World with end;
 
 escape 1;
 ]],
-    gcc = '33: error: ‘CEU_World_get_pingus’ used but never defined',
+    gcc = "undefined reference to `CEU_World_get_pingus'",
 }
 
 Test { [[
