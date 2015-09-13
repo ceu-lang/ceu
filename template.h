@@ -20,15 +20,22 @@ typedef === TCEU_NCLS === tceu_ncls;
 
 #include "ceu_os.h"
 
+#ifdef CEU_NEWS_POOL
+#include "ceu_pool.h"
+#endif
+
+#ifdef CEU_VECTOR
+#include "ceu_vector.h"
+#endif
+
 === NATIVE_PRE ===
 === EVENTS ===      /* CEU_IN_, CEU_OUT_ */
 === FUNCTIONS ===   /* CEU_FUN_ */
 === TUPLES ===
 
-/* class definitions */
-/*
-// TODO: host language to have access to classes
-=== CLSS_DEFS ===
-*/
+/* class/adts definitions */
+/* may use types defined above in "NATIVE" */
+/* each class may define new native code that appear after its struct declaration */
+=== TOPS_H ===
 
 #endif

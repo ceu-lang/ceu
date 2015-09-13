@@ -38,11 +38,6 @@
 /* native code from the Main class */
 === NATIVE ===
 
-/* class/adts definitions */
-/* may use types defined above in "NATIVE" */
-/* each class may define new native code that appear after its struct declaration */
-=== TOPS_DEFS ===
-
 /* goto labels */
 enum {
 === LABELS_ENUM ===
@@ -85,6 +80,8 @@ static _tceu_app _CEU_APP = {
     }
 };
 #endif
+
+=== TOPS_C ===
 
 /**********************************************************************/
 

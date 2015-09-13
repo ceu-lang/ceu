@@ -1,5 +1,6 @@
 MEM = {
-    tops = '',
+    tops_h = '',
+    tops_c = '',
     tops_init = '',
     native_pre = '',
 }
@@ -366,12 +367,12 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
         me.auxs[#me.auxs+1] = pack
         me.auxs   = table.concat(me.auxs,'\n')..'\n'
         me.struct = me.struct..' CEU_'..id..';'
-        MEM.tops = MEM.tops..'\n'..(me.enum or '')..'\n'..
+        MEM.tops_h = MEM.tops_h..'\n'..(me.enum or '')..'\n'..
                                    me.struct..'\n'
 
         -- declare a static BASE instance
         if me.is_rec then
-            MEM.tops = MEM.tops..[[
+            MEM.tops_c = MEM.tops_c..[[
 static CEU_]]..id..[[ CEU_]]..string.upper(id)..[[_BASE;
 ]]
             MEM.tops_init = MEM.tops_init .. [[
@@ -379,7 +380,7 @@ CEU_]]..string.upper(id)..[[_BASE.tag = CEU_]]..string.upper(id..'_'..me.tags[1]
 ]]
         end
 
-        MEM.tops = MEM.tops..me.auxs..'\n'
+        MEM.tops_c = MEM.tops_c..me.auxs..'\n'
     end,
     Dcl_adt_tag_pre = function (me)
         local top = AST.par(me, 'Dcl_adt')
@@ -513,6 +514,8 @@ typedef struct CEU_]]..me.id..[[ {
         me.funs = ''
     end,
     Dcl_cls_pos = function (me)
+        local ifcs_dcls  = ''
+
         if me.is_ifc then
             me.struct = 'typedef void '..TP.toc(me.tp)..';\n'
 
@@ -535,6 +538,33 @@ typedef union CEU_]]..me.id..[[_delayed {
 ]]
             me.__env_last_match.__delayed =
                 (me.__env_last_match.__delayed or '') .. struct .. '\n'
+
+            for _, var in ipairs(me.blk_ifc.vars) do
+                ifcs_dcls = ifcs_dcls ..
+                    TP.toc(var.tp)..'* CEU_'..me.id..'__'..var.id..' (CEU_'..me.id..'*);\n'
+
+                if var.pre == 'var' then
+                    MEM.tops_c = MEM.tops_c..[[
+]]..TP.toc(var.tp)..'* CEU_'..me.id..'__'..var.id..' (CEU_'..me.id..[[* org) {
+    return (]]..TP.toc(var.tp)..[[*) (
+        ((byte*)org) + _CEU_APP.ifcs_flds[((tceu_org*)org)->cls][
+            ]]..ENV.ifcs.flds[var.ifc_id]..[[
+        ]
+    );
+}
+]]
+                elseif var.pre == 'function' then
+                    MEM.tops_c = MEM.tops_c..[[
+]]..TP.toc(var.tp)..'* CEU_'..me.id..'__'..var.id..' (CEU_'..me.id..[[* org) {
+    return (]]..TP.toc(var.tp)..[[*) (
+        _CEU_APP.ifcs_funs[((tceu_org*)org)->cls][
+            ]]..ENV.ifcs.funs[var.ifc_id]..[[
+        ]
+    );
+}
+]]
+                end
+            end
         else
             me.struct  = me.struct..'\n} '..TP.toc(me.tp)..';\n'
         end
@@ -544,14 +574,15 @@ typedef union CEU_]]..me.id..[[_delayed {
 
         if me.id ~= 'Main' then
             -- native goes after class declaration
-            MEM.tops = MEM.tops .. me.native[false] .. '\n'
+            MEM.tops_h = MEM.tops_h .. me.native[false] .. '\n'
         end
-        MEM.tops = MEM.tops .. me.struct .. '\n'
+        MEM.tops_h = MEM.tops_h .. me.struct .. '\n'
 
         -- TODO: HACK_4: delayed declaration until use
-        MEM.tops = MEM.tops .. (me.__delayed or '') .. '\n'
+        MEM.tops_h = MEM.tops_h .. (me.__delayed or '') .. '\n'
 
-        MEM.tops = MEM.tops .. me.funs .. '\n'
+        MEM.tops_h = MEM.tops_h .. me.funs .. '\n'
+        MEM.tops_h = MEM.tops_h .. ifcs_dcls .. '\n'
 --DBG('===', me.id, me.trails_n)
 --DBG(me.struct)
 --DBG('======================')

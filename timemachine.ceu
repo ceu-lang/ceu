@@ -1,5 +1,9 @@
 input bool OS_RESUME, OS_PAUSE;
 
+native/pre do
+    ##include <string.h>
+end
+
 native do
     enum {
         TM_REQ_PAUSE = -1,

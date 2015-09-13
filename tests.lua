@@ -11,6 +11,70 @@ end
 --[===[
 --]===]
 
+Test { [[
+native do
+    int fff (CEU_T* t, int v) {
+        return CEU_T_fff(NULL, (tceu_org*)t, v);
+    }
+    int iii (CEU_III* i, int v) {
+        return CEU_III__fff(i)(NULL, i, v);
+    }
+    int vvv (CEU_III* i) {
+        return *CEU_III__vvv(i);
+    }
+end
+native @pure _fff(), _iii(), _vvv();
+
+interface III with
+    var int vvv;
+    function (int)=>int fff;
+end
+
+class T with
+    var int vvv;
+    function (int)=>int fff;
+do
+    function (int v)=>int fff do
+        return this.vvv + v;
+    end
+    await FOREVER;
+end
+
+var T t with
+    this.vvv = 100;
+end;
+
+var III&& i = &&t;
+
+escape t.fff(10) + _fff(&&t, 10) + _iii(i, 10) + _vvv(i);
+]],
+    run = 430,
+}
+
+Test { [[
+class T with
+    var int v;
+do
+end
+
+input int E;
+
+par/or do
+var int yyy;
+    every xxx in E do
+        spawn T with
+            yyy = 1;
+            xxx = 1;
+        end;
+    end;
+with
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 --do return end
 
 -------------------------------------------------------------------------------
@@ -15460,7 +15524,7 @@ escape(a);
 }
 
 Test { [[
-native do
+native/pre do
     void f (int* a) {
         *a = 10;
     }
@@ -17184,7 +17248,7 @@ escape v;
 }
 
 Test { [[
-native do
+native/pre do
     void f (int* a) {
         *a = 10;
     }
@@ -17986,7 +18050,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pre do
     struct T;
     typedef struct T t;
     int V = 1;
@@ -18202,7 +18266,7 @@ escape &tex2==&_V;
 }
 
 Test { [[
-native do
+native/pre do
     struct T;
     typedef struct T t;
     int V = 1;
@@ -19301,7 +19365,7 @@ native do
     #define ceu_out_emit(a,b,c,d) 1
 end
 output int A;
-native do
+native/pre do
     typedef int t;
 end
 var _t v=1;
@@ -20766,7 +20830,7 @@ var void[1] b;
 }
 
 Test { [[
-native do
+native/pre do
     typedef struct {
         int v[10];
         int c;
@@ -23480,7 +23544,7 @@ escape 0;
 -- STRUCTS / SIZEOF
 
 Test { [[
-native do
+native/pre do
 typedef struct {
     u16 a;
     u8 b;
@@ -23497,7 +23561,7 @@ escape vs.a + vs.b + sizeof(_s);
 }
 
 Test { [[
-native do
+native/pre do
 typedef struct {
     u16 a;
     u8 b;
@@ -23533,7 +23597,7 @@ escape sizeof<_aaa> + _SZ;
 }
 
 Test { [[
-native do
+native/pre do
     typedef struct {
         u16 ack;
         u8 data[16];
@@ -23590,7 +23654,7 @@ escape vs.a;
 }
 
 Test { [[
-native do
+native/pre do
     typedef struct {
         int a;
     } mys;
@@ -23970,7 +24034,7 @@ a = 1;
 }
 
 Test { [[
-native do
+native/pre do
     #define N 1
 end
 var _u8[_N] vec;
@@ -23981,7 +24045,7 @@ escape vec[_N-1];
 }
 
 Test { [[
-native do
+native/pre do
     #define N 1
 end
 var _u8[N] vec;
@@ -23992,7 +24056,7 @@ escape vec[N-1];
 }
 
 Test { [[
-native do
+native/pre do
     #define N 1
 end
 var _u8[N+1] vec;
@@ -24012,7 +24076,7 @@ escape vec[1];
 }
 
 Test { [[
-native do
+native/pre do
     #define N 5
 end
 var _int[_N] vec;
@@ -26122,7 +26186,7 @@ escape *_BGS[1];
 }
 
 Test { [[
-native do
+native/pre do
     typedef int* t;
 end
 var int v = 2;
@@ -26134,7 +26198,7 @@ escape *p;
 
 Test { [[
 native @plain _t;
-native do
+native/pre do
     typedef int t;
 end
 var _t v = 2;
@@ -26145,7 +26209,7 @@ escape *v;
 
 Test { [[
 native @plain _rect;
-native do
+native/pre do
     typedef struct rect {
         int* x, y;
     } rect;
@@ -26160,7 +26224,7 @@ escape *(r.x);
 }
 
 Test { [[
-native do
+native/pre do
     typedef struct t {
         int* x;
     } t;
@@ -29301,7 +29365,7 @@ escape 1;
 Test { [[
 native @const _UI_ALIGN_CENTER;
 native @pure _UI_align();
-native do
+native/pre do
     typedef struct {
         int x, w;
     } SDL_Rect;
@@ -29328,7 +29392,7 @@ escape 1;
 Test { [[
 native @const _UI_ALIGN_CENTER;
 native @pure _UI_align();
-native do
+native/pre do
     typedef struct {
         int x, w;
     } SDL_Rect;
@@ -34352,7 +34416,7 @@ escape 10;
 
 Test { [[
 native _s=0;
-native do
+native/pre do
     typedef int s;
 end
 
@@ -34377,7 +34441,7 @@ escape 10;
 
 Test { [[
 native _s=0;
-native do
+native/pre do
     typedef int s;
 end
 
@@ -34405,7 +34469,7 @@ escape 10;
 
 Test { [[
 native _s=0;
-native do
+native/pre do
     typedef int s;
 end
 
@@ -34462,7 +34526,7 @@ escape _V;
 
 Test { [[
 native _s=0;
-native do
+native/pre do
     typedef int s;
 end
 
@@ -34536,7 +34600,7 @@ end;
 
 Test { [[
 native _s=0;
-native do
+native/pre do
     typedef int s;
 end
 
@@ -34588,7 +34652,7 @@ escape _V;
 
 Test { [[
 native _s=0;
-native do
+native/pre do
     typedef int s;
 end
 
@@ -34624,7 +34688,7 @@ escape _V;
 
 Test { [[
 native _s=0;
-native do
+native/pre do
     typedef int s;
 end
 
@@ -34665,7 +34729,7 @@ escape _V;
 
 Test { [[
 native _s=0;
-native do
+native/pre do
     typedef int s;
 end
 
@@ -38375,7 +38439,7 @@ escape i:g(5);
 }
 
 Test { [[
-native do
+native/pre do
     typedef int (*f_t) (int v);
 end
 
@@ -38408,7 +38472,7 @@ escape t.ret1 + t.ret2;
 }
 
 Test { [[
-native do
+native/pre do
     typedef int (*f_t) (int v);
 end
 
@@ -44931,7 +44995,7 @@ escape 1;
 Test { [[
 native @plain _t;
 native @nohold _f();
-native do
+native/pre do
     #define f(a)
     typedef int t;
 end
@@ -45021,7 +45085,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pre do
     typedef struct t {
         int v;
     } t;
@@ -48082,7 +48146,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pre do
     typedef struct {
         int x;
     } t;
@@ -55430,7 +55494,7 @@ escape 1;
 -- makes sense: how an external component would know about a
 -- type defined in Ceu?
 Test { [[
-native do
+native/pre do
     typedef int t;
 end
 input (_t,int) EVT;
@@ -56747,7 +56811,7 @@ escape 1;
 do return end
 
 Test { [[
-native do
+native/pre do
     typedef struct {
         int v;
     } tp;
@@ -56763,7 +56827,7 @@ escape t.i!==nil;
 }
 
 Test { [[
-native do
+native/pre do
     typedef struct {
         int v;
     } tp;

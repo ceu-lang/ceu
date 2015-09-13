@@ -204,7 +204,19 @@ do
     HH = SUB(HH, '=== TCEU_NLBL ===',   's'..tps[TP.types.tceu_nlbl.len])
     HH = SUB(HH, '=== TCEU_NCLS ===',   's'..tps[TP.types.tceu_ncls.len])
     HH = SUB(HH, '=== CEU_NTRAILS ===', MAIN.trails_n)
-    --HH = SUB(HH, '=== CLSS_DEFS ===',  MEM.clss)
+    HH = SUB(HH, '=== TOPS_H ===',      MEM.tops_h)
+
+    if not OPTS.os then
+        -- TODO: ceu_pool_* => ceu_sys_pool_*
+        FILES.ceu_pool_h = SUB(FILES.ceu_pool_h, '#include "ceu_os.h"',
+                                                 FILES.ceu_os_h)
+        HH = SUB(HH, '#include "ceu_pool.h"', FILES.ceu_pool_h)
+
+        -- TODO: ceu_vector_* => ceu_sys_vector_*
+        FILES.ceu_vector_h = SUB(FILES.ceu_vector_h, '#include "ceu_os.h"',
+                                                     FILES.ceu_os_h)
+        HH = SUB(HH, '#include "ceu_vector.h"', FILES.ceu_vector_h)
+    end
 
     -- DEFINES
     do
@@ -398,7 +410,6 @@ do
 
     CC = SUB(CC, '=== LABELS_ENUM ===', LBLS.code_enum)
 
-    CC = SUB(CC, '=== TOPS_DEFS ===',  MEM.tops)   -- TODO: move to HH
     CC = SUB(CC, '=== TOPS_INIT ===',  MEM.tops_init)
 
     CC = SUB(CC, '=== CONSTRS_C ===',   CODE.constrs)
@@ -408,6 +419,7 @@ do
     CC = SUB(CC, '=== STUBS ===',       CODE.stubs)
     CC = SUB(CC, '=== CODE ===',        AST.root.code)
     CC = SUB(CC, '=== NATIVE ===', (OPTS.c_calls and '') or MAIN.native[false])
+    CC = SUB(CC, '=== TOPS_C ===',      MEM.tops_c)
 
     -- IFACES
     if PROPS.has_ifcs then
