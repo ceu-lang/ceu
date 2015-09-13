@@ -593,7 +593,7 @@ typedef union CEU_]]..me.id..[[_delayed {
         local cls = CLS()
 
         -- input parameters (void* _ceu_go->org, int a, int b)
-        local dcl = { 'tceu_app* _ceu_app', 'tceu_org* __ceu_org' }
+        local dcl = { 'tceu_app* _ceu_app', 'CEU_'..cls.id..'* __ceu_org' }
         for _, v in ipairs(ins) do
             local _, tp, id = unpack(v)
             dcl[#dcl+1] = MEM.tp2dcl('var', tp, (id or ''), nil, nil, nil)
@@ -602,7 +602,6 @@ typedef union CEU_]]..me.id..[[_delayed {
 
         local tp_out = MEM.tp2dcl('var', out, '', nil, nil, nil)
 
-        -- TODO: static?
         me.id = 'CEU_'..cls.id..'_'..id
         me.proto = [[
 ]]..tp_out..' '..me.id..' ('..dcl..[[)
@@ -610,7 +609,7 @@ typedef union CEU_]]..me.id..[[_delayed {
         if OPTS.os and ENV.exts[id] and ENV.exts[id].pre=='output' then
             -- defined elsewhere
         else
-            cls.funs = cls.funs..'static '..me.proto..';\n'
+            cls.funs = cls.funs..me.proto..';\n'
         end
     end,
 

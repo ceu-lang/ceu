@@ -14,7 +14,7 @@ end
 Test { [[
 native do
     int fff (CEU_T* t, int v) {
-        return CEU_T_fff(NULL, (tceu_org*)t, v);
+        return CEU_T_fff(NULL, t, v);
     }
     int iii (CEU_III* i, int v) {
         return CEU_III__fff(i)(NULL, i, v);
@@ -54236,7 +54236,7 @@ input int DT;
 #define TM_SNAP_N       1000
 #define TM_DIFF_N       1000000
 
-native do
+native/pre do
     ##define CEU_FPS 20
 end
 
@@ -54381,7 +54381,7 @@ input int DT;
 #define TM_SNAP_N       1000
 #define TM_DIFF_N       1000000
 
-native do
+native/pre do
     ##define CEU_FPS 20
 end
 
@@ -54593,7 +54593,7 @@ input int DT;
 #define TM_DIFF_N           1000000
 #define TM_BACKWARD_TICK    30
 
-native do
+native/pre do
     ##define CEU_FPS 100
 end
 
@@ -54811,7 +54811,7 @@ input int DT;
 #define TM_SNAP_N       1000
 #define TM_DIFF_N       1000000
 
-native do
+native/pre do
     ##define CEU_FPS 100
 end
 
@@ -54925,7 +54925,7 @@ input int  DT;
 #define TM_SNAP_N       1000
 #define TM_DIFF_N       1000000
 
-native do
+native/pre do
     ##define CEU_FPS 100
 end
 
