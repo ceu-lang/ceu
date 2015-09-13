@@ -15,8 +15,8 @@ The environment broadcasts an occurring event to all active trails, which share
 a single global time reference (the event itself).
 
 The synchronous concurrency model of Céu greatly diverges from conventional 
-multithreading (e.g. *pthreads* and *Java threads*) and the actor model (e.g.  
-*erlang* and *Go*).
+multithreading (e.g. *pthreads* and *Java threads*) and the actor model
+(e.g.  *erlang* and *Go*).
 On the one hand, trails can share variables in a deterministic and seamless way 
 (e.g. no need for locks or semaphores).
 On the other hand, there is no real parallelism (e.g. multi-core execution) in 
@@ -386,7 +386,6 @@ Keywords in Céu are reserved names that cannot be used as identifiers (e.g.,
 variable and class names):
 
 <pre><code><b>
-TODO(pre)
 
         and             async           async/thread    atomic          await
 
@@ -408,21 +407,22 @@ TODO(pre)
 
         or              outer           output          output/input    par
 
-        par/and         par/or          pause/if        pool            return
+        par/and         par/or          pause/if        pool            pre
 
-        s16             s32             s64             s8              request
+        return          s16             s32             s64             s8
 
-        sizeof          spawn           sync            tag             then
+        request         sizeof          spawn           sync            tag
 
-        this            traverse        true            u16             u32
+        then            this            traverse        true            u16
 
-        u64             u8              uint            until           var
+        u32             u64             u8              uint            until
 
-        void            watching        with            word            @const
+        var             void            watching        with            word
 
-        @hold           @nohold         @plain          @pure           @rec
+        @const          @hold           @nohold         @plain          @pure
 
-        @safe
+        @rec            @safe
+
 </b></code></pre>
 
 Identifiers
@@ -620,15 +620,24 @@ See [Classes and Interfaces](#classes-and-interfaces).
 Type modifiers
 --------------
 
-Types can be suffixed with the following modifiers: `&&`, `&`, `?`, and `[N]`.
+Types can be suffixed with the following modifiers: `&`, `&&`, `?`, and `[N]`.
 
-### Pointer
+### References
+
+`TODO`
+
+Céu supports two forms of references: *aliases* and *pointers*.
+
+#### Alias
+
+`TODO (like C++ references)`
+
+#### Pointer
 
 `TODO (like C)`
 
-### Alias
-
-`TODO (like C++ references)`
+restrictions
+    - across yielding statements
 
 ### Option
 
