@@ -68,7 +68,8 @@ F = {
             return      -- handled in env.lua
         end
 
-        local adt = assert(ENV.adts[TP.id(to.tp)], 'bug found')
+        local adt = ASR(ENV.adts[TP.id(to.tp)], me,
+                        'invalid attribution : destination is not a "data" type')
         if not adt.is_rec then
             assert(set == 'adt-constr')
             return  -- ignore non-adt or non-recursive-adt

@@ -9,9 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+do return end
 --]===]
-
---do return end
 
 -------------------------------------------------------------------------------
 
@@ -28715,6 +28714,22 @@ escape 1;
 }
 
 Test { [[
+input (_WorldObjs__LaserExit&&, _FileReader&&) LASEREXIT_NEW;
+class LaserExitFactory with
+do
+    every me_ in LASEREXIT_NEW do
+        spawn LaserExit with
+            this.me = &_XXX_PTR2REF(me_);
+        end;
+    end
+end
+
+var LaserExitFactory _;
+]],
+    env = 'line 4 : arity mismatch',
+}
+
+Test { [[
 interface Global with
     var int& v;
 end
@@ -46996,6 +47011,23 @@ escape v;
 ]],
     fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
 }
+
+Test { [[
+data Vector3f with
+    var float x, y, z;
+end
+
+class SurfaceBackground with
+    var _WorldObjs__SurfaceBackground& me;
+do
+    function (_Vector3f&& p)=>void set_pos do
+        this.me.pos = Vector3f(p:x, p:y, p:z);
+    end
+end
+]],
+    adt = 'line 9 : invalid attribution : destination is not a "data" type',
+}
+
 -- << ADT : MISC
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")

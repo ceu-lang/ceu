@@ -1250,6 +1250,7 @@ F = {
                 local evt = (iter.var or iter).evt
                 local tup = (evt and evt.ins.tup) or { iter.tp }
                 to = (to.tag=='VarList' and to) or { to }
+                ASR(#tup==#to, me, 'arity mismatch')
                 for i, tp in ipairs(tup) do
                     local dcl = AST.node('Dcl_var', me.ln, 'var', AST.copy(tp), to[i][1])
                     dcl.isEvery = true  -- implicit declaration: cannot hide other variables
@@ -1760,8 +1761,6 @@ F = {
     Nat = function (me)
         local id = unpack(me)
         local c = ENV.c[id] or {}
-        ASR(c.tag~='type', me,
-            'native variable/function "'..id..'" is not declared')
         me.id   = id
         me.tp   = TP.new{'@'}
         me.lval = me
