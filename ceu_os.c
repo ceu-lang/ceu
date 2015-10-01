@@ -639,10 +639,6 @@ _CEU_GO_NO_:
 
 void ceu_sys_go_ex (tceu_app* app, int evt, void* evtp, tceu_go go)
 {
-#ifdef CEU_STACK
-    for (;;)
-    {
-#endif
         for (;;)
         {
 /* TODO: remove: no more invalidation? */
@@ -863,9 +859,10 @@ printf("\t<<< NO\n");
 #ifdef CEU_STACK
         stack_pop(app, &go);
         if (stack_empty(&go)) {
-            break;      /* reaction has terminated */
+            /* reaction has terminated */
+        } else {
+            ceu_sys_go_ex(app, evt, evtp, go);
         }
-    }
 #endif
 
 #ifdef CEU_RET
