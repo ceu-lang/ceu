@@ -637,69 +637,8 @@ _CEU_GO_NO_:
     *_STK = *stk;
 }
 
-void ceu_sys_go (tceu_app* app, int evt, void* evtp)
+void ceu_sys_go_ex (tceu_app* app, int evt, void* evtp, tceu_go go)
 {
-#ifdef CEU_STACK
-#ifdef CEU_REENTRANT
-    static
-#endif
-    byte CEU_STK[CEU_STACK_MAX];
-#endif
-
-    tceu_go go;
-#ifdef CEU_STACK
-            go.stk = CEU_STK;
-#endif
-
-    switch (evt) {
-#ifdef CEU_ASYNCS
-        case CEU_IN__ASYNC:
-            app->pendingAsyncs = 0;
-            break;
-#endif
-#ifdef CEU_WCLOCKS
-        case CEU_IN__WCLOCK:
-            app->wclk_min_cmp = app->wclk_min_set;      /* swap "cmp" to last "set" */
-            app->wclk_min_set = CEU_WCLOCK_INACTIVE;    /* new "set" resets to inactive */
-            if (app->wclk_min_cmp <= *((s32*)evtp)) {
-                app->wclk_late = *((s32*)evtp) - app->wclk_min_cmp;
-            }
-            break;
-#ifdef CEU_TIMEMACHINE
-        case CEU_IN__WCLOCK_:
-            app->wclk_min_cmp_ = app->wclk_min_set_;
-            app->wclk_min_set_ = CEU_WCLOCK_INACTIVE;
-            if (app->wclk_min_cmp_ <= *((s32*)evtp)) {
-                app->wclk_late_ = *((s32*)evtp) - app->wclk_min_cmp_;
-            }
-            break;
-#endif
-#endif
-    }
-
-#ifdef CEU_INTS
-    app->seqno++;
-#endif
-
-#ifdef CEU_STACK
-    stack_init(app, &go);
-#endif
-    {
-        tceu_stk stk;
-                 stk.evt  = evt;
-#ifdef CEU_ORGS
-                 stk.org  = app->data;
-#endif
-                 stk.trl  = &app->data->trls[0];
-#ifdef CEU_CLEAR
-                 stk.stop = NULL;  /* traverse all (don't stop) */
-#endif
-#ifdef CEU_STACK
-                 stk.evt_sz = sizeof(evtp);
-#endif
-        ceu_sys_bcast(app, &go, &stk, &evtp);
-    }
-
 #ifdef CEU_STACK
     for (;;)
     {
@@ -932,6 +871,72 @@ printf("\t<<< NO\n");
 #ifdef CEU_RET
 _CEU_GO_QUIT_:;
 #endif
+}
+
+void ceu_sys_go (tceu_app* app, int evt, void* evtp)
+{
+#ifdef CEU_STACK
+#ifdef CEU_REENTRANT
+    static
+#endif
+    byte CEU_STK[CEU_STACK_MAX];
+#endif
+
+    tceu_go go;
+#ifdef CEU_STACK
+            go.stk = CEU_STK;
+#endif
+
+    switch (evt) {
+#ifdef CEU_ASYNCS
+        case CEU_IN__ASYNC:
+            app->pendingAsyncs = 0;
+            break;
+#endif
+#ifdef CEU_WCLOCKS
+        case CEU_IN__WCLOCK:
+            app->wclk_min_cmp = app->wclk_min_set;      /* swap "cmp" to last "set" */
+            app->wclk_min_set = CEU_WCLOCK_INACTIVE;    /* new "set" resets to inactive */
+            if (app->wclk_min_cmp <= *((s32*)evtp)) {
+                app->wclk_late = *((s32*)evtp) - app->wclk_min_cmp;
+            }
+            break;
+#ifdef CEU_TIMEMACHINE
+        case CEU_IN__WCLOCK_:
+            app->wclk_min_cmp_ = app->wclk_min_set_;
+            app->wclk_min_set_ = CEU_WCLOCK_INACTIVE;
+            if (app->wclk_min_cmp_ <= *((s32*)evtp)) {
+                app->wclk_late_ = *((s32*)evtp) - app->wclk_min_cmp_;
+            }
+            break;
+#endif
+#endif
+    }
+
+#ifdef CEU_INTS
+    app->seqno++;
+#endif
+
+#ifdef CEU_STACK
+    stack_init(app, &go);
+#endif
+    {
+        tceu_stk stk;
+                 stk.evt  = evt;
+#ifdef CEU_ORGS
+                 stk.org  = app->data;
+#endif
+                 stk.trl  = &app->data->trls[0];
+#ifdef CEU_CLEAR
+                 stk.stop = NULL;  /* traverse all (don't stop) */
+#endif
+#ifdef CEU_STACK
+                 stk.evt_sz = sizeof(evtp);
+#endif
+        ceu_sys_bcast(app, &go, &stk, &evtp);
+    }
+
+    ceu_sys_go_ex(app, evt, evtp, go);
 
 #ifdef CEU_WCLOCKS
     if (evt==CEU_IN__WCLOCK) {
