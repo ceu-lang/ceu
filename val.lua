@@ -316,7 +316,11 @@ F =
                 elseif not TP.is_ext(exp.tp,'_') then
                     -- f(&&vec);
                     local cast = TP.toc(TP.pop(TP.pop(exp.tp,'&'),'&&'))
-                    ps[#ps] = '(('..cast..')'..ps[#ps]..'->mem)'
+                    if TP.check(exp.tp,'char','[]','&&','-&') then
+                        ps[#ps] = 'ceu_vector_tochar('..ps[#ps]..')'
+                    else
+                        ps[#ps] = '(('..cast..')'..ps[#ps]..'->mem)'
+                    end
                 end
             end
         end

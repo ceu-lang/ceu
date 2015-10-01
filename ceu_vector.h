@@ -25,6 +25,7 @@ int   ceu_vector_seti   (tceu_vector* vector, int idx, byte* v);
 int   ceu_vector_push   (tceu_vector* vector, byte* v);
 int   ceu_vector_concat (tceu_vector* to, tceu_vector* fr);
 int   ceu_vector_concat_buffer (tceu_vector* to, const char* fr, int n);
+char* ceu_vector_tochar (tceu_vector* vector);
 
 #if 0
 byte* ceu_pool_alloc (tceu_pool* pool);

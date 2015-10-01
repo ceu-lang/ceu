@@ -1,5 +1,3 @@
-/* TODO: #ifdef CEU_INTS: seqno, stk_curi, CEU_STK */
-
 #include "ceu_os.h"
 
 #ifdef __AVR

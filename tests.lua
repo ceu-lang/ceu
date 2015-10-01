@@ -9,6 +9,59 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+--cbuffer "attr to greater scope"
+Test { [[
+    function @rec (void)=>void update_surface do
+        var _CollisionMap&& colmap = _XXX_PURE(global:world!:get_colmap());
+
+        this.me.colmap_serial = colmap:get_serial();
+
+        this.me.canvas.lock();
+
+        var u8&& cbuffer = (u8&&)_XXX_PURE(this.me.canvas.get_data());
+]],
+}
+
+Test { [[
+interface Global with
+    var int i;
+end
+var int i = 1;
+
+class T with
+    function (void)=>int get;
+do
+    function (void)=>int get do
+        return global:i;
+    end
+end
+
+var T t;
+
+escape t.get();
+]],
+    run = 1,
+}
+
+Test { [[
+class WorldObjFactory with
+    var _PingusLevel&& plf;
+do
+    native do
+        ##define std__vector_FileReader std::vector<FileReader>
+    end
+    loop i in this.plf:get_objects().size() do
+        traverse _ in [] with
+            var _FileReader&& reader = &&this.plf:get_objects().at(i);
+        do
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
 do return end
 --]===]
 
@@ -21583,6 +21636,15 @@ escape 1;
     run = 1,
 }
 
+
+Test { [[
+native @pure _strcmp();
+var char[] str1;
+var char[] str2 = [].."";
+escape _strcmp(&&str1,"")==0 and _strcmp(&&str2,"")==0;
+]],
+    run = 1,
+}
 
 --<<< VECTORS / STRINGS
 

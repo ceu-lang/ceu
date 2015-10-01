@@ -27,7 +27,7 @@ static void* ceu_vector_resize (tceu_vector* vector, int n) {
             vector->mem = NULL;
         }
     } else {
-        /* Java does the same? */
+        /* TODO: Java does the same? */
         n = (n*3/2) + 1;
         if (n < 10) {
             n = 10;
@@ -142,6 +142,14 @@ int ceu_vector_concat_buffer (tceu_vector* to, const char* fr, int n) {
         }
     }
     return 1;
+}
+
+char* ceu_vector_tochar (tceu_vector* vector) {
+    if (vector->mem == NULL) {
+        return "";
+    } else {
+        return (char*)vector->mem;
+    }
 }
 
 #endif
