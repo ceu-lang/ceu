@@ -308,18 +308,21 @@ F =
         for i, exp in ipairs(exps) do
             ps[#ps+1] = V(exp, 'rval')
 
-            if TP.check(exp.tp,'[]','&&','-&') then
-                if ENV.clss[TP.id(exp.tp)] and
-                  TP.check(exp.tp, TP.id(exp.tp),'[]','&&','-&')
-                then
-                    error'bug found'
-                elseif not TP.is_ext(exp.tp,'_') then
-                    -- f(&&vec);
-                    local cast = TP.toc(TP.pop(TP.pop(exp.tp,'&'),'&&'))
-                    if TP.check(exp.tp,'char','[]','&&','-&') then
-                        ps[#ps] = 'ceu_vector_tochar('..ps[#ps]..')'
-                    else
-                        ps[#ps] = '(('..cast..')'..ps[#ps]..'->mem)'
+            -- for native function calls, convert the vector argument to its internal buffer
+            if not (f.var and f.var.fun) then
+                if TP.check(exp.tp,'[]','&&','-&') then
+                    if ENV.clss[TP.id(exp.tp)] and
+                      TP.check(exp.tp, TP.id(exp.tp),'[]','&&','-&')
+                    then
+                        error'bug found'
+                    elseif not TP.is_ext(exp.tp,'_') then
+                        -- f(&&vec);
+                        local cast = TP.toc(TP.pop(TP.pop(exp.tp,'&'),'&&'))
+                        if TP.check(exp.tp,'char','[]','&&','-&') then
+                            ps[#ps] = 'ceu_vector_tochar('..ps[#ps]..')'
+                        else
+                            ps[#ps] = '(('..cast..')'..ps[#ps]..'->mem)'
+                        end
                     end
                 end
             end

@@ -483,7 +483,7 @@ F = {
                     local has,var = newvar(fun, me, 'var', tp, id, false)
                     assert(not has)
                     var.isTmp  = true -- TODO: var should be a node
-                    var.isFun  = true
+                    var.is_arg = true
                     var.funIdx = i
                 end
             end

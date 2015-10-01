@@ -698,7 +698,7 @@ _STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
                 if var.id == '_ret' then
                     LINE(me,'#endif\n')             -- avoids "unused" warning
                 end
-                if var.isFun then
+                if var.is_arg then
                     -- function parameter
                     -- __ceu_a = a
                     LINE(me, ID..' = '..var.id..';')

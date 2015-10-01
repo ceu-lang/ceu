@@ -42,15 +42,23 @@ F = {
         local global    = to.tag=='Field' and to.org.cls.id=='Global' and cls.id=='Main'
         local outer     = (not constr) and to.tag=='Field' and to.org.cls~=cls and (not global)
         local interface = AST.par(me, 'BlockI')
-        local internal  = not (constr or outer or interface)
+        local internal  = not (constr or outer or interface or argument)
 
         -- IGNORE NON-FIRST ASSIGNMENTS
+
         --  class T with
         --      var int& ref;
         --  do
         --      this.ref = <...>;   // this is not a first assignment
         --  end
         if (not constr) and to.lst.var.blk==cls.blk_ifc and (cls.id~='Main') then
+            return
+        end
+
+        --  function (int& v)=>void do
+        --      v = 10;     // this is not a first assignment
+        --  end
+        if AST.par(me,'Dcl_fun') and to.lst.var.is_arg then
             return
         end
 

@@ -9,6 +9,40 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
+-- BUG: bad message, I want to say that you cannot copy vectors in a single 
+stmt
+Test { [[
+class Test with
+    function (u8[]&& buf)=>void fillBuffer;
+do
+    function (u8[]&& buf)=>void fillBuffer do
+        var u8[] b = *buf;
+        b = b .. [3];
+    end
+end
+
+var u8[10] buffer;
+
+var Test t;
+t.fillBuffer(&&buffer);
+
+escape buffer[0];
+]],
+    env = 'line 5 : types mismatch (`u8[]´ <= `u8[]´)',
+}
+
+-- BUG: doesn't check dimension of pointer to vector
+Test { [[
+function (u8[20]&& buf)=>void fillBuffer do
+    *buf = *buf .. [3];
+end
+var u8[10] buffer;
+fillBuffer(&&buffer);
+escape buffer[0];
+]],
+    env = 'line 5 : wrong argument #1 : types mismatch (`u8[]&&´ <= `u8[]&&´) : dimension mismatch',
+}
+
 --cbuffer "attr to greater scope"
 Test { [[
     function @rec (void)=>void update_surface do
@@ -37741,6 +37775,83 @@ escape 1;
     props = 'line 2 : not permitted across function declaration',
 }
 
+Test { [[
+function (u8&& v)=>void set do
+    *v = 3;
+end
+var u8 v = 0;
+set(&&v);
+escape v;
+]],
+    run = 3,
+}
+
+Test { [[
+function (u8& v)=>void set do
+    v = 3;
+end
+var u8 v = 0;
+set(&v);
+escape v;
+]],
+    run = 3,
+}
+
+Test { [[
+function (u8[]& buf)=>void fillBuffer do
+    buf = buf .. [3];
+end
+var u8[10] buffer;
+fillBuffer(&buffer);
+escape buffer[0];
+]],
+    run = 3,
+}
+
+Test { [[
+function (u8[20]& buf)=>void fillBuffer do
+    buf = buf .. [3];
+end
+var u8[10] buffer;
+fillBuffer(&buffer);
+escape buffer[0];
+]],
+    env = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]´) : dimension mismatch',
+}
+
+Test { [[
+function (u8[3]& buf)=>void fillBuffer do
+    buf = buf .. [2,3,4];
+end
+var u8[3] buffer = [1];
+fillBuffer(&buffer);
+escape buffer[0];
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+function (u8[]&& buf)=>void fillBuffer do
+    *buf = *buf .. [3];
+end
+var u8[10] buffer;
+fillBuffer(&&buffer);
+escape buffer[0];
+]],
+    run = 3,
+}
+
+Test { [[
+function (u8[3]&& buf)=>void fillBuffer do
+    *buf = *buf .. [2,3,4];
+end
+var u8[3] buffer = [1];
+fillBuffer(&&buffer);
+escape buffer[0];
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
 --<<< FUNCTIONS
 
 -->>> RECURSIVE / FUNCTIONS
@@ -39386,6 +39497,44 @@ var T t;
 escape t.f();
 ]],
     env = 'line 6 : invalid return value : types mismatch (`int&&´ <= `int´)',
+}
+
+Test { [[
+class Test with
+    function (u8[]& buf)=>void fillBuffer;
+do
+    function (u8[]& buf)=>void fillBuffer do
+        buf = buf .. [3];
+    end
+end
+
+var u8[10] buffer;
+
+var Test t;
+t.fillBuffer(&buffer);
+
+escape buffer[0];
+]],
+    run = 3,
+}
+
+Test { [[
+class Test with
+    function (u8[]&& buf)=>void fillBuffer;
+do
+    function (u8[]&& buf)=>void fillBuffer do
+        *buf = *buf .. [3];
+    end
+end
+
+var u8[10] buffer;
+
+var Test t;
+t.fillBuffer(&&buffer);
+
+escape buffer[0];
+]],
+    run = 3,
 }
 
 --<<< METHODS
