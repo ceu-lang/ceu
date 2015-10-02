@@ -334,7 +334,7 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
 /**********************************************************************/
 
 #ifdef CEU_CLEAR
-int ceu_sys_clear (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_nlbl cnt,
+int ceu_sys_clear (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, tceu_nlbl cnt,
                    tceu_org* org, tceu_trl* from, void* stop)
 {
     /* save the continuation to run after the clear */
@@ -499,13 +499,13 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 #endif
 
-static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* stk, void* evtp)
+static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, void* evtp)
 {
 #ifdef CEU_STACK
-    stack_push(_ceu_app, _ceu_go, stk, evtp);
+    stack_push(_ceu_app, _ceu_go, _ceu_stk, evtp);
 #else
-    stk->evt_buf = evtp;
-    *_ceu_go = *stk;
+    _ceu_stk->evt_buf = evtp;
+    *_ceu_go = *_ceu_stk;
 #endif
     for (;;)
     {
@@ -634,10 +634,14 @@ _CEU_GO_NO_:
     }
 
     /* restore to initial state (org/trl/stop) */
-    *_STK = *stk;
+#ifdef CEU_STACK
+    *stack_cur(_ceu_go) = *_ceu_stk;
+#else
+    *_ceu_go = *_ceu_stk;
+#endif
 }
 
-int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go)
+int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk)
 {
     for (;;)
     {
@@ -791,7 +795,7 @@ printf("\t<<< OK %d\n", _STK->trl->lbl);
 #endif
 
             /*** CODE ***/
-            _ret = _ceu_app->code(_ceu_app, _ceu_go);
+            _ret = _ceu_app->code(_ceu_app, _ceu_go, _ceu_stk);
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = 0;
@@ -923,7 +927,11 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
     }
 
     while (1) {
-        int stop = ceu_sys_go_ex(app, &go);
+#ifdef CEU_STACK
+        int stop = ceu_sys_go_ex(app, &go, (tceu_stk*)&(go.stk[go.stk_curi]));
+#else
+        int stop = ceu_sys_go_ex(app, &go, (tceu_stk*)&go);
+#endif
         if (stop) {
             break;
         }

@@ -140,8 +140,8 @@
 #endif
 
 #ifdef CEU_CLEAR
-    #define ceu_out_clear(app,go,cnt,org,from,stop) \
-        ((__typeof__(ceu_sys_clear)*)((app)->sys_vec[CEU_SYS_CLEAR]))(app,go,cnt,org,from,stop)
+    #define ceu_out_clear(app,go,stk,cnt,org,from,stop) \
+        ((__typeof__(ceu_sys_clear)*)((app)->sys_vec[CEU_SYS_CLEAR]))(app,go,stk,cnt,org,from,stop)
 #endif
 
 #ifdef CEU_STACK
@@ -219,8 +219,8 @@
             ceu_sys_req()
 
 #ifdef CEU_CLEAR
-    #define ceu_out_clear(app,go,cnt,org,from,stop) \
-            ceu_sys_clear(app,go,cnt,org,from,stop)
+    #define ceu_out_clear(app,go,stk,cnt,org,from,stop) \
+            ceu_sys_clear(app,go,stk,cnt,org,from,stop)
 #endif
 
 #ifdef CEU_STACK
@@ -621,7 +621,7 @@ typedef struct tceu_go {
     ceu_out_stack_push((app),(go),(elem),(ptr));
 
 #define STK  stack_cur(&go)
-#define _STK stack_cur(_ceu_go)
+#define _STK _ceu_stk
 #ifdef CEU_ORGS
 #define STK_ORG_ATTR  (STK->org)
 #define _STK_ORG_ATTR (_STK->org)
@@ -722,7 +722,7 @@ typedef struct tceu_app {
 #endif
 #endif
 
-    int         (*code)  (struct tceu_app*,tceu_go*);
+    int         (*code)  (struct tceu_app*,tceu_go*,tceu_stk*);
     void        (*init)  (struct tceu_app*);
 #ifdef CEU_OS
     void*       (*calls) (struct tceu_app*,tceu_nevt,void*);
@@ -840,7 +840,7 @@ tceu_app* ceu_sys_load      (void* addr);
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
 #ifdef CEU_CLEAR
-int       ceu_sys_clear     (tceu_app* app, tceu_go* _ceu_go, tceu_nlbl cnt, tceu_org* org, tceu_trl* from, void* stop);
+int       ceu_sys_clear     (tceu_app* app, tceu_go* _ceu_go, tceu_nlbl cnt, tceu_org* org, tceu_stk* _ceu_stk, tceu_trl* from, void* stop);
 #endif
 
 #ifdef CEU_STACK

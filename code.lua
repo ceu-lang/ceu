@@ -143,7 +143,7 @@ function CLEAR_BEF (me)
 ]]
 
     LINE(me, [[
-return ceu_out_clear(_ceu_app, _ceu_go, ]]..me.lbl_clr.id..[[, _STK_ORG,
+return ceu_out_clear(_ceu_app, _ceu_go, _ceu_stk, ]]..me.lbl_clr.id..[[, _STK_ORG,
                      &_STK_ORG->trls[ ]]..(me.trails[1])  ..[[ ],
                      &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ]);
 ]])
@@ -570,7 +570,7 @@ if (]]..me.val..[[ == NULL) {
         LINE(me, [[
 {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
-    return ceu_out_clear(_ceu_app, _ceu_go, ]]..me.lbl.id..[[, __ceu_org,
+    return ceu_out_clear(_ceu_app, _ceu_go, _ceu_stk, ]]..me.lbl.id..[[, __ceu_org,
                              &__ceu_org->trls[0],
                              __ceu_org);
 }
