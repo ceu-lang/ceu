@@ -160,8 +160,8 @@
     #define ceu_out_org_trail(org,idx,lnk) \
         ((__typeof__(ceu_sys_org_trail)*)((_ceu_app)->sys_vec[CEU_SYS_ORG_TRAIL]))(org,idx,lnk)
 
-    #define ceu_out_org_spawn(app, go, lbl_cnt, org, lbl_org) \
-        ((__typeof__(ceu_sys_org_spawn)*)((app)->sys_vec[CEU_SYS_ORG_SPAWN]))(app,go,lbl_cnt,org,lbl_org)
+    #define ceu_out_org_spawn(app, go, stk, lbl_cnt, org, lbl_org) \
+        ((__typeof__(ceu_sys_org_spawn)*)((app)->sys_vec[CEU_SYS_ORG_SPAWN]))(app,go,stk,lbl_cnt,org,lbl_org)
 #endif
 
     #define ceu_out_start(app) \
@@ -238,8 +238,8 @@
 #ifdef CEU_ORGS
     #define ceu_out_org_trail(org,idx,lnk) \
             ceu_sys_org_trail(org,idx,lnk)
-    #define ceu_out_org_spawn(app, go, lbl_cnt, org, lbl_org) \
-            ceu_sys_org_spawn(app, go, lbl_cnt, org, lbl_org)
+    #define ceu_out_org_spawn(app, go, stk, lbl_cnt, org, lbl_org) \
+            ceu_sys_org_spawn(app, go, stk, lbl_cnt, org, lbl_org)
 #endif
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
@@ -621,6 +621,7 @@ typedef struct tceu_go {
     ceu_out_stack_push((app),(go),(elem),(ptr));
 
 #define STK  stack_cur(&go)
+/*#define _STK stack_cur(_ceu_go)*/
 #define _STK _ceu_stk
 #ifdef CEU_ORGS
 #define STK_ORG_ATTR  (STK->org)
@@ -853,7 +854,7 @@ void      ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim);
 void      ceu_sys_org       (tceu_org* org, int n, int lbl, int cls, int isDyn, tceu_org* parent, tceu_org_lnk** lnks);
 #ifdef CEU_ORGS
 void      ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk);
-int       ceu_sys_org_spawn (tceu_app* app, tceu_go* _ceu_go, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org);
+int       ceu_sys_org_spawn (tceu_app* app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, tceu_nlbl lbl_cnt, tceu_org* org, tceu_nlbl lbl_org);
 #endif
 void      ceu_sys_start     (tceu_app* app);
 int       ceu_sys_link      (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);

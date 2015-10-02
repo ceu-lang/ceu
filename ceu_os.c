@@ -183,7 +183,7 @@ void ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnks) {
     lnks[0].up = lnks[1].up = org;
 }
 
-int ceu_sys_org_spawn (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_nlbl lbl_cnt,
+int ceu_sys_org_spawn (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, tceu_nlbl lbl_cnt,
                        tceu_org* neworg, tceu_nlbl neworg_lbl) {
     /* save the continuation to run after the constructor */
     _STK->trl->evt = CEU_IN__STK;
@@ -258,7 +258,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* stk, void* evtp);
 
 #ifdef CEU_ORGS
-void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_org* me)
+void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, tceu_org* me)
 {
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
     me->isAlive = 0;
@@ -503,8 +503,11 @@ static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_
 {
 #ifdef CEU_STACK
     stack_push(_ceu_app, _ceu_go, _ceu_stk, evtp);
+    tceu_stk old = *_ceu_stk;
+    _ceu_stk = stack_cur(_ceu_go);
 #else
     _ceu_stk->evt_buf = evtp;
+    tceu_stk old = *_ceu_stk;
     *_ceu_go = *_ceu_stk;
 #endif
     for (;;)
@@ -565,14 +568,14 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
 #ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_ORGS
 if (_STK->trl->evt==CEU_IN__ORG) {
-printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d : org=%p->%p\n",
+printf("\tTRY-B[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d : org=%p->%p\n",
     _STK->trl, _STK->trl->evt, _STK->trl->stk, 0, _STK_LBL,
     &_STK->trl->lnks[0], &_STK->trl->lnks[1]);
 } else
 #endif
 {
-printf("\tTRY[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d\n",
-    _STK->trl, _STK->trl->evt, _STK->trl->stk, 0, _STK_LBL);
+printf("\tTRY-B[%p] : evt=%d : seqno=%d : lbl=%d\n",
+    _STK->trl, _STK->trl->evt, 0, _STK_LBL);
 }
 #endif
 
@@ -635,9 +638,11 @@ _CEU_GO_NO_:
 
     /* restore to initial state (org/trl/stop) */
 #ifdef CEU_STACK
-    *stack_cur(_ceu_go) = *_ceu_stk;
+    *stack_cur(_ceu_go) = old;
+    /**stack_cur(_ceu_go) = *_ceu_stk;*/
 #else
-    *_ceu_go = *_ceu_stk;
+    *_ceu_go = old;
+    /**_ceu_go = *_ceu_stk;*/
 #endif
 }
 
@@ -652,11 +657,9 @@ int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk)
         }
 
 #ifdef CEU_DEBUG_TRAILS
-#if 0
-printf("=== 2\n");
-#endif
 printf("STACK[%d]: evt=%d : seqno=%d\n",
 stack_curi(_ceu_go), _STK->evt, 0);
+/*0, _STK->evt, 0);*/
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
 printf("\torg=%p/%d : [%d/%p]\n",
 _STK_ORG, _STK_ORG==_ceu_app->data, _STK_ORG->n, _STK_ORG->trls);
@@ -726,18 +729,22 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
                         /* pop this level as it was a bounded CLEAR on the
                          * given ORG nothing else to do in this level */
                         stack_pop(_ceu_app, _ceu_go);
-                        ceu_sys_org_kill(_ceu_app, _ceu_go, old); /* has bcast/push */
+_ceu_stk = stack_cur(_ceu_go);
+                        ceu_sys_org_kill(_ceu_app, _ceu_go, _ceu_stk, old); /* has bcast/push */
+_ceu_stk = stack_cur(_ceu_go);
                     } else {
                         /* pop/kill/push:
                          * terminate current CLEAR before kill */
 #ifdef CEU_ORGS_WATCHING
                         tceu_stk stk = *stack_cur(_ceu_go);
                         stack_pop(_ceu_app, _ceu_go); /* only if "kill" emit ok_killed */
+_ceu_stk = stack_cur(_ceu_go);
 #endif
-                        ceu_sys_org_kill(_ceu_app, _ceu_go, old); /* has bcast/push 
-*/
+                        ceu_sys_org_kill(_ceu_app, _ceu_go, _ceu_stk, old); /* has bcast/push */
+_ceu_stk = stack_cur(_ceu_go);
 #ifdef CEU_ORGS_WATCHING
                         stack_push(_ceu_app, _ceu_go, &stk, NULL);
+_ceu_stk = stack_cur(_ceu_go);
 #endif
                     }
 #ifdef CEU_ORGS_NEWS
@@ -806,6 +813,7 @@ printf("\t<<< OK %d\n", _STK->trl->lbl);
                     break;
 #if defined(CEU_INTS) || defined(CEU_CLEAR) || defined(CEU_ORGS)
                 case RET_RESTART:
+_ceu_stk = stack_cur(_ceu_go);
                     continue; /* restart */
 #endif
 #ifdef CEU_ASYNCS

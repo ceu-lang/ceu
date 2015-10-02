@@ -182,7 +182,7 @@ F = {
     Dcl_constr = function (me)
         CONC_ALL(me)
         CODE.constrs = CODE.constrs .. [[
-static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, tceu_go* _ceu_go) {
+static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, tceu_go* _ceu_go, tceu_stk* _ceu_stk) {
 ]] .. me.code .. [[
 }
 ]]
@@ -399,11 +399,11 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         end
         if t.constr then
             LINE(me, [[
-    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_go);
+    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_go, _ceu_stk);
 ]])
         end
         LINE(me, [[
-    return ceu_out_org_spawn(_ceu_app, _ceu_go, ]]..me.lbls_cnt.id..','..org..','..t.cls.lbl.id..[[);
+    return ceu_out_org_spawn(_ceu_app, _ceu_go, _ceu_stk, ]]..me.lbls_cnt.id..','..org..','..t.cls.lbl.id..[[);
 case ]]..me.lbls_cnt.id..[[:;
 ]])
         if t.arr then
