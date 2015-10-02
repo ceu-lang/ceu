@@ -620,32 +620,23 @@ typedef struct tceu_go {
     ceu_out_assert_msg(!stack_full((go),(elem)), "stack overflow"); \
     ceu_out_stack_push((app),(go),(elem),(ptr));
 
-#define STK  stack_cur(&go)
 /*#define _STK stack_cur(_ceu_go)*/
 #define _STK _ceu_stk
 #ifdef CEU_ORGS
-#define STK_ORG_ATTR  (STK->org)
 #define _STK_ORG_ATTR (_STK->org)
 #else
-#define STK_ORG_ATTR  (app->data)
 #define _STK_ORG_ATTR (_ceu_app->data)
 #endif
-#define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
 #define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
-#define STK_LBL (STK->trl->lbl)
 #define _STK_LBL (_STK->trl->lbl)
 
 #else   /* !CEU_STACK */
 
 typedef tceu_stk tceu_go;
 
-#define STK  (&go)
 #define _STK (_ceu_go)
-#define STK_ORG_ATTR  (app->data)
 #define _STK_ORG_ATTR (_ceu_app->data)
-#define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
 #define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
-#define STK_LBL (STK->trl->lbl)
 #define _STK_LBL (_STK->trl->lbl)
 
 #endif  /* CEU_STACK */
