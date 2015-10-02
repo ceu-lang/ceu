@@ -637,7 +637,7 @@ _CEU_GO_NO_:
     *_STK = *stk;
 }
 
-int ceu_sys_go_ex (tceu_app* _ceu_app, int evt, void* evtp, tceu_go* _ceu_go)
+int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go)
 {
     for (;;)
     {
@@ -923,7 +923,7 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
     }
 
     while (1) {
-        int stop = ceu_sys_go_ex(app, evt, evtp, &go);
+        int stop = ceu_sys_go_ex(app, &go);
         if (stop) {
             break;
         }
