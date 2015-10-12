@@ -515,24 +515,7 @@ static void ceu_sys_bcast_ex (tceu_app* _ceu_app, int stk_lvl, tceu_stk* _ceu_st
 #endif
             ])
         {
-            /* end of traversal, reached the end of top org */
-            if (_STK_ORG == _ceu_app->data) {
-                return;  /* pop stack */
-            }
-
-#ifdef CEU_ORGS
-            else {
-                if (_STK_ORG->n == 0) {
-                    return;
-                } else {
-                    /* traverse next org */
-                    tceu_stk new = *_ceu_stk;
-                    new.org = _STK_ORG->nxt;
-                    new.trl = &((tceu_org*)_STK_ORG->nxt)->trls[0];
-                    return ceu_sys_bcast_ex(_ceu_app, stk_lvl, &new, evtp);
-                }
-            }
-#endif  /* CEU_ORGS */
+            break;
         }
 
         /* continue traversing current org */
@@ -591,6 +574,26 @@ static void ceu_sys_bcast_ex (tceu_app* _ceu_app, int stk_lvl, tceu_stk* _ceu_st
 printf("\t>>> OK\n");
 #endif
     }
+
+    /* end of traversal, reached the end of top org */
+    if (_STK_ORG == _ceu_app->data) {
+        return;
+/* TODO: nao precisaria, se n==0 funcionasse p/ data */
+    }
+
+#ifdef CEU_ORGS
+    else {
+        if (_STK_ORG->n == 0) {
+            return;
+        } else {
+            /* traverse next org */
+            tceu_stk new = *_ceu_stk;
+            new.org = _STK_ORG->nxt;
+            new.trl = &((tceu_org*)_STK_ORG->nxt)->trls[0];
+            return ceu_sys_bcast_ex(_ceu_app, stk_lvl, &new, evtp);
+        }
+    }
+#endif  /* CEU_ORGS */
 }
 
 static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, void* evtp) {
