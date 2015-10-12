@@ -500,29 +500,11 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 #endif
 
-static void ceu_sys_bcast_ex (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, void* evtp) {
-    for (;;)
+/* TODO: remover PTR ultimo org p/ IN__ORG e usar call normalmente*/
+
+static void ceu_sys_bcast_ex (tceu_app* _ceu_app, int stk_lvl, tceu_stk* _ceu_stk, void* evtp) {
+    for (;; _ceu_stk->trl++)
     {
-/* TODO: remove: no more invalidation? */
-/* i.e., make sure we never emit NONE */
-        if (_ceu_stk->evt == CEU_IN__NONE) {
-            break;  /* invalidated emit or freed organism */
-        }
-
-#if 0
-#ifdef CEU_DEBUG_TRAILS
-printf("=== 1\n");
-printf("STACK[%d]: evt=%d : seqno=%d\n",
-    stack_curi(_ceu_go), _STK->evt, _ceu_app->seqno);
-#if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
-printf("\torg=%p/%d : [%d/%p]\n",
-    _STK_ORG, _STK_ORG==_ceu_app->data, _STK_ORG->n, _STK_ORG->trls);
-#else
-printf("\tntrls=%d\n", CEU_NTRAILS);
-#endif
-#endif
-#endif
-
         /* STK_ORG has been traversed to the end? */
         if (_ceu_stk->trl ==
             &_STK_ORG->trls[
@@ -535,49 +517,36 @@ printf("\tntrls=%d\n", CEU_NTRAILS);
         {
             /* end of traversal, reached the end of top org */
             if (_STK_ORG == _ceu_app->data) {
-                break;  /* pop stack */
+                return;  /* pop stack */
             }
 
 #ifdef CEU_ORGS
             else {
-                /* save current org before setting the next traversal */
-                tceu_org* o = _STK_ORG;
-
-                /* traverse next org */
-                _STK_ORG_ATTR = o->nxt;
-                _ceu_stk->trl = &((tceu_org*)o->nxt)->trls [
-                                 (o->n == 0) ?
-                                 ((tceu_org_lnk*)o)->lnk : 0
-                            ];
-return ceu_sys_bcast_ex(_ceu_app, _ceu_go, _ceu_stk, evtp);
+                if (_STK_ORG->n == 0) {
+                    return;
+                } else {
+                    /* traverse next org */
+                    tceu_stk new = *_ceu_stk;
+                    new.org = _STK_ORG->nxt;
+                    new.trl = &((tceu_org*)_STK_ORG->nxt)->trls[0];
+                    return ceu_sys_bcast_ex(_ceu_app, stk_lvl, &new, evtp);
+                }
             }
 #endif  /* CEU_ORGS */
         }
 
         /* continue traversing current org */
 
-#ifdef CEU_DEBUG_TRAILS
-#ifdef CEU_ORGS
-if (_ceu_stk->trl->evt==CEU_IN__ORG) {
-printf("\tTRY-B[%p] : evt=%d : seqno=%d : stk=%d : lbl=%d : org=%p->%p\n",
-    _ceu_stk->trl, _ceu_stk->trl->evt, _ceu_stk->trl->stk, 0, _STK_LBL,
-    &_ceu_stk->trl->lnks[0], &_ceu_stk->trl->lnks[1]);
-} else
-#endif
-{
-printf("\tTRY-B[%p] : evt=%d : seqno=%d : lbl=%d\n",
-    _ceu_stk->trl, _ceu_stk->trl->evt, 0, _STK_LBL);
-}
-#endif
-
         /* jump into linked orgs */
 #ifdef CEU_ORGS
         if (_ceu_stk->trl->evt == CEU_IN__ORG)
         {
             /* TODO(speed): jump LST */
-            _STK_ORG_ATTR = _ceu_stk->trl->lnks[0].nxt;   /* jump FST */
-            _ceu_stk->trl = &_STK_ORG->trls[0];
-return ceu_sys_bcast_ex(_ceu_app, _ceu_go, _ceu_stk, evtp);
+            tceu_stk new = *_ceu_stk;
+            new.org = _ceu_stk->trl->lnks[0].nxt;   /* jump FST */
+            new.trl = &((tceu_org*)new.org)->trls[0];
+            ceu_sys_bcast_ex(_ceu_app, stk_lvl, &new, evtp);
+            continue;
         }
 #endif /* CEU_ORGS */
 
@@ -588,11 +557,11 @@ return ceu_sys_bcast_ex(_ceu_app, _ceu_go, _ceu_stk, evtp);
         ||  (_ceu_stk->evt<CEU_IN_lower && _ceu_stk->evto!=_ceu_stk->trl->evto)
 #endif
         ) {
-            goto _CEU_GO_NO_;
+            continue;
         }
 #ifdef CEU_OS
         if (_ceu_stk->trl->evt == CEU_IN__NONE) {
-            goto _CEU_GO_NO_; /* OS can emit NONE (to fill queue gaps) */
+            continue; /* OS can emit NONE (to fill queue gaps) */
         }
 #endif
 #ifdef CEU_WATCHING
@@ -600,7 +569,7 @@ return ceu_sys_bcast_ex(_ceu_app, _ceu_go, _ceu_stk, evtp);
             if (_ceu_stk->trl->org_or_adt != NULL &&
                 _ceu_stk->trl->org_or_adt != ((tceu_kill*)evtp)->org_or_adt)
             {
-                goto _CEU_GO_NO_;
+                continue;
             }
         }
         else
@@ -608,7 +577,7 @@ return ceu_sys_bcast_ex(_ceu_app, _ceu_go, _ceu_stk, evtp);
         {
 #ifdef CEU_INTS
             if (_ceu_stk->evt<CEU_IN_lower && _ceu_stk->trl->seqno==_ceu_app->seqno) {
-                goto _CEU_GO_NO_;
+                continue;
             }
 #endif
         }
@@ -616,15 +585,11 @@ return ceu_sys_bcast_ex(_ceu_app, _ceu_go, _ceu_stk, evtp);
         /* execute this trail in the 2nd pass */
         _ceu_stk->trl->evt = CEU_IN__STK;
 #ifdef CEU_STACK
-        _ceu_stk->trl->stk = stack_curi(_ceu_go);
+        _ceu_stk->trl->stk = stk_lvl;
 #endif
 #ifdef CEU_DEBUG_TRAILS
 printf("\t>>> OK\n");
 #endif
-
-_CEU_GO_NO_:
-
-        _ceu_stk->trl++; /* next trail */
     }
 }
 
@@ -639,7 +604,11 @@ static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_
     *_ceu_go = *_ceu_stk;
 #endif
 
-    ceu_sys_bcast_ex(_ceu_app, _ceu_go, _ceu_stk, evtp);
+#ifdef CEU_STACK
+    ceu_sys_bcast_ex(_ceu_app, stack_curi(_ceu_go), _ceu_stk, evtp);
+#else
+    ceu_sys_bcast_ex(_ceu_app, 0, _ceu_stk, evtp);
+#endif
 
     /* restore to initial state (org/trl/stop) */
 #ifdef CEU_STACK
