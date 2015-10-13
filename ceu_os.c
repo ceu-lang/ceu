@@ -285,14 +285,8 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk,
                  stk.evt_sz = sizeof(tceu_kill);
         tceu_kill ps = { me, me->ret };
 
-#ifdef CEU_STACK
-    stack_push(_ceu_app, _ceu_go, &stk, &ps);
-    ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_curi(_ceu_go), stack_cur(_ceu_go), &ps);
-#else
-    stk.evt_buf = &ps;
-    *_ceu_go = stk;
-    ceu_sys_bcast(_ceu_app, _ceu_app->data, 0, &stk, &ps);
-#endif
+        ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk, &ps);
+        stack_push(_ceu_app, _ceu_go, &stk, &ps);
 
     /* restore to initial state (org/trl/stop) */
 #ifdef CEU_STACK
@@ -341,14 +335,8 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
              stk.stop = NULL;
              stk.evt_sz = sizeof(tceu_kill);
 
-#ifdef CEU_STACK
+    ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk, &me);
     stack_push(_ceu_app, _ceu_go, &stk, &me);
-    ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_curi(_ceu_go), stack_cur(_ceu_go), &me);
-#else
-    stk.evt_buf = &me;
-    *_ceu_go = stk;
-    ceu_sys_bcast(_ceu_app, _ceu_app->data, 0, &stk, &me);
-#endif
 
     /* restore to initial state (org/trl/stop) */
 #ifdef CEU_STACK
@@ -571,6 +559,7 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, int stk_lvl, tceu_stk* 
         if (stk->evt == CEU_IN__ok_killed) {
             if (trl->org_or_adt != NULL &&
                 trl->org_or_adt != ((tceu_kill*)evtp)->org_or_adt)
+/* TODO: em vez de evtp, nao poderia estar em tceu_stk (tal como evto)? */
             {
                 continue;
             }
@@ -872,12 +861,12 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 #endif
 
 #ifdef CEU_STACK
+    ceu_sys_bcast(app, app->data, stack_nxti(&go), &stk, &evtp);
     stack_push(app, &go, &stk, &evtp);
-    ceu_sys_bcast(app, app->data, stack_curi(&go), stack_cur(&go), &evtp);
 #else
     stk.evt_buf = &evtp;
-    go = stk;
     ceu_sys_bcast(app, app->data, 0, &stk, &evtp);
+    go = stk;
 #endif
 
     /* restore to initial state (org/trl/stop) */
