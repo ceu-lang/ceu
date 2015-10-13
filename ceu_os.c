@@ -97,6 +97,7 @@ void ceu_stack_pop_f (tceu_app* app, tceu_go* go) {
 }
 
 void ceu_sys_stack_push (tceu_app* app, tceu_go* go, tceu_stk* elem, void* ptr) {
+    elem->XXX_alive = 1;
     elem->offset = go->stk_nxti - go->stk_curi;
     go->stk_curi = go->stk_nxti;
     go->stk_nxti = stack_pushi(go, elem);
@@ -337,6 +338,7 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
 /**********************************************************************/
 
 #ifdef CEU_CLEAR
+int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk);
 int ceu_sys_clear (tceu_app* _ceu_app, tceu_go* _ceu_go,
                    tceu_trl* cnt_trl, tceu_nlbl cnt_lbl,
                    tceu_org* org, tceu_trl* from, void* stop)
@@ -360,7 +362,20 @@ int ceu_sys_clear (tceu_app* _ceu_app, tceu_go* _ceu_go,
         stack_push(_ceu_app, _ceu_go, &stk, NULL);    /* continue after it */
     }
 
-    return RET_RESTART;
+    ceu_sys_go_ex(_ceu_app, _ceu_go, stack_cur(_ceu_go));
+    stack_pop(_ceu_app, _ceu_go);
+
+    {
+        tceu_stk* stk;
+        for (stk=stack_cur(_ceu_go); stk!=NULL; stk=stk->XXX_prv) {
+            if (stk->trl->evt == CEU_IN__NONE) {
+                stk->XXX_alive = 0;
+            }
+        }
+    }
+
+    return RET_HALT;
+/* TODO: return ignorado */
 }
 #endif
 
@@ -592,6 +607,13 @@ int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk)
     for (;;
         _ceu_stk->trl++)
     {
+#if 0
+printf("GO-EX: %d\n", _ceu_stk->evt);
+printf("\tcuri: %d\n", stack_curi(_ceu_go));
+printf("\ttrl: %p\n", _ceu_stk->trl);
+printf("\t\tevt: %d\n", _ceu_stk->trl->evt);
+printf("\t\tstk: %d\n", _ceu_stk->trl->stk);
+#endif
 #ifdef CEU_CLEAR
         if (_ceu_stk->trl == _ceu_stk->stop) {    /* bounded trail traversal?  */
             _ceu_stk->stop = NULL;           /* back to default */
@@ -847,6 +869,8 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 #ifdef CEU_STACK
                  stk.evt_sz = sizeof(evtp);
 #endif
+
+stk.XXX_prv = NULL;
 
 #ifdef CEU_STACK
     ceu_sys_bcast(app, app->data, stack_nxti(&go), &stk, &evtp);

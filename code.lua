@@ -143,9 +143,9 @@ function CLEAR_BEF (me)
 ]]
 
     LINE(me, [[
-return ceu_out_clear(_ceu_app, _ceu_go, _ceu_stk->trl, ]]..me.lbl_clr.id..[[, _STK_ORG,
-                     &_STK_ORG->trls[ ]]..(me.trails[1])  ..[[ ],
-                     &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ]);
+ceu_out_clear(_ceu_app, _ceu_go, _ceu_stk->trl, ]]..me.lbl_clr.id..[[, _STK_ORG,
+              &_STK_ORG->trls[ ]]..(me.trails[1])  ..[[ ],
+              &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ]);
 ]])
 end
 
@@ -851,16 +851,9 @@ _ceu_stk->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 
         if me.fins then
             LINE(me, [[
-{
-    int __ceu_from_fin;         /* separate dcl/set because of C++ */
-    __ceu_from_fin = 0;         /* skip HALT */
-    if (0) {
+if (0) {
 ]])
             CASE(me, me.lbl_fin)
-            LINE(me, [[
-        __ceu_from_fin = 1;         /* stop on HALT */
-    }
-]])
             for i, fin in ipairs(me.fins) do
                 LINE(me, [[
     if (]]..fin.val..[[) {
@@ -869,9 +862,7 @@ _ceu_stk->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
             end
             LINE(me, [[
-    if (__ceu_from_fin) {
-        return RET_HALT;
-    }
+    return RET_HALT;
 }
 ]])
         end
@@ -1720,7 +1711,7 @@ case ]]..me.lbl_cnt.id..[[:;
 /* save the continuation to run after the emit */
 _ceu_stk->trl->evt = CEU_IN__STK;
 _ceu_stk->trl->lbl = ]]..me.lbl_cnt.id..[[;
-_ceu_stk->trl->stk = stack_curi(_ceu_go);
+_ceu_stk->trl->stk = 100; /*stack_curi(_ceu_go);*/
    /* awake in the same level as we are now (-1 vs the emit push below) */
 
 /* trigger the event */
@@ -1738,6 +1729,8 @@ _ceu_stk->trl->stk = stack_curi(_ceu_go);
 #ifdef CEU_CLEAR
              stk.stop = NULL;
 #endif
+
+stk.XXX_prv = stack_cur(_ceu_go);
 ]])
         if ps and #ps>0 then
             LINE(me, [[
@@ -1756,7 +1749,11 @@ _ceu_stk->trl->stk = stack_curi(_ceu_go);
 }
 }
 
-return RET_RESTART;
+ceu_sys_go_ex(_ceu_app, _ceu_go, stack_cur(_ceu_go));
+stack_pop(_ceu_app, _ceu_go);
+if (_ceu_stk->XXX_alive == 0) {
+    return RET_HALT;
+}
 
 case ]]..me.lbl_cnt.id..[[:;
 ]])

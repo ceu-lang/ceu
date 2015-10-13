@@ -464,6 +464,9 @@ typedef struct {
 
 /* TODO(speed): hold nxt trl to run */
 typedef struct tceu_stk {
+    struct tceu_stk* XXX_prv;
+    int XXX_alive;
+
     struct {
         tceu_nevt evt;  /* TODO: small in the end of struct? */
 #ifdef CEU_STACK

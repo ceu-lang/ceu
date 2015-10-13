@@ -97,13 +97,13 @@ escape 1;
 }
 
 do return end
---]===]
 
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -3722,6 +3722,22 @@ par/and do
 with
     await OS_START;
     emit b;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+var int ret;
+event void a,b;
+par/and do
+    await OS_START;
+    emit a;
+with
+    await OS_START;
+    emit b;
 with
     await a;
     ret = 1;    // 12: nd
@@ -4072,73 +4088,6 @@ escape ret;
 ]],
     _ana = {acc=1},
     run = 1000, -- had stack overflow
-}
-Test { [[
-event void x,e,f,g;
-var int ret = 0;
-class T with do end;
-par/or do
-    every x do
-        loop i in 1000 do
-            emit e;
-        end
-    end
-with
-    every e do
-        emit f;
-    end
-with
-    every f do
-        emit g;
-    end
-with
-    every g do
-        ret = ret + 1;
-        spawn T;
-    end
-with
-    emit x;
-end
-escape ret;
-]],
-    _ana = {acc=1},
-    run = 1000, -- had stack overflow
-}
-
-Test { [[
-class Groundpiece with
-do
-end
-
-event void x;
-event void a;
-event void b;
-event void c;
-var int ret = 0;
-
-par/or do
-    every x do
-        emit b;
-        ret = 10;
-    end
-with
-    every b do
-        emit a;
-    end
-with
-    every c do
-        spawn Groundpiece;
-    end
-with
-    emit x;
-end
-
-input void OS_START;
-await OS_START;
-escape ret;
-]],
-    _ana = {acc=true},
-    run = 10,
 }
 
 --<<< INTERNAL EVENTS
@@ -15664,178 +15613,6 @@ escape v!;
 ]],
     env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v! = 20;
-end
-do T with
-    this.v = &v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v! = 20;
-end
-do T with
-    this.v = &v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = &v;
-end;
-
-escape v!;
-]],
-    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = &v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var _int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var _int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = &v;
-end;
-
-escape v!;
-]],
-    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
-}
-
-Test { [[
-native do
-    int* new_Int() {
-        return NULL;
-    }
-end
-    function (void) => void parse_file do
-            var int&? intro_story_str;
-            finalize
-                intro_story_str = &_new_Int();
-            with
-                nothing;    /* deleted below */
-            end
-    end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native @pure _new_String();
-class String with
-do
-    var _std__string&? ss = &_new_String();
-end
-escape 1;
-]],
-    fin = 'line 4 : attribution to pointer with greater scope',
-    run = 1,
-}
-
 --<<< FINALLY / FINALIZE
 
 Test { [[
@@ -21681,357 +21458,6 @@ escape _strcmp(&&str1,"")==0 and _strcmp(&&str2,"")==0;
 }
 
 --<<< VECTORS / STRINGS
-
--->>> VECTORS FOR POINTERS TO ORGS
-
-Test { [[
-class T with
-do
-end
-var T&&[]  ts;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var int x = $ts;
-escape x+$ts+1;
-]],
-    run = 1,
-}
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var T t;
-ts = ts .. [t];
-escape $ts+1;
-]],
-    env = 'line 6 : wrong argument #1 : types mismatch (`T&&´ <= `T´)',
-}
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var T t;
-ts = ts .. [&&t];
-escape $ts+1;
-]],
-    run = 2,
-}
-
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var T t;
-ts = ts .. [&&t];
-var T&& p = ts[0];
-escape p == &&t;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var T t;
-ts = ts .. [&&t];
-var T&& p = ts[1];
-escape p == &&t;
-]],
-    run = '7] runtime error: access out of bounds',
-}
-
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var T t;
-ts = ts .. [&&t];
-await 1s;
-var T&& p = ts[0];
-escape p == &&t;
-]],
-    fin = 'line 8 : unsafe access to pointer "ts" across `await´ (tests.lua : 7)',
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-    await FOREVER;
-end
-
-var T t;
-var T&&? p = &&t;
-
-escape t.v + p!:v;
-]],
-    run = 20,
-}
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-var T t;
-var T&&? p = &&t;
-
-escape t.v + p!:v;
-]],
-    run = '9] runtime error: invalid tag',
-}
-Test { [[
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var T t;
-var T&&? p = &&t;
-
-await 500ms;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s'] = 20 },
-}
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-var T t;
-var T&&? p = &&t;
-
-await 500ms;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s'] = '12] runtime error: invalid tag', },
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var T t;
-var T&&? p = &&t;
-
-await 1s;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s']='13] runtime error: invalid tag' },
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var T t;
-var T&&? p = &&t;
-
-await 500ms;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s'] = 20 },
-}
-
-Test { [[
-class U with
-    var int v = 10;
-do
-    await FOREVER;
-end
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var U u;
-var T t;
-var U&&? p = &&u;
-
-await 1s;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s']=20 },
-}
-
-Test { [[
-class T with
-do
-end
-//var T[]   ts;
-var T&&[]  ts1;
-var T&&?[] ts2;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t];
-escape $ts;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-var T&&?[] ts;
-
-var T t;
-ts = [] .. [&&t];
-
-escape ts[0] == &&t;
-]],
-    env = 'line 9 : invalid operands to binary "=="',
-}
-
-Test { [[
-class T with
-do
-    await FOREVER;
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t];
-escape ts[0]! == &&t;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t];
-escape ts[0]! == &&t;
-]],
-    run = '7] runtime error: invalid tag',
-}
-
-Test { [[
-class T with
-do
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t] .. [&&t];
-escape ts[1]! == &&t;
-]],
-    run = '7] runtime error: invalid tag',
-}
-
-Test { [[
-class T with
-do
-end
-var T&&?[] ts;
-var T t1,t2;
-ts = [] .. [&&t1];
-ts[0]! = &&t2;
-escape ts[0]! == &&t2;
-]],
-    run = '7] runtime error: invalid tag',
-}
-
-Test { [[
-class T with
-do
-    await 1s;
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t];
-await 1s;
-escape ts[0]! == &&t;
-]],
-    run = { ['~>1s']='10] runtime error: invalid tag' },
-}
-
-Test { [[
-interface I with
-end
-class T with
-do
-end
-
-var T t;
-var I&&?[] is;
-is = [&&t];
-
-escape is[0]? + 1;
-]],
-    run = { ['~>1s'] = 1 },
-}
-
-Test { [[
-interface I with
-end
-class T with
-do
-end
-class U with
-do
-    await FOREVER;
-end
-class V with
-do
-    await 1s;
-end
-
-var T t;
-var U u;
-var V v;
-
-var I&&?[] is;
-is = [&&t, &&u, &&v];
-
-var int ret = 0;
-
-ret = ret + is[0]? + is[1]? + is[2]?;
-await 1s;
-ret = ret + is[0]? + is[1]? + is[2]?;
-
-escape ret;
-]],
-    run = { ['~>1s'] = 3 },
-}
 
 Test { [[
 data SDL_Rect with
@@ -29924,7 +29350,7 @@ escape tot + tot2;              // 36
 
 --<<< GLOBAL-DO-END / DO-PRE
 
--- SPAWN
+-->>> SPAWN
 
 Test { [[
 class T with do end
@@ -30345,6 +29771,76 @@ escape 1;
 ]],
     run = 1,
 }
+
+Test { [[
+event void x,e,f,g;
+var int ret = 0;
+class T with do end;
+par/or do
+    every x do
+        loop i in 1000 do
+            emit e;
+        end
+    end
+with
+    every e do
+        emit f;
+    end
+with
+    every f do
+        emit g;
+    end
+with
+    every g do
+        ret = ret + 1;
+        spawn T;
+    end
+with
+    emit x;
+end
+escape ret;
+]],
+    _ana = {acc=1},
+    run = 1000, -- had stack overflow
+}
+
+Test { [[
+class Groundpiece with
+do
+end
+
+event void x;
+event void a;
+event void b;
+event void c;
+var int ret = 0;
+
+par/or do
+    every x do
+        emit b;
+        ret = 10;
+    end
+with
+    every b do
+        emit a;
+    end
+with
+    every c do
+        spawn Groundpiece;
+    end
+with
+    emit x;
+end
+
+input void OS_START;
+await OS_START;
+escape ret;
+]],
+    _ana = {acc=true},
+    run = 10,
+}
+
+--<<< SPAWN
 
 -- MEM/MEMORY POOL
 
@@ -39539,7 +39035,536 @@ escape buffer[0];
 
 --<<< METHODS
 
--- ISR / ATOMIC
+-->>> CLASS-FINALIZE-OPTION
+
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = &v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var _int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var _int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = &v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+}
+
+Test { [[
+native do
+    int* new_Int() {
+        return NULL;
+    }
+end
+    function (void) => void parse_file do
+            var int&? intro_story_str;
+            finalize
+                intro_story_str = &_new_Int();
+            with
+                nothing;    /* deleted below */
+            end
+    end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native @pure _new_String();
+class String with
+do
+    var _std__string&? ss = &_new_String();
+end
+escape 1;
+]],
+    fin = 'line 4 : attribution to pointer with greater scope',
+    run = 1,
+}
+
+--<<< CLASS-FINALIZE-OPTION
+
+-->>> CLASS-VECTORS-FOR-POINTERS-TO-ORGS
+
+Test { [[
+class T with
+do
+end
+var T&&[]  ts;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var int x = $ts;
+escape x+$ts+1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var T t;
+ts = ts .. [t];
+escape $ts+1;
+]],
+    env = 'line 6 : wrong argument #1 : types mismatch (`T&&´ <= `T´)',
+}
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var T t;
+ts = ts .. [&&t];
+escape $ts+1;
+]],
+    run = 2,
+}
+
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var T t;
+ts = ts .. [&&t];
+var T&& p = ts[0];
+escape p == &&t;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var T t;
+ts = ts .. [&&t];
+var T&& p = ts[1];
+escape p == &&t;
+]],
+    run = '7] runtime error: access out of bounds',
+}
+
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var T t;
+ts = ts .. [&&t];
+await 1s;
+var T&& p = ts[0];
+escape p == &&t;
+]],
+    fin = 'line 8 : unsafe access to pointer "ts" across `await´ (tests.lua : 7)',
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+var T t;
+var T&&? p = &&t;
+
+escape t.v + p!:v;
+]],
+    run = 20,
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+var T&&? p = &&t;
+
+escape t.v + p!:v;
+]],
+    run = '9] runtime error: invalid tag',
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T&&? p = &&t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = 20 },
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+var T&&? p = &&t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = '12] runtime error: invalid tag', },
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T&&? p = &&t;
+
+await 1s;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s']='13] runtime error: invalid tag' },
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T&&? p = &&t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = 20 },
+}
+
+Test { [[
+class U with
+    var int v = 10;
+do
+    await FOREVER;
+end
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var U u;
+var T t;
+var U&&? p = &&u;
+
+await 1s;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s']=20 },
+}
+
+Test { [[
+class T with
+do
+end
+//var T[]   ts;
+var T&&[]  ts1;
+var T&&?[] ts2;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t];
+escape $ts;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T&&?[] ts;
+
+var T t;
+ts = [] .. [&&t];
+
+escape ts[0] == &&t;
+]],
+    env = 'line 9 : invalid operands to binary "=="',
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t];
+escape ts[0]! == &&t;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t];
+escape ts[0]! == &&t;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t] .. [&&t];
+escape ts[1]! == &&t;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+end
+var T&&?[] ts;
+var T t1,t2;
+ts = [] .. [&&t1];
+ts[0]! = &&t2;
+escape ts[0]! == &&t2;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+    await 1s;
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t];
+await 1s;
+escape ts[0]! == &&t;
+]],
+    run = { ['~>1s']='10] runtime error: invalid tag' },
+}
+
+Test { [[
+interface I with
+end
+class T with
+do
+end
+
+var T t;
+var I&&?[] is;
+is = [&&t];
+
+escape is[0]? + 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+interface I with
+end
+class T with
+do
+end
+class U with
+do
+    await FOREVER;
+end
+class V with
+do
+    await 1s;
+end
+
+var T t;
+var U u;
+var V v;
+
+var I&&?[] is;
+is = [&&t, &&u, &&v];
+
+var int ret = 0;
+
+ret = ret + is[0]? + is[1]? + is[2]?;
+await 1s;
+ret = ret + is[0]? + is[1]? + is[2]?;
+
+escape ret;
+]],
+    run = { ['~>1s'] = 3 },
+}
+
+--<<< CLASS-VECTORS-FOR-POINTERS-TO-ORGS
+
+-->>> ISR / ATOMIC
 
 Test { [[
 atomic do
@@ -39857,6 +39882,8 @@ escape 1;
     env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
     --env = 'line 4 : invalid operand to unary "&&"',
 }
+
+--<<< ISR / ATOMIC
 
 Test { [[
 class U with do end;
