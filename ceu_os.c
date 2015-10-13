@@ -608,14 +608,9 @@ static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_
 
 int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk)
 {
-    for (;;)
+    for (;;
+        _ceu_stk->trl++)
     {
-/* TODO: remove: no more invalidation? */
-/* i.e., make sure we never emit NONE */
-        if (_ceu_stk->evt == CEU_IN__NONE) {
-            break;  /* invalidated emit or freed organism */
-        }
-
 #ifdef CEU_CLEAR
         if (_ceu_stk->trl == _ceu_stk->stop) {    /* bounded trail traversal?  */
             _ceu_stk->stop = NULL;           /* back to default */
@@ -810,8 +805,6 @@ printf("\t<<< NO\n");
             _ceu_stk->trl->seqno = _ceu_app->seqno-1;   /* keeps the gap tight */
         }
 #endif
-
-        _ceu_stk->trl++;
     }
     return 0;
 }
