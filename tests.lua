@@ -15613,189 +15613,9 @@ escape v!;
 ]],
     env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
+
 --<<< FINALLY / FINALIZE
 
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-function (T& t)=>int f do
-    return t.v * 2;
-end
-
-var T t;
-var int ret = f(&t);
-
-    var T u with
-        this.v = 20;
-    end;
-    ret = ret + f(&u);
-
-escape ret;
-]],
-    run = 60,
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-function (T& t)=>int f do
-    return t.v * 2;
-end
-
-var T t;
-var int ret = f(&t);
-
-do
-    var T u with
-        this.v = 20;
-    end;
-    ret = ret + f(&u);
-end
-
-escape ret;
-]],
-    ref = 'line 17 : attribution to reference with greater scope',
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-function (T&& t)=>int f do
-    return t:v * 2;
-end
-
-var T t;
-var int ret = f(&&t);
-
-do
-    var T u with
-        this.v = 20;
-    end;
-    ret = ret + f(&&u);
-end
-
-escape ret;
-]],
-    run = 60,
-}
-
-Test { [[
-interface Human with
-    function (void)=>int walk;
-    function (void)=>int breath;
-    var int n;
-end
-
-class CommonThings with
-    function (Human& h)=>int walk;
-    function (Human& h)=>int breath;
-do
-    function (Human& h)=>int walk do
-        return h.n;
-    end
-    function (Human& h)=>int breath do
-        return h.n;
-    end
-    await FOREVER;
-end
-
-class Man with
-    interface Human;
-    var CommonThings& ct;
-    var int n = 100;
-do
-    function (void)=>int walk do
-        return 200; // override
-    end
-    function (void)=>int breath do
-        return this.ct.breath(&this); // delegate
-    end
-end
-
-var CommonThings ct;
-var Man m with
-    this.ct = &ct;
-end;
-escape m.walk() + m.breath();
-]],
-    run = 300,
-}
-
-Test { [[
-native do
-    typedef struct t {
-        void* ceu;
-    } t;
-end
-var _t   t;
-var _t&& ptr = &&t;
-var int v = 10;
-ptr:ceu = &v;
-escape *((int&&)(ptr:ceu));
-]],
-    ref = 'line 9 : invalid attribution : l-value already bounded',
-    --run = 10,
-}
-
-Test { [[
-native do
-    typedef struct t {
-        void* xxx;
-    } t;
-end
-
-class C with
-    var int v = 10;
-do
-end
-var C c;
-
-var _t   t;
-var _t&& ptr = &&t;
-
-ptr:xxx = &c;
-
-escape ((C&&)ptr:xxx):v;
-]],
-    --run = 10,
-    ref = 'line 16 : invalid attribution : l-value already bounded',
-}
-
-Test { [[
-native do
-    typedef struct t {
-        void* xxx;
-    } t;
-end
-
-class C with
-    var int v = 10;
-    event int e;
-do
-end
-var C c;
-
-var _t   t;
-var _t&& ptr = &&t;
-
-ptr:xxx = &c;
-
-emit ((C&&)ptr:xxx):e => 1;
-
-escape ((C&&)ptr:xxx):v;
-]],
-    ref = 'line 17 : invalid attribution : l-value already bounded',
-    --run = 10,
-}
 Test { [[
 native @pure _f();
 native do
@@ -15893,91 +15713,6 @@ end
 escape f(str);
 ]],
     env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `char[]´)',
-}
-
-Test { [[
-class Dir with
-    var int value;
-do
-end
-interface IPingu with
-    function (void)=>Dir& get;
-end
-class Pingu with
-    interface IPingu;
-do
-    var Dir dir with
-        this.value = 10;
-    end;
-    function (void)=>Dir& get do
-        return &&dir;
-    end
-end
-var Pingu p;
-escape p.get().value;
-]],
-    env = 'line 15 : invalid return value : types mismatch (`Dir&´ <= `Dir&&´)',
-}
-
-Test { [[
-class Dir with
-    var int value;
-do
-end
-interface IPingu with
-    function (void)=>Dir& get;
-end
-class Pingu with
-    interface IPingu;
-do
-    var Dir dir with
-        this.value = 10;
-    end;
-    function (void)=>Dir& get do
-        return &dir;
-    end
-end
-var Pingu p;
-escape p.get().value;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with do end
-
-pool T[] ts;
-
-class U with
-    var int& ts;
-do
-end
-
-var U u;
-
-escape 1;
-]],
-    ref = 'line 10 : field "ts" must be assigned',
-}
-
-Test { [[
-class T with do end
-
-pool T[] ts;
-
-class U with
-    pool T[]& ts;
-do
-    var T&&? t =
-        spawn T in ts with
-        end;
-end
-
-var U u;
-
-escape 1;
-]],
-    ref = 'line 13 : field "ts" must be assigned',
 }
 
 --<<< REFERENCES / REFS / &
@@ -21050,150 +20785,6 @@ _f(&&b);
 escape b[0] + b[1];
 ]],
     run = 5,
-}
-
-Test { [[
-class T with
-    var int[10] vs;
-do
-    this.vs = [1];
-end
-
-var T t;
-t.vs[0] = t.vs[0] + 2;
-
-escape t.vs[0];
-]],
-    props = 'line 2 : not permitted inside an interface : vectors',
-}
-
-Test { [[
-class T with
-    var int[10]& vs;
-do
-    this.vs = [1];
-end
-
-var int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-t.vs[0] = t.vs[0] + 2;
-
-escape t.vs[0];
-]],
-    run = 3,
-}
-
-Test { [[
-interface I with
-    var int& v;
-end
-
-class T with
-    interface I;
-do
-    this.v = 1;
-end
-
-var int v;
-var T t with
-    this.v = &v;
-end;
-t.v = t.v + 2;
-
-var I&& i = &&t;
-i:v = i:v * 3;
-
-escape t.v;
-]],
-    run = 9,
-}
-
-Test { [[
-var int[10]& rs;
-var int[10]  vs = [1];
-rs = &vs;
-vs[0] = vs[0] + 2;
-
-rs[0] = rs[0] * 3;
-
-escape vs[0];
-]],
-    run = 9,
-}
-Test { [[
-interface I with
-    var int[10]& vs;
-end
-
-class T with
-    interface I;
-do
-end
-
-var int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-
-var I&& i = &&t;
-
-i:vs = [ 0 ];
-i:vs[0] = 3;
-
-escape i:vs[0];
-]],
-    run = 3,
-}
-Test { [[
-interface I with
-    var int[10]& vs;
-end
-
-class T with
-    interface I;
-do
-end
-
-var int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-
-var I&& i = &&t;
-
-i:vs[0] = 3;
-
-escape 1;
-]],
-    run = '17] runtime error: access out of bounds',
-    -- TODO: not 20, 17!
-}
-Test { [[
-interface I with
-    var int[10]& vs;
-end
-
-class T with
-    interface I;
-do
-    this.vs = [1];
-end
-
-var int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-t.vs[0] = t.vs[0] + 2;
-
-var I&& i = &&t;
-
-i:vs[0] = i:vs[0] * 3;
-
-escape t.vs[0];
-]],
-    run = 9,
 }
 
 Test { [[
@@ -39033,6 +38624,272 @@ escape buffer[0];
     run = 3,
 }
 
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+function (T& t)=>int f do
+    return t.v * 2;
+end
+
+var T t;
+var int ret = f(&t);
+
+    var T u with
+        this.v = 20;
+    end;
+    ret = ret + f(&u);
+
+escape ret;
+]],
+    run = 60,
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+function (T& t)=>int f do
+    return t.v * 2;
+end
+
+var T t;
+var int ret = f(&t);
+
+do
+    var T u with
+        this.v = 20;
+    end;
+    ret = ret + f(&u);
+end
+
+escape ret;
+]],
+    ref = 'line 17 : attribution to reference with greater scope',
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+function (T&& t)=>int f do
+    return t:v * 2;
+end
+
+var T t;
+var int ret = f(&&t);
+
+do
+    var T u with
+        this.v = 20;
+    end;
+    ret = ret + f(&&u);
+end
+
+escape ret;
+]],
+    run = 60,
+}
+
+Test { [[
+interface Human with
+    function (void)=>int walk;
+    function (void)=>int breath;
+    var int n;
+end
+
+class CommonThings with
+    function (Human& h)=>int walk;
+    function (Human& h)=>int breath;
+do
+    function (Human& h)=>int walk do
+        return h.n;
+    end
+    function (Human& h)=>int breath do
+        return h.n;
+    end
+    await FOREVER;
+end
+
+class Man with
+    interface Human;
+    var CommonThings& ct;
+    var int n = 100;
+do
+    function (void)=>int walk do
+        return 200; // override
+    end
+    function (void)=>int breath do
+        return this.ct.breath(&this); // delegate
+    end
+end
+
+var CommonThings ct;
+var Man m with
+    this.ct = &ct;
+end;
+escape m.walk() + m.breath();
+]],
+    run = 300,
+}
+
+Test { [[
+native do
+    typedef struct t {
+        void* ceu;
+    } t;
+end
+var _t   t;
+var _t&& ptr = &&t;
+var int v = 10;
+ptr:ceu = &v;
+escape *((int&&)(ptr:ceu));
+]],
+    ref = 'line 9 : invalid attribution : l-value already bounded',
+    --run = 10,
+}
+
+Test { [[
+native do
+    typedef struct t {
+        void* xxx;
+    } t;
+end
+
+class C with
+    var int v = 10;
+do
+end
+var C c;
+
+var _t   t;
+var _t&& ptr = &&t;
+
+ptr:xxx = &c;
+
+escape ((C&&)ptr:xxx):v;
+]],
+    --run = 10,
+    ref = 'line 16 : invalid attribution : l-value already bounded',
+}
+
+Test { [[
+native do
+    typedef struct t {
+        void* xxx;
+    } t;
+end
+
+class C with
+    var int v = 10;
+    event int e;
+do
+end
+var C c;
+
+var _t   t;
+var _t&& ptr = &&t;
+
+ptr:xxx = &c;
+
+emit ((C&&)ptr:xxx):e => 1;
+
+escape ((C&&)ptr:xxx):v;
+]],
+    ref = 'line 17 : invalid attribution : l-value already bounded',
+    --run = 10,
+}
+Test { [[
+class Dir with
+    var int value;
+do
+end
+interface IPingu with
+    function (void)=>Dir& get;
+end
+class Pingu with
+    interface IPingu;
+do
+    var Dir dir with
+        this.value = 10;
+    end;
+    function (void)=>Dir& get do
+        return &&dir;
+    end
+end
+var Pingu p;
+escape p.get().value;
+]],
+    env = 'line 15 : invalid return value : types mismatch (`Dir&´ <= `Dir&&´)',
+}
+
+Test { [[
+class Dir with
+    var int value;
+do
+end
+interface IPingu with
+    function (void)=>Dir& get;
+end
+class Pingu with
+    interface IPingu;
+do
+    var Dir dir with
+        this.value = 10;
+    end;
+    function (void)=>Dir& get do
+        return &dir;
+    end
+end
+var Pingu p;
+escape p.get().value;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+
+pool T[] ts;
+
+class U with
+    var int& ts;
+do
+end
+
+var U u;
+
+escape 1;
+]],
+    ref = 'line 10 : field "ts" must be assigned',
+}
+
+Test { [[
+class T with do end
+
+pool T[] ts;
+
+class U with
+    pool T[]& ts;
+do
+    var T&&? t =
+        spawn T in ts with
+        end;
+end
+
+var U u;
+
+escape 1;
+]],
+    ref = 'line 13 : field "ts" must be assigned',
+}
+
 --<<< METHODS
 
 -->>> CLASS-FINALIZE-OPTION
@@ -39213,6 +39070,149 @@ escape 1;
 
 -->>> CLASS-VECTORS-FOR-POINTERS-TO-ORGS
 
+Test { [[
+class T with
+    var int[10] vs;
+do
+    this.vs = [1];
+end
+
+var T t;
+t.vs[0] = t.vs[0] + 2;
+
+escape t.vs[0];
+]],
+    props = 'line 2 : not permitted inside an interface : vectors',
+}
+
+Test { [[
+class T with
+    var int[10]& vs;
+do
+    this.vs = [1];
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+t.vs[0] = t.vs[0] + 2;
+
+escape t.vs[0];
+]],
+    run = 3,
+}
+
+Test { [[
+interface I with
+    var int& v;
+end
+
+class T with
+    interface I;
+do
+    this.v = 1;
+end
+
+var int v;
+var T t with
+    this.v = &v;
+end;
+t.v = t.v + 2;
+
+var I&& i = &&t;
+i:v = i:v * 3;
+
+escape t.v;
+]],
+    run = 9,
+}
+
+Test { [[
+var int[10]& rs;
+var int[10]  vs = [1];
+rs = &vs;
+vs[0] = vs[0] + 2;
+
+rs[0] = rs[0] * 3;
+
+escape vs[0];
+]],
+    run = 9,
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+
+var I&& i = &&t;
+
+i:vs = [ 0 ];
+i:vs[0] = 3;
+
+escape i:vs[0];
+]],
+    run = 3,
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+
+var I&& i = &&t;
+
+i:vs[0] = 3;
+
+escape 1;
+]],
+    run = '17] runtime error: access out of bounds',
+    -- TODO: not 20, 17!
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+    this.vs = [1];
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+t.vs[0] = t.vs[0] + 2;
+
+var I&& i = &&t;
+
+i:vs[0] = i:vs[0] * 3;
+
+escape t.vs[0];
+]],
+    run = 9,
+}
 Test { [[
 class T with
 do

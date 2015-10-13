@@ -466,6 +466,7 @@ typedef struct {
 typedef struct tceu_stk {
     struct tceu_stk* XXX_prv;
     int XXX_alive;
+    int XXX_level;
 
     struct {
         tceu_nevt evt;  /* TODO: small in the end of struct? */

@@ -871,6 +871,7 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 #endif
 
 stk.XXX_prv = NULL;
+stk.XXX_level = 1;
 
 #ifdef CEU_STACK
     ceu_sys_bcast(app, app->data, stack_nxti(&go), &stk, &evtp);
@@ -882,25 +883,11 @@ stk.XXX_prv = NULL;
 #endif
     }
 
-    while (1) {
 #ifdef CEU_STACK
-        int stop = ceu_sys_go_ex(app, &go, (tceu_stk*)&(go.stk[go.stk_curi]));
+    ceu_sys_go_ex(app, &go, (tceu_stk*)&(go.stk[go.stk_curi]));
 #else
-        int stop = ceu_sys_go_ex(app, &go, (tceu_stk*)&go);
+    ceu_sys_go_ex(app, &go, (tceu_stk*)&go);
 #endif
-        if (stop) {
-            break;
-        }
-
-#ifdef CEU_STACK
-        stack_pop(app, &go);
-        if (stack_empty(&go)) {
-            break; /* reaction has terminated */
-        }
-#else
-        break;
-#endif
-    }
 
 #ifdef CEU_WCLOCKS
     if (evt==CEU_IN__WCLOCK) {
