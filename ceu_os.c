@@ -563,9 +563,6 @@ static void ceu_sys_bcast_ex (tceu_app* app, tceu_org* org, int stk_lvl, tceu_st
 #ifdef CEU_STACK
         trl->stk = stk_lvl;
 #endif
-#ifdef CEU_DEBUG_TRAILS
-printf("\t>>> OK\n");
-#endif
     }
 
     /* end of traversal, reached the end of top org */
@@ -606,10 +603,6 @@ static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_
     /* restore to initial state (org/trl/stop) */
 #ifdef CEU_STACK
     *stack_cur(_ceu_go) = old;
-    /**stack_cur(_ceu_go) = *_ceu_stk;*/
-#else
-    *_ceu_go = old;
-    /**_ceu_go = *_ceu_stk;*/
 #endif
 }
 
@@ -622,18 +615,6 @@ int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk)
         if (_ceu_stk->evt == CEU_IN__NONE) {
             break;  /* invalidated emit or freed organism */
         }
-
-#ifdef CEU_DEBUG_TRAILS
-printf("STACK[%d]: evt=%d : seqno=%d\n",
-stack_curi(_ceu_go), _ceu_stk->evt, 0);
-/*0, _ceu_stk->evt, 0);*/
-#if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
-printf("\torg=%p/%d : [%d/%p]\n",
-_STK_ORG, _STK_ORG==_ceu_app->data, _STK_ORG->n, _STK_ORG->trls);
-#else
-printf("\tntrls=%d\n", CEU_NTRAILS);
-#endif
-#endif
 
 #ifdef CEU_CLEAR
         if (_ceu_stk->trl == _ceu_stk->stop) {    /* bounded trail traversal?  */
@@ -761,10 +742,6 @@ return ceu_sys_go_ex(_ceu_app, _ceu_go, _ceu_stk);
         {
             int _ret;
             _ceu_stk->trl->evt = CEU_IN__NONE;  /* clear trail */
-
-#ifdef CEU_DEBUG_TRAILS
-printf("\t<<< OK %d\n", _ceu_stk->trl->lbl);
-#endif
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = _ceu_app->addr;
