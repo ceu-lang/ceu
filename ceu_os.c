@@ -255,7 +255,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #endif  /* CEU_ORGS */
 }
 
-static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* stk, void* evtp);
+static void ceu_sys_bcast (tceu_app* app, tceu_org* org, int stk_lvl, tceu_stk* stk, void* evtp);
 
 #ifdef CEU_ORGS
 void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, tceu_org* me)
@@ -285,7 +285,20 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk,
                  stk.evt_sz = sizeof(tceu_kill);
         tceu_kill ps = { me, me->ret };
 
-        ceu_sys_bcast(_ceu_app, _ceu_go, &stk, &ps);
+#ifdef CEU_STACK
+    stack_push(_ceu_app, _ceu_go, &stk, &ps);
+    ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_curi(_ceu_go), stack_cur(_ceu_go), &ps);
+#else
+    stk.evt_buf = &ps;
+    *_ceu_go = stk;
+    ceu_sys_bcast(_ceu_app, _ceu_app->data, 0, &stk, &ps);
+#endif
+
+    /* restore to initial state (org/trl/stop) */
+#ifdef CEU_STACK
+    *stack_cur(_ceu_go) = stk;
+#endif
+
     }
 #endif
 }
@@ -327,7 +340,21 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
              stk.trl  = &_ceu_app->data->trls[0];
              stk.stop = NULL;
              stk.evt_sz = sizeof(tceu_kill);
-    ceu_sys_bcast(_ceu_app, _ceu_go, &stk, &me);
+
+#ifdef CEU_STACK
+    stack_push(_ceu_app, _ceu_go, &stk, &me);
+    ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_curi(_ceu_go), stack_cur(_ceu_go), &me);
+#else
+    stk.evt_buf = &me;
+    *_ceu_go = stk;
+    ceu_sys_bcast(_ceu_app, _ceu_app->data, 0, &stk, &me);
+#endif
+
+    /* restore to initial state (org/trl/stop) */
+#ifdef CEU_STACK
+    *stack_cur(_ceu_go) = stk;
+#endif
+
 }
 #endif
 
@@ -502,7 +529,7 @@ u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 
 /* TODO: remover PTR ultimo org p/ IN__ORG e usar call normalmente*/
 
-static void ceu_sys_bcast_ex (tceu_app* app, tceu_org* org, int stk_lvl, tceu_stk* stk, void* evtp) {
+static void ceu_sys_bcast (tceu_app* app, tceu_org* org, int stk_lvl, tceu_stk* stk, void* evtp) {
     tceu_trl* trl;
     for (
         trl = &org->trls[0];
@@ -521,7 +548,7 @@ static void ceu_sys_bcast_ex (tceu_app* app, tceu_org* org, int stk_lvl, tceu_st
         {
             /* TODO(speed): jump LST */
             /* jump FST */
-            ceu_sys_bcast_ex(app, trl->lnks[0].nxt, stk_lvl, stk, evtp);
+            ceu_sys_bcast(app, trl->lnks[0].nxt, stk_lvl, stk, evtp);
             continue;
         }
 #endif /* CEU_ORGS */
@@ -577,33 +604,10 @@ static void ceu_sys_bcast_ex (tceu_app* app, tceu_org* org, int stk_lvl, tceu_st
             return;
         } else {
             /* traverse next org */
-            return ceu_sys_bcast_ex(app, org->nxt, stk_lvl, stk, evtp);
+            return ceu_sys_bcast(app, org->nxt, stk_lvl, stk, evtp);
         }
     }
 #endif  /* CEU_ORGS */
-}
-
-static void ceu_sys_bcast (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, void* evtp) {
-#ifdef CEU_STACK
-    stack_push(_ceu_app, _ceu_go, _ceu_stk, evtp);
-    tceu_stk old = *_ceu_stk;
-    _ceu_stk = stack_cur(_ceu_go);
-#else
-    _ceu_stk->evt_buf = evtp;
-    tceu_stk old = *_ceu_stk;
-    *_ceu_go = *_ceu_stk;
-#endif
-
-#ifdef CEU_STACK
-    ceu_sys_bcast_ex(_ceu_app, _ceu_app->data, stack_curi(_ceu_go), _ceu_stk, evtp);
-#else
-    ceu_sys_bcast_ex(_ceu_app, _ceu_app->data, 0, _ceu_stk, evtp);
-#endif
-
-    /* restore to initial state (org/trl/stop) */
-#ifdef CEU_STACK
-    *stack_cur(_ceu_go) = old;
-#endif
 }
 
 int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk)
@@ -615,7 +619,7 @@ int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk)
         if (_ceu_stk->trl == _ceu_stk->stop) {    /* bounded trail traversal?  */
             _ceu_stk->stop = NULL;           /* back to default */
 /* TODO: precisa desse NULL? */
-            break;                      /* pop stack */
+            return 0;                      /* pop stack */
         }
 #endif
 
@@ -629,77 +633,7 @@ int ceu_sys_go_ex (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk)
 #endif
             ])
         {
-            /* end of traversal, reached the end of top org */
-            if (_STK_ORG == _ceu_app->data) {
-                break;  /* pop stack */
-            }
-
-#ifdef CEU_ORGS
-            /* end of current org */
-            else {
-                /* save current org before setting the next traversal */
-                tceu_org* old = _STK_ORG;
-
-#if 0
-                /*
-                 * Test is commented to simplify the code.
-                 * "traverse-next-org" only required on that condition.
-                 */
-                int to_kill_free = (STK->evt==CEU_IN__CLEAR && old->n!=0);
-                int stop_now = (STK->stop==(void*)old);
-                if (to_kill_free && stop_now) {
-                } else
-#endif
-                {
-                    /* traverse next org */
-                    _STK_ORG_ATTR = old->nxt;
-                    _ceu_stk->trl = &((tceu_org*)old->nxt)->trls [
-                                        (old->n == 0) ?
-                                        ((tceu_org_lnk*)old)->lnk : 0
-                                    ];
-                }
-
-                if (_ceu_stk->evt==CEU_IN__CLEAR && old->n!=0) {
-                    ceu_sys_stack_clear_org(_ceu_go, old, stack_curi(_ceu_go));
-                    if (_ceu_stk->stop==(void*)old) {
-#ifdef CEU_ORGS_WATCHING
-                        /* HACK_10: (see adj.lua)
-                         * save return value as global
-                         * (in case spawn terminates immediately)
-                         */
-                        _ceu_app->ret = old->ret;
-#endif
-                        /* pop this level as it was a bounded CLEAR on the
-                         * given ORG nothing else to do in this level */
-                        stack_pop(_ceu_app, _ceu_go);
-_ceu_stk = stack_cur(_ceu_go);
-                        ceu_sys_org_kill(_ceu_app, _ceu_go, _ceu_stk, old); /* has bcast/push */
-_ceu_stk = stack_cur(_ceu_go);
-                    } else {
-                        /* pop/kill/push:
-                         * terminate current CLEAR before kill */
-#ifdef CEU_ORGS_WATCHING
-                        tceu_stk stk = *stack_cur(_ceu_go);
-                        stack_pop(_ceu_app, _ceu_go); /* only if "kill" emit ok_killed */
-_ceu_stk = stack_cur(_ceu_go);
-#endif
-                        ceu_sys_org_kill(_ceu_app, _ceu_go, _ceu_stk, old); /* has bcast/push */
-_ceu_stk = stack_cur(_ceu_go);
-#ifdef CEU_ORGS_WATCHING
-                        stack_push(_ceu_app, _ceu_go, &stk, NULL);
-_ceu_stk = stack_cur(_ceu_go);
-#endif
-                    }
-#ifdef CEU_ORGS_NEWS
-                    if (old->isDyn) {
-                        ceu_sys_org_free(old);
-                    }
-#endif
-                }
-return ceu_sys_go_ex(_ceu_app, _ceu_go, _ceu_stk);
-                /* restart with kill */
-            }
-#endif  /* CEU_ORGS */
+            break;
         }
 
         /* continue traversing current org */
@@ -806,6 +740,73 @@ printf("\t<<< NO\n");
         }
 #endif
     }
+
+#ifdef CEU_ORGS
+    /* end of current org */
+    if (_STK_ORG != _ceu_app->data) {
+        /* save current org before setting the next traversal */
+        tceu_org* old = _STK_ORG;
+
+#if 0
+        /*
+         * Test is commented to simplify the code.
+         * "traverse-next-org" only required on that condition.
+         */
+        int to_kill_free = (STK->evt==CEU_IN__CLEAR && old->n!=0);
+        int stop_now = (STK->stop==(void*)old);
+        if (to_kill_free && stop_now) {
+        } else
+#endif
+        {
+            /* traverse next org */
+            _STK_ORG_ATTR = old->nxt;
+            _ceu_stk->trl = &((tceu_org*)old->nxt)->trls [
+                                (old->n == 0) ?
+                                ((tceu_org_lnk*)old)->lnk : 0
+                            ];
+        }
+
+        if (_ceu_stk->evt==CEU_IN__CLEAR && old->n!=0) {
+            ceu_sys_stack_clear_org(_ceu_go, old, stack_curi(_ceu_go));
+            if (_ceu_stk->stop==(void*)old) {
+#ifdef CEU_ORGS_WATCHING
+                /* HACK_10: (see adj.lua)
+                 * save return value as global
+                 * (in case spawn terminates immediately)
+                 */
+                _ceu_app->ret = old->ret;
+#endif
+                /* pop this level as it was a bounded CLEAR on the
+                 * given ORG nothing else to do in this level */
+                stack_pop(_ceu_app, _ceu_go);
+_ceu_stk = stack_cur(_ceu_go);
+                ceu_sys_org_kill(_ceu_app, _ceu_go, _ceu_stk, old); /* has bcast/push */
+_ceu_stk = stack_cur(_ceu_go);
+            } else {
+                /* pop/kill/push:
+                 * terminate current CLEAR before kill */
+#ifdef CEU_ORGS_WATCHING
+                tceu_stk stk = *stack_cur(_ceu_go);
+                stack_pop(_ceu_app, _ceu_go); /* only if "kill" emit ok_killed */
+_ceu_stk = stack_cur(_ceu_go);
+#endif
+                ceu_sys_org_kill(_ceu_app, _ceu_go, _ceu_stk, old); /* has bcast/push */
+_ceu_stk = stack_cur(_ceu_go);
+#ifdef CEU_ORGS_WATCHING
+                stack_push(_ceu_app, _ceu_go, &stk, NULL);
+_ceu_stk = stack_cur(_ceu_go);
+#endif
+            }
+#ifdef CEU_ORGS_NEWS
+            if (old->isDyn) {
+                ceu_sys_org_free(old);
+            }
+#endif
+        }
+return ceu_sys_go_ex(_ceu_app, _ceu_go, _ceu_stk);
+        /* restart with kill */
+    }
+#endif  /* CEU_ORGS */
     return 0;
 }
 
@@ -869,7 +870,20 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 #ifdef CEU_STACK
                  stk.evt_sz = sizeof(evtp);
 #endif
-        ceu_sys_bcast(app, &go, &stk, &evtp);
+
+#ifdef CEU_STACK
+    stack_push(app, &go, &stk, &evtp);
+    ceu_sys_bcast(app, app->data, stack_curi(&go), stack_cur(&go), &evtp);
+#else
+    stk.evt_buf = &evtp;
+    go = stk;
+    ceu_sys_bcast(app, app->data, 0, &stk, &evtp);
+#endif
+
+    /* restore to initial state (org/trl/stop) */
+#ifdef CEU_STACK
+    *stack_cur(&go) = stk;
+#endif
     }
 
     while (1) {

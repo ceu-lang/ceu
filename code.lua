@@ -1742,12 +1742,29 @@ _ceu_stk->trl->stk = stack_curi(_ceu_go);
         if ps and #ps>0 then
             LINE(me, [[
             stk.evt_sz = sizeof(*]]..val..[[);
-            ceu_sys_bcast(_ceu_app, _ceu_go, &stk, ]]..val..[[);
+
+#ifdef CEU_STACK
+    stack_push(_ceu_app, _ceu_go, &stk, ]]..val..[[);
+            ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_curi(_ceu_go), stack_cur(_ceu_go), ]]..val..[[);
+#else
+    _ceu_stk->evt_buf = ]]..val..[[);
+    *_ceu_go = stk;
+            ceu_sys_bcast(_ceu_app, _ceu_app->data, 0, &stk, ]]..val..[[);
+#endif
+
 ]])
         else
             LINE(me, [[
             stk.evt_sz = 0;
-            ceu_sys_bcast(_ceu_app, _ceu_go, &stk, NULL);
+
+#ifdef CEU_STACK
+    stack_push(_ceu_app, _ceu_go, &stk, NULL);
+            ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_curi(_ceu_go), stack_cur(_ceu_go), NULL);
+#else
+    _ceu_stk->evt_buf = NULL;
+    *_ceu_go = stk;
+            ceu_sys_bcast(_ceu_app, _ceu_app->data, 0, &stk, NULL);
+#endif
 ]])
         end
         LINE(me, [[
