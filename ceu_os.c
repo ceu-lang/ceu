@@ -503,23 +503,17 @@ u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 /* TODO: remover PTR ultimo org p/ IN__ORG e usar call normalmente*/
 
 static void ceu_sys_bcast_ex (tceu_app* _ceu_app, int stk_lvl, tceu_stk* _ceu_stk, void* evtp) {
-    for (;; _ceu_stk->trl++)
-    {
-        /* STK_ORG has been traversed to the end? */
-        if (_ceu_stk->trl ==
-            &_STK_ORG->trls[
+    for (
+        ;
+        _ceu_stk->trl != &_STK_ORG->trls[
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
-                _STK_ORG->n
+                            _STK_ORG->n
 #else
-                CEU_NTRAILS
+                            CEU_NTRAILS
 #endif
-            ])
-        {
-            break;
-        }
-
-        /* continue traversing current org */
-
+                         ];
+        _ceu_stk->trl++
+    ) {
         /* jump into linked orgs */
 #ifdef CEU_ORGS
         if (_ceu_stk->trl->evt == CEU_IN__ORG)
