@@ -97,7 +97,6 @@ void ceu_stack_pop_f (tceu_app* app, tceu_go* go) {
 }
 
 void ceu_sys_stack_push (tceu_app* app, tceu_go* go, tceu_stk* elem, void* ptr) {
-    elem->XXX_alive = 1;
     elem->offset = go->stk_nxti - go->stk_curi;
     go->stk_curi = go->stk_nxti;
     go->stk_nxti = stack_pushi(go, elem);
@@ -256,7 +255,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #endif  /* CEU_ORGS */
 }
 
-static void ceu_sys_bcast (tceu_app* app, tceu_org* org, int stk_lvl, tceu_stk* stk, void* evtp);
+static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk, void* evtp);
 
 #ifdef CEU_ORGS
 void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, tceu_org* me)
@@ -363,15 +362,6 @@ void ceu_sys_clear (tceu_app* _ceu_app, tceu_stk* old,
                  stk.stop   = stop;
                  stk.evt_sz = 0;
         ceu_sys_go_ex(_ceu_app, &stk);
-    }
-
-    {
-        tceu_stk* stk;
-        for (stk=old; stk!=NULL; stk=stk->XXX_prv) {
-            if (stk->trl->evt == CEU_IN__NONE) {
-                stk->XXX_alive = 0;
-            }
-        }
     }
 }
 #endif
@@ -517,7 +507,7 @@ u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 
 /* TODO: remover PTR ultimo org p/ IN__ORG e usar call normalmente*/
 
-static void ceu_sys_bcast (tceu_app* app, tceu_org* org, int stk_lvl, tceu_stk* stk, void* evtp) {
+static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk, void* evtp) {
     tceu_trl* trl;
     for (
         trl = &org->trls[0];
@@ -536,7 +526,7 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, int stk_lvl, tceu_stk* 
         {
             /* TODO(speed): jump LST */
             /* jump FST */
-            ceu_sys_bcast(app, trl->lnks[0].nxt, stk_lvl, stk, evtp);
+            ceu_sys_bcast(app, trl->lnks[0].nxt, stk, evtp);
             continue;
         }
 #endif /* CEU_ORGS */
@@ -577,7 +567,7 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, int stk_lvl, tceu_stk* 
         /* execute this trail in the 2nd pass */
         trl->evt = CEU_IN__STK;
 #ifdef CEU_STACK
-        trl->stk = stk_lvl;
+        trl->stk = stk->XXX_level;
 #endif
     }
 
@@ -593,7 +583,7 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, int stk_lvl, tceu_stk* 
             return;
         } else {
             /* traverse next org */
-            return ceu_sys_bcast(app, org->nxt, stk_lvl, stk, evtp);
+            return ceu_sys_bcast(app, org->nxt, stk, evtp);
         }
     }
 #endif  /* CEU_ORGS */
@@ -601,8 +591,9 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, int stk_lvl, tceu_stk* 
 
 int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk)
 {
-    for (;;
-        stk->trl++)
+    tceu_trl* trl;
+    for (trl=stk->trl;;
+         trl++)
     {
 #if 0
 printf("GO-EX: %d\n", stk->evt);
@@ -612,7 +603,7 @@ printf("\t\tevt: %d\n", stk->trl->evt);
 printf("\t\tstk: %d\n", stk->trl->stk);
 #endif
 #ifdef CEU_CLEAR
-        if (stk->trl == stk->stop) {    /* bounded trail traversal?  */
+        if (trl == stk->stop) {    /* bounded trail traversal?  */
             stk->stop = NULL;           /* back to default */
 /* TODO: precisa desse NULL? */
             return 0;                      /* pop stack */
@@ -620,7 +611,7 @@ printf("\t\tstk: %d\n", stk->trl->stk);
 #endif
 
         /* STK_ORG has been traversed to the end? */
-        if (stk->trl ==
+        if (trl ==
             &STK_ORG->trls[
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
                 STK_ORG->n
@@ -636,18 +627,18 @@ printf("\t\tstk: %d\n", stk->trl->stk);
 
         /* jump into linked orgs */
 #ifdef CEU_ORGS
-        if ( (stk->trl->evt == CEU_IN__ORG)
+        if ( (trl->evt == CEU_IN__ORG)
 #ifdef CEU_PSES
-          || (stk->trl->evt==CEU_IN__ORG_PSED && stk->evt==CEU_IN__CLEAR)
+          || (trl->evt==CEU_IN__ORG_PSED && stk->evt==CEU_IN__CLEAR)
 #endif
            )
         {
             if (stk->evt == CEU_IN__CLEAR) {
-                stk->trl->evt = CEU_IN__NONE;
+                trl->evt = CEU_IN__NONE;
             }
             /* TODO(speed): jump LST */
-            STK_ORG_ATTR = stk->trl->lnks[0].nxt;   /* jump FST */
-            stk->trl = &STK_ORG->trls[0];
+            STK_ORG_ATTR = trl->lnks[0].nxt;   /* jump FST */
+            trl = &STK_ORG->trls[0];
             return ceu_sys_go_ex(app, stk);
             /* restart */
         }
@@ -656,23 +647,24 @@ printf("\t\tstk: %d\n", stk->trl->stk);
         /* EXECUTE THIS TRAIL */
         if (
 #ifdef CEU_CLEAR
-            (stk->evt==CEU_IN__CLEAR && stk->trl->evt==CEU_IN__CLEAR) ||
+            (stk->evt==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR) ||
 #endif
-            (stk->trl->evt==CEU_IN__STK
+            (trl->evt==CEU_IN__STK
 #ifdef CEU_STACK
-             && stk->trl->stk==stk->XXX_level
+             && trl->stk==stk->XXX_level
 #endif
             )
            )
         {
             int _ret;
-            stk->trl->evt = CEU_IN__NONE;  /* clear trail */
+            trl->evt = CEU_IN__NONE;  /* clear trail */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = app->addr;
 #endif
 
             /*** CODE ***/
+            stk->trl = trl;
             _ret = app->code(app, NULL, stk);
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
@@ -718,8 +710,9 @@ printf("\t\tstk: %d\n", stk->trl->stk);
 printf("\t<<< NO\n");
 #endif
 #ifdef CEU_CLEAR
-            if (stk->evt==CEU_IN__CLEAR && stk->cnt!=stk->trl) {
-                stk->trl->evt = CEU_IN__NONE;    /* trail cleared */
+            if (stk->evt==CEU_IN__CLEAR && stk->cnt!=trl) {
+                trl->evt = CEU_IN__NONE;    /* trail cleared */
+trl->lbl = 0;
             }
 #endif
         }
@@ -727,8 +720,8 @@ printf("\t<<< NO\n");
         /* NEXT TRAIL */
 
 #ifdef CEU_INTS
-        if (stk->trl->evt<CEU_IN_lower && stk->trl->seqno!=app->seqno) {
-            stk->trl->seqno = app->seqno-1;   /* keeps the gap tight */
+        if (trl->evt<CEU_IN_lower && trl->seqno!=app->seqno) {
+            trl->seqno = app->seqno-1;   /* keeps the gap tight */
         }
 #endif
     }
@@ -866,11 +859,11 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
                  stk.evt_sz = sizeof(evtp);
 #endif
 
-#ifdef CEU_STACK
-        ceu_sys_bcast(app, app->data, stack_nxti(&go), &stk, &evtp);
-#else
         stk.evt_buf = &evtp;
-        ceu_sys_bcast(app, app->data, 0, &stk, &evtp);
+#ifdef CEU_STACK
+        ceu_sys_bcast(app, app->data, &stk, &evtp);
+#else
+        ceu_sys_bcast(app, app->data, &stk, &evtp);
         go = stk;
 #endif
 

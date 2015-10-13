@@ -465,7 +465,6 @@ typedef struct {
 /* TODO(speed): hold nxt trl to run */
 typedef struct tceu_stk {
     struct tceu_stk* XXX_prv;
-    int XXX_alive;
     int XXX_level;
 
     struct {
@@ -499,11 +498,7 @@ typedef struct tceu_stk {
     };
 
     /* out of "struct{...}" to be aligned */
-#ifdef CEU_STACK
-    byte  evt_buf[0];
-#else
     void* evt_buf;
-#endif
 } tceu_stk;
 /* TODO: see if fields can be reused in union */
 

@@ -103,6 +103,7 @@ do return end
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -907,7 +908,6 @@ escape 10;
     },
     run = 10,
 }
---]===]
 Test { [[
 input int A;
 var int ret;
@@ -1024,6 +1024,28 @@ end
 escape 10;
 ]],
     ana = 'line 3 : `loop´ iteration is not reachable',
+    run = 10,
+}
+
+Test { [[
+event void e;
+emit e;
+escape 10;
+]],
+    --ana = 'line 3 : `loop´ iteration is not reachable',
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+event void e;
+await OS_START;
+emit e;
+escape 10;
+]],
+    --ana = 'line 3 : `loop´ iteration is not reachable',
+    wrn = true,
     run = 10,
 }
 
@@ -4099,34 +4121,6 @@ escape ret;
 }
 
 --<<< INTERNAL EVENTS
-
-Test { [[
-class T with
-    event void e;
-do
-    await FOREVER;
-end
-
-event void f;
-
-var T t;
-
-par do
-    par/or do
-        await t.e;
-    with
-        await 1s;
-        emit t.e;
-    end
-    emit f;
-    escape -1;
-with
-    await f;
-    escape 10;
-end
-]],
-    run = { ['~>10s'] = 10 },
-}
 
 -- ParOr
 
@@ -15011,24 +15005,6 @@ escape 1;
 
 Test { [[
 native do
-    int f() { return 1; }
-end
-class T with do end
-spawn T with
-            var _int&? intro_story_str;
-            finalize
-                intro_story_str = &_f();
-            with
-            end
-    end;
-escape 1;
-]],
-    gcc = '24: note: expected ‘int *’ but argument is of type ‘int’',
-    --run = 1,
-}
-
-Test { [[
-native do
     int V = 10;
     int* fff (int v) {
         V += v;
@@ -15592,34 +15568,6 @@ end
 escape v1!+v2!+_V;
 ]],
     run = 60,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = &v;
-end;
-
-escape v!;
-]],
-    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
 
 --<<< FINALLY / FINALIZE
@@ -17097,23 +17045,6 @@ escape v;
     env = 'line 12 : wrong argument #1',
     --wrn = true,
     --run = 10,
-}
-
-Test { [[
-input int&& SPRITE_DELETE;
-class Sprite with
-    var int& me;
-do
-    par/or do
-        var int&& me = await SPRITE_DELETE
-                      until me == &&this.me;
-    with
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
 }
 
 Test { [[
@@ -20572,13 +20503,6 @@ escape 1;
     env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
 }
 Test { [[
-class T with do end
-var T[1] ts = [];
-escape 1;
-]],
-    env = 'line 2 : invalid attribution : destination is not a vector',
-}
-Test { [[
 var _int[1] vec = [];
 escape 1;
 ]],
@@ -20641,22 +20565,6 @@ var u8[10] vec;
 escape vec[0];
 ]],
     run = '2] runtime error: access out of bounds',
-}
-
-Test { [[
-class T with do end
-pool T[10] ts;
-escape $$ts;
-]],
-    env = 'line 3 : invalid operand to unary "$$" : vector expected',
-}
-
-Test { [[
-class T with do end
-pool T[10] ts;
-escape $ts;
-]],
-    env = 'line 3 : invalid operand to unary "$" : vector expected',
 }
 
 Test { [[
@@ -20868,17 +20776,6 @@ v = [1] .. v;
 escape 1;
 ]],
     run = '2] runtime error: access out of bounds';
-}
-
-Test { [[
-class T with
-    var int[]& v1;
-    var int[]  v2;
-do
-end
-escape 1;
-]],
-    props = 'line 3 : not permitted inside an interface',
 }
 
 Test { [[
@@ -23604,22 +23501,6 @@ pause/if in_tm do
         end
     end
 end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input int&& SDL_KEYDOWN_;
-event bool in_tm;
-
-pause/if in_tm do
-    class Input with
-    do
-        await SDL_KEYDOWN_ ;
-    end
-end
-
 escape 1;
 ]],
     run = 1,
@@ -36546,6 +36427,147 @@ end
 escape 10;
 ]],
     run = 10;
+}
+
+Test { [[
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+event void f;
+
+var T t;
+
+par do
+    par/or do
+        await t.e;
+    with
+        await 1s;
+        emit t.e;
+    end
+    emit f;
+    escape -1;
+with
+    await f;
+    escape 10;
+end
+]],
+    run = { ['~>10s'] = 10 },
+}
+
+Test { [[
+native do
+    int f() { return 1; }
+end
+class T with do end
+spawn T with
+            var _int&? intro_story_str;
+            finalize
+                intro_story_str = &_f();
+            with
+            end
+    end;
+escape 1;
+]],
+    gcc = '24: note: expected ‘int *’ but argument is of type ‘int’',
+    --run = 1,
+}
+
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = &v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+}
+Test { [[
+input int&& SPRITE_DELETE;
+class Sprite with
+    var int& me;
+do
+    par/or do
+        var int&& me = await SPRITE_DELETE
+                      until me == &&this.me;
+    with
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+class T with do end
+var T[1] ts = [];
+escape 1;
+]],
+    env = 'line 2 : invalid attribution : destination is not a vector',
+}
+Test { [[
+class T with do end
+pool T[10] ts;
+escape $$ts;
+]],
+    env = 'line 3 : invalid operand to unary "$$" : vector expected',
+}
+
+Test { [[
+class T with do end
+pool T[10] ts;
+escape $ts;
+]],
+    env = 'line 3 : invalid operand to unary "$" : vector expected',
+}
+
+Test { [[
+class T with
+    var int[]& v1;
+    var int[]  v2;
+do
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside an interface',
+}
+
+Test { [[
+input int&& SDL_KEYDOWN_;
+event bool in_tm;
+
+pause/if in_tm do
+    class Input with
+    do
+        await SDL_KEYDOWN_ ;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 -->>> FUNCTIONS
