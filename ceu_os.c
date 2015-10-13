@@ -287,12 +287,6 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk,
 
         ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk, &ps);
         stack_push(_ceu_app, _ceu_go, &stk, &ps);
-
-    /* restore to initial state (org/trl/stop) */
-#ifdef CEU_STACK
-    *stack_cur(_ceu_go) = stk;
-#endif
-
     }
 #endif
 }
@@ -337,12 +331,6 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
 
     ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk, &me);
     stack_push(_ceu_app, _ceu_go, &stk, &me);
-
-    /* restore to initial state (org/trl/stop) */
-#ifdef CEU_STACK
-    *stack_cur(_ceu_go) = stk;
-#endif
-
 }
 #endif
 
@@ -867,11 +855,6 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
     stk.evt_buf = &evtp;
     ceu_sys_bcast(app, app->data, 0, &stk, &evtp);
     go = stk;
-#endif
-
-    /* restore to initial state (org/trl/stop) */
-#ifdef CEU_STACK
-    *stack_cur(&go) = stk;
 #endif
     }
 
