@@ -140,8 +140,8 @@
 #endif
 
 #ifdef CEU_CLEAR
-    #define ceu_out_clear(app,go,cnt_trl,cnt_lbl,org,from,stop) \
-        ((__typeof__(ceu_sys_clear)*)((app)->sys_vec[CEU_SYS_CLEAR]))(app,go,cnt_trl,cnt_lbl,org,from,stop)
+    #define ceu_out_clear(app,old,cnt_trl,cnt_lbl,org,from,stop) \
+        ((__typeof__(ceu_sys_clear)*)((app)->sys_vec[CEU_SYS_CLEAR]))(app,old,cnt_trl,cnt_lbl,org,from,stop)
 #endif
 
 #ifdef CEU_STACK
@@ -219,8 +219,8 @@
             ceu_sys_req()
 
 #ifdef CEU_CLEAR
-    #define ceu_out_clear(app,go,cnt_trl,cnt_lbl,org,from,stop) \
-            ceu_sys_clear(app,go,cnt_trl,cnt_lbl,org,from,stop)
+    #define ceu_out_clear(app,old,cnt_trl,cnt_lbl,org,from,stop) \
+            ceu_sys_clear(app,old,cnt_trl,cnt_lbl,org,from,stop)
 #endif
 
 #ifdef CEU_STACK
@@ -626,10 +626,13 @@ typedef struct tceu_go {
 
 /*#define _STK stack_cur(_ceu_go)*/
 #ifdef CEU_ORGS
+#define STK_ORG_ATTR  (stk->org)
 #define _STK_ORG_ATTR (_ceu_stk->org)
 #else
+#define STK_ORG_ATTR  (app->data)
 #define _STK_ORG_ATTR (_ceu_app->data)
 #endif
+#define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
 #define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
 #define _STK_LBL (_ceu_stk->trl->lbl)
 
@@ -637,7 +640,9 @@ typedef struct tceu_go {
 
 typedef tceu_stk tceu_go;
 
+#define STK_ORG_ATTR  (app->data)
 #define _STK_ORG_ATTR (_ceu_app->data)
+#define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
 #define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
 #define _STK_LBL (_ceu_stk->trl->lbl)
 
@@ -834,7 +839,7 @@ tceu_app* ceu_sys_load      (void* addr);
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
 #ifdef CEU_CLEAR
-int       ceu_sys_clear     (tceu_app* _ceu_app, tceu_go* _ceu_go,
+void      ceu_sys_clear     (tceu_app* _ceu_app, tceu_stk* old,
                              tceu_trl* cnt_trl, tceu_nlbl cnt_lbl,
                              tceu_org* org, tceu_trl* from, void* stop)
 #endif

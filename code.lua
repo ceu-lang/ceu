@@ -143,7 +143,7 @@ function CLEAR_BEF (me)
 ]]
 
     LINE(me, [[
-ceu_out_clear(_ceu_app, _ceu_go, _ceu_stk->trl, ]]..me.lbl_clr.id..[[, _STK_ORG,
+ceu_out_clear(_ceu_app, _ceu_stk, _ceu_stk->trl, ]]..me.lbl_clr.id..[[, _STK_ORG,
               &_STK_ORG->trls[ ]]..(me.trails[1])  ..[[ ],
               &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ]);
 ]])
@@ -570,7 +570,7 @@ if (]]..me.val..[[ == NULL) {
         LINE(me, [[
 {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
-    return ceu_out_clear(_ceu_app, _ceu_go, _ceu_stk->trl, ]]..me.lbl.id..[[, __ceu_org,
+    return ceu_out_clear(_ceu_app, _ceu_stk, _ceu_stk->trl, ]]..me.lbl.id..[[, __ceu_org,
                              &__ceu_org->trls[0],
                              __ceu_org);
 }
@@ -1327,7 +1327,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
     trl->evt = CEU_IN__STK;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
 #ifdef CEU_STACK
-    trl->stk = stack_curi(_ceu_go);   /* awake in the same level as we are now */
+    trl->stk = _ceu_stk->XXX_level;   /* awake in the same level as we are now */
 #endif
 #ifdef CEU_DEBUG
     ceu_out_assert_msg(trl > _ceu_stk->trl, "bug found");
@@ -1717,6 +1717,9 @@ _ceu_stk->trl->stk = 100; /*stack_curi(_ceu_go);*/
 /* trigger the event */
 {
     tceu_stk stk;
+             stk.XXX_prv = _ceu_stk;
+             stk.XXX_level = _ceu_stk->XXX_level+1;
+
              stk.evt  = ]]..V(int,'evt')..[[;
 #ifdef CEU_ORGS
 #line ]]..int.ln[2]..' "'..int.ln[1]..[["
@@ -1729,29 +1732,24 @@ _ceu_stk->trl->stk = 100; /*stack_curi(_ceu_go);*/
 #ifdef CEU_CLEAR
              stk.stop = NULL;
 #endif
-
-stk.XXX_prv = stack_cur(_ceu_go);
 ]])
         if ps and #ps>0 then
             LINE(me, [[
             stk.evt_sz = sizeof(*]]..val..[[);
             ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk, ]]..val..[[);
-            stack_push(_ceu_app, _ceu_go, &stk, ]]..val..[[);
 ]])
         else
             LINE(me, [[
             stk.evt_sz = 0;
             ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk, NULL);
-            stack_push(_ceu_app, _ceu_go, &stk, NULL);
 ]])
         end
         LINE(me, [[
 }
 }
 
-ceu_sys_go_ex(_ceu_app, _ceu_go, stack_cur(_ceu_go));
-stack_pop(_ceu_app, _ceu_go);
-if (_ceu_stk->XXX_alive == 0) {
+ceu_sys_go_ex(_ceu_app, &stk);
+if (stk.XXX_alive == 0) {
     return RET_HALT;
 }
 

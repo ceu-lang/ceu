@@ -103,7 +103,6 @@ do return end
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -853,6 +852,14 @@ Test { [[await A; escape 0;]],
 }
 
 Test { [[
+par/or do
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
 input void A;
 par/or do
     await A;
@@ -900,6 +907,7 @@ escape 10;
     },
     run = 10,
 }
+--]===]
 Test { [[
 input int A;
 var int ret;
