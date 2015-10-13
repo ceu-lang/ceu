@@ -1020,6 +1020,38 @@ DclTag ::= <b>tag</b> ID_tag <b>with</b>
            <b>end</b>
 </code></pre>
 
+Example (structured data type)
+
+<pre><code><b>data</b> Foo <b>with</b>
+    <b>var u8</b> a;
+    <b>var int</b> b;
+    <b>var s16</b> c;
+<b>end</b>
+</code></pre>
+
+Example (tagged data type)
+
+<pre><code><b>data</b> Foo <b>with</b>
+    // declare 'BAR' as one possible structure of 'Foo'
+    <b>tag</b> BAR <b>with</b>
+        <b>var u8</b> a;
+        <b>var int</b> b;
+        <b>var s16</b> c;
+    <b>end</b>
+    
+    <b>or</b>
+    
+    // declare 'BAZ' as another possible structure of 'Foo'
+    <b>tag</b> BAZ <b>with</b> 
+        <b>var int</b> d;
+        <b>var s8</b> e;
+    <b>end</b>
+<b>end</b>
+</code></pre>
+
+<i>Note: Céu vectors are not yet supported within data types!</i>
+
+
 ### Native declarations
 
 #### Native blocks
@@ -1242,6 +1274,18 @@ See [Emit statements](#emit-statements).
 List ::= [ (Data|Exp) { `,´ (Data|Exp) } ]
 </code></pre>
 
+Example (structured data type)
+
+<pre><code>// calls the constructor for 'Foo' and uses the provided values for struct initialization
+<b>var</b> Foo f = Foo(4, 7, 1);
+</code></pre>
+
+Example (tagged data type)
+
+<pre><code>// calls the constructor for 'Foo' (using tag BAZ) and uses the provided values for struct initialization
+<b>var</b> Foo f = Foo.BAZ(2, -9);
+</code></pre>
+
 ### Traverse assignment
 
 `TODO`
@@ -1252,6 +1296,14 @@ List ::= [ (Data|Exp) { `,´ (Data|Exp) } ]
 
 <pre><code>Vector ::= Item { `..´ Item }
 Item   ::= Exp | `[´ [ExpList] `]´
+</code></pre>
+
+Example
+
+<pre><code><b>var int</b>[3] v;        // declare an empty vector of length 3
+v = v .. [8];        // append value '8' to the empty vector
+v = v .. [1] .. [5]; // append the values '1' and '5' to the vector
+                     // here: v = {8, 1, 5}
 </code></pre>
 
 ### Lua assignment
