@@ -482,15 +482,11 @@ typedef struct tceu_stk {
 
     union {
         struct {
-#ifdef CEU_CLEAR
             void* cnt;  /* dont clear the continuation trail */
-#endif
-#if defined(CEU_CLEAR) || defined(CEU_ORGS)
             void* stop;     /* stop at this trl/org */
                     /* traversals may be bounded to org/trl
                      * default (NULL) is to traverse everything */
                     /* TODO: could be shared w/ evto */
-#endif
             };
     };
 } tceu_stk;

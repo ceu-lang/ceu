@@ -570,6 +570,12 @@ int ceu_sys_go_ex_dbg (tceu_app* app, tceu_stk* stk)
 int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk)
 #endif
 {
+    int lvl = stk->XXX_level;
+    tceu_evt* evt = &stk->evt;
+    void* cnt = stk->cnt;
+    tceu_org* org = stk->org;
+    void* stop = stk->stop;
+
     tceu_trl* trl;
     for (trl = stk->trl;;
          trl++)
@@ -584,10 +590,8 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
 
 #ifdef CEU_CLEAR
-        if (trl == stk->stop) {    /* bounded trail traversal?  */
-            stk->stop = NULL;           /* back to default */
-/* TODO: precisa desse NULL? */
-            return 0;                      /* pop stack */
+        if (trl == stop) {
+            return 0;    /* bounded trail traversal */
         }
 #endif
 
@@ -595,14 +599,14 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
         if (trl ==
 #ifdef CEU_ORGS
 /* TODO: unify both */
-            &stk->org->trls[
+            &org->trls[
 #else
             &app->data->trls[
 #endif
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
 #ifdef CEU_ORGS
 /* TODO: unify both */
-                stk->org->n
+                org->n
 #else
                 app->data->n
 #endif
@@ -620,11 +624,11 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #ifdef CEU_ORGS
         if ( (trl->evt == CEU_IN__ORG)
 #ifdef CEU_PSES
-          || (trl->evt==CEU_IN__ORG_PSED && stk->evt.id==CEU_IN__CLEAR)
+          || (trl->evt==CEU_IN__ORG_PSED && evt->id==CEU_IN__CLEAR)
 #endif
            )
         {
-            if (stk->evt.id == CEU_IN__CLEAR) {
+            if (evt->id == CEU_IN__CLEAR) {
                 trl->evt = CEU_IN__NONE;
             }
 #ifdef CEU_ORGS_NEWS
@@ -643,11 +647,11 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
         /* EXECUTE THIS TRAIL */
         if (
 #ifdef CEU_CLEAR
-            (stk->evt.id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR) ||
+            (evt->id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR) ||
 #endif
-            (trl->evt==CEU_IN__STK
+            (trl->evt == CEU_IN__STK
 #ifdef CEU_STACK
-             && trl->stk==stk->XXX_level
+             && trl->stk == lvl
 #endif
             )
            )
@@ -662,9 +666,9 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             /*** CODE ***/
 #ifdef CEU_ORGS
 /* TODO: merge both */
-            _ret = app->code(app, stk->XXX_level, &stk->evt, stk->org, &trl);
+            _ret = app->code(app, lvl, evt, org, &trl);
 #else
-            _ret = app->code(app, stk->XXX_level, &stk->evt, app->data, &trl);
+            _ret = app->code(app, lvl, evt, app->data, &trl);
 #endif
                         /* rejoin may reset it */
 
@@ -711,7 +715,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 SPC(1); printf("<<< NO\n");
 #endif
 #ifdef CEU_CLEAR
-            if (stk->evt.id==CEU_IN__CLEAR && stk->cnt!=trl) {
+            if (evt->id==CEU_IN__CLEAR && cnt!=trl) {
                 trl->evt = CEU_IN__NONE;    /* trail cleared */
                 trl->lbl = CEU_LBL__NONE;
 /* TODO: remover um dos dois */
@@ -730,15 +734,15 @@ SPC(1); printf("<<< NO\n");
 
 #ifdef CEU_ORGS
     /* end of current org */
-    if (stk->org->nxt != NULL) {
+    if (org->nxt != NULL) {
         /* traverse next org */
         tceu_stk new = *stk;
-                 new.org = stk->org->nxt;
-                 new.trl = &stk->org->nxt->trls[0];
+                 new.org = org->nxt;
+                 new.trl = &org->nxt->trls[0];
         return ceu_sys_go_ex(app, &new);
 
 #if 0
-        if (stk->evt==CEU_IN__CLEAR && old->n!=0) {
+        if (evt->=CEU_IN__CLEAR && old->n!=0) {
 #if 0
             ceu_sys_stack_clear_org(_ceu_go, old, stack_curi(_ceu_go));
 #endif
@@ -777,8 +781,8 @@ stk = stack_cur(_ceu_go);
             }
 #endif
         }
-#endif
         return ceu_sys_go_ex(app, stk);
+#endif
         /* restart with kill */
     }
 #endif  /* CEU_ORGS */
