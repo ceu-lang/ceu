@@ -758,10 +758,8 @@ SPC(1); printf("<<< NO\n");
 
         if (evt->id == CEU_IN__CLEAR) {
 #if 0
-#if 0
             ceu_sys_stack_clear_org(_ceu_go, old, stack_curi(_ceu_go));
-#endif
-            if (stk->stop==(void*)old) {
+            if (stop == org) {
 #ifdef CEU_ORGS_WATCHING
                 /* HACK_10: (see adj.lua)
                  * save return value as global
@@ -799,7 +797,7 @@ stk = stack_cur(_ceu_go);
         }
 
         /* traverse next org */
-        if (nxt != NULL) {
+        if (nxt!=NULL && stop!=org) {
             return ceu_sys_go_ex(app, lvl, evt,
                                  cnt,
                                  nxt, &nxt->trls[0], NULL);
