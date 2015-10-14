@@ -548,12 +548,12 @@ int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
                    tceu_org* org, tceu_trl* trl, void* stop) {
     spc++;
     SPC(0); printf(">>> GO-EX\n");
-    SPC(1); printf("lvl: %d\n", stk->XXX_level);
-    SPC(1); printf("evt: %d\n", stk->evt.id);
+    SPC(1); printf("lvl: %d\n", lvl);
+    SPC(1); printf("evt: %d\n", evt->id);
     #ifdef CEU_ORGS
-    SPC(1); printf("org: %p\n", stk->org);
-    SPC(2); printf("[%p]=>[%p]\n", &stk->org->trls[0],
-                                   &stk->org->trls[stk->org->n]);
+    SPC(1); printf("org: %p\n", org);
+    SPC(2); printf("[%p]=>[%p]\n", &org->trls[0],
+                                   &org->trls[org->n]);
     #endif
 
     int ret = ceu_sys_go_ex_dbg(app,lvl,evt,cnt,org,trl,stop);
