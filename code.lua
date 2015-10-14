@@ -892,7 +892,7 @@ if (0) {
     for (__ceu_i=0; __ceu_i<ceu_vector_getlen(]]..val..[[); __ceu_i++) {
         ]]..TP.toc(tp_opt)..[[* __ceu_one = (]]..TP.toc(tp_opt)..[[*)
                                             ceu_vector_geti(]]..val..[[, __ceu_i);
-        tceu_kill* __ceu_casted = (tceu_kill*)_ceu_stk->evt_buf;
+        tceu_kill* __ceu_casted = (tceu_kill*)_ceu_stk->evtp;
         if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
              ( ((tceu_org*)(__ceu_one->SOME.v)) ==
                (__ceu_casted)->org_or_adt ) )
@@ -910,7 +910,7 @@ if (0) {
                     local val = V({tag='Var',tp=var.tp,var=var}, 'rval')
                     LINE(me, [[
     {
-        tceu_kill* __ceu_casted = (tceu_kill*)_ceu_stk->evt_buf;
+        tceu_kill* __ceu_casted = (tceu_kill*)_ceu_stk->evtp;
         if (]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
             ((tceu_org*)(]]..val..[[.SOME.v))==(__ceu_casted)->org_or_adt)
         {
@@ -1730,15 +1730,11 @@ case ]]..me.lbl_cnt.id..[[:;
 ]])
         if ps and #ps>0 then
             LINE(me, [[
-            stk.evt_buf = ]]..val..[[;
-            ceu_sys_bcast(_ceu_app, _ceu_app->data, &stk, ]]..val..[[);
-]])
-        else
-            LINE(me, [[
-            ceu_sys_bcast(_ceu_app, _ceu_app->data, &stk, NULL);
+    stk.evtp = ]]..val..[[;
 ]])
         end
         LINE(me, [[
+    ceu_sys_bcast(_ceu_app, _ceu_app->data, &stk);
     ceu_sys_go_ex(_ceu_app, &stk);
     if (trl->lbl != CEU_LBL__STACKED) {
         return RET_HALT;
@@ -1826,7 +1822,7 @@ case ]]..me.lbl.id..[[:;
             LINE(me, [[
     /* subtract time and check if I have to awake */
     {
-        s32** __ceu_casted = (s32**)_ceu_stk->evt_buf;
+        s32** __ceu_casted = (s32**)_ceu_stk->evtp;
         if (!ceu_out_wclock]]..suf..[[(_ceu_app, *(*__ceu_casted), NULL, &]]..val..[[) ) {
             goto ]]..no..[[;
         }
@@ -1878,7 +1874,7 @@ case ]]..me.lbl.id..[[:;
 ]])
                 if tp then
                     LINE(me, [[
-    ]]..tp..[[ __ceu_casted = (]]..tp..[[) _ceu_stk->evt_buf;
+    ]]..tp..[[ __ceu_casted = (]]..tp..[[) _ceu_stk->evtp;
 ]])
                 end
                 LINE(me, [[
@@ -1965,7 +1961,7 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
         {
-            CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_stk->evt_buf;
+            CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_stk->evtp;
             if (*(*(__ceu_casted)) != ]]..me.thread_id..[[) {
                 goto ]]..no..[[; /* another thread is terminating: await again */
             }

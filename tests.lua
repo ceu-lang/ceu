@@ -4120,6 +4120,30 @@ escape ret;
     run = 1000, -- had stack overflow
 }
 
+Test { [[
+input void OS_START;
+event (int,int) e;
+par do
+    do
+        par/or do
+            await OS_START;
+            emit e => (1,2);
+        with
+            await e;
+        end
+    end
+    do
+        emit e => (0,0);
+    end
+with
+    var int a,b;
+    (a,b) = await e;
+    escape a+b;
+end
+]],
+    run = 3,
+}
+
 --<<< INTERNAL EVENTS
 
 -- ParOr

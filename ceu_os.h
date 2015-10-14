@@ -468,34 +468,30 @@ typedef struct tceu_stk {
     struct tceu_stk* XXX_prv;
     int XXX_level;
 
-    struct {
-        tceu_nevt evt;  /* TODO: small in the end of struct? */
-        tceu_trl* trl;  /* trail being traversed */
+    void* evtp;
+    tceu_nevt evt;  /* TODO: small in the end of struct? */
+    tceu_trl* trl;  /* trail being traversed */
 
-        union {
-            struct {
+#ifdef CEU_ORGS
+    void* org;      /* org being traversed */
+#endif
+
+    union {
+        struct {
 #ifdef CEU_CLEAR
-                void* cnt;  /* dont clear the continuation trail */
+            void* cnt;  /* dont clear the continuation trail */
 #endif
 #if defined(CEU_CLEAR) || defined(CEU_ORGS)
-                void* stop;     /* stop at this trl/org */
+            void* stop;     /* stop at this trl/org */
                     /* traversals may be bounded to org/trl
                      * default (NULL) is to traverse everything */
                     /* TODO: could be shared w/ evto */
 #endif
             };
 #if defined(CEU_ORGS) && defined(CEU_INTS)
-            void* evto; /* emitting org */
-#endif
-        };
-
-#ifdef CEU_ORGS
-        void* org;      /* org being traversed */
+        void* evto; /* emitting org */
 #endif
     };
-
-    /* out of "struct{...}" to be aligned */
-    void* evt_buf;
 } tceu_stk;
 /* TODO: see if fields can be reused in union */
 

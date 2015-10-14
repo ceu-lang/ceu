@@ -168,9 +168,6 @@ F = {
             me.lbl_cnt = new{'Async_cont'}
         end
     end,
-    EmitInt = function (me)
-        me.lbl_cnt = new{'EmitInt_cont'}
-    end,
     Dcl_var = function (me)
         if me.var.cls then
             me.lbls_cnt = new{'Start_cnt'}

@@ -223,7 +223,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #endif  /* CEU_ORGS */
 }
 
-static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk, void* evtp);
+static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk);
 
 #ifdef CEU_ORGS
 void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, tceu_org* me)
@@ -245,15 +245,15 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk,
 
     /* TODO(speed): only if was ever watched! */
     {
+        tceu_kill ps = { me, me->ret };
         tceu_stk stk;
                  stk.evt  = CEU_IN__ok_killed;
+                 stk.evtp = &ps;
                  stk.org  = _ceu_app->data;
                  stk.trl  = &_ceu_app->data->trls[0];
                  stk.stop = NULL;
-        tceu_kill ps = { me, me->ret };
 
-        ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk, &ps);
-        stack_push(_ceu_app, _ceu_go, &stk, &ps);
+        ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk);
     }
 #endif
 }
@@ -472,7 +472,7 @@ u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 
 /* TODO: remover PTR ultimo org p/ IN__ORG e usar call normalmente*/
 
-static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk, void* evtp) {
+static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
     tceu_trl* trl;
     for (
         trl = &org->trls[0];
@@ -491,7 +491,7 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk, void* ev
         {
             /* TODO(speed): jump LST */
             /* jump FST */
-            ceu_sys_bcast(app, trl->lnks[0].nxt, stk, evtp);
+            ceu_sys_bcast(app, trl->lnks[0].nxt, stk);
             continue;
         }
 #endif /* CEU_ORGS */
@@ -513,8 +513,7 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk, void* ev
 #ifdef CEU_WATCHING
         if (stk->evt == CEU_IN__ok_killed) {
             if (trl->org_or_adt != NULL &&
-                trl->org_or_adt != ((tceu_kill*)evtp)->org_or_adt)
-/* TODO: em vez de evtp, nao poderia estar em tceu_stk (tal como evto)? */
+                trl->org_or_adt != ((tceu_kill*)stk->evtp)->org_or_adt)
             {
                 continue;
             }
@@ -812,6 +811,7 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
                  stk.XXX_level = 0;
 
                  stk.evt  = evt;
+                 stk.evtp = &evtp;
 #ifdef CEU_ORGS
                  stk.org  = app->data;
 #endif
@@ -820,11 +820,10 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
                  stk.stop = NULL;  /* traverse all (don't stop) */
 #endif
 
-        stk.evt_buf = &evtp;
 #ifdef CEU_STACK
-        ceu_sys_bcast(app, app->data, &stk, &evtp);
+        ceu_sys_bcast(app, app->data, &stk);
 #else
-        ceu_sys_bcast(app, app->data, &stk, &evtp);
+        ceu_sys_bcast(app, app->data, &stk);
 #endif
 
         ceu_sys_go_ex(app, &stk);
