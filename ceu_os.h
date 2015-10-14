@@ -573,9 +573,6 @@ typedef struct {
 
 /* TCEU_GO */
 
-/* TODO: remover STK_ORG */
-#define _STK_ORG (_ceu_org)
-
 /* TCEU_LST */
 
 #ifdef CEU_DEBUG

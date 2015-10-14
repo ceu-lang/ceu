@@ -268,18 +268,18 @@ F =
 
     Outer = function (me, CTX)
         if CTX.val == 'lval' then
-            return '(('..TP.toc(me.tp)..'*)_STK_ORG)'
+            return '(('..TP.toc(me.tp)..'*)_ceu_org)'
         else
-            return '(*(('..TP.toc(me.tp)..'*)_STK_ORG))'
+            return '(*(('..TP.toc(me.tp)..'*)_ceu_org))'
         end
     end,
 
     This = function (me, CTX)
         local VAL
         if AST.iter'Dcl_constr'() then
-            VAL = '__ceu_org'    -- set when calling constr
+            VAL = '__ceu_this'    -- set when calling constr
         else
-            VAL = '_STK_ORG'
+            VAL = '_ceu_org'
         end
         if CTX.val == 'lval' then
             return '(('..TP.toc(me.tp)..'*)'..VAL..')'

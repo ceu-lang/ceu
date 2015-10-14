@@ -143,9 +143,9 @@ function CLEAR_BEF (me)
 ]]
 
     LINE(me, [[
-ceu_out_clear(_ceu_app, _ceu_stk, _ceu_stk->trl, ]]..me.lbl_clr.id..[[, _STK_ORG,
-              &_STK_ORG->trls[ ]]..(me.trails[1])  ..[[ ],
-              &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ]);
+ceu_out_clear(_ceu_app, _ceu_stk, _ceu_stk->trl, ]]..me.lbl_clr.id..[[, _ceu_org,
+              &_ceu_org->trls[ ]]..(me.trails[1])  ..[[ ],
+              &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
 ]])
 end
 
@@ -165,7 +165,7 @@ case ]]..me.lbl_clr.id..[[:;
         LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_stk->trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
+_ceu_stk->trl = &_ceu_org->trls[ ]] ..me.trails[1]..[[ ];
 ]])
     end
 end
@@ -182,7 +182,7 @@ F = {
     Dcl_constr = function (me)
         CONC_ALL(me)
         CODE.constrs = CODE.constrs .. [[
-static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, tceu_stk* _ceu_stk, tceu_org* _ceu_org) {
+static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this, tceu_stk* _ceu_stk, tceu_org* _ceu_org) {
 ]] .. me.code .. [[
 }
 ]]
@@ -201,8 +201,8 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
 
         -- functions and threads receive __ceu_org as parameter
         --   and do not require _ceu_go
-        CODE.functions = string.gsub(CODE.functions, '_STK_ORG', '__ceu_org')
-        CODE.threads   = string.gsub(CODE.threads,   '_STK_ORG', '__ceu_org')
+        CODE.functions = string.gsub(CODE.functions, '_ceu_org', '__ceu_this')
+        CODE.threads   = string.gsub(CODE.threads,   '_ceu_org', '__ceu_this')
 
         -- assert that all input functions have bodies
         for evt, v in pairs(INPUT_FUNCTIONS) do
@@ -214,7 +214,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
     BlockI_pos = function (me)
         -- Interface constants are initialized from outside
         -- (another _ceu_go_org), need to use __ceu_org instead.
-        me.code_ifc = string.gsub(me.code, '_STK_ORG', '__ceu_org')
+        me.code_ifc = string.gsub(me.code, '_ceu_org', '__ceu_this')
         me.code = ''
     end,
 
@@ -274,7 +274,7 @@ case CEU_IN_]]..id..[[:
         end
         if me.has_pre then
             CODE.pres = CODE.pres .. [[
-static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
+static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this) {
 ]] .. me.blk_ifc[1][1].code_ifc .. [[
 }
 ]]
@@ -299,9 +299,9 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
  * In this case, we mark it with "CEU_IN__NONE" to be recognized in the spawn 
  * continuation below.
  */
-if (_ceu_stk->evt==CEU_IN__STK && _ceu_stk->org==_STK_ORG
-    && _ceu_stk->trl==&_STK_ORG->trls[0]
-    && _ceu_stk->stop==&_STK_ORG->trls[_STK_ORG->n]
+if (_ceu_stk->evt==CEU_IN__STK && _ceu_stk->org==_ceu_org
+    && _ceu_stk->trl==&_ceu_org->trls[0]
+    && _ceu_stk->stop==&_ceu_org->trls[_ceu_org->n]
     )
 {
     _ceu_stk->evt = CEU_IN__NONE;
@@ -317,9 +317,9 @@ if (_ceu_stk->evt==CEU_IN__STK && _ceu_stk->org==_STK_ORG
              stk.XXX_level = _ceu_stk->XXX_level+1;
              stk.evt.id = CEU_IN__CLEAR;
              stk.cnt    = NULL;
-             stk.org    = _STK_ORG;
-             stk.trl    = &_STK_ORG->trls[0];
-             stk.stop   = _STK_ORG;
+             stk.org    = _ceu_org;
+             stk.trl    = &_ceu_org->trls[0];
+             stk.stop   = _ceu_org;
     ceu_sys_go_ex(_ceu_app, &stk);
 
 }
@@ -368,11 +368,11 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 ]])     end
         LINE(me, [[
     /* resets org memory and starts org.trail[0]=Class_XXX */
-    /* TODO: BUG: _STK_ORG is not necessarily the parent for pool allocations */
+    /* TODO: BUG: _ceu_org is not necessarily the parent for pool allocations */
     ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
                 ]]..t.cls.n..[[,
                 ]]..t.isDyn..[[,
-                _STK_ORG, ]] ..t.trl..[[);
+                _ceu_org, ]] ..t.trl..[[);
 /* TODO: currently idx is always "1" for all interfaces access because pools 
  * are all together there. When we have separate trls for pools, we'll have to 
  * indirectly access the offset in the interface. */
@@ -384,12 +384,12 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         if me.__adj_is_traverse_root then
             LINE(me, [[
     ((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out = 
-        (__typeof__(((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out)) _STK_ORG;
+        (__typeof__(((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out)) _ceu_org;
 ]])
         elseif me.__adj_is_traverse_rec then
             LINE(me, [[
     ((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out =
-        ((]]..TP.toc(t.cls.tp)..[[*)_STK_ORG)->_out;
+        ((]]..TP.toc(t.cls.tp)..[[*)_ceu_org)->_out;
 ]])
         end
 
@@ -400,7 +400,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         end
         if t.constr then
             LINE(me, [[
-    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_stk, _STK_ORG);
+    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_stk, _ceu_org);
 ]])
         end
         LINE(me, [[
@@ -435,7 +435,7 @@ me.tp = var.tp
                 constr = constr,
                 arr    = var.tp.arr,
                 val_i  = TP.check(var.tp,'[]') and V({tag='Var',tp=var.tp,var=var.constructor_iterator},'rval'),
-                trl    = '&_STK_ORG->trls['..var.trl_orgs[1]..']'
+                trl    = '&_ceu_org->trls['..var.trl_orgs[1]..']'
             })
 
         -- TODO: similar code in Block_pre for !BlockI
@@ -641,7 +641,7 @@ case ]]..me.lbl.id..[[:;
 ]])
         end
 
-        local org = '_STK_ORG'
+        local org = '_ceu_org'
         if pool and pool.org then
             org = '((tceu_org*)&'..V(pool.org,'rval')..')'
         end
@@ -683,8 +683,8 @@ if (]]..V(set_to,'rval')..[[.tag != ]]..string.upper(TP.toc(set_to.tp))..[[_NIL)
         if me.fins then
             LINE(me, [[
 /*  FINALIZE */
-_STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].evt   = CEU_IN__CLEAR;
-_STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
+_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].evt   = CEU_IN__CLEAR;
+_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')
@@ -741,8 +741,8 @@ ceu_vector_init(]]..'&'..ID..','..max..',sizeof('..TP.toc(tp_elem)..[[),
                     if var.tp.arr == '[]' then
                         LINE(me, [[
 /*  FINALIZE VECTOR */
-_STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].evt = CEU_IN__CLEAR;
-_STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
+_ceu_org->trls[ ]]..var.trl_vector[1]..[[ ].evt = CEU_IN__CLEAR;
+_ceu_org->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
 ]])
                     end
                 end
@@ -752,9 +752,9 @@ _STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
                     -- TODO: repeated with Block_pos
                     LINE(me, [[
 /*  RESET OPT-ORG TO NULL */
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
 ]])
                 end
 
@@ -772,7 +772,7 @@ _STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
 
                     local trl = (var.trl_orgs and var.trl_orgs[1]) or 'NULL'
                     if trl ~= 'NULL' then
-                        trl = '&_STK_ORG->trls['..trl..']'
+                        trl = '&_ceu_org->trls['..trl..']'
                     end
 
                     if (not is_dyn) then
@@ -821,8 +821,8 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..trl..'
 ]]..VAL_all..[[->root = &CEU_]]..string.upper(adt.id)..[[_BASE;
 
 /*  FINALIZE ADT */
-_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt = CEU_IN__CLEAR;
-_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl = ]]..var.lbl_fin_kill_free.id..[[;
+_ceu_org->trls[ ]]..var.trl_adt[1]..[[ ].evt = CEU_IN__CLEAR;
+_ceu_org->trls[ ]]..var.trl_adt[1]..[[ ].lbl = ]]..var.lbl_fin_kill_free.id..[[;
 ]])
                 end
             end
@@ -833,8 +833,8 @@ _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl = ]]..var.lbl_fin_kill_free.id..[[;
             if var.trl_orgs and var.trl_orgs_first then
                 LINE(me, [[
 #ifdef CEU_ORGS
-_STK_ORG->trls[ ]]..var.trl_orgs[1]..[[ ].evt = CEU_IN__ORG;
-_STK_ORG->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
+_ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].evt = CEU_IN__ORG;
+_ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
 #endif
 ]])
             end
@@ -852,7 +852,7 @@ _STK_ORG->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
         if me.trails[1] ~= stmts.trails[1] then
             LINE(me, [[
 /* switch to blk trail */
-_ceu_stk->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
+_ceu_stk->trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
         end
         CONC(me, stmts)
@@ -933,9 +933,9 @@ if (0) {
             -- TODO: repeated with Block_pre
             LINE(me, [[
 /*  RESET OPT-ORG TO NULL */
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
 #if 0
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
 #endif
 ]])
                 HALT(me)
@@ -992,8 +992,8 @@ CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
     PauseX = function (me)
         local psed = unpack(me)
         LINE(me, [[
-ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
-          &_STK_ORG->trls[ ]]..me.blk.trails[2]..[[ ],
+ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
+          &_ceu_org->trls[ ]]..me.blk.trails[2]..[[ ],
         ]]..psed..[[);
 ]])
     end,
@@ -1028,10 +1028,10 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     void* __ceu_old = ]]..V(to,'lval')..[[;    /* will kill/free old */
 ]])
 
-        -- HACK: _STK_ORG overwritten by _kill
+        -- HACK: _ceu_org overwritten by _kill
         if PROPS.has_adts_watching[to_tp_id] then
             LINE(me,[[
-    tceu_org* __ceu_stk_org = _STK_ORG;
+    tceu_org* __ceu_stk_org = _ceu_org;
 ]])
         end
 
@@ -1053,10 +1053,10 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
     CEU_]]..to_tp_id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
 ]])
 
-            -- HACK: _STK_ORG overwritten by _kill
+            -- HACK: _ceu_org overwritten by _kill
             LINE(me, [[
-#undef  _STK_ORG
-#define _STK_ORG __ceu_stk_org
+#undef  _ceu_org
+#define _ceu_org __ceu_stk_org
 ]])
         end
 
@@ -1084,14 +1084,9 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         end
 
         if PROPS.has_adts_watching[to_tp_id] then
-            -- HACK: _STK_ORG overwritten by _kill
+            -- HACK: _ceu_org overwritten by _kill
             LINE(me, [[
-#undef  _STK_ORG
-#ifdef CEU_ORGS
-#define _STK_ORG ((tceu_org*)_ceu_stk->org)
-#else
-#define _STK_ORG ((tceu_org*)_ceu_app->data)
-#endif
+#undef  _ceu_org
 
 return RET_RESTART;
 case ]]..SET.lbl_cnt.id..[[:;
@@ -1168,7 +1163,7 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
             else
                 LINE(me, [[
 #ifdef CEU_ORGS_WATCHING
-    _STK_ORG->ret = ]]..V(to,'rval')..[[;
+    _ceu_org->ret = ]]..V(to,'rval')..[[;
 #endif
 ]])
             end
@@ -1332,7 +1327,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
                 LINE(me, [[
 {
     /* mark all trails to start (1st runs immediatelly) */
-    tceu_trl* trl = &_STK_ORG->trls[ ]]..sub.trails[1]..[[ ];
+    tceu_trl* trl = &_ceu_org->trls[ ]]..sub.trails[1]..[[ ];
     trl->evt = CEU_IN__STK;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
 #ifdef CEU_STACK
@@ -1413,7 +1408,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_stk->trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
+_ceu_stk->trl = &_ceu_org->trls[ ]]..me.trails[1]..[[ ];
 ]])
     end,
 
@@ -1730,7 +1725,7 @@ case ]]..me.lbl_cnt.id..[[:;
     stk.evt.id = ]]..V(int,'evt')..[[;
 #ifdef CEU_ORGS
 #line ]]..int.ln[2]..' "'..int.ln[1]..[["
-    stk.evt.org = (tceu_org*) ]]..((int.org and V(int.org,'lval')) or '_STK_ORG')..[[;
+    stk.evt.org = (tceu_org*) ]]..((int.org and V(int.org,'lval')) or '_ceu_org')..[[;
     stk.org  = _ceu_app->data;   /* TODO(speed): check if is_ifc */
 #endif
     stk.trl  = &_ceu_app->data->trls[0];
@@ -1759,7 +1754,7 @@ case ]]..me.lbl_cnt.id..[[:;
 
     __AwaitInt = function (me)
         local e = unpack(me)
-        local org = (e.org and V(e.org,'lval')) or '_STK_ORG'
+        local org = (e.org and V(e.org,'lval')) or '_ceu_org'
 
         local par_pause  = AST.par(me,'Pause')
         local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
@@ -1934,7 +1929,7 @@ case ]]..me.lbl.id..[[:;
 ]]..me.thread_st..[[  = ceu_out_realloc(NULL, sizeof(s8));
 *]]..me.thread_st..[[ = 0;  /* ini */
 {
-    tceu_threads_p p = { _ceu_app, _STK_ORG, ]]..me.thread_st..[[ };
+    tceu_threads_p p = { _ceu_app, _ceu_org, ]]..me.thread_st..[[ };
     int ret =
         CEU_THREADS_CREATE(&]]..me.thread_id..[[, _ceu_thread_]]..me.n..[[, &p);
     if (ret == 0)
