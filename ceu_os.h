@@ -646,7 +646,7 @@ typedef struct tceu_app {
 #endif
 #endif
 
-    int         (*code)  (struct tceu_app*,tceu_stk*,int,tceu_evt*,tceu_org*,tceu_trl**);
+    int         (*code)  (struct tceu_app*,int,tceu_evt*,tceu_org*,tceu_trl**);
     void        (*init)  (struct tceu_app*);
 #ifdef CEU_OS
     void*       (*calls) (struct tceu_app*,tceu_nevt,void*);
