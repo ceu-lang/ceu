@@ -690,7 +690,7 @@ printf("\t<<< NO\n");
 #ifdef CEU_CLEAR
             if (stk->evt==CEU_IN__CLEAR && stk->cnt!=trl) {
                 trl->evt = CEU_IN__NONE;    /* trail cleared */
-                trl->lbl = 0;
+                trl->lbl = CEU_LBL__NONE;
 /* TODO: remover um dos dois */
             }
 #endif

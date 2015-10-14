@@ -1709,8 +1709,8 @@ case ]]..me.lbl_cnt.id..[[:;
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[
 /* save the continuation to run after the emit */
-_ceu_stk->trl->evt = CEU_IN__STK;
-_ceu_stk->trl->lbl = ]]..me.lbl_cnt.id..[[;
+_ceu_stk->trl->evt = CEU_IN__NONE;
+_ceu_stk->trl->lbl = CEU_LBL__STACKED;
 _ceu_stk->trl->stk = 100; /*stack_curi(_ceu_go);*/
    /* awake in the same level as we are now (-1 vs the emit push below) */
 tceu_trl* trl = _ceu_stk->trl;
@@ -1748,14 +1748,11 @@ tceu_trl* trl = _ceu_stk->trl;
         end
         LINE(me, [[
     ceu_sys_go_ex(_ceu_app, &stk);
-/* TODO: pode ser um ID unico para todas as continuacoes */
-    if (trl->lbl != ]]..me.lbl_cnt.id..[[) {
+    if (trl->lbl != CEU_LBL__STACKED) {
         return RET_HALT;
     }
 }
 }
-
-case ]]..me.lbl_cnt.id..[[:;
 ]])
     end,
 

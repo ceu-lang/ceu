@@ -27,6 +27,9 @@ function new (lbl)
     return lbl
 end
 
+new{'CEU_LBL__NONE',    true}
+new{'CEU_LBL__STACKED', true}
+
 F = {
     Node_pre = function (me)
         me.lbls = { #LBLS.list }
@@ -45,8 +48,11 @@ F = {
 
         -- enum of labels
         for i, lbl in ipairs(LBLS.list) do
-            LBLS.code_enum = LBLS.code_enum..'    '
-                                ..lbl.id..' = '..lbl.n..',\n'
+            if i > 2 then
+                -- skip NONE/STACKED (they are defined in ceu_os.h)
+                LBLS.code_enum = LBLS.code_enum..'    '
+                                    ..lbl.id..' = '..lbl.n..',\n'
+            end
         end
 
         -- labels which are finalizers
