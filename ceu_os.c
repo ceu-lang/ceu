@@ -156,7 +156,7 @@ void ceu_sys_org_spawn (tceu_app* _ceu_app, tceu_stk* old,
 
     stk.XXX_prv = old;
     stk.XXX_level = old->XXX_level+1;
-    stk.evt  = CEU_IN__STK;
+    stk.evt.id = CEU_IN__STK;
     stk.org  = neworg;
     stk.trl  = &neworg->trls[0];
     stk.stop = &neworg->trls[neworg->n]; /* don't follow the up link */
@@ -214,7 +214,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #endif  /* CEU_ORGS */
 }
 
-static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk);
+static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_org* org, tceu_evt* evt);
 
 #ifdef CEU_ORGS
 
@@ -282,7 +282,7 @@ void ceu_sys_org_free (tceu_org* me)
 void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
 {
     tceu_stk stk;
-             stk.evt  = CEU_IN__ok_killed;
+             stk.evt.id = CEU_IN__ok_killed;
 #ifdef CEU_ORGS
              stk.org  = _ceu_app->data;
 #endif
@@ -312,7 +312,7 @@ void ceu_sys_clear (tceu_app* _ceu_app, tceu_stk* old,
                  stk.XXX_prv   = old->XXX_prv;
                  stk.XXX_level = old->XXX_level + 1;
 
-                 stk.evt    = CEU_IN__CLEAR;
+                 stk.evt.id = CEU_IN__CLEAR;
                  stk.cnt    = cnt_trl;
 #ifdef CEU_ORGS
                  stk.org    = org;
@@ -463,7 +463,7 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 #endif
 
-static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
+static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_org* org, tceu_evt* evt) {
     tceu_trl* trl;
     for (
         trl = &org->trls[0];
@@ -484,7 +484,7 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
             if (trl->org != NULL)
 #endif
             {
-                ceu_sys_bcast(app, trl->org, stk);
+                ceu_sys_bcast(app, lvl, trl->org, evt);
             }
             continue;
         }
@@ -492,9 +492,9 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
 
         /* EXECUTE THIS TRAIL ? */
 
-        if (trl->evt != stk->evt
+        if (trl->evt != evt->id
 #if defined(CEU_INTS) && defined(CEU_ORGS)
-        ||  (stk->evt<CEU_IN_lower && stk->evto!=trl->evto)
+        ||  (evt->id<CEU_IN_lower && evt->org!=trl->evto)
 #endif
         ) {
             continue;
@@ -505,9 +505,9 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
         }
 #endif
 #ifdef CEU_WATCHING
-        if (stk->evt == CEU_IN__ok_killed) {
+        if (evt->id == CEU_IN__ok_killed) {
             if (trl->org_or_adt != NULL &&
-                trl->org_or_adt != ((tceu_kill*)stk->evtp)->org_or_adt)
+                trl->org_or_adt != ((tceu_kill*)evt->param)->org_or_adt)
             {
                 continue;
             }
@@ -516,7 +516,7 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
 #endif
         {
 #ifdef CEU_INTS
-            if (stk->evt<CEU_IN_lower && trl->seqno==app->seqno) {
+            if (evt->id<CEU_IN_lower && trl->seqno==app->seqno) {
                 continue;
             }
 #endif
@@ -525,14 +525,14 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
         /* execute this trail in the 2nd pass */
         trl->evt = CEU_IN__STK;
 #ifdef CEU_STACK
-        trl->stk = stk->XXX_level;
+        trl->stk = lvl;
 #endif
     }
 
     /* end of traversal, reached the end of top org */
 #ifdef CEU_ORGS
     if (org->nxt != NULL) {
-        return ceu_sys_bcast(app, org->nxt, stk);
+        return ceu_sys_bcast(app, lvl, org->nxt, evt);
     }
 #endif  /* CEU_ORGS */
 }
@@ -546,7 +546,7 @@ int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk) {
     spc++;
     SPC(0); printf(">>> GO-EX\n");
     SPC(1); printf("lvl: %d\n", stk->XXX_level);
-    SPC(1); printf("evt: %d\n", stk->evt);
+    SPC(1); printf("evt: %d\n", stk->evt.id);
     #ifdef CEU_ORGS
     SPC(1); printf("org: %p\n", stk->org);
     SPC(2); printf("[%p]=>[%p]\n", &stk->org->trls[0],
@@ -573,7 +573,9 @@ int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk)
 #ifdef CEU_DEBUG_TRAILS
 SPC(1); printf("trl: %p\n", trl);
 SPC(2); printf("evt: %d\n", trl->evt);
+#ifdef CEU_STACK
 SPC(2); printf("stk: %d\n", trl->stk);
+#endif
 SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
 
@@ -604,11 +606,11 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #ifdef CEU_ORGS
         if ( (trl->evt == CEU_IN__ORG)
 #ifdef CEU_PSES
-          || (trl->evt==CEU_IN__ORG_PSED && stk->evt==CEU_IN__CLEAR)
+          || (trl->evt==CEU_IN__ORG_PSED && stk->evt.id==CEU_IN__CLEAR)
 #endif
            )
         {
-            if (stk->evt == CEU_IN__CLEAR) {
+            if (stk->evt.id == CEU_IN__CLEAR) {
                 trl->evt = CEU_IN__NONE;
             }
 #ifdef CEU_ORGS_NEWS
@@ -627,7 +629,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
         /* EXECUTE THIS TRAIL */
         if (
 #ifdef CEU_CLEAR
-            (stk->evt==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR) ||
+            (stk->evt.id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR) ||
 #endif
             (trl->evt==CEU_IN__STK
 #ifdef CEU_STACK
@@ -691,7 +693,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 SPC(1); printf("<<< NO\n");
 #endif
 #ifdef CEU_CLEAR
-            if (stk->evt==CEU_IN__CLEAR && stk->cnt!=trl) {
+            if (stk->evt.id==CEU_IN__CLEAR && stk->cnt!=trl) {
                 trl->evt = CEU_IN__NONE;    /* trail cleared */
                 trl->lbl = CEU_LBL__NONE;
 /* TODO: remover um dos dois */
@@ -806,8 +808,8 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
                  stk.XXX_prv   = NULL;
                  stk.XXX_level = 0;
 
-                 stk.evt  = evt;
-                 stk.evtp = &evtp;
+                 stk.evt.id = evt;
+                 stk.evt.param = &evtp;
 #ifdef CEU_ORGS
                  stk.org  = app->data;
 #endif
@@ -816,7 +818,7 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
                  stk.stop = NULL;  /* traverse all (don't stop) */
 #endif
 
-        ceu_sys_bcast(app, app->data, &stk);
+        ceu_sys_bcast(app, 0, app->data, &stk.evt);
         ceu_sys_go_ex(app, &stk);
     }
 

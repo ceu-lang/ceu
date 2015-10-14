@@ -457,6 +457,16 @@ typedef struct {
     void*     data;
 } tceu_recurse;
 
+/* TCEU_EVT */
+
+typedef struct tceu_evt {
+    tceu_nevt id;
+    void*     param;
+#if defined(CEU_ORGS) && defined(CEU_INTS)
+    void*     org;      /* emitting org */
+#endif
+} tceu_evt;
+
 /* TCEU_STK */
 
 /* TODO(speed): hold nxt trl to run */
@@ -464,13 +474,13 @@ typedef struct tceu_stk {
     struct tceu_stk* XXX_prv;
     int XXX_level;
 
-    void* evtp;
-    tceu_nevt evt;  /* TODO: small in the end of struct? */
     tceu_trl* trl;  /* trail being traversed */
 
 #ifdef CEU_ORGS
     struct tceu_org* org;      /* org being traversed */
 #endif
+
+    tceu_evt evt;
 
     union {
         struct {
@@ -484,9 +494,6 @@ typedef struct tceu_stk {
                     /* TODO: could be shared w/ evto */
 #endif
             };
-#if defined(CEU_ORGS) && defined(CEU_INTS)
-        void* evto; /* emitting org */
-#endif
     };
 } tceu_stk;
 /* TODO: see if fields can be reused in union */
