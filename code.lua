@@ -319,7 +319,6 @@ if (_ceu_stk->evt==CEU_IN__STK && _ceu_stk->org==_STK_ORG
              stk.org    = _STK_ORG;
              stk.trl    = &_STK_ORG->trls[0];
              stk.stop   = _STK_ORG;
-             stk.evt_sz = 0;
     stack_push(_ceu_app, _ceu_go, &stk, NULL);
 }
 #endif
@@ -1708,41 +1707,34 @@ case ]]..me.lbl_cnt.id..[[:;
 
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[
-/* save the continuation to run after the emit */
-_ceu_stk->trl->evt = CEU_IN__NONE;
-_ceu_stk->trl->lbl = CEU_LBL__STACKED;
-_ceu_stk->trl->stk = 100; /*stack_curi(_ceu_go);*/
-   /* awake in the same level as we are now (-1 vs the emit push below) */
-tceu_trl* trl = _ceu_stk->trl;
-
-/* trigger the event */
-{
     tceu_stk stk;
-             stk.XXX_prv = _ceu_stk;
-             stk.XXX_level = _ceu_stk->XXX_level+1;
 
-             stk.evt  = ]]..V(int,'evt')..[[;
+    /* save the continuation to run after the emit */
+    tceu_trl* trl = _ceu_stk->trl;
+    trl->lbl = CEU_LBL__STACKED;
+
+    /* trigger the event */
+    stk.XXX_prv = _ceu_stk;
+    stk.XXX_level = _ceu_stk->XXX_level+1;
+
+    stk.evt  = ]]..V(int,'evt')..[[;
 #ifdef CEU_ORGS
 #line ]]..int.ln[2]..' "'..int.ln[1]..[["
-             stk.evto = (tceu_org*) ]]..((int.org and V(int.org,'lval')) or '_STK_ORG')..[[;
+    stk.evto = (tceu_org*) ]]..((int.org and V(int.org,'lval')) or '_STK_ORG')..[[;
+    stk.org  = _ceu_app->data;   /* TODO(speed): check if is_ifc */
 #endif
-#ifdef CEU_ORGS
-             stk.org  = _ceu_app->data;   /* TODO(speed): check if is_ifc */
-#endif
-             stk.trl  = &_ceu_app->data->trls[0];
+    stk.trl  = &_ceu_app->data->trls[0];
 #ifdef CEU_CLEAR
-             stk.stop = NULL;
+    stk.stop = NULL;
 #endif
 ]])
         if ps and #ps>0 then
             LINE(me, [[
-            stk.evt_sz = sizeof(*]]..val..[[);
             stk.evt_buf = ]]..val..[[;
             ceu_sys_bcast(_ceu_app, _ceu_app->data, &stk, ]]..val..[[);
 ]])
         else
             LINE(me, [[
-            stk.evt_sz = 0;
             ceu_sys_bcast(_ceu_app, _ceu_app->data, &stk, NULL);
 ]])
         end
@@ -1751,7 +1743,6 @@ tceu_trl* trl = _ceu_stk->trl;
     if (trl->lbl != CEU_LBL__STACKED) {
         return RET_HALT;
     }
-}
 }
 ]])
     end,

@@ -470,10 +470,6 @@ typedef struct tceu_stk {
 
     struct {
         tceu_nevt evt;  /* TODO: small in the end of struct? */
-#ifdef CEU_STACK
-        u8        evt_sz;
-        u8        offset;
-#endif
         tceu_trl* trl;  /* trail being traversed */
 
         union {

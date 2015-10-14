@@ -172,7 +172,6 @@ int ceu_sys_org_spawn (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_trl* trl, tceu
                  stk.org  = neworg;
                  stk.trl  = &neworg->trls[0];
                  stk.stop = &neworg->trls[neworg->n]; /* don't follow the up link */
-                 stk.evt_sz = 0;
         stack_push(_ceu_app, _ceu_go, &stk, NULL);
     }
     return RET_RESTART;
@@ -251,7 +250,6 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk,
                  stk.org  = _ceu_app->data;
                  stk.trl  = &_ceu_app->data->trls[0];
                  stk.stop = NULL;
-                 stk.evt_sz = sizeof(tceu_kill);
         tceu_kill ps = { me, me->ret };
 
         ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk, &ps);
@@ -296,7 +294,6 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
 #endif
              stk.trl  = &_ceu_app->data->trls[0];
              stk.stop = NULL;
-             stk.evt_sz = sizeof(tceu_kill);
 
     ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk, &me);
     stack_push(_ceu_app, _ceu_go, &stk, &me);
@@ -329,7 +326,6 @@ void ceu_sys_clear (tceu_app* _ceu_app, tceu_stk* old,
 #endif
                  stk.trl    = from;
                  stk.stop   = stop;
-                 stk.evt_sz = 0;
         ceu_sys_go_ex(_ceu_app, &stk);
     }
 }
@@ -822,9 +818,6 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
                  stk.trl  = &app->data->trls[0];
 #ifdef CEU_CLEAR
                  stk.stop = NULL;  /* traverse all (don't stop) */
-#endif
-#ifdef CEU_STACK
-                 stk.evt_sz = sizeof(evtp);
 #endif
 
         stk.evt_buf = &evtp;
