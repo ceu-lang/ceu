@@ -313,15 +313,11 @@ if (_ceu_evt->=CEU_IN__STK && _ceu_stk->org==_ceu_org
     LINE(me, [[
 #ifdef CEU_ORGS
 {
-    tceu_stk stk;
-             stk.XXX_level = _ceu_lvl+1;
-             stk.evt.id = CEU_IN__CLEAR;
-             stk.cnt    = NULL;
-             stk.org    = _ceu_org;
-             stk.trl    = &_ceu_org->trls[0];
-             stk.stop   = _ceu_org;
-    ceu_sys_go_ex(_ceu_app, &stk);
-
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
+                  NULL,
+                  _ceu_org, &_ceu_org->trls[0], _ceu_org);
 }
 #endif
 ]])
@@ -1712,8 +1708,6 @@ case ]]..me.lbl_cnt.id..[[:;
 
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[
-    tceu_stk stk;
-
     /* save the continuation to run after the emit */
     tceu_trl* trl = (*_ceu_trl);
     trl->lbl = CEU_LBL__STACKED;
@@ -1722,27 +1716,24 @@ case ]]..me.lbl_cnt.id..[[:;
 #if 0
     stk.XXX_prv = _ceu_stk;
 #endif
-    stk.XXX_level = _ceu_lvl+1;
 
-    stk.evt.id = ]]..V(int,'evt')..[[;
+    tceu_evt evt;
+    evt.id = ]]..V(int,'evt')..[[;
 #ifdef CEU_ORGS
 #line ]]..int.ln[2]..' "'..int.ln[1]..[["
-    stk.evt.org = (tceu_org*) ]]..((int.org and V(int.org,'lval')) or '_ceu_org')..[[;
-    stk.org  = _ceu_app->data;   /* TODO(speed): check if is_ifc */
-#endif
-    stk.trl  = &_ceu_app->data->trls[0];
-#ifdef CEU_CLEAR
-    stk.stop = NULL;
+    evt.org = (tceu_org*) ]]..((int.org and V(int.org,'lval')) or '_ceu_org')..[[;
 #endif
 ]])
         if ps and #ps>0 then
             LINE(me, [[
-    stk.evt.param = ]]..val..[[;
+    evt.param = ]]..val..[[;
 ]])
         end
         LINE(me, [[
-    ceu_sys_bcast(_ceu_app, stk.XXX_level, _ceu_app->data, &stk.evt);
-    ceu_sys_go_ex(_ceu_app, &stk);
+    ceu_sys_bcast(_ceu_app, _ceu_lvl+1, _ceu_app->data, &evt);
+    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
+                  NULL,
+                  _ceu_app->data, &_ceu_app->data->trls[0], NULL);
     if (trl->lbl != CEU_LBL__STACKED) {
         return RET_HALT;
     }
