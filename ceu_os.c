@@ -145,22 +145,24 @@ void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* old, int lim) {
 
 #ifdef CEU_ORGS
 
-void ceu_sys_org_spawn (tceu_app* _ceu_app, tceu_stk* old,
+void ceu_sys_org_spawn (tceu_app* app, int lvl,
                        tceu_org* neworg, tceu_nlbl neworg_lbl) {
     tceu_stk stk;
 
     /* prepare the new org to start */
     neworg->trls[0].evt = CEU_IN__STK;
     neworg->trls[0].lbl = neworg_lbl;
-    neworg->trls[0].stk = old->XXX_level+1;
+    neworg->trls[0].stk = lvl + 1;
 
+#if 0
     stk.XXX_prv = old;
-    stk.XXX_level = old->XXX_level+1;
+#endif
+    stk.XXX_level = lvl + 1;
     stk.evt.id = CEU_IN__STK;
     stk.org  = neworg;
     stk.trl  = &neworg->trls[0];
     stk.stop = &neworg->trls[neworg->n]; /* don't follow the up link */
-    ceu_sys_go_ex(_ceu_app, &stk);
+    ceu_sys_go_ex(app, &stk);
 }
 
 #endif
@@ -297,20 +299,22 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
 /**********************************************************************/
 
 #ifdef CEU_CLEAR
-void ceu_sys_clear (tceu_app* _ceu_app, tceu_stk* old,
+void ceu_sys_clear (tceu_app* _ceu_app, int lvl,
                    tceu_trl* cnt_trl, tceu_nlbl cnt_lbl,
                    tceu_org* org, tceu_trl* from, void* stop)
 {
     /* save the continuation to run after the clear */
     /* trails[1] points to ORG blk ("clear trail") */
     cnt_trl->evt = CEU_IN__STK;
-    cnt_trl->stk = old->XXX_level;
+    cnt_trl->stk = lvl;
     cnt_trl->lbl = cnt_lbl;
 
     {
         tceu_stk stk;
+#if 0
                  stk.XXX_prv   = old->XXX_prv;
-                 stk.XXX_level = old->XXX_level + 1;
+#endif
+                 stk.XXX_level = lvl + 1;
 
                  stk.evt.id = CEU_IN__CLEAR;
                  stk.cnt    = cnt_trl;

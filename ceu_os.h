@@ -145,8 +145,8 @@ enum {
 #endif
 
 #ifdef CEU_CLEAR
-    #define ceu_out_clear(app,old,cnt_trl,cnt_lbl,org,from,stop) \
-        ((__typeof__(ceu_sys_clear)*)((app)->sys_vec[CEU_SYS_CLEAR]))(app,old,cnt_trl,cnt_lbl,org,from,stop)
+    #define ceu_out_clear(app,lvl,cnt_trl,cnt_lbl,org,from,stop) \
+        ((__typeof__(ceu_sys_clear)*)((app)->sys_vec[CEU_SYS_CLEAR]))(app,lvl,cnt_trl,cnt_lbl,org,from,stop)
 #endif
 
 #ifdef CEU_STACK
@@ -160,8 +160,8 @@ enum {
         ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,cls,isDyn,parent,trl)
 
 #ifdef CEU_ORGS
-    #define ceu_out_org_spawn(app, stk, org, lbl_org) \
-        ((__typeof__(ceu_sys_org_spawn)*)((app)->sys_vec[CEU_SYS_ORG_SPAWN]))(app,stk,org,lbl_org)
+    #define ceu_out_org_spawn(app, lvl, org, lbl_org) \
+        ((__typeof__(ceu_sys_org_spawn)*)((app)->sys_vec[CEU_SYS_ORG_SPAWN]))(app,lvl,org,lbl_org)
 #endif
 
     #define ceu_out_start(app) \
@@ -219,8 +219,8 @@ enum {
             ceu_sys_req()
 
 #ifdef CEU_CLEAR
-    #define ceu_out_clear(app,old,cnt_trl,cnt_lbl,org,from,stop) \
-            ceu_sys_clear(app,old,cnt_trl,cnt_lbl,org,from,stop)
+    #define ceu_out_clear(app,lvl,cnt_trl,cnt_lbl,org,from,stop) \
+            ceu_sys_clear(app,lvl,cnt_trl,cnt_lbl,org,from,stop)
 #endif
 
 #ifdef CEU_STACK
@@ -234,8 +234,8 @@ enum {
             ceu_sys_org(org,n,lbl,cls,isDyn,parent,trl)
 
 #ifdef CEU_ORGS
-    #define ceu_out_org_spawn(app, stk, org, lbl_org) \
-            ceu_sys_org_spawn(app, stk, org, lbl_org)
+    #define ceu_out_org_spawn(app, lvl, org, lbl_org) \
+            ceu_sys_org_spawn(app, lvl, org, lbl_org)
 #endif
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
@@ -764,7 +764,7 @@ tceu_app* ceu_sys_load      (void* addr);
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
 #ifdef CEU_CLEAR
-void      ceu_sys_clear     (tceu_app* _ceu_app, tceu_stk* old,
+void      ceu_sys_clear     (tceu_app* _ceu_app, int lvl,
                              tceu_trl* cnt_trl, tceu_nlbl cnt_lbl,
                              tceu_org* org, tceu_trl* from, void* stop)
 #endif
@@ -779,7 +779,7 @@ void      ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim);
 
 void      ceu_sys_org       (tceu_org* org, int n, int lbl, int cls, int isDyn, tceu_org* parent, tceu_trl* trl);
 #ifdef CEU_ORGS
-int       ceu_sys_org_spawn (tceu_app* app, tceu_stk* old, tceu_org* org, tceu_nlbl lbl_org);
+int       ceu_sys_org_spawn (tceu_app* app, int lvl, tceu_org* org, tceu_nlbl lbl_org);
 #endif
 void      ceu_sys_start     (tceu_app* app);
 int       ceu_sys_link      (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);

@@ -143,7 +143,7 @@ function CLEAR_BEF (me)
 ]]
 
     LINE(me, [[
-ceu_out_clear(_ceu_app, _ceu_stk, (*_ceu_trl), ]]..me.lbl_clr.id..[[, _ceu_org,
+ceu_out_clear(_ceu_app, _ceu_lvl, (*_ceu_trl), ]]..me.lbl_clr.id..[[, _ceu_org,
               &_ceu_org->trls[ ]]..(me.trails[1])  ..[[ ],
               &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
 ]])
@@ -407,7 +407,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     {
         tceu_trl* trl = (*_ceu_trl);
         trl->lbl = CEU_LBL__STACKED;
-        ceu_out_org_spawn(_ceu_app, _ceu_stk, ]]..org..','..t.cls.lbl.id..[[);
+        ceu_out_org_spawn(_ceu_app, _ceu_lvl, ]]..org..','..t.cls.lbl.id..[[);
         if (trl->lbl != CEU_LBL__STACKED) {
             return RET_HALT;
         }
@@ -1719,7 +1719,9 @@ case ]]..me.lbl_cnt.id..[[:;
     trl->lbl = CEU_LBL__STACKED;
 
     /* trigger the event */
+#if 0
     stk.XXX_prv = _ceu_stk;
+#endif
     stk.XXX_level = _ceu_lvl+1;
 
     stk.evt.id = ]]..V(int,'evt')..[[;
