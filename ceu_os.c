@@ -564,19 +564,20 @@ int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk)
 printf("GO-EX: %d\n", stk->evt);
 #endif
 
-    for (;;
-         stk->trl++)
+    tceu_trl* trl;
+    for (trl = stk->trl;;
+         trl++)
     {
 #ifdef CEU_DEBUG_TRAILS
 printf("\tlvl: %d\n", stk->XXX_level);
-printf("\ttrl: %p\n", stk->trl);
-printf("\t\tevt: %d\n", stk->trl->evt);
-printf("\t\tstk: %d\n", stk->trl->stk);
-printf("\t\tlbl: %d\n", stk->trl->lbl);
+printf("\ttrl: %p\n", trl);
+printf("\t\tevt: %d\n", trl->evt);
+printf("\t\tstk: %d\n", trl->stk);
+printf("\t\tlbl: %d\n", trl->lbl);
 #endif
 
 #ifdef CEU_CLEAR
-        if (stk->trl == stk->stop) {    /* bounded trail traversal?  */
+        if (trl == stk->stop) {    /* bounded trail traversal?  */
             stk->stop = NULL;           /* back to default */
 /* TODO: precisa desse NULL? */
 #ifdef CEU_DEBUG_TRAILS
@@ -587,7 +588,7 @@ printf("<<<<\n");
 #endif
 
         /* STK_ORG has been traversed to the end? */
-        if (stk->trl ==
+        if (trl ==
             &STK_ORG->trls[
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
                 STK_ORG->n
@@ -603,18 +604,18 @@ printf("<<<<\n");
 
         /* jump into linked orgs */
 #ifdef CEU_ORGS
-        if ( (stk->trl->evt == CEU_IN__ORG)
+        if ( (trl->evt == CEU_IN__ORG)
 #ifdef CEU_PSES
-          || (stk->trl->evt==CEU_IN__ORG_PSED && stk->evt==CEU_IN__CLEAR)
+          || (trl->evt==CEU_IN__ORG_PSED && stk->evt==CEU_IN__CLEAR)
 #endif
            )
         {
             if (stk->evt == CEU_IN__CLEAR) {
-                stk->trl->evt = CEU_IN__NONE;
+                trl->evt = CEU_IN__NONE;
             }
             /* TODO(speed): jump LST */
-            STK_ORG_ATTR = stk->trl->lnks[0].nxt;   /* jump FST */
-            stk->trl = &STK_ORG->trls[0];
+            STK_ORG_ATTR = trl->lnks[0].nxt;   /* jump FST */
+            trl = &STK_ORG->trls[0];
             return ceu_sys_go_ex(app, stk);
             /* restart */
         }
@@ -623,24 +624,26 @@ printf("<<<<\n");
         /* EXECUTE THIS TRAIL */
         if (
 #ifdef CEU_CLEAR
-            (stk->evt==CEU_IN__CLEAR && stk->trl->evt==CEU_IN__CLEAR) ||
+            (stk->evt==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR) ||
 #endif
-            (stk->trl->evt==CEU_IN__STK
+            (trl->evt==CEU_IN__STK
 #ifdef CEU_STACK
-             && stk->trl->stk==stk->XXX_level
+             && trl->stk==stk->XXX_level
 #endif
             )
            )
         {
             int _ret;
-            stk->trl->evt = CEU_IN__NONE;  /* clear trail */
+            trl->evt = CEU_IN__NONE;  /* clear trail */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = app->addr;
 #endif
 
             /*** CODE ***/
+            stk->trl = trl;
             _ret = app->code(app, stk);
+            trl = stk->trl; /* rejoin may reset it */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = 0;
@@ -685,9 +688,10 @@ printf("<<<<\n");
 printf("\t<<< NO\n");
 #endif
 #ifdef CEU_CLEAR
-            if (stk->evt==CEU_IN__CLEAR && stk->cnt!=stk->trl) {
-                stk->trl->evt = CEU_IN__NONE;    /* trail cleared */
-                stk->trl->lbl = 0;
+            if (stk->evt==CEU_IN__CLEAR && stk->cnt!=trl) {
+                trl->evt = CEU_IN__NONE;    /* trail cleared */
+                trl->lbl = 0;
+/* TODO: remover um dos dois */
             }
 #endif
         }
@@ -695,8 +699,8 @@ printf("\t<<< NO\n");
         /* NEXT TRAIL */
 
 #ifdef CEU_INTS
-        if (stk->trl->evt<CEU_IN_lower && stk->trl->seqno!=app->seqno) {
-            stk->trl->seqno = app->seqno-1;   /* keeps the gap tight */
+        if (trl->evt<CEU_IN_lower && trl->seqno!=app->seqno) {
+            trl->seqno = app->seqno-1;   /* keeps the gap tight */
         }
 #endif
     }
