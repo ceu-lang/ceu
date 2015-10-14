@@ -182,7 +182,7 @@ F = {
     Dcl_constr = function (me)
         CONC_ALL(me)
         CODE.constrs = CODE.constrs .. [[
-static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, tceu_go* _ceu_go, tceu_stk* _ceu_stk) {
+static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, tceu_stk* _ceu_stk) {
 ]] .. me.code .. [[
 }
 ]]
@@ -319,7 +319,10 @@ if (_ceu_stk->evt==CEU_IN__STK && _ceu_stk->org==_STK_ORG
              stk.org    = _STK_ORG;
              stk.trl    = &_STK_ORG->trls[0];
              stk.stop   = _STK_ORG;
-    stack_push(_ceu_app, _ceu_go, &stk, NULL);
+printf(">>> CLEAR-T: %p\n", &_STK_ORG->trls[0]);
+    ceu_sys_go_ex(_ceu_app, &stk);
+printf("<<< CLEAR-T\n");
+
 }
 #endif
 ]])
@@ -328,7 +331,7 @@ if (_ceu_stk->evt==CEU_IN__STK && _ceu_stk->org==_STK_ORG
         if me == MAIN then
             HALT(me, 'RET_QUIT')
         else
-            HALT(me, 'RET_RESTART')
+            HALT(me, 'RET_HALT')
         end
 
         -- TODO-RESEARCH-2:
@@ -398,11 +401,21 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         end
         if t.constr then
             LINE(me, [[
-    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_go, _ceu_stk);
+    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_stk);
 ]])
         end
         LINE(me, [[
-    return ceu_out_org_spawn(_ceu_app, _ceu_go, _ceu_stk->trl, ]]..me.lbls_cnt.id..','..org..','..t.cls.lbl.id..[[);
+    {
+        tceu_trl* trl = _ceu_stk->trl;
+        trl->lbl = CEU_LBL__STACKED;
+printf("SPAWN %d\n", trl->lbl);
+        ceu_out_org_spawn(_ceu_app, _ceu_stk, ]]..org..','..t.cls.lbl.id..[[);
+printf("-SPAWN %d\n", trl->lbl);
+        if (trl->lbl != CEU_LBL__STACKED) {
+printf("----\n");
+            return RET_HALT;
+        }
+    }
 case ]]..me.lbls_cnt.id..[[:;
 ]])
         if t.arr then

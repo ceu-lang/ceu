@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -23905,7 +23904,8 @@ escape ret;
     run = 3;
 }
 
--- CLASSES, ORGS, ORGANISMS
+-->>> CLASSES, ORGS, ORGANISMS
+--]===]
 
 Test { [[
 class A with
@@ -24102,6 +24102,23 @@ var T x;
 escape x.a + y[0].a + y[1].a;
 ]],
     run = 60,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+
+class T with
+do
+    _V = _V + 1;
+end
+
+var T ts;
+
+escape _V;
+]],
+    run = 1,
 }
 
 Test { [[

@@ -84,11 +84,14 @@ int ceu_sys_req (void) {
     return CEU_REQS;
 }
 
+int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk);
+
 /**********************************************************************/
 
 #ifdef CEU_STACK
 
 /* TODO: move from 1=>0 (change also in code.lua) */
+#if 0
 #ifdef CEU_ORGS
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
 /*
@@ -134,6 +137,7 @@ void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* old, int lim) {
 }
 #endif
 #endif
+#endif
 
 #endif  /* CEU_STACK */
 
@@ -152,29 +156,22 @@ void ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnks) {
     lnks[0].up = lnks[1].up = org;
 }
 
-int ceu_sys_org_spawn (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_trl* trl, tceu_nlbl lbl_cnt,
+void ceu_sys_org_spawn (tceu_app* _ceu_app, tceu_stk* old,
                        tceu_org* neworg, tceu_nlbl neworg_lbl) {
-    /* save the continuation to run after the constructor */
-    trl->evt = CEU_IN__STK;
-    trl->lbl = lbl_cnt;
-    trl->stk = stack_curi(_ceu_go);
-       /* awake in the same level as we are now (-1 vs the constructor push below) */
+    tceu_stk stk;
 
     /* prepare the new org to start */
     neworg->trls[0].evt = CEU_IN__STK;
     neworg->trls[0].lbl = neworg_lbl;
-    neworg->trls[0].stk = stack_nxti(_ceu_go);
+    neworg->trls[0].stk = old->XXX_level+1;
 
-    {
-        /* switch to ORG */
-        tceu_stk stk;
-                 stk.evt  = CEU_IN__STK;
-                 stk.org  = neworg;
-                 stk.trl  = &neworg->trls[0];
-                 stk.stop = &neworg->trls[neworg->n]; /* don't follow the up link */
-        stack_push(_ceu_app, _ceu_go, &stk, NULL);
-    }
-    return RET_RESTART;
+    stk.XXX_prv = old;
+    stk.XXX_level = old->XXX_level+1;
+    stk.evt  = CEU_IN__STK;
+    stk.org  = neworg;
+    stk.trl  = &neworg->trls[0];
+    stk.stop = &neworg->trls[neworg->n]; /* don't follow the up link */
+    ceu_sys_go_ex(_ceu_app, &stk);
 }
 
 #endif
@@ -226,6 +223,8 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk);
 
 #ifdef CEU_ORGS
+
+#if 0
 void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, tceu_org* me)
 {
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
@@ -257,6 +256,7 @@ void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk,
     }
 #endif
 }
+#endif
 
 #ifdef CEU_ORGS_NEWS
 void ceu_sys_org_free (tceu_org* me)
@@ -303,7 +303,6 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
 /**********************************************************************/
 
 #ifdef CEU_CLEAR
-int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk);
 void ceu_sys_clear (tceu_app* _ceu_app, tceu_stk* old,
                    tceu_trl* cnt_trl, tceu_nlbl cnt_lbl,
                    tceu_org* org, tceu_trl* from, void* stop)
@@ -313,6 +312,7 @@ void ceu_sys_clear (tceu_app* _ceu_app, tceu_stk* old,
     cnt_trl->evt = CEU_IN__STK;
     cnt_trl->stk = old->XXX_level;
     cnt_trl->lbl = cnt_lbl;
+printf("--- clear\n");
 
     {
         tceu_stk stk;
@@ -547,7 +547,7 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
             return;
         } else {
             /* traverse next org */
-            return ceu_sys_bcast(app, org->nxt, stk, evtp);
+            return ceu_sys_bcast(app, org->nxt, stk);
         }
     }
 #endif  /* CEU_ORGS */
@@ -609,10 +609,14 @@ printf("<<<<\n");
                 trl->evt = CEU_IN__NONE;
             }
             /* TODO(speed): jump LST */
-            STK_ORG_ATTR = trl->lnks[0].nxt;   /* jump FST */
-            trl = &STK_ORG->trls[0];
-            return ceu_sys_go_ex(app, stk);
-            /* restart */
+            {
+                tceu_stk new = *stk;
+                         new.org = trl->lnks[0].nxt;   /* jump FST */
+                         new.trl = &((tceu_org*)new.org)->trls[0];
+printf(">---\n");
+                ceu_sys_go_ex(app, &new);
+                continue;
+            }
         }
 #endif /* CEU_ORGS */
 
@@ -705,7 +709,6 @@ printf("\t<<< NO\n");
     if (STK_ORG != app->data) {
         /* save current org before setting the next traversal */
         tceu_org* old = STK_ORG;
-
 #if 0
         /*
          * Test is commented to simplify the code.
@@ -718,16 +721,26 @@ printf("\t<<< NO\n");
 #endif
         {
             /* traverse next org */
-            STK_ORG_ATTR = old->nxt;
-            _ceu_stk->trl = &((tceu_org*)old->nxt)->trls [
-                                (old->n == 0) ?
-                                ((tceu_org_lnk*)old)->lnk : 0
-                            ];
+if (STK_ORG->n != 0) {
+            tceu_stk new = *stk;
+                     new.org = STK_ORG->nxt;
+                     new.trl = &((tceu_org*)STK_ORG->nxt)->trls [
+                                    (STK_ORG->n == 0) ?
+                                    ((tceu_org_lnk*)STK_ORG)->lnk : 0
+                               ];
+printf(">---\n");
+            return ceu_sys_go_ex(app, &new);
+} else {
+    return 0;
+}
         }
 
-        if (_ceu_stk->evt==CEU_IN__CLEAR && old->n!=0) {
+#if 0
+        if (stk->evt==CEU_IN__CLEAR && old->n!=0) {
+#if 0
             ceu_sys_stack_clear_org(_ceu_go, old, stack_curi(_ceu_go));
-            if (_ceu_stk->stop==(void*)old) {
+#endif
+            if (stk->stop==(void*)old) {
 #ifdef CEU_ORGS_WATCHING
                 /* HACK_10: (see adj.lua)
                  * save return value as global
@@ -738,22 +751,22 @@ printf("\t<<< NO\n");
                 /* pop this level as it was a bounded CLEAR on the
                  * given ORG nothing else to do in this level */
                 stack_pop(app, _ceu_go);
-_ceu_stk = stack_cur(_ceu_go);
-                ceu_sys_org_kill(app, _ceu_go, _ceu_stk, old); /* has bcast/push */
-_ceu_stk = stack_cur(_ceu_go);
+stk = stack_cur(_ceu_go);
+                ceu_sys_org_kill(app, _ceu_go, stk, old); /* has bcast/push */
+stk = stack_cur(_ceu_go);
             } else {
                 /* pop/kill/push:
                  * terminate current CLEAR before kill */
 #ifdef CEU_ORGS_WATCHING
                 tceu_stk stk = *stack_cur(_ceu_go);
                 stack_pop(app, _ceu_go); /* only if "kill" emit ok_killed */
-_ceu_stk = stack_cur(_ceu_go);
+stk = stack_cur(_ceu_go);
 #endif
-                ceu_sys_org_kill(app, _ceu_go, _ceu_stk, old); /* has bcast/push */
-_ceu_stk = stack_cur(_ceu_go);
+                ceu_sys_org_kill(app, _ceu_go, stk, old); /* has bcast/push */
+stk = stack_cur(_ceu_go);
 #ifdef CEU_ORGS_WATCHING
                 stack_push(app, _ceu_go, &stk, NULL);
-_ceu_stk = stack_cur(_ceu_go);
+stk = stack_cur(_ceu_go);
 #endif
             }
 #ifdef CEU_ORGS_NEWS
@@ -762,6 +775,7 @@ _ceu_stk = stack_cur(_ceu_go);
             }
 #endif
         }
+#endif
         return ceu_sys_go_ex(app, stk);
         /* restart with kill */
     }
