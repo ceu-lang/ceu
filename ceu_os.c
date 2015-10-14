@@ -147,6 +147,7 @@ void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* old, int lim) {
 
 #ifdef CEU_ORGS
 
+/* TODO: inline this? */
 void ceu_sys_org_spawn (tceu_app* app, int lvl,
                        tceu_org* neworg, tceu_nlbl neworg_lbl) {
     tceu_evt evt;
@@ -299,6 +300,7 @@ void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
 /**********************************************************************/
 
 #ifdef CEU_CLEAR
+/* TODO: inline this? */
 void ceu_sys_clear (tceu_app* _ceu_app, int lvl,
                    tceu_trl* cnt_trl, tceu_nlbl cnt_lbl,
                    tceu_org* org, tceu_trl* from, void* stop)
@@ -537,7 +539,10 @@ static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_org* org, tceu_evt* evt)
 static int spc = -1;
 #define SPC(n) { int i; for(i=0; i<(spc+n)*4; i++) printf(" "); };
 
-int ceu_sys_go_ex_dbg (tceu_app* app, tceu_stk* stk);
+int ceu_sys_go_ex_dbg (tceu_app* app, int lvl, tceu_evt* evt,
+                       void* cnt,
+                       tceu_org* org, tceu_trl* trl, void* stop);
+
 int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
                    void* cnt,
                    tceu_org* org, tceu_trl* trl, void* stop) {
@@ -551,7 +556,7 @@ int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
                                    &stk->org->trls[stk->org->n]);
     #endif
 
-    int ret = ceu_sys_go_ex_dbg(app, stk);
+    int ret = ceu_sys_go_ex_dbg(app,lvl,evt,cnt,org,trl,stop);
 
     SPC(0); printf("<<< GO-EX\n");
     spc--;
@@ -559,7 +564,9 @@ int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
     return ret;
 }
 
-int ceu_sys_go_ex_dbg (tceu_app* app, tceu_stk* stk)
+int ceu_sys_go_ex_dbg (tceu_app* app, int lvl, tceu_evt* evt,
+                       void* cnt,
+                       tceu_org* org, tceu_trl* trl, void* stop)
 #else
 int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
                    void* cnt,
@@ -622,11 +629,9 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #ifdef CEU_ORGS_NEWS
             if (trl->org != NULL)
 #endif
-            {
-                ceu_sys_go_ex(app, lvl, evt,
-                              cnt,
-                              trl->org, &trl->org->trls[0], NULL);
-            }
+            ceu_sys_go_ex(app, lvl, evt,
+                          cnt,
+                          trl->org, &trl->org->trls[0], NULL);
             continue;
         }
 #endif /* CEU_ORGS */

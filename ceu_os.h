@@ -469,29 +469,6 @@ typedef struct tceu_evt {
 
 /* TCEU_STK */
 
-/* TODO(speed): hold nxt trl to run */
-typedef struct tceu_stk {
-    struct tceu_stk* XXX_prv;
-    int XXX_level;
-
-    tceu_trl* trl;  /* trail being traversed */
-
-    struct tceu_org* org;      /* org being traversed */
-
-    tceu_evt evt;
-
-    union {
-        struct {
-            void* cnt;  /* dont clear the continuation trail */
-            void* stop;     /* stop at this trl/org */
-                    /* traversals may be bounded to org/trl
-                     * default (NULL) is to traverse everything */
-                    /* TODO: could be shared w/ evto */
-            };
-    };
-} tceu_stk;
-/* TODO: see if fields can be reused in union */
-
 /* TCEU_LNK */
 
 /* simulates an org prv/nxt */
