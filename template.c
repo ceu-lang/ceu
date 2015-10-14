@@ -142,8 +142,8 @@ static void* ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, void* param) {
 }
 #endif
 
-static int ceu_app_go (tceu_app* _ceu_app , tceu_stk* _ceu_stk, tceu_org* _ceu_org) {
-    int _CEU_LBL = _ceu_stk->trl->lbl;
+static int ceu_app_go (tceu_app* _ceu_app , tceu_stk* _ceu_stk, tceu_org* _ceu_org, tceu_trl** _ceu_trl) {
+    int _CEU_LBL = (*_ceu_trl)->lbl;
 #ifdef CEU_GOTO
 _CEU_GOTO_:
 #endif
@@ -153,7 +153,7 @@ _CEU_GOTO_:
 #ifdef CEU_ORGS
     _ceu_app->lst.org = _ceu_org;
 #endif
-    _ceu_app->lst.trl = _ceu_stk->trl;
+    _ceu_app->lst.trl = (*_ceu_trl);
     _ceu_app->lst.lbl = _CEU_LBL;
 #endif
 #ifdef CEU_DEBUG_TRAILS

@@ -143,7 +143,7 @@ function CLEAR_BEF (me)
 ]]
 
     LINE(me, [[
-ceu_out_clear(_ceu_app, _ceu_stk, _ceu_stk->trl, ]]..me.lbl_clr.id..[[, _ceu_org,
+ceu_out_clear(_ceu_app, _ceu_stk, (*_ceu_trl), ]]..me.lbl_clr.id..[[, _ceu_org,
               &_ceu_org->trls[ ]]..(me.trails[1])  ..[[ ],
               &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
 ]])
@@ -165,7 +165,7 @@ case ]]..me.lbl_clr.id..[[:;
         LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_stk->trl = &_ceu_org->trls[ ]] ..me.trails[1]..[[ ];
+(*_ceu_trl) = &_ceu_org->trls[ ]] ..me.trails[1]..[[ ];
 ]])
     end
 end
@@ -300,7 +300,7 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this) {
  * continuation below.
  */
 if (_ceu_stk->evt==CEU_IN__STK && _ceu_stk->org==_ceu_org
-    && _ceu_stk->trl==&_ceu_org->trls[0]
+    && (*_ceu_trl)==&_ceu_org->trls[0]
     && _ceu_stk->stop==&_ceu_org->trls[_ceu_org->n]
     )
 {
@@ -405,7 +405,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         end
         LINE(me, [[
     {
-        tceu_trl* trl = _ceu_stk->trl;
+        tceu_trl* trl = (*_ceu_trl);
         trl->lbl = CEU_LBL__STACKED;
         ceu_out_org_spawn(_ceu_app, _ceu_stk, ]]..org..','..t.cls.lbl.id..[[);
         if (trl->lbl != CEU_LBL__STACKED) {
@@ -578,7 +578,7 @@ if (]]..me.val..[[ == NULL) {
         LINE(me, [[
 {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
-    return ceu_out_clear(_ceu_app, _ceu_stk, _ceu_stk->trl, ]]..me.lbl.id..[[, __ceu_org,
+    return ceu_out_clear(_ceu_app, _ceu_stk, (*_ceu_trl), ]]..me.lbl.id..[[, __ceu_org,
                              &__ceu_org->trls[0],
                              __ceu_org);
 }
@@ -852,7 +852,7 @@ _ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
         if me.trails[1] ~= stmts.trails[1] then
             LINE(me, [[
 /* switch to blk trail */
-_ceu_stk->trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
+(*_ceu_trl) = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
         end
         CONC(me, stmts)
@@ -1047,9 +1047,9 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
         if PROPS.has_adts_watching[to_tp_id] then
             LINE(me, [[
     /* save the continuation to run after the kills */
-    _ceu_stk->trl->evt = CEU_IN__STK;
-    _ceu_stk->trl->lbl = ]]..SET.lbl_cnt.id..[[;
-    _ceu_stk->trl->stk = stack_curi(_ceu_go);
+    (*_ceu_trl)->evt = CEU_IN__STK;
+    (*_ceu_trl)->lbl = ]]..SET.lbl_cnt.id..[[;
+    (*_ceu_trl)->stk = stack_curi(_ceu_go);
     CEU_]]..to_tp_id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
 ]])
 
@@ -1334,7 +1334,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
     trl->stk = _ceu_stk->XXX_level;   /* awake in the same level as we are now */
 #endif
 #ifdef CEU_DEBUG
-    ceu_out_assert_msg(trl > _ceu_stk->trl, "bug found");
+    ceu_out_assert_msg(trl > (*_ceu_trl), "bug found");
 #endif
 }
 ]])
@@ -1408,7 +1408,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         LINE(me, [[
 /* switch to 1st trail */
 /* TODO: only if not joining with outer prio */
-_ceu_stk->trl = &_ceu_org->trls[ ]]..me.trails[1]..[[ ];
+*_ceu_trl = &_ceu_org->trls[ ]]..me.trails[1]..[[ ];
 ]])
     end,
 
@@ -1496,8 +1496,8 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
     {
 ]]..no..[[:
         if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-        _ceu_stk->trl->evt = CEU_IN__ASYNC;
-        _ceu_stk->trl->lbl = ]]..me.lbl_asy.id..[[;
+        (*_ceu_trl)->evt = CEU_IN__ASYNC;
+        (*_ceu_trl)->lbl = ]]..me.lbl_asy.id..[[;
 ]])
             HALT(me, 'RET_ASYNC')
             LINE(me, [[
@@ -1656,8 +1656,8 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
         LINE(me, [[
 ]]..no..[[:
 if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-_ceu_stk->trl->evt = CEU_IN__ASYNC;
-_ceu_stk->trl->lbl = ]]..me.lbl_cnt.id..[[;
+(*_ceu_trl)->evt = CEU_IN__ASYNC;
+(*_ceu_trl)->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
 
         if e[1] == '_WCLOCK' then
@@ -1715,7 +1715,7 @@ case ]]..me.lbl_cnt.id..[[:;
     tceu_stk stk;
 
     /* save the continuation to run after the emit */
-    tceu_trl* trl = _ceu_stk->trl;
+    tceu_trl* trl = (*_ceu_trl);
     trl->lbl = CEU_LBL__STACKED;
 
     /* trigger the event */
@@ -1763,12 +1763,12 @@ case ]]..me.lbl_cnt.id..[[:;
         LINE(me, [[
 ]]..no..[[:
     if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-    _ceu_stk->trl->evt   = ]]..V(e,'evt')..[[;
-    _ceu_stk->trl->lbl   = ]]..me.lbl.id..[[;
+    (*_ceu_trl)->evt   = ]]..V(e,'evt')..[[;
+    (*_ceu_trl)->lbl   = ]]..me.lbl.id..[[;
 #ifdef CEU_ORGS
-    _ceu_stk->trl->evto  = ]]..org..[[;
+    (*_ceu_trl)->evto  = ]]..org..[[;
 #endif
-    _ceu_stk->trl->seqno =
+    (*_ceu_trl)->seqno =
 ]])
         if me.isEvery then
             LINE(me, [[
@@ -1808,12 +1808,12 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
         LINE(me, [[
 ]]..no..[[:
     if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-    _ceu_stk->trl->evt = CEU_IN_]]..e.evt.id..suf..[[;
-    _ceu_stk->trl->lbl = ]]..me.lbl.id..[[;
+    (*_ceu_trl)->evt = CEU_IN_]]..e.evt.id..suf..[[;
+    (*_ceu_trl)->lbl = ]]..me.lbl.id..[[;
 ]])
         if e[1] == '_ok_killed' then
             LINE(me, [[
-    _ceu_stk->trl->org_or_adt = (void*)]]..V(e[3],'lval')..[[;
+    (*_ceu_trl)->org_or_adt = (void*)]]..V(e[3],'lval')..[[;
 ]])
         end
         HALT(me)
@@ -1897,8 +1897,8 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 ]]..no..[[:
 if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-_ceu_stk->trl->evt = CEU_IN__ASYNC;
-_ceu_stk->trl->lbl = ]]..me.lbl.id..[[;
+(*_ceu_trl)->evt = CEU_IN__ASYNC;
+(*_ceu_trl)->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me, 'RET_ASYNC')
 
@@ -1957,8 +1957,8 @@ case ]]..me.lbl.id..[[:;
         local no = '_CEU_NO_'..me.n..'_'
         LINE(me, [[
 ]]..no..[[:
-        _ceu_stk->trl->evt = CEU_IN__THREAD;
-        _ceu_stk->trl->lbl = ]]..me.lbl.id..[[;
+        (*_ceu_trl)->evt = CEU_IN__THREAD;
+        (*_ceu_trl)->lbl = ]]..me.lbl.id..[[;
 ]])
         HALT(me)
 

@@ -656,14 +656,13 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
 
             /*** CODE ***/
-            stk->trl = trl;
 #ifdef CEU_ORGS
 /* TODO: merge both */
-            _ret = app->code(app, stk, stk->org);
+            _ret = app->code(app, stk, stk->org, &trl);
 #else
-            _ret = app->code(app, stk, app->data);
+            _ret = app->code(app, stk, app->data, &trl);
 #endif
-            trl = stk->trl; /* rejoin may reset it */
+                        /* rejoin may reset it */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = 0;
