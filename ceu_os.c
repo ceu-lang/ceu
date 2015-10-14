@@ -88,37 +88,6 @@ int ceu_sys_req (void) {
 
 #ifdef CEU_STACK
 
-void ceu_stack_pop_f (tceu_app* app, tceu_go* go) {
-    go->stk_nxti = go->stk_curi;
-#ifdef CEU_REENTRANT
-    app->stki = go->stk_nxti;
-#endif
-    go->stk_curi -= stack_cur(go)->offset;
-}
-
-void ceu_sys_stack_push (tceu_app* app, tceu_go* go, tceu_stk* elem, void* ptr) {
-    elem->offset = go->stk_nxti - go->stk_curi;
-    go->stk_curi = go->stk_nxti;
-    go->stk_nxti = stack_pushi(go, elem);
-#ifdef CEU_REENTRANT
-    app->stki = go->stk_nxti;
-#endif
-    *stack_cur(go) = *elem;
-    if (ptr != NULL) {
-        memcpy(stack_cur(go)->evt_buf, ptr, elem->evt_sz);
-    }
-}
-
-#ifdef CEU_DEBUG
-void ceu_stack_dump (tceu_go* go) {
-    int i;
-    printf("=== STACK-DUMP [%d -> %d]\n", go->stk_curi, go->stk_nxti);
-    for (i=0; i<go->stk_nxti; i+=stack_sz(go,i)) {
-        printf("[%d] evt=%d sz=%d\n", i, stack_get(go,i)->evt, stack_get(go,i)->evt_sz);
-    }
-}
-#endif
-
 /* TODO: move from 1=>0 (change also in code.lua) */
 #ifdef CEU_ORGS
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
@@ -591,27 +560,34 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk, void* ev
 
 int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk)
 {
-    tceu_trl* trl;
-    for (trl=stk->trl;;
-         trl++)
-    {
-#if 0
+#ifdef CEU_DEBUG_TRAILS
 printf("GO-EX: %d\n", stk->evt);
-printf("\tcuri: %d\n", stack_curi(_ceu_go));
+#endif
+
+    for (;;
+         stk->trl++)
+    {
+#ifdef CEU_DEBUG_TRAILS
+printf("\tlvl: %d\n", stk->XXX_level);
 printf("\ttrl: %p\n", stk->trl);
 printf("\t\tevt: %d\n", stk->trl->evt);
 printf("\t\tstk: %d\n", stk->trl->stk);
+printf("\t\tlbl: %d\n", stk->trl->lbl);
 #endif
+
 #ifdef CEU_CLEAR
-        if (trl == stk->stop) {    /* bounded trail traversal?  */
+        if (stk->trl == stk->stop) {    /* bounded trail traversal?  */
             stk->stop = NULL;           /* back to default */
 /* TODO: precisa desse NULL? */
+#ifdef CEU_DEBUG_TRAILS
+printf("<<<<\n");
+#endif
             return 0;                      /* pop stack */
         }
 #endif
 
         /* STK_ORG has been traversed to the end? */
-        if (trl ==
+        if (stk->trl ==
             &STK_ORG->trls[
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
                 STK_ORG->n
@@ -627,18 +603,18 @@ printf("\t\tstk: %d\n", stk->trl->stk);
 
         /* jump into linked orgs */
 #ifdef CEU_ORGS
-        if ( (trl->evt == CEU_IN__ORG)
+        if ( (stk->trl->evt == CEU_IN__ORG)
 #ifdef CEU_PSES
-          || (trl->evt==CEU_IN__ORG_PSED && stk->evt==CEU_IN__CLEAR)
+          || (stk->trl->evt==CEU_IN__ORG_PSED && stk->evt==CEU_IN__CLEAR)
 #endif
            )
         {
             if (stk->evt == CEU_IN__CLEAR) {
-                trl->evt = CEU_IN__NONE;
+                stk->trl->evt = CEU_IN__NONE;
             }
             /* TODO(speed): jump LST */
-            STK_ORG_ATTR = trl->lnks[0].nxt;   /* jump FST */
-            trl = &STK_ORG->trls[0];
+            STK_ORG_ATTR = stk->trl->lnks[0].nxt;   /* jump FST */
+            stk->trl = &STK_ORG->trls[0];
             return ceu_sys_go_ex(app, stk);
             /* restart */
         }
@@ -647,25 +623,24 @@ printf("\t\tstk: %d\n", stk->trl->stk);
         /* EXECUTE THIS TRAIL */
         if (
 #ifdef CEU_CLEAR
-            (stk->evt==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR) ||
+            (stk->evt==CEU_IN__CLEAR && stk->trl->evt==CEU_IN__CLEAR) ||
 #endif
-            (trl->evt==CEU_IN__STK
+            (stk->trl->evt==CEU_IN__STK
 #ifdef CEU_STACK
-             && trl->stk==stk->XXX_level
+             && stk->trl->stk==stk->XXX_level
 #endif
             )
            )
         {
             int _ret;
-            trl->evt = CEU_IN__NONE;  /* clear trail */
+            stk->trl->evt = CEU_IN__NONE;  /* clear trail */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = app->addr;
 #endif
 
             /*** CODE ***/
-            stk->trl = trl;
-            _ret = app->code(app, NULL, stk);
+            _ret = app->code(app, stk);
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = 0;
@@ -710,9 +685,9 @@ printf("\t\tstk: %d\n", stk->trl->stk);
 printf("\t<<< NO\n");
 #endif
 #ifdef CEU_CLEAR
-            if (stk->evt==CEU_IN__CLEAR && stk->cnt!=trl) {
-                trl->evt = CEU_IN__NONE;    /* trail cleared */
-trl->lbl = 0;
+            if (stk->evt==CEU_IN__CLEAR && stk->cnt!=stk->trl) {
+                stk->trl->evt = CEU_IN__NONE;    /* trail cleared */
+                stk->trl->lbl = 0;
             }
 #endif
         }
@@ -720,8 +695,8 @@ trl->lbl = 0;
         /* NEXT TRAIL */
 
 #ifdef CEU_INTS
-        if (trl->evt<CEU_IN_lower && trl->seqno!=app->seqno) {
-            trl->seqno = app->seqno-1;   /* keeps the gap tight */
+        if (stk->trl->evt<CEU_IN_lower && stk->trl->seqno!=app->seqno) {
+            stk->trl->seqno = app->seqno-1;   /* keeps the gap tight */
         }
 #endif
     }
@@ -793,22 +768,14 @@ _ceu_stk = stack_cur(_ceu_go);
     }
 #endif  /* CEU_ORGS */
     return 0;
+
+#ifdef CEU_DEBUG_TRAILS
+printf("<<<<\n");
+#endif
 }
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
-#ifdef CEU_STACK
-#ifdef CEU_REENTRANT
-    static
-#endif
-    byte CEU_STK[CEU_STACK_MAX];
-#endif
-
-    tceu_go go;
-#ifdef CEU_STACK
-            go.stk = CEU_STK;
-#endif
-
     switch (evt) {
 #ifdef CEU_ASYNCS
         case CEU_IN__ASYNC:
@@ -839,9 +806,6 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
     app->seqno++;
 #endif
 
-#ifdef CEU_STACK
-    stack_init(app, &go);
-#endif
     {
         tceu_stk stk;
                  stk.XXX_prv   = NULL;
@@ -864,7 +828,6 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
         ceu_sys_bcast(app, app->data, &stk, &evtp);
 #else
         ceu_sys_bcast(app, app->data, &stk, &evtp);
-        go = stk;
 #endif
 
         ceu_sys_go_ex(app, &stk);
@@ -970,7 +933,6 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
 #ifdef CEU_CLEAR
     (void*) &ceu_sys_clear,
 #endif
-    (void*) &ceu_sys_stack_push,
 #ifdef CEU_ORGS
     (void*) &ceu_sys_stack_clear_org,
 #endif

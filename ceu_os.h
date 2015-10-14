@@ -145,8 +145,6 @@
 #endif
 
 #ifdef CEU_STACK
-    #define ceu_out_stack_push(app,go,elem,ptr) \
-        ((__typeof__(ceu_sys_stack_push)*)((app)->sys_vec[CEU_SYS_STACK_PUSH]))(app,go,elem,ptr)
 #ifdef CEU_ORGS
     #define ceu_out_stack_clear_org(go,org,lim) \
         ((__typeof__(ceu_sys_stack_clear_org)*)((_ceu_app)->sys_vec[CEU_SYS_STACK_CLEAR_ORG]))(go,org,lim)
@@ -224,8 +222,6 @@
 #endif
 
 #ifdef CEU_STACK
-    #define ceu_out_stack_push(app,go,elem,ptr) \
-            ceu_sys_stack_push(app,go,elem,ptr)
 #ifdef CEU_ORGS
     #define ceu_out_stack_clear_org(go,org,lim) \
             ceu_sys_stack_clear_org(go,org,lim)
@@ -581,44 +577,6 @@ typedef struct {
 
 #ifdef CEU_STACK
 
-/* TODO: tceu_go => tceu_stk? */
-typedef struct tceu_go {
-    byte*     stk;
-    tceu_nstk stk_nxti;
-    tceu_nstk stk_curi;
-} tceu_go;
-
-#define CEU_STACK_MAX   128*sizeof(tceu_stk)
-    /* TODO: possible to calculate (not is CEU_ORGS_NEWS)
-    #define CEU_STACK_MAX   (CEU_NTRAILS+1) // current +1 for each trail
-    */
-
-#ifdef CEU_REENTRANT
-#define stack_init(app,go) (go)->stk_curi = (go)->stk_nxti = (app)->stki
-#else
-#define stack_init(app,go) (go)->stk_curi = (go)->stk_nxti = 0
-#endif
-#define stack_empty(go)    ((go)->stk_curi == (go)->stk_nxti)
-#define stack_get(go,i)    (((tceu_stk*)&((go)->stk[i])))
-#define stack_cur(go)      stack_get((go),(go)->stk_curi)
-#define stack_nxt(go)      stack_get((go),(go)->stk_nxti)
-#define stack_sz(go,i)     ((tceu_nstk)(sizeof(tceu_stk)+stack_get((go),i)->evt_sz))
-#define stack_curi(go)     ((go)->stk_curi)
-#define stack_nxti(go)     ((go)->stk_nxti)
-#define stack_pushi(go,e)  ((go)->stk_nxti + sizeof(tceu_stk) + (e)->evt_sz)
-#define stack_full(go,e)   (stack_pushi((go),(e)) >= CEU_STACK_MAX)
-
-#define stack_prvi(go)                                          \
-    ((go)->stk_curi - stack_cur((go))->offset)
-
-#define stack_pop(app,go)                                       \
-    ceu_out_assert_msg(!stack_empty(go), "stack underflow");    \
-    ceu_stack_pop_f((app),(go));
-
-#define stack_push(app,go,elem,ptr)                             \
-    ceu_out_assert_msg(!stack_full((go),(elem)), "stack overflow"); \
-    ceu_out_stack_push((app),(go),(elem),(ptr));
-
 /*#define _STK stack_cur(_ceu_go)*/
 #ifdef CEU_ORGS
 #define STK_ORG_ATTR  (stk->org)
@@ -632,8 +590,6 @@ typedef struct tceu_go {
 #define _STK_LBL (_ceu_stk->trl->lbl)
 
 #else   /* !CEU_STACK */
-
-typedef tceu_stk tceu_go;
 
 #define STK_ORG_ATTR  (app->data)
 #define _STK_ORG_ATTR (_ceu_app->data)
@@ -716,7 +672,7 @@ typedef struct tceu_app {
 #endif
 #endif
 
-    int         (*code)  (struct tceu_app*,tceu_go*,tceu_stk*);
+    int         (*code)  (struct tceu_app*,tceu_stk*);
     void        (*init)  (struct tceu_app*);
 #ifdef CEU_OS
     void*       (*calls) (struct tceu_app*,tceu_nevt,void*);
@@ -840,7 +796,6 @@ void      ceu_sys_clear     (tceu_app* _ceu_app, tceu_stk* old,
 #endif
 
 #ifdef CEU_STACK
-void      ceu_sys_stack_push (tceu_app* app, tceu_go* go, tceu_stk* elem, void* ptr);
 #ifdef CEU_ORGS
 void      ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim);
 #endif

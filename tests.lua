@@ -102,8 +102,8 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
-----------------------------------------------------------------------------
 --]===]
+----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -12820,6 +12820,27 @@ end;
 escape 1;
 ]],
     run = { ['~>F'] = 1 },
+}
+
+Test { [[
+input void OS_START;
+event int a, b;
+par/or do
+    loop do
+        par/or do
+            var int aa = await a;
+            emit b => aa;
+        with
+            var int bb = await b;
+        end;
+    end;
+with
+    await OS_START;
+    emit a => 1;
+end;
+escape 10;
+]],
+    run = 10,
 }
 
 Test { [[
