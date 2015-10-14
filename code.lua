@@ -182,7 +182,7 @@ F = {
     Dcl_constr = function (me)
         CONC_ALL(me)
         CODE.constrs = CODE.constrs .. [[
-static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, tceu_stk* _ceu_stk) {
+static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, tceu_stk* _ceu_stk, tceu_org* _ceu_org) {
 ]] .. me.code .. [[
 }
 ]]
@@ -400,7 +400,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         end
         if t.constr then
             LINE(me, [[
-    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_stk);
+    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_stk, _STK_ORG);
 ]])
         end
         LINE(me, [[

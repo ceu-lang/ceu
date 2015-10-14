@@ -573,22 +573,8 @@ typedef struct {
 
 /* TCEU_GO */
 
-/* TODO: remover STK_* */
-
-#ifdef CEU_STACK
-
-/*#define _STK stack_cur(_ceu_go)*/
-#ifdef CEU_ORGS
-#define _STK_ORG (_ceu_stk->org)
-#else
-#define _STK_ORG (_ceu_app->data)
-#endif
-
-#else   /* !CEU_STACK */
-
-#define _STK_ORG (_ceu_app->data)
-
-#endif  /* CEU_STACK */
+/* TODO: remover STK_ORG */
+#define _STK_ORG (_ceu_org)
 
 /* TCEU_LST */
 
