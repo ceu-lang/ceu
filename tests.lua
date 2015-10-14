@@ -25790,6 +25790,19 @@ escape v;
 
 Test { [[
 input void OS_START;
+class T with
+do
+    await FOREVER;
+end
+await OS_START;
+var T a;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
 input void A,F;
 var int v=0;
 class T with

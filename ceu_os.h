@@ -482,8 +482,8 @@ typedef struct tceu_org_lnk {
 
 #ifdef CEU_NEWS
 typedef struct {
-    tceu_org_lnk** lnks;
-    byte**         queue;
+    tceu_trl* trl;
+    byte**    queue;
 } tceu_pool_;
 #endif
 
@@ -523,8 +523,10 @@ typedef struct tceu_org
     u8 isDyn: 1;            /* created w/ new or spawn? */
 #endif
 
-#ifdef CEU_ORGS_NEWS_POOL
+#ifdef CEU_ORGS_NEWS
     tceu_pool_*  pool;      /* TODO(ram): opt, traverse lst of cls pools */
+    /* TODO-POOL: not always required */
+    /* #ifdef CEU_ORGS_NEWS_POOL */
 #endif
 
 #ifdef CEU_ORGS_WATCHING

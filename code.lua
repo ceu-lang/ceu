@@ -292,6 +292,7 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this) {
 
         if me ~= MAIN then
             LINE(me, [[
+#if 0
 #ifdef CEU_ORGS_NEWS
 /* HACK_9:
  * If the stack top is the initial spawn state of the organism, it means that 
@@ -306,6 +307,7 @@ if (_ceu_evt->=CEU_IN__STK && _ceu_stk->org==_ceu_org
 {
     _ceu_stk->evt = CEU_IN__NONE;
 }
+#endif
 #endif
 ]])
         end
@@ -630,12 +632,13 @@ case ]]..me.lbl.id..[[:;
     if (]]..ID..[[ != NULL) {
 ]])
 
-        if pool and (type(pool.var.tp.arr)=='table') or
-           PROPS.has_orgs_news_pool or OPTS.os then
+        -- TODO-POOL: not always required
+        --if pool and (type(pool.var.tp.arr)=='table') or
+           --PROPS.has_orgs_news_pool or OPTS.os then
             LINE(me, [[
         ]]..ID..[[->pool = (tceu_pool_*)&]]..V(pool,'rval')..[[;
 ]])
-        end
+        --end
 
         local org = '_ceu_org'
         if pool and pool.org then
@@ -1730,7 +1733,7 @@ case ]]..me.lbl_cnt.id..[[:;
 ]])
         end
         LINE(me, [[
-    ceu_sys_bcast(_ceu_app, _ceu_lvl+1, _ceu_app->data, &evt);
+    ceu_sys_bcast(_ceu_app, _ceu_lvl+1, &evt, _ceu_app->data);
     ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
                   NULL,
                   _ceu_app->data, &_ceu_app->data->trls[0], NULL);
