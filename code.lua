@@ -576,9 +576,8 @@ if (]]..me.val..[[ == NULL) {
         LINE(me, [[
 {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
-    return ceu_out_clear(_ceu_app, _ceu_stk, (*_ceu_trl), ]]..me.lbl.id..[[, __ceu_org,
-                             &__ceu_org->trls[0],
-                             __ceu_org);
+    ceu_out_clear(_ceu_app, _ceu_lvl, (*_ceu_trl), ]]..me.lbl.id..[[,
+                  __ceu_org, &__ceu_org->trls[0], __ceu_org);
 }
 
 case ]]..me.lbl.id..[[:;

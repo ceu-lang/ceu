@@ -27198,6 +27198,27 @@ escape _f((char&&)&&a.a,(char&&)&&b.a);
 }
 
 Test { [[
+input void OS_START;
+class T with
+    event void e, f;
+do
+    await e;
+    emit f;
+end
+var T[2] ts;
+par/and do
+    await OS_START;
+    emit ts[0].e;
+    emit ts[1].e;
+with
+    await ts[1].f;
+end
+escape 10;
+]],
+    run = 10,
+}
+
+Test { [[
 input void OS_START, B;
 class T with
     var int v;
@@ -27552,59 +27573,6 @@ escape t.v + _V;        // * reads before
         ['~>F'] = 5,
         ['~>A'] = 12,
     }
-}
-
-Test { [[
-class U with
-    event void ok;
-do
-    finalize with
-        _V = _V + 4;
-    end
-    await 1ms;
-    emit this.ok;
-    await FOREVER;
-end;
-class T with do
-    finalize with
-        _V = _V + 2;
-    end
-    var U u;
-    await FOREVER;
-end;
-native do
-    int V = 1;
-end
-finalize with
-    _V = 1000;
-end
-finalize with
-    _V = 1000;
-end
-finalize with
-    _V = 1000;
-end
-par/or do
-    await 1s;
-with
-    do
-        var T t;
-        var U u;
-        par/or do
-            await u.ok;
-        with
-            await u.ok;
-        end;
-    end
-    var T t1;
-    var U u1;
-    await u1.ok;
-    _assert(_V == 11);
-end
-_assert(_V == 21);
-escape _V;
-]],
-    run = { ['~>1s']=21 },
 }
 
 -- internal binding binding
@@ -28508,6 +28476,39 @@ input void OS_START;
 
 class T with
 do
+    await FOREVER;
+end
+var T t;
+par/and do
+    await t;
+with
+    kill t;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await OS_START;
+end
+var T t;
+await t;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+do
     await 1us;
 end
 pool T[] ts;
@@ -28785,6 +28786,59 @@ var T t;
 escape t.x;
 ]],
     run = 10,
+}
+
+Test { [[
+class U with
+    event void ok;
+do
+    finalize with
+        _V = _V + 4;
+    end
+    await 1ms;
+    emit this.ok;
+    await FOREVER;
+end;
+class T with do
+    finalize with
+        _V = _V + 2;
+    end
+    var U u;
+    await FOREVER;
+end;
+native do
+    int V = 1;
+end
+finalize with
+    _V = 1000;
+end
+finalize with
+    _V = 1000;
+end
+finalize with
+    _V = 1000;
+end
+par/or do
+    await 1s;
+with
+    do
+        var T t;
+        var U u;
+        par/or do
+            await u.ok;
+        with
+            await u.ok;
+        end;
+    end
+    var T t1;
+    var U u1;
+    await u1.ok;
+    _assert(_V == 11);
+end
+_assert(_V == 21);
+escape _V;
+]],
+    run = { ['~>1s']=21 },
 }
 
 -- TODO: bounded loop on finally

@@ -221,40 +221,6 @@ static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org)
 
 #ifdef CEU_ORGS
 
-#if 0
-void ceu_sys_org_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, tceu_stk* _ceu_stk, tceu_org* me)
-{
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
-    me->isAlive = 0;
-#endif
-
-    /* awake listeners after clear (this is a stack!) */
-#ifdef CEU_ORGS_WATCHING
-        /* Reuse the same stack level for multiple "kill" in sequence:
-         *  - pools
-         *  - TODO: incomplete? (nested kills?, kill adt+org?)
-         *      - should not be reused in those cases?
-         */
-        if (_ceu_stk->evt == CEU_IN__ok_killed) {
-            stack_pop(_ceu_app, _ceu_go);
-        }
-
-    /* TODO(speed): only if was ever watched! */
-    {
-        tceu_kill ps = { me, me->ret };
-        tceu_stk stk;
-                 stk.evt  = CEU_IN__ok_killed;
-                 stk.evtp = &ps;
-                 stk.org  = _ceu_app->data;
-                 stk.trl  = &_ceu_app->data->trls[0];
-                 stk.stop = NULL;
-
-        ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk);
-    }
-#endif
-}
-#endif
-
 #ifdef CEU_ORGS_NEWS
 void ceu_sys_org_free (tceu_org* me)
 {
@@ -560,6 +526,7 @@ static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org)
 #endif
 #ifdef CEU_WATCHING
         if (evt->id == CEU_IN__ok_killed) {
+            ((tceu_kill*)evt->param)->org_or_adt);
             if (trl->org_or_adt != NULL &&
                 trl->org_or_adt != ((tceu_kill*)evt->param)->org_or_adt)
             {
@@ -757,6 +724,25 @@ SPC(1); printf("<<< NO\n");
         tceu_org* nxt = org->nxt;
 
         if (evt->id == CEU_IN__CLEAR) {
+
+/* NEW */
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
+            org->isAlive = 0;
+#endif
+#ifdef CEU_ORGS_WATCHING
+            {
+                tceu_kill ps = { org, org->ret };
+                tceu_evt evt_;
+                         evt_.id = CEU_IN__ok_killed;
+                         evt_.param = &ps;
+
+                ceu_sys_bcast(app, lvl, &evt_, app->data);
+                ceu_sys_go_ex(app, lvl, &evt_,
+                              NULL,
+                              app->data, &app->data->trls[0], NULL);
+            }
+#endif
+
 #if 0
             ceu_sys_stack_clear_org(_ceu_go, old, stack_curi(_ceu_go));
             if (stop == org) {
