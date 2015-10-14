@@ -299,7 +299,7 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this) {
  * In this case, we mark it with "CEU_IN__NONE" to be recognized in the spawn 
  * continuation below.
  */
-if (_ceu_stk->evt==CEU_IN__STK && _ceu_stk->org==_ceu_org
+if (_ceu_evt->=CEU_IN__STK && _ceu_stk->org==_ceu_org
     && (*_ceu_trl)==&_ceu_org->trls[0]
     && _ceu_stk->stop==&_ceu_org->trls[_ceu_org->n]
     )
@@ -314,7 +314,7 @@ if (_ceu_stk->evt==CEU_IN__STK && _ceu_stk->org==_ceu_org
 #ifdef CEU_ORGS
 {
     tceu_stk stk;
-             stk.XXX_level = _ceu_stk->XXX_level+1;
+             stk.XXX_level = _ceu_lvl+1;
              stk.evt.id = CEU_IN__CLEAR;
              stk.cnt    = NULL;
              stk.org    = _ceu_org;
@@ -902,7 +902,7 @@ if (0) {
     for (__ceu_i=0; __ceu_i<ceu_vector_getlen(]]..val..[[); __ceu_i++) {
         ]]..TP.toc(tp_opt)..[[* __ceu_one = (]]..TP.toc(tp_opt)..[[*)
                                             ceu_vector_geti(]]..val..[[, __ceu_i);
-        tceu_kill* __ceu_casted = (tceu_kill*)_ceu_stk->evt.param;
+        tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
              ( ((tceu_org*)(__ceu_one->SOME.v)) ==
                (__ceu_casted)->org_or_adt ) )
@@ -920,7 +920,7 @@ if (0) {
                     local val = V({tag='Var',tp=var.tp,var=var}, 'rval')
                     LINE(me, [[
     {
-        tceu_kill* __ceu_casted = (tceu_kill*)_ceu_stk->evt.param;
+        tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if (]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
             ((tceu_org*)(]]..val..[[.SOME.v))==(__ceu_casted)->org_or_adt)
         {
@@ -1331,7 +1331,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
     trl->evt = CEU_IN__STK;
     trl->lbl = ]]..me.lbls_in[i].id..[[;
 #ifdef CEU_STACK
-    trl->stk = _ceu_stk->XXX_level;   /* awake in the same level as we are now */
+    trl->stk = _ceu_lvl;   /* awake in the same level as we are now */
 #endif
 #ifdef CEU_DEBUG
     ceu_out_assert_msg(trl > (*_ceu_trl), "bug found");
@@ -1720,7 +1720,7 @@ case ]]..me.lbl_cnt.id..[[:;
 
     /* trigger the event */
     stk.XXX_prv = _ceu_stk;
-    stk.XXX_level = _ceu_stk->XXX_level+1;
+    stk.XXX_level = _ceu_lvl+1;
 
     stk.evt.id = ]]..V(int,'evt')..[[;
 #ifdef CEU_ORGS
@@ -1827,7 +1827,7 @@ case ]]..me.lbl.id..[[:;
             LINE(me, [[
     /* subtract time and check if I have to awake */
     {
-        s32** __ceu_casted = (s32**)_ceu_stk->evt.param;
+        s32** __ceu_casted = (s32**)_ceu_evt->param;
         if (!ceu_out_wclock]]..suf..[[(_ceu_app, *(*__ceu_casted), NULL, &]]..val..[[) ) {
             goto ]]..no..[[;
         }
@@ -1879,7 +1879,7 @@ case ]]..me.lbl.id..[[:;
 ]])
                 if tp then
                     LINE(me, [[
-    ]]..tp..[[ __ceu_casted = (]]..tp..[[) _ceu_stk->evt.param;
+    ]]..tp..[[ __ceu_casted = (]]..tp..[[) _ceu_evt->param;
 ]])
                 end
                 LINE(me, [[
@@ -1966,7 +1966,7 @@ case ]]..me.lbl.id..[[:;
         LINE(me, [[
 case ]]..me.lbl.id..[[:;
         {
-            CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_stk->evt.param;
+            CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_evt->param;
             if (*(*(__ceu_casted)) != ]]..me.thread_id..[[) {
                 goto ]]..no..[[; /* another thread is terminating: await again */
             }

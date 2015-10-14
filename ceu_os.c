@@ -658,9 +658,9 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             /*** CODE ***/
 #ifdef CEU_ORGS
 /* TODO: merge both */
-            _ret = app->code(app, stk, stk->org, &trl);
+            _ret = app->code(app, stk, stk->XXX_level, &stk->evt, stk->org, &trl);
 #else
-            _ret = app->code(app, stk, app->data, &trl);
+            _ret = app->code(app, stk, stk->XXX_level, &stk->evt, app->data, &trl);
 #endif
                         /* rejoin may reset it */
 
