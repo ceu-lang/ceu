@@ -657,7 +657,12 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
             /*** CODE ***/
             stk->trl = trl;
+#ifdef CEU_ORGS
+/* TODO: merge both */
             _ret = app->code(app, stk, stk->org);
+#else
+            _ret = app->code(app, stk, app->data);
+#endif
             trl = stk->trl; /* rejoin may reset it */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)

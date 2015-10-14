@@ -151,14 +151,14 @@ _CEU_GOTO_:
 #ifdef CEU_DEBUG
 #ifndef CEU_OS_APP
 #ifdef CEU_ORGS
-    _ceu_app->lst.org = _STK_ORG;
+    _ceu_app->lst.org = _ceu_org;
 #endif
     _ceu_app->lst.trl = _ceu_stk->trl;
     _ceu_app->lst.lbl = _CEU_LBL;
 #endif
 #ifdef CEU_DEBUG_TRAILS
 #ifndef CEU_OS_APP
-printf("OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
+printf("OK : lbl=%d : org=%p\n", _CEU_LBL, _ceu_org);
 #endif
 #endif
 #endif

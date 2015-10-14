@@ -579,23 +579,14 @@ typedef struct {
 
 /*#define _STK stack_cur(_ceu_go)*/
 #ifdef CEU_ORGS
-#define STK_ORG_ATTR  (stk->org)
-#define _STK_ORG_ATTR (_ceu_stk->org)
+#define _STK_ORG (_ceu_stk->org)
 #else
-#define STK_ORG_ATTR  (app->data)
-#define _STK_ORG_ATTR (_ceu_app->data)
+#define _STK_ORG (_ceu_app->data)
 #endif
-#define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
-#define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
-#define _STK_LBL (_ceu_stk->trl->lbl)
 
 #else   /* !CEU_STACK */
 
-#define STK_ORG_ATTR  (app->data)
-#define _STK_ORG_ATTR (_ceu_app->data)
-#define STK_ORG  ((tceu_org*)STK_ORG_ATTR)    /* not an lvalue */
-#define _STK_ORG ((tceu_org*)_STK_ORG_ATTR)   /* not an lvalue */
-#define _STK_LBL (_ceu_stk->trl->lbl)
+#define _STK_ORG (_ceu_app->data)
 
 #endif  /* CEU_STACK */
 
