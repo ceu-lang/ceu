@@ -142,7 +142,7 @@ static void* ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, void* param) {
 }
 #endif
 
-static int ceu_app_go (tceu_app* _ceu_app , tceu_stk* _ceu_stk) {
+static int ceu_app_go (tceu_app* _ceu_app , tceu_stk* _ceu_stk, tceu_org* _ceu_org) {
     int _CEU_LBL = _ceu_stk->trl->lbl;
 #ifdef CEU_GOTO
 _CEU_GOTO_:

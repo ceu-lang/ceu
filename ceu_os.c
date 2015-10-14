@@ -589,9 +589,19 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
         /* STK_ORG has been traversed to the end? */
         if (trl ==
-            &STK_ORG->trls[
+#ifdef CEU_ORGS
+/* TODO: unify both */
+            &stk->org->trls[
+#else
+            &app->data->trls[
+#endif
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
-                STK_ORG->n
+#ifdef CEU_ORGS
+/* TODO: unify both */
+                stk->org->n
+#else
+                app->data->n
+#endif
 #else
                 CEU_NTRAILS
 #endif
@@ -647,7 +657,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
             /*** CODE ***/
             stk->trl = trl;
-            _ret = app->code(app, stk);
+            _ret = app->code(app, stk, stk->org);
             trl = stk->trl; /* rejoin may reset it */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
@@ -712,11 +722,11 @@ SPC(1); printf("<<< NO\n");
 
 #ifdef CEU_ORGS
     /* end of current org */
-    if (STK_ORG->nxt != NULL) {
+    if (stk->org->nxt != NULL) {
         /* traverse next org */
         tceu_stk new = *stk;
-                 new.org = STK_ORG->nxt;
-                 new.trl = &STK_ORG->nxt->trls[0];
+                 new.org = stk->org->nxt;
+                 new.trl = &stk->org->nxt->trls[0];
         return ceu_sys_go_ex(app, &new);
 
 #if 0

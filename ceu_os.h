@@ -476,9 +476,7 @@ typedef struct tceu_stk {
 
     tceu_trl* trl;  /* trail being traversed */
 
-#ifdef CEU_ORGS
     struct tceu_org* org;      /* org being traversed */
-#endif
 
     tceu_evt evt;
 
@@ -674,7 +672,7 @@ typedef struct tceu_app {
 #endif
 #endif
 
-    int         (*code)  (struct tceu_app*,tceu_stk*);
+    int         (*code)  (struct tceu_app*,tceu_stk*,tceu_org*);
     void        (*init)  (struct tceu_app*);
 #ifdef CEU_OS
     void*       (*calls) (struct tceu_app*,tceu_nevt,void*);
