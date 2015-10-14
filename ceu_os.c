@@ -145,17 +145,6 @@ void ceu_sys_stack_clear_org (tceu_go* go, tceu_org* old, int lim) {
 
 #ifdef CEU_ORGS
 
-void ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnks) {
-    org->trls[idx].evt  = CEU_IN__ORG;
-    org->trls[idx].lnks = lnks;
-    lnks[0].nxt = (tceu_org*) &lnks[1];
-    lnks[1].prv = (tceu_org*) &lnks[0];
-    lnks[1].nxt = org;
-    lnks[1].n   = 0;    /* marks end of linked list */
-    lnks[1].lnk = idx+1;
-    lnks[0].up = lnks[1].up = org;
-}
-
 void ceu_sys_org_spawn (tceu_app* _ceu_app, tceu_stk* old,
                        tceu_org* neworg, tceu_nlbl neworg_lbl) {
     tceu_stk stk;
@@ -176,9 +165,11 @@ void ceu_sys_org_spawn (tceu_app* _ceu_app, tceu_stk* old,
 
 #endif
 
+/* TODO: join sys_org/sys_org_spawn (sys_org recvs &stk) */
+
 void ceu_sys_org (tceu_org* org, int n, int lbl,
                   int cls, int isDyn,
-                  tceu_org* parent, tceu_org_lnk** lnks)
+                  tceu_org* parent, tceu_trl* trl)
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
     memset(&org->trls, 0, n*sizeof(tceu_trl));
@@ -205,18 +196,21 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
     org->trls[0].lbl = lbl;
 
 #ifdef CEU_ORGS
-    if (lnks == NULL) {
+    if (trl == NULL) {
         return;             /* main class */
     }
 
     /* re-link */
-    {
-        tceu_org_lnk* lst = &(*lnks)[1];
-        lst->prv->nxt = org;
-        org->prv = lst->prv;
-        org->nxt = (tceu_org*)lst;
-        lst->prv = org;
+
+    org->nxt = NULL;
+    if (trl->org == NULL) {
+        trl->org = org;
+    } else {
+        tceu_org* last = trl->org->prv;
+        last->nxt = org;
+        org->prv = last;
     }
+    trl->org->prv = org;
 #endif  /* CEU_ORGS */
 }
 
@@ -312,7 +306,6 @@ void ceu_sys_clear (tceu_app* _ceu_app, tceu_stk* old,
     cnt_trl->evt = CEU_IN__STK;
     cnt_trl->stk = old->XXX_level;
     cnt_trl->lbl = cnt_lbl;
-printf("--- clear\n");
 
     {
         tceu_stk stk;
@@ -470,8 +463,6 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 #endif
 
-/* TODO: remover PTR ultimo org p/ IN__ORG e usar call normalmente*/
-
 static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
     tceu_trl* trl;
     for (
@@ -489,9 +480,12 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
 #ifdef CEU_ORGS
         if (trl->evt == CEU_IN__ORG)
         {
-            /* TODO(speed): jump LST */
-            /* jump FST */
-            ceu_sys_bcast(app, trl->lnks[0].nxt, stk);
+#ifdef CEU_ORGS_NEWS
+            if (trl->org != NULL)
+#endif
+            {
+                ceu_sys_bcast(app, trl->org, stk);
+            }
             continue;
         }
 #endif /* CEU_ORGS */
@@ -536,48 +530,57 @@ static void ceu_sys_bcast (tceu_app* app, tceu_org* org, tceu_stk* stk) {
     }
 
     /* end of traversal, reached the end of top org */
-    if (org == app->data) {
-        return;
-/* TODO: nao precisaria, se n==0 funcionasse p/ data */
-    }
-
 #ifdef CEU_ORGS
-    else {
-        if (org->n == 0) {
-            return;
-        } else {
-            /* traverse next org */
-            return ceu_sys_bcast(app, org->nxt, stk);
-        }
+    if (org->nxt != NULL) {
+        return ceu_sys_bcast(app, org->nxt, stk);
     }
 #endif  /* CEU_ORGS */
 }
 
-int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk)
-{
 #ifdef CEU_DEBUG_TRAILS
-printf("GO-EX: %d\n", stk->evt);
-#endif
+static int spc = -1;
+#define SPC(n) { int i; for(i=0; i<(spc+n)*4; i++) printf(" "); };
 
+int ceu_sys_go_ex_dbg (tceu_app* app, tceu_stk* stk);
+int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk) {
+    spc++;
+    SPC(0); printf(">>> GO-EX\n");
+    SPC(1); printf("lvl: %d\n", stk->XXX_level);
+    SPC(1); printf("evt: %d\n", stk->evt);
+    #ifdef CEU_ORGS
+    SPC(1); printf("org: %p\n", stk->org);
+    SPC(2); printf("[%p]=>[%p]\n", &stk->org->trls[0],
+                                   &stk->org->trls[stk->org->n]);
+    #endif
+
+    int ret = ceu_sys_go_ex_dbg(app, stk);
+
+    SPC(0); printf("<<< GO-EX\n");
+    spc--;
+
+    return ret;
+}
+
+int ceu_sys_go_ex_dbg (tceu_app* app, tceu_stk* stk)
+#else
+int ceu_sys_go_ex (tceu_app* app, tceu_stk* stk)
+#endif
+{
     tceu_trl* trl;
     for (trl = stk->trl;;
          trl++)
     {
 #ifdef CEU_DEBUG_TRAILS
-printf("\tlvl: %d\n", stk->XXX_level);
-printf("\ttrl: %p\n", trl);
-printf("\t\tevt: %d\n", trl->evt);
-printf("\t\tstk: %d\n", trl->stk);
-printf("\t\tlbl: %d\n", trl->lbl);
+SPC(1); printf("trl: %p\n", trl);
+SPC(2); printf("evt: %d\n", trl->evt);
+SPC(2); printf("stk: %d\n", trl->stk);
+SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
 
 #ifdef CEU_CLEAR
         if (trl == stk->stop) {    /* bounded trail traversal?  */
             stk->stop = NULL;           /* back to default */
 /* TODO: precisa desse NULL? */
-#ifdef CEU_DEBUG_TRAILS
-printf("<<<<\n");
-#endif
             return 0;                      /* pop stack */
         }
 #endif
@@ -608,15 +611,16 @@ printf("<<<<\n");
             if (stk->evt == CEU_IN__CLEAR) {
                 trl->evt = CEU_IN__NONE;
             }
-            /* TODO(speed): jump LST */
+#ifdef CEU_ORGS_NEWS
+            if (trl->org != NULL)
+#endif
             {
                 tceu_stk new = *stk;
-                         new.org = trl->lnks[0].nxt;   /* jump FST */
-                         new.trl = &((tceu_org*)new.org)->trls[0];
-printf(">---\n");
+                         new.org = trl->org;
+                         new.trl = &new.org->trls[0];
                 ceu_sys_go_ex(app, &new);
-                continue;
             }
+            continue;
         }
 #endif /* CEU_ORGS */
 
@@ -684,7 +688,7 @@ printf(">---\n");
         else
         {
 #ifdef CEU_DEBUG_TRAILS
-printf("\t<<< NO\n");
+SPC(1); printf("<<< NO\n");
 #endif
 #ifdef CEU_CLEAR
             if (stk->evt==CEU_IN__CLEAR && stk->cnt!=trl) {
@@ -706,34 +710,12 @@ printf("\t<<< NO\n");
 
 #ifdef CEU_ORGS
     /* end of current org */
-    if (STK_ORG != app->data) {
-        /* save current org before setting the next traversal */
-        tceu_org* old = STK_ORG;
-#if 0
-        /*
-         * Test is commented to simplify the code.
-         * "traverse-next-org" only required on that condition.
-         */
-        int to_kill_free = (STK->evt==CEU_IN__CLEAR && old->n!=0);
-        int stop_now = (STK->stop==(void*)old);
-        if (to_kill_free && stop_now) {
-        } else
-#endif
-        {
-            /* traverse next org */
-if (STK_ORG->n != 0) {
-            tceu_stk new = *stk;
-                     new.org = STK_ORG->nxt;
-                     new.trl = &((tceu_org*)STK_ORG->nxt)->trls [
-                                    (STK_ORG->n == 0) ?
-                                    ((tceu_org_lnk*)STK_ORG)->lnk : 0
-                               ];
-printf(">---\n");
-            return ceu_sys_go_ex(app, &new);
-} else {
-    return 0;
-}
-        }
+    if (STK_ORG->nxt != NULL) {
+        /* traverse next org */
+        tceu_stk new = *stk;
+                 new.org = STK_ORG->nxt;
+                 new.trl = &STK_ORG->nxt->trls[0];
+        return ceu_sys_go_ex(app, &new);
 
 #if 0
         if (stk->evt==CEU_IN__CLEAR && old->n!=0) {
@@ -781,14 +763,14 @@ stk = stack_cur(_ceu_go);
     }
 #endif  /* CEU_ORGS */
     return 0;
-
-#ifdef CEU_DEBUG_TRAILS
-printf("<<<<\n");
-#endif
 }
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
+#ifdef CEU_DEBUG_TRAILS
+    printf("===> %d\n", evt);
+#endif
+
     switch (evt) {
 #ifdef CEU_ASYNCS
         case CEU_IN__ASYNC:
@@ -834,12 +816,7 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
                  stk.stop = NULL;  /* traverse all (don't stop) */
 #endif
 
-#ifdef CEU_STACK
         ceu_sys_bcast(app, app->data, &stk);
-#else
-        ceu_sys_bcast(app, app->data, &stk);
-#endif
-
         ceu_sys_go_ex(app, &stk);
     }
 
@@ -948,7 +925,6 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
 #endif
     (void*) &ceu_sys_org,
 #ifdef CEU_ORGS
-    (void*) &ceu_sys_org_trail,
     (void*) &ceu_sys_org_spawn,
 #endif
     (void*) &ceu_sys_start,

@@ -314,14 +314,13 @@ if (_ceu_stk->evt==CEU_IN__STK && _ceu_stk->org==_STK_ORG
 #ifdef CEU_ORGS
 {
     tceu_stk stk;
+             stk.XXX_level = _ceu_stk->XXX_level+1;
              stk.evt    = CEU_IN__CLEAR;
              stk.cnt    = NULL;
              stk.org    = _STK_ORG;
              stk.trl    = &_STK_ORG->trls[0];
              stk.stop   = _STK_ORG;
-printf(">>> CLEAR-T: %p\n", &_STK_ORG->trls[0]);
     ceu_sys_go_ex(_ceu_app, &stk);
-printf("<<< CLEAR-T\n");
 
 }
 #endif
@@ -373,7 +372,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
                 ]]..t.cls.n..[[,
                 ]]..t.isDyn..[[,
-                _STK_ORG, ]] ..t.lnks..[[);
+                _STK_ORG, ]] ..t.trl..[[);
 /* TODO: currently idx is always "1" for all interfaces access because pools 
  * are all together there. When we have separate trls for pools, we'll have to 
  * indirectly access the offset in the interface. */
@@ -408,11 +407,8 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     {
         tceu_trl* trl = _ceu_stk->trl;
         trl->lbl = CEU_LBL__STACKED;
-printf("SPAWN %d\n", trl->lbl);
         ceu_out_org_spawn(_ceu_app, _ceu_stk, ]]..org..','..t.cls.lbl.id..[[);
-printf("-SPAWN %d\n", trl->lbl);
         if (trl->lbl != CEU_LBL__STACKED) {
-printf("----\n");
             return RET_HALT;
         }
     }
@@ -439,7 +435,7 @@ me.tp = var.tp
                 constr = constr,
                 arr    = var.tp.arr,
                 val_i  = TP.check(var.tp,'[]') and V({tag='Var',tp=var.tp,var=var.constructor_iterator},'rval'),
-                lnks   = '&_STK_ORG->trls['..var.trl_orgs[1]..'].lnks'
+                trl    = '&_STK_ORG->trls['..var.trl_orgs[1]..']'
             })
 
         -- TODO: similar code in Block_pre for !BlockI
@@ -657,7 +653,7 @@ case ]]..me.lbl.id..[[:;
             val    = '(*((CEU_'..id..'*)'..ID..'))',
             constr = constr,
             arr    = false,
-            lnks   = '((((tceu_pool_*)&'..V(pool,'rval')..'))->lnks)',
+            trl    = '((((tceu_pool_*)&'..V(pool,'rval')..'))->trl)',
         })
         LINE(me, [[
     }
@@ -774,26 +770,26 @@ _STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
                     local id = (adt and '_' or '') .. var.id_
                     local dcl = '&'..CUR(me, id)
 
-                    local lnks = (var.trl_orgs and var.trl_orgs[1]) or 'NULL'
-                    if lnks ~= 'NULL' then
-                        lnks = '&_STK_ORG->trls['..lnks..'].lnks'
+                    local trl = (var.trl_orgs and var.trl_orgs[1]) or 'NULL'
+                    if trl ~= 'NULL' then
+                        trl = '&_STK_ORG->trls['..trl..']'
                     end
 
                     if (not is_dyn) then
                         if top.is_ifc then
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'_delayed),'..lnks..','
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'_delayed),'..trl..','
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         else
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..','
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..trl..','
     ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         end
                     elseif cls or tp_id=='_TOP_POOL' then
                         LINE(me, [[
-(]]..dcl..[[)->lnks  = ]]..lnks..[[;
+(]]..dcl..[[)->trl   = ]]..trl..[[;
 (]]..dcl..[[)->queue = NULL;            /* dynamic pool */
 ]])
                     end
@@ -837,7 +833,8 @@ _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl = ]]..var.lbl_fin_kill_free.id..[[;
             if var.trl_orgs and var.trl_orgs_first then
                 LINE(me, [[
 #ifdef CEU_ORGS
-ceu_out_org_trail(_STK_ORG, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.trl_orgs.val..[[);
+_STK_ORG->trls[ ]]..var.trl_orgs[1]..[[ ].evt = CEU_IN__ORG;
+_STK_ORG->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
 #endif
 ]])
             end

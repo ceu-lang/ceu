@@ -156,13 +156,10 @@ enum {
 #endif
 #endif
 
-    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,lnks) \
-        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,cls,isDyn,parent,lnks)
+    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,trl) \
+        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,cls,isDyn,parent,trl)
 
 #ifdef CEU_ORGS
-    #define ceu_out_org_trail(org,idx,lnk) \
-        ((__typeof__(ceu_sys_org_trail)*)((_ceu_app)->sys_vec[CEU_SYS_ORG_TRAIL]))(org,idx,lnk)
-
     #define ceu_out_org_spawn(app, stk, org, lbl_org) \
         ((__typeof__(ceu_sys_org_spawn)*)((app)->sys_vec[CEU_SYS_ORG_SPAWN]))(app,stk,org,lbl_org)
 #endif
@@ -233,12 +230,10 @@ enum {
 #endif
 #endif
 
-    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,lnks) \
-            ceu_sys_org(org,n,lbl,cls,isDyn,parent,lnks)
+    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,trl) \
+            ceu_sys_org(org,n,lbl,cls,isDyn,parent,trl)
 
 #ifdef CEU_ORGS
-    #define ceu_out_org_trail(org,idx,lnk) \
-            ceu_sys_org_trail(org,idx,lnk)
     #define ceu_out_org_spawn(app, stk, org, lbl_org) \
             ceu_sys_org_spawn(app, stk, org, lbl_org)
 #endif
@@ -412,6 +407,7 @@ typedef u16 tceu_nstk;  /* max size of internal stack in bytes */
 
 /* TCEU_TRL */
 
+struct tceu_org;
 typedef union tceu_trl {
     tceu_nevt evt;
 
@@ -440,7 +436,7 @@ typedef union tceu_trl {
 #ifdef CEU_ORGS
     struct {                    /* TODO(ram): bad for alignment */
         tceu_nevt evt3;
-        struct tceu_org_lnk* lnks;
+        struct tceu_org* org;
     };
 #endif
 
@@ -473,8 +469,7 @@ typedef struct tceu_stk {
     tceu_trl* trl;  /* trail being traversed */
 
 #ifdef CEU_ORGS
-    void* org;      /* org being traversed */
-/* TODO: tceu_org* */
+    struct tceu_org* org;      /* org being traversed */
 #endif
 
     union {
@@ -572,6 +567,8 @@ typedef struct {
 #endif
 
 /* TCEU_GO */
+
+/* TODO: remover STK_* */
 
 #ifdef CEU_STACK
 
@@ -801,9 +798,8 @@ void      ceu_sys_stack_clear_org (tceu_go* go, tceu_org* org, int lim);
 #endif
 #endif
 
-void      ceu_sys_org       (tceu_org* org, int n, int lbl, int cls, int isDyn, tceu_org* parent, tceu_org_lnk** lnks);
+void      ceu_sys_org       (tceu_org* org, int n, int lbl, int cls, int isDyn, tceu_org* parent, tceu_trl* trl);
 #ifdef CEU_ORGS
-void      ceu_sys_org_trail (tceu_org* org, int idx, tceu_org_lnk* lnk);
 int       ceu_sys_org_spawn (tceu_app* app, tceu_stk* old, tceu_org* org, tceu_nlbl lbl_org);
 #endif
 void      ceu_sys_start     (tceu_app* app);
