@@ -92,33 +92,9 @@ static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org)
 
 /**********************************************************************/
 
-#ifdef CEU_ORGS
-
-/* TODO: inline this? */
-void ceu_sys_org_spawn (tceu_app* app, int lvl,
-                       tceu_org* neworg, tceu_nlbl neworg_lbl) {
-    tceu_evt evt;
-             evt.id = CEU_IN__STK;
-
-    /* prepare the new org to start */
-    neworg->trls[0].evt = CEU_IN__STK;
-    neworg->trls[0].lbl = neworg_lbl;
-    neworg->trls[0].stk = lvl + 1;
-
-#if 0
-    stk.XXX_prv = old;
-#endif
-    ceu_sys_go_ex(app, lvl+1, &evt, NULL, NULL,
-/* TODO: stk */
-                  neworg, &neworg->trls[0], &neworg->trls[neworg->n]);
-                                               /* don't follow the up link */
-}
-
-#endif
-
 /* TODO: join sys_org/sys_org_spawn (sys_org recvs &stk) */
 
-void ceu_sys_org (tceu_org* org, int n, int lbl,
+void ceu_sys_org (tceu_org* org, int n, int lbl, int lvl,
                   int cls, int isDyn,
                   tceu_org* parent, tceu_trl* trl)
 {
@@ -145,6 +121,9 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
     /* org.trls[0] == org.blk.trails[1] */
     org->trls[0].evt = CEU_IN__STK;
     org->trls[0].lbl = lbl;
+#ifdef CEU_STACK
+    org->trls[0].stk = lvl;
+#endif
 
 #ifdef CEU_ORGS
     if (trl == NULL) {
@@ -899,9 +878,6 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
     (void*) &ceu_sys_clear,
 #endif
     (void*) &ceu_sys_org,
-#ifdef CEU_ORGS
-    (void*) &ceu_sys_org_spawn,
-#endif
     (void*) &ceu_sys_start,
     (void*) &ceu_sys_link,
     (void*) &ceu_sys_unlink,

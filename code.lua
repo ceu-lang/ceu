@@ -378,7 +378,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         LINE(me, [[
     /* resets org memory and starts org.trail[0]=Class_XXX */
     /* TODO: BUG: _ceu_org is not necessarily the parent for pool allocations */
-    ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
+    ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[, _ceu_lvl+1,
                 ]]..t.cls.n..[[,
                 ]]..t.isDyn..[[,
                 _ceu_org, ]] ..t.trl..[[);
@@ -414,9 +414,17 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         end
         LINE(me, [[
     {
+        tceu_evt evt;
+                 evt.id = CEU_IN__STK;
+
         tceu_trl* trl = (*_ceu_trl);
         trl->lbl = CEU_LBL__STACKED;
-        ceu_out_org_spawn(_ceu_app, _ceu_lvl, ]]..org..','..t.cls.lbl.id..[[);
+
+        ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt, NULL, _ceu_stk,
+                      ]]..org..[[, &]]..org..[[->trls[0],
+                                   &]]..org..[[->trls[ ]]..org..[[->n]);
+                                   /* don't follow the up link */
+
         if (trl->lbl != CEU_LBL__STACKED) {
             return RET_HALT;
         }
@@ -1725,10 +1733,6 @@ case ]]..me.lbl_cnt.id..[[:;
     trl->lbl = CEU_LBL__STACKED;
 
     /* trigger the event */
-#if 0
-    stk.XXX_prv = _ceu_stk;
-#endif
-
     tceu_evt evt;
     evt.id = ]]..V(int,'evt')..[[;
 #ifdef CEU_ORGS

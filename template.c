@@ -245,7 +245,7 @@ ceu_app_init (tceu_app* _ceu_app)
 #endif
 #endif
 
-    ceu_out_org(_ceu_app, _ceu_app->data, CEU_NTRAILS, Class_Main,
+    ceu_out_org(_ceu_app, _ceu_app->data, CEU_NTRAILS, Class_Main, 0,
                 0, 0,
                 NULL, NULL);
 
