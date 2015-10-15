@@ -95,16 +95,6 @@ F = {
         end
 
         me.lbl = new{'Class_'..me.id, true}
--- TODO (-RAM)
-        --if i_am_instantiable then
-            me.lbl_clr = new{'Class_free_'..me.id}
-        --end
-    end,
-    Spawn = function (me)
-        me.lbls_cnt = new{me.tag..'_cont'}
-    end,
-    Kill = function (me)
-        me.lbl = new{'Kill'}
     end,
 
     SetBlock_pre = function (me)
@@ -168,11 +158,6 @@ F = {
             me.lbl_cnt = new{'Async_cont'}
         end
     end,
-    Dcl_var = function (me)
-        if me.var.cls then
-            me.lbls_cnt = new{'Start_cnt'}
-        end
-    end,
 
     Await = function (me)
         local e, dt = unpack(me)
@@ -182,15 +167,6 @@ F = {
             me.lbl = new{'Awake_'..(e.evt or e.var.evt).id}
         end
     end,
-
-    ParOr_pos = function (me)
-        if me.needs_clr then
-            me.lbl_clr = new{'Clear'}
-        end
-    end,
-    Block_pos    = 'ParOr_pos',
-    Loop_pos     = 'ParOr_pos',
-    SetBlock_pos = 'ParOr_pos',
 }
 
 AST.visit(F)

@@ -161,11 +161,6 @@ function CLEAR_AFT (me)
     if not me.needs_clr then
         return
     end
-    if me.lbl_clr then
-        LINE(me, [[
-case ]]..me.lbl_clr.id..[[:;
-]])
-    end
     if not (AST.par(me,'Dcl_fun') or AST.par(me,'Thread')) then
         LINE(me, [[
 /* switch to 1st trail */
@@ -368,7 +363,7 @@ var T t with
     <CONSTR>        -- 2    org: no lbl (cannot call anything)
 end;
 
-<CONT>              -- 4    parent: me.lbls_cnt.id
+<CONT>              -- 4    parent:
 ]]
 
         -- ceu_out_org, _ceu_constr_
@@ -434,7 +429,6 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
             return RET_HALT;
         }
     }
-case ]]..me.lbls_cnt.id..[[:;
 ]])
         if t.arr then
             LINE(me, [[
@@ -606,8 +600,6 @@ if (]]..me.val..[[ == NULL) {
                   __ceu_org, &__ceu_org->trls[0], __ceu_org);
 }
 /* TESTAR se trail ainda ativa, fazer teste que pegue esse bug */
-
-case ]]..me.lbl.id..[[:;
 ]])
     end,
 
@@ -1077,6 +1069,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
             LINE(me, [[
     /* save the continuation to run after the kills */
     (*_ceu_trl)->evt = CEU_IN__STK;
+assert(0); /* remove lbl_cnt.id, use C stack */
     (*_ceu_trl)->lbl = ]]..SET.lbl_cnt.id..[[;
     (*_ceu_trl)->stk = stack_curi(_ceu_go);
     CEU_]]..to_tp_id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
