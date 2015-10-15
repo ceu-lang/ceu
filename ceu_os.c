@@ -604,7 +604,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 SPC(1); printf("<<< NO\n");
 #endif
 #ifdef CEU_CLEAR
-            if (evt->id==CEU_IN__CLEAR && cnt!=trl) {
+            if (evt->id==CEU_IN__CLEAR) {
                 trl->evt = CEU_IN__NONE;    /* trail cleared */
                 trl->lbl = CEU_LBL__NONE;
 /* TODO: remover um dos dois */

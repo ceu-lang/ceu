@@ -598,6 +598,7 @@ if (]]..me.val..[[ == NULL) {
     ceu_out_clear(_ceu_app, _ceu_lvl, (*_ceu_trl), ]]..me.lbl.id..[[,
                   __ceu_org, &__ceu_org->trls[0], __ceu_org);
 }
+/* TESTAR se trail ainda ativa, fazer teste que pegue esse bug */
 
 case ]]..me.lbl.id..[[:;
 ]])
@@ -866,6 +867,7 @@ _ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
         if (not cls) or cls.is_ifc then
             return
         end
+-- TODO: remover outros if(0){} alem do global
 
         -- TODO: try to remove this requirement
         if me.trails[1] ~= stmts.trails[1] then
@@ -876,11 +878,11 @@ _ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
         end
         CONC(me, stmts)
         CLEAR_BEF(me)
-
-        if me.fins then
-            LINE(me, [[
+        LINE(me, [[
 if (0) {
 ]])
+
+        if me.fins then
             CASE(me, me.lbl_fin)
             for i, fin in ipairs(me.fins) do
                 LINE(me, [[
@@ -891,7 +893,6 @@ if (0) {
             end
             LINE(me, [[
     return RET_HALT;
-}
 ]])
         end
 
@@ -1002,6 +1003,9 @@ CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
             end
         end
 
+        LINE(me, [[
+}
+]])
         CLEAR_AFT(me)
         LINE(me, '}')       -- open in Block_pre
     end,
