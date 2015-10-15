@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -23906,6 +23905,7 @@ escape ret;
 }
 
 -->>> CLASSES, ORGS, ORGANISMS
+--]===]
 
 Test { [[
 class A with
@@ -28504,26 +28504,6 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-input void OS_START;
-
-class T with
-do
-    await 1us;
-end
-pool T[] ts;
-
-var T&&? t1 = spawn T;
-var T&&? t2 = spawn T;
-await *(t2!);
-var T&&? t3 = spawn T;
-await *(t3!);
-
-escape 1;
-]],
-    run = { ['~>2us']=1 },
-}
-
 -- problems w/o ceu_sys_stack_clear_org
 Test { [[
 input void OS_START;
@@ -28550,30 +28530,6 @@ do
     var T t3;
     await t3;
 end
-
-escape 1;
-]],
-    run = { ['~>2us']=1 },
-}
-Test { [[
-input void OS_START;
-
-class U with
-do
-    await 1us;
-end
-
-class T with
-do
-    do U;
-end
-pool T[] ts;
-
-var T&&? t1 = spawn T;
-var T&&? t2 = spawn T;
-await *t2!;
-var T&&? t3 = spawn T;
-await *t3!;
 
 escape 1;
 ]],
@@ -29355,6 +29311,68 @@ await *(t!);
 escape 1;
 ]],
     asr = 'runtime error: invalid tag',
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await 1us;
+end
+pool T[] ts;
+
+var T&&? t1 = spawn T;
+await *(t1!);
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await 1us;
+end
+pool T[] ts;
+
+var T&&? t1 = spawn T;
+var T&&? t2 = spawn T;
+await *(t2!);
+var T&&? t3 = spawn T;
+await *(t3!);
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+
+Test { [[
+input void OS_START;
+
+class U with
+do
+    await 1us;
+end
+
+class T with
+do
+    do U;
+end
+pool T[] ts;
+
+var T&&? t1 = spawn T;
+var T&&? t2 = spawn T;
+await *t2!;
+var T&&? t3 = spawn T;
+await *t3!;
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
 }
 
 Test { [[

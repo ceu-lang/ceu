@@ -255,18 +255,14 @@ void ceu_sys_org_free (tceu_org* me)
 /**********************************************************************/
 
 #ifdef CEU_ADTS_WATCHING
-void ceu_sys_adt_kill (tceu_app* _ceu_app, tceu_go* _ceu_go, void* me)
+void ceu_sys_adt_kill (tceu_app* app, int lvl, void* me)
 {
-    tceu_stk stk;
-             stk.evt.id = CEU_IN__ok_killed;
-#ifdef CEU_ORGS
-             stk.org  = _ceu_app->data;
-#endif
-             stk.trl  = &_ceu_app->data->trls[0];
-             stk.stop = NULL;
-
-    ceu_sys_bcast(_ceu_app, _ceu_app->data, stack_nxti(_ceu_go), &stk, &me);
-    stack_push(_ceu_app, _ceu_go, &stk, &me);
+    tceu_evt evt;
+             evt.id = CEU_IN__ok_killed;
+             evt.param = &me;
+    ceu_sys_bcast(app, lvl, &evt, app->data);
+    ceu_sys_go_ex(app, lvl, &evt, NULL,
+                  app->data, &app->data->trls[0], NULL);
 }
 #endif
 

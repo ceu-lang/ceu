@@ -429,8 +429,10 @@ void ]]..enum..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
         end
 
         -- kill myself before my recursive fields (push myself after)
+-- TODO: why before?
+-- moving to "after" to see what happens
         kill = kill .. [[
-    ceu_sys_adt_kill(_ceu_app, go, me);
+    ceu_sys_adt_kill(app, lvl, me);
 }
 #endif
 ]]
