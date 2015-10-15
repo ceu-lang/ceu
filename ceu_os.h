@@ -469,6 +469,11 @@ typedef struct tceu_evt {
 
 /* TCEU_STK */
 
+typedef struct tceu_stk {
+    struct tceu_org* org;
+    struct tceu_stk* down;
+} tceu_stk;
+
 /* TCEU_LNK */
 
 /* simulates an org prv/nxt */
@@ -621,7 +626,7 @@ typedef struct tceu_app {
 #endif
 #endif
 
-    int         (*code)  (struct tceu_app*,int,tceu_evt*,tceu_org*,tceu_trl**);
+    int         (*code)  (struct tceu_app*,int,tceu_evt*,tceu_org*,tceu_trl**,tceu_stk*);
     void        (*init)  (struct tceu_app*);
 #ifdef CEU_OS
     void*       (*calls) (struct tceu_app*,tceu_nevt,void*);
@@ -682,6 +687,11 @@ enum {
 #endif
 #ifdef CEU_RET
     , RET_QUIT
+#endif
+#ifdef CEU_ORGS
+#ifndef CEU_ANA_NO_NESTED_TERMINATION
+    , RET_DEAD
+#endif
 #endif
 };
 

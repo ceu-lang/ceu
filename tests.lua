@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -23905,7 +23906,6 @@ escape ret;
 }
 
 -->>> CLASSES, ORGS, ORGANISMS
---]===]
 
 Test { [[
 class A with
@@ -29662,6 +29662,32 @@ await *(t3!);
 escape 1;
 ]],
     run = { ['~>2us']=1 },
+}
+
+-- fails w/o ceu_sys_stack_clear_org
+Test { [[
+input void OS_START;
+
+class U with
+do
+    await 1us;
+end
+
+class T with
+do
+    do U;
+end
+
+do
+    pool T[] ts;
+    spawn T in ts;
+    var T&&? t = spawn T in ts;
+    await *t!;
+end
+
+escape 1;
+]],
+    run = { ['~>1us']=1 },
 }
 
 Test { [[

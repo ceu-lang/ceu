@@ -317,9 +317,20 @@ if (_ceu_evt->=CEU_IN__STK && _ceu_stk->org==_ceu_org
 {
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
+printf(">>> 2: %p\n", _ceu_org);
+/* XXXX-2 */
     ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
-                  NULL,
+                  NULL, _ceu_stk,
                   _ceu_org, &_ceu_org->trls[0], _ceu_org);
+printf(">>> 3: %p\n", _ceu_org);
+#ifdef CEU_ORGS
+#ifndef CEU_ANA_NO_NESTED_TERMINATION
+    if (_ceu_stk->org == NULL) {
+printf("DDDDDDDD\n");
+        return RET_DEAD;
+    }
+#endif
+#endif
 }
 #endif
 ]])
@@ -662,13 +673,13 @@ case ]]..me.lbl.id..[[:;
             LINE(me, [[
 /* HACK_9: see above */
 #if 0
-#endif
 if (]]..V(set_to,'rval')..[[.tag != ]]..string.upper(TP.toc(set_to.tp))..[[_NIL) {
     tceu_stk* stk = stack_nxt(_ceu_go);
     if (stk->evt.id == CEU_IN__NONE) {
         ]]..V(set_to,'rval')..' = '..string.upper(TP.toc(set_to.tp))..[[_pack(NULL);
     }
 }
+#endif
 ]])
         end
 
@@ -1732,8 +1743,9 @@ case ]]..me.lbl_cnt.id..[[:;
         end
         LINE(me, [[
     ceu_sys_bcast(_ceu_app, _ceu_lvl+1, &evt, _ceu_app->data);
+/* XXXX-3 */
     ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
-                  NULL,
+                  NULL, _ceu_stk,
                   _ceu_app->data, &_ceu_app->data->trls[0], NULL);
     if (trl->lbl != CEU_LBL__STACKED) {
         return RET_HALT;
