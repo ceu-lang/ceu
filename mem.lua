@@ -432,7 +432,21 @@ void ]]..enum..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
 -- TODO: why before?
 -- moving to "after" to see what happens
         kill = kill .. [[
-    ceu_sys_adt_kill(app, lvl, me);
+#ifdef CEU_ADTS_WATCHING
+    {
+        tceu_evt evt;
+                 evt.id = CEU_IN__ok_killed;
+                 evt.param = &me;
+        ceu_sys_bcast(app, lvl, &evt, app->data);
+/* XXXX-1 */
+        ceu_sys_go_ex(app, lvl, &evt, NULL, NULL,
+/* TODO: stk */
+                      app->data, &app->data->trls[0], NULL);
+    }
+#endif
+
+/**********************************************************************/
+
 }
 #endif
 ]]

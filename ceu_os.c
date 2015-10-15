@@ -146,22 +146,6 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int lvl,
 
 /**********************************************************************/
 
-#ifdef CEU_ADTS_WATCHING
-void ceu_sys_adt_kill (tceu_app* app, int lvl, void* me)
-{
-    tceu_evt evt;
-             evt.id = CEU_IN__ok_killed;
-             evt.param = &me;
-    ceu_sys_bcast(app, lvl, &evt, app->data);
-/* XXXX-1 */
-    ceu_sys_go_ex(app, lvl, &evt, NULL, NULL,
-/* TODO: stk */
-                  app->data, &app->data->trls[0], NULL);
-}
-#endif
-
-/**********************************************************************/
-
 #ifdef CEU_CLEAR
 /* TODO: inline this? */
 void ceu_sys_clear (tceu_app* _ceu_app, int lvl,
