@@ -23905,6 +23905,7 @@ escape ret;
 }
 
 -->>> CLASSES, ORGS, ORGANISMS
+--]===]
 
 Test { [[
 class A with
@@ -29626,22 +29627,21 @@ escape 1;
     asr = 'runtime error: invalid tag',
 }
 
---]===]
 Test { [[
 input void OS_START;
 
 class T with
 do
-    await 1us;
+    await OS_START;
 end
 pool T[] ts;
 
-var T&&? t1 = spawn T;
-await *(t1!);
-
+var T&&? t = spawn T;
+await *(t!);
+_printf(">>> 1\n");
 escape 1;
 ]],
-    run = { ['~>2us']=1 },
+    run = 1,
 }
 
 Test { [[

@@ -87,6 +87,8 @@ int ceu_sys_req (void) {
 int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
                    void* cnt,
                    tceu_org* org, tceu_trl* trl, void* stop);
+static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org);
+
 
 /**********************************************************************/
 
@@ -216,41 +218,6 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
     trl->org->prv = org;
 #endif  /* CEU_ORGS */
 }
-
-static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org);
-
-#ifdef CEU_ORGS
-
-#ifdef CEU_ORGS_NEWS
-void ceu_sys_org_free (tceu_org* me)
-{
-    /* re-link PRV <-> NXT */
-    if (me->pool->parent_trl->org == me) {
-        me->pool->parent_trl->org = me->nxt;    /* subst 1st org */
-            /* TODO-POOL: this information is 1 level up in the stack */
-    } else {
-        me->prv->nxt = me->nxt;
-    }
-    if (me->nxt != NULL) {
-        me->nxt->prv = me->prv;
-    }
-
-    /* free */
-#if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
-    ceu_pool_free((tceu_pool*)me->pool, (byte*)me);
-#elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-    if (me->pool->queue == NULL) {
-        ceu_sys_realloc(me, 0);
-    } else {
-        ceu_pool_free((tceu_pool*)me->pool, (byte*)me);
-    }
-#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-    ceu_sys_realloc(me, 0);
-#endif
-}
-#endif /* CEU_ORGS_NEWS */
-
-#endif /* CEU_ORGS */
 
 /**********************************************************************/
 
@@ -436,20 +403,24 @@ static int spc = -1;
 
 static void ceu_sys_bcast_dbg (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org);
 static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org) {
+#if 0
     spc++;
     SPC(0); printf(">>> BCAST\n");
-    SPC(1); printf("lvl: %d\n", lvl);
-    SPC(1); printf("evt: %d\n", evt->id);
+    SPC(0); printf("lvl: %d\n", lvl);
+    SPC(0); printf("evt: %d\n", evt->id);
     #ifdef CEU_ORGS
-    SPC(1); printf("org: %p\n", org);
+    SPC(0); printf("org: %p\n", org);
     SPC(2); printf("[%p]=>[%p]\n", &org->trls[0],
                                    &org->trls[org->n]);
     #endif
+#endif
 
     ceu_sys_bcast_dbg(app,lvl,evt,org);
 
+#if 0
     SPC(0); printf("<<< BCAST\n");
     spc--;
+#endif
 }
 
 int ceu_sys_go_ex_dbg (tceu_app* app, int lvl, tceu_evt* evt,
@@ -460,10 +431,10 @@ int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
                    tceu_org* org, tceu_trl* trl, void* stop) {
     spc++;
     SPC(0); printf(">>> GO-EX\n");
-    SPC(1); printf("lvl: %d\n", lvl);
-    SPC(1); printf("evt: %d\n", evt->id);
+    SPC(0); printf("lvl: %d\n", lvl);
+    SPC(0); printf("evt: %d\n", evt->id);
     #ifdef CEU_ORGS
-    SPC(1); printf("org: %p\n", org);
+    SPC(0); printf("org: %p\n", org);
     SPC(2); printf("[%p]=>[%p]\n", &org->trls[0],
                                    &org->trls[org->n]);
     #endif
@@ -724,6 +695,20 @@ SPC(1); printf("<<< NO\n");
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
             org->isAlive = 0;
 #endif
+#ifdef CEU_ORGS_NEWS
+            /* re-link PRV <-> NXT */
+            if (org->isDyn) {
+                if (org->pool->parent_trl->org == org) {
+                    org->pool->parent_trl->org = org->nxt;    /* subst 1st org */
+                        /* TODO-POOL: this information is 1 level up in the stack */
+                } else {
+                    org->prv->nxt = org->nxt;
+                }
+                if (org->nxt != NULL) {
+                    org->nxt->prv = org->prv;
+                }
+            }
+#endif
 #ifdef CEU_ORGS_WATCHING
             {
                 tceu_kill ps = { org, org->ret };
@@ -737,6 +722,23 @@ SPC(1); printf("<<< NO\n");
                               app->data, &app->data->trls[0], NULL);
             }
 #endif
+#ifdef CEU_ORGS_NEWS
+            /* free */
+            if (org->isDyn) {
+#if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
+                ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+#elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+                if (org->pool->queue == NULL) {
+                    ceu_sys_realloc(org, 0);
+                } else {
+                    ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+                }
+#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+                ceu_sys_realloc(org, 0);
+#endif
+            }
+#endif
+
 
 #if 0
             ceu_sys_stack_clear_org(_ceu_go, old, stack_curi(_ceu_go));
@@ -769,11 +771,11 @@ stk = stack_cur(_ceu_go);
 stk = stack_cur(_ceu_go);
 #endif
             }
-#endif
 #ifdef CEU_ORGS_NEWS
             if (org->isDyn) {
                 ceu_sys_org_free(org);
             }
+#endif
 #endif
         }
 
