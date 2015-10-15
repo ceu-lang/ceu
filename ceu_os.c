@@ -526,7 +526,6 @@ static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org)
 #endif
 #ifdef CEU_WATCHING
         if (evt->id == CEU_IN__ok_killed) {
-            ((tceu_kill*)evt->param)->org_or_adt);
             if (trl->org_or_adt != NULL &&
                 trl->org_or_adt != ((tceu_kill*)evt->param)->org_or_adt)
             {
