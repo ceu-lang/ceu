@@ -85,7 +85,7 @@ int ceu_sys_req (void) {
 }
 
 int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
-                   void* cnt, tceu_stk* stk_down,
+                   tceu_stk* stk_down,
                    tceu_org* org, tceu_trl* trl, void* stop);
 static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org);
 
@@ -308,10 +308,10 @@ static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org)
 }
 
 int ceu_sys_go_ex_dbg (tceu_app* app, int lvl, tceu_evt* evt,
-                       void* cnt, tceu_stk* stk_down,
+                       tceu_stk* stk_down,
                        tceu_org* org, tceu_trl* trl, void* stop);
 int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
-                   void* cnt, tceu_stk* stk_down,
+                   tceu_stk* stk_down,
                    tceu_org* org, tceu_trl* trl, void* stop) {
     spc++;
     SPC(0); printf(">>> GO-EX\n");
@@ -323,7 +323,7 @@ int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
                                    &org->trls[org->n]);
     #endif
 
-    int ret = ceu_sys_go_ex_dbg(app,lvl,evt,cnt,stk,org,trl,stop);
+    int ret = ceu_sys_go_ex_dbg(app,lvl,evt,stk_down,org,trl,stop);
 
     SPC(0); printf("<<< GO-EX\n");
     spc--;
@@ -410,11 +410,11 @@ static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org)
 
 #ifdef CEU_DEBUG_TRAILS
 int ceu_sys_go_ex_dbg (tceu_app* app, int lvl, tceu_evt* evt,
-                       void* cnt, tceu_stk* stk_down,
+                       tceu_stk* stk_down,
                        tceu_org* org, tceu_trl* trl, void* stop)
 #else
 int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
-                   void* cnt, tceu_stk* stk_down,
+                   tceu_stk* stk_down,
                    tceu_org* org, tceu_trl* trl, void* stop)
     /* TODO: now all arguments are required in all configurations */
 #endif
@@ -465,7 +465,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             }
             if (trl->org != NULL) {
                 ceu_sys_go_ex(app, lvl, evt,
-                              cnt, &stk,
+                              &stk,
                               trl->org, &trl->org->trls[0], NULL);
             }
             continue;
@@ -538,7 +538,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     if (parent_trl!=NULL && parent_trl->org!=NULL) {
                         /* TODO: restarting, how to resume from next? */
                         return ceu_sys_go_ex(app, lvl, evt,
-                                             cnt, &stk,
+                                             &stk,
                                              parent_trl->org, &parent_trl->org->trls[0], NULL);
                     } else
 #endif
@@ -633,7 +633,7 @@ printf("--- %p\n", org);
                 ceu_sys_bcast(app, lvl, &evt_, app->data);
 /* XXXX-2 */
                 ceu_sys_go_ex(app, lvl, &evt_,
-                              NULL, &stk,
+                              &stk,
                               app->data, &app->data->trls[0], NULL);
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
                 if (stk.org == NULL) {
@@ -664,7 +664,7 @@ printf("--- %p\n", org);
         /* traverse next org */
         if (nxt!=NULL && stop!=org) {
             return ceu_sys_go_ex(app, lvl, evt,
-                                 cnt, &stk,
+                                 &stk,
                                  nxt, &nxt->trls[0], NULL);
         }
 
@@ -715,7 +715,7 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
                  evt_.param = &evtp;
         ceu_sys_bcast(app, 0, &evt_, app->data);
         ceu_sys_go_ex(app, 0, &evt_,
-                      NULL, NULL,
+                      NULL,
                       app->data, &app->data->trls[0], NULL);
     }
 

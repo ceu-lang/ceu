@@ -146,7 +146,8 @@ function CLEAR_BEF (me)
 {
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt, NULL, _ceu_stk,
+    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
+                  _ceu_stk,
                   _ceu_org,
                   &_ceu_org->trls[ ]]..(me.trails[1])  ..[[ ],
                   &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
@@ -320,7 +321,7 @@ if (_ceu_evt->=CEU_IN__STK && _ceu_stk->org==_ceu_org
 printf(">>> 2: %p\n", _ceu_org);
 /* XXXX-2 */
     ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
-                  NULL, _ceu_stk,
+                  _ceu_stk,
                   _ceu_org, &_ceu_org->trls[0], _ceu_org);
 printf(">>> 3: %p\n", _ceu_org);
 #ifdef CEU_ORGS
@@ -420,7 +421,8 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         tceu_trl* trl = (*_ceu_trl);
         trl->lbl = CEU_LBL__STACKED;
 
-        ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt, NULL, _ceu_stk,
+        ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
+                      _ceu_stk,
                       ]]..org..[[, &]]..org..[[->trls[0],
                                    &]]..org..[[->trls[ ]]..org..[[->n]);
                                    /* don't follow the up link */
@@ -596,7 +598,8 @@ if (]]..me.val..[[ == NULL) {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt, NULL, _ceu_stk,
+    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
+                  _ceu_stk,
                   __ceu_org, &__ceu_org->trls[0], __ceu_org);
 }
 /* TESTAR se trail ainda ativa, fazer teste que pegue esse bug */
@@ -1752,7 +1755,7 @@ case ]]..me.lbl_cnt.id..[[:;
     ceu_sys_bcast(_ceu_app, _ceu_lvl+1, &evt, _ceu_app->data);
 /* XXXX-3 */
     ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
-                  NULL, _ceu_stk,
+                  _ceu_stk,
                   _ceu_app->data, &_ceu_app->data->trls[0], NULL);
     if (trl->lbl != CEU_LBL__STACKED) {
         return RET_HALT;
