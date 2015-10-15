@@ -29095,7 +29095,6 @@ escape sum;
 }
 
 -- POOL ITERATORS
---]===]
 
 Test { [[
 class T with
@@ -29261,6 +29260,40 @@ end
 escape ret + _V;
 ]],
     run = 50,
+}
+
+Test { [[
+class T with
+do
+    _printf("me = %p\n", __ceu_org);
+    await FOREVER;
+end
+
+pool T[2] ts;
+spawn T in ts;
+spawn T in ts;
+
+input void OS_START;
+await OS_START;
+escape 60;
+]],
+    run = 60,
+}
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+pool T[] ts;
+spawn T in ts;
+spawn T in ts;
+
+input void OS_START;
+await OS_START;
+escape 60;
+]],
+    run = 60,
 }
 
 Test { [[
@@ -29593,6 +29626,7 @@ escape 1;
     asr = 'runtime error: invalid tag',
 }
 
+--]===]
 Test { [[
 input void OS_START;
 

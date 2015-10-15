@@ -225,8 +225,8 @@ static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org)
 void ceu_sys_org_free (tceu_org* me)
 {
     /* re-link PRV <-> NXT */
-    if (me->prv == me) {
-        me->pool->parent_trl->org = NULL;  /* last org, clear list */
+    if (me->pool->parent_trl->org == me) {
+        me->pool->parent_trl->org = me->nxt;    /* subst 1st org */
             /* TODO-POOL: this information is 1 level up in the stack */
     } else {
         me->prv->nxt = me->nxt;
