@@ -23905,7 +23905,6 @@ escape ret;
 }
 
 -->>> CLASSES, ORGS, ORGANISMS
---]===]
 
 Test { [[
 class A with
@@ -28504,38 +28503,6 @@ escape 1;
     run = 1,
 }
 
--- problems w/o ceu_sys_stack_clear_org
-Test { [[
-input void OS_START;
-
-class U with
-do
-    await 1us;
-end
-
-class T with
-do
-    do U;
-end
-
-do
-    var T t1;
-    var T t2;
-    await t2;
-end
-do
-    var _char[1000] v;
-    native @nohold _memset();
-    _memset(&&v, 0, 1000);
-    var T t3;
-    await t3;
-end
-
-escape 1;
-]],
-    run = { ['~>2us']=1 },
-}
-
 -- CONSTRUCTOR
 
 Test { [[
@@ -28744,59 +28711,6 @@ escape t.x;
     run = 10,
 }
 
-Test { [[
-class U with
-    event void ok;
-do
-    finalize with
-        _V = _V + 4;
-    end
-    await 1ms;
-    emit this.ok;
-    await FOREVER;
-end;
-class T with do
-    finalize with
-        _V = _V + 2;
-    end
-    var U u;
-    await FOREVER;
-end;
-native do
-    int V = 1;
-end
-finalize with
-    _V = 1000;
-end
-finalize with
-    _V = 1000;
-end
-finalize with
-    _V = 1000;
-end
-par/or do
-    await 1s;
-with
-    do
-        var T t;
-        var U u;
-        par/or do
-            await u.ok;
-        with
-            await u.ok;
-        end;
-    end
-    var T t1;
-    var U u1;
-    await u1.ok;
-    _assert(_V == 11);
-end
-_assert(_V == 21);
-escape _V;
-]],
-    run = { ['~>1s']=21 },
-}
-
 -- TODO: bounded loop on finally
 
 -->>> GLOBAL-DO-END / DO-PRE
@@ -28991,15 +28905,6 @@ end
 
 Test { [[
 class T with do end
-var T&& ok = spawn T;
-escape ok != null;
-]],
-    env = 'line 2 : must assign to option pointer',
-    --run = 1,
-}
-
-Test { [[
-class T with do end
 function (void)=>void fff do
     spawn T;
 end
@@ -29009,13 +28914,140 @@ escape 1;
 }
 
 Test { [[
-class U with do end
-class T with do end
-var U&&? ok = spawn T;
-escape ok != null;
+class T with
+    var int v;
+do
+end
+
+input int E;
+
+par/or do
+    var int yyy;
+    every xxx in E do
+        spawn T with
+            yyy = 1;
+            xxx = 1;
+        end;
+    end;
+with
+end
+
+escape 1;
 ]],
-    env = 'line 3 : types mismatch (`U&&´ <= `T&&´)',
-    --run = 1,
+    run = 1,
+}
+
+Test { [[
+event void x,e,f,g;
+var int ret = 0;
+class T with do end;
+par/or do
+    every x do
+        loop i in 1000 do
+            emit e;
+        end
+    end
+with
+    every e do
+        emit f;
+    end
+with
+    every f do
+        emit g;
+    end
+with
+    every g do
+        ret = ret + 1;
+        spawn T;
+    end
+with
+    emit x;
+end
+escape ret;
+]],
+    _ana = {acc=1},
+    run = 1000, -- had stack overflow
+}
+
+Test { [[
+class Groundpiece with
+do
+end
+
+event void x;
+event void a;
+event void b;
+event void c;
+var int ret = 0;
+
+par/or do
+    every x do
+        emit b;
+        ret = 10;
+    end
+with
+    every b do
+        emit a;
+    end
+with
+    every c do
+        spawn Groundpiece;
+    end
+with
+    emit x;
+end
+
+input void OS_START;
+await OS_START;
+escape ret;
+]],
+    _ana = {acc=true},
+    run = 10,
+}
+
+--<<< SPAWN
+
+-- MEM/MEMORY POOL
+
+Test { [[
+class T with
+do
+end
+pool T t;
+escape 1;
+]],
+    env = 'line 4 : missing `pool´ dimension',
+    --parser = 'line 4 : after `T´ : expected `[´',
+}
+
+Test { [[
+class T with do end
+pool T[] ts;
+var T t;
+ts = t;
+escape 1;
+]],
+    env = 'line 4 : types mismatch',
+}
+
+Test { [[
+class T with
+do
+end
+pool T[] t;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -29029,6 +29061,254 @@ else
 end
 ]],
     run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+var T&&? ok1 = spawn T in t with end;
+var T&&? ok2 = spawn T in t;
+escape (ok1?) + (ok2?) + 1;
+]],
+    run = 1,
+    --fin = 'line 7 : unsafe access to pointer "ok1" across `spawn´',
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+var T&&? ok1 = spawn T in t with end;
+var int sum = 1;
+if ok1? then
+    watching *(ok1!) do
+        var T&&? ok2 = spawn T in t;
+        sum = sum + (ok1?) + (ok2?);
+    end
+end
+escape sum;
+]],
+    run = 1,
+}
+
+-- POOL ITERATORS
+--]===]
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+var T ts;
+loop t in ts do
+end
+escape 1;
+]],
+    --fin = 'line 14 : pointer access across `await´',
+    env = 'line 6 : invalid pool',
+    --run = 1,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+loop t in ts do
+end
+escape 1;
+]],
+    --fin = 'line 14 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var T&&?  ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+var int ok2 = 0;// spawn T in ts;
+var int ret = 0;
+loop (T&&)t in ts do
+    ret = ret + t:v;
+end
+escape (ok1?) + ok2 + ret;
+]],
+    parser = 'line 11 : before `loop´ : expected statement (usually a missing `var´ or C prefix `_´)',
+    --fin = 'line 14 : pointer access across `await´',
+    --run = 1,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var T&&?  ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+var int ok2 = 0;// spawn T in ts;
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:v;
+end
+escape (ok1?) + ok2 + ret + 1;
+]],
+    --fin = 'line 14 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+class T with do await FOREVER; end;
+pool T[] ts;
+event void e;
+spawn T in ts;
+var int ret = 0;
+loop t in ts do
+    ret = ret + 1;
+    spawn T in ts;
+end
+escape ret;
+]],
+    props = 'line 6 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+}
+
+Test { [[
+class T with
+do
+end
+pool T[] t;
+spawn T in t;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+spawn T;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+pool T[] t;
+spawn T in t;
+spawn T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[] ts;
+spawn T in ts with
+    this.v = 10;
+    _V = _V + 10;
+end;
+spawn T with
+    this.v = 20;
+    _V = _V + 20;
+end;
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:v;
+end
+escape ret + _V;
+]],
+    run = 40,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[] ts;
+spawn T with
+    this.v = 10;
+    _V = _V + 10;
+end;
+spawn T in ts with
+    this.v = 20;
+    _V = _V + 20;
+end;
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:v;
+end
+escape ret + _V;
+]],
+    run = 50,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[] ts;
+spawn T in ts with
+    this.v = 10;
+    _V = _V + 10;
+end;
+spawn T in ts with
+    this.v = 20;
+    _V = _V + 20;
+end;
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:v;
+end
+escape ret + _V;
+]],
+    run = 60,
+}
+
+-->> POOL/SPAWN/OPTION
+
+Test { [[
+class T with do end
+var T&& ok = spawn T;
+escape ok != null;
+]],
+    env = 'line 2 : must assign to option pointer',
+    --run = 1,
+}
+
+Test { [[
+class U with do end
+class T with do end
+var U&&? ok = spawn T;
+escape ok != null;
+]],
+    env = 'line 3 : types mismatch (`U&&´ <= `T&&´)',
+    --run = 1,
 }
 
 Test { [[
@@ -29373,356 +29653,6 @@ await *t3!;
 escape 1;
 ]],
     run = { ['~>2us']=1 },
-}
-
-Test { [[
-class T with
-    var int v;
-do
-end
-
-input int E;
-
-par/or do
-    var int yyy;
-    every xxx in E do
-        spawn T with
-            yyy = 1;
-            xxx = 1;
-        end;
-    end;
-with
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-event void x,e,f,g;
-var int ret = 0;
-class T with do end;
-par/or do
-    every x do
-        loop i in 1000 do
-            emit e;
-        end
-    end
-with
-    every e do
-        emit f;
-    end
-with
-    every f do
-        emit g;
-    end
-with
-    every g do
-        ret = ret + 1;
-        spawn T;
-    end
-with
-    emit x;
-end
-escape ret;
-]],
-    _ana = {acc=1},
-    run = 1000, -- had stack overflow
-}
-
-Test { [[
-class Groundpiece with
-do
-end
-
-event void x;
-event void a;
-event void b;
-event void c;
-var int ret = 0;
-
-par/or do
-    every x do
-        emit b;
-        ret = 10;
-    end
-with
-    every b do
-        emit a;
-    end
-with
-    every c do
-        spawn Groundpiece;
-    end
-with
-    emit x;
-end
-
-input void OS_START;
-await OS_START;
-escape ret;
-]],
-    _ana = {acc=true},
-    run = 10,
-}
-
---<<< SPAWN
-
--- MEM/MEMORY POOL
-
-Test { [[
-class T with
-do
-end
-pool T t;
-escape 1;
-]],
-    env = 'line 4 : missing `pool´ dimension',
-    --parser = 'line 4 : after `T´ : expected `[´',
-}
-
-Test { [[
-class T with do end
-pool T[] ts;
-var T t;
-ts = t;
-escape 1;
-]],
-    env = 'line 4 : types mismatch',
-}
-
-Test { [[
-class T with
-do
-end
-pool T[] t;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-pool T[1] t;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-pool T[1] t;
-var T&&? ok1 = spawn T in t with end;
-var T&&? ok2 = spawn T in t;
-escape (ok1?) + (ok2?) + 1;
-]],
-    run = 1,
-    --fin = 'line 7 : unsafe access to pointer "ok1" across `spawn´',
-}
-
-Test { [[
-class T with
-do
-end
-pool T[1] t;
-var T&&? ok1 = spawn T in t with end;
-var int sum = 1;
-if ok1? then
-    watching *(ok1!) do
-        var T&&? ok2 = spawn T in t;
-        sum = sum + (ok1?) + (ok2?);
-    end
-end
-escape sum;
-]],
-    run = 1,
-}
-
--- POOL ITERATORS
-
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-var T ts;
-loop t in ts do
-end
-escape 1;
-]],
-    --fin = 'line 14 : pointer access across `await´',
-    env = 'line 6 : invalid pool',
-    --run = 1,
-}
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-pool T[1] ts;
-var T&&?  ok1 = spawn T in ts with
-                this.v = 10;
-              end;
-var int ok2 = 0;// spawn T in ts;
-var int ret = 0;
-loop (T&&)t in ts do
-    ret = ret + t:v;
-end
-escape (ok1?) + ok2 + ret;
-]],
-    parser = 'line 11 : before `loop´ : expected statement (usually a missing `var´ or C prefix `_´)',
-    --fin = 'line 14 : pointer access across `await´',
-    --run = 1,
-}
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-pool T[1] ts;
-var T&&?  ok1 = spawn T in ts with
-                this.v = 10;
-              end;
-var int ok2 = 0;// spawn T in ts;
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
-end
-escape (ok1?) + ok2 + ret + 1;
-]],
-    --fin = 'line 14 : pointer access across `await´',
-    run = 1,
-}
-Test { [[
-class T with do await FOREVER; end;
-pool T[] ts;
-event void e;
-spawn T in ts;
-var int ret = 0;
-loop t in ts do
-    ret = ret + 1;
-    spawn T in ts;
-end
-escape ret;
-]],
-    props = 'line 6 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
-}
-
-Test { [[
-class T with
-do
-end
-pool T[] t;
-spawn T in t;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-class T with
-do
-end
-spawn T;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-class T with
-do
-end
-pool T[] t;
-spawn T in t;
-spawn T;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-    var int v = 0;
-do
-    async do end;
-end
-pool T[] ts;
-spawn T in ts with
-    this.v = 10;
-    _V = _V + 10;
-end;
-spawn T with
-    this.v = 20;
-    _V = _V + 20;
-end;
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
-end
-escape ret + _V;
-]],
-    run = 40,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-    var int v = 0;
-do
-    async do end;
-end
-pool T[] ts;
-spawn T with
-    this.v = 10;
-    _V = _V + 10;
-end;
-spawn T in ts with
-    this.v = 20;
-    _V = _V + 20;
-end;
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
-end
-escape ret + _V;
-]],
-    run = 50,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-    var int v = 0;
-do
-    async do end;
-end
-pool T[] ts;
-spawn T in ts with
-    this.v = 10;
-    _V = _V + 10;
-end;
-spawn T in ts with
-    this.v = 20;
-    _V = _V + 20;
-end;
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
-end
-escape ret + _V;
-]],
-    run = 60,
 }
 
 Test { [[
@@ -30601,6 +30531,116 @@ end;
 escape sum;
 ]],
     run = 2,
+}
+
+-- problems w/o ceu_sys_stack_clear_org
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await 1us;
+_printf("+++++++\n");
+end
+
+do
+    var T t;
+    await t;
+end
+do
+    var _char[1000] v;
+    native @nohold _memset();
+    _memset(&&v, 0, 1000);
+_printf("--------\n");
+end
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+
+Test { [[
+input void OS_START;
+
+class U with
+do
+    await 1us;
+end
+
+class T with
+do
+    do U;
+end
+
+do
+    var T t1;
+    var T t2;
+    await t2;
+end
+do
+    var _char[1000] v;
+    native @nohold _memset();
+    _memset(&&v, 0, 1000);
+    var T t3;
+    await t3;
+end
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+
+Test { [[
+class U with
+    event void ok;
+do
+    finalize with
+        _V = _V + 4;
+    end
+    await 1ms;
+    emit this.ok;
+    await FOREVER;
+end;
+class T with do
+    finalize with
+        _V = _V + 2;
+    end
+    var U u;
+    await FOREVER;
+end;
+native do
+    int V = 1;
+end
+finalize with
+    _V = 1000;
+end
+finalize with
+    _V = 1000;
+end
+finalize with
+    _V = 1000;
+end
+par/or do
+    await 1s;
+with
+    do
+        var T t;
+        var U u;
+        par/or do
+            await u.ok;
+        with
+            await u.ok;
+        end;
+    end
+    var T t1;
+    var U u1;
+    await u1.ok;
+    _assert(_V == 11);
+end
+_assert(_V == 21);
+escape _V;
+]],
+    run = { ['~>1s']=21 },
 }
 
 -- SPAWN / RECURSIVE

@@ -482,7 +482,7 @@ typedef struct tceu_org_lnk {
 
 #ifdef CEU_NEWS
 typedef struct {
-    tceu_trl* trl;
+    tceu_trl* parent_trl;
     byte**    queue;
 } tceu_pool_;
 #endif

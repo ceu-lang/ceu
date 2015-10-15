@@ -226,7 +226,7 @@ void ceu_sys_org_free (tceu_org* me)
 {
     /* re-link PRV <-> NXT */
     if (me->prv == me) {
-        me->pool->trl->org = NULL;  /* last org, clear list */
+        me->pool->parent_trl->org = NULL;  /* last org, clear list */
             /* TODO-POOL: this information is 1 level up in the stack */
     } else {
         me->prv->nxt = me->nxt;

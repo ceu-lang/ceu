@@ -651,7 +651,7 @@ case ]]..me.lbl.id..[[:;
             val    = '(*((CEU_'..id..'*)'..ID..'))',
             constr = constr,
             arr    = false,
-            trl    = '((((tceu_pool_*)&'..V(pool,'rval')..'))->trl)',
+            trl    = '((((tceu_pool_*)&'..V(pool,'rval')..'))->parent_trl)',
         })
         LINE(me, [[
     }
@@ -661,6 +661,8 @@ case ]]..me.lbl.id..[[:;
             local set_to = set[4]
             LINE(me, [[
 /* HACK_9: see above */
+#if 0
+#endif
 if (]]..V(set_to,'rval')..[[.tag != ]]..string.upper(TP.toc(set_to.tp))..[[_NIL) {
     tceu_stk* stk = stack_nxt(_ceu_go);
     if (stk->evt.id == CEU_IN__NONE) {
@@ -787,7 +789,7 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..trl..'
                         end
                     elseif cls or tp_id=='_TOP_POOL' then
                         LINE(me, [[
-(]]..dcl..[[)->trl   = ]]..trl..[[;
+(]]..dcl..[[)->parent_trl = ]]..trl..[[;
 (]]..dcl..[[)->queue = NULL;            /* dynamic pool */
 ]])
                     end
@@ -1445,22 +1447,19 @@ if (]]..V(c,'rval')..[[) {
             elseif me.iter_tp == 'org' then
                 -- INI
                 local var = iter.lst.var
-                local lnks = '(((tceu_pool_*)'..V(iter,'lval')..')->lnks)'
-                ini[#ini+1] = V(to,'rval')..[[ = (]]..TP.toc(iter.tp)..[[)(
-    ((*]]..lnks..[[)[0].nxt->n == 0) ?
-        NULL :    /* marks end of linked list */
-        (*]]..lnks..[[)[0].nxt
-)
+                ini[#ini+1] =
+V(to,'rval')..' = ('..TP.toc(iter.tp)..[[)
+                    (((tceu_pool_*)]]..V(iter,'lval')..[[)->parent_trl->org)
 ]]
+
                 -- CND
                 cnd = '('..V(to,'rval')..' != NULL)'
 
                 -- NXT
-                local org = '((tceu_org*)'..V(to,'rval')..')'
-                nxt[#nxt+1] = '('..V(to,'rval')..' = ('..TP.toc(iter.tp)..')'..
-                                '(('..org..'->nxt->n==0) ? '..
-                                    'NULL : '..org..'->nxt))'
-
+                nxt[#nxt+1] =
+V(to,'rval')..' = ('..TP.toc(iter.tp)..[[)
+                    ((tceu_org*)]]..V(to,'rval')..[[)->nxt
+]]
             else
                 error'not implemented'
             end
