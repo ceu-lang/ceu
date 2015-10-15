@@ -350,7 +350,7 @@ void CEU_]]..id..'_free_static (tceu_app* _ceu_app, CEU_'..id..[[* me, void* poo
     return ret;
 }
 #if 0
-// TODO: noew requires explicit conversions
+// TODO: now requires explicit conversions
 ]]..some..[[ CEU_]]..ID..[[_unpack (]]..tp..[[ me) {
     if (me.tag == CEU_]]..ID..[[_NIL) {
         return NULL;

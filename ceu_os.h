@@ -144,11 +144,6 @@ enum {
         ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
 #endif
 
-#ifdef CEU_CLEAR
-    #define ceu_out_clear(app,lvl,cnt_trl,cnt_lbl,org,from,stop) \
-        ((__typeof__(ceu_sys_clear)*)((app)->sys_vec[CEU_SYS_CLEAR]))(app,lvl,cnt_trl,cnt_lbl,org,from,stop)
-#endif
-
     #define ceu_out_org(app,org,n,lbl,lvl,cls,isDyn,parent,trl) \
         ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,lvl,cls,isDyn,parent,trl)
     #define ceu_out_start(app) \
@@ -204,12 +199,6 @@ enum {
             ceu_sys_realloc(ptr,size)
     #define ceu_out_req() \
             ceu_sys_req()
-
-#ifdef CEU_CLEAR
-    #define ceu_out_clear(app,lvl,cnt_trl,cnt_lbl,org,from,stop) \
-            ceu_sys_clear(app,lvl,cnt_trl,cnt_lbl,org,from,stop)
-#endif
-
     #define ceu_out_org(app,org,n,lbl,lvl,cls,isDyn,parent,trl) \
             ceu_sys_org(org,n,lbl,lvl,cls,isDyn,parent,trl)
 
@@ -724,13 +713,8 @@ tceu_app* ceu_sys_load      (void* addr);
 #ifdef CEU_ISR
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
-#ifdef CEU_CLEAR
-void      ceu_sys_clear     (tceu_app* _ceu_app, int lvl,
-                             tceu_trl* cnt_trl, tceu_nlbl cnt_lbl,
-                             tceu_org* org, tceu_trl* from, void* stop)
-#endif
-
-void      ceu_sys_org       (tceu_org* org, int n, int lbl, int lvl, int cls, int isDyn, tceu_org* parent, tceu_trl* trl);
+void      ceu_sys_org       (tceu_org* org, int n, int lbl, int lvl, int cls, 
+int isDyn, tceu_org* parent, tceu_trl* trl);
 void      ceu_sys_start     (tceu_app* app);
 int       ceu_sys_link      (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 int       ceu_sys_unlink    (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);

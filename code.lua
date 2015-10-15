@@ -143,9 +143,14 @@ function CLEAR_BEF (me)
 ]]
 
     LINE(me, [[
-ceu_out_clear(_ceu_app, _ceu_lvl, (*_ceu_trl), ]]..me.lbl_clr.id..[[, _ceu_org,
-              &_ceu_org->trls[ ]]..(me.trails[1])  ..[[ ],
-              &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
+{
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt, NULL, _ceu_stk,
+                  _ceu_org,
+                  &_ceu_org->trls[ ]]..(me.trails[1])  ..[[ ],
+                  &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
+}
 ]])
 end
 
@@ -595,7 +600,9 @@ if (]]..me.val..[[ == NULL) {
         LINE(me, [[
 {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
-    ceu_out_clear(_ceu_app, _ceu_lvl, (*_ceu_trl), ]]..me.lbl.id..[[,
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt, NULL, _ceu_stk,
                   __ceu_org, &__ceu_org->trls[0], __ceu_org);
 }
 /* TESTAR se trail ainda ativa, fazer teste que pegue esse bug */
@@ -867,7 +874,6 @@ _ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
         if (not cls) or cls.is_ifc then
             return
         end
--- TODO: remover outros if(0){} alem do global
 
         -- TODO: try to remove this requirement
         if me.trails[1] ~= stmts.trails[1] then
