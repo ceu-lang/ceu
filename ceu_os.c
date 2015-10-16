@@ -338,6 +338,7 @@ static void ceu_sys_bcast_dbg (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* 
 static void ceu_sys_bcast (tceu_app* app, int lvl, tceu_evt* evt, tceu_org* org)
 #endif
 {
+    return;
     tceu_trl* trl;
     for (
         trl = &org->trls[0];
@@ -424,6 +425,7 @@ int ceu_sys_go_ex (tceu_app* app, int lvl, tceu_evt* evt,
     {
 #ifdef CEU_DEBUG_TRAILS
 SPC(1); printf("trl: %p\n", trl);
+SPC(2); printf("seqno: %d\n", trl->seqno);
 SPC(2); printf("evt: %d\n", trl->evt);
 #ifdef CEU_STACK
 SPC(2); printf("stk: %d\n", trl->stk);
@@ -473,13 +475,36 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif /* CEU_ORGS */
 
         /* EXECUTE THIS TRAIL */
+#if 0
+printf("%d==%d && %d!=%d && %d>=%d\n",
+        trl->evt, evt->id,
+        trl->seqno, app->seqno,
+        evt->id, CEU_IN_lower
+);
+#endif
+
         if (
 #ifdef CEU_CLEAR
-            (evt->id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR) ||
+            /* if IN__CLEAR and "finalize" clause */
+            (evt->id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR)
+        ||
 #endif
+            /* if IN__STK, i.e., ready for execution */
             (trl->evt == CEU_IN__STK
+#ifdef CEU_CLEAR
+                && evt->id != CEU_IN__CLEAR
+#endif
 #ifdef CEU_STACK
-             && trl->stk == lvl
+             /*&& trl->stk == lvl*/
+#endif
+            )
+        ||
+            /* if evt->id matches awaiting trail */
+            (trl->evt==evt->id && trl->seqno!=app->seqno
+#ifdef CEU_INTS
+#ifdef CEU_ORGS
+                && (evt->id>=CEU_IN_lower || evt->org==trl->evto)
+#endif
 #endif
             )
            )
@@ -494,6 +519,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
 
             trl->evt = CEU_IN__NONE;  /* clear trail */
+            trl->seqno = app->seqno;  /* don't awake again */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = app->addr;
@@ -572,11 +598,9 @@ SPC(1); printf("<<< NO\n");
 
         /* NEXT TRAIL */
 
-#ifdef CEU_INTS
-        if (trl->evt<CEU_IN_lower && trl->seqno!=app->seqno) {
+        if (trl->evt <= CEU_IN_higher && trl->seqno!=app->seqno) {
             trl->seqno = app->seqno-1;   /* keeps the gap tight */
         }
-#endif
     }
 
 #ifdef CEU_ORGS
@@ -675,8 +699,9 @@ printf("--- %p\n", org);
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
+    app->seqno++;
 #ifdef CEU_DEBUG_TRAILS
-    printf("===> %d\n", evt);
+    printf("===> [%d] %d\n", evt, app->seqno);
 #endif
 
     switch (evt) {
@@ -704,10 +729,6 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 #endif
 #endif
     }
-
-#ifdef CEU_INTS
-    app->seqno++;
-#endif
 
     {
         tceu_evt evt_;
@@ -1237,16 +1258,6 @@ void ceu_sys_start (tceu_app* app)
 #endif
 
     /* INIT */
-
-/*
-printf(">>> %p %X %p[%x %x %x %x %x]\n", addr, size, init,
-        ((unsigned char*)init)[5],
-        ((unsigned char*)init)[6],
-        ((unsigned char*)init)[7],
-        ((unsigned char*)init)[8],
-        ((unsigned char*)init)[9]);
-printf("<<< %d %d\n", app->isAlive, app->ret);
-*/
 
     app->init(app);
 

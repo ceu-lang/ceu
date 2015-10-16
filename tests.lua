@@ -3941,7 +3941,8 @@ with
 end
 ]],
     _ana = {acc=true},
-    run = -2,
+    run = 2,
+    --run = -2,
 }
 Test { [[
 input void OS_START;
@@ -3960,7 +3961,8 @@ with
 end
 ]],
     _ana = {acc=true},
-    run = 1,
+    run = 2,
+    --run = 1,
 }
 
 -- the inner "emit e" is aborted and the outer "emit e"
@@ -3995,9 +3997,8 @@ escape ret;
 ]],
     --_ana = {acc=3},
     _ana = {acc=true},
-    --run = 6,
-    --run = 9,
-    run = -2,
+    run = 9,
+    --run = -2,
 }
 
 Test { [[
@@ -4031,8 +4032,8 @@ escape ret;
     --_ana = {acc=3},
     _ana = {acc=true},
     --run = 6,
-    --run = 9,
-    run = 4,
+    run = 9,
+    --run = 4,
 }
 
 -- "emit e" on the stack has to die
@@ -4133,7 +4134,7 @@ par do
         end
     end
     do
-        emit e => (0,0);
+        emit e => (3,4);
     end
 with
     var int a,b;
@@ -4141,7 +4142,8 @@ with
     escape a+b;
 end
 ]],
-    run = 3,
+    run = 7,
+    --run = 3,
 }
 
 --<<< INTERNAL EVENTS

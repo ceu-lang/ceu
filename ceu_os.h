@@ -1,3 +1,35 @@
+#if 0
+        if (trl->evt != evt->id
+#if defined(CEU_INTS) && defined(CEU_ORGS)
+        ||  (evt->id<CEU_IN_lower && evt->org!=trl->evto)
+#endif
+        ) {
+            continue;
+        }
+#ifdef CEU_OS
+        if (trl->evt == CEU_IN__NONE) {
+            continue; /* OS can emit NONE (to fill queue gaps) */
+        }
+#endif
+#ifdef CEU_WATCHING
+        if (evt->id == CEU_IN__ok_killed) {
+            if (trl->org_or_adt != NULL &&
+                trl->org_or_adt != ((tceu_kill*)evt->param)->org_or_adt)
+            {
+                continue;
+            }
+        }
+        else
+#endif
+        {
+#ifdef CEU_INTS
+            if (evt->id<CEU_IN_lower && trl->seqno==app->seqno) {
+                continue;
+            }
+#endif
+        }
+#endif
+
 #ifndef _CEU_OS_H
 #define _CEU_OS_H
 
@@ -380,8 +412,8 @@ typedef union tceu_trl {
     struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt1;
         tceu_nlbl lbl;
-#ifdef CEU_INTS                 /* R-9: size of trails for internal events */
         u8        seqno;        /* TODO(ram): 2 bits is enough */
+#ifdef CEU_INTS                 /* R-9: size of trails for internal events */
 #ifdef CEU_ORGS
         void*     evto;
 #endif
@@ -537,9 +569,7 @@ typedef struct tceu_app {
      * awaiting trails matches only if trl->seqno < seqno,
      * i.e., previously awaiting the event
      */
-#ifdef CEU_INTS
     u8 seqno:         2;
-#endif
 #if defined(CEU_RET) || defined(CEU_OS)
     u8 isAlive:       1;
 #endif
