@@ -438,7 +438,7 @@ void ]]..enum..'_kill (tceu_app* _ceu_app, tceu_go* go, CEU_'..id..[[* me) {
                  evt.id = CEU_IN__ok_killed;
                  evt.param = &me;
 /* XXXX-1 */
-        ceu_sys_go_ex(app, lvl, &evt, NULL,
+        ceu_sys_go_ex(app, &evt, NULL,
 /* TODO: stk */
                       app->data, &app->data->trls[0], NULL);
     }

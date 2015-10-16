@@ -176,8 +176,8 @@ enum {
         ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
 #endif
 
-    #define ceu_out_org(app,org,n,lbl,lvl,cls,isDyn,parent,trl) \
-        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,lvl,cls,isDyn,parent,trl)
+    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,trl) \
+        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,cls,isDyn,parent,trl)
     #define ceu_out_start(app) \
         ((__typeof__(ceu_sys_start)*)((_ceu_app)->sys_vec[CEU_SYS_START]))(app)
     #define ceu_out_link(app1,evt1 , app2,evt2) \
@@ -231,8 +231,8 @@ enum {
             ceu_sys_realloc(ptr,size)
     #define ceu_out_req() \
             ceu_sys_req()
-    #define ceu_out_org(app,org,n,lbl,lvl,cls,isDyn,parent,trl) \
-            ceu_sys_org(org,n,lbl,lvl,cls,isDyn,parent,trl)
+    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,trl) \
+            ceu_sys_org(org,n,lbl,cls,isDyn,parent,trl)
 
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
@@ -419,15 +419,6 @@ typedef union tceu_trl {
 #endif
 #endif
     };
-
-    /* IN__STK */
-#ifdef CEU_STACK
-    struct {                    /* TODO(ram): bitfields */
-        tceu_nevt evt2;
-        tceu_nlbl lbl2;
-        tceu_nstk stk;
-    };
-#endif
 
     /* IN__ORG */
 #ifdef CEU_ORGS
@@ -621,7 +612,7 @@ typedef struct tceu_app {
 #endif
 #endif
 
-    int         (*code)  (struct tceu_app*,int,tceu_evt*,tceu_org*,tceu_trl*,tceu_stk*);
+    int         (*code)  (struct tceu_app*,tceu_evt*,tceu_org*,tceu_trl*,tceu_stk*);
     void        (*init)  (struct tceu_app*);
 #ifdef CEU_OS
     void*       (*calls) (struct tceu_app*,tceu_nevt,void*);
@@ -743,8 +734,7 @@ tceu_app* ceu_sys_load      (void* addr);
 #ifdef CEU_ISR
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
-void      ceu_sys_org       (tceu_org* org, int n, int lbl, int lvl, int cls, 
-int isDyn, tceu_org* parent, tceu_trl* trl);
+void      ceu_sys_org       (tceu_org* org, int n, int lbl, int cls, int isDyn, tceu_org* parent, tceu_trl* trl);
 void      ceu_sys_start     (tceu_app* app);
 int       ceu_sys_link      (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 int       ceu_sys_unlink    (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);

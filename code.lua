@@ -146,7 +146,7 @@ function CLEAR_BEF (me)
 {
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
+    ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org,
                   &_ceu_org->trls[ ]]..(me.trails[1])  ..[[ ],
@@ -303,7 +303,7 @@ if (_ceu_evt->=CEU_IN__STK && _ceu_stk->org==_ceu_org
              evt.id = CEU_IN__CLEAR;
 printf(">>> 2: %p\n", _ceu_org);
 /* XXXX-2 */
-    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
+    ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org, &_ceu_org->trls[0], _ceu_org);
 printf(">>> 3: %p\n", _ceu_org);
@@ -362,7 +362,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         LINE(me, [[
     /* resets org memory and starts org.trail[0]=Class_XXX */
     /* TODO: BUG: _ceu_org is not necessarily the parent for pool allocations */
-    ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[, _ceu_lvl+1,
+    ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
                 ]]..t.cls.n..[[,
                 ]]..t.isDyn..[[,
                 _ceu_org, ]] ..t.trl..[[);
@@ -400,7 +400,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     {
         tceu_trl* trl = _ceu_trl;
         trl->lbl = CEU_LBL__STACKED;
-        ceu_app_go(_ceu_app,0,NULL,
+        ceu_app_go(_ceu_app,NULL,
                    ]]..org..[[, &]]..org..[[->trls[0],
                    _ceu_stk);
         if (trl->lbl != CEU_LBL__STACKED) {
@@ -574,7 +574,7 @@ if (]]..me.val..[[ == NULL) {
     tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
+    ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   __ceu_org, &__ceu_org->trls[0], __ceu_org);
 }
@@ -1346,7 +1346,7 @@ _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = CEU_LBL__STACKED;
             if i < #me then
                 LINE(me, [[
     trl->lbl = ]]..me.lbls_in[i].id..[[;
-    ceu_app_go(_ceu_app,0,NULL,_ceu_org,trl,_ceu_stk);
+    ceu_app_go(_ceu_app,NULL,_ceu_org,trl,_ceu_stk);
 ]])
             else
                 -- execute the last directly (no need to call)
@@ -1742,7 +1742,7 @@ case ]]..me.lbl_cnt.id..[[:;
         end
         LINE(me, [[
 /* XXXX-3 */
-    ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
+    ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_app->data, &_ceu_app->data->trls[0], NULL);
     if (trl->lbl != CEU_LBL__STACKED) {
