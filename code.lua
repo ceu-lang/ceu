@@ -184,7 +184,6 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this, 
         end
 
         -- functions and threads receive __ceu_org as parameter
-        --   and do not require _ceu_go
         CODE.functions = string.gsub(CODE.functions, '_ceu_org', '__ceu_this')
         CODE.threads   = string.gsub(CODE.threads,   '_ceu_org', '__ceu_this')
 
@@ -953,7 +952,7 @@ ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0);
                     LINE(me, [[
 #if 0
 "kill" only while in scope
-CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..VAL_root..[[);
+CEU_]]..id..[[_kill(_ceu_app, ]]..VAL_root..[[);
 #endif
 ]])
                 end
@@ -1039,12 +1038,13 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 
         if PROPS.has_adts_watching[to_tp_id] then
             LINE(me, [[
-    /* save the continuation to run after the kills */
-    _ceu_trl->evt = CEU_IN__STK;
-assert(0); /* remove lbl_cnt.id, use C stack */
-    _ceu_trl->lbl = ]]..SET.lbl_cnt.id..[[;
-    _ceu_trl->stk = stack_curi(_ceu_go);
-    CEU_]]..to_tp_id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
+    /* save the continuation to run after the kill */
+    tceu_trl* trl = _ceu_trl;
+    trl->lbl = CEU_LBL__STACKED;
+    CEU_]]..to_tp_id..[[_kill(_ceu_app, __ceu_old);
+    if (trl->lbl != CEU_LBL__STACKED) {
+        return RET_HALT;
+    }
 ]])
 
             -- HACK: _ceu_org overwritten by _kill
@@ -1081,9 +1081,6 @@ assert(0); /* remove lbl_cnt.id, use C stack */
             -- HACK: _ceu_org overwritten by _kill
             LINE(me, [[
 #undef  _ceu_org
-
-return RET_RESTART;
-case ]]..SET.lbl_cnt.id..[[:;
 ]])
         end
 

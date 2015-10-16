@@ -101,15 +101,6 @@ F = {
         me.lbl_out = new{'Set_out',  prio=me.__depth}
     end,
 
-    Set = function (me)
-        local _, set, _, to = unpack(me)
-        if set=='adt-mut' or set=='adt-constr' then
-            if PROPS.has_adts_watching[TP.id(to.tp)] then
-                me.lbl_cnt = new{'Set_adt'}
-            end
-        end
-    end,
-
     _Par_pre = function (me)
         me.lbls_in = {}
         for i, sub in ipairs(me) do
