@@ -401,8 +401,8 @@ printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
            )
         {
             int _ret;
-#ifdef CEU_ORGS_NEWS
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
+#ifdef CEU_ORGS_NEWS
             /* save before it dies */
             tceu_trl* parent_trl = (org->isDyn) ? org->pool->parent_trl
                                                 : NULL;
@@ -450,7 +450,9 @@ printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
                 case RET_DEAD:
 #ifdef CEU_ORGS_NEWS
                     if (parent_trl!=NULL && parent_trl->org!=NULL) {
-                        /* TODO: restarting, how to resume from next? */
+                        /* TODO: restarting, how to resume from next?
+                         * Currently, we restart parent_trl in the parent org.
+                         */
                         return ceu_sys_go_ex(app, evt,
                                              &stk,
                                              parent_trl->org, &parent_trl->org->trls[0], NULL);
@@ -502,18 +504,38 @@ SPC(1); printf("<<< NO\n");
             org->isAlive = 0;
 #endif
 
-#if 0
+#if 1
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
-            /* clear stack: pending uses of "org" */
-            /* stk, stk->down, stk->down->down, ... */
-            tceu_stk* stk_;
-            for (stk_=stk_down; stk_!=NULL; stk_=stk_->down) {
-                tceu_org* cur;
-                /* org, org->up, org->up->up, ... */
-                for (cur=org; cur!=NULL; cur=cur->up) {
-                    if (stk_->org == cur) {
-                        stk_->org = NULL;    /* invalidate stack level */
-                        break;
+            /* If it is a bounded clear for a single org and this org is not
+             * dynamic, we don't need to clear the stack because the enclosing
+             * block is still alive, so, no dangling pointers.
+             * TODO: if I do clear, static array traversal does not work, so 
+             * this is not only an optimization.
+             * (because it would require a pointer to the parent trl to restart 
+             * from the next alive org in the array)
+             */
+            if (stop != org
+#ifdef CEU_ORGS_NEWS
+                || org->isDyn
+#endif
+               )
+            {
+                /* Clear stack:
+                 * Pending uses of dyeing "org" must abort.
+                 * Go down in the stack:
+                 *      stk, stk->down, stk->down->down, ...
+                 */
+                tceu_stk* stk_;
+                for (stk_=stk_down; stk_!=NULL; stk_=stk_->down) {
+                    tceu_org* cur;
+                    /* Check if stk_->org is "org" or one of its children:
+                     *      org, org->up, org->up->up, ...
+                     */
+                    for (cur=stk_->org; cur!=NULL; cur=cur->up) {
+                        if (cur == org) {
+                            stk_->org = NULL;    /* invalidate stack level */
+                            break;
+                        }
                     }
                 }
             }
@@ -541,14 +563,14 @@ SPC(1); printf("<<< NO\n");
                          evt_.id = CEU_IN__ok_killed;
                          evt_.param = &ps;
 
-/* XXXX-2 */
                 ceu_sys_go_ex(app, &evt_,
                               &stk,
                               app->data, &app->data->trls[0], NULL);
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
                 if (stk.org == NULL) {
-                    printf("DDDDDDDD\n");
+#if 1
                     return RET_DEAD;
+#endif
                 }
 #endif
             }

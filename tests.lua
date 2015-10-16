@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -23926,6 +23925,7 @@ escape ret;
 }
 
 -->>> CLASSES, ORGS, ORGANISMS
+--]===]
 
 Test { [[
 class A with
@@ -27324,6 +27324,84 @@ escape aa.aa;
 
 Test { [[
 input void OS_START;
+
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+
+pool T[] ts;
+var T&&? t1 = spawn T in ts;
+var T&&? t2 = spawn T in ts;
+
+par/and do
+    await t1!:ok;
+with
+    await t2!:ok;
+end
+
+escape 1;
+]],
+    _ana = {
+        acc = 0,
+    },
+    run = 1,
+}
+Test { [[
+input void OS_START;
+
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+
+var T t1, t2;
+
+par/and do
+    await t1.ok;
+with
+    await t2.ok;
+end
+
+escape 1;
+]],
+    _ana = {
+        acc = 0,
+    },
+    run = 1,
+}
+Test { [[
+input void OS_START;
+
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+
+var T[2] ts;
+
+par/and do
+    await ts[0].ok;
+with
+    await ts[1].ok;
+end
+
+escape 1;
+]],
+    _ana = {
+        acc = 0,
+    },
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
 class T with
     var int v;
     event void e, f, ok;
@@ -28959,6 +29037,26 @@ escape 1;
 }
 
 Test { [[
+native @pure _printf();
+event void e;
+
+class T with do end;
+
+par/or do
+    every e do
+        spawn T;
+    end
+with
+    emit e;
+end
+
+escape 1;
+]],
+    _ana = {acc=1},
+    run = 1, -- had stack overflow
+}
+
+Test { [[
 event void x,e,f,g;
 var int ret = 0;
 class T with do end;
@@ -29658,11 +29756,95 @@ pool T[] ts;
 
 var T&&? t = spawn T;
 await *(t!);
-_printf(">>> 1\n");
 escape 1;
 ]],
     run = 1,
 }
+
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await FOREVER;
+end
+
+var T t;
+par/or do
+    await t;
+with
+    kill t;
+    _assert(0);
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await OS_START;
+end
+
+do
+    var T t;
+    await t;
+end
+do
+    var _char[1000] v;
+    native @nohold _memset();
+    _memset(&&v, 0, 1000);
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void A;
+
+class T with
+do
+    await A;
+end
+
+pool T[] ts;
+
+var T&&? t1 = spawn T;
+await *(t1!);
+var T&&? t2 = spawn T;
+await *(t2!);
+
+escape 1;
+]],
+    run = { ['~>A;~>A']=1 },
+}
+do return end
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await 1us;
+end
+
+pool T[] ts;
+
+var T&&? t1 = spawn T;
+await *(t1!);
+var T&&? t2 = spawn T;
+await *(t2!);
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+do return end
 
 Test { [[
 input void OS_START;
@@ -30620,7 +30802,6 @@ input void OS_START;
 class T with
 do
     await 1us;
-_printf("+++++++\n");
 end
 
 do
@@ -30631,7 +30812,6 @@ do
     var _char[1000] v;
     native @nohold _memset();
     _memset(&&v, 0, 1000);
-_printf("--------\n");
 end
 
 escape 1;
