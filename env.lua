@@ -400,7 +400,6 @@ F = {
 
         local t = {
         -- runtime
-            { '_STK',       nil          },
             { '_ORG',       nil          },
             { '_ORG_PSED',  nil          },
             { '_CLEAR',     nil          },

@@ -105,24 +105,23 @@
 #endif
 
     #define CEU_IN__NONE          0
-    #define CEU_IN__STK         255
-    #define CEU_IN__ORG         254
-    #define CEU_IN__ORG_PSED    253
-    #define CEU_IN__CLEAR       252
-    #define CEU_IN__ok_killed   251
-    #define CEU_IN__INIT        250     /* HIGHER EXTERNAL */
-    #define CEU_IN__ASYNC       249
-    #define CEU_IN__THREAD      248
-    #define CEU_IN__WCLOCK      247
-    #define CEU_IN_OS_START     246
-    #define CEU_IN_OS_STOP      245
-    #define CEU_IN_OS_DT        244
-    #define CEU_IN_OS_INTERRUPT 243
+    #define CEU_IN__ORG         255
+    #define CEU_IN__ORG_PSED    254
+    #define CEU_IN__CLEAR       253
+    #define CEU_IN__ok_killed   252
+    #define CEU_IN__INIT        251     /* HIGHER EXTERNAL */
+    #define CEU_IN__ASYNC       250
+    #define CEU_IN__THREAD      249
+    #define CEU_IN__WCLOCK      248
+    #define CEU_IN_OS_START     247
+    #define CEU_IN_OS_STOP      246
+    #define CEU_IN_OS_DT        245
+    #define CEU_IN_OS_INTERRUPT 244
 #ifdef CEU_TIMEMACHINE
-    #define CEU_IN__WCLOCK_     242
-    #define CEU_IN              242
-#else
+    #define CEU_IN__WCLOCK_     243
     #define CEU_IN              243
+#else
+    #define CEU_IN              242
 #endif
 
     #define CEU_IN_higher       CEU_IN__INIT  /* _INIT = HIGHER EXTERNAL */
