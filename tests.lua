@@ -29408,6 +29408,21 @@ pool T[] ts;
 spawn T in ts;
 spawn T in ts;
 
+escape 60;
+]],
+    run = 60,
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+pool T[] ts;
+spawn T in ts;
+spawn T in ts;
+
 input void OS_START;
 await OS_START;
 escape 60;
@@ -29479,6 +29494,31 @@ await *(tail!);
 escape 1;
 ]],
     asr = '3] runtime error: invalid tag',
+    run = 1,
+}
+
+Test { [[
+native @pure _printf();
+class T with do
+end
+var T&&? kkk;
+pool T[] ppp;
+spawn T in ppp;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with do end
+var bool ok_;
+do
+    var T&&? ok;
+    ok = spawn T;
+    ok_ = (ok?);
+end
+escape ok_+1;
+]],
     run = 1,
 }
 

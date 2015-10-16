@@ -297,13 +297,11 @@ if (_ceu_immediate_death != NULL) {
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org, &_ceu_org->trls[0], _ceu_org);
-#if 1
 #ifdef CEU_ORGS
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
     if (_ceu_stk->org == NULL) {
         return RET_DEAD;
     }
-#endif
 #endif
 #endif
 }
@@ -1739,13 +1737,11 @@ case ]]..me.lbl_cnt.id..[[:;
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_app->data, &_ceu_app->data->trls[0], NULL);
-#if 1
 #ifdef CEU_ORGS
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
     if (_ceu_stk->org == NULL) {
         return RET_DEAD;
     }
-#endif
 #endif
 #endif
     if (trl->lbl != CEU_LBL__STACKED) {
