@@ -577,14 +577,21 @@ if (]]..me.val..[[ == NULL) {
         end
         LINE(me, [[
 {
+    /* save the continuation to run after the kill */
+    tceu_trl* trl = _ceu_trl;
+    trl->lbl = CEU_LBL__STACKED;
+
     tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   __ceu_org, &__ceu_org->trls[0], __ceu_org);
+
+    if (trl->lbl != CEU_LBL__STACKED) {
+        return RET_HALT;
+    }
 }
-/* TODO: TESTAR se trail ainda ativa, fazer teste que pegue esse bug */
 ]])
     end,
 
