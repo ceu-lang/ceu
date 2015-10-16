@@ -398,18 +398,11 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         end
         LINE(me, [[
     {
-        tceu_evt evt;
-                 evt.id = CEU_IN__STK;
-
         tceu_trl* trl = _ceu_trl;
         trl->lbl = CEU_LBL__STACKED;
-
-        ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
-                      _ceu_stk,
-                      ]]..org..[[, &]]..org..[[->trls[0],
-                                   &]]..org..[[->trls[ ]]..org..[[->n]);
-                                   /* don't follow the up link */
-
+        ceu_app_go(_ceu_app,0,NULL,
+                   ]]..org..[[, &]]..org..[[->trls[0],
+                   _ceu_stk);
         if (trl->lbl != CEU_LBL__STACKED) {
             return RET_HALT;
         }
@@ -851,6 +844,14 @@ _ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
         local cls = CLS()
         if (not cls) or cls.is_ifc then
             return
+        end
+
+        -- TODO: try to remove this requirement
+        if me.trails[1] ~= stmts.trails[1] then
+            LINE(me, [[
+/* switch to blk trail */
+_ceu_trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
+]])
         end
 
         CONC(me, stmts)

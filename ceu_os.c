@@ -116,12 +116,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl, int lvl,
     org->isDyn = isDyn;
 #endif
 
-    /* org.trls[0] == org.blk.trails[1] */
-    org->trls[0].evt = CEU_IN__STK;
     org->trls[0].lbl = lbl;
-#ifdef CEU_STACK
-    org->trls[0].stk = lvl;
-#endif
 
 #ifdef CEU_ORGS
     if (trl == NULL) {
@@ -489,16 +484,6 @@ printf("%d==%d && %d!=%d && %d>=%d\n",
             (evt->id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR)
         ||
 #endif
-            /* if IN__STK, i.e., ready for execution */
-            (trl->evt == CEU_IN__STK
-#ifdef CEU_CLEAR
-                && evt->id != CEU_IN__CLEAR
-#endif
-#ifdef CEU_STACK
-             /*&& trl->stk == lvl*/
-#endif
-            )
-        ||
             /* if evt->id matches awaiting trail */
             (trl->evt==evt->id && trl->seqno!=app->seqno
 #ifdef CEU_INTS

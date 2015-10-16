@@ -262,7 +262,9 @@ ceu_app_init (tceu_app* _ceu_app)
     ceu_lua_atpanic(_ceu_app->lua, ceu_lua_atpanic_f);    /* TODO: CEU_OS */
 #endif
 
-    ceu_out_go(_ceu_app, CEU_IN__INIT, NULL);
+    /* TODO: CEU_IN__INIT not required? */
+    tceu_stk stk = { _ceu_app->data, NULL };
+    _ceu_app->code(_ceu_app,0,NULL,_ceu_app->data,&_ceu_app->data->trls[0],&stk);
 }
 
 /* EXPORTED ENTRY POINT
