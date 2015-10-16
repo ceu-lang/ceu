@@ -1741,7 +1741,6 @@ case ]]..me.lbl_cnt.id..[[:;
 ]])
         end
         LINE(me, [[
-    ceu_sys_bcast(_ceu_app, _ceu_lvl+1, &evt, _ceu_app->data);
 /* XXXX-3 */
     ceu_sys_go_ex(_ceu_app, _ceu_lvl+1, &evt,
                   _ceu_stk,
