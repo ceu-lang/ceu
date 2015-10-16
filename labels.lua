@@ -113,7 +113,8 @@ F = {
     _Par_pre = function (me)
         me.lbls_in = {}
         for i, sub in ipairs(me) do
-            if i > 1 then
+            if i < #me then
+                -- the last executes directly (no label needed)
                 me.lbls_in[i] = new{me.tag..'_sub_'..i}
             end
         end

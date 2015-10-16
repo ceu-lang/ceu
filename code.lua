@@ -1350,27 +1350,47 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         for i, sub in ipairs(me) do
             if i > 1 then
                 LINE(me, [[
-{
-    /* mark all trails to start (1st runs immediatelly) */
-    tceu_trl* trl = &_ceu_org->trls[ ]]..sub.trails[1]..[[ ];
-    trl->evt = CEU_IN__STK;
-    trl->lbl = ]]..me.lbls_in[i].id..[[;
-#ifdef CEU_STACK
-    trl->stk = _ceu_lvl;   /* awake in the same level as we are now */
-#endif
-#ifdef CEU_DEBUG
-    ceu_out_assert_msg(trl > (*_ceu_trl), "bug found");
-#endif
-}
+/* stacked to execute, but has to check before actually executing it */
+_ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = CEU_LBL__STACKED;
 ]])
             end
+        end
+        for i, sub in ipairs(me) do
+            LINE(me, [[
+{
+    tceu_trl* trl = &_ceu_org->trls[ ]]..sub.trails[1]..[[ ];
+]])
+            if i > 1 then
+                LINE(me, [[
+    /* except for 1st, check all before executing */
+    if (trl->lbl != CEU_LBL__STACKED) {
+        return RET_HALT;
+    }
+]])
+            end
+            if i < #me then
+                LINE(me, [[
+    trl->lbl = ]]..me.lbls_in[i].id..[[;
+    ceu_app_go(_ceu_app,0,NULL,_ceu_org,&trl,_ceu_stk);
+]])
+            else
+                -- execute the last directly (no need to call)
+                -- the code for each me[i] should be generated backwards
+                LINE(me, [[
+    _ceu_trl = &trl;
+]])
+            end
+            LINE(me, [[
+}
+]])
         end
     end,
 
     ParEver = function (me)
         F._Par(me)
-        for i, sub in ipairs(me) do
-            if i > 1 then
+        for i=#me, 1, -1 do
+            local sub = me[i]
+            if i < #me then
                 CASE(me, me.lbls_in[i])
             end
             CONC(me, sub)
@@ -1384,8 +1404,9 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
 
     ParOr_pos = function (me)
         F._Par(me)
-        for i, sub in ipairs(me) do
-            if i > 1 then
+        for i=#me, 1, -1 do
+            local sub = me[i]
+            if i < #me then
                 CASE(me, me.lbls_in[i])
             end
             CONC(me, sub)
@@ -1415,8 +1436,9 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
 
         F._Par(me)
 
-        for i, sub in ipairs(me) do
-            if i > 1 then
+        for i=#me, 1, -1 do
+            local sub = me[i]
+            if i < #me then
                 CASE(me, me.lbls_in[i])
             end
             CONC(me, sub)

@@ -182,9 +182,7 @@ static __attribute__((noinline))  __attribute__((noclone))
 void
 ceu_app_init (tceu_app* _ceu_app)
 {
-#ifdef CEU_INTS
     _ceu_app->seqno = 0;
-#endif
 #if defined(CEU_RET) || defined(CEU_OS_APP)
     _ceu_app->isAlive = 1;
 #endif
