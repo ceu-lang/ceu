@@ -476,12 +476,23 @@ printf("%d==%d && %d!=%d && %d>=%d\n",
         trl->seqno, app->seqno,
         evt->id, CEU_IN_lower
 );
+#ifdef CEU_WATCHING_
+printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
+             ((tceu_kill*)evt->param)->org_or_adt);
+#endif
 #endif
 
         if (
 #ifdef CEU_CLEAR
             /* if IN__CLEAR and "finalize" clause */
             (evt->id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR)
+        ||
+#endif
+#ifdef CEU_WATCHING
+            /* if */
+            (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
+             trl->org_or_adt != NULL &&
+             trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt)
         ||
 #endif
             /* if evt->id matches awaiting trail */
