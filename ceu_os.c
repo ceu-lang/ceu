@@ -518,9 +518,6 @@ printf("%d==%d && %d!=%d && %d>=%d\n",
 #endif
 #endif
 
-            trl->evt = CEU_IN__NONE;  /* clear trail */
-            trl->seqno = app->seqno;  /* don't awake again */
-
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = app->addr;
 #endif
@@ -598,7 +595,7 @@ SPC(1); printf("<<< NO\n");
 
         /* NEXT TRAIL */
 
-        if (trl->evt <= CEU_IN_higher && trl->seqno!=app->seqno) {
+        if (trl->evt<=CEU_IN_higher && trl->seqno!=app->seqno) {
             trl->seqno = app->seqno-1;   /* keeps the gap tight */
         }
     }
@@ -610,7 +607,6 @@ SPC(1); printf("<<< NO\n");
 
         if (evt->id == CEU_IN__CLEAR)
         {
-printf("--- %p\n", org);
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
             org->isAlive = 0;
 #endif

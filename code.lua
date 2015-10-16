@@ -69,7 +69,7 @@ end
 function GOTO (me, lbl)
     CODE.has_goto = true
     LINE(me, [[
-_CEU_LBL = ]]..lbl..[[;
+_ceu_lbl = ]]..lbl..[[;
 goto _CEU_GOTO_;
 ]])
 end
@@ -1772,17 +1772,17 @@ case ]]..me.lbl_cnt.id..[[:;
 #ifdef CEU_ORGS
     _ceu_trl->evto  = ]]..org..[[;
 #endif
+    _ceu_trl->seqno =
 ]])
         if me.isEvery then
             LINE(me, [[
-    _ceu_trl->seqno =
         _ceu_app->seqno-1;   /* always ready to awake */
 ]])
         else
             LINE(me, [[
-#if 0
         _ceu_app->seqno;    /* not reset with retry */
                             /* (before the label below) */
+#if 0
 #endif
 ]])
         end
@@ -1816,8 +1816,8 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
     if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
     _ceu_trl->evt = CEU_IN_]]..e.evt.id..suf..[[;
     _ceu_trl->lbl = ]]..me.lbl.id..[[;
-#if 0
     _ceu_trl->seqno = _ceu_app->seqno;
+#if 0
 #endif
 ]])
         if e[1] == '_ok_killed' then

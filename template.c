@@ -143,9 +143,17 @@ static void* ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, void* param) {
 #endif
 
 static int ceu_app_go (tceu_app* _ceu_app, int _ceu_lvl, tceu_evt* _ceu_evt, tceu_org* _ceu_org, tceu_trl* _ceu_trl, tceu_stk* _ceu_stk) {
-    int _CEU_LBL = _ceu_trl->lbl;
+
+    tceu_nlbl _ceu_lbl = _ceu_trl->lbl;
+
 #ifdef CEU_GOTO
 _CEU_GOTO_:
+#endif
+
+    _ceu_trl->lbl   = CEU_LBL__NONE;     /* clear trail */
+    _ceu_trl->evt   = CEU_IN__NONE;     /* clear trail */
+    _ceu_trl->seqno = _ceu_app->seqno;  /* don't awake again */
+#if 0
 #endif
 
 #ifdef CEU_DEBUG
@@ -154,11 +162,11 @@ _CEU_GOTO_:
     _ceu_app->lst.org = _ceu_org;
 #endif
     _ceu_app->lst.trl = _ceu_trl;
-    _ceu_app->lst.lbl = _CEU_LBL;
+    _ceu_app->lst.lbl = _ceu_lbl;
 #endif
 #ifdef CEU_DEBUG_TRAILS
 #ifndef CEU_OS_APP
-printf("OK : lbl=%d : org=%p\n", _CEU_LBL, _ceu_org);
+printf("OK : lbl=%d : org=%p\n", _ceu_lbl, _ceu_org);
 #endif
 #endif
 #endif
@@ -167,7 +175,7 @@ printf("OK : lbl=%d : org=%p\n", _CEU_LBL, _ceu_org);
     ceu_stack_clr();
 #endif
 
-    switch (_CEU_LBL) {
+    switch (_ceu_lbl) {
         === CODE ===
     }
 #ifdef CEU_DEBUG
