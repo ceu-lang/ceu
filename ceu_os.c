@@ -414,7 +414,7 @@ printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
 #endif
 
             /*** CODE ***/
-            _ret = app->code(app, evt, org, trl, &stk);
+            _ret = app->code(app, evt, org, trl, &stk, NULL);
                         /* rejoin may reset trl */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)

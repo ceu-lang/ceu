@@ -276,22 +276,16 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this) {
 
         if me ~= MAIN then
             LINE(me, [[
-#if 0
 #ifdef CEU_ORGS_NEWS
 /* HACK_9:
  * If the stack top is the initial spawn state of the organism, it means that 
  * the organism terminated on start and the spawn must return NULL.
- * In this case, we mark it with "CEU_IN__NONE" to be recognized in the spawn 
- * continuation below.
+ * In this case, we mark set "_ceu_immediate_death" to be recognized in the 
+ * spawn continuation below.
  */
-if (_ceu_evt->=CEU_IN__STK && _ceu_stk->org==_ceu_org
-    && _ceu_trl==&_ceu_org->trls[0]
-    && _ceu_stk->stop==&_ceu_org->trls[_ceu_org->n]
-    )
-{
-    _ceu_stk->evt = CEU_IN__NONE;
+if (_ceu_immediate_death != NULL) {
+    *_ceu_immediate_death = 1;
 }
-#endif
 #endif
 ]])
         end
@@ -396,18 +390,31 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_org);
 ]])
         end
+
         LINE(me, [[
     {
+        int immediate_death = 0;
         tceu_trl* trl = _ceu_trl;
         trl->lbl = CEU_LBL__STACKED;
         ceu_app_go(_ceu_app,NULL,
                    ]]..org..[[, &]]..org..[[->trls[0],
-                   _ceu_stk);
+                   _ceu_stk, &immediate_death);
         if (trl->lbl != CEU_LBL__STACKED) {
             return RET_HALT;
         }
+]])
+        if t.set then
+            LINE(me, [[
+/* HACK_9: see above */
+    if (immediate_death) {
+        ]]..V(t.set,'rval')..' = '..string.upper(TP.toc(t.set.tp))..[[_pack(NULL);
     }
 ]])
+        end
+        LINE(me, [[
+    }
+]])
+
         if t.arr then
             LINE(me, [[
 }
@@ -650,26 +657,12 @@ if (]]..me.val..[[ == NULL) {
             constr = constr,
             arr    = false,
             trl    = '((((tceu_pool_*)&'..V(pool,'rval')..'))->parent_trl)',
+            set    = set and set[4]
         })
         LINE(me, [[
     }
 /*}*/
 ]])
-        if set then
-            local set_to = set[4]
-            LINE(me, [[
-/* HACK_9: see above */
-#if 0
-if (]]..V(set_to,'rval')..[[.tag != ]]..string.upper(TP.toc(set_to.tp))..[[_NIL) {
-    tceu_stk* stk = stack_nxt(_ceu_go);
-    if (stk->evt.id == CEU_IN__NONE) {
-        ]]..V(set_to,'rval')..' = '..string.upper(TP.toc(set_to.tp))..[[_pack(NULL);
-    }
-}
-#endif
-]])
-        end
-
     end,
 
     Block_pre = function (me)
@@ -1346,7 +1339,7 @@ _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = CEU_LBL__STACKED;
             if i < #me then
                 LINE(me, [[
     trl->lbl = ]]..me.lbls_in[i].id..[[;
-    ceu_app_go(_ceu_app,NULL,_ceu_org,trl,_ceu_stk);
+    ceu_app_go(_ceu_app,NULL,_ceu_org,trl,_ceu_stk,NULL);
 ]])
             else
                 -- execute the last directly (no need to call)

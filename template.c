@@ -142,7 +142,7 @@ static void* ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, void* param) {
 }
 #endif
 
-static int ceu_app_go (tceu_app* _ceu_app, tceu_evt* _ceu_evt, tceu_org* _ceu_org, tceu_trl* _ceu_trl, tceu_stk* _ceu_stk) {
+static int ceu_app_go (tceu_app* _ceu_app, tceu_evt* _ceu_evt, tceu_org* _ceu_org, tceu_trl* _ceu_trl, tceu_stk* _ceu_stk, int* _ceu_immediate_death) {
 
     tceu_nlbl _ceu_lbl = _ceu_trl->lbl;
 
@@ -264,7 +264,7 @@ ceu_app_init (tceu_app* _ceu_app)
 
     /* TODO: CEU_IN__INIT not required? */
     tceu_stk stk = { _ceu_app->data, NULL };
-    _ceu_app->code(_ceu_app,NULL,_ceu_app->data,&_ceu_app->data->trls[0],&stk);
+    _ceu_app->code(_ceu_app,NULL,_ceu_app->data,&_ceu_app->data->trls[0],&stk,NULL);
 }
 
 /* EXPORTED ENTRY POINT
