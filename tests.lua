@@ -4111,6 +4111,24 @@ par/or do
         ret = ret + 1;
     end
 with
+    loop i in 2 do
+        emit e;
+    end
+end
+escape ret;
+]],
+    _ana = {acc=1},
+    run = 2,
+}
+
+Test { [[
+event void e;
+var int ret = 0;
+par/or do
+    every e do
+        ret = ret + 1;
+    end
+with
     loop i in 1000 do
         emit e;
     end

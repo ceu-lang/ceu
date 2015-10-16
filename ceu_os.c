@@ -526,7 +526,7 @@ printf("%d==%d && %d!=%d && %d>=%d\n",
 #endif
 
             /*** CODE ***/
-            _ret = app->code(app, lvl, evt, org, &trl, &stk);
+            _ret = app->code(app, lvl, evt, org, trl, &stk);
                         /* rejoin may reset trl */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
