@@ -608,7 +608,7 @@ typedef union CEU_]]..me.id..[[_delayed {
         local cls = CLS()
 
         -- input parameters (void* _ceu_go->org, int a, int b)
-        local dcl = { 'tceu_app* app', 'CEU_'..cls.id..'* __ceu_this' }
+        local dcl = { 'tceu_app* _ceu_app', 'CEU_'..cls.id..'* __ceu_this' }
         for _, v in ipairs(ins) do
             local _, tp, id = unpack(v)
             dcl[#dcl+1] = MEM.tp2dcl('var', tp, (id or ''), nil, nil, nil)
