@@ -27349,6 +27349,32 @@ escape 1;
     },
     run = 1,
 }
+
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await OS_START;
+end
+
+pool T[] ts;
+var T&&? t1 = spawn T in ts;
+var T&&? t2 = spawn T in ts;
+
+par/and do
+    await *t1!;
+with
+    await *t2!;
+end
+
+escape 1;
+]],
+    _ana = {
+        acc = 0,
+    },
+    run = 1,
+}
 Test { [[
 input void OS_START;
 
@@ -30534,11 +30560,37 @@ escape t!:b;
     run = 20,
 }
 
+-- fails w/o RET_DEAD check after ceu_app_go for PAR
+Test { [[
+input void OS_START;
+native do
+    tceu_trl* V;
+end
+class T with
+do
+    _V = &&__ceu_org:trls[1];
+    await OS_START;
+    par/or do
+    with
+        _assert(0);
+    end
+end
+do
+    var T t;
+    await t;
+end
+_V:lbl = _CEU_LBL__STACKED;
+escape 1;
+]],
+    run = 1,
+}
+
 Test { [[
 class T with
 do
     par/or do
     with
+        _assert(0);
     end
 end
 spawn T;

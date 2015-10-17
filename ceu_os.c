@@ -331,7 +331,6 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
 
         /* STK_ORG has been traversed to the end? */
-printf("ACC: %p\n", org);
         if (trl ==
             &org->trls[
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
@@ -362,19 +361,23 @@ printf("ACC: %p\n", org);
 
             /* traverse all children */
             while (cur != NULL) {
+                tceu_org* nxt = cur->nxt; /* save: possible free */
+#if 0
 #ifdef CEU_ORGS_NEWS
-                int is_dyn = org->isDyn; /* save: possible free */
+                int is_dyn = org->isDyn;  /* save: possible free */
                 int ret =
+#endif
 #endif
                     ceu_sys_go_ex(app, evt,
                                   &stk,
                                   cur, &cur->trls[0], NULL);
-#if 0
+#if 1
                 /* in case a children kills myself, we stop now */
                 if (stk.org == NULL) {
                     return RET_DEAD;
                 }
 #endif
+#if 0
 #ifdef CEU_NEWS_ORGS
                 if (is_dyn && ret==RET_DEAD) {
                     /* The current *dynamic* child died. (RESEARCH-10)
@@ -387,46 +390,11 @@ printf("ACC: %p\n", org);
                     continue;
                 }
 #endif
-                cur = cur->nxt;
+#endif
+                printf("NXT %p\n", cur);
+                cur = nxt;
             }
-#if 0
-- talvez nao precise mais do stop p/ orgs
-- e nem de prv/nxt
-#if !defined(CEU_ANA_NO_NESTED_TERMINATION) && defined(CEU_ORGS_NEWS)
-            /* Uses "while" to restart traversing all childs in case one dies.
-             * We dont know exactly from which one to restart (RESEARCH-10).
-             */
-            while (trl->org != NULL)
-#else
-            if (trl->org != NULL)
-#endif
-            {
-#ifdef CEU_ORGS_NEWS
-                int is_dyn = org->isDyn; /* save: possible free */
-#endif
-                int ret = ceu_sys_go_ex(app, evt,
-                              &stk,
-                              trl->org, &trl->org->trls[0], NULL);
-#ifndef CEU_ANA_NO_NESTED_TERMINATION
-                if (stk.org == NULL) {
-                    /* in case a children kills myself */
-                    return RET_DEAD;
-                }
-
-                /* restart from first child? */
-#ifdef CEU_NEWS_ORGS
-                if (!is_dyn) {
-                    break;  /* safe to traverse next */
-                }
-                if (ret != RET_DEAD) {
-                    break;
-                }
-#endif
-printf("ret = %d\n", ret);
-#endif
-            }
-#endif
-            continue;
+            continue;   /* next trail after handling children */
         }
 #endif /* CEU_ORGS */
 
@@ -621,6 +589,7 @@ SPC(1); printf("<<< NO\n");
 #ifdef CEU_ORGS_NEWS
         /* free */
         if (org->isDyn) {
+printf("free: %p\n", org);
 #if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
             ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
