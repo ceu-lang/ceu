@@ -294,6 +294,7 @@ if (_ceu_immediate_death != NULL) {
 {
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
+printf("TODO: e agora? os outros return abaixo!\n");
     return ceu_sys_go_ex(_ceu_app, &evt,
                   &_ceu_stk,
                   _ceu_org, &_ceu_org->trls[0], _ceu_org);
@@ -930,9 +931,7 @@ if (0) {
             LINE(me, [[
 /*  RESET OPT-ORG TO NULL */
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
-#if 0
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
-#endif
 ]])
                 HALT(me)
                 LINE(me, [[
@@ -1827,8 +1826,6 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
     _ceu_trl->evt = CEU_IN_]]..e.evt.id..suf..[[;
     _ceu_trl->lbl = ]]..me.lbl.id..[[;
     _ceu_trl->seqno = _ceu_app->seqno;
-#if 0
-#endif
 ]])
         if e[1] == '_ok_killed' then
             LINE(me, [[

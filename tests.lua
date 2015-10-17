@@ -23925,7 +23925,6 @@ escape ret;
 }
 
 -->>> CLASSES, ORGS, ORGANISMS
---]===]
 
 Test { [[
 class A with
@@ -29409,7 +29408,6 @@ escape ret + _V;
 Test { [[
 class T with
 do
-    _printf("me = %p\n", __ceu_org);
     await FOREVER;
 end
 
@@ -29926,6 +29924,190 @@ await *(t3!);
 escape 1;
 ]],
     run = { ['~>2us']=1 },
+}
+
+-- fails w/o sudden death check while traversing children
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    par/or do
+        await t.e;
+        _V = _V + 1;
+    with
+        if only_await then
+            await FOREVER;
+        end
+        await OS_START;
+        emit t.e;
+    with
+        await OS_START;
+    end
+end
+
+var T t;
+
+var U _ with
+    this.t = &t;
+    this.only_await = false;
+end;
+var U _ with
+    this.t = &t;
+    this.only_await = true;
+end;
+
+await OS_START;
+
+escape _V;
+]],
+    run = 2,
+}
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    par/or do
+        await t.e;
+        _V = _V + 1;
+    with
+        if only_await then
+            await FOREVER;
+        end
+        await OS_START;
+        emit t.e;
+    with
+        await OS_START;
+    end
+end
+
+var T t;
+
+spawn U with
+    this.t = &t;
+    this.only_await = false;
+end;
+spawn U with
+    this.t = &t;
+    this.only_await = true;
+end;
+
+await OS_START;
+
+escape _V;
+]],
+    run = 2,
+}
+
+-- u1 doesn't die, kills u2, which becomes dangling
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    if only_await then
+        await t.e;
+        _V = 1;
+    else
+        await OS_START;
+        emit t.e;
+        await FOREVER;
+    end
+end
+
+var T t;
+
+var U _ with
+    this.t = &t;
+    this.only_await = false;
+end;
+var U _ with
+    this.t = &t;
+    this.only_await = true;
+end;
+
+await OS_START;
+
+escape _V;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    if only_await then
+        await t.e;
+        _V = 1;
+    else
+        await OS_START;
+        emit t.e;
+        await FOREVER;
+    end
+end
+
+var T t;
+
+spawn U with
+    this.t = &t;
+    this.only_await = false;
+end;
+spawn U with
+    this.t = &t;
+    this.only_await = true;
+end;
+
+await OS_START;
+
+escape _V;
+]],
+    run = 1,
 }
 
 -- fails w/o ceu_sys_stack_clear_org
@@ -39952,11 +40134,11 @@ do
 end
 
 var T t;
-var T&&? p = &&t;
+var T&&? ppp = &&t;
 
 await 1s;
 
-escape t.v + p!:v;
+escape t.v + ppp!:v;
 ]],
     run = { ['~>1s']='13] runtime error: invalid tag' },
 }
@@ -39978,6 +40160,7 @@ escape t.v + p!:v;
     run = { ['~>1s'] = 20 },
 }
 
+--]===]
 Test { [[
 class U with
     var int v = 10;
@@ -55909,6 +56092,51 @@ do return end
 
 -- async dentro de pause
 -- async thread spawn falhou, e ai?
+
+-- BUG-EVERY-SPAWN
+-- t1 creates t2, which already reacts to e
+Test { [[
+native do
+    int V = 0;
+end
+
+class G with
+    event void e;
+do
+    await FOREVER;
+end
+
+interface I with
+    var G& g;
+end
+
+pool I[] is;
+
+class T with
+    var G& g;
+    pool I[]& is;
+do
+    every g.e do
+        _V = _V + 1;
+        spawn T in is with
+            this.g = &outer.g;
+            this.is = &outer.is;
+        end;
+    end
+end
+
+var G g;
+spawn T in is with
+    this.g = &g;
+    this.is = &is;
+end;
+emit g.e;
+
+escape _V;
+]],
+    run = 1,
+}
+do return end
 
 -- BUG: must enforce alias
 Test { [[

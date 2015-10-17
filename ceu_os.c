@@ -361,7 +361,6 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
             /* traverse all children */
             while (cur != NULL) {
-                printf("CUR %p\n", cur);
 #if 1
 #ifdef CEU_ORGS_NEWS
                 int is_dyn = cur->isDyn;  /* save: possible free */
@@ -379,7 +378,6 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
 #if 1
 #ifdef CEU_ORGS_NEWS
-printf("CHILD %p => %d (vs %d)\n", cur, ret, RET_DEAD);
                 if (is_dyn && ret==RET_DEAD) {
                     /* The current *dynamic* child died. (RESEARCH-10)
                      * We have no idea about the prv/nxt childs, so we restart 
@@ -392,7 +390,7 @@ printf("CHILD %p => %d (vs %d)\n", cur, ret, RET_DEAD);
                 }
 #endif
 #endif
-                printf("NXT %p\n", cur);
+                printf("+ %p -> %p\n", cur, cur->nxt);
                 cur = cur->nxt;
             }
             continue;   /* next trail after handling children */
@@ -421,8 +419,8 @@ printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
 #ifdef CEU_WATCHING
             /* if */
             (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
-             trl->org_or_adt != NULL && /* TODO: required? param can be NULL?  */
-             trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt)
+                (trl->org_or_adt == NULL || /* for option types, initied w/ NULL  */
+                 trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt))
         ||
 #endif
             /* if evt->id matches awaiting trail */
@@ -579,6 +577,7 @@ SPC(1); printf("<<< NO\n");
                      evt_.id = CEU_IN__ok_killed;
                      evt_.param = &ps;
 
+printf("killing %p\n", org);
             ceu_sys_go_ex(app, &evt_,
                           &stk,
                           app->data, &app->data->trls[0], NULL);
@@ -590,7 +589,6 @@ SPC(1); printf("<<< NO\n");
 #ifdef CEU_ORGS_NEWS
         /* free */
         if (org->isDyn) {
-printf("free: %p\n", org);
 #if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
             ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
