@@ -185,7 +185,6 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this, 
 
         -- functions and threads receive __ceu_org as parameter
         CODE.functions = string.gsub(CODE.functions, '_ceu_org', '__ceu_this')
-        CODE.threads   = string.gsub(CODE.threads,   '_ceu_org', '__ceu_this')
 
         -- assert that all input functions have bodies
         for evt, v in pairs(INPUT_FUNCTIONS) do
@@ -2006,8 +2005,8 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 
     /* copy param */
     tceu_threads_p _ceu_p = *((tceu_threads_p*) __ceu_p);
-    tceu_app* _ceu_app  = _ceu_p.app;
-    tceu_org* __ceu_org = _ceu_p.org;
+    tceu_app* _ceu_app = _ceu_p.app;
+    tceu_org* _ceu_org = _ceu_p.org;
 
     /* now safe for sync to proceed */
     CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
