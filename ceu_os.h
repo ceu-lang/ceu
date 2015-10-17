@@ -664,14 +664,11 @@ typedef struct {
 enum {
     RET_HALT = 0
     /*RET_GOTO,*/
-#if defined(CEU_INTS) || defined(CEU_CLEAR) || defined(CEU_ORGS)
-    , RET_RESTART
+#ifdef CEU_RET
+    , RET_QUIT
 #endif
 #ifdef CEU_ASYNCS
     , RET_ASYNC
-#endif
-#ifdef CEU_RET
-    , RET_QUIT
 #endif
 #ifdef CEU_ORGS
 #ifndef CEU_ANA_NO_NESTED_TERMINATION

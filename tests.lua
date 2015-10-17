@@ -29037,7 +29037,6 @@ escape 1;
 }
 
 Test { [[
-native @pure _printf();
 event void e;
 
 class T with do end;
@@ -29498,7 +29497,6 @@ escape 1;
 }
 
 Test { [[
-native @pure _printf();
 class T with do
 end
 var T&&? kkk;
@@ -29864,7 +29862,6 @@ escape 1;
 ]],
     run = { ['~>A;~>A']=1 },
 }
-do return end
 Test { [[
 input void OS_START;
 
@@ -29884,7 +29881,6 @@ escape 1;
 ]],
     run = { ['~>2us']=1 },
 }
-do return end
 
 Test { [[
 input void OS_START;
@@ -29907,6 +29903,31 @@ escape 1;
 }
 
 -- fails w/o ceu_sys_stack_clear_org
+Test { [[
+input void OS_START;
+
+class U with
+do
+    await 1us;
+end
+
+class T with
+do
+    do U;
+end
+
+do
+    pool T[] ts;
+    spawn T in ts;
+    var T&&? t = spawn T in ts;
+    await *t!;
+end
+
+escape 1;
+]],
+    run = { ['~>1us']=1 },
+}
+
 Test { [[
 input void OS_START;
 

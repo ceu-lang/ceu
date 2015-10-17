@@ -117,21 +117,21 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
     org->trls[0].lbl = lbl;
 
 #ifdef CEU_ORGS
-    if (trl == NULL) {
-        return;             /* main class */
-    }
-
-    /* re-link */
-
     org->nxt = NULL;
-    if (trl->org == NULL) {
-        trl->org = org;
+
+    if (trl == NULL) {
+        org->prv = NULL; /* main class */
     } else {
-        tceu_org* last = trl->org->prv;
-        last->nxt = org;
-        org->prv = last;
+        /* re-link */
+        if (trl->org == NULL) {
+            trl->org = org;
+        } else {
+            tceu_org* last = trl->org->prv;
+            last->nxt = org;
+            org->prv = last;
+        }
+        trl->org->prv = org;
     }
-    trl->org->prv = org;
 #endif  /* CEU_ORGS */
 }
 
@@ -314,6 +314,7 @@ int ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 #endif
 {
     tceu_stk stk = { org, stk_down };
+
     for (;; trl++)
     {
 #ifdef CEU_DEBUG_TRAILS
@@ -330,6 +331,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
 
         /* STK_ORG has been traversed to the end? */
+printf("ACC: %p\n", org);
         if (trl ==
             &org->trls[
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
@@ -352,14 +354,59 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
            )
         {
+            tceu_org* cur;
+
             if (evt->id == CEU_IN__CLEAR) {
                 trl->evt = CEU_IN__NONE;
             }
-            if (trl->org != NULL) {
+
+            /* traverse all children */
+            for (cur = trl->org;
+                 cur != NULL;
+                 cur = cur->nxt)
+            {
                 ceu_sys_go_ex(app, evt,
                               &stk,
-                              trl->org, &trl->org->trls[0], NULL);
+                              cur, &cur->trls[0], NULL);
             }
+#if 0
+- talvez nao precise mais do stop p/ orgs
+- e nem de prv/nxt
+#if !defined(CEU_ANA_NO_NESTED_TERMINATION) && defined(CEU_ORGS_NEWS)
+            /* Uses "while" to restart traversing all childs in case one dies.
+             * We dont know exactly from which one to restart (RESEARCH-10).
+             * Static orgs dont clear the stack and dont generate RET_DEAD.
+             */
+            while (trl->org != NULL)
+#else
+            if (trl->org != NULL)
+#endif
+            {
+#ifdef CEU_ORGS_NEWS
+                int is_dyn = org->isDyn; /* save: possible free */
+#endif
+                int ret = ceu_sys_go_ex(app, evt,
+                              &stk,
+                              trl->org, &trl->org->trls[0], NULL);
+#ifndef CEU_ANA_NO_NESTED_TERMINATION
+                if (stk.org == NULL) {
+                    /* in case a children kills myself */
+                    return RET_DEAD;
+                }
+
+                /* restart from first child? */
+#ifdef CEU_NEWS_ORGS
+                if (!is_dyn) {
+                    break;  /* safe to traverse next */
+                }
+                if (ret != RET_DEAD) {
+                    break;
+                }
+#endif
+printf("ret = %d\n", ret);
+#endif
+            }
+#endif
             continue;
         }
 #endif /* CEU_ORGS */
@@ -392,6 +439,10 @@ printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
 #endif
             /* if evt->id matches awaiting trail */
             (trl->evt==evt->id && trl->seqno!=app->seqno
+#ifdef CEU_WATCHING
+                && (evt->id != CEU_IN__ok_killed)
+                    /* TODO: simplify */
+#endif
 #ifdef CEU_INTS
 #ifdef CEU_ORGS
                 && (evt->id>=CEU_IN_lower || evt->org==trl->evto)
@@ -401,14 +452,6 @@ printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
            )
         {
             int _ret;
-#ifndef CEU_ANA_NO_NESTED_TERMINATION
-#ifdef CEU_ORGS_NEWS
-            /* save before it dies */
-            tceu_trl* parent_trl = (org->isDyn) ? org->pool->parent_trl
-                                                : NULL;
-#endif
-#endif
-
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = app->addr;
 #endif
@@ -443,24 +486,12 @@ printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
 #ifdef CEU_LUA
                     lua_close(app->lua);
 #endif
-                    return 1;
+                    return RET_QUIT;
 #endif
 #ifdef CEU_ORGS
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
                 case RET_DEAD:
-#ifdef CEU_ORGS_NEWS
-                    if (parent_trl!=NULL && parent_trl->org!=NULL) {
-                        /* TODO: restarting, how to resume from next?
-                         * Currently, we restart parent_trl in the parent org.
-                         */
-                        return ceu_sys_go_ex(app, evt,
-                                             stk_down,
-                                             parent_trl->org, &parent_trl->org->trls[0], NULL);
-                    } else
-#endif
-                    {
-                        return 0;
-                    }
+                    return RET_DEAD;
 #endif
 #endif
                 default:
@@ -495,113 +526,100 @@ SPC(1); printf("<<< NO\n");
 
 #ifdef CEU_ORGS
     /* end of current org */
+    if (evt->id == CEU_IN__CLEAR)
     {
-        tceu_org* nxt = org->nxt;
-
-        if (evt->id == CEU_IN__CLEAR)
-        {
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
-            org->isAlive = 0;
+        org->isAlive = 0;
 #endif
 
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
-            /* If it is a bounded clear for a single org and this org is not
-             * dynamic, we don't need to clear the stack because the enclosing
-             * block is still alive, so, no dangling pointers.
-             * TODO: if I do clear, static array traversal does not work, so 
-             * this is not only an optimization.
-             * (because it would require a pointer to the parent trl to restart 
-             * from the next alive org in the array)
+        /* If it is a bounded clear for a single org and this org is not
+         * dynamic, we don't need to clear the stack because the enclosing
+         * block is still alive, so, no dangling pointers.
+         * TODO: if I do clear, static array traversal does not work, so 
+         * this is not only an optimization.
+         * (because it would require a pointer to the parent trl to restart 
+         * from the next alive org in the array)
+         */
+        if (stop != org
+#ifdef CEU_ORGS_NEWS
+            || org->isDyn
+#endif
+           )
+        {
+            /* Clear stack:
+             * Pending uses of dyeing "org" must abort.
+             * Go down in the stack:
+             *      stk->down, stk->down->down, ...
              */
-            if (stop != org
-#ifdef CEU_ORGS_NEWS
-                || org->isDyn
-#endif
-               )
+            tceu_stk* stk_;
+            for (stk_=stk_down; stk_!=NULL; stk_=stk_->down)
             {
-                /* Clear stack:
-                 * Pending uses of dyeing "org" must abort.
-                 * Go down in the stack:
-                 *      stk->down, stk->down->down, ...
+                tceu_org* cur;
+                if (stk_->org == NULL) {
+                    continue;   /* level previously aborted */
+                }
+
+                /* Check if stk_->org is "org" or one of its children:
+                 *      org, org->up, org->up->up, ...
                  */
-                tceu_stk* stk_;
-                for (stk_=stk_down; stk_!=NULL; stk_=stk_->down)
-                {
-                    tceu_org* cur;
-
-                    if (stk_->org == NULL) {
-                        continue;   /* level previously aborted */
-                    }
-
-                    /* Check if stk_->org is "org" or one of its children:
-                     *      org, org->up, org->up->up, ...
-                     */
-                    for (cur=stk_->org; cur!=NULL; cur=cur->up) {
-                        if (cur == org) {
-                            stk_->org = NULL;    /* invalidate stack level */
-                            break;
-                        }
+                for (cur=stk_->org; cur!=NULL; cur=cur->up) {
+                    if (cur == org) {
+                        stk_->org = NULL;    /* invalidate stack level */
+                        break;
                     }
                 }
             }
+        }
 #endif
 #ifdef CEU_ORGS_NEWS
-            /* re-link PRV <-> NXT */
-            if (org->isDyn) {
-                if (org->pool->parent_trl->org == org) {
-                    org->pool->parent_trl->org = org->nxt;    /* subst 1st org */
-                        /* TODO-POOL: this information is 1 level up in the stack */
-                } else {
-                    org->prv->nxt = org->nxt;
-                }
-                if (org->nxt != NULL) {
-                    org->nxt->prv = org->prv;
-                }
+        /* re-link PRV <-> NXT */
+        if (org->isDyn) {
+            if (org->pool->parent_trl->org == org) {
+                org->pool->parent_trl->org = org->nxt;    /* subst 1st org */
+                    /* TODO-POOL: this information is 1 level up in the stack */
+            } else {
+                org->prv->nxt = org->nxt;
             }
+            if (org->nxt != NULL) {
+                org->nxt->prv = org->prv;
+            }
+        }
 #endif
 #ifdef CEU_ORGS_WATCHING
-            /* signal killed */
-            {
-                tceu_kill ps = { org, org->ret };
-                tceu_evt evt_;
-                         evt_.id = CEU_IN__ok_killed;
-                         evt_.param = &ps;
+        /* signal killed */
+        {
+            tceu_kill ps = { org, org->ret };
+            tceu_evt evt_;
+                     evt_.id = CEU_IN__ok_killed;
+                     evt_.param = &ps;
 
-                ceu_sys_go_ex(app, &evt_,
-                              &stk,
-                              app->data, &app->data->trls[0], NULL);
+            ceu_sys_go_ex(app, &evt_,
+                          &stk,
+                          app->data, &app->data->trls[0], NULL);
 #ifndef CEU_ANA_NO_NESTED_TERMINATION
-                if (stk.org == NULL) {
-                    return RET_DEAD;
-                }
-#endif
+            if (stk.org == NULL) {
+                return RET_DEAD;
             }
+#endif
+        }
 #endif
 #ifdef CEU_ORGS_NEWS
-            /* free */
-            if (org->isDyn) {
+        /* free */
+        if (org->isDyn) {
 #if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
-                ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+            ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-                if (org->pool->queue == NULL) {
-                    ceu_sys_realloc(org, 0);
-                } else {
-                    ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
-                }
-#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+            if (org->pool->queue == NULL) {
                 ceu_sys_realloc(org, 0);
-#endif
+            } else {
+                ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
             }
+#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+            ceu_sys_realloc(org, 0);
 #endif
         }
-
-        /* traverse next org */
-        if (nxt!=NULL && stop!=org) {
-            return ceu_sys_go_ex(app, evt,
-                                 stk_down,
-                                 nxt, &nxt->trls[0], NULL);
-        }
-
+#endif
     }
 #endif  /* CEU_ORGS */
     return 0;
