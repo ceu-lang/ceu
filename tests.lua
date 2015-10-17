@@ -40160,7 +40160,6 @@ escape t.v + p!:v;
     run = { ['~>1s'] = 20 },
 }
 
---]===]
 Test { [[
 class U with
     var int v = 10;
@@ -42866,12 +42865,14 @@ class T with
 do
     v = 10;
     await e;
+                            // (4)
     emit f;
+                            // (6)
     v = 100;
     emit ok;
     await FOREVER;
 end
-var T a;
+var T a;                    // (1) v=10
 var T&& ptr;
 ptr = &&a;
 watching *ptr do
@@ -42879,20 +42880,23 @@ watching *ptr do
     par/and do
         par/and do
             await OS_START;
-            emit ptr:go;
+            emit ptr:go;    // (2)
         with
             await ptr:ok;
+                            // (7)
         end
-        ret = ret + 1;      // 24
+        ret = ret + 1;      // ret=2
     with
         await B;
+                            // (3)
         emit ptr:e;
         ret = ret + 1;
     with
         await ptr:f;
-        ret = ret + 1;      // 31
+                            // (5)
+        ret = ret + 1;      // ret=1
     end
-    _V = ret + ptr:v + a.v;
+    _V = ret + ptr:v + a.v;     // _V=104
     escape ret + ptr:v + a.v;
         // this escape the outer block, which kills ptr,
         // which kills the watching, which escapes again with +1
@@ -42902,8 +42906,8 @@ escape _V + 1;
     _ana = {
         --acc = 3,
     },
-    run = { ['~>B']=203, }
-    --run = { ['~>B']=204, }
+    --run = { ['~>B']=203, }
+    run = { ['~>B']=204, }
 }
 Test { [[
 class Unit with
@@ -42959,8 +42963,8 @@ watching *ptr do
 end
 escape _V + 1;
 ]],
-    --run = 21,
-    run = 20,
+    run = 21,
+    --run = 20,
 }
 
 Test { [[
@@ -42983,7 +42987,8 @@ watching *ok1! do
 end
 escape 1;
 ]],
-    run = 11,
+    --run = 11,
+    run = 1,
 }
 
 Test { [[
@@ -43013,7 +43018,8 @@ escape _V + 1;  // this one executes because of strong abortion in the watching
     _ana = {
         acc = true,
     },
-    run = 11,
+    --run = 11,
+    run = 12,
 }
 
 Test { [[
@@ -43314,8 +43320,8 @@ watching *i do
 end
 escape _V + 1;
 ]],
-    run = 100,
-    --run = 101,
+    --run = 100,
+    run = 101,
 }
 
 Test { [[
@@ -43350,8 +43356,8 @@ watching *i do
 end
 escape _V + 1;
 ]],
-    run = 100,
-    --run = 101,
+    --run = 100,
+    run = 101,
 }
 
 Test { [[
@@ -43395,8 +43401,8 @@ watching *i1 do
 end
 escape _V+1;
 ]],
-    --run = 100,
-    run = 99,
+    run = 100,
+    --run = 99,
 }
 
 Test { [[
@@ -43447,8 +43453,8 @@ escape _V + 1;
     _ana = {
         acc = true,
     },
-    run = 165,
-    --run = 166,
+    --run = 165,
+    run = 166,
 }
 
 Test { [[
@@ -43486,8 +43492,8 @@ end
 escape _V+1;
 ]],
     wrn = true,
-    run = 160,
-    --run = 161,
+    --run = 160,
+    run = 161,
 }
 
 Test { [[
@@ -43523,8 +43529,8 @@ watching *i do
 end
 escape _V+1;
 ]],
-    run = 160,
-    --run = 161,
+    --run = 160,
+    run = 161,
 }
 
 Test { [[
@@ -43557,6 +43563,7 @@ escape v + i:get();
     run = 150,
 }
 
+--]===]
 Test { [[
 native do
     int V = 0;
@@ -43608,8 +43615,8 @@ end
 escape _V+1;
 ]],
     wrn = true,
-    run = 630,
-    --run = 631,
+    --run = 630,
+    run = 631,
 }
 
 Test { [[
