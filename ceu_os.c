@@ -361,10 +361,10 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
             /* traverse all children */
             while (cur != NULL) {
-                tceu_org* nxt = cur->nxt; /* save: possible free */
-#if 0
+                printf("CUR %p\n", cur);
+#if 1
 #ifdef CEU_ORGS_NEWS
-                int is_dyn = org->isDyn;  /* save: possible free */
+                int is_dyn = cur->isDyn;  /* save: possible free */
                 int ret =
 #endif
 #endif
@@ -377,8 +377,9 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     return RET_DEAD;
                 }
 #endif
-#if 0
-#ifdef CEU_NEWS_ORGS
+#if 1
+#ifdef CEU_ORGS_NEWS
+printf("CHILD %p => %d (vs %d)\n", cur, ret, RET_DEAD);
                 if (is_dyn && ret==RET_DEAD) {
                     /* The current *dynamic* child died. (RESEARCH-10)
                      * We have no idea about the prv/nxt childs, so we restart 
@@ -392,7 +393,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
 #endif
                 printf("NXT %p\n", cur);
-                cur = nxt;
+                cur = cur->nxt;
             }
             continue;   /* next trail after handling children */
         }
@@ -602,6 +603,9 @@ printf("free: %p\n", org);
             ceu_sys_realloc(org, 0);
 #endif
         }
+#endif
+#if 1
+        return RET_DEAD;
 #endif
     }
 #endif  /* CEU_ORGS */

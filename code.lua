@@ -294,7 +294,7 @@ if (_ceu_immediate_death != NULL) {
 {
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, &evt,
+    return ceu_sys_go_ex(_ceu_app, &evt,
                   &_ceu_stk,
                   _ceu_org, &_ceu_org->trls[0], _ceu_org);
 #ifdef CEU_ORGS
@@ -1743,11 +1743,15 @@ case ]]..me.lbl_cnt.id..[[:;
 ]])
         end
         LINE(me, [[
-    ceu_sys_go_ex(_ceu_app, &evt,
-                  &_ceu_stk,
-                  _ceu_app->data, &_ceu_app->data->trls[0], NULL);
 #ifdef CEU_ORGS
-    if (_ceu_stk.org == NULL) {
+    int ret =
+#endif
+        ceu_sys_go_ex(_ceu_app, &evt,
+                      &_ceu_stk,
+                      _ceu_app->data, &_ceu_app->data->trls[0], NULL);
+#ifdef CEU_ORGS
+printf("ret-from-emit %p => %d\n", _ceu_org, ret);
+    if (ret==RET_DEAD || _ceu_stk.org==NULL) {
         return RET_DEAD;
     }
 #endif
