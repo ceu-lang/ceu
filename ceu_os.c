@@ -390,7 +390,6 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                 }
 #endif
 #endif
-                printf("+ %p -> %p\n", cur, cur->nxt);
                 cur = cur->nxt;
             }
             continue;   /* next trail after handling children */
@@ -577,7 +576,6 @@ SPC(1); printf("<<< NO\n");
                      evt_.id = CEU_IN__ok_killed;
                      evt_.param = &ps;
 
-printf("killing %p\n", org);
             ceu_sys_go_ex(app, &evt_,
                           &stk,
                           app->data, &app->data->trls[0], NULL);
