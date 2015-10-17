@@ -326,7 +326,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
 #ifdef CEU_CLEAR
         if (trl == stop) {
-            return 0;    /* bounded trail traversal */
+            return RET_HALT;    /* bounded trail traversal */
         }
 #endif
 
@@ -354,20 +354,40 @@ printf("ACC: %p\n", org);
 #endif
            )
         {
-            tceu_org* cur;
+            tceu_org* cur = trl->org;
 
             if (evt->id == CEU_IN__CLEAR) {
                 trl->evt = CEU_IN__NONE;
             }
 
             /* traverse all children */
-            for (cur = trl->org;
-                 cur != NULL;
-                 cur = cur->nxt)
-            {
-                ceu_sys_go_ex(app, evt,
-                              &stk,
-                              cur, &cur->trls[0], NULL);
+            while (cur != NULL) {
+#ifdef CEU_ORGS_NEWS
+                int is_dyn = org->isDyn; /* save: possible free */
+                int ret =
+#endif
+                    ceu_sys_go_ex(app, evt,
+                                  &stk,
+                                  cur, &cur->trls[0], NULL);
+#if 0
+                /* in case a children kills myself, we stop now */
+                if (stk.org == NULL) {
+                    return RET_DEAD;
+                }
+#endif
+#ifdef CEU_NEWS_ORGS
+                if (is_dyn && ret==RET_DEAD) {
+                    /* The current *dynamic* child died. (RESEARCH-10)
+                     * We have no idea about the prv/nxt childs, so we restart 
+                     * from scratch.
+                     * Static orgs dont clear the stack and dont generate 
+                     * RET_DEAD. (Because they remain in memory.)
+                     */
+                    cur = trl->org;
+                    continue;
+                }
+#endif
+                cur = cur->nxt;
             }
 #if 0
 - talvez nao precise mais do stop p/ orgs
@@ -375,7 +395,6 @@ printf("ACC: %p\n", org);
 #if !defined(CEU_ANA_NO_NESTED_TERMINATION) && defined(CEU_ORGS_NEWS)
             /* Uses "while" to restart traversing all childs in case one dies.
              * We dont know exactly from which one to restart (RESEARCH-10).
-             * Static orgs dont clear the stack and dont generate RET_DEAD.
              */
             while (trl->org != NULL)
 #else
@@ -465,6 +484,20 @@ printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
 #endif
 
             switch (_ret) {
+                case RET_QUIT:
+#ifdef CEU_RET
+#if defined(CEU_RET) || defined(CEU_OS_KERNEL)
+                    app->isAlive = 0;
+#ifdef CEU_OS_KERNEL
+                    CEU_GC = 1;
+#endif
+#endif
+#ifdef CEU_LUA
+                    lua_close(app->lua);
+#endif
+#endif
+                    return RET_QUIT;
+
                 case RET_HALT:
                     break;
 #ifdef CEU_ASYNCS
@@ -475,24 +508,9 @@ printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
                     app->pendingAsyncs = 1;
                     break;
 #endif
-#ifdef CEU_RET
-                case RET_QUIT:
-#if defined(CEU_RET) || defined(CEU_OS_KERNEL)
-                    app->isAlive = 0;
-#ifdef CEU_OS_KERNEL
-                    CEU_GC = 1;
-#endif
-#endif
-#ifdef CEU_LUA
-                    lua_close(app->lua);
-#endif
-                    return RET_QUIT;
-#endif
 #ifdef CEU_ORGS
-#ifndef CEU_ANA_NO_NESTED_TERMINATION
                 case RET_DEAD:
                     return RET_DEAD;
-#endif
 #endif
                 default:
 #ifdef CEU_DEBUG
@@ -532,7 +550,6 @@ SPC(1); printf("<<< NO\n");
         org->isAlive = 0;
 #endif
 
-#ifndef CEU_ANA_NO_NESTED_TERMINATION
         /* If it is a bounded clear for a single org and this org is not
          * dynamic, we don't need to clear the stack because the enclosing
          * block is still alive, so, no dangling pointers.
@@ -571,7 +588,6 @@ SPC(1); printf("<<< NO\n");
                 }
             }
         }
-#endif
 #ifdef CEU_ORGS_NEWS
         /* re-link PRV <-> NXT */
         if (org->isDyn) {
@@ -597,11 +613,9 @@ SPC(1); printf("<<< NO\n");
             ceu_sys_go_ex(app, &evt_,
                           &stk,
                           app->data, &app->data->trls[0], NULL);
-#ifndef CEU_ANA_NO_NESTED_TERMINATION
             if (stk.org == NULL) {
                 return RET_DEAD;
             }
-#endif
         }
 #endif
 #ifdef CEU_ORGS_NEWS
@@ -622,7 +636,7 @@ SPC(1); printf("<<< NO\n");
 #endif
     }
 #endif  /* CEU_ORGS */
-    return 0;
+    return RET_HALT;
 }
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)

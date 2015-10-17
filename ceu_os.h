@@ -662,18 +662,13 @@ typedef struct {
 /* RET_* */
 
 enum {
-    RET_HALT = 0
-    /*RET_GOTO,*/
-#ifdef CEU_RET
-    , RET_QUIT
-#endif
+      RET_QUIT = 0
+    , RET_HALT
 #ifdef CEU_ASYNCS
     , RET_ASYNC
 #endif
 #ifdef CEU_ORGS
-#ifndef CEU_ANA_NO_NESTED_TERMINATION
     , RET_DEAD
-#endif
 #endif
 };
 
