@@ -147,7 +147,7 @@ function CLEAR_BEF (me)
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
     ceu_sys_go_ex(_ceu_app, &evt,
-                  &_ceu_stk,
+                  _ceu_stk,
                   _ceu_org,
                   &_ceu_org->trls[ ]]..(me.trails[1])  ..[[ ],
                   &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
@@ -294,11 +294,11 @@ if (_ceu_immediate_death != NULL) {
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
 printf("TODO: e agora? os outros return abaixo!\n");
-    return ceu_sys_go_ex(_ceu_app, &evt,
-                  &_ceu_stk,
+    ceu_sys_go_ex(_ceu_app, &evt,
+                  _ceu_stk,
                   _ceu_org, &_ceu_org->trls[0], _ceu_org);
 #ifdef CEU_ORGS
-    if (_ceu_stk.org == NULL) {
+    if (_ceu_stk->org == NULL) {
         return RET_DEAD;
     }
 #endif
@@ -391,9 +391,9 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         trl->lbl = CEU_LBL__STACKED;
         ceu_app_go(_ceu_app,NULL,
                    ]]..org..[[, &]]..org..[[->trls[0],
-                   &_ceu_stk, &immediate_death);
+                   _ceu_stk, &immediate_death);
 #ifdef CEU_ORGS
-        if (_ceu_stk.org == NULL) {
+        if (_ceu_stk->org == NULL) {
             return RET_DEAD;
         }
 #endif
@@ -584,7 +584,7 @@ if (]]..me.val..[[ == NULL) {
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
     ceu_sys_go_ex(_ceu_app, &evt,
-                  &_ceu_stk,
+                  _ceu_stk,
                   __ceu_org, &__ceu_org->trls[0], __ceu_org);
 
     if (trl->lbl != CEU_LBL__STACKED) {
@@ -1340,10 +1340,9 @@ _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = CEU_LBL__STACKED;
             if i < #me then
                 LINE(me, [[
     trl->lbl = ]]..me.lbls_in[i].id..[[;
-printf("ME %p // stk %p/%p\n", _ceu_org, &_ceu_stk,_ceu_stk.org);
-    ceu_app_go(_ceu_app,NULL,_ceu_org,trl,&_ceu_stk,NULL);
+    ceu_app_go(_ceu_app,NULL,_ceu_org,trl,_ceu_stk,NULL);
 #ifdef CEU_ORGS
-    if (_ceu_stk.org == NULL) {
+    if (_ceu_stk->org == NULL) {
         return RET_DEAD;
     }
 #endif
@@ -1745,11 +1744,11 @@ case ]]..me.lbl_cnt.id..[[:;
     int ret =
 #endif
         ceu_sys_go_ex(_ceu_app, &evt,
-                      &_ceu_stk,
+                      _ceu_stk,
                       _ceu_app->data, &_ceu_app->data->trls[0], NULL);
 #ifdef CEU_ORGS
 printf("ret-from-emit %p => %d\n", _ceu_org, ret);
-    if (ret==RET_DEAD || _ceu_stk.org==NULL) {
+    if (ret==RET_DEAD || _ceu_stk->org==NULL) {
         return RET_DEAD;
     }
 #endif

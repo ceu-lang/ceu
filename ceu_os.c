@@ -313,7 +313,12 @@ int ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
     /* TODO: now all arguments are required in all configurations */
 #endif
 {
-    tceu_stk stk = { org, stk_down };
+#ifdef CEU_STACK
+    tceu_stk  stk_ = { org, stk_down };
+    tceu_stk* stk  = &stk_;
+#else
+    tceu_stk* stk  = NULL;
+#endif
 
     for (;; trl++)
     {
@@ -368,11 +373,11 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #endif
 #endif
                     ceu_sys_go_ex(app, evt,
-                                  &stk,
+                                  stk,
                                   cur, &cur->trls[0], NULL);
 #if 1
                 /* in case a children kills myself, we stop now */
-                if (stk.org == NULL) {
+                if (stk->org == NULL) {
                     return RET_DEAD;
                 }
 #endif
@@ -403,10 +408,10 @@ printf("%d==%d && %d!=%d && %d>=%d\n",
         trl->seqno, app->seqno,
         evt->id, CEU_IN_lower
 );
-#ifdef CEU_WATCHING_
-printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
-             ((tceu_kill*)evt->param)->org_or_adt);
-#endif
+if (evt->param != NULL) {
+    printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
+                 ((tceu_kill*)evt->param)->org_or_adt);
+}
 #endif
 
         if (
@@ -442,7 +447,7 @@ printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
 #endif
 
             /*** CODE ***/
-            _ret = app->code(app, evt, org, trl, &stk, NULL);
+            _ret = app->code(app, evt, org, trl, stk, NULL);
                         /* rejoin may reset trl */
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
@@ -535,20 +540,20 @@ SPC(1); printf("<<< NO\n");
              * Go down in the stack:
              *      stk->down, stk->down->down, ...
              */
-            tceu_stk* stk_;
-            for (stk_=stk_down; stk_!=NULL; stk_=stk_->down)
+            tceu_stk* cur_stk;
+            for (cur_stk=stk_down; cur_stk!=NULL; cur_stk=cur_stk->down)
             {
-                tceu_org* cur;
-                if (stk_->org == NULL) {
+                tceu_org* cur_org;
+                if (cur_stk->org == NULL) {
                     continue;   /* level previously aborted */
                 }
 
-                /* Check if stk_->org is "org" or one of its children:
+                /* Check if cur_stk->org is "org" or one of its children:
                  *      org, org->up, org->up->up, ...
                  */
-                for (cur=stk_->org; cur!=NULL; cur=cur->up) {
-                    if (cur == org) {
-                        stk_->org = NULL;    /* invalidate stack level */
+                for (cur_org=cur_stk->org; cur_org!=NULL; cur_org=cur_org->up) {
+                    if (cur_org == org) {
+                        cur_stk->org = NULL;    /* invalidate stack level */
                         break;
                     }
                 }
@@ -577,9 +582,9 @@ SPC(1); printf("<<< NO\n");
                      evt_.param = &ps;
 
             ceu_sys_go_ex(app, &evt_,
-                          &stk,
+                          stk,
                           app->data, &app->data->trls[0], NULL);
-            if (stk.org == NULL) {
+            if (stk->org == NULL) {
                 return RET_DEAD;
             }
         }
