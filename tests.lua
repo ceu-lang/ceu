@@ -50184,6 +50184,7 @@ escape 0;
     run = { ['~>1s'] = 35 },
 }
 
+-- fails if inner is killed before outer
 Test { [[
 data List with
     tag NIL;

@@ -404,6 +404,18 @@ CEU_]]..id..'* '..enum..'_assert (tceu_app* app, CEU_'..id..[[* me, char* file, 
 #ifdef CEU_ADTS_WATCHING_]]..id..[[
 
 void ]]..enum..'_kill (tceu_app* app, CEU_'..id..[[* me) {
+#ifdef CEU_ADTS_WATCHING
+    /* kill myself before my recursive fields */
+    {
+        tceu_evt evt;
+                 evt.id = CEU_IN__ok_killed;
+                 evt.param = &me;
+/* XXXX-1 */
+        ceu_sys_go_ex(app, &evt, NULL,
+/* TODO: stk */
+                      app->data, &app->data->trls[0], NULL);
+    }
+#endif
 ]]
         -- kill all my recursive fields after myself (push them before)
         for _,item in ipairs(top.tags[tag].tup) do
@@ -428,22 +440,7 @@ void ]]..enum..'_kill (tceu_app* app, CEU_'..id..[[* me) {
             end
         end
 
-        -- kill myself before my recursive fields (push myself after)
--- TODO: why before?
--- moving to "after" to see what happens
         kill = kill .. [[
-#ifdef CEU_ADTS_WATCHING
-    {
-        tceu_evt evt;
-                 evt.id = CEU_IN__ok_killed;
-                 evt.param = &me;
-/* XXXX-1 */
-        ceu_sys_go_ex(app, &evt, NULL,
-/* TODO: stk */
-                      app->data, &app->data->trls[0], NULL);
-    }
-#endif
-
 /**********************************************************************/
 
 }
