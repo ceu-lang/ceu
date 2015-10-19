@@ -55,7 +55,6 @@ function HALT (me, ret, cond)
     if cond then
         LINE(me, 'if ('..cond..') {')
     end
-    --LINE(me, '\tgoto _CEU_NEXT_;')
     if ret then
         LINE(me, '\treturn '..ret..';')
     else
@@ -293,7 +292,6 @@ if (_ceu_immediate_death != NULL) {
 {
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
-printf("TODO: e agora? os outros return abaixo!\n");
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org, &_ceu_org->trls[0], _ceu_org);
@@ -1317,46 +1315,20 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         for i, sub in ipairs(me) do
-            if i > 1 then
-                LINE(me, [[
-/* stacked to execute, but has to check before actually executing it */
-_ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = CEU_LBL__STACKED;
-]])
-            end
-        end
-        for i, sub in ipairs(me) do
-            LINE(me, [[
-{
-    tceu_trl* trl = &_ceu_org->trls[ ]]..sub.trails[1]..[[ ];
-]])
-            if i > 1 then
-                LINE(me, [[
-    /* except for 1st, check all before executing */
-    if (trl->lbl != CEU_LBL__STACKED) {
-        return RET_HALT;
-    }
-]])
-            end
             if i < #me then
                 LINE(me, [[
-    trl->lbl = ]]..me.lbls_in[i].id..[[;
-    ceu_app_go(_ceu_app,NULL,_ceu_org,trl,_ceu_stk,NULL);
-#ifdef CEU_ORGS
-    if (_ceu_stk->org == NULL) {
-        return RET_DEAD;
-    }
-#endif
+    _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = ]]..me.lbls_in[i].id..[[;
+    ceu_app_go(_ceu_app,NULL,_ceu_org,
+               &_ceu_org->trls[ ]]..sub.trails[1]..[[ ],
+               _ceu_stk,NULL);
 ]])
             else
                 -- execute the last directly (no need to call)
                 -- the code for each me[i] should be generated backwards
                 LINE(me, [[
-    _ceu_trl = trl;
+    _ceu_trl = &_ceu_org->trls[ ]]..sub.trails[1]..[[ ];
 ]])
             end
-            LINE(me, [[
-}
-]])
         end
     end,
 
@@ -1377,7 +1349,20 @@ _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = CEU_LBL__STACKED;
     end,
 
     ParOr_pos = function (me)
+        if not (ANA and me.ana.pos[false]) then
+            LINE(me, [[
+{
+    static jmp_buf _ceu_jmp_]]..me.n..[[;
+    if (setjmp(_ceu_jmp_]]..me.n..[[) != 0) {
+]])
+            GOTO(me, me.lbl_out2.id)
+            LINE(me, [[
+    }
+]])
+        end
+
         F._Par(me)
+
         for i=#me, 1, -1 do
             local sub = me[i]
             if i < #me then
@@ -1390,9 +1375,13 @@ _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = CEU_LBL__STACKED;
                 GOTO(me, me.lbl_out.id)
             end
         end
-
         if not (ANA and me.ana.pos[false]) then
             CASE(me, me.lbl_out)
+            LINE(me, [[
+            longjmp(_ceu_jmp_]]..me.n..[[, 1);
+}
+]])
+            CASE(me, me.lbl_out2)
             CLEAR_BEF(me)
         end
     end,
@@ -1747,19 +1736,19 @@ case ]]..me.lbl_cnt.id..[[:;
                       _ceu_stk,
                       _ceu_app->data, &_ceu_app->data->trls[0], NULL);
 #ifdef CEU_ORGS
-printf("ret-from-emit %p => %d\n", _ceu_org, ret);
     if (ret==RET_DEAD || _ceu_stk->org==NULL) {
         return RET_DEAD;
     }
 #endif
     if (trl->lbl != CEU_LBL__STACKED) {
-        return RET_HALT;
+        /*return RET_HALT;*/
     }
 }
 ]])
     end,
 
     AwaitN = function (me)
+        LINE(me, '_ceu_trl->lbl = CEU_LBL__NONE;')
         HALT(me)
     end,
 

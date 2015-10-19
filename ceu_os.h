@@ -1,35 +1,3 @@
-#if 0
-        if (trl->evt != evt->id
-#if defined(CEU_INTS) && defined(CEU_ORGS)
-        ||  (evt->id<CEU_IN_lower && evt->org!=trl->evto)
-#endif
-        ) {
-            continue;
-        }
-#ifdef CEU_OS
-        if (trl->evt == CEU_IN__NONE) {
-            continue; /* OS can emit NONE (to fill queue gaps) */
-        }
-#endif
-#ifdef CEU_WATCHING
-        if (evt->id == CEU_IN__ok_killed) {
-            if (trl->org_or_adt != NULL &&
-                trl->org_or_adt != ((tceu_kill*)evt->param)->org_or_adt)
-            {
-                continue;
-            }
-        }
-        else
-#endif
-        {
-#ifdef CEU_INTS
-            if (evt->id<CEU_IN_lower && trl->seqno==app->seqno) {
-                continue;
-            }
-#endif
-        }
-#endif
-
 #ifndef _CEU_OS_H
 #define _CEU_OS_H
 
@@ -52,6 +20,7 @@
 #endif
 
 #if defined(CEU_CLEAR) || defined(CEU_INTS) || defined(CEU_ORGS) || defined(CEU_REENTRANT)
+#include <setjmp.h>
 #define CEU_STACK
 #endif
 

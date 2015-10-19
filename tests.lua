@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -852,6 +851,7 @@ Test { [[await A; escape 0;]],
     env = 'event "A" is not declared',
 }
 
+--]===]
 Test { [[
 par/or do
 with
@@ -50227,6 +50227,7 @@ escape -1;
     _ana = {acc=true},
     run = -1,
 }
+do return end
 
 Test { [[
 data List with

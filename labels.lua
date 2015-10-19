@@ -116,7 +116,8 @@ F = {
     end,
     ParOr_pre = function (me)
         F._Par_pre(me)
-        me.lbl_out = new{'ParOr_out',  prio=me.__depth}
+        me.lbl_out  = new{'ParOr_out',  prio=me.__depth}
+        me.lbl_out2 = new{'ParOr_out2',  prio=me.__depth}
     end,
     ParAnd_pre = function (me)
         F._Par_pre(me)

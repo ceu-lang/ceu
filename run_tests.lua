@@ -1,5 +1,15 @@
 #!/usr/bin/env lua
 
+--[[
+STATS = {
+    count   = 2698,
+    mem     = 0,
+    trails  = 5269,
+    bytes   = 24166370,
+}
+(./run_tests.lua: 676.92s 22704k)
+]]
+
 --RUNTESTS_file = assert(io.open('/tmp/fin.txt','w'))
 
 RUNTESTS = true
