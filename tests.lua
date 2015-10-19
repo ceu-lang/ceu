@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -851,7 +852,6 @@ Test { [[await A; escape 0;]],
     env = 'event "A" is not declared',
 }
 
---]===]
 Test { [[
 par/or do
 with
@@ -1076,6 +1076,29 @@ escape a;
     run = 10,
 }
 
+Test { [[
+input void OS_START;
+do
+    var int v = 0;
+end
+event void e;
+var int ret = 0;
+par/or do
+    await OS_START;
+    emit e;
+    ret = 1;
+with
+    await e;
+    ret = 2;
+end
+escape ret;
+]],
+    _ana = {
+        excpt = 1,
+        --unreachs = 1,
+    },
+    run = 2,
+}
 Test { [[
 input void OS_START;
 do

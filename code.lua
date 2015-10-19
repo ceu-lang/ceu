@@ -1304,6 +1304,11 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         HALT(me)        -- must escape with `escape´
         CASE(me, me.lbl_out)
         if me.has_escape then
+            LINE(me, [[
+ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..[[,
+            _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
+]])
+            CASE(me, me.lbl_out2)
             CLEAR_BEF(me)
         end
     end,
@@ -1351,13 +1356,14 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
     ParOr_pos = function (me)
         if not (ANA and me.ana.pos[false]) then
             LINE(me, [[
+printf("SET %p\n", &_ceu_stk->jmp);
 {
-    static jmp_buf _ceu_jmp_]]..me.n..[[;
-    if (setjmp(_ceu_jmp_]]..me.n..[[) != 0) {
-]])
-            GOTO(me, me.lbl_out2.id)
-            LINE(me, [[
+    int ret = setjmp(_ceu_stk->jmp);
+    if (ret != 0) {
+        _ceu_lbl = ret;
+        goto _CEU_GOTO_;
     }
+}
 ]])
         end
 
@@ -1378,8 +1384,8 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         if not (ANA and me.ana.pos[false]) then
             CASE(me, me.lbl_out)
             LINE(me, [[
-            longjmp(_ceu_jmp_]]..me.n..[[, 1);
-}
+ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..[[,
+            _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
 ]])
             CASE(me, me.lbl_out2)
             CLEAR_BEF(me)
@@ -1702,6 +1708,17 @@ case ]]..me.lbl_cnt.id..[[:;
 
     EmitInt = function (me)
         local _, int, ps = unpack(me)
+
+        LINE(me, [[
+printf("SET %p\n", &_ceu_stk->jmp);
+{
+    int ret = setjmp(_ceu_stk->jmp);
+    if (ret != 0) {
+        _ceu_lbl = ret;
+        goto _CEU_GOTO_;
+    }
+}
+]])
 
         -- block for __emit_ps
         LINE(me, [[

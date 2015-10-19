@@ -99,6 +99,7 @@ F = {
 
     SetBlock_pre = function (me)
         me.lbl_out = new{'Set_out',  prio=me.__depth}
+        me.lbl_out2 = new{'Set_out2',  prio=me.__depth}
     end,
 
     _Par_pre = function (me)

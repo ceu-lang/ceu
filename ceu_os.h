@@ -19,7 +19,10 @@
 #define CEU_ISR_OFF()
 #endif
 
+/*
 #if defined(CEU_CLEAR) || defined(CEU_INTS) || defined(CEU_ORGS) || defined(CEU_REENTRANT)
+*/
+#if 1
 #include <setjmp.h>
 #define CEU_STACK
 #endif
@@ -423,13 +426,6 @@ typedef struct tceu_evt {
 #endif
 } tceu_evt;
 
-/* TCEU_STK */
-
-typedef struct tceu_stk {
-    struct tceu_org* org;
-    struct tceu_stk* down;
-} tceu_stk;
-
 /* TCEU_LNK */
 
 /* simulates an org prv/nxt */
@@ -507,8 +503,6 @@ typedef struct {
 } tceu_kill;
 #endif
 
-/* TCEU_GO */
-
 /* TCEU_LST */
 
 #ifdef CEU_DEBUG
@@ -520,6 +514,15 @@ typedef struct tceu_lst {
     tceu_nlbl lbl;
 } tceu_lst;
 #endif
+
+/* TCEU_STK */
+
+typedef struct tceu_stk {
+    struct tceu_stk* down;
+    tceu_org* org;
+    tceu_trl* trl;
+    jmp_buf   jmp;
+} tceu_stk;
 
 /* TCEU_APP */
 

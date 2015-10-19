@@ -270,6 +270,23 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
+void ceu_longjmp (tceu_stk* stk, tceu_nlbl lbl, tceu_org* org, tceu_ntrl t1, tceu_ntrl t2) {
+    if (stk == NULL) {
+        return;
+    } else {
+        ceu_longjmp(stk->down,lbl,org,t1,t2);     /* TODO: reverse */
+    }
+    if (stk->trl == NULL) {
+        return;                     /* TODO: remove this test */
+    }
+    if (stk->trl >= &org->trls[t1]
+    &&  stk->trl <= &org->trls[t2])
+    {
+printf("JMP %p\n", &stk->jmp);
+        longjmp(stk->jmp, lbl);
+    }
+}
+
 #ifdef CEU_OS_KERNEL
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 #endif
@@ -314,7 +331,7 @@ int ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 #endif
 {
 #ifdef CEU_STACK
-    tceu_stk  stk_ = { org, stk_down };
+    tceu_stk  stk_ = { stk_down, org, NULL, {} };
     tceu_stk* stk  = &stk_;
 #else
     tceu_stk* stk  = NULL;
