@@ -1319,6 +1319,17 @@ ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..[[,
     _Par = function (me)
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
+        LINE(me, [[
+printf("SET %p\n", _ceu_stk);
+{
+    int ret = setjmp(_ceu_stk->jmp);
+    if (ret != 0) {
+        _ceu_lbl = ret;
+        goto _CEU_GOTO_;
+    }
+}
+]])
+
         for i, sub in ipairs(me) do
             if i < #me then
                 LINE(me, [[
@@ -1354,19 +1365,6 @@ ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..[[,
     end,
 
     ParOr_pos = function (me)
-        if not (ANA and me.ana.pos[false]) then
-            LINE(me, [[
-printf("SET %p\n", &_ceu_stk->jmp);
-{
-    int ret = setjmp(_ceu_stk->jmp);
-    if (ret != 0) {
-        _ceu_lbl = ret;
-        goto _CEU_GOTO_;
-    }
-}
-]])
-        end
-
         F._Par(me)
 
         for i=#me, 1, -1 do
@@ -1710,7 +1708,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local _, int, ps = unpack(me)
 
         LINE(me, [[
-printf("SET %p\n", &_ceu_stk->jmp);
+printf("SET %p\n", &_ceu_stk);
 {
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {
