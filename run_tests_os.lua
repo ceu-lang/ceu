@@ -1,5 +1,10 @@
 #!/usr/bin/env lua
 
+if _VERSION ~= "Lua 5.1" then
+    io.stderr:write("This script requires Lua 5.1.\n")
+    os.exit(1)
+end
+
 _RUNTESTS = true
 
 dofile 'pak.lua'
