@@ -146,7 +146,7 @@ static int ceu_app_go (tceu_app* _ceu_app, tceu_evt* _ceu_evt, tceu_org* _ceu_or
                        tceu_stk* _ceu_stk_down, int* _ceu_immediate_death)
 {
 #ifdef CEU_STACK
-    tceu_stk  _ceu_stk_ = { _ceu_stk_down, _ceu_org, _ceu_trl, 0, {} };
+    tceu_stk  _ceu_stk_ = { _ceu_stk_down, _ceu_org, 0, 0, {} };
     tceu_stk* _ceu_stk  = &_ceu_stk_;
 #else
     tceu_stk* _ceu_stk  = NULL;

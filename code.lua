@@ -1314,6 +1314,7 @@ _ceu_stk->depth = ]]..me.__depth_abort..[[;
         _ceu_lbl = ret;
         goto _CEU_GOTO_;
     }
+    _ceu_stk->trl = ]]..me.trails[1]..[[;
 }
 ]])
 
@@ -1697,6 +1698,7 @@ _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
         _ceu_lbl = ret;
         goto _CEU_GOTO_;
     }
+    _ceu_stk->trl = ]]..me.trails[1]..[[;
 }
 ]])
 

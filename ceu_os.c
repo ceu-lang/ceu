@@ -288,7 +288,7 @@ void ceu_longjmp (tceu_stk* stk, tceu_nlbl lbl, u8 depth,
         ceu_longjmp(stk->down,lbl,depth,org,t1,t2);   /* TODO: reverse */
     }
     if (stk->depth >= depth &&
-        stk->trl>=&org->trls[t1] && stk->trl<=&org->trls[t2])
+        stk->trl>=t1 && stk->trl<=t2)
     {
         longjmp(stk->jmp, lbl);
     }
@@ -338,7 +338,7 @@ int ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 #endif
 {
 #ifdef CEU_STACK
-    tceu_stk  stk_ = { stk_down, org, NULL, 0, {} };
+    tceu_stk  stk_ = { stk_down, org, 0, 0, {} };
     tceu_stk* stk  = &stk_;
 #else
     tceu_stk* stk  = NULL;

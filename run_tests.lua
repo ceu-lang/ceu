@@ -63,6 +63,14 @@ STATS = {
     bytes   = 11879676,
 }
 (./run_tests.lua: 285.22s 29660k)
+-- tceu_ntrl
+STATS = {
+    count   = 1389,
+    mem     = 0,
+    trails  = 2127,
+    bytes   = 11851004,
+}
+(./run_tests.lua: 282.82s 32340k)
 
 ]]
 
