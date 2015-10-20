@@ -157,12 +157,6 @@ static int ceu_app_go (tceu_app* _ceu_app, tceu_evt* _ceu_evt, tceu_org* _ceu_or
 _CEU_GOTO_:
 #endif
 
-    _ceu_trl->lbl   = CEU_LBL__NONE;     /* clear trail */
-    _ceu_trl->evt   = CEU_IN__NONE;     /* clear trail */
-    _ceu_trl->seqno = _ceu_app->seqno;  /* don't awake again */
-#if 0
-#endif
-
 #ifdef CEU_DEBUG
 #ifndef CEU_OS_APP
 #ifdef CEU_ORGS

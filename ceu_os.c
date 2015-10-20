@@ -287,9 +287,6 @@ void ceu_longjmp (tceu_stk* stk, tceu_nlbl lbl, u8 depth,
     } else {
         ceu_longjmp(stk->down,lbl,depth,org,t1,t2);   /* TODO: reverse */
     }
-    if (stk->trl == NULL) {
-        return;                     /* TODO: remove this test */
-    }
     if (stk->depth >= depth &&
         stk->trl>=&org->trls[t1] && stk->trl<=&org->trls[t2])
     {
@@ -388,7 +385,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             tceu_org* cur = trl->org;
 
             if (evt->id == CEU_IN__CLEAR) {
-                trl->evt = CEU_IN__NONE;
+                trl->evt = CEU_IN__NONE;    /* TODO: dup w/ below */
             }
 
             /* traverse all children */
@@ -474,6 +471,7 @@ if (evt->param != NULL) {
 #endif
 
             /*** CODE ***/
+            trl->evt = CEU_IN__NONE;    /* TODO: dup w/ above */
             _ret = app->code(app, evt, org, trl, stk, NULL);
                         /* rejoin may reset trl */
 
@@ -526,9 +524,7 @@ SPC(1); printf("<<< NO\n");
 #endif
 #ifdef CEU_CLEAR
             if (evt->id==CEU_IN__CLEAR) {
-                trl->evt = CEU_IN__NONE;    /* trail cleared */
-                trl->lbl = CEU_LBL__NONE;
-                /* TODO: are both required? */
+                trl->evt = CEU_IN__NONE;    /* TODO: dup w/ above */
             }
 #endif
         }

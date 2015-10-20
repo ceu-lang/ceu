@@ -55,6 +55,15 @@ STATS = {
     bytes   = 11912444,
 }
 (./run_tests.lua: 286.71s 27296k)
+-- no unecessary longjmp
+STATS = {
+    count   = 1389,
+    mem     = 0,
+    trails  = 2127,
+    bytes   = 11879676,
+}
+(./run_tests.lua: 285.22s 29660k)
+
 ]]
 
 
