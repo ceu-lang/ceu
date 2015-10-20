@@ -105,6 +105,10 @@ function AST.pred_par (me)
     local tag = me.tag
     return tag=='ParOr' or tag=='ParAnd' or tag=='ParEver'
 end
+function AST.pred_aborts (me)
+    local tag = me.tag
+    return tag=='ParOr' or tag=='SetBlock' or tag=='Loop'
+end
 function AST.pred_true (me) return true end
 
 function AST.par (me, pred)

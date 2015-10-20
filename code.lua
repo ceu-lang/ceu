@@ -1305,7 +1305,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         CASE(me, me.lbl_out)
         if me.has_escape then
             LINE(me, [[
-ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..[[,
+ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..', '..me.__depth..[[,
             _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
 ]])
             CASE(me, me.lbl_out2)
@@ -1320,7 +1320,7 @@ ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..[[,
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         LINE(me, [[
-printf("SET %p\n", _ceu_stk);
+_ceu_stk->depth = ]]..me.__depth..[[;
 {
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {
@@ -1382,7 +1382,7 @@ printf("SET %p\n", _ceu_stk);
         if not (ANA and me.ana.pos[false]) then
             CASE(me, me.lbl_out)
             LINE(me, [[
-ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..[[,
+ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..', '..me.__depth..[[,
             _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
 ]])
             CASE(me, me.lbl_out2)
@@ -1708,7 +1708,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local _, int, ps = unpack(me)
 
         LINE(me, [[
-printf("SET %p\n", &_ceu_stk);
+_ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth..[[;
 {
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {

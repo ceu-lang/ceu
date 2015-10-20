@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -4958,7 +4959,6 @@ end;
         abrt = 3,
     },
 }
---]===]
 Test { [[
 input int A;
 par do
@@ -15462,6 +15462,16 @@ end
 escape ret;
 ]],
     env = 'line 6 : variable/event "a" is not declared',
+}
+
+Test { [[
+var int ret =
+do
+    escape 1;
+end;
+escape ret;
+]],
+    run = 1,
 }
 
 Test { [[

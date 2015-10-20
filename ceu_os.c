@@ -275,24 +275,24 @@ void ceu_stack_dump (tceu_stk* stk) {
     if (stk == NULL) {
         return;
     }
-    printf("[%p] org=%p trl=%p\n", stk, stk->org, stk->trl);
+    printf("[%p] org=%p depth=%d\n", stk, stk->org, stk->depth);
     ceu_stack_dump(stk->down);
 }
 #endif
 
-void ceu_longjmp (tceu_stk* stk, tceu_nlbl lbl, tceu_org* org, tceu_ntrl t1, tceu_ntrl t2) {
+void ceu_longjmp (tceu_stk* stk, tceu_nlbl lbl, int depth,
+                  tceu_org* org, tceu_ntrl t1, tceu_ntrl t2) {
     if (stk == NULL) {
         return;
     } else {
-        ceu_longjmp(stk->down,lbl,org,t1,t2);     /* TODO: reverse */
+        ceu_longjmp(stk->down,lbl,depth,org,t1,t2);   /* TODO: reverse */
     }
     if (stk->trl == NULL) {
         return;                     /* TODO: remove this test */
     }
-    if (stk->trl >= &org->trls[t1]
-    &&  stk->trl <= &org->trls[t2])
+    if (stk->depth >= depth &&
+        stk->trl>=&org->trls[t1] && stk->trl<=&org->trls[t2])
     {
-printf("JMP %p\n", stk);
         longjmp(stk->jmp, lbl);
     }
 }
@@ -341,7 +341,7 @@ int ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 #endif
 {
 #ifdef CEU_STACK
-    tceu_stk  stk_ = { stk_down, org, NULL, {} };
+    tceu_stk  stk_ = { stk_down, org, NULL, -1, {} };
     tceu_stk* stk  = &stk_;
 #else
     tceu_stk* stk  = NULL;
