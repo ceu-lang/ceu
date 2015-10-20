@@ -32,6 +32,13 @@ STATS = {
     bytes   = 11889387,
 }
 (./run_tests.lua: 293.30s 21300k)
+STATS = {
+    count   = 1389,
+    mem     = 0,
+    trails  = 2126,
+    bytes   = 11911256,
+}
+(./run_tests.lua: 287.60s 24216k)
 ]]
 
 

@@ -2496,6 +2496,28 @@ escape 1;
     run = 2,
 }
 
+Test { [[
+input void OS_START;
+event void a;
+loop do
+    if 1 then
+        par do
+            await a;
+            break;
+        with
+            await OS_START;
+            emit a;
+            _assert(0);
+        end
+    else
+        await OS_START;
+    end
+end
+await 1s;
+escape 1;
+]],
+    run = {['~>1s']=1},
+}
 -- LOOP / BOUNDED
 
 Test { [[

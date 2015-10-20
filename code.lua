@@ -120,7 +120,7 @@ end
 
 -- TODO: check if all calls are needed
 --          (e.g., cls outermost block should not!)
-function CLEAR_BEF (me)
+function CLEAR (me)
     COMM(me, 'CLEAR: '..me.tag..' ('..me.ln[2]..')')
 
     if ANA and me.ana.pos[false] then
@@ -140,6 +140,12 @@ function CLEAR_BEF (me)
         end
     end
 ]]
+
+    LINE(me, [[
+ceu_longjmp(_ceu_stk->down, ]]..me.lbl_jmp.id..', '..me.__depth..[[,
+            _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
+]])
+    CASE(me, me.lbl_jmp)
 
     LINE(me, [[
 {
@@ -1298,14 +1304,9 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         local blk,_ = unpack(me)
         CONC(me, blk)
         HALT(me)        -- must escape with `escape´
-        CASE(me, me.lbl_out)
         if me.has_escape then
-            LINE(me, [[
-ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..', '..me.__depth..[[,
-            _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
-]])
-            CASE(me, me.lbl_out2)
-            CLEAR_BEF(me)
+            CASE(me, me.lbl_out)
+            CLEAR(me)
         end
     end,
     Escape = function (me)
@@ -1377,12 +1378,7 @@ _ceu_stk->depth = ]]..me.__depth..[[;
         end
         if not (ANA and me.ana.pos[false]) then
             CASE(me, me.lbl_out)
-            LINE(me, [[
-ceu_longjmp(_ceu_stk->down, ]]..me.lbl_out2.id..', '..me.__depth..[[,
-            _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
-]])
-            CASE(me, me.lbl_out2)
-            CLEAR_BEF(me)
+            CLEAR(me)
         end
     end,
 
@@ -1513,7 +1509,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
         if me.has_break and ( not (AST.iter(AST.pred_async)()
                                 or AST.iter'Dcl_fun'()) )
         then
-            CLEAR_BEF(me)
+            CLEAR(me)
         end
     end,
 
