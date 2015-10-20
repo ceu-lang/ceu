@@ -162,8 +162,40 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 escape 1;
 ]],
-    ast = 'line 5 : max depth of 0xFF',
+    --ast = 'line 5 : max depth of 0xFF',
+    run = 1
 }
+
+do
+    local function gen (v)
+        if v == 1 then
+            return [[
+                do
+                    escape 0;
+                end
+            ]]
+        else
+            return [[
+                par do
+                    var int x]]..v..[[ = ]]..gen(v-1)..[[;
+                    escape 1;
+                with
+                    escape -1;
+                end
+            ]]
+        end
+    end
+    Test { [[
+    var int ret = 0;
+    ret = ]]..gen(50)..[[;
+    escape ret;
+    ]],
+        todo = true,
+        _ana = {acc=true},
+        --ast = 'line 5 : max depth of 0xFF',
+        run = 1
+    }
+end
 
 Test { [[escape 0;]], run=0 }
 Test { [[escape 9999;]], run=9999 }

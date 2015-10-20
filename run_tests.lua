@@ -47,6 +47,14 @@ STATS = {
     bytes   = 11898968,
 }
 (./run_tests.lua: 283.55s 21268k)
+-- after including the test case that used to fail
+STATS = {
+    count   = 1389,
+    mem     = 0,
+    trails  = 2127,
+    bytes   = 11912444,
+}
+(./run_tests.lua: 286.71s 27296k)
 ]]
 
 
