@@ -52,16 +52,10 @@ function LINE (me, line, spc)
 end
 
 function HALT (me, ret, cond)
-    if cond then
-        LINE(me, 'if ('..cond..') {')
-    end
     if ret then
         LINE(me, '\treturn '..ret..';')
     else
         LINE(me, '\treturn RET_HALT;')
-    end
-    if cond then
-        LINE(me, '}')
     end
 end
 
@@ -1398,7 +1392,13 @@ _ceu_stk->depth = ]]..me.__depth_abort..[[;
         -- AFTER code :: test gates
         CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
-            HALT(me, nil, '!'..val..'_'..i)
+            LINE(me, [[
+if (!]]..val..'_'..i..[[) {
+]])
+            HALT(me)
+            LINE(me, [[
+}
+]])
         end
     end,
 
@@ -1485,8 +1485,12 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
         if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
         _ceu_trl->evt = CEU_IN__ASYNC;
         _ceu_trl->lbl = ]]..me.lbl_asy.id..[[;
+#ifdef ceu_out_async
+        ceu_out_async(_ceu_app);
+#endif
+        _ceu_app->pendingAsyncs = 1;
 ]])
-            HALT(me, 'RET_ASYNC')
+            HALT(me)
             LINE(me, [[
     }
     case ]]..me.lbl_asy.id..[[:;
@@ -1679,8 +1683,12 @@ if (! _ceu_app->isAlive) {
     return RET_QUIT;
 }
 #endif
+#ifdef ceu_out_async
+ceu_out_async(_ceu_app);
+#endif
+_ceu_app->pendingAsyncs = 1;
 ]])
-        HALT(me, 'RET_ASYNC')
+        HALT(me)
         LINE(me, [[
 case ]]..me.lbl_cnt.id..[[:;
 ]])
@@ -1747,7 +1755,6 @@ _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
     end,
 
     AwaitN = function (me)
-        LINE(me, '_ceu_trl->lbl = CEU_LBL__NONE;')
         HALT(me)
     end,
 
@@ -1901,8 +1908,12 @@ case ]]..me.lbl.id..[[:;
 if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
 _ceu_trl->evt = CEU_IN__ASYNC;
 _ceu_trl->lbl = ]]..me.lbl.id..[[;
+#ifdef ceu_out_async
+ceu_out_async(_ceu_app);
+#endif
+_ceu_app->pendingAsyncs = 1;
 ]])
-        HALT(me, 'RET_ASYNC')
+        HALT(me)
 
         LINE(me, [[
 case ]]..me.lbl.id..[[:;

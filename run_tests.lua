@@ -72,6 +72,15 @@ STATS = {
 }
 (./run_tests.lua: 282.82s 32340k)
 
+-- inclui threads,lua
+STATS = {
+    count   = 1502,
+    mem     = 0,
+    trails  = 2387,
+    bytes   = 13606410,
+}
+(./run_tests.lua: 387.22s 33068k)
+
 ]]
 
 

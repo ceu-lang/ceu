@@ -496,14 +496,6 @@ if (evt->param != NULL) {
 
                 case RET_HALT:
                     break;
-#ifdef CEU_ASYNCS
-                case RET_ASYNC:
-#ifdef ceu_out_async
-                    ceu_out_async(app);
-#endif
-                    app->pendingAsyncs = 1;
-                    break;
-#endif
 #ifdef CEU_ORGS
                 case RET_DEAD:
                     return RET_DEAD;

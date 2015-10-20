@@ -637,9 +637,6 @@ typedef struct {
 enum {
       RET_QUIT = 0
     , RET_HALT
-#ifdef CEU_ASYNCS
-    , RET_ASYNC
-#endif
 #ifdef CEU_ORGS
     , RET_DEAD
 #endif
