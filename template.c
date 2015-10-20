@@ -142,8 +142,8 @@ static void* ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, void* param) {
 }
 #endif
 
-static int ceu_app_go (tceu_app* _ceu_app, tceu_evt* _ceu_evt, tceu_org* _ceu_org, tceu_trl* _ceu_trl,
-                       tceu_stk* _ceu_stk_down, int* _ceu_immediate_death)
+static void ceu_app_go (tceu_app* _ceu_app, tceu_evt* _ceu_evt, tceu_org* _ceu_org, tceu_trl* _ceu_trl,
+                        tceu_stk* _ceu_stk_down, int* _ceu_immediate_death)
 {
 #ifdef CEU_STACK
     tceu_stk  _ceu_stk_ = { _ceu_stk_down, _ceu_org, 0, 0, {} };
@@ -182,7 +182,6 @@ printf("OK : lbl=%d : org=%p\n", _ceu_lbl, _ceu_org);
 #ifdef CEU_DEBUG
     ceu_out_assert_msg(0, "no return");
 #endif
-    return RET_HALT;    /* TODO: should never be reached anyways */
 }
 
 #ifdef CEU_OS_APP

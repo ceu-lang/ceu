@@ -84,9 +84,9 @@ int ceu_sys_req (void) {
     return CEU_REQS;
 }
 
-int ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
-                   tceu_stk* stk_down,
-                   tceu_org* org, tceu_trl* trl, void* stop);
+void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
+                    tceu_stk* stk_down,
+                    tceu_org* org, tceu_trl* trl, void* stop);
 
 /**********************************************************************/
 
@@ -302,12 +302,12 @@ u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 static int spc = -1;
 #define SPC(n) { int i; for(i=0; i<(spc+n)*4; i++) printf(" "); };
 
-int ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
-                       tceu_stk* stk_down,
-                       tceu_org* org, tceu_trl* trl, void* stop);
-int ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
-                   tceu_stk* stk_down,
-                   tceu_org* org, tceu_trl* trl, void* stop) {
+void ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
+                        tceu_stk* stk_down,
+                        tceu_org* org, tceu_trl* trl, void* stop);
+void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
+                    tceu_stk* stk_down,
+                    tceu_org* org, tceu_trl* trl, void* stop) {
     spc++;
     SPC(0); printf(">>> GO-EX\n");
     SPC(0); printf("evt: %d\n", evt->id);
@@ -317,23 +317,21 @@ int ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                                    &org->trls[org->n]);
     #endif
 
-    int ret = ceu_sys_go_ex_dbg(app,evt,stk_down,org,trl,stop);
+    ceu_sys_go_ex_dbg(app,evt,stk_down,org,trl,stop);
 
     SPC(0); printf("<<< GO-EX\n");
     spc--;
-
-    return ret;
 }
 #endif
 
 #ifdef CEU_DEBUG_TRAILS
-int ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
-                       tceu_stk* stk_down,
-                       tceu_org* org, tceu_trl* trl, void* stop)
+void ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
+                        tceu_stk* stk_down,
+                        tceu_org* org, tceu_trl* trl, void* stop)
 #else
-int ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
-                   tceu_stk* stk_down,
-                   tceu_org* org, tceu_trl* trl, void* stop)
+void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
+                    tceu_stk* stk_down,
+                    tceu_org* org, tceu_trl* trl, void* stop)
     /* TODO: now all arguments are required in all configurations */
 #endif
 {
@@ -355,7 +353,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
 #ifdef CEU_CLEAR
         if (trl == stop) {
-            return RET_HALT;    /* bounded trail traversal */
+            return;    /* bounded trail traversal */
         }
 #endif
 
@@ -393,12 +391,11 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 #if 1
 #ifdef CEU_ORGS_NEWS
                 int is_dyn = cur->isDyn;  /* save: possible free */
-                int ret =
 #endif
 #endif
-                    ceu_sys_go_ex(app, evt,
-                                  stk,
-                                  cur, &cur->trls[0], NULL);
+                ceu_sys_go_ex(app, evt,
+                              stk,
+                              cur, &cur->trls[0], NULL);
 #if 1
                 /* in case a children kills myself, we stop now */
                 if (stk->org == NULL) {
@@ -465,47 +462,28 @@ if (evt->param != NULL) {
             )
            )
         {
-            int _ret;
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = app->addr;
 #endif
 
             /*** CODE ***/
             trl->evt = CEU_IN__NONE;    /* TODO: dup w/ above */
-            _ret = app->code(app, evt, org, trl, stk, NULL);
-                        /* rejoin may reset trl */
+            app->code(app, evt, org, trl, stk, NULL);
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = 0;
 #endif
 
-            switch (_ret) {
-                case RET_QUIT:
-#ifdef CEU_RET
-#if defined(CEU_RET) || defined(CEU_OS_KERNEL)
-                    app->isAlive = 0;
+#if defined(CEU_OS_KERNEL) || defined(CEU_LUA)
+            if (!app->isAlive) {
 #ifdef CEU_OS_KERNEL
-                    CEU_GC = 1;
-#endif
+                CEU_GC = 1;
 #endif
 #ifdef CEU_LUA
-                    lua_close(app->lua);
+                lua_close(app->lua);
 #endif
-#endif
-                    return RET_QUIT;
-
-                case RET_HALT:
-                    break;
-#ifdef CEU_ORGS
-                case RET_DEAD:
-                    return RET_DEAD;
-#endif
-                default:
-#ifdef CEU_DEBUG
-                    ceu_out_assert(0);
-#endif
-                    break;
             }
+#endif
         }
 
         /* DON'T EXECUTE THIS TRAIL */
@@ -625,7 +603,6 @@ SPC(1); printf("<<< NO\n");
 #endif
     }
 #endif  /* CEU_ORGS */
-    return RET_HALT;
 }
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)

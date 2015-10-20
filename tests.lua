@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -24329,6 +24328,22 @@ escape v1;
     run = 900,
 }
 
+--]===]
+Test { [[
+par/and do
+    async/thread do
+_printf("1\n");
+    end
+with
+    async/thread do
+_printf("2\n");
+    end
+end
+escape 1;
+]],
+    run = 900,
+}
+do return end
 Test { [[
 var int  v1, v2;
 var int& p1 = &v1;
@@ -24345,6 +24360,7 @@ par/and do
         sync do
             p1 = ret;
         end
+_printf("1\n");
     end
 with
     async/thread (p2) do
@@ -24357,6 +24373,7 @@ with
         sync do
             p2 = ret;
         end
+_printf("2\n");
     end
 end
 native do ##include <assert.h> end
@@ -24365,6 +24382,7 @@ escape v1;
 ]],
     run = 900,
 }
+do return end
 
 Test { [[
 var int  v1, v2;

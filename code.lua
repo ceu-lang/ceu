@@ -51,12 +51,8 @@ function LINE (me, line, spc)
 ]] .. spc..line
 end
 
-function HALT (me, ret, cond)
-    if ret then
-        LINE(me, '\treturn '..ret..';')
-    else
-        LINE(me, '\treturn RET_HALT;')
-    end
+function HALT (me, ret)
+    LINE(me, '\treturn;')
 end
 
 function GOTO (me, lbl)
@@ -304,10 +300,11 @@ if (_ceu_immediate_death != NULL) {
 
         -- stop
         if me == MAIN then
-            HALT(me, 'RET_QUIT')
-        else
-            HALT(me, 'RET_HALT')
+            LINE(me, [[
+_ceu_app->isAlive = 0;
+]])
         end
+        HALT(me)
 
         -- TODO-RESEARCH-2:
     end,
@@ -853,7 +850,9 @@ _ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
             end
             LINE(me, [[
     if (_ceu_evt->id == CEU_IN__CLEAR) {
-        return RET_HALT;    /* otherwise, normal termination that should continue */
+]])
+            HALT(me) -- otherwise, normal termination that should continue
+            LINE(me, [[
     }
     _ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].evt = CEU_IN__NONE;
 ]])
@@ -1031,7 +1030,9 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
     trl->lbl = CEU_LBL__STACKED;
     CEU_]]..to_tp_id..[[_kill(_ceu_app, __ceu_old);
     if (trl->lbl != CEU_LBL__STACKED) {
-        return RET_HALT;
+]])
+            HALT(me)
+            LINE(me, [[
     }
 ]])
 
@@ -1657,11 +1658,8 @@ _ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
 {
     u32 __ceu_tmp_]]..me.n..' = '..V(ps[1],'rval')..[[;
     ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[);
-    while (
-#if defined(CEU_RET) || defined(CEU_OS)
-            _ceu_app->isAlive &&
-#endif
-            _ceu_app->wclk_min_set]]..suf..[[<=0) {
+    while (_ceu_app->isAlive &&
+           _ceu_app->wclk_min_set]]..suf..[[<=0) {
         s32 __ceu_dt = 0;
         ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt);
     }
@@ -1678,11 +1676,11 @@ _ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
 
         LINE(me, [[
-#if defined(CEU_RET) || defined(CEU_OS)
-if (! _ceu_app->isAlive) {
-    return RET_QUIT;
+if (!_ceu_app->isAlive) {
+]])
+        HALT(me)
+        LINE(me, [[
 }
-#endif
 #ifdef ceu_out_async
 ceu_out_async(_ceu_app);
 #endif
@@ -2019,8 +2017,9 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
         CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
         int ok = (*(_ceu_p.st) >= 2);   /* lck ok? */
         CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
-        if (ok)
+        if (ok) {
             break;
+        }
     }
 
     /* body */

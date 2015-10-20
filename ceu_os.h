@@ -584,7 +584,7 @@ typedef struct tceu_app {
 #endif
 #endif
 
-    int         (*code)  (struct tceu_app*,tceu_evt*,tceu_org*,tceu_trl*,tceu_stk*,int*);
+    void        (*code)  (struct tceu_app*,tceu_evt*,tceu_org*,tceu_trl*,tceu_stk*,int*);
     void        (*init)  (struct tceu_app*);
 #ifdef CEU_OS
     void*       (*calls) (struct tceu_app*,tceu_nevt,void*);
@@ -631,16 +631,6 @@ typedef struct {
 #endif
 } tceu_adt_root;
 #endif
-
-/* RET_* */
-
-enum {
-      RET_QUIT = 0
-    , RET_HALT
-#ifdef CEU_ORGS
-    , RET_DEAD
-#endif
-};
 
 #ifdef CEU_PSES
 void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed);
