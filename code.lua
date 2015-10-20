@@ -142,7 +142,7 @@ function CLEAR (me)
 ]]
 
     LINE(me, [[
-ceu_longjmp(_ceu_stk->down, ]]..me.lbl_jmp.id..', '..me.__depth..[[,
+ceu_longjmp(_ceu_stk->down, ]]..me.lbl_jmp.id..', '..me.__depth_abort..[[,
             _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
 ]])
     CASE(me, me.lbl_jmp)
@@ -848,14 +848,6 @@ _ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
             return
         end
 
-        -- TODO: try to remove this requirement
-        if me.trails[1] ~= stmts.trails[1] then
-            LINE(me, [[
-/* switch to blk trail */
-_ceu_trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
-]])
-        end
-
         CONC(me, stmts)
 
         if me.fins then
@@ -1317,7 +1309,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         LINE(me, [[
-_ceu_stk->depth = ]]..me.__depth..[[;
+_ceu_stk->depth = ]]..me.__depth_abort..[[;
 {
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {
@@ -1700,7 +1692,7 @@ case ]]..me.lbl_cnt.id..[[:;
         local _, int, ps = unpack(me)
 
         LINE(me, [[
-_ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth..[[;
+_ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
 {
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {

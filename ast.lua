@@ -229,8 +229,13 @@ end
 local function visit_aux (me, F)
     local _me = me
     me.__par   = STACK[#STACK]
-    me.__depth = (me.__par and me.__par.__depth+1) or 0
-    ASR(me.__depth < 0xFF, me, 'max depth of 0xFF')
+    me.__depth = (me.__par and me.__par.__depth+1) or 1
+
+    me.__depth_abort = (me.__par and me.__par.__depth_abort) or 1
+    if AST.pred_aborts(me) then
+        me.__depth_abort = me.__depth_abort + 1
+        --ASR(me.__depth_abort < 0xFF, me, 'max depth of 0xFF')
+    end
 
     local pre, mid, pos = FF(F,me.tag..'_pre'), FF(F,me.tag), FF(F,me.tag..'_pos')
     local bef, aft = FF(F,me.tag..'_bef'), FF(F,me.tag..'_aft')

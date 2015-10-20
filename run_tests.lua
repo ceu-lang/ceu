@@ -38,7 +38,15 @@ STATS = {
     trails  = 2126,
     bytes   = 11911256,
 }
+-- after removing end-of-block _ceu_trl readjustment
 (./run_tests.lua: 287.60s 24216k)
+STATS = {
+    count   = 1389,
+    mem     = 0,
+    trails  = 2126,
+    bytes   = 11898968,
+}
+(./run_tests.lua: 283.55s 21268k)
 ]]
 
 

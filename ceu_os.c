@@ -280,7 +280,7 @@ void ceu_stack_dump (tceu_stk* stk) {
 }
 #endif
 
-void ceu_longjmp (tceu_stk* stk, tceu_nlbl lbl, int depth,
+void ceu_longjmp (tceu_stk* stk, tceu_nlbl lbl, u8 depth,
                   tceu_org* org, tceu_ntrl t1, tceu_ntrl t2) {
     if (stk == NULL) {
         return;
@@ -341,7 +341,7 @@ int ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 #endif
 {
 #ifdef CEU_STACK
-    tceu_stk  stk_ = { stk_down, org, NULL, -1, {} };
+    tceu_stk  stk_ = { stk_down, org, NULL, 0, {} };
     tceu_stk* stk  = &stk_;
 #else
     tceu_stk* stk  = NULL;

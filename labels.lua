@@ -1,7 +1,6 @@
 LBLS = {
     list = {},      -- { [lbl]={}, [i]=lbl }
     code_enum = '',
-    code_fins = '',
 }
 
 function new (lbl)
@@ -54,20 +53,13 @@ F = {
                                     ..lbl.id..' = '..lbl.n..',\n'
             end
         end
-
-        -- labels which are finalizers
-        local t = {}
-        for _, lbl in ipairs(LBLS.list) do
-            t[#t+1] = string.find(lbl.id,'__fin') and assert(lbl.__depth) or 0
-        end
-        LBLS.code_fins = table.concat(t,',')
     end,
 
     Block = function (me)
         local blk = unpack(me)
 
         if me.fins then
-            me.lbl_fin = new{'Block__fin', __depth=me.__depth}
+            me.lbl_fin = new{'Block__fin'}
         end
 
         for _, var in ipairs(me.vars) do
@@ -98,8 +90,8 @@ F = {
     end,
 
     SetBlock_pre = function (me)
-        me.lbl_out = new{'Set_out',  prio=me.__depth}
-        me.lbl_jmp = new{'Set_out2',  prio=me.__depth}
+        me.lbl_out = new{'Set_out'}
+        me.lbl_jmp = new{'Set_out2'}
     end,
 
     _Par_pre = function (me)
@@ -117,8 +109,8 @@ F = {
     end,
     ParOr_pre = function (me)
         F._Par_pre(me)
-        me.lbl_out = new{'ParOr_out',  prio=me.__depth}
-        me.lbl_jmp = new{'ParOr_out2',  prio=me.__depth}
+        me.lbl_out = new{'ParOr_out'}
+        me.lbl_jmp = new{'ParOr_out2'}
     end,
     ParAnd_pre = function (me)
         F._Par_pre(me)
@@ -141,7 +133,7 @@ F = {
         if me.iter_tp == 'data' then
             me.lbl_rec = new{'Recurse'}
         end
-        me.lbl_jmp = new{'Loop_out2',  prio=me.__depth}
+        me.lbl_jmp = new{'Loop_out2'}
     end,
     Recurse = function (me)
         me.lbl = new{'Recurse'}
