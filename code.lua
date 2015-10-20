@@ -851,10 +851,6 @@ _ceu_trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
         end
 
         CONC(me, stmts)
-        CLEAR_BEF(me)
-        LINE(me, [[
-if (0) {
-]])
 
         if me.fins then
             CASE(me, me.lbl_fin)
@@ -866,7 +862,10 @@ if (0) {
 ]])
             end
             LINE(me, [[
-    return RET_HALT;
+    if (_ceu_evt->id == CEU_IN__CLEAR) {
+        return RET_HALT;    /* otherwise, normal termination that should continue */
+    }
+    _ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].evt = CEU_IN__NONE;
 ]])
         end
 
@@ -975,9 +974,6 @@ CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
             end
         end
 
-        LINE(me, [[
-}
-]])
         LINE(me, '}')       -- open in Block_pre
     end,
 

@@ -23960,6 +23960,7 @@ escape ret;
 }
 
 -->>> CLASSES, ORGS, ORGANISMS
+do return end
 
 Test { [[
 class A with

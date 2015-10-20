@@ -1,6 +1,8 @@
 #!/usr/bin/env lua
 
 --[[
+-- before changing to set/longjmp
+-- goes up to the error in ASTs (I think)
 STATS = {
     count   = 2698,
     mem     = 0,
@@ -8,7 +10,31 @@ STATS = {
     bytes   = 24166370,
 }
 (./run_tests.lua: 676.92s 22704k)
+
+
+
+
+-- goes up to CLASSES
+
+-- before removing CLEAR from blocks
+STATS = {
+    count   = 1388,
+    mem     = 0,
+    trails  = 2124,
+    bytes   = 11889387,
+}
+(./run_tests.lua: 301.86s 21492k)
+-- after removing CLEAR from blocks
+STATS = {
+    count   = 1388,
+    mem     = 0,
+    trails  = 2124,
+    bytes   = 11889387,
+}
+(./run_tests.lua: 293.30s 21300k)
 ]]
+
+
 
 --RUNTESTS_file = assert(io.open('/tmp/fin.txt','w'))
 
