@@ -130,16 +130,14 @@ function CLEAR (me)
         return
     end
 
---[[
     -- TODO: put it back!
     -- check if top will clear during same reaction
     if (not me.needs_clr_fin) and ANA then   -- fin must execute before any stmt
         local top = AST.iter(_iter)()
-        if top and ANA.CMP(top.ana.pos, me.ana.pos) then
+        if top and ANA.IS_EQUAL(top.ana.pos, me.ana.pos) then
             return  -- top will clear
         end
     end
-]]
 
     LINE(me, [[
 ceu_longjmp(_ceu_stk->down, ]]..me.lbl_jmp.id..', '..me.__depth_abort..[[,

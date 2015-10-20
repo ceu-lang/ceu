@@ -91,7 +91,9 @@ F = {
 
     SetBlock_pre = function (me)
         me.lbl_out = new{'Set_out'}
-        me.lbl_jmp = new{'Set_out2'}
+        if me.needs_clr then
+            me.lbl_jmp = new{'Set_jmp'}
+        end
     end,
 
     _Par_pre = function (me)
@@ -110,7 +112,9 @@ F = {
     ParOr_pre = function (me)
         F._Par_pre(me)
         me.lbl_out = new{'ParOr_out'}
-        me.lbl_jmp = new{'ParOr_out2'}
+        if me.needs_clr then
+            me.lbl_jmp = new{'ParOr_jmp'}
+        end
     end,
     ParAnd_pre = function (me)
         F._Par_pre(me)
@@ -133,7 +137,9 @@ F = {
         if me.iter_tp == 'data' then
             me.lbl_rec = new{'Recurse'}
         end
-        me.lbl_jmp = new{'Loop_out2'}
+        if me.needs_clr then
+            me.lbl_jmp = new{'Loop_jmp'}
+        end
     end,
     Recurse = function (me)
         me.lbl = new{'Recurse'}
