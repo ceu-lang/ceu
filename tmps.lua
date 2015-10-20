@@ -175,7 +175,7 @@ F = {
             end
         end
 
-        if not (v and ANA.CMP(v,me.ana.pre)) then
+        if not (v and ANA.IS_EQUAL(v,me.ana.pre)) then
             var.isTmp = false       -- found a Par or Await in the path
             return
         end
@@ -234,7 +234,7 @@ F = {
     end,
     Loop = function (me)
         local _,_,iter,body = unpack(me)
-        if iter and (not ANA.CMP(body.ana.pre,body.ana.pos)) then
+        if iter and (not ANA.IS_EQUAL(body.ana.pre,body.ana.pos)) then
             iter.var.isTmp = false
         end
     end,
