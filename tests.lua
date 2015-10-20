@@ -97,6 +97,7 @@ escape 1;
 }
 
 do return end
+--]===]
 
 -------------------------------------------------------------------------------
 
@@ -4239,6 +4240,28 @@ end
 ]],
     run = 7,
     --run = 3,
+}
+
+-- different semantics w/ longjmp
+Test { [[
+input void OS_START;
+event void e,f;
+par do
+    par/or do
+        await OS_START;
+        emit e;
+    with
+        await f;
+    end
+    await 1s;
+    escape 1;
+with
+    await e;
+    emit f;     // this continuation dies b/c the whole stack
+    escape 2;   // for emit-e dies
+end
+]],
+    run = {['~>1s']=1},
 }
 
 --<<< INTERNAL EVENTS
@@ -24328,22 +24351,6 @@ escape v1;
     run = 900,
 }
 
---]===]
-Test { [[
-par/and do
-    async/thread do
-_printf("1\n");
-    end
-with
-    async/thread do
-_printf("2\n");
-    end
-end
-escape 1;
-]],
-    run = 900,
-}
-do return end
 Test { [[
 var int  v1, v2;
 var int& p1 = &v1;
@@ -24360,7 +24367,6 @@ par/and do
         sync do
             p1 = ret;
         end
-_printf("1\n");
     end
 with
     async/thread (p2) do
@@ -24373,7 +24379,6 @@ with
         sync do
             p2 = ret;
         end
-_printf("2\n");
     end
 end
 native do ##include <assert.h> end
@@ -24382,7 +24387,6 @@ escape v1;
 ]],
     run = 900,
 }
-do return end
 
 Test { [[
 var int  v1, v2;
@@ -24399,7 +24403,6 @@ native do
                 ret = ret + i + j;
             }
         }
-        printf("ret = %d\n", ret);
         return ret;
     }
 end
