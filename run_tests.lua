@@ -74,13 +74,12 @@ STATS = {
 
 -- inclui threads,lua
 STATS = {
-    count   = 1502,
+    count   = 1503,
     mem     = 0,
-    trails  = 2387,
-    bytes   = 13606410,
+    trails  = 2390,
+    bytes   = 13611846,
 }
-(./run_tests.lua: 387.22s 33068k)
-
+(./run_tests.lua: 419.44s 28536k)
 ]]
 
 

@@ -51,8 +51,72 @@ function LINE (me, line, spc)
 ]] .. spc..line
 end
 
-function HALT (me, ret)
-    LINE(me, '\treturn;')
+function LABEL_NO (me)
+    local no = '_CEU_NO_'..me.n..'_'
+    LINE(me, [[
+]]..no..[[:
+if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
+]])
+    return no
+end
+
+function HALT (me, t)
+    if not t then
+        LINE(me, 'return;')
+        return
+    end
+
+    LINE(me, [[
+_ceu_trl->evt = ]]..t.evt..[[;
+_ceu_trl->lbl = ]]..t.lbl..[[;
+_ceu_trl->seqno = ]]..(t.isEvery and '_ceu_app->seqno-1' or '_ceu_app->seqno')..[[;
+]])
+
+    if t.evto then
+        LINE(me, [[
+#ifdef CEU_ORGS
+_ceu_trl->evto  = ]]..t.evto..[[;
+#endif
+]])
+    end
+
+    if t.org_or_adt then
+        LINE(me, [[
+_ceu_trl->org_or_adt = ]]..t.org_or_adt..[[;
+]])
+    end
+
+    if t.evt == 'CEU_IN__ASYNC' then
+        LINE(me, [[
+#ifdef ceu_out_async
+ceu_out_async(_ceu_app);
+#endif
+    _ceu_app->pendingAsyncs = 1;
+]])
+    end
+
+    LINE(me, [[
+return;
+
+case ]]..t.lbl..[[:;
+]])
+
+    if t.no and PROPS.has_pses then
+        local function __pause_or_dclcls (me)
+            return me.tag=='Pause' or me.tag=='Dcl_cls'
+        end
+        for pse in AST.iter(__pause_or_dclcls) do
+            if pse.tag == 'Dcl_cls' then
+                break
+            end
+            COMM(me, 'PAUSE: '..pse.dcl.var.id)
+            LINE(me, [[
+if (]]..V(pse.dcl,'rval')..[[) {
+    goto ]]..t.no..[[;
+}
+]])
+        end
+    end
 end
 
 function GOTO (me, lbl)
@@ -61,28 +125,6 @@ function GOTO (me, lbl)
 _ceu_lbl = ]]..lbl..[[;
 goto _CEU_GOTO_;
 ]])
-end
-
-local function __pause_or_dclcls (me)
-    return me.tag=='Pause' or me.tag=='Dcl_cls'
-end
-
-function AWAIT_PAUSE (me, no)
-    if not PROPS.has_pses then
-        return
-    end
-
-    for pse in AST.iter(__pause_or_dclcls) do
-        if pse.tag == 'Dcl_cls' then
-            break
-        end
-        COMM(me, 'PAUSE: '..pse.dcl.var.id)
-        LINE(me, [[
-if (]]..V(pse.dcl,'rval')..[[) {
-    goto ]]..no..[[;
-}
-]])
-    end
 end
 
 function COMM (me, comm)
@@ -1420,7 +1462,6 @@ if (]]..V(c,'rval')..[[) {
 
     Loop_pos = function (me)
         local max,iter,to,body = unpack(me)
-        local no = '_CEU_NO_'..me.n..'_'
 
         local ini, nxt = {}, {}
         local cnd = ''
@@ -1484,26 +1525,19 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
     if (ceu_out_pending())
 #endif
     {
-]]..no..[[:
-        if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-        _ceu_trl->evt = CEU_IN__ASYNC;
-        _ceu_trl->lbl = ]]..me.lbl_asy.id..[[;
-#ifdef ceu_out_async
-        ceu_out_async(_ceu_app);
-#endif
-        _ceu_app->pendingAsyncs = 1;
 ]])
-            HALT(me)
+            HALT(me, {
+                evt = 'CEU_IN__ASYNC',
+                lbl = me.lbl_asy.id,
+            })
             LINE(me, [[
     }
-    case ]]..me.lbl_asy.id..[[:;
 ]])
-            AWAIT_PAUSE(me, no)
         end
+
         LINE(me, [[
 }
 ]])
-
         if me.has_break and ( not (AST.iter(AST.pred_async)()
                                 or AST.iter'Dcl_fun'()) )
         then
@@ -1548,7 +1582,6 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
     EmitExt = function (me)
         local op, e, ps = unpack(me)
-        local no = '_CEU_NO_'..me.n..'_'
 
         local DIR, dir, ptr
         if e.evt.pre == 'input' then
@@ -1646,12 +1679,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
         -- emit INPUT
         -------------------------------------------------------------------------------
 
-        LINE(me, [[
-]]..no..[[:
-if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-_ceu_trl->evt = CEU_IN__ASYNC;
-_ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
-]])
+        local no = LABEL_NO(me)
 
         if e[1] == '_WCLOCK' then
             local suf = (ps[1].tm and '_') or ''
@@ -1685,20 +1713,14 @@ _ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
 if (!_ceu_app->isAlive)
 #endif
 {
-]])
-        HALT(me)
-        LINE(me, [[
+    return;     /* HALT(me) */
 }
-#ifdef ceu_out_async
-ceu_out_async(_ceu_app);
-#endif
-_ceu_app->pendingAsyncs = 1;
 ]])
-        HALT(me)
-        LINE(me, [[
-case ]]..me.lbl_cnt.id..[[:;
-]])
-        AWAIT_PAUSE(me, no)
+        HALT(me, {
+            no   = no,
+            evt  = 'CEU_IN__ASYNC',
+            lbl  = me.lbl_cnt.id,
+        })
     end,
 
     EmitInt = function (me)
@@ -1770,36 +1792,15 @@ _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
 
         local par_pause  = AST.par(me,'Pause')
         local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
-        local no = '_CEU_NO_'..me.n..'_'
 
-        LINE(me, [[
-]]..no..[[:
-    if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-    _ceu_trl->evt   = ]]..V(e,'evt')..[[;
-    _ceu_trl->lbl   = ]]..me.lbl.id..[[;
-#ifdef CEU_ORGS
-    _ceu_trl->evto  = ]]..org..[[;
-#endif
-    _ceu_trl->seqno =
-]])
-        if me.isEvery then
-            LINE(me, [[
-        _ceu_app->seqno-1;   /* always ready to awake */
-]])
-        else
-            LINE(me, [[
-        _ceu_app->seqno;    /* not reset with retry */
-                            /* (before the label below) */
-#if 0
-#endif
-]])
-        end
-        HALT(me)
-
-        LINE(me, [[
-case ]]..me.lbl.id..[[:;
-]])
-        AWAIT_PAUSE(me, no)
+        local no = LABEL_NO(me)
+        HALT(me, {
+            no   = no,
+            evt  = V(e,'evt'),
+            lbl  = me.lbl.id,
+            evto = org,
+            isEvery = me.isEvery,
+        })
         DEBUG_TRAILS(me)
     end,
 
@@ -1809,7 +1810,6 @@ case ]]..me.lbl.id..[[:;
 
         local par_pause  = AST.par(me,'Pause')
         local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
-        local no = '_CEU_NO_'..me.n..'_'
 
         local val = CUR(me, '__wclk_'..me.n)
 
@@ -1819,24 +1819,14 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
 ]])
         end
 
-        LINE(me, [[
-]]..no..[[:
-    if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-    _ceu_trl->evt = CEU_IN_]]..e.evt.id..suf..[[;
-    _ceu_trl->lbl = ]]..me.lbl.id..[[;
-    _ceu_trl->seqno = _ceu_app->seqno;
-]])
-        if e[1] == '_ok_killed' then
-            LINE(me, [[
-    _ceu_trl->org_or_adt = (void*)]]..V(e[3],'lval')..[[;
-]])
-        end
-        HALT(me)
-
-        LINE(me, [[
-case ]]..me.lbl.id..[[:;
-]])
-        AWAIT_PAUSE(me, no)
+        local no = LABEL_NO(me)
+        HALT(me, {
+            no  = no,
+            evt = 'CEU_IN_'..e.evt.id..suf,
+            lbl = me.lbl.id,
+            org_or_adt = (e[1] == '_ok_killed') and
+                         '(void*)'..V(e[3],'lval')
+        })
 
         if dt then
             LINE(me, [[
@@ -1907,24 +1897,10 @@ case ]]..me.lbl.id..[[:;
 
     Async = function (me)
         local vars,blk = unpack(me)
-        local no = '_CEU_NO_'..me.n..'_'
-
-        LINE(me, [[
-]]..no..[[:
-if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-_ceu_trl->evt = CEU_IN__ASYNC;
-_ceu_trl->lbl = ]]..me.lbl.id..[[;
-#ifdef ceu_out_async
-ceu_out_async(_ceu_app);
-#endif
-_ceu_app->pendingAsyncs = 1;
-]])
-        HALT(me)
-
-        LINE(me, [[
-case ]]..me.lbl.id..[[:;
-]])
-        AWAIT_PAUSE(me, no)
+        HALT(me, {
+            evt = 'CEU_IN__ASYNC',
+            lbl = me.lbl.id,
+        })
         CONC(me, blk)
     end,
 
@@ -1972,18 +1948,13 @@ case ]]..me.lbl.id..[[:;
         *(p.st) = 2;    /* lck: now thread may also execute */
 ]])
 
-        -- await termination
-        local no = '_CEU_NO_'..me.n..'_'
+        local no = LABEL_NO(me)
+        HALT(me, {
+            no  = no,
+            evt = 'CEU_IN__THREAD',
+            lbl = me.lbl.id,
+        })
         LINE(me, [[
-]]..no..[[:
-        _ceu_trl->evt = CEU_IN__THREAD;
-        _ceu_trl->lbl = ]]..me.lbl.id..[[;
-]])
-        HALT(me)
-
-        -- continue
-        LINE(me, [[
-case ]]..me.lbl.id..[[:;
         {
             CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_evt->param;
             if (*(*(__ceu_casted)) != ]]..me.thread_id..[[) {
