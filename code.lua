@@ -301,7 +301,9 @@ if (_ceu_immediate_death != NULL) {
         -- stop
         if me == MAIN then
             LINE(me, [[
+#if defined(CEU_RET) || defined(CEU_OS)
 _ceu_app->isAlive = 0;
+#endif
 ]])
         end
         HALT(me)
@@ -1658,7 +1660,10 @@ _ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
 {
     u32 __ceu_tmp_]]..me.n..' = '..V(ps[1],'rval')..[[;
     ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[);
-    while (_ceu_app->isAlive &&
+    while (
+#if defined(CEU_RET) || defined(CEU_OS)
+           _ceu_app->isAlive &&
+#endif
            _ceu_app->wclk_min_set]]..suf..[[<=0) {
         s32 __ceu_dt = 0;
         ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt);
@@ -1676,7 +1681,10 @@ _ceu_trl->lbl = ]]..me.lbl_cnt.id..[[;
 ]])
 
         LINE(me, [[
-if (!_ceu_app->isAlive) {
+#if defined(CEU_RET) || defined(CEU_OS)
+if (!_ceu_app->isAlive)
+#endif
+{
 ]])
         HALT(me)
         LINE(me, [[
