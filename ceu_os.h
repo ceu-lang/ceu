@@ -103,11 +103,6 @@
 
 #endif /* CEU_OS */
 
-enum {
-    CEU_LBL__NONE    = 0,
-    CEU_LBL__STACKED = 1
-};
-
 #ifdef CEU_OS_APP
 
     #define ceu_out_log(mode,str) \

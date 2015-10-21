@@ -32095,7 +32095,7 @@ do
     var T t;
     await t;
 end
-_V:lbl = _CEU_LBL__STACKED;
+//_V:lbl = _CEU_LBL__STACKED;
 escape 1;
 ]],
     run = 1,

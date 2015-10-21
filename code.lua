@@ -1746,10 +1746,6 @@ _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
 
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[
-    /* save the continuation to run after the emit */
-    tceu_trl* trl = _ceu_trl;
-    trl->lbl = CEU_LBL__STACKED;
-
     /* trigger the event */
     tceu_evt evt;
     evt.id = ]]..V(int,'evt')..[[;
@@ -1775,9 +1771,6 @@ _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
         return RET_DEAD;
     }
 #endif
-    if (trl->lbl != CEU_LBL__STACKED) {
-        /*return RET_HALT;*/
-    }
 }
 ]])
     end,
