@@ -133,7 +133,7 @@ printf("\tyes-org %p\n", (void*)(intptr_t)lbl_or_org);
             }
         }
     }
-    else
+    else if (org == stk->org)
 #endif
     {
         if (stk->depth >= depth &&
