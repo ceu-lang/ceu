@@ -90,6 +90,62 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 
 /**********************************************************************/
 
+#ifdef CEU_STACK
+void ceu_stack_dump (tceu_stk* stk) {
+    if (stk == NULL) {
+        return;
+    }
+    printf("[%p] org=%p depth=%d\n", stk, stk->org, stk->depth);
+    ceu_stack_dump(stk->down);
+}
+#endif
+
+#ifdef CEU_ORGS
+static void* CEU_JMP_ORG;
+#endif
+
+void ceu_longjmp (tceu_stk* stk, void* lbl_or_org, u8 depth,
+                  tceu_org* org, tceu_ntrl t1, tceu_ntrl t2) {
+    if (stk == NULL) {
+        return;
+    } else {
+        ceu_longjmp(stk->down,lbl_or_org,depth,org,t1,t2);   /* TODO: reverse */
+    }
+printf("CHK %p (%d>=%d, %d>=%d, %d<=%d)\n",
+    stk,
+    stk->depth,  depth,
+    stk->trl, t1, stk->trl, t2
+);
+
+#ifdef CEU_ORGS
+    /* depth==0 means whole-org abortion.
+     * Check if stk->org is the dieyng "org" or one of its children:
+     *      org, org->up, org->up->up, ...
+     */
+    if (depth == 0)
+    {
+        tceu_org* cur_org;
+        for (cur_org=stk->org; cur_org!=NULL; cur_org=cur_org->up) {
+            if (cur_org == org) {
+printf("\tyes-org %p\n", (void*)(intptr_t)lbl_or_org);
+                CEU_JMP_ORG = lbl_or_org;
+                longjmp(stk->jmp, 0xABCD);
+            }
+        }
+    }
+    else
+#endif
+    {
+        if (stk->depth >= depth &&
+            stk->trl>=t1 && stk->trl<=t2) {
+printf("\tyes-trail\n");
+            longjmp(stk->jmp, (int)(intptr_t)lbl_or_org);
+        }
+    }
+}
+
+/**********************************************************************/
+
 void ceu_sys_org (tceu_org* org, int n, int lbl,
                   int cls, int isDyn,
                   tceu_org* parent, tceu_trl* trl)
@@ -134,6 +190,87 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
     }
 #endif  /* CEU_ORGS */
 }
+
+#ifdef CEU_ORGS
+void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
+{
+    tceu_org* nxt;  /* where to go next in case I'm in the stack */
+
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
+    org->isAlive = 0;
+#endif
+
+/* TODO: relink also static orgs for efficiency? */
+#ifdef CEU_ORGS_NEWS
+    /* re-link PRV <-> NXT */
+    if (org->isDyn) {
+        if (org->pool->parent_trl->org == org) {
+            org->pool->parent_trl->org = org->nxt;    /* subst 1st org */
+                /* TODO-POOL: this information is 1 level up in the stack */
+        } else {
+            org->prv->nxt = org->nxt;
+        }
+        if (org->nxt != NULL) {
+            org->nxt->prv = org->prv;
+        }
+    }
+#endif
+
+#ifdef CEU_ORGS_WATCHING
+    /* signal killed */
+    {
+        tceu_kill ps = { org, org->ret };
+        tceu_evt evt_;
+                 evt_.id = CEU_IN__ok_killed;
+                 evt_.param = &ps;
+
+printf("SET-KILL %p\n", stk);
+        int ret = setjmp(stk->jmp);
+        if (ret != 0) {
+printf("set-kill-awake %p\n", stk);
+            /* The current "org" died from the call below, nothing else to
+             * do for him, return now to avoid acessing it again.
+             */
+            return;
+        }
+/* TODO: setjmp */
+        ceu_sys_go_ex(app, &evt_,
+                      stk,
+                      app->data, &app->data->trls[0], NULL);
+    }
+#endif
+
+    nxt = org->nxt;
+
+#ifdef CEU_ORGS_NEWS
+    /* free */
+    if (org->isDyn) {
+#if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
+        ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+#elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+        if (org->pool->queue == NULL) {
+            ceu_sys_realloc(org, 0);
+        } else {
+            ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+        }
+#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+        ceu_sys_realloc(org, 0);
+#endif
+    }
+#endif
+
+    /* We will abort all trails between [t1,t2].
+     * If a pending call in the stack is inside this internal, we want to 
+     * unwind all stack up to that call.
+     * The "ceu_longjmp" traverses the stack and makes a "longjmp" to the 
+     * unwinded call passing the continuation below ("lbl_jmp").
+     */
+printf("LONG-KILL %p [%p]\n", org, app->data);
+ceu_stack_dump(stk);
+    ceu_longjmp(stk->down, nxt, 0, org, 0,0);
+                            /* depth=0 identifies org abortion */
+}
+#endif
 
 /**********************************************************************/
 
@@ -270,32 +407,6 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 
 /**********************************************************************/
 
-#ifdef CEU_STACK
-void ceu_stack_dump (tceu_stk* stk) {
-    if (stk == NULL) {
-        return;
-    }
-    printf("[%p] org=%p depth=%d\n", stk, stk->org, stk->depth);
-    ceu_stack_dump(stk->down);
-}
-#endif
-
-void ceu_longjmp (tceu_stk* stk, tceu_nlbl lbl, u8 depth,
-                  tceu_org* org, tceu_ntrl t1, tceu_ntrl t2) {
-    if (stk == NULL) {
-        return;
-    } else {
-        ceu_longjmp(stk->down,lbl,depth,org,t1,t2);   /* TODO: reverse */
-    }
-printf("CHK %p\n", stk);
-    if (stk->depth >= depth &&
-        stk->trl>=t1 && stk->trl<=t2)
-    {
-printf("\tyes\n");
-        longjmp(stk->jmp, lbl);
-    }
-}
-
 #ifdef CEU_OS_KERNEL
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 #endif
@@ -391,34 +502,41 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             /* traverse all children */
             while (cur != NULL) {
 #if 0
-#ifdef CEU_ORGS_NEWS
-                int is_dyn = cur->isDyn;  /* save: possible free */
-#endif
-#endif
 /* TODO: needs setjmp */
+#endif
+printf("SET-ORGS [%p] => %p\n", stk, cur);
+stk->org = cur;
+int XXX = stk->depth;
+stk->depth = 1;
                 int ret = setjmp(stk->jmp);
                 if (ret != 0) {
-printf("==========\n");
-                    cur = trl->org;
-                    continue;
+                    /* The current child has been aborted from the call below
+                     * to itself.
+                     * It was the lowest aborted call in the stack, so the 
+                     * abortion code ("ceu_sys_org_kill") did a "longjmp" to 
+                     * here to unwind the whole stack.
+                     * Let's go to the next organism received as "ret".
+                     */
+                    /* can only come from ceu_sys_org_kill */
+                    ceu_out_assert(ret == 0xABCD);
+                    cur = CEU_JMP_ORG; /* global set in ceu_sys_org_kill */
+printf("set-orgs-awake -> %p\n", cur);
+stk->org = org;
+stk->depth = XXX;
+                    continue;   /* might be NULL */
                 }
                 ceu_sys_go_ex(app, evt,
                               stk,
                               cur, &cur->trls[0], NULL);
-#if 0
-#ifdef CEU_ORGS_NEWS
-                if (is_dyn && ret==RET_DEAD) {
-                    /* The current *dynamic* child died. (RESEARCH-10)
-                     * We have no idea about the prv/nxt childs, so we restart 
-                     * from scratch.
-                     * Static orgs dont clear the stack and dont generate 
-                     * RET_DEAD. (Because they remain in memory.)
-                     */
-                    cur = trl->org;
-                    continue;
+stk->org = org;
+stk->depth = XXX;
+
+                /* kill child if a IN__CLEAR in the parent */
+                if (evt->id == CEU_IN__CLEAR) {
+printf("CHILD-KILL %p\n", cur);
+                    ceu_sys_org_kill(app, cur, stk);
                 }
-#endif
-#endif
+
                 cur = cur->nxt;
             }
             continue;   /* next trail after handling children */
@@ -508,102 +626,6 @@ SPC(1); printf("<<< NO\n");
             trl->seqno = app->seqno-1;   /* keeps the gap tight */
         }
     }
-
-#ifdef CEU_ORGS
-    /* end of current org */
-    if (evt->id == CEU_IN__CLEAR)
-    {
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
-        org->isAlive = 0;
-#endif
-
-        /* If it is a bounded clear for a single org and this org is not
-         * dynamic, we don't need to clear the stack because the enclosing
-         * block is still alive, so, no dangling pointers.
-         * TODO: if I do clear, static array traversal does not work, so 
-         * this is not only an optimization.
-         * (because it would require a pointer to the parent trl to restart 
-         * from the next alive org in the array)
-         */
-        if (stop != org
-#ifdef CEU_ORGS_NEWS
-            || org->isDyn
-#endif
-           )
-        {
-            /* Clear stack:
-             * Pending uses of dyeing "org" must abort.
-             * Go down in the stack:
-             *      stk->down, stk->down->down, ...
-             */
-            tceu_stk* cur_stk;
-            for (cur_stk=stk_down; cur_stk!=NULL; cur_stk=cur_stk->down)
-            {
-                tceu_org* cur_org;
-                if (cur_stk->org == NULL) {
-                    continue;   /* level previously aborted */
-                }
-
-                /* Check if cur_stk->org is "org" or one of its children:
-                 *      org, org->up, org->up->up, ...
-                 */
-                for (cur_org=cur_stk->org; cur_org!=NULL; cur_org=cur_org->up) {
-                    if (cur_org == org) {
-                        cur_stk->org = NULL;    /* invalidate stack level */
-                        break;
-                    }
-                }
-            }
-        }
-#ifdef CEU_ORGS_NEWS
-        /* re-link PRV <-> NXT */
-        if (org->isDyn) {
-            if (org->pool->parent_trl->org == org) {
-                org->pool->parent_trl->org = org->nxt;    /* subst 1st org */
-                    /* TODO-POOL: this information is 1 level up in the stack */
-            } else {
-                org->prv->nxt = org->nxt;
-            }
-            if (org->nxt != NULL) {
-                org->nxt->prv = org->prv;
-            }
-        }
-#endif
-#ifdef CEU_ORGS_WATCHING
-        /* signal killed */
-        {
-            tceu_kill ps = { org, org->ret };
-            tceu_evt evt_;
-                     evt_.id = CEU_IN__ok_killed;
-                     evt_.param = &ps;
-
-/* TODO: needs setjmp */
-            ceu_sys_go_ex(app, &evt_,
-                          stk,
-                          app->data, &app->data->trls[0], NULL);
-            if (stk->org == NULL) {
-                return RET_DEAD;
-            }
-        }
-#endif
-#ifdef CEU_ORGS_NEWS
-        /* free */
-        if (org->isDyn) {
-#if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
-            ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
-#elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-            if (org->pool->queue == NULL) {
-                ceu_sys_realloc(org, 0);
-            } else {
-                ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
-            }
-#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-            ceu_sys_realloc(org, 0);
-#endif
-        }
-#endif
-    }
-#endif  /* CEU_ORGS */
 }
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)

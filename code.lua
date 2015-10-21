@@ -153,6 +153,9 @@ end
 -- TODO: check if all calls are needed
 --          (e.g., cls outermost block should not!)
 function CLEAR (me, t1, t2)
+    t1 = t1 or me.trails[1]
+    t2 = t2 or me.trails[2]
+
     COMM(me, 'CLEAR: '..me.tag..' ('..me.ln[2]..')')
 
     if ANA and me.ana.pos[false] then
@@ -171,10 +174,16 @@ function CLEAR (me, t1, t2)
         end
     end
 
--- TODO: before or after CLEAR
     LINE(me, [[
+/* We will abort all trails between [t1,t2].
+ * If a pending call in the stack is inside this internal, we want to unwind 
+ * all stack up to that call.
+ * The "ceu_longjmp" traverses the stack and makes a "longjmp" to the unwinded 
+ * call passing the continuation below ("lbl_jmp").
+ */
+printf("LONG-CLEAR %p [%p]\n", _ceu_org, _ceu_app->data);
 ceu_stack_dump(_ceu_stk);
-ceu_longjmp(_ceu_stk->down, ]]..me.lbl_jmp.id..', '..me.__depth_abort..[[,
+ceu_longjmp(_ceu_stk->down, (void*)]]..me.lbl_jmp.id..', '..me.__depth_abort..[[,
             _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
 ]])
     CASE(me, me.lbl_jmp)
@@ -186,8 +195,9 @@ ceu_longjmp(_ceu_stk->down, ]]..me.lbl_jmp.id..', '..me.__depth_abort..[[,
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org,
-                  &_ceu_org->trls[ ]]..(t1 or me.trails[1])  ..[[ ],
-                  &_ceu_org->trls[ ]]..(t2 or me.trails[2]+1)..[[ ]);
+                  &_ceu_org->trls[ ]]..t1..[[ ],
+                  &_ceu_org->trls[ ]]..(t2+1)..[[ ]);
+                                        /* excludes +1 */
 }
 ]])
 end
@@ -325,24 +335,17 @@ if (_ceu_immediate_death != NULL) {
 ]])
         end
 
-    LINE(me, [[
-#ifdef CEU_ORGS
-{
-    tceu_evt evt;
-             evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, &evt,
-                  _ceu_stk,
-                  _ceu_org, &_ceu_org->trls[0], _ceu_org);
-}
-#endif
-]])
-
         -- stop
         if me == MAIN then
             LINE(me, [[
 #if defined(CEU_RET) || defined(CEU_OS)
 _ceu_app->isAlive = 0;
 #endif
+]])
+        else
+            LINE(me, [[
+printf("kill\n");
+ceu_sys_org_kill(_ceu_app, _ceu_org, _ceu_stk);
 ]])
         end
         HALT(me)
@@ -1348,8 +1351,15 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         LINE(me, [[
 _ceu_stk->depth = ]]..me.__depth_abort..[[;
 {
+printf("SET-PAR %p\n", _ceu_stk);
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {
+printf("set-par-awake\n");
+        /* This trail has been aborted from the call below.
+         * It was the lowest aborted trail in the stack, so the abortion code 
+         * "CLEAR" did a "longjmp" to here to unwind the whole stack.
+         * Let's go to the continuation of the abortion received as "ret".
+         */
         _ceu_lbl = ret;
         goto _CEU_GOTO_;
     }
@@ -1729,9 +1739,15 @@ if (!_ceu_app->isAlive)
         LINE(me, [[
 _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
 {
-printf("SET %p\n", _ceu_stk);
+printf("SET-EMIT %p\n", _ceu_stk);
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {
+printf("set-emit-awake\n");
+        /* This trail has been aborted from the call below.
+         * It was the lowest aborted trail in the stack, so the abortion code 
+         * "CLEAR" did a "longjmp" to here to unwind the whole stack.
+         * Let's go to the continuation of the abortion received as "ret".
+         */
         _ceu_lbl = ret;
         goto _CEU_GOTO_;
     }

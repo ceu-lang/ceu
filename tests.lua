@@ -25827,13 +25827,11 @@ do
     await 1s;
     emit e;
     _V = 1;
-_printf("NO\n");
 end
 
 do
     var T t;
     await t.e;
-_printf("OUT\n");
 end
 await 1s;
 escape _V;
@@ -28173,7 +28171,6 @@ escape 10;
     run = 10,
 }
 
---]===]
 Test { [[
 native do ##include <assert.h> end
 native _assert();
@@ -28657,6 +28654,29 @@ escape aa.aa;
     },
 }
 
+--]===]
+Test { [[
+input void OS_START;
+
+class T with
+    event void ok;
+do
+    await OS_START;
+_printf(">>> EMIT\n");
+    emit ok;
+end
+
+pool T[] ts;
+var T&&? t1 = spawn T in ts;
+
+await t1!:ok;
+_printf("oioioi\n");
+
+escape 1;
+]],
+    run = 1,
+}
+
 Test { [[
 input void OS_START;
 
@@ -28679,9 +28699,6 @@ end
 
 escape 1;
 ]],
-    _ana = {
-        acc = 0,
-    },
     run = 1,
 }
 
