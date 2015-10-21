@@ -331,11 +331,6 @@ if (_ceu_immediate_death != NULL) {
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org, &_ceu_org->trls[0], _ceu_org);
-#ifdef CEU_ORGS
-    if (_ceu_stk->org == NULL) {
-        return RET_DEAD;
-    }
-#endif
 }
 #endif
 ]])
@@ -424,19 +419,9 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         LINE(me, [[
     {
         int immediate_death = 0;
-        tceu_trl* trl = _ceu_trl;
-        trl->lbl = CEU_LBL__STACKED;
         ceu_app_go(_ceu_app,NULL,
                    ]]..org..[[, &]]..org..[[->trls[0],
                    _ceu_stk, &immediate_death);
-#ifdef CEU_ORGS
-        if (_ceu_stk->org == NULL) {
-            return RET_DEAD;
-        }
-#endif
-        if (trl->lbl != CEU_LBL__STACKED) {
-            return RET_HALT;
-        }
 ]])
         if t.set then
             LINE(me, [[
@@ -881,6 +866,11 @@ _ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
             return
         end
 
+        if stmts.trails[1] ~= me.trails[1] then
+            LINE(me, [[
+_ceu_trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
+]])
+        end
         CONC(me, stmts)
 
         if me.fins then
@@ -1760,17 +1750,9 @@ _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
 ]])
         end
         LINE(me, [[
-#ifdef CEU_ORGS
-    int ret =
-#endif
-        ceu_sys_go_ex(_ceu_app, &evt,
-                      _ceu_stk,
-                      _ceu_app->data, &_ceu_app->data->trls[0], NULL);
-#ifdef CEU_ORGS
-    if (ret==RET_DEAD || _ceu_stk->org==NULL) {
-        return RET_DEAD;
-    }
-#endif
+    ceu_sys_go_ex(_ceu_app, &evt,
+                  _ceu_stk,
+                  _ceu_app->data, &_ceu_app->data->trls[0], NULL);
 }
 ]])
     end,

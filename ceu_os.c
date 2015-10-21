@@ -397,12 +397,6 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                               stk,
                               cur, &cur->trls[0], NULL);
 #if 1
-                /* in case a children kills myself, we stop now */
-                if (stk->org == NULL) {
-                    return RET_DEAD;
-                }
-#endif
-#if 1
 #ifdef CEU_ORGS_NEWS
                 if (is_dyn && ret==RET_DEAD) {
                     /* The current *dynamic* child died. (RESEARCH-10)
@@ -597,9 +591,6 @@ SPC(1); printf("<<< NO\n");
             ceu_sys_realloc(org, 0);
 #endif
         }
-#endif
-#if 1
-        return RET_DEAD;
 #endif
     }
 #endif  /* CEU_ORGS */
