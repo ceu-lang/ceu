@@ -152,7 +152,7 @@ end
 
 -- TODO: check if all calls are needed
 --          (e.g., cls outermost block should not!)
-function CLEAR (me)
+function CLEAR (me, t1, t2)
     COMM(me, 'CLEAR: '..me.tag..' ('..me.ln[2]..')')
 
     if ANA and me.ana.pos[false] then
@@ -171,7 +171,9 @@ function CLEAR (me)
         end
     end
 
+-- TODO: before or after CLEAR
     LINE(me, [[
+ceu_stack_dump(_ceu_stk);
 ceu_longjmp(_ceu_stk->down, ]]..me.lbl_jmp.id..', '..me.__depth_abort..[[,
             _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
 ]])
@@ -184,8 +186,8 @@ ceu_longjmp(_ceu_stk->down, ]]..me.lbl_jmp.id..', '..me.__depth_abort..[[,
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org,
-                  &_ceu_org->trls[ ]]..(me.trails[1])  ..[[ ],
-                  &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
+                  &_ceu_org->trls[ ]]..(t1 or me.trails[1])  ..[[ ],
+                  &_ceu_org->trls[ ]]..(t2 or me.trails[2]+1)..[[ ]);
 }
 ]])
 end
@@ -998,6 +1000,14 @@ CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
         end
 
         LINE(me, '}')       -- open in Block_pre
+
+        -- clear orgs
+        if stmts.trails[1] > me.trails[1] then
+            -- TODO: clearing also everything before stmts
+            --       (e.g., adts), correct?
+            CLEAR(me, me.trails[1], stmts.trails[1])
+                                    -- end at +1
+        end
     end,
 
     Pause = CONC_ALL,
@@ -1719,6 +1729,7 @@ if (!_ceu_app->isAlive)
         LINE(me, [[
 _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
 {
+printf("SET %p\n", _ceu_stk);
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {
         _ceu_lbl = ret;

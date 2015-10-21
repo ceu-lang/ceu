@@ -287,9 +287,11 @@ void ceu_longjmp (tceu_stk* stk, tceu_nlbl lbl, u8 depth,
     } else {
         ceu_longjmp(stk->down,lbl,depth,org,t1,t2);   /* TODO: reverse */
     }
+printf("CHK %p\n", stk);
     if (stk->depth >= depth &&
         stk->trl>=t1 && stk->trl<=t2)
     {
+printf("\tyes\n");
         longjmp(stk->jmp, lbl);
     }
 }
@@ -388,15 +390,22 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
             /* traverse all children */
             while (cur != NULL) {
-#if 1
+#if 0
 #ifdef CEU_ORGS_NEWS
                 int is_dyn = cur->isDyn;  /* save: possible free */
 #endif
 #endif
+/* TODO: needs setjmp */
+                int ret = setjmp(stk->jmp);
+                if (ret != 0) {
+printf("==========\n");
+                    cur = trl->org;
+                    continue;
+                }
                 ceu_sys_go_ex(app, evt,
                               stk,
                               cur, &cur->trls[0], NULL);
-#if 1
+#if 0
 #ifdef CEU_ORGS_NEWS
                 if (is_dyn && ret==RET_DEAD) {
                     /* The current *dynamic* child died. (RESEARCH-10)
@@ -568,6 +577,7 @@ SPC(1); printf("<<< NO\n");
                      evt_.id = CEU_IN__ok_killed;
                      evt_.param = &ps;
 
+/* TODO: needs setjmp */
             ceu_sys_go_ex(app, &evt_,
                           stk,
                           app->data, &app->data->trls[0], NULL);

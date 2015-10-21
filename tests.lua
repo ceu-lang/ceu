@@ -97,7 +97,6 @@ escape 1;
 }
 
 do return end
---]===]
 
 -------------------------------------------------------------------------------
 
@@ -25828,11 +25827,13 @@ do
     await 1s;
     emit e;
     _V = 1;
+_printf("NO\n");
 end
 
 do
     var T t;
     await t.e;
+_printf("OUT\n");
 end
 await 1s;
 escape _V;
@@ -28172,6 +28173,7 @@ escape 10;
     run = 10,
 }
 
+--]===]
 Test { [[
 native do ##include <assert.h> end
 native _assert();

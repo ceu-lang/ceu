@@ -52,8 +52,6 @@ F = {
     end,
 
     Block = function (me)
-        local blk = unpack(me)
-
         if me.fins then
             me.lbl_fin = new{'Block__fin'}
         end
@@ -74,6 +72,11 @@ F = {
             elseif var.adt and var.pre=='pool' then
                 var.lbl_fin_kill_free = new{'adt_fin_kill_free'}
             end
+        end
+
+        local stmts = unpack(me)
+        if stmts.trails[1] > me.trails[1] then
+            me.lbl_jmp = new{'Block_jmp'}
         end
     end,
 
