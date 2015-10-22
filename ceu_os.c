@@ -176,10 +176,10 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
     org->cls = cls;
 #endif
 #endif
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING) || defined(CEU_OS_KERNEL)
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT) || defined(CEU_OS_KERNEL)
     org->isAlive = 1;
 #endif
-#ifdef CEU_ORGS_WATCHING
+#ifdef CEU_ORGS_AWAIT
     org->ret = 0;   /* TODO: still required? */
 #endif
 #ifdef CEU_ORGS_NEWS
@@ -213,7 +213,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #ifdef CEU_ORGS
 void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
 {
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
     org->isAlive = 0;
 #endif
 
@@ -231,7 +231,7 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
     }
 #endif
 
-#ifdef CEU_ORGS_WATCHING
+#ifdef CEU_ORGS_AWAIT
     /* signal killed */
     {
         tceu_kill ps = { org, org->ret };
@@ -531,7 +531,7 @@ if (evt->param != NULL) {
             (evt->id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR)
         ||
 #endif
-#ifdef CEU_WATCHING
+#ifdef CEU_ORGS_OR_ADTS_AWAIT
             /* if */
             (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
                 (trl->org_or_adt == NULL || /* for option types, initied w/ NULL  */
@@ -540,7 +540,7 @@ if (evt->param != NULL) {
 #endif
             /* if evt->id matches awaiting trail */
             (trl->evt==evt->id && trl->seqno!=app->seqno
-#ifdef CEU_WATCHING
+#ifdef CEU_ORGS_OR_ADTS_AWAIT
                 && (evt->id != CEU_IN__ok_killed)
                     /* TODO: simplify */
 #endif

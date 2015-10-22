@@ -240,7 +240,7 @@ do
             has_pses    = 'CEU_PSES',
             has_ret     = 'CEU_RET',
             has_lua     = 'CEU_LUA',
-            has_orgs_watching = 'CEU_ORGS_WATCHING',
+            has_orgs_await = 'CEU_ORGS_AWAIT',
 
             has_vector        = 'CEU_VECTOR',
             has_vector_pool   = 'CEU_VECTOR_POOL',
@@ -255,11 +255,11 @@ do
             end
         end
 
-        if next(PROPS.has_adts_watching) then
-            str = str .. '#define CEU_ADTS_WATCHING\n'
+        if next(PROPS.has_adts_await) then
+            str = str .. '#define CEU_ADTS_AWAIT\n'
         end
-        for id in pairs(PROPS.has_adts_watching) do
-            str = str .. '#define CEU_ADTS_WATCHING_' .. id .. '\n'
+        for id in pairs(PROPS.has_adts_await) do
+            str = str .. '#define CEU_ADTS_AWAIT_' .. id .. '\n'
         end
 
         if ANA.no_nested_termination then

@@ -37,8 +37,8 @@
 #if defined(CEU_ORGS_NEWS_POOL) || defined(CEU_ADTS_NEWS_POOL)
 #define CEU_NEWS_POOL
 #endif
-#if defined(CEU_ORGS_WATCHING) || defined(CEU_ADTS_WATCHING)
-#define CEU_WATCHING
+#if defined(CEU_ORGS_AWAIT) || defined(CEU_ADTS_AWAIT)
+#define CEU_ORGS_OR_ADTS_AWAIT
 #endif
 
 #ifdef CEU_OS
@@ -63,9 +63,9 @@
     #define CEU_ADTS_NEWS
     #define CEU_ADTS_NEWS_MALLOC
     #define CEU_ADTS_NEWS_POOL
-    #define CEU_ORGS_WATCHING
-    #define CEU_ADTS_WATCHING
-    #define CEU_WATCHING
+    #define CEU_ORGS_AWAIT
+    #define CEU_ADTS_AWAIT
+    #define CEU_ORGS_OR_ADTS_AWAIT
 /*
     #define CEU_THREADS
 */
@@ -395,7 +395,7 @@ typedef union tceu_trl {
 #endif
 
     /* _ok_killed */
-#ifdef CEU_WATCHING
+#ifdef CEU_ORGS_OR_ADTS_AWAIT
     struct {
         tceu_nevt evt4;
         tceu_nlbl lbl4;
@@ -461,7 +461,7 @@ typedef struct tceu_org
     tceu_ncls cls;          /* class id */
 #endif
 
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
     u8 isAlive: 1;          /* Three purposes:
                              * - =0 if terminate normally or =1 if from scope
                              *      checked to see if should call free on pool
@@ -481,7 +481,7 @@ typedef struct tceu_org
     tceu_pool_* pool;       /* TODO(ram): opt, traverse lst of cls pools */
 #endif
 
-#ifdef CEU_ORGS_WATCHING
+#ifdef CEU_ORGS_AWAIT
     int ret;
 #endif
 
@@ -491,7 +491,7 @@ typedef struct tceu_org
 
 } tceu_org;
 
-#ifdef CEU_WATCHING
+#ifdef CEU_ORGS_OR_ADTS_AWAIT
 typedef struct {
     void* org_or_adt;
     int ret;
@@ -543,7 +543,7 @@ typedef struct tceu_app {
     tceu_nstk stki;
 #endif
 
-#if defined(CEU_RET) || defined(CEU_ORGS_WATCHING)
+#if defined(CEU_RET) || defined(CEU_ORGS_AWAIT)
     int ret;
 #endif
 

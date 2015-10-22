@@ -176,7 +176,7 @@ struct CEU_]]..id..[[ {
         end
 
         me.auxs[#me.auxs+1] = [[
-#ifdef CEU_ADTS_WATCHING_]]..id..[[
+#ifdef CEU_ADTS_AWAIT_]]..id..[[
 
 void CEU_]]..id..'_kill (tceu_app* app, CEU_'..id..[[* me);
 #endif
@@ -203,7 +203,7 @@ void CEU_]]..id..'_free_static (tceu_app* app, CEU_'..id..[[* me, void* pool);
         end
 
         local kill = [[
-#ifdef CEU_ADTS_WATCHING_]]..id..[[
+#ifdef CEU_ADTS_AWAIT_]]..id..[[
 
 void CEU_]]..id..'_kill (tceu_app* app, CEU_'..id..[[* me) {
 ]]
@@ -401,10 +401,10 @@ CEU_]]..id..'* '..enum..'_assert (tceu_app* app, CEU_'..id..[[* me, char* file, 
         end
 
         local kill = [[
-#ifdef CEU_ADTS_WATCHING_]]..id..[[
+#ifdef CEU_ADTS_AWAIT_]]..id..[[
 
 void ]]..enum..'_kill (tceu_app* app, CEU_'..id..[[* me) {
-#ifdef CEU_ADTS_WATCHING
+#ifdef CEU_ADTS_AWAIT
     /* kill myself before my recursive fields */
     {
         tceu_evt evt;

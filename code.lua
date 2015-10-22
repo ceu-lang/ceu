@@ -987,7 +987,7 @@ ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0);
 
                 local VAL_root = V({tag='Var',tp=var.tp,var=var}, 'lval')
                 local VAL_all  = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_top')
-                if PROPS.has_adts_watching[var.adt.id] then
+                if PROPS.has_adts_await[var.adt.id] then
                     LINE(me, [[
 #if 0
 "kill" only while in scope
@@ -1065,7 +1065,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 ]])
 
         -- HACK: _ceu_org overwritten by _kill
-        if PROPS.has_adts_watching[to_tp_id] then
+        if PROPS.has_adts_await[to_tp_id] then
             LINE(me,[[
     tceu_org* __ceu_stk_org = _ceu_org;
 ]])
@@ -1080,7 +1080,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 ]])
         end
 
-        if PROPS.has_adts_watching[to_tp_id] then
+        if PROPS.has_adts_await[to_tp_id] then
             LINE(me, [[
     /* save the continuation to run after the kill */
     tceu_trl* trl = _ceu_trl;
@@ -1123,7 +1123,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 ]])
         end
 
-        if PROPS.has_adts_watching[to_tp_id] then
+        if PROPS.has_adts_await[to_tp_id] then
             -- HACK: _ceu_org overwritten by _kill
             LINE(me, [[
 #undef  _ceu_org
@@ -1199,7 +1199,7 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
 ]])
             else
                 LINE(me, [[
-#ifdef CEU_ORGS_WATCHING
+#ifdef CEU_ORGS_AWAIT
     _ceu_org->ret = ]]..V(to,'rval')..[[;
 #endif
 ]])
