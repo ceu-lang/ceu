@@ -100,7 +100,10 @@ void ceu_stack_dump (tceu_stk* stk) {
 }
 #endif
 
-static void* CEU_JMP_LBL_OR_ORG;
+#ifdef CEU_ORGS
+static tceu_org* CEU_JMP_ORG;
+#endif
+static tceu_nlbl CEU_JMP_LBL;
     /* pointer might not fit in an "int", which is the type "longjmp" accepts,
        so we use a global instead */
 
@@ -120,20 +123,14 @@ void ceu_longjmp (tceu_stk* stk, tceu_org* org,
     } else {
         ceu_longjmp(stk->down,org,t1,t2,depth);
     }
-printf("CHK %p (%d>=%d, %d>=%d, %d<=%d)\n",
-    stk,
-    stk->depth,  depth,
-    stk->trl, t1, stk->trl, t2
-);
 
 /* TODO: not sure if required */
 #if 1
     if (stk->depth < depth) {
+        printf("\tno\n");
         return;
     }
 #endif
-
-    tceu_ntrl trl = stk->trl;
 
 #ifdef CEU_ORGS
     if (stk->org != org) {
@@ -144,18 +141,20 @@ printf("CHK %p (%d>=%d, %d>=%d, %d<=%d)\n",
         tceu_org* cur_org;
         for (cur_org=stk->org; cur_org!=NULL; cur_org=cur_org->up) {
             if (cur_org->up == org) {
-                trl = cur_org->parent_trl;
-#endif
-                if (trl>=t1 && trl<=t2) {
-printf("\tyes %p\n", CEU_JMP_LBL_OR_ORG);
+                if (cur_org->parent_trl>=t1 && cur_org->parent_trl<=t2) {
                     longjmp(stk->jmp, 1);
                 }
-#ifdef CEU_ORGS
                 break;
             }
         }
     }
+    else
 #endif
+    {
+        if (stk->trl>=t1 && stk->trl<=t2) {
+            longjmp(stk->jmp, 1);
+        }
+    }
 }
 
 /**********************************************************************/
@@ -238,16 +237,13 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
                  evt_.id = CEU_IN__ok_killed;
                  evt_.param = &ps;
 
-printf("SET-KILL %p\n", stk);
         int ret = setjmp(stk->jmp);
         if (ret != 0) {
-printf("set-kill-awake %p\n", stk);
             /* The current "org" died from the call below, nothing else to
              * do for him, return now to avoid acessing it again.
              */
             return;
         }
-/* TODO: setjmp */
         ceu_sys_go_ex(app, &evt_,
                       stk,
                       app->data, &app->data->trls[0], NULL);
@@ -502,10 +498,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
             /* traverse all children */
             while (cur != NULL) {
-#if 0
-/* TODO: needs setjmp */
-#endif
-printf("SET-ORGS [%p] => %p\n", stk, cur);
+/* TODO */
 stk->org = cur;
 int XXX = stk->depth;
 stk->depth = 1;
@@ -519,8 +512,7 @@ stk->depth = 1;
                      * Let's go to the next organism received as "ret".
                      */
                     /* can only come from ceu_sys_org_kill */
-                    cur = CEU_JMP_LBL_OR_ORG; /* see ceu_longjmp */
-printf("set-orgs-awake -> %p=>%p\n", cur, org);
+                    cur = CEU_JMP_ORG;
 stk->org = org;
 stk->depth = XXX;
                     continue;   /* might be NULL */
@@ -533,7 +525,6 @@ stk->depth = XXX;
 
                 /* kill child if a IN__CLEAR in the parent */
                 if (evt->id == CEU_IN__CLEAR) {
-printf("CHILD-KILL %p\n", cur);
                     ceu_sys_org_kill(app, cur, stk);
                 }
 

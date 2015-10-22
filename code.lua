@@ -184,9 +184,10 @@ function CLEAR (me, t1, t2)
  * range.
  * We want to continue from "me.lbl_jmp" below.
  */
-printf("LONG-CLEAR %p [%p]\n", _ceu_org, _ceu_app->data);
-ceu_stack_dump(_ceu_stk);
-CEU_JMP_LBL_OR_ORG = (void*)]]..me.lbl_jmp.id..[[;
+#ifdef CEU_ORGS
+CEU_JMP_ORG = _ceu_org;
+#endif
+CEU_JMP_LBL = ]]..me.lbl_jmp.id..[[;
 ceu_longjmp(_ceu_stk->down, _ceu_org,
             ]]..me.trails[1]..','..me.trails[2]..[[,
             ]]..me.__depth_abort..[[);
@@ -349,15 +350,14 @@ _ceu_app->isAlive = 0;
 ]])
         else
             LINE(me, [[
-printf("kill\n");
 ceu_sys_org_kill(_ceu_app, _ceu_org, _ceu_stk);
 
 /* Natural termination, can only come from parent traversal.
  * We want to resume the parent traversal from "nxt".
  */
-printf("LONG-KILL %p [%p]\n", _ceu_org, _ceu_app->data);
-ceu_stack_dump(_ceu_stk);
-    CEU_JMP_LBL_OR_ORG = _ceu_org->nxt;
+#ifdef CEU_ORGS
+    CEU_JMP_ORG = _ceu_org->nxt;
+#endif
     ceu_longjmp(_ceu_stk->down, _ceu_org, 0,_ceu_org->n, 0);
 ]])
         end
@@ -1369,17 +1369,18 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         LINE(me, [[
 _ceu_stk->depth = ]]..me.__depth_abort..[[;
 {
-printf("SET-PAR %p\n", _ceu_stk);
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {
         /* This trail has been aborted from the call below.
          * It was the lowest aborted trail in the stack, so the abortion code 
          * "CLEAR" did a "longjmp" to here to unwind the whole stack.
          * Let's go to the continuation of the abortion received in 
-         * "CEU_JMP_LBL_OR_ORG".
+         * "CEU_JMP_LBL/ORG".
          */
-        _ceu_lbl = (int)(intptr_t)CEU_JMP_LBL_OR_ORG;
-printf("set-par-awake => %d\n", _ceu_lbl);
+#ifdef CEU_ORGS
+        _ceu_org = CEU_JMP_ORG;
+#endif
+        _ceu_lbl = CEU_JMP_LBL;
         goto _CEU_GOTO_;
     }
     _ceu_stk->trl = ]]..me.trails[1]..[[;
@@ -1760,7 +1761,6 @@ if (!_ceu_app->isAlive)
         LINE(me, [[
 _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
 {
-printf("SET-EMIT %p\n", _ceu_stk);
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {
         /* This trail has been aborted from the call below.
@@ -1768,8 +1768,10 @@ printf("SET-EMIT %p\n", _ceu_stk);
          * "CLEAR" did a "longjmp" to here to unwind the whole stack.
          * Let's go to the continuation of the abortion received as "ret".
          */
-        _ceu_lbl = (int)(intptr_t)CEU_JMP_LBL_OR_ORG;
-printf("set-emit-awake => %d\n", _ceu_lbl);
+#ifdef CEU_ORGS
+        _ceu_org = CEU_JMP_ORG;
+#endif
+        _ceu_lbl = CEU_JMP_LBL;
         goto _CEU_GOTO_;
     }
     _ceu_stk->trl = ]]..me.trails[1]..[[;

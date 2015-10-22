@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -28361,25 +28362,8 @@ escape _V;
     run = 1,
 }
 
---]===]
 Test { [[
-    input void OS_START;
-class T with
-    event void a, ok, go, b;
-    var int aa, bb;
-do
-
-    par/and do
-        await a;
-        emit b;
-    with
-        await b;
-    end
-    aa = 5;
-    bb = 4;
-    emit ok;
-end
-var T aa;
+input void OS_START;
 
 native _inc(), _V;
 native do
@@ -28387,13 +28371,30 @@ native do
     void inc() { V++; }
 end
 
-_inc();
+class T with
+    event void a, ok, go, b;
+    var int aa, bb;
+do
+    par/and do
+        await a;            // 3.
+        emit b;             // 4.
+    with
+        await b;            // 5.
+    end
+    aa = 5;                 // 6. V=1, aa=5
+    bb = 4;                 // 7. V=1, aa=5, bb=4
+    emit ok;                // 8.
+end
+
+var T aa;
+
+_inc();                     // 1. V=1
 par/or do
-    await aa.ok;
-    _V = _V+1;
+    await aa.ok;            // 9.
+    _V = _V+1;              // 10. V=2, aa=5, bb=4
 with
     await OS_START;
-    emit aa.a;
+    emit aa.a;              // 2.
     _V = _V+2;
 end
 escape _V + aa.aa + aa.bb;
