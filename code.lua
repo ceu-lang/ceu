@@ -175,22 +175,20 @@ function CLEAR (me, t1, t2)
     end
 
     LINE(me, [[
-/* We will abort all trails between [t1,t2].
- * If a pending call in the stack is inside this range, we want to unwind all 
- * stack up to that call.
- * The "ceu_longjmp" traverses the stack and makes a "longjmp" to the unwinded 
- * call passing the continuation below ("lbl_jmp").
- * The traversal has to also consider nested organisms defined in the tail 
- * range.
+/* LONGJMP
+ * Block termination: we will abort all trails between [t1,t2].
+ * Return status=1 to distinguish from longjmp from organism termination.
  * We want to continue from "me.lbl_jmp" below.
  */
 #ifdef CEU_ORGS
 CEU_JMP_ORG = _ceu_org;
 #endif
+CEU_JMP_TRL = _ceu_trl;
 CEU_JMP_LBL = ]]..me.lbl_jmp.id..[[;
-ceu_longjmp(_ceu_stk->down, _ceu_org,
-            ]]..me.trails[1]..','..me.trails[2]..[[,
-            ]]..me.__depth_abort..[[);
+printf("LONG-clear\n");
+ceu_stack_dump(_ceu_stk);
+ceu_longjmp(1, _ceu_stk, _ceu_org,
+            ]]..me.trails[1]..','..me.trails[2]..[[);
 ]])
     CASE(me, me.lbl_jmp)
 
@@ -325,22 +323,6 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this) {
 
         -- might need "free"
 
-        if me ~= MAIN then
-            LINE(me, [[
-#ifdef CEU_ORGS_NEWS
-/* HACK_9:
- * If the stack top is the initial spawn state of the organism, it means that 
- * the organism terminated on start and the spawn must return NULL.
- * In this case, we mark set "_ceu_immediate_death" to be recognized in the 
- * spawn continuation below.
- */
-if (_ceu_immediate_death != NULL) {
-    *_ceu_immediate_death = 1;
-}
-#endif
-]])
-        end
-
         -- stop
         if me == MAIN then
             LINE(me, [[
@@ -350,15 +332,22 @@ _ceu_app->isAlive = 0;
 ]])
         else
             LINE(me, [[
+/* TODO: setjmp */
 ceu_sys_org_kill(_ceu_app, _ceu_org, _ceu_stk);
 
-/* Natural termination, can only come from parent traversal.
- * We want to resume the parent traversal from "nxt".
+/* LONGJMP
+ * Natural termination: can only be reached from parent traversal or from first 
+ * execution (immediate termination).
+ * Parent: resume the parent traversal from "nxt".
+ * First:  the calling trail will continue normally in sequence.
+ * Return status=2 to distinguish from longjmp from block termination.
  */
 #ifdef CEU_ORGS
-    CEU_JMP_ORG = _ceu_org->nxt;
+    CEU_JMP_ORG = _ceu_org->nxt;    /* only required for "Parent" */
 #endif
-    ceu_longjmp(_ceu_stk->down, _ceu_org, 0,_ceu_org->n, 0);
+printf("LONG-kill\n");
+ceu_stack_dump(_ceu_stk);
+    ceu_longjmp(2, _ceu_stk, _ceu_org, 0,_ceu_org->n);
 ]])
         end
         HALT(me)
@@ -435,22 +424,21 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         end
 
         LINE(me, [[
-    {
-        int immediate_death = 0;
+    tceu_stk stk_ = { _ceu_stk, ]]..org..[[, 0, ]]..org..[[->n, {} };
+printf("SET-spawn %p\n", &stk_);
+    int ret = setjmp(stk_.jmp);
+    if (ret != 0) {
+        /* can only come from ceu_sys_org_kill:
+         * org natural termination */
+        ceu_out_assert(ret == 2);
+        ]]..V(t.set,'rval')..' = '..string.upper(TP.toc(t.set.tp))..[[_pack(NULL);
+    } else {
+        /* spawn */
         ceu_app_go(_ceu_app,NULL,
                    ]]..org..[[, &]]..org..[[->trls[0],
-                   _ceu_stk, &immediate_death);
-]])
-        if t.set then
-            LINE(me, [[
-/* HACK_9: see above */
-    if (immediate_death) {
-        ]]..V(t.set,'rval')..' = '..string.upper(TP.toc(t.set.tp))..[[_pack(NULL);
+                   &stk_, NULL);
     }
-]])
-        end
-        LINE(me, [[
-    }
+    /* continue normally with or without longjmp */
 ]])
 
         if t.arr then
@@ -1367,10 +1355,13 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         LINE(me, [[
-_ceu_stk->depth = ]]..me.__depth_abort..[[;
 {
-    int ret = setjmp(_ceu_stk->jmp);
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+printf("SET-par %p\n", &stk_);
+    int ret = setjmp(stk_.jmp);
     if (ret != 0) {
+        /* can only come from CLEAR */
+        ceu_out_assert(ret == 1);
         /* This trail has been aborted from the call below.
          * It was the lowest aborted trail in the stack, so the abortion code 
          * "CLEAR" did a "longjmp" to here to unwind the whole stack.
@@ -1380,11 +1371,10 @@ _ceu_stk->depth = ]]..me.__depth_abort..[[;
 #ifdef CEU_ORGS
         _ceu_org = CEU_JMP_ORG;
 #endif
+        _ceu_trl = CEU_JMP_TRL;
         _ceu_lbl = CEU_JMP_LBL;
         goto _CEU_GOTO_;
     }
-    _ceu_stk->trl = ]]..me.trails[1]..[[;
-}
 ]])
 
         for i, sub in ipairs(me) do
@@ -1393,7 +1383,7 @@ _ceu_stk->depth = ]]..me.__depth_abort..[[;
     _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = ]]..me.lbls_in[i].id..[[;
     ceu_app_go(_ceu_app,NULL,_ceu_org,
                &_ceu_org->trls[ ]]..sub.trails[1]..[[ ],
-               _ceu_stk,NULL);
+               &stk_,NULL);
 ]])
             else
                 -- execute the last directly (no need to call)
@@ -1403,6 +1393,10 @@ _ceu_stk->depth = ]]..me.__depth_abort..[[;
 ]])
             end
         end
+
+        LINE(me, [[
+}
+]])
     end,
 
     ParEver = function (me)
@@ -1759,10 +1753,13 @@ if (!_ceu_app->isAlive)
         local _, int, ps = unpack(me)
 
         LINE(me, [[
-_ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
 {
-    int ret = setjmp(_ceu_stk->jmp);
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+printf("SET-emit %p\n", &stk_);
+    int ret = setjmp(stk_.jmp);
     if (ret != 0) {
+        /* can only come from CLEAR */
+        ceu_out_assert(ret == 1);
         /* This trail has been aborted from the call below.
          * It was the lowest aborted trail in the stack, so the abortion code 
          * "CLEAR" did a "longjmp" to here to unwind the whole stack.
@@ -1771,17 +1768,12 @@ _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
 #ifdef CEU_ORGS
         _ceu_org = CEU_JMP_ORG;
 #endif
+        _ceu_trl = CEU_JMP_TRL;
         _ceu_lbl = CEU_JMP_LBL;
         goto _CEU_GOTO_;
     }
-    _ceu_stk->trl = ]]..me.trails[1]..[[;
-}
 ]])
 
-        -- block for __emit_ps
-        LINE(me, [[
-{
-]])
         local val = F.__emit_ps(me)
 
         -- [ ... | me=stk | ... | oth=stk ]
@@ -1801,7 +1793,7 @@ _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
         end
         LINE(me, [[
     ceu_sys_go_ex(_ceu_app, &evt,
-                  _ceu_stk,
+                  &stk_,
                   _ceu_app->data, &_ceu_app->data->trls[0], NULL);
 }
 ]])

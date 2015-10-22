@@ -515,8 +515,8 @@ typedef struct tceu_lst {
 typedef struct tceu_stk {
     struct tceu_stk* down;
     tceu_org* org;
-    tceu_ntrl trl;
-    u8        depth;
+    tceu_ntrl trl1;
+    tceu_ntrl trl2;
     jmp_buf   jmp;
 } tceu_stk;
 

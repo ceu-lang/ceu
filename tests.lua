@@ -166,37 +166,6 @@ escape 1;
     run = 1
 }
 
-do
-    local function gen (v)
-        if v == 1 then
-            return [[
-                do
-                    escape 0;
-                end
-            ]]
-        else
-            return [[
-                par do
-                    var int x]]..v..[[ = ]]..gen(v-1)..[[;
-                    escape 1;
-                with
-                    escape -1;
-                end
-            ]]
-        end
-    end
-    Test { [[
-    var int ret = 0;
-    ret = ]]..gen(50)..[[;
-    escape ret;
-    ]],
-        todo = true,
-        _ana = {acc=true},
-        --ast = 'line 5 : max depth of 0xFF',
-        run = 1
-    }
-end
-
 Test { [[escape 0;]], run=0 }
 Test { [[escape 9999;]], run=9999 }
 Test { [[escape -1;]], run=-1 }
@@ -10589,6 +10558,25 @@ escape v;
         ['8~>Z'] = 8,
     }
 }
+Test { [[
+var int v = 0;
+par/or do
+    par/or do
+        v = 1;
+    with
+        v = 2;
+    end
+    v = 3;
+    await FOREVER;
+with
+    v = 4;
+end;
+escape v;
+]],
+    _ana = { acc=true },
+    run = 4,
+}
+
 Test { [[
 input int A;
 par/or do
@@ -24324,7 +24312,6 @@ native do
                 ret = ret + i + j;
             }
         }
-        printf("ret = %d\n", ret);
         return ret;
     }
 end
@@ -29542,9 +29529,7 @@ event void e;
 class T with
 do
     await OS_START;
-_printf(">>> EMIT-E\n");
     emit global:e; // TODO: must also check if org trail is active
-_printf(">>> CONT-E\n");
     native _assert();
     _assert(0);
 end
@@ -29552,14 +29537,11 @@ end
 do
     var T t;
     await e;
-_printf(">>> AWAKE-E\n");
 end
-_printf(">>>>>>>>>>>\n");
 escape 2;
 ]],
     run = 2,
 }
-do return end
 Test { [[
 input void OS_START;
 
@@ -29578,7 +29560,7 @@ event void e;
 class T with
 do
     await OS_START;
-    emit global:e; // TODO: must also check if org trail is active
+    emit global:e;
     _V = 1;
     _assert(0);
 end

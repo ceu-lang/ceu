@@ -80,6 +80,22 @@ STATS = {
     bytes   = 13611846,
 }
 (./run_tests.lua: 419.44s 28536k)
+-- with CEU_JMP_*
+STATS = {
+    count   = 1503,
+    mem     = 0,
+    trails  = 2390,
+    bytes   = 13702282,
+}
+(./run_tests.lua: 411.36s 27440k)
+-- w/o depth_abortion
+STATS = {
+    count   = 1504,
+    mem     = 0,
+    trails  = 2393,
+    bytes   = 13770925,
+}
+(./run_tests.lua: 399.93s 29176k)
 ]]
 
 

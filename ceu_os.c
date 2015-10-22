@@ -85,7 +85,7 @@ int ceu_sys_req (void) {
 }
 
 void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
-                    tceu_stk* stk_down,
+                    tceu_stk* stk,
                     tceu_org* org, tceu_trl* trl, void* stop);
 
 /**********************************************************************/
@@ -93,16 +93,19 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 #ifdef CEU_STACK
 void ceu_stack_dump (tceu_stk* stk) {
     if (stk == NULL) {
+        printf(">>> BOTTOM\n");
         return;
     }
-    printf("[%p] org=%p depth=%d\n", stk, stk->org, stk->depth);
     ceu_stack_dump(stk->down);
+    printf("[%p] org=%p trls=[%d,%d]\n",
+        stk, stk->org, stk->trl1, stk->trl2);
 }
 #endif
 
 #ifdef CEU_ORGS
 static tceu_org* CEU_JMP_ORG;
 #endif
+static tceu_trl* CEU_JMP_TRL;
 static tceu_nlbl CEU_JMP_LBL;
     /* pointer might not fit in an "int", which is the type "longjmp" accepts,
        so we use a global instead */
@@ -113,24 +116,18 @@ static tceu_nlbl CEU_JMP_LBL;
  * If so, the whole stack has to unwind and continue from what we pass in 
  * lbl_or_org.
  */
-void ceu_longjmp (tceu_stk* stk, tceu_org* org,
-                  tceu_ntrl t1, tceu_ntrl t2, u8 depth) {
+void ceu_longjmp (int ret, tceu_stk* stk, tceu_org* org,
+                  tceu_ntrl t1, tceu_ntrl t2) {
     /* TODO: reverse */
     /* traverse from the bottom to the top, we want to unwind from the lowest
      * matching lavel */
     if (stk == NULL) {
         return;
     } else {
-        ceu_longjmp(stk->down,org,t1,t2,depth);
+        ceu_longjmp(ret, stk->down, org, t1,t2);
     }
 
-/* TODO: not sure if required */
-#if 1
-    if (stk->depth < depth) {
-        printf("\tno\n");
-        return;
-    }
-#endif
+printf("CHK %p\n", stk);
 
 #ifdef CEU_ORGS
     if (stk->org != org) {
@@ -139,11 +136,15 @@ void ceu_longjmp (tceu_stk* stk, tceu_org* org,
          *      org, org->up, org->up->up, ...
          */
         tceu_org* cur_org;
+printf("\tCHK-2\n");
         for (cur_org=stk->org; cur_org!=NULL; cur_org=cur_org->up) {
+printf("\tCHK-2\n");
             if (cur_org->up == org) {
                 if (cur_org->parent_trl>=t1 && cur_org->parent_trl<=t2) {
-                    longjmp(stk->jmp, 1);
+printf("\tyes-2\n");
+                    longjmp(stk->jmp, ret);
                 }
+printf("\t\tno-2\n");
                 break;
             }
         }
@@ -151,8 +152,9 @@ void ceu_longjmp (tceu_stk* stk, tceu_org* org,
     else
 #endif
     {
-        if (stk->trl>=t1 && stk->trl<=t2) {
-            longjmp(stk->jmp, 1);
+        if (t1<=stk->trl1 && stk->trl2<=t2) {
+printf("\tyes-1\n");
+            longjmp(stk->jmp, ret);
         }
     }
 }
@@ -236,14 +238,6 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
         tceu_evt evt_;
                  evt_.id = CEU_IN__ok_killed;
                  evt_.param = &ps;
-
-        int ret = setjmp(stk->jmp);
-        if (ret != 0) {
-            /* The current "org" died from the call below, nothing else to
-             * do for him, return now to avoid acessing it again.
-             */
-            return;
-        }
         ceu_sys_go_ex(app, &evt_,
                       stk,
                       app->data, &app->data->trls[0], NULL);
@@ -413,10 +407,10 @@ static int spc = -1;
 #define SPC(n) { int i; for(i=0; i<(spc+n)*4; i++) printf(" "); };
 
 void ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
-                        tceu_stk* stk_down,
+                        tceu_stk* stk,
                         tceu_org* org, tceu_trl* trl, void* stop);
 void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
-                    tceu_stk* stk_down,
+                    tceu_stk* stk,
                     tceu_org* org, tceu_trl* trl, void* stop) {
     spc++;
     SPC(0); printf(">>> GO-EX\n");
@@ -427,7 +421,7 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                                    &org->trls[org->n]);
     #endif
 
-    ceu_sys_go_ex_dbg(app,evt,stk_down,org,trl,stop);
+    ceu_sys_go_ex_dbg(app,evt,stk,org,trl,stop);
 
     SPC(0); printf("<<< GO-EX\n");
     spc--;
@@ -436,22 +430,15 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 
 #ifdef CEU_DEBUG_TRAILS
 void ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
-                        tceu_stk* stk_down,
+                        tceu_stk* stk,
                         tceu_org* org, tceu_trl* trl, void* stop)
 #else
 void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
-                    tceu_stk* stk_down,
+                    tceu_stk* stk,
                     tceu_org* org, tceu_trl* trl, void* stop)
     /* TODO: now all arguments are required in all configurations */
 #endif
 {
-#ifdef CEU_STACK
-    tceu_stk  stk_ = { stk_down, org, 0, 0, {} };
-    tceu_stk* stk  = &stk_;
-#else
-    tceu_stk* stk  = NULL;
-#endif
-
     for (;; trl++)
     {
 #ifdef CEU_DEBUG_TRAILS
@@ -498,30 +485,21 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
             /* traverse all children */
             while (cur != NULL) {
-/* TODO */
-stk->org = cur;
-int XXX = stk->depth;
-stk->depth = 1;
-                int ret = setjmp(stk->jmp);
+                tceu_stk stk_ = { stk, org, 0, org->n, {} };
+printf("SET-orgs %p\n", &stk_);
+                int ret = setjmp(stk_.jmp);
                 if (ret != 0) {
-                    /* The current child has been aborted from the call below
-                     * to itself.
-                     * It was the lowest aborted call in the stack, so the 
-                     * abortion code ("ceu_sys_org_kill") did a "longjmp" to 
-                     * here to unwind the whole stack.
-                     * Let's go to the next organism received as "ret".
-                     */
-                    /* can only come from ceu_sys_org_kill */
+                    /* can only come from ceu_sys_org_kill:
+                     * org natural termination */
+                    ceu_out_assert(ret == 2);
+    printf("NOT IMPL\n");
+    ceu_out_assert(0);
                     cur = CEU_JMP_ORG;
-stk->org = org;
-stk->depth = XXX;
                     continue;   /* might be NULL */
                 }
                 ceu_sys_go_ex(app, evt,
                               stk,
                               cur, &cur->trls[0], NULL);
-stk->org = org;
-stk->depth = XXX;
 
                 /* kill child if a IN__CLEAR in the parent */
                 if (evt->id == CEU_IN__CLEAR) {
