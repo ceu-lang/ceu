@@ -28361,6 +28361,7 @@ escape _V;
     run = 1,
 }
 
+--]===]
 Test { [[
     input void OS_START;
 class T with
@@ -28654,7 +28655,6 @@ escape aa.aa;
     },
 }
 
---]===]
 Test { [[
 input void OS_START;
 
@@ -28662,7 +28662,25 @@ class T with
     event void ok;
 do
     await OS_START;
-_printf(">>> EMIT\n");
+    emit ok;
+end
+
+var int ret = 10;
+var T t;
+await t.ok;
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+    event void ok;
+do
+    await OS_START;
     emit ok;
 end
 
@@ -28670,7 +28688,6 @@ pool T[] ts;
 var T&&? t1 = spawn T in ts;
 
 await t1!:ok;
-_printf("oioioi\n");
 
 escape 1;
 ]],
@@ -28877,7 +28894,6 @@ escape ret;
     },
 }
 
--- TODO: STACK
 Test { [[
 native _V;
 native do
@@ -29525,7 +29541,9 @@ event void e;
 class T with
 do
     await OS_START;
+_printf(">>> EMIT-E\n");
     emit global:e; // TODO: must also check if org trail is active
+_printf(">>> CONT-E\n");
     native _assert();
     _assert(0);
 end
@@ -29533,11 +29551,14 @@ end
 do
     var T t;
     await e;
+_printf(">>> AWAKE-E\n");
 end
+_printf(">>>>>>>>>>>\n");
 escape 2;
 ]],
     run = 2,
 }
+do return end
 Test { [[
 input void OS_START;
 

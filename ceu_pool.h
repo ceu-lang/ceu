@@ -7,8 +7,9 @@
 /* TODO: all "int" here, should evaluate the correct unsigned type */
 
 typedef struct {
-    tceu_trl* parent_trl;   /* IN__ORG trail in parent for this pool */
-                    /* parent_trl at 0-offset to share same struct with dynamic */
+    tceu_org* parent_org;   /* IN__ORG trail in parent for this pool */
+    tceu_ntrl parent_trl;   /* IN__ORG trail in parent for this pool */
+                    /* par_trl at 0-offset to share same struct with dynamic */
                     /* TODO: this field is unused for adt */
                     /* TODO: this field makes no sense for non-Ceu pools */
                     /* TODO: move it to an enclosing struct */
@@ -27,7 +28,8 @@ typedef struct {
     type      name##_mem[size];        \
     tceu_pool name;
 
-void ceu_pool_init (tceu_pool* pool, int size, int unit, tceu_trl* parent_trl,
+void ceu_pool_init (tceu_pool* pool, int size, int unit,
+                    tceu_org* parent_org, tceu_ntrl parent_trl,
                     byte** queue, byte* mem);
 byte* ceu_pool_alloc (tceu_pool* pool);
 void ceu_pool_free (tceu_pool* pool, byte* val);

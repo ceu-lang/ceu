@@ -142,8 +142,8 @@
         ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
 #endif
 
-    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,trl) \
-        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,cls,isDyn,parent,trl)
+    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent_org,parent_trl) \
+        ((__typeof__(ceu_sys_org)*)((app)->sys_vec[CEU_SYS_ORG]))(org,n,lbl,cls,isDyn,parent_org,parent_trl)
     #define ceu_out_start(app) \
         ((__typeof__(ceu_sys_start)*)((_ceu_app)->sys_vec[CEU_SYS_START]))(app)
     #define ceu_out_link(app1,evt1 , app2,evt2) \
@@ -197,8 +197,8 @@
             ceu_sys_realloc(ptr,size)
     #define ceu_out_req() \
             ceu_sys_req()
-    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent,trl) \
-            ceu_sys_org(org,n,lbl,cls,isDyn,parent,trl)
+    #define ceu_out_org(app,org,n,lbl,cls,isDyn,parent_org,parent_trl) \
+            ceu_sys_org(org,n,lbl,cls,isDyn,parent_org,parent_trl)
 
 #ifdef CEU_WCLOCKS
     #define ceu_out_wclock(app,dt,set,get) \
@@ -434,7 +434,8 @@ typedef struct tceu_org_lnk {
 
 #ifdef CEU_NEWS
 typedef struct {
-    tceu_trl* parent_trl;
+    struct tceu_org* parent_org;
+    tceu_ntrl parent_trl;
     byte**    queue;
 } tceu_pool_;
 #endif
@@ -475,10 +476,9 @@ typedef struct tceu_org
     u8 isDyn: 1;            /* created w/ new or spawn? */
 #endif
 
-#ifdef CEU_ORGS_NEWS
-    tceu_pool_*  pool;      /* TODO(ram): opt, traverse lst of cls pools */
-    /* TODO-POOL: not always required */
-    /* #ifdef CEU_ORGS_NEWS_POOL */
+    tceu_ntrl parent_trl;
+#ifdef CEU_ORGS_NEWS_POOL
+    tceu_pool_* pool;       /* TODO(ram): opt, traverse lst of cls pools */
 #endif
 
 #ifdef CEU_ORGS_WATCHING
@@ -680,7 +680,8 @@ tceu_app* ceu_sys_load      (void* addr);
 #ifdef CEU_ISR
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
-void      ceu_sys_org       (tceu_org* org, int n, int lbl, int cls, int isDyn, tceu_org* parent, tceu_trl* trl);
+void      ceu_sys_org       (tceu_org* org, int n, int lbl, int cls, int isDyn,
+                             tceu_org* parent_org, tceu_ntrl parent_trl);
 void      ceu_sys_start     (tceu_app* app);
 int       ceu_sys_link      (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);
 int       ceu_sys_unlink    (tceu_app* src_app, tceu_nevt src_evt, tceu_app* dst_app, tceu_nevt dst_evt);

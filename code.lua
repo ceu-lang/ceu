@@ -176,15 +176,20 @@ function CLEAR (me, t1, t2)
 
     LINE(me, [[
 /* We will abort all trails between [t1,t2].
- * If a pending call in the stack is inside this internal, we want to unwind 
- * all stack up to that call.
+ * If a pending call in the stack is inside this range, we want to unwind all 
+ * stack up to that call.
  * The "ceu_longjmp" traverses the stack and makes a "longjmp" to the unwinded 
  * call passing the continuation below ("lbl_jmp").
+ * The traversal has to also consider nested organisms defined in the tail 
+ * range.
+ * We want to continue from "me.lbl_jmp" below.
  */
 printf("LONG-CLEAR %p [%p]\n", _ceu_org, _ceu_app->data);
 ceu_stack_dump(_ceu_stk);
-ceu_longjmp(_ceu_stk->down, (void*)]]..me.lbl_jmp.id..', '..me.__depth_abort..[[,
-            _ceu_org, ]]..me.trails[1]..', '..me.trails[2]..[[);
+CEU_JMP_LBL_OR_ORG = (void*)]]..me.lbl_jmp.id..[[;
+ceu_longjmp(_ceu_stk->down, _ceu_org,
+            ]]..me.trails[1]..','..me.trails[2]..[[,
+            ]]..me.__depth_abort..[[);
 ]])
     CASE(me, me.lbl_jmp)
 
@@ -346,6 +351,14 @@ _ceu_app->isAlive = 0;
             LINE(me, [[
 printf("kill\n");
 ceu_sys_org_kill(_ceu_app, _ceu_org, _ceu_stk);
+
+/* Natural termination, can only come from parent traversal.
+ * We want to resume the parent traversal from "nxt".
+ */
+printf("LONG-KILL %p [%p]\n", _ceu_org, _ceu_app->data);
+ceu_stack_dump(_ceu_stk);
+    CEU_JMP_LBL_OR_ORG = _ceu_org->nxt;
+    ceu_longjmp(_ceu_stk->down, _ceu_org, 0,_ceu_org->n, 0);
 ]])
         end
         HALT(me)
@@ -389,7 +402,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
                 ]]..t.cls.n..[[,
                 ]]..t.isDyn..[[,
-                _ceu_org, ]] ..t.trl..[[);
+                ]]..t.parent_org..','..t.parent_trl..[[);
 /* TODO: currently idx is always "1" for all interfaces access because pools 
  * are all together there. When we have separate trls for pools, we'll have to 
  * indirectly access the offset in the interface. */
@@ -461,7 +474,8 @@ me.tp = var.tp
                 constr = constr,
                 arr    = var.tp.arr,
                 val_i  = TP.check(var.tp,'[]') and V({tag='Var',tp=var.tp,var=var.constructor_iterator},'rval'),
-                trl    = '&_ceu_org->trls['..var.trl_orgs[1]..']'
+                parent_org = '_ceu_org',
+                parent_trl = var.trl_orgs[1],
             })
 
         -- TODO: similar code in Block_pre for !BlockI
@@ -668,11 +682,12 @@ if (]]..me.val..[[ == NULL) {
     if (]]..ID..[[ != NULL) {
 ]])
 
-        -- TODO-POOL: not always required
         --if pool and (type(pool.var.tp.arr)=='table') or
            --PROPS.has_orgs_news_pool or OPTS.os then
             LINE(me, [[
+#ifdef CEU_ORGS_NEWS_POOL
         ]]..ID..[[->pool = (tceu_pool_*)&]]..V(pool,'rval')..[[;
+#endif
 ]])
         --end
 
@@ -688,7 +703,8 @@ if (]]..me.val..[[ == NULL) {
             val    = '(*((CEU_'..id..'*)'..ID..'))',
             constr = constr,
             arr    = false,
-            trl    = '((((tceu_pool_*)&'..V(pool,'rval')..'))->parent_trl)',
+            parent_org = '(((tceu_pool_*)&'..V(pool,'rval')..'))->parent_org',
+            parent_trl = '(((tceu_pool_*)&'..V(pool,'rval')..'))->parent_trl',
             set    = set and set[4]
         })
         LINE(me, [[
@@ -793,25 +809,25 @@ _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
                     local id = (adt and '_' or '') .. var.id_
                     local dcl = '&'..CUR(me, id)
 
-                    local trl = (var.trl_orgs and var.trl_orgs[1]) or 'NULL'
-                    if trl ~= 'NULL' then
-                        trl = '&_ceu_org->trls['..trl..']'
-                    end
+                    local trl = assert(var.trl_orgs,'bug found')[1]
 
                     if (not is_dyn) then
                         if top.is_ifc then
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'_delayed),'..trl..','
-    ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..[[,sizeof(CEU_'..tp_id..'_delayed),
+              _ceu_org, ]]..trl..[[,
+              (byte**)]]..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         else
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..trl..','
-    ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..[[),
+              _ceu_org, ]]..trl..[[,
+              (byte**)]]..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
                         end
                     elseif cls or tp_id=='_TOP_POOL' then
                         LINE(me, [[
+(]]..dcl..[[)->parent_org = _ceu_org;
 (]]..dcl..[[)->parent_trl = ]]..trl..[[;
 (]]..dcl..[[)->queue = NULL;            /* dynamic pool */
 ]])
@@ -831,7 +847,9 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..trl..'
                     local VAL_pool = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_pool')
                     if (not is_dyn) then
                         LINE(me, [[
+#ifdef CEU_ORGS_NEWS_POOL
 ]]..VAL_all..[[->pool = ]]..VAL_pool..[[;
+#endif
 ]])
                     else
                         LINE(me, [[
@@ -1354,13 +1372,14 @@ _ceu_stk->depth = ]]..me.__depth_abort..[[;
 printf("SET-PAR %p\n", _ceu_stk);
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {
-printf("set-par-awake\n");
         /* This trail has been aborted from the call below.
          * It was the lowest aborted trail in the stack, so the abortion code 
          * "CLEAR" did a "longjmp" to here to unwind the whole stack.
-         * Let's go to the continuation of the abortion received as "ret".
+         * Let's go to the continuation of the abortion received in 
+         * "CEU_JMP_LBL_OR_ORG".
          */
-        _ceu_lbl = ret;
+        _ceu_lbl = (int)(intptr_t)CEU_JMP_LBL_OR_ORG;
+printf("set-par-awake => %d\n", _ceu_lbl);
         goto _CEU_GOTO_;
     }
     _ceu_stk->trl = ]]..me.trails[1]..[[;
@@ -1493,7 +1512,9 @@ if (]]..V(c,'rval')..[[) {
                 local var = iter.lst.var
                 ini[#ini+1] =
 V(to,'rval')..' = ('..TP.toc(iter.tp)..[[)
-                    (((tceu_pool_*)]]..V(iter,'lval')..[[)->parent_trl->org)
+                    (((tceu_pool_*)]]..V(iter,'lval')..[[)->parent_org->trls[
+                        ((tceu_pool_*)]]..V(iter,'lval')..[[)->parent_trl
+                    ]->org)
 ]]
 
                 -- CND
@@ -1742,13 +1763,13 @@ _ceu_stk->depth = ]]..AST.iter(AST.pred_aborts)().__depth_abort..[[;
 printf("SET-EMIT %p\n", _ceu_stk);
     int ret = setjmp(_ceu_stk->jmp);
     if (ret != 0) {
-printf("set-emit-awake\n");
         /* This trail has been aborted from the call below.
          * It was the lowest aborted trail in the stack, so the abortion code 
          * "CLEAR" did a "longjmp" to here to unwind the whole stack.
          * Let's go to the continuation of the abortion received as "ret".
          */
-        _ceu_lbl = ret;
+        _ceu_lbl = (int)(intptr_t)CEU_JMP_LBL_OR_ORG;
+printf("set-emit-awake => %d\n", _ceu_lbl);
         goto _CEU_GOTO_;
     }
     _ceu_stk->trl = ]]..me.trails[1]..[[;

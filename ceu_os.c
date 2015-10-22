@@ -100,16 +100,25 @@ void ceu_stack_dump (tceu_stk* stk) {
 }
 #endif
 
-#ifdef CEU_ORGS
-static void* CEU_JMP_ORG;
-#endif
+static void* CEU_JMP_LBL_OR_ORG;
+    /* pointer might not fit in an "int", which is the type "longjmp" accepts,
+       so we use a global instead */
 
-void ceu_longjmp (tceu_stk* stk, void* lbl_or_org, u8 depth,
-                  tceu_org* org, tceu_ntrl t1, tceu_ntrl t2) {
+/*
+ * Trails [t1,t2] of "org" are dyeing.
+ * Traverse the stack to see if a pending call is enclosed by this range.
+ * If so, the whole stack has to unwind and continue from what we pass in 
+ * lbl_or_org.
+ */
+void ceu_longjmp (tceu_stk* stk, tceu_org* org,
+                  tceu_ntrl t1, tceu_ntrl t2, u8 depth) {
+    /* TODO: reverse */
+    /* traverse from the bottom to the top, we want to unwind from the lowest
+     * matching lavel */
     if (stk == NULL) {
         return;
     } else {
-        ceu_longjmp(stk->down,lbl_or_org,depth,org,t1,t2);   /* TODO: reverse */
+        ceu_longjmp(stk->down,org,t1,t2,depth);
     }
 printf("CHK %p (%d>=%d, %d>=%d, %d<=%d)\n",
     stk,
@@ -117,45 +126,51 @@ printf("CHK %p (%d>=%d, %d>=%d, %d<=%d)\n",
     stk->trl, t1, stk->trl, t2
 );
 
+/* TODO: not sure if required */
+#if 1
+    if (stk->depth < depth) {
+        return;
+    }
+#endif
+
+    tceu_ntrl trl = stk->trl;
+
 #ifdef CEU_ORGS
-    /* depth==0 means whole-org abortion.
-     * Check if stk->org is the dieyng "org" or one of its children:
-     *      org, org->up, org->up->up, ...
-     */
-    if (depth == 0)
-    {
+    if (stk->org != org) {
+        /*
+         * Check if stk->org is the dieyng "org" or one of its children:
+         *      org, org->up, org->up->up, ...
+         */
         tceu_org* cur_org;
         for (cur_org=stk->org; cur_org!=NULL; cur_org=cur_org->up) {
-            if (cur_org == org) {
-printf("\tyes-org %p\n", (void*)(intptr_t)lbl_or_org);
-                CEU_JMP_ORG = lbl_or_org;
-                longjmp(stk->jmp, 0xABCD);
+            if (cur_org->up == org) {
+                trl = cur_org->parent_trl;
+#endif
+                if (trl>=t1 && trl<=t2) {
+printf("\tyes %p\n", CEU_JMP_LBL_OR_ORG);
+                    longjmp(stk->jmp, 1);
+                }
+#ifdef CEU_ORGS
+                break;
             }
         }
     }
-    else if (org == stk->org)
 #endif
-    {
-        if (stk->depth >= depth &&
-            stk->trl>=t1 && stk->trl<=t2) {
-printf("\tyes-trail\n");
-            longjmp(stk->jmp, (int)(intptr_t)lbl_or_org);
-        }
-    }
 }
 
 /**********************************************************************/
 
 void ceu_sys_org (tceu_org* org, int n, int lbl,
                   int cls, int isDyn,
-                  tceu_org* parent, tceu_trl* trl)
+                  tceu_org* parent_org, tceu_ntrl parent_trl)
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
     memset(&org->trls, 0, n*sizeof(tceu_trl));
 
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
     org->n  = n;
-    org->up = parent;
+    org->up = parent_org;
+    org->parent_trl = parent_trl;
 #ifdef CEU_IFCS
     org->cls = cls;
 #endif
@@ -175,18 +190,21 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #ifdef CEU_ORGS
     org->nxt = NULL;
 
-    if (trl == NULL) {
-        org->prv = NULL; /* main class */
-    } else {
-        /* re-link */
-        if (trl->org == NULL) {
-            trl->org = org;
+    if (parent_org != NULL) {
+        tceu_trl* trl = &parent_org->trls[parent_trl];
+        if (trl == NULL) {
+            org->prv = NULL; /* main class */
         } else {
-            tceu_org* last = trl->org->prv;
-            last->nxt = org;
-            org->prv = last;
+            /* re-link */
+            if (trl->org == NULL) {
+                trl->org = org;
+            } else {
+                tceu_org* last = trl->org->prv;
+                last->nxt = org;
+                org->prv = last;
+            }
+            trl->org->prv = org;
         }
-        trl->org->prv = org;
     }
 #endif  /* CEU_ORGS */
 }
@@ -194,8 +212,6 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 #ifdef CEU_ORGS
 void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
 {
-    tceu_org* nxt;  /* where to go next in case I'm in the stack */
-
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_WATCHING)
     org->isAlive = 0;
 #endif
@@ -203,16 +219,14 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
 /* TODO: relink also static orgs for efficiency? */
 #ifdef CEU_ORGS_NEWS
     /* re-link PRV <-> NXT */
-    if (org->isDyn) {
-        if (org->pool->parent_trl->org == org) {
-            org->pool->parent_trl->org = org->nxt;    /* subst 1st org */
-                /* TODO-POOL: this information is 1 level up in the stack */
-        } else {
-            org->prv->nxt = org->nxt;
-        }
-        if (org->nxt != NULL) {
-            org->nxt->prv = org->prv;
-        }
+    tceu_trl* trl = &org->up->trls[org->parent_trl];
+    if (trl->org == org) {
+        trl->org = org->nxt;    /* subst 1st org */
+    } else {
+        org->prv->nxt = org->nxt;
+    }
+    if (org->nxt != NULL) {
+        org->nxt->prv = org->prv;
     }
 #endif
 
@@ -240,8 +254,6 @@ printf("set-kill-awake %p\n", stk);
     }
 #endif
 
-    nxt = org->nxt;
-
 #ifdef CEU_ORGS_NEWS
     /* free */
     if (org->isDyn) {
@@ -258,17 +270,6 @@ printf("set-kill-awake %p\n", stk);
 #endif
     }
 #endif
-
-    /* We will abort all trails between [t1,t2].
-     * If a pending call in the stack is inside this internal, we want to 
-     * unwind all stack up to that call.
-     * The "ceu_longjmp" traverses the stack and makes a "longjmp" to the 
-     * unwinded call passing the continuation below ("lbl_jmp").
-     */
-printf("LONG-KILL %p [%p]\n", org, app->data);
-ceu_stack_dump(stk);
-    ceu_longjmp(stk->down, nxt, 0, org, 0,0);
-                            /* depth=0 identifies org abortion */
 }
 #endif
 
@@ -518,9 +519,8 @@ stk->depth = 1;
                      * Let's go to the next organism received as "ret".
                      */
                     /* can only come from ceu_sys_org_kill */
-                    ceu_out_assert(ret == 0xABCD);
-                    cur = CEU_JMP_ORG; /* global set in ceu_sys_org_kill */
-printf("set-orgs-awake -> %p\n", cur);
+                    cur = CEU_JMP_LBL_OR_ORG; /* see ceu_longjmp */
+printf("set-orgs-awake -> %p=>%p\n", cur, org);
 stk->org = org;
 stk->depth = XXX;
                     continue;   /* might be NULL */

@@ -253,7 +253,7 @@ ceu_app_init (tceu_app* app)
 
     ceu_out_org(app, app->data, CEU_NTRAILS, Class_Main,
                 0, 0,
-                NULL, NULL);
+                NULL, 0);
 
 #ifdef CEU_LUA
     ceu_luaL_newstate(app->lua);
