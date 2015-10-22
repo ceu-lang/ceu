@@ -424,21 +424,39 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         end
 
         LINE(me, [[
+{
     tceu_stk stk_ = { _ceu_stk, ]]..org..[[, 0, ]]..org..[[->n, {} };
-printf("SET-spawn %p\n", &stk_);
+printf("SETJMP-spawn %p\n", &stk_);
     int ret = setjmp(stk_.jmp);
-    if (ret != 0) {
-        /* can only come from ceu_sys_org_kill:
-         * org natural termination */
-        ceu_out_assert(ret == 2);
-        ]]..V(t.set,'rval')..' = '..string.upper(TP.toc(t.set.tp))..[[_pack(NULL);
-    } else {
-        /* spawn */
-        ceu_app_go(_ceu_app,NULL,
-                   ]]..org..[[, &]]..org..[[->trls[0],
-                   &stk_, NULL);
+    switch (ret) {
+        case 0:
+            /* normal flow: spawn */
+            ceu_app_go(_ceu_app,NULL,
+                       ]]..org..[[, &]]..org..[[->trls[0],
+                       &stk_, NULL);
+            break;
+        case 1:
+            /* came from clear, proceed to its continuation */
+#ifdef CEU_ORGS
+            _ceu_org = CEU_JMP_ORG;
+#endif
+            _ceu_trl = CEU_JMP_TRL;
+            _ceu_lbl = CEU_JMP_LBL;
+            goto _CEU_GOTO_;
+            break;
+        case 2:
+            /* came from ceu_sys_org_kill, org natural termination */
+            /* unset the org variable and continue executing normally */
+]])
+        if t.set then
+                LINE(me, [[
+            ]]..V(t.set,'rval')..' = '..string.upper(TP.toc(t.set.tp))..[[_pack(NULL);
+]])
+        end
+        LINE(me, [[
+            break;
     }
-    /* continue normally with or without longjmp */
+}
 ]])
 
         if t.arr then
@@ -604,22 +622,8 @@ if (]]..me.val..[[ == NULL) {
 ]])
         end
         LINE(me, [[
-{
-    /* save the continuation to run after the kill */
-    tceu_trl* trl = _ceu_trl;
-    trl->lbl = CEU_LBL__STACKED;
-
-    tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
-    tceu_evt evt;
-             evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, &evt,
-                  _ceu_stk,
-                  __ceu_org, &__ceu_org->trls[0], __ceu_org);
-
-    if (trl->lbl != CEU_LBL__STACKED) {
-        return RET_HALT;
-    }
-}
+/* TODO: setjmp */
+ceu_sys_org_kill(_ceu_app, _ceu_org, _ceu_stk);
 ]])
     end,
 
@@ -1357,7 +1361,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-printf("SET-par %p\n", &stk_);
+printf("SETJMP-par %p\n", &stk_);
     int ret = setjmp(stk_.jmp);
     if (ret != 0) {
         /* can only come from CLEAR */
@@ -1755,7 +1759,7 @@ if (!_ceu_app->isAlive)
         LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-printf("SET-emit %p\n", &stk_);
+printf("SETJMP-emit %p\n", &stk_);
     int ret = setjmp(stk_.jmp);
     if (ret != 0) {
         /* can only come from CLEAR */

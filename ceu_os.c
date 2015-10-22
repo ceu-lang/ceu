@@ -486,7 +486,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             /* traverse all children */
             while (cur != NULL) {
                 tceu_stk stk_ = { stk, org, 0, org->n, {} };
-printf("SET-orgs %p\n", &stk_);
+printf("SETJMP-orgs %p\n", &stk_);
                 int ret = setjmp(stk_.jmp);
                 if (ret != 0) {
                     /* can only come from ceu_sys_org_kill:
