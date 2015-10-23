@@ -155,6 +155,7 @@ F = {
             local tp_id = TP.id(var.tp)
             if var.cls then
                 me.needs_clr = true
+                me.has_orgs = true
             end
             if var.pre == 'var' then
                 if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then

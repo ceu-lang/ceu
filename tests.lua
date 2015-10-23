@@ -32544,7 +32544,6 @@ escape sum;
 }
 
 -- problems w/o ceu_sys_stack_clear_org
---]===]
 Test { [[
 input void OS_START;
 
@@ -32685,8 +32684,8 @@ var T t;
 escape _V;
 ]],
     wrn = 'line 7 : unbounded recursive spawn',
-    --run = 101,  -- tests force 100 allocations at most
-    asr = 'runtime error: stack overflow',
+    run = 101,  -- tests force 100 allocations at most
+    --asr = 'runtime error: stack overflow',
 }
 Test { [[
 native do
@@ -33223,6 +33222,7 @@ escape _V;
     run = 10,
 }
 
+--]===]
 Test { [[
 native do
     int V = 0;

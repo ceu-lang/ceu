@@ -167,10 +167,12 @@ function CLEAR (me, t1, t2)
 
     -- TODO: put it back!
     -- check if top will clear during same reaction
-    if (not me.needs_clr_fin) and ANA then   -- fin must execute before any stmt
-        local top = AST.iter(_iter)()
-        if top and ANA.IS_EQUAL(top.ana.pos, me.ana.pos) then
-            return  -- top will clear
+    if (not me.has_orgs) and (not me.needs_clr_fin) then
+        if ANA then   -- fin must execute before any stmt
+            local top = AST.iter(_iter)()
+            if top and ANA.IS_EQUAL(top.ana.pos, me.ana.pos) then
+                return  -- top will clear
+            end
         end
     end
 
@@ -1039,7 +1041,7 @@ CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
         LINE(me, '}')       -- open in Block_pre
 
         -- clear orgs
-        if stmts.trails[1] > me.trails[1] then
+        if me.has_orgs then
             -- TODO: clearing also everything before stmts
             --       (e.g., adts), correct?
             CLEAR(me, me.trails[1], stmts.trails[1])
