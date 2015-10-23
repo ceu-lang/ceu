@@ -445,8 +445,8 @@ printf("SETJMP-spawn %p\n", &stk_);
             goto _CEU_GOTO_;
             break;
         case 2:
-            /* came from ceu_sys_org_kill, org natural termination */
-            /* unset the org variable and continue executing normally */
+            /* came from ceu_sys_org_kill, org natural termination,
+             * unset the org variable and continue executing normally */
 ]])
         if t.set then
                 LINE(me, [[
@@ -622,8 +622,22 @@ if (]]..me.val..[[ == NULL) {
 ]])
         end
         LINE(me, [[
-/* TODO: setjmp */
-ceu_sys_org_kill(_ceu_app, _ceu_org, _ceu_stk);
+{
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+printf("SETJMP-kill %p\n", &stk_);
+    int ret = setjmp(stk_.jmp);
+    if (ret != 0) {
+        /* can only come from CLEAR */
+        ceu_out_assert(ret == 1);
+#ifdef CEU_ORGS
+        _ceu_org = CEU_JMP_ORG;
+#endif
+        _ceu_trl = CEU_JMP_TRL;
+        _ceu_lbl = CEU_JMP_LBL;
+        goto _CEU_GOTO_;
+    }
+    ceu_sys_org_kill(_ceu_app, (tceu_org*)]]..V(org,'lval')..[[, &stk_);
+}
 ]])
     end,
 
@@ -898,7 +912,7 @@ _ceu_trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
             end
             LINE(me, [[
-    if (_ceu_evt->id == CEU_IN__CLEAR) {
+    if (_ceu_evt!=NULL && _ceu_evt->id==CEU_IN__CLEAR) {
 ]])
             HALT(me) -- otherwise, normal termination that should continue
             LINE(me, [[
@@ -1513,8 +1527,7 @@ if (]]..V(c,'rval')..[[) {
 V(to,'rval')..' = ('..TP.toc(iter.tp)..[[)
                     (((tceu_pool_*)]]..V(iter,'lval')..[[)->parent_org->trls[
                         ((tceu_pool_*)]]..V(iter,'lval')..[[)->parent_trl
-                    ]->org)
-]]
+                    ].org)]]
 
                 -- CND
                 cnd = '('..V(to,'rval')..' != NULL)'

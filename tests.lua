@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -25244,7 +25245,7 @@ escape ptr2==&&a;
 }
 
 -->>> CLASSES, ORGS, ORGANISMS
-do return end
+--do return end
 
 Test { [[
 class A with
@@ -29950,7 +29951,6 @@ escape _V;
     lines = 'error oi',
 }
 
---]===]
 Test { [[
 input void OS_START;
 
