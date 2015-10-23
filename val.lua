@@ -111,7 +111,7 @@ F =
             -- handles adt_top, adt_root, adt_pool
             if var.pre=='pool' and adt and adt.is_rec then
                 if CTX.adt_pool then
-                    VAL = '((tceu_pool_*)'..VAL..')'
+                    --VAL = '('..VAL..')'
                 elseif CTX.adt_top then
                     -- VAL
                 else -- adt_root

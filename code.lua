@@ -621,6 +621,9 @@ if (]]..me.val..[[ == NULL) {
 ((tceu_org*)]]..V(org,'lval')..')->ret = '..V(exp,'rval')..[[;
 ]])
         end
+
+        -- TODO: generate setjmp only if awaiting this class
+        --  (has_orgs_await as a table is not implemented)
         LINE(me, [[
 {
     tceu_evt evt;
@@ -633,7 +636,7 @@ if (]]..me.val..[[ == NULL) {
 }
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-printf("SETJMP-kill-stmt %p\n", &stk_);
+printf("SETJMP-kill-org %p\n", &stk_);
     int ret = setjmp(stk_.jmp);
     if (ret != 0) {
         /* can only come from CLEAR */
@@ -825,21 +828,21 @@ _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
 
                     if (not is_dyn) then
                         local tp_id_ = 'CEU_'..tp_id..(top.is_ifc and '_delayed' or '')
-if cls then
-    local trl = assert(var.trl_orgs,'bug found')[1]
-    LINE(me, [[
+                        local pool
+                        if cls then
+                            pool = CUR(me,id)..'.pool'
+                            local trl = assert(var.trl_orgs,'bug found')[1]
+                            LINE(me, [[
 ]]..CUR(me,id)..[[.parent_org = _ceu_org;
 ]]..CUR(me,id)..[[.parent_trl = ]]..trl..[[;
-ceu_pool_init(&]]..CUR(me,id)..'.pool,'..var.tp.arr.sval..',sizeof('..tp_id_..[[),
-              (byte**)&]]..CUR(me,id)..'_queue, (byte*)&'..CUR(me,id)..[[_mem);
 ]])
-else
+                        else
+                            pool = CUR(me,id)
+                        end
                         LINE(me, [[
-ceu_pool_init(&]]..CUR(me,id)..','..var.tp.arr.sval..',sizeof('..tp_id_..[[),
-              _ceu_org, 0,
+ceu_pool_init(&]]..pool..','..var.tp.arr.sval..',sizeof('..tp_id_..[[),
               (byte**)&]]..CUR(me,id)..'_queue, (byte*)&'..CUR(me,id)..[[_mem);
 ]])
-end
                     elseif cls or tp_id=='_TOP_POOL' then
     local trl = assert(var.trl_orgs,'bug found')[1]
                         LINE(me, [[
@@ -865,7 +868,7 @@ end
                     local VAL_pool = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_pool')
                     if (not is_dyn) then
                         LINE(me, [[
-#ifdef CEU_ORGS_NEWS_POOL
+#ifdef CEU_ADTS_NEWS_POOL
 ]]..VAL_all..[[->pool = ]]..VAL_pool..[[;
 #endif
 ]])
@@ -1034,7 +1037,6 @@ CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
 ]])
 ]=]
                 end
-                HALT(me)
             end
         end
 
@@ -1108,15 +1110,22 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 
         if PROPS.has_adts_await[to_tp_id] then
             LINE(me, [[
-    /* save the continuation to run after the kill */
-    tceu_trl* trl = _ceu_trl;
-    trl->lbl = CEU_LBL__STACKED;
-    CEU_]]..to_tp_id..[[_kill(_ceu_app, __ceu_old);
-    if (trl->lbl != CEU_LBL__STACKED) {
-]])
-            HALT(me)
-            LINE(me, [[
+{
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+printf("SETJMP-kill-adt %p\n", &stk_);
+    int ret = setjmp(stk_.jmp);
+    if (ret != 0) {
+        /* can only come from CLEAR */
+        ceu_out_assert(ret == 1);
+#ifdef CEU_ORGS
+        _ceu_org = CEU_JMP_ORG;
+#endif
+        _ceu_trl = CEU_JMP_TRL;
+        _ceu_lbl = CEU_JMP_LBL;
+        goto _CEU_GOTO_;
     }
+    CEU_]]..to_tp_id..[[_kill(_ceu_app, &stk_, __ceu_old);
+}
 ]])
 
             -- HACK: _ceu_org overwritten by _kill

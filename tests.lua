@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -47600,6 +47599,7 @@ end
 }
 
 -- ALGEBRAIC DATATYPES (ADTS)
+--]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -47659,7 +47659,6 @@ end
 
 --[==[
 -- HERE:
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -48026,6 +48025,11 @@ escape lll.NIL;
 }
 
 Test { [[
+native do
+    ##ifndef CEU_ADTS_NEWS_POOL
+    ##error bug found
+    ##endif
+end
 data List with
     tag NIL;
 or
@@ -49067,10 +49071,11 @@ escape l.CONS;      // runtime error
 Test { DATA..[[
 var int ret = 0;
 do
-    pool List[] l;
-    ret = l.NIL;
+    pool List[] lll;
+    ret = lll.NIL;
 end
-// all instances in "l" have been collected
+_printf("===\n");
+// all instances in "lll" have been collected
 escape ret;
 ]],
     run = 1,
@@ -50665,7 +50670,6 @@ escape -1;
     _ana = {acc=true},
     run = -1,
 }
-do return end
 
 Test { [[
 data List with
@@ -51131,6 +51135,7 @@ escape sum;
     run = { ['~>10s'] = 9 },
 }
 
+]==]
 Test { [[
 data List with
     tag NIL;

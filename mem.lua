@@ -187,7 +187,7 @@ struct CEU_]]..id..[[ {
         me.auxs[#me.auxs+1] = [[
 #ifdef CEU_ADTS_AWAIT_]]..id..[[
 
-void CEU_]]..id..'_kill (tceu_app* app, CEU_'..id..[[* me);
+void CEU_]]..id..'_kill (tceu_app* app, tceu_stk* stk, CEU_'..id..[[* me);
 #endif
 #ifdef CEU_ADTS_NEWS
 #ifdef CEU_ADTS_NEWS_MALLOC
@@ -214,7 +214,7 @@ void CEU_]]..id..'_free_static (tceu_app* app, CEU_'..id..[[* me, void* pool);
         local kill = [[
 #ifdef CEU_ADTS_AWAIT_]]..id..[[
 
-void CEU_]]..id..'_kill (tceu_app* app, CEU_'..id..[[* me) {
+void CEU_]]..id..'_kill (tceu_app* app, tceu_stk* stk, CEU_'..id..[[* me) {
 ]]
         if op == 'union' then
             kill = kill .. [[
@@ -231,7 +231,7 @@ void CEU_]]..id..'_kill (tceu_app* app, CEU_'..id..[[* me) {
 ]]
                 else
                     kill = kill .. [[
-            CEU_]]..id_tag..[[_kill(app, me);
+            CEU_]]..id_tag..[[_kill(app, stk, me);
 ]]
                 end
                 kill = kill .. [[
@@ -412,16 +412,14 @@ CEU_]]..id..'* '..enum..'_assert (tceu_app* app, CEU_'..id..[[* me, char* file, 
         local kill = [[
 #ifdef CEU_ADTS_AWAIT_]]..id..[[
 
-void ]]..enum..'_kill (tceu_app* app, CEU_'..id..[[* me) {
+void ]]..enum..'_kill (tceu_app* app, tceu_stk* stk, CEU_'..id..[[* me) {
 #ifdef CEU_ADTS_AWAIT
     /* kill myself before my recursive fields */
     {
         tceu_evt evt;
                  evt.id = CEU_IN__ok_killed;
                  evt.param = &me;
-/* XXXX-1 */
-        ceu_sys_go_ex(app, &evt, NULL,
-/* TODO: stk */
+        ceu_sys_go_ex(app, &evt, stk,
                       app->data, &app->data->trls[0], NULL);
     }
 #endif
@@ -441,7 +439,7 @@ void ]]..enum..'_kill (tceu_app* app, CEU_'..id..[[* me) {
             end
             if ok then
                 kill = kill .. [[
-    CEU_]]..id_top..[[_kill(app, me->]]..tag..'.'..item.var_id..[[);
+    CEU_]]..id_top..[[_kill(app, stk, me->]]..tag..'.'..item.var_id..[[);
 /*
     me->]]..tag..'.'..item.var_id..[[ = &CEU_]]..string.upper(id_top)..[[_BASE;
 */
