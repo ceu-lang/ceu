@@ -95,6 +95,14 @@ tceu_adt_root]]..ptr..' '..id..[[;
         -- static pool: "var T[N] ts"
         if (_adt or _cls) and type(tp.arr)=='table' then
             local ID = (adt and '_' or '') .. id  -- _id for ADT pools
+if _cls then
+    local tp_id_ = 'CEU_'..tp_id..(top.is_ifc and '_delayed' or '')
+    return dcl .. [[
+]]..tp_id_..[[* ]]..ID..[[_queue[ ]]..tp.arr.sval..[[ ];
+]]..tp_id_..[[  ]]..ID..[[_mem  [ ]]..tp.arr.sval..[[ ];
+tceu_pool_orgs ]]..id..[[;
+]]
+else
             if top.is_ifc then
                 return dcl .. [[
 CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..'_delayed,'..tp.arr.sval..[[)
@@ -106,6 +114,7 @@ CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..','..tp.arr.sval..[[)
 ]]
                        -- TODO: bad (explicit CEU_)
             end
+end
         elseif (not adt) then   -- (top_pool or cls)
             -- ADT doesn't require this NULL pool field
             --  (already has root->pool=NULL)
@@ -120,11 +129,11 @@ CEU_POOL_DCL(]]..ID..',CEU_'..tp_id..','..tp.arr.sval..[[)
                     end
                 end
                 return dcl .. [[
-tceu_pool_]]..ptr..' '..id..[[;
+tceu_pool_orgs]]..ptr..' '..id..[[;
 ]]
             else
                 return dcl .. [[
-tceu_pool_ ]]..id..[[;
+tceu_pool_orgs ]]..id..[[;
 ]]
             end
         else

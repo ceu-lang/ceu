@@ -662,20 +662,20 @@ printf("SETJMP-kill-stmt %p\n", &stk_);
         if pool and (type(pool.var.tp.arr)=='table') then
             -- static
             LINE(me, [[
-    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)&]]..V(pool,'rval')..[[);
+    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc(&]]..V(pool,'rval')..[[.pool);
 ]])
         elseif TP.check(pool.var.tp,'&&') or TP.check(pool.var.tp,'&') then
             -- pointer don't know if is dynamic or static
             LINE(me, [[
 #if !defined(CEU_ORGS_NEWS_MALLOC)
-    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)&]]..V(pool,'rval')..[[);
+    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc(&]]..V(pool,'rval')..[[.pool);
 #elif !defined(CEU_ORGS_NEWS_POOL)
     ]]..ID..[[ = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
 #else
-    if ((&]]..V(pool,'rval')..[[)->queue == NULL) {
+    if (]]..V(pool,'rval')..[[.pool.queue == NULL) {
         ]]..ID..[[ = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
     } else {
-        ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)&]]..V(pool,'rval')..[[);
+        ]]..ID..[[ = (tceu_org*) ceu_pool_alloc(&]]..V(pool,'rval')..[[.pool);
     }
 #endif
 ]])
@@ -701,7 +701,7 @@ printf("SETJMP-kill-stmt %p\n", &stk_);
            --PROPS.has_orgs_news_pool or OPTS.os then
             LINE(me, [[
 #ifdef CEU_ORGS_NEWS_POOL
-        ]]..ID..[[->pool = (tceu_pool_*)&]]..V(pool,'rval')..[[;
+        ]]..ID..[[->pool = &]]..V(pool,'rval')..[[;
 #endif
 ]])
         --end
@@ -718,8 +718,8 @@ printf("SETJMP-kill-stmt %p\n", &stk_);
             val    = '(*((CEU_'..id..'*)'..ID..'))',
             constr = constr,
             arr    = false,
-            parent_org = '(((tceu_pool_*)&'..V(pool,'rval')..'))->parent_org',
-            parent_trl = '(((tceu_pool_*)&'..V(pool,'rval')..'))->parent_trl',
+            parent_org = V(pool,'rval')..'.parent_org',
+            parent_trl = V(pool,'rval')..'.parent_trl',
             set    = set and set[4]
         })
         LINE(me, [[
@@ -822,30 +822,32 @@ _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
                 local tp_id = TP.id(var.tp)
                 if top or tp_id=='_TOP_POOL' then
                     local id = (adt and '_' or '') .. var.id_
-                    local dcl = '&'..CUR(me, id)
-
-                    local trl = (cls and assert(var.trl_orgs,'bug found')[1])
-                                    or 0
 
                     if (not is_dyn) then
-                        if top.is_ifc then
-                            LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..[[_delayed),
-              _ceu_org, ]]..trl..[[,
-              (byte**)]]..dcl..'_queue, (byte*)'..dcl..[[_mem);
+                        local tp_id_ = 'CEU_'..tp_id..(top.is_ifc and '_delayed' or '')
+if cls then
+    local trl = assert(var.trl_orgs,'bug found')[1]
+    LINE(me, [[
+]]..CUR(me,id)..[[.parent_org = _ceu_org;
+]]..CUR(me,id)..[[.parent_trl = ]]..trl..[[;
+ceu_pool_init(&]]..CUR(me,id)..'.pool,'..var.tp.arr.sval..',sizeof('..tp_id_..[[),
+              (byte**)&]]..CUR(me,id)..'_queue, (byte*)&'..CUR(me,id)..[[_mem);
 ]])
-                        else
-                            LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..[[),
-              _ceu_org, ]]..trl..[[,
-              (byte**)]]..dcl..'_queue, (byte*)'..dcl..[[_mem);
-]])
-                        end
-                    elseif cls or tp_id=='_TOP_POOL' then
+else
                         LINE(me, [[
-(]]..dcl..[[)->parent_org = _ceu_org;
-(]]..dcl..[[)->parent_trl = ]]..trl..[[;
-(]]..dcl..[[)->queue = NULL;            /* dynamic pool */
+ceu_pool_init(&]]..CUR(me,id)..','..var.tp.arr.sval..',sizeof('..tp_id_..[[),
+              _ceu_org, 0,
+              (byte**)&]]..CUR(me,id)..'_queue, (byte*)&'..CUR(me,id)..[[_mem);
+]])
+end
+                    elseif cls or tp_id=='_TOP_POOL' then
+    local trl = assert(var.trl_orgs,'bug found')[1]
+                        LINE(me, [[
+(]]..CUR(me,id)..[[).parent_org = _ceu_org;
+(]]..CUR(me,id)..[[).parent_trl = ]]..trl..[[;
+#ifdef CEU_ADTS_NEWS_POOL
+(]]..CUR(me,id)..[[).pool.queue = NULL;            /* dynamic pool */
+#endif
 ]])
                     end
                 end
@@ -1535,8 +1537,8 @@ if (]]..V(c,'rval')..[[) {
                 local var = iter.lst.var
                 ini[#ini+1] =
 V(to,'rval')..' = ('..TP.toc(iter.tp)..[[)
-                    (((tceu_pool_*)]]..V(iter,'lval')..[[)->parent_org->trls[
-                        ((tceu_pool_*)]]..V(iter,'lval')..[[)->parent_trl
+                    (]]..V(iter,'lval')..[[->parent_org->trls[
+                        ]]..V(iter,'lval')..[[->parent_trl
                     ].org)]]
 
                 -- CND

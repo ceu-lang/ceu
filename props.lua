@@ -217,7 +217,7 @@ F = {
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
         local tid = tp[1]
-        local is_unbounded = (tp[3]==true)
+        local is_unbounded = (tp[2]=='[]')
         if ENV.clss[tid] then
             PROPS.has_orgs_news = true
             if is_unbounded then

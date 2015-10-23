@@ -421,27 +421,9 @@ typedef struct tceu_evt {
 #endif
 } tceu_evt;
 
-/* TCEU_POOL_ , TCEU_ADT_ROOT */
-
-#ifdef CEU_NEWS
-typedef struct {
-    struct tceu_org* parent_org;
-    tceu_ntrl parent_trl;
-    byte**    queue;
-} tceu_pool_;
-#endif
-
-#ifdef CEU_ADTS_NEWS
-typedef struct {
-    void* root;
-#ifdef CEU_ADTS_NEWS_POOL
-    void* pool;
-#endif
-} tceu_adt_root;
-#endif
-
 /* TCEU_ORG */
 
+struct tceu_pool_orgs;
 typedef struct tceu_org
 {
 #if defined(CEU_ORGS) || defined(CEU_OS)
@@ -467,7 +449,7 @@ typedef struct tceu_org
     u8 isDyn: 1;            /* created w/ new or spawn? */
 #endif
 #ifdef CEU_ORGS_NEWS_POOL
-    tceu_pool_* pool;       /* TODO(ram): opt, traverse lst of cls pools */
+    struct tceu_pool_orgs* pool;
 #endif
 
 #ifdef CEU_ORGS_AWAIT
@@ -484,6 +466,31 @@ typedef struct tceu_org
     tceu_trl trls[0];       /* first trail */
 
 } tceu_org;
+
+/* TCEU_POOL_ORGS , TCEU_ADT_ROOT */
+
+#if defined(CEU_ORGS_NEWS_POOL) || defined(CEU_ADTS_NEWS_POOL)
+#include "ceu_pool.h"
+#endif
+
+#ifdef CEU_ORGS_NEWS
+typedef struct tceu_pool_orgs {
+    tceu_org* parent_org;
+    tceu_ntrl parent_trl;
+#ifdef CEU_ORGS_NEWS_POOL
+    tceu_pool pool;
+#endif
+} tceu_pool_orgs;
+#endif
+
+#ifdef CEU_ADTS_NEWS
+typedef struct {
+    void* root;
+#ifdef CEU_ADTS_NEWS_POOL
+    void* pool;
+#endif
+} tceu_adt_root;
+#endif
 
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
 typedef struct {

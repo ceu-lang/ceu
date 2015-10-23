@@ -470,6 +470,54 @@ var _abc a;
 }
 
 Test { [[
+native do
+    ##ifndef CEU_EXTS
+    ##error bug found
+    ##endif
+end
+escape 1;
+]],
+    run = 1,
+    gcc = 'error: #error bug found',
+}
+
+Test { [[
+native do
+    ##ifndef CEU_EXTS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_WCLOCKS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_INTS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_THREADS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_ORGS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_IFCS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_CLEAR
+    ##error bug found
+    ##endif
+    ##ifdef CEU_PSES
+    ##error bug found
+    ##endif
+    ##ifndef CEU_RET
+    ##error bug found
+    ##endif
+    ##ifdef CEU_LUA
+    ##error bug found
+    ##endif
+    ##ifdef CEU_VECTOR
+    ##error bug found
+    ##endif
+end
+
 input void A;
 var int a = 1;
 a = 2;
@@ -31693,6 +31741,25 @@ do
     this.a = 1;
     await FOREVER;
 end
+pool T[1] ts;
+var T&&? a = spawn T in ts;
+var int sum = 0;
+watching *(a!) do
+    var T&&? b = spawn T in ts;
+    sum = a? and (not b?);
+end
+escape sum;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+    await FOREVER;
+end
 do
 pool T[0] ts;
 var T&&? t = spawn T in ts;
@@ -32539,6 +32606,75 @@ var Body b with
     this.bodies = &bodies;
     this.sum    = &sum;
 end;
+
+escape sum;
+]],
+    run = 2,
+}
+Test { [[
+class X with do
+end;
+
+class Body with
+    pool  X[]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+    var X&&? nested =
+        spawn X in bodies with
+        end;
+    sum = sum + 1;
+    emit this.ok => 1;
+end
+
+pool X[1] bodies;
+var  int  sum = 1;
+
+var Body b with
+    this.bodies = &bodies;
+    this.sum    = &sum;
+end;
+
+class T with do end;
+spawn T;
+
+escape sum;
+]],
+    run = 2,
+}
+
+Test { [[
+class X with do
+end;
+
+native do
+    ##ifdef CEU_ORGS_NEWS_POOL
+    ##error bug found
+    ##endif
+end
+
+class Body with
+    pool  X[]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+    var X&&? nested =
+        spawn X in bodies with
+        end;
+    sum = sum + 1;
+    emit this.ok => 1;
+end
+
+pool X[] bodies;
+var  int  sum = 1;
+
+var Body b with
+    this.bodies = &bodies;
+    this.sum    = &sum;
+end;
+
+class T with do end;
+spawn T;
 
 escape sum;
 ]],

@@ -200,6 +200,8 @@ F =
                             end
                         end
                     end
+                elseif me.var.pre == 'pool' then
+                    cast = 'tceu_pool_orgs*'
                 end
 
                 -- LVAL
@@ -411,7 +413,7 @@ F =
         local ret = V(e1, CTX)
         if e1.var and e1.var.pre=='pool' then
             if ENV.clss[TP.id(e1.var.tp)] then
-                ret = '((tceu_pool_*)'..ret..')'
+                -- ret
             else
                 ret = '((tceu_adt_root*)'..ret..')'
             end

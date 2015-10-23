@@ -243,12 +243,12 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
         /* free */
         if (org->isDyn) {
 #if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
-            ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+            ceu_pool_free(&org->pool->pool, (byte*)org);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-            if (org->pool->queue == NULL) {
+            if (org->pool->pool.queue == NULL) {
                 ceu_sys_realloc(org, 0);
             } else {
-                ceu_pool_free((tceu_pool*)org->pool, (byte*)org);
+                ceu_pool_free(&org->pool->pool, (byte*)org);
             }
 #elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
             ceu_sys_realloc(org, 0);
