@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -31283,7 +31282,104 @@ escape 1;
     run = { ['~>2us']=1 },
 }
 
--- fails w/o sudden death check while traversing children
+-- group of tests fails w/o sudden death check while traversing children
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    par/or do
+        await t.e;
+        _V = _V + 1;
+    with
+        if only_await then
+            await FOREVER;
+        end
+        await OS_START;
+        emit t.e;
+    with
+        await OS_START;
+    end
+end
+
+var T t;
+
+var U _ with
+    this.t = &t;
+    this.only_await = true;
+end;
+var U _ with
+    this.t = &t;
+    this.only_await = false;
+end;
+
+await OS_START;
+
+escape _V;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    par/or do
+        await t.e;
+        _V = _V + 1;
+    with
+        if only_await then
+            await FOREVER;
+        end
+        await OS_START;
+        emit t.e;
+    with
+        if only_await then
+            await FOREVER;
+        end
+        await OS_START;
+    end
+end
+
+var T t;
+
+var U _ with
+    this.t = &t;
+    this.only_await = true;
+end;
+var U _ with
+    this.t = &t;
+    this.only_await = false;
+end;
+
+await OS_START;
+
+escape _V;
+]],
+    run = 2,
+}
 Test { [[
 input void OS_START;
 native do
@@ -31329,7 +31425,7 @@ await OS_START;
 
 escape _V;
 ]],
-    run = 2,
+    run = 1,
 }
 Test { [[
 input void OS_START;
@@ -31376,7 +31472,7 @@ await OS_START;
 
 escape _V;
 ]],
-    run = 2,
+    run = 1,
 }
 
 -- u1 doesn't die, kills u2, which becomes dangling
@@ -32448,6 +32544,7 @@ escape sum;
 }
 
 -- problems w/o ceu_sys_stack_clear_org
+--]===]
 Test { [[
 input void OS_START;
 

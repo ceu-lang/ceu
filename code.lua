@@ -185,7 +185,7 @@ CEU_JMP_ORG = _ceu_org;
 #endif
 CEU_JMP_TRL = _ceu_trl;
 CEU_JMP_LBL = ]]..me.lbl_jmp.id..[[;
-printf("LONG-clear\n");
+printf("LONGJMP-clear\n");
 ceu_stack_dump(_ceu_stk);
 ceu_longjmp(1, _ceu_stk, _ceu_org,
             ]]..me.trails[1]..','..me.trails[2]..[[);
@@ -332,8 +332,21 @@ _ceu_app->isAlive = 0;
 ]])
         else
             LINE(me, [[
-/* TODO: setjmp */
-ceu_sys_org_kill(_ceu_app, _ceu_org, _ceu_stk);
+{
+#ifdef CEU_ORGS
+    CEU_JMP_ORG = _ceu_org->nxt;    /* only required for "Parent" */
+#endif
+
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, 0, _ceu_org->n, {} };
+printf("SETJMP-kill-natural %p\n", &stk_);
+    int ret = setjmp(stk_.jmp);
+    if (ret != 0) {
+        /* can only come from CLEAR */
+        ceu_out_assert(ret == 1);
+        return; /* nothing else to do with myself */
+    }
+    ceu_sys_org_kill(_ceu_app, _ceu_org, &stk_);
+}
 
 /* LONGJMP
  * Natural termination: can only be reached from parent traversal or from first 
@@ -342,10 +355,7 @@ ceu_sys_org_kill(_ceu_app, _ceu_org, _ceu_stk);
  * First:  the calling trail will continue normally in sequence.
  * Return status=2 to distinguish from longjmp from block termination.
  */
-#ifdef CEU_ORGS
-    CEU_JMP_ORG = _ceu_org->nxt;    /* only required for "Parent" */
-#endif
-printf("LONG-kill\n");
+printf("LONGJMP-dead\n");
 ceu_stack_dump(_ceu_stk);
     ceu_longjmp(2, _ceu_stk, _ceu_org, 0,_ceu_org->n);
 ]])
@@ -624,7 +634,7 @@ if (]]..me.val..[[ == NULL) {
         LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-printf("SETJMP-kill %p\n", &stk_);
+printf("SETJMP-kill-stmt %p\n", &stk_);
     int ret = setjmp(stk_.jmp);
     if (ret != 0) {
         /* can only come from CLEAR */
@@ -820,7 +830,7 @@ _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
                     if (not is_dyn) then
                         if top.is_ifc then
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..[[,sizeof(CEU_'..tp_id..'_delayed),
+ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..[[_delayed),
               _ceu_org, ]]..trl..[[,
               (byte**)]]..dcl..'_queue, (byte*)'..dcl..[[_mem);
 ]])
