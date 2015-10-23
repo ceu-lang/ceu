@@ -335,31 +335,17 @@ _ceu_app->isAlive = 0;
         else
             LINE(me, [[
 {
-#ifdef CEU_ORGS
-    CEU_JMP_ORG = _ceu_org->nxt;    /* only required for "Parent" */
-#endif
-
-    tceu_stk stk_ = { _ceu_stk, _ceu_org, 0, _ceu_org->n, {} };
-printf("SETJMP-kill-natural %p\n", &stk_);
-    int ret = setjmp(stk_.jmp);
-    if (ret != 0) {
-        /* can only come from CLEAR */
-        ceu_out_assert(ret == 1);
-        return; /* nothing else to do with myself */
-    }
-    ceu_sys_org_kill(_ceu_app, _ceu_org, &stk_);
-}
-
-/* LONGJMP
- * Natural termination: can only be reached from parent traversal or from first 
- * execution (immediate termination).
- * Parent: resume the parent traversal from "nxt".
- * First:  the calling trail will continue normally in sequence.
- * Return status=2 to distinguish from longjmp from block termination.
- */
+    /* LONGJMP
+     * Natural termination: can only be reached from parent traversal or from first 
+     * execution (immediate termination).
+     * Parent: resume the parent traversal from "nxt".
+     * First:  the calling trail will continue normally in sequence.
+     * Return status=2 to distinguish from longjmp from block termination.
+     */
 printf("LONGJMP-dead\n");
 ceu_stack_dump(_ceu_stk);
-    ceu_longjmp(2, _ceu_stk, _ceu_org, 0,_ceu_org->n);
+    ceu_longjmp(2, _ceu_stk, _ceu_org, 0, _ceu_org->n);
+}
 ]])
         end
         HALT(me)
@@ -458,7 +444,8 @@ printf("SETJMP-spawn %p\n", &stk_);
             break;
         case 2:
             /* came from ceu_sys_org_kill, org natural termination,
-             * unset the org variable and continue executing normally */
+             * unset the org variable, kill the org, and continue executing 
+             * normally */
 ]])
         if t.set then
                 LINE(me, [[
@@ -466,6 +453,7 @@ printf("SETJMP-spawn %p\n", &stk_);
 ]])
         end
         LINE(me, [[
+            ceu_sys_org_kill(_ceu_app, _ceu_org, _ceu_stk);
             break;
     }
 }
@@ -634,6 +622,15 @@ if (]]..me.val..[[ == NULL) {
 ]])
         end
         LINE(me, [[
+{
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    ceu_sys_go_ex(_ceu_app, &evt,
+                  _ceu_stk,
+                  (tceu_org*)]]..V(org,'lval')..[[,
+                  &((tceu_org*)]]..V(org,'lval')..[[)->trls[0],
+                  NULL);
+}
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
 printf("SETJMP-kill-stmt %p\n", &stk_);

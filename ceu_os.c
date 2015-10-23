@@ -216,6 +216,7 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
     org->isAlive = 0;
 #endif
+printf(">>> KILL %p\n", org);
 
 /* TODO: relink also static orgs for efficiency? */
 #ifdef CEU_ORGS_NEWS
@@ -257,6 +258,7 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
         }
 #endif
 
+printf("||| KILL %p\n", org);
 #ifdef CEU_ORGS_AWAIT
         /* signal killed */
         ceu_sys_go_ex(app, &evt_,
@@ -264,6 +266,7 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
                       app->data, &app->data->trls[0], NULL);
     }
 #endif
+printf("<<< KILL %p\n", org);
 }
 #endif
 
@@ -445,13 +448,6 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 {
     for (;; trl++)
     {
-#ifdef CEU_DEBUG_TRAILS
-SPC(1); printf("trl: %p\n", trl);
-/*SPC(2); printf("seqno: %d\n", trl->seqno);*/
-SPC(2); printf("evt: %d\n", trl->evt);
-SPC(2); printf("lbl: %d\n", trl->lbl);
-#endif
-
 #ifdef CEU_CLEAR
         if (trl == stop) {
             return;    /* bounded trail traversal */
@@ -470,6 +466,13 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
         {
             break;
         }
+
+#ifdef CEU_DEBUG_TRAILS
+SPC(1); printf("trl: %p\n", trl);
+/*SPC(2); printf("seqno: %d\n", trl->seqno);*/
+SPC(2); printf("evt: %d\n", trl->evt);
+SPC(2); printf("lbl: %d\n", trl->lbl);
+#endif
 
         /* continue traversing current org */
 
@@ -493,7 +496,10 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 printf("SETJMP-orgs %p\n", &stk_);
                 int ret = setjmp(stk_.jmp);
 printf("\t%d\n", ret);
-                if (ret == 0) {
+                if (ret == 0)
+                {
+                    tceu_org* nxt = cur->nxt;   /* save before kill/free */
+
                     /* normal flow: call cur and proceed to nxt */
                     ceu_sys_go_ex(app, evt,
                                   &stk_,
@@ -501,11 +507,13 @@ printf("\t%d\n", ret);
 
                     /* kill child if a IN__CLEAR in the parent */
                     if (evt->id == CEU_IN__CLEAR) {
+/* TODO: setjmp? */
                         ceu_sys_org_kill(app, cur, stk);
                     }
-
-                    cur = cur->nxt;
-                } else if (ret == 1) {
+                    cur = nxt;
+                }
+                else if (ret == 1)
+                {
                     /* came from clear, so all my brothers are also dead,
                      * break the loop. before, execute the clear continuation 
                      */
@@ -513,9 +521,11 @@ printf("\t%d\n", ret);
                     app->code(app, evt, CEU_JMP_ORG, CEU_JMP_TRL, &stk_, NULL);
                     break;
                 } else { /* ret == 2 */
-                    /* came from ceu_sys_org_kill, org natural termination,
-                     * the longjmp set for me my next brother before the free */
-                    cur = CEU_JMP_ORG;   /* might be NULL */
+                    /* came from org natural termination */
+                    tceu_org* nxt = cur->nxt;   /* save before kill/free */
+/* TODO: setjmp? */
+                    ceu_sys_org_kill(app, cur, stk);
+                    cur = nxt;
                 }
             }
             continue;   /* next trail after handling children */
