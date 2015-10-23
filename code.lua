@@ -453,7 +453,7 @@ printf("SETJMP-spawn %p\n", &stk_);
 ]])
         end
         LINE(me, [[
-            ceu_sys_org_kill(_ceu_app, _ceu_org, _ceu_stk);
+            ceu_sys_org_kill(_ceu_app, ]]..org..[[, _ceu_stk);
             break;
     }
 }

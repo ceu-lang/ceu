@@ -216,7 +216,6 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
     org->isAlive = 0;
 #endif
-printf(">>> KILL %p\n", org);
 
 /* TODO: relink also static orgs for efficiency? */
 #ifdef CEU_ORGS_NEWS
@@ -258,7 +257,6 @@ printf(">>> KILL %p\n", org);
         }
 #endif
 
-printf("||| KILL %p\n", org);
 #ifdef CEU_ORGS_AWAIT
         /* signal killed */
         ceu_sys_go_ex(app, &evt_,
@@ -266,7 +264,6 @@ printf("||| KILL %p\n", org);
                       app->data, &app->data->trls[0], NULL);
     }
 #endif
-printf("<<< KILL %p\n", org);
 }
 #endif
 
@@ -498,12 +495,13 @@ printf("SETJMP-orgs %p\n", &stk_);
 printf("\t%d\n", ret);
                 if (ret == 0)
                 {
-                    tceu_org* nxt = cur->nxt;   /* save before kill/free */
+                    tceu_org* nxt;
 
                     /* normal flow: call cur and proceed to nxt */
                     ceu_sys_go_ex(app, evt,
                                   &stk_,
                                   cur, &cur->trls[0], NULL);
+                    nxt = cur->nxt;   /* save before kill/free */
 
                     /* kill child if a IN__CLEAR in the parent */
                     if (evt->id == CEU_IN__CLEAR) {
