@@ -121,15 +121,15 @@ F =
                     if CTX.val == 'lval' then
                         if is_ptr then
                             CAST = '('..tp_id..'**)'
-                            VAL  = '(& ((tceu_adt_root*) '..VAL..')->root)'
+                            VAL  = '(& ((tceu_pool_adts*) '..VAL..')->root)'
                         else
                             CAST = '('..tp_id..' *)'
-                            VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
+                            VAL  = '(  ((tceu_pool_adts*) '..VAL..')->root)'
                         end
                     else
                         if is_ptr then
                             CAST = '('..tp_id..' *)'
-                            VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
+                            VAL  = '(  ((tceu_pool_adts*) '..VAL..')->root)'
                         else
                             error'bug found'
                         end
@@ -415,7 +415,7 @@ F =
             if ENV.clss[TP.id(e1.var.tp)] then
                 -- ret
             else
-                ret = '((tceu_adt_root*)'..ret..')'
+                ret = '((tceu_pool_adts*)'..ret..')'
             end
         end
         return ret

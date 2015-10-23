@@ -76,7 +76,7 @@ CEU_VECTOR_DCL(]]..id..','..tp_c..','..max..[[)
     elseif pre == 'pool' then
 
         -- ADT:
-        -- tceu_adt_root id = { root=?, pool=_id };
+        -- tceu_pool_adts id = { root=?, pool=_id };
         -- CEU_POOL_DCL(_id);
         if adt then
             assert(not TP.check(tp,'&&','&&'), 'bug found')
@@ -84,11 +84,11 @@ CEU_VECTOR_DCL(]]..id..','..tp_c..','..max..[[)
             dcl = dcl .. [[
 /*
  * REF:
- * tceu_adt_root* x;  // root/pool always the same as the parent
+ * tceu_pool_adts* x;  // root/pool always the same as the parent
  * PTR:
- * tceu_adt_root x;   // pool: the same // root: may point to the middle
+ * tceu_pool_adts x;   // pool: the same // root: may point to the middle
  */
-tceu_adt_root]]..ptr..' '..id..[[;
+tceu_pool_adts]]..ptr..' '..id..[[;
 ]]
         end
 

@@ -467,7 +467,7 @@ typedef struct tceu_org
 
 } tceu_org;
 
-/* TCEU_POOL_ORGS , TCEU_ADT_ROOT */
+/* TCEU_POOL_ORGS , TCEU_POOL_ADTS */
 
 #if defined(CEU_ORGS_NEWS_POOL) || defined(CEU_ADTS_NEWS_POOL)
 #include "ceu_pool.h"
@@ -489,7 +489,7 @@ typedef struct {
 #ifdef CEU_ADTS_NEWS_POOL
     void* pool;
 #endif
-} tceu_adt_root;
+} tceu_pool_adts;
 #endif
 
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
