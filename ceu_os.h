@@ -421,7 +421,7 @@ typedef struct tceu_evt {
 #endif
 } tceu_evt;
 
-/* TCEU_LNK */
+/* TCEU_POOL_ , TCEU_ADT_ROOT */
 
 #ifdef CEU_NEWS
 typedef struct {
@@ -429,6 +429,15 @@ typedef struct {
     tceu_ntrl parent_trl;
     byte**    queue;
 } tceu_pool_;
+#endif
+
+#ifdef CEU_ADTS_NEWS
+typedef struct {
+    void* root;
+#ifdef CEU_ADTS_NEWS_POOL
+    void* pool;
+#endif
+} tceu_adt_root;
 #endif
 
 /* TCEU_ORG */
@@ -599,17 +608,6 @@ typedef struct {
                    * 3=end (sync/async terminates)
                    */
 } tceu_threads_p;
-#endif
-
-/* TCEU_ADT */
-
-#ifdef CEU_ADTS_NEWS
-typedef struct {
-    void* root;
-#ifdef CEU_ADTS_NEWS_POOL
-    void* pool;
-#endif
-} tceu_adt_root;
 #endif
 
 #ifdef CEU_PSES
