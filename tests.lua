@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -31519,6 +31520,7 @@ escape _V;
 ]],
     run = 1,
 }
+
 Test { [[
 input void OS_START;
 native do
@@ -33222,7 +33224,6 @@ escape _V;
     run = 10,
 }
 
---]===]
 Test { [[
 native do
     int V = 0;
@@ -33704,6 +33705,73 @@ escape v1+v2;
     parser = 'line 6 : after `v´ : expected `)´',
     --env = 'line 10 : arity mismatch',
     --run = 30,
+}
+
+Test { [[
+input void OS_START;
+
+class Mix with
+  var int cup_top;
+  event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+
+class ShuckTip with
+do
+    await FOREVER;
+end
+
+do
+    var int dilu_start = 0;
+    do
+        var Mix m with
+            this.cup_top = dilu_start;
+        end;
+        await m.ok;
+    end
+end
+do
+    var ShuckTip s;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+
+class Mix with
+  var int cup_top;
+  event void ok;
+do
+  await OS_START;
+  emit ok;
+end
+
+class ShuckTip with
+do
+end
+
+do
+    var int dilu_start = 0;
+    do
+        var Mix m with
+            this.cup_top = dilu_start;
+        end;
+        await m.ok;
+    end
+end
+do
+    var ShuckTip s;
+    await s;
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[

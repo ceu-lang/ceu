@@ -516,7 +516,8 @@ printf("\t%d\n", ret);
                      * break the loop. before, execute the clear continuation 
                      */
                     CEU_JMP_TRL->lbl = CEU_JMP_LBL;
-                    app->code(app, evt, CEU_JMP_ORG, CEU_JMP_TRL, &stk_, NULL);
+                    app->code(app, evt, CEU_JMP_ORG, CEU_JMP_TRL, stk, NULL);
+                        /* stk: restore previous (skip &stk_) */
                     break;
                 } else { /* ret == 2 */
                     /* came from org natural termination */
