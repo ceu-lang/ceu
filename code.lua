@@ -824,7 +824,8 @@ _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
                     local id = (adt and '_' or '') .. var.id_
                     local dcl = '&'..CUR(me, id)
 
-                    local trl = assert(var.trl_orgs,'bug found')[1]
+                    local trl = (cls and assert(var.trl_orgs,'bug found')[1])
+                                    or 0
 
                     if (not is_dyn) then
                         if top.is_ifc then

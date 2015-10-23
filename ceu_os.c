@@ -133,18 +133,15 @@ printf("CHK %p\n", stk);
     if (stk->org != org) {
         /*
          * Check if stk->org is the dieyng "org" or one of its children:
-         *      org, org->up, org->up->up, ...
+         *      org, org->par, org->par->par, ...
          */
         tceu_org* cur_org;
-printf("\tCHK-2\n");
-        for (cur_org=stk->org; cur_org!=NULL; cur_org=cur_org->up) {
-printf("\tCHK-2\n");
-            if (cur_org->up == org) {
+        for (cur_org=stk->org; cur_org!=NULL; cur_org=cur_org->parent_org) {
+            if (cur_org->parent_org == org) {
                 if (cur_org->parent_trl>=t1 && cur_org->parent_trl<=t2) {
 printf("\tyes-2\n");
                     longjmp(stk->jmp, ret);
                 }
-printf("\t\tno-2\n");
                 break;
             }
         }
@@ -167,30 +164,29 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
     memset(&org->trls, 0, n*sizeof(tceu_trl));
+    org->trls[0].lbl = lbl;
 
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
     org->n  = n;
-    org->up = parent_org;
-    org->parent_trl = parent_trl;
+#endif
+
+#ifdef CEU_ORGS
+
 #ifdef CEU_IFCS
     org->cls = cls;
 #endif
-#endif
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT) || defined(CEU_OS_KERNEL)
+
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
     org->isAlive = 1;
 #endif
-#ifdef CEU_ORGS_AWAIT
-    org->ret = 0;   /* TODO: still required? */
-#endif
+
 #ifdef CEU_ORGS_NEWS
     org->isDyn = isDyn;
 #endif
 
-    org->trls[0].lbl = lbl;
-
-#ifdef CEU_ORGS
+    org->parent_org = parent_org;
+    org->parent_trl = parent_trl;
     org->nxt = NULL;
-
     if (parent_org != NULL) {
         tceu_trl* trl = &parent_org->trls[parent_trl];
         if (trl == NULL) {
@@ -207,6 +203,11 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
             trl->org->prv = org;
         }
     }
+
+#ifdef CEU_ORGS_AWAIT
+    org->ret = 0;   /* TODO: still required? */
+#endif
+
 #endif  /* CEU_ORGS */
 }
 
@@ -217,10 +218,9 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
     org->isAlive = 0;
 #endif
 
-/* TODO: relink also static orgs for efficiency? */
-#ifdef CEU_ORGS_NEWS
     /* re-link PRV <-> NXT */
-    tceu_trl* trl = &org->up->trls[org->parent_trl];
+    /* relink also static orgs for efficiency */
+    tceu_trl* trl = &org->parent_org->trls[org->parent_trl];
     if (trl->org == org) {
         trl->org = org->nxt;    /* subst 1st org */
     } else {
@@ -229,7 +229,6 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
     if (org->nxt != NULL) {
         org->nxt->prv = org->prv;
     }
-#endif
 
 #ifdef CEU_ORGS_AWAIT
     {

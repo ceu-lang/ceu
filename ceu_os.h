@@ -423,15 +423,6 @@ typedef struct tceu_evt {
 
 /* TCEU_LNK */
 
-/* simulates an org prv/nxt */
-typedef struct tceu_org_lnk {
-    struct tceu_org* prv;   /* TODO(ram): lnks[0] does not use */
-    struct tceu_org* nxt;   /*      prv, n, lnk                  */
-    struct tceu_org* up;
-    u8 lnk;
-    tceu_ntrl n;            /* use for ands/fins                 */
-} tceu_org_lnk;
-
 #ifdef CEU_NEWS
 typedef struct {
     struct tceu_org* parent_org;
@@ -444,23 +435,15 @@ typedef struct {
 
 typedef struct tceu_org
 {
-#ifdef CEU_ORGS
-    struct tceu_org* prv;   /* linked list for the scheduler */
-    struct tceu_org* nxt;
-    struct tceu_org* up;
-    u8 lnk;
-#endif
 #if defined(CEU_ORGS) || defined(CEU_OS)
     tceu_ntrl n;            /* number of trails (TODO(ram): opt, metadata) */
 #endif
-    /* prv/nxt/lnk/n must be in the same order as "tceu_org_lnk" */
 
 #ifdef CEU_ORGS
 
 #ifdef CEU_IFCS
     tceu_ncls cls;          /* class id */
 #endif
-
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
     u8 isAlive: 1;          /* Three purposes:
                              * - =0 if terminate normally or =1 if from scope
@@ -471,12 +454,9 @@ typedef struct tceu_org
                              *      org
                              */
 #endif
-
 #ifdef CEU_ORGS_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */
 #endif
-
-    tceu_ntrl parent_trl;
 #ifdef CEU_ORGS_NEWS_POOL
     tceu_pool_* pool;       /* TODO(ram): opt, traverse lst of cls pools */
 #endif
@@ -484,6 +464,11 @@ typedef struct tceu_org
 #ifdef CEU_ORGS_AWAIT
     int ret;
 #endif
+
+    struct tceu_org* parent_org;
+    tceu_ntrl parent_trl;
+    struct tceu_org* prv;
+    struct tceu_org* nxt;
 
 #endif  /* CEU_ORGS */
 
