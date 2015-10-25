@@ -840,7 +840,7 @@ ceu_pool_init(&]]..pool..','..var.tp.arr.sval..',sizeof('..tp_id_..[[),
                         LINE(me, [[
 (]]..CUR(me,id)..[[).parent_org = _ceu_org;
 (]]..CUR(me,id)..[[).parent_trl = ]]..trl..[[;
-#ifdef CEU_ADTS_NEWS_POOL
+#ifdef CEU_ORGS_NEWS_POOL
 (]]..CUR(me,id)..[[).pool.queue = NULL;            /* dynamic pool */
 #endif
 ]])
@@ -995,7 +995,6 @@ ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0);
 
             -- release ADT pool items
             elseif var.adt and var.adt.is_rec then
-DBG(me.ln[2])
                 local id, op = unpack(var.adt)
                 CASE(me, var.lbl_fin_kill_free)
 
@@ -1216,6 +1215,8 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
                 LINE(me, [[
 #ifdef CEU_ORGS_AWAIT
     _ceu_org->ret = ]]..V(to,'rval')..[[;
+    /* HACK_8: result of immediate spawn termination */
+    _ceu_app->ret = _ceu_org->ret;
 #endif
 ]])
             end

@@ -105,10 +105,10 @@ STATS = {
 RUNTESTS = true
 
 -- Execution option for the tests:
---VALGRIND = true
+VALGRIND = true
 --REENTRANT = true
 --LUACOV = '-lluacov'
---COMPLETE = true
+COMPLETE = true
 OS = false   -- false, true, nil(random)
 
 dofile 'pak.lua'

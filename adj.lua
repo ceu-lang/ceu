@@ -346,7 +346,7 @@ me.blk_body = me.blk_body or blk_body
         --          ret = await *_body_!;
         --      else
         --          ret = _ceu_app->ret;
-        --              // result of immediate spawn termination
+        --              // HACK_8: result of immediate spawn termination
         --              // TODO: what if spawn did fail? (ret=garbage?)
         --      end
         --  end

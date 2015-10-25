@@ -33761,6 +33761,29 @@ escape 1;
 Test { [[
 input void OS_START;
 class T with
+do
+    await OS_START;
+    escape 1;
+end
+var int ddd = do T;
+escape ddd;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+    escape 1;
+end
+var int ddd = do T;
+escape ddd;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
     var int v;
 do
     await OS_START;
@@ -54309,6 +54332,87 @@ escape 1;
 }
 
 Test { [[
+data Stmt with
+    tag NIL;
+or
+    tag SEQ with
+        var Stmt s1;
+    end
+end
+
+pool Stmt[2] stmts = new Stmt.NIL();
+
+var int ddd =
+    traverse stmt in &&stmts do
+        escape 10;
+    end;
+
+escape ddd;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Stmt with
+    tag NIL;
+or
+    tag SEQ with
+        var Stmt s1;
+    end
+end
+
+pool Stmt[] stmts = new Stmt.NIL();
+
+var int v1 = 10;
+
+var int ret =
+    traverse stmt in &&stmts with
+        var int v2 = v1;
+    do
+        escape v1+v2;
+    end;
+
+escape ret;
+]],
+    wrn = true,
+    run = 20,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List  tail;
+    end
+end
+
+pool List[3] list = new
+    List.CONS(1,
+        List.CONS(2,
+            List.CONS(3,
+                List.NIL())));
+
+var int s1 =
+    traverse l in &&list do
+        if l:NIL then
+            escape 0;
+        else
+            watching *l do
+                var int sum_tail = traverse &&l:CONS.tail;
+                escape sum_tail + l:CONS.head;
+            end
+        end
+    end;
+
+escape s1;
+]],
+    run = 6,
+}
+
+Test { [[
 data List with
     tag NIL;
 or
@@ -54594,32 +54698,6 @@ escape 1;
     _ana = {acc=true},
     wrn = true,
     run = 1,
-}
-
-Test { [[
-data Stmt with
-    tag NIL;
-or
-    tag SEQ with
-        var Stmt s1;
-    end
-end
-
-pool Stmt[] stmts = new Stmt.NIL();
-
-var int v1 = 10;
-
-var int ret =
-    traverse stmt in &&stmts with
-        var int v2 = v1;
-    do
-        escape v1+v2;
-    end;
-
-escape ret;
-]],
-    wrn = true,
-    run = 20,
 }
 
 -- << ADTS / RECURSE / TRAVERSE
@@ -54925,10 +55003,34 @@ pool Command[2]& cmds2
 cmds1 = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
+cmds1 = new Command.NOTHING();
 cmds2 = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
 escape cmds1.NEXT;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command  nxt;
+    end
+end
+
+pool Command[2] cmds1;
+pool Command[2]& cmds2
+        = &cmds1;
+
+cmds1 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+cmds2 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+escape cmds1.NOTHING;
 ]],
     run = 1,
 }
@@ -54981,8 +55083,44 @@ end
 pool Command[1] cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1 = new Command.NOTHING();
 cmds1 = new Command.NEXT(Command.NOTHING());
 escape cmds1.NEXT.nxt.NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command  nxt;
+    end
+end
+
+pool Command[1] cmds1;
+
+cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1 = new Command.NEXT(Command.NOTHING());
+escape cmds1.NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command  nxt;
+    end
+end
+
+pool Command[2] cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1 = new Command.NOTHING();
+cmds1 = new Command.NEXT(
+                Command.NEXT(
+                    Command.NOTHING()));
+escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
@@ -54999,7 +55137,7 @@ pool Command[2] cmds1 = new Command.NEXT(Command.NOTHING());
 cmds1 = new Command.NEXT(
                 Command.NEXT(
                     Command.NOTHING()));
-escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
+escape cmds1.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
@@ -55186,11 +55324,12 @@ pool Command[] cmds;
 traverse cmd222 in &&cmds do
 end
 
-var int ret = do Run with
+var int ddd = do Run with
     this.cmds1 = &cmds;
 end;
+_printf("sum = %d\n", ddd);
 
-escape ret;
+escape ddd;
 ]],
     wrn = true,
     run = 2,
@@ -55758,6 +55897,7 @@ escape ret;
 --]=]
 
 -- TIMEMACHINE
+do return end
 
 local t = {
     [1] = [[
