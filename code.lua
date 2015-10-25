@@ -152,9 +152,7 @@ end
 
 -- TODO: check if all calls are needed
 --          (e.g., cls outermost block should not!)
-function CLEAR (me, t1, t2)
-    t1 = t1 or me.trails[1]
-    t2 = t2 or me.trails[2]
+function CLEAR (me)
 
     COMM(me, 'CLEAR: '..me.tag..' ('..me.ln[2]..')')
 
@@ -187,7 +185,6 @@ CEU_JMP_ORG = _ceu_org;
 #endif
 CEU_JMP_TRL = _ceu_trl;
 CEU_JMP_LBL = ]]..me.lbl_jmp.id..[[;
-ceu_stack_dump(_ceu_stk);
 ceu_longjmp(1, _ceu_stk, _ceu_org,
             ]]..me.trails[1]..','..me.trails[2]..[[);
 ]])
@@ -200,8 +197,8 @@ ceu_longjmp(1, _ceu_stk, _ceu_org,
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org,
-                  &_ceu_org->trls[ ]]..t1..[[ ],
-                  &_ceu_org->trls[ ]]..(t2+1)..[[ ]);
+                  &_ceu_org->trls[ ]]..me.trails[1]..[[ ],
+                  &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
                                         /* excludes +1 */
 }
 ]])
@@ -341,8 +338,6 @@ _ceu_app->isAlive = 0;
      * First:  the calling trail will continue normally in sequence.
      * Return status=2 to distinguish from longjmp from block termination.
      */
-printf("ALMOST-DEAD %p\n", _ceu_org);
-ceu_stack_dump(_ceu_stk);
     ceu_longjmp(2, _ceu_stk, _ceu_org, 0, _ceu_org->n);
 }
 ]])
@@ -423,7 +418,6 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, ]]..org..[[, 0, ]]..org..[[->n, {} };
-printf("SETJMP-spawn %p\n", &stk_);
     int ret = setjmp(stk_.jmp);
     switch (ret) {
         case 0:
@@ -577,7 +571,6 @@ if (]]..pool..[[ == NULL) {
 
                 -- fallback to base case if fails
                 LINE(me, [[
-printf("NEW %p\n", ]]..me.val..[[);
 if (]]..me.val..[[ == NULL) {
     ]]..me.val..[[ = &CEU_]]..string.upper(id)..[[_BASE;
 } else  /* rely on {,} that follows */
@@ -636,7 +629,6 @@ if (]]..me.val..[[ == NULL) {
 }
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-printf("SETJMP-kill-org %p\n", &stk_);
     int ret = setjmp(stk_.jmp);
     if (ret != 0) {
         /* can only come from CLEAR */
@@ -915,26 +907,23 @@ _ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
 _ceu_trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
         end
+
         CONC(me, stmts)
+        CLEAR(me)
+        LINE(me, [[
+if (0) {
+]])
 
         if me.fins then
             CASE(me, me.lbl_fin)
             for i, fin in ipairs(me.fins) do
                 LINE(me, [[
-    if (]]..fin.val..[[) {
-        ]] .. fin.code .. [[
-    }
+if (]]..fin.val..[[) {
+    ]] .. fin.code .. [[
+}
 ]])
             end
--- TODO: precisa teste de clear? e o outro?
-            LINE(me, [[
-    if (_ceu_evt!=NULL && _ceu_evt->id==CEU_IN__CLEAR) {
-]])
-            HALT(me) -- otherwise, normal termination that should continue
-            LINE(me, [[
-    }
-    _ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].evt = CEU_IN__NONE;
-]])
+            HALT(me)
         end
 
         for _, var in ipairs(me.vars) do
@@ -949,9 +938,6 @@ _ceu_trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
                 assert(var.pre ~= 'pool')
 -- TODO: review both cases (vec vs no-vec)
 -- possible BUG: pointer is tested after free
-                LINE(me, [[
-if (0) {
-]])
                 CASE(me, var.lbl_optorg_reset)
                 local tp_opt = TP.pop(var.tp,'[]')
                 local ID = string.upper(TP.opt2adt(tp_opt))
@@ -991,16 +977,13 @@ if (0) {
 ]])
                 end
 
-            -- TODO: repeated with Block_pre
-            LINE(me, [[
+                -- TODO: repeated with Block_pre
+                LINE(me, [[
 /*  RESET OPT-ORG TO NULL */
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
 ]])
                 HALT(me)
-                LINE(me, [[
-}
-]])
             end
 
             if is_arr and is_dyn then
@@ -1012,6 +995,7 @@ ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0);
 
             -- release ADT pool items
             elseif var.adt and var.adt.is_rec then
+DBG(me.ln[2])
                 local id, op = unpack(var.adt)
                 CASE(me, var.lbl_fin_kill_free)
 
@@ -1033,7 +1017,6 @@ CEU_]]..id..[[_kill(_ceu_app, ]]..VAL_root..[[);
                         pool = 'NULL'
                     end
                     LINE(me, [[
-printf("FREE-1 %p\n", ]]..VAL_root..[[);
 CEU_]]..id..[[_free(]]..pool..[[, ]]..VAL_root..[[);
 ]])
                 else
@@ -1045,29 +1028,13 @@ CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
 ]])
 ]=]
                 end
+                HALT(me)
             end
         end
-
-        LINE(me, '}')       -- open in Block_pre
-
-        -- clear orgs
-        for _, var in ipairs(me.vars) do
-            if var.cls then
-                CLEAR(me, var.trl_orgs[1], var.trl_orgs[2]+1)
-            end
-        end
--- TODO: choose between the two
---[[
-        if me.has_orgs then
-            CLEAR(me, me.trails[1], stmts.trails[1])
-                                    -- end at +1
-        end
-]]
 
         LINE(me, [[
-/* unset all trails awaiting CEU_IN__CLEAR for finalization */
-memset(&_ceu_org->trls[]]..me.trails[1]..[[], 0,
-       sizeof(tceu_trl)*]]..(stmts.trails[1]-me.trails[1])..[[);
+    }   /* opened in "if (0)" */
+}       /* opened in Block_pre */
 ]])
     end,
 
@@ -1129,7 +1096,6 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
             -- remove "fr" from tree (set parent link to NIL)
             LINE(me, [[
     void* __ceu_new = ]]..V(fr,'lval')..[[;
-printf("NEW[%d] %p %p\n", ]]..me.ln[2]..','..V(fr,'lval')..','..V(to,'lval')..[[);
     ]]..V(fr,'lval')..[[ = &CEU_]]..string.upper(TP.id(fr.tp))..[[_BASE;
     ]]..V(to,'lval','no_cast')..[[ = __ceu_new;
 ]])
@@ -1167,7 +1133,6 @@ printf("NEW[%d] %p %p\n", ]]..me.ln[2]..','..V(fr,'lval')..','..V(to,'lval')..[[
 #endif
         _ceu_trl = CEU_JMP_TRL;
         _ceu_lbl = CEU_JMP_LBL;
-printf(">>>>>\n");
         goto _CEU_GOTO_;
     }
     {
@@ -1421,7 +1386,6 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
          * Let's go to the continuation of the abortion received in 
          * "CEU_JMP_LBL/ORG".
          */
-printf("RESUME\n");
 #ifdef CEU_ORGS
         _ceu_org = CEU_JMP_ORG;
 #endif

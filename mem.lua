@@ -202,7 +202,6 @@ void CEU_]]..id..'_free (void* pool, CEU_'..id..[[* me);
 
         local kill = [[
 void CEU_]]..id..'_free (void* pool, CEU_'..id..[[* me) {
-    printf("kill %p\n", me);
 ]]
         if op == 'union' then
             kill = kill .. [[

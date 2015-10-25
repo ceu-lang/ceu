@@ -490,7 +490,6 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             /* traverse all children */
             while (cur != NULL) {
                 tceu_stk stk_ = { stk, cur, 0, cur->n, {} };
-printf("SETJMP-orgs %p\n", &stk_);
                 int ret = setjmp(stk_.jmp);
                 if (ret == 0)
                 {
@@ -521,7 +520,6 @@ printf("SETJMP-orgs %p\n", &stk_);
                 } else { /* ret == 2 */
                     /* came from org natural termination */
                     tceu_org* nxt = cur->nxt;   /* save before kill/free */
-printf("NEXT %p\n", nxt);
 /* TODO: setjmp? */
                     ceu_sys_org_kill(app, cur, stk);
                     cur = nxt;

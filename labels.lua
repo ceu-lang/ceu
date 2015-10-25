@@ -74,8 +74,7 @@ F = {
             end
         end
 
-        local stmts = unpack(me)
-        if stmts.trails[1] > me.trails[1] then
+        if me.needs_clr then
             me.lbl_jmp = new{'Block_jmp'}
         end
     end,

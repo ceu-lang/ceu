@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -47599,7 +47600,6 @@ end
 }
 
 -- ALGEBRAIC DATATYPES (ADTS)
---]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -47659,6 +47659,7 @@ end
 
 --[==[
 -- HERE:
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -48676,6 +48677,14 @@ escape o.PTR.x;
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor
 Test { DATA..[[
+pool List[] l1 = new List.NIL();
+pool List[] l2 = new List.CONS(1, List.NIL());
+escape 1;
+]],
+    run = 1,
+}
+
+Test { DATA..[[
 var Pair p1 = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&&p1);
@@ -49272,11 +49281,21 @@ escape l.CONS.head;
 Test { DATA..[[
 pool List[2] l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
 _ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
+l = new List.NIL();
 l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // 6 fails
 _ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "2");
 escape l.CONS.tail.CONS.head;
 ]],
     run = 5,
+}
+
+Test { DATA..[[
+pool List[2] l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
+_ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
+l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // all fail
+escape l.NIL;
+]],
+    run = 1,
 }
 
 -- 1-2-3-NIL => 1-2-NIL (3 fails)
@@ -50992,7 +51011,6 @@ escape 1;
 ]],
     run = 1,
 }
-]==]
 Test { [[
 data Tree with
     tag NIL;
@@ -53032,10 +53050,10 @@ with
             if widget:NIL then
                 await FOREVER;
             else/if widget:EMPTY then
-                await FOREVER;
+                escape 1;
 
             else/if widget:ROW then
-                loop do
+                loop i in 3 do
                     par/or do
                         var int ret = traverse &&widget:ROW.w1;
                         if ret == 0 then
