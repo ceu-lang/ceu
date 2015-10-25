@@ -185,18 +185,7 @@ struct CEU_]]..id..[[ {
         end
 
         me.auxs[#me.auxs+1] = [[
-#ifdef CEU_ADTS_AWAIT_]]..id..[[
-
-void CEU_]]..id..'_kill (tceu_app* app, tceu_stk* stk, CEU_'..id..[[* me);
-#endif
-#ifdef CEU_ADTS_NEWS
-#ifdef CEU_ADTS_NEWS_MALLOC
-void CEU_]]..id..'_free_dynamic (tceu_app* app, CEU_'..id..[[* me);
-#endif
-#ifdef CEU_ADTS_NEWS_POOL
-void CEU_]]..id..'_free_static (tceu_app* app, CEU_'..id..[[* me, void* pool);
-#endif
-#endif
+void CEU_]]..id..'_free (void* pool, CEU_'..id..[[* me);
 ]]
     end,
     Dcl_adt = function (me)
@@ -212,9 +201,8 @@ void CEU_]]..id..'_free_static (tceu_app* app, CEU_'..id..[[* me, void* pool);
         end
 
         local kill = [[
-#ifdef CEU_ADTS_AWAIT_]]..id..[[
-
-void CEU_]]..id..'_kill (tceu_app* app, tceu_stk* stk, CEU_'..id..[[* me) {
+void CEU_]]..id..'_free (void* pool, CEU_'..id..[[* me) {
+    printf("kill %p\n", me);
 ]]
         if op == 'union' then
             kill = kill .. [[
@@ -231,7 +219,7 @@ void CEU_]]..id..'_kill (tceu_app* app, tceu_stk* stk, CEU_'..id..[[* me) {
 ]]
                 else
                     kill = kill .. [[
-            CEU_]]..id_tag..[[_kill(app, stk, me);
+            CEU_]]..id_tag..[[_free(pool, me);
 ]]
                 end
                 kill = kill .. [[
@@ -248,90 +236,6 @@ void CEU_]]..id..'_kill (tceu_app* app, tceu_stk* stk, CEU_'..id..[[* me) {
         end
         kill = kill .. [[
 }
-#endif
-]]
-
-        local free = [[
-#ifdef CEU_ADTS_NEWS
-#ifdef CEU_ADTS_NEWS_MALLOC
-void CEU_]]..id..'_free_dynamic (tceu_app* app, CEU_'..id..[[* me) {
-]]
-        if op == 'struct' then
-            free = free .. [[
-    ceu_out_realloc(me, 0);
-]]
-        else
-            assert(op == 'union')
-            free = free .. [[
-    switch (me->tag) {
-]]
-            for _, tag in ipairs(me.tags) do
-                local id_tag = string.upper(id..'_'..tag)
-                free = free .. [[
-        case CEU_]]..id_tag..[[:
-]]
-                if me.is_rec and tag==me.tags[1] then
-                    free = free .. [[
-            /* base case */
-]]
-                else
-                    free = free .. [[
-            CEU_]]..id_tag..[[_free_dynamic(app, me);
-]]
-                end
-                free = free .. [[
-            break;
-]]
-            end
-            free = free .. [[
-#ifdef CEU_DEBUG
-        default:
-            ceu_out_assert_msg(0, "invalid tag");
-#endif
-    }
-]]
-        end
-        free = free .. [[
-}
-#endif
-#ifdef CEU_ADTS_NEWS_POOL
-void CEU_]]..id..'_free_static (tceu_app* app, CEU_'..id..[[* me, void* pool) {
-]]
-        if op == 'struct' then
-            free = free .. [[
-    ceu_pool_free(pool, (void*)me);
-]]
-        else
-            assert(op == 'union')
-            free = free .. [[
-    switch (me->tag) {
-]]
-            for _, tag in ipairs(me.tags) do
-                local id_tag = string.upper(id..'_'..tag)
-                free = free .. [[
-        case CEU_]]..id_tag..[[:
-]]
-                if me.is_rec and tag==me.tags[1] then
-                    free = free .. [[
-            /* base case */
-]]
-                else
-                    free = free .. [[
-            CEU_]]..id_tag..[[_free_static(app, me, pool);
-]]
-                end
-                free = free .. [[
-            break;
-]]
-            end
-            free = free .. [[
-    }
-]]
-        end
-        free = free .. [[
-}
-#endif
-#endif
 ]]
 
         local pack = ''
@@ -372,7 +276,6 @@ void CEU_]]..id..'_free_static (tceu_app* app, CEU_'..id..[[* me, void* pool) {
         end
 
         me.auxs[#me.auxs+1] = kill
-        me.auxs[#me.auxs+1] = free
         me.auxs[#me.auxs+1] = pack
         me.auxs   = table.concat(me.auxs,'\n')..'\n'
         me.struct = me.struct..' CEU_'..id..';'
@@ -410,21 +313,9 @@ CEU_]]..id..'* '..enum..'_assert (tceu_app* app, CEU_'..id..[[* me, char* file, 
         end
 
         local kill = [[
-#ifdef CEU_ADTS_AWAIT_]]..id..[[
-
-void ]]..enum..'_kill (tceu_app* app, tceu_stk* stk, CEU_'..id..[[* me) {
-#ifdef CEU_ADTS_AWAIT
-    /* kill myself before my recursive fields */
-    {
-        tceu_evt evt;
-                 evt.id = CEU_IN__ok_killed;
-                 evt.param = &me;
-        ceu_sys_go_ex(app, &evt, stk,
-                      app->data, &app->data->trls[0], NULL);
-    }
-#endif
+void ]]..enum..'_free (void* pool, CEU_'..id..[[* me) {
 ]]
-        -- kill all my recursive fields after myself (push them before)
+        -- kill all my recursive fields before myself (don't emit ok_killed)
         for _,item in ipairs(top.tags[tag].tup) do
             local _, tp, _ = unpack(item)
             local id_top = id
@@ -439,86 +330,26 @@ void ]]..enum..'_kill (tceu_app* app, tceu_stk* stk, CEU_'..id..[[* me) {
             end
             if ok then
                 kill = kill .. [[
-    CEU_]]..id_top..[[_kill(app, stk, me->]]..tag..'.'..item.var_id..[[);
-/*
-    me->]]..tag..'.'..item.var_id..[[ = &CEU_]]..string.upper(id_top)..[[_BASE;
-*/
+    CEU_]]..id_top..[[_free(pool, me->]]..tag..'.'..item.var_id..[[);
 ]]
             end
         end
-
         kill = kill .. [[
-/**********************************************************************/
-
+    /* FREE (before ok_killed) */
+#if    defined(CEU_ADTS_NEWS_POOL) && !defined(CEU_ADTS_NEWS_MALLOC)
+            ceu_pool_free(pool, (void*)me);
+#elif  defined(CEU_ADTS_NEWS_POOL) &&  defined(CEU_ADTS_NEWS_MALLOC)
+            if (pool == NULL) {
+                ceu_out_realloc(me, 0);
+            } else {
+                ceu_pool_free(pool, (void*)me);
+            }
+#elif !defined(CEU_ADTS_NEWS_POOL) &&  defined(CEU_ADTS_NEWS_MALLOC)
+            ceu_out_realloc(me, 0);
+#endif
 }
-#endif
 ]]
-
-        local free = [[
-#ifdef CEU_ADTS_NEWS
-#ifdef CEU_ADTS_NEWS_MALLOC
-void ]]..enum..'_free_dynamic (tceu_app* app, CEU_'..id..[[* me) {
-]]
-
-        -- free all my recursive fields
-        for _,item in ipairs(top.tags[tag].tup) do
-            local _, tp, _ = unpack(item)
-            local id_top = id
-            local ok = (TP.tostr(tp) == id)
-            if (not ok) and top.subs then
-                for id_adt in pairs(top.subs) do
-                    if TP.tostr(tp) == id_adt then
-                        id_top = id_adt
-                        ok = true
-                    end
-                end
-            end
-            if ok then
-                free = free .. [[
-    CEU_]]..id_top..[[_free_dynamic(app, me->]]..tag..'.'..item.var_id..[[);
-]]
-            end
-        end
-
-        -- free myself
-        free = free .. [[
-    ceu_out_realloc(me, 0);
-}
-#endif
-#ifdef CEU_ADTS_NEWS_POOL
-void ]]..enum..'_free_static (tceu_app* app, CEU_'..id..[[* me, void* pool) {
-]]
-
-        -- free all my recursive fields
-        for _,item in ipairs(top.tags[tag].tup) do
-            local _, tp, _ = unpack(item)
-            local id_top = id
-            local ok = (TP.tostr(tp) == id)
-            if (not ok) and top.subs then
-                for id_adt in pairs(top.subs) do
-                    if TP.tostr(tp) == id_adt then
-                        id_top = id_adt
-                        ok = true
-                    end
-                end
-            end
-            if ok then
-                free = free .. [[
-    CEU_]]..id_top..[[_free_static(app, me->]]..tag..'.'..item.var_id..[[, pool);
-]]
-            end
-        end
-
-        -- free myself
-        free = free .. [[
-    ceu_pool_free(pool, (void*)me);
-}
-#endif
-#endif
-]]
-
         top.auxs[#top.auxs+1] = kill
-        top.auxs[#top.auxs+1] = free
     end,
 
     Dcl_cls_pre = function (me)

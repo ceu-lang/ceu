@@ -187,7 +187,6 @@ CEU_JMP_ORG = _ceu_org;
 #endif
 CEU_JMP_TRL = _ceu_trl;
 CEU_JMP_LBL = ]]..me.lbl_jmp.id..[[;
-printf("LONGJMP-clear\n");
 ceu_stack_dump(_ceu_stk);
 ceu_longjmp(1, _ceu_stk, _ceu_org,
             ]]..me.trails[1]..','..me.trails[2]..[[);
@@ -342,7 +341,7 @@ _ceu_app->isAlive = 0;
      * First:  the calling trail will continue normally in sequence.
      * Return status=2 to distinguish from longjmp from block termination.
      */
-printf("LONGJMP-dead\n");
+printf("ALMOST-DEAD %p\n", _ceu_org);
 ceu_stack_dump(_ceu_stk);
     ceu_longjmp(2, _ceu_stk, _ceu_org, 0, _ceu_org->n);
 }
@@ -578,6 +577,7 @@ if (]]..pool..[[ == NULL) {
 
                 -- fallback to base case if fails
                 LINE(me, [[
+printf("NEW %p\n", ]]..me.val..[[);
 if (]]..me.val..[[ == NULL) {
     ]]..me.val..[[ = &CEU_]]..string.upper(id)..[[_BASE;
 } else  /* rely on {,} that follows */
@@ -740,8 +740,8 @@ printf("SETJMP-kill-org %p\n", &stk_);
         if me.fins then
             LINE(me, [[
 /*  FINALIZE */
-_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].evt   = CEU_IN__CLEAR;
-_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
+_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].evt = CEU_IN__CLEAR;
+_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')
@@ -926,6 +926,7 @@ _ceu_trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
     }
 ]])
             end
+-- TODO: precisa teste de clear? e o outro?
             LINE(me, [[
     if (_ceu_evt!=NULL && _ceu_evt->id==CEU_IN__CLEAR) {
 ]])
@@ -1025,8 +1026,15 @@ CEU_]]..id..[[_kill(_ceu_app, ]]..VAL_root..[[);
 ]])
                 end
                 if is_dyn then
+                    local pool
+                    if PROPS.has_adts_news_pool then
+                        pool = VAL_all..'->pool'
+                    else
+                        pool = 'NULL'
+                    end
                     LINE(me, [[
-CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..VAL_root..[[);
+printf("FREE-1 %p\n", ]]..VAL_root..[[);
+CEU_]]..id..[[_free(]]..pool..[[, ]]..VAL_root..[[);
 ]])
                 else
 -- TODO: required???
@@ -1043,12 +1051,24 @@ CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
         LINE(me, '}')       -- open in Block_pre
 
         -- clear orgs
+        for _, var in ipairs(me.vars) do
+            if var.cls then
+                CLEAR(me, var.trl_orgs[1], var.trl_orgs[2]+1)
+            end
+        end
+-- TODO: choose between the two
+--[[
         if me.has_orgs then
-            -- TODO: clearing also everything before stmts
-            --       (e.g., adts), correct?
             CLEAR(me, me.trails[1], stmts.trails[1])
                                     -- end at +1
         end
+]]
+
+        LINE(me, [[
+/* unset all trails awaiting CEU_IN__CLEAR for finalization */
+memset(&_ceu_org->trls[]]..me.trails[1]..[[], 0,
+       sizeof(tceu_trl)*]]..(stmts.trails[1]-me.trails[1])..[[);
+]])
     end,
 
     Pause = CONC_ALL,
@@ -1085,7 +1105,11 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
         local to_tp_id = TP.id(to.tp)
 
         local pool = ADT.find_pool(to)
-        pool = '('..V(pool,'lval','adt_top')..'->pool)'
+        if PROPS.has_adts_news_pool then
+            pool = '('..V(pool,'lval','adt_top')..'->pool)'
+        else
+            pool = 'NULL'
+        end
 
         LINE(me, [[
 {
@@ -1095,7 +1119,9 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
         -- HACK: _ceu_org overwritten by _kill
         if PROPS.has_adts_await[to_tp_id] then
             LINE(me,[[
+#ifdef CEU_ADTS_NEWS_POOL
     tceu_org* __ceu_stk_org = _ceu_org;
+#endif
 ]])
         end
 
@@ -1103,16 +1129,35 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
             -- remove "fr" from tree (set parent link to NIL)
             LINE(me, [[
     void* __ceu_new = ]]..V(fr,'lval')..[[;
+printf("NEW[%d] %p %p\n", ]]..me.ln[2]..','..V(fr,'lval')..','..V(to,'lval')..[[);
     ]]..V(fr,'lval')..[[ = &CEU_]]..string.upper(TP.id(fr.tp))..[[_BASE;
     ]]..V(to,'lval','no_cast')..[[ = __ceu_new;
 ]])
         end
 
-        if PROPS.has_adts_await[to_tp_id] then
+        -- TODO: Unfortunately, allocation needs to happen before "free".
+        -- We need to "free" before the "kill" because the latter might abort
+        -- something and never return to accomplish the allocation and
+        -- mutation.
+
+        CONC(me, fr)                    -- 1. allocation
+        if set == 'adt-constr' then     -- 2. mutation
             LINE(me, [[
+]]..V(to,'lval','no_cast')..' = '..V(fr,'lval')..[[;
+]])
+        end
+
+        LINE(me, [[                     /* 3. free */
+    CEU_]]..to_tp_id..[[_free(]]..pool..[[, __ceu_old);
+]])
+
+        LINE(me, [[
+
+#ifdef CEU_ADTS_AWAIT_]]..to_tp_id..[[
+
+    /* OK_KILLED (after free) */        /* 4. kill */
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-printf("SETJMP-kill-adt %p\n", &stk_);
     int ret = setjmp(stk_.jmp);
     if (ret != 0) {
         /* can only come from CLEAR */
@@ -1122,49 +1167,19 @@ printf("SETJMP-kill-adt %p\n", &stk_);
 #endif
         _ceu_trl = CEU_JMP_TRL;
         _ceu_lbl = CEU_JMP_LBL;
+printf(">>>>>\n");
         goto _CEU_GOTO_;
     }
-    CEU_]]..to_tp_id..[[_kill(_ceu_app, &stk_, __ceu_old);
-}
-]])
-
-            -- HACK: _ceu_org overwritten by _kill
-            LINE(me, [[
-#undef  _ceu_org
-#define _ceu_org __ceu_stk_org
-]])
-        end
-
-        LINE(me, [[
-                /* TODO: parameter restored here */
-#if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
-    if (]]..pool..[[ == NULL) {
-        CEU_]]..to_tp_id..[[_free_dynamic(_ceu_app, __ceu_old);
-    } else {
-        CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
+    {
+        tceu_evt evt;
+                 evt.id = CEU_IN__ok_killed;
+                 evt.param = &__ceu_old;
+        ceu_sys_go_ex(_ceu_app, &evt, &stk_,
+                      _ceu_app->data, &_ceu_app->data->trls[0], NULL);
     }
-#elif defined(CEU_ADTS_NEWS_MALLOC)
-    CEU_]]..to_tp_id..[[_free_dynamic(_ceu_app, __ceu_old);
-#elif defined(CEU_ADTS_NEWS_POOL)
-    CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
+}
 #endif
 ]])
-
-        -- must allocate after the free
-        CONC(me, fr)
-        if set == 'adt-constr' then
-            LINE(me, [[
-]]..V(to,'lval','no_cast')..' = '..V(fr,'lval')..[[;
-]])
-        end
-
-        if PROPS.has_adts_await[to_tp_id] then
-            -- HACK: _ceu_org overwritten by _kill
-            LINE(me, [[
-#undef  _ceu_org
-]])
-        end
-
         LINE(me, [[
 }
 ]])
@@ -1396,7 +1411,6 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-printf("SETJMP-par %p\n", &stk_);
     int ret = setjmp(stk_.jmp);
     if (ret != 0) {
         /* can only come from CLEAR */
@@ -1407,6 +1421,7 @@ printf("SETJMP-par %p\n", &stk_);
          * Let's go to the continuation of the abortion received in 
          * "CEU_JMP_LBL/ORG".
          */
+printf("RESUME\n");
 #ifdef CEU_ORGS
         _ceu_org = CEU_JMP_ORG;
 #endif
@@ -1793,7 +1808,6 @@ if (!_ceu_app->isAlive)
         LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-printf("SETJMP-emit %p\n", &stk_);
     int ret = setjmp(stk_.jmp);
     if (ret != 0) {
         /* can only come from CLEAR */
