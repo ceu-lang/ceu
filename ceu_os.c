@@ -127,8 +127,6 @@ void ceu_longjmp (int ret, tceu_stk* stk, tceu_org* org,
         ceu_longjmp(ret, stk->down, org, t1,t2);
     }
 
-printf("CHK %p\n", stk);
-
 #ifdef CEU_ORGS
     if (stk->org != org) {
         /*
@@ -139,7 +137,7 @@ printf("CHK %p\n", stk);
         for (cur_org=stk->org; cur_org!=NULL; cur_org=cur_org->parent_org) {
             if (cur_org->parent_org == org) {
                 if (cur_org->parent_trl>=t1 && cur_org->parent_trl<=t2) {
-printf("\tyes-2\n");
+printf("--- %p\n", stk);
                     longjmp(stk->jmp, ret);
                 }
                 break;
@@ -150,7 +148,6 @@ printf("\tyes-2\n");
 #endif
     {
         if (t1<=stk->trl1 && stk->trl2<=t2) {
-printf("\tyes-1\n");
             longjmp(stk->jmp, ret);
         }
     }
@@ -222,11 +219,15 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
     /* relink also static orgs for efficiency */
     tceu_trl* trl = &org->parent_org->trls[org->parent_trl];
     if (trl->org == org) {
-        trl->org = org->nxt;    /* subst 1st org */
+        trl->org = org->nxt;        /* subst 1st org */
     } else {
         org->prv->nxt = org->nxt;
     }
-    if (org->nxt != NULL) {
+    if (org->nxt == NULL) {
+        if (trl->org != NULL) {
+            trl->org->prv = org->prv;   /* subst lst org */
+        }
+    } else {
         org->nxt->prv = org->prv;
     }
 
@@ -491,7 +492,6 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                 tceu_stk stk_ = { stk, cur, 0, cur->n, {} };
 printf("SETJMP-orgs %p\n", &stk_);
                 int ret = setjmp(stk_.jmp);
-printf("\t%d\n", ret);
                 if (ret == 0)
                 {
                     tceu_org* nxt;
@@ -521,6 +521,7 @@ printf("\t%d\n", ret);
                 } else { /* ret == 2 */
                     /* came from org natural termination */
                     tceu_org* nxt = cur->nxt;   /* save before kill/free */
+printf("NEXT %p\n", nxt);
 /* TODO: setjmp? */
                     ceu_sys_org_kill(app, cur, stk);
                     cur = nxt;

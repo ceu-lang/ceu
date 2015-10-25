@@ -50992,6 +50992,78 @@ escape 1;
 ]],
     run = 1,
 }
+]==]
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree  left;
+        var Tree  right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Body with
+    pool  Body[]& bodies;
+    var   Tree&&   n;
+    var   int&    sum;
+    event int     ok;
+do
+    watching *n do
+        var int i = this.sum;
+        if n:NODE then
+            var Body&&? left =
+                spawn Body in this.bodies with
+                    this.bodies = &bodies;
+                    this.n      = &&n:NODE.left;
+                    this.sum    = &sum;
+                end;
+            if left? then
+                watching *left! do
+                    await left!:ok;
+                end
+            end
+
+            this.sum = this.sum + 1;
+
+            var Body&&? right =
+                spawn Body in this.bodies with
+                    this.bodies = &bodies;
+                    this.n      = &&n:NODE.right;
+                    this.sum    = &sum;
+                end;
+            if right? then
+                watching *right! do
+                    await right!:ok;
+                end
+            end
+        end
+    end
+    await 1s;
+    emit this.ok => 1;
+end
+
+var int sum = 0;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = &bodies;
+    this.n      = &&tree;
+    this.sum    = &sum;
+end;
+
+escape sum;
+]],
+    _ana = {acc=true},
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>10s'] = 3 },
+}
 Test { [[
 data Tree with
     tag NIL;
@@ -51135,7 +51207,6 @@ escape sum;
     run = { ['~>10s'] = 9 },
 }
 
-]==]
 Test { [[
 data List with
     tag NIL;
