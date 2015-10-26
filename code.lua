@@ -432,8 +432,9 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
             _ceu_org = CEU_JMP_ORG;
 #endif
             _ceu_trl = CEU_JMP_TRL;
-            _ceu_lbl = CEU_JMP_LBL;
-            goto _CEU_GOTO_;
+]])
+            GOTO(me, 'CEU_JMP_LBL')
+            LINE(me, [[
             break;
         case 2:
             /* came from ceu_sys_org_kill, org natural termination,
@@ -638,7 +639,9 @@ if (]]..me.val..[[ == NULL) {
 #endif
         _ceu_trl = CEU_JMP_TRL;
         _ceu_lbl = CEU_JMP_LBL;
-        goto _CEU_GOTO_;
+]])
+        GOTO(me, 'CEU_JMP_LBL')
+        LINE(me, [[
     }
     ceu_sys_org_kill(_ceu_app, (tceu_org*)]]..V(org,'lval')..[[, &stk_);
 }
@@ -1131,8 +1134,9 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
         _ceu_org = CEU_JMP_ORG;
 #endif
         _ceu_trl = CEU_JMP_TRL;
-        _ceu_lbl = CEU_JMP_LBL;
-        goto _CEU_GOTO_;
+]])
+        GOTO(me, 'CEU_JMP_LBL')
+        LINE(me, [[
     }
     {
         tceu_evt evt;
@@ -1391,8 +1395,9 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         _ceu_org = CEU_JMP_ORG;
 #endif
         _ceu_trl = CEU_JMP_TRL;
-        _ceu_lbl = CEU_JMP_LBL;
-        goto _CEU_GOTO_;
+]])
+        GOTO(me, 'CEU_JMP_LBL')
+        LINE(me, [[
     }
 ]])
 
@@ -1786,8 +1791,9 @@ if (!_ceu_app->isAlive)
         _ceu_org = CEU_JMP_ORG;
 #endif
         _ceu_trl = CEU_JMP_TRL;
-        _ceu_lbl = CEU_JMP_LBL;
-        goto _CEU_GOTO_;
+]])
+        GOTO(me, 'CEU_JMP_LBL')
+        LINE(me, [[
     }
 ]])
 

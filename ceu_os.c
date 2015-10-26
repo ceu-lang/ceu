@@ -90,6 +90,7 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 
 /**********************************************************************/
 
+#ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_STACK
 void ceu_stack_dump (tceu_stk* stk) {
     if (stk == NULL) {
@@ -100,6 +101,7 @@ void ceu_stack_dump (tceu_stk* stk) {
     printf("[%p] org=%p trls=[%d,%d]\n",
         stk, stk->org, stk->trl1, stk->trl2);
 }
+#endif
 #endif
 
 #ifdef CEU_ORGS
@@ -137,7 +139,6 @@ void ceu_longjmp (int ret, tceu_stk* stk, tceu_org* org,
         for (cur_org=stk->org; cur_org!=NULL; cur_org=cur_org->parent_org) {
             if (cur_org->parent_org == org) {
                 if (cur_org->parent_trl>=t1 && cur_org->parent_trl<=t2) {
-printf("--- %p\n", stk);
                     longjmp(stk->jmp, ret);
                 }
                 break;
