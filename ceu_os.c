@@ -90,72 +90,6 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 
 /**********************************************************************/
 
-#ifdef CEU_DEBUG_TRAILS
-#ifdef CEU_STACK
-void ceu_stack_dump (tceu_stk* stk) {
-    if (stk == NULL) {
-        printf(">>> BOTTOM\n");
-        return;
-    }
-    ceu_stack_dump(stk->down);
-    printf("[%p] org=%p trls=[%d,%d]\n",
-        stk, stk->org, stk->trl1, stk->trl2);
-}
-#endif
-#endif
-
-#ifdef CEU_ORGS
-static tceu_org* CEU_JMP_ORG;
-#endif
-static tceu_trl* CEU_JMP_TRL;
-static tceu_nlbl CEU_JMP_LBL;
-    /* pointer might not fit in an "int", which is the type "longjmp" accepts,
-       so we use a global instead */
-
-/*
- * Trails [t1,t2] of "org" are dyeing.
- * Traverse the stack to see if a pending call is enclosed by this range.
- * If so, the whole stack has to unwind and continue from what we pass in 
- * lbl_or_org.
- */
-void ceu_longjmp (int ret, tceu_stk* stk, tceu_org* org,
-                  tceu_ntrl t1, tceu_ntrl t2) {
-    /* TODO: reverse */
-    /* traverse from the bottom to the top, we want to unwind from the lowest
-     * matching lavel */
-    if (stk == NULL) {
-        return;
-    } else {
-        ceu_longjmp(ret, stk->down, org, t1,t2);
-    }
-
-#ifdef CEU_ORGS
-    if (stk->org != org) {
-        /*
-         * Check if stk->org is the dieyng "org" or one of its children:
-         *      org, org->par, org->par->par, ...
-         */
-        tceu_org* cur_org;
-        for (cur_org=stk->org; cur_org!=NULL; cur_org=cur_org->parent_org) {
-            if (cur_org->parent_org == org) {
-                if (cur_org->parent_trl>=t1 && cur_org->parent_trl<=t2) {
-                    longjmp(stk->jmp, ret);
-                }
-                break;
-            }
-        }
-    }
-    else
-#endif
-    {
-        if (t1<=stk->trl1 && stk->trl2<=t2) {
-            longjmp(stk->jmp, ret);
-        }
-    }
-}
-
-/**********************************************************************/
-
 void ceu_sys_org (tceu_org* org, int n, int lbl,
                   int cls, int isDyn,
                   tceu_org* parent_org, tceu_ntrl parent_trl)
@@ -210,6 +144,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 }
 
 #ifdef CEU_ORGS
+
 void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
 {
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
@@ -232,15 +167,6 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
         org->nxt->prv = org->prv;
     }
 
-#ifdef CEU_ORGS_AWAIT
-    {
-        /* save return before "free" */
-        tceu_kill ps = { org, org->ret };
-        tceu_evt evt_;
-                 evt_.id = CEU_IN__ok_killed;
-                 evt_.param = &ps;
-#endif
-
 #ifdef CEU_ORGS_NEWS
         /* free */
         if (org->isDyn) {
@@ -257,16 +183,86 @@ void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
 #endif
         }
 #endif
+}
 
-#ifdef CEU_ORGS_AWAIT
-        /* signal killed */
-        ceu_sys_go_ex(app, &evt_,
-                      stk,
-                      app->data, &app->data->trls[0], NULL);
+/*
+ * Checks if "me" is cleared due to a clear in "clr_org".
+ * ;
+ */
+int ceu_sys_org_is_cleared (void* me, void* clr_org,
+                            tceu_ntrl clr_t1, tceu_ntrl clr_t2)
+{
+    tceu_org* cur_org;
+    if (me == clr_org) {
+        return 1;
     }
-#endif
+    for (cur_org=me; cur_org!=NULL; cur_org=cur_org->parent_org) {
+        if (cur_org->parent_org == clr_org) {
+            if (cur_org->parent_trl>=clr_t1 && cur_org->parent_trl<=clr_t2) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+#endif  /* CEU_ORGS */
+
+/**********************************************************************/
+
+#ifdef CEU_DEBUG_TRAILS
+#ifdef CEU_STACK
+void ceu_stack_dump (tceu_stk* stk) {
+    if (stk == NULL) {
+        printf(">>> BOTTOM\n");
+        return;
+    }
+    ceu_stack_dump(stk->down);
+    printf("[%p] org=%p trls=[%d,%d]\n",
+        stk, stk->org, stk->trl1, stk->trl2);
 }
 #endif
+#endif
+
+#ifdef CEU_ORGS
+static tceu_org* CEU_JMP_ORG;
+#endif
+static tceu_trl* CEU_JMP_TRL;
+static tceu_nlbl CEU_JMP_LBL;
+    /* pointer might not fit in an "int", which is the type "longjmp" accepts,
+       so we use a global instead */
+
+/*
+ * Trails [t1,t2] of "org" are dyeing.
+ * Traverse the stack to see if a pending call is enclosed by this range.
+ * If so, the whole stack has to unwind and continue from what we pass in 
+ * lbl_or_org.
+ */
+void ceu_longjmp (int ret, tceu_stk* stk, tceu_org* org,
+                  tceu_ntrl t1, tceu_ntrl t2) {
+    /* TODO: reverse */
+    /* traverse from the bottom to the top, we want to unwind from the lowest
+     * matching lavel */
+    if (stk == NULL) {
+        return;
+    } else {
+        ceu_longjmp(ret, stk->down, org, t1,t2);
+    }
+
+#ifdef CEU_ORGS
+    if (stk->org != org) {
+        if (ceu_sys_org_is_cleared(stk->org, org, t1, t2)) {
+            longjmp(stk->jmp, ret);
+        }
+    }
+    else
+#endif
+    {
+        if (t1<=stk->trl1 && stk->trl2<=t2) {
+            longjmp(stk->jmp, ret);
+        }
+    }
+}
 
 /**********************************************************************/
 
@@ -523,9 +519,35 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     tceu_org* nxt = cur->nxt;   /* save before kill/free */
 /* TODO: setjmp? */
                     ceu_sys_org_kill(app, cur, stk);
+#ifdef CEU_ORGS_AWAIT
+            /* signal ok_killed */
+            {
+                tceu_kill ps = { cur, cur->ret };
+                tceu_evt evt_;
+                         evt_.id = CEU_IN__ok_killed;
+                         evt_.param = &ps;
+                ceu_sys_go_ex(app, &evt_,
+                              stk,
+                              app->data, &app->data->trls[0], NULL);
+            }
+#endif
                     cur = nxt;
                 }
             }
+
+#ifdef CEU_ORGS_AWAIT
+            /* signal ok_killed */
+            if (evt->id == CEU_IN__CLEAR) {
+                tceu_kill ps = { org, org->ret };
+                tceu_evt evt_;
+                         evt_.id = CEU_IN__ok_killed;
+                         evt_.param = &ps;
+                ceu_sys_go_ex(app, &evt_,
+                              stk,
+                              app->data, &app->data->trls[0], NULL);
+            }
+#endif
+
             continue;   /* next trail after handling children */
         }
 #endif /* CEU_ORGS */
@@ -552,8 +574,11 @@ if (evt->param != NULL) {
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
             /* if */
             (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
-                (trl->org_or_adt == NULL || /* for option types, initied w/ NULL  */
-                 trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt))
+                (trl->org_or_adt == NULL || /* for option ptrs, init'd w/ NULL  */
+                 ceu_sys_org_is_cleared(trl->org_or_adt,
+                                        ((tceu_kill*)evt->param)->org_or_adt,
+                                        ((tceu_kill*)evt->param)->t1,
+                                        ((tceu_kill*)evt->param)->t2)))
         ||
 #endif
             /* if evt->id matches awaiting trail */

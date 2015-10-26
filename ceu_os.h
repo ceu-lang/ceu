@@ -216,7 +216,7 @@
 #endif /* ! CEU_OS_APP (!CEU_OS||CEU_OS_KERNEL) */
 
 #define ceu_in_emit(app,id,n,buf) \
-    ceu_out_go_stk(app,id,buf,&stk_)
+    ceu_out_go_stk(app,id,buf,_ceu_stk)
 
 #ifdef CEU_THREADS
 /* TODO: app */
@@ -496,8 +496,10 @@ typedef struct {
 
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
 typedef struct {
-    void* org_or_adt;
-    int ret;
+    void*     org_or_adt;
+    int       ret;
+    tceu_ntrl t1;
+    tceu_ntrl t2;
 } tceu_kill;
 #endif
 

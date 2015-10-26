@@ -437,7 +437,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
             LINE(me, [[
             break;
         case 2:
-            /* came from ceu_sys_org_kill, org natural termination,
+            /* came from org natural termination,
              * unset the org variable, kill the org, and continue executing 
              * normally */
 ]])
@@ -447,7 +447,22 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 ]])
         end
         LINE(me, [[
-            ceu_sys_org_kill(_ceu_app, ]]..org..[[, _ceu_stk);
+#ifdef CEU_ORGS_AWAIT
+            {
+                /* save return before "free" */
+                tceu_kill ps = { ]]..org..[[, ]]..org..[[->ret };
+                tceu_evt evt_;
+                         evt_.id = CEU_IN__ok_killed;
+                         evt_.param = &ps;
+#endif
+                ceu_sys_org_kill(_ceu_app, ]]..org..[[, _ceu_stk);
+#ifdef CEU_ORGS_AWAIT
+                /* signal killed */
+                ceu_sys_go_ex(_ceu_app, &evt_,
+                              _ceu_stk,
+                              _ceu_app->data, &_ceu_app->data->trls[0], NULL);
+            }
+#endif
             break;
     }
 }
@@ -643,7 +658,24 @@ if (]]..me.val..[[ == NULL) {
         GOTO(me, 'CEU_JMP_LBL')
         LINE(me, [[
     }
-    ceu_sys_org_kill(_ceu_app, (tceu_org*)]]..V(org,'lval')..[[, &stk_);
+
+#ifdef CEU_ORGS_AWAIT
+    {
+        /* save return before "free" */
+        tceu_kill ps = { ]]..V(org,'lval')..[[,
+                         ((tceu_org*)]]..V(org,'lval')..[[)->ret };
+        tceu_evt evt_;
+                 evt_.id = CEU_IN__ok_killed;
+                 evt_.param = &ps;
+#endif
+        ceu_sys_org_kill(_ceu_app, (tceu_org*)]]..V(org,'lval')..[[, _ceu_stk);
+#ifdef CEU_ORGS_AWAIT
+        /* signal killed */
+        ceu_sys_go_ex(_ceu_app, &evt_,
+                      &stk_,
+                      _ceu_app->data, &_ceu_app->data->trls[0], NULL);
+    }
+#endif
 }
 ]])
     end,
@@ -954,8 +986,10 @@ if (]]..fin.val..[[) {
                                             ceu_vector_geti(]]..val..[[, __ceu_i);
         tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
-             ( ((tceu_org*)(__ceu_one->SOME.v)) ==
-               (__ceu_casted)->org_or_adt ) )
+             ceu_sys_org_is_cleared((tceu_org*)__ceu_one->SOME.v,
+                                    __ceu_casted->org_or_adt,
+                                    __ceu_casted->t1,
+                                    __ceu_casted->t2) )
         {
             __ceu_one->tag = CEU_]]..ID..[[_NIL;
 /*
@@ -971,8 +1005,11 @@ if (]]..fin.val..[[) {
                     LINE(me, [[
     {
         tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
-        if (]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
-            ((tceu_org*)(]]..val..[[.SOME.v))==(__ceu_casted)->org_or_adt)
+        if ( ]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
+             ceu_sys_org_is_cleared((tceu_org*)]]..val..[[.SOME.v,
+                                    __ceu_casted->org_or_adt,
+                                    __ceu_casted->t1,
+                                    __ceu_casted->t2) )
         {
             ]]..val..' = '..string.upper(TP.toc(var.tp))..[[_pack(NULL);
         }
@@ -1644,7 +1681,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
                 LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-    int ret = setjmp(stk_.jmp);
+    int ret = 0; /* setjmp(stk_.jmp); */
     if (ret != 0) {
         /* can only come from CLEAR */
         ceu_out_assert(ret == 1);
@@ -1759,14 +1796,14 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 #ifdef CEU_WCLOCKS
 {
     u32 __ceu_tmp_]]..me.n..' = '..V(ps[1],'rval')..[[;
-    ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[, &stk_);
+    ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[, _ceu_stk);
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
            _ceu_app->isAlive &&
 #endif
            _ceu_app->wclk_min_set]]..suf..[[<=0) {
         s32 __ceu_dt = 0;
-        ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt, &stk_);
+        ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt, _ceu_stk);
     }
 }
 #endif

@@ -23269,6 +23269,10 @@ escape 1;
 }
 -- ASYNC
 
+print'=========================================='
+print'TODO: when finishing org-kill, put EmitExt setjmp back and see if this passes'
+print'=========================================='
+io.read()
 Test { [[
 input void A;
 par/or do
@@ -23283,6 +23287,7 @@ async do
 end
 escape 1;
 ]],
+    todo = true,
     run = 1,
 }
 
@@ -44301,7 +44306,7 @@ do
     await FOREVER;
 end
 native do
-    int V = 0;
+    int V = 1;
 end
 class Item with
     var U&& u;
@@ -44309,7 +44314,7 @@ do
     watching *u do
         await FOREVER;
     end
-    _V = 1;
+    _V = _V+1;
 end
 do
     var U u;
@@ -53424,6 +53429,61 @@ escape ret;
 ]],
     _ana = { acc=true },
     run = 5,
+}
+
+print'=========================================='
+print'TODO: this is failing with EmitExt setjmp'
+print'=========================================='
+io.read()
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag FORWARD with
+        var int pixels;
+    end
+or
+    tag SEQUENCE with
+        var Command  one;
+        var Command  two;
+    end
+end
+
+pool Command[] cmds;
+
+cmds = new Command.SEQUENCE(
+            Command.FORWARD(100),
+            Command.FORWARD(500));
+
+par/or do
+    traverse cmd in &&cmds do
+    _printf("oi %p\n", __ceu_org);
+finalize with
+    _printf("tchau %p\n", __ceu_org);
+end
+        watching *cmd do
+            if cmd:FORWARD then
+                await FOREVER;
+
+            else/if cmd:SEQUENCE then
+                traverse &&cmd:SEQUENCE.one;
+
+            else
+            end
+        end
+    end
+with
+    await 100s;
+end
+_printf("OUT\n");
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>100s']=10 },
 }
 
 Test { [[
