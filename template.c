@@ -197,6 +197,9 @@ ceu_app_init (tceu_app* app)
 #ifdef CEU_RET
     app->ret = 0;
 #endif
+#if defined(CEU_ORGS_NEWS_MALLOC) || defined(CEU_ADTS_NEWS_MALLOC)
+    app->tofree = NULL;
+#endif
 #ifdef CEU_WCLOCKS
     app->wclk_late = 0;
     app->wclk_min_set = CEU_WCLOCK_INACTIVE;
@@ -256,16 +259,9 @@ ceu_app_init (tceu_app* app)
     ceu_lua_atpanic(app->lua, ceu_lua_atpanic_f);    /* TODO: CEU_OS */
 #endif
 
-    {
-        tceu_evt evt;
-                 evt.id = CEU_IN__INIT;
-        app->data->trls[0].evt = CEU_IN__INIT;
-        app->data->trls[0].seqno = 1;
-        ceu_sys_go_ex(app, &evt,
-                      NULL,
-                      app->data, &app->data->trls[0], NULL);
-    }
-
+    app->data->trls[0].evt = CEU_IN__INIT;
+    app->data->trls[0].seqno = 0;
+    ceu_sys_go(app, CEU_IN__INIT, NULL);
 }
 
 /* EXPORTED ENTRY POINT

@@ -525,6 +525,14 @@ typedef struct tceu_stk {
     jmp_buf   jmp;
 } tceu_stk;
 
+/* TCEU_TOFREE */
+
+#if defined(CEU_ORGS_NEWS_MALLOC) || defined(CEU_ADTS_NEWS_MALLOC)
+typedef struct tceu_tofree {
+    struct tceu_tofree* nxt;
+} tceu_tofree;
+#endif
+
 /* TCEU_APP */
 
 typedef struct tceu_app {
@@ -550,6 +558,10 @@ typedef struct tceu_app {
 
 #if defined(CEU_RET) || defined(CEU_ORGS_AWAIT)
     int ret;
+#endif
+
+#if defined(CEU_ORGS_NEWS_MALLOC) || defined(CEU_ADTS_NEWS_MALLOC)
+    tceu_tofree* tofree;
 #endif
 
 #ifdef CEU_WCLOCKS

@@ -145,7 +145,8 @@ void ceu_sys_org_init (tceu_org* org, int n, int lbl,
 
 #ifdef CEU_ORGS
 
-void ceu_sys_org_free (tceu_app* app, tceu_org* org, tceu_stk* stk)
+/* TODO: tirar stk */
+void ceu_sys_org_free (tceu_app* app, tceu_org* org)
 {
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
     org->isAlive = 0;
@@ -174,12 +175,14 @@ void ceu_sys_org_free (tceu_app* app, tceu_org* org, tceu_stk* stk)
             ceu_pool_free(&org->pool->pool, (byte*)org);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
             if (org->pool->pool.queue == NULL) {
-                ceu_sys_realloc(org, 0);
+                ((tceu_tofree*)org)->nxt = app->tofree;
+                app->tofree = (tceu_tofree*)org;
             } else {
                 ceu_pool_free(&org->pool->pool, (byte*)org);
             }
 #elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-            ceu_sys_realloc(org, 0);
+            ((tceu_tofree*)org)->nxt = app->tofree;
+            app->tofree = (tceu_tofree*)org;
 #endif
         }
 #endif
@@ -501,7 +504,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     /* kill child if a IN__CLEAR in the parent */
                     if (evt->id == CEU_IN__CLEAR) {
 /* TODO: setjmp? */
-                        ceu_sys_org_free(app, cur, stk);
+                        ceu_sys_org_free(app, cur);
                     }
                     cur = nxt;
                 }
@@ -518,7 +521,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     /* came from org natural termination */
                     tceu_org* nxt = cur->nxt;   /* save before kill/free */
 /* TODO: setjmp? */
-                    ceu_sys_org_free(app, cur, stk);
+                    ceu_sys_org_free(app, cur);
 #ifdef CEU_ORGS_AWAIT
             /* signal ok_killed */
             {
@@ -701,6 +704,14 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
         app->wclk_late_ = 0;
     }
 #endif
+#endif
+
+#ifdef CEU_ORGS_NEWS_MALLOC
+    while (app->tofree != NULL) {
+        tceu_tofree* nxt = app->tofree->nxt;
+        ceu_sys_realloc(app->tofree, 0);
+        app->tofree = nxt;
+    }
 #endif
 }
 

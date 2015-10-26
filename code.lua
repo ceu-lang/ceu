@@ -455,7 +455,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
                          evt_.id = CEU_IN__ok_killed;
                          evt_.param = &ps;
 #endif
-                ceu_sys_org_free(_ceu_app, ]]..org..[[, _ceu_stk);
+                ceu_sys_org_free(_ceu_app, ]]..org..[[);
 #ifdef CEU_ORGS_AWAIT
                 /* signal killed */
                 ceu_sys_go_ex(_ceu_app, &evt_,
@@ -659,18 +659,15 @@ if (]]..me.val..[[ == NULL) {
         LINE(me, [[
     }
 
+    ceu_sys_org_free(_ceu_app, (tceu_org*)]]..V(org,'lval')..[[);
 #ifdef CEU_ORGS_AWAIT
+    /* signal killed */
     {
-        /* save return before "free" */
         tceu_kill ps = { ]]..V(org,'lval')..[[,
                          ((tceu_org*)]]..V(org,'lval')..[[)->ret };
         tceu_evt evt_;
                  evt_.id = CEU_IN__ok_killed;
                  evt_.param = &ps;
-#endif
-        ceu_sys_org_free(_ceu_app, (tceu_org*)]]..V(org,'lval')..[[, _ceu_stk);
-#ifdef CEU_ORGS_AWAIT
-        /* signal killed */
         ceu_sys_go_ex(_ceu_app, &evt_,
                       &stk_,
                       _ceu_app->data, &_ceu_app->data->trls[0], NULL);
