@@ -380,10 +380,10 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         LINE(me, [[
     /* resets org memory and starts org.trail[0]=Class_XXX */
     /* TODO: BUG: _ceu_org is not necessarily the parent for pool allocations */
-    ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
-                ]]..t.cls.n..[[,
-                ]]..t.isDyn..[[,
-                ]]..t.parent_org..','..t.parent_trl..[[);
+    ceu_out_org_init(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
+                     ]]..t.cls.n..[[,
+                     ]]..t.isDyn..[[,
+                     ]]..t.parent_org..','..t.parent_trl..[[);
 /* TODO: currently idx is always "1" for all interfaces access because pools 
  * are all together there. When we have separate trls for pools, we'll have to 
  * indirectly access the offset in the interface. */
@@ -455,7 +455,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
                          evt_.id = CEU_IN__ok_killed;
                          evt_.param = &ps;
 #endif
-                ceu_sys_org_kill(_ceu_app, ]]..org..[[, _ceu_stk);
+                ceu_sys_org_free(_ceu_app, ]]..org..[[, _ceu_stk);
 #ifdef CEU_ORGS_AWAIT
                 /* signal killed */
                 ceu_sys_go_ex(_ceu_app, &evt_,
@@ -668,7 +668,7 @@ if (]]..me.val..[[ == NULL) {
                  evt_.id = CEU_IN__ok_killed;
                  evt_.param = &ps;
 #endif
-        ceu_sys_org_kill(_ceu_app, (tceu_org*)]]..V(org,'lval')..[[, _ceu_stk);
+        ceu_sys_org_free(_ceu_app, (tceu_org*)]]..V(org,'lval')..[[, _ceu_stk);
 #ifdef CEU_ORGS_AWAIT
         /* signal killed */
         ceu_sys_go_ex(_ceu_app, &evt_,

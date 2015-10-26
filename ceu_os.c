@@ -90,9 +90,9 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 
 /**********************************************************************/
 
-void ceu_sys_org (tceu_org* org, int n, int lbl,
-                  int cls, int isDyn,
-                  tceu_org* parent_org, tceu_ntrl parent_trl)
+void ceu_sys_org_init (tceu_org* org, int n, int lbl,
+                       int cls, int isDyn,
+                       tceu_org* parent_org, tceu_ntrl parent_trl)
 {
     /* { evt=0, seqno=0, lbl=0 } for all trails */
     memset(&org->trls, 0, n*sizeof(tceu_trl));
@@ -145,7 +145,7 @@ void ceu_sys_org (tceu_org* org, int n, int lbl,
 
 #ifdef CEU_ORGS
 
-void ceu_sys_org_kill (tceu_app* app, tceu_org* org, tceu_stk* stk)
+void ceu_sys_org_free (tceu_app* app, tceu_org* org, tceu_stk* stk)
 {
 #if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
     org->isAlive = 0;
@@ -501,7 +501,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     /* kill child if a IN__CLEAR in the parent */
                     if (evt->id == CEU_IN__CLEAR) {
 /* TODO: setjmp? */
-                        ceu_sys_org_kill(app, cur, stk);
+                        ceu_sys_org_free(app, cur, stk);
                     }
                     cur = nxt;
                 }
@@ -518,7 +518,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     /* came from org natural termination */
                     tceu_org* nxt = cur->nxt;   /* save before kill/free */
 /* TODO: setjmp? */
-                    ceu_sys_org_kill(app, cur, stk);
+                    ceu_sys_org_free(app, cur, stk);
 #ifdef CEU_ORGS_AWAIT
             /* signal ok_killed */
             {
@@ -783,7 +783,7 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
 #ifdef CEU_ISR
     (void*) &ceu_sys_isr,
 #endif
-    (void*) &ceu_sys_org,
+    (void*) &ceu_sys_org_init,
     (void*) &ceu_sys_start,
     (void*) &ceu_sys_link,
     (void*) &ceu_sys_unlink,
