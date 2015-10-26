@@ -23270,6 +23270,23 @@ escape 1;
 -- ASYNC
 
 Test { [[
+input void A;
+par/or do
+    async do
+        emit A;
+    end
+    escape -1;
+with
+    await A;
+end
+async do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 async do
 
     par/or do
@@ -55898,7 +55915,6 @@ escape ret;
 
 -- TIMEMACHINE
 do return end
-
 local t = {
     [1] = [[
 #define TM_QUEUE
@@ -55983,18 +55999,25 @@ end;
 
 par/or do
     await 3s_;
+_printf("1\n");
     emit tm.go_on;
+_printf("2\n");
     await 1s_;
+_printf("3\n");
 
     ///////////////////////////////
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
+_printf("4 >%d\n", app.v);
     _assert(app.v == 3);
 
     emit tm.go_seek => 0;
+_printf("5\n");
     TM_AWAIT_SEEK(tm);
+_printf("6\n");
     _assert(app.v == 0);
+_printf("7\n");
 
     emit tm.go_seek => 500;
     TM_AWAIT_SEEK(tm);

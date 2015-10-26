@@ -210,11 +210,13 @@
 #endif
     #define ceu_out_go(app,evt,evtp) \
             ceu_sys_go(app,evt,evtp)
+    #define ceu_out_go_stk(app,evt,evtp,stk) \
+            ceu_sys_go_stk(app,evt,evtp,stk)
 
 #endif /* ! CEU_OS_APP (!CEU_OS||CEU_OS_KERNEL) */
 
 #define ceu_in_emit(app,id,n,buf) \
-    ceu_out_go(app,id,buf)
+    ceu_out_go_stk(app,id,buf,&stk_)
 
 #ifdef CEU_THREADS
 /* TODO: app */

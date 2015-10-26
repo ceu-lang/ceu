@@ -615,8 +615,7 @@ SPC(1); printf("<<< NO\n");
     }
 }
 
-void ceu_sys_go (tceu_app* app, int evt, void* evtp)
-{
+void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
     app->seqno++;
 #ifdef CEU_DEBUG_TRAILS
     printf("===> [%d] %d\n", evt, app->seqno);
@@ -653,7 +652,7 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
                  evt_.id = evt;
                  evt_.param = &evtp;
         ceu_sys_go_ex(app, &evt_,
-                      NULL,
+                      stk,
                       app->data, &app->data->trls[0], NULL);
     }
 
@@ -678,6 +677,11 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
     }
 #endif
 #endif
+}
+
+void ceu_sys_go (tceu_app* app, int evt, void* evtp)
+{
+    ceu_sys_go_stk(app, evt, evtp, NULL);
 }
 
 int ceu_go_all (tceu_app* app)

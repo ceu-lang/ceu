@@ -1640,6 +1640,29 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
                 ptr = '(CEU_Main*)_ceu_app->data'
             else
                 ptr = '_ceu_app'
+                -- input emit yields, save the stack
+                LINE(me, [[
+{
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    int ret = setjmp(stk_.jmp);
+    if (ret != 0) {
+        /* can only come from CLEAR */
+        ceu_out_assert(ret == 1);
+        /* This trail has been aborted from the call below.
+         * It was the lowest aborted trail in the stack, so the abortion code 
+         * "CLEAR" did a "longjmp" to here to unwind the whole stack.
+         * Let's go to the continuation of the abortion received as "ret".
+         */
+#ifdef CEU_ORGS
+        _ceu_org = CEU_JMP_ORG;
+#endif
+        _ceu_trl = CEU_JMP_TRL;
+]])
+    GOTO(me, 'CEU_JMP_LBL')
+    LINE(me, [[
+    }
+]])
+
             end
         else
             assert(e.evt.pre == 'output')
@@ -1658,7 +1681,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
         -- block for __emit_ps
         LINE(me, [[
-{
+    {
 ]])
 
         if ps and #ps>0 and e[1]~='_WCLOCK' then
@@ -1719,7 +1742,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
             -- block for __emit_ps
             LINE(me, [[
-}
+    }
 ]])
             return
         end
@@ -1736,14 +1759,14 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 #ifdef CEU_WCLOCKS
 {
     u32 __ceu_tmp_]]..me.n..' = '..V(ps[1],'rval')..[[;
-    ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[);
+    ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[, &stk_);
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
            _ceu_app->isAlive &&
 #endif
            _ceu_app->wclk_min_set]]..suf..[[<=0) {
         s32 __ceu_dt = 0;
-        ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt);
+        ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt, &stk_);
     }
 }
 #endif
@@ -1752,9 +1775,9 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
             LINE(me, VAL..';')
         end
 
-        -- block for __emit_ps
         LINE(me, [[
-}
+    }   /* block for __emit_ps */
+}       /* block for setjmp */
 ]])
 
         LINE(me, [[
