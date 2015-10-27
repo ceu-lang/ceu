@@ -194,7 +194,6 @@ static void ceu_sys_org_free (tceu_app* app, tceu_org* org)
 
 /**********************************************************************/
 
-#ifdef CEU_DEBUG_TRAILS
 #ifdef CEU_STACK
 void ceu_stack_dump (tceu_stk* stk) {
     if (stk == NULL) {
@@ -205,7 +204,6 @@ void ceu_stack_dump (tceu_stk* stk) {
     printf("[%p] org=%p trls=[%d,%d]\n",
         stk, stk->org, stk->trl1, stk->trl2);
 }
-#endif
 #endif
 
 #ifdef CEU_ORGS
@@ -517,18 +515,11 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             /* traverse all children */
             while (cur != NULL) {
                 tceu_org* nxt = cur->nxt;
+/* TODO: remove? */
 
                 tceu_stk stk_ = { stk, cur, 0, cur->n, {} };
                 int ret = setjmp(stk_.jmp);
-                if (ret == 0)
-                {
-                    /* normal flow: call cur and proceed to nxt */
-                    ceu_sys_go_ex(app, evt,
-                                  &stk_,
-                                  cur, &cur->trls[0], NULL);
-                }
-                else if (ret == 1)
-                {
+                if (ret != 0) {
                     /* came from clear, so all my brothers are also dead,
                      * break the loop. before, execute the clear continuation 
                      */
@@ -537,10 +528,9 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                         /* stk: restore previous (skip &stk_) */
                     break;
                 }
-                else /* ret == 2 */
-                {
-                    /* came from org natural termination, continue to next */
-                }
+                ceu_sys_go_ex(app, evt,
+                              &stk_,
+                              cur, &cur->trls[0], NULL);
                 cur = nxt;
             }
             continue;   /* next trail after handling children */

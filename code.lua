@@ -169,7 +169,7 @@ function CLEAR (me)
         if ANA then   -- fin must execute before any stmt
             local top = AST.iter(_iter)()
             if top and ANA.IS_EQUAL(top.ana.pos, me.ana.pos) then
-                return  -- top will clear
+                --return  -- top will clear
             end
         end
     end
@@ -335,15 +335,6 @@ _ceu_app->isAlive = 0;
                   &_ceu_org->trls[_ceu_org->n], /* to the end, only free it */
                   NULL);
 }
-
-/* LONGJMP
- * Natural termination: can only be reached from parent traversal or from first 
- * execution (immediate termination).
- * Parent: resume the parent traversal from "nxt".
- * First:  the calling trail will continue normally in sequence.
- * Return status=2 to distinguish from longjmp from block termination.
- */
-ceu_longjmp(2, _ceu_stk, _ceu_org, 0, _ceu_org->n);
 ]])
         end
         HALT(me)
@@ -422,36 +413,32 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, ]]..org..[[, 0, ]]..org..[[->n, {} };
-    int ret = setjmp(stk_.jmp);
-    switch (ret) {
-        case 0:
-            /* normal flow: spawn */
-            ceu_app_go(_ceu_app,NULL,
-                       ]]..org..[[, &]]..org..[[->trls[0],
-                       &stk_, NULL);
-            break;
-        case 1:
-            /* came from clear, proceed to its continuation */
+    if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
-            _ceu_org = CEU_JMP_ORG;
+        _ceu_org = CEU_JMP_ORG;
 #endif
-            _ceu_trl = CEU_JMP_TRL;
+        _ceu_trl = CEU_JMP_TRL;
 ]])
-            GOTO(me, 'CEU_JMP_LBL')
-            LINE(me, [[
-            break;
-        case 2:
-            /* came from org natural termination,
-             * unset the org variable, continue executing normally */
+        GOTO(me, 'CEU_JMP_LBL')
+        LINE(me, [[
+    }
+
+    /* SETJMP: spawning a new org
+     * The new org might emit a global event that awakes a par/or enclosing the 
+     * call point.
+     */
+    ceu_app_go(_ceu_app,NULL,
+               ]]..org..[[, &]]..org..[[->trls[0],
+               &stk_, NULL);
 ]])
         if t.set then
                 LINE(me, [[
-            ]]..V(t.set,'rval')..' = '..string.upper(TP.toc(t.set.tp))..[[_pack(NULL);
+    if (!]]..org..[[->isAlive) {
+        ]]..V(t.set,'rval')..' = '..string.upper(TP.toc(t.set.tp))..[[_pack(NULL);
+    }
 ]])
         end
         LINE(me, [[
-            break;
-    }
 }
 ]])
         if t.arr then
@@ -620,10 +607,7 @@ if (]]..me.val..[[ == NULL) {
         LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-    int ret = setjmp(stk_.jmp);
-    if (ret != 0) {
-        /* can only come from CLEAR */
-        ceu_out_assert(ret == 1);
+    if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = CEU_JMP_ORG;
 #endif
@@ -634,6 +618,9 @@ if (]]..me.val..[[ == NULL) {
         LINE(me, [[
     }
 
+    /* SETJMP: killing an org
+     * The kill might awake a par/or enclosing the call point.
+     */
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
     ceu_sys_go_ex(_ceu_app, &evt,
@@ -1122,10 +1109,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
     /* OK_KILLED (after free) */        /* 4. kill */
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-    int ret = setjmp(stk_.jmp);
-    if (ret != 0) {
-        /* can only come from CLEAR */
-        ceu_out_assert(ret == 1);
+    if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = CEU_JMP_ORG;
 #endif
@@ -1134,6 +1118,11 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
         GOTO(me, 'CEU_JMP_LBL')
         LINE(me, [[
     }
+
+    /* SETJMP: mutating an adt
+     * The mutation frees a subtree that might awake a par/or enclosing the 
+     * call point.
+     */
     {
         tceu_evt evt;
                  evt.id = CEU_IN__ok_killed;
@@ -1377,16 +1366,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-    int ret = setjmp(stk_.jmp);
-    if (ret != 0) {
-        /* can only come from CLEAR */
-        ceu_out_assert(ret == 1);
-        /* This trail has been aborted from the call below.
-         * It was the lowest aborted trail in the stack, so the abortion code 
-         * "CLEAR" did a "longjmp" to here to unwind the whole stack.
-         * Let's go to the continuation of the abortion received in 
-         * "CEU_JMP_LBL/ORG".
-         */
+    if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = CEU_JMP_ORG;
 #endif
@@ -1395,6 +1375,11 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         GOTO(me, 'CEU_JMP_LBL')
         LINE(me, [[
     }
+
+    /* SETJMP: starting trails in a par
+     * The 1st trail might abort an enclosing par/or, or emit something that 
+     * does.
+     */
 ]])
 
         for i, sub in ipairs(me) do
@@ -1797,15 +1782,7 @@ if (!_ceu_app->isAlive)
         LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-    int ret = setjmp(stk_.jmp);
-    if (ret != 0) {
-        /* can only come from CLEAR */
-        ceu_out_assert(ret == 1);
-        /* This trail has been aborted from the call below.
-         * It was the lowest aborted trail in the stack, so the abortion code 
-         * "CLEAR" did a "longjmp" to here to unwind the whole stack.
-         * Let's go to the continuation of the abortion received as "ret".
-         */
+    if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = CEU_JMP_ORG;
 #endif
@@ -1814,6 +1791,10 @@ if (!_ceu_app->isAlive)
         GOTO(me, 'CEU_JMP_LBL')
         LINE(me, [[
     }
+
+    /* SETJMP: emit internal event
+     * The emit might awake a par/or enclosing the call point.
+     */
 ]])
 
         local val = F.__emit_ps(me)
