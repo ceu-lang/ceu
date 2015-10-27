@@ -513,25 +513,27 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             }
 
             /* traverse all children */
-            while (cur != NULL) {
-                tceu_org* nxt = cur->nxt;
-/* TODO: remove? */
 
-                tceu_stk stk_ = { stk, cur, 0, cur->n, {} };
-                int ret = setjmp(stk_.jmp);
-                if (ret != 0) {
-                    /* came from clear, so all my brothers are also dead,
-                     * break the loop. before, execute the clear continuation 
-                     */
+            if (cur != NULL) {
+                tceu_stk stk_ = { stk, org, cur->parent_trl, cur->parent_trl, {} };
+                if (setjmp(stk_.jmp) != 0) {
                     CEU_JMP_TRL->lbl = CEU_JMP_LBL;
                     app->code(app, evt, CEU_JMP_ORG, CEU_JMP_TRL, stk, NULL);
-                        /* stk: restore previous (skip &stk_) */
-                    break;
+                    return;
                 }
-                ceu_sys_go_ex(app, evt,
-                              &stk_,
-                              cur, &cur->trls[0], NULL);
-                cur = nxt;
+                /* SETJMP: traversing children
+                 * A child might emit a global event that awakes a par/or 
+                 * enclosing the parent organism with the call point.
+                 */
+                do {
+                    tceu_org* nxt = cur->nxt;
+                        /* save "nxt" before the call, which might kill "cur"
+                         * and reset "nxt" for the freelist */
+                    ceu_sys_go_ex(app, evt,
+                                  &stk_,
+                                  cur, &cur->trls[0], NULL);
+                    cur = nxt;
+                } while (cur != NULL);
             }
             continue;   /* next trail after handling children */
         }

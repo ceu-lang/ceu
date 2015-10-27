@@ -31271,6 +31271,7 @@ escape 1;
     run = 1,
 }
 
+-- fails w/o setjmp on parent orgs traversal
 Test { [[
 input void OS_START;
 
