@@ -190,6 +190,7 @@ ceu_longjmp(1, _ceu_stk, _ceu_org,
 ]])
     CASE(me, me.lbl_jmp)
 
+-- TODO: move to before LONGJMP
     LINE(me, [[
 {
     tceu_evt evt;
@@ -319,8 +320,6 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this) {
             return      -- never reachable
         end
 
-        -- might need "free"
-
         -- stop
         if me == MAIN then
             LINE(me, [[
@@ -331,15 +330,23 @@ _ceu_app->isAlive = 0;
         else
             LINE(me, [[
 {
-    /* LONGJMP
-     * Natural termination: can only be reached from parent traversal or from first 
-     * execution (immediate termination).
-     * Parent: resume the parent traversal from "nxt".
-     * First:  the calling trail will continue normally in sequence.
-     * Return status=2 to distinguish from longjmp from block termination.
-     */
-    ceu_longjmp(2, _ceu_stk, _ceu_org, 0, _ceu_org->n);
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    ceu_sys_go_ex(_ceu_app, &evt,
+                  _ceu_stk,
+                  _ceu_org,
+                  &_ceu_org->trls[_ceu_org->n], /* to the end, only free it */
+                  NULL);
 }
+
+/* LONGJMP
+ * Natural termination: can only be reached from parent traversal or from first 
+ * execution (immediate termination).
+ * Parent: resume the parent traversal from "nxt".
+ * First:  the calling trail will continue normally in sequence.
+ * Return status=2 to distinguish from longjmp from block termination.
+ */
+ceu_longjmp(2, _ceu_stk, _ceu_org, 0, _ceu_org->n);
 ]])
         end
         HALT(me)
@@ -447,27 +454,10 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 ]])
         end
         LINE(me, [[
-#ifdef CEU_ORGS_AWAIT
-            {
-                /* save return before "free" */
-                tceu_kill ps = { ]]..org..[[, ]]..org..[[->ret };
-                tceu_evt evt_;
-                         evt_.id = CEU_IN__ok_killed;
-                         evt_.param = &ps;
-#endif
-                ceu_sys_org_free(_ceu_app, ]]..org..[[);
-#ifdef CEU_ORGS_AWAIT
-                /* signal killed */
-                ceu_sys_go_ex(_ceu_app, &evt_,
-                              _ceu_stk,
-                              _ceu_app->data, &_ceu_app->data->trls[0], NULL);
-            }
-#endif
             break;
     }
 }
 ]])
-
         if t.arr then
             LINE(me, [[
 }
@@ -631,18 +621,7 @@ if (]]..me.val..[[ == NULL) {
 ]])
         end
 
-        -- TODO: generate setjmp only if awaiting this class
-        --  (has_orgs_await as a table is not implemented)
         LINE(me, [[
-{
-    tceu_evt evt;
-             evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, &evt,
-                  _ceu_stk,
-                  (tceu_org*)]]..V(org,'lval')..[[,
-                  &((tceu_org*)]]..V(org,'lval')..[[)->trls[0],
-                  NULL);
-}
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
     int ret = setjmp(stk_.jmp);
@@ -659,20 +638,13 @@ if (]]..me.val..[[ == NULL) {
         LINE(me, [[
     }
 
-    ceu_sys_org_free(_ceu_app, (tceu_org*)]]..V(org,'lval')..[[);
-#ifdef CEU_ORGS_AWAIT
-    /* signal killed */
-    {
-        tceu_kill ps = { ]]..V(org,'lval')..[[,
-                         ((tceu_org*)]]..V(org,'lval')..[[)->ret };
-        tceu_evt evt_;
-                 evt_.id = CEU_IN__ok_killed;
-                 evt_.param = &ps;
-        ceu_sys_go_ex(_ceu_app, &evt_,
-                      &stk_,
-                      _ceu_app->data, &_ceu_app->data->trls[0], NULL);
-    }
-#endif
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    ceu_sys_go_ex(_ceu_app, &evt,
+                  &stk_,
+                  (tceu_org*)]]..V(org,'lval')..[[,
+                  &((tceu_org*)]]..V(org,'lval')..[[)->trls[0],
+                  NULL);
 }
 ]])
     end,

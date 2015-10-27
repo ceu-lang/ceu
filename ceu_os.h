@@ -428,6 +428,13 @@ typedef struct tceu_evt {
 struct tceu_pool_orgs;
 typedef struct tceu_org
 {
+#ifdef CEU_ORGS
+    struct tceu_org* nxt; /* first field because of free list for orgs/adts */
+    struct tceu_org* prv;
+    struct tceu_org* parent_org;
+    tceu_ntrl parent_trl;
+#endif
+
 #if defined(CEU_ORGS) || defined(CEU_OS)
     tceu_ntrl n;            /* number of trails (TODO(ram): opt, metadata) */
 #endif
@@ -437,15 +444,14 @@ typedef struct tceu_org
 #ifdef CEU_IFCS
     tceu_ncls cls;          /* class id */
 #endif
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
     u8 isAlive: 1;          /* Three purposes:
-                             * - =0 if terminate normally or =1 if from scope
-                             *      checked to see if should call free on pool
+                             * - avoids double free
                              * - required by "watching o" to avoid awaiting a
                              *      dead org
                              * - required by "Do T" to avoid awaiting a dead 
                              *      org
                              */
+#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
 #endif
 #ifdef CEU_ORGS_NEWS
     u8 isDyn: 1;            /* created w/ new or spawn? */
@@ -457,11 +463,6 @@ typedef struct tceu_org
 #ifdef CEU_ORGS_AWAIT
     int ret;
 #endif
-
-    struct tceu_org* parent_org;
-    tceu_ntrl parent_trl;
-    struct tceu_org* prv;
-    struct tceu_org* nxt;
 
 #endif  /* CEU_ORGS */
 
@@ -494,13 +495,23 @@ typedef struct {
 } tceu_pool_adts;
 #endif
 
+/* TCEU_KILL */
+
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
-typedef struct {
+typedef struct tceu_kill {
     void*     org_or_adt;
     int       ret;
     tceu_ntrl t1;
     tceu_ntrl t2;
 } tceu_kill;
+#endif
+
+/* TCEU_ORG_OR_ADT */
+
+#if defined(CEU_ORGS_NEWS_MALLOC) || defined(CEU_ADTS_NEWS_MALLOC)
+typedef struct tceu_org_or_adt {
+    struct tceu_org_or_adt* nxt;
+} tceu_org_or_adt;
 #endif
 
 /* TCEU_LST */
@@ -513,6 +524,7 @@ typedef struct tceu_lst {
     tceu_trl* trl;
     tceu_nlbl lbl;
 } tceu_lst;
+
 #endif
 
 /* TCEU_STK */
@@ -524,14 +536,6 @@ typedef struct tceu_stk {
     tceu_ntrl trl2;
     jmp_buf   jmp;
 } tceu_stk;
-
-/* TCEU_TOFREE */
-
-#if defined(CEU_ORGS_NEWS_MALLOC) || defined(CEU_ADTS_NEWS_MALLOC)
-typedef struct tceu_tofree {
-    struct tceu_tofree* nxt;
-} tceu_tofree;
-#endif
 
 /* TCEU_APP */
 
@@ -561,7 +565,7 @@ typedef struct tceu_app {
 #endif
 
 #if defined(CEU_ORGS_NEWS_MALLOC) || defined(CEU_ADTS_NEWS_MALLOC)
-    tceu_tofree* tofree;
+    tceu_org_or_adt* tofree;
 #endif
 
 #ifdef CEU_WCLOCKS

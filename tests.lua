@@ -25314,7 +25314,6 @@ escape ptr2==&&a;
 }
 
 -->>> CLASSES, ORGS, ORGANISMS
---]===]
 --do return end
 
 Test { [[
@@ -26301,6 +26300,7 @@ escape i;
     ref = 'line 7 : field "i" must be assigned',
     --run = 1,
 }
+--]===]
 Test { [[
 class T with
 do
@@ -44323,7 +44323,7 @@ do
     end;
     await 1s;
 end
-_assert(_V == 1);
+_assert(_V == 2);
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },

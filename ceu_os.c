@@ -145,12 +145,14 @@ void ceu_sys_org_init (tceu_org* org, int n, int lbl,
 
 #ifdef CEU_ORGS
 
-/* TODO: tirar stk */
 void ceu_sys_org_free (tceu_app* app, tceu_org* org)
 {
-#if defined(CEU_ORGS_NEWS) || defined(CEU_ORGS_AWAIT)
-    org->isAlive = 0;
-#endif
+    /* TODO: try to not depend on this and remove this field */
+    if (org->isAlive) {
+        org->isAlive = 0;
+    } else {
+        return;
+    }
 
     /* re-link PRV <-> NXT */
     /* relink also static orgs for efficiency */
@@ -169,22 +171,22 @@ void ceu_sys_org_free (tceu_app* app, tceu_org* org)
     }
 
 #ifdef CEU_ORGS_NEWS
-        /* free */
-        if (org->isDyn) {
+    /* free */
+    if (org->isDyn) {
 #if    defined(CEU_ORGS_NEWS_POOL) && !defined(CEU_ORGS_NEWS_MALLOC)
-            ceu_pool_free(&org->pool->pool, (byte*)org);
+        ceu_pool_free(&org->pool->pool, (byte*)org);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-            if (org->pool->pool.queue == NULL) {
-                ((tceu_tofree*)org)->nxt = app->tofree;
-                app->tofree = (tceu_tofree*)org;
-            } else {
-                ceu_pool_free(&org->pool->pool, (byte*)org);
-            }
-#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-            ((tceu_tofree*)org)->nxt = app->tofree;
-            app->tofree = (tceu_tofree*)org;
-#endif
+        if (org->pool->pool.queue == NULL) {
+            ((tceu_org_or_adt*)org)->nxt = app->tofree;
+            app->tofree = (tceu_org_or_adt*)org;
+        } else {
+            ceu_pool_free(&org->pool->pool, (byte*)org);
         }
+#elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
+        ((tceu_org_or_adt*)org)->nxt = app->tofree;
+        app->tofree = (tceu_org_or_adt*)org;
+#endif
+    }
 #endif
 }
 
@@ -461,6 +463,30 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 #endif
             ])
         {
+#ifdef CEU_ORGS
+            /* clearing the whole org? */
+            if (org!=app->data && evt->id==CEU_IN__CLEAR && stop==NULL) {
+                ceu_sys_org_free(app, org);
+#ifdef CEU_ORGS_AWAIT
+#if 0
+                if (stk->down != NULL &&
+                    stk->down->org==org->parent_org &&
+                    stk->down->trl1==0 &&
+                    stk->down->trl2==org->parent_org->n) {
+                } else
+#endif
+                {
+                    tceu_kill ps = { org, org->ret };
+                    tceu_evt evt_;
+                             evt_.id = CEU_IN__ok_killed;
+                             evt_.param = &ps;
+                    ceu_sys_go_ex(app, &evt_,
+                                  stk,
+                                  app->data, &app->data->trls[0], NULL);
+                }
+#endif
+            }
+#endif
             break;
         }
 
@@ -489,24 +515,16 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
             /* traverse all children */
             while (cur != NULL) {
+                tceu_org* nxt = cur->nxt;
+
                 tceu_stk stk_ = { stk, cur, 0, cur->n, {} };
                 int ret = setjmp(stk_.jmp);
                 if (ret == 0)
                 {
-                    tceu_org* nxt;
-
                     /* normal flow: call cur and proceed to nxt */
                     ceu_sys_go_ex(app, evt,
                                   &stk_,
                                   cur, &cur->trls[0], NULL);
-                    nxt = cur->nxt;   /* save before kill/free */
-
-                    /* kill child if a IN__CLEAR in the parent */
-                    if (evt->id == CEU_IN__CLEAR) {
-/* TODO: setjmp? */
-                        ceu_sys_org_free(app, cur);
-                    }
-                    cur = nxt;
                 }
                 else if (ret == 1)
                 {
@@ -517,40 +535,13 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     app->code(app, evt, CEU_JMP_ORG, CEU_JMP_TRL, stk, NULL);
                         /* stk: restore previous (skip &stk_) */
                     break;
-                } else { /* ret == 2 */
-                    /* came from org natural termination */
-                    tceu_org* nxt = cur->nxt;   /* save before kill/free */
-/* TODO: setjmp? */
-                    ceu_sys_org_free(app, cur);
-#ifdef CEU_ORGS_AWAIT
-            /* signal ok_killed */
-            {
-                tceu_kill ps = { cur, cur->ret };
-                tceu_evt evt_;
-                         evt_.id = CEU_IN__ok_killed;
-                         evt_.param = &ps;
-                ceu_sys_go_ex(app, &evt_,
-                              stk,
-                              app->data, &app->data->trls[0], NULL);
-            }
-#endif
-                    cur = nxt;
                 }
+                else /* ret == 2 */
+                {
+                    /* came from org natural termination, continue to next */
+                }
+                cur = nxt;
             }
-
-#ifdef CEU_ORGS_AWAIT
-            /* signal ok_killed */
-            if (evt->id == CEU_IN__CLEAR) {
-                tceu_kill ps = { org, org->ret };
-                tceu_evt evt_;
-                         evt_.id = CEU_IN__ok_killed;
-                         evt_.param = &ps;
-                ceu_sys_go_ex(app, &evt_,
-                              stk,
-                              app->data, &app->data->trls[0], NULL);
-            }
-#endif
-
             continue;   /* next trail after handling children */
         }
 #endif /* CEU_ORGS */
@@ -708,7 +699,7 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
 
 #ifdef CEU_ORGS_NEWS_MALLOC
     while (app->tofree != NULL) {
-        tceu_tofree* nxt = app->tofree->nxt;
+        tceu_org_or_adt* nxt = app->tofree->nxt;
         ceu_sys_realloc(app->tofree, 0);
         app->tofree = nxt;
     }
