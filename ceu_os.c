@@ -145,7 +145,7 @@ void ceu_sys_org_init (tceu_org* org, int n, int lbl,
 
 #ifdef CEU_ORGS
 
-void ceu_sys_org_free (tceu_app* app, tceu_org* org)
+static void ceu_sys_org_free (tceu_app* app, tceu_org* org)
 {
     /* TODO: try to not depend on this and remove this field */
     if (org->isAlive) {
@@ -190,27 +190,6 @@ void ceu_sys_org_free (tceu_app* app, tceu_org* org)
 #endif
 }
 
-/*
- * Checks if "me" is cleared due to a clear in "clr_org".
- * ;
- */
-int ceu_sys_org_is_cleared (void* me, void* clr_org,
-                            tceu_ntrl clr_t1, tceu_ntrl clr_t2)
-{
-    tceu_org* cur_org;
-    if (me == clr_org) {
-        return 1;
-    }
-    for (cur_org=me; cur_org!=NULL; cur_org=cur_org->parent_org) {
-        if (cur_org->parent_org == clr_org) {
-            if (cur_org->parent_trl>=clr_t1 && cur_org->parent_trl<=clr_t2) {
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
 #endif  /* CEU_ORGS */
 
 /**********************************************************************/
@@ -238,6 +217,26 @@ static tceu_nlbl CEU_JMP_LBL;
        so we use a global instead */
 
 /*
+ * Checks if "me" is cleared due to a clear in "clr_org".
+ * ;
+ */
+#ifdef CEU_ORGS
+static int ceu_org_is_cleared (void* me, void* clr_org,
+                               tceu_ntrl clr_t1, tceu_ntrl clr_t2)
+{
+    tceu_org* cur_org;
+    for (cur_org=me; cur_org!=NULL; cur_org=cur_org->parent_org) {
+        if (cur_org->parent_org == clr_org) {
+            if (cur_org->parent_trl>=clr_t1 && cur_org->parent_trl<=clr_t2) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+#endif
+
+/*
  * Trails [t1,t2] of "org" are dyeing.
  * Traverse the stack to see if a pending call is enclosed by this range.
  * If so, the whole stack has to unwind and continue from what we pass in 
@@ -256,7 +255,7 @@ void ceu_longjmp (int ret, tceu_stk* stk, tceu_org* org,
 
 #ifdef CEU_ORGS
     if (stk->org != org) {
-        if (ceu_sys_org_is_cleared(stk->org, org, t1, t2)) {
+        if (ceu_org_is_cleared(stk->org, org, t1, t2)) {
             longjmp(stk->jmp, ret);
         }
     }
@@ -464,8 +463,9 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
             ])
         {
 #ifdef CEU_ORGS
-            /* clearing the whole org? */
+            /* clearing the whole org (stop==NULL)? */
             if (org!=app->data && evt->id==CEU_IN__CLEAR && stop==NULL) {
+                /* yes, relink and put it in the free list */
                 ceu_sys_org_free(app, org);
 #ifdef CEU_ORGS_AWAIT
 #if 0
@@ -475,6 +475,7 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                     stk->down->trl2==org->parent_org->n) {
                 } else
 #endif
+                /* signal ok_killed */
                 {
                     tceu_kill ps = { org, org->ret };
                     tceu_evt evt_;
@@ -569,10 +570,7 @@ if (evt->param != NULL) {
             /* if */
             (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
                 (trl->org_or_adt == NULL || /* for option ptrs, init'd w/ NULL  */
-                 ceu_sys_org_is_cleared(trl->org_or_adt,
-                                        ((tceu_kill*)evt->param)->org_or_adt,
-                                        ((tceu_kill*)evt->param)->t1,
-                                        ((tceu_kill*)evt->param)->t2)))
+                 trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt))
         ||
 #endif
             /* if evt->id matches awaiting trail */

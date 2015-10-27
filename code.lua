@@ -175,6 +175,17 @@ function CLEAR (me)
     end
 
     LINE(me, [[
+{
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    ceu_sys_go_ex(_ceu_app, &evt,
+                  _ceu_stk,
+                  _ceu_org,
+                  &_ceu_org->trls[ ]]..me.trails[1]..[[ ],
+                  &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
+                                        /* excludes +1 */
+}
+
 /* LONGJMP
  * Block termination: we will abort all trails between [t1,t2].
  * Return status=1 to distinguish from longjmp from organism termination.
@@ -189,20 +200,6 @@ ceu_longjmp(1, _ceu_stk, _ceu_org,
             ]]..me.trails[1]..','..me.trails[2]..[[);
 ]])
     CASE(me, me.lbl_jmp)
-
--- TODO: move to before LONGJMP
-    LINE(me, [[
-{
-    tceu_evt evt;
-             evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, &evt,
-                  _ceu_stk,
-                  _ceu_org,
-                  &_ceu_org->trls[ ]]..me.trails[1]..[[ ],
-                  &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
-                                        /* excludes +1 */
-}
-]])
 end
 
 F = {
@@ -445,8 +442,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
             break;
         case 2:
             /* came from org natural termination,
-             * unset the org variable, kill the org, and continue executing 
-             * normally */
+             * unset the org variable, continue executing normally */
 ]])
         if t.set then
                 LINE(me, [[
@@ -955,10 +951,7 @@ if (]]..fin.val..[[) {
                                             ceu_vector_geti(]]..val..[[, __ceu_i);
         tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
-             ceu_sys_org_is_cleared((tceu_org*)__ceu_one->SOME.v,
-                                    __ceu_casted->org_or_adt,
-                                    __ceu_casted->t1,
-                                    __ceu_casted->t2) )
+             (__ceu_one->SOME.v == __ceu_casted->org_or_adt) )
         {
             __ceu_one->tag = CEU_]]..ID..[[_NIL;
 /*
@@ -974,11 +967,8 @@ if (]]..fin.val..[[) {
                     LINE(me, [[
     {
         tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
-        if ( ]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
-             ceu_sys_org_is_cleared((tceu_org*)]]..val..[[.SOME.v,
-                                    __ceu_casted->org_or_adt,
-                                    __ceu_casted->t1,
-                                    __ceu_casted->t2) )
+        if ( (]]..val..[[.tag != CEU_]]..ID..[[_NIL) &&
+             (]]..val..[[.SOME.v == __ceu_casted->org_or_adt) )
         {
             ]]..val..' = '..string.upper(TP.toc(var.tp))..[[_pack(NULL);
         }

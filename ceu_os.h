@@ -501,8 +501,6 @@ typedef struct {
 typedef struct tceu_kill {
     void*     org_or_adt;
     int       ret;
-    tceu_ntrl t1;
-    tceu_ntrl t2;
 } tceu_kill;
 #endif
 
