@@ -49124,7 +49124,6 @@ do
     pool List[] lll;
     ret = lll.NIL;
 end
-_printf("===\n");
 // all instances in "lll" have been collected
 escape ret;
 ]],
@@ -53427,11 +53426,6 @@ escape ret;
     run = 5,
 }
 
-print'=========================================='
-print'TODO: this is failing with EmitExt setjmp'
-print'=========================================='
-io.read()
-
 Test { [[
 data Command with
     tag NOTHING;
@@ -53454,9 +53448,7 @@ cmds = new Command.SEQUENCE(
 
 par/or do
     traverse cmd in &&cmds do
-    _printf("oi %p\n", __ceu_org);
 finalize with
-    _printf("tchau %p\n", __ceu_org);
 end
         watching *cmd do
             if cmd:FORWARD then
@@ -53472,7 +53464,6 @@ end
 with
     await 100s;
 end
-_printf("OUT\n");
 
 escape 10;
 ]],
@@ -53480,6 +53471,34 @@ escape 10;
     _ana = { acc=true },
     wrn = true,
     run = { ['~>100s']=10 },
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag SEQUENCE with
+        var Command  one;
+    end
+end
+
+pool Command[] cmds = new Command.SEQUENCE(Command.NOTHING());
+
+par/or do
+    traverse cmd in &&cmds do
+        if cmd:NOTHING then
+            await FOREVER;
+        else/if cmd:SEQUENCE then
+            traverse &&cmd:SEQUENCE.one;
+        end
+    end
+with
+end
+
+escape 10;
+]],
+    wrn = true,
+    run = 10,
 }
 
 Test { [[
@@ -55400,7 +55419,6 @@ end
 var int ddd = do Run with
     this.cmds1 = &cmds;
 end;
-_printf("sum = %d\n", ddd);
 
 escape ddd;
 ]],
@@ -56055,25 +56073,18 @@ end;
 
 par/or do
     await 3s_;
-_printf("1\n");
     emit tm.go_on;
-_printf("2\n");
     await 1s_;
-_printf("3\n");
 
     ///////////////////////////////
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
-_printf("4 >%d\n", app.v);
     _assert(app.v == 3);
 
     emit tm.go_seek => 0;
-_printf("5\n");
     TM_AWAIT_SEEK(tm);
-_printf("6\n");
     _assert(app.v == 0);
-_printf("7\n");
 
     emit tm.go_seek => 500;
     TM_AWAIT_SEEK(tm);

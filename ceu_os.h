@@ -554,12 +554,15 @@ typedef struct tceu_app {
      * awaiting trails matches only if trl->seqno < seqno,
      * i.e., previously awaiting the event
      */
-    u8 seqno:         2;
+    u8 seqno:          2;
 #if defined(CEU_RET) || defined(CEU_OS)
-    u8 isAlive:       1;
+    u8 isAlive:        1;
 #endif
 #ifdef CEU_ASYNCS
-    u8 pendingAsyncs: 1;
+    u8 pendingAsyncs:  1;
+#endif
+#if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
+    u8 dont_emit_kill: 1;
 #endif
 
 #ifdef CEU_OS

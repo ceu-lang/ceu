@@ -457,22 +457,20 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                 /* yes, relink and put it in the free list */
                 ceu_sys_org_free(app, org);
 #ifdef CEU_ORGS_AWAIT
-#if 0
-                if (stk->down != NULL &&
-                    stk->down->org==org->parent_org &&
-                    stk->down->trl1==0 &&
-                    stk->down->trl2==org->parent_org->n) {
-                } else
+#ifdef CEU_ORGS_NEWS_MALLOC
+                if (!app->dont_emit_kill)
 #endif
-                /* signal ok_killed */
                 {
-                    tceu_kill ps = { org, org->ret };
-                    tceu_evt evt_;
-                             evt_.id = CEU_IN__ok_killed;
-                             evt_.param = &ps;
-                    ceu_sys_go_ex(app, &evt_,
-                                  stk,
-                                  app->data, &app->data->trls[0], NULL);
+                    /* signal ok_killed */
+                    {
+                        tceu_kill ps = { org, org->ret };
+                        tceu_evt evt_;
+                                 evt_.id = CEU_IN__ok_killed;
+                                 evt_.param = &ps;
+                        ceu_sys_go_ex(app, &evt_,
+                                      stk,
+                                      app->data, &app->data->trls[0], NULL);
+                    }
                 }
 #endif
             }
@@ -507,26 +505,59 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
             if (cur != NULL) {
                 tceu_stk stk_ = { NULL, org, cur->parent_trl, cur->parent_trl, {} };
+
+#if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
+                /* In the presence of ok_killed events, we cannot simply
+                 * interrupt children traversal during a IN__CLEAR, because it 
+                 * might lead to memory leaks if not all children are travesed.
+                 */
+                tceu_org* nxt;
+                int has_aborted = 0;            /* normal execution */
+                if (setjmp(stk_.jmp) != 0) {
+                    has_aborted = 1;            /* detected abortion */
+                    if (evt->id==CEU_IN__CLEAR) {
+                        cur = nxt;              /* continue from nxt */
+                        app->dont_emit_kill = 1;/* but stop emitting ok_killed */
+                    } else {
+                        cur = NULL;             /* safe to abort now */
+                    }
+                }
+#else
                 if (setjmp(stk_.jmp) != 0) {
                     app->stk_jmp.trl->lbl = app->stk_jmp.lbl;
                     app->code(app, evt, app->stk_jmp.org, app->stk_jmp.trl, stk);
                     return;
                 }
+#endif
+
                 /* SETJMP: traversing children
                  * A child might emit a global event that awakes a par/or 
                  * enclosing the parent organism with the call point.
                  */
                 stk->up = &stk_;
-                do {
-                    tceu_org* nxt = cur->nxt;
+                while (cur != NULL) {
+#if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
+#else
+                    tceu_org*
+#endif
+                    nxt = cur->nxt;
                         /* save "nxt" before the call, which might kill "cur"
                          * and reset "nxt" for the freelist */
                     ceu_sys_go_ex(app, evt,
                                   &stk_,
                                   cur, &cur->trls[0], NULL);
                     cur = nxt;
-                } while (cur != NULL);
+                }
                 stk->up = NULL;
+
+#if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
+                if (has_aborted) {
+                    app->dont_emit_kill = 0;
+                    app->stk_jmp.trl->lbl = app->stk_jmp.lbl;
+                    app->code(app, evt, app->stk_jmp.org, app->stk_jmp.trl, stk);
+                    return;
+                }
+#endif
             }
             continue;   /* next trail after handling children */
         }

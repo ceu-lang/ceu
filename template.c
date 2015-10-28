@@ -191,6 +191,9 @@ ceu_app_init (tceu_app* app)
 #ifdef CEU_ASYNCS
     app->pendingAsyncs = 1;
 #endif
+#if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
+    app->dont_emit_kill = 0;
+#endif
 #ifdef CEU_REENTRANT
     app->stki = 0;
 #endif
