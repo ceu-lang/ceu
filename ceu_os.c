@@ -510,7 +510,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                 tceu_stk stk_ = { stk, org, cur->parent_trl, cur->parent_trl, {} };
                 if (setjmp(stk_.jmp) != 0) {
                     app->jmp.trl->lbl = app->jmp.lbl;
-                    app->code(app, evt, app->jmp.org, app->jmp.trl, stk, NULL);
+                    app->code(app, evt, app->jmp.org, app->jmp.trl, stk);
                     return;
                 }
                 /* SETJMP: traversing children
@@ -577,7 +577,7 @@ if (evt->param != NULL) {
 
             /*** CODE ***/
             trl->evt = CEU_IN__NONE;    /* TODO: dup w/ above */
-            app->code(app, evt, org, trl, stk, NULL);
+            app->code(app, evt, org, trl, stk);
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = 0;

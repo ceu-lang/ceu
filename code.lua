@@ -430,7 +430,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
      */
     ceu_app_go(_ceu_app,NULL,
                ]]..org..[[, &]]..org..[[->trls[0],
-               &stk_, NULL);
+               &stk_);
 ]])
         if t.set then
                 LINE(me, [[
@@ -1389,7 +1389,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
     _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = ]]..me.lbls_in[i].id..[[;
     ceu_app_go(_ceu_app,NULL,_ceu_org,
                &_ceu_org->trls[ ]]..sub.trails[1]..[[ ],
-               &stk_,NULL);
+               &stk_);
 ]])
             else
                 -- execute the last directly (no need to call)
