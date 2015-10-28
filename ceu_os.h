@@ -535,6 +535,18 @@ typedef struct tceu_stk {
     jmp_buf   jmp;
 } tceu_stk;
 
+/* TCEU_JMP */
+
+#ifdef CEU_STACK
+typedef struct tceu_jmp {
+#ifdef CEU_ORGS
+    tceu_org* org;
+#endif
+    tceu_trl* trl;
+    tceu_nlbl lbl;
+} tceu_jmp;
+#endif
+
 /* TCEU_APP */
 
 typedef struct tceu_app {
@@ -556,6 +568,10 @@ typedef struct tceu_app {
 
 #ifdef CEU_REENTRANT
     tceu_nstk stki;
+#endif
+
+#ifdef CEU_STACK
+    tceu_jmp jmp;
 #endif
 
 #if defined(CEU_RET) || defined(CEU_ORGS_AWAIT)
