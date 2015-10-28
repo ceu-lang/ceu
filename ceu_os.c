@@ -509,8 +509,8 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             if (cur != NULL) {
                 tceu_stk stk_ = { stk, org, cur->parent_trl, cur->parent_trl, {} };
                 if (setjmp(stk_.jmp) != 0) {
-                    app->jmp.trl->lbl = app->jmp.lbl;
-                    app->code(app, evt, app->jmp.org, app->jmp.trl, stk);
+                    app->stk_jmp.trl->lbl = app->stk_jmp.lbl;
+                    app->code(app, evt, app->stk_jmp.org, app->stk_jmp.trl, stk);
                     return;
                 }
                 /* SETJMP: traversing children

@@ -571,7 +571,7 @@ typedef struct tceu_app {
 #endif
 
 #ifdef CEU_STACK
-    tceu_jmp jmp;
+    tceu_jmp stk_jmp;
 #endif
 
 #if defined(CEU_RET) || defined(CEU_ORGS_AWAIT)

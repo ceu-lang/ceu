@@ -193,10 +193,10 @@ function CLEAR (me)
  * We want to continue from "me.lbl_jmp" below.
  */
 #ifdef CEU_ORGS
-_ceu_app->jmp.org = _ceu_org;
+_ceu_app->stk_jmp.org = _ceu_org;
 #endif
-_ceu_app->jmp.trl = _ceu_trl;
-_ceu_app->jmp.lbl = ]]..me.lbl_jmp.id..[[;
+_ceu_app->stk_jmp.trl = _ceu_trl;
+_ceu_app->stk_jmp.lbl = ]]..me.lbl_jmp.id..[[;
 ceu_longjmp(_ceu_stk, _ceu_org,
             ]]..me.trails[1]..','..me.trails[2]..[[);
 ]])
@@ -416,11 +416,11 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     tceu_stk stk_ = { _ceu_stk, ]]..org..[[, 0, ]]..org..[[->n, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
-        _ceu_org = _ceu_app->jmp.org;
+        _ceu_org = _ceu_app->stk_jmp.org;
 #endif
-        _ceu_trl = _ceu_app->jmp.trl;
+        _ceu_trl = _ceu_app->stk_jmp.trl;
 ]])
-        GOTO(me, '_ceu_app->jmp.lbl')
+        GOTO(me, '_ceu_app->stk_jmp.lbl')
         LINE(me, [[
     }
 
@@ -610,12 +610,12 @@ if (]]..me.val..[[ == NULL) {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
-        _ceu_org = _ceu_app->jmp.org;
+        _ceu_org = _ceu_app->stk_jmp.org;
 #endif
-        _ceu_trl = _ceu_app->jmp.trl;
-        _ceu_lbl = _ceu_app->jmp.lbl;
+        _ceu_trl = _ceu_app->stk_jmp.trl;
+        _ceu_lbl = _ceu_app->stk_jmp.lbl;
 ]])
-        GOTO(me, '_ceu_app->jmp.lbl')
+        GOTO(me, '_ceu_app->stk_jmp.lbl')
         LINE(me, [[
     }
 
@@ -1112,11 +1112,11 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
-        _ceu_org = _ceu_app->jmp.org;
+        _ceu_org = _ceu_app->stk_jmp.org;
 #endif
-        _ceu_trl = _ceu_app->jmp.trl;
+        _ceu_trl = _ceu_app->stk_jmp.trl;
 ]])
-        GOTO(me, '_ceu_app->jmp.lbl')
+        GOTO(me, '_ceu_app->stk_jmp.lbl')
         LINE(me, [[
     }
 
@@ -1369,11 +1369,11 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
-        _ceu_org = _ceu_app->jmp.org;
+        _ceu_org = _ceu_app->stk_jmp.org;
 #endif
-        _ceu_trl = _ceu_app->jmp.trl;
+        _ceu_trl = _ceu_app->stk_jmp.trl;
 ]])
-        GOTO(me, '_ceu_app->jmp.lbl')
+        GOTO(me, '_ceu_app->stk_jmp.lbl')
         LINE(me, [[
     }
 
@@ -1628,11 +1628,11 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
-        _ceu_org = _ceu_app->jmp.org;
+        _ceu_org = _ceu_app->stk_jmp.org;
 #endif
-        _ceu_trl = _ceu_app->jmp.trl;
+        _ceu_trl = _ceu_app->stk_jmp.trl;
 ]])
-                GOTO(me, '_ceu_app->jmp.lbl')
+                GOTO(me, '_ceu_app->stk_jmp.lbl')
                 LINE(me, [[
     }
 
@@ -1781,11 +1781,11 @@ if (!_ceu_app->isAlive)
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
-        _ceu_org = _ceu_app->jmp.org;
+        _ceu_org = _ceu_app->stk_jmp.org;
 #endif
-        _ceu_trl = _ceu_app->jmp.trl;
+        _ceu_trl = _ceu_app->stk_jmp.trl;
 ]])
-        GOTO(me, '_ceu_app->jmp.lbl')
+        GOTO(me, '_ceu_app->stk_jmp.lbl')
         LINE(me, [[
     }
 
