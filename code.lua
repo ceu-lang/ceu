@@ -1626,23 +1626,19 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
                 LINE(me, [[
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
-    int ret = 0; /* setjmp(stk_.jmp); */
-    if (ret != 0) {
-        /* can only come from CLEAR */
-        ceu_out_assert(ret == 1);
-        /* This trail has been aborted from the call below.
-         * It was the lowest aborted trail in the stack, so the abortion code 
-         * "CLEAR" did a "longjmp" to here to unwind the whole stack.
-         * Let's go to the continuation of the abortion received as "ret".
-         */
+    if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = _ceu_app->jmp.org;
 #endif
         _ceu_trl = _ceu_app->jmp.trl;
 ]])
-    GOTO(me, '_ceu_app->jmp.lbl')
-    LINE(me, [[
+                GOTO(me, '_ceu_app->jmp.lbl')
+                LINE(me, [[
     }
+
+    /* SETJMP: emit input event
+     * The emit might awake a par/or enclosing the call point.
+     */
 ]])
 
             end
@@ -1741,14 +1737,14 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 #ifdef CEU_WCLOCKS
 {
     u32 __ceu_tmp_]]..me.n..' = '..V(ps[1],'rval')..[[;
-    ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[, _ceu_stk);
+    ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[, &stk_);
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
            _ceu_app->isAlive &&
 #endif
            _ceu_app->wclk_min_set]]..suf..[[<=0) {
         s32 __ceu_dt = 0;
-        ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt, _ceu_stk);
+        ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt, &stk_);
     }
 }
 #endif

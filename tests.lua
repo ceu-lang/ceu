@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -23269,10 +23268,7 @@ escape 1;
 }
 -- ASYNC
 
-print'=========================================='
-print'TODO: when finishing org-kill, put EmitExt setjmp back and see if this passes'
-print'=========================================='
-io.read()
+--]===]
 Test { [[
 input void A;
 par/or do
@@ -23287,7 +23283,6 @@ async do
 end
 escape 1;
 ]],
-    todo = true,
     run = 1,
 }
 
