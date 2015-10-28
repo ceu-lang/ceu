@@ -406,13 +406,6 @@ typedef union tceu_trl {
 #endif
 } tceu_trl;
 
-/* TCEU_RECURSE */
-
-typedef struct {
-    tceu_nlbl lbl;      /* TODO(ram): not required if only one `recurse´ */
-    void*     data;
-} tceu_recurse;
-
 /* TCEU_EVT */
 
 typedef struct tceu_evt {
@@ -504,14 +497,6 @@ typedef struct tceu_kill {
 } tceu_kill;
 #endif
 
-/* TCEU_ORG_OR_ADT */
-
-#if defined(CEU_ORGS_NEWS_MALLOC) || defined(CEU_ADTS_NEWS_MALLOC)
-typedef struct tceu_org_or_adt {
-    struct tceu_org_or_adt* nxt;
-} tceu_org_or_adt;
-#endif
-
 /* TCEU_LST */
 
 #ifdef CEU_DEBUG
@@ -582,8 +567,8 @@ typedef struct tceu_app {
     int ret;
 #endif
 
-#if defined(CEU_ORGS_NEWS_MALLOC) || defined(CEU_ADTS_NEWS_MALLOC)
-    tceu_org_or_adt* tofree;
+#ifdef CEU_ORGS_NEWS_MALLOC
+    tceu_org* tofree;
 #endif
 
 #ifdef CEU_WCLOCKS

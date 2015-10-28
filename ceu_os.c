@@ -177,14 +177,14 @@ static void ceu_sys_org_free (tceu_app* app, tceu_org* org)
         ceu_pool_free(&org->pool->pool, (byte*)org);
 #elif  defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
         if (org->pool->pool.queue == NULL) {
-            ((tceu_org_or_adt*)org)->nxt = app->tofree;
-            app->tofree = (tceu_org_or_adt*)org;
+            org->nxt = app->tofree;
+            app->tofree = org;
         } else {
             ceu_pool_free(&org->pool->pool, (byte*)org);
         }
 #elif !defined(CEU_ORGS_NEWS_POOL) &&  defined(CEU_ORGS_NEWS_MALLOC)
-        ((tceu_org_or_adt*)org)->nxt = app->tofree;
-        app->tofree = (tceu_org_or_adt*)org;
+        org->nxt = app->tofree;
+        app->tofree = org;
 #endif
     }
 #endif
@@ -713,7 +713,7 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
 
 #ifdef CEU_ORGS_NEWS_MALLOC
     while (app->tofree != NULL) {
-        tceu_org_or_adt* nxt = app->tofree->nxt;
+        tceu_org* nxt = app->tofree->nxt;
         ceu_sys_realloc(app->tofree, 0);
         app->tofree = nxt;
     }

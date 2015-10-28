@@ -1288,17 +1288,6 @@ F = {
         end
     end,
 
---[[
-    Recurse = function (me)
-        local exp = unpack(me)
-        local loop = AST.par(me, 'Loop')
-        if loop then
-            local _,iter = unpack(loop)
-            ASR(TP.contains(iter.tp,exp.tp), me, 'invalid `recurse´')
-        end
-    end,
-]]
-
     --------------------------------------------------------------------------
 
     Adt_constr_root = function (me)

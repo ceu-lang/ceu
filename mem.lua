@@ -484,9 +484,6 @@ typedef union CEU_]]..me.id..[[_delayed {
                 tag = unpack(n)
             end
         end
-        if me.__loop then
-            top.struct = top.struct..SPC()..me.__loop..'\n'
-        end
         top.struct = top.struct..SPC()..'} '..tag..';\n'
     end,
     Block_pre = function (me)
@@ -592,50 +589,6 @@ typedef union CEU_]]..me.id..[[_delayed {
             cls.struct = cls.struct..SPC()..'u8 __and_'..me.n..'_'..i..': 1;\n'
         end
     end,
-
-    Loop = function (me)
-        if not me.__recs then
-            return
-        end
-error'not implemented'
-
-        -- `recurse´ stack
-        -- TODO: no cls space if no awaits inside the loop (use local C var)
-        local max,iter,_,_ = unpack(me)
-
-        if max then
-            me.iter_max = max.cval
-        else
-            local adt = ENV.adts[TP.id(iter.tp)]
-            if adt then
-                local tp  = iter.lst.var.tp
-                local arr = tp.arr
-                if (not arr) and (not TP.check(tp,'&')) then
-                    me.iter_max = iter.lst.var.n_cons * adt.n_recs
-                elseif type(arr)=='table' then
-                    me.iter_max = arr.cval * adt.n_recs
-                else
-                    error'not implemented: unbounded iter'
-                end
-            else
-                error'not implemented: unbounded iter'
-            end
-        end
-
-        me.iter_max = me.iter_max * me.__recs
-        AST.par(me, 'Block').__loop = [[
-int          __recurse_nxt_]]..me.n..[[;    /* TODO: int (minimum type) */
-tceu_recurse __recurse_vec_]]..me.n..'['..me.iter_max..']'..[[;
-]]
-            -- TODO: reason about the maximum space (it's less than the above!)
-    end,
---[[
-    Recurse = function (me)
-        local loop = AST.par(me,'Loop')
-        loop.__recs = (loop.__recs or 0) + 1
-                      -- stack is a multiple of inner recurses
-    end,
-]]
 
     Await = function (me)
         local _, dt = unpack(me)

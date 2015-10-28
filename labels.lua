@@ -132,15 +132,9 @@ F = {
         if AST.iter'Async'() then
             me.lbl_asy = new{'Async_cnt'}
         end
-        if me.iter_tp == 'data' then
-            me.lbl_rec = new{'Recurse'}
-        end
         if me.needs_clr then
             me.lbl_jmp = new{'Loop_jmp'}
         end
-    end,
-    Recurse = function (me)
-        me.lbl = new{'Recurse'}
     end,
 
     EmitExt = function (me)
