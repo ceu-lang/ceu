@@ -528,7 +528,7 @@ typedef struct tceu_lst {
 /* TCEU_STK */
 
 typedef struct tceu_stk {
-    struct tceu_stk* down;
+    struct tceu_stk* up;
     tceu_org* org;
     tceu_ntrl trl1;
     tceu_ntrl trl2;
@@ -571,7 +571,8 @@ typedef struct tceu_app {
 #endif
 
 #ifdef CEU_STACK
-    tceu_jmp stk_jmp;
+    tceu_stk* stk_bottom;
+    tceu_jmp  stk_jmp;
 #endif
 
 #if defined(CEU_RET) || defined(CEU_ORGS_AWAIT)

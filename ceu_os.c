@@ -195,14 +195,13 @@ static void ceu_sys_org_free (tceu_app* app, tceu_org* org)
 /**********************************************************************/
 
 #ifdef CEU_STACK
-void ceu_stack_dump (tceu_stk* stk) {
-    if (stk == NULL) {
-        printf(">>> BOTTOM\n");
-        return;
+void ceu_stack_dump (tceu_app* app) {
+    tceu_stk* cur;
+    printf(">>> STACK DUMP:\n");
+    for (cur=app->stk_bottom; cur!=NULL; cur=cur->up) {
+        printf("\t[%p] up=%p org=%p trls=[%d,%d]\n",
+            cur, cur->up, cur->org, cur->trl1, cur->trl2);
     }
-    ceu_stack_dump(stk->down);
-    printf("[%p] org=%p trls=[%d,%d]\n",
-        stk, stk->org, stk->trl1, stk->trl2);
 }
 #endif
 
@@ -232,28 +231,28 @@ static int ceu_org_is_cleared (void* me, void* clr_org,
  * If so, the whole stack has to unwind and continue from what we pass in 
  * lbl_or_org.
  */
-void ceu_longjmp (tceu_stk* stk, tceu_org* org,
+void ceu_longjmp (tceu_app* app, tceu_org* org,
                   tceu_ntrl t1, tceu_ntrl t2) {
-    /* TODO: reverse */
-    /* traverse from the bottom to the top, we want to unwind from the lowest
-     * matching lavel */
-    if (stk == NULL) {
-        return;
-    } else {
-        ceu_longjmp(stk->down, org, t1,t2);
-    }
-
-#ifdef CEU_ORGS
-    if (stk->org != org) {
-        if (ceu_org_is_cleared(stk->org, org, t1, t2)) {
-            longjmp(stk->jmp, 1);
-        }
-    }
-    else
-#endif
+    tceu_stk* cur;
+    tceu_stk* prv;
+    for (prv=app->stk_bottom, cur=app->stk_bottom->up;
+         cur != NULL;
+         prv=cur,cur=cur->up)
     {
-        if (t1<=stk->trl1 && stk->trl2<=t2) {
-            longjmp(stk->jmp, 1);
+#ifdef CEU_ORGS
+        if (cur->org != org) {
+            if (ceu_org_is_cleared(cur->org, org, t1, t2)) {
+                prv->up = NULL;
+                longjmp(cur->jmp, 1);
+            }
+        }
+        else
+#endif
+        {
+            if (t1<=cur->trl1 && cur->trl2<=t2) {
+                prv->up = NULL;
+                longjmp(cur->jmp, 1);
+            }
         }
     }
 }
@@ -507,7 +506,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             /* traverse all children */
 
             if (cur != NULL) {
-                tceu_stk stk_ = { stk, org, cur->parent_trl, cur->parent_trl, {} };
+                tceu_stk stk_ = { NULL, org, cur->parent_trl, cur->parent_trl, {} };
                 if (setjmp(stk_.jmp) != 0) {
                     app->stk_jmp.trl->lbl = app->stk_jmp.lbl;
                     app->code(app, evt, app->stk_jmp.org, app->stk_jmp.trl, stk);
@@ -517,6 +516,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                  * A child might emit a global event that awakes a par/or 
                  * enclosing the parent organism with the call point.
                  */
+                stk->up = &stk_;
                 do {
                     tceu_org* nxt = cur->nxt;
                         /* save "nxt" before the call, which might kill "cur"
@@ -526,6 +526,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                                   cur, &cur->trls[0], NULL);
                     cur = nxt;
                 } while (cur != NULL);
+                stk->up = NULL;
             }
             continue;   /* next trail after handling children */
         }
@@ -690,7 +691,9 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
-    ceu_sys_go_stk(app, evt, evtp, NULL);
+    tceu_stk stk_ = { NULL, NULL, 0, 0, {} };
+    app->stk_bottom = &stk_;
+    ceu_sys_go_stk(app, evt, evtp, &stk_);
 }
 
 int ceu_go_all (tceu_app* app)
