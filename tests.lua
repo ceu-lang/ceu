@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -20654,6 +20653,33 @@ escape 1;
 Test { [[
 var int a = 1;
 escape a;
+]],
+    run = 1,
+}
+
+--]===]
+
+Test { [[
+input (char&&, u32) HTTP_GET;
+var char&& p2Buff;
+var u32 len;
+(p2Buff, len) = await HTTP_GET;
+var char c = p2Buff[0]; // doesn't work
+escape 1;
+]],
+    env = 'line 5 : cannot index pointers to internal types',
+}
+
+Test { [[
+input (char&&, u32) HTTP_GET;
+var _char&& p2Buff;
+var u32 len;
+par/or do
+    (p2Buff, len) = await HTTP_GET;
+    var char c = p2Buff[0]; // doesn't work
+with
+end
+escape 1;
 ]],
     run = 1,
 }

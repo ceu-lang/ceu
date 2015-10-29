@@ -1386,10 +1386,19 @@ F = {
         local _, arr, idx = unpack(me)
         local tp_id = TP.id(arr.tp)
 
-        local ok = TP.check(arr.tp, '&&', '-&') or
-                   TP.check(arr.tp, '[]', '-&')
-        ASR(ok or TP.is_ext(arr.tp,'_','@'), me,
+        if TP.check(arr.tp,'&&','-&') then
+            ASR(TP.is_ext(arr.tp,'_','@'), me,
+                'cannot index pointers to internal types', [[
+    Indexing pointers is unsafe because of buffer overflows.
+    You can either use a vector or an external type (e.g., `_char`).
+]])
+        end
+
+        if not TP.is_ext(arr.tp,'_','@') then
+            ASR(TP.check(arr.tp, '[]', '-&'), me,
             'cannot index a non array')
+        end
+
         ASR(TP.isNumeric(idx.tp), me, 'invalid array index')
 
         -- remove [] or *
