@@ -45,20 +45,28 @@ F = {
         local internal  = not (constr or outer or interface or argument)
 
         -- IGNORE NON-FIRST ASSIGNMENTS
+        local not_first = false
+
+        -- t.ref = <...>;       // not a first assignment
+        not_first = not_first or (to.tag == 'Op2_.')
+
+        -- vs[0].ref = <...>;   // not a first assignment
+        not_first = not_first or (to.tag == 'Op2_idx')
 
         --  class T with
         --      var int& ref;
         --  do
-        --      this.ref = <...>;   // this is not a first assignment
+        --      this.ref = <...>;   // not a first assignment
         --  end
-        if (not constr) and to.lst.var.blk==cls.blk_ifc and (cls.id~='Main') then
-            return
-        end
+        not_first = not_first or
+            ((not constr) and to.lst.var.blk==cls.blk_ifc and (cls.id~='Main'))
 
         --  function (int& v)=>void do
-        --      v = 10;     // this is not a first assignment
+        --      v = 10;     // not a first assignment
         --  end
-        if AST.par(me,'Dcl_fun') and to.lst.var.is_arg then
+        not_first = not_first or (AST.par(me,'Dcl_fun') and to.lst.var.is_arg)
+
+        if not_first then
             return
         end
 

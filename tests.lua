@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -20656,8 +20657,6 @@ escape a;
 ]],
     run = 1,
 }
-
---]===]
 
 Test { [[
 input (char&&, u32) HTTP_GET;
@@ -48357,6 +48356,10 @@ escape e.X.d.x;
     run = 10,
 }
 
+print'====================================='
+print'TODO: not binded'
+print'====================================='
+io.read()
 Test { [[
 data D with
     var int x;
@@ -48370,7 +48373,7 @@ or
     end
 end
 
-var E e;
+var E e;    // TODO: should bind here
 do
     var D d = D(1);
     e.X.d = &d;
@@ -48378,6 +48381,7 @@ end
 
 escape e.X.d.x;
 ]],
+    todo = true,
     ref = 'line 16 : attribution to reference with greater scope',
 }
 Test { [[
@@ -50793,6 +50797,71 @@ escape -1;
     _ana = {acc=true},
     run = -1,
 }
+
+-->>> ADTS + VECTORS + REFERENCES
+Test { [[
+data Test with
+    var u8 v;
+end
+var Test a = Test(1);
+var Test b = Test(2);
+var Test c = Test(3);
+var Test[3] vs = [ a, b, c ];
+escape vs[0].v + vs[1].v + vs[2].v;
+]],
+    run = 6,
+}
+
+print'====================================='
+print'TODO: rebinding'
+print'====================================='
+io.read()
+Test { [[
+data Test with
+    var u8& v;
+end
+
+var u8 v = 7;
+var Test t;
+t.v = &v;       // ERRO
+v = 10;
+escape t.v;
+]],
+    todo = true,
+    run = 1,
+}
+
+Test { [[
+data Test with
+    var u8& v;
+end
+var u8 v = 7;
+var Test t = Test(&v);
+v = 10;
+escape t.v;
+]],
+    run = 10,
+}
+
+Test { [[
+data Test with
+    var u8& v;
+end
+
+var u8 v = 7;
+var Test[3] vs;
+var Test t = Test(&v);
+vs = vs .. [t];
+
+v = 10;
+t.v = 88;
+vs[0].v = 36;
+escape v;
+]],
+    run = 36,
+}
+
+--<<< ADTS + VECTORS
 
 -- ADTS / RECURSE / TRAVERSE
 
