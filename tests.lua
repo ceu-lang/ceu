@@ -15874,13 +15874,30 @@ escape ref[1];
 Test { [[
 var char[] str = [0,1,2];
 
-function (int[] vec)=>int f do
+function (void&&, int[] vec)=>int f do
     return vec[1];
 end
 
 escape f(str);
 ]],
-    env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `char[]´)',
+    env = 'line 3 : wrong argument #2 : vectors are not supported',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `char[]´)',
+}
+
+Test { [[
+function (int a, void)=>int f do
+end
+escape 1;
+]],
+    env = 'line 1 : type cannot be `void´',
+}
+
+Test { [[
+function (void, int a)=>int f do
+end
+escape 1;
+]],
+    env = 'line 1 : type cannot be `void´',
 }
 
 --<<< REFERENCES / REFS / &
@@ -39479,6 +39496,14 @@ fillBuffer(&&buffer);
 escape buffer[0];
 ]],
     run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+function (u8[] bytes)=>void build do
+end
+escape 1;
+]],
+    env = 'line 1 : wrong argument #1 : vectors are not supported',
 }
 
 --<<< FUNCTIONS

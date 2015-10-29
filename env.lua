@@ -801,11 +801,14 @@ F = {
         _, me.var = newfun(me, up, pre, rec, ins, out, id, me.isImp)
 
         -- "void" as parameter only if single
-        if #ins > 1 then
-            for _, v in ipairs(ins) do
-                local _, tp, _ = unpack(v)
-                ASR(tp ~= 'void', me, 'invalid declaration')
+        for i, v in ipairs(ins) do
+            local _, tp, _ = unpack(v)
+            if #ins > 1 then
+                ASR(not TP.check(tp,'void'), me,
+                    'wrong argument #'..i..' : cannot be `void´ argument')
             end
+            ASR(not TP.check(tp,'[]'), me,
+                'wrong argument #'..i..' : vectors are not supported')
         end
 
         -- full definitions must contain parameter ids
