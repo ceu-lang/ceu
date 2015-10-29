@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -608,7 +609,6 @@ escape 1;
     --adj = 'line 1 : not implemented : multiple `[]´',
     env = 'line 1 : invalid type modifier : `[][]´',
 }
---]===]
 Test { [[
 var int[1]? v;
 escape 1;
@@ -20938,6 +20938,51 @@ _f(&&b);
 escape b[0] + b[1];
 ]],
     run = 5,
+}
+
+Test { [[
+var u8[5] foo = [1, 2, 3, 4, 5];
+var int tot = 0;
+loop i in $foo do
+    tot = tot + foo[i];
+end
+escape tot;
+]],
+    tight = 'line 3 : tight loop',
+}
+Test { [[
+var u8[5] foo = [1, 2, 3, 4, 5];
+var int tot = 0;
+loop i in $foo do
+    tot = tot + foo[i];
+end
+escape tot;
+]],
+    loop = true,
+    wrn = true,
+    run = 15,
+}
+
+Test { [[
+var u8[5] foo = [1, 2, 3, 4, 5];
+var int tot = 0;
+loop i in $$foo do
+    tot = tot + foo[i];
+end
+escape tot;
+]],
+    run = 15,
+}
+
+Test { [[
+var u8[] foo = [1, 2, 3, 4, 5];
+var int tot = 0;
+loop i in $$foo do
+    tot = tot + foo[i];
+end
+escape tot+1;
+]],
+    run = 1,
 }
 
 Test { [[

@@ -63,15 +63,19 @@ F = {
 
     Loop = function (me)
         local max,iter,_,body = unpack(me)
+
+        me.is_bounded = false
         if max then
             ASR(max.cval, me, '`loop´ bound must be constant')
+            me.is_bounded = true
+        elseif iter then
+            local tp_id = iter.tp and TP.id(iter.tp)
+            me.is_bounded = (iter.cval or
+                             iter.tag=='Op1_$$' or
+                             iter.tp and (
+                                 ENV.clss[tp_id] or
+                                 ENV.adts[tp_id]))
         end
-
-        local tp_id = iter and iter.tp and TP.id(iter.tp)
-        me.is_bounded = max or (iter and (iter.cval or
-                                          iter.tp and (
-                                            ENV.clss[tp_id] or
-                                            ENV.adts[tp_id])))
 
         SAME(me, body)
         local isTight = (not AST.iter(AST.pred_async)())
