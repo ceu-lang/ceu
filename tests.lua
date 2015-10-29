@@ -19733,25 +19733,25 @@ Test { [[
 input (void,int) A;
 escape 1;
 ]],
-    env = 'line 1 : invalid type',
+    env = 'line 1 : type cannot be `void´',
 }
 Test { [[
 input (int,void) A;
 escape 1;
 ]],
-    env = 'line 1 : invalid type',
+    env = 'line 1 : type cannot be `void´',
 }
 Test { [[
 output (void,int) A;
 escape 1;
 ]],
-    env = 'line 1 : invalid type',
+    env = 'line 1 : type cannot be `void´',
 }
 Test { [[
 output (int,void) A;
 escape 1;
 ]],
-    env = 'line 1 : invalid type',
+    env = 'line 1 : type cannot be `void´',
 }
 
 Test { [[
@@ -19768,7 +19768,7 @@ input (void, int a)=>void A do
 end
 escape 1;
 ]],
-    env = 'line 1 : invalid type',
+    env = 'line 1 : type cannot be `void´',
 }
 
 Test { [[
@@ -39286,7 +39286,7 @@ Test { [[
 function (void,int) => int f;
 escape 1;
 ]],
-    env = 'line 1 : invalid type',
+    env = 'line 1 : type cannot be `void´',
 }
 
 Test { [[

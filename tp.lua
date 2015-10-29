@@ -174,7 +174,9 @@ function TP.new (me, dont_generate)
             tp.hold = hold
 
             if TP.check(tp,'void','-&') then
-                ASR(#me==1, me, 'type cannot be `void´')
+                ASR(#me==1, me, 'type cannot be `void´', [[
+    A `void´ only makes sense if it is the only argument.
+]])
                 me[1] = nil     -- empty tuple
                 break
             end
