@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -609,11 +608,13 @@ escape 1;
     --adj = 'line 1 : not implemented : multiple `[]´',
     env = 'line 1 : invalid type modifier : `[][]´',
 }
+--]===]
 Test { [[
 var int[1]? v;
 escape 1;
 ]],
-    env = 'line 1 : invalid type modifier : `[]?´',
+    env = 'line 1 : `data´ fields do not support vectors yet',
+    --env = 'line 1 : invalid type modifier : `[]?´',
 }
 Test { [[
 var int* v;
@@ -50859,6 +50860,57 @@ vs[0].v = 36;
 escape v;
 ]],
     run = 36,
+}
+
+Test { [[
+  var u8[3] bytes;
+
+bytes = bytes .. [5];
+
+escape bytes[0];
+]],
+    run = 5,
+}
+Test { [[
+data Frame with
+  var u8[3] bytes;
+end
+
+var Frame f1;
+f1.bytes = f1.bytes .. [5];
+
+escape f1.bytes[0];
+]],
+    env = 'line 2 : `data´ fields do not support vectors yet',
+}
+Test { [[
+data Frame with
+    tag X;
+or
+    tag Y with
+        var u8[3] bytes;
+    end
+end
+
+escape 1;
+]],
+    env = 'line 5 : `data´ fields do not support vectors yet',
+}
+Test { [[
+data Frame with
+  var _u8[3] bytes;
+end
+
+var Frame[10] frames;
+var Frame f1;
+
+f1.bytes[0] = 5;
+
+frames = frames .. [f1];
+
+escape frames[0].bytes[0];
+]],
+    run = 5,
 }
 
 --<<< ADTS + VECTORS

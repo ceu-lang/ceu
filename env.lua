@@ -565,6 +565,10 @@ F = {
                 for _, dclvar in ipairs(stmts) do
                     AST.asr(dclvar, 'Dcl_var')
                     local _, var_tp, var_id = unpack(dclvar)
+                    if TP.check(var_tp,'[]','-&') then
+                        ASR(TP.is_ext(var_tp,'_','@'), dclvar,
+                            '`data´ fields do not support vectors yet')
+                    end
                     local item = AST.node('TupleTypeItem', me.ln,
                                     false,var_tp,false)
                     me.tup[#me.tup+1] = item
@@ -595,6 +599,10 @@ F = {
                             local _, var_tp, var_id = unpack(dclvar)
                             local item = AST.node('TupleTypeItem', me.ln,
                                             false,var_tp,false)
+                            if TP.check(var_tp,'[]','-&') then
+                                ASR(TP.is_ext(var_tp,'_','@'), dclvar,
+                                    '`data´ fields do not support vectors yet')
+                            end
 
                             --  data Y with ... end
                             --  data X with
@@ -1303,6 +1311,7 @@ F = {
         local tup
         local tadt = ASR(ENV.adts[id_adt], me,
                         'data "'..id_adt..'" is not declared')
+
         if id_tag then
             local ttag = ASR(tadt.tags[id_tag], me,
                             'tag "'..id_tag..'" is not declared')
