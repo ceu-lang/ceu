@@ -180,12 +180,12 @@ me.blk_body = me.blk_body or blk_body
         local exp = unpack(me)
 
         local cls = AST.par(me, 'Dcl_cls')
-        local set = AST.par(me, 'SetBlock')
-        cls.has_escape = (set[3] == true);
-        ASR(set and set.__depth>cls.__depth,
+        local setblk = AST.par(me, 'SetBlock')
+        cls.has_escape = (setblk[3] == true);
+        ASR(setblk and setblk.__depth>cls.__depth,
             me, 'invalid `escape´')
 
-        local _,to = unpack(set)
+        local _,to = unpack(setblk)
         local to = AST.copy(to)    -- escape from multiple places
             to.ln = me.ln
 
@@ -195,7 +195,7 @@ me.blk_body = me.blk_body or blk_body
         --      escape 1;   -- "set" block (outer)
         --  end
         --]]
-        to.__ast_blk = set
+        to.__ast_blk = setblk
 
         --[[
         --      a = do ...; escape 1; end
@@ -203,8 +203,10 @@ me.blk_body = me.blk_body or blk_body
         --      do ...; a=1; escape; end
         --]]
 
+        local set = node('Set', me.ln, '=', 'exp', exp, to, fr)
+        set.__adj_escape = true
         return node('Stmts', me.ln,
-                    node('Set', me.ln, '=', 'exp', exp, to, fr),
+                    set,
                     node('Escape', me.ln))
     end,
 

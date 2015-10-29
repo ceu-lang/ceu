@@ -1239,6 +1239,7 @@ F = {
             me.i_dcl.read_only = true
             me.i_var = (is_num and to) or AST.node('Var',me.ln,id)
             AST.visit(F, me.i_dcl)
+            me.i_dcl.var.__env_is_loop_var = true
             local stmts = me.__par[1]
             stmts[#stmts+1] = me.i_dcl
             if not is_num then

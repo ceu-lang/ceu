@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -822,11 +821,77 @@ if 1 then
 end;
 escape a;
 ]],
+    ref = 'line 5 : missing initialization for variable "a" in the other if-else branch',
+}
+Test { [[
+var int a;
+if 1 then
+    if 1 then
+        a = 2;
+    else
+        a = 0;
+    end;
+else
+    a = 10;
+end;
+escape a;
+]],
     run = 2,
 }
 Test { [[
 var int a;
+if 1 then
+    a = 1;
+    if 1 then
+        a = 2;
+    else
+        a = 0;
+    end;
+else
+    a = 10;
+end;
+escape a;
+]],
+    run = 2,
+}
+Test { [[
+var int a;
+if 1 then
+    a = 1;
+    if 1 then
+        a = 2;
+    else
+        a = 0;
+    end;
+end;
+escape a;
+]],
+    ref = 'line 3 : missing initialization for variable "a" in the other if-else branch',
+}
+Test { [[
+var int a;
 if 0 then
+    escape 1;
+else
+    a=1;a=2; escape 3;
+end;
+]],
+    ref = 'line 5 : missing initialization for variable "a" in the other if-else branch',
+}
+Test { [[
+var int a=1;
+if 0 then
+    escape 1;
+else
+    a=1;a=2; escape 3;
+end;
+]],
+    run = 3,
+}
+Test { [[
+var int a;
+if 0 then
+    a = 1;
     escape 1;
 else
     a=1;a=2; escape 3;
@@ -1406,6 +1471,18 @@ async (pa) do
 end;
 escape a + 1;
 ]],
+    ref = ' line 2 : access to unitialized variable "a"',
+}
+
+Test { [[
+var int a = 0;
+var int& pa = &a;
+async (pa) do
+    emit 1min;
+    pa = 10;
+end;
+escape a + 1;
+]],
     run = 11,
 }
 
@@ -1789,12 +1866,25 @@ input int A;
 var int v;
 if 1 then
     v = await A;
+else
+    v = 0;
 end;
 escape v;
 ]],
     run = {
         ['1~>A ; 0~>A'] = 1,
     },
+}
+
+Test { [[
+input int A;
+var int v;
+if 1 then
+    v = await A;
+end;
+escape v;
+]],
+    ref = 'line 4 : missing initialization for variable "v" in the other if-else branch',
 }
 
 Test { [[
@@ -2179,6 +2269,7 @@ else
         b = 1;
     else
         await A;
+        b = 0;
     end;
 end;
 escape b;
@@ -2186,6 +2277,25 @@ escape b;
     run = {
         ['0~>A ; 0~>A'] = 1,
     },
+}
+
+Test { [[
+input int A;
+var int b;
+if 1 then
+    await A;
+    b = 1;
+else
+    if 1 then
+        await A;
+        b = 1;
+    else
+        await A;
+    end;
+end;
+escape b;
+]],
+    ref = 'line 9 : missing initialization for variable "b" in the other if-else branch',
 }
 
     -- LOOP
@@ -4401,7 +4511,7 @@ escape ret;
 }
 Test { [[
 input int A;
-var int a;
+var int a = 0;
 par/or do
     if 1 then
         a = await A;
@@ -4534,7 +4644,7 @@ escape v;
 
 Test { [[
 input int A,B;
-var int a,v;
+var int a,v=0;
 a = par do
     if 1 then
         v = await A;    // 5
@@ -4557,7 +4667,7 @@ escape a;
 
 Test { [[
 input int A,B;
-var int a,v;
+var int a,v=0;
 a = par do
     if 1 then
         v = await A;
@@ -5620,6 +5730,8 @@ loop do
             if 1 then
                 a = 1;      // 9
                 break;
+            else
+                a = 0;
             end
         end
     with
@@ -5636,7 +5748,7 @@ end
 }
 Test { [[
 input int A;
-var int a;
+var int a=1;
 loop do
     par/or do
         loop do
@@ -8036,7 +8148,7 @@ escape a;
 }
 Test { [[
 input int A,B;
-var int a;
+var int a=0;
 par/or do
     par/and do
         await A;
@@ -8061,7 +8173,7 @@ escape a;
 }
 
 Test { [[
-var int a;
+var int a=0;
 par/or do
     await 10ms;
     var int v = a;
@@ -8174,7 +8286,7 @@ escape a;
 
 Test { [[
 input int A;
-var int a;
+var int a=0;
 par/and do
     if a then
         await A;
@@ -8200,7 +8312,7 @@ escape a;
 }
 Test { [[
 input int A;
-var int a;
+var int a=0;
 if a then
     await A;
 else
@@ -8226,7 +8338,7 @@ escape a;
 }
 Test { [[
 input int A;
-var int a;
+var int a=0;
 par do
     loop do
         if a then           // 5
@@ -8977,9 +9089,11 @@ escape cc;
     },
     run = 5,
 }
+-- TODO: ret=0 should not be required because the loop cannot escape w/o 
+assigning to v
 Test { [[
 input int A;
-var int ret;
+var int ret=0;
 loop do
     var int v = await A;
     if v == 5 then
@@ -9038,7 +9152,7 @@ escape ret;
 Test { [[
 input int A;
 event int a;
-var int aa;
+var int aa=0;
 loop do
     var int v = await A;
     if v==2 then
@@ -9059,7 +9173,7 @@ end;
 Test { [[
 input int A;
 event int a;
-var int aa;
+var int aa=0;
 loop do
     var int v = await A;
     if v==2 then
@@ -10163,6 +10277,17 @@ with
     escape a;
 end;
 ]],
+    ref = 'line 3 : access to unitialized variable "a"',
+}
+Test { [[
+var int a=0;
+par do
+    escape a;
+with
+    a = 1;
+    escape a;
+end;
+]],
     _ana = {
         acc = 2,
         abrt = 3,
@@ -10355,7 +10480,7 @@ end;
 }
 Test { [[
 input int A;
-var int a;
+var int a=0;
 par do
     await A;
     escape a;
@@ -10478,7 +10603,7 @@ escape aa;
 }
 Test { [[
 input int A;
-var int v;
+var int v=0;
 par do
     await A;
     loop do
@@ -12206,10 +12331,71 @@ end;
     },
 }
 
+--]===]
+Test { [[
+var int v;
+par/and do
+    v = 1;
+with
+    v = 2;
+end;
+escape v;
+]],
+    _ana = {acc=1},
+    run = 2;
+}
+
+Test { [[
+var int v;
+par/and do
+    v = 1;
+with
+end;
+escape v;
+]],
+    run = 1;
+}
+
+Test { [[
+var int v;
+par/or do
+with
+    v = 1;
+end;
+escape v;
+]],
+    run = 1;
+}
+
 Test { [[
 input int A,B;
 event int a,b;
 var int v;
+par/or do
+    par/and do
+        var int v = await A;
+        emit a => v;
+    with
+        await B;
+        emit b => 1;
+    end;
+    escape v;
+with
+    v = await a;
+    escape v;       // 15
+with
+    var int bb = await b;
+    escape bb;       // 18
+end;
+]],
+    wrn = true,
+    ref = 'line 12 : access to unitialized variable "v"',
+}
+
+Test { [[
+input int A,B;
+event int a,b;
+var int v=0;
 par/or do
     par/and do
         var int v = await A;

@@ -25,7 +25,7 @@ F = {
     __Set_pre = function (me, TO)
         local _, set, fr, _ = unpack(me)
         to = TO
-        if not TP.check(to.tp,'&','-?') then
+        if to.lst.tag == 'Nat' then
             return
         end
         assert(to.lst.var, 'bug found')
@@ -82,11 +82,13 @@ F = {
         --              this.v = <...>;
         --          end;
         --      end
-        local loop = AST.par(me, 'Loop')
-        if loop then
-            if (not to.lst.var.bind) and (not AST.par(me,'Dcl_constr')) then
-                ASR(AST.isParent(loop, to.lst.var.blk), me,
-                    'reference declaration and first binding cannot be separated by loops')
+        if TP.check(to.lst.var.tp,'&','-?') then
+            local loop = AST.par(me, 'Loop')
+            if loop then
+                if (not to.lst.var.bind) and (not AST.par(me,'Dcl_constr')) then
+                    ASR(AST.isParent(loop, to.lst.var.blk), me,
+                        'reference declaration and first binding cannot be separated by loops')
+                end
             end
         end
 
@@ -109,8 +111,8 @@ F = {
             else
                 if_ = false
             end
-            if if_ and AST.isParent(if_[2],me) then
-                -- do not bind yet if inside a true branch of an if,
+            if if_ and (AST.par(if_,'If') or AST.isParent(if_[2],me)) then
+                -- do not bind yet if inside a nested if or true branch of an if,
                 -- force the else part to also set byRef
                 to.lst.var.bind = 'partial'
 
@@ -130,62 +132,82 @@ F = {
                 to.lst.var.bind = 'interface'
             end
 
-            -- save binds from if/else, check after
-            if if_ then
-                local T = if_.__ref_bounded or {}
-                if_.__ref_bounded = T
-                local t = T[to.lst.var] or {}
-                T[to.lst.var] = t
-                t[#t+1] = me
-            end
-
-            -- first assignment (and only first assignment) is "by ref"
-            me.__ref_byref = true
-
-            ASR(fr.tag == 'Op1_&', me,
-                'invalid attribution : missing alias operator `&´')
-
-            -- check scopes
--- TODO: this code is duplicated with "fin.lua"
-            local fr_blk = NODE2BLK(fr)
-            local to_blk = NODE2BLK(to)
-            local org_blk
-            if to.tag=='Field' and to[2].tag=='This' then
-                local constr = AST.par(me, 'Dcl_constr')
-                if constr then
-                    local dcl = AST.par(constr, 'Dcl_var')
-                    if dcl then
-                        org_blk = dcl.var.blk
+            -- save inits from if/else, check after
+            if  (to.lst.var.id~='_ret')
+            and (not me.__adj_escape)       -- escape a; // doesnt count as init
+            then
+                for if_ in AST.iter'If' do
+                    if (if_.__depth < to.lst.var.blk.__depth) then
+                        break   -- var defined inside the if
+                    end
+                    if constr and if_.__depth<constr.__depth then
+                        error 'TODO: not tested, probably just removing this line works'
+                        break
+                    end
+                    local _, T, F = unpack(if_)
+                    local inits
+                    if AST.isParent(T, me) then
+                        inits = T.__ref_inits or {}
+                        T.__ref_inits = inits
                     else
-                        local spw = AST.par(constr, 'Spawn')
-                        org_blk = spw[2].var.blk or MAIN.blk_body    -- pool.blk
+                        inits = F.__ref_inits or {}
+                        F.__ref_inits = inits
+                    end
+                    if not inits[to.lst.var] then
+                        inits[to.lst.var] = me  -- force error in the first
                     end
                 end
             end
-            if not (
-                fr.fst.tag == 'Nat'        or -- natives are globals
-                (fr.tag=='Op2_call' and       -- native calls are globals
-                 fr[2].fst.tag=='Nat')     or
-                (fr.org and                   -- "global:*" is global
-                 fr.org.cls.id=='Global')  or
-                fr_blk == MAIN.blk_body    or
-                (org_blk and
-                 org_blk.__depth>=fr_blk.__depth) or
-                (   -- same class and scope of "to" <= "fr"
-                    (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
-                        (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
-                        or (to_blk.__depth==cls.blk_ifc.__depth and     --    or
-                            fr_blk.__depth==cls.blk_body.__depth)       -- ifc/bdy
-                        )
-                )
-            ) then
-                ASR(false, me, 'attribution to reference with greater scope')
-                    -- NO:
-                    -- var int& r;
-                    -- do
-                    --     var int v;
-                    --     r = v;
-                    -- end
+
+            if TP.check(to.tp,'&','-?') then
+                -- first assignment (and only first assignment) is "by ref"
+                me.__ref_byref = true
+
+                ASR(fr.tag == 'Op1_&', me,
+                    'invalid attribution : missing alias operator `&´')
+
+                -- check scopes
+-- TODO: this code is duplicated with "fin.lua"
+                local fr_blk = NODE2BLK(fr)
+                local to_blk = NODE2BLK(to)
+                local org_blk
+                if to.tag=='Field' and to[2].tag=='This' then
+                    local constr = AST.par(me, 'Dcl_constr')
+                    if constr then
+                        local dcl = AST.par(constr, 'Dcl_var')
+                        if dcl then
+                            org_blk = dcl.var.blk
+                        else
+                            local spw = AST.par(constr, 'Spawn')
+                            org_blk = spw[2].var.blk or MAIN.blk_body    -- pool.blk
+                        end
+                    end
+                end
+                if not (
+                    fr.fst.tag == 'Nat'        or -- natives are globals
+                    (fr.tag=='Op2_call' and       -- native calls are globals
+                     fr[2].fst.tag=='Nat')     or
+                    (fr.org and                   -- "global:*" is global
+                     fr.org.cls.id=='Global')  or
+                    fr_blk == MAIN.blk_body    or
+                    (org_blk and
+                     org_blk.__depth>=fr_blk.__depth) or
+                    (   -- same class and scope of "to" <= "fr"
+                        (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
+                            (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
+                            or (to_blk.__depth==cls.blk_ifc.__depth and     --    or
+                                fr_blk.__depth==cls.blk_body.__depth)       -- ifc/bdy
+                            )
+                    )
+                ) then
+                    ASR(false, me, 'attribution to reference with greater scope')
+                        -- NO:
+                        -- var int& r;
+                        -- do
+                        --     var int v;
+                        --     r = v;
+                        -- end
+                end
             end
         end
     end,
@@ -232,32 +254,33 @@ F = {
         end
     end,
 
-    If = function (me)
-        -- prepare to pass to parent
-        local if_ = AST.par(me,'If')
-        local T2
-        if if_ then
-            T2 = if_.__ref_bounded or {}
-            if_.__ref_bounded = T2
+    __diff = function (A,B)
+        local C = {}
+DBG'======='
+        for k,v in pairs(A or {}) do
+DBG(k.id, '+A')
+            C[k] = v
         end
-
-        local T1 = me.__ref_bounded or {}
-        for var,t in pairs(T1) do
-            ASR(#t==2, t[1],
-                'reference must be bounded in the other if-else branch')
--- TODO: "must also bound the reference in the other ..."
-
-            -- pass to parent
-            if if_ then
-                T2[var] = t
+        for k,v in pairs(B or {}) do
+            if C[k] then
+DBG(k.id, '-A')
+                C[k] = nil
+            else
+DBG(k.id, '+B')
+                C[k] = v
             end
         end
+        return C
+    end,
+    If = function (me)
+        local c, t, f = unpack(me)
+        local var, stmt = next(F.__diff(t.__ref_inits,f.__ref_inits))
+        ASR(not var, stmt, var and
+            'missing initialization for variable "'..var.id..'" in the other if-else branch')
     end,
 
     -- Constructors (static/dynamic):
-    -- If a ref field (class.field&) is not bounded internally,
-    --  it must be bounded in all constructors.
-    -- Checks if all class.field& are bounded or assigned here.
+    -- A ref field (class.field&) must be bounded in all constructors.
     __constr = function (me, cls, constr)
         constr.__bounded = constr.__bounded or {}
         for _, var in ipairs(cls.blk_ifc.vars) do
@@ -283,7 +306,7 @@ F = {
         -- ensures that global "ref" vars are initialized
         local glb = ENV.clss.Global
         local cls = CLS()   -- might be an ADT declaration
-        if TP.check(me.var.tp,'&') and glb and cls and cls.id=='Main' then
+        if glb and cls and cls.id=='Main' then
             local var = glb.blk_ifc.vars[me.var.id]
             if var then
                 local set = me.__par and me.__par[1]==me and
@@ -303,40 +326,47 @@ F = {
         if not (me.var.pre=='var' or me.var.pre=='pool') then
             return
         end
+        if me.var.id == '_ret' then
+            return
+        end
+
         local cls = CLS()
-        if TP.check(me.var.tp,'&') then
-            -- ignore interface variables outside Main
-            -- (they are guaranteed to be bounded)
-            local inifc = (me.var.blk == cls.blk_ifc)
-            inifc = inifc and cls.id~='Main'
+        -- ignore interface variables outside Main
+        -- (they are guaranteed to be bounded)
+        local inifc = (me.var.blk == cls.blk_ifc)
+        inifc = inifc and cls.id~='Main'
 
-            -- ignore function arguments
-            -- (they are guaranteed to be bounded)
-            local infun = AST.par(me.var.blk, 'Dcl_fun')
+        -- ignore function arguments
+        -- (they are guaranteed to be bounded)
+        local infun = AST.par(me.var.blk, 'Dcl_fun')
 
-            -- ignore global variables
-            -- (they are guaranteed to be bounded)
-            local glb = ENV.clss.Global
-            if glb then
-                if cls.id == 'Main' then
-                    -- id = <...>   // id is a global accessed in Main
-                    glb = glb.blk_ifc.vars[me.var.id]
-                else
-                    local fld = me.__par
-                    if fld and fld.tag=='Field' and fld.org then
-                        -- global:id = <...>
-                        glb = fld.org.cls==glb
-                    end
+        -- ignore global variables
+        -- (they are guaranteed to be bounded)
+        local glb = ENV.clss.Global
+        if glb then
+            if cls.id == 'Main' then
+                -- id = <...>   // id is a global accessed in Main
+                glb = glb.blk_ifc.vars[me.var.id]
+            else
+                local fld = me.__par
+                if fld and fld.tag=='Field' and fld.org then
+                    -- global:id = <...>
+                    glb = fld.org.cls==glb
                 end
             end
+        end
 
-            -- ignore field accesses:
-            --      x.ref.v
-            -- (they are guaranteed to be bounded)
-            local fld = (me.__par.tag=='Field' and me.__par[3]==me)
+        -- ignore field accesses:
+        --      x.ref.v
+        -- (they are guaranteed to be bounded)
+        local fld = (me.__par.tag=='Field' and me.__par[3]==me)
 
+        if  (not me.var.__env_is_loop_var)  -- loop i in ...
+        and (not TP.check(me.var.tp,'[]'))  -- var char[] v
+        then
             if not (inifc or infun or glb or fld) then
-                ASR(me.var.bind, me, 'reference must be bounded before use')
+                ASR(me.var.bind, me,
+                    'access to unitialized variable "'..me.var.id..'"')
             end
         end
     end,
