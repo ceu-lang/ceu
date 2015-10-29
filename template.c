@@ -200,7 +200,7 @@ ceu_app_init (tceu_app* app)
 #ifdef CEU_RET
     app->ret = 0;
 #endif
-#if defined(CEU_ORGS_NEWS_MALLOC) || defined(CEU_ADTS_NEWS_MALLOC)
+#ifdef CEU_ORGS_NEWS_MALLOC
     app->tofree = NULL;
 #endif
 #ifdef CEU_WCLOCKS
