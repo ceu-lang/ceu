@@ -9,15 +9,13 @@
 #include <stdlib.h>
 #include "ceu_pool.h"
 
-void ceu_pool_init (tceu_pool* pool, int size, int unit, tceu_org_lnk** lnks,
-                    byte** queue, byte* mem)
+void ceu_pool_init (tceu_pool* pool, int size, int unit, byte** queue, byte* mem)
 {
     int i;
     pool->size  = size;
     pool->free  = size;
     pool->index = 0;
     pool->unit  = unit;
-    pool->lnks  = lnks;
     pool->queue = queue;
     pool->mem   = mem;
     for (i=0; i<size; i++) {

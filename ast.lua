@@ -105,6 +105,10 @@ function AST.pred_par (me)
     local tag = me.tag
     return tag=='ParOr' or tag=='ParAnd' or tag=='ParEver'
 end
+function AST.pred_aborts (me)
+    local tag = me.tag
+    return tag=='ParOr' or tag=='SetBlock' or tag=='Loop'
+end
 function AST.pred_true (me) return true end
 
 function AST.par (me, pred)
@@ -225,8 +229,7 @@ end
 local function visit_aux (me, F)
     local _me = me
     me.__par   = STACK[#STACK]
-    me.__depth = (me.__par and me.__par.__depth+1) or 0
-    ASR(me.__depth < 0xFF, me, 'max depth of 0xFF')
+    me.__depth = (me.__par and me.__par.__depth+1) or 1
 
     local pre, mid, pos = FF(F,me.tag..'_pre'), FF(F,me.tag), FF(F,me.tag..'_pos')
     local bef, aft = FF(F,me.tag..'_bef'), FF(F,me.tag..'_aft')

@@ -97,12 +97,12 @@ escape 1;
 }
 
 do return end
---]===]
 
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -162,7 +162,8 @@ end end end end end end end end end end end end end end end end end end end end
 end end end end end end end end end end end end end end end end end end end end
 escape 1;
 ]],
-    ast = 'line 5 : max depth of 0xFF',
+    --ast = 'line 5 : max depth of 0xFF',
+    run = 1
 }
 
 Test { [[escape 0;]], run=0 }
@@ -469,6 +470,54 @@ var _abc a;
 }
 
 Test { [[
+native do
+    ##ifndef CEU_EXTS
+    ##error bug found
+    ##endif
+end
+escape 1;
+]],
+    run = 1,
+    gcc = 'error: #error bug found',
+}
+
+Test { [[
+native do
+    ##ifndef CEU_EXTS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_WCLOCKS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_INTS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_THREADS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_ORGS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_IFCS
+    ##error bug found
+    ##endif
+    ##ifdef CEU_CLEAR
+    ##error bug found
+    ##endif
+    ##ifdef CEU_PSES
+    ##error bug found
+    ##endif
+    ##ifndef CEU_RET
+    ##error bug found
+    ##endif
+    ##ifdef CEU_LUA
+    ##error bug found
+    ##endif
+    ##ifdef CEU_VECTOR
+    ##error bug found
+    ##endif
+end
+
 input void A;
 var int a = 1;
 a = 2;
@@ -853,6 +902,14 @@ Test { [[await A; escape 0;]],
 }
 
 Test { [[
+par/or do
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
 input void A;
 par/or do
     await A;
@@ -1020,6 +1077,28 @@ escape 10;
 }
 
 Test { [[
+event void e;
+emit e;
+escape 10;
+]],
+    --ana = 'line 3 : `loop´ iteration is not reachable',
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+event void e;
+await OS_START;
+emit e;
+escape 10;
+]],
+    --ana = 'line 3 : `loop´ iteration is not reachable',
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
 input void OS_START;
 event void e;
 loop do
@@ -1046,6 +1125,29 @@ escape a;
     run = 10,
 }
 
+Test { [[
+input void OS_START;
+do
+    var int v = 0;
+end
+event void e;
+var int ret = 0;
+par/or do
+    await OS_START;
+    emit e;
+    ret = 1;
+with
+    await e;
+    ret = 2;
+end
+escape ret;
+]],
+    _ana = {
+        excpt = 1,
+        --unreachs = 1,
+    },
+    run = 2,
+}
 Test { [[
 input void OS_START;
 do
@@ -2443,6 +2545,28 @@ escape 1;
     run = 2,
 }
 
+Test { [[
+input void OS_START;
+event void a;
+loop do
+    if 1 then
+        par do
+            await a;
+            break;
+        with
+            await OS_START;
+            emit a;
+            _assert(0);
+        end
+    else
+        await OS_START;
+    end
+end
+await 1s;
+escape 1;
+]],
+    run = {['~>1s']=1},
+}
 -- LOOP / BOUNDED
 
 Test { [[
@@ -3722,6 +3846,22 @@ par/and do
 with
     await OS_START;
     emit b;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+var int ret;
+event void a,b;
+par/and do
+    await OS_START;
+    emit a;
+with
+    await OS_START;
+    emit b;
 with
     await a;
     ret = 1;    // 12: nd
@@ -3895,7 +4035,8 @@ with
 end
 ]],
     _ana = {acc=true},
-    run = -2,
+    run = 2,
+    --run = -2,
 }
 Test { [[
 input void OS_START;
@@ -3914,7 +4055,8 @@ with
 end
 ]],
     _ana = {acc=true},
-    run = 1,
+    run = 2,
+    --run = 1,
 }
 
 -- the inner "emit e" is aborted and the outer "emit e"
@@ -3949,9 +4091,9 @@ escape ret;
 ]],
     --_ana = {acc=3},
     _ana = {acc=true},
-    --run = 6,
+    run = 6,
     --run = 9,
-    run = -2,
+    --run = -2,
 }
 
 Test { [[
@@ -3984,9 +4126,9 @@ escape ret;
 ]],
     --_ana = {acc=3},
     _ana = {acc=true},
-    --run = 6,
+    run = 6,
     --run = 9,
-    run = 4,
+    --run = 4,
 }
 
 -- "emit e" on the stack has to die
@@ -4064,6 +4206,24 @@ par/or do
         ret = ret + 1;
     end
 with
+    loop i in 2 do
+        emit e;
+    end
+end
+escape ret;
+]],
+    _ana = {acc=1},
+    run = 2,
+}
+
+Test { [[
+event void e;
+var int ret = 0;
+par/or do
+    every e do
+        ret = ret + 1;
+    end
+with
     loop i in 1000 do
         emit e;
     end
@@ -4073,103 +4233,55 @@ escape ret;
     _ana = {acc=1},
     run = 1000, -- had stack overflow
 }
+
 Test { [[
-event void x,e,f,g;
-var int ret = 0;
-class T with do end;
-par/or do
-    every x do
-        loop i in 1000 do
-            emit e;
+input void OS_START;
+event (int,int) e;
+par do
+    do
+        par/or do
+            await OS_START;
+            emit e => (1,2);
+        with
+            await e;
         end
     end
-with
-    every e do
-        emit f;
+    do
+        emit e => (3,4);
     end
 with
-    every f do
-        emit g;
-    end
-with
-    every g do
-        ret = ret + 1;
-        spawn T;
-    end
-with
-    emit x;
+    var int a,b;
+    (a,b) = await e;
+    escape a+b;
 end
-escape ret;
 ]],
-    _ana = {acc=1},
-    run = 1000, -- had stack overflow
+    run = 7,
+    --run = 3,
 }
 
+-- different semantics w/ longjmp
 Test { [[
-class Groundpiece with
-do
-end
-
-event void x;
-event void a;
-event void b;
-event void c;
-var int ret = 0;
-
-par/or do
-    every x do
-        emit b;
-        ret = 10;
-    end
-with
-    every b do
-        emit a;
-    end
-with
-    every c do
-        spawn Groundpiece;
-    end
-with
-    emit x;
-end
-
 input void OS_START;
-await OS_START;
-escape ret;
+event void e,f;
+par do
+    par/or do
+        await OS_START;
+        emit e;
+    with
+        await f;
+    end
+    await 1s;
+    escape 1;
+with
+    await e;
+    emit f;     // this continuation dies b/c the whole stack
+    escape 2;   // for emit-e dies
+end
 ]],
-    _ana = {acc=true},
-    run = 10,
+    run = {['~>1s']=1},
 }
 
 --<<< INTERNAL EVENTS
-
-Test { [[
-class T with
-    event void e;
-do
-    await FOREVER;
-end
-
-event void f;
-
-var T t;
-
-par do
-    par/or do
-        await t.e;
-    with
-        await 1s;
-        emit t.e;
-    end
-    emit f;
-    escape -1;
-with
-    await f;
-    escape 10;
-end
-]],
-    run = { ['~>10s'] = 10 },
-}
 
 -- ParOr
 
@@ -4837,8 +4949,8 @@ with
 end
 escape ret;
 ]],
-    --run = { ['~>2s']=10 },
-    run = { ['~>2s']=2 },
+    run = { ['~>2s']=10 },
+    --run = { ['~>2s']=2 },
 }
 
 Test { [[
@@ -10495,6 +10607,25 @@ escape v;
     }
 }
 Test { [[
+var int v = 0;
+par/or do
+    par/or do
+        v = 1;
+    with
+        v = 2;
+    end
+    v = 3;
+    await FOREVER;
+with
+    v = 4;
+end;
+escape v;
+]],
+    _ana = { acc=true },
+    run = 4,
+}
+
+Test { [[
 input int A;
 par/or do
 with
@@ -12872,6 +13003,27 @@ escape 1;
 }
 
 Test { [[
+input void OS_START;
+event int a, b;
+par/or do
+    loop do
+        par/or do
+            var int aa = await a;
+            emit b => aa;
+        with
+            var int bb = await b;
+        end;
+    end;
+with
+    await OS_START;
+    emit a => 1;
+end;
+escape 10;
+]],
+    run = 10,
+}
+
+Test { [[
 input void OS_START,A;
 var int v = 0;
 var int x = 0;
@@ -15054,24 +15206,6 @@ escape 1;
 
 Test { [[
 native do
-    int f() { return 1; }
-end
-class T with do end
-spawn T with
-            var _int&? intro_story_str;
-            finalize
-                intro_story_str = &_f();
-            with
-            end
-    end;
-escape 1;
-]],
-    gcc = '24: note: expected ‘int *’ but argument is of type ‘int’',
-    --run = 1,
-}
-
-Test { [[
-native do
     int V = 10;
     int* fff (int v) {
         V += v;
@@ -15443,6 +15577,16 @@ escape ret;
 }
 
 Test { [[
+var int ret =
+do
+    escape 1;
+end;
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
 native _f();
 native do
     int* f (void) {
@@ -15636,389 +15780,9 @@ escape v1!+v2!+_V;
 ]],
     run = 60,
 }
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = &v;
-end;
-
-escape v!;
-]],
-    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v! = 20;
-end
-do T with
-    this.v = &v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int&? v;
-do
-    v! = 20;
-end
-do T with
-    this.v = &v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = &v;
-end;
-
-escape v!;
-]],
-    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = &v!;
-end;
-
-escape v!;
-]],
-    run = 20,
-}
-Test { [[
-native do
-    int V = 10;
-    int* getV (void) {
-        return &V;
-    }
-end
-
-var _int&? v;
-finalize
-    v = &_getV();
-with
-    nothing;
-end
-
-class T with
-    var _int& v;
-do
-    v = 20;
-end
-do T with
-    this.v = &v;
-end;
-
-escape v!;
-]],
-    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
-}
-
-Test { [[
-native do
-    int* new_Int() {
-        return NULL;
-    }
-end
-    function (void) => void parse_file do
-            var int&? intro_story_str;
-            finalize
-                intro_story_str = &_new_Int();
-            with
-                nothing;    /* deleted below */
-            end
-    end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native @pure _new_String();
-class String with
-do
-    var _std__string&? ss = &_new_String();
-end
-escape 1;
-]],
-    fin = 'line 4 : attribution to pointer with greater scope',
-    run = 1,
-}
 
 --<<< FINALLY / FINALIZE
 
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-function (T& t)=>int f do
-    return t.v * 2;
-end
-
-var T t;
-var int ret = f(&t);
-
-    var T u with
-        this.v = 20;
-    end;
-    ret = ret + f(&u);
-
-escape ret;
-]],
-    run = 60,
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-function (T& t)=>int f do
-    return t.v * 2;
-end
-
-var T t;
-var int ret = f(&t);
-
-do
-    var T u with
-        this.v = 20;
-    end;
-    ret = ret + f(&u);
-end
-
-escape ret;
-]],
-    ref = 'line 17 : attribution to reference with greater scope',
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-function (T&& t)=>int f do
-    return t:v * 2;
-end
-
-var T t;
-var int ret = f(&&t);
-
-do
-    var T u with
-        this.v = 20;
-    end;
-    ret = ret + f(&&u);
-end
-
-escape ret;
-]],
-    run = 60,
-}
-
-Test { [[
-interface Human with
-    function (void)=>int walk;
-    function (void)=>int breath;
-    var int n;
-end
-
-class CommonThings with
-    function (Human& h)=>int walk;
-    function (Human& h)=>int breath;
-do
-    function (Human& h)=>int walk do
-        return h.n;
-    end
-    function (Human& h)=>int breath do
-        return h.n;
-    end
-    await FOREVER;
-end
-
-class Man with
-    interface Human;
-    var CommonThings& ct;
-    var int n = 100;
-do
-    function (void)=>int walk do
-        return 200; // override
-    end
-    function (void)=>int breath do
-        return this.ct.breath(&this); // delegate
-    end
-end
-
-var CommonThings ct;
-var Man m with
-    this.ct = &ct;
-end;
-escape m.walk() + m.breath();
-]],
-    run = 300,
-}
-
-Test { [[
-native do
-    typedef struct t {
-        void* ceu;
-    } t;
-end
-var _t   t;
-var _t&& ptr = &&t;
-var int v = 10;
-ptr:ceu = &v;
-escape *((int&&)(ptr:ceu));
-]],
-    ref = 'line 9 : invalid attribution : l-value already bounded',
-    --run = 10,
-}
-
-Test { [[
-native do
-    typedef struct t {
-        void* xxx;
-    } t;
-end
-
-class C with
-    var int v = 10;
-do
-end
-var C c;
-
-var _t   t;
-var _t&& ptr = &&t;
-
-ptr:xxx = &c;
-
-escape ((C&&)ptr:xxx):v;
-]],
-    --run = 10,
-    ref = 'line 16 : invalid attribution : l-value already bounded',
-}
-
-Test { [[
-native do
-    typedef struct t {
-        void* xxx;
-    } t;
-end
-
-class C with
-    var int v = 10;
-    event int e;
-do
-end
-var C c;
-
-var _t   t;
-var _t&& ptr = &&t;
-
-ptr:xxx = &c;
-
-emit ((C&&)ptr:xxx):e => 1;
-
-escape ((C&&)ptr:xxx):v;
-]],
-    ref = 'line 17 : invalid attribution : l-value already bounded',
-    --run = 10,
-}
 Test { [[
 native @pure _f();
 native do
@@ -16116,91 +15880,6 @@ end
 escape f(str);
 ]],
     env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `char[]´)',
-}
-
-Test { [[
-class Dir with
-    var int value;
-do
-end
-interface IPingu with
-    function (void)=>Dir& get;
-end
-class Pingu with
-    interface IPingu;
-do
-    var Dir dir with
-        this.value = 10;
-    end;
-    function (void)=>Dir& get do
-        return &&dir;
-    end
-end
-var Pingu p;
-escape p.get().value;
-]],
-    env = 'line 15 : invalid return value : types mismatch (`Dir&´ <= `Dir&&´)',
-}
-
-Test { [[
-class Dir with
-    var int value;
-do
-end
-interface IPingu with
-    function (void)=>Dir& get;
-end
-class Pingu with
-    interface IPingu;
-do
-    var Dir dir with
-        this.value = 10;
-    end;
-    function (void)=>Dir& get do
-        return &dir;
-    end
-end
-var Pingu p;
-escape p.get().value;
-]],
-    run = 10,
-}
-
-Test { [[
-class T with do end
-
-pool T[] ts;
-
-class U with
-    var int& ts;
-do
-end
-
-var U u;
-
-escape 1;
-]],
-    ref = 'line 10 : field "ts" must be assigned',
-}
-
-Test { [[
-class T with do end
-
-pool T[] ts;
-
-class U with
-    pool T[]& ts;
-do
-    var T&&? t =
-        spawn T in ts with
-        end;
-end
-
-var U u;
-
-escape 1;
-]],
-    ref = 'line 13 : field "ts" must be assigned',
 }
 
 --<<< REFERENCES / REFS / &
@@ -17577,23 +17256,6 @@ escape v;
     env = 'line 12 : wrong argument #1',
     --wrn = true,
     --run = 10,
-}
-
-Test { [[
-input int&& SPRITE_DELETE;
-class Sprite with
-    var int& me;
-do
-    par/or do
-        var int&& me = await SPRITE_DELETE
-                      until me == &&this.me;
-    with
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
 }
 
 Test { [[
@@ -21052,13 +20714,6 @@ escape 1;
     env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
 }
 Test { [[
-class T with do end
-var T[1] ts = [];
-escape 1;
-]],
-    env = 'line 2 : invalid attribution : destination is not a vector',
-}
-Test { [[
 var _int[1] vec = [];
 escape 1;
 ]],
@@ -21121,22 +20776,6 @@ var u8[10] vec;
 escape vec[0];
 ]],
     run = '2] runtime error: access out of bounds',
-}
-
-Test { [[
-class T with do end
-pool T[10] ts;
-escape $$ts;
-]],
-    env = 'line 3 : invalid operand to unary "$$" : vector expected',
-}
-
-Test { [[
-class T with do end
-pool T[10] ts;
-escape $ts;
-]],
-    env = 'line 3 : invalid operand to unary "$" : vector expected',
 }
 
 Test { [[
@@ -21276,150 +20915,6 @@ escape b[0] + b[1];
 }
 
 Test { [[
-class T with
-    var int[10] vs;
-do
-    this.vs = [1];
-end
-
-var T t;
-t.vs[0] = t.vs[0] + 2;
-
-escape t.vs[0];
-]],
-    props = 'line 2 : not permitted inside an interface : vectors',
-}
-
-Test { [[
-class T with
-    var int[10]& vs;
-do
-    this.vs = [1];
-end
-
-var int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-t.vs[0] = t.vs[0] + 2;
-
-escape t.vs[0];
-]],
-    run = 3,
-}
-
-Test { [[
-interface I with
-    var int& v;
-end
-
-class T with
-    interface I;
-do
-    this.v = 1;
-end
-
-var int v;
-var T t with
-    this.v = &v;
-end;
-t.v = t.v + 2;
-
-var I&& i = &&t;
-i:v = i:v * 3;
-
-escape t.v;
-]],
-    run = 9,
-}
-
-Test { [[
-var int[10]& rs;
-var int[10]  vs = [1];
-rs = &vs;
-vs[0] = vs[0] + 2;
-
-rs[0] = rs[0] * 3;
-
-escape vs[0];
-]],
-    run = 9,
-}
-Test { [[
-interface I with
-    var int[10]& vs;
-end
-
-class T with
-    interface I;
-do
-end
-
-var int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-
-var I&& i = &&t;
-
-i:vs = [ 0 ];
-i:vs[0] = 3;
-
-escape i:vs[0];
-]],
-    run = 3,
-}
-Test { [[
-interface I with
-    var int[10]& vs;
-end
-
-class T with
-    interface I;
-do
-end
-
-var int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-
-var I&& i = &&t;
-
-i:vs[0] = 3;
-
-escape 1;
-]],
-    run = '17] runtime error: access out of bounds',
-    -- TODO: not 20, 17!
-}
-Test { [[
-interface I with
-    var int[10]& vs;
-end
-
-class T with
-    interface I;
-do
-    this.vs = [1];
-end
-
-var int[10] vs;
-var T t with
-    this.vs = &vs;
-end;
-t.vs[0] = t.vs[0] + 2;
-
-var I&& i = &&t;
-
-i:vs[0] = i:vs[0] * 3;
-
-escape t.vs[0];
-]],
-    run = 9,
-}
-
-Test { [[
 escape 1..2;
 ]],
     parser = 'line 1 : after `1´ : expected `;´',
@@ -21492,17 +20987,6 @@ v = [1] .. v;
 escape 1;
 ]],
     run = '2] runtime error: access out of bounds';
-}
-
-Test { [[
-class T with
-    var int[]& v1;
-    var int[]  v2;
-do
-end
-escape 1;
-]],
-    props = 'line 3 : not permitted inside an interface',
 }
 
 Test { [[
@@ -21681,357 +21165,6 @@ escape _strcmp(&&str1,"")==0 and _strcmp(&&str2,"")==0;
 }
 
 --<<< VECTORS / STRINGS
-
--->>> VECTORS FOR POINTERS TO ORGS
-
-Test { [[
-class T with
-do
-end
-var T&&[]  ts;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var int x = $ts;
-escape x+$ts+1;
-]],
-    run = 1,
-}
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var T t;
-ts = ts .. [t];
-escape $ts+1;
-]],
-    env = 'line 6 : wrong argument #1 : types mismatch (`T&&´ <= `T´)',
-}
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var T t;
-ts = ts .. [&&t];
-escape $ts+1;
-]],
-    run = 2,
-}
-
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var T t;
-ts = ts .. [&&t];
-var T&& p = ts[0];
-escape p == &&t;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var T t;
-ts = ts .. [&&t];
-var T&& p = ts[1];
-escape p == &&t;
-]],
-    run = '7] runtime error: access out of bounds',
-}
-
-Test { [[
-class T with
-do
-end
-var T&&[] ts;
-var T t;
-ts = ts .. [&&t];
-await 1s;
-var T&& p = ts[0];
-escape p == &&t;
-]],
-    fin = 'line 8 : unsafe access to pointer "ts" across `await´ (tests.lua : 7)',
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-    await FOREVER;
-end
-
-var T t;
-var T&&? p = &&t;
-
-escape t.v + p!:v;
-]],
-    run = 20,
-}
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-var T t;
-var T&&? p = &&t;
-
-escape t.v + p!:v;
-]],
-    run = '9] runtime error: invalid tag',
-}
-Test { [[
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var T t;
-var T&&? p = &&t;
-
-await 500ms;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s'] = 20 },
-}
-Test { [[
-class T with
-    var int v = 10;
-do
-end
-
-var T t;
-var T&&? p = &&t;
-
-await 500ms;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s'] = '12] runtime error: invalid tag', },
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var T t;
-var T&&? p = &&t;
-
-await 1s;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s']='13] runtime error: invalid tag' },
-}
-
-Test { [[
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var T t;
-var T&&? p = &&t;
-
-await 500ms;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s'] = 20 },
-}
-
-Test { [[
-class U with
-    var int v = 10;
-do
-    await FOREVER;
-end
-class T with
-    var int v = 10;
-do
-    await 1s;
-end
-
-var U u;
-var T t;
-var U&&? p = &&u;
-
-await 1s;
-
-escape t.v + p!:v;
-]],
-    run = { ['~>1s']=20 },
-}
-
-Test { [[
-class T with
-do
-end
-//var T[]   ts;
-var T&&[]  ts1;
-var T&&?[] ts2;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t];
-escape $ts;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-var T&&?[] ts;
-
-var T t;
-ts = [] .. [&&t];
-
-escape ts[0] == &&t;
-]],
-    env = 'line 9 : invalid operands to binary "=="',
-}
-
-Test { [[
-class T with
-do
-    await FOREVER;
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t];
-escape ts[0]! == &&t;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t];
-escape ts[0]! == &&t;
-]],
-    run = '7] runtime error: invalid tag',
-}
-
-Test { [[
-class T with
-do
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t] .. [&&t];
-escape ts[1]! == &&t;
-]],
-    run = '7] runtime error: invalid tag',
-}
-
-Test { [[
-class T with
-do
-end
-var T&&?[] ts;
-var T t1,t2;
-ts = [] .. [&&t1];
-ts[0]! = &&t2;
-escape ts[0]! == &&t2;
-]],
-    run = '7] runtime error: invalid tag',
-}
-
-Test { [[
-class T with
-do
-    await 1s;
-end
-var T&&?[] ts;
-var T t;
-ts = [] .. [&&t];
-await 1s;
-escape ts[0]! == &&t;
-]],
-    run = { ['~>1s']='10] runtime error: invalid tag' },
-}
-
-Test { [[
-interface I with
-end
-class T with
-do
-end
-
-var T t;
-var I&&?[] is;
-is = [&&t];
-
-escape is[0]? + 1;
-]],
-    run = { ['~>1s'] = 1 },
-}
-
-Test { [[
-interface I with
-end
-class T with
-do
-end
-class U with
-do
-    await FOREVER;
-end
-class V with
-do
-    await 1s;
-end
-
-var T t;
-var U u;
-var V v;
-
-var I&&?[] is;
-is = [&&t, &&u, &&v];
-
-var int ret = 0;
-
-ret = ret + is[0]? + is[1]? + is[2]?;
-await 1s;
-ret = ret + is[0]? + is[1]? + is[2]?;
-
-escape ret;
-]],
-    run = { ['~>1s'] = 3 },
-}
 
 Test { [[
 data SDL_Rect with
@@ -24137,6 +23270,23 @@ escape 1;
 -- ASYNC
 
 Test { [[
+input void A;
+par/or do
+    async do
+        emit A;
+    end
+    escape -1;
+with
+    await A;
+end
+async do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 async do
 
     par/or do
@@ -24584,22 +23734,6 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-input int&& SDL_KEYDOWN_;
-event bool in_tm;
-
-pause/if in_tm do
-    class Input with
-    do
-        await SDL_KEYDOWN_ ;
-    end
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
 --<<< PAUSE
 
 -- TIGHT LOOPS
@@ -24954,7 +24088,1229 @@ escape ret;
     run = 3;
 }
 
--- CLASSES, ORGS, ORGANISMS
+-->>> REENTRANT
+
+if REENTRANT then
+
+Test { [[
+input int E,F;
+
+par do
+    async do
+        emit E => 10;
+    end
+    await FOREVER;
+with
+    var int ret = 0;
+    par/and do
+        var int v = await E;
+        var int x = 1000;
+        _ceu_sys_go(__ceu_app, _CEU_IN_F, &&x)
+            finalize with nothing; end;
+        ret = ret + v;
+    with
+        var int v = await E;
+        ret = ret + v;
+    end
+    escape ret;
+end
+]],
+    wrn = true,
+    _ana = {acc=true},
+    run = 20,
+}
+
+end
+
+--<<< REENTRANT
+
+-- ASYNCS // THREADS
+
+Test { [[
+var int  a=10, b=5;
+var int& p = &b;
+async/thread do
+end
+escape a + b + p;
+]],
+    run = 20,
+}
+
+Test { [[
+var int ret =
+    async/thread do
+    end;
+escape (ret == 1);
+]],
+    run = 1,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int& p = &b;
+async/thread (a, p) do
+    a = a + p;
+    sync do
+        p = a;
+    end
+end
+escape a + b + p;
+]],
+    run = 45,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int& p = &b;
+var int ret =
+    async/thread (a, p) do
+        a = a + p;
+        sync do
+            p = a;
+        end
+    end;
+escape (ret==1) + a + b + p;
+]],
+    run = 46,
+}
+
+Test { [[
+sync do
+    escape 1;
+end
+]],
+    props = 'line 1 : not permitted outside `thread´',
+}
+
+Test { [[
+async do
+    sync do
+        nothing;
+    end
+end
+escape 1;
+]],
+    props = 'line 2 : not permitted outside `thread´',
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    var int& p = &x;
+    p = 2;
+    async/thread (p) do
+        p = 2;
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 4,
+    },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    var int& p = &x;
+    p = 2;
+    async/thread (p) do
+        sync do
+            p = 2;
+        end
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 4,
+    },
+    run = 2,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int& p = &b;
+async/thread (a, p) do
+    a = a + p;
+    p = a;
+end
+escape a + b + p;
+]],
+    run = 45,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int&& p = &&b;
+async/thread (p) do
+    *p = 1;
+end
+escape 1;
+]],
+    fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
+}
+
+Test { [[
+var int  a=10, b=5;
+var int& p = &b;
+par/and do
+    async/thread (a, p) do
+        a = a + p;
+        p = a;
+    end
+with
+    p = 2;
+end
+escape a + b + p;
+]],
+    _ana = {
+        acc = 5,
+    },
+    run = 36,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int& p = &b;
+async/thread (a, p) do
+    sync do
+        a = a + p;
+        p = a;
+    end
+end
+escape a + b + p;
+]],
+    run = 45,
+}
+
+for i=1, 50 do
+    Test { [[
+native do
+    ##include <unistd.h>
+end
+var int ret = 1;
+var int& p = &ret;
+par/or do
+    async/thread (p) do
+        sync do
+            p = 2;
+        end
+    end
+with
+end
+_usleep(]]..i..[[);
+escape ret;
+]],
+        usleep = true,
+        run = 1,
+    }
+end
+
+for i=1, 50 do
+    Test { [[
+native do
+    ##include <unistd.h>
+end
+var int ret = 0;
+var int& p = &ret;
+par/or do
+    async/thread (p) do
+        _usleep(]]..i..[[);
+        sync do
+            p = 2;
+        end
+    end
+with
+    ret = 1;
+end
+_usleep(]]..i..[[+1);
+escape ret;
+]],
+        complete = (i>1),   -- run i=1 for sure
+        usleep = true,
+        run = 1,
+        _ana = { acc=1 },
+    }
+end
+
+Test { [[
+var int  v1=10, v2=5;
+var int& p1 = &v1;
+var int& p2 = &v2;
+
+par/and do
+    async/thread (v1, p1) do
+        sync do
+            p1 = v1 + v1;
+        end
+    end
+with
+    async/thread (v2, p2) do
+        sync do
+            p2 = v2 + v2;
+        end
+    end
+end
+escape v1+v2;
+]],
+    run = 30,
+}
+
+Test { [[
+var int  v1, v2;
+var int& p1 = &v1;
+var int& p2 = &v2;
+
+native do
+    int calc ()
+    {
+        int ret, i, j;
+        ret = 0;
+        for (i=0; i<10; i++) {
+            for (j=0; j<10; j++) {
+                ret = ret + i + j;
+            }
+        }
+        return ret;
+    }
+end
+
+par/and do
+    async/thread (p1) do
+        var int ret = _calc();
+        sync do
+            p1 = ret;
+        end
+    end
+with
+    async/thread (p2) do
+        var int ret = _calc();
+        sync do
+            p2 = ret;
+        end
+    end
+end
+native do ##include <assert.h> end
+_assert(v1 == v2);
+escape v1;
+]],
+    run = 900,
+}
+
+Test { [[
+var int  v1, v2;
+var int& p1 = &v1;
+var int& p2 = &v2;
+
+par/and do
+    async/thread (p1) do
+        var int ret = 0;
+        loop i in 10 do
+            loop j in 10 do
+                ret = ret + i + j;
+            end
+        end
+        sync do
+            p1 = ret;
+        end
+    end
+with
+    async/thread (p2) do
+        var int ret = 0;
+        loop i in 10 do
+            loop j in 10 do
+                ret = ret + i + j;
+            end
+        end
+        sync do
+            p2 = ret;
+        end
+    end
+end
+native do ##include <assert.h> end
+_assert(v1 == v2);
+escape v1;
+]],
+    run = 900,
+}
+
+Test { [[
+var int  v1, v2;
+var int& p1 = &v1;
+var int& p2 = &v2;
+
+native do
+    int calc ()
+    {
+        int ret, i, j;
+        ret = 0;
+        for (i=0; i<50000; i++) {
+            for (j=0; j<50000; j++) {
+                ret = ret + i + j;
+            }
+        }
+        return ret;
+    }
+end
+
+par/and do
+    async/thread (p1) do
+        var int ret = _calc();
+        sync do
+            p1 = ret;
+        end
+    end
+with
+    async/thread (p2) do
+        var int ret = _calc();
+        sync do
+            p2 = ret;
+        end
+    end
+end
+native do ##include <assert.h> end
+_assert(v1 == v2);
+escape v1;
+]],
+    --run = false,
+    run = 1066784512,
+}
+
+Test { [[
+var int  v1, v2;
+var int& p1 = &v1;
+var int& p2 = &v2;
+
+par/and do
+    async/thread (p1) do
+        var int ret = 0;
+        loop i in 50000 do
+            loop j in 50000 do
+                ret = ret + i + j;
+            end
+        end
+        sync do
+            p1 = ret;
+        end
+    end
+with
+    async/thread (p2) do
+        var int ret = 0;
+        loop i in 50000 do
+            loop j in 50000 do
+                ret = ret + i + j;
+            end
+        end
+        sync do
+            p2 = ret;
+        end
+    end
+end
+native do ##include <assert.h> end
+_assert(v1 == v2);
+escape v1;
+]],
+    run = 1066784512,
+    --run = false,
+-- thr.c
+--./a.out  17.41s user 0.00s system 180% cpu 9.629 total
+-- me (isTmp=true)
+--./a.out  16.80s user 0.02s system 176% cpu 9.525 total
+-- me (isTmp=false)
+--./a.out  30.36s user 0.04s system 173% cpu 17.476 total
+}
+
+-- THREADS / EMITS
+
+Test { [[
+input int A;
+par/or do
+    await A;
+with
+    async/thread do
+        emit A=>10;
+    end
+end;
+escape 10;
+]],
+    _ana = {
+        isForever = false,
+    },
+    --run = 10,
+    props = 'not permitted inside `thread´',
+    --props = 'line 6 : invalid `emit´',
+}
+Test { [[
+input int A;
+par/or do
+    await A;
+with
+    async do
+        emit A=>10;
+    end
+end;
+escape 10;
+]],
+    _ana = {
+        isForever = false,
+    },
+    run = 10,
+}
+
+Test { [[
+var int a;
+var int& pa = &a;
+async/thread (pa) do
+    emit 1min;
+    pa = 10;
+end;
+escape a + 1;
+]],
+    --run = 11,
+    props = 'not permitted inside `thread´',
+}
+Test { [[
+var int a;
+var int& pa = &a;
+async (pa) do
+    emit 1min;
+    pa = 10;
+end;
+escape a + 1;
+]],
+    run = 11,
+}
+
+Test { [[
+par do
+    var int v1=4,v2=4;
+    par/or do
+        await 10ms;
+        v1 = 1;
+    with
+        await 10ms;
+        v2 = 2;
+    end
+    escape v1 + v2;
+with
+    async/thread do
+        emit 5ms;
+        emit(5000)ms;
+    end
+end
+]],
+    _ana = {
+        isForever = false,
+        abrt = 3,
+    },
+    --run = 5,
+    --run = 3,
+    --todo = 'nd excpt',
+    props = 'not permitted inside `thread´',
+}
+Test { [[
+par do
+    var int v1=4,v2=4;
+    par/or do
+        await 10ms;
+        v1 = 1;
+    with
+        await 10ms;
+        v2 = 2;
+    end
+    escape v1 + v2;
+with
+    async do
+        emit 5ms;
+        emit(5000)ms;
+    end
+end
+]],
+    _ana = {
+        isForever = false,
+        abrt = 3,
+    },
+    run = 5,
+    --run = 3,
+    --todo = 'nd excpt',
+}
+
+Test { [[
+input int A;
+par do
+    async/thread do end
+with
+    await A;
+    escape 1;
+end
+]],
+    run = { ['1~>A']=1 },
+}
+
+Test { [[
+native do ##include <assert.h> end
+native _assert();
+input void T;
+var int ret = 0;
+par/or do
+    loop do
+        var int late = await 10ms;
+        ret = ret + late;
+        _assert(late <= 10000);
+    end
+with
+    loop do
+        var int i = 0;
+        var int t;
+        par/or do
+            t = await 1s;
+        with
+            loop do
+                await T;
+                i = i + 1;
+            end
+        end
+    end
+with
+    async/thread do
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+    end
+end
+escape ret;
+]],
+    --run = 72000,
+    props = 'not permitted inside `thread´',
+}
+Test { [[
+native do ##include <assert.h> end
+native _assert();
+input void T;
+var int ret = 0;
+par/or do
+    loop do
+        var int late = await 10ms;
+        ret = ret + late;
+        _assert(late <= 10000);
+    end
+with
+    loop do
+        var int i = 0;
+        var int t;
+        par/or do
+            t = await 1s;
+        with
+            loop do
+                await T;
+                i = i + 1;
+            end
+        end
+    end
+with
+    async do
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+        emit 12ms;
+        emit T;
+    end
+end
+escape ret;
+]],
+    run = 72000,
+}
+
+Test { [[
+input int P2;
+par do
+    loop do
+        par/or do
+            var int p2 = await P2;
+            if p2 == 1 then
+                escape 0;
+            end;
+        with
+            loop do
+                await 200ms;
+            end;
+        end;
+    end;
+with
+    async/thread do
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 1;
+    end;
+    await FOREVER;      // TODO: ele acha que o async termina
+end;
+]],
+    --run = 0,
+    props = 'not permitted inside `thread´',
+}
+Test { [[
+input int P2;
+par do
+    loop do
+        par/or do
+            var int p2 = await P2;
+            if p2 == 1 then
+                escape 0;
+            end;
+        with
+            loop do
+                await 200ms;
+            end;
+        end;
+    end;
+with
+    async do
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 0;
+        emit P2 => 1;
+    end;
+    await FOREVER;      // TODO: ele acha que o async termina
+end;
+]],
+    run = 0,
+}
+
+Test { [[
+var int ret = 0;
+input void A;
+par/and do
+    await 1s;
+    ret = ret + 1;
+with
+    async do
+        emit 1s;
+    end
+    ret = ret + 1;
+with
+    async/thread do
+        sync do
+        end
+    end
+    ret = ret + 1;
+with
+    async do
+        emit A;
+    end
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = { ['~>A;~>1s'] = 4 },
+}
+
+-- ASYNC/NONDET
+
+Test { [[
+var _int[2] v;
+var _int&& p = &&v[0];
+par/and do
+    v[0] = 1;
+with
+    p[1] = 2;
+end
+escape v[0] + v[1];
+]],
+    _ana = {
+        acc = 1,
+    },
+    --fin = 'line 6 : pointer access across `await´',
+    run = 3;
+}
+Test { [[
+var _int[2] v;
+par/and do
+    v[0] = 1;
+with
+    var _int&& p = &&v[0];
+    p[1] = 2;
+end
+escape v[0] + v[1];
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 3,
+}
+Test { [[
+var int[2] v = [0,0];
+var int[2] p = [0,0];
+par/and do
+    v[0] = 1;
+with
+    p[1] = 2;
+end
+escape v[0] + p[1];
+]],
+    run = 3,
+}
+
+Test { [[
+var int x = 0;
+async do
+    x = 2;
+end
+escape x;
+]],
+    env = 'line 3 : variable/event "x" is not declared',
+}
+
+Test { [[
+var int x = 0;
+async/thread do
+    x = 2;
+end
+escape x;
+]],
+    env = 'line 3 : variable/event "x" is not declared',
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async (x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    _ana = { acc=1 },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async/thread (x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    _ana = { acc=1 },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async/thread (x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    await 1s;
+    x = 1;
+with
+    var int y = x;
+    async/thread (y) do
+        y = 2;
+    end
+    x = x + y;
+end
+escape x;
+]],
+    run = { ['~>1s']=3 },
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    await 1s;
+    x = 1;
+with
+    var int y = x;
+    async/thread (y) do
+        y = 2;
+    end
+    x = x + y;
+end
+escape x;
+]],
+    run = { ['~>1s']=3 },
+    safety = 2,
+    _ana = {
+        acc = 3,
+    },
+}
+
+Test { [[
+var int x  = 0;
+var int&& p = &&x;
+par/and do
+    *p = 1;
+with
+    var int y = x;
+    async/thread (y) do
+        y = 2;
+    end
+    x = x + y;
+end
+escape x;
+]],
+    _ana = {
+        acc = 3,
+    },
+    run = 3,
+}
+
+Test { [[
+native @plain _int;
+var _int[10] x;
+async/thread (x) do
+    x[0] = 2;
+end
+escape x[0];
+]],
+    run = 2,
+    --gcc = 'error: lvalue required as left operand of assignment',
+}
+
+Test { [[
+var int[10] x = [0];
+async/thread (x) do
+    x[0] = 2;
+end
+escape x[0];
+]],
+    run = 2,
+    --gcc = 'error: lvalue required as left operand of assignment',
+}
+
+Test { [[
+var int[10] x = [0,1];
+par/and do
+    async/thread (x) do
+        x[0] = x[1] + 2;
+    end
+with
+    x[1] = 5;
+end
+escape x[0];
+]],
+    run = 7,
+    _ana = {
+        acc = 2,
+    },
+    --gcc = 'error: lvalue required as left operand of assignment',
+}
+
+Test { [[
+var int v = 1;
+async (v) do
+    finalize with
+        v = 2;
+    end
+end;
+escape v;
+]],
+    props = 'line 3 : not permitted inside `async´',
+}
+Test { [[
+var int v = 1;
+async/thread (v) do
+    finalize with
+        v = 2;
+    end
+end;
+escape v;
+]],
+    props = 'line 3 : not permitted inside `thread´',
+}
+
+--<<< THREADS / EMITS
+
+-->>> LUA
+
+Test { [==[
+[[
+    a = 1
+]]
+var int a = [[a]];
+escape a;
+]==],
+    run = 1,
+}
+
+Test { [==[
+[[
+    --[[oi]]
+    a = 1
+]]
+var int a = [[a]];
+escape a;
+]==],
+    parser = 'line 3 : after `1´ : expected `;´',
+}
+
+Test { [==[
+[=[
+    --[[oi]]
+    a = 1
+]=]
+var int a = [[a]];
+escape a;
+]==],
+    run = 1,
+}
+
+Test { [=[
+var int v = [["ok" == 'ok']];
+escape v;
+]=],
+    run = 1,
+}
+
+Test { [=[
+var int v = [[true]];
+escape v;
+]=],
+    run = 1,
+}
+
+Test { [=[
+var int v = [[false]];
+escape v;
+]=],
+    run = 0,
+}
+
+Test { [==[
+[[
+    print '*** END: 10'
+]]
+var int v = [[1]];
+escape v;
+]==],
+    run = 10,
+}
+
+Test { [==[
+[[
+    aa $ aa
+]]
+escape 1;
+]==],
+    run = '2: \'=\' expected near \'$\'',
+}
+
+Test { [=[
+var int a = [[1]];
+[[
+    a = @a+1
+]]
+var int ret = [[a]];
+escape ret;
+]=],
+    run = 2,
+}
+
+Test { [=[
+var int a = [[1]];
+var int b = 10;
+[[
+    a = @a+@b
+]]
+var int ret = [[a]];
+escape ret;
+]=],
+    run = 11,
+}
+
+Test { [=[
+native @nohold _strcmp();
+var char&& str = "oioioi";
+[[ str = @str ]]
+var bool ret = [[ str == 'oioioi' ]];
+var char[10] cpy = [[ str ]];
+escape ret and (not _strcmp(str,&&cpy));
+]=],
+    run = 1,
+}
+
+Test { [=[
+native @nohold _strcmp(), _strcpy();
+var char[10] str;
+_strcpy(&&str,"oioioi");
+[[ str = @str ]]
+var bool ret = [[ str == 'oioioi' ]];
+var char[10] cpy;
+var char&& ptr = cpy;
+ptr = [[ str ]];
+escape ret and (not _strcmp(&&str,&&cpy));
+]=],
+    env = 'line 7 : types mismatch (`char&&´ <= `char[]´)',
+}
+
+Test { [=[
+native @nohold _strcmp(), _strcpy();
+var char[10] str = [] .. "oioioi";
+[[ str = @str ]]
+var bool ret = [[ str == 'oioioi' ]];
+var char[10] cpy;
+var char[10]& ptr = &cpy;
+ptr = [[ str ]];
+escape ret and (not _strcmp(&&str,&&cpy));
+]=],
+    run = 1,
+}
+
+Test { [=[
+native @nohold _strcmp();
+[[ str = '1234567890' ]]
+var char[2] cpy = [[ str ]];
+escape (_strcmp(&&cpy,"1") == 0);
+]=],
+    run = '3] runtime error: access out of bounds',
+}
+
+Test { [=[
+native @nohold _strcmp();
+[[ str = '1234567890' ]]
+var char[2] cpy;
+var char[20] cpy_;
+var char[]& ptr = &cpy;
+ptr = [[ str ]];
+escape (not _strcmp(&&cpy,"1234567890"));
+]=],
+    run = '6] runtime error: access out of bounds',
+}
+
+Test { [=[
+var int a = [[1]];
+var int b = 10;
+[[
+    @a = @a+@b
+    a = @a
+]]
+var int ret = [[a]];
+escape ret;
+]=],
+    todo = 'error: assign to @a',
+    run = 11,
+}
+
+Test { [=[
+native @nohold _strcmp();
+
+[[
+-- this is lua code
+v_from_lua = 100
+]]
+
+var int v_from_ceu = [[v_from_lua]];
+
+[[
+str_from_lua = 'string from lua'
+]]
+var char[100] str_from_ceu = [[str_from_lua]];
+_assert(not _strcmp(&&str_from_ceu, "string from lua"));
+
+[[
+print(@v_from_ceu)
+v_from_lua = v_from_lua + @v_from_ceu
+]]
+
+//v_from_ceu = [[nil]];
+
+var int ret = [[v_from_lua]];
+escape ret;
+]=],
+    run = 200,
+}
+
+Test { [=[
+var int a;
+var void&& ptr1 = &&a;
+[[ ptr = @ptr1 ]];
+var void&& ptr2 = [[ ptr ]];
+escape ptr2==&&a;
+]=],
+    run = 1,
+}
+
+-->>> CLASSES, ORGS, ORGANISMS
+--do return end
 
 Test { [[
 class A with
@@ -25151,6 +25507,23 @@ var T x;
 escape x.a + y[0].a + y[1].a;
 ]],
     run = 60,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+
+class T with
+do
+    _V = _V + 1;
+end
+
+var T ts;
+
+escape _V;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -26822,6 +27195,19 @@ escape v;
 
 Test { [[
 input void OS_START;
+class T with
+do
+    await FOREVER;
+end
+await OS_START;
+var T a;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
 input void A,F;
 var int v=0;
 class T with
@@ -28029,23 +28415,7 @@ escape _V;
 }
 
 Test { [[
-    input void OS_START;
-class T with
-    event void a, ok, go, b;
-    var int aa, bb;
-do
-
-    par/and do
-        await a;
-        emit b;
-    with
-        await b;
-    end
-    aa = 5;
-    bb = 4;
-    emit ok;
-end
-var T aa;
+input void OS_START;
 
 native _inc(), _V;
 native do
@@ -28053,13 +28423,30 @@ native do
     void inc() { V++; }
 end
 
-_inc();
+class T with
+    event void a, ok, go, b;
+    var int aa, bb;
+do
+    par/and do
+        await a;            // 3.
+        emit b;             // 4.
+    with
+        await b;            // 5.
+    end
+    aa = 5;                 // 6. V=1, aa=5
+    bb = 4;                 // 7. V=1, aa=5, bb=4
+    emit ok;                // 8.
+end
+
+var T aa;
+
+_inc();                     // 1. V=1
 par/or do
-    await aa.ok;
-    _V = _V+1;
+    await aa.ok;            // 9.
+    _V = _V+1;              // 10. V=2, aa=5, bb=4
 with
     await OS_START;
-    emit aa.a;
+    emit aa.a;              // 2.
     _V = _V+2;
 end
 escape _V + aa.aa + aa.bb;
@@ -28217,6 +28604,27 @@ escape _f((char&&)&&a.a,(char&&)&&b.a);
 }
 
 Test { [[
+input void OS_START;
+class T with
+    event void e, f;
+do
+    await e;
+    emit f;
+end
+var T[2] ts;
+par/and do
+    await OS_START;
+    emit ts[0].e;
+    emit ts[1].e;
+with
+    await ts[1].f;
+end
+escape 10;
+]],
+    run = 10,
+}
+
+Test { [[
 input void OS_START, B;
 class T with
     var int v;
@@ -28298,6 +28706,146 @@ escape aa.aa;
         ['11~>S;~>10s;~>F'] = 11,
         ['~>10s;11~>S;~>F'] = 7,
     },
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+
+var int ret = 10;
+var T t;
+await t.ok;
+
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+
+pool T[] ts;
+var T&&? t1 = spawn T in ts;
+
+await t1!:ok;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+
+pool T[] ts;
+var T&&? t1 = spawn T in ts;
+var T&&? t2 = spawn T in ts;
+
+par/and do
+    await t1!:ok;
+with
+    await t2!:ok;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await OS_START;
+end
+
+pool T[] ts;
+var T&&? t1 = spawn T in ts;
+var T&&? t2 = spawn T in ts;
+
+par/and do
+    await *t1!;
+with
+    await *t2!;
+end
+
+escape 1;
+]],
+    _ana = {
+        acc = 0,
+    },
+    run = 1,
+}
+Test { [[
+input void OS_START;
+
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+
+var T t1, t2;
+
+par/and do
+    await t1.ok;
+with
+    await t2.ok;
+end
+
+escape 1;
+]],
+    _ana = {
+        acc = 0,
+    },
+    run = 1,
+}
+Test { [[
+input void OS_START;
+
+class T with
+    event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+
+var T[2] ts;
+
+par/and do
+    await ts[0].ok;
+with
+    await ts[1].ok;
+end
+
+escape 1;
+]],
+    _ana = {
+        acc = 0,
+    },
+    run = 1,
 }
 
 Test { [[
@@ -28399,7 +28947,6 @@ escape ret;
     },
 }
 
--- TODO: STACK
 Test { [[
 native _V;
 native do
@@ -28571,59 +29118,6 @@ escape t.v + _V;        // * reads before
         ['~>F'] = 5,
         ['~>A'] = 12,
     }
-}
-
-Test { [[
-class U with
-    event void ok;
-do
-    finalize with
-        _V = _V + 4;
-    end
-    await 1ms;
-    emit this.ok;
-    await FOREVER;
-end;
-class T with do
-    finalize with
-        _V = _V + 2;
-    end
-    var U u;
-    await FOREVER;
-end;
-native do
-    int V = 1;
-end
-finalize with
-    _V = 1000;
-end
-finalize with
-    _V = 1000;
-end
-finalize with
-    _V = 1000;
-end
-par/or do
-    await 1s;
-with
-    do
-        var T t;
-        var U u;
-        par/or do
-            await u.ok;
-        with
-            await u.ok;
-        end;
-    end
-    var T t1;
-    var U u1;
-    await u1.ok;
-    _assert(_V == 11);
-end
-_assert(_V == 21);
-escape _V;
-]],
-    run = { ['~>1s']=21 },
 }
 
 -- internal binding binding
@@ -29131,7 +29625,7 @@ event void e;
 class T with
 do
     await OS_START;
-    emit global:e; // TODO: must also check if org trail is active
+    emit global:e;
     _V = 1;
     _assert(0);
 end
@@ -29527,75 +30021,32 @@ input void OS_START;
 
 class T with
 do
-    await 1us;
+    await FOREVER;
 end
-pool T[] ts;
-
-var T&&? t1 = spawn T;
-var T&&? t2 = spawn T;
-await *(t2!);
-var T&&? t3 = spawn T;
-await *(t3!);
-
-escape 1;
-]],
-    run = { ['~>2us']=1 },
-}
-
--- problems w/o ceu_sys_stack_clear_org
-Test { [[
-input void OS_START;
-
-class U with
-do
-    await 1us;
-end
-
-class T with
-do
-    do U;
-end
-
-do
-    var T t1;
-    var T t2;
-    await t2;
-end
-do
-    var _char[1000] v;
-    native @nohold _memset();
-    _memset(&&v, 0, 1000);
-    var T t3;
-    await t3;
+var T t;
+par/and do
+    await t;
+with
+    kill t;
 end
 
 escape 1;
 ]],
-    run = { ['~>2us']=1 },
+    run = 1,
 }
 Test { [[
 input void OS_START;
 
-class U with
-do
-    await 1us;
-end
-
 class T with
 do
-    do U;
+    await OS_START;
 end
-pool T[] ts;
-
-var T&&? t1 = spawn T;
-var T&&? t2 = spawn T;
-await *t2!;
-var T&&? t3 = spawn T;
-await *t3!;
+var T t;
+await t;
 
 escape 1;
 ]],
-    run = { ['~>2us']=1 },
+    run = 1,
 }
 
 -- CONSTRUCTOR
@@ -29924,7 +30375,7 @@ escape tot + tot2;              // 36
 
 --<<< GLOBAL-DO-END / DO-PRE
 
--- SPAWN
+-->>> SPAWN
 
 Test { [[
 class T with do end
@@ -30000,15 +30451,6 @@ end
 
 Test { [[
 class T with do end
-var T&& ok = spawn T;
-escape ok != null;
-]],
-    env = 'line 2 : must assign to option pointer',
-    --run = 1,
-}
-
-Test { [[
-class T with do end
 function (void)=>void fff do
     spawn T;
 end
@@ -30018,13 +30460,159 @@ escape 1;
 }
 
 Test { [[
-class U with do end
-class T with do end
-var U&&? ok = spawn T;
-escape ok != null;
+class T with
+    var int v;
+do
+end
+
+input int E;
+
+par/or do
+    var int yyy;
+    every xxx in E do
+        spawn T with
+            yyy = 1;
+            xxx = 1;
+        end;
+    end;
+with
+end
+
+escape 1;
 ]],
-    env = 'line 3 : types mismatch (`U&&´ <= `T&&´)',
-    --run = 1,
+    run = 1,
+}
+
+Test { [[
+event void e;
+
+class T with do end;
+
+par/or do
+    every e do
+        spawn T;
+    end
+with
+    emit e;
+end
+
+escape 1;
+]],
+    _ana = {acc=1},
+    run = 1, -- had stack overflow
+}
+
+Test { [[
+event void x,e,f,g;
+var int ret = 0;
+class T with do end;
+par/or do
+    every x do
+        loop i in 1000 do
+            emit e;
+        end
+    end
+with
+    every e do
+        emit f;
+    end
+with
+    every f do
+        emit g;
+    end
+with
+    every g do
+        ret = ret + 1;
+        spawn T;
+    end
+with
+    emit x;
+end
+escape ret;
+]],
+    _ana = {acc=1},
+    run = 1000, -- had stack overflow
+}
+
+Test { [[
+class Groundpiece with
+do
+end
+
+event void x;
+event void a;
+event void b;
+event void c;
+var int ret = 0;
+
+par/or do
+    every x do
+        emit b;
+        ret = 10;
+    end
+with
+    every b do
+        emit a;
+    end
+with
+    every c do
+        spawn Groundpiece;
+    end
+with
+    emit x;
+end
+
+input void OS_START;
+await OS_START;
+escape ret;
+]],
+    _ana = {acc=true},
+    run = 10,
+}
+
+--<<< SPAWN
+
+-- MEM/MEMORY POOL
+
+Test { [[
+class T with
+do
+end
+pool T t;
+escape 1;
+]],
+    env = 'line 4 : missing `pool´ dimension',
+    --parser = 'line 4 : after `T´ : expected `[´',
+}
+
+Test { [[
+class T with do end
+pool T[] ts;
+var T t;
+ts = t;
+escape 1;
+]],
+    env = 'line 4 : types mismatch',
+}
+
+Test { [[
+class T with
+do
+end
+pool T[] t;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -30038,6 +30626,301 @@ else
 end
 ]],
     run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+var T&&? ok1 = spawn T in t with end;
+var T&&? ok2 = spawn T in t;
+escape (ok1?) + (ok2?) + 1;
+]],
+    run = 1,
+    --fin = 'line 7 : unsafe access to pointer "ok1" across `spawn´',
+}
+
+Test { [[
+class T with
+do
+end
+pool T[1] t;
+var T&&? ok1 = spawn T in t with end;
+var int sum = 1;
+if ok1? then
+    watching *(ok1!) do
+        var T&&? ok2 = spawn T in t;
+        sum = sum + (ok1?) + (ok2?);
+    end
+end
+escape sum;
+]],
+    run = 1,
+}
+
+-- POOL ITERATORS
+
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+var T ts;
+loop t in ts do
+end
+escape 1;
+]],
+    --fin = 'line 14 : pointer access across `await´',
+    env = 'line 6 : invalid pool',
+    --run = 1,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+loop t in ts do
+end
+escape 1;
+]],
+    --fin = 'line 14 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var T&&?  ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+var int ok2 = 0;// spawn T in ts;
+var int ret = 0;
+loop (T&&)t in ts do
+    ret = ret + t:v;
+end
+escape (ok1?) + ok2 + ret;
+]],
+    parser = 'line 11 : before `loop´ : expected statement (usually a missing `var´ or C prefix `_´)',
+    --fin = 'line 14 : pointer access across `await´',
+    --run = 1,
+}
+Test { [[
+class T with
+    var int v = 0;
+do
+end
+pool T[1] ts;
+var T&&?  ok1 = spawn T in ts with
+                this.v = 10;
+              end;
+var int ok2 = 0;// spawn T in ts;
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:v;
+end
+escape (ok1?) + ok2 + ret + 1;
+]],
+    --fin = 'line 14 : pointer access across `await´',
+    run = 1,
+}
+Test { [[
+class T with do await FOREVER; end;
+pool T[] ts;
+event void e;
+spawn T in ts;
+var int ret = 0;
+loop t in ts do
+    ret = ret + 1;
+    spawn T in ts;
+end
+escape ret;
+]],
+    props = 'line 6 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+}
+
+Test { [[
+class T with
+do
+end
+pool T[] t;
+spawn T in t;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+spawn T;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+pool T[] t;
+spawn T in t;
+spawn T;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[] ts;
+spawn T in ts with
+    this.v = 10;
+    _V = _V + 10;
+end;
+spawn T with
+    this.v = 20;
+    _V = _V + 20;
+end;
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:v;
+end
+escape ret + _V;
+]],
+    run = 40,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[] ts;
+spawn T with
+    this.v = 10;
+    _V = _V + 10;
+end;
+spawn T in ts with
+    this.v = 20;
+    _V = _V + 20;
+end;
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:v;
+end
+escape ret + _V;
+]],
+    run = 50,
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+pool T[2] ts;
+spawn T in ts;
+spawn T in ts;
+
+input void OS_START;
+await OS_START;
+escape 60;
+]],
+    run = 60,
+}
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+pool T[] ts;
+spawn T in ts;
+spawn T in ts;
+
+escape 60;
+]],
+    run = 60,
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+pool T[] ts;
+spawn T in ts;
+spawn T in ts;
+
+input void OS_START;
+await OS_START;
+escape 60;
+]],
+    run = 60,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+    var int v = 0;
+do
+    async do end;
+end
+pool T[] ts;
+spawn T in ts with
+    this.v = 10;
+    _V = _V + 10;
+end;
+spawn T in ts with
+    this.v = 20;
+    _V = _V + 20;
+end;
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:v;
+end
+escape ret + _V;
+]],
+    run = 60,
+}
+
+-->> POOL/SPAWN/OPTION
+
+Test { [[
+class T with do end
+var T&& ok = spawn T;
+escape ok != null;
+]],
+    env = 'line 2 : must assign to option pointer',
+    --run = 1,
+}
+
+Test { [[
+class U with do end
+class T with do end
+var U&&? ok = spawn T;
+escape ok != null;
+]],
+    env = 'line 3 : types mismatch (`U&&´ <= `T&&´)',
+    --run = 1,
 }
 
 Test { [[
@@ -30056,6 +30939,30 @@ await *(tail!);
 escape 1;
 ]],
     asr = '3] runtime error: invalid tag',
+    run = 1,
+}
+
+Test { [[
+class T with do
+end
+var T&&? kkk;
+pool T[] ppp;
+spawn T in ppp;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with do end
+var bool ok_;
+do
+    var T&&? ok;
+    ok = spawn T;
+    ok_ = (ok?);
+end
+escape ok_+1;
+]],
     run = 1,
 }
 
@@ -30323,283 +31230,481 @@ escape 1;
 }
 
 Test { [[
-class T with
-    var int v;
-do
-end
+input void OS_START;
 
-input int E;
-
-par/or do
-    var int yyy;
-    every xxx in E do
-        spawn T with
-            yyy = 1;
-            xxx = 1;
-        end;
-    end;
-with
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
--- MEM/MEMORY POOL
-
-Test { [[
 class T with
 do
+    await OS_START;
 end
-pool T t;
-escape 1;
-]],
-    env = 'line 4 : missing `pool´ dimension',
-    --parser = 'line 4 : after `T´ : expected `[´',
-}
-
-Test { [[
-class T with do end
 pool T[] ts;
+
+var T&&? t = spawn T;
+await *(t!);
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await FOREVER;
+end
+
 var T t;
-ts = t;
+par/or do
+    await t;
+with
+    kill t;
+    _assert(0);
+end
+
 escape 1;
 ]],
-    env = 'line 4 : types mismatch',
+    run = 1,
 }
 
+-- fails w/o setjmp on parent orgs traversal
 Test { [[
+input void OS_START;
+
 class T with
 do
+    await OS_START;
 end
-pool T[] t;
+
+do
+    var T t;
+    await t;
+end
+do
+    var _char[1000] v;
+    native @nohold _memset();
+    _memset(&&v, 0, 1000);
+end
+
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
+input void A;
+
 class T with
 do
+    await A;
 end
-pool T[1] t;
+
+pool T[] ts;
+
+var T&&? t1 = spawn T;
+await *(t1!);
+var T&&? t2 = spawn T;
+await *(t2!);
+
 escape 1;
 ]],
-    run = 1,
+    run = { ['~>A;~>A']=1 },
 }
-
 Test { [[
+input void OS_START;
+
 class T with
 do
+    await 1us;
 end
-pool T[1] t;
-var T&&? ok1 = spawn T in t with end;
-var T&&? ok2 = spawn T in t;
-escape (ok1?) + (ok2?) + 1;
+
+pool T[] ts;
+
+var T&&? t1 = spawn T;
+await *(t1!);
+var T&&? t2 = spawn T;
+await *(t2!);
+
+escape 1;
 ]],
-    run = 1,
-    --fin = 'line 7 : unsafe access to pointer "ok1" across `spawn´',
+    run = { ['~>2us']=1 },
 }
 
 Test { [[
+input void OS_START;
+
 class T with
 do
+    await 1us;
 end
-pool T[1] t;
-var T&&? ok1 = spawn T in t with end;
-var int sum = 1;
-if ok1? then
-    watching *(ok1!) do
-        var T&&? ok2 = spawn T in t;
-        sum = sum + (ok1?) + (ok2?);
+pool T[] ts;
+
+var T&&? t1 = spawn T;
+var T&&? t2 = spawn T;
+await *(t2!);
+var T&&? t3 = spawn T;
+await *(t3!);
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+
+-- group of tests fails w/o sudden death check while traversing children
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    par/or do
+        await t.e;
+        _V = _V + 1;
+    with
+        if only_await then
+            await FOREVER;
+        end
+        await OS_START;
+        emit t.e;
+    with
+        await OS_START;
     end
 end
-escape sum;
+
+var T t;
+
+var U _ with
+    this.t = &t;
+    this.only_await = true;
+end;
+var U _ with
+    this.t = &t;
+    this.only_await = false;
+end;
+
+await OS_START;
+
+escape _V;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    par/or do
+        await t.e;
+        _V = _V + 1;
+    with
+        if only_await then
+            await FOREVER;
+        end
+        await OS_START;
+        emit t.e;
+    with
+        if only_await then
+            await FOREVER;
+        end
+        await OS_START;
+    end
+end
+
+var T t;
+
+var U _ with
+    this.t = &t;
+    this.only_await = true;
+end;
+var U _ with
+    this.t = &t;
+    this.only_await = false;
+end;
+
+await OS_START;
+
+escape _V;
+]],
+    run = 2,
+}
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    par/or do
+        await t.e;
+        _V = _V + 1;
+    with
+        if only_await then
+            await FOREVER;
+        end
+        await OS_START;
+        emit t.e;
+    with
+        await OS_START;
+    end
+end
+
+var T t;
+
+var U _ with
+    this.t = &t;
+    this.only_await = false;
+end;
+var U _ with
+    this.t = &t;
+    this.only_await = true;
+end;
+
+await OS_START;
+
+escape _V;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    par/or do
+        await t.e;
+        _V = _V + 1;
+    with
+        if only_await then
+            await FOREVER;
+        end
+        await OS_START;
+        emit t.e;
+    with
+        await OS_START;
+    end
+end
+
+var T t;
+
+spawn U with
+    this.t = &t;
+    this.only_await = false;
+end;
+spawn U with
+    this.t = &t;
+    this.only_await = true;
+end;
+
+await OS_START;
+
+escape _V;
 ]],
     run = 1,
 }
 
--- POOL ITERATORS
+-- u1 doesn't die, kills u2, which becomes dangling
+Test { [[
+input void OS_START;
+native do
+    int V = 0;
+end
 
-Test { [[
 class T with
-    var int v = 0;
+    event void e;
 do
+    await FOREVER;
 end
-var T ts;
-loop t in ts do
-end
-escape 1;
-]],
-    --fin = 'line 14 : pointer access across `await´',
-    env = 'line 6 : invalid pool',
-    --run = 1,
-}
-Test { [[
-class T with
-    var int v = 0;
+
+class U with
+    var T& t;
+    var bool only_await;
 do
+    if only_await then
+        await t.e;
+        _V = 1;
+    else
+        await OS_START;
+        emit t.e;
+        await FOREVER;
+    end
 end
-pool T[1] ts;
-var T&&?  ok1 = spawn T in ts with
-                this.v = 10;
-              end;
-var int ok2 = 0;// spawn T in ts;
-var int ret = 0;
-loop (T&&)t in ts do
-    ret = ret + t:v;
-end
-escape (ok1?) + ok2 + ret;
+
+var T t;
+
+var U _ with
+    this.t = &t;
+    this.only_await = false;
+end;
+var U _ with
+    this.t = &t;
+    this.only_await = true;
+end;
+
+await OS_START;
+
+escape _V;
 ]],
-    parser = 'line 11 : before `loop´ : expected statement (usually a missing `var´ or C prefix `_´)',
-    --fin = 'line 14 : pointer access across `await´',
-    --run = 1,
-}
-Test { [[
-class T with
-    var int v = 0;
-do
-end
-pool T[1] ts;
-var T&&?  ok1 = spawn T in ts with
-                this.v = 10;
-              end;
-var int ok2 = 0;// spawn T in ts;
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
-end
-escape (ok1?) + ok2 + ret + 1;
-]],
-    --fin = 'line 14 : pointer access across `await´',
     run = 1,
 }
+
 Test { [[
-class T with do await FOREVER; end;
-pool T[] ts;
-event void e;
-spawn T in ts;
-var int ret = 0;
-loop t in ts do
-    ret = ret + 1;
+input void OS_START;
+native do
+    int V = 0;
+end
+
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+    var bool only_await;
+do
+    if only_await then
+        await t.e;
+        _V = 1;
+    else
+        await OS_START;
+        emit t.e;
+        await FOREVER;
+    end
+end
+
+var T t;
+
+spawn U with
+    this.t = &t;
+    this.only_await = false;
+end;
+spawn U with
+    this.t = &t;
+    this.only_await = true;
+end;
+
+await OS_START;
+
+escape _V;
+]],
+    run = 1,
+}
+
+-- fails w/o ceu_sys_stack_clear_org
+Test { [[
+input void OS_START;
+
+class U with
+do
+    await 1us;
+end
+
+class T with
+do
+    do U;
+end
+
+do
+    pool T[] ts;
     spawn T in ts;
+    var T&&? t = spawn T in ts;
+    await *t!;
 end
-escape ret;
-]],
-    props = 'line 6 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
-}
 
-Test { [[
-class T with
-do
-end
-pool T[] t;
-spawn T in t;
 escape 1;
 ]],
-    run = 1,
+    run = { ['~>1us']=1 },
 }
+
 Test { [[
+input void OS_START;
+
+class U with
+do
+    await 1us;
+end
+
 class T with
 do
+    do U;
 end
-spawn T;
+
+do
+    pool T[] ts;
+    spawn T in ts;
+    var T&&? t = spawn T in ts;
+    await *t!;
+end
+
 escape 1;
 ]],
-    run = 1,
+    run = { ['~>1us']=1 },
 }
+
 Test { [[
+input void OS_START;
+
+class U with
+do
+    await 1us;
+end
+
 class T with
 do
+    do U;
 end
-pool T[] t;
-spawn T in t;
-spawn T;
+pool T[] ts;
+
+var T&&? t1 = spawn T;
+var T&&? t2 = spawn T;
+await *t2!;
+var T&&? t3 = spawn T;
+await *t3!;
+
 escape 1;
 ]],
-    run = 1,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-    var int v = 0;
-do
-    async do end;
-end
-pool T[] ts;
-spawn T in ts with
-    this.v = 10;
-    _V = _V + 10;
-end;
-spawn T with
-    this.v = 20;
-    _V = _V + 20;
-end;
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
-end
-escape ret + _V;
-]],
-    run = 40,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-    var int v = 0;
-do
-    async do end;
-end
-pool T[] ts;
-spawn T with
-    this.v = 10;
-    _V = _V + 10;
-end;
-spawn T in ts with
-    this.v = 20;
-    _V = _V + 20;
-end;
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
-end
-escape ret + _V;
-]],
-    run = 50,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-    var int v = 0;
-do
-    async do end;
-end
-pool T[] ts;
-spawn T in ts with
-    this.v = 10;
-    _V = _V + 10;
-end;
-spawn T in ts with
-    this.v = 20;
-    _V = _V + 20;
-end;
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
-end
-escape ret + _V;
-]],
-    run = 60,
+    run = { ['~>2us']=1 },
 }
 
 Test { [[
@@ -30624,6 +31729,25 @@ end
 pool T[0] ts;
 var T&&? t = spawn T in ts;
 escape not t?;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+    this.a = 1;
+    await FOREVER;
+end
+pool T[1] ts;
+var T&&? a = spawn T in ts;
+var int sum = 0;
+watching *(a!) do
+    var T&&? b = spawn T in ts;
+    sum = a? and (not b?);
+end
+escape sum;
 ]],
     run = 1,
 }
@@ -31158,11 +32282,37 @@ escape t!:b;
     run = 20,
 }
 
+-- fails w/o RET_DEAD check after ceu_app_go for PAR
+Test { [[
+input void OS_START;
+native do
+    tceu_trl* V;
+end
+class T with
+do
+    _V = &&__ceu_org:trls[1];
+    await OS_START;
+    par/or do
+    with
+        _assert(0);
+    end
+end
+do
+    var T t;
+    await t;
+end
+//_V:lbl = _CEU_LBL__STACKED;
+escape 1;
+]],
+    run = 1,
+}
+
 Test { [[
 class T with
 do
     par/or do
     with
+        _assert(0);
     end
 end
 spawn T;
@@ -31479,6 +32629,183 @@ escape sum;
 ]],
     run = 2,
 }
+Test { [[
+class X with do
+end;
+
+class Body with
+    pool  X[]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+    var X&&? nested =
+        spawn X in bodies with
+        end;
+    sum = sum + 1;
+    emit this.ok => 1;
+end
+
+pool X[1] bodies;
+var  int  sum = 1;
+
+var Body b with
+    this.bodies = &bodies;
+    this.sum    = &sum;
+end;
+
+class T with do end;
+spawn T;
+
+escape sum;
+]],
+    run = 2,
+}
+
+Test { [[
+class X with do
+end;
+
+native do
+    ##ifdef CEU_ORGS_NEWS_POOL
+    ##error bug found
+    ##endif
+end
+
+class Body with
+    pool  X[]& bodies;
+    var   int&    sum;
+    event int     ok;
+do
+    var X&&? nested =
+        spawn X in bodies with
+        end;
+    sum = sum + 1;
+    emit this.ok => 1;
+end
+
+pool X[] bodies;
+var  int  sum = 1;
+
+var Body b with
+    this.bodies = &bodies;
+    this.sum    = &sum;
+end;
+
+class T with do end;
+spawn T;
+
+escape sum;
+]],
+    run = 2,
+}
+
+-- problems w/o ceu_sys_stack_clear_org
+Test { [[
+input void OS_START;
+
+class T with
+do
+    await 1us;
+end
+
+do
+    var T t;
+    await t;
+end
+do
+    var _char[1000] v;
+    native @nohold _memset();
+    _memset(&&v, 0, 1000);
+end
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+
+Test { [[
+input void OS_START;
+
+class U with
+do
+    await 1us;
+end
+
+class T with
+do
+    do U;
+end
+
+do
+    var T t1;
+    var T t2;
+    await t2;
+end
+do
+    var _char[1000] v;
+    native @nohold _memset();
+    _memset(&&v, 0, 1000);
+    var T t3;
+    await t3;
+end
+
+escape 1;
+]],
+    run = { ['~>2us']=1 },
+}
+
+Test { [[
+class U with
+    event void ok;
+do
+    finalize with
+        _V = _V + 4;
+    end
+    await 1ms;
+    emit this.ok;
+    await FOREVER;
+end;
+class T with do
+    finalize with
+        _V = _V + 2;
+    end
+    var U u;
+    await FOREVER;
+end;
+native do
+    int V = 1;
+end
+finalize with
+    _V = 1000;
+end
+finalize with
+    _V = 1000;
+end
+finalize with
+    _V = 1000;
+end
+par/or do
+    await 1s;
+with
+    do
+        var T t;
+        var U u;
+        par/or do
+            await u.ok;
+        with
+            await u.ok;
+        end;
+    end
+    var T t1;
+    var U u1;
+    await u1.ok;
+    _assert(_V == 11);
+end
+_assert(_V == 21);
+escape _V;
+]],
+    run = { ['~>1s']=21 },
+}
 
 -- SPAWN / RECURSIVE
 
@@ -31513,8 +32840,8 @@ var T t;
 escape _V;
 ]],
     wrn = 'line 7 : unbounded recursive spawn',
-    --run = 101,  -- tests force 100 allocations at most
-    asr = 'runtime error: stack overflow',
+    run = 101,  -- tests force 100 allocations at most
+    --asr = 'runtime error: stack overflow',
 }
 Test { [[
 native do
@@ -32452,6 +33779,29 @@ escape 1;
 Test { [[
 input void OS_START;
 class T with
+do
+    await OS_START;
+    escape 1;
+end
+var int ddd = do T;
+escape ddd;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+    escape 1;
+end
+var int ddd = do T;
+escape ddd;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
     var int v;
 do
     await OS_START;
@@ -32532,6 +33882,73 @@ escape v1+v2;
     parser = 'line 6 : after `v´ : expected `)´',
     --env = 'line 10 : arity mismatch',
     --run = 30,
+}
+
+Test { [[
+input void OS_START;
+
+class Mix with
+  var int cup_top;
+  event void ok;
+do
+    await OS_START;
+    emit ok;
+end
+
+class ShuckTip with
+do
+    await FOREVER;
+end
+
+do
+    var int dilu_start = 0;
+    do
+        var Mix m with
+            this.cup_top = dilu_start;
+        end;
+        await m.ok;
+    end
+end
+do
+    var ShuckTip s;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+
+class Mix with
+  var int cup_top;
+  event void ok;
+do
+  await OS_START;
+  emit ok;
+end
+
+class ShuckTip with
+do
+end
+
+do
+    var int dilu_start = 0;
+    do
+        var Mix m with
+            this.cup_top = dilu_start;
+        end;
+        await m.ok;
+    end
+end
+do
+    var ShuckTip s;
+    await s;
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -37453,6 +38870,147 @@ escape 10;
     run = 10;
 }
 
+Test { [[
+class T with
+    event void e;
+do
+    await FOREVER;
+end
+
+event void f;
+
+var T t;
+
+par do
+    par/or do
+        await t.e;
+    with
+        await 1s;
+        emit t.e;
+    end
+    emit f;
+    escape -1;
+with
+    await f;
+    escape 10;
+end
+]],
+    run = { ['~>10s'] = 10 },
+}
+
+Test { [[
+native do
+    int f() { return 1; }
+end
+class T with do end
+spawn T with
+            var _int&? intro_story_str;
+            finalize
+                intro_story_str = &_f();
+            with
+            end
+    end;
+escape 1;
+]],
+    gcc = '24: note: expected ‘int *’ but argument is of type ‘int’',
+    --run = 1,
+}
+
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = &v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+}
+Test { [[
+input int&& SPRITE_DELETE;
+class Sprite with
+    var int& me;
+do
+    par/or do
+        var int&& me = await SPRITE_DELETE
+                      until me == &&this.me;
+    with
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+class T with do end
+var T[1] ts = [];
+escape 1;
+]],
+    env = 'line 2 : invalid attribution : destination is not a vector',
+}
+Test { [[
+class T with do end
+pool T[10] ts;
+escape $$ts;
+]],
+    env = 'line 3 : invalid operand to unary "$$" : vector expected',
+}
+
+Test { [[
+class T with do end
+pool T[10] ts;
+escape $ts;
+]],
+    env = 'line 3 : invalid operand to unary "$" : vector expected',
+}
+
+Test { [[
+class T with
+    var int[]& v1;
+    var int[]  v2;
+do
+end
+escape 1;
+]],
+    props = 'line 3 : not permitted inside an interface',
+}
+
+Test { [[
+input int&& SDL_KEYDOWN_;
+event bool in_tm;
+
+pause/if in_tm do
+    class Input with
+    do
+        await SDL_KEYDOWN_ ;
+    end
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 -->>> FUNCTIONS
 
 Test { [[
@@ -39537,9 +41095,947 @@ escape buffer[0];
     run = 3,
 }
 
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+function (T& t)=>int f do
+    return t.v * 2;
+end
+
+var T t;
+var int ret = f(&t);
+
+    var T u with
+        this.v = 20;
+    end;
+    ret = ret + f(&u);
+
+escape ret;
+]],
+    run = 60,
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+function (T& t)=>int f do
+    return t.v * 2;
+end
+
+var T t;
+var int ret = f(&t);
+
+do
+    var T u with
+        this.v = 20;
+    end;
+    ret = ret + f(&u);
+end
+
+escape ret;
+]],
+    ref = 'line 17 : attribution to reference with greater scope',
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+function (T&& t)=>int f do
+    return t:v * 2;
+end
+
+var T t;
+var int ret = f(&&t);
+
+do
+    var T u with
+        this.v = 20;
+    end;
+    ret = ret + f(&&u);
+end
+
+escape ret;
+]],
+    run = 60,
+}
+
+Test { [[
+interface Human with
+    function (void)=>int walk;
+    function (void)=>int breath;
+    var int n;
+end
+
+class CommonThings with
+    function (Human& h)=>int walk;
+    function (Human& h)=>int breath;
+do
+    function (Human& h)=>int walk do
+        return h.n;
+    end
+    function (Human& h)=>int breath do
+        return h.n;
+    end
+    await FOREVER;
+end
+
+class Man with
+    interface Human;
+    var CommonThings& ct;
+    var int n = 100;
+do
+    function (void)=>int walk do
+        return 200; // override
+    end
+    function (void)=>int breath do
+        return this.ct.breath(&this); // delegate
+    end
+end
+
+var CommonThings ct;
+var Man m with
+    this.ct = &ct;
+end;
+escape m.walk() + m.breath();
+]],
+    run = 300,
+}
+
+Test { [[
+native do
+    typedef struct t {
+        void* ceu;
+    } t;
+end
+var _t   t;
+var _t&& ptr = &&t;
+var int v = 10;
+ptr:ceu = &v;
+escape *((int&&)(ptr:ceu));
+]],
+    ref = 'line 9 : invalid attribution : l-value already bounded',
+    --run = 10,
+}
+
+Test { [[
+native do
+    typedef struct t {
+        void* xxx;
+    } t;
+end
+
+class C with
+    var int v = 10;
+do
+end
+var C c;
+
+var _t   t;
+var _t&& ptr = &&t;
+
+ptr:xxx = &c;
+
+escape ((C&&)ptr:xxx):v;
+]],
+    --run = 10,
+    ref = 'line 16 : invalid attribution : l-value already bounded',
+}
+
+Test { [[
+native do
+    typedef struct t {
+        void* xxx;
+    } t;
+end
+
+class C with
+    var int v = 10;
+    event int e;
+do
+end
+var C c;
+
+var _t   t;
+var _t&& ptr = &&t;
+
+ptr:xxx = &c;
+
+emit ((C&&)ptr:xxx):e => 1;
+
+escape ((C&&)ptr:xxx):v;
+]],
+    ref = 'line 17 : invalid attribution : l-value already bounded',
+    --run = 10,
+}
+Test { [[
+class Dir with
+    var int value;
+do
+end
+interface IPingu with
+    function (void)=>Dir& get;
+end
+class Pingu with
+    interface IPingu;
+do
+    var Dir dir with
+        this.value = 10;
+    end;
+    function (void)=>Dir& get do
+        return &&dir;
+    end
+end
+var Pingu p;
+escape p.get().value;
+]],
+    env = 'line 15 : invalid return value : types mismatch (`Dir&´ <= `Dir&&´)',
+}
+
+Test { [[
+class Dir with
+    var int value;
+do
+end
+interface IPingu with
+    function (void)=>Dir& get;
+end
+class Pingu with
+    interface IPingu;
+do
+    var Dir dir with
+        this.value = 10;
+    end;
+    function (void)=>Dir& get do
+        return &dir;
+    end
+end
+var Pingu p;
+escape p.get().value;
+]],
+    run = 10,
+}
+
+Test { [[
+class T with do end
+
+pool T[] ts;
+
+class U with
+    var int& ts;
+do
+end
+
+var U u;
+
+escape 1;
+]],
+    ref = 'line 10 : field "ts" must be assigned',
+}
+
+Test { [[
+class T with do end
+
+pool T[] ts;
+
+class U with
+    pool T[]& ts;
+do
+    var T&&? t =
+        spawn T in ts with
+        end;
+end
+
+var U u;
+
+escape 1;
+]],
+    ref = 'line 13 : field "ts" must be assigned',
+}
+
 --<<< METHODS
 
--- ISR / ATOMIC
+-->>> CLASS-FINALIZE-OPTION
+
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int&? v;
+do
+    v! = 20;
+end
+do T with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = &v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+Test { [[
+native do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var _int&? v;
+finalize
+    v = &_getV();
+with
+    nothing;
+end
+
+class T with
+    var _int& v;
+do
+    v = 20;
+end
+do T with
+    this.v = &v;
+end;
+
+escape v!;
+]],
+    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+}
+
+Test { [[
+native do
+    int* new_Int() {
+        return NULL;
+    }
+end
+    function (void) => void parse_file do
+            var int&? intro_story_str;
+            finalize
+                intro_story_str = &_new_Int();
+            with
+                nothing;    /* deleted below */
+            end
+    end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native @pure _new_String();
+class String with
+do
+    var _std__string&? ss = &_new_String();
+end
+escape 1;
+]],
+    fin = 'line 4 : attribution to pointer with greater scope',
+    run = 1,
+}
+
+--<<< CLASS-FINALIZE-OPTION
+
+-->>> CLASS-VECTORS-FOR-POINTERS-TO-ORGS
+
+Test { [[
+class T with
+    var int[10] vs;
+do
+    this.vs = [1];
+end
+
+var T t;
+t.vs[0] = t.vs[0] + 2;
+
+escape t.vs[0];
+]],
+    props = 'line 2 : not permitted inside an interface : vectors',
+}
+
+Test { [[
+class T with
+    var int[10]& vs;
+do
+    this.vs = [1];
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+t.vs[0] = t.vs[0] + 2;
+
+escape t.vs[0];
+]],
+    run = 3,
+}
+
+Test { [[
+interface I with
+    var int& v;
+end
+
+class T with
+    interface I;
+do
+    this.v = 1;
+end
+
+var int v;
+var T t with
+    this.v = &v;
+end;
+t.v = t.v + 2;
+
+var I&& i = &&t;
+i:v = i:v * 3;
+
+escape t.v;
+]],
+    run = 9,
+}
+
+Test { [[
+var int[10]& rs;
+var int[10]  vs = [1];
+rs = &vs;
+vs[0] = vs[0] + 2;
+
+rs[0] = rs[0] * 3;
+
+escape vs[0];
+]],
+    run = 9,
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+
+var I&& i = &&t;
+
+i:vs = [ 0 ];
+i:vs[0] = 3;
+
+escape i:vs[0];
+]],
+    run = 3,
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+
+var I&& i = &&t;
+
+i:vs[0] = 3;
+
+escape 1;
+]],
+    run = '17] runtime error: access out of bounds',
+    -- TODO: not 20, 17!
+}
+Test { [[
+interface I with
+    var int[10]& vs;
+end
+
+class T with
+    interface I;
+do
+    this.vs = [1];
+end
+
+var int[10] vs;
+var T t with
+    this.vs = &vs;
+end;
+t.vs[0] = t.vs[0] + 2;
+
+var I&& i = &&t;
+
+i:vs[0] = i:vs[0] * 3;
+
+escape t.vs[0];
+]],
+    run = 9,
+}
+Test { [[
+class T with
+do
+end
+var T&&[]  ts;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var int x = $ts;
+escape x+$ts+1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var T t;
+ts = ts .. [t];
+escape $ts+1;
+]],
+    env = 'line 6 : wrong argument #1 : types mismatch (`T&&´ <= `T´)',
+}
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var T t;
+ts = ts .. [&&t];
+escape $ts+1;
+]],
+    run = 2,
+}
+
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var T t;
+ts = ts .. [&&t];
+var T&& p = ts[0];
+escape p == &&t;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var T t;
+ts = ts .. [&&t];
+var T&& p = ts[1];
+escape p == &&t;
+]],
+    run = '7] runtime error: access out of bounds',
+}
+
+Test { [[
+class T with
+do
+end
+var T&&[] ts;
+var T t;
+ts = ts .. [&&t];
+await 1s;
+var T&& p = ts[0];
+escape p == &&t;
+]],
+    fin = 'line 8 : unsafe access to pointer "ts" across `await´ (tests.lua : 7)',
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await FOREVER;
+end
+
+var T t;
+var T&&? p = &&t;
+
+escape t.v + p!:v;
+]],
+    run = 20,
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+var T&&? p = &&t;
+
+escape t.v + p!:v;
+]],
+    run = '9] runtime error: invalid tag',
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T&&? p = &&t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = 20 },
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+var T&&? p = &&t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = '12] runtime error: invalid tag', },
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T&&? ppp = &&t;
+
+await 1s;
+
+escape t.v + ppp!:v;
+]],
+    run = { ['~>1s']='13] runtime error: invalid tag' },
+}
+
+Test { [[
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var T t;
+var T&&? p = &&t;
+
+await 500ms;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s'] = 20 },
+}
+
+Test { [[
+class U with
+    var int v = 10;
+do
+    await FOREVER;
+end
+class T with
+    var int v = 10;
+do
+    await 1s;
+end
+
+var U u;
+var T t;
+var U&&? p = &&u;
+
+await 1s;
+
+escape t.v + p!:v;
+]],
+    run = { ['~>1s']=20 },
+}
+
+Test { [[
+class T with
+do
+end
+//var T[]   ts;
+var T&&[]  ts1;
+var T&&?[] ts2;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t];
+escape $ts;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T&&?[] ts;
+
+var T t;
+ts = [] .. [&&t];
+
+escape ts[0] == &&t;
+]],
+    env = 'line 9 : invalid operands to binary "=="',
+}
+
+Test { [[
+class T with
+do
+    await FOREVER;
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t];
+escape ts[0]! == &&t;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t];
+escape ts[0]! == &&t;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t] .. [&&t];
+escape ts[1]! == &&t;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+end
+var T&&?[] ts;
+var T t1,t2;
+ts = [] .. [&&t1];
+ts[0]! = &&t2;
+escape ts[0]! == &&t2;
+]],
+    run = '7] runtime error: invalid tag',
+}
+
+Test { [[
+class T with
+do
+    await 1s;
+end
+var T&&?[] ts;
+var T t;
+ts = [] .. [&&t];
+await 1s;
+escape ts[0]! == &&t;
+]],
+    run = { ['~>1s']='10] runtime error: invalid tag' },
+}
+
+Test { [[
+interface I with
+end
+class T with
+do
+end
+
+var T t;
+var I&&?[] is;
+is = [&&t];
+
+escape is[0]? + 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+interface I with
+end
+class T with
+do
+end
+class U with
+do
+    await FOREVER;
+end
+class V with
+do
+    await 1s;
+end
+
+var T t;
+var U u;
+var V v;
+
+var I&&?[] is;
+is = [&&t, &&u, &&v];
+
+var int ret = 0;
+
+ret = ret + is[0]? + is[1]? + is[2]?;
+await 1s;
+ret = ret + is[0]? + is[1]? + is[2]?;
+
+escape ret;
+]],
+    run = { ['~>1s'] = 3 },
+}
+
+--<<< CLASS-VECTORS-FOR-POINTERS-TO-ORGS
+
+-->>> ISR / ATOMIC
 
 Test { [[
 atomic do
@@ -39857,6 +42353,8 @@ escape 1;
     env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
     --env = 'line 4 : invalid operand to unary "&&"',
 }
+
+--<<< ISR / ATOMIC
 
 Test { [[
 class U with do end;
@@ -41804,7 +44302,7 @@ do
     await FOREVER;
 end
 native do
-    int V = 0;
+    int V = 1;
 end
 class Item with
     var U&& u;
@@ -41812,7 +44310,7 @@ do
     watching *u do
         await FOREVER;
     end
-    _V = 1;
+    _V = _V+1;
 end
 do
     var U u;
@@ -41821,7 +44319,7 @@ do
     end;
     await 1s;
 end
-_assert(_V == 1);
+_assert(_V == 2);
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },
@@ -42066,12 +44564,14 @@ class T with
 do
     v = 10;
     await e;
+                            // (4)
     emit f;
+                            // (6)
     v = 100;
     emit ok;
     await FOREVER;
 end
-var T a;
+var T a;                    // (1) v=10
 var T&& ptr;
 ptr = &&a;
 watching *ptr do
@@ -42079,20 +44579,23 @@ watching *ptr do
     par/and do
         par/and do
             await OS_START;
-            emit ptr:go;
+            emit ptr:go;    // (2)
         with
             await ptr:ok;
+                            // (7)
         end
-        ret = ret + 1;      // 24
+        ret = ret + 1;      // ret=2
     with
         await B;
+                            // (3)
         emit ptr:e;
         ret = ret + 1;
     with
         await ptr:f;
-        ret = ret + 1;      // 31
+                            // (5)
+        ret = ret + 1;      // ret=1
     end
-    _V = ret + ptr:v + a.v;
+    _V = ret + ptr:v + a.v;     // _V=104
     escape ret + ptr:v + a.v;
         // this escape the outer block, which kills ptr,
         // which kills the watching, which escapes again with +1
@@ -42102,8 +44605,8 @@ escape _V + 1;
     _ana = {
         --acc = 3,
     },
-    run = { ['~>B']=203, }
-    --run = { ['~>B']=204, }
+    --run = { ['~>B']=203, }
+    run = { ['~>B']=204, }
 }
 Test { [[
 class Unit with
@@ -42159,8 +44662,8 @@ watching *ptr do
 end
 escape _V + 1;
 ]],
-    --run = 21,
-    run = 20,
+    run = 21,
+    --run = 20,
 }
 
 Test { [[
@@ -42183,7 +44686,8 @@ watching *ok1! do
 end
 escape 1;
 ]],
-    run = 11,
+    --run = 11,
+    run = 1,
 }
 
 Test { [[
@@ -42213,7 +44717,8 @@ escape _V + 1;  // this one executes because of strong abortion in the watching
     _ana = {
         acc = true,
     },
-    run = 11,
+    --run = 11,
+    run = 12,
 }
 
 Test { [[
@@ -42514,8 +45019,8 @@ watching *i do
 end
 escape _V + 1;
 ]],
-    run = 100,
-    --run = 101,
+    --run = 100,
+    run = 101,
 }
 
 Test { [[
@@ -42550,8 +45055,8 @@ watching *i do
 end
 escape _V + 1;
 ]],
-    run = 100,
-    --run = 101,
+    --run = 100,
+    run = 101,
 }
 
 Test { [[
@@ -42595,8 +45100,8 @@ watching *i1 do
 end
 escape _V+1;
 ]],
-    --run = 100,
-    run = 99,
+    run = 100,
+    --run = 99,
 }
 
 Test { [[
@@ -42647,8 +45152,8 @@ escape _V + 1;
     _ana = {
         acc = true,
     },
-    run = 165,
-    --run = 166,
+    --run = 165,
+    run = 166,
 }
 
 Test { [[
@@ -42686,8 +45191,8 @@ end
 escape _V+1;
 ]],
     wrn = true,
-    run = 160,
-    --run = 161,
+    --run = 160,
+    run = 161,
 }
 
 Test { [[
@@ -42723,8 +45228,8 @@ watching *i do
 end
 escape _V+1;
 ]],
-    run = 160,
-    --run = 161,
+    --run = 160,
+    run = 161,
 }
 
 Test { [[
@@ -42808,8 +45313,8 @@ end
 escape _V+1;
 ]],
     wrn = true,
-    run = 630,
-    --run = 631,
+    --run = 630,
+    run = 631,
 }
 
 Test { [[
@@ -44077,445 +46582,7 @@ escape 1;
     run = 1,
 }
 
--->>> REENTRANT
-
-if REENTRANT then
-
-Test { [[
-input int E,F;
-
-par do
-    async do
-        emit E => 10;
-    end
-    await FOREVER;
-with
-    var int ret = 0;
-    par/and do
-        var int v = await E;
-        var int x = 1000;
-        _ceu_sys_go(__ceu_app, _CEU_IN_F, &&x)
-            finalize with nothing; end;
-        ret = ret + v;
-    with
-        var int v = await E;
-        ret = ret + v;
-    end
-    escape ret;
-end
-]],
-    wrn = true,
-    _ana = {acc=true},
-    run = 20,
-}
-
-end
-
---<<< REENTRANT
-
--- ASYNCS // THREADS
-
-Test { [[
-var int  a=10, b=5;
-var int& p = &b;
-async/thread do
-end
-escape a + b + p;
-]],
-    run = 20,
-}
-
-Test { [[
-var int ret =
-    async/thread do
-    end;
-escape (ret == 1);
-]],
-    run = 1,
-}
-
-Test { [[
-var int  a=10, b=5;
-var int& p = &b;
-async/thread (a, p) do
-    a = a + p;
-    sync do
-        p = a;
-    end
-end
-escape a + b + p;
-]],
-    run = 45,
-}
-
-Test { [[
-var int  a=10, b=5;
-var int& p = &b;
-var int ret =
-    async/thread (a, p) do
-        a = a + p;
-        sync do
-            p = a;
-        end
-    end;
-escape (ret==1) + a + b + p;
-]],
-    run = 46,
-}
-
-Test { [[
-sync do
-    escape 1;
-end
-]],
-    props = 'line 1 : not permitted outside `thread´',
-}
-
-Test { [[
-async do
-    sync do
-        nothing;
-    end
-end
-escape 1;
-]],
-    props = 'line 2 : not permitted outside `thread´',
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    x = 1;
-with
-    var int& p = &x;
-    p = 2;
-    async/thread (p) do
-        p = 2;
-    end
-end
-escape x;
-]],
-    _ana = {
-        acc = 4,
-    },
-    run = 2,
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    x = 1;
-with
-    var int& p = &x;
-    p = 2;
-    async/thread (p) do
-        sync do
-            p = 2;
-        end
-    end
-end
-escape x;
-]],
-    _ana = {
-        acc = 4,
-    },
-    run = 2,
-}
-
-Test { [[
-var int  a=10, b=5;
-var int& p = &b;
-async/thread (a, p) do
-    a = a + p;
-    p = a;
-end
-escape a + b + p;
-]],
-    run = 45,
-}
-
-Test { [[
-var int  a=10, b=5;
-var int&& p = &&b;
-async/thread (p) do
-    *p = 1;
-end
-escape 1;
-]],
-    fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
-}
-
-Test { [[
-var int  a=10, b=5;
-var int& p = &b;
-par/and do
-    async/thread (a, p) do
-        a = a + p;
-        p = a;
-    end
-with
-    p = 2;
-end
-escape a + b + p;
-]],
-    _ana = {
-        acc = 5,
-    },
-    run = 36,
-}
-
-Test { [[
-var int  a=10, b=5;
-var int& p = &b;
-async/thread (a, p) do
-    sync do
-        a = a + p;
-        p = a;
-    end
-end
-escape a + b + p;
-]],
-    run = 45,
-}
-
-for i=1, 50 do
-    Test { [[
-native do
-    ##include <unistd.h>
-end
-var int ret = 1;
-var int& p = &ret;
-par/or do
-    async/thread (p) do
-        sync do
-            p = 2;
-        end
-    end
-with
-end
-_usleep(]]..i..[[);
-escape ret;
-]],
-        usleep = true,
-        run = 1,
-    }
-end
-
-for i=1, 50 do
-    Test { [[
-native do
-    ##include <unistd.h>
-end
-var int ret = 0;
-var int& p = &ret;
-par/or do
-    async/thread (p) do
-        _usleep(]]..i..[[);
-        sync do
-            p = 2;
-        end
-    end
-with
-    ret = 1;
-end
-_usleep(]]..i..[[+1);
-escape ret;
-]],
-        complete = (i>1),   -- run i=1 for sure
-        usleep = true,
-        run = 1,
-        _ana = { acc=1 },
-    }
-end
-
-Test { [[
-var int  v1=10, v2=5;
-var int& p1 = &v1;
-var int& p2 = &v2;
-
-par/and do
-    async/thread (v1, p1) do
-        sync do
-            p1 = v1 + v1;
-        end
-    end
-with
-    async/thread (v2, p2) do
-        sync do
-            p2 = v2 + v2;
-        end
-    end
-end
-escape v1+v2;
-]],
-    run = 30,
-}
-
-Test { [[
-var int  v1, v2;
-var int& p1 = &v1;
-var int& p2 = &v2;
-
-native do
-    int calc ()
-    {
-        int ret, i, j;
-        ret = 0;
-        for (i=0; i<10; i++) {
-            for (j=0; j<10; j++) {
-                ret = ret + i + j;
-            }
-        }
-        printf("ret = %d\n", ret);
-        return ret;
-    }
-end
-
-par/and do
-    async/thread (p1) do
-        var int ret = _calc();
-        sync do
-            p1 = ret;
-        end
-    end
-with
-    async/thread (p2) do
-        var int ret = _calc();
-        sync do
-            p2 = ret;
-        end
-    end
-end
-native do ##include <assert.h> end
-_assert(v1 == v2);
-escape v1;
-]],
-    run = 900,
-}
-
-Test { [[
-var int  v1, v2;
-var int& p1 = &v1;
-var int& p2 = &v2;
-
-par/and do
-    async/thread (p1) do
-        var int ret = 0;
-        loop i in 10 do
-            loop j in 10 do
-                ret = ret + i + j;
-            end
-        end
-        sync do
-            p1 = ret;
-        end
-    end
-with
-    async/thread (p2) do
-        var int ret = 0;
-        loop i in 10 do
-            loop j in 10 do
-                ret = ret + i + j;
-            end
-        end
-        sync do
-            p2 = ret;
-        end
-    end
-end
-native do ##include <assert.h> end
-_assert(v1 == v2);
-escape v1;
-]],
-    run = 900,
-}
-
-Test { [[
-var int  v1, v2;
-var int& p1 = &v1;
-var int& p2 = &v2;
-
-native do
-    int calc ()
-    {
-        int ret, i, j;
-        ret = 0;
-        for (i=0; i<50000; i++) {
-            for (j=0; j<50000; j++) {
-                ret = ret + i + j;
-            }
-        }
-        printf("ret = %d\n", ret);
-        return ret;
-    }
-end
-
-par/and do
-    async/thread (p1) do
-        var int ret = _calc();
-        sync do
-            p1 = ret;
-        end
-    end
-with
-    async/thread (p2) do
-        var int ret = _calc();
-        sync do
-            p2 = ret;
-        end
-    end
-end
-native do ##include <assert.h> end
-_assert(v1 == v2);
-escape v1;
-]],
-    --run = false,
-    run = 1066784512,
-}
-
-Test { [[
-var int  v1, v2;
-var int& p1 = &v1;
-var int& p2 = &v2;
-
-par/and do
-    async/thread (p1) do
-        var int ret = 0;
-        loop i in 50000 do
-            loop j in 50000 do
-                ret = ret + i + j;
-            end
-        end
-        sync do
-            p1 = ret;
-        end
-    end
-with
-    async/thread (p2) do
-        var int ret = 0;
-        loop i in 50000 do
-            loop j in 50000 do
-                ret = ret + i + j;
-            end
-        end
-        sync do
-            p2 = ret;
-        end
-    end
-end
-native do ##include <assert.h> end
-_assert(v1 == v2);
-escape v1;
-]],
-    run = 1066784512,
-    --run = false,
--- thr.c
---./a.out  17.41s user 0.00s system 180% cpu 9.629 total
--- me (isTmp=true)
---./a.out  16.80s user 0.02s system 176% cpu 9.525 total
--- me (isTmp=false)
---./a.out  30.36s user 0.04s system 173% cpu 17.476 total
-}
+-- CLASSES/THREADS
 
 Test { [[
 class T with
@@ -44560,581 +46627,7 @@ escape v1;
 --./a.out  30.36s user 0.04s system 173% cpu 17.476 total
 }
 
--- THREADS / EMITS
-
-Test { [[
-input int A;
-par/or do
-    await A;
-with
-    async/thread do
-        emit A=>10;
-    end
-end;
-escape 10;
-]],
-    _ana = {
-        isForever = false,
-    },
-    --run = 10,
-    props = 'not permitted inside `thread´',
-    --props = 'line 6 : invalid `emit´',
-}
-Test { [[
-input int A;
-par/or do
-    await A;
-with
-    async do
-        emit A=>10;
-    end
-end;
-escape 10;
-]],
-    _ana = {
-        isForever = false,
-    },
-    run = 10,
-}
-
-Test { [[
-var int a;
-var int& pa = &a;
-async/thread (pa) do
-    emit 1min;
-    pa = 10;
-end;
-escape a + 1;
-]],
-    --run = 11,
-    props = 'not permitted inside `thread´',
-}
-Test { [[
-var int a;
-var int& pa = &a;
-async (pa) do
-    emit 1min;
-    pa = 10;
-end;
-escape a + 1;
-]],
-    run = 11,
-}
-
-Test { [[
-par do
-    var int v1=4,v2=4;
-    par/or do
-        await 10ms;
-        v1 = 1;
-    with
-        await 10ms;
-        v2 = 2;
-    end
-    escape v1 + v2;
-with
-    async/thread do
-        emit 5ms;
-        emit(5000)ms;
-    end
-end
-]],
-    _ana = {
-        isForever = false,
-        abrt = 3,
-    },
-    --run = 5,
-    --run = 3,
-    --todo = 'nd excpt',
-    props = 'not permitted inside `thread´',
-}
-Test { [[
-par do
-    var int v1=4,v2=4;
-    par/or do
-        await 10ms;
-        v1 = 1;
-    with
-        await 10ms;
-        v2 = 2;
-    end
-    escape v1 + v2;
-with
-    async do
-        emit 5ms;
-        emit(5000)ms;
-    end
-end
-]],
-    _ana = {
-        isForever = false,
-        abrt = 3,
-    },
-    run = 5,
-    --run = 3,
-    --todo = 'nd excpt',
-}
-
-Test { [[
-input int A;
-par do
-    async/thread do end
-with
-    await A;
-    escape 1;
-end
-]],
-    run = { ['1~>A']=1 },
-}
-
-Test { [[
-native do ##include <assert.h> end
-native _assert();
-input void T;
-var int ret = 0;
-par/or do
-    loop do
-        var int late = await 10ms;
-        ret = ret + late;
-        _assert(late <= 10000);
-    end
-with
-    loop do
-        var int i = 0;
-        var int t;
-        par/or do
-            t = await 1s;
-        with
-            loop do
-                await T;
-                i = i + 1;
-            end
-        end
-    end
-with
-    async/thread do
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-    end
-end
-escape ret;
-]],
-    --run = 72000,
-    props = 'not permitted inside `thread´',
-}
-Test { [[
-native do ##include <assert.h> end
-native _assert();
-input void T;
-var int ret = 0;
-par/or do
-    loop do
-        var int late = await 10ms;
-        ret = ret + late;
-        _assert(late <= 10000);
-    end
-with
-    loop do
-        var int i = 0;
-        var int t;
-        par/or do
-            t = await 1s;
-        with
-            loop do
-                await T;
-                i = i + 1;
-            end
-        end
-    end
-with
-    async do
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-        emit 12ms;
-        emit T;
-    end
-end
-escape ret;
-]],
-    run = 72000,
-}
-
-Test { [[
-input int P2;
-par do
-    loop do
-        par/or do
-            var int p2 = await P2;
-            if p2 == 1 then
-                escape 0;
-            end;
-        with
-            loop do
-                await 200ms;
-            end;
-        end;
-    end;
-with
-    async/thread do
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 1;
-    end;
-    await FOREVER;      // TODO: ele acha que o async termina
-end;
-]],
-    --run = 0,
-    props = 'not permitted inside `thread´',
-}
-Test { [[
-input int P2;
-par do
-    loop do
-        par/or do
-            var int p2 = await P2;
-            if p2 == 1 then
-                escape 0;
-            end;
-        with
-            loop do
-                await 200ms;
-            end;
-        end;
-    end;
-with
-    async do
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 1;
-    end;
-    await FOREVER;      // TODO: ele acha que o async termina
-end;
-]],
-    run = 0,
-}
-
-Test { [[
-var int ret = 0;
-input void A;
-par/and do
-    await 1s;
-    ret = ret + 1;
-with
-    async do
-        emit 1s;
-    end
-    ret = ret + 1;
-with
-    async/thread do
-        sync do
-        end
-    end
-    ret = ret + 1;
-with
-    async do
-        emit A;
-    end
-    ret = ret + 1;
-end
-escape ret;
-]],
-    run = { ['~>A;~>1s'] = 4 },
-}
-
--- ASYNC/NONDET
-
-Test { [[
-var _int[2] v;
-var _int&& p = &&v[0];
-par/and do
-    v[0] = 1;
-with
-    p[1] = 2;
-end
-escape v[0] + v[1];
-]],
-    _ana = {
-        acc = 1,
-    },
-    --fin = 'line 6 : pointer access across `await´',
-    run = 3;
-}
-Test { [[
-var _int[2] v;
-par/and do
-    v[0] = 1;
-with
-    var _int&& p = &&v[0];
-    p[1] = 2;
-end
-escape v[0] + v[1];
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 3,
-}
-Test { [[
-var int[2] v = [0,0];
-var int[2] p = [0,0];
-par/and do
-    v[0] = 1;
-with
-    p[1] = 2;
-end
-escape v[0] + p[1];
-]],
-    run = 3,
-}
-
-Test { [[
-var int x = 0;
-async do
-    x = 2;
-end
-escape x;
-]],
-    env = 'line 3 : variable/event "x" is not declared',
-}
-
-Test { [[
-var int x = 0;
-async/thread do
-    x = 2;
-end
-escape x;
-]],
-    env = 'line 3 : variable/event "x" is not declared',
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    x = 1;
-with
-    async (x) do
-        x = 2;
-    end
-end
-escape x;
-]],
-    _ana = { acc=1 },
-    run = 2,
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    x = 1;
-with
-    async/thread (x) do
-        x = 2;
-    end
-end
-escape x;
-]],
-    _ana = { acc=1 },
-    run = 2,
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    x = 1;
-with
-    async/thread (x) do
-        x = 2;
-    end
-end
-escape x;
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 2,
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    await 1s;
-    x = 1;
-with
-    var int y = x;
-    async/thread (y) do
-        y = 2;
-    end
-    x = x + y;
-end
-escape x;
-]],
-    run = { ['~>1s']=3 },
-}
-
-Test { [[
-var int x = 0;
-par/and do
-    await 1s;
-    x = 1;
-with
-    var int y = x;
-    async/thread (y) do
-        y = 2;
-    end
-    x = x + y;
-end
-escape x;
-]],
-    run = { ['~>1s']=3 },
-    safety = 2,
-    _ana = {
-        acc = 3,
-    },
-}
-
-Test { [[
-var int x  = 0;
-var int&& p = &&x;
-par/and do
-    *p = 1;
-with
-    var int y = x;
-    async/thread (y) do
-        y = 2;
-    end
-    x = x + y;
-end
-escape x;
-]],
-    _ana = {
-        acc = 3,
-    },
-    run = 3,
-}
-
-Test { [[
-native @plain _int;
-var _int[10] x;
-async/thread (x) do
-    x[0] = 2;
-end
-escape x[0];
-]],
-    run = 2,
-    --gcc = 'error: lvalue required as left operand of assignment',
-}
-
-Test { [[
-var int[10] x = [0];
-async/thread (x) do
-    x[0] = 2;
-end
-escape x[0];
-]],
-    run = 2,
-    --gcc = 'error: lvalue required as left operand of assignment',
-}
-
-Test { [[
-var int[10] x = [0,1];
-par/and do
-    async/thread (x) do
-        x[0] = x[1] + 2;
-    end
-with
-    x[1] = 5;
-end
-escape x[0];
-]],
-    run = 7,
-    _ana = {
-        acc = 2,
-    },
-    --gcc = 'error: lvalue required as left operand of assignment',
-}
-
-Test { [[
-var int v = 1;
-async (v) do
-    finalize with
-        v = 2;
-    end
-end;
-escape v;
-]],
-    props = 'line 3 : not permitted inside `async´',
-}
-Test { [[
-var int v = 1;
-async/thread (v) do
-    finalize with
-        v = 2;
-    end
-end;
-escape v;
-]],
-    props = 'line 3 : not permitted inside `thread´',
-}
-
--- END: THREADS / EMITS
-
--- REFS / &
+-- CLASSES/REFS / &
 
 Test { [[
 class T with
@@ -45498,6 +46991,8 @@ escape o.v;
 ]],
     run = { ['~>2s']=1 },
 }
+
+--<<< CLASSES, ORGS, ORGANISMS
 
 -- REQUESTS
 
@@ -46145,215 +47640,6 @@ end
     run = -1,
 }
 
--- LUA
-
-Test { [==[
-[[
-    a = 1
-]]
-var int a = [[a]];
-escape a;
-]==],
-    run = 1,
-}
-
-Test { [==[
-[[
-    --[[oi]]
-    a = 1
-]]
-var int a = [[a]];
-escape a;
-]==],
-    parser = 'line 3 : after `1´ : expected `;´',
-}
-
-Test { [==[
-[=[
-    --[[oi]]
-    a = 1
-]=]
-var int a = [[a]];
-escape a;
-]==],
-    run = 1,
-}
-
-Test { [=[
-var int v = [["ok" == 'ok']];
-escape v;
-]=],
-    run = 1,
-}
-
-Test { [=[
-var int v = [[true]];
-escape v;
-]=],
-    run = 1,
-}
-
-Test { [=[
-var int v = [[false]];
-escape v;
-]=],
-    run = 0,
-}
-
-Test { [==[
-[[
-    print '*** END: 10'
-]]
-var int v = [[1]];
-escape v;
-]==],
-    run = 10,
-}
-
-Test { [==[
-[[
-    aa $ aa
-]]
-escape 1;
-]==],
-    run = '2: \'=\' expected near \'$\'',
-}
-
-Test { [=[
-var int a = [[1]];
-[[
-    a = @a+1
-]]
-var int ret = [[a]];
-escape ret;
-]=],
-    run = 2,
-}
-
-Test { [=[
-var int a = [[1]];
-var int b = 10;
-[[
-    a = @a+@b
-]]
-var int ret = [[a]];
-escape ret;
-]=],
-    run = 11,
-}
-
-Test { [=[
-native @nohold _strcmp();
-var char&& str = "oioioi";
-[[ str = @str ]]
-var bool ret = [[ str == 'oioioi' ]];
-var char[10] cpy = [[ str ]];
-escape ret and (not _strcmp(str,&&cpy));
-]=],
-    run = 1,
-}
-
-Test { [=[
-native @nohold _strcmp(), _strcpy();
-var char[10] str;
-_strcpy(&&str,"oioioi");
-[[ str = @str ]]
-var bool ret = [[ str == 'oioioi' ]];
-var char[10] cpy;
-var char&& ptr = cpy;
-ptr = [[ str ]];
-escape ret and (not _strcmp(&&str,&&cpy));
-]=],
-    env = 'line 7 : types mismatch (`char&&´ <= `char[]´)',
-}
-
-Test { [=[
-native @nohold _strcmp(), _strcpy();
-var char[10] str = [] .. "oioioi";
-[[ str = @str ]]
-var bool ret = [[ str == 'oioioi' ]];
-var char[10] cpy;
-var char[10]& ptr = &cpy;
-ptr = [[ str ]];
-escape ret and (not _strcmp(&&str,&&cpy));
-]=],
-    run = 1,
-}
-
-Test { [=[
-native @nohold _strcmp();
-[[ str = '1234567890' ]]
-var char[2] cpy = [[ str ]];
-escape (_strcmp(&&cpy,"1") == 0);
-]=],
-    run = '3] runtime error: access out of bounds',
-}
-
-Test { [=[
-native @nohold _strcmp();
-[[ str = '1234567890' ]]
-var char[2] cpy;
-var char[20] cpy_;
-var char[]& ptr = &cpy;
-ptr = [[ str ]];
-escape (not _strcmp(&&cpy,"1234567890"));
-]=],
-    run = '6] runtime error: access out of bounds',
-}
-
-Test { [=[
-var int a = [[1]];
-var int b = 10;
-[[
-    @a = @a+@b
-    a = @a
-]]
-var int ret = [[a]];
-escape ret;
-]=],
-    todo = 'error: assign to @a',
-    run = 11,
-}
-
-Test { [=[
-native @nohold _strcmp();
-
-[[
--- this is lua code
-v_from_lua = 100
-]]
-
-var int v_from_ceu = [[v_from_lua]];
-
-[[
-str_from_lua = 'string from lua'
-]]
-var char[100] str_from_ceu = [[str_from_lua]];
-_assert(not _strcmp(&&str_from_ceu, "string from lua"));
-
-[[
-print(@v_from_ceu)
-v_from_lua = v_from_lua + @v_from_ceu
-]]
-
-//v_from_ceu = [[nil]];
-
-var int ret = [[v_from_lua]];
-escape ret;
-]=],
-    run = 200,
-}
-
-Test { [=[
-var int a;
-var void&& ptr1 = &&a;
-[[ ptr = @ptr1 ]];
-var void&& ptr2 = [[ ptr ]];
-escape ptr2==&&a;
-]=],
-    run = 1,
-}
-
 -- ALGEBRAIC DATATYPES (ADTS)
 
 -- ADTs used in most examples below
@@ -46781,6 +48067,11 @@ escape lll.NIL;
 }
 
 Test { [[
+native do
+    ##ifndef CEU_ADTS_NEWS_POOL
+    ##error bug found
+    ##endif
+end
 data List with
     tag NIL;
 or
@@ -47427,6 +48718,14 @@ escape o.PTR.x;
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor
 Test { DATA..[[
+pool List[] l1 = new List.NIL();
+pool List[] l2 = new List.CONS(1, List.NIL());
+escape 1;
+]],
+    run = 1,
+}
+
+Test { DATA..[[
 var Pair p1 = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&&p1);
@@ -47822,10 +49121,10 @@ escape l.CONS;      // runtime error
 Test { DATA..[[
 var int ret = 0;
 do
-    pool List[] l;
-    ret = l.NIL;
+    pool List[] lll;
+    ret = lll.NIL;
 end
-// all instances in "l" have been collected
+// all instances in "lll" have been collected
 escape ret;
 ]],
     run = 1,
@@ -48022,11 +49321,21 @@ escape l.CONS.head;
 Test { DATA..[[
 pool List[2] l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
 _ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
+l = new List.NIL();
 l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // 6 fails
 _ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "2");
 escape l.CONS.tail.CONS.head;
 ]],
     run = 5,
+}
+
+Test { DATA..[[
+pool List[2] l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
+_ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
+l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // all fail
+escape l.NIL;
+]],
+    run = 1,
 }
 
 -- 1-2-3-NIL => 1-2-NIL (3 fails)
@@ -49377,6 +50686,7 @@ escape 0;
     run = { ['~>1s'] = 35 },
 }
 
+-- fails if inner is killed before outer
 Test { [[
 data List with
     tag NIL;
@@ -49740,6 +51050,77 @@ end
 escape 1;
 ]],
     run = 1,
+}
+Test { [[
+data Tree with
+    tag NIL;
+or
+    tag NODE with
+        var int   v;
+        var Tree  left;
+        var Tree  right;
+    end
+end
+
+pool Tree[3] tree;
+tree = new Tree.NODE(1,
+            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
+            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+
+class Body with
+    pool  Body[]& bodies;
+    var   Tree&&   n;
+    var   int&    sum;
+    event int     ok;
+do
+    watching *n do
+        var int i = this.sum;
+        if n:NODE then
+            var Body&&? left =
+                spawn Body in this.bodies with
+                    this.bodies = &bodies;
+                    this.n      = &&n:NODE.left;
+                    this.sum    = &sum;
+                end;
+            if left? then
+                watching *left! do
+                    await left!:ok;
+                end
+            end
+
+            this.sum = this.sum + 1;
+
+            var Body&&? right =
+                spawn Body in this.bodies with
+                    this.bodies = &bodies;
+                    this.n      = &&n:NODE.right;
+                    this.sum    = &sum;
+                end;
+            if right? then
+                watching *right! do
+                    await right!:ok;
+                end
+            end
+        end
+    end
+    await 1s;
+    emit this.ok => 1;
+end
+
+var int sum = 0;
+
+pool Body[7] bodies;
+do Body with
+    this.bodies = &bodies;
+    this.n      = &&tree;
+    this.sum    = &sum;
+end;
+
+escape sum;
+]],
+    _ana = {acc=true},
+    wrn = 'line 26 : unbounded recursive spawn',
+    run = { ['~>10s'] = 3 },
 }
 Test { [[
 data Tree with
@@ -51709,10 +53090,10 @@ with
             if widget:NIL then
                 await FOREVER;
             else/if widget:EMPTY then
-                await FOREVER;
+                escape 1;
 
             else/if widget:ROW then
-                loop do
+                loop i in 3 do
                     par/or do
                         var int ret = traverse &&widget:ROW.w1;
                         if ret == 0 then
@@ -52043,6 +53424,81 @@ escape ret;
 ]],
     _ana = { acc=true },
     run = 5,
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag FORWARD with
+        var int pixels;
+    end
+or
+    tag SEQUENCE with
+        var Command  one;
+        var Command  two;
+    end
+end
+
+pool Command[] cmds;
+
+cmds = new Command.SEQUENCE(
+            Command.FORWARD(100),
+            Command.FORWARD(500));
+
+par/or do
+    traverse cmd in &&cmds do
+finalize with
+end
+        watching *cmd do
+            if cmd:FORWARD then
+                await FOREVER;
+
+            else/if cmd:SEQUENCE then
+                traverse &&cmd:SEQUENCE.one;
+
+            else
+            end
+        end
+    end
+with
+    await 100s;
+end
+
+escape 10;
+]],
+    --tight = 'tight loop',
+    _ana = { acc=true },
+    wrn = true,
+    run = { ['~>100s']=10 },
+}
+
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag SEQUENCE with
+        var Command  one;
+    end
+end
+
+pool Command[] cmds = new Command.SEQUENCE(Command.NOTHING());
+
+par/or do
+    traverse cmd in &&cmds do
+        if cmd:NOTHING then
+            await FOREVER;
+        else/if cmd:SEQUENCE then
+            traverse &&cmd:SEQUENCE.one;
+        end
+    end
+with
+end
+
+escape 10;
+]],
+    wrn = true,
+    run = 10,
 }
 
 Test { [[
@@ -52968,6 +54424,87 @@ escape 1;
 }
 
 Test { [[
+data Stmt with
+    tag NIL;
+or
+    tag SEQ with
+        var Stmt s1;
+    end
+end
+
+pool Stmt[2] stmts = new Stmt.NIL();
+
+var int ddd =
+    traverse stmt in &&stmts do
+        escape 10;
+    end;
+
+escape ddd;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+data Stmt with
+    tag NIL;
+or
+    tag SEQ with
+        var Stmt s1;
+    end
+end
+
+pool Stmt[] stmts = new Stmt.NIL();
+
+var int v1 = 10;
+
+var int ret =
+    traverse stmt in &&stmts with
+        var int v2 = v1;
+    do
+        escape v1+v2;
+    end;
+
+escape ret;
+]],
+    wrn = true,
+    run = 20,
+}
+
+Test { [[
+data List with
+    tag NIL;
+or
+    tag CONS with
+        var int   head;
+        var List  tail;
+    end
+end
+
+pool List[3] list = new
+    List.CONS(1,
+        List.CONS(2,
+            List.CONS(3,
+                List.NIL())));
+
+var int s1 =
+    traverse l in &&list do
+        if l:NIL then
+            escape 0;
+        else
+            watching *l do
+                var int sum_tail = traverse &&l:CONS.tail;
+                escape sum_tail + l:CONS.head;
+            end
+        end
+    end;
+
+escape s1;
+]],
+    run = 6,
+}
+
+Test { [[
 data List with
     tag NIL;
 or
@@ -53253,32 +54790,6 @@ escape 1;
     _ana = {acc=true},
     wrn = true,
     run = 1,
-}
-
-Test { [[
-data Stmt with
-    tag NIL;
-or
-    tag SEQ with
-        var Stmt s1;
-    end
-end
-
-pool Stmt[] stmts = new Stmt.NIL();
-
-var int v1 = 10;
-
-var int ret =
-    traverse stmt in &&stmts with
-        var int v2 = v1;
-    do
-        escape v1+v2;
-    end;
-
-escape ret;
-]],
-    wrn = true,
-    run = 20,
 }
 
 -- << ADTS / RECURSE / TRAVERSE
@@ -53584,10 +55095,34 @@ pool Command[2]& cmds2
 cmds1 = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
+cmds1 = new Command.NOTHING();
 cmds2 = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
 escape cmds1.NEXT;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command  nxt;
+    end
+end
+
+pool Command[2] cmds1;
+pool Command[2]& cmds2
+        = &cmds1;
+
+cmds1 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+cmds2 = new Command.NEXT(
+            Command.NEXT(
+                Command.NOTHING()));
+escape cmds1.NOTHING;
 ]],
     run = 1,
 }
@@ -53640,8 +55175,44 @@ end
 pool Command[1] cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1 = new Command.NOTHING();
 cmds1 = new Command.NEXT(Command.NOTHING());
 escape cmds1.NEXT.nxt.NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command  nxt;
+    end
+end
+
+pool Command[1] cmds1;
+
+cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1 = new Command.NEXT(Command.NOTHING());
+escape cmds1.NOTHING;
+]],
+    run = 1,
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command  nxt;
+    end
+end
+
+pool Command[2] cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1 = new Command.NOTHING();
+cmds1 = new Command.NEXT(
+                Command.NEXT(
+                    Command.NOTHING()));
+escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
@@ -53658,7 +55229,7 @@ pool Command[2] cmds1 = new Command.NEXT(Command.NOTHING());
 cmds1 = new Command.NEXT(
                 Command.NEXT(
                     Command.NOTHING()));
-escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
+escape cmds1.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
@@ -53845,11 +55416,11 @@ pool Command[] cmds;
 traverse cmd222 in &&cmds do
 end
 
-var int ret = do Run with
+var int ddd = do Run with
     this.cmds1 = &cmds;
 end;
 
-escape ret;
+escape ddd;
 ]],
     wrn = true,
     run = 2,
@@ -54417,7 +55988,7 @@ escape ret;
 --]=]
 
 -- TIMEMACHINE
-
+do return end
 local t = {
     [1] = [[
 #define TM_QUEUE
@@ -55292,6 +56863,51 @@ do return end
 
 -- async dentro de pause
 -- async thread spawn falhou, e ai?
+
+-- BUG-EVERY-SPAWN
+-- t1 creates t2, which already reacts to e
+Test { [[
+native do
+    int V = 0;
+end
+
+class G with
+    event void e;
+do
+    await FOREVER;
+end
+
+interface I with
+    var G& g;
+end
+
+pool I[] is;
+
+class T with
+    var G& g;
+    pool I[]& is;
+do
+    every g.e do
+        _V = _V + 1;
+        spawn T in is with
+            this.g = &outer.g;
+            this.is = &outer.is;
+        end;
+    end
+end
+
+var G g;
+spawn T in is with
+    this.g = &g;
+    this.is = &is;
+end;
+emit g.e;
+
+escape _V;
+]],
+    run = 1,
+}
+do return end
 
 -- BUG: must enforce alias
 Test { [[

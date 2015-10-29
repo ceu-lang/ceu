@@ -10,8 +10,8 @@ PROPS = {
     has_pses    = false,
     has_ret     = false,
     has_lua     = false,
-    has_orgs_watching = false,
-    has_adts_watching = {},
+    has_orgs_await = false,
+    has_adts_await = {},
     has_enums   = false,
 
     has_vector        = false,
@@ -155,11 +155,12 @@ F = {
             local tp_id = TP.id(var.tp)
             if var.cls then
                 me.needs_clr = true
+                me.has_orgs = true
             end
             if var.pre == 'var' then
                 if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
                     me.needs_clr = true
-                    PROPS.has_orgs_watching = true
+                    PROPS.has_orgs_await = true
                 end
 
                 if TP.check(var.tp,'[]','-&') and (not TP.is_ext(var.tp,'_')) then
@@ -216,7 +217,7 @@ F = {
     Dcl_pool = function (me)
         local pre, tp, id, constr = unpack(me)
         local tid = tp[1]
-        local is_unbounded = (tp[3]==true)
+        local is_unbounded = (tp[2]=='[]')
         if ENV.clss[tid] then
             PROPS.has_orgs_news = true
             if is_unbounded then
@@ -354,11 +355,11 @@ F = {
         local watch = me.__env_watching
         if watch then
             if watch == true then
-                PROPS.has_orgs_watching = true
+                PROPS.has_orgs_await = true
             else
-                PROPS.has_adts_watching[watch] = true
+                PROPS.has_adts_await[watch] = true
                 for id in pairs(ENV.adts[watch].subs or {}) do
-                    PROPS.has_adts_watching[id] = true
+                    PROPS.has_adts_await[id] = true
                 end
             end
         end

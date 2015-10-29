@@ -51,49 +51,80 @@ function LINE (me, line, spc)
 ]] .. spc..line
 end
 
-function HALT (me, ret, cond)
-    if cond then
-        LINE(me, 'if ('..cond..') {')
+function LABEL_NO (me)
+    local no = '_CEU_NO_'..me.n..'_'
+    LINE(me, [[
+]]..no..[[:
+if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
+]])
+    return no
+end
+
+function HALT (me, t)
+    if not t then
+        LINE(me, 'return;')
+        return
     end
-    --LINE(me, '\tgoto _CEU_NEXT_;')
-    if ret then
-        LINE(me, '\treturn '..ret..';')
-    else
-        LINE(me, '\treturn RET_HALT;')
+
+    LINE(me, [[
+_ceu_trl->evt = ]]..t.evt..[[;
+_ceu_trl->lbl = ]]..t.lbl..[[;
+_ceu_trl->seqno = ]]..(t.isEvery and '_ceu_app->seqno-1' or '_ceu_app->seqno')..[[;
+]])
+
+    if t.evto then
+        LINE(me, [[
+#ifdef CEU_ORGS
+_ceu_trl->evto  = ]]..t.evto..[[;
+#endif
+]])
     end
-    if cond then
-        LINE(me, '}')
+
+    if t.org_or_adt then
+        LINE(me, [[
+_ceu_trl->org_or_adt = ]]..t.org_or_adt..[[;
+]])
+    end
+
+    if t.evt == 'CEU_IN__ASYNC' then
+        LINE(me, [[
+#ifdef ceu_out_async
+ceu_out_async(_ceu_app);
+#endif
+    _ceu_app->pendingAsyncs = 1;
+]])
+    end
+
+    LINE(me, [[
+return;
+
+case ]]..t.lbl..[[:;
+]])
+
+    if t.no and PROPS.has_pses then
+        local function __pause_or_dclcls (me)
+            return me.tag=='Pause' or me.tag=='Dcl_cls'
+        end
+        for pse in AST.iter(__pause_or_dclcls) do
+            if pse.tag == 'Dcl_cls' then
+                break
+            end
+            COMM(me, 'PAUSE: '..pse.dcl.var.id)
+            LINE(me, [[
+if (]]..V(pse.dcl,'rval')..[[) {
+    goto ]]..t.no..[[;
+}
+]])
+        end
     end
 end
 
 function GOTO (me, lbl)
     CODE.has_goto = true
     LINE(me, [[
-_CEU_LBL = ]]..lbl..[[;
+_ceu_lbl = ]]..lbl..[[;
 goto _CEU_GOTO_;
 ]])
-end
-
-local function __pause_or_dclcls (me)
-    return me.tag=='Pause' or me.tag=='Dcl_cls'
-end
-
-function AWAIT_PAUSE (me, no)
-    if not PROPS.has_pses then
-        return
-    end
-
-    for pse in AST.iter(__pause_or_dclcls) do
-        if pse.tag == 'Dcl_cls' then
-            break
-        end
-        COMM(me, 'PAUSE: '..pse.dcl.var.id)
-        LINE(me, [[
-if (]]..V(pse.dcl,'rval')..[[) {
-    goto ]]..no..[[;
-}
-]])
-    end
 end
 
 function COMM (me, comm)
@@ -101,18 +132,18 @@ function COMM (me, comm)
 end
 
 local _iter = function (n)
+    if n.tag == 'Dcl_cls' then
+        return true
+    end
     if n.tag == 'Block' and n.needs_clr then
         return true
     end
-
     if n.tag == 'SetBlock' and n.needs_clr then
         return true
     end
-
     if n.tag == 'Loop' and n.needs_clr then
         return true
     end
-
     n = n.__par
     if n and (n.tag == 'ParOr') then
         return true     -- par branch
@@ -121,7 +152,8 @@ end
 
 -- TODO: check if all calls are needed
 --          (e.g., cls outermost block should not!)
-function CLEAR_BEF (me)
+function CLEAR (me)
+
     COMM(me, 'CLEAR: '..me.tag..' ('..me.ln[2]..')')
 
     if ANA and me.ana.pos[false] then
@@ -131,45 +163,45 @@ function CLEAR_BEF (me)
         return
     end
 
---[[
-    -- TODO: put it back!
     -- check if top will clear during same reaction
-    if (not me.needs_clr_fin) and ANA then   -- fin must execute before any stmt
-        local top = AST.iter(_iter)()
-        if top and ANA.CMP(top.ana.pos, me.ana.pos) then
-            return  -- top will clear
+    if (not me.has_orgs) and (not me.needs_clr_fin) then
+        if ANA then   -- fin must execute before any stmt
+            local top = AST.iter(_iter)()
+            if top and top.needs_clr and
+                ANA.IS_EQUAL(top.ana.pos, me.ana.pos)
+            then
+                return  -- top will clear
+            end
         end
     end
-]]
 
     LINE(me, [[
-return ceu_out_clear(_ceu_app, _ceu_go, ]]..me.lbl_clr.id..[[, _STK_ORG,
-                     &_STK_ORG->trls[ ]]..(me.trails[1])  ..[[ ],
-                     &_STK_ORG->trls[ ]]..(me.trails[2]+1)..[[ ]);
-]])
-end
+{
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    ceu_sys_go_ex(_ceu_app, &evt,
+                  _ceu_stk,
+                  _ceu_org,
+                  &_ceu_org->trls[ ]]..me.trails[1]..[[ ],
+                  &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
+                                        /* excludes +1 */
+}
 
-function CLEAR_AFT (me)
-    if ANA and me.ana.pos[false] then
-        return
-    end
-    if not me.needs_clr then
-        return
-    end
-    if me.lbl_clr then
-        LINE(me, [[
-case ]]..me.lbl_clr.id..[[:;
+/* LONGJMP
+ * Block termination: we will abort all trails between [t1,t2].
+ * Return status=1 to distinguish from longjmp from organism termination.
+ * We want to continue from "me.lbl_jmp" below.
+ */
+#ifdef CEU_ORGS
+_ceu_app->stk_jmp.org = _ceu_org;
+#endif
+_ceu_app->stk_jmp.trl = _ceu_trl;
+_ceu_app->stk_jmp.lbl = ]]..me.lbl_jmp.id..[[;
+ceu_longjmp(_ceu_app, _ceu_org,
+            ]]..me.trails[1]..','..me.trails[2]..[[);
 ]])
-    end
-    if not (AST.par(me,'Dcl_fun') or AST.par(me,'Thread')) then
-        LINE(me, [[
-/* switch to 1st trail */
-/* TODO: only if not joining with outer prio */
-_STK->trl = &_STK_ORG->trls[ ]] ..me.trails[1]..[[ ];
-]])
-    end
+    CASE(me, me.lbl_jmp)
 end
-
 
 F = {
     Node_pre = function (me)
@@ -182,7 +214,7 @@ F = {
     Dcl_constr = function (me)
         CONC_ALL(me)
         CODE.constrs = CODE.constrs .. [[
-static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, tceu_go* _ceu_go) {
+static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this, tceu_org* _ceu_org) {
 ]] .. me.code .. [[
 }
 ]]
@@ -200,9 +232,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
         end
 
         -- functions and threads receive __ceu_org as parameter
-        --   and do not require _ceu_go
-        CODE.functions = string.gsub(CODE.functions, '_STK_ORG', '__ceu_org')
-        CODE.threads   = string.gsub(CODE.threads,   '_STK_ORG', '__ceu_org')
+        CODE.functions = string.gsub(CODE.functions, '_ceu_org', '__ceu_this')
 
         -- assert that all input functions have bodies
         for evt, v in pairs(INPUT_FUNCTIONS) do
@@ -214,7 +244,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org, t
     BlockI_pos = function (me)
         -- Interface constants are initialized from outside
         -- (another _ceu_go_org), need to use __ceu_org instead.
-        me.code_ifc = string.gsub(me.code, '_STK_ORG', '__ceu_org')
+        me.code_ifc = string.gsub(me.code, '_ceu_org', '__ceu_this')
         me.code = ''
     end,
 
@@ -274,7 +304,7 @@ case CEU_IN_]]..id..[[:
         end
         if me.has_pre then
             CODE.pres = CODE.pres .. [[
-static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
+static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this) {
 ]] .. me.blk_ifc[1][1].code_ifc .. [[
 }
 ]]
@@ -288,49 +318,27 @@ static void _ceu_pre_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_org) {
             return      -- never reachable
         end
 
-        -- might need "free"
-
-        if me ~= MAIN then
-            LINE(me, [[
-#ifdef CEU_ORGS_NEWS
-/* HACK_9:
- * If the stack top is the initial spawn state of the organism, it means that 
- * the organism terminated on start and the spawn must return NULL.
- * In this case, we mark it with "CEU_IN__NONE" to be recognized in the spawn 
- * continuation below.
- */
-if (_STK->evt==CEU_IN__STK && _STK->org==_STK_ORG
-    && _STK->trl==&_STK_ORG->trls[0]
-    && _STK->stop==&_STK_ORG->trls[_STK_ORG->n]
-    )
-{
-    _STK->evt = CEU_IN__NONE;
-}
-#endif
-]])
-        end
-
-    LINE(me, [[
-#ifdef CEU_ORGS
-{
-    tceu_stk stk;
-             stk.evt    = CEU_IN__CLEAR;
-             stk.cnt    = NULL;
-             stk.org    = _STK_ORG;
-             stk.trl    = &_STK_ORG->trls[0];
-             stk.stop   = _STK_ORG;
-             stk.evt_sz = 0;
-    stack_push(_ceu_app, _ceu_go, &stk, NULL);
-}
-#endif
-]])
-
         -- stop
         if me == MAIN then
-            HALT(me, 'RET_QUIT')
+            LINE(me, [[
+#if defined(CEU_RET) || defined(CEU_OS)
+_ceu_app->isAlive = 0;
+#endif
+]])
         else
-            HALT(me, 'RET_RESTART')
+            LINE(me, [[
+{
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    ceu_sys_go_ex(_ceu_app, &evt,
+                  _ceu_stk,
+                  _ceu_org,
+                  &_ceu_org->trls[_ceu_org->n], /* to the end, only free it */
+                  NULL);
+}
+]])
         end
+        HALT(me)
 
         -- TODO-RESEARCH-2:
     end,
@@ -353,7 +361,7 @@ var T t with
     <CONSTR>        -- 2    org: no lbl (cannot call anything)
 end;
 
-<CONT>              -- 4    parent: me.lbls_cnt.id
+<CONT>              -- 4    parent:
 ]]
 
         -- ceu_out_org, _ceu_constr_
@@ -367,11 +375,11 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 ]])     end
         LINE(me, [[
     /* resets org memory and starts org.trail[0]=Class_XXX */
-    /* TODO: BUG: _STK_ORG is not necessarily the parent for pool allocations */
-    ceu_out_org(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
-                ]]..t.cls.n..[[,
-                ]]..t.isDyn..[[,
-                _STK_ORG, ]] ..t.lnks..[[);
+    /* TODO: BUG: _ceu_org is not necessarily the parent for pool allocations */
+    ceu_out_org_init(_ceu_app, ]]..org..','..t.cls.trails_n..','..t.cls.lbl.id..[[,
+                     ]]..t.cls.n..[[,
+                     ]]..t.isDyn..[[,
+                     ]]..t.parent_org..','..t.parent_trl..[[);
 /* TODO: currently idx is always "1" for all interfaces access because pools 
  * are all together there. When we have separate trls for pools, we'll have to 
  * indirectly access the offset in the interface. */
@@ -383,12 +391,12 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         if me.__adj_is_traverse_root then
             LINE(me, [[
     ((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out = 
-        (__typeof__(((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out)) _STK_ORG;
+        (__typeof__(((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out)) _ceu_org;
 ]])
         elseif me.__adj_is_traverse_rec then
             LINE(me, [[
     ((]]..TP.toc(t.cls.tp)..'*)'..org..[[)->_out =
-        ((]]..TP.toc(t.cls.tp)..[[*)_STK_ORG)->_out;
+        ((]]..TP.toc(t.cls.tp)..[[*)_ceu_org)->_out;
 ]])
         end
 
@@ -399,12 +407,42 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         end
         if t.constr then
             LINE(me, [[
-    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_go);
+    _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_org);
+]])
+        end
+
+        LINE(me, [[
+{
+    tceu_stk stk_ = { NULL, ]]..org..[[, 0, ]]..org..[[->n, {} };
+    if (setjmp(stk_.jmp) != 0) {
+#ifdef CEU_ORGS
+        _ceu_org = _ceu_app->stk_jmp.org;
+#endif
+        _ceu_trl = _ceu_app->stk_jmp.trl;
+]])
+        GOTO(me, '_ceu_app->stk_jmp.lbl')
+        LINE(me, [[
+    }
+
+    /* SETJMP: spawning a new org
+     * The new org might emit a global event that awakes a par/or enclosing the 
+     * call point.
+     */
+    _ceu_stk->up = &stk_;
+    ceu_app_go(_ceu_app,NULL,
+               ]]..org..[[, &]]..org..[[->trls[0],
+               &stk_);
+    _ceu_stk->up = NULL;
+]])
+        if t.set then
+                LINE(me, [[
+    if (!]]..org..[[->isAlive) {
+        ]]..V(t.set,'rval')..' = '..string.upper(TP.toc(t.set.tp))..[[_pack(NULL);
+    }
 ]])
         end
         LINE(me, [[
-    return ceu_out_org_spawn(_ceu_app, _ceu_go, ]]..me.lbls_cnt.id..','..org..','..t.cls.lbl.id..[[);
-case ]]..me.lbls_cnt.id..[[:;
+}
 ]])
         if t.arr then
             LINE(me, [[
@@ -427,7 +465,8 @@ me.tp = var.tp
                 constr = constr,
                 arr    = var.tp.arr,
                 val_i  = TP.check(var.tp,'[]') and V({tag='Var',tp=var.tp,var=var.constructor_iterator},'rval'),
-                lnks   = '&_STK_ORG->trls['..var.trl_orgs[1]..'].lnks'
+                parent_org = '_ceu_org',
+                parent_trl = var.trl_orgs[1],
             })
 
         -- TODO: similar code in Block_pre for !BlockI
@@ -567,15 +606,34 @@ if (]]..me.val..[[ == NULL) {
 ((tceu_org*)]]..V(org,'lval')..')->ret = '..V(exp,'rval')..[[;
 ]])
         end
+
         LINE(me, [[
 {
-    tceu_org* __ceu_org = (tceu_org*)]]..V(org,'lval')..[[;
-    return ceu_out_clear(_ceu_app, _ceu_go, ]]..me.lbl.id..[[, __ceu_org,
-                             &__ceu_org->trls[0],
-                             __ceu_org);
-}
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    if (setjmp(stk_.jmp) != 0) {
+#ifdef CEU_ORGS
+        _ceu_org = _ceu_app->stk_jmp.org;
+#endif
+        _ceu_trl = _ceu_app->stk_jmp.trl;
+        _ceu_lbl = _ceu_app->stk_jmp.lbl;
+]])
+        GOTO(me, '_ceu_app->stk_jmp.lbl')
+        LINE(me, [[
+    }
 
-case ]]..me.lbl.id..[[:;
+    /* SETJMP: killing an org
+     * The kill might awake a par/or enclosing the call point.
+     */
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    _ceu_stk->up = &stk_;
+    ceu_sys_go_ex(_ceu_app, &evt,
+                  &stk_,
+                  (tceu_org*)]]..V(org,'lval')..[[,
+                  &((tceu_org*)]]..V(org,'lval')..[[)->trls[0],
+                  NULL);
+    _ceu_stk->up = NULL;
+}
 ]])
     end,
 
@@ -591,20 +649,20 @@ case ]]..me.lbl.id..[[:;
         if pool and (type(pool.var.tp.arr)=='table') then
             -- static
             LINE(me, [[
-    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)&]]..V(pool,'rval')..[[);
+    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc(&]]..V(pool,'rval')..[[.pool);
 ]])
         elseif TP.check(pool.var.tp,'&&') or TP.check(pool.var.tp,'&') then
             -- pointer don't know if is dynamic or static
             LINE(me, [[
 #if !defined(CEU_ORGS_NEWS_MALLOC)
-    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)&]]..V(pool,'rval')..[[);
+    ]]..ID..[[ = (tceu_org*) ceu_pool_alloc(&]]..V(pool,'rval')..[[.pool);
 #elif !defined(CEU_ORGS_NEWS_POOL)
     ]]..ID..[[ = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
 #else
-    if ((&]]..V(pool,'rval')..[[)->queue == NULL) {
+    if (]]..V(pool,'rval')..[[.pool.queue == NULL) {
         ]]..ID..[[ = (tceu_org*) ceu_out_realloc(NULL, sizeof(CEU_]]..id..[[));
     } else {
-        ]]..ID..[[ = (tceu_org*) ceu_pool_alloc((tceu_pool*)&]]..V(pool,'rval')..[[);
+        ]]..ID..[[ = (tceu_org*) ceu_pool_alloc(&]]..V(pool,'rval')..[[.pool);
     }
 #endif
 ]])
@@ -626,14 +684,16 @@ case ]]..me.lbl.id..[[:;
     if (]]..ID..[[ != NULL) {
 ]])
 
-        if pool and (type(pool.var.tp.arr)=='table') or
-           PROPS.has_orgs_news_pool or OPTS.os then
+        --if pool and (type(pool.var.tp.arr)=='table') or
+           --PROPS.has_orgs_news_pool or OPTS.os then
             LINE(me, [[
-        ]]..ID..[[->pool = (tceu_pool_*)&]]..V(pool,'rval')..[[;
+#ifdef CEU_ORGS_NEWS_POOL
+        ]]..ID..[[->pool = &]]..V(pool,'rval')..[[;
+#endif
 ]])
-        end
+        --end
 
-        local org = '_STK_ORG'
+        local org = '_ceu_org'
         if pool and pool.org then
             org = '((tceu_org*)&'..V(pool.org,'rval')..')'
         end
@@ -645,25 +705,14 @@ case ]]..me.lbl.id..[[:;
             val    = '(*((CEU_'..id..'*)'..ID..'))',
             constr = constr,
             arr    = false,
-            lnks   = '((((tceu_pool_*)&'..V(pool,'rval')..'))->lnks)',
+            parent_org = V(pool,'rval')..'.parent_org',
+            parent_trl = V(pool,'rval')..'.parent_trl',
+            set    = set and set[4]
         })
         LINE(me, [[
     }
 /*}*/
 ]])
-        if set then
-            local set_to = set[4]
-            LINE(me, [[
-/* HACK_9: see above */
-if (]]..V(set_to,'rval')..[[.tag != ]]..string.upper(TP.toc(set_to.tp))..[[_NIL) {
-    tceu_stk* stk = stack_nxt(_ceu_go);
-    if (stk->evt == CEU_IN__NONE) {
-        ]]..V(set_to,'rval')..' = '..string.upper(TP.toc(set_to.tp))..[[_pack(NULL);
-    }
-}
-]])
-        end
-
     end,
 
     Block_pre = function (me)
@@ -675,8 +724,8 @@ if (]]..V(set_to,'rval')..[[.tag != ]]..string.upper(TP.toc(set_to.tp))..[[_NIL)
         if me.fins then
             LINE(me, [[
 /*  FINALIZE */
-_STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].evt   = CEU_IN__CLEAR;
-_STK_ORG->trls[ ]]..me.trl_fins[1]..[[ ].lbl   = ]]..me.lbl_fin.id..[[;
+_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].evt = CEU_IN__CLEAR;
+_ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
 ]])
             for _, fin in ipairs(me.fins) do
                 LINE(me, fin.val..' = 0;')
@@ -733,8 +782,8 @@ ceu_vector_init(]]..'&'..ID..','..max..',sizeof('..TP.toc(tp_elem)..[[),
                     if var.tp.arr == '[]' then
                         LINE(me, [[
 /*  FINALIZE VECTOR */
-_STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].evt = CEU_IN__CLEAR;
-_STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
+_ceu_org->trls[ ]]..var.trl_vector[1]..[[ ].evt = CEU_IN__CLEAR;
+_ceu_org->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
 ]])
                     end
                 end
@@ -744,9 +793,9 @@ _STK_ORG->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
                     -- TODO: repeated with Block_pos
                     LINE(me, [[
 /*  RESET OPT-ORG TO NULL */
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
 ]])
                 end
 
@@ -760,29 +809,32 @@ _STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
                 local tp_id = TP.id(var.tp)
                 if top or tp_id=='_TOP_POOL' then
                     local id = (adt and '_' or '') .. var.id_
-                    local dcl = '&'..CUR(me, id)
-
-                    local lnks = (var.trl_orgs and var.trl_orgs[1]) or 'NULL'
-                    if lnks ~= 'NULL' then
-                        lnks = '&_STK_ORG->trls['..lnks..'].lnks'
-                    end
 
                     if (not is_dyn) then
-                        if top.is_ifc then
+                        local tp_id_ = 'CEU_'..tp_id..(top.is_ifc and '_delayed' or '')
+                        local pool
+                        if cls then
+                            pool = CUR(me,id)..'.pool'
+                            local trl = assert(var.trl_orgs,'bug found')[1]
                             LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'_delayed),'..lnks..','
-    ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
+]]..CUR(me,id)..[[.parent_org = _ceu_org;
+]]..CUR(me,id)..[[.parent_trl = ]]..trl..[[;
 ]])
                         else
-                            LINE(me, [[
-ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..','
-    ..'(byte**)'..dcl..'_queue, (byte*)'..dcl..[[_mem);
-]])
+                            pool = CUR(me,id)
                         end
-                    elseif cls or tp_id=='_TOP_POOL' then
                         LINE(me, [[
-(]]..dcl..[[)->lnks  = ]]..lnks..[[;
-(]]..dcl..[[)->queue = NULL;            /* dynamic pool */
+ceu_pool_init(&]]..pool..','..var.tp.arr.sval..',sizeof('..tp_id_..[[),
+              (byte**)&]]..CUR(me,id)..'_queue, (byte*)&'..CUR(me,id)..[[_mem);
+]])
+                    elseif cls or tp_id=='_TOP_POOL' then
+    local trl = assert(var.trl_orgs,'bug found')[1]
+                        LINE(me, [[
+(]]..CUR(me,id)..[[).parent_org = _ceu_org;
+(]]..CUR(me,id)..[[).parent_trl = ]]..trl..[[;
+#ifdef CEU_ORGS_NEWS_POOL
+(]]..CUR(me,id)..[[).pool.queue = NULL;            /* dynamic pool */
+#endif
 ]])
                     end
                 end
@@ -800,7 +852,9 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..
                     local VAL_pool = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_pool')
                     if (not is_dyn) then
                         LINE(me, [[
+#ifdef CEU_ADTS_NEWS_POOL
 ]]..VAL_all..[[->pool = ]]..VAL_pool..[[;
+#endif
 ]])
                     else
                         LINE(me, [[
@@ -813,8 +867,8 @@ ceu_pool_init(]]..dcl..','..var.tp.arr.sval..',sizeof(CEU_'..tp_id..'),'..lnks..
 ]]..VAL_all..[[->root = &CEU_]]..string.upper(adt.id)..[[_BASE;
 
 /*  FINALIZE ADT */
-_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].evt = CEU_IN__CLEAR;
-_STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl = ]]..var.lbl_fin_kill_free.id..[[;
+_ceu_org->trls[ ]]..var.trl_adt[1]..[[ ].evt = CEU_IN__CLEAR;
+_ceu_org->trls[ ]]..var.trl_adt[1]..[[ ].lbl = ]]..var.lbl_fin_kill_free.id..[[;
 ]])
                 end
             end
@@ -825,7 +879,8 @@ _STK_ORG->trls[ ]]..var.trl_adt[1]..[[ ].lbl = ]]..var.lbl_fin_kill_free.id..[[;
             if var.trl_orgs and var.trl_orgs_first then
                 LINE(me, [[
 #ifdef CEU_ORGS
-ceu_out_org_trail(_STK_ORG, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.trl_orgs.val..[[);
+_ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].evt = CEU_IN__ORG;
+_ceu_org->trls[ ]]..var.trl_orgs[1]..[[ ].org = NULL;
 #endif
 ]])
             end
@@ -839,41 +894,28 @@ ceu_out_org_trail(_STK_ORG, ]]..var.trl_orgs[1]..[[, (tceu_org_lnk*) &]]..var.tr
             return
         end
 
-        -- TODO: try to remove this requirement
-        if me.trails[1] ~= stmts.trails[1] then
+        if stmts.trails[1] ~= me.trails[1] then
             LINE(me, [[
-/* switch to blk trail */
-_STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
+_ceu_trl = &_ceu_org->trls[ ]]..stmts.trails[1]..[[ ];
 ]])
         end
+
         CONC(me, stmts)
-        CLEAR_BEF(me)
+        CLEAR(me)
+        LINE(me, [[
+if (0) {
+]])
 
         if me.fins then
-            LINE(me, [[
-{
-    int __ceu_from_fin;         /* separate dcl/set because of C++ */
-    __ceu_from_fin = 0;         /* skip HALT */
-    if (0) {
-]])
             CASE(me, me.lbl_fin)
-            LINE(me, [[
-        __ceu_from_fin = 1;         /* stop on HALT */
-    }
-]])
             for i, fin in ipairs(me.fins) do
                 LINE(me, [[
-    if (]]..fin.val..[[) {
-        ]] .. fin.code .. [[
-    }
-]])
-            end
-            LINE(me, [[
-    if (__ceu_from_fin) {
-        return RET_HALT;
-    }
+if (]]..fin.val..[[) {
+    ]] .. fin.code .. [[
 }
 ]])
+            end
+            HALT(me)
         end
 
         for _, var in ipairs(me.vars) do
@@ -888,9 +930,6 @@ _STK->trl = &_STK_ORG->trls[ ]]..stmts.trails[1]..[[ ];
                 assert(var.pre ~= 'pool')
 -- TODO: review both cases (vec vs no-vec)
 -- possible BUG: pointer is tested after free
-                LINE(me, [[
-if (0) {
-]])
                 CASE(me, var.lbl_optorg_reset)
                 local tp_opt = TP.pop(var.tp,'[]')
                 local ID = string.upper(TP.opt2adt(tp_opt))
@@ -902,10 +941,9 @@ if (0) {
     for (__ceu_i=0; __ceu_i<ceu_vector_getlen(]]..val..[[); __ceu_i++) {
         ]]..TP.toc(tp_opt)..[[* __ceu_one = (]]..TP.toc(tp_opt)..[[*)
                                             ceu_vector_geti(]]..val..[[, __ceu_i);
-        tceu_kill* __ceu_casted = (tceu_kill*)_STK->evt_buf;
+        tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
-             ( ((tceu_org*)(__ceu_one->SOME.v)) ==
-               (__ceu_casted)->org_or_adt ) )
+             (__ceu_one->SOME.v == __ceu_casted->org_or_adt) )
         {
             __ceu_one->tag = CEU_]]..ID..[[_NIL;
 /*
@@ -920,9 +958,9 @@ if (0) {
                     local val = V({tag='Var',tp=var.tp,var=var}, 'rval')
                     LINE(me, [[
     {
-        tceu_kill* __ceu_casted = (tceu_kill*)_STK->evt_buf;
-        if (]]..val..[[.tag!=CEU_]]..ID..[[_NIL &&
-            ((tceu_org*)(]]..val..[[.SOME.v))==(__ceu_casted)->org_or_adt)
+        tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
+        if ( (]]..val..[[.tag != CEU_]]..ID..[[_NIL) &&
+             (]]..val..[[.SOME.v == __ceu_casted->org_or_adt) )
         {
             ]]..val..' = '..string.upper(TP.toc(var.tp))..[[_pack(NULL);
         }
@@ -930,18 +968,13 @@ if (0) {
 ]])
                 end
 
-            -- TODO: repeated with Block_pre
-            LINE(me, [[
+                -- TODO: repeated with Block_pre
+                LINE(me, [[
 /*  RESET OPT-ORG TO NULL */
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
-#if 0
-_STK_ORG->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
-#endif
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
 ]])
                 HALT(me)
-                LINE(me, [[
-}
-]])
             end
 
             if is_arr and is_dyn then
@@ -958,17 +991,23 @@ ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0);
 
                 local VAL_root = V({tag='Var',tp=var.tp,var=var}, 'lval')
                 local VAL_all  = V({tag='Var',tp=var.tp,var=var}, 'lval','adt_top')
-                if PROPS.has_adts_watching[var.adt.id] then
+                if PROPS.has_adts_await[var.adt.id] then
                     LINE(me, [[
 #if 0
 "kill" only while in scope
-CEU_]]..id..[[_kill(_ceu_app, _ceu_go, ]]..VAL_root..[[);
+CEU_]]..id..[[_kill(_ceu_app, ]]..VAL_root..[[);
 #endif
 ]])
                 end
                 if is_dyn then
+                    local pool
+                    if PROPS.has_adts_news_pool then
+                        pool = VAL_all..'->pool'
+                    else
+                        pool = 'NULL'
+                    end
                     LINE(me, [[
-CEU_]]..id..[[_free_dynamic(_ceu_app, ]]..VAL_root..[[);
+CEU_]]..id..[[_free(]]..pool..[[, ]]..VAL_root..[[);
 ]])
                 else
 -- TODO: required???
@@ -983,8 +1022,10 @@ CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
             end
         end
 
-        CLEAR_AFT(me)
-        LINE(me, '}')       -- open in Block_pre
+        LINE(me, [[
+    }   /* opened in "if (0)" */
+}       /* opened in Block_pre */
+]])
     end,
 
     Pause = CONC_ALL,
@@ -992,8 +1033,8 @@ CEU_]]..id..[[_free_static(_ceu_app, ]]..VAL_root..','..pool..[[);
     PauseX = function (me)
         local psed = unpack(me)
         LINE(me, [[
-ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
-          &_STK_ORG->trls[ ]]..me.blk.trails[2]..[[ ],
+ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
+          &_ceu_org->trls[ ]]..me.blk.trails[2]..[[ ],
         ]]..psed..[[);
 ]])
     end,
@@ -1021,17 +1062,23 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
         local to_tp_id = TP.id(to.tp)
 
         local pool = ADT.find_pool(to)
-        pool = '('..V(pool,'lval','adt_top')..'->pool)'
+        if PROPS.has_adts_news_pool then
+            pool = '('..V(pool,'lval','adt_top')..'->pool)'
+        else
+            pool = 'NULL'
+        end
 
         LINE(me, [[
 {
     void* __ceu_old = ]]..V(to,'lval')..[[;    /* will kill/free old */
 ]])
 
-        -- HACK: _STK_ORG overwritten by _kill
-        if PROPS.has_adts_watching[to_tp_id] then
+        -- HACK: _ceu_org overwritten by _kill
+        if PROPS.has_adts_await[to_tp_id] then
             LINE(me,[[
-    tceu_org* __ceu_stk_org = _STK_ORG;
+#ifdef CEU_ADTS_NEWS_POOL
+    tceu_org* __ceu_stk_org = _ceu_org;
+#endif
 ]])
         end
 
@@ -1044,60 +1091,55 @@ ceu_pause(&_STK_ORG->trls[ ]]..me.blk.trails[1]..[[ ],
 ]])
         end
 
-        if PROPS.has_adts_watching[to_tp_id] then
-            LINE(me, [[
-    /* save the continuation to run after the kills */
-    _STK->trl->evt = CEU_IN__STK;
-    _STK->trl->lbl = ]]..SET.lbl_cnt.id..[[;
-    _STK->trl->stk = stack_curi(_ceu_go);
-    CEU_]]..to_tp_id..[[_kill(_ceu_app, _ceu_go, __ceu_old);
-]])
+        -- TODO: Unfortunately, allocation needs to happen before "free".
+        -- We need to "free" before the "kill" because the latter might abort
+        -- something and never return to accomplish the allocation and
+        -- mutation.
 
-            -- HACK: _STK_ORG overwritten by _kill
-            LINE(me, [[
-#undef  _STK_ORG
-#define _STK_ORG __ceu_stk_org
-]])
-        end
-
-        LINE(me, [[
-                /* TODO: parameter restored here */
-#if defined(CEU_ADTS_NEWS_MALLOC) && defined(CEU_ADTS_NEWS_POOL)
-    if (]]..pool..[[ == NULL) {
-        CEU_]]..to_tp_id..[[_free_dynamic(_ceu_app, __ceu_old);
-    } else {
-        CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
-    }
-#elif defined(CEU_ADTS_NEWS_MALLOC)
-    CEU_]]..to_tp_id..[[_free_dynamic(_ceu_app, __ceu_old);
-#elif defined(CEU_ADTS_NEWS_POOL)
-    CEU_]]..to_tp_id..[[_free_static(_ceu_app, __ceu_old, ]]..pool..[[);
-#endif
-]])
-
-        -- must allocate after the free
-        CONC(me, fr)
-        if set == 'adt-constr' then
+        CONC(me, fr)                    -- 1. allocation
+        if set == 'adt-constr' then     -- 2. mutation
             LINE(me, [[
 ]]..V(to,'lval','no_cast')..' = '..V(fr,'lval')..[[;
 ]])
         end
 
-        if PROPS.has_adts_watching[to_tp_id] then
-            -- HACK: _STK_ORG overwritten by _kill
-            LINE(me, [[
-#undef  _STK_ORG
-#ifdef CEU_ORGS
-#define _STK_ORG ((tceu_org*)_STK->org)
-#else
-#define _STK_ORG ((tceu_org*)_ceu_app->data)
-#endif
-
-return RET_RESTART;
-case ]]..SET.lbl_cnt.id..[[:;
+        LINE(me, [[                     /* 3. free */
+    CEU_]]..to_tp_id..[[_free(]]..pool..[[, __ceu_old);
 ]])
-        end
 
+        LINE(me, [[
+
+#ifdef CEU_ADTS_AWAIT_]]..to_tp_id..[[
+
+    /* OK_KILLED (after free) */        /* 4. kill */
+{
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    if (setjmp(stk_.jmp) != 0) {
+#ifdef CEU_ORGS
+        _ceu_org = _ceu_app->stk_jmp.org;
+#endif
+        _ceu_trl = _ceu_app->stk_jmp.trl;
+]])
+        GOTO(me, '_ceu_app->stk_jmp.lbl')
+        LINE(me, [[
+    }
+
+    /* SETJMP: mutating an adt
+     * The mutation frees a subtree that might awake a par/or enclosing the 
+     * call point.
+     */
+    {
+        tceu_evt evt;
+                 evt.id = CEU_IN__ok_killed;
+                 evt.param = &__ceu_old;
+        _ceu_stk->up = &stk_;
+        ceu_sys_go_ex(_ceu_app, &evt, &stk_,
+                      _ceu_app->data, &_ceu_app->data->trls[0], NULL);
+        _ceu_stk->up = NULL;
+    }
+}
+#endif
+]])
         LINE(me, [[
 }
 ]])
@@ -1167,8 +1209,10 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
 ]])
             else
                 LINE(me, [[
-#ifdef CEU_ORGS_WATCHING
-    _STK_ORG->ret = ]]..V(to,'rval')..[[;
+#ifdef CEU_ORGS_AWAIT
+    _ceu_org->ret = ]]..V(to,'rval')..[[;
+    /* HACK_8: result of immediate spawn termination */
+    _ceu_app->ret = _ceu_org->ret;
 #endif
 ]])
             end
@@ -1314,10 +1358,9 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         local blk,_ = unpack(me)
         CONC(me, blk)
         HALT(me)        -- must escape with `escape´
-        CASE(me, me.lbl_out)
         if me.has_escape then
-            CLEAR_BEF(me)
-            CLEAR_AFT(me)
+            CASE(me, me.lbl_out)
+            CLEAR(me)
         end
     end,
     Escape = function (me)
@@ -1327,30 +1370,54 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
     _Par = function (me)
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
-        for i, sub in ipairs(me) do
-            if i > 1 then
-                LINE(me, [[
+        LINE(me, [[
 {
-    /* mark all trails to start (1st runs immediatelly) */
-    tceu_trl* trl = &_STK_ORG->trls[ ]]..sub.trails[1]..[[ ];
-    trl->evt = CEU_IN__STK;
-    trl->lbl = ]]..me.lbls_in[i].id..[[;
-#ifdef CEU_STACK
-    trl->stk = stack_curi(_ceu_go);   /* awake in the same level as we are now */
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    if (setjmp(stk_.jmp) != 0) {
+#ifdef CEU_ORGS
+        _ceu_org = _ceu_app->stk_jmp.org;
 #endif
-#ifdef CEU_DEBUG
-    ceu_out_assert_msg(trl > _STK->trl, "bug found");
-#endif
-}
+        _ceu_trl = _ceu_app->stk_jmp.trl;
+]])
+        GOTO(me, '_ceu_app->stk_jmp.lbl')
+        LINE(me, [[
+    }
+
+    /* SETJMP: starting trails in a par
+     * The 1st trail might abort an enclosing par/or, or emit something that 
+     * does.
+     */
+]])
+
+        for i, sub in ipairs(me) do
+            if i < #me then
+                LINE(me, [[
+    _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = ]]..me.lbls_in[i].id..[[;
+    _ceu_stk->up = &stk_;
+    ceu_app_go(_ceu_app,NULL,_ceu_org,
+               &_ceu_org->trls[ ]]..sub.trails[1]..[[ ],
+               &stk_);
+    _ceu_stk->up = NULL;
+]])
+            else
+                -- execute the last directly (no need to call)
+                -- the code for each me[i] should be generated backwards
+                LINE(me, [[
+    _ceu_trl = &_ceu_org->trls[ ]]..sub.trails[1]..[[ ];
 ]])
             end
         end
+
+        LINE(me, [[
+}
+]])
     end,
 
     ParEver = function (me)
         F._Par(me)
-        for i, sub in ipairs(me) do
-            if i > 1 then
+        for i=#me, 1, -1 do
+            local sub = me[i]
+            if i < #me then
                 CASE(me, me.lbls_in[i])
             end
             CONC(me, sub)
@@ -1364,8 +1431,10 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
 
     ParOr_pos = function (me)
         F._Par(me)
-        for i, sub in ipairs(me) do
-            if i > 1 then
+
+        for i=#me, 1, -1 do
+            local sub = me[i]
+            if i < #me then
                 CASE(me, me.lbls_in[i])
             end
             CONC(me, sub)
@@ -1375,11 +1444,9 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
                 GOTO(me, me.lbl_out.id)
             end
         end
-
         if not (ANA and me.ana.pos[false]) then
             CASE(me, me.lbl_out)
-            CLEAR_BEF(me)
-            CLEAR_AFT(me)
+            CLEAR(me)
         end
     end,
 
@@ -1395,8 +1462,9 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
 
         F._Par(me)
 
-        for i, sub in ipairs(me) do
-            if i > 1 then
+        for i=#me, 1, -1 do
+            local sub = me[i]
+            if i < #me then
                 CASE(me, me.lbls_in[i])
             end
             CONC(me, sub)
@@ -1407,14 +1475,14 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         -- AFTER code :: test gates
         CASE(me, me.lbl_tst)
         for i, sub in ipairs(me) do
-            HALT(me, nil, '!'..val..'_'..i)
-        end
-
-        LINE(me, [[
-/* switch to 1st trail */
-/* TODO: only if not joining with outer prio */
-_STK->trl = &_STK_ORG->trls[ ]]..me.trails[1]..[[ ];
+            LINE(me, [[
+if (!]]..val..'_'..i..[[) {
 ]])
+            HALT(me)
+            LINE(me, [[
+}
+]])
+        end
     end,
 
     If = function (me)
@@ -1432,7 +1500,6 @@ if (]]..V(c,'rval')..[[) {
 
     Loop_pos = function (me)
         local max,iter,to,body = unpack(me)
-        local no = '_CEU_NO_'..me.n..'_'
 
         local ini, nxt = {}, {}
         local cnd = ''
@@ -1452,22 +1519,20 @@ if (]]..V(c,'rval')..[[) {
             elseif me.iter_tp == 'org' then
                 -- INI
                 local var = iter.lst.var
-                local lnks = '(((tceu_pool_*)'..V(iter,'lval')..')->lnks)'
-                ini[#ini+1] = V(to,'rval')..[[ = (]]..TP.toc(iter.tp)..[[)(
-    ((*]]..lnks..[[)[0].nxt->n == 0) ?
-        NULL :    /* marks end of linked list */
-        (*]]..lnks..[[)[0].nxt
-)
-]]
+                ini[#ini+1] =
+V(to,'rval')..' = ('..TP.toc(iter.tp)..[[)
+                    (]]..V(iter,'lval')..[[->parent_org->trls[
+                        ]]..V(iter,'lval')..[[->parent_trl
+                    ].org)]]
+
                 -- CND
                 cnd = '('..V(to,'rval')..' != NULL)'
 
                 -- NXT
-                local org = '((tceu_org*)'..V(to,'rval')..')'
-                nxt[#nxt+1] = '('..V(to,'rval')..' = ('..TP.toc(iter.tp)..')'..
-                                '(('..org..'->nxt->n==0) ? '..
-                                    'NULL : '..org..'->nxt))'
-
+                nxt[#nxt+1] =
+V(to,'rval')..' = ('..TP.toc(iter.tp)..[[)
+                    ((tceu_org*)]]..V(to,'rval')..[[)->nxt
+]]
             else
                 error'not implemented'
             end
@@ -1499,27 +1564,23 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
     if (ceu_out_pending())
 #endif
     {
-]]..no..[[:
-        if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-        _STK->trl->evt = CEU_IN__ASYNC;
-        _STK->trl->lbl = ]]..me.lbl_asy.id..[[;
 ]])
-            HALT(me, 'RET_ASYNC')
+            HALT(me, {
+                evt = 'CEU_IN__ASYNC',
+                lbl = me.lbl_asy.id,
+            })
             LINE(me, [[
     }
-    case ]]..me.lbl_asy.id..[[:;
 ]])
-            AWAIT_PAUSE(me, no)
         end
+
         LINE(me, [[
 }
 ]])
-
         if me.has_break and ( not (AST.iter(AST.pred_async)()
                                 or AST.iter'Dcl_fun'()) )
         then
-            CLEAR_BEF(me)
-            CLEAR_AFT(me)
+            CLEAR(me)
         end
     end,
 
@@ -1560,7 +1621,6 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
     EmitExt = function (me)
         local op, e, ps = unpack(me)
-        local no = '_CEU_NO_'..me.n..'_'
 
         local DIR, dir, ptr
         if e.evt.pre == 'input' then
@@ -1570,6 +1630,26 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
                 ptr = '(CEU_Main*)_ceu_app->data'
             else
                 ptr = '_ceu_app'
+                -- input emit yields, save the stack
+                LINE(me, [[
+{
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    if (setjmp(stk_.jmp) != 0) {
+#ifdef CEU_ORGS
+        _ceu_org = _ceu_app->stk_jmp.org;
+#endif
+        _ceu_trl = _ceu_app->stk_jmp.trl;
+]])
+                GOTO(me, '_ceu_app->stk_jmp.lbl')
+                LINE(me, [[
+    }
+
+    /* SETJMP: emit input event
+     * The emit might awake a par/or enclosing the call point.
+     */
+    _ceu_stk->up = &stk_;
+]])
+
             end
         else
             assert(e.evt.pre == 'output')
@@ -1588,7 +1668,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
         -- block for __emit_ps
         LINE(me, [[
-{
+    {
 ]])
 
         if ps and #ps>0 and e[1]~='_WCLOCK' then
@@ -1649,7 +1729,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
             -- block for __emit_ps
             LINE(me, [[
-}
+    }
 ]])
             return
         end
@@ -1658,12 +1738,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
         -- emit INPUT
         -------------------------------------------------------------------------------
 
-        LINE(me, [[
-]]..no..[[:
-if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-_STK->trl->evt = CEU_IN__ASYNC;
-_STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
-]])
+        local no = LABEL_NO(me)
 
         if e[1] == '_WCLOCK' then
             local suf = (ps[1].tm and '_') or ''
@@ -1671,14 +1746,14 @@ _STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
 #ifdef CEU_WCLOCKS
 {
     u32 __ceu_tmp_]]..me.n..' = '..V(ps[1],'rval')..[[;
-    ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[);
+    ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[, &stk_);
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
-            _ceu_app->isAlive &&
+           _ceu_app->isAlive &&
 #endif
-            _ceu_app->wclk_min_set]]..suf..[[<=0) {
+           _ceu_app->wclk_min_set]]..suf..[[<=0) {
         s32 __ceu_dt = 0;
-        ceu_out_go(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt);
+        ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt, &stk_);
     }
 }
 #endif
@@ -1687,76 +1762,72 @@ _STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
             LINE(me, VAL..';')
         end
 
-        -- block for __emit_ps
         LINE(me, [[
-}
+    }   /* block for __emit_ps */
+    _ceu_stk->up = NULL;
+}       /* block for setjmp */
 ]])
 
         LINE(me, [[
 #if defined(CEU_RET) || defined(CEU_OS)
-if (! _ceu_app->isAlive) {
-    return RET_QUIT;
-}
+if (!_ceu_app->isAlive)
 #endif
+{
+    return;     /* HALT(me) */
+}
 ]])
-        HALT(me, 'RET_ASYNC')
-        LINE(me, [[
-case ]]..me.lbl_cnt.id..[[:;
-]])
-        AWAIT_PAUSE(me, no)
+        HALT(me, {
+            no   = no,
+            evt  = 'CEU_IN__ASYNC',
+            lbl  = me.lbl_cnt.id,
+        })
     end,
 
     EmitInt = function (me)
         local _, int, ps = unpack(me)
 
-        -- block for __emit_ps
         LINE(me, [[
 {
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    if (setjmp(stk_.jmp) != 0) {
+#ifdef CEU_ORGS
+        _ceu_org = _ceu_app->stk_jmp.org;
+#endif
+        _ceu_trl = _ceu_app->stk_jmp.trl;
 ]])
+        GOTO(me, '_ceu_app->stk_jmp.lbl')
+        LINE(me, [[
+    }
+
+    /* SETJMP: emit internal event
+     * The emit might awake a par/or enclosing the call point.
+     */
+]])
+
         local val = F.__emit_ps(me)
 
         -- [ ... | me=stk | ... | oth=stk ]
         LINE(me, [[
-/* save the continuation to run after the emit */
-_STK->trl->evt = CEU_IN__STK;
-_STK->trl->lbl = ]]..me.lbl_cnt.id..[[;
-_STK->trl->stk = stack_curi(_ceu_go);
-   /* awake in the same level as we are now (-1 vs the emit push below) */
-
-/* trigger the event */
-{
-    tceu_stk stk;
-             stk.evt  = ]]..V(int,'evt')..[[;
+    /* trigger the event */
+    tceu_evt evt;
+    evt.id = ]]..V(int,'evt')..[[;
 #ifdef CEU_ORGS
 #line ]]..int.ln[2]..' "'..int.ln[1]..[["
-             stk.evto = (tceu_org*) ]]..((int.org and V(int.org,'lval')) or '_STK_ORG')..[[;
-#endif
-#ifdef CEU_ORGS
-             stk.org  = _ceu_app->data;   /* TODO(speed): check if is_ifc */
-#endif
-             stk.trl  = &_ceu_app->data->trls[0];
-#ifdef CEU_CLEAR
-             stk.stop = NULL;
+    evt.org = (tceu_org*) ]]..((int.org and V(int.org,'lval')) or '_ceu_org')..[[;
 #endif
 ]])
         if ps and #ps>0 then
             LINE(me, [[
-            stk.evt_sz = sizeof(*]]..val..[[);
-            ceu_sys_bcast(_ceu_app, _ceu_go, &stk, ]]..val..[[);
-]])
-        else
-            LINE(me, [[
-            stk.evt_sz = 0;
-            ceu_sys_bcast(_ceu_app, _ceu_go, &stk, NULL);
+    evt.param = ]]..val..[[;
 ]])
         end
         LINE(me, [[
+    _ceu_stk->up = &stk_;
+    ceu_sys_go_ex(_ceu_app, &evt,
+                  &stk_,
+                  _ceu_app->data, &_ceu_app->data->trls[0], NULL);
+    _ceu_stk->up = NULL;
 }
-}
-
-return RET_RESTART;
-
-case ]]..me.lbl_cnt.id..[[:;
 ]])
     end,
 
@@ -1766,38 +1837,19 @@ case ]]..me.lbl_cnt.id..[[:;
 
     __AwaitInt = function (me)
         local e = unpack(me)
-        local org = (e.org and V(e.org,'lval')) or '_STK_ORG'
+        local org = (e.org and V(e.org,'lval')) or '_ceu_org'
 
         local par_pause  = AST.par(me,'Pause')
         local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
-        local no = '_CEU_NO_'..me.n..'_'
 
-        LINE(me, [[
-]]..no..[[:
-    if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-    _STK->trl->evt   = ]]..V(e,'evt')..[[;
-    _STK->trl->lbl   = ]]..me.lbl.id..[[;
-#ifdef CEU_ORGS
-    _STK->trl->evto  = ]]..org..[[;
-#endif
-    _STK->trl->seqno =
-]])
-        if me.isEvery then
-            LINE(me, [[
-        _ceu_app->seqno-1;   /* always ready to awake */
-]])
-        else
-            LINE(me, [[
-        _ceu_app->seqno;    /* not reset with retry */
-                            /* (before the label below) */
-]])
-        end
-        HALT(me)
-
-        LINE(me, [[
-case ]]..me.lbl.id..[[:;
-]])
-        AWAIT_PAUSE(me, no)
+        local no = LABEL_NO(me)
+        HALT(me, {
+            no   = no,
+            evt  = V(e,'evt'),
+            lbl  = me.lbl.id,
+            evto = org,
+            isEvery = me.isEvery,
+        })
         DEBUG_TRAILS(me)
     end,
 
@@ -1807,7 +1859,6 @@ case ]]..me.lbl.id..[[:;
 
         local par_pause  = AST.par(me,'Pause')
         local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
-        local no = '_CEU_NO_'..me.n..'_'
 
         local val = CUR(me, '__wclk_'..me.n)
 
@@ -1817,29 +1868,20 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
 ]])
         end
 
-        LINE(me, [[
-]]..no..[[:
-    if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-    _STK->trl->evt = CEU_IN_]]..e.evt.id..suf..[[;
-    _STK->trl->lbl = ]]..me.lbl.id..[[;
-]])
-        if e[1] == '_ok_killed' then
-            LINE(me, [[
-    _STK->trl->org_or_adt = (void*)]]..V(e[3],'lval')..[[;
-]])
-        end
-        HALT(me)
-
-        LINE(me, [[
-case ]]..me.lbl.id..[[:;
-]])
-        AWAIT_PAUSE(me, no)
+        local no = LABEL_NO(me)
+        HALT(me, {
+            no  = no,
+            evt = 'CEU_IN_'..e.evt.id..suf,
+            lbl = me.lbl.id,
+            org_or_adt = (e[1] == '_ok_killed') and
+                         '(void*)'..V(e[3],'lval')
+        })
 
         if dt then
             LINE(me, [[
     /* subtract time and check if I have to awake */
     {
-        s32** __ceu_casted = (s32**)_STK->evt_buf;
+        s32** __ceu_casted = (s32**)_ceu_evt->param;
         if (!ceu_out_wclock]]..suf..[[(_ceu_app, *(*__ceu_casted), NULL, &]]..val..[[) ) {
             goto ]]..no..[[;
         }
@@ -1891,7 +1933,7 @@ case ]]..me.lbl.id..[[:;
 ]])
                 if tp then
                     LINE(me, [[
-    ]]..tp..[[ __ceu_casted = (]]..tp..[[) _STK->evt_buf;
+    ]]..tp..[[ __ceu_casted = (]]..tp..[[) _ceu_evt->param;
 ]])
                 end
                 LINE(me, [[
@@ -1904,20 +1946,10 @@ case ]]..me.lbl.id..[[:;
 
     Async = function (me)
         local vars,blk = unpack(me)
-        local no = '_CEU_NO_'..me.n..'_'
-
-        LINE(me, [[
-]]..no..[[:
-if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
-_STK->trl->evt = CEU_IN__ASYNC;
-_STK->trl->lbl = ]]..me.lbl.id..[[;
-]])
-        HALT(me, 'RET_ASYNC')
-
-        LINE(me, [[
-case ]]..me.lbl.id..[[:;
-]])
-        AWAIT_PAUSE(me, no)
+        HALT(me, {
+            evt = 'CEU_IN__ASYNC',
+            lbl = me.lbl.id,
+        })
         CONC(me, blk)
     end,
 
@@ -1941,7 +1973,7 @@ case ]]..me.lbl.id..[[:;
 ]]..me.thread_st..[[  = ceu_out_realloc(NULL, sizeof(s8));
 *]]..me.thread_st..[[ = 0;  /* ini */
 {
-    tceu_threads_p p = { _ceu_app, _STK_ORG, ]]..me.thread_st..[[ };
+    tceu_threads_p p = { _ceu_app, _ceu_org, ]]..me.thread_st..[[ };
     int ret =
         CEU_THREADS_CREATE(&]]..me.thread_id..[[, _ceu_thread_]]..me.n..[[, &p);
     if (ret == 0)
@@ -1965,20 +1997,15 @@ case ]]..me.lbl.id..[[:;
         *(p.st) = 2;    /* lck: now thread may also execute */
 ]])
 
-        -- await termination
-        local no = '_CEU_NO_'..me.n..'_'
+        local no = LABEL_NO(me)
+        HALT(me, {
+            no  = no,
+            evt = 'CEU_IN__THREAD',
+            lbl = me.lbl.id,
+        })
         LINE(me, [[
-]]..no..[[:
-        _STK->trl->evt = CEU_IN__THREAD;
-        _STK->trl->lbl = ]]..me.lbl.id..[[;
-]])
-        HALT(me)
-
-        -- continue
-        LINE(me, [[
-case ]]..me.lbl.id..[[:;
         {
-            CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_STK->evt_buf;
+            CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_evt->param;
             if (*(*(__ceu_casted)) != ]]..me.thread_id..[[) {
                 goto ]]..no..[[; /* another thread is terminating: await again */
             }
@@ -2002,8 +2029,8 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 
     /* copy param */
     tceu_threads_p _ceu_p = *((tceu_threads_p*) __ceu_p);
-    tceu_app* _ceu_app  = _ceu_p.app;
-    tceu_org* __ceu_org = _ceu_p.org;
+    tceu_app* _ceu_app = _ceu_p.app;
+    tceu_org* _ceu_org = _ceu_p.org;
 
     /* now safe for sync to proceed */
     CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
@@ -2018,8 +2045,9 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
         CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
         int ok = (*(_ceu_p.st) >= 2);   /* lck ok? */
         CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
-        if (ok)
+        if (ok) {
             break;
+        }
     }
 
     /* body */

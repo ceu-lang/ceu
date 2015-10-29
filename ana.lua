@@ -69,7 +69,7 @@ function COPY (n)
     return ret
 end
 
-function ANA.CMP (n1, n2)
+function ANA.IS_EQUAL (n1, n2)
     return ANA.HAS(n1,n2) and ANA.HAS(n2,n1)
 end
 

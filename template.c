@@ -142,8 +142,11 @@ static void* ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, void* param) {
 }
 #endif
 
-static int ceu_app_go (tceu_app* _ceu_app , tceu_go* _ceu_go) {
-    int _CEU_LBL = _STK->trl->lbl;
+static void ceu_app_go (tceu_app* _ceu_app, tceu_evt* _ceu_evt, tceu_org* _ceu_org, tceu_trl* _ceu_trl,
+                        tceu_stk* _ceu_stk)
+{
+    tceu_nlbl _ceu_lbl = _ceu_trl->lbl;
+
 #ifdef CEU_GOTO
 _CEU_GOTO_:
 #endif
@@ -151,14 +154,14 @@ _CEU_GOTO_:
 #ifdef CEU_DEBUG
 #ifndef CEU_OS_APP
 #ifdef CEU_ORGS
-    _ceu_app->lst.org = _STK_ORG;
+    _ceu_app->lst.org = _ceu_org;
 #endif
-    _ceu_app->lst.trl = _STK->trl;
-    _ceu_app->lst.lbl = _CEU_LBL;
+    _ceu_app->lst.trl = _ceu_trl;
+    _ceu_app->lst.lbl = _ceu_lbl;
 #endif
 #ifdef CEU_DEBUG_TRAILS
 #ifndef CEU_OS_APP
-printf("OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
+printf("OK : lbl=%d : org=%p\n", _ceu_lbl, _ceu_org);
 #endif
 #endif
 #endif
@@ -167,57 +170,60 @@ printf("OK : lbl=%d : org=%p\n", _CEU_LBL, _STK_ORG);
     ceu_stack_clr();
 #endif
 
-    switch (_CEU_LBL) {
+    switch (_ceu_lbl) {
         === CODE ===
     }
 #ifdef CEU_DEBUG
     ceu_out_assert_msg(0, "no return");
 #endif
-    return RET_HALT;    /* TODO: should never be reached anyways */
 }
 
 #ifdef CEU_OS_APP
 static __attribute__((noinline))  __attribute__((noclone))
 #endif
 void
-ceu_app_init (tceu_app* _ceu_app)
+ceu_app_init (tceu_app* app)
 {
-#ifdef CEU_INTS
-    _ceu_app->seqno = 0;
-#endif
+    app->seqno = 0;
 #if defined(CEU_RET) || defined(CEU_OS_APP)
-    _ceu_app->isAlive = 1;
+    app->isAlive = 1;
 #endif
 #ifdef CEU_ASYNCS
-    _ceu_app->pendingAsyncs = 1;
+    app->pendingAsyncs = 1;
+#endif
+#if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
+    app->dont_emit_kill = 0;
 #endif
 #ifdef CEU_REENTRANT
-    _ceu_app->stki = 0;
+    app->stki = 0;
 #endif
 #ifdef CEU_RET
-    _ceu_app->ret = 0;
+    app->ret = 0;
+#endif
+#ifdef CEU_ORGS_NEWS_MALLOC
+    app->tofree = NULL;
 #endif
 #ifdef CEU_WCLOCKS
-    _ceu_app->wclk_late = 0;
-    _ceu_app->wclk_min_set = CEU_WCLOCK_INACTIVE;
-    _ceu_app->wclk_min_cmp = CEU_WCLOCK_INACTIVE;
+    app->wclk_late = 0;
+    app->wclk_min_set = CEU_WCLOCK_INACTIVE;
+    app->wclk_min_cmp = CEU_WCLOCK_INACTIVE;
 #ifdef CEU_TIMEMACHINE
-    _ceu_app->wclk_late_ = 0;
-    _ceu_app->wclk_min_set_ = CEU_WCLOCK_INACTIVE;
-    _ceu_app->wclk_min_cmp_ = CEU_WCLOCK_INACTIVE;
+    app->wclk_late_ = 0;
+    app->wclk_min_set_ = CEU_WCLOCK_INACTIVE;
+    app->wclk_min_cmp_ = CEU_WCLOCK_INACTIVE;
 #endif
 #endif
 #ifdef CEU_THREADS
-    pthread_mutex_init(&_ceu_app->threads_mutex, NULL);
+    pthread_mutex_init(&app->threads_mutex, NULL);
     /*PTHREAD_COND_INITIALIZER,*/
-    _ceu_app->threads_n = 0;
+    app->threads_n = 0;
 
     /* All code run atomically:
      * - the program is always locked as a whole
      * -    thread spawns will unlock => re-lock
      * - but program will still run to completion
      */
-    CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
+    CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
 #endif
 
     === TOPS_INIT ===
@@ -225,38 +231,40 @@ ceu_app_init (tceu_app* _ceu_app)
 #ifdef CEU_OS_APP
 
 #ifdef __AVR
-    _ceu_app->code  = (__typeof__(ceu_app_go)*)    (((word)_ceu_app->addr>>1) + &ceu_app_go);
-    _ceu_app->calls = (__typeof__(ceu_app_calls)*) (((word)_ceu_app->addr>>1) + &ceu_app_calls);
+    app->code  = (__typeof__(ceu_app_go)*)    (((word)app->addr>>1) + &ceu_app_go);
+    app->calls = (__typeof__(ceu_app_calls)*) (((word)app->addr>>1) + &ceu_app_calls);
 #else
-    _ceu_app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
-    _ceu_app->calls = (__typeof__(ceu_app_calls)*) (&ceu_app_calls);
+    app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
+    app->calls = (__typeof__(ceu_app_calls)*) (&ceu_app_calls);
 #endif
 
 #else   /* !CEU_OS_APP */
 
-    _ceu_app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
+    app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
 
 #endif  /* CEU_OS_APP */
 
 #ifndef CEU_OS_APP
 #ifdef CEU_DEBUG
-    CEU_APP_SIG = _ceu_app;
+    CEU_APP_SIG = app;
     signal(SIGSEGV, ceu_segfault);
 #endif
 #endif
 
-    ceu_out_org(_ceu_app, _ceu_app->data, CEU_NTRAILS, Class_Main,
-                0, 0,
-                NULL, NULL);
+    ceu_out_org_init(app, app->data, CEU_NTRAILS, Class_Main,
+                     0, 0,
+                     NULL, 0);
 
 #ifdef CEU_LUA
-    ceu_luaL_newstate(_ceu_app->lua);
-    ceu_out_assert(_ceu_app->lua != NULL);
-    ceu_luaL_openlibs(_ceu_app->lua);
-    ceu_lua_atpanic(_ceu_app->lua, ceu_lua_atpanic_f);    /* TODO: CEU_OS */
+    ceu_luaL_newstate(app->lua);
+    ceu_out_assert(app->lua != NULL);
+    ceu_luaL_openlibs(app->lua);
+    ceu_lua_atpanic(app->lua, ceu_lua_atpanic_f);    /* TODO: CEU_OS */
 #endif
 
-    ceu_out_go(_ceu_app, CEU_IN__INIT, NULL);
+    app->data->trls[0].evt = CEU_IN__INIT;
+    app->data->trls[0].seqno = 0;
+    ceu_sys_go(app, CEU_IN__INIT, NULL);
 }
 
 /* EXPORTED ENTRY POINT

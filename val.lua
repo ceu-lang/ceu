@@ -111,7 +111,7 @@ F =
             -- handles adt_top, adt_root, adt_pool
             if var.pre=='pool' and adt and adt.is_rec then
                 if CTX.adt_pool then
-                    VAL = '((tceu_pool_*)'..VAL..')'
+                    --VAL = '('..VAL..')'
                 elseif CTX.adt_top then
                     -- VAL
                 else -- adt_root
@@ -121,15 +121,15 @@ F =
                     if CTX.val == 'lval' then
                         if is_ptr then
                             CAST = '('..tp_id..'**)'
-                            VAL  = '(& ((tceu_adt_root*) '..VAL..')->root)'
+                            VAL  = '(& ((tceu_pool_adts*) '..VAL..')->root)'
                         else
                             CAST = '('..tp_id..' *)'
-                            VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
+                            VAL  = '(  ((tceu_pool_adts*) '..VAL..')->root)'
                         end
                     else
                         if is_ptr then
                             CAST = '('..tp_id..' *)'
-                            VAL  = '(  ((tceu_adt_root*) '..VAL..')->root)'
+                            VAL  = '(  ((tceu_pool_adts*) '..VAL..')->root)'
                         else
                             error'bug found'
                         end
@@ -200,6 +200,8 @@ F =
                             end
                         end
                     end
+                elseif me.var.pre == 'pool' then
+                    cast = 'tceu_pool_orgs*'
                 end
 
                 -- LVAL
@@ -268,18 +270,18 @@ F =
 
     Outer = function (me, CTX)
         if CTX.val == 'lval' then
-            return '(('..TP.toc(me.tp)..'*)_STK_ORG)'
+            return '(('..TP.toc(me.tp)..'*)_ceu_org)'
         else
-            return '(*(('..TP.toc(me.tp)..'*)_STK_ORG))'
+            return '(*(('..TP.toc(me.tp)..'*)_ceu_org))'
         end
     end,
 
     This = function (me, CTX)
         local VAL
         if AST.iter'Dcl_constr'() then
-            VAL = '__ceu_org'    -- set when calling constr
+            VAL = '__ceu_this'    -- set when calling constr
         else
-            VAL = '_STK_ORG'
+            VAL = '_ceu_org'
         end
         if CTX.val == 'lval' then
             return '(('..TP.toc(me.tp)..'*)'..VAL..')'
@@ -411,9 +413,9 @@ F =
         local ret = V(e1, CTX)
         if e1.var and e1.var.pre=='pool' then
             if ENV.clss[TP.id(e1.var.tp)] then
-                ret = '((tceu_pool_*)'..ret..')'
+                -- ret
             else
-                ret = '((tceu_adt_root*)'..ret..')'
+                ret = '((tceu_pool_adts*)'..ret..')'
             end
         end
         return ret

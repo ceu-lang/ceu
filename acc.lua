@@ -581,7 +581,7 @@ G = {
                     end
                 end
                 for acc in pairs(ALL) do
-                    if ANA.CMP(acc.path, me.ana.pre) then
+                    if ANA.IS_EQUAL(acc.path, me.ana.pre) then
                         NO_emts[acc] = true -- instantaneous emit
                     end
                 end
