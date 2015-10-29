@@ -125,17 +125,19 @@ function WRN (cond, ln, code, msg)
     DBG('WRN ['..code..'] : '..ln[1]..' : line '..ln[2]..' : '..msg)
     return cond
 end
-function ASR (cond, ln, code, msg)
+function ASR (cond, ln, code, msg, extra)
     if cond then
         return cond
     end
 
-    if msg==nil then
-        msg = code
-        code = '0000'
+    if not tonumber(code) then
+        code, msg, extra = '0000', code, msg
     end
     ln = (AST.isNode(ln) and ln.ln) or ln
     msg = 'ERR ['..code..'] : '..ln[1]..' : line '..ln[2]..' : '..msg
+    if extra and OPTS.verbose then
+        msg = msg..'\n'..extra
+    end
 
     if RUNTESTS_file and tonumber(code)>1100 then
         RUNTESTS_file:write([[

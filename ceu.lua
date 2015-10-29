@@ -23,8 +23,9 @@ OPTS_NPARAMS = {
     os_luaifc = 0,
 
     timemachine = 0,
-
     reentrant = 0,
+
+    verbose = 0,
 }
 
 OPTS = {
@@ -51,8 +52,9 @@ OPTS = {
     os_luaifc = false,
 
     timemachine = false,
-
     reentrant = false,
+
+    verbose = false,
 }
 
 local params = {...}
