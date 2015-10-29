@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 
 if _VERSION ~= "Lua 5.1" then
-    io.stderr:write("This script requires Lua 5.1.\n")
+    io.stderr:write("Usage: requires Lua 5.1\n")
     os.exit(1)
 end
 
@@ -16,7 +16,7 @@ RUNTESTS = true
 --COMPLETE = true
 OS = false   -- false, true, nil(random)
 
-dofile 'pak.lua'
+assert(loadfile'pak.lua')('lua')
 
 math.randomseed(os.time())
 T = nil
