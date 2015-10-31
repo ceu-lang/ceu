@@ -101,9 +101,8 @@ function WRN (cond, ln, code, msg)
         return cond
     end
 
-    if msg==nil then
-        msg = code
-        code = '0000'
+    if not tonumber(code) then
+        code, msg, extra = '0000', code, msg
     end
     ln = (AST.isNode(ln) and ln.ln) or ln
     msg = 'WRN ['..code..'] : '..ln[1]..' : line '..ln[2]..' : '..msg
