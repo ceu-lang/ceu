@@ -1281,6 +1281,7 @@ F = {
                     local dcl = AST.node('Dcl_var', me.ln, 'var', AST.copy(tp), to[i][1])
                     dcl.isEvery = true  -- implicit declaration: cannot hide other variables
                     AST.visit(F, dcl)
+                    dcl.var.__env_is_loop_var = true   -- (see ref.lua)
                     local stmts = AST.asr(me.__par[1],'Stmts')
                     stmts[#stmts+1] = dcl
                 end
@@ -1294,6 +1295,7 @@ F = {
                                 to[1])
                 dcl.read_only = true
                 AST.visit(F, dcl)
+                dcl.var.__env_is_loop_var = true   -- (see ref.lua)
                 local stmts = me.__par[1]
                 stmts[#stmts+1] = dcl
             end
@@ -1309,6 +1311,7 @@ F = {
                                 to[1])
                 dcl.read_only = true
                 AST.visit(F, dcl)
+                dcl.var.__env_is_loop_var = true   -- (see ref.lua)
                 local stmts = me.__par[1]
                 stmts[#stmts+1] = dcl
             end
