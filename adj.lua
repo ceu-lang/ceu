@@ -727,10 +727,15 @@ me.blk_body = me.blk_body or blk_body
 
     -- implicit pool in enclosing class if no "in pool"
     Spawn = function (me)
-        local _,pool = unpack(me)
+        local _,pool,constr = unpack(me)
         if not pool then
             AST.par(me,'Dcl_cls').__ast_has_malloc = true
             me[2] = node('Var', me.ln, '_top_pool')
+        end
+        if not constr then
+            me[3] = AST.node('Dcl_constr', me.ln,
+                        AST.node('Block', me.ln,
+                            AST.node('Stmts', me.ln)))
         end
     end,
 

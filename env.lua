@@ -731,6 +731,13 @@ F = {
         F.__dcl_var(me)
 
         if me.var.cls then
+            if not constr then
+                me[4] = AST.node('Dcl_constr', me.ln,
+                            AST.node('Block', me.ln,
+                                AST.node('Stmts', me.ln)))
+                F.Dcl_constr_pre(AST.asr(me,'', 4,'Dcl_constr'))
+                F.Block_pre(AST.asr(me,'', 4,'Dcl_constr', 1,'Block'))
+            end
             if TP.check(me.var.tp,'[]') then
                 ASR(me.var.tp.arr.sval, me,
                     'invalid static expression')

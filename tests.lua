@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -26052,7 +26053,6 @@ escape _V;
     run = 8,
 }
 
---]===]
 Test { [[
 class T with
     var int a;
@@ -26791,6 +26791,31 @@ escape t.v;
 ]],
     run = 5,
 }
+Test { [[
+var int v;
+class T with
+    var int v;
+do
+end
+var T t;
+escape t.v;
+]],
+    ref = 'line 6 : missing initialization for field "v" (declared in tests.lua:3)',
+}
+Test { [[
+var int v;
+class T with
+    var int v;
+do
+end
+var T t with
+    this.v = 1;
+end;
+var T x;
+escape t.v + x.v;
+]],
+    ref = 'line 9 : missing initialization for field "v" (declared in tests.lua:3)',
+}
 
 Test { [[
 var int v;
@@ -26864,7 +26889,6 @@ escape t.v + t.u.x;
 }
 
 Test { [[
-
 var int v;
 class U with
     var int x = 10;
@@ -26885,6 +26909,61 @@ var T t with
     this.v = 10;
 end;
 escape t.v + t.u:x;
+]],
+    ref = 'line 18 : missing initialization for field "u" (declared in tests.lua:9)',
+}
+Test { [[
+class U with
+    var int x = 10;
+do
+    await FOREVER;
+end
+var U&&? u;
+var U uu with
+    this.x = 20;
+end;
+u = &&uu;
+escape u!:x;
+]],
+    run = 20,
+}
+Test { [[
+class U with
+    var int x = 10;
+do
+end
+var U&&? u;
+var U uu with
+    this.x = 20;
+end;
+u = &&uu;
+escape not u?;
+]],
+    run = 1,
+}
+Test { [[
+var int v;
+class U with
+    var int x = 10;
+do
+    await FOREVER;
+end
+
+class T with
+    var int v=5;
+    var U&&? u;
+do
+    var U uu with
+        this.x = 20;
+    end;
+    this.u = &&uu;
+    this.v = 100;
+    await FOREVER;
+end
+var T t with
+    this.v = 10;
+end;
+escape t.v + t.u!:x;
 ]],
     run = 120,
 }
@@ -26912,7 +26991,8 @@ end
 escape *v;
 ]],
     --fin = 'line 4 : attribution requires `finalize´',
-    fin = 'line 4 : attribution to pointer with greater scope',
+    --fin = 'line 4 : attribution to pointer with greater scope',
+    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
 }
 Test { [[
 var int& v;
@@ -26922,7 +27002,8 @@ do
 end
 escape v;
 ]],
-    ref = 'line 4 : attribution to reference with greater scope',
+    --ref = 'line 4 : attribution to reference with greater scope',
+    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --run = 1,
 }
 
@@ -26936,7 +27017,8 @@ end
 var T t;
 escape i;
 ]],
-    ref = 'line 7 : field "i" must be assigned',
+    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+    --ref = 'line 7 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --run = 1,
 }
@@ -26951,7 +27033,8 @@ end
 var T t;
 escape i;
 ]],
-    ref = 'line 8 : field "i" must be assigned',
+    ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
+    --ref = 'line 8 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --run = 1,
 }
@@ -26966,7 +27049,8 @@ end
 var T t;
 escape t.i;
 ]],
-    ref = 'line 8 : field "i" must be assigned',
+    ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
+    --ref = 'line 8 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --run = 10,
 }
@@ -26980,8 +27064,9 @@ end
 spawn T;
 escape i;
 ]],
+    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
     --ref = 'line 5 : invalid attribution (not a reference)',
-    ref = 'line 7 : field "i" must be assigned',
+    --ref = 'line 7 : field "i" must be assigned',
     --run = 1,
 }
 Test { [[
@@ -27005,7 +27090,8 @@ end
 var T&&? p = spawn T;
 escape p!:i;
 ]],
-    ref = 'line 8 : field "i" must be assigned',
+    ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
+    --ref = 'line 8 : field "i" must be assigned',
     --run = 10,
 }
 Test { [[

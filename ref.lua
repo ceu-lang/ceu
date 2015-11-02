@@ -36,10 +36,13 @@ local IF_INITS = {}
 F = {
     Dcl_var = function (me)
         if string.sub(me.var.id,1,1)=='_'
-        or me.var.__env_is_loop_var
+        or me.var.__env_is_loop_var     -- loop i ... end
         or me.isEvery
-        or TP.check(me.var.tp,'[]')
-        or (TP.check(me.var.tp,'?') and (not TP.check(me.var.tp,'&','?')))
+        or TP.check(me.var.tp,'[]')     -- var int[] vec;
+        or (TP.check(me.var.tp,'?') and (not (TP.check(me.var.tp,'&','?'))))
+                                        -- var int? i;  // OK
+                                        -- var int&? i; // NO
+        or me.var.cls                   -- var T t;
         then
             -- no need for initialization
         else
@@ -251,7 +254,37 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
         end
     end,
 
+--- check class constructors
+
+    BlockI_pre = function (me)
+        me.__old = VARS_UNINIT
+        VARS_UNINIT = {}
+    end,
+    BlockI_pos = function (me)
+        AST.par(me,'Dcl_cls').vars_uninit = VARS_UNINIT
+        VARS_UNINIT = me.__old
+    end,
+    Dcl_constr_pre = function (me)
+        me.__old = VARS_UNINIT
+        VARS_UNINIT = {}
+        for k,v in pairs(me.cls.vars_uninit) do
+            VARS_UNINIT[k] = v
+        end
+    end,
+    Dcl_constr_pos = function (me)
+        for var,dcl in pairs(VARS_UNINIT) do
+            ASR(false, me, [[
+missing initialization for field "]]..var.id..[[" (declared in ]]..dcl.ln[1]..':'..dcl.ln[2]..')',
+[[
+    The constructor must initialize all variables (withouth default values)
+    declared in the class interface.
+]])
+        end
+        VARS_UNINIT = me.__old
+    end,
+
 --- disable VARS_UNINIT in data type declarations
+
     Dcl_adt_pre = function (me)
         me.__old = VARS_UNINIT
         VARS_UNINIT = {}
