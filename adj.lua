@@ -764,14 +764,16 @@ me.blk_body = me.blk_body or blk_body
             awt = node('_Set', me.ln, to, '=', 'await', awt)
         end
 
-        return node('Do', me.ln,
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        node('Dcl_var', me.ln, 'var',
-                            node('Type', me.ln, id_cls),
-                            '_org_'..me.n,
-                            constr),
-                        awt)))
+        local ret = node('Do', me.ln,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Dcl_var', me.ln, 'var',
+                                    node('Type', me.ln, id_cls),
+                                    '_org_'..me.n,
+                                    constr),
+                                awt)))
+        ret.__adj_is_do_org = true
+        return ret
     end,
 
 -- BlockI ------------------------------------------------------------

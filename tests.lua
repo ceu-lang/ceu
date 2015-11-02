@@ -15282,7 +15282,7 @@ b = &a;
 a = 2;
 escape b;
 ]],
-    ref = 'line 3 : invalid attribution : variable "b" already bound',
+    ref = 'line 3 : invalid attribution : variable "b" is already bound',
 }
 Test { [[
 var int a = 1;
@@ -15690,7 +15690,7 @@ i = &v;
 i = &v;
 escape i!;
 ]],
-    ref = 'line 4 : invalid attribution : variable "i" already bound',
+    ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
 
 Test { [[
@@ -15703,7 +15703,7 @@ loop do
 end
 escape v;
 ]],
-    ref = 'line 4 : invalid attribution : variable "i" already bound',
+    ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
 Test { [[
 var int v = 10;
@@ -15719,7 +15719,7 @@ loop do
 end
 escape v;
 ]],
-    ref = 'line 4 : invalid attribution : variable "i" already bound',
+    ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --run = 11,
     --ref = 'reference declaration and first binding cannot be separated by loops',
     --ref = 'line 2 : uninitialized variable "i" crossing compound statement (tests.lua:3)',
@@ -15736,7 +15736,7 @@ every 1s do
 end
 escape 1;
 ]],
-    ref = 'line 4 : invalid attribution : variable "sfc" already bound',
+    ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
     --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
     --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (tests.lua:2)',
 }
@@ -30288,7 +30288,7 @@ global:t = &t;
 
 escape global:t.v;
 ]],
-    ref = 'line 12 : invalid attribution : variable "t" already bound',
+    ref = 'line 12 : invalid attribution : variable "t" is already bound',
 }
 
 Test { [[
@@ -32405,7 +32405,6 @@ escape _V;
 ]],
     run = 1,
 }
---]===]
 Test { [[
 input void OS_START;
 native do
@@ -32634,7 +32633,7 @@ escape not t?;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
 end
@@ -32647,7 +32646,7 @@ escape not t?;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32666,7 +32665,7 @@ escape sum;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32685,7 +32684,7 @@ escape sum;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32701,7 +32700,7 @@ end
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32723,7 +32722,7 @@ escape sum;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32745,7 +32744,7 @@ escape sum;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32772,7 +32771,7 @@ escape sum;
 }
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32793,7 +32792,7 @@ escape 0;
 }
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32834,7 +32833,7 @@ escape 1;
 }
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32859,13 +32858,13 @@ escape sum;
 }
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
 pool T[1] ts;
-var T&& a;
+var T&& a=null;
 do
     var T&&? aa = spawn T in ts;
         a = aa!;
@@ -32878,7 +32877,7 @@ escape (not b?);
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32910,7 +32909,7 @@ escape sum;
 }
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32936,14 +32935,14 @@ escape sum and (not c?);
 }
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
 pool T[1] ts;
 var T&&? a, b;
-var bool b_;
+var bool b_=true;
 do
     do
         var T&&? aa = spawn T in ts;
@@ -32962,7 +32961,7 @@ escape b_==false and (not c?);
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -32983,13 +32982,13 @@ escape sum and (not b?);
 }
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
 pool T[1] ts;
-var T&& a;
+var T&& a=null;
 do
     var T&&? aa = spawn T in ts;
         a = aa!;
@@ -33005,7 +33004,6 @@ native do
     int V = 0;
 end
 class T with
-    var int a;
 do
     _V = _V + 1;
     await FOREVER;
@@ -33028,7 +33026,6 @@ native do
     int V = 0;
 end
 class T with
-    var int a;
 do
     _V = _V + 1;
     await FOREVER;
@@ -33052,7 +33049,6 @@ native do
     int V = 0;
 end
 class T with
-    var int a;
 do
     _V = _V + 1;
 end
@@ -33077,7 +33073,6 @@ native do
     int V = 0;
 end
 class T with
-    var int a;
 do
     _V = _V + 1;
     await A;
@@ -33099,7 +33094,6 @@ native do
     int V = 0;
 end
 class T with
-    var int a;
 do
     _V = _V + 1;
     await A;
@@ -33125,12 +33119,12 @@ interface I with
 end
 
 class T with
-    var int u,v,x;
+    var int u=0,v=0,x=0;
 do
 end
 
 class U with
-    var int v;
+    var int v=0;
 do
 end
 
@@ -33149,12 +33143,12 @@ interface I with
 end
 
 class T with
-    var int u,v,x;
+    var int u=0,v=0,x=0;
 do
 end
 
 class U with
-    var int v;
+    var int v=0;
 do
 end
 
@@ -33178,7 +33172,7 @@ escape sizeof(CEU_T) >= sizeof(CEU_U);
 Test { [[
 class T with
     var int a;
-    var int b;
+    var int b=0;
 do
     b = a * 2;
     await FOREVER;
@@ -33464,7 +33458,7 @@ Test { [[
 native do
     int V = 0;
 end
-var int i;
+var int i=0;
 var int& r = &i;
 
 class T with
@@ -34093,7 +34087,7 @@ escape v;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
 end
@@ -34116,7 +34110,7 @@ escape ret;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
 end
@@ -34139,7 +34133,7 @@ Test { [[
 input void OS_START;
 
 class T with
-    var int a;
+    var int a=0;
 do
 end
 
@@ -34167,7 +34161,7 @@ Test { [[
 input void OS_START;
 
 class T with
-    var int a;
+    var int a=0;
 do
     await 1s;
 end
@@ -34207,7 +34201,7 @@ escape 1;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -34231,7 +34225,7 @@ escape rrr;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
     await FOREVER;
@@ -34688,6 +34682,7 @@ escape 1;
     run = 1,
 }
 
+--]===]
 Test { [[
 input void OS_START;
 class T with

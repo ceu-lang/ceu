@@ -38,12 +38,14 @@ local SET_TARGET = {}
 local IF_INITS = {}
 
 F = {
+    Dcl_pool = 'Dcl_var',
     Dcl_var = function (me)
         if string.sub(me.var.id,1,1)=='_'
-        or me.var.__env_is_loop_var     -- loop i ... end
+        or me.var.__env_is_loop_var         -- loop i ... end
         or me.isEvery
-        or TP.check(me.var.tp,'[]')     -- var int[] vec;
-        or me.var.cls                   -- var T t;
+        or (TP.check(me.var.tp,'[]') and    -- var int[] vec;
+            (not TP.check(me.var.tp,'[]','&')))
+        or me.var.cls                       -- var T t;
         then
             -- no need for initialization
         else
@@ -78,8 +80,13 @@ F = {
         if TP.check(me.var.tp,'?') then
             return  -- optional assignment
         end
+        local constr = AST.par(me,'Dcl_constr')
+        if constr and constr.cls==AST.par(me,'Dcl_cls') then
+            return  -- recursive spawn
+        end
 
         local dcl = VARS_UNINIT[me.var]
+
         ASR(not dcl, me, dcl and
             'invalid access to uninitialized variable "'..me.var.id..'"'..
             ' (declared at '..dcl.ln[1]..':'..dcl.ln[2]..')', [[
@@ -209,7 +216,7 @@ F = {
             else
                 -- not-first assignment
                 ASR(fr.tag ~= 'Op1_&', me,
-                    'invalid attribution : variable "'..to.var.id..'" already bound', [[
+                    'invalid attribution : variable "'..to.var.id..'" is already bound', [[
     Once an alias is first attributed, it cannot be rebound.
     Also, a declaration and corresponding initialization cannot be separated by 
     compound statements.
@@ -248,16 +255,25 @@ F = {
         return C
     end,
 
-    ParEver_pre = 'Do_pre',
-    ParAnd_pre  = 'Do_pre',
-    ParOr_pre   = 'Do_pre',
-    Pause_pre   = 'Do_pre',
-    Async_pre   = 'Do_pre',
-    Sync_pre    = 'Do_pre',
-    Thread_pre  = 'Do_pre',
-    Spawn_pre   = 'Do_pre',
-    Loop_pre    = 'Do_pre',
+    ParEver_pre = '__compound',
+    ParAnd_pre  = '__compound',
+    Pause_pre   = '__compound',
+    Async_pre   = '__compound',
+    Sync_pre    = '__compound',
+    Thread_pre  = '__compound',
+    Spawn_pre   = '__compound',
+    Loop_pre    = '__compound',
     Do_pre = function (me)
+        if not me.__adj_is_do_org then
+            F.__compound(me)
+        end
+    end,
+    ParOr_pre = function (me)
+        if not me.__adj_watching then
+            F.__compound(me)
+        end
+    end,
+    __compound = function (me)
         for var,dcl in pairs(VARS_UNINIT) do
             local setblk = find_set_block(var) or find_set_thread(var)
             if setblk and me.__depth>setblk.__depth then
