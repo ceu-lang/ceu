@@ -1223,6 +1223,8 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
         local _, set, fr, to = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
 
+        local _, f = unpack(fr)     -- in case of constructor call _tp(...)
+
         if set == 'exp' then
             CONC(me, fr)                -- TODO: remove?
 
@@ -1247,6 +1249,15 @@ if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
                 local _,vec = unpack(to)
                 LINE(me, [[
 ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..[[), "invalid attribution : vector size can only shrink" );
+]])
+
+            -- _tp(...)
+            elseif fr.tag=='Op2_call' and f.c and f.c.mod=='@plain' then
+                LINE(me, [[
+{
+    ]]..TP.toc(to.tp)..[[ __ceu_v_]]..me.n..' = '..V(fr,'rval')..[[;
+    ]]..V(to,'rval')..[[ = __ceu_v_]]..me.n..[[;
+}
 ]])
 
             -- all other

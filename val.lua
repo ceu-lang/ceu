@@ -335,8 +335,13 @@ F =
             op = tpctx2op (f.var.fun.out, CTX)
         end
         if op == '' then
-            -- avoid paranthesis because of macro expansions
-            return V(f,CTX)..'('..table.concat(ps,',')..')'
+            if f.c and f.c.mod=='@plain' then
+                -- struct constructor: _Rect(x,y,dx,dy)
+                return '{'..table.concat(ps,',')..'}'
+            else
+                -- avoid paranthesis because of macro expansions
+                return V(f,CTX)..'('..table.concat(ps,',')..')'
+            end
         else
             return '('..op..V(f,CTX)..'('..table.concat(ps,',')..'))'
         end

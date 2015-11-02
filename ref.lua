@@ -1,374 +1,263 @@
-function NODE2BLK (n)
-    return n.fst and n.fst.blk or
-           n.fst and n.fst.var and n.fst.var.blk or
-           MAIN.blk_ifc
+local VARS_UNINIT = {}
+
+-- TODO: ref-greater-scope, opt-types, data-types, func-calls, init-for-c-structs
+
+local function find_set_block (v1)
+    for blk in AST.iter'SetBlock' do
+        local _, v2 = unpack(blk)
+        if v1 == v2.var then
+            return blk
+        end
+    end
 end
 
+local function find_set_thread (v1)
+    for set in AST.iter'Set' do
+        if set[2] == 'thread' then
+            return set
+        end
+    end
+end
+
+local SET_TARGET = {}
+
+-- Avoids problems with multiple intialization assignments in nested ifs:
+--      if <...> then
+--          if <...> then
+--              x = 1;      // count only 1 for outer
+--          else
+--              x = 2;      // count only 1 for outer
+--          end
+--      else
+--          x = 3;
+--      end
+local IF_INITS = {}
+
 F = {
-    -- before Var
-    Set_pre = function (me)
+    Dcl_var = function (me)
+        if string.sub(me.var.id,1,1)=='_'
+        or me.var.__env_is_loop_var
+        or me.isEvery
+        or TP.check(me.var.tp,'[]')
+        or (TP.check(me.var.tp,'?') and (not TP.check(me.var.tp,'&','?')))
+        then
+            -- no need for initialization
+        else
+            VARS_UNINIT[me.var] = me
+        end
+    end,
+
+    Var = function (me)
+        if not (me.var.pre=='var' or me.var.pre=='pool') then
+            return
+        end
+        if me.__par.tag == 'SetBlock' then
+            return  -- a = do <...> end;
+        end
+        if SET_TARGET[me] then
+            return  -- im exactly the target of an assignment
+        end
+
+        local dcl = VARS_UNINIT[me.var]
+        ASR(not dcl, me, dcl and
+            'invalid access to uninitialized variable "'..me.var.id..'"'..
+            ' (declared at '..dcl.ln[1]..':'..dcl.ln[2]..')', [[
+    To access a variable, first assign to it.
+    When using an `if-then-else´ to initialize a variable declared outside it,
+    the `if-then-else´ can only serve this purpose and cannot perform extra
+    accesses to the variable.
+]])
+    end,
+
+    -- before access to "to" which I want to mark as initialized
+    Set_bef = function (me, sub)
         local _, _, fr, to = unpack(me)
+        if sub ~= to then
+            return
+        end
         local TO = (to.tag=='VarList' and to) or {to}
         for _, to in ipairs(TO) do
-            F.__Set_pre(me, to)
-
--- TODO: remove all above along with all references to __ref_byref
-            if me.__ref_byref then
-                assert(fr.tag == 'Op1_&', 'bug found')
-            else
-                --assert(fr.tag ~= 'Op1_&', 'bug found')
-                ASR(fr.tag ~= 'Op1_&', me,
-                    'invalid attribution : l-value already bounded')
+            if to.var then
+                local _, _, fr, _ = unpack(me)
+                F.__Set_bef_one(me, fr, to)
             end
         end
     end,
-    __Set_pre = function (me, TO)
-        local _, set, fr, _ = unpack(me)
-        to = TO
-        if to.lst.tag == 'Nat' then
-            return
-        end
-        assert(to.lst.var, 'bug found')
-        local cls = CLS()
+    __Set_bef_one = function (me, fr, to)
+        SET_TARGET[to] = true
 
-        -- Detect source of assignment/binding:
-        --  - internal:  assignment from body to normal variable (v, this.v)
-        --  - constr:    assignment from constructor to interface variable (this.v)
-        --  - interface: assignment from interface (var int v = <default value>)
-        --  - outer:     assignment from outer body (t.v)
-
-        local constr    = AST.par(me, 'Dcl_constr')
-              constr    = constr and (constr.cls.blk_ifc.vars[to.lst.var.id]==to.lst.var) and constr
-        local global    = to.tag=='Field' and to.org.cls.id=='Global' and cls.id=='Main'
-        local outer     = (not constr) and to.tag=='Field' and to.org.cls~=cls and (not global)
-        local interface = AST.par(me, 'BlockI')
-        local internal  = not (constr or outer or interface or argument)
-
-        -- IGNORE NON-FIRST ASSIGNMENTS
-        local not_first = false
-
-        -- t.ref = <...>;       // not a first assignment
-        not_first = not_first or (to.tag == 'Op2_.')
-
-        -- vs[0].ref = <...>;   // not a first assignment
-        not_first = not_first or (to.tag == 'Op2_idx')
-
-        --  class T with
-        --      var int& ref;
-        --  do
-        --      this.ref = <...>;   // not a first assignment
-        --  end
-        not_first = not_first or
-            ((not constr) and to.lst.var.blk==cls.blk_ifc and (cls.id~='Main'))
-
-        --  function (int& v)=>void do
-        --      v = 10;     // not a first assignment
-        --  end
-        not_first = not_first or (AST.par(me,'Dcl_fun') and to.lst.var.is_arg)
-
-        if not_first then
-            return
-        end
-
-        -- refuse first assignment inside loop with declaration outside it:
-        --      var t& v;
-        --      loop do
-        --          v = <...>;      // rebindings are forbidden
-        --          <...>
-        --      end
-        -- accept if inside a constructor:
-        --      loop do
-        --          var T with
-        --              this.v = <...>;
-        --          end;
-        --      end
-        if TP.check(to.lst.var.tp,'&','-?') then
-            local loop = AST.par(me, 'Loop')
-            if loop then
-                if (not to.lst.var.bind) and (not AST.par(me,'Dcl_constr')) then
-                    ASR(AST.isParent(loop, to.lst.var.blk), me,
-                        'reference declaration and first binding cannot be separated by loops')
-                end
-            end
-        end
-
-        -- ALREADY HAS BINDING
-
-        if to.lst.var.bind == 'internal' then
-            assert(cls.id=='Main' or (to.blk ~= cls.blk_ifc))
-        elseif outer then
-
-        -- NO INTERNAL BINDING
-        --  first assignment
-
-        else
-            local if_ = AST.par(me,'If')
-            if if_ and (if_.__depth > to.lst.var.blk.__depth) and
-               ((not constr) or if_.__depth > constr.__depth) and
-               ((not to.lst.var.bind) or to.lst.var.bind=='partial')
-            then
-                -- nothing
-            else
-                if_ = false
-            end
-            if if_ and (AST.par(if_,'If') or AST.isParent(if_[2],me)) then
-                -- do not bind yet if inside a nested if or true branch of an if,
-                -- force the else part to also set byRef
-                to.lst.var.bind = 'partial'
-
-            -- set source of binding
-            elseif internal then
-                to.lst.var.bind = 'internal'
-                assert(cls.id=='Main' or (to.blk ~= cls.blk_ifc))
-            elseif constr then
-                if not to.lst.var.bind then
-                    to.lst.var.bind = 'constr'
-                end
-                -- mark this field assigned inside this constructor
-                -- later (Dcl_constr), we check if all unbounded fields have being assigned
-                constr.__bounded = constr.__bounded or {}
-                constr.__bounded[to.lst.var] = true
-            elseif interface then
-                to.lst.var.bind = 'interface'
-            end
-
-            -- save inits from if/else, check after
-            if  (to.lst.var.id~='_ret')
-            and (not me.__adj_escape)       -- escape a; // doesnt count as init
-            then
+        local outermost_if = nil
+        if VARS_UNINIT[to.var] then
+            -- Unitialized variables being first-assigned in an "if":
+            --      var int x;          // declared outside
+            --      if <...> then
+            --          x = <...>       // first-assigned inside
+            --      else
+            --          x = <...        // first-assigned inside>
+            --      end
+            -- We want to
+            --  - check first-assignment in all branches
+            --  - refuse accesses inside it (besides the first assignment)
+            --
+            do
                 for if_ in AST.iter'If' do
-                    if (if_.__depth < to.lst.var.blk.__depth) then
+                    if (if_.__depth < to.var.blk.__depth) then
                         break   -- var defined inside the if
                     end
                     if constr and if_.__depth<constr.__depth then
                         error 'TODO: not tested, probably just removing this line works'
                         break
                     end
-                    local _, T, F = unpack(if_)
+                    outermost_if = if_
+                    local _, t, f = unpack(if_)
                     local inits
-                    if AST.isParent(T, me) then
-                        inits = T.__ref_inits or {}
-                        T.__ref_inits = inits
+                    if AST.isParent(t, me) then
+                        inits = t.__ref_inits or {}
+                        t.__ref_inits = inits
                     else
-                        inits = F.__ref_inits or {}
-                        F.__ref_inits = inits
+                        inits = f.__ref_inits or {}
+                        f.__ref_inits = inits
                     end
-                    if not inits[to.lst.var] then
-                        inits[to.lst.var] = me  -- force error in the first
+
+                    if not IF_INITS[to] then
+                        ASR(not inits[to.var], me,
+                        'invalid extra access to variable "'..to.var.id..'"'..
+                        ' inside the initializing `if-then-else´ ('..if_.ln[1]..':'..if_.ln[2]..')', [[
+    When using an `if-then-else´ to initialize a variable declared outside it,
+    the `if-then-else´ can only serve this purpose and cannot perform extra
+    accesses to the variable.
+]])
+                        IF_INITS[to] = true
+                    end
+                    if not inits[to.var] then   -- 1st has priority
+                        inits[to.var] = me  -- save stmt of the assignment of "me"
                     end
                 end
+                if outermost_if then
+                    outermost_if.__ref_outermost = true
+                end
             end
+        end
 
-            if TP.check(to.tp,'&','-?') then
-                -- first assignment (and only first assignment) is "by ref"
-                me.__ref_byref = true
-
+        -- check aliases bindings/no-bindings
+        if TP.check(to.tp,'&','-?') then
+            if VARS_UNINIT[to.var] then
+                -- first assignment
                 ASR(fr.tag == 'Op1_&', me,
-                    'invalid attribution : missing alias operator `&´')
+                    'invalid attribution : missing alias operator `&´ on the right', [[
+    The first attribution to an alias, declared with the modifier `&´, binds
+    the right-hand location to the left-hand variable.
+    The attribution expects the explicit alias operator `&´ in the righ-hand
+    side to make explicit that it is binding the location and not the value.
+]])
+            else
+                -- not-first assignment
+                ASR(fr.tag ~= 'Op1_&', me,
+                    'invalid attribution : variable "'..to.var.id..'" already bound', [[
+    Once an alias is first attributed, it cannot be rebound.
+]])
+            end
+        end
 
-                -- check scopes
--- TODO: this code is duplicated with "fin.lua"
-                local fr_blk = NODE2BLK(fr)
-                local to_blk = NODE2BLK(to)
-                local org_blk
-                if to.tag=='Field' and to[2].tag=='This' then
-                    local constr = AST.par(me, 'Dcl_constr')
-                    if constr then
-                        local dcl = AST.par(constr, 'Dcl_var')
-                        if dcl then
-                            org_blk = dcl.var.blk
-                        else
-                            local spw = AST.par(constr, 'Spawn')
-                            org_blk = spw[2].var.blk or MAIN.blk_body    -- pool.blk
-                        end
-                    end
-                end
-                if not (
-                    fr.fst.tag == 'Nat'        or -- natives are globals
-                    (fr.tag=='Op2_call' and       -- native calls are globals
-                     fr[2].fst.tag=='Nat')     or
-                    (fr.org and                   -- "global:*" is global
-                     fr.org.cls.id=='Global')  or
-                    fr_blk == MAIN.blk_body    or
-                    (org_blk and
-                     org_blk.__depth>=fr_blk.__depth) or
-                    (   -- same class and scope of "to" <= "fr"
-                        (AST.par(to_blk,'Dcl_cls') == AST.par(fr_blk,'Dcl_cls')) and
-                            (   to_blk.__depth >= fr_blk.__depth            -- to <= fr
-                            or (to_blk.__depth==cls.blk_ifc.__depth and     --    or
-                                fr_blk.__depth==cls.blk_body.__depth)       -- ifc/bdy
-                            )
-                    )
-                ) then
-                    ASR(false, me, 'attribution to reference with greater scope')
-                        -- NO:
-                        -- var int& r;
-                        -- do
-                        --     var int v;
-                        --     r = v;
-                        -- end
-                end
+        if not outermost_if then
+            VARS_UNINIT[to.var] = nil
+        end
+    end,
+
+    If = function (me)
+        local c, t, f = unpack(me)
+        local var, stmt = next(F.__diff(t.__ref_inits,f.__ref_inits))
+        ASR(not var, stmt, var and
+            'missing initialization for variable "'..(var.id or '?')..'" in the other branch of the `if-then-else´ ('..me.ln[1]..':'..me.ln[2]..')')
+        if me.__ref_outermost then
+            for var in pairs(t.__ref_inits or {}) do
+                VARS_UNINIT[var] = nil
             end
         end
     end,
-
-    Return_pre = function (me)
-        local exp = unpack(me)
-        local dcl = AST.par(me, 'Dcl_fun')
-        if not dcl then
-            return  -- checked in props.lua
-        end
-
-        -- return <x>
-        --      becomes
-        -- <var-in-ifc> = <x>
-        local var = AST.node('Var', me.ln, '_')
-        var.tp = dcl.var.fun.out
-        var.lst = var
-        var.var = {blk=CLS().blk_ifc, tp=var.tp}
-        F.__Set_pre(AST.node('Return', me.ln, '=', 'set', exp), var)
-    end,
-
-    __check_params = function (me, ins, params, f)
-        for i, param in ipairs(params) do
-            -- f(<x>)
-            --      becomes
-            -- <var-in-ifc> = <x>
-            if ins then
-                local var = AST.node('Var', me.ln, '_')
-                var.tp = ins.tup[i]
-                var.lst = var
-                var.var = {blk=AST.par(f,'Dcl_cls').blk_ifc, tp=var.tp}
-                F.__Set_pre(AST.node('Return', me.ln, '=', 'set', param), var)
-            end
-        end
-    end,
-    Op2_call = function (me)
-        local _, f, params, fin = unpack(me)
-        if not (me.c and (me.c.mod=='@pure' or me.c.mod=='@nohold')) then
-            req = F.__check_params(
-                    me,
-                    f.var and f.var.fun and f.var.fun.ins,
-                    params,
-                    f)
-        end
-    end,
-
     __diff = function (A,B)
         local C = {}
-DBG'======='
         for k,v in pairs(A or {}) do
-DBG(k.id, '+A')
             C[k] = v
         end
         for k,v in pairs(B or {}) do
             if C[k] then
-DBG(k.id, '-A')
                 C[k] = nil
             else
-DBG(k.id, '+B')
                 C[k] = v
             end
         end
         return C
     end,
-    If = function (me)
-        local c, t, f = unpack(me)
-        local var, stmt = next(F.__diff(t.__ref_inits,f.__ref_inits))
-        ASR(not var, stmt, var and
-            'missing initialization for variable "'..var.id..'" in the other if-else branch')
-    end,
 
-    -- Constructors (static/dynamic):
-    -- A ref field (class.field&) must be bounded in all constructors.
-    __constr = function (me, cls, constr)
-        constr.__bounded = constr.__bounded or {}
-        for _, var in ipairs(cls.blk_ifc.vars) do
-            if var.pre=='var' or var.pre=='pool' then
-                if TP.check(var.tp,'&') and
-                   (var.bind=='constr' or (not var.bind))
-                then
-                    -- '_out' is set by the compiler, before the constructor
-                    if var.id ~= '_out' then
-                        ASR(constr.__bounded[var], me,
-                            'field "'..var.id..'" must be assigned')
-                    end
-                end
-            end
-        end
-    end,
-    Dcl_var = function (me)
-        if me.var.cls then
-            local _,_,_,constr = unpack(me)
-            F.__constr(me, me.var.cls, constr or {})
-        end
-
-        -- ensures that global "ref" vars are initialized
-        local glb = ENV.clss.Global
-        local cls = CLS()   -- might be an ADT declaration
-        if glb and cls and cls.id=='Main' then
-            local var = glb.blk_ifc.vars[me.var.id]
-            if var then
-                local set = me.__par and me.__par[1]==me and
-                            me.__par[2] and me.__par[2].tag=='Set'
-                ASR(set, me,
-                    'global references must be bounded on declaration')
-            end
-        end
-    end,
-    Spawn = function (me)
-        local _,_,constr = unpack(me)
-        F.__constr(me, me.cls, constr or {})
-    end,
-
-    -- Ensures that &ref var is bound before use.
-    Var = function (me)
-        if not (me.var.pre=='var' or me.var.pre=='pool') then
-            return
-        end
-        if me.var.id == '_ret' then
-            return
-        end
-
-        local cls = CLS()
-        -- ignore interface variables outside Main
-        -- (they are guaranteed to be bounded)
-        local inifc = (me.var.blk == cls.blk_ifc)
-        inifc = inifc and cls.id~='Main'
-
-        -- ignore function arguments
-        -- (they are guaranteed to be bounded)
-        local infun = AST.par(me.var.blk, 'Dcl_fun')
-
-        -- ignore global variables
-        -- (they are guaranteed to be bounded)
-        local glb = ENV.clss.Global
-        if glb then
-            if cls.id == 'Main' then
-                -- id = <...>   // id is a global accessed in Main
-                glb = glb.blk_ifc.vars[me.var.id]
+    ParEver_pre = 'Do_pre',
+    ParAnd_pre  = 'Do_pre',
+    ParOr_pre   = 'Do_pre',
+    Pause_pre   = 'Do_pre',
+    Async_pre   = 'Do_pre',
+    Sync_pre    = 'Do_pre',
+    Thread_pre  = 'Do_pre',
+    Spawn_pre   = 'Do_pre',
+    Loop_pre    = 'Do_pre',
+    Do_pre = function (me)
+        for var,dcl in pairs(VARS_UNINIT) do
+            local setblk = find_set_block(var) or find_set_thread(var)
+            if setblk and me.__depth>setblk.__depth then
+                -- Statement is inside a block assignment to "v":
+                --      var int v = do <...> end
+                -- No problem because "v" cannot be accessed inside it.
             else
-                local fld = me.__par
-                if fld and fld.tag=='Field' and fld.org then
-                    -- global:id = <...>
-                    glb = fld.org.cls==glb
-                end
+                ASR(false, dcl, [[
+uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1]..':'..me.ln[2]..[[)]],
+[[
+    All variables must be initialized before use.
+    Also, a declaration and corresponding initialization cannot be separated by 
+    compound statements.
+    The exception are `if-then-else´ statements to alternative initializations.
+]])
             end
         end
+    end,
 
-        -- ignore field accesses:
-        --      x.ref.v
-        -- (they are guaranteed to be bounded)
-        local fld = (me.__par.tag=='Field' and me.__par[3]==me)
+--- check function calls
 
-        if  (not me.var.__env_is_loop_var)  -- loop i in ...
-        and (not TP.check(me.var.tp,'[]'))  -- var char[] v
-        then
-            if not (inifc or infun or glb or fld) then
-                ASR(me.var.bind, me,
-                    'access to unitialized variable "'..me.var.id..'"')
+    __check_params = function (me, ins, params, f)
+        local old = VARS_UNINIT
+        for i, param in ipairs(params) do
+            -- f(<x>)
+            --      becomes
+            -- <var-in-ifc> = <x>
+            local var = AST.node('Var', me.ln, '_')
+            var.tp = ins.tup[i]
+            var.lst = var
+            var.var = {id=ins[i][3], blk=AST.par(f,'Dcl_cls').blk_ifc, tp=var.tp}
+            VARS_UNINIT[var.var] = me
+            F.__Set_bef_one(me, param, var)
+                -- TODO: error message: 'invalid argument #i : ...'
+        end
+        VARS_UNINIT = old
+    end,
+    Op2_call = function (me)
+        local _, f, params, fin = unpack(me)
+        if not (me.c and (me.c.mod=='@pure' or me.c.mod=='@nohold')) then
+            local ins = f.var and f.var.fun and f.var.fun.ins
+            if ins then
+                req = F.__check_params(
+                        me,
+                        ins,
+                        params,
+                        f)
             end
         end
+    end,
+
+--- disable VARS_UNINIT in data type declarations
+    Dcl_adt_pre = function (me)
+        me.__old = VARS_UNINIT
+        VARS_UNINIT = {}
+    end,
+    Dcl_adt_pos = function (me)
+        VARS_UNINIT = me.__old
     end,
 }
 

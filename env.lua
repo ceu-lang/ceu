@@ -833,6 +833,14 @@ F = {
         else
             local ok, msg = TP.contains(dcl.var.fun.out, exp.tp)
             ASR(ok, me, 'invalid return value : '..(msg or ''))
+
+            -- cannot return local reference from function
+            local var = exp.fst.var
+            if var and AST.isParent(dcl, var.blk) then
+                local is_ref = TP.check(exp.tp,'&','-?')
+                            or TP.check(exp.tp,'&&','-?')
+                ASR(not is_ref, me, 'invalid return vale : local reference')
+            end
         end
     end,
 
@@ -1239,7 +1247,7 @@ F = {
             me.i_dcl.read_only = true
             me.i_var = (is_num and to) or AST.node('Var',me.ln,id)
             AST.visit(F, me.i_dcl)
-            me.i_dcl.var.__env_is_loop_var = true
+            me.i_dcl.var.__env_is_loop_var = true   -- (see ref.lua)
             local stmts = me.__par[1]
             stmts[#stmts+1] = me.i_dcl
             if not is_num then
@@ -1594,7 +1602,7 @@ F = {
             'invalid operand to unary "&" : cannot be aliased')
 
         me.lval = false
-        me.tp = e1.tp
+        me.tp = TP.push(e1.tp,'&')
         me.fst = e1.fst
         me.lst = e1.lst
     end,
