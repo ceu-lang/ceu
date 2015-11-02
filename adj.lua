@@ -165,7 +165,7 @@ me.blk_body = me.blk_body or blk_body
         end
 
         -- insert class pool for orphan spawn
-        local stmts = AST.asr(blk_ifc,'BlockI', 1,'Stmts')
+        local stmts = AST.asr(me.blk_body,'Block', 1,'Stmts')
         if me.__ast_has_malloc then
             table.insert(stmts, 1,
                 node('Dcl_pool', me.ln, 'pool',

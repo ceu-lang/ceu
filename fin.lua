@@ -6,12 +6,6 @@ local TRACK = {
                       --   now, any access to "var" yields error
 }
 
-local function NODE2BLK (n)
-    return n.fst and n.fst.blk or
-           n.fst and n.fst.var and n.fst.var.blk or
-           MAIN.blk_ifc
-end
-
 local function GET ()
     return TRACK[#TRACK]
 end

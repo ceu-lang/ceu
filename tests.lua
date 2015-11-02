@@ -98,11 +98,24 @@ escape 1;
 
 do return end
 
+Test { [[
+native @plain _rect;
+native/pre do
+    typedef struct rect {
+        int* x, y;
+    } rect;
+end
+var int v = 10;
+var _rect r = _rect(null);
+r.x = &&v;      // BUG: finalize?
+escape *(r.x);
+]],
+    run = 10,
+}
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -27449,11 +27462,38 @@ native/pre do
     } rect;
 end
 var int v = 10;
-var _rect r;
-r.x = &&v;
+var _rect r = _rect(&&v);
 escape *(r.x);
 ]],
-    --env = 'line 8 : invalid operand to unary "*"',
+    fin = 'line 8 : call requires `finalize´',
+}
+Test { [[
+native @plain _rect;
+native/pre do
+    typedef struct rect {
+        int* x, y;
+    } rect;
+end
+var int v = 10;
+var _rect r = _rect(&&v) finalize with nothing; end;
+escape *(r.x);
+]],
+    run = 10,
+}
+Test { [[
+native @plain _rect;
+native/pre do
+    typedef struct rect {
+        int* x, y;
+    } rect;
+    int V = 0;
+end
+do
+    var int v = 10;
+    var _rect r = _rect(&&v) finalize with _V=10; end;
+end
+escape _V;
+]],
     run = 10,
 }
 
@@ -27465,8 +27505,7 @@ native/pre do
 end
 native @plain _t;
 var int v = 10;
-var _t t;
-t.x = &&v;
+var _t t = _t(&&v) finalize with nothing; end;
 await 1s;
 escape *t.x;
 ]],
@@ -27477,7 +27516,7 @@ Test { [[
 input void OS_START;
 var int v;
 class T with
-    var int v;
+    var int v=0;
 do
     v = 5;
 end
@@ -27493,7 +27532,7 @@ escape a.v + v;
 Test { [[
 input void OS_START;
 class T with
-    var int v;
+    var int v=0;
 do
     this.v = 5;
 end
@@ -27511,7 +27550,7 @@ end
 Test { [[
 input void OS_START, A;
 class T with
-    var int v;
+    var int v=0;
 do
     await OS_START;
     this.v = 5;
@@ -27561,7 +27600,7 @@ Test { [[
 input void OS_START;
 class T with
     event void go;
-    var int v;
+    var int v=0;
 do
     await go;
     v = 5;
@@ -27589,7 +27628,7 @@ Test { [[
 input void OS_START;
 class T with
     event int a, go, ok;
-    var int aa;
+    var int aa=0;
 do
     await go;
     emit a => 100;
@@ -27611,7 +27650,7 @@ escape aa.aa;
 Test { [[
 input void OS_START;
 class T with
-    var int v;
+    var int v=0;
 do
     v = 5;
 end
@@ -27755,11 +27794,11 @@ escape 1;
 Test { [[
 class Sm with
 do
-    var u8 id;
+    var u8 id=0;
 end
 
 class Image_media with
-    var Sm&& sm;
+    var Sm&& sm=null;
 do
     var Sm smm;
     this.sm = &&smm;
@@ -27774,7 +27813,7 @@ escape 1;
 }
 Test { [[
 class Sm with
-    var int id;
+    var int id=0;
 do
 end
 
@@ -27798,12 +27837,12 @@ escape img1.sm.id + img2.sm.id + img3.sm.id;
 }
 Test { [[
 class Sm with
-    var int id;
+    var int id=0;
 do
 end
 
 class Image_media with
-    var Sm&& sm;
+    var Sm&& sm=null;
 do
     var Sm smm;
     this.sm = &&smm;
@@ -27824,7 +27863,7 @@ escape img1.sm:id + img2.sm:id + img3.sm:id;
 }
 Test { [[
 class Sm with
-    var int id;
+    var int id=0;
 do
 end
 
@@ -27852,12 +27891,12 @@ escape img1.sm.id + img2.sm.id + img3.sm.id;
 }
 Test { [[
 class Sm with
-    var int id;
+    var int id=0;
 do
 end
 
 class Image_media with
-    var Sm&& sm;
+    var Sm&& sm=null;
 do
     var Sm smm;
     this.sm = &&smm;
@@ -27883,7 +27922,7 @@ escape img1.sm:id + img2.sm:id + img3.sm:id;
 
 Test { [[
 class T with
-    var int v;
+    var int v=0;
 do
 end
 
@@ -27897,7 +27936,7 @@ escape p:v;
 
 Test { [[
 class T with
-    var int v;
+    var int v=0;
 do
 end
 
@@ -27927,7 +27966,7 @@ escape 1;
 }
 Test { [[
 class T with
-    var _char&& ptr;
+    var _char&& ptr=null;
 do
 end
 
@@ -28145,7 +28184,7 @@ input int F;
 do
     class T with
         event void ok;
-        var int v;
+        var int v=0;
     do
         v = await F;
         emit ok;
@@ -28617,7 +28656,7 @@ escape ret;
 Test { [[
 input void A;
 class T with
-    var int v;
+    var int v=0;
 do
     await A;
     v = 1;
@@ -28636,7 +28675,7 @@ escape a.v;
 Test { [[
 input void A;
 class T with
-    var int v;
+    var int v=0;
     event void ok;
 do
     v = 0;
@@ -28666,7 +28705,7 @@ input void OS_START;
 input void A;
 class T with
     event int a, ok;
-    var int aa;
+    var int aa=0;
 do
     par/or do
         await A;
@@ -28694,7 +28733,7 @@ input void OS_START;
 input void A;
 class T with
     event int a, ok;
-    var int aa;
+    var int aa=0;
 do
     par/or do
         await A;
@@ -28725,7 +28764,7 @@ Test { [[
 input void OS_START;
 class T with
     event int a;
-    var int aa;
+    var int aa=0;
 do
     par/and do
         emit this.a => 10; // 6
@@ -28814,7 +28853,7 @@ native do
 end
 
 class T with
-    var int a;
+    var int a=0;
 do
 end
 
@@ -28882,7 +28921,7 @@ escape 1;
 }
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
 end
 var T[2] ts;
@@ -28900,7 +28939,7 @@ escape ts[0].a + ts[1].a;
 }
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
 end
 var T t1, t2;
@@ -28916,7 +28955,7 @@ escape t1.a + t2.a;
 Test { [[
 input void OS_START;
 class T with
-    var int a;
+    var int a=0;
 do
     await OS_START;
     a = 0;
@@ -28938,7 +28977,7 @@ escape ts[0].a + ts[1].a;
 Test { [[
 input void OS_START;
 class T with
-    var int a;
+    var int a=0;
 do
     await OS_START;
     this.a = 0;
@@ -28960,7 +28999,7 @@ escape ts[0].a + ts[1].a;
 Test { [[
 input void OS_START;
 class T with
-    var int a;
+    var int a=0;
 do
     await OS_START;
     a = 0;
@@ -28982,7 +29021,7 @@ escape t1.a + t2.a;
 Test { [[
 input void OS_START;
 class T with
-    var int a;
+    var int a=0;
 do
     await OS_START;
     this.a = 0;
@@ -29061,8 +29100,8 @@ input int  BUTTON;
 input void F;
 
 class Rect with
-    var s16 x;
-    var s16 y;
+    var s16 x=0;
+    var s16 y=0;
     event void go;
 do
     loop do
@@ -29173,7 +29212,7 @@ escape 100;
 Test { [[
 class T with
     event int a, go, ok;
-    var int aa;
+    var int aa=0;
 do
     par/or do
         emit a => 10;      // 5
@@ -29205,7 +29244,7 @@ escape aa.aa;
 Test { [[
 class T with
     event int a, ok, go;
-    var int aa;
+    var int aa=0;
 do
     emit a => 10;
     aa = 5;
@@ -29255,7 +29294,7 @@ end
 
 class T with
     event void a, ok, go, b;
-    var int aa, bb;
+    var int aa=0, bb=0;
 do
     par/and do
         await a;            // 3.
@@ -29288,7 +29327,7 @@ Test { [[
     input void OS_START;
 class T with
     event void a, ok, go, b;
-    var int aa, bb;
+    var int aa=0, bb=0;
 do
 
     par/and do
@@ -29328,10 +29367,10 @@ escape _V + aa.aa + aa.bb;
 }
 
 Test { [[
-    input void OS_START;
+input void OS_START;
 class T with
     event void a, ok, go, b;
-    var int aa, bb;
+    var int aa=0, bb=0;
 do
 
     par/and do
@@ -29346,7 +29385,7 @@ do
 end
 var T aa;
 
-var int ret;
+var int ret=0;
 par/or do
     await aa.ok;
     ret = 1;
@@ -29364,7 +29403,7 @@ Test { [[
 input void OS_START;
 class T with
     event void e, ok, go;
-    var int ee;
+    var int ee=0;
 do
     await this.go;
     if ee == 1 then
@@ -29405,7 +29444,7 @@ native @nohold _f();
 input void OS_START;
 class T with
     event void e, ok, go, b;
-    var u8 a;
+    var u8 a=0;
 do
     await go;
     a = 1;
@@ -29457,7 +29496,7 @@ escape 10;
 Test { [[
 input void OS_START, B;
 class T with
-    var int v;
+    var int v=0;
     event void ok, go, b;
     event void e, f;
 do
@@ -29515,7 +29554,7 @@ input int S;
 input void F;
 class T with
     event void a,ok;
-    var int aa;
+    var int aa=0;
 do
     par/or do
         aa = await S;
@@ -29681,7 +29720,7 @@ escape 1;
 Test { [[
 input void OS_START;
 class T with
-    var int v;
+    var int v=0;
     event void e, f, ok;
 do
     v = 10;
@@ -29727,7 +29766,7 @@ escape ret + ts[0].v + ts[1].v;
 Test { [[
 input void OS_START;
 class T with
-    var int v;
+    var int v=0;
 do
     v = 1;
 end
@@ -29912,7 +29951,7 @@ native do
 end
 class T with
     event void e, ok;
-    var int v;
+    var int v=0;
 do
     finalize with
         _V = _V + 1;        // * writes after
@@ -29961,7 +30000,8 @@ end
 var T t;
 escape t.i;
 ]],
-    ref = 'line 7 : field "i" must be assigned',
+    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
+    --ref = 'line 7 : field "i" must be assigned',
     --run = 10,
 }
 
@@ -29993,7 +30033,8 @@ end
 var T t;
 escape t.i;
 ]],
-    ref = 'line 7 : field "i" must be assigned',
+    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
+    --ref = 'line 7 : field "i" must be assigned',
     --run = 10,
 }
 -- internal binding w/ default
@@ -30062,7 +30103,8 @@ end
 var T t;
 escape 1;
 ]],
-    ref = 'line 5 : field "i" must be assigned',
+    ref = 'line 5 : missing initialization for field "i" (declared in tests.lua:2)',
+    --ref = 'line 5 : field "i" must be assigned',
 }
 
 Test { [[
@@ -30081,7 +30123,8 @@ end;
 
 escape t1.i;
 ]],
-    ref = 'line 8 : field "i" must be assigned',
+    ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:2)',
+    --ref = 'line 8 : field "i" must be assigned',
 }
 
 Test { [[
@@ -30100,7 +30143,8 @@ var T t1;
 
 escape t1.i;
 ]],
-    ref = 'line 12 : field "i" must be assigned',
+    ref = 'line 12 : missing initialization for field "i" (declared in tests.lua:2)',
+    --ref = 'line 12 : field "i" must be assigned',
 }
 
 Test { [[
@@ -30115,7 +30159,7 @@ var int v = 0;
 t.i = v;
 escape 1;
 ]],
-    ref = 'line 7 : field "i" must be assigned',
+    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
     --ref = 'line 9 : cannot assign to reference bounded inside the class',
 }
 
@@ -30157,7 +30201,8 @@ var int  um = 1;
 var int& v;// = um;
 escape 1;//global:v;
 ]],
-    ref = 'line 5 : global references must be bounded on declaration',
+    ref = 'line 5 : missing initialization for global variable "v"',
+    --ref = 'line 5 : global references must be bounded on declaration',
 }
 
 Test { [[
@@ -30188,7 +30233,7 @@ interface Global with
 end
 
 class T with
-    var int v;
+    var int v=0;
 do
     this.v = global:v;
 end
@@ -30222,11 +30267,28 @@ end
 
 var T t_;
 var T& t = &t_;
-global:t = &t;
 
 escape global:t.v;
 ]],
     run = 10,
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+interface Global with
+    var T& t;
+end
+
+var T t_;
+var T& t = &t_;
+global:t = &t;
+
+escape global:t.v;
+]],
+    ref = 'line 12 : invalid attribution : variable "t" already bound',
 }
 
 Test { [[
@@ -30253,7 +30315,7 @@ escape 1;
 
 Test { [[
 class T with
-    var int x;
+    var int x=0;
 do
 end
 var T t;
@@ -30285,7 +30347,7 @@ escape t.x + u.t.x + v.u.t.x;
 
 Test { [[
 class T with
-    var int x;
+    var int x=0;
 do
 end
 var T t;
@@ -30345,7 +30407,20 @@ var T t with
 end;
 escape 1;
 ]],
-    ref = 'line 7 : attribution to reference with greater scope',
+    ref = 'line 7 : invalid access to uninitialized variable "x" (declared at tests.lua:6)',
+}
+Test { [[
+class T with
+    var int& v;
+do
+end
+var T t with
+    var int x=0;
+    this.v = &x;
+end;
+escape 1;
+]],
+    ref = 'line 7 : invalid attribution : variable "x" has narrower scope its destination',
 }
 
 Test { [[
@@ -30388,7 +30463,8 @@ end;
 
 escape t1.v.v + t2.v.v + t3.v.v;
 ]],
-    ref = 'line 12 : attribution to reference with greater scope',
+    ref = 'line 12 : invalid attribution : variable "v_" has narrower scope its destination',
+    --ref = 'line 12 : attribution to reference with greater scope',
     --run = 6,
 }
 
@@ -30633,7 +30709,7 @@ native do
 end
 
 class T with
-    var int x;
+    var int x=0;
     event void ok;
 do
     await OS_START;
@@ -30642,7 +30718,7 @@ do
 end
 
 class U with
-    var int x;
+    var int x=0;
     event void ok;
 do
     await OS_START;
@@ -30666,7 +30742,7 @@ escape ret;
 
 Test { [[
 class T with
-    var int&& a1;
+    var int&& a1=null;
 do
     var int&& a2=null;
     a1 = a2;
@@ -30682,7 +30758,8 @@ class T with
     var _SDL_rect rect;
 do
     do
-        var _SDL_Rect r;
+        native @plain _SDL_Rect;
+        var _SDL_Rect r=_SDL_Rect();
         r.x = _N;
     end
 end
@@ -30698,7 +30775,8 @@ class T with
     var _SDL_rect rect;
 do
     do
-        var _SDL_Rect r;
+        native @plain _SDL_Rect;
+        var _SDL_Rect r=_SDL_Rect();
         r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
     end
 end
@@ -30724,7 +30802,8 @@ class T with
     var _SDL_Rect rect;
 do
     do
-        var _SDL_Rect r;
+        native @plain _SDL_Rect;
+        var _SDL_Rect r=_SDL_Rect();
         r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
     end
 end
@@ -30749,7 +30828,8 @@ class T with
     var _SDL_Rect rect;
 do
     do
-        var _SDL_Rect r;
+        native @plain _SDL_Rect;
+        var _SDL_Rect r=_SDL_Rect();
             r.w = 1;
         r.x = _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
     end
@@ -30776,7 +30856,8 @@ class T with
     var _SDL_Rect rect;
 do
     do
-        var _SDL_Rect r;
+        native @plain _SDL_Rect;
+        var _SDL_Rect r=_SDL_Rect();
         r.x = (int) _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
     end
 end
@@ -30910,7 +30991,7 @@ escape t1.b;
 Test { [[
 class T with
     var int a;
-    var int b;
+    var int b=0;
 do
     b = a * 2;
 end
@@ -30963,8 +31044,8 @@ escape t.ret;
 
 Test { [[
 class T with
-    var int a;
-    var int b;
+    var int a=0;
+    var int b=0;
 do
     b = a * 2;
 end
@@ -30981,7 +31062,7 @@ escape t.b;
 Test { [[
 class T with
     var int a;
-    var int b;
+    var int b=0;
 do
     b = a * 2;
 end
@@ -31291,14 +31372,14 @@ escape 1;
 
 Test { [[
 class T with
-    var int v;
+    var int v=0;
 do
 end
 
 input int E;
 
 par/or do
-    var int yyy;
+    var int yyy=0;
     every xxx in E do
         spawn T with
             yyy = 1;
@@ -31785,7 +31866,7 @@ escape 1;
 
 Test { [[
 class T with do end
-var bool ok_;
+var bool ok_=true;
 do
     var T&&? ok;
     ok = spawn T;
@@ -31799,7 +31880,7 @@ escape ok_+1;
 Test { [[
 class T with do end
 var T&&? ok;
-var bool ok_;
+var bool ok_=true;
 do
     ok = spawn T;
     ok_ = (ok?);
@@ -31843,7 +31924,7 @@ class T with do
     await FOREVER;
 end
 var T&&? ok;
-var bool ok_;
+var bool ok_=false;
 native _assert();
 do
     loop i in 5 do
@@ -31862,7 +31943,7 @@ class T with do
     await FOREVER;
 end
 var T&&? ok;
-var bool ok_;
+var bool ok_=true;
 native _assert();
 do
     loop i in 100 do
@@ -31897,7 +31978,7 @@ escape (ok?)+1;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
 end
@@ -31911,7 +31992,7 @@ escape t!:a;
 Test { [[
 input void OS_START;
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 1;
 end
@@ -32324,6 +32405,7 @@ escape _V;
 ]],
     run = 1,
 }
+--]===]
 Test { [[
 input void OS_START;
 native do
@@ -32354,14 +32436,14 @@ do
     end
 end
 
-var T t;
+var T tt;
 
 spawn U with
-    this.t = &t;
+    this.t = &tt;
     this.only_await = false;
 end;
 spawn U with
-    this.t = &t;
+    this.t = &tt;
     this.only_await = true;
 end;
 

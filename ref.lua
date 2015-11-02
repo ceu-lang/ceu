@@ -1,6 +1,10 @@
 local VARS_UNINIT = {}
 
--- TODO: ref-greater-scope, opt-types, data-types, func-calls, init-for-c-structs
+function NODE2BLK (n)
+    return n.fst and n.fst.blk or
+           n.fst and n.fst.var and n.fst.var.blk or
+           MAIN.blk_ifc
+end
 
 local function find_set_block (v1)
     for blk in AST.iter'SetBlock' do
@@ -44,6 +48,20 @@ F = {
             -- no need for initialization
         else
             VARS_UNINIT[me.var] = me
+        end
+
+        -- ensures that global "ref" vars are initialized
+        local glb = ENV.clss.Global
+        local cls = CLS()   -- might be an ADT declaration
+        if TP.check(me.var.tp,'&') and glb and cls and cls.id=='Main' then
+            local var = glb.blk_ifc.vars[me.var.id]
+            if var then
+                local set = me.__par and me.__par[1]==me and
+                            me.__par[2] and me.__par[2].tag=='Set'
+                ASR(set, me, 'missing initialization for global variable "'..var.id..'"', [[
+    Global aliases must be bound on declaration.
+]])
+            end
         end
     end,
 
@@ -147,7 +165,7 @@ F = {
         -- check aliases bindings/no-bindings
         if TP.check(to.tp,'&','-?') then
             if VARS_UNINIT[to.var] then
-                -- first assignment
+                -- first assignment has to use &var
                 ASR(fr.tag == 'Op1_&', me,
                     'invalid attribution : missing alias operator `&´ on the right', [[
     The first attribution to an alias, declared with the modifier `&´, binds
@@ -155,6 +173,39 @@ F = {
     The attribution expects the explicit alias operator `&´ in the righ-hand
     side to make explicit that it is binding the location and not the value.
 ]])
+
+                -- check if aliased value has wider scope
+                local fr_blk = NODE2BLK(fr)
+                local to_blk = NODE2BLK(to)
+                local to_org_blk
+                if to.tag=='Field' and to[2].tag=='This' then
+                    local constr = AST.par(me, 'Dcl_constr')
+                    if constr then
+                        local dcl = AST.par(constr, 'Dcl_var')
+                        if dcl then
+                            to_org_blk = dcl.var.blk
+                        else
+                            local spw = AST.par(constr, 'Spawn')
+                            to_org_blk = spw[2].var.blk or MAIN.blk_body
+                                            -- pool.blk
+                        end
+                    end
+                end
+                if to_org_blk then
+                    local fr_id = (fr.fst and fr.fst.var and fr.fst.var.id)
+                                    or '?'
+                    ASR(to_org_blk.__depth >= fr_blk.__depth, me,
+                        'invalid attribution : variable "'..fr_id..'" has narrower scope its destination', [[
+    The aliased variable (source) must have wider scope than alias variable
+    (destination).
+]])
+                        -- NO:
+                        -- var int& r;
+                        -- do
+                        --     var int v;
+                        --     r = v;
+                        -- end
+                end
             else
                 -- not-first assignment
                 ASR(fr.tag ~= 'Op1_&', me,
@@ -285,7 +336,7 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
     end,
     Dcl_constr_pos = function (me)
         for var,dcl in pairs(VARS_UNINIT) do
-            ASR(false, me, [[
+            ASR(TP.check(var.tp,'?'), me, [[
 missing initialization for field "]]..var.id..[[" (declared in ]]..dcl.ln[1]..':'..dcl.ln[2]..')',
 [[
     The constructor must initialize all variables (withouth default values)
