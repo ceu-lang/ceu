@@ -39,9 +39,6 @@ F = {
         or me.var.__env_is_loop_var     -- loop i ... end
         or me.isEvery
         or TP.check(me.var.tp,'[]')     -- var int[] vec;
-        or (TP.check(me.var.tp,'?') and (not (TP.check(me.var.tp,'&','?'))))
-                                        -- var int? i;  // OK
-                                        -- var int&? i; // NO
         or me.var.cls                   -- var T t;
         then
             -- no need for initialization
@@ -59,6 +56,9 @@ F = {
         end
         if SET_TARGET[me] then
             return  -- im exactly the target of an assignment
+        end
+        if TP.check(me.var.tp,'?') then
+            return  -- optional assignment
         end
 
         local dcl = VARS_UNINIT[me.var]
@@ -80,7 +80,9 @@ F = {
         end
         local TO = (to.tag=='VarList' and to) or {to}
         for _, to in ipairs(TO) do
-            if to.var then
+            to = (to.var and to) or
+                 (to.fst==to.lst and to.fst.var and to.fst)
+            if to then
                 local _, _, fr, _ = unpack(me)
                 F.__Set_bef_one(me, fr, to)
             end
@@ -158,6 +160,8 @@ F = {
                 ASR(fr.tag ~= 'Op1_&', me,
                     'invalid attribution : variable "'..to.var.id..'" already bound', [[
     Once an alias is first attributed, it cannot be rebound.
+    Also, a declaration and corresponding initialization cannot be separated by 
+    compound statements.
 ]])
             end
         end
@@ -209,6 +213,14 @@ F = {
                 -- Statement is inside a block assignment to "v":
                 --      var int v = do <...> end
                 -- No problem because "v" cannot be accessed inside it.
+            elseif TP.check(var.tp,'?') then
+                -- initialization is not obligatory, but not it is not
+                -- considered first assignment either
+                --  var int&? v;
+                --  loop do
+                --      v = &<...>;     // not first assignment
+                --  end
+                VARS_UNINIT[var] = nil
             else
                 ASR(false, dcl, [[
 uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1]..':'..me.ln[2]..[[)]],

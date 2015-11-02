@@ -102,7 +102,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -15673,17 +15672,43 @@ escape v!;
 Test { [[
 var int v = 10;
 var int&? i;
+i = &v;
+i = &v;
+escape i!;
+]],
+    ref = 'line 4 : invalid attribution : variable "i" already bound',
+}
+
+Test { [[
+var int v = 10;
+var int&? i;
 loop do
-    i! = &v;
+    i = &v;
     i! = i! + 1;
     break;
 end
 escape v;
 ]],
-    wrn = true,
+    ref = 'line 4 : invalid attribution : variable "i" already bound',
+}
+Test { [[
+var int v = 10;
+var int&? i;
+loop do
+    i! = &v;
+    i! = i! + 1;
+    if 1 then
+        break;
+    else
+        await 1s;
+    end
+end
+escape v;
+]],
+    ref = 'line 4 : invalid attribution : variable "i" already bound',
     --run = 11,
     --ref = 'reference declaration and first binding cannot be separated by loops',
-    ref = 'line 2 : uninitialized variable "i" crossing compound statement (tests.lua:3)',
+    --ref = 'line 2 : uninitialized variable "i" crossing compound statement (tests.lua:3)',
 }
 
 Test { [[
@@ -15697,8 +15722,9 @@ every 1s do
 end
 escape 1;
 ]],
+    ref = 'line 4 : invalid attribution : variable "sfc" already bound',
     --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
-    ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (tests.lua:2)',
 }
 
 Test { [[
@@ -16326,6 +16352,7 @@ escape *(t.ptr);
     ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
+--]===]
 Test { [[
 native @pure _f();
 native do
@@ -26099,14 +26126,17 @@ escape 1;
 
 Test { [[
 class T with
-    var int a, b;
+    var int a;
 do
 end
 
-var T y;
+var T y with
+    this.a = 10;
+end;
 
-var T x;
-    x.a = 10;
+var T x with
+    this.a = 10;
+end;
 
 input void OS_START;
 await OS_START;
@@ -26151,8 +26181,9 @@ class T with
     var int a;
 do
 end
-var T x;
-    x.a = 30;
+var T x with
+    this.a = 30;
+end;
 
 escape x.a;
 ]],
@@ -26173,12 +26204,32 @@ var T x;
 
 escape x.a + y[0].a + y[1].a;
 ]],
+    ref = 'line 6 : missing initialization for field "a" (declared in tests.lua:2)',
+}
+Test { [[
+class T with
+    var int a;
+do
+end
+
+var int i = 1;
+var T[2] y with
+    this.a = 10*i;
+    i = i + 1;
+end;
+
+var T x with
+    this.a = 30;
+end;
+
+escape x.a + y[0].a + y[1].a;
+]],
     run = 60,
 }
 
 Test { [[
 class T with
-    var int a, b;
+    var int a;
 do
 end
 
@@ -26189,8 +26240,9 @@ var T[2] y with
     this.a = i*10;
 end;
 
-var T x;
-    x.a = 30;
+var T x with
+    this.a = 30;
+end;
 
 escape x.a + y[0].a + y[1].a;
 ]],
@@ -26356,8 +26408,9 @@ class T with
     var int v;
 do
 end
-var T a;
-a.v = 5;
+var T a with
+    this.v = 5;
+end;
 escape a.v;
 ]],
     run = 5,
@@ -26379,7 +26432,7 @@ escape _V;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a =
         do escape 1; end;
@@ -26393,7 +26446,7 @@ escape a.a;
 Test { [[
 input void OS_START;
 class T with
-    var int v;
+    var int v=0;
 do
     await FOREVER;
 end
@@ -26407,7 +26460,7 @@ escape a.v;
 
 Test { [[
 class T with
-    var int v;
+    var int v=0;
 do
 end
 do
@@ -26546,7 +26599,7 @@ escape 1;
 
 Test { [[
 class T with
-    var int x;
+    var int x=0;
 do
     this.x = await 999ms;
 end
@@ -26650,7 +26703,7 @@ escape a;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 8;
     var int a = 1;
@@ -26670,7 +26723,7 @@ escape t.a;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     this.a = 8;
     do
@@ -26705,7 +26758,7 @@ class T2 with
 do
 end
 class T with
-    var T2&& x;
+    var T2&&? x;
 do
     var T2 xx;
     this.x = &&xx;
@@ -26718,16 +26771,16 @@ escape 1;
 
 Test { [[
 class T3 with
-    var int v3;
+    var int v3=0;
 do
 end
 class T2 with
     var T3 t3;
-    var int v;
+    var int v=0;
 do
 end
 class T with
-    var int v,v2;
+    var int v=0,v2=0;
     var T2 x;
 do
 end
@@ -26742,29 +26795,32 @@ escape a . v + a.x .v + a .v2 + a.x  .  t3 . v3;
 }
 Test { [[
 class T3 with
-    var int v3;
+    var int v3=0;
 do
+    await FOREVER;
 end
 class T2 with
-    var T3&& t3;
-    var int v;
+    var T3&&? t3;
+    var int v=0;
 do
     var T3 t33;
     this.t3 = &&t33;
+    await FOREVER;
 end
 class T with
-    var int v,v2;
-    var T2&& x;
+    var int v=0,v2=0;
+    var T2&&? x;
 do
     var T2 xx;
     x = &&xx;
+    await FOREVER;
 end
 var T a;
 a.v = 5;
-a.x:v = 5;
+a.x!:v = 5;
 a.v2 = 10;
-a.x:t3:v3 = 15;
-escape a . v + a.x :v + a .v2 + a.x  :  t3 : v3;
+a.x!:t3!:v3 = 15;
+escape a . v + a.x! :v + a .v2 + a.x!  :  t3! : v3;
 ]],
     run = 35,
 }
