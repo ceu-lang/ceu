@@ -80,11 +80,11 @@ F = {
         end
         local TO = (to.tag=='VarList' and to) or {to}
         for _, to in ipairs(TO) do
-            to = (to.var and to) or
-                 (to.fst==to.lst and to.fst.var and to.fst)
-            if to then
+            to_ = (to.var and to) or
+                  (to.fst==to.lst and to.fst.var and to.tag~='Op2_.' and to.fst)
+            if to_ then
                 local _, _, fr, _ = unpack(me)
-                F.__Set_bef_one(me, fr, to)
+                F.__Set_bef_one(me, fr, to_)
             end
         end
     end,

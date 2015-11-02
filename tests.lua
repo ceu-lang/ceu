@@ -102,6 +102,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -16352,7 +16353,6 @@ escape *(t.ptr);
     ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
---]===]
 Test { [[
 native @pure _f();
 native do
