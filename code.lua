@@ -325,16 +325,20 @@ _ceu_app->isAlive = 0;
 #endif
 ]])
         else
+            -- TODO: avoid this long traversal only to simulate kill?
             LINE(me, [[
+ceu_sys_org_free(_ceu_app, _ceu_org);
+#ifdef CEU_ORGS_AWAIT
 {
-    tceu_evt evt;
-             evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, &evt,
-                  _ceu_stk,
-                  _ceu_org,
-                  0,
-                  _ceu_org->n);
+    /* signal ok_killed */
+    tceu_kill ps = { _ceu_org, _ceu_org->ret };
+    tceu_evt evt_;
+             evt_.id = CEU_IN__ok_killed;
+             evt_.param = &ps;
+    ceu_sys_go_ex(_ceu_app, &evt_, _ceu_stk,
+                  _ceu_app->data, 0, _ceu_app->data->n);
 }
+#endif
 ]])
         end
         HALT(me)
@@ -620,15 +624,32 @@ if (]]..me.val..[[ == NULL) {
         GOTO(me, '_ceu_app->stk_jmp.lbl')
         LINE(me, [[
     }
+    _ceu_stk->up = &stk_;
 
     /* SETJMP: killing an org
      * The kill might awake a par/or enclosing the call point.
      */
-    tceu_evt evt;
-             evt.id = CEU_IN__CLEAR;
-    _ceu_stk->up = &stk_;
-    ceu_sys_go_ex(_ceu_app, &evt, &stk_,
-                  ]]..org_cast..[[, 0, ]]..org_cast..[[->n);
+    {
+        tceu_evt evt;
+                 evt.id = CEU_IN__CLEAR;
+        ceu_sys_go_ex(_ceu_app, &evt, &stk_,
+                      ]]..org_cast..[[, 0, ]]..org_cast..[[->n);
+    }
+
+    ceu_sys_org_free(_ceu_app,]]..org_cast..[[);
+
+#ifdef CEU_ORGS_AWAIT
+    /* signal ok_killed */
+    {
+        tceu_kill ps = { ]]..org_cast..','..org_cast..[[->ret };
+        tceu_evt evt_;
+                 evt_.id = CEU_IN__ok_killed;
+                 evt_.param = &ps;
+        ceu_sys_go_ex(_ceu_app, &evt_, &stk_,
+                      _ceu_app->data, 0, _ceu_app->data->n);
+    }
+#endif
+
     _ceu_stk->up = NULL;
 }
 ]])
