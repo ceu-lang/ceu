@@ -183,8 +183,7 @@ function CLEAR (me)
                   _ceu_stk,
                   _ceu_org,
                   ]]..me.trails[1]..[[,
-                  ]]..(me.trails[2]+1)..[[);
-                                        /* excludes +1 */
+                  ]]..me.trails[2]..[[);
 }
 
 /* LONGJMP
@@ -333,8 +332,8 @@ _ceu_app->isAlive = 0;
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org,
-                  _ceu_org->n, /* to the end, only free it */
-                  _ceu_org->n+1);
+                  0,
+                  _ceu_org->n);
 }
 ]])
         end
@@ -628,11 +627,8 @@ if (]]..me.val..[[ == NULL) {
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
     _ceu_stk->up = &stk_;
-    ceu_sys_go_ex(_ceu_app, &evt,
-                  &stk_,
-                  ]]..org_cast..[[,
-                  0,
-                  ]]..org_cast..[[->n+1);
+    ceu_sys_go_ex(_ceu_app, &evt, &stk_,
+                  ]]..org_cast..[[, 0, ]]..org_cast..[[->n);
     _ceu_stk->up = NULL;
 }
 ]])
@@ -1137,9 +1133,9 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
         ceu_sys_go_ex(_ceu_app, &evt, &stk_,
                       _ceu_app->data, 0,
 #ifdef CEU_ORGS
-                      _ceu_app->data->n+1
+                      _ceu_app->data->n
 #else
-                      CEU_NTRAILS+1
+                      CEU_NTRAILS
 #endif
                      );
         _ceu_stk->up = NULL;
@@ -1834,9 +1830,9 @@ if (!_ceu_app->isAlive)
                   &stk_,
                   _ceu_app->data, 0,
 #ifdef CEU_ORGS
-                  _ceu_app->data->n+1
+                  _ceu_app->data->n
 #else
-                  CEU_NTRAILS+1
+                  CEU_NTRAILS
 #endif
     );
     _ceu_stk->up = NULL;

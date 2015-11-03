@@ -436,15 +436,12 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
     tceu_ntrl trlI;
     tceu_trl* trl;
     for (trlI=trl0, trl=&org->trls[trlI];
-         ;
-         trlI++,    trl++)
-    {
 #ifdef CEU_CLEAR
-        if (trlI == trlF) {
-            return;    /* bounded trail traversal */
-        }
+         trlI <= trlF
 #endif
-
+         ;
+         trlI++, trl++)
+    {
         /* STK_ORG has been traversed to the end? */
         if (trlI ==
 #if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
@@ -455,16 +452,13 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
            )
         {
 #ifdef CEU_ORGS
-            /* clearing the whole org (trlF==org->n+1)? */
-            if ( org!=app->data && evt->id==CEU_IN__CLEAR &&
-                    (trlF==org->n+1) )
+            /* clearing the whole org */
+            if (org!=app->data && evt->id==CEU_IN__CLEAR &&
+                trl0==0 && trlF==org->n)
             {
                 /* yes, relink and put it in the free list */
                 ceu_sys_org_free(app, org);
 #ifdef CEU_ORGS_AWAIT
-                if (trlF == org->n+1)
-#ifdef CEU_ORGS_NEWS_MALLOC
-#endif
                 {
                     /* signal ok_killed */
                     {
@@ -474,7 +468,7 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                                  evt_.param = &ps;
                         ceu_sys_go_ex(app, &evt_,
                                       stk,
-                                      app->data, 0, app->data->n+1);
+                                      app->data, 0, app->data->n);
                     }
                 }
 #endif
@@ -547,9 +541,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     nxt = cur->nxt;
                         /* save "nxt" before the call, which might kill "cur"
                          * and reset "nxt" for the freelist */
-                    ceu_sys_go_ex(app, evt,
-                                  &stk_,
-                                  cur, 0, cur->n+1);
+                    ceu_sys_go_ex(app, evt, &stk_, cur, 0, cur->n);
                     cur = nxt;
                 }
                 stk->up = NULL;
@@ -691,9 +683,9 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
                       stk,
                       app->data, 0,
 #ifdef CEU_ORGS
-                      app->data->n+1
+                      app->data->n
 #else
-                      CEU_NTRAILS+1
+                      CEU_NTRAILS
 #endif
         );
     }
