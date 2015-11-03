@@ -401,6 +401,11 @@ typedef union tceu_trl {
     struct {
         tceu_nevt evt4;
         tceu_nlbl lbl4;
+#ifdef CEU_ORGS_AWAIT
+#ifdef CEU_ADTS_AWAIT
+        u8        is_org;
+#endif
+#endif
         void*     org_or_adt;
     };
 #endif
@@ -494,6 +499,8 @@ typedef struct {
 typedef struct tceu_kill {
     void*     org_or_adt;
     int       ret;
+    tceu_ntrl t1;
+    tceu_ntrl t2;
 } tceu_kill;
 #endif
 

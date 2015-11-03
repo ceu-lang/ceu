@@ -105,13 +105,16 @@ function NEEDS_CLR (top)
     end
 end
 
-function HAS_FINS ()
+function PARENTS_SET_FIELD (upto, field)
     for n in AST.iter() do
+        if n == upto then
+            break
+        end
         if n.tag == 'Block'    or
            n.tag == 'ParOr'    or
            n.tag == 'Loop'     or
            n.tag == 'SetBlock' then
-            n.needs_clr_fin = true
+            n[field] = true
         end
     end
 end
@@ -197,8 +200,12 @@ F = {
             end
         end
 
+        local top = CLS()
         if me.needs_clr then
-            HAS_FINS()  -- TODO (-ROM): could avoid ors w/o fins
+            PARENTS_SET_FIELD(top, 'needs_clr_fin')  -- TODO (-ROM): could avoid ors w/o fins
+        end
+        if me.has_orgs then
+            PARENTS_SET_FIELD(top, 'has_orgs')
         end
     end,
     Spawn = function (me)

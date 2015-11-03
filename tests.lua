@@ -96,8 +96,6 @@ escape 1;
     run = 1,
 }
 
-do return end
-
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -33780,6 +33778,74 @@ escape 1;
     --run = 1,
 }
 
+-- outer organism dies, nested organism has to awake block
+Test { [[
+native do
+    int V = 1;
+end
+
+class S with
+do
+    await FOREVER;
+end
+
+class T with
+    var S&& s;
+do
+    watching *s do
+        every 1s do
+            _V = _V + 1;
+        end
+    end
+end
+
+par/or do
+    var S s;
+    var T&&? t =
+        spawn T with
+            this.s = &&s;
+        end;
+    await *t!;
+with
+end
+
+await 5s;
+
+escape _V;
+]],
+    run = { ['~>10s']=1 },
+}
+
+Test { [[
+input void OS_START;
+
+class OrgC with
+do
+    await FOREVER;
+end
+
+event void signal;
+var int ret = 0;
+
+par/or do
+    loop do
+        watching signal do
+            do OrgC;
+        end
+        ret = ret + 1;
+    end
+with
+    await OS_START;
+    emit signal;
+end
+
+escape ret;
+]],
+    wrn = true,
+    loop = true,
+    run = 1,
+}
+
 -- DO T
 
 Test { [[
@@ -44409,16 +44475,44 @@ do
     _V = _V+1;
 end
 do
+    pool Item[] is;
+    var U u;
+    spawn Item in is with
+        this.u = &&u;
+    end;
+    await 1s;
+end
+escape _V;
+]],
+    run = { ['~>1s'] = 1 },
+    --fin = 'line 19 : attribution to pointer with greater scope',
+}
+Test { [[
+class U with
+do
+    await FOREVER;
+end
+native do
+    int V = 1;
+end
+class Item with
+    var U&& u;
+do
+    watching *u do
+        await FOREVER;
+    end
+    _V = _V+1;
+end
+do
     var U u;
     spawn Item with
         this.u = &&u;
     end;
     await 1s;
 end
-_assert(_V == 2);
-escape 1;
+escape _V;
 ]],
-    run = { ['~>1s'] = 1 },
+    run = { ['~>1s'] = 2 },
     --fin = 'line 19 : attribution to pointer with greater scope',
 }
 
@@ -44701,8 +44795,8 @@ escape _V + 1;
     _ana = {
         --acc = 3,
     },
-    --run = { ['~>B']=203, }
-    run = { ['~>B']=204, }
+    run = { ['~>B']=203, }
+    --run = { ['~>B']=204, }
 }
 Test { [[
 class Unit with
@@ -44758,8 +44852,8 @@ watching *ptr do
 end
 escape _V + 1;
 ]],
-    run = 21,
-    --run = 20,
+    --run = 21,
+    run = 20,
 }
 
 Test { [[
@@ -44782,8 +44876,8 @@ watching *ok1! do
 end
 escape 1;
 ]],
-    --run = 11,
-    run = 1,
+    run = 11,
+    --run = 1,
 }
 
 Test { [[
@@ -44813,8 +44907,8 @@ escape _V + 1;  // this one executes because of strong abortion in the watching
     _ana = {
         acc = true,
     },
-    --run = 11,
-    run = 12,
+    run = 11,
+    --run = 12,
 }
 
 Test { [[
@@ -45115,8 +45209,8 @@ watching *i do
 end
 escape _V + 1;
 ]],
-    --run = 100,
-    run = 101,
+    run = 100,
+    --run = 101,
 }
 
 Test { [[
@@ -45151,8 +45245,8 @@ watching *i do
 end
 escape _V + 1;
 ]],
-    --run = 100,
-    run = 101,
+    run = 100,
+    --run = 101,
 }
 
 Test { [[
@@ -45196,8 +45290,8 @@ watching *i1 do
 end
 escape _V+1;
 ]],
-    run = 100,
-    --run = 99,
+    --run = 100,
+    run = 99,
 }
 
 Test { [[
@@ -45248,8 +45342,8 @@ escape _V + 1;
     _ana = {
         acc = true,
     },
-    --run = 165,
-    run = 166,
+    run = 165,
+    --run = 166,
 }
 
 Test { [[
@@ -45287,8 +45381,8 @@ end
 escape _V+1;
 ]],
     wrn = true,
-    --run = 160,
-    run = 161,
+    run = 160,
+    --run = 161,
 }
 
 Test { [[
@@ -45324,8 +45418,8 @@ watching *i do
 end
 escape _V+1;
 ]],
-    --run = 160,
-    run = 161,
+    run = 160,
+    --run = 161,
 }
 
 Test { [[
@@ -45409,8 +45503,8 @@ end
 escape _V+1;
 ]],
     wrn = true,
-    --run = 630,
-    run = 631,
+    run = 630,
+    --run = 631,
 }
 
 Test { [[
@@ -48427,10 +48521,6 @@ escape e.X.d.x;
     run = 10,
 }
 
-print'====================================='
-print'TODO: not binded'
-print'====================================='
-io.read()
 Test { [[
 data D with
     var int x;
@@ -48452,8 +48542,7 @@ end
 
 escape e.X.d.x;
 ]],
-    todo = true,
-    ref = 'line 16 : attribution to reference with greater scope',
+    ref = 'line 16 : invalid attribution : l-value already bounded',
 }
 Test { [[
 data D with
@@ -50883,10 +50972,6 @@ escape vs[0].v + vs[1].v + vs[2].v;
     run = 6,
 }
 
-print'====================================='
-print'TODO: rebinding'
-print'====================================='
-io.read()
 Test { [[
 data Test with
     var u8& v;
@@ -50898,8 +50983,8 @@ t.v = &v;       // ERRO
 v = 10;
 escape t.v;
 ]],
-    todo = true,
-    run = 1,
+    ref = 'line 7 : invalid attribution : l-value already bounded',
+    --run = 1,
 }
 
 Test { [[
@@ -53266,12 +53351,12 @@ with
                     _ceu_out_assert_msg(0, "not implemented");
                 end
             end
-            escape 0;
+            escape 2;
         end;
     escape ret;
 end
 
-escape 0;
+escape 1;
 ]],
     _ana = {acc=true},
     wrn = true,
@@ -54295,6 +54380,50 @@ or
     end
 end
 
+pool List[] ls;
+ls = new List.CONS(1,
+            List.CONS(2,
+                List.HOLD()));
+
+var int ret = 0;
+
+do
+    traverse l in &&ls do
+        ret = ret + 1;
+        watching *l do
+            if l:HOLD then
+                finalize with
+                    ret = ret + 1;
+                end
+                await FOREVER;
+            else
+                par/or do
+                    traverse &&l:CONS.tail;
+                with
+                    await 1s;
+                end
+            end
+        end
+    end
+end
+
+escape ret;
+]],
+    wrn = 'line 23 : unbounded recursive spawn',
+    run = { ['~>5s']=4 },
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag HOLD;
+or
+    tag CONS with
+        var int   head;
+        var List  tail;
+    end
+end
+
 pool List[10] ls = new List.CONS(1,
             List.CONS(2,
                 List.HOLD()));
@@ -54314,6 +54443,48 @@ traverse l in &&ls do
                 traverse &&l:CONS.tail;
             with
                 await 1s;
+            end
+        end
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=4 },
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag HOLD;
+or
+    tag CONS with
+        var int   head;
+        var List  tail;
+    end
+end
+
+pool List[10] ls = new List.CONS(1,
+            List.CONS(2,
+                List.HOLD()));
+
+var int ret = 0;
+
+do
+    traverse l in &&ls do
+        ret = ret + 1;
+        watching *l do
+            if l:HOLD then
+                finalize with
+                    ret = ret + 1;
+                end
+                await FOREVER;
+            else
+                par/or do
+                    traverse &&l:CONS.tail;
+                with
+                    await 1s;
+                end
             end
         end
     end
@@ -54770,7 +54941,7 @@ class C with
 do
     pool T[] ts; // = new T.NEXT(T.NIL());
     var int ret =
-        traverse t in ts do
+        traverse t in &&ts do
             escape this.v;
         end;
     escape ret;
@@ -54783,7 +54954,6 @@ var int v =
 
 escape v;
 ]],
-    todo = true,
     run = 10,
 }
 
@@ -54935,6 +55105,7 @@ escape 1;
 }
 
 -- par/or kills (2) which should be aborted
+
 Test { [[
 data Exp with
     tag NIL;
@@ -55773,6 +55944,8 @@ do
                 this.idx = idx + 1;
             end;
         end
+    else
+        await OS_START;
     end
 end
 

@@ -82,6 +82,11 @@ _ceu_trl->evto  = ]]..t.evto..[[;
 
     if t.org_or_adt then
         LINE(me, [[
+#ifdef CEU_ORGS_AWAIT
+#ifdef CEU_ADTS_AWAIT
+_ceu_trl->is_org = ]]..t.is_org..[[;
+#endif
+#endif
 _ceu_trl->org_or_adt = ]]..t.org_or_adt..[[;
 ]])
     end
@@ -185,7 +190,26 @@ function CLEAR (me)
                   ]]..me.trails[1]..[[,
                   ]]..(me.trails[2]+1)..[[);
 }
+]])
 
+    if me.has_orgs then
+        -- TODO: only if contains orgs of awaited classes
+        LINE(me, [[
+#ifdef CEU_ORGS_AWAIT
+/* signal ok_killed */
+{
+    tceu_kill ps = { _ceu_org, _ceu_org->ret, ]]..me.trails[1]..','..me.trails[2]..[[ };
+    tceu_evt evt_;
+             evt_.id = CEU_IN__ok_killed;
+             evt_.param = &ps;
+    ceu_sys_go_ex(_ceu_app, &evt_, _ceu_stk,
+                  _ceu_app->data, 0, _ceu_app->data->n);
+}
+#endif
+]])
+    end
+
+    LINE(me, [[
 /* LONGJMP
  * Block termination: we will abort all trails between [t1,t2].
  * Return status=1 to distinguish from longjmp from organism termination.
@@ -331,7 +355,7 @@ ceu_sys_org_free(_ceu_app, _ceu_org);
 #ifdef CEU_ORGS_AWAIT
 {
     /* signal ok_killed */
-    tceu_kill ps = { _ceu_org, _ceu_org->ret };
+    tceu_kill ps = { _ceu_org, _ceu_org->ret, 0, _ceu_org->n-1 };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
@@ -641,7 +665,7 @@ if (]]..me.val..[[ == NULL) {
 #ifdef CEU_ORGS_AWAIT
     /* signal ok_killed */
     {
-        tceu_kill ps = { ]]..org_cast..','..org_cast..[[->ret };
+        tceu_kill ps = { ]]..org_cast..','..org_cast..'->ret, 0, '..org_cast..[[->n-1  };
         tceu_evt evt_;
                  evt_.id = CEU_IN__ok_killed;
                  evt_.param = &ps;
@@ -813,6 +837,11 @@ _ceu_org->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
 /*  RESET OPT-ORG TO NULL */
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
+#ifdef CEU_ORGS_AWAIT
+#ifdef CEU_ADTS_AWAIT
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].is_org = 1;
+#endif
+#endif
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
 ]])
                 end
@@ -1899,12 +1928,20 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
         end
 
         local no = LABEL_NO(me)
+
+        local is_org, org_or_adt
+        if e[1] == '_ok_killed' then
+            local _,_,v = unpack(e)
+            is_org = (ENV.clss[TP.id(v.tp)] and 1 or 0)
+            org_or_adt = '(void*)'..V(v,'lval')
+        end
+
         HALT(me, {
             no  = no,
             evt = 'CEU_IN_'..e.evt.id..suf,
             lbl = me.lbl.id,
-            org_or_adt = (e[1] == '_ok_killed') and
-                         '(void*)'..V(e[3],'lval')
+            is_org = is_org,
+            org_or_adt = org_or_adt,
         })
 
         if dt then

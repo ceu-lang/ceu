@@ -210,9 +210,13 @@ void ceu_stack_dump (tceu_app* app) {
  * ;
  */
 #ifdef CEU_ORGS
-static int ceu_org_is_cleared (void* me, void* clr_org,
+static int ceu_org_is_cleared (tceu_org* me, tceu_org* clr_org,
                                tceu_ntrl clr_t1, tceu_ntrl clr_t2)
 {
+    if (me == clr_org) {
+        return (clr_t1==0 && clr_t2==me->n-1);
+    }
+
     tceu_org* cur_org;
     for (cur_org=me; cur_org!=NULL; cur_org=cur_org->parent_org) {
         if (cur_org->parent_org == clr_org) {
@@ -539,11 +543,26 @@ if (evt->param != NULL) {
             (evt->id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR)
         ||
 #endif
-#ifdef CEU_ORGS_OR_ADTS_AWAIT
+#ifdef CEU_ORGS_AWAIT
             /* if */
             (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
+#ifdef CEU_ADTS_AWAIT
+                trl->is_org &&
+#endif
                 (trl->org_or_adt == NULL || /* for option ptrs, init'd w/ NULL  */
-                 trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt))
+                 ceu_org_is_cleared(trl->org_or_adt,
+                    ((tceu_kill*)evt->param)->org_or_adt,
+                    ((tceu_kill*)evt->param)->t1,
+                    ((tceu_kill*)evt->param)->t2)))
+        ||
+#endif
+#ifdef CEU_ADTS_AWAIT
+            /* if */
+            (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
+#ifdef CEU_ORGS_AWAIT
+                !trl->is_org &&
+#endif
+                trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt)
         ||
 #endif
             /* if evt->id matches awaiting trail */
@@ -609,19 +628,6 @@ SPC(1); printf("<<< NO\n");
     if (evt->id==CEU_IN__CLEAR && org!=app->data && trl0==0 && trlF==org->n) {
         /* yes, relink and put it in the free list */
         ceu_sys_org_free(app, org);
-#ifdef CEU_ORGS_AWAIT
-        {
-            /* signal ok_killed */
-            {
-                tceu_kill ps = { org, org->ret };
-                tceu_evt evt_;
-                         evt_.id = CEU_IN__ok_killed;
-                         evt_.param = &ps;
-                return ceu_sys_go_ex(app, &evt_, stk,
-                                     app->data, 0, app->data->n);
-            }
-        }
-#endif
     }
 #endif
 }
