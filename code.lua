@@ -183,7 +183,7 @@ function CLEAR (me)
                   _ceu_stk,
                   _ceu_org,
                   &_ceu_org->trls[ ]]..me.trails[1]..[[ ],
-                  &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
+                  ]]..(me.trails[2]+1)..[[);
                                         /* excludes +1 */
 }
 
@@ -334,7 +334,7 @@ _ceu_app->isAlive = 0;
                   _ceu_stk,
                   _ceu_org,
                   &_ceu_org->trls[_ceu_org->n], /* to the end, only free it */
-                  &_ceu_org->trls[_ceu_org->n+1]);
+                  _ceu_org->n+1);
 }
 ]])
         end
@@ -632,7 +632,7 @@ if (]]..me.val..[[ == NULL) {
                   &stk_,
                   ]]..org_cast..[[,
                   &]]..org_cast..[[->trls[0],
-                  &]]..org_cast..[[->trls[ ]]..org_cast..[[->n+1 ]);
+                  ]]..org_cast..[[->n+1);
     _ceu_stk->up = NULL;
 }
 ]])
@@ -1135,7 +1135,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
                  evt.param = &__ceu_old;
         _ceu_stk->up = &stk_;
         ceu_sys_go_ex(_ceu_app, &evt, &stk_,
-                      _ceu_app->data, &_ceu_app->data->trls[0], NULL);
+                      _ceu_app->data, &_ceu_app->data->trls[0], _ceu_app->data->n+1);
         _ceu_stk->up = NULL;
     }
 }
@@ -1826,7 +1826,13 @@ if (!_ceu_app->isAlive)
     _ceu_stk->up = &stk_;
     ceu_sys_go_ex(_ceu_app, &evt,
                   &stk_,
-                  _ceu_app->data, &_ceu_app->data->trls[0], NULL);
+                  _ceu_app->data, &_ceu_app->data->trls[0],
+#ifdef CEU_ORGS
+                  _ceu_app->data->n+1
+#else
+                  CEU_NTRAILS+1
+#endif
+    );
     _ceu_stk->up = NULL;
 }
 ]])
