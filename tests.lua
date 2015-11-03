@@ -116,6 +116,7 @@ escape *(r.x);
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -34682,7 +34683,6 @@ escape 1;
     run = 1,
 }
 
---]===]
 Test { [[
 input void OS_START;
 class T with
@@ -35166,12 +35166,12 @@ escape 10;
 
 Test { [[
 class T with
-    var int v;
+    var int v=0;
 do
     await FOREVER;
 end
 
-var T&& a;
+var T&& a=null;
 do
     var T&&? b = spawn T;
     b!:v = 10;
@@ -35181,21 +35181,41 @@ escape a:v;
 ]],
     --fin = 'line 10 : attribution requires `finalize´',
     --fin = 'line 12 : pointer access across `await´',
-    run = 10,
+    --run = 10,
+    fin = 'line 13 : unsafe access to pointer "a" across `spawn´ (tests.lua : 9)',
 }
 Test { [[
 class T with
-    var int v;
+    var int v=0;
 do
     await FOREVER;
 end
 
-var T&& a;
+var T&&? a;
 do
     var T&&? b = spawn T;
     b!:v = 10;
     a = b!;
-    escape a:v;
+end
+escape a!:v;
+]],
+    --fin = 'line 10 : attribution requires `finalize´',
+    --fin = 'line 12 : pointer access across `await´',
+    run = 10,
+}
+Test { [[
+class T with
+    var int v=0;
+do
+    await FOREVER;
+end
+
+var T&&? a;
+do
+    var T&&? b = spawn T;
+    b!:v = 10;
+    a = b!;
+    escape a!:v;
 end
 ]],
     --fin = 'line 10 : attribution requires `finalize´',
@@ -35204,11 +35224,11 @@ end
 
 Test { [[
 class T with
-    var int v;
+    var int v=0;
 do
 end
 
-var T&& a;
+var T&& a=null;
 do
     var T&&? b = spawn T;
     b!:v = 10;
@@ -35217,34 +35237,26 @@ end
 await 1s;
 escape a:v;
 ]],
-    fin = 'line 13 : unsafe access to pointer "a" across `await´',
+    fin = 'line 13 : unsafe access to pointer "a" across `spawn´ (tests.lua : 8)'
 }
 
 Test { [[
 class T with
-    var int v;
+    var int v=0;
 do
     await FOREVER;
 end
 
-var T&& a;
+var T&& a=null;
 var T aa;
 do
     var T&&? b = spawn T;
     b!:v = 10;
-    finalize
         a = b!;
-    with
-        do
-            aa.v = b!:v;
-            a = &&aa;
-        end
-    end
 end
 escape a:v;
 ]],
-    todo = 'free runs after block fin (correct leak!)',
-    run = 10,
+    fin = 'line 14 : unsafe access to pointer "a" across `spawn´ (tests.lua : 10)',
 }
 
 Test { [[
@@ -35253,7 +35265,7 @@ native do
     int V = 1;
 end
 class T with
-    var int v;
+    var int v=0;
 do
     finalize with   // enters!
         _V = 10;
@@ -35261,7 +35273,7 @@ do
     await FOREVER;
 end
 
-var T&& a;
+var T&& a=null;
 var T aa;
 do
     pool T[] ts;
@@ -35281,7 +35293,7 @@ native do
     int V = 0;
 end
 class T with
-    var int v;
+    var int v=0;
 do
     finalize with
         _V = 10;
@@ -35289,7 +35301,7 @@ do
     await FOREVER;
 end
 
-var T&& a;
+var T&& a=null;
 var T aa;
 do
     pool T[] ts;
@@ -35309,7 +35321,7 @@ native do
     int V = 5;
 end
 class T with
-    var int v;
+    var int v=0;
 do
     finalize with   // enters!
         _V = 10;
@@ -35317,7 +35329,7 @@ do
     await FOREVER;
 end
 
-var T&& a;
+var T&& a=null;
 do
     pool T[] ts;
     var T&&? b = spawn T in ts;
@@ -35335,7 +35347,7 @@ native do
     int V = 5;
 end
 class T with
-    var int v;
+    var int v=0;
 do
     finalize with
         _V = 10;
@@ -35343,7 +35355,7 @@ do
     await FOREVER;
 end
 
-var T&& a;
+var T&& a=null;
 do
     pool T[] ts;
     var T&&? b = spawn T in ts;
@@ -35357,9 +35369,9 @@ escape _V;
 }
 Test { [[
 class T with
-    var int&& i1;
+    var int&& i1=null;
 do
-    var int i2;
+    var int i2=0;
     i1 = &&i2;
 end
 var T a;
@@ -35370,7 +35382,7 @@ escape 10;
 
 Test { [[
 class T with do end
-var T&& t1;
+var T&& t1=null;
 do
 do
     var T t2;
@@ -35385,7 +35397,7 @@ escape 10;
 
 Test { [[
 class T with do end
-var T&& t1;
+var T&& t1=null;
 do
 do
     var T t2;
@@ -35439,7 +35451,7 @@ native do
 end
 
 class T with
-    var int a;
+    var int a=0;
 do
     finalize with
         _V = 1;
@@ -35471,7 +35483,7 @@ native do
 end
 
 class T with
-    var int a;
+    var int a=0;
 do
     finalize with
         _V = 1;
@@ -35505,7 +35517,7 @@ native do
 end
 
 class T with
-    var int a;
+    var int a=0;
 do
     finalize with
         _V = 1;
@@ -35551,7 +35563,7 @@ do
 end
 
 class U with
-    var V&& v;
+
 do
     var V&&? vv = spawn V;
 end
@@ -35574,13 +35586,13 @@ do
 end
 
 class U with
-    var V&& v;
+ 
 do
     var V&&? vv = spawn V;
 end
 
 class T with
-    var U&& u;
+    var U&& u=null;
 do
     var U uu;
     this.u = &&uu;
@@ -35611,7 +35623,7 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
@@ -35649,14 +35661,14 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U&& u;
+    var U&& u=null;
 do
     var U uu;
     u = &&uu;
@@ -35723,7 +35735,7 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V vv1;
     v = &&vv1;
@@ -35732,7 +35744,7 @@ do
 end
 
 class T with
-    var U&& u;
+    var U&& u=null;
 do
     var U uu;
     u = &&uu;
@@ -35768,7 +35780,7 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
@@ -35810,14 +35822,14 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U&& u;
+    var U&& u=null;
 do
     var U uu;
     u = &&uu;
@@ -35891,7 +35903,7 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
@@ -35934,14 +35946,14 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U&& u;
+    var U&& u=null;
 do
     var U uu;
     u = &&uu;
@@ -35980,7 +35992,7 @@ do
 end
 
 class U with
-    var V&& x;
+    var V&& x=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
@@ -36025,14 +36037,14 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U&& u;
+    var U&& u=null;
 do
     var U uu;
     u = &&uu;
@@ -36072,7 +36084,7 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
@@ -36120,7 +36132,7 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
@@ -36169,14 +36181,14 @@ do
 end
 
 class U with
-    var V&& v;
+    var V&& v=null;
 do
     var V&&? vv = spawn V;
     await FOREVER;
 end
 
 class T with
-    var U&& u;
+    var U&& u=null;
 do
     var U uu;
     u = &&uu;
@@ -36235,7 +36247,7 @@ do
 end
 
 class T with
-    var U&& u;
+    var U&& u=null;
 do
     await OS_START;
     u:v = spawn V;
@@ -36266,7 +36278,7 @@ do
 end
 
 class T with
-    var U&& u;
+    var U&& u=null;
 do
     await OS_START;
     u:v = spawn V;
@@ -36303,7 +36315,7 @@ do
 end
 
 class T with
-    var U&& u;
+    var U&& u=null;
 do
     await 1s;
     u:v = spawn V;
@@ -36534,7 +36546,8 @@ escape 1;
 ]],
     --fin = 'line 10 : attribution requires `finalize´',
     --run = 1,
-    ref = 'line 10 : attribution to reference with greater scope',
+    --ref = 'line 10 : attribution to reference with greater scope',
+    ref = 'line 10 : invalid attribution : variable "u" has narrower scope its destination',
 }
 
 Test { [[
@@ -36678,7 +36691,7 @@ native do
     int V = 0;
 end
 class T with
-    var int v;
+    var int v=0;
 do
     finalize with
         do
@@ -36722,7 +36735,7 @@ escape t!.v;
 
 Test { [[
 class T with
-    var int v;
+    var int v=0;
 do
     await FOREVER;
 end
@@ -37199,7 +37212,7 @@ class Unit with
     event int move;
 do
 end
-var Unit&& u;
+var Unit&& u=null;
 do
     var Unit unit;
     u = &&unit;
@@ -37256,7 +37269,7 @@ end
 
 event int a;
 
-var int ret;
+var int ret=0;
 par/or do
     pause/if a do
         var T t;
@@ -38174,8 +38187,8 @@ Test { [[
 interface Global with
     var int&& a;
 end
-var int&& a;
-var int&& b;
+var int&& a=null;
+var int&& b=null;
 b = global:a;
 do
     var int&& c;
@@ -38189,8 +38202,8 @@ Test { [[
 interface Global with
     var int&& a;
 end
-var int&& a;
-var int&& b;
+var int&& a=null;
+var int&& b=null;
 global:a = b;       // don't use global
 do
     var int&& c=null;
@@ -38206,11 +38219,11 @@ Test { [[
 interface Global with
     var int&& a;
 end
-var int&& a;
-var int&& b;
+var int&& a=null;
+var int&& b=null;
 global:a = b;       // don't use global
 do
-    var int&& c;
+    var int&& c=null;
     await 1s;
     global:a = c;
 end
@@ -38240,7 +38253,7 @@ interface Global with
 end
 class T with
 do
-    var int&& b;
+    var int&& b=null;
     global:a = b;
 end
 var int&& a;
@@ -38279,7 +38292,7 @@ event int a;
 var int aa;
 class T with
     event int a;
-    var int aa;
+    var int aa=0;
 do
     aa = await global:a;
 end
@@ -38293,7 +38306,7 @@ escape t.aa;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
 do
     a = global:a;
 end
@@ -38312,7 +38325,7 @@ interface Global with
     var int a;
 end
 class T with
-    var int a;
+    var int a=0;
 do
     a = global:a;
 end
@@ -38333,7 +38346,7 @@ interface Global with
     var int a;
 end
 class T with
-    var int a;
+    var int a=0;
 do
     a = global:a;
 end
@@ -38361,7 +38374,7 @@ interface Global with
     var int a;
 end
 class T with
-    var int a;
+    var int a=0;
 do
     a = global:a;
     _attr(this);
@@ -38666,7 +38679,7 @@ Test { [[
 input void OS_START;
 class T with
     event int a;
-    var int aa;
+    var int aa=0;
 do
     aa = 10;
 end
@@ -38693,7 +38706,7 @@ Test { [[
 input void OS_START;
 class T with
     event int a;
-    var int aa;
+    var int aa=0;
 do
     aa = 10;
 end
@@ -38720,9 +38733,9 @@ escape i:aa + j:aa + t.aa;
 Test { [[
 input void OS_START;
 class T with
-    var int v;
-    var int&& x;
-    var int a;
+    var int v=0;
+    var int&& x=null;
+    var int a=0;
 do
     a = 10;
     v = 1;
@@ -38748,9 +38761,9 @@ escape i:a + j:a + t.a + i:v + t.v;
 Test { [[
 input void OS_START;
 class T with
-    var int v;
-    var int&& x;
-    var int a;
+    var int v=0;
+    var int&& x=null;
+    var int a=0;
 do
     a = 10;
     v = 1;
@@ -38834,6 +38847,7 @@ interface I with
 end
 class T with
     interface I;
+    var int a=0;
 do
     a = 10;
 end
@@ -39230,8 +39244,9 @@ escape 1;
 }
 
 Test { [[
+native @plain _pkt_t;
 class Forwarder with
-    var _pkt_t out;
+    var _pkt_t out = _pkt_t();
 do
 end
 
@@ -39292,7 +39307,7 @@ Test { [[
 interface I with end
 class T with do end
 pool T[] ts;
-var I&& p;
+var I&& p=null;
 do
     loop i in ts do
         p = i;
@@ -39332,7 +39347,7 @@ escape ret;
 Test { [[
 class Unit with do end
 pool Unit[] us;
-var Unit&& p;
+var Unit&& p=null;
 do
     loop i in us do
         p = i;
@@ -39421,13 +39436,14 @@ end
 
 class T with
     interface I;
+    var int v=0;
 do
     await FOREVER;
 end
 
 class U with
     var int z;
-    var int v;
+    var int v=0;
 do
     await FOREVER;
 end

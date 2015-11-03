@@ -49,7 +49,26 @@ F = {
         then
             -- no need for initialization
         else
-            VARS_UNINIT[me.var] = me
+            -- prioritize non-interface declarations
+            local blk = AST.par(me,'BlockI')
+            if blk then
+                blk.__had = blk.__had or {}
+                if blk.__had[me.var.id] then
+                    if not me.isImp then
+                        for old in pairs(VARS_UNINIT) do
+                            if old.id == me.var.id then
+                                VARS_UNINIT[old] = nil  -- remove existing isImp
+                            end
+                        end
+                        VARS_UNINIT[me.var] = me
+                    end
+                else
+                    VARS_UNINIT[me.var] = me
+                end
+                blk.__had[me.var.id] = true
+            else
+                VARS_UNINIT[me.var] = me
+            end
         end
 
         -- ensures that global "ref" vars are initialized
