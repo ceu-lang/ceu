@@ -452,13 +452,15 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
             ])
         {
 #ifdef CEU_ORGS
-            /* clearing the whole org (stop==NULL)? */
-            if (org!=app->data && evt->id==CEU_IN__CLEAR && stop==NULL) {
+            /* clearing the whole org (stop==NULL||org->n)? */
+            if ( org!=app->data && evt->id==CEU_IN__CLEAR &&
+                    (stop==NULL || stop==&org->trls[org->n+1]) )
+            {
                 /* yes, relink and put it in the free list */
                 ceu_sys_org_free(app, org);
 #ifdef CEU_ORGS_AWAIT
+                if (stop == &org->trls[org->n+1])
 #ifdef CEU_ORGS_NEWS_MALLOC
-                if (!app->dont_emit_kill)
 #endif
                 {
                     /* signal ok_killed */
@@ -517,7 +519,6 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     has_aborted = 1;            /* detected abortion */
                     if (evt->id==CEU_IN__CLEAR) {
                         cur = nxt;              /* continue from nxt */
-                        app->dont_emit_kill = 1;/* but stop emitting ok_killed */
                     } else {
                         cur = NULL;             /* safe to abort now */
                     }
@@ -552,7 +553,6 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
 #if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
                 if (has_aborted) {
-                    app->dont_emit_kill = 0;
                     app->stk_jmp.trl->lbl = app->stk_jmp.lbl;
                     app->code(app, evt, app->stk_jmp.org, app->stk_jmp.trl, stk);
                     return;

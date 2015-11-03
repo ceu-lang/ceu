@@ -334,7 +334,7 @@ _ceu_app->isAlive = 0;
                   _ceu_stk,
                   _ceu_org,
                   &_ceu_org->trls[_ceu_org->n], /* to the end, only free it */
-                  NULL);
+                  &_ceu_org->trls[_ceu_org->n+1]);
 }
 ]])
         end
@@ -607,6 +607,7 @@ if (]]..me.val..[[ == NULL) {
 ]])
         end
 
+        local org_cast = '((tceu_org*)'..V(org,'lval')..')'
         LINE(me, [[
 {
     tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
@@ -629,9 +630,9 @@ if (]]..me.val..[[ == NULL) {
     _ceu_stk->up = &stk_;
     ceu_sys_go_ex(_ceu_app, &evt,
                   &stk_,
-                  (tceu_org*)]]..V(org,'lval')..[[,
-                  &((tceu_org*)]]..V(org,'lval')..[[)->trls[0],
-                  NULL);
+                  ]]..org_cast..[[,
+                  &]]..org_cast..[[->trls[0],
+                  &]]..org_cast..[[->trls[ ]]..org_cast..[[->n+1 ]);
     _ceu_stk->up = NULL;
 }
 ]])
