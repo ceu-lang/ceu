@@ -40,12 +40,14 @@ local IF_INITS = {}
 F = {
     Dcl_pool = 'Dcl_var',
     Dcl_var = function (me)
-        if string.sub(me.var.id,1,1)=='_'
-        or me.var.__env_is_loop_var         -- loop i ... end
+        if me.var.id=='_ret'
+        or me.var.id=='_out'
+        or string.match(me.var.id, '^_+%d*$')   -- var t _;
+        or me.var.__env_is_loop_var             -- loop i ... end
         or me.isEvery
-        or (TP.check(me.var.tp,'[]') and    -- var int[] vec;
+        or (TP.check(me.var.tp,'[]') and        -- var int[] vec;
             (not TP.check(me.var.tp,'[]','&')))
-        or me.var.cls                       -- var T t;
+        or me.var.cls                           -- var T t;
         then
             -- no need for initialization
         else
@@ -280,8 +282,8 @@ F = {
     Async_pre   = '__compound',
     Sync_pre    = '__compound',
     Thread_pre  = '__compound',
-    Spawn_pre   = '__compound',
     Loop_pre    = '__compound',
+    Spawn_pre   = '__compound',
     Do_pre = function (me)
         if not me.__adj_is_do_org then
             F.__compound(me)
@@ -303,6 +305,11 @@ F = {
             if setblk and me.__depth>setblk.__depth then
                 -- Statement is inside a block assignment to "v":
                 --      var int v = do <...> end
+                -- No problem because "v" cannot be accessed inside it.
+            elseif AST.par(var.blk,'Dcl_cls') ~= AST.par(me,'Dcl_cls') then
+                -- Statement is in another class declared inline:
+                --      var int v;
+                --      class with <...> do <...> end
                 -- No problem because "v" cannot be accessed inside it.
             elseif TP.check(var.tp,'?') then
                 -- initialization is not obligatory, but not it is not

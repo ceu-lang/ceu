@@ -138,6 +138,7 @@ escape e.X.d.x;
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -16403,7 +16404,8 @@ var _t t;
 t.ptr = &_f(&&v);
 escape *(t.ptr);
 ]],
-    ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    env = 'line 12 : invalid attribution : l-value cannot hold an alias',
+    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
 
@@ -42205,7 +42207,7 @@ var int x = &v;
 ptr:ceu = &v;
 escape *((int&&)(ptr:ceu));
 ]],
-    env = 'line 10 : invalid attribution : not aliasable',
+    env = 'line 10 : invalid attribution : l-value cannot hold an alias',
     --ref = 'line 9 : invalid attribution : l-value already bounded',
     --run = 10,
 }
@@ -42222,7 +42224,7 @@ var int v = 10;
 ptr:ceu = &v;
 escape *((int&&)(ptr:ceu));
 ]],
-    env = 'line 10 : invalid attribution : not aliasable',
+    env = 'line 10 : invalid attribution : l-value cannot hold an alias',
     --ref = 'line 9 : invalid attribution : l-value already bounded',
     --run = 10,
 }
@@ -42248,7 +42250,7 @@ ptr:xxx = &c;
 escape ((C&&)ptr:xxx):v;
 ]],
     --run = 10,
-    env = 'line 16 : invalid attribution : not aliasable',
+    env = 'line 16 : invalid attribution : l-value cannot hold an alias',
     --ref = 'line 16 : invalid attribution : l-value already bounded',
 }
 
@@ -42275,7 +42277,7 @@ emit ((C&&)ptr:xxx):e => 1;
 
 escape ((C&&)ptr:xxx):v;
 ]],
-    env = 'line 17 : invalid attribution : not aliasable',
+    env = 'line 17 : invalid attribution : l-value cannot hold an alias',
     --run = 10,
 }
 Test { [[
@@ -48649,7 +48651,6 @@ end
 }
 
 -- ALGEBRAIC DATATYPES (ADTS)
---]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -48709,6 +48710,7 @@ end
 
 --[==[
 -- HERE:
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -49577,7 +49579,6 @@ end
 -- USE DATATYPES DEFINED ABOVE ("DATA")
 
 -- simple test
-]==]
 Test { DATA..[[
 escape 1;
 ]],
@@ -50603,7 +50604,8 @@ var int&? i = &v1;
 i = &v2;
 escape v1;
 ]],
-    ref = 'line 4 : invalid attribution : l-value already bounded',
+    ref = 'line 4 : invalid attribution : variable "i" is already bound',
+    --ref = 'line 4 : invalid attribution : l-value already bounded',
 }
 
 Test { [[
@@ -50751,8 +50753,8 @@ native/pre do
 end
 native @pure _id();
 
-var _t t;
-    t.x = 11;
+native @plain _t;
+var _t t = _t(11);
 
 var _t&? t_ = &t;
 
@@ -50952,7 +50954,7 @@ escape _fff(ui.bg_clr!).v;
 }
 
 Test { [[
-var int ret;
+var int ret=0;
 var int&? p = &ret;
 p! = p!;
 escape 1;
@@ -51236,7 +51238,7 @@ end
 
 class U with
     var T& t;
-    var int ret;
+    var int ret=0;
 do
     this.ret = t.x!;
 end
@@ -51262,7 +51264,7 @@ end
 
 class U with
     var T& t;
-    var int ret;
+    var int ret=0;
 do
     this.ret = t.x!;
 end
@@ -51825,23 +51827,17 @@ escape vs[0].v + vs[1].v + vs[2].v;
     run = 6,
 }
 
-print'====================================='
-print'TODO: rebinding'
-print'====================================='
-io.read()
 Test { [[
 data Test with
     var u8& v;
 end
 
 var u8 v = 7;
-var Test t;
-t.v = &v;       // ERRO
+var Test t=Test(&v);
 v = 10;
 escape t.v;
 ]],
-    todo = true,
-    run = 1,
+    run = 10,
 }
 
 Test { [[
@@ -52189,7 +52185,8 @@ if false then
 end
 escape 1;
 ]],
-    run = 1,
+    ref = 'line 10 : invalid access to uninitialized variable "n" (declared at tests.lua:8)',
+    --run = 1,
 }
 Test { [[
 data Tree with
@@ -54196,7 +54193,7 @@ with
                     escape widget:V.v;
 
                 else/if widget:ROW then
-                    var int v1, v2;
+                    var int v1=0, v2=0;
                     par/and do
                         v1 = traverse &&widget:ROW.w1;
                     with
@@ -54897,8 +54894,8 @@ cmds = new Command.REPEAT(2,
                                         Command.AWAIT(500)))))))));
 
 class Turtle with
-    var int angle;
-    var int pos_x, pos_y;
+    var int angle=0;
+    var int pos_x=0, pos_y=0;
 do
     await FOREVER;
 end
@@ -55999,7 +55996,6 @@ end
 }
 
 Test { [[
-var int&& vs;
 traverse v in [10] do
     traverse 1;
 end

@@ -495,7 +495,7 @@ me.blk_body = me.blk_body or blk_body
     --      <constr>
     --  end;
     --      ... becomes ...
-    --  do
+    --  ret = do
     --      var Scope s;
     --      var Body*? _body_;
     --      _body_ = spawn Body in _bodies with
@@ -505,9 +505,10 @@ me.blk_body = me.blk_body or blk_body
     --          <constr>
     --      end;
     --      if _body_? then
-    --          ret = await *_body_!;
+    --          var int v = await *_body_!;
+    --          escape v;
     --      else
-    --          ret = _ceu_app->ret;
+    --          escape _ceu_app->ret;
     --              // result of immediate spawn termination
     --              // TODO: what if spawn did fail? (ret=garbage?)
     --      end
@@ -522,37 +523,50 @@ me.blk_body = me.blk_body or blk_body
                             false)
         local SET_DEAD = node('Nothing', me.ln)
         if ret then
-            SET_AWAIT = node('_Set', me.ln, ret, '=', 'await',
-                            SET_AWAIT)
-            SET_DEAD  = node('_Set', me.ln, ret, '=', 'exp',
+            SET_AWAIT = node('Stmts', me.ln,
+                            node('Dcl_var', me.ln, 'var',
+                                node('Type', me.ln, 'int'),
+                                '_ret_'..me.n),
+                            node('_Set', me.ln,
+                                node('Var', me.ln, '_ret_'..me.n),
+                                '=', 'await',
+                                SET_AWAIT),
+                            node('_Escape', me.ln,
+                                node('Var', me.ln, '_ret_'..me.n)))
+            SET_DEAD  = node('_Escape', me.ln,
                             node('RawExp', me.ln, '_ceu_app->ret'))
                                 -- HACK_10: (see ceu_os.c)
                                 -- restores return value from global
                                 -- (in case spawn terminates immediately)
         end
 
-        return node('Block', me.ln,
-                node('Stmts', me.ln,
-                    node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, 'Scope'),
-                        '_s'),
-                    node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, cls_id, '&&','?'),
-                        '_body_'..me.n),
-                    node('_Set', me.ln,
-                        node('Var', me.ln, '_body_'..me.n),
-                        '=', 'spawn',
-                        spawn),
-                    node('If', me.ln,
-                        node('Op1_?', me.ln, '?',
-                            node('Var', me.ln, '_body_'..me.n)),
-                        --node('Nothing', me.ln),
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                SET_AWAIT)),
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                SET_DEAD)))))
+        local blk = node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Dcl_var', me.ln, 'var',
+                                node('Type', me.ln, 'Scope'),
+                                '_s'),
+                            node('Dcl_var', me.ln, 'var',
+                                node('Type', me.ln, cls_id, '&&','?'),
+                                '_body_'..me.n),
+                            node('_Set', me.ln,
+                                node('Var', me.ln, '_body_'..me.n),
+                                '=', 'spawn',
+                                spawn),
+                            node('If', me.ln,
+                                node('Op1_?', me.ln, '?',
+                                    node('Var', me.ln, '_body_'..me.n)),
+                                --node('Nothing', me.ln),
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        SET_AWAIT)),
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        SET_DEAD)))))
+        if ret then
+            return node('SetBlock', me.ln, blk, ret)
+        else
+            return blk
+        end
     end,
 
     _TraverseRec_pre = function (me)

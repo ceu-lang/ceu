@@ -1188,7 +1188,10 @@ F = {
 
         if fr.tag == 'Op1_&' then
             ASR(TP.check(to.tp,'&','-?'), me,
-                'invalid attribution : not aliasable')
+                'invalid attribution : l-value cannot hold an alias', [[
+    An alias is a variable declared with the type modifier `&´ (e.g.,
+    "var int& a").
+]])
 
         elseif (not lua_str) then
             ASR(to and to.lval, me,
@@ -1615,8 +1618,12 @@ F = {
         ASR(e1.tag ~= 'Op1_*', me,
             'invalid operand to unary "&" : cannot be aliased')
 
+        if TP.check(e1.tp,'&') then
+            me.tp = TP.copy(e1.tp)
+        else
+            me.tp = TP.push(e1.tp,'&')
+        end
         me.lval = false
-        me.tp = TP.push(e1.tp,'&')
         me.fst = e1.fst
         me.lst = e1.lst
     end,
