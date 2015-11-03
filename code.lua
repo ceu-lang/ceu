@@ -183,7 +183,7 @@ function CLEAR (me)
                   _ceu_stk,
                   _ceu_org,
                   ]]..me.trails[1]..[[,
-                  ]]..me.trails[2]..[[);
+                  ]]..(me.trails[2]+1)..[[);
 }
 
 /* LONGJMP

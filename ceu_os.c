@@ -436,47 +436,9 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
     tceu_ntrl trlI;
     tceu_trl* trl;
     for (trlI=trl0, trl=&org->trls[trlI];
-#ifdef CEU_CLEAR
-         trlI <= trlF
-#endif
-         ;
+         trlI < trlF;
          trlI++, trl++)
     {
-        /* STK_ORG has been traversed to the end? */
-        if (trlI ==
-#if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
-                org->n
-#else
-                CEU_NTRAILS
-#endif
-           )
-        {
-#ifdef CEU_ORGS
-            /* clearing the whole org */
-            if (org!=app->data && evt->id==CEU_IN__CLEAR &&
-                trl0==0 && trlF==org->n)
-            {
-                /* yes, relink and put it in the free list */
-                ceu_sys_org_free(app, org);
-#ifdef CEU_ORGS_AWAIT
-                {
-                    /* signal ok_killed */
-                    {
-                        tceu_kill ps = { org, org->ret };
-                        tceu_evt evt_;
-                                 evt_.id = CEU_IN__ok_killed;
-                                 evt_.param = &ps;
-                        ceu_sys_go_ex(app, &evt_,
-                                      stk,
-                                      app->data, 0, app->data->n);
-                    }
-                }
-#endif
-            }
-#endif
-            break;
-        }
-
 #ifdef CEU_DEBUG_TRAILS
 SPC(1); printf("trl: %p\n", trl);
 /*SPC(2); printf("seqno: %d\n", trl->seqno);*/
@@ -641,6 +603,27 @@ SPC(1); printf("<<< NO\n");
             trl->seqno = app->seqno-1;   /* keeps the gap tight */
         }
     }
+
+#ifdef CEU_ORGS
+    /* clearing the whole org? */
+    if (evt->id==CEU_IN__CLEAR && org!=app->data && trl0==0 && trlF==org->n) {
+        /* yes, relink and put it in the free list */
+        ceu_sys_org_free(app, org);
+#ifdef CEU_ORGS_AWAIT
+        {
+            /* signal ok_killed */
+            {
+                tceu_kill ps = { org, org->ret };
+                tceu_evt evt_;
+                         evt_.id = CEU_IN__ok_killed;
+                         evt_.param = &ps;
+                return ceu_sys_go_ex(app, &evt_, stk,
+                                     app->data, 0, app->data->n);
+            }
+        }
+#endif
+    }
+#endif
 }
 
 void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
