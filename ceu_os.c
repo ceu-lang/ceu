@@ -86,7 +86,7 @@ int ceu_sys_req (void) {
 
 void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                     tceu_stk* stk,
-                    tceu_org* org, tceu_ntrl trl0, tceu_ntrl stop);
+                    tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF);
 
 /**********************************************************************/
 
@@ -402,10 +402,10 @@ static int spc = -1;
 
 void ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
                         tceu_stk* stk,
-                        tceu_org* org, tceu_ntrl trl0, tceu_ntrl stop);
+                        tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF);
 void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                     tceu_stk* stk,
-                    tceu_org* org, tceu_ntrl trl0, tceu_ntrl stop) {
+                    tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF) {
     spc++;
     SPC(0); printf(">>> GO-EX\n");
     SPC(0); printf("evt: %d\n", evt->id);
@@ -415,7 +415,7 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                                    &org->trls[org->n]);
     #endif
 
-    ceu_sys_go_ex_dbg(app,evt,stk,org,trl0,stop);
+    ceu_sys_go_ex_dbg(app,evt,stk,org,trl0,trlF);
 
     SPC(0); printf("<<< GO-EX\n");
     spc--;
@@ -425,11 +425,11 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 #ifdef CEU_DEBUG_TRAILS
 void ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
                         tceu_stk* stk,
-                        tceu_org* org, tceu_ntrl trl0, tceu_ntrl stop)
+                        tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF)
 #else
 void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                     tceu_stk* stk,
-                    tceu_org* org, tceu_ntrl trl0, tceu_ntrl stop)
+                    tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF)
     /* TODO: now all arguments are required in all configurations */
 #endif
 {
@@ -440,7 +440,7 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
          trlI++,    trl++)
     {
 #ifdef CEU_CLEAR
-        if (trlI == stop) {
+        if (trlI == trlF) {
             return;    /* bounded trail traversal */
         }
 #endif
@@ -455,14 +455,14 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
            )
         {
 #ifdef CEU_ORGS
-            /* clearing the whole org (stop==NULL||org->n)? */
+            /* clearing the whole org (trlF==org->n+1)? */
             if ( org!=app->data && evt->id==CEU_IN__CLEAR &&
-                    (stop==org->n+1) )
+                    (trlF==org->n+1) )
             {
                 /* yes, relink and put it in the free list */
                 ceu_sys_org_free(app, org);
 #ifdef CEU_ORGS_AWAIT
-                if (stop == org->n+1)
+                if (trlF == org->n+1)
 #ifdef CEU_ORGS_NEWS_MALLOC
 #endif
                 {
