@@ -96,11 +96,12 @@ escape 1;
     run = 1,
 }
 
+--]===]
+
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -42193,6 +42194,80 @@ ret = ret + is[0]? + is[1]? + is[2]?;
 escape ret;
 ]],
     run = { ['~>1s'] = 3 },
+}
+
+Test { [[
+input void OS_START;
+class T with
+do
+    native @pure _printf();
+    _printf("%p\n", &&this);
+    await FOREVER;
+end
+
+var T&&? t;
+par/or do
+    do
+        pool T[] ts;
+        t = spawn T in ts;
+        await OS_START;
+    end
+    await FOREVER;
+with
+    await *t!;
+end
+escape 1;
+
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+do
+    await FOREVER;
+end
+
+var T&&? t;
+par/and do
+    do
+        pool T[] ts;
+        t = spawn T in ts;
+        await OS_START;
+    end
+with
+    await *t!;
+end
+escape t?==false;
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+do
+    await FOREVER;
+end
+
+var T&&?[] v;
+par/and do
+    do
+        pool T[] ts;
+        var T&&? ptr = spawn T in ts;
+        v = v .. [ptr];
+        await OS_START;
+    end
+with
+    await *v[0]!;
+end
+escape v[0]?==false;
+]],
+    _ana = {acc=true},
+    run = 1,
 }
 
 --<<< CLASS-VECTORS-FOR-POINTERS-TO-ORGS

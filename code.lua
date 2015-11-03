@@ -990,7 +990,10 @@ if (]]..fin.val..[[) {
                                             ceu_vector_geti(]]..val..[[, __ceu_i);
         tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
-             (__ceu_one->SOME.v == __ceu_casted->org_or_adt) )
+             (ceu_org_is_cleared((tceu_org*)__ceu_one->SOME.v,
+                                 __ceu_casted->org_or_adt,
+                                 __ceu_casted->t1,
+                                 __ceu_casted->t2)) )
         {
             __ceu_one->tag = CEU_]]..ID..[[_NIL;
 /*
@@ -1007,7 +1010,10 @@ if (]]..fin.val..[[) {
     {
         tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if ( (]]..val..[[.tag != CEU_]]..ID..[[_NIL) &&
-             (]]..val..[[.SOME.v == __ceu_casted->org_or_adt) )
+             (ceu_org_is_cleared((tceu_org*)]]..val..[[.SOME.v,
+                                 __ceu_casted->org_or_adt,
+                                 __ceu_casted->t1,
+                                 __ceu_casted->t2)) )
         {
             ]]..val..' = '..string.upper(TP.toc(var.tp))..[[_pack(NULL);
         }
