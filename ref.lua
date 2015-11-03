@@ -292,6 +292,11 @@ F = {
             F.__compound(me)
         end
     end,
+    Loop_pre = function (me)
+        if not me.isAwaitUntil then
+            F.__compound(me)
+        end
+    end,
     __compound = function (me)
         for var,dcl in pairs(VARS_UNINIT) do
             local setblk = find_set_block(var) or find_set_thread(var)
