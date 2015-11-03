@@ -112,11 +112,32 @@ escape *(r.x);
 ]],
     run = 10,
 }
+
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D& d;
+    end
+end
+
+    var D d = D(1);
+var E e = E.X(&d);
+    e.X.d = &d;     // BUG: error?
+
+escape e.X.d.x;
+]],
+    run = 1,
+}
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -38935,6 +38956,7 @@ interface I with
 end
 class T with
     interface I;
+    var _char c=0;
 do
     this.c = 1;
 end
@@ -38994,7 +39016,7 @@ end
 
 Test { [[
 class T with
-    var void&& v;
+    var void&& v=null;
 do
 end
 
@@ -39028,7 +39050,7 @@ escape 1;
 
 Test { [[
 class T with
-    var void&& v;
+    var void&& v=null;
 do
 end
 
@@ -39442,7 +39464,6 @@ do
 end
 
 class U with
-    var int z;
     var int v=0;
 do
     await FOREVER;
@@ -39485,7 +39506,6 @@ end
 pool T[] ts;
 
 class U with
-    var int z;
     var int v;
 do
     await FOREVER;
@@ -39873,10 +39893,21 @@ class Sprite with
     var int& me;
 do
     par/or do
-        var int&& me = await SPRITE_DELETE
-                      until me == &&this.me;
+        await SPRITE_DELETE until &&this.me==null;
     with
     end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+par/or do
+input int&& SPRITE_DELETE;
+var int&& me = await SPRITE_DELETE
+               until me == null;
+with
 end
 escape 1;
 ]],
@@ -40297,7 +40328,7 @@ var u8[10] buffer;
 fillBuffer(&buffer);
 escape buffer[0];
 ]],
-    env = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]´) : dimension mismatch',
+    env = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
 Test { [[
@@ -40470,6 +40501,24 @@ end
 var T t;
 escape t.a + t.f();
 ]],
+    ref = 'line 7 : invalid access to uninitialized variable "b" (declared at tests.lua:5)',
+}
+Test { [[
+class T with
+    var int a=0;
+    function (void)=>int f;
+do
+    var int b=0;
+    function (void)=>int f do
+        return b;
+    end
+    a = 1;
+    b = 2;
+end
+
+var T t;
+escape t.a + t.f();
+]],
     run = 3,
 }
 
@@ -40572,10 +40621,10 @@ escape _V;
 
 Test { [[
 class T with
-    var int a;
+    var int a=0;
     function (void)=>int f;
 do
-    var int b;
+    var int b=0;
     function (void)=>int f do
         return this.b;
     end
@@ -40590,7 +40639,7 @@ escape t.a + t.f();
 }
 Test { [[
 class T with
-    var int a;
+    var int a=0;
     function (void)=>int f do
         return this.b;
     end
@@ -40618,7 +40667,7 @@ escape 10;
 
 Test { [[
 class T with
-    var int v;
+    var int v=0;
     function (int)=>void f;
 do
     v = 50;
@@ -40641,7 +40690,7 @@ escape t.v + t.f(20) + t.v;
 
 Test { [[
 class T with
-    var int v;
+    var int v=0;
     function (int)=>int f;
 do
     v = 50;
@@ -40717,7 +40766,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function (int v)=>int g do
         if (v == 1) then
@@ -40795,7 +40844,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function (int v)=>int g do
         if (v == 1) then
@@ -40821,7 +40870,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function @rec (int v)=>int g do
         if (v == 1) then
@@ -40846,7 +40895,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function @rec (int v)=>int g do
         if (v == 1) then
@@ -40872,7 +40921,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function @rec (int v)=>int g do
         return 1;
@@ -40894,7 +40943,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function @rec (int v)=>int g do
         return 1;
@@ -40917,7 +40966,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function @rec (int v)=>int g do
         return v;
@@ -40943,7 +40992,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function @rec (int v)=>int g do
         return v;
@@ -40968,7 +41017,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function (int v)=>int g do
         return 1;
@@ -40992,7 +41041,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function (int v)=>int g do
         return 1;
@@ -41015,7 +41064,7 @@ end
 
 class U with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function (int v)=>int g do
         return 1;
@@ -41024,7 +41073,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function (int v)=>int g do
         if (v == 1) then
@@ -41055,7 +41104,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function (int v)=>int g do
         if (v == 1) then
@@ -41067,7 +41116,7 @@ end
 
 class U with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function (int v)=>int g do
         return 1;
@@ -41096,7 +41145,7 @@ end
 
 class T with
     interface I;
-    var I&& i;
+    var I&& i=null;
 do
     function @rec (int v)=>int g do
         if (v == 1) then
@@ -41121,7 +41170,7 @@ native/pre do
 end
 
 class T with
-    var int ret1, ret2;
+    var int ret1=0, ret2=0;
     function (int)=>int f1;
     var _f_t f2;
 do
@@ -41154,7 +41203,7 @@ native/pre do
 end
 
 class T with
-    var int ret1, ret2;
+    var int ret1=0, ret2=0;
     function (int)=>int f1;
     var _f_t f2;
 do
@@ -41187,7 +41236,7 @@ interface I with
 end
 
 class T with
-    var int v;
+    var int v=0;
 do
 end
 
@@ -41208,7 +41257,7 @@ end
 
 class T with
     interface I;
-    //var int v;
+    var int v=0;
     //native @nohold _ins();
 do
     function (void)=>int ins do
@@ -41331,7 +41380,7 @@ escape 1;
 
 Test { [[
 class T with
-    var void&& v;
+    var void&& v=null;
     function (void&& v)=>void f;
 do
     function (void&& v)=>void f do
@@ -41348,7 +41397,7 @@ escape 1;
 
 Test { [[
 class T with
-    var void&& a;
+    var void&& a=null;
     function (void&& v)=>void f;
 do
     function (void&& v)=>void f do
@@ -41363,11 +41412,11 @@ escape 1;
 
 Test { [[
 class T with
-    var void&& a;
+    var void&& a=null;
     function (void)=>void f;
 do
     function (void)=>void f do
-        var void&& v;
+        var void&& v=null;
         a = v;
     end
 end
@@ -41378,7 +41427,7 @@ escape 1;
 }
 Test { [[
 class T with
-    var void&& a;
+    var void&& a=null;
     function (void&& v)=>void f;
 do
     function (void&& v)=>void f do
@@ -41393,7 +41442,7 @@ escape 1;
 }
 Test { [[
 class T with
-    var void&& a;
+    var void&& a=null;
     function (void&& v)=>void f;
 do
     function (void&& v)=>void f do
@@ -41407,7 +41456,7 @@ escape 1;
 }
 Test { [[
 class T with
-    var void&& a;
+    var void&& a=null;
     function (@hold void&& v)=>void f;
 do
     function (@hold void&& v)=>void f do
@@ -41421,7 +41470,7 @@ escape 1;
 
 Test { [[
 class T with
-    var void&& v;
+    var void&& v=null;
     function (void&& v)=>void f;
 do
     function (@hold void&& v)=>void f do
@@ -41436,19 +41485,19 @@ escape 1;
 
 Test { [[
 class T with
-    var void&& v;
+    var void&& v=null;
     function (@hold void&& v)=>void f;
 do
     function (@hold void&& v)=>void f do
         this.v := v;
     end
 end
-var void&& v;
+var void&& v=null;
 var T t;
 t.f(null);
 t.f(v);
 do
-    var void&& v;
+    var void&& v=null;
     t.f(v);
 end
 escape 1;
@@ -41461,19 +41510,19 @@ escape 1;
 
 Test { [[
 class T with
-    var void&& v;
+    var void&& v=null;
     function (@hold void&& v)=>void f;
 do
     function (@hold void&& v)=>void f do
         this.v := v;
     end
 end
-var void&& v;
+var void&& v=null;
 var T t;
 t.f(null);
 t.f(v);
 do
-    var void&& v;
+    var void&& v=null;
     t.f(v)
         finalize with
             nothing;
@@ -41985,7 +42034,7 @@ var T t;
 
 escape t.f();
 ]],
-    env = 'line 6 : invalid return value : types mismatch (`int&&´ <= `int´)',
+    env = 'line 6 : invalid return value : types mismatch (`int&&´ <= `int&´)',
 }
 
 Test { [[
@@ -42071,7 +42120,8 @@ end
 
 escape ret;
 ]],
-    ref = 'line 17 : attribution to reference with greater scope',
+    --ref = 'line 17 : attribution to reference with greater scope',
+    run = 60,
 }
 
 Test { [[
@@ -42147,13 +42197,33 @@ native do
         void* ceu;
     } t;
 end
-var _t   t;
+native @plain _t;
+var _t t = _t();
+var _t&& ptr = &&t;
+var int v = 10;
+var int x = &v;
+ptr:ceu = &v;
+escape *((int&&)(ptr:ceu));
+]],
+    env = 'line 10 : invalid attribution : not aliasable',
+    --ref = 'line 9 : invalid attribution : l-value already bounded',
+    --run = 10,
+}
+Test { [[
+native do
+    typedef struct t {
+        void* ceu;
+    } t;
+end
+native @plain _t;
+var _t t = _t();
 var _t&& ptr = &&t;
 var int v = 10;
 ptr:ceu = &v;
 escape *((int&&)(ptr:ceu));
 ]],
-    ref = 'line 9 : invalid attribution : l-value already bounded',
+    env = 'line 10 : invalid attribution : not aliasable',
+    --ref = 'line 9 : invalid attribution : l-value already bounded',
     --run = 10,
 }
 
@@ -42178,7 +42248,8 @@ ptr:xxx = &c;
 escape ((C&&)ptr:xxx):v;
 ]],
     --run = 10,
-    ref = 'line 16 : invalid attribution : l-value already bounded',
+    env = 'line 16 : invalid attribution : not aliasable',
+    --ref = 'line 16 : invalid attribution : l-value already bounded',
 }
 
 Test { [[
@@ -42204,7 +42275,7 @@ emit ((C&&)ptr:xxx):e => 1;
 
 escape ((C&&)ptr:xxx):v;
 ]],
-    ref = 'line 17 : invalid attribution : l-value already bounded',
+    env = 'line 17 : invalid attribution : not aliasable',
     --run = 10,
 }
 Test { [[
@@ -42269,7 +42340,7 @@ var U u;
 
 escape 1;
 ]],
-    ref = 'line 10 : field "ts" must be assigned',
+    ref = 'line 10 : missing initialization for field "ts" (declared in tests.lua:6)',
 }
 
 Test { [[
@@ -42289,7 +42360,7 @@ var U u;
 
 escape 1;
 ]],
-    ref = 'line 13 : field "ts" must be assigned',
+    ref = 'line 13 : missing initialization for field "ts" (declared in tests.lua:6)',
 }
 
 --<<< METHODS
@@ -43062,7 +43133,7 @@ native do
         V = V + 1;
     }
 end
-var int a;
+var int a=0;
 do
     interrupt [20] do
         a = 1;
@@ -43070,7 +43141,8 @@ do
 end             // TODO: forcing finalize out_isr(null)
 escape _V;
 ]],
-    run = 2,
+    --run = 2,
+    isr = 'line 7 : access to "a" must be atomic',
 }
 
 Test { [[
@@ -43904,7 +43976,7 @@ Test { [[
 }
 Test { [[
     class QueueForever with
-      var int val, maxval;
+      var int val=0, maxval=0;
     do
         spawn QueueForever;
     end
@@ -44648,8 +44720,6 @@ do
     await 1min;
 end
 watching *u! do
-    var int x1;
-    var int x2;
     emit u!:move => 0;
 end
 escape 2;
@@ -45367,7 +45437,7 @@ do
 end
 
 do
-    var int cmds;
+    var int cmds=0;
     spawn Run with
         this.cmds = &cmds;
     end;
@@ -45375,7 +45445,8 @@ end
 
 escape 1;
 ]],
-    ref = 'line 9 : attribution to reference with greater scope',
+    ref = 'line 9 : invalid attribution : variable "cmds" has narrower scope its destination',
+    --ref = 'line 9 : attribution to reference with greater scope',
 }
 Test { [[
 class Run with
@@ -45385,7 +45456,7 @@ end
 
 do
     pool Run[] rs;
-    var int cmds;
+    var int cmds=0;
     spawn Run in rs with
         this.cmds = &cmds;
     end;
@@ -45406,8 +45477,6 @@ pool Unit[] units;
 u = spawn Unit in units;
 await 2s;
 watching *u! do
-    var int x1;
-    var int x2;
     emit u!:move => 0;
 end
 escape 2;
@@ -45434,10 +45503,10 @@ escape 2;
 
 Test { [[
 class Unit with
-    var int pos;
+    var int pos=0;
 do end;
 
-var Unit&& ptr;
+var Unit&& ptr=null;
 do
     var Unit u;
     ptr = &&u;
@@ -45491,7 +45560,7 @@ input void OS_START,B;
 class T with
     event void ok, go, b;
     event void e, f;
-    var int v;
+    var int v=0;
 do
     v = 10;
     await e;
@@ -45541,10 +45610,10 @@ escape _V + 1;
 }
 Test { [[
 class Unit with
-    var int pos;
+    var int pos=0;
 do end;
 
-var Unit&& ptr;
+var Unit&& ptr=null;
 do
     var Unit u;
     u.pos = 10;
@@ -45568,7 +45637,7 @@ end
 input void OS_START;
 class T with
     event void ok, go;
-    var int v, going;
+    var int v=0, going=0;
 do
     await go;
     going = 1;
@@ -45935,7 +46004,7 @@ interface I with
 end
 
 class T with
-    var int e;
+    var int e=0;
 do
     e = 100;
     await FOREVER;
@@ -45968,7 +46037,7 @@ end
 
 class T with
     event void e;
-    var int ee;
+    var int ee=0;
 do
     await e;
     ee = 100;
@@ -46004,7 +46073,7 @@ end
 
 class T with
     event int e, f;
-    var int vv;
+    var int vv=0;
 do
     var int v = await e;
     vv = v;
@@ -46098,7 +46167,7 @@ interface I with
 end
 
 class T with
-    var int v;
+    var int v=0;
     function (int)=>void f;
 do
     v = 50;
@@ -46138,6 +46207,7 @@ end
 
 class T with
     interface I;
+    var int v=0;
 do
     v = 50;
     this.f(10);
@@ -46205,6 +46275,7 @@ end
 
 class T with
     interface I;
+    var int v=0;
 do
     v = 50;
     this.f(10);
@@ -46217,6 +46288,7 @@ end
 
 class U with
     interface I;
+    var int v=0;
 do
     v = 50;
     this.f(10);
@@ -46478,7 +46550,7 @@ end
 var int x = 10;
 
 class T with
-    var int x;
+    var int x=0;
 do
     this.x = global:x;
 end
@@ -46864,7 +46936,7 @@ do
 end
 var T a,b;
 native _f();
-var int c;
+var int c=0;
 par do
     loop do
         _f();
@@ -46911,7 +46983,7 @@ do
 end
 var T a,b;
 native _f();
-var int c;
+var int c=0;
 par do
     loop do
         _f();
@@ -46962,7 +47034,7 @@ do
 end
 var T a,b;
 native _f();
-var int c;
+var int c=0;
 par do
     loop do
         _f();
@@ -47519,7 +47591,7 @@ Test { [[
 class T with
     event int ok;
 do
-    var int v;
+    var int v=0;
     var int& p = &v;
     async/thread (p) do
         var int ret = 0;
@@ -47536,7 +47608,7 @@ do
 end
 
 var T t1, t2;
-var int v1, v2;
+var int v1=0, v2=0;
 
 par/and do
     v1 = await t1.ok;
@@ -47562,7 +47634,7 @@ escape v1;
 
 Test { [[
 class T with
-    var int x;
+    var int x=0;
 do
 end
 class U with do end;
@@ -47586,7 +47658,7 @@ escape 1;
 
 Test { [[
 class T with
-    var int x;
+    var int x=0;
 do
 end
 class U with do end;
@@ -47619,7 +47691,7 @@ escape 1;
 }
 
 Test { [[
-var int&& p;
+var int&& p=null;
 var int& i = *p;
 escape 1;
 ]],
@@ -47735,6 +47807,7 @@ escape 1;
 }
 
 Test { [[
+native @plain _t;
 native/pre do
     typedef struct t {
         int v;
@@ -47747,7 +47820,7 @@ do
 end
 
 var Unit u with
-    this.t.v  =  30;
+    this.t = _t(30);
 end;
 escape u.t.v;
 ]],
@@ -47851,6 +47924,7 @@ do
 end
 class X with
     interface Object;
+    var _int v=0;
 do
 end
 var X xxx;
@@ -47867,6 +47941,7 @@ interface Object with
     var _int v;
 end
 class O with
+    var _int v=0;
     interface Object;
 do
     this.v = 10;
@@ -47903,11 +47978,13 @@ interface Object with
     var _int v;
 end
 class O with
+    var _int v=0;
     interface Object;
 do
     this.v = 10;
 end
 class MoveObject with
+    var _int v=0;
     var Object& obj;
 do
     await 1s;
@@ -47983,10 +48060,10 @@ await FOREVER;
 
 Test { [[
 output/input [10] (int max)=>char&& LINE;
-var u8 err;
 var char&& ret = null;
 par/or do
     var char&& ret1;
+    var u8 err;
     (err, ret1) = request LINE => 10;
     ret := ret1;
 with
@@ -48003,9 +48080,9 @@ output/input [10] (int max)=>char&& LINE;
 native do
     ##define ceu_out_emit(a,b,c,d) 1
 end
-var u8 err;
 par/or do
     var char&& ret;
+    var u8 err;
     (err, ret) = request LINE => 10;
 with
 end
@@ -48572,6 +48649,7 @@ end
 }
 
 -- ALGEBRAIC DATATYPES (ADTS)
+--]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -48631,7 +48709,6 @@ end
 
 --[==[
 -- HERE:
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -49252,13 +49329,14 @@ data D with
 end
 
 var T _ with
-    var D d;
+    var D d = D(1);
     this.v = &d.v;
 end;
 
 escape 1;
 ]],
-    ref = 'line 13 : attribution to reference with greater scope',
+    --ref = 'line 13 : attribution to reference with greater scope',
+    ref = 'line 13 : invalid attribution : variable "d" has narrower scope its destination',
 }
 
 Test { [[
@@ -49298,10 +49376,6 @@ escape e.X.d.x;
     run = 10,
 }
 
-print'====================================='
-print'TODO: not binded'
-print'====================================='
-io.read()
 Test { [[
 data D with
     var int x;
@@ -49323,8 +49397,28 @@ end
 
 escape e.X.d.x;
 ]],
-    todo = true,
-    ref = 'line 16 : attribution to reference with greater scope',
+    ref = 'line 13 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
+}
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D& d;
+    end
+end
+
+    var D d = D(1);
+var E e = E.X(&d);
+    e.X.d = &d;
+
+escape e.X.d.x;
+]],
+    run = 1,
 }
 Test { [[
 data D with
@@ -49346,30 +49440,6 @@ var E e = E.X(null);
 escape e.X.d:x;
 ]],
     run = 10,
-}
-
-Test { [[
-data D with
-    var int x;
-end
-
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var D&& d;
-    end
-end
-
-var E e;
-do
-    var D d = D(1);
-    e.X.d = &&d;
-end
-
-escape 1;
-]],
-    fin = 'line 16 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -49507,6 +49577,7 @@ end
 -- USE DATATYPES DEFINED ABOVE ("DATA")
 
 -- simple test
+]==]
 Test { DATA..[[
 escape 1;
 ]],

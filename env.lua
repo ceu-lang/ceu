@@ -1186,7 +1186,11 @@ F = {
             end
         end
 
-        if (not lua_str) and (fr.tag~='Op1_&') then
+        if fr.tag == 'Op1_&' then
+            ASR(TP.check(to.tp,'&','-?'), me,
+                'invalid attribution : not aliasable')
+
+        elseif (not lua_str) then
             ASR(to and to.lval, me,
                 'invalid attribution : not assignable')
             ASR(me.read_only or (not to.lval.read_only), me,

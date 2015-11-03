@@ -153,8 +153,8 @@ F = {
                     if (if_.__depth < to.var.blk.__depth) then
                         break   -- var defined inside the if
                     end
+                    local constr = AST.par(me,'Dcl_constr')
                     if constr and if_.__depth<constr.__depth then
-                        error 'TODO: not tested, probably just removing this line works'
                         break
                     end
                     outermost_if = if_
