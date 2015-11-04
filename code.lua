@@ -82,6 +82,11 @@ _ceu_trl->evto  = ]]..t.evto..[[;
 
     if t.org_or_adt then
         LINE(me, [[
+#ifdef CEU_ORGS_AWAIT
+#ifdef CEU_ADTS_AWAIT
+_ceu_trl->is_org = ]]..t.is_org..[[;
+#endif
+#endif
 _ceu_trl->org_or_adt = ]]..t.org_or_adt..[[;
 ]])
     end
@@ -182,11 +187,29 @@ function CLEAR (me)
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org,
-                  &_ceu_org->trls[ ]]..me.trails[1]..[[ ],
-                  &_ceu_org->trls[ ]]..(me.trails[2]+1)..[[ ]);
-                                        /* excludes +1 */
+                  ]]..me.trails[1]..[[,
+                  ]]..(me.trails[2]+1)..[[);
 }
+]])
 
+    if me.has_orgs then
+        -- TODO: only if contains orgs of awaited classes
+        LINE(me, [[
+#ifdef CEU_ORGS_AWAIT
+/* signal ok_killed */
+{
+    tceu_kill ps = { _ceu_org, _ceu_org->ret, ]]..me.trails[1]..','..me.trails[2]..[[ };
+    tceu_evt evt_;
+             evt_.id = CEU_IN__ok_killed;
+             evt_.param = &ps;
+    ceu_sys_go_ex(_ceu_app, &evt_, _ceu_stk,
+                  _ceu_app->data, 0, _ceu_app->data->n);
+}
+#endif
+]])
+    end
+
+    LINE(me, [[
 /* LONGJMP
  * Block termination: we will abort all trails between [t1,t2].
  * Return status=1 to distinguish from longjmp from organism termination.
@@ -326,16 +349,20 @@ _ceu_app->isAlive = 0;
 #endif
 ]])
         else
+            -- TODO: avoid this long traversal only to simulate kill?
             LINE(me, [[
+ceu_sys_org_free(_ceu_app, _ceu_org);
+#ifdef CEU_ORGS_AWAIT
 {
-    tceu_evt evt;
-             evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, &evt,
-                  _ceu_stk,
-                  _ceu_org,
-                  &_ceu_org->trls[_ceu_org->n], /* to the end, only free it */
-                  NULL);
+    /* signal ok_killed */
+    tceu_kill ps = { _ceu_org, _ceu_org->ret, 0, _ceu_org->n-1 };
+    tceu_evt evt_;
+             evt_.id = CEU_IN__ok_killed;
+             evt_.param = &ps;
+    ceu_sys_go_ex(_ceu_app, &evt_, _ceu_stk,
+                  _ceu_app->data, 0, _ceu_app->data->n);
 }
+#endif
 ]])
         end
         HALT(me)
@@ -607,6 +634,7 @@ if (]]..me.val..[[ == NULL) {
 ]])
         end
 
+        local org_cast = '((tceu_org*)'..V(org,'lval')..')'
         LINE(me, [[
 {
     tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
@@ -620,18 +648,32 @@ if (]]..me.val..[[ == NULL) {
         GOTO(me, '_ceu_app->stk_jmp.lbl')
         LINE(me, [[
     }
+    _ceu_stk->up = &stk_;
 
     /* SETJMP: killing an org
      * The kill might awake a par/or enclosing the call point.
      */
-    tceu_evt evt;
-             evt.id = CEU_IN__CLEAR;
-    _ceu_stk->up = &stk_;
-    ceu_sys_go_ex(_ceu_app, &evt,
-                  &stk_,
-                  (tceu_org*)]]..V(org,'lval')..[[,
-                  &((tceu_org*)]]..V(org,'lval')..[[)->trls[0],
-                  NULL);
+    {
+        tceu_evt evt;
+                 evt.id = CEU_IN__CLEAR;
+        ceu_sys_go_ex(_ceu_app, &evt, &stk_,
+                      ]]..org_cast..[[, 0, ]]..org_cast..[[->n);
+    }
+
+    ceu_sys_org_free(_ceu_app,]]..org_cast..[[);
+
+#ifdef CEU_ORGS_AWAIT
+    /* signal ok_killed */
+    {
+        tceu_kill ps = { ]]..org_cast..','..org_cast..'->ret, 0, '..org_cast..[[->n-1  };
+        tceu_evt evt_;
+                 evt_.id = CEU_IN__ok_killed;
+                 evt_.param = &ps;
+        ceu_sys_go_ex(_ceu_app, &evt_, &stk_,
+                      _ceu_app->data, 0, _ceu_app->data->n);
+    }
+#endif
+
     _ceu_stk->up = NULL;
 }
 ]])
@@ -795,6 +837,11 @@ _ceu_org->trls[ ]]..var.trl_vector[1]..[[ ].lbl = ]]..(var.lbl_fin_free).id..[[;
 /*  RESET OPT-ORG TO NULL */
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].evt = CEU_IN__ok_killed;
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id..[[;
+#ifdef CEU_ORGS_AWAIT
+#ifdef CEU_ADTS_AWAIT
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].is_org = 1;
+#endif
+#endif
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
 ]])
                 end
@@ -943,7 +990,10 @@ if (]]..fin.val..[[) {
                                             ceu_vector_geti(]]..val..[[, __ceu_i);
         tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
-             (__ceu_one->SOME.v == __ceu_casted->org_or_adt) )
+             (ceu_org_is_cleared((tceu_org*)__ceu_one->SOME.v,
+                                 __ceu_casted->org_or_adt,
+                                 __ceu_casted->t1,
+                                 __ceu_casted->t2)) )
         {
             __ceu_one->tag = CEU_]]..ID..[[_NIL;
 /*
@@ -960,7 +1010,10 @@ if (]]..fin.val..[[) {
     {
         tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if ( (]]..val..[[.tag != CEU_]]..ID..[[_NIL) &&
-             (]]..val..[[.SOME.v == __ceu_casted->org_or_adt) )
+             (ceu_org_is_cleared((tceu_org*)]]..val..[[.SOME.v,
+                                 __ceu_casted->org_or_adt,
+                                 __ceu_casted->t1,
+                                 __ceu_casted->t2)) )
         {
             ]]..val..' = '..string.upper(TP.toc(var.tp))..[[_pack(NULL);
         }
@@ -1134,7 +1187,13 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
                  evt.param = &__ceu_old;
         _ceu_stk->up = &stk_;
         ceu_sys_go_ex(_ceu_app, &evt, &stk_,
-                      _ceu_app->data, &_ceu_app->data->trls[0], NULL);
+                      _ceu_app->data, 0,
+#ifdef CEU_ORGS
+                      _ceu_app->data->n
+#else
+                      CEU_NTRAILS
+#endif
+                     );
         _ceu_stk->up = NULL;
     }
 }
@@ -1836,7 +1895,13 @@ if (!_ceu_app->isAlive)
     _ceu_stk->up = &stk_;
     ceu_sys_go_ex(_ceu_app, &evt,
                   &stk_,
-                  _ceu_app->data, &_ceu_app->data->trls[0], NULL);
+                  _ceu_app->data, 0,
+#ifdef CEU_ORGS
+                  _ceu_app->data->n
+#else
+                  CEU_NTRAILS
+#endif
+    );
     _ceu_stk->up = NULL;
 }
 ]])
@@ -1880,12 +1945,20 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
         end
 
         local no = LABEL_NO(me)
+
+        local is_org, org_or_adt
+        if e[1] == '_ok_killed' then
+            local _,_,v = unpack(e)
+            is_org = (ENV.clss[TP.id(v.tp)] and 1 or 0)
+            org_or_adt = '(void*)'..V(v,'lval')
+        end
+
         HALT(me, {
             no  = no,
             evt = 'CEU_IN_'..e.evt.id..suf,
             lbl = me.lbl.id,
-            org_or_adt = (e[1] == '_ok_killed') and
-                         '(void*)'..V(e[3],'lval')
+            is_org = is_org,
+            org_or_adt = org_or_adt,
         })
 
         if dt then

@@ -86,7 +86,7 @@ int ceu_sys_req (void) {
 
 void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                     tceu_stk* stk,
-                    tceu_org* org, tceu_trl* trl, void* stop);
+                    tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF);
 
 /**********************************************************************/
 
@@ -210,9 +210,13 @@ void ceu_stack_dump (tceu_app* app) {
  * ;
  */
 #ifdef CEU_ORGS
-static int ceu_org_is_cleared (void* me, void* clr_org,
+static int ceu_org_is_cleared (tceu_org* me, tceu_org* clr_org,
                                tceu_ntrl clr_t1, tceu_ntrl clr_t2)
 {
+    if (me == clr_org) {
+        return (clr_t1==0 && clr_t2==me->n-1);
+    }
+
     tceu_org* cur_org;
     for (cur_org=me; cur_org!=NULL; cur_org=cur_org->parent_org) {
         if (cur_org->parent_org == clr_org) {
@@ -402,10 +406,10 @@ static int spc = -1;
 
 void ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
                         tceu_stk* stk,
-                        tceu_org* org, tceu_trl* trl, void* stop);
+                        tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF);
 void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                     tceu_stk* stk,
-                    tceu_org* org, tceu_trl* trl, void* stop) {
+                    tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF) {
     spc++;
     SPC(0); printf(">>> GO-EX\n");
     SPC(0); printf("evt: %d\n", evt->id);
@@ -415,7 +419,7 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                                    &org->trls[org->n]);
     #endif
 
-    ceu_sys_go_ex_dbg(app,evt,stk,org,trl,stop);
+    ceu_sys_go_ex_dbg(app,evt,stk,org,trl0,trlF);
 
     SPC(0); printf("<<< GO-EX\n");
     spc--;
@@ -425,59 +429,20 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 #ifdef CEU_DEBUG_TRAILS
 void ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
                         tceu_stk* stk,
-                        tceu_org* org, tceu_trl* trl, void* stop)
+                        tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF)
 #else
 void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                     tceu_stk* stk,
-                    tceu_org* org, tceu_trl* trl, void* stop)
+                    tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF)
     /* TODO: now all arguments are required in all configurations */
 #endif
 {
-    for (;; trl++)
+    tceu_ntrl trlI;
+    tceu_trl* trl;
+    for (trlI=trl0, trl=&org->trls[trlI];
+         trlI < trlF;
+         trlI++, trl++)
     {
-#ifdef CEU_CLEAR
-        if (trl == stop) {
-            return;    /* bounded trail traversal */
-        }
-#endif
-
-        /* STK_ORG has been traversed to the end? */
-        if (trl ==
-            &org->trls[
-#if defined(CEU_ORGS) || defined(CEU_OS_KERNEL)
-                org->n
-#else
-                CEU_NTRAILS
-#endif
-            ])
-        {
-#ifdef CEU_ORGS
-            /* clearing the whole org (stop==NULL)? */
-            if (org!=app->data && evt->id==CEU_IN__CLEAR && stop==NULL) {
-                /* yes, relink and put it in the free list */
-                ceu_sys_org_free(app, org);
-#ifdef CEU_ORGS_AWAIT
-#ifdef CEU_ORGS_NEWS_MALLOC
-                if (!app->dont_emit_kill)
-#endif
-                {
-                    /* signal ok_killed */
-                    {
-                        tceu_kill ps = { org, org->ret };
-                        tceu_evt evt_;
-                                 evt_.id = CEU_IN__ok_killed;
-                                 evt_.param = &ps;
-                        ceu_sys_go_ex(app, &evt_,
-                                      stk,
-                                      app->data, &app->data->trls[0], NULL);
-                    }
-                }
-#endif
-            }
-#endif
-            break;
-        }
-
 #ifdef CEU_DEBUG_TRAILS
 SPC(1); printf("trl: %p\n", trl);
 /*SPC(2); printf("seqno: %d\n", trl->seqno);*/
@@ -517,7 +482,6 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     has_aborted = 1;            /* detected abortion */
                     if (evt->id==CEU_IN__CLEAR) {
                         cur = nxt;              /* continue from nxt */
-                        app->dont_emit_kill = 1;/* but stop emitting ok_killed */
                     } else {
                         cur = NULL;             /* safe to abort now */
                     }
@@ -543,16 +507,13 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                     nxt = cur->nxt;
                         /* save "nxt" before the call, which might kill "cur"
                          * and reset "nxt" for the freelist */
-                    ceu_sys_go_ex(app, evt,
-                                  &stk_,
-                                  cur, &cur->trls[0], NULL);
+                    ceu_sys_go_ex(app, evt, &stk_, cur, 0, cur->n);
                     cur = nxt;
                 }
                 stk->up = NULL;
 
 #if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
                 if (has_aborted) {
-                    app->dont_emit_kill = 0;
                     app->stk_jmp.trl->lbl = app->stk_jmp.lbl;
                     app->code(app, evt, app->stk_jmp.org, app->stk_jmp.trl, stk);
                     return;
@@ -582,11 +543,26 @@ if (evt->param != NULL) {
             (evt->id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR)
         ||
 #endif
-#ifdef CEU_ORGS_OR_ADTS_AWAIT
+#ifdef CEU_ORGS_AWAIT
             /* if */
             (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
+#ifdef CEU_ADTS_AWAIT
+                trl->is_org &&
+#endif
                 (trl->org_or_adt == NULL || /* for option ptrs, init'd w/ NULL  */
-                 trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt))
+                 ceu_org_is_cleared(trl->org_or_adt,
+                    ((tceu_kill*)evt->param)->org_or_adt,
+                    ((tceu_kill*)evt->param)->t1,
+                    ((tceu_kill*)evt->param)->t2)))
+        ||
+#endif
+#ifdef CEU_ADTS_AWAIT
+            /* if */
+            (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
+#ifdef CEU_ORGS_AWAIT
+                !trl->is_org &&
+#endif
+                trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt)
         ||
 #endif
             /* if evt->id matches awaiting trail */
@@ -646,6 +622,14 @@ SPC(1); printf("<<< NO\n");
             trl->seqno = app->seqno-1;   /* keeps the gap tight */
         }
     }
+
+#ifdef CEU_ORGS
+    /* clearing the whole org? */
+    if (evt->id==CEU_IN__CLEAR && org!=app->data && trl0==0 && trlF==org->n) {
+        /* yes, relink and put it in the free list */
+        ceu_sys_org_free(app, org);
+    }
+#endif
 }
 
 void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
@@ -686,7 +670,13 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
                  evt_.param = &evtp;
         ceu_sys_go_ex(app, &evt_,
                       stk,
-                      app->data, &app->data->trls[0], NULL);
+                      app->data, 0,
+#ifdef CEU_ORGS
+                      app->data->n
+#else
+                      CEU_NTRAILS
+#endif
+        );
     }
 
 #ifdef CEU_WCLOCKS

@@ -34622,6 +34622,74 @@ escape 1;
     --run = 1,
 }
 
+-- outer organism dies, nested organism has to awake block
+Test { [[
+native do
+    int V = 1;
+end
+
+class S with
+do
+    await FOREVER;
+end
+
+class T with
+    var S&& s;
+do
+    watching *s do
+        every 1s do
+            _V = _V + 1;
+        end
+    end
+end
+
+par/or do
+    var S s;
+    var T&&? t =
+        spawn T with
+            this.s = &&s;
+        end;
+    await *t!;
+with
+end
+
+await 5s;
+
+escape _V;
+]],
+    run = { ['~>10s']=1 },
+}
+
+Test { [[
+input void OS_START;
+
+class OrgC with
+do
+    await FOREVER;
+end
+
+event void signal;
+var int ret = 0;
+
+par/or do
+    loop do
+        watching signal do
+            do OrgC;
+        end
+        ret = ret + 1;
+    end
+with
+    await OS_START;
+    emit signal;
+end
+
+escape ret;
+]],
+    wrn = true,
+    loop = true,
+    run = 1,
+}
+
 -- DO T
 
 Test { [[
@@ -43037,6 +43105,80 @@ escape ret;
     run = { ['~>1s'] = 3 },
 }
 
+Test { [[
+input void OS_START;
+class T with
+do
+    native @pure _printf();
+    _printf("%p\n", &&this);
+    await FOREVER;
+end
+
+var T&&? t;
+par/or do
+    do
+        pool T[] ts;
+        t = spawn T in ts;
+        await OS_START;
+    end
+    await FOREVER;
+with
+    await *t!;
+end
+escape 1;
+
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+do
+    await FOREVER;
+end
+
+var T&&? t;
+par/and do
+    do
+        pool T[] ts;
+        t = spawn T in ts;
+        await OS_START;
+    end
+with
+    await *t!;
+end
+escape t?==false;
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+class T with
+do
+    await FOREVER;
+end
+
+var T&&?[] v;
+par/and do
+    do
+        pool T[] ts;
+        var T&&? ptr = spawn T in ts;
+        v = v .. [ptr];
+        await OS_START;
+    end
+with
+    await *v[0]!;
+end
+escape v[0]?==false;
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
 --<<< CLASS-VECTORS-FOR-POINTERS-TO-ORGS
 
 -->>> ISR / ATOMIC
@@ -45328,6 +45470,34 @@ escape 1;
     run = { ['~>1s'] = 1 },
     --fin = 'line 19 : attribution to pointer with greater scope',
 }
+Test { [[
+class U with
+do
+    await FOREVER;
+end
+native do
+    int V = 1;
+end
+class Item with
+    var U&& u;
+do
+    watching *u do
+        await FOREVER;
+    end
+    _V = _V+1;
+end
+do
+    var U u;
+    spawn Item with
+        this.u = &&u;
+    end;
+    await 1s;
+end
+escape _V;
+]],
+    run = { ['~>1s'] = 2 },
+    --fin = 'line 19 : attribution to pointer with greater scope',
+}
 
 Test { [[
 class U with do end;
@@ -45607,8 +45777,8 @@ escape _V + 1;
     _ana = {
         --acc = 3,
     },
-    --run = { ['~>B']=203, }
-    run = { ['~>B']=204, }
+    run = { ['~>B']=203, }
+    --run = { ['~>B']=204, }
 }
 Test { [[
 class Unit with
@@ -45664,8 +45834,8 @@ watching *ptr do
 end
 escape _V + 1;
 ]],
-    run = 21,
-    --run = 20,
+    --run = 21,
+    run = 20,
 }
 
 Test { [[
@@ -45688,8 +45858,8 @@ watching *ok1! do
 end
 escape 1;
 ]],
-    --run = 11,
-    run = 1,
+    run = 11,
+    --run = 1,
 }
 
 Test { [[
@@ -45719,8 +45889,8 @@ escape _V + 1;  // this one executes because of strong abortion in the watching
     _ana = {
         acc = true,
     },
-    --run = 11,
-    run = 12,
+    run = 11,
+    --run = 12,
 }
 
 Test { [[
@@ -46021,8 +46191,8 @@ watching *i do
 end
 escape _V + 1;
 ]],
-    --run = 100,
-    run = 101,
+    run = 100,
+    --run = 101,
 }
 
 Test { [[
@@ -46057,8 +46227,8 @@ watching *i do
 end
 escape _V + 1;
 ]],
-    --run = 100,
-    run = 101,
+    run = 100,
+    --run = 101,
 }
 
 Test { [[
@@ -46102,8 +46272,8 @@ watching *i1 do
 end
 escape _V+1;
 ]],
-    run = 100,
-    --run = 99,
+    --run = 100,
+    run = 99,
 }
 
 Test { [[
@@ -46154,8 +46324,8 @@ escape _V + 1;
     _ana = {
         acc = true,
     },
-    --run = 165,
-    run = 166,
+    run = 165,
+    --run = 166,
 }
 
 Test { [[
@@ -46193,8 +46363,8 @@ end
 escape _V+1;
 ]],
     wrn = true,
-    --run = 160,
-    run = 161,
+    run = 160,
+    --run = 161,
 }
 
 Test { [[
@@ -46231,8 +46401,8 @@ watching *i do
 end
 escape _V+1;
 ]],
-    --run = 160,
-    run = 161,
+    run = 160,
+    --run = 161,
 }
 
 Test { [[
@@ -46318,8 +46488,8 @@ end
 escape _V+1;
 ]],
     wrn = true,
-    --run = 630,
-    run = 631,
+    run = 630,
+    --run = 631,
 }
 
 Test { [[
@@ -48772,6 +48942,20 @@ end
 escape 1;
 ]],
     env = 'top-level identifier "T" already taken',
+}
+
+Test { [[
+data D with
+    var int x;
+end
+class C with
+    var D d = D(200);
+do
+end
+var C c;
+escape c.d.x;
+]],
+    run = 200,
 }
 
 -- tags inside union data types must be all uppercase
@@ -55234,6 +55418,50 @@ or
     end
 end
 
+pool List[] ls;
+ls = new List.CONS(1,
+            List.CONS(2,
+                List.HOLD()));
+
+var int ret = 0;
+
+do
+    traverse l in &&ls do
+        ret = ret + 1;
+        watching *l do
+            if l:HOLD then
+                finalize with
+                    ret = ret + 1;
+                end
+                await FOREVER;
+            else
+                par/or do
+                    traverse &&l:CONS.tail;
+                with
+                    await 1s;
+                end
+            end
+        end
+    end
+end
+
+escape ret;
+]],
+    wrn = 'line 23 : unbounded recursive spawn',
+    run = { ['~>5s']=4 },
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag HOLD;
+or
+    tag CONS with
+        var int   head;
+        var List  tail;
+    end
+end
+
 pool List[10] ls = new List.CONS(1,
             List.CONS(2,
                 List.HOLD()));
@@ -55253,6 +55481,48 @@ traverse l in &&ls do
                 traverse &&l:CONS.tail;
             with
                 await 1s;
+            end
+        end
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>5s']=4 },
+}
+Test { [[
+data List with
+    tag NIL;
+or
+    tag HOLD;
+or
+    tag CONS with
+        var int   head;
+        var List  tail;
+    end
+end
+
+pool List[10] ls = new List.CONS(1,
+            List.CONS(2,
+                List.HOLD()));
+
+var int ret = 0;
+
+do
+    traverse l in &&ls do
+        ret = ret + 1;
+        watching *l do
+            if l:HOLD then
+                finalize with
+                    ret = ret + 1;
+                end
+                await FOREVER;
+            else
+                par/or do
+                    traverse &&l:CONS.tail;
+                with
+                    await 1s;
+                end
             end
         end
     end
