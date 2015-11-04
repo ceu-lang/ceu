@@ -349,7 +349,6 @@ _ceu_app->isAlive = 0;
 #endif
 ]])
         else
-            -- TODO: avoid this long traversal only to simulate kill?
             LINE(me, [[
 ceu_sys_org_free(_ceu_app, _ceu_org);
 #ifdef CEU_ORGS_AWAIT

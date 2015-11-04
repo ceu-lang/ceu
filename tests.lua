@@ -134,11 +134,13 @@ escape e.X.d.x;
 ]],
     run = 1,
 }
+
+--]===]
+
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -3291,7 +3293,7 @@ end
     run = { ['~>10s'] = 10 },
 }
 
--- CONTINUE
+-->>> CONTINUE
 
 Test { [[
 var int ret = 1;
@@ -3382,6 +3384,27 @@ end
         isForever = true,
     },
 }
+
+Test { [[
+par/or do
+    loop do
+        if false then
+            continue;
+        end
+        var int dim = 0;
+        var int x = dim;
+        do break; end
+    end
+with
+end
+escape 1;
+]],
+    wrn = true,
+    loop = true,
+    run = 1,
+}
+
+--<<< CONTINUE
 
 -- EX.05
 Test { [[
@@ -4614,6 +4637,32 @@ with
 end
 ]],
     run = {['~>1s']=1},
+}
+
+-- EMIT / SELF-ABORT
+Test { [[
+input void I;
+event void e, f;
+par do
+    watching e do       // 5
+        await I;        // 1
+        emit f;         // 3, aborted on 5
+        _assert(0);     // never executes
+    end
+    await I;
+    escape 42;
+with
+    await f;            // 2
+    emit e;             // 4, aborted on 5
+    _assert(0);         // never executes
+with
+    async do
+        emit I;
+        emit I;
+    end
+end
+]],
+    run = 42,
 }
 
 --<<< INTERNAL EVENTS
@@ -27671,6 +27720,51 @@ escape aa.aa;
     run = 5,
 }
 
+-- EMIT / SELF-ABORT
+Test { [[
+input void KILL;
+
+native do
+    int V = 0;
+end
+
+class OrgA with
+    event void evtA;
+    event void evtB;
+do
+    loop do
+        watching evtA do
+            loop do
+                loop i in 3 do
+                    await 1s;
+                end
+                emit evtB;
+                _assert(0);
+            end
+        end
+        _V = 10;
+    end
+end
+
+class OrgB with
+do
+    var OrgA a;
+    
+    loop do
+        await a.evtB;
+        emit a.evtA;
+        _assert(0);
+    end
+end
+
+var OrgB b;
+
+await KILL;
+
+escape _V;
+]],
+    run = { ['~>3s;~>KILL']=10 },
+}
 Test { [[
 input void OS_START;
 class T with
@@ -40440,6 +40534,20 @@ end
 escape 1;
 ]],
     env = 'line 1 : wrong argument #1 : vectors are not supported',
+}
+
+Test { [[
+function (int x)=>int f do
+    return x + 1;
+end
+
+if true then
+    escape f(1);
+else
+    escape 0;
+end
+]],
+    run = 2,
 }
 
 --<<< FUNCTIONS

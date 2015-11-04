@@ -343,7 +343,7 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
             local var = AST.node('Var', me.ln, '_')
             var.tp = ins.tup[i]
             var.lst = var
-            var.var = {id=ins[i][3], blk=AST.par(f,'Dcl_cls').blk_ifc, tp=var.tp}
+            var.var = {id=ins[i][3], blk=me, tp=var.tp}
             VARS_UNINIT[var.var] = me
             F.__Set_bef_one(me, param, var)
                 -- TODO: error message: 'invalid argument #i : ...'
