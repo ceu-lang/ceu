@@ -182,16 +182,20 @@ function CLEAR (me)
 
     LINE(me, [[
 {
-int old = _ceu_stk->is_alive;
+    /* Reuse current stack frame.
+     * We know that CLEAR will not abort anything and return normally.
+     * Just save the previous "is_alive", call CLEAR, and restore it.
+     */
+    int __ceu_old = _ceu_stk->is_alive;
+    _ceu_stk->is_alive = 1;
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
-_ceu_stk->is_alive = 1;
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org,
                   ]]..me.trails[1]..[[,
                   ]]..(me.trails[2]+1)..[[);
-_ceu_stk->is_alive = old;
+    _ceu_stk->is_alive = __ceu_old;
 }
 ]])
 
@@ -213,20 +217,10 @@ _ceu_stk->is_alive = old;
     end
 
     LINE(me, [[
-/* LONGJMP
- * Block termination: we will abort all trails between [t1,t2].
- * Return status=1 to distinguish from longjmp from organism termination.
- * We want to continue from "me.lbl_jmp" below.
- */
-#ifdef CEU_ORGS
-_ceu_app->stk_jmp.org = _ceu_org;
-#endif
-_ceu_app->stk_jmp.trl = _ceu_trl;
-_ceu_app->stk_jmp.lbl = ]]..me.lbl_jmp.id..[[;
-ceu_longjmp(_ceu_app, _ceu_org,
-            ]]..me.trails[1]..','..me.trails[2]..[[);
+/* TODO: invert with above? */
+ceu_sys_stack_clear(_ceu_stk, _ceu_org,
+                    ]]..me.trails[1]..','..me.trails[2]..[[);
 ]])
-    CASE(me, me.lbl_jmp)
 end
 
 F = {
@@ -356,18 +350,16 @@ _ceu_app->isAlive = 0;
 ceu_sys_org_free(_ceu_app, _ceu_org);
 #ifdef CEU_ORGS_AWAIT
 {
+    /* signal ok_killed */
     tceu_stk stk_ = *_ceu_stk;
              stk_.is_alive = 1;
-
-    /* signal ok_killed */
+             stk_.down = _ceu_stk;
     tceu_kill ps = { _ceu_org, _ceu_org->ret, 0, _ceu_org->n-1 };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
-    _ceu_stk->up = &stk_;
     ceu_sys_go_ex(_ceu_app, &evt_, &stk_,
                   _ceu_app->data, 0, _ceu_app->data->n);
-    _ceu_stk->up = NULL;
 }
 #endif
 ]])
@@ -447,26 +439,10 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 
         LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
-    if (setjmp(stk_.jmp) != 0) {
-#ifdef CEU_ORGS
-        _ceu_org = _ceu_app->stk_jmp.org;
-#endif
-        _ceu_trl = _ceu_app->stk_jmp.trl;
-]])
-        GOTO(me, '_ceu_app->stk_jmp.lbl')
-        LINE(me, [[
-    }
-
-    /* SETJMP: spawning a new org
-     * The new org might emit a global event that awakes a par/or enclosing the 
-     * call point.
-     */
-    _ceu_stk->up = &stk_;
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
     ceu_app_go(_ceu_app,NULL,
                ]]..org..[[, &]]..org..[[->trls[0],
                &stk_);
-    _ceu_stk->up = NULL;
     if (!stk_.is_alive) {
         return;
     }
@@ -647,28 +623,11 @@ if (]]..me.val..[[ == NULL) {
         local org_cast = '((tceu_org*)'..V(org,'lval')..')'
         LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
-    if (setjmp(stk_.jmp) != 0) {
-#ifdef CEU_ORGS
-        _ceu_org = _ceu_app->stk_jmp.org;
-#endif
-        _ceu_trl = _ceu_app->stk_jmp.trl;
-        _ceu_lbl = _ceu_app->stk_jmp.lbl;
-]])
-        GOTO(me, '_ceu_app->stk_jmp.lbl')
-        LINE(me, [[
-    }
-    _ceu_stk->up = &stk_;
-
-    /* SETJMP: killing an org
-     * The kill might awake a par/or enclosing the call point.
-     */
-    {
-        tceu_evt evt;
-                 evt.id = CEU_IN__CLEAR;
-        ceu_sys_go_ex(_ceu_app, &evt, &stk_,
-                      ]]..org_cast..[[, 0, ]]..org_cast..[[->n);
-    }
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+    tceu_evt evt;
+             evt.id = CEU_IN__CLEAR;
+    ceu_sys_go_ex(_ceu_app, &evt, &stk_,
+                  ]]..org_cast..[[, 0, ]]..org_cast..[[->n);
 
     ceu_sys_org_free(_ceu_app,]]..org_cast..[[);
 
@@ -683,12 +642,9 @@ if (]]..me.val..[[ == NULL) {
                       _ceu_app->data, 0, _ceu_app->data->n);
     }
     if (!stk_.is_alive) {
-        _ceu_stk->up = NULL;
         return;
     }
 #endif
-
-    _ceu_stk->up = NULL;
 }
 ]])
     end,
@@ -1180,38 +1136,20 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 
     /* OK_KILLED (after free) */        /* 4. kill */
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
-    if (setjmp(stk_.jmp) != 0) {
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+    tceu_evt evt;
+             evt.id = CEU_IN__ok_killed;
+             evt.param = &__ceu_old;
+    ceu_sys_go_ex(_ceu_app, &evt, &stk_,
+                  _ceu_app->data, 0,
 #ifdef CEU_ORGS
-        _ceu_org = _ceu_app->stk_jmp.org;
-#endif
-        _ceu_trl = _ceu_app->stk_jmp.trl;
-]])
-        GOTO(me, '_ceu_app->stk_jmp.lbl')
-        LINE(me, [[
-    }
-
-    /* SETJMP: mutating an adt
-     * The mutation frees a subtree that might awake a par/or enclosing the 
-     * call point.
-     */
-    {
-        tceu_evt evt;
-                 evt.id = CEU_IN__ok_killed;
-                 evt.param = &__ceu_old;
-        _ceu_stk->up = &stk_;
-        ceu_sys_go_ex(_ceu_app, &evt, &stk_,
-                      _ceu_app->data, 0,
-#ifdef CEU_ORGS
-                      _ceu_app->data->n
+                  _ceu_app->data->n
 #else
-                      CEU_NTRAILS
+                  CEU_NTRAILS
 #endif
-                     );
-        _ceu_stk->up = NULL;
-        if (!stk_.is_alive) {
-            return;
-        }
+                 );
+    if (!stk_.is_alive) {
+        return;
     }
 }
 #endif
@@ -1459,32 +1397,16 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         COMM(me, me.tag..': spawn subs')
         LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
-    if (setjmp(stk_.jmp) != 0) {
-#ifdef CEU_ORGS
-        _ceu_org = _ceu_app->stk_jmp.org;
-#endif
-        _ceu_trl = _ceu_app->stk_jmp.trl;
-]])
-        GOTO(me, '_ceu_app->stk_jmp.lbl')
-        LINE(me, [[
-    }
-
-    /* SETJMP: starting trails in a par
-     * The 1st trail might abort an enclosing par/or, or emit something that 
-     * does.
-     */
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
 ]])
 
         for i, sub in ipairs(me) do
             if i < #me then
                 LINE(me, [[
     _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = ]]..me.lbls_in[i].id..[[;
-    _ceu_stk->up = &stk_;
     ceu_app_go(_ceu_app,NULL,_ceu_org,
                &_ceu_org->trls[ ]]..sub.trails[1]..[[ ],
                &stk_);
-    _ceu_stk->up = NULL;
 
     if (!stk_.is_alive) {
         return;
@@ -1724,21 +1646,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
                 -- input emit yields, save the stack
                 LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
-    if (setjmp(stk_.jmp) != 0) {
-#ifdef CEU_ORGS
-        _ceu_org = _ceu_app->stk_jmp.org;
-#endif
-        _ceu_trl = _ceu_app->stk_jmp.trl;
-]])
-                GOTO(me, '_ceu_app->stk_jmp.lbl')
-                LINE(me, [[
-    }
-
-    /* SETJMP: emit input event
-     * The emit might awake a par/or enclosing the call point.
-     */
-    _ceu_stk->up = &stk_;
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
 ]])
 
             end
@@ -1844,7 +1752,6 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 #endif
            _ceu_app->wclk_min_set]]..suf..[[<=0) {
         if (!stk_.is_alive) {
-            _ceu_stk->up = NULL;
             return;
         }
         s32 __ceu_dt = 0;
@@ -1857,7 +1764,6 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
             LINE(me, VAL..';')
             LINE(me, [[
     if (!stk_.is_alive) {
-        _ceu_stk->up = NULL;
         return;
     }
 ]])
@@ -1865,8 +1771,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
         LINE(me, [[
     }   /* block for __emit_ps */
-    _ceu_stk->up = NULL;
-}       /* block for setjmp */
+}       /* block for stk_ */
 ]])
 
         LINE(me, [[
@@ -1889,20 +1794,7 @@ if (!_ceu_app->isAlive)
 
         LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
-    if (setjmp(stk_.jmp) != 0) {
-#ifdef CEU_ORGS
-        _ceu_org = _ceu_app->stk_jmp.org;
-#endif
-        _ceu_trl = _ceu_app->stk_jmp.trl;
-]])
-        GOTO(me, '_ceu_app->stk_jmp.lbl')
-        LINE(me, [[
-    }
-
-    /* SETJMP: emit internal event
-     * The emit might awake a par/or enclosing the call point.
-     */
+    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
 ]])
 
         local val = F.__emit_ps(me)
@@ -1923,7 +1815,6 @@ if (!_ceu_app->isAlive)
 ]])
         end
         LINE(me, [[
-    _ceu_stk->up = &stk_;
     ceu_sys_go_ex(_ceu_app, &evt,
                   &stk_,
                   _ceu_app->data, 0,
@@ -1933,7 +1824,6 @@ if (!_ceu_app->isAlive)
                   CEU_NTRAILS
 #endif
     );
-    _ceu_stk->up = NULL;
 
     if (!stk_.is_alive) {
         return;

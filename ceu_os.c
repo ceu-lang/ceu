@@ -195,12 +195,11 @@ static void ceu_sys_org_free (tceu_app* app, tceu_org* org)
 /**********************************************************************/
 
 #ifdef CEU_STACK
-void ceu_stack_dump (tceu_app* app) {
-    tceu_stk* cur;
+void ceu_sys_stack_dump (tceu_stk* stk) {
     printf(">>> STACK DUMP:\n");
-    for (cur=app->stk_bottom; cur!=NULL; cur=cur->up) {
-        printf("\t[%p] up=%p org=%p trls=[%d,%d]\n",
-            cur, cur->up, cur->org, cur->trl1, cur->trl2);
+    for (; stk!=NULL; stk=stk->down) {
+        printf("\t[%p] down=%p org=%p trls=[%d,%d]\n",
+            stk, stk->down, stk->org, stk->trl1, stk->trl2);
     }
 }
 #endif
@@ -235,36 +234,23 @@ static int ceu_org_is_cleared (tceu_org* me, tceu_org* clr_org,
  * If so, the whole stack has to unwind and continue from what we pass in 
  * lbl_or_org.
  */
-void ceu_longjmp (tceu_app* app, tceu_org* org,
-                  tceu_ntrl t1, tceu_ntrl t2) {
-    tceu_stk* cur;
-    tceu_stk* prv; /* TODO: remove */
-    for (prv=app->stk_bottom, cur=app->stk_bottom->up;
-         cur != NULL;
-         prv=cur,cur=cur->up)
-    {
-        if (!cur->is_alive) {
+void ceu_sys_stack_clear (tceu_stk* stk, tceu_org* org,
+                          tceu_ntrl t1, tceu_ntrl t2) {
+    for (; stk->down!=NULL; stk=stk->down) {
+        if (!stk->is_alive) {
             continue;
         }
 #ifdef CEU_ORGS
-        if (cur->org != org) {
-            if (ceu_org_is_cleared(cur->org, org, t1, t2)) {
-                cur->is_alive = 0;
-#if 0
-                prv->up = NULL;
-                longjmp(cur->jmp, 1);
-#endif
+        if (stk->org != org) {
+            if (ceu_org_is_cleared(stk->org, org, t1, t2)) {
+                stk->is_alive = 0;
             }
         }
         else
 #endif
         {
-            if (t1<=cur->trl1 && cur->trl2<=t2) {
-                cur->is_alive = 0;
-#if 0
-                prv->up = NULL;
-                longjmp(cur->jmp, 1);
-#endif
+            if (t1<=stk->trl1 && stk->trl2<=t2) {
+                stk->is_alive = 0;
             }
         }
     }
@@ -478,49 +464,13 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             /* traverse all children */
 
             if (cur != NULL) {
-                tceu_stk stk_ = { NULL, org, cur->parent_trl, cur->parent_trl, 1, {} };
-
-#if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
-                /* In the presence of ok_killed events, we cannot simply
-                 * interrupt children traversal during a IN__CLEAR, because it 
-                 * might lead to memory leaks if not all children are travesed.
-                 */
-                tceu_org* nxt;
-                int has_aborted = 0;            /* normal execution */
-                if (setjmp(stk_.jmp) != 0) {
-                    has_aborted = 1;            /* detected abortion */
-                    if (evt->id==CEU_IN__CLEAR) {
-                        cur = nxt;              /* continue from nxt */
-                    } else {
-                        cur = NULL;             /* safe to abort now */
-                    }
-                }
-#else
-                if (setjmp(stk_.jmp) != 0) {
-                    app->stk_jmp.trl->lbl = app->stk_jmp.lbl;
-                    app->code(app, evt, app->stk_jmp.org, app->stk_jmp.trl, stk);
-                    return;
-                }
-#endif
-
-                /* SETJMP: traversing children
-                 * A child might emit a global event that awakes a par/or 
-                 * enclosing the parent organism with the call point.
-                 */
-                stk->up = &stk_;
+                tceu_stk stk_ = { stk, org, cur->parent_trl, cur->parent_trl, 1 };
                 while (cur != NULL) {
-#if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
-#else
-                    tceu_org*
-#endif
-                    nxt = cur->nxt;
-                        /* save "nxt" before the call, which might kill "cur"
-                         * and reset "nxt" for the freelist */
+                    tceu_org* nxt = cur->nxt;   /* save before possible free/relink */
                     ceu_sys_go_ex(app, evt, &stk_, cur, 0, cur->n);
-if (!stk->is_alive) {
-    stk->up = NULL;
-    return; /* whole outer traversal aborted */
-}
+                    if (!stk->is_alive) {
+                        return; /* whole outer traversal aborted */
+                    }
 #if 0
 if (!stk_.is_alive) {
 printf("aborted\n");
@@ -529,15 +479,6 @@ printf("aborted\n");
 #endif
                     cur = nxt;
                 }
-                stk->up = NULL;
-
-#if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
-                if (has_aborted) {
-                    app->stk_jmp.trl->lbl = app->stk_jmp.lbl;
-                    app->code(app, evt, app->stk_jmp.org, app->stk_jmp.trl, stk);
-                    return;
-                }
-#endif
             }
             continue;   /* next trail after handling children */
         }
@@ -731,8 +672,7 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
-    tceu_stk stk_ = { NULL, NULL, 0, 0, 1, {} };
-    app->stk_bottom = &stk_;
+    tceu_stk stk_ = { NULL, NULL, 0, 0, 1 };
     ceu_sys_go_stk(app, evt, evtp, &stk_);
 }
 

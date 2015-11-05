@@ -10,7 +10,7 @@ end
 RUNTESTS = true
 
 -- Execution option for the tests:
-VALGRIND = true
+--VALGRIND = true
 --REENTRANT = true
 --LUACOV = 'lua -lluacov'
 --COMPLETE = true
@@ -333,8 +333,25 @@ STATS = {
     trails  = 6063,
     bytes   = 37971664,
 }
-
 (./run_tests.lua: 729.84s 50348k)
+
+-- with c-stack-longjmp-no, but not yet cleaned
+STATS = {
+    count   = 2953,
+    mem     = 0,
+    trails  = 6463,
+    bytes   = 35420104,
+}
+(./run_tests.lua: 846.00s 50496k)
+
+-- with c-stack-longjmp-no, but cleaned-1
+STATS = {
+    count   = 2953,
+    mem     = 0,
+    trails  = 6463,
+    bytes   = 33295058,
+}
+(./run_tests.lua: 802.49s 53308k)
 
 ===
 

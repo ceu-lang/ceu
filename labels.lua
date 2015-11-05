@@ -73,10 +73,6 @@ F = {
                 var.lbl_fin_kill_free = new{'adt_fin_kill_free'}
             end
         end
-
-        if me.needs_clr then
-            me.lbl_jmp = new{'Block_jmp'}
-        end
     end,
 
     Dcl_cls = function (me)
@@ -89,9 +85,6 @@ F = {
 
     SetBlock_pre = function (me)
         me.lbl_out = new{'Set_out'}
-        if me.needs_clr then
-            me.lbl_jmp = new{'Set_jmp'}
-        end
     end,
 
     _Par_pre = function (me)
@@ -110,9 +103,6 @@ F = {
     ParOr_pre = function (me)
         F._Par_pre(me)
         me.lbl_out = new{'ParOr_out'}
-        if me.needs_clr then
-            me.lbl_jmp = new{'ParOr_jmp'}
-        end
     end,
     ParAnd_pre = function (me)
         F._Par_pre(me)
@@ -131,9 +121,6 @@ F = {
     Loop_pre = function (me)
         if AST.iter'Async'() then
             me.lbl_asy = new{'Async_cnt'}
-        end
-        if me.needs_clr then
-            me.lbl_jmp = new{'Loop_jmp'}
         end
     end,
 

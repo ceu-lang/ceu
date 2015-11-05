@@ -19,14 +19,6 @@
 #define CEU_ISR_OFF()
 #endif
 
-/*
-#if defined(CEU_CLEAR) || defined(CEU_INTS) || defined(CEU_ORGS) || defined(CEU_REENTRANT)
-*/
-#if 1
-#include <setjmp.h>
-#define CEU_STACK
-#endif
-
 #if defined(CEU_OS_KERNEL) || defined(CEU_OS_APP)
 #define CEU_OS
 #endif
@@ -520,25 +512,12 @@ typedef struct tceu_lst {
 /* TCEU_STK */
 
 typedef struct tceu_stk {
-    struct tceu_stk* up;
+    struct tceu_stk* down;
     tceu_org*   org;
     tceu_ntrl   trl1;
     tceu_ntrl   trl2;
     char        is_alive;
-    jmp_buf   jmp;
 } tceu_stk;
-
-/* TCEU_JMP */
-
-#ifdef CEU_STACK
-typedef struct tceu_jmp {
-#ifdef CEU_ORGS
-    tceu_org* org;
-#endif
-    tceu_trl* trl;
-    tceu_nlbl lbl;
-} tceu_jmp;
-#endif
 
 /* TCEU_APP */
 
@@ -564,11 +543,6 @@ typedef struct tceu_app {
 
 #ifdef CEU_REENTRANT
     tceu_nstk stki;
-#endif
-
-#ifdef CEU_STACK
-    tceu_stk* stk_bottom;
-    tceu_jmp  stk_jmp;
 #endif
 
 #if defined(CEU_RET) || defined(CEU_ORGS_AWAIT)
