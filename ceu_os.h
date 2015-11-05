@@ -1,3 +1,5 @@
+#define CEU_STACK
+
 #ifndef _CEU_OS_H
 #define _CEU_OS_H
 
@@ -511,6 +513,7 @@ typedef struct tceu_lst {
 
 /* TCEU_STK */
 
+#ifdef CEU_STACK
 typedef struct tceu_stk {
     struct tceu_stk* down;
     tceu_org*   org;
@@ -518,6 +521,9 @@ typedef struct tceu_stk {
     tceu_ntrl   trl2;
     char        is_alive;
 } tceu_stk;
+#else
+typedef void tceu_stk
+#endif
 
 /* TCEU_APP */
 
@@ -539,10 +545,6 @@ typedef struct tceu_app {
 
 #ifdef CEU_OS
     struct tceu_app* nxt;
-#endif
-
-#ifdef CEU_REENTRANT
-    tceu_nstk stki;
 #endif
 
 #if defined(CEU_RET) || defined(CEU_ORGS_AWAIT)

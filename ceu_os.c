@@ -190,25 +190,10 @@ static void ceu_sys_org_free (tceu_app* app, tceu_org* org)
 #endif
 }
 
-#endif  /* CEU_ORGS */
-
-/**********************************************************************/
-
-#ifdef CEU_STACK
-void ceu_sys_stack_dump (tceu_stk* stk) {
-    printf(">>> STACK DUMP:\n");
-    for (; stk!=NULL; stk=stk->down) {
-        printf("\t[%p] down=%p org=%p trls=[%d,%d]\n",
-            stk, stk->down, stk->org, stk->trl1, stk->trl2);
-    }
-}
-#endif
-
 /*
  * Checks if "me" is cleared due to a clear in "clr_org".
  * ;
  */
-#ifdef CEU_ORGS
 static int ceu_org_is_cleared (tceu_org* me, tceu_org* clr_org,
                                tceu_ntrl clr_t1, tceu_ntrl clr_t2)
 {
@@ -226,7 +211,19 @@ static int ceu_org_is_cleared (tceu_org* me, tceu_org* clr_org,
     }
     return 0;
 }
-#endif
+
+#endif  /* CEU_ORGS */
+
+/**********************************************************************/
+
+#ifdef CEU_STACK
+void ceu_sys_stack_dump (tceu_stk* stk) {
+    printf(">>> STACK DUMP:\n");
+    for (; stk!=NULL; stk=stk->down) {
+        printf("\t[%p] down=%p org=%p trls=[%d,%d]\n",
+            stk, stk->down, stk->org, stk->trl1, stk->trl2);
+    }
+}
 
 /*
  * Trails [t1,t2] of "org" are dyeing.
@@ -255,6 +252,7 @@ void ceu_sys_stack_clear (tceu_stk* stk, tceu_org* org,
         }
     }
 }
+#endif
 
 /**********************************************************************/
 
@@ -435,7 +433,10 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
     tceu_ntrl trlI;
     tceu_trl* trl;
     for (trlI=trl0, trl=&org->trls[trlI];
-         trlI<trlF && stk->is_alive;
+#ifdef CEU_STACK
+         stk->is_alive &&
+#endif
+            trlI<trlF;
          trlI++, trl++)
     {
 #ifdef CEU_DEBUG_TRAILS
@@ -462,7 +463,9 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             }
 
             /* traverse all children */
-
+#ifndef CEU_STACK
+#error bug found: expected CEU_STACK to be defined
+#endif
             if (cur != NULL) {
                 tceu_stk stk_ = { stk, org, cur->parent_trl, cur->parent_trl, 1 };
                 while (cur != NULL) {
@@ -672,8 +675,12 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
+#ifdef CEU_STACK
     tceu_stk stk_ = { NULL, NULL, 0, 0, 1 };
     ceu_sys_go_stk(app, evt, evtp, &stk_);
+#else
+    ceu_sys_go_stk(app, evt, evtp, NULL);
+#endif
 }
 
 int ceu_go_all (tceu_app* app)

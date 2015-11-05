@@ -181,13 +181,18 @@ function CLEAR (me)
     end
 
     LINE(me, [[
+#ifndef CEU_STACK
+#error bug found: expected CEU_STACK to be defined
+#endif
 {
     /* Reuse current stack frame.
      * We know that CLEAR will not abort anything and return normally.
      * Just save the previous "is_alive", call CLEAR, and restore it.
      */
+#ifdef CEU_STACK
     int __ceu_old = _ceu_stk->is_alive;
     _ceu_stk->is_alive = 1;
+#endif
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
     ceu_sys_go_ex(_ceu_app, &evt,
@@ -195,7 +200,9 @@ function CLEAR (me)
                   _ceu_org,
                   ]]..me.trails[1]..[[,
                   ]]..(me.trails[2]+1)..[[);
+#ifdef CEU_STACK
     _ceu_stk->is_alive = __ceu_old;
+#endif
 }
 ]])
 
@@ -1396,6 +1403,9 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         LINE(me, [[
+#ifndef CEU_STACK
+#error bug found: expected CEU_STACK to be defined
+#endif
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
 ]])
@@ -1645,6 +1655,9 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
                 ptr = '_ceu_app'
                 -- input emit yields, save the stack
                 LINE(me, [[
+#ifndef CEU_STACK
+#error bug found: expected CEU_STACK to be defined
+#endif
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
 ]])
@@ -1793,6 +1806,9 @@ if (!_ceu_app->isAlive)
         local _, int, ps = unpack(me)
 
         LINE(me, [[
+#ifndef CEU_STACK
+#error bug found: expected CEU_STACK to be defined
+#endif
 {
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
 ]])

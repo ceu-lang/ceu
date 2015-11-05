@@ -353,6 +353,15 @@ STATS = {
 }
 (./run_tests.lua: 802.49s 53308k)
 
+-- with c-stack-longjmp-no, but cleaned-2
+STATS = {
+    count   = 2953,
+    mem     = 0,
+    trails  = 6463,
+    bytes   = 33110738,
+}
+(./run_tests.lua: 808.63s 51912k)
+
 ===
 
 -- ROCKS

@@ -194,9 +194,6 @@ ceu_app_init (tceu_app* app)
 #if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
     app->dont_emit_kill = 0;
 #endif
-#ifdef CEU_REENTRANT
-    app->stki = 0;
-#endif
 #ifdef CEU_RET
     app->ret = 0;
 #endif
