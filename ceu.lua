@@ -239,6 +239,7 @@ do
             has_adts_news_malloc = 'CEU_ADTS_NEWS_MALLOC',
             has_ifcs    = 'CEU_IFCS',
             has_clear   = 'CEU_CLEAR',
+            has_stack_clear = 'CEU_STACK_CLEAR',
             has_pses    = 'CEU_PSES',
             has_ret     = 'CEU_RET',
             has_lua     = 'CEU_LUA',

@@ -7,6 +7,7 @@ PROPS = {
     has_orgs    = false,
     has_ifcs    = false,
     has_clear   = false,
+    has_stack_clear = false,
     has_pses    = false,
     has_ret     = false,
     has_lua     = false,
@@ -99,6 +100,7 @@ function NEEDS_CLR (top)
                n.tag == 'ParOr'   or
                n.tag == 'Block' and n.needs_clr then
             PROPS.has_clear = true
+            PROPS.has_stack_clear = true
             top.needs_clr = true
             break
         end
@@ -203,6 +205,7 @@ F = {
         local top = CLS()
         if me.needs_clr then
             PARENTS_SET_FIELD(top, 'needs_clr_fin')  -- TODO (-ROM): could avoid ors w/o fins
+            PROPS.has_stack_clear = true
         end
         if me.has_orgs then
             PARENTS_SET_FIELD(top, 'has_orgs')
@@ -244,6 +247,7 @@ F = {
     ParOr = function (me)
         me.needs_clr = true
         PROPS.has_clear = true
+        PROPS.has_stack_clear = true
     end,
 
     Loop_pre = function (me)

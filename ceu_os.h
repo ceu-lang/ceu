@@ -1,5 +1,3 @@
-#define CEU_STACK
-
 #ifndef _CEU_OS_H
 #define _CEU_OS_H
 
@@ -43,7 +41,7 @@
     #define CEU_ASYNCS
     #define CEU_RET
     #define CEU_CLEAR
-    #define CEU_STACK
+    #define CEU_STACK_CLEAR
 #ifndef __AVR
 #endif
     #define CEU_INTS
@@ -209,8 +207,13 @@
 
 #endif /* ! CEU_OS_APP (!CEU_OS||CEU_OS_KERNEL) */
 
+#ifdef CEU_STACK_CLEAR
 #define ceu_in_emit(app,id,n,buf) \
     ceu_out_go_stk(app,id,buf,&stk_)
+#else
+#define ceu_in_emit(app,id,n,buf) \
+    ceu_out_go_stk(app,id,buf,NULL)
+#endif
 
 #ifdef CEU_THREADS
 /* TODO: app */
@@ -352,7 +355,7 @@ typedef u8 tceu_nevt;   /* max number of events */
 typedef u8 tceu_ntrl;   /* max number of trails per class */
                         /* TODO: should "u8" be fixed? */
 
-#ifdef CEU_STACK
+#ifdef CEU_STACK_CLEAR
 typedef u16 tceu_nstk;  /* max size of internal stack in bytes */
                         /* TODO: should "u16" be fixed? */
 #endif
@@ -513,7 +516,7 @@ typedef struct tceu_lst {
 
 /* TCEU_STK */
 
-#ifdef CEU_STACK
+#ifdef CEU_STACK_CLEAR
 typedef struct tceu_stk {
     struct tceu_stk* down;
     tceu_org*   org;
@@ -522,7 +525,7 @@ typedef struct tceu_stk {
     char        is_alive;
 } tceu_stk;
 #else
-typedef void tceu_stk
+typedef void tceu_stk;
 #endif
 
 /* TCEU_APP */

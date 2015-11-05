@@ -361,6 +361,22 @@ STATS = {
     bytes   = 33110738,
 }
 (./run_tests.lua: 808.63s 51912k)
+STATS = {
+    count   = 2953,
+    mem     = 0,
+    trails  = 6463,
+    bytes   = 33781282,
+}
+(./run_tests.lua: 828.69s 53068k)
+STATS = {
+    count   = 2953,
+    mem     = 0,
+    trails  = 6463,
+    bytes   = 33721874,
+}
+(./run_tests.lua: 737.99s 52916k)
+
+
 
 ===
 
@@ -372,16 +388,10 @@ STATS = {
 SCORE = 56 vs 49
 (./rocks.exe: 2.33s 31916k)
 294063
---
-(./rocks.exe: 2.06s 31868k)     -- c-stack-longjmp
-227341
---
-(./rocks.exe: 1.93s 31868k)     -- c-stack-longjmp-ok
-220284
---
-SCORE = 53 vs 50
-(./rocks.exe: 1.95s 31896k)     -- ok_killed-new-abortion
-230616
+--- c-stack-longjmp-no, some mods in the game
+SCORE = 40 vs 58
+(./rocks.exe: 1.39s 31896k)
+214734
 ]]
 
 --[[

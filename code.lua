@@ -181,15 +181,12 @@ function CLEAR (me)
     end
 
     LINE(me, [[
-#ifndef CEU_STACK
-#error bug found: expected CEU_STACK to be defined
-#endif
 {
     /* Reuse current stack frame.
      * We know that CLEAR will not abort anything and return normally.
      * Just save the previous "is_alive", call CLEAR, and restore it.
      */
-#ifdef CEU_STACK
+#ifdef CEU_STACK_CLEAR
     int __ceu_old = _ceu_stk->is_alive;
     _ceu_stk->is_alive = 1;
 #endif
@@ -200,11 +197,11 @@ function CLEAR (me)
                   _ceu_org,
                   ]]..me.trails[1]..[[,
                   ]]..(me.trails[2]+1)..[[);
-#ifdef CEU_STACK
+#ifdef CEU_STACK_CLEAR
     _ceu_stk->is_alive = __ceu_old;
-#endif
     ceu_sys_stack_clear(_ceu_stk, _ceu_org,
                         ]]..me.trails[1]..','..me.trails[2]..[[);
+#endif
 }
 ]])
 
@@ -354,14 +351,21 @@ ceu_sys_org_free(_ceu_app, _ceu_org);
 #ifdef CEU_ORGS_AWAIT
 {
     /* signal ok_killed */
+#ifdef CEU_STACK_CLEAR
     tceu_stk stk_ = *_ceu_stk;
              stk_.is_alive = 1;
              stk_.down = _ceu_stk;
+#endif
     tceu_kill ps = { _ceu_org, _ceu_org->ret, 0, _ceu_org->n-1 };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
-    ceu_sys_go_ex(_ceu_app, &evt_, &stk_,
+    ceu_sys_go_ex(_ceu_app, &evt_,
+#ifdef CEU_STACK_CLEAR
+                  &stk_,
+#else
+                  NULL,
+#endif
                   _ceu_app->data, 0, _ceu_app->data->n);
 }
 #endif
@@ -442,6 +446,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 
         LINE(me, [[
 {
+#ifdef CEU_STACK_CLEAR
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
     ceu_app_go(_ceu_app,NULL,
                ]]..org..[[, &]]..org..[[->trls[0],
@@ -449,6 +454,11 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     if (!stk_.is_alive) {
         return;
     }
+#else
+    ceu_app_go(_ceu_app,NULL,
+               ]]..org..[[, &]]..org..[[->trls[0],
+               NULL);
+#endif
 ]])
         if t.set then
                 LINE(me, [[
@@ -1399,11 +1409,10 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         -- Ever/Or/And spawn subs
         COMM(me, me.tag..': spawn subs')
         LINE(me, [[
-#ifndef CEU_STACK
-#error bug found: expected CEU_STACK to be defined
-#endif
 {
+#ifdef CEU_STACK_CLEAR
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+#endif
 ]])
 
         for i, sub in ipairs(me) do
@@ -1412,11 +1421,18 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
     _ceu_org->trls[ ]]..sub.trails[1]..[[ ].lbl = ]]..me.lbls_in[i].id..[[;
     ceu_app_go(_ceu_app,NULL,_ceu_org,
                &_ceu_org->trls[ ]]..sub.trails[1]..[[ ],
-               &stk_);
+#ifdef CEU_STACK_CLEAR
+               &stk_
+#else
+               NULL
+#endif
+              );
 
+#ifdef CEU_STACK_CLEAR
     if (!stk_.is_alive) {
         return;
     }
+#endif
 ]])
             else
                 -- execute the last directly (no need to call)
@@ -1651,11 +1667,10 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
                 ptr = '_ceu_app'
                 -- input emit yields, save the stack
                 LINE(me, [[
-#ifndef CEU_STACK
-#error bug found: expected CEU_STACK to be defined
-#endif
 {
+#ifdef CEU_STACK_CLEAR
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+#endif
 ]])
 
             end
@@ -1754,17 +1769,31 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 #ifdef CEU_WCLOCKS
 {
     u32 __ceu_tmp_]]..me.n..' = '..V(ps[1],'rval')..[[;
-    ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[, &stk_);
+    ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_tmp_]]..me.n..[[,
+#ifdef CEU_STACK_CLEAR
+                   &stk_
+#else
+                   NULL
+#endif
+                  );
     while (
 #if defined(CEU_RET) || defined(CEU_OS)
            _ceu_app->isAlive &&
 #endif
            _ceu_app->wclk_min_set]]..suf..[[<=0) {
+#ifdef CEU_STACK_CLEAR
         if (!stk_.is_alive) {
             return;
         }
+#endif
         s32 __ceu_dt = 0;
-        ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt, &stk_);
+        ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt,
+#ifdef CEU_STACK_CLEAR
+                       &stk_
+#else
+                       NULL
+#endif
+                      );
     }
 }
 #endif
@@ -1772,9 +1801,11 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
         else
             LINE(me, VAL..';')
             LINE(me, [[
+#ifdef CEU_STACK_CLEAR
     if (!stk_.is_alive) {
         return;
     }
+#endif
 ]])
         end
 
@@ -1802,11 +1833,10 @@ if (!_ceu_app->isAlive)
         local _, int, ps = unpack(me)
 
         LINE(me, [[
-#ifndef CEU_STACK
-#error bug found: expected CEU_STACK to be defined
-#endif
 {
+#ifdef CEU_STACK_CLEAR
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+#endif
 ]])
 
         local val = F.__emit_ps(me)
@@ -1828,7 +1858,11 @@ if (!_ceu_app->isAlive)
         end
         LINE(me, [[
     ceu_sys_go_ex(_ceu_app, &evt,
+#ifdef CEU_STACK_CLEAR
                   &stk_,
+#else
+                  NULL,
+#endif
                   _ceu_app->data, 0,
 #ifdef CEU_ORGS
                   _ceu_app->data->n
@@ -1837,9 +1871,11 @@ if (!_ceu_app->isAlive)
 #endif
     );
 
+#ifdef CEU_STACK_CLEAR
     if (!stk_.is_alive) {
         return;
     }
+#endif
 }
 ]])
     end,

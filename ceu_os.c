@@ -216,7 +216,7 @@ static int ceu_org_is_cleared (tceu_org* me, tceu_org* clr_org,
 
 /**********************************************************************/
 
-#ifdef CEU_STACK
+#ifdef CEU_STACK_CLEAR
 void ceu_sys_stack_dump (tceu_stk* stk) {
     printf(">>> STACK DUMP:\n");
     for (; stk!=NULL; stk=stk->down) {
@@ -433,7 +433,7 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
     tceu_ntrl trlI;
     tceu_trl* trl;
     for (trlI=trl0, trl=&org->trls[trlI];
-#ifdef CEU_STACK
+#ifdef CEU_STACK_CLEAR
          stk->is_alive &&
 #endif
             trlI<trlF;
@@ -463,13 +463,13 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             }
 
             /* traverse all children */
-#ifndef CEU_STACK
-#error bug found: expected CEU_STACK to be defined
-#endif
             if (cur != NULL) {
+#ifdef CEU_STACK_CLEAR
                 tceu_stk stk_ = { stk, org, cur->parent_trl, cur->parent_trl, 1 };
+#endif
                 while (cur != NULL) {
                     tceu_org* nxt = cur->nxt;   /* save before possible free/relink */
+#ifdef CEU_STACK_CLEAR
                     ceu_sys_go_ex(app, evt, &stk_, cur, 0, cur->n);
                     if (!stk->is_alive) {
                         return; /* whole outer traversal aborted */
@@ -479,6 +479,9 @@ if (!stk_.is_alive) {
 printf("aborted\n");
     break; /* all children traversal aborted */
 }
+#endif
+#else
+                    ceu_sys_go_ex(app, evt, NULL, cur, 0, cur->n);
 #endif
                     cur = nxt;
                 }
@@ -675,7 +678,7 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
-#ifdef CEU_STACK
+#ifdef CEU_STACK_CLEAR
     tceu_stk stk_ = { NULL, NULL, 0, 0, 1 };
     ceu_sys_go_stk(app, evt, evtp, &stk_);
 #else
