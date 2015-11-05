@@ -10,7 +10,7 @@ end
 RUNTESTS = true
 
 -- Execution option for the tests:
---VALGRIND = true
+VALGRIND = true
 --REENTRANT = true
 --LUACOV = 'lua -lluacov'
 --COMPLETE = true

@@ -238,17 +238,20 @@ static int ceu_org_is_cleared (tceu_org* me, tceu_org* clr_org,
 void ceu_longjmp (tceu_app* app, tceu_org* org,
                   tceu_ntrl t1, tceu_ntrl t2) {
     tceu_stk* cur;
-    tceu_stk* prv;
+    tceu_stk* prv; /* TODO: remove */
     for (prv=app->stk_bottom, cur=app->stk_bottom->up;
          cur != NULL;
          prv=cur,cur=cur->up)
     {
+        if (!cur->is_alive) {
+            continue;
+        }
 #ifdef CEU_ORGS
         if (cur->org != org) {
             if (ceu_org_is_cleared(cur->org, org, t1, t2)) {
-                prv->up = NULL;
                 cur->is_alive = 0;
 #if 0
+                prv->up = NULL;
                 longjmp(cur->jmp, 1);
 #endif
             }
@@ -257,10 +260,9 @@ void ceu_longjmp (tceu_app* app, tceu_org* org,
 #endif
         {
             if (t1<=cur->trl1 && cur->trl2<=t2) {
-                prv->up = NULL;
-printf("set-dead %p\n", cur);
                 cur->is_alive = 0;
 #if 0
+                prv->up = NULL;
                 longjmp(cur->jmp, 1);
 #endif
             }
@@ -515,6 +517,16 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
                         /* save "nxt" before the call, which might kill "cur"
                          * and reset "nxt" for the freelist */
                     ceu_sys_go_ex(app, evt, &stk_, cur, 0, cur->n);
+if (!stk->is_alive) {
+    stk->up = NULL;
+    return; /* whole outer traversal aborted */
+}
+#if 0
+if (!stk_.is_alive) {
+printf("aborted\n");
+    break; /* all children traversal aborted */
+}
+#endif
                     cur = nxt;
                 }
                 stk->up = NULL;

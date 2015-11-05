@@ -35695,6 +35695,23 @@ escape ret + _V;
 }
 
 Test { [[
+class T with
+do
+    await FOREVER;
+end
+
+par/or do
+    spawn T;
+with
+    _assert(0);
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 input void OS_START, F;
 native _V;
 native do

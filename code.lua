@@ -182,13 +182,16 @@ function CLEAR (me)
 
     LINE(me, [[
 {
+int old = _ceu_stk->is_alive;
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
+_ceu_stk->is_alive = 1;
     ceu_sys_go_ex(_ceu_app, &evt,
                   _ceu_stk,
                   _ceu_org,
                   ]]..me.trails[1]..[[,
                   ]]..(me.trails[2]+1)..[[);
+_ceu_stk->is_alive = old;
 }
 ]])
 
@@ -353,13 +356,18 @@ _ceu_app->isAlive = 0;
 ceu_sys_org_free(_ceu_app, _ceu_org);
 #ifdef CEU_ORGS_AWAIT
 {
+    tceu_stk stk_ = *_ceu_stk;
+             stk_.is_alive = 1;
+
     /* signal ok_killed */
     tceu_kill ps = { _ceu_org, _ceu_org->ret, 0, _ceu_org->n-1 };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
-    ceu_sys_go_ex(_ceu_app, &evt_, _ceu_stk,
+    _ceu_stk->up = &stk_;
+    ceu_sys_go_ex(_ceu_app, &evt_, &stk_,
                   _ceu_app->data, 0, _ceu_app->data->n);
+    _ceu_stk->up = NULL;
 }
 #endif
 ]])
@@ -439,7 +447,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 
         LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, ]]..org..[[, 0, ]]..org..[[->n, 1, {} };
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = _ceu_app->stk_jmp.org;
@@ -458,10 +466,10 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     ceu_app_go(_ceu_app,NULL,
                ]]..org..[[, &]]..org..[[->trls[0],
                &stk_);
+    _ceu_stk->up = NULL;
     if (!stk_.is_alive) {
         return;
     }
-    _ceu_stk->up = NULL;
 ]])
         if t.set then
                 LINE(me, [[
@@ -675,6 +683,7 @@ if (]]..me.val..[[ == NULL) {
                       _ceu_app->data, 0, _ceu_app->data->n);
     }
     if (!stk_.is_alive) {
+        _ceu_stk->up = NULL;
         return;
     }
 #endif
@@ -1200,6 +1209,9 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 #endif
                      );
         _ceu_stk->up = NULL;
+        if (!stk_.is_alive) {
+            return;
+        }
     }
 }
 #endif
@@ -1832,6 +1844,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 #endif
            _ceu_app->wclk_min_set]]..suf..[[<=0) {
         if (!stk_.is_alive) {
+            _ceu_stk->up = NULL;
             return;
         }
         s32 __ceu_dt = 0;
@@ -1844,6 +1857,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
             LINE(me, VAL..';')
             LINE(me, [[
     if (!stk_.is_alive) {
+        _ceu_stk->up = NULL;
         return;
     }
 ]])
