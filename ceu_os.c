@@ -247,7 +247,10 @@ void ceu_longjmp (tceu_app* app, tceu_org* org,
         if (cur->org != org) {
             if (ceu_org_is_cleared(cur->org, org, t1, t2)) {
                 prv->up = NULL;
+                cur->is_alive = 0;
+#if 0
                 longjmp(cur->jmp, 1);
+#endif
             }
         }
         else
@@ -255,7 +258,11 @@ void ceu_longjmp (tceu_app* app, tceu_org* org,
         {
             if (t1<=cur->trl1 && cur->trl2<=t2) {
                 prv->up = NULL;
+printf("set-dead %p\n", cur);
+                cur->is_alive = 0;
+#if 0
                 longjmp(cur->jmp, 1);
+#endif
             }
         }
     }
@@ -440,7 +447,7 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
     tceu_ntrl trlI;
     tceu_trl* trl;
     for (trlI=trl0, trl=&org->trls[trlI];
-         trlI < trlF;
+         trlI<trlF && stk->is_alive;
          trlI++, trl++)
     {
 #ifdef CEU_DEBUG_TRAILS
@@ -469,7 +476,7 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
             /* traverse all children */
 
             if (cur != NULL) {
-                tceu_stk stk_ = { NULL, org, cur->parent_trl, cur->parent_trl, {} };
+                tceu_stk stk_ = { NULL, org, cur->parent_trl, cur->parent_trl, 1, {} };
 
 #if defined(CEU_ORGS_NEWS_MALLOC) && defined(CEU_ORGS_AWAIT)
                 /* In the presence of ok_killed events, we cannot simply
@@ -712,7 +719,7 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
-    tceu_stk stk_ = { NULL, NULL, 0, 0, {} };
+    tceu_stk stk_ = { NULL, NULL, 0, 0, 1, {} };
     app->stk_bottom = &stk_;
     ceu_sys_go_stk(app, evt, evtp, &stk_);
 }

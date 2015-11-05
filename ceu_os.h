@@ -521,9 +521,10 @@ typedef struct tceu_lst {
 
 typedef struct tceu_stk {
     struct tceu_stk* up;
-    tceu_org* org;
-    tceu_ntrl trl1;
-    tceu_ntrl trl2;
+    tceu_org*   org;
+    tceu_ntrl   trl1;
+    tceu_ntrl   trl2;
+    char        is_alive;
     jmp_buf   jmp;
 } tceu_stk;
 

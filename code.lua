@@ -439,7 +439,7 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 
         LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, ]]..org..[[, 0, ]]..org..[[->n, {} };
+    tceu_stk stk_ = { NULL, ]]..org..[[, 0, ]]..org..[[->n, 1, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = _ceu_app->stk_jmp.org;
@@ -458,6 +458,9 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     ceu_app_go(_ceu_app,NULL,
                ]]..org..[[, &]]..org..[[->trls[0],
                &stk_);
+    if (!stk_.is_alive) {
+        return;
+    }
     _ceu_stk->up = NULL;
 ]])
         if t.set then
@@ -636,7 +639,7 @@ if (]]..me.val..[[ == NULL) {
         local org_cast = '((tceu_org*)'..V(org,'lval')..')'
         LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = _ceu_app->stk_jmp.org;
@@ -670,6 +673,9 @@ if (]]..me.val..[[ == NULL) {
                  evt_.param = &ps;
         ceu_sys_go_ex(_ceu_app, &evt_, &stk_,
                       _ceu_app->data, 0, _ceu_app->data->n);
+    }
+    if (!stk_.is_alive) {
+        return;
     }
 #endif
 
@@ -1165,7 +1171,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 
     /* OK_KILLED (after free) */        /* 4. kill */
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = _ceu_app->stk_jmp.org;
@@ -1441,7 +1447,7 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
         COMM(me, me.tag..': spawn subs')
         LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = _ceu_app->stk_jmp.org;
@@ -1467,6 +1473,10 @@ ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "
                &_ceu_org->trls[ ]]..sub.trails[1]..[[ ],
                &stk_);
     _ceu_stk->up = NULL;
+
+    if (!stk_.is_alive) {
+        return;
+    }
 ]])
             else
                 -- execute the last directly (no need to call)
@@ -1702,7 +1712,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
                 -- input emit yields, save the stack
                 LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = _ceu_app->stk_jmp.org;
@@ -1821,6 +1831,9 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
            _ceu_app->isAlive &&
 #endif
            _ceu_app->wclk_min_set]]..suf..[[<=0) {
+        if (!stk_.is_alive) {
+            return;
+        }
         s32 __ceu_dt = 0;
         ceu_sys_go_stk(_ceu_app, CEU_IN__WCLOCK]]..suf..[[, &__ceu_dt, &stk_);
     }
@@ -1829,6 +1842,11 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 ]])
         else
             LINE(me, VAL..';')
+            LINE(me, [[
+    if (!stk_.is_alive) {
+        return;
+    }
+]])
         end
 
         LINE(me, [[
@@ -1857,7 +1875,7 @@ if (!_ceu_app->isAlive)
 
         LINE(me, [[
 {
-    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, {} };
+    tceu_stk stk_ = { NULL, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1, {} };
     if (setjmp(stk_.jmp) != 0) {
 #ifdef CEU_ORGS
         _ceu_org = _ceu_app->stk_jmp.org;
@@ -1902,6 +1920,10 @@ if (!_ceu_app->isAlive)
 #endif
     );
     _ceu_stk->up = NULL;
+
+    if (!stk_.is_alive) {
+        return;
+    }
 }
 ]])
     end,

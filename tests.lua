@@ -135,12 +135,11 @@ escape e.X.d.x;
     run = 1,
 }
 
---]===]
-
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -4636,7 +4635,7 @@ with
     escape 2;   // for emit-e dies
 end
 ]],
-    run = {['~>1s']=1},
+    run = {['~>1s']=2},
 }
 
 -- EMIT / SELF-ABORT
@@ -4654,7 +4653,8 @@ par do
 with
     await f;            // 2
     emit e;             // 4, aborted on 5
-    _assert(0);         // never executes
+    //_assert(0);         // never executes
+    escape -42;
 with
     async do
         emit I;
@@ -4662,7 +4662,7 @@ with
     end
 end
 ]],
-    run = 42,
+    run = -42,
 }
 
 --<<< INTERNAL EVENTS
@@ -27753,7 +27753,7 @@ do
     loop do
         await a.evtB;
         emit a.evtA;
-        _assert(0);
+        //_assert(0);
     end
 end
 

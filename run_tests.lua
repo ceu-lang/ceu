@@ -346,4 +346,120 @@ STATS = {
 SCORE = 56 vs 49
 (./rocks.exe: 2.33s 31916k)
 294063
+--
+(./rocks.exe: 2.06s 31868k)     -- c-stack-longjmp
+227341
+--
+(./rocks.exe: 1.93s 31868k)     -- c-stack-longjmp-ok
+220284
+--
+SCORE = 53 vs 50
+(./rocks.exe: 1.95s 31896k)     -- ok_killed-new-abortion
+230616
 ]]
+
+--[[
+-- before changing to set/longjmp
+-- goes up to the error in ASTs (I think)
+STATS = {
+    count   = 2698,
+    mem     = 0,
+    trails  = 5269,
+    bytes   = 24166370,
+}
+(./run_tests.lua: 676.92s 22704k)
+
+
+-- goes up to CLASSES
+
+-- before removing CLEAR from blocks
+STATS = {
+    count   = 1388,
+    mem     = 0,
+    trails  = 2124,
+    bytes   = 11889387,
+}
+(./run_tests.lua: 301.86s 21492k)
+-- after removing CLEAR from blocks
+STATS = {
+    count   = 1388,
+    mem     = 0,
+    trails  = 2124,
+    bytes   = 11889387,
+}
+(./run_tests.lua: 293.30s 21300k)
+STATS = {
+    count   = 1389,
+    mem     = 0,
+    trails  = 2126,
+    bytes   = 11911256,
+}
+-- after removing end-of-block _ceu_trl readjustment
+(./run_tests.lua: 287.60s 24216k)
+STATS = {
+    count   = 1389,
+    mem     = 0,
+    trails  = 2126,
+    bytes   = 11898968,
+}
+(./run_tests.lua: 283.55s 21268k)
+-- after including the test case that used to fail
+STATS = {
+    count   = 1389,
+    mem     = 0,
+    trails  = 2127,
+    bytes   = 11912444,
+}
+(./run_tests.lua: 286.71s 27296k)
+-- no unecessary longjmp
+STATS = {
+    count   = 1389,
+    mem     = 0,
+    trails  = 2127,
+    bytes   = 11879676,
+}
+(./run_tests.lua: 285.22s 29660k)
+-- tceu_ntrl
+STATS = {
+    count   = 1389,
+    mem     = 0,
+    trails  = 2127,
+    bytes   = 11851004,
+}
+(./run_tests.lua: 282.82s 32340k)
+
+-- inclui threads,lua
+STATS = {
+    count   = 1503,
+    mem     = 0,
+    trails  = 2390,
+    bytes   = 13611846,
+}
+(./run_tests.lua: 419.44s 28536k)
+-- with CEU_JMP_*
+STATS = {
+    count   = 1503,
+    mem     = 0,
+    trails  = 2390,
+    bytes   = 13702282,
+}
+(./run_tests.lua: 411.36s 27440k)
+-- w/o depth_abortion
+STATS = {
+    count   = 1504,
+    mem     = 0,
+    trails  = 2393,
+    bytes   = 13770925,
+}
+(./run_tests.lua: 399.93s 29176k)
+
+
+-- WRONG SEMANTICS
+(./run_tests.lua: 743.23s 37444k)
+(./run_tests.lua: 763.66s 37452k)
+
+
+]]
+
+
+
