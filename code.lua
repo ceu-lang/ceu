@@ -203,6 +203,8 @@ function CLEAR (me)
 #ifdef CEU_STACK
     _ceu_stk->is_alive = __ceu_old;
 #endif
+    ceu_sys_stack_clear(_ceu_stk, _ceu_org,
+                        ]]..me.trails[1]..','..me.trails[2]..[[);
 }
 ]])
 
@@ -222,12 +224,6 @@ function CLEAR (me)
 #endif
 ]])
     end
-
-    LINE(me, [[
-/* TODO: invert with above? */
-ceu_sys_stack_clear(_ceu_stk, _ceu_org,
-                    ]]..me.trails[1]..','..me.trails[2]..[[);
-]])
 end
 
 F = {
