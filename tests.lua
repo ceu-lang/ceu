@@ -57538,7 +57538,6 @@ escape ret;
 --]=]
 
 -- TIMEMACHINE
-do return end
 local t = {
     [1] = [[
 #define TM_QUEUE

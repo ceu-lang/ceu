@@ -128,7 +128,7 @@ class TimeMachine with
         end
 
     var int time_total = 0;
-    var int time_now;
+    var int time_now = 0;
 do
 #ifdef TM_SNAP
     _snap_init((u8&&)&&this.app)
@@ -441,7 +441,7 @@ do
                 end
             with
                 var bool go = false;
-                var int bk_speed;
+                var int bk_speed = 0;
                 loop do
                     var bool me = false;
                     par/or do
@@ -467,7 +467,7 @@ do
 #ifndef TM_BACKWARD_TICK
 #define TM_BACKWARD_TICK 30 // TODO: adaptative
 #endif
-                        var int awt;
+                        var int awt = 0;
                         if bk_speed > 0 then
                             awt = TM_BACKWARD_TICK/bk_speed;
                         else/if bk_speed < 0 then
