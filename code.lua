@@ -172,10 +172,12 @@ function CLEAR (me)
     if (not me.has_orgs) and (not me.needs_clr_fin) then
         if ANA then   -- fin must execute before any stmt
             local top = AST.iter(_iter)()
-            if top and top.needs_clr and
-                ANA.IS_EQUAL(top.ana.pos, me.ana.pos)
+            if top and top.needs_clr
+                and ANA.IS_EQUAL(top.ana.pos, me.ana.pos)
             then
-                return  -- top will clear
+-- TODO: emit/kill in between the two breaks this
+-- TODO: check on concat if previous is clear, and override it with outer
+                --return  -- top will clear
             end
         end
     end
@@ -356,7 +358,7 @@ ceu_sys_org_free(_ceu_app, _ceu_org);
              stk_.is_alive = 1;
              stk_.down = _ceu_stk;
 #endif
-    tceu_kill ps = { _ceu_org, _ceu_org->ret, 0, _ceu_org->n-1 };
+    tceu_kill ps = { _ceu_org, _ceu_org->ret, 0, (tceu_ntrl)(_ceu_org->n-1) };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
@@ -647,7 +649,7 @@ if (]]..me.val..[[ == NULL) {
 #ifdef CEU_ORGS_AWAIT
     /* signal ok_killed */
     {
-        tceu_kill ps = { ]]..org_cast..','..org_cast..'->ret, 0, '..org_cast..[[->n-1  };
+        tceu_kill ps = { ]]..org_cast..','..org_cast..'->ret, 0, (tceu_ntrl)('..org_cast..[[->n-1)  };
         tceu_evt evt_;
                  evt_.id = CEU_IN__ok_killed;
                  evt_.param = &ps;
@@ -974,7 +976,7 @@ if (]]..fin.val..[[) {
         tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if ( (__ceu_one->tag != CEU_]]..ID..[[_NIL) &&
              (ceu_org_is_cleared((tceu_org*)__ceu_one->SOME.v,
-                                 __ceu_casted->org_or_adt,
+                                 (tceu_org*)__ceu_casted->org_or_adt,
                                  __ceu_casted->t1,
                                  __ceu_casted->t2)) )
         {
@@ -994,7 +996,7 @@ if (]]..fin.val..[[) {
         tceu_kill* __ceu_casted = (tceu_kill*)_ceu_evt->param;
         if ( (]]..val..[[.tag != CEU_]]..ID..[[_NIL) &&
              (ceu_org_is_cleared((tceu_org*)]]..val..[[.SOME.v,
-                                 __ceu_casted->org_or_adt,
+                                 (tceu_org*)__ceu_casted->org_or_adt,
                                  __ceu_casted->t1,
                                  __ceu_casted->t2)) )
         {

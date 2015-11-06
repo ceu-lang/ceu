@@ -516,8 +516,8 @@ if (evt->param != NULL) {
                 trl->is_org &&
 #endif
                 (trl->org_or_adt == NULL || /* for option ptrs, init'd w/ NULL  */
-                 ceu_org_is_cleared(trl->org_or_adt,
-                    ((tceu_kill*)evt->param)->org_or_adt,
+                 ceu_org_is_cleared((tceu_org*)trl->org_or_adt,
+                    (tceu_org*)((tceu_kill*)evt->param)->org_or_adt,
                     ((tceu_kill*)evt->param)->t1,
                     ((tceu_kill*)evt->param)->t2)))
         ||

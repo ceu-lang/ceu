@@ -135,19 +135,7 @@ escape e.X.d.x;
     run = 1,
 }
 
-Test { [[
-var int ret =
-    do
-        if true then
-            escape 1;
-        end
-        escape 0;
-    end;
-escape ret;
-]],
-    run = 1,
-}
-
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -2078,6 +2066,19 @@ escape 0;
 }
 
 Test { [[
+var int ret =
+    do
+        if true then
+            escape 1;
+        end
+        escape 0;
+    end;
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
 input void A,B;
 par/or do
     await A;
@@ -2296,7 +2297,6 @@ escape a;
 ]],
     ref = 'line 3 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
 }
---]===]
 Test { [[
 var int a =
     do
@@ -11712,7 +11712,6 @@ escape v;
     }
 }
 
--- TODO(ref): this could be accepted
 Test { [[
 input int A,B,Z,D;
 var int a = 0;
@@ -11731,8 +11730,8 @@ a = a + 1;
 await D;
 escape a;
 ]],
-    ref = 'line 9 : invalid access to uninitialized variable "a" (declared at tests.lua:2)',
-    --run = { ['0~>A;0~>B;0~>Z;0~>D'] = 2 }
+    --ref = 'line 9 : invalid access to uninitialized variable "a" (declared at tests.lua:2)',
+    run = { ['0~>A;0~>B;0~>Z;0~>D'] = 2 }
 }
 
 Test { [[
@@ -34733,6 +34732,46 @@ escape 1;
 ]],
     props = 'line 8 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
     --run = 1,
+}
+
+Test { [[
+input void OS_START;
+event void a;
+class T with do end
+do
+    var T t;
+    par/or do
+        await a;
+        _assert(0);
+    with
+        await OS_START;
+    end
+    emit a;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+event void a;
+class T with do
+    await FOREVER;
+end
+do
+    var T t;
+    par/or do
+        await t;
+        _assert(0);
+    with
+        await OS_START;
+    end
+    kill t;
+end
+escape 1;
+]],
+    run = 1,
 }
 
 -- outer organism dies, nested organism has to awake block

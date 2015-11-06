@@ -337,7 +337,14 @@ F =
         if op == '' then
             if f.c and f.c.mod=='@plain' then
                 -- struct constructor: _Rect(x,y,dx,dy)
-                return '{'..table.concat(ps,',')..'}'
+                return [[
+
+#ifdef __cplusplus
+    ]]..V(f,CTX)..'('..table.concat(ps,',')..[[)
+#else
+    {]]..table.concat(ps,',')..[[}
+#endif
+]]
             else
                 -- avoid paranthesis because of macro expansions
                 return V(f,CTX)..'('..table.concat(ps,',')..')'
