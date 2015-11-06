@@ -135,11 +135,23 @@ escape e.X.d.x;
     run = 1,
 }
 
+Test { [[
+var int ret =
+    do
+        if true then
+            escape 1;
+        end
+        escape 0;
+    end;
+escape ret;
+]],
+    run = 1,
+}
+
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -875,7 +887,8 @@ else
 end;
 escape a+c;
 ]],
-    ref = 'line 5 : invalid access to uninitialized variable "a"',
+    run = 4,
+    --ref = 'line 5 : invalid access to uninitialized variable "a"',
 }
 Test { [[
 var int a;
@@ -2283,6 +2296,7 @@ escape a;
 ]],
     ref = 'line 3 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
 }
+--]===]
 Test { [[
 var int a =
     do
@@ -2291,6 +2305,7 @@ var int a =
     end;
 escape a;
 ]],
+    --ref = 'line 4 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
     run = 1,
 }
 Test { [[
@@ -4838,7 +4853,9 @@ a = par do
     end;
 escape a;
 ]],
-    ref = 'line 6 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:4)',
+    run = {['6~>A']=6},
+    _ana = {acc=true},
+    --ref = 'line 6 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:4)',
 }
 Test { [[
 input int A;
@@ -11695,6 +11712,7 @@ escape v;
     }
 }
 
+-- TODO(ref): this could be accepted
 Test { [[
 input int A,B,Z,D;
 var int a = 0;
@@ -11713,7 +11731,8 @@ a = a + 1;
 await D;
 escape a;
 ]],
-    run = { ['0~>A;0~>B;0~>Z;0~>D'] = 2 }
+    ref = 'line 9 : invalid access to uninitialized variable "a" (declared at tests.lua:2)',
+    --run = { ['0~>A;0~>B;0~>Z;0~>D'] = 2 }
 }
 
 Test { [[
@@ -11725,10 +11744,10 @@ a = par do
     with
         await B;
     end;
-    escape a+1;
+    escape 1;
 with
     await Z;
-    escape a;
+    escape 0;
 end;
 a = a + 1;
 await D;
@@ -11737,7 +11756,7 @@ escape a;
     run = { ['0~>A;0~>B;0~>Z;0~>D'] = 2 },
     safety = 2,
     _ana = {
-        acc = 3,
+        acc = true,
     },
 }
 
@@ -11747,14 +11766,14 @@ var int a = 0;
 a = par do
     par do
         await A;
-        escape a;
+        escape 0;
     with
         await B;
-        escape a;
+        escape 0;
     end;
 with
     await Z;
-    escape a;
+    escape 0;
 end;
 a = a + 1;
 await D;
@@ -11769,15 +11788,15 @@ var int a = 0;
 a = par do
     par do
         await A;
-        escape a;
+        escape 0;
     with
         await B;
-        escape a;
+        escape 0;
     end;
     // unreachable
 with
     await Z;
-    escape a;
+    escape 0;
 end;
 a = a + 1;
 await D;
@@ -16465,7 +16484,7 @@ function (void)=>int&& get do
 end
 escape 10;
 ]],
-    env = 'line 3 : invalid return vale : local reference',
+    env = 'line 3 : invalid return value : local reference',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
 }
 
@@ -16476,7 +16495,7 @@ function (void)=>int&& get do
 end
 escape 10;
 ]],
-    env = 'line 3 : invalid return vale : local reference',
+    env = 'line 3 : invalid return value : local reference',
     --fin = 'line 3 : attribution to pointer with greater scope',
 }
 
@@ -16487,7 +16506,7 @@ function (void)=>int& get do
 end
 escape 10;
 ]],
-    env = 'line 3 : invalid return vale : local reference',
+    env = 'line 3 : invalid return value : local reference',
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
@@ -40567,6 +40586,64 @@ end
     run = 2,
 }
 
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+
+function (void)=>T&& f do
+    return &&t;
+end
+
+var T&& p = f();
+
+escape p:v;
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+
+function (void)=>T&& f do
+    var T&& p = &&t;
+    return p;
+end
+
+var T&& p = f();
+
+escape p:v;
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var int v = 10;
+do
+end
+
+var T t;
+
+function (void)=>T&& f do
+    var T&& p = &&t;
+    return p;
+end
+
+var T&& p = f();
+await 1s;
+
+escape p:v;
+]],
+    fin = 'line 16 : unsafe access to pointer "p" across `await´ (tests.lua : 14)',
+}
+
 --<<< FUNCTIONS
 
 -->>> RECURSIVE / FUNCTIONS
@@ -42556,6 +42633,61 @@ var U u;
 escape 1;
 ]],
     ref = 'line 13 : missing initialization for field "ts" (declared in tests.lua:6)',
+}
+
+Test { [[
+interface I with end;
+
+class T with
+    interface I;
+    function (void)=>I&& f;
+do
+    function (void)=>I&& f do
+        var I&& i = &&this;
+        return i;
+    end
+end
+
+var T t;
+var I&& p = t.f();
+escape p==&&t;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    function (void)=>int&& f;
+do
+    var int x = 1;
+    function (void)=>int&& f do
+        return &&this.x;
+    end
+end
+
+var T t;
+escape *(t.f());
+]],
+    run = 1,
+}
+
+Test { [[
+interface I with end;
+
+class T with
+    interface I;
+    function (void)=>I&& f;
+do
+    function (void)=>I&& f do
+        return &&this;
+    end
+end
+
+var T t;
+t.f();
+escape 1;
+]],
+    run = 1,
 }
 
 --<<< METHODS

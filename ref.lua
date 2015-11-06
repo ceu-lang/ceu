@@ -6,15 +6,6 @@ function NODE2BLK (n)
            MAIN.blk_ifc
 end
 
-local function find_set_block (v1)
-    for blk in AST.iter'SetBlock' do
-        local _, v2 = unpack(blk)
-        if v1 == v2.var then
-            return blk
-        end
-    end
-end
-
 local function find_set_thread (v1)
     for set in AST.iter'Set' do
         if set[2] == 'thread' then
@@ -95,7 +86,7 @@ F = {
         if me.__par.tag == 'SetBlock' then
             return  -- a = do <...> end;
         end
-        if SET_TARGET[me] then
+        if SET_TARGET[me.var] then
             return  -- im exactly the target of an assignment
         end
         if TP.check(me.var.tp,'?') then
@@ -107,6 +98,15 @@ F = {
         end
 
         local dcl = VARS_UNINIT[me.var]
+
+        for setblk in AST.iter'SetBlock' do
+            local _,to = unpack(setblk)
+            assert(to.var, 'bug found')
+            if to.var == me.var then
+                dcl = to.var.blk.vars[to.var.id].dcl
+                break
+            end
+        end
 
         ASR(not dcl, me, dcl and
             'invalid access to uninitialized variable "'..me.var.id..'"'..
@@ -135,7 +135,7 @@ F = {
         end
     end,
     __Set_bef_one = function (me, fr, to)
-        SET_TARGET[to] = true
+        SET_TARGET[to.var] = true
 
         local outermost_if = nil
         if VARS_UNINIT[to.var] then
@@ -276,6 +276,16 @@ F = {
         return C
     end,
 
+    SetBlock_pre = function (me)
+        local _,to = unpack(me)
+        local var = assert(to.var,'bug found')
+        if VARS_UNINIT[var] then
+            VARS_UNINIT[var] = nil
+        else
+            var.__ref_was_inited = true
+        end
+    end,
+
     ParEver_pre = '__compound',
     ParAnd_pre  = '__compound',
     Pause_pre   = '__compound',
@@ -301,7 +311,7 @@ F = {
     end,
     __compound = function (me)
         for var,dcl in pairs(VARS_UNINIT) do
-            local setblk = find_set_block(var) or find_set_thread(var)
+            local setblk = find_set_thread(var)
             if setblk and me.__depth>setblk.__depth then
                 -- Statement is inside a block assignment to "v":
                 --      var int v = do <...> end
