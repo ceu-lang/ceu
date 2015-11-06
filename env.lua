@@ -846,7 +846,10 @@ F = {
             if var and AST.isParent(dcl, var.blk) then
                 local is_ref = TP.check(exp.tp,'&','-?')
                             or TP.check(exp.tp,'&&','-?')
-                ASR(not is_ref, me, 'invalid return vale : local reference')
+                local is_top = (var.blk == dcl.var.blk)
+                local is_org = ENV.clss[TP.id(exp.tp)]
+                ASR((not is_ref) or is_top or is_org, me,
+                   'invalid return value : local reference')
             end
         end
     end,

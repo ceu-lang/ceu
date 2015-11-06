@@ -155,10 +155,12 @@ F = {
 
     -- CHECK IF "FINALIZE" IS REQUIRED
 
-        local func_impure, input_call = false, false
+        local func_ceu, func_impure, input_call = false, false, false
         local T = fr.lst
         if T then
             if T.tag == 'Op2_call' then
+                local _, f = unpack(T)
+                func_ceu = f and f.var and f.var.fun
                 func_impure = (T.c.mod~='@pure')
             elseif T.tag == 'EmitExt' then
                 local op, ext, param = unpack(T)
@@ -180,7 +182,7 @@ F = {
         end
 
         -- TODO: move to exp/ref.lua
-        if func_impure or input_call or fr.tag=='RawExp' then
+        if (not func_ceu) and (func_impure or input_call or fr.tag=='RawExp') then
             -- We assume that a impure function that returns a global pointer
             -- creates memory (e.g. malloc, fopen):
             --      var void&? pa = _fopen();
@@ -303,7 +305,7 @@ F = {
         local var = AST.node('Var', me.ln, '_')
         var.tp = dcl.var.fun.out
         var.var = {blk=CLS().blk_ifc, tp=var.tp}
-        F.Set(AST.node('Return', me.ln, '=', 'set', exp, var))
+        --F.Set(AST.node('Return', me.ln, '=', 'set', exp, var))
     end,
 
     Dcl_pool = 'Dcl_var',
