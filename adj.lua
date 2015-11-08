@@ -306,6 +306,47 @@ me.blk_body = me.blk_body or blk_body
         end
     end,
 
+    -- TODO: Traverse could use this
+    _SpawnAnon_pre = function (me)
+        --[[
+        --  spawn do
+        --      <body>
+        --  end
+        --
+        --      ... becomes ...
+        --
+        --  class Body with
+        --      var Outer& _out;
+        --  do
+        --      <body>
+        --  end
+        --  var Body _ with
+        --      this._out = &outer;
+        --  end;
+        --]]
+
+        local body = unpack(me)
+        local out = AST.par(me, 'Dcl_cls')
+
+        local cls = node('Dcl_cls', me.ln, false, 'Body_'..me.n,
+                        node('BlockI', me.ln,
+                            node('Stmts', me.ln,
+                                node('Dcl_var', me.ln, 'var',
+                                    node('Type', me.ln, out[2], '&'),
+                                    '_out'))),
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    body)))
+        cls.__adj_out = AST.par(me, 'Block')
+
+        local var = node('Dcl_var', me.ln, 'var',
+                        node('Type', me.ln, 'Body_'..me.n),
+                        '_')
+        var.__adj_is_traverse_root = true -- see code.lua
+
+        return node('Stmts', me.ln, cls, var)
+    end,
+
     _TraverseLoop_pre = function (me)
         --[[
         --  ret = traverse <n> in <root> with

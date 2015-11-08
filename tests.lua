@@ -136,6 +136,77 @@ escape e.X.d.x;
 }
 
 --]===]
+Test { [[
+var int xxx=0;
+spawn do
+    xxx = 1;
+end
+escape xxx;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x;
+spawn do
+    x = 1;
+end
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x =
+    spawn do
+        escape 1;
+    end;
+escape x;
+]],
+    parser = 'line 2 : after `spawn´ : expected identifier',
+}
+
+Test { [[
+input void OS_START;
+var int x = 0;
+spawn do
+    await OS_START;
+    x = 1;
+end
+await OS_START;
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int xxx=0;
+spawn do
+    this.xxx = 1;
+end
+escape xxx;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int xxx=0;
+do
+    var int aaa = 0;
+    spawn do
+        this.aaa = 10;
+        this.xxx = this.aaa;
+    end
+    escape aaa;
+end
+var int ret = do T;
+escape ret;
+]],
+    run = 10,
+}
+
+--do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------

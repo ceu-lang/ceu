@@ -317,6 +317,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 
     -- spawn / kill
+    , _SpawnAnon = KEY'spawn' * EV'__Do'
     , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
     , Kill  = KEY'kill' * EV'__Exp' * (EK'=>'*EV'__Exp' + Cc(false))
@@ -560,6 +561,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + V'Host'
               + V'Do'    + V'If'
               + V'_Loop' + V'_Every' + V'_TraverseLoop'
+              + V'_SpawnAnon'
               + V'Finalize'
               + V'ParOr' + V'ParAnd' + V'_Watching'
               + V'_Pause'

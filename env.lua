@@ -1691,7 +1691,10 @@ F = {
                     --]]
             end
             if not VAR then
-                BLK = me.blk_out or cls.blk_ifc
+                local x = e1.tag=='Field' and e1[3].tag=='Var' and e1[3][1]=='$_out'
+                BLK = me.blk_out or
+                        (x and cls.blk_body) or
+                            cls.blk_ifc
                       -- HACK_7
                 VAR = ASR(ENV.getvar(id,BLK), me,
                         'variable/event "'..id..'" is not declared')
