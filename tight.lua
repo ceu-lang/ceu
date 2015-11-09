@@ -131,9 +131,22 @@ F = {
 
         -- if calling a tight (or unknown) function,
         --  then the top function is also tight
-        local dcl = AST.iter'Dcl_fun'()
+        local dcl = AST.par(me, 'Dcl_fun')
         if dcl then
-            if (f.var.fun.isTight==true or f.var.fun.isTight=='maybe' or dcl.var.fun==f.var.fun) then
+            local matches_ifc = false
+            local cls = AST.par(dcl,'Dcl_cls')
+            for ifc in pairs(cls.matches) do
+                if ifc==f.org.cls and dcl.var.id==f.var.id then
+                    matches_ifc = true
+                    break
+                end
+            end
+
+            local f_cls = AST.par(f.var.blk,'Dcl_cls')
+            local deps_on_unk_ifc = (f.var.fun.isTight==nil and f_cls.is_ifc)
+
+            if (f.var.fun.isTight==true or f.var.fun.isTight=='maybe'
+            or dcl.var.fun==f.var.fun or matches_ifc) then
                 dcl.var.fun.isTight = true
                 f.var.fun.isTight   = true
                 ASR(dcl.var.fun.mod.rec == true,
@@ -142,10 +155,10 @@ F = {
                 -- f must be re-checked after dcl completes
                 dcl.__tight_calls = dcl.__tight_calls or {}
                 dcl.__tight_calls[#dcl.__tight_calls+1] = f
-            elseif f.var.fun.isTight == nil then
+            elseif f.var.fun.isTight==nil and (not deps_on_unk_ifc) then
                 dcl.var.fun.isTight = 'maybe'
             else
-                assert(f.var.fun.isTight   == false)
+                assert(f.var.fun.isTight==false or deps_on_unk_ifc)
                 assert(dcl.var.fun.isTight == nil)      -- remains nil
             end
         end

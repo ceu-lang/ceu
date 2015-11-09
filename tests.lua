@@ -136,76 +136,6 @@ escape e.X.d.x;
 }
 
 --]===]
-Test { [[
-var int xxx=0;
-spawn do
-    xxx = 1;
-end
-escape xxx;
-]],
-    run = 1,
-}
-
-Test { [[
-var int x;
-spawn do
-    x = 1;
-end
-escape x;
-]],
-    run = 1,
-}
-
-Test { [[
-var int x =
-    spawn do
-        escape 1;
-    end;
-escape x;
-]],
-    parser = 'line 2 : after `spawn´ : expected identifier',
-}
-
-Test { [[
-input void OS_START;
-var int x = 0;
-spawn do
-    await OS_START;
-    x = 1;
-end
-await OS_START;
-escape x;
-]],
-    run = 1,
-}
-
-Test { [[
-var int xxx=0;
-spawn do
-    this.xxx = 1;
-end
-escape xxx;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int xxx=0;
-do
-    var int aaa = 0;
-    spawn do
-        this.aaa = 10;
-        this.xxx = this.aaa;
-    end
-    escape aaa;
-end
-var int ret = do T;
-escape ret;
-]],
-    run = 10,
-}
-
 --do return end
 -------------------------------------------------------------------------------
 
@@ -34913,7 +34843,81 @@ escape ret;
     run = 1,
 }
 
--- DO T
+-->>> SPAWN-DO SUGAR
+
+Test { [[
+var int xxx=0;
+spawn do
+    xxx = 1;
+end
+escape xxx;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x;
+spawn do
+    x = 1;
+end
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x =
+    spawn do
+        escape 1;
+    end;
+escape x;
+]],
+    parser = 'line 2 : after `spawn´ : expected identifier',
+}
+
+Test { [[
+input void OS_START;
+var int x = 0;
+spawn do
+    await OS_START;
+    x = 1;
+end
+await OS_START;
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int xxx=0;
+spawn do
+    this.xxx = 1;
+end
+escape xxx;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int xxx=0;
+do
+    var int aaa = 0;
+    spawn do
+        this.aaa = 10;
+        this.xxx = this.aaa;
+    end
+    escape aaa;
+end
+var int ret = do T;
+escape ret;
+]],
+    run = 10,
+}
+
+--<<< SPAWN-DO SUGAR
+
+-->>> DO-T SUGAR
 
 Test { [[
 do T;
@@ -41164,7 +41168,7 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
+    tight = 'line 9 : function must be annotated as `@rec´ (recursive)',
 }
 
 Test { [[
@@ -41242,7 +41246,7 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
+    tight = 'line 9 : function must be annotated as `@rec´ (recursive)',
 }
 
 Test { [[
@@ -41476,7 +41480,30 @@ t.i = i2;
 escape i1:g(5) + i2:g(5);
 ]],
     --run = 120,
-    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
+    tight = 'line 18 : function must be annotated as `@rec´ (recursive)',
+}
+
+Test { [[
+interface I with
+    function (int)=>int g;
+end
+
+class T with
+    interface I;
+    var I&& i=null;
+do
+    function @rec (int v)=>int g do
+        if (v == 1) then
+            return 1;
+        end
+        return v * i:g(v-1);
+    end
+end
+
+escape 1;
+]],
+    --run = 120,
+    env = 'line 9 : function declaration does not match the one at "tests.lua:2"',
 }
 
 Test { [[
@@ -41516,7 +41543,7 @@ t.i = i2;
 escape i1:g(5) + i2:g(5);
 ]],
     --run = 120,
-    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
+    tight = 'line 9 : function must be annotated as `@rec´ (recursive)',
 }
 
 
@@ -42183,6 +42210,112 @@ escape f(5);
     tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
     --run = 120,
 }
+
+Test { [[
+interface I with
+    function (void)=>void f;
+end
+
+class T with
+    interface I;
+do
+    function (void)=>void f do
+    end
+end
+
+var T t;
+var I& i = &t;
+
+function (void)=>void g do
+    i.f();
+end
+
+function (void)=>void h do
+    this.g();
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+interface I with
+    function (void)=>void f;
+end
+
+class T with
+    interface I;
+do
+    function (void)=>void f do
+    end
+end
+
+var T t;
+var I& i = &t;
+
+function (void)=>void g do
+    i.f();
+end
+
+function (void)=>void h do
+    this.g();
+end
+
+class U with
+    interface I;
+    function (void)=>void g;
+do
+    function (void)=>void f do
+        this.g();
+    end
+    function (void)=>void g do
+    end
+end
+
+escape 1;
+]],
+    tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
+}
+Test { [[
+interface I with
+    function @rec (void)=>void f;
+end
+
+class T with
+    interface I;
+do
+    function @rec (void)=>void f do
+    end
+end
+
+var T t;
+var I& i = &t;
+
+function (void)=>void g do
+    call/rec i.f();
+end
+
+function (void)=>void h do
+    this.g();
+end
+
+class U with
+    interface I;
+    function (void)=>void g;
+do
+    function @rec (void)=>void f do
+        this.g();
+    end
+    function (void)=>void g do
+    end
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 Test { [[
 function @rec (int v)=>int f;
 function (int v)=>int f do
