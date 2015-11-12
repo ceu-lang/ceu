@@ -199,7 +199,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
     local ME = CLS() or ADT()  -- (me can be a "data" declaration)
     for stmt in AST.iter() do
         if stmt.tag=='Dcl_cls' or stmt.tag=='Dcl_adt' or
-           stmt.tag=='Async' or stmt.tag=='Thread'
+           stmt.tag=='Dcl_fun' or stmt.tag=='Async' or stmt.tag=='Thread'
         then
             break   -- search boundaries
         elseif stmt.tag == 'Block' then

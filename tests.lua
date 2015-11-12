@@ -135,8 +135,27 @@ escape e.X.d.x;
     run = 1,
 }
 
+Test { [[
+class U with do end
+
+class T with
+    function (int x)=>U f;
+do
+    var int x = 0;
+
+    function (int x)=>U f do
+        this.x = 1;
+    end
+end
+
+var T t = T(1);
+escape t.x;
+]],
+    run = 1,
+}
+
+do return end
 --]===]
---do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -40756,6 +40775,18 @@ await 1s;
 escape p:v;
 ]],
     fin = 'line 16 : unsafe access to pointer "p" across `await´ (tests.lua : 14)',
+}
+
+Test { [[
+function (int x)=>int f;
+var int x = 0;
+function (int x)=>int f do
+    this.x = 1;
+    return 2;
+end
+escape f(1) + this.x;
+]],
+    run = 3,
 }
 
 --<<< FUNCTIONS
