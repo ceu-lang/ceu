@@ -450,6 +450,9 @@ typedef union CEU_]]..me.id..[[_delayed {
         dcl = table.concat(dcl,  ', ')
 
         local tp_out = MEM.tp2dcl('var', out, '', nil, nil, nil)
+        if TP.check(out, cls.id) then
+            tp_out = 'void'     -- constructor
+        end
 
         me.id = 'CEU_'..cls.id..'_'..id
         me.proto = [[

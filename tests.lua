@@ -135,27 +135,145 @@ escape e.X.d.x;
     run = 1,
 }
 
+-- TODO: bug
 Test { [[
-class U with do end
-
-class T with
-    function (int x)=>U f;
-do
-    var int x = 0;
-
-    function (int x)=>U f do
-        this.x = 1;
+data LLRB with
+    tag NIL;
+or
+    tag NODE with
+        var LLRB left;
+        var LLRB right;
     end
 end
 
-var T t = T(1);
-escape t.x;
+var LLRB& h;
+h.NODE.right = h.NODE.left;
+
+escape 1;
 ]],
     run = 1,
 }
 
-do return end
+-- TODO: bug
+Test { [[
+data LLRB with
+    tag NIL;
+or
+    tag NODE with
+        var LLRB left;
+    end
+end
+
+pool LLRB[] llrb;
+traverse e in llrb do
+    e:NODE.left = traverse e:NODE.left;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 --]===]
+Test { [[
+class U with do end
+
+class T with
+    function (int x)=>T f;
+    var int x = 0;
+do
+    function (int x)=>T f do
+        this.x = 1;
+    end
+end
+
+var T t = U.f(1);
+escape t.x;
+]],
+    env = 'line 12 : invalid constructor',
+}
+
+Test { [[
+class U with do end
+
+class T with
+    function (int x)=>T f;
+do
+    var int x = 0;
+
+    function (int x)=>T f do
+        this.x = 1;
+    end
+end
+
+var T t;
+t = T.f(1);
+escape t.x;
+]],
+    parser = 'line 14 : before `.´ : expected `(´',
+    --run = 2,
+}
+
+Test { [[
+class U with do end
+
+class T with
+    function (int x)=>T fff;
+    var int x = 0;
+do
+    function (int x)=>T fff do
+        this.x = x;
+    end
+end
+
+var T ttt = T.fff(2);
+escape ttt.x;
+]],
+    run = 2,
+}
+
+Test { [[
+class U with do end
+
+class T with
+    function (int x)=>T fff;
+    var int x = 0;
+do
+    function (int x)=>T fff do
+        this.x = x;
+    end
+    this.x = 1;
+end
+
+var T ttt = T.fff(2);
+escape ttt.x;
+]],
+    run = 1,
+}
+
+Test { [[
+class U with do end
+
+class T with
+    function (int x)=>T f1;
+    function (int x)=>T f2;
+    var int x = 0;
+do
+    function (int x)=>T f1 do
+        this.x = x;
+    end
+    function (int x)=>T f2 do
+        this.f1(x);
+    end
+end
+
+var T ttt = T.f2(2);
+escape ttt.x;
+]],
+    run = 2,
+}
+
+--do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------

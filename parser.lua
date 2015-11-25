@@ -164,11 +164,14 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- variables, organisms
     , _Dcl_var  = (V'__Dcl_var_org' + V'__Dcl_var_plain_set' + V'_Dcl_var_plain')
     , __Dcl_var_org   = CKEY'var'  * EV'Type' * Cc(true)  * EV'__ID_var' *
-                            EKEY'with' * V'Dcl_constr' * EKEY'end'
+                            ( EKEY'with' * V'Dcl_constr' * EKEY'end'
+                            + K'=' * V'Cls_constr' )
     , __Dcl_var_plain_set = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var_set' 
                                 * (K','*V'__dcl_var_set')^0
     , _Dcl_var_plain = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var' *
                             (K','*V'__dcl_var')^0
+    , Cls_constr = V'__ID_cls' * (K'.'-'..') * V'__ID_var'
+                 * EK'(' * EV'ExpList' * EK')'
 
     -- auxiliary
     , Dcl_constr = V'Block'

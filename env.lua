@@ -155,17 +155,22 @@ local function check (me, pre, tp)
     local top = ASR(ENV.c[tp_id] or ENV.clss[tp_id] or ENV.adts[tp_id],
                     me, 'undeclared type `'..(tp_id or '?')..'´')
 
-    tp = TP.pop(tp,'?')
+    tp_ = TP.pop(tp,'?')
 
     if pre=='pool' and top.tag=='Dcl_adt' then
         ASR(top.is_rec, me, 'invalid pool : non-recursive data')
     end
 
-    if TP.check(tp,tp_id, '-[]') then
+    if TP.check(tp_,tp_id, '-[]') then
         if AST.isParent(top,me) then
-            -- List with tag CONS with List tail end
-            ASR(top.tag=='Dcl_adt', me,
-                'undeclared type `'..(tp_id or '?')..'´')
+            if top.tag== 'Dcl_adt' then
+                -- ok, List with tag CONS with List tail end
+            elseif me.tag=='Dcl_fun' and me[4]==tp then
+                -- ok, constructor, "tp" is the return type
+            else
+                ASR(false, me,
+                    'undeclared type `'..(tp_id or '?')..'´')
+            end
         end
         if top.is_ifc then
             ASR(pre == 'pool', me,
@@ -176,9 +181,9 @@ local function check (me, pre, tp)
     local void_ok = (tp_id=='void' and
                     (pre=='event' or pre=='function' or pre=='input' or
                      pre=='output' or pre=='interrupt' or
-                     tp.tt[2]=='&&'))
+                     tp_.tt[2]=='&&'))
 
-    ASR(TP.get(tp_id).len~=0 or TP.check(tp,'&&') or TP.check(tp,'&') or void_ok,
+    ASR(TP.get(tp_id).len~=0 or TP.check(tp_,'&&') or TP.check(tp_,'&') or void_ok,
         me, 'cannot instantiate type "'..tp_id..'"')
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 end
@@ -748,6 +753,21 @@ F = {
             -- var T[10] ts;  // needs _i_ to iterate for the constructor
             _, me.var.constructor_iterator =
                 newvar(me, AST.par(me,'Block'), 'var', TP.new{'int'}, '_i_'..id, false)
+        end
+
+        --  var T t = T.constr(...);
+        --      becomes
+        --  var T t; T.constr(t,...);
+        if constr and constr.tag=='Cls_constr' then
+            local id2, f, exps = unpack(constr)
+            ASR(tp[1] == id2, me, 'invalid constructor')
+            me[4] = AST.node('CallStmt', me.ln,
+                        AST.node('Op2_call', me.ln, 'call',
+                            AST.node('Op2_.', me.ln, '.',
+                                AST.node('Var', me.ln, id),
+                                f),
+                            exps))
+            AST.visit(F, me[4])
         end
     end,
 
