@@ -441,13 +441,9 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
 ]])
         end
         if t.constr then
-            if t.constr.tag == 'CallStmt' then
-                CONC(me, t.constr)
-            else
-                LINE(me, [[
+            LINE(me, [[
     _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_org);
 ]])
-            end
         end
 
         LINE(me, [[

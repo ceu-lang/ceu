@@ -174,6 +174,8 @@ escape 1;
     run = 1,
 }
 
+-----------------------
+
 --]===]
 Test { [[
 class U with do end
@@ -190,12 +192,10 @@ end
 var T t = U.f(1);
 escape t.x;
 ]],
-    env = 'line 12 : invalid constructor',
+    adj = 'line 12 : invalid constructor',
 }
 
 Test { [[
-class U with do end
-
 class T with
     function (int x)=>T f;
 do
@@ -210,13 +210,11 @@ var T t;
 t = T.f(1);
 escape t.x;
 ]],
-    parser = 'line 14 : before `.´ : expected `(´',
+    parser = 'line 12 : before `.´ : expected `(´',
     --run = 2,
 }
 
 Test { [[
-class U with do end
-
 class T with
     function (int x)=>T fff;
     var int x = 0;
@@ -233,8 +231,6 @@ escape ttt.x;
 }
 
 Test { [[
-class U with do end
-
 class T with
     function (int x)=>T fff;
     var int x = 0;
@@ -252,8 +248,6 @@ escape ttt.x;
 }
 
 Test { [[
-class U with do end
-
 class T with
     function (int x)=>T f1;
     function (int x)=>T f2;
@@ -273,7 +267,56 @@ escape ttt.x;
     run = 2,
 }
 
---do return end
+Test { [[
+class T with
+    function (int x)=>T f1;
+    function (int x)=>T f2;
+    var int x = 0;
+do
+    function (int x)=>T f1 do
+        this.x = x;
+    end
+    function (int x)=>T f2 do
+        this.f1(x);
+    end
+    await FOREVER;
+end
+
+pool T[] ts;
+spawn T.f2(2) in ts;
+
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:x;
+end
+
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+class T with
+    function (int x)=>T f1;
+    function (int x)=>T f2;
+    var int x = 0;
+do
+    function (int x)=>T f1 do
+        this.x = x;
+    end
+    function (int x)=>T f2 do
+        this.f1(x);
+    end
+    escape this.x;
+end
+
+var int ret = do T.f2(2);
+escape ret;
+]],
+    run = 2,
+}
+
+do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------

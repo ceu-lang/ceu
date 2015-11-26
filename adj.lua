@@ -782,16 +782,36 @@ me.blk_body = me.blk_body or blk_body
 
     -- implicit pool in enclosing class if no "in pool"
     Spawn = function (me)
-        local _,pool,constr = unpack(me)
+        local id, c1, pool, c2 = unpack(me)
         if not pool then
             AST.par(me,'Dcl_cls').__ast_has_malloc = true
             me[2] = node('Var', me.ln, '_top_pool')
         end
-        if not constr then
-            me[3] = AST.node('Dcl_constr', me.ln,
-                        AST.node('Block', me.ln,
-                            AST.node('Stmts', me.ln)))
+        if not c2 then
+            c2 = AST.node('Dcl_constr', me.ln,
+                    AST.node('Block', me.ln,
+                        AST.node('Stmts', me.ln)))
         end
+        if c1 then
+            --  spawn T.constr(...);
+            --      becomes
+            --  spawn T with
+            --      this.constr(...);
+            --      ...
+            --  end;
+            local f, exps = unpack(c1)
+            table.insert(c2[1][1], 1,
+                node('CallStmt', me.ln,
+                    node('Op2_call', me.ln, 'call',
+                        node('Op2_.', me.ln, '.',
+                            node('This', me.ln),
+                            f),
+                        exps)))
+        end
+
+        -- remove c1
+        me[2] = pool
+        me[3] = c2
     end,
 
 -- DoOrg ------------------------------------------------------------
@@ -809,7 +829,7 @@ me.blk_body = me.blk_body or blk_body
         --      x = await t;
         --  end
         --]]
-        local id_cls, constr = unpack(me);
+        local id_cls, c1, c2 = unpack(me);
 
         local awt = node('Await', me.ln,
                         node('Var', me.ln, '_org_'..me.n),
@@ -819,13 +839,20 @@ me.blk_body = me.blk_body or blk_body
             awt = node('_Set', me.ln, to, '=', 'await', awt)
         end
 
+        if c1 then
+            -- adjusts to what Dcl_var expects
+            table.insert(c1, 1, id_cls)
+        end
+
         local ret = node('Do', me.ln,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('Dcl_var', me.ln, 'var',
+                                node('_Dcl_var', me.ln, 'var',
                                     node('Type', me.ln, id_cls),
+                                    true,
                                     '_org_'..me.n,
-                                    constr),
+                                    c1,
+                                    c2),
                                 awt)))
         ret.__adj_is_do_org = true
         return ret
@@ -1228,8 +1255,35 @@ me.blk_body = me.blk_body or blk_body
         local t = { unpack(me,4) }  -- skip pre,tp,hasConstr
 
         if hasConstr then
-            table.remove(me, 3)
+            local _, _, _, id, c1, c2 = unpack(me)
             me.tag = 'Dcl_var'
+            if not c2 then
+                c2 = node('Dcl_constr', me.ln,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln)))
+                if c1 then
+                    --  var T t = T.constr(...);
+                    --      becomes
+                    --  var T t with
+                    --      this.constr(...);
+                    --      ...
+                    --  end;
+                    local tp2, f, exps = unpack(c1)
+                    ASR(tp[1] == tp2, me, 'invalid constructor')
+                    table.insert(c2[1][1], 1,
+                        node('CallStmt', me.ln,
+                            node('Op2_call', me.ln, 'call',
+                                node('Op2_.', me.ln, '.',
+                                    node('This', me.ln),
+                                    f),
+                                exps)))
+                end
+            end
+
+            -- remove c1, hasConstr
+            me[5] = c2
+            me[6] = false
+            table.remove(me, 3)
             return
         end
 

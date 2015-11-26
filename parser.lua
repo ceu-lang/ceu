@@ -163,15 +163,18 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- variables, organisms
     , _Dcl_var  = (V'__Dcl_var_org' + V'__Dcl_var_plain_set' + V'_Dcl_var_plain')
-    , __Dcl_var_org   = CKEY'var'  * EV'Type' * Cc(true)  * EV'__ID_var' *
-                            ( EKEY'with' * V'Dcl_constr' * EKEY'end'
-                            + K'=' * V'Cls_constr' )
+    , __Dcl_var_org = CKEY'var'  * EV'Type' * Cc(true)  * EV'__ID_var' *
+                        ( Cc(false) * EKEY'with' * V'Dcl_constr' * EKEY'end'
+                        + K'=' * V'_Var_constr' * (
+                            EKEY'with' * V'Dcl_constr' * EKEY'end' +
+                            Cc(false)
+                          ) )
     , __Dcl_var_plain_set = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var_set' 
                                 * (K','*V'__dcl_var_set')^0
     , _Dcl_var_plain = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var' *
                             (K','*V'__dcl_var')^0
-    , Cls_constr = V'__ID_cls' * (K'.'-'..') * V'__ID_var'
-                 * EK'(' * EV'ExpList' * EK')'
+
+    , _Var_constr = V'__ID_cls' * (EK'.'-'..') * EV'__ID_var' * EK'(' * EV'ExpList' * EK')'
 
     -- auxiliary
     , Dcl_constr = V'Block'
@@ -317,12 +320,17 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- do organism
     , _DoOrg = KEY'do' * EV'__ID_cls'
+             * (V'_Spawn_constr' + Cc(false))
              * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 
     -- spawn / kill
     , _SpawnAnon = KEY'spawn' * EV'__Do'
-    , Spawn = KEY'spawn' * EV'__ID_cls' * (KEY'in'*EV'__Exp' + Cc(false))
+    , Spawn = KEY'spawn' * EV'__ID_cls'
+            * (V'_Spawn_constr' + Cc(false))
+            * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+    , _Spawn_constr = (K'.'-'..') * EV'__ID_var' * EK'(' * EV'ExpList' * EK')'
+
     , Kill  = KEY'kill' * EV'__Exp' * (EK'=>'*EV'__Exp' + Cc(false))
 
 -- Flow control

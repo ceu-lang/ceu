@@ -754,21 +754,6 @@ F = {
             _, me.var.constructor_iterator =
                 newvar(me, AST.par(me,'Block'), 'var', TP.new{'int'}, '_i_'..id, false)
         end
-
-        --  var T t = T.constr(...);
-        --      becomes
-        --  var T t; T.constr(t,...);
-        if constr and constr.tag=='Cls_constr' then
-            local id2, f, exps = unpack(constr)
-            ASR(tp[1] == id2, me, 'invalid constructor')
-            me[4] = AST.node('CallStmt', me.ln,
-                        AST.node('Op2_call', me.ln, 'call',
-                            AST.node('Op2_.', me.ln, '.',
-                                AST.node('Var', me.ln, id),
-                                f),
-                            exps))
-            AST.visit(F, me[4])
-        end
     end,
 
     __Dcl_pool_pre = function (me)
@@ -1237,14 +1222,14 @@ F = {
 
     -- _pre: gives error before "set" inside it
     Spawn_pre = function (me)
-        local id, pool, constr = unpack(me)
+        local id, _, _ = unpack(me)
         me.cls = ENV.clss[id]
         ASR(me.cls, me, 'undeclared type `'..id..'´')
         ASR(not me.cls.is_ifc, me, 'cannot instantiate an interface')
         me.tp = TP.new{id,'&&'}  -- class id
     end,
     Spawn = function (me)
-        local _, pool, _ = unpack(me)
+        local _, pool, constr = unpack(me)
         ASR(pool and pool.lst and pool.lst.var and pool.lst.var.pre=='pool',
             me, 'invalid pool')
     end,
