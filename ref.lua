@@ -323,7 +323,7 @@ F = {
                 --      class with <...> do <...> end
                 -- No problem because "v" cannot be accessed inside it.
             elseif TP.check(var.tp,'?') then
-                -- initialization is not obligatory, but not it is not
+                -- initialization is not obligatory, but it is not
                 -- considered first assignment either
                 --  var int&? v;
                 --  loop do
@@ -373,9 +373,18 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
                         f)
             end
         end
+
+        -- all initialization is guaranteed
+        --  var T t = T.constr(...)
+        local constr = AST.par(me, 'Dcl_constr')
+        if constr and f.var and f.var.fun and
+            TP.check(f.var.fun.out, constr.cls.id)
+        then
+            VARS_UNINIT = {}
+        end
     end,
 
---- check class constructors
+--- check class constructors, i.e., if all uninit vars are inited
 
     BlockI_pre = function (me)
         me.__old = VARS_UNINIT
@@ -385,10 +394,12 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
         AST.par(me,'Dcl_cls').vars_uninit = VARS_UNINIT
         VARS_UNINIT = me.__old
     end,
-    Dcl_constr_pre = function (me)
+
+    Dcl_constr_pre = function (me, cls)
+        cls = cls or me.cls
         me.__old = VARS_UNINIT
         VARS_UNINIT = {}
-        for k,v in pairs(me.cls.vars_uninit) do
+        for k,v in pairs(cls.vars_uninit) do
             VARS_UNINIT[k] = v
         end
     end,
@@ -402,6 +413,23 @@ missing initialization for field "]]..var.id..[[" (declared in ]]..dcl.ln[1]..':
 ]])
         end
         VARS_UNINIT = me.__old
+    end,
+
+    Dcl_fun_pre = function (me)
+        local _, _, _, out, _, blk = unpack(me)
+        local cls = CLS()
+        if blk and TP.check(out,cls.id) then
+            -- is a constructor body
+            F.Dcl_constr_pre(me, cls)
+        end
+    end,
+    Dcl_fun_pos = function (me)
+        local _, _, _, out, _, blk = unpack(me)
+        local cls = CLS()
+        if blk and TP.check(out,cls.id) then
+            -- is a constructor body
+            F.Dcl_constr_pos(me)
+        end
     end,
 
 --- disable VARS_UNINIT in data type declarations

@@ -355,7 +355,7 @@ class T with
     function (int& x)=>T fff;
 do
     function (int& x)=>T fff do
-        this.x = &x;
+        this.x = x;
     end
     this.x = 1;
 end
@@ -364,11 +364,56 @@ var int x = 10;
 var T ttt = T.fff(&x);
 escape x;
 ]],
+    ref = 'line 6 : invalid attribution : missing alias operator `&´ on the right',
+}
+
+Test { [[
+class T with
+    var int& x;
+    function (int& x)=>T fff;
+do
+    function (int& x)=>T fff do
+    end
+end
+escape 1;
+]],
+    ref = 'line 5 : missing initialization for field "x" (declared in tests.lua:2)',
+}
+
+Test { [[
+class T with
+    var int& x;
+    function (int& x)=>T fff;
+do
+    this.x = 1;
+    function (int& x)=>T fff do
+    end
+end
+escape 1;
+]],
+    ref = 'line 6 : missing initialization for field "x" (declared in tests.lua:2)',
+}
+
+--]===]
+Test { [[
+class T with
+    var int& xxx2;
+    function (int& xxx3)=>T fff;
+do
+    function (int& xxx3)=>T fff do
+        this.xxx2 = &xxx3;
+    end
+    this.xxx2 = 1;
+end
+
+var int xxx1 = 10;
+var T ttt = T.fff(&xxx1);
+escape xxx1;
+]],
     run = 1,
 }
 
 do return end
---]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
