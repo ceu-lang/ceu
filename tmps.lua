@@ -184,13 +184,15 @@ F = {
     ['Op1_&'] = 'Op1_&&',
     ['Op1_&&'] = function (me)
         local op, e1 = unpack(me)
-        if e1.fst.var then
+        if e1.fst.var and (not e1.fst.var.is_arg) then
             e1.fst.var.isTmp = false    -- assigned to a pointer
         end
     end,
     Set = function (me)
         local _, _, fr = unpack(me)
-        if fr.tag=='Op1_&' and fr.fst.var then
+        if fr.tag=='Op1_&' and fr.fst.var and
+            (not fr.fst.var.is_arg)
+        then
             fr.fst.var.isTmp = false    -- assigned to a pointer
         end
     end,

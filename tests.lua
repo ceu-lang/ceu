@@ -177,6 +177,64 @@ escape 1;
 -----------------------
 
 Test { [[
+class T with
+    var int xxx2=0;
+    function (int xxx3)=>void fff;
+do
+    function (int xxx3)=>void fff do
+        var int xxx4 = xxx3;
+        this.xxx2 = xxx4;
+    end
+    this.xxx2 = 1;
+end
+
+var int xxx1 = 10;
+var T ttt;
+ttt.fff(&xxx1);
+escape ttt.xxx2;
+]],
+    run = 1,
+}
+--]===]
+Test { [[
+class T with
+    var int xxx2=0;
+    function (int xxx3)=>void fff;
+do
+    function (int xxx3)=>void fff do
+        this.xxx2 = xxx3;
+    end
+    this.xxx2 = 1;
+end
+
+var int xxx1 = 10;
+var T ttt;
+ttt.fff(xxx1);
+escape ttt.xxx2;
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var int xxx2=0;
+    function (int& xxx3)=>void fff;
+do
+    function (int& xxx3)=>void fff do
+        var int& xxx4 = &xxx3;
+        this.xxx2 = xxx4;
+    end
+    this.xxx2 = 1;
+end
+
+var int xxx1 = 10;
+var T ttt;
+ttt.fff(&xxx1);
+escape ttt.xxx2;
+]],
+    run = 10,
+}
+
+Test { [[
 class U with do end
 
 class T with
@@ -394,7 +452,24 @@ escape 1;
     ref = 'line 6 : missing initialization for field "x" (declared in tests.lua:2)',
 }
 
---]===]
+Test { [[
+class T with
+    var int xxx2;
+    function (int& xxx3)=>T fff;
+do
+    function (int& xxx3)=>T fff do
+        this.xxx2 = xxx3;
+    end
+    this.xxx2 = 1;
+end
+
+var int xxx1 = 10;
+var T ttt = T.fff(&xxx1);
+escape ttt.xxx2;
+]],
+    run = 1,
+}
+
 Test { [[
 class T with
     var int& xxx2;
@@ -413,7 +488,7 @@ escape xxx1;
     run = 1,
 }
 
-do return end
+--do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
