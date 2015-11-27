@@ -479,6 +479,7 @@ me.blk_body = me.blk_body or blk_body
         cls.is_traverse = true
 
         local spawn = node('Spawn', me.ln, 'Body_'..me.n,
+                            false,
                             node('Var', me.ln, '_pool_'..me.n),
                             node('Dcl_constr', me.ln,
                                 node('Block', me.ln,
@@ -640,6 +641,7 @@ me.blk_body = me.blk_body or blk_body
         local cls_id = cls[2]
 
         local spawn = node('Spawn', me.ln, cls_id,
+                            false,
                             node('Var', me.ln, '_bodies'),
                             node('Dcl_constr', me.ln,
                                 node('Block', me.ln,
