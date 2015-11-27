@@ -175,7 +175,6 @@ escape 1;
 }
 
 -----------------------
---]===]
 
 Test { [[
 class U with do end
@@ -350,7 +349,26 @@ escape ret;
     run = 2,
 }
 
---do return end
+Test { [[
+class T with
+    var int& x;
+    function (int& x)=>T fff;
+do
+    function (int& x)=>T fff do
+        this.x = &x;
+    end
+    this.x = 1;
+end
+
+var int x = 10;
+var T ttt = T.fff(&x);
+escape x;
+]],
+    run = 1,
+}
+
+do return end
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
@@ -30771,7 +30789,7 @@ var T t with
 end;
 escape 1;
 ]],
-    ref = 'line 7 : invalid attribution : variable "x" has narrower scope its destination',
+    ref = 'line 7 : invalid attribution : variable "x" has narrower scope than its destination',
 }
 
 Test { [[
@@ -30814,7 +30832,7 @@ end;
 
 escape t1.v.v + t2.v.v + t3.v.v;
 ]],
-    ref = 'line 12 : invalid attribution : variable "v_" has narrower scope its destination',
+    ref = 'line 12 : invalid attribution : variable "v_" has narrower scope than its destination',
     --ref = 'line 12 : attribution to reference with greater scope',
     --run = 6,
 }
@@ -37096,7 +37114,7 @@ escape 1;
     --fin = 'line 10 : attribution requires `finalize´',
     --run = 1,
     --ref = 'line 10 : attribution to reference with greater scope',
-    ref = 'line 10 : invalid attribution : variable "u" has narrower scope its destination',
+    ref = 'line 10 : invalid attribution : variable "u" has narrower scope than its destination',
 }
 
 Test { [[
@@ -46343,7 +46361,7 @@ end
 
 escape 1;
 ]],
-    ref = 'line 9 : invalid attribution : variable "cmds" has narrower scope its destination',
+    ref = 'line 9 : invalid attribution : variable "cmds" has narrower scope than its destination',
     --ref = 'line 9 : attribution to reference with greater scope',
 }
 Test { [[
@@ -50248,7 +50266,7 @@ end;
 escape 1;
 ]],
     --ref = 'line 13 : attribution to reference with greater scope',
-    ref = 'line 13 : invalid attribution : variable "d" has narrower scope its destination',
+    ref = 'line 13 : invalid attribution : variable "d" has narrower scope than its destination',
 }
 
 Test { [[

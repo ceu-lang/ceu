@@ -92,6 +92,7 @@ F = {
         if TP.check(me.var.tp,'?') then
             return  -- optional assignment
         end
+
         local constr = AST.par(me,'Dcl_constr')
         if constr and constr.cls==AST.par(me,'Dcl_cls') then
             return  -- recursive spawn
@@ -223,7 +224,7 @@ F = {
                     local fr_id = (fr.fst and fr.fst.var and fr.fst.var.id)
                                     or '?'
                     ASR(to_org_blk.__depth >= fr_blk.__depth, me,
-                        'invalid attribution : variable "'..fr_id..'" has narrower scope its destination', [[
+                        'invalid attribution : variable "'..fr_id..'" has narrower scope than its destination', [[
     The aliased variable (source) must have wider scope than alias variable
     (destination).
 ]])
