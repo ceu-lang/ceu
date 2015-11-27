@@ -785,7 +785,7 @@ me.blk_body = me.blk_body or blk_body
         local id, c1, pool, c2 = unpack(me)
         if not pool then
             AST.par(me,'Dcl_cls').__ast_has_malloc = true
-            me[2] = node('Var', me.ln, '_top_pool')
+            pool = node('Var', me.ln, '_top_pool')
         end
         if not c2 then
             c2 = AST.node('Dcl_constr', me.ln,
@@ -812,6 +812,7 @@ me.blk_body = me.blk_body or blk_body
         -- remove c1
         me[2] = pool
         me[3] = c2
+        me[4] = false
     end,
 
 -- DoOrg ------------------------------------------------------------
@@ -1159,6 +1160,7 @@ me.blk_body = me.blk_body or blk_body
                                             node('Var', me.ln, 'ok_'),
                                             '=', 'spawn',
                                             node('Spawn', me.ln, id_cls,
+                                                false,
                                                 node('Var', me.ln, '_'..id_cls..'s'),
                                                 node('Dcl_constr', me.ln, unpack(sets)))),
                                         node('If', me.ln,
@@ -1261,23 +1263,23 @@ me.blk_body = me.blk_body or blk_body
                 c2 = node('Dcl_constr', me.ln,
                         node('Block', me.ln,
                             node('Stmts', me.ln)))
-                if c1 then
-                    --  var T t = T.constr(...);
-                    --      becomes
-                    --  var T t with
-                    --      this.constr(...);
-                    --      ...
-                    --  end;
-                    local tp2, f, exps = unpack(c1)
-                    ASR(tp[1] == tp2, me, 'invalid constructor')
-                    table.insert(c2[1][1], 1,
-                        node('CallStmt', me.ln,
-                            node('Op2_call', me.ln, 'call',
-                                node('Op2_.', me.ln, '.',
-                                    node('This', me.ln),
-                                    f),
-                                exps)))
-                end
+            end
+            if c1 then
+                --  var T t = T.constr(...);
+                --      becomes
+                --  var T t with
+                --      this.constr(...);
+                --      ...
+                --  end;
+                local tp2, f, exps = unpack(c1)
+                ASR(tp[1] == tp2, me, 'invalid constructor')
+                table.insert(c2[1][1], 1,
+                    node('CallStmt', me.ln,
+                        node('Op2_call', me.ln, 'call',
+                            node('Op2_.', me.ln, '.',
+                                node('This', me.ln),
+                                f),
+                            exps)))
             end
 
             -- remove c1, hasConstr

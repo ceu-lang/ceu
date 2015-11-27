@@ -175,8 +175,8 @@ escape 1;
 }
 
 -----------------------
-
 --]===]
+
 Test { [[
 class U with do end
 
@@ -228,6 +228,40 @@ var T ttt = T.fff(2);
 escape ttt.x;
 ]],
     run = 2,
+}
+
+Test { [[
+class T with
+    function (int x)=>T fff;
+    var int x = 0;
+do
+    function (int x)=>T fff do
+        this.x = x;
+    end
+end
+
+var T ttt = T.fff(2) with
+end;
+escape ttt.x;
+]],
+    run = 2,
+}
+Test { [[
+class T with
+    function (int x)=>T fff;
+    var int x = 0;
+do
+    function (int x)=>T fff do
+        this.x = x;
+    end
+end
+
+var T ttt = T.fff(2) with
+    this.x = 1;
+end;
+escape ttt.x;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -316,7 +350,7 @@ escape ret;
     run = 2,
 }
 
-do return end
+--do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
