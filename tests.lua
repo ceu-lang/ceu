@@ -195,7 +195,6 @@ escape ttt.xxx2;
 ]],
     run = 1,
 }
---]===]
 Test { [[
 class T with
     var int xxx2=0;
@@ -488,12 +487,95 @@ escape xxx1;
     run = 1,
 }
 
---do return end
+Test { [[
+class T with
+    var int& vvv;
+do
+end
+var T t;
+escape 1;
+]],
+    ref = 'line 5 : missing initialization for field "vvv" (declared in tests.lua:2)',
+}
+Test { [[
+var int& vvv;
+escape vvv;
+]],
+    ref = 'line 2 : invalid access to uninitialized variable "vvv" (declared at tests.lua:1)',
+}
+Test { [[
+class TimeDisplay with
+    function (int& vvv)=>TimeDisplay build;
+do
+    var int x = 0;
+    var int& vvv = &x;
+
+    function (int& vvv)=>TimeDisplay build do
+        this.vvv = &vvv;
+    end
+end
+escape 1;
+]],
+    ref = 'line 8 : invalid attribution : variable "vvv" is already bound',
+}
+
+Test { [[
+class TimeDisplay with
+    function (int& vvv)=>TimeDisplay build;
+do
+    var int x = 0;
+    var int& vvv;
+
+    function (int& vvv)=>TimeDisplay build do
+        this.vvv = &vvv;
+    end
+
+    vvv = &x;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class TimeDisplay with
+    function (int& vvv)=>TimeDisplay build;
+do
+    var int x = 0;
+    var int& vvv;
+
+    function (int& vvv)=>TimeDisplay build do
+        //this.vvv = &vvv;
+    end
+
+    vvv = &x;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class TimeDisplay with
+    function (int& vvv)=>TimeDisplay build;
+do
+    var int& vvv;
+
+    function (int& vvv)=>TimeDisplay build do
+        this.vvv = &vvv;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+do return end
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -44040,6 +44122,26 @@ end
 escape v[0]?==false;
 ]],
     _ana = {acc=true},
+    run = 1,
+}
+
+Test { [[
+class U with do end;
+
+class T with
+    var U&&[]& us;
+    function (U&&[]& us)=>T build;
+do
+    function (U&&[]& us)=>T build do
+        this.us = &us;
+    end
+end
+
+var U&&[] us;
+var T t = T.build(&us);
+
+escape 1;
+]],
     run = 1,
 }
 

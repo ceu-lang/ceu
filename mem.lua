@@ -57,7 +57,7 @@ function MEM.tp2dcl (pre, tp, id, _dcl_id)
                 end
             else
                 if TP.check(tp,'&&') or TP.check(tp,'&') then
-                    return dcl .. 'tceu_vector* '..id
+                    return 'tceu_vector* '..id
                 else
                     local max = (tp.arr.cval or 0)
                     local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
