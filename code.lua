@@ -972,6 +972,7 @@ if (]]..fin.val..[[) {
                 if TP.check(var.tp,'[]') then
                     local val = V({tag='Var',tp=var.tp,var=var}, 'lval')
                     LINE(me, [[
+{
     int __ceu_i;
     for (__ceu_i=0; __ceu_i<ceu_vector_getlen(]]..val..[[); __ceu_i++) {
         ]]..TP.toc(tp_opt)..[[* __ceu_one = (]]..TP.toc(tp_opt)..[[*)
@@ -990,6 +991,7 @@ if (]]..fin.val..[[) {
 */
         }
     }
+}
 ]])
 
                 else
