@@ -569,13 +569,13 @@ escape 1;
 ]],
     run = 1,
 }
-do return end
+
+--]===]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -44143,6 +44143,111 @@ var T t = T.build(&us);
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+class U with do end;
+
+class T with
+    var U&&[]& us;
+    function (U&&[]& us)=>T build;
+do
+    function (U&&[]& us)=>T build do
+        this.us = &us;
+    end
+end
+
+var U&&[] us = [null];
+
+await 1s;
+
+var T t = T.build(&us);
+var U&& u = us[0];
+
+escape u==null;
+]],
+    fin = 'line 16 : unsafe access to pointer "us" across `await´ (tests.lua : 14)',
+}
+Test { [[
+class U with do end;
+
+class T with
+    var U&&?[]& us;
+    function (U&&?[]& us)=>T build;
+do
+    function (U&&?[]& us)=>T build do
+        this.us = &us;
+    end
+end
+
+var U u1;
+var U&&?[] us = [&&u1];
+
+await 1s;
+
+var T t = T.build(&us);
+var U&&? u2 = us[0];
+
+escape u2?+1;
+]],
+    run = { ['~>2s']=1 },
+}
+Test { [[
+class U with
+    event bool go;
+do
+    await FOREVER;
+end;
+
+class T with
+    var U&&?[]& us;
+    function (U&&?[]& us)=>T build;
+do
+    function (U&&?[]& us)=>T build do
+        this.us = &us;
+    end
+end
+
+var U u1;
+var U&&?[] us = [&&u1];
+
+await 1s;
+
+var T t = T.build(&us);
+emit us[0]!:go => true;
+
+escape us[0]?+1;
+]],
+    run = { ['~>2s']=2 },
+}
+Test { [[
+class U with
+    event bool go;
+do
+    await FOREVER;
+end;
+
+class T with
+    var U&&?[]& us;
+    function (U&&?[]& us)=>T build;
+do
+    function (U&&?[]& us)=>T build do
+        this.us = &us;
+    end
+end
+
+var U u1;
+var U&&?[] us = [&&u1];
+var U&&?[]& xx = &us;
+
+await 1s;
+
+var T t = T.build(&us);
+emit xx[0]!:go => true;
+
+escape us[0]?+1;
+]],
+    run = { ['~>2s']=2 },
 }
 
 --<<< CLASS-VECTORS-FOR-POINTERS-TO-ORGS

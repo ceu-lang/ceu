@@ -239,6 +239,7 @@ void CEU_]]..id..'_free (void* pool, CEU_'..id..[[* me) {
 
         local pack = ''
         local xx = me.__adj_from_opt
+        xx =  xx and TP.pop(xx, '&')
         xx =  xx and TP.pop(xx, '[]')
         --local xx = me.__adj_from_opt
         if xx and (TP.check(xx,'&&','?') or TP.check(xx,'&','?')) then
