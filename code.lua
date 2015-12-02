@@ -227,7 +227,7 @@ end
 
 F = {
     Node_pre = function (me)
-        me.code = '/* NODE: '..me.tag..' '..me.n..' */\n'
+        me.code =  me.code or '/* NODE: '..me.tag..' '..me.n..' */\n'
     end,
 
     Do         = CONC_ALL,
@@ -802,7 +802,10 @@ _ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
                     local max = (var.tp.arr.cval or 0)
                     local ID = (var.isTmp and '__ceu_'..var.id..'_'..var.n) or
                                CUR(me,var.id_)
-                    LINE(me, [[
+
+                    local blki = AST.par(var.dcl,'BlockI') or me -- init inside _ceu_pre
+                    F.Node_pre(blki)
+                    LINE(blki, [[
 ceu_vector_init(]]..'&'..ID..','..max..',sizeof('..TP.toc(tp_elem)..[[),
                 (byte*)]]..ID..[[_mem);
 ]])

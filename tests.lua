@@ -570,6 +570,7 @@ escape 1;
     run = 1,
 }
 
+do return end
 --]===]
 -------------------------------------------------------------------------------
 
@@ -40694,7 +40695,21 @@ do
 end
 escape 1;
 ]],
-    props = 'line 3 : not permitted inside an interface',
+    run = 1,
+    --props = 'line 3 : not permitted inside an interface',
+}
+Test { [[
+class T with
+    var int[]  v2;
+do
+    await FOREVER;
+end
+var T t with
+    this.v2 = [1,2,3];
+end;
+escape t.v2[0]+t.v2[2];
+]],
+    run = 4,
 }
 
 Test { [[
@@ -43571,7 +43586,8 @@ t.vs[0] = t.vs[0] + 2;
 
 escape t.vs[0];
 ]],
-    props = 'line 2 : not permitted inside an interface : vectors',
+    --props = 'line 2 : not permitted inside an interface : vectors',
+    run = 3,
 }
 
 Test { [[
@@ -59510,6 +59526,22 @@ escape 1;
 ]],
     todo = 'List is recursive',
     run = 1,
+}
+
+Test { [[
+class T with
+    var char[] xxx;
+do
+    await FOREVER;
+end
+
+var T t with
+    this.xxx = [].."oioi";
+end;
+
+escape $t.xxx;
+]],
+    run = 4,
 }
 
 -- TODO: vectors in the class interface

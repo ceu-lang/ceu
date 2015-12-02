@@ -337,11 +337,14 @@ F = {
 
     Dcl_var = function (me)
         if AST.par(me, 'BlockI') then
-            ASR(not TP.check(me.var.tp,'[]') or TP.is_ext(me.var.tp,'_','@'), me,
-                'not permitted inside an interface : vectors')
+            --ASR(not TP.check(me.var.tp,'[]') or TP.is_ext(me.var.tp,'_','@'), me,
+                --'not permitted inside an interface : vectors')
             ASR(not me.var.cls, me,
                 'not permitted inside an interface : organisms')
             if TP.check(me.var.tp,'?') then
+                CLS().has_pre = true   -- code for pre (before constr)
+            end
+            if TP.check(me.var.tp,'[]') then
                 CLS().has_pre = true   -- code for pre (before constr)
             end
         end
