@@ -21918,6 +21918,13 @@ escape 1;
 }
 
 Test { [[
+var int[] v = [] ..;
+escape 1;
+]],
+    parser = 'line 1 : after `..´ : expected `[´',
+}
+
+Test { [[
 var int&&[] v1;
 var int[]  v2 = []..v1;
 escape 1;
