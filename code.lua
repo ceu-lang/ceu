@@ -1901,7 +1901,7 @@ if (!_ceu_app->isAlive)
             evt  = V(e,'evt'),
             lbl  = me.lbl.id,
             evto = org,
-            isEvery = me.isEvery,
+            isEvery = me.isEvery or par_pause,
         })
         DEBUG_TRAILS(me)
     end,
