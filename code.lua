@@ -1894,10 +1894,7 @@ if (!_ceu_app->isAlive)
     __AwaitInt = function (me)
         local e = unpack(me)
         local org = (e.org and V(e.org,'lval')) or '_ceu_org'
-
-        local par_pause  = AST.par(me,'Pause')
-        local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
-
+        assert(AST.par(me,'Dcl_cls'), 'bug found')
         local no = LABEL_NO(me)
         HALT(me, {
             no   = no,
@@ -1912,9 +1909,7 @@ if (!_ceu_app->isAlive)
     __AwaitExt = function (me)
         local e, dt, _, org = unpack(me)
         local suf = (dt and dt.tm and '_') or ''  -- timemachine "WCLOCK_"
-
-        local par_pause  = AST.par(me,'Pause')
-        local par_dclcls = assert(AST.par(me,'Dcl_cls'), 'bug found')
+        assert(AST.par(me,'Dcl_cls'), 'bug found')
 
         local val = CUR(me, '__wclk_'..me.n)
 

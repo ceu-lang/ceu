@@ -24988,6 +24988,49 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+event bool e;
+
+par/or do
+    par/and do
+        pause/if e do
+            await 1s;
+        end
+    with
+        emit e => true;
+    end
+    escape -1;
+with
+    await 2s;
+    escape 1;
+end
+]],
+    _ana = {acc=true},
+    run = {['~>2s']=1},
+}
+
+Test { [[
+event bool e;
+
+par/or do
+    par/and do
+        pause/if e do
+            await 1s;
+        end
+    with
+        emit e => true;
+        emit e => false;
+    end
+    escape -1;
+with
+    await 2s;
+    escape 1;
+end
+]],
+    _ana = {acc=true},
+    run = {['~>2s']=-1},
+}
+
 --<<< PAUSE
 
 -- TIGHT LOOPS

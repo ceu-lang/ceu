@@ -161,7 +161,6 @@ F =
     Dcl_var = 'Var',
     Var = function (me, CTX)
         local var = me.var
-
         local tp_id = TP.id(var.tp)
         local adt = ENV.adts[tp_id]
 

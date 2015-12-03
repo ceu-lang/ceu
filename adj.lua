@@ -1613,6 +1613,9 @@ me.blk_body = me.blk_body or blk_body
         local off = node('PauseX', me.ln, 0)
             off.blk = PSE
 
+        local awt = node('Await', me.ln, evt, false)
+        awt.isEvery = true
+
         return
             node('Block', me.ln,
                 node('Stmts', me.ln,
@@ -1626,7 +1629,7 @@ me.blk_body = me.blk_body or blk_body
                                 node('_Set', me.ln,
                                     node('Var', me.ln, cur_id),
                                     '=', 'await',
-                                    node('Await', me.ln, evt, false)),
+                                    awt),
                                 node('If', me.ln,
                                     node('Var', me.ln, cur_id),
                                     on,
