@@ -289,9 +289,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Adt_explist    = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
 
     -- vector-constr
-    , Vector_tup = (EK'['-('['*P'='^0*'[')) * EV'ExpList' * EK']'
+    , Vector_tup = (K'['-('['*P'='^0*'[')) * EV'ExpList' * EK']'
     , __vector_one = V'Vector_tup' + V'__Exp'
-    , Vector_constr = V'__vector_one'*(K'..'*EV'__vector_one')^1
+    , Vector_constr = V'__vector_one'*(K'..'*(V'__vector_one'+EM'item'))^1
                     + V'Vector_tup'
 
 -- Function calls
