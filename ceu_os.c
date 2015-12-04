@@ -552,6 +552,11 @@ if (evt->param != NULL) {
             /*** CODE ***/
             trl->evt = CEU_IN__NONE;    /* TODO: dup w/ above */
             app->code(app, evt, org, trl, stk);
+#ifdef CEU_STACK_CLEAR
+            if (!stk->is_alive) {
+                return;
+            }
+#endif
 
 #if defined(CEU_OS_KERNEL) && defined(__AVR)
             CEU_APP_ADDR = 0;
