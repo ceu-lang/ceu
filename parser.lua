@@ -422,8 +422,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Atomic  = KEY'atomic' * V'__Do'
 
     -- C integration
-    , RawStmt = K'{' * C((P(1)-'}')^0) * EK'}'
-    , RawExp  = K'{' * C((P(1)-'}')^0) * EK'}'
+    , RawStmt = K'{' * C(V'__raw') * EK'}'
+    , RawExp  = K'{' * C(V'__raw') * EK'}'
+    , __raw   = ((1-m.S'{}') + '{'*V'__raw'*'}')^0
 
     -- Lua integration
     -- Stmt/Exp differ only by the "return" and are re-unified in "adj.lua"
