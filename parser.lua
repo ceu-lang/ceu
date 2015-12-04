@@ -1,6 +1,6 @@
-local P, C, V, Cc, Ct = m.P, m.C, m.V, m.Cc, m.Ct
+local P, C, V, S, Cc, Ct = m.P, m.C, m.V, m.S, m.Cc, m.Ct
 
-local S = V'__SPACES'
+local X = V'__SPACES'
 
 local ERR_msg
 local ERR_i
@@ -25,13 +25,13 @@ local K = function (patt, key)
     key = key and -m.R('09','__','az','AZ','\127\255')
             or P(true)
     ERR_msg = '?'
-    return #P(1) * m.Cmt(patt*key, f) * S
+    return #P(1) * m.Cmt(patt*key, f) * X
 end
 local CK = function (patt, key)
     key = key and -m.R('09','__','az','AZ','\127\255')
             or P(true)
     ERR_msg = '?'
-    return C(m.Cmt(patt*key, f))*S
+    return C(m.Cmt(patt*key, f))*X
 end
 local EK = function (tk, key)
     key = key and -m.R('09','__','az','AZ','\127\255')
@@ -251,9 +251,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 + Cc'unk'  * V'__ID_nat'        * Cc(false)
 
     , Host    = (KEY'native/pre'*Cc(true) + KEY'native'*Cc(false))
-                * (#EKEY'do')*'do' * --m.S' \n\t'^0 *
-                    ( C(V'_C') + C((P(1)-(m.S'\t\n\r '*'end'*P';'^0*'\n'))^0) )
-                *S* EKEY'end'
+                * (#EKEY'do')*'do' * --S' \n\t'^0 *
+                    ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) )
+                *X* EKEY'end'
 
     -- deterministic annotations
     , Dcl_det  = KEY'@safe' * EV'__ID' * EKEY'with' *
@@ -424,7 +424,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- C integration
     , RawStmt = K'{' * C(V'__raw') * EK'}'
     , RawExp  = K'{' * C(V'__raw') * EK'}'
-    , __raw   = ((1-m.S'{}') + '{'*V'__raw'*'}')^0
+    , __raw   = ((1-S'{}') + '{'*V'__raw'*'}')^0
 
     -- Lua integration
     -- Stmt/Exp differ only by the "return" and are re-unified in "adj.lua"
@@ -433,7 +433,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , __lua    = K'[' * m.Cg(P'='^0,'lua') * '[' *
                 ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
-                 * (V'__luacl'/function()end) *S
+                 * (V'__luacl'/function()end) *X
     , __luaext = K'@' * V'__Exp'
     , __luacl  = ']' * C(P'='^0) * EK']'
     , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
@@ -531,8 +531,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , NULL   = CKEY'null'     -- TODO: the idea is to get rid of this
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
-    , NUMBER = CK( #m.R'09' * (m.R'09'+m.S'xX'+m.R'AF'+m.R'af'+(P'.'-'..')
-                                      +(m.S'Ee'*'-')+m.S'Ee')^1 )
+    , NUMBER = CK( #m.R'09' * (m.R'09'+S'xX'+m.R'AF'+m.R'af'+(P'.'-'..')
+                                      +(S'Ee'*'-')+S'Ee')^1 )
              + CK( "'" * (P(1)-"'")^0 * "'" )
              + KEY'false' / function() return 0 end
              + KEY'true'  / function() return 1 end
@@ -589,10 +589,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _CEND = m.Cmt(C(V'_CSEP') * m.Cb'mark',
                     function (s,i,a,b) return a == b end)
 
-    , __SPACES = (('\n' * (V'__comm'+m.S'\t\n\r ')^0 *
+    , __SPACES = (('\n' * (V'__comm'+S'\t\n\r ')^0 *
                     '#' * (P(1)-'\n')^0)
                 + ('//' * (P(1)-'\n')^0)
-                + m.S'\t\n\r '
+                + S'\t\n\r '
                 + V'__comm'
                 )^0
 
