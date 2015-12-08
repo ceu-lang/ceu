@@ -505,8 +505,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __10   = ( Cc(false) * (CKEY'not'+CK'-'+CK'+'+CK'~'+CK'*'+
                               (CK'&&'-P'&'^3) + (CK'&'-'&&') +
                               CK'$$' + (CK'$'-'$$')
-                           + Cc'cast'*(K'('*V'Type'*K')') )
-              )^0 * V'__11'
+                           + Cc'cast'*(K'('*V'Type'*K')')*#V'__Exp' )
+               )^0 * V'__11'
     , __11   = V'__12' *
                   (
                       K'(' * Cc'call' * EV'ExpList' * EK')' *
