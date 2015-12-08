@@ -196,330 +196,6 @@ escape ttt.xxx2;
     run = 1,
 }
 Test { [[
-class T with
-    var int xxx2=0;
-    function (int xxx3)=>void fff;
-do
-    function (int xxx3)=>void fff do
-        this.xxx2 = xxx3;
-    end
-    this.xxx2 = 1;
-end
-
-var int xxx1 = 10;
-var T ttt;
-ttt.fff(xxx1);
-escape ttt.xxx2;
-]],
-    run = 10,
-}
-Test { [[
-class T with
-    var int xxx2=0;
-    function (int& xxx3)=>void fff;
-do
-    function (int& xxx3)=>void fff do
-        var int& xxx4 = &xxx3;
-        this.xxx2 = xxx4;
-    end
-    this.xxx2 = 1;
-end
-
-var int xxx1 = 10;
-var T ttt;
-ttt.fff(&xxx1);
-escape ttt.xxx2;
-]],
-    run = 10,
-}
-
-Test { [[
-class U with do end
-
-class T with
-    function (int x)=>T f;
-    var int x = 0;
-do
-    function (int x)=>T f do
-        this.x = 1;
-    end
-end
-
-var T t = U.f(1);
-escape t.x;
-]],
-    adj = 'line 12 : invalid constructor',
-}
-
-Test { [[
-class T with
-    function (int x)=>T f;
-do
-    var int x = 0;
-
-    function (int x)=>T f do
-        this.x = 1;
-    end
-end
-
-var T t;
-t = T.f(1);
-escape t.x;
-]],
-    parser = 'line 12 : before `.´ : expected `(´',
-    --run = 2,
-}
-
-Test { [[
-class T with
-    function (int x)=>T fff;
-    var int x = 0;
-do
-    function (int x)=>T fff do
-        this.x = x;
-    end
-end
-
-var T ttt = T.fff(2);
-escape ttt.x;
-]],
-    run = 2,
-}
-
-Test { [[
-class T with
-    function (int x)=>T fff;
-    var int x = 0;
-do
-    function (int x)=>T fff do
-        this.x = x;
-    end
-end
-
-var T ttt = T.fff(2) with
-end;
-escape ttt.x;
-]],
-    run = 2,
-}
-Test { [[
-class T with
-    function (int x)=>T fff;
-    var int x = 0;
-do
-    function (int x)=>T fff do
-        this.x = x;
-    end
-end
-
-var T ttt = T.fff(2) with
-    this.x = 1;
-end;
-escape ttt.x;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    function (int x)=>T fff;
-    var int x = 0;
-do
-    function (int x)=>T fff do
-        this.x = x;
-    end
-    this.x = 1;
-end
-
-var T ttt = T.fff(2);
-escape ttt.x;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    function (int x)=>T f1;
-    function (int x)=>T f2;
-    var int x = 0;
-do
-    function (int x)=>T f1 do
-        this.x = x;
-    end
-    function (int x)=>T f2 do
-        this.f1(x);
-    end
-end
-
-var T ttt = T.f2(2);
-escape ttt.x;
-]],
-    run = 2,
-}
-
-Test { [[
-class T with
-    function (int x)=>T f1;
-    function (int x)=>T f2;
-    var int x = 0;
-do
-    function (int x)=>T f1 do
-        this.x = x;
-    end
-    function (int x)=>T f2 do
-        this.f1(x);
-    end
-    await FOREVER;
-end
-
-pool T[] ts;
-spawn T.f2(2) in ts;
-
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:x;
-end
-
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-class T with
-    function (int x)=>T f1;
-    function (int x)=>T f2;
-    var int x = 0;
-do
-    function (int x)=>T f1 do
-        this.x = x;
-    end
-    function (int x)=>T f2 do
-        this.f1(x);
-    end
-    escape this.x;
-end
-
-var int ret = do T.f2(2);
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-class T with
-    var int& x;
-    function (int& x)=>T fff;
-do
-    function (int& x)=>T fff do
-        this.x = x;
-    end
-    this.x = 1;
-end
-
-var int x = 10;
-var T ttt = T.fff(&x);
-escape x;
-]],
-    ref = 'line 6 : invalid attribution : missing alias operator `&´ on the right',
-}
-
-Test { [[
-class T with
-    var int& x;
-    function (int& x)=>T fff;
-do
-    function (int& x)=>T fff do
-    end
-end
-escape 1;
-]],
-    ref = 'line 5 : missing initialization for field "x" (declared in tests.lua:2)',
-}
-
-Test { [[
-class T with
-    var int& x;
-    function (int& x)=>T fff;
-do
-    this.x = 1;
-    function (int& x)=>T fff do
-    end
-end
-escape 1;
-]],
-    ref = 'line 6 : missing initialization for field "x" (declared in tests.lua:2)',
-}
-
-Test { [[
-class T with
-    var int xxx2;
-    function (int& xxx3)=>T fff;
-do
-    function (int& xxx3)=>T fff do
-        this.xxx2 = xxx3;
-    end
-    this.xxx2 = 1;
-end
-
-var int xxx1 = 10;
-var T ttt = T.fff(&xxx1);
-escape ttt.xxx2;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int& xxx2;
-    function (int& xxx3)=>T fff;
-do
-    function (int& xxx3)=>T fff do
-        this.xxx2 = &xxx3;
-    end
-    this.xxx2 = 1;
-end
-
-var int xxx1 = 10;
-var T ttt = T.fff(&xxx1);
-escape xxx1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    var int& vvv;
-do
-end
-var T t;
-escape 1;
-]],
-    ref = 'line 5 : missing initialization for field "vvv" (declared in tests.lua:2)',
-}
-Test { [[
-var int& vvv;
-escape vvv;
-]],
-    ref = 'line 2 : invalid access to uninitialized variable "vvv" (declared at tests.lua:1)',
-}
-Test { [[
-class TimeDisplay with
-    function (int& vvv)=>TimeDisplay build;
-do
-    var int x = 0;
-    var int& vvv = &x;
-
-    function (int& vvv)=>TimeDisplay build do
-        this.vvv = &vvv;
-    end
-end
-escape 1;
-]],
-    ref = 'line 8 : invalid attribution : variable "vvv" is already bound',
-}
-
-Test { [[
 class TimeDisplay with
     function (int& vvv)=>TimeDisplay build;
 do
@@ -528,24 +204,6 @@ do
 
     function (int& vvv)=>TimeDisplay build do
         this.vvv = &vvv;
-    end
-
-    vvv = &x;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class TimeDisplay with
-    function (int& vvv)=>TimeDisplay build;
-do
-    var int x = 0;
-    var int& vvv;
-
-    function (int& vvv)=>TimeDisplay build do
-        //this.vvv = &vvv;
     end
 
     vvv = &x;
@@ -571,12 +229,42 @@ escape 1;
 }
 
 do return end
---]===]
+
+--[=[
+---
+
+    var char&&                  name    = null;
+
+    function (@hold char&& name)=>Surface name;
+
+---
+
+class Credits with
+    var _Pathname&& filename;
+do
+    finalize with
+        call {StatManager::instance()->set_bool}("credits-seen", true);
+    end
+
+    // read credit information from filename
+    {
+        static std::vector<std::string> credits;
+        static int end_offset = -static_cast<float>(Display::get_height())/2 - 50; // screen height + grace time
+
+        {
+            std::ifstream in(THIS(CEU_Credits)->filename->get_sys_path());
+            if (!in) {
+                log_error("couldn't open %1%", THIS(CEU_Credits)->filename);
+
+                std::ostringstream out;
+                out << "couldn't open " << THIS(CEU_Credits)->filename;
+]=]
 -------------------------------------------------------------------------------
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -701,6 +389,20 @@ Test { [[var int a;]],
         reachs = 1,
         isForever = true,
     }
+}
+
+Test { [[
+native do
+    int x = 1;
+end
+escape (_x);
+]],
+    run = 1,
+}
+Test { [[
+escape (1+1).v;
+]],
+    env = 'line 1 : not a struct',
 }
 
 Test { [[
@@ -25051,6 +24753,35 @@ end
     run = {['~>2s']=-1},
 }
 
+Test { [[
+native do
+    int V = 1;
+end
+
+class X with
+do
+    every 1s do
+        _V = _V + 1;
+    end
+end
+
+event bool pse;
+par/or do
+    pause/if pse do
+        var X x1, x2;
+        await FOREVER;
+    end
+with
+    emit pse=>true;
+    await 5s;
+end
+
+escape _V;
+]],
+    _ana = {acc=true},
+    run = {['~>5s']=1},
+}
+
 --<<< PAUSE
 
 -- TIGHT LOOPS
@@ -43452,6 +43183,348 @@ end
 
 var T t;
 t.f();
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int xxx2=0;
+    function (int xxx3)=>void fff;
+do
+    function (int xxx3)=>void fff do
+        this.xxx2 = xxx3;
+    end
+    this.xxx2 = 1;
+end
+
+var int xxx1 = 10;
+var T ttt;
+ttt.fff(xxx1);
+escape ttt.xxx2;
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var int xxx2=0;
+    function (int& xxx3)=>void fff;
+do
+    function (int& xxx3)=>void fff do
+        var int& xxx4 = &xxx3;
+        this.xxx2 = xxx4;
+    end
+    this.xxx2 = 1;
+end
+
+var int xxx1 = 10;
+var T ttt;
+ttt.fff(&xxx1);
+escape ttt.xxx2;
+]],
+    run = 10,
+}
+
+Test { [[
+class U with do end
+
+class T with
+    function (int x)=>T f;
+    var int x = 0;
+do
+    function (int x)=>T f do
+        this.x = 1;
+    end
+end
+
+var T t = U.f(1);
+escape t.x;
+]],
+    adj = 'line 12 : invalid constructor',
+}
+
+Test { [[
+class T with
+    function (int x)=>T f;
+do
+    var int x = 0;
+
+    function (int x)=>T f do
+        this.x = 1;
+    end
+end
+
+var T t;
+t = T.f(1);
+escape t.x;
+]],
+    parser = 'line 12 : before `.´ : expected `(´',
+    --run = 2,
+}
+
+Test { [[
+class T with
+    function (int x)=>T fff;
+    var int x = 0;
+do
+    function (int x)=>T fff do
+        this.x = x;
+    end
+end
+
+var T ttt = T.fff(2);
+escape ttt.x;
+]],
+    run = 2,
+}
+
+Test { [[
+class T with
+    function (int x)=>T fff;
+    var int x = 0;
+do
+    function (int x)=>T fff do
+        this.x = x;
+    end
+end
+
+var T ttt = T.fff(2) with
+end;
+escape ttt.x;
+]],
+    run = 2,
+}
+Test { [[
+class T with
+    function (int x)=>T fff;
+    var int x = 0;
+do
+    function (int x)=>T fff do
+        this.x = x;
+    end
+end
+
+var T ttt = T.fff(2) with
+    this.x = 1;
+end;
+escape ttt.x;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    function (int x)=>T fff;
+    var int x = 0;
+do
+    function (int x)=>T fff do
+        this.x = x;
+    end
+    this.x = 1;
+end
+
+var T ttt = T.fff(2);
+escape ttt.x;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    function (int x)=>T f1;
+    function (int x)=>T f2;
+    var int x = 0;
+do
+    function (int x)=>T f1 do
+        this.x = x;
+    end
+    function (int x)=>T f2 do
+        this.f1(x);
+    end
+end
+
+var T ttt = T.f2(2);
+escape ttt.x;
+]],
+    run = 2,
+}
+
+Test { [[
+class T with
+    function (int x)=>T f1;
+    function (int x)=>T f2;
+    var int x = 0;
+do
+    function (int x)=>T f1 do
+        this.x = x;
+    end
+    function (int x)=>T f2 do
+        this.f1(x);
+    end
+    await FOREVER;
+end
+
+pool T[] ts;
+spawn T.f2(2) in ts;
+
+var int ret = 0;
+loop t in ts do
+    ret = ret + t:x;
+end
+
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+class T with
+    function (int x)=>T f1;
+    function (int x)=>T f2;
+    var int x = 0;
+do
+    function (int x)=>T f1 do
+        this.x = x;
+    end
+    function (int x)=>T f2 do
+        this.f1(x);
+    end
+    escape this.x;
+end
+
+var int ret = do T.f2(2);
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+class T with
+    var int& x;
+    function (int& x)=>T fff;
+do
+    function (int& x)=>T fff do
+        this.x = x;
+    end
+    this.x = 1;
+end
+
+var int x = 10;
+var T ttt = T.fff(&x);
+escape x;
+]],
+    ref = 'line 6 : invalid attribution : missing alias operator `&´ on the right',
+}
+
+Test { [[
+class T with
+    var int& x;
+    function (int& x)=>T fff;
+do
+    function (int& x)=>T fff do
+    end
+end
+escape 1;
+]],
+    ref = 'line 5 : missing initialization for field "x" (declared in tests.lua:2)',
+}
+
+Test { [[
+class T with
+    var int& x;
+    function (int& x)=>T fff;
+do
+    this.x = 1;
+    function (int& x)=>T fff do
+    end
+end
+escape 1;
+]],
+    ref = 'line 6 : missing initialization for field "x" (declared in tests.lua:2)',
+}
+
+Test { [[
+class T with
+    var int xxx2;
+    function (int& xxx3)=>T fff;
+do
+    function (int& xxx3)=>T fff do
+        this.xxx2 = xxx3;
+    end
+    this.xxx2 = 1;
+end
+
+var int xxx1 = 10;
+var T ttt = T.fff(&xxx1);
+escape ttt.xxx2;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int& xxx2;
+    function (int& xxx3)=>T fff;
+do
+    function (int& xxx3)=>T fff do
+        this.xxx2 = &xxx3;
+    end
+    this.xxx2 = 1;
+end
+
+var int xxx1 = 10;
+var T ttt = T.fff(&xxx1);
+escape xxx1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    var int& vvv;
+do
+end
+var T t;
+escape 1;
+]],
+    ref = 'line 5 : missing initialization for field "vvv" (declared in tests.lua:2)',
+}
+Test { [[
+var int& vvv;
+escape vvv;
+]],
+    ref = 'line 2 : invalid access to uninitialized variable "vvv" (declared at tests.lua:1)',
+}
+Test { [[
+class TimeDisplay with
+    function (int& vvv)=>TimeDisplay build;
+do
+    var int x = 0;
+    var int& vvv = &x;
+
+    function (int& vvv)=>TimeDisplay build do
+        this.vvv = &vvv;
+    end
+end
+escape 1;
+]],
+    ref = 'line 8 : invalid attribution : variable "vvv" is already bound',
+}
+
+Test { [[
+class TimeDisplay with
+    function (int& vvv)=>TimeDisplay build;
+do
+    var int x = 0;
+    var int& vvv;
+
+    function (int& vvv)=>TimeDisplay build do
+        //this.vvv = &vvv;
+    end
+
+    vvv = &x;
+end
 escape 1;
 ]],
     run = 1,
