@@ -364,10 +364,6 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
                 trl->evt = CEU_IN__ORG;
             }
         }
-        if ( trl->evt == CEU_IN__ORG
-        ||   trl->evt == CEU_IN__ORG_PSED ) {
-            trl += 2;       /* jump [fst|lst] */
-        }
     } while (++trl <= trlF);
 
 #ifdef ceu_out_wclock_set
