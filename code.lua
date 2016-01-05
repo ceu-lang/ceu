@@ -1982,6 +1982,12 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
                     else
                         tp = TP.toc(me.tp)..'*'
                         val = '((*(__ceu_casted))->_'..i..')'
+                        if TP.check(v.tp,'?') then
+                            local ID = string.upper(TP.toc(v.tp))
+                            val = ID..'_pack('..val..')'
+                            --local ID = string.upper(TP.toc(e.evt.ins.tup[i]))
+                            --val = 'CEU_OPTION_'..ID..'_pack('..val..')'
+                        end
                     end
                 else
                     tp = TP.toc(me.tp)

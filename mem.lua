@@ -241,8 +241,8 @@ void CEU_]]..id..'_free (void* pool, CEU_'..id..[[* me) {
         local xx = me.__adj_from_opt
         xx =  xx and TP.pop(xx, '&')
         xx =  xx and TP.pop(xx, '[]')
-        --local xx = me.__adj_from_opt
-        if xx and (TP.check(xx,'&&','?') or TP.check(xx,'&','?')) then
+
+        if xx then-- and (TP.check(xx,'&&','?') or TP.check(xx,'&','?')) then
             local ID = string.upper(TP.opt2adt(xx))
             local tp = 'CEU_'..TP.opt2adt(xx)
             local some = TP.toc(me[4][2][1][1][2])
@@ -252,13 +252,20 @@ void CEU_]]..id..'_free (void* pool, CEU_'..id..[[* me) {
                 some = 'struct '..some      -- due to recursive spawn
             end
             pack = [[
-]]..tp..[[ CEU_]]..ID..[[_pack (]]..some..[[ ptr) {
+]]..tp..[[ CEU_]]..ID..[[_pack (]]..some..[[ v) {
     ]]..tp..[[ ret;
-    if (ptr == NULL) {
+]]
+            if (TP.check(xx,'&&','?') or TP.check(xx,'&','?')) then
+                pack = pack .. [[
+    if (v == NULL) {
         ret.tag = CEU_]]..ID..[[_NIL;
-    } else {
+    } else
+]]
+            end
+            pack = pack .. [[
+    {
         ret.tag = CEU_]]..ID..[[_SOME;
-        ret.SOME.v = ptr;
+        ret.SOME.v = v;
     }
     return ret;
 }

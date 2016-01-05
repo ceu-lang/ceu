@@ -339,14 +339,16 @@ local function __norefs (tt)
     end
     return tt
 end
-function TP.contains (tp1, tp2, non_numeric)
+function TP.contains (tp1, tp2, t)
+    t = t or {}
+
     if tp1.tup or tp2.tup then
         if tp1.tup and tp2.tup then
             if #tp1.tup == #tp2.tup then
                 for i=1, #tp1.tup do
                     local t1 = tp1.tup[i]
                     local t2 = tp2.tup[i]
-                    local ok, msg = TP.contains(t1,t2,non_numeric)
+                    local ok, msg = TP.contains(t1,t2,t)
                     if not ok then
                         return false, 'wrong argument #'..i..' : '..msg
                     end
@@ -367,6 +369,11 @@ function TP.contains (tp1, tp2, non_numeric)
     local id2  = TP.id(tp2)
     local cls1 = ENV.clss[id1]
     local cls2 = ENV.clss[id2]
+
+    if t.option == true then
+        tp1 = TP.pop(TP1, '?')
+        --tp2 = TP.pop(TP2, '?')
+    end
 
     -- TODO: required for external calls
     --       remove it!
@@ -396,7 +403,7 @@ function TP.contains (tp1, tp2, non_numeric)
                 -- compatible pointers, check arity, "char" renaming trick
                 local tp1, tp2 = TP.copy(tp1), TP.copy(tp2)
                 tp1.tt[1], tp2.tt[1] = 'char', 'char'
-                return TP.contains(tp1, tp2,non_numeric)
+                return TP.contains(tp1, tp2,t)
             -- non-pointers
             elseif TP.check(TP1,id1,'&') then
                 return true
@@ -419,7 +426,7 @@ function TP.contains (tp1, tp2, non_numeric)
             return false, __err(TP1,TP2)..' : dimension mismatch'
         end
         return TP.contains( TP.pop(tp1,'[]'),
-                            TP.pop(tp2,'[]'), true )
+                            TP.pop(tp2,'[]'), {numeric=false} )
 
     -- same type
     elseif TP.tostr(tp1) == TP.tostr(tp2) then
@@ -449,7 +456,7 @@ function TP.contains (tp1, tp2, non_numeric)
         end
 
     -- numerical type
-    elseif (not non_numeric) and TP.isNumeric(tp1) and TP.isNumeric(tp2) then
+    elseif (t.numeric~=false) and TP.isNumeric(tp1) and TP.isNumeric(tp2) then
         return true
 
     -- external non-pointers: let "gcc" handle it
@@ -484,11 +491,11 @@ function TP.contains (tp1, tp2, non_numeric)
         if id1 == 'char' then
             local tp2 = TP.copy(tp2)
             tp2.tt[1] = 'char'
-            return TP.contains(tp1, tp2, true)
+            return TP.contains(tp1, tp2, {numeric=false})
         elseif id1 == 'void' then
             local tp2 = TP.copy(tp2)
             tp2.tt[1] = 'void'
-            return TP.contains(tp1, tp2, true)
+            return TP.contains(tp1, tp2, {numeric=false})
 
         -- both are external types: let "gcc" handle it
         elseif TP.is_ext(tp1,'_') or TP.is_ext(tp2,'_') then

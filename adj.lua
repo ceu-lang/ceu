@@ -1671,13 +1671,15 @@ me.blk_body = me.blk_body or blk_body
     -- becomes
     --      var _reqid id = _ceu_sys_request();
     --      var _reqid id';
-    --      emit _LINE_request => (id, 10);
-    --      finalize with
-    --          _ceu_sys_unrequest(id);
-    --          emit _LINE_cancel => id;
+    --      var int err = (emit _LINE_request => (id, 10));
+    --      if err == 0 then
+    --          finalize with
+    --              _ceu_sys_unrequest(id);
+    --              emit _LINE_cancel => id;
+    --          end
+    --          (id', err, v) = await LINE_return
+    --                          until id == id';
     --      end
-    --      (id', err, v) = await LINE_return
-    --                      until id == id';
     --]]
 
     local to, op, _, emit
@@ -1713,6 +1715,9 @@ me.blk_body = me.blk_body or blk_body
                     node('Op2_==', me.ln, '==',
                         node('Var', me.ln, id_req),
                         node('Var', me.ln, id_req2)))
+
+    local err_dcl
+    local err_var
     if to then
         -- v = await RETURN
 
@@ -1721,33 +1726,51 @@ me.blk_body = me.blk_body or blk_body
             to = node('VarList', me.ln, to)
         end
         table.insert(to, 1, node('Var',me.ln,id_req2))
+        to.__adj_is_request = true  -- has to check if payload is "?"
 
         awt = node('_Set', me.ln, to, op, 'await', awt)
+        err_var = to[2]
     else
 -- TODO: bug (removing session check)
         awt[3] = false
+        err_dcl = node('Dcl_var', me.ln, 'var',
+                    node('Type', me.ln, 'int'),
+                    '_err_'..me.n)
+        err_var = node('Var', me.ln, '_err_'..me.n)
     end
 
     return node('Stmts', me.ln,
             node('Dcl_var', me.ln, 'var', tp_req, id_req),
-            node('Dcl_var', me.ln, 'var', tp_req, id_req2),
+            err_dcl or node('Nothing',me.ln),
             node('Set', me.ln, '=', 'exp',
                 node('RawExp', me.ln, 'ceu_out_req()'),
                 node('Var', me.ln, id_req)),
-            node('EmitExt', me.ln, 'emit',
-                node('Ext', me.ln, id_evt..'_REQUEST'),
-                ps),
-            node('Finalize', me.ln,
-                false,
-                node('Finally', me.ln,
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Nothing', me.ln), -- TODO: unrequest
-                            node('EmitExt', me.ln, 'emit',
-                                node('Ext', me.ln, id_evt..'_CANCEL'),
-                                node('Var', me.ln, id_req)))))),
-            awt
-    )
+            node('Set', me.ln, '=', 'emit-ext',
+                node('EmitExt', me.ln, 'emit',
+                    node('Ext', me.ln, id_evt..'_REQUEST'),
+                    ps),
+                AST.copy(err_var)),
+            node('If', me.ln,
+                node('Op2_==', me.ln, '==',
+                    AST.copy(err_var),
+                    node('NUMBER', me.ln, 0)),
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        node('Dcl_var', me.ln, 'var', tp_req, id_req2),
+                        node('Finalize', me.ln,
+                            false,
+                            node('Finally', me.ln,
+                                node('Block', me.ln,
+                                    node('Stmts', me.ln,
+                                        node('Nothing', me.ln), -- TODO: unrequest
+                                        node('EmitExt', me.ln, 'emit',
+                                            node('Ext', me.ln, id_evt..'_CANCEL'),
+                                            node('Var', me.ln, id_req)))))),
+                        awt)),
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        node('Nothing', me.ln))))
+            )
 end
 
 }

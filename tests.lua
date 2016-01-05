@@ -261,10 +261,32 @@ do
 ]=]
 -------------------------------------------------------------------------------
 
+-- BUG: deveria ser outer.rect.
+-- tenho que verificar essas atribuicoes this.x=this.x
+        var SpriteR _ = SpriteR.build_name(&this.rect,
+                                           "core/buttons/hbuttonbgb");
+
+-- BUG: u8 vs int
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) 1
+end
+output/input [10] (int max)=>int LINE;
+par/or do
+    var u8 err;
+    var u8? ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
 ----------------------------------------------------------------------------
 -- OK: well tested
-----------------------------------------------------------------------------
 --]===]
+----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -32196,7 +32218,7 @@ class T with do end
 var U&&? ok = spawn T;
 escape ok != null;
 ]],
-    env = 'line 3 : types mismatch (`U&&´ <= `T&&´)',
+    env = 'line 3 : types mismatch (`U&&?´ <= `T&&´)',
     --run = 1,
 }
 
@@ -49454,13 +49476,46 @@ await FOREVER;
 }
 
 Test { [[
+var char&&? ret = null;
+escape ret! == null;
+]],
+    run = 1,
+}
+
+Test { [[
+input (int, char&&) LINE;
+par do
+    var char&&? ret;
+    var u8 err;
+    (err, ret) = await LINE;
+    escape not ret?;
+with
+    async do
+        emit LINE => (1,null);
+    end
+end
+]],
+    run = 1,
+}
+
+Test { [[
+var int? v;
+if 1 then
+    v = 1;
+end
+escape v!;
+]],
+    run = 1,
+}
+
+Test { [[
 output/input [10] (int max)=>char&& LINE;
 var char&& ret = null;
 par/or do
-    var char&& ret1;
+    var char&&? ret1;
     var u8 err;
     (err, ret1) = request LINE => 10;
-    ret := ret1;
+    ret := ret1!;
 with
     await FOREVER;
 end
@@ -49477,6 +49532,22 @@ native do
 end
 par/or do
     var char&& ret;
+    var u8 err;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    env = 'line 8 : payload "ret" must be an option type',
+}
+
+Test { [[
+output/input [10] (int max)=>char&& LINE;
+native do
+    ##define ceu_out_emit(a,b,c,d) 1
+end
+par/or do
+    var char&&? ret;
     var u8 err;
     (err, ret) = request LINE => 10;
 with
@@ -49526,12 +49597,23 @@ escape 1;
 }
 
 Test { [[
+input (int, char&&) LINE;
+var u8 err;
+var u8? ret;
+(err, ret) = await LINE;
+escape 1;
+]],
+    env = 'line 4 : wrong argument #2',
+}
+
+Test { [[
 output/input [10] (int max)=>char&& LINE;
-var u8 err, ret;
+var u8 err;
+var u8? ret;
 (err, ret) = request LINE => 10;
 escape 1;
 ]],
-    env = 'line 3 : wrong argument #3',
+    env = 'line 4 : wrong argument #3',
     --env = 'line 3 : invalid attribution (u8 vs char&&)',
 }
 
@@ -49541,7 +49623,8 @@ native do
 end
 output/input [10] (int max)=>int LINE;
 par/or do
-    var u8 err, ret;
+    var u8 err;
+    var int? ret;
     (err, ret) = request LINE => 10;
 with
 end
@@ -49575,7 +49658,8 @@ output/input [10] (int max)=>int LINE do
     return 1;
 end
 par/or do
-    var u8 err, ret;
+    var u8 err;
+    var u8? ret;
     (err, ret) = request LINE => 10;
 with
 end
@@ -49592,13 +49676,14 @@ input/output [10] (int max)=>int LINE do
     return 1;
 end
 par/or do
-    var u8 err, ret;
+    var u8 err;
+    var u8? ret;
     (err, ret) = request LINE => 10;
 with
 end
 escape 1;
 ]],
-    props = 'line 9 : invalid `emit´',
+    props = 'line 10 : invalid `emit´',
 }
 
 Test { [[
@@ -49964,13 +50049,27 @@ end
 }
 
 Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) 1
+    int V = 0;
+end
+output/input (int max)=>int LINE;
+var int? v   = 0;
+var int err = 0;
+(err,v) = request LINE=>10;
+escape err;
+]],
+    run = 1,
+}
+
+Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) 0
         int V = 0;
     end
     output/input (int max)=>int LINE;
-    var int v   = 0;
+    var int? v  = 0;
     var int err = 0;
     par/or do
         (err,v) = request LINE=>10;
@@ -49978,7 +50077,7 @@ par do
         await 5s;
         escape 999;
     end
-    escape v+err;
+    escape v!+err;
 with
     async do
         emit LINE_RETURN => (1,1,10);
@@ -49992,11 +50091,11 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) 0
         int V = 0;
     end
     output/input (int max)=>int LINE;
-    var int v   = 0;
+    var int? v  = 0;
     var int err = 0;
     par/or do
         (err,v) = request LINE=>10;
@@ -50004,7 +50103,7 @@ par do
         await 5s;
         escape 999;
     end
-    escape v+err;
+    escape v!+err;
 with
     async do
         emit LINE_RETURN => (2,1,10);
@@ -50018,11 +50117,11 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) 0
         int V = 0;
     end
     output/input (int max)=>int LINE;
-    var int v   = 0;
+    var int? v  = 0;
     var int err = 0;
     par/or do
         (err,v) = request LINE=>10;
@@ -50030,7 +50129,7 @@ par do
         await 5s;
         escape 999;
     end
-    escape v+err;
+    escape v!+err;
 with
     async do
         emit LINE_RETURN => (2,1,10);

@@ -139,7 +139,7 @@ F = {
         SET_TARGET[to.var] = true
 
         local outermost_if = nil
-        if VARS_UNINIT[to.var] then
+        if (not TP.check(to.var.tp,'?')) and VARS_UNINIT[to.var] then
             -- Unitialized variables being first-assigned in an "if":
             --      var int x;          // declared outside
             --      if <...> then

@@ -911,6 +911,15 @@ F = {
         me.tp   = me
         me.lval = me
         me.tp.tup = TP.t2tup(me)
+
+        if me.__adj_is_request and #me==3 then
+            ASR(TP.check(me[3].tp,'?'), me,
+                'payload "'..me[3].var.id..'" must be an option type',
+ [[
+    Given that requests might fail, the receiving payload must be an option 
+type.
+]])
+        end
     end,
     ExpList = function (me)
         me.tp   = me
@@ -1180,7 +1189,7 @@ F = {
             local to_tp_noopt, to_isopt = TP.pop(to.tp, '?')
             if to_isopt then
                 local _, to_isoptref = TP.pop(to_tp_noopt, '&')
-                local ok, msg = TP.contains(to_tp_noopt, TP.pop(fr_tp,'?'))
+                local ok, msg = TP.contains(to.tp, TP.pop(fr_tp,'?'), {option=true})
                 ASR(ok, me, msg)
                 if to_isoptref then
                     -- var int&? v = <...>;
@@ -1189,7 +1198,7 @@ F = {
                         'invalid attribution : missing `!´ (in the left) or `&´ (in the right)')
                 end
             else
-                local ok, msg = TP.contains(to.tp, fr_tp)
+                local ok, msg = TP.contains(to.tp, fr_tp, {option=true})
                 ASR(ok, me, msg)
             end
         end
