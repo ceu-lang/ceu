@@ -3,6 +3,8 @@
 
 # Requests in Céu
 
+TODO: overall description of the concept
+
 ## Output and Input Events
 
 Céu interacts with the environment through `input` and `output` events.
@@ -26,44 +28,45 @@ end
 ```
 
 In this example, every time the application receives a stimulus from the 
-keyboard with the pressed key, it reacts and generates a stimulus to the LED 
-accordingly.
+keyboard, it reacts and generates an appropriate stimulus to the LED according 
+to the pressed key.
 
 The `emit` is an asynchronous operation, i.e., it notifies the environment 
 immediately and proceeds to the next line.
 The environment can process the arguments and return a value of type `int`, but 
-must not block the application:
+must not block the application indefinitely:
 
 ```
-/* the environment */
-native do
-    /* An "emit SEND=>v" expands to this macro ... */
-    #define ceu_out_emit_SEND(v) SEND(v);
-
-    /* ... which calls this function ... */
-    int SEND (tceu_char_* v) {
-        if (SYSTEM_SEND(v->_1) == <...>) {
-            return 0; /* success */
-        } else {
-            return 1; /* error */
-        }
-    }
-
-    /*
-     * ... which uses this type.
-     * Event types are tuples: (tp1, tp2, ...)
-     * In C, tuples are structs with fields `_1`, _`2`, ...
-     * (This type is generated automatically and is here only as an 
-     * illustration.)
-     */
-    typedef struct tceu_char_ {
-        char* _1;
-    } tceu_char_;
-end
+/* THE APPLICATION */
 
 output char&& SEND;     /* transmits a packet */
 var int err = (emit SEND => "Hello World!");
 _assert(err == 0);
+
+/* THE ENVIRONMENT */
+
+/* An "emit SEND=>v" expands to this macro ... */
+#define ceu_out_emit_SEND(v) SEND(v);
+
+/* ... which calls this function ... */
+int SEND (tceu_char_* v) {
+    if (SYSTEM_SEND(v->_1) == <...>) {
+        return 0; /* success */
+    } else {
+        return 1; /* error */
+    }
+}
+
+/* ... which uses this type. */
+typedef struct tceu_char_ {
+    char* _1;
+} tceu_char_;
+    /*
+     * (This type is generated automatically and is here only as an 
+     * illustration.)
+     * Event types are tuples: (tp1, tp2, ...)
+     * In C, tuples are structs with fields `_1`, _`2`, ...
+     */
 ```
 
 Assuming that the event `SEND` transmits a network packet, the 
@@ -77,18 +80,18 @@ In particular, some usage patterns sustain a cause-and-effect relationship
 between output and input events:
 
 ```
-output char&& SEND;             // sending data
-input  void   DONE;             // acknowledging a SEND
+output char&& SEND;             // broadcasts some data
+input  void   DONE;             // acknowledges the broadcast
 var char[] buffer = [0,1,0,1];  // create some data
-emit SEND => &&buffer;          // start sending
-await DONE;                     // finished sending
-<...>                           // data delivery has been confirmed
+emit SEND => &&buffer;          // trigger the broadcast
+await DONE;                     // broadcast confirmed
+<...>
 ```
 
 In this example, we use the output event `SEND` to broadcast data and the input 
-event `DONE` to be notified on completion.
-A `DONE` cannot occur without a previous `SEND`, hence, the cause-and-effect 
-relationship applies in this case.
+event `DONE` to be notified on confirmation.
+A `DONE` input cannot occur without a previous `SEND` output, hence, the 
+cause-and-effect relationship applies in this case.
 
 Another example following this cause-and-effect pattern would be requesting a 
 character from a serial line:
@@ -113,21 +116,23 @@ loop do
 end
 ```
 
-In this example, the `PING`-`PONG` sequence abstracts the communication between 
-the application and a predefined remote node in the network.
+In the last example, the `PING`-`PONG` sequence abstracts the communication 
+between the application and a predefined remote node in the network.
 The asynchronous `emit PING` transfers the data in the background, which 
 eventually reaches the remote node, which then prepares an answer and sends it 
 back to the application, which eventually awakes from the `await PONG`.
 
-All examples use an `emit` to request a service in sequence with an `await` for 
-a confirmation (or answer).
+In all three examples above, we use an `emit` to request a service in sequence 
+with an `await` for a confirmation (with an optional answer).
+
 Céu provides a syntactic sugar to deal with this pattern as follows:
 
-1. An `output/input` declaration joins the `output` and corresponding `input` 
-events.
-2. A `request` substitutes the sequence of an `emit` followed by an `await`.
+1. An `output/input` declaration unifies the `output` and corresponding `input` 
+event declarations.
+2. A `request` statement unifies the sequence of an `emit` followed by an 
+`await`.
 
-We can now rewrite the three examples above:
+We can now rewrite the three examples above using the syntactic sugar:
 
 ```
 // 1st example
@@ -156,12 +161,12 @@ convention.
 ## Safety and Programmability Considerations
 
 The conversion described above for the request pattern is still a 
-simplification of the problem and neglects some considerations:
+simplification of the problem and neglects some desired functionality:
 
 1. *Failure*:  the resource should be allowed to fail and notify the
                application.
-2. *Abortion*: the application should be allowed to abort a request and notify
-               the resource.
+2. *Abortion*: the application should be allowed to abort an ongoing request 
+               and notify the resource.
 3. *Sessions*: the application should be allowed to make concurrent requests to 
                the same resource.
 
@@ -170,44 +175,46 @@ possible.
 
 ### Failure
 
-We need to consider failures when using the request pattern because the 
-requesting `emit` might not always end up awaking the associated `await` as 
-expected.
+We need to consider failures in the request pattern because the requesting 
+`emit` might not always end up awaking the associated `await` as expected.
+
 In fact, an error could happen immediately, at the point of the `emit`; or 
 later, when the application is already at the point of the corresponding 
 `await`.
+
 An *early error* happens if the resource is not yet bounded to the output event 
 (e.g., not yet configured or connected).
 A *late error* happens if the resource is bounded but cannot handle the request 
 now (e.g., it is busy or in an inconsistent state).
 
 The code below catches possible failures when manipulating a resource through 
-the raw syntax with the events `OUT` and `IN`:
+the raw syntax, with the events `OUT` and `IN`:
 
 ```
-output <t1>      OUT;
-input  (int,<t2>) IN;
+output <t1>       OUT;
+input  (int,<t2>) IN;               // extra "int" for late errors
 
 var <t1> v1 = <...>;
-var int err = (emit OUT => v1); // catch an early error
+var int err = (emit OUT => v1);     // catches an early error
 
 var <t2>? v2;
 if err == 0 then
-    (err, v2) = await IN;       // catch a late error
+    (err, v2) = await IN;           // catches a late error
 end
 ```
 
-To represent early errors, we use the return value of the `emit`, i.e., a `0` 
-represents success, and a `1` represents that the associated resource is not 
-yet bounded.
+To represent early errors, we use the return value of the `emit`, which is 
+tested before the `await IN`.
+As an example, `0` represents success and `1` represents that the associated 
+resource is not yet bounded.
 
 To represent late errors, we add an additional type to the input declaration, 
 before the event payload.
-Now, besides the input payload, the environment also has to notify about 
-errors.
-As an example, a `0` represents success, and a `2` represents that the resource 
-is busy (to avoid reusing a `1` for early errors).
-Also, in the case of a failure, the input payload is not available and is not 
+Now, the environment also needs to notify about errors.
+As an example, `0` represents success and `2` represents that the resource is 
+busy (to avoid reusing a `1` for early errors).
+
+In the case of a failure, the input payload is not available and is not 
 assigned to the corresponding variable.
 For this reason, the corresponding variable has to be of an option type.
 
@@ -245,8 +252,8 @@ instead
 
 ### Abortion
 
-Céu provides structured abortion primitives, such as the `par/or`, which aborts 
-active blocks of code safely, avoiding resource leaks.
+The `par/or` construct of Céu aborts active blocks of code safely, avoiding 
+resource leaks.
 Now, consider a modified *Echo* client-server that sends a single message and 
 terminates after *5s*:
 
@@ -263,15 +270,15 @@ end
 <...>   // do something else
 ```
 
-After the `emit PING` and while in the `await PONG`, the `par/or` might abort 
-the ongoing request due to awaking from the `await 5s`.
-Note that the application is no longer interested in the `PONG` answer: the 
-`str` is out of scope and the `_printf()` will never execute.
+After the `emit PING` and while idle in the `await PONG`, the `par/or` might 
+abort the ongoing request due to awaking from the `await 5s`.
+In this case, the application is no longer interested in the `PONG` answer, 
+given that `str` is out of scope and the `_printf()` will never execute.
 However, the `emit PING` started the communication and the remote node might do 
-unnecessary work and also transfer data that will never be used.
+unnecessary work in addition too transfer data that will never be used.
 
-To overcome this inefficiency, the `emit`/`await` sequence needs to include a 
-`finalize` clause to cancel the ongoing request in the case the enclosing block 
+To overcome this inefficiency, the `emit`-`await` sequence needs to include a 
+`finalize` clause to cancel the ongoing request if the enclosing block 
 terminates:
 
 ```
@@ -298,8 +305,8 @@ awaking from the `await PONG`.
 Hence, the environment implementation has to be neutral with respect to normal 
 termination, i.e., the extra `emit CANCEL` should be harmless.
 
-The `request` sugar declares an implicit output event `CANCEL` and also 
-includes the finalization clause automatically:
+The syntactic sugar for requests declares an implicit output event `CANCEL` and 
+also includes the finalization clause automatically:
 
 ```
 output/input char&& PING_PONG;
@@ -316,15 +323,19 @@ end
 <...>   // do something else
 ```
 
-Again, as we discuss [further], the cancelling event name derive from the 
-`output/input` declaration and follows a naming convention.
+Again, as we discuss [further](#the-environment), the cancelling event name 
+derive from the `output/input` declaration and follows a naming convention.
 
 ### Sessions
 
+<!--
 There are no syntactic restrictions on the use of `emit` and `await` 
 statements, and as a consequence, also on use of the `request` statement.
-In particular, nothing prevents the programmer to write requests to the same 
-resource in parallel:
+In particular,
+-->
+
+Nothing prevents the programmer to write requests to the same resource in 
+parallel:
 
 ```
 output char&& SEND;
@@ -343,12 +354,12 @@ end
 In this example, we want to broadcast two messages at the same time, and 
 terminate when both transmissions are acknowledged.
 However, the two `await DONE` in parallel do not distinguish between the two 
-requests: both statements will awake as soon as any of the two transmission is 
-acknowledged.
+requests: both statements will awake as soon as either of the two transmissions 
+is acknowledged.
 
 To disambiguate concurrent requests, we use the concept of *sessions*, which is 
 nothing more than a unique identifier shared by an `emit` and its corresponding 
-`await`.
+`await` only.
 
 ```
 output (int,char&&) SEND;                   // extra "int" session
@@ -386,8 +397,8 @@ start .
 
 ## The Full Conversion
 
-Putting it all together, follows the full conversion, from the syntactic sugar 
-to the full expansion:
+Putting it all together, the full conversion is as follows, from the syntactic 
+sugar to the full expansion:
 
 ```
 output/input (<in1>,<in2>,...) => <out> <NAME>;
@@ -417,11 +428,11 @@ var int err;
 var <out>? ret;
 do
     var int id = <allocate-session-id>;
-    var int err = (emit <NAME>_REQUEST => (id,v1,v2,...));
     finalize with
         <release-session-id>;
         emit <NAME>_CANCEL => id;
     end
+    var int err = (emit <NAME>_REQUEST => (id,v1,v2,...));
     if err == 0 then
         var int id_;
         (id_, err, ret) = await <NAME>_RETURN until id==id_;
@@ -438,37 +449,38 @@ declaration and does not assign to `ret` if `err` is nonzero.
 
 ## The Environment
 
-The expansion shows that an `output/input` declaration becomes three external 
-events:
+The expansion above shows that an `output/input` declaration becomes three 
+external events:
 
 ```
 output/input (<in1>,<in2>,...) => <out> <NAME>;
-
+    /* becomes */
 output (int,<in1>,<in2>,...) <NAME>_REQUEST;    // "int" session
 output int                   <NAME>_CANCEL;     // "int" session
 input  (int,int,<out>)       <NAME>_RETURN;     // "int" session, "int" error
 ```
 
-The environment implementation deals with the three raw events and has to 
-consider session IDs and error codes:
+The environment implementation has to deal with the three raw events and 
+consider session IDs and error codes altogether:
 
 ```
 /* output: REQUEST */
 #define CEU_OUT_<NAME>_REQUEST(args) <NAME>_REQUEST(args)
-int <NAME>_REQUEST (tceu_int__<tuple>* args) {
+int <NAME>_REQUEST (tceu_int__<args-tps>* args) {
     /*
      * Manipulates "args->_1", "args->_2", ...
-     *      - "args->_1" is the session ID
+     *      - "args->_1" is the session ID (must be kept somehow)
      *      - the other arguments depend on the request
      */
-    return <error-code>;
+    return <error-code>;    // signals an "early error"
 }
 
 /* output: CANCEL */
 #define CEU_OUT_<NAME>_CANCEL(args) <NAME>_CANCEL(args)
-int <NAME>_REQUEST (tceu_<tuple>* args) {
+int <NAME>_CANCEL (tceu_int* args) {
     /*
-     * Manipulates "args->_1", the session ID and single field.
+     * Manipulates "args->_1", the session ID (and single field).
+     * Should use the session ID to abort the ongoing request.
      */
     return 0;   // the returned value is currently ignored
 }
@@ -478,8 +490,13 @@ int main (void) {
     /* The event loop: */
     for (;;) {
         <...>
-            /* Notifies the application about the request return input. */
-            tceu_int__int__<tuple> args = { <session-id>, <error-code>, ... };
+            /*
+             * Notifies the application about the request return:
+             *      - must provide which <session-id> to awake
+             *      - must provide a "late error" code
+             *      - the return value depends on the request
+             */
+            tceu_int__int__<ret-tp> args = { <session-id>, <error-code>, <return-value> };
             ceu_sys_go(&<app>, CEU_IN_<NAME>_RETURN, &args);
     }
 }
