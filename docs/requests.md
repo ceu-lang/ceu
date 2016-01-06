@@ -29,6 +29,30 @@ In this example, every time the application receives a stimulus from the
 keyboard with the pressed key, it reacts and generates a stimulus to the LED 
 accordingly.
 
+The `emit` is an asynchronous operation, i.e., it notifies the environment 
+immediately and proceeds to the next line.
+The environment can process the arguments and return a value of type `int`, but 
+must not block the application:
+
+```
+native do
+    /* the environment */
+    #define ceu_out_SEND(v)             \
+        if (SYSTEM_SEND(v) == <...>) {  \
+            return 0; /* success */     \
+        } else {                        \
+            return 1; /* error */       \
+        }
+end
+output char&& SEND;     /* transmits a packet */
+var int err = (emit SEND => "Hello World!");
+_assert(err == 0);
+```
+
+Assuming that the event `SEND` transmits a network packet, the function 
+`SYSTEM_SEND` typically enqueues the argument and returns a status, which is 
+mapped to an error code returned to the application.
+
 ## Requests: Cause-and-Effect Output-Input
 
 Some resources can generate *and* receive stimuli to/from the application.
@@ -44,8 +68,10 @@ await DONE;                     // finished sending
 <...>                           // data delivery has been confirmed
 ```
 
-In this example, we use the output event `SEND` to send data to a specific 
-machine and the input event `DONE` to be notified of completion.
+In this example, we use the output event `SEND` to broadcast data and the input 
+event `DONE` to be notified on completion.
+A `DONE` cannot occur without a previous `SEND`, hence, the cause-and-effect 
+relationship applies in this case.
 
 Another example following this cause-and-effect pattern would be requesting a 
 character from a serial line:
@@ -62,14 +88,21 @@ Or a simple *Echo* client-server:
 ```
 output char&& PING;
 input  char&& PONG;
-every 5s do
+loop do
+    await 5s;
     emit PING => "Hello";
     var char&& str = await PONG;
     _printf("%s\n", str);
 end
 ```
 
-The examples use an `emit` to request a service in sequence with an `await` for 
+In this example, the `PING`-`PONG` sequence abstracts the communication between 
+the application and a predefined remote node in the network.
+The asynchronous `emit PING` transfers the data in the background, which 
+eventually reaches the remote node, which then prepares an answer and sends it 
+back to the application, which eventually awakes from the `await PONG`.
+
+All examples use an `emit` to request a service in sequence with an `await` for 
 a confirmation (or answer).
 Céu provides a syntax sugar to deal with this pattern as follows:
 
@@ -91,16 +124,17 @@ var char c = request SERIAL_CHAR;
 
 // 3rd example
 output/input (char&&)=>char&& PING_PONG;
-every 5s do
-    var char&& str = (await PING_PONG => "Hello");
+loop do
+    await 5s;
+    var char&& str = (request PING_PONG => "Hello");
     _printf("%s\n", str);
 end
 ```
 
 ## Safety and Programmability Considerations
 
-The conversion described above is still a simplification of the problem and 
-neglects some considerations:
+The conversion described above for the request pattern is still a 
+simplification of the problem and neglects some considerations:
 
 1. *Failure*:  the resource should be allowed to fail and notify the
                application.
@@ -114,10 +148,12 @@ possible.
 
 ### Failure
 
-The first problem with the conversion above is that it does handle failures.
-Considering the raw syntax (without the `output/input` and `request` sugars), 
-an error could happen immediately, at the point of the `emit`; or later, when 
-the application is already at the point of the corresponding `await`.
+We need to consider failures when using the request pattern because the 
+requesting `emit` might not always end up awaking the associated `await` as 
+expected.
+In fact, an error could happen immediately, at the point of the `emit`; or 
+later, when the application is already at the point of the corresponding 
+`await`.
 An *early error* happens if the resource is not yet bounded to the output event 
 (e.g., not yet configured or connected).
 A *late error* happens if the resource is bounded but cannot handle the request 
@@ -139,13 +175,9 @@ if err == 0 then
 end
 ```
 
-In Céu, an `emit` to an output event returns a value of type `int` as an 
-immediate feedback.
-Although each environment implementation can give its own semantics, this value 
-typically represents error codes.
-Hence, to handle early errors, we use the return value of the `emit`.
-As an example, a `0` represents success, and a `1` represents that the 
-associated resource is not yet bounded.
+To represent early errors, we use the return value of the `emit`, i.e., a `0` 
+represents success, and a `1` represents that the associated resource is not 
+yet bounded.
 
 To represent late errors, we add an additional type to the input declaration, 
 before the event payload.
@@ -162,18 +194,19 @@ now rewrite the three examples above as follows:
 
 ```
 // 1st example
-output/input (char&&)=>void SEND_DONE;          // unmodified
+output/input (char&&)=>void SEND_DONE;
 var char[] buffer = [0,1,0,1];
-request SEND_DONE => &&buffer;                  // unmodified
+var int err;
+err = (request SEND_DONE => &&buffer);          // extra "err" variable
 
 // 2nd example
-output/input (void)=>char SERIAL_CHAR;          // unmodified
+output/input (void)=>char SERIAL_CHAR;
 var char? c;                                    // extra option modifier "?"
 var int err;
 (err, c) = request SERIAL_CHAR;                 // extra "err" variable
 
 // 3rd example
-output/input (char&&)=>char&& PING_PONG;        // unmodified
+output/input (char&&)=>char&& PING_PONG;
 every 5s do
     var char&&? str;                            // extra option modifier "?"
     var int err;
@@ -182,7 +215,81 @@ every 5s do
 end
 ```
 
+TODO: syntax sugar that omits error handling and generates a run-time error 
+instead
+
 ### Abortion
+
+Céu provides structured abortion primitives, such as the `par/or`, which aborts 
+active blocks of code safely, avoiding resource leaks.
+Now, consider a modified *Echo* client-server that sends a single message and 
+terminates after *5s*:
+
+```
+output char&& PING;
+input  char&& PONG;
+par/or do
+    emit PING => "Hello";
+    var char&& str = await PONG;
+    _printf("%s\n", str);
+with
+    await 5s;
+end
+<...>   // do something else
+```
+
+After the `emit PING` and while in the `await PONG`, the `par/or` might abort 
+the ongoing request due to awaking from the `await 5s`.
+Note that the application is no longer interested in the `PONG` answer: the 
+`str` is out of scope and the `_printf()` will never execute.
+However, the `emit PING` started the communication and the remote node might do 
+unnecessary work and also transfer data that will never be used.
+
+To overcome this inefficiency, the `emit`/`await` sequence needs to include a 
+`finalize` clause to cancel the ongoing request in the case the enclosing block 
+terminates:
+
+```
+output char&& PING;
+input  char&& PONG;
+output void   CANCEL;
+par/or do
+    do                      // additional block around emit/await
+        finalize with
+            emit CANCEL;    // cancel request on abortion
+        end
+        emit PING => "Hello";
+        var char&& str = await PONG;
+    end
+    _printf("%s\n", str);
+with
+    await 5s;
+end
+<...>   // do something else
+```
+
+Note that the `CANCEL` is emitted even if the operation executes normally when 
+awaking from the `await PONG`.
+Hence, the environment implementation has to be neutral with respect to normal 
+termination, i.e., the extra `emit CANCEL` should be harmless.
+
+The `request` sugar declares an implicit output event `CANCEL` and also 
+includes the finalization clause automatically:
+
+```
+output/input char&& PING_PONG;
+par/or do
+    var int err;
+    var char&&? str;
+    (err, str) = (request PING_PONG => "Hello");
+                    // calls "emit PING_PONG_CANCEL" implicitly
+                    // on abortion or normal termination
+    _printf("%s\n", str);
+with
+    await 5s;
+end
+<...>   // do something else
+```
 
 ### Sessions
 
