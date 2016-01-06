@@ -35,23 +35,40 @@ The environment can process the arguments and return a value of type `int`, but
 must not block the application:
 
 ```
+/* the environment */
 native do
-    /* the environment */
-    #define ceu_out_SEND(v)             \
-        if (SYSTEM_SEND(v) == <...>) {  \
-            return 0; /* success */     \
-        } else {                        \
-            return 1; /* error */       \
+    /* An "emit SEND=>v" expands to this macro ... */
+    #define ceu_out_emit_SEND(v) SEND(v);
+
+    /* ... which calls this function ... */
+    int SEND (tceu_char_* v) {
+        if (SYSTEM_SEND(v->_1) == <...>) {
+            return 0; /* success */
+        } else {
+            return 1; /* error */
         }
+    }
+
+    /*
+     * ... which uses this type.
+     * Event types are tuples: (tp1, tp2, ...)
+     * In C, tuples are structs with fields `_1`, _`2`, ...
+     * (This type is generated automatically and is here only as an 
+     * illustration.)
+     */
+    typedef struct tceu_char_ {
+        char* _1;
+    } tceu_char_;
 end
+
 output char&& SEND;     /* transmits a packet */
 var int err = (emit SEND => "Hello World!");
 _assert(err == 0);
 ```
 
-Assuming that the event `SEND` transmits a network packet, the function 
-`SYSTEM_SEND` typically enqueues the argument and returns a status, which is 
-mapped to an error code returned to the application.
+Assuming that the event `SEND` transmits a network packet, the 
+platform-dependent function `SYSTEM_SEND` typically enqueues the argument and 
+returns a status, which is mapped to an error code returned to the application.
 
 ## Requests: Cause-and-Effect Output-Input
 
@@ -104,7 +121,7 @@ back to the application, which eventually awakes from the `await PONG`.
 
 All examples use an `emit` to request a service in sequence with an `await` for 
 a confirmation (or answer).
-Céu provides a syntax sugar to deal with this pattern as follows:
+Céu provides a syntactic sugar to deal with this pattern as follows:
 
 1. An `output/input` declaration joins the `output` and corresponding `input` 
 events.
@@ -130,6 +147,11 @@ loop do
     _printf("%s\n", str);
 end
 ```
+
+As we discuss [further](#the-environment), the environment still has to 
+manipulate each event separately.
+The event names derive from the `output/input` declaration and follow a naming 
+convention.
 
 ## Safety and Programmability Considerations
 
@@ -189,8 +211,8 @@ Also, in the case of a failure, the input payload is not available and is not
 assigned to the corresponding variable.
 For this reason, the corresponding variable has to be of an option type.
 
-Putting it all together and using the syntax sugar that Céu provides, we can 
-now rewrite the three examples above as follows:
+Using the syntactic sugar that Céu provides, we can now rewrite the three 
+examples above as follows:
 
 ```
 // 1st example
@@ -215,7 +237,10 @@ every 5s do
 end
 ```
 
-TODO: syntax sugar that omits error handling and generates a run-time error 
+Note that the error argument is implicit and does not appear in the 
+`output/input` declaration.
+
+TODO: syntactic sugar that omits error handling and generates a run-time error 
 instead
 
 ### Abortion
@@ -291,12 +316,20 @@ end
 <...>   // do something else
 ```
 
+Again, as we discuss [further], the cancelling event name derive from the 
+`output/input` declaration and follows a naming convention.
+
 ### Sessions
+
+There are no syntactic restrictions on the use of `emit` and `await` 
+statements, and as a consequence, also on use of the `request` statement.
+In particular, nothing prevents the programmer to write requests to the same 
+resource in parallel:
 
 ```
 output char&& SEND;
 input  void   DONE;
-par do
+par/and do
     var char[] buffer = [0,1,0,1];
     emit SEND => &&buffer;
     await DONE;
@@ -307,6 +340,151 @@ with
 end
 ```
 
+In this example, we want to broadcast two messages at the same time, and 
+terminate when both transmissions are acknowledged.
+However, the two `await DONE` in parallel do not distinguish between the two 
+requests: both statements will awake as soon as any of the two transmission is 
+acknowledged.
+
+To disambiguate concurrent requests, we use the concept of *sessions*, which is 
+nothing more than a unique identifier shared by an `emit` and its corresponding 
+`await`.
+
+```
+output (int,char&&) SEND;                   // extra "int" session
+input  int          DONE;                   // extra "int" session
+par/and do
+    var char[] buffer = [0,1,0,1];
+    emit SEND => (1,&&buffer);              // session 1
+    var int id = await DONE until id==1;
+with
+    var char[] buffer = [1,0,1,0];
+    emit SEND => (2,&&buffer);              // session 2
+    var int id = await DONE until id==2;
+end
+```
+
+Again, the syntactic sugar for requests handle sessions automatically, 
+providing the desired functionality:
+
+```
+output/input (char&&)=>void SEND_DONE;
+par/and do
+    var char[] buffer = [0,1,0,1];
+    request SEND_DONE => &&buffer;
+with
+    var char[] buffer = [1,0,1,0];
+    request SEND_DONE => &&buffer;
+end
+```
+
+<!--
+Currently, the session identifier is a dynamic and ever increasing counter such 
+that no two sessions can share the same:
+start .
+-->
+
+## The Full Conversion
+
+Putting it all together, follows the full conversion, from the syntactic sugar 
+to the full expansion:
+
+```
+output/input (<in1>,<in2>,...) => <out> <NAME>;
+    // <in1>,<in2>,... // the argument types for the request
+    // <out>           // the return type for the request
+    // <NAME>          // the request identifier
+<...>
+var <in1> v1 = <...>;
+var <in2> v2 = <...>;
+<...>
+var int err;
+var <out>? ret;
+(err, ret) = (request <NAME> => (v1,v2,...);
+```
+
+expands to
+
+```
+output (int,<in1>,<in2>,...) <NAME>_REQUEST;    // "int" session
+output int                   <NAME>_CANCEL;     // "int" session
+input  (int,int,<out>)       <NAME>_RETURN;     // "int" session, "int" error
+<...>
+var <in1> v1 = <...>;
+var <in2> v2 = <...>;
+<...>
+var int err;
+var <out>? ret;
+do
+    var int id = <allocate-session-id>;
+    var int err = (emit <NAME>_REQUEST => (id,v1,v2,...));
+    finalize with
+        <release-session-id>;
+        emit <NAME>_CANCEL => id;
+    end
+    if err == 0 then
+        var int id_;
+        (id_, err, ret) = await <NAME>_RETURN until id==id_;
+    end
+end
+```
+
+<!--
+Besides the desugaring, there is one modification to the language:
+The runtime knows that `<NAME>_RETURN` derives from an `output/input` 
+declaration and does not assign to `ret` if `err` is nonzero.
+(TODO: only required because of `async` simulation.)
+-->
+
 ## The Environment
 
-## input/output
+The expansion shows that an `output/input` declaration becomes three external 
+events:
+
+```
+output/input (<in1>,<in2>,...) => <out> <NAME>;
+
+output (int,<in1>,<in2>,...) <NAME>_REQUEST;    // "int" session
+output int                   <NAME>_CANCEL;     // "int" session
+input  (int,int,<out>)       <NAME>_RETURN;     // "int" session, "int" error
+```
+
+The environment implementation deals with the three raw events and has to 
+consider session IDs and error codes:
+
+```
+/* output: REQUEST */
+#define CEU_OUT_<NAME>_REQUEST(args) <NAME>_REQUEST(args)
+int <NAME>_REQUEST (tceu_int__<tuple>* args) {
+    /*
+     * Manipulates "args->_1", "args->_2", ...
+     *      - "args->_1" is the session ID
+     *      - the other arguments depend on the request
+     */
+    return <error-code>;
+}
+
+/* output: CANCEL */
+#define CEU_OUT_<NAME>_CANCEL(args) <NAME>_CANCEL(args)
+int <NAME>_REQUEST (tceu_<tuple>* args) {
+    /*
+     * Manipulates "args->_1", the session ID and single field.
+     */
+    return 0;   // the returned value is currently ignored
+}
+
+/* input: RETURN */
+int main (void) {
+    /* The event loop: */
+    for (;;) {
+        <...>
+            /* Notifies the application about the request return input. */
+            tceu_int__int__<tuple> args = { <session-id>, <error-code>, ... };
+            ceu_sys_go(&<app>, CEU_IN_<NAME>_RETURN, &args);
+    }
+}
+```
+
+## Resource Implementation in Céu Itself
+
+TODO: `input/output`
