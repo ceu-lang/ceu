@@ -97,16 +97,27 @@ every 5s do
 end
 ```
 
-As we discuss further, the conversion described above is still a simplification 
-of the problem (and solution).
+## Safety and Programmability Considerations
 
-## Failures
+The conversion described above is still a simplification of the problem and 
+neglects some considerations:
 
-The first problem with the conversion above is that it does not deal with 
-failures.
-Considering the raw syntax (without the `output/input` and `request`), an error 
-could happen immediately, at the point of the `emit`; or later, when the 
-application is already at the point of the corresponding `await`.
+1. *Failure*:  the resource should be allowed to fail and notify the
+               application.
+2. *Abortion*: the application should be allowed to abort a request and notify
+               the resource.
+3. *Sessions*: the application should be allowed to make concurrent requests to 
+               the same resource.
+
+Ideally, the language should deal with these issues as much transparently as 
+possible.
+
+### Failure
+
+The first problem with the conversion above is that it does handle failures.
+Considering the raw syntax (without the `output/input` and `request` sugars), 
+an error could happen immediately, at the point of the `emit`; or later, when 
+the application is already at the point of the corresponding `await`.
 An *early error* happens if the resource is not yet bounded to the output event 
 (e.g., not yet configured or connected).
 A *late error* happens if the resource is bounded but cannot handle the request 
@@ -120,11 +131,11 @@ output <t1>      OUT;
 input  (int,<t2>) IN;
 
 var <t1> v1 = <...>;
-var int err = (emit OUT => v1);
+var int err = (emit OUT => v1); // catch an early error
 
 var <t2>? v2;
 if err == 0 then
-    (err, v2) = await IN;
+    (err, v2) = await IN;       // catch a late error
 end
 ```
 
@@ -171,9 +182,9 @@ every 5s do
 end
 ```
 
-## Abortion
+### Abortion
 
-## Sessions
+### Sessions
 
 ```
 output char&& SEND;
