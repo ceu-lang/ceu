@@ -1715,6 +1715,7 @@ me.blk_body = me.blk_body or blk_body
                     node('Op2_==', me.ln, '==',
                         node('Var', me.ln, id_req),
                         node('Var', me.ln, id_req2)))
+    awt[1].__adj_is_request = true
 
     local err_dcl
     local err_var

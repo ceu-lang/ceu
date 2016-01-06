@@ -2001,8 +2001,17 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
     ]]..tp..[[ __ceu_casted = (]]..tp..[[) _ceu_evt->param;
 ]])
                 end
+
+                -- payload, only assign if not a request error
+                if e.__adj_is_request and i==3 then
+                    LINE(me, [[
+    if ((*__ceu_casted)->_2 == 0)
+]])
+                end
                 LINE(me, [[
-    ]]..V(v,'rval')..' = '..val..[[;
+    {
+        ]]..V(v,'rval')..' = '..val..[[;
+    }
 }
 ]])
             end

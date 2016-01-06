@@ -50071,6 +50071,46 @@ par do
     output/input (int max)=>int LINE;
     var int? v  = 0;
     var int err = 0;
+    (err,v) = request LINE=>10;
+    escape v!+err;
+with
+    async do
+        emit LINE_RETURN => (1,1,10);
+    end
+end
+]],
+    run = 1,
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit(a,b,c,d) 0
+        int V = 0;
+    end
+    output/input (int max)=>int LINE;
+    var int? v;
+    var int err = 0;
+    (err,v) = request LINE=>10;
+    escape v!+err;
+with
+    async do
+        emit LINE_RETURN => (1,1,10);
+    end
+end
+]],
+    run = '10] runtime error: invalid tag',
+}
+
+Test { [[
+par do
+    native do
+        ##define ceu_out_emit(a,b,c,d) 0
+        int V = 0;
+    end
+    output/input (int max)=>int LINE;
+    var int? v  = 0;
+    var int err = 0;
     par/or do
         (err,v) = request LINE=>10;
     with
@@ -50085,7 +50125,7 @@ with
     end
 end
 ]],
-    run = 11,
+    run = 1,
 }
 
 Test { [[
