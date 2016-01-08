@@ -95,12 +95,12 @@ local EV = function (rule)
         end) * P(false)
 end
 
-local EM = function (msg)
+local EM = function (msg,full)
     return m.Cmt(P'',
         function (_,i)
             if i > ERR_i then
                 ERR_i = i
-                ERR_msg = 'expected ' .. msg
+                ERR_msg = (full and '' or 'expected ') .. msg
                 return false
             end
             return true
@@ -290,9 +290,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- vector-constr
     , Vector_tup = (K'['-('['*P'='^0*'[')) * EV'ExpList' * EK']'
-    , __vector_one = V'Vector_tup' + V'__Exp'
-    , Vector_constr = V'__vector_one'*(K'..'*(V'__vector_one'+EM'item'))^1
-                    + V'Vector_tup'
+    , Vector_constr = V'Vector_tup' *
+                        (K'..'*( V'Vector_tup'+V'__Exp'+EM'item'))^0
+                    + V'__Exp' * K'..' * EM('invalid constructor syntax',true)
 
 -- Function calls
 

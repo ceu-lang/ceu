@@ -283,6 +283,59 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+output char[]&& OUT;
+var char[] xxx = [] .. "1234567890";
+emit OUT => &&xxx;
+escape 1;
+]],
+    env = 'line 1 : not implemented : vectors',
+}
+
+Test { [[
+input char[]&& IN;
+var int ret = 0;
+par/and do
+    var char[]&& vec = await IN;
+    ret = $vec;
+with
+    async do
+        var char[] vec = [1,2,3,4,5];
+        emit IN => &&vec;
+    end
+end
+escape $vec;
+]],
+    env = 'line 1 : not implemented : vectors',
+}
+
+Test { [[
+output char[] OUT;
+var char[] xxx = [] .. "1234567890";
+emit OUT => []..xxx;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input char[] IN;
+var int ret = 0;
+par/and do
+    var char[]&& vec = await IN;
+    ret = $vec;
+with
+    async do
+        var char[] vec = [1,2,3,4,5];
+        emit IN => &&vec;
+    end
+end
+escape $vec;
+]],
+    run = 5,
+}
+
+do return end
 ----------------------------------------------------------------------------
 -- OK: well tested
 --]===]
@@ -21735,6 +21788,16 @@ escape v2[0] + v2[1] + v2[2];
 ]],
     env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
 }
+
+Test { [[
+var char[] v1, v2, v3;
+v1 = v2;
+v1 = v2..v3;
+escape 1;
+]],
+    parser = 'line 3 : after `..´ : invalid constructor syntax',
+}
+
 Test { [[
 var u8[10] v1 = [1,2,3];
 var u8[20] v2 = []..v1;
@@ -21912,7 +21975,7 @@ Test { [[
 var int[] v1;
 var int[] v2;
 v1 = [1] .. v2;
-v1 = v2 .. [1];
+v1 = [] .. v2 .. [1];
 escape v1[0];
 ]],
     run = 1;
@@ -21928,7 +21991,7 @@ escape v1[0]+v1[1]+v1[2];
 Test { [[
 var int[] v1 = [1,2,3];
 var int[] v2 = [7,8,9];
-v1 = v1 .. [4,5,6] .. v2;
+v1 = [] .. v1 .. [4,5,6] .. v2;
 var int ret = 0;
 loop i in 9 do
     ret = ret + v1[i];
@@ -21940,7 +22003,7 @@ escape ret;
 
 Test { [[
 var int[] v = [1,2,3];
-v = v .. v;
+v = [] .. v .. v;
 escape 1;
 ]],
     run = '2] runtime error: access out of bounds';
@@ -22264,7 +22327,7 @@ escape _strlen(&&v);
 Test { [[
 native @nohold _strlen();
 var char[] v = [].."abc";
-v = v .. "def";
+v = [] .. v .. "def";
 escape _strlen(&&v);
 ]],
     run = 6,
@@ -40890,7 +40953,7 @@ escape v;
 
 Test { [[
 function (u8[]& buf)=>void fillBuffer do
-    buf = buf .. [3];
+    buf = [] .. buf .. [3];
 end
 var u8[10] buffer;
 fillBuffer(&buffer);
@@ -40901,7 +40964,7 @@ escape buffer[0];
 
 Test { [[
 function (u8[20]& buf)=>void fillBuffer do
-    buf = buf .. [3];
+    buf = [] .. buf .. [3];
 end
 var u8[10] buffer;
 fillBuffer(&buffer);
@@ -40912,7 +40975,7 @@ escape buffer[0];
 
 Test { [[
 function (u8[3]& buf)=>void fillBuffer do
-    buf = buf .. [2,3,4];
+    buf = [] .. buf .. [2,3,4];
 end
 var u8[3] buffer = [1];
 fillBuffer(&buffer);
@@ -40923,7 +40986,7 @@ escape buffer[0];
 
 Test { [[
 function (u8[]&& buf)=>void fillBuffer do
-    *buf = *buf .. [3];
+    *buf = [] .. *buf .. [3];
 end
 var u8[10] buffer;
 fillBuffer(&&buffer);
@@ -40934,7 +40997,7 @@ escape buffer[0];
 
 Test { [[
 function (u8[3]&& buf)=>void fillBuffer do
-    *buf = *buf .. [2,3,4];
+    *buf = [] .. *buf .. [2,3,4];
 end
 var u8[3] buffer = [1];
 fillBuffer(&&buffer);
@@ -42834,7 +42897,7 @@ class Test with
     function (u8[]& buf)=>void fillBuffer;
 do
     function (u8[]& buf)=>void fillBuffer do
-        buf = buf .. [3];
+        buf = [] .. buf .. [3];
     end
 end
 
@@ -42853,7 +42916,7 @@ class Test with
     function (u8[]&& buf)=>void fillBuffer;
 do
     function (u8[]&& buf)=>void fillBuffer do
-        *buf = *buf .. [3];
+        *buf = [] .. *buf .. [3];
     end
 end
 
@@ -43901,7 +43964,7 @@ do
 end
 var T&&[] ts;
 var T t;
-ts = ts .. [t];
+ts = [] .. ts .. [t];
 escape $ts+1;
 ]],
     env = 'line 6 : wrong argument #1 : types mismatch (`T&&´ <= `T´)',
@@ -43912,7 +43975,7 @@ do
 end
 var T&&[] ts;
 var T t;
-ts = ts .. [&&t];
+ts = [] .. ts .. [&&t];
 escape $ts+1;
 ]],
     run = 2,
@@ -43924,7 +43987,7 @@ do
 end
 var T&&[] ts;
 var T t;
-ts = ts .. [&&t];
+ts = [] .. ts .. [&&t];
 var T&& p = ts[0];
 escape p == &&t;
 ]],
@@ -43937,7 +44000,7 @@ do
 end
 var T&&[] ts;
 var T t;
-ts = ts .. [&&t];
+ts = [] .. ts .. [&&t];
 var T&& p = ts[1];
 escape p == &&t;
 ]],
@@ -43950,7 +44013,7 @@ do
 end
 var T&&[] ts;
 var T t;
-ts = ts .. [&&t];
+ts = [] .. ts .. [&&t];
 await 1s;
 var T&& p = ts[0];
 escape p == &&t;
@@ -44287,7 +44350,7 @@ par/and do
     do
         pool T[] ts;
         var T&&? ptr = spawn T in ts;
-        v = v .. [ptr];
+        v = [] .. v .. [ptr];
         await OS_START;
     end
 with
@@ -53425,7 +53488,7 @@ end
 var u8 v = 7;
 var Test[3] vs;
 var Test t = Test(&v);
-vs = vs .. [t];
+vs = [] .. vs .. [t];
 
 v = 10;
 t.v = 88;
@@ -53438,7 +53501,7 @@ escape v;
 Test { [[
   var u8[3] bytes;
 
-bytes = bytes .. [5];
+bytes = [] .. bytes .. [5];
 
 escape bytes[0];
 ]],
@@ -53450,7 +53513,7 @@ data Frame with
 end
 
 var Frame f1;
-f1.bytes = f1.bytes .. [5];
+f1.bytes = [] .. f1.bytes .. [5];
 
 escape f1.bytes[0];
 ]],
@@ -53479,7 +53542,7 @@ var Frame f1;
 
 f1.bytes[0] = 5;
 
-frames = frames .. [f1];
+frames = [] .. frames .. [f1];
 
 escape frames[0].bytes[0];
 ]],

@@ -2886,8 +2886,8 @@ Stmt ::= &lt;empty-string&gt;
                   Data ::= ID_data [`.´ ID_tag] `(´ List `)´
                   List ::= [ (Data|Exp) { `,´ (Data|Exp) } ]
 
-                  Vector ::= Item { `..´ Item }
-                  Item   ::= Exp | `[´ [ExpList] `]´
+                  Vector ::= `[´ [ExpList] `]´ { `..´ Item }
+                  Item   ::= `[´ [ExpList] `]´ | Exp
 
                   AssignableBlock ::= &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt; | &lt;every&gt; | &lt;par&gt;
 
