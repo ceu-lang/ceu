@@ -951,6 +951,10 @@ me.blk_body = me.blk_body or blk_body
 
     _Dcl_ext0_pre = function (me)
         local dir, spw, rec, ins, out, id_evt, blk = unpack(me)
+        local ret_value;
+        if out and out[1]~='void' then
+            ret_value = node('ANY', me.ln)
+        end
 
         -- Type => TupleType
         if ins.tag == 'Type' then
@@ -1005,6 +1009,9 @@ me.blk_body = me.blk_body or blk_body
                                         false,node('Type',me.ln,'u8'),false),
                                     node('TupleTypeItem', me.ln,
                                         false, out, false))
+                if #out==1 and out[1]=='void' then
+                    ins_ret[#ins_ret] = nil -- remove void argument
+                end
 
                 ret[#ret+1] = node('Dcl_ext', me.ln, d1, false,
                                    ins_req, false, id_evt..'_REQUEST')
@@ -1074,7 +1081,7 @@ me.blk_body = me.blk_body or blk_body
                                                     node('Var', me.ln, id_req),
                                                     node('NUMBER', me.ln, 2),
                                                             -- TODO: err=2?
-                                                    node('NUMBER', me.ln, 0))))))),
+                                                    ret_value)))))),
                             node('ParOr', me.ln,
                                 node('Block', me.ln,
                                     node('Stmts', me.ln, blk)),
@@ -1174,9 +1181,9 @@ me.blk_body = me.blk_body or blk_body
                                                     node('Ext', me.ln, id_evt..'_RETURN'),
                                                     node('ExpList', me.ln,
                                                         node('Var', me.ln, id_req),
-                                                        node('NUMBER', me.ln, 1),
-                                                                -- TODO: err=1?
-                                                        node('NUMBER', me.ln, 0)))),
+                                                        node('NUMBER', me.ln, 3),
+                                                                -- TODO: err=3?
+                                                        ret_value))),
                                             false)))))))
         end
 
@@ -1191,13 +1198,13 @@ me.blk_body = me.blk_body or blk_body
             -- becomes
             --      emit RETURN => (this.id, 0, ret);
             --]]
-            return node('EmitExt', me.ln, 'emit',
-                        node('Ext', me.ln, cls.__ast_req.id_evt..'_RETURN'),
-                        node('ExpList', me.ln,
-                            node('Var', me.ln, cls.__ast_req.id_req),
-                            node('NUMBER', me.ln, 0), -- no error
-                            me[1])  -- return expression
-                    )
+        return node('EmitExt', me.ln, 'emit',
+                node('Ext', me.ln, cls.__ast_req.id_evt..'_RETURN'),
+                node('ExpList', me.ln,
+                    node('Var', me.ln, cls.__ast_req.id_req),
+                    node('NUMBER', me.ln, 0), -- no error
+                    me[1])  -- return expression
+               )
         end
     end,
 

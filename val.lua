@@ -569,4 +569,7 @@ F =
         --assert(CTX.val == 'rval', 'bug found')
         return 'NULL'
     end,
+    ANY = function (me)
+        return ''
+    end,
 }

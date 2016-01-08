@@ -49422,6 +49422,25 @@ escape o.v;
 -- REQUESTS
 
 Test { [[
+output/input (int max)=>void X;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) 1
+end
+input/output (int max)=>void X do
+    return;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 input/output [10] (int max)=>char&& LINE;
 request LINE;
 escape 1;

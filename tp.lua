@@ -175,7 +175,7 @@ function TP.new (me, dont_generate)
 
             if TP.check(tp,'void','-&') then
                 ASR(#me==1, me, 'type cannot be `void´', [[
-    A `void´ only makes sense if it is the only argument.
+    A `void´ only makes sense if it is the single argument.
 ]])
                 me[1] = nil     -- empty tuple
                 break
@@ -504,6 +504,10 @@ function TP.contains (tp1, tp2, t)
         else
             return false, __err(tp1, tp2)
         end
+
+    -- unused value in EmitExt for requests with errors
+    elseif TP.check(tp2,'any') then
+        return true
 
     -- error
     else

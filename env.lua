@@ -1863,6 +1863,11 @@ type.
         me.lval = false
         me.isConst = true
     end,
+    ANY = function (me)
+        me.tp   = TP.new{'any'}
+        me.lval = false
+        me.isConst = true
+    end,
 }
 
 AST.visit(F)
