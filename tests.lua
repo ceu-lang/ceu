@@ -284,7 +284,6 @@ escape 1;
 }
 
 -----------
---]===]
 Test { [[
 output char[] OUT;
 var char[] xxx = [] .. "1234567890";
@@ -373,6 +372,31 @@ end
 escape ret;
 ]],
     run = 5,
+}
+
+--]===]
+Test { [[
+native do
+    ##define ceu_out_emit_OUT(x) (x->_2->nxt + x->has_vector)
+end
+output (int,int[]&&,int) OUT;
+var int[] xxx = [1,2,3,4,5];
+var int ret = emit OUT => (0,&&xxx,1);
+escape ret;
+]],
+    env = 'line 4 : invalid event type : vector only as the last argument'
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_OUT(x) (x->_3->nxt + x->vector_offset)
+end
+output (int,int,int[]&&) OUT;
+var int[] xxx = [1,2,3,4,5];
+var int ret = emit OUT => (0,1,&&xxx);
+escape ret;
+]],
+    run = 21,
 }
 
 --do return end

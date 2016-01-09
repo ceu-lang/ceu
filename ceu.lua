@@ -386,7 +386,12 @@ do
         local str = ''
         for _,T in pairs(TP.types) do
             if T.tup and #T.tup>0 then
-                str = str .. 'typedef struct {\n'
+                str = str .. [[
+typedef struct {
+#ifdef CEU_VECTOR     /* TODO: check for each tuple */
+    u8 vector_offset; /* >0 if this->_N is a vector */
+#endif
+]]
                 for i, t in ipairs(T.tup) do
                     local tmp = TP.toc(t)
                     local tp_id = TP.id(t)
@@ -397,7 +402,12 @@ do
                     end
                     str = str..'\t'..tmp..' _'..i..';\n'
                 end
-                str = str .. '} '..TP.toc(T)..';\n'
+                str = str .. [[
+#ifdef CEU_VECTOR
+    char mem[0];
+#endif
+} ]]..TP.toc(T)..[[;
+]]
             end
         end
         HH = SUB(HH, '=== TUPLES ===', str)

@@ -693,27 +693,28 @@ F = {
             return
         end
 
-        for _, item in ipairs(ins) do
+        for I, item in ipairs(ins) do
             local _,tp,_ = unpack(item)
 
             -- "base" is a basic type: _t, int, etc
             local base = TP.base(tp)
             ASR(TP.types[base.tt[1]] or TP.is_ext(base,'_'), me,
                 'invalid event type')
-            if #tp.tt == 1 then
-                break
-            end
 
-            -- last mod is "&&"
-            local tp,v = TP.pop(tp)
-            ASR(v=='&&', me, 'invalid event type')
+            if #tp.tt > 1 then
+                -- last mod is "&&"
+                local tp,v = TP.pop(tp)
+                ASR(v=='&&', me, 'invalid event type')
 
-            -- other mods are "&&" or single "[]"
-            for i=2, #tp.tt do
-                if tp.tt[i] == '[]' then
-                    ASR(i==#tp.tt, me, 'invalid event type')
-                else
-                    ASR(v=='&&', me, 'invalid event type')
+                -- other mods are "&&" or single "[]"
+                for i=2, #tp.tt do
+                    if tp.tt[i] == '[]' then
+                        ASR(i==#tp.tt, me, 'invalid event type')
+                        ASR(I==#ins, me,
+                            'invalid event type : vector only as the last argument')
+                    else
+                        ASR(v=='&&', me, 'invalid event type')
+                    end
                 end
             end
         end

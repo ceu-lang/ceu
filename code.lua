@@ -1641,14 +1641,29 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
         local val = '__ceu_ps_'..me.n
         if ps and #ps>0 then
             local PS = {}
-            for _, p in ipairs(ps) do
+            local tp_c = TP.toc((e.var or e).evt.ins)
+            local vector_offset = 0
+            for i, p in ipairs(ps) do
                 PS[#PS+1] = V(p,'rval')
+                if TP.check(p.tp,'[]','&&') then
+                    vector_offset = 'offsetof('..tp_c..', _'..i..')'
+                end
             end
             LINE(me, [[
-]]..TP.toc((e.var or e).evt.ins)..' '..val..[[;
+]]..tp_c..' '..val..[[;
 {
-    ]]..TP.toc((e.var or e).evt.ins)..' '..val..[[_ =
-        { ]]..table.concat(PS,',')..[[ };
+    ]]..tp_c..' '..val..[[_ =
+        {
+#ifdef CEU_VECTOR
+            ]]..vector_offset..[[,
+#endif
+            ]]..table.concat(PS,',')..[[
+
+#ifdef CEU_VECTOR
+            , {}
+#endif
+        };
+        ceu_out_assert(]]..vector_offset..[[ < 256);
     ]]..val..' = '..val..[[_;
 }
 ]])
