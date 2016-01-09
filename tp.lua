@@ -259,7 +259,12 @@ function TP.copy (tp)
     return ret
 end
 
-function TP.toc (tp)
+function TP.toc (tp, t)
+    t = t or {}
+    if t.vector_base and TP.check(tp,'[]') then
+        return TP.toc(TP.pop(tp,'[]'))..'*'
+    end
+
     if tp.tup then
         local t = { 'tceu' }
         for _, v in ipairs(tp.tup) do
@@ -271,15 +276,17 @@ function TP.toc (tp)
         return string.gsub(table.concat(t,'__'),'%*','_')
     end
 
-    local v
     local ret = ''
     for i=#tp.tt, 2, -1 do
         if tp.tt[i] == '?' then
             return 'CEU_'..TP.opt2adt(tp)..ret
         end
 
+        local v
         tp, v = TP.pop(tp)
-        if v=='[]' or v=='&&' or v=='&' then
+        if v == '[]' then
+            return 'tceu_vector'..ret       -- [], return now
+        elseif v=='&&' or v=='&' then
             ret = '*'..ret
         else
             error 'bug found'

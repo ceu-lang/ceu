@@ -52,7 +52,7 @@ function MEM.tp2dcl (pre, tp, id, _dcl_id)
                     local tp_c = TP.toc( TP.pop(tp) )
                     return dcl .. tp_c..' '..id
                 else
-                    local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
+                    local tp_c = TP.toc(tp_elem)
                     return dcl .. tp_c..' '..id..'['..tp.arr.cval..']'
                 end
             else
@@ -60,7 +60,7 @@ function MEM.tp2dcl (pre, tp, id, _dcl_id)
                     return 'tceu_vector* '..id
                 else
                     local max = (tp.arr.cval or 0)
-                    local tp_c = string.sub(tp_c,1,-2)  -- remove leading `*´
+                    local tp_c = TP.toc(tp_elem)
                     return dcl .. [[
 CEU_VECTOR_DCL(]]..id..','..tp_c..','..max..[[)
 ]]
@@ -397,13 +397,14 @@ typedef union CEU_]]..me.id..[[_delayed {
                 (me.__env_last_match.__delayed or '') .. struct .. '\n'
 
             for _, var in ipairs(me.blk_ifc.vars) do
+                local tp_c = TP.toc(var.tp,{vector_base=true})
                 ifcs_dcls = ifcs_dcls ..
-                    TP.toc(var.tp)..'* CEU_'..me.id..'__'..var.id..' (CEU_'..me.id..'*);\n'
+                    tp_c..'* CEU_'..me.id..'__'..var.id..' (CEU_'..me.id..'*);\n'
 
                 if var.pre == 'var' then
                     MEM.tops_c = MEM.tops_c..[[
-]]..TP.toc(var.tp)..'* CEU_'..me.id..'__'..var.id..' (CEU_'..me.id..[[* org) {
-    return (]]..TP.toc(var.tp)..[[*) (
+]]..tp_c..'* CEU_'..me.id..'__'..var.id..' (CEU_'..me.id..[[* org) {
+    return (]]..tp_c..[[*) (
         ((byte*)org) + _CEU_APP.ifcs_flds[((tceu_org*)org)->cls][
             ]]..ENV.ifcs.flds[var.ifc_id]..[[
         ]
@@ -412,8 +413,8 @@ typedef union CEU_]]..me.id..[[_delayed {
 ]]
                 elseif var.pre == 'function' then
                     MEM.tops_c = MEM.tops_c..[[
-]]..TP.toc(var.tp)..'* CEU_'..me.id..'__'..var.id..' (CEU_'..me.id..[[* org) {
-    return (]]..TP.toc(var.tp)..[[*) (
+]]..tp_c..'* CEU_'..me.id..'__'..var.id..' (CEU_'..me.id..[[* org) {
+    return (]]..tp_c..[[*) (
         _CEU_APP.ifcs_funs[((tceu_org*)org)->cls][
             ]]..ENV.ifcs.funs[var.ifc_id]..[[
         ]

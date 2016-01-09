@@ -333,6 +333,16 @@ F = {
 
     Dcl_ext = function (me)
         PROPS.has_exts = true
+
+        local _,_,ins,_,_ = unpack(me)
+        for _, item in ipairs(ins) do
+            local _,tp,_ = unpack(item)
+            for _, v in ipairs(tp.tt) do
+                if v == '[]' then
+                    PROPS.has_vector = true
+                end
+            end
+        end
     end,
 
     Dcl_var = function (me)

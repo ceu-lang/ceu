@@ -700,12 +700,13 @@ F = {
             local base = TP.base(tp)
             ASR(TP.types[base.tt[1]] or TP.is_ext(base,'_'), me,
                 'invalid event type')
+            if #tp.tt == 1 then
+                break
+            end
 
             -- last mod is "&&"
             local tp,v = TP.pop(tp)
-            if v ~= nil then
-                ASR(v=='&&', me, 'invalid event type')
-            end
+            ASR(v=='&&', me, 'invalid event type')
 
             -- other mods are "&&" or single "[]"
             for i=2, #tp.tt do

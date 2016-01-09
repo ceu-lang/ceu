@@ -1561,8 +1561,9 @@ if (]]..V(c,'rval')..[[) {
             elseif me.iter_tp == 'org' then
                 -- INI
                 local var = iter.lst.var
+                local tp_c = TP.toc(iter.tp,{vector_base=true})
                 ini[#ini+1] =
-V(to,'rval')..' = ('..TP.toc(iter.tp)..[[)
+V(to,'rval')..' = ('..tp_c..[[)
                     (]]..V(iter,'lval')..[[->parent_org->trls[
                         ]]..V(iter,'lval')..[[->parent_trl
                     ].org)]]
@@ -1572,7 +1573,7 @@ V(to,'rval')..' = ('..TP.toc(iter.tp)..[[)
 
                 -- NXT
                 nxt[#nxt+1] =
-V(to,'rval')..' = ('..TP.toc(iter.tp)..[[)
+V(to,'rval')..' = ('..tp_c..[[)
                     ((tceu_org*)]]..V(to,'rval')..[[)->nxt
 ]]
             else

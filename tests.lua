@@ -284,6 +284,7 @@ escape 1;
 }
 
 -----------
+--]===]
 Test { [[
 output char[] OUT;
 var char[] xxx = [] .. "1234567890";
@@ -333,14 +334,28 @@ escape $vec;
     env = 'line 1 : invalid event type',
 }
 
---]===]
 Test { [[
+native do
+    ##define ceu_out_emit_OUT(x) (x->_1->nxt)
+end
+output int[]&& OUT;
+var int[] xxx = [1,2,3,4,5];
+var int ret = emit OUT => &&xxx;
+escape ret;
+]],
+    run = 5,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_OUT(x) (x->_1->nxt)
+end
 output char[]&& OUT;
 var char[] xxx = [] .. "1234567890";
-emit OUT => &&xxx;
-escape 1;
+var int ret = emit OUT => &&xxx;
+escape ret;
 ]],
-    run = 1,
+    run = 10,
 }
 
 Test { [[
@@ -348,19 +363,19 @@ input char[]&& IN;
 var int ret = 0;
 par/and do
     var char[]&& vec = await IN;
-    ret = $vec;
+    ret = $*vec;
 with
     async do
         var char[] vec = [1,2,3,4,5];
         emit IN => &&vec;
     end
 end
-escape $vec;
+escape ret;
 ]],
-    run = 1,
+    run = 5,
 }
 
-do return end
+--do return end
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
@@ -21395,8 +21410,8 @@ escape p;
     -- ARRAYS
 
 Test { [[input int[1] E; escape 0;]],
-    run = 0,
-    --env = 'invalid event type',
+    --run = 0,
+    env = 'invalid event type',
     --parser = "line 1 : after `int´ : expected identifier",
 }
 Test { [[var int[0] v; escape 0;]],

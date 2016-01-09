@@ -186,9 +186,9 @@ F =
         if me.org.cls and me.org.cls.is_ifc then
             if me.var.pre == 'var'
             or me.var.pre == 'pool' then
-                local cast = TP.toc(me.var.tp)..'*'
+                local cast = TP.toc(me.var.tp,{vector_base=true})..'*'
                 if me.var.pre=='var' and me.var.tp.arr then
-                    cast = TP.toc(me.var.tp)
+                    cast = TP.toc(me.var.tp,{vector_base=true})
                     if (not TP.is_ext(me.var.tp,'_','@')) then
                         local cls = ENV.clss[TP.id(me.var.tp)] and
                                     TP.check(TP.pop(me.var.tp,'&'),TP.id(me.var.tp),'[]')
@@ -318,7 +318,7 @@ F =
                         error'bug found'
                     elseif not TP.is_ext(exp.tp,'_') then
                         -- f(&&vec);
-                        local cast = TP.toc(TP.pop(TP.pop(exp.tp,'&'),'&&'))
+                        local cast = TP.toc(TP.pop(TP.pop(exp.tp,'&'),'&&'),{vector_base=true})
                         if TP.check(exp.tp,'char','[]','&&','-&') then
                             ps[#ps] = 'ceu_vector_tochar('..ps[#ps]..')'
                         else
