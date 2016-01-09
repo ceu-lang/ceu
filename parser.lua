@@ -269,7 +269,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'await'      * V'Await'
               + Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
               + Cc'adt-constr' * V'Adt_constr_root'
-              + Cc'vector'     * V'Vector_constr'   -- before exp
               + Cc'lua'        * V'_LuaExp'
               + Cc'do-org'     * V'_DoOrg'
               + Cc'spawn'      * V'Spawn'
@@ -291,8 +290,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- vector-constr
     , Vector_tup = (K'['-('['*P'='^0*'[')) * EV'ExpList' * EK']'
     , Vector_constr = V'Vector_tup' *
-                        (K'..'*( V'Vector_tup'+V'__Exp'+EM'item'))^0
-                    + V'__Exp' * K'..' * EM('invalid constructor syntax',true)
+                        (K'..'*( V'Vector_tup'+V'__Exp'))^0
 
 -- Function calls
 
@@ -490,7 +488,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- Expressions
 
-    , __Exp  = V'__1'
+    , __Exp  = V'__0'
+    , __0    = V'__1' * K'..' * EM('invalid constructor syntax',true) * -1
+             + V'__1'
     , __1    = V'__2'  * (CKEY'or'  * EV'__2')^0
     , __2    = V'__3'  * (CKEY'and' * EV'__3')^0
     , __3    = V'__4'  * ( ( (CK'!='-'!==')+CK'=='+CK'<='+CK'>='
@@ -523,7 +523,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'Var'     + V'Nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
-             + V'RawExp'
+             + V'RawExp'  + V'Vector_constr'
              + CKEY'call'     * EV'__Exp'
              + CKEY'call/rec' * EV'__Exp'
 

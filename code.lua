@@ -1294,67 +1294,67 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..[[),
 }
 ]])
 
+            elseif fr.tag == 'Vector_constr' then
+                local first = true
+                for i, e in ipairs(fr) do
+                    if e.tag == 'Vector_tup' then
+                        if #e > 0 then
+                            e = AST.asr(e,'', 1,'ExpList')
+                            for j, ee in ipairs(e) do
+                                if first then
+                                    first = false
+                                    LINE(me, [[
+    ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
+    ]])
+                                end
+                                LINE(me, [[
+    {
+    ]]..TP.toc(TP.pop(TP.pop(to.tp,'&'),'[]'))..[[ __ceu_p;
+    ]])
+                                F.__set(me, ee, {tag='RawExp', tp=TP.pop(to.tp,'[]'), '__ceu_p'})
+                                LINE(me, [[
+    #line ]]..fr.ln[2]..' "'..fr.ln[1]..[["
+    ceu_out_assert_msg( ceu_vector_push(]]..V(to,'lval')..[[, (byte*)&__ceu_p), "access out of bounds");
+    }
+    ]])
+                            end
+                        end
+                    else
+                        if TP.check(e.tp,'char','&&','-&') then
+                            if first then
+                                LINE(me, [[
+    ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
+    ]])
+                            end
+                            LINE(me, [[
+    #line ]]..e.ln[2]..' "'..e.ln[1]..[["
+    ceu_out_assert_msg( ceu_vector_concat_buffer(]]..V(to,'lval')..','..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[)), "access out of bounds" );
+    ]])
+                        else
+                            assert(TP.check(e.tp,'[]','-&'), 'bug found')
+                            if first then
+                                LINE(me, [[
+    if (]]..V(to,'lval')..' != '..V(e,'lval')..[[) {
+        ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
+    ]])
+                            end
+                            LINE(me, [[
+    #line ]]..e.ln[2]..' "'..e.ln[1]..[["
+    ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "access out of bounds" );
+    ]])
+                            if first then
+                                LINE(me, [[
+    }
+    ]])
+                            end
+                        end
+                        first = false
+                    end
+                end
+
             -- all other
             else
                 F.__set(me, fr, to)
-            end
-
-        elseif set == 'vector' then
-            local first = true
-            for i, e in ipairs(fr) do
-                if e.tag == 'Vector_tup' then
-                    if #e > 0 then
-                        e = AST.asr(e,'', 1,'ExpList')
-                        for j, ee in ipairs(e) do
-                            if first then
-                                first = false
-                                LINE(me, [[
-ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
-]])
-                            end
-                            LINE(me, [[
-{
-]]..TP.toc(TP.pop(TP.pop(to.tp,'&'),'[]'))..[[ __ceu_p;
-]])
-                            F.__set(me, ee, {tag='RawExp', tp=TP.pop(to.tp,'[]'), '__ceu_p'})
-                            LINE(me, [[
-#line ]]..fr.ln[2]..' "'..fr.ln[1]..[["
-ceu_out_assert_msg( ceu_vector_push(]]..V(to,'lval')..[[, (byte*)&__ceu_p), "access out of bounds");
-}
-]])
-                        end
-                    end
-                else
-                    if TP.check(e.tp,'char','&&','-&') then
-                        if first then
-                            LINE(me, [[
-ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
-]])
-                        end
-                        LINE(me, [[
-#line ]]..e.ln[2]..' "'..e.ln[1]..[["
-ceu_out_assert_msg( ceu_vector_concat_buffer(]]..V(to,'lval')..','..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[)), "access out of bounds" );
-]])
-                    else
-                        assert(TP.check(e.tp,'[]','-&'), 'bug found')
-                        if first then
-                            LINE(me, [[
-if (]]..V(to,'lval')..' != '..V(e,'lval')..[[) {
-    ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
-]])
-                        end
-                        LINE(me, [[
-#line ]]..e.ln[2]..' "'..e.ln[1]..[["
-ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "access out of bounds" );
-]])
-                        if first then
-                            LINE(me, [[
-}
-]])
-                        end
-                    end
-                    first = false
-                end
             end
 
         elseif set == 'adt-ref-pool' then

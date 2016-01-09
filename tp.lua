@@ -415,18 +415,32 @@ function TP.contains (tp1, tp2, t)
         end
 
     -- vec& = vec
-    elseif TP.check(TP1,'[]','&') and (not TP.is_ext(tp1,'_','@')) and
-           TP.check(tp2,'[]')     and (not TP.is_ext(tp2,'_','@')) and
-            (not (cls1 or cls2)) -- TODO: TP.pre()
+    -- vec  = []..
+    elseif (not TP.is_ext(tp1,'_','@')) and (not TP.is_ext(tp2,'_','@')) and
+           --(not (tp1.pre=='pool' or tp2.pre=='pool')) and
+           (not (ENV.clss[id1] and TP.check(tp1,id1,'[]','-&') or
+                 ENV.clss[id2] and TP.check(tp2,id2,'[]','-&'))) and -- TODO: TP.pre()
+        (
+            TP.check(TP1,'[]','&') and TP.check(tp2,'[]')
+        or
+            TP.check(TP1,'[]','-&','-?') and TP.check(tp2,'[]','..')
+        )
     then
+        local is_constr = TP.check(tp2,'[]','..')
+
         -- to == fr
-        local ok = (TP1.arr=='[]') or
+        local ok = is_constr or (TP1.arr=='[]') or
                    (TP2.arr~='[]' and TP1.arr.sval==TP2.arr.sval)
         if not ok then
             return false, __err(TP1,TP2)..' : dimension mismatch'
         end
-        return TP.contains( TP.pop(tp1,'[]'),
-                            TP.pop(tp2,'[]'), {numeric=false} )
+
+        tp2 = TP.pop(tp2,'..')
+        return TP.contains(TP.pop(tp1,'[]'), TP.pop(tp2,'[]'),
+                    {option=true,numeric=is_constr})
+                                    -- OK: var char[] str = [int,int,int]
+                                    -- NO: var char[]& str = &vec_int
+--, {numeric=false} )
 
     -- same type
     elseif TP.tostr(tp1) == TP.tostr(tp2) then
@@ -506,6 +520,7 @@ function TP.contains (tp1, tp2, t)
         end
 
     -- unused value in EmitExt for requests with errors
+    -- [] vector constructors
     elseif TP.check(tp2,'any') then
         return true
 

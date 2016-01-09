@@ -1108,44 +1108,6 @@ type.
             ASR( AST.isParent(CLS(),to.lst.var.blk), me,
                     'invalid attribution (no scope)' )
 
-        elseif set == 'vector' then
-            -- TODO: TP.pre() (only pool?)
-            local is_vec = TP.check(to.tp,'[]','-&') and
-                           (not TP.is_ext(to.tp,'_','@'))
-            local is_cls = ENV.clss[TP.id(to.tp)] and
-                           TP.check(TP.pop(to.tp,'&'),TP.id(to.tp),'[]')
-            ASR(is_vec and (not is_cls), me, 'invalid attribution : destination is not a vector')
-
-            local to_unit = TP.pop(TP.pop(to.tp,'&'),'[]')
-            local to_unit_noopt, isopt = TP.pop(to_unit,'?')
-            AST.asr(fr, 'Vector_constr')
-            for i, e in ipairs(fr) do
-                if e.tag == 'Vector_tup' then
-                    if #e > 0 then
-                        e = AST.asr(e,'', 1,'ExpList')
-                        for j, ee in ipairs(e) do
-                            local ok, msg = TP.contains(to_unit_noopt,
-                                                        isopt and TP.pop(ee.tp,'?') or ee.tp)
-                            ASR(ok, me, 'wrong argument #'..j..' : '..(msg or ''))
-                        end
-                    end
-                else -- vector
-                    local is_str = TP.check(e.tp,'char','&&','-&')
-                    local is_vec = TP.check(e.tp,'[]','-&') and
-                                   (not TP.is_ext(e.tp,'_','@'))
-                    local msg1 = (#fr>0 and 'wrong argument #'..i..' : ') or ''
-                    ASR(is_str or is_vec, me, msg1..'source is not a vector')
-
-                    local fr_unit = is_str and TP.new{'char'} or
-                                    TP.pop(TP.pop(e.tp,'&'),'[]')
-                    local ok, msg2 = TP.contains(to_unit_noopt,
-                                                 isopt and TP.pop(fr_unit,'?') or fr_unit)
-                    ASR(ok, me, msg1..(msg2 or ''))
-                end
-            end
-
-            return
-
         elseif set == 'lua' then
             lua_str = TP.check(to.tp,'char','[]','-&')
             if not lua_str then
@@ -1182,6 +1144,43 @@ type.
                     me[2] = 'adt-mut'
                 end
                 return
+            end
+
+            if fr.tag == 'Vector_constr' then
+                -- TODO: TP.pre() (only pool?)
+                local is_vec = TP.check(to.tp,'[]','-&') and
+                               (not TP.is_ext(to.tp,'_','@'))
+                local is_cls = ENV.clss[TP.id(to.tp)] and
+                               TP.check(TP.pop(to.tp,'&'),TP.id(to.tp),'[]')
+                ASR(is_vec and (not is_cls), me, 'invalid attribution : destination is not a vector')
+
+                local to_unit = TP.pop(TP.pop(to.tp,'&'),'[]')
+                local to_unit_noopt, isopt = TP.pop(to_unit,'?')
+                AST.asr(fr, 'Vector_constr')
+                for i, e in ipairs(fr) do
+                    if e.tag == 'Vector_tup' then
+                        if #e > 0 then
+                            e = AST.asr(e,'', 1,'ExpList')
+                            for j, ee in ipairs(e) do
+                                local ok, msg = TP.contains(to_unit_noopt,
+                                                            isopt and TP.pop(ee.tp,'?') or ee.tp)
+                                ASR(ok, me, 'wrong argument #'..j..' : '..(msg or ''))
+                            end
+                        end
+                    else -- vector
+                        local is_str = TP.check(e.tp,'char','&&','-&')
+                        local is_vec = TP.check(e.tp,'[]','-&') and
+                                       (not TP.is_ext(e.tp,'_','@'))
+                        local msg1 = (#fr>0 and 'wrong argument #'..i..' : ') or ''
+                        ASR(is_str or is_vec, me, msg1..'source is not a vector')
+
+                        local fr_unit = is_str and TP.new{'char'} or
+                                        TP.pop(TP.pop(e.tp,'&'),'[]')
+                        local ok, msg2 = TP.contains(to_unit_noopt,
+                                                     isopt and TP.pop(fr_unit,'?') or fr_unit)
+                        ASR(ok, me, msg1..(msg2 or ''))
+                    end
+                end
             end
         end
 
@@ -1422,7 +1421,7 @@ type.
                     'wrong argument #'..i..' : cannot pass option values to native calls')
                 ASR(v.tag~='Op1_&', me,
                     'wrong argument #'..i..' : cannot pass aliases to native calls')
-                ASR(not TP.check(v.tp,'[]','-&'), me,
+                ASR(not TP.check(v.tp,'[]','-&','-..'), me,
                     'wrong argument #'..i..' : cannot pass plain vectors to native calls')
             end
         end
@@ -1815,6 +1814,32 @@ type.
         me.fst = exp.fst
         me.lst = exp.lst
         me.isConst = exp.isConst
+    end,
+
+    Vector_constr = function (me)
+        me.lval = false
+        -- append "..": constructor modifier
+        for _, item in ipairs(me) do
+            if item.tag == 'Vector_tup' then
+                local v = AST.asr(item,'', 1,'ExpList')[1]
+                if v then
+                    me.tp = TP.push(TP.push(v.tp,'[]'),'..')
+                    break
+                end
+            else
+                if TP.check(item.tp,'char','&&') then
+                    me.tp = TP.new{'char','[]','..'}
+                else
+                    me.tp = TP.push(TP.pop(item.tp,'&'),'..')
+                end
+                break
+            end
+        end
+        if not me.tp then
+            me.tp = TP.new{'any','[]'}
+        end
+        me.tp.arr = '[]'
+        --ASR(false, me, 'invalid vector type')
     end,
 
     Nat = function (me)

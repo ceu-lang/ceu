@@ -1517,9 +1517,6 @@ me.blk_body = me.blk_body or blk_body
             rec[#rec+1] = to;
             return rec
 
-        elseif tag == 'vector' then
-            return node('Set', me.ln, op, tag, fr, to)
-
         else
             error 'not implemented'
         end
