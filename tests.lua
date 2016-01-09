@@ -283,39 +283,37 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-output char[]&& OUT;
-var char[] xxx = [] .. "1234567890";
-emit OUT => &&xxx;
-escape 1;
-]],
-    env = 'line 1 : not implemented : vectors',
-}
-
-Test { [[
-input char[]&& IN;
-var int ret = 0;
-par/and do
-    var char[]&& vec = await IN;
-    ret = $vec;
-with
-    async do
-        var char[] vec = [1,2,3,4,5];
-        emit IN => &&vec;
-    end
-end
-escape $vec;
-]],
-    env = 'line 1 : not implemented : vectors',
-}
-
+-----------
 Test { [[
 output char[] OUT;
 var char[] xxx = [] .. "1234567890";
 emit OUT => []..xxx;
 escape 1;
 ]],
-    run = 1,
+    env = 'line 1 : invalid event type',
+}
+
+Test { [[
+output char[]&& && OUT;
+]],
+    env = 'line 1 : invalid event type',
+}
+Test { [[
+output char[]& && OUT;
+]],
+    env = 'line 1 : invalid event type',
+}
+Test { [[
+class T with do end
+output T OUT;
+]],
+    env = 'line 2 : invalid event type',
+}
+Test { [[
+class T with do end
+output T&& OUT;
+]],
+    env = 'line 2 : invalid event type',
 }
 
 Test { [[
@@ -332,13 +330,39 @@ with
 end
 escape $vec;
 ]],
-    run = 5,
+    env = 'line 1 : invalid event type',
+}
+
+--]===]
+Test { [[
+output char[]&& OUT;
+var char[] xxx = [] .. "1234567890";
+emit OUT => &&xxx;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input char[]&& IN;
+var int ret = 0;
+par/and do
+    var char[]&& vec = await IN;
+    ret = $vec;
+with
+    async do
+        var char[] vec = [1,2,3,4,5];
+        emit IN => &&vec;
+    end
+end
+escape $vec;
+]],
+    run = 1,
 }
 
 do return end
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }

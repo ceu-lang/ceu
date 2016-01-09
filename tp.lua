@@ -24,6 +24,11 @@ local function TT_copy (tt)
     end
     return ret
 end
+
+function TP.base (tp)
+    return TP.new{tp.tt[1]}
+end
+
 function TP.pop (tp, v)
     if tp.tup then
         return tp, false
