@@ -283,193 +283,9 @@ escape 1;
     run = 1,
 }
 
------------
+do return end
 --]===]
-Test { [[
-output char[] OUT;
-var char[] xxx = [] .. "1234567890";
-emit OUT => []..xxx;
-escape 1;
-]],
-    env = 'line 1 : invalid event type',
-}
 
-Test { [[
-output char[]&& && OUT;
-]],
-    env = 'line 1 : invalid event type',
-}
-Test { [[
-output char[]& && OUT;
-]],
-    env = 'line 1 : invalid event type',
-}
-Test { [[
-class T with do end
-output T OUT;
-]],
-    env = 'line 2 : invalid event type',
-}
-Test { [[
-class T with do end
-output T&& OUT;
-]],
-    env = 'line 2 : invalid event type',
-}
-
-Test { [[
-input char[] IN;
-var int ret = 0;
-par/and do
-    var char[]&& vec = await IN;
-    ret = $vec;
-with
-    async do
-        var char[] vec = [1,2,3,4,5];
-        emit IN => &&vec;
-    end
-end
-escape $vec;
-]],
-    env = 'line 1 : invalid event type',
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_OUT(x) (x->_1->nxt)
-end
-output int[]&& OUT;
-var int[] xxx = [1,2,3,4,5];
-var int ret = emit OUT => &&xxx;
-escape ret;
-]],
-    run = 5,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_OUT(x) (x->_1->nxt)
-end
-output char[]&& OUT;
-var char[] xxx = [] .. "1234567890";
-var int ret = emit OUT => &&xxx;
-escape ret;
-]],
-    run = 10,
-}
-
-Test { [[
-input char[]&& IN;
-var int ret = 0;
-par/and do
-    var char[]&& vec = await IN;
-    ret = $*vec;
-with
-    async do
-        var char[] vec = [1,2,3,4,5];
-        emit IN => &&vec;
-    end
-end
-escape ret;
-]],
-    run = 5,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_OUT(x) (x->_2->nxt + x->has_vector)
-end
-output (int,int[]&&,int) OUT;
-var int[] xxx = [1,2,3,4,5];
-var int ret = emit OUT => (0,&&xxx,1);
-escape ret;
-]],
-    env = 'line 4 : invalid event type : vector only as the last argument'
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit_OUT(x) (x->_3->nxt + x->vector_offset)
-end
-output (int,int,int[]&&) OUT;
-var int[] xxx = [1,2,3,4,5];
-var int ret = emit OUT => (0,1,&&xxx);
-escape ret;
-]],
-    run = 21,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit(a,b,c,d) ceu_out_event_F(a,b,c,d)
-    int ceu_out_event_F (tceu_app* app, int id_out, int len, char* data) {
-        u8 vector_offset = (((u8*)data)[0]);
-        tceu_vector** v = (tceu_vector**)(data + vector_offset);
-        return (*v)->nxt;
-    }
-end
-output (int,int,int[]&&) OUT;
-var int[] xxx = [1,2,3,4,5];
-var int ret = emit OUT => (0,1,&&xxx);
-escape ret;
-]],
-    run = 5,
-}
-
-Test { [[
-output/input (void)=>char SERIAL_CHAR;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit(a,b,c,d) 0
-end
-
-input void OS_START;
-output/input (void)=>char SERIAL_CHAR;
-
-par/or do
-    var int err;
-    var char? v;
-    (err,v) = request SERIAL_CHAR;
-with
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit(a,b,c,d) 0
-end
-input/output (void)=>char SERIAL_CHAR do
-    return 'a';
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    ##define ceu_out_emit(a,b,c,d) 0
-end
-
-input/output (char[]&& str)=>char[]&& PING_PONG do
-    var char[] ret = [].."Pong ";
-    return &&ret;
-end
-escape 1;
-]],
-    run = 1,
-}
-
---do return end
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
@@ -50415,6 +50231,225 @@ with
 end
 ]],
     run = -1,
+}
+
+Test { [[
+output char[] OUT;
+var char[] xxx = [] .. "1234567890";
+emit OUT => []..xxx;
+escape 1;
+]],
+    env = 'line 1 : invalid event type',
+}
+
+Test { [[
+output char[]&& && OUT;
+]],
+    env = 'line 1 : invalid event type',
+}
+Test { [[
+output char[]& && OUT;
+]],
+    env = 'line 1 : invalid event type',
+}
+Test { [[
+class T with do end
+output T OUT;
+]],
+    env = 'line 2 : invalid event type',
+}
+Test { [[
+class T with do end
+output T&& OUT;
+]],
+    env = 'line 2 : invalid event type',
+}
+
+Test { [[
+input char[] IN;
+var int ret = 0;
+par/and do
+    var char[]&& vec = await IN;
+    ret = $vec;
+with
+    async do
+        var char[] vec = [1,2,3,4,5];
+        emit IN => &&vec;
+    end
+end
+escape $vec;
+]],
+    env = 'line 1 : invalid event type',
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_OUT(x) (x->_1->nxt)
+end
+output int[]&& OUT;
+var int[] xxx = [1,2,3,4,5];
+var int ret = emit OUT => &&xxx;
+escape ret;
+]],
+    run = 5,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_OUT(x) (x->_1->nxt)
+end
+output char[]&& OUT;
+var char[] xxx = [] .. "1234567890";
+var int ret = emit OUT => &&xxx;
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+input char[]&& IN;
+var int ret = 0;
+par/and do
+    var char[]&& vec = await IN;
+    ret = $*vec;
+with
+    async do
+        var char[] vec = [1,2,3,4,5];
+        emit IN => &&vec;
+    end
+end
+escape ret;
+]],
+    run = 5,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_OUT(x) (x->_2->nxt + x->has_vector)
+end
+output (int,int[]&&,int) OUT;
+var int[] xxx = [1,2,3,4,5];
+var int ret = emit OUT => (0,&&xxx,1);
+escape ret;
+]],
+    env = 'line 4 : invalid event type : vector only as the last argument'
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit_OUT(x) (x->_3->nxt + x->vector_offset)
+end
+output (int,int,int[]&&) OUT;
+var int[] xxx = [1,2,3,4,5];
+var int ret = emit OUT => (0,1,&&xxx);
+escape ret;
+]],
+    run = 21,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) ceu_out_event_F(a,b,c,d)
+    int ceu_out_event_F (tceu_app* app, int id_out, int len, char* data) {
+        u8 vector_offset = (((u8*)data)[0]);
+        tceu_vector** v = (tceu_vector**)(data + vector_offset);
+        return (*v)->nxt;
+    }
+end
+output (int,int,int[]&&) OUT;
+var int[] xxx = [1,2,3,4,5];
+var int ret = emit OUT => (0,1,&&xxx);
+escape ret;
+]],
+    run = 5,
+}
+
+Test { [[
+output/input (void)=>char SERIAL_CHAR;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) 0
+end
+
+input void OS_START;
+output/input (void)=>char SERIAL_CHAR;
+
+par/or do
+    var int err;
+    var char? v;
+    (err,v) = request SERIAL_CHAR;
+with
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) 0
+end
+input/output (void)=>char SERIAL_CHAR do
+    return 'a';
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) ceu_out_event_F(a,b,c,d)
+    int V = 0;
+    int ceu_out_event_F (tceu_app* app, int id_out, int len, char* data) {
+        {
+            u8 vector_offset = (((u8*)data)[0]);
+            if (vector_offset > 0) {
+                tceu_vector* v = *((tceu_vector**)(data + vector_offset));
+                V = v->nxt;
+            }
+        }
+        return 1;
+    }
+end
+
+input/output (int x)=>char[]&& PING_PONG do
+    var char[] ret = [].."Pong ";
+    native @nohold _printf();
+    _printf("%s\n", &&ret);
+    return &&ret;
+end
+async do
+    emit PING_PONG_REQUEST => (0,1);
+end
+escape _V;
+]],
+    run = 5,
+}
+
+Test { [[
+output/input (int x)=>char[]&& PING_PONG;
+var char[]&&? ret;
+par/and do
+    var int i,err;
+    (i,err,ret) = await PING_PONG_RETURN;
+    native @nohold _printf();
+    _printf("%s\n", ret!);
+with
+    async do
+        var char[] str = [].."END: 10";
+        emit PING_PONG_RETURN => (0,0,&&str);
+    end
+end
+escape 1;
+]],
+    run = 10,
 }
 
 -- ALGEBRAIC DATATYPES (ADTS)
