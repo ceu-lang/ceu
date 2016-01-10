@@ -570,6 +570,11 @@ F =
         return 'NULL'
     end,
     ANY = function (me)
-        return ''
+        local v = unpack(me)
+        if TP.isNumeric(v) then
+            return '0'
+        else
+            return 'NULL'
+        end
     end,
 }

@@ -284,6 +284,7 @@ escape 1;
 }
 
 -----------
+--]===]
 Test { [[
 output char[] OUT;
 var char[] xxx = [] .. "1234567890";
@@ -442,7 +443,6 @@ escape 1;
     run = 1,
 }
 
---]===]
 Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) 0
@@ -455,7 +455,21 @@ escape 1;
     run = 1,
 }
 
-do return end
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) 0
+end
+
+input/output (char[]&& str)=>char[]&& PING_PONG do
+    var char[] ret = [].."Pong ";
+    return &&ret;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+--do return end
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------

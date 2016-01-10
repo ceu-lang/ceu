@@ -953,7 +953,7 @@ me.blk_body = me.blk_body or blk_body
         local dir, spw, rec, ins, out, id_evt, blk = unpack(me)
         local ret_value;
         if out and out[1]~='void' then
-            ret_value = node('ANY', me.ln)
+            ret_value = node('ANY', me.ln, out)
         end
 
         -- Type => TupleType
