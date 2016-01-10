@@ -374,7 +374,6 @@ escape ret;
     run = 5,
 }
 
---]===]
 Test { [[
 native do
     ##define ceu_out_emit_OUT(x) (x->_2->nxt + x->has_vector)
@@ -399,7 +398,64 @@ escape ret;
     run = 21,
 }
 
---do return end
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) ceu_out_event_F(a,b,c,d)
+    int ceu_out_event_F (tceu_app* app, int id_out, int len, char* data) {
+        u8 vector_offset = (((u8*)data)[0]);
+        tceu_vector** v = (tceu_vector**)(data + vector_offset);
+        return (*v)->nxt;
+    }
+end
+output (int,int,int[]&&) OUT;
+var int[] xxx = [1,2,3,4,5];
+var int ret = emit OUT => (0,1,&&xxx);
+escape ret;
+]],
+    run = 5,
+}
+
+Test { [[
+output/input (void)=>char SERIAL_CHAR;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) 0
+end
+
+input void OS_START;
+output/input (void)=>char SERIAL_CHAR;
+
+par/or do
+    var int err;
+    var char? v;
+    (err,v) = request SERIAL_CHAR;
+with
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+--]===]
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) 0
+end
+input/output (void)=>char SERIAL_CHAR do
+    return 'a';
+end
+escape 1;
+]],
+    run = 1,
+}
+
+do return end
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------

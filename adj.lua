@@ -1009,6 +1009,11 @@ me.blk_body = me.blk_body or blk_body
                                         false,node('Type',me.ln,'u8'),false),
                                     node('TupleTypeItem', me.ln,
                                         false, out, false))
+
+                -- remove void argument
+                if #ins==1 and ins[1][2][1]=='void' then
+                    ins_req[#ins_req] = nil -- remove void argument
+                end
                 if #out==1 and out[1]=='void' then
                     ins_ret[#ins_ret] = nil -- remove void argument
                 end
@@ -1060,7 +1065,9 @@ me.blk_body = me.blk_body or blk_body
                 local tp_id = unpack(tp)
                 ASR(tp_id=='void' or id, me, 'missing parameter identifier')
                 --id = '_'..id..'_'..me.n
-                ifc[#ifc+1] = node('Dcl_var', me.ln, 'var', tp, id)
+                if id then
+                    ifc[#ifc+1] = node('Dcl_var', me.ln, 'var', tp, id)
+                end
             end
 
             local cls =
@@ -1137,15 +1144,17 @@ me.blk_body = me.blk_body or blk_body
                 local mod, tp, id = unpack(t)
                 ASR(TP.check({tt=tp},'void') or id, me,
                     'missing parameter identifier')
-                local _id = '_'..id..'_'..me.n
-                --dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, _id)
-                vars[#vars+1] = node('Var', me.ln, _id)
-                sets[#sets+1] = node('_Set', me.ln,
-                                    node('Op2_.', me.ln, '.',
-                                        node('This',me.ln),
-                                        id),
-                                    '=', 'exp',
-                                    node('Var', me.ln, _id))
+                if id then
+                    local _id = '_'..id..'_'..me.n
+                    --dcls[#dcls+1] = node('Dcl_var', me.ln, 'var', tp, _id)
+                    vars[#vars+1] = node('Var', me.ln, _id)
+                    sets[#sets+1] = node('_Set', me.ln,
+                                        node('Op2_.', me.ln, '.',
+                                            node('This',me.ln),
+                                            id),
+                                        '=', 'exp',
+                                        node('Var', me.ln, _id))
+                end
             end
 
             local reqs = ADJ_REQS.reqs
@@ -1704,15 +1713,16 @@ me.blk_body = me.blk_body or blk_body
 
     local tp_req = node('Type', me.ln, 'int')
 
-    if ps then
-        -- insert "id" into "emit REQUEST => (id,...)"
-        if ps.tag == 'ExpList' then
-            table.insert(ps, 1, node('Var',me.ln,id_req))
-        else
-            ps = node('ExpList', me.ln,
-                    node('Var', me.ln, id_req),
-                    ps)
-        end
+    -- insert "id" into "emit REQUEST => (id,...)"
+    if not ps then
+        ps = node('ExpList', me.ln)
+    end
+    if ps.tag == 'ExpList' then
+        table.insert(ps, 1, node('Var',me.ln,id_req))
+    else
+        ps = node('ExpList', me.ln,
+                node('Var', me.ln, id_req),
+                ps)
     end
 
     local awt = node('Await', me.ln,
