@@ -3,7 +3,53 @@
 
 # Requests in Céu
 
+<!--
+Requests in Céu deal with .
+
+set of syntactic constructs
+
+The conversion described above for the request pattern is still a 
+simplification of the problem and neglects some desired functionality:
+
+1. *Failure*:  the resource should be allowed to fail and notify the
+               application.
+2. *Abortion*: the application should be allowed to abort an ongoing request 
+               and notify the resource.
+3. *Sessions*: the application should be allowed to make concurrent requests to 
+               the same resource.
+
+Ideally, the language should deal with these issues as much transparently as 
+possible.
+
 TODO: overall description of the concept
+Ping-Pong
+
+Install `ceu-mqueue`:
+https://github.com/fsantanna/ceu-mqueue/blob/master/INSTALL
+.
+
+```
+output/input (char[]&&)=>void SEND_DONE;
+_printf("sending...\n");
+var char[] str = [].."Hello World!";
+var int err = (request SEND_DONE => &&str);
+_printf("done: %d\n", err);
+```
+
+```
+input/output (char[]&& v)=>void SEND_DONE do
+    _DBG("received %s\n", v);
+    loop i in 10 do
+        _DBG("thinking...\n");
+        await 1s;
+    end
+    _DBG("returning...\n");
+    return;
+end
+```
+
+# Design
+-->
 
 ## Output and Input Events
 
@@ -504,4 +550,60 @@ int main (void) {
 
 ## Resource Implementation in Céu Itself
 
-TODO: `input/output`
+<!--
+So far, we described how to control an external resource from Céu.
+Céu also provides a syntactic sugar for the other way around, i.e., an external 
+application controlling an application in Céu that represents a resource.
+
+
+```
+input  char&& SEND;             // broadcasts some data
+output void   DONE;             // acknowledges the broadcast
+loop do
+    var char&& buffer = await SEND;
+    <...>           // enqueue the buffer
+    emit DONE;
+end
+```
+
+In this example, we use the output event `SEND` to broadcast data and the input 
+event `DONE` to be notified on confirmation.
+A `DONE` input cannot occur without a previous `SEND` output, hence, the 
+cause-and-effect relationship applies in this case.
+
+Another example following this cause-and-effect pattern would be requesting a 
+character from a serial line:
+
+```
+input  void SERIAL;
+output char CHAR;
+loop do
+    await SERIAL;
+    var char c =        // read one character from the serial
+        do
+            <...>;
+            escape <...>;
+        end;
+    emit CHAR => c;
+end
+```
+
+Or a simple *Echo* client-server:
+
+```
+input  char&& PING;
+output char&& PONG;
+loop do
+    var char&& str = await PING;
+    <...>;
+    var char&& out =    // prepare an answer
+        do
+            <...>;
+            escape <...>;
+        end;
+    emit
+    emit PONG => out;
+end
+```
+
+-->
