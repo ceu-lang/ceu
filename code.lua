@@ -1654,16 +1654,38 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 {
     ]]..tp_c..' '..val..[[_ =
         {
+]])
+            if OPTS.tuple_vector then
+                LINE(me, [[
+
 #ifdef CEU_VECTOR
             ]]..vector_offset..[[,
 #endif
+]])
+            end
+            LINE(me, [[
             ]]..table.concat(PS,',')..[[
+]])
+            if OPTS.tuple_vector then
+                LINE(me, [[
 
 #ifdef CEU_VECTOR
             , {}
 #endif
+]])
+            end
+            LINE(me, [[
         };
+]])
+            if OPTS.tuple_vector then
+                LINE(me, [[
+
+#ifdef CEU_VECTOR
         ceu_out_assert(]]..vector_offset..[[ < 256);
+#endif
+]])
+            end
+            LINE(me, [[
     ]]..val..' = '..val..[[_;
 }
 ]])

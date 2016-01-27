@@ -11,6 +11,8 @@ OPTS_NPARAMS = {
     join      = 0,
     c_calls   = 1,
 
+    tuple_vector = 0,
+
     cpp       = 0,
     cpp_exe   = 1,
     cpp_args  = 1,
@@ -39,6 +41,8 @@ OPTS = {
     tmp_vars  = true,
     join      = true,
     c_calls   = nil,    -- [nil=accept]
+
+    tuple_vector = false,
 
     cpp       = true,
     cpp_exe   = 'cpp',
@@ -113,6 +117,8 @@ if not OPTS.input then
         --tmp-vars (--no-tmp-vars) # TODO
         --join (--no-join)     # join lines enclosed by /*{-{*/ and /*}-}*/ (join)
         --c-calls              # TODO
+
+        --tuple-vector         # TODO
 
         --cpp (--no-cpp)       # preprocess the input with `cpp´ (no-cpp)
         --cpp-exe              # preprocessor executable (cpp)
@@ -388,10 +394,15 @@ do
             if T.tup and #T.tup>0 then
                 str = str .. [[
 typedef struct {
+]]
+                if OPTS.tuple_vector then
+                    str = str .. [[
+
 #ifdef CEU_VECTOR     /* TODO: check for each tuple */
     u8 vector_offset; /* >0 if this->_N is a vector */
 #endif
 ]]
+                end
                 for i, t in ipairs(T.tup) do
                     local tmp = TP.toc(t)
                     local tp_id = TP.id(t)
@@ -402,10 +413,15 @@ typedef struct {
                     end
                     str = str..'\t'..tmp..' _'..i..';\n'
                 end
-                str = str .. [[
+                if OPTS.tuple_vector then
+                    str = str .. [[
+
 #ifdef CEU_VECTOR
     char mem[0];
 #endif
+]]
+                end
+                str = str .. [[
 } ]]..TP.toc(T)..[[;
 ]]
             end
