@@ -283,6 +283,16 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+native do
+    int V = 1;
+end
+var _int x = _V;
+await 1s;
+escape x;
+]],
+    run = 1,
+}
 do return end
 --]===]
 
@@ -49550,6 +49560,19 @@ end
 }
 
 Test { [[
+var int v = 1;
+var int&? x;
+if 0 then
+    x = &v;
+else
+    x = &v;
+end
+escape x!;
+]],
+    run = 1,
+}
+
+Test { [[
 var int? v;
 if 1 then
     v = 1;
@@ -50344,6 +50367,7 @@ var int[] xxx = [1,2,3,4,5];
 var int ret = emit OUT => (0,1,&&xxx);
 escape ret;
 ]],
+    opts = '--tuple-vector',
     run = 21,
 }
 
@@ -50361,6 +50385,7 @@ var int[] xxx = [1,2,3,4,5];
 var int ret = emit OUT => (0,1,&&xxx);
 escape ret;
 ]],
+    opts = '--tuple-vector',
     run = 5,
 }
 
@@ -50431,6 +50456,7 @@ end
 escape _V;
 ]],
     run = 5,
+    opts = '--tuple-vector',
 }
 
 Test { [[

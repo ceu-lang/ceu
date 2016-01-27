@@ -196,13 +196,14 @@ end
 
     local CEU, GCC
     local cpp = (T.cpp_args and '--cpp-args "'..T.cpp_args..'"') or ''
+    local opts = T.opts or ''
     local tm  = (T.timemachine and '--timemachine') or ''
     local r = (math.random(2) == 1)
     if OS==true or (OS==nil and r) then
-        CEU = (LUACOV or '')..' ./ceu _ceu_tmp.ceu '..cpp..' --run-tests --os '..tm..' 2>&1'
+        CEU = (LUACOV or '')..' ./ceu _ceu_tmp.ceu '..cpp..' '..opts..'  --run-tests --os '..tm..' 2>&1'
         GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe main.c ceu_os.c _ceu_app.c 2>&1'
     else
-        CEU = (LUACOV or '')..' ./ceu _ceu_tmp.ceu '..cpp
+        CEU = (LUACOV or '')..' ./ceu _ceu_tmp.ceu '..cpp..' '..opts
                 ..(REENTRANT and '--reentrant' or '')
                 ..' --run-tests '..tm..' 2>&1'
         GCC = 'gcc '..O..' -o ceu.exe main.c 2>&1'
