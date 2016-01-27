@@ -139,7 +139,7 @@ F = {
         SET_TARGET[to.var] = true
 
         local outermost_if = nil
-        if (not TP.check(to.var.tp,'?')) and VARS_UNINIT[to.var] then
+        if VARS_UNINIT[to.var] then
             -- Unitialized variables being first-assigned in an "if":
             --      var int x;          // declared outside
             --      if <...> then
@@ -254,7 +254,7 @@ F = {
     If = function (me)
         local c, t, f = unpack(me)
         local var, stmt = next(F.__diff(t.__ref_inits,f.__ref_inits))
-        ASR(not var, stmt, var and
+        ASR((not var) or TP.check(var.tp,'?'), stmt, var and
             'missing initialization for variable "'..(var.id or '?')..'" in the other branch of the `if-then-else´ ('..me.ln[1]..':'..me.ln[2]..')')
         if me.__ref_outermost then
             for var in pairs(t.__ref_inits or {}) do
