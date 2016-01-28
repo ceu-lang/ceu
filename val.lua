@@ -517,6 +517,11 @@ F =
                             ..VAL..' : NULL)'..
                           ')'
                 end
+            elseif TP.check(tp,'char','&&') and
+                   TP.check(exp.tp,'char','[]','&&','-&')
+            then
+                -- (char&&)&&str  =>  str.mem
+                return '((char*)'..VAL..'->mem)'
             end
             return '(('..TP.toc(tp)..')'..VAL..')'
         else -- @annotation

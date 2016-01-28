@@ -283,8 +283,30 @@ escape 1;
     run = 1,
 }
 
-do return end
 --]===]
+Test { [[
+function (char&& str)=>int strlen do
+    return _strlen(str);
+end
+
+var char[] str = [].."Ola Mundo!";
+escape strlen(&&str);
+]],
+    env = 'line 6 : wrong argument #1 : types mismatch (`char&&´ <= `char[]&&´)',
+}
+
+Test { [[
+function (char&& str)=>int strlen do
+    return _strlen(str);
+end
+
+var char[] str = [].."Ola Mundo!";
+escape strlen((char&&)&&str);
+]],
+    run = 10,
+}
+
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
