@@ -73,7 +73,7 @@ F =
 
     Op1_cast = function (me)
         local tp, exp = unpack(me)
-        if exp.cval then
+        if tp.tag=='Type' and exp.cval then
             me.cval = '(('..TP.toc(tp)..')'..exp.cval..')'
         end
     end,

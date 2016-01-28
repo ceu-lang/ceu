@@ -165,11 +165,11 @@ end
 In the last example, the `PING`-`PONG` sequence abstracts the communication 
 between the application and a predefined remote node in the network.
 The asynchronous `emit PING` transfers the data in the background, which 
-eventually reaches the remote node, which then prepares an answer and sends it 
+eventually reaches the remote node, which then prepares a response and sends it 
 back to the application, which eventually awakes from the `await PONG`.
 
 In all three examples above, we use an `emit` to request a service in sequence 
-with an `await` for a confirmation (with an optional answer).
+with an `await` for a confirmation (with an optional response).
 
 Céu provides a syntactic sugar to deal with this pattern as follows:
 
@@ -318,7 +318,7 @@ end
 
 After the `emit PING` and while idle in the `await PONG`, the `par/or` might 
 abort the ongoing request due to awaking from the `await 5s`.
-In this case, the application is no longer interested in the `PONG` answer, 
+In this case, the application is no longer interested in the `PONG` response, 
 given that `str` is out of scope and the `_printf()` will never execute.
 However, the `emit PING` started the communication and the remote node might do 
 unnecessary work in addition too transfer data that will never be used.
@@ -596,7 +596,7 @@ output char&& PONG;
 loop do
     var char&& str = await PING;
     <...>;
-    var char&& out =    // prepare an answer
+    var char&& out =    // prepare a response
         do
             <...>;
             escape <...>;

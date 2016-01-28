@@ -502,23 +502,26 @@ F =
         local tp, exp = unpack(me)
         local VAL = V(exp, CTX)
 
-        local cls = (TP.check(tp,'&&','-&') and ENV.clss[TP.id(tp)])
-        if cls then
-            if cls.is_ifc then
-                -- TODO: out of bounds acc
-                VAL = '(('..VAL..' == NULL) ? NULL : '..
-                        '((_CEU_APP.ifcs_clss[((tceu_org*)'..VAL..')->cls]'
-                            ..'['..cls.n..']) ?'..VAL..' : NULL)'..
-                      ')'
-            else
-                VAL = '(('..VAL..' == NULL) ? NULL : '..
-                        '((((tceu_org*)'..VAL..')->cls == '..cls.n..') ? '
-                        ..VAL..' : NULL)'..
-                      ')'
+        if tp.tag == 'Type' then
+            local cls = (TP.check(tp,'&&','-&') and ENV.clss[TP.id(tp)])
+            if cls then
+                if cls.is_ifc then
+                    -- TODO: out of bounds acc
+                    VAL = '(('..VAL..' == NULL) ? NULL : '..
+                            '((_CEU_APP.ifcs_clss[((tceu_org*)'..VAL..')->cls]'
+                                ..'['..cls.n..']) ?'..VAL..' : NULL)'..
+                          ')'
+                else
+                    VAL = '(('..VAL..' == NULL) ? NULL : '..
+                            '((((tceu_org*)'..VAL..')->cls == '..cls.n..') ? '
+                            ..VAL..' : NULL)'..
+                          ')'
+                end
             end
+            return '(('..TP.toc(tp)..')'..VAL..')'
+        else -- @annotation
+            return VAL
         end
-
-        return '(('..TP.toc(tp)..')'..VAL..')'
     end,
 
     ----------------------------------------------------------------------

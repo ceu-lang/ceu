@@ -454,7 +454,7 @@ F = {
 
     Op1_cast = function (me)
         local tp, _ = unpack(me)
-        if ENV.clss[TP.id(tp)] and TP.check(tp,'&&') then
+        if tp.tag=='Type' and ENV.clss[TP.id(tp)] and TP.check(tp,'&&') then
             PROPS.has_ifcs = true      -- cast must check org->cls_id
         end
     end,

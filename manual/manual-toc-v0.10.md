@@ -20,10 +20,11 @@
     * 3.2 [Native types](#native-types)
     * 3.3 [Class and Interface types](#class-and-interface-types)
     * 3.4 [Type modifiers](#type-modifiers)
-        * 3.4.1 [Pointer](#pointer)
-        * 3.4.2 [Alias](#alias)
-        * 3.4.3 [Option](#option)
-        * 3.4.4 [Dimension](#dimension)
+        * 3.4.1 [References](#references)
+            * 3.4.1.1 [Alias](#alias)
+            * 3.4.1.2 [Pointer](#pointer)
+        * 3.4.2 [Option](#option)
+        * 3.4.3 [Dimension](#dimension)
 * 4 [Statements](#statements)
     * 4.1 [Blocks](#blocks)
         * 4.1.1 [do-end](#do-end)
@@ -167,8 +168,8 @@ The environment broadcasts an occurring event to all active trails, which share
 a single global time reference (the event itself).
 
 The synchronous concurrency model of Céu greatly diverges from conventional 
-multithreading (e.g. *pthreads* and *Java threads*) and the actor model (e.g.  
-*erlang* and *Go*).
+multithreading (e.g. *pthreads* and *Java threads*) and the actor model
+(e.g.  *erlang* and *Go*).
 On the one hand, trails can share variables in a deterministic and seamless way 
 (e.g. no need for locks or semaphores).
 On the other hand, there is no real parallelism (e.g. multi-core execution) in 
@@ -546,7 +547,6 @@ Keywords in Céu are reserved names that cannot be used as identifiers (e.g.,
 variable and class names):
 
 <pre><code><b>
-TODO(pre)
 
         and             async           async/thread    atomic          await
 
@@ -568,21 +568,22 @@ TODO(pre)
 
         or              outer           output          output/input    par
 
-        par/and         par/or          pause/if        pool            return
+        par/and         par/or          pause/if        pool            pre
 
-        s16             s32             s64             s8              request
+        return          s16             s32             s64             s8
 
-        sizeof          spawn           sync            tag             then
+        request         sizeof          spawn           sync            tag
 
-        this            traverse        true            u16             u32
+        then            this            traverse        true            u16
 
-        u64             u8              uint            until           var
+        u32             u64             u8              uint            until
 
-        void            watching        with            word            @const
+        var             void            watching        with            word
 
-        @hold           @nohold         @plain          @pure           @rec
+        @const          @hold           @nohold         @plain          @pure
 
-        @safe
+        @rec            @safe
+
 </b></code></pre>
 
 ### 2.2
@@ -793,24 +794,34 @@ See [Classes and Interfaces](#classes-and-interfaces).
 Type modifiers
 --------------
 
-Types can be suffixed with the following modifiers: `&&`, `&`, `?`, and `[N]`.
+Types can be suffixed with the following modifiers: `&`, `&&`, `?`, and `[N]`.
 
 #### 3.4.1
-### Pointer
+### References
 
-`TODO (like C)`
+`TODO`
 
-#### 3.4.2
-### Alias
+Céu supports two forms of references: *aliases* and *pointers*.
+
+##### 3.4.1.1
+#### Alias
 
 `TODO (like C++ references)`
 
-#### 3.4.3
+##### 3.4.1.2
+#### Pointer
+
+`TODO (like C)`
+
+restrictions
+    - across yielding statements
+
+#### 3.4.2
 ### Option
 
 `TODO (like Maybe)`
 
-#### 3.4.4
+#### 3.4.3
 ### Dimension
 
 `TODO (vectors, pools)`
@@ -1209,6 +1220,38 @@ DclTag ::= <b>tag</b> ID_tag <b>with</b>
            <b>end</b>
 </code></pre>
 
+Example (structured data type)
+
+<pre><code><b>data</b> Foo <b>with</b>
+    <b>var u8</b> a;
+    <b>var int</b> b;
+    <b>var s16</b> c;
+<b>end</b>
+</code></pre>
+
+Example (tagged data type)
+
+<pre><code><b>data</b> Foo <b>with</b>
+    // declare 'BAR' as one possible structure of 'Foo'
+    <b>tag</b> BAR <b>with</b>
+        <b>var u8</b> a;
+        <b>var int</b> b;
+        <b>var s16</b> c;
+    <b>end</b>
+    
+    <b>or</b>
+    
+    // declare 'BAZ' as another possible structure of 'Foo'
+    <b>tag</b> BAZ <b>with</b> 
+        <b>var int</b> d;
+        <b>var s8</b> e;
+    <b>end</b>
+<b>end</b>
+</code></pre>
+
+<i>Note: Céu vectors are not yet supported within data types!</i>
+
+
 #### 4.3.8
 ### Native declarations
 
@@ -1442,6 +1485,18 @@ See [Emit statements](#emit-statements).
 List ::= [ (Data|Exp) { `,´ (Data|Exp) } ]
 </code></pre>
 
+Example (structured data type)
+
+<pre><code>// calls the constructor for 'Foo' and uses the provided values for struct initialization
+<b>var</b> Foo f = Foo(4, 7, 1);
+</code></pre>
+
+Example (tagged data type)
+
+<pre><code>// calls the constructor for 'Foo' (using tag BAZ) and uses the provided values for struct initialization
+<b>var</b> Foo f = Foo.BAZ(2, -9);
+</code></pre>
+
 #### 4.4.6
 ### Traverse assignment
 
@@ -1454,6 +1509,14 @@ List ::= [ (Data|Exp) { `,´ (Data|Exp) } ]
 
 <pre><code>Vector ::= Item { `..´ Item }
 Item   ::= Exp | `[´ [ExpList] `]´
+</code></pre>
+
+Example
+
+<pre><code><b>var int</b>[3] v;        // declare an empty vector of length 3
+v = v .. [8];        // append value '8' to the empty vector
+v = v .. [1] .. [5]; // append the values '1' and '5' to the vector
+                     // here: v = {8, 1, 5}
 </code></pre>
 
 #### 4.4.8
@@ -3124,8 +3187,8 @@ Stmt ::= &lt;empty-string&gt;
                   Data ::= ID_data [`.´ ID_tag] `(´ List `)´
                   List ::= [ (Data|Exp) { `,´ (Data|Exp) } ]
 
-                  Vector ::= Item { `..´ Item }
-                  Item   ::= Exp | `[´ [ExpList] `]´
+                  Vector ::= `[´ [ExpList] `]´ { `..´ Item }
+                  Item   ::= `[´ [ExpList] `]´ | Exp
 
                   AssignableBlock ::= &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt; | &lt;every&gt; | &lt;par&gt;
 

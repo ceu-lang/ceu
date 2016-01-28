@@ -1831,10 +1831,16 @@ type.
 
     Op1_cast = function (me)
         local tp, exp = unpack(me)
-        me.tp   = tp
         me.lval = exp.lval
-        if TP.check(tp,'&&','-&') then
-            me.lval = exp      -- *((u32*)0x100)=v
+
+        if tp.tag == 'Type' then
+            me.tp = tp
+            if TP.check(tp,'&&','-&') then
+                me.lval = exp      -- *((u32*)0x100)=v
+            end
+        else -- @annotation
+            me.tp = exp.tp
+            me[tp] = true
         end
 
         me.fst = exp.fst

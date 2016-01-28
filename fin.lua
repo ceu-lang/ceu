@@ -56,7 +56,7 @@ function ISPTR (node_or_var)
     -- either native dcl or derived
     -- _SDL_Renderer&?: "_ext &?" should not be considered a pointer
     if TP.is_ext(tp,'_','@') and
-       (not (TP.get(tp_id).plain or tp.plain or TP.check(tp,'&','?')))
+       (not (TP.get(tp_id).plain or tp.plain or node_or_var['@plain'] or TP.check(tp,'&','?')))
     then
         if node_or_var.id == '_top_pool' then
             return false    -- TODO: should not be considered "is_ext"
@@ -161,7 +161,7 @@ F = {
             if T.tag == 'Op2_call' then
                 local _, f = unpack(T)
                 func_ceu = f and f.var and f.var.fun
-                func_impure = (T.c.mod~='@pure')
+                func_impure = not (T.c.mod=='@pure' or f['@pure'])
             elseif T.tag == 'EmitExt' then
                 local op, ext, param = unpack(T)
                 input_call = op=='call' and ext.evt.pre=='input'
@@ -555,7 +555,7 @@ F = {
 
         local req = false
 
-        if not (me.c and (me.c.mod=='@pure' or me.c.mod=='@nohold')) then
+        if not (me.c and (me.c.mod=='@pure' or me.c.mod=='@nohold' or f['@nohold'] or f['@pure'])) then
             req = F.__check_params(
                     me,
                     f.var and f.var.fun and f.var.fun.ins,

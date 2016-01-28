@@ -505,7 +505,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __10   = ( Cc(false) * (CKEY'not'+CK'-'+CK'+'+CK'~'+CK'*'+
                               (CK'&&'-P'&'^3) + (CK'&'-'&&') +
                               CK'$$' + (CK'$'-'$$')
-                           + Cc'cast'*(K'('*V'Type'*K')')*#V'__Exp' )
+                           + Cc'cast'*(K'('*V'__Cast'*K')')*#V'__Exp' )
                )^0 * V'__11'
     , __11   = V'__12' *
                   (
@@ -526,6 +526,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'RawExp'  + V'Vector_constr'
              + CKEY'call'     * EV'__Exp'
              + CKEY'call/rec' * EV'__Exp'
+
+    , __Cast = V'Type' + (CKEY'@nohold'+CK'@plain'+CK'@pure')
 
     , SIZEOF = KEY'sizeof' * EK'(' * (V'Type' + V'__Exp') * EK')'
     , NULL   = CKEY'null'     -- TODO: the idea is to get rid of this

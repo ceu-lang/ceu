@@ -283,16 +283,6 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-native do
-    int V = 1;
-end
-var _int x = _V;
-await 1s;
-escape x;
-]],
-    run = 1,
-}
 do return end
 --]===]
 
@@ -592,7 +582,7 @@ end
     run = 1,
 }
 
--- TYPE / NATIVE / ANON
+-- TYPE / NATIVE / ANNOTATIONS
 
 Test { [[
 escape 1;
@@ -656,6 +646,61 @@ var _abc b;
     env = 'line 3 : cannot instantiate type "_abc"',
 }
 
+Test { [[
+input void OS_START;
+native do
+    int f () { return 1; }
+end
+var _int x = (@plain) _f();
+escape x;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+native @pure _f;
+native do
+    int f () { return 1; }
+end
+var _int x = _f();
+escape x;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+native do
+    int f () { return 1; }
+end
+var _int x = ((@pure)_f)();
+escape x;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+native do
+    void* V;
+    int f (void* v) { return 1; }
+end
+var void&& ptr = null;
+var int x = ((@nohold)_f)(ptr);
+escape x;
+]],
+    run = 1,
+}
+Test { [[
+input void OS_START;
+native do
+    void* V;
+    int f (void* v) { return 1; }
+end
+var void&& ptr = null;
+var int x = ((@pure)_f)(ptr);
+escape x;
+]],
+    run = 1,
+}
 Test { [[
 native _abc;
 native do
