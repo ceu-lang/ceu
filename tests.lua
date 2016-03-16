@@ -283,29 +283,6 @@ escape 1;
     run = 1,
 }
 
---]===]
-Test { [[
-function (char&& str)=>int strlen do
-    return _strlen(str);
-end
-
-var char[] str = [].."Ola Mundo!";
-escape strlen(&&str);
-]],
-    env = 'line 6 : wrong argument #1 : types mismatch (`char&&´ <= `char[]&&´)',
-}
-
-Test { [[
-function (char&& str)=>int strlen do
-    return _strlen(str);
-end
-
-var char[] str = [].."Ola Mundo!";
-escape strlen((char&&)&&str);
-]],
-    run = 10,
-}
-
 do return end
 
 ----------------------------------------------------------------------------
@@ -22232,6 +22209,28 @@ var char[] str2 = [].."";
 escape _strcmp(&&str1,"")==0 and _strcmp(&&str2,"")==0;
 ]],
     run = 1,
+}
+
+Test { [[
+function (char&& str)=>int strlen do
+    return _strlen(str);
+end
+
+var char[] str = [].."Ola Mundo!";
+escape strlen(&&str);
+]],
+    env = 'line 6 : wrong argument #1 : types mismatch (`char&&´ <= `char[]&&´)',
+}
+
+Test { [[
+function (char&& str)=>int strlen do
+    return _strlen(str);
+end
+
+var char[] str = [].."Ola Mundo!";
+escape strlen((char&&)&&str);
+]],
+    run = 10,
 }
 
 --<<< VECTORS / STRINGS
@@ -44536,6 +44535,7 @@ escape us[0]?+1;
 --<<< CLASS-VECTORS-FOR-POINTERS-TO-ORGS
 
 -->>> ISR / ATOMIC
+--]===]
 
 Test { [[
 atomic do
@@ -44614,39 +44614,102 @@ escape 1;
 }
 
 Test { [[
-function @rec (void)=>void f;
-var int a;
-interrupt [20] do
-    a = 1;
+interrupt (20) do
 end
 escape 1;
 ]],
-    gcc = 'error: implicit declaration of function ‘ceu_out_isr’',
+    gcc = 'error: implicit declaration of function ‘ceu_out_isr_on’',
 }
 
 Test { [[
 native do
-    int V = 0;
-    void ceu_out_isr (int v, void* f) {
-        V = V + 1;
+    void ceu_out_isr_on (void) {}
+end
+interrupt (20) do
+end
+escape 1;
+]],
+    gcc = 'error: implicit declaration of function ‘ceu_out_isr_off’',
+}
+
+Test { [[
+native do
+    void ceu_out_isr_on  (void) { }
+    void ceu_out_isr_off (void) { }
+end
+interrupt (20) do
+end
+escape 1;
+]],
+    gcc = '5: error: too many arguments to function ‘ceu_out_isr_on’',
+}
+
+Test { [[
+native do
+    void ceu_out_isr_on  (void* f) { }
+    void ceu_out_isr_off (void* f) { }
+end
+interrupt () do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    void ceu_out_isr_on  (void* f) { }
+    void ceu_out_isr_off (void* f, int v) { }
+end
+interrupt () do
+end
+escape 1;
+]],
+    gcc = '5: error: too few arguments to function ‘ceu_out_isr_off’',
+}
+
+Test { [[
+native do
+    int V = 1;
+    void ceu_out_isr_on (void* f, int v1, int v2) {
+        V = V + v1 + v2;
+    }
+    void ceu_out_isr_off (void* f, int v1, int v2) {
+        V = V * v1 - v2;
     }
 end
-var int a=0;
 do
-    interrupt [20] do
-        a = 1;
+    interrupt (3,4) do
     end
 end             // TODO: forcing finalize out_isr(null)
 escape _V;
 ]],
-    --run = 2,
-    isr = 'line 7 : access to "a" must be atomic',
+    run = 20,
+}
+
+Test { [[
+native do
+    int V = 1;
+    void ceu_out_isr_on (void* f, int v) {
+        V = V + v;
+    }
+    void ceu_out_isr_off (void* f, int v) {
+        V = V * v;
+    }
+end
+do
+    interrupt (3) do
+    end
+end             // TODO: forcing finalize out_isr(null)
+escape _V;
+]],
+    run = 12,
 }
 
 Test { [[
 var int[10] v;
 v[0] = 2;
-interrupt [20] do
+interrupt (20) do
     v[0] = 1;
 end
 escape v[0];
@@ -44659,7 +44722,7 @@ var int[10] v;
 atomic do
     v[0] = 2;
 end
-interrupt [20] do
+interrupt (20) do
     v[0] = 1;
 end
 atomic do
@@ -44671,14 +44734,14 @@ end
 
 Test { [[
 native do
-    void ceu_out_isr (int v, void* f) {
-    }
+    void ceu_out_isr_on  (void* f, int v) { }
+    void ceu_out_isr_off (void* f, int v) { }
 end
 var _int[10] v;
 atomic do
     v[0] = 2;
 end
-interrupt [20] do
+interrupt (20) do
     v[0] = 1;
 end
 var int ret;
@@ -44692,7 +44755,7 @@ escape ret;
 
 Test { [[
 var int v = 2;
-interrupt [20] do
+interrupt (20) do
     v = 1;
 end
 escape v;
@@ -44702,7 +44765,7 @@ escape v;
 
 Test { [[
 var int&& v;
-interrupt [20] do
+interrupt (20) do
     *v = 1;
 end
 escape 1;
@@ -44715,7 +44778,7 @@ function (void)=>int f do
     return 2;
 end
 var int v = f();
-interrupt [20] do
+interrupt (20) do
     f();
 end
 escape v;
@@ -44728,7 +44791,7 @@ function (void)=>int f do
     return 2;
 end
 var int v = f();
-interrupt [20] do
+interrupt (20) do
     f();
 end
 escape v;
@@ -44739,7 +44802,7 @@ escape v;
 
 Test { [[
 var int v = _f();
-interrupt [20] do
+interrupt (20) do
     _f();
 end
 escape v;
@@ -44754,11 +44817,11 @@ native do
     int f (void) {
         return 2;
     }
-    void ceu_out_isr (int v, void* f) {
-    }
+    void ceu_out_isr_on  (void* f, int v) { }
+    void ceu_out_isr_off  (void* f, int v) { }
 end
 var int v = _f();
-interrupt [20] do
+interrupt (20) do
     _f();
 end
 escape v;
@@ -44769,7 +44832,7 @@ escape v;
 Test { [[
 var int v;
 v = 2;
-interrupt [20] do
+interrupt (20) do
     v = 1;
 end
 escape v;
@@ -44782,7 +44845,7 @@ var int v;
 atomic do
     v = 2;
 end
-interrupt [20] do
+interrupt (20) do
     this.v = 1;
 end
 escape v;
@@ -44792,14 +44855,14 @@ escape v;
 
 Test { [[
 native do
-    void ceu_out_isr (int v, void* f) {
-    }
+    void ceu_out_isr_on  (void* f, int v) { }
+    void ceu_out_isr_off  (void* f, int v) { }
 end
 var int v;
 atomic do
     v = 2;
 end
-interrupt [20] do
+interrupt (20) do
     this.v = 1;
     v = 1;
 end
@@ -44817,7 +44880,7 @@ var int v;
 atomic do
     v = 2;
 end
-interrupt [20] do
+interrupt (20) do
     this.v = 1;
 end
 escape v;
@@ -44832,7 +44895,7 @@ atomic do
     v = 2;
     p = &&v;
 end
-interrupt [20] do
+interrupt (20) do
     this.v = 1;
 end
 escape 1;
@@ -44846,7 +44909,7 @@ var int&& p;
 atomic do
     p = &&v;
 end
-interrupt [20] do
+interrupt (20) do
     this.v[1] = 1;
 end
 escape 1;
@@ -44855,6 +44918,7 @@ escape 1;
     --env = 'line 4 : invalid operand to unary "&&"',
 }
 
+do return end
 --<<< ISR / ATOMIC
 
 Test { [[
@@ -50544,6 +50608,123 @@ escape 1;
 ]],
     run = 10,
 }
+
+Test { [[
+native @plain _info;
+native/pre do
+    int V = 0;
+    typedef struct info {
+        int8_t i1;
+        uint16_t i2;
+    } info;
+end
+
+native do
+    ##define ceu_out_emit(a,b,c,d) ceu_sys_output_handler(a,b,c,d)
+    int ceu_sys_output_handler(tceu_app* app, int evt_id, int evt_sz, void* evt_buf) {
+        tceu__int__u8__info_h* k;
+        switch (evt_id) {
+            case CEU_OUT_TEST_RETURN:
+                k = (tceu__int__u8__info_h*)evt_buf;
+                V = V + k->_2;
+            break;
+        }
+        return 1;
+    }
+end
+
+input/output [10] (u16 t)=>_info&& TEST do
+    var _info i = _info(42,89);
+    return &&i;
+end
+
+async do
+    emit TEST_REQUEST => (0,0);
+end
+
+escape _V;
+]],
+    run = 5,
+}
+Test { [[
+native @plain _info;
+native/pre do
+    int V = 0;
+    typedef struct info {
+        int8_t i1;
+        uint16_t i2;
+    } info;
+end
+
+native do
+    ##define ceu_out_emit(a,b,c,d) ceu_sys_output_handler(a,b,c,d)
+    int ceu_sys_output_handler(tceu_app* app, int evt_id, int evt_sz, void* evt_buf) {
+        tceu__int__u8__info_h* k;
+        switch (evt_id) {
+            case CEU_OUT_TEST_RETURN:
+                k = (tceu__int__u8__info_h*)evt_buf;
+printf("RET %p %d\n", evt_buf, k->_2);
+                V = V + k->_2;
+            break;
+        }
+        return 1;
+    }
+end
+
+input/output [10] (u16 t)=>_info&& TEST do
+    var _info i = _info(42,89);
+    await 1s;
+    return &&i;
+end
+
+async do
+    emit TEST_REQUEST => (0,0);
+end
+
+await 2s;
+
+escape _V;
+]],
+    run = {['~>1s;~>2s']=2},
+}
+do return end
+
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) 0
+    int V = 0;
+end
+
+class Test with
+    var u8 k;
+do
+    await FOREVER;
+end
+
+interface Global with
+    var Test&&? ptr;
+end
+
+var Test t with
+    this.k = 5;
+end;
+var Test&&? ptr = &&t;
+
+input/output [10] (void)=>void RESOURCE do
+    _V = global:ptr!:k;
+end
+
+async do
+    emit RESOURCE_REQUEST => 0;
+end
+
+escape _V;
+]],
+    run = 5,
+}
+do return end
+
+--<< REQUESTS
 
 -- ALGEBRAIC DATATYPES (ADTS)
 

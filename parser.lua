@@ -189,10 +189,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     EV'__ID_var' * (K','*EV'__ID_var')^0
 
     -- internal functions / interrupts
-    , _Dcl_fun0 = CKEY'interrupt' * EK'[' * NUM * EK']' * (CKEY'@rec'+Cc(false))
-                + CKEY'function' * (CKEY'@rec'+Cc(false))
-                               * EV'_TupleType_2' * EK'=>' * EV'Type'
-                               * V'__ID_var'
+    , _Dcl_fun0 = CKEY'interrupt' * (CKEY'@rec'+Cc(false))
+                                  * EK'(' * EV'ExpList' * EK')'
+                + CKEY'function'  * (CKEY'@rec'+Cc(false))
+                                  * EV'_TupleType_2' * EK'=>' * EV'Type'
+                                  * V'__ID_var'
     , _Dcl_fun1 = V'_Dcl_fun0' * V'__Do'
 
     -- external functions
