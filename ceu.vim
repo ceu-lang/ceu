@@ -18,8 +18,8 @@ syn keyword cType       const nohold rec safe plain pure hold
 syn keyword	cStatement  async await break native continue data do else emit end
 syn keyword cStatement  event every finalize FOREVER global if input loop nothing
 syn keyword cStatement  output pre par pause return then until var with class
-syn keyword cStatement  include interface kill spawn thread sync function
-syn keyword cStatement  escape call interrupt atomic request in
+syn keyword cStatement  include interface kill spawn thread function
+syn keyword cStatement  escape call isr atomic request in
 syn keyword cStatement  watching tag new traverse pool
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 

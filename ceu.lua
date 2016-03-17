@@ -236,6 +236,7 @@ do
             has_ints    = 'CEU_INTS',
             has_asyncs  = 'CEU_ASYNCS',
             has_threads = 'CEU_THREADS',
+            has_isrs    = 'CEU_ISRS',
             has_orgs    = 'CEU_ORGS',
             has_orgs_news        = 'CEU_ORGS_NEWS',
             has_orgs_news_pool   = 'CEU_ORGS_NEWS_POOL',
@@ -444,6 +445,7 @@ do
     CC = SUB(CC, '=== CONSTRS_C ===',   CODE.constrs)
     CC = SUB(CC, '=== PRES_C ===',      CODE.pres)
     CC = SUB(CC, '=== THREADS_C ===',   CODE.threads)
+    CC = SUB(CC, '=== ISRS_C ===',      CODE.isrs)
     CC = SUB(CC, '=== FUNCTIONS_C ===', CODE.functions)
     CC = SUB(CC, '=== STUBS ===',       CODE.stubs)
     CC = SUB(CC, '=== CODE ===',        AST.root.code)
@@ -487,7 +489,7 @@ do
                             flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
                         end
                     end
-                elseif var.pre=='function' or var.pre=='interrupt' then
+                elseif var.pre=='function' then
                     local i = ENV.ifcs.funs[var.ifc_id]
                     if i then
                         funs[i+1] = '(void*)CEU_'..cls.id..'_'..var.id

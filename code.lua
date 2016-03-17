@@ -3,6 +3,7 @@ CODE = {
     pres      = '',
     constrs   = '',
     threads   = '',
+    isrs      = '',
     functions = '',
     stubs     = '',     -- maps input functions to ceu_app_call switch cases
 }
@@ -299,13 +300,7 @@ case CEU_IN_]]..id..[[:
             end
 
             -- functions and threads receive __ceu_org as parameter
-            local code = blk.code
-            if pre=='interrupt' and (not OPTS.os) then
-                code = string.gsub(code, '_ceu_org', '((tceu_org*)CEU_APP.data)')
-                code = string.gsub(code, '_ceu_app', '(&CEU_APP)')
-            else
-                code = string.gsub(code, '_ceu_org', '__ceu_this')
-            end
+            local code = string.gsub(blk.code, '_ceu_org', '__ceu_this')
             CODE.functions = CODE.functions ..
                 me.proto..'{'..code..'}'..'\n'
         end
@@ -2207,6 +2202,21 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 ]]
     end,
 
+    Isr = function (me)
+        local id, blk = unpack(me)
+
+        local code = string.gsub(blk.code, '_ceu_org', '((tceu_org*)CEU_APP.data)')
+        code = string.gsub(code, '_ceu_app', '(&CEU_APP)')
+
+        CODE.isrs = CODE.isrs .. [[
+void ]]..id..[[ (void)
+{
+    ]]..code..[[
+}
+]]
+    end,
+
+
     RawStmt = function (me)
         if me.thread then
             me.thread.thread_st = CUR(me, '__thread_st_'..me.thread.n)
@@ -2347,26 +2357,27 @@ _CEU_LUA_OK_]]..me.n..[[:;
 ]])
     end,
 
-    Sync = function (me)
-        local thr = AST.iter'Thread'()
-        LINE(me, [[
+    Atomic = function (me)
+        local thread = AST.par(me, 'Thread')
+        if thread then
+            LINE(me, [[
 CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
 if (*(_ceu_p.st) == 3) {        /* 3=end */
     CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
-    goto ]]..thr.lbl_out.id..[[;   /* exit if ended from "sync" */
+    goto ]]..thread.lbl_out.id..[[;   /* exit if ended from "sync" */
 } else {                        /* othrewise, execute block */
 ]])
-        CONC(me)
-        LINE(me, [[
+            CONC(me)
+            LINE(me, [[
     CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
 }
 ]])
-    end,
-
-    Atomic = function (me)
-        LINE(me, 'CEU_ISR_ON();')
-        CONC(me)
-        LINE(me, 'CEU_ISR_OFF();')
+        else
+-- TODO: ao contrario?
+            LINE(me, 'CEU_ISR_ON();')
+            CONC(me)
+            LINE(me, 'CEU_ISR_OFF();')
+        end
     end,
 }
 

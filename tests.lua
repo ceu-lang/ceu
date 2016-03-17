@@ -287,6 +287,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -25328,7 +25329,7 @@ var int  a=10, b=5;
 var int& p = &b;
 async/thread (a, p) do
     a = a + p;
-    sync do
+    atomic do
         p = a;
     end
 end
@@ -25343,7 +25344,7 @@ var int& p = &b;
 var int ret =
     async/thread (a, p) do
         a = a + p;
-        sync do
+        atomic do
             p = a;
         end
     end;
@@ -25353,22 +25354,23 @@ escape (ret==1) + a + b + p;
 }
 
 Test { [[
-sync do
+atomic do
     escape 1;
 end
 ]],
-    props = 'line 1 : not permitted outside `thread´',
+    props = 'line 2 : not permitted inside `atomic´',
 }
 
 Test { [[
 async do
-    sync do
+    atomic do
         nothing;
     end
 end
 escape 1;
 ]],
-    props = 'line 2 : not permitted outside `thread´',
+    --props = 'line 2 : not permitted outside `thread´',
+    run = 1,
 }
 
 Test { [[
@@ -25398,7 +25400,7 @@ with
     var int& p = &x;
     p = 2;
     async/thread (p) do
-        sync do
+        atomic do
             p = 2;
         end
     end
@@ -25457,7 +25459,7 @@ Test { [[
 var int  a=10, b=5;
 var int& p = &b;
 async/thread (a, p) do
-    sync do
+    atomic do
         a = a + p;
         p = a;
     end
@@ -25476,7 +25478,7 @@ var int ret = 1;
 var int& p = &ret;
 par/or do
     async/thread (p) do
-        sync do
+        atomic do
             p = 2;
         end
     end
@@ -25500,7 +25502,7 @@ var int& p = &ret;
 par/or do
     async/thread (p) do
         _usleep(]]..i..[[);
-        sync do
+        atomic do
             p = 2;
         end
     end
@@ -25524,13 +25526,13 @@ var int& p2 = &v2;
 
 par/and do
     async/thread (v1, p1) do
-        sync do
+        atomic do
             p1 = v1 + v1;
         end
     end
 with
     async/thread (v2, p2) do
-        sync do
+        atomic do
             p2 = v2 + v2;
         end
     end
@@ -25562,14 +25564,14 @@ end
 par/and do
     async/thread (p1) do
         var int ret = _calc();
-        sync do
+        atomic do
             p1 = ret;
         end
     end
 with
     async/thread (p2) do
         var int ret = _calc();
-        sync do
+        atomic do
             p2 = ret;
         end
     end
@@ -25594,7 +25596,7 @@ par/and do
                 ret = ret + i + j;
             end
         end
-        sync do
+        atomic do
             p1 = ret;
         end
     end
@@ -25606,7 +25608,7 @@ with
                 ret = ret + i + j;
             end
         end
-        sync do
+        atomic do
             p2 = ret;
         end
     end
@@ -25640,14 +25642,14 @@ end
 par/and do
     async/thread (p1) do
         var int ret = _calc();
-        sync do
+        atomic do
             p1 = ret;
         end
     end
 with
     async/thread (p2) do
         var int ret = _calc();
-        sync do
+        atomic do
             p2 = ret;
         end
     end
@@ -25673,7 +25675,7 @@ par/and do
                 ret = ret + i + j;
             end
         end
-        sync do
+        atomic do
             p1 = ret;
         end
     end
@@ -25685,7 +25687,7 @@ with
                 ret = ret + i + j;
             end
         end
-        sync do
+        atomic do
             p2 = ret;
         end
     end
@@ -26026,7 +26028,7 @@ with
     ret = ret + 1;
 with
     async/thread do
-        sync do
+        atomic do
         end
     end
     ret = ret + 1;
@@ -44535,7 +44537,6 @@ escape us[0]?+1;
 --<<< CLASS-VECTORS-FOR-POINTERS-TO-ORGS
 
 -->>> ISR / ATOMIC
---]===]
 
 Test { [[
 atomic do
@@ -44614,7 +44615,7 @@ escape 1;
 }
 
 Test { [[
-interrupt (20) do
+async/isr (20) do
 end
 escape 1;
 ]],
@@ -44626,7 +44627,7 @@ native do
     tceu_app CEU_APP;
     void ceu_out_isr_on (void) {}
 end
-interrupt (20) do
+async/isr (20) do
 end
 escape 1;
 ]],
@@ -44639,7 +44640,7 @@ native do
     void ceu_out_isr_on  (void) { }
     void ceu_out_isr_off (void) { }
 end
-interrupt (20) do
+async/isr (20) do
 end
 escape 1;
 ]],
@@ -44652,7 +44653,7 @@ native do
     void ceu_out_isr_on  (void* f) { }
     void ceu_out_isr_off (void* f) { }
 end
-interrupt () do
+async/isr () do
 end
 escape 1;
 ]],
@@ -44665,7 +44666,7 @@ native do
     void ceu_out_isr_on  (void* f) { }
     void ceu_out_isr_off (void* f, int v) { }
 end
-interrupt () do
+async/isr () do
 end
 escape 1;
 ]],
@@ -44684,7 +44685,7 @@ native do
     }
 end
 do
-    interrupt (3,4) do
+    async/isr (3,4) do
     end
 end             // TODO: forcing finalize out_isr(null)
 escape _V;
@@ -44704,7 +44705,7 @@ native do
     }
 end
 do
-    interrupt (3) do
+    async/isr (3) do
     end
 end             // TODO: forcing finalize out_isr(null)
 escape _V;
@@ -44715,7 +44716,7 @@ escape _V;
 Test { [[
 var int[10] v;
 v[0] = 2;
-interrupt (20) do
+async/isr (20) do
     v[0] = 1;
 end
 escape v[0];
@@ -44728,7 +44729,7 @@ var int[10] v;
 atomic do
     v[0] = 2;
 end
-interrupt (20) do
+async/isr (20) do
     v[0] = 1;
 end
 atomic do
@@ -44749,7 +44750,7 @@ var _int[10] v;
 atomic do
     v[0] = 2;
 end
-interrupt (20) do
+async/isr (20) do
     v[0] = 1;
 end
 var int ret;
@@ -44776,7 +44777,7 @@ var int x = 0;
 atomic do
     global:x = 1;
 end
-interrupt (20) do
+async/isr (20) do
     atomic do
         global:x = 0;
     end
@@ -44788,7 +44789,7 @@ escape x;
 
 Test { [[
 var int v = 2;
-interrupt (20) do
+async/isr (20) do
     v = 1;
 end
 escape v;
@@ -44798,7 +44799,7 @@ escape v;
 
 Test { [[
 var int&& v;
-interrupt (20) do
+async/isr (20) do
     *v = 1;
 end
 escape 1;
@@ -44811,7 +44812,7 @@ function (void)=>int f do
     return 2;
 end
 var int v = f();
-interrupt (20) do
+async/isr (20) do
     f();
 end
 escape v;
@@ -44824,7 +44825,7 @@ function (void)=>int f do
     return 2;
 end
 var int v = f();
-interrupt (20) do
+async/isr (20) do
     f();
 end
 escape v;
@@ -44835,7 +44836,7 @@ escape v;
 
 Test { [[
 var int v = _f();
-interrupt (20) do
+async/isr (20) do
     _f();
 end
 escape v;
@@ -44855,7 +44856,7 @@ native do
     void ceu_out_isr_off  (void* f, int v) { }
 end
 var int v = _f();
-interrupt (20) do
+async/isr (20) do
     _f();
 end
 escape v;
@@ -44866,7 +44867,7 @@ escape v;
 Test { [[
 var int v;
 v = 2;
-interrupt (20) do
+async/isr (20) do
     v = 1;
 end
 escape v;
@@ -44879,7 +44880,7 @@ var int v;
 atomic do
     v = 2;
 end
-interrupt (20) do
+async/isr (20) do
     this.v = 1;
 end
 escape v;
@@ -44897,7 +44898,7 @@ var int v;
 atomic do
     v = 2;
 end
-interrupt (20) do
+async/isr (20) do
     this.v = 1;
     v = 1;
 end
@@ -44915,7 +44916,7 @@ var int v;
 atomic do
     v = 2;
 end
-interrupt (20) do
+async/isr (20) do
     this.v = 1;
 end
 escape v;
@@ -44930,7 +44931,7 @@ atomic do
     v = 2;
     p = &&v;
 end
-interrupt (20) do
+async/isr (20) do
     this.v = 1;
 end
 escape 1;
@@ -44944,7 +44945,7 @@ var int&& p;
 atomic do
     p = &&v;
 end
-interrupt (20) do
+async/isr (20) do
     this.v[1] = 1;
 end
 escape 1;
@@ -44953,7 +44954,6 @@ escape 1;
     --env = 'line 4 : invalid operand to unary "&&"',
 }
 
-do return end
 --<<< ISR / ATOMIC
 
 Test { [[
@@ -49225,7 +49225,7 @@ do
                 ret = ret + i + j;
             end
         end
-        sync do
+        atomic do
             p = ret;
         end
     end
@@ -50722,7 +50722,6 @@ escape _V;
 ]],
     run = {['~>1s;~>2s']=2},
 }
-do return end
 
 Test { [[
 native do
@@ -50757,7 +50756,6 @@ escape _V;
 ]],
     run = 5,
 }
-do return end
 
 --<< REQUESTS
 

@@ -780,6 +780,43 @@ me.blk_body = me.blk_body or blk_body
                     --]]
     end,
 
+    -- ISR: include "ceu_out_isr(id)"
+    _Isr_pre = function (me)
+        me.tag = 'Isr'
+
+        local args, blk = unpack(me)
+
+        local id = 'ISR_'..string.gsub(tostring(me),'[: ]','_')
+        me[1] = id
+
+        table.insert(args, 1, node('RawExp',me.ln,id))
+
+        --[[
+        -- _ceu_out_isr_on(isr, ...)
+        --      finalize with
+        --          _ceu_out_isr_off(isr, ...)
+        --      end
+        --]]
+        return
+            node('Block', me.ln,
+                node('Stmts', me.ln,
+                    me,
+                    --node('Dcl_nat', me.ln, '@nohold', 'func', '_ceu_out_isr_off', false),
+                    node('CallStmt', me.ln,
+                        node('Op2_call', me.ln, 'call',
+                            node('Nat', me.ln, '_ceu_out_isr_on'),
+                            args)),
+                    node('Finalize', me.ln,
+                        false,
+                        node('Finally', me.ln,
+                            node('Block', me.ln,
+                                node('Stmts', me.ln,
+                                    node('CallStmt', me.ln,
+                                        node('Op2_call', me.ln, 'call',
+                                            node('Nat', me.ln, '_ceu_out_isr_off'),
+                                            AST.copy(args)))))))))
+    end,
+
 -- Spawn ------------------------------------------------------------
 
     -- implicit pool in enclosing class if no "in pool"
@@ -895,59 +932,11 @@ me.blk_body = me.blk_body or blk_body
 
 -- Dcl_fun, Dcl_ext --------------------------------------------------------
 
-    _Dcl_ext1_pre = '_Dcl_fun1_pre',
-    _Dcl_fun1_pre = function (me)
+    _Dcl_ext1_pre = '_Dcl_fun_do_pre',
+    _Dcl_fun_do_pre = function (me)
         local dcl, blk = unpack(me)
         dcl[#dcl+1] = blk           -- include body on DCL0
         return dcl
-    end,
-
-    _Dcl_fun0_pre = function (me)
-        me.tag = 'Dcl_fun'
-
-        local pre, rec, args, blk = unpack(me)
-
-        -- ISR: include "ceu_out_isr(id)"
-        if pre == 'interrupt' then
-            local id = '_INTERRUPT_'..string.gsub(tostring(me),'[: ]','_')
-
-            -- convert to 'function'
-                --me[1] = 'function'
-                --me[2] = rec
-                me[3] = node('TupleType', me.ln,
-                            node('TupleTypeItem', me.ln, false,
-                                node('Type', me.ln, 'void'),
-                                false))
-                me[4] = node('Type', me.ln, 'void')
-                me[5] = id
-                me[6] = blk
-
-            table.insert(args, 1, node('Var',me.ln,id))
-
-            --[[
-            -- _ceu_out_isr_on(isr, ...)
-            --      finalize with
-            --          _ceu_out_isr_off(isr, ...)
-            --      end
-            --]]
-            return node('Stmts', me.ln,
-                me,
-                node('Dcl_nat', me.ln, '@nohold', 'func', '_ceu_out_isr_off', false),
-                node('CallStmt', me.ln,
-                    node('Op2_call', me.ln, 'call',
-                        node('Nat', me.ln, '_ceu_out_isr_on'),
-                        args,
-                        node('Finally', me.ln,
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('CallStmt', me.ln,
-                                        node('Op2_call', me.ln, 'call',
-                                            node('Nat', me.ln, '_ceu_out_isr_off'),
-                                            AST.copy(args)))))))))
-        -- FUN
-        else
-            return me
-        end
     end,
 
     _Dcl_ext0_pre = function (me)

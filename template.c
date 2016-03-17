@@ -121,6 +121,11 @@ static void ceu_stack_clr () {
 === THREADS_C ===
 #endif
 
+#ifdef CEU_ISRS
+/* ISRS_C */
+=== ISRS_C ===
+#endif
+
 /* FUNCTIONS_C */
 === FUNCTIONS_C ===
 

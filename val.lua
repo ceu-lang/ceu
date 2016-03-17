@@ -142,8 +142,6 @@ F =
 
         elseif var.pre == 'function' then
             VAL = 'CEU_'..cls.id..'_'..var.id
-        elseif var.pre == 'interrupt' then
-            VAL = 'CEU_'..cls.id..'_'..var.id
         elseif var.pre == 'event' then
             assert(CTX.evt)
             return var.evt.idx

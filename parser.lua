@@ -130,8 +130,8 @@ KEYS = P'nothing' + 'escape' + 'return' + 'break' + 'continue'
      + 'par' + 'par/and' + 'par/or' + 'with'
      + 'watching'
      + 'pause/if'
-     + 'async' + 'async/thread' + 'sync'
-     + 'interrupt' + 'atomic'
+     + 'async' + 'async/thread'
+     + 'async/isr' + 'atomic'
      + 'or' + P'and' + 'not'
      + 'sizeof'
      + 'null'
@@ -189,12 +189,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     EV'__ID_var' * (K','*EV'__ID_var')^0
 
     -- internal functions / interrupts
-    , _Dcl_fun0 = CKEY'interrupt' * (CKEY'@rec'+Cc(false))
-                                  * EK'(' * EV'ExpList' * EK')'
-                + CKEY'function'  * (CKEY'@rec'+Cc(false))
-                                  * EV'_TupleType_2' * EK'=>' * EV'Type'
-                                  * V'__ID_var'
-    , _Dcl_fun1 = V'_Dcl_fun0' * V'__Do'
+    , Dcl_fun = CKEY'function' * (CKEY'@rec'+Cc(false))
+                               * EV'_TupleType_2' * EK'=>' * EV'Type'
+                               * V'__ID_var'
+    , _Dcl_fun_do = V'Dcl_fun' * V'__Do'
 
     -- external functions
     , __Dcl_ext_call = (CKEY'input'+CKEY'output')
@@ -228,7 +226,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_ifc = KEY'interface' * Cc(true)
                * EV'__ID_cls'
                * EKEY'with' * V'_BlockI' * EKEY'end'
-    , _BlockI = ( (EV'_Dcl_var'+V'_Dcl_int'+V'_Dcl_pool'+V'_Dcl_fun0'+V'_Dcl_imp')
+    , _BlockI = ( (EV'_Dcl_var'+V'_Dcl_int'+V'_Dcl_pool'+V'Dcl_fun'+V'_Dcl_imp')
                   * (EK';'*K';'^0)
                )^0
     , _Dcl_imp = KEY'interface' * EV'__ID_cls' * (K',' * EV'__ID_cls')^0
@@ -417,7 +415,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- asynchronous execution
     , Async   = KEY'async' * (-P'/thread') * (V'VarList'+Cc(false)) * V'__Do'
     , _Thread = KEY'async/thread'          * (V'VarList'+Cc(false)) * V'__Do'
-    , Sync    = KEY'sync'   * V'__Do'
+    , _Isr    = KEY'async/isr' * EK'(' * EV'ExpList' * EK')' * V'__Do'
     , Atomic  = KEY'atomic' * V'__Do'
 
     -- C integration
@@ -552,13 +550,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  * ( V'__LstStmt' * (EK';'*K';'^0) +
                      V'__LstStmtB' * (K';'^0)
                    )^-1
-                 * (V'Host'+V'_Dcl_fun1')^0 )
+                 * (V'Host'+V'_Dcl_fun_do')^0 )
 
     , __LstStmt  = V'_Escape' + V'Return' + V'Break' + V'_Continue' + V'AwaitN'
     , __LstStmtB = V'ParEver'
     , __StmtS    = V'Nothing'
                  + V'_Dcl_var'  + V'_Dcl_pool' + V'_Dcl_int'
-                 + V'_Dcl_fun0' + V'_Dcl_ext0'
+                 + V'Dcl_fun' + V'_Dcl_ext0'
                  + V'_Dcl_nat'  + V'Dcl_det'
                  + V'_Set'
                  + V'Await' + V'EmitExt' + V'EmitInt'
@@ -571,7 +569,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
-    , __StmtB = V'_Dcl_fun1' + V'_Dcl_ext1'
+    , __StmtB = V'_Dcl_fun_do' + V'_Dcl_ext1'
               + V'_Dcl_ifc'  + V'Dcl_cls' + V'Dcl_adt'
               + V'Host'
               + V'Do'    + V'If'
@@ -580,7 +578,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + V'Finalize'
               + V'ParOr' + V'ParAnd' + V'_Watching'
               + V'_Pause'
-              + V'Async' + V'_Thread' + V'Sync' + V'Atomic'
+              + V'Async' + V'_Thread' + V'_Isr' + V'Atomic'
               + V'_DoPre'
               + V'_LuaStmt'
 

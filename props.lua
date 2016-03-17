@@ -4,6 +4,7 @@ PROPS = {
     has_ints    = false,
     has_asyncs  = false,
     has_threads = false,
+    has_isrs    = false,
     has_orgs    = false,
     has_ifcs    = false,
     has_clear   = false,
@@ -366,8 +367,8 @@ F = {
     Thread = function (me)
         PROPS.has_threads = true
     end,
-    Sync = function (me)
-        ASR(AST.iter'Thread'(), me,'not permitted outside `thread´')
+    Isr = function (me)
+        PROPS.has_isrs = true
     end,
 
     Pause = function (me)

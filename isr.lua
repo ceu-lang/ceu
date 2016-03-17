@@ -13,8 +13,7 @@
 local accs = {}
 
 local function inIsr (me)
-    local fun = AST.par(me, 'Dcl_fun')
-    return fun and fun.var.pre=='interrupt'
+    return AST.par(me, 'Isr')
 end
 
 local msg = 'breaks the static check for `atomic´ sections'
