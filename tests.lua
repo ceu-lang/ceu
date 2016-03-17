@@ -287,7 +287,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -44954,6 +44953,44 @@ escape 1;
     --env = 'line 4 : invalid operand to unary "&&"',
 }
 
+--]===]
+Test { [[
+async/isr () do
+    emit A;
+end
+escape 1;
+]],
+    env = 'line 2 : event "A" is not declared',
+}
+
+Test { [[
+input int A;
+async/isr () do
+    emit A;
+end
+escape 1;
+]],
+    env = ' line 3 : arity mismatch',
+}
+
+Test { [[
+input int A;
+native do
+    tceu_app CEU_APP;
+    void ceu_out_isr_on  (void* f) { }
+    void ceu_out_isr_off  (void* f) { }
+end
+async/isr () do
+    var int x = 111;
+    emit A => 1;
+    x = 222;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+do return end
 --<<< ISR / ATOMIC
 
 Test { [[

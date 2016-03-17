@@ -814,7 +814,8 @@ me.blk_body = me.blk_body or blk_body
                                     node('CallStmt', me.ln,
                                         node('Op2_call', me.ln, 'call',
                                             node('Nat', me.ln, '_ceu_out_isr_off'),
-                                            AST.copy(args)))))))))
+                                            AST.copy(args))))))),
+                    node('AwaitN',me.ln)))
     end,
 
 -- Spawn ------------------------------------------------------------

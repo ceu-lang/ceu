@@ -1868,11 +1868,14 @@ if (!_ceu_app->isAlive)
     return;     /* HALT(me) */
 }
 ]])
-        HALT(me, {
-            no   = no,
-            evt  = 'CEU_IN__ASYNC',
-            lbl  = me.lbl_cnt.id,
-        })
+
+        if AST.par(me, 'Async') then
+            HALT(me, {
+                no   = no,
+                evt  = 'CEU_IN__ASYNC',
+                lbl  = me.lbl_cnt.id,
+            })
+        end
     end,
 
     EmitInt = function (me)
@@ -2211,6 +2214,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
         CODE.isrs = CODE.isrs .. [[
 void ]]..id..[[ (void)
 {
+    tceu_stk* _ceu_stk = NULL;
     ]]..code..[[
 }
 ]]

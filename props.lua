@@ -423,8 +423,8 @@ F = {
 
     EmitExt = function (me)
         local op, ext = unpack(me)
-        if ext.evt.pre == 'input' then
-            ASR( AST.par(me,'Async') or op=='call',
+        if ext.evt.pre=='input' and op~='call' then
+            ASR(AST.par(me,'Async') or AST.par(me,'Isr'),
                 me, 'invalid `'..op..'´')
                     -- no <emit I> on sync
         end
