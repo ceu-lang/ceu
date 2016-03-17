@@ -44623,6 +44623,7 @@ escape 1;
 
 Test { [[
 native do
+    tceu_app CEU_APP;
     void ceu_out_isr_on (void) {}
 end
 interrupt (20) do
@@ -44634,6 +44635,7 @@ escape 1;
 
 Test { [[
 native do
+    tceu_app CEU_APP;
     void ceu_out_isr_on  (void) { }
     void ceu_out_isr_off (void) { }
 end
@@ -44646,6 +44648,7 @@ escape 1;
 
 Test { [[
 native do
+    tceu_app CEU_APP;
     void ceu_out_isr_on  (void* f) { }
     void ceu_out_isr_off (void* f) { }
 end
@@ -44658,6 +44661,7 @@ escape 1;
 
 Test { [[
 native do
+    tceu_app CEU_APP;
     void ceu_out_isr_on  (void* f) { }
     void ceu_out_isr_off (void* f, int v) { }
 end
@@ -44671,6 +44675,7 @@ escape 1;
 Test { [[
 native do
     int V = 1;
+    tceu_app CEU_APP;
     void ceu_out_isr_on (void* f, int v1, int v2) {
         V = V + v1 + v2;
     }
@@ -44690,6 +44695,7 @@ escape _V;
 Test { [[
 native do
     int V = 1;
+    tceu_app CEU_APP;
     void ceu_out_isr_on (void* f, int v) {
         V = V + v;
     }
@@ -44734,6 +44740,8 @@ end
 
 Test { [[
 native do
+    tceu_app CEU_APP;
+    tceu_app CEU_APP;
     void ceu_out_isr_on  (void* f, int v) { }
     void ceu_out_isr_off (void* f, int v) { }
 end
@@ -44751,6 +44759,31 @@ end
 escape ret;
 ]],
     run = 2,
+}
+
+Test { [[
+native do
+    tceu_app CEU_APP;
+    void ceu_out_isr_on  (void* f, int v) { }
+    void ceu_out_isr_off (void* f, int v) { }
+end
+
+interface Global with
+    var int x;
+end
+var int x = 0;
+
+atomic do
+    global:x = 1;
+end
+interrupt (20) do
+    atomic do
+        global:x = 0;
+    end
+end
+escape x;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -44817,6 +44850,7 @@ native do
     int f (void) {
         return 2;
     }
+    tceu_app CEU_APP;
     void ceu_out_isr_on  (void* f, int v) { }
     void ceu_out_isr_off  (void* f, int v) { }
 end
@@ -44855,6 +44889,7 @@ escape v;
 
 Test { [[
 native do
+    tceu_app CEU_APP;
     void ceu_out_isr_on  (void* f, int v) { }
     void ceu_out_isr_off  (void* f, int v) { }
 end

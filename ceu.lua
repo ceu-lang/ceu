@@ -487,7 +487,7 @@ do
                             flds[i+1] = 'offsetof(CEU_'..cls.id..','..(var.id_ or var.id)..')'
                         end
                     end
-                elseif var.pre == 'function' then
+                elseif var.pre=='function' or var.pre=='interrupt' then
                     local i = ENV.ifcs.funs[var.ifc_id]
                     if i then
                         funs[i+1] = '(void*)CEU_'..cls.id..'_'..var.id

@@ -253,9 +253,6 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this, 
             me.code = me.code .. cls.code_cls
         end
 
-        -- functions and threads receive __ceu_org as parameter
-        CODE.functions = string.gsub(CODE.functions, '_ceu_org', '__ceu_this')
-
         -- assert that all input functions have bodies
         for evt, v in pairs(INPUT_FUNCTIONS) do
             ASR(v, evt.ln, 'missing function body')
@@ -271,7 +268,7 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this, 
     end,
 
     Dcl_fun = function (me)
-        local _, _, ins, out, id, blk = unpack(me)
+        local pre, _, ins, out, id, blk = unpack(me)
         if blk then
             if me.var.fun.isExt then
                 local ps = {}
@@ -300,8 +297,17 @@ case CEU_IN_]]..id..[[:
     ]]..ret_value..me.id..'(_ceu_app, _ceu_app->data '..ps..[[));
 ]]..ret_void..'\n'
             end
+
+            -- functions and threads receive __ceu_org as parameter
+            local code = blk.code
+            if pre=='interrupt' and (not OPTS.os) then
+                code = string.gsub(code, '_ceu_org', '((tceu_org*)CEU_APP.data)')
+                code = string.gsub(code, '_ceu_app', '(&CEU_APP)')
+            else
+                code = string.gsub(code, '_ceu_org', '__ceu_this')
+            end
             CODE.functions = CODE.functions ..
-                me.proto..'{'..blk.code..'}'..'\n'
+                me.proto..'{'..code..'}'..'\n'
         end
 
         -- assert that all input functions have bodies
