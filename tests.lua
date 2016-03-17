@@ -287,6 +287,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -44953,24 +44954,29 @@ escape 1;
     --env = 'line 4 : invalid operand to unary "&&"',
 }
 
---]===]
 Test { [[
-async/isr () do
-    emit A;
+par/or do
+    async/isr () do
+        emit A;
+    end
+with
 end
 escape 1;
 ]],
-    env = 'line 2 : event "A" is not declared',
+    env = 'line 3 : event "A" is not declared',
 }
 
 Test { [[
 input int A;
-async/isr () do
-    emit A;
+par/or do
+    async/isr () do
+        emit A;
+    end
+with
 end
 escape 1;
 ]],
-    env = ' line 3 : arity mismatch',
+    env = ' line 4 : arity mismatch',
 }
 
 Test { [[
@@ -44980,17 +44986,47 @@ native do
     void ceu_out_isr_on  (void* f) { }
     void ceu_out_isr_off  (void* f) { }
 end
-async/isr () do
-    var int x = 111;
-    emit A => 1;
-    x = 222;
+par/or do
+    async/isr () do
+        var int x = 111;
+        emit A => 1;
+        x = 222;
+    end
+with
 end
 escape 1;
 ]],
     run = 1,
 }
 
-do return end
+Test { [[
+@safe _assert;
+native do
+    int V = 0;
+    tceu_app CEU_APP;
+    void ceu_out_isr_on (void* f, int v) {
+        V = V + v;
+    }
+    void ceu_out_isr_off (void* f, int v) {
+        V = V - v;
+    }
+end
+par/or do
+    _assert(_V==0);
+    async/isr (1) do
+    end
+with
+    _assert(_V==1);
+    await 1s;
+    _assert(_V==1);
+end             // TODO: forcing finalize out_isr(null)
+_assert(_V==0);
+escape _V+1;
+]],
+    run = { ['~>1s']=1 },
+}
+
+--do return end
 --<<< ISR / ATOMIC
 
 Test { [[

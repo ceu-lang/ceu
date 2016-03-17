@@ -255,8 +255,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 *X* EKEY'end'
 
     -- deterministic annotations
-    , Dcl_det  = KEY'@safe' * EV'__ID' * EKEY'with' *
-                     EV'__ID' * (K',' * EV'__ID')^0
+    , Dcl_det  = KEY'@safe' * EV'__ID' * (
+                    EKEY'with' * EV'__ID' * (K',' * EV'__ID')^0
+                 )^-1
     , __ID     = V'__ID_nat' + V'__ID_ext' + V'Var'
 
 

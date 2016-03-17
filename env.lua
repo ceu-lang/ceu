@@ -646,13 +646,22 @@ F = {
     Dcl_det = function (me)                 -- TODO: verify in ENV.c
         local id1 = det2id(me[1])
         local t1 = ENV.dets[id1] or {}
+        if #me == 1 then
+            t1 = true   -- safe against everything
+        end
         ENV.dets[id1] = t1
         for i=2, #me do
             local id2 = det2id(me[i])
+
+            if t1 ~= true then
+                t1[id2] = true
+            end
+
             local t2 = ENV.dets[id2] or {}
-            ENV.dets[id2] = t2
-            t1[id2] = true
-            t2[id1] = true
+            if t2 ~= true then
+                ENV.dets[id2] = t2
+                t2[id1] = true
+            end
         end
     end,
 

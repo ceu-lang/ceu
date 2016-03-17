@@ -489,7 +489,12 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
                 local c2 = ENV.c[acc2.id]
                 c2 = c2 and (c2.mod=='@pure' or c2.mod=='const')
                 local c_ = c1 or c2
-                        or (ENV.dets[acc1.id] and ENV.dets[acc1.id][acc2.id])
+                        or (ENV.dets[acc1.id] and
+                                (ENV.dets[acc1.id]==true or
+                                 ENV.dets[acc1.id][acc2.id]))
+                        or (ENV.dets[acc2.id] and
+                                (ENV.dets[acc2.id]==true or
+                                 ENV.dets[acc2.id][acc1.id]))
 
     --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
 --[[
