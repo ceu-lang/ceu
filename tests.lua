@@ -44615,7 +44615,10 @@ escape 1;
 }
 
 Test { [[
-async/isr (20) do
+par/or do
+    async/isr (20) do
+    end
+with
 end
 escape 1;
 ]],
@@ -44627,7 +44630,10 @@ native do
     tceu_app CEU_APP;
     void ceu_out_isr_on (void) {}
 end
-async/isr (20) do
+par/or do
+    async/isr (20) do
+    end
+with
 end
 escape 1;
 ]],
@@ -44640,7 +44646,10 @@ native do
     void ceu_out_isr_on  (void) { }
     void ceu_out_isr_off (void) { }
 end
-async/isr (20) do
+par/or do
+    async/isr (20) do
+    end
+with
 end
 escape 1;
 ]],
@@ -44653,7 +44662,10 @@ native do
     void ceu_out_isr_on  (void* f) { }
     void ceu_out_isr_off (void* f) { }
 end
-async/isr () do
+par/or do
+    async/isr () do
+    end
+with
 end
 escape 1;
 ]],
@@ -44666,7 +44678,10 @@ native do
     void ceu_out_isr_on  (void* f) { }
     void ceu_out_isr_off (void* f, int v) { }
 end
-async/isr () do
+par/or do
+    async/isr () do
+    end
+with
 end
 escape 1;
 ]],
@@ -44684,10 +44699,13 @@ native do
         V = V * v1 - v2;
     }
 end
+par/or do
 do
     async/isr (3,4) do
     end
 end             // TODO: forcing finalize out_isr(null)
+with
+end
 escape _V;
 ]],
     run = 20,
@@ -44704,10 +44722,13 @@ native do
         V = V * v;
     }
 end
-do
-    async/isr (3) do
-    end
-end             // TODO: forcing finalize out_isr(null)
+par/or do
+    do
+        async/isr (3) do
+        end
+    end             // TODO: forcing finalize out_isr(null)
+with
+end
 escape _V;
 ]],
     run = 12,
@@ -44716,8 +44737,11 @@ escape _V;
 Test { [[
 var int[10] v;
 v[0] = 2;
-async/isr (20) do
-    v[0] = 1;
+par/or do
+    async/isr (20) do
+        v[0] = 1;
+    end
+with
 end
 escape v[0];
 ]],
@@ -44729,14 +44753,17 @@ var int[10] v;
 atomic do
     v[0] = 2;
 end
-async/isr (20) do
-    v[0] = 1;
+par/or do
+    async/isr (20) do
+        v[0] = 1;
+    end
+with
 end
 atomic do
     escape v[0];
 end
 ]],
-    props = 'line 9 : not permitted inside `atomic´',
+    props = 'line 12 : not permitted inside `atomic´',
 }
 
 Test { [[
@@ -44750,15 +44777,19 @@ var _int[10] v;
 atomic do
     v[0] = 2;
 end
-async/isr (20) do
-    v[0] = 1;
+par do
+    async/isr (20) do
+        v[0] = 1;
+    end
+with
+    var int ret;
+    atomic do
+        ret = v[0];
+    end
+    escape ret;
 end
-var int ret;
-atomic do
-    ret = v[0];
-end
-escape ret;
 ]],
+    _ana = {acc=1},
     run = 2,
 }
 
@@ -44777,10 +44808,13 @@ var int x = 0;
 atomic do
     global:x = 1;
 end
-async/isr (20) do
-    atomic do
-        global:x = 0;
+par/or do
+    async/isr (20) do
+        atomic do
+            global:x = 0;
+        end
     end
+with
 end
 escape x;
 ]],
@@ -44789,8 +44823,11 @@ escape x;
 
 Test { [[
 var int v = 2;
-async/isr (20) do
-    v = 1;
+par/or do
+    async/isr (20) do
+        v = 1;
+    end
+with
 end
 escape v;
 ]],
@@ -44798,13 +44835,16 @@ escape v;
 }
 
 Test { [[
-var int&& v;
-async/isr (20) do
-    *v = 1;
+var int&& v = null;
+par/or do
+    async/isr (20) do
+        *v = 1;
+    end
+with
 end
 escape 1;
 ]],
-    isr = 'line 3 : pointer access breaks the static check for `atomic´ sections',
+    isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
 }
 
 Test { [[
@@ -44812,12 +44852,15 @@ function (void)=>int f do
     return 2;
 end
 var int v = f();
-async/isr (20) do
-    f();
+par/or do
+    async/isr (20) do
+        f();
+    end
+with
 end
 escape v;
 ]],
-    isr = 'line 6 : call breaks the static check for `atomic´ sections',
+    isr = 'line 7 : call breaks the static check for `atomic´ sections',
 }
 
 Test { [[
@@ -44825,8 +44868,11 @@ function (void)=>int f do
     return 2;
 end
 var int v = f();
-async/isr (20) do
-    f();
+par/or do
+    async/isr (20) do
+        f();
+    end
+with
 end
 escape v;
 ]],
@@ -44836,8 +44882,11 @@ escape v;
 
 Test { [[
 var int v = _f();
-async/isr (20) do
-    _f();
+par/or do
+    async/isr (20) do
+        _f();
+    end
+with
 end
 escape v;
 ]],
@@ -44856,8 +44905,11 @@ native do
     void ceu_out_isr_off  (void* f, int v) { }
 end
 var int v = _f();
-async/isr (20) do
-    _f();
+par/or do
+    async/isr (20) do
+        _f();
+    end
+with
 end
 escape v;
 ]],
@@ -44867,8 +44919,11 @@ escape v;
 Test { [[
 var int v;
 v = 2;
-async/isr (20) do
-    v = 1;
+par/or do
+    async/isr (20) do
+        v = 1;
+    end
+with
 end
 escape v;
 ]],
@@ -44880,12 +44935,15 @@ var int v;
 atomic do
     v = 2;
 end
-async/isr (20) do
-    this.v = 1;
+par/or do
+    async/isr (20) do
+        this.v = 1;
+    end
+with
 end
 escape v;
 ]],
-    isr = 'line 8 : access to "v" must be atomic',
+    isr = 'line 11 : access to "v" must be atomic',
 }
 
 Test { [[
@@ -44898,16 +44956,20 @@ var int v;
 atomic do
     v = 2;
 end
-async/isr (20) do
-    this.v = 1;
-    v = 1;
+par do
+    async/isr (20) do
+        this.v = 1;
+        v = 1;
+    end
+with
+    var int ret;
+    atomic do
+        ret = v;
+    end
+    escape ret;
 end
-var int ret;
-atomic do
-    ret = v;
-end
-escape ret;
 ]],
+    _ana = {acc=2},
     run = 2,
 }
 
@@ -44916,12 +44978,15 @@ var int v;
 atomic do
     v = 2;
 end
-async/isr (20) do
-    this.v = 1;
+par/or do
+    async/isr (20) do
+        this.v = 1;
+    end
+with
 end
 escape v;
 ]],
-    isr = 'line 8 : access to "v" must be atomic',
+    isr = 'line 11 : access to "v" must be atomic',
 }
 
 Test { [[
@@ -44931,8 +44996,11 @@ atomic do
     v = 2;
     p = &&v;
 end
-async/isr (20) do
-    this.v = 1;
+par/or do
+    async/isr (20) do
+        this.v = 1;
+    end
+with
 end
 escape 1;
 ]],
@@ -44945,8 +45013,11 @@ var int&& p;
 atomic do
     p = &&v;
 end
-async/isr (20) do
-    this.v[1] = 1;
+par/or do
+    async/isr (20) do
+        this.v[1] = 1;
+    end
+with
 end
 escape 1;
 ]],
