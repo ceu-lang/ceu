@@ -787,6 +787,7 @@ me.blk_body = me.blk_body or blk_body
         local args, blk = unpack(me)
 
         local f = 'ISR_'..string.gsub(tostring(me),'[: ]','_')
+        ASR(args[1], me.ln, 'missing ISR identifier')
         me[1] = args[1][1]
         me[2] = f
         me[3] = blk

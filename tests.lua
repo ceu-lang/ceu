@@ -25362,6 +25362,10 @@ end
 }
 
 Test { [[
+native do
+    ##define ceu_out_isr_on();
+    ##define ceu_out_isr_off();
+end
 async do
     atomic do
         nothing;
@@ -44628,7 +44632,8 @@ escape 1;
 Test { [[
 native do
     tceu_app CEU_APP;
-    void ceu_out_isr_attach (void) {}
+    void ceu_out_isr_attach (void*) {}
+    void ceu_out_isr_detach (void*) {}
 end
 par/or do
     async/isr (20) do
@@ -44637,7 +44642,7 @@ with
 end
 escape 1;
 ]],
-    gcc = 'error: implicit declaration of function ‘ceu_out_isr_off’',
+    gcc = 'error: #error "Missing definition for macro \\"ceu_out_isr_on\\"."',
 }
 
 Test { [[
@@ -44657,13 +44662,15 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pre do
     tceu_app CEU_APP;
-    void ceu_out_isr_attach  (void* f) { }
-    void ceu_out_isr_off (void* f) { }
+    ##define ceu_out_isr_on
+    ##define ceu_out_isr_off
+    ##define ceu_out_isr_attach
+    ##define ceu_out_isr_detach
 end
 par/or do
-    async/isr () do
+    async/isr (1) do
     end
 with
 end
@@ -44673,31 +44680,39 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pre do
     tceu_app CEU_APP;
-    void ceu_out_isr_attach  (void* f) { }
-    void ceu_out_isr_off (void* f, int v) { }
+    void ceu_sys_isr_attach  (void* f, int v) { }
+    void ceu_sys_isr_detach  (void* f, int v, int h) { }
+    ##define ceu_out_isr_on
+    ##define ceu_out_isr_off
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
 end
 par/or do
-    async/isr () do
+    async/isr (1) do
     end
 with
 end
 escape 1;
 ]],
-    gcc = '5: error: too few arguments to function ‘ceu_out_isr_off’',
+    gcc = '5: error: too few arguments to function ‘ceu_sys_isr_detach’',
 }
 
 Test { [[
-native do
+native/pre do
     int V = 1;
     tceu_app CEU_APP;
-    void ceu_out_isr_attach (void* f, int v1, int v2) {
+    ##define ceu_out_isr_on
+    ##define ceu_out_isr_off
+    void ceu_sys_isr_attach (void* f, int v1, int v2) {
         V = V + v1 + v2;
     }
-    void ceu_out_isr_off (void* f, int v1, int v2) {
+    void ceu_sys_isr_detach (void* f, int v1, int v2) {
         V = V * v1 - v2;
     }
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
 end
 par/or do
 do
@@ -44712,15 +44727,19 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pre do
     int V = 1;
     tceu_app CEU_APP;
-    void ceu_out_isr_attach (void* f, int v) {
+    ##define ceu_out_isr_on
+    ##define ceu_out_isr_off
+    void ceu_sys_isr_attach (void* f, int v) {
         V = V + v;
     }
-    void ceu_out_isr_off (void* f, int v) {
+    void ceu_sys_isr_detach (void* f, int v) {
         V = V * v;
     }
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
 end
 par/or do
     do
@@ -44767,11 +44786,19 @@ end
 }
 
 Test { [[
-native do
+native/pre do
+    int V = 1;
     tceu_app CEU_APP;
-    tceu_app CEU_APP;
-    void ceu_out_isr_attach  (void* f, int v) { }
-    void ceu_out_isr_off (void* f, int v) { }
+    ##define ceu_out_isr_on()
+    ##define ceu_out_isr_off()
+    void ceu_sys_isr_attach (void* f, int v) {
+        V = V + v;
+    }
+    void ceu_sys_isr_detach (void* f, int v) {
+        V = V * v;
+    }
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
 end
 var _int[10] v;
 atomic do
@@ -44794,10 +44821,19 @@ end
 }
 
 Test { [[
-native do
+native/pre do
+    int V = 1;
     tceu_app CEU_APP;
-    void ceu_out_isr_attach  (void* f, int v) { }
-    void ceu_out_isr_off (void* f, int v) { }
+    ##define ceu_out_isr_on()
+    ##define ceu_out_isr_off()
+    void ceu_sys_isr_attach (void* f, int v) {
+        V = V + v;
+    }
+    void ceu_sys_isr_detach (void* f, int v) {
+        V = V * v;
+    }
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
 end
 
 interface Global with
@@ -44896,14 +44932,18 @@ escape v;
 
 Test { [[
 native @pure _f();
-native do
+native/pre do
     int f (void) {
         return 2;
     }
-    tceu_app CEU_APP;
-    void ceu_out_isr_attach  (void* f, int v) { }
-    void ceu_out_isr_off  (void* f, int v) { }
+    ##define ceu_out_isr_on()
+    ##define ceu_out_isr_off()
+    void ceu_sys_isr_attach (void* f, int v) { }
+    void ceu_sys_isr_detach (void* f, int v) { }
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
 end
+
 var int v = _f();
 par/or do
     async/isr (20) do
@@ -44947,11 +44987,16 @@ escape v;
 }
 
 Test { [[
-native do
+native/pre do
     tceu_app CEU_APP;
-    void ceu_out_isr_attach  (void* f, int v) { }
-    void ceu_out_isr_off  (void* f, int v) { }
+    ##define ceu_out_isr_on()
+    ##define ceu_out_isr_off()
+    void ceu_sys_isr_attach (void* f, int v) { }
+    void ceu_sys_isr_detach (void* f, int v) { }
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
 end
+
 var int v;
 atomic do
     v = 2;
@@ -45027,7 +45072,7 @@ escape 1;
 
 Test { [[
 par/or do
-    async/isr () do
+    async/isr (1) do
         emit A;
     end
 with
@@ -45047,18 +45092,36 @@ with
 end
 escape 1;
 ]],
+    adj = 'line 3 : missing ISR identifier',
+}
+
+Test { [[
+input int A;
+par/or do
+    async/isr (1) do
+        emit A;
+    end
+with
+end
+escape 1;
+]],
     env = ' line 4 : arity mismatch',
 }
 
 Test { [[
 input int A;
-native do
+native/pre do
     tceu_app CEU_APP;
-    void ceu_out_isr_attach  (void* f) { }
-    void ceu_out_isr_off  (void* f) { }
+    ##define ceu_out_isr_on()
+    ##define ceu_out_isr_off()
+    void ceu_sys_isr_attach (void* f, int v) { }
+    void ceu_sys_isr_detach (void* f, int v) { }
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
 end
+
 par/or do
-    async/isr () do
+    async/isr (1) do
         var int x = 111;
         emit A => 1;
         x = 222;
@@ -45072,16 +45135,21 @@ escape 1;
 
 Test { [[
 @safe _assert;
-native do
+native/pre do
+    ##define ceu_out_isr_on()
+    ##define ceu_out_isr_off()
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
     int V = 0;
     tceu_app CEU_APP;
     void ceu_out_isr_attach (void* f, int v) {
         V = V + v;
     }
-    void ceu_out_isr_off (void* f, int v) {
+    void ceu_out_isr_detach (void* f, int v) {
         V = V - v;
     }
 end
+
 par/or do
     _assert(_V==0);
     async/isr (1) do
