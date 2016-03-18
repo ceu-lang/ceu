@@ -784,6 +784,11 @@ me.blk_body = me.blk_body or blk_body
     _Isr_pre = function (me)
         me.tag = 'Isr'
 
+        AST.asr(me.__par,'Stmts')
+        local nxt = me.__par[me.__idx+1]
+        ASR(AST.isNode(nxt) and nxt.tag=='AwaitN', me.ln,
+            '`async/isr´ must be followed by `await FOREVER´')
+
         local args, blk = unpack(me)
 
         local f = 'ISR_'..string.gsub(tostring(me),'[: ]','_')
@@ -802,24 +807,22 @@ me.blk_body = me.blk_body or blk_body
         --      end
         --]]
         return
-            node('Block', me.ln,
-                node('Stmts', me.ln,
-                    me,
-                    --node('Dcl_nat', me.ln, '@nohold', 'func', '_ceu_out_isr_detach', false),
-                    node('CallStmt', me.ln,
-                        node('Op2_call', me.ln, 'call',
-                            node('Nat', me.ln, '_ceu_out_isr_attach'),
-                            args)),
-                    node('Finalize', me.ln,
-                        false,
-                        node('Finally', me.ln,
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    node('CallStmt', me.ln,
-                                        node('Op2_call', me.ln, 'call',
-                                            node('Nat', me.ln, '_ceu_out_isr_detach'),
-                                            AST.copy(args))))))),
-                    node('AwaitN',me.ln)))
+            node('Stmts', me.ln,
+                me,
+                --node('Dcl_nat', me.ln, '@nohold', 'func', '_ceu_out_isr_detach', false),
+                node('CallStmt', me.ln,
+                    node('Op2_call', me.ln, 'call',
+                        node('Nat', me.ln, '_ceu_out_isr_attach'),
+                        args)),
+                node('Finalize', me.ln,
+                    false,
+                    node('Finally', me.ln,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('CallStmt', me.ln,
+                                    node('Op2_call', me.ln, 'call',
+                                        node('Nat', me.ln, '_ceu_out_isr_detach'),
+                                        AST.copy(args))))))))
     end,
 
 -- Spawn ------------------------------------------------------------

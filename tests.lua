@@ -44626,6 +44626,18 @@ with
 end
 escape 1;
 ]],
+    adj = 'line 2 : `async/isr´ must be followed by `await FOREVER´',
+}
+
+Test { [[
+par/or do
+    async/isr (20) do
+    end
+    await FOREVER;
+with
+end
+escape 1;
+]],
     gcc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
 }
 
@@ -44638,6 +44650,7 @@ end
 par/or do
     async/isr (20) do
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -44654,6 +44667,7 @@ end
 par/or do
     async/isr (20) do
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -44672,6 +44686,7 @@ end
 par/or do
     async/isr (1) do
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -44692,6 +44707,7 @@ end
 par/or do
     async/isr (1) do
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -44718,6 +44734,7 @@ par/or do
 do
     async/isr (3,4) do
     end
+    await FOREVER;
 end             // TODO: forcing finalize out_isr(null)
 with
 end
@@ -44745,6 +44762,7 @@ par/or do
     do
         async/isr (3) do
         end
+        await FOREVER;
     end             // TODO: forcing finalize out_isr(null)
 with
 end
@@ -44760,6 +44778,7 @@ par/or do
     async/isr (20) do
         v[0] = 1;
     end
+    await FOREVER;
 with
 end
 escape v[0];
@@ -44776,13 +44795,14 @@ par/or do
     async/isr (20) do
         v[0] = 1;
     end
+    await FOREVER;
 with
 end
 atomic do
     escape v[0];
 end
 ]],
-    props = 'line 12 : not permitted inside `atomic´',
+    props = 'line 13 : not permitted inside `atomic´',
 }
 
 Test { [[
@@ -44808,6 +44828,7 @@ par do
     async/isr (20) do
         v[0] = 1;
     end
+    await FOREVER;
 with
     var int ret;
     atomic do
@@ -44850,6 +44871,7 @@ par/or do
             global:x = 0;
         end
     end
+    await FOREVER;
 with
 end
 escape x;
@@ -44863,6 +44885,7 @@ par/or do
     async/isr (20) do
         v = 1;
     end
+    await FOREVER;
 with
 end
 escape v;
@@ -44876,6 +44899,7 @@ par/or do
     async/isr (20) do
         *v = 1;
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -44892,6 +44916,7 @@ par/or do
     async/isr (20) do
         f();
     end
+    await FOREVER;
 with
 end
 escape v;
@@ -44908,6 +44933,7 @@ par/or do
     async/isr (20) do
         f();
     end
+    await FOREVER;
 with
 end
 escape v;
@@ -44922,6 +44948,7 @@ par/or do
     async/isr (20) do
         _f();
     end
+    await FOREVER;
 with
 end
 escape v;
@@ -44949,6 +44976,7 @@ par/or do
     async/isr (20) do
         _f();
     end
+    await FOREVER;
 with
 end
 escape v;
@@ -44963,6 +44991,7 @@ par/or do
     async/isr (20) do
         v = 1;
     end
+    await FOREVER;
 with
 end
 escape v;
@@ -44979,11 +45008,12 @@ par/or do
     async/isr (20) do
         this.v = 1;
     end
+    await FOREVER;
 with
 end
 escape v;
 ]],
-    isr = 'line 11 : access to "v" must be atomic',
+    isr = 'line 12 : access to "v" must be atomic',
 }
 
 Test { [[
@@ -45006,6 +45036,7 @@ par do
         this.v = 1;
         v = 1;
     end
+    await FOREVER;
 with
     var int ret;
     atomic do
@@ -45027,11 +45058,12 @@ par/or do
     async/isr (20) do
         this.v = 1;
     end
+    await FOREVER;
 with
 end
 escape v;
 ]],
-    isr = 'line 11 : access to "v" must be atomic',
+    isr = 'line 12 : access to "v" must be atomic',
 }
 
 Test { [[
@@ -45045,6 +45077,7 @@ par/or do
     async/isr (20) do
         this.v = 1;
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -45062,6 +45095,7 @@ par/or do
     async/isr (20) do
         this.v[1] = 1;
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -45075,6 +45109,7 @@ par/or do
     async/isr (1) do
         emit A;
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -45088,6 +45123,7 @@ par/or do
     async/isr () do
         emit A;
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -45101,6 +45137,7 @@ par/or do
     async/isr (1) do
         emit A;
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -45126,6 +45163,7 @@ par/or do
         emit A => 1;
         x = 222;
     end
+    await FOREVER;
 with
 end
 escape 1;
@@ -45154,6 +45192,7 @@ par/or do
     _assert(_V==0);
     async/isr (1) do
     end
+    await FOREVER;
 with
     _assert(_V==1);
     await 1s;

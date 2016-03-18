@@ -254,6 +254,7 @@ local function visit_aux (me, F)
     for i, sub in ipairs(me) do
         if bef then assert(bef(me, sub, i)==nil) end
         if AST.isNode(sub) then
+            sub.__idx = i
             sub = visit_aux(sub, F)
             me[i] = sub
         end
