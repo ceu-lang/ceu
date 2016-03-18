@@ -325,6 +325,14 @@ do
         HH = SUB(HH, '=== DEFINES ===', str)
     end
 
+    -- ISRS
+    do
+        local str = ''
+        for id in pairs(ISR.defs) do
+            str = str..'#define CEU_ISR_'..id..'\n'
+        end
+        HH = SUB(HH, '=== ISRS ===', str)
+    end
 
     -- EVENTS
     do

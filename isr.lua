@@ -10,6 +10,10 @@
 -- breaks the analysis.
 --]]
 
+ISR = {
+    defs = {}
+}
+
 local accs = {}
 
 local function inIsr (me)
@@ -37,6 +41,11 @@ F = {
             WRN((me.c and me.c.mod=='@pure'), me,
                 'call '..msg)
         end
+    end,
+
+    Isr = function (me)
+        local id = unpack(me)
+        ISR.defs[id] = true
     end,
 }
 

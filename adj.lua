@@ -786,25 +786,28 @@ me.blk_body = me.blk_body or blk_body
 
         local args, blk = unpack(me)
 
-        local id = 'ISR_'..string.gsub(tostring(me),'[: ]','_')
-        me[1] = id
+        local f = 'ISR_'..string.gsub(tostring(me),'[: ]','_')
+        me[1] = args[1][1]
+        me[2] = f
+        me[3] = blk
+        ASR(type(me[1])=='string', me, 'invalid ISR identifier')
 
-        table.insert(args, 1, node('RawExp',me.ln,id))
+        table.insert(args, 1, node('RawExp',me.ln,f))
 
         --[[
-        -- _ceu_out_isr_on(isr, ...)
+        -- _ceu_out_isr_attach(isr, ...)
         --      finalize with
-        --          _ceu_out_isr_off(isr, ...)
+        --          _ceu_out_isr_detach(isr, ...)
         --      end
         --]]
         return
             node('Block', me.ln,
                 node('Stmts', me.ln,
                     me,
-                    --node('Dcl_nat', me.ln, '@nohold', 'func', '_ceu_out_isr_off', false),
+                    --node('Dcl_nat', me.ln, '@nohold', 'func', '_ceu_out_isr_detach', false),
                     node('CallStmt', me.ln,
                         node('Op2_call', me.ln, 'call',
-                            node('Nat', me.ln, '_ceu_out_isr_on'),
+                            node('Nat', me.ln, '_ceu_out_isr_attach'),
                             args)),
                     node('Finalize', me.ln,
                         false,
@@ -813,7 +816,7 @@ me.blk_body = me.blk_body or blk_body
                                 node('Stmts', me.ln,
                                     node('CallStmt', me.ln,
                                         node('Op2_call', me.ln, 'call',
-                                            node('Nat', me.ln, '_ceu_out_isr_off'),
+                                            node('Nat', me.ln, '_ceu_out_isr_detach'),
                                             AST.copy(args))))))),
                     node('AwaitN',me.ln)))
     end,

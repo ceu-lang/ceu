@@ -8,6 +8,21 @@ void* CEU_APP_ADDR = NULL;
 #endif
 #endif
 
+#ifdef CEU_ISRS
+    #ifndef ceu_out_isr_on
+        #error "Missing definition for macro \"ceu_out_isr_on\"."
+    #endif
+    #ifndef ceu_out_isr_off
+        #error "Missing definition for macro \"ceu_out_isr_off\"."
+    #endif
+    #ifndef ceu_out_isr_attach
+        #error "Missing definition for macro \"ceu_out_isr_attach\"."
+    #endif
+    #ifndef ceu_out_isr_detach
+        #error "Missing definition for macro \"ceu_out_isr_detach\"."
+    #endif
+#endif
+
 #include <string.h>
 
 #ifdef CEU_DEBUG
@@ -758,7 +773,7 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
     (void*) &ceu_sys_realloc,
     (void*) &ceu_sys_req,
     (void*) &ceu_sys_load,
-#ifdef CEU_ISR
+#ifdef CEU_ISRS
     (void*) &ceu_sys_isr,
 #endif
     (void*) &ceu_sys_org_init,
@@ -794,7 +809,7 @@ void* CEU_SYS_VEC[CEU_SYS_MAX] __attribute__((used)) = {
 
 tceu_queue* ceu_sys_queue_get (void) {
     tceu_queue* ret;
-    CEU_ISR_OFF();
+    ceu_out_isr_off();
     if (QUEUE_tot == 0) {
         ret = NULL;
     } else {
@@ -803,12 +818,12 @@ tceu_queue* ceu_sys_queue_get (void) {
 #endif
         ret = (tceu_queue*) &QUEUE[QUEUE_get];
     }
-    CEU_ISR_ON();
+    ceu_out_isr_on();
     return ret;
 }
 
 int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, int sz, byte* buf) {
-    CEU_ISR_OFF();
+    ceu_out_isr_off();
 
     int n = sizeof(tceu_queue) + sz;
 
@@ -838,16 +853,16 @@ int ceu_sys_queue_put (tceu_app* app, tceu_nevt evt, int sz, byte* buf) {
     QUEUE_put += n;
     QUEUE_tot += n;
 
-    CEU_ISR_ON();
+    ceu_out_isr_on();
     return 1;
 }
 
 void ceu_sys_queue_rem (void) {
-    CEU_ISR_OFF();
+    ceu_out_isr_off();
     tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get];
     QUEUE_tot -= sizeof(tceu_queue) + qu->sz;
     QUEUE_get += sizeof(tceu_queue) + qu->sz;
-    CEU_ISR_ON();
+    ceu_out_isr_on();
 }
 
 /*****************************************************************************/
@@ -913,7 +928,7 @@ static void __ceu_os_gc (void)
 
     /* remove pending events */
     {
-        CEU_ISR_OFF();
+        ceu_out_isr_off();
         int i = 0;
         while (i < QUEUE_tot) {
             tceu_queue* qu = (tceu_queue*) &QUEUE[QUEUE_get+i];
@@ -922,7 +937,7 @@ static void __ceu_os_gc (void)
             }
             i += sizeof(tceu_queue) + qu->sz;
         }
-        CEU_ISR_ON();
+        ceu_out_isr_on();
     }
 
     /* remove broken links */
@@ -972,7 +987,7 @@ static void __ceu_os_gc (void)
     }
 }
 
-#ifdef CEU_ISR
+#ifdef CEU_ISRS
 
 typedef struct {
     tceu_isr_f f;
@@ -996,12 +1011,12 @@ int ceu_sys_isr (int n, tceu_isr_f f, tceu_app* app) {
 #endif
 
 void ceu_os_init (void) {
-#ifdef CEU_ISR
+#ifdef CEU_ISRS
     int i;
     for (i=0; i<CEU_ISR_MAX; i++) {
         CEU_ISR_VEC[i].f = NULL;      /* TODO: is this required? (bss=0) */
     }
-    CEU_ISR_ON();       /* enable global interrupts to start */
+    ceu_out_isr_on();       /* enable global interrupts to start */
 #endif
 }
 
@@ -1064,9 +1079,9 @@ int ceu_os_scheduler (int(*dt)())
         /* EVENTS */
         {
             /* clear the current size (ignore events emitted here) */
-            CEU_ISR_OFF();
+            ceu_out_isr_off();
             int tot = QUEUE_tot;
-            CEU_ISR_ON();
+            ceu_out_isr_on();
             if (tot > 0)
             {
                 tceu_queue* qu = ceu_sys_queue_get();
@@ -1241,7 +1256,7 @@ int ceu_sys_unlink (tceu_app* src_app, tceu_nevt src_evt,
     return 0;
 }
 
-#ifdef CEU_ISR
+#ifdef CEU_ISRS
 
 /* Foreach ISR, call ceu_sys_emit(CEU_IN_OS_INTERRUPT). */
 
@@ -1269,7 +1284,7 @@ GEN_ISR(31) GEN_ISR(32) GEN_ISR(33) GEN_ISR(34) GEN_ISR(35)
 GEN_ISR(36) GEN_ISR(37) GEN_ISR(38) GEN_ISR(39) GEN_ISR(40)
 */
 
-#endif /* CEU_ISR */
+#endif /* CEU_ISRS */
 
 #endif /* ifdef CEU_OS_KERNEL */
 

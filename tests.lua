@@ -44622,13 +44622,13 @@ with
 end
 escape 1;
 ]],
-    gcc = 'error: implicit declaration of function ‘ceu_out_isr_on’',
+    gcc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
 }
 
 Test { [[
 native do
     tceu_app CEU_APP;
-    void ceu_out_isr_on (void) {}
+    void ceu_out_isr_attach (void) {}
 end
 par/or do
     async/isr (20) do
@@ -44643,7 +44643,7 @@ escape 1;
 Test { [[
 native do
     tceu_app CEU_APP;
-    void ceu_out_isr_on  (void) { }
+    void ceu_out_isr_attach  (void) { }
     void ceu_out_isr_off (void) { }
 end
 par/or do
@@ -44653,13 +44653,13 @@ with
 end
 escape 1;
 ]],
-    gcc = '5: error: too many arguments to function ‘ceu_out_isr_on’',
+    gcc = '5: error: too many arguments to function ‘ceu_out_isr_attach’',
 }
 
 Test { [[
 native do
     tceu_app CEU_APP;
-    void ceu_out_isr_on  (void* f) { }
+    void ceu_out_isr_attach  (void* f) { }
     void ceu_out_isr_off (void* f) { }
 end
 par/or do
@@ -44675,7 +44675,7 @@ escape 1;
 Test { [[
 native do
     tceu_app CEU_APP;
-    void ceu_out_isr_on  (void* f) { }
+    void ceu_out_isr_attach  (void* f) { }
     void ceu_out_isr_off (void* f, int v) { }
 end
 par/or do
@@ -44692,7 +44692,7 @@ Test { [[
 native do
     int V = 1;
     tceu_app CEU_APP;
-    void ceu_out_isr_on (void* f, int v1, int v2) {
+    void ceu_out_isr_attach (void* f, int v1, int v2) {
         V = V + v1 + v2;
     }
     void ceu_out_isr_off (void* f, int v1, int v2) {
@@ -44715,7 +44715,7 @@ Test { [[
 native do
     int V = 1;
     tceu_app CEU_APP;
-    void ceu_out_isr_on (void* f, int v) {
+    void ceu_out_isr_attach (void* f, int v) {
         V = V + v;
     }
     void ceu_out_isr_off (void* f, int v) {
@@ -44770,7 +44770,7 @@ Test { [[
 native do
     tceu_app CEU_APP;
     tceu_app CEU_APP;
-    void ceu_out_isr_on  (void* f, int v) { }
+    void ceu_out_isr_attach  (void* f, int v) { }
     void ceu_out_isr_off (void* f, int v) { }
 end
 var _int[10] v;
@@ -44796,7 +44796,7 @@ end
 Test { [[
 native do
     tceu_app CEU_APP;
-    void ceu_out_isr_on  (void* f, int v) { }
+    void ceu_out_isr_attach  (void* f, int v) { }
     void ceu_out_isr_off (void* f, int v) { }
 end
 
@@ -44901,7 +44901,7 @@ native do
         return 2;
     }
     tceu_app CEU_APP;
-    void ceu_out_isr_on  (void* f, int v) { }
+    void ceu_out_isr_attach  (void* f, int v) { }
     void ceu_out_isr_off  (void* f, int v) { }
 end
 var int v = _f();
@@ -44949,7 +44949,7 @@ escape v;
 Test { [[
 native do
     tceu_app CEU_APP;
-    void ceu_out_isr_on  (void* f, int v) { }
+    void ceu_out_isr_attach  (void* f, int v) { }
     void ceu_out_isr_off  (void* f, int v) { }
 end
 var int v;
@@ -45054,7 +45054,7 @@ Test { [[
 input int A;
 native do
     tceu_app CEU_APP;
-    void ceu_out_isr_on  (void* f) { }
+    void ceu_out_isr_attach  (void* f) { }
     void ceu_out_isr_off  (void* f) { }
 end
 par/or do
@@ -45075,7 +45075,7 @@ Test { [[
 native do
     int V = 0;
     tceu_app CEU_APP;
-    void ceu_out_isr_on (void* f, int v) {
+    void ceu_out_isr_attach (void* f, int v) {
         V = V + v;
     }
     void ceu_out_isr_off (void* f, int v) {

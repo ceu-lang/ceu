@@ -8,17 +8,6 @@
 #include <assert.h>
 #endif
 
-#if defined(CEU_OS) && defined(__AVR)
-#error Understand this again!
-#include "Arduino.h"
-#define CEU_ISR
-#define CEU_ISR_ON()  interrupts()
-#define CEU_ISR_OFF() noInterrupts()
-#else
-#define CEU_ISR_ON()
-#define CEU_ISR_OFF()
-#endif
-
 #if defined(CEU_OS_KERNEL) || defined(CEU_OS_APP)
 #define CEU_OS
 #endif
@@ -129,7 +118,7 @@
     #define ceu_out_load(addr) \
         ((__typeof__(ceu_sys_load)*)((_ceu_app)->sys_vec[CEU_SYS_LOAD]))(addr)
 
-#ifdef CEU_ISR
+#ifdef CEU_ISRS
     #define ceu_out_isr(n,f) \
         ((__typeof__(ceu_sys_isr)*)((_ceu_app)->sys_vec[CEU_SYS_ISR]))(n,f,_ceu_app)
 #endif
@@ -663,7 +652,7 @@ typedef struct {
     byte      buf[0];
 } tceu_queue;
 
-#ifdef CEU_ISR
+#ifdef CEU_ISRS
 typedef void(*tceu_isr_f)(tceu_app* app, tceu_org* org);
 #endif
 
@@ -677,7 +666,7 @@ void      ceu_sys_log       (int mode, long str);
 void*     ceu_sys_realloc   (void* ptr, size_t size);
 int       ceu_sys_req       (void);
 tceu_app* ceu_sys_load      (void* addr);
-#ifdef CEU_ISR
+#ifdef CEU_ISRS
 int       ceu_sys_isr       (int n, tceu_isr_f f, tceu_app* app);
 #endif
 void      ceu_sys_org_init  (tceu_org* org, int n, int lbl, int cls, int isDyn,
@@ -694,7 +683,7 @@ enum {
     CEU_SYS_REALLOC,
     CEU_SYS_REQ,
     CEU_SYS_LOAD,
-#ifdef CEU_ISR
+#ifdef CEU_ISRS
     CEU_SYS_ISR,
 #endif
 #ifdef CEU_CLEAR

@@ -2206,13 +2206,13 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     end,
 
     Isr = function (me)
-        local id, blk = unpack(me)
+        local id, f, blk = unpack(me)
 
         local code = string.gsub(blk.code, '_ceu_org', '((tceu_org*)CEU_APP.data)')
         code = string.gsub(code, '_ceu_app', '(&CEU_APP)')
 
         CODE.isrs = CODE.isrs .. [[
-void ]]..id..[[ (void)
+void ]]..f..[[ (void)
 {
     tceu_stk* _ceu_stk = NULL;
     ]]..code..[[
@@ -2377,10 +2377,9 @@ if (*(_ceu_p.st) == 3) {        /* 3=end */
 }
 ]])
         else
--- TODO: ao contrario?
-            LINE(me, 'CEU_ISR_ON();')
+            LINE(me, 'ceu_out_isr_off();')
             CONC(me)
-            LINE(me, 'CEU_ISR_OFF();')
+            LINE(me, 'ceu_out_isr_on();')
         end
     end,
 }

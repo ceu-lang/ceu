@@ -29,6 +29,7 @@ typedef === TCEU_NCLS === tceu_ncls;
 #endif
 
 === NATIVE_PRE ===
+=== ISRS ===        /* CEU_ISR_ */
 === EVENTS ===      /* CEU_IN_, CEU_OUT_ */
 === FUNCTIONS ===   /* CEU_FUN_ */
 === TUPLES ===
