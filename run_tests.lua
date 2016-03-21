@@ -92,12 +92,11 @@ Test = function (t)
     if not check('adt')      then return end
     if not check('ref')      then return end
     if not check('cval')     then return end
-    if not check('isr')      then return end
     if not check('tight')    then return end
     if not check('fin')      then return end
     if not check('props')    then return end
     if not check('ana')      then return end
-    dofile 'acc.lua'
+    if not check('acc')      then return end
 
     if not check('trails')   then return end
     if not check('labels')   then return end

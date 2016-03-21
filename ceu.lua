@@ -173,7 +173,6 @@ do
     dofile 'adt.lua'
     dofile 'ref.lua'
     dofile 'cval.lua'
-    dofile 'isr.lua'
     dofile 'tight.lua'
     dofile 'fin.lua'
     dofile 'props.lua'
@@ -328,7 +327,7 @@ do
     -- ISRS
     do
         local str = ''
-        for id in pairs(ISR.defs) do
+        for id in pairs(ENV.isrs) do
             str = str..'#define CEU_ISR_'..id..'\n'
         end
         HH = SUB(HH, '=== ISRS ===', str)
