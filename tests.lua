@@ -283,6 +283,16 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+class Test with
+do
+end
+
+var Test&&? a = null; // leads to segfault
+]],
+    run = 1,
+}
+
 do return end
 
 ----------------------------------------------------------------------------
@@ -30796,9 +30806,10 @@ interface Global with
 end
 var int  um = 1;
 var int& v;// = um;
-escape 1;//global:v;
+escape global:v;
 ]],
-    ref = 'line 5 : missing initialization for global variable "v"',
+    ref = 'line 6 : invalid access to uninitialized variable "v" (declared at tests.lua:2)',
+    --ref = 'line 5 : missing initialization for global variable "v"',
     --ref = 'line 5 : global references must be bounded on declaration',
 }
 
@@ -34765,7 +34776,8 @@ end
 
 escape 1;
 ]],
-    env = 'line 13 : wrong argument : cannot pass pointers',
+    env = 'line 8 : invalid event type',
+    --env = 'line 13 : wrong argument : cannot pass pointers',
     --run = 1,
 }
 
@@ -34796,7 +34808,8 @@ with
     escape 1;
 end
 ]],
-    env = 'line 21 : wrong argument : cannot pass pointers',
+    env = 'line 9 : invalid event type',
+    --env = 'line 21 : wrong argument : cannot pass pointers',
     --run = { ['~>2s']=1 },
 }
 
@@ -34979,7 +34992,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 15 : wrong argument : cannot pass pointers',
+    env = 'line 8 : invalid event type',
+    --env = 'line 15 : wrong argument : cannot pass pointers',
     --run = { ['~>1s'] = 14 },
     --fin = 'line 16 : unsafe access to pointer "t" across `emit´',
 }
@@ -35012,7 +35026,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 16 : wrong argument : cannot pass pointers',
+    env = 'line 8 : invalid event type',
+    --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s'] = 12 },
 }
 
@@ -35065,7 +35080,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 17 : wrong argument : cannot pass pointers',
+    env = 'line 8 : invalid event type',
+    --env = 'line 17 : wrong argument : cannot pass pointers',
     --run = 25,
 }
 
@@ -38055,15 +38071,14 @@ escape _V;
 
 Test { [[
 class Game with
-    event (int,int,int&&) go;
+    event (int,int) go;
 do
 end
 
 var Game game;
 par/or do
     var int a,b;
-    var int&& c;
-    (a, b, c) = await game.go;
+    (a, b) = await game.go;
 with
     nothing;
 end
@@ -38082,7 +38097,8 @@ var Game game;
 emit game.go => (1, 1, null);
 escape 1;
 ]],
-    env = 'line 7 : wrong argument #3 : cannot pass pointers',
+    env = 'line 2 : invalid event type',
+    --env = 'line 7 : wrong argument #3 : cannot pass pointers',
     --run = 1;
 }
 
@@ -39115,30 +39131,30 @@ Test { [[
 interface Global with
     var int&& a;
 end
+var int&& a = null;
 class T with
 do
     var int&& b;
     b = global:a;
 end
-var int&& a;
 escape 1;
 ]],
-    fin = 'line 7 : unsafe access to pointer "a" across `class´ (tests.lua : 4)',
+    fin = 'line 8 : unsafe access to pointer "a" across `class´ (tests.lua : 5)',
     --run = 1,
 }
 Test { [[
 interface Global with
     var int&& a;
 end
+var int&& a = null;
 class T with
 do
     var int&& b=null;
     global:a = b;
 end
-var int&& a;
 escape 1;
 ]],
-    fin = 'line 7 : attribution to pointer with greater scope',
+    fin = 'line 8 : attribution to pointer with greater scope',
     --fin = 'line 7 : unsafe access to pointer "a" across `class´ (tests.lua : 4)',
     --fin = 'line 7 : organism pointer attribution only inside constructors',
 }
@@ -39168,7 +39184,7 @@ interface Global with
     var int aa;
 end
 event int a;
-var int aa;
+var int aa = 0;
 class T with
     event int a;
     var int aa=0;
@@ -39192,13 +39208,49 @@ var int v;
 class T with
     var int v = 1;
 do
+    this.v = global:v;
+end
+var T t;
+
+escape t.v;
+]],
+    ref = 'line 9 : invalid access to uninitialized variable "v" (declared at tests.lua:2)',
+}
+
+Test { [[
+interface Global with
+    var int v;
+end
+var int v;
+
+class T with
+    var int v = 1;
+do
+    //this.v = global:v;
+end
+var T t;
+
+escape v;
+]],
+    ref = 'line 13 : invalid access to uninitialized variable "v" (declared at tests.lua:4)',
+}
+
+Test { [[
+interface Global with
+    var int v;
+end
+var int v;
+
+class T with
+    var int v = 1;
+do
     //this.v = global:v;
 end
 var T t;
 
 escape t.v;
 ]],
-    ref = 'line 4 : missing initialization for global variable "v"',
+    run = 1,
 }
 
 Test { [[
@@ -39216,7 +39268,7 @@ var T t;
 var int v;
 escape t.v;
 ]],
-    ref = 'line 12 : missing initialization for global variable "v"',
+    run = 1,
 }
 
 -- use of global before its initialization
@@ -39280,12 +39332,12 @@ Test { [[
 interface Global with
     var int a;
 end
+var int a = 10;
 class T with
     var int a=0;
 do
     a = global:a;
 end
-var int a = 10;
 do
     var T t;
 input void OS_START;
@@ -39572,7 +39624,7 @@ interface I with
     event int a;
 end
 interface J with
-    event int&& a;
+    event u8 a;
 end
 
 var I&& i;
@@ -39858,10 +39910,11 @@ end
 event (G&&,int) g;
 escape 1;
 ]],
+    env = 'line 2 : invalid event type'
     --env = 'line 2 : undeclared type `G´',
     --run = 1,
     --gcc = '22:2: error: unknown type name ‘G’',
-    gcc = 'error: unknown type name',
+    --gcc = 'error: unknown type name',
 }
 
 Test { [[
@@ -39985,17 +40038,17 @@ interface Global with
     var I&& t;
 end
 
+var I&& t = null;
+
 class T with
 do
     global:t = &&this;
 end
 
-var I&& t;
-
 escape 1;
 ]],
     --fin = 'line 10 : attribution requires `finalize´'
-    fin = 'line 10 : attribution to pointer with greater scope',
+    fin = 'line 12 : attribution to pointer with greater scope',
     --fin = 'line 10 : organism pointer attribution only inside constructors',
 }
 
@@ -40084,7 +40137,7 @@ Test { [[
 interface Global with
     var int&& a;
 end
-var int&& a;
+var int&& a = null;
 class T with
     var int&& v;
 do
@@ -46437,7 +46490,8 @@ watching e do
 end
 escape 1;
 ]],
-    gcc = ' error: unknown type name ‘T’',
+    env = 'line 1 : invalid event type',
+    --gcc = ' error: unknown type name ‘T’',
     --run = { ['~>1s'] = 1 }
 }
 
@@ -46596,7 +46650,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 14 : wrong argument : cannot pass pointers',
+    env = 'line 6 : invalid event type',
+    --env = 'line 14 : wrong argument : cannot pass pointers',
     --run = 10,
 }
 
@@ -46622,7 +46677,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 14 : wrong argument : cannot pass pointers',
+    env = 'line 6 : invalid event type',
+    --env = 'line 14 : wrong argument : cannot pass pointers',
     --run = 10,
     safety = 2,
 }
@@ -46650,7 +46706,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 14 : wrong argument : cannot pass pointers',
+    env = 'line 6 : invalid event type',
+    --env = 'line 14 : wrong argument : cannot pass pointers',
     --fin = 'line 18 : unsafe access to pointer "p" across `async´'
 }
 
@@ -46681,7 +46738,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 18 : wrong argument : cannot pass pointers',
+    env = 'line 10 : invalid event type',
+    --env = 'line 18 : wrong argument : cannot pass pointers',
     --fin = 'line 22 : unsafe access to pointer "p" across `async´',
 }
 
@@ -47104,7 +47162,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 14 : wrong argument : cannot pass pointers',
+    env = 'line 6 : invalid event type',
+    --env = 'line 14 : wrong argument : cannot pass pointers',
     --run = { ['~>5s']=1 },
 }
 
@@ -47139,7 +47198,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 14 : wrong argument : cannot pass pointers',
+    env = 'line 6 : invalid event type',
+    --env = 'line 14 : wrong argument : cannot pass pointers',
     --run = { ['~>5s']=1 },
     safety = 2,
 }
@@ -47174,7 +47234,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 14 : wrong argument : cannot pass pointers',
+    env = 'line 6 : invalid event type',
+    --env = 'line 14 : wrong argument : cannot pass pointers',
     --run = { ['~>5s']=1 },
 }
 
@@ -47210,7 +47271,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 15 : wrong argument : cannot pass pointers',
+    env = 'line 7 : invalid event type',
+    --env = 'line 15 : wrong argument : cannot pass pointers',
     --run = { ['~>10s']=10 },
 }
 
@@ -47246,7 +47308,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 15 : wrong argument : cannot pass pointers',
+    env = 'line 7 : invalid event type',
+    --env = 'line 15 : wrong argument : cannot pass pointers',
     --run = { ['~>10s']=-1 },
 }
 
@@ -47282,7 +47345,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 15 : wrong argument : cannot pass pointers',
+    env = 'line 7 : invalid event type',
+    --env = 'line 15 : wrong argument : cannot pass pointers',
     --run = { ['~>10s']=10 },
 }
 
@@ -47296,7 +47360,8 @@ event T&& e;
 emit e => null;
 escape 1;
 ]],
-    env = 'line 7 : wrong argument : cannot pass pointers',
+    env = 'line 6 : invalid event type',
+    --env = 'line 7 : wrong argument : cannot pass pointers',
     --run = 1;
 }
 
@@ -47333,7 +47398,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 16 : wrong argument : cannot pass pointers',
+    env = 'line 7 : invalid event type',
+    --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
@@ -47369,7 +47435,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 16 : wrong argument : cannot pass pointers',
+    env = 'line 7 : invalid event type',
+    --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=1 },
 }
 
@@ -47406,7 +47473,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 16 : wrong argument : cannot pass pointers',
+    env = 'line 7 : invalid event type',
+    --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
@@ -47443,7 +47511,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 16 : wrong argument : cannot pass pointers',
+    env = 'line 7 : invalid event type',
+    --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=10 },
 }
 
@@ -47479,7 +47548,8 @@ end
 
 escape ret;
 ]],
-    env = 'line 16 : wrong argument : cannot pass pointers',
+    env = 'line 7 : invalid event type',
+    --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
 
@@ -47790,7 +47860,8 @@ end
 var int v = await t.ok;
 escape v;
 ]],
-    env = 'line 25 : wrong argument : cannot pass pointers',
+    env = 'line 6 : invalid event type',
+    --env = 'line 25 : wrong argument : cannot pass pointers',
     --run = { ['~>2s']=1 },
 }
 
@@ -49407,7 +49478,7 @@ escape 1;
 
 Test { [[
 input (int&&,int) A;
-event (int,int&&) a;
+//event (int,int&&) a;
 escape 1;
 ]],
     run = 1;
@@ -54754,7 +54825,8 @@ with
     escape ret;
 end
 ]],
-    env = 'line 16 : wrong argument : cannot pass pointers',
+    env = 'line 6 : invalid event type',
+    --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s']=1 },
 }
 

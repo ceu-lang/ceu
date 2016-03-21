@@ -66,6 +66,7 @@ F = {
             end
         end
 
+--[=[
         -- ensures that global "ref" vars are initialized
         local glb = ENV.clss.Global
         if glb and cls and cls.id=='Main' then
@@ -78,6 +79,7 @@ F = {
 ]])
             end
         end
+]=]
     end,
 
     Var = function (me)
