@@ -39125,6 +39125,62 @@ escape t.aa;
 }
 
 Test { [[
+interface Global with
+    var int v;
+end
+var int v;
+
+class T with
+    var int v = 1;
+do
+    //this.v = global:v;
+end
+var T t;
+
+escape t.v;
+]],
+    ref = 'line 4 : missing initialization for global variable "v"',
+}
+
+Test { [[
+interface Global with
+    var int v;
+end
+
+class T with
+    var int v = 1;
+do
+    //this.v = global:v;
+end
+var T t;
+
+var int v;
+escape t.v;
+]],
+    ref = 'line 12 : missing initialization for global variable "v"',
+}
+
+-- use of global before its initialization
+Test { [[
+interface Global with
+    var int& vvv;
+end
+
+class T with
+    var int v = 1;
+do
+    this.v = global:vvv;
+end
+var T t;
+
+var int  um = 111;
+var int& vvv = &um;
+escape t.v;
+]],
+    ref = 'line 8 : invalid access to uninitialized variable "vvv" (declared at tests.lua:2)',
+}
+
+Test { [[
 class T with
     var int a=0;
 do
@@ -61068,26 +61124,6 @@ end
 escape ret;
 ]],
     run = 2,
-}
-
--- use of global before its initialization
-Test { [[
-interface Global with
-    var int& v;
-end
-
-class T with
-    var int v;
-do
-    this.v = global:v;
-end
-var T t;
-
-var int  um = 111;
-var int& v = um;
-escape t.v;
-]],
-    run = 111,
 }
 
 -- XXX: T-vs-Opt

@@ -31,6 +31,8 @@ local IF_INITS = {}
 F = {
     Dcl_pool = 'Dcl_var',
     Dcl_var = function (me)
+        local cls = CLS()   -- might be an ADT declaration
+
         if me.var.id=='_ret'
         or me.var.id=='_out'
         or string.match(me.var.id, '^_+%d*$')   -- var t _;
@@ -66,8 +68,7 @@ F = {
 
         -- ensures that global "ref" vars are initialized
         local glb = ENV.clss.Global
-        local cls = CLS()   -- might be an ADT declaration
-        if TP.check(me.var.tp,'&') and glb and cls and cls.id=='Main' then
+        if glb and cls and cls.id=='Main' then
             local var = glb.blk_ifc.vars[me.var.id]
             if var then
                 local set = me.__par and me.__par[1]==me and
@@ -387,12 +388,16 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
 --- check class constructors, i.e., if all uninit vars are inited
 
     BlockI_pre = function (me)
-        me.__old = VARS_UNINIT
-        VARS_UNINIT = {}
+        if CLS() ~= ENV.clss.Global then
+            me.__old = VARS_UNINIT
+            VARS_UNINIT = {}
+        end
     end,
     BlockI_pos = function (me)
-        AST.par(me,'Dcl_cls').vars_uninit = VARS_UNINIT
-        VARS_UNINIT = me.__old
+        if CLS() ~= ENV.clss.Global then
+            AST.par(me,'Dcl_cls').vars_uninit = VARS_UNINIT
+            VARS_UNINIT = me.__old
+        end
     end,
 
     Dcl_constr_pre = function (me, cls)
