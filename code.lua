@@ -1862,11 +1862,10 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 
         LINE(me, [[
 #if defined(CEU_RET) || defined(CEU_OS)
-if (!_ceu_app->isAlive)
-#endif
-{
+if (!_ceu_app->isAlive) {
     return;     /* HALT(me) */
 }
+#endif
 ]])
 
         if AST.par(me, 'Async') then

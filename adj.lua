@@ -308,43 +308,31 @@ me.blk_body = me.blk_body or blk_body
 
     -- TODO: Traverse could use this
     _SpawnAnon_pre = function (me)
-        --[[
-        --  spawn do
-        --      <body>
-        --  end
-        --
-        --      ... becomes ...
-        --
-        --  class Body with
-        --      var Outer& _out;
-        --  do
-        --      <body>
-        --  end
-        --  var Body _ with
-        --      this._out = &outer;
-        --  end;
-        --]]
+        -- all statements after myself
+        local par_stmts = AST.asr(me.__par, 'Stmts')
+        local cnt_stmts = { unpack(par_stmts, me.__idx+1) }
+        for i=me.__idx, #par_stmts do
+            par_stmts[i] = nil
+        end
 
-        local body = unpack(me)
-        local out = AST.par(me, 'Dcl_cls')
+        local awaitN = node('AwaitN', me.ln)
+        awaitN.__adj_no_not_reachable_warning = true
 
-        local cls = node('Dcl_cls', me.ln, false, 'Body_'..me.n,
-                        node('BlockI', me.ln,
+        local orig = AST.asr(me[1],'Block', 1,'Stmts')
+        orig.__adj_is_spawnanon = true
+        orig.ln = me.ln
+        me[1][1] = node('Stmts', me.ln,
+                    me[1][1],
+                    awaitN)
+
+        me.tag = 'SpawnAnon'
+        local ret = node('ParOr', me.ln,
+                        me[1],
+                        node('Block', me.ln,
                             node('Stmts', me.ln,
-                                node('Dcl_var', me.ln, 'var',
-                                    node('Type', me.ln, out[2], '&'),
-                                    '_out'))),
-                            node('Block', me.ln,
-                                node('Stmts', me.ln,
-                                    body)))
-        cls.__adj_out = AST.par(me, 'Block')
-
-        local var = node('Dcl_var', me.ln, 'var',
-                        node('Type', me.ln, 'Body_'..me.n),
-                        '_')
-        var.__adj_is_traverse_root = true -- see code.lua
-
-        return node('Stmts', me.ln, cls, var)
+                                unpack(cnt_stmts))))
+        ret.__adj_no_should_terminate_warning = true
+        return ret
     end,
 
     _TraverseLoop_pre = function (me)

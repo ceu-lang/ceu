@@ -35211,12 +35211,30 @@ escape ret;
 -->>> SPAWN-DO SUGAR
 
 Test { [[
+spawn do
+end
+escape 1;
+]],
+    ana = 'line 1 : `spawn´ body must never terminate',
+}
+Test { [[
+spawn do
+    await FOREVER;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 var int xxx=0;
 spawn do
     xxx = 1;
+    await FOREVER;
 end
 escape xxx;
 ]],
+    _ana = {acc=1},
     run = 1,
 }
 
@@ -35227,7 +35245,8 @@ spawn do
 end
 escape x;
 ]],
-    run = 1,
+    ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
+    --run = 1,
 }
 
 Test { [[
@@ -35242,10 +35261,11 @@ escape x;
 
 Test { [[
 input void OS_START;
-var int x = 0;
+var int x = 1;
 spawn do
-    await OS_START;
-    x = 1;
+    every 1s do
+        x = 1;
+    end
 end
 await OS_START;
 escape x;
@@ -35254,12 +35274,59 @@ escape x;
 }
 
 Test { [[
+input void OS_START;
+var int x = 1;
+spawn do
+    loop do
+        await 1s;
+        if 1 == 1 then
+            break;
+        end
+    end
+end
+await OS_START;
+escape x;
+]],
+    ana = 'line 3 : `spawn´ body must never terminate',
+}
+
+Test { [[
+input void OS_START;
+var int x = 0;
+spawn do
+    await OS_START;
+    x = 1;
+end
+await OS_START;
+escape x;
+]],
+    ana = 'line 3 : `spawn´ body must never terminate',
+}
+
+Test { [[
+input void OS_START;
+var int x = 0;
+spawn do
+    await OS_START;
+    x = 1;
+    await FOREVER;
+end
+await OS_START;
+escape x;
+]],
+    _ana = {acc=1},
+    run = 1,
+}
+
+Test { [[
 var int xxx=0;
 spawn do
     this.xxx = 1;
+    await FOREVER;
 end
 escape xxx;
 ]],
+    _ana = {acc=1},
     run = 1,
 }
 
@@ -35271,12 +35338,14 @@ do
     spawn do
         this.aaa = 10;
         this.xxx = this.aaa;
+        await FOREVER;
     end
     escape aaa;
 end
 var int ret = do T;
 escape ret;
 ]],
+    _ana = {acc=1},
     run = 10,
 }
 

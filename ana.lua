@@ -187,8 +187,10 @@ print('class "'..id..'" may terminate from nested organisms')
                me[i-1].ana.pos[false] and (not me[i-1].ana.pre[false]) then
                 --ANA.ana.unreachs = ANA.ana.unreachs + 1
                 me.__unreach = true
-                WRN( INC(me, 'unreachs'),
-                     sub, 'statement is not reachable')
+                local n = INC(me, 'unreachs')
+                if (not n) and (not sub.__adj_no_not_reachable_warning) then
+                    WRN(false, sub, 'statement is not reachable')
+                end
             end
             -- other subs follow previous
             sub.ana = {
@@ -212,7 +214,7 @@ print('class "'..id..'" may terminate from nested organisms')
         for _, sub in ipairs(me) do
             OR(me, sub, true)
         end
-        if me.ana.pos[false] then
+        if me.ana.pos[false] and (not me.__adj_no_should_terminate_warning) then
             --ANA.ana.unreachs = ANA.ana.unreachs + 1
             WRN( INC(me, 'unreachs'),
                  me, 'at least one trail should terminate')
@@ -338,6 +340,13 @@ print('class "'..id..'" may terminate from nested organisms')
             me.ana.pos = COPY(me.ana.pre)
         else
             me.ana.pos = { ['ASYNC_'..me.n]=true }  -- assume it terminates
+        end
+    end,
+
+    Stmts_pos = function (me)
+        if me.__adj_is_spawnanon then
+            ASR(me.ana.pos[false] == true, me.ln,
+                '`spawn´ body must never terminate')
         end
     end,
 

@@ -180,7 +180,7 @@ function AST.dump (me, spc)
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
     --ks = table.concat(me.trails,'-')
 --
-if me.ana then
+if me.ana and me.ana.pre and me.ana.pos then
     local f = function(v)
                 return type(v)=='table'
                             and (type(v[1])=='table' and v[1].id or v[1])
