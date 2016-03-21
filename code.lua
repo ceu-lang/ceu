@@ -1215,7 +1215,9 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
                 then
                     -- var T&&? p = &&t;
                     LINE(me, [[
-if (((tceu_org*)]]..V(fr,'rval')..[[)->isAlive) {
+if ( ]]..V(fr,'rval')..[[!=NULL &&
+     ((tceu_org*)]]..V(fr,'rval')..[[)->isAlive )
+{
 ]]..V(to,'rval')..' = '..string.upper(TP.toc(to.tp))..[[_pack(]]..V(fr,'rval')..[[);
 } else {
 ]]..V(to,'rval')..' = '..string.upper(TP.toc(to.tp))..[[_pack(NULL);

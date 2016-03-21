@@ -283,21 +283,11 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-class Test with
-do
-end
-
-var Test&&? a = null; // leads to segfault
-]],
-    run = 1,
-}
-
-do return end
+--]===]
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -27339,6 +27329,18 @@ do
     this.x = &&xx;
 end
 var T a;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class Test with
+do
+end
+
+var Test&&? a = null; // leads to segfault
+
 escape 1;
 ]],
     run = 1,
