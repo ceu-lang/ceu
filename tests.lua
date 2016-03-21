@@ -284,10 +284,10 @@ escape 1;
 }
 
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -18039,12 +18039,20 @@ event void&& e;
 var void&& v = await e;
 escape 1;
 ]],
+    env = 'line 1 : invalid event type',
+}
+
+Test { [[
+event int e;
+var int v = await e;
+escape 1;
+]],
     run = 0,
 }
 
 Test { [[
-event void&& e;
-var void&& v = await e;
+event int e;
+var int v = await e;
 await e;
 escape 1;
 ]],
@@ -18053,9 +18061,9 @@ escape 1;
 }
 
 Test { [[
-event int&& e;
-var int&& v = await e;
-await e;
+input int&& E;
+var int&& v = await E;
+await E;
 escape *v;
 ]],
     fin = 'line 4 : unsafe access to pointer "v" across `await´',
@@ -18066,8 +18074,8 @@ escape *v;
 Test { [[
 var int&& p=null;
 do
-    event int&& e;
-    p = await e;
+    input int&& E;
+    p = await E;
 end
 escape 1;
 ]],
@@ -18079,10 +18087,10 @@ Test { [[
 var int&& p1=null;
 do
     var int&& p;
-    event int&& e;
-    p = await e;
+    input int&& E;
+    p = await E;
     p1 = p;
-    await e;
+    await E;
     escape *p1;
 end
 escape 1;
@@ -18096,10 +18104,10 @@ Test { [[
 var int&& p1 = null;
 do
     var int&& p;
-    event int&& e;
-    p = await e;
+    input int&& E;
+    p = await E;
     _f(p);
-    await e;
+    await E;
     escape *p1;
 end
 escape 1;
@@ -18110,8 +18118,8 @@ escape 1;
 Test { [[
 var int&& p=null;
 do
-    event int&& e;
-    p = await e;
+    input int&& E;
+    p = await E;
 end
 await 1s;
 escape 1;
@@ -18126,8 +18134,8 @@ var int&& p = &&x;
 par/or do
     await 1s;
 with
-    event int&& e;
-    p = await e;
+    input int&& E;
+    p = await E;
 end
 escape x;
 ]],
@@ -18213,10 +18221,10 @@ var int&& p=null;
 var int ret=0;
 input void OS_START;
 do
-    event int&& e;
+    input int&& E;
     par/and do
         finalize
-            p = await e;
+            p = await E;
         with
             ret = *p;
             p = &&ret;
@@ -18224,7 +18232,9 @@ do
     with
         await OS_START;
         var int i = 1;
-        emit e => &&i;
+        async do
+            emit E => &&i;
+        end
     end
 end
 escape ret + *p;
@@ -18236,23 +18246,26 @@ escape ret + *p;
 }
 
 Test { [[
-var int ret;
+var int ret = 0;
 var int&& p = &&ret;
 input void OS_START;
 do
-    event int&& e;
+    input int&& E;
     par/and do
-        p = await e;
+        p = await E;
     with
         await OS_START;
         var int i = 1;
-        emit e => &&i;
+        async (i) do
+            emit E => &&i;
+        end
     end
 end
 escape ret + *p;
 ]],
-    env = 'line 11 : wrong argument : cannot pass pointers',
-    --fin = 'line 14 : unsafe access to pointer "p" across `emit´ (tests.lua : 11)',
+    run = 1,
+    --env = 'line 11 : wrong argument : cannot pass pointers',
+    fin = 'line 16 : unsafe access to pointer "p" across `async´ (tests.lua : 11)',
     --fin = 'line 14 : unsafe access to pointer "p" across `par/and´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
     --fin = 'line 14 : cannot `await´ again on this block',
@@ -18265,16 +18278,18 @@ input void OS_START;
 do
     var int r;
     do
-        event (int,void&&) ptr;
+        input (int,void&&) PTR;
         par/or do
             finalize
-                (i,p) = await ptr;
+                (i,p) = await PTR;
             with
                 r = i;
             end
         with
             await OS_START;
-            emit ptr => (1, null);
+            async do
+                emit PTR => (1, null);
+            end
         end
     end
     _assert(r == 1);
@@ -18287,46 +18302,50 @@ end
 }
 
 Test { [[
-var int&& p;
-var int ret;
+var int&& p = null;
+var int ret = 0;
 input void OS_START;
 do
-    event int&& e;
+    input int&& E;
     par/and do
-        p = await e;
+        p = await E;
         ret = *p;
     with
         await OS_START;
-        var int i = 1;
-        emit e => &&i;
+        async do
+            var int i = 1;
+            emit E => &&i;
+        end
     end
 end
 escape ret;
 ]],
-    env = 'line 12 : wrong argument : cannot pass pointers',
+    --env = 'line 12 : wrong argument : cannot pass pointers',
     --fin = 'line 7 : invalid block for awoken pointer "p"',
     --fin = 'line 7 : wrong operator',
-    --run = 1,
+    run = 1,
 }
 
 Test { [[
-var int&& p;
-var int ret;
+var int&& p = null;
+var int ret = 0;
 input void OS_START;
 do
-    event int&& e;
+    input int&& E;
     par/and do
-        p = await e;
+        p = await E;
         ret = *p;
     with
         await OS_START;
-        var int i = 1;
-        emit e => &&i;
+        async do
+            var int i = 1;
+            emit E => &&i;
+        end
     end
 end
 escape ret;
 ]],
-    env = 'line 12 : wrong argument : cannot pass pointers',
+    --env = 'line 12 : wrong argument : cannot pass pointers',
     --fin = 'line 7 : invalid block for awoken pointer "p"',
     --fin = 'line 7 : wrong operator',
     --run = 1,
@@ -18354,47 +18373,51 @@ escape ret;
 
 Test { [[
 input void OS_START;
-event (int,void&&) ptr;
+input (int,void&&) PTR;
 var void&& p=null;
 var int i=0;
 par/or do
-    (i,p) = await ptr;
+    (i,p) = await PTR;
 with
     await OS_START;
-    emit ptr => (1, null);
+    async do
+        emit PTR => (1, null);
+    end
 end
 escape i;
 ]],
-    env = 'line 9 : wrong argument #2 : cannot pass pointers',
+    --env = 'line 9 : wrong argument #2 : cannot pass pointers',
     --fin = 'line 6 : invalid block for awoken pointer "p"',
     --fin = 'line 6 : attribution to pointer with greater scope',
-    --run = 1,
+    run = 1,
 }
 Test { [[
 input void OS_START;
-event (int,void&&) ptr;
+input (int,void&&) PTR;
 var void&& p=null;
 var int i=0;
 par/or do
     var void&& p1;
-    (i,p1) = await ptr;
+    (i,p1) = await PTR;
     p := p1;
 with
     await OS_START;
-    emit ptr => (1, null);
+    async do
+        emit PTR => (1, null);
+    end
 end
 escape i;
 ]],
-    env = 'line 11 : wrong argument #2 : cannot pass pointers',
+    --env = 'line 11 : wrong argument #2 : cannot pass pointers',
     --fin = 'line 6 : invalid block for awoken pointer "p"',
-    --run = 1,
+    run = 1,
 }
 
 Test { [[
-event (int,void&&) ptr;
+input (int,void&&) PTR;
 var void&& p;
 var int i;
-(i,p) = await ptr;
+(i,p) = await PTR;
 await 1s;
 escape i;
 ]],
@@ -18404,83 +18427,91 @@ escape i;
 
 Test { [[
 input void OS_START;
-event (int,void&&) ptr;
-var void&& p;
-var int i;
+input (int,void&&) PTR;
+var void&& p = null;
+var int i = 0;
 par/or do
     var void&& p1;
-    (i,p1) = await ptr;
+    (i,p1) = await PTR;
     p := p1;
 with
     await OS_START;
-    emit ptr => (1, null);
+    async do
+        emit PTR => (1, null);
+    end
 end
 await 1s;
 escape i;
 ]],
-    env = 'line 11 : wrong argument #2 : cannot pass pointers',
-    --run = 0,
+    --env = 'line 11 : wrong argument #2 : cannot pass pointers',
+    run = 0,
     --fin = 'line 6 : invalid block for awoken pointer "p"',
 }
 
 Test { [[
-var void&& p;
-var int i;
+var void&& p = null;
+var int i = 0;
 input void OS_START;
 do
-    event (int,void&&) ptr;
+    input (int,void&&) PTR;
     par/or do
-        (i,p) := await ptr;
+        (i,p) = await PTR;
     with
         await OS_START;
-        emit ptr => (1, null);
+        async do
+            emit PTR => (1, null);
+        end
     end
 end
 escape i;
 ]],
-    env = 'line 10 : wrong argument #2 : cannot pass pointers',
+    --env = 'line 10 : wrong argument #2 : cannot pass pointers',
     --fin = 'line 7 : wrong operator',
     --fin = 'line 7 : attribution does not require `finalize´',
-    --run = 1,
+    run = 1,
 }
 
 Test { [[
-var void&& p;
-var int i;
+var void&& p = null;
+var int i = 0;
 input void OS_START;
 do
-    event (int,void&&) ptr;
+    input (int,void&&) PTR;
     par/or do
         var void&& p1;
-        (i,p1) = await ptr;
+        (i,p1) = await PTR;
         p := p1;
     with
         await OS_START;
-        emit ptr => (1, null);
+        async do
+            emit PTR => (1, null);
+        end
     end
 end
 escape i;
 ]],
     --fin = 'line 7 : wrong operator',
     --fin = 'line 7 : attribution does not require `finalize´',
-    env = 'line 12 : wrong argument #2 : cannot pass pointers',
-    --run = 1,
+    --env = 'line 12 : wrong argument #2 : cannot pass pointers',
+    run = 1,
 }
 
 Test { [[
-var int&& p;
-var int i;
+var int&& p = null;
+var int i = 0;
 input void OS_START;
 do
-    event (int,int&&) ptr;
+    input (int,int&&) PTR;
     par/or do
         var int&& p1;
-        (i,p1) = await ptr;
+        (i,p1) = await PTR;
         p := p1;
     with
         await OS_START;
-        var int v = 10;
-        emit ptr => (1, &&v);
+        async do
+            var int v = 10;
+            emit PTR => (1, &&v);
+        end
     end
     i = *p;
 end
@@ -18489,8 +18520,9 @@ escape i;
     --fin = 'line 7 : wrong operator',
     --fin = 'line 7 : attribution does not require `finalize´',
     --fin = 'line 14 : pointer access across `await´',
-    env = 'line 13 : wrong argument #2 : cannot pass pointers',
+    --env = 'line 13 : wrong argument #2 : cannot pass pointers',
     --run = 10,
+    fin = 'line 17 : unsafe access to pointer "p" across `async´ (tests.lua : 12)',
 }
 
 Test { [[
@@ -19863,8 +19895,8 @@ escape ret;
 
 Test { [[
 input void&& E;
-event _tceu_queue&& go;
-every qu_ in go do
+input _tceu_queue&& GO;
+every qu_ in GO do
     var _tceu_queue qu = * qu_;
     async(qu) do
         emit E => qu.param.ptr;
@@ -19879,8 +19911,8 @@ end
 Test { [[
 input void&& E;
 native @plain _tceu_queue;
-event _tceu_queue&& go;
-every qu_ in go do
+input _tceu_queue&& GO;
+every qu_ in GO do
     var _tceu_queue qu = * qu_;
     async(qu) do
         emit E => qu.param.ptr;
