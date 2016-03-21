@@ -37,7 +37,6 @@ local NO_atomic = {
     Pause=true,
     -- TODO:
     Loop=true, Break=true, Escape=true,
-    Op2_call=true,
 }
 
 local NO_fun = {
@@ -68,6 +67,19 @@ local NO_async = {
     Pause=true,
     Escape=true,
     Finalize=true,
+    This=true,
+}
+
+local NO_isr = {
+    Async=true, Thread=true,
+    ParEver=true, ParOr=true, ParAnd=true,
+    Await=true, AwaitN=true,
+    EmitInt=true,
+    Pause=true,
+    Escape=true,
+    Finalize=true,
+    Atomic=true,
+    This=true,
 }
 
 local NO_thread = {
@@ -78,6 +90,7 @@ local NO_thread = {
     Pause=true,
     Escape=true,
     Finalize=true,
+    This=true,
 }
 
 local NO_constr = {
@@ -143,6 +156,10 @@ F = {
         if NO_thread[me.tag] then
             ASR(not AST.par(me,'Thread'), me,
                     'not permitted inside `thread´')
+        end
+        if NO_isr[me.tag] then
+            ASR(not AST.par(me,'Isr'), me,
+                    'not permitted inside `async/isr´')
         end
         if NO_constr[me.tag] then
             ASR(not AST.par(me,'Dcl_constr'), me,
