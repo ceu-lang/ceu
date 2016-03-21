@@ -31691,13 +31691,27 @@ tot = tot * 2;                  // 6
 
 escape tot;
 ]],
+    env = 'line 4 : variable/event "tot" is not declared',
+}
+
+Test { [[
+pre do
+    var int tot = 1;                // 1
+
+    tot = tot + 2;              // 3
+end
+
+tot = tot * 2;                  // 6
+
+escape tot;
+]],
     run = 6
 }
 
 Test { [[
-var int tot = 1;                // 1
-
 pre do
+    var int tot = 1;                // 1
+
     tot = tot + 2;              // 3
 end
 
@@ -31721,10 +31735,10 @@ escape tot;
 }
 
 Test { [[
+pre do
 var int tot = 1;                // 1
 var int tot2;
 
-pre do
     tot = tot + 2;              // 3
 end
 
@@ -31748,10 +31762,10 @@ escape tot;
 }
 
 Test { [[
+pre do
 var int tot = 1;                // 1
 var int tot2 = 1;                       // 1
 
-pre do
     tot = tot + 2;              // 3
 end
 
@@ -31778,18 +31792,18 @@ pre do
     end
 end
 
-tot = tot + tot2;               // 25
+tot = tot + tot2;               // 30
 
 pre do
-    tot = tot + tot2;           // 35
+    tot = tot + tot2;           // 25
     tot2 = tot2 / 2;                    // 5
 end
 
 tot2 = tot2 - 4;                        // 1
 
-escape tot + tot2;              // 36
+escape tot + tot2;              // 31
 ]],
-    run = 36
+    run = 31
 }
 
 --<<< GLOBAL-DO-END / DO-PRE

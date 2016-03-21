@@ -989,7 +989,7 @@ type.
         ASR(pool.var and TP.check(pool.tp,TP.id(pool.tp),'[]','-&&','-&'),
             me, 'invalid pool')
 
-        local blki = AST.asr(me.__par,'Stmts', 3,'Stmts', 1,'Dcl_cls',
+        local blki = AST.asr(me.__par,'Stmts', 3,'Dcl_cls',
                                     3,'Block', 1,'Stmts', 1,'BlockI')
 
         local tp = AST.asr(blki,'', 1,'Stmts', 3,'Dcl_pool', 2,'Type')

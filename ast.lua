@@ -165,7 +165,10 @@ function AST.iter (pred, inc)
     end
 end
 
-function AST.dump (me, spc)
+function AST.dump (me, spc, lvl)
+    if lvl and lvl==0 then
+        return
+    end
     spc = spc or 0
     local ks = ''
 --[[
@@ -210,7 +213,7 @@ end
 --DBG'---'
     for i, sub in ipairs(me) do
         if AST.isNode(sub) then
-            AST.dump(sub, spc+2)
+            AST.dump(sub, spc+2, lvl and lvl-1)
         else
             DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
         end

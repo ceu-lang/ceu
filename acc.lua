@@ -470,15 +470,12 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
                     -- C's are det?
                     local c1_err = c1.mod~='@pure' and c1.mod~='const'
                     local c2_err = c2.mod~='@pure' and c2.mod~='const'
-                    if c1_err and c2_err then
-                        local ok = (ENV.dets[acc1.id] and
-                                    (ENV.dets[acc1.id]==true or
-                                     ENV.dets[acc1.id][acc2.id]))
-                                 or
-                                   (ENV.dets[acc2.id] and
-                                    (ENV.dets[acc2.id]==true or
-                                     ENV.dets[acc2.id][acc1.id]))
-                        err = not ok
+                    if c1_err and c2_err and
+                        ( acc1.md=='cl' and acc2.md=='cl'
+                        or
+                          acc1.id==acc2.id )
+                    then
+                        err = true
                     end
                 else
                     -- this.x vs this.x (both accs bounded to cls)
@@ -502,6 +499,17 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
                                  or acc1.any and TP.contains(acc1.tp,acc2.tp)
                                  or acc2.any and TP.contains(acc2.tp,acc1.tp)
                     err = cls_err and org_err and id_err
+                end
+
+                if err then
+                    local ok = (ENV.dets[acc1.id] and
+                                (ENV.dets[acc1.id]==true or
+                                 ENV.dets[acc1.id][acc2.id]))
+                             or
+                               (ENV.dets[acc2.id] and
+                                (ENV.dets[acc2.id]==true or
+                                 ENV.dets[acc2.id][acc1.id]))
+                    err = not ok
                 end
 --[[
 DBG'==============='
