@@ -2205,7 +2205,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
     end,
 
     Isr = function (me)
-        local id, f, blk = unpack(me)
+        local _,f,_,blk = unpack(me)
 
         local code = string.gsub(blk.code, '_ceu_org', '((tceu_org*)CEU_APP.data)')
         code = string.gsub(code, '_ceu_app', '(&CEU_APP)')

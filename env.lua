@@ -6,6 +6,7 @@ ENV = {
     adts = {},      -- { [1]=adt, ... [adt]=0 }
 
     calls = {},     -- { _printf=true, _myf=true, ... }
+    isrs  = {},     -- { }
 
     -- f=fields, e=events
     ifcs  = {
@@ -203,8 +204,8 @@ end
 function newvar (me, blk, pre, tp, id, isImp, isEvery)
     local ME = CLS() or ADT()  -- (me can be a "data" declaration)
     for stmt in AST.iter() do
-        if stmt.tag=='Dcl_cls' or stmt.tag=='Dcl_adt' or
-           stmt.tag=='Dcl_fun' or stmt.tag=='Async' or stmt.tag=='Thread'
+        if stmt.tag=='Dcl_cls' or stmt.tag=='Dcl_adt' or stmt.tag=='Dcl_fun'
+        or stmt.tag=='Async'   or stmt.tag=='Thread'  or stmt.tag=='Isr'
         then
             break   -- search boundaries
         elseif stmt.tag == 'Block' then
@@ -360,8 +361,11 @@ function ENV.getvar (id, blk)
     while blk do
         if blk.tag=='Dcl_cls' or blk.tag=='Dcl_adt' then
             return nil      -- class/adt boundary
-        elseif blk.tag=='Async' or blk.tag=='Thread' then
+        elseif blk.tag=='Async' or blk.tag=='Thread' or blk.tag=='Isr' then
             local vars = unpack(blk)    -- VarList
+            if blk.tag == 'Isr' then
+                vars = blk[3]
+            end
             if not (vars and __vars_check(vars,id)) then
                 return nil  -- async boundary: stop unless declared with `&´
             end
@@ -1422,6 +1426,11 @@ type.
 
         local ok, msg = TP.contains(tup, params.tp)
         ASR(ok, me, msg)
+    end,
+
+    Isr = function (me)
+        local id = unpack(me)
+        ENV.isrs[id] = true
     end,
 
     Op2_call = function (me)

@@ -414,9 +414,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Pause   = KEY'pause/if' * EV'__Exp' * V'__Do'
 
     -- asynchronous execution
-    , Async   = KEY'async' * (-P'/thread') * (V'VarList'+Cc(false)) * V'__Do'
-    , _Thread = KEY'async/thread'          * (V'VarList'+Cc(false)) * V'__Do'
-    , _Isr    = KEY'async/isr' * EK'(' * EV'ExpList' * EK')' * V'__Do'
+    , Async   = KEY'async' * (-P'/thread'-'/isr') * (V'VarList'+Cc(false)) * V'__Do'
+    , _Thread = KEY'async/thread' * (V'VarList'+Cc(false)) * V'__Do'
+    , _Isr    = KEY'async/isr'    * EK'[' * EV'ExpList' * EK']' * (V'VarList'+Cc(false)) * V'__Do'
     , Atomic  = KEY'atomic' * V'__Do'
 
     -- C integration
