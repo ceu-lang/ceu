@@ -205,6 +205,7 @@ F = {
 
     Global = function (me)
         me.acc = INS {
+            me  = me,
             path = me.ana.pre,
             id  = 'Global',
             md  = 'rd',
@@ -239,18 +240,20 @@ F = {
     Var = function (me)
         local tag = me.__par.tag=='VarList' and me.__par.__par.tag
 
-        if tag=='Async' or tag=='Thread' then
+        if tag=='Async' or tag=='Thread' or tag=='Isr' then
             return  -- <async (v)> is not an access
         end
 
         local generated = (string.sub(me.var.id,1,1) == '_') and (me.var.id~='_ret')
 
         me.acc = INS {
+            me  = me,
             path = me.ana.pre,
             id  = me.var,
             md  = (generated and 'nv') or 'rd',
             tp  = me.var.tp,
             any = TP.check(me.var.tp,'&'),
+            str = me.var.id,
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
 
@@ -264,11 +267,13 @@ F = {
     Nat = function (me)
         local _, generated = unpack(me);
         me.acc = INS {
+            me  = me,
             path = me.ana.pre,
             id  = me[1],
             md  = (generated and 'nv') or 'rd',
             tp  = TP.new{'@'},
             any = false,
+            str = me[1],
             err = ERR(me, 'symbol `'..me[1]..'´'),
         }
     end,
@@ -455,48 +460,49 @@ function CHK_ACC (accs1, accs2, NO_par, NO_emts)
 -- ACC (in both safety levels, ignore aw/tr for level-2)
 --DBG(acc1.md,acc2.md, OPTS.safety, ND.acc[acc1.md],ND.acc[acc2.md])
             if par_level1(path1,path2) and ND.acc[acc1.md][acc2.md] or
-               OPTS.safety==2 and ND.acc[acc1.md][acc2.md]==2 then
-                -- this.x vs this.x (both accs bounded to cls)
-                local cls_ = (acc1.cls == cls) or
-                             (acc2.cls == cls)
-
-                -- a.x vs this.x
-                local _nil = {}
-                local o1 = (acc1.org or acc2.org)
-                o1 = o1 and o1.acc or _nil
-                local o2 = (acc2.org or acc1.org)
-                o2 = o2 and o2.acc or _nil
-
-                -- orgs are compatible?
-                local org_ = (o1 == o2)
-                          or o1.any
-                          or o2.any
-
-                -- orgs are compatible?
-                local org_ = o1.id == o2.id
-                          or o1.any
-                          or o2.any
-
-                -- ids are compatible?
-                local id_ = acc1.id == acc2.id
-                         or acc1.md=='cl' and acc2.md=='cl'
-                         or acc1.any and TP.contains(acc1.tp,acc2.tp)
-                         or acc2.any and TP.contains(acc2.tp,acc1.tp)
-
-                -- C's are det?
+               OPTS.safety==2 and ND.acc[acc1.md][acc2.md]==2
+            then
+                local err = false
                 local c1 = ENV.c[acc1.id]
-                c1 = c1 and (c1.mod=='@pure' or c1.mod=='const')
                 local c2 = ENV.c[acc2.id]
-                c2 = c2 and (c2.mod=='@pure' or c2.mod=='const')
-                local c_ = c1 or c2
-                        or (ENV.dets[acc1.id] and
-                                (ENV.dets[acc1.id]==true or
-                                 ENV.dets[acc1.id][acc2.id]))
-                        or (ENV.dets[acc2.id] and
-                                (ENV.dets[acc2.id]==true or
-                                 ENV.dets[acc2.id][acc1.id]))
 
-    --DBG(id_, c_,c1,c2, acc1.any,acc2.any)
+                if c1 and c2 then
+                    -- C's are det?
+                    local c1_err = c1.mod~='@pure' and c1.mod~='const'
+                    local c2_err = c2.mod~='@pure' and c2.mod~='const'
+                    if c1_err and c2_err then
+                        local ok = (ENV.dets[acc1.id] and
+                                    (ENV.dets[acc1.id]==true or
+                                     ENV.dets[acc1.id][acc2.id]))
+                                 or
+                                   (ENV.dets[acc2.id] and
+                                    (ENV.dets[acc2.id]==true or
+                                     ENV.dets[acc2.id][acc1.id]))
+                        err = not ok
+                    end
+                else
+                    -- this.x vs this.x (both accs bounded to cls)
+                    local cls_err = (acc1.cls == cls) or
+                                    (acc2.cls == cls)
+
+                    -- orgs are compatible?
+                    -- a.x vs this.x
+                    local _nil = {}
+                    local o1 = (acc1.org or acc2.org)
+                    o1 = o1 and o1.acc or _nil
+                    local o2 = (acc2.org or acc1.org)
+                    o2 = o2 and o2.acc or _nil
+                    local org_err = o1.id == o2.id
+                                    or o1.any
+                                    or o2.any
+
+                    -- ids are compatible?
+                    local id_err = acc1.id == acc2.id
+                                 or acc1.md=='cl' and acc2.md=='cl'
+                                 or acc1.any and TP.contains(acc1.tp,acc2.tp)
+                                 or acc2.any and TP.contains(acc2.tp,acc1.tp)
+                    err = cls_err and org_err and id_err
+                end
 --[[
 DBG'==============='
 DBG(acc1.cls.id, acc1, acc1.id, acc1.md, TP.toc(acc1.tp), acc1.any, acc1.err)
@@ -509,13 +515,27 @@ DBG('path2', acc2.path, type(k)=='table' and k[1].id or k)
 end
 DBG'==============='
 ]]
-                if cls_ and org_ and id_ and (not c_)
-                then
+                if err then
                     if OPTS.safety > 0 then
                         DBG('WRN : nondeterminism : '..acc1.err
                                 ..' vs '..acc2.err)
                     end
                     ANA.ana.acc = ANA.ana.acc + 1
+
+                    if acc1.me and      AST.par(acc1.me,'Isr') and
+                       acc2.me and (not AST.par(acc2.me,'Isr'))
+                    then
+                        ASR(AST.par(acc2.me,'Atomic'), acc2.me.ln,
+                            'access to symbol "'..acc2.str..'" must be atomic'..
+                            ' (vs '..acc1.err..')')
+                    end
+                    if acc2.me and      AST.par(acc2.me,'Isr') and
+                       acc1.me and (not AST.par(acc1.me,'Isr'))
+                    then
+                        ASR(AST.par(acc1.me,'Atomic'), acc1.me.ln,
+                            'access to symbol "'..acc1.str..'" must be atomic'..
+                            ' (vs '..acc2.err..')')
+                    end
                 end
             end
         end
