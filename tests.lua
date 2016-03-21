@@ -26603,6 +26603,32 @@ escape t.a;
 }
 
 Test { [[
+var TestX x with
+  this.k = 5;
+end;
+]],
+    env = 'line 1 : undeclared type `TestX´',
+}
+Test { [[
+do TestX with
+  this.k = 5;
+end;
+]],
+    env = 'line 1 : undeclared type `TestX´',
+}
+Test { [[
+class Test with
+    var u8 k;
+do
+end
+
+do TestX with
+  this.k = 5;
+end;
+]],
+    env = 'line 6 : undeclared type `TestX´',
+}
+Test { [[
 interface I with end
 
 class T with

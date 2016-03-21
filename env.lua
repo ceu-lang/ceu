@@ -769,10 +769,15 @@ F = {
         end
     end,
 
+    -- declare variable before the constructor
+    Dcl_var_aft = function (me, sub, i)
+        if i == 3 then
+            F.__dcl_var(me)
+        end
+    end,
+
     Dcl_var = function (me)
         local _, tp, id, constr, _ = unpack(me)
-
-        F.__dcl_var(me)
 
         if me.var.cls then
             if not constr then
