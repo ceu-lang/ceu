@@ -22959,6 +22959,12 @@ escape v[1];
     run = 2,
 }
 
+Test { [[
+var int xxx = 10;
+escape ((_CEU_Main&&)(__ceu_app:data)):xxx;
+]],
+    run = 10,
+}
 -- NATIVE/PRE
 
 Test { [[
@@ -44643,25 +44649,52 @@ escape 1;
     props = 'line 3 : not permitted inside `atomic´',
 }
 
-Test { [[
+PRE_ISR = [[
+native/pre do
+    tceu_app CEU_APP;
+    ##define ceu_out_isr_on()
+    ##define ceu_out_isr_off()
+    int V;
+    void ceu_sys_isr_attach (void* f, int v) {
+        V = V + v;
+    }
+    void ceu_sys_isr_detach (void* f, int v) {
+        V = V * v;
+    }
+    ##define ceu_out_isr_attach ceu_sys_isr_attach
+    ##define ceu_out_isr_detach ceu_sys_isr_detach
+end
+
+
+
+
+
+
+]]
+
+Test { PRE_ISR..[[
+native do
+    void f (void){}
+end
 output int O;
 atomic do
     _f();
 end
 escape 1;
 ]],
-    props = 'line 3 : not permitted inside `atomic´',
+    run = 1,
 }
 
-Test { [[
+Test { PRE_ISR..[[
 output int O;
-function (void)=>void f;
+function (void)=>void f do end
 atomic do
     f();
 end
 escape 1;
 ]],
-    props = 'line 4 : not permitted inside `atomic´',
+    run = 1,
+    --props = 'line 4 : not permitted inside `atomic´',
 }
 
 Test { [[
@@ -44689,7 +44722,7 @@ escape 1;
 
 Test { [[
 par/or do
-    async/isr (20) do
+    async/isr [20] do
     end
 with
 end
@@ -44700,7 +44733,7 @@ escape 1;
 
 Test { [[
 par/or do
-    async/isr (20) do
+    async/isr [20] do
     end
     await FOREVER;
 with
@@ -44717,7 +44750,7 @@ native do
     void ceu_out_isr_detach (void*) {}
 end
 par/or do
-    async/isr (20) do
+    async/isr [20] do
     end
     await FOREVER;
 with
@@ -44734,7 +44767,7 @@ native do
     void ceu_out_isr_off (void) { }
 end
 par/or do
-    async/isr (20) do
+    async/isr [20] do
     end
     await FOREVER;
 with
@@ -44753,7 +44786,7 @@ native/pre do
     ##define ceu_out_isr_detach
 end
 par/or do
-    async/isr (1) do
+    async/isr [1] do
     end
     await FOREVER;
 with
@@ -44774,7 +44807,7 @@ native/pre do
     ##define ceu_out_isr_detach ceu_sys_isr_detach
 end
 par/or do
-    async/isr (1) do
+    async/isr [1] do
     end
     await FOREVER;
 with
@@ -44801,7 +44834,7 @@ native/pre do
 end
 par/or do
 do
-    async/isr (3,4) do
+    async/isr [3,4] do
     end
     await FOREVER;
 end             // TODO: forcing finalize out_isr(null)
@@ -44829,7 +44862,7 @@ native/pre do
 end
 par/or do
     do
-        async/isr (3) do
+        async/isr [3] do
         end
         await FOREVER;
     end             // TODO: forcing finalize out_isr(null)
@@ -44840,11 +44873,11 @@ escape _V;
     run = 12,
 }
 
-Test { [[
-var int[10] v;
+Test { PRE_ISR..[[
+var int[10] v = [1];
 v[0] = 2;
 par/or do
-    async/isr (20) do
+    async/isr [20] (v) do
         v[0] = 1;
     end
     await FOREVER;
@@ -44852,7 +44885,8 @@ with
 end
 escape v[0];
 ]],
-    isr = 'line 2 : access to "v" must be atomic',
+    run = 2,
+    --isr = 'line 2 : access to "v" must be atomic',
 }
 
 Test { [[
@@ -44861,7 +44895,7 @@ atomic do
     v[0] = 2;
 end
 par/or do
-    async/isr (20) do
+    async/isr [20] (v) do
         v[0] = 1;
     end
     await FOREVER;
@@ -44894,7 +44928,7 @@ atomic do
     v[0] = 2;
 end
 par do
-    async/isr (20) do
+    async/isr [20] (v) do
         v[0] = 1;
     end
     await FOREVER;
@@ -44908,6 +44942,17 @@ end
 ]],
     _ana = {acc=1},
     run = 2,
+}
+
+Test { [[
+async/isr [20] do
+    atomic do
+        _f();
+    end
+end
+await FOREVER;
+]],
+    props = 'line 2 : not permitted inside `async/isr´'
 }
 
 Test { [[
@@ -44935,10 +44980,8 @@ atomic do
     global:x = 1;
 end
 par/or do
-    async/isr (20) do
-        atomic do
-            global:x = 0;
-        end
+    async/isr [20] do
+        global:x = 0;
     end
     await FOREVER;
 with
@@ -44948,10 +44991,10 @@ escape x;
     run = 1,
 }
 
-Test { [[
+Test { PRE_ISR..[[
 var int v = 2;
 par/or do
-    async/isr (20) do
+    async/isr[20] (v) do
         v = 1;
     end
     await FOREVER;
@@ -44959,13 +45002,14 @@ with
 end
 escape v;
 ]],
-    isr = 'line 1 : access to "v" must be atomic',
+    run = 2,
+    --isr = 'line 1 : access to "v" must be atomic',
 }
 
-Test { [[
+Test { PRE_ISR..[[
 var int&& v = null;
 par/or do
-    async/isr (20) do
+    async/isr[20] (v) do
         *v = 1;
     end
     await FOREVER;
@@ -44973,16 +45017,17 @@ with
 end
 escape 1;
 ]],
-    isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
+    --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
+    run = 1,
 }
 
-Test { [[
+Test { PRE_ISR..[[
 function (void)=>int f do
     return 2;
 end
 var int v = f();
 par/or do
-    async/isr (20) do
+    async/isr [20] (f) do
         f();
     end
     await FOREVER;
@@ -44990,16 +45035,17 @@ with
 end
 escape v;
 ]],
-    isr = 'line 7 : call breaks the static check for `atomic´ sections',
+    --isr = 'line 7 : call breaks the static check for `atomic´ sections',
+    run = 2,
 }
 
-Test { [[
+Test { PRE_ISR..[[
 function (void)=>int f do
     return 2;
 end
 var int v = f();
 par/or do
-    async/isr (20) do
+    async/isr[20] (f) do
         f();
     end
     await FOREVER;
@@ -45007,14 +45053,18 @@ with
 end
 escape v;
 ]],
-    wrn = true,
-    isr = 'line 4 : access to "f" must be atomic',
+    --wrn = true,
+    --isr = 'line 4 : access to "f" must be atomic',
+    run = 2,
 }
 
-Test { [[
+Test { PRE_ISR..[[
+native do
+    int f (void) { return 2; }
+end
 var int v = _f();
 par/or do
-    async/isr (20) do
+    async/isr [20] do
         _f();
     end
     await FOREVER;
@@ -45022,8 +45072,9 @@ with
 end
 escape v;
 ]],
-    wrn = true,
-    isr = 'line 1 : access to "_f" must be atomic',
+    run = 2,
+    --wrn = true,
+    --isr = 'line 1 : access to "_f" must be atomic',
 }
 
 Test { [[
@@ -45042,7 +45093,7 @@ end
 
 var int v = _f();
 par/or do
-    async/isr (20) do
+    async/isr [20] do
         _f();
     end
     await FOREVER;
@@ -45053,11 +45104,11 @@ escape v;
     run = 2,
 }
 
-Test { [[
+Test { PRE_ISR..[[
 var int v;
 v = 2;
 par/or do
-    async/isr (20) do
+    async/isr [20] (v) do
         v = 1;
     end
     await FOREVER;
@@ -45065,24 +45116,25 @@ with
 end
 escape v;
 ]],
-    isr = 'line 2 : access to "v" must be atomic',
+    --isr = 'line 2 : access to "v" must be atomic',
+    run = 2,
 }
 
-Test { [[
+Test { PRE_ISR..[[
 var int v;
 atomic do
     v = 2;
 end
 par/or do
-    async/isr (20) do
-        this.v = 1;
+    async/isr [20] (v) do
+        v = 1;
     end
     await FOREVER;
 with
 end
 escape v;
 ]],
-    isr = 'line 12 : access to "v" must be atomic',
+    run = 2,
 }
 
 Test { [[
@@ -45101,8 +45153,8 @@ atomic do
     v = 2;
 end
 par do
-    async/isr (20) do
-        this.v = 1;
+    async/isr [20] (v) do
+        v = 1;
         v = 1;
     end
     await FOREVER;
@@ -45118,13 +45170,13 @@ end
     run = 2,
 }
 
-Test { [[
+Test { PRE_ISR..[[
 var int v;
 atomic do
     v = 2;
 end
 par/or do
-    async/isr (20) do
+    async/isr [20] do
         this.v = 1;
     end
     await FOREVER;
@@ -45132,10 +45184,11 @@ with
 end
 escape v;
 ]],
-    isr = 'line 12 : access to "v" must be atomic',
+    --isr = 'line 12 : access to "v" must be atomic',
+    props = 'line 27 : not permitted inside `async/isr´',
 }
 
-Test { [[
+Test { PRE_ISR..[[
 var int v;
 var int&& p;
 atomic do
@@ -45143,15 +45196,16 @@ atomic do
     p = &&v;
 end
 par/or do
-    async/isr (20) do
-        this.v = 1;
+    async/isr [20](v) do
+        v = 1;
     end
     await FOREVER;
 with
 end
 escape 1;
 ]],
-    isr = 'line 5 : reference access breaks the static check for `atomic´ sections',
+    --isr = 'line 5 : reference access breaks the static check for `atomic´ sections',
+    run = 1,
 }
 
 Test { [[
@@ -45161,7 +45215,7 @@ atomic do
     p = &&v;
 end
 par/or do
-    async/isr (20) do
+    async/isr [20] do
         this.v[1] = 1;
     end
     await FOREVER;
@@ -45175,7 +45229,7 @@ escape 1;
 
 Test { [[
 par/or do
-    async/isr (1) do
+    async/isr [1] do
         emit A;
     end
     await FOREVER;
@@ -45189,7 +45243,7 @@ escape 1;
 Test { [[
 input int A;
 par/or do
-    async/isr () do
+    async/isr [] do
         emit A;
     end
     await FOREVER;
@@ -45203,7 +45257,7 @@ escape 1;
 Test { [[
 input int A;
 par/or do
-    async/isr (1) do
+    async/isr [1] do
         emit A;
     end
     await FOREVER;
@@ -45227,7 +45281,7 @@ native/pre do
 end
 
 par/or do
-    async/isr (1) do
+    async/isr [1] do
         var int x = 111;
         emit A => 1;
         x = 222;
@@ -45259,7 +45313,7 @@ end
 
 par/or do
     _assert(_V==0);
-    async/isr (1) do
+    async/isr [1] do
     end
     await FOREVER;
 with
@@ -45273,7 +45327,90 @@ escape _V+1;
     run = { ['~>1s']=1 },
 }
 
---do return end
+Test { [[
+input int PIN02;
+par/or do
+    async/isr [1] do
+        emit PIN02 => _digitalRead(2);
+    end
+    await FOREVER;
+with
+    _digitalWrite(13, 1);
+end
+escape 1;
+]],
+    --_ana = {acc=1},
+    acc = 'line 8 : access to symbol "_digitalWrite" must be atomic (vs symbol `_digitalRead´ (tests.lua:4))',
+    run = 1,
+}
+
+Test { [[
+input int PIN02;
+par/or do
+    var int i = 0;
+    async/isr [1] do
+        emit PIN02 => i;
+    end
+    await FOREVER;
+with
+    _digitalWrite(13, 1);
+end
+escape 1;
+]],
+    env = 'line 5 : variable/event "i" is not declared',
+}
+
+Test { [[
+input int PIN02;
+par/or do
+    var int i = 0;
+    async/isr [1] (i) do
+        emit PIN02 => i;
+    end
+    await FOREVER;
+with
+    _digitalWrite(13, 1);
+end
+escape 1;
+]],
+    gcc = '#error "Missing definition for macro',
+}
+
+Test { [[
+input int PIN02;
+var int i = 0;
+par/or do
+    async/isr [1] (i) do
+        i = 2;
+    end
+    await FOREVER;
+with
+    i = 1;
+end
+escape 1;
+]],
+    acc = 'line 9 : access to symbol "i" must be atomic (vs variable/event `i´ (tests.lua:5))',
+}
+
+Test { [[
+input int PIN02;
+var int i = 0;
+par/or do
+    async/isr [1] (i) do
+        i = 2;
+    end
+    await FOREVER;
+with
+    atomic do
+        i = 1;
+    end
+end
+escape 1;
+]],
+    _ana = {acc=1},
+    gcc = '#error "Missing definition for macro',
+}
+
 --<<< ISR / ATOMIC
 
 Test { [[

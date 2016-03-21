@@ -4,11 +4,16 @@ local TRAVERSE_ALREADY_GENERATED = false
 -- TODO: remove
 MAIN = nil
 
+local DO_PRE
+
 F = {
 -- 1, Root --------------------------------------------------
 
     ['1_pre'] = function (me)
         local spc, stmts = unpack(me)
+
+        DO_PRE = node('Stmts', me.ln)
+        table.insert(stmts, 1, DO_PRE)
 
         local BLK_IFC = node('Block', me.ln, stmts)
         local RET = BLK_IFC
@@ -97,22 +102,14 @@ F = {
     _DoPre_pos = function (me)
         local cls = AST.iter'Dcl_cls'()
         AST.asr(me,'', 1,'Block', 1,'Stmts')
-        if cls == MAIN then
-            return me[1][1]
-                    -- remove "global do ... end" and Block
-        else
-            cls.__globaldos[#cls.__globaldos+1] = me[1][1]
-                    -- remove "global do ... end" and Block
-            return AST.node('Nothing', me.ln)
-        end
+        DO_PRE[#DO_PRE+1] = me[1][1]
+        return AST.node('Nothing', me.ln)
     end,
 
     Dcl_cls_pre = function (me)
         local is_ifc, id, blk_ifc, blk_body = unpack(me)
 -- TODO
 me.blk_body = me.blk_body or blk_body
-
-        me.__globaldos = {}
 
         -- enclose the main block with <ret = do ... end>
         blk_body = node('Block', me.ln,
@@ -125,21 +122,6 @@ me.blk_body = me.blk_body or blk_body
                             node('Var', me.ln,'_ret'),
                             true))) -- true=cls-block
         me[4] = blk_body
-    end,
-
-    Dcl_cls_pos = function (me)
-        local par = AST.iter'Dcl_cls'()
-        assert(me ~= par)
-        if par then
-            if par == MAIN then
-                return node('Stmts', me.ln, me, unpack(me.__globaldos))
-            else
-                for _, v in ipairs(me.__globaldos) do
-                    par.__globaldos[#par.__globaldos+1] = v
-                end
-                return node('Stmts', me.ln, me)
-            end
-        end
     end,
 
     _Dcl_ifc = 'Dcl_cls',
@@ -777,16 +759,18 @@ me.blk_body = me.blk_body or blk_body
         ASR(AST.isNode(nxt) and nxt.tag=='AwaitN', me.ln,
             '`async/isr´ must be followed by `await FOREVER´')
 
-        local args, blk = unpack(me)
+        local args, vars, blk = unpack(me)
 
         local f = 'ISR_'..string.gsub(tostring(me),'[: ]','_')
-        ASR(args[1], me.ln, 'missing ISR identifier')
-        me[1] = args[1][1]
-        me[2] = f
-        me[3] = blk
-        ASR(type(me[1])=='string', me, 'invalid ISR identifier')
+        local id = ASR(args[1], me.ln, 'missing ISR identifier')
+        id = id[1]
+        ASR(type(id)=='string', me, 'invalid ISR identifier')
+        me[1] = id
+        table.insert(me,2,f)
+        -- me = { id, f, vars, blk }
 
         table.insert(args, 1, node('RawExp',me.ln,f))
+        -- args = { f, ... }
 
         --[[
         -- _ceu_out_isr_attach(isr, ...)
@@ -797,7 +781,8 @@ me.blk_body = me.blk_body or blk_body
         return
             node('Stmts', me.ln,
                 me,
-                --node('Dcl_nat', me.ln, '@nohold', 'func', '_ceu_out_isr_detach', false),
+                node('Dcl_det', me.ln, '_ceu_out_isr_attach'),
+                node('Dcl_det', me.ln, '_ceu_out_isr_detach'),
                 node('CallStmt', me.ln,
                     node('Op2_call', me.ln, 'call',
                         node('Nat', me.ln, '_ceu_out_isr_attach'),
