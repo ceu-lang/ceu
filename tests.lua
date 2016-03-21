@@ -22862,10 +22862,10 @@ escape _V==null;
 Test { [[
 do
     var int&& p, p1;
-    event int&& e;
-    p = await e;
+    input int&& E;
+    p = await E;
     p1 = p;
-    await e;
+    await E;
     escape *p1;
 end
 ]],
@@ -30829,14 +30829,15 @@ interface Global with
     var int& v;
 end
 
+var int  um = 111;
+var int& v = &um;
+
 class T with
     var int v=0;
 do
     this.v = global:v;
 end
 
-var int  um = 111;
-var int& v = &um;
 var T t;
 escape t.v;
 ]],

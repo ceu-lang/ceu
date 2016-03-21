@@ -249,6 +249,15 @@ F = {
 
         if not outermost_if then
             VARS_UNINIT[to.var] = nil
+
+            -- associated "global" should also be uninited
+            for var, dcl in pairs(VARS_UNINIT) do
+                if AST.par(dcl,'Dcl_cls') == ENV.clss.Global then
+                    if to.var.id == var.id then
+                        VARS_UNINIT[var] = nil
+                    end
+                end
+            end
         end
     end,
 
