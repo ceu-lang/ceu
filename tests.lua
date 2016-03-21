@@ -4760,7 +4760,8 @@ with
 end
 escape ret;
 ]],
-    env = 'line 11 : wrong argument : cannot pass pointers',
+    env = 'line 3 : invalid event type',
+    --env = 'line 11 : wrong argument : cannot pass pointers',
     --run = { ['~>1s']=10 },
 }
 
@@ -16824,8 +16825,8 @@ var Test t = Test(&b);
 v = [] .. v .. [t];
 
 // reassignments
-b = 10;  // OK
-t.b = 88; // OK
+b = 10;
+t.b = 88;
 v[0].b = 36; // invalid attribution : missing alias operator `&´
 
 escape b;
@@ -50157,6 +50158,26 @@ end
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+class U with do end;
+
+class T with
+    var U&& u;
+do
+    watching *u do
+    end
+end
+
+var U&& u = null;
+var T t with
+    this.u = u;
+end;
+
+escape 1;
+]],
+    run = 'SEGFAULT',
 }
 
 --<<< CLASSES, ORGS, ORGANISMS
