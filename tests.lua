@@ -284,10 +284,10 @@ escape 1;
 }
 
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -644,6 +644,16 @@ event void a;
 var _abc b;
 ]],
     env = 'line 3 : cannot instantiate type "_abc"',
+}
+
+Test { [[
+event u8&& a;  // allowed by compiler
+
+var u8 k = 5;
+
+emit a => &&k; // leads to compiler error
+]],
+    env = 'line 1 : invalid event type'
 }
 
 Test { [[
@@ -16801,6 +16811,26 @@ end
 escape 1;
 ]],
     env = 'line 1 : type cannot be `void´',
+}
+
+Test { [[
+data Test with
+    var u8& b;
+end
+
+var u8 b = 7;
+var Test[3] v;
+var Test t = Test(&b);
+v = [] .. v .. [t];
+
+// reassignments
+b = 10;  // OK
+t.b = 88; // OK
+v[0].b = 36; // invalid attribution : missing alias operator `&´
+
+escape b;
+]],
+    run = 36,
 }
 
 --<<< REFERENCES / REFS / &
@@ -50094,6 +50124,39 @@ await 2s;
 escape o.v;
 ]],
     run = { ['~>2s']=1 },
+}
+
+Test { [[
+class Parser with
+    event int  evtByte;
+    event void evtStop;
+do end;
+
+class Frame with
+    function (int)=>void rawWriteByte;
+do
+    function (int v)=>void rawWriteByte do end;
+end;
+
+class Receiver with
+    var Parser& up;
+    var Frame& rx;
+    event void evtReady;
+do
+    par do
+        every pB in up.evtByte do
+            rx.rawWriteByte(pB);
+        end
+    with
+        every up.evtStop do
+            emit evtReady;
+        end
+    end
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 --<<< CLASSES, ORGS, ORGANISMS

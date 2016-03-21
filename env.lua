@@ -827,8 +827,7 @@ F = {
         end
         assert(tp.tup, 'bug found')
         for _, t in ipairs(tp.tup) do
-            ASR((TP.isNumeric(t) or TP.check(t,'&&')),
-                me, 'invalid event type')
+            ASR(TP.isNumeric(t), me, 'invalid event type')
         end
         local _
         _, me.var = newint(me, AST.iter'Block'(), pre, tp, id, me.isImp)
