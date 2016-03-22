@@ -261,8 +261,8 @@ end
 
 function TP.toc (tp, t)
     t = t or {}
-    if t.vector_base and TP.check(tp,'[]') then
-        return TP.toc(TP.pop(tp,'[]'))..'*'
+    if t.vector_base and TP.check(tp,'[]','-&') then
+        return TP.toc(TP.pop(TP.pop(tp,'&'),'[]'))..'*'
     end
 
     if tp.tup then

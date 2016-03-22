@@ -283,8 +283,8 @@ escape 1;
     run = 1,
 }
 
+do return end
 --]===]
---do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -34228,6 +34228,35 @@ spawn T;
 escape sum;
 ]],
     run = 2,
+}
+
+Test { [[
+class Job with
+    var u8 id = 0;
+    event void nextRequest;
+do
+    // do job
+    await 1s;
+end
+
+pool Job[10] jobs;
+pool Job[10]& jobs_alias = &jobs;
+
+var Job&& ptr = null;
+loop j in jobs do
+    ptr = j;
+    if 1 then break; end
+end // ok, no compile error
+
+ptr = null;
+loop j in jobs_alias do
+    ptr = j;
+    if 1 then break; end
+end // compile error occurs
+
+escape 1;
+]],
+    run = 1,
 }
 
 -- problems w/o ceu_sys_stack_clear_org
