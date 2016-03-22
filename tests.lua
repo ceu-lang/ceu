@@ -283,11 +283,11 @@ escape 1;
     run = 1,
 }
 
-do return end
---]===]
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -26580,6 +26580,15 @@ Test { [[
 class T with
     var int x;
 do
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+    var int x;
+do
     var int v;
 end
 
@@ -27414,7 +27423,7 @@ end
 }
 
 Test { [[
-var int v;
+var int v=0;
 class T with
     var int v=5;
 do
@@ -27425,7 +27434,7 @@ escape t.v;
     run = 5,
 }
 Test { [[
-var int v;
+//var int v;
 class T with
     var int v;
 do
@@ -27436,7 +27445,7 @@ escape t.v;
     ref = 'line 6 : missing initialization for field "v" (declared in tests.lua:3)',
 }
 Test { [[
-var int v;
+//var int v;
 class T with
     var int v;
 do
@@ -27451,7 +27460,7 @@ escape t.v + x.v;
 }
 
 Test { [[
-var int v;
+var int v = 0;
 class T with
     var int v=5;
 do
@@ -27483,7 +27492,7 @@ escape 1;
 }
 
 Test { [[
-var int v;
+var int v = 0;
 class T with
     var int v=5;
 do
@@ -27499,7 +27508,7 @@ escape t.v;
 
 Test { [[
 
-var int v;
+var int v = 0;
 class U with
     var int x = 10;
 do
@@ -27522,7 +27531,7 @@ escape t.v + t.u.x;
 }
 
 Test { [[
-var int v;
+var int v = 0;
 class U with
     var int x = 10;
 do
@@ -27564,6 +27573,21 @@ Test { [[
 class U with
     var int x = 10;
 do
+    await FOREVER;
+end
+var U&&? u;
+var U uu with
+    this.x = 20;
+end;
+u = &&uu;
+escape u!:x;
+]],
+    run = 20,
+}
+Test { [[
+class U with
+    var int x = 10;
+do
 end
 var U&&? u;
 var U uu with
@@ -27575,7 +27599,7 @@ escape not u?;
     run = 1,
 }
 Test { [[
-var int v;
+var int v = 0;
 class U with
     var int x = 10;
 do
@@ -28078,7 +28102,7 @@ escape *t.x;
 
 Test { [[
 input void OS_START;
-var int v;
+var int v=0;
 class T with
     var int v=0;
 do
@@ -28385,7 +28409,7 @@ escape a+b;
 Test { [[
 class Sm with
 do
-    var u8 id;
+    var u8 id = 0;
 end
 
 class Image_media with
@@ -31034,6 +31058,42 @@ escape 1;
     ref = 'line 7 : invalid attribution : variable "x" has narrower scope than its destination',
 }
 
+Test { [[
+class Test with
+    var u8& v;
+do
+    var int x = v;
+end
+
+var u8& v;
+
+do Test with
+    this.v = &v;
+end;
+
+escape 1;
+]],
+    ref = 'line 7 : uninitialized variable "v"',
+    --run = 1,
+}
+Test { [[
+class Test with
+    var u8[10]& v;
+do
+    v = [] .. v .. [4];
+end
+
+var u8[10]& v; // error: '&' must be deleted
+
+do Test with
+    this.v = &v;
+end;
+
+escape 1;
+]],
+    ref = 'line 7 : uninitialized variable "v"',
+    --run = 1,
+}
 Test { [[
 class T with
     var int& v;
