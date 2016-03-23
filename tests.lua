@@ -283,11 +283,11 @@ escape 1;
     run = 1,
 }
 
---do return end
+do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -22297,6 +22297,15 @@ escape strlen((char&&)&&str);
     run = 10,
 }
 
+Test { [[
+var u8[3] bytes;
+
+bytes = [] .. bytes .. [5];
+
+escape bytes[0];
+]],
+    run = 5,
+}
 --<<< VECTORS / STRINGS
 
 Test { [[

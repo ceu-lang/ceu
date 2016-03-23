@@ -1119,7 +1119,6 @@ tceu_app* ceu_sys_load (void* addr)
                         , &luaifc
 #endif
                         );
-#endif
 
     tceu_app* app = (tceu_app*) ceu_sys_realloc(NULL, sizeof(tceu_app));
     if (app == NULL) {
