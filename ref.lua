@@ -1,16 +1,5 @@
 local VARS_UNINIT = {}
 
-local function VARS_UNINIT_RESET ()
-    for var, dcl in pairs(VARS_UNINIT) do
-        if TP.check(var.tp,'?') then
-            -- OK
-        else
-            ASR(false, dcl, 'uninitialized variable "'..dcl.var.id..'"')
-        end
-    end
-    VARS_UNINIT = {}
-end
-
 function NODE2BLK (n)
     return n.fst and n.fst.blk or
            n.fst and n.fst.var and n.fst.var.blk or
@@ -42,8 +31,6 @@ local IF_INITS = {}
 F = {
     Dcl_pool = 'Dcl_var',
     Dcl_var = function (me)
-        local cls = CLS()   -- might be an ADT declaration
-
         if me.var.id=='_ret'
         or me.var.id=='_out'
         or string.match(me.var.id, '^_+%d*$')   -- var t _;
@@ -51,9 +38,11 @@ F = {
         or me.isEvery
         or (TP.check(me.var.tp,'[]') and        -- var int[] vec;
             (not TP.check(me.var.tp,'[]','&')))
-        or me.var.cls                           -- var T t;
         then
             -- no need for initialization
+        elseif me.var.cls then -- var T t;
+            -- no need for initialization
+            F.__compound(me)
         else
             -- prioritize non-interface declarations
             local blk = AST.par(me,'BlockI')
@@ -300,6 +289,14 @@ F = {
         return C
     end,
 
+    _TMP_INIT_pre = function (me)
+        -- HACK_9
+        local var = unpack(me)
+        VARS_UNINIT[var.var] = nil
+        me.tag = 'Nothing'
+        me[1] = nil
+    end,
+
     SetBlock_pre = function (me)
         local _,to = unpack(me)
         local var = assert(to.var,'bug found')
@@ -310,6 +307,7 @@ F = {
         end
     end,
 
+    Dcl_cls_pre = '__compound',
     ParEver_pre = '__compound',
     ParAnd_pre  = '__compound',
     Pause_pre   = '__compound',
@@ -403,8 +401,7 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
         if constr and f.var and f.var.fun and
             TP.check(f.var.fun.out, constr.cls.id)
         then
-            VARS_UNINIT_RESET()
-            --VARS_UNINIT = {}
+            VARS_UNINIT = {}
         end
     end,
 
@@ -413,8 +410,7 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
     BlockI_pre = function (me)
         if CLS() ~= ENV.clss.Global then
             me.__old = VARS_UNINIT
-            VARS_UNINIT_RESET()
-            --VARS_UNINIT = {}
+            VARS_UNINIT = {}
         end
     end,
     BlockI_pos = function (me)
@@ -427,8 +423,7 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
     Dcl_constr_pre = function (me, cls)
         cls = cls or me.cls
         me.__old = VARS_UNINIT
-        VARS_UNINIT_RESET()
-        --VARS_UNINIT = {}
+        VARS_UNINIT = {}
         for k,v in pairs(cls.vars_uninit) do
             VARS_UNINIT[k] = v
         end
@@ -466,8 +461,7 @@ missing initialization for field "]]..var.id..[[" (declared in ]]..dcl.ln[1]..':
 
     Dcl_adt_pre = function (me)
         me.__old = VARS_UNINIT
-        VARS_UNINIT_RESET()
-        --VARS_UNINIT = {}
+        VARS_UNINIT = {}
     end,
     Dcl_adt_pos = function (me)
         VARS_UNINIT = me.__old

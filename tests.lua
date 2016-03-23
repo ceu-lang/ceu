@@ -35694,16 +35694,16 @@ escape v;
 Test { [[
 input void OS_START;
 class T with
-    var int v;
+    var int vv;
 do
     await OS_START;
-    escape v;
+    escape vv;
 end
-var int v;
-v = do T with
-    this.v = 10;
+var int a;
+a = do T with
+    this.vv = 10;
 end;
-escape v;
+escape a;
 ]],
     run = 10,
 }
@@ -39305,7 +39305,8 @@ var T t;
 
 escape t.v;
 ]],
-    ref = 'line 9 : invalid access to uninitialized variable "v" (declared at tests.lua:2)',
+    ref = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
+    --ref = 'line 9 : invalid access to uninitialized variable "v" (declared at tests.lua:2)',
 }
 
 Test { [[
@@ -39323,7 +39324,8 @@ var T t;
 
 escape v;
 ]],
-    ref = 'line 13 : invalid access to uninitialized variable "v" (declared at tests.lua:4)',
+    ref = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
+    --ref = 'line 13 : invalid access to uninitialized variable "v" (declared at tests.lua:4)',
 }
 
 Test { [[
@@ -39331,6 +39333,25 @@ interface Global with
     var int v;
 end
 var int v;
+
+class T with
+    var int v = 1;
+do
+    //this.v = global:v;
+end
+var T t;
+
+escape t.v;
+]],
+    ref = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
+    --run = 1,
+}
+
+Test { [[
+interface Global with
+    var int v;
+end
+var int v=0;
 
 class T with
     var int v = 1;
@@ -39680,6 +39701,24 @@ var T t;
 i = &&t;
 escape 10;
 ]],
+    ref = 'line 10 : uninitialized variable "i" crossing compound statement (tests.lua:11)',
+}
+
+Test { [[
+class T with
+    event int a;
+do
+end
+
+interface I with
+    event int a;
+end
+
+var T t;
+var I&& i;
+i = &&t;
+escape 10;
+]],
     run = 10;
 }
 
@@ -39696,8 +39735,8 @@ interface J with
     event int a;
 end
 
-var I&& i;
 var T t;
+var I&& i;
 i = &&t;
 var J&& j = i;
 escape 10;
@@ -39771,8 +39810,8 @@ interface J with
     var int aa;
 end
 
-var I&& i;
 var T t;
+var I&& i;
 i = &&t;
 var J&& j = i;
 escape i:aa + j:aa + t.aa;
@@ -39798,8 +39837,8 @@ interface J with
     var int aa;
 end
 
-var I&& i;
 var T t;
+var I&& i;
 i = &&t;
 var J&& j = i;
 await OS_START;
@@ -39827,8 +39866,8 @@ interface J with
     var int a;
 end
 
-var I&& i;
 var T t;
+var I&& i;
 i = &&t;
 var J&& j = i;
 escape i:a + j:a + t.a + i:v + t.v;
@@ -39855,8 +39894,8 @@ interface J with
     var int a;
 end
 
-var I&& i;
 var T t;
+var I&& i;
 i = &&t;
 var J&& j = i;
 await OS_START;
@@ -44271,6 +44310,31 @@ do
 end
 
 var int v;
+var T t with
+    this.v = &v;
+end;
+t.v = t.v + 2;
+
+var I&& i = &&t;
+i:v = i:v * 3;
+
+escape t.v;
+]],
+    ref = 'line 11 : uninitialized variable "v" crossing compound statement (tests.lua:12)',
+}
+
+Test { [[
+interface I with
+    var int& v;
+end
+
+class T with
+    interface I;
+do
+    this.v = 1;
+end
+
+var int v=10;
 var T t with
     this.v = &v;
 end;
@@ -50454,6 +50518,7 @@ end;
 
 escape 1;
 ]],
+    valgrind = false,
     run = 'SEGFAULT',
 }
 

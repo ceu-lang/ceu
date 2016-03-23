@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #define ceu_out_assert(v) ceu_sys_assert(v)
 void ceu_sys_assert (int v) {

@@ -1480,22 +1480,31 @@ me.blk_body = me.blk_body or blk_body
             return node('Set', me.ln, op, tag, fr, to)
 
         elseif tag == 'do-org' then
-            return F._DoOrg_pre(fr, to)
+            return node('Stmts', me.ln,
+                    -- HACK_9
+                    node('_TMP_INIT', me.ln, to),
+                    F._DoOrg_pre(fr, to))
 
         elseif tag == 'lua' then
             return node('Set', me.ln, op, tag, fr, to)
 
         elseif tag == '__trav_rec' then
-            local rec = AST.asr(me,'_Set', 4,'_TraverseRec')
+            local ret = AST.asr(me,'_Set', 4,'_TraverseRec')
             assert(op == '=', 'bug found')
-            rec[#rec+1] = to;
-            return rec
+            ret[#ret+1] = to
+            return node('Stmts', me.ln,
+                    -- HACK_9
+                    node('_TMP_INIT', me.ln, to),
+                    ret)
 
         elseif tag == '__trav_loop' then
-            local rec = AST.asr(me,'_Set', 4,'_TraverseLoop')
+            local ret = AST.asr(me,'_Set', 4,'_TraverseLoop')
             assert(op == '=', 'bug found')
-            rec[#rec+1] = to;
-            return rec
+            ret[#ret+1] = to
+            return node('Stmts', me.ln,
+                    -- HACK_9
+                    node('_TMP_INIT', me.ln, to),
+                    ret)
 
         else
             error 'not implemented'
