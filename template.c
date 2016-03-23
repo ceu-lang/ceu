@@ -231,20 +231,11 @@ ceu_app_init (tceu_app* app)
     === TOPS_INIT ===
 
 #ifdef CEU_OS_APP
-
-#ifdef __AVR
-    app->code  = (__typeof__(ceu_app_go)*)    (((word)app->addr>>1) + &ceu_app_go);
-    app->calls = (__typeof__(ceu_app_calls)*) (((word)app->addr>>1) + &ceu_app_calls);
-#else
     app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
     app->calls = (__typeof__(ceu_app_calls)*) (&ceu_app_calls);
-#endif
-
-#else   /* !CEU_OS_APP */
-
+#else
     app->code  = (__typeof__(ceu_app_go)*)    (&ceu_app_go);
-
-#endif  /* CEU_OS_APP */
+#endif
 
 #ifndef CEU_OS_APP
 #ifdef CEU_DEBUG

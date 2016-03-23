@@ -1,13 +1,5 @@
 #include "ceu_os.h"
 
-#ifdef __AVR
-#ifdef CEU_OS
-#error Understand this again!
-#include <avr/pgmspace.h>
-void* CEU_APP_ADDR = NULL;
-#endif
-#endif
-
 #ifdef CEU_ISRS
     #ifndef ceu_out_isr_on
         #error "Missing definition for macro \"ceu_out_isr_on\"."
@@ -556,10 +548,6 @@ if (evt->param != NULL) {
             )
            )
         {
-#if defined(CEU_OS_KERNEL) && defined(__AVR)
-            CEU_APP_ADDR = app->addr;
-#endif
-
             /*** CODE ***/
             trl->evt = CEU_IN__NONE;    /* TODO: dup w/ above */
             app->code(app, evt, org, trl, stk);
@@ -567,10 +555,6 @@ if (evt->param != NULL) {
             if (!stk->is_alive) {
                 return;
             }
-#endif
-
-#if defined(CEU_OS_KERNEL) && defined(__AVR)
-            CEU_APP_ADDR = 0;
 #endif
 
 #if defined(CEU_OS_KERNEL) || defined(CEU_LUA)
@@ -887,14 +871,7 @@ void* ceu_sys_call (tceu_app* app, tceu_nevt evt, void* param) {
         if (app!=lnk->src_app || evt!=lnk->src_evt) {
             continue;
         }
-#if defined(CEU_OS_KERNEL) && defined(__AVR)
-        void* __old = CEU_APP_ADDR; /* must remember to resume after call */
-        CEU_APP_ADDR = lnk->dst_app->addr;
-#endif
         void* ret = lnk->dst_app->calls(lnk->dst_app, lnk->dst_evt, param);
-#if defined(CEU_OS_KERNEL) && defined(__AVR)
-        CEU_APP_ADDR = __old;
-#endif
         return ret;
     }
 /* TODO: error? */
@@ -1137,9 +1114,6 @@ tceu_app* ceu_sys_load (void* addr)
     char*      luaifc;
 #endif
 
-#ifdef __AVR
-    ((tceu_export) ((word)addr>>1))(&size, &init);
-#else
     ((tceu_export) addr)(&size, &init
 #ifdef CEU_OS_LUAIFC
                         , &luaifc
@@ -1162,11 +1136,7 @@ tceu_app* ceu_sys_load (void* addr)
 
     /* Assumes sizeof(void*)==sizeof(WORD) and
         that gcc will word-align SIZE/INIT */
-#ifdef __AVR
-    app->init = (tceu_init) (((word)addr>>1) + (word)init);
-#else
     app->init = (tceu_init) ((word)init);
-#endif
     app->addr = addr;
 
 #ifdef CEU_OS_LUAIFC

@@ -31,8 +31,6 @@
     #define CEU_RET
     #define CEU_CLEAR
     #define CEU_STACK_CLEAR
-#ifndef __AVR
-#endif
     #define CEU_INTS
     #define CEU_ORGS
     /*#define CEU_PSES*/ /* TODO: never tried */
@@ -51,11 +49,7 @@
     #define CEU_THREADS
 */
 
-#ifdef __AVR
-    #define CEU_QUEUE_MAX 256
-#else
     #define CEU_QUEUE_MAX 65536
-#endif
 
     #define CEU_IN__NONE          0
     #define CEU_IN__ORG         255
