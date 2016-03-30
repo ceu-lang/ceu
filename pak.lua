@@ -1,15 +1,12 @@
-local lua_exec = ...
-if type(lua_exec) ~= 'string' then
-    io.stderr:write('Usage: lua pak.lua <path-to-lua-5.1>\n')
-    os.exit(1)
-end
+local lua_exec = ... or 'lua'
 
 local fd = assert(io.popen(lua_exec..' -e "print(_VERSION)"'))
-local ver = fd:read("*a"):gsub("\n", "")
+local ver = fd:read("*a")
 fd:close()
-if ver ~= 'Lua 5.1' then
-    io.stderr:write('Usage: lua pak.lua <path-to-lua-5.1>\n')
-    io.stderr:write('       requires Lua 5.1\n')
+ver = tonumber(string.match(ver, 'Lua 5%.(.)'))
+if not (ver and ver>=1) then
+    io.stderr:write('Usage: lua pak.lua <path-to-lua>\n')
+    io.stderr:write('       requires Lua >= 5.1\n')
     os.exit(1)
 end
 
