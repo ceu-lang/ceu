@@ -283,8 +283,8 @@ escape 1;
     run = 1,
 }
 
-do return end
 --]===]
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2292,6 +2292,19 @@ escape 0;
     env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
 
+Test { [[
+var u8&& ptr =
+    par do
+        //_idle();
+        await FOREVER;
+    with
+        await 1s;
+        escape null;
+    end;
+escape ptr == null;
+]],
+    run = {['~>1s']=1},
+}
 Test { [[
 var int ret =
     do
@@ -25786,6 +25799,32 @@ escape v1;
 --./a.out  16.80s user 0.02s system 176% cpu 9.525 total
 -- me (isTmp=false)
 --./a.out  30.36s user 0.04s system 173% cpu 17.476 total
+}
+
+Test { [[
+native/pre do
+    ##include <unistd.h>
+    int V = 0;
+end
+par/or do
+    async do
+        loop i in 3 do
+            _usleep(500);
+        end
+    end
+with
+    async/thread do
+        loop i in 2 do
+            _V = _V + 1;
+            _usleep(500);
+        end
+    end
+end
+escape _V;
+]],
+    _ana = {acc=1},
+    usleep = true,
+    run = 2,
 }
 
 -- THREADS / EMITS

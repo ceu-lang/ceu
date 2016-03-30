@@ -720,6 +720,10 @@ int ceu_go_all (tceu_app* app)
 #ifdef CEU_THREADS
         CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
         /* allow threads to also execute */
+#if 0
+        CEU_THREADS_YIELD();    /* should work with single cores? */
+#endif
+        usleep(100);            /* should work anyway */
         CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
 #endif
     }

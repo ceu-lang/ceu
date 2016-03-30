@@ -200,6 +200,7 @@
 
 #ifdef CEU_THREADS
 /* TODO: app */
+#include <unistd.h>     /* usleep */
 #include "ceu_threads.h"
 #endif
 

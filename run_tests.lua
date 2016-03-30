@@ -183,7 +183,7 @@ end
         O = O .. ' -g'
     end
 
-    if T.usleep then
+    if T.usleep or PROPS.has_threads then
         -- usleep is deprecated and gcc always complains
         O = O .. ' -Wno-implicit-function-declaration'
     end
