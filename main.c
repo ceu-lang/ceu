@@ -40,7 +40,7 @@ int main (int argc, char *argv[])
         app.data = (tceu_org*) &CEU_DATA;
         app.init = &ceu_app_init;
 
-    int ret = ceu_go_all(&app);
+    int ret = ceu_go_all(&app, &argc, argv);
 
     printf("*** END: %d\n", ret);
 #if 0
