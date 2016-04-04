@@ -615,7 +615,7 @@ typedef struct {
 void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed);
 #endif
 
-int  ceu_go_all    (tceu_app* app, int *argc, char **argv);
+int  ceu_go_all    (tceu_app* app, int argc, char **argv);
 
 #ifdef CEU_WCLOCKS
 int       ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get);
