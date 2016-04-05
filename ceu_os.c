@@ -686,7 +686,7 @@ void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 #endif
 }
 
-int ceu_go_all (tceu_app* app)
+int ceu_go_all (tceu_app* app, int argc, char **argv)
 {
     /* All code run atomically:
      * - the program is always locked as a whole
@@ -700,7 +700,11 @@ int ceu_go_all (tceu_app* app)
     if (app->isAlive)
 #endif
     {
-        ceu_sys_go(app, CEU_IN_OS_START, NULL);
+        tceu__int__char__ arg;
+        arg._1 = argc;
+        arg._2 = argv;
+
+        ceu_sys_go(app, CEU_IN_OS_START, &arg);
     }
 #endif
 
