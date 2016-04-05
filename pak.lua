@@ -103,6 +103,8 @@ SOFTWARE.
 --
 --]]
 
+unpack = unpack or table.unpack   -- Lua 5.3
+
 ]=] .. fin)
 
 fout:close()

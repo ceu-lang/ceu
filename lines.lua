@@ -29,7 +29,7 @@ local dir_lins = m.Cmt( m.P'#' *SS* m.P'line'^-1
                           * (S + (m.P(1)-'\n'))^0 * '\n' -- \n
                  ,
     function (s,i, line, file)
-        LINE = line
+        LINE = tonumber(line)
         FILE = file
         return true
     end )
