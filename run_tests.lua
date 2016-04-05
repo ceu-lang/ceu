@@ -216,8 +216,9 @@ end
         GCC = GCC .. ' -llua5.1'
     end
 
-    local EXE = (((not VALGRIND) or T.valgrind==false) and './ceu.exe 2>&1')
-             or 'valgrind -q --leak-check=full ./ceu.exe 2>&1'
+    local ARGS = T.args or ''
+    local EXE = (((not VALGRIND) or T.valgrind==false) and './ceu.exe '..ARGS..' 2>&1')
+             or 'valgrind -q --leak-check=full ./ceu.exe '..ARGS..' 2>&1'
              --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
 
     local go = function (src, exp)

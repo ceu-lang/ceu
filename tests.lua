@@ -283,11 +283,12 @@ escape 1;
     run = 1,
 }
 
---]===]
---do return end
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
+
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -1468,35 +1469,6 @@ escape 10;
 Test { [[
 event void e;
 emit e;
-escape 10;
-]],
-    --ana = 'line 3 : `loop´ iteration is not reachable',
-    wrn = true,
-    run = 10,
-}
-
-Test { [[
-input void OS_START;
-event void e;
-await OS_START;
-emit e;
-escape 10;
-]],
-    --ana = 'line 3 : `loop´ iteration is not reachable',
-    wrn = true,
-    run = 10,
-}
-
-Test { [[
-input void OS_START;
-event void e;
-loop do
-    await OS_START;
-    loop i in 10 do
-        emit e;
-    end
-    do break; end
-end
 escape 10;
 ]],
     --ana = 'line 3 : `loop´ iteration is not reachable',
@@ -20811,6 +20783,54 @@ escape ret;
 }
 
 --end -- OS (INPUT/OUTPUT)
+
+-->>> OS_START
+
+Test { [[
+native @pure _strcmp();
+input (int,_char&& &&) OS_START;
+var int argc;
+var _char&& && argv;
+(argc, argv) = await OS_START;
+_assert(_strcmp(argv[1],"arg")==0);
+escape argc;
+]],
+    --ana = 'line 3 : `loop´ iteration is not reachable',
+    wrn = true,
+    run = 2,
+    args = 'arg',
+}
+
+Test { [[
+input void OS_START;
+event void e;
+await OS_START;
+emit e;
+escape 10;
+]],
+    --ana = 'line 3 : `loop´ iteration is not reachable',
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+event void e;
+loop do
+    await OS_START;
+    loop i in 10 do
+        emit e;
+    end
+    do break; end
+end
+escape 10;
+]],
+    --ana = 'line 3 : `loop´ iteration is not reachable',
+    wrn = true,
+    run = 10,
+}
+
+--<<< OS_START
 
 Test { [[
 
