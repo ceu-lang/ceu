@@ -1,0 +1,10 @@
+par/or do
+    every 1s do
+        _printf("Hello World!\n");
+    end
+with
+    async do
+        emit 5s;
+    end
+end
+escape 0;
