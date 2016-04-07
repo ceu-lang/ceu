@@ -1,1 +1,1 @@
-CFLAGS += -lpthread
+C_FLAGS += -lpthread
