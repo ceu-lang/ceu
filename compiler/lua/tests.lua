@@ -25414,7 +25414,7 @@ end
 
 --<<< REENTRANT
 
--- ASYNCS // THREADS
+-->> ASYNCS // THREADS
 
 Test { [[
 var int  a=10, b=5;
@@ -26420,6 +26420,7 @@ escape v;
 }
 
 --<<< THREADS / EMITS
+--<<< ASYNCS / THREADS
 
 -->>> LUA
 

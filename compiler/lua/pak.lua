@@ -27,8 +27,10 @@ ARCH = {
         ['threads.h'] = io.open(arch_dir..'/threads.h')     or
                         io.open(arch_dir..'/sub/threads.h') or
                         false,
-        ['main.c'] =    io.open(arch_dir..'/main.c')     or
-                        io.open(arch_dir..'/sub/main.c') or
+        ['main.c'] =    io.open(arch_dir..'/main.c')     and arch_dir..'/main.c'
+                            or
+                        io.open(arch_dir..'/sub/main.c') and arch_dir..'/sub/main.c'
+                            or
                         false,
     }
 }
