@@ -217,9 +217,9 @@ local HH, CC
 -- TEMPLATE.H
 do
     HH = FILES.template_h
-    HH = SUB(HH, '#include "ceu_os.h"',      FILES.ceu_os_h)
-    HH = SUB(HH, '#include "ceu_threads.h"', FILES.ceu_threads_h)
-    HH = SUB(HH, '#include "ceu_types.h"',   FILES.ceu_types_h)
+    HH = SUB(HH, '#include "ceu_os.h"',  FILES.ceu_os_h)
+    HH = SUB(HH, '#include "threads.h"', FILES.threads_h)
+    HH = SUB(HH, '#include "types.h"',   FILES.types_h)
 
 
     local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
@@ -230,8 +230,8 @@ do
 
     if not OPTS.os then
         -- TODO: ceu_pool_* => ceu_sys_pool_*
-        FILES.ceu_pool_h = SUB(FILES.ceu_pool_h, '#include "ceu_os.h"',
-                                                 FILES.ceu_os_h)
+        FILES.ceu_pool_h = SUB(FILES.ceu_pool_h, '#include "types.h"',
+                                                 FILES.types_h)
         HH = SUB(HH, '#include "ceu_pool.h"', FILES.ceu_pool_h)
 
         -- TODO: ceu_vector_* => ceu_sys_vector_*
@@ -547,13 +547,13 @@ do
     if not OPTS.os then
         FILES.ceu_os_c = SUB(FILES.ceu_os_c, '#include "ceu_os.h"',
                                              FILES.ceu_os_h)
-        CC = SUB(CC, '#include "ceu_types.h"', FILES.ceu_types_h)
+        CC = SUB(CC, '#include "types.h"', FILES.types_h)
         CC = SUB(CC, '#include "ceu_os.h"',
                      FILES.ceu_os_h..'\n'..FILES.ceu_os_c)
 
         -- TODO: ceu_pool_* => ceu_sys_pool_*
-        FILES.ceu_pool_h = SUB(FILES.ceu_pool_h, '#include "ceu_os.h"',
-                                                 FILES.ceu_os_h)
+        FILES.ceu_pool_h = SUB(FILES.ceu_pool_h, '#include "types.h"',
+                                                 FILES.types_h)
         FILES.ceu_pool_c = SUB(FILES.ceu_pool_c, '#include "ceu_pool.h"', '')
         CC = SUB(CC, '#include "ceu_pool.h"',
                              FILES.ceu_pool_h..'\n'..FILES.ceu_pool_c)

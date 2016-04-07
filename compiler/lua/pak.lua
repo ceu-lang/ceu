@@ -95,9 +95,9 @@ FILES = {
         [====[]]..'\n'..assert(io.open'../c/ceu_vector.h'):read'*a'..[[]====],
     ceu_vector_c =
         [====[]]..'\n'..assert(io.open'../c/ceu_vector.c'):read'*a'..[[]====],
-    ceu_types_h =
+    types_h =
         [====[]]..'\n'..ARCH.files['types.h'].handler:read'*a'..[[]====],
-    ceu_threads_h =
+    threads_h =
         [====[]]..'\n'..ARCH.files['threads.h'].handler:read'*a'..[[]====],
 }
 ]]..fin

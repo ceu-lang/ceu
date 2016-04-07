@@ -1,7 +1,7 @@
 #ifndef === DEFS_H ===
 #define === DEFS_H ===
 
-#include "ceu_types.h"
+#include "types.h"
 
 === DEFINES ===     /* CEU_EXTS, CEU_WCLOCKS, CEU_INTS, ... */
 
