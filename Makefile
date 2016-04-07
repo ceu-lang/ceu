@@ -20,32 +20,24 @@ ifeq ($(MAKECMDGOALS),clean)
 	do_clean = yes
 endif
 
-ifdef do_compiler
-LUA_EXE  ?= lua
 ARCH_DIR_ABS ?= $(PWD)/arch/dummy
-endif
 
-ifdef do_ceu
-ARCH_DIR_ABS  ?= $(PWD)/arch/dummy
-OUT_DIR   ?= build
-OUT_EXE   ?= $(OUT_DIR)/$(basename $(notdir $(CEU_SRC))).exe
-CEU_EXE   ?= ./ceu
-CEU_FLAGS += --cpp-args "-I $(ARCH_DIR_ABS)"
-ifndef CEU_SRC
-$(error USAGE: make CEU_SRC=<path-to-ceu-file>)
-endif
-endif
+LUA_EXE      ?= lua
 
-ifdef do_c
-ARCH_DIR_ABS ?= $(PWD)/arch/dummy
-OUT_DIR  ?= build
-OUT_EXE  ?= $(OUT_DIR)/a.out
 C_EXE    ?= gcc
 C_FLAGS  += -I$(OUT_DIR)
-endif
 
-ifdef do_clean
-OUT_DIR  ?= build
+CEU_DIR   ?= .
+CEU_EXE   ?= $(CEU_DIR)/ceu
+CEU_FLAGS += --cpp-args "-I $(ARCH_DIR_ABS)"
+
+OUT_DIR		 ?= build
+OUT_EXE      ?= $(OUT_DIR)/$(basename $(notdir $(SRC))).exe
+
+ifdef do_ceu
+ifndef SRC
+$(error USAGE: make SRC=<path-to-ceu-file>)
+endif
 endif
 
 help:
@@ -55,13 +47,13 @@ all: compiler ceu c
 	$(OUT_EXE)
 
 compiler:
-	cd compiler/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE) $(ARCH_DIR_ABS)
-	mv compiler/lua/ceu .
-	./ceu --dump
+	cd $(CEU_DIR)/compiler/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE) $(ARCH_DIR_ABS)
+	mv $(CEU_DIR)/compiler/lua/ceu .
+	$(CEU_EXE) --dump
 
 ceu:
 	mkdir -p $(OUT_DIR)
-	$(CEU_EXE) --out-dir $(OUT_DIR) $(CEU_FLAGS) $(CEU_SRC)
+	$(CEU_EXE) --out-dir $(OUT_DIR) $(CEU_FLAGS) $(SRC)
 
 c:
 	$(C_EXE) $(ARCH_DIR_ABS)/main.c $(C_FLAGS) -o $(OUT_EXE)
