@@ -201,12 +201,12 @@ end
     local r = (math.random(2) == 1)
     if OS==true or (OS==nil and r) then
         CEU = (LUACOV or '')..' ./ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts..'  --run-tests --os '..tm..' 2>&1'
-        GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe '..ARCH.files['main.c']..'  ceu_os.c _ceu_app.c 2>&1'
+        GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe '..ARCH.files['main.c'].path..'  ceu_os.c _ceu_app.c 2>&1'
     else
         CEU = (LUACOV or '')..' ./ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts
                 ..(REENTRANT and '--reentrant' or '')
                 ..' --run-tests '..tm..' 2>&1'
-        GCC = 'gcc '..O..' -o '..OUT_DIR..'/ceu.exe '..ARCH.files['main.c']..' 2>&1'
+        GCC = 'gcc '..O..' -o '..OUT_DIR..'/ceu.exe '..ARCH.files['main.c'].path..' 2>&1'
     end
     --local line = debug.getinfo(2).currentline
     --os.execute('echo "/*'..line..'*/" > /tmp/line')

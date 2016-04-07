@@ -21,23 +21,24 @@ end
 ARCH = {
     dir   = arch_dir,
     files = {
-        ['types.h']   = io.open(arch_dir..'/types.h')     or
-                        io.open(arch_dir..'/sub/types.h') or
-                        false,
-        ['threads.h'] = io.open(arch_dir..'/threads.h')     or
-                        io.open(arch_dir..'/sub/threads.h') or
-                        false,
-        ['main.c'] =    io.open(arch_dir..'/main.c')     and arch_dir..'/main.c'
-                            or
-                        io.open(arch_dir..'/sub/main.c') and arch_dir..'/sub/main.c'
-                            or
-                        false,
+        ['types.h'] = {
+            path    = arch_dir..'/types.h',
+            handler = io.open(arch_dir..'/types.h') or false,
+        },
+        ['threads.h'] = {
+            path    = arch_dir..'/threads.h',
+            handler = io.open(arch_dir..'/threads.h') or false,
+        },
+        ['main.c'] = {
+            path    = arch_dir..'/main.c',
+            handler = io.open(arch_dir..'/main.c') or false,
+        },
     }
 }
 for name, file in pairs(ARCH.files) do
-    if not file then
+    if not file.handler then
         io.stderr:write('Usage: lua pak.lua <lua-exe> <arch-dir>\n')
-        io.stderr:write('       missing file '..ARCH.dir..'/'..name..'\n')
+        io.stderr:write('       missing file '..file.path..'\n')
         os.exit(1)
     end
 end
@@ -95,9 +96,9 @@ FILES = {
     ceu_vector_c =
         [====[]]..'\n'..assert(io.open'../c/ceu_vector.c'):read'*a'..[[]====],
     ceu_types_h =
-        [====[]]..'\n'..ARCH.files['types.h']:read'*a'..[[]====],
+        [====[]]..'\n'..ARCH.files['types.h'].handler:read'*a'..[[]====],
     ceu_threads_h =
-        [====[]]..'\n'..ARCH.files['threads.h']:read'*a'..[[]====],
+        [====[]]..'\n'..ARCH.files['threads.h'].handler:read'*a'..[[]====],
 }
 ]]..fin
 
