@@ -1,7 +1,9 @@
 OPTS_NPARAMS = {
     version   = 0,
+    dump      = 0,
     input     = nil,
 
+    out_dir   = 1,
     out_c     = 1,
     out_h     = 1,
     out_s     = 1,
@@ -33,6 +35,7 @@ OPTS_NPARAMS = {
 OPTS = {
     input     = nil,
 
+    out_dir   = '.',
     out_c     = '_ceu_app.c',
     out_h     = '_ceu_app.h',
     out_s     = 'CEU_SIZE',
@@ -96,6 +99,16 @@ if OPTS.version then
     os.exit(0)
 end
 
+if OPTS.dump then
+    print([[
+Version: ceu 0.10
+Lua:     ]]..LUA_EXE..[[
+
+Arch:    ]]..ARCH_DIR..[[
+]])
+    os.exit(0)
+end
+
 if OPTS.safety then
     OPTS.safety = assert(tonumber(OPTS.safety), '`--safety´ must be a number')
 end
@@ -109,6 +122,7 @@ if not OPTS.input then
 
     ./ceu <filename>           # Ceu input file, or `-´ for stdin
     
+        --out-dir <dir>        # C output directory (.)
         --out-c <filename>     # C output source file (_ceu_app.c)
         --out-h <filename>     # C output header file (_ceu_app.h)
         --out-s <NAME>         # TODO (CEU_SIZE)
@@ -205,6 +219,7 @@ do
     HH = FILES.template_h
     HH = SUB(HH, '#include "ceu_os.h"',      FILES.ceu_os_h)
     HH = SUB(HH, '#include "ceu_threads.h"', FILES.ceu_threads_h)
+    HH = SUB(HH, '#include "ceu_types.h"',   FILES.ceu_types_h)
 
 
     local tps = { [0]='void', [1]='8', [2]='16', [4]='32' }
@@ -609,7 +624,7 @@ end
 -- OUTPUT
 
 if OPTS.out_h and OPTS.out_h~='-' then
-    local f = assert(io.open(OPTS.out_h,'w'))
+    local f = assert(io.open(OPTS.out_dir..'/'..OPTS.out_h,'w'))
     f:write(HH)
     f:close()
 end
@@ -619,7 +634,7 @@ local out
 if OPTS.out_c == '-' then
     out = io.stdout
 else
-    out = assert(io.open(OPTS.out_c,'w'))
+    out = assert(io.open(OPTS.out_dir..'/'..OPTS.out_c,'w'))
 end
 out:write([[
 /*

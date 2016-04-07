@@ -11,7 +11,11 @@ RUNTESTS = true
 --COMPLETE = true
 OS = false   -- false, true, nil(random)
 
-assert(loadfile'pak.lua')('lua')
+ARCH_DIR = '../../arch/dummy'
+OUT_DIR = '/tmp/ceu-tests'
+os.execute('mkdir -p '..OUT_DIR)
+
+assert(loadfile'pak.lua')('lua',ARCH_DIR)
 
 math.randomseed(os.time())
 T = nil
@@ -174,6 +178,7 @@ end
             ..' -Wno-maybe-uninitialized'
             ..' -Wno-unused'
             ..' -Wno-unused-parameter'
+            ..' -I'..OUT_DIR
             ..' -ansi'
             ..' -DCEU_DEBUG'
             --..' -DCEU_DEBUG_TRAILS'
@@ -191,16 +196,17 @@ end
     local CEU, GCC
     local cpp = (T.cpp_args and '--cpp-args "'..T.cpp_args..'"') or ''
     local opts = T.opts or ''
+    opts = opts..' --out-dir '..OUT_DIR
     local tm  = (T.timemachine and '--timemachine') or ''
     local r = (math.random(2) == 1)
     if OS==true or (OS==nil and r) then
-        CEU = (LUACOV or '')..' ./ceu _ceu_tmp.ceu '..cpp..' '..opts..'  --run-tests --os '..tm..' 2>&1'
-        GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe main.c ceu_os.c _ceu_app.c 2>&1'
+        CEU = (LUACOV or '')..' ./ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts..'  --run-tests --os '..tm..' 2>&1'
+        GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe '..ARCH_DIR..'/main.c ceu_os.c _ceu_app.c 2>&1'
     else
-        CEU = (LUACOV or '')..' ./ceu _ceu_tmp.ceu '..cpp..' '..opts
+        CEU = (LUACOV or '')..' ./ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts
                 ..(REENTRANT and '--reentrant' or '')
                 ..' --run-tests '..tm..' 2>&1'
-        GCC = 'gcc '..O..' -o ceu.exe main.c 2>&1'
+        GCC = 'gcc '..O..' -o '..OUT_DIR..'/ceu.exe '..ARCH_DIR..'/main.c 2>&1'
     end
     --local line = debug.getinfo(2).currentline
     --os.execute('echo "/*'..line..'*/" > /tmp/line')
@@ -217,12 +223,12 @@ end
     end
 
     local ARGS = T.args or ''
-    local EXE = (((not VALGRIND) or T.valgrind==false) and './ceu.exe '..ARGS..' 2>&1')
-             or 'valgrind -q --leak-check=full ./ceu.exe '..ARGS..' 2>&1'
+    local EXE = (((not VALGRIND) or T.valgrind==false) and OUT_DIR..'/ceu.exe '..ARGS..' 2>&1')
+             or 'valgrind -q --leak-check=full '..OUT_DIR..'/ceu.exe '..ARGS..' 2>&1'
              --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
 
     local go = function (src, exp)
-        local ceu = assert(io.open('_ceu_tmp.ceu', 'w'))
+        local ceu = assert(io.open(OUT_DIR..'/_ceu_tmp.ceu', 'w'))
         ceu:write(src)
         ceu:close()
         local exec_ceu = os.execute(CEU)
@@ -289,7 +295,7 @@ end
     end
 
     if not T.gcc then
-        local f = io.popen('du -b ceu.exe')
+        local f = io.popen('du -b '..OUT_DIR..'/ceu.exe')
         local n = string.match(f:read'*a', '(%d+)')
         STATS.bytes = STATS.bytes + n
         f:close()
