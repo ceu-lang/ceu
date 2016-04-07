@@ -26,8 +26,11 @@ ARCH_DIR ?= arch/dummy
 endif
 
 ifdef do_ceu
-CEU_EXE ?= ./ceu
-OUT_DIR ?= build
+ARCH_DIR ?= arch/dummy
+OUT_DIR   ?= build
+OUT_EXE   ?= $(OUT_DIR)/$(basename $(notdir $(CEU))).exe
+CEU_EXE   ?= ./ceu
+CEU_FLAGS += --cpp-args "-I $(ARCH_DIR)"
 ifndef CEU
 $(error USAGE: make CEU=<path-to-ceu-file>)
 endif
@@ -36,6 +39,8 @@ endif
 ifdef do_c
 ARCH_DIR ?= arch/dummy
 OUT_DIR  ?= build
+OUT_EXE  ?= $(OUT_DIR)/a.out
+CC       ?= gcc
 CFLAGS   += -I$(OUT_DIR)
 endif
 
@@ -47,7 +52,9 @@ help:
 	@echo "See the file README.md"
 
 all: compiler ceu c
-	$(OUT_DIR)/a.out
+	$(OUT_EXE)
+
+include $(ARCH_DIR)/Makefile
 
 compiler:
 	cd compiler/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE) ../../$(ARCH_DIR)
@@ -56,10 +63,10 @@ compiler:
 
 ceu:
 	mkdir -p build/
-	$(CEU_EXE) --out-dir $(OUT_DIR) $(CEU)
+	$(CEU_EXE) --out-dir $(OUT_DIR) $(CEU_FLAGS) $(CEU)
 
 c:
-	gcc $(ARCH_DIR)/main.c $(CFLAGS) -o $(OUT_DIR)/a.out
+	$(CC) $(ARCH_DIR)/main.c $(CFLAGS) -o $(OUT_EXE)
 
 clean:
 	rm -rf $(OUT_DIR)/
