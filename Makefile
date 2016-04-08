@@ -71,6 +71,19 @@ ceu:
 c:
 	$(C_EXE) $(ARCH_DIR)/ceu_main.c $(C_FLAGS) -o $(OUT_EXE)
 
+samples:
+	$(foreach var,samples/*.ceu,echo $(var);)
+	for i in samples/*; do							\
+		echo "#######################";				\
+		echo "# $$i";								\
+		echo "#######################";				\
+		if [ "$$i" = "samples/test-03.ceu" ]; then	\
+			make ARCH_DIR=arch/pthread SRC=$$i all;	\
+		else										\
+			make SRC=$$i all;						\
+		fi											\
+	done
+
 clean:
 	rm -rf $(OUT_DIR)/
 
@@ -80,4 +93,4 @@ include $(ARCH_DIR)/Makefile
 endif
 endif
 
-.PHONY: help all compiler ceu clean
+.PHONY: help all compiler ceu samples clean

@@ -63,10 +63,86 @@ CEU_EXE ?= /usr/local/bin/ceu   # change this line and try again
 Now, you are ready to run the examples:
 
 ```
-###############
-# test-00.ceu #
-###############
+$ make samples
 
+samples/test-00.ceu samples/test-01.ceu samples/test-02.ceu samples/test-03.ceu
+for i in samples/*; do							\
+		echo "#######################";				\
+		echo "# $i";								\
+		echo "#######################";				\
+		if [ "$i" = "samples/test-03.ceu" ]; then	\
+			make ARCH_DIR=arch/pthread SRC=$i all;	\
+		else									\
+			make SRC=$i all;						\
+		fi									\
+	done
+#######################
+# samples/test-00.ceu
+#######################
+make[1]: Entering directory `/data/ceu/ceu'
+mkdir -p build
+/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-00.ceu
+gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-00.exe
+build/test-00.exe
+*** END: 0
+make[1]: Leaving directory `/data/ceu/ceu'
+#######################
+# samples/test-01.ceu
+#######################
+make[1]: Entering directory `/data/ceu/ceu'
+mkdir -p build
+/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-01.ceu
+gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-01.exe
+build/test-01.exe
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+*** END: 0
+make[1]: Leaving directory `/data/ceu/ceu'
+#######################
+# samples/test-02.ceu
+#######################
+make[1]: Entering directory `/data/ceu/ceu'
+mkdir -p build
+/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-02.ceu
+gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-02.exe
+build/test-02.exe
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+*** END: 0
+make[1]: Leaving directory `/data/ceu/ceu'
+#######################
+# samples/test-03.ceu
+#######################
+make[1]: Entering directory `/data/ceu/ceu'
+mkdir -p build
+/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/pthread" samples/test-03.ceu
+gcc arch/pthread/ceu_main.c -I arch/pthread -I build -lpthread -o build/test-03.exe
+build/test-03.exe
+[sync] hello
+[thread] world
+[sync] hello
+[thread] world
+[sync] hello
+[thread] world
+[sync] hello
+[thread] world
+[sync] hello
+[thread] world
+*** END: 0
+make[1]: Leaving directory `/data/ceu/ceu'
+```
+
+### `test-00.ceu`
+
+The example `test-00.ceu`, simply terminates immediatelly with an `escape`:
+
+```
 $ cat samples/test-00.ceu
 escape 0;
 
@@ -76,11 +152,14 @@ mkdir -p build
 gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-00.exe
 build/test-00.exe
 *** END: 0
+```
 
-###############
-# test-01.ceu #
-###############
+### `test-01.ceu`
 
+The example `test-01.ceu`, prints `"Hello World"` every second and simulates 
+the passage of `5` seconds in parallel:
+
+```
 $ cat samples/test-01.ceu
 par/or do
     every 1s do
@@ -104,11 +183,14 @@ Hello World!
 Hello World!
 Hello World!
 *** END: 0
+```
 
-###############
-# test-02.ceu #
-###############
+### `test-02.ceu`
 
+The example `test-02.ceu` is similar to `test-01.ceu`, but calls `_sleep` to 
+make the application resepect the "wall-clock time":
+
+```
 $ cat samples/test-02.ceu
 par/or do
     every 1s do
@@ -135,11 +217,14 @@ Hello World!
 Hello World!
 Hello World!
 *** END: 0
+```
 
-###############
-# test-03.ceu #
-###############
+### `test-03.ceu`
 
+The example `test-03` uses a real thread with `async/thread` that executes in 
+parallel with the rest of the application:
+
+```
 $ cat samples/test-03.ceu
 par/or do
     every 1s do
@@ -162,28 +247,6 @@ with
 end
 escape 0;
 
-$ make all SRC=samples/test-03.ceu
-mkdir -p build
-/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-03.ceu
-gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-03.exe
-In file included from samples/test-03.ceu:232:0,
-                 from arch/dummy/ceu_main.c:28:
-arch/dummy/ceu_threads.h:1:2: error: #error "no support for threads"
- #error "no support for threads"
-  ^
-```
-
-The example `test-03.ceu` fails because it uses the `async/thread` primitive 
-which requires the `pthread` architecture to execute:
-
-```
-###############
-# test-03.ceu #
-###############
-
-$ cat samples/test-03.ceu
-<...>
-
 $ make ARCH_DIR=arch/pthread SRC=samples/test-03.ceu all
 mkdir -p build
 /usr/local/bin/ceu --out-dir build --cpp-args "-I arch/pthread" samples/test-03.ceu
@@ -201,3 +264,6 @@ build/test-03.exe
 [thread] world
 *** END: 0
 ```
+
+The `async/thread` requires `pthread` which is passed as 
+`ARCH_DIR=arch/pthread` to the command `make`.
