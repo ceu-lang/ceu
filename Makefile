@@ -11,7 +11,8 @@ C_FLAGS  += -I $(ARCH_DIR) -I $(OUT_DIR)
 
 CEU_DIR   ?= .
 CEU_EXE   ?= /usr/local/bin/ceu
-CEU_FLAGS += --cpp-args "-I $(ARCH_DIR)"
+CEU_FLAGS_CPP += -I $(ARCH_DIR)
+CEU_FLAGS += --cpp-args "$(CEU_FLAGS_CPP)"
 
 OUT_DIR	?= build
 OUT_EXE ?= $(OUT_DIR)/$(basename $(notdir $(SRC))).exe
