@@ -72,15 +72,14 @@ c:
 	$(C_EXE) $(ARCH_DIR)/ceu_main.c $(C_FLAGS) -o $(OUT_EXE)
 
 samples:
-	$(foreach var,samples/*.ceu,echo $(var);)
-	for i in samples/*; do							\
+	for i in samples/*.ceu; do							\
 		echo "#######################";				\
 		echo "# $$i";								\
 		echo "#######################";				\
 		if [ "$$i" = "samples/test-03.ceu" ]; then	\
-			make ARCH_DIR=arch/pthread SRC=$$i all;	\
+			make ARCH_DIR=arch/pthread SRC=$$i all || exit 1; \
 		else										\
-			make SRC=$$i all;						\
+			make SRC=$$i all || exit 1;				\
 		fi											\
 	done
 

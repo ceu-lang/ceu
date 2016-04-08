@@ -188,7 +188,7 @@ Hello World!
 ### `test-02.ceu`
 
 The example `test-02.ceu` is similar to `test-01.ceu`, but calls `_sleep` to 
-make the application resepect the "wall-clock time":
+make the application respect the "wall-clock time":
 
 ```
 $ cat samples/test-02.ceu
