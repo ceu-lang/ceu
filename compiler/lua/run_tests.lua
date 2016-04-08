@@ -14,8 +14,7 @@ OS = false   -- false, true, nil(random)
 OUT_DIR = '/tmp/ceu-tests'
 os.execute('mkdir -p '..OUT_DIR)
 
-arch_dir = '../../arch/pthread'
-assert(loadfile'pak.lua')('lua',arch_dir)
+assert(loadfile'pak.lua')('lua')
 
 math.randomseed(os.time())
 T = nil
@@ -197,16 +196,18 @@ end
     local cpp = (T.cpp_args and '--cpp-args "'..T.cpp_args..'"') or ''
     local opts = T.opts or ''
     opts = opts..' --out-dir '..OUT_DIR
+    local ARCH = '../../arch/pthread'
+    local main = ARCH..'/ceu_main.c'
     local tm  = (T.timemachine and '--timemachine') or ''
     local r = (math.random(2) == 1)
     if OS==true or (OS==nil and r) then
         CEU = (LUACOV or '')..' ./ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts..'  --run-tests --os '..tm..' 2>&1'
-        GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe '..ARCH.files['main.c'].path..'  ceu_os.c _ceu_app.c 2>&1'
+        GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe '..main..'  ceu_os.c _ceu_app.c 2>&1'
     else
         CEU = (LUACOV or '')..' ./ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts
                 ..(REENTRANT and '--reentrant' or '')
                 ..' --run-tests '..tm..' 2>&1'
-        GCC = 'gcc '..O..' -o '..OUT_DIR..'/ceu.exe '..ARCH.files['main.c'].path..' 2>&1'
+        GCC = 'gcc '..O..' -o '..OUT_DIR..'/ceu.exe -I'..ARCH..' '..main..' 2>&1'
     end
     --local line = debug.getinfo(2).currentline
     --os.execute('echo "/*'..line..'*/" > /tmp/line')
