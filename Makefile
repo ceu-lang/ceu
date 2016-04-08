@@ -2,16 +2,16 @@
 # EDIT
 ###############################################################################
 
-ARCH_DIR_ABS ?= $(PWD)/arch/dummy
+ARCH_DIR ?= arch/dummy
 
 LUA_EXE ?= lua
 
 C_EXE    ?= gcc
-C_FLAGS  += -I$(OUT_DIR)
+C_FLAGS  += -I $(ARCH_DIR) -I $(OUT_DIR)
 
 CEU_DIR   ?= .
-CEU_EXE   ?= ./ceu
-CEU_FLAGS += --cpp-args "-I $(ARCH_DIR_ABS)"
+CEU_EXE   ?= /usr/local/bin/ceu
+CEU_FLAGS += --cpp-args "-I $(ARCH_DIR)"
 
 OUT_DIR	?= build
 OUT_EXE ?= $(OUT_DIR)/$(basename $(notdir $(SRC))).exe
@@ -60,7 +60,7 @@ all: ceu c
 	$(OUT_EXE)
 
 compiler:
-	cd $(CEU_DIR)/compiler/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE) $(ARCH_DIR_ABS)
+	cd $(CEU_DIR)/compiler/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE)
 	mv $(CEU_DIR)/compiler/lua/ceu $(CEU_EXE)
 	$(CEU_EXE) --dump
 
@@ -69,13 +69,15 @@ ceu:
 	$(CEU_EXE) --out-dir $(OUT_DIR) $(CEU_FLAGS) $(SRC)
 
 c:
-	$(C_EXE) $(ARCH_DIR_ABS)/main.c $(C_FLAGS) -o $(OUT_EXE)
+	$(C_EXE) $(ARCH_DIR)/ceu_main.c $(C_FLAGS) -o $(OUT_EXE)
 
 clean:
 	rm -rf $(OUT_DIR)/
 
-ifdef ARCH_DIR_ABS
-include $(ARCH_DIR_ABS)/Makefile
+ifndef do_compiler
+ifdef ARCH_DIR
+include $(ARCH_DIR)/Makefile
+endif
 endif
 
 .PHONY: help all compiler ceu clean

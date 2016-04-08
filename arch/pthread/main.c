@@ -1,1 +1,0 @@
-../dummy/main.c

@@ -2,7 +2,7 @@
 #define _CEU_OS_H
 
 #include <stddef.h>
-#include "types.h"
+#include "ceu_types.h"
 
 #ifdef CEU_DEBUG
 #include <assert.h>
@@ -201,7 +201,7 @@
 #ifdef CEU_THREADS
 /* TODO: app */
 #include <unistd.h>     /* usleep */
-#include "threads.h"
+#include "ceu_threads.h"
 #endif
 
 #ifdef CEU_LUA

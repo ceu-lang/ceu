@@ -1,46 +1,17 @@
-local lua_exe, arch_dir = ...
-LUA_EXE = lua_exe
+LUA_EXE = ...
 
-if not (LUA_EXE and arch_dir) then
-    io.stderr:write('Usage: lua pak.lua <lua-exe> <arch-dir>\n')
+if not LUA_EXE then
+    io.stderr:write('Usage: lua pak.lua <lua-exe>\n')
     os.exit(1)
 end
-
-arch_dir = string.match(arch_dir,'(.-)%/?$')
-
 local fd = assert(io.popen(LUA_EXE..' -e "print(_VERSION)"'))
 local ver = fd:read("*a")
 fd:close()
 ver = tonumber(string.match(ver, 'Lua 5%.(.)'))
 if not (ver and ver>=1) then
-    io.stderr:write('Usage: lua pak.lua <lua-exe> <arch-dir>\n')
+    io.stderr:write('Usage: lua pak.lua <lua-exe>\n')
     io.stderr:write('       requires Lua >= 5.1\n')
     os.exit(1)
-end
-
-ARCH = {
-    dir   = arch_dir,
-    files = {
-        ['types.h'] = {
-            path    = arch_dir..'/types.h',
-            handler = io.open(arch_dir..'/types.h') or false,
-        },
-        ['threads.h'] = {
-            path    = arch_dir..'/threads.h',
-            handler = io.open(arch_dir..'/threads.h') or false,
-        },
-        ['main.c'] = {
-            path    = arch_dir..'/main.c',
-            handler = io.open(arch_dir..'/main.c') or false,
-        },
-    }
-}
-for name, file in pairs(ARCH.files) do
-    if not file.handler then
-        io.stderr:write('Usage: lua pak.lua <lua-exe> <arch-dir>\n')
-        io.stderr:write('       missing file '..file.path..'\n')
-        os.exit(1)
-    end
 end
 
 local fout = assert(io.open('ceu','w'))
@@ -95,10 +66,6 @@ FILES = {
         [====[]]..'\n'..assert(io.open'../c/ceu_vector.h'):read'*a'..[[]====],
     ceu_vector_c =
         [====[]]..'\n'..assert(io.open'../c/ceu_vector.c'):read'*a'..[[]====],
-    types_h =
-        [====[]]..'\n'..ARCH.files['types.h'].handler:read'*a'..[[]====],
-    threads_h =
-        [====[]]..'\n'..ARCH.files['threads.h'].handler:read'*a'..[[]====],
 }
 ]]..fin
 
@@ -138,7 +105,6 @@ SOFTWARE.
 
 unpack = unpack or table.unpack   -- Lua 5.3
 LUA_EXE  = ']=]..LUA_EXE..[=['
-ARCH_DIR = ']=]..ARCH.dir..[=['
 
 ]=] .. fin)
 

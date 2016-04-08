@@ -1,7 +1,7 @@
 #ifndef _CEU_POOL_H
 #define _CEU_POOL_H
 
-#include "types.h"
+#include "ceu_types.h"
 
 /* TODO: all "int" here, should evaluate the correct unsigned type */
 
