@@ -1,19 +1,12 @@
 par/or do
     every 1s do
-        _printf("[sync] hello\n");
-    end
-with
-    async/thread do
-        loop do
-            _sleep(1);
-            _printf("[thread] world\n");
-        end
+        _printf("Hello World!\n");
     end
 with
     async do
         loop i in 5 do
-            emit 1s;
             _sleep(1);
+            emit 1s;
         end
     end
 end
