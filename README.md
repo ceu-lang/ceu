@@ -26,19 +26,19 @@ $ sudo apt-get install lua-lpeg
 - LPeg: http://www.inf.puc-rio.br/~roberto/lpeg/#download
 ```
 
-## Build & Install Céu:
+## Build & Install `ceu`:
 
 Then, you need to build & install the compiler of Céu:
 
 ```
-$ make compiler
+$ sudo make compiler
 cd ./compiler/lua/ && lua pak.lua lua
 mv ./compiler/lua/ceu /usr/local/bin/ceu
 mv: cannot move ‘./compiler/lua/ceu’ to ‘/usr/local/bin/ceu’: Permission denied
 make: *** [compiler] Error 1
 ```
 
-Installation fails because it tries to write to `/usr/local/bin/ceu`.
+The installation fails because it tries to write to `/usr/local/bin/ceu`.
 
 Try again with `sudo`:
 
@@ -47,7 +47,7 @@ $ make compiler
 cd ./compiler/lua/ && lua pak.lua lua
 mv ./compiler/lua/ceu /usr/local/bin/ceu
 /usr/local/bin/ceu --dump
-Version: ceu 0.10
+Version: ceu <version>
 Lua:     lua
 ```
 
@@ -55,8 +55,7 @@ Or edit the `Makefile` to change the destination `CEU_EXE`:
 
 ```
 $ vi Makefile
-# change this line
-CEU_EXE ?= /usr/local/bin/ceu
+CEU_EXE ?= /usr/local/bin/ceu   # change this line and try again
 ```
 
 ## Run the examples
@@ -175,7 +174,7 @@ arch/dummy/ceu_threads.h:1:2: error: #error "no support for threads"
 ```
 
 The example `test-03.ceu` fails because it uses the `async/thread` primitive 
-whith requires the `pthread` architecture to execute:
+which requires the `pthread` architecture to execute:
 
 ```
 ###############
