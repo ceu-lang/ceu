@@ -5,6 +5,8 @@ http://www.ceu-lang.org/
 
 Join the chat at https://gitter.im/fsantanna/ceu
 
+# Summary
+
 * [Quick Start](#quick-start)
 * [Examples](#examples)
 * [Environments](#environments)
@@ -233,20 +235,20 @@ The `async/thread` requires `pthread` which is passed as
 
 # Environments
 
-Céu requires a "real environment" that provides actual input events and output 
-functionality.
+Céu requires a real environment that provides actual input events and output 
+functionality for the applications.
 
 ## SDL
 
 [SDL](http://www.libsdl.org/) works in typical platforms (e.g., Windows, Mac, 
-Linux, Android) and provides basic functionality (e.g., timers, keyboard, 
-mouse, display):
+Linux, Android) and provides basic input & output functionality (e.g., timers, 
+keyboard, mouse, display):
 
 https://github.com/fsantanna/ceu-sdl/
 
 ## Arduino
 
-[Arduino](http://www.arduino.cc/) is a platforms for sensing and controlling 
+[Arduino](http://www.arduino.cc/) is a platform for sensing and controlling 
 physical devices:
 
 https://github.com/fsantanna/ceu-arduino/
