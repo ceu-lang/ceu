@@ -3,12 +3,11 @@ alternative to C.
 
 http://www.ceu-lang.org/
 
-For Céu distributions targeted at specific platforms (e.g. Arduino, SDL), 
-consult the wiki.
-
-http://www.ceu-lang.org/wiki
-
 Join the chat at https://gitter.im/fsantanna/ceu
+
+* [Quick Start](#quick-start)
+* [Examples](#examples)
+* [Environments](#environments)
 
 # Quick Start
 
@@ -64,21 +63,31 @@ Now, you are ready to run the examples:
 
 ```
 $ make samples
-
-samples/test-00.ceu samples/test-01.ceu samples/test-02.ceu samples/test-03.ceu
-for i in samples/*; do							\
-		echo "#######################";				\
-		echo "# $i";								\
-		echo "#######################";				\
-		if [ "$i" = "samples/test-03.ceu" ]; then	\
-			make ARCH_DIR=arch/pthread SRC=$i all;	\
+for i in samples/*.ceu; do								\
+		echo;									\
+		echo -n "#####################################";		\
+		echo    "#####################################";		\
+		echo File: "$i";							\
+		grep "#@" "$i" | cut -f2- -d" ";					\
+		echo -n "#####################################";		\
+		echo    "#####################################";		\
+		echo -n "Press <enter> to start...";					\
+		read _;									\
+		if [ "$i" = "samples/test-03.ceu" ]; then				\
+			make ARCH_DIR=arch/pthread SRC=$i all || exit 1;	\
 		else									\
-			make SRC=$i all;						\
-		fi									\
+			make SRC=$i all || exit 1;					\
+		fi;									\
+		echo;									\
 	done
-#######################
-# samples/test-00.ceu
-#######################
+
+##########################################################################
+File: samples/test-00.ceu
+Description: Terminates immediatelly with an `escape`.
+Features:
+ - `escape`
+##########################################################################
+Press <enter> to start...
 make[1]: Entering directory `/data/ceu/ceu'
 mkdir -p build
 /usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-00.ceu
@@ -86,57 +95,11 @@ gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-00.exe
 build/test-00.exe
 *** END: 0
 make[1]: Leaving directory `/data/ceu/ceu'
-#######################
-# samples/test-01.ceu
-#######################
-make[1]: Entering directory `/data/ceu/ceu'
-mkdir -p build
-/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-01.ceu
-gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-01.exe
-build/test-01.exe
-Hello World!
-Hello World!
-Hello World!
-Hello World!
-Hello World!
-*** END: 0
-make[1]: Leaving directory `/data/ceu/ceu'
-#######################
-# samples/test-02.ceu
-#######################
-make[1]: Entering directory `/data/ceu/ceu'
-mkdir -p build
-/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-02.ceu
-gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-02.exe
-build/test-02.exe
-Hello World!
-Hello World!
-Hello World!
-Hello World!
-Hello World!
-*** END: 0
-make[1]: Leaving directory `/data/ceu/ceu'
-#######################
-# samples/test-03.ceu
-#######################
-make[1]: Entering directory `/data/ceu/ceu'
-mkdir -p build
-/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/pthread" samples/test-03.ceu
-gcc arch/pthread/ceu_main.c -I arch/pthread -I build -lpthread -o build/test-03.exe
-build/test-03.exe
-[sync] hello
-[thread] world
-[sync] hello
-[thread] world
-[sync] hello
-[thread] world
-[sync] hello
-[thread] world
-[sync] hello
-[thread] world
-*** END: 0
-make[1]: Leaving directory `/data/ceu/ceu'
+
+<...> # output for other samples
 ```
+
+# Examples
 
 ### `test-00.ceu`
 
@@ -267,3 +230,23 @@ build/test-03.exe
 
 The `async/thread` requires `pthread` which is passed as 
 `ARCH_DIR=arch/pthread` to the command `make`.
+
+# Environments
+
+Céu requires a "real environment" that provides actual input events and output 
+functionality.
+
+## SDL
+
+[SDL](http://www.libsdl.org/) works in typical platforms (e.g., Windows, Mac, 
+Linux, Android) and provides basic functionality (e.g., timers, keyboard, 
+mouse, display):
+
+https://github.com/fsantanna/ceu-sdl/
+
+## Arduino
+
+[Arduino](http://www.arduino.cc/) is a platforms for sensing and controlling 
+physical devices:
+
+https://github.com/fsantanna/ceu-arduino/
