@@ -29,24 +29,14 @@ $ sudo apt-get install lua-lpeg
 - LPeg: http://www.inf.puc-rio.br/~roberto/lpeg/#download
 ```
 
-## Build & Install `ceu`:
+## Download, Build, and Install `ceu`:
 
-Then, you need to build & install the compiler of Céu:
+Then, you need to download, build, and install the compiler of Céu:
 
 ```
+$ git clone https://github.com/fsantanna/ceu/
+$ cd ceu/
 $ sudo make compiler
-cd ./compiler/lua/ && lua pak.lua lua
-mv ./compiler/lua/ceu /usr/local/bin/ceu
-mv: cannot move ‘./compiler/lua/ceu’ to ‘/usr/local/bin/ceu’: Permission denied
-make: *** [compiler] Error 1
-```
-
-The installation fails because it tries to write to `/usr/local/bin/ceu`.
-
-Try again with `sudo`:
-
-```
-$ make compiler
 cd ./compiler/lua/ && lua pak.lua lua
 mv ./compiler/lua/ceu /usr/local/bin/ceu
 /usr/local/bin/ceu --dump
@@ -54,7 +44,7 @@ Version: ceu <version>
 Lua:     lua
 ```
 
-Or edit the `Makefile` to change the destination `CEU_EXE`:
+Alternatively, you can edit the `Makefile` to change the destination `CEU_EXE`:
 
 ```
 $ vi Makefile
