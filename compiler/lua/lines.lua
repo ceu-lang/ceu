@@ -53,7 +53,7 @@ if OPTS.cpp or OPTS.cpp_args then
     end
 
     -- fin, fout, ferr
-    local fout = base..'_ceu_cpp_'..name
+    local fout = OPTS.out_dir..'/_ceu_cpp_'..name
     local ferr = fout..'.err'
     local fin  = fout..'.in'
     local f = assert( io.open(fin,'w') )
