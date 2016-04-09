@@ -52,7 +52,7 @@ ifndef SRC_
 $(error USAGE: make SRC=<path-to-ceu-file>)
 endif
 else
-ifdef SRC_
+ifdef SRC
 $(error invalid target for "SRC")
 endif
 endif
