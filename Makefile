@@ -65,8 +65,8 @@ all: ceu c
 	$(OUT_EXE)
 
 compiler:
-	cd $(CEU_DIR)/compiler/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE)
-	mv $(CEU_DIR)/compiler/lua/ceu $(CEU_EXE)
+	cd $(CEU_DIR)/src/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE)
+	mv $(CEU_DIR)/src/lua/ceu $(CEU_EXE)
 	$(CEU_EXE) --dump
 
 ceu:
