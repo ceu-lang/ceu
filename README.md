@@ -94,8 +94,8 @@ Features:
 Press <enter> to start...
 make[1]: Entering directory `/data/ceu/ceu'
 mkdir -p build
-/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-00.ceu
-gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-00.exe
+/usr/local/bin/ceu --out-dir build --cpp-args "-I arch" samples/test-00.ceu
+gcc arch/ceu_main.c -I arch -I build -o build/test-00.exe
 build/test-00.exe
 *** END: 0
 make[1]: Leaving directory `/data/ceu/ceu'
@@ -115,8 +115,8 @@ escape 0;
 
 $ make all SRC=samples/test-00.ceu
 mkdir -p build
-/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-00.ceu
-gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-00.exe
+/usr/local/bin/ceu --out-dir build --cpp-args "-I arch" samples/test-00.ceu
+gcc arch/ceu_main.c -I arch -I build -o build/test-00.exe
 build/test-00.exe
 *** END: 0
 ```
@@ -141,8 +141,8 @@ escape 0;
 
 $ make all SRC=samples/test-01.ceu
 mkdir -p build
-/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-01.ceu
-gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-01.exe
+/usr/local/bin/ceu --out-dir build --cpp-args "-I arch" samples/test-01.ceu
+gcc arch/ceu_main.c -I arch -I build -o build/test-01.exe
 build/test-01.exe
 Hello World!
 Hello World!
@@ -175,8 +175,8 @@ escape 0;
 
 $ make all SRC=samples/test-02.ceu
 mkdir -p build
-/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/dummy" samples/test-02.ceu
-gcc arch/dummy/ceu_main.c -I arch/dummy -I build -o build/test-02.exe
+/usr/local/bin/ceu --out-dir build --cpp-args "-I arch/" samples/test-02.ceu
+gcc arch/ceu_main.c -I arch -I build -o build/test-02.exe
 build/test-02.exe
 Hello World!
 Hello World!
