@@ -3,6 +3,8 @@ alternative to C.
 
 http://www.ceu-lang.org/
 
+https://github.com/fsantanna/ceu/
+
 Join the chat at https://gitter.im/fsantanna/ceu
 
 # Summary
@@ -56,7 +58,7 @@ Or edit the `Makefile` to change the destination `CEU_EXE`:
 
 ```
 $ vi Makefile
-CEU_EXE ?= /usr/local/bin/ceu   # change this line and try again
+CEU_EXE ?= /usr/local/bin/ceu   # EDIT THIS LINE
 ```
 
 ## Run the examples
