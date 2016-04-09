@@ -67,7 +67,7 @@ Test = function (t)
         out_dir = '/tmp',
         cpp     = true,
         cpp_exe = 'cpp',
-        cpp_args = (T.cpp_args or '')..'-I'..ARCH,
+        cpp_args = (T.cpp_args or '')..'-I'..ARCH..' -I'..ARCH..'/up',
         input   = 'tests.lua',
         source  = source,
     }
