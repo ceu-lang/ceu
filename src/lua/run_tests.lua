@@ -57,15 +57,17 @@ Test = function (t)
         print('\n=============\n---\n'..source..'\n---\n')
     end
 
+    local ARCH = '../../arch/pthread'
     OPTS = {
         tp_word = 4,
         tp_off  = 2,
         tp_lbl  = 2,
         safety  = t.safety or 1,
 
+        out_dir = '/tmp',
         cpp     = true,
         cpp_exe = 'cpp',
-        cpp_args = T.cpp_args,
+        cpp_args = (T.cpp_args or '')..'-I'..ARCH,
         input   = 'tests.lua',
         source  = source,
     }
@@ -181,7 +183,7 @@ end
             ..' -ansi'
             ..' -DCEU_DEBUG'
             --..' -DCEU_DEBUG_TRAILS'
-            ..' '..(T.cpp_args or '')
+            ..' '..(OPTS.cpp_args or '')
 
     if VALGRIND then
         O = O .. ' -g'
@@ -193,10 +195,9 @@ end
     end
 
     local CEU, GCC
-    local cpp = (T.cpp_args and '--cpp-args "'..T.cpp_args..'"') or ''
+    local cpp = (OPTS.cpp_args and '--cpp-args "'..OPTS.cpp_args..'"') or ''
     local opts = T.opts or ''
     opts = opts..' --out-dir '..OUT_DIR
-    local ARCH = '../../arch/pthread'
     local main = ARCH..'/ceu_main.c'
     local tm  = (T.timemachine and '--timemachine') or ''
     local r = (math.random(2) == 1)
@@ -499,6 +500,3 @@ STATS = {
 
 
 ]]
-
-
-
