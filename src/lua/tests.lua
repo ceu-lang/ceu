@@ -60359,14 +60359,14 @@ native do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
-class App with
+class TM_App with
     var int v = 0;
 do
     every 1s do
         this.v = this.v + 1;
     end
 end
-var App app;
+var TM_App tm_app;
 
 input int DT;
 
@@ -60384,7 +60384,7 @@ native/pre do
     ##define CEU_FPS 20
 end
 
-#include "timemachine.ceu"
+#include "tm/backend.ceu"
 
 #ifdef TM_QUEUE
 class IOTimeMachine with
@@ -60395,7 +60395,7 @@ var IOTimeMachine io;
 #endif
 
 var TimeMachine tm with
-    this.app = &app;
+    this.app = &tm_app;
 #ifdef TM_QUEUE
     this.io  = &io;
 #endif
@@ -60410,59 +60410,59 @@ par/or do
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     emit tm.go_seek => 500;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     emit tm.go_seek => 1000;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
 
     emit tm.go_seek => 1500;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
 
     emit tm.go_seek => 2000;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
 
     emit tm.go_seek => 2500;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
 
     emit tm.go_seek => 3000;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     emit tm.go_seek => 2500;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
 
     emit tm.go_seek => 2000;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
 
     emit tm.go_seek => 1500;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
 
     emit tm.go_seek => 1000;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
 
     emit tm.go_seek => 500;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     escape 1;
 
@@ -60488,7 +60488,7 @@ with
     end
 end
 
-escape app.v;
+escape tm_app.v;
 ]],
     timemachine = true,
     complete = (i>1),   -- runs i=1 for sure
@@ -60504,14 +60504,14 @@ native do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
-class App with
+class TM_App with
     var int v = 0;
 do
     every 1s do
         this.v = this.v + 1;
     end
 end
-var App app;
+var TM_App tm_app;
 
 input int DT;
 
@@ -60529,7 +60529,7 @@ native/pre do
     ##define CEU_FPS 20
 end
 
-#include "timemachine.ceu"
+#include "tm/backend.ceu"
 
 #ifdef TM_QUEUE
 class IOTimeMachine with
@@ -60540,7 +60540,7 @@ var IOTimeMachine io;
 #endif
 
 var TimeMachine tm with
-    this.app = &app;
+    this.app = &tm_app;
 #ifdef TM_QUEUE
     this.io  = &io;
 #endif
@@ -60555,127 +60555,127 @@ par/or do
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     ///////////////////////////////
 
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     emit tm.go_forward => 1;
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     await 1ms_;
     await 1000ms_;
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     await 1000ms_;
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     await 1000ms_;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     ///////////////////////////////
 
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     emit tm.go_forward => 1;
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     await 1ms_;
     loop i in 20 do
         await 50ms_;
     end
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     loop i in 20 do
         await 50ms_;
     end
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     loop i in 20 do
         await 50ms_;
     end
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     ///////////////////////////////
 
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     emit tm.go_forward => 2;
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     await 1ms_;
     loop i in 10 do
         await 50ms_;
     end
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     loop i in 10 do
         await 50ms_;
     end
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     loop i in 10 do
         await 50ms_;
     end
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     ///////////////////////////////
 
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     emit tm.go_forward => 5;
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     await 1ms_;
     await 200ms_;
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     await 200ms_;
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     await 200ms_;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     ///////////////////////////////
 
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     emit tm.go_forward => -2;
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     await 1ms_;
     await 2000ms_;
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     await 2000ms_;
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     await 2000ms_;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     ///////////////////////////////
 
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     emit tm.go_forward => -5;
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     await 1ms_;
     loop i in 100 do
         await 50ms_;
     end
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     loop i in 100 do
         await 50ms_;
     end
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     loop i in 100 do
         await 50ms_;
     end
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
 with
     input int DT;
@@ -60699,7 +60699,7 @@ with
     end
 end
 
-escape app.v;
+escape tm_app.v;
 ]],
     timemachine = true,
     complete = (i>1),   -- runs i=1 for sure
@@ -60715,14 +60715,14 @@ native do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
-class App with
+class TM_App with
     var int v = 0;
 do
     every 1s do
         this.v = this.v + 1;
     end
 end
-var App app;
+var TM_App tm_app;
 
 input int DT;
 
@@ -60741,7 +60741,7 @@ native/pre do
     ##define CEU_FPS 100
 end
 
-#include "timemachine.ceu"
+#include "tm/backend.ceu"
 
 #ifdef TM_QUEUE
 class IOTimeMachine with
@@ -60752,7 +60752,7 @@ var IOTimeMachine io;
 #endif
 
 var TimeMachine tm with
-    this.app = &app;
+    this.app = &tm_app;
 #ifdef TM_QUEUE
     this.io  = &io;
 #endif
@@ -60767,135 +60767,135 @@ par/or do
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     emit tm.go_backward => 1;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     await 1000ms_;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     await 1000ms_;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     await 1000ms_;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     ///////////////////////////////
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     emit tm.go_backward => 1;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     loop i in 20 do
         await 50ms_;
     end
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     loop i in 20 do
         await 50ms_;
     end
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     loop i in 20 do
         await 50ms_;
     end
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     ///////////////////////////////
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     emit tm.go_backward => 2;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     loop i in 10 do
         await 50ms_;
     end
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     loop i in 10 do
         await 50ms_;
     end
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     loop i in 10 do
         await 50ms_;
     end
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     ///////////////////////////////
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     emit tm.go_backward => 5;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     await 200ms_;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     await 200ms_;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     await 200ms_;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     ///////////////////////////////
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     emit tm.go_backward => -2;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     await 2000ms_;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     await 2000ms_;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     await 2000ms_;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     ///////////////////////////////
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     emit tm.go_backward => -5;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     loop i in 100 do
         await 50ms_;
     end
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
     loop i in 100 do
         await 50ms_;
     end
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
     loop i in 100 do
         await 50ms_;
     end
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
-    app.v = app.v + 1;
+    tm_app.v = tm_app.v + 1;
 with
     input int DT;
     async (tm) do
@@ -60918,7 +60918,7 @@ with
     end
 end
 
-escape app.v;
+escape tm_app.v;
 ]],
     timemachine = true,
     complete = (i>1),   -- runs i=1 for sure
@@ -60934,14 +60934,14 @@ native do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
-class App with
+class TM_App with
     var int v = 0;
 do
     every 1s do
         this.v = this.v + 1;
     end
 end
-var App app;
+var TM_App tm_app;
 
 input int DT;
 
@@ -60959,7 +60959,7 @@ native/pre do
     ##define CEU_FPS 100
 end
 
-#include "timemachine.ceu"
+#include "tm/backend.ceu"
 
 #ifdef TM_QUEUE
 class IOTimeMachine with
@@ -60970,7 +60970,7 @@ var IOTimeMachine io;
 #endif
 
 var TimeMachine tm with
-    this.app = &app;
+    this.app = &tm_app;
 #ifdef TM_QUEUE
     this.io  = &io;
 #endif
@@ -60978,31 +60978,31 @@ end;
 
 par/or do
     await 3s_;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
     emit tm.go_on;
 
     await 1s_;
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     await 1s_;
     emit tm.go_forward => 2;
-    _assert(app.v == 0);
+    _assert(tm_app.v == 0);
 
     await 1s400ms_;
-    _assert(app.v == 2);
+    _assert(tm_app.v == 2);
 
     emit tm.go_seek => tm.time_total;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     emit tm.go_backward => 2;
-    _assert(app.v == 3);
+    _assert(tm_app.v == 3);
 
     await 1s1ms_;
     TM_AWAIT_SEEK(tm);
-    _assert(app.v == 1);
+    _assert(tm_app.v == 1);
 with
     input int DT;
     async (tm) do
@@ -61025,7 +61025,7 @@ with
     end
 end
 
-escape app.v;
+escape tm_app.v;
 ]],
     timemachine = true,
     complete = (i>1),   -- runs i=1 for sure
@@ -61041,7 +61041,7 @@ native do
 end
 
 input int&& KEY;
-class App with
+class TM_App with
     var int v = 0;
 do
     par do
@@ -61055,7 +61055,7 @@ do
         end
     end
 end
-var App app;
+var TM_App tm_app;
 
 input int  DT;
 
@@ -61073,7 +61073,7 @@ native/pre do
     ##define CEU_FPS 100
 end
 
-#include "timemachine.ceu"
+#include "tm/backend.ceu"
 
 #ifdef TM_QUEUE
 class IOTimeMachine with
@@ -61114,7 +61114,7 @@ var IOTimeMachine io;
 #endif
 
 var TimeMachine tm with
-    this.app = &app;
+    this.app = &tm_app;
 #ifdef TM_QUEUE
     this.io  = &io;
 #endif
@@ -61139,7 +61139,7 @@ par/or do
             emit DT => 10;
         end
     end
-    _assert(app.v == 25);
+    _assert(tm_app.v == 25);
 
     emit tm.go_on;
     await 1s_;
@@ -61149,13 +61149,13 @@ par/or do
 
     emit tm.go_forward => 1;
     await 3s1ms_;
-    _assert(app.v == 7);
+    _assert(tm_app.v == 7);
     await 2s_;
-    _assert(app.v == 9);
+    _assert(tm_app.v == 9);
     await 1s_;
-    _assert(app.v == 22);
+    _assert(tm_app.v == 22);
     await 3s_;
-    _assert(app.v == 25);
+    _assert(tm_app.v == 25);
 with
     input int DT;
     async (tm) do
@@ -61173,7 +61173,7 @@ with
     end
 end
 
-escape app.v;
+escape tm_app.v;
 ]],
     timemachine = true,
     complete = (i>1),   -- runs i=1 for sure

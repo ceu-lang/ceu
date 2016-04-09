@@ -11,6 +11,14 @@ native do
 end
 native @nohold _snap_seek();
 
+#ifndef TM_QUEUE
+#ifndef TM_SNAP
+#ifndef TM_DIFF
+#error "Must define one of TM_QUEUE, TM_SNAP, or TM_DIFF"
+#endif
+#endif
+#endif
+
 #ifndef TM_INPUT_DT
 #error "Missing TM_INPUT_DT"
 #endif
@@ -102,7 +110,7 @@ end
 #endif
 
 class TimeMachine with
-    var App& app;
+    var TM_App& app;
 #ifdef TM_QUEUE
     var IIOTimeMachine& io;
 #endif
@@ -140,9 +148,9 @@ do
 #endif
 #else   // !TM_SNAP
     native do
-        CEU_App CEU_APP_0;      /* saves application state-0 */
+        CEU_TM_App CEU_TM_APP_0;      /* saves application state-0 */
     end
-    _CEU_APP_0 = *((CEU_App&&)&&this.app);
+    _CEU_TM_APP_0 = *((CEU_TM_App&&)&&this.app);
 #ifdef TM_QUEUE
     _queue_seek(0);
 #endif
@@ -273,7 +281,7 @@ do
                         var u32 diffs;
                         this.time_now = _snap_seek(time_req, &&diffs);
                         _DIFF.nxt = diffs;
-                        _memcpy(_DIFF.data_old, _DIFF.data, sizeof(_CEU_App));
+                        _memcpy(_DIFF.data_old, _DIFF.data, sizeof(_CEU_TM_App));
                         this.time_now = _diff_seek(time_req);
 #else
                         this.time_now = _snap_seek(time_req);
@@ -282,7 +290,7 @@ do
 #else   // !TM_SNAP
 
 #if   defined TM_QUEUE
-                        *((_CEU_App&&)&&app) = _CEU_APP_0;
+                        *((_CEU_TM_App&&)&&app) = _CEU_TM_APP_0;
                         _queue_seek(0);
                         this.time_now = 0;
 #elif defined TM_DIFF
@@ -719,7 +727,7 @@ do
         typedef struct {
             u32       put;
             u8*       data;
-            u8        data_old[sizeof(CEU_App)];
+            u8        data_old[sizeof(CEU_TM_App)];
             u32       nxt;
             u8        buf[TM_DIFF_N];
         } tceu_diff_state;
@@ -744,7 +752,7 @@ do
             u32 sum2 = 0;
             {
                 u32 n = 0;
-                for (n=0; n<sizeof(CEU_App); n++) {
+                for (n=0; n<sizeof(CEU_TM_App); n++) {
                     sum2 += DIFF.data_old[n];
                 }
             }
@@ -775,7 +783,7 @@ printf("<<< DUMP\n");
             /* fill "put" */
             u32 i;
             u32 n = 0;
-            for (i=0; i<sizeof(CEU_App); i++) {
+            for (i=0; i<sizeof(CEU_TM_App); i++) {
                 u8 fr = DIFF.data_old[i];
                 u8 to = DIFF.data[i];
                 if (fr != to) {
@@ -791,7 +799,7 @@ printf("<<< DUMP\n");
             TM_DIFF_BUF(DIFF.put).n = n;
 
             /* replace with new current */
-            memcpy(DIFF.data_old, DIFF.data, sizeof(CEU_App));
+            memcpy(DIFF.data_old, DIFF.data, sizeof(CEU_TM_App));
 
             /* update "put" */
             DIFF.put += TM_BUF_SZ(n);
@@ -825,8 +833,8 @@ printf("<<< DUMP\n");
             /* time=0 is outside DIFF.buf */
             if (time == 0) {
                 DIFF.nxt = 0;
-                memcpy(DIFF.data,     &CEU_APP_0, sizeof(CEU_App));
-                memcpy(DIFF.data_old, &CEU_APP_0, sizeof(CEU_App));
+                memcpy(DIFF.data,     &CEU_TM_APP_0, sizeof(CEU_TM_App));
+                memcpy(DIFF.data_old, &CEU_TM_APP_0, sizeof(CEU_TM_App));
                 /*diff_sum(0);*/
                 return 0;
             }
@@ -897,7 +905,7 @@ printf("<<< DUMP\n");
                     assert(TM_DIFF_BUF(cur).time > time);
                 }
             }
-            memcpy(DIFF.data, DIFF.data_old, sizeof(CEU_App));
+            memcpy(DIFF.data, DIFF.data_old, sizeof(CEU_TM_App));
             return time;
         }
 
@@ -930,7 +938,7 @@ printf("<<< DUMP\n");
             DIFF.data = data;
             DIFF.put  = 0;
             DIFF.nxt  = 0;
-            memcpy(DIFF.data_old, DIFF.data, sizeof(CEU_App));
+            memcpy(DIFF.data_old, DIFF.data, sizeof(CEU_TM_App));
         }
     end
 
@@ -949,7 +957,7 @@ printf("<<< DUMP\n");
 #elif defined TM_DIFF
             u32             diffs;
 #endif
-            CEU_App         data;
+            CEU_TM_App      data;
         } tceu_snap;
 
         typedef struct {
@@ -966,7 +974,7 @@ printf("<<< DUMP\n");
         void snap_put (u32 time) {
             assert(SNAP.put < TM_SNAP_N);
             SNAP.buf[SNAP.put].time = time;
-            SNAP.buf[SNAP.put].data = *((CEU_App*)SNAP.data);
+            SNAP.buf[SNAP.put].data = *((CEU_TM_App*)SNAP.data);
 #if   defined TM_QUEUE
             SNAP.buf[SNAP.put].queue = QUEUE.put_old;
 #elif defined TM_DIFF
@@ -1003,7 +1011,7 @@ printf("<<< DUMP\n");
                                 /* i==0 must be found below */
                 i--;
                 if (SNAP.buf[i].time <= time) {
-                    *((CEU_App*)SNAP.data) = SNAP.buf[i].data;
+                    *((CEU_TM_App*)SNAP.data) = SNAP.buf[i].data;
 #if   defined TM_QUEUE
                     *queue = SNAP.buf[i].queue;
 #elif defined TM_DIFF
@@ -1025,7 +1033,7 @@ printf("<<< DUMP\n");
                 if (s->time > upto) {
                     return 0;   /* do not advance */
                 }
-                *((CEU_App*)SNAP.data) = s->data;
+                *((CEU_TM_App*)SNAP.data) = s->data;
                 SNAP.nxt++;
                 return s->time;
             }

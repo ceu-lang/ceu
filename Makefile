@@ -2,24 +2,29 @@
 # EDIT
 ###############################################################################
 
-ARCH_DIR ?= arch/dummy
+SRC =
+
+ARCH_DIR ?= arch
 
 LUA_EXE ?= lua
 
-C_EXE    ?= gcc
-C_FLAGS  += -I $(ARCH_DIR) -I $(OUT_DIR)
+C_EXE   ?= gcc
+C_FLAGS =
 
 CEU_DIR   ?= .
 CEU_EXE   ?= /usr/local/bin/ceu
-CEU_FLAGS_CPP += -I $(ARCH_DIR)
-CEU_FLAGS += --cpp-args "$(CEU_FLAGS_CPP)"
+CEU_FLAGS =
 
 OUT_DIR	?= build
-OUT_EXE ?= $(OUT_DIR)/$(basename $(notdir $(SRC))).exe
+OUT_EXE ?= $(OUT_DIR)/$(basename $(notdir $(SRC_))).exe
 
 ###############################################################################
 # DO NOT EDIT
 ###############################################################################
+
+SRC_	   = $(SRC)
+C_FLAGS_   = $(C_FLAGS) -I $(ARCH_DIR) -I $(OUT_DIR) -I .
+CEU_FLAGS_ = $(CEU_FLAGS) --cpp-args "$(C_FLAGS_)"
 
 do_compiler =
 do_ceu =
@@ -43,11 +48,11 @@ ifeq ($(MAKECMDGOALS),clean)
 endif
 
 ifdef do_ceu
-ifndef SRC
+ifndef SRC_
 $(error USAGE: make SRC=<path-to-ceu-file>)
 endif
 else
-ifdef SRC
+ifdef SRC_
 $(error invalid target for "SRC")
 endif
 endif
@@ -56,6 +61,14 @@ ifndef do_compiler
 ifeq ("$(wildcard $(CEU_EXE))","")
 $(error "$(CEU_EXE)" is not found: run "make compiler")
 endif
+endif
+
+ifdef TM
+# TODO: -DTM_QUEUE
+TM_SRC	   := $(SRC_)
+SRC_	    = $(ARCH_DIR)/tm/main.ceu
+C_FLAGS_   += -DCEU_TIMEMACHINE -DTM_SRC=$(TM_SRC) -DTM_QUEUE
+CEU_FLAGS_ += --timemachine
 endif
 
 help:
@@ -70,11 +83,12 @@ compiler:
 	$(CEU_EXE) --dump
 
 ceu:
+	echo "-=-=-=-=-=- $(SRC_) $(TM_SRC)"
 	mkdir -p $(OUT_DIR)
-	$(CEU_EXE) --out-dir $(OUT_DIR) $(CEU_FLAGS) $(SRC)
+	$(CEU_EXE) --out-dir $(OUT_DIR) $(CEU_FLAGS_) $(SRC_)
 
 c:
-	$(C_EXE) $(ARCH_DIR)/ceu_main.c $(C_FLAGS) -o $(OUT_EXE)
+	$(C_EXE) $(ARCH_DIR)/ceu_main.c $(C_FLAGS_) -o $(OUT_EXE)
 
 samples:
 	for i in samples/*.ceu; do									\
