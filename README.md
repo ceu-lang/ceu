@@ -5,7 +5,7 @@ http://www.ceu-lang.org/
 
 https://github.com/fsantanna/ceu/
 
-Join the chat at https://gitter.im/fsantanna/ceu
+Join our chat at https://gitter.im/fsantanna/ceu
 
 # Summary
 
