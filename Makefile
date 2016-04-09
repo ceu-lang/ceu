@@ -46,6 +46,10 @@ ifdef do_ceu
 ifndef SRC
 $(error USAGE: make SRC=<path-to-ceu-file>)
 endif
+else
+ifdef SRC
+$(error invalid target for "SRC")
+endif
 endif
 
 ifndef do_compiler
@@ -73,15 +77,22 @@ c:
 	$(C_EXE) $(ARCH_DIR)/ceu_main.c $(C_FLAGS) -o $(OUT_EXE)
 
 samples:
-	for i in samples/*.ceu; do							\
-		echo "#######################";				\
-		echo "# $$i";								\
-		echo "#######################";				\
-		if [ "$$i" = "samples/test-03.ceu" ]; then	\
-			make ARCH_DIR=arch/pthread SRC=$$i all || exit 1; \
-		else										\
-			make SRC=$$i all || exit 1;				\
-		fi											\
+	for i in samples/*.ceu; do									\
+		echo;													\
+		echo -n "#####################################";		\
+		echo    "#####################################";		\
+		echo File: "$$i";										\
+		grep "#@" "$$i" | cut -f2- -d" ";						\
+		echo -n "#####################################";		\
+		echo    "#####################################";		\
+		echo -n "Press <enter> to start...";					\
+		read _;													\
+		if [ "$$i" = "samples/test-03.ceu" ]; then				\
+			make ARCH_DIR=arch/pthread SRC=$$i all || exit 1;	\
+		else													\
+			make SRC=$$i all || exit 1;							\
+		fi;														\
+		echo;													\
 	done
 
 clean:

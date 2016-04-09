@@ -18,3 +18,10 @@ with
     end
 end
 escape 0;
+
+#if 0
+#@ Description: Interleaves "[sync] hello" and "[thread] world".
+#@ Features:
+#@  - same as `test-02.ceu`
+#@  - `async/thread` to execute an independent block in another OS thread
+#endif
