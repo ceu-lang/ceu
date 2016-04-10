@@ -90,6 +90,7 @@ Test = function (t)
     --AST.dump(AST.root)
     --if not check('exp')      then return end
     if not check('adt')      then return end
+    if not check('mode')     then return end
     if not check('ref')      then return end
     if not check('cval')     then return end
     if not check('tight')    then return end

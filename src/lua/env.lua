@@ -262,6 +262,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         --arr   = arr,
         n     = _N,
         dcl   = me,
+        mode  = nil,    -- see mode.lua
     }
 
     local tp, is_ref = TP.pop(tp, '&')   -- only *,& after []

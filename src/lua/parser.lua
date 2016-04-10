@@ -227,9 +227,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                * EV'__ID_cls'
                * EKEY'with' * V'_BlockI' * EKEY'end'
     , _BlockI = ( (EV'_Dcl_var'+V'_Dcl_int'+V'_Dcl_pool'+V'Dcl_fun'+V'_Dcl_imp')
-                  * (EK';'*K';'^0)
-               )^0
+                    * (EK';'*K';'^0)
+                + V'Dcl_mode' * K':'
+                )^0
     , _Dcl_imp = KEY'interface' * EV'__ID_cls' * (K',' * EV'__ID_cls')^0
+    , Dcl_mode = CKEY'input/output'+CKEY'output/input'+CKEY'input'+CKEY'output'
 
     -- data types
     , Dcl_adt = KEY'data' * EV'__ID_adt' * EKEY'with'

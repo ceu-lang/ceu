@@ -1,11 +1,5 @@
 local VARS_UNINIT = {}
 
-function NODE2BLK (n)
-    return n.fst and n.fst.blk or
-           n.fst and n.fst.var and n.fst.var.blk or
-           MAIN.blk_ifc
-end
-
 local function find_set_thread (v1)
     for set in AST.iter'Set' do
         if set[2] == 'thread' then
@@ -207,8 +201,8 @@ F = {
 ]])
 
                 -- check if aliased value has wider scope
-                local fr_blk = NODE2BLK(fr)
-                local to_blk = NODE2BLK(to)
+                local fr_blk = NODE2BLK(me, fr)
+                local to_blk = NODE2BLK(me, to)
                 local to_org_blk
                 if to.tag=='Field' and to[2].tag=='This' then
                     local constr = AST.par(me, 'Dcl_constr')

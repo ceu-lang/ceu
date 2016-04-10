@@ -128,30 +128,8 @@ F = {
     -- NON-CONSTANT ATTRIBUTIONS
 
         -- determine "to_blk": block/scope for "to"
-        local to_blk
-        local constr = AST.iter'Dcl_constr'()
-        if constr then
-            -- var T t with
-            --  this.x = y;     -- blk of this is the same as block of t
-            -- end;
-            -- spawn T with
-            --  this.x = y;     -- blk of this is the same spawn pool
-            -- end
-            local dcl = AST.iter'Dcl_var'()
-            if dcl then
-                to_blk = dcl.var.blk
-            else
-                AST.asr(constr.__par, 'Spawn')
-                local _,pool,_ = unpack(constr.__par)
-                assert(assert(pool.lst).var)
-                to_blk = pool.lst.var.blk
-            end
-        else
-            -- block where variable is defined
-            to_blk = NODE2BLK(to)
-        end
-
-        local fr_blk = NODE2BLK(fr)
+        local to_blk = NODE2BLK(me, to)
+        local fr_blk = NODE2BLK(me, fr)
 
     -- CHECK IF "FINALIZE" IS REQUIRED
 

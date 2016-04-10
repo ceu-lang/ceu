@@ -183,6 +183,7 @@ do
     dofile 'sval.lua'
     dofile 'env.lua'
     dofile 'adt.lua'
+    dofile 'mode.lua'
     dofile 'ref.lua'
     dofile 'cval.lua'
     dofile 'tight.lua'
