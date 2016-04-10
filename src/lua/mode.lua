@@ -1,13 +1,19 @@
-function NODE2BLK (me, n)
-    local constr = AST.par(me,'Dcl_constr')
-    if constr and n.tag=='Field' and n[2].tag=='This' then
+function IS_THIS_INSIDE_CONSTR (me)
+    return AST.par(me,'Dcl_constr') and
+            me.tag=='Field' and me[2].tag=='This'
+end
+
+function NODE2BLK (set, n)
+    assert(set.tag=='Set' or set.tag=='Op2_call')
+    local constr = set.tag=='Set' and AST.par(set,'Dcl_constr')
+    if IS_THIS_INSIDE_CONSTR(n) then
         -- var T t with
         --  this.x = y;     -- blk of this is the same as block of t
         -- end;
         -- spawn T with
         --  this.x = y;     -- blk of this is the same spawn pool
         -- end
-        local dcl = AST.par(me,'Dcl_var')
+        local dcl = AST.par(set,'Dcl_var')
         if dcl then
             return dcl.var.blk
         else
@@ -51,23 +57,54 @@ F = {
         CLS().mode = 'input/output'
     end,
 
-    Var = function (me)
-        local is_set_target = IS_SET_TARGET(me)
-        if AST.par(me,'Dcl_constr') then
-            if is_set_target and
-                (me.var.mode=='output' or me.var.mode=='output/input')
-            then
-            end
+    Field = function (me)
+        if IS_SET_TARGET(me) then
+            return
+        end
+do return end
+
+        -- read
+        if IS_THIS_INSIDE_CONSTR(me) then
+            --  var T _ with
+            --      <...> = this.x;
+            --  end;
+            ASR(me, false, 'cannot read field inside the constructor')
         else
+            --  var T t;
+            --  <...> = t.x;
+            if me.var.mode == 'input' then
+                ASR(me, false,
+                    'cannot read field with mode `'..me.var.mode..'´')
+            else
+                -- OK
+                -- mode = 'input/output'
+                -- mode = 'output'
+                -- mode = 'output/input'
+            end
         end
     end,
 
     Set = function (me)
         local _, _, fr, to = unpack(me)
+do return end
 
-        local to_blk = NODE2BLK(me, to)
-        local fr_blk = NODE2BLK(me, fr)
-
+        -- write
+        if mode == 'output' then
+            ASR(me, false,
+                'cannot write to field with mode `output´')
+        elseif mode=='output/input' then
+            if IS_THIS_INSIDE_CONSTR(me) then
+                --  var T _ with
+                --      this.x = <...>;
+                --  end;
+                ASR(me, false,
+                    'cannot write to field with mode `output/input´ inside constructor')
+            end
+        else
+            -- OK
+            -- mode = 'input'
+            -- mode = 'input/output'
+        end
     end,
 }
 

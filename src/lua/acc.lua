@@ -257,7 +257,7 @@ F = {
             err = ERR(me, 'variable/event `'..me.var.id..'´'),
         }
 
-        if me.__par.tag=='Field' and me.__par[2].tag=='This' and AST.par(me,'Dcl_constr') then
+        if IS_THIS_INSIDE_CONSTR(me.__par) then
             -- variable being allocated cannot be in parallel with anyone
             me.acc.md = 'no'
         end

@@ -78,7 +78,6 @@ F = {
 
     Set = function (me)
         local op, set, fr, to = unpack(me)
-        to = to or AST.iter'SetBlock'()[1]
 
         -- TODO
         if set=='await' or set=='vector' then
@@ -127,7 +126,6 @@ F = {
 
     -- NON-CONSTANT ATTRIBUTIONS
 
-        -- determine "to_blk": block/scope for "to"
         local to_blk = NODE2BLK(me, to)
         local fr_blk = NODE2BLK(me, fr)
 
@@ -301,27 +299,20 @@ F = {
         end
 
         -- re-setting variable
-        local set = AST.par(me,'Set')
-        local to  = set and set[4]
-        if to and AST.isParent(to,me) then
-            local ok = (to==me)
-            ok = ok or (to.tag=='Field' and to.var==me.var)
-            ok = ok or (to.tag=='VarList' and AST.isParent(to, me))
-            if ok then
+        if IS_SET_TARGET(me) then
 -- TODO: repeated with Set?
-                if ENV.clss[TP.id(me.var.tp)] then
-                    local old = GET()[me.var]
-                    -- do not restart in case of pointers to organisms
-                    GET()[me.var] = old or 'accessed'
-                else
-                    GET()[me.var] = 'accessed'
-                end
-                --GET()[me.var] = 'accessed'
-                -- set[4] is VarList or Var
-                return
+            if ENV.clss[TP.id(me.var.tp)] then
+                local old = GET()[me.var]
+                -- do not restart in case of pointers to organisms
+                GET()[me.var] = old or 'accessed'
+            else
+                GET()[me.var] = 'accessed'
             end
+            --GET()[me.var] = 'accessed'
+            -- set[4] is VarList or Var
+            return
         end
-        if AST.par(me,'Dcl_constr') and me.__par.fst.tag=='This' then
+        if IS_THIS_INSIDE_CONSTR(me) then
             return  -- constructor access
         end
 
@@ -521,7 +512,7 @@ F = {
                     local var = AST.node('Var', me.ln, '_')
                     var.tp = ins.tup[i]
                     var.var = {blk=AST.par(f,'Dcl_cls').blk_ifc, tp=var.tp}
-                    F.Set(AST.node('Return', me.ln, '=', 'set', param, var))
+                    F.Set(AST.node('Set', me.ln, '=', 'set', param, var))
                 end
             end
         end

@@ -204,17 +204,15 @@ F = {
                 local fr_blk = NODE2BLK(me, fr)
                 local to_blk = NODE2BLK(me, to)
                 local to_org_blk
-                if to.tag=='Field' and to[2].tag=='This' then
-                    local constr = AST.par(me, 'Dcl_constr')
-                    if constr then
-                        local dcl = AST.par(constr, 'Dcl_var')
-                        if dcl then
-                            to_org_blk = dcl.var.blk
-                        else
-                            local spw = AST.par(constr, 'Spawn')
-                            to_org_blk = spw[2].var.blk or MAIN.blk_body
-                                            -- pool.blk
-                        end
+                if IS_THIS_INSIDE_CONSTR(to) then
+                    local constr = AST.par(me,'Dcl_constr')
+                    local dcl = AST.par(constr, 'Dcl_var')
+                    if dcl then
+                        to_org_blk = dcl.var.blk
+                    else
+                        local spw = AST.par(constr, 'Spawn')
+                        to_org_blk = spw[2].var.blk or MAIN.blk_body
+                                        -- pool.blk
                     end
                 end
                 if to_org_blk then
