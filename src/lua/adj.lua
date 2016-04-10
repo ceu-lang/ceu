@@ -1763,7 +1763,8 @@ me.blk_body = me.blk_body or blk_body
                         node('NUMBER', me.ln, 0)),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
-                            node('Dcl_var', me.ln, 'var', tp_req, id_req2),
+                            to and node('Dcl_var',me.ln,'var',tp_req,id_req2)
+                                or node('Nothing',me.ln),
                             awt)),
                     node('Block', me.ln,
                         node('Stmts', me.ln,

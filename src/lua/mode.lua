@@ -1,12 +1,23 @@
-function IS_THIS_INSIDE_CONSTR (me)
-    return AST.par(me,'Dcl_constr') and
-            me.tag=='Field' and me[2].tag=='This'
+function IS_THIS_INSIDE (at, me)
+    assert(at=='constr' or at=='body', 'bug found')
+    local is_this = (me.tag=='Field' and me[2].tag=='This')
+    if not is_this then
+        return false
+    end
+
+    local fun = AST.par(me,'Dcl_fun')
+    local is_constr = AST.par(me,'Dcl_constr') or (fun and fun.is_constr)
+    if at == 'constr' then
+        return is_constr
+    elseif at == 'body' then
+        return not is_constr
+    end
 end
 
 function NODE2BLK (set, n)
     assert(set.tag=='Set' or set.tag=='Op2_call')
     local constr = set.tag=='Set' and AST.par(set,'Dcl_constr')
-    if IS_THIS_INSIDE_CONSTR(n) then
+    if IS_THIS_INSIDE('constr',n) then
         -- var T t with
         --  this.x = y;     -- blk of this is the same as block of t
         -- end;
@@ -57,64 +68,44 @@ F = {
         CLS().mode = 'input/output'
     end,
 
-    Var = function (me)
+    Field = function (me)
         if IS_SET_TARGET(me) then
             return
         end
-        if AST.par(me,'Field') then
-            -- "t.x" is handled in "Field"
-        end
-
-        -- THIS READ (inside class)
-        -- <...> = x
-        if me.var.blk == CLS().blk_ifc then
-            if me.var.mode == 'input' then
-                ASR(false, me,
-                    'cannot read field with mode `'..me.var.mode..'´')
-            else
-                -- OK
-                -- mode = 'input/output'
-                -- mode = 'output'
-                -- mode = 'output/input'
-            end
-        end
-    end,
-
-    Field = function (me)
-        if IS_SET_TARGET(me) then
+        if me.var.pre == 'function' then
             return
         end
 
         -- FIELD READ (outside class)
         -- <...> = this.x;  // inside constructor
         -- <...> = t.x;
-        if IS_THIS_INSIDE_CONSTR(me) then
+        if IS_THIS_INSIDE('constr',me) then
             --  var T _ with
             --      <...> = this.x;
             --  end;
             ASR(false, me, 'cannot read field inside the constructor')
-        else
-            --  var T t;
-            --  <...> = t.x;
-            if me.var.mode == 'input' then
-                ASR(false, me,
-                    'cannot read field with mode `'..me.var.mode..'´')
-            else
-                -- OK
-                -- mode = 'input/output'
-                -- mode = 'output'
-                -- mode = 'output/input'
-            end
         end
     end,
 
     Set = function (me)
-        local _, _, fr, to = unpack(me)
+        local _, set, fr, to = unpack(me)
+
+        -- TODO
+        if set == 'await' then
+            return
+        end
+
+        if not to.var then
+            -- _V = 1
+            -- *((u8*)0x10)= 1
+            --assert(to.fst.tag=='Nat' or TP.isNumeric(to.fst.tp))
+            return
+        end
 
         -- FIELD WRITE (outside class)
         -- this.x = <...>   // inside constructor
         -- t.x    = <...>
-        if to.tag == 'Field' then
+        if to.tag=='Field' and (not IS_THIS_INSIDE('body',to)) then
             if to.var.mode == 'input' then
                 -- OK
             elseif to.var.mode == 'input/output' then
@@ -123,7 +114,7 @@ F = {
                 ASR(false, me,
                     'cannot write to field with mode `output´')
             elseif to.var.mode=='output/input' then
-                if IS_THIS_INSIDE_CONSTR(me) then
+                if IS_THIS_INSIDE('constr',me) then
                     --  var T _ with
                     --      this.x = <...>;
                     --  end;

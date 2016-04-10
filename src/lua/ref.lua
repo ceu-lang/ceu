@@ -34,6 +34,9 @@ F = {
             (not TP.check(me.var.tp,'[]','&')))
         then
             -- no need for initialization
+            if me.var.cls then -- var T _;
+                F.__compound(me)
+            end
         elseif me.var.cls then -- var T t;
             -- no need for initialization
             F.__compound(me)
@@ -125,7 +128,8 @@ F = {
         local TO = (to.tag=='VarList' and to) or {to}
         for _, to in ipairs(TO) do
             to_ = (to.var and to) or
-                  (to.fst==to.lst and to.fst.var and to.tag~='Op2_.' and to.fst)
+                  (to.tag=='Op1_!' and to[2].var and to[2])
+                  --(to.fst==to.lst and to.fst.var and to.tag~='Op2_.' and to.fst)
             if to_ then
                 local _, _, fr, _ = unpack(me)
                 F.__Set_bef_one(me, fr, to_)
@@ -204,7 +208,7 @@ F = {
                 local fr_blk = NODE2BLK(me, fr)
                 local to_blk = NODE2BLK(me, to)
                 local to_org_blk
-                if IS_THIS_INSIDE_CONSTR(to) then
+                if IS_THIS_INSIDE('constr',to) then
                     local constr = AST.par(me,'Dcl_constr')
                     local dcl = AST.par(constr, 'Dcl_var')
                     if dcl then
@@ -300,6 +304,11 @@ F = {
     end,
 
     Dcl_cls_pre = '__compound',
+    Dcl_cls_pos = function (me)
+        if not me.is_ifc then
+            F.__compound(me)
+        end
+    end,
     ParEver_pre = '__compound',
     ParAnd_pre  = '__compound',
     Pause_pre   = '__compound',
@@ -330,7 +339,9 @@ F = {
                 -- Statement is inside a block assignment to "v":
                 --      var int v = do <...> end
                 -- No problem because "v" cannot be accessed inside it.
-            elseif AST.par(var.blk,'Dcl_cls') ~= AST.par(me,'Dcl_cls') then
+            elseif AST.par(var.blk,'Dcl_cls') ~= AST.par(me,'Dcl_cls') and
+                   AST.par(var.blk,'Dcl_cls') ~= me
+            then
                 -- Statement is in another class declared inline:
                 --      var int v;
                 --      class with <...> do <...> end
@@ -446,7 +457,7 @@ missing initialization for field "]]..var.id..[[" (declared in ]]..dcl.ln[1]..':
     Dcl_fun_pre = function (me)
         local _, _, _, out, _, blk = unpack(me)
         local cls = CLS()
-        if blk and TP.check(out,cls.id) then
+        if blk and me.is_constr then
             -- is a constructor body
             F.Dcl_constr_pre(me, cls)
         end
@@ -454,7 +465,7 @@ missing initialization for field "]]..var.id..[[" (declared in ]]..dcl.ln[1]..':
     Dcl_fun_pos = function (me)
         local _, _, _, out, _, blk = unpack(me)
         local cls = CLS()
-        if blk and TP.check(out,cls.id) then
+        if blk and me.is_constr then
             -- is a constructor body
             F.Dcl_constr_pos(me)
         end

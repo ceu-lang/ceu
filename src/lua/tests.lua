@@ -283,299 +283,6 @@ escape 1;
     run = 1,
 }
 
--->>> INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
-Test { [[
-class T with
-    var int i;
-do
-end
-var T t with
-    var int i  = this.i;
-end;
-escape 1;
-]],
-    mode = ' line 6 : cannot read field inside the constructor',
-}
-
-Test { [[
-class T with
-    input:
-        var int i;
-do
-end
-var T t;
-escape t.i;
-]],
-    mode = 'line 7 : cannot read field with mode `input´',
-}
-
-Test { [[
-class T with
-    output:
-        var int o;
-do
-end
-var T t with
-    this.o  = 1;
-end;
-escape 1;
-]],
-    mode = 'line 7 : cannot write to field with mode `output´',
-}
-
-Test { [[
-class T with
-    output:
-        var int o;
-do
-end
-var T t;
-t.o = 1;
-escape 1;
-]],
-    mode = 'line 7 : cannot write to field with mode `output´',
-}
-
-Test { [[
-class T with
-    input:
-        var int i;
-do
-    i  = 1;
-end
-escape 1;
-]],
-    mode = 'line 5 : cannot write to field with mode `input´',
-}
-
-Test { [[
-class T with
-    input:
-        var int i;
-
-    output:
-        var int o;
-
-    input/output:
-        var int io;
-
-    output/input:
-        var int oi;
-do
-    o  = 1;
-    io = 1;
-    oi = 1;
-end
-var T t with
-    this.i  = 1;
-    this.io = 1;
-    this.oi = 1;
-end;
-t.i  = 1;
-t.io = 1;
-t.oi = 1;
-escape t.o+t.io+t.oi;
-]],
-    run = 3,
-}
-
-Test { [[
-class T with
-    input/output:
-        var int& io;
-do
-    var int io_ = 1;
-    io = &io_;
-end
-escape 1;
-]],
-    ref = 'line 6 : invalid attribution : variable "io" is already bound',
-}
-
-Test { [[
-class T with
-    output/input:
-        var int& oi;
-do
-end
-
-var int oi = 1;
-var T t with
-    this.oi = &oi;
-end;
-escape 1;
-]],
-    ref = 'line 9 : invalid attribution : variable "oi" is already bound',
-}
-
-Test { [[
-class T with
-    input:
-        var int& i;
-
-    output:
-        var int& o;
-
-    input/output:
-        var int& io;
-
-    output/input:
-        var int& oi;
-do
-    var int o_  = 1;
-    var int io_ = 1;
-    var int oi_ = 1;
-
-    o  = &o_;
-    oi = &oi_;
-
-    o  = 1;
-    io = 1;
-    oi = 1;
-end
-
-var int i  = 1;
-var int io = 1;
-var int oi = 1;
-var T t with
-    this.i  = &i;
-    this.io = &io;
-end;
-t.i  = 1;
-t.io = 1;
-t.oi = 1;
-escape t.o+t.io+t.oi;
-]],
-    run = 3,
-}
-
-Test { [[
-class T with
-    input:
-        var int i=1;
-
-    output:
-        var int o=1;
-
-    input/output:
-        var int io=1;
-
-    output/input:
-        var int oi=1;
-do
-end
-var T t with
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    input/output:
-        var int io;
-do
-end
-var T t with
-end;
-escape 1;
-]],
-    ref = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
-}
-
-Test { [[
-class T with
-    input:
-        var int i;
-do
-end
-var T t with
-end;
-escape 1;
-]],
-    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
-}
-
-Test { [[
-class T with
-    input:
-        var int i;
-
-    output:
-        var int o;
-
-    input/output:
-        var int io;
-
-    output/input:
-        var int oi;
-do
-end
-var T t with
-    this.i  = 1;
-    this.io = 1;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-    input:
-        var int& i;
-do
-end
-var T t with
-end;
-escape 1;
-]],
-    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
-}
-
-Test { [[
-class T with
-    input:
-        var int& io;
-do
-end
-var T t with
-end;
-escape 1;
-]],
-    ref = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
-}
-
---]===]
-Test { [[
-class T with
-    input:
-        var int& i;
-
-    output:
-        var int& o;
-
-    input/output:
-        var int& io;
-
-    output/input:
-        var int& oi;
-do
-end
-var int i=0;
-var T t with
-    this.i  = &i;
-    this.io = &i;
-end;
-escape 1;
-]],
-    run = 1,
-}
--- body init
---<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
-do return end
-
 Test { [[
 emit/await/refs
 class SDL with
@@ -621,7 +328,8 @@ var SDL _;
     run = 1,
 }
 
-do return end
+--]===]
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -741,10 +449,14 @@ escape 1;
     run = 1,
 }
 Test { [[var int a;]],
+    ref = 'uninitialized variable "a" crossing compound statement (tests.lua:1)',
+}
+
+Test { [[var int a=0;]],
     ana = 'line 1 : missing `escape´ statement for the block',
 }
 
-Test { [[var int a;]],
+Test { [[var int a=0;]],
     wrn = true,
     _ana = {
         reachs = 1,
@@ -768,6 +480,7 @@ escape (1+1).v;
 
 Test { [[
 var int a, b;
+a=0; b=0;
 escape 10;
 ]],
     run = 10,
@@ -1050,11 +763,11 @@ escape x;
 }
 Test { [[
 native _abc;
-native do
+native/pre do
     typedef u8  abc;
 end
 event void a;
-var _abc b;
+var _abc b=0;
 escape 1;
 ]],
     run = 1,
@@ -1233,6 +946,13 @@ Test { [[
 var int&& & v;
 escape 1;
 ]],
+    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
+}
+Test { [[
+var int&& p = null;
+var int&& & v = &p;
+escape 1;
+]],
     run = 1,
 }
 Test { [[
@@ -1359,7 +1079,7 @@ Test { [[if (2) then  else escape 0; end;]],
 }
 
 -- IF vs SEQ priority
-Test { [[if 1 then var int a; escape 2; else escape 3; end;]],
+Test { [[if 1 then var int a=0; escape 2; else escape 3; end;]],
     run = 2,
 }
 
@@ -15610,7 +15330,7 @@ Test { [[do end;]],
         isForever = true,
     },
 }
-Test { [[do var int a; end;]],
+Test { [[do var int a=0; end;]],
     _ana = {
         reachs = 1,
         isForever = true,
@@ -15618,7 +15338,7 @@ Test { [[do var int a; end;]],
 }
 Test { [[
 do
-    var int a;
+    var int a=0;
     escape 1;
 end;
 ]],
@@ -17363,7 +17083,7 @@ Test { [[
 var int ret = 0;
 var int&& pa=null;
 do
-    var int v;
+    var int v=0;
     if 1 then
         finalize with
             ret = ret + 1;
@@ -19314,8 +19034,8 @@ escape ret;
 
 Test { [[
 native @nohold _SDL_DestroyWindow();
-var int win_w;
-var int win_h;
+
+
 var _SDL_Window& win;
     finalize
         win = &_SDL_CreateWindow("UI - Texture",
@@ -21263,9 +20983,9 @@ end;
 Test { [[
 native _char = 1;
 var int i;
-var int&& pi;
+//var int&& pi;
 var _char c=10;
-var _char&& pc;
+//var _char&& pc;
 i = c;
 c = i;
 i = (int) c;
@@ -21279,9 +20999,9 @@ escape c;
 Test { [[
 native _char = 1;
 var int i;
-var int&& pi;
+//var int&& pi;
 var _char c=0;
-var _char&& pc;
+//var _char&& pc;
 i = (int) c;
 c = (_char) i;
 escape 10;
@@ -24485,6 +24205,14 @@ end
     -- POINTER ASSIGNMENTS
 
 Test { [[
+var int&& x;
+*x = 1;
+escape 1;
+]],
+    ref = 'line 2 : invalid access to uninitialized variable "x" (declared at tests.lua:1)',
+}
+
+Test { [[
 var int&& p;
 do
     var int i;
@@ -24844,9 +24572,9 @@ Test { [[
 async do
 
     par/or do
-        var int a;
+        var int a=0;
     with
-        var int b;
+        var int b=0;
     end
 end
 ]],
@@ -24857,9 +24585,9 @@ async do
 
 
     par/and do
-        var int a;
+        var int a=0;
     with
-        var int b;
+        var int b=0;
     end
 end
 ]],
@@ -24868,9 +24596,9 @@ end
 Test { [[
 async do
     par do
-        var int a;
+        var int a=0;
     with
-        var int b;
+        var int b=0;
     end
 end
 ]],
@@ -24880,7 +24608,7 @@ end
 -- DFA
 
 Test { [[
-var int a;
+var int a=0;
 ]],
     _ana = {
         reachs = 1,
@@ -24891,7 +24619,7 @@ var int a;
 Test { [[
 var int a;
 a = do
-    var int b;
+    var int b=0;
 end;
 ]],
     _ana = {
@@ -27274,8 +27002,8 @@ escape 0;
 Test { [[
 class T with
 do
-    class T1 with var int v; do end
-    var int v;
+    class T1 with var int v=0; do end
+    var int v=0;
 end
 escape 0;
 ]],
@@ -27286,8 +27014,8 @@ escape 0;
 Test { [[
 class T with
 do
-    class T1 with do var int v; end
-    var int v;
+    class T1 with do var int v=0; end
+    var int v=0;
 end
 escape 0;
 ]],
@@ -38369,7 +38097,7 @@ var T t with
     finalize
         this.ptr = _malloc(10);
     with
-        _free(this.ptr);
+        _free();
     end
 end;
 ]],
@@ -38388,7 +38116,7 @@ spawn T with
     finalize
         this.ptr = _malloc(10);
     with
-        _free(this.ptr);
+        _free();
     end
 end;
 ]],
@@ -39782,7 +39510,7 @@ do
 end
 var T t;
 
-var int v;
+var int v=0;
 escape t.v;
 ]],
     run = 1,
@@ -40619,8 +40347,10 @@ Test { [[
 class T with
 do
 end
-var int&& & v;
-var T&& & t;
+var int&& p1=null;
+var int&& & v=&p1;
+var T&& p=null;
+var T&& & t=&p;
 escape 1;
 ]],
     run = 1;
@@ -41995,7 +41725,7 @@ escape 1;
     env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
 }
 Test { [[
-var int x;
+//var int x;
 
 function @rec (void)=>void f1;
 function @rec (void)=>void f2;
@@ -42018,7 +41748,7 @@ escape 1;
 }
 
 Test { [[
-var int x;
+//var int x;
 
 function (void)=>void f1;
 function (void)=>void f2;
@@ -42038,7 +41768,7 @@ escape 1;
 }
 
 Test { [[
-var int x;
+//var int x;
 
 function (void)=>void f1;
 function (void)=>void f2;
@@ -42059,7 +41789,7 @@ escape 1;
 }
 
 Test { [[
-var int x;
+//var int x;
 
 function (void)=>void f1;
 function @rec (void)=>void f2;
@@ -43166,7 +42896,7 @@ end
 function (void&& v)=>void f do
     _V := v;
 end
-var void&& x;
+var void&& x=null;
 f((void&&)5);
 escape _V==(void&&)5;
 ]],
@@ -43182,7 +42912,7 @@ end
 function (@hold void&& v)=>void f do
     _V := v;
 end
-var void&& x;
+var void&& x=null;
 f((void&&)5)
     finalize with nothing; end;
 escape _V==(void&&)5;
@@ -43197,7 +42927,7 @@ end
 function (int v)=>void f do
     _V = v;
 end
-var void&& x;
+var void&& x=null;
 f(5);
 escape _V==5;
 ]],
@@ -46771,7 +46501,7 @@ Test { [[
 Test { [[
     class Queue with
     do
-        var Queue&& q;
+        var Queue&& q=null;
     end
     var Queue q;
     escape 1;
@@ -50929,6 +50659,504 @@ escape 1;
 
 --<<< CLASSES, ORGS, ORGANISMS
 
+-->>> INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
+
+Test { [[
+class T with
+    var int i;
+do
+end
+var T t with
+    var int i  = this.i;
+end;
+escape 1;
+]],
+    mode = ' line 6 : cannot read field inside the constructor',
+}
+
+Test { [[
+class T with
+    input:
+        var int i;
+do
+end
+var T t;
+escape t.i;
+]],
+    ref = 'line 6 : missing initialization for field "i" (declared in tests.lua:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
+}
+
+Test { [[
+class T with
+    output:
+        var int o;
+do
+end
+var T t with
+    this.o  = 1;
+end;
+escape 1;
+]],
+    mode = 'line 7 : cannot write to field with mode `output´',
+}
+
+Test { [[
+class T with
+    output:
+        var int o;
+do
+end
+var T t;
+t.o = 1;
+escape 1;
+]],
+    mode = 'line 7 : cannot write to field with mode `output´',
+}
+
+Test { [[
+class T with
+    input:
+        var int i;
+do
+    i  = 1;
+end
+escape 1;
+]],
+    mode = 'line 5 : cannot write to field with mode `input´',
+}
+Test { [[
+class T with
+    input:
+        var int i;
+do
+    this.i  = 1;
+end
+escape 1;
+]],
+    mode = 'line 5 : cannot write to field with mode `input´',
+}
+
+Test { [[
+class T with
+    input:
+        var int i;
+
+    output:
+        var int o;
+
+    input/output:
+        var int io;
+
+    output/input:
+        var int oi;
+do
+    o  = 1;
+    io = 1;
+    oi = 1;
+end
+var T t with
+    this.i  = 1;
+    this.io = 1;
+    this.oi = 1;
+end;
+t.i  = 1;
+t.io = 1;
+t.oi = 1;
+escape t.o+t.io+t.oi;
+]],
+    run = 3,
+}
+Test { [[
+class T with
+    input:
+        var int i;
+
+    output:
+        var int o;
+
+    input/output:
+        var int io;
+
+    output/input:
+        var int oi;
+do
+    this.o  = 1;
+    this.io = 1;
+    this.oi = 1;
+end
+var T t with
+    this.i  = 1;
+    this.io = 1;
+    this.oi = 1;
+end;
+t.i  = 1;
+t.io = 1;
+t.oi = 1;
+escape t.o+t.io+t.oi;
+]],
+    run = 3,
+}
+
+Test { [[
+class T with
+    input/output:
+        var int& io;
+do
+    var int io_ = 1;
+    io = &io_;
+end
+escape 1;
+]],
+    ref = 'line 6 : invalid attribution : variable "io" is already bound',
+}
+Test { [[
+class T with
+    input/output:
+        var int& io;
+do
+    var int io_ = 1;
+    this.io = &io_;
+end
+escape 1;
+]],
+    ref = 'line 6 : invalid attribution : variable "io" is already bound',
+}
+
+Test { [[
+class T with
+    output/input:
+        var int& oi;
+do
+    var int oi_=0;
+    oi = &oi_;
+end
+
+var int oi = 1;
+var T t with
+    this.oi = &oi;
+end;
+escape 1;
+]],
+    ref = 'line 11 : invalid attribution : variable "oi" is already bound',
+}
+Test { [[
+class T with
+    output/input:
+        var int& oi;
+do
+    var int oi_=0;
+    this.oi = &oi_;
+end
+
+var int oi = 1;
+var T t with
+    this.oi = &oi;
+end;
+escape 1;
+]],
+    ref = 'line 11 : invalid attribution : variable "oi" is already bound',
+}
+
+Test { [[
+class T with
+    input:
+        var int& i;
+
+    output:
+        var int& o;
+
+    input/output:
+        var int& io;
+
+    output/input:
+        var int& oi;
+do
+    var int o_  = 1;
+    var int io_ = 1;
+    var int oi_ = 1;
+
+    o  = &o_;
+    oi = &oi_;
+
+    o  = 1;
+    io = 1;
+    oi = 1;
+end
+
+var int i  = 1;
+var int io = 1;
+var int oi = 1;
+var T t with
+    this.i  = &i;
+    this.io = &io;
+end;
+t.i  = 1;
+t.io = 1;
+t.oi = 1;
+escape t.o+t.io+t.oi;
+]],
+    run = 3,
+}
+Test { [[
+class T with
+    input:
+        var int& i;
+
+    output:
+        var int& o;
+
+    input/output:
+        var int& io;
+
+    output/input:
+        var int& oi;
+do
+    var int o_  = 1;
+    var int io_ = 1;
+    var int oi_ = 1;
+
+    this.o  = &o_;
+    this.oi = &oi_;
+
+    this.o  = 1;
+    this.io = 1;
+    this.oi = 1;
+end
+
+var int i  = 1;
+var int io = 1;
+var int oi = 1;
+var T t with
+    this.i  = &i;
+    this.io = &io;
+end;
+t.i  = 1;
+t.io = 1;
+t.oi = 1;
+escape t.o+t.io+t.oi;
+]],
+    run = 3,
+}
+
+Test { [[
+class T with
+    input:
+        var int i=1;
+
+    output:
+        var int o=1;
+
+    input/output:
+        var int io=1;
+
+    output/input:
+        var int oi=1;
+do
+end
+var T t with
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    input/output:
+        var int io;
+do
+end
+var T t with
+end;
+escape 1;
+]],
+    ref = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
+}
+
+Test { [[
+class T with
+    input:
+        var int i;
+do
+end
+var T t with
+end;
+escape 1;
+]],
+    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+}
+
+Test { [[
+class T with
+    input:
+        var int i;
+
+    output:
+        var int o;
+
+    input/output:
+        var int io;
+
+    output/input:
+        var int oi;
+do
+    this.o  = 1;
+    this.oi = 1;
+end
+var T t with
+    this.i  = 1;
+    this.io = 1;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    input:
+        var int& i;
+do
+end
+var T t with
+end;
+escape 1;
+]],
+    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+}
+
+Test { [[
+class T with
+    input:
+        var int& io;
+do
+end
+var T t with
+end;
+escape 1;
+]],
+    ref = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
+}
+
+Test { [[
+class T with
+    output:
+        var int& o;
+do
+end
+escape 1;
+]],
+    ref = 'line 3 : uninitialized variable "o" crossing compound statement (tests.lua:1)',
+}
+
+Test { [[
+class T with
+    output/input:
+        var int& oi;
+do
+end
+escape 1;
+]],
+    ref = 'line 3 : uninitialized variable "oi" crossing compound statement (tests.lua:1)',
+}
+
+Test { [[
+class T with
+    input:
+        var int& i;
+
+    output:
+        var int& o;
+
+    input/output:
+        var int& io;
+
+    output/input:
+        var int& oi;
+do
+    var int o_ = 1;
+    o  = &o_;
+    oi = &o_;
+end
+var int i=0;
+var T t with
+    this.i  = &i;
+    this.io = &i;
+end;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class T with
+    input:
+        var int& i;
+
+    output:
+        var int& o;
+
+    input/output:
+        var int& io;
+
+    output/input:
+        var int& oi;
+do
+    var int o_ = 1;
+    this.o  = &o_;
+    this.oi = &o_;
+end
+var int i=0;
+var T t with
+    this.i  = &i;
+    this.io = &i;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class SDL with
+    input:
+        var int w;
+do
+    var int x = w;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class SDL with
+    input:
+        var int w;
+do
+    _f(this.w);
+end
+escape 1;
+]],
+    gcc = 'implicit declaration of function ‘f’',
+}
+
+Test { [[
+class T with
+    input:
+        var int v;
+    function (int v)=>T build;
+do
+    function (int v)=>T build do
+        this.v = v;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+--<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
+
 -- REQUESTS
 
 Test { [[
@@ -52735,13 +52963,35 @@ data D with
 end
 
 var D d;
+var T t with
+    this.v = &d.v;   // 13
+end;
+d = D(1);
+
+escape t.v;
+]],
+    ref = 'line 11 : uninitialized variable "d" crossing compound statement (tests.lua:12)',
+}
+
+Test { [[
+class T with
+    var float& v;
+do
+    await FOREVER;
+end
+
+data D with
+    var float v;
+end
+
+var D d;
 var T _ with
     this.v = &d.v;   // 13
 end;
 
 escape 1;
 ]],
-    run = 1,
+    ref = 'line 11 : uninitialized variable "d" crossing compound statement (tests.lua:12)',
 }
 
 Test { [[
@@ -55343,7 +55593,7 @@ frames = [] .. frames .. [f1];
 
 escape frames[0].bytes[0];
 ]],
-    run = 5,
+    ref = 'line 8 : invalid access to uninitialized variable "f1" (declared at tests.lua:6)'
 }
 
 --<<< ADTS + VECTORS
@@ -59684,6 +59934,21 @@ end
 
 pool Command[] cmds1;
 pool Command[]& cmds2;
+escape 1;
+]],
+    ref = 'line 10 : uninitialized variable "cmds2" crossing compound statement (tests.lua:1)',
+}
+Test { [[
+data Command with
+    tag NOTHING;
+or
+    tag NEXT with
+        var Command  nxt;
+    end
+end
+
+pool Command[] cmds1;
+pool Command[]& cmds2=&cmds1;
 escape 1;
 ]],
     run = 1,

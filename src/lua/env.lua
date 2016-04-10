@@ -166,8 +166,9 @@ local function check (me, pre, tp)
         if AST.isParent(top,me) then
             if top.tag== 'Dcl_adt' then
                 -- ok, List with tag CONS with List tail end
-            elseif me.tag=='Dcl_fun' and me[4]==tp then
+            elseif me.tag=='Dcl_fun' and me.is_constr then
                 -- ok, constructor, "tp" is the return type
+                -- me.var.is_constr not yet set
             else
                 ASR(false, me,
                     'undeclared type `'..(tp_id or '?')..'´')
@@ -262,7 +263,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         --arr   = arr,
         n     = _N,
         dcl   = me,
-        mode  = nil,    -- see mode.lua
+        mode  = 'input/output',    -- see mode.lua
     }
 
     local tp, is_ref = TP.pop(tp, '&')   -- only *,& after []
@@ -322,6 +323,7 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
         -- but from class it is not.
     end
 
+    me.is_constr = out[1]==CLS().id,
     check(me, pre, ins)
     check(me, pre, out)
 

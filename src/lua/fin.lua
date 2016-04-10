@@ -312,7 +312,7 @@ F = {
             -- set[4] is VarList or Var
             return
         end
-        if IS_THIS_INSIDE_CONSTR(me) then
+        if IS_THIS_INSIDE('constr',me) then
             return  -- constructor access
         end
 
