@@ -57,23 +57,47 @@ F = {
         CLS().mode = 'input/output'
     end,
 
+    Var = function (me)
+        if IS_SET_TARGET(me) then
+            return
+        end
+        if AST.par(me,'Field') then
+            -- "t.x" is handled in "Field"
+        end
+
+        -- THIS READ (inside class)
+        -- <...> = x
+        if me.var.blk == CLS().blk_ifc then
+            if me.var.mode == 'input' then
+                ASR(false, me,
+                    'cannot read field with mode `'..me.var.mode..'´')
+            else
+                -- OK
+                -- mode = 'input/output'
+                -- mode = 'output'
+                -- mode = 'output/input'
+            end
+        end
+    end,
+
     Field = function (me)
         if IS_SET_TARGET(me) then
             return
         end
-do return end
 
-        -- read
+        -- FIELD READ (outside class)
+        -- <...> = this.x;  // inside constructor
+        -- <...> = t.x;
         if IS_THIS_INSIDE_CONSTR(me) then
             --  var T _ with
             --      <...> = this.x;
             --  end;
-            ASR(me, false, 'cannot read field inside the constructor')
+            ASR(false, me, 'cannot read field inside the constructor')
         else
             --  var T t;
             --  <...> = t.x;
             if me.var.mode == 'input' then
-                ASR(me, false,
+                ASR(false, me,
                     'cannot read field with mode `'..me.var.mode..'´')
             else
                 -- OK
@@ -86,24 +110,44 @@ do return end
 
     Set = function (me)
         local _, _, fr, to = unpack(me)
-do return end
 
-        -- write
-        if mode == 'output' then
-            ASR(me, false,
-                'cannot write to field with mode `output´')
-        elseif mode=='output/input' then
-            if IS_THIS_INSIDE_CONSTR(me) then
-                --  var T _ with
-                --      this.x = <...>;
-                --  end;
-                ASR(me, false,
-                    'cannot write to field with mode `output/input´ inside constructor')
+        -- FIELD WRITE (outside class)
+        -- this.x = <...>   // inside constructor
+        -- t.x    = <...>
+        if to.tag == 'Field' then
+            if to.var.mode == 'input' then
+                -- OK
+            elseif to.var.mode == 'input/output' then
+                -- OK
+            elseif to.var.mode == 'output' then
+                ASR(false, me,
+                    'cannot write to field with mode `output´')
+            elseif to.var.mode=='output/input' then
+                if IS_THIS_INSIDE_CONSTR(me) then
+                    --  var T _ with
+                    --      this.x = <...>;
+                    --  end;
+                    ASR(false, me,
+                        'cannot write to field with mode `output/input´ inside constructor')
+                else
+                    -- OK
+                end
             end
-        else
-            -- OK
-            -- mode = 'input'
-            -- mode = 'input/output'
+
+        -- THIS WRITE (inside class)
+        -- this.x = <...>   // outside constructor
+        -- x      = <...>
+        elseif to.var.blk == CLS().blk_ifc then
+            if to.var.mode == 'input' then
+                ASR(AST.par(me,'BlockI'), me,
+                    'cannot write to field with mode `input´')
+            elseif to.var.mode == 'input/output' then
+                -- OK
+            elseif to.var.mode == 'output' then
+                -- OK
+            elseif to.var.mode=='output/input' then
+                -- OK
+            end
         end
     end,
 }

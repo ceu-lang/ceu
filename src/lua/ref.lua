@@ -397,7 +397,7 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
         end
     end,
 
---- check class constructors, i.e., if all uninit vars are inited
+--- check class constructors, i.e., if all input uninit vars are inited
 
     BlockI_pre = function (me)
         if CLS() ~= ENV.clss.Global then
@@ -408,6 +408,12 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
     BlockI_pos = function (me)
         if CLS() ~= ENV.clss.Global then
             AST.par(me,'Dcl_cls').vars_uninit = VARS_UNINIT
+            for var,dcl in pairs(VARS_UNINIT) do
+                if var.mode=='output' or var.mode=='output/input' then
+                    -- body must initialize output vars
+                    me.__old[var] = dcl
+                end
+            end
             VARS_UNINIT = me.__old
         end
     end,
@@ -416,18 +422,23 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
         cls = cls or me.cls
         me.__old = VARS_UNINIT
         VARS_UNINIT = {}
-        for k,v in pairs(cls.vars_uninit) do
-            VARS_UNINIT[k] = v
+        for var,dcl in pairs(cls.vars_uninit) do
+            if var.mode=='input' or var.mode=='input/output' then
+                -- constructor must initialize input vars
+                VARS_UNINIT[var] = dcl
+            end
         end
     end,
     Dcl_constr_pos = function (me)
         for var,dcl in pairs(VARS_UNINIT) do
-            ASR(TP.check(var.tp,'?'), me, [[
+            if var.mode=='input' or var.mode=='input/output' then
+                ASR(TP.check(var.tp,'?'), me, [[
 missing initialization for field "]]..var.id..[[" (declared in ]]..dcl.ln[1]..':'..dcl.ln[2]..')',
 [[
     The constructor must initialize all variables (withouth default values)
     declared in the class interface.
 ]])
+            end
         end
         VARS_UNINIT = me.__old
     end,

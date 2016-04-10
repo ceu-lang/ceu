@@ -283,12 +283,348 @@ escape 1;
     run = 1,
 }
 
+-->>> INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
+Test { [[
+class T with
+    var int i;
+do
+end
+var T t with
+    var int i  = this.i;
+end;
+escape 1;
+]],
+    mode = ' line 6 : cannot read field inside the constructor',
+}
+
+Test { [[
+class T with
+    input:
+        var int i;
+do
+end
+var T t;
+escape t.i;
+]],
+    mode = 'line 7 : cannot read field with mode `input´',
+}
+
+Test { [[
+class T with
+    output:
+        var int o;
+do
+end
+var T t with
+    this.o  = 1;
+end;
+escape 1;
+]],
+    mode = 'line 7 : cannot write to field with mode `output´',
+}
+
+Test { [[
+class T with
+    output:
+        var int o;
+do
+end
+var T t;
+t.o = 1;
+escape 1;
+]],
+    mode = 'line 7 : cannot write to field with mode `output´',
+}
+
+Test { [[
+class T with
+    input:
+        var int i;
+do
+    i  = 1;
+end
+escape 1;
+]],
+    mode = 'line 5 : cannot write to field with mode `input´',
+}
+
+Test { [[
+class T with
+    input:
+        var int i;
+
+    output:
+        var int o;
+
+    input/output:
+        var int io;
+
+    output/input:
+        var int oi;
+do
+    o  = 1;
+    io = 1;
+    oi = 1;
+end
+var T t with
+    this.i  = 1;
+    this.io = 1;
+    this.oi = 1;
+end;
+t.i  = 1;
+t.io = 1;
+t.oi = 1;
+escape t.o+t.io+t.oi;
+]],
+    run = 3,
+}
+
+Test { [[
+class T with
+    input/output:
+        var int& io;
+do
+    var int io_ = 1;
+    io = &io_;
+end
+escape 1;
+]],
+    ref = 'line 6 : invalid attribution : variable "io" is already bound',
+}
+
+Test { [[
+class T with
+    output/input:
+        var int& oi;
+do
+end
+
+var int oi = 1;
+var T t with
+    this.oi = &oi;
+end;
+escape 1;
+]],
+    ref = 'line 9 : invalid attribution : variable "oi" is already bound',
+}
+
+Test { [[
+class T with
+    input:
+        var int& i;
+
+    output:
+        var int& o;
+
+    input/output:
+        var int& io;
+
+    output/input:
+        var int& oi;
+do
+    var int o_  = 1;
+    var int io_ = 1;
+    var int oi_ = 1;
+
+    o  = &o_;
+    oi = &oi_;
+
+    o  = 1;
+    io = 1;
+    oi = 1;
+end
+
+var int i  = 1;
+var int io = 1;
+var int oi = 1;
+var T t with
+    this.i  = &i;
+    this.io = &io;
+end;
+t.i  = 1;
+t.io = 1;
+t.oi = 1;
+escape t.o+t.io+t.oi;
+]],
+    run = 3,
+}
+
+Test { [[
+class T with
+    input:
+        var int i=1;
+
+    output:
+        var int o=1;
+
+    input/output:
+        var int io=1;
+
+    output/input:
+        var int oi=1;
+do
+end
+var T t with
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    input/output:
+        var int io;
+do
+end
+var T t with
+end;
+escape 1;
+]],
+    ref = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
+}
+
+Test { [[
+class T with
+    input:
+        var int i;
+do
+end
+var T t with
+end;
+escape 1;
+]],
+    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+}
+
+Test { [[
+class T with
+    input:
+        var int i;
+
+    output:
+        var int o;
+
+    input/output:
+        var int io;
+
+    output/input:
+        var int oi;
+do
+end
+var T t with
+    this.i  = 1;
+    this.io = 1;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    input:
+        var int& i;
+do
+end
+var T t with
+end;
+escape 1;
+]],
+    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+}
+
+Test { [[
+class T with
+    input:
+        var int& io;
+do
+end
+var T t with
+end;
+escape 1;
+]],
+    ref = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
+}
+
+--]===]
+Test { [[
+class T with
+    input:
+        var int& i;
+
+    output:
+        var int& o;
+
+    input/output:
+        var int& io;
+
+    output/input:
+        var int& oi;
+do
+end
+var int i=0;
+var T t with
+    this.i  = &i;
+    this.io = &i;
+end;
+escape 1;
+]],
+    run = 1,
+}
+-- body init
+--<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
+do return end
+
+Test { [[
+emit/await/refs
+class SDL with
+    input:
+        var char[] title;
+        var int w,h;
+
+    output:
+        var _SDL_Window&   win;
+        var _SDL_Renderer& ren;
+
+    input/output:
+        var int io;
+
+    output/input:
+        var int oi;
+do
+    var _SDL_Window&? win_;
+    finalize
+        win_ = &_SDL_CreateWindow("SDL 1", _SDL_WINDOWPOS_CENTERED,
+                                           _SDL_WINDOWPOS_CENTERED,
+                                           800, 480,
+                                           _SDL_WINDOW_SHOWN);
+    with
+        _SDL_DestroyWindow(&&win_!);
+    end
+    this.win = &win_!;
+
+    _SDL_GetWindowSize(&&win, &&w, &&h);
+
+    var _SDL_Renderer&? ren_;
+    finalize
+        ren_ = &_SDL_CreateRenderer(&&win, -1, 0);
+    with
+        _SDL_DestroyRenderer(&&ren_!);
+    end
+    this.ren = &ren_!;
+
+    await FOREVER;
+end
+var SDL _;
+]],
+    run = 1,
+}
+
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
-
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
