@@ -16067,6 +16067,15 @@ escape v;
 Test { [[
 var int v = 10;
 var int&? i;
+i! = &v;
+escape i!;
+]],
+    ref = 'line 3 : invalid attribution : cannot bind with operator `!´',
+}
+
+Test { [[
+var int v = 10;
+var int&? i;
 loop do
     i! = &v;
     i! = i! + 1;

@@ -1,3 +1,5 @@
+-- TODO: remove fst,lst, use only var
+
 ANA.ana.acc  = 0      -- nd accesses
 ANA.ana.abrt  = 0      -- nd flows
 ANA.ana.excpt = 0      -- nd excpt

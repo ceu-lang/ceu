@@ -128,6 +128,8 @@ F = {
         local TO = (to.tag=='VarList' and to) or {to}
         for _, to in ipairs(TO) do
             to_ = (to.var and to) or
+-- TODO: refuse this: (i! = &v)
+-- 16074
                   (to.tag=='Op1_!' and to[2].var and to[2])
                   --(to.fst==to.lst and to.fst.var and to.tag~='Op2_.' and to.fst)
             if to_ then
@@ -203,6 +205,9 @@ F = {
     The attribution expects the explicit alias operator `&´ in the righ-hand
     side to make explicit that it is binding the location and not the value.
 ]])
+
+                ASR(not AST.par(to.lst,'Op1_!'), me,
+                    'invalid attribution : cannot bind with operator `!´')
 
                 -- check if aliased value has wider scope
                 local fr_blk = NODE2BLK(me, fr)
@@ -377,6 +382,7 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
             -- <var-in-ifc> = <x>
             local var = AST.node('Var', me.ln, '_')
             var.tp = ins.tup[i]
+            var.fst = var
             var.lst = var
             var.var = {id=ins[i][3], blk=me, tp=var.tp}
             VARS_UNINIT[var.var] = me

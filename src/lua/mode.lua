@@ -82,25 +82,29 @@ F = {
             return
         end
 
-        if not to.var then
+        if not (to.lst and to.lst.var) then
             -- _V = 1
             -- *((u8*)0x10)= 1
             --assert(to.fst.tag=='Nat' or TP.isNumeric(to.fst.tp))
             return
+        end
+        assert(to.lst.var, 'bug found')
+        if to.var then
+            assert(to.var==to.lst.var, 'bug found')
         end
 
         -- FIELD WRITE (outside class)
         -- this.x = <...>   // inside constructor
         -- t.x    = <...>
         if to.tag=='Field' and (not IS_THIS_INSIDE('body',to)) then
-            if to.var.mode == 'input' then
+            if to.lst.var.mode == 'input' then
                 -- OK
-            elseif to.var.mode == 'input/output' then
+            elseif to.lst.var.mode == 'input/output' then
                 -- OK
-            elseif to.var.mode == 'output' then
+            elseif to.lst.var.mode == 'output' then
                 ASR(false, me,
                     'cannot write to field with mode `output´')
-            elseif to.var.mode=='output/input' then
+            elseif to.lst.var.mode=='output/input' then
                 if IS_THIS_INSIDE('constr',me) then
                     --  var T _ with
                     --      this.x = <...>;
@@ -115,15 +119,15 @@ F = {
         -- THIS WRITE (inside class)
         -- this.x = <...>   // outside constructor
         -- x      = <...>
-        elseif to.var.blk == CLS().blk_ifc then
-            if to.var.mode == 'input' then
+        elseif to.lst.var.blk == CLS().blk_ifc then
+            if to.lst.var.mode == 'input' then
                 ASR(AST.par(me,'BlockI'), me,
                     'cannot write to field with mode `input´')
-            elseif to.var.mode == 'input/output' then
+            elseif to.lst.var.mode == 'input/output' then
                 -- OK
-            elseif to.var.mode == 'output' then
+            elseif to.lst.var.mode == 'output' then
                 -- OK
-            elseif to.var.mode=='output/input' then
+            elseif to.lst.var.mode=='output/input' then
                 -- OK
             end
         end
