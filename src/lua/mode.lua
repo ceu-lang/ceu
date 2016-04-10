@@ -1,33 +1,39 @@
 function IS_THIS_INSIDE (at, me)
-    assert(at=='constr' or at=='body', 'bug found')
+    assert(at=='constr' or at=='constr-var' or at=='contr-fun' or at=='body', 'bug found')
     local is_this = (me.tag=='Field' and me[2].tag=='This')
     if not is_this then
         return false
     end
 
+    local var = AST.par(me,'Dcl_constr')
     local fun = AST.par(me,'Dcl_fun')
-    local is_constr = AST.par(me,'Dcl_constr') or (fun and fun.is_constr)
+          fun = fun and fun.is_constr
+
     if at == 'constr' then
-        return is_constr
+        return var or fun
+    elseif at == 'constr-var' then
+        return var
+    elseif at == 'constr-fun' then
+        return fun
     elseif at == 'body' then
-        return not is_constr
+        return not (var or fun)
     end
 end
 
 function NODE2BLK (set, n)
     assert(set.tag=='Set' or set.tag=='Op2_call')
-    local constr = set.tag=='Set' and AST.par(set,'Dcl_constr')
-    if IS_THIS_INSIDE('constr',n) then
+    if IS_THIS_INSIDE('constr-var',n) then
         -- var T t with
         --  this.x = y;     -- blk of this is the same as block of t
         -- end;
         -- spawn T with
         --  this.x = y;     -- blk of this is the same spawn pool
         -- end
-        local dcl = AST.par(set,'Dcl_var')
-        if dcl then
-            return dcl.var.blk
+        local dcl_var = AST.par(set,'Dcl_var')
+        if dcl_var then
+            return dcl_var.var.blk
         else
+            local constr = assert(AST.par(set,'Dcl_constr'),'bug found')
             AST.asr(constr.__par, 'Spawn')
             local _,pool,_ = unpack(constr.__par)
             assert(assert(pool.lst).var)
@@ -66,25 +72,6 @@ F = {
     end,
     BlockI_pos = function (me)
         CLS().mode = 'input/output'
-    end,
-
-    Field = function (me)
-        if IS_SET_TARGET(me) then
-            return
-        end
-        if me.var.pre == 'function' then
-            return
-        end
-
-        -- FIELD READ (outside class)
-        -- <...> = this.x;  // inside constructor
-        -- <...> = t.x;
-        if IS_THIS_INSIDE('constr',me) then
-            --  var T _ with
-            --      <...> = this.x;
-            --  end;
-            ASR(false, me, 'cannot read field inside the constructor')
-        end
     end,
 
     Set = function (me)

@@ -328,11 +328,11 @@ var SDL _;
     run = 1,
 }
 
---]===]
 --do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -50663,19 +50663,6 @@ escape 1;
 
 Test { [[
 class T with
-    var int i;
-do
-end
-var T t with
-    var int i  = this.i;
-end;
-escape 1;
-]],
-    mode = ' line 6 : cannot read field inside the constructor',
-}
-
-Test { [[
-class T with
     input:
         var int i;
 do
@@ -51153,6 +51140,20 @@ end
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+class T with
+    var int i;
+do
+end
+var T t with
+    var int i  = this.i;
+end;
+escape 1;
+]],
+    ref = 'line 6 : invalid access to uninitialized variable "i" (declared at tests.lua:2)',
+    --mode = ' line 6 : cannot read field inside the constructor',
 }
 
 --<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT

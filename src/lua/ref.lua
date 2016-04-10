@@ -208,7 +208,7 @@ F = {
                 local fr_blk = NODE2BLK(me, fr)
                 local to_blk = NODE2BLK(me, to)
                 local to_org_blk
-                if IS_THIS_INSIDE('constr',to) then
+                if IS_THIS_INSIDE('constr-var',to) then
                     local constr = AST.par(me,'Dcl_constr')
                     local dcl = AST.par(constr, 'Dcl_var')
                     if dcl then
