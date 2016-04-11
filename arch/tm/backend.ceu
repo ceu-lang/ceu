@@ -274,7 +274,7 @@ do
 #ifdef TM_SNAP
 
 #if   defined TM_QUEUE
-                        var u32 queue;
+                        var u32 queue=0;
                         this.time_now = _snap_seek(time_req, &&queue);
                         _queue_seek(queue);
 #elif defined TM_DIFF

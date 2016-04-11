@@ -25,7 +25,7 @@ OUT_EXE ?= $(OUT_DIR)/$(basename $(notdir $(SRC_))).exe
 SRC_	 = $(SRC)
 SRC_DIR_ = $(dir $(SRC_))
 
-C_FLAGS_   = $(C_FLAGS) -I$(OUT_DIR) -I$(SRC_DIR_) -I$(ARCH_DIR) \
+C_FLAGS_   = $(C_FLAGS) -I$(OUT_DIR) -I$(SRC_DIR_) -I. -I$(ARCH_DIR) \
 				-I$(ARCH_DIR)/up -I$(ARCH_DIR)/up/up -I$(ARCH_DIR)/up/up/up
 CEU_FLAGS_ = $(CEU_FLAGS) --cpp-args "$(C_FLAGS_)"
 
