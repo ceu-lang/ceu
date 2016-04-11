@@ -452,13 +452,15 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
     end,
     Dcl_constr_pos = function (me)
         for var,dcl in pairs(VARS_UNINIT) do
-            if var.mode=='input' or var.mode=='input/output' then
-                ASR(TP.check(var.tp,'?'), me, [[
+            if me.cls.vars_uninit[var] then
+                if var.mode=='input' or var.mode=='input/output' then
+                    ASR(TP.check(var.tp,'?'), me, [[
 missing initialization for field "]]..var.id..[[" (declared in ]]..dcl.ln[1]..':'..dcl.ln[2]..')',
 [[
     The constructor must initialize all variables (withouth default values)
     declared in the class interface.
 ]])
+                end
             end
         end
         VARS_UNINIT = me.__old

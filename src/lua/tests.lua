@@ -31233,7 +31233,8 @@ end;
 
 escape 1;
 ]],
-    ref = 'line 7 : uninitialized variable "v"',
+    ref = 'line 10 : invalid access to uninitialized variable "v" (declared at tests.lua:7)',
+    --ref = 'line 7 : uninitialized variable "v"',
     --run = 1,
 }
 Test { [[
@@ -31251,7 +31252,8 @@ end;
 
 escape 1;
 ]],
-    ref = 'line 7 : uninitialized variable "v"',
+    ref = 'line 10 : invalid access to uninitialized variable "v" (declared at tests.lua:7)',
+    --ref = 'line 7 : uninitialized variable "v"',
     --run = 1,
 }
 Test { [[
