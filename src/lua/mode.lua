@@ -1,8 +1,11 @@
 function IS_THIS_INSIDE (at, me)
-    assert(at=='constr' or at=='constr-var' or at=='contr-fun' or at=='body', 'bug found')
+    assert(at=='any' or at=='constr' or at=='constr-var' or at=='contr-fun' or at=='body',
+            'bug found')
     local is_this = (me.tag=='Field' and me[2].tag=='This')
     if not is_this then
         return false
+    elseif at == 'any' then
+        return true
     end
 
     local var = AST.par(me,'Dcl_constr')

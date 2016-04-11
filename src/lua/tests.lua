@@ -328,6 +328,24 @@ var SDL _;
     run = 1,
 }
 
+-- BUG: deallocates char: ifc/body dcls should not terminate
+Test { [[
+class T with
+    output:
+        var char[]& name;
+do
+    var char[] name_ = [].."oi";
+    this.name = &name_;
+    // bug: deallocates char[]
+end
+
+var T t;
+native @nohold _strlen();
+escape _strlen((char&&)&&t.name);
+]],
+    run = 2,
+}
+
 --do return end
 
 ----------------------------------------------------------------------------
@@ -39843,7 +39861,8 @@ var T t;
 i = &&t;
 escape 10;
 ]],
-    ref = 'line 10 : uninitialized variable "i" crossing compound statement (tests.lua:11)',
+    run = 10,
+    --ref = 'line 10 : uninitialized variable "i" crossing compound statement (tests.lua:11)',
 }
 
 Test { [[
@@ -40553,6 +40572,22 @@ end
 -- TODO_TYPECAST
 
 -- IFACES / IFCS / ITERATORS
+
+Test { [[
+interface I with
+    var int v;
+end
+class T with
+    var I& parent;
+    pool I[1] is;
+do
+    await 1s;
+end
+escape 1;
+]],
+    run = 1,
+}
+
 Test { [[
 interface I with end
 class T with do end
@@ -44457,6 +44492,7 @@ var int v;
 var T t with
     this.v = &v;
 end;
+v = 1;
 t.v = t.v + 2;
 
 var I&& i = &&t;
@@ -44464,7 +44500,9 @@ i:v = i:v * 3;
 
 escape t.v;
 ]],
-    ref = 'line 11 : uninitialized variable "v" crossing compound statement (tests.lua:12)',
+    ref = 'tests.lua : line 13 : invalid access to uninitialized variable "v" (declared at tests.lua:11)',
+    --run = 1,
+    --ref = 'line 11 : uninitialized variable "v" crossing compound statement (tests.lua:12)',
 }
 
 Test { [[
@@ -51165,6 +51203,70 @@ escape 1;
     --mode = ' line 6 : cannot read field inside the constructor',
 }
 
+Test { [[
+interface I with
+output:
+    var int& v;
+end
+
+class Bridger with
+    var I& i;
+do
+    var int& v = &this.i.v;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+    output:
+        var char[]& name;
+do
+    var char[] name_ = [].."oi";
+    this.name = &name_;
+    await FOREVER;
+end
+
+var T t;
+native @nohold _strlen();
+escape _strlen((char&&)&&t.name);
+]],
+    run = 2,
+}
+
+Test { [[
+interface I with
+    output:
+        var char[]& name;
+end
+
+class T with
+    interface I;
+do
+    var char[] name_ = [].."oi";
+    this.name = &name_;
+    await FOREVER;
+end
+
+class U with
+    var T& t;
+do
+    var char[]& name = &this.t.name;
+end
+
+var T t;
+var U u with
+    this.t = &t;
+end;
+
+native @nohold _strlen();
+escape _strlen((char&&)&&t.name);
+]],
+    run = 2,
+}
+
 --<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 
 -- REQUESTS
@@ -52980,7 +53082,8 @@ d = D(1);
 
 escape t.v;
 ]],
-    ref = 'line 11 : uninitialized variable "d" crossing compound statement (tests.lua:12)',
+    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (tests.lua:12)',
+    ref = 'line 13 : invalid access to uninitialized variable "d" (declared at tests.lua:11)',
 }
 
 Test { [[
@@ -53001,7 +53104,8 @@ end;
 
 escape 1;
 ]],
-    ref = 'line 11 : uninitialized variable "d" crossing compound statement (tests.lua:12)',
+    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (tests.lua:12)',
+    ref = 'line 13 : invalid access to uninitialized variable "d" (declared at tests.lua:11)',
 }
 
 Test { [[

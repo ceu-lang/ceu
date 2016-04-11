@@ -32,18 +32,9 @@ F = {
         or me.isEvery
         or (TP.check(me.var.tp,'[]') and        -- var int[] vec;
             (not TP.check(me.var.tp,'[]','&')))
+        or me.var.cls                           -- var T t;
         then
             -- no need for initialization
-            if me.var.cls then -- var T _;
-                if not AST.par(me,'BlockI') then
-                    F.__compound(me)
-                end
-            end
-        elseif me.var.cls then -- var T t;
-            -- no need for initialization
-            if not AST.par(me,'BlockI') then
-                F.__compound(me)
-            end
         else
             -- prioritize non-interface declarations
             local blk = AST.par(me,'BlockI')
@@ -95,6 +86,12 @@ F = {
         end
         if TP.check(me.var.tp,'?') then
             return  -- optional assignment
+        end
+        if me.__par.org and
+           not (IS_THIS_INSIDE('any',me.__par) or
+                me.__par.org.cls.id=='Global')
+        then
+            return  -- access to other organism t.x
         end
 
         local constr = AST.par(me,'Dcl_constr')
@@ -443,6 +440,9 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
         cls = cls or me.cls
         me.__old = VARS_UNINIT
         VARS_UNINIT = {}
+        for var,dcl in pairs(me.__old) do
+            VARS_UNINIT[var] = dcl  -- keep all old
+        end
         for var,dcl in pairs(cls.vars_uninit) do
             if var.mode=='input' or var.mode=='input/output' then
                 -- constructor must initialize input vars
