@@ -451,8 +451,9 @@ uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1
         end
     end,
     Dcl_constr_pos = function (me)
+        local cls = me.cls or CLS() -- Dcl_fun
         for var,dcl in pairs(VARS_UNINIT) do
-            if me.cls.vars_uninit[var] then
+            if cls.vars_uninit[var] then
                 if var.mode=='input' or var.mode=='input/output' then
                     ASR(TP.check(var.tp,'?'), me, [[
 missing initialization for field "]]..var.id..[[" (declared in ]]..dcl.ln[1]..':'..dcl.ln[2]..')',
