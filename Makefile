@@ -15,15 +15,17 @@ CEU_DIR   ?= .
 CEU_EXE   ?= /usr/local/bin/ceu
 CEU_FLAGS =
 
-OUT_DIR	?= build
+OUT_DIR	?= $(SRC_DIR_)/build
 OUT_EXE ?= $(OUT_DIR)/$(basename $(notdir $(SRC_))).exe
 
 ###############################################################################
 # DO NOT EDIT
 ###############################################################################
 
-SRC_	   = $(SRC)
-C_FLAGS_   = $(C_FLAGS) -I. -I$(OUT_DIR) -I$(ARCH_DIR) \
+SRC_	 = $(SRC)
+SRC_DIR_ = $(dir $(SRC_))
+
+C_FLAGS_   = $(C_FLAGS) -I$(OUT_DIR) -I$(SRC_DIR_) -I$(ARCH_DIR) \
 				-I$(ARCH_DIR)/up -I$(ARCH_DIR)/up/up -I$(ARCH_DIR)/up/up/up
 CEU_FLAGS_ = $(CEU_FLAGS) --cpp-args "$(C_FLAGS_)"
 
@@ -84,7 +86,6 @@ compiler:
 	$(CEU_EXE) --dump
 
 ceu:
-	echo "-=-=-=-=-=- $(SRC_) $(TM_SRC)"
 	mkdir -p $(OUT_DIR)
 	$(CEU_EXE) --out-dir $(OUT_DIR) $(CEU_FLAGS_) $(SRC_)
 

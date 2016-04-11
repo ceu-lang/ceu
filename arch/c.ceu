@@ -1,0 +1,24 @@
+#ifndef _C_CEU
+#define _C_CEU
+
+native do
+    ##define UNSAFE_POINTER_TO_REFERENCE(ptr) ptr
+end
+native @nohold _UNSAFE_POINTER_TO_REFERENCE();
+
+native _assert(),
+       _malloc();
+
+native @const _stderr;
+
+native @nohold _fprintf(),
+               _free(),
+               _printf(),
+               _sprintf(),
+               _srand();
+
+native @pure _abs(),
+             _strcmp(),
+             _strcpy();
+
+#endif

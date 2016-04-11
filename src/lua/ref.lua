@@ -35,11 +35,15 @@ F = {
         then
             -- no need for initialization
             if me.var.cls then -- var T _;
-                F.__compound(me)
+                if not AST.par(me,'BlockI') then
+                    F.__compound(me)
+                end
             end
         elseif me.var.cls then -- var T t;
             -- no need for initialization
-            F.__compound(me)
+            if not AST.par(me,'BlockI') then
+                F.__compound(me)
+            end
         else
             -- prioritize non-interface declarations
             local blk = AST.par(me,'BlockI')
