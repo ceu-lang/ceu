@@ -55,10 +55,10 @@ FILES = {
         [====[]]..'\n'..assert(io.open'../c/template.h'):read'*a'..[[]====],
     template_c =
         [====[]]..'\n'..assert(io.open'../c/template.c'):read'*a'..[[]====],
-    ceu_os_h =
-        [====[]]..'\n'..assert(io.open'../c/ceu_os.h'):read'*a'..[[]====],
-    ceu_os_c =
-        [====[]]..'\n'..assert(io.open'../c/ceu_os.c'):read'*a'..[[]====],
+    ceu_sys_h =
+        [====[]]..'\n'..assert(io.open'../c/ceu_sys.h'):read'*a'..[[]====],
+    ceu_sys_c =
+        [====[]]..'\n'..assert(io.open'../c/ceu_sys.c'):read'*a'..[[]====],
     ceu_pool_h =
         [====[]]..'\n'..assert(io.open'../c/ceu_pool.h'):read'*a'..[[]====],
     ceu_pool_c =

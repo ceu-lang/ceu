@@ -18,7 +18,7 @@ typedef === TCEU_NCLS === tceu_ncls;
 /* TODO: remove */
 #define CEU_NTRAILS === CEU_NTRAILS ===
 
-#include "ceu_os.h"
+#include "ceu_sys.h"
 
 #ifdef CEU_NEWS_POOL
 #include "ceu_pool.h"

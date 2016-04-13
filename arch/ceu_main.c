@@ -23,7 +23,7 @@ void ceu_sys_log (int mode, long s) {
 }
 
 #ifdef CEU_OS
-    #include "ceu_os.h"
+    #include "ceu_sys.h"
 #else
     #include "_ceu_app.c"
 #endif

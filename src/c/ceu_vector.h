@@ -1,7 +1,7 @@
 #ifndef _CEU_VECTOR_H
 #define _CEU_VECTOR_H
 
-#include "ceu_os.h"
+#include "ceu_sys.h"
 
 typedef struct {
     int   max;

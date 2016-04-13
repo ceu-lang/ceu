@@ -547,7 +547,7 @@ me.blk_body = me.blk_body or blk_body
                                 node('Var', me.ln, '_ret_'..me.n)))
             SET_DEAD  = node('_Escape', me.ln,
                             node('RawExp', me.ln, '_ceu_app->ret'))
-                                -- HACK_10: (see ceu_os.c)
+                                -- HACK_10: (see ceu_sys.c)
                                 -- restores return value from global
                                 -- (in case spawn terminates immediately)
         end

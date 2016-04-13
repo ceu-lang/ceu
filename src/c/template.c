@@ -1,7 +1,7 @@
 #line 1 "=== FILENAME ==="
 
 === OUT_H ===
-#include "ceu_os.h"
+#include "ceu_sys.h"
 
 #include <stdlib.h>
 #ifdef CEU_DEBUG

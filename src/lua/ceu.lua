@@ -216,7 +216,7 @@ local HH, CC
 -- TEMPLATE.H
 do
     HH = FILES.template_h
-    HH = SUB(HH, '#include "ceu_os.h"',  FILES.ceu_os_h)
+    HH = SUB(HH, '#include "ceu_sys.h"',  FILES.ceu_sys_h)
     --HH = SUB(HH, '#include "ceu_threads.h"', FILES.ceu_threads_h)
     --HH = SUB(HH, '#include "ceu_types.h"',   FILES.ceu_types_h)
 
@@ -234,8 +234,8 @@ do
         HH = SUB(HH, '#include "ceu_pool.h"', FILES.ceu_pool_h)
 
         -- TODO: ceu_vector_* => ceu_sys_vector_*
-        FILES.ceu_vector_h = SUB(FILES.ceu_vector_h, '#include "ceu_os.h"',
-                                                     FILES.ceu_os_h)
+        FILES.ceu_vector_h = SUB(FILES.ceu_vector_h, '#include "ceu_sys.h"',
+                                                     FILES.ceu_sys_h)
         HH = SUB(HH, '#include "ceu_vector.h"', FILES.ceu_vector_h)
     end
 
@@ -544,11 +544,11 @@ do
     end
 
     if not OPTS.os then
-        FILES.ceu_os_c = SUB(FILES.ceu_os_c, '#include "ceu_os.h"',
-                                             FILES.ceu_os_h)
+        FILES.ceu_sys_c = SUB(FILES.ceu_sys_c, '#include "ceu_sys.h"',
+                                             FILES.ceu_sys_h)
         --CC = SUB(CC, '#include "ceu_types.h"', FILES.ceu_types_h)
-        CC = SUB(CC, '#include "ceu_os.h"',
-                     FILES.ceu_os_h..'\n'..FILES.ceu_os_c)
+        CC = SUB(CC, '#include "ceu_sys.h"',
+                     FILES.ceu_sys_h..'\n'..FILES.ceu_sys_c)
 
         -- TODO: ceu_pool_* => ceu_sys_pool_*
         --FILES.ceu_pool_h = SUB(FILES.ceu_pool_h, '#include "ceu_types.h"',
@@ -558,8 +558,8 @@ do
                              FILES.ceu_pool_h..'\n'..FILES.ceu_pool_c)
 
         -- TODO: ceu_vector_* => ceu_sys_vector_*
-        FILES.ceu_vector_h = SUB(FILES.ceu_vector_h, '#include "ceu_os.h"',
-                                                     FILES.ceu_os_h)
+        FILES.ceu_vector_h = SUB(FILES.ceu_vector_h, '#include "ceu_sys.h"',
+                                                     FILES.ceu_sys_h)
         FILES.ceu_vector_c = SUB(FILES.ceu_vector_c, '#include "ceu_vector.h"', '')
         CC = SUB(CC, '#include "ceu_vector.h"',
                              FILES.ceu_vector_h..'\n'..FILES.ceu_vector_c)

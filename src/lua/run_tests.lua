@@ -204,7 +204,7 @@ end
     local r = (math.random(2) == 1)
     if OS==true or (OS==nil and r) then
         CEU = (LUACOV or '')..' ./ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts..'  --run-tests --os '..tm..' 2>&1'
-        GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe '..main..'  ceu_os.c _ceu_app.c 2>&1'
+        GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe '..main..'  ceu_sys.c _ceu_app.c 2>&1'
     else
         CEU = (LUACOV or '')..' ./ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts
                 ..(REENTRANT and '--reentrant' or '')
