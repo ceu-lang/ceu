@@ -50,19 +50,21 @@ ifeq ($(MAKECMDGOALS),clean)
 	do_clean = yes
 endif
 
-ifdef do_ceu
-ifndef SRC_
-$(error USAGE: make SRC=<path-to-ceu-file>)
-endif
-else
-ifdef SRC
-$(error invalid target for "SRC")
-endif
-endif
-
 ifndef do_compiler
 ifeq ("$(wildcard $(CEU_EXE))","")
 $(error "$(CEU_EXE)" is not found: run "make compiler")
+endif
+endif
+
+ifdef do_ceu
+ifeq ($(SRC_),)
+$(error USAGE: make ceu SRC=<path-to-ceu-file>)
+endif
+endif
+
+ifdef do_clean
+ifeq ($(SRC_),)
+$(error USAGE: make clean SRC=<path-to-ceu-file>)
 endif
 endif
 
