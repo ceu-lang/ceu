@@ -1,11 +1,14 @@
 Céu is a reactive language that aims to offer a higher-level and safer 
 alternative to C.
 
+Try it online:
 http://www.ceu-lang.org/
 
+Source code:
 https://github.com/fsantanna/ceu/
 
-Join our chat at https://gitter.im/fsantanna/ceu
+Join our chat:
+https://gitter.im/fsantanna/ceu
 
 # Summary
 
@@ -15,7 +18,7 @@ Join our chat at https://gitter.im/fsantanna/ceu
 
 # Quick Start
 
-## Install `lua` and `lua-lpeg`:
+## Install `lua` and `lua-lpeg`
 
 First, you need to install `lua` and `lua-lpeg`:
 
@@ -29,7 +32,7 @@ $ sudo apt-get install lua-lpeg
 - LPeg: http://www.inf.puc-rio.br/~roberto/lpeg/#download
 ```
 
-## Download, Build, and Install `ceu`:
+## Download, Build, and Install `ceu`
 
 Then, you need to download, build, and install the compiler of Céu:
 
@@ -93,11 +96,11 @@ make[1]: Leaving directory `/data/ceu/ceu'
 <...> # output for other samples
 ```
 
-# Examples
+# Commented Examples
 
 ### `test-00.ceu`
 
-The example `test-00.ceu`, simply terminates immediatelly with an `escape`:
+Terminates immediatelly with an `escape`:
 
 ```
 $ cat samples/test-00.ceu
@@ -113,8 +116,8 @@ build/test-00.exe
 
 ### `test-01.ceu`
 
-The example `test-01.ceu`, prints `"Hello World"` every second and simulates 
-the passage of `5` seconds in parallel:
+Prints `"Hello World"` every second and simulates the passage of `5` seconds in 
+parallel:
 
 ```
 $ cat samples/test-01.ceu
@@ -144,8 +147,8 @@ Hello World!
 
 ### `test-02.ceu`
 
-The example `test-02.ceu` is similar to `test-01.ceu`, but calls `_sleep` to 
-make the application respect the "wall-clock time":
+Similar to `test-01.ceu`, but calls `_sleep` to make the application respect 
+the "wall-clock time":
 
 ```
 $ cat samples/test-02.ceu
@@ -178,8 +181,8 @@ Hello World!
 
 ### `test-03.ceu`
 
-The example `test-03` uses a real thread with `async/thread` that executes in 
-parallel with the rest of the application:
+Uses a real thread with `async/thread` that executes in parallel with the rest 
+of the application:
 
 ```
 $ cat samples/test-03.ceu
@@ -225,10 +228,17 @@ build/test-03.exe
 The `async/thread` requires `pthread` which is passed as 
 `ARCH_DIR=arch/pthread` to the command `make`.
 
-# Environments
+# Architectures (Environments)
 
-Céu requires a real environment that provides actual input events and output 
-functionality for the applications.
+Céu is actually a C library that requires an *external environment* to
+provide input events and output functionality for the applications.
+An *architecture* glues the Céu library with an environment and consists of a 
+set of files with type definitions, function hooks, and a `main` function.
+
+The standard distribution comes with a [default](arch/) architecture and also a 
+[pthread] extension.
+
+Other repositories provide complete architectures to write real applications:
 
 ## SDL
 
