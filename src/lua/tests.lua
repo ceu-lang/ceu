@@ -346,7 +346,7 @@ escape _strlen((char&&)&&t.name);
     run = 2,
 }
 
---do return end
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -15887,13 +15887,6 @@ escape v;
 }
 
 Test { [[
-var _int[] v;
-escape 1;
-]],
-    --run = 1,
-    cval = 'line 1 : invalid array dimension',
-}
-Test { [[
 var int[] v;
 escape 1;
 ]],
@@ -21595,7 +21588,7 @@ var void[10] a;
 }
 
 Test { [[
-var _int[2] v;
+var _int[2] v = [];
 v[0] = 5;
 escape v[0];
 ]],
@@ -21603,7 +21596,7 @@ escape v[0];
 }
 
 Test { [[
-var _int[2] v;
+var _int[2] v = [];
 v[0] = 1;
 v[1] = 1;
 escape v[0] + v[1];
@@ -21612,7 +21605,7 @@ escape v[0] + v[1];
 }
 
 Test { [[
-var _int[2] v;
+var _int[2] v = [];
 var int i;
 v[0] = 0;
 v[1] = 5;
@@ -21646,7 +21639,7 @@ native/pre do
 end
 native _T = 44;
 
-var _T[10] vec;
+var _T[10] vec = [];
 var int i = 110;
 
 vec[3].v[5] = 10;
@@ -21664,6 +21657,70 @@ end;
 escape i;
 ]],
     run = 1,
+}
+
+Test { [[
+var _int[] v;
+escape 1;
+]],
+    --run = 1,
+    --cval = 'line 1 : invalid array dimension',
+    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
+}
+Test { [[
+var _u8[10] v = [_V];
+escape v[0];
+]],
+    env = 'invalid attribution : external vectors accept only empty initialization `[]´',
+}
+
+Test { [[
+var _u8[10] vvv = [];
+vvv[9] = 1;
+escape vvv[9];
+]],
+    run = 1,
+}
+
+Test { [[
+var _u8[10] v;
+escape v[0];
+]],
+    ref = 'line 2 : invalid access to uninitialized variable "v" (declared at tests.lua:1)',
+}
+
+Test { [[
+data Test with
+  var _u8[10] v;
+end
+var Test t = Test();
+escape t.v[0];
+]],
+    env = 'line 4 : arity mismatch',
+}
+
+Test { [[
+data Test with
+  var _u8[10] v;
+end
+var Test t = Test([]);
+t.v[9] = 10;
+escape t.v[9];
+]],
+    run = 10,
+}
+
+Test { [[
+data Test with
+    var int a;
+    var _u8[10] v;
+    var int b;
+end
+var Test t = Test(1, [], 1);
+t.v[0] = 10;
+escape t.v[0];
+]],
+    run = 10,
 }
 
 Test { [[var int[2] v; await v;     escape 0;]],
@@ -21693,7 +21750,7 @@ native do
         *p = 1;
     }
 end
-var _int[2] a;
+var _int[2] a = [];
 var int b=0;
 par/and do
     b = 2;
@@ -21712,7 +21769,7 @@ native do
         *p = 1;
     }
 end
-var _int[2] a;
+var _int[2] a = [];
 a[0] = 0;
 a[1] = 0;
 var int b=0;
@@ -21738,7 +21795,7 @@ native do
         *p = 1;
     }
 end
-var _int[2] a;
+var _int[2] a = [];
 a[0] = 0;
 a[1] = 0;
 var int b=0;
@@ -21877,7 +21934,8 @@ Test { [[
 var _int[1] vec = [];
 escape 1;
 ]],
-    env = 'line 1 : invalid attribution : destination is not a vector',
+    --env = 'line 1 : invalid attribution : destination is not a vector',
+    run = 1,
 }
 
 Test { [[
@@ -22952,7 +23010,7 @@ native do
         return *v1+*v2;
     }
 end
-var _u8[2] v;
+var _u8[2] v = [];
 v[0] = 8;
 v[1] = 5;
 escape _f2(&&v[0],&&v[1]) + _f1(&&v) + _f1(&&v[0]);
@@ -23138,7 +23196,7 @@ native do
         return 1;
     }
 end
-var _int[2] v;
+var _int[2] v = [];
 v[0] = 0;
 v[1] = 1;
 v[_f()] = 2;
@@ -23871,7 +23929,7 @@ _printf("END: 1%d%d\n",2,3); escape 0;]], run=123 }
 Test { [[
 native @nohold _strncpy(), _printf(), _strlen();
 native _char = 1;
-var _char[10] str;
+var _char[10] str = [];
 _strncpy(&&str, "123", 4);
 _printf("END: %d %s\n", (int)_strlen(&&str), &&str);
 escape 0;
@@ -23882,10 +23940,10 @@ escape 0;
 Test { [[
 native @nohold _strncpy(), _printf(), _strlen(), _strcpy();
 native _char = 1;
-var _char[6] a; _strcpy(&&a, "Hello");
-var _char[2] b; _strcpy(&&b, " ");
-var _char[7] c; _strcpy(&&c, "World!");
-var _char[30] d;
+var _char[6] a=[]; _strcpy(&&a, "Hello");
+var _char[2] b=[]; _strcpy(&&b, " ");
+var _char[7] c=[]; _strcpy(&&c, "World!");
+var _char[30] d=[];
 
 var int len = 0;
 _strcpy(&&d,&&a);
@@ -24144,8 +24202,8 @@ Test { [[
 
 Test { [[
 native @plain _char=1;
-var _u8[10] v1;
-var _char[10] v2;
+var _u8[10] v1 = [];
+var _char[10] v2 = [];
 
 loop i in 10 do
     v1[i] = i;
@@ -24359,7 +24417,17 @@ escape 1;
 }
 Test { [[
 var _int&& u;
-var _int[1] i;
+var _int[1] i=[];
+await 1s;
+u = &&i[0];
+escape 1;
+]],
+    fin = 'line 4 : unsafe access to pointer "i" across `await´ (tests.lua : 3)',
+}
+Test { [[
+native @plain _int;
+var _int&& u;
+var _int[1] i=[];
 await 1s;
 u = &&i[0];
 escape 1;
@@ -24510,7 +24578,7 @@ Test { [[
 native/pre do
     #define N 1
 end
-var _u8[_N] vec;
+var _u8[_N] vec = [];
 vec[0] = 10;
 escape vec[_N-1];
 ]],
@@ -24521,7 +24589,7 @@ Test { [[
 native/pre do
     #define N 1
 end
-var _u8[N] vec;
+var _u8[N] vec = [];
 vec[0] = 10;
 escape vec[N-1];
 ]],
@@ -24532,7 +24600,7 @@ Test { [[
 native/pre do
     #define N 1
 end
-var _u8[N+1] vec;
+var _u8[N+1] vec = [];
 vec[1] = 10;
 escape vec[1];
 ]],
@@ -24541,7 +24609,7 @@ escape vec[1];
 
 Test { [[
 #define N 1
-var _u8[N+1] vec;
+var _u8[N+1] vec = [];
 vec[1] = 10;
 escape vec[1];
 ]],
@@ -24552,7 +24620,7 @@ Test { [[
 native/pre do
     #define N 5
 end
-var _int[_N] vec;
+var _int[_N] vec = [];
 loop i in _N do
     vec[i] = i;
 end
@@ -26278,7 +26346,7 @@ escape ret;
 -- ASYNC/NONDET
 
 Test { [[
-var _int[2] v;
+var _int[2] v = [];
 var _int&& p = &&v[0];
 par/and do
     v[0] = 1;
@@ -26294,7 +26362,7 @@ escape v[0] + v[1];
     run = 3;
 }
 Test { [[
-var _int[2] v;
+var _int[2] v = [];
 par/and do
     v[0] = 1;
 with
@@ -26448,7 +26516,7 @@ escape x;
 
 Test { [[
 native @plain _int;
-var _int[10] x;
+var _int[10] x = [];
 async/thread (x) do
     x[0] = 2;
 end
@@ -33038,7 +33106,7 @@ do
     await t;
 end
 do
-    var _char[1000] v;
+    var _char[1000] v = [];
     native @nohold _memset();
     _memset(&&v, 0, 1000);
 end
@@ -34495,7 +34563,7 @@ do
     await t;
 end
 do
-    var _char[1000] v;
+    var _char[1000] v = [];
     native @nohold _memset();
     _memset(&&v, 0, 1000);
 end
@@ -34524,7 +34592,7 @@ do
     await t2;
 end
 do
-    var _char[1000] v;
+    var _char[1000] v = [];
     native @nohold _memset();
     _memset(&&v, 0, 1000);
     var T t3;
@@ -37882,13 +37950,35 @@ escape t!.v;
 }
 
 Test { [[
+native @plain _void;
 class T with
     var int v=0;
 do
     await FOREVER;
 end
 
-var _void&&[10] ts;
+var _void&&[10] ts = [];
+var T&&? t;
+t = spawn T;
+t!:v = 10;
+ts[0] = (void&&)(t!);
+escape t!:v + ((T&&)ts[0]):v;
+]],
+    fin = 'line 12 : unsafe access to pointer "ts" across `spawn´ (tests.lua : 10)',
+}
+
+Test { [[
+native/pre do
+    typedef void* void_;
+end
+native @plain _void_;
+class T with
+    var int v=0;
+do
+    await FOREVER;
+end
+
+var _void_[10] ts = [];
 var T&&? t;
 t = spawn T;
 t!:v = 10;
@@ -45475,7 +45565,7 @@ native/pre do
     ##define ceu_out_isr_attach ceu_sys_isr_attach
     ##define ceu_out_isr_detach ceu_sys_isr_detach
 end
-var _int[10] v;
+var _int[10] v = [];
 atomic do
     v[0] = 2;
 end
@@ -46052,7 +46142,7 @@ end
 interface Global with
     interface I;
 end
-var _int[10]  vs;
+var _int[10]  vs = [];
 
 class T with
     interface I;
@@ -46064,6 +46154,40 @@ vs[0] = 1;
 global:vs[0] = 1;
 
 var T t;
+t.vs[0] = 1;
+
+var I&& i = &&t;
+i:vs[0] = 1;
+
+escape 1;
+]],
+    ref = 'line 21 : missing initialization for field "vs" (declared in tests.lua:4)',
+}
+
+Test { [[
+native @plain _int;
+
+interface I with
+    var _int[10] vs;
+end
+
+interface Global with
+    interface I;
+end
+var _int[10]  vs = [];
+
+class T with
+    interface I;
+do
+    global:vs[0] = 1;
+end
+
+vs[0] = 1;
+global:vs[0] = 1;
+
+var T t with
+    this.vs = [];
+end;
 t.vs[0] = 1;
 
 var I&& i = &&t;
@@ -46116,7 +46240,7 @@ interface Global with
     var _int[10] vs;
     var int     v;
 end
-var _int[10] vs;
+var _int[10] vs = [];
 var int     v = 0;
 
 loop i in 10 do
@@ -55739,7 +55863,7 @@ par do
         end
     end
     do
-        var _int[100] is;
+        var _int[100] is = [];
         loop i in 100 do
             is[i] = i;
         end
@@ -61910,6 +62034,17 @@ do return end
 
 -- async dentro de pause
 -- async thread spawn falhou, e ai?
+
+Test { [[
+data Test with
+  var _u8[10] vvv;
+end
+var Test t = Test([_V]);    // should not accept [_V] here
+t.vvv[9] = 10;
+escape t.vvv[9];
+]],
+    run = 10,
+}
 
 -- BUG-EVERY-SPAWN
 -- t1 creates t2, which already reacts to e

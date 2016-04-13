@@ -30,9 +30,10 @@ F = {
         or string.match(me.var.id, '^_+%d*$')   -- var t _;
         or me.var.__env_is_loop_var             -- loop i ... end
         or me.isEvery
-        or (TP.check(me.var.tp,'[]') and        -- var int[] vec;
-            (not TP.check(me.var.tp,'[]','&')))
-        or me.var.cls                           -- var T t;
+        or (TP.check(me.var.tp,'[]') and            -- OK: var int[] vec;
+            (not TP.check(me.var.tp,'[]','&'))) and -- NO: var int[]& vec;
+            (not TP.is_ext(me.var.tp,'_'))          -- NO: var u8_[] vec;
+        or me.var.cls                               -- var T t;
         then
             -- no need for initialization
         else

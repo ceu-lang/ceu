@@ -270,11 +270,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
     local is_arr = TP.check(tp, '[]')
 
     if pre=='var' then
-        if is_arr and TP.is_ext(tp,'_','@') then
-            var.lval = false
-        else
-            var.lval = var
-        end
+        var.lval = var
     elseif pre=='pool' and (ENV.adts[TP.id(tp)] or is_ref) then
         var.lval = var
     else
@@ -1179,11 +1175,17 @@ type.
 
             if fr.tag == 'Vector_constr' then
                 -- TODO: TP.pre() (only pool?)
-                local is_vec = TP.check(to.tp,'[]','-&') and
-                               (not TP.is_ext(to.tp,'_','@'))
+                local is_vec = TP.check(to.tp,'[]','-&')
                 local is_cls = ENV.clss[TP.id(to.tp)] and
                                TP.check(TP.pop(to.tp,'&'),TP.id(to.tp),'[]')
                 ASR(is_vec and (not is_cls), me, 'invalid attribution : destination is not a vector')
+
+                -- _u8 v[N] = []    -- only accept empty
+                if TP.is_ext(to.tp,'_') then
+                    local explist = AST.asr(fr,'Vector_constr', 1,'Vector_tup', 1,'ExpList')
+                    ASR(#explist == 0, me,
+                        'invalid attribution : external vectors accept only empty initialization `[]´')
+                end
 
                 local to_unit = TP.pop(TP.pop(to.tp,'&'),'[]')
                 local to_unit_noopt, isopt = TP.pop(to_unit,'?')

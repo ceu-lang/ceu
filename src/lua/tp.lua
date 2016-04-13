@@ -285,7 +285,11 @@ function TP.toc (tp, t)
         local v
         tp, v = TP.pop(tp)
         if v == '[]' then
-            return 'tceu_vector'..ret       -- [], return now
+            if TP.is_ext(tp,'_') then
+                ret = '*'..ret                  -- _u8[] => _u8*
+            else
+                return 'tceu_vector'..ret       -- [], return now
+            end
         elseif v=='&&' or v=='&' then
             ret = '*'..ret
         else
@@ -428,16 +432,25 @@ function TP.contains (tp1, tp2, t)
 
     -- vec& = vec
     -- vec  = []..
-    elseif (not TP.is_ext(tp1,'_','@')) and (not TP.is_ext(tp2,'_','@')) and
+    elseif (not TP.is_ext(tp2,'_')) and
            --(not (tp1.pre=='pool' or tp2.pre=='pool')) and
            (not (ENV.clss[id1] and TP.check(tp1,id1,'[]','-&') or
                  ENV.clss[id2] and TP.check(tp2,id2,'[]','-&'))) and -- TODO: TP.pre()
         (
             TP.check(TP1,'[]','&') and TP.check(tp2,'[]')
         or
+            -- OK: var _u8[N] v = []
+            -- NO: var _u8[N] v = [1]
+            -- NO: var _u8[N] v = v2
+            TP.is_ext(tp1,'_') and TP.check(TP1,'[]') and TP.check(tp2,'any','[]')
+        or
             TP.check(TP1,'[]','-&','-?') and TP.check(tp2,'[]','..')
         )
     then
+        if TP.is_ext(tp1,'_') then
+            return true
+        end
+
         local is_constr = TP.check(tp2,'[]','..')
 
         -- to == fr

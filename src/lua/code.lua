@@ -622,7 +622,11 @@ if (]]..me.val..[[ == NULL) {
         for i, p in ipairs(params) do
             local field = blk.vars[i]
             local amp = ''--(TP.check(field.tp,'&') and '&') or ''
-            LINE(me, me.val..op..tag..field.id..' = '..amp..V(p,'rval')..';')
+            if TP.is_ext(field.tp,'_') and TP.check(field.tp,'[]') then
+                -- NO:  t._vec = [];
+            else
+                LINE(me, me.val..op..tag..field.id..' = '..amp..V(p,'rval')..';')
+            end
         end
 
         LINE(me, '}')   -- will ignore if allocation fails
