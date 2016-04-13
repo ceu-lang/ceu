@@ -2,16 +2,15 @@
 # EDIT
 ###############################################################################
 
-SRC =
+SRC ?=
 
 LUA_EXE ?= lua
 
 C_EXE   ?= gcc
-C_FLAGS =
+C_FLAGS ?=
 
-CEU_DIR   ?= .
 CEU_EXE   ?= /usr/local/bin/ceu
-CEU_FLAGS =
+CEU_FLAGS ?=
 
 ARCH_DIR ?= $(CEU_DIR)/arch
 
@@ -21,6 +20,8 @@ OUT_EXE ?= $(OUT_DIR)/$(basename $(notdir $(SRC_))).exe
 ###############################################################################
 # DO NOT EDIT
 ###############################################################################
+
+CEU_DIR ?= .
 
 SRC_	 = $(SRC)
 SRC_DIR_ = $(dir $(SRC_))
