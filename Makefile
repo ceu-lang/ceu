@@ -4,8 +4,6 @@
 
 SRC =
 
-ARCH_DIR ?= arch
-
 LUA_EXE ?= lua
 
 C_EXE   ?= gcc
@@ -14,6 +12,8 @@ C_FLAGS =
 CEU_DIR   ?= .
 CEU_EXE   ?= /usr/local/bin/ceu
 CEU_FLAGS =
+
+ARCH_DIR ?= $(CEU_DIR)/arch
 
 OUT_DIR	?= $(SRC_DIR_)/build
 OUT_EXE ?= $(OUT_DIR)/$(basename $(notdir $(SRC_))).exe
