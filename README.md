@@ -2,12 +2,15 @@ Céu is a reactive language that aims to offer a higher-level and safer
 alternative to C.
 
 Try it online:
+
 http://www.ceu-lang.org/
 
 Source code:
+
 https://github.com/fsantanna/ceu/
 
 Join our chat:
+
 https://gitter.im/fsantanna/ceu
 
 # Summary
@@ -236,7 +239,7 @@ An *architecture* glues the Céu library with an environment and consists of a
 set of files with type definitions, function hooks, and a `main` function.
 
 The standard distribution comes with a [default](arch/) architecture and also a 
-[pthread] extension.
+[pthread](arch/pthread/) extension.
 
 Other repositories provide complete architectures to write real applications:
 
