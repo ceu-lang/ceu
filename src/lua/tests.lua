@@ -346,11 +346,65 @@ escape _strlen((char&&)&&t.name);
     run = 2,
 }
 
+TODO: string = []; (sem [].."")
+    var Read r = Read.build(&outer.stream,&outer.string);
+Test { [[
+    var _char[3] buf_ = [];
+    var _uv_buf_t&& buf = _uv_buf_init(buf_, sizeof(buf_)-1);
+    var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client, buf)
+                    finalize with
+                        _uv_read_stop((_uv_stream_t&&)&&client);
+                    end;
+buf is local??
+    //_printf("error: %s\n", _uv_strerror(ret));
+    _assert(ret == 0);
+
+    // READ
+    loop do
+        var _ssize_t    n;
+        var _uv_buf_t&& buf_r;
+        var _uv_stream_t&& s;
+        (s,n,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
+_printf("READ [%ld] %s\n", n, buf_);
+        _assert(buf_r:base == buf.base);
+        _assert(buf_r:len  == buf.len);
+await 1s;
+_printf("READ [%ld] %s\n", n, buf_);
+]],
+    run = 1,
+}
+
+--]===]
+Test { [[
+native @plain _char;
+    var _char[3] buf_ = [];
+    var _uv_buf_t buf = _uv_buf_init(buf_, sizeof(buf_)-1);
+    var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client, &&buf)
+                    finalize with
+                        _uv_read_stop((_uv_stream_t&&)&&client);
+                    end;
+    _assert(ret == 0);
+
+    // READ
+    loop i in 10 do
+        var _ssize_t    n;
+        var _uv_buf_t&& buf_r;
+        var _uv_stream_t&& s;
+        (s,n,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
+        _assert(buf_r:base == buf.base);
+        _assert(buf_r:len  == buf.len);
+await 1s;
+    end
+_printf("READ [%ld] %s\n", n, buf_);
+escape 0;
+]],
+    run = 1,
+}
+
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -21544,7 +21598,7 @@ escape p;
     run = 10;
 }
 
-    -- ARRAYS
+-->>> NATIVE/POINTERS/VECTORS
 
 Test { [[input int[1] E; escape 0;]],
     --run = 0,
@@ -21864,6 +21918,22 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+native @pure _f;
+native do
+    int f (int* v) {
+        return v[0];
+    }
+end
+var _int[2] v = [];
+v[0] = 10;
+escape _f(v);
+]],
+    run = 10,
+}
+
+--<<< NATIVE/POINTERS/VECTORS
+
 -->>> VECTORS / STRINGS
 
 Test { [[
@@ -22128,7 +22198,7 @@ native do
     }
 end
 var int[2] a = [1,2];
-_f(&&a);
+_f((_int&&)&&a);
 escape a[0] + a[1];
 ]],
     run = 5,
@@ -22144,7 +22214,23 @@ native do
 end
 var int[2] a  = [1,2];
 var int[2]& b = &a;
-_f(&&b);
+_f((_char&&)&&b);
+escape b[0] + b[1];
+]],
+    env = 'line 10 : invalid type cast',
+}
+
+Test { [[
+native @nohold _f();
+native do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+var int[2] a  = [1,2];
+var int[2]& b = &a;
+_f((_int&&)&&b);
 escape b[0] + b[1];
 ]],
     run = 5,
@@ -22328,7 +22414,7 @@ var char[]  str;
 var char[]& ref = &str;
 ref = [] .. (char&&){f}() .. "oi";
 native @pure _strlen();
-escape _strlen(&&str);
+escape _strlen((_char&&)&&str);
 ]],
     run = 5,
 }
@@ -22424,8 +22510,8 @@ end
 native @pure _ID(), _strlen();
 var char[] str = [] .. "abc"
                     .. (char&&)_ID("def");
-var char&& str2 = _ID(&&str);
-escape _strlen(&&str) + _strlen(str2);
+var char&& str2 = _ID((_char&&)&&str);
+escape _strlen((_char&&)&&str) + _strlen(str2);
 ]],
     run = 12,
 }
@@ -22444,7 +22530,7 @@ Test { [[
 native @pure _strcmp();
 var char[] str1;
 var char[] str2 = [].."";
-escape _strcmp(&&str1,"")==0 and _strcmp(&&str2,"")==0;
+escape _strcmp((_char&&)&&str1,"")==0 and _strcmp((_char&&)&&str2,"")==0;
 ]],
     run = 1,
 }
@@ -22466,7 +22552,7 @@ function (char&& str)=>int strlen do
 end
 
 var char[] str = [].."Ola Mundo!";
-escape strlen((char&&)&&str);
+escape strlen((_char&&)&&str);
 ]],
     run = 10,
 }
@@ -22533,14 +22619,14 @@ escape _f((int&&)&&rcs[0]);
 Test { [[
 native @nohold _strlen();
 var char[] v = ['a','b','c','\0'];
-escape _strlen(&&v);
+escape _strlen((_char&&)&&v);
 ]],
     run = 3,
 }
 Test { [[
 native @nohold _strlen();
 var char[] v = ['a','b','c','\0'];
-escape _strlen(&&v);
+escape _strlen((_char&&)&&v);
 ]],
     run = 3,
 }
@@ -22559,9 +22645,9 @@ end
 
 var char[10] v;
 var char[10] v_;
-_garbage(&&v);
+_garbage((_char&&)&&v);
 v = ['a','b','c'];
-escape _strlen(&&v);
+escape _strlen((_char&&)&&v);
 ]],
     run = 3,
 }
@@ -22604,7 +22690,7 @@ escape 1;
 Test { [[
 native @nohold _strlen();
 var char[] v = "abc";
-escape _strlen(v);
+escape _strlen((_char&&)v);
 ]],
     env = 'line 2 : types mismatch (`char[]´ <= `char&&´)',
     --run = 3,
@@ -22612,7 +22698,7 @@ escape _strlen(v);
 Test { [[
 native @nohold _strlen();
 var char[] v = [].."abc";
-escape _strlen(&&v);
+escape _strlen((_char&&)&&v);
 ]],
     run = 3,
 }
@@ -22620,7 +22706,7 @@ Test { [[
 native @nohold _strlen();
 var char[] v = [].."abc";
 v = [] .. v .. "def";
-escape _strlen(&&v);
+escape _strlen((_char&&)&&v);
 ]],
     run = 6,
 }
@@ -25715,6 +25801,7 @@ var int  a=10, b=5;
 var int& p = &b;
 par/and do
     async/thread (a, p) do
+        _usleep(100);
         a = a + p;
         p = a;
     end
@@ -25724,7 +25811,7 @@ end
 escape a + b + p;
 ]],
     _ana = {
-        acc = 5,
+        acc = true,
     },
     run = 36,
 }
@@ -26541,6 +26628,7 @@ Test { [[
 var int[10] x = [0,1];
 par/and do
     async/thread (x) do
+        _usleep(100);
         x[0] = x[1] + 2;
     end
 with
@@ -26580,6 +26668,7 @@ escape v;
 
 --<<< THREADS / EMITS
 --<<< ASYNCS / THREADS
+do return end
 
 -->>> LUA
 

@@ -1459,7 +1459,7 @@ type.
                     'wrong argument #'..i..' : cannot pass option values to native calls')
                 ASR(v.tag~='Op1_&', me,
                     'wrong argument #'..i..' : cannot pass aliases to native calls')
-                ASR(not TP.check(v.tp,'[]','-&','-..'), me,
+                ASR(TP.is_ext(v.tp,'_') or (not TP.check(v.tp,'[]','-&','-..')), me,
                     'wrong argument #'..i..' : cannot pass plain vectors to native calls')
             end
         end
@@ -1849,6 +1849,9 @@ type.
             me.tp = tp
             if TP.check(tp,'&&','-&') then
                 me.lval = exp      -- *((u32*)0x100)=v
+            end
+            if (not TP.is_ext(exp.tp,'_','@')) and TP.check(exp.tp,'[]','&&','-&') then
+                ASR(TP.id(tp) == '_'..TP.id(exp.tp), me, 'invalid type cast')
             end
         else -- @annotation
             me.tp = exp.tp
