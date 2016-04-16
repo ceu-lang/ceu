@@ -13,14 +13,5 @@
 #define CEU_THREADS_MUTEX_LOCK(m)   ceu_out_assert(pthread_mutex_lock(m)==0)
 #define CEU_THREADS_MUTEX_UNLOCK(m) ceu_out_assert(pthread_mutex_unlock(m)==0)
 #define CEU_THREADS_SLEEP(us)       usleep(us)
-/*
-#define CEU_THREADS_COND_T          pthread_cond_t
-#define CEU_THREADS_YIELD()         assert(sched_yield()==0)
-#define CEU_THREADS_YIELD()         assert(pthread_yield()==0)
-#define CEU_THREADS_MUTEX_LOCK(m)   pthread_mutex_lock(m); printf("L[%d]\n",__LINE__)
-#define CEU_THREADS_MUTEX_UNLOCK(m) pthread_mutex_unlock(m); printf("U[%d]\n",__LINE__)
-#define CEU_THREADS_COND_WAIT(c,m)  pthread_cond_wait(c,m)
-#define CEU_THREADS_COND_SIGNAL(c)  pthread_cond_signal(c)
-*/
 
 #endif

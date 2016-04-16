@@ -710,9 +710,11 @@ int ceu_go_all (tceu_app* app, int argc, char **argv)
     {
         ceu_sys_go(app, CEU_IN__ASYNC, NULL);
 #ifdef CEU_THREADS
-        CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex_external);
-        CEU_THREADS_SLEEP(100); /* allow threads to do "atomic" and "terminate" */
-        CEU_THREADS_MUTEX_LOCK(&app->threads_mutex_external);
+        if (app->threads_n > 0) {
+            CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex_external);
+            CEU_THREADS_SLEEP(100); /* allow threads to do "atomic" and "terminate" */
+            CEU_THREADS_MUTEX_LOCK(&app->threads_mutex_external);
+        }
 #endif
     }
 #endif
