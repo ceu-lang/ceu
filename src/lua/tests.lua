@@ -347,6 +347,7 @@ escape _strlen((char&&)&&t.name);
 }
 
 TODO: string = []; (sem [].."")
+
 do return end
 --]===]
 
@@ -45325,6 +45326,28 @@ escape ret;
 ]],
     run = 10,
 }
+Test { [[
+native do
+    ##define ID(x) x
+end
+native @pure _ID();
+class T with
+    var int& i;
+    function (int& i)=>T build;
+do
+    function (int& i)=>T build do
+        this.i = &i;
+    end
+    escape this.i;
+end
+
+var int i = 10;
+var int ret = do T.build(&_ID(&&this.i));
+escape ret;
+]],
+    run = 10,
+}
+
 --<<< CLASS-VECTORS-FOR-POINTERS-TO-ORGS
 
 -->>> ISR / ATOMIC

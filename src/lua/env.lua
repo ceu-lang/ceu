@@ -694,12 +694,12 @@ F = {
             -- keep true
             assert(constr, 'bug found')
         elseif constr then
-            local call = AST.par(me, 'Op2_call')
-            local _, f, _ = unpack(call)
-            if f.var and f.var.fun and f.var.fun.is_constr then
-                -- keep false
-            else
-                me.__adj_this_new = true
+            me.__adj_this_new = true
+            for call in AST.iter'Op2_call' do
+                local _, f, _ = unpack(call)
+                if f.var and f.var.fun and f.var.fun.is_constr then
+                    me.__adj_this_new = false
+                end
             end
         else
             -- keep false
