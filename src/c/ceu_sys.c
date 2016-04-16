@@ -29,20 +29,6 @@ void *realloc(void *ptr, size_t size);
 #include "ceu_pool.h"
 #endif
 
-/*
- * pthread_t thread;
- * pthread_mutex_t mutex;
- * pthread_cond_t  cond;
- * pthread_self();
-        Uint32 SDL_ThreadID(void);
- * pthread_create(&thread, NULL, f, &p);
-        SDL_Thread *SDL_CreateThread(int (*fn)(void *), void *data);
- * pthread_mutex_lock(&mutex);
- * pthread_mutex_unlock(&mutex);
- * pthread_cond_wait(&cond, &mutex);
- * pthread_cond_signal(&cond);
-*/
-
 /**********************************************************************
  * "APPS" running on the OS do not need any of the below.
  **********************************************************************/
@@ -724,19 +710,16 @@ int ceu_go_all (tceu_app* app, int argc, char **argv)
     {
         ceu_sys_go(app, CEU_IN__ASYNC, NULL);
 #ifdef CEU_THREADS
-        CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
-        /* allow threads to also execute */
-#if 0
-        CEU_THREADS_YIELD();    /* should work with single cores? */
-#endif
-        usleep(100);            /* should work anyway */
-        CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
+        CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex_external);
+        CEU_THREADS_SLEEP(100); /* allow threads to do "atomic" and "terminate" */
+        CEU_THREADS_MUTEX_LOCK(&app->threads_mutex_external);
 #endif
     }
 #endif
 
+/* TODO: app.close() ? */
 #ifdef CEU_THREADS
-    CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex_external);
 #endif
 
 #ifdef CEU_NEWS

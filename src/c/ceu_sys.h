@@ -200,7 +200,6 @@
 
 #ifdef CEU_THREADS
 /* TODO: app */
-#include <unistd.h>     /* usleep */
 #include "ceu_threads.h"
 #endif
 
@@ -561,8 +560,8 @@ typedef struct tceu_app {
 #endif
 
 #ifdef CEU_THREADS
-    CEU_THREADS_MUTEX_T threads_mutex;
-    /*CEU_THREADS_COND_T  threads_cond;*/
+    CEU_THREADS_MUTEX_T threads_mutex_internal;
+    CEU_THREADS_MUTEX_T threads_mutex_external;
     u8                  threads_n;          /* number of running threads */
         /* TODO: u8? */
 #endif
@@ -602,12 +601,7 @@ typedef void (*tceu_export) (uint* size, tceu_init** init
 typedef struct {
     tceu_app* app;
     tceu_org* org;
-    s8*       st; /* thread state:
-                   * 0=ini (sync  spawns)
-                   * 1=cpy (async copies)
-                   * 2=lck (sync  locks)
-                   * 3=end (sync/async terminates)
-                   */
+    s8*       is_aborted;
 } tceu_threads_p;
 #endif
 

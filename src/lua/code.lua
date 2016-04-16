@@ -2090,32 +2090,23 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
 
         -- spawn thread
         LINE(me, [[
-/* TODO: test it! */
-]]..me.thread_st..[[  = ceu_out_realloc(NULL, sizeof(s8));
-*]]..me.thread_st..[[ = 0;  /* ini */
+]]..me.thread_is_aborted..[[  = ceu_out_realloc(NULL, sizeof(s8));
+*]]..me.thread_is_aborted..[[ = 1;
 {
-    tceu_threads_p p = { _ceu_app, _ceu_org, ]]..me.thread_st..[[ };
+    /* CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex_internal) is on */
+
+    tceu_threads_p p = { _ceu_app, _ceu_org, ]]..me.thread_is_aborted..[[ };
     int ret =
         CEU_THREADS_CREATE(&]]..me.thread_id..[[, _ceu_thread_]]..me.n..[[, &p);
     if (ret == 0)
     {
-        int v = CEU_THREADS_DETACH(]]..me.thread_id..[[);
-        ceu_out_assert_msg(v == 0, "bug found");
+        CEU_THREADS_DETACH(]]..me.thread_id..[[);
         _ceu_app->threads_n++;
 
-        /* wait for "p" to be copied inside the thread */
-        CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
-
-        while (1) {
-            CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
-            int ok = (*(p.st) >= 1);   /* cpy ok? */
-            if (ok)
-                break;
-            CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
-        }
+        /* wait new thread to copy "p" and unlock */
+        CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex_internal);
 
         /* proceed with sync execution (already locked) */
-        *(p.st) = 2;    /* lck: now thread may also execute */
 ]])
 
         local no = LABEL_NO(me)
@@ -2139,7 +2130,7 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
         local set = AST.par(me, 'Set')
         if set then
             local set_to = set[4]
-            LINE(me, V(set_to,'rval')..' = (*('..me.thread_st..') > 0);')
+            LINE(me, V(set_to,'rval')..' = ( (*('..me.thread_is_aborted..')) == 1);')
         end
 
         -- thread function
@@ -2150,26 +2141,12 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 
     /* copy param */
     tceu_threads_p _ceu_p = *((tceu_threads_p*) __ceu_p);
+    *(_ceu_p.is_aborted) = 0;
     tceu_app* _ceu_app = _ceu_p.app;
     tceu_org* _ceu_org = _ceu_p.org;
 
     /* now safe for sync to proceed */
-    CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
-    *(_ceu_p.st) = 1;
-    CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
-
-    /* ensures that sync reaquires the mutex and terminates
-     * the current reaction before I proceed
-     * otherwise I could lock below and reenter sync
-     */
-    while (1) {
-        CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
-        int ok = (*(_ceu_p.st) >= 2);   /* lck ok? */
-        CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
-        if (ok) {
-            break;
-        }
-    }
+    CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex_internal);
 
     /* body */
     ]]..blk.code..[[
@@ -2179,13 +2156,15 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
 
     /* terminate thread */
     {
+        /* can only lock in between reactions */
+        CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex_external);
+
         CEU_THREADS_T __ceu_thread = CEU_THREADS_SELF();
         void* evtp = &__ceu_thread;
         /*pthread_testcancel();*/
-        CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
-    /* only if sync is not active */
-        if (*(_ceu_p.st) < 3) {             /* 3=end */
-            *(_ceu_p.st) = 3;
+        /* only if sync is not active */
+        if (*(_ceu_p.is_aborted) == 0) {
+            *(_ceu_p.is_aborted) = 1;
             ceu_out_go(_ceu_app, CEU_IN__THREAD, evtp);   /* keep locked */
                 /* HACK_2:
                  *  A thread never terminates the program because we include an
@@ -2193,18 +2172,11 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
                  *  main program.
                  */
         } else {
-            ceu_out_realloc(_ceu_p.st, 0);  /* fin finished, I free */
+            ceu_out_realloc(_ceu_p.is_aborted, 0);  /* fin finished, I free */
             _ceu_app->threads_n--;
         }
-        CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
+        CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex_external);
     }
-
-    /* more correct would be two signals:
-     * (1) above, when I finish
-     * (2) finalizer, when sync finishes
-     * now the program may hang if I never reach here
-    CEU_THREADS_COND_SIGNAL(&_ceu_app->threads_cond);
-     */
     return NULL;
 }
 ]]
@@ -2228,16 +2200,16 @@ void ]]..f..[[ (void)
 
     RawStmt = function (me)
         if me.thread then
-            me.thread.thread_st = CUR(me, '__thread_st_'..me.thread.n)
+            me.thread.thread_is_aborted = CUR(me, '__thread_is_aborted_'..me.thread.n)
             me.thread.thread_id = CUR(me, '__thread_id_'..me.thread.n)
                 -- TODO: ugly, should move to "Thread" node
 
             me[1] = [[
-if (*]]..me.thread.thread_st..[[ < 3) {     /* 3=end */
-    *]]..me.thread.thread_st..[[ = 3;
-    ceu_out_assert_msg( pthread_cancel(]]..me.thread.thread_id..[[) == 0 , "bug found")
+if (*]]..me.thread.thread_is_aborted..[[ == 0) {
+    *]]..me.thread.thread_is_aborted..[[ = 1;
+    CEU_THREADS_CANCEL(]]..me.thread.thread_id..[[);
 } else {
-    ceu_out_realloc(]]..me.thread.thread_st..[[, 0); /* thr finished, I free */
+    ceu_out_realloc(]]..me.thread.thread_is_aborted..[[, 0); /* thr finished, I free */
     _ceu_app->threads_n--;
 }
 ]]
@@ -2370,15 +2342,15 @@ _CEU_LUA_OK_]]..me.n..[[:;
         local thread = AST.par(me, 'Thread')
         if thread then
             LINE(me, [[
-CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex);
-if (*(_ceu_p.st) == 3) {        /* 3=end */
-    CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
+CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex_external);
+if (*(_ceu_p.is_aborted) == 1) {
+    CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex_external);
     goto ]]..thread.lbl_out.id..[[;   /* exit if ended from "sync" */
 } else {                        /* othrewise, execute block */
 ]])
             CONC(me)
             LINE(me, [[
-    CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
+    CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex_external);
 }
 ]])
         else

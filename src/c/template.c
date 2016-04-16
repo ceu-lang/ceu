@@ -12,15 +12,6 @@
 #include <string.h>     /* memset */
 #endif
 
-#ifdef CEU_THREADS
-#   define CEU_ATOMIC(f)                                      \
-            CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex); \
-                f                                             \
-            CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex);
-#else
-#   define CEU_ATOMIC(f) f
-#endif
-
 #ifdef CEU_NEWS_POOL
 #include "ceu_pool.h"
 #endif
@@ -216,8 +207,8 @@ ceu_app_init (tceu_app* app)
 #endif
 #endif
 #ifdef CEU_THREADS
-    pthread_mutex_init(&app->threads_mutex, NULL);
-    /*PTHREAD_COND_INITIALIZER,*/
+    pthread_mutex_init(&app->threads_mutex_external, NULL);
+    pthread_mutex_init(&app->threads_mutex_internal, NULL);
     app->threads_n = 0;
 
     /* All code run atomically:
@@ -225,7 +216,8 @@ ceu_app_init (tceu_app* app)
      * -    thread spawns will unlock => re-lock
      * - but program will still run to completion
      */
-    CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
+    CEU_THREADS_MUTEX_LOCK(&app->threads_mutex_external);
+    CEU_THREADS_MUTEX_LOCK(&app->threads_mutex_internal);
 #endif
 
     === TOPS_INIT ===
