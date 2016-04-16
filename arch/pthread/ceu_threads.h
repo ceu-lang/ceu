@@ -13,5 +13,7 @@
 #define CEU_THREADS_MUTEX_LOCK(m)   ceu_out_assert(pthread_mutex_lock(m)==0)
 #define CEU_THREADS_MUTEX_UNLOCK(m) ceu_out_assert(pthread_mutex_unlock(m)==0)
 #define CEU_THREADS_SLEEP(us)       usleep(us)
+#define CEU_THREADS_PROTOTYPE(f,p)  void* f (p)
+#define CEU_THREADS_RETURN(v)       return v
 
 #endif

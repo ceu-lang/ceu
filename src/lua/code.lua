@@ -2135,7 +2135,7 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
 
         -- thread function
         CODE.threads = CODE.threads .. [[
-static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
+static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 {
     /* start thread */
 
@@ -2177,7 +2177,7 @@ static void* _ceu_thread_]]..me.n..[[ (void* __ceu_p)
         }
         CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex_external);
     }
-    return NULL;
+    CEU_THREADS_RETURN(NULL);
 }
 ]]
     end,
