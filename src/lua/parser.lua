@@ -165,7 +165,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_var  = (V'__Dcl_var_org' + V'__Dcl_var_plain_set' + V'_Dcl_var_plain')
     , __Dcl_var_org = CKEY'var'  * EV'Type' * Cc(true)  * EV'__ID_var' *
                         ( Cc(false) * EKEY'with' * V'Dcl_constr' * EKEY'end'
-                        + K'=' * V'__Var_constr' * (
+                        + K'=' * V'_Var_constr' * (
                             EKEY'with' * V'Dcl_constr' * EKEY'end' +
                             Cc(false)
                           ) )
@@ -174,7 +174,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_var_plain = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var' *
                             (K','*V'__dcl_var')^0
 
-    , __Var_constr = V'__ID_cls' * (EK'.'-'..') * EV'__ID_var' * EK'(' * EV'ExpList' * EK')'
+    , _Var_constr = V'__ID_cls' * (EK'.'-'..') * EV'__ID_var' * EK'(' * EV'ExpList' * EK')'
 
     -- auxiliary
     , Dcl_constr = V'Block'
