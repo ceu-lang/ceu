@@ -15,7 +15,7 @@ CEU_FLAGS ?=
 ARCH_DIR ?= $(CEU_DIR)/arch
 
 OUT_DIR	?= $(SRC_DIR_)/build
-OUT_EXE ?= $(OUT_DIR)/$(basename $(notdir $(SRC_))).exe
+OUT_EXE ?= $(basename $(notdir $(SRC_))).exe
 
 ###############################################################################
 # DO NOT EDIT
@@ -81,7 +81,7 @@ help:
 	@echo "See the file README.md"
 
 all: ceu c
-	$(OUT_EXE)
+	cd $(OUT_DIR) && ./$(OUT_EXE)
 
 compiler:
 	cd $(CEU_DIR)/src/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE)
@@ -93,7 +93,7 @@ ceu:
 	$(CEU_EXE) --out-dir $(OUT_DIR) $(CEU_FLAGS_) $(SRC_)
 
 c:
-	$(C_EXE) $(ARCH_DIR)/ceu_main.c $(C_FLAGS_) -o $(OUT_EXE)
+	$(C_EXE) $(ARCH_DIR)/ceu_main.c $(C_FLAGS_) -o $(OUT_DIR)/$(OUT_EXE)
 
 samples:
 	for i in samples/*.ceu; do									\

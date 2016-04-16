@@ -2,12 +2,14 @@
 #define _C_CEU
 
 native do
-    ##define UNSAFE_POINTER_TO_REFERENCE(ptr) ptr
+    ##define UNSAFE_POINTER_TO_ALIAS(ptr) ptr
 end
-native @nohold _UNSAFE_POINTER_TO_REFERENCE();
+native @nohold _UNSAFE_POINTER_TO_ALIAS();
 
 native _assert(),
        _malloc();
+
+native @plain _char;
 
 native @const _stderr;
 
@@ -15,7 +17,8 @@ native @nohold _fprintf(),
                _free(),
                _printf(),
                _sprintf(),
-               _srand();
+               _srand(),
+               _sscanf();
 
 native @pure _abs(),
              _strcmp(),
