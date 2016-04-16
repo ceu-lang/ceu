@@ -337,6 +337,7 @@ function newfun (me, blk, pre, rec, ins, out, id, isImp)
         pre = pre,
         mod = { rec=rec },
         isExt = string.upper(id)==id,
+        is_constr = me.is_constr,
     }
     var.fun = fun
     return false, var
@@ -687,8 +688,24 @@ F = {
 
     This = function (me)
         -- if inside constructor, change scope to the class being created
-        local constr = AST.iter'Dcl_constr'()
-        local cls = constr and constr.cls or CLS()
+        -- HACK_11
+        local constr = AST.par(me,'Dcl_constr')
+        if me.__adj_this_new then
+            -- keep true
+            assert(constr, 'bug found')
+        elseif constr then
+            local call = AST.par(me, 'Op2_call')
+            local _, f, _ = unpack(call)
+            if f.var and f.var.fun and f.var.fun.is_constr then
+                -- keep false
+            else
+                me.__adj_this_new = true
+            end
+        else
+            -- keep false
+        end
+
+        local cls = me.__adj_this_new and constr.cls or CLS()
         ASR(cls, me, 'undeclared class')
         me.tp   = cls.tp
         me.lval = false

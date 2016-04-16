@@ -274,9 +274,10 @@ F =
     end,
 
     This = function (me, CTX)
+        -- HACK_11
         local VAL
-        if AST.iter'Dcl_constr'() then
-            VAL = '__ceu_this'    -- set when calling constr
+        if me.__adj_this_new then
+            VAL = '__ceu_this'
         else
             VAL = '_ceu_org'
         end

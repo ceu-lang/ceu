@@ -1262,11 +1262,13 @@ me.blk_body = me.blk_body or blk_body
                 --  end;
                 local tp2, f, exps = unpack(c1)
                 ASR(tp[1] == tp2, me, 'invalid constructor')
+                local this = node('This', me.ln)
+                this.__adj_this_new = true  -- HACK_11
                 table.insert(c2[1][1], 1,
                     node('CallStmt', me.ln,
                         node('Op2_call', me.ln, 'call',
                             node('Op2_.', me.ln, '.',
-                                node('This', me.ln),
+                                this,
                                 f),
                             exps)))
             end

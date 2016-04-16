@@ -347,61 +347,8 @@ escape _strlen((char&&)&&t.name);
 }
 
 TODO: string = []; (sem [].."")
-    var Read r = Read.build(&outer.stream,&outer.string);
-Test { [[
-    var _char[3] buf_ = [];
-    var _uv_buf_t&& buf = _uv_buf_init(buf_, sizeof(buf_)-1);
-    var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client, buf)
-                    finalize with
-                        _uv_read_stop((_uv_stream_t&&)&&client);
-                    end;
-buf is local??
-    //_printf("error: %s\n", _uv_strerror(ret));
-    _assert(ret == 0);
-
-    // READ
-    loop do
-        var _ssize_t    n;
-        var _uv_buf_t&& buf_r;
-        var _uv_stream_t&& s;
-        (s,n,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
-_printf("READ [%ld] %s\n", n, buf_);
-        _assert(buf_r:base == buf.base);
-        _assert(buf_r:len  == buf.len);
-await 1s;
-_printf("READ [%ld] %s\n", n, buf_);
-]],
-    run = 1,
-}
-
---]===]
-Test { [[
-native @plain _char;
-    var _char[3] buf_ = [];
-    var _uv_buf_t buf = _uv_buf_init(buf_, sizeof(buf_)-1);
-    var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client, &&buf)
-                    finalize with
-                        _uv_read_stop((_uv_stream_t&&)&&client);
-                    end;
-    _assert(ret == 0);
-
-    // READ
-    loop i in 10 do
-        var _ssize_t    n;
-        var _uv_buf_t&& buf_r;
-        var _uv_stream_t&& s;
-        (s,n,buf_r) = await UV_READ until s==(_uv_stream_t&&)&&client;
-        _assert(buf_r:base == buf.base);
-        _assert(buf_r:len  == buf.len);
-await 1s;
-    end
-_printf("READ [%ld] %s\n", n, buf_);
-escape 0;
-]],
-    run = 1,
-}
-
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -21930,6 +21877,23 @@ v[0] = 10;
 escape _f(v);
 ]],
     run = 10,
+}
+
+Test { [[
+input void UV_READ;
+native @plain _char, _uv_buf_t, _uv_stream_t;
+native @nohold _uv_buf_init(), _uv_read_stop();
+var _char[3] buf_ = [];
+var _uv_buf_t buf = _uv_buf_init(buf_, sizeof(buf_)-1);
+var _uv_stream_t client = _uv_stream_t();
+var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client, &&buf)
+                    finalize with
+                        _uv_read_stop((_uv_stream_t&&)&&client);
+                    end;
+_assert(ret == 0);
+escape 0;
+]],
+    gcc = 'implicit declaration of function ‘uv_buf_init’',
 }
 
 --<<< NATIVE/POINTERS/VECTORS
@@ -45344,6 +45308,23 @@ escape us[0]?+1;
     run = { ['~>2s']=2 },
 }
 
+Test { [[
+class T with
+    var int& i;
+    function (int& i)=>T build;
+do
+    function (int& i)=>T build do
+        this.i = &i;
+    end
+    escape this.i;
+end
+
+var int i = 10;
+var int ret = do T.build(&this.i);
+escape ret;
+]],
+    run = 10,
+}
 --<<< CLASS-VECTORS-FOR-POINTERS-TO-ORGS
 
 -->>> ISR / ATOMIC
