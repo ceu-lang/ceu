@@ -347,7 +347,6 @@ escape _strlen((char&&)&&t.name);
 }
 
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -16973,8 +16972,8 @@ var char[255] buf;
 _enqueue(buf);
 escape 1;
 ]],
-    --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
-    fin = 'line 2 : call requires `finalize´',
+    env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
+    --fin = 'line 2 : call requires `finalize´',
 }
 Test { [[
 var char[255] buf;
@@ -22059,12 +22058,37 @@ escape vec[0];
     run = '3] runtime error: access out of bounds',
 }
 
+--]===]
 Test { [[
 var int[2] vec;
 $vec = 1;
 escape 1;
 ]],
-    run = '2] runtime error: invalid attribution : vector size can only shrink',
+    run = '2] runtime error: invalid attribution : out of bounds',
+}
+
+Test { [[
+var byte[] bs;
+$bs := 1;
+escape $bs;
+]],
+    run = 1,
+}
+
+Test { [[
+var byte[10] bs;
+$bs := 10;
+escape $bs;
+]],
+    run = 10,
+}
+
+Test { [[
+var byte[10] bs;
+$bs := 11;
+escape $bs;
+]],
+    run = '5] runtime error: invalid attribution : out of bounds',
 }
 
 Test { [[

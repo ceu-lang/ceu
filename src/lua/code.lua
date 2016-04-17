@@ -1028,7 +1028,7 @@ _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id.
             if is_arr and is_dyn then
                 CASE(me, var.lbl_fin_free)
                 LINE(me, [[
-ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0);
+ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0, 0);
 ]])
                 HALT(me)
 
@@ -1261,7 +1261,7 @@ if ( ]]..V(fr,'rval')..[[!=NULL &&
     end,
 
     Set = function (me)
-        local _, set, fr, to = unpack(me)
+        local op, set, fr, to = unpack(me)
         COMM(me, 'SET: '..tostring(to[1]))    -- Var or C
 
         local _, f = unpack(fr)     -- in case of constructor call _tp(...)
@@ -1288,8 +1288,9 @@ if ( ]]..V(fr,'rval')..[[!=NULL &&
             elseif to.tag == 'Op1_$' then
                 -- $vec = ...
                 local _,vec = unpack(to)
+                local force = (op==':=' and 1) or 0
                 LINE(me, [[
-ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..[[), "invalid attribution : vector size can only shrink" );
+ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','..force..[[), "invalid attribution : out of bounds");
 ]])
 
             -- _tp(...)
@@ -1311,7 +1312,7 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..[[),
                                 if first then
                                     first = false
                                     LINE(me, [[
-    ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
+    ceu_vector_setlen(]]..V(to,'lval')..[[, 0, 0);
     ]])
                                 end
                                 LINE(me, [[
@@ -1330,24 +1331,24 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..[[),
                         if TP.check(e.tp,'char','&&','-&') then
                             if first then
                                 LINE(me, [[
-    ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
+    ceu_vector_setlen(]]..V(to,'lval')..[[, 0, 0);
     ]])
                             end
                             LINE(me, [[
     #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-    ceu_out_assert_msg( ceu_vector_concat_buffer(]]..V(to,'lval')..','..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[)), "access out of bounds" );
+    ceu_out_assert_msg( ceu_vector_concat_buffer(]]..V(to,'lval')..','..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[)), "access out of bounds");
     ]])
                         else
                             assert(TP.check(e.tp,'[]','-&'), 'bug found')
                             if first then
                                 LINE(me, [[
     if (]]..V(to,'lval')..' != '..V(e,'lval')..[[) {
-        ceu_vector_setlen(]]..V(to,'lval')..[[, 0);
+        ceu_vector_setlen(]]..V(to,'lval')..[[, 0, 0);
     ]])
                             end
                             LINE(me, [[
     #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-    ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "access out of bounds" );
+    ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "access out of bounds");
     ]])
                             if first then
                                 LINE(me, [[
@@ -2297,7 +2298,7 @@ if (*]]..me.thread.thread_is_aborted..[[ == 0) {
                 ceu_lua_objlen(len, _ceu_app->lua, -1);
                 ceu_lua_tostring(ret, _ceu_app->lua, -1);
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-                ceu_out_assert_msg( ceu_vector_concat_buffer(]]..V(set_to,'lval')..[[, ret, len), "access out of bounds" );
+                ceu_out_assert_msg( ceu_vector_concat_buffer(]]..V(set_to,'lval')..[[, ret, len), "access out of bounds");
             } else {
                 ceu_lua_pushstring(_ceu_app->lua, "not implemented [2]");
                 err = 1;

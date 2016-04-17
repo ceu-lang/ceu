@@ -94,7 +94,7 @@ F = {
         -- _r.x = (int) ...;
         if not (ISPTR(to) or TP.check(to.tp,'&','?')) or
            not (ISPTR(fr) or TP.check(TP.pop(fr.tp,'&'),'[]')) then
-            ASR(op == '=', me, 1101, 'wrong operator')
+            ASR(to.tag=='Op1_$' or op=='=', me, 1101, 'wrong operator')
             ASR(not me.fin, me, 1102, 'attribution does not require `finalize´')
             return
         end

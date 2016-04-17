@@ -42,29 +42,41 @@ static void* ceu_vector_resize (tceu_vector* vector, int n) {
 }
 #endif
 
-/* can only decrease vector->nxt */
-int ceu_vector_setlen (tceu_vector* vector, int nxt) {
-    if (nxt > vector->nxt) {
-        return 0;
-    } else {
+int ceu_vector_setlen (tceu_vector* vector, int nxt, int force) {
+    int ret;
+
+    if (nxt<=vector->nxt || force) {
         vector->nxt = nxt;
 
-        /* [STRING] */
-        if (vector->mem != NULL) {
-            vector->mem[nxt*vector->unit] = '\0';
-        }
-
 #ifdef CEU_VECTOR_MALLOC
-        /* shrink malloc'ed arrays */
         if (vector->max <= 0) {
             if (ceu_vector_resize(vector,nxt)==NULL && nxt>0) {
-                return 0;
+                ret = 0;
+            } else {
+                ret = 1;
             }
         }
+        else
 #endif
+        {
+            if (nxt > vector->max) {
+                ret = 0;
+            } else {
+                ret = 1;
+            }
+        }
 
-        return 1;
+        /* [STRING] */
+        if (ret == 1) {
+            if (vector->mem != NULL) {
+                vector->mem[nxt*vector->unit] = '\0';
+            }
+        }
+    } else {
+        /* can only decrease vector->nxt */
+        ret = 0;
     }
+    return ret;
 }
 
 /* can only get within idx < vector->nxt */
