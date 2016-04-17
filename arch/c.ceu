@@ -9,7 +9,7 @@ native @nohold _UNSAFE_POINTER_TO_ALIAS();
 native _assert(),
        _malloc();
 
-native @plain _char;
+native @plain _char, _byte;
 
 native @const _stderr;
 

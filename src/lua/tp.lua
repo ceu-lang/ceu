@@ -452,7 +452,9 @@ function TP.contains (tp1, tp2, t)
         end
 
         local is_constr = TP.check(tp2,'[]','..')
-        local same_size = (TP.types[TP.id(tp1)].len == TP.types[TP.id(tp2)].len)
+        local t1 = TP.types[TP.id(tp1)]
+        local t2 = TP.types[TP.id(tp2)]
+        local same_base_size = t1 and t2 and (t1.len == t2.len)
         local numeric = is_constr or same_base_size
 
         -- to == fr
@@ -529,7 +531,7 @@ function TP.contains (tp1, tp2, t)
         -- TODO: allows any cast to byte*, char* and void*
         --       is it correct?
         --       (I think "void*" should fail)
-        if id1=='byte' or id1=='char' or id=='void' then
+        if id1=='byte' or id1=='char' or id1=='void' then
             local tp2 = TP.copy(tp2)
             tp2.tt[1] = id1
             return TP.contains(tp1, tp2, {numeric=false})
