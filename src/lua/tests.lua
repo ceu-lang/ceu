@@ -346,8 +346,6 @@ escape _strlen((char&&)&&t.name);
     run = 2,
 }
 
-TODO: string = []; (sem [].."")
-
 do return end
 --]===]
 
@@ -16975,8 +16973,8 @@ var char[255] buf;
 _enqueue(buf);
 escape 1;
 ]],
-    env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --fin = 'line 2 : call requires `finalize´',
+    --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
+    fin = 'line 2 : call requires `finalize´',
 }
 Test { [[
 var char[255] buf;
@@ -21775,7 +21773,7 @@ var _int[2] a = [];
 a[0] = 0;
 a[1] = 0;
 var int b=0;
-par/or do
+par/and do
     b = 2;
 with
     _f(a);
@@ -21785,9 +21783,9 @@ escape a[0] + b;
     _ana = {
         abrt = 1,
     },
-    env = 'line 14 : wrong argument #1 : cannot pass plain vectors to native calls',
+    --env = 'line 14 : wrong argument #1 : cannot pass plain vectors to native calls',
     --code = 'line 14 : invalid value : vectors are not copyable',
-    --run = 3,
+    run = 3,
 }
 
 Test { [[
