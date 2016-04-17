@@ -347,6 +347,7 @@ escape _strlen((char&&)&&t.name);
 }
 
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -22058,7 +22059,6 @@ escape vec[0];
     run = '3] runtime error: access out of bounds',
 }
 
---]===]
 Test { [[
 var int[2] vec;
 $vec = 1;
@@ -22088,7 +22088,7 @@ var byte[10] bs;
 $bs := 11;
 escape $bs;
 ]],
-    run = '5] runtime error: invalid attribution : out of bounds',
+    run = '2] runtime error: invalid attribution : out of bounds',
 }
 
 Test { [[
@@ -22599,6 +22599,35 @@ escape _f((int&&)&&rcs[0]);
     run = 10,
 }
 
+Test { [[
+var byte b = 1;
+var char c = 2;
+b = (byte)c;
+escape b;
+]],
+    run = 2,
+}
+Test { [[
+var char[] c = [1];
+var byte[]& b = &c;
+escape b[0];
+]],
+    run = 1,
+}
+Test { [[
+var char  c = 2;
+var byte& b = &c;
+escape b;
+]],
+    gcc = 'error: pointer targets in assignment differ',
+}
+Test { [[
+var char   c = 2;
+var byte&& b = &&c;
+escape *b;
+]],
+    gcc = 'error: pointer targets in assignment differ',
+}
 --<< VECTORS
 
 -- STRINGS

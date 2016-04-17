@@ -452,6 +452,8 @@ function TP.contains (tp1, tp2, t)
         end
 
         local is_constr = TP.check(tp2,'[]','..')
+        local same_size = (TP.types[TP.id(tp1)].len == TP.types[TP.id(tp2)].len)
+        local numeric = is_constr or same_base_size
 
         -- to == fr
         local ok = is_constr or (TP1.arr=='[]') or
@@ -462,7 +464,7 @@ function TP.contains (tp1, tp2, t)
 
         tp2 = TP.pop(tp2,'..')
         return TP.contains(TP.pop(tp1,'[]'), TP.pop(tp2,'[]'),
-                    {option=true,numeric=is_constr})
+                    {option=true,numeric=numeric})
                                     -- OK: var char[] str = [int,int,int]
                                     -- NO: var char[]& str = &vec_int
 --, {numeric=false} )
@@ -524,16 +526,12 @@ function TP.contains (tp1, tp2, t)
 
     -- single-pointer casts
     elseif TP.check(tp1,id1,'&&') and TP.check(tp2,id2,'&&') then
-        -- TODO: allows any cast to char* and void*
+        -- TODO: allows any cast to byte*, char* and void*
         --       is it correct?
         --       (I think "void*" should fail)
-        if id1 == 'char' then
+        if id1=='byte' or id1=='char' or id=='void' then
             local tp2 = TP.copy(tp2)
-            tp2.tt[1] = 'char'
-            return TP.contains(tp1, tp2, {numeric=false})
-        elseif id1 == 'void' then
-            local tp2 = TP.copy(tp2)
-            tp2.tt[1] = 'void'
+            tp2.tt[1] = id1
             return TP.contains(tp1, tp2, {numeric=false})
 
         -- both are external types: let "gcc" handle it
