@@ -22334,17 +22334,17 @@ escape ret;
 Test { [[
 var int[] v = [1,2,3];
 v = [] .. v .. v;
-escape 1;
+escape $v + v[5];
 ]],
-    run = '2] runtime error: access out of bounds';
+    run = 9,
 }
 
 Test { [[
 var int[] v = [1,2,3];
 v = [1] .. v;
-escape 1;
+escape $v + v[1];
 ]],
-    run = '2] runtime error: access out of bounds';
+    run = 3,
 }
 
 Test { [[

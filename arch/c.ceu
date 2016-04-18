@@ -13,15 +13,18 @@ native @plain _char, _byte;
 
 native @const _stderr;
 
-native @nohold _fprintf(),
-               _free(),
-               _printf(),
-               _sprintf(),
-               _srand(),
-               _sscanf();
+native @nohold
+        _ceu_vector_copy_buffer(),
+        _fprintf(),
+        _free(),
+        _printf(),
+        _sprintf(),
+        _srand(),
+        _sscanf(),
+        _strcpy();
 
 native @pure _abs(),
              _strcmp(),
-             _strcpy();
+             _strlen();
 
 #endif

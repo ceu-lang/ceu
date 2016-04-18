@@ -128,32 +128,20 @@ int ceu_vector_push (tceu_vector* vector, byte* v) {
 }
 
 int ceu_vector_concat (tceu_vector* to, tceu_vector* fr) {
-    if (to == fr) {
-        return 0;
-    } else {
-        /* TODO: memcpy */
-        int i;
-        for (i=0; i<fr->nxt; i++) {
-            byte* v = ceu_vector_geti(fr, i);
-            if (v == NULL) {
-                return 0;
-            } else if (!ceu_vector_push(to,v)) {
-                return 0;
-            }
-        }
-    }
-    return 1;
+    return ceu_vector_copy_buffer(to,
+                                  ceu_vector_getlen(to),
+                                  fr->mem,
+                                  ceu_vector_getlen(fr)*fr->unit);
 }
 
-int ceu_vector_concat_buffer (tceu_vector* to, const char* fr, int n) {
-    /* TODO: memcpy */
-    int i;
-    for (i=0; i<n; i++) {
-        if (!ceu_vector_push(to,(byte*)&fr[i])) {
-            return 0;
-        }
+int ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n) {
+    ceu_out_assert_msg((n % to->unit) == 0, "bug found");
+    if (!ceu_vector_setlen(to, idx + n/to->unit, 1)) {
+        return 0;
+    } else {
+        memcpy(&to->mem[idx*to->unit], fr, n);
+        return 1;
     }
-    return 1;
 }
 
 char* ceu_vector_tochar (tceu_vector* vector) {

@@ -1336,7 +1336,7 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
                             end
                             LINE(me, [[
     #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-    ceu_out_assert_msg( ceu_vector_concat_buffer(]]..V(to,'lval')..','..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[)), "access out of bounds");
+    ceu_out_assert_msg(ceu_vector_copy_buffer(]]..V(to,'lval')..[[, ceu_vector_getlen(]]..V(to,'lval')..[[),(byte*)]]..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[)), "access out of bounds");
     ]])
                         else
                             assert(TP.check(e.tp,'[]','-&'), 'bug found')
@@ -1348,7 +1348,7 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
                             end
                             LINE(me, [[
     #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-    ceu_out_assert_msg( ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "access out of bounds");
+    ceu_out_assert_msg(ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "access out of bounds");
     ]])
                             if first then
                                 LINE(me, [[
@@ -2298,7 +2298,7 @@ if (*]]..me.thread.thread_is_aborted..[[ == 0) {
                 ceu_lua_objlen(len, _ceu_app->lua, -1);
                 ceu_lua_tostring(ret, _ceu_app->lua, -1);
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-                ceu_out_assert_msg( ceu_vector_concat_buffer(]]..V(set_to,'lval')..[[, ret, len), "access out of bounds");
+                ceu_out_assert_msg(ceu_vector_copy_buffer(]]..V(set_to,'lval')..[[,ceu_vector_getlen(]]..V(set_to,'lval')..[[), ret, len), "access out of bounds");
             } else {
                 ceu_lua_pushstring(_ceu_app->lua, "not implemented [2]");
                 err = 1;
