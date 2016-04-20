@@ -327,10 +327,11 @@ int ceu_sys_wclock_ (tceu_app* app, s32 dt, s32* set, s32* get)
 #ifdef CEU_LUA
 int ceu_lua_atpanic_f (lua_State* lua) {
 #ifdef CEU_DEBUG
-    char msg[255] = "LUA_ATPANIC: ";
-    strncat(msg, lua_tostring(lua,-1), 100);
-    strncat(msg, "\n", 1);
-    ceu_out_assert_msg(0, msg);
+    char* msg = lua_tostring(lua,-1);
+    ceu_out_assert_msg(msg!=NULL, "bug found");
+    ceu_out_log(0, (long)msg);
+    ceu_out_log(0, (long)"\n");
+    ceu_out_assert(0);
 /*
 */
 #else

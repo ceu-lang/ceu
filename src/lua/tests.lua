@@ -347,10 +347,12 @@ escape _strlen((char&&)&&t.name);
 }
 
 do return end
---]===]
+
+no output vectors in interfaces
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -26684,7 +26686,6 @@ escape v;
 
 --<<< THREADS / EMITS
 --<<< ASYNCS / THREADS
-do return end
 
 -->>> LUA
 
@@ -26721,21 +26722,21 @@ escape a;
 }
 
 Test { [=[
-var int v = [["ok" == 'ok']];
+var bool v = [["ok" == 'ok']];
 escape v;
 ]=],
     run = 1,
 }
 
 Test { [=[
-var int v = [[true]];
+var bool v = [[true]];
 escape v;
 ]=],
     run = 1,
 }
 
 Test { [=[
-var int v = [[false]];
+var bool v = [[false]];
 escape v;
 ]=],
     run = 0,
@@ -26784,12 +26785,40 @@ escape ret;
 }
 
 Test { [=[
+
+[[ error'oi' ]];
+escape 1;
+]=],
+    run = '2] lua error : [string " error\'oi\' "]:1: oi',
+}
+
+Test { [=[
+var int ret = [[ true ]];
+escape ret;
+]=],
+    run = '1] lua error : number expected',
+}
+Test { [=[
+var bool ret = [[ nil ]];
+escape ret==false;
+]=],
+    run = 1,
+}
+Test { [=[
+
+var int ret = [[ nil ]];
+escape ret;
+]=],
+    run = '2] lua error : number expected',
+}
+
+Test { [=[
 native @nohold _strcmp();
 var char&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 var char[10] cpy = [[ str ]];
-escape ret and (not _strcmp(str,&&cpy));
+escape ret and (not _strcmp(str,(_char&&)&&cpy));
 ]=],
     run = 1,
 }
@@ -26816,7 +26845,7 @@ var bool ret = [[ str == 'oioioi' ]];
 var char[10] cpy;
 var char[10]& ptr = &cpy;
 ptr = [[ str ]];
-escape ret and (not _strcmp(&&str,&&cpy));
+escape ret and (not _strcmp((_char&&)&&str,(_char&&)&&cpy));
 ]=],
     run = 1,
 }
@@ -26825,7 +26854,7 @@ Test { [=[
 native @nohold _strcmp();
 [[ str = '1234567890' ]]
 var char[2] cpy = [[ str ]];
-escape (_strcmp(&&cpy,"1") == 0);
+escape (_strcmp((_char&&)&&cpy,"1") == 0);
 ]=],
     run = '3] runtime error: access out of bounds',
 }
@@ -26837,7 +26866,7 @@ var char[2] cpy;
 var char[20] cpy_;
 var char[]& ptr = &cpy;
 ptr = [[ str ]];
-escape (not _strcmp(&&cpy,"1234567890"));
+escape (not _strcmp((_char&&)&&cpy,"1234567890"));
 ]=],
     run = '6] runtime error: access out of bounds',
 }
@@ -26857,7 +26886,21 @@ escape ret;
 }
 
 Test { [=[
-native @nohold _strcmp();
+[[ ]] [[ ]] [[ ]]
+escape 1;
+]=],
+    run = 1,
+}
+Test { [=[
+[[ ]]
+[[ ]]
+[[ ]]
+escape 1;
+]=],
+    run = 1,
+}
+Test { [=[
+native @nohold _strcmp(),_printf();
 
 [[
 -- this is lua code
@@ -26870,7 +26913,7 @@ var int v_from_ceu = [[v_from_lua]];
 str_from_lua = 'string from lua'
 ]]
 var char[100] str_from_ceu = [[str_from_lua]];
-_assert(not _strcmp(&&str_from_ceu, "string from lua"));
+_assert(0==_strcmp((_char&&)&&str_from_ceu, "string from lua"));
 
 [[
 print(@v_from_ceu)

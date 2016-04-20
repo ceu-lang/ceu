@@ -2236,28 +2236,38 @@ if (*]]..me.thread.thread_is_aborted..[[ == 0) {
         lua = string.gsub(lua, '\n', 'n') -- undo format for \n
         LINE(me, [[
 {
+    int   err_line = __LINE__ - 1;
+    char* err_file = __FILE__;
+    ceu_lua_pushstring(_ceu_app->lua, "[");
+    ceu_lua_pushstring(_ceu_app->lua, __FILE__);
+    ceu_lua_pushstring(_ceu_app->lua, ":");
+    ceu_lua_pushnumber(_ceu_app->lua, err_line);
+    ceu_lua_pushstring(_ceu_app->lua, "] lua error : ");
+
     int err;
     ceu_luaL_loadstring(err,_ceu_app->lua, ]]..lua..[[);
-    if (! err) {
+    if (err) {
+        goto _CEU_LUA_ERR_]]..me.n..[[;
+    }
 ]])
 
         for _, p in ipairs(me.params) do
             ASR(TP.id(p.tp)~='@', me, 'unknown type')
             if TP.isNumeric(p.tp) then
                 LINE(me, [[
-        ceu_lua_pushnumber(_ceu_app->lua,]]..V(p,'rval')..[[);
+    ceu_lua_pushnumber(_ceu_app->lua,]]..V(p,'rval')..[[);
 ]])
             elseif TP.check(p.tp,'char','[]','-&') then
                 LINE(me, [[
-        ceu_lua_pushstring(_ceu_app->lua,(char*)]]..V(p,'lval')..[[->mem);
+    ceu_lua_pushstring(_ceu_app->lua,(char*)]]..V(p,'lval')..[[->mem);
 ]])
             elseif TP.check(p.tp,'char','&&','-&') then
                 LINE(me, [[
-        ceu_lua_pushstring(_ceu_app->lua,]]..V(p,'rval')..[[);
+    ceu_lua_pushstring(_ceu_app->lua,]]..V(p,'rval')..[[);
 ]])
             elseif TP.check(p.tp,'&&','-&') then
                 LINE(me, [[
-        ceu_lua_pushlightuserdata(_ceu_app->lua,]]..V(p,'rval')..[[);
+    ceu_lua_pushlightuserdata(_ceu_app->lua,]]..V(p,'rval')..[[);
 ]])
             else
                 error 'not implemented'
@@ -2265,59 +2275,63 @@ if (*]]..me.thread.thread_is_aborted..[[ == 0) {
         end
 
         LINE(me, [[
-        ceu_lua_pcall(err, _ceu_app->lua, ]]..nargs..','..nrets..[[, 0);
-        if (! err) {
+    ceu_lua_pcall(err, _ceu_app->lua, ]]..nargs..','..nrets..[[, 0);
+    if (err) {
+        goto _CEU_LUA_ERR_]]..me.n..[[;
+    }
 ]])
         if set then
-            if TP.isNumeric(set_to.tp) or set_to.tp=='bool' then
+            if TP.check(set_to.tp,'bool') then
                 LINE(me, [[
-            int is;
-            int ret;
-            ceu_lua_isnumber(is, _ceu_app->lua,-1);
-            if (is) {
-                ceu_lua_tonumber(ret, _ceu_app->lua,-1);
-            } else {
-                ceu_lua_isboolean(is, _ceu_app->lua,-1);
-                if (is) {
-                    ceu_lua_toboolean(ret, _ceu_app->lua,-1);
-                } else {
-                    ceu_lua_pushstring(_ceu_app->lua, "not implemented [1]");
-                    err = 1;
-                }
-            }
-            ]]..V(set_to,'rval')..[[ = ret;
-            ceu_lua_pop(_ceu_app->lua, 1);
+    int is;
+    int ret;
+    ceu_lua_toboolean(ret, _ceu_app->lua,-1);
+    ]]..V(set_to,'rval')..[[ = ret;
+]])
+            elseif TP.isNumeric(set_to.tp) then
+                LINE(me, [[
+    int is;
+    int ret;
+    ceu_lua_isnumber(is, _ceu_app->lua,-1);
+    if (is) {
+        ceu_lua_tonumber(ret, _ceu_app->lua,-1);
+    } else {
+        ceu_lua_pop(_ceu_app->lua,1);
+        ceu_lua_pushstring(_ceu_app->lua, "number expected");
+        goto _CEU_LUA_ERR_]]..me.n..[[;
+    }
+    ]]..V(set_to,'rval')..[[ = ret;
 ]])
             elseif TP.check(set_to.tp,'char','[]','-&') then
                 LINE(me, [[
-            int is;
-            ceu_lua_isstring(is, _ceu_app->lua,-1);
-            if (is) {
-                const char* ret;
-                int len;
-                ceu_lua_objlen(len, _ceu_app->lua, -1);
-                ceu_lua_tostring(ret, _ceu_app->lua, -1);
+    int is;
+    ceu_lua_isstring(is, _ceu_app->lua,-1);
+    if (is) {
+        const char* ret;
+        int len;
+        ceu_lua_objlen(len, _ceu_app->lua, -1);
+        ceu_lua_tostring(ret, _ceu_app->lua, -1);
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-                ceu_out_assert_msg(ceu_vector_copy_buffer(]]..V(set_to,'lval')..[[,ceu_vector_getlen(]]..V(set_to,'lval')..[[), ret, len), "access out of bounds");
-            } else {
-                ceu_lua_pushstring(_ceu_app->lua, "not implemented [2]");
-                err = 1;
-            }
-            ceu_lua_pop(_ceu_app->lua, 1);
+        ceu_out_assert_msg(ceu_vector_copy_buffer(]]..V(set_to,'lval')..[[,ceu_vector_getlen(]]..V(set_to,'lval')..[[), (byte*)ret, len), "access out of bounds");
+    } else {
+        ceu_lua_pop(_ceu_app->lua,1);
+        ceu_lua_pushstring(_ceu_app->lua, "not implemented [2]");
+        goto _CEU_LUA_ERR_]]..me.n..[[;
+    }
 ]])
             elseif TP.check(set_to.tp,'&&','-&') then
                 LINE(me, [[
-            void* ret;
-            int is;
-            ceu_lua_islightuserdata(is, _ceu_app->lua,-1);
-            if (is) {
-                ceu_lua_touserdata(ret,_ceu_app->lua,-1);
-            } else {
-                ceu_lua_pushstring(_ceu_app->lua, "not implemented [3]");
-                err = 1;
-            }
+    void* ret;
+    int is;
+    ceu_lua_islightuserdata(is, _ceu_app->lua,-1);
+    if (is) {
+        ceu_lua_touserdata(ret,_ceu_app->lua,-1);
+    } else {
+        ceu_lua_pushstring(_ceu_app->lua, "not implemented [3]");
+        ceu_lua_pop(_ceu_app->lua,1);
+        goto _CEU_LUA_ERR_]]..me.n..[[;
+    }
             ]]..V(set_to,'rval')..[[ = ret;
-            ceu_lua_pop(_ceu_app->lua, 1);
 ]])
             else
                 error 'not implemented'
@@ -2325,16 +2339,14 @@ if (*]]..me.thread.thread_is_aborted..[[ == 0) {
         end
 
         LINE(me, [[
-            if (! err) {
-                goto _CEU_LUA_OK_]]..me.n..[[;
-            }
-        }
-    }
+    if (0) {
 /* ERROR */
-    ceu_lua_error(_ceu_app->lua); /* TODO */
-
+_CEU_LUA_ERR_]]..me.n..[[:;
+        ceu_lua_concat(_ceu_app->lua, 6);
+        ceu_lua_error(_ceu_app->lua); /* TODO */
+    }
 /* OK */
-_CEU_LUA_OK_]]..me.n..[[:;
+    ceu_lua_pop(_ceu_app->lua, ]]..(set and 6 or 5)..[[);
 }
 ]])
     end,

@@ -310,9 +310,10 @@
     }
 
 #else
+    #define ceu_lua_atpanic(l,f)                 lua_atpanic(l,f)
+    #define ceu_lua_concat(l,n)                  lua_concat(l,n)
     #define ceu_luaL_newstate(set)               set = luaL_newstate()
     #define ceu_luaL_openlibs(l)                 luaL_openlibs(l)
-    #define ceu_lua_atpanic(l,f)                 lua_atpanic(l,f)
     #define ceu_luaL_loadstring(set,l,str)       set = luaL_loadstring(l,str)
     #define ceu_lua_pushnumber(l,v)              lua_pushnumber(l,v)
     #define ceu_lua_pushstring(l,v)              lua_pushstring(l,v)

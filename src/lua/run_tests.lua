@@ -215,8 +215,6 @@ end
     --os.execute('echo "/*'..line..'*/" > /tmp/line')
     --os.execute('cat /tmp/line _ceu_app.c > /tmp/file')
     --os.execute('mv /tmp/file _ceu_app.c')
---DBG(CEU)
---DBG(GCC)
 
     if PROPS.has_threads then
         GCC = GCC .. ' -lpthread'
@@ -224,6 +222,8 @@ end
     if PROPS.has_lua then
         GCC = GCC .. ' -llua5.1'
     end
+--DBG(CEU)
+--DBG(GCC)
 
     local ARGS = T.args or ''
     local EXE = (((not VALGRIND) or T.valgrind==false) and OUT_DIR..'/ceu.exe '..ARGS..' 2>&1')
