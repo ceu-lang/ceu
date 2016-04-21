@@ -25,6 +25,7 @@ native @nohold
 
 native @pure _abs(),
              _strcmp(),
+             _strncpy(),
              _strlen();
 
 #endif

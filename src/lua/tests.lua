@@ -346,13 +346,13 @@ escape _strlen((char&&)&&t.name);
     run = 2,
 }
 
-do return end
-
 no output vectors in interfaces
+
+--]===]
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -16172,8 +16172,8 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
-    --ref = 'line 4 : invalid access to uninitialized variable "x" (declared at tests.lua:3)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    ref = 'line 4 : invalid access to uninitialized variable "x" (declared at tests.lua:3)',
 }
 
 Test { [[
@@ -16184,7 +16184,8 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    ref = 'line 4 : invalid attribution : variable "x" has narrower scope than its destination',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --run = 1,
 }
 
@@ -16230,8 +16231,9 @@ do
 end
 escape v1.v+v2.v+v3.v;
 ]],
-    ref = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
+    --ref = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
     --ref = 'line 10 : attribution to reference with greater scope',
+    ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',
     --run = 6,
 }
 
@@ -16895,6 +16897,16 @@ v[0].b = 36; // invalid attribution : missing alias operator `&´
 escape b;
 ]],
     run = 36,
+}
+
+Test { [[
+var int x;
+do
+    x = 1;
+end
+escape x;
+]],
+    run = 1,
 }
 
 --<<< REFERENCES / REFS / &
@@ -22555,6 +22567,48 @@ escape bytes[0];
 ]],
     run = 5,
 }
+
+Test { [[
+native @nohold _ceu_vector_copy_buffer();
+var char[] v = [1,2,0,4,5];
+var byte c = 3;
+_ceu_vector_copy_buffer(&&v, 2, &&c, 1);
+escape v[2] + $v;
+]],
+    run = 8,
+}
+
+Test { [[
+native @nohold _ceu_vector_copy_buffer();
+var char[5] v = [1,2,0,4,5];
+var byte c = 3;
+var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1);
+escape v[2] + $v + ok;
+]],
+    run = 9,
+}
+
+Test { [[
+native @nohold _ceu_vector_copy_buffer();
+var char[5] v = [1,2,1,4,5];
+var byte c = 3;
+var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8);
+_printf("v = %d\n", $v);
+escape v[2] + $v + ok;
+]],
+    run = 6,
+}
+
+Test { [=[
+var char[] str = [].."12345";
+var byte[] bts = [1,2,3,4,5];
+var int r1 = [[ string.len(@str) ]];
+var int r2 = [[ string.len(@bts) ]];
+escape r1+r2;
+]=],
+    run = 10,
+}
+
 --<<< VECTORS / STRINGS
 
 Test { [[
@@ -26684,6 +26738,20 @@ escape v;
     props = 'line 3 : not permitted inside `thread´',
 }
 
+Test { [[
+native do
+    int f (int v) {
+        return v + 1;
+    }
+end
+var int a = 0;
+async/thread (a) do
+    a = _f(10);
+end
+escape a;
+]],
+    run = 11,
+}
 --<<< THREADS / EMITS
 --<<< ASYNCS / THREADS
 
@@ -26937,6 +27005,23 @@ escape ptr2==&&a;
 ]=],
     run = 1,
 }
+
+Test { [=[
+var bool b1 = true;
+var bool b2 = false;
+var int ret = [[ @b1==true and @b2==false ]];
+[[
+    b1 = @b1
+    b2 = @b2
+]];
+var bool b1_ = [[b1]];
+var bool b2_ = [[b2]];
+escape ret + b1_ + b2_;
+]=],
+    run = 2,
+}
+
+--<<< LUA
 
 -->>> CLASSES, ORGS, ORGANISMS
 --do return end

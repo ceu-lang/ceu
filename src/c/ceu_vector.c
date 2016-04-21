@@ -43,40 +43,33 @@ static void* ceu_vector_resize (tceu_vector* vector, int n) {
 #endif
 
 int ceu_vector_setlen (tceu_vector* vector, int nxt, int force) {
-    int ret;
-
-    if (nxt<=vector->nxt || force) {
-        vector->nxt = nxt;
-
+    if (nxt<=vector->nxt || force)
+    {
 #ifdef CEU_VECTOR_MALLOC
         if (vector->max <= 0) {
             if (ceu_vector_resize(vector,nxt)==NULL && nxt>0) {
-                ret = 0;
-            } else {
-                ret = 1;
+                return 0;
             }
         }
         else
 #endif
         {
             if (nxt > vector->max) {
-                ret = 0;
-            } else {
-                ret = 1;
+                return 0;
             }
         }
 
         /* [STRING] */
-        if (ret == 1) {
-            if (vector->mem != NULL) {
-                vector->mem[nxt*vector->unit] = '\0';
-            }
+        if (vector->mem != NULL) {
+            vector->mem[nxt*vector->unit] = '\0';
         }
     } else {
         /* can only decrease vector->nxt */
-        ret = 0;
+        return 0;
     }
-    return ret;
+
+    vector->nxt = nxt;
+    return 1;
 }
 
 /* can only get within idx < vector->nxt */
@@ -136,7 +129,8 @@ int ceu_vector_concat (tceu_vector* to, tceu_vector* fr) {
 
 int ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n) {
     ceu_out_assert_msg((n % to->unit) == 0, "bug found");
-    if (!ceu_vector_setlen(to, idx + n/to->unit, 1)) {
+    int len = idx + n/to->unit;
+    if (ceu_vector_getlen(to)<len && !ceu_vector_setlen(to,len,1)) {
         return 0;
     } else {
         memcpy(&to->mem[idx*to->unit], fr, n);

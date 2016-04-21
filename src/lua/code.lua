@@ -2253,13 +2253,17 @@ if (*]]..me.thread.thread_is_aborted..[[ == 0) {
 
         for _, p in ipairs(me.params) do
             ASR(TP.id(p.tp)~='@', me, 'unknown type')
-            if TP.isNumeric(p.tp) then
+            if TP.check(p.tp,'bool') then
+                LINE(me, [[
+    ceu_lua_pushboolean(_ceu_app->lua,]]..V(p,'rval')..[[);
+]])
+            elseif TP.isNumeric(p.tp) then
                 LINE(me, [[
     ceu_lua_pushnumber(_ceu_app->lua,]]..V(p,'rval')..[[);
 ]])
-            elseif TP.check(p.tp,'char','[]','-&') then
+            elseif TP.check(p.tp,'[]','-&') then
                 LINE(me, [[
-    ceu_lua_pushstring(_ceu_app->lua,(char*)]]..V(p,'lval')..[[->mem);
+    ceu_lua_pushlstring(_ceu_app->lua,(char*)]]..V(p,'lval')..[[->mem,ceu_vector_getlen(]]..V(p,'lval')..[[));
 ]])
             elseif TP.check(p.tp,'char','&&','-&') then
                 LINE(me, [[
