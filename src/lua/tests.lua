@@ -348,11 +348,11 @@ escape _strlen((char&&)&&t.name);
 
 no output vectors in interfaces
 
---]===]
-do return end
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -16172,8 +16172,8 @@ do
 end
 escape 1;
 ]],
-    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
-    ref = 'line 4 : invalid access to uninitialized variable "x" (declared at tests.lua:3)',
+    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    --ref = 'line 4 : invalid access to uninitialized variable "x" (declared at tests.lua:3)',
 }
 
 Test { [[
@@ -16184,8 +16184,8 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 4 : invalid attribution : variable "x" has narrower scope than its destination',
-    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    --ref = 'line 4 : invalid attribution : variable "x" has narrower scope than its destination',
+    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --run = 1,
 }
 
@@ -16231,9 +16231,9 @@ do
 end
 escape v1.v+v2.v+v3.v;
 ]],
-    --ref = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
+    ref = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
     --ref = 'line 10 : attribution to reference with greater scope',
-    ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',
+    --ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',
     --run = 6,
 }
 
@@ -16906,7 +16906,8 @@ do
 end
 escape x;
 ]],
-    run = 1,
+    ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
+    --run = 1,
 }
 
 --<<< REFERENCES / REFS / &
@@ -27019,6 +27020,27 @@ var bool b2_ = [[b2]];
 escape ret + b1_ + b2_;
 ]=],
     run = 2,
+}
+
+Test { [=[
+
+[[
+    (0)();
+]];
+escape 1;
+]=],
+    run = '2: attempt to call a number value',
+}
+
+Test { [=[
+
+var int ret = [[
+    (0)();
+]];
+escape ret;
+]=],
+    --run = 1,
+    run = '2: attempt to call a number value',
 }
 
 --<<< LUA
@@ -51629,7 +51651,7 @@ end
 
 var T t;
 native @nohold _strlen();
-escape _strlen((char&&)&&t.name);
+escape _strlen((_char&&)&&t.name);
 ]],
     run = 2,
 }
@@ -51660,7 +51682,7 @@ var U u with
 end;
 
 native @nohold _strlen();
-escape _strlen((char&&)&&t.name);
+escape _strlen((_char&&)&&t.name);
 ]],
     run = 2,
 }
@@ -52653,7 +52675,7 @@ end
 input/output (int x)=>char[]&& PING_PONG do
     var char[] ret = [].."Pong ";
     native @nohold _printf();
-    _printf("%s\n", &&ret);
+    _printf("%s\n", (_char&&)&&ret);
     return &&ret;
 end
 async do
@@ -52672,7 +52694,7 @@ par/and do
     var int i,err;
     (i,err,ret) = await PING_PONG_RETURN;
     native @nohold _printf();
-    _printf("%s\n", ret!);
+    _printf("%s\n", (_char&&)ret!);
 with
     async do
         var char[] str = [].."END: 10";
