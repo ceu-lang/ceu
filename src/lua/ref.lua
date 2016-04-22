@@ -362,7 +362,9 @@ F = {
                 --  end
                 VARS_UNINIT[var] = nil
             else
-                ASR(false, dcl, [[
+                -- accepts uninit across 'do' (unless 'var int& ref')
+                local ok = (me.tag=='Do' and (not TP.check('&')))
+                ASR(ok, dcl, [[
 uninitialized variable "]]..var.id..[[" crossing compound statement (]]..me.ln[1]..':'..me.ln[2]..[[)]],
 [[
     All variables must be initialized before use.

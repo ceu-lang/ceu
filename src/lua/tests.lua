@@ -269,7 +269,7 @@ do
 -- BUG: u8 vs int
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input [10] (int max)=>int LINE;
 par/or do
@@ -347,6 +347,9 @@ escape _strlen((char&&)&&t.name);
 }
 
 no output vectors in interfaces
+
+every (x,_) in e do
+end
 
 --do return end
 
@@ -539,7 +542,8 @@ Test { [[var int b=2; var int a=1; b=a; var int a=0; escape b+a;]],
     run = 1,
 }
 Test { [[do var int a=1; end var int a=0; escape a;]],
-    run = 0,
+    gcc = 'error: variable ‘__ceu_a_1’ set but not used',
+    --run = 0,
 }
 Test { [[var int a=1,a=0; escape a;]],
     wrn = true,
@@ -1099,7 +1103,7 @@ Test { [[if (2) then  else escape 0; end;]],
 }
 
 -- IF vs SEQ priority
-Test { [[if 1 then var int a=0; escape 2; else escape 3; end;]],
+Test { [[if 1 then var int a=0; if a then end; escape 2; else escape 3; end;]],
     run = 2,
 }
 
@@ -1556,6 +1560,7 @@ Test { [[
 var int a=10;
 do
     var int b=1;
+    if b then end;
 end
 escape a;
 ]],
@@ -1566,6 +1571,7 @@ Test { [[
 input void OS_START;
 do
     var int v = 0;
+    if v then end;
 end
 event void e;
 var int ret = 0;
@@ -1589,6 +1595,7 @@ Test { [[
 input void OS_START;
 do
     var int v = 0;
+    if v then end;
 end
 event void e;
 par do
@@ -1610,6 +1617,7 @@ Test { [[
 input void OS_START;
 do
     var int v = 0;
+    if v then end;
 end
 event void e;
 par do
@@ -3265,6 +3273,28 @@ escape ret;
     run = 40;
 }
 
+Test { [[
+var int k = 5;
+loop/1 i in k do
+    var int x = i + 2;
+    _printf("%d\n", x);
+end
+escape 1;
+]],
+    run = '2] runtime error: loop overflow',
+}
+
+Test { [[
+var int k = 5;
+loop/10 i in k do
+    var int x = i + 2;
+    _printf("%d\n", x);
+end
+escape 1;
+]],
+    run = 1,
+}
+
 -- EVERY
 
 Test { [[
@@ -3388,6 +3418,7 @@ input (int,int) A;
 par do
     var int a, b;
     (a,b) = await A;
+    if a and b then end
 with
     await A;
     escape 1;
@@ -3405,6 +3436,7 @@ input (int,int) A;
 par do
     var int a, b;
     (a,b) = await A;
+    if a and b then end
 with
     escape 1;
 end
@@ -3586,6 +3618,7 @@ par do
         var int ok = do
             escape 1;
         end;
+        if ok then end;
     end
 with
     await 2s;
@@ -3695,6 +3728,7 @@ par/or do
         end
         var int dim = 0;
         var int x = dim;
+        if x then end
         do break; end
     end
 with
@@ -4133,6 +4167,7 @@ par/or do
         await A;
         async do
             var int a = 1;
+            if a then end
         end
     end
     sum = 0;
@@ -4157,6 +4192,7 @@ par/or do
         await A;
         async do
             var int a = 1;
+            if a then end
         end
     end
     sum = 0;            // 11
@@ -4164,6 +4200,7 @@ with
     loop i in 2 do        // 13
         async do
             var int a = 1;
+            if a then end
         end
         sum = sum + 1;  // 17
     end
@@ -4182,6 +4219,7 @@ par/or do
         await A;
         async do
             var int a = 1;
+            if a then end
         end
     end
     sum = 0;            // 11
@@ -4189,6 +4227,7 @@ with
     loop i in 2 do        // 13
         async do
             var int a = 1;
+            if a then end
         end
         sum = sum + 1;  // 17
     end
@@ -7087,6 +7126,7 @@ with
                 i = i + 1;
             end
         end
+        if t then end;
     end
 with
     async do
@@ -7610,6 +7650,7 @@ par/or do
 with
     await A;
     var int v = a;
+    if v then end;
 end;
 escape a;
 ]],
@@ -8660,6 +8701,7 @@ par/or do
     end;
     await 10ms;
     var int v = a;
+    if v then end;
 with
     await B;
     await 10ms;
@@ -8708,6 +8750,7 @@ par/or do
         await 10ms;
     end;
     var int v = a;
+    if v then end;
 with
     await B;
     await 20ms;
@@ -8737,6 +8780,7 @@ par/or do
     end;
     await 10us;
     var int v = a;
+    if v then end
 with
     await A;
     await B;
@@ -11265,6 +11309,7 @@ with
     await A;
     await B;
     var int v = a;
+    if v then end;
 end;
 escape a;
 ]],
@@ -13820,6 +13865,7 @@ par/or do
             emit b => aa;
         with
             var int bb = await b;
+            if bb then end;
         end;
     end;
 with
@@ -13904,6 +13950,7 @@ Test { [[
 var int v=2;
 async (v) do
     var int a = v;
+    if a then end;
 end;
 escape v;
 ]],
@@ -13975,11 +14022,13 @@ par do
             await B;
             async (v1) do
                 var int v = v1 + 1;
+                if v then end
             end;
         with
             await B;
             async (v2) do
                 var int v = v2 + 1;
+                if v then end
             end;
         with
             await A;
@@ -15359,6 +15408,7 @@ Test { [[do var int a=0; end;]],
 Test { [[
 do
     var int a=0;
+    if a then end;
     escape 1;
 end;
 ]],
@@ -15370,6 +15420,7 @@ do
     var int a = 1;
     do
         var int a = 0;
+        if a then end;
     end;
     escape a;
 end;
@@ -15437,6 +15488,7 @@ par/or do
     await A;
     a = 1;
     await A;
+    if a then end;
 with
     a = 2;
     await B;
@@ -15882,6 +15934,8 @@ v = &vv;
 await 1s;
 do
     var int vvv = 1;
+    native @nohold ___ceu_nothing();
+    ___ceu_nothing(&&vvv);
 end
 escape v;
 ]],
@@ -16547,6 +16601,30 @@ end
 escape r;
 ]],
     --props = "line 8 : not permitted inside `finalize´",
+    gcc = '9:27: error: variable ‘__ceu_a_3’ set but not used [-Werror=unused-but-set-variable]',
+}
+
+Test { [[
+native _f();
+native do
+    int* f (void) {
+        return NULL;
+    }
+end
+var int r = 0;
+do
+    var int&? a;
+    finalize
+        a = &_f();
+    with
+        if a? then end
+        var int b = do escape 2; end;
+    end
+    r = 1;
+end
+escape r;
+]],
+    --props = "line 8 : not permitted inside `finalize´",
     run = 1,
 }
 
@@ -16605,6 +16683,8 @@ native do
 end
 native _t = 4;
 var _t v = _f;
+    native @nohold ___ceu_nothing();
+    ___ceu_nothing(v);
 await 1s;
 do
     var int a=0;
@@ -16627,6 +16707,8 @@ native do
 end
 native _t = 4;
 var _t v = _f;
+    native @nohold ___ceu_nothing();
+    ___ceu_nothing(v);
 await 1s;
 var int a=0;
 _f(&&a) finalize with nothing; end;
@@ -17119,6 +17201,7 @@ var int ret = 0;
 var int&& pa=null;
 do
     var int v=0;
+    if v then end;
     if 1 then
         finalize with
             ret = ret + 1;
@@ -18441,6 +18524,7 @@ par/or do
 with
     var bool b;
     (b,ret) = await ok;
+    if b then end;
 end
 escape ret;
 ]],
@@ -19106,6 +19190,7 @@ with
         finalize
             srf = &_my_alloc();
         with
+            if srf? then end;
             _my_free();
         end
     end
@@ -20006,6 +20091,7 @@ var int a = 1;
 var int&& b = &&a;
 do
 var int a = 0;
+if a then end;
 end
 escape *b;
 ]],
@@ -20041,7 +20127,7 @@ escape(1);
 }
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing(d)
 end
 output int A;
 emit A => 1;
@@ -20104,7 +20190,7 @@ escape(1);
 }
 Test { [[
 native do
-    #define ceu_out_emit(a,b,c,d) 1
+    #define ceu_out_emit(a,b,c,d) __ceu_nothing(d)
 end
 output int A;
 native/pre do
@@ -20303,7 +20389,7 @@ escape 0;
 
 Test { [[
 native do
-    #define ceu_out_emit(a,b,c,d) 0
+    #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
 output void A, B;
 par/or do
@@ -20322,7 +20408,7 @@ escape 1;
 
 Test { [[
 native do
-    #define ceu_out_emit(a,b,c,d) 0
+    #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
 @safe A with B;
 output void A, B;
@@ -20865,6 +20951,7 @@ input (int c)=>int F1 do
     return c + 1;
 end
 input (int c)=>void F2 do
+    ___ceu_nothing(&&c);
 end
 call F2 => 0;
 var int ret = call F1 => 1;
@@ -21553,6 +21640,7 @@ do
     var int x = 0;
     await OS_START;
     var int z = 0;
+    if x and z then end;
 end
 escape p;
 ]],
@@ -21872,6 +21960,7 @@ par/or do
     var u32 len;
     (p2Buff, len) = await HTTP_GET;
     var char c = p2Buff[0]; // doesn't work
+    if len and p2Buff and c then end;
 with
 end
 escape 1;
@@ -22573,7 +22662,7 @@ Test { [[
 native @nohold _ceu_vector_copy_buffer();
 var char[] v = [1,2,0,4,5];
 var byte c = 3;
-_ceu_vector_copy_buffer(&&v, 2, &&c, 1);
+_ceu_vector_copy_buffer(&&v, 2, &&c, 1, 1);
 escape v[2] + $v;
 ]],
     run = 8,
@@ -22583,7 +22672,7 @@ Test { [[
 native @nohold _ceu_vector_copy_buffer();
 var char[5] v = [1,2,0,4,5];
 var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1);
+var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 1);
 escape v[2] + $v + ok;
 ]],
     run = 9,
@@ -22593,7 +22682,38 @@ Test { [[
 native @nohold _ceu_vector_copy_buffer();
 var char[5] v = [1,2,1,4,5];
 var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8);
+var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 1);
+_printf("v = %d\n", $v);
+escape v[2] + $v + ok;
+]],
+    run = 6,
+}
+
+Test { [[
+native @nohold _ceu_vector_copy_buffer();
+var char[] v = [1,2,0,4,5];
+var byte c = 3;
+_ceu_vector_copy_buffer(&&v, 2, &&c, 1, 0);
+escape v[2] + $v;
+]],
+    run = 8,
+}
+
+Test { [[
+native @nohold _ceu_vector_copy_buffer();
+var char[5] v = [1,2,0,4,5];
+var byte c = 3;
+var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 0);
+escape v[2] + $v + ok;
+]],
+    run = 9,
+}
+
+Test { [[
+native @nohold _ceu_vector_copy_buffer();
+var char[] v = [1,2,1,4,5];
+var byte c = 3;
+var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 0);
 _printf("v = %d\n", $v);
 escape v[2] + $v + ok;
 ]],
@@ -23383,18 +23503,26 @@ native do
 end
 
 input (char&& path, char&& mode)=>_F&& OPEN do
+    ___ceu_nothing(path);
+    ___ceu_nothing(mode);
     return _fff;
 end
 
 input (_F&& f)=>int CLOSE do
+    ___ceu_nothing(f);
     return 1;
 end
 
 input (_F&& f)=>int SIZE do
+    ___ceu_nothing(f);
     return 1;
 end
 
 input (void&& ptr, int size, int nmemb, _F&& f)=>int READ do
+    ___ceu_nothing(ptr);
+    ___ceu_nothing(&&size);
+    ___ceu_nothing(&&nmemb);
+    ___ceu_nothing(f);
     return 1;
 end
 
@@ -23414,6 +23542,7 @@ native/pre do
 end
 
 input (_draw_string_t&& ptr)=>void DRAW_STRING do
+    ___ceu_nothing(ptr);
 end
 
 native @plain _draw_string_t;
@@ -24589,6 +24718,7 @@ var _int&& u;
 var _int[1] i=[];
 await 1s;
 u = &&i[0];
+if u==null then end;
 escape 1;
 ]],
     run = { ['~>1s']=1 },
@@ -24648,6 +24778,7 @@ input int&& SDL_KEYUP;
 par/or do
     var int&& key;
     key = await SDL_KEYUP;
+    if key==null then end;
 with
     async do
         emit SDL_KEYUP => null;
@@ -24672,7 +24803,7 @@ end
 }
 
 Test { [[
-function (int id, void&& && o1, void&& && o2)=>int getVS do
+function (void&& && o1, void&& && o2)=>int getVS do
     if (*o1) then
         return 1;
     else/if (*o2) then
@@ -26369,6 +26500,7 @@ with
         par/or do
             var int t;
             t = await 1s;
+            if t then end;
         with
             loop do
                 await T;
@@ -27066,6 +27198,16 @@ do
 end
 escape 1;
 ]],
+    gcc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
+}
+Test { [[
+class T with
+    var int x=0;
+do
+    if x then end;
+end
+escape 1;
+]],
     run = 1,
 }
 Test { [[
@@ -27341,31 +27483,10 @@ escape _V;
 
 Test { [[
 class T with
-    var int v;
-do
-end
-escape 0;
-]],
-    run = 0,
-}
-
-Test { [[
-class T with
 do
     class T1 with var int v=0; do end
     var int v=0;
-end
-escape 0;
-]],
-    run = 0, -- TODO
-    --props = 'line 2 : must be in top-level',
-}
-
-Test { [[
-class T with
-do
-    class T1 with do var int v=0; end
-    var int v=0;
+    if v then end;
 end
 escape 0;
 ]],
@@ -28561,7 +28682,9 @@ native/pre do
 end
 do
     var int v = 10;
-    var _rect r = _rect(&&v) finalize with _V=10; end;
+    var _rect r = _rect(&&v) finalize with _V=v; end;
+    native @nohold ___ceu_nothing();
+    ___ceu_nothing(&&r);
 end
 escape _V;
 ]],
@@ -28911,6 +29034,7 @@ Test { [[
 class Sm with
 do
     var u8 id=0;
+    if id then end;
 end
 
 class Image_media with
@@ -29905,6 +30029,7 @@ input void A,B;
 var int a = 0;
 do
     var u8 a = 1;
+    if a then end;
 end
 par/and do
     await A;
@@ -30029,6 +30154,7 @@ Test { [[
 class T with
 do
     var int a = 1;
+    if a then end;
 end
 var T[2] ts;
 escape 1;
@@ -31368,6 +31494,7 @@ Test { [[
 interface Global with
 end
 var int&? win;
+if win? then end;
 escape 1;
 ]],
     run = 1,
@@ -31945,7 +32072,7 @@ escape 1;
 Test { [[
 native @const _UI_ALIGN_CENTER;
 native @pure _UI_align();
-native do
+native/pre do
     typedef struct {
         int x, w;
     } SDL_Rect;
@@ -31962,6 +32089,7 @@ do
         var _SDL_Rect r=_SDL_Rect();
         r.x = _UI_align(r.w, _UI_ALIGN_CENTER);
     end
+    rect.x = 1;
 end
 escape 1;
 ]],
@@ -37123,6 +37251,7 @@ end
 class V with
 do
     var int&? v;
+    if v? then end;
     finalize
         v = &_f();
     with
@@ -37284,6 +37413,7 @@ end
 class V with
 do
     var int&? v;
+    if v? then end
     finalize
         v = &_f();
     with
@@ -37408,6 +37538,7 @@ end
 class V with
 do
     var int&? v;
+    if v? then end
     finalize
         v = &_f();
     with
@@ -37499,6 +37630,7 @@ end
 class V with
 do
     var int&? v;
+    if v? then end;
     finalize
         v = &_f();
     with
@@ -37528,6 +37660,7 @@ var T t;
 do
     await OS_START;
     var V&& v = t.u:v;
+    if v==null then end;
 end
 
 escape _V;
@@ -37643,6 +37776,7 @@ end
 class V with
 do
     var int&? v;
+    if v? then end;
     finalize
         v = &_f();
     with
@@ -38059,6 +38193,7 @@ class T with
     var U&& u;
 do
     var U&& u1 = u;
+    if u1==null then end;
     await 1s;
 end
 
@@ -38081,6 +38216,7 @@ class T with
     var U&& u;
 do
     var U&& u1 = u;
+    if u1==null then end;
     await 1s;
 end
 
@@ -38677,6 +38813,7 @@ var Game game;
 par/or do
     var int a,b;
     (a, b) = await game.go;
+    if a and b then end;
 with
     nothing;
 end
@@ -39686,6 +39823,7 @@ b = global:a;
 do
     var int&& c;
     c = global:a;
+    if c == null then end;
 end
 escape 1;
 ]],
@@ -40460,6 +40598,7 @@ class MenuGames with
     interface MenuGamesListener;
 do
     var MenuGamesListener&& lst = &&this;
+    if lst==null then end;
 end
 escape 1;
 ]],
@@ -40928,6 +41067,7 @@ class T with
     var I& parent;
     pool I[1] is;
 do
+    if &&parent==null then end;
     await 1s;
 end
 escape 1;
@@ -41566,6 +41706,7 @@ class T with
     var int[]& v1;
     var int[]  v2;
 do
+    if &&v1==null then end;
 end
 escape 1;
 ]],
@@ -41691,6 +41832,7 @@ escape 1;
 Test { [[
 function (void) => void f do
     var int a = 1;
+    if a then end;
 end
 escape 1;
 ]],
@@ -41883,6 +42025,7 @@ escape 1;
 Test { [[
 escape 1;
 function (int x)=>int f do
+    if x then end;
     loop i in 10 do
     end
     return 1;
@@ -42085,7 +42228,7 @@ Test { [[
 function (int x)=>int f;
 var int x = 0;
 function (int x)=>int f do
-    this.x = 1;
+    this.x = x;
     return 2;
 end
 escape f(1) + this.x;
@@ -42275,6 +42418,7 @@ class T with do end;
 
 function (void)=>void fff do
     var T&& ttt = null;
+    if ttt==null then end;
 end
 
 do
@@ -42741,7 +42885,7 @@ class T with
     var I&& i=null;
 do
     function (int v)=>int g do
-        return 1;
+        return v;
     end
 end
 
@@ -42752,7 +42896,7 @@ escape i:g(5);
 ]],
     --fin = 'line 16 : organism pointer attribution only inside constructors',
     --fin = 'line 16 : attribution to pointer with greater scope',
-    run = 1,
+    run = 5,
 }
 
 Test { [[
@@ -42765,7 +42909,7 @@ class T with
     var I&& i=null;
 do
     function (int v)=>int g do
-        return 1;
+        return v;
     end
 end
 
@@ -42775,7 +42919,7 @@ t.i = i;
 escape i:g(5);
 ]],
     --fin = 'line 16 : organism pointer attribution only inside constructors',
-    run = 1,
+    run = 5,
 }
 
 Test { [[
@@ -43098,6 +43242,7 @@ native do
     void* V;
 end
 function (void&& v)=>void f do
+    if v then end;
 end
 escape 1;
 ]],
@@ -43128,6 +43273,7 @@ class T with
     function (void&& v)=>void f;
 do
     function (void&& v)=>void f do
+        if v then end;
     end
 end
 var T t;
@@ -43146,6 +43292,7 @@ class T with
 do
     function (void&& v)=>void f do
         var void&& a = v;
+        if a then end;
     end
 end
 escape 1;
@@ -44601,9 +44748,11 @@ do
 
     function (int& vvv)=>TimeDisplay build do
         //this.vvv = &vvv;
+        if vvv then end;
     end
 
     vvv = &x;
+    if vvv then end;
 end
 escape 1;
 ]],
@@ -44763,6 +44912,7 @@ native do
 end
     function (void) => void parse_file do
             var int&? intro_story_str;
+            if intro_story_str? then end;
             finalize
                 intro_story_str = &_new_Int();
             with
@@ -45718,8 +45868,8 @@ native/pre do
     tceu_app CEU_APP;
     ##define ceu_out_isr_on
     ##define ceu_out_isr_off
-    ##define ceu_out_isr_attach
-    ##define ceu_out_isr_detach
+    ##define ceu_out_isr_attach(a,b) __ceu_nothing(a)
+    ##define ceu_out_isr_detach(a,b) __ceu_nothing(a)
 end
 par/or do
     async/isr [1] do
@@ -46969,6 +47119,7 @@ Test { [[
     class Queue with
     do
         var Queue&& q=null;
+        if q then end;
     end
     var Queue q;
     escape 1;
@@ -47101,6 +47252,7 @@ do
     await this.e;
     var int v;
     watching v in this.e do
+        if v then end;
         nothing;
     end
 end
@@ -47767,6 +47919,7 @@ class T with
 do
     watching *i do
         var int v = i:v;
+        if v then end
     end
 end
 
@@ -47805,6 +47958,7 @@ do
     watching *i do
         await 1s;
         var int v = i:v;
+        if v then end
     end
 end
 
@@ -51079,7 +51233,7 @@ do end;
 class Frame with
     function (int)=>void rawWriteByte;
 do
-    function (int v)=>void rawWriteByte do end;
+    function (int v)=>void rawWriteByte do if v then end end;
 end;
 
 class Receiver with
@@ -51336,6 +51490,9 @@ do
     o  = 1;
     io = 1;
     oi = 1;
+
+    if io_ and o and io and oi then end;
+    if this.o and this.io and this.oi then end;
 end
 
 var int i  = 1;
@@ -51366,8 +51523,8 @@ class T with
     output/input:
         var int& oi;
 do
-    var int o_  = 1;
-    var int io_ = 1;
+    var int o_  = 1; if o_ then end;
+    var int io_ = 1; if io_ then end;
     var int oi_ = 1;
 
     this.o  = &o_;
@@ -51576,6 +51733,7 @@ class SDL with
         var int w;
 do
     var int x = w;
+    if x then end
 end
 escape 1;
 ]],
@@ -51633,6 +51791,7 @@ class Bridger with
     var I& i;
 do
     var int& v = &this.i.v;
+    if v then end;
 end
 escape 1;
 ]],
@@ -51700,9 +51859,10 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 input/output (int max)=>void X do
+    if max then end;
     return;
 end
 escape 1;
@@ -51737,7 +51897,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input [10] (int max)=>char&& LINE;
 par/or do
@@ -51777,6 +51937,7 @@ par do
     var char&&? ret;
     var u8 err;
     (err, ret) = await LINE;
+    if err then end;
     escape not ret?;
 with
     async do
@@ -51830,7 +51991,7 @@ escape *ret;
 Test { [[
 output/input [10] (int max)=>char&& LINE;
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 par/or do
     var char&& ret;
@@ -51846,12 +52007,13 @@ escape 1;
 Test { [[
 output/input [10] (int max)=>char&& LINE;
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 par/or do
     var char&&? ret;
     var u8 err;
     (err, ret) = request LINE => 10;
+    if err and ret? then end;
 with
 end
 escape 1;
@@ -51886,7 +52048,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input [10] (int max)=>char&& LINE;
 par/or do
@@ -51921,13 +52083,14 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input [10] (int max)=>int LINE;
 par/or do
     var u8 err;
     var int? ret;
     (err, ret) = request LINE => 10;
+    if err and ret? then end;
 with
 end
 escape 1;
@@ -51937,7 +52100,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input [10] (int)=>int LINE do
     return 1;     // missing <int "id">
@@ -51954,7 +52117,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input [10] (int max)=>int LINE do
     return 1;
@@ -51972,7 +52135,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 input/output [10] (int max)=>int LINE do
     return 1;
@@ -51990,7 +52153,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 input/output [10] (int max)=>int LINE do
     return 1;
@@ -52002,7 +52165,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 var int ret = 0;
 input/output [10] (int max)=>int LINE do
@@ -52016,7 +52179,7 @@ escape ret;
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [10] (int max)=>int LINE do
@@ -52038,7 +52201,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [10] (int max)=>int LINE do
@@ -52059,7 +52222,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [10] (int max)=>int LINE do
@@ -52082,7 +52245,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
     end
     input/output [2] (int max)=>int LINE do
         await 1s;
@@ -52102,7 +52265,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output (int max)=>int LINE do
@@ -52127,7 +52290,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [2] (int max)=>int LINE do
@@ -52154,7 +52317,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [2] (int max)=>int LINE do
@@ -52181,7 +52344,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [2] (int max)=>int LINE do
@@ -52212,7 +52375,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [1] (int max)=>int LINE do
@@ -52243,7 +52406,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [0] (int max)=>int LINE do
@@ -52274,7 +52437,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [10] (int max)=>int LINE do
@@ -52300,7 +52463,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [10] (int max)=>int LINE do
@@ -52326,7 +52489,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 1
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output [10] (int max)=>int LINE do
@@ -52352,7 +52515,7 @@ end
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 1
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
     int V = 0;
 end
 output/input (int max)=>int LINE;
@@ -52367,7 +52530,7 @@ escape err;
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 0
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
     output/input (int max)=>int LINE;
@@ -52387,7 +52550,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 0
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
     output/input (int max)=>int LINE;
@@ -52407,7 +52570,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 0
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
     output/input (int max)=>int LINE;
@@ -52433,7 +52596,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 0
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
     output/input (int max)=>int LINE;
@@ -52459,7 +52622,7 @@ end
 Test { [[
 par do
     native do
-        ##define ceu_out_emit(a,b,c,d) 0
+        ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
     output/input (int max)=>int LINE;
@@ -52626,7 +52789,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 0
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
 end
 
 input void OS_START;
@@ -52636,6 +52799,7 @@ par/or do
     var int err;
     var char? v;
     (err,v) = request SERIAL_CHAR;
+    if err and v? then end;
 with
 end
 
@@ -52646,7 +52810,7 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 0
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
 end
 input/output (void)=>char SERIAL_CHAR do
     return 'a';
@@ -52695,6 +52859,7 @@ par/and do
     (i,err,ret) = await PING_PONG_RETURN;
     native @nohold _printf();
     _printf("%s\n", (_char&&)ret!);
+    if i and err then end;
 with
     async do
         var char[] str = [].."END: 10";
@@ -52787,7 +52952,7 @@ escape _V;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) 0
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
     int V = 0;
 end
 
@@ -54720,6 +54885,7 @@ escape ret;
 
 Test { [[
 var int? i;
+if i? then end;
 escape 1;
 ]],
     run = 1,
@@ -54728,13 +54894,6 @@ escape 1;
 Test { [[
 var int? i = 1;
 escape i!;
-]],
-    run = 1,
-}
-
-Test { [[
-var int? i;
-escape 1;
 ]],
     run = 1,
 }
@@ -54891,6 +55050,7 @@ class T with
     var int&? i;
 do
     var int v = 10;
+    if v then end;
 end
 var T t with
     this.i = &v;
@@ -54905,6 +55065,7 @@ class T with
     var int&? i;
 do
     var int v = 10;
+    if v then end;
 end
 var T t;
 escape t.i? + 1;
@@ -54916,6 +55077,7 @@ class T with
     var int&? i;
 do
     var int v = 10;
+    if v then end;
 end
 var T t;
 escape t.i!;
@@ -54927,6 +55089,7 @@ class T with
     var int&? i;
 do
     var int v = 10;
+    if v then end;
 end
 var int v = 1;
 var T t with
@@ -54979,6 +55142,7 @@ Test { [[
 class T with
     var int&? v;
 do
+    if v? then end;
 end
 var T t;
 escape 1;
@@ -55409,6 +55573,7 @@ class EnterLeave with
     var IGUI_Component& gui;
 do
     var _void&& g = &&(gui.nat!);
+    if g then end;
 end
 escape 1;
 ]],
@@ -56441,6 +56606,7 @@ class Body with
 do
     watching *n do
         var int i = this.sum;
+        if i then end;
         if n:NODE then
             var Body&&? left =
                 spawn Body in this.bodies with
@@ -61066,6 +61232,7 @@ do
     pool BTree[3]& btree2 = &this.btree;
     traverse t in &&this.btree do
         var int a = this.x;
+        if a then end;
     end
     escape 1;
 end

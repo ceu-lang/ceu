@@ -175,10 +175,12 @@ end
     end
 
     -- TODO: pedantic
+-- TODO: remove all warnings
     local O = ' -Wall -Wextra -Wformat=2 -Wstrict-overflow=3 -Werror '
             ..' -Wno-missing-field-initializers'
             ..' -Wno-maybe-uninitialized'
-            ..' -Wno-unused'
+            --..' -Wno-unused'
+            ..' -Wno-unused-function'
             ..' -Wno-unused-parameter'
             ..' -I'..OUT_DIR
             ..' -ansi'

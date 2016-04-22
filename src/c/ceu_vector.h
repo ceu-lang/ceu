@@ -24,7 +24,7 @@ byte* ceu_vector_geti   (tceu_vector* vector, int idx);
 int   ceu_vector_seti   (tceu_vector* vector, int idx, byte* v);
 int   ceu_vector_push   (tceu_vector* vector, byte* v);
 int   ceu_vector_concat (tceu_vector* to, tceu_vector* fr);
-int   ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n);
+int   ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n, int force);
 char* ceu_vector_tochar (tceu_vector* vector);
 
 #if 0

@@ -557,26 +557,29 @@ typedef union CEU_]]..me.id..[[_delayed {
             local tp_c  = TP.toc(var.tp)
             local tp_id = TP.id(var.tp)
 
-            if var.inTop then
-                var.id_ = var.id
-                    -- id's inside interfaces are kept (to be used from C)
-            else
-                var.id_ = var.id .. '_' .. var.n
-                    -- otherwise use counter to avoid clash inside struct/union
-            end
-
-            if (var.pre=='var' and (not var.isTmp)) or var.pre=='pool' then
-                -- avoid main "ret" if not assigned
-                local go = true
-                if var.id == '_ret' then
-                    local setblock = AST.asr(me,'', 1,'Stmts', 2,'SetBlock')
-                    go = setblock.has_escape
+            -- do not generate "placeholder" vars (which are not orgs)
+            if (not string.match(var.id,'^_%d+')) or var.cls then
+                if var.inTop then
+                    var.id_ = var.id
+                        -- id's inside interfaces are kept (to be used from C)
+                else
+                    var.id_ = var.id .. '_' .. var.n
+                        -- otherwise use counter to avoid clash inside struct/union
                 end
 
-                if go then
-                    DCL.struct = DCL.struct .. SPC() .. '  ' ..
-                                  MEM.tp2dcl(var.pre, var.tp, var.id_, DCL.id)
-                                 ..  ';\n'
+                if (var.pre=='var' and (not var.isTmp)) or var.pre=='pool' then
+                    -- avoid main "ret" if not assigned
+                    local go = true
+                    if var.id == '_ret' then
+                        local setblock = AST.asr(me,'', 1,'Stmts', 2,'SetBlock')
+                        go = setblock.has_escape
+                    end
+
+                    if go then
+                        DCL.struct = DCL.struct .. SPC() .. '  ' ..
+                                      MEM.tp2dcl(var.pre, var.tp, var.id_, DCL.id)
+                                     ..  ';\n'
+                    end
                 end
             end
         end

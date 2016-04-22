@@ -55,8 +55,8 @@ end
 function LABEL_NO (me)
     local no = '_CEU_NO_'..me.n..'_'
     LINE(me, [[
-]]..no..[[:
-if (0) { goto ]]..no..[[; /* avoids "not used" warning */ }
+goto ]]..no..[[; /* avoids "not used" warning */
+]]..no..[[:;
 ]])
     return no
 end
@@ -771,18 +771,27 @@ _ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
         LINE(me, '{')       -- close in Block_pos
         for _, var in ipairs(me.vars) do
             if var.isTmp then
-                local ID = '__ceu_'..var.id..'_'..var.n
-                if var.id == '_ret' then
-                    LINE(me,'#ifdef CEU_RET\n')     -- avoids "unused" warning
-                end
-                LINE(me, MEM.tp2dcl(var.pre, var.tp,ID,nil)..';\n')
-                if var.id == '_ret' then
-                    LINE(me,'#endif\n')             -- avoids "unused" warning
-                end
-                if var.is_arg then
-                    -- function parameter
-                    -- __ceu_a = a
-                    LINE(me, ID..' = '..var.id..';')
+                -- do not generate "placeholder" vars (which are not orgs)
+                if (not string.match(var.id,'^_%d+')) or var.cls then
+                    local ID = '__ceu_'..var.id..'_'..var.n
+                    local def = (cls.id=='Main' and 'CEU_RET') or 'CEU_ORGS_AWAIT'
+                    if var.id == '_ret' then
+                        LINE(me,[[
+/* avoids "unused" warning */
+#ifdef ]]..def..[[
+]])
+                    end
+                    LINE(me, MEM.tp2dcl(var.pre, var.tp,ID,nil)..';\n')
+                    if var.id == '_ret' then
+                        LINE(me,[[
+#endif
+]])
+                    end
+                    if var.is_arg then
+                        -- function parameter
+                        -- __ceu_a = a
+                        LINE(me, ID..' = '..var.id..';')
+                    end
                 end
             end
 
@@ -1126,6 +1135,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
             LINE(me,[[
 #ifdef CEU_ADTS_NEWS_POOL
     tceu_org* __ceu_stk_org = _ceu_org;
+    __ceu_nothing(__ceu_stk_org);
 #endif
 ]])
         end
@@ -1235,22 +1245,35 @@ if ( ]]..V(fr,'rval')..[[!=NULL &&
             end
         else
             -- normal types
+
+            if to.tag=='Var' and to.var.id=='_ret' then
+                if CLS().id == 'Main' then
+                    LINE(me, [[
+#ifdef CEU_RET
+]])
+                else
+                    LINE(me, [[
+#ifdef CEU_ORGS_AWAIT
+]])
+                end
+            end
+
             local l_or_r = (is_byref and TP.check(to.tp,'&') and 'lval')
                                 or 'rval'
             LINE(me, V(to,l_or_r)..' = '..V(fr,'rval')..';')
                                             -- & makes 'lval' on this side
         end
 
-        if to.tag=='Var' and to.var.id=='_ret' then
+        if to.tag=='Var' and to.var.id=='_ret'
+        or to.tag=='Var' and string.match(to.var.id,'^__ceu__ret')
+        then
             if CLS().id == 'Main' then
                 LINE(me, [[
-#ifdef CEU_RET
     _ceu_app->ret = ]]..V(to,'rval')..[[;
 #endif
 ]])
             else
                 LINE(me, [[
-#ifdef CEU_ORGS_AWAIT
     _ceu_org->ret = ]]..V(to,'rval')..[[;
     /* HACK_8: result of immediate spawn termination */
     _ceu_app->ret = _ceu_org->ret;
@@ -1321,7 +1344,7 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
     ]])
                                 F.__set(me, ee, {tag='RawExp', tp=TP.pop(to.tp,'[]'), '__ceu_p'})
                                 LINE(me, [[
-    #line ]]..fr.ln[2]..' "'..fr.ln[1]..[["
+#line ]]..fr.ln[2]..' "'..fr.ln[1]..[["
     ceu_out_assert_msg( ceu_vector_push(]]..V(to,'lval')..[[, (byte*)&__ceu_p), "access out of bounds");
     }
     ]])
@@ -1335,8 +1358,8 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
     ]])
                             end
                             LINE(me, [[
-    #line ]]..e.ln[2]..' "'..e.ln[1]..[["
-    ceu_out_assert_msg(ceu_vector_copy_buffer(]]..V(to,'lval')..[[, ceu_vector_getlen(]]..V(to,'lval')..[[),(byte*)]]..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[)), "access out of bounds");
+#line ]]..e.ln[2]..' "'..e.ln[1]..[["
+    ceu_out_assert_msg(ceu_vector_copy_buffer(]]..V(to,'lval')..[[, ceu_vector_getlen(]]..V(to,'lval')..[[),(byte*)]]..V(e,'rval')..[[, strlen(]]..V(e,'rval')..[[),1), "access out of bounds");
     ]])
                         else
                             assert(TP.check(e.tp,'[]','-&'), 'bug found')
@@ -1347,7 +1370,7 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
     ]])
                             end
                             LINE(me, [[
-    #line ]]..e.ln[2]..' "'..e.ln[1]..[["
+#line ]]..e.ln[2]..' "'..e.ln[1]..[["
     ceu_out_assert_msg(ceu_vector_concat(]]..V(to,'lval')..','..V(e,'lval')..[[), "access out of bounds");
     ]])
                             if first then
@@ -1594,7 +1617,12 @@ V(to,'rval')..' = ('..tp_c..[[)
 
         -- ensures that cval is constant
         if max then
-            LINE(me, 'int __'..me.n..'['..max.cval..'/'..max.cval..'-1] = {};')
+            LINE(me, [[
+{ \
+    char __]]..me.n..'['..max.cval..'/'..max.cval..[[ ] = {0};
+    __ceu_nothing(&__]]..me.n..[[);
+}
+]])
         end
 
         LINE(me, [[
@@ -1723,6 +1751,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
 {
 #ifdef CEU_STACK_CLEAR
     tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+    __ceu_nothing(&stk_);
 #endif
 ]])
 
@@ -2145,6 +2174,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     *(_ceu_p.is_aborted) = 0;
     tceu_app* _ceu_app = _ceu_p.app;
     tceu_org* _ceu_org = _ceu_p.org;
+    __ceu_nothing(_ceu_org);
 
     /* now safe for sync to proceed */
     CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex_internal);
@@ -2153,7 +2183,8 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     ]]..blk.code..[[
 
     /* goto from "sync" and already terminated */
-    ]]..me.lbl_out.id..[[:
+goto ]]..me.lbl_out.id..[[; /* avoids "not used" warning */
+]]..me.lbl_out.id..[[:
 
     /* terminate thread */
     {
@@ -2193,6 +2224,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 void ]]..f..[[ (void)
 {
     tceu_stk* _ceu_stk = NULL;
+    __ceu_nothing(_ceu_stk);
     ]]..code..[[
 }
 ]]
@@ -2236,8 +2268,7 @@ if (*]]..me.thread.thread_is_aborted..[[ == 0) {
         lua = string.gsub(lua, '\n', 'n') -- undo format for \n
         LINE(me, [[
 {
-    int   err_line = __LINE__ - 1;
-    char* err_file = __FILE__;
+    int err_line = __LINE__ - 1;
     ceu_lua_pushstring(_ceu_app->lua, "[");
     ceu_lua_pushstring(_ceu_app->lua, __FILE__);
     ceu_lua_pushstring(_ceu_app->lua, ":");
@@ -2287,7 +2318,6 @@ if (*]]..me.thread.thread_is_aborted..[[ == 0) {
         if set then
             if TP.check(set_to.tp,'bool') then
                 LINE(me, [[
-    int is;
     int ret;
     ceu_lua_toboolean(ret, _ceu_app->lua,-1);
     ]]..V(set_to,'rval')..[[ = ret;
@@ -2316,7 +2346,7 @@ if (*]]..me.thread.thread_is_aborted..[[ == 0) {
         ceu_lua_objlen(len, _ceu_app->lua, -1);
         ceu_lua_tostring(ret, _ceu_app->lua, -1);
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
-        ceu_out_assert_msg(ceu_vector_copy_buffer(]]..V(set_to,'lval')..[[,ceu_vector_getlen(]]..V(set_to,'lval')..[[), (byte*)ret, len), "access out of bounds");
+        ceu_out_assert_msg(ceu_vector_copy_buffer(]]..V(set_to,'lval')..[[,ceu_vector_getlen(]]..V(set_to,'lval')..[[), (byte*)ret, len, 1), "access out of bounds");
     } else {
         ceu_lua_pop(_ceu_app->lua,1);
         ceu_lua_pushstring(_ceu_app->lua, "not implemented [2]");
@@ -2345,6 +2375,7 @@ if (*]]..me.thread.thread_is_aborted..[[ == 0) {
         LINE(me, [[
     if (0) {
 /* ERROR */
+goto _CEU_LUA_ERR_]]..me.n..[[; /* avoids "not used" warning */
 _CEU_LUA_ERR_]]..me.n..[[:;
         ceu_lua_concat(_ceu_app->lua, 6);
         ceu_lua_error(_ceu_app->lua); /* TODO */

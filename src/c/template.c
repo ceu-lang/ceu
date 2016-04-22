@@ -97,6 +97,10 @@ static void ceu_stack_clr () {
 }
 #endif
 
+/* avoids "unused variable" warnings */
+void __ceu_nothing     (void* ptr) {}
+int  __ceu_nothing_int (void* ptr, int v) { return v; }
+
 /**********************************************************************/
 
 #ifdef CEU_ORGS
@@ -119,6 +123,8 @@ static void ceu_stack_clr () {
 
 /* FUNCTIONS_C */
 === FUNCTIONS_C ===
+
+/**********************************************************************/
 
 #ifdef CEU_OS_APP
 static void* ceu_app_calls (tceu_app* _ceu_app, tceu_nevt evt, void* param) {
@@ -250,6 +256,11 @@ ceu_app_init (tceu_app* app)
     app->data->trls[0].evt = CEU_IN__INIT;
     app->data->trls[0].seqno = 0;
     ceu_sys_go(app, CEU_IN__INIT, NULL);
+
+    /* avoids "unused" warnings */
+#ifdef CEU_IFCS
+    __ceu_nothing(&_CEU_APP);
+#endif
 }
 
 /* EXPORTED ENTRY POINT

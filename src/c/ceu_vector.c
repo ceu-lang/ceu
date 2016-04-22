@@ -124,13 +124,14 @@ int ceu_vector_concat (tceu_vector* to, tceu_vector* fr) {
     return ceu_vector_copy_buffer(to,
                                   ceu_vector_getlen(to),
                                   fr->mem,
-                                  ceu_vector_getlen(fr)*fr->unit);
+                                  ceu_vector_getlen(fr)*fr->unit,
+                                  1);
 }
 
-int ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n) {
+int ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n, int force) {
     ceu_out_assert_msg((n % to->unit) == 0, "bug found");
     int len = idx + n/to->unit;
-    if (ceu_vector_getlen(to)<len && !ceu_vector_setlen(to,len,1)) {
+    if (ceu_vector_getlen(to)<len && !ceu_vector_setlen(to,len,force)) {
         return 0;
     } else {
         memcpy(&to->mem[idx*to->unit], fr, n);
