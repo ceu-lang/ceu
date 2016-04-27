@@ -7,7 +7,11 @@ void ceu_vector_init (tceu_vector* vector, int max, int unit, byte* mem) {
     vector->nxt  = 0;
     vector->max  = max;
     vector->unit = unit;
-    vector->mem  = (max==0) ? NULL : mem;
+    if (max==0) {
+        vector->mem = NULL;
+    } else {
+        vector->mem = mem;
+    }
 
     /* [STRING] */
     if (vector->mem != NULL) {
@@ -16,7 +20,7 @@ void ceu_vector_init (tceu_vector* vector, int max, int unit, byte* mem) {
 }
 
 #ifdef CEU_VECTOR_MALLOC
-static void* ceu_vector_resize (tceu_vector* vector, int n) {
+void* ceu_vector_resize (tceu_vector* vector, int n) {
     ceu_out_assert_msg(vector->max <= 0, "bug found");
 
     if (n == 0) {
@@ -27,11 +31,13 @@ static void* ceu_vector_resize (tceu_vector* vector, int n) {
             vector->mem = NULL;
         }
     } else {
+#if 0
         /* TODO: Java does the same? */
         n = (n*3/2) + 1;
         if (n < 10) {
             n = 10;
         }
+#endif
 
         vector->max = -n;
         vector->mem = (byte*)ceu_out_realloc(vector->mem, n*vector->unit + 1);

@@ -16,7 +16,7 @@ typedef struct {
                 /* [STRING] max+1: extra space for '\0' */
 
 #define ceu_vector_getlen(vec) ((vec)->nxt)
-#define ceu_vector_getmax(vec) ((vec)->max > 0 ? (vec)->max : 0)
+#define ceu_vector_getmax(vec) ((vec)->max)
 
 void  ceu_vector_init   (tceu_vector* vector, int max, int unit, byte* mem);
 int   ceu_vector_setlen (tceu_vector* vector, int len, int force);
@@ -26,6 +26,9 @@ int   ceu_vector_push   (tceu_vector* vector, byte* v);
 int   ceu_vector_concat (tceu_vector* to, tceu_vector* fr);
 int   ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n, int force);
 char* ceu_vector_tochar (tceu_vector* vector);
+#ifdef CEU_VECTOR_MALLOC
+void* ceu_vector_resize (tceu_vector* vector, int n);
+#endif
 
 #if 0
 byte* ceu_pool_alloc (tceu_pool* pool);
