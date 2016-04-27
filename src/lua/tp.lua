@@ -498,6 +498,10 @@ function TP.contains (tp1, tp2, t)
             return true
         end
 
+    -- var void& p = &v
+    elseif TP.check(TP1,'void','&') and TP.check(TP2,'&') then
+        return true
+
     -- numerical type
     elseif (t.numeric~=false) and TP.isNumeric(tp1) and TP.isNumeric(tp2) then
         return true
@@ -520,7 +524,7 @@ function TP.contains (tp1, tp2, t)
     elseif TP.is_ext(tp1,'@') or TP.is_ext(tp2,'@') then
         return true
 
-    -- any pointer can be used with "null"
+    -- any pointer or alias can be used with "null"
     elseif TP.check(tp1,'&&') and TP.check(tp2,'null','&&') or
            TP.check(tp2,'&&') and TP.check(tp1,'null','&&')
     then

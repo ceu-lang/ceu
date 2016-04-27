@@ -346,16 +346,77 @@ escape _strlen((char&&)&&t.name);
     run = 2,
 }
 
+--
 no output vectors in interfaces
 
+--
 every (x,_) in e do
+
+--
+event in e      // class ifc
+if e then ...   // nested blk in body
+end
+_printf(e);
+
+--
+var byte[HASH_BYTES+sizeof(u32)] bs;
+    -- nao detecta como static
+
+--]===]
+Test { [[
+var int v = 10;
+var void& p = &v;
+escape *((int&&)&&p);
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var void& p;
+do
+    escape *((int&&)&&this.p);
 end
 
---do return end
+var int v = 10;
+var int ret = do T with
+                this.p = &v;
+              end;
+escape ret;
+]],
+    run = 10,
+}
+
+-- bug: arity mismatch on constructor/creation
+Test { [[
+class T with
+    var void& p;
+    function (void& p)=>T build;
+do
+    function (void& p)=>T build do
+        this.p = &p;
+    end
+    escape *((int&&)&&this.p);
+end
+
+var int v = 10;
+var int ret = do T.build(&v);
+escape ret;
+]],
+    run = 10,
+}
+do return end
+
+Test { [[
+var byte[] bs = [ 1, 2, 3 ];
+var int idx = 1;
+var int& i = &idx;
+escape bs[i];
+]],
+    run = 2,
+}
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }

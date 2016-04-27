@@ -1508,7 +1508,7 @@ type.
             'cannot index a non array')
         end
 
-        ASR(TP.isNumeric(idx.tp), me, 'invalid array index')
+        ASR(TP.isNumeric(idx.tp,'&'), me, 'invalid array index')
 
         -- remove [] or *
         local tp = TP.pop(arr.tp,'&')
