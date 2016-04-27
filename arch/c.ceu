@@ -18,6 +18,7 @@ native @nohold
         _fprintf(),
         _free(),
         _printf(),
+        _memcpy(),
         _sprintf(),
         _srand(),
         _sscanf(),
