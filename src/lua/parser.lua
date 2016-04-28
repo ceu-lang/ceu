@@ -280,7 +280,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
               + EM'expression'
               )
-    , __SetBlock = V'Do' + V'If' + V'_Loop' + V'_Every' + V'ParEver'
+    , __SetBlock = V'Do' + V'If' + V'ParEver'
 
     -- adt-constr
     , Adt_constr_root = (CKEY'new'+Cc(false)) * V'Adt_constr_one'

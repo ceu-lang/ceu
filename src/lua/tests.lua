@@ -362,30 +362,6 @@ _printf(e);
 var byte[HASH_BYTES+sizeof(u32)] bs;
     -- nao detecta como static
 
---]===]
-Test { [[
-var int v = 10;
-var void& p = &v;
-escape *((int&&)&&p);
-]],
-    run = 10,
-}
-Test { [[
-class T with
-    var void& p;
-do
-    escape *((int&&)&&this.p);
-end
-
-var int v = 10;
-var int ret = do T with
-                this.p = &v;
-              end;
-escape ret;
-]],
-    run = 10,
-}
-
 -- bug: arity mismatch on constructor/creation
 Test { [[
 class T with
@@ -404,20 +380,11 @@ escape ret;
 ]],
     run = 10,
 }
-do return end
-
-Test { [[
-var byte[] bs = [ 1, 2, 3 ];
-var int idx = 1;
-var int& i = &idx;
-escape bs[i];
-]],
-    run = 2,
-}
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -791,6 +758,8 @@ emit a => &&k; // leads to compiler error
     env = 'line 1 : invalid event type'
 }
 
+-->>> OS_START / ANY
+
 Test { [[
 input void OS_START;
 native do
@@ -846,6 +815,53 @@ escape x;
 ]],
     run = 1,
 }
+
+Test { [[
+input void ANY;
+await ANY;
+escape 1;
+]],
+    run = { ['~>1s']=1 },
+}
+
+Test { [[
+input void OS_START;
+input void A, B;
+input void ANY;
+var int ret = 0;
+await OS_START;
+par/or do
+    await B;
+with
+    every ANY do
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    run = { ['~>1s;~>A;~>B']=6 },
+}
+
+Test { [[
+input void ANY;
+var int ret = 0;
+par/or do
+    every ANY do
+        ret = ret + 1;
+    end
+with
+    every 1ms do
+    end
+with
+    await 1s;
+end
+escape ret;
+]],
+    run = { ['~>1s']=1002 },
+}
+
+--<<< OS_START / ANY
+
 Test { [[
 native _abc;
 native/pre do
@@ -9843,6 +9859,25 @@ escape 0;   // TODO
 
 Test { [[
 input int A,B;
+var int ret = do loop do
+        await A;
+        par/or do
+            await A;
+        with
+            var int v = await B;
+            escape v;
+        end;
+    end end;
+escape ret;
+]],
+    run = {
+        ['1~>A ; 5~>B'] = 5,
+        ['1~>A ; 1~>A ; 3~>B ; 1~>A ; 5~>B'] = 5,
+    }
+}
+
+Test { [[
+input int A,B;
 var int ret = loop do
         await A;
         par/or do
@@ -9854,6 +9889,7 @@ var int ret = loop do
     end;
 escape ret;
 ]],
+    parser = 'line 2 : after `=´ : expected expression',
     run = {
         ['1~>A ; 5~>B'] = 5,
         ['1~>A ; 1~>A ; 3~>B ; 1~>A ; 5~>B'] = 5,
@@ -12320,7 +12356,7 @@ var int a = 1;
 par/or do
     await B;
 with
-    var int b = loop do
+    var int b = do loop do
             par/or do
                 await B;
                             // prio 1
@@ -12332,7 +12368,7 @@ with
             escape a;
         end;
     a = a + 2 + b;
-end;
+end end;
 escape a;
 ]],
     _ana = {
@@ -12349,7 +12385,7 @@ var int a = 1;
 par/or do
     await B;
 with
-    var int b = loop do
+    var int b = do loop do
             par/or do
                 await B;
             with
@@ -12359,7 +12395,7 @@ with
             a = a + 1;
         end;
     a = a + 2 + b;
-end;
+end end;
 escape a;
 ]],
     _ana = {
@@ -15756,7 +15792,7 @@ escape ret;
     run = 5,
 }
 
--->>> REFERENCES / REFS / &
+-->>> ALIASES / REFERENCES / REFS / &
 
 Test { [[
 var int a = 1;
@@ -17053,7 +17089,31 @@ escape x;
     --run = 1,
 }
 
---<<< REFERENCES / REFS / &
+-- REFS: void&
+Test { [[
+var int v = 10;
+var void& p = &v;
+escape *((int&&)&&p);
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var void& p;
+do
+    escape *((int&&)&&this.p);
+end
+
+var int v = 10;
+var int ret = do T with
+                this.p = &v;
+              end;
+escape ret;
+]],
+    run = 10,
+}
+
+--<<< ALIASES / REFERENCES / REFS / &
 
 Test { [[
 native _f();
@@ -22386,6 +22446,15 @@ _f((_int&&)&&b);
 escape b[0] + b[1];
 ]],
     run = 5,
+}
+
+Test { [[
+var byte[] bs = [ 1, 2, 3 ];
+var int idx = 1;
+var int& i = &idx;
+escape bs[i];
+]],
+    run = 2,
 }
 
 Test { [[
