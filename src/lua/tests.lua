@@ -12366,9 +12366,10 @@ with
             end;
             a = a + 1;
             escape a;
+end;
         end;
     a = a + 2 + b;
-end end;
+end
 escape a;
 ]],
     _ana = {
@@ -12394,8 +12395,9 @@ with
             end;
             a = a + 1;
         end;
+end;
     a = a + 2 + b;
-end end;
+end
 escape a;
 ]],
     _ana = {
@@ -22266,7 +22268,7 @@ Test { [[
 var u8[] vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
-    run = 9,
+    run = 6,
 }
 
 Test { [[
