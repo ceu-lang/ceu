@@ -4,7 +4,7 @@
 
 # Install required software:
 
-> sudo apt-get install git lua5.1 lua-lpeg valgrind
+> sudo apt-get install git lua5.1 liblua5.1-dev lua-lpeg
 
 # Clone Céu repository:
 
@@ -14,6 +14,7 @@
 # Run self tests:
 
 > ./run_tests.lua
+> cp ceu /usr/local/bin/  # copy ceu to your path
 
 # Include Céu in your path:
 
