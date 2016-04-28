@@ -494,6 +494,10 @@ if (evt->param != NULL) {
 #endif
 
         if (
+#ifdef CEU_IN_ANY
+           (trl->evt == CEU_IN_ANY)
+        ||
+#endif
 #ifdef CEU_CLEAR
             /* if IN__CLEAR and "finalize" clause */
             (evt->id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR)

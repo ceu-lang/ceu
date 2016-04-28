@@ -414,10 +414,11 @@ F = {
             { '_CLEAR',     nil          },
             { '_ok_killed', {'int'}      },
         -- input / runtime
-            { '_INIT',      nil,     'seqno' }, -- _INIT = HIGHER EXTERNAL
-            { '_ASYNC',     nil,     'seqno' },
-            { '_THREAD',    nil,     'seqno' },
-            { '_WCLOCK',    {'s32'}, 'seqno' },
+            { '_INIT',      nil,      'seqno' }, -- _INIT = HIGHER EXTERNAL
+            { '_ASYNC',     nil,      'seqno' },
+            { '_THREAD',    nil,      'seqno' },
+            { '_WCLOCK',    {'s32'},  'seqno' },
+            --{ 'ANY',        {'void'}, 'seqno' },
         }
 
         if OPTS.timemachine then
