@@ -2136,7 +2136,8 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
         /* wait new thread to copy "p" and unlock */
         CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex_internal);
 
-        /* proceed with sync execution (already locked) */
+        /* await if thread has not terminated (immediately) */
+        if (*]]..me.thread_is_aborted..[[ == 0) {
 ]])
 
         local no = LABEL_NO(me)
@@ -2146,13 +2147,16 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
             lbl = me.lbl.id,
         })
         LINE(me, [[
-        {
-            CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_evt->param;
-            if (*(*(__ceu_casted)) != ]]..me.thread_id..[[) {
-                goto ]]..no..[[; /* another thread is terminating: await again */
+            {
+                CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_evt->param;
+                if (*(*(__ceu_casted)) != ]]..me.thread_id..[[) {
+                    goto ]]..no..[[; /* another thread is terminating: await again */
+                }
             }
         }
+
     }
+    /* proceed with sync execution (already locked) */
 }
 ]])
         DEBUG_TRAILS(me)
