@@ -495,7 +495,7 @@ if (evt->param != NULL) {
 
         if (
 #ifdef CEU_IN_ANY
-           (trl->evt==CEU_IN_ANY
+           (trl->evt==CEU_IN_ANY && evt->id>=CEU_IN_lower && evt->id<CEU_IN__INIT
 #ifdef CEU_CLEAR
                 && evt->id!=CEU_IN__CLEAR
 #endif
