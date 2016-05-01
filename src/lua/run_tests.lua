@@ -230,8 +230,8 @@ end
              or 'valgrind -q --leak-check=full '..OUT_DIR..'/ceu.exe '..ARGS..' 2>&1'
              --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
 --DBG(CEU)
-DBG(GCC)
-DBG(EXE)
+--DBG(GCC)
+--DBG(GCC)
 
     local go = function (src, exp)
         local ceu = assert(io.open(OUT_DIR..'/_ceu_tmp.ceu', 'w'))
