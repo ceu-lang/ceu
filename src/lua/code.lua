@@ -2119,22 +2119,30 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
         end
 
         -- spawn thread
-        LINE(me, [[
+        LINE(me, [[{
 ]]..me.thread_is_aborted..[[  = ceu_out_realloc(NULL, sizeof(s8));
-*]]..me.thread_is_aborted..[[ = 1;
+printf("malloc-s8: %p\n", ]]..me.thread_is_aborted..[[);
+if (]]..me.thread_is_aborted..[[ != NULL)
 {
+    *]]..me.thread_is_aborted..[[ = 1;  /* 1 = not started */
     /* CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex_internal) is on */
 
     tceu_threads_p p = { _ceu_app, _ceu_org, ]]..me.thread_is_aborted..[[ };
     int ret =
         CEU_THREADS_CREATE(&]]..me.thread_id..[[, _ceu_thread_]]..me.n..[[, &p);
+printf("create: %d [%d]\n", ret,
+    *]]..me.thread_is_aborted..[[);
     if (ret == 0)
     {
         CEU_THREADS_DETACH(]]..me.thread_id..[[);
         _ceu_app->threads_n++;
 
         /* wait new thread to copy "p" and unlock */
+printf("lock-out [%d]\n",
+    *]]..me.thread_is_aborted..[[);
         CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex_internal);
+printf("unlocked-out [%d]\n",
+    *]]..me.thread_is_aborted..[[);
 
         /* await if thread has not terminated (immediately) */
         if (*]]..me.thread_is_aborted..[[ == 0) {
@@ -2157,14 +2165,20 @@ ceu_out_wclock]]..suf..[[(_ceu_app, (s32)]]..V(dt,'rval')..[[, &]]..val..[[, NUL
 
     }
     /* proceed with sync execution (already locked) */
+printf("awake-out [%d]\n",
+    *]]..me.thread_is_aborted..[[);
 }
-]])
+}]])
         DEBUG_TRAILS(me)
 
         local set = AST.par(me, 'Set')
         if set then
             local set_to = set[4]
-            LINE(me, V(set_to,'rval')..' = ( (*('..me.thread_is_aborted..')) == 1);')
+            LINE(me, V(set_to,'rval')..[[ = (
+                (]]..me.thread_is_aborted..[[ != NULL) &&
+                (*]]..me.thread_is_aborted..[[ != 1)
+            );
+]])
         end
 
         -- thread function
@@ -2181,6 +2195,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     __ceu_nothing(_ceu_org);
 
     /* now safe for sync to proceed */
+printf("unlock-in [%d]\n", *(_ceu_p.is_aborted));
     CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex_internal);
 
     /* body */
@@ -2193,14 +2208,17 @@ goto ]]..me.lbl_out.id..[[; /* avoids "not used" warning */
     /* terminate thread */
     {
         /* can only lock in between reactions */
+printf("lock-in [%d]\n", *(_ceu_p.is_aborted));
         CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex_external);
+printf("unlocked-in [%d]\n", *(_ceu_p.is_aborted));
 
         CEU_THREADS_T __ceu_thread = CEU_THREADS_SELF();
         void* evtp = &__ceu_thread;
         /*pthread_testcancel();*/
         /* only if sync is not active */
         if (*(_ceu_p.is_aborted) == 0) {
-            *(_ceu_p.is_aborted) = 1;
+            *(_ceu_p.is_aborted) = 2;
+printf("awake-in [%d]\n", *(_ceu_p.is_aborted));
             ceu_out_go(_ceu_app, CEU_IN__THREAD, evtp);   /* keep locked */
                 /* HACK_2:
                  *  A thread never terminates the program because we include an
@@ -2208,11 +2226,13 @@ goto ]]..me.lbl_out.id..[[; /* avoids "not used" warning */
                  *  main program.
                  */
         } else {
+printf("free-in [%d]\n", *(_ceu_p.is_aborted));
             ceu_out_realloc(_ceu_p.is_aborted, 0);  /* fin finished, I free */
-            _ceu_app->threads_n--;
         }
+printf("unlock-in\n");
         CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex_external);
     }
+    _ceu_app->threads_n--;
     CEU_THREADS_RETURN(NULL);
 }
 ]]
@@ -2242,12 +2262,17 @@ void ]]..f..[[ (void)
                 -- TODO: ugly, should move to "Thread" node
 
             me[1] = [[
-if (*]]..me.thread.thread_is_aborted..[[ == 0) {
-    *]]..me.thread.thread_is_aborted..[[ = 1;
-    CEU_THREADS_CANCEL(]]..me.thread.thread_id..[[);
-} else {
-    ceu_out_realloc(]]..me.thread.thread_is_aborted..[[, 0); /* thr finished, I free */
-    _ceu_app->threads_n--;
+if (]]..me.thread.thread_is_aborted..[[ != NULL) {
+    if (*]]..me.thread.thread_is_aborted..[[ == 0) {
+        *]]..me.thread.thread_is_aborted..[[ = 2;
+printf("cancel-out [%d]\n",
+        *]]..me.thread.thread_is_aborted..[[);
+        /*CEU_THREADS_CANCEL(]]..me.thread.thread_id..[[);*/
+    } else {
+printf("free-out [%d]\n",
+        *]]..me.thread.thread_is_aborted..[[);
+        ceu_out_realloc(]]..me.thread.thread_is_aborted..[[, 0); /* thr finished, I free */
+    }
 }
 ]]
         end
@@ -2395,7 +2420,7 @@ _CEU_LUA_ERR_]]..me.n..[[:;
         if thread then
             LINE(me, [[
 CEU_THREADS_MUTEX_LOCK(&_ceu_app->threads_mutex_external);
-if (*(_ceu_p.is_aborted) == 1) {
+if (*(_ceu_p.is_aborted) != 0) {
     CEU_THREADS_MUTEX_UNLOCK(&_ceu_app->threads_mutex_external);
     goto ]]..thread.lbl_out.id..[[;   /* exit if ended from "sync" */
 } else {                        /* othrewise, execute block */

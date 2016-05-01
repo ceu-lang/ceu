@@ -5,7 +5,7 @@
 RUNTESTS = true
 
 -- Execution option for the tests:
---VALGRIND = true
+VALGRIND = true
 --REENTRANT = true
 --LUACOV = 'lua -lluacov'
 --COMPLETE = true
@@ -224,13 +224,14 @@ end
     if PROPS.has_lua then
         GCC = GCC .. ' -llua5.1'
     end
---DBG(CEU)
---DBG(GCC)
 
     local ARGS = T.args or ''
     local EXE = (((not VALGRIND) or T.valgrind==false) and OUT_DIR..'/ceu.exe '..ARGS..' 2>&1')
              or 'valgrind -q --leak-check=full '..OUT_DIR..'/ceu.exe '..ARGS..' 2>&1'
              --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
+--DBG(CEU)
+DBG(GCC)
+DBG(EXE)
 
     local go = function (src, exp)
         local ceu = assert(io.open(OUT_DIR..'/_ceu_tmp.ceu', 'w'))
@@ -254,7 +255,7 @@ end
 
         -- skip "threads" tests with VALGRIND on
         if PROPS.has_threads and VALGRIND then
-            return
+            --return
         end
 
         if T.asr then

@@ -383,7 +383,6 @@ escape ret;
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -25996,7 +25995,10 @@ end
 --<<< REENTRANT
 
 -->> ASYNCS // THREADS
+--]===]
+while true do
 
+--while true do
 Test { [[
 var int  a=10, b=5;
 var int& p = &b;
@@ -26006,6 +26008,8 @@ escape a + b + p;
 ]],
     run = 20,
 }
+--end
+--do return end
 
 Test { [[
 var int ret =
@@ -27017,6 +27021,8 @@ escape a;
 ]],
     run = 11,
 }
+end
+--do return end
 --<<< THREADS / EMITS
 --<<< ASYNCS / THREADS
 

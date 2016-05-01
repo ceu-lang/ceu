@@ -731,6 +731,8 @@ int ceu_go_all (tceu_app* app, int argc, char **argv)
 /* TODO: app.close() ? */
 #ifdef CEU_THREADS
     CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex_external);
+    while (app->threads_n>0) ;    /* wait all terminate/free */
+    sleep(1);
 #endif
 
 #ifdef CEU_NEWS
