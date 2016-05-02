@@ -127,10 +127,16 @@ int ceu_vector_push (tceu_vector* vector, byte* v) {
 }
 
 int ceu_vector_concat (tceu_vector* to, tceu_vector* fr) {
+    /* if "fr" is part of "to", we need to grow "to" before getting "fr->mem" */
+    u32 len_to = ceu_vector_getlen(to);
+    u32 len_fr = ceu_vector_getlen(fr);
+    if (to == fr) {
+        ceu_vector_setlen(to, len_to*2, 1);
+    }
     return ceu_vector_copy_buffer(to,
-                                  ceu_vector_getlen(to),
+                                  len_to,
                                   fr->mem,
-                                  ceu_vector_getlen(fr)*fr->unit,
+                                  len_fr*fr->unit,
                                   1);
 }
 
