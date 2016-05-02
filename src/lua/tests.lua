@@ -25996,6 +25996,7 @@ end
 --<<< REENTRANT
 
 -->> ASYNCS // THREADS
+--while true do
 
 Test { [[
 var int  a=10, b=5;
@@ -26889,12 +26890,16 @@ with
     var int y = x;
     async/thread (y) do
         y = 2;
+        _usleep(50);
     end
     x = x + y;
 end
 escape x;
 ]],
     run = { ['~>1s']=3 },
+    _ana = {
+        acc = true,
+    },
 }
 
 Test { [[
@@ -26906,6 +26911,7 @@ with
     var int y = x;
     async/thread (y) do
         y = 2;
+        _usleep(50);
     end
     x = x + y;
 end
@@ -27017,7 +27023,8 @@ escape a;
 ]],
     run = 11,
 }
-
+--end
+--do return end
 --<<< THREADS / EMITS
 --<<< ASYNCS / THREADS
 
