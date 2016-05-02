@@ -381,30 +381,12 @@ escape ret;
     run = 10,
 }
 
---]===]
-Test { [[
-var int ret = 0;
-async (ret) do
-    ret = do escape 1; end;
-end
-escape ret;
-]],
-    run = 1,
-}
-Test { [[
-var int ret = 0;
-async/thread (ret) do
-    ret = do escape 1; end;
-end
-escape ret;
-]],
-    run = 1,
-}
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -1935,7 +1917,8 @@ end;
 escape a + 1;
 ]],
     --env = 'line 1 : variable/event "_ret" is not declared',
-    props = 'line 4 : not permitted inside `async´',
+    --props = 'line 4 : not permitted inside `async´',
+    props = 'line 4 : not permitted across `async´ declaration',
 }
 
 Test { [[
@@ -19434,7 +19417,8 @@ async do
 end;
 escape 0;
 ]],
-    props = 'line 2 : not permitted inside `async´',
+    --props = 'line 2 : not permitted inside `async´',
+    props = 'line 2 : not permitted across `async´ declaration',
 }
 
 Test { [[
@@ -19477,7 +19461,8 @@ with
     escape 2;
 end;
 ]],
-    props = 'line 3 : not permitted inside `async´',
+    props = 'line 3 : not permitted across `async´ declaration',
+    --props = 'line 3 : not permitted inside `async´',
 }
 
 Test { [[
@@ -19536,7 +19521,8 @@ async do
     escape 1+2;
 end;
 ]],
-    props = 'line 2 : not permitted inside `async´',
+    --props = 'line 2 : not permitted inside `async´',
+    props = 'line 2 : not permitted across `async´ declaration',
 }
 
 Test { [[
@@ -19551,7 +19537,8 @@ end;
 escape a;
 ]],
     wrn = true,
-    props = 'line 5 : not permitted inside `async´',
+    props = 'line 7 : not permitted across `async´ declaration',
+    --props = 'line 5 : not permitted inside `async´',
 }
 
 Test { [[
@@ -27042,6 +27029,36 @@ end
 escape a;
 ]],
     run = 11,
+}
+
+Test { [[
+var int ret = 0;
+async (ret) do
+    ret = do escape 1; end;
+end
+escape ret;
+]],
+    run = 1,
+}
+Test { [[
+var int ret = 0;
+async/thread (ret) do
+    ret = do escape 1; end;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [=[
+    async/thread do
+    end
+    loop i in 100 do
+        await 1s;
+    end
+    escape 1;
+]=],
+    run = {['~>100s;~>100s']=1},
 }
 --end
 --do return end

@@ -81,11 +81,15 @@ static _tceu_app _CEU_APP = {
 tceu_app* CEU_APP_SIG = NULL;
 static void ceu_segfault (int sig_num) {
 #ifdef CEU_ORGS
-    printf("SEGFAULT on %p : %d\n", CEU_APP_SIG->lst.org, CEU_APP_SIG->lst.lbl);
+    fprintf(stderr, "SEGFAULT on %p : %d\n", CEU_APP_SIG->lst.org, CEU_APP_SIG->lst.lbl);
 #else
-    printf("SEGFAULT on %d\n", CEU_APP_SIG->lst.lbl);
+    fprintf(stderr, "SEGFAULT on %d\n", CEU_APP_SIG->lst.lbl);
 #endif
+#ifdef CEU_RUNTESTS
     exit(0);
+#else
+    exit(1);
+#endif
 }
 #endif
 #endif

@@ -313,6 +313,16 @@ F = {
             ASR(blk.__depth > fun.__depth, me,
                     'not permitted across function declaration')
         end
+        local async = AST.par(me, 'Async')
+        if async then
+            ASR(blk.__depth > async.__depth, me,
+                    'not permitted across `async´ declaration')
+        end
+        local thread = AST.par(me, 'Thread')
+        if thread then
+            ASR(blk.__depth > thread.__depth, me,
+                    'not permitted across `async/thread´ declaration')
+        end
 
         local fin = AST.par(me, 'Finally')
         if fin then

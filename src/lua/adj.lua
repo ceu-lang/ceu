@@ -735,7 +735,8 @@ me.blk_body = me.blk_body or blk_body
         me.tag = 'Thread'
         local raw = node('RawStmt', me.ln, nil)    -- see code.lua
               raw.thread = me
-        return node('Stmts', me.ln,
+        return node('Block', me.ln,
+                node('Stmts', me.ln,
                     node('Finalize', me.ln,
                         false,
                         node('Finally', me.ln,
@@ -743,7 +744,7 @@ me.blk_body = me.blk_body or blk_body
                                 node('Stmts', me.ln,raw)))),
                     me,
                     node('Async', me.ln, node('VarList', me.ln),
-                                      node('Block', me.ln, node('Stmts', me.ln))))
+                                      node('Block', me.ln, node('Stmts', me.ln)))))
                     --[[ HACK_2:
                     -- Include <async do end> after it to enforce terminating
                     -- from the main program.
