@@ -213,17 +213,15 @@ ceu_app_init (tceu_app* app)
 #endif
 #endif
 #ifdef CEU_THREADS
-    pthread_mutex_init(&app->threads_mutex_external, NULL);
-    pthread_mutex_init(&app->threads_mutex_internal, NULL);
-    app->threads_n = 0;
+    pthread_mutex_init(&app->threads_mutex, NULL);
+    app->threads_head = NULL;
 
     /* All code run atomically:
      * - the program is always locked as a whole
      * -    thread spawns will unlock => re-lock
      * - but program will still run to completion
      */
-    CEU_THREADS_MUTEX_LOCK(&app->threads_mutex_external);
-    CEU_THREADS_MUTEX_LOCK(&app->threads_mutex_internal);
+    CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
 #endif
 
     === TOPS_INIT ===

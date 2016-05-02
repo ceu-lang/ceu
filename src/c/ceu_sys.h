@@ -201,6 +201,15 @@
 #ifdef CEU_THREADS
 /* TODO: app */
 #include "ceu_threads.h"
+typedef struct tceu_threads_data {
+    CEU_THREADS_T id;
+    u8 has_started:    1;
+    u8 has_terminated: 1;
+    u8 has_aborted:    1;
+    u8 has_notified:   1;
+    u8 has_joined:     1;
+    struct tceu_threads_data* nxt;
+} tceu_threads_data;
 #endif
 
 #ifdef CEU_LUA
@@ -563,10 +572,8 @@ typedef struct tceu_app {
 #endif
 
 #ifdef CEU_THREADS
-    CEU_THREADS_MUTEX_T threads_mutex_internal;
-    CEU_THREADS_MUTEX_T threads_mutex_external;
-    u8                  threads_n;          /* number of running threads */
-        /* TODO: u8? */
+    CEU_THREADS_MUTEX_T threads_mutex;
+    tceu_threads_data*  threads_head;   /* linked list of threads alive */
 #endif
 #if defined(CEU_LUA) || defined(CEU_OS)
 #ifdef CEU_LUA
@@ -602,10 +609,10 @@ typedef void (*tceu_export) (uint* size, tceu_init** init
 
 #ifdef CEU_THREADS
 typedef struct {
-    tceu_app* app;
-    tceu_org* org;
-    s8*       is_aborted;
-} tceu_threads_p;
+    tceu_app*          app;
+    tceu_org*          org;
+    tceu_threads_data* thread;
+} tceu_threads_param;
 #endif
 
 #ifdef CEU_PSES

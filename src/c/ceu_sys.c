@@ -324,6 +324,56 @@ int ceu_sys_wclock_ (tceu_app* app, s32 dt, s32* set, s32* get)
 
 /**********************************************************************/
 
+#ifdef CEU_THREADS
+
+int ceu_threads_gc (tceu_app* app, int force_join) {
+    int n_alive = 0;
+    tceu_threads_data** head_ = &app->threads_head;
+    tceu_threads_data*  head  = *head_;
+    while (head != NULL) {
+        tceu_threads_data** nxt_ = &head->nxt;
+        if (head->has_terminated || head->has_aborted)
+        {
+            if (app->isAlive && !head->has_notified) {
+                ceu_out_go(app, CEU_IN__THREAD, &head->id);
+                head->has_notified = 1;
+            }
+
+            if (! head->has_joined) {
+                if (force_join || head->has_terminated) {
+                    CEU_THREADS_JOIN(head->id);
+                    head->has_joined = 1;
+                } else {
+                    /* possible with "CANCEL" which prevents setting "has_terminated" */
+                    head->has_joined = CEU_THREADS_JOIN_TRY(head->id);
+                }
+            }
+
+            if (head->has_aborted && head->has_joined) {
+                    /* HACK_2:
+                     *  A thread never terminates the program because we include an
+                     *  <async do end> after it to enforce terminating from the
+                     *  main program.
+                     */
+                *head_ = head->nxt;
+                nxt_ = head_;
+                ceu_out_realloc(head, 0);
+            }
+        }
+        else
+        {
+            n_alive++;
+        }
+        head_ = nxt_;
+        head  = *head_;
+    }
+    return n_alive;
+}
+
+#endif
+
+/**********************************************************************/
+
 #ifdef CEU_LUA
 int ceu_lua_atpanic_f (lua_State* lua) {
 #ifdef CEU_DEBUG
@@ -712,27 +762,28 @@ int ceu_go_all (tceu_app* app, int argc, char **argv)
 #endif
             (
 #ifdef CEU_THREADS
-                app->threads_n>0 ||
+                (ceu_threads_gc(app,0)>0) ||
 #endif
                 app->pendingAsyncs
             ) )
     {
         ceu_sys_go(app, CEU_IN__ASYNC, NULL);
 #ifdef CEU_THREADS
-        if (app->threads_n > 0) {
-            CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex_external);
+#if 1
+        if (app->threads_head != NULL) {
+            CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
             CEU_THREADS_SLEEP(100); /* allow threads to do "atomic" and "terminate" */
-            CEU_THREADS_MUTEX_LOCK(&app->threads_mutex_external);
+            CEU_THREADS_MUTEX_LOCK(&app->threads_mutex);
         }
+#endif
 #endif
     }
 #endif
 
 /* TODO: app.close() ? */
 #ifdef CEU_THREADS
-    CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex_external);
-    while (app->threads_n>0) ;    /* wait all terminate/free */
-    sleep(1);
+    CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
+    ceu_out_assert(ceu_threads_gc(app,1) == 0); /* wait all terminate/free */
 #endif
 
 #ifdef CEU_NEWS
