@@ -65,7 +65,7 @@ local NO_async = {
     Await=true, AwaitN=true,
     EmitInt=true,
     Pause=true,
-    Escape=true,
+    --Escape=true,
     Finalize=true,
     This=true,
 }
@@ -88,7 +88,7 @@ local NO_thread = {
     Await=true, AwaitN=true,
     EmitInt=true, EmitExt=true,
     Pause=true,
-    Escape=true,
+    --Escape=true,
     Finalize=true,
     This=true,
 }

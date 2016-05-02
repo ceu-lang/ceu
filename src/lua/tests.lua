@@ -381,10 +381,30 @@ escape ret;
     run = 10,
 }
 
+--]===]
+Test { [[
+var int ret = 0;
+async (ret) do
+    ret = do escape 1; end;
+end
+escape ret;
+]],
+    run = 1,
+}
+Test { [[
+var int ret = 0;
+async/thread (ret) do
+    ret = do escape 1; end;
+end
+escape ret;
+]],
+    run = 1,
+}
+do return end
+
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

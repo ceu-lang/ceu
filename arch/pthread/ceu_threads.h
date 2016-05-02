@@ -6,7 +6,6 @@
 
 #define CEU_THREADS_T               pthread_t
 #define CEU_THREADS_MUTEX_T         pthread_mutex_t
-#define CEU_THREADS_SELF()          pthread_self()
 #define CEU_THREADS_CREATE(t,f,p)   pthread_create(t,NULL,f,p)
 #define CEU_THREADS_CANCEL(t)       ceu_out_assert(pthread_cancel(t)==0)
 /*

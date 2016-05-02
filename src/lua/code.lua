@@ -30,7 +30,11 @@ function CONC (me, sub, tab)
 end
 
 function CASE (me, lbl)
-    LINE(me, 'case '..lbl.id..':;', 0)
+    if AST.par(me, 'Thread') then
+        LINE(me, lbl.id..':;', 0)
+    else
+        LINE(me, 'case '..lbl.id..':;', 0)
+    end
 end
 
 function DEBUG_TRAILS (me, lbl)
@@ -126,11 +130,15 @@ if (]]..V(pse.dcl,'rval')..[[) {
 end
 
 function GOTO (me, lbl)
-    CODE.has_goto = true
-    LINE(me, [[
+    if AST.par(me, 'Thread') then
+        LINE(me, 'goto '..lbl..';')
+    else
+        CODE.has_goto = true
+        LINE(me, [[
 _ceu_lbl = ]]..lbl..[[;
 goto _CEU_GOTO_;
 ]])
+    end
 end
 
 function COMM (me, comm)
@@ -1433,7 +1441,14 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
     SetBlock_pos = function (me)
         local blk,_ = unpack(me)
         CONC(me, blk)
-        HALT(me)        -- must escape with `escape´
+
+        local thr = AST.par(me, 'Thread')
+        if thr then
+            LINE(me, 'goto '..me.lbl_out.id..';')
+        else
+            HALT(me)        -- must escape with `escape´
+        end
+
         if me.has_escape then
             CASE(me, me.lbl_out)
             CLEAR(me)
