@@ -5,7 +5,7 @@
 RUNTESTS = true
 
 -- Execution option for the tests:
-VALGRIND = true
+--VALGRIND = true
 --REENTRANT = true
 --LUACOV = 'lua -lluacov'
 --COMPLETE = true
@@ -24,6 +24,7 @@ STATS = {
     mem     = 0,
     trails  = 0,
     bytes   = 0,
+    n_go    = 0,
 }
 
 function check (mod)
@@ -265,10 +266,12 @@ end
             -- test output
             local ret = io.popen(EXE):read'*a'
             assert(not string.find(ret, '==%d+=='), 'valgrind error')
-            local v = tonumber( string.match(ret, 'END: (.-)\n') )
+            local v, n_go = string.match(ret, 'END: (.-) (.-)\n')
+            v, n_go = tonumber(v), tonumber(n_go)
 
             if type(exp)=='number' then
                 assert(v==exp, ret..' vs '..exp..' expected')
+                STATS.n_go = STATS.n_go + n_go
             else
                 assert( string.find(ret, exp, nil, true), ret )
             end
@@ -319,6 +322,7 @@ STATS = {
     mem     = ]]..STATS.mem    ..[[,
     trails  = ]]..STATS.trails ..[[,
     bytes   = ]]..STATS.bytes  ..[[,
+    n_go    = ]]..STATS.n_go   ..[[,
 }
 ]])
 
@@ -502,5 +506,20 @@ STATS = {
 (./run_tests.lua: 743.23s 37444k)
 (./run_tests.lua: 763.66s 37452k)
 
+
+=====================================
+
+STATS = {
+    count   = 3184,
+    mem     = 0,
+    trails  = 6914,
+    bytes   = 37129848,
+    n_go    = 31093344,
+}
+
+
+real	17m1.637s
+user	14m36.196s
+sys	2m47.229s
 
 ]]

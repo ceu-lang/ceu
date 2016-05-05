@@ -381,6 +381,97 @@ escape ret;
     run = 10,
 }
 
+var char[sizeof(u32)] vec;  // acha que eh dinamico
+Test { [[
+class T with
+    var int size;
+    function (int size)=>T run;
+do
+native @nohold _printf();
+_printf(">>> T = %p\n", &&this);
+    function (int size)=>T run do
+        this.size = size;
+    end
+    await 1s;
+    escape this.size;
+end
+
+class X with do await FOREVER; end;
+
+class U with
+do
+    do
+        _printf("TRL = %p\n", __ceu_trl);
+        var int n = do T.run(4);
+do
+        var X x;
+        par/or do
+            await x;
+        with
+            kill x;
+        end
+end
+    end
+    do
+_printf("TRL = %p\n", __ceu_trl);
+        var int n = do T.run(2);
+_printf("noooo\n");
+        _assert(n == 2);
+    end
+
+    escape 0;
+end
+
+_printf(">>> M = %p\n", &&this);
+do U;
+
+escape 1;
+]],
+    run = { ['~>1s']=1 },
+}
+
+do return end
+
+Test { [[
+class T with
+    var int size;
+    function (int size)=>T run;
+do
+native @nohold _printf();
+_printf(">>> %p\n", &&this);
+    function (int size)=>T run do
+        this.size = size;
+    end
+    await 1s;
+    escape this.size;
+end
+
+class U with
+do
+    do
+//native @plain _byte;
+        //var _byte[7] buf = [];
+        var byte[7] buf;
+_printf("> %d\n", $$buf);
+        var int n = do T.run(4);
+    end
+    do
+        var char[] buf;
+        var int n = do T.run(2);
+_printf("n=%d len=%d\n", n, 2);
+        _assert(n == 2);
+    end
+
+    escape 0;
+end
+
+do U;
+
+escape 1;
+]],
+    run = { ['~>2s']=1 },
+}
+
 do return end
 
 ----------------------------------------------------------------------------
@@ -24348,10 +24439,10 @@ escape _strlen("123");
 ]], run=3 }
 Test { [[
 native _printf();
-_printf("END: 1%d\n",2); escape 0;]], run=12 }
+_printf("END: 1%d 0\n",2); escape 0;]], run=12 }
 Test { [[
 native _printf();
-_printf("END: 1%d%d\n",2,3); escape 0;]], run=123 }
+_printf("END: 1%d%d 0\n",2,3); escape 0;]], run=123 }
 
 Test { [[
 native @nohold _strncpy(), _printf(), _strlen();
@@ -53039,7 +53130,7 @@ par/and do
     if i and err then end;
 with
     async do
-        var char[] str = [].."END: 10";
+        var char[] str = [].."END: 10 0";
         emit PING_PONG_RETURN => (0,0,&&str);
     end
 end

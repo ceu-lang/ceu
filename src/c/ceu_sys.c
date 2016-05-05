@@ -432,6 +432,9 @@ void ceu_pause (tceu_trl* trl, tceu_trl* trlF, int psed) {
 #ifdef CEU_OS_KERNEL
 u8 CEU_GC = 0;  /* execute __ceu_os_gc() when "true" */
 #endif
+#ifdef CEU_RUNTESTS
+u32 CEU_N_GO = 0;
+#endif
 
 #ifdef CEU_DEBUG_TRAILS
 static int spc = -1;
@@ -484,6 +487,9 @@ SPC(1); printf("trl: %p\n", trl);
 /*SPC(2); printf("seqno: %d\n", trl->seqno);*/
 SPC(2); printf("evt: %d\n", trl->evt);
 SPC(2); printf("lbl: %d\n", trl->lbl);
+#endif
+#ifdef CEU_RUNTESTS
+        CEU_N_GO++;
 #endif
 
         /* continue traversing current org */

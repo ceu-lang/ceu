@@ -42,7 +42,12 @@ int main (int argc, char *argv[])
 
     int ret = ceu_go_all(&app, argc, argv);
 
+#ifdef CEU_RUNTESTS
+    printf("*** END: %d %d\n", ret, CEU_N_GO);
+#else
     printf("*** END: %d\n", ret);
+#endif
+
 #if 0
     #include <unistd.h>
     sleep(1);  /* use when testing threads+valgrind */
