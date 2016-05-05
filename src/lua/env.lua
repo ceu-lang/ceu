@@ -575,7 +575,7 @@ F = {
                 for _, dclvar in ipairs(stmts) do
                     AST.asr(dclvar, 'Dcl_var')
                     local _, var_tp, var_id = unpack(dclvar)
-                    if TP.check(var_tp,'[]','-&') then
+                    if TP.check(var_tp,'[]') then
                         ASR(TP.is_ext(var_tp,'_','@'), dclvar,
                             '`data´ fields do not support vectors yet')
                     end

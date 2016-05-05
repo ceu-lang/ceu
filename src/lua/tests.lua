@@ -381,17 +381,29 @@ escape ret;
     run = 10,
 }
 
-var char[sizeof(u32)] vec;  // acha que eh dinamico
 Test { [[
+data D with
+    var char[]& str;
+end
+var char[] s = [].. "oi";
+var D d = D(s);    // BUG: nao detecta erro de tipo
+escape $d.str;
+]],
+    run = 2,
+}
+
+var char[sizeof(u32)] vec;  // acha que eh dinamico
+
+Test { [[
+native @nohold _printf();
 class T with
     var int size;
     function (int size)=>T run;
 do
-native @nohold _printf();
-_printf(">>> T = %p\n", &&this);
     function (int size)=>T run do
         this.size = size;
     end
+_printf("T %p\n", &&this);
     await 1s;
     escape this.size;
 end
@@ -401,33 +413,40 @@ class X with do await FOREVER; end;
 class U with
 do
     do
-        _printf("TRL = %p\n", __ceu_trl);
-        var int n = do T.run(4);
-do
-        var X x;
-        par/or do
-            await x;
-        with
-            kill x;
+#if 1
+        var int n = 0;
+        do
+            var T t = T.run(4);
+            n = await t;
+_printf("1\n");
         end
-end
+_printf("2\n");
+#else
+        var int n = do T.run(4);
+_printf("1\n");
+#endif
     end
+//await 1s;
     do
-_printf("TRL = %p\n", __ceu_trl);
-        var int n = do T.run(2);
-_printf("noooo\n");
-        _assert(n == 2);
+        native @plain _char;
+        var _char[8] v = [];
+        var T t = T.run(2);
+        par/or do
+            await FOREVER;
+        with
+            var int n = await t;
+            _printf("noooo\n");
+            _assert(n == 2);
+        end
     end
-
     escape 0;
 end
 
-_printf(">>> M = %p\n", &&this);
 do U;
 
 escape 1;
 ]],
-    run = { ['~>1s']=1 },
+    run = { ['~>3s']=1 },
 }
 
 do return end
@@ -1737,6 +1756,7 @@ escape a;
     run = 10,
 }
 
+-- TODO: XXX
 Test { [[
 input void OS_START;
 do
@@ -1761,6 +1781,28 @@ escape ret;
     },
     run = 2,
 }
+
+Test { [[
+input void OS_START;
+var int ret = 0;
+par/and do
+    await OS_START;
+with
+    event void e;
+    par/or do
+        await OS_START;
+        emit e;
+        ret = 1;
+    with
+        await e;
+        ret = 2;
+    end
+end
+escape ret;
+]],
+    run = 2,
+}
+
 Test { [[
 input void OS_START;
 do
@@ -27213,7 +27255,7 @@ escape v;
 
 Test { [==[
 [[
-    print '*** END: 10'
+    print '*** END: 10 0'
 ]]
 var int v = [[1]];
 escape v;
@@ -56561,6 +56603,48 @@ frames = [] .. frames .. [f1];
 escape frames[0].bytes[0];
 ]],
     ref = 'line 8 : invalid access to uninitialized variable "f1" (declared at tests.lua:6)'
+}
+
+Test { [[
+data T with
+    var int& i;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data T with
+    var char[]& str;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+native/pre do
+    typedef char* char_ptr;
+end
+native @nohold _strlen();
+native @plain _char_ptr;
+data D with
+    var _char_ptr str;
+end
+var char[] s = [].. "oi";
+var D d = D((_char_ptr)(_char&&)&&s);
+escape _strlen((_char&&)d.str);
+]],
+    run = 2,
+}
+Test { [[
+data D with
+    var char[]& str;
+end
+var char[] s = [].. "oi";
+var D d = D(&s);
+escape $d.str;
+]],
+    run = 2,
 }
 
 --<<< ADTS + VECTORS
