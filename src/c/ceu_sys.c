@@ -77,8 +77,7 @@ int ceu_sys_req (void) {
     return CEU_REQS;
 }
 
-void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
-                    tceu_stk* stk,
+void ceu_sys_go_ex (tceu_app* app, tceu_stk* stk,
                     tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF);
 
 /**********************************************************************/
@@ -219,7 +218,7 @@ void ceu_sys_stack_dump (tceu_stk* stk) {
 }
 
 /*
- * Trails [t1,t2] of "org" are dyeing.
+ * Trails [t1,t2] of "org" are dying.
  * Traverse the stack to see if a pending call is enclosed by this range.
  * If so, the whole stack has to unwind and continue from what we pass in 
  * lbl_or_org.
@@ -227,12 +226,15 @@ void ceu_sys_stack_dump (tceu_stk* stk) {
 void ceu_sys_stack_clear (tceu_stk* stk, tceu_org* org,
                           tceu_ntrl t1, tceu_ntrl t2) {
     for (; stk->down!=NULL; stk=stk->down) {
+printf("====> %d (%d)\n", stk->evt->id, CEU_IN__ok_killed);
         if (!stk->is_alive) {
             continue;
         }
 #ifdef CEU_ORGS
+printf("par=%p org=%p\n", org, stk->org);
         if (stk->org != org) {
             if (ceu_org_is_cleared(stk->org, org, t1, t2)) {
+printf("\tclear-1\n");
                 stk->is_alive = 0;
             }
         }
@@ -243,7 +245,20 @@ void ceu_sys_stack_clear (tceu_stk* stk, tceu_org* org,
                 stk->is_alive = 0;
             }
         }
+#if 1
+#ifdef CEU_ORGS_AWAIT
+        if (stk->evt!=NULL && stk->evt->id==CEU_IN__ok_killed) {
+printf("oioi\n");
+            tceu_kill* p = (tceu_kill*)stk->evt->param;
+            if (ceu_org_is_cleared(p->org_or_adt,org,t1,t2)) {
+                stk->is_alive = 0;
+                printf("\tclear-2 par=%p org=%p\n", org,p->org_or_adt);
+            }
+        }
+#endif
+#endif
     }
+printf("<====\n");
 }
 #endif
 
@@ -440,12 +455,12 @@ u32 CEU_N_GO = 0;
 static int spc = -1;
 #define SPC(n) { int i; for(i=0; i<(spc+n)*4; i++) printf(" "); };
 
-void ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
-                        tceu_stk* stk,
+void ceu_sys_go_ex_dbg (tceu_app* app, tceu_stk* stk,
                         tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF);
-void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
-                    tceu_stk* stk,
+void ceu_sys_go_ex (tceu_app* app, tceu_stk* stk,
                     tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF) {
+    tceu_evt* evt = stk->evt;
+
     spc++;
     SPC(0); printf(">>> GO-EX\n");
     SPC(0); printf("evt: %d\n", evt->id);
@@ -455,7 +470,7 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
                                    &org->trls[org->n]);
     #endif
 
-    ceu_sys_go_ex_dbg(app,evt,stk,org,trl0,trlF);
+    ceu_sys_go_ex_dbg(app,stk,org,trl0,trlF);
 
     SPC(0); printf("<<< GO-EX\n");
     spc--;
@@ -463,16 +478,15 @@ void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
 #endif
 
 #ifdef CEU_DEBUG_TRAILS
-void ceu_sys_go_ex_dbg (tceu_app* app, tceu_evt* evt,
-                        tceu_stk* stk,
+void ceu_sys_go_ex_dbg (tceu_app* app, tceu_stk* stk,
                         tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF)
 #else
-void ceu_sys_go_ex (tceu_app* app, tceu_evt* evt,
-                    tceu_stk* stk,
+void ceu_sys_go_ex (tceu_app* app, tceu_stk* stk,
                     tceu_org* org, tceu_ntrl trl0, tceu_ntrl trlF)
     /* TODO: now all arguments are required in all configurations */
 #endif
 {
+    tceu_evt* evt = stk->evt;
     tceu_ntrl trlI;
     tceu_trl* trl;
     for (trlI=trl0, trl=&org->trls[trlI];
@@ -510,13 +524,13 @@ SPC(2); printf("lbl: %d\n", trl->lbl);
 
             /* traverse all children */
             if (cur != NULL) {
-#ifdef CEU_STACK_CLEAR
-                tceu_stk stk_ = { stk, org, cur->parent_trl, cur->parent_trl, 1 };
-#endif
                 while (cur != NULL) {
+#ifdef CEU_STACK_CLEAR
+                    tceu_stk stk_ = { evt, stk, org, cur->parent_trl, cur->parent_trl, 1 };
+#endif
                     tceu_org* nxt = cur->nxt;   /* save before possible free/relink */
 #ifdef CEU_STACK_CLEAR
-                    ceu_sys_go_ex(app, evt, &stk_, cur, 0, cur->n);
+                    ceu_sys_go_ex(app, &stk_, cur, 0, cur->n);
                     if (!stk->is_alive) {
                         return; /* whole outer traversal aborted */
                     }
@@ -527,7 +541,7 @@ printf("aborted\n");
 }
 #endif
 #else
-                    ceu_sys_go_ex(app, evt, NULL, cur, 0, cur->n);
+                    ceu_sys_go_ex(app, stk, cur, 0, cur->n);
 #endif
                     cur = nxt;
                 }
@@ -570,10 +584,14 @@ if (evt->param != NULL) {
                 trl->is_org &&
 #endif
                 (trl->org_or_adt == NULL || /* for option ptrs, init'd w/ NULL  */
+#if 0
+1))
+#else
                  ceu_org_is_cleared((tceu_org*)trl->org_or_adt,
                     (tceu_org*)((tceu_kill*)evt->param)->org_or_adt,
                     ((tceu_kill*)evt->param)->t1,
                     ((tceu_kill*)evt->param)->t2)))
+#endif
         ||
 #endif
 #ifdef CEU_ADTS_AWAIT
@@ -650,6 +668,17 @@ SPC(1); printf("<<< NO\n");
 }
 
 void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
+#ifdef CEU_STACK_CLEAR
+    tceu_stk stk_ = { NULL, NULL, NULL, 0, 0, 1 };
+#else
+    tceu_stk stk_ = { NULL };
+#endif
+    if (stk == NULL) {
+        stk = &stk_;
+    }
+    tceu_evt evt_ = { evt, &evtp };
+    stk->evt = &evt_;
+
     app->seqno++;
 #ifdef CEU_DEBUG_TRAILS
     printf("===> [%d] %d\n", evt, app->seqno);
@@ -682,11 +711,7 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
     }
 
     {
-        tceu_evt evt_;
-                 evt_.id = evt;
-                 evt_.param = &evtp;
-        ceu_sys_go_ex(app, &evt_,
-                      stk,
+        ceu_sys_go_ex(app, stk,
                       app->data, 0,
 #ifdef CEU_ORGS
                       app->data->n
@@ -730,7 +755,7 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
 #ifdef CEU_STACK_CLEAR
-    tceu_stk stk_ = { NULL, NULL, 0, 0, 1 };
+    tceu_stk stk_ = { NULL, NULL, NULL, 0, 0, 1 };
     ceu_sys_go_stk(app, evt, evtp, &stk_);
 #else
     ceu_sys_go_stk(app, evt, evtp, NULL);

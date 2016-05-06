@@ -511,17 +511,16 @@ typedef struct tceu_lst {
 
 /* TCEU_STK */
 
-#ifdef CEU_STACK_CLEAR
 typedef struct tceu_stk {
+    tceu_evt*   evt;
+#ifdef CEU_STACK_CLEAR
     struct tceu_stk* down;
     tceu_org*   org;
     tceu_ntrl   trl1;
     tceu_ntrl   trl2;
     char        is_alive;
-} tceu_stk;
-#else
-typedef void tceu_stk;
 #endif
+} tceu_stk;
 
 /* TCEU_APP */
 

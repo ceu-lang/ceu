@@ -522,4 +522,23 @@ real	17m1.637s
 user	14m36.196s
 sys	2m47.229s
 
+STATS = {
+    count   = 3189,
+    mem     = 0,
+    trails  = 6925,
+    bytes   = 37355994,
+    n_go    = 30908511,
+}
+(./run_tests.lua: 883.24s 51240k)
+
+STATS = {
+    count   = 3191,
+    mem     = 0,
+    trails  = 6927,
+    bytes   = 37735651,
+    n_go    = 31000336,
+}
+(./run_tests.lua: 839.18s 52080k)
+
+
 ]]

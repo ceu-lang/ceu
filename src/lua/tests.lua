@@ -394,6 +394,7 @@ escape $d.str;
 
 var char[sizeof(u32)] vec;  // acha que eh dinamico
 
+--]===]
 Test { [[
 native @nohold _printf();
 class T with
@@ -403,12 +404,11 @@ do
     function (int size)=>T run do
         this.size = size;
     end
-_printf("T %p\n", &&this);
+_printf("> T %p\n", &&this);
     await 1s;
+_printf("< T %p\n", &&this);
     escape this.size;
 end
-
-class X with do await FOREVER; end;
 
 class U with
 do
@@ -430,12 +430,15 @@ _printf("1\n");
     do
         native @plain _char;
         var _char[8] v = [];
+_printf("aaa\n");
         var T t = T.run(2);
+_printf("bbb\n");
         par/or do
             await FOREVER;
         with
+_printf("ccc\n");
             var int n = await t;
-            _printf("noooo\n");
+_printf("ddd\n");
             _assert(n == 2);
         end
     end
@@ -446,10 +449,10 @@ do U;
 
 escape 1;
 ]],
-    run = { ['~>3s']=1 },
+    run = { ['~>1s']=1 },
 }
-
 do return end
+
 
 Test { [[
 class T with
@@ -496,7 +499,6 @@ do return end
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -54256,6 +54258,37 @@ do
 end
 ]],
     adt = 'line 9 : invalid attribution : destination is not a "data" type',
+}
+
+Test { [[
+data D with
+    var int x;
+    var int y;
+end
+
+var D d1 = D(10,10);
+var D d2 = d1;
+d2.y = 20;
+
+escape d1.x + d2.x + d1.y + d2.y;
+]],
+    run = 50,
+}
+
+Test { [[
+data D with
+    var int  x;
+    var int& y;
+end
+
+var int v = 10;
+var D d1 = D(10,&v);
+var D d2 = d1;
+d2.y = 20;
+
+escape d1.x + d2.x + d1.y + d2.y;
+]],
+    run = 60,
 }
 
 -- << ADT : MISC
