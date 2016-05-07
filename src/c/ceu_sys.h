@@ -220,9 +220,9 @@ typedef struct tceu_threads_data {
     #include "lauxlib.h"
     #include "lualib.h"
 #else
-    #include <lua5.1/lua.h>
-    #include <lua5.1/lauxlib.h>
-    #include <lua5.1/lualib.h>
+    #include <lua5.3/lua.h>
+    #include <lua5.3/lauxlib.h>
+    #include <lua5.3/lualib.h>
 #endif
 
 #ifdef CEU_OS_APP

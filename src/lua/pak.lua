@@ -26,6 +26,10 @@ local function subst (name)
           string.sub(fin, (e+1))
 end
 
+-- Lua 5.3
+unpack     = unpack     or table.unpack
+loadstring = loadstring or load
+
 subst 'tp.lua'
 subst 'lines.lua'
 subst 'parser.lua'
@@ -104,7 +108,10 @@ SOFTWARE.
 --
 --]]
 
-unpack = unpack or table.unpack   -- Lua 5.3
+-- Lua 5.3
+unpack     = unpack     or table.unpack
+loadstring = loadstring or load
+
 LUA_EXE  = ']=]..LUA_EXE..[=['
 
 ]=] .. fin)

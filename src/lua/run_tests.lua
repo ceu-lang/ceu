@@ -1,4 +1,4 @@
-#!/usr/bin/env lua
+#!/usr/bin/env lua5.3
 
 --RUNTESTS_file = assert(io.open('/tmp/fin.txt','w'))
 
@@ -14,7 +14,7 @@ OS = false   -- false, true, nil(random)
 OUT_DIR = '/tmp/ceu-tests'
 os.execute('mkdir -p '..OUT_DIR)
 
-assert(loadfile'pak.lua')('lua')
+assert(loadfile'pak.lua')('lua5.3')
 
 math.randomseed(os.time())
 T = nil

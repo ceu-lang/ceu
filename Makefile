@@ -4,7 +4,7 @@
 
 SRC ?=
 
-LUA_EXE ?= lua
+LUA_EXE ?= lua5.3
 
 C_EXE   ?= gcc
 C_FLAGS ?=
