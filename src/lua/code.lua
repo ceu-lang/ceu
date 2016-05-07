@@ -227,7 +227,7 @@ printf("clear %p, %d->%d\n", _ceu_org,
 #ifdef CEU_ORGS_AWAIT
 /* signal ok_killed */
 {
-    tceu_kill ps = { _ceu_org, _ceu_org->ret, ]]..me.trails[1]..','..me.trails[2]..[[, ++_ceu_app->xxx };
+    tceu_kill ps = { _ceu_org, ++_ceu_app->xxx, _ceu_org->ret, ]]..me.trails[1]..','..me.trails[2]..[[ };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
@@ -373,7 +373,7 @@ ceu_sys_org_free(_ceu_app, _ceu_org);
              stk_.is_alive = 1;
              stk_.down = _ceu_stk;
 #endif
-    tceu_kill ps = { _ceu_org, _ceu_org->ret, 0, (tceu_ntrl)(_ceu_org->n-1), ++_ceu_app->xxx };
+    tceu_kill ps = { _ceu_org, ++_ceu_app->xxx, _ceu_org->ret, 0, (tceu_ntrl)(_ceu_org->n-1) };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
@@ -664,7 +664,7 @@ if (]]..me.val..[[ == NULL) {
 #ifdef CEU_ORGS_AWAIT
     /* signal ok_killed */
     {
-        tceu_kill ps = { ]]..org_cast..','..org_cast..'->ret, 0, (tceu_ntrl)('..org_cast..[[->n-1), ++_ceu_app->xxx  };
+        tceu_kill ps = { ]]..org_cast..', ++_ceu_app->xxx,'..org_cast..'->ret, 0, (tceu_ntrl)('..org_cast..[[->n-1)  };
         tceu_evt evt_;
                  evt_.id = CEU_IN__ok_killed;
                  evt_.param = &ps;
@@ -1175,17 +1175,17 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 
         LINE(me, [[                     /* 3. free */
     CEU_]]..to_tp_id..[[_free(]]..pool..[[, __ceu_old);
-]])
-
-        LINE(me, [[
 
 #ifdef CEU_ADTS_AWAIT_]]..to_tp_id..[[
 
     /* OK_KILLED (after free) */        /* 4. kill */
 {
+    tceu_kill ps;
+              ps.org_or_adt = __ceu_old;
+              ps.xxx = ++_ceu_app->xxx;
     tceu_evt evt;
              evt.id = CEU_IN__ok_killed;
-             evt.param = &__ceu_old;
+             evt.param = &ps;
     tceu_stk stk_ = { &evt, _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
     ceu_sys_go_ex(_ceu_app, &stk_,
                   _ceu_app->data, 0,

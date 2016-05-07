@@ -487,10 +487,12 @@ typedef struct {
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
 typedef struct tceu_kill {
     void*     org_or_adt;
+    u8        xxx;
+#ifdef CEU_ORGS_AWAIT
     int       ret;
     tceu_ntrl t1;
     tceu_ntrl t2;
-    u8        xxx;
+#endif
 } tceu_kill;
 #endif
 

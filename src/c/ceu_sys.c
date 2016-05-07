@@ -551,25 +551,6 @@ printf("aborted\n");
 #endif /* CEU_ORGS */
 
         /* EXECUTE THIS TRAIL */
-#if 0
-printf("%d==%d && %d!=%d && %d>=%d\n",
-        trl->evt, evt->id,
-        trl->seqno, app->seqno,
-        evt->id, CEU_IN_lower
-);
-if (evt->param != NULL) {
-    printf("trl->org_or_adt=%p // param=%p\n", trl->org_or_adt,
-                 ((tceu_kill*)evt->param)->org_or_adt);
-}
-#endif
-
-#if 0
-if (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed) {
-    printf(">>> seqno %d != %d\n", trl->seqno, app->seqno);
-    printf(">>> xxx   %d <  %d\n", trl->xxx, ((tceu_kill*)evt->param)->xxx);
-}
-#endif
-
         if (
 
         /* IN__ANY */
@@ -591,6 +572,7 @@ if (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed) {
         /* IN__ok_killed */
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
             (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
+             (trl->seqno!=app->seqno || trl->xxx<((tceu_kill*)evt->param)->xxx) &&
                 (0
 #ifdef CEU_ORGS_AWAIT
                 || (
