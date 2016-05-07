@@ -226,15 +226,12 @@ void ceu_sys_stack_dump (tceu_stk* stk) {
 void ceu_sys_stack_clear (tceu_stk* stk, tceu_org* org,
                           tceu_ntrl t1, tceu_ntrl t2) {
     for (; stk->down!=NULL; stk=stk->down) {
-printf("====> %d (%d)\n", stk->evt->id, CEU_IN__ok_killed);
         if (!stk->is_alive) {
             continue;
         }
 #ifdef CEU_ORGS
-printf("par=%p org=%p\n", org, stk->org);
         if (stk->org != org) {
             if (ceu_org_is_cleared(stk->org, org, t1, t2)) {
-printf("\tclear-1\n");
                 stk->is_alive = 0;
             }
         }
@@ -245,7 +242,10 @@ printf("\tclear-1\n");
                 stk->is_alive = 0;
             }
         }
-#if 1
+#if 0
+printf("====> %d (%d)\n", stk->evt->id, CEU_IN__ok_killed);
+printf("par=%p org=%p\n", org, stk->org);
+printf("\tclear-1\n");
 #ifdef CEU_ORGS_AWAIT
         if (stk->evt!=NULL && stk->evt->id==CEU_IN__ok_killed) {
 printf("oioi\n");
@@ -563,6 +563,13 @@ if (evt->param != NULL) {
 }
 #endif
 
+#if 0
+if (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed) {
+    printf(">>> seqno %d != %d\n", trl->seqno, app->seqno);
+    printf(">>> xxx   %d <  %d\n", trl->xxx, ((tceu_kill*)evt->param)->xxx);
+}
+#endif
+
         if (
 #ifdef CEU_IN_ANY
            (trl->evt==CEU_IN_ANY && evt->id>=CEU_IN_lower && evt->id<CEU_IN__INIT
@@ -580,18 +587,15 @@ if (evt->param != NULL) {
 #ifdef CEU_ORGS_AWAIT
             /* if */
             (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
+             (trl->seqno!=app->seqno || trl->xxx<((tceu_kill*)evt->param)->xxx) &&
 #ifdef CEU_ADTS_AWAIT
                 trl->is_org &&
 #endif
                 (trl->org_or_adt == NULL || /* for option ptrs, init'd w/ NULL  */
-#if 0
-1))
-#else
                  ceu_org_is_cleared((tceu_org*)trl->org_or_adt,
                     (tceu_org*)((tceu_kill*)evt->param)->org_or_adt,
                     ((tceu_kill*)evt->param)->t1,
                     ((tceu_kill*)evt->param)->t2)))
-#endif
         ||
 #endif
 #ifdef CEU_ADTS_AWAIT
@@ -653,6 +657,9 @@ SPC(1); printf("<<< NO\n");
 
         /* NEXT TRAIL */
 
+        if (trl->evt==CEU_IN__ok_killed && trl->seqno!=app->seqno) {
+            trl->seqno = app->seqno-1;   /* keeps the gap tight */
+        }
         if (trl->evt<=CEU_IN_higher && trl->seqno!=app->seqno) {
             trl->seqno = app->seqno-1;   /* keeps the gap tight */
         }
@@ -754,6 +761,10 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
 
 void ceu_sys_go (tceu_app* app, int evt, void* evtp)
 {
+#ifdef CEU_ORGS_OR_ADTS_AWAIT
+    app->xxx = 0;
+#endif
+
 #ifdef CEU_STACK_CLEAR
     tceu_stk stk_ = { NULL, NULL, NULL, 0, 0, 1 };
     ceu_sys_go_stk(app, evt, evtp, &stk_);

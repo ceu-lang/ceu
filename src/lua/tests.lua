@@ -449,9 +449,9 @@ do U;
 
 escape 1;
 ]],
-    run = { ['~>1s']=1 },
+    run = { ['~>2s']=1 },
 }
-do return end
+--do return end
 
 
 Test { [[
@@ -494,7 +494,7 @@ escape 1;
     run = { ['~>2s']=1 },
 }
 
-do return end
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
