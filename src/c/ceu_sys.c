@@ -571,6 +571,8 @@ if (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed) {
 #endif
 
         if (
+
+        /* IN__ANY */
 #ifdef CEU_IN_ANY
            (trl->evt==CEU_IN_ANY && evt->id>=CEU_IN_lower && evt->id<CEU_IN__INIT
 #ifdef CEU_CLEAR
@@ -579,35 +581,43 @@ if (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed) {
            )
         ||
 #endif
+
+        /* IN__CLEAR and "finalize" clause */
 #ifdef CEU_CLEAR
-            /* if IN__CLEAR and "finalize" clause */
             (evt->id==CEU_IN__CLEAR && trl->evt==CEU_IN__CLEAR)
         ||
 #endif
-#ifdef CEU_ORGS_AWAIT
-            /* if */
+
+        /* IN__ok_killed */
+#ifdef CEU_ORGS_OR_ADTS_AWAIT
             (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
-             (trl->seqno!=app->seqno || trl->xxx<((tceu_kill*)evt->param)->xxx) &&
+                (0
+#ifdef CEU_ORGS_AWAIT
+                || (
 #ifdef CEU_ADTS_AWAIT
-                trl->is_org &&
+                    trl->is_org &&
 #endif
-                (trl->org_or_adt == NULL || /* for option ptrs, init'd w/ NULL  */
-                 ceu_org_is_cleared((tceu_org*)trl->org_or_adt,
-                    (tceu_org*)((tceu_kill*)evt->param)->org_or_adt,
-                    ((tceu_kill*)evt->param)->t1,
-                    ((tceu_kill*)evt->param)->t2)))
+                    (trl->org_or_adt == NULL || /* for option ptrs, init'd w/ NULL  */
+                     ceu_org_is_cleared((tceu_org*)trl->org_or_adt,
+                        (tceu_org*)((tceu_kill*)evt->param)->org_or_adt,
+                        ((tceu_kill*)evt->param)->t1,
+                        ((tceu_kill*)evt->param)->t2))
+                   )
+#endif
+#ifdef CEU_ADTS_AWAIT
+                || (
+#ifdef CEU_ORGS_AWAIT
+                    !trl->is_org &&
+#endif
+                    trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt
+                   )
+#endif
+                )
+            )
         ||
 #endif
-#ifdef CEU_ADTS_AWAIT
-            /* if */
-            (evt->id==CEU_IN__ok_killed && trl->evt==CEU_IN__ok_killed &&
-#ifdef CEU_ORGS_AWAIT
-                !trl->is_org &&
-#endif
-                trl->org_or_adt == ((tceu_kill*)evt->param)->org_or_adt)
-        ||
-#endif
-            /* if evt->id matches awaiting trail */
+
+        /* evt->id matches awaiting trail */
             (trl->evt==evt->id && trl->seqno!=app->seqno
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
                 && (evt->id != CEU_IN__ok_killed)
