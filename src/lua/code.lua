@@ -93,7 +93,7 @@ _ceu_trl->is_org = ]]..t.is_org..[[;
 #endif
 #endif
 _ceu_trl->org_or_adt = ]]..t.org_or_adt..[[;
-_ceu_trl->xxx = _ceu_app->xxx;
+_ceu_trl->t_kills = _ceu_app->t_kills;
 ]])
     end
 
@@ -227,7 +227,8 @@ printf("clear %p, %d->%d\n", _ceu_org,
 #ifdef CEU_ORGS_AWAIT
 /* signal ok_killed */
 {
-    tceu_kill ps = { _ceu_org, ++_ceu_app->xxx, _ceu_org->ret, ]]..me.trails[1]..','..me.trails[2]..[[ };
+    ceu_out_assert(_ceu_app->t_kills < 255);
+    tceu_kill ps = { _ceu_org, ++_ceu_app->t_kills, _ceu_org->ret, ]]..me.trails[1]..','..me.trails[2]..[[ };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
@@ -373,7 +374,8 @@ ceu_sys_org_free(_ceu_app, _ceu_org);
              stk_.is_alive = 1;
              stk_.down = _ceu_stk;
 #endif
-    tceu_kill ps = { _ceu_org, ++_ceu_app->xxx, _ceu_org->ret, 0, (tceu_ntrl)(_ceu_org->n-1) };
+    ceu_out_assert(_ceu_app->t_kills < 255);
+    tceu_kill ps = { _ceu_org, ++_ceu_app->t_kills, _ceu_org->ret, 0, (tceu_ntrl)(_ceu_org->n-1) };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
@@ -664,7 +666,8 @@ if (]]..me.val..[[ == NULL) {
 #ifdef CEU_ORGS_AWAIT
     /* signal ok_killed */
     {
-        tceu_kill ps = { ]]..org_cast..', ++_ceu_app->xxx,'..org_cast..'->ret, 0, (tceu_ntrl)('..org_cast..[[->n-1)  };
+        ceu_out_assert(_ceu_app->t_kills < 255);
+        tceu_kill ps = { ]]..org_cast..', ++_ceu_app->t_kills,'..org_cast..'->ret, 0, (tceu_ntrl)('..org_cast..[[->n-1)  };
         tceu_evt evt_;
                  evt_.id = CEU_IN__ok_killed;
                  evt_.param = &ps;
@@ -856,7 +859,7 @@ _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].is_org = 1;
 #endif
 #endif
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
-_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].xxx = _ceu_app->xxx;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].t_kills = _ceu_app->t_kills;
 ]])
                 end
 
@@ -1180,9 +1183,10 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 
     /* OK_KILLED (after free) */        /* 4. kill */
 {
+    ceu_out_assert(_ceu_app->t_kills < 255);
     tceu_kill ps;
               ps.org_or_adt = __ceu_old;
-              ps.xxx = ++_ceu_app->xxx;
+              ps.t_kills = ++_ceu_app->t_kills;
     tceu_evt evt;
              evt.id = CEU_IN__ok_killed;
              evt.param = &ps;

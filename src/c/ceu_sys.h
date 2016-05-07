@@ -394,7 +394,7 @@ typedef union tceu_trl {
         u8        is_org;
 #endif
 #endif
-        u8        xxx;          /* avoids awake from old org in the same address */
+        u8        t_kills;      /* avoids awake from old org in the same address */
         void*     org_or_adt;
     };
 #endif
@@ -487,7 +487,7 @@ typedef struct {
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
 typedef struct tceu_kill {
     void*     org_or_adt;
-    u8        xxx;
+    u8        t_kills;      /* TODO: u8? */
 #ifdef CEU_ORGS_AWAIT
     int       ret;
     tceu_ntrl t1;
@@ -549,7 +549,7 @@ typedef struct tceu_app {
 #endif
 
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
-    u8 xxx;
+    u8 t_kills;                 /* TODO: u8? */
 #endif
 
 #ifdef CEU_ORGS_NEWS_MALLOC

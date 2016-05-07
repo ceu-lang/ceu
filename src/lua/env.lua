@@ -414,7 +414,7 @@ F = {
             { '_CLEAR',     nil          },
             { '_ok_killed', {'int'}      },
         -- input / runtime
-            { '_INIT',      nil,      'seqno' }, -- _INIT = HIGHER EXTERNAL
+            { '_INIT',      nil,      'seqno' },
             { '_ASYNC',     nil,      'seqno' },
             { '_THREAD',    nil,      'seqno' },
             { '_WCLOCK',    {'s32'},  'seqno' },

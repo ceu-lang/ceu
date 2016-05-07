@@ -401,105 +401,6 @@ var char[sizeof(u32)] vec;  // acha que eh dinamico
 ----------------------------------------------------------------------------
 --]===]
 
-Test { [[
-native @nohold _printf();
-class T with
-    var int size;
-    function (int size)=>T run;
-do
-    function (int size)=>T run do
-        this.size = size;
-    end
-_printf("> T %p\n", &&this);
-    await 1s;
-_printf("< T %p\n", &&this);
-    escape this.size;
-end
-
-class U with
-do
-    do
-#if 1
-        var int n = 0;
-        do
-            var T t = T.run(4);
-            n = await t;
-_printf("1\n");
-        end
-_printf("2\n");
-#else
-        var int n = do T.run(4);
-_printf("1\n");
-#endif
-    end
-//await 1s;
-    do
-        native @plain _char;
-        var _char[8] v = [];
-_printf("aaa\n");
-        var T t = T.run(2);
-_printf("bbb\n");
-        par/or do
-            await FOREVER;
-        with
-_printf("ccc\n");
-            var int n = await t;
-_printf("ddd\n");
-            _assert(n == 2);
-        end
-    end
-    escape 0;
-end
-
-do U;
-
-escape 1;
-]],
-    run = { ['~>2s']=1 },
-}
---do return end
-
-
-Test { [[
-class T with
-    var int size;
-    function (int size)=>T run;
-do
-native @nohold _printf();
-_printf(">>> %p\n", &&this);
-    function (int size)=>T run do
-        this.size = size;
-    end
-    await 1s;
-    escape this.size;
-end
-
-class U with
-do
-    do
-//native @plain _byte;
-        //var _byte[7] buf = [];
-        var byte[7] buf;
-_printf("> %d\n", $$buf);
-        var int n = do T.run(4);
-    end
-    do
-        var char[] buf;
-        var int n = do T.run(2);
-_printf("n=%d len=%d\n", n, 2);
-        _assert(n == 2);
-    end
-
-    escape 0;
-end
-
-do U;
-
-escape 1;
-]],
-    run = { ['~>2s']=1 },
-}
-
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
 
@@ -32554,6 +32455,120 @@ await t;
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+class T with
+    var int size;
+    function (int size)=>T run;
+do
+    function (int size)=>T run do
+        this.size = size;
+    end
+    await 1s;
+    escape this.size;
+end
+
+class U with
+do
+    do
+        var int n = 0;
+        do
+            var T t = T.run(4);
+            n = await t;
+        end
+    end
+    do
+        native @plain _char;
+        var _char[8] v = [];
+        var T t = T.run(2);
+        par/or do
+            await FOREVER;
+        with
+            var int n = await t;
+            _assert(n == 2);
+        end
+    end
+    escape 0;
+end
+
+do U;
+
+escape 1;
+]],
+    run = { ['~>2s']=1 },
+}
+Test { [[
+class T with
+    var int size;
+    function (int size)=>T run;
+do
+    function (int size)=>T run do
+        this.size = size;
+    end
+    await 1s;
+    escape this.size;
+end
+
+class U with
+do
+    do
+        var int n = do T.run(4);
+    end
+    do
+        native @plain _char;
+        var _char[8] v = [];
+        var T t = T.run(2);
+        par/or do
+            await FOREVER;
+        with
+            var int n = await t;
+            _assert(n == 2);
+        end
+    end
+    escape 0;
+end
+
+do U;
+
+escape 1;
+]],
+    run = { ['~>2s']=1 },
+}
+
+
+Test { [[
+class T with
+    var int size;
+    function (int size)=>T run;
+do
+    function (int size)=>T run do
+        this.size = size;
+    end
+    await 1s;
+    escape this.size;
+end
+
+class U with
+do
+    do
+        var byte[7] buf;
+        var int n = do T.run(4);
+    end
+    do
+        var char[] buf;
+        var int n = do T.run(2);
+        _assert(n == 2);
+    end
+
+    escape 0;
+end
+
+do U;
+
+escape 1;
+]],
+    run = { ['~>2s']=1 },
 }
 
 -- CONSTRUCTOR
