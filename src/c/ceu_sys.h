@@ -350,11 +350,6 @@ typedef u8 tceu_nevt;   /* max number of events */
 typedef u8 tceu_ntrl;   /* max number of trails per class */
                         /* TODO: should "u8" be fixed? */
 
-#ifdef CEU_STACK_CLEAR
-typedef u16 tceu_nstk;  /* max size of internal stack in bytes */
-                        /* TODO: should "u16" be fixed? */
-#endif
-
 #ifdef __cplusplus
 #define CEU_WCLOCK_INACTIVE 0x7fffffffL     /* TODO */
 #else
@@ -393,11 +388,13 @@ typedef union tceu_trl {
     struct {
         tceu_nevt evt4;
         tceu_nlbl lbl4;
+        u8        seqno2;       /* TODO(ram): 2 bits is enough */
 #ifdef CEU_ORGS_AWAIT
 #ifdef CEU_ADTS_AWAIT
         u8        is_org;
 #endif
 #endif
+        u8        t_kills;      /* avoids awake from old org in the same address */
         void*     org_or_adt;
     };
 #endif
@@ -490,9 +487,12 @@ typedef struct {
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
 typedef struct tceu_kill {
     void*     org_or_adt;
+    u8        t_kills;      /* TODO: u8? */
+#ifdef CEU_ORGS_AWAIT
     int       ret;
     tceu_ntrl t1;
     tceu_ntrl t2;
+#endif
 } tceu_kill;
 #endif
 
@@ -511,17 +511,16 @@ typedef struct tceu_lst {
 
 /* TCEU_STK */
 
-#ifdef CEU_STACK_CLEAR
 typedef struct tceu_stk {
+    tceu_evt*   evt;
+#ifdef CEU_STACK_CLEAR
     struct tceu_stk* down;
     tceu_org*   org;
     tceu_ntrl   trl1;
     tceu_ntrl   trl2;
     char        is_alive;
-} tceu_stk;
-#else
-typedef void tceu_stk;
 #endif
+} tceu_stk;
 
 /* TCEU_APP */
 
@@ -547,6 +546,10 @@ typedef struct tceu_app {
 
 #if defined(CEU_RET) || defined(CEU_ORGS_AWAIT)
     int ret;
+#endif
+
+#ifdef CEU_ORGS_OR_ADTS_AWAIT
+    u8 t_kills;                 /* TODO: u8? */
 #endif
 
 #ifdef CEU_ORGS_NEWS_MALLOC

@@ -388,7 +388,6 @@ do
         end
 
         if not OPTS.os then
-            str = str..'#define CEU_IN_higher CEU_IN__INIT\n'   -- _INIT = HIGHER EXTERNAL
             str = str..'#define CEU_IN_lower '..(256-ins)..'\n'
         end
 

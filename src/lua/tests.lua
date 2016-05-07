@@ -381,7 +381,20 @@ escape ret;
     run = 10,
 }
 
-do return end
+Test { [[
+data D with
+    var char[]& str;
+end
+var char[] s = [].. "oi";
+var D d = D(s);    // BUG: nao detecta erro de tipo
+escape $d.str;
+]],
+    run = 2,
+}
+
+var char[sizeof(u32)] vec;  // acha que eh dinamico
+
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1646,6 +1659,7 @@ escape a;
     run = 10,
 }
 
+-- TODO: XXX
 Test { [[
 input void OS_START;
 do
@@ -1670,6 +1684,28 @@ escape ret;
     },
     run = 2,
 }
+
+Test { [[
+input void OS_START;
+var int ret = 0;
+par/and do
+    await OS_START;
+with
+    event void e;
+    par/or do
+        await OS_START;
+        emit e;
+        ret = 1;
+    with
+        await e;
+        ret = 2;
+    end
+end
+escape ret;
+]],
+    run = 2,
+}
+
 Test { [[
 input void OS_START;
 do
@@ -24348,10 +24384,10 @@ escape _strlen("123");
 ]], run=3 }
 Test { [[
 native _printf();
-_printf("END: 1%d\n",2); escape 0;]], run=12 }
+_printf("END: 1%d 0\n",2); escape 0;]], run=12 }
 Test { [[
 native _printf();
-_printf("END: 1%d%d\n",2,3); escape 0;]], run=123 }
+_printf("END: 1%d%d 0\n",2,3); escape 0;]], run=123 }
 
 Test { [[
 native @nohold _strncpy(), _printf(), _strlen();
@@ -27122,7 +27158,7 @@ escape v;
 
 Test { [==[
 [[
-    print '*** END: 10'
+    print '*** END: 10 0'
 ]]
 var int v = [[1]];
 escape v;
@@ -32419,6 +32455,120 @@ await t;
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+class T with
+    var int size;
+    function (int size)=>T run;
+do
+    function (int size)=>T run do
+        this.size = size;
+    end
+    await 1s;
+    escape this.size;
+end
+
+class U with
+do
+    do
+        var int n = 0;
+        do
+            var T t = T.run(4);
+            n = await t;
+        end
+    end
+    do
+        native @plain _char;
+        var _char[8] v = [];
+        var T t = T.run(2);
+        par/or do
+            await FOREVER;
+        with
+            var int n = await t;
+            _assert(n == 2);
+        end
+    end
+    escape 0;
+end
+
+do U;
+
+escape 1;
+]],
+    run = { ['~>2s']=1 },
+}
+Test { [[
+class T with
+    var int size;
+    function (int size)=>T run;
+do
+    function (int size)=>T run do
+        this.size = size;
+    end
+    await 1s;
+    escape this.size;
+end
+
+class U with
+do
+    do
+        var int n = do T.run(4);
+    end
+    do
+        native @plain _char;
+        var _char[8] v = [];
+        var T t = T.run(2);
+        par/or do
+            await FOREVER;
+        with
+            var int n = await t;
+            _assert(n == 2);
+        end
+    end
+    escape 0;
+end
+
+do U;
+
+escape 1;
+]],
+    run = { ['~>2s']=1 },
+}
+
+
+Test { [[
+class T with
+    var int size;
+    function (int size)=>T run;
+do
+    function (int size)=>T run do
+        this.size = size;
+    end
+    await 1s;
+    escape this.size;
+end
+
+class U with
+do
+    do
+        var byte[7] buf;
+        var int n = do T.run(4);
+    end
+    do
+        var char[] buf;
+        var int n = do T.run(2);
+        _assert(n == 2);
+    end
+
+    escape 0;
+end
+
+do U;
+
+escape 1;
+]],
+    run = { ['~>2s']=1 },
 }
 
 -- CONSTRUCTOR
@@ -53039,7 +53189,7 @@ par/and do
     if i and err then end;
 with
     async do
-        var char[] str = [].."END: 10";
+        var char[] str = [].."END: 10 0";
         emit PING_PONG_RETURN => (0,0,&&str);
     end
 end
@@ -54123,6 +54273,37 @@ do
 end
 ]],
     adt = 'line 9 : invalid attribution : destination is not a "data" type',
+}
+
+Test { [[
+data D with
+    var int x;
+    var int y;
+end
+
+var D d1 = D(10,10);
+var D d2 = d1;
+d2.y = 20;
+
+escape d1.x + d2.x + d1.y + d2.y;
+]],
+    run = 50,
+}
+
+Test { [[
+data D with
+    var int  x;
+    var int& y;
+end
+
+var int v = 10;
+var D d1 = D(10,&v);
+var D d2 = d1;
+d2.y = 20;
+
+escape d1.x + d2.x + d1.y + d2.y;
+]],
+    run = 60,
 }
 
 -- << ADT : MISC
@@ -56470,6 +56651,48 @@ frames = [] .. frames .. [f1];
 escape frames[0].bytes[0];
 ]],
     ref = 'line 8 : invalid access to uninitialized variable "f1" (declared at tests.lua:6)'
+}
+
+Test { [[
+data T with
+    var int& i;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data T with
+    var char[]& str;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+native/pre do
+    typedef char* char_ptr;
+end
+native @nohold _strlen();
+native @plain _char_ptr;
+data D with
+    var _char_ptr str;
+end
+var char[] s = [].. "oi";
+var D d = D((_char_ptr)(_char&&)&&s);
+escape _strlen((_char&&)d.str);
+]],
+    run = 2,
+}
+Test { [[
+data D with
+    var char[]& str;
+end
+var char[] s = [].. "oi";
+var D d = D(&s);
+escape $d.str;
+]],
+    run = 2,
 }
 
 --<<< ADTS + VECTORS

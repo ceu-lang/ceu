@@ -93,6 +93,7 @@ _ceu_trl->is_org = ]]..t.is_org..[[;
 #endif
 #endif
 _ceu_trl->org_or_adt = ]]..t.org_or_adt..[[;
+_ceu_trl->t_kills = _ceu_app->t_kills;
 ]])
     end
 
@@ -203,15 +204,19 @@ function CLEAR (me)
 #endif
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, &evt,
-                  _ceu_stk,
+    _ceu_stk->evt = &evt;
+    ceu_sys_go_ex(_ceu_app, _ceu_stk,
                   _ceu_org,
                   ]]..me.trails[1]..[[,
                   ]]..(me.trails[2]+1)..[[);
 #ifdef CEU_STACK_CLEAR
     _ceu_stk->is_alive = __ceu_old;
+#if 1
+printf("clear %p, %d->%d\n", _ceu_org,
+                        ]]..me.trails[1]..','..me.trails[2]..[[);
     ceu_sys_stack_clear(_ceu_stk, _ceu_org,
                         ]]..me.trails[1]..','..me.trails[2]..[[);
+#endif
 #endif
 }
 ]])
@@ -222,11 +227,13 @@ function CLEAR (me)
 #ifdef CEU_ORGS_AWAIT
 /* signal ok_killed */
 {
-    tceu_kill ps = { _ceu_org, _ceu_org->ret, ]]..me.trails[1]..','..me.trails[2]..[[ };
+    ceu_out_assert(_ceu_app->t_kills < 255);
+    tceu_kill ps = { _ceu_org, ++_ceu_app->t_kills, _ceu_org->ret, ]]..me.trails[1]..','..me.trails[2]..[[ };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
-    ceu_sys_go_ex(_ceu_app, &evt_, _ceu_stk,
+    _ceu_stk->evt = &evt_;
+    ceu_sys_go_ex(_ceu_app, _ceu_stk,
                   _ceu_app->data, 0, _ceu_app->data->n);
 }
 #endif
@@ -362,21 +369,18 @@ ceu_sys_org_free(_ceu_app, _ceu_org);
 #ifdef CEU_ORGS_AWAIT
 {
     /* signal ok_killed */
-#ifdef CEU_STACK_CLEAR
     tceu_stk stk_ = *_ceu_stk;
+#ifdef CEU_STACK_CLEAR
              stk_.is_alive = 1;
              stk_.down = _ceu_stk;
 #endif
-    tceu_kill ps = { _ceu_org, _ceu_org->ret, 0, (tceu_ntrl)(_ceu_org->n-1) };
+    ceu_out_assert(_ceu_app->t_kills < 255);
+    tceu_kill ps = { _ceu_org, ++_ceu_app->t_kills, _ceu_org->ret, 0, (tceu_ntrl)(_ceu_org->n-1) };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
              evt_.param = &ps;
-    ceu_sys_go_ex(_ceu_app, &evt_,
-#ifdef CEU_STACK_CLEAR
-                  &stk_,
-#else
-                  NULL,
-#endif
+    stk_.evt = &evt_;
+    ceu_sys_go_ex(_ceu_app, &stk_,
                   _ceu_app->data, 0, _ceu_app->data->n);
 }
 #endif
@@ -458,8 +462,8 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         LINE(me, [[
 {
 #ifdef CEU_STACK_CLEAR
-    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
-    ceu_app_go(_ceu_app,NULL,
+    tceu_stk stk_ = { _ceu_evt, _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+    ceu_app_go(_ceu_app, NULL,
                ]]..org..[[, &]]..org..[[->trls[0],
                &stk_);
     if (!stk_.is_alive) {
@@ -651,10 +655,10 @@ if (]]..me.val..[[ == NULL) {
         local org_cast = '((tceu_org*)'..V(org,'lval')..')'
         LINE(me, [[
 {
-    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
     tceu_evt evt;
              evt.id = CEU_IN__CLEAR;
-    ceu_sys_go_ex(_ceu_app, &evt, &stk_,
+    tceu_stk stk_ = { &evt, _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+    ceu_sys_go_ex(_ceu_app, &stk_,
                   ]]..org_cast..[[, 0, ]]..org_cast..[[->n);
 
     ceu_sys_org_free(_ceu_app,]]..org_cast..[[);
@@ -662,11 +666,13 @@ if (]]..me.val..[[ == NULL) {
 #ifdef CEU_ORGS_AWAIT
     /* signal ok_killed */
     {
-        tceu_kill ps = { ]]..org_cast..','..org_cast..'->ret, 0, (tceu_ntrl)('..org_cast..[[->n-1)  };
+        ceu_out_assert(_ceu_app->t_kills < 255);
+        tceu_kill ps = { ]]..org_cast..', ++_ceu_app->t_kills,'..org_cast..'->ret, 0, (tceu_ntrl)('..org_cast..[[->n-1)  };
         tceu_evt evt_;
                  evt_.id = CEU_IN__ok_killed;
                  evt_.param = &ps;
-        ceu_sys_go_ex(_ceu_app, &evt_, &stk_,
+        stk_.evt = &evt_;
+        ceu_sys_go_ex(_ceu_app, &stk_,
                       _ceu_app->data, 0, _ceu_app->data->n);
     }
     if (!stk_.is_alive) {
@@ -853,6 +859,7 @@ _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].is_org = 1;
 #endif
 #endif
 _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].org_or_adt = NULL;
+_ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].t_kills = _ceu_app->t_kills;
 ]])
                 end
 
@@ -1171,19 +1178,20 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 
         LINE(me, [[                     /* 3. free */
     CEU_]]..to_tp_id..[[_free(]]..pool..[[, __ceu_old);
-]])
-
-        LINE(me, [[
 
 #ifdef CEU_ADTS_AWAIT_]]..to_tp_id..[[
 
     /* OK_KILLED (after free) */        /* 4. kill */
 {
-    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+    ceu_out_assert(_ceu_app->t_kills < 255);
+    tceu_kill ps;
+              ps.org_or_adt = __ceu_old;
+              ps.t_kills = ++_ceu_app->t_kills;
     tceu_evt evt;
              evt.id = CEU_IN__ok_killed;
-             evt.param = &__ceu_old;
-    ceu_sys_go_ex(_ceu_app, &evt, &stk_,
+             evt.param = &ps;
+    tceu_stk stk_ = { &evt, _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+    ceu_sys_go_ex(_ceu_app, &stk_,
                   _ceu_app->data, 0,
 #ifdef CEU_ORGS
                   _ceu_app->data->n
@@ -1464,7 +1472,7 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
         LINE(me, [[
 {
 #ifdef CEU_STACK_CLEAR
-    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+    tceu_stk stk_ = { _ceu_evt, _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
 #endif
 ]])
 
@@ -1765,7 +1773,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
                 LINE(me, [[
 {
 #ifdef CEU_STACK_CLEAR
-    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+    tceu_stk stk_ = { NULL, _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
     __ceu_nothing(&stk_);
 #endif
 ]])
@@ -1930,20 +1938,20 @@ if (!_ceu_app->isAlive) {
 
     EmitInt = function (me)
         local _, int, ps = unpack(me)
+        local val = F.__emit_ps(me)
 
         LINE(me, [[
 {
-#ifdef CEU_STACK_CLEAR
-    tceu_stk stk_ = { _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
-#endif
-]])
-
-        local val = F.__emit_ps(me)
-
-        -- [ ... | me=stk | ... | oth=stk ]
-        LINE(me, [[
+    /* [ ... | me=stk | ... | oth=stk ] */
     /* trigger the event */
     tceu_evt evt;
+
+#ifdef CEU_STACK_CLEAR
+    tceu_stk stk_ = { &evt, _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+#else
+    tceu_stk stk_ = { &evt };
+#endif
+
     evt.id = ]]..V(int,'evt')..[[;
 #ifdef CEU_ORGS
 #line ]]..int.ln[2]..' "'..int.ln[1]..[["
@@ -1956,12 +1964,8 @@ if (!_ceu_app->isAlive) {
 ]])
         end
         LINE(me, [[
-    ceu_sys_go_ex(_ceu_app, &evt,
-#ifdef CEU_STACK_CLEAR
-                  &stk_,
-#else
-                  NULL,
-#endif
+    stk_.evt = &evt;
+    ceu_sys_go_ex(_ceu_app, &stk_,
                   _ceu_app->data, 0,
 #ifdef CEU_ORGS
                   _ceu_app->data->n
