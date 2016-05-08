@@ -22896,6 +22896,22 @@ escape v[2] + $v + ok;
 }
 
 Test { [=[
+var float f = 3.2;
+var bool ok = [[ 3.1<(@f) and 3.3>(@f) ]];
+escape ok;
+]=],
+    run = 1,
+}
+
+Test { [=[
+var int f = 3;
+var bool ok = [[ 3.0==@f ]];
+escape ok;
+]=],
+    run = 1,
+}
+
+Test { [=[
 var char[] str = [].."12345";
 var byte[] bts = [1,2,3,4,5];
 var int r1 = [[ string.len(@str) ]];
@@ -27172,7 +27188,8 @@ Test { [==[
 ]]
 escape 1;
 ]==],
-    run = '2: \'=\' expected near \'$\'',
+    run = '1] lua error : [string "..."]:2: syntax error near \'$\'',
+    --run = '2: \'=\' expected near \'$\'',
 }
 
 Test { [=[

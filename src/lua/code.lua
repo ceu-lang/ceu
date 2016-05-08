@@ -2272,7 +2272,7 @@ if (]]..me.thread.thread..[[ != NULL) {
     ceu_lua_pushstring(_ceu_app->lua, "[");
     ceu_lua_pushstring(_ceu_app->lua, __FILE__);
     ceu_lua_pushstring(_ceu_app->lua, ":");
-    ceu_lua_pushnumber(_ceu_app->lua, err_line);
+    ceu_lua_pushinteger(_ceu_app->lua, err_line);
     ceu_lua_pushstring(_ceu_app->lua, "] lua error : ");
 
     int err;
@@ -2328,7 +2328,12 @@ if (]]..me.thread.thread..[[ != NULL) {
     int ret;
     ceu_lua_isnumber(is, _ceu_app->lua,-1);
     if (is) {
-        ceu_lua_tonumber(ret, _ceu_app->lua,-1);
+        ceu_lua_isinteger(is, _ceu_app->lua,-1);
+        if (is) {
+            ceu_lua_tointeger(ret, _ceu_app->lua,-1);
+        } else {
+            ceu_lua_tonumber(ret, _ceu_app->lua,-1);
+        }
     } else {
         ceu_lua_pop(_ceu_app->lua,1);
         ceu_lua_pushstring(_ceu_app->lua, "number expected");
@@ -2343,7 +2348,7 @@ if (]]..me.thread.thread..[[ != NULL) {
     if (is) {
         const char* ret;
         int len;
-        ceu_lua_objlen(len, _ceu_app->lua, -1);
+        ceu_lua_rawlen(len, _ceu_app->lua, -1);
         ceu_lua_tostring(ret, _ceu_app->lua, -1);
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
         ceu_out_assert_msg(ceu_vector_copy_buffer(]]..V(set_to,'lval')..[[,ceu_vector_getlen(]]..V(set_to,'lval')..[[), (byte*)ret, len, 1), "access out of bounds");

@@ -313,7 +313,7 @@ typedef struct tceu_threads_data {
         ceu_out_call(_ceu_app, CEU_OUT_LUA_ERROR, &p);  \
     }
 
-    #define ceu_lua_objlen(set, l, idx) {                       \
+    #define ceu_lua_rawlen(set, l, idx) {                       \
         tceu__lua_State___int p = { l, idx };                   \
         set = ceu_out_call(_ceu_app, CEU_OUT_LUA_OBJLEN, &p);   \
     }
@@ -325,12 +325,15 @@ typedef struct tceu_threads_data {
     #define ceu_luaL_openlibs(l)                 luaL_openlibs(l)
     #define ceu_luaL_loadstring(set,l,str)       set = luaL_loadstring(l,str)
     #define ceu_lua_pushboolean(l,v)             lua_pushboolean(l,v)
+    #define ceu_lua_pushinteger(l,v)             lua_pushinteger(l,v)
     #define ceu_lua_pushnumber(l,v)              lua_pushnumber(l,v)
     #define ceu_lua_pushstring(l,v)              lua_pushstring(l,v)
     #define ceu_lua_pushlstring(l,v,n)           lua_pushlstring(l,v,n)
     #define ceu_lua_pushlightuserdata(l,v)       lua_pushlightuserdata(l,v)
     #define ceu_lua_pcall(set,l,nargs,nrets,err) set = lua_pcall(l,nargs,nrets,err)
+    #define ceu_lua_isinteger(set,l,idx)         set = lua_isinteger(l,idx)
     #define ceu_lua_isnumber(set,l,idx)          set = lua_isnumber(l,idx)
+    #define ceu_lua_tointeger(set,l,idx)         set = lua_tointeger(l,idx)
     #define ceu_lua_tonumber(set,l,idx)          set = lua_tonumber(l,idx)
     #define ceu_lua_isboolean(set,l,idx)         set = lua_isboolean(l,idx)
     #define ceu_lua_toboolean(set,l,idx)         set = lua_toboolean(l,idx)
@@ -340,7 +343,7 @@ typedef struct tceu_threads_data {
     #define ceu_lua_islightuserdata(set,l,idx)   set = lua_islightuserdata(l,idx)
     #define ceu_lua_touserdata(set,l,idx)        set = lua_touserdata(l,idx)
     #define ceu_lua_error(l)                     lua_error(l)
-    #define ceu_lua_objlen(set,l,idx)            set = lua_objlen(l,idx)
+    #define ceu_lua_rawlen(set,l,idx)            set = lua_rawlen(l,idx)
 #endif
 #endif
 
