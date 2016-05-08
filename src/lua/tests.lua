@@ -393,6 +393,8 @@ escape $d.str;
 }
 
 var char[sizeof(u32)] vec;  // acha que eh dinamico
+    -- setar max em tempo de execucao
+    -- e, claro, alocar o espaco com antecedencia
 
 --do return end
 
@@ -46244,7 +46246,7 @@ with
 end
 escape 1;
 ]],
-    gcc = '5: error: too few arguments to function ‘ceu_sys_isr_detach’',
+    gcc = '8:28: error: too few arguments to function ‘ceu_sys_isr_detach’',
 }
 
 Test { [[
