@@ -212,8 +212,6 @@ function CLEAR (me)
 #ifdef CEU_STACK_CLEAR
     _ceu_stk->is_alive = __ceu_old;
 #if 1
-printf("clear %p, %d->%d\n", _ceu_org,
-                        ]]..me.trails[1]..','..me.trails[2]..[[);
     ceu_sys_stack_clear(_ceu_stk, _ceu_org,
                         ]]..me.trails[1]..','..me.trails[2]..[[);
 #endif

@@ -258,7 +258,6 @@ printf("oioi\n");
 #endif
 #endif
     }
-printf("<====\n");
 }
 #endif
 
@@ -392,7 +391,7 @@ int ceu_threads_gc (tceu_app* app, int force_join) {
 #ifdef CEU_LUA
 int ceu_lua_atpanic_f (lua_State* lua) {
 #ifdef CEU_DEBUG
-    char* msg = lua_tostring(lua,-1);
+    const char* msg = lua_tostring(lua,-1);
     ceu_out_assert_msg(msg!=NULL, "bug found");
     ceu_out_log(0, (long)msg);
     ceu_out_log(0, (long)"\n");

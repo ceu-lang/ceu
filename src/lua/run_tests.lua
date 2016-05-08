@@ -184,7 +184,7 @@ end
             ..' -Wno-unused-function'
             ..' -Wno-unused-parameter'
             ..' -I'..OUT_DIR
-            ..' -ansi'
+            ..((PROPS.has_lua and '') or ' -ansi')
             ..' -DCEU_DEBUG'
             --..' -DCEU_DEBUG_TRAILS'
             ..' '..(OPTS.cpp_args or '')
@@ -223,7 +223,7 @@ end
         GCC = GCC .. ' -lpthread'
     end
     if PROPS.has_lua then
-        GCC = GCC .. ' -llua5.1'
+        GCC = GCC .. ' -llua5.3'
     end
 
     local ARGS = T.args or ''
