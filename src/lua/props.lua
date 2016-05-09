@@ -192,7 +192,7 @@ F = {
                         me.needs_clr = true
                         PROPS.has_clear = true
                     end
-                    if var.tp.arr.cval then
+                    if var.tp.arr.sval then
                         PROPS.has_vector_pool   = true
                     else
                         PROPS.has_vector_malloc = true

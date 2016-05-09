@@ -185,7 +185,6 @@ do
     dofile 'adt.lua'
     dofile 'mode.lua'
     dofile 'ref.lua'
-    dofile 'cval.lua'
     dofile 'tight.lua'
     dofile 'fin.lua'
     dofile 'props.lua'

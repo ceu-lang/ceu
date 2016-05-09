@@ -411,6 +411,86 @@ escape 1;
     run = 1,
 }
 
+--------------------
+
+Test { [[
+var int n = 10;
+var _u8[n] us = [];
+us[0] = 10;
+us[9] = 1;
+escape us[0]+us[9];
+]],
+    env = 'line 2 : dimension must be constant',
+}
+
+Test { [[
+var int n = 10;
+var _u8[_U8_MAX] us = [];
+us[_U8_MAX-1] = 10;
+us[0] = 1;
+escape us[0]+us[_U8_MAX-1];
+]],
+    env = 'line 2 : dimension must be constant',
+}
+
+Test { [[
+native @const _U8_MAX;
+var int n = 10;
+var _u8[_U8_MAX] us = [];
+us[_U8_MAX-1] = 10;
+us[0] = 1;
+escape us[0]+us[_U8_MAX-1];
+]],
+    run = 11,
+}
+
+Test { [[
+native/pre do
+    int N = 10;
+end
+var int n = 10;
+var _u8[_N] us = [];
+us[_N-1] = 10;
+us[0] = 1;
+escape us[0]+us[_N-1];
+]],
+    env = 'line 5 : dimension must be constant',
+}
+
+Test { [[
+native @const _N;
+native/pre do
+    int N = 10;
+end
+var int n = 10;
+var _u8[_N] xxxx = [];
+xxxx[_N-1] = 10;
+xxxx[0] = 1;
+escape xxxx[0]+xxxx[_N-1];
+]],
+    gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
+}
+
+Test { [[
+native @const _U8_MAX;
+class T with do end;
+var T[_U8_MAX] ts;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int n = 10;
+var u8[n] us;
+us[0] = 10;
+us[9] = 1;
+escape us[0]+us[9];
+]],
+    run = 1,
+}
+
 
 do return end
 
@@ -3341,7 +3421,18 @@ loop/_V do
 end
 escape 1;
 ]],
-    gcc = ':4:5: error: variable-sized object may not be initialized',
+    tight = 'line 4 : `loop´ bound must be constant',
+}
+Test { [[
+native @const _V;
+native do
+    int V;
+end
+loop/_V do
+end
+escape 1;
+]],
+    gcc = '5:5: error: variable-sized object may not be initialized',
 }
 Test { [[
 loop/10 do
@@ -3392,6 +3483,7 @@ escape 1;
     asr = true,
 }
 Test { [[
+native @const _A;
 native do
     ##define A 10
 end
@@ -21840,7 +21932,7 @@ Test { [[input int[1] E; escape 0;]],
 }
 Test { [[var int[0] v; escape 0;]],
     run = 0,
-    --env='invalid array dimension'
+    --env='invalid dimension'
 }
 Test { [[var int[2] v; escape v;]],
     env = 'types mismatch'
@@ -21947,11 +22039,11 @@ escape i;
 }
 
 Test { [[
-var _int[] v;
+var _int[1] v;
 escape 1;
 ]],
     --run = 1,
-    --cval = 'line 1 : invalid array dimension',
+    --cval = 'line 1 : invalid dimension',
     ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
 }
 Test { [[
@@ -25074,6 +25166,7 @@ a = 1;
 }
 
 Test { [[
+native @const _N;
 native/pre do
     #define N 1
 end
@@ -25085,6 +25178,7 @@ escape vec[_N-1];
 }
 
 Test { [[
+native @const _N;
 native/pre do
     #define N 1
 end
@@ -25096,6 +25190,7 @@ escape vec[N-1];
 }
 
 Test { [[
+native @const _N;
 native/pre do
     #define N 1
 end
@@ -25116,6 +25211,7 @@ escape vec[1];
 }
 
 Test { [[
+native @const _N;
 native/pre do
     #define N 5
 end
@@ -33154,6 +33250,19 @@ escape 1;
 ]],
     env = 'line 4 : missing `pool´ dimension',
     --parser = 'line 4 : after `T´ : expected `[´',
+}
+
+Test { [[
+class Org with
+do
+end
+
+var int n = 5;
+pool Org[n] a;
+
+escape 1;
+]],
+    env = 'line 6 : dimension must be constant',
 }
 
 Test { [[

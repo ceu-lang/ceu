@@ -825,7 +825,7 @@ _ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
                 -- VECTOR
                 elseif TP.check(var.tp,'[]') and (not (var.cls or TP.is_ext(var.tp,'_'))) then
                     local tp_elem = TP.pop( TP.pop(var.tp,'&'), '[]' )
-                    local max = (var.tp.arr.cval or 0)
+                    local max = (var.tp.arr.sval or 0)
                     local ID = (var.isTmp and '__ceu_'..var.id..'_'..var.n) or
                                CUR(me,var.id_)
 
@@ -1636,11 +1636,11 @@ V(to,'rval')..' = ('..tp_c..[[)
         ini = table.concat(ini, ', ')
         nxt = table.concat(nxt, ', ')
 
-        -- ensures that cval is constant
+        -- ensures that sval is constant
         if max then
             LINE(me, [[
 { \
-    char __]]..me.n..'['..max.cval..'/'..max.cval..[[ ] = {0};
+    char __]]..me.n..'['..max.sval..'/'..max.sval..[[ ] = {0};
     __ceu_nothing(&__]]..me.n..[[);
 }
 ]])

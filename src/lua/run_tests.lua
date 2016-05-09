@@ -93,7 +93,6 @@ Test = function (t)
     if not check('adt')      then return end
     if not check('mode')     then return end
     if not check('ref')      then return end
-    if not check('cval')     then return end
     if not check('tight')    then return end
     if not check('fin')      then return end
     if not check('props')    then return end

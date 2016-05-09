@@ -53,13 +53,13 @@ function MEM.tp2dcl (pre, tp, id, _dcl_id)
                     return dcl .. tp_c..' '..id
                 else
                     local tp_c = TP.toc(tp_elem)
-                    return dcl .. tp_c..' '..id..'['..tp.arr.cval..']'
+                    return dcl .. tp_c..' '..id..'['..tp.arr.sval..']'
                 end
             else
                 if TP.check(tp,'&&') or TP.check(tp,'&') then
                     return 'tceu_vector* '..id
                 else
-                    local max = (tp.arr.cval or 0)
+                    local max = (tp.arr.sval or 0)
                     local tp_c = TP.toc(tp_elem)
                     return dcl .. [[
 CEU_VECTOR_DCL(]]..id..','..tp_c..','..max..[[)
@@ -576,9 +576,10 @@ typedef union CEU_]]..me.id..[[_delayed {
                     end
 
                     if go then
-                        DCL.struct = DCL.struct .. SPC() .. '  ' ..
-                                      MEM.tp2dcl(var.pre, var.tp, var.id_, DCL.id)
-                                     ..  ';\n'
+                        DCL.struct = DCL.struct .. [[
+#line ]]..var.dcl.ln[2]..' "'..var.dcl.ln[1]..[["
+]]..SPC()..'  '..MEM.tp2dcl(var.pre, var.tp, var.id_, DCL.id)..[[;
+]]
                     end
                 end
             end

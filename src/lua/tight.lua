@@ -66,11 +66,11 @@ F = {
 
         me.is_bounded = false
         if max then
-            ASR(max.cval, me, '`loop´ bound must be constant')
+            ASR(max.sval, me, '`loop´ bound must be constant')
             me.is_bounded = true
         elseif iter then
             local tp_id = iter.tp and TP.id(iter.tp)
-            me.is_bounded = (iter.cval or
+            me.is_bounded = (iter.sval or
                              iter.tag=='Op1_$$' or
                              iter.tp and (
                                  ENV.clss[tp_id] or

@@ -267,8 +267,6 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
     }
 
     local tp, is_ref = TP.pop(tp, '&')   -- only *,& after []
-    local is_arr = TP.check(tp, '[]')
-
     if pre=='var' then
         var.lval = var
     elseif pre=='pool' and (ENV.adts[TP.id(tp)] or is_ref) then
@@ -784,6 +782,14 @@ F = {
         if isTmp then
             me.var.isTmp = true
         end
+
+        local is_arr = TP.check(me.var.tp,'[]','-&')
+        if is_arr then
+            local arr = me.var.tp.arr
+            local dyn = (not TP.is_ext(me.var.tp,'_')) and (arr=='[]')
+            ASR(dyn or (type(arr)=='table' and arr.sval),
+                me, 'dimension must be constant')
+        end
     end,
 
     -- declare variable before the constructor
@@ -803,10 +809,6 @@ F = {
                                 AST.node('Stmts', me.ln)))
                 F.Dcl_constr_pre(AST.asr(me,'', 4,'Dcl_constr'))
                 F.Block_pre(AST.asr(me,'', 4,'Dcl_constr', 1,'Block'))
-            end
-            if TP.check(me.var.tp,'[]') then
-                ASR(me.var.tp.arr.sval, me,
-                    'invalid static expression')
             end
         end
 
@@ -997,10 +999,6 @@ type.
         end
         -- TODO: remove
         ENV.c[id] = { tag=tag, id=id, len=len, mod=mod }
-    end,
-
-    Dcl_pure = function (me)
-        ENV.pures[me[1]] = true
     end,
 
     _TMP_ITER = function (me)
