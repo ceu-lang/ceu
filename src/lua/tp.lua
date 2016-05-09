@@ -423,8 +423,8 @@ function TP.contains (tp1, tp2, t)
             -- non-pointers
             elseif TP.check(TP1,id1,'&') then
                 return true
-            else
-                return false, __err(TP1, TP2)
+            elseif t.is_spawn then
+                return true
             end
         else
             return false, __err(TP1, TP2)

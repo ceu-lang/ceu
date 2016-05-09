@@ -232,7 +232,6 @@ end
              --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
 --DBG(CEU)
 --DBG(GCC)
---DBG(GCC)
 
     local go = function (src, exp)
         local ceu = assert(io.open(OUT_DIR..'/_ceu_tmp.ceu', 'w'))

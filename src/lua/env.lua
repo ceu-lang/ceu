@@ -1291,6 +1291,12 @@ type.
         local _, pool, constr = unpack(me)
         ASR(pool and pool.lst and pool.lst.var and pool.lst.var.pre=='pool',
             me, 'invalid pool')
+        local ok, msg = TP.contains(
+                            TP.pop(TP.pop(pool.tp,'&'),'[]'),
+                            TP.pop(me.tp,'&&'),
+                            {is_spawn=true}
+                        )
+        ASR(ok, me, ((not ok) and ('invalid `spawn´ : '..msg)))
     end,
 
     Dcl_constr_pre = function (me)

@@ -396,6 +396,20 @@ var char[sizeof(u32)] vec;  // acha que eh dinamico
     -- setar max em tempo de execucao
     -- e, claro, alocar o espaco com antecedencia
 
+-- bug: force nominal type system
+Test { [[
+interface I with
+end
+
+class V with
+do
+    pool I[1] is;
+end
+
+escape 1;
+]],
+    run = 1,
+}
 --do return end
 
 ----------------------------------------------------------------------------
@@ -34758,6 +34772,38 @@ escape _V;
 }
 
 Test { [[
+class U with
+    var int v=0;
+do
+end
+
+pool U[10] us;
+
+spawn U in us;
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+interface I with
+    var int v;
+end
+
+class U with
+    var int v=0;
+do
+end
+
+pool I[10] is;
+
+spawn U in is;
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
 interface I with
     var int v;
 end
@@ -34781,6 +34827,114 @@ escape sizeof(CEU_T) >= sizeof(CEU_U);
 ]],
     run = 1,
 }
+Test { [[
+class T with
+    var int v=0;
+do
+end
+
+class U with
+do
+end
+
+pool T[1] ts;
+
+spawn U in ts;
+
+escape 1;
+]],
+    env = 'line 12 : invalid `spawn´ : types mismatch (`T´ <= `U´)',
+}
+Test { [[
+interface I with
+    var int v;
+end
+
+class V with
+do
+end
+
+pool I[1] is;
+
+spawn V in is;
+
+escape 1;
+]],
+    env = 'line 11 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
+}
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+do
+end
+
+class U with
+    var int v=0;
+do
+end
+
+class V with
+do
+    pool I[1] is;
+end
+
+pool I[1] is;
+
+spawn T in is;
+spawn U in is;
+spawn V in is;
+
+escape 1;
+]],
+    env = 'line 21 : invalid `spawn´ : types mismatch (`I´ <= `T´)',
+}
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+do
+end
+
+class U with
+    var int v=0;
+do
+end
+
+class V with
+do
+    pool I[1] is;
+end
+
+pool I[1] is;
+
+spawn U in is;
+spawn V in is;
+
+escape 1;
+]],
+    env = 'line 22 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
+}
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with do end
+
+pool I[1] is;
+
+spawn T in is;
+
+escape 1;
+]],
+    env = 'line 9 : invalid `spawn´ : types mismatch (`I´ <= `T´)',
+}
+
 Test { [[
 interface I with
     var int v;
@@ -34808,6 +34962,38 @@ pool I[10] is;
 spawn T in is;
 spawn U in is;
 spawn V in is;
+
+escape sizeof(CEU_T) >= sizeof(CEU_U);
+]],
+    env = 'line 26 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
+}
+Test { [[
+interface I with
+    var int v;
+end
+
+class T with
+    var int u=0,v=0,x=0;
+do
+end
+
+class U with
+    var int v=0;
+do
+end
+
+class V with
+do
+    pool I[10] is;
+    spawn T in is;
+    spawn U in is;
+end
+
+pool I[10] is;
+
+spawn T in is;
+spawn U in is;
+spawn V;
 
 escape sizeof(CEU_T) >= sizeof(CEU_U);
 ]],
