@@ -225,7 +225,7 @@ function CLEAR (me)
 #ifdef CEU_ORGS_AWAIT
 /* signal ok_killed */
 {
-    ceu_out_assert(_ceu_app->t_kills < 255);
+    ceu_out_assert_msg(_ceu_app->t_kills < U16_MAX, "too many dying organisms");
     tceu_kill ps = { _ceu_org, ++_ceu_app->t_kills, _ceu_org->ret, ]]..me.trails[1]..','..me.trails[2]..[[ };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
@@ -372,7 +372,7 @@ ceu_sys_org_free(_ceu_app, _ceu_org);
              stk_.is_alive = 1;
              stk_.down = _ceu_stk;
 #endif
-    ceu_out_assert(_ceu_app->t_kills < 255);
+    ceu_out_assert_msg(_ceu_app->t_kills < U16_MAX, "too many dying organisms");
     tceu_kill ps = { _ceu_org, ++_ceu_app->t_kills, _ceu_org->ret, 0, (tceu_ntrl)(_ceu_org->n-1) };
     tceu_evt evt_;
              evt_.id = CEU_IN__ok_killed;
@@ -664,7 +664,7 @@ if (]]..me.val..[[ == NULL) {
 #ifdef CEU_ORGS_AWAIT
     /* signal ok_killed */
     {
-        ceu_out_assert(_ceu_app->t_kills < 255);
+        ceu_out_assert_msg(_ceu_app->t_kills < U16_MAX, "too many dying organisms");
         tceu_kill ps = { ]]..org_cast..', ++_ceu_app->t_kills,'..org_cast..'->ret, 0, (tceu_ntrl)('..org_cast..[[->n-1)  };
         tceu_evt evt_;
                  evt_.id = CEU_IN__ok_killed;
@@ -1181,7 +1181,7 @@ ceu_pause(&_ceu_org->trls[ ]]..me.blk.trails[1]..[[ ],
 
     /* OK_KILLED (after free) */        /* 4. kill */
 {
-    ceu_out_assert(_ceu_app->t_kills < 255);
+    ceu_out_assert_msg(_ceu_app->t_kills < U16_MAX, "too many dying organisms");
     tceu_kill ps;
               ps.org_or_adt = __ceu_old;
               ps.t_kills = ++_ceu_app->t_kills;
@@ -1738,7 +1738,7 @@ for (]]..ini..';'..cnd..';'..nxt..[[) {
                 LINE(me, [[
 
 #ifdef CEU_VECTOR
-        ceu_out_assert(]]..vector_offset..[[ < 256);
+        ceu_out_assert(]]..vector_offset..[[ <= U8_MAX);
 #endif
 ]])
             end

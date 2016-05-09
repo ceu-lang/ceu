@@ -410,7 +410,9 @@ escape 1;
 ]],
     run = 1,
 }
---do return end
+
+
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -36568,6 +36570,34 @@ escape ret;
     wrn = true,
     loop = true,
     run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+
+do T;
+
+var T[65532] ts;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+
+do T;
+
+var T[65533] ts;
+
+escape 1;
+]],
+    run = ':4] runtime error: too many dying organisms',
 }
 
 -->>> SPAWN-DO SUGAR
