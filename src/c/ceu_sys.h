@@ -4,6 +4,22 @@
 #include <stddef.h>
 #include "ceu_types.h"
 
+#define S8_MIN   -127
+#define S8_MAX    127
+#define U8_MAX    255
+
+#define S16_MIN  -32767
+#define S16_MAX   32767
+#define U16_MAX   65535
+
+#define S32_MIN  -2147483647
+#define S32_MAX   2147483647
+#define U32_MAX   4294967295
+
+#define S64_MIN  -9223372036854775807
+#define S64_MAX   9223372036854775807
+#define U64_MAX   18446744073709551615
+
 #ifdef CEU_DEBUG
 #include <assert.h>
 #endif
@@ -370,7 +386,7 @@ typedef union tceu_trl {
     struct {                    /* TODO(ram): bitfields */
         tceu_nevt evt1;
         tceu_nlbl lbl;
-        u8        seqno;        /* TODO(ram): 2 bits is enough */
+        u8        seqno: 2;
 #ifdef CEU_INTS                 /* R-9: size of trails for internal events */
 #ifdef CEU_ORGS
         void*     evto;
@@ -391,13 +407,13 @@ typedef union tceu_trl {
     struct {
         tceu_nevt evt4;
         tceu_nlbl lbl4;
-        u8        seqno2;       /* TODO(ram): 2 bits is enough */
+        u8        seqno2: 2;
 #ifdef CEU_ORGS_AWAIT
 #ifdef CEU_ADTS_AWAIT
-        u8        is_org;
+        u8        is_org: 1;
 #endif
 #endif
-        u8        t_kills;      /* avoids awake from old org in the same address */
+        u16       t_kills;      /* avoids awake from old org in the same address */
         void*     org_or_adt;
     };
 #endif
@@ -490,7 +506,7 @@ typedef struct {
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
 typedef struct tceu_kill {
     void*     org_or_adt;
-    u8        t_kills;      /* TODO: u8? */
+    u16       t_kills;
 #ifdef CEU_ORGS_AWAIT
     int       ret;
     tceu_ntrl t1;
@@ -552,7 +568,7 @@ typedef struct tceu_app {
 #endif
 
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
-    u8 t_kills;                 /* TODO: u8? */
+    u16 t_kills;
 #endif
 
 #ifdef CEU_ORGS_NEWS_MALLOC
