@@ -630,6 +630,7 @@ typedef void (*tceu_export) (uint* size, tceu_init** init
 /* TCEU_THREADS_P */
 
 #ifdef CEU_THREADS
+int ceu_threads_gc (tceu_app* app, int force_join);
 typedef struct {
     tceu_app*          app;
     tceu_org*          org;
