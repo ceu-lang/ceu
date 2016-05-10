@@ -1058,7 +1058,9 @@ _ceu_org->trls[ ]]..var.trl_optorg[1]..[[ ].lbl = ]]..(var.lbl_optorg_reset).id.
             if is_arr and is_dyn then
                 CASE(me, var.lbl_fin_free)
                 LINE(me, [[
-ceu_vector_setlen(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, 0, 0);
+if (]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[->mem != NULL) {
+    ceu_out_realloc(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[->mem, 0);
+}
 ]])
                 HALT(me)
 
