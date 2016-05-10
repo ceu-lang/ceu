@@ -21,7 +21,9 @@ void ceu_vector_init (tceu_vector* vector, int max, int unit, byte* mem) {
 
 #ifdef CEU_VECTOR_MALLOC
 byte* ceu_vector_setmax (tceu_vector* vector, int len, bool freeze) {
-    ceu_out_assert_msg(vector->max <= 0, "cannot resize vector");
+    if (vector->max > 0) {
+        return NULL;    /* "cannot resize vector" */
+    }
 
     if (len == 0) {
         /* free */

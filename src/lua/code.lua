@@ -843,7 +843,7 @@ _ceu_org->trls[ ]]..me.trl_fins[1]..[[ ].lbl = ]]..me.lbl_fin.id..[[;
 ceu_vector_init(]]..'&'..ID..','..max..',sizeof('..TP.toc(tp_elem)..[[),
                 (byte*)]]..ID..[[_mem);
 ]])
-                    if var.tp.arr == '[]' then
+                    if var.tp.arr and (var.tp.arr=='[]' or (not var.tp.arr.sval)) then
                         LINE(me, [[
 /*  FINALIZE VECTOR */
 _ceu_org->trls[ ]]..var.trl_vector[1]..[[ ].evt = CEU_IN__CLEAR;
@@ -1357,7 +1357,7 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
                                 if first then
                                     first = false
                                     LINE(me, [[
-    ceu_vector_setlen(]]..V(to,'lval')..[[, 0, 0);
+    ceu_out_assert( ceu_vector_setlen(]]..V(to,'lval')..[[, 0, 0) );
 ]])
                                 end
                                 LINE(me, [[
