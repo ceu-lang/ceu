@@ -2299,9 +2299,16 @@ if (]]..me.thread.thread..[[ != NULL) {
     ceu_lua_pushboolean(_ceu_app->lua,]]..V(p,'rval')..[[);
 ]])
             elseif TP.isNumeric(p.tp) then
-                LINE(me, [[
+                local tp_id = TP.id(p.tp)
+                if tp_id=='float' or tp_id=='f32' or tp_id=='f64' then
+                    LINE(me, [[
     ceu_lua_pushnumber(_ceu_app->lua,]]..V(p,'rval')..[[);
 ]])
+                else
+                    LINE(me, [[
+    ceu_lua_pushinteger(_ceu_app->lua,]]..V(p,'rval')..[[);
+]])
+                end
             elseif TP.check(p.tp,'[]','-&') then
                 LINE(me, [[
     ceu_lua_pushlstring(_ceu_app->lua,(char*)]]..V(p,'lval')..[[->mem,ceu_vector_getlen(]]..V(p,'lval')..[[));

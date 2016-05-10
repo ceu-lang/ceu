@@ -27583,6 +27583,30 @@ escape ret;
     run = '2: attempt to call a number value',
 }
 
+Test { [=[
+do
+    var f32 f = 0;
+    [[assert(math.type(@f)=='float')]];
+end
+do
+    var f64 f = 0;
+    [[assert(math.type(@f)=='float')]];
+end
+
+var int   i = 0;
+var float f = 0;
+var bool is_int   = [[math.type(@i)=='integer']];
+var bool is_float = [[math.type(@f)=='float']];
+
+[[assert(math.type(@(1.1))=='float')]];
+[[assert(math.type(@(1.0))=='float')]];
+[[assert(math.type(@(1))=='integer')]];
+
+escape is_int+is_float;
+]=],
+    run = 2,
+}
+
 --<<< LUA
 
 -->>> CLASSES, ORGS, ORGANISMS
