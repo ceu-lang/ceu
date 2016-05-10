@@ -515,8 +515,16 @@ me.tp = var.tp
                 -- initialize to nil
                 local ID = string.upper(TP.opt2adt(var.tp))
                 LINE(me, [[
-    ]]..V({tag='Var',tp=var.tp,var=var},'rval')..[[.tag = CEU_]]..ID..[[_NIL;
-    ]])
+]]..V({tag='Var',tp=var.tp,var=var},'rval')..[[.tag = CEU_]]..ID..[[_NIL;
+]])
+            end
+        end
+
+        if TP.check(var.tp,'[]') and (not (var.cls or TP.is_ext(var.tp,'_'))) then
+            if var.tp.arr and var.tp.arr~='[]' and (not var.tp.arr.sval) then
+                LINE(me, [[
+ceu_vector_setmax(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, ]]..V(var.tp.arr,'rval')..[[, 1);
+]])
             end
         end
     end,
@@ -981,11 +989,11 @@ if (]]..fin.val..[[) {
         end
 
         for _, var in ipairs(me.vars) do
-            local is_arr = (TP.check(var.tp,'[]')           and
-                           (var.pre == 'var')               and
+            local is_arr = (var.pre == 'var')               and
+                           (TP.check(var.tp,'[]')           and
                            (not TP.is_ext(var.tp,'_','@'))) and
                            (not var.cls)
-            local is_dyn = (var.tp.arr=='[]')
+            local is_dyn = var.tp.arr and (var.tp.arr=='[]' or (not var.tp.arr.sval))
 
             local tp_id = TP.id(var.tp)
             if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
@@ -1350,7 +1358,7 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
                                     first = false
                                     LINE(me, [[
     ceu_vector_setlen(]]..V(to,'lval')..[[, 0, 0);
-    ]])
+]])
                                 end
                                 LINE(me, [[
     {

@@ -60,7 +60,7 @@ F = {
             local is_arr_dyn = (TP.check(var.tp,'[]')           and
                                (var.pre == 'var')               and
                                (not TP.is_ext(var.tp,'_','@'))) and 
-                               (var.tp.arr=='[]')               and
+                               (var.tp.arr and (var.tp.arr=='[]' or (not var.tp.arr.sval))) and
                                (not var.cls)
             if is_arr_dyn then
                 var.lbl_fin_free = new{'vector_fin_free'}

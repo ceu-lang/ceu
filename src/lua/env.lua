@@ -786,8 +786,10 @@ F = {
         local is_arr = TP.check(me.var.tp,'[]','-&')
         if is_arr then
             local arr = me.var.tp.arr
-            local dyn = (TP.id(me.var.tp)=='_TOP_POOL' or (not TP.is_ext(me.var.tp,'_'))) and (arr=='[]')
-            ASR(dyn or (type(arr)=='table' and arr.sval),
+            local is_ext = TP.is_ext(me.var.tp,'_') and (TP.id(me.var.tp)~='_TOP_POOL')
+            local dyn1 = (not is_ext) and (arr=='[]')   -- pool T[K] ts
+            local dyn2 = (not is_ext) and (pre=='var')  -- var int[n] vec
+            ASR(dyn1 or dyn2 or (type(arr)=='table' and arr.sval),
                 me, 'dimension must be constant')
         end
     end,

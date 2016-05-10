@@ -359,9 +359,6 @@ end
 _printf(e);
 
 --
-var byte[HASH_BYTES+sizeof(u32)] bs;
-    -- nao detecta como static
-
 -- bug: arity mismatch on constructor/creation
 Test { [[
 class T with
@@ -392,10 +389,6 @@ escape $d.str;
     run = 2,
 }
 
-var char[sizeof(u32)] vec;  // acha que eh dinamico
-    -- setar max em tempo de execucao
-    -- e, claro, alocar o espaco com antecedencia
-
 -- bug: force nominal type system
 Test { [[
 interface I with
@@ -412,85 +405,6 @@ escape 1;
 }
 
 --------------------
-
-Test { [[
-var int n = 10;
-var _u8[n] us = [];
-us[0] = 10;
-us[9] = 1;
-escape us[0]+us[9];
-]],
-    env = 'line 2 : dimension must be constant',
-}
-
-Test { [[
-var int n = 10;
-var _u8[_U8_MAX] us = [];
-us[_U8_MAX-1] = 10;
-us[0] = 1;
-escape us[0]+us[_U8_MAX-1];
-]],
-    env = 'line 2 : dimension must be constant',
-}
-
-Test { [[
-native @const _U8_MAX;
-var int n = 10;
-var _u8[_U8_MAX] us = [];
-us[_U8_MAX-1] = 10;
-us[0] = 1;
-escape us[0]+us[_U8_MAX-1];
-]],
-    run = 11,
-}
-
-Test { [[
-native/pre do
-    int N = 10;
-end
-var int n = 10;
-var _u8[_N] us = [];
-us[_N-1] = 10;
-us[0] = 1;
-escape us[0]+us[_N-1];
-]],
-    env = 'line 5 : dimension must be constant',
-}
-
-Test { [[
-native @const _N;
-native/pre do
-    int N = 10;
-end
-var int n = 10;
-var _u8[_N] xxxx = [];
-xxxx[_N-1] = 10;
-xxxx[0] = 1;
-escape xxxx[0]+xxxx[_N-1];
-]],
-    gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
-}
-
-Test { [[
-native @const _U8_MAX;
-class T with do end;
-var T[_U8_MAX] ts;
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int n = 10;
-var u8[n] us;
-us[0] = 10;
-us[9] = 1;
-escape us[0]+us[9];
-]],
-    run = 1,
-}
-
 
 do return end
 
@@ -23205,6 +23119,156 @@ escape _strlen((_char&&)&&v);
     run = 6,
 }
 
+Test { [[
+var int nnn = 10;
+var u8[nnn] xxx;
+xxx[0] = 10;
+escape 1;
+]],
+    run = ':3] runtime error: access out of bounds',
+}
+
+Test { [[
+var int nnn = 10;
+var u8[nnn] xxx;
+$xxx := nnn;
+xxx[0] = 10;
+xxx[9] = 1;
+escape xxx[0]+xxx[9];
+]],
+    run = 11,
+}
+
+Test { [[
+var int nnn = 10;
+var u8[nnn] xxx;
+$xxx := nnn+1;
+escape 1;
+]],
+    run = ':3] runtime error: invalid attribution : out of bounds',
+}
+
+Test { [[
+var int n = 10;
+var u8[n] us;
+$us := n;
+$us = 20;
+escape 1;
+]],
+    run = ':4] runtime error: invalid attribution : out of bounds',
+}
+
+Test { [[
+var int n = 10;
+var u8[] us;
+$us = n;
+escape 1;
+]],
+    run = ':3] runtime error: invalid attribution : out of bounds',
+}
+
+Test { [[
+var int n = 10;
+var u8[] us;
+$us := n;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int n = 10;
+var u8[n] us = [0,1,2,3,4,5,6,7,8,9];
+us[n] = 10;
+escape us[0]+us[9];
+]],
+    run = ':3] runtime error: access out of bounds',
+}
+
+Test { [[
+var int n = 10;
+var u8[n] us = [0,1,2,3,4,5,6,7,8,9];
+us[n-1] = 1;
+escape us[0]+us[9];
+]],
+    run = 1,
+}
+
+
+Test { [[
+var int n = 10;
+var _u8[n] us = [];
+us[0] = 10;
+us[9] = 1;
+escape us[0]+us[9];
+]],
+    env = 'line 2 : dimension must be constant',
+}
+
+Test { [[
+var int n = 10;
+var _u8[_U8_MAX] us = [];
+us[_U8_MAX-1] = 10;
+us[0] = 1;
+escape us[0]+us[_U8_MAX-1];
+]],
+    env = 'line 2 : dimension must be constant',
+}
+
+Test { [[
+native @const _U8_MAX;
+var int n = 10;
+var _u8[_U8_MAX] us = [];
+us[_U8_MAX-1] = 10;
+us[0] = 1;
+escape us[0]+us[_U8_MAX-1];
+]],
+    run = 11,
+}
+
+Test { [[
+native/pre do
+    int N = 10;
+end
+var int n = 10;
+var _u8[_N] us = [];
+us[_N-1] = 10;
+us[0] = 1;
+escape us[0]+us[_N-1];
+]],
+    env = 'line 5 : dimension must be constant',
+}
+
+Test { [[
+native @const _N;
+native/pre do
+    int N = 10;
+end
+var int n = 10;
+var _u8[_N] xxxx = [];
+xxxx[_N-1] = 10;
+xxxx[0] = 1;
+escape xxxx[0]+xxxx[_N-1];
+]],
+    gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
+}
+
+Test { [[
+#define HASH_BYTES 32
+var byte[HASH_BYTES+sizeof(u32)] bs;
+escape $$bs;
+]],
+    run = 36,
+}
+
+Test { [[
+var int n = 32;
+var byte[n] bs;
+escape $$bs;
+]],
+    run = 32,
+}
+
 --<< VECTORS / STRINGS
 
     -- NATIVE C FUNCS BLOCK RAW
@@ -27846,6 +27910,16 @@ var T[5] a;
 escape 0;
 ]],
     run = 0,
+}
+
+Test { [[
+native @const _U8_MAX;
+class T with do end;
+var T[_U8_MAX] ts;
+
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[

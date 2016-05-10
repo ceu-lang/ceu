@@ -22,7 +22,7 @@
 #endif
 
 #if defined(CEU_DEBUG) || defined(CEU_NEWS) || defined(CEU_THREADS) || defined(CEU_OS_KERNEL)
-void *realloc(void *ptr, size_t size);
+void* realloc(void *ptr, size_t size);
 #endif
 
 #ifdef CEU_NEWS_POOL
