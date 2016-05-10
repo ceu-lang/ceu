@@ -3,7 +3,7 @@
 
 #include "ceu_vector.h"
 
-void ceu_vector_init (tceu_vector* vector, word max, int unit, byte* mem) {
+void ceu_vector_init (tceu_vector* vector, int max, int unit, byte* mem) {
     vector->nxt  = 0;
     vector->max  = max;
     vector->unit = unit;
@@ -20,7 +20,7 @@ void ceu_vector_init (tceu_vector* vector, word max, int unit, byte* mem) {
 }
 
 #ifdef CEU_VECTOR_MALLOC
-byte* ceu_vector_setmax (tceu_vector* vector, word len, bool freeze) {
+byte* ceu_vector_setmax (tceu_vector* vector, int len, bool freeze) {
     ceu_out_assert_msg(vector->max <= 0, "cannot resize vector");
 
     if (len == 0) {
@@ -44,7 +44,7 @@ byte* ceu_vector_setmax (tceu_vector* vector, word len, bool freeze) {
 }
 #endif
 
-bool ceu_vector_setlen (tceu_vector* vector, word nxt, bool force) {
+bool ceu_vector_setlen (tceu_vector* vector, int nxt, bool force) {
     if (nxt<=vector->nxt || force)
     {
 #ifdef CEU_VECTOR_MALLOC
@@ -75,7 +75,7 @@ bool ceu_vector_setlen (tceu_vector* vector, word nxt, bool force) {
 }
 
 /* can only get within idx < vector->nxt */
-byte* ceu_vector_geti (tceu_vector* vector, word idx) {
+byte* ceu_vector_geti (tceu_vector* vector, int idx) {
     if (idx >= vector->nxt) {
         return NULL;
     } else {
@@ -84,7 +84,7 @@ byte* ceu_vector_geti (tceu_vector* vector, word idx) {
 }
 
 /* can only set within idx < vector->nxt */
-bool  ceu_vector_seti (tceu_vector* vector, word idx, byte* v) {
+bool  ceu_vector_seti (tceu_vector* vector, int idx, byte* v) {
     if (idx >= vector->nxt) {
         return 0;
     } else {
@@ -136,9 +136,9 @@ bool ceu_vector_concat (tceu_vector* to, tceu_vector* fr) {
                                   1);
 }
 
-bool ceu_vector_copy_buffer (tceu_vector* to, word idx, const byte* fr, word n, bool force) {
+bool ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n, bool force) {
     ceu_out_assert_msg((n % to->unit) == 0, "bug found");
-    word len = idx + n/to->unit;
+    int len = idx + n/to->unit;
     if (ceu_vector_getlen(to)<len && !ceu_vector_setlen(to,len,force)) {
         return 0;
     } else {

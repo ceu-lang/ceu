@@ -23269,7 +23269,7 @@ escape $$bs;
     run = 32,
 }
 
---<< VECTORS / STRINGS
+--<<< VECTORS / STRINGS
 
     -- NATIVE C FUNCS BLOCK RAW
 

@@ -4,8 +4,8 @@
 #include "ceu_sys.h"
 
 typedef struct {
-    word  max;
-    word  nxt;
+    int   max;
+    int   nxt;
     int   unit;
     byte* mem;
 } tceu_vector;
@@ -18,16 +18,16 @@ typedef struct {
 #define ceu_vector_getlen(vec) ((vec)->nxt)
 #define ceu_vector_getmax(vec) ((vec)->max)
 
-void  ceu_vector_init   (tceu_vector* vector, word max, int unit, byte* mem);
+void  ceu_vector_init   (tceu_vector* vector, int max, int unit, byte* mem);
 #ifdef CEU_VECTOR_MALLOC
-byte* ceu_vector_setmax (tceu_vector* vector, word len, bool freeze);
+byte* ceu_vector_setmax (tceu_vector* vector, int len, bool freeze);
 #endif
-bool  ceu_vector_setlen (tceu_vector* vector, word nxt, bool force);
-byte* ceu_vector_geti   (tceu_vector* vector, word idx);
-bool  ceu_vector_seti   (tceu_vector* vector, word idx, byte* v);
+bool  ceu_vector_setlen (tceu_vector* vector, int nxt, bool force);
+byte* ceu_vector_geti   (tceu_vector* vector, int idx);
+bool  ceu_vector_seti   (tceu_vector* vector, int idx, byte* v);
 bool  ceu_vector_push   (tceu_vector* vector, byte* v);
 bool  ceu_vector_concat (tceu_vector* to, tceu_vector* fr);
-bool  ceu_vector_copy_buffer (tceu_vector* to, word idx, const byte* fr, word n, bool force);
+bool  ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n, bool force);
 char* ceu_vector_tochar (tceu_vector* vector);
 
 #if 0
