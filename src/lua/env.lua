@@ -786,7 +786,7 @@ F = {
         local is_arr = TP.check(me.var.tp,'[]','-&')
         if is_arr then
             local arr = me.var.tp.arr
-            local dyn = (not TP.is_ext(me.var.tp,'_')) and (arr=='[]')
+            local dyn = (TP.id(me.var.tp)=='_TOP_POOL' or (not TP.is_ext(me.var.tp,'_'))) and (arr=='[]')
             ASR(dyn or (type(arr)=='table' and arr.sval),
                 me, 'dimension must be constant')
         end

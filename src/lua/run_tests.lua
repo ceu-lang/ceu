@@ -226,9 +226,13 @@ end
     end
 
     local ARGS = T.args or ''
-    local EXE = (((not VALGRIND) or T.valgrind==false) and OUT_DIR..'/ceu.exe '..ARGS..' 2>&1')
-             or 'valgrind -q --leak-check=full '..OUT_DIR..'/ceu.exe '..ARGS..' 2>&1'
-             --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
+    local EXE
+    if VALGRIND and T.valgrind~=false and type(T.run)=='number' then
+        EXE = 'valgrind -q --leak-check=full --max-stackframe=4194320 '..OUT_DIR..'/ceu.exe '..ARGS..' 2>&1'
+         --or 'valgrind -q --tool=helgrind ./ceu.exe 2>&1'
+    else
+        EXE = OUT_DIR..'/ceu.exe '..ARGS..' 2>&1'
+    end
 --DBG(CEU)
 --DBG(GCC)
 

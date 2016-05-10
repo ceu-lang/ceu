@@ -36688,6 +36688,34 @@ end
 
 do T;
 
+var T[31245] ts;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+
+do T;
+
+var T[31246] ts;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
+do
+end
+
+do T;
+
 var T[65532] ts;
 
 escape 1;
