@@ -406,6 +406,7 @@ escape 1;
 
 --------------------
 
+
 do return end
 
 ----------------------------------------------------------------------------
@@ -27607,6 +27608,16 @@ escape is_int+is_float;
     run = 2,
 }
 
+Test { [=[
+function (void)=>int f do
+    var int v = [[ 1 ]];
+    return v;
+end
+escape f();
+]=],
+    run = 1,
+}
+
 --<<< LUA
 
 -->>> CLASSES, ORGS, ORGANISMS
@@ -43032,6 +43043,92 @@ escape f(1) + this.x;
 ]],
     run = 3,
 }
+
+-->>> GLOBAL FUNCTIONS
+
+Test { [[
+function (int i)=>int f do
+    return i + 1;
+end
+var int ret = f(1);
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+function (int i)=>int f do
+    return i + 1;
+end
+class T with
+do
+    var int ret = f(1);
+    escape ret;
+end
+var int ret = do T;
+escape ret;
+]],
+    --env = 'line 6 : variable/event "f" is not declared',
+    run = 2,
+}
+
+Test { [[
+function (int i)=>int F do
+    return i + 1;
+end
+var int ret = E(1);
+escape ret;
+]],
+    todo = 'global ids',
+    env = 'line 4 : variable/event "E" is not declared',
+}
+
+Test { [[
+function (int i)=>int F do
+    return i + 1;
+end
+var int ret = F(1);
+escape ret;
+]],
+    todo = 'global ids',
+    run = 2,
+}
+
+Test { [[
+function (int i)=>int F do
+    return i + 1;
+end
+class T with
+do
+    var int ret = F(1);
+    escape ret;
+end
+var int ret = do T;
+escape ret;
+]],
+    todo = 'global ids',
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+function (int i)=>int F do
+    return i + x;
+end
+x = F(10);
+class T with
+do
+    var int ret = F(1);
+    escape ret;
+end
+var int ret = do T;
+escape ret;
+]],
+    todo = 'global ids',
+    run = 11,
+}
+
+--<<< GLOBAL FUNCTIONS
 
 --<<< FUNCTIONS
 
