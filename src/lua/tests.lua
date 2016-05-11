@@ -23270,6 +23270,17 @@ escape $$bs;
     run = 32,
 }
 
+Test { [[
+function (void)=>void f do
+    var int x = 0;
+
+    var char[10] cs;
+end
+escape 1;
+]],
+    props = 'line 4 : not permitted inside `function´',
+}
+
 --<<< VECTORS / STRINGS
 
     -- NATIVE C FUNCS BLOCK RAW
