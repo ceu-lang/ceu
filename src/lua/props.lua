@@ -187,7 +187,9 @@ F = {
                 end
 
                 if TP.check(var.tp,'[]','-&') and (not TP.is_ext(var.tp,'_')) then
-                    ASR(not AST.par(me,'Dcl_fun'), var.dcl, 'not permitted inside `function´')
+                    if not TP.check(var.tp,'&') then
+                        ASR(not AST.par(me,'Dcl_fun'), var.dcl, 'not permitted inside `function´')
+                    end
                     PROPS.has_vector = true
                     if not TP.check(var.tp,'&') then
                         me.needs_clr = true

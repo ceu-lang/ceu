@@ -4,7 +4,6 @@ ENV = {
     clss_cls = {},
 
     adts = {},      -- { [1]=adt, ... [adt]=0 }
-    funs = {},      -- { [1]=fun, ... [fun]=0 }
 
     calls = {},     -- { _printf=true, _myf=true, ... }
     isrs  = {},     -- { }
@@ -513,7 +512,7 @@ F = {
         -- restart variables/events counting
         STACK_N_E[#STACK_N_E+1] = { _N, _E }
 
-        ASR(not (ENV.clss[id] or ENV.adts[id] or ENV.funs[id]), me,
+        ASR(not (ENV.clss[id] or ENV.adts[id]), me,
             'top-level identifier "'..id..'" already taken')
         ENV.clss[id] = me
         ENV.clss[#ENV.clss+1] = me
@@ -554,7 +553,7 @@ F = {
     Dcl_adt_pre = function (me)
         local id, op = unpack(me)
 
-        ASR(not (ENV.adts[id] or ENV.clss[id] or ENV.funs[id]), me,
+        ASR(not (ENV.adts[id] or ENV.clss[id]), me,
             'top-level identifier "'..id..'" already taken')
         ENV.adts[id] = me
         ENV.adts[#ENV.adts+1] = me
@@ -877,13 +876,6 @@ F = {
         local _
         _, me.var = newfun(me, up, pre, rec, ins, out, id, me.isImp)
 
-        if cls.id == 'Main' then
-            ASR(not (ENV.clss[id] or ENV.adts[id] or ENV.funs[id]), me,
-                'top-level identifier "'..id..'" already taken')
-            ENV.funs[id] = me
-            ENV.funs[#ENV.funs+1] = me
-        end
-
         -- "void" as parameter only if single
         for i, v in ipairs(ins) do
             local _, tp, _ = unpack(v)
@@ -941,7 +933,7 @@ F = {
         local id = unpack(me)
         local blk = me.__ast_blk and assert(AST.par(me.__ast_blk,'Block'))
                         or AST.iter('Block')()
-        local var = me.var or ENV.getvar(id, blk) or ENV.funs[id]
+        local var = me.var or ENV.getvar(id, blk)
 
         -- OUT access in recurse loops
         --  var int x;
@@ -971,7 +963,7 @@ F = {
         local id = unpack(me)
         local blk = me.__ast_blk and assert(AST.par(me.__ast_blk,'Block'))
                         or AST.iter('Block')()
-        local var = me.var or ENV.getvar(id, blk) or (ENV.funs[id] and ENV.funs[id].var)
+        local var = me.var or ENV.getvar(id, blk)
 
         ASR(var, me, 'variable/event "'..id..'" is not declared')
         me.var  = var

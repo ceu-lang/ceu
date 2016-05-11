@@ -141,9 +141,6 @@ F =
             end
 
         elseif var.pre == 'function' then
-            if AST.par(var.blk,'Dcl_cls').id == 'Main' then
-                cls = ENV.clss.Main
-            end
             VAL = 'CEU_'..cls.id..'_'..var.id
         elseif var.pre == 'event' then
             assert(CTX.evt)
@@ -301,8 +298,6 @@ F =
             ps[#ps+1] = '_ceu_app'
             if f.org then
                 ps[#ps+1] = V(f.org,'lval')   -- only native
-            elseif AST.par(f.var.blk,'Dcl_cls').id == 'Main' then
-                ps[#ps+1] = '(CEU_Main*)_ceu_app->data'
             else
                 ps[#ps+1] = CUR(me)
             end
