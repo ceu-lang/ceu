@@ -406,7 +406,6 @@ escape 1;
 
 --------------------
 
-
 do return end
 
 ----------------------------------------------------------------------------
@@ -27636,6 +27635,14 @@ function (void)=>int f do
     return v;
 end
 escape f();
+]=],
+    run = 1,
+}
+
+Test { [=[
+var float v1 = [[ 0.5 ]];
+var float v2 = 0.5;
+escape v1==v2;
 ]=],
     run = 1,
 }

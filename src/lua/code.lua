@@ -1436,8 +1436,12 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
                     local pool_op = TP.check(pool.tp,'&&','-&') and '->' or '.'
                     LINE(me, [[
 #ifdef CEU_ADTS_NEWS_POOL
+]])
+                    LINE(me, [[
 ]]..V(to,'lval','adt_top')..'->pool = '..V(pool,'rval','adt_top')..pool_op..[[pool;
 #endif
+]])
+                    LINE(me, [[
 ]]..V(to,'lval','adt_top')..'->root = '..V(fr,'rval')..[[;
 ]])
                 end
@@ -2335,31 +2339,38 @@ if (]]..me.thread.thread..[[ != NULL) {
         if set then
             if TP.check(set_to.tp,'bool') then
                 LINE(me, [[
+{
     int ret;
     ceu_lua_toboolean(ret, _ceu_app->lua,-1);
     ]]..V(set_to,'rval')..[[ = ret;
+}
 ]])
             elseif TP.isNumeric(set_to.tp) then
                 LINE(me, [[
+{
     int is;
-    int ret;
     ceu_lua_isnumber(is, _ceu_app->lua,-1);
     if (is) {
         ceu_lua_isinteger(is, _ceu_app->lua,-1);
         if (is) {
+            int ret;
             ceu_lua_tointeger(ret, _ceu_app->lua,-1);
+            ]]..V(set_to,'rval')..[[ = ret;
         } else {
+            double ret;
             ceu_lua_tonumber(ret, _ceu_app->lua,-1);
+            ]]..V(set_to,'rval')..[[ = ret;
         }
     } else {
         ceu_lua_pop(_ceu_app->lua,1);
         ceu_lua_pushstring(_ceu_app->lua, "number expected");
         goto _CEU_LUA_ERR_]]..me.n..[[;
     }
-    ]]..V(set_to,'rval')..[[ = ret;
+}
 ]])
             elseif TP.check(set_to.tp,'char','[]','-&') then
                 LINE(me, [[
+{
     int is;
     ceu_lua_isstring(is, _ceu_app->lua,-1);
     if (is) {
@@ -2374,9 +2385,11 @@ if (]]..me.thread.thread..[[ != NULL) {
         ceu_lua_pushstring(_ceu_app->lua, "not implemented [2]");
         goto _CEU_LUA_ERR_]]..me.n..[[;
     }
+}
 ]])
             elseif TP.check(set_to.tp,'&&','-&') then
                 LINE(me, [[
+{
     void* ret;
     int is;
     ceu_lua_islightuserdata(is, _ceu_app->lua,-1);
@@ -2387,7 +2400,8 @@ if (]]..me.thread.thread..[[ != NULL) {
         ceu_lua_pop(_ceu_app->lua,1);
         goto _CEU_LUA_ERR_]]..me.n..[[;
     }
-            ]]..V(set_to,'rval')..[[ = ret;
+    ]]..V(set_to,'rval')..[[ = ret;
+}
 ]])
             else
                 error 'not implemented'
