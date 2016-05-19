@@ -607,6 +607,7 @@ typedef struct tceu_app {
 
     void        (*code)  (struct tceu_app*,tceu_evt*,tceu_org*,tceu_trl*,tceu_stk*);
     void        (*init)  (struct tceu_app*);
+    int         (*close) (struct tceu_app*);
 #ifdef CEU_OS
     void*       (*calls) (struct tceu_app*,tceu_nevt,void*);
     void**      sys_vec;
@@ -620,7 +621,8 @@ typedef struct tceu_app {
 
 #ifdef CEU_OS
 typedef void (*tceu_init)   (tceu_app* app);
-typedef void (*tceu_export) (uint* size, tceu_init** init
+typedef int  (*tceu_close)  (tceu_app* app);
+typedef void (*tceu_export) (uint* size, tceu_init** init, tceu_close** close
 #ifdef CEU_OS_LUAIFC
                             , char** luaifc
 #endif

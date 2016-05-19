@@ -265,6 +265,33 @@ ceu_app_init (tceu_app* app)
 #endif
 }
 
+int
+ceu_app_close (tceu_app* app)
+{
+#if defined(CEU_RET) || defined(CEU_OS_APP)
+    /*ceu_out_assert(!app->isAlive);*/
+#endif
+#ifdef CEU_ASYNCS
+    /*ceu_out_assert(app->pendingAsyncs == 0);*/
+#endif
+#ifdef CEU_ORGS_NEWS_MALLOC
+    ceu_out_assert(app->tofree == NULL);
+#endif
+#ifdef CEU_THREADS
+    CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
+    ceu_out_assert(ceu_threads_gc(app,1) == 0);
+	/* wait all terminate/free */
+#endif
+#ifdef CEU_LUA
+    lua_close(app->lua);
+#endif
+#ifdef CEU_RET
+    return app->ret;
+#else
+    return 0;
+#endif
+}
+
 /* EXPORTED ENTRY POINT
  * CEU_EXPORT is put in a separate section ".export".
  * "gcc-ld" should place it at 0x00, before ".text".
@@ -277,8 +304,9 @@ void CEU_EXPORT (uint* size, tceu_init** init
                 , char** luaifc
 #endif
 ) {
-    *size = sizeof(CEU_Main);
-    *init = (tceu_init*) &ceu_app_init;
+    *size  = sizeof(CEU_Main);
+    *init  = (tceu_init*)  &ceu_app_init;
+    *close = (tceu_close*) &ceu_app_close;
 #ifdef CEU_OS_LUAIFC
     *luaifc = (=== APP_LUAIFC ===);
 #endif

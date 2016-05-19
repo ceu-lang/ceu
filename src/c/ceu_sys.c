@@ -626,10 +626,7 @@ printf("aborted\n");
 #ifdef CEU_OS_KERNEL
                 CEU_GC = 1;
 #endif
-#ifdef CEU_LUA
-                lua_close(app->lua);
-#endif
-            }
+	    }
 #endif
         }
 
@@ -811,23 +808,13 @@ int ceu_go_all (tceu_app* app, int argc, char **argv)
     }
 #endif
 
-/* TODO: app.close() ? */
-#ifdef CEU_THREADS
-    CEU_THREADS_MUTEX_UNLOCK(&app->threads_mutex);
-    ceu_out_assert(ceu_threads_gc(app,1) == 0); /* wait all terminate/free */
-#endif
-
 #ifdef CEU_NEWS
 #ifdef CEU_RUNTESTS
     ceu_out_assert_msg(_ceu_dyns_ == 0, "memory leak");
 #endif
 #endif
 
-#ifdef CEU_RET
-    return app->ret;
-#else
-    return 0;
-#endif
+    return app->close(app);     /* calls CEU_THREADS_MUTEX_UNLOCK() */
 }
 
 #endif /* !CEU_OS_APP */
