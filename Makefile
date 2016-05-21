@@ -123,6 +123,15 @@ clean:
 ifndef do_compiler
 ifdef ARCH_DIR
 include $(ARCH_DIR)/Makefile
+ifneq ("$(wildcard $(ARCH_DIR)/up/Makefile)","")
+include $(ARCH_DIR)/up/Makefile
+endif
+ifneq ("$(wildcard $(ARCH_DIR)/up/up/Makefile)","")
+include $(ARCH_DIR)/up/up/Makefile
+endif
+ifneq ("$(wildcard $(ARCH_DIR)/up/up/up/Makefile)","")
+include $(ARCH_DIR)/up/up/up/Makefile
+endif
 endif
 endif
 
