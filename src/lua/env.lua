@@ -1219,13 +1219,13 @@ type.
                             end
                         end
                     else -- vector
-                        local is_str = TP.check(e.tp,'char','&&','-&')
+                        local is_str = TP.check(e.tp,'_char','&&','-&')
                         local is_vec = TP.check(e.tp,'[]','-&') and
                                        (not TP.is_ext(e.tp,'_','@'))
                         local msg1 = (#fr>0 and 'wrong argument #'..i..' : ') or ''
                         ASR(is_str or is_vec, me, msg1..'source is not a vector')
 
-                        local fr_unit = is_str and TP.new{'char'} or
+                        local fr_unit = is_str and TP.new{'_char'} or
                                         TP.pop(TP.pop(e.tp,'&'),'[]')
                         local ok, msg2 = TP.contains(to_unit_noopt,
                                                      isopt and TP.pop(fr_unit,'?') or fr_unit)
@@ -1898,7 +1898,7 @@ type.
                     break
                 end
             else
-                if TP.check(item.tp,'char','&&') then
+                if TP.check(item.tp,'_char','&&') then
                     me.tp = TP.new{'char','[]','..'}
                 else
                     me.tp = TP.push(TP.pop(item.tp,'&'),'..')
@@ -1939,7 +1939,7 @@ type.
     end,
 
     STRING = function (me)
-        me.tp   = TP.new{'char','&&'}
+        me.tp   = TP.new{'_char','&&'}
         me.lval = false
         me.isConst = true
     end,

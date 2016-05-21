@@ -404,6 +404,44 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+native @nohold _printf();
+
+data T with
+    var _char[255] str;
+    var int x;
+end
+var T t = T([], 1);
+t.str[0] = '\0';
+escape t.x;
+]],
+    run = 1,
+}
+
+Test { [[
+native @nohold _printf();
+
+data T with
+    var _char[255] str;
+end
+var T t = T("oioioi");
+_printf("%s\n", t.str);
+escape 0;
+]],
+    run = 1,
+}
+
+Test { [[
+native @pure _strlen();
+
+var _char[255] str;
+str = "oioioi";
+
+escape _strlen(&&str);
+]],
+    run = 1,
+}
+
 --------------------
 
 do return end
@@ -22688,7 +22726,39 @@ native do
     } tp;
     tp T = { f };
 end
-var char[] str = [] .. (char&&)_T.f() .. "oi";
+var char[] str = [] .. "oi";
+escape str[1]=='i';
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    char* f (void) {
+        return "ola";
+    }
+    typedef struct {
+        char* (*f) (void);
+    } tp;
+    tp T = { f };
+end
+var char[] str = [] .. (_char&&)_T.f();
+escape str[2]=='a';
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    char* f (void) {
+        return "ola";
+    }
+    typedef struct {
+        char* (*f) (void);
+    } tp;
+    tp T = { f };
+end
+var char[] str = [] .. (_char&&)_T.f() .. "oi";
 escape str[4]=='i';
 ]],
     run = 1,
@@ -22702,7 +22772,7 @@ native do
 end
 var char[]  str;
 var char[]& ref = &str;
-ref = [] .. (char&&){f}() .. "oi";
+ref = [] .. (_char&&){f}() .. "oi";
 native @pure _strlen();
 escape _strlen((_char&&)&&str);
 ]],
@@ -22767,7 +22837,7 @@ function (void) => char[]& f do
 end
 
 var char[]& ref = &f();
-ref = [] .. (char&&){g}() .. "ola";
+ref = [] .. (_char&&){g}() .. "ola";
 
 escape str[3] == 'o';
 ]],
@@ -22799,7 +22869,7 @@ native do
 end
 native @pure _ID(), _strlen();
 var char[] str = [] .. "abc"
-                    .. (char&&)_ID("def");
+                    .. (_char&&)_ID("def");
 var char&& str2 = _ID((_char&&)&&str);
 escape _strlen((_char&&)&&str) + _strlen(str2);
 ]],
@@ -23100,7 +23170,7 @@ native @nohold _strlen();
 var char[] v = "abc";
 escape _strlen((_char&&)v);
 ]],
-    env = 'line 2 : types mismatch (`char[]´ <= `char&&´)',
+    env = 'line 2 : types mismatch (`char[]´ <= `_char&&´)',
     --run = 3,
 }
 Test { [[
@@ -24548,7 +24618,7 @@ var _char[10] a;
 a = "oioioi";
 escape 1;
 ]],
-    env = 'line 2 : types mismatch (`_char[]´ <= `char&&´)',
+    env = 'line 2 : types mismatch (`_char[]´ <= `_char&&´)',
     --env = 'line 2 : invalid attribution',
 }
 
@@ -24565,7 +24635,7 @@ var int a;
 a = "oioioi";
 escape 1;
 ]],
-    env = 'line 2 : types mismatch (`int´ <= `char&&´)',
+    env = 'line 2 : types mismatch (`int´ <= `_char&&´)',
 }
 
 Test { [[

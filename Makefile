@@ -80,6 +80,9 @@ endif
 help:
 	@echo "See the file README.md"
 
+#cd $(OUT_DIR) && ./$(OUT_EXE)
+#cd $(OUT_DIR) && valgrind --leak-check=full --error-exitcode=1 ./$(OUT_EXE)
+
 all: ceu c
 	cd $(OUT_DIR) && ./$(OUT_EXE)
 
@@ -96,22 +99,22 @@ c:
 	$(C_EXE) $(ARCH_DIR)/ceu_main.c $(C_FLAGS_) -o $(OUT_DIR)/$(OUT_EXE)
 
 samples:
-	for i in samples/*.ceu; do									\
-		echo;													\
-		echo -n "#####################################";		\
-		echo    "#####################################";		\
-		echo File: "$$i";										\
-		grep "#@" "$$i" | cut -f2- -d" ";						\
-		echo -n "#####################################";		\
-		echo    "#####################################";		\
-		echo -n "Press <enter> to start...";					\
-		read _;													\
-		if [ "$$i" = "samples/test-03.ceu" ]; then				\
-			make ARCH_DIR=arch/pthread SRC=$$i all || exit 1;	\
-		else													\
-			make SRC=$$i all || exit 1;							\
-		fi;														\
-		echo;													\
+	for i in samples/*.ceu; do								\
+		echo;												\
+		echo -n "#####################################";	\
+		echo    "#####################################";	\
+		echo File: "$$i";									\
+		grep "#@" "$$i" | cut -f2- -d" ";					\
+		echo -n "#####################################";	\
+		echo    "#####################################";	\
+		echo -n "Press <enter> to start...";				\
+		read _;												\
+		if [ "$$i" = "samples/test-03.ceu" ]; then			\
+			make ARCH_DIR=arch/pthread SRC=$$i all || exit 1;\
+		else												\
+			make SRC=$$i all || exit 1;						\
+		fi;													\
+		echo;												\
 	done
 
 clean:

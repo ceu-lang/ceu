@@ -1375,7 +1375,7 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
                             end
                         end
                     else
-                        if TP.check(e.tp,'char','&&','-&') then
+                        if TP.check(e.tp,'_char','&&','-&') then
                             if first then
                                 LINE(me, [[
     ceu_vector_setlen(]]..V(to,'lval')..[[, 0, 0);
