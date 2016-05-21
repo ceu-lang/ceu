@@ -404,47 +404,9 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-native @nohold _printf();
-
-data T with
-    var _char[255] str;
-    var int x;
-end
-var T t = T([], 1);
-t.str[0] = '\0';
-escape t.x;
-]],
-    run = 1,
-}
-
-Test { [[
-native @nohold _printf();
-
-data T with
-    var _char[255] str;
-end
-var T t = T("oioioi");
-_printf("%s\n", t.str);
-escape 0;
-]],
-    run = 1,
-}
-
-Test { [[
-native @pure _strlen();
-
-var _char[255] str;
-str = "oioioi";
-
-escape _strlen(&&str);
-]],
-    run = 1,
-}
-
 --------------------
 
-do return end
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -22227,6 +22189,42 @@ escape 0;
     gcc = 'implicit declaration of function ‘uv_buf_init’',
 }
 
+Test { [[
+native @nohold _printf();
+
+data T with
+    var _char[255] str;
+    var int x;
+end
+var T t = T([], 1);
+t.str[0] = '\0';
+escape t.x;
+]],
+    run = 1,
+}
+
+Test { [[
+native @pure _strlen();
+data T with
+    var _char[255] xxxx;
+end
+var T t = T("oioioi");
+escape _strlen(t.xxxx);
+]],
+    run = 6,
+}
+
+Test { [[
+native @pure _strlen();
+
+var _char[255] str;
+str = "oioioi";
+
+escape _strlen(&&str);
+]],
+    gcc = '4:34: error: assignment to expression with array type',
+}
+
 --<<< NATIVE/POINTERS/VECTORS
 
 -->>> VECTORS / STRINGS
@@ -24618,7 +24616,8 @@ var _char[10] a;
 a = "oioioi";
 escape 1;
 ]],
-    env = 'line 2 : types mismatch (`_char[]´ <= `_char&&´)',
+    gcc = '2:32: error: assignment to expression with array type',
+    --env = 'line 2 : types mismatch (`_char[]´ <= `_char&&´)',
     --env = 'line 2 : invalid attribution',
 }
 

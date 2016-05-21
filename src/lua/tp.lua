@@ -432,23 +432,29 @@ function TP.contains (tp1, tp2, t)
 
     -- vec& = vec
     -- vec  = []..
-    elseif (not TP.is_ext(tp2,'_')) and
-           --(not (tp1.pre=='pool' or tp2.pre=='pool')) and
+    elseif --(not (tp1.pre=='pool' or tp2.pre=='pool')) and
            (not (ENV.clss[id1] and TP.check(tp1,id1,'[]','-&') or
                  ENV.clss[id2] and TP.check(tp2,id2,'[]','-&'))) and -- TODO: TP.pre()
         (
             TP.check(TP1,'[]','&') and TP.check(tp2,'[]')
         or
-            -- OK: var _u8[N] v = []
-            -- NO: var _u8[N] v = [1]
-            -- NO: var _u8[N] v = v2
-            TP.is_ext(tp1,'_') and TP.check(TP1,'[]') and TP.check(tp2,'any','[]')
+            TP.is_ext(tp1,'_') and TP.check(TP1,'[]')
         or
             TP.check(TP1,'[]','-&','-?') and TP.check(tp2,'[]','..')
         )
     then
         if TP.is_ext(tp1,'_') then
-            return true
+            -- OK: var _u8[N] v = []
+            -- OK: var _char[N] v = "hello"
+            -- NO: var _u8[N] v = [1]
+            -- NO: var _u8[N] v = v2
+            if TP.check(tp2,'any','[]') then
+                return true
+            elseif TP.check(TP1,'_char','[]') and TP.check(TP2,'_char','&&') then
+                return true
+            else
+                return false, __err(TP1, TP2)
+            end
         end
 
         local is_constr = TP.check(tp2,'[]','..')

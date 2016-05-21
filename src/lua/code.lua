@@ -641,7 +641,15 @@ if (]]..me.val..[[ == NULL) {
             local field = blk.vars[i]
             local amp = ''--(TP.check(field.tp,'&') and '&') or ''
             if TP.is_ext(field.tp,'_') and TP.check(field.tp,'[]') then
-                -- NO:  t._vec = [];
+                if TP.check(p.tp,'_char','&&') then
+                    local n = assert(field.tp.arr, 'bug found')
+                    n = AST.asr(n, 'NUMBER')[1]
+                    LINE(me, [[
+strncpy(]]..me.val..op..tag..field.id..', '..amp..V(p,'rval')..', '..n..[[);
+]])
+                else
+                    -- NO:  t._vec = [];
+                end
             else
                 LINE(me, me.val..op..tag..field.id..' = '..amp..V(p,'rval')..';')
             end
