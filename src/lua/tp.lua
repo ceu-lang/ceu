@@ -432,7 +432,7 @@ function TP.contains (tp1, tp2, t)
 
     -- vec& = vec
     -- vec  = []..
-    elseif ((not TP.is_ext(tp2,'_')) or TP.check(tp2,'_char','&&','-&','..')) and
+    elseif (not TP.is_ext(tp2,'_')) and
            --(not (tp1.pre=='pool' or tp2.pre=='pool')) and
            (not (ENV.clss[id1] and TP.check(tp1,id1,'[]','-&') or
                  ENV.clss[id2] and TP.check(tp2,id2,'[]','-&'))) and -- TODO: TP.pre()
