@@ -649,6 +649,6 @@ int ceu_go_all (tceu_app* app, int argc, char **argv);
 #ifdef CEU_WCLOCKS
 int ceu_sys_wclock (tceu_app* app, s32 dt, s32* set, s32* get);
 #endif
-void ceu_sys_go (tceu_app* app, int evt, void* evtp);
+void ceu_sys_go (tceu_app* app, tceu_nevt evt, void* evtp);
 
 #endif  /* _CEU_OS_H */

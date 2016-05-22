@@ -660,7 +660,7 @@ SPC(1); printf("<<< NO\n");
 #endif
 }
 
-void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
+void ceu_sys_go_stk (tceu_app* app, tceu_nevt evt, void* evtp, tceu_stk* stk) {
 #ifdef CEU_STACK_CLEAR
     tceu_stk stk_ = { NULL, NULL, NULL, 0, 0, 1 };
 #else
@@ -745,7 +745,7 @@ void ceu_sys_go_stk (tceu_app* app, int evt, void* evtp, tceu_stk* stk) {
 #endif
 }
 
-void ceu_sys_go (tceu_app* app, int evt, void* evtp)
+void ceu_sys_go (tceu_app* app, tceu_nevt evt, void* evtp)
 {
 #ifdef CEU_ORGS_OR_ADTS_AWAIT
     app->t_kills = 0;
