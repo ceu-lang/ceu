@@ -196,12 +196,12 @@ me.blk_body = me.blk_body or blk_body
 
     _Watching_pre = function (me)
         --[[
-        --      watching <v> in <EVT> do
+        --      x = watching <EVT> do
         --          ...
         --      end
         -- becomes
         --      par/or do
-        --          <v> = await <EVT>;  // strong abortion
+        --          x = await <EVT>;  // strong abortion
         --      with
         --          ...                 // no chance to execute on <EVT>
         --      end
@@ -210,11 +210,13 @@ me.blk_body = me.blk_body or blk_body
         -- both sides, the message will point to "..." which appears after in
         -- the code
         --]]
-        local to, e, dt, blk = unpack(me)
+        local e, dt, blk = unpack(me)
 
         local awt = node('Await', me.ln, e, dt, false)
-        local set
-        if to then
+
+        local set = AST.par(me, 'SetBlock')
+        if set then
+            local to = set[2]
             set = node('_Set', me.ln, to, '=', 'await', awt)
         else
             set = awt

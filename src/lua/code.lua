@@ -1473,7 +1473,10 @@ ceu_out_assert_msg( ceu_vector_setlen(]]..V(vec,'lval')..','..V(fr,'rval')..','.
         local thr = AST.par(me, 'Thread')
         if thr then
             LINE(me, 'goto '..me.lbl_out.id..';')
-        else
+        elseif blk.tag ~= 'ParOr' then  -- watching
+            LINE(me, [[
+ceu_out_assert_msg(0, "missing `escape´ statement");
+]])
             HALT(me)        -- must escape with `escape´
         end
 

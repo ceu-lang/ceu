@@ -405,13 +405,54 @@ escape 1;
 }
 
 --------------------
+Test { [[
 
---do return end
+var      T   t;
+var[]    T   ts;  // erro
+pool[]   T   ts;
+vector[] T   ts;
+vector[] T&& pts;
+
+var (pool[]   T)  && ppool;
+var (vector[] T)  && pvec;
+var (vector[] T&&)&& pvec;
+
+event T e;
+
+var (event T)&& pev;
+
+var    t :: T;
+vector t :: []T;
+
+var pvec :: (vector[] T&&)&&
+
+
+code T
+
+
+
+escape 0;
+]],
+    todo = true,
+    run = 1,
+}
+--]===]
+
+Test { [[
+var int n =
+    watching 1s do
+        await FOREVER;
+    end;
+escape n;
+]],
+    run = { ['~>1001ms'] = 1000 },
+}
+
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
---]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }

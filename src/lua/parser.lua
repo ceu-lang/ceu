@@ -280,7 +280,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
               + EM'expression'
               )
-    , __SetBlock = V'Do' + V'If' + V'ParEver'
+    , __SetBlock = V'Do' + V'If' + V'ParEver' + V'_Watching'
 
     -- adt-constr
     , Adt_constr_root = (CKEY'new'+Cc(false)) * V'Adt_constr_one'
@@ -406,11 +406,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , ParEver = KEY'par' * EKEY'do' *
                     V'Block' * (EKEY'with' * V'Block')^1 *
                 EKEY'end'
-    , _Watching = KEY'watching' * ( (EV'Var'+V'VarList') * EKEY'in'
-                                  + Cc(false) )
-                * V'__awaits'
-                * V'__Do'
-
+    , _Watching = KEY'watching' * V'__awaits' * V'__Do'
 
     -- pause
     , _Pause   = KEY'pause/if' * EV'__Exp' * V'__Do'

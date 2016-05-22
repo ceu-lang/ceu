@@ -281,8 +281,10 @@ print('class "'..id..'" may terminate from nested organisms')
         me.ana.pos = { [false]='esc' }   -- diff from [false]=true
     end,
     SetBlock = function (me)
-        local blk = me[1]
-        if not blk.ana.pos[false] then
+        local blk = unpack(me)
+        if blk.tag == 'ParOr' then  -- watching
+            OR(me, blk, true)
+        elseif not blk.ana.pos[false] then
             --ANA.ana.reachs = ANA.ana.reachs + 1
             WRN( INC(me, 'reachs'),
                  blk, 'missing `escape´ statement for the block')
