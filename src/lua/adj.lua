@@ -214,9 +214,9 @@ me.blk_body = me.blk_body or blk_body
 
         local awt = node('Await', me.ln, e, dt, false)
 
-        local set = AST.par(me, 'SetBlock')
-        if set then
-            local to = set[2]
+        local set
+        if me.__par.tag == 'SetBlock' then
+            local to = me.__par[2]
             set = node('_Set', me.ln, to, '=', 'await', awt)
         else
             set = awt

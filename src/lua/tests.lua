@@ -436,23 +436,13 @@ escape 0;
     todo = true,
     run = 1,
 }
---]===]
-
-Test { [[
-var int n =
-    watching 1s do
-        await FOREVER;
-    end;
-escape n;
-]],
-    run = { ['~>1001ms'] = 1000 },
-}
 
 do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
+--]===]
 
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
@@ -48194,6 +48184,121 @@ escape 1;
 -- TRACKING / WATCHING
 
 Test { [[
+var int n =
+    watching 1s do
+        await FOREVER;
+    end;
+escape n;
+]],
+    run = { ['~>1001ms'] = 1000 },
+}
+
+Test { [[
+event int e;
+par do
+    var int n =
+        watching e do
+            await FOREVER;
+        end;
+    escape n;
+with
+    await 1s;
+    emit e => 10;
+    await FOREVER;
+end
+]],
+    run = { ['~>1001ms'] = 10 },
+}
+
+Test { [[
+class T with
+    event int e;
+do
+    await 1s;
+    escape 10;
+end
+
+var T t;
+var int n =
+    watching t do
+        await FOREVER;
+    end;
+
+escape n;
+]],
+    run = { ['~>1001ms'] = 10 },
+}
+
+Test { [[
+var int n =
+    watching 1s do
+        escape 1;
+    end;
+escape n;
+]],
+    run = { ['~>1001ms'] = 1 },
+}
+
+Test { [[
+input void E;
+event int e;
+par do
+    var int n =
+        watching e do
+            await 300ms;
+            escape 1;
+        end;
+    escape n;
+with
+    await E;
+    emit e => 10;
+    await FOREVER;
+end
+]],
+    run = { ['~>1001ms'] = 1 },
+}
+
+Test { [[
+event int e;
+par do
+    var int n =
+        watching e do
+            await 300ms;
+            escape 1;
+        end;
+    escape n;
+with
+    await 1s;
+    emit e => 10;
+    await FOREVER;
+end
+]],
+    _ana = { acc=1 },
+    run = { ['~>1001ms'] = 1 },
+}
+
+Test { [[
+input void E;
+class T with
+    event int e;
+do
+    await E;
+    escape 10;
+end
+
+var T t;
+var int n =
+    watching t do
+        await 500ms;
+        escape 1;
+    end;
+
+escape n;
+]],
+    run = { ['~>1001ms'] = 1 },
+}
+
+Test { [[
 class T with
     event void e;
 do
@@ -48213,10 +48318,26 @@ class T with
 do
     await this.e;
     var int v;
-    watching v in this.e do
+    watching this.e do
         if v then end;
         nothing;
     end
+end
+escape 1;
+]],
+    ref = 'line 7 : invalid access to uninitialized variable "v" (declared at tests.lua:5)',
+}
+
+Test { [[
+class T with
+    event int e;
+do
+    await this.e;
+    var int v =
+        watching this.e do
+            if v then end;
+            nothing;
+        end;
 end
 escape 1;
 ]],
@@ -48283,11 +48404,11 @@ escape ret;
 Test { [[
 input int I;
 var int ret = -5;
-var int v=0;
-watching v in I do
+var int v=
+watching I do
     await 1s;
     ret = 5;
-end
+end;
 escape ret+v;
 ]],
     run = {
