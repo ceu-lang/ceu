@@ -1234,7 +1234,7 @@ Test { [[if (2) then  else escape 0; end;]],
     _ana = {
         reachs = 1,
     },
-    run = 0,    -- TODO: may be anything
+    run = '1] runtime error: missing `escape´ statement',
 }
 
 -- IF vs SEQ priority
@@ -36443,10 +36443,10 @@ end
 var T a;
 var int ret = 10;
 par/and do
-    var int v;
-    watching v in a do
+    var int v =
+    watching a do
         await FOREVER;
-    end
+    end;
     ret = v;
 with
     kill a => 1;

@@ -438,7 +438,6 @@ me.blk_body = me.blk_body or blk_body
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('_Watching', me.ln,
-                                    false,
                                     node('Op1_*', me.ln, '*',
                                         node('Var', me.ln, '_parent')),
                                     false,
