@@ -483,8 +483,14 @@ F =
         else
             VAL  = '('..V(e1,'rval')..'.'..id..')'
         end
-        local op = tpctx2op(me.tp,CTX)
-        VAL = '('..op..VAL..')'
+        if CTX.evt then
+            local ddd = ENV.v_or_ref(e1.tp, 'ddd')
+            local _,blk = unpack(ddd)
+            return blk.vars[id].evt.idx
+        else
+            local op = tpctx2op(me.tp,CTX)
+            VAL = '('..op..VAL..')'
+        end
         return VAL
     end,
 

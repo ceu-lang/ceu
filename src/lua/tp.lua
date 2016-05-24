@@ -301,7 +301,7 @@ function TP.toc (tp, t)
 
     ret = id..ret
 
-    if ENV.clss[id] or ENV.adts[id] then
+    if ENV.clss[id] or ENV.adts[id] or ENV.tops[id] then
         ret = 'CEU_'..ret
     end
 

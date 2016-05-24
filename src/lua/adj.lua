@@ -1480,6 +1480,8 @@ me.blk_body = me.blk_body or blk_body
         elseif tag=='spawn' then
             return node('Set', me.ln, op, tag, fr, to)
 
+        elseif tag=='ddd-constr' then
+            return node('Set', me.ln, op, tag, fr, to)
         elseif tag=='adt-constr' then
             return node('Set', me.ln, op, tag, fr, to)
 
@@ -1883,6 +1885,15 @@ H = {
     end,
 
     -----------------------------------------------------------------------
+
+    _DDD_pos = function (me)
+        local id = unpack(me)
+        return node('DDD', me.ln,
+                id,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        unpack(me,2))))
+    end,
 
     Dcl_adt_pos = function (me)
         -- id, op, ...

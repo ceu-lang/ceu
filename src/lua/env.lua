@@ -3,6 +3,8 @@ ENV = {
     clss_ifc = {},
     clss_cls = {},
 
+    tops = {},
+
     adts = {},      -- { [1]=adt, ... [adt]=0 }
 
     calls = {},     -- { _printf=true, _myf=true, ... }
@@ -153,7 +155,7 @@ local function check (me, pre, tp)
 
     local tp_id = TP.id(tp)
 
-    local top = ASR(ENV.c[tp_id] or ENV.clss[tp_id] or ENV.adts[tp_id],
+    local top = ASR(ENV.c[tp_id] or ENV.tops[tp_id] or ENV.clss[tp_id] or ENV.adts[tp_id],
                     me, 'undeclared type `'..(tp_id or '?')..'´')
 
     tp_ = TP.pop(tp,'?')
@@ -164,7 +166,7 @@ local function check (me, pre, tp)
 
     if TP.check(tp_,tp_id, '-[]') then
         if AST.isParent(top,me) then
-            if top.tag== 'Dcl_adt' then
+            if top.tag == 'Dcl_adt' then
                 -- ok, List with tag CONS with List tail end
             elseif me.tag=='Dcl_fun' and me.is_constr then
                 -- ok, constructor, "tp" is the return type
@@ -190,15 +192,17 @@ local function check (me, pre, tp)
     --ASR((not arr) or arr>0, me, 'invalid array dimension')
 end
 
-function ENV.v_or_ref (tp, cls_or_adt)
+function ENV.v_or_ref (tp, cls_or_adt_or_ddd)
     local tp_id = TP.id(tp)
     local ok = TP.check(tp,tp_id,'-[]','-&','-?')
-    if cls_or_adt == 'cls' then
+    if cls_or_adt_or_ddd == 'cls' then
         return ok and ENV.clss[tp_id]
-    elseif cls_or_adt == 'adt' then
+    elseif cls_or_adt_or_ddd == 'adt' then
         return ok and ENV.adts[tp_id]
+    elseif cls_or_adt_or_ddd == 'ddd' then
+        return ok and ENV.tops[tp_id]
     else
-        return ok and (ENV.clss[tp_id] or ENV.adts[tp_id])
+        return ok and (ENV.clss[tp_id] or ENV.adts[tp_id] or ENV.tops[tp_id])
     end
 end
 
@@ -548,6 +552,14 @@ F = {
                 end
             end
         end
+    end,
+
+    DDD = function (me)
+        local id = unpack(me)
+        ASR(not ENV.tops[id], me,
+            'top-level identifier "'..id..'" already taken')
+        ENV.tops[id] = me
+        ENV.tops[#ENV.tops+1] = me
     end,
 
     Dcl_adt_pre = function (me)
@@ -1165,6 +1177,9 @@ type.
                 me, 'invalid attribution')
             fr.tp = to.tp -- return type is not known at compile time
 
+        elseif set == 'ddd-constr' then
+            return  -- checked in ddd.lua
+
         elseif set == 'adt-constr' then
             if to.lst.var and to.lst.var.pre == 'pool' then
                 return  -- TODO: not enough
@@ -1747,6 +1762,8 @@ type.
 
         local cls = ENV.v_or_ref(e1.tp, 'cls')
         local adt = ENV.v_or_ref(e1.tp, 'adt')
+        local ddd = ENV.v_or_ref(e1.tp, 'ddd')
+
         local BLK, VAR
         me.id = id
         if cls then
@@ -1781,6 +1798,17 @@ type.
             me.tp   = VAR.tp
             me.lval = VAR.lval
             VAR.isTmp = false
+
+        elseif ddd then
+            local ID, blk = unpack(ddd)
+
+            local var = ASR(blk.vars[id], me,
+                        'field "'..id..'" is not declared')
+            me.tp = var.tp
+            me.lval = var
+me.var = var
+            --BLK, VAR = blk, var
+            -- TODO
 
         elseif adt then
             local ID, op, blk = unpack(adt)

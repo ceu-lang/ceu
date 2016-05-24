@@ -156,6 +156,19 @@ F = {
 ]] .. src
     end,
 
+    DDD_pre = function (me)
+        local id = unpack(me)
+        me.struct = 'typedef '
+    end,
+    DDD = function (me)
+        local id = unpack(me)
+        me.struct = string.sub(me.struct, 1, -3)    -- remove leading ';'
+
+        me.struct = me.struct..' CEU_'..id..';'
+        MEM.tops_h = MEM.tops_h..'\n'..(me.enum or '')..'\n'..
+                                   me.struct..'\n'
+    end,
+
     Dcl_adt_pre = function (me)
         local id, op = unpack(me)
         me.struct = 'typedef '
@@ -488,7 +501,7 @@ typedef union CEU_]]..me.id..[[_delayed {
     end,
 
     Block_pos = function (me)
-        local top = AST.par(me,'Dcl_adt') or CLS()
+        local top = AST.par(me,'Dcl_adt') or AST.par(me,'DDD') or CLS()
         local tag = ''
         if top.tag == 'Dcl_adt' then
             local n = AST.par(me, 'Dcl_adt_tag')
@@ -499,7 +512,7 @@ typedef union CEU_]]..me.id..[[_delayed {
         top.struct = top.struct..SPC()..'} '..tag..';\n'
     end,
     Block_pre = function (me)
-        local DCL = AST.par(me,'Dcl_adt') or CLS()
+        local DCL = AST.par(me,'Dcl_adt') or AST.par(me,'DDD') or CLS()
 
         DCL.struct = DCL.struct..SPC()..'struct { /* BLOCK ln='..me.ln[2]..' */\n'
 
@@ -522,7 +535,7 @@ typedef union CEU_]]..me.id..[[_delayed {
                 len = 1   --
             elseif var.pre=='pool' and (not TP.check(var.tp,'&')) and (type(var.tp.arr)=='table') then
                 len = 10    -- TODO: it should be big
-            elseif var.cls or var.adt then
+            elseif var.cls or var.adt or ENV.tops[TP.id(var.tp)] then
                 len = 10    -- TODO: it should be big
                 --len = (var.tp.arr or 1) * ?
             elseif TP.check(var.tp,'?') then
@@ -549,7 +562,7 @@ typedef union CEU_]]..me.id..[[_delayed {
         -- sort offsets in descending order to optimize alignment
         -- TODO: previous org metadata
         local sorted = { unpack(me.vars) }
-        if me~=DCL.blk_ifc and DCL.tag~='Dcl_adt' then
+        if me~=DCL.blk_ifc and DCL.tag~='Dcl_adt' and DCL.tag~='Dcl_ddd' then
             table.sort(sorted, pred_sort)   -- TCEU_X should respect lexical order
         end
 
