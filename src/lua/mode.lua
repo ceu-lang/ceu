@@ -93,7 +93,8 @@ F = {
         end
         assert(to.lst.var, 'bug found')
         if to.var then
-            assert(to.var==to.lst.var, 'bug found')
+-- TODO
+--assert(to.var==to.lst.var, 'bug found')
         end
 
         -- FIELD WRITE (outside class)

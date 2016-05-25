@@ -915,6 +915,80 @@ me.blk_body = me.blk_body or blk_body
 
 -- Dcl_fun, Dcl_ext --------------------------------------------------------
 
+    __code = {},
+    _Code_do_pre = '_Code_pre',
+    _Code_pre = function (me)
+        local pre, id, ins, out, blk = unpack(me)
+
+        -- (int x, int y) => "data _id with ... end"
+        local had_data = F.__code['_'..id]
+        local data
+        if had_data then
+            data = had_data -- single declaration (prototype or body)
+        else
+            data = node('_DDD', me.ln, '_'..id)
+            F.__code['_'..id] = data
+        end
+
+        -- (int x, int y) => "do var int x=args.x; ... end"
+        local args = node('Stmts', me.ln)
+
+        for i, item in ipairs(ins) do
+            local _,tp,id = unpack(item)
+
+            -- NO: (void, int)
+            local tp_id, any = unpack(tp)
+            local is_void = (tp_id=='void' and (not any))
+
+            if is_void then
+                ASR(i==1 and #ins==1, me,
+                    'wrong argument #'..i..' : cannot be `void´')
+                ASR(not id, me, 'cannot instantiate type "'..tp_id..'"')
+            else
+                -- full definitions must contain parameter ids
+                if blk then
+                    ASR(id, me, 'missing parameter identifier')
+                end
+
+                -- include arguments into "data"
+                if had_data then
+                    assert(id, 'bug found')
+                    data[1+i][3] = id
+                else
+                    data[1+i] = node('Dcl_var', me.ln, 'var', tp, id)
+                end
+
+                -- include arguments into code block
+                if blk then
+                    args[#args+1] = node('Dcl_var', me.ln, 'var', tp, id)
+                    if pre == 'code/delayed' then
+                        args[#args+1] = node('Set', me.ln, '=', 'exp',
+                                            node('Op2_.', me.ln, '.',
+                                                node('Nat', me.ln, '__ceu_args'),
+                                                '_'..i),
+                                            node('Var', me.ln, id))
+                    else
+                        args[#args+1] = node('Set', me.ln, '=', 'exp',
+                                            node('Nat', me.ln, '_'..id),
+                                            node('Var', me.ln, id))
+                    end
+                end
+            end
+        end
+
+        me.tag = 'Code'
+        me[3] = node('Abs', me.ln, '_'..id)
+        if blk then
+            table.insert(AST.asr(blk,'',1,'Stmts'), 1, args)
+        end
+
+        if had_data then
+            return me
+        else
+            return node('Stmts', me.ln, data, me)
+        end
+    end,
+
     _Dcl_ext1_pre = '_Dcl_fun_do_pre',
     _Dcl_fun_do_pre = function (me)
         local dcl, blk = unpack(me)

@@ -98,7 +98,7 @@ F = {
         end
 
         -- all function vars are "tmp"
-        if AST.iter'Dcl_fun'() then
+        if AST.par(me,'Dcl_fun') or AST.par(me,'Code') then
             return
         end
 
@@ -185,7 +185,10 @@ F = {
     ['Op1_&&'] = function (me)
         local op, e1 = unpack(me)
         if e1.fst.var and (not e1.fst.var.is_arg) then
+-- TODO: pure/nohold
+if not AST.par(me,'Code') then
             e1.fst.var.isTmp = false    -- assigned to a pointer
+end
         end
     end,
     Set = function (me)

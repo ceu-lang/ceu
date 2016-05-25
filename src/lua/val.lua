@@ -301,20 +301,28 @@ F =
     Op2_call = function (me, CTX)
         local _, f, exps = unpack(me)
         local ps = {}
-        if f.tag=='Abs' or (f.var and f.var.fun) then
+
+        if f.tag == 'Abs' then
+            local abs = unpack(f)
+            local pre = unpack(ENV.tops[abs])
+            if pre == 'code/instantaneous' then
+                ps[#ps+1] = '_ceu_app'
+            else
+                -- after exps
+            end
+        elseif (f.var and f.var.fun) then
             -- (tceu_app*, tceu_org*, ...)
             ps[#ps+1] = '_ceu_app'
-            if f.tag ~= 'Abs' then
-                if f.org then
-                    ps[#ps+1] = V(f.org,'lval')   -- only native
-                else
-                    ps[#ps+1] = CUR(me)
-                end
+            if f.org then
+                ps[#ps+1] = V(f.org,'lval')   -- only native
+            else
+                ps[#ps+1] = CUR(me)
             end
             --ps[#ps] = '(tceu_org*)'..ps[#ps]
         else
             f.is_call = true
         end
+
         for i, exp in ipairs(exps) do
             ps[#ps+1] = V(exp, 'rval')
 
@@ -326,6 +334,15 @@ F =
                         error'bug found'
                     end
                 end
+            end
+        end
+
+        if f.tag == 'Abs' then
+            local abs = unpack(f)
+            local pre = unpack(ENV.tops[abs])
+            if pre == 'code/delayed' then
+                ps = table.concat(ps,',')
+                ps = { '_ceu_app', '{'..ps..'}' }
             end
         end
 

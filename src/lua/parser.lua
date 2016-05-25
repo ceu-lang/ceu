@@ -81,16 +81,18 @@ local _V2NAME = {
     _TupleType_1 = 'type list',
     _TupleType_2 = 'param list',
     __adt_expitem = 'parameter',
+    __Do = 'block',
 }
 for i=1, 13 do
     _V2NAME['__'..i] = 'expression'
 end
 local EV = function (rule)
+    assert(rule, rule)
     return V(rule) + m.Cmt(P'',
         function (_,i)
             if i > ERR_i then
                 ERR_i = i
-                ERR_msg = 'expected ' .. _V2NAME[rule]
+                ERR_msg = 'expected ' .. assert(_V2NAME[rule],rule)
             end
             return false
         end) * P(false)
@@ -220,9 +222,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                      * V'_TupleType_2' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
-    , Code = KEY'code' * EV'__ID_abs'
-                       * EV'_TupleType_2' * EK'=>' * EV'Type'
-                       * (EV'__Do' + Cc(false))
+    , __code   = (CKEY'code/instantaneous' + CKEY'code/delayed')
+                    * EV'__ID_abs'
+                    * EV'_TupleType_2' * EK'=>' * EV'Type'
+    , _Code    = V'__code'
+    , _Code_do = V'__code' * V'__Do'
 
     -- classes / interfaces
     , Dcl_cls  = KEY'class'     * Cc(false)
@@ -329,8 +333,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- internal/external emit/call/request
     -- TODO: emit/await, move from "false"=>"_WCLOCK"
-    --, EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
-    , EmitExt  = (CKEY'emit'+CKEY'request')
+    , EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
                * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
                  + EV'Ext' * V'__emit_ps' )
     , EmitInt  = CKEY'emit' * EV'__Exp' * V'__emit_ps'
@@ -340,7 +343,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 -- Organism instantiation
 
     -- do organism
-    , _DoOrg = KEY'do' * EV'__ID_cls'
+    , _DoOrg = KEY'do' * (EV'__ID_cls' + K'@'*EV'__Exp')
              * (V'_Spawn_constr' + Cc(false))
              * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
 
@@ -543,7 +546,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Prim = K'(' * EV'__Exp' * EK')'
              + V'SIZEOF'
 -- Field
-             + V'Abs'
+             + K'@'*V'Abs'
              + V'Var'     + V'Nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
@@ -575,13 +578,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  * ( V'__LstStmt' * (EK';'*K';'^0) +
                      V'__LstStmtB' * (K';'^0)
                    )^-1
-                 * (V'Host'+V'_Dcl_fun_do'+V'Code')^0 )
+                 * (V'Host'+V'_Dcl_fun_do'+V'_Code')^0 )
 
     , __LstStmt  = V'_Escape' + V'Return' + V'Break' + V'_Continue' + V'AwaitN'
     , __LstStmtB = V'ParEver'
     , __StmtS    = V'Nothing'
                  + V'_Dcl_var'  + V'_Dcl_pool' + V'_Dcl_int'
-                 + V'Dcl_fun' + V'_Dcl_ext0'
+                 + V'Dcl_fun' + V'_Code' + V'_Dcl_ext0'
                  + V'_Dcl_nat'  + V'Dcl_det'
                  + V'_Set'
                  + V'Await' + V'EmitExt' + V'EmitInt'
@@ -594,7 +597,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
-    , __StmtB = V'_Dcl_fun_do'+V'Code' + V'_Dcl_ext1'
+    , __StmtB = V'_Dcl_fun_do'+V'_Code_do' + V'_Dcl_ext1'
               + V'_Dcl_ifc'  + V'Dcl_cls' + V'Dcl_adt' + V'_DDD'
               + V'Host'
               + V'Do'    + V'If'

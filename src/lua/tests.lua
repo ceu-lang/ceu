@@ -471,15 +471,148 @@ escape fff(x+10);
 }
 do return end
 
+-------------------------------------------------------------------------------
+
+-- BUG: return 1 => void
+Test { [[
+code/instantaneous Code (int)=>void;
+code/instantaneous Code (int a)=>void
+do
+    return 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
 --]===]
 Test { [[
-code Code (int x) => int
+code/instantaneous Code (int)=>void
+do
+end
+escape 1;
+]],
+    adj = 'line 1 : missing parameter identifier',
+}
+
+Test { [[
+code/instantaneous Code (int x, int)=>void
+do
+end
+escape 1;
+]],
+    adj = 'line 1 : missing parameter identifier',
+}
+
+Test { [[
+code/instantaneous Code (void, int x) => void
+do
+end
+escape 1;
+]],
+    adj = 'line 1 : wrong argument #1 : cannot be `void´',
+}
+
+Test { [[
+code/instantaneous Code (int a)=>void
+    __ceu_nothing(&&a);
+do
+end
+escape 1;
+]],
+    parser = 'line 1 : after `void´ : expected `;´',
+}
+
+Test { [[
+code/instantaneous Code (int a)=>void;
+code/instantaneous Code (int a)=>void
+do
+    native @nohold ___ceu_nothing();
+    ___ceu_nothing(&&a);
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/instantaneous Code (void a)=>void
+do
+end
+escape 1;
+]],
+    adj = 'line 1 : cannot instantiate type "void"',
+}
+
+Test { [[
+code/instantaneous Code (void)=>void
+do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/instantaneous Code (int x) => int
 do
     x = x + 1;
     return x;
 end
-var int a = call Code(1);
-escape Code(a+10);
+var int a = call @ Code(1);
+escape @ Code(a+10);
+]],
+    run = 13,
+}
+
+Test { [[
+code/delayed Code (int x) => int
+do
+    x = x + 1;
+    await 1s;
+    return x;
+end
+var int a = do @ @ Code(1);
+/*
+var Code c = Code(1);
+await c;
+*/
+escape a;
+]],
+    run = 13,
+}
+
+Test { [[
+code/delayed Code (int x) => int
+do
+    x = x + 1;
+    await 1s;
+    return x;
+end
+var int a =
+    watching Code(10) do
+        escape 1;
+    end;
+
+escape a;
+]],
+    run = 13,
+}
+
+Test { [[
+code/delayed Code (int x) => int
+do
+    x = x + 1;
+    await 1s;
+    return x;
+end
+var int a =
+    watching Code(10) do
+        await 5s;
+        escape 1;
+    end;
+
+escape a;
 ]],
     run = 13,
 }

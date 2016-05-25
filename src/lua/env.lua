@@ -502,22 +502,6 @@ F = {
                 end
             end
         end
-
-        -- include arguments into code block
-        local code = me.__par
-        local _, inp, out = unpack(code)
-        if code.tag == 'Code' then
-            for i, v in ipairs(inp) do
-                local _, tp, id = unpack(v)
-                if tp ~= 'void' then
-                    local has,var = newvar(code, me, 'var', tp, id, false)
-                    assert(not has)
-                    var.isTmp  = true -- TODO: var should be a node
-                    var.is_arg = true
-                    var.funIdx = i
-                end
-            end
-        end
     end,
 
     Dcl_cls_pos = function (me)
@@ -577,34 +561,17 @@ F = {
         if i ~= 3 then
             return  -- evaulate just before "blk" so that "return" can be checked
         end
-        local id, ins, out, blk = unpack(me)
+        local pre, id, ins, out, blk = unpack(me)
+
+-- TODO
+if not blk then
+    return
+end
 
         ASR(not (ENV.clss[id] or ENV.adts[id] or ENV.tops[id]), me,
             'top-level identifier "'..id..'" already taken')
         ENV.tops[id] = me
         ENV.tops[#ENV.tops+1] = me
-
---check(me, pre, ins)
---check(me, pre, out)
-
-        -- "void" as parameter only if single
-        for i, v in ipairs(ins) do
-            local _, tp, _ = unpack(v)
-            if #ins > 1 then
-                ASR(not TP.check(tp,'void'), me,
-                    'wrong argument #'..i..' : cannot be `void´ argument')
-            end
-            ASR(not TP.check(tp,'[]'), me,
-                'wrong argument #'..i..' : vectors are not supported')
-        end
-
-        -- full definitions must contain parameter ids
-        if blk then
-            for _, v in ipairs(ins) do
-                local _, tp, id = unpack(v)
-                ASR(tp=='void' or id, me, 'missing parameter identifier')
-            end
-        end
     end,
 
     DDD = function (me)
@@ -1107,10 +1074,12 @@ type.
     end,
 
     _TMP_AWAIT = function (me)
+        local e = unpack(me)
+
         -- HACK_6 [await]: detects if OPT-1 (evt) or OPT-2 (adt) or OPT-3 (org)
         local stmts = AST.asr(me.__par, 'Stmts')
 
-        local tp    = me[1].tp  -- type of Var
+        local tp    = e.tp  -- type of Var
         local tp_id = tp and TP.id(tp)
 
         if tp and ENV.clss[tp_id] then
@@ -1122,7 +1091,7 @@ type.
             if awt.tag ~= 'Await' then
                 awt = AST.asr(awt,'Set', 3,'Await')
             end
-            awt.__env_org = me[1]   -- see fin.lua
+            awt.__env_org = e   -- see fin.lua
         elseif tp and ENV.adts[tp_id] then
             --ASR(tp.ptr==1, me, 'data must be a pointer')
             local dot = AST.asr(stmts,'', 3,'If', 1,'Op2_.')
@@ -1140,7 +1109,7 @@ type.
         --AST.asr(stmts,'', 1,'_TMP_AWAIT')
         --stmts[1] = AST.node('Nothing', me.ln)   -- remove myself
         me.tag = 'Nothing'
-        --me[1] = nil
+        --e = nil
     end,
 
     Await = function (me)

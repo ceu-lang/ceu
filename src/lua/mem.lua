@@ -14,11 +14,10 @@ function pred_sort (v1, v2)
 end
 
 function CUR (me, id)
-    if AST.par(me,'Code') then
+    local code = AST.par(me, 'Code')
+    if code and code[1]=='code/instantaneous' then
         return assert(id)
-    end
-
-    if id then
+    elseif id then
         return '(('..TP.toc(CLS().tp)..'*)_ceu_org)->'..id
     else
         return '(('..TP.toc(CLS().tp)..'*)_ceu_org)'
@@ -464,16 +463,26 @@ typedef union CEU_]]..me.id..[[_delayed {
     end,
 
     Code = function (me)
-        local id, ins, out, blk = unpack(me)
-
-        local dcl = { 'tceu_app* _ceu_app' }
-        for _, v in ipairs(ins) do
-            local _, tp, id = unpack(v)
-            dcl[#dcl+1] = MEM.tp2dcl('var', tp, (id or ''), nil, nil, nil)
-        end
-        dcl = table.concat(dcl,  ', ')
+        local pre, id, abs, out, blk = unpack(me)
 
         local tp_out = MEM.tp2dcl('var', out, '', nil, nil, nil)
+
+        -- prototype has all arguments or single "data" container
+        -- instantaneous: (arg1, arg2, ...)
+        -- delayed:       (CEU__args)
+
+        local dcl = { 'tceu_app* _ceu_app' }
+        if pre == 'code/delayed' then
+            dcl[#dcl+1] = 'CEU_'..abs.id..' _ceu_args'
+        else
+            local data = assert(ENV.tops[abs.id])
+            local ins = AST.asr(data,'DDD', 2,'Block', 1,'Stmts')
+            for _, var in ipairs(ins) do
+                local _, tp, id = unpack(var)
+                dcl[#dcl+1] = MEM.tp2dcl('var', tp, id, nil, nil, nil)
+            end
+        end
+        dcl = table.concat(dcl,  ', ')
 
         me.id = 'CEU_'..id
         me.proto = [[
@@ -598,7 +607,8 @@ typedef union CEU_]]..me.id..[[_delayed {
             local tp_id = TP.id(var.tp)
 
             -- do not generate "placeholder" vars (which are not orgs)
-            if (not string.match(var.id,'^_%d+')) or var.cls then
+-- TODO
+--if (not string.match(var.id,'^_%d+')) or var.cls then
                 if var.inTop then
                     var.id_ = var.id
                         -- id's inside interfaces are kept (to be used from C)
@@ -622,7 +632,7 @@ typedef union CEU_]]..me.id..[[_delayed {
 ]]
                     end
                 end
-            end
+--end
         end
     end,
 
