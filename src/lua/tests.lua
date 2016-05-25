@@ -440,10 +440,11 @@ escape 0;
 --]===]
 Test { [[
 ddd DDD with
+    var int xxx;
     event void e;
 end
 
-var DDD d = @ DDD();
+var DDD d = @ DDD(1);
 
 par/and do
     await d.e;
@@ -452,9 +453,10 @@ with
     emit d.e;
 end
 
-escape 1;
+d.xxx = d.xxx + 2;
+escape d.xxx;
 ]],
-    run = { ['~>1s']=1 },
+    run = { ['~>1s']=3 },
 }
 
 do return end

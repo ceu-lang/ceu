@@ -251,6 +251,10 @@ F =
 
     ----------------------------------------------------------------------
 
+    DDD_constr_one = function (me, CTX)
+        return me.val   -- set by hand in code.lua
+    end,
+
     Adt_constr_one = function (me, CTX)
         return me.val   -- set by hand in code.lua
     end,

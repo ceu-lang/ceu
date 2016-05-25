@@ -57,7 +57,7 @@ F = {
             var.isTmp = false       -- option pointer to cls (T&&?)
         elseif is_arr and is_dyn then
             var.isTmp = false       -- dynamic vector
-        elseif AST.par(me,'Dcl_adt') then
+        elseif AST.par(me,'Dcl_adt') or AST.par(me,'DDD') then
             var.isTmp = false       -- ADT field declaration
         elseif var.id == '_out' then
             var.isTmp = false       -- recursive ADT '_out' field

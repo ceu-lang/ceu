@@ -489,6 +489,13 @@ missing initialization for field "]]..var.id..[[" (declared in ]]..dcl.ln[1]..':
 
 --- disable VARS_UNINIT in data type declarations
 
+    DDD_pre = function (me)
+        me.__old = VARS_UNINIT
+        VARS_UNINIT = {}
+    end,
+    DDD_pos = function (me)
+        VARS_UNINIT = me.__old
+    end,
     Dcl_adt_pre = function (me)
         me.__old = VARS_UNINIT
         VARS_UNINIT = {}

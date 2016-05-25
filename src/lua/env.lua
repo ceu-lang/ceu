@@ -121,6 +121,7 @@ function ENV.top (tp, me, pre)
     local tp_id = TP.id(tp)
     local adt = ENV.adts[tp_id]
     local cls = ENV.clss[tp_id]
+    local ddd = ENV.tops[tp_id]
 
     local plain = TP.check(tp, tp_id, '-[]')
     if not plain then
@@ -129,6 +130,8 @@ function ENV.top (tp, me, pre)
 
     if cls then
         return cls
+    elseif ddd then
+        return ddd
     elseif adt then
         if adt.is_rec or (me and AST.isParent(adt,me)) then
             if pre == 'pool' then
@@ -209,7 +212,7 @@ end
 function newvar (me, blk, pre, tp, id, isImp, isEvery)
     local ME = CLS() or ADT()  -- (me can be a "data" declaration)
     for stmt in AST.iter() do
-        if stmt.tag=='Dcl_cls' or stmt.tag=='Dcl_adt' or stmt.tag=='Dcl_fun'
+        if stmt.tag=='Dcl_cls' or stmt.tag=='Dcl_adt' or stmt.tag=='DDD' or stmt.tag=='Dcl_fun'
         or stmt.tag=='Async'   or stmt.tag=='Thread'  or stmt.tag=='Isr'
         then
             break   -- search boundaries
@@ -261,7 +264,7 @@ function newvar (me, blk, pre, tp, id, isImp, isEvery)
         cls   = (top and top.tag=='Dcl_cls' and top) or (id=='_top_pool'),
         adt   = (top and top.tag=='Dcl_adt' and top),
         pre   = pre,
-        inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body) or AST.par(me,'Dcl_adt'),
+        inTop = (blk==ME.blk_ifc) or (blk==ME.blk_body) or AST.par(me,'Dcl_adt') or AST.par(me,'DDD'),
                 -- (never "tmp")
         --isTmp = false,
         --arr   = arr,
@@ -361,7 +364,7 @@ end
 function ENV.getvar (id, blk)
     local blk = blk or AST.iter('Block')()
     while blk do
-        if blk.tag=='Dcl_cls' or blk.tag=='Dcl_adt' then
+        if blk.tag=='Dcl_cls' or blk.tag=='Dcl_adt' or blk.tag=='DDD' then
             return nil      -- class/adt boundary
         elseif blk.tag=='Async' or blk.tag=='Thread' or blk.tag=='Isr' then
             local vars = unpack(blk)    -- VarList
@@ -516,7 +519,7 @@ F = {
         -- restart variables/events counting
         STACK_N_E[#STACK_N_E+1] = { _N, _E }
 
-        ASR(not (ENV.clss[id] or ENV.adts[id]), me,
+        ASR(not (ENV.clss[id] or ENV.adts[id] or ENV.tops[id]), me,
             'top-level identifier "'..id..'" already taken')
         ENV.clss[id] = me
         ENV.clss[#ENV.clss+1] = me

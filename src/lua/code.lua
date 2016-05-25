@@ -529,6 +529,70 @@ ceu_vector_setmax(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, ]]..V(var.tp.
         end
     end,
 
+    ExpList = CONC_ALL,
+
+    DDD_constr_root = function (me)
+        local dyn, one = unpack(me)
+
+        LINE(me, '{')
+
+        local set = assert(AST.par(me,'Set'), 'bug found')
+        local _,_,_,to = unpack(set)
+
+        if not dyn then
+            CONC(me, one)
+            F.__set(me, one, to)
+        else
+error'TODO'
+            F.__set_adt_mut_conc_fr(me, set, one)
+        end
+
+        LINE(me, '}')
+    end,
+
+    DDD_constr_one = function (me)
+        local id, params = unpack(me)
+        local ddd = assert(ENV.tops[id])
+
+        local root = AST.par(me, 'Adt_constr_root')
+
+        -- CODE-1: declaration, allocation
+        -- CODE-2: all children
+        -- CODE-3: assignment
+        --          { requires all children }
+
+        me.val = '__ceu_adt_'..me.n
+
+        -- CODE-1
+        -- CEU_T t;
+        LINE(me, [[
+CEU_]]..id..' '..me.val..[[;
+]])
+
+        -- CODE-2
+        CONC(me, params)
+
+        -- CODE-3
+        local _,blk = unpack(ENV.tops[id])
+        for i, p in ipairs(params) do
+            local field = blk.vars[i]
+            local amp = ''--(TP.check(field.tp,'&') and '&') or ''
+            if TP.is_ext(field.tp,'_') and TP.check(field.tp,'[]') then
+                if TP.check(p.tp,'_char','&&') then
+                    local n = assert(field.tp.arr, 'bug found')
+                    n = AST.asr(n, 'NUMBER')[1]
+                    LINE(me, [[
+strncpy(]]..me.val..'.'..field.id..', '..amp..V(p,'rval')..', '..n..[[);
+]])
+                else
+                    -- NO:  t._vec = [];
+                end
+            else
+                LINE(me, me.val..'.'..field.id..' = '..amp..V(p,'rval')..';')
+            end
+        end
+    end,
+
     Adt_constr_root = function (me)
         local dyn, one = unpack(me)
 
@@ -541,14 +605,12 @@ ceu_vector_setmax(]]..V({tag='Var',tp=var.tp,var=var},'lval')..[[, ]]..V(var.tp.
             CONC(me, one)
             F.__set(me, one, to)
         else
-            local set = assert(AST.par(me,'Set'), 'bug found')
             F.__set_adt_mut_conc_fr(me, set, one)
         end
 
         LINE(me, '}')
     end,
 
-    ExpList = CONC_ALL,
     Adt_constr_one = function (me)
         local adt, params = unpack(me)
         local id, tag = unpack(adt)
