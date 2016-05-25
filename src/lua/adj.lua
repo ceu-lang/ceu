@@ -854,6 +854,17 @@ me.blk_body = me.blk_body or blk_body
         --]]
         local id_cls, c1, c2 = unpack(me);
 
+-- TODO:
+if AST.isNode(id_cls) then
+    local call = AST.asr(id_cls,'Op2_call')
+    local _,abs,explist = unpack(call)
+    assert((not c1) and (not c2))
+
+    id_cls = '__'..abs[1]
+    me[1] = id_cls
+    c2 = explist
+end
+
         local awt = node('Await', me.ln,
                         node('Var', me.ln, '_org_'..me.n),
                         false,
@@ -918,16 +929,16 @@ me.blk_body = me.blk_body or blk_body
     __code = {},
     _Code_do_pre = '_Code_pre',
     _Code_pre = function (me)
-        local pre, id, ins, out, blk = unpack(me)
+        local pre, ID, ins, out, blk = unpack(me)
 
         -- (int x, int y) => "data _id with ... end"
-        local had_data = F.__code['_'..id]
+        local had_data = F.__code['_'..ID]
         local data
         if had_data then
             data = had_data -- single declaration (prototype or body)
         else
-            data = node('_DDD', me.ln, '_'..id)
-            F.__code['_'..id] = data
+            data = node('_DDD', me.ln, '_'..ID)
+            F.__code['_'..ID] = data
         end
 
         -- (int x, int y) => "do var int x=args.x; ... end"
@@ -962,11 +973,13 @@ me.blk_body = me.blk_body or blk_body
                 if blk then
                     args[#args+1] = node('Dcl_var', me.ln, 'var', tp, id)
                     if pre == 'code/delayed' then
-                        args[#args+1] = node('Set', me.ln, '=', 'exp',
-                                            node('Op2_.', me.ln, '.',
-                                                node('Nat', me.ln, '__ceu_args'),
-                                                '_'..i),
-                                            node('Var', me.ln, id))
+                        args[#args+1] =
+                            node('Set', me.ln, '=', 'exp',
+                                node('Op2_.', me.ln, '.',
+                                    node('RawExp', me.ln,
+                                        '(*((CEU__'..ID..'*)_ceu_evt->param))'),
+                                            id),
+                                        node('Var', me.ln, id))
                     else
                         args[#args+1] = node('Set', me.ln, '=', 'exp',
                                             node('Nat', me.ln, '_'..id),
@@ -977,16 +990,24 @@ me.blk_body = me.blk_body or blk_body
         end
 
         me.tag = 'Code'
-        me[3] = node('Abs', me.ln, '_'..id)
+        me[3] = node('Abs', me.ln, '_'..ID)
         if blk then
             table.insert(AST.asr(blk,'',1,'Stmts'), 1, args)
         end
 
-        if had_data then
-            return me
-        else
-            return node('Stmts', me.ln, data, me)
+        local ret = node('Stmts', me.ln)
+        if not had_data then
+            ret[#ret+1] = data
         end
+        if pre == 'code/delayed' then
+-- TODO
+ret[#ret+1] = node('Dcl_cls', me.ln, false, '__'..ID,
+                node('BlockI', me.ln,
+                    node('Stmts', me.ln)),
+                AST.copy(blk))
+        end
+        ret[#ret+1] = me
+        return ret
     end,
 
     _Dcl_ext1_pre = '_Dcl_fun_do_pre',

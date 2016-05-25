@@ -485,7 +485,6 @@ escape 1;
     run = 1,
 }
 
---]===]
 Test { [[
 code/instantaneous Code (int)=>void
 do
@@ -565,12 +564,13 @@ escape @ Code(a+10);
     run = 13,
 }
 
+-- BUG: error x crosses await
 Test { [[
 code/delayed Code (int x) => int
 do
     x = x + 1;
     await 1s;
-    return x;
+    escape x;
 end
 var int a = do @ @ Code(1);
 /*
@@ -582,6 +582,25 @@ escape a;
     run = 13,
 }
 
+--]===]
+Test { [[
+code/delayed Code (int x) => int
+do
+    var int xx = x + 1;
+    await 1s;
+    escape xx+1;
+end
+var int a = do @ @ Code(1);
+_printf("a = %d\n", a);
+/*
+var Code c = Code(1);
+await c;
+*/
+escape a;
+]],
+    run = { ['~>1s']=3 },
+}
+
 Test { [[
 code/delayed Code (int x) => int
 do
@@ -590,7 +609,7 @@ do
     return x;
 end
 var int a =
-    watching Code(10) do
+    watching @ @ Code(10) do
         escape 1;
     end;
 

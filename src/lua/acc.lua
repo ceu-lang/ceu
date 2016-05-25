@@ -241,16 +241,14 @@ F = {
 
     Abs = function (me)
         me.acc = INS {
---[[
             me  = me,
             path = me.ana.pre,
             id  = me.id,
             md  = 'rd',
-            tp  = me.var.tp,
-            any = TP.check(me.var.tp,'&'),
+            --tp  = me.var.tp,
+            --any = TP.check(me.var.tp,'&'),
             str = me.id,
-            err = ERR(me, 'abstraction `'..me.var.id..'´'),
-]]
+            err = ERR(me, 'abstraction `'..me.id..'´'),
         }
     end,
 

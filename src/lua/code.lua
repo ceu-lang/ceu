@@ -282,7 +282,11 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this, 
     end,
 
     Code = function (me)
-        local _,_,_,_,blk = unpack(me)
+        local pre,_,_,_,blk = unpack(me)
+-- TODO
+if pre == 'code/delayed' then
+    return
+end
         if blk then
             CODE.functions = CODE.functions ..
                 me.proto..'{'..blk.code..'}'..'\n'
@@ -459,24 +463,40 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
     _ceu_pre_]]..t.cls.n..[[(_ceu_app, ]]..org..[[);
 ]])
         end
+-- TODO
+local evt = '_ceu_evt'
         if t.constr then
+if t.constr.tag == 'ExpList' then
+    local ps = {}
+    for i, p in ipairs(t.constr) do
+        ps[i] = V(p, 'rval')
+    end
+    ps = table.concat(ps, ',')
+    evt = '&evt'
+    LINE(me, [[{
+    CEU]]..t.cls.id..' ps = { '..ps..[[ };
+    tceu_evt evt;
+             evt.param = &ps;
+]])
+else
             LINE(me, [[
     _ceu_constr_]]..t.constr.n..[[(_ceu_app, ]]..org..[[, _ceu_org);
 ]])
+end
         end
 
         LINE(me, [[
 {
 #ifdef CEU_STACK_CLEAR
-    tceu_stk stk_ = { _ceu_evt, _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
-    ceu_app_go(_ceu_app, NULL,
+    tceu_stk stk_ = { ]]..evt..[[, _ceu_stk, _ceu_org, ]]..me.trails[1]..[[, ]]..me.trails[2]..[[, 1 };
+    ceu_app_go(_ceu_app, ]]..evt..[[,
                ]]..org..[[, &]]..org..[[->trls[0],
                &stk_);
     if (!stk_.is_alive) {
         return;
     }
 #else
-    ceu_app_go(_ceu_app,NULL,
+    ceu_app_go(_ceu_app, ]]..evt..[[,
                ]]..org..[[, &]]..org..[[->trls[0],
                NULL);
 #endif
@@ -491,6 +511,11 @@ for (]]..t.val_i..[[=0; ]]..t.val_i..'<'..t.arr.sval..';'..t.val_i..[[++)
         LINE(me, [[
 }
 ]])
+if t.constr and t.constr.tag=='ExpList' then
+        LINE(me, [[
+}
+]])
+end
         if t.arr then
             LINE(me, [[
 }
