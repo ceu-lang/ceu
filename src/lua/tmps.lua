@@ -63,7 +63,7 @@ F = {
             var.isTmp = false       -- recursive ADT '_out' field
 
         -- ALWAYS TEMPORARY (isTmp=true)
-        elseif AST.par(me, 'Dcl_fun') then
+        elseif AST.par(me,'Dcl_fun') or AST.par(me,'Code') then
             var.isTmp = true        -- functions vars (no yields inside)
         end
 
@@ -87,7 +87,7 @@ F = {
 
         -- uses inside threads or methods
         -- ("or" is ok because threads/methods are mutually exlusive)
-        local node = AST.par(me,'Thread') or AST.par(me,'Dcl_fun')
+        local node = AST.par(me,'Thread') or AST.par(me,'Dcl_fun') or AST.par(me,'Code')
         if node then
             if me.var.blk.__depth < node.__depth then
                 var.isTmp = false

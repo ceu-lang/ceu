@@ -502,6 +502,22 @@ F = {
                 end
             end
         end
+
+        -- include arguments into code block
+        local code = me.__par
+        local _, inp, out = unpack(code)
+        if code.tag == 'Code' then
+            for i, v in ipairs(inp) do
+                local _, tp, id = unpack(v)
+                if tp ~= 'void' then
+                    local has,var = newvar(code, me, 'var', tp, id, false)
+                    assert(not has)
+                    var.isTmp  = true -- TODO: var should be a node
+                    var.is_arg = true
+                    var.funIdx = i
+                end
+            end
+        end
     end,
 
     Dcl_cls_pos = function (me)
@@ -553,6 +569,40 @@ F = {
                         ENV.ifcs.funs[#ENV.ifcs.funs+1] = var.ifc_id
                     end
                 end
+            end
+        end
+    end,
+
+    Code_aft = function (me, sub, i)
+        if i ~= 3 then
+            return  -- evaulate just before "blk" so that "return" can be checked
+        end
+        local id, ins, out, blk = unpack(me)
+
+        ASR(not (ENV.clss[id] or ENV.adts[id] or ENV.tops[id]), me,
+            'top-level identifier "'..id..'" already taken')
+        ENV.tops[id] = me
+        ENV.tops[#ENV.tops+1] = me
+
+--check(me, pre, ins)
+--check(me, pre, out)
+
+        -- "void" as parameter only if single
+        for i, v in ipairs(ins) do
+            local _, tp, _ = unpack(v)
+            if #ins > 1 then
+                ASR(not TP.check(tp,'void'), me,
+                    'wrong argument #'..i..' : cannot be `void´ argument')
+            end
+            ASR(not TP.check(tp,'[]'), me,
+                'wrong argument #'..i..' : vectors are not supported')
+        end
+
+        -- full definitions must contain parameter ids
+        if blk then
+            for _, v in ipairs(ins) do
+                local _, tp, id = unpack(v)
+                ASR(tp=='void' or id, me, 'missing parameter identifier')
             end
         end
     end,
@@ -936,6 +986,12 @@ F = {
                    'invalid return value : local reference')
             end
         end
+    end,
+
+    Abs = function (me)
+        local id = unpack(me)
+        me.id  = id
+        me.top = ASR(ENV.tops[id], me, 'abstraction "'..id..'" is not declared')
     end,
 
     Ext = function (me)

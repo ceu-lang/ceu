@@ -129,7 +129,7 @@ F = {
 
     Op2_call = function (me)
         local _, f, exps = unpack(me)
-        CHG(f.lst.acc, 'cl')
+        CHG((f.lst or f).acc, 'cl')
         me.acc = f.lst.acc
         for _, exp in ipairs(exps) do
             if TP.check(exp.tp,'&&') then
@@ -236,6 +236,21 @@ F = {
             tp  = me.tp,
             any = true,
             err = ERR(me, 'variable `this´'),
+        }
+    end,
+
+    Abs = function (me)
+        me.acc = INS {
+--[[
+            me  = me,
+            path = me.ana.pre,
+            id  = me.id,
+            md  = 'rd',
+            tp  = me.var.tp,
+            any = TP.check(me.var.tp,'&'),
+            str = me.id,
+            err = ERR(me, 'abstraction `'..me.var.id..'´'),
+]]
         }
     end,
 

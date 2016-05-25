@@ -156,6 +156,10 @@ F =
         return VAL
     end,
 
+    Abs = function (me, CTX)
+        return 'CEU_'..me.id
+    end,
+
     Dcl_var = 'Var',
     Var = function (me, CTX)
         local var = me.var
@@ -297,13 +301,15 @@ F =
     Op2_call = function (me, CTX)
         local _, f, exps = unpack(me)
         local ps = {}
-        if f.var and f.var.fun then
+        if f.tag=='Abs' or (f.var and f.var.fun) then
             -- (tceu_app*, tceu_org*, ...)
             ps[#ps+1] = '_ceu_app'
-            if f.org then
-                ps[#ps+1] = V(f.org,'lval')   -- only native
-            else
-                ps[#ps+1] = CUR(me)
+            if f.tag ~= 'Abs' then
+                if f.org then
+                    ps[#ps+1] = V(f.org,'lval')   -- only native
+                else
+                    ps[#ps+1] = CUR(me)
+                end
             end
             --ps[#ps] = '(tceu_org*)'..ps[#ps]
         else

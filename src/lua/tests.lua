@@ -437,7 +437,6 @@ escape 0;
     run = 1,
 }
 
---]===]
 Test { [[
 ddd DDD with
     var int xxx;
@@ -457,6 +456,32 @@ d.xxx = d.xxx + 2;
 escape d.xxx;
 ]],
     run = { ['~>1s']=3 },
+}
+
+Test { [[
+function (int x) => int fff
+do
+    x = x + 1;
+    return x;
+end
+var int x = call fff(1);
+escape fff(x+10);
+]],
+    run = 11,
+}
+do return end
+
+--]===]
+Test { [[
+code Code (int x) => int
+do
+    x = x + 1;
+    return x;
+end
+var int a = call Code(1);
+escape Code(a+10);
+]],
+    run = 13,
 }
 
 do return end

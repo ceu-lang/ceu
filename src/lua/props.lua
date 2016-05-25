@@ -343,7 +343,7 @@ F = {
     end,
 
     Return = function (me)
-        ASR(AST.iter'Dcl_fun'(), me,
+        ASR(AST.par(me,'Dcl_fun') or AST.par(me,'Code'), me,
                 'not permitted outside a function')
     end,
 

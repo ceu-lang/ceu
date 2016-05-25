@@ -65,7 +65,7 @@ local _V2NAME = {
     Ext = 'event',
     Var = 'variable/event',
     __ID_adt  = 'identifier',
-    __ID_ddd = 'identifier',
+    __ID_abs = ' abstraction identifier',
     __ID_nat  = 'identifier',
     __ID_var  = 'identifier',
     __ID_ext  = 'identifier',
@@ -117,7 +117,7 @@ KEYS = P'nothing' + 'escape' + 'return' + 'break' + 'continue'
      + 'var' + 'pool' + 'event' + 'input' + 'output'
      + 'input/output' + 'output/input'
      + 'function'
-     + 'class' + 'interface'
+     + 'code' + 'class' + 'interface'
      + 'data' + 'tag'
      + 'native' + 'native/pre'
      + 'call' + 'call/rec'
@@ -220,6 +220,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                      * V'_TupleType_2' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
+    , Code = KEY'code' * EV'__ID_abs'
+                       * EV'_TupleType_2' * EK'=>' * EV'Type'
+                       * (EV'__Do' + Cc(false))
+
     -- classes / interfaces
     , Dcl_cls  = KEY'class'     * Cc(false)
                * EV'__ID_cls'
@@ -235,14 +239,14 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Dcl_mode = CKEY'input/output'+CKEY'output/input'+CKEY'input'+CKEY'output'
 
     -- ddd types
-    , _DDD = KEY'ddd' * EV'__ID_ddd' * EKEY'with' * (
+    , _DDD = KEY'ddd' * EV'__ID_abs' * EKEY'with' * (
                 (V'_Dcl_var_plain'+V'_Dcl_int'+V'_Dcl_pool') *
                     (EK';'*K';'^0)
              )^1 * EK'end'
 
     -- ddd-constr
     , DDD_constr_root = K'@' * (CKEY'new'+Cc(false)) * V'DDD_constr_one'
-    , DDD_constr_one  = V'__ID_ddd' * EK'(' * EV'_DDD_explist' * EK')'
+    , DDD_constr_one  = V'__ID_abs' * EK'(' * EV'_DDD_explist' * EK')'
     , _DDD_explist    = ( V'__ddd_expitem'*(K','*EV'__ddd_expitem')^0 )^-1
     , __ddd_expitem   = (V'DDD_constr_one' + V'__Exp')
 
@@ -325,7 +329,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- internal/external emit/call/request
     -- TODO: emit/await, move from "false"=>"_WCLOCK"
-    , EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
+    --, EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
+    , EmitExt  = (CKEY'emit'+CKEY'request')
                * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
                  + EV'Ext' * V'__emit_ps' )
     , EmitInt  = CKEY'emit' * EV'__Exp' * V'__emit_ps'
@@ -453,9 +458,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- Identifiers
 
-    , Ext     = V'__ID_ext'
-    , Var     = V'__ID_var'
-    , Nat     = V'__ID_nat'
+    , Ext = V'__ID_ext'
+    , Var = V'__ID_var'
+    , Abs = V'__ID_abs'
+    , Nat = V'__ID_nat'
 
     , __ID_var   = (-KEYS * CK(m.R'az'*Alphanum^0) + CK('_'*-Alphanum))
     , __ID_ext   = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
@@ -464,9 +470,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __ID_tag   = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
     , __ID_nat   = CK(  P'_' *Alphanum^1)
     , __ID_field = CK(Alpha * (Alphanum)^0)
-    , __ID_type  = CK(TYPES) + V'__ID_nat' + V'__ID_cls' + V'__ID_adt' + V'__ID_ddd'
+    , __ID_type  = CK(TYPES) + V'__ID_nat' + V'__ID_cls' + V'__ID_adt' + V'__ID_abs'
 
-    , __ID_ddd = -KEYS * CK(m.R'AZ'*Alphanum^0)
+    , __ID_abs = -KEYS * CK(m.R'AZ'*Alphanum^0)
 
 -- Types
 
@@ -536,6 +542,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , __Prim = K'(' * EV'__Exp' * EK')'
              + V'SIZEOF'
+-- Field
+             + V'Abs'
              + V'Var'     + V'Nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
@@ -567,7 +575,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  * ( V'__LstStmt' * (EK';'*K';'^0) +
                      V'__LstStmtB' * (K';'^0)
                    )^-1
-                 * (V'Host'+V'_Dcl_fun_do')^0 )
+                 * (V'Host'+V'_Dcl_fun_do'+V'Code')^0 )
 
     , __LstStmt  = V'_Escape' + V'Return' + V'Break' + V'_Continue' + V'AwaitN'
     , __LstStmtB = V'ParEver'
@@ -586,7 +594,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
-    , __StmtB = V'_Dcl_fun_do' + V'_Dcl_ext1'
+    , __StmtB = V'_Dcl_fun_do'+V'Code' + V'_Dcl_ext1'
               + V'_Dcl_ifc'  + V'Dcl_cls' + V'Dcl_adt' + V'_DDD'
               + V'Host'
               + V'Do'    + V'If'

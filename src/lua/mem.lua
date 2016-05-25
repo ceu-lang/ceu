@@ -14,6 +14,10 @@ function pred_sort (v1, v2)
 end
 
 function CUR (me, id)
+    if AST.par(me,'Code') then
+        return assert(id)
+    end
+
     if id then
         return '(('..TP.toc(CLS().tp)..'*)_ceu_org)->'..id
     else
@@ -457,6 +461,29 @@ typedef union CEU_]]..me.id..[[_delayed {
 --DBG('===', me.id, me.trails_n)
 --DBG(me.struct)
 --DBG('======================')
+    end,
+
+    Code = function (me)
+        local id, ins, out, blk = unpack(me)
+
+        local dcl = { 'tceu_app* _ceu_app' }
+        for _, v in ipairs(ins) do
+            local _, tp, id = unpack(v)
+            dcl[#dcl+1] = MEM.tp2dcl('var', tp, (id or ''), nil, nil, nil)
+        end
+        dcl = table.concat(dcl,  ', ')
+
+        local tp_out = MEM.tp2dcl('var', out, '', nil, nil, nil)
+
+        me.id = 'CEU_'..id
+        me.proto = [[
+]]..tp_out..' '..me.id..' ('..dcl..[[)
+]]
+        if OPTS.os and ENV.exts[id] and ENV.exts[id].pre=='output' then
+            -- defined elsewhere
+        else
+            MEM.tops_h = MEM.tops_h..me.proto..';\n'
+        end
     end,
 
     Dcl_fun = function (me)

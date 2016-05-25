@@ -281,6 +281,14 @@ static void _ceu_constr_]]..me.n..[[ (tceu_app* _ceu_app, tceu_org* __ceu_this, 
         me.code = ''
     end,
 
+    Code = function (me)
+        local _,_,_,blk = unpack(me)
+        if blk then
+            CODE.functions = CODE.functions ..
+                me.proto..'{'..blk.code..'}'..'\n'
+        end
+    end,
+
     Dcl_fun = function (me)
         local pre, _, ins, out, id, blk = unpack(me)
         if blk then
