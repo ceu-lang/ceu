@@ -439,6 +439,69 @@ escape 0;
 
 -------------------------------------------------------------------------------
 
+-- TODO: incomplete
+Test { [[
+ddd Data with
+    var int& v;
+end
+
+code/delayed Code (var& Data d, var int ini) => int
+do
+    var int v = ini;
+    d.v = &v;
+    every 1s do
+        v = v + 1;
+    end
+end
+
+pool Data[] datas;
+pool Code[] cs;
+
+var Data&&? d = new Data(0) in datas;
+var bool ok = spawn SpawnCode(d!) in cs;
+
+var bool ok = spawn SpawnCode(
+                new Data(0) in datas
+              ) in cs; 
+
+// implicitly does the above (creates a SpawnX and calls it)
+var bool ok = spawn/deref Code(
+                new Data(0) in datas
+              ) in cs; 
+
+loop d in datas do
+    _printf("%d\n", d:v);
+end
+
+loop d,x,y in cs do
+    // each Data (all & args) running in Code
+end
+
+
+code/delayed SpawnCode (var Data&& d)=>void
+do
+    watching *d do
+        await Code(&(*d)...)
+        kill *d;
+    end
+end
+
+var int a =
+    watching @ Code(&d, 10) do
+        var int ret = 0;
+        watching 5s do
+            every 1s do
+                ret = ret + d.v;
+            end
+        end
+        escape ret;
+    end;
+
+escape a;
+]],
+    run = {['~>10s']=50 },
+}
+
 -- BUG: return 1 => void
 Test { [[
 code/instantaneous Code (int)=>void;
@@ -451,7 +514,41 @@ escape 1;
     run = 1,
 }
 
+-- BUG: already bound
+Test { [[
+ddd Data with
+    var int& v;
+end
+
+code/delayed Code (Data& d, int ini) => int
+do
+    var int v = ini;
+    d.v = &v;
+    every 1s do
+        v = v + 1;
+    end
+end
+
+var Data d = @ Data(0);
+
+var int a =
+    watching @ Code(&d, 10) do
+        var int ret = 0;
+        watching 5s do
+            every 1s do
+                ret = ret + d.v;
+            end
+        end
+        escape ret;
+    end;
+
+escape a;
+]],
+    run = {['~>10s']=50 },
+}
+
 --]===]
+
 Test { [[
 ddd DDD with
     var int xxx;
@@ -679,7 +776,7 @@ escape a;
     run = {['~>10s']=50 },
 }
 
-do return end
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
