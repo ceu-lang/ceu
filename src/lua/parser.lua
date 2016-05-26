@@ -120,31 +120,69 @@ TYPES = P'bool' + 'byte'
       + 'uint' + 'usize' + 'void'
 --<<<
 
-KEYS = P'nothing' + 'escape' + 'return' + 'break' + 'continue'
-     + 'var' + 'pool' + 'event' + 'input' + 'output'
-     + 'input/output' + 'output/input'
-     + 'function'
-     + 'code' + 'class' + 'interface'
-     + 'data' + 'tag'
-     + 'native' + 'native/pre'
-     + 'call' + 'call/rec'
-     + 'await' + 'emit' + 'until' + 'FOREVER' + 'request'
-     + 'spawn' + 'kill'
-     + 'new' + 'traverse'
-     + 'do' + 'end' + 'pre'
-     + 'if' + 'then' + 'else' + 'else/if'
-     + 'loop' + 'in' + 'every'
-     + 'finalize'
-     + 'par' + 'par/and' + 'par/or' + 'with'
-     + 'watching'
-     + 'pause/if'
-     + 'async' + 'async/thread'
-     + 'async/isr' + 'atomic'
-     + 'or' + P'and' + 'not'
-     + 'sizeof'
-     + 'null'
-     + 'global' + 'this' + 'outer'
-     + 'true' + 'false'
+KEYS = P
+'and' + 
+'async' + 
+'async/isr' + 
+'async/thread' + 
+'atomic' + 
+'await' + 
+'break' +
+'call' + 
+'call/rec' + 
+'class' + 
+'code' + 
+'continue' + 
+'data' + 
+'do' + 
+'else' + 
+'else/if' + 
+'emit' + 
+'end' + 
+'escape' +
+'event' + 
+'every' + 
+'false'
+'finalize' + 
+'FOREVER' + 
+'function' + 
+'global' + 
+'if' + 
+'in' + 
+'input' + 
+'input/output' + 
+'interface' + 
+'kill' + 
+'loop' + 
+'native' + 
+'native/pre' + 
+'new' + 
+'not' + 
+'nothing' +
+'null' + 
+'or' + P
+'outer' + 
+'output' + 
+'output/input' + 
+'par' + 
+'par/and' + 
+'par/or' + 
+'pause/if' + 
+'pool' + 
+'pre' + 
+'request' + 
+'sizeof' + 
+'spawn' + 
+'tag' + 
+'then' + 
+'this' + 
+'traverse' + 
+'true' + 
+'until' + 
+'var' + 
+'watching' + 
+'with' + 
+
      + P'@' * (
          P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'rec' + 'safe'
        )
