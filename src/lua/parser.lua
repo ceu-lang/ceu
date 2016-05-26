@@ -110,10 +110,15 @@ local EM = function (msg,full)
         end)
 end
 
-TYPES = P'bool' + 'byte' + 'char' + 'f32' + 'f64'
-      + 'float' + 'int'  + 's16'  + 's32' + 's64'
-      + 's8'    + 'u16'  + 'u32'  + 'u64' + 'u8'
-      + 'uint'  + 'void' + 'word'
+-->>> OK
+TYPES = P'bool' + 'byte'
+      + 'f32' + 'f64' + 'float'
+      + 'int'
+      + 's16' + 's32' + 's64' + 's8'
+      + 'ssize'
+      + 'u16' + 'u32' + 'u64' + 'u8'
+      + 'uint' + 'usize' + 'void'
+--<<<
 
 KEYS = P'nothing' + 'escape' + 'return' + 'break' + 'continue'
      + 'var' + 'pool' + 'event' + 'input' + 'output'

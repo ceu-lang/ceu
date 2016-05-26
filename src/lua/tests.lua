@@ -233,9 +233,9 @@ do return end
 --[=[
 ---
 
-    var char&&                  name    = null;
+    var byte&&                  name    = null;
 
-    function (@hold char&& name)=>Surface name;
+    function (@hold byte&& name)=>Surface name;
 
 ---
 
@@ -287,7 +287,7 @@ Test { [[
 emit/await/refs
 class SDL with
     input:
-        var char[] title;
+        var byte[] title;
         var int w,h;
 
     output:
@@ -328,20 +328,20 @@ var SDL _;
     run = 1,
 }
 
--- BUG: deallocates char: ifc/body dcls should not terminate
+-- BUG: deallocates byte: ifc/body dcls should not terminate
 Test { [[
 class T with
     output:
-        var char[]& name;
+        var byte[]& name;
 do
-    var char[] name_ = [].."oi";
+    var byte[] name_ = [].."oi";
     this.name = &name_;
-    // bug: deallocates char[]
+    // bug: deallocates byte[]
 end
 
 var T t;
 native @nohold _strlen();
-escape _strlen((char&&)&&t.name);
+escape _strlen((byte&&)&&t.name);
 ]],
     run = 2,
 }
@@ -380,9 +380,9 @@ escape ret;
 
 Test { [[
 data D with
-    var char[]& str;
+    var byte[]& str;
 end
-var char[] s = [].. "oi";
+var byte[] s = [].. "oi";
 var D d = D(s);    // BUG: nao detecta erro de tipo
 escape $d.str;
 ]],
@@ -547,8 +547,8 @@ escape a;
     run = {['~>10s']=50 },
 }
 
+-- KKK
 --]===]
-
 Test { [[
 ddd DDD with
     var int xxx;
@@ -1128,7 +1128,7 @@ native @const __;
 var int _;
 var int _;
 do
-    var char _;
+    var byte _;
 end
 
 escape (int) __;
@@ -1339,7 +1339,7 @@ escape a;
 
 Test { [[
 input void A;
-var word a = 1;
+var usize a = 1;
 a = 2;
 escape a;
 ]],
@@ -1388,14 +1388,14 @@ escape x + 0.5;
 }
 
 Test { [[
-var char x = 1.5;
+var byte x = 1.5;
 escape x + 0.5;
 ]],
     run = 1,
 }
 
 Test { [[
-var char x = 255;
+var byte x = 255;
 escape x + 0.5;
 ]],
     run = 0,
@@ -17416,9 +17416,9 @@ escape 10;
 }
 
 Test { [[
-var char[] str = [0,1,2];
+var byte[] str = [0,1,2];
 
-function (char[]& vec)=>int f do
+function (byte[]& vec)=>int f do
     return vec[1];
 end
 
@@ -17427,7 +17427,7 @@ escape f(&str);
     run = 1,
 }
 Test { [[
-var char[] str = [0,1,2];
+var byte[] str = [0,1,2];
 
 function (int[]& vec)=>int f do
     return vec[1];
@@ -17435,12 +17435,12 @@ end
 
 escape f(&str);
 ]],
-    env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `char´)',
+    env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
 }
 Test { [[
-var char[] str = [0,1,2];
+var byte[] str = [0,1,2];
 
-function (char[]& vec)=>int f do
+function (byte[]& vec)=>int f do
     return vec[1];
 end
 
@@ -17449,22 +17449,22 @@ escape f(str);
     ref = 'line 7 : invalid attribution : missing alias operator `&´',
 }
 Test { [[
-var char[] str = [0,1,2];
+var byte[] str = [0,1,2];
 
-function (void) => char[] f do
+function (void) => byte[] f do
     return &this.str;
 end
 
-var char[]& ref = &f();
+var byte[]& ref = &f();
 
 escape ref[1];
 ]],
-    env = 'line 4 : invalid return value : types mismatch (`char[]´ <= `char[]&´)',
+    env = 'line 4 : invalid return value : types mismatch (`byte[]´ <= `byte[]&´)',
 }
 
 -- vectors as argument (NO)
 Test { [[
-var char[] str = [0,1,2];
+var byte[] str = [0,1,2];
 
 function (void&&, int[] vec)=>int f do
     return vec[1];
@@ -17473,7 +17473,7 @@ end
 escape f(str);
 ]],
     env = 'line 3 : wrong argument #2 : vectors are not supported',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `char[]´)',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
 }
 
 Test { [[
@@ -17613,7 +17613,7 @@ escape 1;
     fin = 'line 6 : invalid call (multiple scopes)',
 }
 Test { [[
-var char&& buf = _V;
+var byte&& buf = _V;
 _enqueue(buf);
 escape 1;
 ]],
@@ -17621,7 +17621,7 @@ escape 1;
 }
 
 Test { [[
-var char[255] buf;
+var byte[255] buf;
 _enqueue(buf);
 escape 1;
 ]],
@@ -17629,7 +17629,7 @@ escape 1;
     --fin = 'line 2 : call requires `finalize´',
 }
 Test { [[
-var char[255] buf;
+var byte[255] buf;
 _enqueue(&&buf);
 escape 1;
 ]],
@@ -21571,14 +21571,14 @@ escape 10;
 
 Test { [[
 
-input (int tilex, int tiley, bool vertical, int lock, int door, word&& position) DOOR_SPAWN;
+input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position) DOOR_SPAWN;
 
     var int tilex;
     var int tiley;
     var bool vertical;
     var int lock;
     var int door;
-    var word&& position;
+    var usize&& position;
     every (tilex,tiley,vertical,lock,door,position) in DOOR_SPAWN do
     end
 ]],
@@ -22313,7 +22313,7 @@ escape i + vec[9].c + vec[3].v[5];
 
 Test { [[
 var int i = do
-    var char[5] abcd;
+    var byte[5] abcd;
     escape 1;
 end;
 escape i;
@@ -22502,23 +22502,23 @@ escape a;
 }
 
 Test { [[
-input (char&&, u32) HTTP_GET;
-var char&& p2Buff;
+input (byte&&, u32) HTTP_GET;
+var byte&& p2Buff;
 var u32 len;
 (p2Buff, len) = await HTTP_GET;
-var char c = p2Buff[0]; // doesn't work
+var byte c = p2Buff[0]; // doesn't work
 escape 1;
 ]],
     env = 'line 5 : cannot index pointers to internal types',
 }
 
 Test { [[
-input (char&&, u32) HTTP_GET;
+input (byte&&, u32) HTTP_GET;
 par/or do
     var _char&& p2Buff;
     var u32 len;
     (p2Buff, len) = await HTTP_GET;
-    var char c = p2Buff[0]; // doesn't work
+    var byte c = p2Buff[0]; // doesn't work
     if len and p2Buff and c then end;
 with
 end
@@ -22799,7 +22799,7 @@ escape v2[0] + v2[1] + v2[2];
 }
 
 Test { [[
-var char[] v1, v2, v3;
+var byte[] v1, v2, v3;
 v1 = v2;
 v1 = v2..v3;
 escape 1;
@@ -23085,15 +23085,15 @@ escape cell_rects[0].x;
 
 Test { [[
 native do
-    char* f (void) {
+    byte* f (void) {
         return "ola";
     }
     typedef struct {
-        char* (*f) (void);
+        byte* (*f) (void);
     } tp;
     tp T = { f };
 end
-var char[] str = [] .. "oi";
+var byte[] str = [] .. "oi";
 escape str[1]=='i';
 ]],
     run = 1,
@@ -23101,15 +23101,15 @@ escape str[1]=='i';
 
 Test { [[
 native do
-    char* f (void) {
+    byte* f (void) {
         return "ola";
     }
     typedef struct {
-        char* (*f) (void);
+        byte* (*f) (void);
     } tp;
     tp T = { f };
 end
-var char[] str = [] .. (_char&&)_T.f();
+var byte[] str = [] .. (_char&&)_T.f();
 escape str[2]=='a';
 ]],
     run = 1,
@@ -23117,15 +23117,15 @@ escape str[2]=='a';
 
 Test { [[
 native do
-    char* f (void) {
+    byte* f (void) {
         return "ola";
     }
     typedef struct {
-        char* (*f) (void);
+        byte* (*f) (void);
     } tp;
     tp T = { f };
 end
-var char[] str = [] .. (_char&&)_T.f() .. "oi";
+var byte[] str = [] .. (_char&&)_T.f() .. "oi";
 escape str[4]=='i';
 ]],
     run = 1,
@@ -23133,12 +23133,12 @@ escape str[4]=='i';
 
 Test { [[
 native do
-    char* f (void) {
+    byte* f (void) {
         return "ola";
     }
 end
-var char[]  str;
-var char[]& ref = &str;
+var byte[]  str;
+var byte[]& ref = &str;
 ref = [] .. (_char&&){f}() .. "oi";
 native @pure _strlen();
 escape _strlen((_char&&)&&str);
@@ -23147,13 +23147,13 @@ escape _strlen((_char&&)&&str);
 }
 
 Test { [[
-var char[] str = [0,1,2];
+var byte[] str = [0,1,2];
 
-function (void) => char[]& f do
+function (void) => byte[]& f do
     return &this.str;
 end
 
-var char[]& ref = &f();
+var byte[]& ref = &f();
 
 escape ref[1];
 ]],
@@ -23161,13 +23161,13 @@ escape ref[1];
 }
 
 Test { [[
-var char[] str = [0,1,2];
+var byte[] str = [0,1,2];
 
-function (void) => char[]& f do
+function (void) => byte[]& f do
     return &this.str;
 end
 
-var char[]& ref = &f();
+var byte[]& ref = &f();
 ref = [3, 4, 5];
 
 escape str[1];
@@ -23176,13 +23176,13 @@ escape str[1];
 }
 
 Test { [[
-var char[] str = [0,1,2];
+var byte[] str = [0,1,2];
 
-function (void) => char[]& f do
+function (void) => byte[]& f do
     return &this.str;
 end
 
-var char[]& ref = &f();
+var byte[]& ref = &f();
 ref = [] .. "ola";
 
 escape str[1] == 'l';
@@ -23191,19 +23191,19 @@ escape str[1] == 'l';
 }
 
 Test { [[
-var char[] str = [0,1,2];
+var byte[] str = [0,1,2];
 
 native do
-    char* g () {
+    byte* g () {
         return "ola";
     }
 end
 
-function (void) => char[]& f do
+function (void) => byte[]& f do
     return &this.str;
 end
 
-var char[]& ref = &f();
+var byte[]& ref = &f();
 ref = [] .. (_char&&){g}() .. "ola";
 
 escape str[3] == 'o';
@@ -23212,14 +23212,14 @@ escape str[3] == 'o';
 }
 
 Test { [[
-var char[] str;
+var byte[] str;
 
-function (void)=>char[]& f1 do
+function (void)=>byte[]& f1 do
     return &this.str;
 end
 
 function (void)=>void f2 do
-    var char[]& ref = &f1();
+    var byte[]& ref = &f1();
     ref = [] .. "ola" .. "mundo";
 end
 
@@ -23235,17 +23235,17 @@ native do
     ##define ID(x) x
 end
 native @pure _ID(), _strlen();
-var char[] str = [] .. "abc"
+var byte[] str = [] .. "abc"
                     .. (_char&&)_ID("def");
-var char&& str2 = _ID((_char&&)&&str);
+var byte&& str2 = _ID((_char&&)&&str);
 escape _strlen((_char&&)&&str) + _strlen(str2);
 ]],
     run = 12,
 }
 
 Test { [[
-var char[] str;
-var char[] str;
+var byte[] str;
+var byte[] str;
 escape 1;
 ]],
     wrn = true,
@@ -23255,30 +23255,30 @@ escape 1;
 
 Test { [[
 native @pure _strcmp();
-var char[] str1;
-var char[] str2 = [].."";
+var byte[] str1;
+var byte[] str2 = [].."";
 escape _strcmp((_char&&)&&str1,"")==0 and _strcmp((_char&&)&&str2,"")==0;
 ]],
     run = 1,
 }
 
 Test { [[
-function (char&& str)=>int strlen do
+function (byte&& str)=>int strlen do
     return _strlen(str);
 end
 
-var char[] str = [].."Ola Mundo!";
+var byte[] str = [].."Ola Mundo!";
 escape strlen(&&str);
 ]],
-    env = 'line 6 : wrong argument #1 : types mismatch (`char&&´ <= `char[]&&´)',
+    env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
 }
 
 Test { [[
-function (char&& str)=>int strlen do
+function (byte&& str)=>int strlen do
     return _strlen(str);
 end
 
-var char[] str = [].."Ola Mundo!";
+var byte[] str = [].."Ola Mundo!";
 escape strlen((_char&&)&&str);
 ]],
     run = 10,
@@ -23296,7 +23296,7 @@ escape bytes[0];
 
 Test { [[
 native @nohold _ceu_vector_copy_buffer();
-var char[] v = [1,2,0,4,5];
+var byte[] v = [1,2,0,4,5];
 var byte c = 3;
 _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 1);
 escape v[2] + $v;
@@ -23306,7 +23306,7 @@ escape v[2] + $v;
 
 Test { [[
 native @nohold _ceu_vector_copy_buffer();
-var char[5] v = [1,2,0,4,5];
+var byte[5] v = [1,2,0,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 1);
 escape v[2] + $v + ok;
@@ -23316,7 +23316,7 @@ escape v[2] + $v + ok;
 
 Test { [[
 native @nohold _ceu_vector_copy_buffer();
-var char[5] v = [1,2,1,4,5];
+var byte[5] v = [1,2,1,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 1);
 _printf("v = %d\n", $v);
@@ -23327,7 +23327,7 @@ escape v[2] + $v + ok;
 
 Test { [[
 native @nohold _ceu_vector_copy_buffer();
-var char[] v = [1,2,0,4,5];
+var byte[] v = [1,2,0,4,5];
 var byte c = 3;
 _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 0);
 escape v[2] + $v;
@@ -23337,7 +23337,7 @@ escape v[2] + $v;
 
 Test { [[
 native @nohold _ceu_vector_copy_buffer();
-var char[5] v = [1,2,0,4,5];
+var byte[5] v = [1,2,0,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 0);
 escape v[2] + $v + ok;
@@ -23347,7 +23347,7 @@ escape v[2] + $v + ok;
 
 Test { [[
 native @nohold _ceu_vector_copy_buffer();
-var char[] v = [1,2,1,4,5];
+var byte[] v = [1,2,1,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 0);
 _printf("v = %d\n", $v);
@@ -23373,7 +23373,7 @@ escape ok;
 }
 
 Test { [=[
-var char[] str = [].."12345";
+var byte[] str = [].."12345";
 var byte[] bts = [1,2,3,4,5];
 var int r1 = [[ string.len(@str) ]];
 var int r2 = [[ string.len(@bts) ]];
@@ -23430,28 +23430,28 @@ escape _f((int&&)&&rcs[0]);
 
 Test { [[
 var byte b = 1;
-var char c = 2;
+var byte c = 2;
 b = (byte)c;
 escape b;
 ]],
     run = 2,
 }
 Test { [[
-var char[] c = [1];
+var byte[] c = [1];
 var byte[]& b = &c;
 escape b[0];
 ]],
     run = 1,
 }
 Test { [[
-var char  c = 2;
+var byte  c = 2;
 var byte& b = &c;
 escape b;
 ]],
     gcc = 'error: pointer targets in assignment differ',
 }
 Test { [[
-var char   c = 2;
+var byte   c = 2;
 var byte&& b = &&c;
 escape *b;
 ]],
@@ -23463,14 +23463,14 @@ escape *b;
 
 Test { [[
 native @nohold _strlen();
-var char[] v = ['a','b','c','\0'];
+var byte[] v = ['a','b','c','\0'];
 escape _strlen((_char&&)&&v);
 ]],
     run = 3,
 }
 Test { [[
 native @nohold _strlen();
-var char[] v = ['a','b','c','\0'];
+var byte[] v = ['a','b','c','\0'];
 escape _strlen((_char&&)&&v);
 ]],
     run = 3,
@@ -23480,7 +23480,7 @@ Test { [[
 native @pure _strlen();
 native @nohold _garbage();
 native do
-    void garbage (char* v) {
+    void garbage (byte* v) {
         int i = 0;
         for (; i<20; i++) {
             v[i] = i;
@@ -23488,8 +23488,8 @@ native do
     }
 end
 
-var char[10] v;
-var char[10] v_;
+var byte[10] v;
+var byte[10] v_;
 _garbage((_char&&)&&v);
 v = ['a','b','c'];
 escape _strlen((_char&&)&&v);
@@ -23534,22 +23534,22 @@ escape 1;
 
 Test { [[
 native @nohold _strlen();
-var char[] v = "abc";
+var byte[] v = "abc";
 escape _strlen((_char&&)v);
 ]],
-    env = 'line 2 : types mismatch (`char[]´ <= `_char&&´)',
+    env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
 }
 Test { [[
 native @nohold _strlen();
-var char[] v = [].."abc";
+var byte[] v = [].."abc";
 escape _strlen((_char&&)&&v);
 ]],
     run = 3,
 }
 Test { [[
 native @nohold _strlen();
-var char[] v = [].."abc";
+var byte[] v = [].."abc";
 v = [] .. v .. "def";
 escape _strlen((_char&&)&&v);
 ]],
@@ -23710,7 +23710,7 @@ Test { [[
 function (void)=>void f do
     var int x = 0;
 
-    var char[10] cs;
+    var byte[10] cs;
 end
 escape 1;
 ]],
@@ -23718,10 +23718,10 @@ escape 1;
 }
 
 Test { [[
-function (char[]& cs)=>void f do
+function (byte[]& cs)=>void f do
     cs[0] = 10;
 end
-var char[] cs = [0];
+var byte[] cs = [0];
 f(&cs);
 escape cs[0];
 ]],
@@ -23861,7 +23861,7 @@ escape 1;
 
 Test { [[
 native do
-    char* a = "end";
+    byte* a = "end";
 end
 escape 1;
 ]],
@@ -23871,7 +23871,7 @@ escape 1;
 Test { [[
 native do
     /*** END ***/
-    char* a = "end";
+    byte* a = "end";
     /*** END ***/
 end
 escape 1;
@@ -24326,7 +24326,7 @@ native do
     F* fff;
 end
 
-input (char&& path, char&& mode)=>_F&& OPEN do
+input (byte&& path, byte&& mode)=>_F&& OPEN do
     ___ceu_nothing(path);
     ___ceu_nothing(mode);
     return _fff;
@@ -24358,7 +24358,7 @@ escape 1;
 Test { [[
 native/pre do
     typedef struct {
-        char* str;
+        byte* str;
         u32   length;
         u32   x;
         u32   y;
@@ -24991,7 +24991,7 @@ escape 1;
 }
 
 Test { [[
-var char&& a;
+var byte&& a;
 a = "oioioi";
 escape 1;
 ]],
@@ -25011,7 +25011,7 @@ native _char=1;
 var _char&& a = "Abcd12" ;
 escape 1;
 ]],
-    --env = 'line 2 : invalid attribution (_char&& vs char&&)',
+    --env = 'line 2 : invalid attribution (_char&& vs byte&&)',
     run = 1,
 }
 Test { [[
@@ -27883,10 +27883,10 @@ escape ret;
 
 Test { [=[
 native @nohold _strcmp();
-var char&& str = "oioioi";
+var byte&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
-var char[10] cpy = [[ str ]];
+var byte[10] cpy = [[ str ]];
 escape ret and (not _strcmp(str,(_char&&)&&cpy));
 ]=],
     run = 1,
@@ -27894,25 +27894,25 @@ escape ret and (not _strcmp(str,(_char&&)&&cpy));
 
 Test { [=[
 native @nohold _strcmp(), _strcpy();
-var char[10] str;
+var byte[10] str;
 _strcpy(&&str,"oioioi");
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
-var char[10] cpy;
-var char&& ptr = cpy;
+var byte[10] cpy;
+var byte&& ptr = cpy;
 ptr = [[ str ]];
 escape ret and (not _strcmp(&&str,&&cpy));
 ]=],
-    env = 'line 7 : types mismatch (`char&&´ <= `char[]´)',
+    env = 'line 7 : types mismatch (`byte&&´ <= `byte[]´)',
 }
 
 Test { [=[
 native @nohold _strcmp(), _strcpy();
-var char[10] str = [] .. "oioioi";
+var byte[10] str = [] .. "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
-var char[10] cpy;
-var char[10]& ptr = &cpy;
+var byte[10] cpy;
+var byte[10]& ptr = &cpy;
 ptr = [[ str ]];
 escape ret and (not _strcmp((_char&&)&&str,(_char&&)&&cpy));
 ]=],
@@ -27922,7 +27922,7 @@ escape ret and (not _strcmp((_char&&)&&str,(_char&&)&&cpy));
 Test { [=[
 native @nohold _strcmp();
 [[ str = '1234567890' ]]
-var char[2] cpy = [[ str ]];
+var byte[2] cpy = [[ str ]];
 escape (_strcmp((_char&&)&&cpy,"1") == 0);
 ]=],
     run = '3] runtime error: access out of bounds',
@@ -27931,9 +27931,9 @@ escape (_strcmp((_char&&)&&cpy,"1") == 0);
 Test { [=[
 native @nohold _strcmp();
 [[ str = '1234567890' ]]
-var char[2] cpy;
-var char[20] cpy_;
-var char[]& ptr = &cpy;
+var byte[2] cpy;
+var byte[20] cpy_;
+var byte[]& ptr = &cpy;
 ptr = [[ str ]];
 escape (not _strcmp((_char&&)&&cpy,"1234567890"));
 ]=],
@@ -27981,7 +27981,7 @@ var int v_from_ceu = [[v_from_lua]];
 [[
 str_from_lua = 'string from lua'
 ]]
-var char[100] str_from_ceu = [[str_from_lua]];
+var byte[100] str_from_ceu = [[str_from_lua]];
 _assert(0==_strcmp((_char&&)&&str_from_ceu, "string from lua"));
 
 [[
@@ -31614,7 +31614,7 @@ do
 end
 var T a, b;
 native do
-    int f (char* a, char* b) {
+    int f (byte* a, byte* b) {
         return *a + *b;
     }
 end
@@ -31629,7 +31629,7 @@ with
 with
     await b.ok;
 end
-escape _f((char&&)&&a.a,(char&&)&&b.a);
+escape _f((byte&&)&&a.a,(byte&&)&&b.a);
 ]],
     run = 2,
 }
@@ -33263,7 +33263,7 @@ do
         var int n = do T.run(4);
     end
     do
-        var char[] buf;
+        var byte[] buf;
         var int n = do T.run(2);
         _assert(n == 2);
     end
@@ -42137,7 +42137,7 @@ escape 1;
 
 Test { [[
 class T with
-    var char && str;
+    var byte && str;
 do
     str = "oioi";
     this.str = "oioi";
@@ -42173,13 +42173,13 @@ escape 1;
 
 Test { [[
 class T with
-    var char&& str;
+    var byte&& str;
 do
 end
 
 do
     spawn T with
-        var char&& s = "str";
+        var byte&& s = "str";
         this.str = s;
     end;
 end
@@ -43266,7 +43266,7 @@ escape fff(x);
     run = 12,
 }
 Test { [[
-output (int&&,char&&)=>void LUA_GETGLOBAL;
+output (int&&,byte&&)=>void LUA_GETGLOBAL;
 function @rec (int&& l)=>void load do
     loop i do
     end
@@ -43284,7 +43284,7 @@ native do
     ##define ceu_out_call_LUA_GETGLOBAL
 end
 
-output (int&&,char&&)=>void LUA_GETGLOBAL;
+output (int&&,byte&&)=>void LUA_GETGLOBAL;
 function @rec (int&& l)=>void load do
     // TODO: load file
     call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
@@ -53222,9 +53222,9 @@ escape 1;
 Test { [[
 class T with
     output:
-        var char[]& name;
+        var byte[]& name;
 do
-    var char[] name_ = [].."oi";
+    var byte[] name_ = [].."oi";
     this.name = &name_;
     await FOREVER;
 end
@@ -53239,13 +53239,13 @@ escape _strlen((_char&&)&&t.name);
 Test { [[
 interface I with
     output:
-        var char[]& name;
+        var byte[]& name;
 end
 
 class T with
     interface I;
 do
-    var char[] name_ = [].."oi";
+    var byte[] name_ = [].."oi";
     this.name = &name_;
     await FOREVER;
 end
@@ -53253,7 +53253,7 @@ end
 class U with
     var T& t;
 do
-    var char[]& name = &this.t.name;
+    var byte[]& name = &this.t.name;
 end
 
 var T t;
@@ -53292,7 +53292,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char&& LINE;
+input/output [10] (int max)=>byte&& LINE;
 request LINE;
 escape 1;
 ]],
@@ -53301,7 +53301,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char&& LINE;
+input/output [10] (int max)=>byte&& LINE;
 request LINE => "oi";
 escape 1;
 ]],
@@ -53309,7 +53309,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char&& LINE;
+input/output [10] (int max)=>byte&& LINE;
 request LINE => 10;
 escape 1;
 ]],
@@ -53320,7 +53320,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input [10] (int max)=>char&& LINE;
+output/input [10] (int max)=>byte&& LINE;
 par/or do
     request LINE => 10;
 with
@@ -53346,16 +53346,16 @@ await FOREVER;
 }
 
 Test { [[
-var char&&? ret = null;
+var byte&&? ret = null;
 escape ret! == null;
 ]],
     run = 1,
 }
 
 Test { [[
-input (int, char&&) LINE;
+input (int, byte&&) LINE;
 par do
-    var char&&? ret;
+    var byte&&? ret;
     var u8 err;
     (err, ret) = await LINE;
     if err then end;
@@ -53393,10 +53393,10 @@ escape v!;
 }
 
 Test { [[
-output/input [10] (int max)=>char&& LINE;
-var char&& ret = null;
+output/input [10] (int max)=>byte&& LINE;
+var byte&& ret = null;
 par/or do
-    var char&&? ret1;
+    var byte&&? ret1;
     var u8 err;
     (err, ret1) = request LINE => 10;
     ret := ret1!;
@@ -53410,12 +53410,12 @@ escape *ret;
 }
 
 Test { [[
-output/input [10] (int max)=>char&& LINE;
+output/input [10] (int max)=>byte&& LINE;
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 par/or do
-    var char&& ret;
+    var byte&& ret;
     var u8 err;
     (err, ret) = request LINE => 10;
 with
@@ -53426,12 +53426,12 @@ escape 1;
 }
 
 Test { [[
-output/input [10] (int max)=>char&& LINE;
+output/input [10] (int max)=>byte&& LINE;
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 par/or do
-    var char&&? ret;
+    var byte&&? ret;
     var u8 err;
     (err, ret) = request LINE => 10;
     if err and ret? then end;
@@ -53443,7 +53443,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char&& LINE;
+input/output [10] (int max)=>byte&& LINE;
 request LINE;
 escape 1;
 ]],
@@ -53452,7 +53452,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char&& LINE;
+input/output [10] (int max)=>byte&& LINE;
 request LINE => "oi";
 escape 1;
 ]],
@@ -53460,7 +53460,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (int max)=>char&& LINE;
+input/output [10] (int max)=>byte&& LINE;
 request LINE => 10;
 escape 1;
 ]],
@@ -53471,7 +53471,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input [10] (int max)=>char&& LINE;
+output/input [10] (int max)=>byte&& LINE;
 par/or do
     request LINE => 10;
 with
@@ -53482,7 +53482,7 @@ escape 1;
 }
 
 Test { [[
-input (int, char&&) LINE;
+input (int, byte&&) LINE;
 var u8 err;
 var u8? ret;
 (err, ret) = await LINE;
@@ -53492,14 +53492,14 @@ escape 1;
 }
 
 Test { [[
-output/input [10] (int max)=>char&& LINE;
+output/input [10] (int max)=>byte&& LINE;
 var u8 err;
 var u8? ret;
 (err, ret) = request LINE => 10;
 escape 1;
 ]],
     env = 'line 4 : wrong argument #3',
-    --env = 'line 3 : invalid attribution (u8 vs char&&)',
+    --env = 'line 3 : invalid attribution (u8 vs byte&&)',
 }
 
 Test { [[
@@ -54069,8 +54069,8 @@ end
 }
 
 Test { [[
-output char[] OUT;
-var char[] xxx = [] .. "1234567890";
+output byte[] OUT;
+var byte[] xxx = [] .. "1234567890";
 emit OUT => []..xxx;
 escape 1;
 ]],
@@ -54078,12 +54078,12 @@ escape 1;
 }
 
 Test { [[
-output char[]&& && OUT;
+output byte[]&& && OUT;
 ]],
     env = 'line 1 : invalid event type',
 }
 Test { [[
-output char[]& && OUT;
+output byte[]& && OUT;
 ]],
     env = 'line 1 : invalid event type',
 }
@@ -54101,14 +54101,14 @@ output T&& OUT;
 }
 
 Test { [[
-input char[] IN;
+input byte[] IN;
 var int ret = 0;
 par/and do
-    var char[]&& vec = await IN;
+    var byte[]&& vec = await IN;
     ret = $vec;
 with
     async do
-        var char[] vec = [1,2,3,4,5];
+        var byte[] vec = [1,2,3,4,5];
         emit IN => &&vec;
     end
 end
@@ -54133,8 +54133,8 @@ Test { [[
 native do
     ##define ceu_out_emit_OUT(x) (x->_1->nxt)
 end
-output char[]&& OUT;
-var char[] xxx = [] .. "1234567890";
+output byte[]&& OUT;
+var byte[] xxx = [] .. "1234567890";
 var int ret = emit OUT => &&xxx;
 escape ret;
 ]],
@@ -54142,14 +54142,14 @@ escape ret;
 }
 
 Test { [[
-input char[]&& IN;
+input byte[]&& IN;
 var int ret = 0;
 par/and do
-    var char[]&& vec = await IN;
+    var byte[]&& vec = await IN;
     ret = $*vec;
 with
     async do
-        var char[] vec = [1,2,3,4,5];
+        var byte[] vec = [1,2,3,4,5];
         emit IN => &&vec;
     end
 end
@@ -54186,7 +54186,7 @@ escape ret;
 Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) ceu_out_event_F(a,b,c,d)
-    int ceu_out_event_F (tceu_app* app, int id_out, int len, char* data) {
+    int ceu_out_event_F (tceu_app* app, int id_out, int len, byte* data) {
         u8 vector_offset = (((u8*)data)[0]);
         tceu_vector** v = (tceu_vector**)(data + vector_offset);
         return (*v)->nxt;
@@ -54202,7 +54202,7 @@ escape ret;
 }
 
 Test { [[
-output/input (void)=>char SERIAL_CHAR;
+output/input (void)=>byte SERIAL_CHAR;
 escape 1;
 ]],
     run = 1,
@@ -54214,11 +54214,11 @@ native do
 end
 
 input void OS_START;
-output/input (void)=>char SERIAL_CHAR;
+output/input (void)=>byte SERIAL_CHAR;
 
 par/or do
     var int err;
-    var char? v;
+    var byte? v;
     (err,v) = request SERIAL_CHAR;
     if err and v? then end;
 with
@@ -54233,7 +54233,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
 end
-input/output (void)=>char SERIAL_CHAR do
+input/output (void)=>byte SERIAL_CHAR do
     return 'a';
 end
 escape 1;
@@ -54245,7 +54245,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) ceu_out_event_F(a,b,c,d)
     int V = 0;
-    int ceu_out_event_F (tceu_app* app, int id_out, int len, char* data) {
+    int ceu_out_event_F (tceu_app* app, int id_out, int len, byte* data) {
         {
             u8 vector_offset = (((u8*)data)[0]);
             if (vector_offset > 0) {
@@ -54257,8 +54257,8 @@ native do
     }
 end
 
-input/output (int x)=>char[]&& PING_PONG do
-    var char[] ret = [].."Pong ";
+input/output (int x)=>byte[]&& PING_PONG do
+    var byte[] ret = [].."Pong ";
     native @nohold _printf();
     _printf("%s\n", (_char&&)&&ret);
     return &&ret;
@@ -54273,8 +54273,8 @@ escape _V;
 }
 
 Test { [[
-output/input (int x)=>char[]&& PING_PONG;
-var char[]&&? ret;
+output/input (int x)=>byte[]&& PING_PONG;
+var byte[]&&? ret;
 par/and do
     var int i,err;
     (i,err,ret) = await PING_PONG_RETURN;
@@ -54283,7 +54283,7 @@ par/and do
     if i and err then end;
 with
     async do
-        var char[] str = [].."END: 10 0";
+        var byte[] str = [].."END: 10 0";
         emit PING_PONG_RETURN => (0,0,&&str);
     end
 end
@@ -57757,7 +57757,7 @@ escape 1;
 }
 Test { [[
 data T with
-    var char[]& str;
+    var byte[]& str;
 end
 escape 1;
 ]],
@@ -57765,14 +57765,14 @@ escape 1;
 }
 Test { [[
 native/pre do
-    typedef char* char_ptr;
+    typedef byte* char_ptr;
 end
 native @nohold _strlen();
 native @plain _char_ptr;
 data D with
     var _char_ptr str;
 end
-var char[] s = [].. "oi";
+var byte[] s = [].. "oi";
 var D d = D((_char_ptr)(_char&&)&&s);
 escape _strlen((_char&&)d.str);
 ]],
@@ -57780,9 +57780,9 @@ escape _strlen((_char&&)d.str);
 }
 Test { [[
 data D with
-    var char[]& str;
+    var byte[]& str;
 end
-var char[] s = [].. "oi";
+var byte[] s = [].. "oi";
 var D d = D(&s);
 escape $d.str;
 ]],
@@ -62660,7 +62660,7 @@ or
 end
 
 native do
-    char vec[3] = {5,5,5};
+    byte vec[3] = {5,5,5};
 end
 
 pool Dummy[] ds;
@@ -64156,7 +64156,7 @@ escape 1;
 
 Test { [[
 class T with
-    var char[] xxx;
+    var byte[] xxx;
 do
     await FOREVER;
 end
@@ -64174,7 +64174,7 @@ escape $t.xxx;
 Test { [[
 native @pure _strlen();
 class T with
-    var char[] str;
+    var byte[] str;
 do
     escape _strlen(&&this.str);
 end
@@ -65240,7 +65240,7 @@ escape 1;
 }
 
 Test { [[
-input (char* str, int len, int x, int y)=>int DRAW_STRING do
+input (byte* str, int len, int x, int y)=>int DRAW_STRING do
     return x + y + len;
 end
 
@@ -65386,9 +65386,9 @@ escape 1;
 }
 
 Test { [[
-input (char* buf)=>void F do
+input (byte* buf)=>void F do
 end;
-var char* buf;
+var byte* buf;
 call F => (buf);
 escape 1;
 ]],
@@ -65396,9 +65396,9 @@ escape 1;
 }
 
 Test { [[
-input (char* buf, int i)=>void F do
+input (byte* buf, int i)=>void F do
 end;
-var char* buf;
+var byte* buf;
 call F => (buf, 1);
 escape 1;
 ]],
@@ -65408,7 +65408,7 @@ escape 1;
 Test { [[
 input (void)=>void F do
 end;
-var char* buf;
+var byte* buf;
 call F;
 escape 1;
 ]],
@@ -65416,9 +65416,9 @@ escape 1;
 }
 
 Test { [[
-input (char* buf)=>void F do
+input (byte* buf)=>void F do
 end;
-var char* buf;
+var byte* buf;
 call F => buf;
 escape 1;
 ]],
@@ -65426,9 +65426,9 @@ escape 1;
 }
 
 Test { [[
-input (@hold char* buf)=>void F do
+input (@hold byte* buf)=>void F do
 end;
-var char* buf;
+var byte* buf;
 call F => buf;
 escape 1;
 ]],
@@ -65436,7 +65436,7 @@ escape 1;
 }
 
 Test { [[
-var char[255] buf;
+var byte[255] buf;
 _enqueue(buf);
 escape 1;
 ]],
@@ -65598,7 +65598,7 @@ native do
 end
 
 output (int n)=>void* MALLOC;
-var char* buf;
+var byte* buf;
 buf = (call MALLOC => 10);
 escape 1;
 ]],
@@ -65611,8 +65611,8 @@ native do
     #define ceu_out_call_SEND(x) 0
 end
 
-output (char* buf)=>void SEND;
-var char[255] buf;
+output (byte* buf)=>void SEND;
+var byte[255] buf;
 call SEND => buf;
 escape 1;
 ]],
@@ -65630,7 +65630,7 @@ native do
     F* f;
     #define ceu_out_call_OPEN(x) f
 end
-output (char* path, char* mode)=>_F* OPEN;
+output (byte* path, byte* mode)=>_F* OPEN;
 
 // Default device
 var _F[] f;
@@ -65641,7 +65641,7 @@ escape 1;
 }
 
 Test { [[
-output (char* path, char* mode)=>_F* OPEN;
+output (byte* path, byte* mode)=>_F* OPEN;
 output (_F* f)=>int CLOSE;
 output (_F* f)=>int SIZE;
 output (void* ptr, int size, int nmemb, _F* f)=>int READ;
@@ -65659,8 +65659,8 @@ if f == null then
 end
 
 var int flen = (call SIZE => f);
-//char *buf = (char *)malloc(flen+1);
-var char[255] buf;
+//byte *buf = (byte *)malloc(flen+1);
+var byte[255] buf;
 buf[flen] = 0;
 call READ => (buf, 1, flen, f);
 
@@ -65673,7 +65673,7 @@ ra = ra & ~(7<<18);
 ra = ra | 1<<18;
 *GPFSEL1 = ra;
 
-var char* orig = "multiboot";
+var byte* orig = "multiboot";
 
 loop do
     loop i in 9 do
