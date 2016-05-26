@@ -437,6 +437,21 @@ escape 0;
     run = 1,
 }
 
+-------------------------------------------------------------------------------
+
+-- BUG: return 1 => void
+Test { [[
+code/instantaneous Code (int)=>void;
+code/instantaneous Code (int a)=>void
+do
+    return 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+--]===]
 Test { [[
 ddd DDD with
     var int xxx;
@@ -467,22 +482,7 @@ end
 var int x = call fff(1);
 escape fff(x+10);
 ]],
-    run = 11,
-}
-do return end
-
--------------------------------------------------------------------------------
-
--- BUG: return 1 => void
-Test { [[
-code/instantaneous Code (int)=>void;
-code/instantaneous Code (int a)=>void
-do
-    return 1;
-end
-escape 1;
-]],
-    run = 1,
+    run = 13,
 }
 
 Test { [[
@@ -564,12 +564,12 @@ escape @ Code(a+10);
     run = 13,
 }
 
--- BUG: error x crosses await
 Test { [[
 code/delayed Code (int x) => int
 do
     x = x + 1;
     await 1s;
+    x = x + 1;
     escape x;
 end
 var int a = do @ @ Code(1);
@@ -579,7 +579,7 @@ await c;
 */
 escape a;
 ]],
-    run = 13,
+    run = { ['~>1s']=3 },
 }
 
 Test { [[
@@ -648,7 +648,6 @@ escape a;
     run = {['~>1s']=11 },
 }
 
---]===]
 Test { [[
 ddd Data with
     var int v;
@@ -662,7 +661,7 @@ do
     end
 end
 
-var Data d;
+var Data d = @ Data(0);
 
 var int a =
     watching @ Code(&d, 10) do
