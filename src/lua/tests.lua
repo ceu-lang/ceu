@@ -864,8 +864,9 @@ var int _ = 2;
 
 escape __;
 ]],
+    parser = 'line 6 : before `=´ : expected `with´',
     --env = 'line 6 : invalid access to `_´',
-    env = 'line 6 : variable/event "_" is not declared',
+    --env = 'line 6 : variable/event "_" is not declared',
     --run = 3,
 }
 Test { [[
@@ -897,7 +898,8 @@ end
 
 escape (int) __;
 ]],
-    run = 3,
+    parser = 'line 6 : after `_´ : expected `with´',
+    --run = 3,
 }
 
 Test { [[
@@ -32186,7 +32188,7 @@ do
     end
 end
 
-var LaserExitFactory _;
+var LaserExitFactory x;
 ]],
     env = 'line 4 : arity mismatch',
 }

@@ -66,18 +66,18 @@ local _V2NAME = {
     --__StmtB = 'statement',
     --__LstStmt = 'statement',
     --__LstStmtB = 'statement',
-    Ext = 'event',
-    Var = 'variable/event',
+    ID_ext = 'event',
+    ID_int = 'variable/event',
     __ID_adt  = 'identifier',
     __ID_abs = ' abstraction identifier',
     __ID_nat  = 'identifier',
-    __ID_var  = 'identifier',
+    __ID_int  = 'identifier',
     __ID_ext  = 'identifier',
     __ID_cls  = 'identifier',
     Type = 'type',
     __ID_field = 'identifier',
     _Dcl_var = 'declaration',
-    _Dcl_int = 'declaration',
+    _Dcl_evt = 'declaration',
     _Dcl_pool = 'declaration',
     __Dcl_nat  = 'declaration',
     _Dcl_nat   = 'declaration',
@@ -216,8 +216,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- continue/i
     , _Escape   = KEY'escape'   * ('/'*EV'__do_escape_id' + Cc(false))
                                 * (EV'__Exp' + Cc(false))
-    , _Break    = KEY'break'    * ('/'*EV'ID_var' + Cc(false))
-    , _Continue = KEY'continue' * ('/'*EV'ID_var' + Cc(false))
+    , _Break    = KEY'break'    * ('/'*EV'ID_int' + Cc(false))
+    , _Continue = KEY'continue' * ('/'*EV'ID_int' + Cc(false))
 
     , __do_escape_id = CK(Alpha * (Alphanum)^0)
 
@@ -230,13 +230,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Do  = KEY'do' * V'Block' * KEY'end'
     , Block = V'_Stmts'
 
-    , ID_var = V'__ID_var'
-
 -- Declarations
 
     -- variables, organisms
     , _Dcl_var  = (V'__Dcl_var_org' + V'__Dcl_var_plain_set' + V'_Dcl_var_plain')
-    , __Dcl_var_org = CKEY'var'  * EV'Type' * Cc(true)  * EV'__ID_var' *
+    , __Dcl_var_org = CKEY'var'  * EV'Type' * Cc(true)  * (EV'__ID_int'+V'ID_none') *
                         ( Cc(false) * EKEY'with' * V'Dcl_constr' * EKEY'end'
                         + K'=' * V'_Var_constr' * (
                             EKEY'with' * V'Dcl_constr' * EKEY'end' +
@@ -247,24 +245,24 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_var_plain = CKEY'var'  * EV'Type' * Cc(false) * V'__dcl_var' *
                             (K','*V'__dcl_var')^0
 
-    , _Var_constr = V'__ID_cls' * (EK'.'-'..') * EV'__ID_var' * EK'(' * EV'ExpList' * EK')'
+    , _Var_constr = V'__ID_cls' * (EK'.'-'..') * EV'__ID_int' * EK'(' * EV'ExpList' * EK')'
 
     -- auxiliary
     , Dcl_constr = V'Block'
-    , __dcl_var_set = EV'__ID_var' * (V'__Sets' + Cc(false)*Cc(false)*Cc(false))
-    , __dcl_var     = EV'__ID_var' * Cc(false)*Cc(false)*Cc(false)
+    , __dcl_var_set = EV'__ID_int' * (V'__Sets' + Cc(false)*Cc(false)*Cc(false))
+    , __dcl_var     = EV'__ID_int' * Cc(false)*Cc(false)*Cc(false)
 
     -- pools
     , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__dcl_var_set' * (K','*EV'__dcl_var_set')^0
 
     -- internal events
-    , _Dcl_int  = CKEY'event' * (V'_TupleType_1'+EV'Type') *
-                    EV'__ID_var' * (K','*EV'__ID_var')^0
+    , _Dcl_evt  = CKEY'event' * (V'_TupleType_1'+EV'Type') *
+                    EV'__ID_int' * (K','*EV'__ID_int')^0
 
     -- internal functions / interrupts
     , Dcl_fun = CKEY'function' * (CKEY'@rec'+Cc(false))
                                * EV'_TupleType_2' * EK'=>' * EV'Type'
-                               * V'__ID_var'
+                               * V'__ID_int'
     , _Dcl_fun_do = V'Dcl_fun' * V'__Do'
 
     -- external functions
@@ -305,7 +303,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_ifc = KEY'interface' * Cc(true)
                * EV'__ID_cls'
                * EKEY'with' * V'_BlockI' * EKEY'end'
-    , _BlockI = ( (EV'_Dcl_var'+V'_Dcl_int'+V'_Dcl_pool'+V'Dcl_fun'+V'_Dcl_imp')
+    , _BlockI = ( (EV'_Dcl_var'+V'_Dcl_evt'+V'_Dcl_pool'+V'Dcl_fun'+V'_Dcl_imp')
                     * (EK';'*K';'^0)
                 + V'Dcl_mode' * K':'
                 )^0
@@ -314,7 +312,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- ddd types
     , _DDD = KEY'ddd' * EV'__ID_abs' * EKEY'with' * (
-                (V'_Dcl_var_plain'+V'_Dcl_int'+V'_Dcl_pool') *
+                (V'_Dcl_var_plain'+V'_Dcl_evt'+V'_Dcl_pool') *
                     (EK';'*K';'^0)
              )^1 * EK'end'
 
@@ -329,7 +327,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                *    (V'__Dcl_adt_struct' + V'__Dcl_adt_union')
                * EKEY'end'
     , __Dcl_adt_struct = Cc'struct' * (
-                            (V'_Dcl_var_plain'+V'_Dcl_int') * (EK';'*K';'^0)
+                            (V'_Dcl_var_plain'+V'_Dcl_evt') * (EK';'*K';'^0)
                          )^1
     , __Dcl_adt_union  = Cc'union'  * V'Dcl_adt_tag' * (EKEY'or' * EV'Dcl_adt_tag')^0
     , Dcl_adt_tag    = KEY'tag' * EV'__ID_tag' * EKEY'with'
@@ -353,7 +351,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Dcl_det  = KEY'@safe' * EV'__ID' * (
                     EKEY'with' * EV'__ID' * (K',' * EV'__ID')^0
                  )^-1
-    , __ID     = V'__ID_nat' + V'__ID_ext' + V'Var'
+    , __ID     = V'__ID_nat' + V'__ID_ext' + V'ID_int'
 
 
 -- Assignments
@@ -399,13 +397,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     * (KEY'until'*EV'__Exp' + Cc(false))
     , AwaitN   = KEY'await' * KEY'FOREVER'
     , __awaits = Cc(false) * (V'WCLOCKK'+V'WCLOCKE')  -- false,   wclock
-               + (EV'Ext'+EV'__Exp') * Cc(false)      -- ext/int/org, false
+               + (EV'ID_ext'+EV'__Exp') * Cc(false)      -- ext/int/org, false
 
     -- internal/external emit/call/request
     -- TODO: emit/await, move from "false"=>"_WCLOCK"
     , EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
                * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
-                 + EV'Ext' * V'__emit_ps' )
+                 + EV'ID_ext' * V'__emit_ps' )
     , EmitInt  = CKEY'emit' * EV'__Exp' * V'__emit_ps'
     , __emit_ps = ( K'=>' * (V'__Exp' + K'(' * V'ExpList' * EK')')
                 +   Cc(false) )
@@ -423,7 +421,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
             * (V'_Spawn_constr' + Cc(false))
             * (KEY'in'*EV'__Exp' + Cc(false))
             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
-    , _Spawn_constr = (K'.'-'..') * EV'__ID_var' * EK'(' * EV'ExpList' * EK')'
+    , _Spawn_constr = (K'.'-'..') * EV'__ID_int' * EK'(' * EV'ExpList' * EK')'
 
     , Kill  = KEY'kill' * EV'__Exp' * (EK'=>'*EV'__Exp' + Cc(false))
 
@@ -443,16 +441,16 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- loops
     , _Loop   = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
-                    (V'Var' * (EKEY'in'*EV'__Exp' + Cc(false))
+                    ((V'ID_int'+V'ID_none') * (EKEY'in'*EV'__Exp' + Cc(false))
                     + Cc(false)*Cc(false)) *
                 V'__Do'
-    , _Every  = KEY'every' * ( (EV'Var'+V'VarList') * EKEY'in'
+    , _Every  = KEY'every' * ( (EV'ID_int'+V'VarList') * EKEY'in'
                             + Cc(false) )
               * V'__awaits'
               * V'__Do'
 
     -- traverse
-    , _TraverseLoop = KEY'traverse' * V'Var' * EKEY'in' * (
+    , _TraverseLoop = KEY'traverse' * (V'ID_int'+V'ID_none') * EKEY'in' * (
                         Cc'number' * (K'['*(V'__Exp'+Cc'[]')*EK']')
                       +
                         Cc'adt'    * EV'__Exp'
@@ -476,7 +474,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
             ...
         end
             , _Iter   = KEY'loop' * K'('*EV'Type'*EK')'
-                      *     V'__ID_var' * KEY'in' * EV'__Exp'
+                      *     V'__ID_int' * KEY'in' * EV'__Exp'
                       * V'__Do'
         ]]
 
@@ -526,21 +524,25 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- Identifiers
 
-    , Ext = V'__ID_ext'
-    , Var = V'__ID_var'
-    , Abs = V'__ID_abs'
-    , Nat = V'__ID_nat'
+    , ID_ext  = V'__ID_ext'
+    , ID_int  = V'__ID_int'
+    , ID_abs  = V'__ID_abs'
+    , ID_nat  = V'__ID_nat'
+    , ID_none = V'__ID_none'
 
-    , __ID_var   = (-KEYS * CK(m.R'az'*Alphanum^0) + CK('_'*-Alphanum))
-    , __ID_ext   = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
+    , __ID_ext  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
+    , __ID_int  = -KEYS * CK(m.R'az'*Alphanum^0)
+    , __ID_abs  = -KEYS * CK(m.R'AZ'*Alphanum^0)
+    , __ID_nat  = CK(P'_' * Alphanum^1)
+    , __ID_none = CK(P'_' * -Alphanum)
+
+
     , __ID_cls   = -KEYS * CK(m.R'AZ'*Alphanum^0)
     , __ID_adt   = -KEYS * CK(m.R'AZ'*Alphanum^0)
     , __ID_tag   = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
-    , __ID_nat   = CK(  P'_' *Alphanum^1)
     , __ID_field = CK(Alpha * (Alphanum)^0)
     , __ID_type  = CK(TYPES) + V'__ID_nat' + V'__ID_cls' + V'__ID_adt' + V'__ID_abs'
 
-    , __ID_abs = -KEYS * CK(m.R'AZ'*Alphanum^0)
 
 -- Types
 
@@ -551,7 +553,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- Lists
 
-    , VarList = ( K'(' * EV'Var' * (EK',' * EV'Var')^0 * EK')' )
+    , VarList = ( K'(' * EV'ID_int' * (EK',' * EV'ID_int')^0 * EK')' )
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
 
     -- (int, void*)
@@ -559,7 +561,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _TupleType_1 = K'(' * EV'_TupleTypeItem_1' * (EK','*V'_TupleTypeItem_1')^0 * EK')'
 
     -- (int v, nohold void* ptr)
-    , _TupleTypeItem_2 = (CKEY'@hold'+Cc(false)) * EV'Type' * (EV'__ID_var'+Cc(false))
+    , _TupleTypeItem_2 = (CKEY'@hold'+Cc(false)) * EV'Type' * (EV'__ID_int'+Cc(false))
     , _TupleType_2 = K'(' * EV'_TupleTypeItem_2' * (EK','*V'_TupleTypeItem_2')^0 * EK')'
 
 -- Wall-clock values
@@ -611,8 +613,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Prim = K'(' * EV'__Exp' * EK')'
              + V'SIZEOF'
 -- Field
-             + K'@'*V'Abs'
-             + V'Var'     + V'Nat'
+             + K'@'*V'ID_abs'
+             + V'ID_int'     + V'ID_nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
              + V'RawExp'  + V'Vector_constr'
@@ -648,7 +650,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __LstStmt  = V'_Escape' + V'_Break' + V'_Continue' + V'AwaitN'
     , __LstStmtB = V'ParEver'
     , __StmtS    = V'Nothing'
-                 + V'_Dcl_var'  + V'_Dcl_pool' + V'_Dcl_int'
+                 + V'_Dcl_var'  + V'_Dcl_pool' + V'_Dcl_evt'
                  + V'Dcl_fun' + V'_Code' + V'_Dcl_ext0'
                  + V'_Dcl_nat'  + V'Dcl_det'
                  + V'_Set'
