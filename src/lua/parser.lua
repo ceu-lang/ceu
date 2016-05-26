@@ -264,9 +264,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 -- VARS, EVTS
 
     , _Vars_set = CKEY'var' * EV'Type' *
-                    V'__dcl_var_set' * (K','*V'__dcl_var_set')^0
+                    EV'__ID_int'*V'__Sets' * (K','*EV'__ID_int'*V'__Sets')^0
     , _Vars     = CKEY'var' * EV'Type' *
-                    V'__dcl_var' * (K','*V'__dcl_var')^0
+                    EV'__ID_int' * (K','*EV'__ID_int')^0
+
     , _Evts     = CKEY'event' * (V'_Typelist_anon'+EV'Type') *
                     EV'__ID_int' * (K','*EV'__ID_int')^0
     , _Exts     = (CKEY'input'+CKEY'output') * (V'_Typelist_anon'+EV'Type') *
@@ -301,10 +302,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- auxiliary
     , Dcl_constr = V'Block'
-    , __dcl_var_set = EV'__ID_int' * (V'__Sets' + Cc(false)*Cc(false)*Cc(false))
-    , __dcl_var     = EV'__ID_int' * Cc(false)*Cc(false)*Cc(false)
 
     -- pools
+    , __dcl_var_set = EV'__ID_int' * (V'__Sets' + Cc(false)*Cc(false)*Cc(false))
     , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__dcl_var_set' * (K','*EV'__dcl_var_set')^0
 
     -- external functions
@@ -373,10 +373,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                       + KEY'tag' * EV'__ID_tag' * (EK';'*K';'^0)
 
     -- deterministic annotations
-    , Dcl_det  = KEY'@safe' * EV'__ID' * (
-                    EKEY'with' * EV'__ID' * (K',' * EV'__ID')^0
+    , Dcl_det  = KEY'@safe' * EV'__id' * (
+                    EKEY'with' * EV'__id' * (K',' * EV'__id')^0
                  )^-1
-    , __ID     = V'__ID_nat' + V'__ID_ext' + V'ID_int'
+    , __id     = V'__ID_nat' + V'__ID_ext' + V'ID_int'
 
 
 -- Assignments
