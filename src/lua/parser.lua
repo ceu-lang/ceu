@@ -76,11 +76,11 @@ local _V2NAME = {
     __ID_cls  = 'identifier',
     Type = 'type',
     __ID_field = 'identifier',
-    _Dcl_var = 'declaration',
-    _Dcl_evt = 'declaration',
+    _Vars = 'declaration',
+    _Evts = 'declaration',
     _Dcl_pool = 'declaration',
-    __Dcl_nat  = 'declaration',
-    _Dcl_nat   = 'declaration',
+    __nat  = 'declaration',
+    _Nats   = 'declaration',
     Dcl_adt_tag = 'declaration',
     _Typelist_anon = 'type list',
     _Typelist_ids = 'param list',
@@ -185,11 +185,7 @@ KEYS = P
 'var' + 
 'watching' + 
 'with' + 
-
-     P'@' * (
-         P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'safe'
-       )
-     + TYPES
+TYPES
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
 
@@ -208,7 +204,10 @@ NUM = CK(m.R'09'^1) / tonumber
 GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -->>> OK
+
     , Nothing = KEY'nothing'
+
+-- DO, BLOCK
 
     -- escape/A 10
     -- break/i
@@ -224,10 +223,70 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Do = KEY'do' * ('/'*EV'__do_escape_id' + Cc(false)) *
                 V'Block' *
            KEY'end'
---<<<
 
     , __Do  = KEY'do' * V'Block' * KEY'end'
     , Block = V'_Stmts'
+
+-- PAR, PAR/AND, PAR/OR
+
+    , Par    = KEY'par' * EKEY'do' *
+                V'Block' * (EKEY'with' * V'Block')^1 *
+               EKEY'end'
+    , Parand = KEY'par/and' * EKEY'do' *
+                V'Block' * (EKEY'with' * V'Block')^1 *
+               EKEY'end'
+    , Paror  = KEY'par/or' * EKEY'do' *
+                V'Block' * (EKEY'with' * V'Block')^1 *
+               EKEY'end'
+
+-- CODE
+
+    , __code   = (CKEY'code/instantaneous' + CKEY'code/delayed')
+                    * (CK'/recursive' + Cc(false))
+                    * EV'__ID_abs'
+                    * EV'_Typelist_ids' * EK'=>' * EV'Type'
+    , _Code_proto = V'__code'
+    , _Code_impl  = V'__code' * V'__Do'
+
+-- NATIVE
+
+    , _Nats = KEY'native' *
+                (K'/'*(CKEY'pure'+CKEY'const'+CKEY'nohold'+CK'plain') + Cc(false)) *
+                EV'__nat' * (K',' * EV'__nat')^0
+    , __nat = Cc'type' * V'__ID_nat' * K'=' * NUM
+                + Cc'func' * V'__ID_nat' * '()' * Cc(false)
+                + Cc'unk'  * V'__ID_nat'        * Cc(false)
+
+    , Host = (CKEY'pre' + Cc(false)) * KEY'native' * (#EKEY'do')*'do' *
+                ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
+             X* EKEY'end'
+
+-- VARS, EVTS
+
+    , _Vars_set = CKEY'var' * EV'Type' *
+                    V'__dcl_var_set' * (K','*V'__dcl_var_set')^0
+    , _Vars     = CKEY'var' * EV'Type' *
+                    V'__dcl_var' * (K','*V'__dcl_var')^0
+    , _Evts     = CKEY'event' * (V'_Typelist_anon'+EV'Type') *
+                    EV'__ID_int' * (K','*EV'__ID_int')^0
+    , _Exts     = (CKEY'input'+CKEY'output') * (V'_Typelist_anon'+EV'Type') *
+                    EV'__ID_ext' * (K','*EV'__ID_ext')^0
+
+-- IDS
+
+    , ID_ext  = V'__ID_ext'
+    , ID_int  = V'__ID_int'
+    , ID_abs  = V'__ID_abs'
+    , ID_nat  = V'__ID_nat'
+    , ID_none = V'__ID_none'
+
+    , __ID_ext  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
+    , __ID_int  = -KEYS * CK(m.R'az'*Alphanum^0)
+    , __ID_abs  = -KEYS * CK(m.R'AZ'*Alphanum^0)
+    , __ID_nat  = CK(P'_' * Alphanum^1)
+    , __ID_none = CK(P'_' * -Alphanum)
+
+ --<<<
 
 -- Declarations
 
@@ -240,13 +299,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                           ) )
     , _Var_constr = V'__ID_cls' * (EK'.'-'..') * EV'__ID_int' * EK'(' * EV'ExpList' * EK')'
 
--->>> OK
-    , _Vars_set = CKEY'var' * EV'Type' * Cc(false) * V'__dcl_var_set' *
-                    (K','*V'__dcl_var_set')^0
-    , _Vars     = CKEY'var' * EV'Type' * Cc(false) * V'__dcl_var' *
-                    (K','*V'__dcl_var')^0
---<<<
-
     -- auxiliary
     , Dcl_constr = V'Block'
     , __dcl_var_set = EV'__ID_int' * (V'__Sets' + Cc(false)*Cc(false)*Cc(false))
@@ -254,10 +306,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- pools
     , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__dcl_var_set' * (K','*EV'__dcl_var_set')^0
-
-    -- internal events
-    , _Dcl_evt  = CKEY'event' * (V'_Typelist_anon'+EV'Type') *
-                    EV'__ID_int' * (K','*EV'__ID_int')^0
 
     -- external functions
     , __Dcl_ext_call = (CKEY'input'+CKEY'output')
@@ -267,15 +315,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
     -- external requests/events
-    , _Dcl_ext0 = V'__Dcl_ext_io' + V'__Dcl_ext_call' + V'__Dcl_ext_evt'
-    , _Dcl_ext1 = V'_Dcl_ext0' * V'__Do'
-
-    -- external events
-    , __Dcl_ext_evt  = (CKEY'input'+CKEY'output')
-                     * Cc(false)     -- spawn array
-                     * Cc(false)     -- recursive
-                     * (V'_Typelist_anon'+EV'Type') * Cc(false)
-                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+    , _Ext_proto = V'__Dcl_ext_io' + V'__Dcl_ext_call'
+    , _Ext_impl = V'_Ext_proto' * V'__Do'
 
     -- external requests
     , __Dcl_ext_io   = (CKEY'input/output'+CKEY'output/input')
@@ -283,15 +324,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                      * Cc(false)     -- recursive
                      * V'_Typelist_ids' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
-
--->>> OK
-    , __code   = (CKEY'code/instantaneous' + CKEY'code/delayed')
-                    * (CK'/recursive' + Cc(false))
-                    * EV'__ID_abs'
-                    * EV'_Typelist_ids' * EK'=>' * EV'Type'
-    , _Code_proto = V'__code'
-    , _Code_impl  = V'__code' * V'__Do'
---<<<
 
     -- (int, void*)
     , _Typelist_anon_item = Cc(false) * EV'Type' * Cc(false)
@@ -308,7 +340,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_ifc = KEY'interface' * Cc(true)
                * EV'__ID_cls'
                * EKEY'with' * V'_BlockI' * EKEY'end'
-    , _BlockI = ( ((V'__Org'+V'_Vars_set'+EV'_Vars')+V'_Dcl_evt'+V'_Dcl_pool'+V'_Code_proto'+V'_Dcl_imp')
+    , _BlockI = ( ((V'__Org'+V'_Vars_set'+EV'_Vars')+V'_Evts'+V'_Dcl_pool'+V'_Code_proto'+V'_Dcl_imp')
                     * (EK';'*K';'^0)
                 + V'Dcl_mode' * K':'
                 )^0
@@ -317,7 +349,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- ddd types
     , _DDD = KEY'ddd' * EV'__ID_abs' * EKEY'with' * (
-                (V'_Vars'+V'_Dcl_evt'+V'_Dcl_pool') *
+                (V'_Vars'+V'_Evts'+V'_Dcl_pool') *
                     (EK';'*K';'^0)
              )^1 * EK'end'
 
@@ -332,25 +364,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                *    (V'__Dcl_adt_struct' + V'__Dcl_adt_union')
                * EKEY'end'
     , __Dcl_adt_struct = Cc'struct' * (
-                            (V'_Vars'+V'_Dcl_evt') * (EK';'*K';'^0)
+                            (V'_Vars'+V'_Evts') * (EK';'*K';'^0)
                          )^1
     , __Dcl_adt_union  = Cc'union'  * V'Dcl_adt_tag' * (EKEY'or' * EV'Dcl_adt_tag')^0
     , Dcl_adt_tag    = KEY'tag' * EV'__ID_tag' * EKEY'with'
                       *   (V'_Vars' * (EK';'*K';'^0))^0
                       * EKEY'end'
                       + KEY'tag' * EV'__ID_tag' * (EK';'*K';'^0)
-
-    -- C integration
-    , _Dcl_nat = KEY'native' * (CKEY'@pure'+CKEY'@const'+CKEY'@nohold'+CK'@plain'+Cc(false))
-                   * EV'__Dcl_nat' * (K',' * EV'__Dcl_nat')^0
-    , __Dcl_nat = Cc'type' * V'__ID_nat' * K'=' * NUM
-                + Cc'func' * V'__ID_nat' * '()' * Cc(false)
-                + Cc'unk'  * V'__ID_nat'        * Cc(false)
-
-    , Host    = (KEY'native/pre'*Cc(true) + KEY'native'*Cc(false))
-                * (#EKEY'do')*'do' * --S' \n\t'^0 *
-                    ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) )
-                *X* EKEY'end'
 
     -- deterministic annotations
     , Dcl_det  = KEY'@safe' * EV'__ID' * (
@@ -488,16 +508,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                * EKEY'with' * EV'Finally' * EKEY'end'
     , Finally  = V'Block'
 
-    -- parallel compositions
-    , ParOr     = KEY'par/or' * EKEY'do' *
-                      V'Block' * (EKEY'with' * V'Block')^1 *
-                  EKEY'end'
-    , ParAnd  = KEY'par/and' * EKEY'do' *
-                    V'Block' * (EKEY'with' * V'Block')^1 *
-                EKEY'end'
-    , ParEver = KEY'par' * EKEY'do' *
-                    V'Block' * (EKEY'with' * V'Block')^1 *
-                EKEY'end'
     , _Watching = KEY'watching' * V'__awaits' * V'__Do'
 
     -- pause
@@ -526,23 +536,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __luacl  = ']' * C(P'='^0) * EK']'
     , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
                     function (s,i,a,b) return a == b end)
-
--- Identifiers
-
--->>> OK
-    , ID_ext  = V'__ID_ext'
-    , ID_int  = V'__ID_int'
-    , ID_abs  = V'__ID_abs'
-    , ID_nat  = V'__ID_nat'
-    , ID_none = V'__ID_none'
-
-    , __ID_ext  = -KEYS * CK(m.R'AZ'*ALPHANUM^0)
-    , __ID_int  = -KEYS * CK(m.R'az'*Alphanum^0)
-    , __ID_abs  = -KEYS * CK(m.R'AZ'*Alphanum^0)
-    , __ID_nat  = CK(P'_' * Alphanum^1)
-    , __ID_none = CK(P'_' * -Alphanum)
---<<<
-
 
     , __ID_cls   = -KEYS * CK(m.R'AZ'*Alphanum^0)
     , __ID_adt   = -KEYS * CK(m.R'AZ'*Alphanum^0)
@@ -647,12 +640,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  * (V'Host'+V'_Code_impl')^0 )
 
     , __LstStmt  = V'_Escape' + V'_Break' + V'_Continue' + V'AwaitN'
-    , __LstStmtB = V'ParEver'
+    , __LstStmtB = V'Par'
     , __StmtS    = V'Nothing'
-                 + V'__Org' + V'_Vars_set' + V'_Vars'
-                 + V'_Dcl_pool' + V'_Dcl_evt'
-                 + V'_Code_proto' + V'_Dcl_ext0'
-                 + V'_Dcl_nat'  + V'Dcl_det'
+                 + V'__Org'
+                 + V'_Vars_set' + V'_Vars' + V'_Evts' + V'_Exts'
+                 + V'_Dcl_pool'
+                 + V'_Code_proto' + V'_Ext_proto'
+                 + V'_Nats'  + V'Dcl_det'
                  + V'_Set'
                  + V'Await' + V'EmitExt' + V'EmitInt'
                  + V'Spawn' + V'Kill'
@@ -664,14 +658,14 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
-    , __StmtB = V'_Code_impl' + V'_Dcl_ext1'
+    , __StmtB = V'_Code_impl' + V'_Ext_impl'
               + V'_Dcl_ifc'  + V'Dcl_cls' + V'Dcl_adt' + V'_DDD'
               + V'Host'
               + V'Do'    + V'If'
               + V'_Loop' + V'_Every' + V'_TraverseLoop'
               + V'_SpawnAnon'
               + V'Finalize'
-              + V'ParOr' + V'ParAnd' + V'_Watching'
+              + V'Paror' + V'Parand' + V'_Watching'
               + V'_Pause'
               + V'Async' + V'_Thread' + V'_Isr' + V'Atomic'
               + V'_DoPre'

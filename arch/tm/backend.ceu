@@ -1,6 +1,6 @@
 input bool OS_RESUME, OS_PAUSE;
 
-native/pre do
+pre native do
     ##include <string.h>
 end
 
@@ -9,7 +9,7 @@ native do
         TM_REQ_PAUSE = -1,
     };
 end
-native @nohold _snap_seek();
+native/nohold _snap_seek();
 
 #ifndef TM_QUEUE
 #ifndef TM_SNAP
@@ -518,8 +518,8 @@ do
 
 #ifdef TM_QUEUE
 
-    native @plain _tceu_queue;
-    native/pre do
+    native/plain _tceu_queue;
+    pre native do
         typedef struct {
             tceu_nevt evt;
 #ifdef TM_QUEUE_WCLOCK_REUSE
