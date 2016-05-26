@@ -57,6 +57,10 @@ local CKEY = function (str)
 end
 
 local _V2NAME = {
+-->>> OK
+    __do_escape_id = '`escape´ identifier',
+--<<<
+
     __Exp = 'expression',
     --__StmtS = 'statement',
     --__StmtB = 'statement',
@@ -142,7 +146,7 @@ KEYS = P
 'escape' +
 'event' + 
 'every' + 
-'false'
+'false' +
 'finalize' + 
 'FOREVER' + 
 'function' + 
@@ -183,7 +187,7 @@ KEYS = P
 'watching' + 
 'with' + 
 
-     + P'@' * (
+     P'@' * (
          P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'rec' + 'safe'
        )
      + TYPES
@@ -210,11 +214,21 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- escape/A 10
     -- break/i
     -- continue/i
-    , _Escape   = KEY'escape'   * ('/'*CK(Alpha*(Alphanum)^0) + Cc(false))
-                                * EV'__Exp'
+    , _Escape   = KEY'escape'   * ('/'*EV'__do_escape_id' + Cc(false))
+                                * (EV'__Exp' + Cc(false))
     , _Break    = KEY'break'    * ('/'*EV'ID_var' + Cc(false))
     , _Continue = KEY'continue' * ('/'*EV'ID_var' + Cc(false))
+
+    , __do_escape_id = CK(Alpha * (Alphanum)^0)
+
+    -- do/A ... end
+    , Do = KEY'do' * ('/'*EV'__do_escape_id' + Cc(false)) *
+                V'Block' *
+           KEY'end'
 --<<<
+
+    , __Do  = KEY'do' * V'Block' * KEY'end'
+    , Block = V'_Stmts'
 
     , ID_var = V'__ID_var'
 
@@ -414,11 +428,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Kill  = KEY'kill' * EV'__Exp' * (EK'=>'*EV'__Exp' + Cc(false))
 
 -- Flow control
-
-    -- explicit block
-    , Do    = V'__Do'
-    , __Do  = KEY'do' * V'Block' * KEY'end'
-    , Block = V'_Stmts'
 
     -- global (top level) execution
     , _DoPre = KEY'pre' * V'__Do'

@@ -9,401 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
--- BUG: bad message, I want to say that you cannot copy vectors in a single 
-stmt
-Test { [[
-class Test with
-    function (u8[]&& buf)=>void fillBuffer;
-do
-    function (u8[]&& buf)=>void fillBuffer do
-        var u8[] b = *buf;
-        b = b .. [3];
-    end
-end
-
-var u8[10] buffer;
-
-var Test t;
-t.fillBuffer(&&buffer);
-
-escape buffer[0];
-]],
-    env = 'line 5 : types mismatch (`u8[]´ <= `u8[]´)',
-}
-
--- BUG: doesn't check dimension of pointer to vector
-Test { [[
-function (u8[20]&& buf)=>void fillBuffer do
-    *buf = *buf .. [3];
-end
-var u8[10] buffer;
-fillBuffer(&&buffer);
-escape buffer[0];
-]],
-    env = 'line 5 : wrong argument #1 : types mismatch (`u8[]&&´ <= `u8[]&&´) : dimension mismatch',
-}
-
---cbuffer "attr to greater scope"
-Test { [[
-    function @rec (void)=>void update_surface do
-        var _CollisionMap&& colmap = _XXX_PURE(global:world!:get_colmap());
-
-        this.me.colmap_serial = colmap:get_serial();
-
-        this.me.canvas.lock();
-
-        var u8&& cbuffer = (u8&&)_XXX_PURE(this.me.canvas.get_data());
-]],
-}
-
-Test { [[
-interface Global with
-    var int i;
-end
-var int i = 1;
-
-class T with
-    function (void)=>int get;
-do
-    function (void)=>int get do
-        return global:i;
-    end
-end
-
-var T t;
-
-escape t.get();
-]],
-    run = 1,
-}
-
-Test { [[
-class WorldObjFactory with
-    var _PingusLevel&& plf;
-do
-    native do
-        ##define std__vector_FileReader std::vector<FileReader>
-    end
-    loop i in this.plf:get_objects().size() do
-        traverse _ in [] with
-            var _FileReader&& reader = &&this.plf:get_objects().at(i);
-        do
-        end
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-do return end
-
-Test { [[
-native @plain _rect;
-native/pre do
-    typedef struct rect {
-        int* x, y;
-    } rect;
-end
-var int v = 10;
-var _rect r = _rect(null);
-r.x = &&v;      // BUG: finalize?
-escape *(r.x);
-]],
-    run = 10,
-}
-
-Test { [[
-data D with
-    var int x;
-end
-
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var D& d;
-    end
-end
-
-    var D d = D(1);
-var E e = E.X(&d);
-    e.X.d = &d;     // BUG: error?
-
-escape e.X.d.x;
-]],
-    run = 1,
-}
-
--- TODO: bug
-Test { [[
-data LLRB with
-    tag NIL;
-or
-    tag NODE with
-        var LLRB left;
-        var LLRB right;
-    end
-end
-
-var LLRB& h;
-h.NODE.right = h.NODE.left;
-
-escape 1;
-]],
-    run = 1,
-}
-
--- TODO: bug
-Test { [[
-data LLRB with
-    tag NIL;
-or
-    tag NODE with
-        var LLRB left;
-    end
-end
-
-pool LLRB[] llrb;
-traverse e in llrb do
-    e:NODE.left = traverse e:NODE.left;
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
------------------------
-
-Test { [[
-class T with
-    var int xxx2=0;
-    function (int xxx3)=>void fff;
-do
-    function (int xxx3)=>void fff do
-        var int xxx4 = xxx3;
-        this.xxx2 = xxx4;
-    end
-    this.xxx2 = 1;
-end
-
-var int xxx1 = 10;
-var T ttt;
-ttt.fff(&xxx1);
-escape ttt.xxx2;
-]],
-    run = 1,
-}
-Test { [[
-class TimeDisplay with
-    function (int& vvv)=>TimeDisplay build;
-do
-    var int x = 0;
-    var int& vvv;
-
-    function (int& vvv)=>TimeDisplay build do
-        this.vvv = &vvv;
-    end
-
-    vvv = &x;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class TimeDisplay with
-    function (int& vvv)=>TimeDisplay build;
-do
-    var int& vvv;
-
-    function (int& vvv)=>TimeDisplay build do
-        this.vvv = &vvv;
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-do return end
-
---[=[
----
-
-    var byte&&                  name    = null;
-
-    function (@hold byte&& name)=>Surface name;
-
----
-
-class Credits with
-    var _Pathname&& filename;
-do
-    finalize with
-        call {StatManager::instance()->set_bool}("credits-seen", true);
-    end
-
-    // read credit information from filename
-    {
-        static std::vector<std::string> credits;
-        static int end_offset = -static_cast<float>(Display::get_height())/2 - 50; // screen height + grace time
-
-        {
-            std::ifstream in(THIS(CEU_Credits)->filename->get_sys_path());
-            if (!in) {
-                log_error("couldn't open %1%", THIS(CEU_Credits)->filename);
-
-                std::ostringstream out;
-                out << "couldn't open " << THIS(CEU_Credits)->filename;
-]=]
--------------------------------------------------------------------------------
-
--- BUG: deveria ser outer.rect.
--- tenho que verificar essas atribuicoes this.x=this.x
-        var SpriteR _ = SpriteR.build_name(&this.rect,
-                                           "core/buttons/hbuttonbgb");
-
--- BUG: u8 vs int
-Test { [[
-native do
-    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
-end
-output/input [10] (int max)=>int LINE;
-par/or do
-    var u8 err;
-    var u8? ret;
-    (err, ret) = request LINE => 10;
-with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-emit/await/refs
-class SDL with
-    input:
-        var byte[] title;
-        var int w,h;
-
-    output:
-        var _SDL_Window&   win;
-        var _SDL_Renderer& ren;
-
-    input/output:
-        var int io;
-
-    output/input:
-        var int oi;
-do
-    var _SDL_Window&? win_;
-    finalize
-        win_ = &_SDL_CreateWindow("SDL 1", _SDL_WINDOWPOS_CENTERED,
-                                           _SDL_WINDOWPOS_CENTERED,
-                                           800, 480,
-                                           _SDL_WINDOW_SHOWN);
-    with
-        _SDL_DestroyWindow(&&win_!);
-    end
-    this.win = &win_!;
-
-    _SDL_GetWindowSize(&&win, &&w, &&h);
-
-    var _SDL_Renderer&? ren_;
-    finalize
-        ren_ = &_SDL_CreateRenderer(&&win, -1, 0);
-    with
-        _SDL_DestroyRenderer(&&ren_!);
-    end
-    this.ren = &ren_!;
-
-    await FOREVER;
-end
-var SDL _;
-]],
-    run = 1,
-}
-
--- BUG: deallocates byte: ifc/body dcls should not terminate
-Test { [[
-class T with
-    output:
-        var byte[]& name;
-do
-    var byte[] name_ = [].."oi";
-    this.name = &name_;
-    // bug: deallocates byte[]
-end
-
-var T t;
-native @nohold _strlen();
-escape _strlen((byte&&)&&t.name);
-]],
-    run = 2,
-}
-
---
-no output vectors in interfaces
-
---
-every (x,_) in e do
-
---
-event in e      // class ifc
-if e then ...   // nested blk in body
-end
-_printf(e);
-
---
--- bug: arity mismatch on constructor/creation
-Test { [[
-class T with
-    var void& p;
-    function (void& p)=>T build;
-do
-    function (void& p)=>T build do
-        this.p = &p;
-    end
-    escape *((int&&)&&this.p);
-end
-
-var int v = 10;
-var int ret = do T.build(&v);
-escape ret;
-]],
-    run = 10,
-}
-
-Test { [[
-data D with
-    var byte[]& str;
-end
-var byte[] s = [].. "oi";
-var D d = D(s);    // BUG: nao detecta erro de tipo
-escape $d.str;
-]],
-    run = 2,
-}
-
--- bug: force nominal type system
-Test { [[
-interface I with
-end
-
-class V with
-do
-    pool I[1] is;
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
 --------------------
 Test { [[
 
@@ -502,12 +107,12 @@ escape a;
     run = {['~>10s']=50 },
 }
 
--- BUG: return 1 => void
+-- BUG: escape 1 => void
 Test { [[
 code/instantaneous Code (int)=>void;
 code/instantaneous Code (int a)=>void
 do
-    return 1;
+    escape 1;
 end
 escape 1;
 ]],
@@ -549,6 +154,7 @@ escape a;
 
 -- KKK
 --]===]
+
 Test { [[
 ddd DDD with
     var int xxx;
@@ -568,18 +174,6 @@ d.xxx = d.xxx + 2;
 escape d.xxx;
 ]],
     run = { ['~>1s']=3 },
-}
-
-Test { [[
-function (int x) => int fff
-do
-    x = x + 1;
-    return x;
-end
-var int x = call fff(1);
-escape fff(x+10);
-]],
-    run = 13,
 }
 
 Test { [[
@@ -653,7 +247,7 @@ Test { [[
 code/instantaneous Code (int x) => int
 do
     x = x + 1;
-    return x;
+    escape x;
 end
 var int a = call @ Code(1);
 escape @ Code(a+10);
@@ -779,17 +373,58 @@ escape a;
 -------------------------------------------------------------------------------
 
 Test { [[
+do/
+    escape/A 1;
+end
+]],
+    parser = 'line 1 : after `do´ : expected `escape´ identifier',
+}
+
+Test { [[
+do/A
+    escape/ 1;
+end
+]],
+    parser = 'line 2 : after `escape´ : expected `escape´ identifier',
+}
+
+Test { [[
 do/A
     escape/A 1;
 end
 ]],
-    env = 'do/A has no return value',
+    env = 'do/A has no escape value',
+}
+
+Test { [[
+do/A
+    escape/A;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+do/A
+    escape;
+end
+]],
+    env = 'missing value',
+}
+
+Test { [[
+do/A
+    escape 1;
+end
+]],
+    run = 1,
 }
 
 Test { [[
 var int a = do/A
     escape/A 1;
-end
+end;
 escape 1;
 ]],
     run = 1,
@@ -893,7 +528,7 @@ escape x;
     run = 10,
 }
 
-do return end
+--do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -902,14 +537,14 @@ do return end
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
 
-Test { [[escape 1; // return 1;]], run=1 }
+Test { [[escape 1; // escape 1;]], run=1 }
 Test { [[escape /* */ 1;]], run=1 }
 Test { [[escape /*
 
 */ 1;]], run=1 }
 Test { [[escape /**/* **/ 1;]], run=1 }
 Test { [[escape /**/* */ 1;]],
-    parser = "line 1 : after `escape´ : expected expression"
+    parser = 'line 1 : after `escape´ : expected `escape´ identifier',
 }
 
 Test { [[
@@ -1276,7 +911,7 @@ emit a => &&k; // leads to compiler error
 Test { [[
 input void OS_START;
 native do
-    int f () { return 1; }
+    int f () { escape 1; }
 end
 var _int x = (@plain) _f();
 escape x;
@@ -1287,7 +922,7 @@ Test { [[
 input void OS_START;
 native @pure _f;
 native do
-    int f () { return 1; }
+    int f () { escape 1; }
 end
 var _int x = _f();
 escape x;
@@ -1297,7 +932,7 @@ escape x;
 Test { [[
 input void OS_START;
 native do
-    int f () { return 1; }
+    int f () { escape 1; }
 end
 var _int x = ((@pure)_f)();
 escape x;
@@ -1308,7 +943,7 @@ Test { [[
 input void OS_START;
 native do
     void* V;
-    int f (void* v) { return 1; }
+    int f (void* v) { escape 1; }
 end
 var void&& ptr = null;
 var int x = ((@nohold)_f)(ptr);
@@ -1320,7 +955,7 @@ Test { [[
 input void OS_START;
 native do
     void* V;
-    int f (void* v) { return 1; }
+    int f (void* v) { escape 1; }
 end
 var void&& ptr = null;
 var int x = ((@pure)_f)(ptr);
@@ -16486,7 +16121,7 @@ escape v;
 Test { [[
 native do
     int f (int v) {
-        return v + 1;
+        escape v + 1;
     }
     typedef struct {
         int (*f) (int);
@@ -16829,7 +16464,7 @@ native do
     int V = 10;
     int* fff (int v) {
         V += v;
-        return &V;
+        escape &V;
     }
 end
 var int   v = 1;
@@ -16850,7 +16485,7 @@ native do
     int V = 10;
     int* fff (int v) {
         V += v;
-        return &V;
+        escape &V;
     }
 end
 var int   v = 1;
@@ -17233,7 +16868,7 @@ Test { [[
 native _f();
 native do
     int* f (void) {
-        return NULL;
+        escape NULL;
     }
 end
 var int r = 0;
@@ -17256,7 +16891,7 @@ Test { [[
 native _f();
 native do
     int* f (void) {
-        return NULL;
+        escape NULL;
     }
 end
 var int r = 0;
@@ -17389,7 +17024,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -17408,7 +17043,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -17436,7 +17071,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -17469,7 +17104,7 @@ native do
         int* ptr;
     } t;
     int* f (int* ptr) {
-        return ptr;
+        escape ptr;
     }
 end
 var int v = 10;
@@ -17486,7 +17121,7 @@ native do
         int* ptr;
     } t;
     int* f (int* ptr) {
-        return ptr;
+        escape ptr;
     }
 end
 var int v = 10;
@@ -17502,33 +17137,33 @@ escape *(t.ptr);
 Test { [[
 function (void)=>int&& get do
     var int x;
-    return &&x;
+    escape &&x;
 end
 escape 10;
 ]],
-    env = 'line 3 : invalid return value : local reference',
+    env = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
 }
 
 Test { [[
 function (void)=>int&& get do
     var int x=0;
-    return &&x;
+    escape &&x;
 end
 escape 10;
 ]],
-    env = 'line 3 : invalid return value : local reference',
+    env = 'line 3 : invalid escape value : local reference',
     --fin = 'line 3 : attribution to pointer with greater scope',
 }
 
 Test { [[
 function (void)=>int& get do
     var int x=1;
-    return &x;
+    escape &x;
 end
 escape 10;
 ]],
-    env = 'line 3 : invalid return value : local reference',
+    env = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
@@ -17536,7 +17171,7 @@ Test { [[
 var byte[] str = [0,1,2];
 
 function (byte[]& vec)=>int f do
-    return vec[1];
+    escape vec[1];
 end
 
 escape f(&str);
@@ -17547,7 +17182,7 @@ Test { [[
 var byte[] str = [0,1,2];
 
 function (int[]& vec)=>int f do
-    return vec[1];
+    escape vec[1];
 end
 
 escape f(&str);
@@ -17558,7 +17193,7 @@ Test { [[
 var byte[] str = [0,1,2];
 
 function (byte[]& vec)=>int f do
-    return vec[1];
+    escape vec[1];
 end
 
 escape f(str);
@@ -17569,14 +17204,14 @@ Test { [[
 var byte[] str = [0,1,2];
 
 function (void) => byte[] f do
-    return &this.str;
+    escape &this.str;
 end
 
 var byte[]& ref = &f();
 
 escape ref[1];
 ]],
-    env = 'line 4 : invalid return value : types mismatch (`byte[]´ <= `byte[]&´)',
+    env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
 }
 
 -- vectors as argument (NO)
@@ -17584,7 +17219,7 @@ Test { [[
 var byte[] str = [0,1,2];
 
 function (void&&, int[] vec)=>int f do
-    return vec[1];
+    escape vec[1];
 end
 
 escape f(str);
@@ -17775,7 +17410,7 @@ native _v;
 native do
     int v = 1;
     int f (int v) {
-        return v + 1;
+        escape v + 1;
     }
 end
 escape _f(_v);
@@ -17790,7 +17425,7 @@ native _v;
 native do
     int v = 1;
     int f (int v) {
-        return v + 1;
+        escape v + 1;
     }
 end
 escape _f(_v);
@@ -17804,7 +17439,7 @@ Test { [[
 native @pure _f();
 native do
     int* f (int a) {
-        return NULL;
+        escape NULL;
     }
 end
 var int&& v = _f(0);
@@ -17818,7 +17453,7 @@ native @pure _f();
 native do
     int V = 10;
     int f (int v) {
-        return v;
+        escape v;
     }
 end
 native @const _V;
@@ -17831,7 +17466,7 @@ Test { [[
 native _f();
 native do
     int f (int* v) {
-        return 1;
+        escape 1;
     }
 end
 var int v=0;
@@ -17844,7 +17479,7 @@ Test { [[
 native @nohold _f();
 native do
     int f (int* v) {
-        return 1;
+        escape 1;
     }
 end
 var int v=0;
@@ -17859,7 +17494,7 @@ native @nohold _f();
 native do
     int V=1;
     int f (int* v) {
-        return 1;
+        escape 1;
     }
 end
 var int v=0;
@@ -19396,7 +19031,7 @@ Test { [[
 native do
     int V;
     int* alloc (int ok) {
-        return &V;
+        escape &V;
     }
     void dealloc (int* ptr) {
     }
@@ -19419,7 +19054,7 @@ Test { [[
 native do
     int V;
     int* alloc (int ok) {
-        return &V;
+        escape &V;
     }
     void dealloc (int* ptr) {
     }
@@ -19441,7 +19076,7 @@ escape 1;
 Test { [[
 native do
     int* alloc (int ok) {
-        return NULL;
+        escape NULL;
     }
     void dealloc (int* ptr) {
     }
@@ -19463,7 +19098,7 @@ escape 1;
 Test { [[
 native do
     int* alloc (int ok) {
-        return NULL;
+        escape NULL;
     }
     int V = 0;
     void dealloc (int* ptr) {
@@ -19492,7 +19127,7 @@ escape _V;
 Test { [[
 native do
     int* alloc (int ok) {
-        return NULL;
+        escape NULL;
     }
     int V = 0;
     void dealloc (int* ptr) {
@@ -19521,7 +19156,7 @@ escape _V;
 Test { [[
 native do
     int* alloc (int ok) {
-        return NULL;
+        escape NULL;
     }
     int V = 0;
     void dealloc (int* ptr) {
@@ -19555,9 +19190,9 @@ native/pre do
     t* alloc (int ok) {
         if (ok) {
             V++;
-            return (t*) &V;
+            escape (t*) &V;
         } else {
-            return NULL;
+            escape NULL;
         }
     }
     void dealloc (t* ptr) {
@@ -19610,7 +19245,7 @@ escape ret;
 Test { [[
 native do
     void* f () {
-        return NULL;
+        escape NULL;
     }
 end
 
@@ -19629,7 +19264,7 @@ escape &ptr! == &ptr!;  // ptr.SOME fails
 Test { [[
 native do
     void* f () {
-        return NULL;
+        escape NULL;
     }
 end
 
@@ -19648,7 +19283,7 @@ escape &&ptr! == &&ptr!;  // ptr.SOME fails
 Test { [[
 native do
     void* f () {
-        return NULL;
+        escape NULL;
     }
 end
 
@@ -19667,7 +19302,7 @@ escape not ptr?;
 Test { [[
 native do
     void* f () {
-        return NULL;
+        escape NULL;
     }
     void g (void* g) {
     }
@@ -19689,7 +19324,7 @@ escape not ptr?;
 Test { [[
 native do
     void* f () {
-        return NULL;
+        escape NULL;
     }
     void g (void* g) {
     }
@@ -19721,7 +19356,7 @@ Test { [[
 native do
     int V = 1;
     int* alloc () {
-        return &V;
+        escape &V;
     }
 end
 
@@ -19744,7 +19379,7 @@ Test { [[
 native do
     int V = 1;
     int* alloc () {
-        return NULL;
+        escape NULL;
     }
 end
 
@@ -19771,9 +19406,9 @@ native/pre do
     t* alloc (int ok) {
         if (ok) {
             V++;
-            return (t*) &V;
+            escape (t*) &V;
         } else {
-            return NULL;
+            escape NULL;
         }
     }
     void dealloc (t* ptr) {
@@ -19844,7 +19479,7 @@ native do
     int V = 0;
     void* my_alloc (void) {
         V += 1;
-        return NULL;
+        escape NULL;
     }
     void my_free () {
         V *= 2;
@@ -20960,9 +20595,9 @@ native do
     int Fa (tceu_app* app, int evt, int sz, void* v) {
         if (evt == CEU_OUT_A) {
             t* x = ((tceu__t_*)v)->_1;
-            return x->a + x->b;
+            escape x->a + x->b;
         } else {
-            return *((int*)v);
+            escape *((int*)v);
         }
     }
 end
@@ -20994,9 +20629,9 @@ native do
     int Fa (tceu_app* app, int evt, int sz, void* v) {
         if (evt == CEU_OUT_A) {
             t x = ((tceu__t*)v)->_1;
-            return x.a + x.b;
+            escape x.a + x.b;
         } else {
-            return *((int*)v);
+            escape *((int*)v);
         }
     }
 end
@@ -21295,7 +20930,7 @@ Test { [[
 native do
     ##define ceu_out_emit_F(a) F(a)
     int F (int v) {
-        return v+1;
+        escape v+1;
     }
 end
 output (int)=>int F;
@@ -21310,7 +20945,7 @@ Test { [[
 native do
     ##define ceu_out_call_F(a) F((int*)a)
     int F (int* v) {
-        return *v+1;
+        escape *v+1;
     }
 end
 output (int)=>int F;
@@ -21324,7 +20959,7 @@ Test { [[
 native do
     ##define ceu_out_call(a,b,c) F((int*)c)
     int F (int* v) {
-        return *v+1;
+        escape *v+1;
     }
 end
 output (int)=>int F;
@@ -21338,7 +20973,7 @@ Test { [[
 native do
     ##define ceu_out_call_F(a) F(a)
     int F (int v) {
-        return v+1;
+        escape v+1;
     }
 end
 output (int)=>int F;
@@ -21402,7 +21037,7 @@ Test { [[
 native do
     ##define ceu_out_call_F(a) F(a)
     int F (tceu__int__int* p) {
-        return p->_1 + p->_2;
+        escape p->_1 + p->_2;
     }
 end
 output (int,int)=>int F;
@@ -21416,7 +21051,7 @@ Test { [[
 native do
     ##define ceu_out_call(a,b,c) F(a,b,c)
     int F (tceu_app* app, tceu_nevt evt, int* p) {
-        return (evt == CEU_OUT_F) + *p;
+        escape (evt == CEU_OUT_F) + *p;
     }
 end
 output (int)=>int F;
@@ -21430,7 +21065,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) F(a,b,d)
     int F (tceu_app* app, tceu_nevt evt, void* p) {
-        return (evt==CEU_OUT_F && p==NULL);
+        escape (evt==CEU_OUT_F && p==NULL);
     }
 end
 output void F;
@@ -21444,7 +21079,7 @@ Test { [[
 native do
     ##define ceu_out_emit_F() F()
     int F () {
-        return 1;
+        escape 1;
     }
 end
 output void F;
@@ -21458,7 +21093,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) F(a,b,d)
     int F (tceu_app* app, tceu_nevt evt, int* p) {
-        return (evt == CEU_OUT_F) + *p;
+        escape (evt == CEU_OUT_F) + *p;
     }
 end
 output int F;
@@ -21479,7 +21114,7 @@ Test { [[
 native do
     ##define ceu_out_call(a,b,c) F(a,b,c)
     int F (tceu_app* app, tceu_nevt evt, int* p) {
-        return (evt == CEU_OUT_F) + *p;
+        escape (evt == CEU_OUT_F) + *p;
     }
 end
 output (int)=>int F;
@@ -21498,7 +21133,7 @@ escape 1;
 
 Test { [[
 input (int a)=>int F,G do
-    return a + 1;
+    escape a + 1;
 end
 ]],
     adj = 'line 1 : same body for multiple declarations',
@@ -21507,7 +21142,7 @@ end
 -- XXX
 Test { [[
 input (int a)=>int F do
-    return a + 1;
+    escape a + 1;
 end
 input (int a)=>int G;
 var int ret = call F=>1;
@@ -21546,7 +21181,7 @@ escape this.v;
 Test { [[
 var int v = 0;
 input (int a)=>int G do
-    return a + 1;
+    escape a + 1;
 end
 input (int a)=>void F do
     this.v = call G=>a;
@@ -21613,7 +21248,7 @@ escape v;
 
 Test { [[
 input (int c)=>int WRITE do
-    return c + 1;
+    escape c + 1;
 end
 var byte b = 1;
 var int ret = call WRITE => b;
@@ -21624,7 +21259,7 @@ escape ret;
 
 Test { [[
 input (int c)=>int F1 do
-    return c + 1;
+    escape c + 1;
 end
 input (int c)=>void F2 do
     ___ceu_nothing(&&c);
@@ -22172,7 +21807,7 @@ native do
     int a;
     int* f () {
         a = 10;
-        return &a;
+        escape &a;
     }
 end
 var int&? p;
@@ -22191,7 +21826,7 @@ native do
     int a;
     int* f () {
         a = 10;
-        return &a;
+        escape &a;
     }
 end
 var int&? p;
@@ -22210,7 +21845,7 @@ native do
     int a;
     int* f () {
         a = 10;
-        return &a;
+        escape &a;
     }
 end
 var int&& p;
@@ -22224,7 +21859,7 @@ native _f();
 native do
     int A = 10;
     int* f () {
-        return &A;
+        escape &A;
     }
 end
 var int a=0;
@@ -22246,7 +21881,7 @@ native _f();
 native do
     int A = 10;
     int* f () {
-        return &A;
+        escape &A;
     }
 end
 var int a = 10;
@@ -22648,7 +22283,7 @@ Test { [[
 native @pure _f;
 native do
     int f (int* v) {
-        return v[0];
+        escape v[0];
     }
 end
 var _int[2] v = [];
@@ -23203,7 +22838,7 @@ escape cell_rects[0].x;
 Test { [[
 native do
     byte* f (void) {
-        return "ola";
+        escape "ola";
     }
     typedef struct {
         byte* (*f) (void);
@@ -23219,7 +22854,7 @@ escape str[1]=='i';
 Test { [[
 native do
     byte* f (void) {
-        return "ola";
+        escape "ola";
     }
     typedef struct {
         byte* (*f) (void);
@@ -23235,7 +22870,7 @@ escape str[2]=='a';
 Test { [[
 native do
     byte* f (void) {
-        return "ola";
+        escape "ola";
     }
     typedef struct {
         byte* (*f) (void);
@@ -23251,7 +22886,7 @@ escape str[4]=='i';
 Test { [[
 native do
     byte* f (void) {
-        return "ola";
+        escape "ola";
     }
 end
 var byte[]  str;
@@ -23267,7 +22902,7 @@ Test { [[
 var byte[] str = [0,1,2];
 
 function (void) => byte[]& f do
-    return &this.str;
+    escape &this.str;
 end
 
 var byte[]& ref = &f();
@@ -23281,7 +22916,7 @@ Test { [[
 var byte[] str = [0,1,2];
 
 function (void) => byte[]& f do
-    return &this.str;
+    escape &this.str;
 end
 
 var byte[]& ref = &f();
@@ -23296,7 +22931,7 @@ Test { [[
 var byte[] str = [0,1,2];
 
 function (void) => byte[]& f do
-    return &this.str;
+    escape &this.str;
 end
 
 var byte[]& ref = &f();
@@ -23312,12 +22947,12 @@ var byte[] str = [0,1,2];
 
 native do
     byte* g () {
-        return "ola";
+        escape "ola";
     }
 end
 
 function (void) => byte[]& f do
-    return &this.str;
+    escape &this.str;
 end
 
 var byte[]& ref = &f();
@@ -23332,7 +22967,7 @@ Test { [[
 var byte[] str;
 
 function (void)=>byte[]& f1 do
-    return &this.str;
+    escape &this.str;
 end
 
 function (void)=>void f2 do
@@ -23381,7 +23016,7 @@ escape _strcmp((_char&&)&&str1,"")==0 and _strcmp((_char&&)&&str2,"")==0;
 
 Test { [[
 function (byte&& str)=>int strlen do
-    return _strlen(str);
+    escape _strlen(str);
 end
 
 var byte[] str = [].."Ola Mundo!";
@@ -23392,7 +23027,7 @@ escape strlen(&&str);
 
 Test { [[
 function (byte&& str)=>int strlen do
-    return _strlen(str);
+    escape _strlen(str);
 end
 
 var byte[] str = [].."Ola Mundo!";
@@ -23530,7 +23165,7 @@ Test { [[
 native @pure _f();
 native do
     int f (int* rect) {
-        return *rect;
+        escape *rect;
     }
 end
 
@@ -24019,7 +23654,7 @@ escape 0;
 
 Test { [[
 native do
-    int A (int v) { return 1; }
+    int A (int v) { escape 1; }
 end
 escape 0;
 ]],
@@ -24070,7 +23705,7 @@ Test { [[
 native _Const();
 native do
     int Const () {
-        return -10;
+        escape -10;
     }
 end
 var int ret = _Const();
@@ -24083,7 +23718,7 @@ Test { [[
 native _ID();
 native do
     int ID (int v) {
-        return v;
+        escape v;
     }
 end
 escape _ID(10);
@@ -24095,7 +23730,7 @@ Test { [[
 native _ID();
 native do
     int ID (int v) {
-        return v;
+        escape v;
     }
 end
 var int v = _ID(10);
@@ -24143,7 +23778,7 @@ Test { [[
 native _NEG();
 native do
     int NEG (int v) {
-        return -v;
+        escape -v;
     }
 end
 escape _NEG(10);
@@ -24155,7 +23790,7 @@ Test { [[
 native _NEG();
 native do
     int NEG (int v) {
-        return -v;
+        escape -v;
     }
 end
 var int v = _NEG(10);
@@ -24168,7 +23803,7 @@ Test { [[
 native _ID();
 native do
     int ID (int v) {
-        return v;
+        escape v;
     }
 end
 input int A;
@@ -24187,7 +23822,7 @@ Test { [[
 native _ID();
 native do
     int ID (int v) {
-        return v;
+        escape v;
     }
 end
 input int A;
@@ -24207,7 +23842,7 @@ escape v;
 
 Test { [[
 native _Z1();
-native do int Z1 (int a) { return a; } end
+native do int Z1 (int a) { escape a; } end
 input int A;
 var int c;
 _Z1(3);
@@ -24224,10 +23859,10 @@ Test { [[
 native @nohold _f1(), _f2();
 native do
     int f1 (u8* v) {
-        return v[0]+v[1];
+        escape v[0]+v[1];
     }
     int f2 (u8* v1, u8* v2) {
-        return *v1+*v2;
+        escape *v1+*v2;
     }
 end
 var _u8[2] v = [];
@@ -24413,7 +24048,7 @@ escape 1;
 Test { [[
 native do
     int f () {
-        return 1;
+        escape 1;
     }
 end
 var _int[2] v = [];
@@ -24446,17 +24081,17 @@ end
 input (byte&& path, byte&& mode)=>_F&& OPEN do
     ___ceu_nothing(path);
     ___ceu_nothing(mode);
-    return _fff;
+    escape _fff;
 end
 
 input (_F&& f)=>int CLOSE do
     ___ceu_nothing(f);
-    return 1;
+    escape 1;
 end
 
 input (_F&& f)=>int SIZE do
     ___ceu_nothing(f);
-    return 1;
+    escape 1;
 end
 
 input (void&& ptr, int size, int nmemb, _F&& f)=>int READ do
@@ -24464,7 +24099,7 @@ input (void&& ptr, int size, int nmemb, _F&& f)=>int READ do
     ___ceu_nothing(&&size);
     ___ceu_nothing(&&nmemb);
     ___ceu_nothing(f);
-    return 1;
+    escape 1;
 end
 
 escape 1;
@@ -24504,11 +24139,11 @@ escape 1;
 PRE = [[
 native do
     static inline int idx (@const int* vec, int i) {
-        return vec[i];
+        escape vec[i];
     }
     static inline int set (int* vec, int i, int val) {
         vec[i] = val;
-        return val;
+        escape val;
     }
 end
 @pure _idx;
@@ -24586,19 +24221,19 @@ PRE = [[
 @pure _f3, _f5;
 native do
 int f1 (int* a, int* b) {
-    return *a + *b;
+    escape *a + *b;
 }
 int f2 (@const int* a, int* b) {
-    return *a + *b;
+    escape *a + *b;
 }
 int f3 (@const int* a, const int* b) {
-    return *a + *b;
+    escape *a + *b;
 }
 int f4 (int* a) {
-    return *a;
+    escape *a;
 }
 int f5 (@const int* a) {
-    return *a;
+    escape *a;
 }
 end
 ]]
@@ -25070,7 +24705,7 @@ native do
     int V = 0;
     int fff (int a, int b) {
         V = V + a + b;
-        return V;
+        escape V;
     }
 end
 {fff}(1,2);
@@ -25085,7 +24720,7 @@ native do
     int V = 0;
     int fff (int a, int b) {
         V = V + a + b;
-        return V;
+        escape V;
     }
 end
 call {fff}(1,2);
@@ -25189,7 +24824,7 @@ Test { [[
 native _const_1();
 native do
     int const_1 () {
-        return 1;
+        escape 1;
     }
 end
 escape _const_1();
@@ -25201,7 +24836,7 @@ Test { [[
 native _const_1();
 native do
     int const_1 () {
-        return 1;
+        escape 1;
     }
 end
 escape _const_1() + _const_1();
@@ -25213,7 +24848,7 @@ Test { [[
 native _inv();
 native do
     int inv (int v) {
-        return -v;
+        escape -v;
     }
 end
 var int a;
@@ -25228,7 +24863,7 @@ Test { [[
 native @pure _inv();
 native do
     int inv (int v) {
-        return -v;
+        escape -v;
     }
 end
 var int a;
@@ -25242,7 +24877,7 @@ Test { [[
 native _id();
 native do
     int id (int v) {
-        return v;
+        escape v;
     }
 end
 var int a;
@@ -25747,17 +25382,17 @@ end
 Test { [[
 function (void&& && o1, void&& && o2)=>int getVS do
     if (*o1) then
-        return 1;
+        escape 1;
     else/if (*o2) then
         var void&& tmp = *o1;
         *o1 = *o2;
         *o2 := tmp;
             // tmp is an alias to "o1"
-        return 1;
+        escape 1;
     else
         //*o1 = NULL;
         //*o2 = NULL;
-        return 0;
+        escape 0;
     end
 end
 escape 1;
@@ -27069,7 +26704,7 @@ native do
                 ret = ret + i + j;
             }
         }
-        return ret;
+        escape ret;
     }
 end
 
@@ -27147,7 +26782,7 @@ native do
                 ret = ret + i + j;
             }
         }
-        return ret;
+        escape ret;
     }
 end
 
@@ -27826,7 +27461,7 @@ escape v;
 Test { [[
 native do
     int f (int v) {
-        return v + 1;
+        escape v + 1;
     }
 end
 var int a = 0;
@@ -28187,7 +27822,7 @@ escape is_int+is_float;
 Test { [=[
 function (void)=>int f do
     var int v = [[ 1 ]];
-    return v;
+    escape v;
 end
 escape f();
 ]=],
@@ -31732,7 +31367,7 @@ end
 var T a, b;
 native do
     int f (byte* a, byte* b) {
-        return *a + *b;
+        escape *a + *b;
     }
 end
 par/and do
@@ -33115,7 +32750,7 @@ native/pre do
     } SDL_Rect;
     int UI_ALIGN_CENTER = 1;
     int UI_align (int a, int b) {
-        return 0;
+        escape 0;
     }
 end
 class T with
@@ -33142,7 +32777,7 @@ native/pre do
     } SDL_Rect;
     int UI_ALIGN_CENTER = 1;
     int UI_align (int a, int b, int c) {
-        return 0;
+        escape 0;
     }
 end
 class T with
@@ -33170,7 +32805,7 @@ native/pre do
     } SDL_Rect;
     int UI_ALIGN_CENTER = 1;
     int UI_align (int a, int b, int c) {
-        return 0;
+        escape 0;
     }
 end
 class T with
@@ -33527,7 +33162,7 @@ Test { [[
 native do
     void* PTR;
     void* myalloc (void) {
-        return NULL;
+        escape NULL;
     }
     void myfree (void* ptr) {
     }
@@ -33553,7 +33188,7 @@ Test { [[
 native do
     int V;
     void* myalloc (void) {
-        return &V;
+        escape &V;
     }
     void myfree (void* ptr) {
     }
@@ -33580,7 +33215,7 @@ Test { [[
 native do
     int V;
     void* myalloc (void) {
-        return &V;
+        escape &V;
     }
     void myfree (void* ptr) {
     }
@@ -38614,7 +38249,7 @@ Test { [[
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -38652,7 +38287,7 @@ Test { [[
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -38772,7 +38407,7 @@ input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -38814,7 +38449,7 @@ input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -38896,7 +38531,7 @@ input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -38939,7 +38574,7 @@ input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -38986,7 +38621,7 @@ input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -39031,7 +38666,7 @@ input void OS_START;
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -39080,7 +38715,7 @@ Test { [[
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -39128,7 +38763,7 @@ Test { [[
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -39177,7 +38812,7 @@ Test { [[
 native _f(), _V;
 native do
     int V = 1;
-    int* f (){ return NULL; }
+    int* f (){ escape NULL; }
 end
 
 class V with
@@ -41547,13 +41182,13 @@ end
 Test { [[
 native do
     int fff (CEU_T* t, int v) {
-        return CEU_T_fff(NULL, t, v);
+        escape CEU_T_fff(NULL, t, v);
     }
     int iii (CEU_III* i, int v) {
-        return CEU_III__fff(i)(NULL, i, v);
+        escape CEU_III__fff(i)(NULL, i, v);
     }
     int vvv (CEU_III* i) {
-        return *CEU_III__vvv(i);
+        escape *CEU_III__vvv(i);
     }
 end
 native @pure _fff(), _iii(), _vvv();
@@ -41568,7 +41203,7 @@ class T with
     function (int)=>int fff;
 do
     function (int v)=>int fff do
-        return this.vvv + v;
+        escape this.vvv + v;
     end
     await FOREVER;
 end
@@ -42648,7 +42283,7 @@ var I&& i2 = (I&&) &&u;
 native @pure _f();
 native do
     void* f (void* org) {
-        return org;
+        escape org;
     }
 end
 
@@ -43013,7 +42648,7 @@ end
 
 Test { [[
 native do
-    int f() { return 1; }
+    int f() { escape 1; }
 end
 class T with do end
 spawn T with
@@ -43033,7 +42668,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -43154,7 +42789,7 @@ escape 1;
 
 Test { [[
 function (int v)=>int f do
-    return v+1;
+    escape v+1;
 end
 escape f();
 ]],
@@ -43163,7 +42798,7 @@ escape f();
 
 Test { [[
 function (int v)=>int f do
-    return v+1;
+    escape v+1;
 end
 var int&& ptr;
 escape f(ptr);
@@ -43173,7 +42808,7 @@ escape f(ptr);
 
 Test { [[
 function (int v)=>int f do
-    return v+1;
+    escape v+1;
 end
 escape f(1);
 ]],
@@ -43218,7 +42853,7 @@ escape 1;
 
 Test { [[
 function (int) => void f do
-    return 1;
+    escape 1;
 end
 escape 1;
 ]],
@@ -43248,7 +42883,7 @@ escape 1;
 
 Test { [[
 function (void) => void f do
-    return;
+    escape;
 end
 escape 1;
 ]],
@@ -43257,17 +42892,17 @@ escape 1;
 
 Test { [[
 function (void) => void f do
-    return 1;
+    escape 1;
 end
 escape 1;
 ]],
-    --gcc = 'error: ‘return’ with a value, in function returning void',
-    env = 'line 2 : invalid return value : types mismatch (`void´ <= `int´)',
+    --gcc = 'error: ‘escape’ with a value, in function returning void',
+    env = 'line 2 : invalid escape value : types mismatch (`void´ <= `int´)',
 }
 
 Test { [[
 function (void) => void f do
-    return;
+    escape;
 end
 escape 1;
 ]],
@@ -43276,7 +42911,7 @@ escape 1;
 
 Test { [[
 do
-    return 1;
+    escape 1;
 end
 escape 1;
 ]],
@@ -43293,7 +42928,7 @@ escape 1;
 
 Test { [[
 function (void)=>int f do
-    return 1;
+    escape 1;
 end
 escape f();
 ]],
@@ -43302,7 +42937,7 @@ escape f();
 
 Test { [[
 function (void)=>int f do
-    return 1;
+    escape 1;
 end
 escape call f();
 ]],
@@ -43328,7 +42963,7 @@ escape 1;
 
 Test { [[
 function (void) => int f;
-function (void) => int f do return 1; end
+function (void) => int f do escape 1; end
 escape 1;
 ]],
     run = 1,
@@ -43351,7 +42986,7 @@ escape 1;
 Test { [[
 function (int,int) => int f;
 function (int a, int b) => int f do
-    return a + b;
+    escape a + b;
 end
 escape 1;
 ]],
@@ -43361,7 +42996,7 @@ escape 1;
 Test { [[
 function (int,int) => int f;
 function (int a, int b) => int f do
-    return a + b;
+    escape a + b;
 end
 escape f(1,2);
 ]],
@@ -43370,7 +43005,7 @@ escape f(1,2);
 
 Test { [[
 function (int x)=>int fff do
-    return x + 1;
+    escape x + 1;
 end
 
 var int x = fff(10);
@@ -43435,7 +43070,7 @@ function (int x)=>int f do
     if x then end;
     loop i in 10 do
     end
-    return 1;
+    escape 1;
 end
 ]],
     run = 1,
@@ -43446,7 +43081,7 @@ class T with
 do
     function (int)=>int f;
     function (int x)=>int f do
-        return x;
+        escape x;
     end
     escape f(10);
 end
@@ -43459,7 +43094,7 @@ escape x;
 Test { [[
 escape 1;
 function (void) => int f do
-    return 1;
+    escape 1;
 end
 ]],
     run = 1,
@@ -43561,7 +43196,7 @@ escape 1;
 
 Test { [[
 function (int x)=>int f do
-    return x + 1;
+    escape x + 1;
 end
 
 if true then
@@ -43582,7 +43217,7 @@ end
 var T t;
 
 function (void)=>T&& f do
-    return &&t;
+    escape &&t;
 end
 
 var T&& p = f();
@@ -43601,7 +43236,7 @@ var T t;
 
 function (void)=>T&& f do
     var T&& p = &&t;
-    return p;
+    escape p;
 end
 
 var T&& p = f();
@@ -43620,7 +43255,7 @@ var T t;
 
 function (void)=>T&& f do
     var T&& p = &&t;
-    return p;
+    escape p;
 end
 
 var T&& p = f();
@@ -43636,7 +43271,7 @@ function (int x)=>int f;
 var int x = 0;
 function (int x)=>int f do
     this.x = x;
-    return 2;
+    escape 2;
 end
 escape f(1) + this.x;
 ]],
@@ -43763,7 +43398,7 @@ class T with
 do
     var int b;
     function (void)=>int f do
-        return b;
+        escape b;
     end
     a = 1;
     b = 2;
@@ -43781,7 +43416,7 @@ class T with
 do
     var int b=0;
     function (void)=>int f do
-        return b;
+        escape b;
     end
     a = 1;
     b = 2;
@@ -43843,7 +43478,7 @@ native do
 end
 class T with
     function (int a, int b)=>int f do
-        return a + b;
+        escape a + b;
     end
 do
     _V = _V + f(1,2) + this.f(3,4);
@@ -43861,7 +43496,7 @@ end
 class T with
 do
     function (int a, int b)=>int f do
-        return a + b;
+        escape a + b;
     end
     _V = _V + f(1,2) + this.f(3,4);
 end
@@ -43898,7 +43533,7 @@ class T with
 do
     var int b=0;
     function (void)=>int f do
-        return this.b;
+        escape this.b;
     end
     a = 1;
     b = 2;
@@ -43913,7 +43548,7 @@ Test { [[
 class T with
     var int a=0;
     function (void)=>int f do
-        return this.b;
+        escape this.b;
     end
 do
     var int b;
@@ -43947,7 +43582,7 @@ do
 
     function (int v)=>int f do
         this.v = this.v + v;
-        return this.v;
+        escape this.v;
     end
 end
 
@@ -43970,7 +43605,7 @@ do
 
     function (int v)=>int f do
         this.v = this.v + v;
-        return this.v;
+        escape this.v;
     end
 end
 
@@ -43993,10 +43628,10 @@ class T with
     interface I;
 do
     function (void)=>int f do
-        return this.f1();
+        escape this.f1();
     end
     function (void)=>int f1 do
-        return 1;
+        escape 1;
     end
 end
 
@@ -44017,10 +43652,10 @@ class T with
     interface I;
 do
     function (void)=>int f1 do
-        return 1;
+        escape 1;
     end
     function (void)=>int f do
-        return this.f1();
+        escape this.f1();
     end
 end
 
@@ -44042,9 +43677,9 @@ class T with
 do
     function (int v)=>int g do
         if (v == 1) then
-            return 1;
+            escape 1;
         end
-        return v * i:g(v-1);
+        escape v * i:g(v-1);
     end
 end
 
@@ -44068,9 +43703,9 @@ class T with
 do
     function (int v)=>int g do
         if (v == 1) then
-            return 1;
+            escape 1;
         end
-        return v * i:g(v-1);
+        escape v * i:g(v-1);
     end
 end
 
@@ -44094,9 +43729,9 @@ class T with
 do
     function @rec (int v)=>int g do
         if (v == 1) then
-            return 1;
+            escape 1;
         end
-        return v * i:g(v-1);
+        escape v * i:g(v-1);
     end
 end
 
@@ -44120,9 +43755,9 @@ class T with
 do
     function (int v)=>int g do
         if (v == 1) then
-            return 1;
+            escape 1;
         end
-        return v * i:g(v-1);
+        escape v * i:g(v-1);
     end
 end
 
@@ -44146,9 +43781,9 @@ class T with
 do
     function @rec (int v)=>int g do
         if (v == 1) then
-            return 1;
+            escape 1;
         end
-        return v * (call/rec i:g(v-1));
+        escape v * (call/rec i:g(v-1));
     end
 end
 
@@ -44171,9 +43806,9 @@ class T with
 do
     function @rec (int v)=>int g do
         if (v == 1) then
-            return 1;
+            escape 1;
         end
-        return v * i:g(v-1);
+        escape v * i:g(v-1);
     end
 end
 
@@ -44196,7 +43831,7 @@ class T with
     var I&& i=null;
 do
     function @rec (int v)=>int g do
-        return 1;
+        escape 1;
     end
 end
 
@@ -44218,7 +43853,7 @@ class T with
     var I&& i=null;
 do
     function @rec (int v)=>int g do
-        return 1;
+        escape 1;
     end
 end
 
@@ -44241,7 +43876,7 @@ class T with
     var I&& i=null;
 do
     function @rec (int v)=>int g do
-        return v;
+        escape v;
     end
 end
 
@@ -44267,7 +43902,7 @@ class T with
     var I&& i=null;
 do
     function @rec (int v)=>int g do
-        return v;
+        escape v;
     end
 end
 
@@ -44292,7 +43927,7 @@ class T with
     var I&& i=null;
 do
     function (int v)=>int g do
-        return v;
+        escape v;
     end
 end
 
@@ -44316,7 +43951,7 @@ class T with
     var I&& i=null;
 do
     function (int v)=>int g do
-        return v;
+        escape v;
     end
 end
 
@@ -44339,7 +43974,7 @@ class U with
     var I&& i=null;
 do
     function (int v)=>int g do
-        return 1;
+        escape 1;
     end
 end
 
@@ -44349,9 +43984,9 @@ class T with
 do
     function (int v)=>int g do
         if (v == 1) then
-            return 1;
+            escape 1;
         end
-        return v * i:g(v-1);
+        escape v * i:g(v-1);
     end
 end
 
@@ -44380,9 +44015,9 @@ class T with
 do
     function @rec (int v)=>int g do
         if (v == 1) then
-            return 1;
+            escape 1;
         end
-        return v * i:g(v-1);
+        escape v * i:g(v-1);
     end
 end
 
@@ -44403,9 +44038,9 @@ class T with
 do
     function (int v)=>int g do
         if (v == 1) then
-            return 1;
+            escape 1;
         end
-        return v * i:g(v-1);
+        escape v * i:g(v-1);
     end
 end
 
@@ -44414,7 +44049,7 @@ class U with
     var I&& i=null;
 do
     function (int v)=>int g do
-        return 1;
+        escape 1;
     end
 end
 
@@ -44444,9 +44079,9 @@ class T with
 do
     function @rec (int v)=>int g do
         if (v == 1) then
-            return 1;
+            escape 1;
         end
-        return v * i:g(v-1);
+        escape v * i:g(v-1);
     end
 end
 
@@ -44471,12 +44106,12 @@ class T with
 do
     native do
         int f2 (int v) {
-            return v;
+            escape v;
         }
     end
 
     function (int v)=>int f1 do
-        return v;
+        escape v;
     end
 
     ret1 = this.f1(1);
@@ -44504,12 +44139,12 @@ class T with
 do
     native do
         int f2 (int v) {
-            return v;
+            escape v;
         }
     end
 
     function (int v)=>int f1 do
-        return v;
+        escape v;
     end
 
     ret1 = this.f1(1);
@@ -44556,7 +44191,7 @@ class T with
     //native @nohold _ins();
 do
     function (void)=>int ins do
-        return v;
+        escape v;
     end
 end
 
@@ -45090,9 +44725,9 @@ Test { [[
 function (int v)=>int f;
 function (int v)=>int f do
     if v == 0 then
-        return 1;
+        escape 1;
     end
-    return v*f(v-1);
+    escape v*f(v-1);
 end
 escape f(5);
 ]],
@@ -45209,9 +44844,9 @@ Test { [[
 function @rec (int v)=>int f;
 function (int v)=>int f do
     if v == 0 then
-        return 1;
+        escape 1;
     end
-    return v*f(v-1);
+    escape v*f(v-1);
 end
 escape f(5);
 ]],
@@ -45222,9 +44857,9 @@ Test { [[
 function @rec (int v)=>int f;
 function @rec (int v)=>int f do
     if v == 0 then
-        return 1;
+        escape 1;
     end
-    return v*f(v-1);
+    escape v*f(v-1);
 end
 escape f(5);
 ]],
@@ -45241,9 +44876,9 @@ Test { [[
 function @rec (int v)=>int f;
 function @rec (int v)=>int f do
     if v == 0 then
-        return 1;
+        escape 1;
     end
-    return v * (call/rec f(v-1));
+    escape v * (call/rec f(v-1));
 end
 escape f(5);
 ]],
@@ -45253,9 +44888,9 @@ Test { [[
 function @rec (int v)=>int f;
 function @rec (int v)=>int f do
     if v == 0 then
-        return 1;
+        escape 1;
     end
-    return v * call/rec f(v-1);
+    escape v * call/rec f(v-1);
 end
 escape call/rec f(5);
 ]],
@@ -45378,18 +45013,18 @@ escape w:x;     // escapes with "10"
 
 Test { [[
 function (void)=>int&& f do
-    return 1;
+    escape 1;
 end
 escape 10;
 ]],
-    env = 'line 2 : invalid return value : types mismatch (`int&&´ <= `int´)',
+    env = 'line 2 : invalid escape value : types mismatch (`int&&´ <= `int´)',
 }
 
 Test { [[
 var int x = 10;
 
 function (void)=>int& f do
-    return &this.x;
+    escape &this.x;
 end
 
 escape f();
@@ -45402,7 +45037,7 @@ class T with
 do
     var int x = 10;
     function (void)=>int& f do
-        return &this.x;
+        escape &this.x;
     end
 end
 
@@ -45417,12 +45052,12 @@ Test { [[
 var int x = 10;
 
 function (void)=>int& f do
-    return &&this.x;
+    escape &&this.x;
 end
 
 escape f();
 ]],
-    env = 'line 4 : invalid return value : types mismatch (`int&´ <= `int&&´)',
+    env = 'line 4 : invalid escape value : types mismatch (`int&´ <= `int&&´)',
 }
 Test { [[
 class T with
@@ -45430,7 +45065,7 @@ class T with
 do
     var int x = 10;
     function (void)=>int&& f do
-        return &this.x;
+        escape &this.x;
     end
 end
 
@@ -45438,7 +45073,7 @@ var T t;
 
 escape t.f();
 ]],
-    env = 'line 6 : invalid return value : types mismatch (`int&&´ <= `int&´)',
+    env = 'line 6 : invalid escape value : types mismatch (`int&&´ <= `int&´)',
 }
 
 Test { [[
@@ -45486,7 +45121,7 @@ do
 end
 
 function (T& t)=>int f do
-    return t.v * 2;
+    escape t.v * 2;
 end
 
 var T t;
@@ -45509,7 +45144,7 @@ do
 end
 
 function (T& t)=>int f do
-    return t.v * 2;
+    escape t.v * 2;
 end
 
 var T t;
@@ -45535,7 +45170,7 @@ do
 end
 
 function (T&& t)=>int f do
-    return t:v * 2;
+    escape t:v * 2;
 end
 
 var T t;
@@ -45565,10 +45200,10 @@ class CommonThings with
     function (Human& h)=>int breath;
 do
     function (Human& h)=>int walk do
-        return h.n;
+        escape h.n;
     end
     function (Human& h)=>int breath do
-        return h.n;
+        escape h.n;
     end
     await FOREVER;
 end
@@ -45579,10 +45214,10 @@ class Man with
     var int n = 100;
 do
     function (void)=>int walk do
-        return 200; // override
+        escape 200; // override
     end
     function (void)=>int breath do
-        return this.ct.breath(&this); // delegate
+        escape this.ct.breath(&this); // delegate
     end
 end
 
@@ -45697,13 +45332,13 @@ do
         this.value = 10;
     end;
     function (void)=>Dir& get do
-        return &&dir;
+        escape &&dir;
     end
 end
 var Pingu p;
 escape p.get().value;
 ]],
-    env = 'line 15 : invalid return value : types mismatch (`Dir&´ <= `Dir&&´)',
+    env = 'line 15 : invalid escape value : types mismatch (`Dir&´ <= `Dir&&´)',
 }
 
 Test { [[
@@ -45721,7 +45356,7 @@ do
         this.value = 10;
     end;
     function (void)=>Dir& get do
-        return &dir;
+        escape &dir;
     end
 end
 var Pingu p;
@@ -45776,7 +45411,7 @@ class T with
 do
     function (void)=>I&& f do
         var I&& i = &&this;
-        return i;
+        escape i;
     end
 end
 
@@ -45793,7 +45428,7 @@ class T with
 do
     var int x = 1;
     function (void)=>int&& f do
-        return &&this.x;
+        escape &&this.x;
     end
 end
 
@@ -45811,7 +45446,7 @@ class T with
     function (void)=>I&& f;
 do
     function (void)=>I&& f do
-        return &&this;
+        escape &&this;
     end
 end
 
@@ -46174,7 +45809,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -46202,7 +45837,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -46230,7 +45865,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -46258,7 +45893,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -46286,7 +45921,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -46314,7 +45949,7 @@ escape v!;
 Test { [[
 native do
     int* new_Int() {
-        return NULL;
+        escape NULL;
     }
 end
     function (void) => void parse_file do
@@ -47516,7 +47151,7 @@ escape 1;
 
 Test { PRE_ISR..[[
 function (void)=>int f do
-    return 2;
+    escape 2;
 end
 var int v = f();
 par/or do
@@ -47534,7 +47169,7 @@ escape v;
 
 Test { PRE_ISR..[[
 function (void)=>int f do
-    return 2;
+    escape 2;
 end
 var int v = f();
 par/or do
@@ -47553,7 +47188,7 @@ escape v;
 
 Test { PRE_ISR..[[
 native do
-    int f (void) { return 2; }
+    int f (void) { escape 2; }
 end
 var int v = _f();
 par/or do
@@ -47574,7 +47209,7 @@ Test { [[
 native @pure _f();
 native/pre do
     int f (void) {
-        return 2;
+        escape 2;
     }
     ##define ceu_out_isr_on()
     ##define ceu_out_isr_off()
@@ -51007,7 +50642,7 @@ class T with
     var int v = 50;
 do
     function (void)=>int get do
-        return v;
+        escape v;
     end
     function (int v)=>void set do
         this.v= v;
@@ -51531,7 +51166,7 @@ escape i+1;
 }
 ]=]
 
---do escape end
+--do return end
 
 -- GLOBAL AWAITS (deprecated)
 
@@ -51784,7 +51419,7 @@ end
     awaits = 3,
     gcc = 'error: implicit declaration of function',
 }
---do escape end
+--do return end
 
 Test { [[
 input int A, B;
@@ -52197,7 +51832,7 @@ escape 1;
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 native do
     int f () {
-        return 10;
+        escape 10;
     }
 end
 ]])
@@ -52211,7 +51846,7 @@ escape _f();
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 native do
     int f () {
-        return 10;
+        escape 10;
     }
 end
 ]])
@@ -52228,7 +51863,7 @@ INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 #define MOD1
 native do
     int f () {
-        return 10;
+        escape 10;
     }
 end
 #endif
@@ -52325,7 +51960,7 @@ escape i;
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 native do
     int f () {
-        return 10;
+        escape 10;
     }
     int A;
     int B;
@@ -53401,7 +53036,7 @@ native do
 end
 input/output (int max)=>void X do
     if max then end;
-    return;
+    escape;
 end
 escape 1;
 ]],
@@ -53641,7 +53276,7 @@ native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input [10] (int)=>int LINE do
-    return 1;     // missing <int "id">
+    escape 1;     // missing <int "id">
 end
 par/or do
     var u8 err, ret;
@@ -53658,7 +53293,7 @@ native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input [10] (int max)=>int LINE do
-    return 1;
+    escape 1;
 end
 par/or do
     var u8 err;
@@ -53676,7 +53311,7 @@ native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 input/output [10] (int max)=>int LINE do
-    return 1;
+    escape 1;
 end
 par/or do
     var u8 err;
@@ -53694,7 +53329,7 @@ native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 input/output [10] (int max)=>int LINE do
-    return 1;
+    escape 1;
 end
 escape 1;
 ]],
@@ -53722,7 +53357,7 @@ par do
     end
     input/output [10] (int max)=>int LINE do
         _V = 10;
-        return 1;
+        escape 1;
     end
     await 1s;
     escape _V+1;
@@ -54306,7 +53941,7 @@ native do
     int ceu_out_event_F (tceu_app* app, int id_out, int len, byte* data) {
         u8 vector_offset = (((u8*)data)[0]);
         tceu_vector** v = (tceu_vector**)(data + vector_offset);
-        return (*v)->nxt;
+        escape (*v)->nxt;
     }
 end
 output (int,int,int[]&&) OUT;
@@ -54351,7 +53986,7 @@ native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
 end
 input/output (void)=>byte SERIAL_CHAR do
-    return 'a';
+    escape 'a';
 end
 escape 1;
 ]],
@@ -54370,7 +54005,7 @@ native do
                 V = v->nxt;
             }
         }
-        return 1;
+        escape 1;
     }
 end
 
@@ -54378,7 +54013,7 @@ input/output (int x)=>byte[]&& PING_PONG do
     var byte[] ret = [].."Pong ";
     native @nohold _printf();
     _printf("%s\n", (_char&&)&&ret);
-    return &&ret;
+    escape &&ret;
 end
 async do
     emit PING_PONG_REQUEST => (0,1);
@@ -54429,13 +54064,13 @@ native do
                 V = V + k->_2;
             break;
         }
-        return 1;
+        escape 1;
     }
 end
 
 input/output [10] (u16 t)=>_info&& TEST do
     var _info i = _info(42,89);
-    return &&i;
+    escape &&i;
 end
 
 async do
@@ -54467,14 +54102,14 @@ printf("RET %p %d\n", evt_buf, k->_2);
                 V = V + k->_2;
             break;
         }
-        return 1;
+        escape 1;
     }
 end
 
 input/output [10] (u16 t)=>_info&& TEST do
     var _info i = _info(42,89);
     await 1s;
-    return &&i;
+    escape &&i;
 end
 
 async do
@@ -54781,7 +54416,7 @@ var Ball ball = Ball(130,130,8);
 
 native do
     int add (s16 a, s16 b, s16 c) {
-        return a + b + c;
+        escape a + b + c;
     }
 end
 
@@ -54817,7 +54452,7 @@ escape 1;
 Test { [[
 native do
     int add (int a, int b, int c) {
-        return a + b + c;
+        escape a + b + c;
     }
 end
 
@@ -54854,7 +54489,7 @@ end
 
 function (void)=>T f do
     var T t = T(10);
-    return t;
+    escape t;
 end
 
 var T t = f();
@@ -56689,7 +56324,7 @@ native/pre do
         int x;
     } t;
     int id (int v) {
-        return v;
+        escape v;
     }
 end
 native @pure _id();
@@ -56722,7 +56357,7 @@ escape 1;
 Test { [[
 native do
     void* myalloc (void) {
-        return NULL;
+        escape NULL;
     }
     void myfree (void* v) {
     }
@@ -56744,7 +56379,7 @@ escape 1;
 Test { [[
 native do
     void* myalloc (void) {
-        return NULL;
+        escape NULL;
     }
     void myfree (void* v) {
     }
@@ -56777,9 +56412,9 @@ native do
     int* V2 = &v2;
     int* fff (int i) {
         if (i == 1) {
-            return NULL;
+            escape NULL;
         } else {
-            return V2;
+            escape V2;
         }
     }
 end
@@ -56968,7 +56603,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -56997,7 +56632,7 @@ Test { [[
 native do
     int V = 10;
     int* getV (void) {
-        return &V;
+        escape &V;
     }
 end
 
@@ -64104,6 +63739,400 @@ do return end
 -- BUGS & INCOMPLETNESS
 -------------------------------------------------------------------------------
 
+-- BUG: bad message, I want to say that you cannot copy vectors in a single stmt
+Test { [[
+class Test with
+    function (u8[]&& buf)=>void fillBuffer;
+do
+    function (u8[]&& buf)=>void fillBuffer do
+        var u8[] b = *buf;
+        b = b .. [3];
+    end
+end
+
+var u8[10] buffer;
+
+var Test t;
+t.fillBuffer(&&buffer);
+
+escape buffer[0];
+]],
+    env = 'line 5 : types mismatch (`u8[]´ <= `u8[]´)',
+}
+
+-- BUG: doesn't check dimension of pointer to vector
+Test { [[
+function (u8[20]&& buf)=>void fillBuffer do
+    *buf = *buf .. [3];
+end
+var u8[10] buffer;
+fillBuffer(&&buffer);
+escape buffer[0];
+]],
+    env = 'line 5 : wrong argument #1 : types mismatch (`u8[]&&´ <= `u8[]&&´) : dimension mismatch',
+}
+
+--cbuffer "attr to greater scope"
+Test { [[
+    function @rec (void)=>void update_surface do
+        var _CollisionMap&& colmap = _XXX_PURE(global:world!:get_colmap());
+
+        this.me.colmap_serial = colmap:get_serial();
+
+        this.me.canvas.lock();
+
+        var u8&& cbuffer = (u8&&)_XXX_PURE(this.me.canvas.get_data());
+]],
+}
+
+Test { [[
+interface Global with
+    var int i;
+end
+var int i = 1;
+
+class T with
+    function (void)=>int get;
+do
+    function (void)=>int get do
+        escape global:i;
+    end
+end
+
+var T t;
+
+escape t.get();
+]],
+    run = 1,
+}
+
+Test { [[
+class WorldObjFactory with
+    var _PingusLevel&& plf;
+do
+    native do
+        ##define std__vector_FileReader std::vector<FileReader>
+    end
+    loop i in this.plf:get_objects().size() do
+        traverse _ in [] with
+            var _FileReader&& reader = &&this.plf:get_objects().at(i);
+        do
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+do return end
+
+Test { [[
+native @plain _rect;
+native/pre do
+    typedef struct rect {
+        int* x, y;
+    } rect;
+end
+var int v = 10;
+var _rect r = _rect(null);
+r.x = &&v;      // BUG: finalize?
+escape *(r.x);
+]],
+    run = 10,
+}
+
+Test { [[
+data D with
+    var int x;
+end
+
+data E with
+    tag NOTHING;
+or
+    tag X with
+        var D& d;
+    end
+end
+
+    var D d = D(1);
+var E e = E.X(&d);
+    e.X.d = &d;     // BUG: error?
+
+escape e.X.d.x;
+]],
+    run = 1,
+}
+
+-- TODO: bug
+Test { [[
+data LLRB with
+    tag NIL;
+or
+    tag NODE with
+        var LLRB left;
+        var LLRB right;
+    end
+end
+
+var LLRB& h;
+h.NODE.right = h.NODE.left;
+
+escape 1;
+]],
+    run = 1,
+}
+
+-- TODO: bug
+Test { [[
+data LLRB with
+    tag NIL;
+or
+    tag NODE with
+        var LLRB left;
+    end
+end
+
+pool LLRB[] llrb;
+traverse e in llrb do
+    e:NODE.left = traverse e:NODE.left;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+-----------------------
+
+Test { [[
+class T with
+    var int xxx2=0;
+    function (int xxx3)=>void fff;
+do
+    function (int xxx3)=>void fff do
+        var int xxx4 = xxx3;
+        this.xxx2 = xxx4;
+    end
+    this.xxx2 = 1;
+end
+
+var int xxx1 = 10;
+var T ttt;
+ttt.fff(&xxx1);
+escape ttt.xxx2;
+]],
+    run = 1,
+}
+Test { [[
+class TimeDisplay with
+    function (int& vvv)=>TimeDisplay build;
+do
+    var int x = 0;
+    var int& vvv;
+
+    function (int& vvv)=>TimeDisplay build do
+        this.vvv = &vvv;
+    end
+
+    vvv = &x;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class TimeDisplay with
+    function (int& vvv)=>TimeDisplay build;
+do
+    var int& vvv;
+
+    function (int& vvv)=>TimeDisplay build do
+        this.vvv = &vvv;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+do return end
+
+--[=[
+---
+
+    var byte&&                  name    = null;
+
+    function (@hold byte&& name)=>Surface name;
+
+---
+
+class Credits with
+    var _Pathname&& filename;
+do
+    finalize with
+        call {StatManager::instance()->set_bool}("credits-seen", true);
+    end
+
+    // read credit information from filename
+    {
+        static std::vector<std::string> credits;
+        static int end_offset = -static_cast<float>(Display::get_height())/2 - 50; // screen height + grace time
+
+        {
+            std::ifstream in(THIS(CEU_Credits)->filename->get_sys_path());
+            if (!in) {
+                log_error("couldn't open %1%", THIS(CEU_Credits)->filename);
+
+                std::ostringstream out;
+                out << "couldn't open " << THIS(CEU_Credits)->filename;
+]=]
+-------------------------------------------------------------------------------
+
+-- BUG: deveria ser outer.rect.
+-- tenho que verificar essas atribuicoes this.x=this.x
+        --var SpriteR _ = SpriteR.build_name(&this.rect,
+                                           --"core/buttons/hbuttonbgb");
+
+-- BUG: u8 vs int
+Test { [[
+native do
+    ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
+end
+output/input [10] (int max)=>int LINE;
+par/or do
+    var u8 err;
+    var u8? ret;
+    (err, ret) = request LINE => 10;
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+emit/await/refs
+class SDL with
+    input:
+        var byte[] title;
+        var int w,h;
+
+    output:
+        var _SDL_Window&   win;
+        var _SDL_Renderer& ren;
+
+    input/output:
+        var int io;
+
+    output/input:
+        var int oi;
+do
+    var _SDL_Window&? win_;
+    finalize
+        win_ = &_SDL_CreateWindow("SDL 1", _SDL_WINDOWPOS_CENTERED,
+                                           _SDL_WINDOWPOS_CENTERED,
+                                           800, 480,
+                                           _SDL_WINDOW_SHOWN);
+    with
+        _SDL_DestroyWindow(&&win_!);
+    end
+    this.win = &win_!;
+
+    _SDL_GetWindowSize(&&win, &&w, &&h);
+
+    var _SDL_Renderer&? ren_;
+    finalize
+        ren_ = &_SDL_CreateRenderer(&&win, -1, 0);
+    with
+        _SDL_DestroyRenderer(&&ren_!);
+    end
+    this.ren = &ren_!;
+
+    await FOREVER;
+end
+var SDL _;
+]],
+    run = 1,
+}
+
+-- BUG: deallocates byte: ifc/body dcls should not terminate
+Test { [[
+class T with
+    output:
+        var byte[]& name;
+do
+    var byte[] name_ = [].."oi";
+    this.name = &name_;
+    // bug: deallocates byte[]
+end
+
+var T t;
+native @nohold _strlen();
+escape _strlen((byte&&)&&t.name);
+]],
+    run = 2,
+}
+
+--
+--no output vectors in interfaces
+
+--
+--every (x,_) in e do
+
+--
+--event in e      // class ifc
+--if e then ...   // nested blk in body
+--end
+--_printf(e);
+
+--
+-- bug: arity mismatch on constructor/creation
+Test { [[
+class T with
+    var void& p;
+    function (void& p)=>T build;
+do
+    function (void& p)=>T build do
+        this.p = &p;
+    end
+    escape *((int&&)&&this.p);
+end
+
+var int v = 10;
+var int ret = do T.build(&v);
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+data D with
+    var byte[]& str;
+end
+var byte[] s = [].. "oi";
+var D d = D(s);    // BUG: nao detecta erro de tipo
+escape $d.str;
+]],
+    run = 2,
+}
+
+-- bug: force nominal type system
+Test { [[
+interface I with
+end
+
+class V with
+do
+    pool I[1] is;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 -- async dentro de pause
 -- async thread spawn falhou, e ai?
 
@@ -64586,7 +64615,7 @@ end
 error 'testar pause/if org.e'
 error 'testar spawn/spawn que se mata'
 
---do escape end
+--do return end
 
 -- ok: under tests but supposed to work
 
@@ -65313,7 +65342,7 @@ end
 
 Test { [[
 input (int a)=>int F do
-    return a + 1;
+    escape a + 1;
 end
 var int ret = call F=>1;
 escape ret;
@@ -65323,7 +65352,7 @@ escape ret;
 
 Test { [[
 input (int c)=>int WRITE do
-    return c + 1;
+    escape c + 1;
 end
 var byte b = 1;
 var int ret = call WRITE => b;
@@ -65334,7 +65363,7 @@ escape ret;
 
 Test { [[
 input (int a, int b)=>int F do
-    return a + b;
+    escape a + b;
 end
 var int ret = call F=>(1,2);
 escape ret;
@@ -65358,7 +65387,7 @@ escape 1;
 
 Test { [[
 input (byte* str, int len, int x, int y)=>int DRAW_STRING do
-    return x + y + len;
+    escape x + y + len;
 end
 
 var int ret = call DRAW_STRING => ("Welcome to Ceu/OS!\n", 20, 100, 100);
@@ -65421,9 +65450,9 @@ escape 1;
 Test { [[
 input (int a, int b, void* ptr)=>void* MALLOC do
     if a+b == 11 then
-        return ptr;
+        escape ptr;
     else
-        return null;
+        escape null;
     end
 end
 
@@ -65440,9 +65469,9 @@ escape ptr==&i;
 Test { [[
 input (int a, int b, void* ptr)=>void* MALLOC do
     if a+b == 11 then
-        return ptr;
+        escape ptr;
     else
-        return null;
+        escape null;
     end
 end
 
@@ -65582,7 +65611,7 @@ native _v;
 native do
     int v = 1;
     int f (int v) {
-        return v + 1;
+        escape v + 1;
     }
 end
 escape _f(_v);
@@ -65597,7 +65626,7 @@ native _v;
 native do
     int v = 1;
     int f (int v) {
-        return v + 1;
+        escape v + 1;
     }
 end
 escape _f(_v);
@@ -65611,7 +65640,7 @@ Test { [[
 native @pure _f();
 native do
     int* f (int a) {
-        return NULL;
+        escape NULL;
     }
 end
 var int* v = _f(0);
@@ -65625,7 +65654,7 @@ native @pure _f();
 native do
     int V = 10;
     int f (int v) {
-        return v;
+        escape v;
     }
 end
 native @const _V;
@@ -65638,7 +65667,7 @@ Test { [[
 native _f();
 native do
     int f (int* v) {
-        return 1;
+        escape 1;
     }
 end
 var int v;
@@ -65651,7 +65680,7 @@ Test { [[
 native @nohold _f();
 native do
     int f (int* v) {
-        return 1;
+        escape 1;
     }
 end
 var int v;
@@ -65666,7 +65695,7 @@ native @nohold _f();
 native do
     int V=1;
     int f (int* v) {
-        return 1;
+        escape 1;
     }
 end
 var int v;
