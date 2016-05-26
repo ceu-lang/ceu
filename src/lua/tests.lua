@@ -528,6 +528,18 @@ escape x;
     run = 10,
 }
 
+Test { [[
+a = do end;
+]],
+    parser = 'line 1 : after `do´ : expected `/´',
+}
+
+Test { [[
+a = do/X end;
+]],
+    run = 'assertion',
+}
+
 --do return end
 
 ----------------------------------------------------------------------------
@@ -2553,9 +2565,9 @@ end
 }
 
 Test { [[
-var int a = do
-    var int a = do
-        escape 1;
+var int a = do/_
+    var int a = do/A
+        escape/A 1;
     end;
     escape a;
 end;
@@ -2566,10 +2578,48 @@ escape a;
 }
 
 Test { [[
+var int a = do/B
+    var int a = do/A
+        escape/A 1;
+    end;
+    escape a;
+end;
+escape a;
+]],
+    wrn = true,
+    run = 1
+}
+
+Test { [[
+var int a = do/B
+    var int a = do/A
+        escape/B 1;
+    end;
+    escape/B 10;
+end;
+escape a;
+]],
+    wrn = true,
+    run = 1
+}
+
+Test { [[
+var int a = do/B
+    var int a = do/A
+        escape/B 1;
+    end;
+    escape/A a;
+end;
+escape a;
+]],
+    env = 'A not defined',
+}
+
+Test { [[
 event int aa;
 var int a=0;
 par/and do
-    a = do
+    a = do/_
         escape 1;
     end;
 with
@@ -2586,7 +2636,7 @@ escape 0;
 Test { [[
 event int a;
 par/and do
-    a = do
+    a = do/_
         escape 1;
     end;
 with
@@ -2608,11 +2658,25 @@ var u8&& ptr =
     end;
 escape ptr == null;
 ]],
+    parser = 'line 1 : after `=´ : expected expression',
+}
+Test { [[
+var u8&& ptr = do/_
+    par do
+        //_idle();
+        await FOREVER;
+    with
+        await 1s;
+        escape null;
+end
+    end;
+escape ptr == null;
+]],
     run = {['~>1s']=1},
 }
 Test { [[
 var int ret =
-    do
+    do/_
         if true then
             escape 1;
         end
@@ -2826,7 +2890,7 @@ escape a;
 }
 Test { [[
 var int a =
-    do
+    do/_
         escape 1;
     end;
 escape a;
@@ -2835,7 +2899,7 @@ escape a;
 }
 Test { [[
 var int a =
-    do
+    do/_
         escape a;
     end;
 escape a;
@@ -2844,7 +2908,7 @@ escape a;
 }
 Test { [[
 var int a =
-    do
+    do/_
         a = 1;
         escape a;
     end;
@@ -2854,19 +2918,21 @@ escape a;
     run = 1,
 }
 Test { [[
-var int a = par do
+var int a = do/_ par do
                 escape 1;
             with
             end;
+end;
 escape a;
 ]],
     run = 1,
 }
 
 Test { [[
-var int a = par do
+var int a = do/_ par do
                 escape a;
             with
+end
             end;
 escape a;
 ]],
@@ -2874,7 +2940,7 @@ escape a;
 }
 
 Test { [[
-var int a = do
+var int a = do/_
     par do
         escape 1;
     with
@@ -2887,7 +2953,7 @@ escape a;
 
 Test { [[
 input int A,B,F;
-var int a = do
+var int a = do/_
     par/or do
         escape 1;
     with
@@ -2901,7 +2967,7 @@ escape a;
 
 Test { [[
 input int A,B,F;
-var int a = do
+var int a = do/_
         par/or do
             par do
                 var int v=0;
@@ -2932,7 +2998,7 @@ escape a;
 
 Test { [[
 input int A,B,F;
-var int a = do
+var int a = do/_
         par/or do
             par do
                 var int v=0;
@@ -2967,7 +3033,7 @@ escape a;
 
 Test { [[
 input int A,B,F;
-var int a = do
+var int a = do/_
         par/or do
             par do
                 var int v;
@@ -3876,7 +3942,7 @@ end
 Test { [[
 par do
     every 1s do
-        var int ok = do
+        var int ok = do/_
             escape 1;
         end;
         if ok then end;
@@ -5407,7 +5473,7 @@ escape a;
 
 Test { [[
 input int A,B;
-var int a = par do
+var int a = do/_ par do
         await A;
         if 1 then
             await B;
@@ -5417,6 +5483,7 @@ var int a = par do
     with
         var int v = await A;
         escape v;               // 11
+end
     end;
 escape a;
 ]],
@@ -5430,7 +5497,7 @@ escape a;
 Test { [[
 input int A;
 var int a;
-a = par do
+a = do/_ par do
         if 1 then
             var int v = await A;
             escape v;           // 6
@@ -5439,6 +5506,7 @@ a = par do
     with
         var int v = await A;
         escape v;               // 11
+end
     end;
 escape a;
 ]],
@@ -5449,7 +5517,7 @@ escape a;
 Test { [[
 input int A;
 var int a;
-a = par do
+a = do/_ par do
         if 1 then
             var int v = await A;
             escape v;           // 6
@@ -5459,6 +5527,7 @@ a = par do
     with
         var int v = await A;
         escape v;               // 11
+end
     end;
 escape a;
 ]],
@@ -5471,7 +5540,7 @@ escape a;
 Test { [[
 input int A;
 var int a;
-a = par do
+a = do/_ par do
     await A;                    // 4
     if 1 then
         var int v = await A;
@@ -5483,6 +5552,7 @@ a = par do
 with
     var int v = await A;
     escape v;                   // 13
+end
 end;
 escape a;
 ]],
@@ -5543,7 +5613,7 @@ escape v;
 Test { [[
 input int A,B;
 var int a,v=0;
-a = par do
+a = do/_ par do
     if 1 then
         v = await A;    // 5
         escape 0;           // 10
@@ -5554,6 +5624,7 @@ a = par do
 with
     var int v = await A;
     escape v;           // 13
+end
 end;
 escape a;
 ]],
@@ -5566,7 +5637,7 @@ escape a;
 Test { [[
 input int A,B;
 var int a,v=0;
-a = par do
+a = do/_ par do
     if 1 then
         v = await A;
         escape v;       // 6
@@ -5578,6 +5649,7 @@ a = par do
 with
     var int v = await A;
     escape v;           // 14
+end
 end;
 escape a;
 ]],
@@ -9280,10 +9352,11 @@ end;
     },
 }
 Test { [[
-var int v = par do
+var int v = do/_ par do
             escape 0;
         with
             escape 0;
+end
         end;
 if v then
     escape 1;
@@ -9302,10 +9375,11 @@ end;
 }
 Test { [[
 var int a=0;
-var int v = par do
+var int v = do/_ par do
             escape 0;
         with
             escape 0;
+end
         end;
 if v then
     a = 1;
@@ -9320,10 +9394,11 @@ escape a;
     },
 }
 Test { [[
-var int v = par do
+var int v = do/_ par do
             escape 1;
         with
             escape 2;
+end
         end;
 escape v;
 ]],
@@ -10043,7 +10118,7 @@ escape 0;   // TODO
 
 Test { [[
 input int A,B;
-var int ret = do loop do
+var int ret = do/_ loop do
         await A;
         par/or do
             await A;
@@ -11357,7 +11432,7 @@ escape a+b;
 Test { [[
 event int a;
 var int aa=0;
-var int v = par do
+var int v = do/_ par do
     emit a => 1;
     aa = 1;
     escape aa;
@@ -11367,6 +11442,7 @@ with
 with
     emit a => 1;
     escape aa;
+end
 end;
 escape v;
 ]],
@@ -11378,12 +11454,13 @@ escape v;
 }
 Test { [[
 var int v;
-v = par do
+v = do/_ par do
     escape 1;
 with
     escape 1;
 with
     escape 1;
+end
 end;
 escape v;
 ]],
@@ -12330,7 +12407,7 @@ escape v;
 Test { [[
 input int A,B,Z,D;
 var int a = 0;
-a = par do
+a = do/_ par do
     par/and do
         await A;
     with
@@ -12340,6 +12417,7 @@ a = par do
 with
     await Z;
     escape a;
+end
 end;
 a = a + 1;
 await D;
@@ -12352,7 +12430,7 @@ escape a;
 Test { [[
 input int A,B,Z,D;
 var int a = 0;
-a = par do
+a = do/_ par do
     par/and do
         await A;
     with
@@ -12362,6 +12440,7 @@ a = par do
 with
     await Z;
     escape 0;
+end
 end;
 a = a + 1;
 await D;
@@ -12377,7 +12456,7 @@ escape a;
 Test { [[
 input int A,B,Z,D;
 var int a = 0;
-a = par do
+a = do/_ par do
     par do
         await A;
         escape 0;
@@ -12388,6 +12467,7 @@ a = par do
 with
     await Z;
     escape 0;
+end
 end;
 a = a + 1;
 await D;
@@ -12399,7 +12479,7 @@ escape a;
 Test { [[
 input int A,B,Z,D;
 var int a = 0;
-a = par do
+a = do/_ par do
     par do
         await A;
         escape 0;
@@ -12411,6 +12491,7 @@ a = par do
 with
     await Z;
     escape 0;
+end
 end;
 a = a + 1;
 await D;
@@ -12540,7 +12621,7 @@ var int a = 1;
 par/or do
     await B;
 with
-    var int b = do loop do
+    var int b = do/_ loop do
             par/or do
                 await B;
                             // prio 1
@@ -12570,7 +12651,7 @@ var int a = 1;
 par/or do
     await B;
 with
-    var int b = do loop do
+    var int b = do/_ loop do
             par/or do
                 await B;
             with
@@ -13017,15 +13098,16 @@ c = d + 1;
 await A;
 escape c;
 ]],
-    parser = "line 3 : after `par´ : expected `do´",
+    parser = 'line 3 : after `=´ : expected expression',
 }
 
 Test { [[
 input int A;
 var int c = 2;
-var int d = par do
+var int d = do/_ par do
     with
         escape c;
+end
     end;
 c = d + 1;
 await A;
@@ -13554,7 +13636,7 @@ par/or do
 with
     i = 1;
     loop do
-        var int o = par do
+        var int o = do/_ par do
                 await Z;
                 await Z;
                 var int c = await Z;
@@ -13562,6 +13644,7 @@ with
             with
                 var int d = await D;
                 escape d;
+end
             end;
         if o == 0 then
             i = i + 1;
@@ -16856,7 +16939,7 @@ escape ret;
 
 Test { [[
 var int ret =
-do
+do/_
     escape 1;
 end;
 escape ret;
@@ -16877,7 +16960,7 @@ do
     finalize
         a = &_f();
     with
-        var int b = do escape 2; end;
+        var int b = do/_ escape 2; end;
     end
     r = 1;
 end
@@ -16901,7 +16984,7 @@ do
         a = &_f();
     with
         if a? then end
-        var int b = do escape 2; end;
+        var int b = do/_ escape 2; end;
     end
     r = 1;
 end
@@ -18220,7 +18303,7 @@ escape ret;
 }
 
 Test { [[
-var int ret = do
+var int ret = do/_
     var int ret = 0;
     loop do
         do
@@ -18242,7 +18325,7 @@ escape ret;
 }
 
 Test { [[
-var int ret = do
+var int ret = do/_
     var int ret = 0;
     loop do
         do
@@ -19543,7 +19626,7 @@ escape 1;
 
 Test { [[
 finalize with
-    var int ok = do
+    var int ok = do/_
         escape 1;
     end;
 end
@@ -19710,7 +19793,7 @@ Test { [[
 var int a = 1;
 var int& pa = &a;
 async (a) do
-    var int a = do
+    var int a = do/_
         escape 1;
     end;
     escape a;
@@ -19996,7 +20079,7 @@ input int F;
 var int ret = 0;
 var int f = 0;
 par/or do
-    ret = do
+    ret = do/_
         var int sum = 0;
         var int i = 0;
         loop do
@@ -21384,7 +21467,7 @@ Test { [[var int  a;  var int&& pa=a; escape a;]], env='types mismatch' }
 Test { [[var int&& pa; var int a=pa;  escape a;]], env='types mismatch' }
 Test { [[
 var int a;
-var int&& pa = do
+var int&& pa = do/_
     escape a;
 end;
 escape a;
@@ -21393,7 +21476,7 @@ escape a;
 }
 Test { [[
 var int&& pa;
-var int a = do
+var int a = do/_
     escape pa;
 end;
 escape a;
@@ -22064,7 +22147,7 @@ escape i + vec[9].c + vec[3].v[5];
 }
 
 Test { [[
-var int i = do
+var int i = do/_
     var byte[5] abcd;
     escape 1;
 end;
@@ -25145,7 +25228,7 @@ escape 1
 
 Test { [[
 var int a;
-a = do
+a = do/_
     var int b;
 end
 ]],
@@ -25584,7 +25667,7 @@ var int a=0;
 
 Test { [[
 var int a;
-a = do
+a = do/_
     var int b=0;
 end;
 ]],
@@ -25637,7 +25720,7 @@ par do
             points = 0;     // number of steps alive
         end
         await KEY;
-        win = par do
+        win = do/_ par do
                 loop do
                     await (dt)ms;
                     step = step + 1;
@@ -25657,6 +25740,7 @@ par do
                         ship = 1;
                     end
                 end
+end
             end;
         par/or do
             await 1s;
@@ -27476,7 +27560,7 @@ escape a;
 Test { [[
 var int ret = 0;
 async (ret) do
-    ret = do escape 1; end;
+    ret = do/_ escape 1; end;
 end
 escape ret;
 ]],
@@ -27485,7 +27569,7 @@ escape ret;
 Test { [[
 var int ret = 0;
 async/thread (ret) do
-    ret = do escape 1; end;
+    ret = do/_ escape 1; end;
 end
 escape ret;
 ]],
@@ -28285,7 +28369,7 @@ class T with
     var int a=0;
 do
     this.a =
-        do escape 1; end;
+        do/_ escape 1; end;
 end
 var T a;
 escape a.a;

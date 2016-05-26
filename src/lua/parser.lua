@@ -360,7 +360,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Set  = (V'__Exp' + V'VarList') * V'__Sets'
     , __Sets = (CK'='+CK':=') * (
-                Cc'block'      * V'__SetBlock'
+                Cc'do'         * #(KEY'do'*EK'/') * V'Do'
+              + Cc'watching'   * V'_Watching'
               + Cc'await'      * V'Await'
               + Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
               + Cc'adt-constr' * V'Adt_constr_root'
@@ -374,7 +375,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
               + EM'expression'
               )
-    , __SetBlock = V'Do' + V'If' + V'ParEver' + V'_Watching'
 
     -- adt-constr
     , Adt_constr_root = (CKEY'new'+Cc(false)) * V'Adt_constr_one'
