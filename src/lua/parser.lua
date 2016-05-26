@@ -82,8 +82,8 @@ local _V2NAME = {
     __Dcl_nat  = 'declaration',
     _Dcl_nat   = 'declaration',
     Dcl_adt_tag = 'declaration',
-    _TupleType_1 = 'type list',
-    _TupleType_2 = 'param list',
+    _Typelist_anon = 'type list',
+    _Typelist_ids = 'param list',
     __adt_expitem = 'parameter',
     __Do = 'block',
 }
@@ -133,7 +133,7 @@ KEYS = P
 'await' + 
 'break' +
 'call' + 
-'call/rec' + 
+'call/recursive' + 
 'class' + 
 'code' + 
 'continue' + 
@@ -149,7 +149,6 @@ KEYS = P
 'false' +
 'finalize' + 
 'FOREVER' + 
-'function' + 
 'global' + 
 'if' + 
 'in' + 
@@ -188,7 +187,7 @@ KEYS = P
 'with' + 
 
      P'@' * (
-         P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'rec' + 'safe'
+         P'const' + 'hold' + 'nohold' + 'plain' + 'pure' + 'safe'
        )
      + TYPES
 
@@ -256,20 +255,14 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__dcl_var_set' * (K','*EV'__dcl_var_set')^0
 
     -- internal events
-    , _Dcl_evt  = CKEY'event' * (V'_TupleType_1'+EV'Type') *
+    , _Dcl_evt  = CKEY'event' * (V'_Typelist_anon'+EV'Type') *
                     EV'__ID_int' * (K','*EV'__ID_int')^0
-
-    -- internal functions / interrupts
-    , Dcl_fun = CKEY'function' * (CKEY'@rec'+Cc(false))
-                               * EV'_TupleType_2' * EK'=>' * EV'Type'
-                               * V'__ID_int'
-    , _Dcl_fun_do = V'Dcl_fun' * V'__Do'
 
     -- external functions
     , __Dcl_ext_call = (CKEY'input'+CKEY'output')
                      * Cc(false)     -- spawn array
                      * (CKEY'@rec'+Cc(false))
-                     * V'_TupleType_2' * K'=>' * EV'Type'
+                     * V'_Typelist_ids' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
     -- external requests/events
@@ -280,21 +273,32 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_ext_evt  = (CKEY'input'+CKEY'output')
                      * Cc(false)     -- spawn array
                      * Cc(false)     -- recursive
-                     * (V'_TupleType_1'+EV'Type') * Cc(false)
+                     * (V'_Typelist_anon'+EV'Type') * Cc(false)
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
     -- external requests
     , __Dcl_ext_io   = (CKEY'input/output'+CKEY'output/input')
                      * ('['*(V'__Exp'+Cc(true))*EK']'+Cc(false))
                      * Cc(false)     -- recursive
-                     * V'_TupleType_2' * K'=>' * EV'Type'
+                     * V'_Typelist_ids' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
+-->>> OK
     , __code   = (CKEY'code/instantaneous' + CKEY'code/delayed')
+                    * (CK'/recursive' + Cc(false))
                     * EV'__ID_abs'
-                    * EV'_TupleType_2' * EK'=>' * EV'Type'
-    , _Code    = V'__code'
-    , _Code_do = V'__code' * V'__Do'
+                    * EV'_Typelist_ids' * EK'=>' * EV'Type'
+    , _Code_proto = V'__code'
+    , _Code_impl  = V'__code' * V'__Do'
+--<<<
+
+    -- (int, void*)
+    , _Typelist_anon_item = Cc(false) * EV'Type' * Cc(false)
+    , _Typelist_anon = K'(' * EV'_Typelist_anon_item' * (EK','*V'_Typelist_anon_item')^0 * EK')'
+
+    -- (int v, nohold void* ptr)
+    , _Typelist_ids_item = (CKEY'@hold'+Cc(false)) * EV'Type' * (EV'__ID_int'+Cc(false))
+    , _Typelist_ids = K'(' * EV'_Typelist_ids_item' * (EK','*V'_Typelist_ids_item')^0 * EK')'
 
     -- classes / interfaces
     , Dcl_cls  = KEY'class'     * Cc(false)
@@ -303,7 +307,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_ifc = KEY'interface' * Cc(true)
                * EV'__ID_cls'
                * EKEY'with' * V'_BlockI' * EKEY'end'
-    , _BlockI = ( (EV'_Dcl_var'+V'_Dcl_evt'+V'_Dcl_pool'+V'Dcl_fun'+V'_Dcl_imp')
+    , _BlockI = ( (EV'_Dcl_var'+V'_Dcl_evt'+V'_Dcl_pool'+V'_Code_proto'+V'_Dcl_imp')
                     * (EK';'*K';'^0)
                 + V'Dcl_mode' * K':'
                 )^0
@@ -401,7 +405,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- internal/external emit/call/request
     -- TODO: emit/await, move from "false"=>"_WCLOCK"
-    , EmitExt  = (CKEY'call/rec'+CKEY'call'+CKEY'emit'+CKEY'request')
+    , EmitExt  = (CKEY'call/recursive'+CKEY'call'+CKEY'emit'+CKEY'request')
                * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
                  + EV'ID_ext' * V'__emit_ps' )
     , EmitInt  = CKEY'emit' * EV'__Exp' * V'__emit_ps'
@@ -524,6 +528,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- Identifiers
 
+-->>> OK
     , ID_ext  = V'__ID_ext'
     , ID_int  = V'__ID_int'
     , ID_abs  = V'__ID_abs'
@@ -535,6 +540,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __ID_abs  = -KEYS * CK(m.R'AZ'*Alphanum^0)
     , __ID_nat  = CK(P'_' * Alphanum^1)
     , __ID_none = CK(P'_' * -Alphanum)
+--<<<
 
 
     , __ID_cls   = -KEYS * CK(m.R'AZ'*Alphanum^0)
@@ -555,14 +561,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , VarList = ( K'(' * EV'ID_int' * (EK',' * EV'ID_int')^0 * EK')' )
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
-
-    -- (int, void*)
-    , _TupleTypeItem_1 = Cc(false) * EV'Type' * Cc(false)
-    , _TupleType_1 = K'(' * EV'_TupleTypeItem_1' * (EK','*V'_TupleTypeItem_1')^0 * EK')'
-
-    -- (int v, nohold void* ptr)
-    , _TupleTypeItem_2 = (CKEY'@hold'+Cc(false)) * EV'Type' * (EV'__ID_int'+Cc(false))
-    , _TupleType_2 = K'(' * EV'_TupleTypeItem_2' * (EK','*V'_TupleTypeItem_2')^0 * EK')'
 
 -- Wall-clock values
 
@@ -619,7 +617,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'Global'  + V'This'   + V'Outer'
              + V'RawExp'  + V'Vector_constr'
              + CKEY'call'     * EV'__Exp'
-             + CKEY'call/rec' * EV'__Exp'
+             + CKEY'call/recursive' * EV'__Exp'
 
     , __Cast = V'Type' + (CKEY'@nohold'+CK'@plain'+CK'@pure')
 
@@ -645,13 +643,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  * ( V'__LstStmt' * (EK';'*K';'^0) +
                      V'__LstStmtB' * (K';'^0)
                    )^-1
-                 * (V'Host'+V'_Dcl_fun_do'+V'_Code')^0 )
+                 * (V'Host'+V'_Code_impl')^0 )
 
     , __LstStmt  = V'_Escape' + V'_Break' + V'_Continue' + V'AwaitN'
     , __LstStmtB = V'ParEver'
     , __StmtS    = V'Nothing'
                  + V'_Dcl_var'  + V'_Dcl_pool' + V'_Dcl_evt'
-                 + V'Dcl_fun' + V'_Code' + V'_Dcl_ext0'
+                 + V'_Code_proto' + V'_Dcl_ext0'
                  + V'_Dcl_nat'  + V'Dcl_det'
                  + V'_Set'
                  + V'Await' + V'EmitExt' + V'EmitInt'
@@ -664,7 +662,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
-    , __StmtB = V'_Dcl_fun_do'+V'_Code_do' + V'_Dcl_ext1'
+    , __StmtB = V'_Code_impl' + V'_Dcl_ext1'
               + V'_Dcl_ifc'  + V'Dcl_cls' + V'Dcl_adt' + V'_DDD'
               + V'Host'
               + V'Do'    + V'If'

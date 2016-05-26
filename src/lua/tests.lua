@@ -17220,7 +17220,18 @@ escape *(t.ptr);
 }
 
 Test { [[
-function (void)=>int&& get do
+code/instantaneous get (void)=>int&& do
+    var int x;
+    escape &&x;
+end
+escape 10;
+]],
+    parser = 'line 1 : after `code/instantaneous´ : expected  abstraction identifier',
+    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int&& do
     var int x;
     escape &&x;
 end
@@ -17231,7 +17242,7 @@ escape 10;
 }
 
 Test { [[
-function (void)=>int&& get do
+code/instantaneous Get (void)=>int&& do
     var int x=0;
     escape &&x;
 end
@@ -17242,7 +17253,7 @@ escape 10;
 }
 
 Test { [[
-function (void)=>int& get do
+code/instantaneous Get (void)=>int& do
     var int x=1;
     escape &x;
 end
@@ -17255,7 +17266,7 @@ escape 10;
 Test { [[
 var byte[] str = [0,1,2];
 
-function (byte[]& vec)=>int f do
+code/instantaneous F (byte[]& vec)=>int do
     escape vec[1];
 end
 
@@ -17266,7 +17277,7 @@ escape f(&str);
 Test { [[
 var byte[] str = [0,1,2];
 
-function (int[]& vec)=>int f do
+code/instantaneous F (int[]& vec)=>int do
     escape vec[1];
 end
 
@@ -17277,7 +17288,7 @@ escape f(&str);
 Test { [[
 var byte[] str = [0,1,2];
 
-function (byte[]& vec)=>int f do
+code/instantaneous F (byte[]& vec)=>int do
     escape vec[1];
 end
 
@@ -17288,7 +17299,7 @@ escape f(str);
 Test { [[
 var byte[] str = [0,1,2];
 
-function (void) => byte[] f do
+code/instantaneous F (void) => byte[] do
     escape &this.str;
 end
 
@@ -17303,7 +17314,7 @@ escape ref[1];
 Test { [[
 var byte[] str = [0,1,2];
 
-function (void&&, int[] vec)=>int f do
+code/instantaneous F (void&&, int[] vec)=>int do
     escape vec[1];
 end
 
@@ -17314,7 +17325,7 @@ escape f(str);
 }
 
 Test { [[
-function (int a, void)=>int f do
+code/instantaneous F (int a, void)=>int do
 end
 escape 1;
 ]],
@@ -17322,7 +17333,7 @@ escape 1;
 }
 
 Test { [[
-function (void, int a)=>int f do
+code/instantaneous F (void, int a)=>int do
 end
 escape 1;
 ]],
@@ -22986,7 +22997,7 @@ escape _strlen((_char&&)&&str);
 Test { [[
 var byte[] str = [0,1,2];
 
-function (void) => byte[]& f do
+code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
@@ -23000,7 +23011,7 @@ escape ref[1];
 Test { [[
 var byte[] str = [0,1,2];
 
-function (void) => byte[]& f do
+code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
@@ -23015,7 +23026,7 @@ escape str[1];
 Test { [[
 var byte[] str = [0,1,2];
 
-function (void) => byte[]& f do
+code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
@@ -23036,7 +23047,7 @@ native do
     }
 end
 
-function (void) => byte[]& f do
+code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
@@ -23051,11 +23062,11 @@ escape str[3] == 'o';
 Test { [[
 var byte[] str;
 
-function (void)=>byte[]& f1 do
+code/instantaneous F1 (void)=>byte[]& do
     escape &this.str;
 end
 
-function (void)=>void f2 do
+code/instantaneous F2 (void)=>void do
     var byte[]& ref = &f1();
     ref = [] .. "ola" .. "mundo";
 end
@@ -23100,7 +23111,7 @@ escape _strcmp((_char&&)&&str1,"")==0 and _strcmp((_char&&)&&str2,"")==0;
 }
 
 Test { [[
-function (byte&& str)=>int strlen do
+code/instantaneous Strlen (byte&& str)=>int do
     escape _strlen(str);
 end
 
@@ -23111,7 +23122,7 @@ escape strlen(&&str);
 }
 
 Test { [[
-function (byte&& str)=>int strlen do
+code/instantaneous Strlen (byte&& str)=>int do
     escape _strlen(str);
 end
 
@@ -23544,7 +23555,7 @@ escape $$bs;
 }
 
 Test { [[
-function (void)=>void f do
+code/instantaneous F (void)=>void do
     var int x = 0;
 
     var byte[10] cs;
@@ -23555,7 +23566,7 @@ escape 1;
 }
 
 Test { [[
-function (byte[]& cs)=>void f do
+code/instantaneous F (byte[]& cs)=>void do
     cs[0] = 10;
 end
 var byte[] cs = [0];
@@ -25317,7 +25328,7 @@ escape 1;
     fin = 'line 3 : attribution does not require `finalize´',
 }
 Test { [[
-function (void)=>void faca do
+code/instantaneous Faca (void)=>void do
     var int&& a;
     a := null;
 end
@@ -25346,7 +25357,7 @@ escape 1;
     fin = 'line 4 : attribution does not require `finalize´',
 }
 Test { [[
-function (void&& o1)=>void f do
+code/instantaneous F (void&& o1)=>void do
     var void&& tmp := o1;
 end
 escape 1;
@@ -25465,7 +25476,7 @@ end
 }
 
 Test { [[
-function (void&& && o1, void&& && o2)=>int getVS do
+code/instantaneous GetVS (void&& && o1, void&& && o2)=>int do
     if (*o1) then
         escape 1;
     else/if (*o2) then
@@ -27906,7 +27917,7 @@ escape is_int+is_float;
 }
 
 Test { [=[
-function (void)=>int f do
+code/instantaneous F (void)=>int do
     var int v = [[ 1 ]];
     escape v;
 end
@@ -33005,9 +33016,9 @@ escape 1;
 Test { [[
 class T with
     var int size;
-    function (int size)=>T run;
+    code/instantaneous Run (int size)=>T;
 do
-    function (int size)=>T run do
+    code/instantaneous Run (int size)=>T do
         this.size = size;
     end
     await 1s;
@@ -33046,9 +33057,9 @@ escape 1;
 Test { [[
 class T with
     var int size;
-    function (int size)=>T run;
+    code/instantaneous Run (int size)=>T;
 do
-    function (int size)=>T run do
+    code/instantaneous Run (int size)=>T do
         this.size = size;
     end
     await 1s;
@@ -33085,9 +33096,9 @@ escape 1;
 Test { [[
 class T with
     var int size;
-    function (int size)=>T run;
+    code/instantaneous Run (int size)=>T;
 do
-    function (int size)=>T run do
+    code/instantaneous Run (int size)=>T do
         this.size = size;
     end
     await 1s;
@@ -33532,7 +33543,7 @@ end
 
 Test { [[
 class T with do end
-function (void)=>void fff do
+code/instantaneous Fff (void)=>void do
     spawn T;
 end
 escape 1;
@@ -41281,14 +41292,14 @@ native @pure _fff(), _iii(), _vvv();
 
 interface III with
     var int vvv;
-    function (int)=>int fff;
+    code/instantaneous Fff (int)=>int;
 end
 
 class T with
     var int vvv;
-    function (int)=>int fff;
+    code/instantaneous Fff (int)=>int;
 do
-    function (int v)=>int fff do
+    code/instantaneous Fff (int v)=>int do
         escape this.vvv + v;
     end
     await FOREVER;
@@ -42127,9 +42138,9 @@ native do
     void* V;
 end
 class T with
-    function (void&& v)=>void f;
+    code/instantaneous F (void&& v)=>void;
 do
-    function (void&& v)=>void f do
+    code/instantaneous F (void&& v)=>void do
         _V := v;
     end
 end
@@ -42874,7 +42885,7 @@ escape 1;
 -->>> FUNCTIONS
 
 Test { [[
-function (int v)=>int f do
+code/instantaneous F (int v)=>int do
     escape v+1;
 end
 escape f();
@@ -42883,7 +42894,7 @@ escape f();
 }
 
 Test { [[
-function (int v)=>int f do
+code/instantaneous F (int v)=>int do
     escape v+1;
 end
 var int&& ptr;
@@ -42893,7 +42904,7 @@ escape f(ptr);
 }
 
 Test { [[
-function (int v)=>int f do
+code/instantaneous F (int v)=>int do
     escape v+1;
 end
 escape f(1);
@@ -42902,43 +42913,43 @@ escape f(1);
 }
 
 Test { [[
-function (void) f;
+code/instantaneous F (void);
 escape 1;
 ]],
     parser = 'line 1 : after `)´ : expected `=>´',
 }
 
 Test { [[
-function (void) => void f
+code/instantaneous F (void) => void
 escape 1;
 ]],
-    parser = 'line 1 : after `f´ : expected `;´'
+    parser = 'line 1 : after `void´ : expected `;´'
 }
 
 Test { [[
-function (void) => void f;
+code/instantaneous F (void) => void;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-function void => (void) f;
+code/instantaneous F void => (void);
 escape 1;
 ]],
-    parser = 'line 1 : after `function´ : expected param list',
+    parser = 'line 1 : after `F´ : expected param list',
     --parser = 'line 1 : after `=>´ : expected type',
 }
 
 Test { [[
-function (void) => void f;
+code/instantaneous F (void) => void;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-function (int) => void f do
+code/instantaneous F (int) => void do
     escape 1;
 end
 escape 1;
@@ -42947,7 +42958,7 @@ escape 1;
 }
 
 Test { [[
-function (void) => void f do
+code/instantaneous F (void) => void do
     event void i;
     emit i;
     await i;
@@ -42958,7 +42969,7 @@ escape 1;
 }
 
 Test { [[
-function (void) => void f do
+code/instantaneous F (void) => void do
     var int a = 1;
     if a then end;
 end
@@ -42968,7 +42979,7 @@ escape 1;
 }
 
 Test { [[
-function (void) => void f do
+code/instantaneous F (void) => void do
     escape;
 end
 escape 1;
@@ -42977,7 +42988,7 @@ escape 1;
 }
 
 Test { [[
-function (void) => void f do
+code/instantaneous F (void) => void do
     escape 1;
 end
 escape 1;
@@ -42987,7 +42998,7 @@ escape 1;
 }
 
 Test { [[
-function (void) => void f do
+code/instantaneous F (void) => void do
     escape;
 end
 escape 1;
@@ -43013,7 +43024,7 @@ escape 1;
 }
 
 Test { [[
-function (void)=>int f do
+code/instantaneous F (void)=>int do
     escape 1;
 end
 escape f();
@@ -43022,7 +43033,7 @@ escape f();
 }
 
 Test { [[
-function (void)=>int f do
+code/instantaneous F (void)=>int do
     escape 1;
 end
 escape call f();
@@ -43032,46 +43043,46 @@ escape call f();
 }
 
 Test { [[
-function (void) => int f;
-function (int)  => int f;
+code/instantaneous F (void) => int;
+code/instantaneous F (int)  => int;
 escape 1;
 ]],
     env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
 }
 
 Test { [[
-function (void) => int f;
-function (int)  => int f do end
+code/instantaneous F (void) => int;
+code/instantaneous F (int)  => int do end
 escape 1;
 ]],
     env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
 }
 
 Test { [[
-function (void) => int f;
-function (void) => int f do escape 1; end
+code/instantaneous F (void) => int;
+code/instantaneous F (void) => int do escape 1; end
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-function (void,int) => int f;
+code/instantaneous F (void,int) => int;
 escape 1;
 ]],
     env = 'line 1 : type cannot be `void´',
 }
 
 Test { [[
-function (int) => void f;
+code/instantaneous F (int) => void;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-function (int,int) => int f;
-function (int a, int b) => int f do
+code/instantaneous F (int,int) => int;
+code/instantaneous F (int a, int b) => int do
     escape a + b;
 end
 escape 1;
@@ -43080,8 +43091,8 @@ escape 1;
 }
 
 Test { [[
-function (int,int) => int f;
-function (int a, int b) => int f do
+code/instantaneous F (int,int) => int;
+code/instantaneous F (int a, int b) => int do
     escape a + b;
 end
 escape f(1,2);
@@ -43090,7 +43101,7 @@ escape f(1,2);
 }
 
 Test { [[
-function (int x)=>int fff do
+code/instantaneous Fff (int x)=>int do
     escape x + 1;
 end
 
@@ -43105,11 +43116,11 @@ escape fff(x);
 }
 Test { [[
 output (int&&,byte&&)=>void LUA_GETGLOBAL;
-function @rec (int&& l)=>void load do
+code/instantaneous/recursive Load (int&& l)=>void do
     loop i do
     end
 end
-call/rec load(null);
+call/recursive load(null);
 
 escape 1;
 ]],
@@ -43123,7 +43134,7 @@ native do
 end
 
 output (int&&,byte&&)=>void LUA_GETGLOBAL;
-function @rec (int&& l)=>void load do
+code/instantaneous/recursive Load (int&& l)=>void do
     // TODO: load file
     call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
     call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
@@ -43142,7 +43153,7 @@ function @rec (int&& l)=>void load do
     end
     */
 end
-call/rec load(null);
+call/recursive load(null);
 
 escape 1;
 ]],
@@ -43152,7 +43163,7 @@ escape 1;
 
 Test { [[
 escape 1;
-function (int x)=>int f do
+code/instantaneous F (int x)=>int do
     if x then end;
     loop i in 10 do
     end
@@ -43165,8 +43176,8 @@ end
 Test { [[
 class T with
 do
-    function (int)=>int f;
-    function (int x)=>int f do
+    code/instantaneous F (int)=>int;
+    code/instantaneous F (int x)=>int do
         escape x;
     end
     escape f(10);
@@ -43179,7 +43190,7 @@ escape x;
 
 Test { [[
 escape 1;
-function (void) => int f do
+code/instantaneous F (void) => int do
     escape 1;
 end
 ]],
@@ -43187,7 +43198,7 @@ end
 }
 
 Test { [[
-function (void) => void f do
+code/instantaneous F (void) => void do
     escape 1;
 end
 escape 1;
@@ -43196,7 +43207,7 @@ escape 1;
 }
 
 Test { [[
-function (u8&& v)=>void set do
+code/instantaneous Set (u8&& v)=>void do
     *v = 3;
 end
 var u8 v = 0;
@@ -43207,7 +43218,7 @@ escape v;
 }
 
 Test { [[
-function (u8& v)=>void set do
+code/instantaneous Set (u8& v)=>void do
     v = 3;
 end
 var u8 v = 0;
@@ -43218,7 +43229,7 @@ escape v;
 }
 
 Test { [[
-function (u8[]& buf)=>void fillBuffer do
+code/instantaneous FillBuffer (u8[]& buf)=>void do
     buf = [] .. buf .. [3];
 end
 var u8[10] buffer;
@@ -43229,7 +43240,7 @@ escape buffer[0];
 }
 
 Test { [[
-function (u8[20]& buf)=>void fillBuffer do
+code/instantaneous FillBuffer (u8[20]& buf)=>void do
     buf = [] .. buf .. [3];
 end
 var u8[10] buffer;
@@ -43240,7 +43251,7 @@ escape buffer[0];
 }
 
 Test { [[
-function (u8[3]& buf)=>void fillBuffer do
+code/instantaneous FillBuffer (u8[3]& buf)=>void do
     buf = [] .. buf .. [2,3,4];
 end
 var u8[3] buffer = [1];
@@ -43251,7 +43262,7 @@ escape buffer[0];
 }
 
 Test { [[
-function (u8[]&& buf)=>void fillBuffer do
+code/instantaneous FillBuffer (u8[]&& buf)=>void do
     *buf = [] .. *buf .. [3];
 end
 var u8[10] buffer;
@@ -43262,7 +43273,7 @@ escape buffer[0];
 }
 
 Test { [[
-function (u8[3]&& buf)=>void fillBuffer do
+code/instantaneous FillBuffer (u8[3]&& buf)=>void do
     *buf = [] .. *buf .. [2,3,4];
 end
 var u8[3] buffer = [1];
@@ -43273,7 +43284,7 @@ escape buffer[0];
 }
 
 Test { [[
-function (u8[] bytes)=>void build do
+code/instantaneous Build (u8[] bytes)=>void do
 end
 escape 1;
 ]],
@@ -43281,7 +43292,7 @@ escape 1;
 }
 
 Test { [[
-function (int x)=>int f do
+code/instantaneous F (int x)=>int do
     escape x + 1;
 end
 
@@ -43302,7 +43313,7 @@ end
 
 var T t;
 
-function (void)=>T&& f do
+code/instantaneous F (void)=>T&& do
     escape &&t;
 end
 
@@ -43320,7 +43331,7 @@ end
 
 var T t;
 
-function (void)=>T&& f do
+code/instantaneous F (void)=>T&& do
     var T&& p = &&t;
     escape p;
 end
@@ -43339,7 +43350,7 @@ end
 
 var T t;
 
-function (void)=>T&& f do
+code/instantaneous F (void)=>T&& do
     var T&& p = &&t;
     escape p;
 end
@@ -43353,9 +43364,9 @@ escape p:v;
 }
 
 Test { [[
-function (int x)=>int f;
+code/instantaneous F (int x)=>int;
 var int x = 0;
-function (int x)=>int f do
+code/instantaneous F (int x)=>int do
     this.x = x;
     escape 2;
 end
@@ -43369,19 +43380,19 @@ escape f(1) + this.x;
 -->>> RECURSIVE / FUNCTIONS
 
 Test { [[
-function @rec (void)=>void f;
-function @rec (void)=>void f;
-function      (void)=>void g;
-function @rec (void)=>void g;
+code/instantaneous/recursive F (void)=>void;
+code/instantaneous/recursive F (void)=>void;
+code/instantaneous G      (void)=>void;
+code/instantaneous/recursive G (void)=>void;
 escape 1;
 ]],
     env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
 }
 Test { [[
-function @rec (void)=>void f;
-function @rec (void)=>void f;
-function @rec (void)=>void g;
-function      (void)=>void g;
+code/instantaneous/recursive F (void)=>void;
+code/instantaneous/recursive F (void)=>void;
+code/instantaneous/recursive G (void)=>void;
+code/instantaneous G      (void)=>void;
 escape 1;
 ]],
     env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
@@ -43389,20 +43400,20 @@ escape 1;
 Test { [[
 //var int x;
 
-function @rec (void)=>void f1;
-function @rec (void)=>void f2;
+code/instantaneous/recursive F1 (void)=>void;
+code/instantaneous/recursive F2 (void)=>void;
 
-function @rec (void)=>void f1 do
+code/instantaneous/recursive F1 (void)=>void do
     if false then
-        call/rec this.f2();
+        call/recursive this.f2();
     end
 end
 
-function @rec (void)=>void f2 do
-    call/rec this.f1();
+code/instantaneous/recursive F2 (void)=>void do
+    call/recursive this.f1();
 end
 
-call/rec this.f1();
+call/recursive this.f1();
 
 escape 1;
 ]],
@@ -43412,14 +43423,14 @@ escape 1;
 Test { [[
 //var int x;
 
-function (void)=>void f1;
-function (void)=>void f2;
+code/instantaneous F1 (void)=>void;
+code/instantaneous F2 (void)=>void;
 
-function (void)=>void f1 do
+code/instantaneous F1 (void)=>void do
     this.f2();
 end
 
-function (void)=>void f2 do
+code/instantaneous F2 (void)=>void do
 end
 
 this.f1();
@@ -43432,14 +43443,14 @@ escape 1;
 Test { [[
 //var int x;
 
-function (void)=>void f1;
-function (void)=>void f2;
+code/instantaneous F1 (void)=>void;
+code/instantaneous F2 (void)=>void;
 
-function (void)=>void f1 do
+code/instantaneous F1 (void)=>void do
     this.f2();
 end
 
-function (void)=>void f2 do
+code/instantaneous F2 (void)=>void do
     this.f1();
 end
 
@@ -43453,16 +43464,16 @@ escape 1;
 Test { [[
 //var int x;
 
-function (void)=>void f1;
-function @rec (void)=>void f2;
+code/instantaneous F1 (void)=>void;
+code/instantaneous/recursive F2 (void)=>void;
 
-function (void)=>void f1 do
+code/instantaneous F1 (void)=>void do
     if false then
-        call/rec this.f2();
+        call/recursive this.f2();
     end
 end
 
-function @rec (void)=>void f2 do
+code/instantaneous/recursive F2 (void)=>void do
     this.f1();
 end
 
@@ -43480,10 +43491,10 @@ escape 1;
 Test { [[
 class T with
     var int a;
-    function (void)=>int f;
+    code/instantaneous F (void)=>int;
 do
     var int b;
-    function (void)=>int f do
+    code/instantaneous F (void)=>int do
         escape b;
     end
     a = 1;
@@ -43498,10 +43509,10 @@ escape t.a + t.f();
 Test { [[
 class T with
     var int a=0;
-    function (void)=>int f;
+    code/instantaneous F (void)=>int;
 do
     var int b=0;
-    function (void)=>int f do
+    code/instantaneous F (void)=>int do
         escape b;
     end
     a = 1;
@@ -43544,7 +43555,7 @@ escape _V;
 Test { [[
 class T with do end;
 
-function (void)=>void fff do
+code/instantaneous Fff (void)=>void do
     var T&& ttt = null;
     if ttt==null then end;
 end
@@ -43563,7 +43574,7 @@ native do
     int V = 0;
 end
 class T with
-    function (int a, int b)=>int f do
+    code/instantaneous F (int a, int b)=>int do
         escape a + b;
     end
 do
@@ -43572,7 +43583,7 @@ end
 var T[2] ts;
 escape _V;
 ]],
-    parser = 'line 5 : after `f´ : expected `;´',
+    parser = 'line 5 : after `int´ : expected `;´',
 }
 
 Test { [[
@@ -43581,7 +43592,7 @@ native do
 end
 class T with
 do
-    function (int a, int b)=>int f do
+    code/instantaneous F (int a, int b)=>int do
         escape a + b;
     end
     _V = _V + f(1,2) + this.f(3,4);
@@ -43599,7 +43610,7 @@ end
 class T with
 do
     var int v=0;
-    function (int a, int b)=>void f do
+    code/instantaneous F (int a, int b)=>void do
         this.v = this.v + a + b;
     end
     f(1,2);
@@ -43615,10 +43626,10 @@ escape _V;
 Test { [[
 class T with
     var int a=0;
-    function (void)=>int f;
+    code/instantaneous F (void)=>int;
 do
     var int b=0;
-    function (void)=>int f do
+    code/instantaneous F (void)=>int do
         escape this.b;
     end
     a = 1;
@@ -43633,7 +43644,7 @@ escape t.a + t.f();
 Test { [[
 class T with
     var int a=0;
-    function (void)=>int f do
+    code/instantaneous F (void)=>int do
         escape this.b;
     end
 do
@@ -43645,13 +43656,13 @@ end
 var T t;
 escape t.a + t.f();
 ]],
-    parser = 'line 3 : after `f´ : expected `;´',
+    parser = 'line 3 : after `int´ : expected `;´',
 }
 
 Test { [[
 interface I with
     var int v;
-    function (void)=>void f;
+    code/instantaneous F (void)=>void;
 end
 escape 10;
 ]],
@@ -43661,12 +43672,12 @@ escape 10;
 Test { [[
 class T with
     var int v=0;
-    function (int)=>void f;
+    code/instantaneous F (int)=>void;
 do
     v = 50;
     this.f(10);
 
-    function (int v)=>int f do
+    code/instantaneous F (int v)=>int do
         this.v = this.v + v;
         escape this.v;
     end
@@ -43684,12 +43695,12 @@ escape t.v + t.f(20) + t.v;
 Test { [[
 class T with
     var int v=0;
-    function (int)=>int f;
+    code/instantaneous F (int)=>int;
 do
     v = 50;
     this.f(10);
 
-    function (int v)=>int f do
+    code/instantaneous F (int v)=>int do
         this.v = this.v + v;
         escape this.v;
     end
@@ -43706,17 +43717,17 @@ escape t.v + t.f(20) + t.v;
 
 Test { [[
 interface I with
-    function (void)=>int f;
-    function (void)=>int f1;
+    code/instantaneous F (void)=>int;
+    code/instantaneous F1 (void)=>int;
 end
 
 class T with
     interface I;
 do
-    function (void)=>int f do
+    code/instantaneous F (void)=>int do
         escape this.f1();
     end
-    function (void)=>int f1 do
+    code/instantaneous F1 (void)=>int do
         escape 1;
     end
 end
@@ -43730,17 +43741,17 @@ escape t.f() + i:f();
 
 Test { [[
 interface I with
-    function (void)=>int f1;
-    function (void)=>int f;
+    code/instantaneous F1 (void)=>int;
+    code/instantaneous F (void)=>int;
 end
 
 class T with
     interface I;
 do
-    function (void)=>int f1 do
+    code/instantaneous F1 (void)=>int do
         escape 1;
     end
-    function (void)=>int f do
+    code/instantaneous F (void)=>int do
         escape this.f1();
     end
 end
@@ -43754,14 +43765,14 @@ escape t.f() + i:f();
 
 Test { [[
 interface I with
-    function (int)=>int g;
+    code/instantaneous G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function (int v)=>int g do
+    code/instantaneous G (int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -43780,14 +43791,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function @rec (int)=>int g;
+    code/instantaneous/recursive G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i;
 do
-    function (int v)=>int g do
+    code/instantaneous G (int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -43806,14 +43817,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function (int)=>int g;
+    code/instantaneous G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i;
 do
-    function @rec (int v)=>int g do
+    code/instantaneous/recursive G (int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -43832,14 +43843,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function (int)=>int g;
+    code/instantaneous G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function (int v)=>int g do
+    code/instantaneous G (int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -43858,39 +43869,39 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function @rec (int)=>int g;
+    code/instantaneous/recursive G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function @rec (int v)=>int g do
+    code/instantaneous/recursive G (int v)=>int do
         if (v == 1) then
             escape 1;
         end
-        escape v * (call/rec i:g(v-1));
+        escape v * (call/recursive i:g(v-1));
     end
 end
 
 var T t;
 var I&& i = &&t;
 t.i = i;
-escape call/rec i:g(5);
+escape call/recursive i:g(5);
 ]],
     run = 120,
 }
 
 Test { [[
 interface I with
-    function @rec (int)=>int g;
+    code/instantaneous/recursive G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function @rec (int v)=>int g do
+    code/instantaneous/recursive G (int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -43904,19 +43915,19 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    tight = 'line 13 : `call/rec´ is required for "g"',
+    tight = 'line 13 : `call/recursive´ is required for "g"',
 }
 
 Test { [[
 interface I with
-    function @rec (int)=>int g;
+    code/instantaneous/recursive G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function @rec (int v)=>int g do
+    code/instantaneous/recursive G (int v)=>int do
         escape 1;
     end
 end
@@ -43927,18 +43938,18 @@ t.i = i;
 escape i:g(5);
 ]],
     tight = 'line 9 : function may be declared without `recursive´',
-    --tight = 'line 17 : `call/rec´ is required for "g"',
+    --tight = 'line 17 : `call/recursive´ is required for "g"',
 }
 Test { [[
 interface I with
-    function @rec (int)=>int g;
+    code/instantaneous/recursive G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function @rec (int v)=>int g do
+    code/instantaneous/recursive G (int v)=>int do
         escape 1;
     end
 end
@@ -43949,19 +43960,19 @@ t.i = i;
 escape i:g(5);
 ]],
     wrn = true,
-    tight = 'line 17 : `call/rec´ is required for "g"',
+    tight = 'line 17 : `call/recursive´ is required for "g"',
 }
 
 Test { [[
 interface I with
-    function @rec (int)=>int g;
+    code/instantaneous/recursive G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function @rec (int v)=>int g do
+    code/instantaneous/recursive G (int v)=>int do
         escape v;
     end
 end
@@ -43969,7 +43980,7 @@ end
 var T t;
 var I&& i = &&t;
 t.i = i;
-escape call/rec i:g(5);
+escape call/recursive i:g(5);
 ]],
     --fin = 'line 16 : organism pointer attribution only inside constructors',
     --fin = 'line 16 : attribution to pointer with greater scope',
@@ -43980,14 +43991,14 @@ escape call/rec i:g(5);
 
 Test { [[
 interface I with
-    function @rec (int)=>int g;
+    code/instantaneous/recursive G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function @rec (int v)=>int g do
+    code/instantaneous/recursive G (int v)=>int do
         escape v;
     end
 end
@@ -43995,7 +44006,7 @@ end
 var T t;
 var I&& i = &&t;
 t.i = i;
-escape call/rec i:g(5);
+escape call/recursive i:g(5);
 ]],
     --fin = 'line 16 : organism pointer attribution only inside constructors',
     --tight = 'line 9 : function may be declared without `recursive´',
@@ -44005,14 +44016,14 @@ escape call/rec i:g(5);
 
 Test { [[
 interface I with
-    function (int)=>int g;
+    code/instantaneous G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function (int v)=>int g do
+    code/instantaneous G (int v)=>int do
         escape v;
     end
 end
@@ -44029,14 +44040,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function (int)=>int g;
+    code/instantaneous G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function (int v)=>int g do
+    code/instantaneous G (int v)=>int do
         escape v;
     end
 end
@@ -44052,14 +44063,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    function (int)=>int g;
+    code/instantaneous G (int)=>int;
 end
 
 class U with
     interface I;
     var I&& i=null;
 do
-    function (int v)=>int g do
+    code/instantaneous G (int v)=>int do
         escape 1;
     end
 end
@@ -44068,7 +44079,7 @@ class T with
     interface I;
     var I&& i=null;
 do
-    function (int v)=>int g do
+    code/instantaneous G (int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44092,14 +44103,14 @@ escape i1:g(5) + i2:g(5);
 
 Test { [[
 interface I with
-    function (int)=>int g;
+    code/instantaneous G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function @rec (int v)=>int g do
+    code/instantaneous/recursive G (int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44115,14 +44126,14 @@ escape 1;
 
 Test { [[
 interface I with
-    function (int)=>int g;
+    code/instantaneous G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function (int v)=>int g do
+    code/instantaneous G (int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44134,7 +44145,7 @@ class U with
     interface I;
     var I&& i=null;
 do
-    function (int v)=>int g do
+    code/instantaneous G (int v)=>int do
         escape 1;
     end
 end
@@ -44156,14 +44167,14 @@ escape i1:g(5) + i2:g(5);
 
 Test { [[
 interface I with
-    function @rec (int)=>int g;
+    code/instantaneous/recursive G (int)=>int;
 end
 
 class T with
     interface I;
     var I&& i=null;
 do
-    function @rec (int v)=>int g do
+    code/instantaneous/recursive G (int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44176,7 +44187,7 @@ var I&& i = &&t;
 t.i = i;
 escape i:g(5);
 ]],
-    tight = 'line 13 : `call/rec´ is required for "g"',
+    tight = 'line 13 : `call/recursive´ is required for "g"',
     --run = 120,
 }
 
@@ -44187,7 +44198,7 @@ end
 
 class T with
     var int ret1=0, ret2=0;
-    function (int)=>int f1;
+    code/instantaneous F1 (int)=>int;
     var _f_t f2;
 do
     native do
@@ -44196,7 +44207,7 @@ do
         }
     end
 
-    function (int v)=>int f1 do
+    code/instantaneous F1 (int v)=>int do
         escape v;
     end
 
@@ -44220,7 +44231,7 @@ end
 
 class T with
     var int ret1=0, ret2=0;
-    function (int)=>int f1;
+    code/instantaneous F1 (int)=>int;
     var _f_t f2;
 do
     native do
@@ -44229,7 +44240,7 @@ do
         }
     end
 
-    function (int v)=>int f1 do
+    code/instantaneous F1 (int v)=>int do
         escape v;
     end
 
@@ -44248,7 +44259,7 @@ escape t.ret1 + t.ret2;
 Test { [[
 interface I with
     var int v;
-    function (void)=>void ins;
+    code/instantaneous Ins (void)=>void;
 end
 
 class T with
@@ -44268,7 +44279,7 @@ escape i:_ins() + t._ins();;
 Test { [[
 interface I with
     var int v;
-    function (void)=>int ins;
+    code/instantaneous Ins (void)=>int;
 end
 
 class T with
@@ -44276,7 +44287,7 @@ class T with
     var int v=0;
     //native @nohold _ins();
 do
-    function (void)=>int ins do
+    code/instantaneous Ins (void)=>int do
         escape v;
     end
 end
@@ -44291,7 +44302,7 @@ escape i:ins() + t.ins();
 
 Test { [[
 interface F with
-    function (void)=>void f;
+    code/instantaneous F (void)=>void;
     var int i=10;
 end
 ]],
@@ -44301,7 +44312,7 @@ end
 Test { [[
 interface F with
     var int i;
-    function (int i)=>void f;
+    code/instantaneous F (int i)=>void;
 end
 
 class T with
@@ -44309,7 +44320,7 @@ class T with
     interface F;
 do
     this.f(1);
-    function (int i)=>void f do
+    code/instantaneous F (int i)=>void do
         this.i = this.i + i;
     end
 end
@@ -44328,7 +44339,7 @@ escape t1.i + f:i;
 Test { [[
 interface F with
     var int i;
-    function (int)=>void f;
+    code/instantaneous F (int)=>void;
 end
 
 class T with
@@ -44336,7 +44347,7 @@ class T with
     var int i=10;   // 2
 do
     this.f(1);
-    function (int i)=>void f do
+    code/instantaneous F (int i)=>void do
         this.i = this.i + i;
     end
 end
@@ -44356,7 +44367,7 @@ Test { [[
 native do
     void* V;
 end
-function (void&& v)=>void f do
+code/instantaneous F (void&& v)=>void do
     _V = v;
 end
 escape 1;
@@ -44369,7 +44380,7 @@ Test { [[
 native do
     void* V;
 end
-function (void&& v)=>void f do
+code/instantaneous F (void&& v)=>void do
     if v then end;
 end
 escape 1;
@@ -44383,9 +44394,9 @@ native do
     void* V;
 end
 class T with
-    function (void&& v)=>void f;
+    code/instantaneous F (void&& v)=>void;
 do
-    function (void&& v)=>void f do
+    code/instantaneous F (void&& v)=>void do
         _V = v;
     end
 end
@@ -44398,9 +44409,9 @@ escape 1;
 Test { [[
 class T with
     var void&& v=null;
-    function (void&& v)=>void f;
+    code/instantaneous F (void&& v)=>void;
 do
-    function (void&& v)=>void f do
+    code/instantaneous F (void&& v)=>void do
         if v then end;
     end
 end
@@ -44416,9 +44427,9 @@ escape 1;
 Test { [[
 class T with
     var void&& a=null;
-    function (void&& v)=>void f;
+    code/instantaneous F (void&& v)=>void;
 do
-    function (void&& v)=>void f do
+    code/instantaneous F (void&& v)=>void do
         var void&& a = v;
         if a then end;
     end
@@ -44432,9 +44443,9 @@ escape 1;
 Test { [[
 class T with
     var void&& a=null;
-    function (void)=>void f;
+    code/instantaneous F (void)=>void;
 do
-    function (void)=>void f do
+    code/instantaneous F (void)=>void do
         var void&& v=null;
         a = v;
     end
@@ -44447,9 +44458,9 @@ escape 1;
 Test { [[
 class T with
     var void&& a=null;
-    function (void&& v)=>void f;
+    code/instantaneous F (void&& v)=>void;
 do
-    function (void&& v)=>void f do
+    code/instantaneous F (void&& v)=>void do
         a = v;
     end
 end
@@ -44462,9 +44473,9 @@ escape 1;
 Test { [[
 class T with
     var void&& a=null;
-    function (void&& v)=>void f;
+    code/instantaneous F (void&& v)=>void;
 do
-    function (void&& v)=>void f do
+    code/instantaneous F (void&& v)=>void do
         a := v;
     end
 end
@@ -44476,9 +44487,9 @@ escape 1;
 Test { [[
 class T with
     var void&& a=null;
-    function (@hold void&& v)=>void f;
+    code/instantaneous F (@hold void&& v)=>void;
 do
-    function (@hold void&& v)=>void f do
+    code/instantaneous F (@hold void&& v)=>void do
         a := v;
     end
 end
@@ -44490,9 +44501,9 @@ escape 1;
 Test { [[
 class T with
     var void&& v=null;
-    function (void&& v)=>void f;
+    code/instantaneous F (void&& v)=>void;
 do
-    function (@hold void&& v)=>void f do
+    code/instantaneous F (@hold void&& v)=>void do
         this.v = v;
     end
 end
@@ -44505,9 +44516,9 @@ escape 1;
 Test { [[
 class T with
     var void&& v=null;
-    function (@hold void&& v)=>void f;
+    code/instantaneous F (@hold void&& v)=>void;
 do
-    function (@hold void&& v)=>void f do
+    code/instantaneous F (@hold void&& v)=>void do
         this.v := v;
     end
 end
@@ -44530,9 +44541,9 @@ escape 1;
 Test { [[
 class T with
     var void&& v=null;
-    function (@hold void&& v)=>void f;
+    code/instantaneous F (@hold void&& v)=>void;
 do
-    function (@hold void&& v)=>void f do
+    code/instantaneous F (@hold void&& v)=>void do
         this.v := v;
     end
 end
@@ -44559,7 +44570,7 @@ Test { [[
 native do
     void* V;
 end
-function (void&& v)=>void f do
+code/instantaneous F (void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
@@ -44575,7 +44586,7 @@ Test { [[
 native do
     void* V;
 end
-function (@hold void&& v)=>void f do
+code/instantaneous F (@hold void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
@@ -44590,7 +44601,7 @@ Test { [[
 native do
     int V;
 end
-function (int v)=>void f do
+code/instantaneous F (int v)=>void do
     _V = v;
 end
 var void&& x=null;
@@ -44602,22 +44613,22 @@ escape _V==5;
 
 Test { [[
 interface I with
-    function (void)=>void f;
+    code/instantaneous F (void)=>void;
 end
 
 class T with
     interface I;
-    function @rec (void)=>void f;
+    code/instantaneous/recursive F (void)=>void;
 do
-    function @rec (void)=>void f do
+    code/instantaneous/recursive F (void)=>void do
         if 0 then
-            call/rec this.f();
+            call/recursive this.f();
         end
     end
 end
 
 var T t;
-call/rec t.f();
+call/recursive t.f();
 
 var I&& i = &&t;
 call i:f();
@@ -44630,52 +44641,52 @@ escape 1;
 
 Test { [[
 interface I with
-    function @rec (void)=>void f;
+    code/instantaneous/recursive F (void)=>void;
 end
 
 class T with
     interface I;
-    function @rec (void)=>void f;
+    code/instantaneous/recursive F (void)=>void;
 do
-    function @rec (void)=>void f do
+    code/instantaneous/recursive F (void)=>void do
         if 0 then
-            call/rec this.f();
+            call/recursive this.f();
         end
     end
 end
 
 var T t;
-call/rec t.f();
+call/recursive t.f();
 
 var I&& i = &&t;
 call i:f();
 
 escape 1;
 ]],
-    tight = 'line 20 : `call/rec´ is required for "f"',
+    tight = 'line 20 : `call/recursive´ is required for "f"',
 }
 
 Test { [[
 interface I with
-    function @rec (void)=>void f;
+    code/instantaneous/recursive F (void)=>void;
 end
 
 class T with
     interface I;
-    function @rec (void)=>void f;
+    code/instantaneous/recursive F (void)=>void;
 do
-    function @rec (void)=>void f do
+    code/instantaneous/recursive F (void)=>void do
         if 0 then
-            call/rec this.f();
+            call/recursive this.f();
         end
     end
 end
 
 var T t;
-call/rec t.f();
+call/recursive t.f();
 
 var I&& i = &&t;
-call/rec i:f();
+call/recursive i:f();
 
 escape 1;
 ]],
@@ -44684,14 +44695,14 @@ escape 1;
 
 Test { [[
 interface I with
-    function @rec (void)=>void f;
+    code/instantaneous/recursive F (void)=>void;
 end
 
 class T with
     interface I;
-    function (void)=>void f; // ignored
+    code/instantaneous F (void)=>void; // ignored
 do
-    function (void)=>void f do
+    code/instantaneous F (void)=>void do
     end
 end
 
@@ -44699,7 +44710,7 @@ var T t;
 call t.f();
 
 var I&& i = &&t;
-call/rec i:f();
+call/recursive i:f();
 
 escape 1;
 ]],
@@ -44708,14 +44719,14 @@ escape 1;
 
 Test { [[
 interface I with
-    function (void)=>void f;
+    code/instantaneous F (void)=>void;
 end
 
 class T with
     interface I;
-    function (void)=>void f; // ignored
+    code/instantaneous F (void)=>void; // ignored
 do
-    function (void)=>void f do
+    code/instantaneous F (void)=>void do
     end
 end
 
@@ -44723,23 +44734,23 @@ var T t;
 call t.f();
 
 var I&& i = &&t;
-call/rec i:f();
+call/recursive i:f();
 
 escape 1;
 ]],
-    tight = 'line 17 : `call/rec´ is not required for "f"',
+    tight = 'line 17 : `call/recursive´ is not required for "f"',
 }
 
 Test { [[
 interface I with
-    function (void)=>void f;
+    code/instantaneous F (void)=>void;
 end
 
 class T with
     interface I;
-    function (void)=>void f; // ignored
+    code/instantaneous F (void)=>void; // ignored
 do
-    function (void)=>void f do
+    code/instantaneous F (void)=>void do
     end
 end
 
@@ -44758,22 +44769,22 @@ escape 1;
 
 Test { [[
 interface I with
-    function @rec (void)=>void f;
+    code/instantaneous/recursive F (void)=>void;
 end
 
 class T with
     interface I;
-    function @rec (void)=>void f; // ignored
+    code/instantaneous/recursive F (void)=>void; // ignored
 do
-    function @rec (void)=>void f do
+    code/instantaneous/recursive F (void)=>void do
     end
 end
 
 var T t;
-call/rec t.f();
+call/recursive t.f();
 
 var I&& i = &&t;
-call/rec i:f();
+call/recursive i:f();
 
 escape 1;
 ]],
@@ -44784,22 +44795,22 @@ escape 1;
 
 Test { [[
 interface I with
-    function @rec (void)=>void f;
+    code/instantaneous/recursive F (void)=>void;
 end
 
 class T with
-    function @rec (void)=>void f;
+    code/instantaneous/recursive F (void)=>void;
     interface I;
 do
-    function @rec (void)=>void f do
+    code/instantaneous/recursive F (void)=>void do
     end
 end
 
 var T t;
-call/rec t.f();
+call/recursive t.f();
 
 var I&& i = &&t;
-call/rec i:f();
+call/recursive i:f();
 
 escape 1;
 ]],
@@ -44808,8 +44819,8 @@ escape 1;
 }
 
 Test { [[
-function (int v)=>int f;
-function (int v)=>int f do
+code/instantaneous F (int v)=>int;
+code/instantaneous F (int v)=>int do
     if v == 0 then
         escape 1;
     end
@@ -44823,24 +44834,24 @@ escape f(5);
 
 Test { [[
 interface I with
-    function (void)=>void f;
+    code/instantaneous F (void)=>void;
 end
 
 class T with
     interface I;
 do
-    function (void)=>void f do
+    code/instantaneous F (void)=>void do
     end
 end
 
 var T t;
 var I& i = &t;
 
-function (void)=>void g do
+code/instantaneous G (void)=>void do
     i.f();
 end
 
-function (void)=>void h do
+code/instantaneous H (void)=>void do
     this.g();
 end
 
@@ -44850,35 +44861,35 @@ escape 1;
 }
 Test { [[
 interface I with
-    function (void)=>void f;
+    code/instantaneous F (void)=>void;
 end
 
 class T with
     interface I;
 do
-    function (void)=>void f do
+    code/instantaneous F (void)=>void do
     end
 end
 
 var T t;
 var I& i = &t;
 
-function (void)=>void g do
+code/instantaneous G (void)=>void do
     i.f();
 end
 
-function (void)=>void h do
+code/instantaneous H (void)=>void do
     this.g();
 end
 
 class U with
     interface I;
-    function (void)=>void g;
+    code/instantaneous G (void)=>void;
 do
-    function (void)=>void f do
+    code/instantaneous F (void)=>void do
         this.g();
     end
-    function (void)=>void g do
+    code/instantaneous G (void)=>void do
     end
 end
 
@@ -44888,35 +44899,35 @@ escape 1;
 }
 Test { [[
 interface I with
-    function @rec (void)=>void f;
+    code/instantaneous/recursive F (void)=>void;
 end
 
 class T with
     interface I;
 do
-    function @rec (void)=>void f do
+    code/instantaneous/recursive F (void)=>void do
     end
 end
 
 var T t;
 var I& i = &t;
 
-function (void)=>void g do
-    call/rec i.f();
+code/instantaneous G (void)=>void do
+    call/recursive i.f();
 end
 
-function (void)=>void h do
+code/instantaneous H (void)=>void do
     this.g();
 end
 
 class U with
     interface I;
-    function (void)=>void g;
+    code/instantaneous G (void)=>void;
 do
-    function @rec (void)=>void f do
+    code/instantaneous/recursive F (void)=>void do
         this.g();
     end
-    function (void)=>void g do
+    code/instantaneous G (void)=>void do
     end
 end
 
@@ -44927,8 +44938,8 @@ escape 1;
 }
 
 Test { [[
-function @rec (int v)=>int f;
-function (int v)=>int f do
+code/instantaneous/recursive F (int v)=>int;
+code/instantaneous F (int v)=>int do
     if v == 0 then
         escape 1;
     end
@@ -44940,8 +44951,8 @@ escape f(5);
     --run = 120,
 }
 Test { [[
-function @rec (int v)=>int f;
-function @rec (int v)=>int f do
+code/instantaneous/recursive F (int v)=>int;
+code/instantaneous/recursive F (int v)=>int do
     if v == 0 then
         escape 1;
     end
@@ -44949,7 +44960,7 @@ function @rec (int v)=>int f do
 end
 escape f(5);
 ]],
-    tight = 'line 6 : `call/rec´ is required for "f"',
+    tight = 'line 6 : `call/recursive´ is required for "f"',
     --run = 120,
 }
 Test { [[
@@ -44959,33 +44970,33 @@ call 1;
 }
 
 Test { [[
-function @rec (int v)=>int f;
-function @rec (int v)=>int f do
+code/instantaneous/recursive F (int v)=>int;
+code/instantaneous/recursive F (int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v * (call/rec f(v-1));
+    escape v * (call/recursive f(v-1));
 end
 escape f(5);
 ]],
-    tight = 'line 8 : `call/rec´ is required for "f"',
+    tight = 'line 8 : `call/recursive´ is required for "f"',
 }
 Test { [[
-function @rec (int v)=>int f;
-function @rec (int v)=>int f do
+code/instantaneous/recursive F (int v)=>int;
+code/instantaneous/recursive F (int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v * call/rec f(v-1);
+    escape v * call/recursive f(v-1);
 end
-escape call/rec f(5);
+escape call/recursive f(5);
 ]],
     run = 120,
 }
 
 Test { [[
 interface IWorld with
-    function (PinguHolder&&) => PinguHolder&& get_pingus;
+    code/instantaneous Get_pingus (PinguHolder&&) => PinguHolder&&;
 end
 
 class PinguHolder with
@@ -45004,7 +45015,7 @@ escape 1;
 
 Test { [[
 interface IWorld with
-    function (void) => PinguHolder&& get_pingus;
+    code/instantaneous Get_pingus (void) => PinguHolder&&;
 end
 
 class PinguHolder with
@@ -45023,7 +45034,7 @@ escape 1;
 
 Test { [[
 interface IWorld with
-    function (PinguHolder&&) => void get_pingus;
+    code/instantaneous Get_pingus (PinguHolder&&) => void;
 end
 
 class PinguHolder with
@@ -45045,7 +45056,7 @@ class PinguHolder with
 do end
 
 interface IWorld with
-    function (PinguHolder&&) => PinguHolder&& get_pingus;
+    code/instantaneous Get_pingus (PinguHolder&&) => PinguHolder&&;
 end
 
 class World with
@@ -45098,7 +45109,7 @@ escape w:x;     // escapes with "10"
 }
 
 Test { [[
-function (void)=>int&& f do
+code/instantaneous F (void)=>int&& do
     escape 1;
 end
 escape 10;
@@ -45109,7 +45120,7 @@ escape 10;
 Test { [[
 var int x = 10;
 
-function (void)=>int& f do
+code/instantaneous F (void)=>int& do
     escape &this.x;
 end
 
@@ -45119,10 +45130,10 @@ escape f();
 }
 Test { [[
 class T with
-    function (void)=>int& f;
+    code/instantaneous F (void)=>int&;
 do
     var int x = 10;
-    function (void)=>int& f do
+    code/instantaneous F (void)=>int& do
         escape &this.x;
     end
 end
@@ -45137,7 +45148,7 @@ escape t.f();
 Test { [[
 var int x = 10;
 
-function (void)=>int& f do
+code/instantaneous F (void)=>int& do
     escape &&this.x;
 end
 
@@ -45147,10 +45158,10 @@ escape f();
 }
 Test { [[
 class T with
-    function (void)=>int&& f;
+    code/instantaneous F (void)=>int&&;
 do
     var int x = 10;
-    function (void)=>int&& f do
+    code/instantaneous F (void)=>int&& do
         escape &this.x;
     end
 end
@@ -45164,9 +45175,9 @@ escape t.f();
 
 Test { [[
 class Test with
-    function (u8[]& buf)=>void fillBuffer;
+    code/instantaneous FillBuffer (u8[]& buf)=>void;
 do
-    function (u8[]& buf)=>void fillBuffer do
+    code/instantaneous FillBuffer (u8[]& buf)=>void do
         buf = [] .. buf .. [3];
     end
 end
@@ -45183,9 +45194,9 @@ escape buffer[0];
 
 Test { [[
 class Test with
-    function (u8[]&& buf)=>void fillBuffer;
+    code/instantaneous FillBuffer (u8[]&& buf)=>void;
 do
-    function (u8[]&& buf)=>void fillBuffer do
+    code/instantaneous FillBuffer (u8[]&& buf)=>void do
         *buf = [] .. *buf .. [3];
     end
 end
@@ -45206,7 +45217,7 @@ class T with
 do
 end
 
-function (T& t)=>int f do
+code/instantaneous F (T& t)=>int do
     escape t.v * 2;
 end
 
@@ -45229,7 +45240,7 @@ class T with
 do
 end
 
-function (T& t)=>int f do
+code/instantaneous F (T& t)=>int do
     escape t.v * 2;
 end
 
@@ -45255,7 +45266,7 @@ class T with
 do
 end
 
-function (T&& t)=>int f do
+code/instantaneous F (T&& t)=>int do
     escape t:v * 2;
 end
 
@@ -45276,19 +45287,19 @@ escape ret;
 
 Test { [[
 interface Human with
-    function (void)=>int walk;
-    function (void)=>int breath;
+    code/instantaneous Walk (void)=>int;
+    code/instantaneous Breath (void)=>int;
     var int n;
 end
 
 class CommonThings with
-    function (Human& h)=>int walk;
-    function (Human& h)=>int breath;
+    code/instantaneous Walk (Human& h)=>int;
+    code/instantaneous Breath (Human& h)=>int;
 do
-    function (Human& h)=>int walk do
+    code/instantaneous Walk (Human& h)=>int do
         escape h.n;
     end
-    function (Human& h)=>int breath do
+    code/instantaneous Breath (Human& h)=>int do
         escape h.n;
     end
     await FOREVER;
@@ -45299,10 +45310,10 @@ class Man with
     var CommonThings& ct;
     var int n = 100;
 do
-    function (void)=>int walk do
+    code/instantaneous Walk (void)=>int do
         escape 200; // override
     end
-    function (void)=>int breath do
+    code/instantaneous Breath (void)=>int do
         escape this.ct.breath(&this); // delegate
     end
 end
@@ -45409,7 +45420,7 @@ class Dir with
 do
 end
 interface IPingu with
-    function (void)=>Dir& get;
+    code/instantaneous Get (void)=>Dir&;
 end
 class Pingu with
     interface IPingu;
@@ -45417,7 +45428,7 @@ do
     var Dir dir with
         this.value = 10;
     end;
-    function (void)=>Dir& get do
+    code/instantaneous Get (void)=>Dir& do
         escape &&dir;
     end
 end
@@ -45433,7 +45444,7 @@ class Dir with
 do
 end
 interface IPingu with
-    function (void)=>Dir& get;
+    code/instantaneous Get (void)=>Dir&;
 end
 class Pingu with
     interface IPingu;
@@ -45441,7 +45452,7 @@ do
     var Dir dir with
         this.value = 10;
     end;
-    function (void)=>Dir& get do
+    code/instantaneous Get (void)=>Dir& do
         escape &dir;
     end
 end
@@ -45493,9 +45504,9 @@ interface I with end;
 
 class T with
     interface I;
-    function (void)=>I&& f;
+    code/instantaneous F (void)=>I&&;
 do
-    function (void)=>I&& f do
+    code/instantaneous F (void)=>I&& do
         var I&& i = &&this;
         escape i;
     end
@@ -45510,10 +45521,10 @@ escape p==&&t;
 
 Test { [[
 class T with
-    function (void)=>int&& f;
+    code/instantaneous F (void)=>int&&;
 do
     var int x = 1;
-    function (void)=>int&& f do
+    code/instantaneous F (void)=>int&& do
         escape &&this.x;
     end
 end
@@ -45529,9 +45540,9 @@ interface I with end;
 
 class T with
     interface I;
-    function (void)=>I&& f;
+    code/instantaneous F (void)=>I&&;
 do
-    function (void)=>I&& f do
+    code/instantaneous F (void)=>I&& do
         escape &&this;
     end
 end
@@ -45546,9 +45557,9 @@ escape 1;
 Test { [[
 class T with
     var int xxx2=0;
-    function (int xxx3)=>void fff;
+    code/instantaneous Fff (int xxx3)=>void;
 do
-    function (int xxx3)=>void fff do
+    code/instantaneous Fff (int xxx3)=>void do
         this.xxx2 = xxx3;
     end
     this.xxx2 = 1;
@@ -45564,9 +45575,9 @@ escape ttt.xxx2;
 Test { [[
 class T with
     var int xxx2=0;
-    function (int& xxx3)=>void fff;
+    code/instantaneous Fff (int& xxx3)=>void;
 do
-    function (int& xxx3)=>void fff do
+    code/instantaneous Fff (int& xxx3)=>void do
         var int& xxx4 = &xxx3;
         this.xxx2 = xxx4;
     end
@@ -45585,10 +45596,10 @@ Test { [[
 class U with do end
 
 class T with
-    function (int x)=>T f;
+    code/instantaneous F (int x)=>T;
     var int x = 0;
 do
-    function (int x)=>T f do
+    code/instantaneous F (int x)=>T do
         this.x = 1;
     end
 end
@@ -45601,11 +45612,11 @@ escape t.x;
 
 Test { [[
 class T with
-    function (int x)=>T f;
+    code/instantaneous F (int x)=>T;
 do
     var int x = 0;
 
-    function (int x)=>T f do
+    code/instantaneous F (int x)=>T do
         this.x = 1;
     end
 end
@@ -45620,10 +45631,10 @@ escape t.x;
 
 Test { [[
 class T with
-    function (int x)=>T fff;
+    code/instantaneous Fff (int x)=>T;
     var int x = 0;
 do
-    function (int x)=>T fff do
+    code/instantaneous Fff (int x)=>T do
         this.x = x;
     end
 end
@@ -45636,10 +45647,10 @@ escape ttt.x;
 
 Test { [[
 class T with
-    function (int x)=>T fff;
+    code/instantaneous Fff (int x)=>T;
     var int x = 0;
 do
-    function (int x)=>T fff do
+    code/instantaneous Fff (int x)=>T do
         this.x = x;
     end
 end
@@ -45652,10 +45663,10 @@ escape ttt.x;
 }
 Test { [[
 class T with
-    function (int x)=>T fff;
+    code/instantaneous Fff (int x)=>T;
     var int x = 0;
 do
-    function (int x)=>T fff do
+    code/instantaneous Fff (int x)=>T do
         this.x = x;
     end
 end
@@ -45670,10 +45681,10 @@ escape ttt.x;
 
 Test { [[
 class T with
-    function (int x)=>T fff;
+    code/instantaneous Fff (int x)=>T;
     var int x = 0;
 do
-    function (int x)=>T fff do
+    code/instantaneous Fff (int x)=>T do
         this.x = x;
     end
     this.x = 1;
@@ -45687,14 +45698,14 @@ escape ttt.x;
 
 Test { [[
 class T with
-    function (int x)=>T f1;
-    function (int x)=>T f2;
+    code/instantaneous F1 (int x)=>T;
+    code/instantaneous F2 (int x)=>T;
     var int x = 0;
 do
-    function (int x)=>T f1 do
+    code/instantaneous F1 (int x)=>T do
         this.x = x;
     end
-    function (int x)=>T f2 do
+    code/instantaneous F2 (int x)=>T do
         this.f1(x);
     end
 end
@@ -45707,14 +45718,14 @@ escape ttt.x;
 
 Test { [[
 class T with
-    function (int x)=>T f1;
-    function (int x)=>T f2;
+    code/instantaneous F1 (int x)=>T;
+    code/instantaneous F2 (int x)=>T;
     var int x = 0;
 do
-    function (int x)=>T f1 do
+    code/instantaneous F1 (int x)=>T do
         this.x = x;
     end
-    function (int x)=>T f2 do
+    code/instantaneous F2 (int x)=>T do
         this.f1(x);
     end
     await FOREVER;
@@ -45735,14 +45746,14 @@ escape ret;
 
 Test { [[
 class T with
-    function (int x)=>T f1;
-    function (int x)=>T f2;
+    code/instantaneous F1 (int x)=>T;
+    code/instantaneous F2 (int x)=>T;
     var int x = 0;
 do
-    function (int x)=>T f1 do
+    code/instantaneous F1 (int x)=>T do
         this.x = x;
     end
-    function (int x)=>T f2 do
+    code/instantaneous F2 (int x)=>T do
         this.f1(x);
     end
     escape this.x;
@@ -45757,9 +45768,9 @@ escape ret;
 Test { [[
 class T with
     var int& x;
-    function (int& x)=>T fff;
+    code/instantaneous Fff (int& x)=>T;
 do
-    function (int& x)=>T fff do
+    code/instantaneous Fff (int& x)=>T do
         this.x = x;
     end
     this.x = 1;
@@ -45775,9 +45786,9 @@ escape x;
 Test { [[
 class T with
     var int& x;
-    function (int& x)=>T fff;
+    code/instantaneous Fff (int& x)=>T;
 do
-    function (int& x)=>T fff do
+    code/instantaneous Fff (int& x)=>T do
     end
 end
 escape 1;
@@ -45788,10 +45799,10 @@ escape 1;
 Test { [[
 class T with
     var int& x;
-    function (int& x)=>T fff;
+    code/instantaneous Fff (int& x)=>T;
 do
     this.x = 1;
-    function (int& x)=>T fff do
+    code/instantaneous Fff (int& x)=>T do
     end
 end
 escape 1;
@@ -45802,9 +45813,9 @@ escape 1;
 Test { [[
 class T with
     var int xxx2;
-    function (int& xxx3)=>T fff;
+    code/instantaneous Fff (int& xxx3)=>T;
 do
-    function (int& xxx3)=>T fff do
+    code/instantaneous Fff (int& xxx3)=>T do
         this.xxx2 = xxx3;
     end
     this.xxx2 = 1;
@@ -45820,9 +45831,9 @@ escape ttt.xxx2;
 Test { [[
 class T with
     var int& xxx2;
-    function (int& xxx3)=>T fff;
+    code/instantaneous Fff (int& xxx3)=>T;
 do
-    function (int& xxx3)=>T fff do
+    code/instantaneous Fff (int& xxx3)=>T do
         this.xxx2 = &xxx3;
     end
     this.xxx2 = 1;
@@ -45853,12 +45864,12 @@ escape vvv;
 }
 Test { [[
 class TimeDisplay with
-    function (int& vvv)=>TimeDisplay build;
+    code/instantaneous Build (int& vvv)=>TimeDisplay;
 do
     var int x = 0;
     var int& vvv = &x;
 
-    function (int& vvv)=>TimeDisplay build do
+    code/instantaneous Build (int& vvv)=>TimeDisplay do
         this.vvv = &vvv;
     end
 end
@@ -45869,12 +45880,12 @@ escape 1;
 
 Test { [[
 class TimeDisplay with
-    function (int& vvv)=>TimeDisplay build;
+    code/instantaneous Build (int& vvv)=>TimeDisplay;
 do
     var int x = 0;
     var int& vvv;
 
-    function (int& vvv)=>TimeDisplay build do
+    code/instantaneous Build (int& vvv)=>TimeDisplay do
         //this.vvv = &vvv;
         if vvv then end;
     end
@@ -46038,7 +46049,7 @@ native do
         escape NULL;
     }
 end
-    function (void) => void parse_file do
+    code/instantaneous Parse_file (void) => void do
             var int&? intro_story_str;
             if intro_story_str? then end;
             finalize
@@ -46668,9 +46679,9 @@ class U with do end;
 
 class T with
     var U&&[]& us;
-    function (U&&[]& us)=>T build;
+    code/instantaneous Build (U&&[]& us)=>T;
 do
-    function (U&&[]& us)=>T build do
+    code/instantaneous Build (U&&[]& us)=>T do
         this.us = &us;
     end
 end
@@ -46688,9 +46699,9 @@ class U with do end;
 
 class T with
     var U&&[]& us;
-    function (U&&[]& us)=>T build;
+    code/instantaneous Build (U&&[]& us)=>T;
 do
-    function (U&&[]& us)=>T build do
+    code/instantaneous Build (U&&[]& us)=>T do
         this.us = &us;
     end
 end
@@ -46711,9 +46722,9 @@ class U with do end;
 
 class T with
     var U&&?[]& us;
-    function (U&&?[]& us)=>T build;
+    code/instantaneous Build (U&&?[]& us)=>T;
 do
-    function (U&&?[]& us)=>T build do
+    code/instantaneous Build (U&&?[]& us)=>T do
         this.us = &us;
     end
 end
@@ -46739,9 +46750,9 @@ end;
 
 class T with
     var U&&?[]& us;
-    function (U&&?[]& us)=>T build;
+    code/instantaneous Build (U&&?[]& us)=>T;
 do
-    function (U&&?[]& us)=>T build do
+    code/instantaneous Build (U&&?[]& us)=>T do
         this.us = &us;
     end
 end
@@ -46767,9 +46778,9 @@ end;
 
 class T with
     var U&&?[]& us;
-    function (U&&?[]& us)=>T build;
+    code/instantaneous Build (U&&?[]& us)=>T;
 do
-    function (U&&?[]& us)=>T build do
+    code/instantaneous Build (U&&?[]& us)=>T do
         this.us = &us;
     end
 end
@@ -46791,9 +46802,9 @@ escape us[0]?+1;
 Test { [[
 class T with
     var int& i;
-    function (int& i)=>T build;
+    code/instantaneous Build (int& i)=>T;
 do
-    function (int& i)=>T build do
+    code/instantaneous Build (int& i)=>T do
         this.i = &i;
     end
     escape this.i;
@@ -46812,9 +46823,9 @@ end
 native @pure _ID();
 class T with
     var int& i;
-    function (int& i)=>T build;
+    code/instantaneous Build (int& i)=>T;
 do
-    function (int& i)=>T build do
+    code/instantaneous Build (int& i)=>T do
         this.i = &i;
     end
     escape this.i;
@@ -46901,7 +46912,7 @@ escape 1;
 
 Test { PRE_ISR..[[
 output int O;
-function (void)=>void f do end
+code/instantaneous F (void)=>void do end
 atomic do
     f();
 end
@@ -47236,7 +47247,7 @@ escape 1;
 }
 
 Test { PRE_ISR..[[
-function (void)=>int f do
+code/instantaneous F (void)=>int do
     escape 2;
 end
 var int v = f();
@@ -47254,7 +47265,7 @@ escape v;
 }
 
 Test { PRE_ISR..[[
-function (void)=>int f do
+code/instantaneous F (void)=>int do
     escape 2;
 end
 var int v = f();
@@ -47655,7 +47666,7 @@ class UIGrid with
     interface UI;
     pool  UIGridItem[] uis;
 do
-    function (void)=>void go do
+    code/instantaneous Go (void)=>void do
         loop item in this.uis do
             _f(item:ui);
         end
@@ -50646,17 +50657,17 @@ end
 
 interface I with
     var int v;
-    function (int)=>void f;
+    code/instantaneous F (int)=>void;
 end
 
 class T with
     var int v=0;
-    function (int)=>void f;
+    code/instantaneous F (int)=>void;
 do
     v = 50;
     this.f(10);
 
-    function (int v)=>void f do
+    code/instantaneous F (int v)=>void do
         this.v = this.v + v;
     end
     await FOREVER;
@@ -50685,7 +50696,7 @@ end
 
 interface I with
     var int v;
-    function (int)=>void f;
+    code/instantaneous F (int)=>void;
 end
 
 class T with
@@ -50695,7 +50706,7 @@ do
     v = 50;
     this.f(10);
 
-    function (int a)=>void f do
+    code/instantaneous F (int a)=>void do
         v = v + a;
     end
     await FOREVER;
@@ -50719,18 +50730,18 @@ escape _V+1;
 Test { [[
 interface I with
     var int v;
-    function (void)=>int get;
-    function (int)=>void set;
+    code/instantaneous Get (void)=>int;
+    code/instantaneous Set (int)=>void;
 end
 
 class T with
     interface I;
     var int v = 50;
 do
-    function (void)=>int get do
+    code/instantaneous Get (void)=>int do
         escape v;
     end
-    function (int v)=>void set do
+    code/instantaneous Set (int v)=>void do
         this.v= v;
     end
     await FOREVER;
@@ -50753,7 +50764,7 @@ end
 
 interface I with
     var int v;
-    function (int)=>void f;
+    code/instantaneous F (int)=>void;
 end
 
 class T with
@@ -50763,7 +50774,7 @@ do
     v = 50;
     this.f(10);
 
-    function (int v)=>void f do
+    code/instantaneous F (int v)=>void do
         this.v = this.v + v;
     end
     await FOREVER;
@@ -50776,7 +50787,7 @@ do
     v = 50;
     this.f(10);
 
-    function (int v)=>void f do
+    code/instantaneous F (int v)=>void do
         this.v = this.v + 2*v;
     end
     await FOREVER;
@@ -52490,9 +52501,9 @@ class Parser with
 do end;
 
 class Frame with
-    function (int)=>void rawWriteByte;
+    code/instantaneous RawWriteByte (int)=>void;
 do
-    function (int v)=>void rawWriteByte do if v then end end;
+    code/instantaneous RawWriteByte (int v)=>void do if v then end end;
 end;
 
 class Receiver with
@@ -53015,9 +53026,9 @@ Test { [[
 class T with
     input:
         var int v;
-    function (int v)=>T build;
+    code/instantaneous Build (int v)=>T;
 do
-    function (int v)=>T build do
+    code/instantaneous Build (int v)=>T do
         this.v = v;
     end
 end
@@ -54573,7 +54584,7 @@ data T with
     var int x;
 end
 
-function (void)=>T f do
+code/instantaneous F (void)=>T do
     var T t = T(10);
     escape t;
 end
@@ -55199,7 +55210,7 @@ end
 class SurfaceBackground with
     var _WorldObjs__SurfaceBackground& me;
 do
-    function (_Vector3f&& p)=>void set_pos do
+    code/instantaneous Set_pos (_Vector3f&& p)=>void do
         this.me.pos = Vector3f(p:x, p:y, p:z);
     end
 end
@@ -63828,9 +63839,9 @@ do return end
 -- BUG: bad message, I want to say that you cannot copy vectors in a single stmt
 Test { [[
 class Test with
-    function (u8[]&& buf)=>void fillBuffer;
+    code/instantaneous FillBuffer (u8[]&& buf)=>void;
 do
-    function (u8[]&& buf)=>void fillBuffer do
+    code/instantaneous FillBuffer (u8[]&& buf)=>void do
         var u8[] b = *buf;
         b = b .. [3];
     end
@@ -63848,7 +63859,7 @@ escape buffer[0];
 
 -- BUG: doesn't check dimension of pointer to vector
 Test { [[
-function (u8[20]&& buf)=>void fillBuffer do
+code/instantaneous FillBuffer (u8[20]&& buf)=>void do
     *buf = *buf .. [3];
 end
 var u8[10] buffer;
@@ -63860,7 +63871,7 @@ escape buffer[0];
 
 --cbuffer "attr to greater scope"
 Test { [[
-    function @rec (void)=>void update_surface do
+    code/instantaneous/recursive Update_surface (void)=>void do
         var _CollisionMap&& colmap = _XXX_PURE(global:world!:get_colmap());
 
         this.me.colmap_serial = colmap:get_serial();
@@ -63878,9 +63889,9 @@ end
 var int i = 1;
 
 class T with
-    function (void)=>int get;
+    code/instantaneous Get (void)=>int;
 do
-    function (void)=>int get do
+    code/instantaneous Get (void)=>int do
         escape global:i;
     end
 end
@@ -63994,9 +64005,9 @@ escape 1;
 Test { [[
 class T with
     var int xxx2=0;
-    function (int xxx3)=>void fff;
+    code/instantaneous Fff (int xxx3)=>void;
 do
-    function (int xxx3)=>void fff do
+    code/instantaneous Fff (int xxx3)=>void do
         var int xxx4 = xxx3;
         this.xxx2 = xxx4;
     end
@@ -64012,12 +64023,12 @@ escape ttt.xxx2;
 }
 Test { [[
 class TimeDisplay with
-    function (int& vvv)=>TimeDisplay build;
+    code/instantaneous Build (int& vvv)=>TimeDisplay;
 do
     var int x = 0;
     var int& vvv;
 
-    function (int& vvv)=>TimeDisplay build do
+    code/instantaneous Build (int& vvv)=>TimeDisplay do
         this.vvv = &vvv;
     end
 
@@ -64030,11 +64041,11 @@ escape 1;
 
 Test { [[
 class TimeDisplay with
-    function (int& vvv)=>TimeDisplay build;
+    code/instantaneous Build (int& vvv)=>TimeDisplay;
 do
     var int& vvv;
 
-    function (int& vvv)=>TimeDisplay build do
+    code/instantaneous Build (int& vvv)=>TimeDisplay do
         this.vvv = &vvv;
     end
 end
@@ -64050,7 +64061,7 @@ do return end
 
     var byte&&                  name    = null;
 
-    function (@hold byte&& name)=>Surface name;
+    code/instantaneous Name (@hold byte&& name)=>Surface;
 
 ---
 
@@ -64178,9 +64189,9 @@ escape _strlen((byte&&)&&t.name);
 Test { [[
 class T with
     var void& p;
-    function (void& p)=>T build;
+    code/instantaneous Build (void& p)=>T;
 do
-    function (void& p)=>T build do
+    code/instantaneous Build (void& p)=>T do
         this.p = &p;
     end
     escape *((int&&)&&this.p);
@@ -64778,7 +64789,7 @@ escape _V;
 }
 
 Test { [[
-function () => void f;
+code/instantaneous F () => void;
 escape 1;
 ]],
     run = 1,
