@@ -1512,6 +1512,17 @@ ret[#ret+1] = node('Dcl_cls', me.ln, false, '__'..ID,
     Await_pre = function (me)
         local e, dt, cnd = unpack(me)
 
+-- TODO
+local e = unpack(me)
+if e and e.tag=='Op2_call' then
+    local _,abs,_ = unpack(e)
+    if abs.tag == 'Abs' then
+        me = AST.copy(me)
+        me.tag = '_DoOrg'
+        return me
+    end
+end
+
         -- wclock event, change "e" and insert "dt"
         if dt then
             me[1] = node('Ext', me.ln, '_WCLOCK')
@@ -1535,6 +1546,19 @@ ret[#ret+1] = node('Dcl_cls', me.ln, false, '__'..ID,
 
     _Set_pre = function (me)
         local to, op, tag, fr = unpack(me)
+
+-- TODO
+if tag == 'await' then
+    local e = unpack(fr)
+    if e and e.tag=='Op2_call' then
+        local _,abs,_ = unpack(e)
+        if abs.tag == 'Abs' then
+            fr.tag = '_DoOrg'
+            tag = 'do-org'
+            me[3] = op
+        end
+    end
+end
 
         if tag == 'exp' then
             return node('Set', me.ln, op, tag, fr, to)

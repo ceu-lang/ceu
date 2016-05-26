@@ -590,13 +590,25 @@ do
     await 1s;
     escape xx+1;
 end
-var int a = do @ @ Code(1);
+var int a = await @ Code(1);
 _printf("a = %d\n", a);
-/*
-var Code c = Code(1);
-await c;
-*/
 escape a;
+]],
+    run = { ['~>1s']=3 },
+}
+Test { [[
+native do
+    int X = 0;
+end
+code/delayed Code (int x) => int
+do
+    var int xx = x + 1;
+    await 1s;
+    _X = xx + 1;
+    escape xx+1;
+end
+await @ Code(1);
+escape _X;
 ]],
     run = { ['~>1s']=3 },
 }
