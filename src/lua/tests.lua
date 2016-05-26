@@ -776,7 +776,124 @@ escape a;
     run = {['~>10s']=50 },
 }
 
---do return end
+-------------------------------------------------------------------------------
+
+Test { [[
+do/A
+    escape/A 1;
+end
+]],
+    env = 'do/A has no return value',
+}
+
+Test { [[
+var int a = do/A
+    escape/A 1;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    x = x + 1;
+    par/and do
+        await FOREVER;
+    with
+        continue/i;
+    end
+end
+escape x;
+]],
+    run = 10,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    loop j in 10 do
+        x = x + 1;
+        par/and do
+            await FOREVER;
+        with
+            continue/i;
+        end
+    end
+end
+escape x;
+]],
+    run = 10,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    loop j in 10 do
+        x = x + 1;
+        par/and do
+            await FOREVER;
+        with
+            continue/j;
+        end
+    end
+end
+escape x;
+]],
+    run = 100,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    x = x + 1;
+    par/and do
+        await FOREVER;
+    with
+        break/i;
+    end
+end
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    loop j in 10 do
+        x = x + 1;
+        par/and do
+            await FOREVER;
+        with
+            break/i;
+        end
+    end
+end
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    loop j in 10 do
+        x = x + 1;
+        par/and do
+            await FOREVER;
+        with
+            break/j;
+        end
+    end
+end
+escape x;
+]],
+    run = 10,
+}
+
+do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested

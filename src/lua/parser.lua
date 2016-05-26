@@ -159,13 +159,26 @@ local alphanum = m.R'az' + '_' + m.R'09'
 
 NUM = CK(m.R'09'^1) / tonumber
 
+-- Rule:    unchanged in the AST
+-- _Rule:   changed in the AST as "Rule"
+-- __Rule:  container for other rules, not in the AST
+-- __rule:  (local) container for other rules
+
 GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
+-->>> OK
     , Nothing = KEY'nothing'
-    , _Escape = KEY'escape' * EV'__Exp'
-    , Return  = KEY'return' * EV'__Exp'^-1
-    , Break     = KEY'break'
-    , _Continue = KEY'continue'
+
+    -- escape/A 10
+    -- break/i
+    -- continue/i
+    , _Escape   = KEY'escape'   * ('/'*CK(Alpha*(Alphanum)^0) + Cc(false))
+                                * EV'__Exp'
+    , _Break    = KEY'break'    * ('/'*EV'ID_var' + Cc(false))
+    , _Continue = KEY'continue' * ('/'*EV'ID_var' + Cc(false))
+--<<<
+
+    , ID_var = V'__ID_var'
 
 -- Declarations
 
@@ -585,7 +598,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                    )^-1
                  * (V'Host'+V'_Dcl_fun_do'+V'_Code')^0 )
 
-    , __LstStmt  = V'_Escape' + V'Return' + V'Break' + V'_Continue' + V'AwaitN'
+    , __LstStmt  = V'_Escape' + V'_Break' + V'_Continue' + V'AwaitN'
     , __LstStmtB = V'ParEver'
     , __StmtS    = V'Nothing'
                  + V'_Dcl_var'  + V'_Dcl_pool' + V'_Dcl_int'
