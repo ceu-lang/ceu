@@ -582,7 +582,6 @@ escape a;
     run = 13,
 }
 
---]===]
 Test { [[
 code/delayed Code (int x) => int
 do
@@ -618,16 +617,17 @@ code/delayed Code (int x) => int
 do
     x = x + 1;
     await 1s;
-    return x;
+    escape x;
 end
 var int a =
-    watching @ @ Code(10) do
+    watching @ Code(10) do
         escape 1;
     end;
 
 escape a;
 ]],
-    run = 13,
+    _ana = {acc=1},
+    run = 1,
 }
 
 Test { [[
@@ -635,17 +635,49 @@ code/delayed Code (int x) => int
 do
     x = x + 1;
     await 1s;
-    return x;
+    escape x;
 end
 var int a =
-    watching Code(10) do
+    watching @ Code(10) do
         await 5s;
         escape 1;
     end;
 
 escape a;
 ]],
-    run = 13,
+    run = {['~>1s']=11 },
+}
+
+--]===]
+Test { [[
+ddd Data with
+    var int v;
+end
+
+code/delayed Code (Data& d, int ini) => int
+do
+    d.v = ini;
+    every 1s do
+        d.v = d.v + 1;
+    end
+end
+
+var Data d;
+
+var int a =
+    watching @ Code(&d, 10) do
+        var int ret = 0;
+        watching 5s do
+            every 1s do
+                ret = ret + d.v;
+            end
+        end
+        escape ret;
+    end;
+
+escape a;
+]],
+    run = {['~>10s']=50 },
 }
 
 do return end

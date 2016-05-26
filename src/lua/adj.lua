@@ -973,13 +973,13 @@ end
                 if blk then
                     args[#args+1] = node('Dcl_var', me.ln, 'var', tp, id)
                     if pre == 'code/delayed' then
-                        args[#args+1] =
-                            node('Set', me.ln, '=', 'exp',
-                                node('Op2_.', me.ln, '.',
-                                    node('RawExp', me.ln,
-                                        '(*((CEU__'..ID..'*)_ceu_evt->param))'),
-                                            id),
-                                        node('Var', me.ln, id))
+                        local fr = node('RawExp', me.ln,
+                                    '(((CEU__'..ID..'*)_ceu_evt->param)->'..id..')')
+                        if tp[#tp] == '&' then
+                            fr = node('Op1_&', me.ln, '&', fr)
+                        end
+                        local to = node('Var', me.ln, id)
+                        args[#args+1] = node('Set', me.ln, '=', 'exp', fr, to)
                     else
                         args[#args+1] = node('Set', me.ln, '=', 'exp',
                                             node('Nat', me.ln, '_'..id),
