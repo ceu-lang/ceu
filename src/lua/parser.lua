@@ -60,6 +60,14 @@ local OPT = function (patt)
     return patt + Cc(false)
 end
 
+local Ccs = function (...)
+    local ret = Cc(true)
+    for _, v in ipairs(...) do
+        ret = ret * Cc(v)
+    end
+    return ret
+end
+
 local _V2NAME = {
 -->>> OK
     __do_escape_id = '`escape´ identifier',
@@ -323,7 +331,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Dcl_constr = V'Block'
 
     -- pools
-    , __dcl_var_set = EV'__ID_int' * (V'__Sets' + Cc(false)*Cc(false)*Cc(false))
+    , __dcl_var_set = EV'__ID_int' * (V'__Sets' + Cc(false,false,false))
     , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__dcl_var_set' * (K','*EV'__dcl_var_set')^0
 
     -- external functions
@@ -483,7 +491,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- loops
     , _Loop   = KEY'loop' * OPT('/'*EV'__Exp') *
                     ((V'ID_int'+V'ID_none') * OPT(EKEY'in'*EV'__Exp')
-                    + Cc(false)*Cc(false)) *
+                    + Cc(false,false)) *
                 V'__Do'
     , _Every  = KEY'every' * ( (EV'ID_int'+V'VarList') * EKEY'in'
                             + Cc(false) )
