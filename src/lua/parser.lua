@@ -94,8 +94,7 @@ local _V2NAME = {
     __nat  = 'declaration',
     _Nats   = 'declaration',
     Dcl_adt_tag = 'declaration',
-    _Typepars_anon = 'type list',
-    _Typepars_ids = 'param list',
+    __adt_expitem = 'parameter',
     __adt_expitem = 'parameter',
     __Do = 'block',
 }
@@ -257,7 +256,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __code   = (CKEY'code/instantaneous' + CKEY'code/delayed')
                     * OPT(CK'/recursive')
                     * EV'__ID_abs'
-                    * EV'_Typepars_ids' * EK'=>' * EV'Type'
+                    * EV'_Typepars' * EK'=>' * EV'Type'
     , _Code_proto = V'__code'
     , _Code_impl  = V'__code' * V'__Do'
 
@@ -341,7 +340,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_ext_call = (CKEY'input'+CKEY'output')
                      * Cc(false)     -- spawn array
                      * OPT(CKEY'@rec')
-                     * V'_Typepars_ids' * K'=>' * EV'Type'
+                     * V'_Typepars' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
     -- external requests/events
@@ -352,18 +351,17 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_ext_io   = (CKEY'input/output'+CKEY'output/input')
                      * OPT('['*(V'__Exp'+Cc(true))*EK']')
                      * Cc(false)     -- recursive
-                     * V'_Typepars_ids' * K'=>' * EV'Type'
+                     * V'_Typepars' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
-    -- (var int, var void*)
-    , _Typepars_anon_item = EK'var' * Cc(false) * EV'Type' * Cc(false)
-    , _Typepars_anon = K'(' * Cc(false) * (#P'void' * EV'Type') * Cc(false) * EK')'
-                     + K'(' * EV'_Typepars_anon_item' * (EK','*V'_Typepars_anon_item')^0 * EK')'
-
-    -- (var int v, var nohold void* ptr)
-    , _Typepars_ids_item = EK'var' * OPT(CKEY'@hold') * EV'Type' * OPT(EV'__ID_int')
-    , _Typepars_ids = K'(' * Cc(false) * (#P'void' * EV'Type') * Cc(false) * EK')'
-                    + K'(' * EV'_Typepars_ids_item' * (EK','*V'_Typepars_ids_item')^0 * EK')'
+    -- (var& int, var/nohold void&&)
+    -- (var& int v, var/nohold void&& ptr)
+    , __typepars_pre = EK'var' * OPT(CK'&') * OPT(K'/'*CKEY'hold')
+    , _Typepars_item_id   = V'__typepars_pre' * EV'Type' * EV'__ID_int'
+    , _Typepars_item_anon = V'__typepars_pre' * EV'Type' * Cc(false)
+    , _Typepars = EK'(' * P'void' * EK')'
+                + K'(' * EV'_Typepars_item_anon' * (EK','*V'_Typepars_item_anon')^0 * EK')'
+                + K'(' * EV'_Typepars_item_id'   * (EK','*V'_Typepars_item_id')^0   * EK')'
 
     -- classes / interfaces
     , Dcl_cls  = KEY'class'     * Cc(false)

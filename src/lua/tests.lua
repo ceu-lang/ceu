@@ -191,11 +191,30 @@ do
 end
 escape 1;
 ]],
-    adj = 'line 1 : missing parameter identifier',
+    parser = 'line 1 : after `int´ : expected identifier',
 }
 
 Test { [[
 code/instantaneous Code (var void, var  int x) => void
+do
+end
+escape 1;
+]],
+    parser = 'line 1 : after `int´ : expected `,´',
+    --adj = 'line 1 : wrong argument #1 : cannot be `void´',
+}
+
+Test { [[
+code/instantaneous Code (var void, var  int) => void
+do
+end
+escape 1;
+]],
+    adj = 'line 1 : wrong argument #1 : cannot be `void´',
+}
+
+Test { [[
+code/instantaneous Code (var void a, var  int b) => void
 do
 end
 escape 1;
@@ -362,7 +381,7 @@ ddd Data with
     var int v;
 end
 
-code/delayed Code (var Data& d, var  int ini) => int
+code/delayed Code (var& Data d, var  int ini) => int
 do
     d.v = ini;
     every 1s do
@@ -17341,7 +17360,7 @@ escape ref[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (var void&&, var  int[] vec)=>int do
+code/instantaneous F (var void&& x, var  int[] vec)=>int do
     escape vec[1];
 end
 
@@ -17352,7 +17371,7 @@ escape f(str);
 }
 
 Test { [[
-code/instantaneous F (var int a, var  void)=>int do
+code/instantaneous F (var int a, var  void b)=>int do
 end
 escape 1;
 ]],
@@ -17360,7 +17379,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var void, var  int a)=>int do
+code/instantaneous F (var void, var  int)=>int do
 end
 escape 1;
 ]],
@@ -21349,7 +21368,7 @@ escape 1;
 }
 
 Test { [[
-input (var void, var  int a)=>void A do
+input (var void a, var  int a)=>void A do
     v = 1;
 end
 escape 1;
@@ -42966,7 +42985,8 @@ Test { [[
 code/instantaneous F void => (void);
 escape 1;
 ]],
-    parser = 'line 1 : after `F´ : expected param list',
+    parser = 'line 1 : after `F´ : expected `(´',
+    --parser = 'line 1 : after `F´ : expected param list',
     --parser = 'line 1 : after `=>´ : expected type',
 }
 
@@ -44516,9 +44536,9 @@ escape 1;
 Test { [[
 class T with
     var void&& a=null;
-    code/instantaneous F (var @hold void&& v)=>void;
+    code/instantaneous F (var/hold void&& v)=>void;
 do
-    code/instantaneous F (var @hold void&& v)=>void do
+    code/instantaneous F (var/hold void&& v)=>void do
         a := v;
     end
 end
@@ -44532,7 +44552,7 @@ class T with
     var void&& v=null;
     code/instantaneous F (var void&& v)=>void;
 do
-    code/instantaneous F (var @hold void&& v)=>void do
+    code/instantaneous F (var/hold void&& v)=>void do
         this.v = v;
     end
 end
@@ -44545,9 +44565,9 @@ escape 1;
 Test { [[
 class T with
     var void&& v=null;
-    code/instantaneous F (var @hold void&& v)=>void;
+    code/instantaneous F (var/hold void&& v)=>void;
 do
-    code/instantaneous F (var @hold void&& v)=>void do
+    code/instantaneous F (var/hold void&& v)=>void do
         this.v := v;
     end
 end
@@ -44570,9 +44590,9 @@ escape 1;
 Test { [[
 class T with
     var void&& v=null;
-    code/instantaneous F (var @hold void&& v)=>void;
+    code/instantaneous F (var/hold void&& v)=>void;
 do
-    code/instantaneous F (var @hold void&& v)=>void do
+    code/instantaneous F (var/hold void&& v)=>void do
         this.v := v;
     end
 end
@@ -44615,7 +44635,7 @@ Test { [[
 native do
     void* V;
 end
-code/instantaneous F (var @hold void&& v)=>void do
+code/instantaneous F (var/hold void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
@@ -65649,7 +65669,7 @@ Test { [[
 native do
     void* V;
 end
-input (var @hold void* v)=>void F do
+input (var/hold void* v)=>void F do
     _V := v;
 end
 escape 1;
@@ -65698,7 +65718,7 @@ escape 1;
 }
 
 Test { [[
-input (var @hold byte* buf)=>void F do
+input (var/hold byte* buf)=>void F do
 end;
 var byte* buf;
 call F => buf;
