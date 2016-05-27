@@ -251,7 +251,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 V'Block' * (EKEY'with' * V'Block')^1 *
                EKEY'end'
 
--- CODE
+-- CODE / EXTS (call, req)
+
+    -- CODE
 
     , __code   = (CKEY'code/instantaneous' + CKEY'code/delayed')
                     * OPT(CK'/recursive')
@@ -259,6 +261,37 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     * EV'_Typepars' * EK'=>' * EV'Type'
     , _Code_proto = V'__code'
     , _Code_impl  = V'__code' * V'__Do'
+
+    -- EXTS
+
+    -- call
+    , __extcall = (CKEY'input' + CKEY'output')
+                    * OPT(CK'/recursive')
+                    * Cc(false)     -- spawn array
+                    * V'_Typepars' * K'=>' * EV'Type'
+                    * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+    , _Extcall_proto = V'__extcall'
+    , _Extcall_impl  = V'__extcall' * V'__Do'
+
+    -- req
+    , __extreq = (CKEY'input/output' + CKEY'output/input')
+                   * OPT('[' * (V'__Exp'+Cc(true)) * EK']')
+                   * Cc(false)     -- recursive
+                   * V'_Typepars' * K'=>' * EV'Type'
+                   * EV'__ID_ext' * (K','*EV'__ID_ext')^0
+    , _Extreq_proto = V'__extreq'
+    , _Extreq_impl  = V'__extreq' * V'__Do'
+
+    -- TYPEPARS
+
+    -- (var& int, var/nohold void&&)
+    -- (var& int v, var/nohold void&& ptr)
+    , __typepars_pre = EK'var' * OPT(CK'&') * OPT(K'/'*CKEY'hold')
+    , _Typepars_item_id   = V'__typepars_pre' * EV'Type' * EV'__ID_int'
+    , _Typepars_item_anon = V'__typepars_pre' * EV'Type' * Cc(false)
+    , _Typepars = EK'(' * P'void' * EK')'
+                + K'(' * EV'_Typepars_item_anon' * (EK','*V'_Typepars_item_anon')^0 * EK')'
+                + K'(' * EV'_Typepars_item_id'   * (EK','*V'_Typepars_item_id')^0   * EK')'
 
 -- NATIVE
 
@@ -335,33 +368,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- pools
     , __dcl_var_set = EV'__ID_int' * (V'__Sets' + Cc(false,false,false))
     , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__dcl_var_set' * (K','*EV'__dcl_var_set')^0
-
-    -- external functions
-    , __Dcl_ext_call = (CKEY'input'+CKEY'output')
-                     * Cc(false)     -- spawn array
-                     * OPT(CKEY'@rec')
-                     * V'_Typepars' * K'=>' * EV'Type'
-                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
-
-    -- external requests/events
-    , _Ext_proto = V'__Dcl_ext_io' + V'__Dcl_ext_call'
-    , _Ext_impl = V'_Ext_proto' * V'__Do'
-
-    -- external requests
-    , __Dcl_ext_io   = (CKEY'input/output'+CKEY'output/input')
-                     * OPT('['*(V'__Exp'+Cc(true))*EK']')
-                     * Cc(false)     -- recursive
-                     * V'_Typepars' * K'=>' * EV'Type'
-                     * EV'__ID_ext' * (K','*EV'__ID_ext')^0
-
-    -- (var& int, var/nohold void&&)
-    -- (var& int v, var/nohold void&& ptr)
-    , __typepars_pre = EK'var' * OPT(CK'&') * OPT(K'/'*CKEY'hold')
-    , _Typepars_item_id   = V'__typepars_pre' * EV'Type' * EV'__ID_int'
-    , _Typepars_item_anon = V'__typepars_pre' * EV'Type' * Cc(false)
-    , _Typepars = EK'(' * P'void' * EK')'
-                + K'(' * EV'_Typepars_item_anon' * (EK','*V'_Typepars_item_anon')^0 * EK')'
-                + K'(' * EV'_Typepars_item_id'   * (EK','*V'_Typepars_item_id')^0   * EK')'
 
     -- classes / interfaces
     , Dcl_cls  = KEY'class'     * Cc(false)
@@ -672,7 +678,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  + V'__Org'
                  + V'_Vars_set' + V'_Vars' + V'_Vecs_set' + V'_Vecs' + V'_Evts' + V'_Exts'
                  + V'_Dcl_pool'
-                 + V'_Code_proto' + V'_Ext_proto'
+                 + V'_Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Dcl_det'
                  + V'_Set'
                  + V'Await' + V'EmitExt' + V'EmitInt'
@@ -685,7 +691,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              --+ EM'statement'-- (missing `_´?)'
              + EM'statement (usually a missing `var´ or C prefix `_´)'
 
-    , __StmtB = V'_Code_impl' + V'_Ext_impl'
+    , __StmtB = V'_Code_impl' + V'_Extcall_impl' + V'_Extreq_impl'
               + V'_Dcl_ifc'  + V'Dcl_cls' + V'Dcl_adt' + V'_DDD'
               + V'Host'
               + V'Do'    + V'If'
