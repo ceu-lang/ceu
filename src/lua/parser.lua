@@ -94,8 +94,8 @@ local _V2NAME = {
     __nat  = 'declaration',
     _Nats   = 'declaration',
     Dcl_adt_tag = 'declaration',
-    _Typelist_anon = 'type list',
-    _Typelist_ids = 'param list',
+    _Typepars_anon = 'type list',
+    _Typepars_ids = 'param list',
     __adt_expitem = 'parameter',
     __Do = 'block',
 }
@@ -257,7 +257,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __code   = (CKEY'code/instantaneous' + CKEY'code/delayed')
                     * OPT(CK'/recursive')
                     * EV'__ID_abs'
-                    * EV'_Typelist_ids' * EK'=>' * EV'Type'
+                    * EV'_Typepars_ids' * EK'=>' * EV'Type'
     , _Code_proto = V'__code'
     , _Code_impl  = V'__code' * V'__Do'
 
@@ -291,9 +291,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Vecs     = CKEY'vector' * EV'__Dim' * EV'Type' *
                     EV'__ID_int' * (K','*EV'__ID_int')^0
 
-    , _Evts     = CKEY'event' * (V'_Typelist_anon'+EV'Type') *
+    , _Evts     = CKEY'event' * (V'_Typelist'+EV'Type') *
                     EV'__ID_int' * (K','*EV'__ID_int')^0
-    , _Exts     = (CKEY'input'+CKEY'output') * (V'_Typelist_anon'+EV'Type') *
+    , _Exts     = (CKEY'input'+CKEY'output') * (V'_Typelist'+EV'Type') *
                     EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
 -- IDS
@@ -338,7 +338,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_ext_call = (CKEY'input'+CKEY'output')
                      * Cc(false)     -- spawn array
                      * OPT(CKEY'@rec')
-                     * V'_Typelist_ids' * K'=>' * EV'Type'
+                     * V'_Typepars_ids' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
     -- external requests/events
@@ -349,16 +349,20 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Dcl_ext_io   = (CKEY'input/output'+CKEY'output/input')
                      * OPT('['*(V'__Exp'+Cc(true))*EK']')
                      * Cc(false)     -- recursive
-                     * V'_Typelist_ids' * K'=>' * EV'Type'
+                     * V'_Typepars_ids' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
     -- (int, void*)
-    , _Typelist_anon_item = Cc(false) * EV'Type' * Cc(false)
-    , _Typelist_anon = K'(' * EV'_Typelist_anon_item' * (EK','*V'_Typelist_anon_item')^0 * EK')'
+    , _Typelist_item = Cc(false) * EV'Type' * Cc(false)
+    , _Typelist      = K'(' * EV'_Typelist_item' * (EK','*V'_Typelist_item')^0 * EK')'
 
-    -- (int v, nohold void* ptr)
-    , _Typelist_ids_item = OPT(CKEY'@hold') * EV'Type' * OPT(EV'__ID_int')
-    , _Typelist_ids = K'(' * EV'_Typelist_ids_item' * (EK','*V'_Typelist_ids_item')^0 * EK')'
+    -- (var int, var void*)
+    , _Typepars_anon_item = K'var' * Cc(false) * EV'Type' * Cc(false)
+    , _Typepars_anon = K'(' * EV'_Typepars_anon_item' * (EK','*V'_Typepars_anon_item')^0 * EK')'
+
+    -- (var int v, var nohold void* ptr)
+    , _Typepars_ids_item = K'var' * OPT(CKEY'@hold') * EV'Type' * OPT(EV'__ID_int')
+    , _Typepars_ids = K'(' * EV'_Typepars_ids_item' * (EK','*V'_Typepars_ids_item')^0 * EK')'
 
     -- classes / interfaces
     , Dcl_cls  = KEY'class'     * Cc(false)
