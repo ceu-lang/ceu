@@ -56,6 +56,10 @@ local CKEY = function (str)
     return CK(str,true)
 end
 
+local OPT = function (patt)
+    return patt + Cc(false)
+end
+
 local _V2NAME = {
 -->>> OK
     __do_escape_id = '`escape´ identifier',
@@ -213,15 +217,15 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- escape/A 10
     -- break/i
     -- continue/i
-    , _Escape   = KEY'escape'   * ('/'*EV'__do_escape_id' + Cc(false))
-                                * (EV'__Exp' + Cc(false))
-    , _Break    = KEY'break'    * ('/'*EV'ID_int' + Cc(false))
-    , _Continue = KEY'continue' * ('/'*EV'ID_int' + Cc(false))
+    , _Escape   = KEY'escape'   * OPT('/'*EV'__do_escape_id')
+                                * OPT(EV'__Exp')
+    , _Break    = KEY'break'    * OPT('/'*EV'ID_int')
+    , _Continue = KEY'continue' * OPT('/'*EV'ID_int')
 
     , __do_escape_id = CK(Alpha * (Alphanum)^0)
 
     -- do/A ... end
-    , Do = KEY'do' * ('/'*EV'__do_escape_id' + Cc(false)) *
+    , Do = KEY'do' * OPT('/'*EV'__do_escape_id') *
                 V'Block' *
            KEY'end'
 
@@ -243,7 +247,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 -- CODE
 
     , __code   = (CKEY'code/instantaneous' + CKEY'code/delayed')
-                    * (CK'/recursive' + Cc(false))
+                    * OPT(CK'/recursive')
                     * EV'__ID_abs'
                     * EV'_Typelist_ids' * EK'=>' * EV'Type'
     , _Code_proto = V'__code'
@@ -252,19 +256,19 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 -- NATIVE
 
     , _Nats = KEY'native' *
-                (K'/'*(CKEY'pure'+CKEY'const'+CKEY'nohold'+CK'plain') + Cc(false)) *
+                OPT(K'/'*(CKEY'pure'+CKEY'const'+CKEY'nohold'+CK'plain')) *
                 EV'__nat' * (K',' * EV'__nat')^0
     , __nat = Cc'type' * V'__ID_nat' * K'=' * NUM
                 + Cc'func' * V'__ID_nat' * '()' * Cc(false)
                 + Cc'unk'  * V'__ID_nat'        * Cc(false)
 
-    , Host = (CKEY'pre' + Cc(false)) * KEY'native' * (#EKEY'do')*'do' *
+    , Host = OPT(CKEY'pre') * KEY'native' * (#EKEY'do')*'do' *
                 ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
              X* EKEY'end'
 
 -- VARS, VECTORS, EVTS, EXTS
 
-    , __vars_set = EV'__ID_int' * (V'__Sets'+Cc(false))
+    , __vars_set = EV'__ID_int' * OPT(V'__Sets')
 
     , _Vars_set = CKEY'var' * EV'Type' *
                     EV'__vars_set' * (K','*EV'__vars_set')^0
@@ -272,7 +276,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     EV'__ID_int' * (K','*EV'__ID_int')^0
 
 -- TODO: only vec constr
-    , __vecs_set = EV'__ID_int' * (V'__Sets'+Cc(false))
+    , __vecs_set = EV'__ID_int' * OPT(V'__Sets')
 
     , _Vecs_set = CKEY'vector' * EV'__Dim' * EV'Type' *
                     EV'__vecs_set' * (K','*EV'__vecs_set')^0
@@ -325,7 +329,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- external functions
     , __Dcl_ext_call = (CKEY'input'+CKEY'output')
                      * Cc(false)     -- spawn array
-                     * (CKEY'@rec'+Cc(false))
+                     * OPT(CKEY'@rec')
                      * V'_Typelist_ids' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
@@ -335,7 +339,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- external requests
     , __Dcl_ext_io   = (CKEY'input/output'+CKEY'output/input')
-                     * ('['*(V'__Exp'+Cc(true))*EK']'+Cc(false))
+                     * OPT('['*(V'__Exp'+Cc(true))*EK']')
                      * Cc(false)     -- recursive
                      * V'_Typelist_ids' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
@@ -345,7 +349,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Typelist_anon = K'(' * EV'_Typelist_anon_item' * (EK','*V'_Typelist_anon_item')^0 * EK')'
 
     -- (int v, nohold void* ptr)
-    , _Typelist_ids_item = (CKEY'@hold'+Cc(false)) * EV'Type' * (EV'__ID_int'+Cc(false))
+    , _Typelist_ids_item = OPT(CKEY'@hold') * EV'Type' * OPT(EV'__ID_int')
     , _Typelist_ids = K'(' * EV'_Typelist_ids_item' * (EK','*V'_Typelist_ids_item')^0 * EK')'
 
     -- classes / interfaces
@@ -369,7 +373,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              )^1 * EK'end'
 
     -- ddd-constr
-    , DDD_constr_root = K'@' * (CKEY'new'+Cc(false)) * V'DDD_constr_one'
+    , DDD_constr_root = K'@' * OPT(CKEY'new') * V'DDD_constr_one'
     , DDD_constr_one  = V'__ID_abs' * EK'(' * EV'_DDD_explist' * EK')'
     , _DDD_explist    = ( V'__ddd_expitem'*(K','*EV'__ddd_expitem')^0 )^-1
     , __ddd_expitem   = (V'DDD_constr_one' + V'__Exp')
@@ -415,9 +419,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               )
 
     -- adt-constr
-    , Adt_constr_root = (CKEY'new'+Cc(false)) * V'Adt_constr_one'
+    , Adt_constr_root = OPT(CKEY'new') * V'Adt_constr_one'
     , Adt_constr_one  = V'Adt' * EK'(' * EV'_Adt_explist' * EK')'
-    , Adt             = V'__ID_adt' * ((K'.'-'..')*V'__ID_tag' + Cc(false))
+    , Adt             = V'__ID_adt' * OPT((K'.'-'..')*V'__ID_tag')
     , __adt_expitem   = (V'Adt_constr_one' + V'__Exp')
     , _Adt_explist    = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
 
@@ -434,7 +438,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- internal/external await
     , Await    = KEY'await' * V'__awaits'
-                    * (KEY'until'*EV'__Exp' + Cc(false))
+                    * OPT(KEY'until'*EV'__Exp')
     , AwaitN   = KEY'await' * KEY'FOREVER'
     , __awaits = Cc(false) * (V'WCLOCKK'+V'WCLOCKE')  -- false,   wclock
                + (EV'ID_ext'+EV'__Exp') * Cc(false)      -- ext/int/org, false
@@ -445,25 +449,24 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
                  + EV'ID_ext' * V'__emit_ps' )
     , EmitInt  = CKEY'emit' * EV'__Exp' * V'__emit_ps'
-    , __emit_ps = ( K'=>' * (V'__Exp' + K'(' * V'ExpList' * EK')')
-                +   Cc(false) )
+    , __emit_ps = OPT(K'=>' * (V'__Exp' + K'(' * V'ExpList' * EK')'))
 
 -- Organism instantiation
 
     -- do organism
     , _DoOrg = KEY'do' * (EV'__ID_cls' + K'@'*EV'__Exp')
-             * (V'_Spawn_constr' + Cc(false))
-             * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+             * OPT(V'_Spawn_constr')
+             * OPT(EKEY'with'*V'Dcl_constr'* EKEY'end')
 
     -- spawn / kill
     , _SpawnAnon = KEY'spawn' * EV'__Do'
     , Spawn = KEY'spawn' * EV'__ID_cls'
-            * (V'_Spawn_constr' + Cc(false))
-            * (KEY'in'*EV'__Exp' + Cc(false))
-            * (EKEY'with'*V'Dcl_constr'* EKEY'end' + Cc(false))
+            * OPT(V'_Spawn_constr')
+            * OPT(KEY'in'*EV'__Exp')
+            * OPT(EKEY'with'*V'Dcl_constr'* EKEY'end')
     , _Spawn_constr = (K'.'-'..') * EV'__ID_int' * EK'(' * EV'ExpList' * EK')'
 
-    , Kill  = KEY'kill' * EV'__Exp' * (EK'=>'*EV'__Exp' + Cc(false))
+    , Kill  = KEY'kill' * EV'__Exp' * OPT(EK'=>'*EV'__Exp')
 
 -- Flow control
 
@@ -473,15 +476,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- conditional
     , If = KEY'if' * EV'__Exp' * EKEY'then' *
             V'Block' *
-           (KEY'else/if' * EV'__Exp' * EKEY'then' *
-            V'Block')^0 *
-           (KEY'else' *
-            V'Block' + Cc(false)) *
+           (KEY'else/if' * EV'__Exp' * EKEY'then' * V'Block')^0 *
+           OPT(KEY'else' * V'Block') *
            EKEY'end'-- - V'_Continue'
 
     -- loops
-    , _Loop   = KEY'loop' * ('/'*EV'__Exp' + Cc(false)) *
-                    ((V'ID_int'+V'ID_none') * (EKEY'in'*EV'__Exp' + Cc(false))
+    , _Loop   = KEY'loop' * OPT('/'*EV'__Exp') *
+                    ((V'ID_int'+V'ID_none') * OPT(EKEY'in'*EV'__Exp')
                     + Cc(false)*Cc(false)) *
                 V'__Do'
     , _Every  = KEY'every' * ( (EV'ID_int'+V'VarList') * EKEY'in'
@@ -495,10 +496,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                       +
                         Cc'adt'    * EV'__Exp'
                     )
-                    * (KEY'with'*V'_BlockI' + Cc(false))
+                    * OPT(KEY'with'*V'_BlockI')
                     * V'__Do'
-    , _TraverseRec  = KEY'traverse' * ('/'*V'NUMBER'+Cc(false)) * EV'__Exp'
-                    * (KEY'with'*V'Block'*EKEY'end' + Cc(false))
+    , _TraverseRec  = KEY'traverse' * OPT('/'*V'NUMBER') * EV'__Exp'
+                    * OPT(KEY'with'*V'Block'*EKEY'end')
 
         --[[
         loop/N i in <e-num> do
@@ -519,7 +520,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
         ]]
 
     -- finalization
-    , Finalize = KEY'finalize' * (V'_Set'*EK';'*K';'^0 + Cc(false))
+    , Finalize = KEY'finalize' * OPT(V'_Set'*EK';'*K';'^0)
                * EKEY'with' * EV'Finally' * EKEY'end'
     , Finally  = V'Block'
 
@@ -529,9 +530,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Pause   = KEY'pause/if' * EV'__Exp' * V'__Do'
 
     -- asynchronous execution
-    , Async   = KEY'async' * (-P'/thread'-'/isr') * (V'VarList'+Cc(false)) * V'__Do'
-    , _Thread = KEY'async/thread' * (V'VarList'+Cc(false)) * V'__Do'
-    , _Isr    = KEY'async/isr'    * EK'[' * EV'ExpList' * EK']' * (V'VarList'+Cc(false)) * V'__Do'
+    , Async   = KEY'async' * (-P'/thread'-'/isr') * OPT(V'VarList') * V'__Do'
+    , _Thread = KEY'async/thread' * OPT(V'VarList') * V'__Do'
+    , _Isr    = KEY'async/isr'    * EK'[' * EV'ExpList' * EK']' * OPT(V'VarList') * V'__Do'
     , Atomic  = KEY'atomic' * V'__Do'
 
     -- C integration
@@ -579,11 +580,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 (NUM * K's'   + Cc(0)) *
                 (NUM * K'ms'  + Cc(0)) *
                 (NUM * K'us'  + Cc(0)) *
-                (NUM * EM'<h,min,s,ms,us>')^-1 * (CK'_' + Cc(false))
+                (NUM * EM'<h,min,s,ms,us>')^-1 * OPT(CK'_')
     , WCLOCKE = K'(' * V'__Exp' * EK')' * (
                     CK'h' + CK'min' + CK's' + CK'ms' + CK'us'
                   + EM'<h,min,s,ms,us>'
-              ) * (CK'_' + Cc(false))
+              ) * OPT(CK'_')
 
 -- Expressions
 
@@ -609,8 +610,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __11   = V'__12' *
                   (
                       K'(' * Cc'call' * EV'ExpList' * EK')' *
-                          ( KEY'finalize' * EKEY'with' * V'Finally' * EKEY'end'
-                            + Cc(false)) +
+                          OPT(KEY'finalize' * EKEY'with' * V'Finally' * EKEY'end')
+                  +
                       K'[' * Cc'idx'  * EV'__Exp'    * EK']' +
                       (CK':' + (CK'.'-'..')) * EV'__ID_field' +
                       CK'?' + (CK'!'-'!=')
