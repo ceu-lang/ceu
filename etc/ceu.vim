@@ -20,8 +20,8 @@ syn keyword cType       s16 s32 s64 s8
 syn keyword cType       ssize
 syn keyword cType       u16 u32 u64 u8
 syn keyword cType       uint usize void
-syn keyword cType       const nohold recursive safe plain pure hold
-syn keyword	cStatement  async await break native continue data do else emit end
+syn keyword cType       const nohold recursive plain pure hold
+syn keyword	cStatement  async await break native continue data deterministic do else emit end
 syn keyword cStatement  event every finalize FOREVER global if input loop nothing
 syn keyword cStatement  output pre par pause return then until var vector with class
 syn keyword cStatement  include interface kill spawn thread

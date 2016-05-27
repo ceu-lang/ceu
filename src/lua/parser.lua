@@ -148,6 +148,7 @@ KEYS = P
 'code' + 
 'continue' + 
 'data' + 
+'deterministic' + 
 'do' + 
 'else' + 
 'else/if' + 
@@ -339,6 +340,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- (int, void*)
     , _Typelist = K'(' * EV'Type' * (EK','*V'Type')^0 * EK')'
 
+-- DETERMINISTIC
+
+    , __det_id = V'ID_ext' + V'ID_int' + V'ID_abs' + V'__ID_nat'
+    , Deterministic = KEY'deterministic' * EV'__det_id' * (
+                        EKEY'with' * EV'__det_id' * (K',' * EV'__det_id')^0
+                      )^-1
+
 -- IDS
 
     , ID_ext  = V'__ID_ext'
@@ -422,13 +430,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                       *   ((V'_Vars'+V'_Vecs') * (EK';'*K';'^0))^0
                       * EKEY'end'
                       + KEY'tag' * EV'__ID_tag' * (EK';'*K';'^0)
-
-    -- deterministic annotations
-    , Dcl_det  = KEY'@safe' * EV'__id' * (
-                    EKEY'with' * EV'__id' * (K',' * EV'__id')^0
-                 )^-1
-    , __id     = V'__ID_nat' + V'__ID_ext' + V'ID_int'
-
 
 -- Assignments
 
@@ -697,7 +698,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  + V'_Evts_set'  + V'_Evts'
                  + V'_Exts'
                  + V'_Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
-                 + V'_Nats'  + V'Dcl_det'
+                 + V'_Nats'  + V'Deterministic'
                  + V'_Set'
                  + V'Await' + V'EmitExt' + V'EmitInt'
                  + V'Spawn' + V'Kill'

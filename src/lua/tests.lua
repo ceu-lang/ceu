@@ -20034,7 +20034,7 @@ escape _a+_b;
 
 Test { [[
 @const _a;
-@safe _b with _c;
+deterministic _b with _c;
 
 native do
     int a = 1;
@@ -20101,7 +20101,7 @@ native do
     int a = 1;
 end
 var int a=0;
-@safe a with _a;
+deterministic a with _a;
 par/or do
     _a = 1;
 with
@@ -20895,7 +20895,7 @@ Test { [[
 native do
     #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
-@safe A with B;
+deterministic A with B;
 output void A, B;
 par/or do
     emit A;
@@ -20990,7 +20990,7 @@ end
 
 Test { [[
 native _F();
-@safe _F with F,G;
+deterministic _F with F,G;
 output int F,G;
 native do
     void F() {};
@@ -21013,7 +21013,7 @@ end
 Test { [[
 native _F();
 output int&& F,G;
-@safe _F with F,G;
+deterministic _F with F,G;
 int a = 1;
 int&& b;
 native do
@@ -21060,7 +21060,7 @@ end
 
 Test { [[
 native _F();
-@safe F with G;
+deterministic F with G;
 output void F,G;
 par do
     emit F;
@@ -21786,7 +21786,7 @@ Test { [[
 var int b = 1;
 var int c = 2;
 var int&& a = &&c;
-@safe b with a, c;
+deterministic b with a, c;
 par/and do
     b = 1;
 with
@@ -24756,7 +24756,7 @@ escape 0;
 }
 
 Test { [[
-@safe _printf with _assert;
+deterministic _printf with _assert;
 native do ##include <assert.h> end
 par/and do
     _printf("END: 1\n");
@@ -47625,7 +47625,7 @@ escape 1;
 }
 
 Test { [[
-@safe _assert;
+deterministic _assert;
 pre native do
     ##define ceu_out_isr_on()
     ##define ceu_out_isr_off()
