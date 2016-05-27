@@ -183,6 +183,7 @@ KEYS = P
 'true' + 
 'until' + 
 'var' + 
+'vector' + 
 'watching' + 
 'with' + 
 TYPES
@@ -261,11 +262,21 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
              X* EKEY'end'
 
--- VARS, EVTS
+-- VARS, VECTORS, EVTS, EXTS
+
+    , __vars_set = EV'__ID_int' * (V'__Sets'+Cc(false))
 
     , _Vars_set = CKEY'var' * EV'Type' *
-                    EV'__ID_int'*V'__Sets' * (K','*EV'__ID_int'*V'__Sets')^0
+                    EV'__vars_set' * (K','*EV'__vars_set')^0
     , _Vars     = CKEY'var' * EV'Type' *
+                    EV'__ID_int' * (K','*EV'__ID_int')^0
+
+-- TODO: only vec constr
+    , __vecs_set = EV'__ID_int' * (V'__Sets'+Cc(false))
+
+    , _Vecs_set = CKEY'vector' * EV'__Dim' * EV'Type' *
+                    EV'__vecs_set' * (K','*EV'__vecs_set')^0
+    , _Vecs     = CKEY'vector' * EV'__Dim' * EV'Type' *
                     EV'__ID_int' * (K','*EV'__ID_int')^0
 
     , _Evts     = CKEY'event' * (V'_Typelist_anon'+EV'Type') *
@@ -286,6 +297,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __ID_abs  = -KEYS * CK(m.R'AZ'*Alphanum^0)
     , __ID_nat  = CK(P'_' * Alphanum^1)
     , __ID_none = CK(P'_' * -Alphanum)
+
+-- MODS
+
+    , __Dim = EK'[' * (V'__Exp'+Cc('[]')) * K']'
 
  --<<<
 
@@ -340,7 +355,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_ifc = KEY'interface' * Cc(true)
                * EV'__ID_cls'
                * EKEY'with' * V'_BlockI' * EKEY'end'
-    , _BlockI = ( ((V'__Org'+V'_Vars_set'+EV'_Vars')+V'_Evts'+V'_Dcl_pool'+V'_Code_proto'+V'_Dcl_imp')
+    , _BlockI = ( (V'__Org'+V'_Vars_set'+EV'_Vars'+V'_Vecs_set'+V'_Vecs'+V'_Evts'+V'_Dcl_pool'+V'_Code_proto'+V'_Dcl_imp')
                     * (EK';'*K';'^0)
                 + V'Dcl_mode' * K':'
                 )^0
@@ -364,11 +379,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                *    (V'__Dcl_adt_struct' + V'__Dcl_adt_union')
                * EKEY'end'
     , __Dcl_adt_struct = Cc'struct' * (
-                            (V'_Vars'+V'_Evts') * (EK';'*K';'^0)
+                            (V'_Vars'+V'_Evts'+V'_Vecs') * (EK';'*K';'^0)
                          )^1
     , __Dcl_adt_union  = Cc'union'  * V'Dcl_adt_tag' * (EKEY'or' * EV'Dcl_adt_tag')^0
     , Dcl_adt_tag    = KEY'tag' * EV'__ID_tag' * EKEY'with'
-                      *   (V'_Vars' * (EK';'*K';'^0))^0
+                      *   ((V'_Vars'+V'_Vecs') * (EK';'*K';'^0))^0
                       * EKEY'end'
                       + KEY'tag' * EV'__ID_tag' * (EK';'*K';'^0)
 
@@ -548,7 +563,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __type = CK(TYPES) + V'__ID_nat' + V'__ID_abs' + V'__ID_cls' + V'__ID_adt'
     , Type = V'__type'  -- id (* + [k] + & + ?)^0
            * ( (CK'&&'-P'&'^3) + (CK'&'-'&&') + CK'?'
-             + K'['*(V'__Exp'+Cc('[]'))*K']'
+           + K'['*(V'__Exp'+Cc('[]'))*K']'
              )^0
 
 -- Lists
@@ -643,7 +658,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __LstStmtB = V'Par'
     , __StmtS    = V'Nothing'
                  + V'__Org'
-                 + V'_Vars_set' + V'_Vars' + V'_Evts' + V'_Exts'
+                 + V'_Vars_set' + V'_Vars' + V'_Vecs_set' + V'_Vecs' + V'_Evts' + V'_Exts'
                  + V'_Dcl_pool'
                  + V'_Code_proto' + V'_Ext_proto'
                  + V'_Nats'  + V'Dcl_det'

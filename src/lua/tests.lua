@@ -18,9 +18,9 @@ pool[]   T   ts;
 vector[] T   ts;
 vector[] T&& pts;
 
-var (pool[]   T)  && ppool;
-var (vector[] T)  && pvec;
-var (vector[] T&&)&& pvec;
+vector[] (pool   T)  && ppool;
+vector[] (vector T)  && pvec;
+vector[] (vector T&&)&& pvec;
 
 event T e;
 
@@ -1180,14 +1180,23 @@ end
     -- INVALID TYPE MODIFIERS
 
 Test { [[
-var int[1][1] v;
+vector int[1][1] v;
 escape 1;
 ]],
     --adj = 'line 1 : not implemented : multiple `[]´',
-    env = 'line 1 : invalid type modifier : `[][]´',
+    --env = 'line 1 : invalid type modifier : `[][]´',
+    parser = 'line 1 : after `vector´ : expected `[´',
 }
 Test { [[
-var int[1]? v;
+vector[1][1] int v;
+escape 1;
+]],
+    --adj = 'line 1 : not implemented : multiple `[]´',
+    --env = 'line 1 : invalid type modifier : `[][]´',
+    parser = 'line 1 : after `]´ : expected type',
+}
+Test { [[
+vector[1] int? v;
 escape 1;
 ]],
     env = 'line 1 : `data´ fields do not support vectors yet',
@@ -1219,7 +1228,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-var int&[] v;
+vector[] int& v;
 escape 1;
 ]],
     env = 'line 1 : invalid type modifier : `&[]´',
@@ -1238,7 +1247,7 @@ escape 1;
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
-var int?[1] v;
+vector[1] int? v;
 escape 1;
 ]],
     run = 1,
@@ -5439,7 +5448,7 @@ escape ret;
 }
 
 Test { [[
-var int[2] v;
+vector[2] int v;
 v[0] = 1;
 var int ret=0;
 par/or do
@@ -16311,7 +16320,7 @@ escape v;
 }
 
 Test { [[
-var int[] v;
+vector[] int v;
 escape 1;
 ]],
     run = 1,
@@ -17264,7 +17273,7 @@ escape 10;
 }
 
 Test { [[
-var byte[] str = [0,1,2];
+vector[] byte str = [0,1,2];
 
 code/instantaneous F (byte[]& vec)=>int do
     escape vec[1];
@@ -17275,7 +17284,7 @@ escape f(&str);
     run = 1,
 }
 Test { [[
-var byte[] str = [0,1,2];
+vector[] byte str = [0,1,2];
 
 code/instantaneous F (int[]& vec)=>int do
     escape vec[1];
@@ -17286,7 +17295,7 @@ escape f(&str);
     env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
 }
 Test { [[
-var byte[] str = [0,1,2];
+vector[] byte str = [0,1,2];
 
 code/instantaneous F (byte[]& vec)=>int do
     escape vec[1];
@@ -17297,13 +17306,13 @@ escape f(str);
     ref = 'line 7 : invalid attribution : missing alias operator `&´',
 }
 Test { [[
-var byte[] str = [0,1,2];
+vector[] byte str = [0,1,2];
 
 code/instantaneous F (void) => byte[] do
     escape &this.str;
 end
 
-var byte[]& ref = &f();
+vector[] byte& ref = &f();
 
 escape ref[1];
 ]],
@@ -17312,7 +17321,7 @@ escape ref[1];
 
 -- vectors as argument (NO)
 Test { [[
-var byte[] str = [0,1,2];
+vector[] byte str = [0,1,2];
 
 code/instantaneous F (void&&, int[] vec)=>int do
     escape vec[1];
@@ -17346,7 +17355,7 @@ data Test with
 end
 
 var u8 b = 7;
-var Test[3] v;
+vector[3] Test v;
 var Test t = Test(&b);
 v = [] .. v .. [t];
 
@@ -17469,7 +17478,7 @@ escape 1;
 }
 
 Test { [[
-var byte[255] buf;
+vector[255] byte buf;
 _enqueue(buf);
 escape 1;
 ]],
@@ -17477,7 +17486,7 @@ escape 1;
     --fin = 'line 2 : call requires `finalize´',
 }
 Test { [[
-var byte[255] buf;
+vector[255] byte buf;
 _enqueue(&&buf);
 escape 1;
 ]],
@@ -22061,18 +22070,18 @@ Test { [[input int[1] E; escape 0;]],
     env = 'invalid event type',
     --parser = "line 1 : after `int´ : expected identifier",
 }
-Test { [[var int[0] v; escape 0;]],
+Test { [[vector[0] int v; escape 0;]],
     run = 0,
     --env='invalid dimension'
 }
-Test { [[var int[2] v; escape v;]],
+Test { [[vector[2] int v; escape v;]],
     env = 'types mismatch'
 }
 Test { [[var _u8[2] v; escape &&v;]],
     env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
-Test { [[var u8[2] v; escape &&v;]],
+Test { [[vector[2] u8 v; escape &&v;]],
     env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
@@ -22092,7 +22101,7 @@ void[10] a;
 }
 
 Test { [[
-var void[10] a;
+vector[10] void a;
 ]],
     env = 'line 1 : cannot instantiate type "void"',
 }
@@ -22128,14 +22137,14 @@ escape v[i+1];
 
 Test { [[
 var void a;
-var void[1] b;
+vector[1] void b;
 ]],
     env = 'line 1 : cannot instantiate type "void"',
 }
 
 Test { [[
 var int a;
-var void[1] b;
+vector[1] void b;
 ]],
     env = 'line 2 : cannot instantiate type "void"',
 }
@@ -22161,7 +22170,7 @@ escape i + vec[9].c + vec[3].v[5];
 
 Test { [[
 var int i = do/_
-    var byte[5] abcd;
+    vector[5] byte abcd;
     escape 1;
 end;
 escape i;
@@ -22233,16 +22242,16 @@ escape t.v[0];
     run = 10,
 }
 
-Test { [[var int[2] v; await v;     escape 0;]],
+Test { [[vector[2] int v; await v;     escape 0;]],
         env='event "v" is not declared' }
-Test { [[var int[2] v; emit v;    escape 0;]],
+Test { [[vector[2] int v; emit v;    escape 0;]],
         env='event "v" is not declared' }
-Test { [[var int[2] v; await v[0];  escape 0;]],
+Test { [[vector[0] int[2] v; await v;  escape 0;]],
         env='line 1 : event "?" is not declared'}
-Test { [[var int[2] v; emit v[0]; escape 0;]],
+Test { [[vector[0] int[2] v; emit v; escape 0;]],
         env='event "?" is not declared' }
 Test { [[var _int[2] v; v=v; escape 0;]], env='types mismatch' }
-Test { [[var int v; escape v[1];]], env='cannot index a non array' }
+Test { [[vector[1] int v; escape v;]], env='cannot index a non array' }
 Test { [[var _int[2] v; escape v[v];]], env='invalid array index' }
 
 Test { [[
@@ -22323,7 +22332,7 @@ escape a[0] + b;
 }
 
 Test { [[
-var u8[255] vec;
+vector[255] u8 vec;
 event void  e;
 escape 1;
 ]],
@@ -22354,7 +22363,7 @@ input (byte&&, u32) HTTP_GET;
 var byte&& p2Buff;
 var u32 len;
 (p2Buff, len) = await HTTP_GET;
-var byte c = p2Buff[0]; // doesn't work
+vector[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
     env = 'line 5 : cannot index pointers to internal types',
@@ -22366,7 +22375,7 @@ par/or do
     var _char&& p2Buff;
     var u32 len;
     (p2Buff, len) = await HTTP_GET;
-    var byte c = p2Buff[0]; // doesn't work
+    vector[0] byte c = p2Buff; // doesn't work
     if len and p2Buff and c then end;
 with
 end
@@ -22460,21 +22469,21 @@ escape $v;
 }
 
 Test { [[
-var u8[10] vec;
+vector[10] u8 vec;
 escape $$vec + $vec;
 ]],
     run = 10,
 }
 
 Test { [[
-var u8[] vec;
+vector[] u8 vec;
 escape $$vec + $vec + 1;
 ]],
     run = 1,
 }
 
 Test { [[
-var int[] c;
+vector[] int c;
 escape [];
 ]],
     env = 'line 2 : invalid attribution : destination is not a vector',
@@ -22482,7 +22491,7 @@ escape [];
 }
 
 Test { [[
-var int[] c;
+vector[] int c;
 escape [1]..[]..c;
 ]],
     env = 'line 2 : invalid attribution : destination is not a vector',
@@ -22490,7 +22499,7 @@ escape [1]..[]..c;
 }
 
 Test { [[
-var u8[10] vec = [ [1,2,3] ];
+vector[10] u8 vec = [ [1,2,3] ];
 escape 1;
 ]],
     --parser = 'line 1 : after `[´ : expected `]´',
@@ -22499,13 +22508,13 @@ escape 1;
     env = 'line 1 : wrong argument #1 : types mismatch (`u8´ <= `int[]..´)',
 }
 Test { [[
-var u8[10] vec = (1,2,3);
+vector[10] u8 vec = (1,2,3);
 escape 1;
 ]],
     parser = 'line 1 : after `1´ : expected `)´',
 }
 Test { [[
-var u8[10] vec = (1);
+vector[10] u8 vec = (1);
 escape 1;
 ]],
     env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
@@ -22520,14 +22529,14 @@ escape 1;
 
 Test { [[
 var int x;
-var u8[10] vec = [ &&x ];
+vector[10] u8 vec = [ &&x ];
 escape 1;
 ]],
     env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int&&´)',
 }
 
 Test { [[
-var int[] v = [] ..;
+vector[] int v = [] ..;
 escape 1;
 ]],
     --parser = 'line 1 : after `..´ : expected item',
@@ -22535,22 +22544,22 @@ escape 1;
 }
 
 Test { [[
-var int&&[] v1;
-var int[]  v2 = []..v1;
+vector[] int&& v1;
+vector[] int  v2 = []..v1;
 escape 1;
 ]],
     env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int&&´)',
 }
 
 Test { [[
-var u8[10] vec = [1,2,3];
+vector[10] u8 vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
     run = 19,
 }
 
 Test { [[
-var u8[10] vec = [1,2,3];
+vector[10] u8 vec = [1,2,3];
 vec[0] = 4;
 vec[1] = 5;
 vec[2] = 6;
@@ -22560,7 +22569,7 @@ escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 }
 
 Test { [[
-var int[10] vec = [1,2,3];
+vector[10] int vec = [1,2,3];
 vec[0] = 4;
 vec[1] = 5;
 vec[2] = 6;
@@ -22570,7 +22579,7 @@ escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 }
 
 Test { [[
-var u8[10] vec;
+vector[10] u8 vec;
 vec[0] = 1;
 escape 1;
 ]],
@@ -22578,28 +22587,28 @@ escape 1;
 }
 
 Test { [[
-var u8[10] vec;
+vector[10] u8 vec;
 escape vec[0];
 ]],
     run = '2] runtime error: access out of bounds',
 }
 
 Test { [[
-var u8[] vec = [1,2,3];
+vector[] u8 vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
     run = 6,
 }
 
 Test { [[
-var u8[10] vec = [1,2,3];
+vector[10] u8 vec = [1,2,3];
 $$vec = 0;
 escape vec[0];
 ]],
     env = 'line 2 : invalid attribution',
 }
 Test { [[
-var u8[10] vec = [1,2,3];
+vector[10] u8 vec = [1,2,3];
 $vec = 0;
 escape vec[0];
 ]],
@@ -22607,7 +22616,7 @@ escape vec[0];
 }
 
 Test { [[
-var int[2] vec;
+vector[2] int vec;
 $vec = 1;
 escape 1;
 ]],
@@ -22615,7 +22624,7 @@ escape 1;
 }
 
 Test { [[
-var byte[] bs;
+vector[] byte bs;
 $bs := 1;
 escape $bs;
 ]],
@@ -22623,7 +22632,7 @@ escape $bs;
 }
 
 Test { [[
-var byte[10] bs;
+vector[10] byte bs;
 $bs := 10;
 escape $bs;
 ]],
@@ -22631,7 +22640,7 @@ escape $bs;
 }
 
 Test { [[
-var byte[10] bs;
+vector[10] byte bs;
 $bs := 11;
 escape $bs;
 ]],
@@ -22639,15 +22648,15 @@ escape $bs;
 }
 
 Test { [[
-var u8[10] v1 = [1,2,3];
-var u8[20] v2 = v1;
+vector[10] u8 v1 = [1,2,3];
+vector[20] u8 v2 = v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
 }
 
 Test { [[
-var byte[] v1, v2, v3;
+vector[] byte v1, v2, v3;
 v1 = v2;
 v1 = v2..v3;
 escape 1;
@@ -22656,52 +22665,52 @@ escape 1;
 }
 
 Test { [[
-var u8[10] v1 = [1,2,3];
-var u8[20] v2 = []..v1;
+vector[10] u8 v1 = [1,2,3];
+vector[20] u8 v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = 6,
 }
 Test { [[
-var u8[20] v1 = [1,2,3];
-var u8[10] v2 = []..v1;
+vector[20] u8 v1 = [1,2,3];
+vector[10] u8 v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = 6,
 }
 Test { [[
-var u8[] v1   = [1,2,3];
-var u8[10] v2 = []..v1;
+vector[] u8 v1   = [1,2,3];
+vector[10] u8 v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = 6,
 }
 Test { [[
-var u8[10] v1 = [1,2,3];
-var u8[]   v2 = []..v1;
+vector[10] u8 v1 = [1,2,3];
+vector[] u8   v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = 6,
 }
 Test { [[
-var u8[3] v1 = [1,2,3];
-var u8[2] v2 = []..v1;
+vector[3] u8 v1 = [1,2,3];
+vector[2] u8 v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = '2] runtime error: access out of bounds',
 }
 
 Test { [[
-var u8[10] vec = [1,2,3];
-var u8[]&  ref = &vec;
+vector[10] u8 vec = [1,2,3];
+vector[] u8&  ref = &vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
     run = 19,
 }
 
 Test { [[
-var u8[10]  vec = [1,2,3];
-var u8[11]& ref = &vec;
+vector[10] u8  vec = [1,2,3];
+vector[11] u8& ref = &vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
     run = 1,
@@ -22709,15 +22718,15 @@ escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 }
 
 Test { [[
-var u8[10] vec = [1,2,3];
-var u8[9]& ref = &vec;
+vector[10] u8 vec = [1,2,3];
+vector[9] u8& ref = &vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
     env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
 Test { [[
-var int[2] v ;
+vector[2] int v ;
 escape v == &&v[0] ;
 ]],
     env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
@@ -22731,7 +22740,7 @@ native do
         v[1]++;
     }
 end
-var int[2] a = [1,2];
+vector[2] int a = [1,2];
 _f((_int&&)&&a);
 escape a[0] + a[1];
 ]],
@@ -22746,8 +22755,8 @@ native do
         v[1]++;
     }
 end
-var int[2] a  = [1,2];
-var int[2]& b = &a;
+vector[2] int a  = [1,2];
+vector[2] int& b = &a;
 _f((_char&&)&&b);
 escape b[0] + b[1];
 ]],
@@ -22762,8 +22771,8 @@ native do
         v[1]++;
     }
 end
-var int[2] a  = [1,2];
-var int[2]& b = &a;
+vector[2] int a  = [1,2];
+vector[2] int& b = &a;
 _f((_int&&)&&b);
 escape b[0] + b[1];
 ]],
@@ -22771,7 +22780,7 @@ escape b[0] + b[1];
 }
 
 Test { [[
-var byte[] bs = [ 1, 2, 3 ];
+vector[] byte bs = [ 1, 2, 3 ];
 var int idx = 1;
 var int& i = &idx;
 escape bs[i];
@@ -22780,7 +22789,7 @@ escape bs[i];
 }
 
 Test { [[
-var u8[5] foo = [1, 2, 3, 4, 5];
+vector[5] u8 foo = [1, 2, 3, 4, 5];
 var int tot = 0;
 loop i in $foo do
     tot = tot + foo[i];
@@ -22790,7 +22799,7 @@ escape tot;
     tight = 'line 3 : tight loop',
 }
 Test { [[
-var u8[5] foo = [1, 2, 3, 4, 5];
+vector[5] u8 foo = [1, 2, 3, 4, 5];
 var int tot = 0;
 loop i in $foo do
     tot = tot + foo[i];
@@ -22803,7 +22812,7 @@ escape tot;
 }
 
 Test { [[
-var u8[5] foo = [1, 2, 3, 4, 5];
+vector[5] u8 foo = [1, 2, 3, 4, 5];
 var int tot = 0;
 loop i in $$foo do
     tot = tot + foo[i];
@@ -22814,7 +22823,7 @@ escape tot;
 }
 
 Test { [[
-var u8[] foo = [1, 2, 3, 4, 5];
+vector[] u8 foo = [1, 2, 3, 4, 5];
 var int tot = 0;
 loop i in $$foo do
     tot = tot + foo[i];
@@ -22837,7 +22846,7 @@ escape 1 .. 2;
     --parser = 'line 1 : after `1´ : expected `;´',
 }
 Test { [[
-var int[] x = [1]..2;
+vector[] int x = [1]..2;
 escape 1;
 ]],
     env = 'line 1 : wrong argument #2 : source is not a vector',
@@ -22858,8 +22867,8 @@ escape [1]..[&&this];
 }
 
 Test { [[
-var int[] v1;
-var int[] v2;
+vector[] int v1;
+vector[] int v2;
 v1 = [1] .. v2;
 v1 = [] .. v2 .. [1];
 escape v1[0];
@@ -22868,15 +22877,15 @@ escape v1[0];
 }
 
 Test { [[
-var int[] v1 = [1]..[2]..[3];
+vector[] int v1 = [1]..[2]..[3];
 escape v1[0]+v1[1]+v1[2];
 ]],
     run = 6;
 }
 
 Test { [[
-var int[] v1 = [1,2,3];
-var int[] v2 = [7,8,9];
+vector[] int v1 = [1,2,3];
+vector[] int v2 = [7,8,9];
 v1 = [] .. v1 .. [4,5,6] .. v2;
 var int ret = 0;
 loop i in 9 do
@@ -22888,7 +22897,7 @@ escape ret;
 }
 
 Test { [[
-var int[] v = [1,2,3];
+vector[] int v = [1,2,3];
 v = [] .. v .. v;
 escape $v + v[5];
 ]],
@@ -22896,7 +22905,7 @@ escape $v + v[5];
 }
 
 Test { [[
-var int[] v = [1,2,3];
+vector[] int v = [1,2,3];
 v = [1] .. v;
 escape $v + v[1];
 ]],
@@ -22904,7 +22913,7 @@ escape $v + v[1];
 }
 
 Test { [[
-var int[] v;
+vector[] int v;
 $v = 0;
 escape $v + 1;
 ]],
@@ -22914,7 +22923,7 @@ Test { [[
 data SDL_Rect with
     var int x;
 end
-var SDL_Rect[] cell_rects;
+vector[] SDL_Rect cell_rects;
 escape 1;
 ]],
     run = 1,
@@ -22925,7 +22934,7 @@ data SDL_Rect with
     var int x;
 end
 var SDL_Rect r1 = SDL_Rect(10);
-var SDL_Rect[] cell_rects = [r1];
+vector[] SDL_Rect cell_rects = [r1];
 escape cell_rects[0].x;
 ]],
     run = 10,
@@ -22941,7 +22950,7 @@ native do
     } tp;
     tp T = { f };
 end
-var byte[] str = [] .. "oi";
+vector[] byte str = [] .. "oi";
 escape str[1]=='i';
 ]],
     run = 1,
@@ -22957,7 +22966,7 @@ native do
     } tp;
     tp T = { f };
 end
-var byte[] str = [] .. (_char&&)_T.f();
+vector[] byte str = [] .. (_char&&)_T.f();
 escape str[2]=='a';
 ]],
     run = 1,
@@ -22973,7 +22982,7 @@ native do
     } tp;
     tp T = { f };
 end
-var byte[] str = [] .. (_char&&)_T.f() .. "oi";
+vector[] byte str = [] .. (_char&&)_T.f() .. "oi";
 escape str[4]=='i';
 ]],
     run = 1,
@@ -22985,8 +22994,8 @@ native do
         escape "ola";
     }
 end
-var byte[]  str;
-var byte[]& ref = &str;
+vector[] byte  str;
+vector[] byte& ref = &str;
 ref = [] .. (_char&&){f}() .. "oi";
 native/pure _strlen();
 escape _strlen((_char&&)&&str);
@@ -22995,13 +23004,13 @@ escape _strlen((_char&&)&&str);
 }
 
 Test { [[
-var byte[] str = [0,1,2];
+vector[] byte str = [0,1,2];
 
 code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
-var byte[]& ref = &f();
+vector[] byte& ref = &f();
 
 escape ref[1];
 ]],
@@ -23009,13 +23018,13 @@ escape ref[1];
 }
 
 Test { [[
-var byte[] str = [0,1,2];
+vector[] byte str = [0,1,2];
 
 code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
-var byte[]& ref = &f();
+vector[] byte& ref = &f();
 ref = [3, 4, 5];
 
 escape str[1];
@@ -23024,13 +23033,13 @@ escape str[1];
 }
 
 Test { [[
-var byte[] str = [0,1,2];
+vector[] byte str = [0,1,2];
 
 code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
-var byte[]& ref = &f();
+vector[] byte& ref = &f();
 ref = [] .. "ola";
 
 escape str[1] == 'l';
@@ -23039,7 +23048,7 @@ escape str[1] == 'l';
 }
 
 Test { [[
-var byte[] str = [0,1,2];
+vector[] byte str = [0,1,2];
 
 native do
     byte* g () {
@@ -23051,7 +23060,7 @@ code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
-var byte[]& ref = &f();
+vector[] byte& ref = &f();
 ref = [] .. (_char&&){g}() .. "ola";
 
 escape str[3] == 'o';
@@ -23060,14 +23069,14 @@ escape str[3] == 'o';
 }
 
 Test { [[
-var byte[] str;
+vector[] byte str;
 
 code/instantaneous F1 (void)=>byte[]& do
     escape &this.str;
 end
 
 code/instantaneous F2 (void)=>void do
-    var byte[]& ref = &f1();
+    vector[] byte& ref = &f1();
     ref = [] .. "ola" .. "mundo";
 end
 
@@ -23092,8 +23101,8 @@ escape _strlen((_char&&)&&str) + _strlen(str2);
 }
 
 Test { [[
-var byte[] str;
-var byte[] str;
+vector[] byte str;
+vector[] byte str;
 escape 1;
 ]],
     wrn = true,
@@ -23103,8 +23112,8 @@ escape 1;
 
 Test { [[
 native/pure _strcmp();
-var byte[] str1;
-var byte[] str2 = [].."";
+vector[] byte str1;
+vector[] byte str2 = [].."";
 escape _strcmp((_char&&)&&str1,"")==0 and _strcmp((_char&&)&&str2,"")==0;
 ]],
     run = 1,
@@ -23115,7 +23124,7 @@ code/instantaneous Strlen (byte&& str)=>int do
     escape _strlen(str);
 end
 
-var byte[] str = [].."Ola Mundo!";
+vector[] byte str = [].."Ola Mundo!";
 escape strlen(&&str);
 ]],
     env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
@@ -23126,14 +23135,14 @@ code/instantaneous Strlen (byte&& str)=>int do
     escape _strlen(str);
 end
 
-var byte[] str = [].."Ola Mundo!";
+vector[] byte str = [].."Ola Mundo!";
 escape strlen((_char&&)&&str);
 ]],
     run = 10,
 }
 
 Test { [[
-var u8[3] bytes;
+vector[3] u8 bytes;
 
 bytes = [] .. bytes .. [5];
 
@@ -23144,7 +23153,7 @@ escape bytes[0];
 
 Test { [[
 native/nohold _ceu_vector_copy_buffer();
-var byte[] v = [1,2,0,4,5];
+vector[] byte v = [1,2,0,4,5];
 var byte c = 3;
 _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 1);
 escape v[2] + $v;
@@ -23154,7 +23163,7 @@ escape v[2] + $v;
 
 Test { [[
 native/nohold _ceu_vector_copy_buffer();
-var byte[5] v = [1,2,0,4,5];
+vector[5] byte v = [1,2,0,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 1);
 escape v[2] + $v + ok;
@@ -23164,7 +23173,7 @@ escape v[2] + $v + ok;
 
 Test { [[
 native/nohold _ceu_vector_copy_buffer();
-var byte[5] v = [1,2,1,4,5];
+vector[5] byte v = [1,2,1,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 1);
 _printf("v = %d\n", $v);
@@ -23175,7 +23184,7 @@ escape v[2] + $v + ok;
 
 Test { [[
 native/nohold _ceu_vector_copy_buffer();
-var byte[] v = [1,2,0,4,5];
+vector[] byte v = [1,2,0,4,5];
 var byte c = 3;
 _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 0);
 escape v[2] + $v;
@@ -23185,7 +23194,7 @@ escape v[2] + $v;
 
 Test { [[
 native/nohold _ceu_vector_copy_buffer();
-var byte[5] v = [1,2,0,4,5];
+vector[5] byte v = [1,2,0,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 0);
 escape v[2] + $v + ok;
@@ -23195,7 +23204,7 @@ escape v[2] + $v + ok;
 
 Test { [[
 native/nohold _ceu_vector_copy_buffer();
-var byte[] v = [1,2,1,4,5];
+vector[] byte v = [1,2,1,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 0);
 _printf("v = %d\n", $v);
@@ -23236,7 +23245,7 @@ Test { [[
 data SDL_Rect with
     var int x;
 end
-var SDL_Rect[1] rcs;
+vector[1] SDL_Rect rcs;
 var SDL_Rect ri;
 ri = SDL_Rect(10);
 rcs[0] = ri;
@@ -23251,7 +23260,7 @@ data SDL_Rect with
 end
 var SDL_Rect ri;
 ri = SDL_Rect(10);
-var SDL_Rect[1] rcs = [ri];
+vector[1] SDL_Rect rcs = [ri];
 escape rcs[0].x;
 ]],
     run = 10,
@@ -23270,7 +23279,7 @@ data SDL_Rect with
 end
 var SDL_Rect ri;
 ri = SDL_Rect(10);
-var SDL_Rect[1] rcs = [ri];
+vector[1] SDL_Rect rcs = [ri];
 escape _f((int&&)&&rcs[0]);
 ]],
     run = 10,
@@ -23285,8 +23294,8 @@ escape b;
     run = 2,
 }
 Test { [[
-var byte[] c = [1];
-var byte[]& b = &c;
+vector[] byte c = [1];
+vector[] byte& b = &c;
 escape b[0];
 ]],
     run = 1,
@@ -23311,14 +23320,14 @@ escape *b;
 
 Test { [[
 native/nohold _strlen();
-var byte[] v = ['a','b','c','\0'];
+vector[] byte v = ['a','b','c','\0'];
 escape _strlen((_char&&)&&v);
 ]],
     run = 3,
 }
 Test { [[
 native/nohold _strlen();
-var byte[] v = ['a','b','c','\0'];
+vector[] byte v = ['a','b','c','\0'];
 escape _strlen((_char&&)&&v);
 ]],
     run = 3,
@@ -23336,8 +23345,8 @@ native do
     }
 end
 
-var byte[10] v;
-var byte[10] v_;
+vector[10] byte v;
+vector[10] byte v_;
 _garbage((_char&&)&&v);
 v = ['a','b','c'];
 escape _strlen((_char&&)&&v);
@@ -23362,7 +23371,7 @@ escape 1;
     --run = 1,
 }
 Test { [[
-var int[] v;
+vector[] int v;
 _f([1]..v);
 escape 1;
 ]],
@@ -23371,7 +23380,7 @@ escape 1;
     --run = 1,
 }
 Test { [[
-var int[] v;
+vector[] int v;
 _f(v..[1]);
 escape 1;
 ]],
@@ -23382,7 +23391,7 @@ escape 1;
 
 Test { [[
 native/nohold _strlen();
-var byte[] v = "abc";
+vector[] byte v = "abc";
 escape _strlen((_char&&)v);
 ]],
     env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
@@ -23390,14 +23399,14 @@ escape _strlen((_char&&)v);
 }
 Test { [[
 native/nohold _strlen();
-var byte[] v = [].."abc";
+vector[] byte v = [].."abc";
 escape _strlen((_char&&)&&v);
 ]],
     run = 3,
 }
 Test { [[
 native/nohold _strlen();
-var byte[] v = [].."abc";
+vector[] byte v = [].."abc";
 v = [] .. v .. "def";
 escape _strlen((_char&&)&&v);
 ]],
@@ -23406,7 +23415,7 @@ escape _strlen((_char&&)&&v);
 
 Test { [[
 var int nnn = 10;
-var u8[nnn] xxx;
+vector[nnn] u8 xxx;
 xxx[0] = 10;
 escape 1;
 ]],
@@ -23415,7 +23424,7 @@ escape 1;
 
 Test { [[
 var int nnn = 10;
-var u8[nnn] xxx;
+vector[nnn] u8 xxx;
 $xxx := nnn;
 xxx[0] = 10;
 xxx[9] = 1;
@@ -23426,7 +23435,7 @@ escape xxx[0]+xxx[9];
 
 Test { [[
 var int nnn = 10;
-var u8[nnn] xxx;
+vector[nnn] u8 xxx;
 $xxx := nnn+1;
 escape 1;
 ]],
@@ -23435,7 +23444,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-var u8[n] us;
+vector[n] u8 us;
 $us := n;
 $us = 20;
 escape 1;
@@ -23445,7 +23454,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-var u8[] us;
+vector[] u8 us;
 $us = n;
 escape 1;
 ]],
@@ -23454,7 +23463,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-var u8[] us;
+vector[] u8 us;
 $us := n;
 escape 1;
 ]],
@@ -23463,7 +23472,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-var u8[n] us = [0,1,2,3,4,5,6,7,8,9];
+vector[n] u8 us = [0,1,2,3,4,5,6,7,8,9];
 us[n] = 10;
 escape us[0]+us[9];
 ]],
@@ -23472,7 +23481,7 @@ escape us[0]+us[9];
 
 Test { [[
 var int n = 10;
-var u8[n] us = [0,1,2,3,4,5,6,7,8,9];
+vector[n] u8 us = [0,1,2,3,4,5,6,7,8,9];
 us[n-1] = 1;
 escape us[0]+us[9];
 ]],
@@ -23540,7 +23549,7 @@ escape xxxx[0]+xxxx[_N-1];
 
 Test { [[
 #define HASH_BYTES 32
-var byte[HASH_BYTES+sizeof(u32)] bs;
+vector[HASH_BYTES+sizeof(u32)] byte bs;
 escape $$bs;
 ]],
     run = 36,
@@ -23548,7 +23557,7 @@ escape $$bs;
 
 Test { [[
 var int n = 32;
-var byte[n] bs;
+vector[n] byte bs;
 escape $$bs;
 ]],
     run = 32,
@@ -23558,7 +23567,7 @@ Test { [[
 code/instantaneous F (void)=>void do
     var int x = 0;
 
-    var byte[10] cs;
+    vector[10] byte cs;
 end
 escape 1;
 ]],
@@ -23569,7 +23578,7 @@ Test { [[
 code/instantaneous F (byte[]& cs)=>void do
     cs[0] = 10;
 end
-var byte[] cs = [0];
+vector[] byte cs = [0];
 f(&cs);
 escape cs[0];
 ]],
@@ -24984,7 +24993,7 @@ escape a;
 }
 
 Test { [[
-var int[2] v;
+vector[2] int v;
 par/or do
     v[0] = 1;
 with
@@ -24998,7 +25007,7 @@ escape 0;
     },
 }
 Test { [[
-var int[2] v;
+vector[2] int v;
 var int i=0,j=0;
 par/or do
     v[j] = 1;
@@ -25398,7 +25407,7 @@ escape 1;
 }
 Test { [[
 var int&& u;
-var int[1] i;
+vector[1] int i;
 await 1s;
 u = i;
 escape 1;
@@ -25500,7 +25509,7 @@ escape 1;
 
 Test { [[
 var u8 cnt;
-var u8[3] v;
+vector[3] u8 v;
 
 v = [] .. v .. [17];
 v = [] .. v .. [9];
@@ -25514,7 +25523,7 @@ escape cnt;
 
 Test { [[
 #define _OBJ_N + 2
-var void&&[_OBJ_N] objs;
+vector[_OBJ_N] void&& objs;
 escape 1;
 ]],
     run = 1,
@@ -25523,7 +25532,7 @@ escape 1;
 Test { [[
 #define _OBJ_N + 2 \
                + 1
-var void&&[_OBJ_N] objs;
+vector[_OBJ_N] void&& objs;
 escape 1;
 ]],
     run = 1,
@@ -27348,8 +27357,8 @@ escape v[0] + v[1];
     run = 3,
 }
 Test { [[
-var int[2] v = [0,0];
-var int[2] p = [0,0];
+vector[2] int v = [0,0];
+vector[2] int p = [0,0];
 par/and do
     v[0] = 1;
 with
@@ -27503,7 +27512,7 @@ escape x[0];
 }
 
 Test { [[
-var int[10] x = [0];
+vector[10] int x = [0];
 async/thread (x) do
     x[0] = 2;
 end
@@ -27514,7 +27523,7 @@ escape x[0];
 }
 
 Test { [[
-var int[10] x = [0,1];
+vector[10] int x = [0,1];
 par/and do
     async/thread (x) do
         _usleep(100);
@@ -27747,7 +27756,8 @@ var byte[10] str;
 _strcpy(&&str,"oioioi");
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
-var byte[10] cpy;
+
+vector[10] byte cpy;
 var byte&& ptr = cpy;
 ptr = [[ str ]];
 escape ret and (not _strcmp(&&str,&&cpy));
@@ -27830,7 +27840,7 @@ var int v_from_ceu = [[v_from_lua]];
 [[
 str_from_lua = 'string from lua'
 ]]
-var byte[100] str_from_ceu = [[str_from_lua]];
+vector[100] byte str_from_ceu = [[str_from_lua]];
 _assert(0==_strcmp((_char&&)&&str_from_ceu, "string from lua"));
 
 [[
@@ -32458,12 +32468,12 @@ escape 1;
 }
 Test { [[
 class Test with
-    var u8[10]& v;
+    vector[10] u8& v;
 do
     v = [] .. v .. [4];
 end
 
-var u8[10]& v; // error: '&' must be deleted
+vector[10] u8& v; // error: '&' must be deleted
 
 do Test with
     this.v = &v;
@@ -33108,11 +33118,11 @@ end
 class U with
 do
     do
-        var byte[7] buf;
+        vector[7] byte buf;
         var int n = do T.run(4);
     end
     do
-        var byte[] buf;
+        vector[] byte buf;
         var int n = do T.run(2);
         _assert(n == 2);
     end
@@ -42842,8 +42852,8 @@ escape $ts;
 
 Test { [[
 class T with
-    var int[]& v1;
-    var int[]  v2;
+    vector[] int& v1;
+    vector[] int  v2;
 do
     if &&v1==null then end;
 end
@@ -42854,7 +42864,7 @@ escape 1;
 }
 Test { [[
 class T with
-    var int[]  v2;
+    vector[] int  v2;
 do
     await FOREVER;
 end
@@ -43232,7 +43242,7 @@ Test { [[
 code/instantaneous FillBuffer (u8[]& buf)=>void do
     buf = [] .. buf .. [3];
 end
-var u8[10] buffer;
+vector[10] u8 buffer;
 fillBuffer(&buffer);
 escape buffer[0];
 ]],
@@ -43243,7 +43253,7 @@ Test { [[
 code/instantaneous FillBuffer (u8[20]& buf)=>void do
     buf = [] .. buf .. [3];
 end
-var u8[10] buffer;
+vector[10] u8 buffer;
 fillBuffer(&buffer);
 escape buffer[0];
 ]],
@@ -43254,7 +43264,7 @@ Test { [[
 code/instantaneous FillBuffer (u8[3]& buf)=>void do
     buf = [] .. buf .. [2,3,4];
 end
-var u8[3] buffer = [1];
+vector[3] u8 buffer = [1];
 fillBuffer(&buffer);
 escape buffer[0];
 ]],
@@ -43265,7 +43275,7 @@ Test { [[
 code/instantaneous FillBuffer (u8[]&& buf)=>void do
     *buf = [] .. *buf .. [3];
 end
-var u8[10] buffer;
+vector[10] u8 buffer;
 fillBuffer(&&buffer);
 escape buffer[0];
 ]],
@@ -43276,7 +43286,7 @@ Test { [[
 code/instantaneous FillBuffer (u8[3]&& buf)=>void do
     *buf = [] .. *buf .. [2,3,4];
 end
-var u8[3] buffer = [1];
+vector[3] u8 buffer = [1];
 fillBuffer(&&buffer);
 escape buffer[0];
 ]],
@@ -45182,7 +45192,7 @@ do
     end
 end
 
-var u8[10] buffer;
+vector[10] u8 buffer;
 
 var Test t;
 t.fillBuffer(&buffer);
@@ -45201,7 +45211,7 @@ do
     end
 end
 
-var u8[10] buffer;
+vector[10] u8 buffer;
 
 var Test t;
 t.fillBuffer(&&buffer);
@@ -46081,7 +46091,7 @@ escape 1;
 
 Test { [[
 class T with
-    var int[10] vs;
+    vector[10] int vs;
 do
     this.vs = [1];
 end
@@ -46097,12 +46107,12 @@ escape t.vs[0];
 
 Test { [[
 class T with
-    var int[10]& vs;
+    vector[10] int& vs;
 do
     this.vs = [1];
 end
 
-var int[10] vs;
+vector[10] int vs;
 var T t with
     this.vs = &vs;
 end;
@@ -46167,8 +46177,8 @@ escape t.v;
 }
 
 Test { [[
-var int[10]& rs;
-var int[10]  vs = [1];
+vector[10] int& rs;
+vector[10] int  vs = [1];
 rs = &vs;
 vs[0] = vs[0] + 2;
 
@@ -46180,7 +46190,7 @@ escape vs[0];
 }
 Test { [[
 interface I with
-    var int[10]& vs;
+    vector[10] int& vs;
 end
 
 class T with
@@ -46188,7 +46198,7 @@ class T with
 do
 end
 
-var int[10] vs;
+vector[10] int vs;
 var T t with
     this.vs = &vs;
 end;
@@ -46204,7 +46214,7 @@ escape i:vs[0];
 }
 Test { [[
 interface I with
-    var int[10]& vs;
+    vector[10] int& vs;
 end
 
 class T with
@@ -46212,7 +46222,7 @@ class T with
 do
 end
 
-var int[10] vs;
+vector[10] int vs;
 var T t with
     this.vs = &vs;
 end;
@@ -46228,7 +46238,7 @@ escape 1;
 }
 Test { [[
 interface I with
-    var int[10]& vs;
+    vector[10] int& vs;
 end
 
 class T with
@@ -46237,7 +46247,7 @@ do
     this.vs = [1];
 end
 
-var int[10] vs;
+vector[10] int vs;
 var T t with
     this.vs = &vs;
 end;
@@ -46255,7 +46265,7 @@ Test { [[
 class T with
 do
 end
-var T&&[]  ts;
+vector[] T&&  ts;
 escape 1;
 ]],
     run = 1,
@@ -46264,7 +46274,7 @@ Test { [[
 class T with
 do
 end
-var T&&[] ts;
+vector[] T&& ts;
 var int x = $ts;
 escape x+$ts+1;
 ]],
@@ -46274,7 +46284,7 @@ Test { [[
 class T with
 do
 end
-var T&&[] ts;
+vector[] T&& ts;
 var T t;
 ts = [] .. ts .. [t];
 escape $ts+1;
@@ -46285,7 +46295,7 @@ Test { [[
 class T with
 do
 end
-var T&&[] ts;
+vector[] T&& ts;
 var T t;
 ts = [] .. ts .. [&&t];
 escape $ts+1;
@@ -46297,7 +46307,7 @@ Test { [[
 class T with
 do
 end
-var T&&[] ts;
+vector[] T&& ts;
 var T t;
 ts = [] .. ts .. [&&t];
 var T&& p = ts[0];
@@ -46310,7 +46320,7 @@ Test { [[
 class T with
 do
 end
-var T&&[] ts;
+vector[] T&& ts;
 var T t;
 ts = [] .. ts .. [&&t];
 var T&& p = ts[1];
@@ -46323,7 +46333,7 @@ Test { [[
 class T with
 do
 end
-var T&&[] ts;
+vector[] T&& ts;
 var T t;
 ts = [] .. ts .. [&&t];
 await 1s;
@@ -46453,9 +46463,9 @@ Test { [[
 class T with
 do
 end
-//var T[]   ts;
-var T&&[]  ts1;
-var T&&?[] ts2;
+//vector[] T   ts;
+vector[] T&&  ts1;
+vector[] T&&? ts2;
 escape 1;
 ]],
     run = 1,
@@ -46465,7 +46475,7 @@ Test { [[
 class T with
 do
 end
-var T&&?[] ts;
+vector[] T&&? ts;
 var T t;
 ts = [] .. [&&t];
 escape $ts;
@@ -46477,7 +46487,7 @@ Test { [[
 class T with
 do
 end
-var T&&?[] ts;
+vector[] T&&? ts;
 
 var T t;
 ts = [] .. [&&t];
@@ -46492,7 +46502,7 @@ class T with
 do
     await FOREVER;
 end
-var T&&?[] ts;
+vector[] T&&? ts;
 var T t;
 ts = [] .. [&&t];
 escape ts[0]! == &&t;
@@ -46504,7 +46514,7 @@ Test { [[
 class T with
 do
 end
-var T&&?[] ts;
+vector[] T&&? ts;
 var T t;
 ts = [] .. [&&t];
 escape ts[0]! == &&t;
@@ -46516,7 +46526,7 @@ Test { [[
 class T with
 do
 end
-var T&&?[] ts;
+vector[] T&&? ts;
 var T t;
 ts = [] .. [&&t] .. [&&t];
 escape ts[1]! == &&t;
@@ -46528,7 +46538,7 @@ Test { [[
 class T with
 do
 end
-var T&&?[] ts;
+vector[] T&&? ts;
 var T t1,t2;
 ts = [] .. [&&t1];
 ts[0]! = &&t2;
@@ -46542,7 +46552,7 @@ class T with
 do
     await 1s;
 end
-var T&&?[] ts;
+vector[] T&&? ts;
 var T t;
 ts = [] .. [&&t];
 await 1s;
@@ -46559,7 +46569,7 @@ do
 end
 
 var T t;
-var I&&?[] is;
+vector[] I&&? is;
 is = [&&t];
 
 escape is[0]? + 1;
@@ -46586,7 +46596,7 @@ var T t;
 var U u;
 var V v;
 
-var I&&?[] is;
+vector[] I&&? is;
 is = [&&t, &&u, &&v];
 
 var int ret = 0;
@@ -46657,7 +46667,7 @@ do
     await FOREVER;
 end
 
-var T&&?[] v;
+vector[] T&&? v;
 par/and do
     do
         pool T[] ts;
@@ -46678,7 +46688,7 @@ Test { [[
 class U with do end;
 
 class T with
-    var U&&[]& us;
+    vector[] U&& & us;
     code/instantaneous Build (U&&[]& us)=>T;
 do
     code/instantaneous Build (U&&[]& us)=>T do
@@ -46686,7 +46696,7 @@ do
     end
 end
 
-var U&&[] us;
+vector[] U&& us;
 var T t = T.build(&us);
 
 escape 1;
@@ -46698,7 +46708,7 @@ Test { [[
 class U with do end;
 
 class T with
-    var U&&[]& us;
+    vector[] U&& & us;
     code/instantaneous Build (U&&[]& us)=>T;
 do
     code/instantaneous Build (U&&[]& us)=>T do
@@ -46706,7 +46716,7 @@ do
     end
 end
 
-var U&&[] us = [null];
+vector[] U&& us = [null];
 
 await 1s;
 
@@ -46721,7 +46731,7 @@ Test { [[
 class U with do end;
 
 class T with
-    var U&&?[]& us;
+    vector[] U&&?& us;
     code/instantaneous Build (U&&?[]& us)=>T;
 do
     code/instantaneous Build (U&&?[]& us)=>T do
@@ -46730,7 +46740,7 @@ do
 end
 
 var U u1;
-var U&&?[] us = [&&u1];
+vector[] U&&? us = [&&u1];
 
 await 1s;
 
@@ -46749,7 +46759,7 @@ do
 end;
 
 class T with
-    var U&&?[]& us;
+    vector[] U&&?& us;
     code/instantaneous Build (U&&?[]& us)=>T;
 do
     code/instantaneous Build (U&&?[]& us)=>T do
@@ -46758,7 +46768,7 @@ do
 end
 
 var U u1;
-var U&&?[] us = [&&u1];
+vector[] U&&? us = [&&u1];
 
 await 1s;
 
@@ -46777,7 +46787,7 @@ do
 end;
 
 class T with
-    var U&&?[]& us;
+    vector[] U&&?& us;
     code/instantaneous Build (U&&?[]& us)=>T;
 do
     code/instantaneous Build (U&&?[]& us)=>T do
@@ -46786,8 +46796,8 @@ do
 end
 
 var U u1;
-var U&&?[] us = [&&u1];
-var U&&?[]& xx = &us;
+vector[] U&&? us = [&&u1];
+vector[] U&&?& xx = &us;
 
 await 1s;
 
@@ -47099,7 +47109,7 @@ escape _V;
 }
 
 Test { PRE_ISR..[[
-var int[10] v = [1];
+vector[10] int v = [1];
 v[0] = 2;
 par/or do
     async/isr [20] (v) do
@@ -47115,7 +47125,7 @@ escape v[0];
 }
 
 Test { [[
-var int[10] v;
+vector[10] int v;
 atomic do
     v[0] = 2;
 end
@@ -47434,7 +47444,7 @@ escape 1;
 }
 
 Test { [[
-var int[10] v;
+vector[10] int v;
 var int&& p;
 atomic do
     p = &&v;
@@ -50114,7 +50124,7 @@ do
     ptr = &&u;
 end
 do
-    var int[100] v;
+    vector[100] int v;
     loop i in 100 do
         v[i] = i;
     end
@@ -53071,9 +53081,9 @@ escape 1;
 Test { [[
 class T with
     output:
-        var byte[]& name;
+        vector[] byte& name;
 do
-    var byte[] name_ = [].."oi";
+    vector[] byte name_ = [].."oi";
     this.name = &name_;
     await FOREVER;
 end
@@ -53088,13 +53098,13 @@ escape _strlen((_char&&)&&t.name);
 Test { [[
 interface I with
     output:
-        var byte[]& name;
+        vector[] byte& name;
 end
 
 class T with
     interface I;
 do
-    var byte[] name_ = [].."oi";
+    vector[] byte name_ = [].."oi";
     this.name = &name_;
     await FOREVER;
 end
@@ -53102,7 +53112,7 @@ end
 class U with
     var T& t;
 do
-    var byte[]& name = &this.t.name;
+    vector[] byte& name = &this.t.name;
 end
 
 var T t;
@@ -53919,7 +53929,7 @@ end
 
 Test { [[
 output byte[] OUT;
-var byte[] xxx = [] .. "1234567890";
+vector[] byte xxx = [] .. "1234567890";
 emit OUT => []..xxx;
 escape 1;
 ]],
@@ -53957,7 +53967,7 @@ par/and do
     ret = $vec;
 with
     async do
-        var byte[] vec = [1,2,3,4,5];
+        vector[] byte vec = [1,2,3,4,5];
         emit IN => &&vec;
     end
 end
@@ -53971,7 +53981,7 @@ native do
     ##define ceu_out_emit_OUT(x) (x->_1->nxt)
 end
 output int[]&& OUT;
-var int[] xxx = [1,2,3,4,5];
+vector[] int xxx = [1,2,3,4,5];
 var int ret = emit OUT => &&xxx;
 escape ret;
 ]],
@@ -53983,7 +53993,7 @@ native do
     ##define ceu_out_emit_OUT(x) (x->_1->nxt)
 end
 output byte[]&& OUT;
-var byte[] xxx = [] .. "1234567890";
+vector[] byte xxx = [] .. "1234567890";
 var int ret = emit OUT => &&xxx;
 escape ret;
 ]],
@@ -53998,7 +54008,7 @@ par/and do
     ret = $*vec;
 with
     async do
-        var byte[] vec = [1,2,3,4,5];
+        vector[] byte vec = [1,2,3,4,5];
         emit IN => &&vec;
     end
 end
@@ -54012,7 +54022,7 @@ native do
     ##define ceu_out_emit_OUT(x) (x->_2->nxt + x->has_vector)
 end
 output (int,int[]&&,int) OUT;
-var int[] xxx = [1,2,3,4,5];
+vector[] int xxx = [1,2,3,4,5];
 var int ret = emit OUT => (0,&&xxx,1);
 escape ret;
 ]],
@@ -54024,7 +54034,7 @@ native do
     ##define ceu_out_emit_OUT(x) (x->_3->nxt + x->vector_offset)
 end
 output (int,int,int[]&&) OUT;
-var int[] xxx = [1,2,3,4,5];
+vector[] int xxx = [1,2,3,4,5];
 var int ret = emit OUT => (0,1,&&xxx);
 escape ret;
 ]],
@@ -54042,7 +54052,7 @@ native do
     }
 end
 output (int,int,int[]&&) OUT;
-var int[] xxx = [1,2,3,4,5];
+vector[] int xxx = [1,2,3,4,5];
 var int ret = emit OUT => (0,1,&&xxx);
 escape ret;
 ]],
@@ -54107,7 +54117,7 @@ native do
 end
 
 input/output (int x)=>byte[]&& PING_PONG do
-    var byte[] ret = [].."Pong ";
+    vector[] byte ret = [].."Pong ";
     native/nohold _printf();
     _printf("%s\n", (_char&&)&&ret);
     escape &&ret;
@@ -54132,7 +54142,7 @@ par/and do
     if i and err then end;
 with
     async do
-        var byte[] str = [].."END: 10 0";
+        vector[] byte str = [].."END: 10 0";
         emit PING_PONG_RETURN => (0,0,&&str);
     end
 end
@@ -57496,7 +57506,7 @@ end
 var Test a = Test(1);
 var Test b = Test(2);
 var Test c = Test(3);
-var Test[3] vs = [ a, b, c ];
+vector[3] Test vs = [ a, b, c ];
 escape vs[0].v + vs[1].v + vs[2].v;
 ]],
     run = 6,
@@ -57533,7 +57543,7 @@ data Test with
 end
 
 var u8 v = 7;
-var Test[3] vs;
+vector[3] Test vs;
 var Test t = Test(&v);
 vs = [] .. vs .. [t];
 
@@ -57546,7 +57556,7 @@ escape v;
 }
 
 Test { [[
-  var u8[3] bytes;
+  vector[3] u8 bytes;
 
 bytes = [] .. bytes .. [5];
 
@@ -57556,7 +57566,7 @@ escape bytes[0];
 }
 Test { [[
 data Frame with
-  var u8[3] bytes;
+  vector[3] u8 bytes;
 end
 
 var Frame f1;
@@ -57571,7 +57581,7 @@ data Frame with
     tag X;
 or
     tag Y with
-        var u8[3] bytes;
+        vector[3] u8 bytes;
     end
 end
 
@@ -57584,7 +57594,7 @@ data Frame with
   var _u8[3] bytes;
 end
 
-var Frame[10] frames;
+vector[10] Frame frames;
 var Frame f1;
 
 f1.bytes[0] = 5;
@@ -57606,7 +57616,7 @@ escape 1;
 }
 Test { [[
 data T with
-    var byte[]& str;
+    vector[] byte& str;
 end
 escape 1;
 ]],
@@ -57621,7 +57631,7 @@ native/plain _char_ptr;
 data D with
     var _char_ptr str;
 end
-var byte[] s = [].. "oi";
+vector[] byte s = [].. "oi";
 var D d = D((_char_ptr)(_char&&)&&s);
 escape _strlen((_char&&)d.str);
 ]],
@@ -57629,9 +57639,9 @@ escape _strlen((_char&&)d.str);
 }
 Test { [[
 data D with
-    var byte[]& str;
+    vector[] byte& str;
 end
-var byte[] s = [].. "oi";
+vector[] byte s = [].. "oi";
 var D d = D(&s);
 escape $d.str;
 ]],
@@ -63842,12 +63852,12 @@ class Test with
     code/instantaneous FillBuffer (u8[]&& buf)=>void;
 do
     code/instantaneous FillBuffer (u8[]&& buf)=>void do
-        var u8[] b = *buf;
+        vector[] u8 b = *buf;
         b = b .. [3];
     end
 end
 
-var u8[10] buffer;
+vector[10] u8 buffer;
 
 var Test t;
 t.fillBuffer(&&buffer);
@@ -63862,7 +63872,7 @@ Test { [[
 code/instantaneous FillBuffer (u8[20]&& buf)=>void do
     *buf = *buf .. [3];
 end
-var u8[10] buffer;
+vector[10] u8 buffer;
 fillBuffer(&&buffer);
 escape buffer[0];
 ]],
@@ -64113,7 +64123,7 @@ Test { [[
 emit/await/refs
 class SDL with
     input:
-        var byte[] title;
+        vector[] byte title;
         var int w,h;
 
     output:
@@ -64158,9 +64168,9 @@ var SDL _;
 Test { [[
 class T with
     output:
-        var byte[]& name;
+        vector[] byte& name;
 do
-    var byte[] name_ = [].."oi";
+    vector[] byte name_ = [].."oi";
     this.name = &name_;
     // bug: deallocates byte[]
 end
@@ -64206,9 +64216,9 @@ escape ret;
 
 Test { [[
 data D with
-    var byte[]& str;
+    vector[] byte& str;
 end
-var byte[] s = [].. "oi";
+vector[] byte s = [].. "oi";
 var D d = D(s);    // BUG: nao detecta erro de tipo
 escape $d.str;
 ]],
@@ -64399,7 +64409,7 @@ escape 1;
 
 Test { [[
 class T with
-    var byte[] xxx;
+    vector[] byte xxx;
 do
     await FOREVER;
 end
@@ -64417,7 +64427,7 @@ escape $t.xxx;
 Test { [[
 native/pure _strlen();
 class T with
-    var byte[] str;
+    vector[] byte str;
 do
     escape _strlen(&&this.str);
 end
@@ -64935,7 +64945,7 @@ escape a;
 }
 
 Test { [[
-var int[2] v ;
+vector[2] int v ;
 _f(v)
 escape v == &v[0] ;
 ]],
@@ -65503,14 +65513,14 @@ var void* ptr = (call MALLOC);
 
 Test { [[
 input (void)=>void* MALLOC;
-var void[] ptr = (call MALLOC);
+vector[] void ptr = (call MALLOC);
 ]],
     fin = 'line 2 : attribution requires `finalize´',
 }
 
 Test { [[
 input (void)=>void* MALLOC;
-var void[] ptr;
+vector[] void ptr;
 finalize
     ptr = (call MALLOC);
 with
@@ -65522,7 +65532,7 @@ escape 1;
 
 Test { [[
 input (int,int)=>void* MALLOC;
-var void[] ptr;
+vector[] void ptr;
 finalize
     ptr = (call MALLOC=>(1,1));
 with
@@ -65554,7 +65564,7 @@ input (int a, int b, void* ptr)=>void* MALLOC do
 end
 
 var int i;
-var void[] ptr;
+vector[] void ptr;
 finalize
     ptr = (call MALLOC=>(10,1, &i));
 with
@@ -65573,7 +65583,7 @@ input (int a, int b, void* ptr)=>void* MALLOC do
 end
 
 var int i;
-var void[] ptr;
+vector[] void ptr;
 finalize
     ptr = (call MALLOC=>(1,1, &i));
 with
@@ -65679,7 +65689,7 @@ escape 1;
 }
 
 Test { [[
-var byte[255] buf;
+vector[255] byte buf;
 _enqueue(buf);
 escape 1;
 ]],
@@ -65855,7 +65865,7 @@ native do
 end
 
 output (byte* buf)=>void SEND;
-var byte[255] buf;
+vector[255] byte buf;
 call SEND => buf;
 escape 1;
 ]],
@@ -65903,7 +65913,7 @@ end
 
 var int flen = (call SIZE => f);
 //byte *buf = (byte *)malloc(flen+1);
-var byte[255] buf;
+vector[255] byte buf;
 buf[flen] = 0;
 call READ => (buf, 1, flen, f);
 
@@ -65935,7 +65945,7 @@ end
 }
 
 Test { [[
-var int[10] vec1;
+vector[10] int vec1;
 
 class T with
     var int*& vec2;

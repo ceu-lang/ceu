@@ -23,7 +23,7 @@ syn keyword cType       uint usize void
 syn keyword cType       const nohold recursive safe plain pure hold
 syn keyword	cStatement  async await break native continue data do else emit end
 syn keyword cStatement  event every finalize FOREVER global if input loop nothing
-syn keyword cStatement  output pre par pause return then until var with class
+syn keyword cStatement  output pre par pause return then until var vector with class
 syn keyword cStatement  include interface kill spawn thread
 syn keyword cStatement  escape call isr atomic request in
 syn keyword cStatement  watching tag new traverse pool
