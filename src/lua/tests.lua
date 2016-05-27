@@ -59,8 +59,8 @@ do
     end
 end
 
-pool Data[] datas;
-pool Code[] cs;
+pool[] Data datas;
+pool[] Code cs;
 
 var Data&&? d = new Data(0) in datas;
 var bool ok = spawn SpawnCode(d!) in cs;
@@ -1265,7 +1265,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-vector[] int& v;
+vector&[] int v;
 escape 1;
 ]],
     env = 'line 1 : invalid type modifier : `&[]´',
@@ -17349,7 +17349,7 @@ code/instantaneous F (void) => byte[] do
     escape &this.str;
 end
 
-vector[] byte& ref = &f();
+vector&[] byte ref = &f();
 
 escape ref[1];
 ]],
@@ -22740,7 +22740,7 @@ escape v2[0] + v2[1] + v2[2];
 
 Test { [[
 vector[10] u8 vec = [1,2,3];
-vector[] u8&  ref = &vec;
+vector&[] u8  ref = &vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
     run = 19,
@@ -22748,7 +22748,7 @@ escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 
 Test { [[
 vector[10] u8  vec = [1,2,3];
-vector[11] u8& ref = &vec;
+vector&[11] u8 ref = &vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
     run = 1,
@@ -22757,7 +22757,7 @@ escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 
 Test { [[
 vector[10] u8 vec = [1,2,3];
-vector[9] u8& ref = &vec;
+vector&[9] u8 ref = &vec;
 escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 ]],
     env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
@@ -22794,7 +22794,7 @@ native do
     }
 end
 vector[2] int a  = [1,2];
-vector[2] int& b = &a;
+vector&[2] int b = &a;
 _f((_char&&)&&b);
 escape b[0] + b[1];
 ]],
@@ -22810,7 +22810,7 @@ native do
     }
 end
 vector[2] int a  = [1,2];
-vector[2] int& b = &a;
+vector&[2] int b = &a;
 _f((_int&&)&&b);
 escape b[0] + b[1];
 ]],
@@ -23033,7 +23033,7 @@ native do
     }
 end
 vector[] byte  str;
-vector[] byte& ref = &str;
+vector&[] byte ref = &str;
 ref = [] .. (_char&&){f}() .. "oi";
 native/pure _strlen();
 escape _strlen((_char&&)&&str);
@@ -23048,7 +23048,7 @@ code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
-vector[] byte& ref = &f();
+vector&[] byte ref = &f();
 
 escape ref[1];
 ]],
@@ -23062,7 +23062,7 @@ code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
-vector[] byte& ref = &f();
+vector&[] byte ref = &f();
 ref = [3, 4, 5];
 
 escape str[1];
@@ -23077,7 +23077,7 @@ code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
-vector[] byte& ref = &f();
+vector&[] byte ref = &f();
 ref = [] .. "ola";
 
 escape str[1] == 'l';
@@ -23098,7 +23098,7 @@ code/instantaneous F (void) => byte[]& do
     escape &this.str;
 end
 
-vector[] byte& ref = &f();
+vector&[] byte ref = &f();
 ref = [] .. (_char&&){g}() .. "ola";
 
 escape str[3] == 'o';
@@ -23114,7 +23114,7 @@ code/instantaneous F1 (void)=>byte[]& do
 end
 
 code/instantaneous F2 (void)=>void do
-    vector[] byte& ref = &f1();
+    vector&[] byte ref = &f1();
     ref = [] .. "ola" .. "mundo";
 end
 
@@ -23333,7 +23333,7 @@ escape b;
 }
 Test { [[
 vector[] byte c = [1];
-vector[] byte& b = &c;
+vector&[] byte b = &c;
 escape b[0];
 ]],
     run = 1,
@@ -31665,7 +31665,7 @@ do
     emit ok;
 end
 
-pool T[] ts;
+pool[] T ts;
 var T&&? t1 = spawn T in ts;
 
 await t1!:ok;
@@ -31685,7 +31685,7 @@ do
     emit ok;
 end
 
-pool T[] ts;
+pool[] T ts;
 var T&&? t1 = spawn T in ts;
 var T&&? t2 = spawn T in ts;
 
@@ -31708,7 +31708,7 @@ do
     await OS_START;
 end
 
-pool T[] ts;
+pool[] T ts;
 var T&&? t1 = spawn T in ts;
 var T&&? t2 = spawn T in ts;
 
@@ -32506,12 +32506,12 @@ escape 1;
 }
 Test { [[
 class Test with
-    vector[10] u8& v;
+    vector&[10] u8 v;
 do
     v = [] .. v .. [4];
 end
 
-vector[10] u8& v; // error: '&' must be deleted
+vector&[10] u8 v; // error: '&' must be deleted
 
 do Test with
     this.v = &v;
@@ -33731,7 +33731,7 @@ do
 end
 
 var int n = 5;
-pool Org[n] a;
+pool[n] Org a;
 
 escape 1;
 ]],
@@ -33740,7 +33740,7 @@ escape 1;
 
 Test { [[
 class T with do end
-pool T[] ts;
+pool[] T ts;
 var T t;
 ts = t;
 escape 1;
@@ -33752,7 +33752,7 @@ Test { [[
 class T with
 do
 end
-pool T[] t;
+pool[] T t;
 escape 1;
 ]],
     run = 1,
@@ -33762,7 +33762,7 @@ Test { [[
 class T with
 do
 end
-pool T[1] t;
+pool[1] T t;
 escape 1;
 ]],
     run = 1,
@@ -33770,7 +33770,7 @@ escape 1;
 
 Test { [[
 class T with do end
-pool T[0] ts;
+pool[0] T ts;
 var T&&? ok = spawn T in ts;
 if ok? then
     escape 0;
@@ -33785,7 +33785,7 @@ Test { [[
 class T with
 do
 end
-pool T[1] t;
+pool[1] T t;
 var T&&? ok1 = spawn T in t with end;
 var T&&? ok2 = spawn T in t;
 escape (ok1?) + (ok2?) + 1;
@@ -33798,7 +33798,7 @@ Test { [[
 class T with
 do
 end
-pool T[1] t;
+pool[1] T t;
 var T&&? ok1 = spawn T in t with end;
 var int sum = 1;
 if ok1? then
@@ -33833,7 +33833,7 @@ class T with
     var int v = 0;
 do
 end
-pool T[1] ts;
+pool[1] T ts;
 loop t in ts do
 end
 escape 1;
@@ -33846,7 +33846,7 @@ class T with
     var int v = 0;
 do
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&?  ok1 = spawn T in ts with
                 this.v = 10;
               end;
@@ -33866,7 +33866,7 @@ class T with
     var int v = 0;
 do
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&?  ok1 = spawn T in ts with
                 this.v = 10;
               end;
@@ -33882,7 +33882,7 @@ escape (ok1?) + ok2 + ret + 1;
 }
 Test { [[
 class T with do await FOREVER; end;
-pool T[] ts;
+pool[] T ts;
 event void e;
 spawn T in ts;
 var int ret = 0;
@@ -33899,7 +33899,7 @@ Test { [[
 class T with
 do
 end
-pool T[] t;
+pool[] T t;
 spawn T in t;
 escape 1;
 ]],
@@ -33918,7 +33918,7 @@ Test { [[
 class T with
 do
 end
-pool T[] t;
+pool[] T t;
 spawn T in t;
 spawn T;
 escape 1;
@@ -33935,7 +33935,7 @@ class T with
 do
     async do end;
 end
-pool T[] ts;
+pool[] T ts;
 spawn T in ts with
     this.v = 10;
     _V = _V + 10;
@@ -33962,7 +33962,7 @@ class T with
 do
     async do end;
 end
-pool T[] ts;
+pool[] T ts;
 spawn T with
     this.v = 10;
     _V = _V + 10;
@@ -33986,7 +33986,7 @@ do
     await FOREVER;
 end
 
-pool T[2] ts;
+pool[2] T ts;
 spawn T in ts;
 spawn T in ts;
 
@@ -34002,7 +34002,7 @@ do
     await FOREVER;
 end
 
-pool T[] ts;
+pool[] T ts;
 spawn T in ts;
 spawn T in ts;
 
@@ -34017,7 +34017,7 @@ do
     await FOREVER;
 end
 
-pool T[] ts;
+pool[] T ts;
 spawn T in ts;
 spawn T in ts;
 
@@ -34037,7 +34037,7 @@ class T with
 do
     async do end;
 end
-pool T[] ts;
+pool[] T ts;
 spawn T in ts with
     this.v = 10;
     _V = _V + 10;
@@ -34099,7 +34099,7 @@ Test { [[
 class T with do
 end
 var T&&? kkk;
-pool T[] ppp;
+pool[] T ppp;
 spawn T in ppp;
 escape 1;
 ]],
@@ -34389,7 +34389,7 @@ class T with
 do
     await OS_START;
 end
-pool T[] ts;
+pool[] T ts;
 
 var T&&? t = spawn T;
 await *(t!);
@@ -34451,7 +34451,7 @@ do
     await A;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var T&&? t1 = spawn T;
 await *(t1!);
@@ -34470,7 +34470,7 @@ do
     await 1us;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var T&&? t1 = spawn T;
 await *(t1!);
@@ -34489,7 +34489,7 @@ class T with
 do
     await 1us;
 end
-pool T[] ts;
+pool[] T ts;
 
 var T&&? t1 = spawn T;
 var T&&? t2 = spawn T;
@@ -34799,7 +34799,7 @@ do
 end
 
 do
-    pool T[] ts;
+    pool[] T ts;
     spawn T in ts;
     var T&&? t = spawn T in ts;
     await *t!;
@@ -34824,7 +34824,7 @@ do
 end
 
 do
-    pool T[] ts;
+    pool[] T ts;
     spawn T in ts;
     var T&&? t = spawn T in ts;
     await *t!;
@@ -34847,7 +34847,7 @@ class T with
 do
     do U;
 end
-pool T[] ts;
+pool[] T ts;
 
 var T&&? t1 = spawn T;
 var T&&? t2 = spawn T;
@@ -34861,7 +34861,7 @@ escape 1;
 }
 
 Test { [[
-pool T[0] ts;
+pool[0] T ts;
 class T with
     var int a;
 do
@@ -34879,7 +34879,7 @@ class T with
 do
     this.a = 1;
 end
-pool T[0] ts;
+pool[0] T ts;
 var T&&? t = spawn T in ts;
 escape not t?;
 ]],
@@ -34893,7 +34893,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&? a = spawn T in ts;
 var int sum = 0;
 watching *(a!) do
@@ -34912,7 +34912,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&? a = spawn T in ts;
 var int sum = 0;
 watching *(a!) do
@@ -34932,7 +34932,7 @@ do
     await FOREVER;
 end
 do
-pool T[0] ts;
+pool[0] T ts;
 var T&&? t = spawn T in ts;
 escape not t?;
 end
@@ -34947,8 +34947,8 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] as;
-pool T[0] bs;
+pool[1] T as;
+pool[0] T bs;
 var T&&? a = spawn T in as;
 var int sum = 0;
 if a? then
@@ -34969,7 +34969,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&? a = spawn T in ts;
 //free(a);
 var int sum = 0;
@@ -34991,7 +34991,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&& a = null;
 do
     var T&&? aa = spawn T in ts;
@@ -35018,7 +35018,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[2] ts;
+pool[2] T ts;
 var T&& a = null;
 do
     var T&&? aa = spawn T in ts;
@@ -35039,7 +35039,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[2] ts;
+pool[2] T ts;
 var T&& a = null;
 do
     var T&&? aa = spawn T in ts;
@@ -35080,7 +35080,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&? a;
 do
     var T&&? aa = spawn T in ts;
@@ -35105,7 +35105,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&& a=null;
 do
     var T&&? aa = spawn T in ts;
@@ -35124,7 +35124,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&& a=null, b=null;
 var int sum = 0;
 do
@@ -35156,7 +35156,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&? a, b;
 var int sum = 0;
 do
@@ -35182,7 +35182,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&? a, b;
 var bool b_=true;
 do
@@ -35208,7 +35208,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&? a;
 var int sum = 0;
 do
@@ -35229,7 +35229,7 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&& a=null;
 do
     var T&&? aa = spawn T in ts;
@@ -35250,7 +35250,7 @@ do
     _V = _V + 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 do
     loop i in 2 do
         spawn T in ts;
@@ -35272,7 +35272,7 @@ do
     _V = _V + 1;
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 do
     loop i in 2 do
         spawn T in ts;
@@ -35295,7 +35295,7 @@ do
     _V = _V + 1;
 end
 do
-    pool T[1] ts;
+    pool[1] T ts;
     loop i in 1000 do
         var T&&? ok = spawn T in ts;  // 999 fails
         if (not ok?) then
@@ -35319,7 +35319,7 @@ do
     _V = _V + 1;
     await A;
 end
-pool T[1] ts;
+pool[1] T ts;
 do
     loop i in 10 do
         spawn T in ts;
@@ -35340,7 +35340,7 @@ do
     _V = _V + 1;
     await A;
 end
-pool T[1] ts;
+pool[1] T ts;
 do
     loop i in 1000 do
         var T&&? ok = spawn T in ts;
@@ -35361,7 +35361,7 @@ class U with
 do
 end
 
-pool U[10] us;
+pool[10] U us;
 
 spawn U in us;
 
@@ -35379,7 +35379,7 @@ class U with
 do
 end
 
-pool I[10] is;
+pool[10] I is;
 
 spawn U in is;
 
@@ -35402,7 +35402,7 @@ class U with
 do
 end
 
-pool I[10] is;
+pool[10] I is;
 
 spawn T in is;
 spawn U in is;
@@ -35421,7 +35421,7 @@ class U with
 do
 end
 
-pool T[1] ts;
+pool[1] T ts;
 
 spawn U in ts;
 
@@ -35438,7 +35438,7 @@ class V with
 do
 end
 
-pool I[1] is;
+pool[1] I is;
 
 spawn V in is;
 
@@ -35462,10 +35462,10 @@ end
 
 class V with
 do
-    pool I[1] is;
+    pool[1] I is;
 end
 
-pool I[1] is;
+pool[1] I is;
 
 spawn T in is;
 spawn U in is;
@@ -35491,10 +35491,10 @@ end
 
 class V with
 do
-    pool I[1] is;
+    pool[1] I is;
 end
 
-pool I[1] is;
+pool[1] I is;
 
 spawn U in is;
 spawn V in is;
@@ -35510,7 +35510,7 @@ end
 
 class T with do end
 
-pool I[1] is;
+pool[1] I is;
 
 spawn T in is;
 
@@ -35536,12 +35536,12 @@ end
 
 class V with
 do
-    pool I[10] is;
+    pool[10] I is;
     spawn T in is;
     spawn U in is;
 end
 
-pool I[10] is;
+pool[10] I is;
 
 spawn T in is;
 spawn U in is;
@@ -35568,12 +35568,12 @@ end
 
 class V with
 do
-    pool I[10] is;
+    pool[10] I is;
     spawn T in is;
     spawn U in is;
 end
 
-pool I[10] is;
+pool[10] I is;
 
 spawn T in is;
 spawn U in is;
@@ -35715,7 +35715,7 @@ class Pingu with
     interface IPingu;
 do
     do
-        pool WalkerAction[] was;
+        pool[] WalkerAction was;
         every 10s do
             spawn WalkerAction in was with
                 this.pingu = &outer;
@@ -35853,11 +35853,11 @@ escape 1;
 Test { [[
 class T with do end;
 class U with
-    pool T[]& ts;
+    pool&[] T ts;
 do
 end
-pool T[] ts1;
-pool T[2] ts2;
+pool[] T ts1;
+pool[2] T ts2;
 var U _ with
     this.ts = &ts1;
 end;
@@ -35881,10 +35881,10 @@ do
     await FOREVER;
 end;
 
-pool T[2] ts;
+pool[2] T ts;
 
 class U with
-    pool T[]& xxx;  // TODO: test also T[K<2], T[K>2]
+    pool&[] T xxx;  // TODO: test also T[K<2], T[K>2]
                     //       should <= be allowed?
 do
     spawn T in xxx;
@@ -35926,7 +35926,7 @@ class X with do
 end;
 
 class Body with
-    pool  X[]& bodies;
+    pool&[]  X bodies;
     var&   int    sum;
     event int     ok;
 do
@@ -35937,7 +35937,7 @@ do
     emit this.ok => 1;
 end
 
-pool X[1] bodies;
+pool[1] X bodies;
 var  int  sum = 1;
 
 var Body b with
@@ -35954,7 +35954,7 @@ class X with do
 end;
 
 class Body with
-    pool  X[]& bodies;
+    pool&[]  X bodies;
     var&   int    sum;
     event int     ok;
 do
@@ -35965,7 +35965,7 @@ do
     emit this.ok => 1;
 end
 
-pool X[1] bodies;
+pool[1] X bodies;
 var  int  sum = 1;
 
 var Body b with
@@ -35992,7 +35992,7 @@ native do
 end
 
 class Body with
-    pool  X[]& bodies;
+    pool&[]  X bodies;
     var&   int    sum;
     event int     ok;
 do
@@ -36003,7 +36003,7 @@ do
     emit this.ok => 1;
 end
 
-pool X[] bodies;
+pool[] X bodies;
 var  int  sum = 1;
 
 var Body b with
@@ -36028,8 +36028,8 @@ do
     await 1s;
 end
 
-pool Job[10] jobs;
-pool Job[10]& jobs_alias = &jobs;
+pool[10] Job jobs;
+pool&[10] Job jobs_alias = &jobs;
 
 var Job&& ptr = null;
 loop j in jobs do
@@ -36210,7 +36210,7 @@ escape _V;
 }
 Test { [[
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var&   int    sum;
     event int     ok;
 do
@@ -36228,7 +36228,7 @@ do
     emit this.ok => 1;
 end
 
-pool Body[4] bodies;
+pool[4] Body bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -36244,7 +36244,7 @@ escape sum;
 
 Test { [[
 class Body with
-    pool Body[]& bodies;
+    pool&[] Body bodies;
     var&  int     sum;
 do
     var Body&&? nested =
@@ -36258,7 +36258,7 @@ do
     sum = sum + 1;
 end
 
-pool Body[] bodies;
+pool[] Body bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -36292,7 +36292,7 @@ escape sum;
 
 Test { [[
 class Body with
-    pool Body[1]& bodies;
+    pool&[1] Body bodies;
     var&  int     sum;
 do
     var Body&&? nested =
@@ -36306,7 +36306,7 @@ do
     sum = sum + 1;
 end
 
-pool Body[1] bodies;
+pool[1] Body bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -36320,7 +36320,7 @@ escape sum;
 }
 Test { [[
 class Body with
-    pool Body[1]& bodies;
+    pool&[1] Body bodies;
     var&  int     sum;
 do
     var Body&&? nested =
@@ -36331,7 +36331,7 @@ do
     sum = sum + 1;
 end
 
-pool Body[1] bodies;
+pool[1] Body bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -36346,7 +36346,7 @@ escape sum;
 
 Test { [[
 class Body with
-    pool Body[1]& bodies;
+    pool&[1] Body bodies;
     var&  int     sum;
 do
     var Body&&? nested =
@@ -36357,7 +36357,7 @@ do
     sum = sum + 1;
 end
 
-pool Body[1] bodies;
+pool[1] Body bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -36372,7 +36372,7 @@ escape sum;
 
 Test { [[
 class Body with
-    pool Body[1]& bodies;
+    pool&[1] Body bodies;
     var&  int     sum;
 do
     spawn Body in bodies with
@@ -36386,7 +36386,7 @@ do
     end;
 end
 
-pool Body[1] bodies;
+pool[1] Body bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -36401,7 +36401,7 @@ escape sum;
 
 Test { [[
 class Body with
-    pool Body[1]& bodies;
+    pool&[1] Body bodies;
     var&  int     sum;
 do
     sum = sum + 1;
@@ -36413,7 +36413,7 @@ do
     end
 end
 
-pool Body[1] bodies;
+pool[1] Body bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -36428,7 +36428,7 @@ escape sum;
 
 Test { [[
 class Body with
-    pool Body[1]& bodies;
+    pool&[1] Body bodies;
     var&  int     sum;
 do
     sum = sum + 1;
@@ -36443,7 +36443,7 @@ do
     end
 end
 
-pool Body[1] bodies;
+pool[1] Body bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -36464,7 +36464,7 @@ do
 end
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var&   Sum    sum;
 do
     *this.sum.v = *this.sum.v + 1;
@@ -36479,7 +36479,7 @@ var Sum sum with
     this.v = &&v;
 end;
 
-pool Body[7] bodies;
+pool[7] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.sum    = &sum;
@@ -36499,7 +36499,7 @@ do
 end
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var&   Sum    sum;
 do
     await 1s;
@@ -36515,7 +36515,7 @@ var Sum sum with
     this.v = &&v;
 end;
 
-pool Body[7] bodies;
+pool[7] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.sum    = &sum;
@@ -36721,7 +36721,7 @@ do
     await FOREVER;
 end
 do
-    pool T[] ts;
+    pool[] T ts;
     var T&&? t = spawn T in ts;
 end
 escape _V;
@@ -36984,7 +36984,7 @@ do
     await FOREVER;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 loop t1 in ts do
     loop t2 in ts do
@@ -37005,7 +37005,7 @@ do
     await FOREVER;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 loop t1 in ts do
     loop t2 in ts do
@@ -37027,7 +37027,7 @@ do
     await FOREVER;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 loop t1 in ts do
     watching *t1 do
@@ -37745,7 +37745,7 @@ end
 native do ##include <assert.h> end
 native _assert();
 do
-    pool T[] ts;
+    pool[] T ts;
     loop i in 100 do
         var T&&? ok;
         ok = spawn T in ts;
@@ -37757,7 +37757,7 @@ do
     _assert(not ok2?);
 end
 do
-    pool T[] ts;
+    pool[] T ts;
     loop i in 100 do
         var T&&? ok;
         ok = spawn T in ts;
@@ -37765,7 +37765,7 @@ do
     end
 end
 do
-    pool T[] ts;
+    pool[] T ts;
     loop i in 101 do
         var T&&? ok;
         ok = spawn T in ts;
@@ -37799,7 +37799,7 @@ do
 end
 var int v = 0;
 do
-    pool T[] ts;
+    pool[] T ts;
     loop i in 200 do
         var T&&? ok =
             spawn T in ts with
@@ -38045,7 +38045,7 @@ end
 var T&& a=null;
 var T aa;
 do
-    pool T[] ts;
+    pool[] T ts;
     var T&&? b = spawn T in ts;
     b!:v = 10;
         a = b!;
@@ -38073,7 +38073,7 @@ end
 var T&& a=null;
 var T aa;
 do
-    pool T[] ts;
+    pool[] T ts;
     var T&&? b = spawn T in ts;
     b!:v = 10;
         a = b!;
@@ -38100,7 +38100,7 @@ end
 
 var T&& a=null;
 do
-    pool T[] ts;
+    pool[] T ts;
     var T&&? b = spawn T in ts;
     b!:v = 10;
         a = b!;
@@ -38126,7 +38126,7 @@ end
 
 var T&& a=null;
 do
-    pool T[] ts;
+    pool[] T ts;
     var T&&? b = spawn T in ts;
     b!:v = 10;
         a = b!;
@@ -38264,7 +38264,7 @@ end
 var int ret = 0;
 
 par/or do
-    pool T[] ts;
+    pool[] T ts;
     var T&&? o;
     o = spawn T in ts;
     //await OS_START;
@@ -39176,7 +39176,7 @@ do
 end
 
 do
-    pool T[] ts;
+    pool[] T ts;
     var T&&? a;
     a = spawn T in ts;
     //free a;
@@ -39245,7 +39245,7 @@ do
 end
 
 do
-    pool T[] ts;
+    pool[] T ts;
     var T&&? ptr;
     loop i in 100 do
         if ptr? then
@@ -39448,7 +39448,7 @@ var int n = 0;
 par/or do
     await 1s;
 with
-    pool Rect[1000] rs;
+    pool[1000] Rect rs;
     every 40ms do
         loop i in 40 do
             n = n + 1;
@@ -39498,7 +39498,7 @@ do
     await FOREVER;
 end
 do
-    pool T[] ts;
+    pool[] T ts;
     var T&&? p;
     p = spawn T in ts;
     p!:v = 1;
@@ -39625,7 +39625,7 @@ class T with
 do
 end
 do
-    pool T[] ts;
+    pool[] T ts;
     var void&& p = null;
     var T&&? ui;
     ui = spawn T in ts with
@@ -40050,7 +40050,7 @@ do
 end
 var Unit&&? u;
 do
-    pool Unit[] units;
+    pool[] Unit units;
     u = spawn Unit in units;  // deveria falhar aqui!
     await 1min;
 end
@@ -40063,7 +40063,7 @@ escape 2;
 
 Test { [[
 class T with do end;
-pool T[] ts;
+pool[] T ts;
 loop t in ts do
 end
 escape 1;
@@ -40170,7 +40170,7 @@ end
 
 par/or do
     do
-        pool T[] ts;
+        pool[] T ts;
         loop i do
             spawn T in ts with
                 this.c = i;
@@ -40208,7 +40208,7 @@ event int pse;
 par/or do
     pause/if pse do
         do
-            pool T[] ts;
+            pool[] T ts;
             loop i do
                 spawn T in ts with
                     this.c = i;
@@ -40252,7 +40252,7 @@ event int pse;
 
 par/or do
     do
-        pool T[] ts;
+        pool[] T ts;
         loop i do
             pause/if pse do
                 spawn T in ts with
@@ -40297,7 +40297,7 @@ event int pse;
 
 par/or do
     do
-        pool T[] ts;
+        pool[] T ts;
         loop i do
             pause/if pse do
                 spawn T in ts with
@@ -40344,7 +40344,7 @@ event int pse;
 par/or do
     pause/if pse do
         do
-            pool T[] ts;
+            pool[] T ts;
             loop i do
                 spawn T in ts with
                     this.c = i;
@@ -40389,7 +40389,7 @@ event int pse;
 
 par/or do
     do
-        pool T[] ts;
+        pool[] T ts;
         loop i do
             pause/if pse do
                 spawn T in ts with
@@ -40435,7 +40435,7 @@ event int pse;
 par/or do
     pause/if pse do
         do
-            pool T[] ts;
+            pool[] T ts;
             loop i do
                 spawn T in ts with
                     this.c = i;
@@ -40522,7 +40522,7 @@ do
     await e;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 1;
 
@@ -40553,7 +40553,7 @@ do
     end
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 1;
 
@@ -40590,7 +40590,7 @@ class T with
 do
     await e;
 end
-pool T[] ts;
+pool[] T ts;
 var int ret = 0;
 do
     spawn T in ts with
@@ -40618,7 +40618,7 @@ do
     await e;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 1;
 
@@ -40643,7 +40643,7 @@ do
     await e;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 1;
 
@@ -40670,7 +40670,7 @@ do
     await e;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 1;
 
@@ -40702,7 +40702,7 @@ do
     await e;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 1;
 
@@ -40830,7 +40830,7 @@ end
 class T with
 do end
 do
-    pool T[] ts;
+    pool[] T ts;
     loop i in ts do
     end
 end
@@ -42227,10 +42227,10 @@ do
 end
 
 interface Global with
-    pool Unit[] all;
+    pool[] Unit all;
 end
 
-pool Unit[] all;
+pool[] Unit all;
 
 class Nest with
 do
@@ -42252,7 +42252,7 @@ interface I with
 end
 class T with
     var& I parent;
-    pool I[1] is;
+    pool[1] I is;
 do
     if &&parent==null then end;
     await 1s;
@@ -42265,7 +42265,7 @@ escape 1;
 Test { [[
 interface I with end
 class T with do end
-pool T[] ts;
+pool[] T ts;
 do
     loop i in ts do
         _f(i);
@@ -42278,7 +42278,7 @@ end
 Test { [[
 interface I with end
 class T with do end
-pool T[] ts;
+pool[] T ts;
 var I&& p=null;
 do
     loop i in ts do
@@ -42294,7 +42294,7 @@ escape 1;
 Test { [[
 interface Unit with end
 class CUnit with do end
-pool CUnit[] us;
+pool[] CUnit us;
 loop u in us do
 end
 escape 1;
@@ -42304,7 +42304,7 @@ escape 1;
 
 Test { [[
 class Unit with do end
-pool Unit[] us;
+pool[] Unit us;
 var int ret = 1;
 do
     loop u in us do
@@ -42318,7 +42318,7 @@ escape ret;
 
 Test { [[
 class Unit with do end
-pool Unit[] us;
+pool[] Unit us;
 var Unit&& p=null;
 do
     loop i in us do
@@ -42332,7 +42332,7 @@ escape 10;
 
 Test { [[
 class I with do end
-pool I[] is;
+pool[] I is;
 native/nohold _f();
 native do
     void f (void* p) {
@@ -42350,7 +42350,7 @@ escape 10;
 
 Test { [[
 class I with do end
-pool I[] is;
+pool[] I is;
 native _f();
 native do
     void f (void* p) {
@@ -42378,7 +42378,7 @@ do
     await FOREVER;
 end
 
-pool T[] ts;
+pool[] T ts;
 var int ret = 0;
 do
     spawn T in ts with
@@ -42453,7 +42453,7 @@ class T with
 do
     await FOREVER;
 end
-pool T[] ts;
+pool[] T ts;
 
 class U with
     var int v;
@@ -42493,7 +42493,7 @@ do
     await FOREVER;
 end
 
-pool I[] is;
+pool[] I is;
 
 var int ret = 0;
 
@@ -42520,7 +42520,7 @@ interface I with
     event void inc;
 end
 
-pool I[] is;
+pool[] I is;
 
 class T with
     interface I;
@@ -42565,7 +42565,7 @@ class T with
     interface I;
 do
 end
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 1;
 do
@@ -42588,7 +42588,7 @@ class T with
     interface I;
 do
 end
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 1;
 do
@@ -42627,7 +42627,7 @@ do
     this.v = v + 1;
 end
 
-pool T[] ts;
+pool[] T ts;
 var int ret = 1;
 do
     spawn T in ts with
@@ -42670,7 +42670,7 @@ do
     await FOREVER;
 end
 
-pool T[] ts;
+pool[] T ts;
 var int ret = 1;
 do
     spawn T in ts with
@@ -42712,7 +42712,7 @@ do
     this.v = v + 1;
     await FOREVER;
 end
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 0;
 do
@@ -42750,7 +42750,7 @@ class T with
     var int a;
 do
 end
-pool T[] ts;
+pool[] T ts;
 
 do
     loop t in ts do
@@ -42874,7 +42874,7 @@ escape 1;
 }
 Test { [[
 class T with do end
-pool T[10] ts;
+pool[10] T ts;
 escape $$ts;
 ]],
     env = 'line 3 : invalid operand to unary "$$" : vector expected',
@@ -42882,7 +42882,7 @@ escape $$ts;
 
 Test { [[
 class T with do end
-pool T[10] ts;
+pool[10] T ts;
 escape $ts;
 ]],
     env = 'line 3 : invalid operand to unary "$" : vector expected',
@@ -42890,7 +42890,7 @@ escape $ts;
 
 Test { [[
 class T with
-    vector[] int& v1;
+    vector&[] int v1;
     vector[] int  v2;
 do
     if &&v1==null then end;
@@ -45514,7 +45514,7 @@ escape p.get().value;
 Test { [[
 class T with do end
 
-pool T[] ts;
+pool[] T ts;
 
 class U with
     var& int ts;
@@ -45531,10 +45531,10 @@ escape 1;
 Test { [[
 class T with do end
 
-pool T[] ts;
+pool[] T ts;
 
 class U with
-    pool T[]& ts;
+    pool&[] T ts;
 do
     var T&&? t =
         spawn T in ts with
@@ -45780,7 +45780,7 @@ do
     await FOREVER;
 end
 
-pool T[] ts;
+pool[] T ts;
 spawn T.f2(2) in ts;
 
 var int ret = 0;
@@ -46146,7 +46146,7 @@ escape t.vs[0];
 
 Test { [[
 class T with
-    vector[10] int& vs;
+    vector&[10] int vs;
 do
     this.vs = [1];
 end
@@ -46216,7 +46216,7 @@ escape t.v;
 }
 
 Test { [[
-vector[10] int& rs;
+vector&[10] int rs;
 vector[10] int  vs = [1];
 rs = &vs;
 vs[0] = vs[0] + 2;
@@ -46229,7 +46229,7 @@ escape vs[0];
 }
 Test { [[
 interface I with
-    vector[10] int& vs;
+    vector&[10] int vs;
 end
 
 class T with
@@ -46253,7 +46253,7 @@ escape i:vs[0];
 }
 Test { [[
 interface I with
-    vector[10] int& vs;
+    vector&[10] int vs;
 end
 
 class T with
@@ -46277,7 +46277,7 @@ escape 1;
 }
 Test { [[
 interface I with
-    vector[10] int& vs;
+    vector&[10] int vs;
 end
 
 class T with
@@ -46661,7 +46661,7 @@ end
 var T&&? t;
 par/or do
     do
-        pool T[] ts;
+        pool[] T ts;
         t = spawn T in ts;
         await OS_START;
     end
@@ -46686,7 +46686,7 @@ end
 var T&&? t;
 par/and do
     do
-        pool T[] ts;
+        pool[] T ts;
         t = spawn T in ts;
         await OS_START;
     end
@@ -46709,7 +46709,7 @@ end
 vector[] T&&? v;
 par/and do
     do
-        pool T[] ts;
+        pool[] T ts;
         var T&&? ptr = spawn T in ts;
         v = [] .. v .. [ptr];
         await OS_START;
@@ -46727,7 +46727,7 @@ Test { [[
 class U with do end;
 
 class T with
-    vector[] U&& & us;
+    vector&[] U&&  us;
     code/instantaneous Build (var& U&&[] us)=>T;
 do
     code/instantaneous Build (var& U&&[] us)=>T do
@@ -46747,7 +46747,7 @@ Test { [[
 class U with do end;
 
 class T with
-    vector[] U&& & us;
+    vector&[] U&&  us;
     code/instantaneous Build (var& U&&[] us)=>T;
 do
     code/instantaneous Build (var& U&&[] us)=>T do
@@ -46770,7 +46770,7 @@ Test { [[
 class U with do end;
 
 class T with
-    vector[] U&&?& us;
+    vector&[] U&&? us;
     code/instantaneous Build (var& U&&?[] us)=>T;
 do
     code/instantaneous Build (var& U&&?[] us)=>T do
@@ -46798,7 +46798,7 @@ do
 end;
 
 class T with
-    vector[] U&&?& us;
+    vector&[] U&&? us;
     code/instantaneous Build (var& U&&?[] us)=>T;
 do
     code/instantaneous Build (var& U&&?[] us)=>T do
@@ -46826,7 +46826,7 @@ do
 end;
 
 class T with
-    vector[] U&&?& us;
+    vector&[] U&&? us;
     code/instantaneous Build (var& U&&?[] us)=>T;
 do
     code/instantaneous Build (var& U&&?[] us)=>T do
@@ -46836,7 +46836,7 @@ end
 
 var U u1;
 vector[] U&&? us = [&&u1];
-vector[] U&&?& xx = &us;
+vector&[] U&&? xx = &us;
 
 await 1s;
 
@@ -47690,9 +47690,9 @@ escape 1;
 Test { [[
 class U with do end;
 
-pool U[10]  us;
+pool[10] U  us;
 
-pool U[1] us1;
+pool[1] U us1;
 spawn U in us1;
 
 escape 1;
@@ -47713,7 +47713,7 @@ end
 
 class UIGrid with
     interface UI;
-    pool  UIGridItem[] uis;
+    pool[]  UIGridItem uis;
 do
     code/instantaneous Go (void)=>void do
         loop item in this.uis do
@@ -47732,7 +47732,7 @@ escape 1;
 Test { [[
 class U with do end;
 class T with
-    pool U[0] us;
+    pool[0] U us;
 do
 end
 
@@ -47747,7 +47747,7 @@ Test { [[
 class U with do end;
 
 interface I with
-    pool U[10] us;
+    pool[10] U us;
 end
 
 class T with
@@ -47834,16 +47834,16 @@ Test { [[
 class U with do end;
 
 interface I with
-    pool U[10] us;
+    pool[10] U us;
 end
 
 interface Global with
     interface I;
 end
-pool U[10]  us;
+pool[10] U  us;
 
 class T with
-    pool U[10] us;
+    pool[10] U us;
     interface I;
 do
     spawn U in global:us;
@@ -47852,7 +47852,7 @@ end
 spawn U in us;
 spawn U in global:us;
 
-pool U[1] us1;
+pool[1] U us1;
 spawn U in us1;
 
 var T t;
@@ -47895,10 +47895,10 @@ do
 end
 
 interface Global with
-    pool T[] ts;
+    pool[] T ts;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 spawn T in ts with
     this.v = 10;
@@ -47922,10 +47922,10 @@ do
 end
 
 interface Global with
-    pool T[1] ts;
+    pool[1] T ts;
 end
 
-pool T[1] ts;
+pool[1] T ts;
 
 spawn T in ts with
     this.v = 10;
@@ -47948,10 +47948,10 @@ do
 end
 
 interface Global with
-    pool T[] ts;
+    pool[] T ts;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 spawn T in global:ts;
 
@@ -47968,10 +47968,10 @@ do
 end
 
 interface Global with
-    pool T[] ts;
+    pool[] T ts;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 spawn T in global:ts with
     this.v = 10;
@@ -47995,10 +47995,10 @@ do
 end
 
 interface Global with
-    pool T[] ts;
+    pool[] T ts;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 spawn T in global:ts with
     this.v = 10;
@@ -48020,10 +48020,10 @@ do
 end
 
 interface Global with
-    pool T[] ts;
+    pool[] T ts;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 class U with
     var int v = 0;
@@ -48045,10 +48045,10 @@ do
 end
 
 interface Global with
-    pool T[] ts;
+    pool[] T ts;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 class U with
     var int v = 0;
@@ -48089,10 +48089,10 @@ do
 end
 
 interface Global with
-    pool T[1] ts;
+    pool[1] T ts;
 end
 
-pool T[1] ts;
+pool[1] T ts;
 
 class U with
     var int v = 0;
@@ -48141,7 +48141,7 @@ end
 
 class U with
     var int v = 0;
-    pool T[1] ts;
+    pool[1] T ts;
 do
     await FOREVER;
 end
@@ -48185,7 +48185,7 @@ end
 
 class U with
     var int v = 0;
-    pool T[] ts;
+    pool[] T ts;
 do
     await FOREVER;
 end
@@ -48219,9 +48219,9 @@ do
     spawn Unit in global:units;
 end
 interface Global with
-    pool Unit[] units;
+    pool[] Unit units;
 end
-pool Unit[] units;
+pool[] Unit units;
 escape 1;
 ]],
     env = 'line 3 : interface "Global" is not defined',
@@ -48229,13 +48229,13 @@ escape 1;
 }
 Test { [[
 interface Global with
-    pool Unit[] units;
+    pool[] Unit units;
 end
 class Unit with
 do
     spawn Unit in global:units;
 end
-pool Unit[] units;
+pool[] Unit units;
 escape 1;
 ]],
     env = 'line 2 : undeclared type `Unit´',
@@ -48244,7 +48244,7 @@ Test { [[
 interface U with end;
 
 interface Global with
-    pool U[] units;
+    pool[] U units;
 end
 native/nohold _SDL_Has;
 
@@ -48264,7 +48264,7 @@ do
     end
 end
 
-pool U[] units;
+pool[] U units;
 escape 1;
 ]],
     props = 'line 17 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
@@ -48275,7 +48275,7 @@ escape 1;
 
 Test { [[
     class Queue with
-      pool QueueForever[] val;
+      pool[] QueueForever val;
     do
       //
     end
@@ -48316,7 +48316,7 @@ Test { [[
 }
 Test { [[
     class Queue with
-      pool QueueForever[] val;
+      pool[] QueueForever val;
     do
     end
 
@@ -48351,7 +48351,7 @@ Test { [[
 }
 Test { [[
     class Queue with
-      pool QueueForever[] val;
+      pool[] QueueForever val;
     do
       //
     end
@@ -48405,7 +48405,7 @@ end
 
 class BTreeTraverse with
 do
-    pool Body[0] bodies;
+    pool[0] Body bodies;
     do Body;
     await 10ms;
 end
@@ -48731,11 +48731,11 @@ do
 end;
 
 interface I with
-    pool U[2] us2;
+    pool[2] U us2;
 end
 
 class T with
-    pool U[2] us1;
+    pool[2] U us1;
     interface I;
 do
 end
@@ -48773,11 +48773,11 @@ do
 end;
 
 interface I with
-    pool U[2] us2;
+    pool[2] U us2;
 end
 
 class T with
-    pool U[2] us1;
+    pool[2] U us1;
     interface I;
 do
     await FOREVER;
@@ -48819,11 +48819,11 @@ do
 end;
 
 interface I with
-    pool U[2] us2;
+    pool[2] U us2;
 end
 
 class T with
-    pool U[2] us1;
+    pool[2] U us1;
     interface I;
 do
 end
@@ -49003,7 +49003,7 @@ do
     _V = _V + 1;
 end
 
-pool T[1] ts;
+pool[1] T ts;
 var T&&? t = spawn T in ts with
     this.id = 10;
 end;
@@ -49028,7 +49028,7 @@ do
     await OS_START;
 end
 
-pool T[1] ts;
+pool[1] T ts;
 var T&&? t = spawn T in ts with
     this.id = 10000;
 end;
@@ -49052,7 +49052,7 @@ do
     await OS_START;
 end
 
-pool T[2] ts;
+pool[2] T ts;
 var T&&? t1 = spawn T in ts with
     this.id = 10000;
 end;
@@ -49083,7 +49083,7 @@ do
     _V = _V + 1;
 end
 
-pool T[10000] ts;
+pool[10000] T ts;
 var T&& t0 = null;
 var T&& tF = null;
 loop i in 10000 do
@@ -49123,7 +49123,7 @@ do
     _V = _V + 1;
 end
 
-pool T[10000] ts;
+pool[10000] T ts;
 var T&& tF = null;
 loop i in 10000 do
 var T&& t0 = null;
@@ -49196,7 +49196,7 @@ do
 end
 var Unit&&? u;
 do
-    pool Unit[] units;
+    pool[] Unit units;
     u = spawn Unit in units;
 end
 if u? then
@@ -49215,7 +49215,7 @@ do
 end
 var Unit&&? u;
 do
-    pool Unit[] units;
+    pool[] Unit units;
     u = spawn Unit in units;
     await 1min;
 end
@@ -49607,7 +49607,7 @@ var int ret = 1;
 
 par/and do
     async do end;
-    pool T[] ts;
+    pool[] T ts;
     var T&&? t = spawn T in ts with
         this.v = 10;
     end;
@@ -49645,7 +49645,7 @@ var int ret = 1;
 
 par/and do
     async do end;
-    pool T[] ts;
+    pool[] T ts;
     var T&&? t = spawn T in ts with
         this.v = 10;
     end;
@@ -49682,7 +49682,7 @@ var int ret = 0;
 
 par/and do
     async do end;
-    pool T[] ts;
+    pool[] T ts;
     var T&&? t = spawn T in ts with
         this.v = 10;
     end;
@@ -49720,7 +49720,7 @@ var int ret = 0;
 
 par/and do
     async do end;
-    pool T[] ts;
+    pool[] T ts;
     var T&&? t = spawn T in ts with
         this.v = 10;
     end;
@@ -49758,7 +49758,7 @@ var int ret = 0;
 
 par/and do
     async do end;
-    pool T[] ts;
+    pool[] T ts;
     var T&&? t = spawn T in ts with
         this.v = 10;
     end;
@@ -49955,7 +49955,7 @@ do
 end
 
 class X with
-    pool T[] ts;
+    pool[] T ts;
 do
     await FOREVER;
 end
@@ -49997,7 +49997,7 @@ do
 end
 
 do
-    pool Run[] rs;
+    pool[] Run rs;
     var int cmds=0;
     spawn Run in rs with
         this.cmds = &cmds;
@@ -50015,7 +50015,7 @@ class Unit with
 do
 end
 var Unit&&? u;
-pool Unit[] units;
+pool[] Unit units;
 u = spawn Unit in units;
 await 2s;
 watching *u! do
@@ -50033,7 +50033,7 @@ do
     await FOREVER;
 end
 var Unit&&? u;
-pool Unit[] units;
+pool[] Unit units;
 u = spawn Unit in units;
 watching *u! do
     emit u!:move => 0;
@@ -50215,7 +50215,7 @@ class T with
 do
     await FOREVER;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&? ok1 = spawn T in ts with
                 this.v = 10;
               end;
@@ -50242,7 +50242,7 @@ class T with
 do
     async do end;
 end
-pool T[1] ts;
+pool[1] T ts;
 var T&&? ok1 = spawn T in ts with
                 this.v = 10;
               end;
@@ -50399,7 +50399,7 @@ do
 end
 
 class UIGridPool with
-    pool UIGridItem[] all;
+    pool[] UIGridItem all;
 do
     await FOREVER;
 end
@@ -50444,7 +50444,7 @@ do
 end
 
 class UIGridPool with
-    pool UIGridItem[] all;
+    pool[] UIGridItem all;
 do
     await FOREVER;
 end
@@ -50509,7 +50509,7 @@ do
 end
 
 class UIGridPool with
-    pool UIGridItem[] all;
+    pool[] UIGridItem all;
 do
     await FOREVER;
 end
@@ -50932,7 +50932,7 @@ do
     await OS_START;
 end
 
-pool T[9999] ts;
+pool[9999] T ts;
 var T&& t0 = null;
 loop i in 9999 do
     var T&&? t = spawn T with
@@ -50962,7 +50962,7 @@ do
     await OS_START;
 end
 
-pool T[9999] ts;
+pool[9999] T ts;
 loop i in 9999 do
     var T&& t0 = null;
     var T&&? t = spawn T with
@@ -52327,7 +52327,7 @@ Test { [[
 class T with do end
 
 class Pool with
-    pool T[] all;
+    pool[] T all;
 do
     await FOREVER;
 end
@@ -53120,7 +53120,7 @@ escape 1;
 Test { [[
 class T with
     output:
-        vector[] byte& name;
+        vector&[] byte name;
 do
     vector[] byte name_ = [].."oi";
     this.name = &name_;
@@ -53137,7 +53137,7 @@ escape _strlen((_char&&)&&t.name);
 Test { [[
 interface I with
     output:
-        vector[] byte& name;
+        vector&[] byte name;
 end
 
 class T with
@@ -53151,7 +53151,7 @@ end
 class U with
     var& T t;
 do
-    vector[] byte& name = &this.t.name;
+    vector&[] byte name = &this.t.name;
 end
 
 var T t;
@@ -54743,7 +54743,7 @@ or
         var List tail;
     end
 end
-pool List[10] l;
+pool[10] List l;
 l = List.CONS(1,
         List.CONS(2,
             List.NIL()));
@@ -54761,7 +54761,7 @@ or
         var List tail;
     end
 end
-pool List[10] lll;
+pool[10] List lll;
 escape lll.NIL;
 ]],
     run = 1,
@@ -54781,7 +54781,7 @@ or
         var List tail;
     end
 end
-pool List[10] lll = new List.CONS(1, List.NIL());
+pool[10] List lll = new List.CONS(1, List.NIL());
 escape lll.CONS.head;
 ]],
     run = 1,
@@ -54796,7 +54796,7 @@ or
         var List tail;
     end
 end
-pool List[10] lll;
+pool[10] List lll;
 lll = new List.CONS(1,
             List.CONS(2,
                 List.NIL()));
@@ -54814,7 +54814,7 @@ or
     end
 end
 
-pool Stack[] xxx = new Stack.NONEMPTY(
+pool[] Stack xxx = new Stack.NONEMPTY(
                     Stack.NONEMPTY(xxx));
 
 escape 1;
@@ -54839,7 +54839,7 @@ or
     end
 end
 
-pool Grid[] g;
+pool[] Grid g;
 g = new Grid.SPLIT(Split.HORIZONTAL(), Grid.EMPTY(), Grid.EMPTY());
 
 escape g.SPLIT.one.EMPTY + g.SPLIT.two.EMPTY + g.SPLIT.dir.HORIZONTAL;
@@ -54883,7 +54883,7 @@ or
     end
 end
 
-pool Grid[5] g = new Grid.SPLIT(
+pool[5] Grid g = new Grid.SPLIT(
                     Split.HORIZONTAL(),
                     Grid.SPLIT(
                         Split.VERTICAL(),
@@ -54912,7 +54912,7 @@ or
     end
 end
 
-pool Grid[5] g;
+pool[5] Grid g;
 g = new Grid.SPLIT(
             Split.HORIZONTAL(),
             Grid.SPLIT(
@@ -54943,7 +54943,7 @@ or
     end
 end
 
-pool Grid[] g = new Grid.SPLIT(
+pool[] Grid g = new Grid.SPLIT(
                     Split.HORIZONTAL(),
                     Grid.NIL(),
                     Grid.NIL());
@@ -55179,7 +55179,7 @@ or
     end
 end
 
-pool D[] ds = new D.REC(
+pool[] D ds = new D.REC(
                     D.REC(D.NIL(),D.NIL()),
                     D.NIL());
 
@@ -55206,7 +55206,7 @@ or
     end
 end
 
-pool Tree[3] tree;
+pool[3] Tree tree;
 tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
@@ -55218,7 +55218,7 @@ do
 end
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   Tree&&   n;
     var&   Sum    sum;
 do
@@ -55239,7 +55239,7 @@ var Sum sum with
     this.v = &&v;
 end;
 
-pool Body[7] bodies;
+pool[7] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&tree;
@@ -55314,9 +55314,9 @@ Test { DATA..[[
 var Pair p1 = Pair(1,2);        /* struct, no tags */
 var Opt  o1 = Opt.NIL();        /* unions, explicit tag */
 var Opt  o2 = Opt.PTR(&&p1);
-pool List[] l1;
+pool[] List l1;
 l1 = new List.NIL();       /* recursive union */
-pool List[] l2 = new List.CONS(1, l1);
+pool[] List l2 = new List.CONS(1, l1);
 escape 1;
 ]],
     env = 'line 56 : invalid constructor : recursive field "CONS" must be new data',
@@ -55326,8 +55326,8 @@ escape 1;
 
 -- recursive fields are pointers
 Test { DATA..[[
-pool List[] l1 = new List.NIL();
-pool List[] l2;
+pool[] List l1 = new List.NIL();
+pool[] List l2;
 l2 = new List.CONS(1, l1);     /* should be &&l1 */
 escape 1;
 ]],
@@ -55344,7 +55344,7 @@ escape 1;
     --run = 1,
 }
 Test { DATA..[[
-pool List[] l1 = new NIL();    /* vs List.NIL() */
+pool[] List l1 = new NIL();    /* vs List.NIL() */
 escape 1;
 ]],
     env = 'line 51 : data "NIL" is not declared',
@@ -55425,7 +55425,7 @@ escape 1;
     run = 1,
 }
 Test { DATA..[[
-pool List[] l;
+pool[] List l;
 l = new List.NIL();
 escape 1;
 ]],
@@ -55447,14 +55447,14 @@ escape 1;
 
 -- distinction "constructor" vs "tag check"
 Test { DATA..[[
-pool List[] l = new List.NIL();   /* call syntax: constructor */
+pool[] List l = new List.NIL();   /* call syntax: constructor */
 var bool no_ = l.NIL;     /* no-call syntax: check tag */
 escape no_;
 ]],
     run = 1,
 }
 Test { DATA..[[
-pool List[] l;
+pool[] List l;
 l = new List.NIL();   /* call syntax: constructor */
 var bool no_ = l.CONS;    /* no-call syntax: check tag */
 escape no_;
@@ -55471,7 +55471,7 @@ escape p1.x + p1.y;
 }
 -- tag NIL has no fields
 Test { DATA..[[
-pool List[] l;
+pool[] List l;
 escape l.NIL.v;
 ]],
     env = 'line 52 : field "v" is not declared',
@@ -55486,8 +55486,8 @@ escape o.PTR.x;
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor
 Test { DATA..[[
-pool List[] l1 = new List.NIL();
-pool List[] l2 = new List.CONS(1, List.NIL());
+pool[] List l1 = new List.NIL();
+pool[] List l2 = new List.CONS(1, List.NIL());
 escape 1;
 ]],
     run = 1,
@@ -55497,10 +55497,10 @@ Test { DATA..[[
 var Pair p1 = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&&p1);
-pool List[] l1 = new List.NIL();
-pool List[] l2;
+pool[] List l1 = new List.NIL();
+pool[] List l2;
 l2 = new List.CONS(1, List.NIL());
-pool List[] l3 = new List.CONS(1, List.CONS(2, List.NIL()));
+pool[] List l3 = new List.CONS(1, List.CONS(2, List.NIL()));
 
 var int ret = 0;                                // 0
 
@@ -55522,7 +55522,7 @@ escape ret;
 --      assert(l.CONS)
 --      v = l.CONS.head
 Test { DATA..[[
-pool List[] l;
+pool[] List l;
 l = new List.NIL();
 escape l.CONS.head;         // runtime error
 ]],
@@ -55530,7 +55530,7 @@ escape l.CONS.head;         // runtime error
     --run = 1,
 }
 Test { DATA..[[
-pool List[] l = new List.CONS(2, List.NIL());
+pool[] List l = new List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
     run = 2,
@@ -55541,10 +55541,10 @@ Test { DATA..[[
 var Pair p  = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&&p);
-pool List[] l1;
+pool[] List l1;
 l1 = new List.NIL();
-pool List[] l2 = new List.CONS(1, List.NIL());
-pool List[] l3;
+pool[] List l2 = new List.CONS(1, List.NIL());
+pool[] List l3;
 l3 = new List.CONS(1, List.CONS(2, List.NIL()));
 
 var int ret = 0;            // 0
@@ -55621,7 +55621,7 @@ escape ret;
 
 -- cannot cross await statements
 Test { DATA..[[
-pool List[] l = new List.CONS(1, List.NIL());
+pool[] List l = new List.CONS(1, List.NIL());
 var List&& p = l.CONS.tail;
 await 1s;
 escape p:CONS.head;
@@ -55631,7 +55631,7 @@ escape p:CONS.head;
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
-pool List[] l = new List.CONS(1, List.NIL());
+pool[] List l = new List.CONS(1, List.NIL());
 var List&& p = &&l.CONS.tail;
 await 1s;
 escape p:CONS.head;
@@ -55641,7 +55641,7 @@ escape p:CONS.head;
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
-pool List[] l = new List.CONS(1, List.NIL());
+pool[] List l = new List.CONS(1, List.NIL());
 var List&& p = &&l.CONS.tail;
 await 1s;
 escape p:CONS.head;
@@ -55658,10 +55658,10 @@ escape p:CONS.head;
 
 -- linking a list: 2-1-NIL
 Test { DATA..[[
-pool List[] l1;
+pool[] List l1;
 l1 = new List.NIL();
-pool List[] l2 = new List.CONS(1, l1);
-pool List[] l3;
+pool[] List l2 = new List.CONS(1, l1);
+pool[] List l3;
 l3 = new List.CONS(2, l2);
 escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
 ]],
@@ -55670,22 +55670,22 @@ escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
     -- TODO-ADT-REC-STATIC-CONSTRS
 }
 Test { DATA..[[
-pool List[] l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+pool[] List l3 = new List.CONS(2, List.CONS(1, List.NIL()));
 escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
 ]],
     run = 4,
 }
 Test { DATA..[[
-pool List[] l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+pool[] List l3 = new List.CONS(2, List.CONS(1, List.NIL()));
 escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
 ]],
     run = 4,
 }
 -- breaking a list: 2-1-NIL => 2-NIL
 Test { DATA..[[
-pool List[] l1;
+pool[] List l1;
 l1 = new List.NIL();
-pool List[] l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+pool[] List l3 = new List.CONS(2, List.CONS(1, List.NIL()));
 l3.CONS.tail = l1;
 escape l3.CONS.head + l3.CONS.tail.NIL;
 ]],
@@ -55695,9 +55695,9 @@ escape l3.CONS.head + l3.CONS.tail.NIL;
     run = 3,
 }
 Test { DATA..[[
-pool List[] l1;
+pool[] List l1;
 l1 = new List.NIL();
-pool List[] l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+pool[] List l3 = new List.CONS(2, List.CONS(1, List.NIL()));
 l3.CONS.tail = &&l1;
 escape l3.CONS.head + l3.CONS.tail.NIL;
 ]],
@@ -55708,8 +55708,8 @@ escape l3.CONS.head + l3.CONS.tail.NIL;
 
 -- circular list: 1-1-1-...
 Test { DATA..[[
-pool List[] l1;
-pool List[] l2;
+pool[] List l1;
+pool[] List l2;
 l1 = new List.NIL();
 l2 = new List.CONS(1, List.NIL());
 l1 = l2;
@@ -55720,8 +55720,8 @@ escape l1.CONS + (l1.CONS.head==1);
     run = 2,
 }
 Test { DATA..[[
-pool List[] l1;
-pool List[] l2;
+pool[] List l1;
+pool[] List l2;
 l1 = new List.NIL();
 l2 = new List.CONS(1, List.NIL());
 l1 = &&l2;
@@ -55733,7 +55733,7 @@ escape l1.CONS + (l1.CONS.head==1);
     run = 2,
 }
 Test { DATA..[[
-pool List[] l1 = new List.NIL(),
+pool[] List l1 = new List.NIL(),
             l2 = new List.CONS(1, List.NIL());
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
@@ -55745,7 +55745,7 @@ escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
 
 -- circular list: 1-2-1-2-...
 Test { DATA..[[
-pool List[] l1 = new List.CONS(1, List.NIL()),
+pool[] List l1 = new List.CONS(1, List.NIL()),
             l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
 escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
@@ -55758,7 +55758,7 @@ escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
 }
 
 Test { DATA..[[
-pool List[] l1 = new List.CONS(1, List.NIL()),
+pool[] List l1 = new List.CONS(1, List.NIL()),
             l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = &&l2;
 escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
@@ -55772,7 +55772,7 @@ escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
 
 -- another circular list
 Test { DATA..[[
-pool List[] l1, l2;
+pool[] List l1, l2;
 l1 = new List.CONS(1, List.NIL());
 l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
@@ -55788,7 +55788,7 @@ escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.
 
 -- not circular
 Test { DATA..[[
-pool List[] l1, l2;
+pool[] List l1, l2;
 l1 = new List.NIL();
 l2 = new List.CONS(1, List.NIL());
 l1 = l2.CONS.tail;
@@ -55802,7 +55802,7 @@ escape l1.NIL;
 
 -- not circular
 Test { DATA..[[
-pool List[] l1, l2;
+pool[] List l1, l2;
 l1 = new List.NIL();
 l2 = new List.CONS(1, List.NIL());
 l1 = &&l2.CONS.tail;
@@ -55830,7 +55830,7 @@ escape l1.NIL;
 
 -- dynamic ADTs require a pool
 Test { DATA..[[
-pool List[] l;     // all instances reside here
+pool[] List l;     // all instances reside here
 escape 1;
 ]],
     run = 1,
@@ -55840,34 +55840,34 @@ escape 1;
 --  - represents the pool
 --  - represents the root of the tree
 Test { DATA..[[
-pool List[] l;     // l is the pool
+pool[] List l;     // l is the pool
 escape l.NIL;       // l is a pointer to the root
 ]],
     run = 1,
 }
 Test { DATA..[[
-pool List[] l;     // l is the pool
+pool[] List l;     // l is the pool
 escape (l).NIL;    // equivalent to above
 ]],
     run = 1,
 }
 -- the pointer must be dereferenced
 Test { DATA..[[
-pool List[] l;     // l is the pool
+pool[] List l;     // l is the pool
 escape l:NIL;       // "l" is not a struct
 ]],
     env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
-pool List[] l;     // l is the pool
+pool[] List l;     // l is the pool
 escape l:CONS.head; // "l" is not a struct
 ]],
     env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
-pool List[] l;             // l is the pool
+pool[] List l;             // l is the pool
 escape l.CONS.tail:CONS;    // "l:CONS.tail" is not a struct
 ]],
     env = 'line 52 : invalid operand to unary "*"',
@@ -55878,7 +55878,7 @@ escape l.CONS.tail:CONS;    // "l:CONS.tail" is not a struct
 -- (this is why the base case cannot have fields and
 --  must appear first in the ADT declaration)
 Test { DATA..[[
-pool List[] l;
+pool[] List l;
 escape l.CONS;      // runtime error
 ]],
     asr = true,
@@ -55889,7 +55889,7 @@ escape l.CONS;      // runtime error
 Test { DATA..[[
 var int ret = 0;
 do
-    pool List[] lll;
+    pool[] List lll;
     ret = lll.NIL;
 end
 // all instances in "lll" have been collected
@@ -55905,27 +55905,27 @@ escape ret;
 --  - must use "new"
 --  - the pool is inferred from the l-value
 Test { DATA..[[
-pool List[] l;
+pool[] List l;
 l = new List.NIL();
 escape l.NIL;
 ]],
     run = 1,
 }
 Test { DATA..[[
-pool List[] l = new List.CONS(2, List.NIL());
+pool[] List l = new List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
     run = 2,
 }
 Test { DATA..[[
-pool List[] l = new List.CONS(1, List.CONS(2, List.NIL()));
+pool[] List l = new List.CONS(1, List.CONS(2, List.NIL()));
 escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 ]],
     run = 4,
 }
 -- wrong tag
 Test { DATA..[[
-pool List[] l;
+pool[] List l;
 l = new List.NIL();
 escape l.CONS;
 ]],
@@ -55933,7 +55933,7 @@ escape l.CONS;
 }
 -- no "new"
 Test { DATA..[[
-pool List[] l;
+pool[] List l;
 l = List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
@@ -55942,14 +55942,14 @@ escape l.CONS.head;
 }
 -- cannot assign "l" directly (in the pool declaration)
 Test { DATA..[[
-pool List[] l = new List.CONS(2, List.NIL());
+pool[] List l = new List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
     run = 2,
 }
 -- no dereference
 Test { DATA..[[
-pool List[] l;
+pool[] List l;
 l = new List.NIL();
 escape l.NIL;
 ]],
@@ -55957,7 +55957,7 @@ escape l.NIL;
     run = 1,
 }
 Test { DATA..[[
-pool List[] l;
+pool[] List l;
 l = new List.CONS(2, List.NIL());
 escape l.CONS.head;
 ]],
@@ -55966,9 +55966,9 @@ escape l.CONS.head;
 }
 
 -- static vs heap pools
---      pool List[] l;      // instances go to the heap
+--      pool[] List l;      // instances go to the heap
 -- vs
---      pool List[10] l;    // 10 instances at most
+--      pool[10] List l;    // 10 instances at most
 -- (same as for organisms)
 
 -- allocation fails (0 space)
@@ -55977,13 +55977,13 @@ escape l.CONS.head;
 --  must appear first in the ADT declaration)
 -- (
 Test { DATA..[[
-pool List[0] l = new List.CONS(2, List.NIL());
+pool[0] List l = new List.CONS(2, List.NIL());
 escape l.NIL;
 ]],
     run = 1,
 }
 Test { DATA..[[
-pool List[0] l;
+pool[0] List l;
 l = new List.CONS(2, List.NIL());
 escape l.CONS.head;     // runtime error
 ]],
@@ -55991,7 +55991,7 @@ escape l.CONS.head;     // runtime error
 }
 -- 2nd allocation fails (1 space)
 Test { DATA..[[
-pool List[1] l = new List.CONS(2, List.CONS(1, List.NIL()));
+pool[1] List l = new List.CONS(2, List.CONS(1, List.NIL()));
 _assert(l.CONS.tail.NIL);
 escape l.CONS.head;
 ]],
@@ -55999,7 +55999,7 @@ escape l.CONS.head;
 }
 -- 3rd allocation fails (2 space)
 Test { DATA..[[
-pool List[2] l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+pool[2] List l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 _assert(l.CONS.tail.CONS.tail.NIL);
 escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 ]],
@@ -56009,7 +56009,7 @@ escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 -- dereference test for static pools
 -- (nothing new here)
 Test { DATA..[[
-pool List[0] l;
+pool[0] List l;
 l = new List.CONS(2, List.NIL());
 escape l.NIL;
 ]],
@@ -56026,7 +56026,7 @@ or
         var T&&  nxt;
     end
 end
-pool T[] ts;
+pool[] T ts;
 do
     ts = new T.NIL();
 end
@@ -56047,7 +56047,7 @@ escape ts.NIL;
 -- 1-NIL => 2-NIL
 -- 1-NIL can be safely reclaimed
 Test { DATA..[[
-pool List[1] l = new List.CONS(1, List.NIL());
+pool[1] List l = new List.CONS(1, List.NIL());
 l = new List.CONS(2, List.NIL());    // this fails (new before free)!
 escape l.CONS.head;
 ]],
@@ -56055,7 +56055,7 @@ escape l.CONS.head;
 }
 
 Test { DATA..[[
-pool List[1] l;
+pool[1] List l;
 l = new List.CONS(1, List.NIL());
 l.CONS.tail = new List.CONS(2, List.NIL()); // fails
 escape l.CONS.tail.NIL;
@@ -56066,7 +56066,7 @@ escape l.CONS.tail.NIL;
 
 -- 1-2-NIL
 Test { DATA..[[
-pool List[2] l = new List.CONS(1, List.NIL());
+pool[2] List l = new List.CONS(1, List.NIL());
 l.CONS.tail = new List.CONS(2, List.NIL()); // fails
 escape l.CONS.tail.CONS.head;
 ]],
@@ -56076,7 +56076,7 @@ escape l.CONS.tail.CONS.head;
 -- 1-NIL => 2-NIL
 -- 1-NIL can be safely reclaimed
 Test { DATA..[[
-pool List[2] l;
+pool[2] List l;
 l = new List.CONS(1, List.NIL());
 l = new List.CONS(2, List.NIL());    // no allocation fail
 escape l.CONS.head;
@@ -56087,7 +56087,7 @@ escape l.CONS.head;
 -- 1-2-3-NIL => 1-2-NIL (3 fails)
 -- 4-5-6-NIL => NIL     (all fail)
 Test { DATA..[[
-pool List[2] l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
+pool[2] List l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
 _ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
 l = new List.NIL();
 l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // 6 fails
@@ -56098,7 +56098,7 @@ escape l.CONS.tail.CONS.head;
 }
 
 Test { DATA..[[
-pool List[2] l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
+pool[2] List l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
 _ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
 l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // all fail
 escape l.NIL;
@@ -56110,7 +56110,7 @@ escape l.NIL;
 -- (clear all)
 -- 4-5-6-NIL => 4-5-NIL (6 fails)
 Test { DATA..[[
-pool List[2] l;
+pool[2] List l;
 l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
 _assert(l.CONS.tail.CONS.tail.NIL);
 l = new List.NIL();                                                // clear all
@@ -56135,7 +56135,7 @@ escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
 -- 1-NIL
 -- 1-2-NIL
 Test { DATA..[[
-pool List[2] l = new List.CONS(1, List.NIL());
+pool[2] List l = new List.CONS(1, List.NIL());
 l.CONS.tail = new List.CONS(2, List.NIL());
 escape l.CONS.head + l.CONS.tail.CONS.head;
 ]],
@@ -56146,7 +56146,7 @@ escape l.CONS.head + l.CONS.tail.CONS.head;
 -- 1-2-NIL
 -- 1-NIL
 Test { DATA..[[
-pool List[2] lll;
+pool[2] List lll;
 lll = new List.CONS(1, List.CONS(2, List.NIL()));
 lll = lll.CONS.tail;    // parent=child
 escape lll.CONS.head;
@@ -56154,7 +56154,7 @@ escape lll.CONS.head;
     run = 2,
 }
 Test { DATA..[[
-pool List[2] lll = new List.CONS(1, List.CONS(2, List.NIL()));
+pool[2] List lll = new List.CONS(1, List.CONS(2, List.NIL()));
 lll = lll.CONS.tail;
 lll.CONS.tail = new List.CONS(3, List.NIL());
 escape 1;
@@ -56162,7 +56162,7 @@ escape 1;
     run = 1,
 }
 Test { DATA..[[
-pool List[2] lll;
+pool[2] List lll;
 lll = new List.CONS(1, List.CONS(2, List.NIL()));
 lll = lll.CONS.tail;    // parent=child
 lll.CONS.tail = new List.CONS(3, List.CONS(4, List.NIL()));    // 4 fails
@@ -56171,7 +56171,7 @@ escape lll.CONS.head + lll.CONS.tail.CONS.head + lll.CONS.tail.CONS.tail.NIL;
     run = 6,
 }
 Test { DATA..[[
-pool List[2] l = new List.CONS(1, List.CONS(2, List.NIL()));
+pool[2] List l = new List.CONS(1, List.CONS(2, List.NIL()));
 l = l.CONS.tail;    // parent=child
 l.CONS.tail = new List.CONS(3, List.CONS(4, List.NIL()));    // 4 fails
 escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
@@ -56184,7 +56184,7 @@ escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 -- 1-2-NIL
 -- 1-2-^1   (no)
 Test { DATA..[[
-pool List[2] l;
+pool[2] List l;
 l = new List.CONS(1, List.CONS(2, List.NIL()));
 l.CONS.tail = l;    // child=parent
 escape 1;
@@ -56815,7 +56815,7 @@ escape p1==p2;
     --run = 1,
 }
 Test { DATA..[[
-pool List[] l1, l2;
+pool[] List l1, l2;
 l2 = new List.NIL();
 escape l1==l2;
 ]],
@@ -56825,7 +56825,7 @@ escape l1==l2;
 
 -- cannot mix recursive ADTs
 Test { DATA..[[
-pool List[] l1, l2;
+pool[] List l1, l2;
 l1 = new List.CONS(1, List.NIL());
 l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
@@ -56835,9 +56835,9 @@ escape l1.CONS.tail.CONS.head;
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
 }
 Test { DATA..[[
-pool List[] l1 = new List.CONS(1, List.NIL());
+pool[] List l1 = new List.CONS(1, List.NIL());
 do
-    pool List[] l2;
+    pool[] List l2;
     l2 = new List.CONS(2, List.NIL());
     l1.CONS.tail = &&l2;
 end
@@ -56848,9 +56848,9 @@ escape l1.CONS.tail.CONS.head;
     --fin = 'line 54 : attribution to pointer with greater scope',
 }
 Test { DATA..[[
-pool List[] l1;
+pool[] List l1;
 l1 = new List.CONS(1, List.NIL());
-pool List[2] l2 = new List.CONS(2, List.NIL());
+pool[2] List l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
 escape l1.CONS.tail.CONS.head;
 ]],
@@ -56858,8 +56858,8 @@ escape l1.CONS.tail.CONS.head;
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
 }
 Test { DATA..[[
-pool List[2] l1;
-pool List[2] l2;
+pool[2] List l1;
+pool[2] List l2;
 l1 = new List.CONS(1, List.NIL());
 l2 = new List.CONS(2, List.NIL());
 l1.CONS.tail = l2;
@@ -56872,7 +56872,7 @@ escape l1.CONS.tail.CONS.head;
 Test { DATA..[[
 var int ret = 0;                // 0
 
-pool List[5] l;
+pool[5] List l;
 
 // change head [2]
 l = new List.CONS(1, List.NIL());
@@ -56890,7 +56890,7 @@ _assert(ret == 6);
 l.CONS.tail.CONS.tail = new List.CONS(4, List.NIL());
                                 // 10
 
-pool List[] l3 = new List.CONS(3, List.NIL());
+pool[] List l3 = new List.CONS(3, List.NIL());
 l.CONS.tail.CONS.tail = &&l3;
 _assert(l.CONS.tail.CONS.head == 3);
 _assert(l.CONS.tail.CONS.tail.CONS.head == 4);
@@ -57095,7 +57095,7 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 var List&& lll = &&list;
 
 escape 1;
@@ -57114,7 +57114,7 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 var List&& lll = list;
 
 escape 1;
@@ -57136,7 +57136,7 @@ or
     end
 end
 
-pool List[] list
+pool[] List list
 
 = new List.CONS(10, List.NIL());
 var List&& l = list;
@@ -57162,11 +57162,11 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.NIL());
 
-pool List[]& lll = &list;
+pool&[] List lll = &list;
 
 escape lll.CONS.head;
 ]],
@@ -57182,11 +57182,11 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.NIL());
 
-pool List[]&& lll = &&list;
+pool[] List&& lll = &&list;
 
 escape lll:CONS.head;
 ]],
@@ -57203,10 +57203,10 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]&& l = &&list;
+pool[] List&& l = &&list;
 
 l:CONS.tail = new List.CONS(9, List.NIL());
 l = l:CONS.tail;
@@ -57235,12 +57235,12 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.NIL());
 
-pool List[]&& l1 = &&list;
-pool List[]&  l2 = &list;
+pool[] List&& l1 = &&list;
+pool&[] List  l2 = &list;
 
 list = new List.NIL();
 
@@ -57263,10 +57263,10 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]&& lll = &&list;
+pool[] List&& lll = &&list;
 
 var int ret = 0;
 
@@ -57293,10 +57293,10 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.CONS(20, List.NIL()));
-pool List[]&& lll = &&list;
+pool[] List&& lll = &&list;
 
 var int ret = 0;
 watching *lll do
@@ -57321,7 +57321,7 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.NIL());
 var List[]&& lll = &&list;
@@ -57343,10 +57343,10 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]&& lll = &&list;
+pool[] List&& lll = &&list;
 
 *lll = lll:CONS.tail;
 
@@ -57367,10 +57367,10 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]&& lll = &&list;
+pool[] List&& lll = &&list;
 
 lll:CONS.tail = new List.CONS(9, List.NIL());
 *lll = lll:CONS.tail;
@@ -57394,10 +57394,10 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]&& l = &&list;
+pool[] List&& l = &&list;
 
 var int ret = 0;
 
@@ -57429,10 +57429,10 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]&& l = &&list;
+pool[] List&& l = &&list;
 
 watching *l do
     l:CONS.tail = new List.CONS(9, List.NIL());
@@ -57466,10 +57466,10 @@ or
     end
 end
 
-pool List[10] list;
+pool[10] List list;
 
 list = new List.CONS(10, List.NIL());
-pool List[]&& lll = &&list;
+pool[] List&& lll = &&list;
 
 watching *lll do
     lll:CONS.tail = new List.CONS(9, List.NIL());
@@ -57509,8 +57509,8 @@ or
     end
 end
 
-pool List[] list = new List.CONS(10, List.NIL());
-pool List[]&& lll = &&list;
+pool[] List list = new List.CONS(10, List.NIL());
+pool[] List&& lll = &&list;
 
 watching *lll do
     lll:CONS.tail = new List.CONS(9, List.NIL());
@@ -57655,7 +57655,7 @@ escape 1;
 }
 Test { [[
 data T with
-    vector[] byte& str;
+    vector&[] byte str;
 end
 escape 1;
 ]],
@@ -57678,7 +57678,7 @@ escape _strlen((_char&&)d.str);
 }
 Test { [[
 data D with
-    vector[] byte& str;
+    vector&[] byte str;
 end
 vector[] byte s = [].. "oi";
 var D d = D(&s);
@@ -57706,7 +57706,7 @@ par do
     do
         par/or do
             await OS_START;
-            pool T[1] ts;
+            pool[1] T ts;
             var T&&? ptr = spawn T in ts;
             emit e => ptr!;
         with
@@ -57741,7 +57741,7 @@ or
     end
 end
 
-pool Widget[] widgets;
+pool[] Widget widgets;
 traverse widget in &&widgets do
     watching *widget do
         var int v1 = traverse &&widget:ROW.w1;
@@ -57766,7 +57766,7 @@ or
     end
 end
 
-pool T[] ts = new T.NXT(10, T.NXT(9, T.NIL()));
+pool[] T ts = new T.NXT(10, T.NXT(9, T.NIL()));
 
 par/or do
     await ts;           // 2. but continuation is aborted
@@ -57790,7 +57790,7 @@ or
     end
 end
 
-pool T[] ts;
+pool[] T ts;
 
 ts = new T.NXT(10, T.NXT(9, T.NIL()));
 
@@ -57825,7 +57825,7 @@ escape ret;
 
 Test { [[
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var&   int    sum;
     event int     ok;
 do
@@ -57847,7 +57847,7 @@ do
 end
 
 
-pool Body[100] bodies;
+pool[100] Body bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -57863,7 +57863,7 @@ escape sum;
 }
 Test { [[
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var&   int    sum;
     event int     ok;
 do
@@ -57885,7 +57885,7 @@ do
 end
 
 
-pool Body[] bodies;
+pool[] Body bodies;
 var  int     sum = 0;
 
 var Body b with
@@ -57901,7 +57901,7 @@ escape sum;
 }
 Test { [[
 class Body with
-    pool  Body[3]& bodies;
+    pool&[3]  Body bodies;
     var&   int    sum;
     event int     ok;
 do
@@ -57923,7 +57923,7 @@ do
 end
 
 
-pool Body[3] bodies;
+pool[3] Body bodies;
 var  int     sum = 0;
 
 var Body&&? b = spawn Body in bodies with
@@ -57985,13 +57985,13 @@ or
     end
 end
 
-pool Tree[3] tree;
+pool[3] Tree tree;
 tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   Tree&&   n;
     var&   int    sum;
     event int     ok;
@@ -58033,7 +58033,7 @@ end
 
 var int sum = 0;
 
-pool Body[7] bodies;
+pool[7] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&tree;
@@ -58057,13 +58057,13 @@ or
     end
 end
 
-pool Tree[3] tree;
+pool[3] Tree tree;
 tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   Tree&&   n;
     var&   int    sum;
     event int     ok;
@@ -58104,7 +58104,7 @@ end
 
 var int sum = 0;
 
-pool Body[7] bodies;
+pool[7] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&tree;
@@ -58127,12 +58127,12 @@ or
     end
 end
 
-pool Tree[3] tree = new Tree.NODE(1,
+pool[3] Tree tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
 class Body with
-    pool  Body[7]& bodies;
+    pool&[7]  Body bodies;
     var   Tree&&    n;
     var&   int     sum;
     event int      ok;
@@ -58177,7 +58177,7 @@ end
 
 var int sum = 0;
 
-pool Body[7] bodies;
+pool[7] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&tree;
@@ -58199,13 +58199,13 @@ or
     end
 end
 
-pool List[3] list
+pool[3] List list
     = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   List&&   n;
 do
     await 1s;
@@ -58221,7 +58221,7 @@ do
     end
 end
 
-pool Body[3] bodies;
+pool[3] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&list;
@@ -58241,13 +58241,13 @@ or
     end
 end
 
-pool List[3] list
+pool[3] List list
     = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   List&&   n;
 do
     if n:NIL then
@@ -58262,7 +58262,7 @@ do
     end
 end
 
-pool Body[3] bodies;
+pool[3] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&list;
@@ -58284,7 +58284,7 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -58313,7 +58313,7 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -58343,7 +58343,7 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -58373,7 +58373,7 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -58405,7 +58405,7 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -58437,7 +58437,7 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -58469,7 +58469,7 @@ or
     end
 end
 
-pool List[3] list
+pool[3] List list
     = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -58506,7 +58506,7 @@ or
     end
 end
 
-pool Tree[3] tree =
+pool[3] Tree tree =
     new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
@@ -58539,7 +58539,7 @@ or
     end
 end
 
-pool Tree[3] tree =
+pool[3] Tree tree =
     new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
@@ -58573,7 +58573,7 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -58593,7 +58593,7 @@ end
 */
 
 class Body with
-    pool  Body[3]& bodies;
+    pool&[3]  Body bodies;
     var   List&&    n;
 do
     if n:NIL then
@@ -58616,7 +58616,7 @@ do
     end
 end
 
-pool Body[3] bodies;
+pool[3] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&list;
@@ -58641,7 +58641,7 @@ or
     end
 end
 
-pool List[4] list = new List.CONS(1,
+pool[4] List list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -58660,7 +58660,7 @@ end
 */
 
 class Body with
-    pool  Body[4]& bodies;
+    pool&[4]  Body bodies;
     var   List&&    n;
 do
     watching *n do
@@ -58682,7 +58682,7 @@ do
     end
 end
 
-pool Body[4] bodies;
+pool[4] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&list;
@@ -58704,7 +58704,7 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -58723,7 +58723,7 @@ end
 
 /*
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   List&&   n;
 do
     watching *n do
@@ -58743,7 +58743,7 @@ do
     end
 end
 
-pool Body[3] bodies;
+pool[3] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&list;
@@ -58766,7 +58766,7 @@ or
     end
 end
 
-pool List[3] list = new List.CONS(1,
+pool[3] List list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -58784,7 +58784,7 @@ end
 
 /*
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   List&&   n;
 do
     watching *n do
@@ -58804,7 +58804,7 @@ do
     end
 end
 
-pool Body[3] bodies;
+pool[3] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&list;
@@ -58827,7 +58827,7 @@ or
     end
 end
 
-pool List[3] list = new List.CONS(1,
+pool[3] List list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -58859,7 +58859,7 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -58899,7 +58899,7 @@ or
     end
 end
 
-pool List[3] list = new List.CONS(1,
+pool[3] List list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
@@ -58939,7 +58939,7 @@ end
 
 class T with
 do
-    pool List[3] list;
+    pool[3] List list;
     list = new List.CONS(1,
                 List.CONS(2,
                     List.CONS(3, List.NIL())));
@@ -58977,7 +58977,7 @@ or
     end
 end
 
-pool Tree[] tree;
+pool[] Tree tree;
 tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
@@ -59012,7 +59012,7 @@ or
     end
 end
 
-pool Tree[3] tree = new Tree.NODE(1,
+pool[3] Tree tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -59045,7 +59045,7 @@ or
     end
 end
 
-pool Tree[3] tree = new Tree.NODE(1,
+pool[3] Tree tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -59079,7 +59079,7 @@ or
     end
 end
 
-pool Tree[] tree;
+pool[] Tree tree;
 tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
@@ -59112,7 +59112,7 @@ or
     end
 end
 
-pool Tree[3] tree;
+pool[3] Tree tree;
 tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
@@ -59144,7 +59144,7 @@ or
     end
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var void&& p1 = (void&&)this;
 
@@ -59172,7 +59172,7 @@ or
     end
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var void&& p1 = (void&&)&&this;
 
@@ -59199,7 +59199,7 @@ or
     end
 end
 
-pool T[] ts;
+pool[] T ts;
 
 native do
     ##define PTR2REF(x) &x
@@ -59233,7 +59233,7 @@ or
     end
 end
 
-pool T[1] ts;
+pool[1] T ts;
 
 native do
     ##define PTR2REF(x) &x
@@ -59267,7 +59267,7 @@ or
     end
 end
 
-pool T[] ts;
+pool[] T ts;
 
 native do
     ##define PTR2REF(x) &x
@@ -59316,7 +59316,7 @@ or
     end
 end
 
-pool T[1] ts;
+pool[1] T ts;
 
 native do
     ##define PTR2REF(x) &x
@@ -59366,7 +59366,7 @@ or
     end
 end
 
-pool Tree[3] tree = new Tree.NODE(1,
+pool[3] Tree tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -59399,7 +59399,7 @@ or
     end
 end
 
-pool Tree[3] tree = new Tree.NODE(1,
+pool[3] Tree tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -59432,7 +59432,7 @@ or
     end
 end
 
-pool Tree[3] tree;
+pool[3] Tree tree;
 tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
@@ -59468,7 +59468,7 @@ or
     end
 end
 
-pool Tree[3] tree = new Tree.NODE(1,
+pool[3] Tree tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
@@ -59514,7 +59514,7 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -59545,7 +59545,7 @@ or
     end
 end
 
-pool List[] list;
+pool[] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -59577,7 +59577,7 @@ or
     end
 end
 
-pool List[3] list
+pool[3] List list
     = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -59629,7 +59629,7 @@ or
     end
 end
 
-pool Widget[] widgets;
+pool[] Widget widgets;
 widgets = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
@@ -59673,7 +59673,7 @@ or
     end
 end
 
-pool Widget[] widgets;
+pool[] Widget widgets;
 widgets = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
@@ -59716,7 +59716,7 @@ or
     end
 end
 
-pool Widget[10] widgets;
+pool[10] Widget widgets;
 widgets = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
@@ -59760,7 +59760,7 @@ or
     end
 end
 
-pool Widget[] widgets
+pool[] Widget widgets
     = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
@@ -59803,7 +59803,7 @@ or
     end
 end
 
-pool Widget[10] widgets = new Widget.SEQ(
+pool[10] Widget widgets = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
 
@@ -59845,7 +59845,7 @@ or
     end
 end
 
-pool List[] l = new List.CONS(1,
+pool[] List l = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3,
                     List.CONS(4,
@@ -59878,7 +59878,7 @@ or
     end
 end
 
-pool List[] l;
+pool[] List l;
 l = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3,
@@ -59949,7 +59949,7 @@ end
 par/or do
     await 21s;
 with
-    pool Widget[] widgets = new Widget.ROW(
+    pool[] Widget widgets = new Widget.ROW(
                     Widget.V(10),
                     Widget.V(20));
 
@@ -60004,7 +60004,7 @@ end
 par/or do
     await OS_START;
 with
-    pool Widget[] widgets;
+    pool[] Widget widgets;
     widgets = new Widget.ROW(
                     Widget.EMPTY(),
                     Widget.EMPTY());
@@ -60059,7 +60059,7 @@ or
     end
 end
 
-pool List[] l = new List.CONS(1, List.EMPTY());
+pool[] List l = new List.CONS(1, List.EMPTY());
 
 par/or do
     traverse e in &&l do
@@ -60105,7 +60105,7 @@ end
 var int ret = 0;
 
 par/or do
-    pool Widget[] widgets;
+    pool[] Widget widgets;
     widgets = new Widget.SEQ(
                 Widget.EMPTY(),
                 Widget.EMPTY());
@@ -60170,7 +60170,7 @@ end
 var int ret = 0;
 
 par/or do
-    pool Widget[10] widgets = new Widget.SEQ(
+    pool[10] Widget widgets = new Widget.SEQ(
                 Widget.EMPTY(),
                 Widget.EMPTY());
 
@@ -60231,7 +60231,7 @@ or
     end
 end
 
-pool Widget[] widgets;
+pool[] Widget widgets;
 widgets = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
@@ -60298,7 +60298,7 @@ or
     end
 end
 
-pool Widget[10] widgets = new Widget.SEQ(
+pool[10] Widget widgets = new Widget.SEQ(
             Widget.EMPTY(),
             Widget.EMPTY());
 
@@ -60364,7 +60364,7 @@ or
     end
 end
 
-pool Command[] cmds;
+pool[] Command cmds;
 
 cmds = new Command.SEQUENCE(
             Command.FORWARD(100),
@@ -60406,7 +60406,7 @@ or
     end
 end
 
-pool Command[] cmds = new Command.SEQUENCE(Command.NOTHING());
+pool[] Command cmds = new Command.SEQUENCE(Command.NOTHING());
 
 par/or do
     traverse cmd in &&cmds do
@@ -60439,7 +60439,7 @@ or
     end
 end
 
-pool Command[] cmds;
+pool[] Command cmds;
 
 cmds = new Command.SEQUENCE(
             Command.FORWARD(100),
@@ -60487,7 +60487,7 @@ or
 end
 
 // TODO: aceitar estatico
-pool Command[] cmds = new Command.SEQUENCE(
+pool[] Command cmds = new Command.SEQUENCE(
             Command.FORWARD(100),
             Command.FORWARD(500));
 
@@ -60532,7 +60532,7 @@ or
 end
 
 // TODO: aceitar estatico
-pool Command[] cmds;
+pool[] Command cmds;
 
 cmds = new Command.SEQUENCE(
             Command.FORWARD(100),
@@ -60573,7 +60573,7 @@ or
     end
 end
 
-pool Command[] cmds = new Command.REPEAT(
+pool[] Command cmds = new Command.REPEAT(
             Command.LEFT());
 
 class TurtleTurn with
@@ -60642,7 +60642,7 @@ or
 end
 
 // TODO: aceitar estatico
-pool Command[] cmds;
+pool[] Command cmds;
 
 cmds = new Command.REPEAT(2,
             Command.SEQUENCE(
@@ -60809,7 +60809,7 @@ or
     end
 end
 
-pool Command[] cmds;
+pool[] Command cmds;
 
 cmds = new Command.REPEAT(2,
             Command.SEQUENCE(
@@ -60878,7 +60878,7 @@ or
 end
 
 // TODO: aceitar estatico
-pool Command[] cmds = new Command.REPEAT(2,
+pool[] Command cmds = new Command.REPEAT(2,
             Command.SEQUENCE(
                 Command.AWAIT(100),
                 Command.SEQUENCE(
@@ -60926,7 +60926,7 @@ or
     end
 end
 
-pool List[] ls;
+pool[] List ls;
 ls = new List.CONS(List.NIL());
 
 traverse l in &&ls do
@@ -60960,7 +60960,7 @@ or
     end
 end
 
-pool List[] ls;
+pool[] List ls;
 ls = new List.CONS(1,
             List.CONS(2,
                 List.HOLD()));
@@ -61002,7 +61002,7 @@ or
     end
 end
 
-pool List[] ls;
+pool[] List ls;
 ls = new List.CONS(1,
             List.CONS(2,
                 List.HOLD()));
@@ -61046,7 +61046,7 @@ or
     end
 end
 
-pool List[10] ls = new List.CONS(1,
+pool[10] List ls = new List.CONS(1,
             List.CONS(2,
                 List.HOLD()));
 
@@ -61086,7 +61086,7 @@ or
     end
 end
 
-pool List[10] ls = new List.CONS(1,
+pool[10] List ls = new List.CONS(1,
             List.CONS(2,
                 List.HOLD()));
 
@@ -61127,7 +61127,7 @@ or
     end
 end
 
-pool List[10] list;
+pool[10] List list;
 
 var int i = 10;
 traverse l in &&list do
@@ -61148,7 +61148,7 @@ or
     end
 end
 
-pool List[10] list;
+pool[10] List list;
 
 loop i in 10 do
     traverse l in &&list do
@@ -61189,7 +61189,7 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -61199,7 +61199,7 @@ native do
 end
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   List&&   n;
 do
     watching *n do
@@ -61221,7 +61221,7 @@ do
     end
 end
 
-pool Body[3] bodies;
+pool[3] Body bodies;
 do Body with
     this.bodies = bodies;
     this.n      = &&list;
@@ -61243,7 +61243,7 @@ or
     end
 end
 
-pool List[4] list;
+pool[4] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -61253,7 +61253,7 @@ native do
 end
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   List&&   n;
 do
     watching *n do
@@ -61275,7 +61275,7 @@ do
     end
 end
 
-pool Body[4] bodies;
+pool[4] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&list;
@@ -61298,7 +61298,7 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -61337,7 +61337,7 @@ or
     end
 end
 
-pool List[4] list;
+pool[4] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
@@ -61375,7 +61375,7 @@ or
     end
 end
 
-pool L[] ls;
+pool[] L ls;
 
 var int v = 10;
 var int&& p = &&v;
@@ -61442,7 +61442,7 @@ or
     end
 end
 
-pool Stmt[2] stmts = new Stmt.NIL();
+pool[2] Stmt stmts = new Stmt.NIL();
 
 var int ddd =
     traverse stmt in &&stmts do
@@ -61464,7 +61464,7 @@ or
     end
 end
 
-pool Stmt[] stmts = new Stmt.NIL();
+pool[] Stmt stmts = new Stmt.NIL();
 
 var int v1 = 10;
 
@@ -61491,7 +61491,7 @@ or
     end
 end
 
-pool List[3] list = new
+pool[3] List list = new
     List.CONS(1,
         List.CONS(2,
             List.CONS(3,
@@ -61524,7 +61524,7 @@ or
     end
 end
 
-pool List[3] list = new
+pool[3] List list = new
     List.CONS(1,
         List.CONS(2,
             List.CONS(3,
@@ -61561,7 +61561,7 @@ end
 class C with
     var int v;
 do
-    pool T[] ts; // = new T.NEXT(T.NIL());
+    pool[] T ts; // = new T.NEXT(T.NIL());
     var int ret =
         traverse t in ts do
             escape this.v;
@@ -61602,7 +61602,7 @@ or
     tag STREAM_END;
 end
 
-pool Command[100] cmds = new
+pool[100] Command cmds = new
     Command.STREAM_ROOT(
         Command.AWAIT(1000),
         Command.STREAM_END(),
@@ -61660,7 +61660,7 @@ or
     tag STREAM_END;
 end
 
-pool Command[] cmds;
+pool[] Command cmds;
 cmds.STREAM_ROOT.now.STREAM_NEXT.one = cmds.STREAM_ROOT.nxt;
 cmds.STREAM_ROOT.run = cmds.STREAM_ROOT.nxt.STREAM_NEXT.two;
 traverse cmd in &&cmds do
@@ -61706,7 +61706,7 @@ or
     end
 end
 
-pool Stmt[] stmts =
+pool[] Stmt stmts =
     new Stmt.SEQ(
             Stmt.PRINT(
                 Exp.ADD(
@@ -61744,7 +61744,7 @@ end
 
 var int ret = 0;
 
-pool Exp[] exps = new
+pool[] Exp exps = new
     Exp.ADD(Exp.NIL(), Exp.V(20));
 
 traverse e in &&exps do
@@ -61790,7 +61790,7 @@ or
     end
 end
 
-    pool Stmt[] stmts;
+    pool[] Stmt stmts;
     traverse stmt in &&stmts do
         watching *stmt do
         end
@@ -61871,14 +61871,14 @@ or
     end
 end
 
-pool List[3] list;
+pool[3] List list;
 list = new List.CONS(1,
             List.CONS(2,
                 List.CONS(3, List.NIL())));
 
 var int sum = 0;
 
-pool List[]&& lll = &&list.CONS.tail;
+pool[] List&& lll = &&list.CONS.tail;
 
 traverse n in lll do
     sum = sum + 1;
@@ -61950,10 +61950,10 @@ or
     end
 end
 
-pool CommandQueue[10] cq1 = new Command.NOTHING();
-pool CommandQueue[10] cq2 = new CommandQueue.NIL();
+pool[10] CommandQueue cq1 = new Command.NOTHING();
+pool[10] CommandQueue cq2 = new CommandQueue.NIL();
 
-pool CommandQueue[10] cq3 = new
+pool[10] CommandQueue cq3 = new
     CommandQueue.NXT(
         Command.SEQUENCE(
             Command.NOTHING(),
@@ -61984,9 +61984,9 @@ or
     end
 end
 
-pool CommandQueue[10] cq1 = new CommandQueue.NIL();
+pool[10] CommandQueue cq1 = new CommandQueue.NIL();
 
-pool CommandQueue[10] cq2 = new
+pool[10] CommandQueue cq2 = new
     CommandQueue.NXT(
         Command.SEQUENCE(
             Command.NOTHING(),
@@ -62009,7 +62009,7 @@ or
         var List  nxt;
     end
 end
-pool List[] lll;     // l is the pool
+pool[] List lll;     // l is the pool
 escape lll.NIL;       // l is a pointer to the root
 ]],
     run = 1,
@@ -62024,8 +62024,8 @@ or
     end
 end
 
-pool Command[] cmds1;
-pool Command[]& cmds2;
+pool[] Command cmds1;
+pool&[] Command cmds2;
 escape 1;
 ]],
     ref = 'line 10 : uninitialized variable "cmds2" crossing compound statement (tests.lua:1)',
@@ -62039,8 +62039,8 @@ or
     end
 end
 
-pool Command[] cmds1;
-pool Command[]& cmds2=&cmds1;
+pool[] Command cmds1;
+pool&[] Command cmds2=&cmds1;
 escape 1;
 ]],
     run = 1,
@@ -62054,8 +62054,8 @@ or
     end
 end
 
-pool Command[] cmds1;
-pool Command[]& cmds2;
+pool[] Command cmds1;
+pool&[] Command cmds2;
 cmds2 = &cmds1;
 escape 1;
 ]],
@@ -62070,12 +62070,12 @@ or
     end
 end
 
-pool Command[] cmds1;
+pool[] Command cmds1;
 cmds1 = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
 
-pool Command[]& cmds2 = &cmds1;
+pool&[] Command cmds2 = &cmds1;
 
 escape cmds2.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
@@ -62090,7 +62090,7 @@ or
     end
 end
 
-pool Command[]& cmds2
+pool&[] Command cmds2
     = &new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
@@ -62112,8 +62112,8 @@ or
     end
 end
 
-pool Command[2] cmds1;
-pool Command[2]& cmds2
+pool[2] Command cmds1;
+pool&[2] Command cmds2
         = &cmds1;
 
 cmds1 = new Command.NEXT(
@@ -62136,8 +62136,8 @@ or
     end
 end
 
-pool Command[2] cmds1;
-pool Command[2]& cmds2
+pool[2] Command cmds1;
+pool&[2] Command cmds2
         = &cmds1;
 
 cmds1 = new Command.NEXT(
@@ -62159,7 +62159,7 @@ or
     end
 end
 
-pool Command[2] cmds1;
+pool[2] Command cmds1;
 
 cmds1 = new Command.NEXT(
                 Command.NEXT(
@@ -62178,7 +62178,7 @@ or
     end
 end
 
-pool Command[2] cmds1;
+pool[2] Command cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
 cmds1.NEXT.nxt = new Command.NEXT(Command.NOTHING());
@@ -62196,7 +62196,7 @@ or
     end
 end
 
-pool Command[1] cmds1;
+pool[1] Command cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
 cmds1 = new Command.NOTHING();
@@ -62214,7 +62214,7 @@ or
     end
 end
 
-pool Command[1] cmds1;
+pool[1] Command cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
 cmds1 = new Command.NEXT(Command.NOTHING());
@@ -62231,7 +62231,7 @@ or
     end
 end
 
-pool Command[2] cmds1 = new Command.NEXT(Command.NOTHING());
+pool[2] Command cmds1 = new Command.NEXT(Command.NOTHING());
 cmds1 = new Command.NOTHING();
 cmds1 = new Command.NEXT(
                 Command.NEXT(
@@ -62249,7 +62249,7 @@ or
     end
 end
 
-pool Command[2] cmds1 = new Command.NEXT(Command.NOTHING());
+pool[2] Command cmds1 = new Command.NEXT(Command.NOTHING());
 cmds1 = new Command.NEXT(
                 Command.NEXT(
                     Command.NOTHING()));
@@ -62266,8 +62266,8 @@ or
     end
 end
 
-pool Command[2] cmds1;
-pool Command[2]& cmds2 = &cmds1;
+pool[2] Command cmds1;
+pool&[2] Command cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
 cmds2.NEXT.nxt = new Command.NEXT(Command.NOTHING());
@@ -62284,8 +62284,8 @@ or
     end
 end
 
-pool Command[2] cmds1;
-pool Command[2]& cmds2 = &cmds1;
+pool[2] Command cmds1;
+pool&[2] Command cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(Command.NOTHING());
 cmds2.NEXT.nxt = new Command.NEXT(
@@ -62304,8 +62304,8 @@ or
     end
 end
 
-pool Command[3] cmds1;
-pool Command[3]& cmds2;
+pool[3] Command cmds1;
+pool&[3] Command cmds2;
 cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(
@@ -62327,9 +62327,9 @@ or
     end
 end
 
-pool Command[10] cmds1;
+pool[10] Command cmds1;
 
-pool Command[10]& cmds2;
+pool&[10] Command cmds2;
 cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(
@@ -62352,9 +62352,9 @@ or
     end
 end
 
-pool Command[] cmds1;
+pool[] Command cmds1;
 
-pool Command[]& cmds2 = &cmds1;
+pool&[] Command cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(
             Command.NEXT(
@@ -62377,9 +62377,9 @@ or
     end
 end
 
-pool Command[] cmds1;
+pool[] Command cmds1;
 
-pool Command[]& cmds2;
+pool&[] Command cmds2;
 cmds2 = &cmds1;
 
 cmds1 = new Command.NEXT(
@@ -62420,7 +62420,7 @@ or
 end
 
 class Run with
-    pool Command[]& cmds1;
+    pool&[] Command cmds1;
 do
     cmds1 = new Command.NEXT(
                 Command.NEXT(
@@ -62435,7 +62435,7 @@ do
     escape sum;
 end
 
-pool Command[] cmds;
+pool[] Command cmds;
 
 traverse cmd222 in &&cmds do
 end
@@ -62459,7 +62459,7 @@ or
     end
 end
 
-    pool Command[] cmds;
+    pool[] Command cmds;
     traverse cmd in &&cmds do
     end
 
@@ -62479,7 +62479,7 @@ or
 end
 
 class Run with
-    pool Command[]& cmds;
+    pool&[] Command cmds;
 do
     var int sum = 0;
     traverse cmd in &&cmds do
@@ -62491,7 +62491,7 @@ do
     escape sum;
 end
 
-pool Command[] cmds = new Command.NEXT(
+pool[] Command cmds = new Command.NEXT(
             Command.NEXT(
                 Command.NOTHING()));
 
@@ -62516,14 +62516,14 @@ or
     end
 end
 
-pool Command[] cmds;
+pool[] Command cmds;
 
 cmds = new Command.PAROR(
             Command.PAROR(
                 Command.AWAIT()));
 
 class Run with
-    pool Command[]& cmds;
+    pool&[] Command cmds;
 do
     traverse cmd in &&cmds do
         if cmd:AWAIT then
@@ -62561,7 +62561,7 @@ native do
     byte vec[3] = {5,5,5};
 end
 
-pool Dummy[] ds;
+pool[] Dummy ds;
 
 var int xxx = 0;
 
@@ -62597,7 +62597,7 @@ or
     end
 end
 
-pool NoRec[]& norec;
+pool&[] NoRec norec;
 
 traverse t in this.norec do
 end
@@ -62617,11 +62617,11 @@ or
 end
 
 class BTreeTraverse with
-    pool BTree[3]& btree;
+    pool&[3] BTree btree;
     var int x;
 do
     var int a = this.x;
-    pool BTree[3]& btree2 = &this.btree;
+    pool&[3] BTree btree2 = &this.btree;
     traverse t in &&this.btree do
         var int a = this.x;
         if a then end;
@@ -62643,10 +62643,10 @@ or
     end
 end
 
-pool BTree[3] bs = new BTree.SEQ(BTree.SEQ(BTree.NIL()));
+pool[3] BTree bs = new BTree.SEQ(BTree.SEQ(BTree.NIL()));
 
 class BTreeTraverse with
-    pool BTree[3]& btree;
+    pool&[3] BTree btree;
 do
     var int ret = 0;
     traverse t in &&this.btree do
@@ -62787,7 +62787,7 @@ with
     end
 end
 
-pool List[3] l;
+pool[3] List l;
 l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
 
 var int sum = 0;
@@ -62815,7 +62815,7 @@ with
     end
 end
 
-pool Tree[3] t;
+pool[3] Tree t;
 t = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
@@ -64039,7 +64039,7 @@ or
     end
 end
 
-pool LLRB[] llrb;
+pool[] LLRB llrb;
 traverse e in llrb do
     e:NODE.left = traverse e:NODE.left;
 end
@@ -64207,7 +64207,7 @@ var SDL _;
 Test { [[
 class T with
     output:
-        vector[] byte& name;
+        vector&[] byte name;
 do
     vector[] byte name_ = [].."oi";
     this.name = &name_;
@@ -64255,7 +64255,7 @@ escape ret;
 
 Test { [[
 data D with
-    vector[] byte& str;
+    vector&[] byte str;
 end
 vector[] byte s = [].. "oi";
 var D d = D(s);    // BUG: nao detecta erro de tipo
@@ -64271,7 +64271,7 @@ end
 
 class V with
 do
-    pool I[1] is;
+    pool[1] I is;
 end
 
 escape 1;
@@ -64310,11 +64310,11 @@ interface I with
     var& G g;
 end
 
-pool I[] is;
+pool[] I is;
 
 class T with
     var& G g;
-    pool I[]& is;
+    pool&[] I is;
 do
     every g.e do
         _V = _V + 1;
@@ -64384,7 +64384,7 @@ or
     end
 end
 
-pool Tree[3] tree;
+pool[3] Tree tree;
 tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
@@ -64396,7 +64396,7 @@ do
 end
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   Tree&&   n;
     var&   Sum    sum;
 do
@@ -64417,7 +64417,7 @@ var Sum sum with
     this.v = &&v;
 end;
 
-pool Body[7] bodies;
+pool[7] Body bodies;
 do Body with
     this.bodies = &bodies;
     this.n      = &&tree;
@@ -64500,7 +64500,7 @@ or
     end
 end
 
-pool Stmt[] stmts = new Stmt.NIL();
+pool[] Stmt stmts = new Stmt.NIL();
 
 var int v1 = 10;
 
@@ -64921,7 +64921,7 @@ class T with
     interface I;
 do
 end
-pool T[1] ts;
+pool[1] T ts;
 var T a with
     a.v = 15;
 end
@@ -64945,7 +64945,7 @@ do
 end
 var T* ui;
 do
-    pool T[] ts;
+    pool[] T ts;
     var void* p = null;
     ui = spawn T in ts with // ui > ts (should require fin)
         this.ptr = p;
@@ -65056,7 +65056,7 @@ do
     await FOREVER;
 end
 
-pool I[100] is;
+pool[100] I is;
 
 var int ret = 0;
 
@@ -65089,7 +65089,7 @@ class T with
 do
     await FOREVER;
 end
-pool I[] is;
+pool[] I is;
 
 class U with
     var int z;
@@ -65124,16 +65124,16 @@ Test { [[
 class U with do end;
 
 interface I with
-    pool U[10] us;
+    pool[10] U us;
 end
 
 interface Global with
     interface I;
 end
-pool U[]  us;
+pool[] U  us;
 
 class T with
-    pool U[10] us;
+    pool[10] U us;
     interface I;
 do
     spawn U in global:us;
@@ -65142,7 +65142,7 @@ end
 spawn U in us;
 spawn U in global:us;
 
-pool U[1] us1;
+pool[1] U us1;
 spawn U in us1;
 
 var T t;
@@ -65215,7 +65215,7 @@ class T with
 do
     this.v = 1;
 end
-pool T[] ts;
+pool[] T ts;
 
 par/or do
     spawn T in ts with
@@ -65237,7 +65237,7 @@ do
 end
 
 par/and do
-    pool T[] ts;
+    pool[] T ts;
     var T* t = spawn T in ts with
     end;
 with
@@ -65270,12 +65270,12 @@ end
 class V with
     var int v;
 do
-    pool I[10] is;
+    pool[10] I is;
     spawn T in is;
     spawn U in is;
 end
 
-pool I[10] is;
+pool[10] I is;
 
 spawn T in is;
 spawn U in is;
@@ -65354,7 +65354,7 @@ loop do
    par/or do
       await STOP;
    with
-      pool Forwarder[10] forwarders;
+      pool[10] Forwarder forwarders;
       var  Client   [10] clients;
 
       var _pkt_t* pkt;
@@ -65413,7 +65413,7 @@ if false then
     var Bird* ptr = null;
     watching ptr do end
 else
-    pool Rect[257] rs;
+    pool[257] Rect rs;
     loop i in 257 do
         spawn Rect in rs;
     end
@@ -65427,7 +65427,7 @@ do return end
 
 Test { [[
 class T with do end;
-pool T[] ts;
+pool[] T ts;
 loop t in ts do
     await 1s;
 end
@@ -65443,7 +65443,7 @@ class T with
     interface I;
 do end
 do
-    pool T[] ts;
+    pool[] T ts;
     loop i in ts do
         await 1s;
     end
@@ -66019,7 +66019,7 @@ or
 end
 
 class TCommand with
-    pool Command[] cs;
+    pool[] Command cs;
 do
 end
 
@@ -66049,7 +66049,7 @@ end
 class UIGrid with
     interface UI;
     var&   int?    bg_clr = nil;
-    pool UIGridItem[] uis;
+    pool[] UIGridItem uis;
 do
 end
 
@@ -66076,7 +66076,7 @@ do
 end
 class UIGrid with
     interface UI;
-    pool UIGridItem[] uis;
+    pool[] UIGridItem uis;
 do
 end
 
@@ -66139,7 +66139,7 @@ escape 1;
 -- BUG: do T quando ok acontece na mesma reacao
 Test { [[
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var&   int    sum;
     event int     ok;
 do
@@ -66159,7 +66159,7 @@ do
     emit this.ok => 1;
 end
 
-pool Body[2] bodies;
+pool[2] Body bodies;
 var  int     sum = 0;
 
     finalize with end;
@@ -66187,13 +66187,13 @@ with
     end
 end
 
-pool Tree[3] tree;
+pool[3] Tree tree;
 tree = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
 
 class Body with
-    pool  Body[]& bodies;
+    pool&[]  Body bodies;
     var   Tree*   n;
     var&   int    sum;
     event int     ok;
@@ -66233,7 +66233,7 @@ end
 
 var int sum = 0;
 
-pool Body[7] bodies;
+pool[7] Body bodies;
 do Body with
     this.bodies = bodies;
     this.n      = &&tree;
@@ -66267,7 +66267,7 @@ do
     await FOREVER;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var T*? t = spawn T in ts;
 
@@ -66293,7 +66293,7 @@ do
     await e;
 end
 
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 1;
 
@@ -66330,7 +66330,7 @@ with
     end
 end
 
-pool Tree[3] t;
+pool[3] Tree t;
 t = new Tree.NODE(1,
             Tree.NODE(2, Tree.NIL(), Tree.NIL()),
             Tree.NODE(3, Tree.NIL(), Tree.NIL()));
@@ -66415,7 +66415,7 @@ do
     this.v = v + 1;
     await FOREVER;
 end
-pool T[] ts;
+pool[] T ts;
 
 var int ret = 0;
 do
