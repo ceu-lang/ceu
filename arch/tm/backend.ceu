@@ -110,9 +110,9 @@ end
 #endif
 
 class TimeMachine with
-    var TM_App& app;
+    var& TM_App app;
 #ifdef TM_QUEUE
-    var IIOTimeMachine& io;
+    var& IIOTimeMachine io;
 #endif
     event void go_on, go_off;
     //event void ok_restart;
@@ -336,7 +336,7 @@ do
 
 #if   defined TM_QUEUE
 
-                            var _tceu_queue&? qu;
+                            var& _tceu_queue? qu;
                             finalize
                                 qu = &_queue_nxt(time_now, time_req);
                             with

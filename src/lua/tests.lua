@@ -13,7 +13,7 @@ end
 Test { [[
 
 var      T   t;
-var[]    T   ts;  // erro
+vector[]    T   ts;  // erro
 pool[]   T   ts;
 vector[] T   ts;
 vector[] T&& pts;
@@ -29,7 +29,7 @@ var (event T)&& pev;
 var    t :: T;
 vector t :: []T;
 
-var pvec :: (vector[] T&&)&&
+vector[] pvec :: (vector T&&)&&
 
 
 code T
@@ -581,7 +581,7 @@ a = do/X end;
 
 Test { [[
 event void  a;
-event void& b = &a;
+event& void b = &a;
 
 par/or do
     await 1s;
@@ -1299,13 +1299,15 @@ Test { [[
 var& int&  v;
 escape 1;
 ]],
-    env = 'line 1 : invalid type modifier : `&&´',
+    parser = 'line 1 : after `int´ : expected identifier',
+    --env = 'line 1 : invalid type modifier : `&&´',
 }
 Test { [[
 var int?&& v;
 escape 1;
 ]],
-    env = 'line 1 : invalid type modifier : `?&&´',
+    parser = 'line 1 : after `?´ : expected identifier',
+    --env = 'line 1 : invalid type modifier : `?&&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
@@ -1327,7 +1329,8 @@ Test { [[
 var int?? v;
 escape 1;
 ]],
-    env = 'line 1 : invalid type modifier : `??´',
+    parser = 'line 1 : after `?´ : expected identifier',
+    --env = 'line 1 : invalid type modifier : `??´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 
@@ -17331,14 +17334,15 @@ code/instantaneous Get (void)=>int& do
 end
 escape 10;
 ]],
-    env = 'line 3 : invalid escape value : local reference',
+    parser = 'line 1 : after `int´ : expected `;´',
+    --env = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (var& byte[] vec)=>int do
+code/instantaneous F (vector&[] byte vec)=>int do
     escape vec[1];
 end
 
@@ -17349,7 +17353,7 @@ escape f(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (var& int[] vec)=>int do
+code/instantaneous F (vector&[] int vec)=>int do
     escape vec[1];
 end
 
@@ -17360,7 +17364,7 @@ escape f(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (var& byte[] vec)=>int do
+code/instantaneous F (vector&[] byte vec)=>int do
     escape vec[1];
 end
 
@@ -17379,20 +17383,22 @@ vector&[] byte ref = &f();
 
 escape ref[1];
 ]],
-    env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
+    parser = 'line 3 : after `byte´ : expected `;´',
+    --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
 }
 
 -- vectors as argument (NO)
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (var void&& x, var  int[] vec)=>int do
+code/instantaneous F (var void&& x, vector[] int vec)=>int do
     escape vec[1];
 end
 
 escape f(str);
 ]],
-    env = 'line 3 : wrong argument #2 : vectors are not supported',
+    parser = 'line 3 : before `vector´ : expected `var´',
+    --env = 'line 3 : wrong argument #2 : vectors are not supported',
     --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
 }
 
@@ -22131,8 +22137,8 @@ escape p;
 
 Test { [[input int[1] E; escape 0;]],
     --run = 0,
-    env = 'invalid event type',
-    --parser = "line 1 : after `int´ : expected identifier",
+    --env = 'invalid event type',
+    parser = "line 1 : after `int´ : expected identifier",
 }
 Test { [[vector[0] int v; escape 0;]],
     run = 0,
@@ -22311,9 +22317,13 @@ Test { [[vector[2] int v; await v;     escape 0;]],
 Test { [[vector[2] int v; emit v;    escape 0;]],
         env='event "v" is not declared' }
 Test { [[vector[0] int[2] v; await v;  escape 0;]],
-        env='line 1 : event "?" is not declared'}
+        --env='line 1 : event "?" is not declared'
+        parser = 'line 1 : after `int´ : expected identifier',
+}
 Test { [[vector[0] int[2] v; emit v; escape 0;]],
-        env='event "?" is not declared' }
+        --env='event "?" is not declared'
+        parser = 'line 1 : after `int´ : expected identifier',
+}
 Test { [[var _int[2] v; v=v; escape 0;]], env='types mismatch' }
 Test { [[vector[1] int v; escape v;]], env='cannot index a non array' }
 Test { [[var _int[2] v; escape v[v];]], env='invalid array index' }
@@ -23067,6 +23077,8 @@ escape _strlen((_char&&)&&str);
     run = 5,
 }
 
+-- TODO: dropped support for returning alias, is this a problem?
+
 Test { [[
 vector[] byte str = [0,1,2];
 
@@ -23078,7 +23090,8 @@ vector&[] byte ref = &f();
 
 escape ref[1];
 ]],
-    run = 1,
+    parser = 'line 3 : after `byte´ : expected `;´',
+    --run = 1,
 }
 
 Test { [[
@@ -23093,7 +23106,8 @@ ref = [3, 4, 5];
 
 escape str[1];
 ]],
-    run = 4,
+    parser = 'line 3 : after `byte´ : expected `;´',
+    --run = 4,
 }
 
 Test { [[
@@ -23108,7 +23122,8 @@ ref = [] .. "ola";
 
 escape str[1] == 'l';
 ]],
-    run = 1,
+    parser = 'line 3 : after `byte´ : expected `;´',
+    --run = 1,
 }
 
 Test { [[
@@ -23129,7 +23144,8 @@ ref = [] .. (_char&&){g}() .. "ola";
 
 escape str[3] == 'o';
 ]],
-    run = 1,
+    --run = 1,
+    parser = 'line 9 : after `byte´ : expected `;´',
 }
 
 Test { [[
@@ -23148,7 +23164,8 @@ f2();
 
 escape str[4] == 'u';
 ]],
-    run = 1,
+    parser = 'line 3 : after `byte´ : expected `;´',
+    --run = 1,
 }
 
 Test { [[
@@ -23156,7 +23173,7 @@ native do
     ##define ID(x) x
 end
 native/pure _ID(), _strlen();
-var byte[] str = [] .. "abc"
+vector[] byte str = [] .. "abc"
                     .. (_char&&)_ID("def");
 var byte&& str2 = _ID((_char&&)&&str);
 escape _strlen((_char&&)&&str) + _strlen(str2);
@@ -23294,8 +23311,8 @@ escape ok;
 }
 
 Test { [=[
-var byte[] str = [].."12345";
-var byte[] bts = [1,2,3,4,5];
+vector[] byte str = [].."12345";
+vector[] byte bts = [1,2,3,4,5];
 var int r1 = [[ string.len(@str) ]];
 var int r2 = [[ string.len(@bts) ]];
 escape r1+r2;
@@ -23639,7 +23656,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var& byte[] cs)=>void do
+code/instantaneous F (vector&[] byte cs)=>void do
     cs[0] = 10;
 end
 vector[] byte cs = [0];
@@ -27808,7 +27825,7 @@ native/nohold _strcmp();
 var byte&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
-var byte[10] cpy = [[ str ]];
+vector[10] byte cpy = [[ str ]];
 escape ret and (not _strcmp(str,(_char&&)&&cpy));
 ]=],
     run = 1,
@@ -27816,7 +27833,7 @@ escape ret and (not _strcmp(str,(_char&&)&&cpy));
 
 Test { [=[
 native/nohold _strcmp(), _strcpy();
-var byte[10] str;
+vector[10] byte str;
 _strcpy(&&str,"oioioi");
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
@@ -27831,11 +27848,11 @@ escape ret and (not _strcmp(&&str,&&cpy));
 
 Test { [=[
 native/nohold _strcmp(), _strcpy();
-var byte[10] str = [] .. "oioioi";
+vector[10] byte str = [] .. "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
-var byte[10] cpy;
-var& byte[10] ptr = &cpy;
+vector[10] byte cpy;
+vector&[10] byte ptr = &cpy;
 ptr = [[ str ]];
 escape ret and (not _strcmp((_char&&)&&str,(_char&&)&&cpy));
 ]=],
@@ -27845,7 +27862,7 @@ escape ret and (not _strcmp((_char&&)&&str,(_char&&)&&cpy));
 Test { [=[
 native/nohold _strcmp();
 [[ str = '1234567890' ]]
-var byte[2] cpy = [[ str ]];
+vector[2] byte cpy = [[ str ]];
 escape (_strcmp((_char&&)&&cpy,"1") == 0);
 ]=],
     run = '3] runtime error: access out of bounds',
@@ -27854,9 +27871,9 @@ escape (_strcmp((_char&&)&&cpy,"1") == 0);
 Test { [=[
 native/nohold _strcmp();
 [[ str = '1234567890' ]]
-var byte[2] cpy;
-var byte[20] cpy_;
-var& byte[] ptr = &cpy;
+vector[2] byte cpy;
+vector[20] byte cpy_;
+vector&[] byte ptr = &cpy;
 ptr = [[ str ]];
 escape (not _strcmp((_char&&)&&cpy,"1234567890"));
 ]=],
@@ -28227,7 +28244,7 @@ class T with
 do
 end
 
-var T[2] y;
+vector[2] T y;
     y[0].a = 10;
     y[1].a = 20;
 
@@ -28245,7 +28262,7 @@ do
 end
 
 var int i = 1;
-var T[2] y with
+vector[2] T y with
     this.a = 10*i;
     i = i + 1;
 end;
@@ -28267,7 +28284,7 @@ end
 
 var int i = 0;
 
-var T[2] y with
+vector[2] T y with
     i = i + 1;
     this.a = i*10;
 end;
@@ -28307,7 +28324,7 @@ do
     _V = _V + 1;
 end
 
-var T[20000] ts;
+vector[20000] T ts;
 
 escape _V;
 ]],
@@ -28331,7 +28348,7 @@ Test { [[
 class T with
 do
 end
-var T[5] a;
+vector[5] T a;
 escape 0;
 ]],
     run = 0,
@@ -28340,7 +28357,7 @@ escape 0;
 Test { [[
 native/const _U8_MAX;
 class T with do end;
-var T[_U8_MAX] ts;
+vector[_U8_MAX] T ts;
 
 escape 1;
 ]],
@@ -30999,7 +31016,7 @@ do
     var int a = 1;
     if a then end;
 end
-var T[2] ts;
+vector[2] T ts;
 escape 1;
 ]],
     run = 1,
@@ -31009,7 +31026,7 @@ class T with
     var int a=0;
 do
 end
-var T[2] ts;
+vector[2] T ts;
 par/and do
     ts[0].a = 10;   // 7
 with
@@ -31045,7 +31062,7 @@ do
     await OS_START;
     a = 0;
 end
-var T[2] ts;
+vector[2] T ts;
 await OS_START;
 par/and do
     ts[0].a = 10;   // 11
@@ -31067,7 +31084,7 @@ do
     await OS_START;
     this.a = 0;
 end
-var T[2] ts;
+vector[2] T ts;
 await OS_START;
 par/and do
     ts[0].a = 10;
@@ -31136,7 +31153,7 @@ do
     await OS_START;
     _f(&&this);       // 9
 end
-var T[2] ts;
+vector[2] T ts;
 await OS_START;
 par/and do
     _f(&&ts[0]);     // 14
@@ -31225,7 +31242,7 @@ do
     end
 end
 
-var Rect[2] rs;
+vector[2] Rect rs;
 rs[0].x = 10;
 rs[0].y = 50;
 rs[1].x = 100;
@@ -31565,7 +31582,7 @@ do
     await e;
     emit f;
 end
-var T[2] ts;
+vector[2] T ts;
 par/and do
     await OS_START;
     emit ts[0].e;
@@ -31592,7 +31609,7 @@ do
     v = 100;
     emit ok;
 end
-var T[2] ts;
+vector[2] T ts;
 var int ret = 0;
 par/and do
     par/and do
@@ -31786,7 +31803,7 @@ do
     emit ok;
 end
 
-var T[2] ts;
+vector[2] T ts;
 
 par/and do
     await ts[0].ok;
@@ -31815,7 +31832,7 @@ do
     v = 100;
     emit ok;
 end
-var T[2] ts;
+vector[2] T ts;
 var int ret = 0;
 par/and do
     par/and do
@@ -32783,7 +32800,7 @@ par/or do
 with
     await OS_START;
     do
-        var T[2] t;
+        vector[2] T t;
         _assert(0);
         await FOREVER;
     end
@@ -33002,7 +33019,7 @@ class T with
 do
     _V = _V + 1;
 end
-var T[N] ts;
+vector[N] T ts;
 escape _V;
 ]],
     run = 5,
@@ -33017,7 +33034,7 @@ class T with
 do
     _V = _V + 1;
 end
-var T[N+1] ts;
+vector[N+1] T ts;
 escape _V;
 ]],
     run = 6,
@@ -33032,7 +33049,7 @@ class T with
 do
     _V = _V + 1;
 end
-var T[N+1] ts;
+vector[N+1] T ts;
 escape _V;
 ]],
     run = 6,
@@ -33048,7 +33065,7 @@ do
     _V = _V + 1;
 end
 #error oi
-var T[N+1] ts;
+vector[N+1] T ts;
 escape _V;
 ]],
     lines = 'error oi',
@@ -33237,7 +33254,7 @@ do
     b = a * 2;
 end
 
-var T[2] t with
+vector[2] T t with
     this.a = 10;
 end;
 
@@ -37187,7 +37204,7 @@ end
 
 do T;
 
-var T[31245] ts;
+vector[31245] T ts;
 
 escape 1;
 ]],
@@ -37201,7 +37218,7 @@ end
 
 do T;
 
-var T[31246] ts;
+vector[31246] T ts;
 
 escape 1;
 ]],
@@ -37215,7 +37232,7 @@ end
 
 do T;
 
-var T[65500] ts;
+vector[65500] T ts;
 
 escape 1;
 ]],
@@ -37229,7 +37246,7 @@ end
 
 do T;
 
-var T[65532] ts;
+vector[65532] T ts;
 
 escape 1;
 ]],
@@ -37244,7 +37261,7 @@ end
 
 do T;
 
-var T[65533] ts;
+vector[65533] T ts;
 
 escape 1;
 ]],
@@ -40145,7 +40162,7 @@ end
 
 par/or do
     pause/if a do
-        var T[2] ts;
+        vector[2] T ts;
         par/or do
             par/and do
                 await ts[0].ok;
@@ -40973,7 +40990,7 @@ escape 10;
 Test { [[
 interface I with
 end
-var I[10] a;
+vector[10] I a;
 ]],
     env = 'line 3 : cannot instantiate an interface',
 }
@@ -41474,7 +41491,7 @@ Test { [[
 interface I with
     event int a;
 end
-var I[10] t;
+vector[10] I t;
 escape 10;
 ]],
     env = 'line 4 : cannot instantiate an interface',
@@ -42893,7 +42910,7 @@ escape 1;
 
 Test { [[
 class T with do end
-var T[1] ts = [];
+vector[1] T ts = [];
 escape 1;
 ]],
     env = 'line 2 : invalid attribution : destination is not a vector',
@@ -43304,7 +43321,7 @@ escape v;
 }
 
 Test { [[
-code/instantaneous FillBuffer (var& u8[] buf)=>void do
+code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
     buf = [] .. buf .. [3];
 end
 vector[10] u8 buffer;
@@ -43315,7 +43332,7 @@ escape buffer[0];
 }
 
 Test { [[
-code/instantaneous FillBuffer (var& u8[20] buf)=>void do
+code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
     buf = [] .. buf .. [3];
 end
 vector[10] u8 buffer;
@@ -43326,7 +43343,7 @@ escape buffer[0];
 }
 
 Test { [[
-code/instantaneous FillBuffer (var& u8[3] buf)=>void do
+code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
     buf = [] .. buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
@@ -43336,8 +43353,9 @@ escape buffer[0];
     run = '2] runtime error: access out of bounds',
 }
 
+-- TODO: dropped support for pointers to vectors
 Test { [[
-code/instantaneous FillBuffer (var u8[]&& buf)=>void do
+code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
     *buf = [] .. *buf .. [3];
 end
 vector[10] u8 buffer;
@@ -43345,10 +43363,11 @@ fillBuffer(&&buffer);
 escape buffer[0];
 ]],
     run = 3,
+    todo = 'no pointers to vectors',
 }
 
 Test { [[
-code/instantaneous FillBuffer (var u8[3]&& buf)=>void do
+code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
     *buf = [] .. *buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
@@ -43356,14 +43375,16 @@ fillBuffer(&&buffer);
 escape buffer[0];
 ]],
     run = '2] runtime error: access out of bounds',
+    todo = 'no pointers to vectors',
 }
 
 Test { [[
-code/instantaneous Build (var u8[] bytes)=>void do
+code/instantaneous Build (vector[] u8 bytes)=>void do
 end
 escape 1;
 ]],
-    env = 'line 1 : wrong argument #1 : vectors are not supported',
+    parser = 'line 1 : before `vector´ : expected `var´',
+    --env = 'line 1 : wrong argument #1 : vectors are not supported',
 }
 
 Test { [[
@@ -43655,7 +43676,7 @@ class T with
 do
     _V = _V + f(1,2) + this.f(3,4);
 end
-var T[2] ts;
+vector[2] T ts;
 escape _V;
 ]],
     parser = 'line 5 : after `int´ : expected `;´',
@@ -43672,7 +43693,7 @@ do
     end
     _V = _V + f(1,2) + this.f(3,4);
 end
-var T[2] ts;
+vector[2] T ts;
 escape _V;
 ]],
     run = 20,
@@ -43692,7 +43713,7 @@ do
     this.f(3,4);
     _V = _V + v;
 end
-var T[2] ts;
+vector[2] T ts;
 escape _V;
 ]],
     run = 20,
@@ -45192,6 +45213,8 @@ escape 10;
     env = 'line 2 : invalid escape value : types mismatch (`int&&´ <= `int´)',
 }
 
+-- TODO: dropped support for returning alias, is this a problem?
+
 Test { [[
 var int x = 10;
 
@@ -45201,7 +45224,8 @@ end
 
 escape f();
 ]],
-    run = 10,
+    parser = 'line 3 : after `int´ : expected `;´',
+    --run = 10,
 }
 Test { [[
 class T with
@@ -45217,7 +45241,8 @@ var T t;
 
 escape t.f();
 ]],
-    run = 10,
+    parser = 'line 2 : after `int´ : expected `;´',
+    --run = 10,
 }
 
 Test { [[
@@ -45229,7 +45254,8 @@ end
 
 escape f();
 ]],
-    env = 'line 4 : invalid escape value : types mismatch (`int&´ <= `int&&´)',
+    parser = 'line 3 : after `int´ : expected `;´',
+    --env = 'line 4 : invalid escape value : types mismatch (`int&´ <= `int&&´)',
 }
 Test { [[
 class T with
@@ -45250,9 +45276,9 @@ escape t.f();
 
 Test { [[
 class Test with
-    code/instantaneous FillBuffer (var& u8[] buf)=>void;
+    code/instantaneous FillBuffer (vector&[] u8 buf)=>void;
 do
-    code/instantaneous FillBuffer (var& u8[] buf)=>void do
+    code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
         buf = [] .. buf .. [3];
     end
 end
@@ -45269,9 +45295,9 @@ escape buffer[0];
 
 Test { [[
 class Test with
-    code/instantaneous FillBuffer (var u8[]&& buf)=>void;
+    code/instantaneous FillBuffer (vector[]&& u8 buf)=>void;
 do
-    code/instantaneous FillBuffer (var u8[]&& buf)=>void do
+    code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
         *buf = [] .. *buf .. [3];
     end
 end
@@ -45283,7 +45309,8 @@ t.fillBuffer(&&buffer);
 
 escape buffer[0];
 ]],
-    run = 3,
+    --run = 3,
+    todo = 'no pointers to vectors',
 }
 
 Test { [[
@@ -45510,7 +45537,8 @@ end
 var Pingu p;
 escape p.get().value;
 ]],
-    env = 'line 15 : invalid escape value : types mismatch (`Dir&´ <= `Dir&&´)',
+    parser = 'line 6 : after `Dir´ : expected `;´',
+    --env = 'line 15 : invalid escape value : types mismatch (`Dir&´ <= `Dir&&´)',
 }
 
 Test { [[
@@ -45534,7 +45562,8 @@ end
 var Pingu p;
 escape p.get().value;
 ]],
-    run = 10,
+    parser = 'line 6 : after `Dir´ : expected `;´',
+    --run = 10,
 }
 
 Test { [[
@@ -46754,9 +46783,9 @@ class U with do end;
 
 class T with
     vector&[] U&&  us;
-    code/instantaneous Build (var& U&&[] us)=>T;
+    code/instantaneous Build (vector&[] U&& us)=>T;
 do
-    code/instantaneous Build (var& U&&[] us)=>T do
+    code/instantaneous Build (vector&[] U&& us)=>T do
         this.us = &us;
     end
 end
@@ -46774,9 +46803,9 @@ class U with do end;
 
 class T with
     vector&[] U&&  us;
-    code/instantaneous Build (var& U&&[] us)=>T;
+    code/instantaneous Build (vector&[] U&& us)=>T;
 do
-    code/instantaneous Build (var& U&&[] us)=>T do
+    code/instantaneous Build (vector&[] U&& us)=>T do
         this.us = &us;
     end
 end
@@ -46797,9 +46826,9 @@ class U with do end;
 
 class T with
     vector&[] U&&? us;
-    code/instantaneous Build (var& U&&?[] us)=>T;
+    code/instantaneous Build (vector&[] U&&? us)=>T;
 do
-    code/instantaneous Build (var& U&&?[] us)=>T do
+    code/instantaneous Build (vector&[] U&&? us)=>T do
         this.us = &us;
     end
 end
@@ -46825,9 +46854,9 @@ end;
 
 class T with
     vector&[] U&&? us;
-    code/instantaneous Build (var& U&&?[] us)=>T;
+    code/instantaneous Build (vector&[] U&&? us)=>T;
 do
-    code/instantaneous Build (var& U&&?[] us)=>T do
+    code/instantaneous Build (vector&[] U&&? us)=>T do
         this.us = &us;
     end
 end
@@ -46853,9 +46882,9 @@ end;
 
 class T with
     vector&[] U&&? us;
-    code/instantaneous Build (var& U&&?[] us)=>T;
+    code/instantaneous Build (vector&[] U&&? us)=>T;
 do
-    code/instantaneous Build (var& U&&?[] us)=>T do
+    code/instantaneous Build (vector&[] U&&? us)=>T do
         this.us = &us;
     end
 end
@@ -52222,7 +52251,8 @@ with
 end
 escape 1;
 ]],
-    env = 'line 6 : invalid event type',
+    parser = 'line 6 : after `T´ : expected identifier',
+    --env = 'line 6 : invalid event type',
 }
 
 Test { [[
@@ -52248,7 +52278,8 @@ with
 end
 escape 1;
 ]],
-    env = 'line 6 : invalid event type',
+    parser = 'line 6 : after `T´ : expected `,´',
+    --env = 'line 6 : invalid event type',
     --run = 1,
 }
 
@@ -52280,7 +52311,7 @@ event int& e;
 var& int i = await e;
 escape 1;
 ]],
-    env = 'line 1 : invalid event type',
+    parser = 'line 1 : after `int´ : expected identifier',
 }
 
 Test { [[
@@ -52425,7 +52456,8 @@ with
     escape b;
 end
 ]],
-    env = 'line 3 : invalid event type',
+    parser = 'line 3 : after `int´ : expected identifier',
+    --env = 'line 3 : invalid event type',
     --run = 11,
 }
 
@@ -52445,7 +52477,7 @@ with
     escape b;
 end
 ]],
-    env = 'line 3 : invalid event type',
+    parser = 'line 3 : after `int´ : expected `,´',
     --run = 14,
 }
 
@@ -53998,18 +54030,21 @@ vector[] byte xxx = [] .. "1234567890";
 emit OUT => []..xxx;
 escape 1;
 ]],
-    env = 'line 1 : invalid event type',
+    parser = 'line 1 : after `byte´ : expected identifier',
+    --env = 'line 1 : invalid event type',
 }
 
 Test { [[
 output byte[]&& && OUT;
 ]],
-    env = 'line 1 : invalid event type',
+    parser = 'line 1 : after `byte´ : expected identifier',
+    --env = 'line 1 : invalid event type',
 }
 Test { [[
 output byte[]& && OUT;
 ]],
-    env = 'line 1 : invalid event type',
+    parser = 'line 1 : after `byte´ : expected identifier',
+    --env = 'line 1 : invalid event type',
 }
 Test { [[
 class T with do end
@@ -54024,11 +54059,13 @@ output T&& OUT;
     env = 'line 2 : invalid event type',
 }
 
+-- TODO: dropped support for i/o vectors
+
 Test { [[
 input byte[] IN;
 var int ret = 0;
 par/and do
-    var byte[]&& vec = await IN;
+    vector[] byte&& vec = await IN;
     ret = $vec;
 with
     async do
@@ -54038,7 +54075,8 @@ with
 end
 escape $vec;
 ]],
-    env = 'line 1 : invalid event type',
+    parser = 'line 1 : after `byte´ : expected identifier',
+    --env = 'line 1 : invalid event type',
 }
 
 Test { [[
@@ -54051,6 +54089,7 @@ var int ret = emit OUT => &&xxx;
 escape ret;
 ]],
     run = 5,
+    todo = 'TODO: dropped support for vector i/o',
 }
 
 Test { [[
@@ -54063,13 +54102,14 @@ var int ret = emit OUT => &&xxx;
 escape ret;
 ]],
     run = 10,
+    todo = 'TODO: dropped support for vector i/o',
 }
 
 Test { [[
 input byte[]&& IN;
 var int ret = 0;
 par/and do
-    var byte[]&& vec = await IN;
+    vector[] byte&& vec = await IN;
     ret = $*vec;
 with
     async do
@@ -54080,6 +54120,7 @@ end
 escape ret;
 ]],
     run = 5,
+    todo = 'TODO: dropped support for vector i/o',
 }
 
 Test { [[
@@ -54091,7 +54132,8 @@ vector[] int xxx = [1,2,3,4,5];
 var int ret = emit OUT => (0,&&xxx,1);
 escape ret;
 ]],
-    env = 'line 4 : invalid event type : vector only as the last argument'
+    env = 'line 4 : invalid event type : vector only as the last argument',
+    todo = 'TODO: dropped support for vector i/o',
 }
 
 Test { [[
@@ -54105,6 +54147,7 @@ escape ret;
 ]],
     opts = '--tuple-vector',
     run = 21,
+    todo = 'TODO: dropped support for vector i/o',
 }
 
 Test { [[
@@ -54123,6 +54166,7 @@ escape ret;
 ]],
     opts = '--tuple-vector',
     run = 5,
+    todo = 'TODO: dropped support for vector i/o',
 }
 
 Test { [[
@@ -54194,11 +54238,12 @@ escape _V;
 ]],
     run = 5,
     opts = '--tuple-vector',
+    todo = 'TODO: dropped support for vector i/o',
 }
 
 Test { [[
 output/input (var int x)=>byte[]&& PING_PONG;
-var byte[]&&? ret;
+vector[] byte&&? ret;
 par/and do
     var int i,err;
     (i,err,ret) = await PING_PONG_RETURN;
@@ -54214,6 +54259,7 @@ end
 escape 1;
 ]],
     run = 10,
+    todo = 'TODO: dropped support for vector i/o',
 }
 
 Test { [[
@@ -57350,7 +57396,7 @@ end
 pool[] List list;
 
 list = new List.CONS(10, List.NIL());
-var List[]&& lll = &&list;
+vector[] List&& lll = &&list; // TODO fat pointer
 
 *lll = lll:CONS.tail;
 
@@ -63914,9 +63960,9 @@ do return end
 -- BUG: bad message, I want to say that you cannot copy vectors in a single stmt
 Test { [[
 class Test with
-    code/instantaneous FillBuffer (var u8[]&& buf)=>void;
+    code/instantaneous FillBuffer (vector[]&& u8 buf)=>void;
 do
-    code/instantaneous FillBuffer (var u8[]&& buf)=>void do
+    code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
         vector[] u8 b = *buf;
         b = b .. [3];
     end
@@ -63934,7 +63980,7 @@ escape buffer[0];
 
 -- BUG: doesn't check dimension of pointer to vector
 Test { [[
-code/instantaneous FillBuffer (var u8[20]&& buf)=>void do
+code/instantaneous FillBuffer (vector[20]&& u8 buf)=>void do
     *buf = *buf .. [3];
 end
 vector[10] u8 buffer;
@@ -64570,7 +64616,7 @@ class T with
 do
 end
 
-var T[10] ts;
+vector[10] T ts;
 var int   i = 0;
 var int* pi = &i;
 await ts[*pi];
@@ -65381,7 +65427,7 @@ loop do
       await STOP;
    with
       pool[10] Forwarder forwarders;
-      var  Client   [10] clients;
+      vector[10]  Client    clients;
 
       var _pkt_t* pkt;
       every pkt in RECEIVE do

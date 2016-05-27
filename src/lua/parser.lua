@@ -286,7 +286,10 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- (var& int, var/nohold void&&)
     -- (var& int v, var/nohold void&& ptr)
-    , __typepars_pre = EK'var' * OPT(CK'&') * OPT(K'/'*CKEY'hold')
+    , __typepars_pre = KEY'vector' * K'&' * EV'__Dim'
+                     + KEY'pool'   * K'&' * EV'__Dim'
+                     + EKEY'var'   * OPT(CK'&') * OPT(K'/'*CKEY'hold')
+
     , _Typepars_item_id   = V'__typepars_pre' * EV'Type' * EV'__ID_int'
     , _Typepars_item_anon = V'__typepars_pre' * EV'Type' * Cc(false)
     , _Typepars = EK'(' * P'void' * EK')'
@@ -366,6 +369,12 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                             EKEY'with' * V'Dcl_constr' * EKEY'end' +
                             Cc(false)
                           ) )
+            + CKEY'vector' * OPT(CK'&') * EV'__Dim' * EV'Type' * Cc(true)  * (EV'__ID_int'+V'ID_none') *
+                        ( Cc(false) * EKEY'with' * V'Dcl_constr' * EKEY'end'
+                        + K'=' * V'_Var_constr' * (
+                            EKEY'with' * V'Dcl_constr' * EKEY'end' +
+                            Cc(false)
+                          ) )
     , _Var_constr = V'__ID_cls' * (EK'.'-'..') * EV'__ID_int' * EK'(' * EV'ExpList' * EK')'
 
     -- auxiliary
@@ -396,7 +405,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- ddd types
     , _DDD = KEY'ddd' * EV'__ID_abs' * EKEY'with' * (
-                (V'_Vars'+V'_Evts'+V'_Pools'+V'_Dcl_pool') *
+                (V'_Vars'+V'_Vecs'+V'_Pools'+V'_Evts'+V'_Dcl_pool') *
                     (EK';'*K';'^0)
              )^1 * EK'end'
 
@@ -589,11 +598,11 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- Types
 
-    , __type = CK(TYPES) + V'__ID_nat' + V'__ID_abs' + V'__ID_cls' + V'__ID_adt'
-    , Type = V'__type'  -- id (* + [k] + & + ?)^0
-           * ( (CK'&&'-P'&'^3) + (CK'&'-'&&') + CK'?'
-           + K'['*(V'__Exp'+Cc('[]'))*K']'
-             )^0
+    , __type = CK(TYPES) + V'__ID_abs' + V'__ID_cls' + V'__ID_adt'
+    , __type_ptr = CK'&&' -(P'&'^3)
+    , __type_vec = K'[' * V'__Exp' * K']'
+    , Type = V'__type'   * (V'__type_ptr'              )^0 * CK'?'^-1
+           + V'__ID_nat' * (V'__type_ptr'+V'__type_vec')^0 * CK'?'^-1
 
 -- Lists
 
