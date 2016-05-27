@@ -296,6 +296,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Exts     = (CKEY'input'+CKEY'output') * (V'_Typelist'+EV'Type') *
                     EV'__ID_ext' * (K','*EV'__ID_ext')^0
 
+    -- (int, void*)
+    , _Typelist = K'(' * EV'Type' * (EK','*V'Type')^0 * EK')'
+
 -- IDS
 
     , ID_ext  = V'__ID_ext'
@@ -351,10 +354,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                      * Cc(false)     -- recursive
                      * V'_Typepars_ids' * K'=>' * EV'Type'
                      * EV'__ID_ext' * (K','*EV'__ID_ext')^0
-
-    -- (int, void*)
-    , _Typelist_item = Cc(false) * EV'Type' * Cc(false)
-    , _Typelist      = K'(' * EV'_Typelist_item' * (EK','*V'_Typelist_item')^0 * EK')'
 
     -- (var int, var void*)
     , _Typepars_anon_item = EK'var' * Cc(false) * EV'Type' * Cc(false)
