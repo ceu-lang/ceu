@@ -577,6 +577,31 @@ a = do/X end;
     run = 'assertion',
 }
 
+-------------------------------------------------------------------------------
+
+Test { [[
+event void  a;
+event void& b = &a;
+
+par/or do
+    await 1s;
+    emit a;
+with
+    await b;
+end
+
+par/or do
+    await 1s;
+    emit b;
+with
+    await a;
+end
+
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
 --do return end
 
 ----------------------------------------------------------------------------
@@ -1788,7 +1813,8 @@ Test { [[var int a; emit a => 1; escape a;]],
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; escape a;]],
-    parser = 'line 1 : after `a´ : expected `;´',
+    env = 'TODO: a=0',
+    --parser = 'line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
 Test { [[

@@ -326,8 +326,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Pools     = CKEY'pool' * OPT(CK'&') * EV'__Dim' * EV'Type' *
                     EV'__ID_int' * (K','*EV'__ID_int')^0
 
-    --, _Evts_set  = CKEY'event' * OPT(CK'&') * (V'_Typelist'+EV'Type') *
-                    --EV'__vars_set' * (K','*EV'__vars_set')^0
+    , _Evts_set  = CKEY'event' * OPT(CK'&') * (V'_Typelist'+EV'Type') *
+                    EV'__vars_set' * (K','*EV'__vars_set')^0
     , _Evts      = CKEY'event' * OPT(CK'&') * (V'_Typelist'+EV'Type') *
                     EV'__ID_int' * (K','*EV'__ID_int')^0
 
@@ -382,7 +382,12 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Dcl_ifc = KEY'interface' * Cc(true)
                * EV'__ID_cls'
                * EKEY'with' * V'_BlockI' * EKEY'end'
-    , _BlockI = ( (V'__Org'+V'_Vars_set'+EV'_Vars'+V'_Vecs_set'+V'_Vecs'+V'_Evts'+V'_Pools'+V'_Pools_set'+V'_Dcl_pool'+V'_Code_proto'+V'_Dcl_imp')
+    , _BlockI = ( (V'__Org'
+                  + V'_Vars_set'  + EV'_Vars'
+                  + V'_Vecs_set'  + V'_Vecs'
+                  + V'_Pools_set' + V'_Pools'
+                  + V'_Evts_set'  + V'_Evts'
+                  + V'_Dcl_pool' + V'_Code_proto' + V'_Dcl_imp')
                     * (EK';'*K';'^0)
                 + V'Dcl_mode' * K':'
                 )^0
@@ -682,8 +687,12 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __LstStmtB = V'Par'
     , __StmtS    = V'Nothing'
                  + V'__Org'
-                 + V'_Vars_set' + V'_Vars' + V'_Vecs_set' + V'_Vecs' + V'_Evts' + V'_Exts'
-                 + V'_Pools_set'+V'_Pools'+V'_Dcl_pool'
+                 + V'_Vars_set'  + V'_Vars'
+                 + V'_Vecs_set'  + V'_Vecs'
+                 + V'_Pools_set' + V'_Pools'
+                 + V'_Evts_set'  + V'_Evts'
+                 + V'_Exts'
+                 + V'_Dcl_pool'
                  + V'_Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Dcl_det'
                  + V'_Set'
