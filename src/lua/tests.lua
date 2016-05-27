@@ -47,7 +47,7 @@ escape 0;
 -- TODO: incomplete
 Test { [[
 ddd Data with
-    var int& v;
+    var& int v;
 end
 
 code/delayed Code (var& Data d, var int ini) => int
@@ -122,7 +122,7 @@ escape 1;
 -- BUG: already bound
 Test { [[
 ddd Data with
-    var int& v;
+    var& int v;
 end
 
 code/delayed Code (Data& d, int ini) => int
@@ -1209,20 +1209,20 @@ escape 1;
     parser = 'after `int´ : expected identifier',
 }
 Test { [[
-var int&&& v;
+var& int&& v;
 escape 1;
 ]],
-    parser = 'line 1 : after `int´ : expected identifier',
+    env = 'TODO: uninit',
 }
 Test { [[
-var int&& & v;
+var& int&&  v;
 escape 1;
 ]],
     ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
 }
 Test { [[
 var int&& p = null;
-var int&& & v = &p;
+var& int&&  v = &p;
 escape 1;
 ]],
     run = 1,
@@ -1234,7 +1234,7 @@ escape 1;
     env = 'line 1 : invalid type modifier : `&[]´',
 }
 Test { [[
-var int& & v;
+var& int&  v;
 escape 1;
 ]],
     env = 'line 1 : invalid type modifier : `&&´',
@@ -1255,7 +1255,7 @@ escape 1;
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
-var int?& v;
+var& int? v;
 escape 1;
 ]],
     env = 'line 1 : invalid type modifier : `?&´',
@@ -2115,7 +2115,7 @@ escape a + 1;
 
 Test { [[
 var int a;
-var int& pa = &a;
+var& int pa = &a;
 async (pa) do
     emit 1min;
     pa = 10;
@@ -2127,7 +2127,7 @@ escape a + 1;
 
 Test { [[
 var int a = 0;
-var int& pa = &a;
+var& int pa = &a;
 async (pa) do
     emit 1min;
     pa = 10;
@@ -14337,7 +14337,7 @@ escape v;
 Test { [[
 var int v=2;
 var int x=v;
-var int& px = &x;
+var& int px = &x;
 async (px, v) do
     px = v + 1;
 end;
@@ -16076,7 +16076,7 @@ escape ret;
 
 Test { [[
 var int a = 1;
-var int& b = &a;
+var& int b = &a;
 a = 2;
 b = b+a;
 escape a+b;
@@ -16085,7 +16085,7 @@ escape a+b;
 }
 Test { [[
 var int a = 1;
-var int& b = &a;
+var& int b = &a;
 b = &a;
 a = 2;
 escape b;
@@ -16094,7 +16094,7 @@ escape b;
 }
 Test { [[
 var int a = 1;
-var int& b = a;
+var& int b = a;
 a = 2;
 escape b;
 ]],
@@ -16104,7 +16104,7 @@ escape b;
 Test { [[
 var int a = 1;
 var int b = 10;
-var int& c;
+var& int c;
 if a==1 then
     c = &a;
 else
@@ -16118,7 +16118,7 @@ escape a+b;
 Test { [[
 var int a = 1;
 var int b = 10;
-var int& c;
+var& int c;
 if a==0 then
     c = &a;
 else
@@ -16132,7 +16132,7 @@ escape a+b;
 Test { [[
 var int a = 1;
 var int b = 10;
-var int& c;
+var& int c;
 if a==1 then
     c = &a;
     c = 100;
@@ -16146,7 +16146,7 @@ escape a+b;
 Test { [[
 var int a = 1;
 var int b = 10;
-var int& c;
+var& int c;
 if a==1 then
     c = &a;
 else
@@ -16162,7 +16162,7 @@ Test { [[
 native do
     int V = 10;
 end
-var int& v = &_V;
+var& int v = &_V;
 escape v;
 ]],
     --gcc = 'error: assignment makes pointer from integer without a cast',
@@ -16184,7 +16184,7 @@ escape _V;
 
 Test { [[
 var int a = 1;
-var int& b = &&a;
+var& int b = &&a;
 a = 2;
 escape b;
 ]],
@@ -16193,7 +16193,7 @@ escape b;
 }
 Test { [[
 var int x = 10;
-var int& y = &&x;
+var& int y = &&x;
 escape y;
 ]],
     env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
@@ -16203,7 +16203,7 @@ Test { [[
 native do
     int V = 10;
 end
-var int& v;
+var& int v;
 v = &_V;
 escape v;
 ]],
@@ -16223,7 +16223,7 @@ native do
     tp T = { f };
 end
 var int v = 1;
-var int& ref = &v;
+var& int ref = &v;
 escape _T.f(v);
 ]],
     run = 2,
@@ -16231,7 +16231,7 @@ escape _T.f(v);
 
 Test { [[
 var int a = 1;
-var int& b;
+var& int b;
 escape b;
 ]],
     --ref = 'line 3 : reference must be bounded before use',
@@ -16240,7 +16240,7 @@ escape b;
 }
 Test { [[
 var int a = 1;
-var int& b;
+var& int b;
 b = &a;
 a = 2;
 escape b;
@@ -16251,7 +16251,7 @@ Test { [[
 native do
     int V = 10;
 end
-var int& v;
+var& int v;
 v = &_V;
 escape v;
 ]],
@@ -16260,7 +16260,7 @@ escape v;
 }
 
 Test { [[
-var int& a;
+var& int a;
 var int&& b = null;
 a = b;
 await 1s;
@@ -16275,7 +16275,7 @@ native do
     int V = 10;
 end
 var int vv = 10;
-var int& v;
+var& int v;
 v = &&vv;
 await 1s;
 do
@@ -16290,7 +16290,7 @@ native do
     int V = 10;
 end
 var int vv = 10;
-var int& v;
+var& int v;
 v = vv;
 await 1s;
 do
@@ -16306,7 +16306,7 @@ native do
     int V = 10;
 end
 var int vv = 10;
-var int& v;
+var& int v;
 v = &vv;
 await 1s;
 do
@@ -16328,7 +16328,7 @@ escape 1;
 
 Test { [[
 var int a=1, b=2;
-var int& v;
+var& int v;
 if true then
 else
     v = &b;
@@ -16341,7 +16341,7 @@ escape a + b + v;
 }
 Test { [[
 var int a=1, b=2;
-var int& v;
+var& int v;
 if true then
     v = &a;
 else
@@ -16353,13 +16353,13 @@ escape a + b + v;
 }
 Test { [[
 var int a=1, b=2;
-var int& v;
+var& int v;
 if true then
     v = &a;
 else
     v = &b;
 end
-var int& x;
+var& int x;
 if false then
     x = &a;
 else
@@ -16377,7 +16377,7 @@ native do
     int V1 = 10;
     int V2 = 5;
 end
-var int& v;
+var& int v;
 if true then
     v = &_V1;
 else
@@ -16392,13 +16392,13 @@ escape _V1+_V2;
 
 Test { [[
 var int a=1, b=2, c=3;
-var int& v;
+var& int v;
 if true then
     v = &a;
 else
     v = &b;
 end
-var int& x;
+var& int x;
 if false then
     x = &a;
 else/if true then
@@ -16415,13 +16415,13 @@ escape a + b + x + v;
 
 Test { [[
 var int a=1, b=2, c=3;
-var int& v;
+var& int v;
 if true then
     v = &a;
 else
     v = &b;
 end
-var int& x;
+var& int x;
 if false then
     x = &a;
 else
@@ -16441,7 +16441,7 @@ escape a + b + x + v;
 Test { [[
 var int v = 10;
 loop do
-    var int& i = &v;
+    var& int i = &v;
     i = i + 1;
     break;
 end
@@ -16453,7 +16453,7 @@ escape v;
 
 Test { [[
 var int v = 10;
-var int& i;
+var& int i;
 loop do
     i = &v;
     i = i + 1;
@@ -16469,7 +16469,7 @@ escape v;
 Test { [[
 var int v = 10;
 loop do
-    var int&? i = &v;
+    var& int? i = &v;
     i = i + 1;
     break;
 end
@@ -16488,7 +16488,7 @@ escape v!;
 
 Test { [[
 var int v = 10;
-var int&? i;
+var& int? i;
 i = &v;
 i = &v;
 escape i!;
@@ -16498,7 +16498,7 @@ escape i!;
 
 Test { [[
 var int v = 10;
-var int&? i;
+var& int? i;
 loop do
     i = &v;
     i! = i! + 1;
@@ -16510,7 +16510,7 @@ escape v;
 }
 Test { [[
 var int v = 10;
-var int&? i;
+var& int? i;
 i! = &v;
 escape i!;
 ]],
@@ -16519,7 +16519,7 @@ escape i!;
 
 Test { [[
 var int v = 10;
-var int&? i;
+var& int? i;
 loop do
     i! = &v;
     i! = i! + 1;
@@ -16538,7 +16538,7 @@ escape v;
 }
 
 Test { [[
-var _SDL_Surface&? sfc;
+var& _SDL_Surface? sfc;
 every 1s do
     finalize
         sfc = &_TTF_RenderText_Blended();
@@ -16563,7 +16563,7 @@ native do
 end
 var int   v = 1;
 var int&& p = &&v;
-var int&? r;
+var& int? r;
 finalize
     r = &_fff(*p);
 with
@@ -16584,7 +16584,7 @@ native do
 end
 var int   v = 1;
 var int&& p = &&v;
-var int&? r;
+var& int? r;
 finalize
     r = &_fff(*p);
 with
@@ -16596,7 +16596,7 @@ escape r!;
 }
 
 Test { [[
-var int& v;
+var& int v;
 do
     var int x;
     v = &x;
@@ -16608,7 +16608,7 @@ escape 1;
 }
 
 Test { [[
-var int& v;
+var& int v;
 do
     var int x=1;
     v = &x;
@@ -16621,7 +16621,7 @@ escape 1;
 }
 
 Test { [[
-var int& v;
+var& int v;
     var int x=1;
     v = &x;
 escape v;
@@ -16634,8 +16634,8 @@ data V with
     var int v;
 end
 
-var V& v1 = V(1);
-var V& v2, v3;
+var& V v1 = V(1);
+var& V v2, v3;
     v2 = V(2);
     v3 = V(3);
 escape v1.v+v2.v+v3.v;
@@ -16650,8 +16650,8 @@ data V with
 end
 
 var V v1_ = V(1);
-var V& v1 = &v1_;
-var V& v2, v3;
+var& V v1 = &v1_;
+var& V v2, v3;
 do
     var V v2_ = V(2);
     v2 = &v2_;
@@ -16671,7 +16671,7 @@ escape v1.v+v2.v+v3.v;
 Test { [[
 native/nohold _g();
 
-var _SDL_Renderer&? ren;
+var& _SDL_Renderer? ren;
     finalize
         ren = &_f();
     with
@@ -16756,7 +16756,7 @@ end
 Test { [[
 native _f();
 do
-    var int&? a;
+    var& int? a;
     finalize
         a = &_f();
     with
@@ -16770,7 +16770,7 @@ end
 Test { [[
 native _f();
 do
-    var int&? a;
+    var& int? a;
     finalize
         a = &_f();
     with
@@ -16785,7 +16785,7 @@ end
 Test { [[
 native _f();
 do
-    var int&? a;
+    var& int? a;
     finalize
         a = &_f();
     with
@@ -16881,7 +16881,7 @@ escape v;
 
 Test { [[
 input void E;
-var int&? n;
+var& int? n;
 finalize
     this.n = &_f();
 with
@@ -16967,7 +16967,7 @@ native do
 end
 var int r = 0;
 do
-    var int&? a;
+    var& int? a;
     finalize
         a = &_f();
     with
@@ -16990,7 +16990,7 @@ native do
 end
 var int r = 0;
 do
-    var int&? a;
+    var& int? a;
     finalize
         a = &_f();
     with
@@ -17122,7 +17122,7 @@ native do
     }
 end
 
-var int&? v;
+var& int? v;
 finalize
     v = &_getV();
 with
@@ -17141,7 +17141,7 @@ native do
     }
 end
 
-var int&? v1;
+var& int? v1;
 finalize
     v1 = &_getV();
 with
@@ -17149,7 +17149,7 @@ with
 end
 v1 = 20;
 
-var int&? v2;
+var& int? v2;
 finalize
     v2 = &_getV();
 with
@@ -17169,7 +17169,7 @@ native do
     }
 end
 
-var int&? v1;
+var& int? v1;
 finalize
     v1 = &_getV();
 with
@@ -17177,7 +17177,7 @@ with
 end
 v1! = 20;
 
-var int&? v2;
+var& int? v2;
 finalize
     v2 = &_getV();
 with
@@ -17351,7 +17351,7 @@ escape 1;
 
 Test { [[
 data Test with
-    var u8& b;
+    var& u8 b;
 end
 
 var u8 b = 7;
@@ -17383,14 +17383,14 @@ escape x;
 -- REFS: void&
 Test { [[
 var int v = 10;
-var void& p = &v;
+var& void p = &v;
 escape *((int&&)&&p);
 ]],
     run = 10,
 }
 Test { [[
 class T with
-    var void& p;
+    var& void p;
 do
     escape *((int&&)&&this.p);
 end
@@ -19143,7 +19143,7 @@ native do
 end
 native/nohold _dealloc();
 
-var int&? tex;
+var& int? tex;
 finalize
     tex = &_alloc(1);    // v=2
 with
@@ -19166,7 +19166,7 @@ native do
 end
 native/nohold _dealloc();
 
-var int&? tex;
+var& int? tex;
 finalize
     tex = &_alloc(1);    // v=2
 with
@@ -19188,7 +19188,7 @@ native do
 end
 native/nohold _dealloc();
 
-var int&? tex;
+var& int? tex;
 finalize
     tex = &_alloc(1);    // v=2
 with
@@ -19215,7 +19215,7 @@ end
 native/nohold _dealloc();
 
 do
-    var int&? tex;
+    var& int? tex;
     finalize
         tex = &_alloc(1);
     with
@@ -19244,7 +19244,7 @@ end
 native/nohold _dealloc();
 
 do
-    var int&? tex;
+    var& int? tex;
     finalize
         tex = &_alloc(1);
     with
@@ -19273,7 +19273,7 @@ end
 native/nohold _dealloc();
 
 do
-    var int&? tex;
+    var& int? tex;
     finalize
         tex = &_alloc(1);
     with
@@ -19311,7 +19311,7 @@ native/nohold _dealloc();
 var int ret = _V;           // v=1, ret=1
 
 do
-    var _t&? tex;
+    var& _t? tex;
     finalize
         tex = &_alloc(1);    // v=2
     with
@@ -19326,7 +19326,7 @@ end                         // v=4
 ret = ret + _V;             // ret=7
 
 do
-    var _t&? tex;
+    var& _t? tex;
     finalize
         tex = &_alloc(0);    // v=4
     with
@@ -19354,7 +19354,7 @@ native do
     }
 end
 
-var void&? ptr;
+var& void? ptr;
 finalize
     ptr = &_f();
 with
@@ -19373,7 +19373,7 @@ native do
     }
 end
 
-var void&? ptr;
+var& void? ptr;
 finalize
     ptr = &_f();
 with
@@ -19392,7 +19392,7 @@ native do
     }
 end
 
-var void&? ptr;
+var& void? ptr;
 finalize
     ptr = &_f();
 with
@@ -19414,7 +19414,7 @@ native do
 end
 native/nohold _g();
 
-var void&? ptr;
+var& void? ptr;
 finalize
     ptr = &_f();
 with
@@ -19439,7 +19439,7 @@ native/nohold _g();
 var int ret = 0;
 
 do
-    var void&? ptr;
+    var& void? ptr;
     finalize
         ptr = &_f();
     with
@@ -19465,14 +19465,14 @@ native do
     }
 end
 
-var int&? tex1;
+var& int? tex1;
 finalize
     tex1 = &_alloc(1);
 with
     nothing;
 end
 
-var int& tex2 = tex1;
+var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
@@ -19488,14 +19488,14 @@ native do
     }
 end
 
-var int&? tex1;
+var& int? tex1;
 finalize
     tex1 = &_alloc(1);
 with
     nothing;
 end
 
-var int& tex2 = tex1;
+var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
@@ -19527,7 +19527,7 @@ native/nohold _dealloc();
 var int ret = _V;           // v=1, ret=1
 
 do
-    var _t&? tex;
+    var& _t? tex;
     finalize
         tex = &_alloc(1);    // v=2
     with
@@ -19542,7 +19542,7 @@ end                         // v=4
 ret = ret + _V;             // ret=7
 
 do
-    var _t&? tex;
+    var& _t? tex;
     finalize
         tex = &_alloc(0);    // v=4
     with
@@ -19567,7 +19567,7 @@ Test { [[
 native/nohold _SDL_DestroyWindow();
 
 
-var _SDL_Window& win;
+var& _SDL_Window win;
     finalize
         win = &_SDL_CreateWindow("UI - Texture",
                             500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
@@ -19598,7 +19598,7 @@ par/or do
     _V = _V + 100;
 with
     every SDL_REDRAW do
-        var void&? srf;
+        var& void? srf;
         finalize
             srf = &_my_alloc();
         with
@@ -19662,7 +19662,7 @@ escape 1;
 Test { [[
 input void A;
 var int ret=0;
-var int& pret = &ret;
+var& int pret = &ret;
 par/or do
    async(pret) do
       pret=10;
@@ -19679,7 +19679,7 @@ escape ret;
 Test { [[
 input void A;
 var int ret=0;
-var int& pret = &ret;
+var& int pret = &ret;
 par/or do
    async(pret) do
       pret=10;
@@ -19813,7 +19813,7 @@ end;
 
 Test { [[
 var int a = 1;
-var int& pa = &a;
+var& int pa = &a;
 async (a) do
     var int a = do/_
         escape 1;
@@ -20287,7 +20287,7 @@ escape ret;
 
 Test { [[
 var int i=0;
-var int& pi=&i;
+var& int pi=&i;
 async (pi) do
     var int i = 10;
     loop do
@@ -20306,7 +20306,7 @@ escape i;
 
 Test { [[
 var int i=0;
-var int& pi = &i;
+var& int pi = &i;
 async (pi) do
     var int i = 10;
     loop do
@@ -20344,7 +20344,7 @@ escape i;
 
 Test { [[
 var int i = 10;
-var int& pi = &i;
+var& int pi = &i;
 async (pi) do
     loop do
         i = i - 1;
@@ -20361,7 +20361,7 @@ escape i;
 
 Test { [[
 var int sum=0;
-var int& p = &sum;
+var& int p = &sum;
 async (p) do
     var int i = 10;
     var int sum = 0;
@@ -21872,7 +21872,7 @@ native do
         escape &a;
     }
 end
-var int&? p = _f();
+var& int? p = _f();
 escape p;
 ]],
     env = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
@@ -21886,7 +21886,7 @@ native do
         escape &a;
     }
 end
-var int&? p = &_f();
+var& int? p = &_f();
 escape p;
 ]],
     env = 'line 9 : types mismatch (`int´ <= `int&?´)',
@@ -21900,7 +21900,7 @@ native do
         escape &a;
     }
 end
-var int&? p = &_f();
+var& int? p = &_f();
 escape p!;
 ]],
     fin = 'line 8 : attribution requires `finalize´',
@@ -21915,7 +21915,7 @@ native do
         escape &a;
     }
 end
-var int&? p;
+var& int? p;
 finalize
     p = &_f();
 with
@@ -21934,7 +21934,7 @@ native do
         escape &a;
     }
 end
-var int&? p;
+var& int? p;
 finalize
     p = &_f();
 with
@@ -21969,7 +21969,7 @@ native do
 end
 var int a=0;
 do
-    var int&? p;
+    var& int? p;
     finalize
         p = &_f();
     with
@@ -21991,7 +21991,7 @@ native do
 end
 var int a = 10;
 do
-    var int&? p;
+    var& int? p;
     //do
         finalize
             p = &_f();
@@ -22051,7 +22051,7 @@ escape 1;
 Test { [[
 input void OS_START;
 var int h = 10;
-var int& p = &h;
+var& int p = &h;
 do
     var int x = 0;
     await OS_START;
@@ -22782,7 +22782,7 @@ escape b[0] + b[1];
 Test { [[
 vector[] byte bs = [ 1, 2, 3 ];
 var int idx = 1;
-var int& i = &idx;
+var& int i = &idx;
 escape bs[i];
 ]],
     run = 2,
@@ -23302,7 +23302,7 @@ escape b[0];
 }
 Test { [[
 var byte  c = 2;
-var byte& b = &c;
+var& byte b = &c;
 escape b;
 ]],
     gcc = 'error: pointer targets in assignment differ',
@@ -23643,7 +23643,7 @@ escape {v};
 }
 
 Test { [[
-var void&? p;
+var& void? p;
 finalize
     p = &{ NULL };
 with
@@ -23656,7 +23656,7 @@ escape p! ==null;
 }
 
 Test { [[
-var void&? p;
+var& void? p;
 p := { NULL };
 escape 1;
 //escape p==null;
@@ -26555,7 +26555,7 @@ end
 
 Test { [[
 var int  a=10, b=5;
-var int& p = &b;
+var& int p = &b;
 async/thread do
 end
 escape a + b + p;
@@ -26574,7 +26574,7 @@ escape (ret == 1);
 
 Test { [[
 var int  a=10, b=5;
-var int& p = &b;
+var& int p = &b;
 async/thread (a, p) do
     a = a + p;
     atomic do
@@ -26588,7 +26588,7 @@ escape a + b + p;
 
 Test { [[
 var int  a=10, b=5;
-var int& p = &b;
+var& int p = &b;
 var int ret =
     async/thread (a, p) do
         a = a + p;
@@ -26630,7 +26630,7 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    var int& p = &x;
+    var& int p = &x;
     p = 2;
     async/thread (p) do
         p = 2;
@@ -26649,7 +26649,7 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    var int& p = &x;
+    var& int p = &x;
     p = 2;
     async/thread (p) do
         atomic do
@@ -26667,7 +26667,7 @@ escape x;
 
 Test { [[
 var int  a=10, b=5;
-var int& p = &b;
+var& int p = &b;
 async/thread (a, p) do
     a = a + p;
     p = a;
@@ -26690,7 +26690,7 @@ escape 1;
 
 Test { [[
 var int  a=10, b=5;
-var int& p = &b;
+var& int p = &b;
 par/and do
     async/thread (a, p) do
         _usleep(100);
@@ -26710,7 +26710,7 @@ escape a + b + p;
 
 Test { [[
 var int  a=10, b=5;
-var int& p = &b;
+var& int p = &b;
 async/thread (a, p) do
     atomic do
         a = a + p;
@@ -26728,7 +26728,7 @@ native do
     ##include <unistd.h>
 end
 var int ret = 1;
-var int& p = &ret;
+var& int p = &ret;
 par/or do
     async/thread (p) do
         atomic do
@@ -26751,7 +26751,7 @@ native do
     ##include <unistd.h>
 end
 var int ret = 0;
-var int& p = &ret;
+var& int p = &ret;
 par/or do
     async/thread (p) do
         _usleep(]]..i..[[);
@@ -26774,8 +26774,8 @@ end
 
 Test { [[
 var int  v1=10, v2=5;
-var int& p1 = &v1;
-var int& p2 = &v2;
+var& int p1 = &v1;
+var& int p2 = &v2;
 
 par/and do
     async/thread (v1, p1) do
@@ -26797,8 +26797,8 @@ escape v1+v2;
 
 Test { [[
 var int  v1=0, v2=0;
-var int& p1 = &v1;
-var int& p2 = &v2;
+var& int p1 = &v1;
+var& int p2 = &v2;
 
 native do
     int calc ()
@@ -26838,8 +26838,8 @@ escape v1;
 
 Test { [[
 var int  v1=0, v2=0;
-var int& p1 = &v1;
-var int& p2 = &v2;
+var& int p1 = &v1;
+var& int p2 = &v2;
 
 par/and do
     async/thread (p1) do
@@ -26875,8 +26875,8 @@ escape v1;
 
 Test { [[
 var int  v1=0, v2=0;
-var int& p1 = &v1;
-var int& p2 = &v2;
+var& int p1 = &v1;
+var& int p2 = &v2;
 
 native do
     int calc ()
@@ -26917,8 +26917,8 @@ escape v1;
 
 Test { [[
 var int  v1=0, v2=0;
-var int& p1 = &v1;
-var int& p2 = &v2;
+var& int p1 = &v1;
+var& int p2 = &v2;
 
 par/and do
     async/thread (p1) do
@@ -27024,7 +27024,7 @@ escape 10;
 
 Test { [[
 var int a=1;
-var int& pa = &a;
+var& int pa = &a;
 async/thread (pa) do
     emit 1min;
     pa = 10;
@@ -27036,7 +27036,7 @@ escape a + 1;
 }
 Test { [[
 var int a=1;
-var int& pa = &a;
+var& int pa = &a;
 async (pa) do
     emit 1min;
     pa = 10;
@@ -27771,7 +27771,7 @@ var byte[10] str = [] .. "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 var byte[10] cpy;
-var byte[10]& ptr = &cpy;
+var& byte[10] ptr = &cpy;
 ptr = [[ str ]];
 escape ret and (not _strcmp((_char&&)&&str,(_char&&)&&cpy));
 ]=],
@@ -27792,7 +27792,7 @@ native/nohold _strcmp();
 [[ str = '1234567890' ]]
 var byte[2] cpy;
 var byte[20] cpy_;
-var byte[]& ptr = &cpy;
+var& byte[] ptr = &cpy;
 ptr = [[ str ]];
 escape (not _strcmp((_char&&)&&cpy,"1234567890"));
 ]=],
@@ -29035,7 +29035,7 @@ escape *v;
     ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
 }
 Test { [[
-var int& v;
+var& int v;
 do
     var int i = 1;
     v = &i;
@@ -29050,7 +29050,7 @@ escape v;
 Test { [[
 var int i = 0;
 class T with
-    var int& i;
+    var& int i;
 do
     i = 10;
 end
@@ -29065,7 +29065,7 @@ escape i;
 Test { [[
 var int i = 1;
 class T with
-    var int& i;
+    var& int i;
 do
     var int v = 10;
     i = v;
@@ -29081,7 +29081,7 @@ escape i;
 Test { [[
 var int i = 1;
 class T with
-    var int& i;
+    var& int i;
 do
     var int v = 10;
     i = v;
@@ -29097,7 +29097,7 @@ escape t.i;
 Test { [[
 var int i = 0;
 class T with
-    var int& i;
+    var& int i;
 do
     i = 10;
 end
@@ -29122,7 +29122,7 @@ escape 10;
 Test { [[
 var int i = 0;
 class T with
-    var int& i;
+    var& int i;
 do
     var int v = 10;
     i = v;
@@ -29137,7 +29137,7 @@ escape p!:i;
 Test { [[
 var int i = 0;
 class T with
-    var int& i;
+    var& int i;
 do
     var int v = 10;
     i = v;
@@ -29153,7 +29153,7 @@ escape i;
 Test { [[
 var int i = 1;
 class T with
-    var int& i;
+    var& int i;
     var int v = 10;
 do
     v = i;
@@ -29170,7 +29170,7 @@ Test { [[
 input void OS_START;
 var int i = 1;
 class T with
-    var int& i;
+    var& int i;
     var int v = 10;
 do
     await OS_START;
@@ -29189,7 +29189,7 @@ escape t.v;
 Test { [[
 var int i = 0;
 class T with
-    var int& i;
+    var& int i;
 do
     var int v = 10;
     i = v;
@@ -29206,7 +29206,7 @@ escape i;
 Test { [[
 var int i = 1;
 class T with
-    var int&? i;
+    var& int? i;
 do
     var int v = 10;
     i! = v;
@@ -29239,7 +29239,7 @@ escape ret;
 Test { [[
 var int i = 1;
 class T with
-    var int&? i;
+    var& int? i;
 do
     var int v = 10;
     if i? then
@@ -29273,7 +29273,7 @@ escape ret;
 Test { [[
 var int i = 1;
 class T with
-    var int&? i;
+    var& int? i;
 do
     if i? then
     end
@@ -29288,7 +29288,7 @@ escape 1;
 Test { [[
 var int i = 1;
 class T with
-    var int&? i;
+    var& int? i;
     var int  v = 0;
 do
     if i? then
@@ -29321,11 +29321,11 @@ escape ret;
 
 Test { [[
 var int i = 1;
-var int& v = i;
+var& int v = i;
 
 class T with
     var int&& p = null;
-    var int& v = null;
+    var& int v = null;
 do
 end
 
@@ -29341,11 +29341,11 @@ escape *(t.p) + *(t.v);
 
 Test { [[
 var int i = 1;
-var int& v = &i;
+var& int v = &i;
 
 class T with
     var int&& p = null;
-    var int& v;
+    var& int v;
 do
 end
 
@@ -29361,11 +29361,11 @@ escape *(t.p) + (t.v);
 
 Test { [[
 var int i = 1;
-var int& v = &i;
+var& int v = &i;
 
 class T with
     var int&& p = null;
-    var int& v;
+    var& int v;
 do
     await 1s;
     //v = 1;
@@ -32013,7 +32013,7 @@ escape t.v + _V;        // * reads before
 -- internal binding binding
 Test { [[
 class T with
-    var int& i;
+    var& int i;
 do
     var int v = 10;
     i = v;
@@ -32029,7 +32029,7 @@ escape t.i;
 -- internal/constr binding
 Test { [[
 class T with
-    var int& i;
+    var& int i;
 do
     var int v = 10;
     i = v;
@@ -32046,7 +32046,7 @@ escape v;
 -- internal binding
 Test { [[
 class T with
-    var int& i;
+    var& int i;
 do
     var int v = 10;
     i = v;
@@ -32061,7 +32061,7 @@ escape t.i;
 -- internal binding w/ default
 Test { [[
 class T with
-    var int&? i;
+    var& int? i;
 do
     var int v = 10;
     i! = v;
@@ -32075,7 +32075,7 @@ escape t.i!;
 -- internal binding w/ default
 Test { [[
 class T with
-    var int&? i;
+    var& int? i;
 do
     _assert(not i?);
     var int v = 10;
@@ -32090,7 +32090,7 @@ escape t.i!;
 -- external binding w/ default
 Test { [[
 class T with
-    var int&? i;
+    var& int? i;
 do
     _assert(i?);
 end
@@ -32104,7 +32104,7 @@ escape t.i!;
 }
 Test { [[
 class T with
-    var int&? i;
+    var& int? i;
 do
     _assert(not i?);
 end
@@ -32118,7 +32118,7 @@ escape not t.i?;
 -- no binding
 Test { [[
 class T with
-    var int& i;
+    var& int i;
 do
 end
 var T t;
@@ -32130,7 +32130,7 @@ escape 1;
 
 Test { [[
 class T with
-    var int& i;
+    var& int i;
 do
 end
 
@@ -32150,7 +32150,7 @@ escape t1.i;
 
 Test { [[
 class T with
-    var int& i;
+    var& int i;
 do
 end
 
@@ -32170,7 +32170,7 @@ escape t1.i;
 
 Test { [[
 class T with
-    var int& i;
+    var& int i;
 do
     var int v = 10;
     i = v;
@@ -32186,7 +32186,7 @@ escape 1;
 
 Test { [[
 class Integral with
-    var   int& v;
+    var&   int v;
     event int  e;
 do
     every dv in e do
@@ -32216,10 +32216,10 @@ var LaserExitFactory x;
 
 Test { [[
 interface Global with
-    var int& v;
+    var& int v;
 end
 var int  um = 1;
-var int& v;// = um;
+var& int v;// = um;
 escape global:v;
 ]],
     ref = 'line 6 : invalid access to uninitialized variable "v" (declared at tests.lua:2)',
@@ -32229,10 +32229,10 @@ escape global:v;
 
 Test { [[
 interface Global with
-    var int& v;
+    var& int v;
 end
 var int  um = 1;
-var int& v = &um;
+var& int v = &um;
 escape 1;//global:v;
 ]],
     run = 1,
@@ -32240,10 +32240,10 @@ escape 1;//global:v;
 
 Test { [[
 interface Global with
-    var int& v;
+    var& int v;
 end
 var int  um = 1;
-var int& v = &um;
+var& int v = &um;
 escape global:v;
 ]],
     run = 1,
@@ -32251,11 +32251,11 @@ escape global:v;
 
 Test { [[
 interface Global with
-    var int& v;
+    var& int v;
 end
 
 var int  um = 111;
-var int& v = &um;
+var& int v = &um;
 
 class T with
     var int v=0;
@@ -32272,7 +32272,7 @@ escape t.v;
 Test { [[
 interface Global with
 end
-var int&? win;
+var& int? win;
 if win? then end;
 escape 1;
 ]],
@@ -32286,11 +32286,11 @@ do
 end
 
 interface Global with
-    var T& t;
+    var& T t;
 end
 
 var T t_;
-var T& t = &t_;
+var& T t = &t_;
 
 escape global:t.v;
 ]],
@@ -32303,11 +32303,11 @@ do
 end
 
 interface Global with
-    var T& t;
+    var& T t;
 end
 
 var T t_;
-var T& t = &t_;
+var& T t = &t_;
 global:t = &t;
 
 escape global:t.v;
@@ -32323,7 +32323,7 @@ end
 var T t;
 
 class U with
-    var T& t;
+    var& T t;
 do
     emit t.e;
 end
@@ -32345,13 +32345,13 @@ end
 var T t;
 
 class U with
-    var T& t;
+    var& T t;
 do
     t.x = 1;
 end
 
 class V with
-    var U& u;
+    var& U u;
 do
     u.t.x = 2;
 end
@@ -32377,13 +32377,13 @@ end
 var T t;
 
 class U with
-    var T& t;
+    var& T t;
 do
     t.x = 1;
 end
 
 class V with
-    var U& u;
+    var& U u;
 do
     var U&& p = &&u;
     p:t.x = 2;
@@ -32404,7 +32404,7 @@ escape t.x + u.t.x + v.u.t.x;
 
 Test { [[
 class Ship with
-    var int& v;
+    var& int v;
 do
 end
 
@@ -32422,7 +32422,7 @@ end
 
 Test { [[
 class T with
-    var int& v;
+    var& int v;
 do
 end
 var T t with
@@ -32435,7 +32435,7 @@ escape 1;
 }
 Test { [[
 class T with
-    var int& v;
+    var& int v;
 do
 end
 var T t with
@@ -32449,12 +32449,12 @@ escape 1;
 
 Test { [[
 class Test with
-    var u8& v;
+    var& u8 v;
 do
     var int x = v;
 end
 
-var u8& v;
+var& u8 v;
 
 do Test with
     this.v = &v;
@@ -32487,7 +32487,7 @@ escape 1;
 }
 Test { [[
 class T with
-    var int& v;
+    var& int v;
 do
 end
 var int x = 10;
@@ -32506,7 +32506,7 @@ data V with
 end
 
 class T with
-    var V& v;
+    var& V v;
 do
 end
 
@@ -32532,7 +32532,7 @@ escape t1.v.v + t2.v.v + t3.v.v;
 
 Test { [[
 class T with
-    var int& v;
+    var& int v;
 do
 end
 var int x = 10;
@@ -33305,7 +33305,7 @@ native/nohold _myfree();
 class T with
     var int x = 10;
 do
-    var void&? ptr;
+    var& void? ptr;
     finalize
         ptr = &_myalloc();
     with
@@ -33332,7 +33332,7 @@ native/nohold _myfree();
 class T with
     var int x = 10;
 do
-    var void&? ptr;
+    var& void? ptr;
     finalize
         ptr = &_myalloc();
     with
@@ -34478,7 +34478,7 @@ do
 end
 
 class U with
-    var T& t;
+    var& T t;
     var bool only_await;
 do
     par/or do
@@ -34525,7 +34525,7 @@ do
 end
 
 class U with
-    var T& t;
+    var& T t;
     var bool only_await;
 do
     par/or do
@@ -34575,7 +34575,7 @@ do
 end
 
 class U with
-    var T& t;
+    var& T t;
     var bool only_await;
 do
     par/or do
@@ -34622,7 +34622,7 @@ do
 end
 
 class U with
-    var T& t;
+    var& T t;
     var bool only_await;
 do
     par/or do
@@ -34671,7 +34671,7 @@ do
 end
 
 class U with
-    var T& t;
+    var& T t;
     var bool only_await;
 do
     if only_await then
@@ -34715,7 +34715,7 @@ do
 end
 
 class U with
-    var T& t;
+    var& T t;
     var bool only_await;
 do
     if only_await then
@@ -35645,7 +35645,7 @@ interface IPingu with
 end
 
 class WalkerAction with
-    var IPingu& pingu;
+    var& IPingu pingu;
 do
 end
 
@@ -35669,7 +35669,7 @@ interface IPingu with
 end
 
 class WalkerAction with
-    var IPingu& pingu;
+    var& IPingu pingu;
 do
 end
 
@@ -35835,7 +35835,7 @@ native do
     int V = 0;
 end
 var int i=0;
-var int& r = &i;
+var& int r = &i;
 
 class T with
 do
@@ -35867,7 +35867,7 @@ escape _V;
 
 Test { [[
 class Body with
-    var int& sum;
+    var& int sum;
 do
     sum = sum + 1;
 end
@@ -35889,7 +35889,7 @@ end;
 
 class Body with
     pool  X[]& bodies;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     var X&&? nested =
@@ -35917,7 +35917,7 @@ end;
 
 class Body with
     pool  X[]& bodies;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     var X&&? nested =
@@ -35955,7 +35955,7 @@ end
 
 class Body with
     pool  X[]& bodies;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     var X&&? nested =
@@ -36173,7 +36173,7 @@ escape _V;
 Test { [[
 class Body with
     pool  Body[]& bodies;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     var Body&&? nested =
@@ -36207,7 +36207,7 @@ escape sum;
 Test { [[
 class Body with
     pool Body[]& bodies;
-    var  int&     sum;
+    var&  int     sum;
 do
     var Body&&? nested =
         spawn Body in bodies with
@@ -36255,7 +36255,7 @@ escape sum;
 Test { [[
 class Body with
     pool Body[1]& bodies;
-    var  int&     sum;
+    var&  int     sum;
 do
     var Body&&? nested =
         spawn Body in bodies with
@@ -36283,7 +36283,7 @@ escape sum;
 Test { [[
 class Body with
     pool Body[1]& bodies;
-    var  int&     sum;
+    var&  int     sum;
 do
     var Body&&? nested =
         spawn Body in bodies with
@@ -36309,7 +36309,7 @@ escape sum;
 Test { [[
 class Body with
     pool Body[1]& bodies;
-    var  int&     sum;
+    var&  int     sum;
 do
     var Body&&? nested =
         spawn Body in bodies with
@@ -36335,7 +36335,7 @@ escape sum;
 Test { [[
 class Body with
     pool Body[1]& bodies;
-    var  int&     sum;
+    var&  int     sum;
 do
     spawn Body in bodies with
         this.bodies = &bodies;
@@ -36364,7 +36364,7 @@ escape sum;
 Test { [[
 class Body with
     pool Body[1]& bodies;
-    var  int&     sum;
+    var&  int     sum;
 do
     sum = sum + 1;
     loop do
@@ -36391,7 +36391,7 @@ escape sum;
 Test { [[
 class Body with
     pool Body[1]& bodies;
-    var  int&     sum;
+    var&  int     sum;
 do
     sum = sum + 1;
     loop do
@@ -36427,7 +36427,7 @@ end
 
 class Body with
     pool  Body[]& bodies;
-    var   Sum&    sum;
+    var&   Sum    sum;
 do
     *this.sum.v = *this.sum.v + 1;
     spawn Body in this.bodies with
@@ -36462,7 +36462,7 @@ end
 
 class Body with
     pool  Body[]& bodies;
-    var   Sum&    sum;
+    var&   Sum    sum;
 do
     await 1s;
     *this.sum.v = *this.sum.v + 1;
@@ -38361,7 +38361,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     finalize
         v = &_f();
     with
@@ -38399,7 +38399,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     if v? then end;
     finalize
         v = &_f();
@@ -38519,7 +38519,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     finalize
         v = &_f();
     with
@@ -38561,7 +38561,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     if v? then end
     finalize
         v = &_f();
@@ -38643,7 +38643,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     finalize
         v = &_f();
     with
@@ -38686,7 +38686,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     if v? then end
     finalize
         v = &_f();
@@ -38733,7 +38733,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     finalize
         v = &_f();
     with
@@ -38778,7 +38778,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     if v? then end;
     finalize
         v = &_f();
@@ -38827,7 +38827,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     finalize
         v = &_f();
     with
@@ -38875,7 +38875,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     finalize
         v = &_f();
     with
@@ -38924,7 +38924,7 @@ end
 
 class V with
 do
-    var int&? v;
+    var& int? v;
     if v? then end;
     finalize
         v = &_f();
@@ -39286,7 +39286,7 @@ escape 1;
 Test { [[
 class U with do end;
 class T with
-    var U& u;
+    var& U u;
 do
 end
 
@@ -39323,7 +39323,7 @@ escape 1;
 Test { [[
 class U with do end;
 class T with
-    var U& u;
+    var& U u;
 do
 end
 
@@ -41180,7 +41180,7 @@ escape t.v;
 -- use of global before its initialization
 Test { [[
 interface Global with
-    var int& vvv;
+    var& int vvv;
 end
 
 class T with
@@ -41191,7 +41191,7 @@ end
 var T t;
 
 var int  um = 111;
-var int& vvv = &um;
+var& int vvv = &um;
 escape t.v;
 ]],
     ref = 'line 8 : invalid access to uninitialized variable "vvv" (declared at tests.lua:2)',
@@ -41983,7 +41983,7 @@ native do
     void* v;
 end
 class T with
-    var _void& ptr;
+    var& _void ptr;
 do
 end
 var T t with
@@ -42011,9 +42011,9 @@ class T with
 do
 end
 var int&& p1=null;
-var int&& & v=&p1;
+var& int&&  v=&p1;
 var T&& p=null;
-var T&& & t=&p;
+var& T&&  t=&p;
 escape 1;
 ]],
     run = 1;
@@ -42023,8 +42023,8 @@ Test { [[
 class T with
 do
 end
-var int& && v;
-var T& && t;
+var& int && v;
+var& T && t;
 escape 1;
 ]],
     env = 'line 4 : invalid type modifier : `&&&´',
@@ -42213,7 +42213,7 @@ interface I with
     var int v;
 end
 class T with
-    var I& parent;
+    var& I parent;
     pool I[1] is;
 do
     if &&parent==null then end;
@@ -42759,7 +42759,7 @@ native do
 end
 class T with do end
 spawn T with
-            var _int&? intro_story_str;
+            var& _int? intro_story_str;
             finalize
                 intro_story_str = &_f();
             with
@@ -42779,7 +42779,7 @@ native do
     }
 end
 
-var int&? v;
+var& int? v;
 finalize
     v = &_getV();
 with
@@ -42787,7 +42787,7 @@ with
 end
 
 class T with
-    var int& v;
+    var& int v;
 do
     v = 20;
 end
@@ -42802,7 +42802,7 @@ escape v!;
 Test { [[
 input int&& SPRITE_DELETE;
 class Sprite with
-    var int& me;
+    var& int me;
 do
     par/or do
         await SPRITE_DELETE until &&this.me==null;
@@ -44855,7 +44855,7 @@ do
 end
 
 var T t;
-var I& i = &t;
+var& I i = &t;
 
 code/instantaneous G (void)=>void do
     i.f();
@@ -44882,7 +44882,7 @@ do
 end
 
 var T t;
-var I& i = &t;
+var& I i = &t;
 
 code/instantaneous G (void)=>void do
     i.f();
@@ -44920,7 +44920,7 @@ do
 end
 
 var T t;
-var I& i = &t;
+var& I i = &t;
 
 code/instantaneous G (void)=>void do
     call/recursive i.f();
@@ -45232,7 +45232,7 @@ code/instantaneous F (T& t)=>int do
 end
 
 var T t;
-var int ret = f(&t);
+var& int ret = f(t);
 
     var T u with
         this.v = 20;
@@ -45255,7 +45255,7 @@ code/instantaneous F (T& t)=>int do
 end
 
 var T t;
-var int ret = f(&t);
+var& int ret = f(t);
 
 do
     var T u with
@@ -45317,7 +45317,7 @@ end
 
 class Man with
     interface Human;
-    var CommonThings& ct;
+    var& CommonThings ct;
     var int n = 100;
 do
     code/instantaneous Walk (void)=>int do
@@ -45478,7 +45478,7 @@ class T with do end
 pool T[] ts;
 
 class U with
-    var int& ts;
+    var& int ts;
 do
 end
 
@@ -45588,7 +45588,7 @@ class T with
     code/instantaneous Fff (int& xxx3)=>void;
 do
     code/instantaneous Fff (int& xxx3)=>void do
-        var int& xxx4 = &xxx3;
+        var& int xxx4 = &xxx3;
         this.xxx2 = xxx4;
     end
     this.xxx2 = 1;
@@ -45777,7 +45777,7 @@ escape ret;
 
 Test { [[
 class T with
-    var int& x;
+    var& int x;
     code/instantaneous Fff (int& x)=>T;
 do
     code/instantaneous Fff (int& x)=>T do
@@ -45795,7 +45795,7 @@ escape x;
 
 Test { [[
 class T with
-    var int& x;
+    var& int x;
     code/instantaneous Fff (int& x)=>T;
 do
     code/instantaneous Fff (int& x)=>T do
@@ -45808,7 +45808,7 @@ escape 1;
 
 Test { [[
 class T with
-    var int& x;
+    var& int x;
     code/instantaneous Fff (int& x)=>T;
 do
     this.x = 1;
@@ -45840,7 +45840,7 @@ escape ttt.xxx2;
 
 Test { [[
 class T with
-    var int& xxx2;
+    var& int xxx2;
     code/instantaneous Fff (int& xxx3)=>T;
 do
     code/instantaneous Fff (int& xxx3)=>T do
@@ -45858,7 +45858,7 @@ escape xxx1;
 
 Test { [[
 class T with
-    var int& vvv;
+    var& int vvv;
 do
 end
 var T t;
@@ -45867,7 +45867,7 @@ escape 1;
     ref = 'line 5 : missing initialization for field "vvv" (declared in tests.lua:2)',
 }
 Test { [[
-var int& vvv;
+var& int vvv;
 escape vvv;
 ]],
     ref = 'line 2 : invalid access to uninitialized variable "vvv" (declared at tests.lua:1)',
@@ -45877,7 +45877,7 @@ class TimeDisplay with
     code/instantaneous Build (int& vvv)=>TimeDisplay;
 do
     var int x = 0;
-    var int& vvv = &x;
+    var& int vvv = &x;
 
     code/instantaneous Build (int& vvv)=>TimeDisplay do
         this.vvv = &vvv;
@@ -45893,7 +45893,7 @@ class TimeDisplay with
     code/instantaneous Build (int& vvv)=>TimeDisplay;
 do
     var int x = 0;
-    var int& vvv;
+    var& int vvv;
 
     code/instantaneous Build (int& vvv)=>TimeDisplay do
         //this.vvv = &vvv;
@@ -45920,7 +45920,7 @@ native do
     }
 end
 
-var int&? v;
+var& int? v;
 finalize
     v = &_getV();
 with
@@ -45928,7 +45928,7 @@ with
 end
 
 class T with
-    var int&? v;
+    var& int? v;
 do
     v! = 20;
 end
@@ -45948,7 +45948,7 @@ native do
     }
 end
 
-var int&? v;
+var& int? v;
 finalize
     v = &_getV();
 with
@@ -45956,7 +45956,7 @@ with
 end
 
 class T with
-    var int&? v;
+    var& int? v;
 do
     v! = 20;
 end
@@ -45976,7 +45976,7 @@ native do
     }
 end
 
-var int&? v;
+var& int? v;
 finalize
     v = &_getV();
 with
@@ -45984,7 +45984,7 @@ with
 end
 
 class T with
-    var int& v;
+    var& int v;
 do
     v = 20;
 end
@@ -46004,7 +46004,7 @@ native do
     }
 end
 
-var int&? v;
+var& int? v;
 finalize
     v = &_getV();
 with
@@ -46012,7 +46012,7 @@ with
 end
 
 class T with
-    var int& v;
+    var& int v;
 do
     v = 20;
 end
@@ -46032,7 +46032,7 @@ native do
     }
 end
 
-var _int&? v;
+var& _int? v;
 finalize
     v = &_getV();
 with
@@ -46040,7 +46040,7 @@ with
 end
 
 class T with
-    var _int& v;
+    var& _int v;
 do
     v = 20;
 end
@@ -46060,7 +46060,7 @@ native do
     }
 end
     code/instantaneous Parse_file (void) => void do
-            var int&? intro_story_str;
+            var& int? intro_story_str;
             if intro_story_str? then end;
             finalize
                 intro_story_str = &_new_Int();
@@ -46077,7 +46077,7 @@ Test { [[
 native/pure _new_String();
 class String with
 do
-    var _std__string&? ss = &_new_String();
+    var& _std__string? ss = &_new_String();
 end
 escape 1;
 ]],
@@ -46125,7 +46125,7 @@ escape t.vs[0];
 
 Test { [[
 interface I with
-    var int& v;
+    var& int v;
 end
 
 class T with
@@ -46153,7 +46153,7 @@ escape t.v;
 
 Test { [[
 interface I with
-    var int& v;
+    var& int v;
 end
 
 class T with
@@ -46720,7 +46720,7 @@ vector[] U&& us = [null];
 
 await 1s;
 
-var T t = T.build(&us);
+var& T t = T.build(us);
 var U&& u = us[0];
 
 escape u==null;
@@ -46811,7 +46811,7 @@ escape us[0]?+1;
 
 Test { [[
 class T with
-    var int& i;
+    var& int i;
     code/instantaneous Build (int& i)=>T;
 do
     code/instantaneous Build (int& i)=>T do
@@ -46832,7 +46832,7 @@ native do
 end
 native/pure _ID();
 class T with
-    var int& i;
+    var& int i;
     code/instantaneous Build (int& i)=>T;
 do
     code/instantaneous Build (int& i)=>T do
@@ -48318,7 +48318,7 @@ Test { [[
     end
 
     class QueueForever with
-      var Queue& queue;
+      var& Queue queue;
       var int val, maxval;
     do
       if val < maxval then
@@ -49935,7 +49935,7 @@ escape 1;
 }
 Test { [[
 class Run with
-    var int& cmds;
+    var& int cmds;
 do
 end
 
@@ -49953,7 +49953,7 @@ escape 1;
 }
 Test { [[
 class Run with
-    var int& cmds;
+    var& int cmds;
 do
 end
 
@@ -50366,7 +50366,7 @@ do
 end
 
 class UIGrid with
-    var UIGridPool& uis;
+    var& UIGridPool uis;
 do
 end
 
@@ -50411,7 +50411,7 @@ do
 end
 
 class UIGrid with
-    var UIGridPool& uis;
+    var& UIGridPool uis;
 do
 end
 
@@ -50432,7 +50432,7 @@ escape 1;
 
 Test { [[
 interface Screen with
-    var _GUIScreen&? me;
+    var& _GUIScreen? me;
 end
 
 interface IWorldmapScreen with
@@ -50476,7 +50476,7 @@ do
 end
 
 class UIGrid with
-    var UIGridPool& uis;
+    var& UIGridPool uis;
 do
 end
 
@@ -52096,7 +52096,7 @@ class T with
     event int ok;
 do
     var int v=0;
-    var int& p = &v;
+    var& int p = &v;
     async/thread (p) do
         var int ret = 0;
         loop i in 50000 do
@@ -52151,7 +52151,7 @@ par/and do
    end
    var U u;
 with
-   var T& t = await e;
+   var& T t = await e;
    t.x = 1;
    await 1s;
 end
@@ -52175,7 +52175,7 @@ par/and do
    end
    var U u;
 with
-   var T& t;
+   var& T t;
    var int i;
    (t,i) = await e;
    t.x = 1;
@@ -52188,7 +52188,7 @@ escape 1;
 }
 
 Test { [[
-var int& i = 1;
+var& int i = 1;
 escape 1;
 ]],
     ref = 'line 1 : invalid attribution',
@@ -52196,7 +52196,7 @@ escape 1;
 
 Test { [[
 var int&& p=null;
-var int& i = *p;
+var& int i = *p;
 escape 1;
 ]],
     ref = 'line 2 : invalid attribution',
@@ -52204,7 +52204,7 @@ escape 1;
 
 Test { [[
 event int e;
-var int& i = await e;
+var& int i = await e;
 escape 1;
 ]],
     ref = 'line 2 : invalid attribution',
@@ -52212,7 +52212,7 @@ escape 1;
 
 Test { [[
 event int& e;
-var int& i = await e;
+var& int i = await e;
 escape 1;
 ]],
     env = 'line 1 : invalid event type',
@@ -52226,7 +52226,7 @@ pre native do
     typedef int t;
 end
 class T with
-    var _t& t;
+    var& _t t;
 do
     await 1s;
     _f(&&t);
@@ -52351,7 +52351,7 @@ input void OS_START;
 var int a = 1;
 event int& e;
 par do
-    var int& v = await e;
+    var& int v = await e;
     v = v + 1;
 with
     await OS_START;
@@ -52369,7 +52369,7 @@ input void OS_START;
 var int a = 1;
 event (int,int&) e;
 par do
-    var int& r;
+    var& int r;
     var int  v;
     (v,r) = await e;
     r = r + v;
@@ -52406,7 +52406,7 @@ interface Object with
     var _int v;
 end
 class MoveObject with
-    var Object& obj;
+    var& Object obj;
 do
     await 1s;
     obj.v = 1;
@@ -52421,7 +52421,7 @@ interface Object with
     var _int v;
 end
 class MoveObject with
-    var Object& obj;
+    var& Object obj;
 do
     await 1s;
     obj.v = 1;
@@ -52451,7 +52451,7 @@ do
     this.v = 10;
 end
 class MoveObject with
-    var Object& obj;
+    var& Object obj;
 do
     await 1s;
     obj.v = 1;
@@ -52469,7 +52469,7 @@ end
 var T t with
     this.v = 10;
 end;
-var T& tt = &t;
+var& T tt = &t;
 tt.v = 5;
 escape t.v;
 ]],
@@ -52489,7 +52489,7 @@ do
 end
 class MoveObject with
     var _int v=0;
-    var Object& obj;
+    var& Object obj;
 do
     await 1s;
     obj.v = 1;
@@ -52517,8 +52517,8 @@ do
 end;
 
 class Receiver with
-    var Parser& up;
-    var Frame& rx;
+    var& Parser up;
+    var& Frame rx;
     event void evtReady;
 do
     par do
@@ -52689,7 +52689,7 @@ escape t.o+t.io+t.oi;
 Test { [[
 class T with
     input/output:
-        var int& io;
+        var& int io;
 do
     var int io_ = 1;
     io = &io_;
@@ -52701,7 +52701,7 @@ escape 1;
 Test { [[
 class T with
     input/output:
-        var int& io;
+        var& int io;
 do
     var int io_ = 1;
     this.io = &io_;
@@ -52714,7 +52714,7 @@ escape 1;
 Test { [[
 class T with
     output/input:
-        var int& oi;
+        var& int oi;
 do
     var int oi_=0;
     oi = &oi_;
@@ -52731,7 +52731,7 @@ escape 1;
 Test { [[
 class T with
     output/input:
-        var int& oi;
+        var& int oi;
 do
     var int oi_=0;
     this.oi = &oi_;
@@ -52749,16 +52749,16 @@ escape 1;
 Test { [[
 class T with
     input:
-        var int& i;
+        var& int i;
 
     output:
-        var int& o;
+        var& int o;
 
     input/output:
-        var int& io;
+        var& int io;
 
     output/input:
-        var int& oi;
+        var& int oi;
 do
     var int o_  = 1;
     var int io_ = 1;
@@ -52792,16 +52792,16 @@ escape t.o+t.io+t.oi;
 Test { [[
 class T with
     input:
-        var int& i;
+        var& int i;
 
     output:
-        var int& o;
+        var& int o;
 
     input/output:
-        var int& io;
+        var& int io;
 
     output/input:
-        var int& oi;
+        var& int oi;
 do
     var int o_  = 1; if o_ then end;
     var int io_ = 1; if io_ then end;
@@ -52907,7 +52907,7 @@ escape 1;
 Test { [[
 class T with
     input:
-        var int& i;
+        var& int i;
 do
 end
 var T t with
@@ -52920,7 +52920,7 @@ escape 1;
 Test { [[
 class T with
     input:
-        var int& io;
+        var& int io;
 do
 end
 var T t with
@@ -52933,7 +52933,7 @@ escape 1;
 Test { [[
 class T with
     output:
-        var int& o;
+        var& int o;
 do
 end
 escape 1;
@@ -52944,7 +52944,7 @@ escape 1;
 Test { [[
 class T with
     output/input:
-        var int& oi;
+        var& int oi;
 do
 end
 escape 1;
@@ -52955,16 +52955,16 @@ escape 1;
 Test { [[
 class T with
     input:
-        var int& i;
+        var& int i;
 
     output:
-        var int& o;
+        var& int o;
 
     input/output:
-        var int& io;
+        var& int io;
 
     output/input:
-        var int& oi;
+        var& int oi;
 do
     var int o_ = 1;
     o  = &o_;
@@ -52982,16 +52982,16 @@ escape 1;
 Test { [[
 class T with
     input:
-        var int& i;
+        var& int i;
 
     output:
-        var int& o;
+        var& int o;
 
     input/output:
-        var int& io;
+        var& int io;
 
     output/input:
-        var int& oi;
+        var& int oi;
 do
     var int o_ = 1;
     this.o  = &o_;
@@ -53064,13 +53064,13 @@ escape 1;
 Test { [[
 interface I with
 output:
-    var int& v;
+    var& int v;
 end
 
 class Bridger with
-    var I& i;
+    var& I i;
 do
-    var int& v = &this.i.v;
+    var& int v = &this.i.v;
     if v then end;
 end
 escape 1;
@@ -53110,7 +53110,7 @@ do
 end
 
 class U with
-    var T& t;
+    var& T t;
 do
     vector[] byte& name = &this.t.name;
 end
@@ -53230,7 +53230,7 @@ end
 
 Test { [[
 var int v = 1;
-var int&? x;
+var& int? x;
 if 0 then
     x = &v;
 else
@@ -54930,7 +54930,7 @@ escape c.d.x;
 
 Test { [[
 class T with
-    var float& v;
+    var& float v;
 do
     await FOREVER;
 end
@@ -54953,7 +54953,7 @@ escape t.v;
 
 Test { [[
 class T with
-    var float& v;
+    var& float v;
 do
     await FOREVER;
 end
@@ -54975,7 +54975,7 @@ escape 1;
 
 Test { [[
 class T with
-    var float& v;
+    var& float v;
 do
     await FOREVER;
 end
@@ -55020,7 +55020,7 @@ data E with
     tag NOTHING;
 or
     tag X with
-        var D& d;
+        var& D d;
     end
 end
 
@@ -55041,7 +55041,7 @@ data E with
     tag NOTHING;
 or
     tag X with
-        var D& d;
+        var& D d;
     end
 end
 
@@ -55064,7 +55064,7 @@ data E with
     tag NOTHING;
 or
     tag X with
-        var D& d;
+        var& D d;
     end
 end
 
@@ -55107,14 +55107,14 @@ data Leaf with
     tag NOTHING;
 or
     tag TWEEN with
-        var Ball& ball;
+        var& Ball ball;
     end
 end
 
 class LeafHandler with
-    var Leaf& leaf;
+    var& Leaf leaf;
 do
-    var Ball& ball = &leaf.TWEEN.ball;
+    var& Ball ball = &leaf.TWEEN.ball;
     escape ball.x;
 end
 
@@ -55181,7 +55181,7 @@ end
 class Body with
     pool  Body[]& bodies;
     var   Tree&&   n;
-    var   Sum&    sum;
+    var&   Sum    sum;
 do
     watching *n do
         if n:NODE then
@@ -55218,7 +55218,7 @@ data Vector3f with
 end
 
 class SurfaceBackground with
-    var _WorldObjs__SurfaceBackground& me;
+    var& _WorldObjs__SurfaceBackground me;
 do
     code/instantaneous Set_pos (_Vector3f&& p)=>void do
         this.me.pos = Vector3f(p:x, p:y, p:z);
@@ -55246,7 +55246,7 @@ escape d1.x + d2.x + d1.y + d2.y;
 Test { [[
 data D with
     var int  x;
-    var int& y;
+    var& int y;
 end
 
 var int v = 10;
@@ -56225,7 +56225,7 @@ escape not i?;
 
 Test { [[
 var int v = 10;
-var int&? i;
+var& int? i;
 escape not i?;
 ]],
     --ref = 'line 3 : reference must be bounded before use',
@@ -56234,7 +56234,7 @@ escape not i?;
 
 Test { [[
 var int v = 10;
-var int&? i;
+var& int? i;
 escape not i?;
 ]],
     run = 1,
@@ -56242,7 +56242,7 @@ escape not i?;
 
 Test { [[
 var int v = 10;
-var int&? i;
+var& int? i;
 escape not i?;
 ]],
     run = 1,
@@ -56250,7 +56250,7 @@ escape not i?;
 
 Test { [[
 var int v = 10;
-var int&? i = &v;
+var& int? i = &v;
 escape i!;
 ]],
     run = 10,
@@ -56259,7 +56259,7 @@ escape i!;
 Test { [[
 var int v1 = 0;
 var int v2 = 1;
-var int&? i = &v1;
+var& int? i = &v1;
 i! = v2;
 escape v1;
 ]],
@@ -56270,7 +56270,7 @@ escape v1;
 Test { [[
 var int v1 = 0;
 var int v2 = 1;
-var int&? i = &v1;
+var& int? i = &v1;
 i = v2;
 escape v1;
 ]],
@@ -56279,7 +56279,7 @@ escape v1;
 Test { [[
 var int v1 = 0;
 var int v2 = 1;
-var int&? i = &v1;
+var& int? i = &v1;
 i = &v2;
 escape v1;
 ]],
@@ -56290,7 +56290,7 @@ escape v1;
 Test { [[
 var int v1 = 0;
 var int v2 = 1;
-var int&? i = &v1;
+var& int? i = &v1;
 i! = v2;
 escape v1;
 ]],
@@ -56299,7 +56299,7 @@ escape v1;
 
 Test { [[
 var int v = 10;
-var int& i = &v;
+var& int i = &v;
 escape v + i;
 ]],
     run = 20,
@@ -56307,7 +56307,7 @@ escape v + i;
 
 Test { [[
 var int v = 10;
-var int&? i = &v;
+var& int? i = &v;
 escape v + i!;
 ]],
     run = 20,
@@ -56316,7 +56316,7 @@ escape v + i!;
 Test { [[
 var int v1 = 10;
 var int v2 =  1;
-var int&? i = &v1;
+var& int? i = &v1;
 i! = v2;
 i! = 10;
 var int ret = i!;
@@ -56327,7 +56327,7 @@ escape v1 + v2 + ret;
 
 Test { [[
 class T with
-    var int&? i;
+    var& int? i;
 do
     var int v = 10;
     this.i! = v;
@@ -56340,7 +56340,7 @@ escape t.i!;
 }
 Test { [[
 class T with
-    var int&? i;
+    var& int? i;
 do
     var int v = 10;
     this.i! = v;
@@ -56358,7 +56358,7 @@ escape t.i!;
 Test { [[
 var int v = 10;
 class T with
-    var int&? i;
+    var& int? i;
 do
     var int v = 10;
     if v then end;
@@ -56373,7 +56373,7 @@ escape t.i? + t.i! + 1;
 }
 Test { [[
 class T with
-    var int&? i;
+    var& int? i;
 do
     var int v = 10;
     if v then end;
@@ -56385,7 +56385,7 @@ escape t.i? + 1;
 }
 Test { [[
 class T with
-    var int&? i;
+    var& int? i;
 do
     var int v = 10;
     if v then end;
@@ -56397,7 +56397,7 @@ escape t.i!;
 }
 Test { [[
 class T with
-    var int&? i;
+    var& int? i;
 do
     var int v = 10;
     if v then end;
@@ -56414,7 +56414,7 @@ escape t.i!;
 
 Test { [[
 native/nohold _g();
-var _SDL_Texture&? t_enemy_0, t_enemy_1;
+var& _SDL_Texture? t_enemy_0, t_enemy_1;
 finalize
     t_enemy_1 = &_f();
 with
@@ -56439,7 +56439,7 @@ native/pure _id();
 native/plain _t;
 var _t t = _t(11);
 
-var _t&? t_ = &t;
+var& _t? t_ = &t;
 
 var int ret = t_!.x;
 t_!.x = 100;
@@ -56451,7 +56451,7 @@ escape ret + _id(t_!.x) + t.x;
 
 Test { [[
 class T with
-    var int&? v;
+    var& int? v;
 do
     if v? then end;
 end
@@ -56471,7 +56471,7 @@ native do
 end
 native/nohold _myfree();
 
-var void&? v;
+var& void? v;
 finalize
     v = &_myalloc();
 with
@@ -56493,7 +56493,7 @@ native do
 end
 native/nohold _myfree();
 
-var void&? v;
+var& void? v;
 finalize
     v = &_myalloc();
 with
@@ -56526,28 +56526,28 @@ native do
     }
 end
 
-var int&? v1;
+var& int? v1;
     finalize
         v1 = &_fff(1);
     with
         nothing;
     end
 
-var int&? v2;
+var& int? v2;
     finalize
         v2 = &_fff(2);
     with
         nothing;
     end
 
-var int&? v3;
+var& int? v3;
     finalize
         v3 = &_UNSAFE_POINTER_TO_REFERENCE(_V1);
     with
         nothing;
     end
 
-var int&? v4;
+var& int? v4;
     finalize
         v4 = &_UNSAFE_POINTER_TO_REFERENCE(_V2);
     with
@@ -56639,7 +56639,7 @@ escape _fff(ui.bg_clr!).v;
 
 Test { [[
 var int ret=0;
-var int&? p = &ret;
+var& int? p = &ret;
 p! = p!;
 escape 1;
 ]],
@@ -56666,7 +56666,7 @@ end
 var int ret = 0;    // 0
 
 var int?  i;
-var int&? p;
+var& int? p;
 ret = ret + (not i?) + (not p?);  // 2
 
 i = 3;
@@ -56714,7 +56714,7 @@ native do
     }
 end
 
-var int&? v;
+var& int? v;
 finalize
     v = &_getV();
 with
@@ -56722,7 +56722,7 @@ with
 end
 
 class T with
-    var int&? v;
+    var& int? v;
 do
     v! = 20;
 end
@@ -56743,7 +56743,7 @@ native do
     }
 end
 
-var int&? v;
+var& int? v;
 finalize
     v = &_getV();
 with
@@ -56751,7 +56751,7 @@ with
 end
 
 class T with
-    var int&? v;
+    var& int? v;
 do
     v! = 20;
 end
@@ -56877,11 +56877,11 @@ escape ret;
 
 Test { [[
 interface IGUI_Component with
-    var _void&? nat;
+    var& _void? nat;
 end
 
 class EnterLeave with
-    var IGUI_Component& gui;
+    var& IGUI_Component gui;
 do
     var _void&& g = &&(gui.nat!);
     if g then end;
@@ -56898,7 +56898,7 @@ do
 end
 
 class U with
-    var T& t;
+    var& T t;
 do
 end
 
@@ -56922,7 +56922,7 @@ do
 end
 
 class U with
-    var T& t;
+    var& T t;
     var int ret=0;
 do
     this.ret = t.x!;
@@ -56943,12 +56943,12 @@ escape u.t.x! + u.ret;
 
 Test { [[
 class T with
-    var int&? x;
+    var& int? x;
 do
 end
 
 class U with
-    var T& t;
+    var& T t;
     var int ret=0;
 do
     this.ret = t.x!;
@@ -56980,7 +56980,7 @@ do
 end
 
 class U with
-    var T& t;
+    var& T t;
 do
 end
 
@@ -57024,7 +57024,7 @@ do
 end
 
 interface I with
-    var T& t;
+    var& T t;
 end
 
 class U with
@@ -57514,7 +57514,7 @@ escape vs[0].v + vs[1].v + vs[2].v;
 
 Test { [[
 data Test with
-    var u8& v;
+    var& u8 v;
 end
 
 var u8 v = 7;
@@ -57527,7 +57527,7 @@ escape t.v;
 
 Test { [[
 data Test with
-    var u8& v;
+    var& u8 v;
 end
 var u8 v = 7;
 var Test t = Test(&v);
@@ -57539,7 +57539,7 @@ escape t.v;
 
 Test { [[
 data Test with
-    var u8& v;
+    var& u8 v;
 end
 
 var u8 v = 7;
@@ -57608,7 +57608,7 @@ escape frames[0].bytes[0];
 
 Test { [[
 data T with
-    var int& i;
+    var& int i;
 end
 escape 1;
 ]],
@@ -57787,7 +57787,7 @@ escape ret;
 Test { [[
 class Body with
     pool  Body[]& bodies;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     finalize with end;
@@ -57825,7 +57825,7 @@ escape sum;
 Test { [[
 class Body with
     pool  Body[]& bodies;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     finalize with end;
@@ -57863,7 +57863,7 @@ escape sum;
 Test { [[
 class Body with
     pool  Body[3]& bodies;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     finalize with end;
@@ -57954,7 +57954,7 @@ tree = new Tree.NODE(1,
 class Body with
     pool  Body[]& bodies;
     var   Tree&&   n;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     watching *n do
@@ -58026,7 +58026,7 @@ tree = new Tree.NODE(1,
 class Body with
     pool  Body[]& bodies;
     var   Tree&&   n;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     watching *n do
@@ -58095,7 +58095,7 @@ pool Tree[3] tree = new Tree.NODE(1,
 class Body with
     pool  Body[7]& bodies;
     var   Tree&&    n;
-    var   int&     sum;
+    var&   int     sum;
     event int      ok;
 do
     watching *n do
@@ -59165,7 +59165,7 @@ pool T[] ts;
 native do
     ##define PTR2REF(x) &x
 end
-var void&? p1;
+var& void? p1;
 finalize
     p1 = &_PTR2REF(this);
 with
@@ -59199,7 +59199,7 @@ pool T[1] ts;
 native do
     ##define PTR2REF(x) &x
 end
-var void&? p1;
+var& void? p1;
 finalize
     p1 = &_PTR2REF(this);
 with
@@ -59233,7 +59233,7 @@ pool T[] ts;
 native do
     ##define PTR2REF(x) &x
 end
-var void&? p1;
+var& void? p1;
 finalize
     p1 = &_PTR2REF(this);
 with
@@ -59282,7 +59282,7 @@ pool T[1] ts;
 native do
     ##define PTR2REF(x) &x
 end
-var void&? p1;
+var& void? p1;
 finalize
     p1 = &_PTR2REF(this);
 with
@@ -60630,7 +60630,7 @@ do
 end
 
 class TurtleTurn with
-    var Turtle& turtle;
+    var& Turtle turtle;
     var int     angle;
     var int     isRight;
 do
@@ -60657,7 +60657,7 @@ do
 end
 
 class TurtleMove with
-    var Turtle& turtle;
+    var& Turtle turtle;
     var int     pixels;
     var int     isForward;
 do
@@ -60813,7 +60813,7 @@ escape ret;
 
 Test { [[
 native/nohold _free();
-var void&? ptr;
+var& void? ptr;
 finalize
     ptr = &_malloc(10000);
 with
@@ -61363,7 +61363,7 @@ do
 end
 
 class B with
-    var A& a;
+    var& A a;
 do
     escape *(a.p);
 end
@@ -61383,7 +61383,7 @@ do
 end
 
 class B with
-    var A& a;
+    var& A a;
 do
     await 1s;
     escape *(a.p);
@@ -61592,7 +61592,7 @@ Test { [[
 native/plain _SDL_Renderer;
 native/nohold _f();
 class Turtle with
-    var _SDL_Renderer& ren;
+    var& _SDL_Renderer ren;
 do
     every 1s do
         _f(&&ren);
@@ -62841,7 +62841,7 @@ data List with
 with
     tag CONS with
         var int   head = 0;
-        var List& tail = List.nil();
+        var& List tail = List.nil();
     end
 end
 
@@ -63958,7 +63958,7 @@ data E with
     tag NOTHING;
 or
     tag X with
-        var D& d;
+        var& D d;
     end
 end
 
@@ -63982,7 +63982,7 @@ or
     end
 end
 
-var LLRB& h;
+var& LLRB h;
 h.NODE.right = h.NODE.left;
 
 escape 1;
@@ -64036,7 +64036,7 @@ class TimeDisplay with
     code/instantaneous Build (int& vvv)=>TimeDisplay;
 do
     var int x = 0;
-    var int& vvv;
+    var& int vvv;
 
     code/instantaneous Build (int& vvv)=>TimeDisplay do
         this.vvv = &vvv;
@@ -64053,7 +64053,7 @@ Test { [[
 class TimeDisplay with
     code/instantaneous Build (int& vvv)=>TimeDisplay;
 do
-    var int& vvv;
+    var& int vvv;
 
     code/instantaneous Build (int& vvv)=>TimeDisplay do
         this.vvv = &vvv;
@@ -64127,8 +64127,8 @@ class SDL with
         var int w,h;
 
     output:
-        var _SDL_Window&   win;
-        var _SDL_Renderer& ren;
+        var& _SDL_Window   win;
+        var& _SDL_Renderer ren;
 
     input/output:
         var int io;
@@ -64136,7 +64136,7 @@ class SDL with
     output/input:
         var int oi;
 do
-    var _SDL_Window&? win_;
+    var& _SDL_Window? win_;
     finalize
         win_ = &_SDL_CreateWindow("SDL 1", _SDL_WINDOWPOS_CENTERED,
                                            _SDL_WINDOWPOS_CENTERED,
@@ -64149,7 +64149,7 @@ do
 
     _SDL_GetWindowSize(&&win, &&w, &&h);
 
-    var _SDL_Renderer&? ren_;
+    var& _SDL_Renderer? ren_;
     finalize
         ren_ = &_SDL_CreateRenderer(&&win, -1, 0);
     with
@@ -64198,7 +64198,7 @@ escape _strlen((byte&&)&&t.name);
 -- bug: arity mismatch on constructor/creation
 Test { [[
 class T with
-    var void& p;
+    var& void p;
     code/instantaneous Build (void& p)=>T;
 do
     code/instantaneous Build (void& p)=>T do
@@ -64268,13 +64268,13 @@ do
 end
 
 interface I with
-    var G& g;
+    var& G g;
 end
 
 pool I[] is;
 
 class T with
-    var G& g;
+    var& G g;
     pool I[]& is;
 do
     every g.e do
@@ -64309,14 +64309,14 @@ data Leaf with
     tag NOTHING;
 or
     tag TWEEN with
-        var Ball& ball;
+        var& Ball ball;
     end
 end
 
 class LeafHandler with
-    var Leaf& leaf;
+    var& Leaf leaf;
 do
-    var Ball& ball = &leaf.TWEEN.ball;
+    var& Ball ball = &leaf.TWEEN.ball;
     escape ball.x;
 end
 
@@ -64359,7 +64359,7 @@ end
 class Body with
     pool  Body[]& bodies;
     var   Tree&&   n;
-    var   Sum&    sum;
+    var&   Sum    sum;
 do
     watching *n do
         if n:NODE then
@@ -64490,7 +64490,7 @@ escape *x;
 }
 
 Test { [[
-var void& v;
+var& void v;
 escape 1;
 ]],
     run = 1,
@@ -64547,7 +64547,7 @@ Test { [[
 class T with
 do
 end
-var T*&? t;
+var& T*? t;
 finalize
     t = _malloc(10 * sizeof(T**));
 with
@@ -64707,7 +64707,7 @@ escape ret;
 -- BUG: should be: field must be assigned
 Test { [[
 var int v = 10;
-var int& i;
+var& int i;
 
 par do
     await 1s;
@@ -65948,7 +65948,7 @@ Test { [[
 vector[10] int vec1;
 
 class T with
-    var int*& vec2;
+    var& int* vec2;
 do
     this.vec2[0] = 10;
 end
@@ -65998,7 +65998,7 @@ escape 1;
 --          because it stops implementing UI
 Test { [[
 interface UI with
-    var   int&?   bg_clr;
+    var&   int?   bg_clr;
 end
 class UIGridItem with
    var UI* ui;
@@ -66009,7 +66009,7 @@ do
 end
 class UIGrid with
     interface UI;
-    var   int&?    bg_clr = nil;
+    var&   int?    bg_clr = nil;
     pool UIGridItem[] uis;
 do
 end
@@ -66062,7 +66062,7 @@ pre native do
     } tp;
 end
 class T with
-    var _tp&? i = nil;
+    var& _tp? i = nil;
 do
 end
 var T t;
@@ -66079,7 +66079,7 @@ pre native do
     tp V = { 10 };
 end
 class T with
-    var _tp&? i = nil;
+    var& _tp? i = nil;
 do
 end
 var T t with
@@ -66101,7 +66101,7 @@ escape 1;
 Test { [[
 class Body with
     pool  Body[]& bodies;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     finalize with end;
@@ -66156,7 +66156,7 @@ tree = new Tree.NODE(1,
 class Body with
     pool  Body[]& bodies;
     var   Tree*   n;
-    var   int&    sum;
+    var&   int    sum;
     event int     ok;
 do
     //watching n do

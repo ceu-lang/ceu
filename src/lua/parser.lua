@@ -278,9 +278,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , __vars_set = EV'__ID_int' * OPT(V'__Sets')
 
-    , _Vars_set = CKEY'var' * EV'Type' *
+    , _Vars_set = CKEY'var' * OPT(CK'&') * EV'Type' *
                     EV'__vars_set' * (K','*EV'__vars_set')^0
-    , _Vars     = CKEY'var' * EV'Type' *
+    , _Vars     = CKEY'var' * OPT(CK'&') * EV'Type' *
                     EV'__ID_int' * (K','*EV'__ID_int')^0
 
 -- TODO: only vec constr
@@ -319,7 +319,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 -- Declarations
 
     -- variables, organisms
-    , __Org = CKEY'var'  * EV'Type' * Cc(true)  * (EV'__ID_int'+V'ID_none') *
+    , __Org = CKEY'var' * OPT(CK'&') * EV'Type' * Cc(true)  * (EV'__ID_int'+V'ID_none') *
                         ( Cc(false) * EKEY'with' * V'Dcl_constr' * EKEY'end'
                         + K'=' * V'_Var_constr' * (
                             EKEY'with' * V'Dcl_constr' * EKEY'end' +
