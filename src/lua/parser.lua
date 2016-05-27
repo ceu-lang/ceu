@@ -357,12 +357,14 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Typelist      = K'(' * EV'_Typelist_item' * (EK','*V'_Typelist_item')^0 * EK')'
 
     -- (var int, var void*)
-    , _Typepars_anon_item = K'var' * Cc(false) * EV'Type' * Cc(false)
-    , _Typepars_anon = K'(' * EV'_Typepars_anon_item' * (EK','*V'_Typepars_anon_item')^0 * EK')'
+    , _Typepars_anon_item = EK'var' * Cc(false) * EV'Type' * Cc(false)
+    , _Typepars_anon = K'(' * Cc(false) * (#P'void' * EV'Type') * Cc(false) * EK')'
+                     + K'(' * EV'_Typepars_anon_item' * (EK','*V'_Typepars_anon_item')^0 * EK')'
 
     -- (var int v, var nohold void* ptr)
-    , _Typepars_ids_item = K'var' * OPT(CKEY'@hold') * EV'Type' * OPT(EV'__ID_int')
-    , _Typepars_ids = K'(' * EV'_Typepars_ids_item' * (EK','*V'_Typepars_ids_item')^0 * EK')'
+    , _Typepars_ids_item = EK'var' * OPT(CKEY'@hold') * EV'Type' * OPT(EV'__ID_int')
+    , _Typepars_ids = K'(' * Cc(false) * (#P'void' * EV'Type') * Cc(false) * EK')'
+                    + K'(' * EV'_Typepars_ids_item' * (EK','*V'_Typepars_ids_item')^0 * EK')'
 
     -- classes / interfaces
     , Dcl_cls  = KEY'class'     * Cc(false)
