@@ -150,7 +150,7 @@ do
     native do
         CEU_TM_App CEU_TM_APP_0;      /* saves application state-0 */
     end
-    _CEU_TM_APP_0 = *((CEU_TM_App&&)&&this.app);
+    _CEU_TM_APP_0 = *(&&this.app as CEU_TM_App&&);
 #ifdef TM_QUEUE
     _queue_seek(0);
 #endif
@@ -290,7 +290,7 @@ do
 #else   // !TM_SNAP
 
 #if   defined TM_QUEUE
-                        *((_CEU_TM_App&&)&&app) = _CEU_TM_APP_0;
+                        *(&&app as _CEU_TM_App&&) = _CEU_TM_APP_0;
                         _queue_seek(0);
                         this.time_now = 0;
 #elif defined TM_DIFF
@@ -351,7 +351,7 @@ do
 #ifdef TM_QUEUE_WCLOCK_REUSE
                                 dt = (1000/_CEU_FPS);
 #else
-                                dt = ((_tceu_queue_dt&&)&&qu!):dt;
+                                dt = (&&qu! as _tceu_queue_dt&&):dt;
 #endif
                                 _assert(dt >= 0);
                                 time_now = time_now + dt;

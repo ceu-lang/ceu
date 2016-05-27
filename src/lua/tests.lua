@@ -989,7 +989,7 @@ input void OS_START;
 native do
     int f () { escape 1; }
 end
-var _int x = (@plain) _f();
+var _int x = _f() as /plain;
 escape x;
 ]],
     run = 1,
@@ -1010,7 +1010,7 @@ input void OS_START;
 native do
     int f () { escape 1; }
 end
-var _int x = ((@pure)_f)();
+var _int x = (_f as /pure)();
 escape x;
 ]],
     run = 1,
@@ -1022,7 +1022,7 @@ native do
     int f (void* v) { escape 1; }
 end
 var void&& ptr = null;
-var int x = ((@nohold)_f)(ptr);
+var int x = (_f as/nohold)(ptr);
 escape x;
 ]],
     run = 1,
@@ -1034,7 +1034,7 @@ native do
     int f (void* v) { escape 1; }
 end
 var void&& ptr = null;
-var int x = ((@pure)_f)(ptr);
+var int x = (_f as/pure)(ptr);
 escape x;
 ]],
     run = 1,
@@ -17453,7 +17453,7 @@ escape x;
 Test { [[
 var int v = 10;
 var& void p = &v;
-escape *((int&&)&&p);
+escape *(&&p as int&&);
 ]],
     run = 10,
 }
@@ -17461,7 +17461,7 @@ Test { [[
 class T with
     var& void p;
 do
-    escape *((int&&)&&this.p);
+    escape *(&&this.p as int&&);
 end
 
 var int v = 10;
@@ -18571,7 +18571,7 @@ native do
 end
 var int ret = 0;
 if _A then
-    ret = ret + *(int&&)_A;
+    ret = ret + *(_A as int&&);
 end
 do
     var int a = 10;;
@@ -18584,11 +18584,11 @@ do
         end
             end;
     if _A then
-        a = a + *(int&&)_A;
+        a = a + *(_A as int&&);
     end
 end
 if _A then
-    ret = ret + *(int&&)_A;
+    ret = ret + *(_A as int&&);
 end
 escape(ret);
 ]],
@@ -18607,7 +18607,7 @@ native do
 end
 var int ret = 0;
 if _A then
-    ret = ret + *(int&&)_A;
+    ret = ret + *(_A as int&&);
 end
 par/or do
         var int a = 10;;
@@ -18620,14 +18620,14 @@ par/or do
             end
                 end;
         if _A then
-            a = a + *(int&&)_A;
+            a = a + *(_A as int&&);
         end
         await FOREVER;
 with
     await OS_START;
 end
 if _A then
-    ret = ret + *(int&&)_A;
+    ret = ret + *(_A as int&&);
 end
 escape(ret);
 ]],
@@ -18639,7 +18639,7 @@ var int v = 1;
 par/or do
     nothing;
 with
-    v = *(int&&)null;
+    v = *(null as int&&);
 end
 escape v;
 ]],
@@ -18845,7 +18845,7 @@ par/or do
 with
     async do
         var int v = 10;
-        emit A => (void&&) &&v;
+        emit A => (&&v as void&&);
         emit A => null;
     end
 end
@@ -21549,7 +21549,7 @@ Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
 Test { [[
-*((u32&&)0x100) = _V;
+*(0x100 as u32&&) = _V;
 escape 1;
 ]],
     gcc = 'error: ‘V’ undeclared (first use in this function)',
@@ -21596,8 +21596,8 @@ var _char c=10;
 //var _char&& pc;
 i = c;
 c = i;
-i = (int) c;
-c = (_char) i;
+i = (c as int);
+c = (i as _char);
 escape c;
 ]],
     --env = 'line 6 : invalid attribution',
@@ -21610,8 +21610,8 @@ var int i;
 //var int&& pi;
 var _char c=0;
 //var _char&& pc;
-i = (int) c;
-c = (_char) i;
+i = (c as int);
+c = (i as _char);
 escape 10;
 ]],
     run = 10
@@ -21636,7 +21636,7 @@ Test { [[
 var int&& ptr1 = null;
 var void&& ptr2 = null;
 if 1 then
-    ptr2 = (void&&)ptr1;
+    ptr2 = ptr1 as void&&;
 else
     ptr2 = ptr2;
 end;
@@ -21649,8 +21649,8 @@ escape 1;
 Test { [[
 var int&& ptr1;
 var void&& ptr2=null;
-ptr1 = (int&&)ptr2;
-ptr2 = (void&&)ptr1;
+ptr1 = ptr2 as int&&;
+ptr2 = ptr1 as void&&;
 escape 1;
 ]],
     run = 1,
@@ -21670,10 +21670,10 @@ escape 1;
 Test { [[
 native _char=1;
 var _char&& ptr1;
-var int&& ptr2=(void&&)0xFF;
+var int&& ptr2=0xFF as void&&;
 ptr1 = ptr2;
 ptr2 = ptr1;
-escape (int)ptr2;
+escape ptr2 as int;
 ]],
     env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
     --env = 'line 4 : invalid attribution',
@@ -21683,10 +21683,10 @@ escape (int)ptr2;
 Test { [[
 native _char=1;
 var _char&& ptr1;
-var int&& ptr2=(void&&)0xFF;
-ptr1 = (_char&&)ptr2;
-ptr2 = (int&&) ptr1;
-escape (int)ptr2;
+var int&& ptr2=0xFF as void&&;
+ptr1 = (ptr2 as _char&&);
+ptr2 =  ptr1 as int&&;
+escape (ptr2 as int);
 ]],
     env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
     --env = 'line 4 : invalid attribution',
@@ -21697,8 +21697,8 @@ Test { [[
 native _char=1;
 var _char&& ptr1;
 var int&& ptr2=null;
-ptr1 = (_char&&)ptr2;
-ptr2 = (int&&)ptr1;
+ptr1 = (ptr2 as _char&&);
+ptr2 = ptr1 as int&&;
 escape 1;
 ]],
     run = 1,
@@ -21707,8 +21707,8 @@ Test { [[
 native _char=1;
 var int&& ptr1;
 var _char&& ptr2=null;
-ptr1 = (int&&) ptr2;
-ptr2 = (_char&&) ptr1;
+ptr1 =  ptr2 as int&&;
+ptr2 = ( ptr1 as _char&&);
 escape 1;
 ]],
     run = 1,
@@ -21732,8 +21732,8 @@ Test { [[
 native _FILE=0;
 var int&& ptr1;
 var _FILE&& ptr2=null;
-ptr1 = (int&&)ptr2;
-ptr2 = (_FILE&&)ptr1;
+ptr1 = ptr2 as int&&;
+ptr2 = ptr1 as _FILE&&;
 escape 1;
 ]],
     run = 1,
@@ -21927,7 +21927,7 @@ escape a + b;
 
 Test { [[
 var int b = 10;
-var int&& a = (int&&) &&b;
+var int&& a = (&&b as int&&);
 var int&& c = &&b;
 escape *a + *c;
 ]],
@@ -22111,7 +22111,7 @@ escape 1;
 Test { [[
 native _char = 1;
 var _char&& p=null;
-*(p:a) = (_char)1;
+*(p:a) = (1 as _char);
 escape 1;
 ]],
     --env = 'line 3 : invalid operand to unary "*"',
@@ -22479,9 +22479,9 @@ native/nohold _uv_buf_init(), _uv_read_stop();
 var _char[3] buf_ = [];
 var _uv_buf_t buf = _uv_buf_init(buf_, sizeof(buf_)-1);
 var _uv_stream_t client = _uv_stream_t();
-var int ret = _ceu_uv_read_start((_uv_stream_t&&)&&client, &&buf)
+var int ret = _ceu_uv_read_start(&&client as _uv_stream_t&&, &&buf)
                     finalize with
-                        _uv_read_stop((_uv_stream_t&&)&&client);
+                        _uv_read_stop(&&client as _uv_stream_t&&);
                     end;
 _assert(ret == 0);
 escape 0;
@@ -22815,7 +22815,7 @@ native do
     }
 end
 vector[2] int a = [1,2];
-_f((_int&&)&&a);
+_f(&&a as _int&&);
 escape a[0] + a[1];
 ]],
     run = 5,
@@ -22831,7 +22831,7 @@ native do
 end
 vector[2] int a  = [1,2];
 vector&[2] int b = &a;
-_f((_char&&)&&b);
+_f(&&b as _char&&);
 escape b[0] + b[1];
 ]],
     env = 'line 10 : invalid type cast',
@@ -22847,7 +22847,7 @@ native do
 end
 vector[2] int a  = [1,2];
 vector&[2] int b = &a;
-_f((_int&&)&&b);
+_f(&&b as _int&&);
 escape b[0] + b[1];
 ]],
     run = 5,
@@ -23040,7 +23040,7 @@ native do
     } tp;
     tp T = { f };
 end
-vector[] byte str = [] .. (_char&&)_T.f();
+vector[] byte str = [] .. (_T.f() as _char&&);
 escape str[2]=='a';
 ]],
     run = 1,
@@ -23056,7 +23056,7 @@ native do
     } tp;
     tp T = { f };
 end
-vector[] byte str = [] .. (_char&&)_T.f() .. "oi";
+vector[] byte str = [] .. (_T.f() as _char&&) .. "oi";
 escape str[4]=='i';
 ]],
     run = 1,
@@ -23070,9 +23070,9 @@ native do
 end
 vector[] byte  str;
 vector&[] byte ref = &str;
-ref = [] .. (_char&&){f}() .. "oi";
+ref = [] .. ({f}() as _char&&) .. "oi";
 native/pure _strlen();
-escape _strlen((_char&&)&&str);
+escape _strlen(&&str as _char&&);
 ]],
     run = 5,
 }
@@ -23140,7 +23140,7 @@ code/instantaneous F (void) => byte[]& do
 end
 
 vector&[] byte ref = &f();
-ref = [] .. (_char&&){g}() .. "ola";
+ref = [] .. ({g}() as _char&&) .. "ola";
 
 escape str[3] == 'o';
 ]],
@@ -23174,9 +23174,9 @@ native do
 end
 native/pure _ID(), _strlen();
 vector[] byte str = [] .. "abc"
-                    .. (_char&&)_ID("def");
-var byte&& str2 = _ID((_char&&)&&str);
-escape _strlen((_char&&)&&str) + _strlen(str2);
+                    .. (_ID("def") as _char&&);
+var byte&& str2 = _ID(&&str as _char&&);
+escape _strlen(&&str as _char&&) + _strlen(str2);
 ]],
     run = 12,
 }
@@ -23195,7 +23195,7 @@ Test { [[
 native/pure _strcmp();
 vector[] byte str1;
 vector[] byte str2 = [].."";
-escape _strcmp((_char&&)&&str1,"")==0 and _strcmp((_char&&)&&str2,"")==0;
+escape _strcmp(&&str1 as _char&&,"")==0 and _strcmp(&&str2 as _char&&,"")==0;
 ]],
     run = 1,
 }
@@ -23217,7 +23217,7 @@ code/instantaneous Strlen (var byte&& str)=>int do
 end
 
 vector[] byte str = [].."Ola Mundo!";
-escape strlen((_char&&)&&str);
+escape strlen(&&str as _char&&);
 ]],
     run = 10,
 }
@@ -23361,7 +23361,7 @@ end
 var SDL_Rect ri;
 ri = SDL_Rect(10);
 vector[1] SDL_Rect rcs = [ri];
-escape _f((int&&)&&rcs[0]);
+escape _f(&&rcs[0] as int&&);
 ]],
     run = 10,
 }
@@ -23369,7 +23369,7 @@ escape _f((int&&)&&rcs[0]);
 Test { [[
 var byte b = 1;
 var byte c = 2;
-b = (byte)c;
+b = (c as byte);
 escape b;
 ]],
     run = 2,
@@ -23402,14 +23402,14 @@ escape *b;
 Test { [[
 native/nohold _strlen();
 vector[] byte v = ['a','b','c','\0'];
-escape _strlen((_char&&)&&v);
+escape _strlen(&&v as _char&&);
 ]],
     run = 3,
 }
 Test { [[
 native/nohold _strlen();
 vector[] byte v = ['a','b','c','\0'];
-escape _strlen((_char&&)&&v);
+escape _strlen(&&v as _char&&);
 ]],
     run = 3,
 }
@@ -23428,9 +23428,9 @@ end
 
 vector[10] byte v;
 vector[10] byte v_;
-_garbage((_char&&)&&v);
+_garbage(&&v as _char&&);
 v = ['a','b','c'];
-escape _strlen((_char&&)&&v);
+escape _strlen(&&v as _char&&);
 ]],
     run = 3,
 }
@@ -23473,7 +23473,7 @@ escape 1;
 Test { [[
 native/nohold _strlen();
 vector[] byte v = "abc";
-escape _strlen((_char&&)v);
+escape _strlen(v as _char&&);
 ]],
     env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
@@ -23481,7 +23481,7 @@ escape _strlen((_char&&)v);
 Test { [[
 native/nohold _strlen();
 vector[] byte v = [].."abc";
-escape _strlen((_char&&)&&v);
+escape _strlen(&&v as _char&&);
 ]],
     run = 3,
 }
@@ -23489,7 +23489,7 @@ Test { [[
 native/nohold _strlen();
 vector[] byte v = [].."abc";
 v = [] .. v .. "def";
-escape _strlen((_char&&)&&v);
+escape _strlen(&&v as _char&&);
 ]],
     run = 6,
 }
@@ -24248,7 +24248,7 @@ escape v[1];
 
 Test { [[
 var int xxx = 10;
-escape ((_CEU_Main&&)(__ceu_app:data)):xxx;
+escape ((__ceu_app:data as _CEU_Main&&)):xxx;
 ]],
     run = 10,
 }
@@ -24954,7 +24954,7 @@ escape 1;
 }
 Test { [[
 native _char=1;
-var _char&& a = (_char&&)"Abcd12" ;
+var _char&& a = ("Abcd12"  as _char&&);
 escape 1;
 ]],
     run = 1
@@ -24982,7 +24982,7 @@ native/nohold _strncpy(), _printf(), _strlen();
 native _char = 1;
 var _char[10] str = [];
 _strncpy(&&str, "123", 4);
-_printf("END: %d %s\n", (int)_strlen(&&str), &&str);
+_printf("END: %d %s\n", _strlen(&&str) as int, &&str);
 escape 0;
 ]],
     run = '3 123'
@@ -25000,7 +25000,7 @@ var int len = 0;
 _strcpy(&&d,&&a);
 _strcpy(&&d[_strlen(&&d)], &&b);
 _strcpy(&&d[_strlen(&&d)], &&c);
-_printf("END: %d %s\n", (int)_strlen(&&d), &&d);
+_printf("END: %d %s\n", _strlen(&&d) as int, &&d);
 escape 0;
 ]],
     run = '12 Hello World!'
@@ -25258,12 +25258,12 @@ var _char[10] v2 = [];
 
 loop i in 10 do
     v1[i] = i;
-    v2[i] = (_char) (i*2);
+    v2[i] = ((i*2) as _char);
 end
 
 var int ret = 0;
 loop i in 10 do
-    ret = ret + (u8)v2[i] - v1[i];
+    ret = ret + (v2[i] as u8) - v1[i];
 end
 
 escape ret;
@@ -25283,8 +25283,8 @@ escape sizeof<_t>;
 
 Test { [[
 native _char=1;
-var _char a = (_char) 1;
-escape (int)a;
+var _char a = (1 as _char);
+escape a as int;
 ]],
     run = 1,
 }
@@ -25694,7 +25694,7 @@ escape ret;
 
 Test { [[
 #define UART0_BASE 0x20201000
-#define UART0_CR ((u32&&)(UART0_BASE + 0x30))
+#define UART0_CR ((UART0_BASE + 0x30) as u32&&)
 *UART0_CR = 0x00000000;
 escape 1;
 ]],
@@ -27826,7 +27826,7 @@ var byte&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy = [[ str ]];
-escape ret and (not _strcmp(str,(_char&&)&&cpy));
+escape ret and (not _strcmp(str,&&cpy as _char&&));
 ]=],
     run = 1,
 }
@@ -27854,7 +27854,7 @@ var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy;
 vector&[10] byte ptr = &cpy;
 ptr = [[ str ]];
-escape ret and (not _strcmp((_char&&)&&str,(_char&&)&&cpy));
+escape ret and (not _strcmp(&&str as _char&&,&&cpy as _char&&));
 ]=],
     run = 1,
 }
@@ -27863,7 +27863,7 @@ Test { [=[
 native/nohold _strcmp();
 [[ str = '1234567890' ]]
 vector[2] byte cpy = [[ str ]];
-escape (_strcmp((_char&&)&&cpy,"1") == 0);
+escape (_strcmp(&&cpy as _char&&,"1") == 0);
 ]=],
     run = '3] runtime error: access out of bounds',
 }
@@ -27875,7 +27875,7 @@ vector[2] byte cpy;
 vector[20] byte cpy_;
 vector&[] byte ptr = &cpy;
 ptr = [[ str ]];
-escape (not _strcmp((_char&&)&&cpy,"1234567890"));
+escape (not _strcmp(&&cpy as _char&&,"1234567890"));
 ]=],
     run = '6] runtime error: access out of bounds',
 }
@@ -27922,7 +27922,7 @@ var int v_from_ceu = [[v_from_lua]];
 str_from_lua = 'string from lua'
 ]]
 vector[100] byte str_from_ceu = [[str_from_lua]];
-_assert(0==_strcmp((_char&&)&&str_from_ceu, "string from lua"));
+_assert(0==_strcmp(&&str_from_ceu as _char&&, "string from lua"));
 
 [[
 print(@v_from_ceu)
@@ -31569,7 +31569,7 @@ with
 with
     await b.ok;
 end
-escape _f((byte&&)&&a.a,(byte&&)&&b.a);
+escape _f(&&a.a as byte&&,&&b.a as byte&&);
 ]],
     run = 2,
 }
@@ -33002,7 +33002,7 @@ do
     do
         native/plain _SDL_Rect;
         var _SDL_Rect r=_SDL_Rect();
-        r.x = (int) _UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER);
+        r.x = (_UI_align(this.rect.w, r.w, _UI_ALIGN_CENTER) as int);
     end
 end
 escape 1;
@@ -34991,9 +34991,9 @@ do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T as;
+pool[1] T aas;
 pool[0] T bs;
-var T&&? a = spawn T in as;
+var T&&? a = spawn T in aas;
 var int sum = 0;
 if a? then
     watching *a! do
@@ -39583,8 +39583,8 @@ var _void&&[10] ts = [];
 var T&&? t;
 t = spawn T;
 t!:v = 10;
-ts[0] = (void&&)(t!);
-escape t!:v + ((T&&)ts[0]):v;
+ts[0] = (t!) as void&&;
+escape t!:v + (ts[0] as T&&):v;
 ]],
     fin = 'line 12 : unsafe access to pointer "ts" across `spawn´ (tests.lua : 10)',
 }
@@ -39604,8 +39604,8 @@ var _void_[10] ts = [];
 var T&&? t;
 t = spawn T;
 t!:v = 10;
-ts[0] = (void&&)(t!);
-escape t!:v + ((T&&)ts[0]):v;
+ts[0] = (t!) as void&&;
+escape t!:v + (ts[0] as T&&):v;
 ]],
     run = 20,
 }
@@ -40921,7 +40921,7 @@ end
 interface I with
     event int e;
 end
-var I&& i = (I&&) _ptr;
+var I&& i = _ptr as I&&;
 escape 10;
 ]],
     run = 10;
@@ -40949,11 +40949,11 @@ var T2 t2;
 var T&& t;
 
 t = &&t1;
-var T1&& x1 = (T1&&) t;
+var T1&& x1 = ( t as T1&&);
 _assert(x1 != null);
 
 t = &&t1;
-var T2&& x2 = (T2&&) t;
+var T2&& x2 = ( t as T2&&);
 _assert(x2 == null);
 
 escape 10;
@@ -41977,7 +41977,7 @@ end
 do
     every door in T_VERTICAL_DOOR do
         spawn T_VerticalDoor with
-            this.v = (void&&)door;
+            this.v = door as void&&;
         end;
     end
 end
@@ -42467,7 +42467,7 @@ var T t;
 var U u;
 
 var I&& i1 = &&t;
-var I&& i2 = (I&&) &&u;
+var I&& i2 = (&&u as I&&);
 
 native/pure _f();
 native do
@@ -42476,11 +42476,11 @@ native do
     }
 end
 
-var I&& i3 = (I&&) _f(&&t);
-var I&& i4 = (I&&) _f(&&u);
+var I&& i3 = ( _f(&&t) as I&&);
+var I&& i4 = ( _f(&&u) as I&&);
 
-var T&& i5 = (T&&) _f(&&t);
-var T&& i6 = (T&&) _f(&&u);
+var T&& i5 = ( _f(&&t) as T&&);
+var T&& i6 = ( _f(&&u) as T&&);
 
 escape i1==&&t and i2==null and i3==&&t and i4==null and i5==&&t and i6==null;
 ]],
@@ -44671,8 +44671,8 @@ code/instantaneous F (var void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
-f((void&&)5);
-escape _V==(void&&)5;
+f(5 as void&&);
+escape _V==(5 as void&&);
 ]],
     fin = 'line 5 : parameter must be `hold´',
     --fin = 'line 5 : invalid attribution',
@@ -44687,9 +44687,9 @@ code/instantaneous F (var/hold void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
-f((void&&)5)
+f(5 as void&&)
     finalize with nothing; end;
-escape _V==(void&&)5;
+escape _V==(5 as void&&);
 ]],
     fin = 'line 8 : invalid `finalize´',
 }
@@ -45442,7 +45442,7 @@ var _t&& ptr = &&t;
 var int v = 10;
 var int x = &v;
 ptr:ceu = &v;
-escape *((int&&)(ptr:ceu));
+escape *((ptr:ceu as int&&));
 ]],
     env = 'line 10 : invalid attribution : l-value cannot hold an alias',
     --ref = 'line 9 : invalid attribution : l-value already bounded',
@@ -45459,7 +45459,7 @@ var _t t = _t();
 var _t&& ptr = &&t;
 var int v = 10;
 ptr:ceu = &v;
-escape *((int&&)(ptr:ceu));
+escape *((ptr:ceu as int&&));
 ]],
     env = 'line 10 : invalid attribution : l-value cannot hold an alias',
     --ref = 'line 9 : invalid attribution : l-value already bounded',
@@ -45484,7 +45484,7 @@ var _t&& ptr = &&t;
 
 ptr:xxx = &c;
 
-escape ((C&&)ptr:xxx):v;
+escape (ptr:xxx as C&&):v;
 ]],
     --run = 10,
     env = 'line 16 : invalid attribution : l-value cannot hold an alias',
@@ -45510,9 +45510,9 @@ var _t&& ptr = &&t;
 
 ptr:xxx = &c;
 
-emit ((C&&)ptr:xxx):e => 1;
+emit (ptr:xxx as C&&):e => 1;
 
-escape ((C&&)ptr:xxx):v;
+escape (ptr:xxx as C&&):v;
 ]],
     env = 'line 17 : invalid attribution : l-value cannot hold an alias',
     --run = 10,
@@ -53188,7 +53188,7 @@ end
 
 var T t;
 native/nohold _strlen();
-escape _strlen((_char&&)&&t.name);
+escape _strlen(&&t.name as _char&&);
 ]],
     run = 2,
 }
@@ -53219,7 +53219,7 @@ var U u with
 end;
 
 native/nohold _strlen();
-escape _strlen((_char&&)&&t.name);
+escape _strlen(&&t.name as _char&&);
 ]],
     run = 2,
 }
@@ -57744,8 +57744,8 @@ data D with
     var _char_ptr str;
 end
 vector[] byte s = [].. "oi";
-var D d = D((_char_ptr)(_char&&)&&s);
-escape _strlen((_char&&)d.str);
+var D d = D(&&s as _char&& as _char_ptr);
+escape _strlen(d.str as _char&&);
 ]],
     run = 2,
 }
@@ -59219,10 +59219,10 @@ end
 
 pool[] T ts;
 
-var void&& p1 = (void&&)this;
+var void&& p1 = this as void&&;
 
 traverse t in &&ts do
-    _assert(p1 == (void&&)this);
+    _assert(p1 == (this as void&&));
     if t:NXT then
         traverse &&t:NXT.nxt;
     end
@@ -59247,10 +59247,10 @@ end
 
 pool[] T ts;
 
-var void&& p1 = (void&&)&&this;
+var void&& p1 = &&this as void&&;
 
 traverse t in &&ts do
-    _assert(p1 == (void&&)&&this);
+    _assert(p1 == (&&this as void&&));
     if t:NXT then
         traverse &&t:NXT.nxt;
     end
@@ -59285,7 +59285,7 @@ with
 end
 
 traverse t in &&ts do
-    _assert(&&p1! == (void&&)&&this);
+    _assert(&&p1! == (&&this as void&&));
     if t:NXT then
         traverse &&t:NXT.nxt;
     end
@@ -59319,7 +59319,7 @@ with
 end
 
 traverse t in &&ts do
-    _assert(&&p1! == (void&&)&&this);
+    _assert(&&p1! == (&&this as void&&));
     if t:NXT then
         traverse &&t:NXT.nxt;
     end
@@ -59360,7 +59360,7 @@ class X with
 do end
 
 traverse t in &&ts do
-    _assert(&&p1! == (void&&)&&this);
+    _assert(&&p1! == (&&this as void&&));
     var int v1 = 1;
     var int v3 = 0;
     var X x with
@@ -59409,7 +59409,7 @@ class X with
 do end
 
 traverse t in &&ts do
-    _assert(&&p1! == (void&&)&&this);
+    _assert(&&p1! == (&&this as void&&));
     var int v1 = 1;
     var int v3 = 0;
     var X x with
@@ -63852,7 +63852,7 @@ do
             watching this.go_on do
                 every key in KEY do
                     _queue_put(_CEU_IN_KEY,
-                               sizeof(int), (byte&&)key
+                               sizeof(int), key as byte&&
 #ifdef TM_SNAP
                                 ,0
 #endif
@@ -64000,7 +64000,7 @@ Test { [[
 
         this.me.canvas.lock();
 
-        var u8&& cbuffer = (u8&&)_XXX_PURE(this.me.canvas.get_data());
+        var u8&& cbuffer = (_XXX_PURE(this.me.canvas.get_data()) as u8&&);
 ]],
 }
 
@@ -64316,7 +64316,7 @@ do
     code/instantaneous Build (var& void p)=>T do
         this.p = &p;
     end
-    escape *((int&&)&&this.p);
+    escape *(&&this.p as int&&);
 end
 
 var int v = 10;

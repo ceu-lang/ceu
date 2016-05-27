@@ -135,68 +135,69 @@ TYPES = P'bool' + 'byte'
 --<<<
 
 KEYS = P
-'and' + 
-'async' + 
-'async/isr' + 
-'async/thread' + 
-'atomic' + 
-'await' + 
+'and' +
+'async' +
+'as' +          -- TODO vs async
+'async/isr' +
+'async/thread' +
+'atomic' +
+'await' +
 'break' +
-'call' + 
-'call/recursive' + 
-'class' + 
-'code' + 
-'continue' + 
-'data' + 
-'deterministic' + 
-'do' + 
-'else' + 
-'else/if' + 
-'emit' + 
-'end' + 
+'call' +
+'call/recursive' +
+'class' +
+'code' +
+'continue' +
+'data' +
+'deterministic' +
+'do' +
+'else' +
+'else/if' +
+'emit' +
+'end' +
 'escape' +
-'event' + 
-'every' + 
+'event' +
+'every' +
 'false' +
-'finalize' + 
-'FOREVER' + 
-'global' + 
-'if' + 
-'in' + 
-'input' + 
-'input/output' + 
-'interface' + 
-'kill' + 
-'loop' + 
-'native' + 
-'native/pre' + 
-'new' + 
-'not' + 
+'finalize' +
+'FOREVER' +
+'global' +
+'if' +
+'in' +
+'input' +
+'input/output' +
+'interface' +
+'kill' +
+'loop' +
+'native' +
+'native/pre' +
+'new' +
+'not' +
 'nothing' +
-'null' + 
-'or' + P
-'outer' + 
-'output' + 
-'output/input' + 
-'par' + 
-'par/and' + 
-'par/or' + 
-'pause/if' + 
-'pool' + 
-'pre' + 
-'request' + 
-'sizeof' + 
-'spawn' + 
-'tag' + 
-'then' + 
-'this' + 
-'traverse' + 
-'true' + 
-'until' + 
-'var' + 
-'vector' + 
-'watching' + 
-'with' + 
+'null' +
+'or' +
+'outer' +
+'output' +
+'output/input' +
+'par' +
+'par/and' +
+'par/or' +
+'pause/if' +
+'pool' +
+'pre' +
+'request' +
+'sizeof' +
+'spawn' +
+'tag' +
+'then' +
+'this' +
+'traverse' +
+'true' +
+'until' +
+'var' +
+'vector' +
+'watching' +
+'with' +
 TYPES
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
@@ -628,17 +629,18 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __2    = V'__3'  * (CKEY'and' * EV'__3')^0
     , __3    = V'__4'  * ( ( (CK'!='-'!==')+CK'=='+CK'<='+CK'>='
                            + (CK'<'-'<<')+(CK'>'-'>>')
-                           ) * EV'__4')^0
+                           ) * EV'__4'
+                         + CK'as' * EV'__Cast'
+                         )^0
     , __4    = V'__5'  * ((CK'|'-'||') * EV'__5')^0
     , __5    = V'__6'  * (CK'^' * EV'__6')^0
     , __6    = V'__7'  * (CK'&' * EV'__7')^0
     , __7    = V'__8'  * ((CK'>>'+CK'<<') * EV'__8')^0
     , __8    = V'__9'  * ((CK'+'+CK'-') * EV'__9')^0
     , __9    = V'__10' * ((CK'*'+(CK'/'-'//'-'/*')+CK'%') * EV'__10')^0
-    , __10   = ( Cc(false) * (CKEY'not'+CK'-'+CK'+'+CK'~'+CK'*'+
-                              (CK'&&'-P'&'^3) + (CK'&'-'&&') +
-                              CK'$$' + (CK'$'-'$$')
-                           + Cc'cast'*(K'('*V'__Cast'*K')')*#V'__Exp' )
+    , __10   = ( Cc(false) * ( CKEY'not'+CK'-'+CK'+'+CK'~'+CK'*'+
+                               (CK'&&'-P'&'^3) + (CK'&'-'&&') +
+                               CK'$$' + (CK'$'-'$$') )
                )^0 * V'__11'
     , __11   = V'__12' *
                   (
@@ -662,7 +664,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + CKEY'call'     * EV'__Exp'
              + CKEY'call/recursive' * EV'__Exp'
 
-    , __Cast = V'Type' + (CKEY'@nohold'+CK'@plain'+CK'@pure')
+-->>> OK
+    , __Cast = V'Type' + K'/'*(CK'nohold'+CK'plain'+CK'pure')
+--<<<
 
     , SIZEOF = KEY'sizeof' * EK'(' * (V'Type' + V'__Exp') * EK')'
     , NULL   = CKEY'null'     -- TODO: the idea is to get rid of this
