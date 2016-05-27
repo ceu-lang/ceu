@@ -125,7 +125,7 @@ ddd Data with
     var& int v;
 end
 
-code/delayed Code (var Data& d, var  int ini) => int
+code/delayed Code (var& Data d, var  int ini) => int
 do
     var int v = ini;
     d.v = &v;
@@ -17312,7 +17312,7 @@ escape 10;
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (var byte[]& vec)=>int do
+code/instantaneous F (var& byte[] vec)=>int do
     escape vec[1];
 end
 
@@ -17323,7 +17323,7 @@ escape f(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (var int[]& vec)=>int do
+code/instantaneous F (var& int[] vec)=>int do
     escape vec[1];
 end
 
@@ -17334,7 +17334,7 @@ escape f(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (var byte[]& vec)=>int do
+code/instantaneous F (var& byte[] vec)=>int do
     escape vec[1];
 end
 
@@ -23613,7 +23613,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var byte[]& cs)=>void do
+code/instantaneous F (var& byte[] cs)=>void do
     cs[0] = 10;
 end
 vector[] byte cs = [0];
@@ -43267,7 +43267,7 @@ escape v;
 }
 
 Test { [[
-code/instantaneous Set (var u8& v)=>void do
+code/instantaneous Set (var& u8 v)=>void do
     v = 3;
 end
 var u8 v = 0;
@@ -43278,7 +43278,7 @@ escape v;
 }
 
 Test { [[
-code/instantaneous FillBuffer (var u8[]& buf)=>void do
+code/instantaneous FillBuffer (var& u8[] buf)=>void do
     buf = [] .. buf .. [3];
 end
 vector[10] u8 buffer;
@@ -43289,7 +43289,7 @@ escape buffer[0];
 }
 
 Test { [[
-code/instantaneous FillBuffer (var u8[20]& buf)=>void do
+code/instantaneous FillBuffer (var& u8[20] buf)=>void do
     buf = [] .. buf .. [3];
 end
 vector[10] u8 buffer;
@@ -43300,7 +43300,7 @@ escape buffer[0];
 }
 
 Test { [[
-code/instantaneous FillBuffer (var u8[3]& buf)=>void do
+code/instantaneous FillBuffer (var& u8[3] buf)=>void do
     buf = [] .. buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
@@ -45224,9 +45224,9 @@ escape t.f();
 
 Test { [[
 class Test with
-    code/instantaneous FillBuffer (var u8[]& buf)=>void;
+    code/instantaneous FillBuffer (var& u8[] buf)=>void;
 do
-    code/instantaneous FillBuffer (var u8[]& buf)=>void do
+    code/instantaneous FillBuffer (var& u8[] buf)=>void do
         buf = [] .. buf .. [3];
     end
 end
@@ -45266,7 +45266,7 @@ class T with
 do
 end
 
-code/instantaneous F (var T& t)=>int do
+code/instantaneous F (var& T t)=>int do
     escape t.v * 2;
 end
 
@@ -45289,7 +45289,7 @@ class T with
 do
 end
 
-code/instantaneous F (var T& t)=>int do
+code/instantaneous F (var& T t)=>int do
     escape t.v * 2;
 end
 
@@ -45342,13 +45342,13 @@ interface Human with
 end
 
 class CommonThings with
-    code/instantaneous Walk (var Human& h)=>int;
-    code/instantaneous Breath (var Human& h)=>int;
+    code/instantaneous Walk (var& Human h)=>int;
+    code/instantaneous Breath (var& Human h)=>int;
 do
-    code/instantaneous Walk (var Human& h)=>int do
+    code/instantaneous Walk (var& Human h)=>int do
         escape h.n;
     end
-    code/instantaneous Breath (var Human& h)=>int do
+    code/instantaneous Breath (var& Human h)=>int do
         escape h.n;
     end
     await FOREVER;
@@ -45624,9 +45624,9 @@ escape ttt.xxx2;
 Test { [[
 class T with
     var int xxx2=0;
-    code/instantaneous Fff (var int& xxx3)=>void;
+    code/instantaneous Fff (var& int xxx3)=>void;
 do
-    code/instantaneous Fff (var int& xxx3)=>void do
+    code/instantaneous Fff (var& int xxx3)=>void do
         var& int xxx4 = &xxx3;
         this.xxx2 = xxx4;
     end
@@ -45817,9 +45817,9 @@ escape ret;
 Test { [[
 class T with
     var& int x;
-    code/instantaneous Fff (var int& x)=>T;
+    code/instantaneous Fff (var& int x)=>T;
 do
-    code/instantaneous Fff (var int& x)=>T do
+    code/instantaneous Fff (var& int x)=>T do
         this.x = x;
     end
     this.x = 1;
@@ -45835,9 +45835,9 @@ escape x;
 Test { [[
 class T with
     var& int x;
-    code/instantaneous Fff (var int& x)=>T;
+    code/instantaneous Fff (var& int x)=>T;
 do
-    code/instantaneous Fff (var int& x)=>T do
+    code/instantaneous Fff (var& int x)=>T do
     end
 end
 escape 1;
@@ -45848,10 +45848,10 @@ escape 1;
 Test { [[
 class T with
     var& int x;
-    code/instantaneous Fff (var int& x)=>T;
+    code/instantaneous Fff (var& int x)=>T;
 do
     this.x = 1;
-    code/instantaneous Fff (var int& x)=>T do
+    code/instantaneous Fff (var& int x)=>T do
     end
 end
 escape 1;
@@ -45862,9 +45862,9 @@ escape 1;
 Test { [[
 class T with
     var int xxx2;
-    code/instantaneous Fff (var int& xxx3)=>T;
+    code/instantaneous Fff (var& int xxx3)=>T;
 do
-    code/instantaneous Fff (var int& xxx3)=>T do
+    code/instantaneous Fff (var& int xxx3)=>T do
         this.xxx2 = xxx3;
     end
     this.xxx2 = 1;
@@ -45880,9 +45880,9 @@ escape ttt.xxx2;
 Test { [[
 class T with
     var& int xxx2;
-    code/instantaneous Fff (var int& xxx3)=>T;
+    code/instantaneous Fff (var& int xxx3)=>T;
 do
-    code/instantaneous Fff (var int& xxx3)=>T do
+    code/instantaneous Fff (var& int xxx3)=>T do
         this.xxx2 = &xxx3;
     end
     this.xxx2 = 1;
@@ -45913,12 +45913,12 @@ escape vvv;
 }
 Test { [[
 class TimeDisplay with
-    code/instantaneous Build (var int& vvv)=>TimeDisplay;
+    code/instantaneous Build (var& int vvv)=>TimeDisplay;
 do
     var int x = 0;
     var& int vvv = &x;
 
-    code/instantaneous Build (var int& vvv)=>TimeDisplay do
+    code/instantaneous Build (var& int vvv)=>TimeDisplay do
         this.vvv = &vvv;
     end
 end
@@ -45929,12 +45929,12 @@ escape 1;
 
 Test { [[
 class TimeDisplay with
-    code/instantaneous Build (var int& vvv)=>TimeDisplay;
+    code/instantaneous Build (var& int vvv)=>TimeDisplay;
 do
     var int x = 0;
     var& int vvv;
 
-    code/instantaneous Build (var int& vvv)=>TimeDisplay do
+    code/instantaneous Build (var& int vvv)=>TimeDisplay do
         //this.vvv = &vvv;
         if vvv then end;
     end
@@ -46728,9 +46728,9 @@ class U with do end;
 
 class T with
     vector[] U&& & us;
-    code/instantaneous Build (var U&&[]& us)=>T;
+    code/instantaneous Build (var& U&&[] us)=>T;
 do
-    code/instantaneous Build (var U&&[]& us)=>T do
+    code/instantaneous Build (var& U&&[] us)=>T do
         this.us = &us;
     end
 end
@@ -46748,9 +46748,9 @@ class U with do end;
 
 class T with
     vector[] U&& & us;
-    code/instantaneous Build (var U&&[]& us)=>T;
+    code/instantaneous Build (var& U&&[] us)=>T;
 do
-    code/instantaneous Build (var U&&[]& us)=>T do
+    code/instantaneous Build (var& U&&[] us)=>T do
         this.us = &us;
     end
 end
@@ -46771,9 +46771,9 @@ class U with do end;
 
 class T with
     vector[] U&&?& us;
-    code/instantaneous Build (var U&&?[]& us)=>T;
+    code/instantaneous Build (var& U&&?[] us)=>T;
 do
-    code/instantaneous Build (var U&&?[]& us)=>T do
+    code/instantaneous Build (var& U&&?[] us)=>T do
         this.us = &us;
     end
 end
@@ -46799,9 +46799,9 @@ end;
 
 class T with
     vector[] U&&?& us;
-    code/instantaneous Build (var U&&?[]& us)=>T;
+    code/instantaneous Build (var& U&&?[] us)=>T;
 do
-    code/instantaneous Build (var U&&?[]& us)=>T do
+    code/instantaneous Build (var& U&&?[] us)=>T do
         this.us = &us;
     end
 end
@@ -46827,9 +46827,9 @@ end;
 
 class T with
     vector[] U&&?& us;
-    code/instantaneous Build (var U&&?[]& us)=>T;
+    code/instantaneous Build (var& U&&?[] us)=>T;
 do
-    code/instantaneous Build (var U&&?[]& us)=>T do
+    code/instantaneous Build (var& U&&?[] us)=>T do
         this.us = &us;
     end
 end
@@ -46851,9 +46851,9 @@ escape us[0]?+1;
 Test { [[
 class T with
     var& int i;
-    code/instantaneous Build (var int& i)=>T;
+    code/instantaneous Build (var& int i)=>T;
 do
-    code/instantaneous Build (var int& i)=>T do
+    code/instantaneous Build (var& int i)=>T do
         this.i = &i;
     end
     escape this.i;
@@ -46872,9 +46872,9 @@ end
 native/pure _ID();
 class T with
     var& int i;
-    code/instantaneous Build (var int& i)=>T;
+    code/instantaneous Build (var& int i)=>T;
 do
-    code/instantaneous Build (var int& i)=>T do
+    code/instantaneous Build (var& int i)=>T do
         this.i = &i;
     end
     escape this.i;
@@ -64072,12 +64072,12 @@ escape ttt.xxx2;
 }
 Test { [[
 class TimeDisplay with
-    code/instantaneous Build (var int& vvv)=>TimeDisplay;
+    code/instantaneous Build (var& int vvv)=>TimeDisplay;
 do
     var int x = 0;
     var& int vvv;
 
-    code/instantaneous Build (var int& vvv)=>TimeDisplay do
+    code/instantaneous Build (var& int vvv)=>TimeDisplay do
         this.vvv = &vvv;
     end
 
@@ -64090,11 +64090,11 @@ escape 1;
 
 Test { [[
 class TimeDisplay with
-    code/instantaneous Build (var int& vvv)=>TimeDisplay;
+    code/instantaneous Build (var& int vvv)=>TimeDisplay;
 do
     var& int vvv;
 
-    code/instantaneous Build (var int& vvv)=>TimeDisplay do
+    code/instantaneous Build (var& int vvv)=>TimeDisplay do
         this.vvv = &vvv;
     end
 end
@@ -64238,9 +64238,9 @@ escape _strlen((byte&&)&&t.name);
 Test { [[
 class T with
     var& void p;
-    code/instantaneous Build (var void& p)=>T;
+    code/instantaneous Build (var& void p)=>T;
 do
-    code/instantaneous Build (var void& p)=>T do
+    code/instantaneous Build (var& void p)=>T do
         this.p = &p;
     end
     escape *((int&&)&&this.p);
