@@ -33764,7 +33764,8 @@ end
 pool T t;
 escape 1;
 ]],
-    env = 'line 4 : missing `pool´ dimension',
+    parser = 'line 4 : after `pool´ : expected `[´',
+    --env = 'line 4 : missing `pool´ dimension',
     --parser = 'line 4 : after `T´ : expected `[´',
 }
 

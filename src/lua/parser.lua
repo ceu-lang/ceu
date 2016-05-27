@@ -90,7 +90,6 @@ local _V2NAME = {
     __ID_field = 'identifier',
     _Vars = 'declaration',
     _Evts = 'declaration',
-    _Dcl_pool = 'declaration',
     __nat  = 'declaration',
     _Nats   = 'declaration',
     Dcl_adt_tag = 'declaration',
@@ -380,10 +379,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- auxiliary
     , Dcl_constr = V'Block'
 
-    -- pools
-    , __dcl_var_set = EV'__ID_int' * (V'__Sets' + Cc(false,false,false))
-    , _Dcl_pool = CKEY'pool' * EV'Type' * EV'__dcl_var_set' * (K','*EV'__dcl_var_set')^0
-
     -- classes / interfaces
     , Dcl_cls  = KEY'class'     * Cc(false)
                * EV'__ID_cls'
@@ -396,7 +391,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                   + V'_Vecs_set'  + V'_Vecs'
                   + V'_Pools_set' + V'_Pools'
                   + V'_Evts_set'  + V'_Evts'
-                  + V'_Dcl_pool' + V'_Code_proto' + V'_Dcl_imp')
+                  + V'_Code_proto' + V'_Dcl_imp')
                     * (EK';'*K';'^0)
                 + V'Dcl_mode' * K':'
                 )^0
@@ -405,7 +400,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- ddd types
     , _DDD = KEY'ddd' * EV'__ID_abs' * EKEY'with' * (
-                (V'_Vars'+V'_Vecs'+V'_Pools'+V'_Evts'+V'_Dcl_pool') *
+                (V'_Vars'+V'_Vecs'+V'_Pools'+V'_Evts') *
                     (EK';'*K';'^0)
              )^1 * EK'end'
 
@@ -701,7 +696,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  + V'_Pools_set' + V'_Pools'
                  + V'_Evts_set'  + V'_Evts'
                  + V'_Exts'
-                 + V'_Dcl_pool'
                  + V'_Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Dcl_det'
                  + V'_Set'
