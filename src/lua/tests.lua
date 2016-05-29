@@ -21498,6 +21498,13 @@ escape 10;
 --<<< OS_START
 
 Test { [[
+input (int) X;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 
 input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position) DOOR_SPAWN;
 
@@ -21511,7 +21518,8 @@ input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position
     end
 ]],
     --parser = 'line 2 : before `)´ : expected `,´',
-    parser = 'line 2 : after `int´ : expected `,´',
+    --parser = 'line 2 : after `int´ : expected `,´',
+    parser = 'line 2 : after `int´ : expected `)´',
     _ana = {
         isForever = true,
     },
@@ -23446,7 +23454,8 @@ _f([1]);
 escape 1;
 ]],
     --env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
-    parser = 'line 1 : after `(´ : expected `)´',
+    --parser = 'line 1 : after `(´ : expected `)´',
+    parser = 'line 1 : after `(´ : expected expression',
     --run = 1,
 }
 Test { [[
@@ -23454,7 +23463,8 @@ _f([1]..[2]);
 escape 1;
 ]],
     --env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
-    parser = 'line 1 : after `(´ : expected `)´',
+    --parser = 'line 1 : after `(´ : expected `)´',
+    parser = 'line 1 : after `(´ : expected expression',
     --run = 1,
 }
 Test { [[
@@ -23463,7 +23473,8 @@ _f([1]..v);
 escape 1;
 ]],
     --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
-    parser = 'line 2 : after `(´ : expected `)´',
+    parser = 'line 2 : after `(´ : expected expression',
+    --parser = 'line 2 : after `(´ : expected `)´',
     --run = 1,
 }
 Test { [[
@@ -34368,7 +34379,8 @@ spawn i;
 Test { [[
 _f(spawn T);
 ]],
-    parser = 'line 1 : after `(´ : expected `)´',
+    --parser = 'line 1 : after `(´ : expected `)´',
+    parser = 'line 1 : after `(´ : expected expression',
 }
 
 Test { [[
@@ -45739,6 +45751,7 @@ t = T.f(1);
 escape t.x;
 ]],
     parser = 'line 12 : before `.´ : expected `(´',
+    --parser = 'line 12 : before `.´ : expected expression',
     --run = 2,
 }
 
@@ -47589,7 +47602,8 @@ with
 end
 escape 1;
 ]],
-    adj = 'line 3 : missing ISR identifier',
+    --adj = 'line 3 : missing ISR identifier',
+    parser = 'line 3 : after `[´ : expected expression',
 }
 
 Test { [[
@@ -51748,10 +51762,21 @@ end
 
 Test { [[
 var int a, b;
+(a) = 1;
+escape 1;
+]],
+    --parser = 'line 2 : before `=´ : expected `,´',
+    --env = 'line 2 : arity mismatch',
+    run = 1,
+}
+
+Test { [[
+var int a, b;
 (a,b) = 1;
 escape 1;
 ]],
-    parser = 'line 2 : before `=´ : expected `,´',
+    parser = 'line 2 : after `=´ : expected `await´',
+    --parser = 'line 2 : before `=´ : expected `,´',
     --env = 'line 2 : arity mismatch',
     --run = 1,
 }
@@ -52288,7 +52313,8 @@ with
 end
 escape 1;
 ]],
-    parser = 'line 6 : after `T´ : expected `,´',
+    parser = 'line 6 : after `T´ : expected `)´',
+    --parser = 'line 6 : after `T´ : expected `,´',
     --env = 'line 6 : invalid event type',
     --run = 1,
 }
@@ -52487,7 +52513,7 @@ with
     escape b;
 end
 ]],
-    parser = 'line 3 : after `int´ : expected `,´',
+    parser = 'line 3 : after `int´ : expected `)´',
     --run = 14,
 }
 

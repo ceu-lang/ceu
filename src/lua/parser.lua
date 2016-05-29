@@ -60,6 +60,10 @@ local OPT = function (patt)
     return patt + Cc(false)
 end
 
+local PARENS = function (patt)
+    return K'(' * patt * EK')'
+end
+
 local Ccs = function (...)
     local ret = Cc(true)
     for _, v in ipairs(...) do
@@ -71,6 +75,7 @@ end
 local _V2NAME = {
 -->>> OK
     __do_escape_id = '`escape´ identifier',
+    Explist = 'expression',
 --<<<
 
     __Exp = 'expression',
@@ -122,6 +127,10 @@ local EM = function (msg,full)
             end
             return true
         end)
+end
+
+local E = function (patt, msg)
+    return patt + EM(msg)
 end
 
 -->>> OK
@@ -293,9 +302,12 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , _Typepars_item_id   = V'__typepars_pre' * EV'Type' * EV'__ID_int'
     , _Typepars_item_anon = V'__typepars_pre' * EV'Type' * Cc(false)
-    , _Typepars = EK'(' * P'void' * EK')'
-                + K'(' * EV'_Typepars_item_anon' * (EK','*V'_Typepars_item_anon')^0 * EK')'
-                + K'(' * EV'_Typepars_item_id'   * (EK','*V'_Typepars_item_id')^0   * EK')'
+    , _Typepars = #EK'(' * (
+                    PARENS(P'void') +
+                    PARENS(EV'_Typepars_item_anon' * (EK','*V'_Typepars_item_anon')^0) +
+                    PARENS(EV'_Typepars_item_id'   * (EK','*V'_Typepars_item_id')^0)
+                  )
+
 
 -- NATIVE
 
@@ -332,20 +344,17 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Pools     = CKEY'pool' * OPT(CK'&') * EV'__Dim' * EV'Type' *
                     EV'__ID_int' * (K','*EV'__ID_int')^0
 
-    , _Evts_set  = CKEY'event' * OPT(CK'&') * (V'_Typelist'+EV'Type') *
+    , _Evts_set  = CKEY'event' * OPT(CK'&') * (PARENS(V'_Typelist')+EV'Type') *
                     EV'__vars_set' * (K','*EV'__vars_set')^0
-    , _Evts      = CKEY'event' * OPT(CK'&') * (V'_Typelist'+EV'Type') *
+    , _Evts      = CKEY'event' * OPT(CK'&') * (PARENS(V'_Typelist')+EV'Type') *
                     EV'__ID_int' * (K','*EV'__ID_int')^0
 
-    , _Exts      = (CKEY'input'+CKEY'output') * (V'_Typelist'+EV'Type') *
+    , _Exts      = (CKEY'input'+CKEY'output') * (PARENS(V'_Typelist')+EV'Type') *
                     EV'__ID_ext' * (K','*EV'__ID_ext')^0
-
-    -- (int, void*)
-    , _Typelist = K'(' * EV'Type' * (EK','*V'Type')^0 * EK')'
 
     -- USES
 
-    , __evts_ps = (EV'__Exp' + K'(' * EV'ExpList' * EK')')
+    , __evts_ps = EV'__Exp' + PARENS(OPT(V'Explist'))
     , Extemit  = KEY'emit' * (
                     (V'WCLOCKK'+V'WCLOCKE') * OPT(K'=>' * EV'__Exp') +
                     EV'ID_ext' * OPT(K'=>' * EV'__evts_ps')
@@ -386,7 +395,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __vec_pre     = K'[' - V'__lua_pre'
 
     -- vector constructor
-    , Vectup  = V'__vec_pre' * EV'ExpList' * EK']'
+    , Vectup  = V'__vec_pre' * OPT(V'Explist') * EK']'
     , _Vecnew = V'Vectup' * (K'..' * (V'__Exp' + #EK'['*V'Vectup'))^0
 
 
@@ -408,6 +417,12 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     , __Dim = EK'[' * (V'__Exp'+Cc('[]')) * K']'
 
+-- LISTS
+
+    , Varlist   = V'ID_int' * (K',' * EV'ID_int')^0
+    , Explist   = V'__Exp'  * (K',' * EV'__Exp')^0
+    , _Typelist = V'Type'   * (K',' * EV'Type')^0
+
  --<<<
 
 -- Declarations
@@ -425,7 +440,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                             EKEY'with' * V'Dcl_constr' * EKEY'end' +
                             Cc(false)
                           ) )
-    , _Var_constr = V'__ID_cls' * (EK'.'-'..') * EV'__ID_int' * EK'(' * EV'ExpList' * EK')'
+    , _Var_constr = V'__ID_cls' * (EK'.'-'..') * EV'__ID_int' *
+                        PARENS(OPT(V'Explist'))
 
     -- auxiliary
     , Dcl_constr = V'Block'
@@ -457,7 +473,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- ddd-constr
     , DDD_constr_root = K'@' * OPT(CKEY'new') * V'DDD_constr_one'
-    , DDD_constr_one  = V'__ID_abs' * EK'(' * EV'_DDD_explist' * EK')'
+    , DDD_constr_one  = V'__ID_abs' * PARENS(EV'_DDD_explist')
     , _DDD_explist    = ( V'__ddd_expitem'*(K','*EV'__ddd_expitem')^0 )^-1
     , __ddd_expitem   = (V'DDD_constr_one' + V'__Exp')
 
@@ -476,11 +492,12 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- Assignments
 
-    , _Set_one   = V'__Exp'   * V'__Sets_one'
-    , _Set_many  = V'Varlist' * V'__Sets_many'
+    , _Set_one   = V'__Exp'           * V'__Sets_one'
+    , _Set_many  = PARENS(V'Varlist') * V'__Sets_many'
 
-    , __Sets_one  = (CK'='+CK':=') * (V'__sets_one'  + K'('*V'__sets_one'*EK')')
-    , __Sets_many = (CK'='+CK':=') * (V'__sets_many' + K'('*V'__sets_many'*EK')')
+    , __Sets_one  = (CK'='+CK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
+    , __Sets_many = (CK'='+CK':=') *
+                        E((V'__sets_many' + PARENS(V'__sets_many')), '`await´')
 
     , __sets_one =
                 --Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
@@ -504,7 +521,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- adt-constr
     , Adt_constr_root = OPT(CKEY'new') * V'Adt_constr_one'
-    , Adt_constr_one  = V'Adt' * EK'(' * EV'_Adt_explist' * EK')'
+    , Adt_constr_one  = V'Adt' * #EK'('*PARENS(EV'_Adt_explist')
     , Adt             = V'__ID_adt' * OPT((K'.'-'..')*V'__ID_tag')
     , __adt_expitem   = (V'Adt_constr_one' + V'_Vecnew' + V'__Exp')
     , _Adt_explist    = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
@@ -538,7 +555,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
             * OPT(V'_Spawn_constr')
             * OPT(KEY'in'*EV'__Exp')
             * OPT(EKEY'with'*V'Dcl_constr'* EKEY'end')
-    , _Spawn_constr = (K'.'-'..') * EV'__ID_int' * EK'(' * EV'ExpList' * EK')'
+    , _Spawn_constr = (K'.'-'..') * EV'__ID_int' * PARENS(OPT(V'Explist'))
 
     , Kill  = KEY'kill' * EV'__Exp' * OPT(EK'=>'*EV'__Exp')
 
@@ -559,7 +576,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     ((V'ID_int'+V'ID_none') * OPT(EKEY'in'*EV'__Exp')
                     + Cc(false,false)) *
                 V'__Do'
-    , _Every  = KEY'every' * ( (EV'ID_int'+V'Varlist') * EKEY'in'
+    , _Every  = KEY'every' * ( (EV'ID_int'+PARENS(V'Varlist')) * EKEY'in'
                             + Cc(false) )
               * V'__awaits'
               * V'__Do'
@@ -604,9 +621,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Pause   = KEY'pause/if' * EV'__Exp' * V'__Do'
 
     -- asynchronous execution
-    , Async   = KEY'async' * (-P'/thread'-'/isr') * OPT(V'Varlist') * V'__Do'
-    , _Thread = KEY'async/thread' * OPT(V'Varlist') * V'__Do'
-    , _Isr    = KEY'async/isr'    * EK'[' * EV'ExpList' * EK']' * OPT(V'Varlist') * V'__Do'
+    , Async   = KEY'async' * (-P'/thread'-'/isr') * OPT(PARENS(V'Varlist')) *
+                V'__Do'
+    , _Thread = KEY'async/thread' * OPT(PARENS(V'Varlist')) * V'__Do'
+    , _Isr    = KEY'async/isr'    *
+                    EK'[' * EV'Explist' * EK']' *
+                    OPT(PARENS(V'Varlist')) *
+                V'__Do'
     , Atomic  = KEY'atomic' * V'__Do'
 
     -- C integration
@@ -638,11 +659,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Type = V'__type'   * (V'__type_ptr'              )^0 * CK'?'^-1
            + V'__ID_nat' * (V'__type_ptr'+V'__type_vec')^0 * CK'?'^-1
 
--- Lists
-
-    , Varlist = ( K'(' * EV'ID_int' * (EK',' * EV'ID_int')^0 * EK')' )
-    , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
-
 -- Wall-clock values
 
     , WCLOCKK = #NUM *
@@ -652,7 +668,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                 (NUM * K'ms'  + Cc(0)) *
                 (NUM * K'us'  + Cc(0)) *
                 (NUM * EM'<h,min,s,ms,us>')^-1 * OPT(CK'_')
-    , WCLOCKE = K'(' * V'__Exp' * EK')' * (
+    , WCLOCKE = PARENS(V'__Exp') * (
                     CK'h' + CK'min' + CK's' + CK'ms' + CK'us'
                   + EM'<h,min,s,ms,us>'
               ) * OPT(CK'_')
@@ -681,7 +697,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                )^0 * V'__11'
     , __11   = V'__12' *
                   (
-                      K'(' * Cc'call' * EV'ExpList' * EK')' *
+                      PARENS(Cc'call' * OPT(EV'Explist')) *
                           OPT(KEY'finalize' * EKEY'with' * V'Finally' * EKEY'end')
                   +
                       K'[' * Cc'idx'  * EV'__Exp'    * EK']' +
@@ -690,7 +706,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                   )^0
     , __12   = V'__Prim'
 
-    , __Prim = K'(' * V'__Exp' * EK')'
+    , __Prim = PARENS(V'__Exp')
              + V'SIZEOF'
 -- Field
              + K'@'*V'ID_abs'
@@ -705,7 +721,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __Cast = V'Type' + K'/'*(CK'nohold'+CK'plain'+CK'pure')
 --<<<
 
-    , SIZEOF = KEY'sizeof' * EK'(' * (V'Type' + V'__Exp') * EK')'
+    , SIZEOF = KEY'sizeof' * PARENS((V'Type' + V'__Exp'))
     , NULL   = CKEY'null'     -- TODO: the idea is to get rid of this
     , STRING = CK( CK'"' * (P(1)-'"'-'\n')^0 * EK'"' )
 
