@@ -660,8 +660,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 -- Expressions
 
     , __Exp  = V'__0'
--- TODO: -0
-    , __0    = V'__1'
+    , __0    = V'__1' * K'..' * EM('invalid constructor syntax',true) * -1
+             + V'__1'
     , __1    = V'__2'  * (CKEY'or'  * EV'__2')^0
     , __2    = V'__3'  * (CKEY'and' * EV'__3')^0
     , __3    = V'__4'  * ( ( (CK'!='-'!==')+CK'=='+CK'<='+CK'>='

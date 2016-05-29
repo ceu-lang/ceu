@@ -23471,8 +23471,8 @@ vector[] int v;
 _f(v..[1]);
 escape 1;
 ]],
-    --parser = 'line 2 : after `..´ : invalid constructor syntax',
-    parser = 'line 2 : after `v´ : expected `)´',
+    parser = 'line 2 : after `..´ : invalid constructor syntax',
+    --parser = 'line 2 : after `v´ : expected `)´',
     --run = 1,
 }
 
