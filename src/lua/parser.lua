@@ -367,18 +367,28 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- SETS
 
-    , _Set_Do       = #(K'do'*EK'/')      * V'Do'
-    , _Set_Await    = #K'await'           * V'Await'
-    , _Set_Watching = #K'watching'        * V'_Watching'
-    , _Set_Spawn    = #K'spawn'           * V'Spawn'
-    , _Set_Thread   = #K'async/thread '   * V'_Thread'
-    , _Set_Lua      = #('['*(P'='^0)*'[') * V'_Lua'
-    , _Set_Exp      =                       V'__Exp'
+    -- after `=´
+    , _Set_Do       = #(K'do'*EK'/')    * V'Do'
+    , _Set_Await    = #K'await'         * V'Await'
+    , _Set_Watching = #K'watching'      * V'_Watching'
+    , _Set_Spawn    = #K'spawn'         * V'Spawn'
+    , _Set_Thread   = #K'async/thread'  * V'_Thread'
+    , _Set_Lua      = #V'__lua_pre'     * V'_Lua'
+    , _Set_Vec      = #V'__vec_pre'     * V'_Vecnew'
+    , _Set_Exp      =                     V'__Exp'
 
-    , _Set_Extemit  = #K'emit'            * V'Extemit'
-    , _Set_Extreq   = #K'request'         * V'Extreq'
-    , _Set_Extcall  = #V'__extcall_pre'   * V'Extcall'
+    , _Set_Extemit  = #K'emit'          * V'Extemit'
+    , _Set_Extreq   = #K'request'       * V'Extreq'
+    , _Set_Extcall  = #V'__extcall_pre' * V'Extcall'
+
     , __extcall_pre = (KEY'call/recursive'+KEY'call') * V'ID_ext'
+    , __lua_pre     = K'[' * (P'='^0) * '['
+    , __vec_pre     = K'[' - V'__lua_pre'
+
+    -- vector constructor
+    , Vectup  = V'__vec_pre' * EV'ExpList' * EK']'
+    , _Vecnew = V'Vectup' * (K'..' * (V'__Exp' + #EK'['*V'Vectup'))^0
+
 
 -- IDS
 
@@ -485,6 +495,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
         + V'_Set_Spawn'
         + V'_Set_Thread'
         + V'_Set_Lua'
+        + V'_Set_Vec'
         + V'_Set_Exp'
               + Cc'do-org'     * V'_DoOrg'
               + EM'expression'
@@ -495,13 +506,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , Adt_constr_root = OPT(CKEY'new') * V'Adt_constr_one'
     , Adt_constr_one  = V'Adt' * EK'(' * EV'_Adt_explist' * EK')'
     , Adt             = V'__ID_adt' * OPT((K'.'-'..')*V'__ID_tag')
-    , __adt_expitem   = (V'Adt_constr_one' + V'__Exp')
+    , __adt_expitem   = (V'Adt_constr_one' + V'_Vecnew' + V'__Exp')
     , _Adt_explist    = ( V'__adt_expitem'*(K','*EV'__adt_expitem')^0 )^-1
-
-    -- vector-constr
-    , Vector_tup = (K'['-('['*P'='^0*'[')) * EV'ExpList' * EK']'
-    , Vector_constr = V'Vector_tup' *
-                        (K'..'*( V'Vector_tup'+V'__Exp'))^0
 
 -- Function calls
 
@@ -654,8 +660,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 -- Expressions
 
     , __Exp  = V'__0'
-    , __0    = V'__1' * K'..' * EM('invalid constructor syntax',true) * -1
-             + V'__1'
+-- TODO: -0
+    , __0    = V'__1'
     , __1    = V'__2'  * (CKEY'or'  * EV'__2')^0
     , __2    = V'__3'  * (CKEY'and' * EV'__3')^0
     , __3    = V'__4'  * ( ( (CK'!='-'!==')+CK'=='+CK'<='+CK'>='
@@ -691,7 +697,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'ID_int'     + V'ID_nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
-             + V'RawExp'  + V'Vector_constr'
+             + V'RawExp'  --+ V'Vector_constr'
              + CKEY'call'     * V'__Exp'
              + CKEY'call/recursive' * V'__Exp'
 

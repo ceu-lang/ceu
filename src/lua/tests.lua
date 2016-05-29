@@ -22562,7 +22562,8 @@ Test { [[
 vector[] int c;
 escape [];
 ]],
-    env = 'line 2 : invalid attribution : destination is not a vector',
+    parser = 'line 2 : after `escape´ : expected expression',
+    --env = 'line 2 : invalid attribution : destination is not a vector',
     --env = 'line 2 : types mismatch (`int´ <= `any[]´)',
 }
 
@@ -22570,7 +22571,8 @@ Test { [[
 vector[] int c;
 escape [1]..[]..c;
 ]],
-    env = 'line 2 : invalid attribution : destination is not a vector',
+    parser = 'line 2 : after `escape´ : expected expression',
+    --env = 'line 2 : invalid attribution : destination is not a vector',
     --env = 'line 2 : types mismatch (`int´ <= `int[]´)',
 }
 
@@ -22578,10 +22580,11 @@ Test { [[
 vector[10] u8 vec = [ [1,2,3] ];
 escape 1;
 ]],
+    parser = 'line 1 : after `[´ : expected `]´',
     --parser = 'line 1 : after `[´ : expected `]´',
     --env = 'line 1 : wrong argument #1 : arity mismatch',
     --env = 'line 1 : types mismatch (`u8[]´ <= `int[][]´)',
-    env = 'line 1 : wrong argument #1 : types mismatch (`u8´ <= `int[]..´)',
+    --env = 'line 1 : wrong argument #1 : types mismatch (`u8´ <= `int[]..´)',
 }
 Test { [[
 vector[10] u8 vec = (1,2,3);
@@ -22616,7 +22619,8 @@ vector[] int v = [] ..;
 escape 1;
 ]],
     --parser = 'line 1 : after `..´ : expected item',
-    parser = 'line 1 : after `..´ : invalid constructor syntax',
+    --parser = 'line 1 : after `..´ : invalid constructor syntax',
+    parser = 'line 1 : after `..´ : expected `[´',
 }
 
 Test { [[
@@ -22931,15 +22935,15 @@ escape 1;
 Test { [[
 escape [1]..[2];
 ]],
-    --parser = 'line 1 : after `escape´ : expected expression',
-    env = 'line 1 : invalid attribution : destination is not a vector',
+    parser = 'line 1 : after `escape´ : expected expression',
+    --env = 'line 1 : invalid attribution : destination is not a vector',
 }
 
 Test { [[
 escape [1]..[&&this];
 ]],
-    env = 'line 1 : invalid attribution : destination is not a vector',
-    --parser = 'line 1 : after `escape´ : expected expression',
+    --env = 'line 1 : invalid attribution : destination is not a vector',
+    parser = 'line 1 : after `escape´ : expected expression',
 }
 
 Test { [[
@@ -23441,16 +23445,16 @@ Test { [[
 _f([1]);
 escape 1;
 ]],
-    env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --parser = 'line 1 : after `(´ : expected `)´',
+    --env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
+    parser = 'line 1 : after `(´ : expected `)´',
     --run = 1,
 }
 Test { [[
 _f([1]..[2]);
 escape 1;
 ]],
-    env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --parser = 'line 1 : after `(´ : expected `)´',
+    --env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
+    parser = 'line 1 : after `(´ : expected `)´',
     --run = 1,
 }
 Test { [[
@@ -23458,8 +23462,8 @@ vector[] int v;
 _f([1]..v);
 escape 1;
 ]],
-    env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --parser = 'line 2 : after `(´ : expected `)´',
+    --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
+    parser = 'line 2 : after `(´ : expected `)´',
     --run = 1,
 }
 Test { [[
@@ -23467,8 +23471,8 @@ vector[] int v;
 _f(v..[1]);
 escape 1;
 ]],
-    parser = 'line 2 : after `..´ : invalid constructor syntax',
-    --parser = 'line 2 : after `v´ : expected `)´',
+    --parser = 'line 2 : after `..´ : invalid constructor syntax',
+    parser = 'line 2 : after `v´ : expected `)´',
     --run = 1,
 }
 
