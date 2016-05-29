@@ -312,6 +312,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- VARS, VECTORS, POOLS, EVTS, EXTS
 
+    -- DECLARATIONS
+
     , __vars_set  = EV'__ID_int' * OPT(V'__Sets')
 
     , _Vars_set  = CKEY'var' * OPT(CK'&') * EV'Type' *
@@ -341,12 +343,42 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     -- (int, void*)
     , _Typelist = K'(' * EV'Type' * (EK','*V'Type')^0 * EK')'
 
+    -- USES
+
+    , __evts_ps = (EV'__Exp' + K'(' * EV'ExpList' * EK')')
+    , Extemit  = KEY'emit' * (
+                    (V'WCLOCKK'+V'WCLOCKE') * OPT(K'=>' * EV'__Exp') +
+                    EV'ID_ext' * OPT(K'=>' * EV'__evts_ps')
+                 )
+    , Extcall  = (KEY'call/recursive'+KEY'call') *
+                    EV'ID_ext' * OPT(K'=>' * EV'__evts_ps')
+    , Extreq   = KEY'request' *
+                    EV'ID_ext' * OPT(K'=>' * EV'__evts_ps')
+
+    , Intemit  = KEY'emit' * -#(V'WCLOCKK'+V'WCLOCKE') *
+                    EV'__Exp' * OPT(K'=>' * EV'__evts_ps')
+
 -- DETERMINISTIC
 
     , __det_id = V'ID_ext' + V'ID_int' + V'ID_abs' + V'__ID_nat'
     , Deterministic = KEY'deterministic' * EV'__det_id' * (
                         EKEY'with' * EV'__det_id' * (K',' * EV'__det_id')^0
                       )^-1
+
+-- SETS
+
+    , _Set_Do       = #(K'do'*EK'/')      * V'Do'
+    , _Set_Await    = #K'await'           * V'Await'
+    , _Set_Watching = #K'watching'        * V'_Watching'
+    , _Set_Spawn    = #K'spawn'           * V'Spawn'
+    , _Set_Thread   = #K'async/thread '   * V'_Thread'
+    , _Set_Lua      = #('['*(P'='^0)*'[') * V'_Lua'
+    , _Set_Exp      =                       V'__Exp'
+
+    , _Set_Extemit  = #K'emit'            * V'Extemit'
+    , _Set_Extreq   = #K'request'         * V'Extreq'
+    , _Set_Extcall  = #V'__extcall_pre'   * V'Extcall'
+    , __extcall_pre = (KEY'call/recursive'+KEY'call') * V'ID_ext'
 
 -- IDS
 
@@ -434,23 +466,24 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- Assignments
 
-    , _Set  = (V'__Exp' + V'VarList') * V'__Sets'
-    , __Sets = (CK'='+CK':=') * (
-                Cc'do'         * #(KEY'do'*EK'/') * V'Do'
-              + Cc'watching'   * V'_Watching'
-              + Cc'await'      * V'Await'
-              + Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
-              + Cc'adt-constr' * V'Adt_constr_root'
+    , _Set  = (V'__Exp'+V'VarList') * V'__Sets'
+    , __Sets = (CK'='+CK':=') * (V'__sets' + K'('*V'__sets'*EK')')
+    , __sets =
+                --Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
+              Cc'adt-constr' * V'Adt_constr_root'
               + Cc'ddd-constr' * V'DDD_constr_root'
-              + Cc'lua'        * V'_LuaExp'
-              + Cc'do-org'     * V'_DoOrg'
-              + Cc'spawn'      * V'Spawn'
-              + Cc'thread'     * V'_Thread'
-              + Cc'exp'        * V'__Exp'
               + Cc'__trav_loop' * V'_TraverseLoop'  -- before Rec
               + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
+        + V'_Set_Extemit' + V'_Set_Extcall' + V'_Set_Extreq'
+        + V'_Set_Do'
+        + V'_Set_Await'
+        + V'_Set_Watching'
+        + V'_Set_Spawn'
+        + V'_Set_Thread'
+        + V'_Set_Lua'
+        + V'_Set_Exp'
+              + Cc'do-org'     * V'_DoOrg'
               + EM'expression'
-              )
 
     -- adt-constr
     , Adt_constr_root = OPT(CKEY'new') * V'Adt_constr_one'
@@ -479,11 +512,6 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- internal/external emit/call/request
     -- TODO: emit/await, move from "false"=>"_WCLOCK"
-    , EmitExt  = (CKEY'call/recursive'+CKEY'call'+CKEY'emit'+CKEY'request')
-               * ( Cc(false) * (V'WCLOCKK'+V'WCLOCKE')
-                 + EV'ID_ext' * V'__emit_ps' )
-    , EmitInt  = CKEY'emit' * EV'__Exp' * V'__emit_ps'
-    , __emit_ps = OPT(K'=>' * (V'__Exp' + K'(' * V'ExpList' * EK')'))
 
 -- Organism instantiation
 
@@ -576,10 +604,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- Lua integration
     -- Stmt/Exp differ only by the "return" and are re-unified in "adj.lua"
-    , _LuaStmt = V'__lua'
-    , _LuaExp  = Cc'return ' * V'__lua'
-
-    , __lua    = K'[' * m.Cg(P'='^0,'lua') * '[' *
+    , _Lua    = K'[' * m.Cg(P'='^0,'lua') * '[' *
                 ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
                  * (V'__luacl'/function()end) *X
     , __luaext = K'@' * V'__Exp'
@@ -630,7 +655,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , __3    = V'__4'  * ( ( (CK'!='-'!==')+CK'=='+CK'<='+CK'>='
                            + (CK'<'-'<<')+(CK'>'-'>>')
                            ) * EV'__4'
-                         + CK'as' * EV'__Cast'
+                         + CKEY'as' * EV'__Cast'
                          )^0
     , __4    = V'__5'  * ((CK'|'-'||') * EV'__5')^0
     , __5    = V'__6'  * (CK'^' * EV'__6')^0
@@ -653,7 +678,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                   )^0
     , __12   = V'__Prim'
 
-    , __Prim = K'(' * EV'__Exp' * EK')'
+    , __Prim = K'(' * V'__Exp' * EK')'
              + V'SIZEOF'
 -- Field
              + K'@'*V'ID_abs'
@@ -661,8 +686,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
              + V'RawExp'  + V'Vector_constr'
-             + CKEY'call'     * EV'__Exp'
-             + CKEY'call/recursive' * EV'__Exp'
+             + CKEY'call'     * V'__Exp'
+             + CKEY'call/recursive' * V'__Exp'
 
 -->>> OK
     , __Cast = V'Type' + K'/'*(CK'nohold'+CK'plain'+CK'pure')
@@ -704,7 +729,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  + V'_Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Deterministic'
                  + V'_Set'
-                 + V'Await' + V'EmitExt' + V'EmitInt'
+                 + V'Await' + V'Intemit'
+                 + V'Extemit' + V'Extcall' + V'Extreq'
                  + V'Spawn' + V'Kill'
                  + V'_TraverseRec'
                  + V'_DoOrg'
@@ -725,7 +751,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
               + V'_Pause'
               + V'Async' + V'_Thread' + V'_Isr' + V'Atomic'
               + V'_DoPre'
-              + V'_LuaStmt'
+              + V'_Lua'
 
     --, _C = '/******/' * (P(1)-'/******/')^0 * '/******/'
     , _C      = m.Cg(V'_CSEP','mark') *

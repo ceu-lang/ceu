@@ -20844,8 +20844,8 @@ output void A;
 var _char v = emit A => ;
 escape v;
 ]],
-    --parser = 'line 3 : after `=´ : expected expression',
-    parser = 'line 3 : before `=>´ : expected `;´',
+    parser = 'line 3 : after `=>´ : expected expression',
+    --parser = 'line 3 : before `=>´ : expected `;´',
     --env = 'line 3 : invalid attribution',
 }
 Test { [[
@@ -21079,7 +21079,8 @@ Test { [[
 output (var int)=>int F;
 escape call F=>1;
 ]],
-    parser = 'line 2 : after `call´ : expected expression',
+    --parser = 'line 2 : after `call´ : expected expression',
+    parser = 'line 2 : before `call´ : expected expression',
     --parser = 'line 2 : after `F´ : expected `;´',
 }
 
@@ -25300,7 +25301,8 @@ Test { [[escape]],
 }
 
 Test { [[escape()]],
-    parser = "line 1 : after `(´ : expected expression",
+    --parser = "line 1 : after `(´ : expected expression",
+    parser = "line 1 : before `(´ : expected expression",
 }
 
 Test { [[escape 1+;]],
@@ -45063,7 +45065,8 @@ escape f(5);
 Test { [[
 call 1;
 ]],
-    parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
+    env = 'TODO: 1 not func',
+    --parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
 }
 
 Test { [[
