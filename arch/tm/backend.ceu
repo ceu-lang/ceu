@@ -399,7 +399,7 @@ do
                                     TM_DELAY(awt);
 #else
                                     if awt > late then
-                                        late = await (awt-late) ms_;
+                                        late = await (awt-late) ms/;
                                         _assert(late%1000 == 0);
                                         late = late / 1000;
                                     else
@@ -483,7 +483,7 @@ do
                         else
                             _assert(0);
                         end
-                        var int late = await (awt)ms_;       // first iteration
+                        var int late = await (awt)ms/;       // first iteration
 
                         loop i do
                             now = now - TM_BACKWARD_TICK;
@@ -500,7 +500,7 @@ do
                                 late = late/1000;
                                 var int tot = (awt-late);
                                 if tot > 0 then
-                                    late = await (awt-late)ms_;  // other iterations
+                                    late = await (awt-late)ms/;  // other iterations
                                 else
                                     late = (late-awt)*1000;
                                 end

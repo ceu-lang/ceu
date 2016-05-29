@@ -1077,7 +1077,7 @@ with
     every 1ms do
     end
 with
-    await 1s;
+    await 1ms;
 end
 escape ret;
 ]],
@@ -63204,9 +63204,9 @@ var TimeMachine tm with
 end;
 
 par/or do
-    await 3s_;
+    await 3s/;
     emit tm.go_on;
-    await 1s_;
+    await 1s/;
 
     ///////////////////////////////
 
@@ -63285,7 +63285,7 @@ with
                 end
                 emit SLOW;
             end
-            emit 50ms_;
+            emit 50ms/;
         end
     end
 end
@@ -63349,9 +63349,9 @@ var TimeMachine tm with
 end;
 
 par/or do
-    await 3s_;
+    await 3s/;
     emit tm.go_on;
-    await 1s_;
+    await 1s/;
 
     ///////////////////////////////
 
@@ -63368,12 +63368,12 @@ par/or do
     emit tm.go_forward => 1;
     _assert(tm_app.v == 0);
 
-    await 1ms_;
-    await 1000ms_;
+    await 1ms/;
+    await 1000ms/;
     _assert(tm_app.v == 1);
-    await 1000ms_;
+    await 1000ms/;
     _assert(tm_app.v == 2);
-    await 1000ms_;
+    await 1000ms/;
     _assert(tm_app.v == 3);
 
     ///////////////////////////////
@@ -63385,17 +63385,17 @@ par/or do
     emit tm.go_forward => 1;
     _assert(tm_app.v == 0);
 
-    await 1ms_;
+    await 1ms/;
     loop i in 20 do
-        await 50ms_;
+        await 50ms/;
     end
     _assert(tm_app.v == 1);
     loop i in 20 do
-        await 50ms_;
+        await 50ms/;
     end
     _assert(tm_app.v == 2);
     loop i in 20 do
-        await 50ms_;
+        await 50ms/;
     end
     _assert(tm_app.v == 3);
 
@@ -63408,17 +63408,17 @@ par/or do
     emit tm.go_forward => 2;
     _assert(tm_app.v == 0);
 
-    await 1ms_;
+    await 1ms/;
     loop i in 10 do
-        await 50ms_;
+        await 50ms/;
     end
     _assert(tm_app.v == 1);
     loop i in 10 do
-        await 50ms_;
+        await 50ms/;
     end
     _assert(tm_app.v == 2);
     loop i in 10 do
-        await 50ms_;
+        await 50ms/;
     end
     _assert(tm_app.v == 3);
 
@@ -63431,12 +63431,12 @@ par/or do
     emit tm.go_forward => 5;
     _assert(tm_app.v == 0);
 
-    await 1ms_;
-    await 200ms_;
+    await 1ms/;
+    await 200ms/;
     _assert(tm_app.v == 1);
-    await 200ms_;
+    await 200ms/;
     _assert(tm_app.v == 2);
-    await 200ms_;
+    await 200ms/;
     _assert(tm_app.v == 3);
 
     ///////////////////////////////
@@ -63448,12 +63448,12 @@ par/or do
     emit tm.go_forward => -2;
     _assert(tm_app.v == 0);
 
-    await 1ms_;
-    await 2000ms_;
+    await 1ms/;
+    await 2000ms/;
     _assert(tm_app.v == 1);
-    await 2000ms_;
+    await 2000ms/;
     _assert(tm_app.v == 2);
-    await 2000ms_;
+    await 2000ms/;
     _assert(tm_app.v == 3);
 
     ///////////////////////////////
@@ -63465,17 +63465,17 @@ par/or do
     emit tm.go_forward => -5;
     _assert(tm_app.v == 0);
 
-    await 1ms_;
+    await 1ms/;
     loop i in 100 do
-        await 50ms_;
+        await 50ms/;
     end
     _assert(tm_app.v == 1);
     loop i in 100 do
-        await 50ms_;
+        await 50ms/;
     end
     _assert(tm_app.v == 2);
     loop i in 100 do
-        await 50ms_;
+        await 50ms/;
     end
     _assert(tm_app.v == 3);
 
@@ -63496,7 +63496,7 @@ with
                 end
                 emit SLOW;
             end
-            emit 50ms_;
+            emit 50ms/;
         end
     end
 end
@@ -63561,9 +63561,9 @@ var TimeMachine tm with
 end;
 
 par/or do
-    await 3s_;
+    await 3s/;
     emit tm.go_on;
-    await 1s_;
+    await 1s/;
 
     ///////////////////////////////
 
@@ -63574,13 +63574,13 @@ par/or do
     emit tm.go_backward => 1;
     _assert(tm_app.v == 3);
 
-    await 1000ms_;
+    await 1000ms/;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
-    await 1000ms_;
+    await 1000ms/;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
-    await 1000ms_;
+    await 1000ms/;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
@@ -63594,17 +63594,17 @@ par/or do
     _assert(tm_app.v == 3);
 
     loop i in 20 do
-        await 50ms_;
+        await 50ms/;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
     loop i in 20 do
-        await 50ms_;
+        await 50ms/;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
     loop i in 20 do
-        await 50ms_;
+        await 50ms/;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
@@ -63619,17 +63619,17 @@ par/or do
     _assert(tm_app.v == 3);
 
     loop i in 10 do
-        await 50ms_;
+        await 50ms/;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
     loop i in 10 do
-        await 50ms_;
+        await 50ms/;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
     loop i in 10 do
-        await 50ms_;
+        await 50ms/;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
@@ -63643,13 +63643,13 @@ par/or do
     emit tm.go_backward => 5;
     _assert(tm_app.v == 3);
 
-    await 200ms_;
+    await 200ms/;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
-    await 200ms_;
+    await 200ms/;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
-    await 200ms_;
+    await 200ms/;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
@@ -63662,13 +63662,13 @@ par/or do
     emit tm.go_backward => -2;
     _assert(tm_app.v == 3);
 
-    await 2000ms_;
+    await 2000ms/;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
-    await 2000ms_;
+    await 2000ms/;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
-    await 2000ms_;
+    await 2000ms/;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
@@ -63682,17 +63682,17 @@ par/or do
     _assert(tm_app.v == 3);
 
     loop i in 100 do
-        await 50ms_;
+        await 50ms/;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
     loop i in 100 do
-        await 50ms_;
+        await 50ms/;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
     loop i in 100 do
-        await 50ms_;
+        await 50ms/;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
@@ -63715,7 +63715,7 @@ with
                 end
                 emit SLOW;
             end
-            emit 10ms_;
+            emit 10ms/;
         end
     end
 end
@@ -63779,20 +63779,20 @@ var TimeMachine tm with
 end;
 
 par/or do
-    await 3s_;
+    await 3s/;
     _assert(tm_app.v == 3);
     emit tm.go_on;
 
-    await 1s_;
+    await 1s/;
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    await 1s_;
+    await 1s/;
     emit tm.go_forward => 2;
     _assert(tm_app.v == 0);
 
-    await 1s400ms_;
+    await 1s400ms/;
     _assert(tm_app.v == 2);
 
     emit tm.go_seek => tm.time_total;
@@ -63802,7 +63802,7 @@ par/or do
     emit tm.go_backward => 2;
     _assert(tm_app.v == 3);
 
-    await 1s1ms_;
+    await 1s1ms/;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
 with
@@ -63822,7 +63822,7 @@ with
                 end
                 emit SLOW;
             end
-            emit 10ms_;
+            emit 10ms/;
         end
     end
 end
@@ -63944,19 +63944,19 @@ par/or do
     _assert(tm_app.v == 25);
 
     emit tm.go_on;
-    await 1s_;
+    await 1s/;
 
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
 
     emit tm.go_forward => 1;
-    await 3s1ms_;
+    await 3s1ms/;
     _assert(tm_app.v == 7);
-    await 2s_;
+    await 2s/;
     _assert(tm_app.v == 9);
-    await 1s_;
+    await 1s/;
     _assert(tm_app.v == 22);
-    await 3s_;
+    await 3s/;
     _assert(tm_app.v == 25);
 with
     input int DT;
@@ -63970,7 +63970,7 @@ with
                 end
                 emit SLOW;
             end
-            emit 10ms_;
+            emit 10ms/;
         end
     end
 end
