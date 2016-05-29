@@ -314,7 +314,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
     -- DECLARATIONS
 
-    , __vars_set  = EV'__ID_int' * OPT(V'__Sets')
+    , __vars_set  = EV'__ID_int' * OPT(V'__Sets_one')
 
     , _Vars_set  = CKEY'var' * OPT(CK'&') * EV'Type' *
                     EV'__vars_set' * (K','*EV'__vars_set')^0
@@ -466,9 +466,13 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- Assignments
 
-    , _Set  = (V'__Exp'+V'VarList') * V'__Sets'
-    , __Sets = (CK'='+CK':=') * (V'__sets' + K'('*V'__sets'*EK')')
-    , __sets =
+    , _Set_one   = V'__Exp'   * V'__Sets_one'
+    , _Set_many  = V'Varlist' * V'__Sets_many'
+
+    , __Sets_one  = (CK'='+CK':=') * (V'__sets_one'  + K'('*V'__sets_one'*EK')')
+    , __Sets_many = (CK'='+CK':=') * (V'__sets_many' + K'('*V'__sets_many'*EK')')
+
+    , __sets_one =
                 --Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*EK')')
               Cc'adt-constr' * V'Adt_constr_root'
               + Cc'ddd-constr' * V'DDD_constr_root'
@@ -484,6 +488,8 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
         + V'_Set_Exp'
               + Cc'do-org'     * V'_DoOrg'
               + EM'expression'
+
+    , __sets_many = V'_Set_Extreq' + V'_Set_Await' + V'_Set_Watching'
 
     -- adt-constr
     , Adt_constr_root = OPT(CKEY'new') * V'Adt_constr_one'
@@ -547,7 +553,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                     ((V'ID_int'+V'ID_none') * OPT(EKEY'in'*EV'__Exp')
                     + Cc(false,false)) *
                 V'__Do'
-    , _Every  = KEY'every' * ( (EV'ID_int'+V'VarList') * EKEY'in'
+    , _Every  = KEY'every' * ( (EV'ID_int'+V'Varlist') * EKEY'in'
                             + Cc(false) )
               * V'__awaits'
               * V'__Do'
@@ -582,7 +588,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
         ]]
 
     -- finalization
-    , Finalize = KEY'finalize' * OPT(V'_Set'*EK';'*K';'^0)
+    , Finalize = KEY'finalize' * OPT(V'_Set_one'*EK';'*K';'^0)
                * EKEY'with' * EV'Finally' * EKEY'end'
     , Finally  = V'Block'
 
@@ -592,9 +598,9 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
     , _Pause   = KEY'pause/if' * EV'__Exp' * V'__Do'
 
     -- asynchronous execution
-    , Async   = KEY'async' * (-P'/thread'-'/isr') * OPT(V'VarList') * V'__Do'
-    , _Thread = KEY'async/thread' * OPT(V'VarList') * V'__Do'
-    , _Isr    = KEY'async/isr'    * EK'[' * EV'ExpList' * EK']' * OPT(V'VarList') * V'__Do'
+    , Async   = KEY'async' * (-P'/thread'-'/isr') * OPT(V'Varlist') * V'__Do'
+    , _Thread = KEY'async/thread' * OPT(V'Varlist') * V'__Do'
+    , _Isr    = KEY'async/isr'    * EK'[' * EV'ExpList' * EK']' * OPT(V'Varlist') * V'__Do'
     , Atomic  = KEY'atomic' * V'__Do'
 
     -- C integration
@@ -628,7 +634,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
 
 -- Lists
 
-    , VarList = ( K'(' * EV'ID_int' * (EK',' * EV'ID_int')^0 * EK')' )
+    , Varlist = ( K'(' * EV'ID_int' * (EK',' * EV'ID_int')^0 * EK')' )
     , ExpList = ( V'__Exp'*(K','*EV'__Exp')^0 )^-1
 
 -- Wall-clock values
@@ -728,7 +734,7 @@ GG = { [1] = CK'' * V'_Stmts' * P(-1)-- + EM'expected EOF')
                  + V'_Exts'
                  + V'_Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Deterministic'
-                 + V'_Set'
+                 + V'_Set_one' + V'_Set_many'
                  + V'Await' + V'Intemit'
                  + V'Extemit' + V'Extcall' + V'Extreq'
                  + V'Spawn' + V'Kill'

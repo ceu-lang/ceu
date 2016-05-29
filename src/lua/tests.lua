@@ -18936,7 +18936,8 @@ do
     escape r;
 end
 ]],
-    adj = 'line 9 : invalid `finalize´',
+    parser = 'line 10 : after `i´ : expected `)´',
+    --adj = 'line 9 : invalid `finalize´',
     --run = 1,
     -- TODO: impossible to place the finally in the correct parameter?
 }
@@ -51746,7 +51747,8 @@ var int a, b;
 (a,b) = 1;
 escape 1;
 ]],
-    env = 'line 2 : arity mismatch',
+    parser = 'line 2 : before `=´ : expected `,´',
+    --env = 'line 2 : arity mismatch',
     --run = 1,
 }
 
