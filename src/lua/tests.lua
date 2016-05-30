@@ -156,12 +156,12 @@ escape a;
 --]===]
 
 Test { [[
-ddd DDD with
+data DDD with
     var int xxx;
     event void e;
 end
 
-var DDD d = @ DDD(1);
+var DDD d = DDD(1);
 
 par/and do
     await d.e;
@@ -286,8 +286,8 @@ do
     x = x + 1;
     escape x;
 end
-var int a = call @ Code(1);
-escape @ Code(a+10);
+var int a = call Code(1);
+escape Code(a+10);
 ]],
     run = 13,
 }
@@ -300,7 +300,7 @@ do
     x = x + 1;
     escape x;
 end
-var int a = do @ @ Code(1);
+var int a = do @ Code(1);
 /*
 var Code c = Code(1);
 await c;
@@ -317,7 +317,7 @@ do
     await 1s;
     escape xx+1;
 end
-var int a = await @ Code(1);
+var int a = await Code(1);
 _printf("a = %d\n", a);
 escape a;
 ]],
@@ -334,7 +334,7 @@ do
     _X = xx + 1;
     escape xx+1;
 end
-await @ Code(1);
+await Code(1);
 escape _X;
 ]],
     run = { ['~>1s']=3 },
@@ -348,7 +348,7 @@ do
     escape x;
 end
 var int a =
-    watching @ Code(10) do
+    watching Code(10) do
         escape 1;
     end;
 
@@ -366,7 +366,7 @@ do
     escape x;
 end
 var int a =
-    watching @ Code(10) do
+    watching Code(10) do
         await 5s;
         escape 1;
     end;
@@ -377,7 +377,7 @@ escape a;
 }
 
 Test { [[
-ddd Data with
+data Data with
     var int v;
 end
 
@@ -389,10 +389,10 @@ do
     end
 end
 
-var Data d = @ Data(0);
+var Data d = Data(0);
 
 var int a =
-    watching @ Code(&d, 10) do
+    watching Code(&d, 10) do
         var int ret = 0;
         watching 5s do
             every 1s do
@@ -857,7 +857,8 @@ Test { [[
 inputintMY_EVT;
 ifv==0thenbreak;end
 ]],
-    parser = 'line 2 : after `0´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´',
+    parser = 'line 2 : after `==´ : expected expression',
+    --parser = 'line 2 : after `0´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´',
 }
 Test { [[
 inputintMY_EVT;
@@ -986,7 +987,7 @@ escape (int) __;
 }
 
 Test { [[
-native _abc = 0;
+native _abc; // TODO: = 0;
 event void a;
 var _abc b;
 ]],
@@ -1120,7 +1121,7 @@ escape 1;
 }
 
 Test { [[
-native _abc = 0;
+native _abc;// TODO = 0;
 event void a;
 var _abc a;
 ]],
@@ -1649,7 +1650,8 @@ input int A;
 
 A=1;
 ]],
-    parser = 'line 1 : after `;´ : expected statement',
+    --parser = 'line 1 : after `;´ : expected statement',
+    parser = 'line 4 : after `A´ : expected `(´',
 }
 
 Test { [[
@@ -1659,7 +1661,8 @@ escape 1;
 ]],
     --adj = 'line 2 : invalid expression',
     --parser = 'line 1 : after `;´ : expected statement',
-    parser = 'line 1 : after `;´ : expected statement',
+    --parser = 'line 1 : after `;´ : expected statement',
+    parser = 'line 2 : after `A´ : expected `(´',
     --parser = 'line 1 : after `;´ : expected statement (usually a missing `var´ or C prefix `_´)',
 }
 
@@ -1788,7 +1791,8 @@ with
 end;
 escape A;
 ]],
-    parser = "line 9 : after `escape´ : expected expression",
+    --parser = "line 9 : after `escape´ : expected expression",
+    parser = 'line 9 : after `A´ : expected `(´',
     --adj = 'line 9 : invalid expression',
 }
 
@@ -2122,7 +2126,8 @@ escape 0;
 Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     --parser = 'line 1 : after `1´ : expected `;´',
-    parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `until´ or `;´',
+    --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `until´ or `;´',
+    parser = 'line 1 : after `-´ : expected expression',
 }
 
 Test { [[await 1; escape 0;]],
@@ -17121,7 +17126,7 @@ native do
     }
     typedef void (*t)(int*);
 end
-native _t = 4;
+native _t;
 var _t v = _f;
 await 1s;
 var int a=0;
@@ -17142,7 +17147,7 @@ native do
     }
     typedef void (*t)(int*);
 end
-native _t = 4;
+native _t;
 var _t v = _f;
 await 1s;
 var int a=0;
@@ -17160,7 +17165,7 @@ native do
     }
     typedef void (*t)(int*);
 end
-native _t = 4;
+native _t;
 var _t v = _f;
     native/nohold ___ceu_nothing();
     ___ceu_nothing(v);
@@ -17184,7 +17189,7 @@ native do
     }
     typedef void (*t)(int*);
 end
-native _t = 4;
+native _t;
 var _t v = _f;
     native/nohold ___ceu_nothing();
     ___ceu_nothing(v);
@@ -17206,7 +17211,7 @@ pre native do
     }
     typedef void (*t)(int*);
 end
-native _t = 4;
+native _t;
 var _t v = _f;
 var int a=0;
 do v(&&a); finalize with nothing; end;
@@ -18580,7 +18585,7 @@ pre native do
     }
     typedef void (*t)(int*);
 end
-native _t=4;
+native _t;
 native/nohold _f();
 var _t v = _f;
 var int ret=0;
@@ -18595,7 +18600,7 @@ escape(ret);
     run = 10,
 }
 Test { [[
-native _t=4, _A;
+native _t, _A;
 native _f();
 native do
     int* A = NULL;;
@@ -18631,7 +18636,7 @@ escape(ret);
 }
 Test { [[
 input void OS_START;
-native _t=4, _A;
+native _t, _A;
 native _f();
 native do
     int* A = NULL;;
@@ -20810,7 +20815,7 @@ native do
         }
     }
 end
-native _t = 8;
+native _t;
 output _t&& A;
 output int B;
 var int a, b;
@@ -20844,7 +20849,7 @@ native do
         }
     }
 end
-native _t = 8;
+native _t;
 output _t A;
 output int B;
 var int a, b;
@@ -20860,7 +20865,7 @@ escape a + b;
 }
 
 Test { [[
-native _char = 1;
+native _char;
 output void A;
 native do
     void A (int v) {}
@@ -20874,7 +20879,7 @@ escape 0;
     --env = 'line 6 : undeclared type `_cahr´',
 }
 Test { [[
-native _char = 1;
+native _char;
 output void A;
 var _char v = emit A => ;
 escape v;
@@ -20888,7 +20893,7 @@ output void A;
 native do
     void A (int v) {}
 end
-native _char = 1;
+native _char;
 var _char v = emit A => 1;
 escape 0;
 ]],
@@ -21115,8 +21120,9 @@ output (var int)=>int F;
 escape call F=>1;
 ]],
     --parser = 'line 2 : after `call´ : expected expression',
-    parser = 'line 2 : after `call´ : expected expression',
+    --parser = 'line 2 : after `call´ : expected expression',
     --parser = 'line 2 : after `F´ : expected `;´',
+    parser = 'line 2 : after `F´ : expected `(´',
 }
 
 Test { [[
@@ -21661,7 +21667,7 @@ end;
 }
 
 Test { [[
-native _char = 1;
+native _char;
 var int i;
 //var int&& pi;
 var _char c=10;
@@ -21677,7 +21683,7 @@ escape c;
 }
 
 Test { [[
-native _char = 1;
+native _char;
 var int i;
 //var int&& pi;
 var _char c=0;
@@ -21740,7 +21746,7 @@ escape 1;
 }
 
 Test { [[
-native _char=1;
+native _char;
 var _char&& ptr1;
 var int&& ptr2=0xFF as void&&;
 ptr1 = ptr2;
@@ -21753,7 +21759,7 @@ escape ptr2 as int;
     gcc = 'error: assignment from incompatible pointer type'
 }
 Test { [[
-native _char=1;
+native _char;
 var _char&& ptr1;
 var int&& ptr2=0xFF as void&&;
 ptr1 = (ptr2 as _char&&);
@@ -21766,7 +21772,7 @@ escape (ptr2 as int);
     gcc = 'error: cast from pointer to integer of different size',
 }
 Test { [[
-native _char=1;
+native _char;
 var _char&& ptr1;
 var int&& ptr2=null;
 ptr1 = (ptr2 as _char&&);
@@ -21776,7 +21782,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-native _char=1;
+native _char;
 var int&& ptr1;
 var _char&& ptr2=null;
 ptr1 =  ptr2 as int&&;
@@ -21787,7 +21793,7 @@ escape 1;
 }
 
 Test { [[
-native _FILE=0;
+native _FILE;
 var int&& ptr1;
 var _FILE&& ptr2=null;
 ptr1 = ptr2;
@@ -21801,7 +21807,7 @@ escape 1;
 }
 
 Test { [[
-native _FILE=0;
+native _FILE;
 var int&& ptr1;
 var _FILE&& ptr2=null;
 ptr1 = ptr2 as int&&;
@@ -22185,7 +22191,7 @@ escape 1;
 }
 
 Test { [[
-native _char = 1;
+native _char;
 var _char&& p=null;
 *(p:a) = (1 as _char);
 escape 1;
@@ -22237,7 +22243,8 @@ N;
 ]],
     --adj = 'line 1 : invalid expression',
     --parser = 'line 1 : after `<BOF>´ : expected statement',
-    parser = 'line 1 : after `begin of file´ : expected statement',
+    --parser = 'line 1 : after `begin of file´ : expected statement',
+    parser = 'after `N´ : expected `(´',
 }
 
 Test { [[
@@ -22302,7 +22309,7 @@ pre native do
         int c;
     } T;
 end
-native _T = 44;
+native _T ;
 
 var _T[10] vec = [];
 var int i = 110;
@@ -23910,7 +23917,8 @@ escape 1;
 ]],
     --adj = 'line 4 : invalid expression',
     --parser = 'line 3 : after `end´ : expected statement'
-    parser = 'line 3 : after `end´ : expected statement',
+    --parser = 'line 3 : after `end´ : expected statement',
+    parser = 'line 4 : after `A´ : expected `(´',
 }
 
 Test { [[
@@ -25029,7 +25037,7 @@ escape 1;
 }
 
 Test { [[
-native _char=1;
+native _char;
 var _char&& a = "Abcd12" ;
 escape 1;
 ]],
@@ -25037,7 +25045,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-native _char=1;
+native _char;
 var _char&& a = ("Abcd12"  as _char&&);
 escape 1;
 ]],
@@ -25063,7 +25071,7 @@ _printf("END: 1%d%d 0\n",2,3); escape 0;]], run=123 }
 
 Test { [[
 native/nohold _strncpy(), _printf(), _strlen();
-native _char = 1;
+native _char ;
 var _char[10] str = [];
 _strncpy(&&str, "123", 4);
 _printf("END: %d %s\n", _strlen(&&str) as int, &&str);
@@ -25074,7 +25082,7 @@ escape 0;
 
 Test { [[
 native/nohold _strncpy(), _printf(), _strlen(), _strcpy();
-native _char = 1;
+native _char;
 var _char[6] a=[]; _strcpy(&&a, "Hello");
 var _char[2] b=[]; _strcpy(&&b, " ");
 var _char[7] c=[]; _strcpy(&&c, "World!");
@@ -25245,7 +25253,7 @@ pre native do
         u8 data[16];
     } Payload;
 end
-native _Payload = 18;
+native _Payload ;
 var _Payload final;
 var u8&& neighs = &&(final.data[4]);
 escape 1;
@@ -25274,7 +25282,7 @@ typedef struct {
     int b;
 } s;
 end
-native/plain _s = 8;
+native/plain _s;
 var _s vs = _s(0,0);
 par/and do
     vs.a = 10;
@@ -25295,7 +25303,7 @@ typedef struct {
     int b;
 } s;
 end
-native/plain _s = 8;
+native/plain _s;
 var _s vs = _s(0,0);
 par/and do
     vs.a = 10;
@@ -25315,7 +25323,7 @@ pre native do
         int a;
     } mys;
 end
-native/plain _mys = 4;
+native/plain _mys;
 var _mys v = _mys(0);
 var _mys&& pv;
 pv = &&v;
@@ -25336,7 +25344,7 @@ Test { [[
 }
 
 Test { [[
-native/plain _char=1;
+native/plain _char;
 var _u8[10] v1 = [];
 var _char[10] v2 = [];
 
@@ -25357,7 +25365,7 @@ escape ret;
 }
 
 Test { [[
-native _message_t = 52;
+native _message_t ;
 native _t = sizeof<_message_t, u8>;
 escape sizeof<_t>;
 ]],
@@ -25366,7 +25374,7 @@ escape sizeof<_t>;
 }
 
 Test { [[
-native _char=1;
+native _char;
 var _char a = (1 as _char);
 escape a as int;
 ]],
@@ -25979,7 +25987,8 @@ end
 escape 0;
 ]],
     --adj = 'line 2 : invalid expression',
-    parser = 'line 2 : after `pause/if´ : expected expression',
+    --parser = 'line 2 : after `pause/if´ : expected expression',
+    parser = 'line 2 : after `A´ : expected `(´',
 }
 
 Test { [[
@@ -35508,9 +35517,9 @@ class U with
 do
 end
 
-pool[10] I is;
+pool[10] I iss;
 
-spawn U in is;
+spawn U in iss;
 
 escape 1;
 ]],
@@ -35531,10 +35540,10 @@ class U with
 do
 end
 
-pool[10] I is;
+pool[10] I iss;
 
-spawn T in is;
-spawn U in is;
+spawn T in iss;
+spawn U in iss;
 
 escape sizeof(CEU_T) >= sizeof(CEU_U);
 ]],
@@ -35567,9 +35576,9 @@ class V with
 do
 end
 
-pool[1] I is;
+pool[1] I iss;
 
-spawn V in is;
+spawn V in iss;
 
 escape 1;
 ]],
@@ -35591,14 +35600,14 @@ end
 
 class V with
 do
-    pool[1] I is;
+    pool[1] I iss;
 end
 
-pool[1] I is;
+pool[1] I iss;
 
-spawn T in is;
-spawn U in is;
-spawn V in is;
+spawn T in iss;
+spawn U in iss;
+spawn V in iss;
 
 escape 1;
 ]],
@@ -35620,13 +35629,13 @@ end
 
 class V with
 do
-    pool[1] I is;
+    pool[1] I iss;
 end
 
-pool[1] I is;
+pool[1] I iss;
 
-spawn U in is;
-spawn V in is;
+spawn U in iss;
+spawn V in iss;
 
 escape 1;
 ]],
@@ -35639,9 +35648,9 @@ end
 
 class T with do end
 
-pool[1] I is;
+pool[1] I iss;
 
-spawn T in is;
+spawn T in iss;
 
 escape 1;
 ]],
@@ -35665,16 +35674,16 @@ end
 
 class V with
 do
-    pool[10] I is;
-    spawn T in is;
-    spawn U in is;
+    pool[10] I iss;
+    spawn T in iss;
+    spawn U in iss;
 end
 
-pool[10] I is;
+pool[10] I iss;
 
-spawn T in is;
-spawn U in is;
-spawn V in is;
+spawn T in iss;
+spawn U in iss;
+spawn V in iss;
 
 escape sizeof(CEU_T) >= sizeof(CEU_U);
 ]],
@@ -35697,15 +35706,15 @@ end
 
 class V with
 do
-    pool[10] I is;
-    spawn T in is;
-    spawn U in is;
+    pool[10] I iss;
+    spawn T in iss;
+    spawn U in iss;
 end
 
-pool[10] I is;
+pool[10] I iss;
 
-spawn T in is;
-spawn U in is;
+spawn T in iss;
+spawn U in iss;
 spawn V;
 
 escape sizeof(CEU_T) >= sizeof(CEU_U);
@@ -39757,7 +39766,7 @@ escape 10;
 }
 
 Test { [[
-native _s=0;
+native _s;
 pre native do
     typedef int s;
 end
@@ -39782,7 +39791,7 @@ escape 10;
 }
 
 Test { [[
-native _s=0;
+native _s;
 pre native do
     typedef int s;
 end
@@ -39810,7 +39819,7 @@ escape 10;
 }
 
 Test { [[
-native _s=0;
+native _s;
 pre native do
     typedef int s;
 end
@@ -39867,7 +39876,7 @@ escape _V;
 }
 
 Test { [[
-native _s=0;
+native _s;
 pre native do
     typedef int s;
 end
@@ -39939,7 +39948,7 @@ end;
 }
 
 Test { [[
-native _s=0;
+native _s;
 pre native do
     typedef int s;
 end
@@ -39990,7 +39999,7 @@ escape _V;
 }
 
 Test { [[
-native _s=0;
+native _s;
 pre native do
     typedef int s;
 end
@@ -40026,7 +40035,7 @@ escape _V;
 }
 
 Test { [[
-native _s=0;
+native _s;
 pre native do
     typedef int s;
 end
@@ -40066,7 +40075,7 @@ escape _V;
 }
 
 Test { [[
-native _s=0;
+native _s;
 pre native do
     typedef int s;
 end
@@ -42365,7 +42374,7 @@ interface I with
 end
 class T with
     var& I parent;
-    pool[1] I is;
+    pool[1] I iss;
 do
     if &&parent==null then end;
     await 1s;
@@ -42445,14 +42454,14 @@ escape 10;
 
 Test { [[
 class I with do end
-pool[] I is;
+pool[] I iss;
 native/nohold _f();
 native do
     void f (void* p) {
     }
 end
 do
-    loop i in is do
+    loop i in iss do
         _f(i);
     end
 end
@@ -42463,14 +42472,14 @@ escape 10;
 
 Test { [[
 class I with do end
-pool[] I is;
+pool[] I iss;
 native _f();
 native do
     void f (void* p) {
     }
 end
 do
-    loop i in is do
+    loop i in iss do
         do _f(i); finalize with nothing; end;
     end
 end
@@ -42606,7 +42615,7 @@ do
     await FOREVER;
 end
 
-pool[] I is;
+pool[] I iss;
 
 var int ret = 0;
 
@@ -42614,11 +42623,11 @@ spawn T with
     this.v = 1;
 end;
 
-spawn T in is with
+spawn T in iss with
     this.v = 3;
 end;
 
-loop i in is do
+loop i in iss do
     ret = ret + i:v;
 end
 
@@ -42633,7 +42642,7 @@ interface I with
     event void inc;
 end
 
-pool[] I is;
+pool[] I iss;
 
 class T with
     interface I;
@@ -42652,14 +42661,14 @@ do
     spawn T with
         this.v = 1;
     end;
-    spawn U in is with
+    spawn U in iss with
         this.v = 2;
     end;
-    spawn T in is with
+    spawn T in iss with
         this.v = 3;
     end;
 
-    loop i in is do
+    loop i in iss do
         ret = ret + i:v;
     end
 end
@@ -45798,7 +45807,8 @@ var T t;
 t = T.f(1);
 escape t.x;
 ]],
-    parser = 'line 12 : after `.´ : expected tag identifier',
+    parser = 'line 12 : after `T´ : expected `(´',
+    --parser = 'line 12 : after `.´ : expected tag identifier',
     --parser = 'line 12 : before `.´ : expected expression',
     --run = 2,
 }
@@ -46727,10 +46737,10 @@ do
 end
 
 var T t;
-vector[] I&&? is;
-is = [&&t];
+vector[] I&&? iss;
+iss = [&&t];
 
-escape is[0]? + 1;
+escape iss[0]? + 1;
 ]],
     run = { ['~>1s'] = 1 },
 }
@@ -46754,14 +46764,14 @@ var T t;
 var U u;
 var V v;
 
-vector[] I&&? is;
-is = [&&t, &&u, &&v];
+vector[] I&&? iss;
+iss = [&&t, &&u, &&v];
 
 var int ret = 0;
 
-ret = ret + is[0]? + is[1]? + is[2]?;
+ret = ret + iss[0]? + iss[1]? + iss[2]?;
 await 1s;
-ret = ret + is[0]? + is[1]? + is[2]?;
+ret = ret + iss[0]? + iss[1]? + iss[2]?;
 
 escape ret;
 ]],
@@ -54466,23 +54476,23 @@ data Pair with
 end
 
 // "Nullable pointer"
-data Opt with
-    tag NIL;
-or
-    tag PTR with
-        var void&& v;
-    end
+data Opt;
+data NIL is Opt;
+data PTR is Opt with
+    var void&& v;
 end
 
 // List (recursive type)
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
+
+
+
+
 
 
 
@@ -54525,7 +54535,7 @@ end
 escape 1;
 ]],
     -- TODO: better error message
-    parser = 'line 1 : after `data´ : expected adt identifier'
+    parser = 'line 1 : after `data´ : expected abstraction identifier'
 }
 Test { [[
 data T with
@@ -54593,70 +54603,76 @@ escape c.d.x;
     run = 200,
 }
 
--- tags inside union data types must be all uppercase
 Test { [[
-data Opt with
-    tag Nil;
-or
-    tag Ptr with
-        var void&& v;
-    end
-end
-escape 1;
-]],
-    -- TODO: better error message
-    parser = 'line 2 : after `N´ : expected `with´',
-}
-Test { [[
-data Opt with
-    tag NIL;
-or
-    tag PTR with
-        var void&& v;
-    end
+data Opt;
+data OptNIL is Opt;
+data OptPTR is Opt with
+    var void&& v;
 end
 escape 1;
 ]],
     run = 1,
 }
 
+Test { [[
+data OptNIL is;
+]],
+    parser = 'line 1 : after `is´ : expected abstraction identifier',
+}
+
+Test { [[
+data OptNIL is with
+end
+]],
+    parser = 'line 1 : after `is´ : expected abstraction identifier',
+}
+
+Test { [[
+data OptNIL with
+end
+]],
+    parser = 'line 1 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
+}
+
+Test { [[
+data Opt;
+data OptNIL is Opt_;
+escape 1;
+]],
+    env = 'TODO: undef',
+}
+
 -- recursive ADTs must have a base case
 Test { [[
-data List with
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data Opt;
+data OptPTR is Opt with
+    var void&& v;
 end
 escape 1;
 ]],
     adt = 'line 1 : invalid recursive base case : no parameters allowed',
 }
+
 -- the base case must appear first
 Test { [[
-data List with
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
-or
-    tag NIL;
+data Opt;
+data OptPTR is Opt with
+    var void&& v;
 end
+data OptNIL is Opt;
 escape 1;
 ]],
     adt = 'line 1 : invalid recursive base case : no parameters allowed',
 }
+
 -- the base must not have fields
 Test { [[
-data List with
-    tag NIL with
-        var int x;
-    end
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data Opt;
+data OptNIL is Opt with
+    var int x;
+end
+data OptPTR is Opt with
+    var void&& v;
 end
 escape 1;
 ]],
@@ -54795,13 +54811,11 @@ escape t.x;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
 end
 escape 1;
 ]],
@@ -54810,17 +54824,15 @@ escape 1;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
 end
-var List l = List.CONS(1,
-               List.CONS(2,
-                   List.NIL()));
+var List l = ListCONS(1,
+               ListCONS(2,
+                   ListNIL()));
 escape l.CONS.tail.CONS.head;
 ]],
     adt = 'line 9 : invalid constructor : recursive data must use `new´',
@@ -54828,91 +54840,100 @@ escape l.CONS.tail.CONS.head;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
 end
-var List l = new List.CONS(1,
-                  List.CONS(2,
-                   List.NIL()));
-escape l.CONS.tail.CONS.head;
+var List l = new ListCONS(1,
+                  ListCONS(2,
+                   ListNIL()));
+escape 1;//(l.CONS.tail.CONS.head;
 ]],
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
-    adt = 'line 9 : invalid attribution : not a pool',
+    adt = 'line 7 : invalid attribution : not a pool',
 }
 
+do return end
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
 end
-var List&& l = List.CONS(1,
-                List.CONS(2,
+var List&& l = ListCONS(1,
+                ListCONS(2,
                     List.NIL()));
-escape l:CONS.tail.CONS.head;
+escape 1;//l:CONS.tail.CONS.head;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
-    adt = 'line 9 : invalid constructor : recursive data must use `new´',
+    adt = 'line 7 : invalid constructor : recursive data must use `new´',
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
 end
-var List&& l = new List.CONS(1,
-                   List.CONS(2,
-                    List.NIL()));
-escape l:CONS.tail.CONS.head;
+
+var List&& l = new ListCONS(1,
+                   ListCONS(2,
+                    ListNIL()));
+escape 0;//l:CONS.tail.CONS.head;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
-    adt = 'line 9 : invalid attribution : not a pool',
+    adt = 'line 8 : invalid attribution : not a pool',
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
 end
+
 pool[10] List l;
-l = List.CONS(1,
-        List.CONS(2,
-            List.NIL()));
-escape l.CONS.tail.CONS.head;
+l = ListCONS(1,
+        ListCONS(2,
+            ListNIL()));
+
+escape 0;//l.CONS.tail.CONS.head;
 ]],
-    adt = 'line 10 : invalid constructor : recursive data must use `new´',
+    adt = 'line 9 : invalid constructor : recursive data must use `new´',
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
 end
+
 pool[10] List lll;
-escape lll.NIL;
+escape lll is ListNIL;
+]],
+    run = 1,
+}
+
+Test { [[
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
+end
+
+pool[10] List lll;
+escape (lll is ListCONS) + 1;
 ]],
     run = 1,
 }
@@ -54923,49 +54944,66 @@ native do
     ##error bug found
     ##endif
 end
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
 end
-pool[10] List lll = new List.CONS(1, List.NIL());
-escape lll.CONS.head;
+
+pool[10] List lll = new ListCONS(1, List.NIL());
+escape (lll as ListCONS).head;
 ]],
     run = 1,
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+native do
+    ##ifndef CEU_ADTS_NEWS_POOL
+    ##error bug found
+    ##endif
 end
+
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
+end
+
+pool[10] List lll = new ListCONS(1, List.NIL());
+escape lll.head;
+]],
+    env = 'TODO: no head in lll',
+}
+
+Test { [[
+data List;
+data ListNIL is List;
+data ListCONS is List with
+    var int  head;
+    var List tail;
+end
+
 pool[10] List lll;
-lll = new List.CONS(1,
-            List.CONS(2,
-                List.NIL()));
-escape lll.CONS.tail.CONS.head;
+lll = new ListCONS(1,
+            ListCONS(2,
+                ListNIL()));
+escape ((lll as ListCONS).tail as ListCONS).head;
 ]],
     run = 2,
 }
 
 Test { [[
-data Stack with
-    tag EMPTY;
-or
-    tag NONEMPTY with
-        var Stack&& nxt;
-    end
+data Stack;
+data StackEMPTY;
+data StackNONEMPTY with
+    var Stack&& nxt;
 end
 
-pool[] Stack xxx = new Stack.NONEMPTY(
-                    Stack.NONEMPTY(xxx));
+pool[] Stack xxx = new StackNONEMPTY(
+                    StackNONEMPTY(xxx));
 
 escape 1;
 ]],
@@ -54973,103 +55011,89 @@ escape 1;
 }
 
 Test { [[
-data Split with
-    tag HORIZONTAL;
-or
-    tag VERTICAL;
-end
+data Split;
+data SplitHORIZONTAL is Split;
+data SplitVERTICAL   is Split;
 
-data Grid with
-    tag EMPTY;
-or
-    tag SPLIT with
-        var Split dir;
-        var Grid  one;
-        var Grid  two;
-    end
+data Grid;
+data GridEMPTY;
+data GridSPLIT with
+    var Split dir;
+    var Grid  one;
+    var Grid  two;
 end
 
 pool[] Grid g;
-g = new Grid.SPLIT(Split.HORIZONTAL(), Grid.EMPTY(), Grid.EMPTY());
+g = new GridSPLIT(SplitHORIZONTAL(), GridEMPTY(), GridEMPTY());
 
-escape g.SPLIT.one.EMPTY + g.SPLIT.two.EMPTY + g.SPLIT.dir.HORIZONTAL;
+escape ((g as GridSPLIT).one is GridEMPTY) + ((g as GridSPLIT).two is GridEMPTY) + ((g as GridSPLIT).dir is SplitHORIZONTAL);
 ]],
     run = 3,
 }
 
 Test { [[
-data Split with
-    tag HORIZONTAL;
-or
-    tag VERTICAL;
-end
+data Split;
+data SplitHORIZONTAL is Split;
+data SplitVERTICAL   is Split;
 
 data Grid with
     var Split dir;
 end
 
-var Grid g1 = Grid(Split.HORIZONTAL());
-var Grid g2 = Grid(Split.VERTICAL());
+var Grid g1 = Grid(SplitHORIZONTAL());
+var Grid g2 = Grid(SplitVERTICAL());
 
-escape g1.dir.HORIZONTAL + g2.dir.VERTICAL;
+escape (g1.dir is SplitHORIZONTAL) + (g2.dir is SplitVERTICAL);
 ]],
     run = 2,
 }
 
 Test { [[
-data Split with
-    tag HORIZONTAL;
-or
-    tag VERTICAL;
+data Split;
+data SplitHORIZONTAL is Split;
+data SplitVERTICAL   is Split;
+
+data Grid;
+data GridEMPTY;
+data GridSPLIT with
+    var Split dir;
+    var Grid  one;
+    var Grid  two;
 end
 
-data Grid with
-    tag NIL;
-or
-    tag SPLIT with
-        var Split dir;
-        var Grid  g1;
-        var Grid  g2;
-    end
-end
-
-pool[5] Grid g = new Grid.SPLIT(
-                    Split.HORIZONTAL(),
-                    Grid.SPLIT(
-                        Split.VERTICAL(),
-                        Grid.NIL(),
-                        Grid.NIL()));
+pool[5] Grid g = new GridSPLIT(
+                    SplitHORIZONTAL(),
+                    GridSPLIT(
+                        SplitVERTICAL(),
+                        GridNIL(),
+                        GridNIL()));
 
 escape 1;
 ]],
-    env = 'line 17 : arity mismatch',
+    env = 'line 13 : arity mismatch',
 }
 
 Test { [[
-data Split with
-    tag HORIZONTAL;
-or
-    tag VERTICAL;
-end
+data Split;
+data SplitHORIZONTAL is Split;
+data SplitVERTICAL   is Split;
 
-data Grid with
-    tag NIL;
-or
-    tag SPLIT with
-        var Split dir;
-        var Grid  g1;
-        var Grid  g2;
-    end
+data Grid;
+data GridEMPTY;
+data GridSPLIT with
+    var Split dir;
+    var Grid  one;
+    var Grid  two;
 end
 
 pool[5] Grid g;
-g = new Grid.SPLIT(
-            Split.HORIZONTAL(),
-            Grid.SPLIT(
-                Split.VERTICAL(),
-                Grid.NIL(),
-                Grid.NIL()),
-            Grid.NIL());
+g = new GridSPLIT(
+            SplitHORIZONTAL(),
+            GridSPLIT(
+                SplitVERTICAL(),
+                GridNIL(),
+                GridNIL()),
+            GridNIL());
 
 escape 1;
 ]],
@@ -55077,26 +55101,22 @@ escape 1;
 }
 
 Test { [[
-data Split with
-    tag HORIZONTAL;
-or
-    tag VERTICAL;
+data Split;
+data SplitHORIZONTAL is Split;
+data SplitVERTICAL   is Split;
+
+data Grid;
+data GridEMPTY;
+data GridSPLIT with
+    var Split dir;
+    var Grid  one;
+    var Grid  two;
 end
 
-data Grid with
-    tag NIL;
-or
-    tag SPLIT with
-        var Split dir;
-        var Grid  g1;
-        var Grid  g2;
-    end
-end
-
-pool[] Grid g = new Grid.SPLIT(
-                    Split.HORIZONTAL(),
-                    Grid.NIL(),
-                    Grid.NIL());
+pool[] Grid g = new GridSPLIT(
+                    SplitHORIZONTAL(),
+                    GridNIL(),
+                    GridNIL());
 
 escape 1;
 ]],
@@ -55185,19 +55205,17 @@ escape 1;
 }
 
 Test { [[
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var int x;
-    end
+data E;
+data NOTHING is E;
+data X is E with
+    var int x;
 end
 
 var E e = E(1);
 
 escape 1;
 ]],
-    env = 'line 9 : union data constructor requires a tag',
+    env = 'line 7 : union data constructor requires a tag',
 }
 
 Test { [[
@@ -55205,18 +55223,16 @@ data D with
     var int x;
 end
 
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var& D d;
-    end
+data E;
+data NOTHING is E;
+data X is E with
+    var& D d;
 end
 
 var D d = D(10);
-var E e = E.X(&d);
+var E e = X(&d);
 
-escape e.X.d.x;
+escape (e as X).d.x;
 ]],
     run = 10,
 }
@@ -55226,12 +55242,10 @@ data D with
     var int x;
 end
 
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var& D d;
-    end
+data E;
+data NOTHING is E;
+data X is E with
+    var& D d;
 end
 
 var E e;    // TODO: should bind here
@@ -55240,28 +55254,26 @@ do
     e.X.d = &d;
 end
 
-escape e.X.d.x;
+escape 1;//e.X.d.x;
 ]],
-    ref = 'line 13 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
+    ref = 'line 11 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
 }
 Test { [[
 data D with
     var int x;
 end
 
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var& D d;
-    end
+data E;
+data NOTHING is E;
+data X is E with
+    var& D d;
 end
 
     var D d = D(1);
-var E e = E.X(&d);
-    e.X.d = &d;
+var E e = X(&d);
+    (e as X).d = &d;
 
-escape e.X.d.x;
+escape (e as X).d.x;
 ]],
     run = 1,
 }
@@ -55270,19 +55282,17 @@ data D with
     var int x;
 end
 
-data E with
-    tag NOTHING;
-or
-    tag X with
-        var D&& d;
-    end
+data E;
+data NOTHING is E;
+data X is E with
+    var& D d;
 end
 
-var E e = E.X(null);
+var E e = E(null);
     var D d = D(10);
-    e.X.d = &&d;
+    (e as X).d = &&d;
 
-escape e.X.d:x;
+escape (e as X).d:x;
 ]],
     run = 10,
 }
@@ -55292,23 +55302,21 @@ data Ball with
     var int x;
 end
 
-data Leaf with
-    tag NOTHING;
-or
-    tag TWEEN with
-        var& Ball ball;
-    end
+data Leaf;
+data NOTHING is Leaf;
+data TWEEN is Leaf with
+    var& Ball ball;
 end
 
 class LeafHandler with
     var& Leaf leaf;
 do
-    var& Ball ball = &leaf.TWEEN.ball;
+    var& Ball ball = &(leaf as TWEEN).ball;
     escape ball.x;
 end
 
 var Ball ball = Ball(10);
-var Leaf leaf = Leaf.TWEEN(&ball);
+var Leaf leaf = TWEEN(&ball);
 
 var int x = do LeafHandler with
                 this.leaf = &leaf;
@@ -55320,23 +55328,21 @@ escape x;
 }
 
 Test { [[
-data D with
-    tag NIL;
-or
-    tag REC with
-        var D r1;
-        var D r2;
-    end
+data D;
+data NIL is D;
+data REC is D with
+    var D r1;
+    var D r2;
 end
 
-pool[] D ds = new D.REC(
-                    D.REC(D.NIL(),D.NIL()),
-                    D.NIL());
+pool[] D ds = new REC(
+                    REC(NIL(),NIL()),
+                    NIL());
 
 par/or do
-    await ds.REC.r1;
+    await (ds as REC).r1;
 with
-    ds.REC.r1 = new D.NIL();
+    (ds as REC).r1 = new NIL();
 end
 
 escape 1;
@@ -55346,20 +55352,18 @@ escape 1;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
-        var int   v;
-        var Tree  left;
-        var Tree  right;
-    end
+data Tree;
+data NIL is Tree;
+data NODE is Tree with
+    var int   v;
+    var Tree  left;
+    var Tree  right;
 end
 
 pool[3] Tree tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 class Sum with
     var int&& v;
@@ -55373,11 +55377,11 @@ class Body with
     var&   Sum    sum;
 do
     watching *n do
-        if n:NODE then
-            *this.sum.v = *this.sum.v + n:NODE.v;
+        if *n is NODE then
+            *this.sum.v = *this.sum.v + (*n as NODE).v;
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = &&n:NODE.left;
+                this.n      = && (*n as NODE).left;
                 this.sum    = &sum;
             end;
         end
@@ -55462,11 +55466,11 @@ escape 1;
 -- constructors
 Test { DATA..[[
 var Pair p1 = Pair(1,2);        /* struct, no tags */
-var Opt  o1 = Opt.NIL();        /* unions, explicit tag */
-var Opt  o2 = Opt.PTR(&&p1);
+var Opt  o1 = NIL();        /* unions, explicit tag */
+var Opt  o2 = PTR(&&p1);
 pool[] List l1;
-l1 = new List.NIL();       /* recursive union */
-pool[] List l2 = new List.CONS(1, l1);
+l1 = new NIL();       /* recursive union */
+pool[] List l2 = new CONS(1, l1);
 escape 1;
 ]],
     env = 'line 56 : invalid constructor : recursive field "CONS" must be new data',
@@ -55476,9 +55480,9 @@ escape 1;
 
 -- recursive fields are pointers
 Test { DATA..[[
-pool[] List l1 = new List.NIL();
+pool[] List l1 = new NIL();
 pool[] List l2;
-l2 = new List.CONS(1, l1);     /* should be &&l1 */
+l2 = new CONS(1, l1);     /* should be &&l1 */
 escape 1;
 ]],
     env = 'line 53 : invalid constructor : recursive field "CONS" must be new data',
@@ -55525,7 +55529,7 @@ escape 1;
 
 -- constructors have call syntax
 Test { DATA..[[
-var List l1 = List.NIL; /* vs List.NIL() */
+var List l1 = NIL; /* vs List.NIL() */
 escape 1;
 ]],
     parser = 'line 51 : after `NIL´ : expected `(´',
@@ -64740,7 +64744,7 @@ event void a;
 var int ret = 1;
 var _t* a;
 native _f();
-native _t = 0;
+native _t ;
 par/or do
     do _f(a);               // 8
         finalize with

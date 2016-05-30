@@ -25,7 +25,7 @@ syn keyword	cStatement  as async await break native continue data deterministic 
 syn keyword cStatement  event every finalize FOREVER global if input loop nothing
 syn keyword cStatement  output pre par pause return then until var vector with class
 syn keyword cStatement  include interface kill spawn thread
-syn keyword cStatement  escape call isr atomic request in
+syn keyword cStatement  escape call isr atomic request in is
 syn keyword cStatement  watching tag new traverse pool
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
