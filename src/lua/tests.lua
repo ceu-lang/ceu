@@ -191,7 +191,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `int´ : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier'
 }
 
 Test { [[
@@ -200,7 +200,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `int´ : expected `,´',
+    parser = 'line 1 : after `int´ : expected type modifier or `,´ or `)´',
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
 }
 
@@ -229,7 +229,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `void´ : expected `;´',
+    parser = 'line 1 : after `void´ : expected type modifier or `;´ or `do´',
 }
 
 Test { [[
@@ -277,7 +277,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `(´ : expected `var´',
+    parser = 'line 1 : after `(´ : expected `vector´ or `pool´ or `var´',
 }
 
 Test { [[
@@ -602,6 +602,24 @@ escape 1;
     run = { ['~>1s'] = 1 },
 }
 
+-------------------------------------------------------------------------------
+
+Test { [[
+var int a = _;
+loop _ in 10 do
+end
+
+do/_
+    escape;
+end
+
+await 1ms/_;
+
+escape 1;
+]],
+    run = 1,
+}
+
 --do return end
 
 ----------------------------------------------------------------------------
@@ -689,13 +707,13 @@ Test { [[escape (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
-    parser = "line 1 : after `nt´ : expected `;´",
+    parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´",
 }
 Test { [[nt sizeof;]],
-    parser = "line 1 : after `nt´ : expected `;´",
+    parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´",
 }
 Test { [[var int sizeof;]],
-    parser = "line 1 : after `int´ : expected identifier",
+    parser = "line 1 : after `int´ : expected type modifier or internal identifier",
 }
 Test { [[escape sizeof(int);]], run=4 }
 Test { [[escape 1<2>3;]], run=0 }
@@ -801,13 +819,16 @@ Test { [[var int a=1,a=0; escape a;]],
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
-    parser = "line 1 : after `b´ : expected `;´",
+    parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `;´",
 }
 Test { [[var int a = b; escape 0;]],
     env = 'variable/event "b" is not declared',
 }
 Test { [[escape 1;2;]],
-    parser = "line 1 : before `;´ : expected statement",
+    parser = "line 1 : after `;´ : expected end of file",
+}
+Test { [[escape 1;2]],
+    parser = "line 1 : after `;´ : expected end of file",
 }
 Test { [[var int aAa; aAa=1; escape aAa;]],
     run = 1,
@@ -836,7 +857,7 @@ Test { [[
 inputintMY_EVT;
 ifv==0thenbreak;end
 ]],
-    parser = 'line 2 : after `0´ : expected `;´',
+    parser = 'line 2 : after `0´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´',
 }
 Test { [[
 inputintMY_EVT;
@@ -858,7 +879,7 @@ Test { [[
 native_printf();
 loopdo await250ms;_printf("Hello World!\n");end
 ]],
-    parser = 'line 2 : after `loopdo´ : expected `;´',
+    parser = 'line 2 : after `loopdo´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´',
 }
 
 -- TYPE / BOOL
@@ -926,7 +947,7 @@ var int _ = 2;
 
 escape __;
 ]],
-    parser = 'line 6 : before `=´ : expected `with´',
+    parser = 'line 6 : after `=´ : expected class identifier',
     --env = 'line 6 : invalid access to `_´',
     --env = 'line 6 : variable/event "_" is not declared',
     --run = 3,
@@ -943,7 +964,7 @@ var int _ = 2;
 
 escape __;
 ]],
-    parser = 'line 5 : after `const´ : expected declaration',
+    parser = 'line 5 : after `const´ : expected native identifier',
     --run = 3,
 }
 Test { [[
@@ -1247,7 +1268,7 @@ escape 1;
 ]],
     --adj = 'line 1 : not implemented : multiple `[]´',
     --env = 'line 1 : invalid type modifier : `[][]´',
-    parser = 'line 1 : after `vector´ : expected `[´',
+    parser = 'line 1 : after `vector´ : expected `&´ or `[´',
 }
 Test { [[
 vector[1][1] int v;
@@ -1268,7 +1289,7 @@ Test { [[
 var int* v;
 escape 1;
 ]],
-    parser = 'after `int´ : expected identifier',
+    parser = 'after `int´ : expected type modifier or internal identifier',
 }
 Test { [[
 var& int&& v;
@@ -1299,14 +1320,14 @@ Test { [[
 var& int&  v;
 escape 1;
 ]],
-    parser = 'line 1 : after `int´ : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
     --env = 'line 1 : invalid type modifier : `&&´',
 }
 Test { [[
 var int?&& v;
 escape 1;
 ]],
-    parser = 'line 1 : after `?´ : expected identifier',
+    parser = 'line 1 : after `?´ : expected internal identifier',
     --env = 'line 1 : invalid type modifier : `?&&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
@@ -1329,7 +1350,7 @@ Test { [[
 var int?? v;
 escape 1;
 ]],
-    parser = 'line 1 : after `?´ : expected identifier',
+    parser = 'line 1 : after `?´ : expected internal identifier',
     --env = 'line 1 : invalid type modifier : `??´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
@@ -1615,11 +1636,11 @@ escape a;
 
 Test { [[input int A=1;
 ]],
-    parser="line 1 : after `A´ : expected `;´"
+    parser="line 1 : after `A´ : expected `,´ or `;´"
 }
 
 Test { [[input int A=1;]],
-    parser="line 1 : after `A´ : expected `;´"
+    parser="line 1 : after `A´ : expected `,´ or `;´"
 }
 
 Test { [[
@@ -1628,7 +1649,7 @@ input int A;
 
 A=1;
 ]],
-    parser = 'line 1 : after `;´ : expected statement (usually a missing `var´ or C prefix `_´)',
+    parser = 'line 1 : after `;´ : expected statement',
 }
 
 Test { [[
@@ -1638,7 +1659,8 @@ escape 1;
 ]],
     --adj = 'line 2 : invalid expression',
     --parser = 'line 1 : after `;´ : expected statement',
-    parser = 'line 1 : after `;´ : expected statement (usually a missing `var´ or C prefix `_´)',
+    parser = 'line 1 : after `;´ : expected statement',
+    --parser = 'line 1 : after `;´ : expected statement (usually a missing `var´ or C prefix `_´)',
 }
 
 Test { [[input  int A;]],
@@ -1807,7 +1829,7 @@ Test { [[var int a = a+1; escape a;]],
 
 Test { [[var int a; a = emit a => 1; escape a;]],
     --parser = 'line 1 : after `=´ : expected expression',
-    parser = "line 1 : after `emit´ : expected event",
+    parser = "line 1 : after `emit´ : expected number or `(´ or external identifier",
     --trig_wo = 1,
 }
 
@@ -2099,7 +2121,8 @@ escape 0;
 
 Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
-    parser = 'line 1 : after `1´ : expected `;´',
+    --parser = 'line 1 : after `1´ : expected `;´',
+    parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `until´ or `;´',
 }
 
 Test { [[await 1; escape 0;]],
@@ -2134,10 +2157,10 @@ escape a + ___ceu_a_1;
 }
 
 Test { [[await FOREVER; await FOREVER;]],
-    parser = "line 1 : before `;´ : expected event",
+    parser = "line 1 : after `;´ : expected end of file",
 }
 Test { [[await FOREVER; escape 0;]],
-    parser = "line 1 : before `;´ : expected event",
+    parser = "line 1 : after `;´ : expected end of file",
 }
 
 Test { [[emit 1ms; escape 0;]],
@@ -3421,10 +3444,10 @@ escape a;
 }
 
 Test { [[break; escape 1;]],
-    parser="line 1 : before `;´ : expected statement"
+    parser="line 1 : after `;´ : expected end of file"
 }
 Test { [[break; break;]],
-    parser="line 1 : before `;´ : expected statement"
+    parser="line 1 : after `;´ : expected end of file"
 }
 Test { [[loop do break; end; escape 1;]],
     _ana = {
@@ -12224,7 +12247,7 @@ loop do
 end;
 ]],
     --ast = "line 4 : after `;´ : expected `end´",
-    parser = 'line 4 : before `;´ : expected statement',
+    parser = 'line 4 : after `;´ : expected `end´',
 }
 
 Test { [[
@@ -17301,7 +17324,7 @@ code/instantaneous get (void)=>int&& do
 end
 escape 10;
 ]],
-    parser = 'line 1 : after `code/instantaneous´ : expected  abstraction identifier',
+    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´ or abstraction identifier',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
 }
 
@@ -17334,7 +17357,7 @@ code/instantaneous Get (void)=>int& do
 end
 escape 10;
 ]],
-    parser = 'line 1 : after `int´ : expected `;´',
+    parser = 'line 1 : after `int´ : expected type modifier or `;´ or `do´',
     --env = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : attribution to reference with greater scope',
 }
@@ -17383,7 +17406,7 @@ vector&[] byte ref = &f();
 
 escape ref[1];
 ]],
-    parser = 'line 3 : after `byte´ : expected `;´',
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
     --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
 }
 
@@ -17397,7 +17420,7 @@ end
 
 escape f(str);
 ]],
-    parser = 'line 3 : before `vector´ : expected `var´',
+    parser = 'line 3 : after `vector´ : expected `&´',
     --env = 'line 3 : wrong argument #2 : vectors are not supported',
     --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
 }
@@ -18936,7 +18959,7 @@ do
     escape r;
 end
 ]],
-    parser = 'line 10 : after `i´ : expected `)´',
+    parser = 'line 10 : after `i´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `)´',
     --adj = 'line 9 : invalid `finalize´',
     --run = 1,
     -- TODO: impossible to place the finally in the correct parameter?
@@ -21081,7 +21104,7 @@ output (var int)=>int F;
 escape call F=>1;
 ]],
     --parser = 'line 2 : after `call´ : expected expression',
-    parser = 'line 2 : before `call´ : expected expression',
+    parser = 'line 2 : after `call´ : expected expression',
     --parser = 'line 2 : after `F´ : expected `;´',
 }
 
@@ -21219,6 +21242,12 @@ end
 output (var int, var int)=>int F;
 var int ret = call F=>(1,2);
 escape ret;
+]],
+    run = 3,
+}
+
+Test { [[
+var int ret = (call F=>2);
 ]],
     run = 3,
 }
@@ -21505,6 +21534,33 @@ escape 1;
 }
 
 Test { [[
+input (int);
+]],
+    parser = 'line 1 : after `)´ : expected external identifier',
+}
+Test { [[
+input (xxx);
+]],
+    parser = 'line 1 : after `(´ : expected type',
+}
+Test { [[
+input ();
+]],
+    parser = 'line 1 : after `(´ : expected type',
+}
+Test { [[
+input (u8);
+]],
+    parser = 'line 1 : after `)´ : expected external identifier',
+}
+
+Test { [[
+input (xxx tilex) X;;
+]],
+    parser = 'line 1 : after `(´ : expected type',
+}
+
+Test { [[
 
 input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position) DOOR_SPAWN;
 
@@ -21517,12 +21573,7 @@ input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position
     every (tilex,tiley,vertical,lock,door,position) in DOOR_SPAWN do
     end
 ]],
-    --parser = 'line 2 : before `)´ : expected `,´',
-    --parser = 'line 2 : after `int´ : expected `,´',
-    parser = 'line 2 : after `int´ : expected `)´',
-    _ana = {
-        isForever = true,
-    },
+    parser = 'line 2 : after `int´ : expected type modifier or `,´ or `)´',
 }
 
     -- POINTERS & ARRAYS
@@ -22148,7 +22199,7 @@ escape p;
 Test { [[input int[1] E; escape 0;]],
     --run = 0,
     --env = 'invalid event type',
-    parser = "line 1 : after `int´ : expected identifier",
+    parser = 'line 1 : after `int´ : expected type modifier or external identifier',
 }
 Test { [[vector[0] int v; escape 0;]],
     run = 0,
@@ -22171,13 +22222,13 @@ N;
 ]],
     --adj = 'line 1 : invalid expression',
     --parser = 'line 1 : after `<BOF>´ : expected statement',
-    parser = 'line 1 : after `<BOF>´ : expected statement (usually a missing `var´ or C prefix `_´)',
+    parser = 'line 1 : after `begin of file´ : expected statement',
 }
 
 Test { [[
 void[10] a;
 ]],
-    parser = 'line 1 : after `<BOF>´ : expected statement',
+    parser = 'line 1 : after `begin of file´ : expected statement',
 }
 
 Test { [[
@@ -22328,11 +22379,11 @@ Test { [[vector[2] int v; emit v;    escape 0;]],
         env='event "v" is not declared' }
 Test { [[vector[0] int[2] v; await v;  escape 0;]],
         --env='line 1 : event "?" is not declared'
-        parser = 'line 1 : after `int´ : expected identifier',
+        parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
 }
 Test { [[vector[0] int[2] v; emit v; escape 0;]],
         --env='event "?" is not declared'
-        parser = 'line 1 : after `int´ : expected identifier',
+        parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
 }
 Test { [[var _int[2] v; v=v; escape 0;]], env='types mismatch' }
 Test { [[vector[1] int v; escape v;]], env='cannot index a non array' }
@@ -22598,7 +22649,7 @@ Test { [[
 vector[10] u8 vec = (1,2,3);
 escape 1;
 ]],
-    parser = 'line 1 : after `1´ : expected `)´',
+    parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `)´',
 }
 Test { [[
 vector[10] u8 vec = (1);
@@ -22628,7 +22679,7 @@ escape 1;
 ]],
     --parser = 'line 1 : after `..´ : expected item',
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    parser = 'line 1 : after `..´ : expected `[´',
+    parser = 'line 1 : after `..´ : expected expression or `[´',
 }
 
 Test { [[
@@ -22749,7 +22800,7 @@ v1 = v2;
 v1 = v2..v3;
 escape 1;
 ]],
-    parser = 'line 3 : after `..´ : invalid constructor syntax',
+    parser = 'line 3 : after `v2´ : expected `(´ or `[´ or `:´ or `?´ or `!´ or binary operator or `;´',
 }
 
 Test { [[
@@ -22924,14 +22975,15 @@ escape tot+1;
 Test { [[
 escape 1..2;
 ]],
-    parser = 'line 1 : after `..´ : invalid constructor syntax',
-    --parser = 'line 1 : after `1´ : expected `;´',
+    --parser = 'line 1 : after `..´ : invalid constructor syntax',
+    parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `?´ or `!´ or binary operator or `;´',
 }
 Test { [[
 escape 1 .. 2;
 ]],
-    parser = 'line 1 : after `..´ : invalid constructor syntax',
+    --parser = 'line 1 : after `..´ : invalid constructor syntax',
     --parser = 'line 1 : after `1´ : expected `;´',
+    parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `?´ or `!´ or binary operator or `;´',
 }
 Test { [[
 vector[] int x = [1]..2;
@@ -23104,7 +23156,7 @@ vector&[] byte ref = &f();
 
 escape ref[1];
 ]],
-    parser = 'line 3 : after `byte´ : expected `;´',
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
     --run = 1,
 }
 
@@ -23120,7 +23172,7 @@ ref = [3, 4, 5];
 
 escape str[1];
 ]],
-    parser = 'line 3 : after `byte´ : expected `;´',
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
     --run = 4,
 }
 
@@ -23136,7 +23188,7 @@ ref = [] .. "ola";
 
 escape str[1] == 'l';
 ]],
-    parser = 'line 3 : after `byte´ : expected `;´',
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
     --run = 1,
 }
 
@@ -23159,7 +23211,7 @@ ref = [] .. ({g}() as _char&&) .. "ola";
 escape str[3] == 'o';
 ]],
     --run = 1,
-    parser = 'line 9 : after `byte´ : expected `;´',
+    parser = 'line 9 : after `byte´ : expected type modifier or `;´ or `do´',
 }
 
 Test { [[
@@ -23178,7 +23230,7 @@ f2();
 
 escape str[4] == 'u';
 ]],
-    parser = 'line 3 : after `byte´ : expected `;´',
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
     --run = 1,
 }
 
@@ -23482,8 +23534,8 @@ vector[] int v;
 _f(v..[1]);
 escape 1;
 ]],
-    parser = 'line 2 : after `..´ : invalid constructor syntax',
-    --parser = 'line 2 : after `v´ : expected `)´',
+    --parser = 'line 2 : after `..´ : invalid constructor syntax',
+    parser = 'line 2 : after `v´ : expected `(´ or `[´ or `:´ or `?´ or `!´ or binary operator or `,´ or `)´',
     --run = 1,
 }
 
@@ -23767,7 +23819,7 @@ escape 1;
 Test { [[
 _f()
 ]],
-    parser = 'line 1 : after `)´ : expected `;´',
+    parser = 'line 1 : after `)´ : expected `finalize´ or `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´',
 }
 
 Test { [[
@@ -23843,7 +23895,7 @@ escape 1;
 ]],
     --adj = 'line 4 : invalid expression',
     --parser = 'line 3 : after `end´ : expected statement'
-    parser = 'line 3 : after `end´ : expected statement (usually a missing `var´ or C prefix `_´)',
+    parser = 'line 3 : after `end´ : expected statement',
 }
 
 Test { [[
@@ -24915,7 +24967,7 @@ end
 var int i = {fff}(3,4);
 escape i;
 ]],
-    parser = 'line 8 : before `)´ : expected `;´',
+    parser = 'line 8 : after `)´ : expected `finalize´ or `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´',
 }
 
 Test { [[
@@ -25318,7 +25370,7 @@ Test { [[escape]],
 
 Test { [[escape()]],
     --parser = "line 1 : after `(´ : expected expression",
-    parser = "line 1 : before `(´ : expected expression",
+    parser = "line 1 : after `(´ : expected expression",
 }
 
 Test { [[escape 1+;]],
@@ -27732,7 +27784,7 @@ Test { [==[
 var int a = [[a]];
 escape a;
 ]==],
-    parser = 'line 3 : after `1´ : expected `;´',
+    parser = 'line 3 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `;´',
 }
 
 Test { [==[
@@ -28537,7 +28589,7 @@ do
 end
 escape 10;
 ]],
-    parser = 'line 2 : after `;´ : expected declaration',
+    parser = 'line 2 : after `;´ : expected `var´ or `vector´ or `pool´ or `event´ or `code/instantaneous´ or `code/delayed´ or `interface´ or `input/output´ or `output/input´ or `input´ or `output´ or `do´',
 }
 
 Test { [[
@@ -28548,7 +28600,7 @@ do
 end
 escape 10;
 ]],
-    parser = 'line 2 : after `;´ : expected declaration',
+    parser = 'line 2 : after `;´ : expected `var´ or `vector´ or `pool´ or `event´ or `code/instantaneous´ or `code/delayed´ or `interface´ or `input/output´ or `output/input´ or `input´ or `output´ or `do´',
 }
 
 Test { [[
@@ -28901,7 +28953,7 @@ class T with
 do
 end
 ]],
-    parser = 'line 3 : after `;´ : expected declaration',
+    parser = 'line 3 : after `;´ : expected `var´ or `vector´ or `pool´ or `event´ or `code/instantaneous´ or `code/delayed´ or `interface´ or `input/output´ or `output/input´ or `input´ or `output´ or `do´',
 }
 
 Test { [[
@@ -33261,7 +33313,7 @@ end;
 
 escape t1.b;
 ]],
-    parser = 'line 8 : after `t2´ : expected `;´',
+    parser = 'line 8 : after `t2´ : expected `=´ or `:=´ or `,´ or `;´',
 }
 
 Test { [[
@@ -33782,7 +33834,7 @@ end
 pool T t;
 escape 1;
 ]],
-    parser = 'line 4 : after `pool´ : expected `[´',
+    parser = 'line 4 : after `pool´ : expected `&´ or `[´',
     --env = 'line 4 : missing `pool´ dimension',
     --parser = 'line 4 : after `T´ : expected `[´',
 }
@@ -33919,7 +33971,7 @@ loop (T&&)t in ts do
 end
 escape (ok1?) + ok2 + ret;
 ]],
-    parser = 'line 11 : before `loop´ : expected statement (usually a missing `var´ or C prefix `_´)',
+    parser = 'line 11 : after `loop´ : expected internal identifier or `do´',
     --fin = 'line 14 : pointer access across `await´',
     --run = 1,
 }
@@ -34374,7 +34426,7 @@ escape 10;
 Test { [[
 spawn i;
 ]],
-    parser = 'line 1 : after `spawn´ : expected identifier',
+    parser = 'line 1 : after `spawn´ : expected class identifier or `do´',
 }
 Test { [[
 _f(spawn T);
@@ -37336,7 +37388,7 @@ var int x =
     end;
 escape x;
 ]],
-    parser = 'line 2 : after `spawn´ : expected identifier',
+    parser = 'line 2 : after `spawn´ : expected class identifier',
 }
 
 Test { [[
@@ -37618,7 +37670,7 @@ var int v1, v2;
 end;
 escape v1+v2;
 ]],
-    parser = 'line 6 : after `v´ : expected `)´',
+    parser = 'line 6 : after `v´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `)´',
     --env = 'line 10 : arity mismatch',
     --run = 30,
 }
@@ -43034,7 +43086,7 @@ Test { [[
 code/instantaneous F (void) => void
 escape 1;
 ]],
-    parser = 'line 1 : after `void´ : expected `;´'
+    parser = 'line 1 : after `void´ : expected type modifier or `;´ or `do´'
 }
 
 Test { [[
@@ -43403,7 +43455,7 @@ code/instantaneous Build (vector[] u8 bytes)=>void do
 end
 escape 1;
 ]],
-    parser = 'line 1 : before `vector´ : expected `var´',
+    parser = 'line 1 : after `vector´ : expected `&´',
     --env = 'line 1 : wrong argument #1 : vectors are not supported',
 }
 
@@ -43648,7 +43700,7 @@ interface I with
 end
 escape 10;
 ]],
-    parser = 'line 2 : after `;´ : expected declaration',
+    parser = 'line 2 : after `;´ : expected `var´ or `vector´ or `pool´ or `event´ or `code/instantaneous´ or `code/delayed´ or `interface´ or `input/output´ or `output/input´ or `input´ or `output´ or `end´',
     --run = 10,
 }
 
@@ -43699,7 +43751,7 @@ end
 vector[2] T ts;
 escape _V;
 ]],
-    parser = 'line 5 : after `int´ : expected `;´',
+    parser = 'line 5 : after `int´ : expected type modifier or `;´',
 }
 
 Test { [[
@@ -43772,7 +43824,7 @@ end
 var T t;
 escape t.a + t.f();
 ]],
-    parser = 'line 3 : after `int´ : expected `;´',
+    parser = 'line 3 : after `int´ : expected type modifier or `;´',
 }
 
 Test { [[
@@ -45245,7 +45297,7 @@ end
 
 escape f();
 ]],
-    parser = 'line 3 : after `int´ : expected `;´',
+    parser = 'line 3 : after `int´ : expected type modifier or `;´ or `do´',
     --run = 10,
 }
 Test { [[
@@ -45262,7 +45314,7 @@ var T t;
 
 escape t.f();
 ]],
-    parser = 'line 2 : after `int´ : expected `;´',
+    parser = 'line 2 : after `int´ : expected type modifier or `;´',
     --run = 10,
 }
 
@@ -45275,7 +45327,7 @@ end
 
 escape f();
 ]],
-    parser = 'line 3 : after `int´ : expected `;´',
+    parser = 'line 3 : after `int´ : expected type modifier or `;´ or `do´',
     --env = 'line 4 : invalid escape value : types mismatch (`int&´ <= `int&&´)',
 }
 Test { [[
@@ -45558,7 +45610,7 @@ end
 var Pingu p;
 escape p.get().value;
 ]],
-    parser = 'line 6 : after `Dir´ : expected `;´',
+    parser = 'line 6 : after `Dir´ : expected type modifier or `;´',
     --env = 'line 15 : invalid escape value : types mismatch (`Dir&´ <= `Dir&&´)',
 }
 
@@ -45583,7 +45635,7 @@ end
 var Pingu p;
 escape p.get().value;
 ]],
-    parser = 'line 6 : after `Dir´ : expected `;´',
+    parser = 'line 6 : after `Dir´ : expected type modifier or `;´',
     --run = 10,
 }
 
@@ -45750,7 +45802,7 @@ var T t;
 t = T.f(1);
 escape t.x;
 ]],
-    parser = 'line 12 : before `.´ : expected `(´',
+    parser = 'line 12 : after `.´ : expected tag identifier',
     --parser = 'line 12 : before `.´ : expected expression',
     --run = 2,
 }
@@ -51775,7 +51827,7 @@ var int a, b;
 (a,b) = 1;
 escape 1;
 ]],
-    parser = 'line 2 : after `=´ : expected `await´',
+    parser = 'line 2 : after `=´ : expected `request´ or `await´ or `watching´ or `(´',
     --parser = 'line 2 : before `=´ : expected `,´',
     --env = 'line 2 : arity mismatch',
     --run = 1,
@@ -51981,7 +52033,7 @@ nothing;
 await A;
 escape 1;
 ]],
-    parser = '/tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `;´',
+    parser = '/tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `,´ or `;´',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -52062,7 +52114,7 @@ Test { [[
 await A;
 escape 1;
 ]],
-    parser = '/tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `;´',
+    parser = '/tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `,´ or `;´',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -52286,7 +52338,7 @@ with
 end
 escape 1;
 ]],
-    parser = 'line 6 : after `T´ : expected identifier',
+    parser = 'line 6 : after `T´ : expected type modifier or internal identifier',
     --env = 'line 6 : invalid event type',
 }
 
@@ -52313,7 +52365,7 @@ with
 end
 escape 1;
 ]],
-    parser = 'line 6 : after `T´ : expected `)´',
+    parser = 'line 6 : after `T´ : expected type modifier or `,´ or `)´',
     --parser = 'line 6 : after `T´ : expected `,´',
     --env = 'line 6 : invalid event type',
     --run = 1,
@@ -52347,7 +52399,7 @@ event int& e;
 var& int i = await e;
 escape 1;
 ]],
-    parser = 'line 1 : after `int´ : expected identifier',
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
 }
 
 Test { [[
@@ -52492,7 +52544,7 @@ with
     escape b;
 end
 ]],
-    parser = 'line 3 : after `int´ : expected identifier',
+    parser = 'line 3 : after `int´ : expected type modifier or internal identifier',
     --env = 'line 3 : invalid event type',
     --run = 11,
 }
@@ -52513,7 +52565,7 @@ with
     escape b;
 end
 ]],
-    parser = 'line 3 : after `int´ : expected `)´',
+    parser = 'line 3 : after `int´ : expected type modifier or `,´ or `)´',
     --run = 14,
 }
 
@@ -54066,20 +54118,20 @@ vector[] byte xxx = [] .. "1234567890";
 emit OUT => []..xxx;
 escape 1;
 ]],
-    parser = 'line 1 : after `byte´ : expected identifier',
+    parser = 'line 1 : after `byte´ : expected type modifier or external identifier',
     --env = 'line 1 : invalid event type',
 }
 
 Test { [[
 output byte[]&& && OUT;
 ]],
-    parser = 'line 1 : after `byte´ : expected identifier',
+    parser = 'line 1 : after `byte´ : expected type modifier or external identifier',
     --env = 'line 1 : invalid event type',
 }
 Test { [[
 output byte[]& && OUT;
 ]],
-    parser = 'line 1 : after `byte´ : expected identifier',
+    parser = 'line 1 : after `byte´ : expected type modifier or external identifier',
     --env = 'line 1 : invalid event type',
 }
 Test { [[
@@ -54111,7 +54163,7 @@ with
 end
 escape $vec;
 ]],
-    parser = 'line 1 : after `byte´ : expected identifier',
+    parser = 'line 1 : after `byte´ : expected type modifier or external identifier',
     --env = 'line 1 : invalid event type',
 }
 
@@ -54483,7 +54535,7 @@ end
 escape 1;
 ]],
     -- TODO: better error message
-    parser = 'line 1 : after `data´ : expected identifier'
+    parser = 'line 1 : after `data´ : expected adt identifier'
 }
 Test { [[
 data T with
@@ -55448,7 +55500,7 @@ var Pair p1 = (1,2);    /* vs Pair(1,2) */
 escape 1;
 ]],
     -- TODO: better error message
-    parser = 'line 51 : after `1´ : expected `)´',
+    parser = 'line 51 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `)´',
     --run = 1,
 }
 Test { DATA..[[
@@ -62205,7 +62257,7 @@ pool&[] Command cmds2
 
 escape 1;
 ]],
-    parser = 'line 10 : before `&´ : expected expression',
+    parser = 'line 10 : after `&´ : expected expression',
     --parser = 'line 10 : after `new´ : expected `;´'
     --ref = 'line 9 : invalid attribution (not a reference)',
     --ref = 'line 10 : reference must be bounded before use',
@@ -63204,9 +63256,9 @@ var TimeMachine tm with
 end;
 
 par/or do
-    await 3s/;
+    await 3s/_;
     emit tm.go_on;
-    await 1s/;
+    await 1s/_;
 
     ///////////////////////////////
 
@@ -63285,7 +63337,7 @@ with
                 end
                 emit SLOW;
             end
-            emit 50ms/;
+            emit 50ms/_;
         end
     end
 end
@@ -63349,9 +63401,9 @@ var TimeMachine tm with
 end;
 
 par/or do
-    await 3s/;
+    await 3s/_;
     emit tm.go_on;
-    await 1s/;
+    await 1s/_;
 
     ///////////////////////////////
 
@@ -63368,12 +63420,12 @@ par/or do
     emit tm.go_forward => 1;
     _assert(tm_app.v == 0);
 
-    await 1ms/;
-    await 1000ms/;
+    await 1ms/_;
+    await 1000ms/_;
     _assert(tm_app.v == 1);
-    await 1000ms/;
+    await 1000ms/_;
     _assert(tm_app.v == 2);
-    await 1000ms/;
+    await 1000ms/_;
     _assert(tm_app.v == 3);
 
     ///////////////////////////////
@@ -63385,17 +63437,17 @@ par/or do
     emit tm.go_forward => 1;
     _assert(tm_app.v == 0);
 
-    await 1ms/;
+    await 1ms/_;
     loop i in 20 do
-        await 50ms/;
+        await 50ms/_;
     end
     _assert(tm_app.v == 1);
     loop i in 20 do
-        await 50ms/;
+        await 50ms/_;
     end
     _assert(tm_app.v == 2);
     loop i in 20 do
-        await 50ms/;
+        await 50ms/_;
     end
     _assert(tm_app.v == 3);
 
@@ -63408,17 +63460,17 @@ par/or do
     emit tm.go_forward => 2;
     _assert(tm_app.v == 0);
 
-    await 1ms/;
+    await 1ms/_;
     loop i in 10 do
-        await 50ms/;
+        await 50ms/_;
     end
     _assert(tm_app.v == 1);
     loop i in 10 do
-        await 50ms/;
+        await 50ms/_;
     end
     _assert(tm_app.v == 2);
     loop i in 10 do
-        await 50ms/;
+        await 50ms/_;
     end
     _assert(tm_app.v == 3);
 
@@ -63431,12 +63483,12 @@ par/or do
     emit tm.go_forward => 5;
     _assert(tm_app.v == 0);
 
-    await 1ms/;
-    await 200ms/;
+    await 1ms/_;
+    await 200ms/_;
     _assert(tm_app.v == 1);
-    await 200ms/;
+    await 200ms/_;
     _assert(tm_app.v == 2);
-    await 200ms/;
+    await 200ms/_;
     _assert(tm_app.v == 3);
 
     ///////////////////////////////
@@ -63448,12 +63500,12 @@ par/or do
     emit tm.go_forward => -2;
     _assert(tm_app.v == 0);
 
-    await 1ms/;
-    await 2000ms/;
+    await 1ms/_;
+    await 2000ms/_;
     _assert(tm_app.v == 1);
-    await 2000ms/;
+    await 2000ms/_;
     _assert(tm_app.v == 2);
-    await 2000ms/;
+    await 2000ms/_;
     _assert(tm_app.v == 3);
 
     ///////////////////////////////
@@ -63465,17 +63517,17 @@ par/or do
     emit tm.go_forward => -5;
     _assert(tm_app.v == 0);
 
-    await 1ms/;
+    await 1ms/_;
     loop i in 100 do
-        await 50ms/;
+        await 50ms/_;
     end
     _assert(tm_app.v == 1);
     loop i in 100 do
-        await 50ms/;
+        await 50ms/_;
     end
     _assert(tm_app.v == 2);
     loop i in 100 do
-        await 50ms/;
+        await 50ms/_;
     end
     _assert(tm_app.v == 3);
 
@@ -63496,7 +63548,7 @@ with
                 end
                 emit SLOW;
             end
-            emit 50ms/;
+            emit 50ms/_;
         end
     end
 end
@@ -63561,9 +63613,9 @@ var TimeMachine tm with
 end;
 
 par/or do
-    await 3s/;
+    await 3s/_;
     emit tm.go_on;
-    await 1s/;
+    await 1s/_;
 
     ///////////////////////////////
 
@@ -63574,13 +63626,13 @@ par/or do
     emit tm.go_backward => 1;
     _assert(tm_app.v == 3);
 
-    await 1000ms/;
+    await 1000ms/_;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
-    await 1000ms/;
+    await 1000ms/_;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
-    await 1000ms/;
+    await 1000ms/_;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
@@ -63594,17 +63646,17 @@ par/or do
     _assert(tm_app.v == 3);
 
     loop i in 20 do
-        await 50ms/;
+        await 50ms/_;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
     loop i in 20 do
-        await 50ms/;
+        await 50ms/_;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
     loop i in 20 do
-        await 50ms/;
+        await 50ms/_;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
@@ -63619,17 +63671,17 @@ par/or do
     _assert(tm_app.v == 3);
 
     loop i in 10 do
-        await 50ms/;
+        await 50ms/_;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
     loop i in 10 do
-        await 50ms/;
+        await 50ms/_;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
     loop i in 10 do
-        await 50ms/;
+        await 50ms/_;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
@@ -63643,13 +63695,13 @@ par/or do
     emit tm.go_backward => 5;
     _assert(tm_app.v == 3);
 
-    await 200ms/;
+    await 200ms/_;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
-    await 200ms/;
+    await 200ms/_;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
-    await 200ms/;
+    await 200ms/_;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
@@ -63662,13 +63714,13 @@ par/or do
     emit tm.go_backward => -2;
     _assert(tm_app.v == 3);
 
-    await 2000ms/;
+    await 2000ms/_;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
-    await 2000ms/;
+    await 2000ms/_;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
-    await 2000ms/;
+    await 2000ms/_;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
@@ -63682,17 +63734,17 @@ par/or do
     _assert(tm_app.v == 3);
 
     loop i in 100 do
-        await 50ms/;
+        await 50ms/_;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
     loop i in 100 do
-        await 50ms/;
+        await 50ms/_;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
     loop i in 100 do
-        await 50ms/;
+        await 50ms/_;
     end
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
@@ -63715,7 +63767,7 @@ with
                 end
                 emit SLOW;
             end
-            emit 10ms/;
+            emit 10ms/_;
         end
     end
 end
@@ -63779,20 +63831,20 @@ var TimeMachine tm with
 end;
 
 par/or do
-    await 3s/;
+    await 3s/_;
     _assert(tm_app.v == 3);
     emit tm.go_on;
 
-    await 1s/;
+    await 1s/_;
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    await 1s/;
+    await 1s/_;
     emit tm.go_forward => 2;
     _assert(tm_app.v == 0);
 
-    await 1s400ms/;
+    await 1s400ms/_;
     _assert(tm_app.v == 2);
 
     emit tm.go_seek => tm.time_total;
@@ -63802,7 +63854,7 @@ par/or do
     emit tm.go_backward => 2;
     _assert(tm_app.v == 3);
 
-    await 1s1ms/;
+    await 1s1ms/_;
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
 with
@@ -63822,7 +63874,7 @@ with
                 end
                 emit SLOW;
             end
-            emit 10ms/;
+            emit 10ms/_;
         end
     end
 end
@@ -63944,19 +63996,19 @@ par/or do
     _assert(tm_app.v == 25);
 
     emit tm.go_on;
-    await 1s/;
+    await 1s/_;
 
     emit tm.go_seek => 0;
     TM_AWAIT_SEEK(tm);
 
     emit tm.go_forward => 1;
-    await 3s1ms/;
+    await 3s1ms/_;
     _assert(tm_app.v == 7);
-    await 2s/;
+    await 2s/_;
     _assert(tm_app.v == 9);
-    await 1s/;
+    await 1s/_;
     _assert(tm_app.v == 22);
-    await 3s/;
+    await 3s/_;
     _assert(tm_app.v == 25);
 with
     input int DT;
@@ -63970,7 +64022,7 @@ with
                 end
                 emit SLOW;
             end
-            emit 10ms/;
+            emit 10ms/_;
         end
     end
 end

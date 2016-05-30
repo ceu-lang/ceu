@@ -2,7 +2,7 @@
 
 --RUNTESTS_file = assert(io.open('/tmp/fin.txt','w'))
 
-RUNTESTS = true
+RUNTESTS = {}
 
 -- Execution option for the tests:
 --VALGRIND = true
@@ -86,10 +86,10 @@ Test = function (t)
     if not check('parser')   then return end
 do return end
     if not check('ast')      then return end
+    AST.dump(AST.root)
     if not check('adj')      then return end
     if not check('sval')     then return end
     if not check('env')      then return end
-    --AST.dump(AST.root)
     --if not check('exp')      then return end
     if not check('adt')      then return end
     if not check('mode')     then return end
@@ -315,6 +315,11 @@ end
 end
 
 dofile 'tests.lua'
+
+-- check if all translation messages were used
+for i=1, #RUNTESTS.parser_translate.original do
+    assert(RUNTESTS.parser_translate.ok[i]==true, 'parser translate '..i)
+end
 
 print([[
 

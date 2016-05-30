@@ -7,13 +7,100 @@ local ERR_strs = {}
 local LST_i    = 0
 local LST_str  = 'begin of file'
 
+local T = {
+    {
+        '`%*´ or `/´ or `%%´ or `%+´ or `%-´ or `>>´ or `<<´ or `&´ or `^´ or `|´ or `!=´ or `==´ or `<=´ or `>=´ or `<´ or `>´ or `as´ or `and´ or `or´',
+        'binary operator'
+    },
+
+    {
+        'internal identifier or `_´',
+        'internal identifier'
+    },
+    {
+        '`&&´ or `%?´',
+        'type modifier'
+    },
+
+    {
+        '`&´ or `%(´ or primitive type or abstraction identifier or class identifier or adt identifier or native identifier',
+        'type'
+    },
+    {
+        '`%(´ or primitive type or abstraction identifier or class identifier or adt identifier or native identifier or `/recursive´',
+        'type'
+    },
+    {
+        'primitive type or abstraction identifier or class identifier or adt identifier or native identifier',
+        'type'
+    },
+
+    {
+        '`pre´ or `native´ or `code/instantaneous´ or `code/delayed´ or end of file',
+        'end of file'
+    },
+    {
+        '`;´ or `pre´ or `native´ or `code/instantaneous´ or `code/delayed´ or `with´',
+        '`with´'
+    },
+    {
+        '`pre´ or `native´ or `code/instantaneous´ or `code/delayed´ or `end´',
+        '`end´'
+    },
+
+    {
+        '`not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or `@´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´ or `call´ or `call/recursive´ or `;´',
+        'expression'
+    },
+    {
+        '`not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or `@´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´ or `call´ or `call/recursive´',
+        'expression'
+    },
+    {
+        'class identifier or `new´ or adt identifier or `@´ or `traverse´ or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
+        'expression'
+    },
+    {
+        '`new´ or adt identifier or `@´ or `traverse´ or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
+        'expression',
+    },
+
+    {
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or expression or `await´ or `emit´ or `request´ or `spawn´ or `kill´ or `traverse´ or `do´ or `interface´ or `class´ or `data´ or `ddd´ or `pre´ or `if´ or `loop´ or `every´ or `finalize´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        'statement'
+    },
+    {
+        '`;´ or statement',
+        'statement'
+    },
+}
+if RUNTESTS then
+    RUNTESTS.parser_translate = RUNTESTS.parser_translate or { ok={}, original=T }
+end
+
+-- ( ) . % + - * ? [ ] ^ $
+
+local function translate (msg)
+    for i,t in ipairs(T) do
+        local fr,to = unpack(t)
+        local new = string.gsub(msg, fr, to)
+        if RUNTESTS then
+            if msg ~= new then
+                RUNTESTS.parser_translate.ok[i] = true
+            end
+        end
+        msg = new
+    end
+    return msg
+end
+
 local function ERR ()
 --DBG(LST_i, ERR_i, ERR_strs, _I2L[LST_i], I2TK[LST_i])
     local file, line = unpack(LINES.i2l[LST_i])
     return 'ERR : '..file..
               ' : line '..line..
               ' : after `'..LST_str..'´'..
-              ' : expected '..table.concat(ERR_strs, ' or ')
+              ' : expected '..translate(table.concat(ERR_strs,' or '))
 end
 
 local function fail (i, err)
@@ -57,6 +144,7 @@ local function K (patt, err, nox)
                     function (_,i)
                         return fail(i,err)
                     end) * P(false)
+                           -- (avoids "left recursive" error (explicit fail))
 
     if not nox then
         ret = ret * X
@@ -87,7 +175,7 @@ local E = function (msg)
     return m.Cmt(P'',
             function (_,i)
                 return fail(i,msg)
-            end) --* P(false)
+            end)
 end
 
 -->>> OK
@@ -100,70 +188,71 @@ TYPES = P'bool' + 'byte'
       + 'uint' + 'usize' + 'void'
 --<<<
 
+-- must be in reverse order (to count superstrings as keywords)
 KEYS = P
-'and' +
-'async' +
-'as' +          -- TODO vs async
-'async/isr' +
-'async/thread' +
-'atomic' +
-'await' +
-'break' +
-'call' +
-'call/recursive' +
-'class' +
-'code' +
-'continue' +
-'data' +
-'deterministic' +
-'do' +
-'else' +
-'else/if' +
-'emit' +
-'end' +
-'escape' +
-'event' +
-'every' +
-'false' +
-'finalize' +
-'FORVER' +
-'global' +
-'if' +
-'in' +
-'input' +
-'input/output' +
-'interface' +
-'kill' +
-'loop' +
-'native' +
-'native/pre' +
-'new' +
-'not' +
-'nothing' +
-'null' +
-'or' +
-'outer' +
-'output' +
-'output/input' +
-'par' +
-'par/and' +
-'par/or' +
-'pause/if' +
-'pool' +
-'pre' +
-'request' +
-'sizeof' +
-'spawn' +
-'tag' +
-'then' +
-'this' +
-'traverse' +
-'true' +
-'until' +
-'var' +
-'vector' +
-'watching' +
 'with' +
+'watching' +
+'vector' +
+'var' +
+'until' +
+'true' +
+'traverse' +
+'this' +
+'then' +
+'tag' +
+'spawn' +
+'sizeof' +
+'request' +
+'pre' +
+'pool' +
+'pause/if' +
+'par/or' +
+'par/and' +
+'par' +
+'output/input' +
+'output' +
+'outer' +
+'or' +
+'null' +
+'nothing' +
+'not' +
+'new' +
+'native/pre' +
+'native' +
+'loop' +
+'kill' +
+'interface' +
+'input/output' +
+'input' +
+'in' +
+'if' +
+'global' +
+'FORVER' +
+'finalize' +
+'false' +
+'every' +
+'event' +
+'escape' +
+'end' +
+'emit' +
+'else/if' +
+'else' +
+'do' +
+'deterministic' +
+'data' +
+'continue' +
+'code' +
+'class' +
+'call/recursive' +
+'call' +
+'break' +
+'await' +
+'atomic' +
+'async/thread' +
+'async/isr' +
+'async' +
+'as' +
+'and' +
 TYPES
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
@@ -192,15 +281,13 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     -- escape/A 10
     -- break/i
     -- continue/i
-    , _Escape   = K'escape'   * OPT('/'*V'__do_escape_id')
+    , _Escape   = K'escape'   * OPT('/'*V'__ID_esc')
                                 * OPT(V'__Exp')
     , _Break    = K'break'    * OPT('/'*V'ID_int')
     , _Continue = K'continue' * OPT('/'*V'ID_int')
 
-    , __do_escape_id = CK(Alpha * (Alphanum)^0, 'escape identifier')
-
     -- do/A ... end
-    , Do = K'do' * OPT('/'*V'__do_escape_id') *
+    , Do = K'do' * OPT('/'*V'__ID_esc') *
                 V'Block' *
            K'end'
 
@@ -235,7 +322,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     -- call
     , __extcall = (CK'input' + CK'output')
                     * OPT(CK'/recursive')
-                    * Cc(false)     -- spawn array
                     * V'_Typepars' * K'=>' * V'Type'
                     * V'__ID_ext' * (K','*V'__ID_ext')^0
     , _Extcall_proto = V'__extcall'
@@ -244,7 +330,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     -- req
     , __extreq = (CK'input/output' + CK'output/input')
                    * OPT('[' * (V'__Exp'+Cc(true)) * K']')
-                   * Cc(false)     -- recursive
                    * V'_Typepars' * K'=>' * V'Type'
                    * V'__ID_ext' * (K','*V'__ID_ext')^0
     , _Extreq_proto = V'__extreq'
@@ -259,7 +344,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                      + K'var'   * OPT(CK'&') * OPT(K'/'*CK'hold')
 
     , _Typepars_item_id   = V'__typepars_pre' * V'Type' * V'__ID_int'
-    , _Typepars_item_anon = V'__typepars_pre' * V'Type' * Cc(false)
+    , _Typepars_item_anon = V'__typepars_pre' * V'Type'
     , _Typepars = #K'(' * (
                     PARENS(P'void') +
                     PARENS(V'_Typepars_item_anon' * (K','*V'_Typepars_item_anon')^0) +
@@ -366,11 +451,13 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , ID_nat  = V'__ID_nat'
     , ID_none = V'__ID_none'
 
-    , __ID_ext  = -KEYS * CK(m.R'AZ'*ALPHANUM^0, 'external identifier')
-    , __ID_int  = -KEYS * CK(m.R'az'*Alphanum^0, 'internal identifier')
-    , __ID_abs  = -KEYS * CK(m.R'AZ'*Alphanum^0, 'abstraction identifier')
+    , __ID_ext  = CK(m.R'AZ'*ALPHANUM^0 -KEYS, 'external identifier')
+    , __ID_int  = CK(m.R'az'*Alphanum^0 -KEYS, 'internal identifier')
+    , __ID_abs  = CK(m.R'AZ'*Alphanum^0 -KEYS, 'abstraction identifier')
     , __ID_nat  = CK(P'_' * Alphanum^1,          'native identifier')
     , __ID_none = CK(P'_' * -Alphanum,           '`_´')
+    , __ID_esc  = CK(Alpha*(Alphanum)^0 -KEYS, '`escape´ identifier')
+
 
 -- MODS
 
@@ -392,11 +479,10 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                         + K'=' * V'_Var_constr' * (
                             OPT(K'with' * V'Dcl_constr' * K'end')
                           ) )
-            + CK'vector' * OPT(CK'&') * V'__Dim' * V'Type' * Cc(true)  * (V'__ID_int'+V'ID_none') *
-                        ( Cc(false) * K'with' * V'Dcl_constr' * K'end'
+            + CK'vector' * OPT(CK'&') * V'__Dim' * V'Type' * (V'__ID_int'+V'ID_none') *
+                        ( K'with' * V'Dcl_constr' * K'end'
                         + K'=' * V'_Var_constr' * (
-                            K'with' * V'Dcl_constr' * K'end' +
-                            Cc(false)
+                            OPT(K'with' * V'Dcl_constr' * K'end')
                           ) )
     , _Var_constr = V'__ID_cls' * (K'.'-'..') * V'__ID_int' *
                         PARENS(OPT(V'Explist'))
@@ -405,10 +491,10 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , Dcl_constr = V'Block'
 
     -- classes / interfaces
-    , Dcl_cls  = K'class'     * Cc(false)
+    , Dcl_cls  = K'class'
                * V'__ID_cls'
                * K'with' * V'_BlockI' * V'__Do'
-    , _Dcl_ifc = K'interface' * Cc(true)
+    , _Dcl_ifc = K'interface'
                * V'__ID_cls'
                * K'with' * V'_BlockI' * K'end'
     , _BlockI = ( (V'__Org'
@@ -594,23 +680,23 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- Lua integration
     -- Stmt/Exp differ only by the "return" and are re-unified in "adj.lua"
-    , _Lua    = K'[' * m.Cg(P'='^0,'lua') * '[' *
+    , _Lua    = K'[' * m.Cg(P'='^0,'lua') * K'[' *
                 ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
                  * (V'__luacl'/function()end) *X
-    , __luaext = K'@' * V'__Exp'
+    , __luaext = P'@' * V'__Exp'
     , __luacl  = ']' * C(P'='^0) * K']'
     , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
                     function (s,i,a,b) return a == b end)
 
-    , __ID_cls   = -KEYS * CK(m.R'AZ'*Alphanum^0, 'class identifier')
-    , __ID_adt   = -KEYS * CK(m.R'AZ'*Alphanum^0, 'adt identifier')
-    , __ID_tag   = -KEYS * CK(m.R'AZ'*ALPHANUM^0, 'tag identifier')
+    , __ID_cls   = CK(m.R'AZ'*Alphanum^0 -KEYS, 'class identifier')
+    , __ID_adt   = CK(m.R'AZ'*Alphanum^0 -KEYS, 'adt identifier')
+    , __ID_tag   = CK(m.R'AZ'*ALPHANUM^0 -KEYS, 'tag identifier')
     , __ID_field = CK(Alpha * (Alphanum)^0,       'field identifier')
 
 
 -- Types
 
-    , __type = CK(TYPES,'type') + V'__ID_abs' + V'__ID_cls' + V'__ID_adt'
+    , __type = CK(TYPES,'primitive type') + V'__ID_abs' + V'__ID_cls' + V'__ID_adt'
     , __type_ptr = CK'&&' -(P'&'^3)
     , __type_vec = K'[' * V'__Exp' * K']'
     , Type = V'__type'   * (V'__type_ptr'              )^0 * CK'?'^-1
@@ -720,9 +806,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_TraverseRec'
                  + V'_DoOrg'
                  + V'RawStmt'
-
              + V'CallStmt' -- last
-             + E'statement (usually a missing `var´ or C prefix `_´)'
 
     , __Stmt_Block = V'_Code_impl' + V'_Extcall_impl' + V'_Extreq_impl'
               + V'_Dcl_ifc'  + V'Dcl_cls' + V'Dcl_adt' + V'_DDD'
