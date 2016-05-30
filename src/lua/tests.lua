@@ -54851,7 +54851,7 @@ end
 var List l = ListCONS(1,
                ListCONS(2,
                    ListNIL()));
-escape l.CONS.tail.CONS.head;
+escape 1;//((l as CONS).tail).CONS.head;
 ]],
     adt = 'line 9 : invalid constructor : recursive data must use `new´',
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
@@ -54867,7 +54867,7 @@ end
 var List l = new ListCONS(1,
                   ListCONS(2,
                    ListNIL()));
-escape 1;//(l.CONS.tail.CONS.head;
+escape 1;//(((l as CONS).tail).CONS.head;
 ]],
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
@@ -54884,7 +54884,7 @@ end
 var List&& l = ListCONS(1,
                 ListCONS(2,
                     ListNIL()));
-escape 1;//l:CONS.tail.CONS.head;
+escape 1;//((l as CONS).tail).CONS.head;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     adt = 'line 7 : invalid constructor : recursive data must use `new´',
@@ -54901,7 +54901,7 @@ end
 var List&& l = new ListCONS(1,
                    ListCONS(2,
                     ListNIL()));
-escape 0;//l:CONS.tail.CONS.head;
+escape 0;//((l as CONS).tail).CONS.head;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
@@ -54922,7 +54922,7 @@ l = ListCONS(1,
         ListCONS(2,
             ListNIL()));
 
-escape 0;//l.CONS.tail.CONS.head;
+escape 0;//((l as CONS).tail).CONS.head;
 ]],
     adt = 'line 9 : invalid constructor : recursive data must use `new´',
 }
@@ -55268,7 +55268,7 @@ end
 var E e;    // TODO: should bind here
 do
     var D d = D(1);
-    e.X.d = &d;
+    (e as X).d = &d;
 end
 
 escape 1;//e.X.d.x;
@@ -55679,10 +55679,10 @@ var int ret = 0;                                // 0
 
 ret = ret + p1.x + p1.y;                        // 3
 ret = ret + (o1 is NOTHING);                             // 4
-ret = ret + (o2.PTR.v==&&p1);                    // 5
-ret = ret + l1.NIL;                             // 6
-ret = ret + l2.CONS.head + l2.CONS.tail.NIL;    // 8
-ret = ret + l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;   // 12
+ret = ret + ((o2 as PTR).v==&&p1);                    // 5
+ret = ret + (l1 is NIL);                             // 6
+ret = ret + (l2 as CONS).head + ((l2 as CONS).tail is NIL);    // 8
+ret = ret + (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);   // 12
 
 escape ret;
 ]],
@@ -55690,21 +55690,21 @@ escape ret;
 }
 
 -- destructors are checked at runtime
---      v = l.CONS.head
+--      v = ((l as CONS).head)
 -- becomes
 --      assert(l.CONS)
---      v = l.CONS.head
+--      v = ((l as CONS).head)
 Test { DATA..[[
 pool[] List l;
 l = new NIL();
-escape l.CONS.head;         // runtime error
+escape (l as CONS).head;         // runtime error
 ]],
     asr = true,
     --run = 1,
 }
 Test { DATA..[[
 pool[] List l = new CONS(2, NIL());
-escape l.CONS.head;
+escape (l as CONS).head;
 ]],
     run = 2,
 }
@@ -55712,8 +55712,8 @@ escape l.CONS.head;
 -- mixes everything:
 Test { DATA..[[
 var Pair p  = Pair(1,2);
-var Opt  o1 = Opt.NOTHING();
-var Opt  o2 = Opt.PTR(&&p);
+var Opt  o1 = NOTHING();
+var Opt  o2 = PTR(&&p);
 pool[] List l1;
 l1 = new NIL();
 pool[] List l2 = new CONS(1, NIL());
@@ -55727,51 +55727,51 @@ var int y = p.y;
 _assert(x+y == 3);
 ret = ret + 3;              // 3
 
-if o1.NOTHING then
+if o1 is NOTHING then
     ret = ret + 1;          // 4
-else/if o1.PTR then
+else/if o1 is PTR then
     _assert(0);             // never reachable
 end
 
-if o2.NOTHING then
+if o2 is NOTHING then
     _assert(0);             // never reachable
-else/if o2.PTR then
+else/if o2 is PTR then
     ret = ret + 1;          // 5
-    _assert(o2.PTR.v==&&p);
+    _assert((o2 as PTR).v==&&p);
 end
 
-if l1.NIL then
+if l1 is NIL then
     ret = ret + 1;          // 6
-else/if l1.CONS then
+else/if l1 is CONS then
     _assert(0);             // never reachable
 end
 
-if l2.NIL then
+if l2 is NIL then
     _assert(0);             // never reachable
-else/if l2.CONS then
-    _assert(l2.CONS.head == 1);
+else/if l2 is CONS then
+    _assert((l2 as CONS).head == 1);
     ret = ret + 1;          // 7
-    if l2.CONS.tail.NIL then
+    if (l2 as CONS).tail is NIL then
         ret = ret + 1;      // 8
-    else/if l2.CONS.tail.CONS then
+    else/if (l2 as CONS).tail is CONS then
         _assert(0);         // never reachable
     end
     ret = ret + 1;          // 9
 end
 
-if l3.NIL then
+if l3 is NIL then
     _assert(0);             // never reachable
-else/if l3.CONS then
-    _assert(l3.CONS.head == 1);
+else/if l3 is CONS then
+    _assert((l3 as CONS).head == 1);
     ret = ret + 1;          // 10
-    if l3.CONS.tail.NIL then
+    if (l3 as CONS).tail is NIL then
         _assert(0);         // never reachable
-    else/if l3.CONS.tail.CONS then
-        _assert(l3.CONS.tail.CONS.head == 2);
+    else/if (l3 as CONS).tail is CONS then
+        _assert(((l3 as CONS).tail as CONS).head == 2);
         ret = ret + 2;      // 12
-        if l3.CONS.tail.CONS.tail.NIL then
+        if ((l3 as CONS).tail as CONS).tail is NIL then
             ret = ret + 1;  // 13
-        else/if l3.CONS.tail.CONS.tail.CONS then
+        else/if ((l3 as CONS).tail as CONS).tail is CONS then
             _assert(0);     // never reachable
         end
         ret = ret + 1;      // 14
@@ -55795,9 +55795,9 @@ escape ret;
 -- cannot cross await statements
 Test { DATA..[[
 pool[] List l = new CONS(1, NIL());
-var List&& p = l.CONS.tail;
+var List&& p = (l as CONS).tail;
 await 1s;
-escape p:CONS.head;
+escape (*p as CONS).head;
 ]],
     adt = 'line 52 : invalid attribution : mutation : cannot mix data sources',
     --fin = 'line 54 : unsafe access to pointer "p" across `await´',
@@ -55805,9 +55805,9 @@ escape p:CONS.head;
 }
 Test { DATA..[[
 pool[] List l = new CONS(1, NIL());
-var List&& p = &&l.CONS.tail;
+var List&& p = &&(l as CONS).tail;
 await 1s;
-escape p:CONS.head;
+escape (*p as CONS).head;
 ]],
     --adt = 'line 52 : mutation : cannot mix data sources',
     fin = 'line 54 : unsafe access to pointer "p" across `await´',
@@ -55815,9 +55815,9 @@ escape p:CONS.head;
 }
 Test { DATA..[[
 pool[] List l = new CONS(1, NIL());
-var List&& p = &&l.CONS.tail;
+var List&& p = &&(l as CONS).tail;
 await 1s;
-escape p:CONS.head;
+escape (*p as CONS).head;
 ]],
     --adt = 'line 52 : cannot mix recursive data sources',
     fin = 'line 54 : unsafe access to pointer "p" across `await´',
@@ -55836,7 +55836,7 @@ l1 = new NIL();
 pool[] List l2 = new CONS(1, l1);
 pool[] List l3;
 l3 = new CONS(2, l2);
-escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
+escape (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);
 ]],
     --run = 4,
     env = 'line 53 : invalid constructor : recursive field "CONS" must be new data',
@@ -55844,13 +55844,13 @@ escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
 }
 Test { DATA..[[
 pool[] List l3 = new CONS(2, CONS(1, NIL()));
-escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
+escape (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);
 ]],
     run = 4,
 }
 Test { DATA..[[
 pool[] List l3 = new CONS(2, CONS(1, NIL()));
-escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
+escape (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);
 ]],
     run = 4,
 }
@@ -55859,8 +55859,8 @@ Test { DATA..[[
 pool[] List l1;
 l1 = new NIL();
 pool[] List l3 = new CONS(2, CONS(1, NIL()));
-l3.CONS.tail = l1;
-escape l3.CONS.head + l3.CONS.tail.NIL;
+(l3 as CONS).tail = l1;
+escape (l3 as CONS).head + ((l3 as CONS).tail is NIL);
 ]],
     --adt = 'line 54 : invalid attribution : value is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
@@ -55871,8 +55871,8 @@ Test { DATA..[[
 pool[] List l1;
 l1 = new NIL();
 pool[] List l3 = new CONS(2, CONS(1, NIL()));
-l3.CONS.tail = &&l1;
-escape l3.CONS.head + l3.CONS.tail.NIL;
+(l3 as CONS).tail = &&l1;
+escape (l3 as CONS).head + ((l3 as CONS).tail is NIL);
 ]],
     adt = 'line 54 : invalid attribution : destination is not a reference',
     --adt = 'line 54 : cannot mix recursive data sources',
@@ -55886,7 +55886,7 @@ pool[] List l2;
 l1 = new NIL();
 l2 = new CONS(1, NIL());
 l1 = l2;
-escape l1.CONS + (l1.CONS.head==1);
+escape (l1 is CONS) + (l1 as CONS).head==1;
 ]],
     --adt = 'line 55 : invalid attribution : value is not a reference',
     adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
@@ -55898,7 +55898,7 @@ pool[] List l2;
 l1 = new NIL();
 l2 = new CONS(1, NIL());
 l1 = &&l2;
-escape l1.CONS + (l1.CONS.head==1);
+escape (l1 is CONS) + (l1 as CONS).head==1;
 ]],
     adt = 'line 55 : invalid attribution : destination is not a reference',
     --adt = 'line 55 : invalid attribution : new reference only to pointer or alias',
@@ -55909,7 +55909,7 @@ Test { DATA..[[
 pool[] List l1 = new NIL(),
             l2 = new CONS(1, NIL());
 l1 = l2;
-escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
+escape (l1 is CONS) + ((l1 as CONS).head==1) + ((((l1 as CONS).tail as CONS).tail as CONS).head==1);
 ]],
     adt = 'line 53 : invalid attribution : value is not a reference',
     adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
@@ -55920,10 +55920,10 @@ escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
 Test { DATA..[[
 pool[] List l1 = new CONS(1, NIL()),
             l2 = new CONS(2, NIL());
-l1.CONS.tail = l2;
-escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
-       (l2.CONS.head==2) + (l2.CONS.tail.CONS.head==1) +
-       (l1.CONS.tail.CONS.tail.CONS.tail.CONS.head==2);
+((l1 as CONS).tail) = l2;
+escape (((l1 as CONS).head)==1) + ((((l1 as CONS).tail) as CONS).head==2) +
+       (((l2 as CONS).head)==2) + ((((l2 as CONS).tail) as CONS).head==1) +
+       ((((((l1 as CONS).tail) as CONS).tail as CONS).tail as CONS).head==2);
 ]],
     --adt = 'line 53 : invalid attribution : value is not a reference',
     adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
@@ -55933,10 +55933,10 @@ escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
 Test { DATA..[[
 pool[] List l1 = new CONS(1, NIL()),
             l2 = new CONS(2, NIL());
-l1.CONS.tail = &&l2;
-escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
-       (l2.CONS.head==2) + (l2.CONS.tail.CONS.head==1) +
-       (l1.CONS.tail.CONS.tail.CONS.tail.CONS.head==2);
+((l1 as CONS).tail) = &&l2;
+escape (((l1 as CONS).head)==1) + ((((l1 as CONS).tail) as CONS).head==2) +
+       (((l2 as CONS).head)==2) + ((((l2 as CONS).tail) as CONS).head==1) +
+       ((((((l1 as CONS).tail) as CONS).tail as CONS).tail as CONS).head==2);
 ]],
     adt = 'line 53 : invalid attribution : destination is not a reference',
     --adt = 'line 53 : cannot mix recursive data sources',
@@ -55948,10 +55948,10 @@ Test { DATA..[[
 pool[] List l1, l2;
 l1 = new CONS(1, NIL());
 l2 = new CONS(2, NIL());
-l1.CONS.tail = l2;
-l2.CONS.tail = l1;
+((l1 as CONS).tail) = l2;
+((l2 as CONS).tail) = l1;
 
-escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.head;
+escape ((l1 as CONS).head) + (((l1 as CONS).tail) as CONS).head + ((l2 as CONS).head) + (((l2 as CONS).tail) as CONS).head;
 ]],
     --adt = 'line 54 : invalid attribution : value is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to root',
@@ -55964,8 +55964,8 @@ Test { DATA..[[
 pool[] List l1, l2;
 l1 = new NIL();
 l2 = new CONS(1, NIL());
-l1 = l2.CONS.tail;
-escape l1.NIL;
+l1 = ((l2 as CONS).tail);
+escape l1 is NIL;
 ]],
     --adt = 'line 54 : invalid attribution : value is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
@@ -55978,8 +55978,8 @@ Test { DATA..[[
 pool[] List l1, l2;
 l1 = new NIL();
 l2 = new CONS(1, NIL());
-l1 = &&l2.CONS.tail;
-escape l1.NIL;
+l1 = &&((l2 as CONS).tail);
+escape l1 is NIL;
 ]],
     adt = 'line 54 : invalid attribution : destination is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
@@ -56014,34 +56014,34 @@ escape 1;
 --  - represents the root of the tree
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape l.NIL;       // l is a pointer to the root
+escape l is NIL;       // l is a pointer to the root
 ]],
     run = 1,
 }
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape (l).NIL;    // equivalent to above
+escape (l) is NIL;    // equivalent to above
 ]],
     run = 1,
 }
 -- the pointer must be dereferenced
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape l:NIL;       // "l" is not a struct
+escape *l is NIL;       // "l" is not a struct
 ]],
     env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape l:CONS.head; // "l" is not a struct
+escape ((l as CONS).head); // "l" is not a struct
 ]],
     env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
 pool[] List l;             // l is the pool
-escape l.CONS.tail:CONS;    // "l:CONS.tail" is not a struct
+escape *((l as CONS).tail) is CONS;    // "((l as CONS).tail)" is not a struct
 ]],
     env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : not a struct',
@@ -56052,7 +56052,7 @@ escape l.CONS.tail:CONS;    // "l:CONS.tail" is not a struct
 --  must appear first in the ADT declaration)
 Test { DATA..[[
 pool[] List l;
-escape l.CONS;      // runtime error
+escape l is CONS;      // runtime error
 ]],
     asr = true,
 }
@@ -56063,7 +56063,7 @@ Test { DATA..[[
 var int ret = 0;
 do
     pool[] List lll;
-    ret = lll.NIL;
+    ret = lll is NIL;
 end
 // all instances in "lll" have been collected
 escape ret;
@@ -56080,19 +56080,19 @@ escape ret;
 Test { DATA..[[
 pool[] List l;
 l = new NIL();
-escape l.NIL;
+escape l is NIL;
 ]],
     run = 1,
 }
 Test { DATA..[[
 pool[] List l = new CONS(2, NIL());
-escape l.CONS.head;
+escape ((l as CONS).head);
 ]],
     run = 2,
 }
 Test { DATA..[[
 pool[] List l = new CONS(1, CONS(2, NIL()));
-escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
+escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + ((((l as CONS).tail) as CONS).tail is NIL);
 ]],
     run = 4,
 }
@@ -56100,7 +56100,7 @@ escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 Test { DATA..[[
 pool[] List l;
 l = new NIL();
-escape l.CONS;
+escape l is CONS;
 ]],
     asr = true,
 }
@@ -56108,7 +56108,7 @@ escape l.CONS;
 Test { DATA..[[
 pool[] List l;
 l = CONS(2, NIL());
-escape l.CONS.head;
+escape ((l as CONS).head);
 ]],
     adt = 'line 52 : invalid constructor : recursive data must use `new´',
     --env = 'line 52 : invalid call parameter #2 (List vs List&&)',
@@ -56116,7 +56116,7 @@ escape l.CONS.head;
 -- cannot assign "l" directly (in the pool declaration)
 Test { DATA..[[
 pool[] List l = new CONS(2, NIL());
-escape l.CONS.head;
+escape ((l as CONS).head);
 ]],
     run = 2,
 }
@@ -56124,7 +56124,7 @@ escape l.CONS.head;
 Test { DATA..[[
 pool[] List l;
 l = new NIL();
-escape l.NIL;
+escape l is NIL;
 ]],
     --env = 'line 53 : invalid access (List[] vs List)',
     run = 1,
@@ -56132,7 +56132,7 @@ escape l.NIL;
 Test { DATA..[[
 pool[] List l;
 l = new CONS(2, NIL());
-escape l.CONS.head;
+escape ((l as CONS).head);
 ]],
     --env = 'line 53 : invalid access (List[] vs List)',
     run = 2,
@@ -56151,30 +56151,30 @@ escape l.CONS.head;
 -- (
 Test { DATA..[[
 pool[0] List l = new CONS(2, NIL());
-escape l.NIL;
+escape l is NIL;
 ]],
     run = 1,
 }
 Test { DATA..[[
 pool[0] List l;
 l = new CONS(2, NIL());
-escape l.CONS.head;     // runtime error
+escape ((l as CONS).head);     // runtime error
 ]],
     asr = true,
 }
 -- 2nd allocation fails (1 space)
 Test { DATA..[[
 pool[1] List l = new CONS(2, CONS(1, NIL()));
-_assert(l.CONS.tail.NIL);
-escape l.CONS.head;
+_assert(((l as CONS).tail) is NIL);
+escape ((l as CONS).head);
 ]],
     run = 2,
 }
 -- 3rd allocation fails (2 space)
 Test { DATA..[[
 pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));
-_assert(l.CONS.tail.CONS.tail.NIL);
-escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
+_assert((((l as CONS).tail) as CONS).tail is NIL);
+escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + (((l as CONS).tail) as CONS).tail is NIL;
 ]],
     run = 4,
 }
@@ -56184,7 +56184,7 @@ escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 Test { DATA..[[
 pool[0] List l;
 l = new CONS(2, NIL());
-escape l.NIL;
+escape l is NIL;
 ]],
     --env = 'line 53 : invalid access (List[] vs List)',
     run = 1,
@@ -56203,7 +56203,7 @@ pool[] T ts;
 do
     ts = new T.NIL();
 end
-escape ts.NIL;
+escape ts is NIL;
 ]],
     run = 1,
 }
@@ -56222,7 +56222,7 @@ escape ts.NIL;
 Test { DATA..[[
 pool[1] List l = new CONS(1, NIL());
 l = new CONS(2, NIL());    // this fails (new before free)!
-escape l.CONS.head;
+escape ((l as CONS).head);
 ]],
     asr = true,
 }
@@ -56230,8 +56230,8 @@ escape l.CONS.head;
 Test { DATA..[[
 pool[1] List l;
 l = new CONS(1, NIL());
-l.CONS.tail = new CONS(2, NIL()); // fails
-escape l.CONS.tail.NIL;
+((l as CONS).tail) = new CONS(2, NIL()); // fails
+escape ((l as CONS).tail) is NIL;
 ]],
     run = 1,
     --asr = true,
@@ -56240,8 +56240,8 @@ escape l.CONS.tail.NIL;
 -- 1-2-NIL
 Test { DATA..[[
 pool[2] List l = new CONS(1, NIL());
-l.CONS.tail = new CONS(2, NIL()); // fails
-escape l.CONS.tail.CONS.head;
+((l as CONS).tail) = new CONS(2, NIL()); // fails
+escape ((l as CONS).tail).CONS.head;
 ]],
     run = 2,
 }
@@ -56252,7 +56252,7 @@ Test { DATA..[[
 pool[2] List l;
 l = new CONS(1, NIL());
 l = new CONS(2, NIL());    // no allocation fail
-escape l.CONS.head;
+escape ((l as CONS).head);
 ]],
     run = 2,
 }
@@ -56261,20 +56261,20 @@ escape l.CONS.head;
 -- 4-5-6-NIL => NIL     (all fail)
 Test { DATA..[[
 pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
-_ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
+_ceu_out_assert_msg(((l as CONS).tail).CONS.tail.NIL, "1");
 l = new NIL();
 l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
-_ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "2");
-escape l.CONS.tail.CONS.head;
+_ceu_out_assert_msg(((l as CONS).tail).CONS.tail.NIL, "2");
+escape ((l as CONS).tail).CONS.head;
 ]],
     run = 5,
 }
 
 Test { DATA..[[
 pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
-_ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
+_ceu_out_assert_msg(((l as CONS).tail).CONS.tail.NIL, "1");
 l = new CONS(4, CONS(5, CONS(6, NIL())));   // all fail
-escape l.NIL;
+escape l is NIL;
 ]],
     run = 1,
 }
@@ -56285,11 +56285,11 @@ escape l.NIL;
 Test { DATA..[[
 pool[2] List l;
 l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
-_assert(l.CONS.tail.CONS.tail.NIL);
+_assert(((l as CONS).tail).CONS.tail.NIL);
 l = new NIL();                                                // clear all
 l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
-_assert(l.CONS.tail.CONS.tail.NIL);
-escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
+_assert(((l as CONS).tail).CONS.tail.NIL);
+escape ((l as CONS).head) + ((l as CONS).tail).CONS.head + (((l as CONS).tail).CONS.tail.NIL);
 ]],
     run = 10,
 }
@@ -56309,8 +56309,8 @@ escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
 -- 1-2-NIL
 Test { DATA..[[
 pool[2] List l = new CONS(1, NIL());
-l.CONS.tail = new CONS(2, NIL());
-escape l.CONS.head + l.CONS.tail.CONS.head;
+((l as CONS).tail) = new CONS(2, NIL());
+escape ((l as CONS).head) + ((l as CONS).tail).CONS.head;
 ]],
     run = 3,
 }
@@ -56321,15 +56321,15 @@ escape l.CONS.head + l.CONS.tail.CONS.head;
 Test { DATA..[[
 pool[2] List lll;
 lll = new CONS(1, CONS(2, NIL()));
-lll = lll.CONS.tail;    // parent=child
-escape lll.CONS.head;
+lll = ll((l as CONS).tail);    // parent=child
+escape ll((l as CONS).head);
 ]],
     run = 2,
 }
 Test { DATA..[[
 pool[2] List lll = new CONS(1, CONS(2, NIL()));
-lll = lll.CONS.tail;
-lll.CONS.tail = new CONS(3, NIL());
+lll = ll((l as CONS).tail);
+ll((l as CONS).tail) = new CONS(3, NIL());
 escape 1;
 ]],
     run = 1,
@@ -56337,17 +56337,17 @@ escape 1;
 Test { DATA..[[
 pool[2] List lll;
 lll = new CONS(1, CONS(2, NIL()));
-lll = lll.CONS.tail;    // parent=child
-lll.CONS.tail = new CONS(3, CONS(4, NIL()));    // 4 fails
-escape lll.CONS.head + lll.CONS.tail.CONS.head + lll.CONS.tail.CONS.tail.NIL;
+lll = ll((l as CONS).tail);    // parent=child
+ll((l as CONS).tail) = new CONS(3, CONS(4, NIL()));    // 4 fails
+escape ll((l as CONS).head) + ll((l as CONS).tail).CONS.head + ll((l as CONS).tail).CONS.tail is NIL;
 ]],
     run = 6,
 }
 Test { DATA..[[
 pool[2] List l = new CONS(1, CONS(2, NIL()));
-l = l.CONS.tail;    // parent=child
-l.CONS.tail = new CONS(3, CONS(4, NIL()));    // 4 fails
-escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
+l = ((l as CONS).tail);    // parent=child
+((l as CONS).tail) = new CONS(3, CONS(4, NIL()));    // 4 fails
+escape ((l as CONS).head) + ((l as CONS).tail).CONS.head + ((l as CONS).tail).CONS.tail is NIL;
 ]],
     run = 6,
 }
@@ -56359,7 +56359,7 @@ escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 Test { DATA..[[
 pool[2] List l;
 l = new CONS(1, CONS(2, NIL()));
-l.CONS.tail = l;    // child=parent
+((l as CONS).tail) = l;    // child=parent
 escape 1;
 ]],
     adt = 'line 53 : cannot assign parent to child',
@@ -56388,7 +56388,7 @@ var int ret = 0;            // 0
 
 var OptionInt i = OptionInt.NIL();
 var OptionPtr p = OptionPtr.NIL();
-ret = ret + i.NIL + p.NIL;  // 2
+ret = ret + i.NIL + p is NIL;  // 2
 
 i = OptionInt.SOME(3);
 ret = ret + i.SOME.v;       // 5
@@ -56992,8 +56992,8 @@ Test { DATA..[[
 pool[] List l1, l2;
 l1 = new CONS(1, NIL());
 l2 = new CONS(2, NIL());
-l1.CONS.tail = l2;
-escape l1.CONS.tail.CONS.head;
+((l1 as CONS).tail) = l2;
+escape ((l1 as CONS).tail).CONS.head;
 ]],
     --adt = 'line 54 : invalid attribution : value is not a reference',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
@@ -57003,9 +57003,9 @@ pool[] List l1 = new CONS(1, NIL());
 do
     pool[] List l2;
     l2 = new CONS(2, NIL());
-    l1.CONS.tail = &&l2;
+    ((l1 as CONS).tail) = &&l2;
 end
-escape l1.CONS.tail.CONS.head;
+escape ((l1 as CONS).tail).CONS.head;
 ]],
     adt = 'line 55 : invalid attribution : destination is not a reference',
     --adt = 'line 55 : cannot mix recursive data sources',
@@ -57015,8 +57015,8 @@ Test { DATA..[[
 pool[] List l1;
 l1 = new CONS(1, NIL());
 pool[2] List l2 = new CONS(2, NIL());
-l1.CONS.tail = l2;
-escape l1.CONS.tail.CONS.head;
+((l1 as CONS).tail) = l2;
+escape ((l1 as CONS).tail).CONS.head;
 ]],
     --adt = 'line 54 : invalid attribution : value is not a reference',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
@@ -57026,8 +57026,8 @@ pool[2] List l1;
 pool[2] List l2;
 l1 = new CONS(1, NIL());
 l2 = new CONS(2, NIL());
-l1.CONS.tail = l2;
-escape l1.CONS.tail.CONS.head;
+((l1 as CONS).tail) = l2;
+escape ((l1 as CONS).tail).CONS.head;
 ]],
     --adt = 'line 55 : invalid attribution : value is not a reference',
     adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
@@ -57040,34 +57040,34 @@ pool[5] List l;
 
 // change head [2]
 l = new CONS(1, NIL());
-ret = ret + l.CONS.head;        // 2
+ret = ret + ((l as CONS).head);        // 2
 _assert(ret == 1);
 
 // add 2 [1, 2]
-l.CONS.tail = new CONS(1, NIL());
-ret = ret + l.CONS.head;        // 3
-ret = ret + l.CONS.head + l.CONS.tail.CONS.head;
+((l as CONS).tail) = new CONS(1, NIL());
+ret = ret + ((l as CONS).head);        // 3
+ret = ret + ((l as CONS).head) + ((l as CONS).tail).CONS.head;
                                 // 6
 _assert(ret == 6);
 
 // change tail [1, 2, 4]
-l.CONS.tail.CONS.tail = new CONS(4, NIL());
+((l as CONS).tail).CONS.tail = new CONS(4, NIL());
                                 // 10
 
 pool[] List l3 = new CONS(3, NIL());
-l.CONS.tail.CONS.tail = &&l3;
-_assert(l.CONS.tail.CONS.head == 3);
-_assert(l.CONS.tail.CONS.tail.CONS.head == 4);
-ret = ret + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.CONS.head;
+((l as CONS).tail).CONS.tail = &&l3;
+_assert(((l as CONS).tail).CONS.head == 3);
+_assert(((l as CONS).tail).CONS.tai((l as CONS).head) == 4);
+ret = ret + ((l as CONS).tail).CONS.head + ((l as CONS).tail).CONS.tai((l as CONS).head);
                                 // 17
 
 // drop middle [1, 3, 4]
-l.CONS.tail = l.CONS.tail.CONS.tail;
-ret = ret + l.CONS.tail.CONS.head;
+((l as CONS).tail) = ((l as CONS).tail).CONS.tail;
+ret = ret + ((l as CONS).tail).CONS.head;
                                 // 20
 
 // fill the list [1, 3, 4, 5, 6] (7 fails)
-l.CONS.tail.CONS.tail.CONS.tail =
+((l as CONS).tail).CONS.tai((l as CONS).tail) =
     new CONS(5, CONS(6, CONS(7, NIL())));
 
 escape ret;
@@ -57332,7 +57332,7 @@ list = new CONS(10, NIL());
 
 pool&[] List lll = &list;
 
-escape lll.CONS.head;
+escape ll((l as CONS).head);
 ]],
     run = 10,
 }
@@ -57352,7 +57352,7 @@ list = new CONS(10, NIL());
 
 pool[] List&& lll = &&list;
 
-escape lll:CONS.head;
+escape ll((l as CONS).head);
 ]],
     run = 10,
 }
@@ -57372,16 +57372,16 @@ pool[] List list;
 list = new CONS(10, NIL());
 pool[] List&& l = &&list;
 
-l:CONS.tail = new CONS(9, NIL());
-l = l:CONS.tail;
+((l as CONS).tail) = new CONS(9, NIL());
+l = ((l as CONS).tail);
 
-l:CONS.tail = new CONS(8, NIL());
-l = l:CONS.tail;
+((l as CONS).tail) = new CONS(8, NIL());
+l = ((l as CONS).tail);
 
 escape l:CONS +
         list.CONS.head +
-        list.CONS.tail.CONS.head +
-        list.CONS.tail.CONS.tail.CONS.head;
+        list.CONS.tai((l as CONS).head) +
+        list.CONS.tai((l as CONS).tail).CONS.head;
 ]],
     adt = 'line 16 : invalid attribution : mutation : destination cannot be a pointer',
 }
@@ -57435,10 +57435,10 @@ pool[] List&& lll = &&list;
 var int ret = 0;
 
 watching *lll do
-    *lll = lll:CONS.tail;
+    *lll = ll((l as CONS).tail);
     ret = lll:CONS +
             list.CONS.head +
-            list.CONS.tail.NIL;
+            list.CONS.tail is NIL;
 end
 
 escape ret;
@@ -57464,10 +57464,10 @@ pool[] List&& lll = &&list;
 
 var int ret = 0;
 watching *lll do
-    lll:CONS.tail = lll:CONS.tail.CONS.tail;
+    ll((l as CONS).tail) = ll((l as CONS).tail).CONS.tail;
     ret = lll:CONS +
             list.CONS.head +
-            list.CONS.tail.NIL;
+            list.CONS.tail is NIL;
 end
 escape ret;
 ]],
@@ -57490,7 +57490,7 @@ pool[] List list;
 list = new CONS(10, NIL());
 vector[] List&& lll = &&list; // TODO fat pointer
 
-*lll = lll:CONS.tail;
+*lll = ll((l as CONS).tail);
 
 escape lll:CONS + list.CONS + 1;
 ]],
@@ -57512,11 +57512,11 @@ pool[] List list;
 list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
-*lll = lll:CONS.tail;
+*lll = ll((l as CONS).tail);
 
 escape lll:CONS +
         list.CONS.head +
-        list.CONS.tail.NIL;
+        list.CONS.tail is NIL;
 ]],
     --run = 10,
     adt = 'line 15 : invalid attribution : mutation : cannot mutate root of a reference',
@@ -57536,15 +57536,15 @@ pool[] List list;
 list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
-lll:CONS.tail = new CONS(9, NIL());
-*lll = lll:CONS.tail;
+ll((l as CONS).tail) = new CONS(9, NIL());
+*lll = ll((l as CONS).tail);
 
-lll:CONS.tail = new CONS(8, NIL());
-*lll = lll:CONS.tail;
+ll((l as CONS).tail) = new CONS(8, NIL());
+*lll = ll((l as CONS).tail);
 
 escape lll:CONS +
         list.CONS.head +
-        list.CONS.tail.NIL;
+        list.CONS.tail is NIL;
 ]],
     adt = 'line 16 : invalid attribution : mutation : cannot mutate root of a reference',
 }
@@ -57566,16 +57566,16 @@ pool[] List&& l = &&list;
 var int ret = 0;
 
 watching *l do
-    l:CONS.tail = new CONS(9, NIL());
-    l = &&l:CONS.tail;
+    ((l as CONS).tail) = new CONS(9, NIL());
+    l = &&((l as CONS).tail);
 
-    l:CONS.tail = new CONS(8, NIL());
-    l = &&l:CONS.tail;
+    ((l as CONS).tail) = new CONS(8, NIL());
+    l = &&((l as CONS).tail);
 
     ret = l:CONS +
             list.CONS.head +
-            list.CONS.tail.CONS.head +
-            list.CONS.tail.CONS.tail.CONS.head;
+            list.CONS.tai((l as CONS).head) +
+            list.CONS.tai((l as CONS).tail).CONS.head;
 end
 escape ret;
 ]],
@@ -57599,18 +57599,18 @@ list = new CONS(10, NIL());
 pool[] List&& l = &&list;
 
 watching *l do
-    l:CONS.tail = new CONS(9, NIL());
-    l = &&l:CONS.tail;
+    ((l as CONS).tail) = new CONS(9, NIL());
+    l = &&((l as CONS).tail);
 
     await 1s;
 
-    l:CONS.tail = new CONS(8, NIL());
-    l = &&l:CONS.tail;
+    ((l as CONS).tail) = new CONS(8, NIL());
+    l = &&((l as CONS).tail);
 
-    escape l:CONS.head +
+    escape ((l as CONS).head) +
             list.CONS.head +
-            list.CONS.tail.CONS.head +
-            list.CONS.tail.CONS.tail.CONS.head;
+            list.CONS.tai((l as CONS).head) +
+            list.CONS.tai((l as CONS).tail).CONS.head;
 end
 
 escape 0;
@@ -57636,20 +57636,20 @@ list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
 watching *lll do
-    lll:CONS.tail = new CONS(9, NIL());
-    lll = &&lll:CONS.tail;
+    ll((l as CONS).tail) = new CONS(9, NIL());
+    lll = &&ll((l as CONS).tail);
 
     par do
         watching *lll do
             await 1s;
 
-            lll:CONS.tail = new CONS(8, NIL());
-            lll = &&lll:CONS.tail;
+            ll((l as CONS).tail) = new CONS(8, NIL());
+            lll = &&ll((l as CONS).tail);
 
-            escape lll:CONS.head +
+            escape ll((l as CONS).head) +
                     list.CONS.head +
-                    list.CONS.tail.CONS.head +
-                    list.CONS.tail.CONS.tail.CONS.head;
+                    list.CONS.tai((l as CONS).head) +
+                    list.CONS.tai((l as CONS).tail).CONS.head;
         end
         escape 1;
     with
@@ -57677,19 +57677,19 @@ pool[] List list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
 watching *lll do
-    lll:CONS.tail = new CONS(9, NIL());
-    lll = &&lll:CONS.tail;
+    ll((l as CONS).tail) = new CONS(9, NIL());
+    lll = &&ll((l as CONS).tail);
 
     par do
         await 1s;
 
-        lll:CONS.tail = new CONS(8, NIL());
-        lll = &&lll:CONS.tail;
+        ll((l as CONS).tail) = new CONS(8, NIL());
+        lll = &&ll((l as CONS).tail);
 
-        escape lll:CONS.head +
+        escape ll((l as CONS).head) +
                 list.CONS.head +
-                list.CONS.tail.CONS.head +
-                list.CONS.tail.CONS.tail.CONS.head;
+                list.CONS.tai((l as CONS).head) +
+                list.CONS.tai((l as CONS).tail).CONS.head;
     with
         list = new NIL();
         await FOREVER;
@@ -60015,10 +60015,10 @@ pool[] List l = new CONS(1,
 var int ret = 0;
 
 par/or do
-    await l.CONS.tail.CONS.tail;
+    await ((l as CONS).tail).CONS.tail;
     ret = 100;
 with
-    l.CONS.tail.CONS.tail = new NIL();
+    ((l as CONS).tail).CONS.tail = new NIL();
     ret = 10;
 end
 
@@ -60049,39 +60049,39 @@ l = new CONS(1,
 var int ret = 0;
 
 par/or do
-    await l.CONS.tail.CONS.tail;
-    ret = ret + l.CONS.tail.CONS.tail.CONS.head;    // 0+4
+    await ((l as CONS).tail).CONS.tail;
+    ret = ret + ((l as CONS).tail).CONS.tai((l as CONS).head);    // 0+4
     _ceu_out_assert_msg(ret == 4, "1");
-    l.CONS.tail.CONS.tail = l.CONS.tail.CONS.tail.CONS.tail;
-    ret = ret + l.CONS.tail.CONS.tail.CONS.head;    // 0+4+5
+    ((l as CONS).tail).CONS.tail = ((l as CONS).tail).CONS.tai((l as CONS).tail);
+    ret = ret + ((l as CONS).tail).CONS.tai((l as CONS).head);    // 0+4+5
     _ceu_out_assert_msg(ret == 9, "2");
 
-    await l.CONS.tail.CONS.tail;
-    ret = ret + l.CONS.tail.CONS.tail.NIL;          // 0+4+5+5+1
+    await ((l as CONS).tail).CONS.tail;
+    ret = ret + ((l as CONS).tail).CONS.tail is NIL;          // 0+4+5+5+1
     _ceu_out_assert_msg(ret == 15, "4");
     await FOREVER;
 with
-    await l.CONS.tail.CONS.tail;
+    await ((l as CONS).tail).CONS.tail;
     _ceu_out_assert_msg(ret == 9, "3");
-    ret = ret + l.CONS.tail.CONS.tail.CONS.head;    // 0+4+5+5
-    l.CONS.tail.CONS.tail = new NIL();
+    ret = ret + ((l as CONS).tail).CONS.tai((l as CONS).head);    // 0+4+5+5
+    ((l as CONS).tail).CONS.tail = new NIL();
 
     _ceu_out_assert_msg(ret == 15, "5");
-    await l.CONS.tail.CONS.tail;
+    await ((l as CONS).tail).CONS.tail;
     // never reached
     _ceu_out_assert_msg(ret == 15, "6");
     await FOREVER;
 with
-    await l.CONS.tail.CONS.tail;
-    ret = ret + l.CONS.tail.CONS.tail.NIL;          // 0+4+5+5+1+1
+    await ((l as CONS).tail).CONS.tail;
+    ret = ret + ((l as CONS).tail).CONS.tail is NIL;          // 0+4+5+5+1+1
 
-    await l.CONS.tail.CONS.tail;
+    await ((l as CONS).tail).CONS.tail;
     _ceu_out_assert_msg(ret == 16, "7");
     await FOREVER;
 with
-    l.CONS.tail.CONS.tail = l.CONS.tail.CONS.tail.CONS.tail;
+    ((l as CONS).tail).CONS.tail = ((l as CONS).tail).CONS.tai((l as CONS).tail);
     ret = ret * 2;  // (0+4+5+5+1+1) * 2
-    l.CONS.tail.CONS.tail = new CONS(10, NIL());
+    ((l as CONS).tail).CONS.tail = new CONS(10, NIL());
 end
 
 escape ret;
@@ -61094,7 +61094,7 @@ traverse l in &&ls do
     else
         watching *l do
             par/or do
-                traverse &&l:CONS.tail;
+                traverse &&((l as CONS).tail);
             with
                 await 1s;
             end
@@ -61136,7 +61136,7 @@ traverse l in &&ls do
             await FOREVER;
         else
             par/or do
-                traverse &&l:CONS.tail;
+                traverse &&((l as CONS).tail);
             with
                 await 1s;
             end
@@ -61179,7 +61179,7 @@ do
                 await FOREVER;
             else
                 par/or do
-                    traverse &&l:CONS.tail;
+                    traverse &&((l as CONS).tail);
                 with
                     await 1s;
                 end
@@ -61221,7 +61221,7 @@ traverse l in &&ls do
             await FOREVER;
         else
             par/or do
-                traverse &&l:CONS.tail;
+                traverse &&((l as CONS).tail);
             with
                 await 1s;
             end
@@ -61262,7 +61262,7 @@ do
                 await FOREVER;
             else
                 par/or do
-                    traverse &&l:CONS.tail;
+                    traverse &&((l as CONS).tail);
                 with
                     await 1s;
                 end
@@ -61314,10 +61314,10 @@ loop i in 10 do
         if l:NIL then
             list = new CONS(i, NIL());
         else/if l:CONS then
-            if l:CONS.tail.NIL then
-                l:CONS.tail = new CONS(i, NIL());
+            if ((l as CONS).tail).NIL then
+                ((l as CONS).tail) = new CONS(i, NIL());
             else
-                traverse &&l:CONS.tail;
+                traverse &&((l as CONS).tail);
             end
         end
     end
@@ -61327,8 +61327,8 @@ var int sum = 0;
 
 traverse l in &&list do
     if l:CONS then
-        sum = sum + l:CONS.head;
-        traverse &&l:CONS.tail;
+        sum = sum + ((l as CONS).head);
+        traverse &&((l as CONS).tail);
     end
 end
 
@@ -61662,8 +61662,8 @@ var int s1 =
             escape 0;
         else
             watching *l do
-                var int sum_tail = traverse &&l:CONS.tail;
-                escape sum_tail + l:CONS.head;
+                var int sum_tail = traverse &&((l as CONS).tail);
+                escape sum_tail + ((l as CONS).head);
             end
         end
     end;
@@ -61696,9 +61696,9 @@ var int s1 =
             escape 0;
         else
             watching *l do
-                var int sum_tail = traverse &&l:CONS.tail;
-                s2 = s2 + l:CONS.head;
-                escape sum_tail + l:CONS.head;
+                var int sum_tail = traverse &&((l as CONS).tail);
+                s2 = s2 + ((l as CONS).head);
+                escape sum_tail + ((l as CONS).head);
             end
         end
     end;
@@ -62169,7 +62169,7 @@ or
     end
 end
 pool[] List lll;     // l is the pool
-escape lll.NIL;       // l is a pointer to the root
+escape lll is NIL;       // l is a pointer to the root
 ]],
     run = 1,
 }
@@ -63057,7 +63057,7 @@ var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(v=&p1);
 var List l1 = NIL();
 var List l2 = CONS(head=1, tail=l1);
-var List l3 = CONS(head=1, tail=CONS(head=2, tail=NIL()));
+var List l3 = CONS(head=1, tai((l as CONS).head)=2, tail=NIL()));
 
 escape 1;
 ]],
