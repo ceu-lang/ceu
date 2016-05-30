@@ -292,6 +292,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
            K'end'
 
     , __Do  = K'do' * V'Block' * K'end'
+    , _Dopre = K'pre' * V'__Do'
+
     , Block = V'_Stmts'
 
 -- PAR, PAR/AND, PAR/OR
@@ -305,6 +307,39 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , Paror  = K'par/or' * K'do' *
                 V'Block' * (K'with' * V'Block')^1 *
                K'end'
+
+-- FLOW CONTROL
+
+    , If = K'if' * V'__Exp' * K'then' * V'Block' *
+           (K'else/if' * V'__Exp' * K'then' * V'Block')^0 *
+           OPT(K'else' * V'Block') *
+           K'end'
+
+    , _Loop   = K'loop' * OPT('/'*V'__Exp') *
+                    OPT((V'ID_int'+V'ID_none') * OPT(K'in'*V'__Exp')) *
+                V'__Do'
+    , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
+                    V'__awaits' *
+                V'__Do'
+
+    , CallStmt = V'__Exp'
+
+    , Finalize = K'finalize' * OPT(V'_Set_one'*V'__seqs')
+               * K'with' * V'Finally' * K'end'
+    , Finally  = V'Block'
+
+    , _Pause   = K'pause/if' * V'__Exp' * V'__Do'
+
+-- ASYNCHRONOUS
+
+    , Async   = K'async' * (-P'/thread'-'/isr') * OPT(PARENS(V'Varlist')) *
+                V'__Do'
+    , _Thread = K'async/thread' * OPT(PARENS(V'Varlist')) * V'__Do'
+    , _Isr    = K'async/isr'    *
+                    K'[' * V'Explist' * K']' *
+                    OPT(PARENS(V'Varlist')) *
+                V'__Do'
+    , Atomic  = K'atomic' * V'__Do'
 
 -- CODE / EXTS (call, req)
 
@@ -352,18 +387,34 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                   )
 
 
--- NATIVE
+-- NATIVE, C, LUA
 
-    , _Nats = K'native' *
-                OPT(K'/'*(CK'pure'+CK'const'+CK'nohold'+CK'plain')) *
-                V'__nat' * (K',' * V'__nat')^0
-    , __nat = Cc'type' * V'__ID_nat' * K'=' * NUM
+    -- C
+
+    , _Nats  = K'native' *
+                    OPT(K'/'*(CK'pure'+CK'const'+CK'nohold'+CK'plain')) *
+                        V'__nat1' * (K',' * V'__nat1')^0
+    , __nat1 = Cc'type' * V'__ID_nat' * K'=' * NUM
                 + Cc'func' * V'__ID_nat' * '()' * Cc(false)
                 + Cc'unk'  * V'__ID_nat'        * Cc(false)
 
-    , Host = OPT(CK'pre') * K'native' * (#K'do')*'do' *
+    , Nat_Block = OPT(CK'pre') * K'native' * (#K'do')*'do' *
                 ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
              X* K'end'
+
+    , Nat_Stmt = K'{' * C(V'__nat2') * K'}'
+    , Nat_Exp  = K'{' * C(V'__nat2') * K'}'
+    , __nat2   = ((1-S'{}') + '{'*V'__nat2'*'}')^0
+
+    -- Lua
+
+    , _Lua     = K'[' * m.Cg(P'='^0,'lua') * K'[' *
+                 ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
+                  * (V'__luacl'/function()end) *X
+    , __luaext = P'@' * V'__Exp'
+    , __luacl  = ']' * C(P'='^0) * K']'
+    , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
+                    function (s,i,a,b) return a == b end)
 
 -- VARS, VECTORS, POOLS, VTS, EXTS
 
@@ -417,6 +468,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , Emit_Int = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') *
                     V'__Exp' * OPT(K'=>' * V'__evts_ps')
 
+    , _Watching = K'watching' * V'__awaits' * V'__Do'
+
 -- DETERMINISTIC
 
     , __det_id = V'ID_ext' + V'ID_int' + V'ID_abs' + V'__ID_nat'
@@ -426,7 +479,34 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- SETS
 
+    , _Set_one   = V'__Exp'           * V'__Sets_one'
+    , _Set_many  = PARENS(V'Varlist') * V'__Sets_many'
+
+    , __Sets_one  = (CK'='+CK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
+    , __Sets_many = (CK'='+CK':=') * (V'__sets_many' + PARENS(V'__sets_many'))
+
+    , __sets_one =
+                --Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*K')')
+              Cc'adt-constr' * V'Adt_constr_root'
+              + Cc'ddd-constr' * V'DDD_constr_root'
+              + Cc'__trav_loop' * V'_TraverseLoop'  -- before Rec
+              + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
+        + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call' + V'_Set_Emit_Ext_req'
+        + V'_Set_Do'
+        + V'_Set_Await'
+        + V'_Set_Watching'
+        + V'_Set_Spawn'
+        + V'_Set_Thread'
+        + V'_Set_Lua'
+        + V'_Set_Vec'
+        + V'_Set_None'
+        + V'_Set_Exp'
+              + Cc'do-org'     * V'_DoOrg'
+
+    , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await' + V'_Set_Watching'
+
     -- after `=´
+
     , _Set_Do       = #(K'do'*K'/')     * V'Do'
     , _Set_Await    = #K'await'         * V'_Awaits'
     , _Set_Watching = #K'watching'      * V'_Watching'
@@ -445,7 +525,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __lua_pre     = K'[' * (P'='^0) * '['
     , __vec_pre     = K'[' - V'__lua_pre'
 
-    -- vector constructor
     , Vectup  = V'__vec_pre' * OPT(V'Explist') * K']'
     , _Vecnew = V'Vectup' * (K'..' * (V'__Exp' + #K'['*V'Vectup'))^0
 
@@ -478,7 +557,14 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
  --<<<
 
--- Declarations
+
+
+
+
+
+
+
+
 
     -- variables, organisms
     , __Org = CK'var' * OPT(CK'&') * V'Type' * (V'__ID_int'+V'ID_none') *
@@ -541,46 +627,12 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                       * K'end'
                       + K'tag' * V'__ID_tag' * V'__seqs'
 
--- Assignments
-
-    , _Set_one   = V'__Exp'           * V'__Sets_one'
-    , _Set_many  = PARENS(V'Varlist') * V'__Sets_many'
-
-    , __Sets_one  = (CK'='+CK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
-    , __Sets_many = (CK'='+CK':=') * (V'__sets_many' + PARENS(V'__sets_many'))
-
-    , __sets_one =
-                --Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*K')')
-              Cc'adt-constr' * V'Adt_constr_root'
-              + Cc'ddd-constr' * V'DDD_constr_root'
-              + Cc'__trav_loop' * V'_TraverseLoop'  -- before Rec
-              + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
-        + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call' + V'_Set_Emit_Ext_req'
-        + V'_Set_Do'
-        + V'_Set_Await'
-        + V'_Set_Watching'
-        + V'_Set_Spawn'
-        + V'_Set_Thread'
-        + V'_Set_Lua'
-        + V'_Set_Vec'
-        + V'_Set_None'
-        + V'_Set_Exp'
-              + Cc'do-org'     * V'_DoOrg'
-
-    , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await' + V'_Set_Watching'
-
     -- adt-constr
     , Adt_constr_root = OPT(CK'new') * V'Adt_constr_one'
     , Adt_constr_one  = V'Adt' * #K'('*PARENS(V'_Adt_explist')
     , Adt             = V'__ID_adt' * OPT((K'.'-'..')*V'__ID_tag')
     , __adt_expitem   = (V'Adt_constr_one' + V'_Vecnew' + V'__Exp')
     , _Adt_explist    = ( V'__adt_expitem'*(K','*V'__adt_expitem')^0 )^-1
-
--- Function calls
-
-    , CallStmt = V'__Exp'
-
--- Event handling
 
 -- Organism instantiation
 
@@ -600,25 +652,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , Kill  = K'kill' * V'__Exp' * OPT(K'=>'*V'__Exp')
 
 -- Flow control
-
-    -- global (top level) execution
-    , _DoPre = K'pre' * V'__Do'
-
-    -- conditional
-    , If = K'if' * V'__Exp' * K'then' *
-            V'Block' *
-           (K'else/if' * V'__Exp' * K'then' * V'Block')^0 *
-           OPT(K'else' * V'Block') *
-           K'end'-- - V'_Continue'
-
-    -- loops
-    , _Loop   = K'loop' * OPT('/'*V'__Exp') *
-                    ((V'ID_int'+V'ID_none') * OPT(K'in'*V'__Exp')
-                    + Cc(false,false)) *
-                V'__Do'
-    , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
-                    V'__awaits' *
-                V'__Do'
 
     -- traverse
     , _TraverseLoop = K'traverse' * (V'ID_int'+V'ID_none') * K'in' * (
@@ -648,41 +681,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                       *     V'__ID_int' * K'in' * V'__Exp'
                       * V'__Do'
         ]]
-
-    -- finalization
-    , Finalize = K'finalize' * OPT(V'_Set_one'*V'__seqs')
-               * K'with' * V'Finally' * K'end'
-    , Finally  = V'Block'
-
-    , _Watching = K'watching' * V'__awaits' * V'__Do'
-
-    -- pause
-    , _Pause   = K'pause/if' * V'__Exp' * V'__Do'
-
-    -- asynchronous execution
-    , Async   = K'async' * (-P'/thread'-'/isr') * OPT(PARENS(V'Varlist')) *
-                V'__Do'
-    , _Thread = K'async/thread' * OPT(PARENS(V'Varlist')) * V'__Do'
-    , _Isr    = K'async/isr'    *
-                    K'[' * V'Explist' * K']' *
-                    OPT(PARENS(V'Varlist')) *
-                V'__Do'
-    , Atomic  = K'atomic' * V'__Do'
-
-    -- C integration
-    , RawStmt = K'{' * C(V'__raw') * K'}'
-    , RawExp  = K'{' * C(V'__raw') * K'}'
-    , __raw   = ((1-S'{}') + '{'*V'__raw'*'}')^0
-
-    -- Lua integration
-    -- Stmt/Exp differ only by the "return" and are re-unified in "adj.lua"
-    , _Lua    = K'[' * m.Cg(P'='^0,'lua') * K'[' *
-                ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
-                 * (V'__luacl'/function()end) *X
-    , __luaext = P'@' * V'__Exp'
-    , __luacl  = ']' * C(P'='^0) * K']'
-    , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
-                    function (s,i,a,b) return a == b end)
 
     , __ID_cls   = CK(m.R'AZ'*Alphanum^0 -KEYS, 'class identifier')
     , __ID_adt   = CK(m.R'AZ'*Alphanum^0 -KEYS, 'adt identifier')
@@ -751,7 +749,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
              + V'ID_int'     + V'ID_nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
-             + V'RawExp'  --+ V'Vector_constr'
+             + V'Nat_Exp'  --+ V'Vector_constr'
              + CK'call'     * V'__Exp'
              + CK'call/recursive' * V'__Exp'
 
@@ -782,7 +780,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  * ( V'__Stmt_Last' * V'__seqs' +
                      V'__Stmt_Last_Block' * (K';'^0)
                    )^-1
-                 * (V'Host'+V'_Code_impl')^0 )
+                 * (V'Nat_Block'+V'_Code_impl')^0 )
 
     , __Stmt_Last  = V'_Escape' + V'_Break' + V'_Continue' + V'Await_Forever'
     , __Stmt_Last_Block = V'Par'
@@ -802,12 +800,12 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'Spawn' + V'Kill'
                  + V'_TraverseRec'
                  + V'_DoOrg'
-                 + V'RawStmt'
+                 + V'Nat_Stmt'
              + V'CallStmt' -- last
 
     , __Stmt_Block = V'_Code_impl' + V'_Extcall_impl' + V'_Extreq_impl'
               + V'_Dcl_ifc'  + V'Dcl_cls' + V'Dcl_adt' + V'_DDD'
-              + V'Host'
+              + V'Nat_Block'
               + V'Do'    + V'If'
               + V'_Loop' + V'_Every' + V'_TraverseLoop'
               + V'_SpawnAnon'
@@ -815,7 +813,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
               + V'Paror' + V'Parand' + V'_Watching'
               + V'_Pause'
               + V'Async' + V'_Thread' + V'_Isr' + V'Atomic'
-              + V'_DoPre'
+              + V'_Dopre'
               + V'_Lua'
 
     --, _C = '/******/' * (P(1)-'/******/')^0 * '/******/'
