@@ -470,6 +470,19 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     , _Watching = K'watching' * V'__awaits' * V'__Do'
 
+    , WCLOCKK = #NUM *
+                (NUM * P'h'   *X + Cc(0)) *
+                (NUM * P'min' *X + Cc(0)) *
+                (NUM * P's'   *X + Cc(0)) *
+                (NUM * P'ms'  *X + Cc(0)) *
+                (NUM * P'us'  *X + Cc(0)) *
+                (NUM * E'<h,min,s,ms,us>')^-1
+                    * OPT(CK'/_')
+    , WCLOCKE = PARENS(V'__Exp') * (
+                    CK'h' + CK'min' + CK's' + CK'ms' + CK'us'
+                  + E'<h,min,s,ms,us>'
+              ) * OPT(CK'/_')
+
 -- DETERMINISTIC
 
     , __det_id = V'ID_ext' + V'ID_int' + V'ID_abs' + V'__ID_nat'
@@ -687,7 +700,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __ID_tag   = CK(m.R'AZ'*ALPHANUM^0 -KEYS, 'tag identifier')
     , __ID_field = CK(Alpha * (Alphanum)^0,       'field identifier')
 
-
 -- Types
 
     , __type = CK(TYPES,'primitive type') + V'__ID_abs' + V'__ID_cls' + V'__ID_adt'
@@ -695,21 +707,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __type_vec = K'[' * V'__Exp' * K']'
     , Type = V'__type'   * (V'__type_ptr'              )^0 * CK'?'^-1
            + V'__ID_nat' * (V'__type_ptr'+V'__type_vec')^0 * CK'?'^-1
-
--- Wall-clock values
-
-    , WCLOCKK = #NUM *
-                (NUM * P'h'   *X + Cc(0)) *
-                (NUM * P'min' *X + Cc(0)) *
-                (NUM * P's'   *X + Cc(0)) *
-                (NUM * P'ms'  *X + Cc(0)) *
-                (NUM * P'us'  *X + Cc(0)) *
-                (NUM * E'<h,min,s,ms,us>')^-1
-                    * OPT(CK'/_')
-    , WCLOCKE = PARENS(V'__Exp') * (
-                    CK'h' + CK'min' + CK's' + CK'ms' + CK'us'
-                  + E'<h,min,s,ms,us>'
-              ) * OPT(CK'/_')
 
 -- Expressions
 
