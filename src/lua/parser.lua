@@ -437,9 +437,9 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , _Set_None     = #K'_'             * V'ID_none'
     , _Set_Exp      =                     V'__Exp'
 
-    , _Set_Extemit  = #K'emit'          * V'Emit_Ext_emit'
-    , _Set_Extreq   = #K'request'       * V'Emit_Ext_req'
-    , _Set_Extcall  = #V'__extcall_pre' * V'Emit_Ext_call'
+    , _Set_Emit_Ext_emit  = #K'emit'          * V'Emit_Ext_emit'
+    , _Set_Emit_Ext_req   = #K'request'       * V'Emit_Ext_req'
+    , _Set_Emit_Ext_call  = #V'__extcall_pre' * V'Emit_Ext_call'
 
     , __extcall_pre = (K'call/recursive'+K'call') * V'ID_ext'
     , __lua_pre     = K'[' * (P'='^0) * '['
@@ -555,7 +555,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
               + Cc'ddd-constr' * V'DDD_constr_root'
               + Cc'__trav_loop' * V'_TraverseLoop'  -- before Rec
               + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
-        + V'_Set_Extemit' + V'_Set_Extcall' + V'_Set_Extreq'
+        + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call' + V'_Set_Emit_Ext_req'
         + V'_Set_Do'
         + V'_Set_Await'
         + V'_Set_Watching'
@@ -567,7 +567,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
         + V'_Set_Exp'
               + Cc'do-org'     * V'_DoOrg'
 
-    , __sets_many = V'_Set_Extreq' + V'_Set_Await' + V'_Set_Watching'
+    , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await' + V'_Set_Watching'
 
     -- adt-constr
     , Adt_constr_root = OPT(CK'new') * V'Adt_constr_one'
