@@ -14856,7 +14856,7 @@ input void OS_START;
 
 await OS_START;
 
-finalize with
+do finalize with
     nothing;
 end
 
@@ -16627,11 +16627,32 @@ escape v;
 }
 
 Test { [[
+do
+    sfc = &_TTF_RenderText_Blended();
+finalize () with
+    _SDL_FreeSurface(&&(sfc!));
+end
+]],
+    parser = 'line 3 : after `(´ : expected expression',
+}
+
+Test { [[
+do
+    nothing;
+finalize with
+    nothing;
+end
+escape 0;
+]],
+    fin = 'TODO',
+}
+
+Test { [[
 var& _SDL_Surface? sfc;
 every 1s do
-    finalize
+    do
         sfc = &_TTF_RenderText_Blended();
-    with
+    finalize (sfc) with
         _SDL_FreeSurface(&&(sfc!));
     end
 end
@@ -16653,9 +16674,8 @@ end
 var int   v = 1;
 var int&& p = &&v;
 var& int? r;
-finalize
-    r = &_fff(*p);
-with
+do r = &_fff(*p);
+finalize (r) with
     nothing;
 end
 escape r;
@@ -16674,9 +16694,8 @@ end
 var int   v = 1;
 var int&& p = &&v;
 var& int? r;
-finalize
-    r = &_fff(*p);
-with
+do r = &_fff(*p);
+finalize (r) with
     nothing;
 end
 escape r!;
@@ -16761,9 +16780,8 @@ Test { [[
 native/nohold _g();
 
 var& _SDL_Renderer? ren;
-    finalize
-        ren = &_f();
-    with
+    do ren = &_f();
+    finalize with
     end
 
 await 1s;
@@ -16806,7 +16824,7 @@ Test { [[
 }
 Test { [[
 do
-finalize with nothing; end
+do finalize with nothing; end
 end
 escape 1;
 ]],
@@ -16814,7 +16832,7 @@ escape 1;
 }
 
 Test { [[
-finalize with
+do finalize with
     do escape 1; end;
 end
 escape 0;
@@ -16832,9 +16850,8 @@ Test { [[
 native _f();
 do
     var int&& a;
-    finalize
-        a = _f();
-    with
+    do a = _f();
+    finalize with
         do await FOREVER; end;
     end
 end
@@ -16846,9 +16863,8 @@ Test { [[
 native _f();
 do
     var& int? a;
-    finalize
-        a = &_f();
-    with
+    do a = &_f();
+    finalize with
         do await FOREVER; end;
     end
 end
@@ -16860,9 +16876,8 @@ Test { [[
 native _f();
 do
     var& int? a;
-    finalize
-        a = &_f();
-    with
+    do a = &_f();
+    finalize with
         async do
         end;
     end
@@ -16875,9 +16890,8 @@ Test { [[
 native _f();
 do
     var& int? a;
-    finalize
-        a = &_f();
-    with
+    do a = &_f();
+    finalize with
         do escape 0; end;
     end
 end
@@ -16971,9 +16985,8 @@ escape v;
 Test { [[
 input void E;
 var& int? n;
-finalize
-    this.n = &_f();
-with
+do this.n = &_f();
+finalize with
 end
 await E;
 escape this.n!;
@@ -16986,9 +16999,8 @@ loop do
     do
     var int&& a;
         var int&& b = null;
-        finalize
-            a = b;
-        with
+        do a = b;
+        finalize with
             do break; end;
         end
     end
@@ -17005,9 +17017,8 @@ loop do
     do
     var int&& a;
         var int&& b = null;
-        finalize
-            a := b;
-        with
+        do a := b;
+        finalize with
             do break; end;
         end
     end
@@ -17022,7 +17033,7 @@ Test { [[
 var int ret = 0;
 do
     var int b;
-    finalize with
+    do finalize with
         do
             a = 1;
             loop do
@@ -17057,9 +17068,8 @@ end
 var int r = 0;
 do
     var& int? a;
-    finalize
-        a = &_f();
-    with
+    do a = &_f();
+    finalize with
         var int b = do/_ escape 2; end;
     end
     r = 1;
@@ -17080,9 +17090,8 @@ end
 var int r = 0;
 do
     var& int? a;
-    finalize
-        a = &_f();
-    with
+    do a = &_f();
+    finalize with
         if a? then end
         var int b = do/_ escape 2; end;
     end
@@ -17096,7 +17105,10 @@ escape r;
 
 Test { [[
 var int a;
-_v(&&a) finalize with nothing; end;
+do _v(&&a);
+finalize with
+    nothing;
+end
 escape(a);
 ]],
     ref = 'line 2 : invalid access to uninitialized variable "a"',
@@ -17113,7 +17125,8 @@ native _t = 4;
 var _t v = _f;
 await 1s;
 var int a=0;
-v(&&a) finalize with nothing; end;
+do v(&&a);
+finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -17133,7 +17146,7 @@ native _t = 4;
 var _t v = _f;
 await 1s;
 var int a=0;
-v(&&a) finalize with nothing; end;
+do v(&&a); finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -17154,7 +17167,7 @@ var _t v = _f;
 await 1s;
 do
     var int a=0;
-    _f(&&a) finalize with nothing; end;
+    do _f(&&a); finalize with nothing; end;
     escape(a);
 end
 ]],
@@ -17177,7 +17190,7 @@ var _t v = _f;
     ___ceu_nothing(v);
 await 1s;
 var int a=0;
-_f(&&a) finalize with nothing; end;
+do _f(&&a); finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -17196,7 +17209,7 @@ end
 native _t = 4;
 var _t v = _f;
 var int a=0;
-v(&&a) finalize with nothing; end;
+do v(&&a); finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -17212,8 +17225,9 @@ native do
 end
 
 var& int? v;
-finalize
+do
     v = &_getV();
+finalize
 with
     nothing;
 end
@@ -17231,17 +17245,15 @@ native do
 end
 
 var& int? v1;
-finalize
-    v1 = &_getV();
-with
+do v1 = &_getV();
+finalize with
     nothing;
 end
 v1 = 20;
 
 var& int? v2;
-finalize
-    v2 = &_getV();
-with
+do v2 = &_getV();
+finalize with
     nothing;
 end
 
@@ -17259,16 +17271,18 @@ native do
 end
 
 var& int? v1;
-finalize
+do
     v1 = &_getV();
+finalize
 with
     nothing;
 end
 v1! = 20;
 
 var& int? v2;
-finalize
+do
     v2 = &_getV();
+finalize
 with
     nothing;
 end
@@ -17500,7 +17514,7 @@ escape ret;
 
 Test { [[
 native _f();
-_f() finalize with nothing;
+do _f(); finalize with nothing;
     end;
 escape 1;
 ]],
@@ -17510,11 +17524,11 @@ escape 1;
 Test { [[
 var int v = 0;
 do
-    finalize with
+    do finalize with
         v = v * 2;
     end
     v = v + 1;
-    finalize with
+    do finalize with
         v = v + 3;
     end
 end
@@ -17528,7 +17542,7 @@ native _f();
 native do void f (void* p) {} end
 
 var void&& p=null;
-_f(p) finalize with nothing;
+do _f(p); finalize with nothing;
     end;
 escape 1;
 ]],
@@ -17540,7 +17554,7 @@ native _f();
 native do void f () {} end
 
 var void&& p = null;
-_f(p!=null) finalize with nothing;
+do _f(p!=null); finalize with nothing;
     end;
 escape 1;
 ]],
@@ -17707,11 +17721,11 @@ do
     var int v=0;
     if v then end;
     if 1 then
-        finalize with
+        do finalize with
             ret = ret + 1;
     end
     else
-        finalize with
+        do finalize with
             ret = ret + 2;
     end
     end
@@ -17727,15 +17741,13 @@ var int&& pa=null;
 do
     var int v=0;
     if 1 then
-        finalize
-            pa = &&v;
-        with
+        do pa = &&v;
+        finalize with
             ret = ret + 1;
     end
     else
-        finalize
-            pa = &&v;
-        with
+        do pa = &&v;
+        finalize with
             ret = ret + 2;
     end
     end
@@ -17766,7 +17778,7 @@ Test { [[
 var int r = 0;
 do
     await 1s;
-    finalize with
+    do finalize with
         do
             var int b = 1;
             r = b;
@@ -17782,7 +17794,7 @@ Test { [[
 var int ret = 0;
 do
     await 1s;
-    finalize with
+    do finalize with
         var int a = 1;
     end
 end
@@ -17793,7 +17805,7 @@ escape ret;
 
 Test { [[
 do
-    finalize with
+    do finalize with
         if 1 then
         end;
     end
@@ -17807,7 +17819,7 @@ Test { [[
 var int ret=0;
 do
     var int a = 1;
-    finalize with
+    do finalize with
         do
             a = a + 1;
             ret = a;
@@ -17823,7 +17835,7 @@ Test { [[
 var int ret=0;
 do
     var int a = 1;
-    finalize with
+    do finalize with
         do
             a = a + 1;
             ret = a;
@@ -17839,7 +17851,7 @@ Test { [[
 var int ret = 0;
 do
     var int a=0;
-    finalize with
+    do finalize with
         do
             a = 1;
             ret = a;
@@ -17854,7 +17866,7 @@ escape ret;
 Test { [[
 var int a=0;
 par/or do
-    finalize with
+    do finalize with
         a = 1;
     end
 with
@@ -17871,7 +17883,7 @@ var int a=0;
 par/or do
     do
         var int a;
-        finalize with
+        do finalize with
             a = 1;
     end
     end
@@ -17889,7 +17901,7 @@ var int ret=0;
 par/or do
     do
         await 1s;
-        finalize with
+        do finalize with
             ret = 3;
     end
     end
@@ -17910,7 +17922,7 @@ loop do
     par/or do
         do
             await A;
-            finalize with
+            do finalize with
                 ret = ret + 1;
             end
         end;
@@ -17931,7 +17943,7 @@ loop do
     par/or do
         do
             await A;
-            finalize with
+            do finalize with
                 ret = ret + 1;
             end
         end;
@@ -17952,7 +17964,7 @@ loop do
     par/or do
         do
             await A;
-            finalize with
+            do finalize with
                 ret = ret + 1;
             end
         end;
@@ -17972,7 +17984,7 @@ var int ret = 1;
 loop do
     par/or do
         do
-            finalize with
+            do finalize with
                 ret = ret + 1;
     end
             await A;
@@ -17993,7 +18005,7 @@ input void A, B;
 var int ret = 1;
 par/or do
     do
-        finalize with
+        do finalize with
             ret = 1;
     end
         await A;
@@ -18001,7 +18013,7 @@ par/or do
 with
     do
         await B;
-        finalize with
+        do finalize with
             ret = 2;
     end
     end
@@ -18019,7 +18031,7 @@ input void A, B;
 var int ret = 1;
 par/or do
     do
-        finalize with
+        do finalize with
             ret = 1;
     end
         await A;
@@ -18027,7 +18039,7 @@ par/or do
 with
     do
         await B;
-        finalize with
+        do finalize with
             ret = 2;
     end
     end
@@ -18050,21 +18062,21 @@ var int ret = 1;
 par/or do
     do
         await A;
-        finalize with
+        do finalize with
             ret = 1;
     end
     end
 with
     do
         await B;
-        finalize with
+        do finalize with
             ret = 2;
     end
     end
 with
     do
         await Z;
-        finalize with
+        do finalize with
             ret = 3;
     end
     end
@@ -18085,7 +18097,7 @@ var int ret = 1;
 par/or do
     do
         await A;
-        finalize with
+        do finalize with
             do
                 emit a;
                 ret = ret * 2;
@@ -18095,7 +18107,7 @@ par/or do
 with
     do
         await B;
-        finalize with
+        do finalize with
             ret = ret + 5;
     end
     end
@@ -18116,7 +18128,7 @@ event void a;
 var int ret = 1;
 par/or do
     do
-        finalize with
+        do finalize with
             ret = ret * 2;      // 7
     end
         await A;
@@ -18124,7 +18136,7 @@ par/or do
     end
 with
     do
-        finalize with
+        do finalize with
             ret = ret + 5;      // 15
     end
         await B;
@@ -18152,7 +18164,7 @@ event void a;
 var int ret = 1;
 par/or do
     do
-        finalize with
+        do finalize with
             ret = ret * 2;      // 7
     end
         await A;
@@ -18160,7 +18172,7 @@ par/or do
     end
 with
     do
-        finalize with
+        do finalize with
             ret = ret + 5;      // 15
     end
         await B;
@@ -18191,11 +18203,11 @@ par/or do
         ret = ret + 1;
         do
             await A;
-            finalize with
+            do finalize with
                 ret = ret * 3;
     end
         end
-        finalize with
+        do finalize with
             ret = ret + 5;
     end
     end
@@ -18217,11 +18229,11 @@ par/or do
         ret = ret + 1;
         do
             await A;
-            finalize with
+            do finalize with
                 ret = ret * 3;
             end
         end
-        finalize with
+        do finalize with
             ret = ret + 5;
         end
     end
@@ -18242,12 +18254,12 @@ input void A, B;
 var int ret = 1;
 par/or do
     do
-        finalize with
+        do finalize with
             ret = ret + 5;
         end
         ret = ret + 1;
         do
-            finalize with
+            do finalize with
                 ret = ret * 3;
             end
             await A;
@@ -18280,7 +18292,7 @@ Test { [[
 input void OS_START;
 await OS_START;
 do
-    finalize with
+    do finalize with
         var int ret = 1;
     end
     await OS_START;
@@ -18295,17 +18307,17 @@ input void A,B;
 var int ret = 0;
 loop do
     do
-        finalize with
+        do finalize with
             ret = ret + 4;
         end
         par/or do
             do
-                finalize with
+                do finalize with
                     ret = ret + 3;
                 end
                 await B;
                 do
-                    finalize with
+                    do finalize with
                         ret = ret + 2;
                     end
                     await B;
@@ -18333,7 +18345,7 @@ loop do
     do
         ret = ret + 1;
         do break; end
-        finalize with
+        do finalize with
             ret = ret + 4;
     end
     end
@@ -18349,7 +18361,7 @@ loop do
     do
         ret = ret + 1;
         do break; end
-        finalize with
+        do finalize with
             ret = ret + 4;
     end
     end
@@ -18364,7 +18376,7 @@ var int ret = 0;
 loop do
     do
         ret = ret + 1;
-        finalize with
+        do finalize with
             ret = ret + 4;
         end
         break;
@@ -18385,7 +18397,7 @@ loop do
         await 1s;
         ret = ret + 1;
         do break; end
-        finalize with
+        do finalize with
             ret = ret + 4;
     end
     end
@@ -18402,7 +18414,7 @@ loop do
     do
         await 1s;
         ret = ret + 1;
-        finalize with
+        do finalize with
             ret = ret + 4;
     end
         break;
@@ -18424,7 +18436,7 @@ var int ret = do/_
             await 1s;
             ret = ret + 1;
             do escape ret * 2; end
-            finalize with
+            do finalize with
                 ret = ret + 4;  // executed after `escape´ assigns to outer `ret´
     end
         end
@@ -18445,7 +18457,7 @@ var int ret = do/_
         do
             await 1s;
             ret = ret + 1;
-            finalize with
+            do finalize with
                 ret = ret + 4;  // executed after `escape´ assigns to outer `ret´
     end
             escape ret * 2;
@@ -18467,7 +18479,7 @@ par/or do
 with
     do
         await 1s;
-        finalize with
+        do finalize with
             ret = ret + 1;
     end
     end
@@ -18489,7 +18501,7 @@ with
         await 1s;
     with
         do
-            finalize with
+            do finalize with
                 ret = ret + 1;
     end
             await 1s;
@@ -18514,7 +18526,7 @@ with
         await 1s;
     with
         do
-            finalize with
+            do finalize with
                 ret = ret + 1;
     end
             await 250ms;
@@ -18537,7 +18549,7 @@ event void e;
 var int v = 1;
 par/or do
     do
-        finalize with
+        do finalize with
             do
                 v = v + 1;
                 v = v * 2;
@@ -18574,7 +18586,7 @@ var _t v = _f;
 var int ret=0;
 do
     var int a=0;
-    v(&&a)
+    do v(&&a);
         finalize with nothing; end;
     ret = a;
 end
@@ -18599,7 +18611,7 @@ end
 do
     var int a = 10;;
     var _t v = _f;
-    v(&&a)
+    do v(&&a);
         finalize with
             do
                 ret = ret + a;
@@ -18635,7 +18647,7 @@ end
 par/or do
         var int a = 10;;
         var _t v = _f;
-        v(&&a)
+        do v(&&a);
             finalize with
                 do
                     ret = ret + a;
@@ -18670,7 +18682,7 @@ escape v;
 }
 
 Test { [[
-finalize with
+do finalize with
 end
 escape 1;
 ]],
@@ -18688,7 +18700,7 @@ end
 var int ret = 10;
 do
     var int x = 5;
-    _f(&&x) finalize with
+    do _f(&&x); finalize with
         _V = _V + 1;
     end;
 end
@@ -18886,9 +18898,8 @@ input void OS_START;
 do
     input int&& E;
     par/and do
-        finalize
-            p = await E;
-        with
+        do p = await E;
+        finalize with
             ret = *p;
             p = &&ret;
         end
@@ -18943,9 +18954,9 @@ do
     do
         input (int,void&&) PTR;
         par/or do
-            finalize
+            do
                 (i,p) = await PTR;
-            with
+            finalize with
                 r = i;
             end
         with
@@ -18959,7 +18970,7 @@ do
     escape r;
 end
 ]],
-    parser = 'line 10 : after `i´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `)´',
+    --parser = 'line 10 : after `i´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `)´',
     --adj = 'line 9 : invalid `finalize´',
     --run = 1,
     -- TODO: impossible to place the finally in the correct parameter?
@@ -19215,9 +19226,8 @@ native/nohold _free();
 native do
     void* ptr;
 end
-finalize
-    _ptr = _malloc(100);
-with
+do _ptr = _malloc(100);
+finalize with
     _free(_ptr);
 end
 escape 1;
@@ -19237,9 +19247,8 @@ end
 native/nohold _dealloc();
 
 var& int? tex;
-finalize
-    tex = &_alloc(1);    // v=2
-with
+do tex = &_alloc(1);    // v=2
+finalize with
     _dealloc(&&tex);
 end
 
@@ -19260,9 +19269,8 @@ end
 native/nohold _dealloc();
 
 var& int? tex;
-finalize
-    tex = &_alloc(1);    // v=2
-with
+do tex = &_alloc(1);    // v=2
+finalize with
     _dealloc(&&tex!);
 end
 
@@ -19282,8 +19290,9 @@ end
 native/nohold _dealloc();
 
 var& int? tex;
-finalize
+do
     tex = &_alloc(1);    // v=2
+finalize
 with
     _dealloc(&&tex!);
 end
@@ -19309,9 +19318,8 @@ native/nohold _dealloc();
 
 do
     var& int? tex;
-    finalize
-        tex = &_alloc(1);
-    with
+do tex = &_alloc(1);
+    finalize with
         _dealloc(tex);
     end
 end
@@ -19338,9 +19346,8 @@ native/nohold _dealloc();
 
 do
     var& int? tex;
-    finalize
-        tex = &_alloc(1);
-    with
+    do tex = &_alloc(1);
+    finalize with
         _dealloc(&tex!);
     end
 end
@@ -19367,9 +19374,8 @@ native/nohold _dealloc();
 
 do
     var& int? tex;
-    finalize
-        tex = &_alloc(1);
-    with
+    do tex = &_alloc(1);
+    finalize with
         _dealloc(&&tex!);
     end
 end
@@ -19405,8 +19411,9 @@ var int ret = _V;           // v=1, ret=1
 
 do
     var& _t? tex;
-    finalize
+do
         tex = &_alloc(1);    // v=2
+    finalize
     with
         _dealloc(&&tex!);
     end
@@ -19420,8 +19427,9 @@ ret = ret + _V;             // ret=7
 
 do
     var& _t? tex;
-    finalize
+do
         tex = &_alloc(0);    // v=4
+    finalize
     with
         if tex? then
             _dealloc(&&tex!);
@@ -19448,9 +19456,8 @@ native do
 end
 
 var& void? ptr;
-finalize
-    ptr = &_f();
-with
+do ptr = &_f();
+finalize with
     nothing;
 end
 
@@ -19467,8 +19474,9 @@ native do
 end
 
 var& void? ptr;
-finalize
+do
     ptr = &_f();
+finalize
 with
     nothing;
 end
@@ -19486,8 +19494,9 @@ native do
 end
 
 var& void? ptr;
-finalize
+do
     ptr = &_f();
+finalize
 with
     nothing;
 end
@@ -19508,8 +19517,9 @@ end
 native/nohold _g();
 
 var& void? ptr;
-finalize
+do
     ptr = &_f();
+finalize
 with
     _g(&&ptr!);    // error (ptr is NIL)
 end
@@ -19533,8 +19543,9 @@ var int ret = 0;
 
 do
     var& void? ptr;
-    finalize
+do
         ptr = &_f();
+    finalize
     with
         if ptr? then
             _g(&&ptr!);
@@ -19559,9 +19570,8 @@ native do
 end
 
 var& int? tex1;
-finalize
-    tex1 = &_alloc(1);
-with
+do tex1 = &_alloc(1);
+finalize with
     nothing;
 end
 
@@ -19582,9 +19592,8 @@ native do
 end
 
 var& int? tex1;
-finalize
-    tex1 = &_alloc(1);
-with
+do tex1 = &_alloc(1);
+finalize with
     nothing;
 end
 
@@ -19621,8 +19630,9 @@ var int ret = _V;           // v=1, ret=1
 
 do
     var& _t? tex;
-    finalize
+do
         tex = &_alloc(1);    // v=2
+    finalize
     with
         _dealloc(&&tex!);
     end
@@ -19636,8 +19646,9 @@ ret = ret + _V;             // ret=7
 
 do
     var& _t? tex;
-    finalize
+do
         tex = &_alloc(0);    // v=4
+    finalize
     with
         if tex? then
             _dealloc(&&tex!);
@@ -19661,10 +19672,9 @@ native/nohold _SDL_DestroyWindow();
 
 
 var& _SDL_Window win;
-    finalize
-        win = &_SDL_CreateWindow("UI - Texture",
+do win = &_SDL_CreateWindow("UI - Texture",
                             500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
-    with
+    finalize with
         _SDL_DestroyWindow(win);
     end
 escape 0;
@@ -19692,8 +19702,9 @@ par/or do
 with
     every SDL_REDRAW do
         var& void? srf;
-        finalize
+do
             srf = &_my_alloc();
+        finalize
         with
             if srf? then end;
             _my_free();
@@ -19707,7 +19718,7 @@ escape _V;
 
 Test { [[
 loop do
-    finalize with
+    do finalize with
         break;
     end
 end
@@ -19717,7 +19728,7 @@ escape 1;
 }
 
 Test { [[
-finalize with
+do finalize with
     escape 1;
 end
 escape 1;
@@ -19726,7 +19737,7 @@ escape 1;
 }
 
 Test { [[
-finalize with
+do finalize with
     loop do
         if 1 then
             break;
@@ -19740,7 +19751,7 @@ escape 1;
 }
 
 Test { [[
-finalize with
+do finalize with
     var int ok = do/_
         escape 1;
     end;
@@ -22047,8 +22058,9 @@ native do
     }
 end
 var& int? p;
-finalize
+do
     p = &_f();
+finalize
 with
     nothing;
 end
@@ -22066,8 +22078,9 @@ native do
     }
 end
 var& int? p;
-finalize
+do
     p = &_f();
+finalize
 with
     nothing;
 end
@@ -22101,8 +22114,9 @@ end
 var int a=0;
 do
     var& int? p;
-    finalize
+do
         p = &_f();
+    finalize
     with
         a = p!;
 end
@@ -22124,8 +22138,9 @@ var int a = 10;
 do
     var& int? p;
     //do
-        finalize
+do
             p = &_f();
+        finalize
         with
             a = a + p!;
         end
@@ -22142,7 +22157,7 @@ native do
     ##define f(p)
 end
 par/or do
-    _f(_p)
+do _f(_p);
         finalize with
             _f(null);
         end;
@@ -22540,7 +22555,8 @@ native/nohold _uv_buf_init(), _uv_read_stop();
 var _char[3] buf_ = [];
 var _uv_buf_t buf = _uv_buf_init(buf_, sizeof(buf_)-1);
 var _uv_stream_t client = _uv_stream_t();
-var int ret = _ceu_uv_read_start(&&client as _uv_stream_t&&, &&buf)
+var int ret;
+do ret = _ceu_uv_read_start(&&client as _uv_stream_t&&, &&buf);
                     finalize with
                         _uv_read_stop(&&client as _uv_stream_t&&);
                     end;
@@ -23794,9 +23810,8 @@ escape {v};
 
 Test { [[
 var& void? p;
-finalize
-    p = &{ NULL };
-with
+do p = &{ NULL };
+finalize with
     nothing;
 end
 escape p! ==null;
@@ -23819,7 +23834,7 @@ escape 1;
 Test { [[
 _f()
 ]],
-    parser = 'line 1 : after `)´ : expected `finalize´ or `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´',
+    parser = 'line 1 : after `)´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´',
 }
 
 Test { [[
@@ -24967,7 +24982,7 @@ end
 var int i = {fff}(3,4);
 escape i;
 ]],
-    parser = 'line 8 : after `)´ : expected `finalize´ or `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´',
+    parser = 'line 8 : after `)´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´',
 }
 
 Test { [[
@@ -25454,9 +25469,8 @@ escape 1;
 }
 Test { [[
 var int a;
-finalize
-    a = 1;
-with
+do a = 1;
+finalize with
     nothing;
 end
 escape 1;
@@ -25478,9 +25492,8 @@ escape 1;
 }
 Test { [[
 var int&& a;
-finalize
-    a = null;
-with
+do a = null;
+finalize with
     nothing;
 end
 escape 1;
@@ -25507,9 +25520,8 @@ escape 1;
 Test { [[
 var int a=0;
 var int&& pa;
-finalize
-    pa = &&a;
-with
+do pa = &&a;
+finalize with
     nothing;
 end
 escape 1;
@@ -26120,7 +26132,7 @@ par/or do
     await A;
 with
     pause/if a do
-        finalize with
+        do finalize with
             ret = 10;
     end
         await Z;
@@ -26682,7 +26694,7 @@ with
     par/and do
         var int v = await E;
         var int x = 1000;
-        _ceu_sys_go(__ceu_app, _CEU_IN_F, &&x)
+        do _ceu_sys_go(__ceu_app, _CEU_IN_F, &&x);
             finalize with nothing; end;
         ret = ret + v;
     with
@@ -27695,7 +27707,7 @@ escape x[0];
 Test { [[
 var int v = 1;
 async (v) do
-    finalize with
+    do finalize with
         v = 2;
     end
 end;
@@ -27706,7 +27718,7 @@ escape v;
 Test { [[
 var int v = 1;
 async/thread (v) do
-    finalize with
+    do finalize with
         v = 2;
     end
 end;
@@ -29597,7 +29609,10 @@ pre native do
     } rect;
 end
 var int v = 10;
-var _rect r = _rect(&&v) finalize with nothing; end;
+var _rect r;
+do
+    r = _rect(&&v);
+finalize with nothing; end
 escape *(r.x);
 ]],
     run = 10,
@@ -29612,7 +29627,8 @@ pre native do
 end
 do
     var int v = 10;
-    var _rect r = _rect(&&v) finalize with _V=v; end;
+    var _rect r;
+do r = _rect(&&v); finalize with _V=v; end;
     native/nohold ___ceu_nothing();
     ___ceu_nothing(&&r);
 end
@@ -29629,7 +29645,8 @@ pre native do
 end
 native/plain _t;
 var int v = 10;
-var _t t = _t(&&v) finalize with nothing; end;
+var _t t;
+do t = _t(&&v); finalize with nothing; end;
 await 1s;
 escape *t.x;
 ]],
@@ -32021,7 +32038,7 @@ end
 do
     do
         do
-            finalize with
+            do finalize with
                 _V = 100;
             end
         end
@@ -32042,7 +32059,7 @@ class T with
     // nothing
 do
     do
-        finalize with
+        do finalize with
             _V = 100;
         end
         await F;
@@ -32068,7 +32085,7 @@ class T with
 do
     _V = 10;
     do
-        finalize with
+        do finalize with
             _V = _V + 100;
         end
         await F;
@@ -32095,7 +32112,7 @@ class T with
     // nothing
 do
     do
-        finalize with
+        do finalize with
             _V = 100;
         end
         await OS_START;
@@ -32125,7 +32142,7 @@ class T with
     event void e, ok;
     var int v=0;
 do
-    finalize with
+    do finalize with
         _V = _V + 1;        // * writes after
     end
     v = 1;
@@ -32138,7 +32155,7 @@ var T t;
 await OS_START;
 par/or do
     do                  // 22
-        finalize with
+        do finalize with
             _V = _V*10;
         end
         await t.ok;
@@ -33430,9 +33447,8 @@ native/nohold _myfree();
 class T with
     var int x = 10;
 do
-    finalize
-        _PTR = _myalloc();
-    with
+    do _PTR = _myalloc();
+    finalize with
         _myfree(_PTR);
     end
 end
@@ -33457,9 +33473,8 @@ class T with
     var int x = 10;
 do
     var& void? ptr;
-    finalize
-        ptr = &_myalloc();
-    with
+    do    ptr = &_myalloc();
+    finalize with
         _myfree(&&ptr);
     end
 end
@@ -33484,9 +33499,8 @@ class T with
     var int x = 10;
 do
     var& void? ptr;
-    finalize
-        ptr = &_myalloc();
-    with
+        do ptr = &_myalloc();
+    finalize with
         _myfree(&&ptr!);
     end
 end
@@ -35904,7 +35918,7 @@ native do
 end
 class T with
 do
-    finalize with
+    do finalize with
         _V = _V + 1;
     end
 end
@@ -35923,7 +35937,7 @@ native do
 end
 class T with
 do
-    finalize with
+    do finalize with
         _V = _V + 1;
     end
 end
@@ -36222,7 +36236,7 @@ Test { [[
 class U with
     event void ok;
 do
-    finalize with
+    do finalize with
         _V = _V + 4;
     end
     await 1ms;
@@ -36230,7 +36244,7 @@ do
     await FOREVER;
 end;
 class T with do
-    finalize with
+    do finalize with
         _V = _V + 2;
     end
     var U u;
@@ -36239,13 +36253,13 @@ end;
 native do
     int V = 1;
 end
-finalize with
+do finalize with
     _V = 1000;
 end
-finalize with
+do finalize with
     _V = 1000;
 end
-finalize with
+do finalize with
     _V = 1000;
 end
 par/or do
@@ -36812,7 +36826,7 @@ native do
 end
 class T with
 do
-    finalize with
+    do finalize with
         _V = 10;
     end
     await FOREVER;
@@ -36830,7 +36844,7 @@ native do
 end
 class T with
 do
-    finalize with
+    do finalize with
         _V = 10;
     end
     await FOREVER;
@@ -36850,7 +36864,7 @@ native do
 end
 class T with
 do
-    finalize with
+    do finalize with
         _V = 10;
     end
     await FOREVER;
@@ -36868,7 +36882,7 @@ native do
 end
 class T with
 do
-    finalize with
+    do finalize with
         _V = 10;
     end
     await FOREVER;
@@ -36886,7 +36900,7 @@ native do
 end
 class T with
 do
-    finalize with
+    do finalize with
         _V = 10;
     end
     await FOREVER;
@@ -36974,7 +36988,7 @@ do
 end
 
 var T&&? t = spawn T;
-finalize with
+do finalize with
     kill *t!;
 end
 
@@ -37907,7 +37921,7 @@ end
 class T with
     var int inc;
 do
-    finalize with
+    do finalize with
         _V = _V + this.inc;
     end
     await FOREVER;
@@ -38151,7 +38165,7 @@ end
 class T with
     var int v=0;
 do
-    finalize with   // enters!
+    do finalize with   // enters!
         _V = 10;
     end
     await FOREVER;
@@ -38179,7 +38193,7 @@ end
 class T with
     var int v=0;
 do
-    finalize with
+    do finalize with
         _V = 10;
     end
     await FOREVER;
@@ -38207,7 +38221,7 @@ end
 class T with
     var int v=0;
 do
-    finalize with   // enters!
+    do finalize with   // enters!
         _V = 10;
     end
     await FOREVER;
@@ -38233,7 +38247,7 @@ end
 class T with
     var int v=0;
 do
-    finalize with
+    do finalize with
         _V = 10;
     end
     await FOREVER;
@@ -38337,7 +38351,7 @@ end
 class T with
     var int a=0;
 do
-    finalize with
+    do finalize with
         _V = 1;
     end
     a = 10;
@@ -38369,7 +38383,7 @@ end
 class T with
     var int a=0;
 do
-    finalize with
+    do finalize with
         _V = 1;
     end
     a = 10;
@@ -38420,7 +38434,7 @@ end
 class T with
     var int a=0;
 do
-    finalize with
+    do finalize with
         _V = 1;
     end
     a = 10;
@@ -38515,9 +38529,8 @@ end
 class V with
 do
     var& int? v;
-    finalize
-        v = &_f();
-    with
+        do v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -38554,9 +38567,8 @@ class V with
 do
     var& int? v;
     if v? then end;
-    finalize
-        v = &_f();
-    with
+        do v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -38594,7 +38606,7 @@ end
 
 class V with
 do
-    finalize with
+    do finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -38630,7 +38642,7 @@ end
 
 class V with
 do
-    finalize with
+    do finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -38673,9 +38685,8 @@ end
 class V with
 do
     var& int? v;
-    finalize
-        v = &_f();
-    with
+        do v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -38716,9 +38727,8 @@ class V with
 do
     var& int? v;
     if v? then end
-    finalize
-        v = &_f();
-    with
+        do v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -38797,9 +38807,8 @@ end
 class V with
 do
     var& int? v;
-    finalize
-        v = &_f();
-    with
+do        v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -38841,9 +38850,8 @@ class V with
 do
     var& int? v;
     if v? then end
-    finalize
-        v = &_f();
-    with
+        do v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -38887,9 +38895,8 @@ end
 class V with
 do
     var& int? v;
-    finalize
-        v = &_f();
-    with
+        do v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -38933,9 +38940,8 @@ class V with
 do
     var& int? v;
     if v? then end;
-    finalize
-        v = &_f();
-    with
+        do v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -38981,9 +38987,8 @@ end
 class V with
 do
     var& int? v;
-    finalize
-        v = &_f();
-    with
+        do v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -39029,9 +39034,8 @@ end
 class V with
 do
     var& int? v;
-    finalize
-        v = &_f();
-    with
+        do v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -39079,9 +39083,8 @@ class V with
 do
     var& int? v;
     if v? then end;
-    finalize
-        v = &_f();
-    with
+        do v = &_f();
+    finalize with
         _V = _V+1;
     end
     await FOREVER;
@@ -39253,7 +39256,7 @@ native do
 end
 class T with
 do
-    finalize with
+    do finalize with
         _V = _V - 1;
     end
     await 500ms;
@@ -39283,7 +39286,7 @@ native do
 end
 class T with
 do
-    finalize with
+    do finalize with
         _V = _V - 1;
     end
     await 500ms;
@@ -39315,7 +39318,7 @@ end
 
 class T with
 do
-    finalize with
+    do finalize with
         _Y = _Y + 1;
     end
     _X = _X + 1;
@@ -39352,7 +39355,7 @@ end
 
 class T with
 do
-    finalize with
+    do finalize with
         _Y = _Y + 1;
     end
     _X = _X + 1;
@@ -39390,7 +39393,7 @@ end
 
 class T with
 do
-    finalize with
+    do finalize with
         _Y = _Y + 1;
     end
     _X = _X + 1;
@@ -39602,7 +39605,7 @@ end
 class T with
     var int v=0;
 do
-    finalize with
+    do finalize with
         do
             loop i in 1 do
                 do break; end
@@ -39906,9 +39909,8 @@ do
 end
 
 var T t with
-    finalize
-        this.ptr = _malloc(10);
-    with
+        do this.ptr = _malloc(10);
+    finalize with
         _free();
     end
 end;
@@ -39925,9 +39927,8 @@ do
 end
 
 spawn T with
-    finalize
-        this.ptr = _malloc(10);
-    with
+        do this.ptr = _malloc(10);
+    finalize with
         _free();
     end
 end;
@@ -39958,9 +39959,8 @@ do
     loop i in 10 do
         var _s&& p = null;
         spawn T with
-            finalize
-                this.ptr = p;
-            with
+                do this.ptr = p;
+            finalize with
                 _V = _V + 1;
             end
         end;
@@ -40047,9 +40047,8 @@ do
     var _s&& p = null;
     loop i in 10 do
         ui = spawn T with
-            finalize
-                this.ptr = p;
-            with
+                do this.ptr = p;
+            finalize with
                 _V = _V + 1;
             end
         end;
@@ -40087,9 +40086,8 @@ do
     loop i in 10 do
         var _s&& p = null;
         var T&&? ui = spawn T with
-            finalize
-                this.ptr = p;   // p == ptr
-            with
+                do this.ptr = p;   // p == ptr
+            finalize with
                 _V = _V + 1;
             end
         end;
@@ -40277,7 +40275,7 @@ end
 class T with
     var int c;
 do
-    finalize with
+    do finalize with
         _V = _V + c;
     end
     await FOREVER;
@@ -40311,7 +40309,7 @@ end
 class T with
     var int c;
 do
-    finalize with
+    do finalize with
         _V = _V + c;
     end
     await FOREVER;
@@ -40356,7 +40354,7 @@ end
 class T with
     var int c;
 do
-    finalize with
+    do finalize with
         _V = _V + c;
     end
     await FOREVER;
@@ -40400,7 +40398,7 @@ end
 class T with
     var int c;
 do
-    finalize with
+    do finalize with
         _V = _V + c;
     end
     await 5s;
@@ -40446,7 +40444,7 @@ end
 class T with
     var int c;
 do
-    finalize with
+    do finalize with
         _V = _V + c;
     end
     await 5s;
@@ -40492,7 +40490,7 @@ end
 class T with
     var int c;
 do
-    finalize with
+    do finalize with
         _V = _V + c;
     end
     await 5s;
@@ -40537,7 +40535,7 @@ end
 class T with
     var int c;
 do
-    finalize with
+    do finalize with
         _V = _V + c;
     end
     await 5s;
@@ -42473,7 +42471,7 @@ native do
 end
 do
     loop i in is do
-        _f(i) finalize with nothing; end;
+        do _f(i); finalize with nothing; end;
     end
 end
 escape 10;
@@ -42913,9 +42911,8 @@ end
 class T with do end
 spawn T with
             var& _int? intro_story_str;
-            finalize
-                intro_story_str = &_f();
-            with
+                do intro_story_str = &_f();
+            finalize with
             end
     end;
 escape 1;
@@ -42933,9 +42930,8 @@ native do
 end
 
 var& int? v;
-finalize
-    v = &_getV();
-with
+    do v = &_getV();
+finalize with
     nothing;
 end
 
@@ -44721,7 +44717,7 @@ t.f(null);
 t.f(v);
 do
     var void&& v=null;
-    t.f(v)
+    do t.f(v);
         finalize with
             nothing;
         end;
@@ -44758,7 +44754,7 @@ code/instantaneous F (var/hold void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
-f(5 as void&&)
+do f(5 as void&&);
     finalize with nothing; end;
 escape _V==(5 as void&&);
 ]],
@@ -46089,9 +46085,8 @@ native do
 end
 
 var& int? v;
-finalize
-    v = &_getV();
-with
+    do v = &_getV();
+finalize with
     nothing;
 end
 
@@ -46117,9 +46112,8 @@ native do
 end
 
 var& int? v;
-finalize
-    v = &_getV();
-with
+    do v = &_getV();
+finalize with
     nothing;
 end
 
@@ -46145,9 +46139,8 @@ native do
 end
 
 var& int? v;
-finalize
-    v = &_getV();
-with
+    do v = &_getV();
+finalize with
     nothing;
 end
 
@@ -46173,9 +46166,8 @@ native do
 end
 
 var& int? v;
-finalize
-    v = &_getV();
-with
+    do v = &_getV();
+finalize with
     nothing;
 end
 
@@ -46201,9 +46193,8 @@ native do
 end
 
 var& _int? v;
-finalize
-    v = &_getV();
-with
+    do v = &_getV();
+finalize with
     nothing;
 end
 
@@ -46230,9 +46221,8 @@ end
     code/instantaneous Parse_file (void) => void do
             var& int? intro_story_str;
             if intro_story_str? then end;
-            finalize
-                intro_story_str = &_new_Int();
-            with
+                do intro_story_str = &_new_Int();
+            finalize with
                 nothing;    /* deleted below */
             end
     end
@@ -48263,7 +48253,7 @@ end
 class T with
     var int v = 0;
 do
-    finalize with
+    do finalize with
         _V = _V + 1;
     end
     await FOREVER;
@@ -48307,7 +48297,7 @@ end
 class T with
     var int v = 0;
 do
-    finalize with
+    do finalize with
         _V = _V + 1;
     end
     await FOREVER;
@@ -49510,7 +49500,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 1 then
                 ret = -1;
             end
@@ -49546,7 +49536,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 1 then
                 ret = -1;
             end
@@ -49582,7 +49572,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 1 then
                 ret = -1;
             end
@@ -49619,7 +49609,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 0 then
                 ret = -1;
             end
@@ -49656,7 +49646,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 0 then
                 ret = -1;
             end
@@ -49693,7 +49683,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 0 then
                 ret = -1;
             end
@@ -49746,7 +49736,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 1 then
                 ret = -1;
             end
@@ -49783,7 +49773,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 0 then
                 ret = 1;
             end
@@ -49821,7 +49811,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 0 then
                 ret = -1;
             end
@@ -49859,7 +49849,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 0 then
                 ret = -1;
             end
@@ -49896,7 +49886,7 @@ par/and do
 with
     var T&& p = await e;
     watching *p do
-        finalize with
+        do finalize with
             if ret == 0 then
                 ret = -1;
             end
@@ -51004,7 +50994,7 @@ var int ret = 1;
 var T&&? t = spawn T;
 if t? then
     watching *t! do
-        finalize with
+        do finalize with
             ret = t!:v;
         end
         await FOREVER;
@@ -56614,9 +56604,8 @@ escape t.i!;
 Test { [[
 native/nohold _g();
 var& _SDL_Texture? t_enemy_0, t_enemy_1;
-finalize
-    t_enemy_1 = &_f();
-with
+    do t_enemy_1 = &_f();
+finalize with
     _g(&&t_enemy_1!);
 end
 escape 1;
@@ -56671,9 +56660,8 @@ end
 native/nohold _myfree();
 
 var& void? v;
-finalize
-    v = &_myalloc();
-with
+    do v = &_myalloc();
+finalize with
     _myfree(&&v!);
 end
 
@@ -56693,9 +56681,8 @@ end
 native/nohold _myfree();
 
 var& void? v;
-finalize
-    v = &_myalloc();
-with
+    do v = &_myalloc();
+finalize with
     if v? then
         _myfree(&&v!);
     end
@@ -56726,30 +56713,26 @@ native do
 end
 
 var& int? v1;
-    finalize
-        v1 = &_fff(1);
-    with
+        do v1 = &_fff(1);
+    finalize with
         nothing;
     end
 
 var& int? v2;
-    finalize
-        v2 = &_fff(2);
-    with
+        do v2 = &_fff(2);
+    finalize with
         nothing;
     end
 
 var& int? v3;
-    finalize
-        v3 = &_UNSAFE_POINTER_TO_REFERENCE(_V1);
-    with
+        do v3 = &_UNSAFE_POINTER_TO_REFERENCE(_V1);
+    finalize with
         nothing;
     end
 
 var& int? v4;
-    finalize
-        v4 = &_UNSAFE_POINTER_TO_REFERENCE(_V2);
-    with
+        do v4 = &_UNSAFE_POINTER_TO_REFERENCE(_V2);
+    finalize with
         nothing;
     end
 
@@ -56914,9 +56897,8 @@ native do
 end
 
 var& int? v;
-finalize
-    v = &_getV();
-with
+    do v = &_getV();
+finalize with
     nothing;
 end
 
@@ -56943,9 +56925,8 @@ native do
 end
 
 var& int? v;
-finalize
-    v = &_getV();
-with
+    do v = &_getV();
+finalize with
     nothing;
 end
 
@@ -57989,7 +57970,7 @@ class Body with
     var&   int    sum;
     event int     ok;
 do
-    finalize with end;
+    do finalize with end;
 
     var Body&&? nested =
         spawn Body in bodies with
@@ -58027,7 +58008,7 @@ class Body with
     var&   int    sum;
     event int     ok;
 do
-    finalize with end;
+    do finalize with end;
 
     var Body&&? nested =
         spawn Body in bodies with
@@ -58065,7 +58046,7 @@ class Body with
     var&   int    sum;
     event int     ok;
 do
-    finalize with end;
+    do finalize with end;
 
     var Body&&? nested =
         spawn Body in bodies with
@@ -59365,9 +59346,8 @@ native do
     ##define PTR2REF(x) &x
 end
 var& void? p1;
-finalize
-    p1 = &_PTR2REF(this);
-with
+    do p1 = &_PTR2REF(this);
+finalize with
     nothing;
 end
 
@@ -59399,9 +59379,8 @@ native do
     ##define PTR2REF(x) &x
 end
 var& void? p1;
-finalize
-    p1 = &_PTR2REF(this);
-with
+    do p1 = &_PTR2REF(this);
+finalize with
     nothing;
 end
 
@@ -59433,9 +59412,8 @@ native do
     ##define PTR2REF(x) &x
 end
 var& void? p1;
-finalize
-    p1 = &_PTR2REF(this);
-with
+    do p1 = &_PTR2REF(this);
+finalize with
     nothing;
 end
 
@@ -59482,9 +59460,8 @@ native do
     ##define PTR2REF(x) &x
 end
 var& void? p1;
-finalize
-    p1 = &_PTR2REF(this);
-with
+    do p1 = &_PTR2REF(this);
+finalize with
     nothing;
 end
 
@@ -60532,7 +60509,7 @@ cmds = new Command.SEQUENCE(
 
 par/or do
     traverse cmd in &&cmds do
-finalize with
+do finalize with
 end
         watching *cmd do
             if cmd:FORWARD then
@@ -61013,9 +60990,8 @@ escape ret;
 Test { [[
 native/nohold _free();
 var& void? ptr;
-finalize
-    ptr = &_malloc(10000);
-with
+    do ptr = &_malloc(10000);
+finalize with
     _free(&&ptr!);
 end
 
@@ -61131,7 +61107,7 @@ traverse l in &&ls do
     ret = ret + 1;
     watching *l do
         if l:HOLD then
-            finalize with
+            do finalize with
                 ret = ret + 1;
             end
             await FOREVER;
@@ -61174,7 +61150,7 @@ do
         ret = ret + 1;
         watching *l do
             if l:HOLD then
-                finalize with
+                do finalize with
                     ret = ret + 1;
                 end
                 await FOREVER;
@@ -61216,7 +61192,7 @@ traverse l in &&ls do
     ret = ret + 1;
     watching *l do
         if l:HOLD then
-            finalize with
+            do finalize with
                 ret = ret + 1;
             end
             await FOREVER;
@@ -61257,7 +61233,7 @@ do
         ret = ret + 1;
         watching *l do
             if l:HOLD then
-                finalize with
+                do finalize with
                     ret = ret + 1;
                 end
                 await FOREVER;
@@ -63938,12 +63914,12 @@ do
             // starts off
             watching this.go_on do
                 every key in KEY do
-                    _queue_put(_CEU_IN_KEY,
+                    do _queue_put(_CEU_IN_KEY,
                                sizeof(int), key as byte&&
 #ifdef TM_SNAP
                                 ,0
 #endif
-                              )
+                              );
                         finalize with
                             nothing;
                         end;
@@ -64336,12 +64312,11 @@ class SDL with
         var int oi;
 do
     var& _SDL_Window? win_;
-    finalize
-        win_ = &_SDL_CreateWindow("SDL 1", _SDL_WINDOWPOS_CENTERED,
+        do win_ = &_SDL_CreateWindow("SDL 1", _SDL_WINDOWPOS_CENTERED,
                                            _SDL_WINDOWPOS_CENTERED,
                                            800, 480,
                                            _SDL_WINDOW_SHOWN);
-    with
+    finalize with
         _SDL_DestroyWindow(&&win_!);
     end
     this.win = &win_!;
@@ -64349,9 +64324,8 @@ do
     _SDL_GetWindowSize(&&win, &&w, &&h);
 
     var& _SDL_Renderer? ren_;
-    finalize
-        ren_ = &_SDL_CreateRenderer(&&win, -1, 0);
-    with
+        do ren_ = &_SDL_CreateRenderer(&&win, -1, 0);
+    finalize with
         _SDL_DestroyRenderer(&&ren_!);
     end
     this.ren = &ren_!;
@@ -64747,13 +64721,12 @@ class T with
 do
 end
 var& T*? t;
-finalize
-    t = _malloc(10 * sizeof(T**));
-with
+    do t = _malloc(10 * sizeof(T**));
+finalize with
     nothing;
 end
 native/nohold _free();
-finalize with
+do finalize with
     _free(t!);
 end
 escape 10;
@@ -64769,13 +64742,13 @@ var _t* a;
 native _f();
 native _t = 0;
 par/or do
-    _f(a)               // 8
+    do _f(a);               // 8
         finalize with
             ret = 1;    // DET: nested blks
         end;
 with
     var _t* b;
-    _f(b)               // 14
+    do _f(b);               // 14
         finalize with
             ret = 2;    // DET: nested blocks
         end;
@@ -64985,7 +64958,7 @@ end
 class T with
 do
     _V = 10;
-    finalize with
+    do finalize with
         _V = 100;   // TODO: deveria executar qd "var T t" sai de escopo
     end
 end
@@ -65016,7 +64989,7 @@ class T with
     event void e, ok;
     var int v;
 do
-    finalize with
+    do finalize with
         _V = _V + 1;        // * writes before
     end
     v = 1;
@@ -65031,7 +65004,7 @@ do
     var T t;
     par/or do
         do                  // 24
-            finalize with
+            do finalize with
                 _V = _V*10;
             end
             await t.ok;
@@ -65064,7 +65037,7 @@ end
 // TODO: "typecast" esconde "call", finalization nao acha que eh call
 var T** t := (T**)_malloc(10 * sizeof(T**));
 native/nohold _free();
-finalize with
+do finalize with
     _free(t);
 end
 escape 10;
@@ -65479,7 +65452,7 @@ class Forwarder with
 do
    loop do
       var bool enq;
-      enq = _send_enqueue(&pkt)
+      do enq = _send_enqueue(&pkt);
             finalize with
                _send_dequeue(&pkt);
             end;
@@ -65720,9 +65693,8 @@ vector[] void ptr = (call MALLOC);
 Test { [[
 input (void)=>void* MALLOC;
 vector[] void ptr;
-finalize
-    ptr = (call MALLOC);
-with
+    do ptr = (call MALLOC);
+finalize with
 end
 escape 1;
 ]],
@@ -65732,9 +65704,8 @@ escape 1;
 Test { [[
 input (var int, var int)=>void* MALLOC;
 vector[] void ptr;
-finalize
-    ptr = (call MALLOC=>(1,1));
-with
+    do ptr = (call MALLOC=>(1,1));
+finalize with
 end
 escape 1;
 ]],
@@ -65744,9 +65715,8 @@ escape 1;
 Test { [[
 input (var int, var int)=>int MALLOC;
 var int v;
-finalize
-    v = (call MALLOC=>(1,1));
-with
+    do v = (call MALLOC=>(1,1));
+finalize with
 end
 escape 1;
 ]],
@@ -65764,9 +65734,8 @@ end
 
 var int i;
 vector[] void ptr;
-finalize
-    ptr = (call MALLOC=>(10,1, &i));
-with
+    do ptr = (call MALLOC=>(10,1, &i));
+finalize with
 end
 escape ptr==&i;
 ]],
@@ -65783,9 +65752,8 @@ end
 
 var int i;
 vector[] void ptr;
-finalize
-    ptr = (call MALLOC=>(1,1, &i));
-with
+    do ptr = (call MALLOC=>(1,1, &i));
+finalize with
 end
 escape ptr==null;
 ]],
@@ -65797,9 +65765,8 @@ input (void)=>void* MALLOC;
 native _f();
 do
     var void* a;
-    finalize
-        a = (call MALLOC);
-    with
+        do a = (call MALLOC);
+    finalize with
         do await FOREVER; end;
     end
 end
@@ -66033,9 +66000,8 @@ end
 
 output (var int n)=>int VVV;
 var int v;
-finalize
-    v = (call VVV => 10);
-with
+    do v = (call VVV => 10);
+finalize with
     nothing;
 end
 escape v;
@@ -66100,9 +66066,8 @@ output (var void* ptr, var int size, var int nmemb, var  _F* f)=>int READ;
 
 // Default device
 var _F[] f;
-finalize
-    f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
-with
+    do f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
+finalize with
     call CLOSE => f;
 end
 
@@ -66303,7 +66268,7 @@ class Body with
     var&   int    sum;
     event int     ok;
 do
-    finalize with end;
+    do finalize with end;
 
     var Body* nested =
         spawn Body in bodies with
@@ -66322,7 +66287,7 @@ end
 pool[2] Body bodies;
 var  int     sum = 0;
 
-    finalize with end;
+    do finalize with end;
 
 do Body with
     this.bodies = bodies;

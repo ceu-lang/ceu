@@ -139,10 +139,11 @@ class TimeMachine with
     var int time_now = 0;
 do
 #ifdef TM_SNAP
-    _snap_init((u8&&)&&this.app)
-        finalize with
-            nothing;    // app is supposed to live longer than TM
-        end;
+    do
+        _snap_init((u8&&)&&this.app);
+    finalize with
+        nothing;    // app is supposed to live longer than TM
+    end
 #ifdef TM_SNAP_QUEUE_DIFF
     var int next_snap = TM_SNAP_MS;
 #endif
@@ -157,10 +158,11 @@ do
 #endif  // TM_SNAP
 
 #ifdef TM_DIFF
-    _diff_init((u8&&)&&this.app)
-        finalize with
-            nothing;    // app is supposed to live longer than TM
-        end;
+    do
+        _diff_init((u8&&)&&this.app);
+    finalize with
+        nothing;    // app is supposed to live longer than TM
+    end;
 #endif
 
     loop do
@@ -191,16 +193,17 @@ do
                 _snap_put(this.time_total);
 #endif
 
+                do
 #ifdef TM_QUEUE
 #ifdef TM_SNAP
-                _queue_put(_CEU_IN__WCLOCK, 0, &&dt, brk_time)
+                    _queue_put(_CEU_IN__WCLOCK, 0, &&dt, brk_time);
 #else
-                _queue_put(_CEU_IN__WCLOCK, 0, &&dt)
+                    _queue_put(_CEU_IN__WCLOCK, 0, &&dt);
 #endif
 #endif
-                    finalize with
-                        nothing;
-                    end;
+                finalize with
+                    nothing;
+                end
             end
         end
 
@@ -216,7 +219,7 @@ do
 #endif
 
         par/or do
-            finalize with
+            do finalize with
                 _CEU_TIMEMACHINE_ON = 0;
                 this.time_total = time_now;     // drop future
 #if   defined TM_QUEUE
@@ -337,9 +340,9 @@ do
 #if   defined TM_QUEUE
 
                             var& _tceu_queue? qu;
-                            finalize
+                            do
                                 qu = &_queue_nxt(time_now, time_req);
-                            with
+                            finalize with
                                 nothing;
                             end
                             if not qu? then

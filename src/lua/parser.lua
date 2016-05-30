@@ -66,7 +66,7 @@ local T = {
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or expression or `await´ or `emit´ or `request´ or `spawn´ or `kill´ or `traverse´ or `do´ or `interface´ or `class´ or `data´ or `ddd´ or `pre´ or `if´ or `loop´ or `every´ or `finalize´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or expression or `await´ or `emit´ or `request´ or `spawn´ or `kill´ or `traverse´ or `do´ or `interface´ or `class´ or `data´ or `ddd´ or `pre´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
     {
@@ -324,9 +324,11 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     , CallStmt = V'__Exp'
 
-    , Finalize = K'finalize' * OPT(V'_Set_one'*V'__seqs')
-               * K'with' * V'Finally' * K'end'
-    , Finally  = V'Block'
+    , Finalize = K'do' *
+                    V'Block' *
+                 K'finalize' * OPT(V'Explist') * K'with' *
+                    V'Block' *
+                 K'end'
 
     , _Pause   = K'pause/if' * V'__Exp' * V'__Do'
 
@@ -730,8 +732,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                )^0 * V'__11'
     , __11   = V'__12' *
                   (
-                      PARENS(Cc'call' * OPT(V'Explist')) *
-                          OPT(K'finalize' * K'with' * V'Finally' * K'end')
+                      PARENS(Cc'call' * OPT(V'Explist'))
                   +
                       K'[' * Cc'idx'  * V'__Exp'    * K']' +
                       (CK':' + (CK'.'-'..')) * V'__ID_field' +
