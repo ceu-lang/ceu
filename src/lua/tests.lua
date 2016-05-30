@@ -54477,7 +54477,7 @@ end
 
 // "Nullable pointer"
 data Opt;
-data NIL is Opt;
+data NOTHING is Opt;
 data PTR is Opt with
     var void&& v;
 end
@@ -54679,6 +54679,18 @@ escape 1;
     adt = 'line 1 : invalid recursive base case : no parameters allowed',
 }
 
+Test { [[
+data Opt;
+data NOTHING is Opt;
+
+data Opt1;
+data NOTHING is Opt1;
+
+escape 1;
+]],
+    env = 'TODO: NOTHING is taken',
+}
+
 -->>> MISC
 
 Test { [[
@@ -54856,7 +54868,6 @@ escape 1;//(l.CONS.tail.CONS.head;
     adt = 'line 7 : invalid attribution : not a pool',
 }
 
-do return end
 Test { [[
 data List;
 data ListNIL is List;
@@ -54866,7 +54877,7 @@ data ListCONS is List with
 end
 var List&& l = ListCONS(1,
                 ListCONS(2,
-                    List.NIL()));
+                    ListNIL()));
 escape 1;//l:CONS.tail.CONS.head;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
@@ -54952,7 +54963,7 @@ data ListCONS is List with
     var List tail;
 end
 
-pool[10] List lll = new ListCONS(1, List.NIL());
+pool[10] List lll = new ListCONS(1, ListNIL());
 escape (lll as ListCONS).head;
 ]],
     run = 1,
@@ -54972,7 +54983,7 @@ data ListCONS is List with
     var List tail;
 end
 
-pool[10] List lll = new ListCONS(1, List.NIL());
+pool[10] List lll = new ListCONS(1, ListNIL());
 escape lll.head;
 ]],
     env = 'TODO: no head in lll',
@@ -55466,7 +55477,7 @@ escape 1;
 -- constructors
 Test { DATA..[[
 var Pair p1 = Pair(1,2);        /* struct, no tags */
-var Opt  o1 = NIL();        /* unions, explicit tag */
+var Opt  o1 = NOTHING();        /* unions, explicit tag */
 var Opt  o2 = PTR(&&p1);
 pool[] List l1;
 l1 = new NIL();       /* recursive union */
@@ -55498,7 +55509,7 @@ escape 1;
     --run = 1,
 }
 Test { DATA..[[
-pool[] List l1 = new NIL();    /* vs List.NIL() */
+pool[] List l1 = new NIL();    /* vs NIL() */
 escape 1;
 ]],
     env = 'line 51 : data "NIL" is not declared',
@@ -55513,7 +55524,7 @@ escape 1;
     env = 'line 51 : data "Unknown" is not declared',
 }
 Test { DATA..[[
-var Opt  o1 = Unknown.NIL();
+var Opt  o1 = UnknownNIL();
 escape 1;
 ]],
     env = 'line 51 : data "Unknown" is not declared',
@@ -55521,7 +55532,7 @@ escape 1;
 
 -- tag has to be defined
 Test { DATA..[[
-var Opt o1 = Opt.UNKNOWN();
+var Opt o1 = UNKNOWN();
 escape 1;
 ]],
     env = 'line 51 : tag "UNKNOWN" is not declared',
@@ -55529,10 +55540,10 @@ escape 1;
 
 -- constructors have call syntax
 Test { DATA..[[
-var List l1 = NIL; /* vs List.NIL() */
+var List l1 = NIL; /* vs NIL() */
 escape 1;
 ]],
-    parser = 'line 51 : after `NIL´ : expected `(´',
+    parser = 'line 51 : after `NIL´ : expected `.´ or `(´',
     --run = 1,
 }
 
@@ -55550,7 +55561,7 @@ escape 1;
     env = 'line 51 : wrong argument #2',
 }
 Test { DATA..[[
-var Opt o1 = Opt.NIL(1);       /* expected (void) */
+var Opt o1 = NOTHING(1);       /* expected (void) */
 escape 1;
 ]],
     env = 'line 51 : arity mismatch',
@@ -55558,29 +55569,31 @@ escape 1;
 
 -- constructors are not expressions...
 Test { DATA..[[
-escape Opt.NIL();
+escape NIL();
 ]],
-    parser = 'line 51 : after `escape´ : expected expression',
+    env = 'TODO: not a code',
+    --parser = 'line 51 : after `escape´ : expected expression',
 }
 Test { DATA..[[
 var List l;
-var int v = (l==Opt.NIL());
+var int v = (l==NIL());
 escape v;
 ]],
-    parser = 'line 52 : after `==´ : expected expression',
+    env = 'TODO: not a code',
+    --parser = 'line 52 : after `==´ : expected expression',
 }
 
 -- ...but have to be assigned to a variable
 Test { DATA..[[
 var Opt o;
-o = Opt.NIL();
+o = NOTHING();
 escape 1;
 ]],
     run = 1,
 }
 Test { DATA..[[
 pool[] List l;
-l = new List.NIL();
+l = new NIL();
 escape 1;
 ]],
     run = 1,
@@ -55601,16 +55614,16 @@ escape 1;
 
 -- distinction "constructor" vs "tag check"
 Test { DATA..[[
-pool[] List l = new List.NIL();   /* call syntax: constructor */
-var bool no_ = l.NIL;     /* no-call syntax: check tag */
+pool[] List l = new NIL();   /* call syntax: constructor */
+var bool no_ = (l is NIL);     /* no-call syntax: check tag */
 escape no_;
 ]],
     run = 1,
 }
 Test { DATA..[[
 pool[] List l;
-l = new List.NIL();   /* call syntax: constructor */
-var bool no_ = l.CONS;    /* no-call syntax: check tag */
+l = new NIL();   /* call syntax: constructor */
+var bool no_ = l is CONS;    /* no-call syntax: check tag */
 escape no_;
 ]],
     run = 0,
@@ -55626,22 +55639,22 @@ escape p1.x + p1.y;
 -- tag NIL has no fields
 Test { DATA..[[
 pool[] List l;
-escape l.NIL.v;
+escape (l as NIL).v;
 ]],
     env = 'line 52 : field "v" is not declared',
 }
 -- tag Opt.PTR has no field "x"
 Test { DATA..[[
 var Opt o;
-escape o.PTR.x;
+escape (o as PTR).x;
 ]],
     env = 'line 52 : field "x" is not declared',
 }
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor
 Test { DATA..[[
-pool[] List l1 = new List.NIL();
-pool[] List l2 = new List.CONS(1, List.NIL());
+pool[] List l1 = new NIL();
+pool[] List l2 = new CONS(1, NIL());
 escape 1;
 ]],
     run = 1,
@@ -55649,17 +55662,17 @@ escape 1;
 
 Test { DATA..[[
 var Pair p1 = Pair(1,2);
-var Opt  o1 = Opt.NIL();
-var Opt  o2 = Opt.PTR(&&p1);
-pool[] List l1 = new List.NIL();
+var Opt  o1 = NOTHING();
+var Opt  o2 = PTR(&&p1);
+pool[] List l1 = new NIL();
 pool[] List l2;
-l2 = new List.CONS(1, List.NIL());
-pool[] List l3 = new List.CONS(1, List.CONS(2, List.NIL()));
+l2 = new CONS(1, NIL());
+pool[] List l3 = new CONS(1, CONS(2, NIL()));
 
 var int ret = 0;                                // 0
 
 ret = ret + p1.x + p1.y;                        // 3
-ret = ret + o1.NIL;                             // 4
+ret = ret + (o1 is NOTHING);                             // 4
 ret = ret + (o2.PTR.v==&&p1);                    // 5
 ret = ret + l1.NIL;                             // 6
 ret = ret + l2.CONS.head + l2.CONS.tail.NIL;    // 8
@@ -55677,14 +55690,14 @@ escape ret;
 --      v = l.CONS.head
 Test { DATA..[[
 pool[] List l;
-l = new List.NIL();
+l = new NIL();
 escape l.CONS.head;         // runtime error
 ]],
     asr = true,
     --run = 1,
 }
 Test { DATA..[[
-pool[] List l = new List.CONS(2, List.NIL());
+pool[] List l = new CONS(2, NIL());
 escape l.CONS.head;
 ]],
     run = 2,
@@ -55693,13 +55706,13 @@ escape l.CONS.head;
 -- mixes everything:
 Test { DATA..[[
 var Pair p  = Pair(1,2);
-var Opt  o1 = Opt.NIL();
+var Opt  o1 = Opt.NOTHING();
 var Opt  o2 = Opt.PTR(&&p);
 pool[] List l1;
-l1 = new List.NIL();
-pool[] List l2 = new List.CONS(1, List.NIL());
+l1 = new NIL();
+pool[] List l2 = new CONS(1, NIL());
 pool[] List l3;
-l3 = new List.CONS(1, List.CONS(2, List.NIL()));
+l3 = new CONS(1, CONS(2, NIL()));
 
 var int ret = 0;            // 0
 
@@ -55708,13 +55721,13 @@ var int y = p.y;
 _assert(x+y == 3);
 ret = ret + 3;              // 3
 
-if o1.NIL then
+if o1.NOTHING then
     ret = ret + 1;          // 4
 else/if o1.PTR then
     _assert(0);             // never reachable
 end
 
-if o2.NIL then
+if o2.NOTHING then
     _assert(0);             // never reachable
 else/if o2.PTR then
     ret = ret + 1;          // 5
@@ -55775,7 +55788,7 @@ escape ret;
 
 -- cannot cross await statements
 Test { DATA..[[
-pool[] List l = new List.CONS(1, List.NIL());
+pool[] List l = new CONS(1, NIL());
 var List&& p = l.CONS.tail;
 await 1s;
 escape p:CONS.head;
@@ -55785,7 +55798,7 @@ escape p:CONS.head;
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
-pool[] List l = new List.CONS(1, List.NIL());
+pool[] List l = new CONS(1, NIL());
 var List&& p = &&l.CONS.tail;
 await 1s;
 escape p:CONS.head;
@@ -55795,7 +55808,7 @@ escape p:CONS.head;
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
-pool[] List l = new List.CONS(1, List.NIL());
+pool[] List l = new CONS(1, NIL());
 var List&& p = &&l.CONS.tail;
 await 1s;
 escape p:CONS.head;
@@ -55813,10 +55826,10 @@ escape p:CONS.head;
 -- linking a list: 2-1-NIL
 Test { DATA..[[
 pool[] List l1;
-l1 = new List.NIL();
-pool[] List l2 = new List.CONS(1, l1);
+l1 = new NIL();
+pool[] List l2 = new CONS(1, l1);
 pool[] List l3;
-l3 = new List.CONS(2, l2);
+l3 = new CONS(2, l2);
 escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
 ]],
     --run = 4,
@@ -55824,13 +55837,13 @@ escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
     -- TODO-ADT-REC-STATIC-CONSTRS
 }
 Test { DATA..[[
-pool[] List l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+pool[] List l3 = new CONS(2, CONS(1, NIL()));
 escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
 ]],
     run = 4,
 }
 Test { DATA..[[
-pool[] List l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+pool[] List l3 = new CONS(2, CONS(1, NIL()));
 escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
 ]],
     run = 4,
@@ -55838,8 +55851,8 @@ escape l3.CONS.head + l3.CONS.tail.CONS.head + l3.CONS.tail.CONS.tail.NIL;
 -- breaking a list: 2-1-NIL => 2-NIL
 Test { DATA..[[
 pool[] List l1;
-l1 = new List.NIL();
-pool[] List l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+l1 = new NIL();
+pool[] List l3 = new CONS(2, CONS(1, NIL()));
 l3.CONS.tail = l1;
 escape l3.CONS.head + l3.CONS.tail.NIL;
 ]],
@@ -55850,8 +55863,8 @@ escape l3.CONS.head + l3.CONS.tail.NIL;
 }
 Test { DATA..[[
 pool[] List l1;
-l1 = new List.NIL();
-pool[] List l3 = new List.CONS(2, List.CONS(1, List.NIL()));
+l1 = new NIL();
+pool[] List l3 = new CONS(2, CONS(1, NIL()));
 l3.CONS.tail = &&l1;
 escape l3.CONS.head + l3.CONS.tail.NIL;
 ]],
@@ -55864,8 +55877,8 @@ escape l3.CONS.head + l3.CONS.tail.NIL;
 Test { DATA..[[
 pool[] List l1;
 pool[] List l2;
-l1 = new List.NIL();
-l2 = new List.CONS(1, List.NIL());
+l1 = new NIL();
+l2 = new CONS(1, NIL());
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1);
 ]],
@@ -55876,8 +55889,8 @@ escape l1.CONS + (l1.CONS.head==1);
 Test { DATA..[[
 pool[] List l1;
 pool[] List l2;
-l1 = new List.NIL();
-l2 = new List.CONS(1, List.NIL());
+l1 = new NIL();
+l2 = new CONS(1, NIL());
 l1 = &&l2;
 escape l1.CONS + (l1.CONS.head==1);
 ]],
@@ -55887,8 +55900,8 @@ escape l1.CONS + (l1.CONS.head==1);
     run = 2,
 }
 Test { DATA..[[
-pool[] List l1 = new List.NIL(),
-            l2 = new List.CONS(1, List.NIL());
+pool[] List l1 = new NIL(),
+            l2 = new CONS(1, NIL());
 l1 = l2;
 escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
 ]],
@@ -55899,8 +55912,8 @@ escape l1.CONS + (l1.CONS.head==1) + (l1.CONS.tail.CONS.tail.CONS.head==1);
 
 -- circular list: 1-2-1-2-...
 Test { DATA..[[
-pool[] List l1 = new List.CONS(1, List.NIL()),
-            l2 = new List.CONS(2, List.NIL());
+pool[] List l1 = new CONS(1, NIL()),
+            l2 = new CONS(2, NIL());
 l1.CONS.tail = l2;
 escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
        (l2.CONS.head==2) + (l2.CONS.tail.CONS.head==1) +
@@ -55912,8 +55925,8 @@ escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
 }
 
 Test { DATA..[[
-pool[] List l1 = new List.CONS(1, List.NIL()),
-            l2 = new List.CONS(2, List.NIL());
+pool[] List l1 = new CONS(1, NIL()),
+            l2 = new CONS(2, NIL());
 l1.CONS.tail = &&l2;
 escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
        (l2.CONS.head==2) + (l2.CONS.tail.CONS.head==1) +
@@ -55927,8 +55940,8 @@ escape (l1.CONS.head==1) + (l1.CONS.tail.CONS.head==2) +
 -- another circular list
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new List.CONS(1, List.NIL());
-l2 = new List.CONS(2, List.NIL());
+l1 = new CONS(1, NIL());
+l2 = new CONS(2, NIL());
 l1.CONS.tail = l2;
 l2.CONS.tail = l1;
 
@@ -55943,8 +55956,8 @@ escape l1.CONS.head + l1.CONS.tail.CONS.head + l2.CONS.head + l2.CONS.tail.CONS.
 -- not circular
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new List.NIL();
-l2 = new List.CONS(1, List.NIL());
+l1 = new NIL();
+l2 = new CONS(1, NIL());
 l1 = l2.CONS.tail;
 escape l1.NIL;
 ]],
@@ -55957,8 +55970,8 @@ escape l1.NIL;
 -- not circular
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new List.NIL();
-l2 = new List.CONS(1, List.NIL());
+l1 = new NIL();
+l2 = new CONS(1, NIL());
 l1 = &&l2.CONS.tail;
 escape l1.NIL;
 ]],
@@ -56060,19 +56073,19 @@ escape ret;
 --  - the pool is inferred from the l-value
 Test { DATA..[[
 pool[] List l;
-l = new List.NIL();
+l = new NIL();
 escape l.NIL;
 ]],
     run = 1,
 }
 Test { DATA..[[
-pool[] List l = new List.CONS(2, List.NIL());
+pool[] List l = new CONS(2, NIL());
 escape l.CONS.head;
 ]],
     run = 2,
 }
 Test { DATA..[[
-pool[] List l = new List.CONS(1, List.CONS(2, List.NIL()));
+pool[] List l = new CONS(1, CONS(2, NIL()));
 escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 ]],
     run = 4,
@@ -56080,7 +56093,7 @@ escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 -- wrong tag
 Test { DATA..[[
 pool[] List l;
-l = new List.NIL();
+l = new NIL();
 escape l.CONS;
 ]],
     asr = true,
@@ -56088,7 +56101,7 @@ escape l.CONS;
 -- no "new"
 Test { DATA..[[
 pool[] List l;
-l = List.CONS(2, List.NIL());
+l = CONS(2, NIL());
 escape l.CONS.head;
 ]],
     adt = 'line 52 : invalid constructor : recursive data must use `new´',
@@ -56096,7 +56109,7 @@ escape l.CONS.head;
 }
 -- cannot assign "l" directly (in the pool declaration)
 Test { DATA..[[
-pool[] List l = new List.CONS(2, List.NIL());
+pool[] List l = new CONS(2, NIL());
 escape l.CONS.head;
 ]],
     run = 2,
@@ -56104,7 +56117,7 @@ escape l.CONS.head;
 -- no dereference
 Test { DATA..[[
 pool[] List l;
-l = new List.NIL();
+l = new NIL();
 escape l.NIL;
 ]],
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -56112,7 +56125,7 @@ escape l.NIL;
 }
 Test { DATA..[[
 pool[] List l;
-l = new List.CONS(2, List.NIL());
+l = new CONS(2, NIL());
 escape l.CONS.head;
 ]],
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -56131,21 +56144,21 @@ escape l.CONS.head;
 --  must appear first in the ADT declaration)
 -- (
 Test { DATA..[[
-pool[0] List l = new List.CONS(2, List.NIL());
+pool[0] List l = new CONS(2, NIL());
 escape l.NIL;
 ]],
     run = 1,
 }
 Test { DATA..[[
 pool[0] List l;
-l = new List.CONS(2, List.NIL());
+l = new CONS(2, NIL());
 escape l.CONS.head;     // runtime error
 ]],
     asr = true,
 }
 -- 2nd allocation fails (1 space)
 Test { DATA..[[
-pool[1] List l = new List.CONS(2, List.CONS(1, List.NIL()));
+pool[1] List l = new CONS(2, CONS(1, NIL()));
 _assert(l.CONS.tail.NIL);
 escape l.CONS.head;
 ]],
@@ -56153,7 +56166,7 @@ escape l.CONS.head;
 }
 -- 3rd allocation fails (2 space)
 Test { DATA..[[
-pool[2] List l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));
 _assert(l.CONS.tail.CONS.tail.NIL);
 escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 ]],
@@ -56164,7 +56177,7 @@ escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 -- (nothing new here)
 Test { DATA..[[
 pool[0] List l;
-l = new List.CONS(2, List.NIL());
+l = new CONS(2, NIL());
 escape l.NIL;
 ]],
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -56201,8 +56214,8 @@ escape ts.NIL;
 -- 1-NIL => 2-NIL
 -- 1-NIL can be safely reclaimed
 Test { DATA..[[
-pool[1] List l = new List.CONS(1, List.NIL());
-l = new List.CONS(2, List.NIL());    // this fails (new before free)!
+pool[1] List l = new CONS(1, NIL());
+l = new CONS(2, NIL());    // this fails (new before free)!
 escape l.CONS.head;
 ]],
     asr = true,
@@ -56210,8 +56223,8 @@ escape l.CONS.head;
 
 Test { DATA..[[
 pool[1] List l;
-l = new List.CONS(1, List.NIL());
-l.CONS.tail = new List.CONS(2, List.NIL()); // fails
+l = new CONS(1, NIL());
+l.CONS.tail = new CONS(2, NIL()); // fails
 escape l.CONS.tail.NIL;
 ]],
     run = 1,
@@ -56220,8 +56233,8 @@ escape l.CONS.tail.NIL;
 
 -- 1-2-NIL
 Test { DATA..[[
-pool[2] List l = new List.CONS(1, List.NIL());
-l.CONS.tail = new List.CONS(2, List.NIL()); // fails
+pool[2] List l = new CONS(1, NIL());
+l.CONS.tail = new CONS(2, NIL()); // fails
 escape l.CONS.tail.CONS.head;
 ]],
     run = 2,
@@ -56231,8 +56244,8 @@ escape l.CONS.tail.CONS.head;
 -- 1-NIL can be safely reclaimed
 Test { DATA..[[
 pool[2] List l;
-l = new List.CONS(1, List.NIL());
-l = new List.CONS(2, List.NIL());    // no allocation fail
+l = new CONS(1, NIL());
+l = new CONS(2, NIL());    // no allocation fail
 escape l.CONS.head;
 ]],
     run = 2,
@@ -56241,10 +56254,10 @@ escape l.CONS.head;
 -- 1-2-3-NIL => 1-2-NIL (3 fails)
 -- 4-5-6-NIL => NIL     (all fail)
 Test { DATA..[[
-pool[2] List l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
+pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
 _ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
-l = new List.NIL();
-l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // 6 fails
+l = new NIL();
+l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
 _ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "2");
 escape l.CONS.tail.CONS.head;
 ]],
@@ -56252,9 +56265,9 @@ escape l.CONS.tail.CONS.head;
 }
 
 Test { DATA..[[
-pool[2] List l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
+pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
 _ceu_out_assert_msg(l.CONS.tail.CONS.tail.NIL, "1");
-l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // all fail
+l = new CONS(4, CONS(5, CONS(6, NIL())));   // all fail
 escape l.NIL;
 ]],
     run = 1,
@@ -56265,10 +56278,10 @@ escape l.NIL;
 -- 4-5-6-NIL => 4-5-NIL (6 fails)
 Test { DATA..[[
 pool[2] List l;
-l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));   // 3 fails
+l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
 _assert(l.CONS.tail.CONS.tail.NIL);
-l = new List.NIL();                                                // clear all
-l = new List.CONS(4, List.CONS(5, List.CONS(6, List.NIL())));   // 6 fails
+l = new NIL();                                                // clear all
+l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
 _assert(l.CONS.tail.CONS.tail.NIL);
 escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
 ]],
@@ -56289,8 +56302,8 @@ escape l.CONS.head + l.CONS.tail.CONS.head + (l.CONS.tail.CONS.tail.NIL);
 -- 1-NIL
 -- 1-2-NIL
 Test { DATA..[[
-pool[2] List l = new List.CONS(1, List.NIL());
-l.CONS.tail = new List.CONS(2, List.NIL());
+pool[2] List l = new CONS(1, NIL());
+l.CONS.tail = new CONS(2, NIL());
 escape l.CONS.head + l.CONS.tail.CONS.head;
 ]],
     run = 3,
@@ -56301,33 +56314,33 @@ escape l.CONS.head + l.CONS.tail.CONS.head;
 -- 1-NIL
 Test { DATA..[[
 pool[2] List lll;
-lll = new List.CONS(1, List.CONS(2, List.NIL()));
+lll = new CONS(1, CONS(2, NIL()));
 lll = lll.CONS.tail;    // parent=child
 escape lll.CONS.head;
 ]],
     run = 2,
 }
 Test { DATA..[[
-pool[2] List lll = new List.CONS(1, List.CONS(2, List.NIL()));
+pool[2] List lll = new CONS(1, CONS(2, NIL()));
 lll = lll.CONS.tail;
-lll.CONS.tail = new List.CONS(3, List.NIL());
+lll.CONS.tail = new CONS(3, NIL());
 escape 1;
 ]],
     run = 1,
 }
 Test { DATA..[[
 pool[2] List lll;
-lll = new List.CONS(1, List.CONS(2, List.NIL()));
+lll = new CONS(1, CONS(2, NIL()));
 lll = lll.CONS.tail;    // parent=child
-lll.CONS.tail = new List.CONS(3, List.CONS(4, List.NIL()));    // 4 fails
+lll.CONS.tail = new CONS(3, CONS(4, NIL()));    // 4 fails
 escape lll.CONS.head + lll.CONS.tail.CONS.head + lll.CONS.tail.CONS.tail.NIL;
 ]],
     run = 6,
 }
 Test { DATA..[[
-pool[2] List l = new List.CONS(1, List.CONS(2, List.NIL()));
+pool[2] List l = new CONS(1, CONS(2, NIL()));
 l = l.CONS.tail;    // parent=child
-l.CONS.tail = new List.CONS(3, List.CONS(4, List.NIL()));    // 4 fails
+l.CONS.tail = new CONS(3, CONS(4, NIL()));    // 4 fails
 escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 ]],
     run = 6,
@@ -56339,7 +56352,7 @@ escape l.CONS.head + l.CONS.tail.CONS.head + l.CONS.tail.CONS.tail.NIL;
 -- 1-2-^1   (no)
 Test { DATA..[[
 pool[2] List l;
-l = new List.CONS(1, List.CONS(2, List.NIL()));
+l = new CONS(1, CONS(2, NIL()));
 l.CONS.tail = l;    // child=parent
 escape 1;
 ]],
@@ -56961,7 +56974,7 @@ escape p1==p2;
 }
 Test { DATA..[[
 pool[] List l1, l2;
-l2 = new List.NIL();
+l2 = new NIL();
 escape l1==l2;
 ]],
     env = 'line 53 : invalid operands to binary "=="',
@@ -56971,8 +56984,8 @@ escape l1==l2;
 -- cannot mix recursive ADTs
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new List.CONS(1, List.NIL());
-l2 = new List.CONS(2, List.NIL());
+l1 = new CONS(1, NIL());
+l2 = new CONS(2, NIL());
 l1.CONS.tail = l2;
 escape l1.CONS.tail.CONS.head;
 ]],
@@ -56980,10 +56993,10 @@ escape l1.CONS.tail.CONS.head;
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
 }
 Test { DATA..[[
-pool[] List l1 = new List.CONS(1, List.NIL());
+pool[] List l1 = new CONS(1, NIL());
 do
     pool[] List l2;
-    l2 = new List.CONS(2, List.NIL());
+    l2 = new CONS(2, NIL());
     l1.CONS.tail = &&l2;
 end
 escape l1.CONS.tail.CONS.head;
@@ -56994,8 +57007,8 @@ escape l1.CONS.tail.CONS.head;
 }
 Test { DATA..[[
 pool[] List l1;
-l1 = new List.CONS(1, List.NIL());
-pool[2] List l2 = new List.CONS(2, List.NIL());
+l1 = new CONS(1, NIL());
+pool[2] List l2 = new CONS(2, NIL());
 l1.CONS.tail = l2;
 escape l1.CONS.tail.CONS.head;
 ]],
@@ -57005,8 +57018,8 @@ escape l1.CONS.tail.CONS.head;
 Test { DATA..[[
 pool[2] List l1;
 pool[2] List l2;
-l1 = new List.CONS(1, List.NIL());
-l2 = new List.CONS(2, List.NIL());
+l1 = new CONS(1, NIL());
+l2 = new CONS(2, NIL());
 l1.CONS.tail = l2;
 escape l1.CONS.tail.CONS.head;
 ]],
@@ -57020,22 +57033,22 @@ var int ret = 0;                // 0
 pool[5] List l;
 
 // change head [2]
-l = new List.CONS(1, List.NIL());
+l = new CONS(1, NIL());
 ret = ret + l.CONS.head;        // 2
 _assert(ret == 1);
 
 // add 2 [1, 2]
-l.CONS.tail = new List.CONS(1, List.NIL());
+l.CONS.tail = new CONS(1, NIL());
 ret = ret + l.CONS.head;        // 3
 ret = ret + l.CONS.head + l.CONS.tail.CONS.head;
                                 // 6
 _assert(ret == 6);
 
 // change tail [1, 2, 4]
-l.CONS.tail.CONS.tail = new List.CONS(4, List.NIL());
+l.CONS.tail.CONS.tail = new CONS(4, NIL());
                                 // 10
 
-pool[] List l3 = new List.CONS(3, List.NIL());
+pool[] List l3 = new CONS(3, NIL());
 l.CONS.tail.CONS.tail = &&l3;
 _assert(l.CONS.tail.CONS.head == 3);
 _assert(l.CONS.tail.CONS.tail.CONS.head == 4);
@@ -57049,7 +57062,7 @@ ret = ret + l.CONS.tail.CONS.head;
 
 // fill the list [1, 3, 4, 5, 6] (7 fails)
 l.CONS.tail.CONS.tail.CONS.tail =
-    new List.CONS(5, List.CONS(6, List.CONS(7, List.NIL())));
+    new CONS(5, CONS(6, CONS(7, NIL())));
 
 escape ret;
 ]],
@@ -57283,7 +57296,7 @@ end
 
 pool[] List list
 
-= new List.CONS(10, List.NIL());
+= new CONS(10, NIL());
 var List&& l = list;
 
 watching l do
@@ -57309,7 +57322,7 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 
 pool&[] List lll = &list;
 
@@ -57329,7 +57342,7 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 
 pool[] List&& lll = &&list;
 
@@ -57350,13 +57363,13 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 pool[] List&& l = &&list;
 
-l:CONS.tail = new List.CONS(9, List.NIL());
+l:CONS.tail = new CONS(9, NIL());
 l = l:CONS.tail;
 
-l:CONS.tail = new List.CONS(8, List.NIL());
+l:CONS.tail = new CONS(8, NIL());
 l = l:CONS.tail;
 
 escape l:CONS +
@@ -57382,12 +57395,12 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 
 pool[] List&& l1 = &&list;
 pool&[] List  l2 = &list;
 
-list = new List.NIL();
+list = new NIL();
 
 escape l1:CONS+l2.CONS+list.CONS+1;
 ]],
@@ -57410,7 +57423,7 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
 var int ret = 0;
@@ -57440,7 +57453,7 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.CONS(20, List.NIL()));
+list = new CONS(10, CONS(20, NIL()));
 pool[] List&& lll = &&list;
 
 var int ret = 0;
@@ -57468,7 +57481,7 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 vector[] List&& lll = &&list; // TODO fat pointer
 
 *lll = lll:CONS.tail;
@@ -57490,7 +57503,7 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
 *lll = lll:CONS.tail;
@@ -57514,13 +57527,13 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
-lll:CONS.tail = new List.CONS(9, List.NIL());
+lll:CONS.tail = new CONS(9, NIL());
 *lll = lll:CONS.tail;
 
-lll:CONS.tail = new List.CONS(8, List.NIL());
+lll:CONS.tail = new CONS(8, NIL());
 *lll = lll:CONS.tail;
 
 escape lll:CONS +
@@ -57541,16 +57554,16 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 pool[] List&& l = &&list;
 
 var int ret = 0;
 
 watching *l do
-    l:CONS.tail = new List.CONS(9, List.NIL());
+    l:CONS.tail = new CONS(9, NIL());
     l = &&l:CONS.tail;
 
-    l:CONS.tail = new List.CONS(8, List.NIL());
+    l:CONS.tail = new CONS(8, NIL());
     l = &&l:CONS.tail;
 
     ret = l:CONS +
@@ -57576,16 +57589,16 @@ end
 
 pool[] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 pool[] List&& l = &&list;
 
 watching *l do
-    l:CONS.tail = new List.CONS(9, List.NIL());
+    l:CONS.tail = new CONS(9, NIL());
     l = &&l:CONS.tail;
 
     await 1s;
 
-    l:CONS.tail = new List.CONS(8, List.NIL());
+    l:CONS.tail = new CONS(8, NIL());
     l = &&l:CONS.tail;
 
     escape l:CONS.head +
@@ -57613,18 +57626,18 @@ end
 
 pool[10] List list;
 
-list = new List.CONS(10, List.NIL());
+list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
 watching *lll do
-    lll:CONS.tail = new List.CONS(9, List.NIL());
+    lll:CONS.tail = new CONS(9, NIL());
     lll = &&lll:CONS.tail;
 
     par do
         watching *lll do
             await 1s;
 
-            lll:CONS.tail = new List.CONS(8, List.NIL());
+            lll:CONS.tail = new CONS(8, NIL());
             lll = &&lll:CONS.tail;
 
             escape lll:CONS.head +
@@ -57634,7 +57647,7 @@ watching *lll do
         end
         escape 1;
     with
-        list = new List.NIL();
+        list = new NIL();
         await FOREVER;
     end
 end
@@ -57654,17 +57667,17 @@ or
     end
 end
 
-pool[] List list = new List.CONS(10, List.NIL());
+pool[] List list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
 watching *lll do
-    lll:CONS.tail = new List.CONS(9, List.NIL());
+    lll:CONS.tail = new CONS(9, NIL());
     lll = &&lll:CONS.tail;
 
     par do
         await 1s;
 
-        lll:CONS.tail = new List.CONS(8, List.NIL());
+        lll:CONS.tail = new CONS(8, NIL());
         lll = &&lll:CONS.tail;
 
         escape lll:CONS.head +
@@ -57672,7 +57685,7 @@ watching *lll do
                 list.CONS.tail.CONS.head +
                 list.CONS.tail.CONS.tail.CONS.head;
     with
-        list = new List.NIL();
+        list = new NIL();
         await FOREVER;
     end
 end
@@ -58345,9 +58358,9 @@ or
 end
 
 pool[3] List list
-    = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+    = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 class Body with
     pool&[]  Body bodies;
@@ -58387,9 +58400,9 @@ or
 end
 
 pool[3] List list
-    = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+    = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 class Body with
     pool&[]  Body bodies;
@@ -58430,9 +58443,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -58459,9 +58472,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -58489,9 +58502,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -58519,9 +58532,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -58551,9 +58564,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -58583,9 +58596,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -58615,9 +58628,9 @@ or
 end
 
 pool[3] List list
-    = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+    = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -58719,9 +58732,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 native do
     int V = 0;
@@ -58786,9 +58799,9 @@ or
     end
 end
 
-pool[4] List list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+pool[4] List list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 native do
     int V = 0;
@@ -58850,9 +58863,9 @@ or
 end
 
 pool[] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 native do
     int V = 0;
@@ -58911,9 +58924,9 @@ or
     end
 end
 
-pool[3] List list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+pool[3] List list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 native do
     int V = 0;
@@ -58972,9 +58985,9 @@ or
     end
 end
 
-pool[3] List list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+pool[3] List list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -59005,9 +59018,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -59044,9 +59057,9 @@ or
     end
 end
 
-pool[3] List list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+pool[3] List list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 traverse n in &&list do
@@ -59085,9 +59098,9 @@ end
 class T with
 do
     pool[3] List list;
-    list = new List.CONS(1,
-                List.CONS(2,
-                    List.CONS(3, List.NIL())));
+    list = new CONS(1,
+                CONS(2,
+                    CONS(3, NIL())));
 
     var int sum = 0;
     traverse n in &&list do
@@ -59656,9 +59669,9 @@ or
 end
 
 pool[] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -59687,9 +59700,9 @@ or
 end
 
 pool[] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -59719,9 +59732,9 @@ or
 end
 
 pool[3] List list
-    = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+    = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -59986,12 +59999,12 @@ or
     end
 end
 
-pool[] List l = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3,
-                    List.CONS(4,
-                        List.CONS(5,
-                            List.NIL())))));
+pool[] List l = new CONS(1,
+            CONS(2,
+                CONS(3,
+                    CONS(4,
+                        CONS(5,
+                            NIL())))));
 
 var int ret = 0;
 
@@ -59999,7 +60012,7 @@ par/or do
     await l.CONS.tail.CONS.tail;
     ret = 100;
 with
-    l.CONS.tail.CONS.tail = new List.NIL();
+    l.CONS.tail.CONS.tail = new NIL();
     ret = 10;
 end
 
@@ -60020,12 +60033,12 @@ or
 end
 
 pool[] List l;
-l = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3,
-                    List.CONS(4,
-                        List.CONS(5,
-                            List.NIL())))));
+l = new CONS(1,
+            CONS(2,
+                CONS(3,
+                    CONS(4,
+                        CONS(5,
+                            NIL())))));
 
 var int ret = 0;
 
@@ -60045,7 +60058,7 @@ with
     await l.CONS.tail.CONS.tail;
     _ceu_out_assert_msg(ret == 9, "3");
     ret = ret + l.CONS.tail.CONS.tail.CONS.head;    // 0+4+5+5
-    l.CONS.tail.CONS.tail = new List.NIL();
+    l.CONS.tail.CONS.tail = new NIL();
 
     _ceu_out_assert_msg(ret == 15, "5");
     await l.CONS.tail.CONS.tail;
@@ -60062,7 +60075,7 @@ with
 with
     l.CONS.tail.CONS.tail = l.CONS.tail.CONS.tail.CONS.tail;
     ret = ret * 2;  // (0+4+5+5+1+1) * 2
-    l.CONS.tail.CONS.tail = new List.CONS(10, List.NIL());
+    l.CONS.tail.CONS.tail = new CONS(10, NIL());
 end
 
 escape ret;
@@ -60200,7 +60213,7 @@ or
     end
 end
 
-pool[] List l = new List.CONS(1, List.EMPTY());
+pool[] List l = new CONS(1, List.EMPTY());
 
 par/or do
     traverse e in &&l do
@@ -61067,7 +61080,7 @@ or
 end
 
 pool[] List ls;
-ls = new List.CONS(List.NIL());
+ls = new CONS(NIL());
 
 traverse l in &&ls do
     if l:NIL then
@@ -61101,8 +61114,8 @@ or
 end
 
 pool[] List ls;
-ls = new List.CONS(1,
-            List.CONS(2,
+ls = new CONS(1,
+            CONS(2,
                 List.HOLD()));
 
 var int ret = 0;
@@ -61143,8 +61156,8 @@ or
 end
 
 pool[] List ls;
-ls = new List.CONS(1,
-            List.CONS(2,
+ls = new CONS(1,
+            CONS(2,
                 List.HOLD()));
 
 var int ret = 0;
@@ -61186,8 +61199,8 @@ or
     end
 end
 
-pool[10] List ls = new List.CONS(1,
-            List.CONS(2,
+pool[10] List ls = new CONS(1,
+            CONS(2,
                 List.HOLD()));
 
 var int ret = 0;
@@ -61226,8 +61239,8 @@ or
     end
 end
 
-pool[10] List ls = new List.CONS(1,
-            List.CONS(2,
+pool[10] List ls = new CONS(1,
+            CONS(2,
                 List.HOLD()));
 
 var int ret = 0;
@@ -61271,7 +61284,7 @@ pool[10] List list;
 
 var int i = 10;
 traverse l in &&list do
-    list = new List.CONS(i, List.NIL());
+    list = new CONS(i, NIL());
 end
 
 escape 1;
@@ -61293,10 +61306,10 @@ pool[10] List list;
 loop i in 10 do
     traverse l in &&list do
         if l:NIL then
-            list = new List.CONS(i, List.NIL());
+            list = new CONS(i, NIL());
         else/if l:CONS then
             if l:CONS.tail.NIL then
-                l:CONS.tail = new List.CONS(i, List.NIL());
+                l:CONS.tail = new CONS(i, NIL());
             else
                 traverse &&l:CONS.tail;
             end
@@ -61330,9 +61343,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 native do
     int V = 0;
@@ -61384,9 +61397,9 @@ or
 end
 
 pool[4] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 native do
     int V = 0;
@@ -61439,9 +61452,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 native do
     int V = 0;
@@ -61478,9 +61491,9 @@ or
 end
 
 pool[4] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 native do
     int V = 0;
@@ -61632,10 +61645,10 @@ or
 end
 
 pool[3] List list = new
-    List.CONS(1,
-        List.CONS(2,
-            List.CONS(3,
-                List.NIL())));
+    CONS(1,
+        CONS(2,
+            CONS(3,
+                NIL())));
 
 var int s1 =
     traverse l in &&list do
@@ -61665,10 +61678,10 @@ or
 end
 
 pool[3] List list = new
-    List.CONS(1,
-        List.CONS(2,
-            List.CONS(3,
-                List.NIL())));
+    CONS(1,
+        CONS(2,
+            CONS(3,
+                NIL())));
 
 var int s2 = 0;
 var int s1 =
@@ -62012,9 +62025,9 @@ or
 end
 
 pool[3] List list;
-list = new List.CONS(1,
-            List.CONS(2,
-                List.CONS(3, List.NIL())));
+list = new CONS(1,
+            CONS(2,
+                CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -62818,7 +62831,7 @@ with
         var List tail;
     end
 end
-var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+var List l = CONS(1, CONS(2, CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -62843,7 +62856,7 @@ with
         var List tail;
     end
 end
-var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+var List l = CONS(1, CONS(2, CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -62868,7 +62881,7 @@ with
         var List tail;
     end
 end
-var List l = List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+var List l = CONS(1, CONS(2, CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -62928,7 +62941,7 @@ with
 end
 
 pool[3] List l;
-l = new List.CONS(1, List.CONS(2, List.CONS(3, List.NIL())));
+l = new CONS(1, CONS(2, CONS(3, NIL())));
 
 var int sum = 0;
 
@@ -63036,9 +63049,9 @@ Test { DATA..[[
 var Pair p1 = Pair(x=1,x=2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(v=&p1);
-var List l1 = List.NIL();
-var List l2 = List.CONS(head=1, tail=l1);
-var List l3 = List.CONS(head=1, tail=List.CONS(head=2, tail=List.NIL()));
+var List l1 = NIL();
+var List l2 = CONS(head=1, tail=l1);
+var List l3 = CONS(head=1, tail=CONS(head=2, tail=NIL()));
 
 escape 1;
 ]],
@@ -63051,9 +63064,9 @@ Test { DATA..[[
 var Pair p1 = Pair(1,2);
 var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(&p1);
-var List l1 = List.NIL();
-var List l2 = List.CONS(1, l1);
-var List l3 = List.CONS(1, List.CONS(2, List.NIL()));
+var List l1 = NIL();
+var List l2 = CONS(1, l1);
+var List l3 = CONS(1, CONS(2, NIL()));
 
 var int ret = 0;
 
@@ -63083,28 +63096,28 @@ switch o2 with
 end
 
 switch l1 with
-    case List.NIL() do
+    case NIL() do
         ret = ret + 1;      // 6
         _assert(1);
     end
-    case List.CONS(int head, List& tail) do
+    case CONS(int head, List& tail) do
         _assert(0);
     end
 end
 
 switch l2 with
-    case List.NIL() do
+    case NIL() do
         _assert(0);
     end
-    case List.CONS(int head1, List& tail1) do
+    case CONS(int head1, List& tail1) do
         _assert(head1 == 1);
         ret = ret + 1;      // 7
         switch *tail1 with
-            case List.NIL() do
+            case NIL() do
                 ret = ret + 1;      // 8
                 _assert(1);
             end
-            case List.CONS(int head2, List& tail2) do
+            case CONS(int head2, List& tail2) do
                 _assert(0);
             end
         end
@@ -63114,25 +63127,25 @@ switch l2 with
 end
 
 switch l3 with
-    case List.NIL() do
+    case NIL() do
         _assert(0);
     end
-    case List.CONS(int head1, List& tail1) do
+    case CONS(int head1, List& tail1) do
         _assert(head1 == 1);
         ret = ret + 1;      // 10
         switch *tail1 with
-            case List.NIL() do
+            case NIL() do
                 _assert(0);
             end
-            case List.CONS(int head2, List& tail2) do
+            case CONS(int head2, List& tail2) do
                 _assert(head2 == 2);
                 ret = ret + 2;      // 12
                 switch *tail2 with
-                    case List.NIL() do
+                    case NIL() do
                         _assert(1);
                         ret = ret + 1;      // 13
                     end
-                    case List.CONS(int head3, List& tail3) do
+                    case CONS(int head3, List& tail3) do
                         _assert(0);
                     end
                 end
