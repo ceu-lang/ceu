@@ -227,7 +227,7 @@ KEYS = P
 'in' +
 'if' +
 'global' +
-'FORVER' +
+'FOREVER' +
 'finalize' +
 'false' +
 'every' +
@@ -395,19 +395,26 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , _Exts      = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') *
                     V'__ID_ext' * (K','*V'__ID_ext')^0
 
-    -- USES
+-- AWAIT, EMIT
+
+    , __awaits     = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock')
+    , _Awaits      = K'await' * V'__awaits' * OPT(K'until'*V'__Exp')
+    , Await_Ext    = V'ID_ext'
+    , Await_Int    = V'__Exp' - V'Await_Wclock'
+    , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
+    , Await_Forever = K'await' * K'FOREVER'
 
     , __evts_ps = V'__Exp' + PARENS(OPT(V'Explist'))
-    , Extemit  = K'emit' * (
-                    (V'WCLOCKK'+V'WCLOCKE') * OPT(K'=>' * V'__Exp') +
-                    V'ID_ext' * OPT(K'=>' * V'__evts_ps')
-                 )
-    , Extcall  = (K'call/recursive'+K'call') *
-                    V'ID_ext' * OPT(K'=>' * V'__evts_ps')
-    , Extreq   = K'request' *
-                    V'ID_ext' * OPT(K'=>' * V'__evts_ps')
+    , Emit_Ext_emit = K'emit' * (
+                        (V'WCLOCKK'+V'WCLOCKE') * OPT(K'=>' * V'__Exp') +
+                        V'ID_ext' * OPT(K'=>' * V'__evts_ps')
+                      )
+    , Emit_Ext_call = (K'call/recursive'+K'call') *
+                        V'ID_ext' * OPT(K'=>' * V'__evts_ps')
+    , Emit_Ext_req  = K'request' *
+                        V'ID_ext' * OPT(K'=>' * V'__evts_ps')
 
-    , Intemit  = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') *
+    , Emit_Int = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') *
                     V'__Exp' * OPT(K'=>' * V'__evts_ps')
 
 -- DETERMINISTIC
@@ -420,8 +427,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 -- SETS
 
     -- after `=´
-    , _Set_Do       = #(K'do'*K'/')    * V'Do'
-    , _Set_Await    = #K'await'         * V'Await'
+    , _Set_Do       = #(K'do'*K'/')     * V'Do'
+    , _Set_Await    = #K'await'         * V'_Awaits'
     , _Set_Watching = #K'watching'      * V'_Watching'
     , _Set_Spawn    = #K'spawn'         * V'Spawn'
     , _Set_Thread   = #K'async/thread'  * V'_Thread'
@@ -430,9 +437,9 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , _Set_None     = #K'_'             * V'ID_none'
     , _Set_Exp      =                     V'__Exp'
 
-    , _Set_Extemit  = #K'emit'          * V'Extemit'
-    , _Set_Extreq   = #K'request'       * V'Extreq'
-    , _Set_Extcall  = #V'__extcall_pre' * V'Extcall'
+    , _Set_Extemit  = #K'emit'          * V'Emit_Ext_emit'
+    , _Set_Extreq   = #K'request'       * V'Emit_Ext_req'
+    , _Set_Extcall  = #V'__extcall_pre' * V'Emit_Ext_call'
 
     , __extcall_pre = (K'call/recursive'+K'call') * V'ID_ext'
     , __lua_pre     = K'[' * (P'='^0) * '['
@@ -575,16 +582,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- Event handling
 
-    -- internal/external await
-    , Await    = K'await' * (V'__awaits'-'FOREVER') *
-                    OPT(K'until'*V'__Exp')
-    , AwaitN   = K'await' * K'FOREVER'
-    , __awaits = Cc(false) * (V'WCLOCKK'+V'WCLOCKE')  -- false,   wclock
-               + (V'ID_ext'+V'__Exp') * Cc(false)      -- ext/int/org, false
-
-    -- internal/external emit/call/request
-    -- TODO: emit/await, move from "false"=>"_WCLOCK"
-
 -- Organism instantiation
 
     -- do organism
@@ -619,10 +616,9 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                     ((V'ID_int'+V'ID_none') * OPT(K'in'*V'__Exp')
                     + Cc(false,false)) *
                 V'__Do'
-    , _Every  = K'every' * ( (V'ID_int'+PARENS(V'Varlist')) * K'in'
-                            + Cc(false) )
-              * V'__awaits'
-              * V'__Do'
+    , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
+                    V'__awaits' *
+                V'__Do'
 
     -- traverse
     , _TraverseLoop = K'traverse' * (V'ID_int'+V'ID_none') * K'in' * (
@@ -788,7 +784,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                    )^-1
                  * (V'Host'+V'_Code_impl')^0 )
 
-    , __Stmt_Last  = V'_Escape' + V'_Break' + V'_Continue' + V'AwaitN'
+    , __Stmt_Last  = V'_Escape' + V'_Break' + V'_Continue' + V'Await_Forever'
     , __Stmt_Last_Block = V'Par'
     , __Stmt_Simple    = V'Nothing'
                  + V'__Org'
@@ -800,8 +796,9 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Deterministic'
                  + V'_Set_one' + V'_Set_many'
-                 + V'Await' + V'Intemit'
-                 + V'Extemit' + V'Extcall' + V'Extreq'
+                 + V'_Awaits'
+                 + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
+                 + V'Emit_Int'
                  + V'Spawn' + V'Kill'
                  + V'_TraverseRec'
                  + V'_DoOrg'
