@@ -708,7 +708,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __ID_cls   = CK(m.R'AZ'*Alphanum^0 -KEYS, 'class identifier')
     , __ID_adt   = CK(m.R'AZ'*Alphanum^0 -KEYS, 'adt identifier')
     , __ID_tag   = CK(m.R'AZ'*ALPHANUM^0 -KEYS, 'tag identifier')
-    , __ID_field = CK(Alpha * (Alphanum)^0,       'field identifier')
 
 -- Types
 
@@ -744,7 +743,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                       PARENS(Cc'call' * OPT(V'Explist'))
                   +
                       KK'[' * Cc'idx'  * V'__Exp'    * KK']' +
-                      (CKK':' + (CKK'.'-'..')) * V'__ID_field' +
+                      (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
                       CKK'?' + (CKK'!'-'!=')
                   )^0
     , __12   = V'__Prim'

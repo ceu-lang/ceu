@@ -24342,6 +24342,12 @@ Test { [[
 var int xxx = 10;
 escape ((__ceu_app:data as _CEU_Main&&)):xxx;
 ]],
+    parser = 'line 2 : after `:´ : expected internal identifier or native identifier',
+}
+Test { [[
+var int xxx = 10;
+escape ((__ceu_app:_data as _CEU_Main&&)):xxx;
+]],
     run = 10,
 }
 -- NATIVE/PRE
@@ -25255,7 +25261,7 @@ pre native do
 end
 native _Payload ;
 var _Payload final;
-var u8&& neighs = &&(final.data[4]);
+var u8&& neighs = &&(final._data[4]);
 escape 1;
 ]],
     ref = 'line 9 : invalid access to uninitialized variable "final" (declared at tests.lua:8)',
@@ -25269,7 +25275,7 @@ pre native do
 end
 native/plain _Payload;
 var _Payload final = _Payload(0,{});
-var u8&& neighs = &&(final.data[4]);
+var u8&& neighs = &&(final._data[4]);
 escape 1;
 ]],
     run = 1;
