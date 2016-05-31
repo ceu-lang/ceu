@@ -57882,12 +57882,12 @@ data T;
         var T   nxt;
     end
 
-pool[] T ts = new T.NXT(10, T.NXT(9, T.NIL()));
+pool[] T ts = new NXT(10, NXT(9, NIL()));
 
 par/or do
     await ts;           // 2. but continuation is aborted
 with
-    ts = new T.NIL();   // 1. free is on continuation
+    ts = new NIL();   // 1. free is on continuation
 end
 
 escape 1;
@@ -57906,7 +57906,7 @@ data T;
 
 pool[] T ts;
 
-ts = new T.NXT(10, T.NXT(9, T.NIL()));
+ts = new NXT(10, NXT(9, NIL()));
 
 var int ret = 10;
 
@@ -57916,18 +57916,18 @@ par/or do
     end
     ret = ret * 2;
 with
-    watching ts.NXT.nxt do
+    watching (ts as NXT).nxt do
         await FOREVER;
     end
     ret = 0;
 with
-    watching ts.NXT.nxt.NXT.nxt do
+    watching ((ts as NXT).nxt as NXT).nxt do
         await FOREVER;
     end
     ret = ret - 1;  // awakes first from NIL
     await FOREVER;
 with
-    ts = new T.NIL();
+    ts = new NIL();
     ret = 0;
 end
 
@@ -61858,23 +61858,21 @@ data Command;
 
 data CommandQueue;
     data NIL is CommandQueue;
-or
     data NXT with
         var Command       cmd;
         var CommandQueue  nxt;
     end
-end
 
-pool[10] CommandQueue cq1 = new CommandQueue.NIL();
+pool[10] CommandQueue cq1 = new NIL();
 
 pool[10] CommandQueue cq2 = new
-    CommandQueue.NXT(
+    NXT(
         SEQUENCE(
             NOTHING(),
             NOTHING()),
-        CommandQueue.NIL());
+        NIL());
 
-escape cq1.NIL + cq2.NXT.cmd.SEQUENCE.one.NOTHING;
+escape (cq1 is NIL) + (((cq2 as NXT).cmd as SEQUENCE).one is NOTHING);
 ]],
     run = 2,
 }
@@ -61948,7 +61946,7 @@ cmds1 = new NEXT(
 
 pool&[] Command cmds2 = &cmds1;
 
-escape cmds2.NEXT.nxt.NEXT.nxt.NOTHING;
+escape (((cmds2 as NEXT).nxt as NEXT).nxt is NOTHING);
 ]],
     run = 1,
 }
@@ -61966,7 +61964,7 @@ pool&[] Command cmds2
 
 escape 1;
 ]],
-    parser = 'line 10 : after `&´ : expected expression',
+    parser = 'line 8 : after `&´ : expected expression',
     --parser = 'line 10 : after `new´ : expected `;´'
     --ref = 'line 9 : invalid attribution (not a reference)',
     --ref = 'line 10 : reference must be bounded before use',
@@ -61990,7 +61988,7 @@ cmds1 = new NOTHING();
 cmds2 = new NEXT(
             NEXT(
                 NOTHING()));
-escape cmds1.NEXT;
+escape cmds1 is NEXT;
 ]],
     run = 1,
 }
@@ -62011,7 +62009,7 @@ cmds1 = new NEXT(
 cmds2 = new NEXT(
             NEXT(
                 NOTHING()));
-escape cmds1.NOTHING;
+escape cmds1 is NOTHING;
 ]],
     run = 1,
 }
@@ -62028,7 +62026,7 @@ cmds1 = new NEXT(
                 NEXT(
                     NEXT(
                         NOTHING())));
-escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
+escape (((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING);
 ]],
     run = 1,
 }
@@ -62042,9 +62040,9 @@ data Command;
 pool[2] Command cmds1;
 
 cmds1 = new NEXT(NOTHING());
-cmds1.NEXT.nxt = new NEXT(NOTHING());
-cmds1.NEXT.nxt.NEXT.nxt = new NEXT(NOTHING());
-escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
+(cmds1 as NEXT).nxt = new NEXT(NOTHING());
+((cmds1 as NEXT).nxt as NEXT).nxt = new NEXT(NOTHING());
+escape (((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING);
 ]],
     run = 1,
 }
@@ -62060,7 +62058,7 @@ pool[1] Command cmds1;
 cmds1 = new NEXT(NOTHING());
 cmds1 = new NOTHING();
 cmds1 = new NEXT(NOTHING());
-escape cmds1.NEXT.nxt.NOTHING;
+escape ((cmds1 as NEXT).nxt is NOTHING);
 ]],
     run = 1,
 }
@@ -62075,7 +62073,7 @@ pool[1] Command cmds1;
 
 cmds1 = new NEXT(NOTHING());
 cmds1 = new NEXT(NOTHING());
-escape cmds1.NOTHING;
+escape cmds1 is NOTHING;
 ]],
     run = 1,
 }
@@ -62091,7 +62089,7 @@ cmds1 = new NOTHING();
 cmds1 = new NEXT(
                 NEXT(
                     NOTHING()));
-escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
+escape (((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING);
 ]],
     run = 1,
 }
@@ -62106,7 +62104,7 @@ pool[2] Command cmds1 = new NEXT(NOTHING());
 cmds1 = new NEXT(
                 NEXT(
                     NOTHING()));
-escape cmds1.NEXT.nxt.NOTHING;
+escape (cmds1 as NEXT).nxt is NOTHING;
 ]],
     run = 1,
 }
@@ -62121,8 +62119,8 @@ pool[2] Command cmds1;
 pool&[2] Command cmds2 = &cmds1;
 
 cmds1 = new NEXT(NOTHING());
-cmds2.NEXT.nxt = new NEXT(NOTHING());
-escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
+(cmds2 as NEXT).nxt = new NEXT(NOTHING());
+escape (((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING);
 ]],
     run = 1,
 }
@@ -62137,10 +62135,10 @@ pool[2] Command cmds1;
 pool&[2] Command cmds2 = &cmds1;
 
 cmds1 = new NEXT(NOTHING());
-cmds2.NEXT.nxt = new NEXT(
+(cmds2 as NEXT).nxt = new NEXT(
                         NEXT(
                             NOTHING()));
-escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
+escape ((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING;
 ]],
     run = 1,
 }
@@ -62158,10 +62156,10 @@ cmds2 = &cmds1;
 cmds1 = new NEXT(
             NEXT(
                 NOTHING()));
-cmds2.NEXT.nxt.NEXT.nxt = new NEXT(
+((cmds2 as NEXT).nxt as NEXT).nxt = new NEXT(
                             NEXT(
                                 NOTHING()));
-escape cmds1.NEXT.nxt.NEXT.nxt.NEXT.nxt.NOTHING;
+escape (((cmds1 as NEXT).nxt as NEXT).nxt as NEXT).nxt is NOTHING;
 ]],
     run = 1,
 }
@@ -62184,7 +62182,7 @@ cmds2 = new NEXT(
             NEXT(
                 NOTHING()));
 
-escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
+escape ((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING;
 ]],
     run = 1,
 }
@@ -62206,7 +62204,7 @@ cmds2 = new NEXT(
             NEXT(
                 NOTHING()));
 
-escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
+escape ((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING;
 ]],
     run = 1,
 }
@@ -62266,9 +62264,9 @@ do
                     NOTHING()));
     var int sum = 0;
     traverse cmd111 in &&cmds1 do
-        if cmd111:NEXT then
+        if *cmd111 is NEXT then
             sum = sum + 1;
-            traverse &&cmd111:NEXT.nxt;
+            traverse &&(*cmd111 as NEXT).nxt;
         end
     end
     escape sum;
@@ -62381,13 +62379,11 @@ escape 1;
 }
 
 Test { [[
-data Dummy with
+data Dummy;
   data NIL is Dummy;
-or
-  data REC with
+  data REC is Dummy with
     var Dummy  rec;
   end
-end
 
 native do
     byte vec[3] = {5,5,5};
@@ -62422,12 +62418,11 @@ escape (_vec[0]==0) + (_vec[1]==1) + (_vec[2]==2);
 }
 
 Test { [[
-data NoRec with
+data NoRec;
     data NIL is NoRec;
-or
     data SEQ is NoRec with
+        var int x;
     end
-end
 
 pool&[] NoRec norec;
 
@@ -62440,13 +62435,11 @@ escape 1;
 }
 
 Test { [[
-data BTree with
+data BTree;
     data NIL is BTree;
-or
     data SEQ is BTree with
         var BTree  nxt;
     end
-end
 
 class BTreeTraverse with
     pool&[3] BTree btree;
@@ -62467,24 +62460,22 @@ escape 1;
 }
 
 Test { [[
-data BTree with
+data BTree;
     data NIL is BTree;
-or
     data SEQ is BTree with
         var BTree  nxt;
     end
-end
 
-pool[3] BTree bs = new BTree.SEQ(BTree.SEQ(BNIL()));
+pool[3] BTree bs = new SEQ(SEQ(NIL()));
 
 class BTreeTraverse with
     pool&[3] BTree btree;
 do
     var int ret = 0;
     traverse t in &&this.btree do
-        if t:SEQ then
+        if t is SEQ then
             ret = ret + 1;
-            traverse &&t:SEQ.nxt;
+            traverse &&(*t as SEQ).nxt;
         end
     end
     escape ret;
