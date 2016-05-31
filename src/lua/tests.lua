@@ -54850,7 +54850,7 @@ end
 var List l = ListCONS(1,
                ListCONS(2,
                    ListNIL()));
-escape 1;//((l as CONS).tail).CONS.head;
+escape 1;//((l as CONS).tail) as CONS).@head@;
 ]],
     adt = 'line 9 : invalid constructor : recursive data must use `new´',
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
@@ -54866,7 +54866,7 @@ end
 var List l = new ListCONS(1,
                   ListCONS(2,
                    ListNIL()));
-escape 1;//(((l as CONS).tail).CONS.head;
+escape 1;//(((l as CONS).tail) as CONS).@head@;
 ]],
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
@@ -54883,7 +54883,7 @@ end
 var List&& l = ListCONS(1,
                 ListCONS(2,
                     ListNIL()));
-escape 1;//((l as CONS).tail).CONS.head;
+escape 1;//((l as CONS).tail) as CONS).@head@;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     adt = 'line 7 : invalid constructor : recursive data must use `new´',
@@ -54900,7 +54900,7 @@ end
 var List&& l = new ListCONS(1,
                    ListCONS(2,
                     ListNIL()));
-escape 0;//((l as CONS).tail).CONS.head;
+escape 0;//((l as CONS).tail) as CONS).@head@;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
@@ -54921,7 +54921,7 @@ l = ListCONS(1,
         ListCONS(2,
             ListNIL()));
 
-escape 0;//((l as CONS).tail).CONS.head;
+escape 0;//((l as CONS).tail) as CONS).@head@;
 ]],
     adt = 'line 9 : invalid constructor : recursive data must use `new´',
 }
@@ -55786,9 +55786,9 @@ escape ret;
 -- POINTERS
 -- TODO: more discussion
 --  - not an lvalue if rvalue not a constructor:
---      ptr.CONS.tail = new ...             // ok
---      ptr.CONS.tail = l....               // no
---      ptr.CONS.tail = ptr.CONS.tail....   // ok
+--      ptr as CONS).@tail@ = new ...             // ok
+--      ptr as CONS).@tail@ = l....               // no
+--      ptr as CONS).@tail@ = ptr as CONS).@tail@....   // ok
 --          same prefix
 
 -- cannot cross await statements
@@ -57861,7 +57861,7 @@ data Widget;
 pool[] Widget widgets;
 traverse widget in &&widgets do
     watching *widget do
-        var int v1 = traverse &&widget:ROW.w1;
+        var int v1 = traverse &&(*widget as ROW).w1;
     end
 end
 
@@ -59880,7 +59880,6 @@ escape ret;
     run = 100,
 }
 
-]==]
 Test { [[
 data List;
     data NIL is List;
@@ -59900,39 +59899,39 @@ l = new CONS(1,
 var int ret = 0;
 
 par/or do
-    await ((l as CONS).tail).CONS.tail;
-    ret = ret + ((l as CONS).tail).CONS.tail.CONS.head);    // 0+4
+    await (((l as CONS).tail) as CONS).tail;
+    ret = ret + ((((l as CONS).tail) as CONS).tail as CONS).head;    // 0+4
     _ceu_out_assert_msg(ret == 4, "1");
-    ((l as CONS).tail).CONS.tail = ((l as CONS).tail).CONS.tail.CONS.tail);
-    ret = ret + ((l as CONS).tail).CONS.tail.CONS.head);    // 0+4+5
+    (((l as CONS).tail) as CONS).tail = ((((l as CONS).tail) as CONS).tail as CONS).tail;
+    ret = ret + ((((l as CONS).tail) as CONS).tail as CONS).head;    // 0+4+5
     _ceu_out_assert_msg(ret == 9, "2");
 
-    await ((l as CONS).tail).CONS.tail;
-    ret = ret + ((l as CONS).tail).CONS.tail is NIL;          // 0+4+5+5+1
+    await (((l as CONS).tail) as CONS).tail;
+    ret = ret + ((((l as CONS).tail) as CONS).tail is NIL);          // 0+4+5+5+1
     _ceu_out_assert_msg(ret == 15, "4");
     await FOREVER;
 with
-    await ((l as CONS).tail).CONS.tail;
+    await (((l as CONS).tail) as CONS).tail;
     _ceu_out_assert_msg(ret == 9, "3");
-    ret = ret + ((l as CONS).tail).CONS.tail.CONS.head);    // 0+4+5+5
-    ((l as CONS).tail).CONS.tail = new NIL();
+    ret = ret + ((((l as CONS).tail) as CONS).tail as CONS).head;    // 0+4+5+5
+    (((l as CONS).tail) as CONS).tail = new NIL();
 
     _ceu_out_assert_msg(ret == 15, "5");
-    await ((l as CONS).tail).CONS.tail;
+    await (((l as CONS).tail) as CONS).tail;
     // never reached
     _ceu_out_assert_msg(ret == 15, "6");
     await FOREVER;
 with
-    await ((l as CONS).tail).CONS.tail;
-    ret = ret + ((l as CONS).tail).CONS.tail is NIL;          // 0+4+5+5+1+1
+    await (((l as CONS).tail) as CONS).tail;
+    ret = ret + ((((l as CONS).tail) as CONS).tail is NIL);          // 0+4+5+5+1+1
 
-    await ((l as CONS).tail).CONS.tail;
+    await (((l as CONS).tail) as CONS).tail;
     _ceu_out_assert_msg(ret == 16, "7");
     await FOREVER;
 with
-    ((l as CONS).tail).CONS.tail = ((l as CONS).tail).CONS.tail.CONS.tail);
+    (((l as CONS).tail) as CONS).tail = ((((l as CONS).tail) as CONS).tail as CONS).tail;
     ret = ret * 2;  // (0+4+5+5+1+1) * 2
-    ((l as CONS).tail).CONS.tail = new CONS(10, NIL());
+    (((l as CONS).tail) as CONS).tail = new CONS(10, NIL());
 end
 
 escape ret;
@@ -59957,23 +59956,23 @@ data Widget;
 par/or do
     await 21s;
 with
-    pool[] Widget widgets = new Widget.ROW(
-                    Widget.V(10),
-                    Widget.V(20));
+    pool[] Widget widgets = new ROW(
+                    V(10),
+                    V(20));
 
     var int ret =
         traverse widget in &&widgets do
             watching *widget do
-                if widget:V then
-                    await (widget:V.v)s;
-                    escape widget:V.v;
+                if (*widget is V) then
+                    await ((*widget as V).v)s;
+                    escape (*widget as V).v;
 
-                else/if widget:ROW then
+                else/if (*widget is ROW) then
                     var int v1=0, v2=0;
                     par/and do
-                        v1 = traverse &&widget:ROW.w1;
+                        v1 = traverse &&(*widget as ROW).w1;
                     with
-                        v2 = traverse &&widget:ROW.w2;
+                        v2 = traverse &&(*widget as ROW).w2;
                     end
                     escape v1 + v2;
 
@@ -59993,6 +59992,7 @@ escape 0;
     run = {['~>21s;'] = 30},
 }
 
+]==]
 Test { [[
 input void OS_START;
 
@@ -60009,7 +60009,7 @@ par/or do
     await OS_START;
 with
     pool[] Widget widgets;
-    widgets = new Widget.ROW(
+    widgets = new ROW(
                     EMPTY(),
                     EMPTY());
 
@@ -60020,15 +60020,15 @@ with
             else/if (*widget is EMPTY) then
                 escape 1;
 
-            else/if widget:ROW then
+            else/if (*widget is ROW) then
                 loop i in 3 do
                     par/or do
-                        var int ret = traverse &&widget:ROW.w1;
+                        var int ret = traverse &&(*widget as ROW).w1;
                         if ret == 0 then
                             await FOREVER;
                         end
                     with
-                        var int ret = traverse &&widget:ROW.w2;
+                        var int ret = traverse &&(*widget as ROW).w2;
                         if ret == 0 then
                             await FOREVER;
                         end
@@ -62850,7 +62850,7 @@ var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(v=&p1);
 var List l1 = NIL();
 var List l2 = CONS(head=1, tail=l1);
-var List l3 = CONS(head=1, tail.CONS.head)=2, tail=NIL()));
+var List l3 = CONS(head=1, (tail as CONS).head)=2, tail=NIL()));
 
 escape 1;
 ]],
