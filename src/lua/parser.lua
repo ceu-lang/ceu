@@ -1,11 +1,34 @@
 local P, C, V, S, Cc, Ct = m.P, m.C, m.V, m.S, m.Cc, m.Ct
 
-local X = V'__SPACES'
+--[[
+local VV = V
+local spc = 0
+V = function (id)
+    return
+        m.Cmt(P'',
+            function ()
+                DBG(string.rep(' ',spc)..'>>>', id)
+                spc = spc + 2
+                return true
+            end)
+        * (
+            VV(id) * m.Cmt(P'',
+                        function ()
+                            spc = spc - 2
+                            DBG(string.rep(' ',spc)..'+++', id)
+                            return true
+                        end)
+          + m.Cmt(P'',
+                function ()
+                    spc = spc - 2
+                    DBG(string.rep(' ',spc)..'---', id)
+                    return false
+                end) * P(false)
+        )
+end
+]]
 
-local ERR_i    = 0
-local ERR_strs = {}
-local LST_i    = 0
-local LST_str  = 'begin of file'
+local X = V'__SPACES'
 
 local T = {
     {
@@ -65,10 +88,6 @@ local T = {
         '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or expression or `await´ or `emit´ or `request´ or `spawn´ or `kill´ or `traverse´ or `do´ or `interface´ or `class´ or `pre´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
-    {
-        '`;´ or statement',
-        'statement'
-    },
 }
 if RUNTESTS then
     RUNTESTS.parser_translate = RUNTESTS.parser_translate or { ok={}, original=T }
@@ -88,6 +107,20 @@ local function translate (msg)
         msg = new
     end
     return msg
+end
+
+local ERR_i    = 0
+local ERR_strs = {}
+local LST_i    = 0
+local LST_str  = 'begin of file'
+
+local IGN = 0
+local ign_inc   = m.Cmt(P'', function() IGN=IGN+1 return true  end)
+local ign_dec_t = m.Cmt(P'', function() IGN=IGN-1 return true  end)
+local ign_dec_f = m.Cmt(P'', function() IGN=IGN-1 return false end)
+
+local function I (patt)
+    return ign_inc * (patt*ign_dec_t + ign_dec_f*P(false))
 end
 
 local function ERR ()
@@ -125,6 +158,7 @@ local function KK (patt, err, nox)
     local ret = m.Cmt(patt,
                     -- SUCCESS
                     function (_, i, tk)
+                        if IGN>0 then return true end
                         if i > LST_i then
                             LST_i   = i
                             LST_str = tk
@@ -134,6 +168,7 @@ local function KK (patt, err, nox)
               + m.Cmt(P'',
                     -- FAILURE
                     function (_,i)
+                        if IGN>0 then return false end
                         return fail(i,err)
                     end) * P(false)
                            -- (avoids "left recursive" error (explicit fail))
@@ -320,7 +355,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                     OPT((V'ID_int'+V'ID_none') * OPT(K'in'*V'__Exp')) *
                 V'__Do'
     , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
-                    V'__awaits' *
+                    (V'__awaits'-I(V'Await_Code')) *
                 V'__Do'
 
     , CallStmt = V'__Exp'
@@ -448,11 +483,13 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- AWAIT, EMIT
 
-    , __awaits     = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock')
+    , __awaits     = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Await_Code')
     , _Awaits      = K'await' * V'__awaits' * OPT(K'until'*V'__Exp')
     , Await_Ext    = V'ID_ext'
-    , Await_Int    = V'__Exp' - V'Await_Wclock'
+    , Await_Int    = V'__Exp' - V'Await_Wclock' - V'Await_Code'
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
+    , Await_Code   = V'CALL'
+
     , Await_Forever = K'await' * K'FOREVER'
 
     , __evts_ps = V'__Exp' + PARENS(OPT(V'Explist'))

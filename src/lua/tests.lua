@@ -311,6 +311,22 @@ escape a;
 }
 
 Test { [[
+every Code(1) do
+end
+]],
+    parser = 'line 1 : after `every´ : expected internal identifier or `(´',
+}
+Test { [[
+await Code(1) until true;
+]],
+    env = 'TODO: until not allowed',
+}
+Test { [[
+await 1s until true;
+]],
+    env = 'TODO: until not allowed',
+}
+Test { [[
 code/delayed Code (var int x) => int
 do
     var int xx = x + 1;
