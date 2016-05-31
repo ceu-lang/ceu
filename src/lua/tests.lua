@@ -153,6 +153,7 @@ escape a;
 }
 
 -- KKK
+--]===]
 
 Test { [[
 data DDD with
@@ -54471,7 +54472,6 @@ escape _V;
 --<< REQUESTS
 
 -- ALGEBRAIC DATATYPES (ADTS)
---]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -54531,6 +54531,7 @@ end
 
 --[==[
 -- HERE:
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -59992,7 +59993,6 @@ escape 0;
     run = {['~>21s;'] = 30},
 }
 
-]==]
 Test { [[
 input void OS_START;
 
@@ -60015,7 +60015,7 @@ with
 
     traverse widget in &&widgets do
         watching *widget do
-            if widget:NIL then
+            if (*widget is NIL) then
                 await FOREVER;
             else/if (*widget is EMPTY) then
                 escape 1;
@@ -60060,17 +60060,17 @@ data List;
         var List  tail;
     end
 
-pool[] List l = new CONS(1, List.EMPTY());
+pool[] List l = new CONS(1, EMPTY());
 
 par/or do
     traverse e in &&l do
         watching *e do
-            if e:EMPTY then
+            if (*e is EMPTY) then
                 await FOREVER;
 
-            else/if e:CONS then
+            else/if (*e is CONS) then
                 loop do
-                    traverse &&e:CONS.tail;
+                    traverse &&(*e as CONS).tail;
                     _ceu_out_assert_msg(0, "0");
                 end
             else
@@ -60123,14 +60123,14 @@ par/or do
                         traverse &&(*widget as SEQ).w1 with
                             this.param = param + 1;
                         end;
-if (*widget is SEQ).w1.NIL then
+if ((*widget is SEQ).w1 is NIL) then
     await FOREVER;
 end
                     with
                         traverse &&(*widget as SEQ).w2 with
                             this.param = param + 1;
                         end;
-if (*widget is SEQ).w2.NIL then
+if ((*widget is SEQ).w2 is NIL) then
     await FOREVER;
 end
                     end
@@ -60184,14 +60184,14 @@ par/or do
                         traverse &&(*widget as SEQ).w1 with
                             this.param = param + 1;
                         end;
-if (*widget is SEQ).w1.NIL then
+if ((*widget is SEQ).w1 is NIL) then
     await FOREVER;
 end
                     with
                         traverse &&(*widget as SEQ).w2 with
                             this.param = param + 1;
                         end;
-if (*widget is SEQ).w2.NIL then
+if ((*widget is SEQ).w2 is NIL) then
     await FOREVER;
 end
                     end
@@ -60246,7 +60246,7 @@ par/or do
                         traverse &&(*widget as SEQ).w1 with
                             this.param = param + 1;
                         end;
-if (*widget is SEQ).w1.NIL then
+if ((*widget is SEQ).w1 is NIL) then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -60254,7 +60254,7 @@ end
                         traverse &&(*widget as SEQ).w2 with
                             this.param = param + 1;
                         end;
-if (*widget is SEQ).w2.NIL then
+if ((*widget is SEQ).w2 is NIL) then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -60309,7 +60309,7 @@ par/or do
                         traverse &&(*widget as SEQ).w1 with
                             this.param = param + 1;
                         end;
-if (*widget is SEQ).w1.NIL then
+if ((*widget is SEQ).w1 is NIL) then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -60317,7 +60317,7 @@ end
                         traverse &&(*widget as SEQ).w2 with
                             this.param = param + 1;
                         end;
-if (*widget is SEQ).w2.NIL then
+if ((*widget is SEQ).w2 is NIL) then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -60340,35 +60340,32 @@ escape ret;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data FORWARD with
+    data FORWARD is Command with
         var int pixels;
     end
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
         var Command  two;
     end
-end
 
 pool[] Command cmds;
 
-cmds = new Command.SEQUENCE(
-            Command.FORWARD(100),
-            Command.FORWARD(500));
+cmds = new SEQUENCE(
+            FORWARD(100),
+            FORWARD(500));
 
 par/or do
     traverse cmd in &&cmds do
 do finalize with
 end
         watching *cmd do
-            if cmd:FORWARD then
+            if (*cmd is FORWARD) then
                 await FOREVER;
 
-            else/if cmd:SEQUENCE then
-                traverse &&cmd:SEQUENCE.one;
+            else/if (*cmd is SEQUENCE) then
+                traverse &&(*cmd as SEQUENCE).one;
 
             else
             end
@@ -60387,22 +60384,20 @@ escape 10;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
     end
-end
 
-pool[] Command cmds = new Command.SEQUENCE(Command.NOTHING());
+pool[] Command cmds = new SEQUENCE(NOTHING());
 
 par/or do
     traverse cmd in &&cmds do
-        if cmd:NOTHING then
+        if (*cmd is NOTHING) then
             await FOREVER;
-        else/if cmd:SEQUENCE then
-            traverse &&cmd:SEQUENCE.one;
+        else/if (*cmd is SEQUENCE) then
+            traverse &&(*cmd as SEQUENCE).one;
         end
     end
 with
@@ -60415,33 +60410,30 @@ escape 10;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data FORWARD with
+    data FORWARD is Command with
         var int pixels;
     end
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
         var Command  two;
     end
-end
 
 pool[] Command cmds;
 
-cmds = new Command.SEQUENCE(
-            Command.FORWARD(100),
-            Command.FORWARD(500));
+cmds = new SEQUENCE(
+            FORWARD(100),
+            FORWARD(500));
 
 par/or do
     traverse cmd in &&cmds do
         watching *cmd do
-            if cmd:FORWARD then
+            if (*cmd is FORWARD) then
                 await FOREVER;
 
-            else/if cmd:SEQUENCE then
-                traverse &&cmd:SEQUENCE.one;
+            else/if (*cmd is SEQUENCE) then
+                traverse &&(*cmd as SEQUENCE).one;
 
             else
             end
@@ -60462,36 +60454,33 @@ escape 10;
 Test { [[
 input int SDL_DT;
 
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data FORWARD with
+    data FORWARD is Command with
         var int pixels;
     end
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
         var Command  two;
     end
-end
 
 // TODO: aceitar estatico
-pool[] Command cmds = new Command.SEQUENCE(
-            Command.FORWARD(100),
-            Command.FORWARD(500));
+pool[] Command cmds = new SEQUENCE(
+            FORWARD(100),
+            FORWARD(500));
 
 par/or do
     await 100s;
 with
     traverse cmd in &&cmds do
         watching *cmd do
-            if cmd:FORWARD then
+            if (*cmd is FORWARD) then
                 await FOREVER;
 
-            else/if cmd:SEQUENCE then
-                traverse &&cmd:SEQUENCE.one;
+            else/if (*cmd is SEQUENCE) then
+                traverse &&(*cmd as SEQUENCE).one;
                 _ceu_out_assert_msg(0, "bug found"); // cmds has to die entirely before children
-                traverse &&cmd:SEQUENCE.two;
+                traverse &&(*cmd as SEQUENCE).two;
             end
         end
     end
@@ -60507,37 +60496,34 @@ escape 10;
 Test { [[
 input int SDL_DT;
 
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data FORWARD with
+    data FORWARD is Command with
         var int pixels;
     end
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
         var Command  two;
     end
-end
 
 // TODO: aceitar estatico
 pool[] Command cmds;
 
-cmds = new Command.SEQUENCE(
-            Command.FORWARD(100),
-            Command.FORWARD(500));
+cmds = new SEQUENCE(
+            FORWARD(100),
+            FORWARD(500));
 
 par/or do
     await 100s;
 with
     traverse cmd in &&cmds do
         watching *cmd do
-            if cmd:FORWARD then
+            if (*cmd is FORWARD) then
                 await FOREVER;
 
-            else/if cmd:SEQUENCE then
-                traverse &&cmd:SEQUENCE.one;
-                traverse &&cmd:SEQUENCE.two;
+            else/if (*cmd is SEQUENCE) then
+                traverse &&(*cmd as SEQUENCE).one;
+                traverse &&(*cmd as SEQUENCE).two;
             end
         end
     end
@@ -60552,18 +60538,15 @@ escape 10;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
     data LEFT;
-or
-    data REPEAT with
+    data REPEAT is Command with
         var Command  command;
     end
-end
 
-pool[] Command cmds = new Command.REPEAT(
-            Command.LEFT());
+pool[] Command cmds = new REPEAT(
+            LEFT());
 
 class TurtleTurn with
 do
@@ -60572,12 +60555,12 @@ end
 
 traverse cmd in &&cmds do
     watching *cmd do
-        if cmd:LEFT then
+        if (*cmd is LEFT) then
             do TurtleTurn;
 
-        else/if cmd:REPEAT then
-            traverse &&cmd:REPEAT.command;
-            traverse &&cmd:REPEAT.command;
+        else/if (*cmd is REPEAT) then
+            traverse &&(*cmd as REPEAT).command;
+            traverse &&(*cmd as REPEAT).command;
 
         else
             _ceu_out_assert_msg(0, "not implemented");
@@ -60596,59 +60579,51 @@ escape 10;
 Test { [[
 input int SDL_DT;
 
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data AWAIT with
+    data AWAIT is Command with
         var int ms;
     end
-or
-    data RIGHT with
+    data RIGHT is Command with
         var int angle;
     end
-or
-    data LEFT with
+    data LEFT is Command with
         var int angle;
     end
-or
-    data FORWARD with
+    data FORWARD is Command with
         var int pixels;
     end
-or
-    data BACKWARD with
+    data BACKWARD is Command with
         var int pixels;
     end
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
         var Command  two;
     end
-or
-    data REPEAT with
+    data REPEAT is Command with
         var int      times;
         var Command  command;
     end
-end
 
 // TODO: aceitar estatico
 pool[] Command cmds;
 
-cmds = new Command.REPEAT(2,
-            Command.SEQUENCE(
-                Command.AWAIT(500),
-                Command.SEQUENCE(
-                    Command.RIGHT(45),
-                    Command.SEQUENCE(
-                        Command.FORWARD(100),
-                        Command.SEQUENCE(
-                            Command.LEFT(90),
-                            Command.SEQUENCE(
-                                Command.FORWARD(100),
-                                Command.SEQUENCE(
-                                    Command.RIGHT(45),
-                                    Command.SEQUENCE(
-                                        Command.BACKWARD(100),
-                                        Command.AWAIT(500)))))))));
+cmds = new REPEAT(2,
+            SEQUENCE(
+                AWAIT(500),
+                SEQUENCE(
+                    RIGHT(45),
+                    SEQUENCE(
+                        FORWARD(100),
+                        SEQUENCE(
+                            LEFT(90),
+                            SEQUENCE(
+                                FORWARD(100),
+                                SEQUENCE(
+                                    RIGHT(45),
+                                    SEQUENCE(
+                                        BACKWARD(100),
+                                        AWAIT(500)))))))));
 
 class Turtle with
     var int angle=0;
@@ -60725,42 +60700,42 @@ with
 
     traverse cmd in &&cmds do
         watching *cmd do
-            if cmd:AWAIT then
-                await (cmd:AWAIT.ms) ms;
+            if (*cmd is AWAIT) then
+                await ((*cmd as AWAIT).ms) ms;
 
-            else/if cmd:RIGHT or cmd:LEFT then
+            else/if (*cmd is RIGHT) or (*cmd is LEFT) then
                 var int angle;
-                if cmd:RIGHT then
-                    angle = cmd:RIGHT.angle;
+                if (*cmd is RIGHT) then
+                    angle = (*cmd as RIGHT).angle;
                 else
-                    angle = cmd:LEFT.angle;
+                    angle = (*cmd as LEFT).angle;
                 end
                 do TurtleTurn with
                     this.turtle  = &turtle;
                     this.angle   = angle;
-                    this.isRight = cmd:RIGHT;
+                    this.isRight = (*cmd is RIGHT);
                 end;
 
-            else/if cmd:FORWARD or cmd:BACKWARD then
+            else/if (*cmd is FORWARD) or (*cmd is BACKWARD) then
                 var int pixels;
-                if cmd:FORWARD then
-                    pixels = cmd:FORWARD.pixels;
+                if (*cmd is FORWARD) then
+                    pixels = (*cmd as FORWARD).pixels;
                 else
-                    pixels = cmd:BACKWARD.pixels;
+                    pixels = (*cmd as BACKWARD).pixels;
                 end
                 do TurtleMove with
                     this.turtle    = &turtle;
                     this.pixels    = pixels;
-                    this.isForward = cmd:FORWARD;
+                    this.isForward = (*cmd is FORWARD);
                 end;
 
-            else/if cmd:SEQUENCE then
-                traverse &&cmd:SEQUENCE.one;
-                traverse &&cmd:SEQUENCE.two;
+            else/if (*cmd is SEQUENCE) then
+                traverse &&(*cmd as SEQUENCE).one;
+                traverse &&(*cmd as SEQUENCE).two;
 
-            else/if cmd:REPEAT then
-                loop i in cmd:REPEAT.times do
-                    traverse &&cmd:REPEAT.command;
+            else/if (*cmd is REPEAT) then
+                loop i in (*cmd as REPEAT).times do
+                    traverse &&(*cmd as REPEAT).command;
                 end
 
             else
@@ -60780,50 +60755,46 @@ escape 10;
 
 -- creates a loop when reusing address of organisms being killed
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data AWAIT with
+    data AWAIT is Command with
         var int ms;
     end
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
         var Command  two;
     end
-or
-    data REPEAT with
+    data REPEAT is Command with
         var int      times;
         var Command  command;
     end
-end
 
 pool[] Command cmds;
 
-cmds = new Command.REPEAT(2,
-            Command.SEQUENCE(
-                Command.AWAIT(100),
-                Command.SEQUENCE(
-                    Command.AWAIT(100),
-                    Command.AWAIT(500))));
+cmds = new REPEAT(2,
+            SEQUENCE(
+                AWAIT(100),
+                SEQUENCE(
+                    AWAIT(100),
+                    AWAIT(500))));
 
 var int ret = 0;
 
 traverse cmd in &&cmds do
     watching *cmd do
-        if cmd:AWAIT then
-            await (cmd:AWAIT.ms) ms;
+        if (*cmd is AWAIT) then
+            await ((*cmd as AWAIT).ms) ms;
             ret = ret + 1;
 
-        else/if cmd:SEQUENCE then
+        else/if (*cmd is SEQUENCE) then
             ret = ret + 2;
-            traverse &&cmd:SEQUENCE.one;
-            traverse &&cmd:SEQUENCE.two;
+            traverse &&(*cmd as SEQUENCE).one;
+            traverse &&(*cmd as SEQUENCE).two;
 
-        else/if cmd:REPEAT then
-            loop i in cmd:REPEAT.times do
+        else/if (*cmd is REPEAT) then
+            loop i in (*cmd as REPEAT).times do
                 ret = ret + 3;
-                traverse &&cmd:REPEAT.command;
+                traverse &&(*cmd as REPEAT).command;
             end
 
         else
@@ -60847,49 +60818,45 @@ finalize with
     _free(&&ptr!);
 end
 
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data AWAIT with
+    data AWAIT is Command with
         var int ms;
     end
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
         var Command  two;
     end
-or
-    data REPEAT with
+    data REPEAT is Command with
         var int      times;
         var Command  command;
     end
-end
 
 // TODO: aceitar estatico
-pool[] Command cmds = new Command.REPEAT(2,
-            Command.SEQUENCE(
-                Command.AWAIT(100),
-                Command.SEQUENCE(
-                    Command.AWAIT(300),
-                    Command.AWAIT(500))));
+pool[] Command cmds = new REPEAT(2,
+            SEQUENCE(
+                AWAIT(100),
+                SEQUENCE(
+                    AWAIT(300),
+                    AWAIT(500))));
 
 var int ret = 0;
 
 traverse cmd in &&cmds do
     watching *cmd do
-        if cmd:AWAIT then
-            await (cmd:AWAIT.ms) ms;
+        if (*cmd is AWAIT) then
+            await ((*cmd as AWAIT).ms) ms;
             ret = ret + 1;
 
-        else/if cmd:SEQUENCE then
+        else/if (*cmd is SEQUENCE) then
             ret = ret + 2;
-            traverse &&cmd:SEQUENCE.one;
-            traverse &&cmd:SEQUENCE.two;
+            traverse &&(*cmd as SEQUENCE).one;
+            traverse &&(*cmd as SEQUENCE).two;
 
-        else/if cmd:REPEAT then
-            loop i in cmd:REPEAT.times do
+        else/if (*cmd is REPEAT) then
+            loop i in (*cmd as REPEAT).times do
                 ret = ret + 3;
-                traverse &&cmd:REPEAT.command;
+                traverse &&(*cmd as REPEAT).command;
             end
 
         else
@@ -60916,7 +60883,7 @@ pool[] List ls;
 ls = new CONS(NIL());
 
 traverse l in &&ls do
-    if l:NIL then
+    if (*l is NIL) then
         await FOREVER;
     else
         watching *l do
@@ -60946,14 +60913,14 @@ data List;
 pool[] List ls;
 ls = new CONS(1,
             CONS(2,
-                List.HOLD()));
+                HOLD()));
 
 var int ret = 0;
 
 traverse l in &&ls do
     ret = ret + 1;
     watching *l do
-        if l:HOLD then
+        if (*l is HOLD) then
             do finalize with
                 ret = ret + 1;
             end
@@ -60985,7 +60952,7 @@ data List;
 pool[] List ls;
 ls = new CONS(1,
             CONS(2,
-                List.HOLD()));
+                HOLD()));
 
 var int ret = 0;
 
@@ -60993,7 +60960,7 @@ do
     traverse l in &&ls do
         ret = ret + 1;
         watching *l do
-            if l:HOLD then
+            if (*l is HOLD) then
                 do finalize with
                     ret = ret + 1;
                 end
@@ -61025,14 +60992,14 @@ data List;
 
 pool[10] List ls = new CONS(1,
             CONS(2,
-                List.HOLD()));
+                HOLD()));
 
 var int ret = 0;
 
 traverse l in &&ls do
     ret = ret + 1;
     watching *l do
-        if l:HOLD then
+        if *l is HOLD then
             do finalize with
                 ret = ret + 1;
             end
@@ -61062,7 +61029,7 @@ data List;
 
 pool[10] List ls = new CONS(1,
             CONS(2,
-                List.HOLD()));
+                HOLD()));
 
 var int ret = 0;
 
@@ -61070,7 +61037,7 @@ do
     traverse l in &&ls do
         ret = ret + 1;
         watching *l do
-            if l:HOLD then
+            if *l is HOLD then
                 do finalize with
                     ret = ret + 1;
                 end
@@ -61122,10 +61089,10 @@ pool[10] List list;
 
 loop i in 10 do
     traverse l in &&list do
-        if l:NIL then
+        if (*l is NIL) then
             list = new CONS(i, NIL());
         else/if (*l as CONS) then
-            if ((l as CONS).tail).NIL then
+            if ((l as CONS).tail) is NIL then
                 ((l as CONS).tail) = new CONS(i, NIL());
             else
                 traverse &&((l as CONS).tail);
@@ -61327,13 +61294,11 @@ escape _V;
 }
 
 Test { [[
-data L with
+data L;
     data NIL is L;
-or
-    data VAL with
+    data VAL is L with
         var L  l;
     end
-end
 
 pool[] L ls;
 
@@ -61343,8 +61308,8 @@ var int&& p = &&v;
 traverse l in &&ls do
     await 1s;
     *p = 1;
-    if l:VAL then
-        traverse &&l:VAL.l;
+    if *l is VAL then
+        traverse &&(*l as VAL).l;
     end
 end
 
@@ -61394,15 +61359,13 @@ escape 1;
 }
 
 Test { [[
-data Stmt with
+data Stmt;
     data NIL is Stmt;
-or
     data SEQ is Stmt with
         var Stmt s1;
     end
-end
 
-pool[2] Stmt stmts = new Stmt.NIL();
+pool[2] Stmt stmts = new NIL();
 
 var int ddd =
     traverse stmt in &&stmts do
@@ -61416,15 +61379,13 @@ escape ddd;
 }
 
 Test { [[
-data Stmt with
+data Stmt;
     data NIL is Stmt;
-or
     data SEQ is Stmt with
         var Stmt s1;
     end
-end
 
-pool[] Stmt stmts = new Stmt.NIL();
+pool[] Stmt stmts = new NIL();
 
 var int v1 = 10;
 
@@ -61457,7 +61418,7 @@ pool[3] List list = new
 
 var int s1 =
     traverse l in &&list do
-        if l:NIL then
+        if (*l is NIL) then
             escape 0;
         else
             watching *l do
@@ -61489,7 +61450,7 @@ pool[3] List list = new
 var int s2 = 0;
 var int s1 =
     traverse l in &&list do
-        if l:NIL then
+        if (*l is NIL) then
             escape 0;
         else
             watching *l do
@@ -61509,7 +61470,7 @@ Test { [[
 data T with
     data NIL is List;
 or
-    data NEXT with
+    data NEXT is Command with
         var T  next;
     end
 end
@@ -61537,42 +61498,37 @@ escape v;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data AWAIT with
+    data AWAIT is Command with
         var int ms;
     end
-or
-    data STREAM_ROOT with
+    data STREAM_ROOT is Command with
         var Command  run;
         var Command  now;
         var Command  nxt;
     end
-or
-    data STREAM_NEXT with
+    data STREAM_NEXT is Command with
         var Command  one;
         var Command  two;
     end
-or
     data STREAM_END;
-end
 
 pool[100] Command cmds = new
-    Command.STREAM_ROOT(
-        Command.AWAIT(1000),
-        Command.STREAM_END(),
-        Command.STREAM_END());
+    STREAM_ROOT(
+        AWAIT(1000),
+        STREAM_END(),
+        STREAM_END());
 
-                cmds.STREAM_ROOT.nxt = new Command.STREAM_END();
+                (cmds as STREAM_ROOT).nxt = new STREAM_END();
 
     traverse cmd in &&cmds do
         watching *cmd do
-            if cmd:AWAIT then
-                await (cmd:AWAIT.ms) ms;
+            if (*cmd is AWAIT) then
+                await ((*cmd as AWAIT).ms) ms;
 
-            else/if cmd:STREAM_ROOT then
-                cmds.STREAM_ROOT.nxt = new Command.STREAM_END();
+            else/if (*cmd is STREAM_ROOT) then
+                (cmds as STREAM_ROOT).nxt = new STREAM_END();
             end
         end
     end
@@ -61599,33 +61555,29 @@ escape 1;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data STREAM_ROOT with
+    data STREAM_ROOT is Command with
         var Command  run;
         var Command  now;
         var Command  nxt;
     end
-or
-    data STREAM_NEXT with
+    data STREAM_NEXT is Command with
         var Command  one;
         var Command  two;
     end
-or
     data STREAM_END;
-end
 
 pool[] Command cmds;
-cmds.STREAM_ROOT.now.STREAM_NEXT.one = cmds.STREAM_ROOT.nxt;
-cmds.STREAM_ROOT.run = cmds.STREAM_ROOT.nxt.STREAM_NEXT.two;
+((cmds as STREAM_ROOT).now as STREAM_NEXT).one = (cmds as STREAM_ROOT).nxt;
+(cmds as STREAM_ROOT).run = ((cmds as STREAM_ROOT).nxt as STREAM_NEXT).two;
 traverse cmd in &&cmds do
-    cmd:STREAM_ROOT.now.STREAM_NEXT.one = cmd:STREAM_ROOT.nxt;
-    cmd:STREAM_ROOT.run = cmd:STREAM_ROOT.nxt.STREAM_NEXT.two;
-    cmds.STREAM_ROOT.now.STREAM_NEXT.one = cmds.STREAM_ROOT.nxt;
-    cmds.STREAM_ROOT.run = cmds.STREAM_ROOT.nxt.STREAM_NEXT.two;
+    ((*cmd as STREAM_ROOT).now as STREAM_NEXT).one = (*cmd as STREAM_ROOT).nxt;
+    (*cmd as STREAM_ROOT).run = ((*cmd as STREAM_ROOT).nxt as STREAM_NEXT).two;
+    ((cmds as STREAM_ROOT).now as STREAM_NEXT).one = (cmds as STREAM_ROOT).nxt;
+    (cmds as STREAM_ROOT).run = ((cmds as STREAM_ROOT).nxt as STREAM_NEXT).two;
 end
-cmds.STREAM_ROOT.now.STREAM_NEXT.one = cmds.STREAM_ROOT.now;
+((cmds as STREAM_ROOT).now as STREAM_NEXT).one = (cmds as STREAM_ROOT).now;
 escape 1;
 ]],
     adt = 'line 27 : cannot assign parent to child',
@@ -61636,45 +61588,39 @@ data Val with
     var int v;
 end
 
-data Exp with
+data Exp;
     data NIL is Exp;
-or
-    data VAL with
+    data VAL is Exp with
         var Val v;
     end
-or
-    data ADD with
+    data ADD is Exp with
         var Exp e1;
         var Exp e2;
     end
-end
 
-data Stmt with
+data Stmt;
     data NIL is Stmt;
-or
     data SEQ is Stmt with
         var Stmt s1;
         var Stmt s2;
     end
-or
-    data PRINT with
+    data PRINT is Stmt with
         var Exp e;
     end
-end
 
 pool[] Stmt stmts =
-    new Stmt.SEQ(
-            Stmt.PRINT(
-                Exp.ADD(
-                    Exp.VAL(Val(10)),
-                    Exp.VAL(Val(5)))),
-            Stmt.NIL());
+    new SEQ(
+            PRINT(
+                ADD(
+                    VAL(Val(10)),
+                    VAL(Val(5)))),
+            NIL());
 
 traverse stmt in stmts do
-    if stmt:SEQ then
-        traverse &&stmt:SEQ.s1;
-    else/if stmt:PRINT then
-        var int v = traverse &&stmt:PRINT.e;
+    if *stmt is SEQ then
+        traverse &&(*stmt as SEQ).s1;
+    else/if *stmt is PRINT then
+        var int v = traverse &&(*stmt as PRINT).e;
     end
 end
 
@@ -61685,37 +61631,34 @@ escape 1;
 
 -- par/or kills (2) which should be aborted
 Test { [[
-data Exp with
+data Exp;
     data NIL is Exp;
-or
-    data V with
+    data V is Exp with
         var int e;
     end
-or
-    data ADD with
+    data ADD is Exp with
         var Exp e1;
         var Exp e2;
     end
-end
 
 var int ret = 0;
 
 pool[] Exp exps = new
-    Exp.ADD(Exp.NIL(), Exp.V(20));
+    ADD(NIL(), V(20));
 
 traverse e in &&exps do
     watching *e do
-        if e:ADD then
+        if *e is ADD then
             ret = ret + 1;
             par/or do
-                traverse &&e:ADD.e2;
+                traverse &&(*e as ADD).e2;
             with
-                traverse &&e:ADD.e1;
+                traverse &&(*e as ADD).e1;
             end
             await 5s;
-        else/if e:V then
+        else/if *e is V then
             every 1s do
-                ret = ret + e:V.e;
+                ret = ret + (*e as V).e;
             end
         end
     end
@@ -61729,22 +61672,18 @@ escape ret;
 }
 
 Test { [[
-data Exp with
+data Exp;
     data NIL is Exp;
-or
-    data SUB with
+    data SUB is Exp with
         var Exp e2;
     end
-end
 
-data Stmt with
+data Stmt;
     data NIL is Stmt;
-or
     data SEQ is Stmt with
         var Stmt s1;
         var Exp e;
     end
-end
 
     pool[] Stmt stmts;
     traverse stmt in &&stmts do
@@ -61849,11 +61788,9 @@ escape sum;
 }
 
 Test { [[
-data X with
+data X;
     data NIL is X;
-or
     data NIL is X;
-end
 
 escape 1;
 ]],
@@ -61861,23 +61798,19 @@ escape 1;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
         var Command  two;
     end
-end
 
-data CommandQueue with
+data CommandQueue;
     data NOTHING is CommandQueue;
-or
     data NXT with
         var Command       cmd;
         var CommandQueue  nxt;
     end
-end
 
 escape 1;
 ]],
@@ -61886,33 +61819,29 @@ escape 1;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
         var Command  two;
     end
-end
 
-data CommandQueue with
+data CommandQueue;
     data NIL is CommandQueue;
-or
     data NXT with
         var Command       cmd;
         var CommandQueue  nxt;
     end
-end
 
-pool[10] CommandQueue cq1 = new Command.NOTHING();
-pool[10] CommandQueue cq2 = new CommandQueue.NIL();
+pool[10] CommandQueue cq1 = new NOTHING();
+pool[10] CommandQueue cq2 = new NIL();
 
 pool[10] CommandQueue cq3 = new
-    CommandQueue.NXT(
-        Command.SEQUENCE(
-            Command.NOTHING(),
-            Command.NOTHING()),
-        CommandQueue.NIL());
+    NXT(
+        SEQUENCE(
+            NOTHING(),
+            NOTHING()),
+        NIL());
 
 escape 1;
 ]],
@@ -61920,16 +61849,14 @@ escape 1;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command  one;
         var Command  two;
     end
-end
 
-data CommandQueue with
+data CommandQueue;
     data NIL is CommandQueue;
 or
     data NXT with
@@ -61942,9 +61869,9 @@ pool[10] CommandQueue cq1 = new CommandQueue.NIL();
 
 pool[10] CommandQueue cq2 = new
     CommandQueue.NXT(
-        Command.SEQUENCE(
-            Command.NOTHING(),
-            Command.NOTHING()),
+        SEQUENCE(
+            NOTHING(),
+            NOTHING()),
         CommandQueue.NIL());
 
 escape cq1.NIL + cq2.NXT.cmd.SEQUENCE.one.NOTHING;
@@ -61968,13 +61895,11 @@ escape lll is NIL;       // l is a pointer to the root
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[] Command cmds1;
 pool&[] Command cmds2;
@@ -61983,13 +61908,11 @@ escape 1;
     ref = 'line 10 : uninitialized variable "cmds2" crossing compound statement (tests.lua:1)',
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[] Command cmds1;
 pool&[] Command cmds2=&cmds1;
@@ -61998,13 +61921,11 @@ escape 1;
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[] Command cmds1;
 pool&[] Command cmds2;
@@ -62014,18 +61935,16 @@ escape 1;
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[] Command cmds1;
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
+cmds1 = new NEXT(
+            NEXT(
+                NOTHING()));
 
 pool&[] Command cmds2 = &cmds1;
 
@@ -62034,18 +61953,16 @@ escape cmds2.NEXT.nxt.NEXT.nxt.NOTHING;
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool&[] Command cmds2
-    = &new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
+    = &new NEXT(
+            NEXT(
+                NOTHING()));
 
 escape 1;
 ]],
@@ -62056,264 +61973,238 @@ escape 1;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[2] Command cmds1;
 pool&[2] Command cmds2
         = &cmds1;
 
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds1 = new Command.NOTHING();
-cmds2 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
+cmds1 = new NEXT(
+            NEXT(
+                NOTHING()));
+cmds1 = new NOTHING();
+cmds2 = new NEXT(
+            NEXT(
+                NOTHING()));
 escape cmds1.NEXT;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[2] Command cmds1;
 pool&[2] Command cmds2
         = &cmds1;
 
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds2 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
+cmds1 = new NEXT(
+            NEXT(
+                NOTHING()));
+cmds2 = new NEXT(
+            NEXT(
+                NOTHING()));
 escape cmds1.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[2] Command cmds1;
 
-cmds1 = new Command.NEXT(
-                Command.NEXT(
-                    Command.NEXT(
-                        Command.NOTHING())));
+cmds1 = new NEXT(
+                NEXT(
+                    NEXT(
+                        NOTHING())));
 escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[2] Command cmds1;
 
-cmds1 = new Command.NEXT(Command.NOTHING());
-cmds1.NEXT.nxt = new Command.NEXT(Command.NOTHING());
-cmds1.NEXT.nxt.NEXT.nxt = new Command.NEXT(Command.NOTHING());
+cmds1 = new NEXT(NOTHING());
+cmds1.NEXT.nxt = new NEXT(NOTHING());
+cmds1.NEXT.nxt.NEXT.nxt = new NEXT(NOTHING());
 escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[1] Command cmds1;
 
-cmds1 = new Command.NEXT(Command.NOTHING());
-cmds1 = new Command.NOTHING();
-cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1 = new NEXT(NOTHING());
+cmds1 = new NOTHING();
+cmds1 = new NEXT(NOTHING());
 escape cmds1.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[1] Command cmds1;
 
-cmds1 = new Command.NEXT(Command.NOTHING());
-cmds1 = new Command.NEXT(Command.NOTHING());
+cmds1 = new NEXT(NOTHING());
+cmds1 = new NEXT(NOTHING());
 escape cmds1.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
-pool[2] Command cmds1 = new Command.NEXT(Command.NOTHING());
-cmds1 = new Command.NOTHING();
-cmds1 = new Command.NEXT(
-                Command.NEXT(
-                    Command.NOTHING()));
+pool[2] Command cmds1 = new NEXT(NOTHING());
+cmds1 = new NOTHING();
+cmds1 = new NEXT(
+                NEXT(
+                    NOTHING()));
 escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
-pool[2] Command cmds1 = new Command.NEXT(Command.NOTHING());
-cmds1 = new Command.NEXT(
-                Command.NEXT(
-                    Command.NOTHING()));
+pool[2] Command cmds1 = new NEXT(NOTHING());
+cmds1 = new NEXT(
+                NEXT(
+                    NOTHING()));
 escape cmds1.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[2] Command cmds1;
 pool&[2] Command cmds2 = &cmds1;
 
-cmds1 = new Command.NEXT(Command.NOTHING());
-cmds2.NEXT.nxt = new Command.NEXT(Command.NOTHING());
+cmds1 = new NEXT(NOTHING());
+cmds2.NEXT.nxt = new NEXT(NOTHING());
 escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[2] Command cmds1;
 pool&[2] Command cmds2 = &cmds1;
 
-cmds1 = new Command.NEXT(Command.NOTHING());
-cmds2.NEXT.nxt = new Command.NEXT(
-                        Command.NEXT(
-                            Command.NOTHING()));
+cmds1 = new NEXT(NOTHING());
+cmds2.NEXT.nxt = new NEXT(
+                        NEXT(
+                            NOTHING()));
 escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[3] Command cmds1;
 pool&[3] Command cmds2;
 cmds2 = &cmds1;
 
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds2.NEXT.nxt.NEXT.nxt = new Command.NEXT(
-                            Command.NEXT(
-                                Command.NOTHING()));
+cmds1 = new NEXT(
+            NEXT(
+                NOTHING()));
+cmds2.NEXT.nxt.NEXT.nxt = new NEXT(
+                            NEXT(
+                                NOTHING()));
 escape cmds1.NEXT.nxt.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[10] Command cmds1;
 
 pool&[10] Command cmds2;
 cmds2 = &cmds1;
 
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds2 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
+cmds1 = new NEXT(
+            NEXT(
+                NOTHING()));
+cmds2 = new NEXT(
+            NEXT(
+                NOTHING()));
 
 escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
     run = 1,
 }
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[] Command cmds1;
 
 pool&[] Command cmds2 = &cmds1;
 
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds2 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
+cmds1 = new NEXT(
+            NEXT(
+                NOTHING()));
+cmds2 = new NEXT(
+            NEXT(
+                NOTHING()));
 
 escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 ]],
@@ -62321,38 +62212,36 @@ escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 pool[] Command cmds1;
 
 pool&[] Command cmds2;
 cmds2 = &cmds1;
 
-cmds1 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
-cmds2 = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
+cmds1 = new NEXT(
+            NEXT(
+                NOTHING()));
+cmds2 = new NEXT(
+            NEXT(
+                NOTHING()));
 
 var int sum = 0;
 
 traverse cmd in &&cmds1 do
-    if cmd:NEXT then
+    if (*cmd is NEXT) then
         sum = sum + 1;
-        traverse &&cmd:NEXT.nxt;
+        traverse &&(*cmd as NEXT).nxt;
     end
 end
 traverse cmd in &&cmds2 do
-    if cmd:NEXT then
+    if (*cmd is NEXT) then
         sum = sum + 1;
-        traverse &&cmd:NEXT.nxt;
+        traverse &&(*cmd as NEXT).nxt;
     end
 end
 
@@ -62363,20 +62252,18 @@ escape sum;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 class Run with
     pool&[] Command cmds1;
 do
-    cmds1 = new Command.NEXT(
-                Command.NEXT(
-                    Command.NOTHING()));
+    cmds1 = new NEXT(
+                NEXT(
+                    NOTHING()));
     var int sum = 0;
     traverse cmd111 in &&cmds1 do
         if cmd111:NEXT then
@@ -62403,13 +62290,11 @@ escape ddd;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
     pool[] Command cmds;
     traverse cmd in &&cmds do
@@ -62422,30 +62307,28 @@ escape 1;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
-    data NEXT with
+    data NEXT is Command with
         var Command  nxt;
     end
-end
 
 class Run with
     pool&[] Command cmds;
 do
     var int sum = 0;
     traverse cmd in &&cmds do
-        if cmd:NEXT then
+        if (*cmd is NEXT) then
             sum = sum + 1;
-            traverse &&cmd:NEXT.nxt;
+            traverse &&(*cmd as NEXT).nxt;
         end
     end
     escape sum;
 end
 
-pool[] Command cmds = new Command.NEXT(
-            Command.NEXT(
-                Command.NOTHING()));
+pool[] Command cmds = new NEXT(
+            NEXT(
+                NOTHING()));
 
 var int ret = do Run with
     this.cmds = &cmds;
@@ -62458,32 +62341,29 @@ escape ret;
 }
 
 Test { [[
-data Command with
+data Command;
     data NOTHING is Command;
-or
     data AWAIT is Command;
-or
-    data PAROR with
+    data PAROR is Command with
         var Command  one;
     end
-end
 
 pool[] Command cmds;
 
-cmds = new Command.PAROR(
-            Command.PAROR(
-                Command.AWAIT()));
+cmds = new PAROR(
+            PAROR(
+                AWAIT()));
 
 class Run with
     pool&[] Command cmds;
 do
     traverse cmd in &&cmds do
-        if cmd:AWAIT then
+        if (*cmd is AWAIT) then
             await 1ms;
 
-        else/if cmd:PAROR then
+        else/if (*cmd is PAROR) then
             par/or do
-                traverse &&cmd:PAROR.one;
+                traverse &&(*cmd as PAROR).one;
             with
             end
         end
@@ -64441,7 +64321,7 @@ end
 }
 
 Test { [[
-data Stmt with
+data Stmt;
     data NIL;
 or
     data SEQ is Stmt with
@@ -65949,10 +65829,10 @@ do return end
 
 -- BUG: new inside constructor (requires stack manipulation?)
 Test { [[
-data Command with
+data Command;
     data NOTHING;
 or
-    data SEQUENCE with
+    data SEQUENCE is Command with
         var Command* one;
         var Command* two;
     end
@@ -65964,7 +65844,7 @@ do
 end
 
 var TCommand cmds with
-    this.cs = new Command.NOTHING();
+    this.cs = new NOTHING();
 end;
 
 escape 1;
