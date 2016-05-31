@@ -49,10 +49,6 @@ local T = {
     },
 
     {
-        '`not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´ or `call´ or `call/recursive´',
-        'expression'
-    },
-    {
         'class identifier or `new´ or abstraction identifier or `traverse´ or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
         'expression'
     },
@@ -224,7 +220,6 @@ KEYS = P
 'nothing' +
 'not' +
 'new' +
-'native/pre' +
 'native' +
 'loop' +
 'kill' +
@@ -401,17 +396,15 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     , _Nats  = K'native' *
                     OPT(KK'/'*(CK'pure'+CK'const'+CK'nohold'+CK'plain')) *
-                        V'__nat1' * (KK',' * V'__nat1')^0
-    , __nat1 = V'__ID_nat' * OPT('()')
--- TODO: remove ()
+                        V'__ID_nat' * (KK',' * V'__ID_nat')^0
 
     , Nat_Block = OPT(CK'pre') * K'native' * (#K'do')*'do' *
                 ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
              X* K'end'
 
-    , Nat_Stmt = KK'{' * C(V'__nat2') * KK'}'
-    , Nat_Exp  = KK'{' * C(V'__nat2') * KK'}'
-    , __nat2   = ((1-S'{}') + '{'*V'__nat2'*'}')^0
+    , Nat_Stmt = KK'{' * C(V'__nat') * KK'}'
+    , Nat_Exp  = KK'{' * C(V'__nat') * KK'}'
+    , __nat   = ((1-S'{}') + '{'*V'__nat'*'}')^0
 
     -- Lua
 

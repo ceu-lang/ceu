@@ -9,7 +9,7 @@ native do
         TM_REQ_PAUSE = -1,
     };
 end
-native/nohold _snap_seek();
+native/nohold _snap_seek;
 
 #ifndef TM_QUEUE
 #ifndef TM_SNAP
