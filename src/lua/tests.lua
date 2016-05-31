@@ -153,7 +153,6 @@ escape a;
 }
 
 -- KKK
---]===]
 
 Test { [[
 data DDD with
@@ -54472,6 +54471,7 @@ escape _V;
 --<< REQUESTS
 
 -- ALGEBRAIC DATATYPES (ADTS)
+--]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -54531,7 +54531,6 @@ end
 
 --[==[
 -- HERE:
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -56191,17 +56190,15 @@ escape l is NIL;
 }
 
 Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
-        var int v;
-        var T&&  nxt;
-    end
+data T;
+data NIL is T;
+data NXT is T with
+    var int v;
+    var T&&  nxt;
 end
 pool[] T ts;
 do
-    ts = new T.NIL();
+    ts = new NIL();
 end
 escape ts is NIL;
 ]],
@@ -56241,7 +56238,7 @@ escape ((l as CONS).tail) is NIL;
 Test { DATA..[[
 pool[2] List l = new CONS(1, NIL());
 ((l as CONS).tail) = new CONS(2, NIL()); // fails
-escape ((l as CONS).tail).CONS.head;
+escape (((l as CONS).tail) as CONS).head;
 ]],
     run = 2,
 }
@@ -56261,18 +56258,18 @@ escape ((l as CONS).head);
 -- 4-5-6-NIL => NIL     (all fail)
 Test { DATA..[[
 pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
-_ceu_out_assert_msg(((l as CONS).tail).CONS.tail.NIL, "1");
+_ceu_out_assert_msg((((l as CONS).tail) as CONS).tail is NIL, "1");
 l = new NIL();
 l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
-_ceu_out_assert_msg(((l as CONS).tail).CONS.tail.NIL, "2");
-escape ((l as CONS).tail).CONS.head;
+_ceu_out_assert_msg((((l as CONS).tail) as CONS).tail is NIL, "2");
+escape (((l as CONS).tail) as CONS).head;
 ]],
     run = 5,
 }
 
 Test { DATA..[[
 pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
-_ceu_out_assert_msg(((l as CONS).tail).CONS.tail.NIL, "1");
+_ceu_out_assert_msg((((l as CONS).tail) as CONS).tail is NIL, "1");
 l = new CONS(4, CONS(5, CONS(6, NIL())));   // all fail
 escape l is NIL;
 ]],
@@ -56285,11 +56282,11 @@ escape l is NIL;
 Test { DATA..[[
 pool[2] List l;
 l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
-_assert(((l as CONS).tail).CONS.tail.NIL);
+_assert((((l as CONS).tail) as CONS).tail is NIL);
 l = new NIL();                                                // clear all
 l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
-_assert(((l as CONS).tail).CONS.tail.NIL);
-escape ((l as CONS).head) + ((l as CONS).tail).CONS.head + (((l as CONS).tail).CONS.tail.NIL);
+_assert((((l as CONS).tail) as CONS).tail is NIL);
+escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + (((((l as CONS).tail) as CONS).tail is NIL));
 ]],
     run = 10,
 }
@@ -56310,7 +56307,7 @@ escape ((l as CONS).head) + ((l as CONS).tail).CONS.head + (((l as CONS).tail).C
 Test { DATA..[[
 pool[2] List l = new CONS(1, NIL());
 ((l as CONS).tail) = new CONS(2, NIL());
-escape ((l as CONS).head) + ((l as CONS).tail).CONS.head;
+escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head;
 ]],
     run = 3,
 }
@@ -56321,15 +56318,15 @@ escape ((l as CONS).head) + ((l as CONS).tail).CONS.head;
 Test { DATA..[[
 pool[2] List lll;
 lll = new CONS(1, CONS(2, NIL()));
-lll = ll((l as CONS).tail);    // parent=child
-escape ll((l as CONS).head);
+lll = (lll as CONS).tail;    // parent=child
+escape (lll as CONS).head;
 ]],
     run = 2,
 }
 Test { DATA..[[
 pool[2] List lll = new CONS(1, CONS(2, NIL()));
-lll = ll((l as CONS).tail);
-ll((l as CONS).tail) = new CONS(3, NIL());
+lll = (lll as CONS).tail;
+(lll as CONS).tail = new CONS(3, NIL());
 escape 1;
 ]],
     run = 1,
@@ -56337,9 +56334,9 @@ escape 1;
 Test { DATA..[[
 pool[2] List lll;
 lll = new CONS(1, CONS(2, NIL()));
-lll = ll((l as CONS).tail);    // parent=child
-ll((l as CONS).tail) = new CONS(3, CONS(4, NIL()));    // 4 fails
-escape ll((l as CONS).head) + ll((l as CONS).tail).CONS.head + ll((l as CONS).tail).CONS.tail is NIL;
+lll = (lll as CONS).tail;    // parent=child
+(lll as CONS).tail = new CONS(3, CONS(4, NIL()));    // 4 fails
+escape (lll as CONS).head + (((lll as CONS).tail) as CONS).head + ((((lll as CONS).tail) as CONS).tail is NIL);
 ]],
     run = 6,
 }
@@ -56347,7 +56344,7 @@ Test { DATA..[[
 pool[2] List l = new CONS(1, CONS(2, NIL()));
 l = ((l as CONS).tail);    // parent=child
 ((l as CONS).tail) = new CONS(3, CONS(4, NIL()));    // 4 fails
-escape ((l as CONS).head) + ((l as CONS).tail).CONS.head + ((l as CONS).tail).CONS.tail is NIL;
+escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + ((((l as CONS).tail) as CONS).tail is NIL);
 ]],
     run = 6,
 }
@@ -56368,37 +56365,33 @@ escape 1;
 -->>> OPTION TYPES
 
 Test { [[
-data OptionInt with
-    tag NIL;
-or
-    tag SOME with
-        var int v;
-    end
+data OptionInt;
+data NIL1 is OptionInt;
+data SOME1 is OptionInt with
+    var int v;
 end
 
-data OptionPtr with
-    tag NIL;
-or
-    tag SOME with
-        var int&& v;
-    end
+data OptionPtr;
+data NIL2 is OptionPtr;
+data SOME2 is OptionPtr with
+    var int&& v;
 end
 
 var int ret = 0;            // 0
 
-var OptionInt i = OptionInt.NIL();
-var OptionPtr p = OptionPtr.NIL();
-ret = ret + i.NIL + p is NIL;  // 2
+var OptionInt i = NIL1();
+var OptionPtr p = NIL2();
+ret = ret + (i is NIL1) + (p is NIL2);  // 2
 
-i = OptionInt.SOME(3);
-ret = ret + i.SOME.v;       // 5
+i = SOME1(3);
+ret = ret + (i as SOME1).v;       // 5
 
-p = OptionPtr.SOME(&&ret);
-*p.SOME.v = *p.SOME.v + 2;    // 7
+p = SOME2(&&ret);
+*(p as SOME).v = *(p as SOME2).v + 2;    // 7
 
 var int v = 10;
-p = OptionPtr.SOME(&&v);
-*p.SOME.v = *p.SOME.v + 1;
+p = SOME2(&&v);
+*(p as SOME).v = *(p as SOME2).v + 1;
 
 ret = ret + v;              // 18
 escape ret;
@@ -56852,20 +56845,16 @@ escape 1;
 }
 
 Test { [[
-data OptionInt with
-    tag NIL;
-or
-    tag SOME with
-        var int v;
-    end
+data OptionInt;
+data NIL1 is OptionInt;
+data SOME1 is OptionInt with
+    var int v;
 end
 
-data OptionPtr with
-    tag NIL;
-or
-    tag SOME with
-        var int&& v;
-    end
+data OptionPtr;
+data NIL2 is OptionPtr;
+data SOME2 is OptionPtr with
+    var int&& v;
 end
 
 var int ret = 0;    // 0
@@ -56993,7 +56982,7 @@ pool[] List l1, l2;
 l1 = new CONS(1, NIL());
 l2 = new CONS(2, NIL());
 ((l1 as CONS).tail) = l2;
-escape ((l1 as CONS).tail).CONS.head;
+escape (((l1 as CONS).tail) as CONS).head;
 ]],
     --adt = 'line 54 : invalid attribution : value is not a reference',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
@@ -57005,7 +56994,7 @@ do
     l2 = new CONS(2, NIL());
     ((l1 as CONS).tail) = &&l2;
 end
-escape ((l1 as CONS).tail).CONS.head;
+escape (((l1 as CONS).tail) as CONS).head;
 ]],
     adt = 'line 55 : invalid attribution : destination is not a reference',
     --adt = 'line 55 : cannot mix recursive data sources',
@@ -57016,7 +57005,7 @@ pool[] List l1;
 l1 = new CONS(1, NIL());
 pool[2] List l2 = new CONS(2, NIL());
 ((l1 as CONS).tail) = l2;
-escape ((l1 as CONS).tail).CONS.head;
+escape (((l1 as CONS).tail) as CONS).head;
 ]],
     --adt = 'line 54 : invalid attribution : value is not a reference',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
@@ -57027,7 +57016,7 @@ pool[2] List l2;
 l1 = new CONS(1, NIL());
 l2 = new CONS(2, NIL());
 ((l1 as CONS).tail) = l2;
-escape ((l1 as CONS).tail).CONS.head;
+escape (((l1 as CONS).tail) as CONS).head;
 ]],
     --adt = 'line 55 : invalid attribution : value is not a reference',
     adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
@@ -57046,28 +57035,28 @@ _assert(ret == 1);
 // add 2 [1, 2]
 ((l as CONS).tail) = new CONS(1, NIL());
 ret = ret + ((l as CONS).head);        // 3
-ret = ret + ((l as CONS).head) + ((l as CONS).tail).CONS.head;
+ret = ret + ((l as CONS).head) + (((l as CONS).tail) as CONS).head;
                                 // 6
 _assert(ret == 6);
 
 // change tail [1, 2, 4]
-((l as CONS).tail).CONS.tail = new CONS(4, NIL());
+(((l as CONS).tail) as CONS).tail = new CONS(4, NIL());
                                 // 10
 
 pool[] List l3 = new CONS(3, NIL());
-((l as CONS).tail).CONS.tail = &&l3;
-_assert(((l as CONS).tail).CONS.head == 3);
-_assert(((l as CONS).tail).CONS.tai((l as CONS).head) == 4);
-ret = ret + ((l as CONS).tail).CONS.head + ((l as CONS).tail).CONS.tai((l as CONS).head);
+(((l as CONS).tail) as CONS).tail = &&l3;
+_assert((((l as CONS).tail) as CONS).head == 3);
+_assert(((((l as CONS).tail) as CONS).tail as CONS).head == 4);
+ret = ret + (((l as CONS).tail) as CONS).head + ((((l as CONS).tail) as CONS).tail as CONS).head;
                                 // 17
 
 // drop middle [1, 3, 4]
-((l as CONS).tail) = ((l as CONS).tail).CONS.tail;
-ret = ret + ((l as CONS).tail).CONS.head;
+((l as CONS).tail) = (((l as CONS).tail) as CONS).tail;
+ret = ret + (((l as CONS).tail) as CONS).head;
                                 // 20
 
 // fill the list [1, 3, 4, 5, 6] (7 fails)
-((l as CONS).tail).CONS.tai((l as CONS).tail) =
+((((l as CONS).tail) as CONS).tail as CONS).tail =
     new CONS(5, CONS(6, CONS(7, NIL())));
 
 escape ret;
@@ -57250,13 +57239,11 @@ escape ((*i).t).x!;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57269,13 +57256,11 @@ escape 1;
     --env = 'line 15 : data must be a pointer',
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57291,13 +57276,11 @@ escape 1;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list
@@ -57317,13 +57300,11 @@ escape 0;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57332,18 +57313,16 @@ list = new CONS(10, NIL());
 
 pool&[] List lll = &list;
 
-escape ll((l as CONS).head);
+escape (lll as CONS).head;
 ]],
     run = 10,
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57352,19 +57331,17 @@ list = new CONS(10, NIL());
 
 pool[] List&& lll = &&list;
 
-escape ll((l as CONS).head);
+escape (lll as CONS).head;
 ]],
     run = 10,
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57378,10 +57355,10 @@ l = ((l as CONS).tail);
 ((l as CONS).tail) = new CONS(8, NIL());
 l = ((l as CONS).tail);
 
-escape l:CONS +
-        list.CONS.head +
-        list.CONS.tai((l as CONS).head) +
-        list.CONS.tai((l as CONS).tail).CONS.head;
+escape (*l as CONS) +
+        (list as CONS).head +
+        ((list as CONS).tail as CONS).head +
+        ((((list as CONS).tail as CONS).tail) as CONS).head;
 ]],
     adt = 'line 16 : invalid attribution : mutation : destination cannot be a pointer',
 }
@@ -57390,13 +57367,11 @@ escape l:CONS +
 --  also, the other way around is unsafe
 --   which is a problem
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57408,7 +57383,7 @@ pool&[] List  l2 = &list;
 
 list = new NIL();
 
-escape l1:CONS+l2.CONS+list.CONS+1;
+escape (*l1 as CONS)+(l2 as CONS)+(list as CONS)+1;
 ]],
     --run = 1,
     fin = 'line 19 : unsafe access to pointer "l1" across `assignment´ (tests.lua : 17)',
@@ -57418,13 +57393,11 @@ escape l1:CONS+l2.CONS+list.CONS+1;
 --  also, the other way around is unsafe
 --   which is a problem
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57435,10 +57408,10 @@ pool[] List&& lll = &&list;
 var int ret = 0;
 
 watching *lll do
-    *lll = ll((l as CONS).tail);
-    ret = lll:CONS +
-            list.CONS.head +
-            list.CONS.tail is NIL;
+    *lll = (lll as CONS).tail;
+    ret = (*lll as CONS) +
+            (list as CONS).head +
+            (list as CONS).tail is NIL;
 end
 
 escape ret;
@@ -57448,13 +57421,11 @@ escape ret;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57464,10 +57435,10 @@ pool[] List&& lll = &&list;
 
 var int ret = 0;
 watching *lll do
-    ll((l as CONS).tail) = ll((l as CONS).tail).CONS.tail;
-    ret = lll:CONS +
-            list.CONS.head +
-            list.CONS.tail is NIL;
+    (lll as CONS).tail = (((lll as CONS).tail) as CONS).tail;
+    ret = (*lll as CONS) +
+            (list as CONS).head +
+            ((list as CONS).tail is NIL);
 end
 escape ret;
 ]],
@@ -57476,13 +57447,11 @@ escape ret;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57490,21 +57459,19 @@ pool[] List list;
 list = new CONS(10, NIL());
 vector[] List&& lll = &&list; // TODO fat pointer
 
-*lll = ll((l as CONS).tail);
+*lll = (lll as CONS).tail;
 
-escape lll:CONS + list.CONS + 1;
+escape (*lll as CONS) + (list as CONS) + 1;
 ]],
     adt = 'line 15 : invalid attribution : mutation : cannot mutate from pointers',
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57512,23 +57479,21 @@ pool[] List list;
 list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
-*lll = ll((l as CONS).tail);
+*lll = (lll as CONS).tail;
 
-escape lll:CONS +
-        list.CONS.head +
-        list.CONS.tail is NIL;
+escape (*lll as CONS) +
+        (list as CONS).head +
+        (list as CONS).tail is NIL;
 ]],
     --run = 10,
     adt = 'line 15 : invalid attribution : mutation : cannot mutate root of a reference',
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57536,26 +57501,24 @@ pool[] List list;
 list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
-ll((l as CONS).tail) = new CONS(9, NIL());
-*lll = ll((l as CONS).tail);
+(lll as CONS).tail = new CONS(9, NIL());
+*lll = (lll as CONS).tail;
 
-ll((l as CONS).tail) = new CONS(8, NIL());
-*lll = ll((l as CONS).tail);
+(lll as CONS).tail = new CONS(8, NIL());
+*lll = (lll as CONS).tail;
 
-escape lll:CONS +
-        list.CONS.head +
-        list.CONS.tail is NIL;
+escape (*lll as CONS) +
+        (list as CONS).head +
+        ((list as CONS).tail is NIL);
 ]],
     adt = 'line 16 : invalid attribution : mutation : cannot mutate root of a reference',
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57572,10 +57535,10 @@ watching *l do
     ((l as CONS).tail) = new CONS(8, NIL());
     l = &&((l as CONS).tail);
 
-    ret = l:CONS +
-            list.CONS.head +
-            list.CONS.tai((l as CONS).head) +
-            list.CONS.tai((l as CONS).tail).CONS.head;
+    ret = (*l as CONS) +
+            (list as CONS).head +
+            ((list as CONS).tail as CONS).head +
+            ((((list as CONS).tail as CONS).tail) as CONS).head;
 end
 escape ret;
 ]],
@@ -57584,13 +57547,11 @@ escape ret;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list;
@@ -57608,9 +57569,9 @@ watching *l do
     l = &&((l as CONS).tail);
 
     escape ((l as CONS).head) +
-            list.CONS.head +
-            list.CONS.tai((l as CONS).head) +
-            list.CONS.tai((l as CONS).tail).CONS.head;
+            (list as CONS).head +
+            ((list as CONS).tail as CONS).head +
+            ((((list as CONS).tail as CONS).tail) as CONS).head;
 end
 
 escape 0;
@@ -57621,13 +57582,11 @@ escape 0;
 
 -- fails if inner is killed before outer
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[10] List list;
@@ -57636,20 +57595,20 @@ list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
 watching *lll do
-    ll((l as CONS).tail) = new CONS(9, NIL());
-    lll = &&ll((l as CONS).tail);
+    (lll as CONS).tail = new CONS(9, NIL());
+    lll = &&(lll as CONS).tail;
 
     par do
         watching *lll do
             await 1s;
 
-            ll((l as CONS).tail) = new CONS(8, NIL());
-            lll = &&ll((l as CONS).tail);
+            (lll as CONS).tail = new CONS(8, NIL());
+            lll = &&(lll as CONS).tail;
 
-            escape ll((l as CONS).head) +
-                    list.CONS.head +
-                    list.CONS.tai((l as CONS).head) +
-                    list.CONS.tai((l as CONS).tail).CONS.head;
+            escape (lll as CONS).head +
+                    (list as CONS).head +
+                    ((list as CONS).tail as CONS).head +
+                    (((list as CONS).tail as CONS).tail as CONS).head;
         end
         escape 1;
     with
@@ -57664,32 +57623,30 @@ escape -1;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
-        var int  head;
-        var List tail;
-    end
+data List;
+data NIL is List;
+data CONS is List with
+    var int  head;
+    var List tail;
 end
 
 pool[] List list = new CONS(10, NIL());
 pool[] List&& lll = &&list;
 
 watching *lll do
-    ll((l as CONS).tail) = new CONS(9, NIL());
-    lll = &&ll((l as CONS).tail);
+    (lll as CONS).tail = new CONS(9, NIL());
+    lll = &&(lll as CONS).tail;
 
     par do
         await 1s;
 
-        ll((l as CONS).tail) = new CONS(8, NIL());
-        lll = &&ll((l as CONS).tail);
+        (lll as CONS).tail = new CONS(8, NIL());
+        lll = &&(lll as CONS).tail;
 
-        escape ll((l as CONS).head) +
-                list.CONS.head +
-                list.CONS.tai((l as CONS).head) +
-                list.CONS.tai((l as CONS).tail).CONS.head;
+        escape (lll as CONS).head +
+                (list as CONS).head +
+                ((list as CONS).tail as CONS).head +
+                (((list as CONS).tail as CONS).tail as CONS).head;
     with
         list = new NIL();
         await FOREVER;
@@ -57780,13 +57737,11 @@ escape f1.bytes[0];
     env = 'line 2 : `data´ fields do not support vectors yet',
 }
 Test { [[
-data Frame with
-    tag X;
-or
-    tag Y with
+data Frame;
+    data X is Frame;
+    data Y is Frame with
         vector[3] u8 bytes;
     end
-end
 
 escape 1;
 ]],
@@ -57878,9 +57833,9 @@ par do
         end
     end
     do
-        var _int[100] is = [];
+        var _int[100] iss = [];
         loop i in 100 do
-            is[i] = i;
+            iss[i] = i;
         end
     end
     await 1s;
@@ -57897,13 +57852,11 @@ end
 }
 
 Test { [[
-data Widget with
-    tag NIL;
-or
-    tag ROW with
+data Widget;
+    data NIL is Widget;
+    data ROW is Widget with
         var Widget w1;
     end
-end
 
 pool[] Widget widgets;
 traverse widget in &&widgets do
@@ -57921,14 +57874,12 @@ escape 1;
 
 -- leaks memory because of lost "free" in IN__STK
 Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
+data T;
+    data NIL is T;
+    data NXT is T with
         var int v;
         var T   nxt;
     end
-end
 
 pool[] T ts = new T.NXT(10, T.NXT(9, T.NIL()));
 
@@ -57945,14 +57896,12 @@ escape 1;
 }
 
 Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
+data T;
+    data NIL is T;
+    data NXT is T with
         var int v;
         var T   nxt;
     end
-end
 
 pool[] T ts;
 
@@ -58103,13 +58052,11 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var Tree left;
     end
-end
 var Tree&& n;
 if false then
     await *n;
@@ -58120,13 +58067,11 @@ escape 1;
     --run = 1,
 }
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var Tree left;
     end
-end
 class Body with
     var Tree&& n;
 do
@@ -58139,20 +58084,18 @@ escape 1;
     run = 1,
 }
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
 pool[3] Tree tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 class Body with
     pool&[]  Body bodies;
@@ -58163,11 +58106,11 @@ do
     watching *n do
         var int i = this.sum;
         if i then end;
-        if n:NODE then
+        if (*n is NODE) then
             var Body&&? left =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:NODE.left;
+                    this.n      = &&(*n as NODE).left;
                     this.sum    = &sum;
                 end;
             if left? then
@@ -58181,7 +58124,7 @@ do
             var Body&&? right =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:NODE.right;
+                    this.n      = &&(*n as NODE).right;
                     this.sum    = &sum;
                 end;
             if right? then
@@ -58211,20 +58154,18 @@ escape sum;
     run = { ['~>10s'] = 3 },
 }
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
 pool[3] Tree tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 class Body with
     pool&[]  Body bodies;
@@ -58234,11 +58175,11 @@ class Body with
 do
     watching *n do
         var int i = this.sum;
-        if n:NODE then
+        if (*n is NODE) then
             var Body&&? left =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:NODE.left;
+                    this.n      = &&(*n as NODE).left;
                     this.sum    = &sum;
                 end;
             if left? then
@@ -58247,12 +58188,12 @@ do
                 end
             end
 
-            this.sum = this.sum + i + n:NODE.v;
+            this.sum = this.sum + i + (*n as NODE).v;
 
             var Body&&? right =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:NODE.right;
+                    this.n      = &&(*n as NODE).right;
                     this.sum    = &sum;
                 end;
             if right? then
@@ -58281,19 +58222,17 @@ escape sum;
     run = { ['~>10s'] = 9 },
 }
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
-pool[3] Tree tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+pool[3] Tree tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 class Body with
     pool&[7]  Body bodies;
@@ -58303,11 +58242,11 @@ class Body with
 do
     watching *n do
         var int i = this.sum;
-        if n:NODE then
+        if (*n is NODE) then
             var Body&&? left =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:NODE.left;
+                    this.n      = &&(*n as NODE).left;
                     this.sum    = &sum;
                 end;
             if left? then
@@ -58316,12 +58255,12 @@ do
                 end
             end
 
-            this.sum = this.sum + i + n:NODE.v;
+            this.sum = this.sum + i + (*n as NODE).v;
 
             var Body&&? right =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:NODE.right;
+                    this.n      = &&(*n as NODE).right;
                     this.sum    = &sum;
                 end;
             if right? then
@@ -58331,7 +58270,7 @@ do
             end
 
             //do/spawn Body in this.bodies with
-                //this.n = n:NODE.left;
+                //this.n = (*n as NODE).left;
             //end;
         end
     end
@@ -58354,14 +58293,12 @@ escape sum;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list
     = new CONS(1,
@@ -58373,13 +58310,13 @@ class Body with
     var   List&&   n;
 do
     await 1s;
-    if n:NIL then
+    if (*n is NIL) then
     end
     watching *n do
-        if n:CONS then
+        if (*n is CONS) then
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = &&n:CONS.tail;
+                this.n      = &&(*n is CONS).tail;
             end;
         end
     end
@@ -58396,14 +58333,12 @@ escape 1;
     fin = 'line 20 : unsafe access to pointer "n" across `await´ (tests.lua : 19)',
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list
     = new CONS(1,
@@ -58414,13 +58349,13 @@ class Body with
     pool&[]  Body bodies;
     var   List&&   n;
 do
-    if n:NIL then
+    if (*n is NIL) then
     end
     watching *n do
-        if n:CONS then
+        if (*n is CONS) then
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = &&n:CONS.tail;
+                this.n      = &&(*n is CONS).tail;
             end;
         end
     end
@@ -58439,14 +58374,12 @@ escape 1;
     --fin = 'line 19 : unsafe access to pointer "n" across `class´ (tests.lua : 15)',
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -58457,9 +58390,9 @@ var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if n:CONS then
-        sum = sum + n:CONS.head;
-        traverse &&n:CONS.tail;
+    if (*n is CONS) then
+        sum = sum + (*n is CONS).head;
+        traverse &&(*n is CONS).tail;
     end
 end
 
@@ -58468,14 +58401,12 @@ escape sum;
     run = 10,
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -58486,10 +58417,10 @@ var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if n:CONS then
-        sum = sum + n:CONS.head;
+    if (*n is CONS) then
+        sum = sum + (*n is CONS).head;
         await 1s;
-        traverse &&n:CONS.tail;
+        traverse &&(*n is CONS).tail;
     end
 end
 
@@ -58498,14 +58429,12 @@ escape sum;
     fin = 'line 22 : unsafe access to pointer "n" across `await´ (tests.lua : 21)',
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -58517,9 +58446,9 @@ var int sum = 0;
 traverse n in &&list do
     sum = sum + 1;
     await 1s;
-    if n:CONS then
-        sum = sum + n:CONS.head;
-        traverse &&n:CONS.tail;
+    if (*n is CONS) then
+        sum = sum + (*n is CONS).head;
+        traverse &&(*n is CONS).tail;
     end
 end
 
@@ -58528,14 +58457,12 @@ escape sum;
     fin = 'line 20 : unsafe access to pointer "n" across `await´ (tests.lua : 19)',
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -58546,11 +58473,11 @@ var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if n:CONS then
-        sum = sum + n:CONS.head;
+    if (*n is CONS) then
+        sum = sum + (*n is CONS).head;
         watching *n do
             await 1s;
-            traverse &&n:CONS.tail;
+            traverse &&(*n is CONS).tail;
         end
     end
 end
@@ -58560,14 +58487,12 @@ escape sum;
     run = { ['~>10s'] = 10 },
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -58580,9 +58505,9 @@ traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         //await 1s;
-        if n:CONS then
-            sum = sum + n:CONS.head;
-            traverse &&n:CONS.tail;
+        if (*n is CONS) then
+            sum = sum + (*n is CONS).head;
+            traverse &&(*n is CONS).tail;
         end
     //end
 end
@@ -58592,14 +58517,12 @@ escape sum;
     run = { ['~>10s'] = 10 },
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -58612,9 +58535,9 @@ traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         await 1s;
-        if n:CONS then
-            sum = sum + n:CONS.head;
-            traverse &&n:CONS.tail;
+        if (*n is CONS) then
+            sum = sum + (*n is CONS).head;
+            traverse &&(*n is CONS).tail;
         end
     //end
 end
@@ -58624,14 +58547,12 @@ escape sum;
     fin = 'line 21 : unsafe access to pointer "n" across `await´ (tests.lua : 20)',
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list
     = new CONS(1,
@@ -58641,13 +58562,13 @@ pool[3] List list
 var int sum = 0;
 
 traverse n in &&list do
-    if n:NIL then
+    if (*n is NIL) then
         sum = sum * 2;
     end
     watching *n do
-        if n:CONS then
-            sum = sum + n:CONS.head;
-            traverse &&n:CONS.tail;
+        if (*n is CONS) then
+            sum = sum + (*n is CONS).head;
+            traverse &&(*n is CONS).tail;
         end
     end
 end
@@ -58660,29 +58581,27 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
 pool[3] Tree tree =
-    new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+    new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int  v = 0;
 var int&& ptr = &&v;
 
 traverse t in &&tree do
     *ptr = *ptr + 1;
-    if t:NODE then
-        traverse &&t:NODE.left;
-        traverse &&t:NODE.right;
+    if (*t is NODE) then
+        traverse &&(*t as NODE).left;
+        traverse &&(*t as NODE).right;
     end
 end
 
@@ -58693,30 +58612,28 @@ escape v;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
 pool[3] Tree tree =
-    new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+    new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int  v = 0;
 var int&& ptr = &&v;
 
 traverse t in &&tree do
     *ptr = *ptr + 1;
-    if t:NODE then
+    if (*t is NODE) then
         watching *t do
-            traverse &&t:NODE.left;
-            traverse &&t:NODE.right;
+            traverse &&(*t as NODE).left;
+            traverse &&(*t as NODE).right;
         end
     end
 end
@@ -58728,14 +58645,12 @@ escape v;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -58749,9 +58664,9 @@ end
 /*
 traverse n in &&list do
     _V = _V + 1;
-    if n:CONS then
-        _V = _V + n:CONS.head;
-        traverse &&n:CONS.tail;
+    if (*n is CONS) then
+        _V = _V + (*n is CONS).head;
+        traverse &&(*n is CONS).tail;
     end
 end
 */
@@ -58760,18 +58675,18 @@ class Body with
     pool&[3]  Body bodies;
     var   List&&    n;
 do
-    if n:NIL then
+    if (*n is NIL) then
         _V = _V * 2;
     end
     watching *n do
         _V = _V + 1;
-        if n:CONS then
-            _V = _V + n:CONS.head;
+        if (*n is CONS) then
+            _V = _V + (*n is CONS).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:CONS.tail;
+                    this.n      = &&(*n is CONS).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -58794,16 +58709,13 @@ escape _V;
 }
 
 Test { [[
-data List with
-    tag NIL_;
-or
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL_;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[4] List list = new CONS(1,
             CONS(2,
@@ -58816,9 +58728,9 @@ end
 /*
 traverse n in &&list do
     _V = _V + 1;
-    if n:CONS then
-        _V = _V + n:CONS.head;
-        traverse &&n:CONS.tail;
+    if (*n is CONS) then
+        _V = _V + (*n is CONS).head;
+        traverse &&(*n is CONS).tail;
     end
 end
 */
@@ -58828,16 +58740,16 @@ class Body with
     var   List&&    n;
 do
     watching *n do
-        if n:NIL then
+        if (*n is NIL) then
             _V = _V * 2;
-        else/if n:CONS then
+        else/if (*n is CONS) then
             _V = _V + 1;
-            _V = _V + n:CONS.head;
+            _V = _V + (*n is CONS).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:CONS.tail;
+                    this.n      = &&(*n is CONS).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -58859,14 +58771,12 @@ escape _V;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[] List list;
 list = new CONS(1,
@@ -58879,9 +58789,9 @@ end
 
 traverse n in &&list do
     _V = _V + 1;
-    if n:CONS then
-        _V = _V + n:CONS.head;
-        traverse &&n:CONS.tail;
+    if (*n is CONS) then
+        _V = _V + (*n is CONS).head;
+        traverse &&(*n is CONS).tail;
     end
 end
 
@@ -58892,13 +58802,13 @@ class Body with
 do
     watching *n do
         _V = _V + 1;
-        if n:CONS then
-            _V = _V + n:CONS.head;
+        if (*n is CONS) then
+            _V = _V + (*n is CONS).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:CONS.tail;
+                    this.n      = &&(*n is CONS).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -58921,14 +58831,12 @@ escape _V;
     run = 10,
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list = new CONS(1,
             CONS(2,
@@ -58940,9 +58848,9 @@ end
 
 traverse n in &&list do
     _V = _V + 1;
-    if n:CONS then
-        _V = _V + n:CONS.head;
-        traverse &&n:CONS.tail;
+    if (*n is CONS) then
+        _V = _V + (*n is CONS).head;
+        traverse &&(*n is CONS).tail;
     end
 end
 
@@ -58953,13 +58861,13 @@ class Body with
 do
     watching *n do
         _V = _V + 1;
-        if n:CONS then
-            _V = _V + n:CONS.head;
+        if (*n is CONS) then
+            _V = _V + (*n is CONS).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:CONS.tail;
+                    this.n      = &&(*n is CONS).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -58982,14 +58890,12 @@ escape _V;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list = new CONS(1,
             CONS(2,
@@ -59001,9 +58907,9 @@ traverse n in &&list do
     sum = sum + 1;
     watching *n do
         await 1s;
-        if n:CONS then
-            sum = sum + n:CONS.head;
-            traverse &&n:CONS.tail;
+        if (*n is CONS) then
+            sum = sum + (*n is CONS).head;
+            traverse &&(*n is CONS).tail;
         end
     end
 end
@@ -59014,14 +58920,12 @@ escape sum;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -59034,9 +58938,9 @@ traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         await 1s;
-        if n:CONS then
-            sum = sum + n:CONS.head;
-            traverse &&n:CONS.tail;
+        if (*n is CONS) then
+            sum = sum + (*n is CONS).head;
+            traverse &&(*n is CONS).tail;
         end
     //end
 end
@@ -59054,14 +58958,12 @@ native do
 ##endif
 end
 
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list = new CONS(1,
             CONS(2,
@@ -59072,10 +58974,10 @@ traverse n in &&list do
     sum = sum + 1;
     watching *n do
         await 1s;
-        if n:CONS then
-            sum = sum + n:CONS.head;
-            traverse &&n:CONS.tail;
-            sum = sum + n:CONS.head;
+        if (*n is CONS) then
+            sum = sum + (*n is CONS).head;
+            traverse &&(*n is CONS).tail;
+            sum = sum + (*n is CONS).head;
         end
     end
 end
@@ -59092,14 +58994,12 @@ native do
 ##endif
 end
 
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 class T with
 do
@@ -59113,10 +59013,10 @@ do
         sum = sum + 1;
         watching *n do
             await 1s;
-            if n:CONS then
-                sum = sum + n:CONS.head;
-                traverse &&n:CONS.tail;
-                sum = sum + n:CONS.head;
+            if (*n is CONS) then
+                sum = sum + (*n is CONS).head;
+                traverse &&(*n is CONS).tail;
+                sum = sum + (*n is CONS).head;
             end
         end
     end
@@ -59131,30 +59031,28 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
 pool[] Tree tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 0;
 
 traverse n in &&tree do
     sum = sum + 1;
     watching *n do
-        if n:NODE then
-            traverse &&n:NODE.left;
-            sum = sum + n:NODE.v;
-            traverse &&n:NODE.right;
+        if (*n is NODE) then
+            traverse &&(*n as NODE).left;
+            sum = sum + (*n as NODE).v;
+            traverse &&(*n as NODE).right;
         end
     end
 end
@@ -59166,29 +59064,27 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
-pool[3] Tree tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+pool[3] Tree tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 0;
 
 traverse n in &&tree do
     sum = sum + 1;
     watching *n do
-        if n:NODE then
-            traverse &&n:NODE.left;
-            sum = sum + n:NODE.v;
-            traverse &&n:NODE.right;
+        if (*n is NODE) then
+            traverse &&(*n as NODE).left;
+            sum = sum + (*n as NODE).v;
+            traverse &&(*n as NODE).right;
         end
     end
 end
@@ -59199,30 +59095,28 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
-pool[3] Tree tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+pool[3] Tree tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 0;
 
 traverse n in &&tree do
     sum = sum + 1;
     watching *n do
-        if n:NODE then
+        if (*n is NODE) then
             await 1s;
-            traverse &&n:NODE.left;
-            sum = sum + n:NODE.v;
-            traverse &&n:NODE.right;
+            traverse &&(*n as NODE).left;
+            sum = sum + (*n as NODE).v;
+            traverse &&(*n as NODE).right;
         end
     end
 end
@@ -59233,29 +59127,27 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
 pool[] Tree tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 1;
 
 traverse n in &&tree do
     watching *n do
-        if n:NODE then
-            traverse &&n:NODE.left;
-            sum = sum * n:NODE.v + n:NODE.v;
-            traverse &&n:NODE.right;
+        if (*n is NODE) then
+            traverse &&(*n as NODE).left;
+            sum = sum * (*n as NODE).v + (*n as NODE).v;
+            traverse &&(*n as NODE).right;
         end
     end
 end
@@ -59266,29 +59158,27 @@ escape sum;
     run = { ['~>10s'] = 18 },
 }
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
 pool[3] Tree tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 1;
 
 traverse n in &&tree do
     watching *n do
-        if n:NODE then
-            traverse &&n:NODE.left;
-            sum = sum * n:NODE.v + n:NODE.v;
-            traverse &&n:NODE.right;
+        if (*n is NODE) then
+            traverse &&(*n as NODE).left;
+            sum = sum * (*n as NODE).v + (*n as NODE).v;
+            traverse &&(*n as NODE).right;
         end
     end
 end
@@ -59299,14 +59189,12 @@ escape sum;
 }
 
 Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
+data T;
+    data NIL is T;
+    data NXT is T with
         var int v;
         var T   nxt;
     end
-end
 
 pool[] T ts;
 
@@ -59314,8 +59202,8 @@ var void&& p1 = this as void&&;
 
 traverse t in &&ts do
     _assert(p1 == (this as void&&));
-    if t:NXT then
-        traverse &&t:NXT.nxt;
+    if (*t is NXT) then
+        traverse &&(*t as NXT).nxt;
     end
 end
 
@@ -59327,14 +59215,12 @@ escape 1;
     run = 1,
 }
 Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
+data T;
+    data NIL is T;
+    data NXT is T with
         var int v;
         var T   nxt;
     end
-end
 
 pool[] T ts;
 
@@ -59342,8 +59228,8 @@ var void&& p1 = &&this as void&&;
 
 traverse t in &&ts do
     _assert(p1 == (&&this as void&&));
-    if t:NXT then
-        traverse &&t:NXT.nxt;
+    if (*t is NXT) then
+        traverse &&(*t as NXT).nxt;
     end
 end
 
@@ -59354,14 +59240,12 @@ escape 1;
     run = 1,
 }
 Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
+data T;
+    data NIL is T;
+    data NXT is T with
         var int v;
         var T   nxt;
     end
-end
 
 pool[] T ts;
 
@@ -59376,8 +59260,8 @@ end
 
 traverse t in &&ts do
     _assert(&&p1! == (&&this as void&&));
-    if t:NXT then
-        traverse &&t:NXT.nxt;
+    if (*t is NXT) then
+        traverse &&(*t as NXT).nxt;
     end
 end
 
@@ -59387,14 +59271,12 @@ escape 1;
     run = 1,
 }
 Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
+data T;
+    data NIL is T;
+    data NXT is T with
         var int v;
         var T   nxt;
     end
-end
 
 pool[1] T ts;
 
@@ -59409,8 +59291,8 @@ end
 
 traverse t in &&ts do
     _assert(&&p1! == (&&this as void&&));
-    if t:NXT then
-        traverse &&t:NXT.nxt;
+    if (*t is NXT) then
+        traverse &&(*t as NXT).nxt;
     end
 end
 
@@ -59420,14 +59302,12 @@ escape 1;
 }
 
 Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
+data T;
+    data NIL is T;
+    data NXT is T with
         var int v;
         var T   nxt;
     end
-end
 
 pool[] T ts;
 
@@ -59457,8 +59337,8 @@ traverse t in &&ts do
         this.v3 = outer.v3;
     end;
     _assert(x.v1 + x.v2 + x.v3 == 6);
-    if t:NXT then
-        traverse &&t:NXT.nxt;
+    if (*t is NXT) then
+        traverse &&(*t as NXT).nxt;
     end
 end
 
@@ -59468,14 +59348,12 @@ escape 1;
     run = 1,
 }
 Test { [[
-data T with
-    tag NIL;
-or
-    tag NXT with
+data T;
+    data NIL is T;
+    data NXT is T with
         var int v;
         var T   nxt;
     end
-end
 
 pool[1] T ts;
 
@@ -59505,8 +59383,8 @@ traverse t in &&ts do
         this.v3 = outer.v3;
     end;
     _assert(x.v1 + x.v2 + x.v3 == 6);
-    if t:NXT then
-        traverse &&t:NXT.nxt;
+    if (*t is NXT) then
+        traverse &&(*t as NXT).nxt;
     end
 end
 
@@ -59516,29 +59394,27 @@ escape 1;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
-pool[3] Tree tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+pool[3] Tree tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 1;
 
 traverse n in &&tree do
     watching *n do
         await 1s;
-        if n:NODE then
-            traverse &&n:NODE.left;
-            sum = sum * n:NODE.v + n:NODE.v;
-            traverse &&n:NODE.right;
+        if (*n is NODE) then
+            traverse &&(*n as NODE).left;
+            sum = sum * (*n as NODE).v + (*n as NODE).v;
+            traverse &&(*n as NODE).right;
         end
     end
 end
@@ -59549,29 +59425,27 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
-pool[3] Tree tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+pool[3] Tree tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 1;
 
 traverse n in &&tree do
     await 1s;
     watching *n do
-        if n:NODE then
-            traverse &&n:NODE.left;
-            sum = sum * n:NODE.v + n:NODE.v;
-            traverse &&n:NODE.right;
+        if (*n is NODE) then
+            traverse &&(*n as NODE).left;
+            sum = sum * (*n as NODE).v + (*n as NODE).v;
+            traverse &&(*n as NODE).right;
         end
     end
 end
@@ -59582,20 +59456,18 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
 pool[3] Tree tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 1;
 
@@ -59603,10 +59475,10 @@ do
     traverse n in &&tree do
         watching *n do
             await 1s;
-            if n:NODE then
-                traverse &&n:NODE.left;
-                sum = sum * n:NODE.v + n:NODE.v;
-                traverse &&n:NODE.right;
+            if (*n is NODE) then
+                traverse &&(*n as NODE).left;
+                sum = sum * (*n as NODE).v + (*n as NODE).v;
+                traverse &&(*n as NODE).right;
             end
         end
     end
@@ -59618,30 +59490,28 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
-or
-    tag NODE with
+data Tree;
+    data NIL is Tree;
+    data NODE is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
-end
 
-pool[3] Tree tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+pool[3] Tree tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 1;
 
 par/and do
     traverse n in &&tree do
         watching *n do
-            if n:NODE then
+            if (*n is NODE) then
                 await 1s;
-                traverse &&n:NODE.left;
-                sum = sum * n:NODE.v + n:NODE.v;
-                traverse &&n:NODE.right;
+                traverse &&(*n as NODE).left;
+                sum = sum * (*n as NODE).v + (*n as NODE).v;
+                traverse &&(*n as NODE).right;
                 await 1s;
             end
         end
@@ -59654,7 +59524,7 @@ with
     _ceu_out_assert_msg(sum == 4, "2");
     await 1s;
     _ceu_out_assert_msg(sum == 5, "3");
-    tree = new Tree.NIL();
+    tree = new NIL();
     _ceu_out_assert_msg(sum == 4, "4");
 end
 
@@ -59665,14 +59535,12 @@ escape sum;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[] List list;
 list = new CONS(1,
@@ -59683,10 +59551,10 @@ var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if n:CONS then
-        sum = sum + n:CONS.head;
+    if (*n is CONS) then
+        sum = sum + (*n is CONS).head;
         loop i in 1 do
-            traverse &&n:CONS.tail;
+            traverse &&(*n is CONS).tail;
         end
     end
 end
@@ -59696,14 +59564,12 @@ escape sum;
     fin = 'line 22 : unsafe access to pointer "n" across `loop´ (tests.lua : 21)',
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[] List list;
 list = new CONS(1,
@@ -59714,10 +59580,10 @@ var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if n:CONS then
-        sum = sum + n:CONS.head;
+    if (*n is CONS) then
+        sum = sum + (*n is CONS).head;
         //loop i in 1 do
-            traverse &&n:CONS.tail;
+            traverse &&(*n is CONS).tail;
         //end
     end
 end
@@ -59728,14 +59594,12 @@ escape sum;
     run = 10,
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list
     = new CONS(1,
@@ -59746,10 +59610,10 @@ var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if n:CONS then
-        sum = sum + n:CONS.head;
+    if (*n is CONS) then
+        sum = sum + (*n is CONS).head;
         //loop i in 1 do
-            traverse &&n:CONS.tail;
+            traverse &&(*n is CONS).tail;
         //end
     end
 end
@@ -59780,19 +59644,17 @@ escape 1;
 }
 
 Test { [[
-data Widget with
-    tag EMPTY;
-or
-    tag SEQ with
+data Widget;
+    data EMPTY is Widget;
+    data SEQ is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
 pool[] Widget widgets;
-widgets = new Widget.SEQ(
-            Widget.EMPTY(),
-            Widget.EMPTY());
+widgets = new SEQ(
+            EMPTY(),
+            EMPTY());
 
 var int ret = 0;
 
@@ -59802,14 +59664,14 @@ do
     ret = ret + param;
 
     watching *widget do
-        if widget:EMPTY then
+        if (*widget is EMPTY) then
             nothing;
 
-        else/if widget:SEQ then
-            traverse &&widget:SEQ.w1 with
+        else/if (*widget is SEQ) then
+            traverse &&(*widget as SEQ).w1 with
                 this.param = param + 1;
             end;
-            traverse &&widget:SEQ.w2 with
+            traverse &&(*widget as SEQ).w2 with
                 this.param = param + 1;
             end;
 
@@ -59821,22 +59683,20 @@ end
 
 escape ret;
 ]],
-    adt = 'line 23 : ineffective use of tag "EMPTY" due to enclosing `watching´',
+    adt = 'line 23 : ineffective use of data "EMPTY" due to enclosing `watching´',
 }
 Test { [[
-data Widget with
-    tag EMPTY;
-or
-    tag SEQ with
+data Widget;
+    data EMPTY is Widget;
+    data SEQ is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
 pool[] Widget widgets;
-widgets = new Widget.SEQ(
-            Widget.EMPTY(),
-            Widget.EMPTY());
+widgets = new SEQ(
+            EMPTY(),
+            EMPTY());
 
 var int ret = 0;
 
@@ -59846,11 +59706,11 @@ do
     ret = ret + param;
 
     watching *widget do
-        if widget:SEQ then
-            traverse &&widget:SEQ.w1 with
+        if (*widget is SEQ) then
+            traverse &&(*widget as SEQ).w1 with
                 this.param = param + 1;
             end;
-            traverse &&widget:SEQ.w2 with
+            traverse &&(*widget as SEQ).w2 with
                 this.param = param + 1;
             end;
 
@@ -59867,19 +59727,17 @@ escape ret;
     run = 5,
 }
 Test { [[
-data Widget with
-    tag EMPTY;
-or
-    tag SEQ with
+data Widget;
+    data EMPTY is Widget;
+    data SEQ is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
 pool[10] Widget widgets;
-widgets = new Widget.SEQ(
-            Widget.EMPTY(),
-            Widget.EMPTY());
+widgets = new SEQ(
+            EMPTY(),
+            EMPTY());
 
 var int ret = 0;
 
@@ -59889,11 +59747,11 @@ do
     ret = ret + param;
 
     watching *widget do
-        if widget:SEQ then
-            traverse &&widget:SEQ.w1 with
+        if (*widget is SEQ) then
+            traverse &&(*widget as SEQ).w1 with
                 this.param = param + 1;
             end;
-            traverse &&widget:SEQ.w2 with
+            traverse &&(*widget as SEQ).w2 with
                 this.param = param + 1;
             end;
 
@@ -59911,19 +59769,17 @@ escape ret;
 }
 
 Test { [[
-data Widget with
-    tag EMPTY;
-or
-    tag SEQ with
+data Widget;
+    data EMPTY is Widget;
+    data SEQ is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
 pool[] Widget widgets
-    = new Widget.SEQ(
-            Widget.EMPTY(),
-            Widget.EMPTY());
+    = new SEQ(
+            EMPTY(),
+            EMPTY());
 
 var int ret = 0;
 
@@ -59933,11 +59789,11 @@ do
     ret = ret + param;
 
     watching *widget do
-        if widget:SEQ then
-            traverse &&widget:SEQ.w1 with
+        if (*widget is SEQ) then
+            traverse &&(*widget as SEQ).w1 with
                 this.param = param + 1;
             end;
-            traverse &&widget:SEQ.w2 with
+            traverse &&(*widget as SEQ).w2 with
                 this.param = param + 1;
             end;
 
@@ -59954,18 +59810,16 @@ escape ret;
     run = 5,
 }
 Test { [[
-data Widget with
-    tag EMPTY;
-or
-    tag SEQ with
+data Widget;
+    data EMPTY is Widget;
+    data SEQ is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
-pool[10] Widget widgets = new Widget.SEQ(
-            Widget.EMPTY(),
-            Widget.EMPTY());
+pool[10] Widget widgets = new SEQ(
+            EMPTY(),
+            EMPTY());
 
 var int ret = 0;
 
@@ -59975,11 +59829,11 @@ do
     ret = ret + param;
 
     watching *widget do
-        if widget:SEQ then
-            traverse &&widget:SEQ.w1 with
+        if (*widget is SEQ) then
+            traverse &&(*widget as SEQ).w1 with
                 this.param = param + 1;
             end;
-            traverse &&widget:SEQ.w2 with
+            traverse &&(*widget as SEQ).w2 with
                 this.param = param + 1;
             end;
 
@@ -59996,14 +59850,12 @@ escape ret;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[] List l = new CONS(1,
             CONS(2,
@@ -60015,10 +59867,10 @@ pool[] List l = new CONS(1,
 var int ret = 0;
 
 par/or do
-    await ((l as CONS).tail).CONS.tail;
+    await (((l as CONS).tail) as CONS).tail;
     ret = 100;
 with
-    ((l as CONS).tail).CONS.tail = new NIL();
+    (((l as CONS).tail) as CONS).tail = new NIL();
     ret = 10;
 end
 
@@ -60028,15 +59880,14 @@ escape ret;
     run = 100,
 }
 
+]==]
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[] List l;
 l = new CONS(1,
@@ -60050,10 +59901,10 @@ var int ret = 0;
 
 par/or do
     await ((l as CONS).tail).CONS.tail;
-    ret = ret + ((l as CONS).tail).CONS.tai((l as CONS).head);    // 0+4
+    ret = ret + ((l as CONS).tail).CONS.tail.CONS.head);    // 0+4
     _ceu_out_assert_msg(ret == 4, "1");
-    ((l as CONS).tail).CONS.tail = ((l as CONS).tail).CONS.tai((l as CONS).tail);
-    ret = ret + ((l as CONS).tail).CONS.tai((l as CONS).head);    // 0+4+5
+    ((l as CONS).tail).CONS.tail = ((l as CONS).tail).CONS.tail.CONS.tail);
+    ret = ret + ((l as CONS).tail).CONS.tail.CONS.head);    // 0+4+5
     _ceu_out_assert_msg(ret == 9, "2");
 
     await ((l as CONS).tail).CONS.tail;
@@ -60063,7 +59914,7 @@ par/or do
 with
     await ((l as CONS).tail).CONS.tail;
     _ceu_out_assert_msg(ret == 9, "3");
-    ret = ret + ((l as CONS).tail).CONS.tai((l as CONS).head);    // 0+4+5+5
+    ret = ret + ((l as CONS).tail).CONS.tail.CONS.head);    // 0+4+5+5
     ((l as CONS).tail).CONS.tail = new NIL();
 
     _ceu_out_assert_msg(ret == 15, "5");
@@ -60079,7 +59930,7 @@ with
     _ceu_out_assert_msg(ret == 16, "7");
     await FOREVER;
 with
-    ((l as CONS).tail).CONS.tail = ((l as CONS).tail).CONS.tai((l as CONS).tail);
+    ((l as CONS).tail).CONS.tail = ((l as CONS).tail).CONS.tail.CONS.tail);
     ret = ret * 2;  // (0+4+5+5+1+1) * 2
     ((l as CONS).tail).CONS.tail = new CONS(10, NIL());
 end
@@ -60093,18 +59944,15 @@ escape ret;
 Test { [[
 input void OS_START;
 
-data Widget with
-    tag NIL;
-or
-    tag V with
+data Widget;
+    data NIL is Wiget;
+    data V is Widget with
         var int v;
     end
-or
-    tag ROW with
+    data ROW is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
 par/or do
     await 21s;
@@ -60148,32 +59996,28 @@ escape 0;
 Test { [[
 input void OS_START;
 
-data Widget with
-    tag NIL_;
-or
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag ROW with
+data Widget;
+    data NIL_;
+    data NIL is Wiget;
+    data EMPTY is Wiget;
+    data ROW is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
 par/or do
     await OS_START;
 with
     pool[] Widget widgets;
     widgets = new Widget.ROW(
-                    Widget.EMPTY(),
-                    Widget.EMPTY());
+                    EMPTY(),
+                    EMPTY());
 
     traverse widget in &&widgets do
         watching *widget do
             if widget:NIL then
                 await FOREVER;
-            else/if widget:EMPTY then
+            else/if (*widget is EMPTY) then
                 escape 1;
 
             else/if widget:ROW then
@@ -60208,16 +60052,13 @@ escape 1;
 Test { [[
 input void OS_START;
 
-data List with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data EMPTY is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[] List l = new CONS(1, List.EMPTY());
 
@@ -60251,24 +60092,21 @@ escape 1;
 Test { [[
 input void OS_START;
 
-data Widget with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag SEQ with
+data Widget;
+    data NIL is Widget;
+    data EMPTY is Widget;
+    data SEQ is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
 var int ret = 0;
 
 par/or do
     pool[] Widget widgets;
-    widgets = new Widget.SEQ(
-                Widget.EMPTY(),
-                Widget.EMPTY());
+    widgets = new SEQ(
+                EMPTY(),
+                EMPTY());
 
     traverse widget in &&widgets with
         var int param = 1;
@@ -60276,23 +60114,23 @@ par/or do
         ret = ret + param;
 
         watching *widget do
-            if widget:EMPTY then
+            if (*widget is EMPTY) then
                 await FOREVER;
 
-            else/if widget:SEQ then
+            else/if (*widget is SEQ) then
                 loop do
                     par/or do
-                        traverse &&widget:SEQ.w1 with
+                        traverse &&(*widget as SEQ).w1 with
                             this.param = param + 1;
                         end;
-if widget:SEQ.w1.NIL then
+if (*widget is SEQ).w1.NIL then
     await FOREVER;
 end
                     with
-                        traverse &&widget:SEQ.w2 with
+                        traverse &&(*widget as SEQ).w2 with
                             this.param = param + 1;
                         end;
-if widget:SEQ.w2.NIL then
+if (*widget is SEQ).w2.NIL then
     await FOREVER;
 end
                     end
@@ -60316,23 +60154,20 @@ escape ret;
 Test { [[
 input void OS_START;
 
-data Widget with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag SEQ with
+data Widget;
+    data NIL is Widget;
+    data EMPTY is Widget;
+    data SEQ is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
 var int ret = 0;
 
 par/or do
-    pool[10] Widget widgets = new Widget.SEQ(
-                Widget.EMPTY(),
-                Widget.EMPTY());
+    pool[10] Widget widgets = new SEQ(
+                EMPTY(),
+                EMPTY());
 
     traverse widget in &&widgets with
         var int param = 1;
@@ -60340,23 +60175,23 @@ par/or do
         ret = ret + param;
 
         watching *widget do
-            if widget:EMPTY then
+            if (*widget is EMPTY) then
                 await FOREVER;
 
-            else/if widget:SEQ then
+            else/if (*widget is SEQ) then
                 loop do
                     par/or do
-                        traverse &&widget:SEQ.w1 with
+                        traverse &&(*widget as SEQ).w1 with
                             this.param = param + 1;
                         end;
-if widget:SEQ.w1.NIL then
+if (*widget is SEQ).w1.NIL then
     await FOREVER;
 end
                     with
-                        traverse &&widget:SEQ.w2 with
+                        traverse &&(*widget as SEQ).w2 with
                             this.param = param + 1;
                         end;
-if widget:SEQ.w2.NIL then
+if (*widget is SEQ).w2.NIL then
     await FOREVER;
 end
                     end
@@ -60380,21 +60215,18 @@ escape ret;
 Test { [[
 input void OS_START;
 
-data Widget with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag SEQ with
+data Widget;
+    data NIL is Widget;
+    data EMPTY is Widget;
+    data SEQ is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
 pool[] Widget widgets;
-widgets = new Widget.SEQ(
-            Widget.EMPTY(),
-            Widget.EMPTY());
+widgets = new SEQ(
+            EMPTY(),
+            EMPTY());
 
 var int ret = 0;
 
@@ -60405,24 +60237,24 @@ par/or do
         ret = ret + param;
 
         watching *widget do
-            if widget:EMPTY then
+            if (*widget is EMPTY) then
                 await FOREVER;
 
-            else/if widget:SEQ then
+            else/if (*widget is SEQ) then
                 loop do
                     par/or do
-                        traverse &&widget:SEQ.w1 with
+                        traverse &&(*widget as SEQ).w1 with
                             this.param = param + 1;
                         end;
-if widget:SEQ.w1.NIL then
+if (*widget is SEQ).w1.NIL then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     with
-                        traverse &&widget:SEQ.w2 with
+                        traverse &&(*widget as SEQ).w2 with
                             this.param = param + 1;
                         end;
-if widget:SEQ.w2.NIL then
+if (*widget is SEQ).w2.NIL then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -60447,20 +60279,17 @@ escape ret;
 Test { [[
 input void OS_START;
 
-data Widget with
-    tag NIL;
-or
-    tag EMPTY;
-or
-    tag SEQ with
+data Widget;
+    data NIL is Widget;
+    data EMPTY is Widget;
+    data SEQ is Widget with
         var Widget  w1;
         var Widget  w2;
     end
-end
 
-pool[10] Widget widgets = new Widget.SEQ(
-            Widget.EMPTY(),
-            Widget.EMPTY());
+pool[10] Widget widgets = new SEQ(
+            EMPTY(),
+            EMPTY());
 
 var int ret = 0;
 
@@ -60471,24 +60300,24 @@ par/or do
         ret = ret + param;
 
         watching *widget do
-            if widget:EMPTY then
+            if (*widget is EMPTY) then
                 await FOREVER;
 
-            else/if widget:SEQ then
+            else/if (*widget is SEQ) then
                 loop do
                     par/or do
-                        traverse &&widget:SEQ.w1 with
+                        traverse &&(*widget as SEQ).w1 with
                             this.param = param + 1;
                         end;
-if widget:SEQ.w1.NIL then
+if (*widget is SEQ).w1.NIL then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     with
-                        traverse &&widget:SEQ.w2 with
+                        traverse &&(*widget as SEQ).w2 with
                             this.param = param + 1;
                         end;
-if widget:SEQ.w2.NIL then
+if (*widget is SEQ).w2.NIL then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -60512,13 +60341,13 @@ escape ret;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag FORWARD with
+    data FORWARD with
         var int pixels;
     end
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
         var Command  two;
     end
@@ -60559,9 +60388,9 @@ escape 10;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
     end
 end
@@ -60587,13 +60416,13 @@ escape 10;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag FORWARD with
+    data FORWARD with
         var int pixels;
     end
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
         var Command  two;
     end
@@ -60634,13 +60463,13 @@ Test { [[
 input int SDL_DT;
 
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag FORWARD with
+    data FORWARD with
         var int pixels;
     end
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
         var Command  two;
     end
@@ -60679,13 +60508,13 @@ Test { [[
 input int SDL_DT;
 
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag FORWARD with
+    data FORWARD with
         var int pixels;
     end
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
         var Command  two;
     end
@@ -60724,11 +60553,11 @@ escape 10;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag LEFT;
+    data LEFT;
 or
-    tag REPEAT with
+    data REPEAT with
         var Command  command;
     end
 end
@@ -60768,34 +60597,34 @@ Test { [[
 input int SDL_DT;
 
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag AWAIT with
+    data AWAIT with
         var int ms;
     end
 or
-    tag RIGHT with
+    data RIGHT with
         var int angle;
     end
 or
-    tag LEFT with
+    data LEFT with
         var int angle;
     end
 or
-    tag FORWARD with
+    data FORWARD with
         var int pixels;
     end
 or
-    tag BACKWARD with
+    data BACKWARD with
         var int pixels;
     end
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
         var Command  two;
     end
 or
-    tag REPEAT with
+    data REPEAT with
         var int      times;
         var Command  command;
     end
@@ -60952,18 +60781,18 @@ escape 10;
 -- creates a loop when reusing address of organisms being killed
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag AWAIT with
+    data AWAIT with
         var int ms;
     end
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
         var Command  two;
     end
 or
-    tag REPEAT with
+    data REPEAT with
         var int      times;
         var Command  command;
     end
@@ -61019,18 +60848,18 @@ finalize with
 end
 
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag AWAIT with
+    data AWAIT with
         var int ms;
     end
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
         var Command  two;
     end
 or
-    tag REPEAT with
+    data REPEAT with
         var int      times;
         var Command  command;
     end
@@ -61077,13 +60906,11 @@ escape ret;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var List tail;
     end
-end
 
 pool[] List ls;
 ls = new CONS(NIL());
@@ -61108,16 +60935,13 @@ escape 1;
     run = { ['~>5s']=1 },
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag HOLD;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data HOLD is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[] List ls;
 ls = new CONS(1,
@@ -61150,16 +60974,13 @@ escape ret;
     run = { ['~>5s']=4 },
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag HOLD;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data HOLD is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[] List ls;
 ls = new CONS(1,
@@ -61194,16 +61015,13 @@ escape ret;
     run = { ['~>5s']=4 },
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag HOLD;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data HOLD is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[10] List ls = new CONS(1,
             CONS(2,
@@ -61234,16 +61052,13 @@ escape ret;
     run = { ['~>5s']=4 },
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag HOLD;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data HOLD is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[10] List ls = new CONS(1,
             CONS(2,
@@ -61277,14 +61092,12 @@ escape ret;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[10] List list;
 
@@ -61298,14 +61111,12 @@ escape 1;
     run = 1,
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[10] List list;
 
@@ -61313,7 +61124,7 @@ loop i in 10 do
     traverse l in &&list do
         if l:NIL then
             list = new CONS(i, NIL());
-        else/if l:CONS then
+        else/if (*l as CONS) then
             if ((l as CONS).tail).NIL then
                 ((l as CONS).tail) = new CONS(i, NIL());
             else
@@ -61326,7 +61137,7 @@ end
 var int sum = 0;
 
 traverse l in &&list do
-    if l:CONS then
+    if (*l as CONS) then
         sum = sum + ((l as CONS).head);
         traverse &&((l as CONS).tail);
     end
@@ -61339,14 +61150,12 @@ escape sum;
 
 -- innefective NIL inside watching
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -61362,16 +61171,16 @@ class Body with
     var   List&&   n;
 do
     watching *n do
-        if n:NIL then
+        if (*n is NIL) then
             _V = _V * 2;
-        else/if n:CONS then
+        else/if (*n is CONS) then
             _V = _V + 1;
-            _V = _V + n:CONS.head;
+            _V = _V + (*n is CONS).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &&n:CONS.tail;
+                    this.n      = &&(*n is CONS).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -61388,19 +61197,16 @@ end;
 
 escape _V;
 ]],
-    adt = 'line 24 : ineffective use of tag "NIL" due to enclosing `watching´',
+    adt = 'line 24 : ineffective use of data "NIL" due to enclosing `watching´',
 }
 Test { [[
-data List with
-    tag NIL_;
-or
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL_;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[4] List list;
 list = new CONS(1,
@@ -61416,16 +61222,16 @@ class Body with
     var   List&&   n;
 do
     watching *n do
-        if n:NIL then
+        if (*n is NIL) then
             _V = _V * 2;
-        else/if n:CONS then
+        else/if (*n is CONS) then
             _V = _V + 1;
-            _V = _V + n:CONS.head;
+            _V = _V + (*n is CONS).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&n:CONS.tail;
+                    this.n      = &&(*n is CONS).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -61448,14 +61254,12 @@ escape _V;
 }
 -- innefective NIL inside watching
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -61469,11 +61273,11 @@ end
 traverse n in &&list do
     _V = _V + 1;
     watching *n do
-        if n:NIL then
+        if (*n is NIL) then
             _V = _V * 2;
-        else/if n:CONS then
-            _V = _V + n:CONS.head;
-            traverse &&n:CONS.tail;
+        else/if (*n is CONS) then
+            _V = _V + (*n is CONS).head;
+            traverse &&(*n is CONS).tail;
         end
     end
     await 1s;
@@ -61481,20 +61285,17 @@ end
 
 escape _V;
 ]],
-    adt = 'line 22 : ineffective use of tag "NIL" due to enclosing `watching´',
+    adt = 'line 22 : ineffective use of data "NIL" due to enclosing `watching´',
 }
 
 Test { [[
-data List with
-    tag NIL_;
-or
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL_ is List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[4] List list;
 list = new CONS(1,
@@ -61508,11 +61309,11 @@ end
 traverse n in &&list do
     _V = _V + 1;
     watching *n do
-        if n:NIL then
+        if (*n is NIL) then
             _V = _V * 2;
-        else/if n:CONS then
-            _V = _V + n:CONS.head;
-            traverse &&n:CONS.tail;
+        else/if (*n is CONS) then
+            _V = _V + (*n is CONS).head;
+            traverse &&(*n is CONS).tail;
         end
     end
     await 1s;
@@ -61527,9 +61328,9 @@ escape _V;
 
 Test { [[
 data L with
-    tag NIL;
+    data NIL is L;
 or
-    tag VAL with
+    data VAL with
         var L  l;
     end
 end
@@ -61594,9 +61395,9 @@ escape 1;
 
 Test { [[
 data Stmt with
-    tag NIL;
+    data NIL is Stmt;
 or
-    tag SEQ with
+    data SEQ is Stmt with
         var Stmt s1;
     end
 end
@@ -61616,9 +61417,9 @@ escape ddd;
 
 Test { [[
 data Stmt with
-    tag NIL;
+    data NIL is Stmt;
 or
-    tag SEQ with
+    data SEQ is Stmt with
         var Stmt s1;
     end
 end
@@ -61641,14 +61442,12 @@ escape ret;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list = new
     CONS(1,
@@ -61674,14 +61473,12 @@ escape s1;
 }
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list = new
     CONS(1,
@@ -61710,9 +61507,9 @@ escape s1 + s2;
 
 Test { [[
 data T with
-    tag NIL;
+    data NIL is List;
 or
-    tag NEXT with
+    data NEXT with
         var T  next;
     end
 end
@@ -61741,24 +61538,24 @@ escape v;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag AWAIT with
+    data AWAIT with
         var int ms;
     end
 or
-    tag STREAM_ROOT with
+    data STREAM_ROOT with
         var Command  run;
         var Command  now;
         var Command  nxt;
     end
 or
-    tag STREAM_NEXT with
+    data STREAM_NEXT with
         var Command  one;
         var Command  two;
     end
 or
-    tag STREAM_END;
+    data STREAM_END;
 end
 
 pool[100] Command cmds = new
@@ -61803,20 +61600,20 @@ escape 1;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag STREAM_ROOT with
+    data STREAM_ROOT with
         var Command  run;
         var Command  now;
         var Command  nxt;
     end
 or
-    tag STREAM_NEXT with
+    data STREAM_NEXT with
         var Command  one;
         var Command  two;
     end
 or
-    tag STREAM_END;
+    data STREAM_END;
 end
 
 pool[] Command cmds;
@@ -61840,27 +61637,27 @@ data Val with
 end
 
 data Exp with
-    tag NIL;
+    data NIL is Exp;
 or
-    tag VAL with
+    data VAL with
         var Val v;
     end
 or
-    tag ADD with
+    data ADD with
         var Exp e1;
         var Exp e2;
     end
 end
 
 data Stmt with
-    tag NIL;
+    data NIL is Stmt;
 or
-    tag SEQ with
+    data SEQ is Stmt with
         var Stmt s1;
         var Stmt s2;
     end
 or
-    tag PRINT with
+    data PRINT with
         var Exp e;
     end
 end
@@ -61889,13 +61686,13 @@ escape 1;
 -- par/or kills (2) which should be aborted
 Test { [[
 data Exp with
-    tag NIL;
+    data NIL is Exp;
 or
-    tag V with
+    data V with
         var int e;
     end
 or
-    tag ADD with
+    data ADD with
         var Exp e1;
         var Exp e2;
     end
@@ -61933,17 +61730,17 @@ escape ret;
 
 Test { [[
 data Exp with
-    tag NIL;
+    data NIL is Exp;
 or
-    tag SUB with
+    data SUB with
         var Exp e2;
     end
 end
 
 data Stmt with
-    tag NIL;
+    data NIL is Stmt;
 or
-    tag SEQ with
+    data SEQ is Stmt with
         var Stmt s1;
         var Exp e;
     end
@@ -62021,14 +61818,12 @@ escape 1;
 
 -->> TRAVERSE / NESTED-RECURSIVE-ADTS
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL is List;
+    data CONS is List with
         var int   head;
         var List  tail;
     end
-end
 
 pool[3] List list;
 list = new CONS(1,
@@ -62037,13 +61832,13 @@ list = new CONS(1,
 
 var int sum = 0;
 
-pool[] List&& lll = &&list.CONS.tail;
+pool[] List&& lll = &&(list as CONS).tail;
 
 traverse n in lll do
     sum = sum + 1;
-    if n:CONS then
-        sum = sum + n:CONS.head;
-        traverse &&n:CONS.tail;
+    if (*n is CONS) then
+        sum = sum + (*n is CONS).head;
+        traverse &&(*n is CONS).tail;
     end
 end
 
@@ -62055,30 +61850,30 @@ escape sum;
 
 Test { [[
 data X with
-    tag NIL;
+    data NIL is X;
 or
-    tag NIL;
+    data NIL is X;
 end
 
 escape 1;
 ]],
-    env = 'line 4 : duplicated tag : "NIL"',
+    env = 'line 4 : duplicated data : "NIL"',
 }
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
         var Command  two;
     end
 end
 
 data CommandQueue with
-    tag NOTHING;
+    data NOTHING is CommandQueue;
 or
-    tag NXT with
+    data NXT with
         var Command       cmd;
         var CommandQueue  nxt;
     end
@@ -62087,23 +61882,23 @@ end
 escape 1;
 ]],
     run = 1,
-    --env = 'line 13 : duplicated tag : "NOTHING"',
+    --env = 'line 13 : duplicated data : "NOTHING"',
 }
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
         var Command  two;
     end
 end
 
 data CommandQueue with
-    tag NIL;
+    data NIL is CommandQueue;
 or
-    tag NXT with
+    data NXT with
         var Command       cmd;
         var CommandQueue  nxt;
     end
@@ -62126,18 +61921,18 @@ escape 1;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command  one;
         var Command  two;
     end
 end
 
 data CommandQueue with
-    tag NIL;
+    data NIL is CommandQueue;
 or
-    tag NXT with
+    data NXT with
         var Command       cmd;
         var CommandQueue  nxt;
     end
@@ -62161,13 +61956,11 @@ escape cq1.NIL + cq2.NXT.cmd.SEQUENCE.one.NOTHING;
 -- ADTS ALIASING
 
 Test { [[
-data List with
-    tag NIL;
-or
-    tag X with
+data List;
+    data NIL is List;
+    data X with
         var List  nxt;
     end
-end
 pool[] List lll;     // l is the pool
 escape lll is NIL;       // l is a pointer to the root
 ]],
@@ -62176,9 +61969,9 @@ escape lll is NIL;       // l is a pointer to the root
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62191,9 +61984,9 @@ escape 1;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62206,9 +61999,9 @@ escape 1;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62222,9 +62015,9 @@ escape 1;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62242,9 +62035,9 @@ escape cmds2.NEXT.nxt.NEXT.nxt.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62264,9 +62057,9 @@ escape 1;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62288,9 +62081,9 @@ escape cmds1.NEXT;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62311,9 +62104,9 @@ escape cmds1.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62330,9 +62123,9 @@ escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62348,9 +62141,9 @@ escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62366,9 +62159,9 @@ escape cmds1.NEXT.nxt.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62383,9 +62176,9 @@ escape cmds1.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62401,9 +62194,9 @@ escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62418,9 +62211,9 @@ escape cmds1.NEXT.nxt.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62436,9 +62229,9 @@ escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62456,9 +62249,9 @@ escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62479,9 +62272,9 @@ escape cmds1.NEXT.nxt.NEXT.nxt.NEXT.nxt.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62504,9 +62297,9 @@ escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 }
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62529,9 +62322,9 @@ escape cmds1.NEXT.nxt.NEXT.nxt.NOTHING;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62571,9 +62364,9 @@ escape sum;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62611,9 +62404,9 @@ escape ddd;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62630,9 +62423,9 @@ escape 1;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag NEXT with
+    data NEXT with
         var Command  nxt;
     end
 end
@@ -62666,11 +62459,11 @@ escape ret;
 
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING is Command;
 or
-    tag AWAIT;
+    data AWAIT is Command;
 or
-    tag PAROR with
+    data PAROR with
         var Command  one;
     end
 end
@@ -62709,9 +62502,9 @@ escape 1;
 
 Test { [[
 data Dummy with
-  tag NIL;
+  data NIL is Dummy;
 or
-  tag REC with
+  data REC with
     var Dummy  rec;
   end
 end
@@ -62750,9 +62543,9 @@ escape (_vec[0]==0) + (_vec[1]==1) + (_vec[2]==2);
 
 Test { [[
 data NoRec with
-    tag NIL;
+    data NIL is NoRec;
 or
-    tag SEQ with
+    data SEQ is NoRec with
     end
 end
 
@@ -62768,9 +62561,9 @@ escape 1;
 
 Test { [[
 data BTree with
-    tag NIL;
+    data NIL is BTree;
 or
-    tag SEQ with
+    data SEQ is BTree with
         var BTree  nxt;
     end
 end
@@ -62795,14 +62588,14 @@ escape 1;
 
 Test { [[
 data BTree with
-    tag NIL;
+    data NIL is BTree;
 or
-    tag SEQ with
+    data SEQ is BTree with
         var BTree  nxt;
     end
 end
 
-pool[3] BTree bs = new BTree.SEQ(BTree.SEQ(BTree.NIL()));
+pool[3] BTree bs = new BTree.SEQ(BTree.SEQ(BNIL()));
 
 class BTreeTraverse with
     pool&[3] BTree btree;
@@ -62829,10 +62622,10 @@ escape ret;
 --[=[
 
 Test { [[
-data List with
-    tag NIL;
+data List;
+    data NIL;
 with
-    tag CONS with
+    data CONS is List with
         var int  head;
         var List tail;
     end
@@ -62854,10 +62647,10 @@ escape sum;
 }
 
 Test { [[
-data List with
-    tag NIL;
+data List;
+    data NIL;
 with
-    tag CONS with
+    data CONS is List with
         var int  head;
         var List tail;
     end
@@ -62879,10 +62672,10 @@ escape sum;
 }
 
 Test { [[
-data List with
-    tag NIL;
+data List;
+    data NIL;
 with
-    tag CONS with
+    data CONS is List with
         var int  head;
         var List tail;
     end
@@ -62904,10 +62697,10 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
+data Tree;
+    data NIL;
 with
-    tag NODE with
+    data NODE with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -62915,19 +62708,19 @@ with
 end
 
 var Tree t =
-    Tree.NODE(1,
-        Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-        Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+    NODE(1,
+        NODE(2, NIL(), NIL()),
+        NODE(3, NIL(), NIL()));
 
 var int sum = 0;
 
     finalize with end;
 
 loop i in &&t do
-    if i:NODE then
-        traverse &&i:NODE.left;
-        sum = sum + i:NODE.v;
-        traverse &&i:NODE.right;
+    if (*i is NODE) then
+        traverse &&(*i as NODE).left;
+        sum = sum + (*i as NODE).v;
+        traverse &&(*i as NODE).right;
     end
 end
 
@@ -62937,10 +62730,10 @@ escape sum;
 }
 
 Test { [[
-data List with
-    tag NIL;
+data List;
+    data NIL;
 with
-    tag CONS with
+    data CONS is List with
         var int  head;
         var List tail;
     end
@@ -62964,10 +62757,10 @@ escape sum;
 }
 
 Test { [[
-data Tree with
-    tag NIL;
+data Tree;
+    data NIL;
 with
-    tag NODE with
+    data NODE with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -62975,17 +62768,17 @@ with
 end
 
 pool[3] Tree t;
-t = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+t = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 0;
 
 loop i in t do
-    if i:NODE then
-        traverse &&i:NODE.left;
-        sum = sum + i:NODE.v;
-        traverse &&i:NODE.right;
+    if (*i is NODE) then
+        traverse &&(*i as NODE).left;
+        sum = sum + (*i as NODE).v;
+        traverse &&(*i as NODE).right;
     end
 end
 
@@ -63027,17 +62820,17 @@ data Pair with
 end
 
 data Opt with
-    tag NIL;
+    data NIL;
 with
-    tag PTR with
+    data PTR with
         var void* v = null;
     end
 end
 
-data List with
-    tag NIL;
+data List;
+    data NIL;
 with
-    tag CONS with
+    data CONS is List with
         var int   head = 0;
         var& List tail = List.nil();
     end
@@ -63057,7 +62850,7 @@ var Opt  o1 = Opt.NIL();
 var Opt  o2 = Opt.PTR(v=&p1);
 var List l1 = NIL();
 var List l2 = CONS(head=1, tail=l1);
-var List l3 = CONS(head=1, tai((l as CONS).head)=2, tail=NIL()));
+var List l3 = CONS(head=1, tail.CONS.head)=2, tail=NIL()));
 
 escape 1;
 ]],
@@ -64153,9 +63946,9 @@ data D with
 end
 
 data E with
-    tag NOTHING;
+    data NOTHING;
 or
-    tag X with
+    data X with
         var& D d;
     end
 end
@@ -64172,9 +63965,9 @@ escape e.X.d.x;
 -- TODO: bug
 Test { [[
 data LLRB with
-    tag NIL;
+    data NIL;
 or
-    tag NODE with
+    data NODE with
         var LLRB left;
         var LLRB right;
     end
@@ -64191,9 +63984,9 @@ escape 1;
 -- TODO: bug
 Test { [[
 data LLRB with
-    tag NIL;
+    data NIL;
 or
-    tag NODE with
+    data NODE with
         var LLRB left;
     end
 end
@@ -64502,9 +64295,9 @@ data Ball with
 end
 
 data Leaf with
-    tag NOTHING;
+    data NOTHING;
 or
-    tag TWEEN with
+    data TWEEN with
         var& Ball ball;
     end
 end
@@ -64531,10 +64324,10 @@ escape x;
 ---------------------------------------------------
 -- BUG: should be type error, T&& <= T[]
 Test { [[
-data Tree with
-    tag NIL;
+data Tree;
+    data NIL;
 or
-    tag NODE with
+    data NODE with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -64542,9 +64335,9 @@ or
 end
 
 pool[3] Tree tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 class Sum with
     var int&& v;
@@ -64558,11 +64351,11 @@ class Body with
     var&   Sum    sum;
 do
     watching *n do
-        if n:NODE then
-            *this.sum.v = *this.sum.v + n:NODE.v;
+        if (*n is NODE) then
+            *this.sum.v = *this.sum.v + (*n as NODE).v;
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = &&n:NODE.left;
+                this.n      = &&(*n as NODE).left;
                 this.sum    = &sum;
             end;
         end
@@ -64587,10 +64380,9 @@ escape v;
     fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
 }
 Test { [[
-data List with
-    tag NIL;
-or
-    tag CONS with
+data List;
+    data NIL;
+    data CONS is List with
         var int  head;
         var List tail;
     end
@@ -64650,9 +64442,9 @@ end
 
 Test { [[
 data Stmt with
-    tag NIL;
+    data NIL;
 or
-    tag SEQ with
+    data SEQ is Stmt with
         var Stmt s1;
     end
 end
@@ -66158,9 +65950,9 @@ do return end
 -- BUG: new inside constructor (requires stack manipulation?)
 Test { [[
 data Command with
-    tag NOTHING;
+    data NOTHING;
 or
-    tag SEQUENCE with
+    data SEQUENCE with
         var Command* one;
         var Command* two;
     end
@@ -66325,10 +66117,10 @@ escape sum;
 
 -- BUG: do T quando ok acontece na mesma reacao
 Test { [[
-data Tree with
-    tag NIL;
+data Tree;
+    data NIL;
 with
-    tag NODE with
+    data NODE with
         var int   v;
         var Tree* left;
         var Tree* right;
@@ -66336,9 +66128,9 @@ with
 end
 
 pool[3] Tree tree;
-tree = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+tree = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 class Body with
     pool&[]  Body bodies;
@@ -66348,23 +66140,23 @@ class Body with
 do
     //watching n do
         var int i = this.sum;
-        if n:NODE then
+        if (*n is NODE) then
             var Body* left =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = n:NODE.left;
+                    this.n      = (*n as NODE).left;
                     this.sum    = sum;
                 end;
             //watching left do
                 await left:ok;
             //end
 
-            this.sum = this.sum + i + n:NODE.v;
+            this.sum = this.sum + i + (*n as NODE).v;
 
             var Body* right =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = n:NODE.right;
+                    this.n      = (*n as NODE).right;
                     this.sum    = sum;
                 end;
             //watching right do
@@ -66372,7 +66164,7 @@ do
             //end
 
             //do/spawn Body in this.bodies with
-                //this.n = n:NODE.left;
+                //this.n = (*n as NODE).left;
             //end;
         end
     //end
@@ -66394,10 +66186,10 @@ escape sum;
 var int sum = 0;
 loop n in &&tree do
     var int i = sum;
-    if n:NODE then
-        traverse &n:NODE.left;
-        sum = i + n:NODE.v;
-        traverse &n:NODE.right;
+    if (*n is NODE) then
+        traverse &(*n as NODE).left;
+        sum = i + (*n as NODE).v;
+        traverse &(*n as NODE).right;
     end
 end
 escape sum;
@@ -66468,10 +66260,10 @@ escape ret;
 
 -- TODO: precisa do watching
 Test { [[
-data Tree with
-    tag NIL;
+data Tree;
+    data NIL;
 with
-    tag NODE with
+    data NODE with
         var int   v;
         var Tree* left;
         var Tree* right;
@@ -66479,19 +66271,19 @@ with
 end
 
 pool[3] Tree t;
-t = new Tree.NODE(1,
-            Tree.NODE(2, Tree.NIL(), Tree.NIL()),
-            Tree.NODE(3, Tree.NIL(), Tree.NIL()));
+t = new NODE(1,
+            NODE(2, NIL(), NIL()),
+            NODE(3, NIL(), NIL()));
 
 var int sum = 0;
 
 par/or do
     loop i in t do
-        if i:NODE then
-            traverse &i:NODE.left;
+        if (*i is NODE) then
+            traverse &(*i as NODE).left;
             await 1s;
-            sum = sum + i:NODE.v;
-            traverse &i:NODE.right;
+            sum = sum + (*i as NODE).v;
+            traverse &(*i as NODE).right;
             await 1s;
         end
     end
