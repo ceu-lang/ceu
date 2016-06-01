@@ -74,11 +74,11 @@ escape a;
     run = {['~>10s']=50 },
 }
 
---do return end
+do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -179,14 +179,14 @@ Test { [[
 _f();
 escape 0;
 ]],
-    tops = 'line 1 : native idenfier "_f" is not declared',
+    tops = 'line 1 : native "_f" is not declared',
 }
 
 Test { [[
 native _f, _f;
 escape 0;
 ]],
-    tops = 'line 1 : native identifier "_f" is already declared',
+    tops = 'line 1 : identifier "_f" is already declared',
 }
 
 Test { [[
@@ -194,7 +194,7 @@ native _f;
 native _f;
 escape 0;
 ]],
-    tops = 'line 2 : native identifier "_f" is already declared',
+    tops = 'line 2 : identifier "_f" is already declared',
 }
 
 Test { [[
@@ -28140,6 +28140,7 @@ end
     parser = 'line 1 : after `every´ : expected internal identifier or `(´',
 }
 Test { [[
+code/delayed Code (void)=>void;
 await Code(1) until true;
 ]],
     env = 'TODO: until not allowed',
@@ -28321,7 +28322,7 @@ code/delayed T (void)=>void do
 end
 escape 0;
 ]],
-    env = 'line 4 : undeclared type `T´',
+    tops = 'line 2 : abstraction "T" is not declared',
 }
 
 Test { [[
@@ -37419,7 +37420,7 @@ Test { [[
 await T();
 escape 0;
 ]],
-    env = 'line 1 : undeclared type `T´',
+    tops = 'line 1 : abstraction "T" is not declared',
 }
 
 Test { [[
@@ -37875,7 +37876,7 @@ do
     end
 end
 ]],
-    env = 'line 4 : undeclared type `HelloWorld´',
+    tops = 'line 4 : abstraction "HelloWorld" is not declared',
 }
 
 Test { [[
@@ -43240,10 +43241,18 @@ escape call f();
 
 Test { [[
 code/instantaneous F (void) => int;
-code/instantaneous F (var int)  => int;
+code/instantaneous F (var int)  => int do end
 escape 1;
 ]],
     env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+}
+
+Test { [[
+code/instantaneous F (void) => int;
+code/instantaneous F (var int)  => int;
+escape 1;
+]],
+    tops = 'ine 2 : identifier "F" is already declared',
 }
 
 Test { [[
@@ -43594,18 +43603,18 @@ escape 1;
 
 Test { [[
 code/instantaneous/recursive F (void)=>void;
-code/instantaneous/recursive F (void)=>void;
+code/instantaneous/recursive F (void)=>void do end
 code/instantaneous G      (void)=>void;
-code/instantaneous/recursive G (void)=>void;
+code/instantaneous/recursive G (void)=>void do end
 escape 1;
 ]],
     env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
 }
 Test { [[
 code/instantaneous/recursive F (void)=>void;
-code/instantaneous/recursive F (void)=>void;
+code/instantaneous/recursive F (void)=>void do end
 code/instantaneous/recursive G (void)=>void;
-code/instantaneous G      (void)=>void;
+code/instantaneous G      (void)=>void do end
 escape 1;
 ]],
     env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
@@ -54697,7 +54706,7 @@ data T with
 end
 escape 1;
 ]],
-    env = 'top-level identifier "T" already taken',
+    tops = 'line 4 : identifier "T" is already declared (tests.lua : line 1)',
 }
 Test { [[
 class T with
@@ -54760,7 +54769,7 @@ data Opt;
 data OptNIL is Opt_;
 escape 1;
 ]],
-    env = 'TODO: undef',
+    tops = 'line 2 : abstraction "Opt_" is not declared',
 }
 
 -- recursive ADTs must have a base case
@@ -54809,7 +54818,7 @@ data NOTHING is Opt1;
 
 escape 1;
 ]],
-    env = 'TODO: NOTHING is taken',
+    tops = 'line 5 : identifier "NOTHING" is already declared (tests.lua : line 2)',
 }
 
 -->>> DATA/EVENTS
@@ -61997,7 +62006,8 @@ data X;
 
 escape 1;
 ]],
-    env = 'line 4 : duplicated data : "NIL"',
+    tops = 'line 3 : identifier "NIL" is already declared (tests.lua : line 2)',
+    --env = 'line 4 : duplicated data : "NIL"',
 }
 
 Test { [[
@@ -62017,8 +62027,9 @@ data CommandQueue;
 
 escape 1;
 ]],
-    run = 1,
+    --run = 1,
     --env = 'line 13 : duplicated data : "NOTHING"',
+    tops = 'line 9 : identifier "NOTHING" is already declared (tests.lua : line 2)',
 }
 
 Test { [[

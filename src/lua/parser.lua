@@ -378,8 +378,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                     * OPT(CK'/recursive')
                     * V'__ID_abs'
                     * V'_Typepars' * KK'=>' * V'Type'
-    , _Code_proto = V'__code'
-    , _Code_impl  = V'__code' * V'__Do'
+    , Code_proto = V'__code'
+    , Code_impl  = V'__code' * V'__Do'
 
     , _Spawn_Block = K'spawn' * V'__Do'
     , Spawn_Code   = K'spawn' * V'CALL'
@@ -421,8 +421,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 -- DATA
 
     , __data       = K'data' * V'__ID_abs' * OPT(K'is' * V'ID_abs')
-    , _Data_simple = V'__data'
-    , _Data_block  = V'__data' * K'with' * (
+    , Data_simple = V'__data'
+    , Data_block  = V'__data' * K'with' * (
                         (V'_Vars'+V'_Vecs'+V'_Pools'+V'_Evts') *
                             V'__seqs'
                      )^1 * K'end'
@@ -693,7 +693,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  * ( V'__Stmt_Last' * V'__seqs' +
                      V'__Stmt_Last_Block' * (KK';'^0)
                    )^-1
-                 * (V'Nat_Block'+V'_Code_impl')^0 )
+                 * (V'Nat_Block'+V'Code_impl')^0 )
 
     , __Stmt_Last  = V'_Escape' + V'_Break' + V'_Continue' + V'Await_Forever'
     , __Stmt_Last_Block = V'Par'
@@ -703,8 +703,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Pools_set' + V'_Pools'
                  + V'_Evts_set'  + V'_Evts'
                  + V'_Exts'
-                 + V'_Data_simple'
-                 + V'_Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
+                 + V'Data_simple'
+                 + V'Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Nat_End'
                  + V'Deterministic'
                  + V'_Set_one' + V'_Set_many'
@@ -717,8 +717,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 + I((K'class'+K'interface'+K'traverse')) * E'TODO: class/interface'
              + V'CallStmt' -- last
 
-    , __Stmt_Block = V'_Code_impl' + V'_Extcall_impl' + V'_Extreq_impl'
-              + V'_Data_block'
+    , __Stmt_Block = V'Code_impl' + V'_Extcall_impl' + V'_Extreq_impl'
+              + V'Data_block'
               + V'Nat_Block'
               + V'Do'    + V'If'
               + V'_Loop' + V'_Every'
