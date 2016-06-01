@@ -234,20 +234,20 @@ local function visit_aux (me, F)
     me.__par   = STACK[#STACK]
     me.__depth = (me.__par and me.__par.__depth+1) or 1
 
-    local pre, mid, pos = FF(F,me.tag..'_pre'), FF(F,me.tag), FF(F,me.tag..'_pos')
+    local pre, mid, pos = FF(F,me.tag..'__PRE'), FF(F,me.tag), FF(F,me.tag..'_pos')
     local bef, aft = FF(F,me.tag..'_bef'), FF(F,me.tag..'_aft')
 
-    if F.Node_pre then
-        me = F.Node_pre(me) or me
+    if F.Node__PRE then
+        me = F.Node__PRE(me) or me
         if me ~= _me then
-            --DBG('Node_pre', me.tag, me)
+            --DBG('Node__PRE', me.tag, me)
             return visit_aux(me, F)
         end
     end
     if pre then
         me = pre(me) or me
         if me ~= _me then
-            --DBG('XXXX_pre', me.tag, me, _me.tag, _me)
+            --DBG('XXXX__PRE', me.tag, me, _me.tag, _me)
             return visit_aux(me, F)
         end
     end
@@ -313,7 +313,7 @@ local function f (ln, v1, op, v2, v3, ...)
     local ret
     if not op then
         ret = v1
-    elseif v1=='call' or v1=='call/rec' then
+    elseif v1=='call' or v1=='call/recursive' then
         -- Prim call
         ASR(op.tag=='Op2_call', ln, 'invalid call')
         op[1] = v1  -- change modifier

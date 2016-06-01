@@ -434,7 +434,9 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , _Nats  = K'native' *
                     OPT(KK'/'*(CK'pure'+CK'const'+CK'nohold'+CK'plain')) *
                         V'__ID_nat' * (KK',' * V'__ID_nat')^0
+        --> Nat+
 
+    , Nat_End = K'native' * KK'/' * K'end'
     , Nat_Block = OPT(CK'pre') * K'native' * (#K'do')*'do' *
                 ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
              X* K'end'
@@ -525,7 +527,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- DETERMINISTIC
 
-    , __det_id = V'ID_ext' + V'ID_int' + V'ID_abs' + V'__ID_nat'
+    , __det_id = V'ID_ext' + V'ID_int' + V'ID_abs' + V'ID_nat'
     , Deterministic = K'deterministic' * V'__det_id' * (
                         K'with' * V'__det_id' * (KK',' * V'__det_id')^0
                       )^-1
@@ -618,8 +620,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __type = CK(TYPES,'primitive type') + V'__ID_abs'
     , __type_ptr = CKK'&&' -(P'&'^3)
     , __type_vec = KK'[' * V'__Exp' * KK']'
-    , Type = V'__type'   * (V'__type_ptr'              )^0 * CKK'?'^-1
-           + V'__ID_nat' * (V'__type_ptr'+V'__type_vec')^0 * CKK'?'^-1
+    , Type = V'__type' * (V'__type_ptr'              )^0 * CKK'?'^-1
+           + V'ID_nat' * (V'__type_ptr'+V'__type_vec')^0 * CKK'?'^-1
 
 -- Expressions
 
@@ -654,7 +656,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     , __Prim = PARENS(V'__Exp')
              + V'SIZEOF'
-             + OPT(CK'call' + CK'call/recursive') * V'CALL'
+             + (CK'call' + CK'call/recursive' + Cc'call') * V'CALL'
 -- Field
              + V'ID_int'     + V'ID_nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
@@ -703,7 +705,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Exts'
                  + V'_Data_simple'
                  + V'_Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
-                 + V'_Nats'  + V'Deterministic'
+                 + V'_Nats'  + V'Nat_End'
+                 + V'Deterministic'
                  + V'_Set_one' + V'_Set_many'
                  + V'_Awaits'
                  + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'

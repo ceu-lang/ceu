@@ -74,11 +74,11 @@ escape a;
     run = {['~>10s']=50 },
 }
 
---]===]
 --do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -173,8 +173,44 @@ Test { [[var int sizeof;]],
 Test { [[escape sizeof(int);]], run=4 }
 Test { [[escape 1<2>3;]], run=0 }
 
+-->>> NATIVE
+
+Test { [[
+_f();
+escape 0;
+]],
+    tops = 'line 1 : native idenfier "_f" is not declared',
+}
+
+Test { [[
+native _f, _f;
+escape 0;
+]],
+    tops = 'line 1 : native identifier "_f" is already declared',
+}
+
+Test { [[
+native _f;
+native _f;
+escape 0;
+]],
+    tops = 'line 2 : native identifier "_f" is already declared',
+}
+
+Test { [[
+native _f;
+native/end;
+native _g;
+escape 0;
+]],
+    tops = 'line 3 : native declarations are disabled',
+}
+
+--<<< NATIVE
+
 -- PRECEDENCE (TODO)
 Test { [[
+native _assert;
 var int v1 = 1 + 1 and 0;    // 0
 _assert(v1 == 0);
 
@@ -211,6 +247,7 @@ Test { [[var int a=0;]],
 }
 
 Test { [[
+native _x;
 native do
     int x = 1;
 end
@@ -464,6 +501,7 @@ emit a => &&k; // leads to compiler error
 -->>> OS_START / ANY
 
 Test { [[
+native _f,_int;
 input void OS_START;
 native do
     int f () { escape 1; }
@@ -475,6 +513,7 @@ escape x;
 }
 Test { [[
 input void OS_START;
+native _int;
 native/pure _f;
 native do
     int f () { escape 1; }
@@ -486,6 +525,7 @@ escape x;
 }
 Test { [[
 input void OS_START;
+native _int, _f;
 native do
     int f () { escape 1; }
 end
@@ -496,6 +536,7 @@ escape x;
 }
 Test { [[
 input void OS_START;
+native _f;
 native do
     void* V;
     int f (void* v) { escape 1; }
@@ -508,6 +549,7 @@ escape x;
 }
 Test { [[
 input void OS_START;
+native _f;
 native do
     void* V;
     int f (void* v) { escape 1; }
@@ -709,6 +751,7 @@ escape x + 0.5;
 }
 
 Test { [[
+native _ISPOINTER, _MINDIST, _TILESHIFT;
 
                             if (_ISPOINTER(check) && ((check:x+_MINDIST) >> 
                                 _TILESHIFT) == tilex ) then
@@ -1612,6 +1655,7 @@ Test { [[await FOREVER;]],
 
 -- tests var.isTmp
 Test { [[
+native ___ceu_a_1;
 var int a = await 999ms;
 escape a + ___ceu_a_1;
 ]],
@@ -3127,6 +3171,7 @@ escape 1;
 }
 
 Test { [[
+native _assert;
 input void OS_START;
 event void a;
 loop do
@@ -3151,6 +3196,7 @@ escape 1;
 -- LOOP / BOUNDED
 
 Test { [[
+native _V;
 native do
     int V;
 end
@@ -3237,6 +3283,7 @@ escape ret;
 }
 
 Test { [[
+native _printf;
 var int k = 5;
 loop/1 i in k do
     var int x = i + 2;
@@ -3248,6 +3295,7 @@ escape 1;
 }
 
 Test { [[
+native _printf;
 var int k = 5;
 loop/10 i in k do
     var int x = i + 2;
@@ -5044,6 +5092,7 @@ end
 
 -- EMIT / SELF-ABORT
 Test { [[
+native _assert;
 input void I;
 event void e, f;
 par do
@@ -5706,6 +5755,7 @@ end
 }
 
 Test { [[
+native _V;
 native do
     int V = 10;
 end
@@ -5723,6 +5773,7 @@ escape _V;
     run = { ['~>2s']=10 },
 }
 Test { [[
+native _V;
 native do
     int V = 10;
 end
@@ -14434,6 +14485,7 @@ Test { [[
 input void OS_START;
 await OS_START;
 
+native _pinMode, _digitalWrite;
 native do
 ##define pinMode(a,b)
 ##define digitalWrite(a,b)
@@ -15882,6 +15934,7 @@ escape a+b;
 }
 
 Test { [[
+native _V;
 native do
     int V = 10;
 end
@@ -15893,6 +15946,7 @@ escape v;
 }
 
 Test { [[
+native _V, _f;
 native do
     int V = 0;
     void f (int* v) {
@@ -15923,6 +15977,7 @@ escape y;
 }
 
 Test { [[
+native _V;
 native do
     int V = 10;
 end
@@ -15936,6 +15991,7 @@ escape v;
 }
 
 Test { [[
+native _T;
 native do
     int f (int v) {
         escape v + 1;
@@ -15971,6 +16027,7 @@ escape b;
     run = 2,
 }
 Test { [[
+native _V;
 native do
     int V = 10;
 end
@@ -15994,6 +16051,7 @@ escape 1;
     --run = { ['~>1s']=1 },
 }
 Test { [[
+native _V;
 native do
     int V = 10;
 end
@@ -16009,6 +16067,7 @@ escape *v;
     env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
 }
 Test { [[
+native _V;
 native do
     int V = 10;
 end
@@ -16025,6 +16084,7 @@ escape *v;
     --run = { ['~>1s']=10 };
 }
 Test { [[
+native _V;
 native do
     int V = 10;
 end
@@ -16096,6 +16156,7 @@ escape a + b + x + v;
 }
 
 Test { [[
+native _V1, _V2;
 native do
     int V1 = 10;
     int V2 = 5;
@@ -16282,6 +16343,7 @@ escape 0;
 }
 
 Test { [[
+native _SDL_Surface, _TTF_RenderText_Blended, _SDL_FreeSurface;
 var& _SDL_Surface? sfc;
 every 1s do
     do
@@ -16298,6 +16360,7 @@ escape 1;
 }
 
 Test { [[
+native _fff, _V;
 native do
     int V = 10;
     int* fff (int v) {
@@ -16318,6 +16381,7 @@ escape r;
 }
 
 Test { [[
+native _fff, _V;
 native do
     int V = 10;
     int* fff (int v) {
@@ -16411,6 +16475,7 @@ escape v1.v+v2.v+v3.v;
 }
 
 Test { [[
+native _SDL_Renderer, _f;
 native/nohold _g;
 
 var& _SDL_Renderer? ren;
@@ -16429,6 +16494,7 @@ escape 1;
 -->>> FINALLY / FINALIZE
 
 Test { [[
+native _Cnt;
     native/pure _Radio_getPayload;
     native/plain _message_t;
     var _message_t msg={};
@@ -16443,9 +16509,9 @@ Test { [[
     },
 }
 Test { [[
+native _Cnt;
     native/plain _message_t;
     native/pure _Radio_getPayload;
-    native/plain _message_t;
     var _message_t msg={};
     loop do
         await 1s;
@@ -16475,6 +16541,7 @@ escape 0;
 }
 
 Test { [[
+native _malloc;
 var int&& ptr = _malloc();
 ]],
     fin = 'line 1 : must assign to a option reference (declared with `&?´)',
@@ -16617,6 +16684,7 @@ escape v;
 }
 
 Test { [[
+native _f;
 input void E;
 var& int? n;
 do this.n = &_f();
@@ -16738,6 +16806,7 @@ escape r;
 }
 
 Test { [[
+native _v;
 var int a;
 do _v(&&a);
 finalize with
@@ -16749,6 +16818,7 @@ escape(a);
 }
 
 Test { [[
+native _f;
 native do
     void f (int* a) {
         *a = 10;
@@ -16770,6 +16840,7 @@ escape(a);
 }
 
 Test { [[
+native _f;
 native do
     void f (int* a) {
         *a = 10;
@@ -16788,6 +16859,7 @@ escape(a);
     fin = 'line 11 : unsafe access to pointer "v" across `await´',
 }
 Test { [[
+native _f;
 native do
     void f (int* a) {
         *a = 10;
@@ -16812,6 +16884,7 @@ end
 }
 
 Test { [[
+native _f;
 native do
     void f (int* a) {
         *a = 10;
@@ -16834,6 +16907,7 @@ escape(a);
 }
 
 Test { [[
+native _f;
 pre native do
     void f (int* a) {
         *a = 10;
@@ -16851,6 +16925,7 @@ escape(a);
 }
 
 Test { [[
+native _V, _getV;
 native do
     int V = 10;
     int* getV (void) {
@@ -16871,6 +16946,7 @@ escape v!;
     run = 10,
 }
 Test { [[
+native _V, _getV;
 native do
     int V = 10;
     int* getV (void) {
@@ -16897,6 +16973,7 @@ escape v1!+v2!+_V;
     --run = 60,
 }
 Test { [[
+native _V, _getV;
 native do
     int V = 10;
     int* getV (void) {
@@ -16929,6 +17006,7 @@ escape v1!+v2!+_V;
 --<<< FINALLY / FINALIZE
 
 Test { [[
+native _t;
 native/pure _f;
 native do
     typedef struct t {
@@ -16946,6 +17024,7 @@ escape *(t.ptr);
     --run = 10,
 }
 Test { [[
+native _t;
 native/pure _f;
 native do
     typedef struct t {
@@ -17209,6 +17288,7 @@ escape 1;
     fin = 'line 6 : invalid call (multiple scopes)',
 }
 Test { [[
+native _enqueue, _V;
 var byte&& buf = _V;
 _enqueue(buf);
 escape 1;
@@ -17217,6 +17297,7 @@ escape 1;
 }
 
 Test { [[
+native _enqueue;
 vector[255] byte buf;
 _enqueue(buf);
 escape 1;
@@ -17225,6 +17306,7 @@ escape 1;
     --fin = 'line 2 : call requires `finalize´',
 }
 Test { [[
+native _enqueue;
 vector[255] byte buf;
 _enqueue(&&buf);
 escape 1;
@@ -18409,6 +18491,7 @@ escape 1;
 }
 
 Test { [[
+native _f;
 var int&& p1 = null;
 do
     var int&& p;
@@ -18579,6 +18662,7 @@ escape ret + *p;
 }
 
 Test { [[
+native _assert;
 var void&& p;
 var int i;
 input void OS_START;
@@ -18846,6 +18930,7 @@ escape 1;
 }
 
 Test { [[
+native _ptr, _malloc;
 native do
     void&& ptr;
 end
@@ -18855,6 +18940,7 @@ escape 1;
     fin = 'line 4 : attribution requires `finalize´',
 }
 Test { [[
+native _ptr, _malloc;
 native/nohold _free;
 native do
     void* ptr;
@@ -18869,6 +18955,7 @@ escape 1;
 }
 
 Test { [[
+native _alloc;
 native do
     int V;
     int* alloc (int ok) {
@@ -18891,6 +18978,7 @@ escape 1;
 }
 
 Test { [[
+native _alloc;
 native do
     int V;
     int* alloc (int ok) {
@@ -18913,6 +19001,7 @@ escape 1;
 }
 
 Test { [[
+native _alloc;
 native do
     int* alloc (int ok) {
         escape NULL;
@@ -18936,6 +19025,7 @@ escape 1;
 }
 
 Test { [[
+native _alloc, _V;
 native do
     int* alloc (int ok) {
         escape NULL;
@@ -18964,6 +19054,7 @@ escape _V;
 }
 
 Test { [[
+native _alloc, _V;
 native do
     int* alloc (int ok) {
         escape NULL;
@@ -19003,6 +19094,7 @@ native do
         }
     }
 end
+native _alloc, _V, _t;
 native/nohold _dealloc;
 
 do
@@ -19038,6 +19130,7 @@ pre native do
         }
     }
 end
+native _alloc, _V, _t;
 native/nohold _dealloc;
 
 var int ret = _V;           // v=1, ret=1
@@ -19082,6 +19175,7 @@ escape ret;
 }
 
 Test { [[
+native _f;
 native do
     void* f () {
         escape NULL;
@@ -19100,6 +19194,7 @@ escape &ptr! == &ptr!;  // ptr.SOME fails
 }
 
 Test { [[
+native _f;
 native do
     void* f () {
         escape NULL;
@@ -19120,6 +19215,7 @@ escape &&ptr! == &&ptr!;  // ptr.SOME fails
 }
 
 Test { [[
+native _f;
 native do
     void* f () {
         escape NULL;
@@ -19140,6 +19236,7 @@ escape not ptr?;
 }
 
 Test { [[
+native _f;
 native do
     void* f () {
         escape NULL;
@@ -19163,6 +19260,7 @@ escape not ptr?;
 }
 
 Test { [[
+native _f;
 native do
     void* f () {
         escape NULL;
@@ -19195,6 +19293,7 @@ escape ret;
 }
 
 Test { [[
+native _alloc, _V;
 native do
     int V = 1;
     int* alloc () {
@@ -19217,6 +19316,7 @@ escape &tex2==&_V;
 }
 
 Test { [[
+native _alloc, _V;
 native do
     int V = 1;
     int* alloc () {
@@ -19239,6 +19339,7 @@ escape &tex2==&_V;
 }
 
 Test { [[
+native _V, _t, _alloc;
 pre native do
     struct T;
     typedef struct T t;
@@ -19301,6 +19402,7 @@ escape ret;
 }
 
 Test { [[
+native _SDL_Window, _SDL_CreateWindow, _SDL_WINDOW_SHOWN;
 native/nohold _SDL_DestroyWindow;
 
 
@@ -19316,6 +19418,7 @@ escape 0;
 }
 
 Test { [[
+native _V, _my_alloc, _my_free;
 native do
     int V = 0;
     void* my_alloc (void) {
@@ -20208,6 +20311,7 @@ escape ret;
 }
 
 Test { [[
+native _tceu_queue;
 input void&& E;
 input _tceu_queue&& GO;
 every qu_ in GO do
@@ -20325,6 +20429,7 @@ escape(1);
     parser = 'line 1 : after `output´ : expected type',
 }
 Test { [[
+native _t;
 output _t&& A;
 emit A => 1;
 escape(1);
@@ -20332,6 +20437,7 @@ escape(1);
     env = 'line 2 : wrong argument #1',
 }
 Test { [[
+native _t;
 output int A;
 var _t v=1;
 emit A => v;
@@ -20342,6 +20448,7 @@ escape(1);
     gcc = 'error: unknown type name',
 }
 Test { [[
+native _t;
 native do
     #define ceu_out_emit(a,b,c,d) __ceu_nothing(d)
 end
@@ -20377,6 +20484,7 @@ escape(1);
     --env = 'line 3 : non-matching types on `emit´',
 }
 Test { [[
+native _char;
 output _char A;
 escape 1;
 ]],
@@ -20403,6 +20511,7 @@ pre native do
         int b;
     } t;
 end
+native _t;
 var _t v;
 v.a = 1;
 v.b = 2;
@@ -20443,12 +20552,11 @@ native do
         }
     }
 end
-native _t;
+native/plain _t;
 output _t&& A;
 output int B;
 var int a, b;
 
-native/plain _t;
 var _t v = _t(1,-1);
 a = emit A => &&v;
 b = emit B => 5;
@@ -20477,12 +20585,11 @@ native do
         }
     }
 end
-native _t;
+native/plain _t;
 output _t A;
 output int B;
 var int a, b;
 
-native/plain _t;
 var _t v = _t(1,-1);
 a = emit A => v;
 b = emit B => 5;
@@ -20493,7 +20600,7 @@ escape a + b;
 }
 
 Test { [[
-native _char;
+native _cahr;
 output void A;
 native do
     void A (int v) {}
@@ -21108,6 +21215,7 @@ escape ret;
 }
 
 Test { [[
+native ___ceu_nothing;
 input (var int c)=>int F1 do
     escape c + 1;
 end
@@ -21126,6 +21234,7 @@ escape ret;
 -->>> OS_START
 
 Test { [[
+native _char,_assert;
 native/pure _strcmp;
 input (int,_char&& &&) OS_START;
 var int argc;
@@ -21255,6 +21364,7 @@ Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
 Test { [[
+native _V;
 *(0x100 as u32&&) = _V;
 escape 1;
 ]],
@@ -21787,6 +21897,7 @@ escape a;
 }
 
 Test { [[
+native _f, _p;
 native do
     ##define f(p)
 end
@@ -21805,6 +21916,7 @@ escape 1;
 }
 
 Test { [[
+native _f, _p;
 native do
     ##define f(p)
 end
@@ -21857,7 +21969,7 @@ Test { [[vector[0] int v; escape 0;]],
 Test { [[vector[2] int v; escape v;]],
     env = 'types mismatch'
 }
-Test { [[var _u8[2] v; escape &&v;]],
+Test { [[native _u8; var _u8[2] v; escape &&v;]],
     env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
@@ -21888,6 +22000,7 @@ vector[10] void a;
 }
 
 Test { [[
+native _int;
 var _int[2] v = [];
 v[0] = 5;
 escape v[0];
@@ -21896,6 +22009,7 @@ escape v[0];
 }
 
 Test { [[
+native _int;
 var _int[2] v = [];
 v[0] = 1;
 v[1] = 1;
@@ -21905,6 +22019,7 @@ escape v[0] + v[1];
 }
 
 Test { [[
+native _int;
 var _int[2] v = [];
 var int i;
 v[0] = 0;
@@ -21960,6 +22075,7 @@ escape i;
 }
 
 Test { [[
+native _int;
 var _int[1] v;
 escape 1;
 ]],
@@ -21968,6 +22084,7 @@ escape 1;
     ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
 }
 Test { [[
+native _u8, _V;
 var _u8[10] v = [_V];
 escape v[0];
 ]],
@@ -21975,6 +22092,7 @@ escape v[0];
 }
 
 Test { [[
+native _u8;
 var _u8[10] vvv = [];
 vvv[9] = 1;
 escape vvv[9];
@@ -21983,6 +22101,7 @@ escape vvv[9];
 }
 
 Test { [[
+native _u8;
 var _u8[10] v;
 escape v[0];
 ]],
@@ -21990,6 +22109,7 @@ escape v[0];
 }
 
 Test { [[
+native _u8;
 data Test with
   var _u8[10] v;
 end
@@ -22000,6 +22120,7 @@ escape t.v[0];
 }
 
 Test { [[
+native _u8;
 data Test with
   var _u8[10] v;
 end
@@ -22011,6 +22132,7 @@ escape t.v[9];
 }
 
 Test { [[
+native _u8;
 data Test with
     var int a;
     var _u8[10] v;
@@ -22035,11 +22157,12 @@ Test { [[vector[0] int[2] v; emit v; escape 0;]],
         --env='event "?" is not declared'
         parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
 }
-Test { [[var _int[2] v; v=v; escape 0;]], env='types mismatch' }
+Test { [[native _int; var _int[2] v; v=v; escape 0;]], env='types mismatch' }
 Test { [[vector[1] int v; escape v;]], env='cannot index a non array' }
-Test { [[var _int[2] v; escape v[v];]], env='invalid array index' }
+Test { [[native _int; var _int[2] v; escape v[v];]], env='invalid array index' }
 
 Test { [[
+native _int;
 var _int[2] v ;
 escape v == &&v[0] ;
 ]],
@@ -22048,6 +22171,7 @@ escape v == &&v[0] ;
 }
 
 Test { [[
+native _int;
 native/nohold _f;
 native do
     void f (int* p) {
@@ -22073,6 +22197,7 @@ native do
         *p = 1;
     }
 end
+native _int;
 var _int[2] a = [];
 a[0] = 0;
 a[1] = 0;
@@ -22099,6 +22224,7 @@ native do
         *p = 1;
     }
 end
+native _int;
 var _int[2] a = [];
 a[0] = 0;
 a[1] = 0;
@@ -22155,6 +22281,7 @@ escape 1;
 }
 
 Test { [[
+native _char;
 input (byte&&, u32) HTTP_GET;
 par/or do
     var _char&& p2Buff;
@@ -22176,6 +22303,7 @@ native do
         escape v[0];
     }
 end
+native _int;
 var _int[2] v = [];
 v[0] = 10;
 escape _f(v);
@@ -22184,6 +22312,7 @@ escape _f(v);
 }
 
 Test { [[
+native _ceu_uv_read_start, _assert;
 input void UV_READ;
 native/plain _char, _uv_buf_t, _uv_stream_t;
 native/nohold _uv_buf_init, _uv_read_stop;
@@ -22202,6 +22331,7 @@ escape 0;
 }
 
 Test { [[
+native _char;
 native/nohold _printf;
 
 data T with
@@ -22216,6 +22346,7 @@ escape t.x;
 }
 
 Test { [[
+native _char;
 native/pure _strlen;
 data T with
     var _char[255] xxxx;
@@ -22229,6 +22360,7 @@ escape _strlen(t.xxxx);
 Test { [[
 native/pure _strlen;
 
+native _char;
 var _char[255] str;
 str = "oioioi";
 
@@ -22309,6 +22441,7 @@ escape 1;
     env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
 }
 Test { [[
+native _int;
 var _int[1] vec = [];
 escape 1;
 ]],
@@ -22531,6 +22664,7 @@ native do
     }
 end
 vector[2] int a = [1,2];
+native _int;
 _f(&&a as _int&&);
 escape a[0] + a[1];
 ]],
@@ -22547,6 +22681,7 @@ native do
 end
 vector[2] int a  = [1,2];
 vector&[2] int b = &a;
+native _char;
 _f(&&b as _char&&);
 escape b[0] + b[1];
 ]],
@@ -22563,6 +22698,7 @@ native do
 end
 vector[2] int a  = [1,2];
 vector&[2] int b = &a;
+native _int;
 _f(&&b as _int&&);
 escape b[0] + b[1];
 ]],
@@ -22757,6 +22893,7 @@ native do
     } tp;
     tp T = { f };
 end
+native _char, _T;
 vector[] byte str = [] .. (_T.f() as _char&&);
 escape str[2]=='a';
 ]],
@@ -22773,6 +22910,7 @@ native do
     } tp;
     tp T = { f };
 end
+native _char, _T;
 vector[] byte str = [] .. (_T.f() as _char&&) .. "oi";
 escape str[4]=='i';
 ]],
@@ -22787,6 +22925,7 @@ native do
 end
 vector[] byte  str;
 vector&[] byte ref = &str;
+native _char;
 ref = [] .. ({f}() as _char&&) .. "oi";
 native/pure _strlen;
 escape _strlen(&&str as _char&&);
@@ -22857,6 +22996,7 @@ code/instantaneous F (void) => byte[]& do
 end
 
 vector&[] byte ref = &f();
+native _char;
 ref = [] .. ({g}() as _char&&) .. "ola";
 
 escape str[3] == 'o';
@@ -22890,6 +23030,7 @@ native do
     ##define ID(x) x
 end
 native/pure _ID, _strlen;
+native _char;
 vector[] byte str = [] .. "abc"
                     .. (_ID("def") as _char&&);
 var byte&& str2 = _ID(&&str as _char&&);
@@ -22912,12 +23053,14 @@ Test { [[
 native/pure _strcmp;
 vector[] byte str1;
 vector[] byte str2 = [].."";
+native _char;
 escape _strcmp(&&str1 as _char&&,"")==0 and _strcmp(&&str2 as _char&&,"")==0;
 ]],
     run = 1,
 }
 
 Test { [[
+native _char, _strlen;
 code/instantaneous Strlen (var byte&& str)=>int do
     escape _strlen(str);
 end
@@ -22929,6 +23072,7 @@ escape strlen(&&str);
 }
 
 Test { [[
+native _char, _strlen;
 code/instantaneous Strlen (var byte&& str)=>int do
     escape _strlen(str);
 end
@@ -22974,7 +23118,6 @@ native/nohold _ceu_vector_copy_buffer;
 vector[5] byte v = [1,2,1,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 1);
-_printf("v = %d\n", $v);
 escape v[2] + $v + ok;
 ]],
     run = 6,
@@ -23005,7 +23148,6 @@ native/nohold _ceu_vector_copy_buffer;
 vector[] byte v = [1,2,1,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 0);
-_printf("v = %d\n", $v);
 escape v[2] + $v + ok;
 ]],
     run = 6,
@@ -23119,6 +23261,7 @@ escape *b;
 Test { [[
 native/nohold _strlen;
 vector[] byte v = ['a','b','c','\0'];
+native _char;
 escape _strlen(&&v as _char&&);
 ]],
     run = 3,
@@ -23126,6 +23269,7 @@ escape _strlen(&&v as _char&&);
 Test { [[
 native/nohold _strlen;
 vector[] byte v = ['a','b','c','\0'];
+native _char;
 escape _strlen(&&v as _char&&);
 ]],
     run = 3,
@@ -23145,6 +23289,7 @@ end
 
 vector[10] byte v;
 vector[10] byte v_;
+native _char;
 _garbage(&&v as _char&&);
 v = ['a','b','c'];
 escape _strlen(&&v as _char&&);
@@ -23193,6 +23338,7 @@ escape 1;
 Test { [[
 native/nohold _strlen;
 vector[] byte v = "abc";
+native _char;
 escape _strlen(v as _char&&);
 ]],
     env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
@@ -23201,6 +23347,7 @@ escape _strlen(v as _char&&);
 Test { [[
 native/nohold _strlen;
 vector[] byte v = [].."abc";
+native _char;
 escape _strlen(&&v as _char&&);
 ]],
     run = 3,
@@ -23209,6 +23356,7 @@ Test { [[
 native/nohold _strlen;
 vector[] byte v = [].."abc";
 v = [] .. v .. "def";
+native _char;
 escape _strlen(&&v as _char&&);
 ]],
     run = 6,
@@ -23291,6 +23439,7 @@ escape us[0]+us[9];
 
 
 Test { [[
+native _u8;
 var int n = 10;
 var _u8[n] us = [];
 us[0] = 10;
@@ -23301,6 +23450,7 @@ escape us[0]+us[9];
 }
 
 Test { [[
+native _u8, _U8_MAX;
 var int n = 10;
 var _u8[_U8_MAX] us = [];
 us[_U8_MAX-1] = 10;
@@ -23311,6 +23461,7 @@ escape us[0]+us[_U8_MAX-1];
 }
 
 Test { [[
+native _u8;
 native/const _U8_MAX;
 var int n = 10;
 var _u8[_U8_MAX] us = [];
@@ -23322,6 +23473,7 @@ escape us[0]+us[_U8_MAX-1];
 }
 
 Test { [[
+native _u8, _N;
 pre native do
     int N = 10;
 end
@@ -23335,6 +23487,7 @@ escape us[0]+us[_N-1];
 }
 
 Test { [[
+native _u8;
 native/const _N;
 pre native do
     int N = 10;
@@ -23391,6 +23544,7 @@ escape cs[0];
     -- NATIVE C FUNCS BLOCK RAW
 
 Test { [[
+native _char;
 var _char c = 1;
 escape c;
 ]],
@@ -23424,6 +23578,7 @@ escape {1};
 }
 
 Test { [[
+native _V;
 { int V = 10; };
 escape _V;
 ]],
@@ -23670,6 +23825,7 @@ escape ret;
 }
 
 Test { [[
+native _VD;
 native do
     void VD (int v) {
     }
@@ -23771,6 +23927,7 @@ native do
         escape *v1+*v2;
     }
 end
+native _u8;
 var _u8[2] v = [];
 v[0] = 8;
 v[1] = 5;
@@ -23784,6 +23941,7 @@ native do
     void* V;
 end
 var void&& v = null;
+native _V;
 _V = v;
 escape 1;
 ]],
@@ -23795,6 +23953,7 @@ native do
     void* V;
 end
 var void&& v=null;
+native _V;
 _V = v;
 await 1s;
 escape _V==null;
@@ -23818,6 +23977,7 @@ end
 }
 
 Test { [[
+native _tp, _a, _b;
 native do
     typedef int tp;
 end
@@ -23952,6 +24112,7 @@ escape 1;
 }
 
 Test { [[
+native _int, _f;
 native do
     int f () {
         escape 1;
@@ -23973,6 +24134,7 @@ escape ((__ceu_app:data as _CEU_Main&&)):xxx;
     parser = 'line 2 : after `:´ : expected internal identifier or native identifier',
 }
 Test { [[
+native __ceu_app, _CEU_Main;
 var int xxx = 10;
 escape ((__ceu_app:_data as _CEU_Main&&)):xxx;
 ]],
@@ -23986,10 +24148,12 @@ pre native do
         int a,b,c;
     } F;
 end
+native _F, _fff;
 native do
     F* fff;
 end
 
+native ___ceu_nothing;
 input (var byte&& path, var  byte&& mode)=>_F&& OPEN do
     ___ceu_nothing(path);
     ___ceu_nothing(mode);
@@ -24029,11 +24193,12 @@ pre native do
     } draw_string_t;
 end
 
+native ___ceu_nothing;
+native/plain _draw_string_t;
 input (var _draw_string_t&& ptr)=>void DRAW_STRING do
     ___ceu_nothing(ptr);
 end
 
-native/plain _draw_string_t;
 var _draw_string_t v = _draw_string_t(
     "Welcome to Ceu/OS!\n",
     20,
@@ -24645,6 +24810,7 @@ escape i;
     -- STRINGS
 
 Test { [[
+native _char;
 var _char[10] a;
 a = "oioioi";
 escape 1;
@@ -24979,6 +25145,7 @@ Test { [[
 
 Test { [[
 native/plain _char;
+native _u8;
 var _u8[10] v1 = [];
 var _char[10] v2 = [];
 
@@ -25181,6 +25348,7 @@ escape 1;
 }
 
 Test { [[
+native _int;
 var _int&& u;
 var _int[1] i;
 await 1s;
@@ -25191,6 +25359,7 @@ escape 1;
     --run = { ['~>1s']=1 },
 }
 Test { [[
+native _int;
 var _int&& u;
 var _int[1] i=[];
 await 1s;
@@ -25221,6 +25390,7 @@ escape 1;
     --run = { ['~>1s']=1 },
 }
 Test { [[
+native _int;
 var _int&& u;
 do
     var _int[1] i;
@@ -25236,6 +25406,7 @@ escape *u;
     env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
 }
 Test { [[
+native _int;
 var _int&& u;
 do
     var _int[1] i;
@@ -25277,6 +25448,7 @@ escape 1;
 }
 
 Test { [[
+native _SDL_KeyboardEvent;
 input _SDL_KeyboardEvent&& SDL_KEYUP;
 every key in SDL_KEYUP do
     if key:keysym.sym == 1 then
@@ -25356,6 +25528,7 @@ native/const _N;
 pre native do
     #define N 1
 end
+native _u8;
 var _u8[_N] vec = [];
 vec[0] = 10;
 escape vec[_N-1];
@@ -25368,6 +25541,7 @@ native/const _N;
 pre native do
     #define N 1
 end
+native _u8;
 var _u8[N] vec = [];
 vec[0] = 10;
 escape vec[N-1];
@@ -25380,6 +25554,7 @@ native/const _N;
 pre native do
     #define N 1
 end
+native _u8;
 var _u8[N+1] vec = [];
 vec[1] = 10;
 escape vec[1];
@@ -25389,6 +25564,7 @@ escape vec[1];
 
 Test { [[
 #define N 1
+native _u8;
 var _u8[N+1] vec = [];
 vec[1] = 10;
 escape vec[1];
@@ -25401,6 +25577,7 @@ native/const _N;
 pre native do
     #define N 5
 end
+native _int;
 var _int[_N] vec = [];
 loop i in _N do
     vec[i] = i;
@@ -26486,6 +26663,7 @@ escape 1;
 }
 
 Test { [[
+native _usleep;
 var int  a=10, b=5;
 var& int p = &b;
 par/and do
@@ -26534,6 +26712,7 @@ par/or do
     end
 with
 end
+native _usleep;
 _usleep(]]..i..[[);
 escape ret;
 ]],
@@ -26551,6 +26730,7 @@ var int ret = 0;
 var& int p = &ret;
 par/or do
     async/thread (p) do
+native _usleep;
         _usleep(]]..i..[[);
         atomic do
             p = 2;
@@ -26597,6 +26777,7 @@ var int  v1=0, v2=0;
 var& int p1 = &v1;
 var& int p2 = &v2;
 
+native _calc, _assert;
 native do
     int calc ()
     {
@@ -26634,6 +26815,7 @@ escape v1;
 }
 
 Test { [[
+native _assert;
 var int  v1=0, v2=0;
 var& int p1 = &v1;
 var& int p2 = &v2;
@@ -26691,6 +26873,7 @@ end
 
 par/and do
     async/thread (p1) do
+native _calc, _assert;
         var int ret = _calc();
         atomic do
             p1 = ret;
@@ -26713,6 +26896,7 @@ escape v1;
 }
 
 Test { [[
+native _assert;
 var int  v1=0, v2=0;
 var& int p1 = &v1;
 var& int p2 = &v2;
@@ -26764,12 +26948,14 @@ end
 par/or do
     async do
         loop i in 3 do
+native _usleep;
             _usleep(500);
         end
     end
 with
     async/thread do
         loop i in 2 do
+native _V;
             _V = _V + 1;
             _usleep(500);
         end
@@ -27123,6 +27309,7 @@ escape ret;
 -- ASYNC/NONDET
 
 Test { [[
+native _int;
 var _int[2] v = [];
 var _int&& p = &&v[0];
 par/and do
@@ -27139,6 +27326,7 @@ escape v[0] + v[1];
     run = 3;
 }
 Test { [[
+native _int;
 var _int[2] v = [];
 par/and do
     v[0] = 1;
@@ -27242,6 +27430,7 @@ with
     var int y = x;
     async/thread (y) do
         y = 2;
+native _usleep;
         _usleep(50);
     end
     x = x + y;
@@ -27263,6 +27452,7 @@ with
     var int y = x;
     async/thread (y) do
         y = 2;
+native _usleep;
         _usleep(50);
     end
     x = x + y;
@@ -27323,6 +27513,7 @@ Test { [[
 vector[10] int x = [0,1];
 par/and do
     async/thread (x) do
+native _usleep;
         _usleep(100);
         x[0] = x[1] + 2;
     end
@@ -27362,6 +27553,7 @@ escape v;
 }
 
 Test { [[
+native _f;
 native do
     int f (int v) {
         escape v + 1;
@@ -27537,6 +27729,7 @@ escape ret;
 }
 
 Test { [=[
+native _char;
 native/nohold _strcmp;
 var byte&& str = "oioioi";
 [[ str = @str ]]
@@ -27570,6 +27763,7 @@ var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy;
 vector&[10] byte ptr = &cpy;
 ptr = [[ str ]];
+native _char;
 escape ret and (not _strcmp(&&str as _char&&,&&cpy as _char&&));
 ]=],
     run = 1,
@@ -27579,6 +27773,7 @@ Test { [=[
 native/nohold _strcmp;
 [[ str = '1234567890' ]]
 vector[2] byte cpy = [[ str ]];
+native _char;
 escape (_strcmp(&&cpy as _char&&,"1") == 0);
 ]=],
     run = '3] runtime error: access out of bounds',
@@ -27591,6 +27786,7 @@ vector[2] byte cpy;
 vector[20] byte cpy_;
 vector&[] byte ptr = &cpy;
 ptr = [[ str ]];
+native _char;
 escape (not _strcmp(&&cpy as _char&&,"1234567890"));
 ]=],
     run = '6] runtime error: access out of bounds',
@@ -27638,6 +27834,8 @@ var int v_from_ceu = [[v_from_lua]];
 str_from_lua = 'string from lua'
 ]]
 vector[100] byte str_from_ceu = [[str_from_lua]];
+native _assert;
+native _char;
 _assert(0==_strcmp(&&str_from_ceu as _char&&, "string from lua"));
 
 [[
@@ -27862,6 +28060,7 @@ escape 1;
 
 
 Test { [[
+native _SDL_MouseButtonEvent;
 input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
 code/delayed T (void)=>void do
     var _SDL_MouseButtonEvent&& but = await SDL_MOUSEBUTTONUP;
@@ -27895,6 +28094,7 @@ end
 
 code/delayed X (void)=>void do
     every 1s do
+native _V;
         _V = _V + 1;
     end
 end
@@ -27957,12 +28157,12 @@ do
     escape xx+1;
 end
 var int a = await Code(1);
-_printf("a = %d\n", a);
 escape a;
 ]],
     run = { ['~>1s']=3 },
 }
 Test { [[
+native _X;
 native do
     int X = 0;
 end
@@ -28140,6 +28340,7 @@ native do
     int V = 10;
 end
 code/delayed T (void)=>void do
+native _V;
     _V = 100;
 end
 spawn T();
@@ -28300,6 +28501,7 @@ class T with
 do
     await 1s;
     emit e;
+native _V;
     _V = 1;
 end
 
@@ -29117,6 +29319,7 @@ escape 1;
 }
 
 Test { [[
+native _BGS;
 native do
     int  vs[] = { 1, 2 };
     int* BGS[] = { &vs[0], &vs[1] };
@@ -29127,6 +29330,7 @@ escape *_BGS[1];
 }
 
 Test { [[
+native _t;
 pre native do
     typedef int* t;
 end
@@ -29188,8 +29392,9 @@ end
 do
     var int v = 10;
     var _rect r;
+native ___ceu_nothing;
+native _V;
 do r = _rect(&&v); finalize with _V=v; end;
-    native/nohold ___ceu_nothing;
     ___ceu_nothing(&&r);
 end
 escape _V;
@@ -29367,9 +29572,11 @@ do
                     await 1s;
                 end
                 emit evtB;
+native _assert;
                 _assert(0);
             end
         end
+native _V;
         _V = 10;
     end
 end
@@ -29697,6 +29904,7 @@ escape t1.v+t2.v;
 
 Test { [[
 class T with
+native _char;
     var _char&& ptr;
 do
 end
@@ -29713,6 +29921,7 @@ escape 1;
 }
 Test { [[
 class T with
+native _char;
     var _char&& ptr=null;
 do
 end
@@ -30704,6 +30913,7 @@ Test { [[
 native do
     int V = 0;
 end
+native _V;
 
 class T with
 do
@@ -30721,6 +30931,7 @@ Test { [[
 native do
     int V = 0;
 end
+native _V;
 class T with
 do
     _V = _V + 1;
@@ -30954,6 +31165,7 @@ escape 10;
 Test { [[
 native do ##include <assert.h> end
 native _assert;
+native _assert;
 input int  BUTTON;
 input void F;
 
@@ -31015,6 +31227,7 @@ with
     async do
         emit 100ms;
     end
+native _assert;
     _assert(rs[1].x==110);
     _assert(rs[0].x==20 and rs[0].y==50 and rs[1].x==110 and rs[1].y==300);
 
@@ -31914,6 +32127,7 @@ Test { [[
 class T with
     var& int? i;
 do
+native _assert;
     _assert(not i?);
     var int v = 10;
     i! = v;
@@ -31929,6 +32143,7 @@ Test { [[
 class T with
     var& int? i;
 do
+native _assert;
     _assert(i?);
 end
 var int i = 10;
@@ -31943,6 +32158,7 @@ Test { [[
 class T with
     var& int? i;
 do
+native _assert;
     _assert(not i?);
 end
 var int i = 10;
@@ -32889,6 +33105,7 @@ do
             await FOREVER;
         with
             var int n = await t;
+native _assert;
             _assert(n == 2);
         end
     end
@@ -32926,6 +33143,7 @@ do
             await FOREVER;
         with
             var int n = await t;
+native _assert;
             _assert(n == 2);
         end
     end
@@ -32961,6 +33179,7 @@ do
     do
         vector[] byte buf;
         var int n = do T.run(2);
+native _assert;
         _assert(n == 2);
     end
 
@@ -33027,6 +33246,7 @@ escape outer;
 }
 
 Test { [[
+native _f;
 _f(outer);
 ]],
     props = 'line 1 : `outer´ can only be unsed inside constructors',
@@ -33117,6 +33337,7 @@ native/nohold _myfree;
 class T with
     var int x = 10;
 do
+native _myalloc;
     do _PTR = _myalloc();
     finalize with
         _myfree(_PTR);
@@ -33143,6 +33364,7 @@ class T with
     var int x = 10;
 do
     var& void? ptr;
+native _myalloc;
     do    ptr = &_myalloc();
     finalize with
         _myfree(&&ptr);
@@ -33169,6 +33391,7 @@ class T with
     var int x = 10;
 do
     var& void? ptr;
+native _myalloc;
         do ptr = &_myalloc();
     finalize with
         _myfree(&&ptr!);
@@ -34210,6 +34433,7 @@ par/or do
     await t;
 with
     kill t;
+native _assert;
     _assert(0);
 end
 
@@ -34232,6 +34456,7 @@ do
     await t;
 end
 do
+native _char;
     var _char[1000] v = [];
     native/nohold _memset;
     _memset(&&v, 0, 1000);
@@ -35413,6 +35638,7 @@ do
     await OS_START;
     par/or do
     with
+native _assert;
         _assert(0);
     end
 end
@@ -35431,6 +35657,7 @@ class T with
 do
     par/or do
     with
+native _assert;
         _assert(0);
     end
 end
@@ -35861,6 +36088,7 @@ do
     await t;
 end
 do
+native _char;
     var _char[1000] v = [];
     native/nohold _memset;
     _memset(&&v, 0, 1000);
@@ -35890,6 +36118,7 @@ do
     await t2;
 end
 do
+native _char;
     var _char[1000] v = [];
     native/nohold _memset;
     _memset(&&v, 0, 1000);
@@ -35947,6 +36176,7 @@ with
     var T t1;
     var U u1;
     await u1.ok;
+native _assert;
     _assert(_V == 11);
 end
 _assert(_V == 21);
@@ -36853,6 +37083,7 @@ do
     var T t;
     par/or do
         await a;
+native _assert;
         _assert(0);
     with
         await OS_START;
@@ -36874,6 +37105,7 @@ do
     var T t;
     par/or do
         await t;
+native _assert;
         _assert(0);
     with
         await OS_START;
@@ -38098,6 +38330,7 @@ end
 par/or do
     spawn T;
 with
+native _assert;
     _assert(0);
 end
 
@@ -39659,6 +39892,7 @@ escape _V;
 }
 
 Test { [[
+native _s, _V;
     var _s&& p = null;
     loop i in 10 do
         var _s&& p1 = p;
@@ -39672,7 +39906,7 @@ escape _V;
 }
 
 Test { [[
-native _s;
+native _s, _V;
 pre native do
     typedef int s;
 end
@@ -41678,6 +41912,7 @@ escape 1;
 
 Test { [[
 interface I with
+native _char;
     var _char c;
 end
 class T with
@@ -42063,6 +42298,7 @@ class T with do end
 pool[] T ts;
 do
     loop i in ts do
+native _f;
         _f(i);
     end
 end
@@ -42592,7 +42828,9 @@ native do
 end
 class T with do end
 spawn T with
+native _int;
             var& _int? intro_story_str;
+native _f;
                 do intro_story_str = &_f();
             finalize with
             end
@@ -43087,6 +43325,7 @@ escape 1;
 }
 
 Test { [[
+native _ceu_out_log;
 native do
     ##define ceu_out_call_LUA_GETGLOBAL
 end
@@ -44338,6 +44577,7 @@ escape t1.i + f:i;
 }
 
 Test { [[
+native _V;
 native do
     void* V;
 end
@@ -44371,6 +44611,7 @@ class T with
     code/instantaneous F (var void&& v)=>void;
 do
     code/instantaneous F (var void&& v)=>void do
+native _V;
         _V = v;
     end
 end
@@ -44545,6 +44786,7 @@ native do
     void* V;
 end
 code/instantaneous F (var void&& v)=>void do
+native _V;
     _V := v;
 end
 var void&& x=null;
@@ -44561,6 +44803,7 @@ native do
     void* V;
 end
 code/instantaneous F (var/hold void&& v)=>void do
+native _V;
     _V := v;
 end
 var void&& x=null;
@@ -44576,6 +44819,7 @@ native do
     int V;
 end
 code/instantaneous F (var int v)=>void do
+native _V;
     _V = v;
 end
 var void&& x=null;
@@ -44940,7 +45184,8 @@ escape f(5);
 Test { [[
 call 1;
 ]],
-    env = 'TODO: 1 not func',
+    ast = 'line 1 : invalid call',
+    --env = 'TODO: 1 not func',
     --parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
 }
 
@@ -45357,6 +45602,7 @@ do
 end
 var C c;
 
+native _t;
 var _t   t;
 var _t&& ptr = &&t;
 
@@ -45383,6 +45629,7 @@ do
 end
 var C c;
 
+native _t;
 var _t   t;
 var _t&& ptr = &&t;
 
@@ -46024,6 +46271,7 @@ escape v!;
 }
 
 Test { [[
+native _new_Int;
 native do
     int* new_Int() {
         escape NULL;
@@ -46882,6 +47130,7 @@ native do
 end
 output int O;
 atomic do
+native _f;
     _f();
 end
 escape 1;
@@ -47044,6 +47293,7 @@ do
 end             // TODO: forcing finalize out_isr(null)
 with
 end
+native _V;
 escape _V;
 ]],
     run = 20,
@@ -47072,6 +47322,7 @@ par/or do
     end             // TODO: forcing finalize out_isr(null)
 with
 end
+native _V;
 escape _V;
 ]],
     run = 12,
@@ -47113,6 +47364,7 @@ end
 }
 
 Test { [[
+native _int;
 pre native do
     int V = 1;
     tceu_app CEU_APP;
@@ -47151,6 +47403,7 @@ end
 Test { [[
 async/isr [20] do
     atomic do
+native _f;
         _f();
     end
 end
@@ -47266,6 +47519,7 @@ Test { PRE_ISR..[[
 native do
     int f (void) { escape 2; }
 end
+native _f;
 var int v = _f();
 par/or do
     async/isr [20] do
@@ -47500,6 +47754,7 @@ escape 1;
 }
 
 Test { [[
+native _assert;
 deterministic _assert;
 pre native do
     ##define ceu_out_isr_on()
@@ -47517,6 +47772,7 @@ pre native do
 end
 
 par/or do
+native _V;
     _assert(_V==0);
     async/isr [1] do
     end
@@ -47533,6 +47789,7 @@ escape _V+1;
 }
 
 Test { [[
+native _digitalRead, _digitalWrite;
 input int PIN02;
 par/or do
     async/isr [1] do
@@ -47551,6 +47808,7 @@ escape 1;
 
 Test { [[
 input int PIN02;
+native _digitalRead, _digitalWrite;
 par/or do
     var int i = 0;
     async/isr [1] do
@@ -47566,6 +47824,7 @@ escape 1;
 }
 
 Test { [[
+native _digitalRead, _digitalWrite;
 input int PIN02;
 par/or do
     var int i = 0;
@@ -47648,6 +47907,7 @@ class UIGrid with
 do
     code/instantaneous Go (void)=>void do
         loop item in this.uis do
+native _f;
             _f(item:ui);
         end
     end
@@ -48065,6 +48325,7 @@ class T with
     var int v = 0;
 do
     do finalize with
+native _V;
         _V = _V + 1;
     end
     await FOREVER;
@@ -48109,6 +48370,7 @@ class T with
     var int v = 0;
 do
     do finalize with
+native _V;
         _V = _V + 1;
     end
     await FOREVER;
@@ -48931,6 +49193,7 @@ class T with
     var int id = 0;
 do
     await OS_START;
+native _V;
     _V = _V + 1;
 end
 
@@ -49011,6 +49274,7 @@ class T with
     var int id = 0;
 do
     await OS_START;
+native _V;
     _V = _V + 1;
 end
 
@@ -49026,6 +49290,7 @@ loop i in 10000 do
     end
     tF = t!;
 end
+native _assert;
 _assert(t0!=null and tF!=null);
 
 var int ret1=0, ret2=0;
@@ -49051,6 +49316,7 @@ class T with
     var int id = 0;
 do
     await OS_START;
+native _V;
     _V = _V + 1;
 end
 
@@ -49066,6 +49332,7 @@ var T&& t0 = null;
     end
     tF = t!;
 end
+native _assert;
 _assert(tF!=null);
 
 var int ret1=0, ret2=0;
@@ -49727,6 +49994,7 @@ do
     watching *u do
         await FOREVER;
     end
+native _V;
     _V = 1;
 end
 do
@@ -49736,6 +50004,7 @@ do
     end;
     await 1s;
 end
+native _assert;
 _assert(_V == 1);
 escape 1;
 ]],
@@ -49756,6 +50025,7 @@ do
     watching *u do
         await FOREVER;
     end
+native _V;
     _V = _V+1;
 end
 do
@@ -49765,6 +50035,7 @@ do
     end;
     await 1s;
 end
+native _assert;
 _assert(_V == 2);
 escape 1;
 ]],
@@ -49785,6 +50056,7 @@ do
     watching *u do
         await FOREVER;
     end
+native _V;
     _V = _V+1;
 end
 do
@@ -49808,6 +50080,7 @@ do
     watching *u do
         await FOREVER;
     end
+native _V;
     _V = _V + 1;
 end
 
@@ -49822,6 +50095,7 @@ do
     end;
     await 1s;
 end
+native _assert;
 _assert(_V == 1);
 escape _V;
 ]],
@@ -49839,6 +50113,7 @@ do
     watching *u do
         await FOREVER;
     end
+native _V;
     _V = 1;
 end
 do
@@ -49848,6 +50123,7 @@ do
     end;
     await 1s;
 end
+native _assert;
 _assert(_V == 1);
 escape 1;
 ]],
@@ -50069,6 +50345,7 @@ watching *ptr do
                             // (5)
         ret = ret + 1;      // ret=1
     end
+native _V;
     _V = ret + ptr:v + a.v;     // _V=104
     escape ret + ptr:v + a.v;
         // this escape the outer block, which kills ptr,
@@ -50131,6 +50408,7 @@ watching *ptr do
     with
         await ptr:ok;
     end
+native _V;
     _V = ptr:v + a.v;
     escape ptr:v + a.v;
 end
@@ -50183,6 +50461,7 @@ watching *ok1! do
     loop t in ts do
         ret = ret + t:v;
     end
+native _V;
     _V = (ok1?) + ok2 + ret;
     escape (ok1?) + ok2 + ret;
 end
@@ -50293,6 +50572,7 @@ do
     watching *u do
         await OS_START;
         emit u:x;
+native _assert;
         _assert(0);
     end
 end
@@ -50488,6 +50768,7 @@ var T t;
 var I&& i = &&t;
 watching *i do
     await OS_START;
+native _V;
     _V = i:e;
     escape i:e;
 end
@@ -50524,6 +50805,7 @@ var I&& i = &&t;
 watching *i do
     await OS_START;
     emit i:e;
+native _V;
     _V = i:ee;
     escape i:ee;
 end
@@ -50569,6 +50851,7 @@ watching *i1 do
     with
         await OS_START;
     end
+native _V;
     _V = ret;
     escape ret;
 end
@@ -50617,6 +50900,7 @@ watching *i1 do
             var int v = await i2:f;
             ret = ret + v;
         end
+native _V;
         _V = ret;
         escape ret;
     end
@@ -50659,6 +50943,7 @@ input void OS_START;
 watching *i do
     await OS_START;
     i:f(100);
+native _V;
     _V = i:v;
     escape i:v;
 end
@@ -50698,6 +50983,7 @@ input void OS_START;
 watching *i do
     await OS_START;
     i:f(100);
+native _V;
     _V = i:v;
     escape i:v;
 end
@@ -50784,6 +51070,7 @@ watching *i do
 
     i=&&u;
     i:f(200);
+native _V;
     _V = ret + i:v;
     escape ret + i:v;
 end
@@ -50949,6 +51236,7 @@ input int A;
 var int v = 0;
 par/or do
     every 10s do
+native _V;
         _V = _V + 1;
     end
 with
@@ -50976,6 +51264,7 @@ input int A;
 var int v = 0;
 par/or do
     every 10s do
+native _V;
         _V = _V + 1;
     end
 with
@@ -51840,6 +52129,7 @@ escape 1;
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 input void A;
 native do ##include <assert.h> end
+native _assert;
 _assert(0);
 ]])
 Test { [[
@@ -51927,6 +52217,7 @@ end
 ]])
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
+native _f;
 escape _f();
 ]],
     run = 10,
@@ -51942,6 +52233,7 @@ end
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
 #include "/tmp/_ceu_MOD1.ceu"
+native _f;
 escape _f();
 ]],
     gcc = 'error: redefinition of',
@@ -51960,6 +52252,7 @@ end
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
 #include "/tmp/_ceu_MOD1.ceu"
+native _f;
 escape _f();
 ]],
     run = 10,
@@ -52057,6 +52350,7 @@ end
 ]])
 Test { [[
 #include "/tmp/_ceu_MOD1.ceu"
+native _f;
 escape _f();
 ]],
     run = 10,
@@ -52103,6 +52397,7 @@ with
 end
 
 native do ##include <assert.h> end
+native _assert;
 _assert(v1 == v2);
 escape v1;
 ]],
@@ -52230,6 +52525,7 @@ end
 
 var T t;
 await 1s;
+native _assert;
 _assert(t.i == null);
 escape 1;
 ]],
@@ -52246,6 +52542,7 @@ end
 var T t;
 var I&& i = t.i;
 await 1s;
+native _assert;
 _assert(t.i == null);
 escape 1;
 ]],
@@ -52263,6 +52560,7 @@ end
 var T t;
 var I&& i = t.i;
 await 1s;
+native _assert;
 _assert(i == null);
 escape 1;
 ]],
@@ -52377,6 +52675,7 @@ end
 class MoveObject with
     var Object&& obj = null;
 do
+native _assert;
     _assert(this.obj != null);
     await 1s;
     obj:rect.x = 1;
@@ -53011,6 +53310,7 @@ class SDL with
     input:
         var int w;
 do
+native _f;
     _f(this.w);
 end
 escape 1;
@@ -53076,6 +53376,7 @@ end
 
 var T t;
 native/nohold _strlen;
+native _char;
 escape _strlen(&&t.name as _char&&);
 ]],
     run = 2,
@@ -53107,6 +53408,7 @@ var U u with
 end;
 
 native/nohold _strlen;
+native _char;
 escape _strlen(&&t.name as _char&&);
 ]],
     run = 2,
@@ -53449,6 +53751,7 @@ par do
         int V = 0;
     end
     input/output LINE [10] (var int max)=>int do
+native _V;
         _V = 10;
         escape 1;
     end
@@ -53471,6 +53774,7 @@ par do
         int V = 0;
     end
     input/output LINE [10] (var int max)=>int do
+native _V;
         _V = max;
     end
     await 1s;
@@ -53492,6 +53796,7 @@ par do
         int V = 0;
     end
     input/output LINE [10] (var int max)=>int do
+native _V;
         _V = _V + max;
     end
     await 1s;
@@ -53536,6 +53841,7 @@ par do
     end
     input/output LINE (var int max)=>int do
         await 1s;
+native _V;
         _V = _V + max;
     end
     await 1s;
@@ -53561,6 +53867,7 @@ par do
     end
     input/output LINE [2] (var int max)=>int do
         await 1s;
+native _V;
         _V = _V + max;
     end
     await 1s;
@@ -53588,6 +53895,7 @@ par do
     end
     input/output LINE [2] (var int max)=>int do
         await 1s;
+native _V;
         _V = _V + max;
     end
     await 2s;
@@ -53615,6 +53923,7 @@ par do
     end
     input/output LINE [2] (var int max)=>int do
         await 1s;
+native _V;
         _V = _V + max;
     end
     await 3s;
@@ -53646,6 +53955,7 @@ par do
     end
     input/output LINE [1] (var int max)=>int do
         await 1s;
+native _V;
         _V = _V + max;
     end
     await 3s;
@@ -53677,6 +53987,7 @@ par do
     end
     input/output LINE [0] (var int max)=>int do
         await 1s;
+native _V;
         _V = _V + max;
     end
     await 3s;
@@ -53708,6 +54019,7 @@ par do
     end
     input/output LINE [10] (var int max)=>int do
         await 1s;
+native _V;
         _V = _V + max;
     end
     input void F;
@@ -53734,6 +54046,7 @@ par do
     end
     input/output LINE [10] (var int max)=>int do
         await 1s;
+native _V;
         _V = _V + max;
     end
     input void F;
@@ -53760,6 +54073,7 @@ par do
     end
     input/output LINE [10] (var int max)=>int do
         await 1s;
+native _V;
         _V = _V + max;
     end
     input void F;
@@ -54117,12 +54431,14 @@ end
 input/output PING_PONG (var int x)=>byte[]&& do
     vector[] byte ret = [].."Pong ";
     native/nohold _printf;
+native _char;
     _printf("%s\n", (_char&&)&&ret);
     escape &&ret;
 end
 async do
     emit PING_PONG_REQUEST => (0,1);
 end
+native _V;
 escape _V;
 ]],
     run = 5,
@@ -54137,6 +54453,7 @@ par/and do
     var int i,err;
     (i,err,ret) = await PING_PONG_RETURN;
     native/nohold _printf;
+native _char;
     _printf("%s\n", (_char&&)ret!);
     if i and err then end;
 with
@@ -54184,6 +54501,7 @@ async do
     emit TEST_REQUEST => (0,0);
 end
 
+native _V;
 escape _V;
 ]],
     run = 5,
@@ -54225,6 +54543,7 @@ end
 
 await 2s;
 
+native _V;
 escape _V;
 ]],
     run = {['~>1s;~>2s']=2},
@@ -54252,6 +54571,7 @@ end;
 var Test&&? ptr = &&t;
 
 input/output RESOURCE [10] (void)=>void do
+native _V;
     _V = global:ptr!:k;
 end
 
@@ -54564,6 +54884,7 @@ end
 
 var Ball ball = Ball(130,130,8);
 
+native _add;
 native do
     int add (s16 a, s16 b, s16 c) {
         escape a + b + c;
@@ -54614,6 +54935,7 @@ do
         var float radius;
     end
     var Ball1 ball = Ball1(130,130,8);
+native _add;
     sum = sum + _add(ball.x, ball.y, ball.radius);
 end
 
@@ -55397,7 +55719,8 @@ escape 1;
 Test { DATA..[[
 escape NIL();
 ]],
-    env = 'TODO: not a code',
+    ast = 'line 51 : invalid call',
+    --env = 'TODO: not a code',
     --parser = 'line 51 : after `escape´ : expected expression',
 }
 Test { DATA..[[
@@ -55405,7 +55728,8 @@ var List l;
 var int v = (l==NIL());
 escape v;
 ]],
-    env = 'TODO: not a code',
+    ast = 'line 52 : invalid call',
+    --env = 'TODO: not a code',
     --parser = 'line 52 : after `==´ : expected expression',
 }
 
@@ -55544,6 +55868,7 @@ var int ret = 0;            // 0
 
 var int x = p.x;
 var int y = p.y;
+native _assert;
 _assert(x+y == 3);
 ret = ret + 3;              // 3
 
@@ -55985,6 +56310,7 @@ escape ((l as CONS).head);     // runtime error
 -- 2nd allocation fails (1 space)
 Test { DATA..[[
 pool[1] List l = new CONS(2, CONS(1, NIL()));
+native _assert;
 _assert(((l as CONS).tail) is NIL);
 escape ((l as CONS).head);
 ]],
@@ -55993,6 +56319,7 @@ escape ((l as CONS).head);
 -- 3rd allocation fails (2 space)
 Test { DATA..[[
 pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));
+native _assert;
 _assert((((l as CONS).tail) as CONS).tail is NIL);
 escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + (((l as CONS).tail) as CONS).tail is NIL;
 ]],
@@ -56078,6 +56405,7 @@ escape ((l as CONS).head);
 -- 1-2-3-NIL => 1-2-NIL (3 fails)
 -- 4-5-6-NIL => NIL     (all fail)
 Test { DATA..[[
+native _ceu_out_assert_msg;
 pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
 _ceu_out_assert_msg((((l as CONS).tail) as CONS).tail is NIL, "1");
 l = new NIL();
@@ -56090,6 +56418,7 @@ escape (((l as CONS).tail) as CONS).head;
 
 Test { DATA..[[
 pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
+native _ceu_out_assert_msg;
 _ceu_out_assert_msg((((l as CONS).tail) as CONS).tail is NIL, "1");
 l = new CONS(4, CONS(5, CONS(6, NIL())));   // all fail
 escape l is NIL;
@@ -56103,6 +56432,7 @@ escape l is NIL;
 Test { DATA..[[
 pool[2] List l;
 l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
+native _assert;
 _assert((((l as CONS).tail) as CONS).tail is NIL);
 l = new NIL();                                                // clear all
 l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
@@ -56439,8 +56769,10 @@ escape t.i!;
 }
 
 Test { [[
+native _SDL_Texture;
 native/nohold _g;
 var& _SDL_Texture? t_enemy_0, t_enemy_1;
+native _f;
     do t_enemy_1 = &_f();
 finalize with
     _g(&&t_enemy_1!);
@@ -56487,6 +56819,7 @@ escape 1;
 }
 
 Test { [[
+native _myalloc, _my_free;
 native do
     void* myalloc (void) {
         escape NULL;
@@ -56508,6 +56841,7 @@ escape 1;
 }
 
 Test { [[
+native _myalloc;
 native do
     void* myalloc (void) {
         escape NULL;
@@ -56550,6 +56884,7 @@ native do
 end
 
 var& int? v1;
+native _fff;
         do v1 = &_fff(1);
     finalize with
         nothing;
@@ -56562,6 +56897,7 @@ var& int? v2;
     end
 
 var& int? v3;
+native _V1, _V2;
         do v3 = &_UNSAFE_POINTER_TO_REFERENCE(_V1);
     finalize with
         nothing;
@@ -56651,6 +56987,7 @@ end
 var UI ui with
     this.bg_clr = SDL_Color(10);
 end;
+native _fff;
 escape _fff(ui.bg_clr!).v;
 ]],
     run = 10,
@@ -56690,6 +57027,7 @@ ret = ret + i!;      // 5
 // first
 p = &ret;
 p! = p! + 2;          // 7
+native _assert;
 _assert(ret == 7);
 
 // second
@@ -56851,6 +57189,7 @@ pool[5] List l;
 // change head [2]
 l = new CONS(1, NIL());
 ret = ret + ((l as CONS).head);        // 2
+native _assert;
 _assert(ret == 1);
 
 // add 2 [1, 2]
@@ -57569,6 +57908,7 @@ escape 1;
     env = 'line 5 : `data´ fields do not support vectors yet',
 }
 Test { [[
+native _u8;
 data Frame with
   var _u8[3] bytes;
 end
@@ -57611,6 +57951,7 @@ data D with
     var _char_ptr str;
 end
 vector[] byte s = [].. "oi";
+native _char;
 var D d = D(&&s as _char&& as _char_ptr);
 escape _strlen(d.str as _char&&);
 ]],
@@ -57654,6 +57995,7 @@ par do
         end
     end
     do
+native _int;
         var _int[100] iss = [];
         loop i in 100 do
             iss[i] = i;
@@ -58497,6 +58839,7 @@ class Body with
     var   List&&    n;
 do
     if (*n is NIL) then
+native _V;
         _V = _V * 2;
     end
     watching *n do
@@ -58562,6 +58905,7 @@ class Body with
 do
     watching *n do
         if (*n is NIL) then
+native _V;
             _V = _V * 2;
         else/if (*n is CONS) then
             _V = _V + 1;
@@ -58609,6 +58953,7 @@ native do
 end
 
 traverse n in &&list do
+native _V;
     _V = _V + 1;
     if (*n is CONS) then
         _V = _V + (*n is CONS).head;
@@ -58668,6 +59013,7 @@ native do
 end
 
 traverse n in &&list do
+native _V;
     _V = _V + 1;
     if (*n is CONS) then
         _V = _V + (*n is CONS).head;
@@ -59022,6 +59368,7 @@ pool[] T ts;
 var void&& p1 = this as void&&;
 
 traverse t in &&ts do
+native _assert;
     _assert(p1 == (this as void&&));
     if (*t is NXT) then
         traverse &&(*t as NXT).nxt;
@@ -59048,6 +59395,7 @@ pool[] T ts;
 var void&& p1 = &&this as void&&;
 
 traverse t in &&ts do
+native _assert;
     _assert(p1 == (&&this as void&&));
     if (*t is NXT) then
         traverse &&(*t as NXT).nxt;
@@ -59080,6 +59428,7 @@ finalize with
 end
 
 traverse t in &&ts do
+native _assert;
     _assert(&&p1! == (&&this as void&&));
     if (*t is NXT) then
         traverse &&(*t as NXT).nxt;
@@ -59111,6 +59460,7 @@ finalize with
 end
 
 traverse t in &&ts do
+native _assert;
     _assert(&&p1! == (&&this as void&&));
     if (*t is NXT) then
         traverse &&(*t as NXT).nxt;
@@ -59149,6 +59499,7 @@ class X with
 do end
 
 traverse t in &&ts do
+native _assert;
     _assert(&&p1! == (&&this as void&&));
     var int v1 = 1;
     var int v3 = 0;
@@ -59195,6 +59546,7 @@ class X with
 do end
 
 traverse t in &&ts do
+native _assert;
     _assert(&&p1! == (&&this as void&&));
     var int v1 = 1;
     var int v3 = 0;
@@ -59340,6 +59692,7 @@ par/and do
     sum = sum - 1;
 with
     await 1s;
+native _ceu_out_assert_msg;
     _ceu_out_assert_msg(sum == 1, "1");
     await 1s;
     _ceu_out_assert_msg(sum == 4, "2");
@@ -59497,6 +59850,7 @@ do
             end;
 
         else
+native _ceu_out_assert_msg;
             _ceu_out_assert_msg(0, "not implemented");
         end
     end
@@ -59536,6 +59890,7 @@ do
             end;
 
         else
+native _ceu_out_assert_msg;
             _ceu_out_assert_msg(0, "not implemented");
         end
     end
@@ -59577,6 +59932,7 @@ do
             end;
 
         else
+native _ceu_out_assert_msg;
             _ceu_out_assert_msg(0, "not implemented");
         end
     end
@@ -59619,6 +59975,7 @@ do
             end;
 
         else
+native _ceu_out_assert_msg;
             _ceu_out_assert_msg(0, "not implemented");
         end
     end
@@ -59659,6 +60016,7 @@ do
             end;
 
         else
+native _ceu_out_assert_msg;
             _ceu_out_assert_msg(0, "not implemented");
         end
     end
@@ -59722,6 +60080,7 @@ var int ret = 0;
 par/or do
     await (((l as CONS).tail) as CONS).tail;
     ret = ret + ((((l as CONS).tail) as CONS).tail as CONS).head;    // 0+4
+native _ceu_out_assert_msg;
     _ceu_out_assert_msg(ret == 4, "1");
     (((l as CONS).tail) as CONS).tail = ((((l as CONS).tail) as CONS).tail as CONS).tail;
     ret = ret + ((((l as CONS).tail) as CONS).tail as CONS).head;    // 0+4+5
@@ -59798,6 +60157,7 @@ with
                     escape v1 + v2;
 
                 else
+native _ceu_out_assert_msg;
                     _ceu_out_assert_msg(0, "not implemented");
                 end
             end
@@ -59857,6 +60217,7 @@ with
                 end
 
             else
+native _ceu_out_assert_msg;
                 _ceu_out_assert_msg(0, "not implemented");
             end
         end
@@ -59892,6 +60253,7 @@ par/or do
             else/if (*e is CONS) then
                 loop do
                     traverse &&(*e as CONS).tail;
+native _ceu_out_assert_msg;
                     _ceu_out_assert_msg(0, "0");
                 end
             else
@@ -59958,6 +60320,7 @@ end
                 end
 
             else
+native _ceu_out_assert_msg;
                 _ceu_out_assert_msg(0, "not implemented");
             end
         end
@@ -60019,6 +60382,7 @@ end
                 end
 
             else
+native _ceu_out_assert_msg;
                 _ceu_out_assert_msg(0, "not implemented");
             end
         end
@@ -60068,6 +60432,7 @@ par/or do
                             this.param = param + 1;
                         end;
 if ((*widget is SEQ).w1 is NIL) then
+native _ceu_out_assert_msg;
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -60131,6 +60496,7 @@ par/or do
                             this.param = param + 1;
                         end;
 if ((*widget is SEQ).w1 is NIL) then
+native _ceu_out_assert_msg;
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -60300,6 +60666,7 @@ with
 
             else/if (*cmd is SEQUENCE) then
                 traverse &&(*cmd as SEQUENCE).one;
+native _ceu_out_assert_msg;
                 _ceu_out_assert_msg(0, "bug found"); // cmds has to die entirely before children
                 traverse &&(*cmd as SEQUENCE).two;
             end
@@ -60384,6 +60751,7 @@ traverse cmd in &&cmds do
             traverse &&(*cmd as REPEAT).command;
 
         else
+native _ceu_out_assert_msg;
             _ceu_out_assert_msg(0, "not implemented");
         end
     end
@@ -60491,6 +60859,7 @@ do
     else
         inc = -1;
     end
+native _ceu_out_assert_msg;
     _ceu_out_assert_msg(this.pixels > 0, "pixels");
 
     var float sum = 0;
@@ -60619,6 +60988,7 @@ traverse cmd in &&cmds do
             end
 
         else
+native _ceu_out_assert_msg;
             _ceu_out_assert_msg(0, "not implemented");
         end
     end
@@ -60681,6 +61051,7 @@ traverse cmd in &&cmds do
             end
 
         else
+native _ceu_out_assert_msg;
             _ceu_out_assert_msg(0, "not implemented");
         end
     end
@@ -60960,6 +61331,7 @@ class Body with
 do
     watching *n do
         if (*n is NIL) then
+native _V;
             _V = _V * 2;
         else/if (*n is CONS) then
             _V = _V + 1;
@@ -61011,6 +61383,7 @@ class Body with
 do
     watching *n do
         if (*n is NIL) then
+native _V;
             _V = _V * 2;
         else/if (*n is CONS) then
             _V = _V + 1;
@@ -61059,6 +61432,7 @@ native do
 end
 
 traverse n in &&list do
+native _V;
     _V = _V + 1;
     watching *n do
         if (*n is NIL) then
@@ -61095,6 +61469,7 @@ native do
 end
 
 traverse n in &&list do
+native _V;
     _V = _V + 1;
     watching *n do
         if (*n is NIL) then
@@ -63932,9 +64307,11 @@ escape 1;
 -- async thread spawn falhou, e ai?
 
 Test { [[
+native _u8;
 data Test with
   var _u8[10] vvv;
 end
+native _V;
 var Test t = Test([_V]);    // should not accept [_V] here
 t.vvv[9] = 10;
 escape t.vvv[9];
@@ -63966,6 +64343,7 @@ class T with
     pool&[] I is;
 do
     every g.e do
+native _V;
         _V = _V + 1;
         spawn T in is with
             this.g = &outer.g;
@@ -64252,9 +64630,9 @@ Test { [[
 input void A, B, Z;
 event void a;
 var int ret = 1;
+native _t;
 var _t* a;
 native _f;
-native _t ;
 par/or do
     do _f(a);               // 8
         finalize with
@@ -64428,6 +64806,7 @@ Test { [[
 pre native do
     typedef int t;
 end
+native _t ;
 input (_t,int) EVT;
 escape 1;
 ]],
@@ -64676,6 +65055,7 @@ escape 10;
 -- TODO: should require finalization
 Test { [[
 class T with
+native _int;
     var _int to;
 do
 end

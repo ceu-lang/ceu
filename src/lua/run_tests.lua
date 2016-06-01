@@ -34,6 +34,7 @@ function check (mod)
         assert(ok==false, 'no error found')
 -- TODO: remove class/interface
 if string.find(msg,'expected TODO: class/interface',nil,true) then
+        return false
 else
         assert(string.find(msg, T[mod], nil, true), tostring(msg))
 end
@@ -41,6 +42,7 @@ end
     else
 -- TODO: remove class/interface
 if (not ok) and string.find(msg,'expected TODO: class/interface',nil,true) then
+        return false
 else
         assert(ok==true, msg)
 end
@@ -92,11 +94,11 @@ Test = function (t)
     end
 
     if not check('parser')   then return end
-do return end
     if not check('ast')      then return end
+    if not check('adjs')     then return end
+    if not check('tops')     then return end
+do return end
     AST.dump(AST.root)
-    if not check('types')    then return end
-    if not check('adj')      then return end
     if not check('sval')     then return end
     if not check('env')      then return end
     --if not check('exp')      then return end
