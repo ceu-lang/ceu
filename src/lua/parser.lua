@@ -381,6 +381,9 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , _Code_proto = V'__code'
     , _Code_impl  = V'__code' * V'__Do'
 
+    , _Spawn_Block = K'spawn' * V'__Do'
+    , Spawn_Code   = K'spawn' * V'CALL'
+
     -- EXTS
 
     -- call
@@ -415,6 +418,14 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                     PARENS(V'_Typepars_item_id'   * (KK','*V'_Typepars_item_id')^0)
                   )
 
+-- DATA
+
+    , __data       = K'data' * V'__ID_abs' * OPT(K'is' * V'ID_abs')
+    , _Data_simple = V'__data'
+    , _Data_block  = V'__data' * K'with' * (
+                        (V'_Vars'+V'_Vecs'+V'_Pools'+V'_Evts') *
+                            V'__seqs'
+                     )^1 * K'end'
 
 -- NATIVE, C, LUA
 
@@ -547,11 +558,11 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , _Set_Do       = #(K'do'*KK'/')    * V'Do'
     , _Set_Await    = #K'await'         * V'_Awaits'
     , _Set_Watching = #K'watching'      * V'_Watching'
-    , _Set_Spawn    = #K'spawn'         * V'Spawn'
+    , _Set_Spawn    = #K'spawn'         * V'Spawn_Code'
     , _Set_Thread   = #K'async/thread'  * V'_Thread'
     , _Set_Lua      = #V'__lua_pre'     * V'_Lua'
-    , _Set_Vec      = #V'__vec_pre'     * V'_Vecnew'
-    , _Set_Data     = #V'__data_pre'    * V'Datanew'
+    , _Set_Vec      = #V'__vec_pre'     * V'_Vec_New'
+    , _Set_Data     = #V'__data_pre'    * V'Data_New'
     , _Set_None     = #K'_'             * V'ID_none'
     , _Set_Exp      =                     V'__Exp'
 
@@ -564,13 +575,13 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __vec_pre     = KK'[' - V'__lua_pre'
     , __data_pre    = K'new'^-1 * V'__ID_abs'
 
-    , Vectup  = V'__vec_pre' * OPT(V'Explist') * KK']'
-    , _Vecnew = V'Vectup' * (KK'..' * (V'__Exp' + #KK'['*V'Vectup'))^0
+    , Vec_Tup  = V'__vec_pre' * OPT(V'Explist') * KK']'
+    , _Vec_New = V'Vec_Tup' * (KK'..' * (V'__Exp' + #KK'['*V'Vec_Tup'))^0
 
-    , Datanew = OPT(CK'new') * V'Datanew_one'
-    , Datanew_one  = V'__ID_abs' * PARENS(V'_Data_explist')
+    , Data_New = OPT(CK'new') * V'Data_New_one'
+    , Data_New_one  = V'__ID_abs' * PARENS(V'_Data_explist')
     , _Data_explist    = ( V'__data_expitem'*(KK','*V'__data_expitem')^0 )^-1
-    , __data_expitem   = (V'Datanew_one' + V'_Vecnew' + V'__Exp')
+    , __data_expitem   = (V'Data_New_one' + V'_Vec_New' + V'__Exp')
 
 -- IDS
 
@@ -600,20 +611,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
  --<<<
 
-    -- data types
-    , __data       = K'data' * V'__ID_abs' * OPT(K'is' * V'ID_abs')
-    , _Data_simple = V'__data'
-    , _Data_block  = V'__data' * K'with' * (
-                        (V'_Vars'+V'_Vecs'+V'_Pools'+V'_Evts') *
-                            V'__seqs'
-                     )^1 * K'end'
-
-    -- spawn / kill
-    , _SpawnAnon = K'spawn' * V'__Do'
-    , Spawn = K'spawn' * V'CALL'
     , Kill  = K'kill' * V'__Exp' * OPT(KK'=>'*V'__Exp')
-
--- Flow control
 
 -- Types
 
@@ -710,7 +708,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Awaits'
                  + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                  + V'Emit_Int'
-                 + V'Spawn' + V'Kill'
+                 + V'Spawn_Code' + V'Kill'
                  + V'Nat_Stmt'
 -- TODO: remove class/interface
 + I((K'class'+K'interface'+K'traverse')) * E'TODO: class/interface'
@@ -721,7 +719,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
               + V'Nat_Block'
               + V'Do'    + V'If'
               + V'_Loop' + V'_Every'
-              + V'_SpawnAnon'
+              + V'_Spawn_Block'
               + V'Finalize'
               + V'Paror' + V'Parand' + V'_Watching'
               + V'_Pause'
