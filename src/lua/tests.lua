@@ -9,39 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---------------------
-Test { [[
-
-var      T   t;
-vector[]    T   ts;  // erro
-pool[]   T   ts;
-vector[] T   ts;
-vector[] T&& pts;
-
-vector[] (pool   T)  && ppool;
-vector[] (vector T)  && pvec;
-vector[] (vector T&&)&& pvec;
-
-event T e;
-
-var (event T)&& pev;
-
-var    t :: T;
-vector t :: []T;
-
-vector[] pvec :: (vector T&&)&&
-
-
-code T
-
-
-
-escape 0;
-]],
-    todo = true,
-    run = 1,
-}
-
 -------------------------------------------------------------------------------
 
 -- TODO: incomplete
@@ -107,530 +74,7 @@ escape a;
     run = {['~>10s']=50 },
 }
 
--- BUG: escape 1 => void
-Test { [[
-code/instantaneous Code (var int)=>void;
-code/instantaneous Code (var int a)=>void
-do
-    escape 1;
-end
-escape 1;
-]],
-    run = 1,
-}
-
--- BUG: already bound
-Test { [[
-ddd Data with
-    var& int v;
-end
-
-code/delayed Code (var& Data d, var  int ini) => int
-do
-    var int v = ini;
-    d.v = &v;
-    every 1s do
-        v = v + 1;
-    end
-end
-
-var Data d = @ Data(0);
-
-var int a =
-    watching @ Code(&d, 10) do
-        var int ret = 0;
-        watching 5s do
-            every 1s do
-                ret = ret + d.v;
-            end
-        end
-        escape ret;
-    end;
-
-escape a;
-]],
-    run = {['~>10s']=50 },
-}
-
--- KKK
 --]===]
-
-Test { [[
-data DDD with
-    var int xxx;
-    event void e;
-end
-
-var DDD d = DDD(1);
-
-par/and do
-    await d.e;
-with
-    await 1s;
-    emit d.e;
-end
-
-d.xxx = d.xxx + 2;
-escape d.xxx;
-]],
-    run = { ['~>1s']=3 },
-}
-
-Test { [[
-code/instantaneous Code (var int)=>void
-do
-end
-escape 1;
-]],
-    adj = 'line 1 : missing parameter identifier',
-}
-
-Test { [[
-code/instantaneous Code (var int x, var  int)=>void
-do
-end
-escape 1;
-]],
-    parser = 'line 1 : after `int´ : expected type modifier or internal identifier'
-}
-
-Test { [[
-code/instantaneous Code (var void, var  int x) => void
-do
-end
-escape 1;
-]],
-    parser = 'line 1 : after `int´ : expected type modifier or `,´ or `)´',
-    --adj = 'line 1 : wrong argument #1 : cannot be `void´',
-}
-
-Test { [[
-code/instantaneous Code (var void, var  int) => void
-do
-end
-escape 1;
-]],
-    adj = 'line 1 : wrong argument #1 : cannot be `void´',
-}
-
-Test { [[
-code/instantaneous Code (var void a, var  int b) => void
-do
-end
-escape 1;
-]],
-    adj = 'line 1 : wrong argument #1 : cannot be `void´',
-}
-
-Test { [[
-code/instantaneous Code (var int a)=>void
-    __ceu_nothing(&&a);
-do
-end
-escape 1;
-]],
-    parser = 'line 1 : after `void´ : expected type modifier or `;´ or `do´',
-}
-
-Test { [[
-code/instantaneous Code (var int a)=>void;
-code/instantaneous Code (var int a)=>void
-do
-    native/nohold ___ceu_nothing;
-    ___ceu_nothing(&&a);
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/instantaneous Code (var void a)=>void
-do
-end
-escape 1;
-]],
-    adj = 'line 1 : cannot instantiate type "void"',
-}
-
-Test { [[
-code/instantaneous Code (var void)=>void
-do
-end
-escape 1;
-]],
-    env = 'TODO: var void',
-}
-
-Test { [[
-code/instantaneous Code (void)=>void
-do
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/instantaneous Code ()=>void
-do
-end
-escape 1;
-]],
-    parser = 'line 1 : after `(´ : expected `vector´ or `pool´ or `var´',
-}
-
-Test { [[
-code/instantaneous Code (var int x) => int
-do
-    x = x + 1;
-    escape x;
-end
-var int a = call Code(1);
-escape Code(a+10);
-]],
-    run = 13,
-}
-
-Test { [[
-code/delayed Code (var int x) => int
-do
-    x = x + 1;
-    await 1s;
-    x = x + 1;
-    escape x;
-end
-var int a = await Code(1);
-escape a;
-]],
-    run = { ['~>1s']=3 },
-}
-
-Test { [[
-every Code(1) do
-end
-]],
-    parser = 'line 1 : after `every´ : expected internal identifier or `(´',
-}
-Test { [[
-await Code(1) until true;
-]],
-    env = 'TODO: until not allowed',
-}
-Test { [[
-await 1s until true;
-]],
-    env = 'TODO: until not allowed',
-}
-Test { [[
-code/delayed Code (var int x) => int
-do
-    var int xx = x + 1;
-    await 1s;
-    escape xx+1;
-end
-var int a = await Code(1);
-_printf("a = %d\n", a);
-escape a;
-]],
-    run = { ['~>1s']=3 },
-}
-Test { [[
-native do
-    int X = 0;
-end
-code/delayed Code (var int x) => int
-do
-    var int xx = x + 1;
-    await 1s;
-    _X = xx + 1;
-    escape xx+1;
-end
-await Code(1);
-escape _X;
-]],
-    run = { ['~>1s']=3 },
-}
-
-Test { [[
-code/delayed Code (var int x) => int
-do
-    x = x + 1;
-    await 1s;
-    escape x;
-end
-var int a =
-    watching Code(10) do
-        escape 1;
-    end;
-
-escape a;
-]],
-    _ana = {acc=1},
-    run = 1,
-}
-
-Test { [[
-code/delayed Code (var int x) => int
-do
-    x = x + 1;
-    await 1s;
-    escape x;
-end
-var int a =
-    watching Code(10) do
-        await 5s;
-        escape 1;
-    end;
-
-escape a;
-]],
-    run = {['~>1s']=11 },
-}
-
-Test { [[
-data Data with
-    var int v;
-end
-
-code/delayed Code (var& Data d, var  int ini) => int
-do
-    d.v = ini;
-    every 1s do
-        d.v = d.v + 1;
-    end
-end
-
-var Data d = Data(0);
-
-var int a =
-    watching Code(&d, 10) do
-        var int ret = 0;
-        watching 5s do
-            every 1s do
-                ret = ret + d.v;
-            end
-        end
-        escape ret;
-    end;
-
-escape a;
-]],
-    run = {['~>10s']=50 },
-}
-
--------------------------------------------------------------------------------
-
-Test { [[
-do/
-    escape/A 1;
-end
-]],
-    parser = 'line 1 : after `do´ : expected `escape´ identifier',
-}
-
-Test { [[
-do/A
-    escape/ 1;
-end
-]],
-    parser = 'line 2 : after `escape´ : expected `escape´ identifier',
-}
-
-Test { [[
-do/A
-    escape/A 1;
-end
-]],
-    env = 'do/A has no escape value',
-}
-
-Test { [[
-do/A
-    escape/A;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-do/A
-    escape;
-end
-]],
-    env = 'missing value',
-}
-
-Test { [[
-do/A
-    escape 1;
-end
-]],
-    run = 1,
-}
-
-Test { [[
-var int a = do/A
-    escape/A 1;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int x = 0;
-loop i in 10 do
-    x = x + 1;
-    par/and do
-        await FOREVER;
-    with
-        continue/i;
-    end
-end
-escape x;
-]],
-    run = 10,
-}
-
-Test { [[
-var int x = 0;
-loop i in 10 do
-    loop j in 10 do
-        x = x + 1;
-        par/and do
-            await FOREVER;
-        with
-            continue/i;
-        end
-    end
-end
-escape x;
-]],
-    run = 10,
-}
-
-Test { [[
-var int x = 0;
-loop i in 10 do
-    loop j in 10 do
-        x = x + 1;
-        par/and do
-            await FOREVER;
-        with
-            continue/j;
-        end
-    end
-end
-escape x;
-]],
-    run = 100,
-}
-
-Test { [[
-var int x = 0;
-loop i in 10 do
-    x = x + 1;
-    par/and do
-        await FOREVER;
-    with
-        break/i;
-    end
-end
-escape x;
-]],
-    run = 1,
-}
-
-Test { [[
-var int x = 0;
-loop i in 10 do
-    loop j in 10 do
-        x = x + 1;
-        par/and do
-            await FOREVER;
-        with
-            break/i;
-        end
-    end
-end
-escape x;
-]],
-    run = 1,
-}
-
-Test { [[
-var int x = 0;
-loop i in 10 do
-    loop j in 10 do
-        x = x + 1;
-        par/and do
-            await FOREVER;
-        with
-            break/j;
-        end
-    end
-end
-escape x;
-]],
-    run = 10,
-}
-
-Test { [[
-a = do end;
-]],
-    parser = 'line 1 : after `do´ : expected `/´',
-}
-
-Test { [[
-a = do/X end;
-]],
-    run = 'assertion',
-}
-
--------------------------------------------------------------------------------
-
-Test { [[
-event void  a;
-event& void b = &a;
-
-par/or do
-    await 1s;
-    emit a;
-with
-    await b;
-end
-
-par/or do
-    await 1s;
-    emit b;
-with
-    await a;
-end
-
-escape 1;
-]],
-    run = { ['~>1s'] = 1 },
-}
-
--------------------------------------------------------------------------------
-
-Test { [[
-var int a = _;
-loop _ in 10 do
-end
-
-do/_
-    escape;
-end
-
-await 1ms/_;
-
-escape 1;
-]],
-    run = 1,
-}
 
 --do return end
 
@@ -2683,6 +2127,66 @@ end
     run = 1,
 }
 
+-->>> DO/_, SETBLOCK, ESCAPE
+
+Test { [[
+do/
+    escape/A 1;
+end
+]],
+    parser = 'line 1 : after `do´ : expected `escape´ identifier',
+}
+
+Test { [[
+do/A
+    escape/ 1;
+end
+]],
+    parser = 'line 2 : after `escape´ : expected `escape´ identifier',
+}
+
+Test { [[
+do/A
+    escape/A 1;
+end
+]],
+    env = 'do/A has no escape value',
+}
+
+Test { [[
+do/A
+    escape/A;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+do/A
+    escape;
+end
+]],
+    env = 'missing value',
+}
+
+Test { [[
+do/A
+    escape 1;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+var int a = do/A
+    escape/A 1;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
 Test { [[
 var int a = do/_
     var int a = do/A
@@ -2805,6 +2309,20 @@ escape ret;
 ]],
     run = 1,
 }
+
+Test { [[
+a = do end;
+]],
+    parser = 'line 1 : after `do´ : expected `/´',
+}
+
+Test { [[
+a = do/X end;
+]],
+    run = 'assertion',
+}
+
+--<<< DO/_, SETBLOCK, ESCAPE
 
 Test { [[
 input void A,B;
@@ -4184,6 +3702,104 @@ escape 1;
     wrn = true,
     loop = true,
     run = 1,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    x = x + 1;
+    par/and do
+        await FOREVER;
+    with
+        continue/i;
+    end
+end
+escape x;
+]],
+    run = 10,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    loop j in 10 do
+        x = x + 1;
+        par/and do
+            await FOREVER;
+        with
+            continue/i;
+        end
+    end
+end
+escape x;
+]],
+    run = 10,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    loop j in 10 do
+        x = x + 1;
+        par/and do
+            await FOREVER;
+        with
+            continue/j;
+        end
+    end
+end
+escape x;
+]],
+    run = 100,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    x = x + 1;
+    par/and do
+        await FOREVER;
+    with
+        break/i;
+    end
+end
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    loop j in 10 do
+        x = x + 1;
+        par/and do
+            await FOREVER;
+        with
+            break/i;
+        end
+    end
+end
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+loop i in 10 do
+    loop j in 10 do
+        x = x + 1;
+        par/and do
+            await FOREVER;
+        with
+            break/j;
+        end
+    end
+end
+escape x;
+]],
+    run = 10,
 }
 
 --<<< CONTINUE
@@ -17505,6 +17121,29 @@ escape x;
     --run = 1,
 }
 
+Test { [[
+event void  a;
+event& void b = &a;
+
+par/or do
+    await 1s;
+    emit a;
+with
+    await b;
+end
+
+par/or do
+    await 1s;
+    emit b;
+with
+    await a;
+end
+
+escape 1;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
 --<<< ALIASES / REFERENCES / REFS / &
 
 Test { [[
@@ -26653,6 +26292,26 @@ escape ret;
     run = 3;
 }
 
+-->>> DONT CARE, NONE
+
+Test { [[
+var int a = _;
+loop _ in 10 do
+end
+
+do/_
+    escape;
+end
+
+await 1ms/_;
+
+escape 1;
+]],
+    run = 1,
+}
+
+--<<< DONT CARE, NONE
+
 -->>> REENTRANT
 
 if REENTRANT then
@@ -28259,6 +27918,165 @@ escape _V;
 ]],
     _ana = {acc=true},
     run = {['~>5s']=1},
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    x = x + 1;
+    await 1s;
+    x = x + 1;
+    escape x;
+end
+var int a = await Code(1);
+escape a;
+]],
+    run = { ['~>1s']=3 },
+}
+
+Test { [[
+every Code(1) do
+end
+]],
+    parser = 'line 1 : after `every´ : expected internal identifier or `(´',
+}
+Test { [[
+await Code(1) until true;
+]],
+    env = 'TODO: until not allowed',
+}
+Test { [[
+await 1s until true;
+]],
+    env = 'TODO: until not allowed',
+}
+Test { [[
+code/delayed Code (var int x) => int
+do
+    var int xx = x + 1;
+    await 1s;
+    escape xx+1;
+end
+var int a = await Code(1);
+_printf("a = %d\n", a);
+escape a;
+]],
+    run = { ['~>1s']=3 },
+}
+Test { [[
+native do
+    int X = 0;
+end
+code/delayed Code (var int x) => int
+do
+    var int xx = x + 1;
+    await 1s;
+    _X = xx + 1;
+    escape xx+1;
+end
+await Code(1);
+escape _X;
+]],
+    run = { ['~>1s']=3 },
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    x = x + 1;
+    await 1s;
+    escape x;
+end
+var int a =
+    watching Code(10) do
+        escape 1;
+    end;
+
+escape a;
+]],
+    _ana = {acc=1},
+    run = 1,
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    x = x + 1;
+    await 1s;
+    escape x;
+end
+var int a =
+    watching Code(10) do
+        await 5s;
+        escape 1;
+    end;
+
+escape a;
+]],
+    run = {['~>1s']=11 },
+}
+
+Test { [[
+data Data with
+    var int v;
+end
+
+code/delayed Code (var& Data d, var  int ini) => int
+do
+    d.v = ini;
+    every 1s do
+        d.v = d.v + 1;
+    end
+end
+
+var Data d = Data(0);
+
+var int a =
+    watching Code(&d, 10) do
+        var int ret = 0;
+        watching 5s do
+            every 1s do
+                ret = ret + d.v;
+            end
+        end
+        escape ret;
+    end;
+
+escape a;
+]],
+    run = {['~>10s']=50 },
+}
+
+Test { [[
+ddd Data with
+    var& int v;
+end
+
+code/delayed Code (var& Data d, var  int ini) => int
+do
+    var int v = ini;
+    d.v = &v;
+    every 1s do
+        v = v + 1;
+    end
+end
+
+var Data d = Data(0);
+
+var int a =
+    watching Code(&d, 10) do
+        var int ret = 0;
+        watching 5s do
+            every 1s do
+                ret = ret + d.v;
+            end
+        end
+        escape ret;
+    end;
+
+escape a;
+]],
+    run = {['~>10s']=50 },
 }
 
 -- REFS: void&
@@ -42909,6 +42727,122 @@ escape 1;
 -->>> FUNCTIONS
 
 Test { [[
+code/instantaneous Code (var int)=>void
+do
+end
+escape 1;
+]],
+    adj = 'line 1 : missing parameter identifier',
+}
+
+Test { [[
+code/instantaneous Code (var int x, var  int)=>void
+do
+end
+escape 1;
+]],
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier'
+}
+
+Test { [[
+code/instantaneous Code (var void, var  int x) => void
+do
+end
+escape 1;
+]],
+    parser = 'line 1 : after `int´ : expected type modifier or `,´ or `)´',
+    --adj = 'line 1 : wrong argument #1 : cannot be `void´',
+}
+
+Test { [[
+code/instantaneous Code (var void, var  int) => void
+do
+end
+escape 1;
+]],
+    adj = 'line 1 : wrong argument #1 : cannot be `void´',
+}
+
+Test { [[
+code/instantaneous Code (var void a, var  int b) => void
+do
+end
+escape 1;
+]],
+    adj = 'line 1 : wrong argument #1 : cannot be `void´',
+}
+
+Test { [[
+code/instantaneous Code (var int a)=>void
+    __ceu_nothing(&&a);
+do
+end
+escape 1;
+]],
+    parser = 'line 1 : after `void´ : expected type modifier or `;´ or `do´',
+}
+
+Test { [[
+code/instantaneous Code (var int a)=>void;
+code/instantaneous Code (var int a)=>void
+do
+    native/nohold ___ceu_nothing;
+    ___ceu_nothing(&&a);
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/instantaneous Code (var void a)=>void
+do
+end
+escape 1;
+]],
+    adj = 'line 1 : cannot instantiate type "void"',
+}
+
+Test { [[
+code/instantaneous Code (var void)=>void
+do
+end
+escape 1;
+]],
+    env = 'TODO: var void',
+}
+
+Test { [[
+code/instantaneous Code (void)=>void
+do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/instantaneous Code ()=>void
+do
+end
+escape 1;
+]],
+    parser = 'line 1 : after `(´ : expected `vector´ or `pool´ or `var´',
+}
+
+Test { [[
+code/instantaneous Code (var int x) => int
+do
+    x = x + 1;
+    escape x;
+end
+var int a = call Code(1);
+escape Code(a+10);
+]],
+    run = 13,
+}
+
+Test { [[
 code/instantaneous F (var int v)=>int do
     escape v+1;
 end
@@ -43402,6 +43336,18 @@ end
 escape f(1) + this.x;
 ]],
     run = 3,
+}
+
+Test { [[
+code/instantaneous Code (var int)=>void;
+code/instantaneous Code (var int a)=>void
+do
+    escape 1;
+end
+escape 1;
+]],
+    env = 'TODO: 1 vs void',
+    run = 1,
 }
 
 --<<< FUNCTIONS
@@ -54321,7 +54267,7 @@ escape _V;
 
 --<< REQUESTS
 
--- ALGEBRAIC DATATYPES (ADTS)
+-->>> DATA
 
 -- ADTs used in most examples below
 DATA = [[
@@ -54546,6 +54492,31 @@ escape 1;
 ]],
     env = 'TODO: NOTHING is taken',
 }
+
+-->>> DATA/EVENTS
+
+Test { [[
+data DDD with
+    var int xxx;
+    event void e;
+end
+
+var DDD d = DDD(1);
+
+par/and do
+    await d.e;
+with
+    await 1s;
+    emit d.e;
+end
+
+d.xxx = d.xxx + 2;
+escape d.xxx;
+]],
+    run = { ['~>1s']=3 },
+}
+
+--<<< DATA/EVENTS
 
 -->>> MISC
 
@@ -57509,7 +57480,7 @@ escape -1;
     run = -1,
 }
 
--->>> ADTS + VECTORS + REFERENCES
+-->>> DATA + VECTORS + REFERENCES
 Test { [[
 data Test with
     var u8 v;
@@ -57657,9 +57628,9 @@ escape $d.str;
     run = 2,
 }
 
---<<< ADTS + VECTORS
+--<<< DATA + VECTORS
 
--- ADTS / RECURSE / TRAVERSE
+-- DATA / RECURSE / TRAVERSE
 
 -- crashes with org->ret
 Test { [[
@@ -61553,7 +61524,7 @@ escape 1;
     run = 1,
 }
 
--- << ADTS / RECURSE / TRAVERSE
+-- << DATA / RECURSE / TRAVERSE
 
 -->> TRAVERSE / NUMERIC
 
@@ -61613,7 +61584,7 @@ escape 1;
 
 --<< TRAVERSE / NUMERIC
 
--->> TRAVERSE / NESTED-RECURSIVE-ADTS
+-->> TRAVERSE / NESTED-RECURSIVE-DATA
 Test { [[
 data List;
     data NIL is List;
@@ -61734,9 +61705,9 @@ escape (cq1 is NIL) + (((cq2 as NXT).cmd as SEQUENCE).one is NOTHING);
 ]],
     run = 2,
 }
---<< TRAVERSE / NESTED-RECURSIVE-ADTS
+--<< TRAVERSE / NESTED-RECURSIVE-DATA
 
--- ADTS ALIASING
+-- DATA ALIASING
 
 Test { [[
 data List;
