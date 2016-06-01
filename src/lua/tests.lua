@@ -16052,6 +16052,11 @@ escape 1;
 }
 Test { [[
 native _V;
+escape 0;
+]],
+    tops = 'line 1 : native "_V declared but not used',
+}
+Test { [[
 native do
     int V = 10;
 end
@@ -16067,7 +16072,6 @@ escape *v;
     env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
 }
 Test { [[
-native _V;
 native do
     int V = 10;
 end
@@ -16084,7 +16088,6 @@ escape *v;
     --run = { ['~>1s']=10 };
 }
 Test { [[
-native _V;
 native do
     int V = 10;
 end
@@ -16360,7 +16363,7 @@ escape 1;
 }
 
 Test { [[
-native _fff, _V;
+native _fff;
 native do
     int V = 10;
     int* fff (int v) {
@@ -16381,7 +16384,7 @@ escape r;
 }
 
 Test { [[
-native _fff, _V;
+native _fff;
 native do
     int V = 10;
     int* fff (int v) {
@@ -16925,7 +16928,7 @@ escape(a);
 }
 
 Test { [[
-native _V, _getV;
+native _getV;
 native do
     int V = 10;
     int* getV (void) {
@@ -17007,7 +17010,6 @@ escape v1!+v2!+_V;
 
 Test { [[
 native _t;
-native/pure _f;
 native do
     typedef struct t {
         int* ptr;
@@ -17062,6 +17064,7 @@ code/instantaneous Get (void)=>int&& do
 end
 escape 10;
 ]],
+    wrn = true,
     env = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
 }
@@ -17073,6 +17076,7 @@ code/instantaneous Get (void)=>int&& do
 end
 escape 10;
 ]],
+    wrn = true,
     env = 'line 3 : invalid escape value : local reference',
     --fin = 'line 3 : attribution to pointer with greater scope',
 }
@@ -17084,6 +17088,7 @@ code/instantaneous Get (void)=>int& do
 end
 escape 10;
 ]],
+    wrn = true,
     parser = 'line 1 : after `int´ : expected type modifier or `;´ or `do´',
     --env = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : attribution to reference with greater scope',
@@ -17098,6 +17103,7 @@ end
 
 escape f(&str);
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -17109,6 +17115,7 @@ end
 
 escape f(&str);
 ]],
+    wrn = true,
     env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
 }
 Test { [[
@@ -17120,6 +17127,7 @@ end
 
 escape f(str);
 ]],
+    wrn = true,
     ref = 'line 7 : invalid attribution : missing alias operator `&´',
 }
 Test { [[
@@ -17157,6 +17165,7 @@ code/instantaneous F (var int a, var  void b)=>int do
 end
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : type cannot be `void´',
 }
 
@@ -17165,6 +17174,7 @@ code/instantaneous F (var void, var  int)=>int do
 end
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : type cannot be `void´',
 }
 
@@ -19094,7 +19104,7 @@ native do
         }
     }
 end
-native _alloc, _V, _t;
+native _alloc, _V;
 native/nohold _dealloc;
 
 do
@@ -21216,14 +21226,14 @@ escape ret;
 
 Test { [[
 native ___ceu_nothing;
-input (var int c)=>int F1 do
+input (var int c)=>int IA do
     escape c + 1;
 end
-input (var int c)=>void F2 do
+input (var int c)=>void IB do
     ___ceu_nothing(&&c);
 end
-call F2 => 0;
-var int ret = call F1 => 1;
+call IB => 0;
+var int ret = call IA => 1;
 escape ret;
 ]],
     run = 2,
@@ -22332,7 +22342,6 @@ escape 0;
 
 Test { [[
 native _char;
-native/nohold _printf;
 
 data T with
     var _char[255] str;
@@ -23008,11 +23017,11 @@ escape str[3] == 'o';
 Test { [[
 vector[] byte str;
 
-code/instantaneous F1 (void)=>byte[]& do
+code/instantaneous Fa (void)=>byte[]& do
     escape &this.str;
 end
 
-code/instantaneous F2 (void)=>void do
+code/instantaneous Fb (void)=>void do
     vector&[] byte ref = &f1();
     ref = [] .. "ola" .. "mundo";
 end
@@ -23060,13 +23069,13 @@ escape _strcmp(&&str1 as _char&&,"")==0 and _strcmp(&&str2 as _char&&,"")==0;
 }
 
 Test { [[
-native _char, _strlen;
+native _strlen;
 code/instantaneous Strlen (var byte&& str)=>int do
     escape _strlen(str);
 end
 
 vector[] byte str = [].."Ola Mundo!";
-escape strlen(&&str);
+escape Strlen(&&str);
 ]],
     env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
 }
@@ -23078,7 +23087,7 @@ code/instantaneous Strlen (var byte&& str)=>int do
 end
 
 vector[] byte str = [].."Ola Mundo!";
-escape strlen(&&str as _char&&);
+escape Strlen(&&str as _char&&);
 ]],
     run = 10,
 }
@@ -23525,6 +23534,7 @@ code/instantaneous F (void)=>void do
 end
 escape 1;
 ]],
+    wrn = true,
     props = 'line 4 : not permitted inside `function´',
 }
 
@@ -23533,7 +23543,7 @@ code/instantaneous F (vector&[] byte cs)=>void do
     cs[0] = 10;
 end
 vector[] byte cs = [0];
-f(&cs);
+F(&cs);
 escape cs[0];
 ]],
     run = 10,
@@ -23562,7 +23572,6 @@ escape a==b;
 }
 
 Test { [[
-native/plain _int;
 var int a=1, b=1;
 a = b;
 await 1s;
@@ -24859,7 +24868,7 @@ escape 0;
     run='Abcd12',
 }
 Test { [[
-native _strncpy, _printf, _strlen;
+native _strlen;
 escape _strlen("123");
 ]], run=3 }
 Test { [[
@@ -24881,7 +24890,7 @@ escape 0;
 }
 
 Test { [[
-native/nohold _strncpy, _printf, _strlen, _strcpy;
+native/nohold _printf, _strlen, _strcpy;
 native _char;
 var _char[6] a=[]; _strcpy(&&a, "Hello");
 var _char[2] b=[]; _strcpy(&&b, " ");
@@ -25316,6 +25325,7 @@ code/instantaneous Faca (void)=>void do
 end
 escape 1;
 ]],
+    wrn = true,
     fin = 'line 3 : wrong operator',
 }
 Test { [[
@@ -25343,6 +25353,7 @@ code/instantaneous F (var void&& o1)=>void do
 end
 escape 1;
 ]],
+    wrn = true,
     fin = 'line 2 : wrong operator',
     --fin = 'line 2 : pointer access across `await´',
 }
@@ -25479,6 +25490,7 @@ code/instantaneous GetVS (var void&& && o1, var  void&& && o2)=>int do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -25537,7 +25549,6 @@ escape vec[_N-1];
 }
 
 Test { [[
-native/const _N;
 pre native do
     #define N 1
 end
@@ -25550,7 +25561,6 @@ escape vec[N-1];
 }
 
 Test { [[
-native/const _N;
 pre native do
     #define N 1
 end
@@ -27756,7 +27766,7 @@ escape ret and (not _strcmp(&&str,&&cpy));
 }
 
 Test { [=[
-native/nohold _strcmp, _strcpy;
+native/nohold _strcmp;
 vector[10] byte str = [] .. "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
@@ -27821,7 +27831,7 @@ escape 1;
     run = 1,
 }
 Test { [=[
-native/nohold _strcmp,_printf;
+native/nohold _strcmp;
 
 [[
 -- this is lua code
@@ -27926,7 +27936,7 @@ code/instantaneous F (void)=>int do
     var int v = [[ 1 ]];
     escape v;
 end
-escape f();
+escape F();
 ]=],
     run = 1,
 }
@@ -27951,6 +27961,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     --adj = 'line 3 : invalid `escape´',
     run = 1,
 }
@@ -27961,6 +27972,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     gcc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
 }
 Test { [[
@@ -27970,6 +27982,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -27994,6 +28007,7 @@ Test { [[
 code/delayed T (void)=>void do end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -28023,6 +28037,7 @@ var _TCEU_T t = _TCEU_T();
 t.a = 1;
 escape t.a;
 ]],
+    wrn = true,
     gcc = 'error: unknown type name ‘TCEU_T’',
     --run = 1,
 }
@@ -28031,7 +28046,7 @@ Test { [[
 call TestX(5);
 escape 0;
 ]],
-    env = 'line 1 : undeclared type `TestX´',
+    tops = 'line 1 : abstraction "TestX" is not declared',
 }
 
 Test { [[
@@ -42970,6 +42985,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     adj = 'line 1 : missing parameter identifier',
 }
 
@@ -42998,6 +43014,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     adj = 'line 1 : wrong argument #1 : cannot be `void´',
 }
 
@@ -43007,6 +43024,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     adj = 'line 1 : wrong argument #1 : cannot be `void´',
 }
 
@@ -43029,6 +43047,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43038,6 +43057,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     adj = 'line 1 : cannot instantiate type "void"',
 }
 
@@ -43047,6 +43067,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     env = 'TODO: var void',
 }
 
@@ -43056,6 +43077,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43084,7 +43106,7 @@ Test { [[
 code/instantaneous F (var int v)=>int do
     escape v+1;
 end
-escape f();
+escape F();
 ]],
     env = 'line 4 : arity mismatch',
 }
@@ -43094,7 +43116,7 @@ code/instantaneous F (var int v)=>int do
     escape v+1;
 end
 var int&& ptr;
-escape f(ptr);
+escape F(ptr);
 ]],
     env = 'line 5 : wrong argument #1',
 }
@@ -43103,7 +43125,7 @@ Test { [[
 code/instantaneous F (var int v)=>int do
     escape v+1;
 end
-escape f(1);
+escape F(1);
 ]],
     run = 2,
 }
@@ -43126,6 +43148,7 @@ Test { [[
 code/instantaneous F (void) => void;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43133,6 +43156,7 @@ Test { [[
 code/instantaneous F void => (void);
 escape 1;
 ]],
+    wrn = true,
     parser = 'line 1 : after `F´ : expected `(´',
     --parser = 'line 1 : after `F´ : expected param list',
     --parser = 'line 1 : after `=>´ : expected type',
@@ -43142,6 +43166,7 @@ Test { [[
 code/instantaneous F (void) => void;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43151,6 +43176,7 @@ code/instantaneous F (var int) => void do
 end
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : missing parameter identifier',
 }
 
@@ -43162,6 +43188,7 @@ code/instantaneous F (void) => void do
 end
 escape 1;
 ]],
+    wrn = true,
     props = 'line 3 : not permitted inside `function´',
 }
 
@@ -43172,6 +43199,7 @@ code/instantaneous F (void) => void do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43181,6 +43209,7 @@ code/instantaneous F (void) => void do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43190,6 +43219,7 @@ code/instantaneous F (void) => void do
 end
 escape 1;
 ]],
+    wrn = true,
     --gcc = 'error: ‘escape’ with a value, in function returning void',
     env = 'line 2 : invalid escape value : types mismatch (`void´ <= `int´)',
 }
@@ -43200,6 +43230,7 @@ code/instantaneous F (void) => void do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43224,7 +43255,7 @@ Test { [[
 code/instantaneous F (void)=>int do
     escape 1;
 end
-escape f();
+escape F();
 ]],
     run = 1,
 }
@@ -43233,7 +43264,7 @@ Test { [[
 code/instantaneous F (void)=>int do
     escape 1;
 end
-escape call f();
+escape call F();
 ]],
     todo = 'call?',
     run = 1,
@@ -43245,6 +43276,7 @@ code/instantaneous F (var int)  => int do end
 escape 1;
 ]],
     env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+    wrn = true,
 }
 
 Test { [[
@@ -43252,7 +43284,7 @@ code/instantaneous F (void) => int;
 code/instantaneous F (var int)  => int;
 escape 1;
 ]],
-    tops = 'ine 2 : identifier "F" is already declared',
+    tops = 'line 2 : identifier "F" is already declared',
 }
 
 Test { [[
@@ -43260,6 +43292,7 @@ code/instantaneous F (void) => int;
 code/instantaneous F (var int)  => int do end
 escape 1;
 ]],
+    wrn = true,
     env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
 }
 
@@ -43268,6 +43301,7 @@ code/instantaneous F (void) => int;
 code/instantaneous F (void) => int do escape 1; end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43275,6 +43309,7 @@ Test { [[
 code/instantaneous F (var void, var int) => int;
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : type cannot be `void´',
 }
 
@@ -43282,6 +43317,7 @@ Test { [[
 code/instantaneous F (var int) => void;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43292,6 +43328,7 @@ code/instantaneous F (var int a, var  int b) => int do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43300,7 +43337,7 @@ code/instantaneous F (var int, var int) => int;
 code/instantaneous F (var int a, var  int b) => int do
     escape a + b;
 end
-escape f(1,2);
+escape F(1,2);
 ]],
     run = 3,
 }
@@ -43310,12 +43347,12 @@ code/instantaneous Fff (var int x)=>int do
     escape x + 1;
 end
 
-var int x = fff(10);
+var int x = Fff(10);
 
 input void OS_START;
 await OS_START;
 
-escape fff(x);
+escape Fff(x);
 ]],
     run = 12,
 }
@@ -43325,7 +43362,7 @@ code/instantaneous/recursive Load (var int&& l)=>void do
     loop i do
     end
 end
-call/recursive load(null);
+call/recursive Load(null);
 
 escape 1;
 ]],
@@ -43359,7 +43396,7 @@ code/instantaneous/recursive Load (var int&& l)=>void do
     end
     */
 end
-call/recursive load(null);
+call/recursive Load(null);
 
 escape 1;
 ]],
@@ -43376,6 +43413,7 @@ code/instantaneous F (var int x)=>int do
     escape 1;
 end
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43386,7 +43424,7 @@ do
     code/instantaneous F (var int x)=>int do
         escape x;
     end
-    escape f(10);
+    escape F(10);
 end
 var int x = do T;
 escape x;
@@ -43400,6 +43438,7 @@ code/instantaneous F (void) => int do
     escape 1;
 end
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -43409,6 +43448,7 @@ code/instantaneous F (void) => void do
 end
 escape 1;
 ]],
+    wrn = true,
     props = 'line 2 : not permitted across function declaration',
 }
 
@@ -43417,7 +43457,7 @@ code/instantaneous Set (var u8&& v)=>void do
     *v = 3;
 end
 var u8 v = 0;
-set(&&v);
+Set(&&v);
 escape v;
 ]],
     run = 3,
@@ -43428,7 +43468,7 @@ code/instantaneous Set (var& u8 v)=>void do
     v = 3;
 end
 var u8 v = 0;
-set(&v);
+Set(&v);
 escape v;
 ]],
     run = 3,
@@ -43439,7 +43479,7 @@ code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
     buf = [] .. buf .. [3];
 end
 vector[10] u8 buffer;
-fillBuffer(&buffer);
+FillBuffer(&buffer);
 escape buffer[0];
 ]],
     run = 3,
@@ -43450,7 +43490,7 @@ code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
     buf = [] .. buf .. [3];
 end
 vector[10] u8 buffer;
-fillBuffer(&buffer);
+FillBuffer(&buffer);
 escape buffer[0];
 ]],
     env = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
@@ -43461,7 +43501,7 @@ code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
     buf = [] .. buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
-fillBuffer(&buffer);
+FillBuffer(&buffer);
 escape buffer[0];
 ]],
     run = '2] runtime error: access out of bounds',
@@ -43473,7 +43513,7 @@ code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
     *buf = [] .. *buf .. [3];
 end
 vector[10] u8 buffer;
-fillBuffer(&&buffer);
+FillBuffer(&&buffer);
 escape buffer[0];
 ]],
     run = 3,
@@ -43485,7 +43525,7 @@ code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
     *buf = [] .. *buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
-fillBuffer(&&buffer);
+FillBuffer(&&buffer);
 escape buffer[0];
 ]],
     run = '2] runtime error: access out of bounds',
@@ -43497,6 +43537,7 @@ code/instantaneous Build (vector[] u8 bytes)=>void do
 end
 escape 1;
 ]],
+    wrn = true,
     parser = 'line 1 : after `vector´ : expected `&´',
     --env = 'line 1 : wrong argument #1 : vectors are not supported',
 }
@@ -43507,7 +43548,7 @@ code/instantaneous F (var int x)=>int do
 end
 
 if true then
-    escape f(1);
+    escape F(1);
 else
     escape 0;
 end
@@ -43527,7 +43568,7 @@ code/instantaneous F (void)=>T&& do
     escape &&t;
 end
 
-var T&& p = f();
+var T&& p = F();
 
 escape p:v;
 ]],
@@ -43546,7 +43587,7 @@ code/instantaneous F (void)=>T&& do
     escape p;
 end
 
-var T&& p = f();
+var T&& p = F();
 
 escape p:v;
 ]],
@@ -43565,7 +43606,7 @@ code/instantaneous F (void)=>T&& do
     escape p;
 end
 
-var T&& p = f();
+var T&& p = F();
 await 1s;
 
 escape p:v;
@@ -43580,7 +43621,7 @@ code/instantaneous F (var int x)=>int do
     this.x = x;
     escape 2;
 end
-escape f(1) + this.x;
+escape F(1) + this.x;
 ]],
     run = 3,
 }
@@ -43593,6 +43634,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     env = 'TODO: 1 vs void',
     run = 1,
 }
@@ -43608,6 +43650,7 @@ code/instantaneous G      (void)=>void;
 code/instantaneous/recursive G (void)=>void do end
 escape 1;
 ]],
+    wrn = true,
     env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
 }
 Test { [[
@@ -43617,25 +43660,26 @@ code/instantaneous/recursive G (void)=>void;
 code/instantaneous G      (void)=>void do end
 escape 1;
 ]],
+    wrn = true,
     env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
 }
 Test { [[
 //var int x;
 
-code/instantaneous/recursive F1 (void)=>void;
-code/instantaneous/recursive F2 (void)=>void;
+code/instantaneous/recursive Fa (void)=>void;
+code/instantaneous/recursive Fb (void)=>void;
 
-code/instantaneous/recursive F1 (void)=>void do
+code/instantaneous/recursive Fa (void)=>void do
     if false then
-        call/recursive this.f2();
+        call/recursive Fb();
     end
 end
 
-code/instantaneous/recursive F2 (void)=>void do
-    call/recursive this.f1();
+code/instantaneous/recursive Fb (void)=>void do
+    call/recursive Fa();
 end
 
-call/recursive this.f1();
+call/recursive Fa();
 
 escape 1;
 ]],
@@ -43645,17 +43689,17 @@ escape 1;
 Test { [[
 //var int x;
 
-code/instantaneous F1 (void)=>void;
-code/instantaneous F2 (void)=>void;
+code/instantaneous Fa (void)=>void;
+code/instantaneous Fb (void)=>void;
 
-code/instantaneous F1 (void)=>void do
-    this.f2();
+code/instantaneous Fa (void)=>void do
+    Fb();
 end
 
-code/instantaneous F2 (void)=>void do
+code/instantaneous Fb (void)=>void do
 end
 
-this.f1();
+Fa();
 
 escape 1;
 ]],
@@ -43665,18 +43709,18 @@ escape 1;
 Test { [[
 //var int x;
 
-code/instantaneous F1 (void)=>void;
-code/instantaneous F2 (void)=>void;
+code/instantaneous Fa (void)=>void;
+code/instantaneous Fb (void)=>void;
 
-code/instantaneous F1 (void)=>void do
-    this.f2();
+code/instantaneous Fa (void)=>void do
+    Fb();
 end
 
-code/instantaneous F2 (void)=>void do
-    this.f1();
+code/instantaneous Fb (void)=>void do
+    Fa();
 end
 
-this.f1();
+Fa();
 
 escape 1;
 ]],
@@ -43686,20 +43730,20 @@ escape 1;
 Test { [[
 //var int x;
 
-code/instantaneous F1 (void)=>void;
-code/instantaneous/recursive F2 (void)=>void;
+code/instantaneous Fa (void)=>void;
+code/instantaneous/recursive Fb (void)=>void;
 
-code/instantaneous F1 (void)=>void do
+code/instantaneous Fa (void)=>void do
     if false then
-        call/recursive this.f2();
+        call/recursive Fb();
     end
 end
 
-code/instantaneous/recursive F2 (void)=>void do
-    this.f1();
+code/instantaneous/recursive Fb (void)=>void do
+    Fa();
 end
 
-this.f1();
+Fa();
 
 escape 1;
 ]],
@@ -43940,7 +43984,7 @@ escape t.v + t.f(20) + t.v;
 Test { [[
 interface I with
     code/instantaneous F (void)=>int;
-    code/instantaneous F1 (void)=>int;
+    code/instantaneous Fa (void)=>int;
 end
 
 class T with
@@ -43949,7 +43993,7 @@ do
     code/instantaneous F (void)=>int do
         escape this.f1();
     end
-    code/instantaneous F1 (void)=>int do
+    code/instantaneous Fa (void)=>int do
         escape 1;
     end
 end
@@ -43963,14 +44007,14 @@ escape t.f() + i:f();
 
 Test { [[
 interface I with
-    code/instantaneous F1 (void)=>int;
+    code/instantaneous Fa (void)=>int;
     code/instantaneous F (void)=>int;
 end
 
 class T with
     interface I;
 do
-    code/instantaneous F1 (void)=>int do
+    code/instantaneous Fa (void)=>int do
         escape 1;
     end
     code/instantaneous F (void)=>int do
@@ -44420,7 +44464,7 @@ end
 
 class T with
     var int ret1=0, ret2=0;
-    code/instantaneous F1 (var int)=>int;
+    code/instantaneous Fa (var int)=>int;
     var _f_t f2;
 do
     native do
@@ -44429,7 +44473,7 @@ do
         }
     end
 
-    code/instantaneous F1 (var int v)=>int do
+    code/instantaneous Fa (var int v)=>int do
         escape v;
     end
 
@@ -44453,7 +44497,7 @@ end
 
 class T with
     var int ret1=0, ret2=0;
-    code/instantaneous F1 (var int)=>int;
+    code/instantaneous Fa (var int)=>int;
     var _f_t f2;
 do
     native do
@@ -44462,7 +44506,7 @@ do
         }
     end
 
-    code/instantaneous F1 (var int v)=>int do
+    code/instantaneous Fa (var int v)=>int do
         escape v;
     end
 
@@ -44595,6 +44639,7 @@ code/instantaneous F (var void&& v)=>void do
 end
 escape 1;
 ]],
+    wrn = true,
     fin = 'line 5 : attribution to pointer with greater scope',
     --fin = 'line 5 : invalid attribution',
 }
@@ -44608,6 +44653,7 @@ code/instantaneous F (var void&& v)=>void do
 end
 escape 1;
 ]],
+    wrn = true,
     -- function can be "@nohold v"
     run = 1,
 }
@@ -44626,6 +44672,7 @@ native _V;
 end
 escape 1;
 ]],
+    wrn = true,
     --fin = 'line 8 : invalid attribution',
     fin = 'line 8 : attribution to pointer with greater scope',
 }
@@ -44799,7 +44846,7 @@ native _V;
     _V := v;
 end
 var void&& x=null;
-f(5 as void&&);
+F(5 as void&&);
 escape _V==(5 as void&&);
 ]],
     fin = 'line 5 : parameter must be `hold´',
@@ -44816,7 +44863,7 @@ native _V;
     _V := v;
 end
 var void&& x=null;
-do f(5 as void&&);
+do F(5 as void&&);
     finalize with nothing; end;
 escape _V==(5 as void&&);
 ]],
@@ -44832,7 +44879,7 @@ native _V;
     _V = v;
 end
 var void&& x=null;
-f(5);
+F(5);
 escape _V==5;
 ]],
     run = 1,
@@ -44849,16 +44896,16 @@ class T with
 do
     code/instantaneous/recursive F (void)=>void do
         if 0 then
-            call/recursive this.f();
+            call/recursive this.F();
         end
     end
 end
 
 var T t;
-call/recursive t.f();
+call/recursive t.F();
 
 var I&& i = &&t;
-call i:f();
+call i:F();
 
 escape 1;
 ]],
@@ -44877,20 +44924,20 @@ class T with
 do
     code/instantaneous/recursive F (void)=>void do
         if 0 then
-            call/recursive this.f();
+            call/recursive this.F();
         end
     end
 end
 
 var T t;
-call/recursive t.f();
+call/recursive t.F();
 
 var I&& i = &&t;
-call i:f();
+call i:F();
 
 escape 1;
 ]],
-    tight = 'line 20 : `call/recursive´ is required for "f"',
+    tight = 'line 20 : `call/recursive´ is required for "F"',
 }
 
 Test { [[
@@ -44904,16 +44951,16 @@ class T with
 do
     code/instantaneous/recursive F (void)=>void do
         if 0 then
-            call/recursive this.f();
+            call/recursive this.F();
         end
     end
 end
 
 var T t;
-call/recursive t.f();
+call/recursive t.F();
 
 var I&& i = &&t;
-call/recursive i:f();
+call/recursive i:F();
 
 escape 1;
 ]],
@@ -44934,10 +44981,10 @@ do
 end
 
 var T t;
-call t.f();
+call t.F();
 
 var I&& i = &&t;
-call/recursive i:f();
+call/recursive i:F();
 
 escape 1;
 ]],
@@ -44958,14 +45005,14 @@ do
 end
 
 var T t;
-call t.f();
+call t.F();
 
 var I&& i = &&t;
-call/recursive i:f();
+call/recursive i:F();
 
 escape 1;
 ]],
-    tight = 'line 17 : `call/recursive´ is not required for "f"',
+    tight = 'line 17 : `call/recursive´ is not required for "F"',
 }
 
 Test { [[
@@ -44982,10 +45029,10 @@ do
 end
 
 var T t;
-call t.f();
+call t.F();
 
 var I&& i = &&t;
-i:f();
+i:F();
 
 escape 1;
 ]],
@@ -45008,10 +45055,10 @@ do
 end
 
 var T t;
-call/recursive t.f();
+call/recursive t.F();
 
 var I&& i = &&t;
-call/recursive i:f();
+call/recursive i:F();
 
 escape 1;
 ]],
@@ -45034,10 +45081,10 @@ do
 end
 
 var T t;
-call/recursive t.f();
+call/recursive t.F();
 
 var I&& i = &&t;
-call/recursive i:f();
+call/recursive i:F();
 
 escape 1;
 ]],
@@ -45051,9 +45098,9 @@ code/instantaneous F (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v*f(v-1);
+    escape v*F(v-1);
 end
-escape f(5);
+escape F(5);
 ]],
     tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
     --run = 120,
@@ -45075,7 +45122,7 @@ var T t;
 var& I i = &t;
 
 code/instantaneous G (void)=>void do
-    i.f();
+    i.F();
 end
 
 code/instantaneous H (void)=>void do
@@ -45102,7 +45149,7 @@ var T t;
 var& I i = &t;
 
 code/instantaneous G (void)=>void do
-    i.f();
+    i.F();
 end
 
 code/instantaneous H (void)=>void do
@@ -45140,7 +45187,7 @@ var T t;
 var& I i = &t;
 
 code/instantaneous G (void)=>void do
-    call/recursive i.f();
+    call/recursive i.F();
 end
 
 code/instantaneous H (void)=>void do
@@ -45170,9 +45217,9 @@ code/instantaneous F (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v*f(v-1);
+    escape v*F(v-1);
 end
-escape f(5);
+escape F(5);
 ]],
     env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
     --run = 120,
@@ -45183,11 +45230,11 @@ code/instantaneous/recursive F (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v*f(v-1);
+    escape v*F(v-1);
 end
-escape f(5);
+escape F(5);
 ]],
-    tight = 'line 6 : `call/recursive´ is required for "f"',
+    tight = 'line 6 : `call/recursive´ is required for "F"',
     --run = 120,
 }
 Test { [[
@@ -45204,11 +45251,11 @@ code/instantaneous/recursive F (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v * (call/recursive f(v-1));
+    escape v * (call/recursive F(v-1));
 end
-escape f(5);
+escape F(5);
 ]],
-    tight = 'line 8 : `call/recursive´ is required for "f"',
+    tight = 'line 8 : `call/recursive´ is required for "F"',
 }
 Test { [[
 code/instantaneous/recursive F (var int v)=>int;
@@ -45216,9 +45263,9 @@ code/instantaneous/recursive F (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v * call/recursive f(v-1);
+    escape v * call/recursive F(v-1);
 end
-escape call/recursive f(5);
+escape call/recursive F(5);
 ]],
     run = 120,
 }
@@ -45343,6 +45390,7 @@ code/instantaneous F (void)=>int&& do
 end
 escape 10;
 ]],
+    wrn = true,
     env = 'line 2 : invalid escape value : types mismatch (`int&&´ <= `int´)',
 }
 
@@ -45355,7 +45403,7 @@ code/instantaneous F (void)=>int& do
     escape &this.x;
 end
 
-escape f();
+escape F();
 ]],
     parser = 'line 3 : after `int´ : expected type modifier or `;´ or `do´',
     --run = 10,
@@ -45372,7 +45420,7 @@ end
 
 var T t;
 
-escape t.f();
+escape t.F();
 ]],
     parser = 'line 2 : after `int´ : expected type modifier or `;´',
     --run = 10,
@@ -45385,7 +45433,7 @@ code/instantaneous F (void)=>int& do
     escape &&this.x;
 end
 
-escape f();
+escape F();
 ]],
     parser = 'line 3 : after `int´ : expected type modifier or `;´ or `do´',
     --env = 'line 4 : invalid escape value : types mismatch (`int&´ <= `int&&´)',
@@ -45402,7 +45450,7 @@ end
 
 var T t;
 
-escape t.f();
+escape t.F();
 ]],
     env = 'line 6 : invalid escape value : types mismatch (`int&&´ <= `int&´)',
 }
@@ -45457,12 +45505,12 @@ code/instantaneous F (var& T t)=>int do
 end
 
 var T t;
-var& int ret = f(t);
+var& int ret = F(t);
 
     var T u with
         this.v = 20;
     end;
-    ret = ret + f(&u);
+    ret = ret + F(&u);
 
 escape ret;
 ]],
@@ -45480,13 +45528,13 @@ code/instantaneous F (var& T t)=>int do
 end
 
 var T t;
-var& int ret = f(t);
+var& int ret = F(t);
 
 do
     var T u with
         this.v = 20;
     end;
-    ret = ret + f(&u);
+    ret = ret + F(&u);
 end
 
 escape ret;
@@ -45506,13 +45554,13 @@ code/instantaneous F (var T&& t)=>int do
 end
 
 var T t;
-var int ret = f(&&t);
+var int ret = F(&&t);
 
 do
     var T u with
         this.v = 20;
     end;
-    ret = ret + f(&&u);
+    ret = ret + F(&&u);
 end
 
 escape ret;
@@ -45752,7 +45800,7 @@ do
 end
 
 var T t;
-var I&& p = t.f();
+var I&& p = t.F();
 escape p==&&t;
 ]],
     run = 1,
@@ -45769,7 +45817,7 @@ do
 end
 
 var T t;
-escape *(t.f());
+escape *(t.F());
 ]],
     run = 1,
 }
@@ -45787,7 +45835,7 @@ do
 end
 
 var T t;
-t.f();
+t.F();
 escape 1;
 ]],
     run = 1,
@@ -45843,7 +45891,7 @@ do
     end
 end
 
-var T t = U.f(1);
+var T t = U.F(1);
 escape t.x;
 ]],
     adj = 'line 12 : invalid constructor',
@@ -45861,7 +45909,7 @@ do
 end
 
 var T t;
-t = T.f(1);
+t = T.F(1);
 escape t.x;
 ]],
     parser = 'line 12 : after `T´ : expected `(´',
@@ -45939,14 +45987,14 @@ escape ttt.x;
 
 Test { [[
 class T with
-    code/instantaneous F1 (var int x)=>T;
-    code/instantaneous F2 (var int x)=>T;
+    code/instantaneous Fa (var int x)=>T;
+    code/instantaneous Fb (var int x)=>T;
     var int x = 0;
 do
-    code/instantaneous F1 (var int x)=>T do
+    code/instantaneous Fa (var int x)=>T do
         this.x = x;
     end
-    code/instantaneous F2 (var int x)=>T do
+    code/instantaneous Fb (var int x)=>T do
         this.f1(x);
     end
 end
@@ -45959,14 +46007,14 @@ escape ttt.x;
 
 Test { [[
 class T with
-    code/instantaneous F1 (var int x)=>T;
-    code/instantaneous F2 (var int x)=>T;
+    code/instantaneous Fa (var int x)=>T;
+    code/instantaneous Fb (var int x)=>T;
     var int x = 0;
 do
-    code/instantaneous F1 (var int x)=>T do
+    code/instantaneous Fa (var int x)=>T do
         this.x = x;
     end
-    code/instantaneous F2 (var int x)=>T do
+    code/instantaneous Fb (var int x)=>T do
         this.f1(x);
     end
     await FOREVER;
@@ -45987,14 +46035,14 @@ escape ret;
 
 Test { [[
 class T with
-    code/instantaneous F1 (var int x)=>T;
-    code/instantaneous F2 (var int x)=>T;
+    code/instantaneous Fa (var int x)=>T;
+    code/instantaneous Fb (var int x)=>T;
     var int x = 0;
 do
-    code/instantaneous F1 (var int x)=>T do
+    code/instantaneous Fa (var int x)=>T do
         this.x = x;
     end
-    code/instantaneous F2 (var int x)=>T do
+    code/instantaneous Fb (var int x)=>T do
         this.f1(x);
     end
     escape this.x;
@@ -46296,6 +46344,7 @@ end
     end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -47151,7 +47200,7 @@ Test { PRE_ISR..[[
 output int O;
 code/instantaneous F (void)=>void do end
 atomic do
-    f();
+    F();
 end
 escape 1;
 ]],
@@ -47491,10 +47540,10 @@ Test { PRE_ISR..[[
 code/instantaneous F (void)=>int do
     escape 2;
 end
-var int v = f();
+var int v = F();
 par/or do
-    async/isr [20] (f) do
-        f();
+    async/isr [20] do
+        F();
     end
     await FOREVER;
 with
@@ -47509,10 +47558,10 @@ Test { PRE_ISR..[[
 code/instantaneous F (void)=>int do
     escape 2;
 end
-var int v = f();
+var int v = F();
 par/or do
-    async/isr[20] (f) do
-        f();
+    async/isr[20] do
+        F();
     end
     await FOREVER;
 with
@@ -47520,7 +47569,7 @@ end
 escape v;
 ]],
     --wrn = true,
-    --isr = 'line 4 : access to "f" must be atomic',
+    --isr = 'line 4 : access to "F" must be atomic',
     run = 2,
 }
 
@@ -47817,7 +47866,7 @@ escape 1;
 
 Test { [[
 input int PIN02;
-native _digitalRead, _digitalWrite;
+native _digitalWrite;
 par/or do
     var int i = 0;
     async/isr [1] do
@@ -47833,7 +47882,7 @@ escape 1;
 }
 
 Test { [[
-native _digitalRead, _digitalWrite;
+native _digitalWrite;
 input int PIN02;
 par/or do
     var int i = 0;
@@ -48912,6 +48961,7 @@ escape ret;
 -- if it is not the case, simply use void* and the other application casts back 
 -- to T*
 Test { [[
+data T;
 event T&& e;
 var int ret = -1;
 watching e do
@@ -50938,7 +50988,7 @@ class T with
     code/instantaneous F (var int)=>void;
 do
     v = 50;
-    this.f(10);
+    this.F(10);
 
     code/instantaneous F (var int v)=>void do
         this.v = this.v + v;
@@ -50951,7 +51001,7 @@ var I&& i = &&t;
 input void OS_START;
 watching *i do
     await OS_START;
-    i:f(100);
+    i:F(100);
 native _V;
     _V = i:v;
     escape i:v;
@@ -50978,7 +51028,7 @@ class T with
     var int v=0;
 do
     v = 50;
-    this.f(10);
+    this.F(10);
 
     code/instantaneous F (var int a)=>void do
         v = v + a;
@@ -50991,7 +51041,7 @@ var I&& i = &&t;
 input void OS_START;
 watching *i do
     await OS_START;
-    i:f(100);
+    i:F(100);
 native _V;
     _V = i:v;
     escape i:v;
@@ -51047,7 +51097,7 @@ class T with
     var int v=0;
 do
     v = 50;
-    this.f(10);
+    this.F(10);
 
     code/instantaneous F (var int v)=>void do
         this.v = this.v + v;
@@ -51060,7 +51110,7 @@ class U with
     var int v=0;
 do
     v = 50;
-    this.f(10);
+    this.F(10);
 
     code/instantaneous F (var int v)=>void do
         this.v = this.v + 2*v;
@@ -51074,11 +51124,11 @@ var I&& i = &&t;
 input void OS_START;
 watching *i do
     await OS_START;
-    i:f(100);
+    i:F(100);
     var int ret = i:v;
 
     i=&&u;
-    i:f(200);
+    i:F(200);
 native _V;
     _V = ret + i:v;
     escape ret + i:v;
@@ -54595,7 +54645,7 @@ escape _V;
 
 --<< REQUESTS
 
--->>> DATA
+-->>> DATA INI
 
 -- ADTs used in most examples below
 DATA = [[
@@ -54673,6 +54723,7 @@ data T with
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -54685,6 +54736,7 @@ interface T with
 end
 escape 1;
 ]],
+    wrn = true,
     env = 'line 4 : top-level identifier "T" already taken',
 }
 Test { [[
@@ -54695,6 +54747,7 @@ data T with
 end
 escape 1;
 ]],
+    wrn = true,
     env = 'line 3 : top-level identifier "T" already taken',
 }
 Test { [[
@@ -54741,6 +54794,7 @@ data OptPTR is Opt with
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -54780,6 +54834,7 @@ data OptPTR is Opt with
 end
 escape 1;
 ]],
+    wrn = true,
     adt = 'line 1 : invalid recursive base case : no parameters allowed',
 }
 
@@ -54792,6 +54847,7 @@ end
 data OptNIL is Opt;
 escape 1;
 ]],
+    wrn = true,
     adt = 'line 1 : invalid recursive base case : no parameters allowed',
 }
 
@@ -54806,6 +54862,7 @@ data OptPTR is Opt with
 end
 escape 1;
 ]],
+    wrn = true,
     adt = 'line 1 : invalid recursive base case : no parameters allowed',
 }
 
@@ -54915,6 +54972,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -54926,6 +54984,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -54973,9 +55032,10 @@ code/instantaneous F (void)=>T do
     escape t;
 end
 
-var T t = f();
+var T t = F();
 escape t.x;
 ]],
+    wrn = true,
     run = 10,
 }
 
@@ -54988,6 +55048,7 @@ data ListCONS is List with
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
     --env = 'line 6 : undeclared type `List´',
 }
@@ -55089,6 +55150,7 @@ end
 pool[10] List lll;
 escape lll is ListNIL;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -55103,6 +55165,7 @@ end
 pool[10] List lll;
 escape (lll is ListCONS) + 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -55123,6 +55186,7 @@ end
 pool[10] List lll = new ListCONS(1, ListNIL());
 escape (lll as ListCONS).head;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -55175,6 +55239,7 @@ pool[] Stack xxx = new StackNONEMPTY(
 
 escape 1;
 ]],
+    wrn = true,
     env = 'line 10 : invalid constructor : recursive field "NONEMPTY" must be new data',
 }
 
@@ -55196,6 +55261,7 @@ g = new GridSPLIT(SplitHORIZONTAL(), GridEMPTY(), GridEMPTY());
 
 escape ((g as GridSPLIT).one is GridEMPTY) + ((g as GridSPLIT).two is GridEMPTY) + ((g as GridSPLIT).dir is SplitHORIZONTAL);
 ]],
+    wrn = true,
     run = 3,
 }
 
@@ -55233,8 +55299,8 @@ pool[5] Grid g = new GridSPLIT(
                     SplitHORIZONTAL(),
                     GridSPLIT(
                         SplitVERTICAL(),
-                        GridNIL(),
-                        GridNIL()));
+                        GridEMPTY(),
+                        GridEMPTY()));
 
 escape 1;
 ]],
@@ -55259,9 +55325,9 @@ g = new GridSPLIT(
             SplitHORIZONTAL(),
             GridSPLIT(
                 SplitVERTICAL(),
-                GridNIL(),
-                GridNIL()),
-            GridNIL());
+                GridEMPTY(),
+                GridEMPTY()),
+            GridEMPTY());
 
 escape 1;
 ]],
@@ -55283,11 +55349,12 @@ end
 
 pool[] Grid g = new GridSPLIT(
                     SplitHORIZONTAL(),
-                    GridNIL(),
-                    GridNIL());
+                    GridEMPTY(),
+                    GridEMPTY());
 
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -55383,6 +55450,7 @@ var E e = E(1);
 
 escape 1;
 ]],
+    wrn = true,
     env = 'line 7 : union data constructor requires a tag',
 }
 
@@ -55402,6 +55470,7 @@ var E e = X(&d);
 
 escape (e as X).d.x;
 ]],
+    wrn = true,
     run = 10,
 }
 
@@ -55424,6 +55493,7 @@ end
 
 escape 1;//e.X.d.x;
 ]],
+    wrn = true,
     ref = 'line 11 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
 }
 Test { [[
@@ -55443,6 +55513,7 @@ var E e = X(&d);
 
 escape (e as X).d.x;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -55462,6 +55533,7 @@ var E e = E(null);
 
 escape (e as X).d:x;
 ]],
+    wrn = true,
     run = 10,
 }
 
@@ -55492,6 +55564,7 @@ var int x = do LeafHandler with
 
 escape x;
 ]],
+    wrn = true,
     run = 10,
 }
 
@@ -55628,6 +55701,7 @@ escape d1.x + d2.x + d1.y + d2.y;
 Test { DATA..[[
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -55653,6 +55727,7 @@ pool[] List l2;
 l2 = new CONS(1, l1);     /* should be &&l1 */
 escape 1;
 ]],
+    wrn = true,
     env = 'line 53 : invalid constructor : recursive field "CONS" must be new data',
 }
 
@@ -55669,6 +55744,7 @@ Test { DATA..[[
 pool[] List l1 = new NIL();    /* vs NIL() */
 escape 1;
 ]],
+    wrn = true,
     env = 'line 51 : data "NIL" is not declared',
     --run = 1,
 }
@@ -55678,13 +55754,14 @@ Test { DATA..[[
 var Pair p1 = Unknown(1,2);
 escape 1;
 ]],
-    env = 'line 51 : data "Unknown" is not declared',
+    tops = 'line 51 : abstraction "Unknown" is not declared',
 }
 Test { DATA..[[
 var Opt  o1 = UnknownNIL();
 escape 1;
 ]],
-    env = 'line 51 : data "Unknown" is not declared',
+    tops = 'line 51 : abstraction "UnknownNIL" is not declared',
+    --env = 'line 51 : data "Unknown" is not declared',
 }
 
 -- tag has to be defined
@@ -55692,7 +55769,7 @@ Test { DATA..[[
 var Opt o1 = UNKNOWN();
 escape 1;
 ]],
-    env = 'line 51 : tag "UNKNOWN" is not declared',
+    tops = 'line 51 : abstraction "UNKNOWN" is not declared',
 }
 
 -- constructors have call syntax
@@ -55709,18 +55786,21 @@ Test { DATA..[[
 var Pair p1 = Pair();           /* expected (x,y) */
 escape 1;
 ]],
+    wrn = true,
     env = 'line 51 : arity mismatch',
 }
 Test { DATA..[[
 var Pair p1 = Pair(1,null);     /* expected (int,int) */
 escape 1;
 ]],
+    wrn = true,
     env = 'line 51 : wrong argument #2',
 }
 Test { DATA..[[
 var Opt o1 = NOTHING(1);       /* expected (void) */
 escape 1;
 ]],
+    wrn = true,
     env = 'line 51 : arity mismatch',
 }
 
@@ -55728,6 +55808,7 @@ escape 1;
 Test { DATA..[[
 escape NIL();
 ]],
+    wrn = true,
     --ast = 'line 51 : invalid call',
     env = 'TODO: not a code',
     --parser = 'line 51 : after `escape´ : expected expression',
@@ -55737,6 +55818,7 @@ var List l;
 var int v = (l==NIL());
 escape v;
 ]],
+    wrn = true,
     --ast = 'line 52 : invalid call',
     env = 'TODO: not a code',
     --parser = 'line 52 : after `==´ : expected expression',
@@ -55748,6 +55830,7 @@ var Opt o;
 o = NOTHING();
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { DATA..[[
@@ -55755,6 +55838,7 @@ pool[] List l;
 l = new NIL();
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -55777,6 +55861,7 @@ pool[] List l = new NIL();   /* call syntax: constructor */
 var bool no_ = (l is NIL);     /* no-call syntax: check tag */
 escape no_;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { DATA..[[
@@ -55785,6 +55870,7 @@ l = new NIL();   /* call syntax: constructor */
 var bool no_ = l is CONS;    /* no-call syntax: check tag */
 escape no_;
 ]],
+    wrn = true,
     run = 0,
 }
 
@@ -55793,6 +55879,7 @@ Test { DATA..[[
 var Pair p1 = Pair(1,2);
 escape p1.x + p1.y;
 ]],
+    wrn = true,
     run = 3,
 }
 -- tag NIL has no fields
@@ -55800,6 +55887,7 @@ Test { DATA..[[
 pool[] List l;
 escape (l as NIL).v;
 ]],
+    wrn = true,
     env = 'line 52 : field "v" is not declared',
 }
 -- tag Opt.PTR has no field "x"
@@ -55807,6 +55895,7 @@ Test { DATA..[[
 var Opt o;
 escape (o as PTR).x;
 ]],
+    wrn = true,
     env = 'line 52 : field "x" is not declared',
 }
 
@@ -55816,6 +55905,7 @@ pool[] List l1 = new NIL();
 pool[] List l2 = new CONS(1, NIL());
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -55852,6 +55942,7 @@ pool[] List l;
 l = new NIL();
 escape (l as CONS).head;         // runtime error
 ]],
+    wrn = true,
     asr = true,
     --run = 1,
 }
@@ -55859,6 +55950,7 @@ Test { DATA..[[
 pool[] List l = new CONS(2, NIL());
 escape (l as CONS).head;
 ]],
+    wrn = true,
     run = 2,
 }
 
@@ -55953,6 +56045,7 @@ var List&& p = (l as CONS).tail;
 await 1s;
 escape (*p as CONS).head;
 ]],
+    wrn = true,
     adt = 'line 52 : invalid attribution : mutation : cannot mix data sources',
     --fin = 'line 54 : unsafe access to pointer "p" across `await´',
     --adt = 'line 52 : invalid attribution : value is not a reference',
@@ -55963,6 +56056,7 @@ var List&& p = &&(l as CONS).tail;
 await 1s;
 escape (*p as CONS).head;
 ]],
+    wrn = true,
     --adt = 'line 52 : mutation : cannot mix data sources',
     fin = 'line 54 : unsafe access to pointer "p" across `await´',
     --adt = 'line 52 : invalid attribution : value is not a reference',
@@ -55973,6 +56067,7 @@ var List&& p = &&(l as CONS).tail;
 await 1s;
 escape (*p as CONS).head;
 ]],
+    wrn = true,
     --adt = 'line 52 : cannot mix recursive data sources',
     fin = 'line 54 : unsafe access to pointer "p" across `await´',
 }
@@ -55992,6 +56087,7 @@ pool[] List l3;
 l3 = new CONS(2, l2);
 escape (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);
 ]],
+    wrn = true,
     --run = 4,
     env = 'line 53 : invalid constructor : recursive field "CONS" must be new data',
     -- TODO-ADT-REC-STATIC-CONSTRS
@@ -56000,12 +56096,14 @@ Test { DATA..[[
 pool[] List l3 = new CONS(2, CONS(1, NIL()));
 escape (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);
 ]],
+    wrn = true,
     run = 4,
 }
 Test { DATA..[[
 pool[] List l3 = new CONS(2, CONS(1, NIL()));
 escape (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);
 ]],
+    wrn = true,
     run = 4,
 }
 -- breaking a list: 2-1-NIL => 2-NIL
@@ -56016,6 +56114,7 @@ pool[] List l3 = new CONS(2, CONS(1, NIL()));
 (l3 as CONS).tail = l1;
 escape (l3 as CONS).head + ((l3 as CONS).tail is NIL);
 ]],
+    wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
@@ -56028,6 +56127,7 @@ pool[] List l3 = new CONS(2, CONS(1, NIL()));
 (l3 as CONS).tail = &&l1;
 escape (l3 as CONS).head + ((l3 as CONS).tail is NIL);
 ]],
+    wrn = true,
     adt = 'line 54 : invalid attribution : destination is not a reference',
     --adt = 'line 54 : cannot mix recursive data sources',
     run = 3,
@@ -56042,6 +56142,7 @@ l2 = new CONS(1, NIL());
 l1 = l2;
 escape (l1 is CONS) + (l1 as CONS).head==1;
 ]],
+    wrn = true,
     --adt = 'line 55 : invalid attribution : value is not a reference',
     adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
     run = 2,
@@ -56054,6 +56155,7 @@ l2 = new CONS(1, NIL());
 l1 = &&l2;
 escape (l1 is CONS) + (l1 as CONS).head==1;
 ]],
+    wrn = true,
     adt = 'line 55 : invalid attribution : destination is not a reference',
     --adt = 'line 55 : invalid attribution : new reference only to pointer or alias',
     --adt = 'line 55 : cannot mix recursive data sources',
@@ -56065,6 +56167,7 @@ pool[] List l1 = new NIL(),
 l1 = l2;
 escape (l1 is CONS) + ((l1 as CONS).head==1) + ((((l1 as CONS).tail as CONS).tail as CONS).head==1);
 ]],
+    wrn = true,
     adt = 'line 53 : invalid attribution : value is not a reference',
     adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
     run = 3,
@@ -56079,6 +56182,7 @@ escape (((l1 as CONS).head)==1) + ((((l1 as CONS).tail) as CONS).head==2) +
        (((l2 as CONS).head)==2) + ((((l2 as CONS).tail) as CONS).head==1) +
        ((((((l1 as CONS).tail) as CONS).tail as CONS).tail as CONS).head==2);
 ]],
+    wrn = true,
     --adt = 'line 53 : invalid attribution : value is not a reference',
     adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
     run = 5,
@@ -56092,6 +56196,7 @@ escape (((l1 as CONS).head)==1) + ((((l1 as CONS).tail) as CONS).head==2) +
        (((l2 as CONS).head)==2) + ((((l2 as CONS).tail) as CONS).head==1) +
        ((((((l1 as CONS).tail) as CONS).tail as CONS).tail as CONS).head==2);
 ]],
+    wrn = true,
     adt = 'line 53 : invalid attribution : destination is not a reference',
     --adt = 'line 53 : cannot mix recursive data sources',
     run = 5,
@@ -56107,6 +56212,7 @@ l2 = new CONS(2, NIL());
 
 escape ((l1 as CONS).head) + (((l1 as CONS).tail) as CONS).head + ((l2 as CONS).head) + (((l2 as CONS).tail) as CONS).head;
 ]],
+    wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to root',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
@@ -56121,6 +56227,7 @@ l2 = new CONS(1, NIL());
 l1 = ((l2 as CONS).tail);
 escape l1 is NIL;
 ]],
+    wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
@@ -56135,6 +56242,7 @@ l2 = new CONS(1, NIL());
 l1 = &&((l2 as CONS).tail);
 escape l1 is NIL;
 ]],
+    wrn = true,
     adt = 'line 54 : invalid attribution : destination is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
     --adt = 'line 54 : cannot mix recursive data sources',
@@ -56160,6 +56268,7 @@ Test { DATA..[[
 pool[] List l;     // all instances reside here
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -56170,12 +56279,14 @@ Test { DATA..[[
 pool[] List l;     // l is the pool
 escape l is NIL;       // l is a pointer to the root
 ]],
+    wrn = true,
     run = 1,
 }
 Test { DATA..[[
 pool[] List l;     // l is the pool
 escape (l) is NIL;    // equivalent to above
 ]],
+    wrn = true,
     run = 1,
 }
 -- the pointer must be dereferenced
@@ -56183,6 +56294,7 @@ Test { DATA..[[
 pool[] List l;     // l is the pool
 escape *l is NIL;       // "l" is not a struct
 ]],
+    wrn = true,
     env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
@@ -56190,6 +56302,7 @@ Test { DATA..[[
 pool[] List l;     // l is the pool
 escape ((l as CONS).head); // "l" is not a struct
 ]],
+    wrn = true,
     env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
@@ -56197,6 +56310,7 @@ Test { DATA..[[
 pool[] List l;             // l is the pool
 escape *((l as CONS).tail) is CONS;    // "((l as CONS).tail)" is not a struct
 ]],
+    wrn = true,
     env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : not a struct',
 }
@@ -56208,6 +56322,7 @@ Test { DATA..[[
 pool[] List l;
 escape l is CONS;      // runtime error
 ]],
+    wrn = true,
     asr = true,
 }
 
@@ -56222,6 +56337,7 @@ end
 // all instances in "lll" have been collected
 escape ret;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -56236,18 +56352,21 @@ pool[] List l;
 l = new NIL();
 escape l is NIL;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { DATA..[[
 pool[] List l = new CONS(2, NIL());
 escape ((l as CONS).head);
 ]],
+    wrn = true,
     run = 2,
 }
 Test { DATA..[[
 pool[] List l = new CONS(1, CONS(2, NIL()));
 escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + ((((l as CONS).tail) as CONS).tail is NIL);
 ]],
+    wrn = true,
     run = 4,
 }
 -- wrong tag
@@ -56256,6 +56375,7 @@ pool[] List l;
 l = new NIL();
 escape l is CONS;
 ]],
+    wrn = true,
     asr = true,
 }
 -- no "new"
@@ -56264,6 +56384,7 @@ pool[] List l;
 l = CONS(2, NIL());
 escape ((l as CONS).head);
 ]],
+    wrn = true,
     adt = 'line 52 : invalid constructor : recursive data must use `new´',
     --env = 'line 52 : invalid call parameter #2 (List vs List&&)',
 }
@@ -56272,6 +56393,7 @@ Test { DATA..[[
 pool[] List l = new CONS(2, NIL());
 escape ((l as CONS).head);
 ]],
+    wrn = true,
     run = 2,
 }
 -- no dereference
@@ -56280,6 +56402,7 @@ pool[] List l;
 l = new NIL();
 escape l is NIL;
 ]],
+    wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
     run = 1,
 }
@@ -56288,6 +56411,7 @@ pool[] List l;
 l = new CONS(2, NIL());
 escape ((l as CONS).head);
 ]],
+    wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
     run = 2,
 }
@@ -56307,6 +56431,7 @@ Test { DATA..[[
 pool[0] List l = new CONS(2, NIL());
 escape l is NIL;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { DATA..[[
@@ -56314,6 +56439,7 @@ pool[0] List l;
 l = new CONS(2, NIL());
 escape ((l as CONS).head);     // runtime error
 ]],
+    wrn = true,
     asr = true,
 }
 -- 2nd allocation fails (1 space)
@@ -56323,6 +56449,7 @@ native _assert;
 _assert(((l as CONS).tail) is NIL);
 escape ((l as CONS).head);
 ]],
+    wrn = true,
     run = 2,
 }
 -- 3rd allocation fails (2 space)
@@ -56332,6 +56459,7 @@ native _assert;
 _assert((((l as CONS).tail) as CONS).tail is NIL);
 escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + (((l as CONS).tail) as CONS).tail is NIL;
 ]],
+    wrn = true,
     run = 4,
 }
 
@@ -56342,6 +56470,7 @@ pool[0] List l;
 l = new CONS(2, NIL());
 escape l is NIL;
 ]],
+    wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
     run = 1,
 }
@@ -56359,6 +56488,7 @@ do
 end
 escape ts is NIL;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -56378,6 +56508,7 @@ pool[1] List l = new CONS(1, NIL());
 l = new CONS(2, NIL());    // this fails (new before free)!
 escape ((l as CONS).head);
 ]],
+    wrn = true,
     asr = true,
 }
 
@@ -56387,6 +56518,7 @@ l = new CONS(1, NIL());
 ((l as CONS).tail) = new CONS(2, NIL()); // fails
 escape ((l as CONS).tail) is NIL;
 ]],
+    wrn = true,
     run = 1,
     --asr = true,
 }
@@ -56397,6 +56529,7 @@ pool[2] List l = new CONS(1, NIL());
 ((l as CONS).tail) = new CONS(2, NIL()); // fails
 escape (((l as CONS).tail) as CONS).head;
 ]],
+    wrn = true,
     run = 2,
 }
 
@@ -56408,6 +56541,7 @@ l = new CONS(1, NIL());
 l = new CONS(2, NIL());    // no allocation fail
 escape ((l as CONS).head);
 ]],
+    wrn = true,
     run = 2,
 }
 
@@ -56422,6 +56556,7 @@ l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
 _ceu_out_assert_msg((((l as CONS).tail) as CONS).tail is NIL, "2");
 escape (((l as CONS).tail) as CONS).head;
 ]],
+    wrn = true,
     run = 5,
 }
 
@@ -56432,6 +56567,7 @@ _ceu_out_assert_msg((((l as CONS).tail) as CONS).tail is NIL, "1");
 l = new CONS(4, CONS(5, CONS(6, NIL())));   // all fail
 escape l is NIL;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -56448,6 +56584,7 @@ l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
 _assert((((l as CONS).tail) as CONS).tail is NIL);
 escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + (((((l as CONS).tail) as CONS).tail is NIL));
 ]],
+    wrn = true,
     run = 10,
 }
 
@@ -56469,6 +56606,7 @@ pool[2] List l = new CONS(1, NIL());
 ((l as CONS).tail) = new CONS(2, NIL());
 escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head;
 ]],
+    wrn = true,
     run = 3,
 }
 -- ok: tail is child of l
@@ -56481,6 +56619,7 @@ lll = new CONS(1, CONS(2, NIL()));
 lll = (lll as CONS).tail;    // parent=child
 escape (lll as CONS).head;
 ]],
+    wrn = true,
     run = 2,
 }
 Test { DATA..[[
@@ -56489,6 +56628,7 @@ lll = (lll as CONS).tail;
 (lll as CONS).tail = new CONS(3, NIL());
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { DATA..[[
@@ -56498,6 +56638,7 @@ lll = (lll as CONS).tail;    // parent=child
 (lll as CONS).tail = new CONS(3, CONS(4, NIL()));    // 4 fails
 escape (lll as CONS).head + (((lll as CONS).tail) as CONS).head + ((((lll as CONS).tail) as CONS).tail is NIL);
 ]],
+    wrn = true,
     run = 6,
 }
 Test { DATA..[[
@@ -56506,6 +56647,7 @@ l = ((l as CONS).tail);    // parent=child
 ((l as CONS).tail) = new CONS(3, CONS(4, NIL()));    // 4 fails
 escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + ((((l as CONS).tail) as CONS).tail is NIL);
 ]],
+    wrn = true,
     run = 6,
 }
 
@@ -56519,6 +56661,7 @@ l = new CONS(1, CONS(2, NIL()));
 ((l as CONS).tail) = l;    // child=parent
 escape 1;
 ]],
+    wrn = true,
     adt = 'line 53 : cannot assign parent to child',
 }
 
@@ -56547,11 +56690,11 @@ i = SOME1(3);
 ret = ret + (i as SOME1).v;       // 5
 
 p = SOME2(&&ret);
-*(p as SOME).v = *(p as SOME2).v + 2;    // 7
+*(p as SOME2).v = *(p as SOME2).v + 2;    // 7
 
 var int v = 10;
 p = SOME2(&&v);
-*(p as SOME).v = *(p as SOME2).v + 1;
+*(p as SOME2).v = *(p as SOME2).v + 1;
 
 ret = ret + v;              // 18
 escape ret;
@@ -56828,7 +56971,7 @@ escape 1;
 }
 
 Test { [[
-native _myalloc, _my_free;
+native _myalloc;
 native do
     void* myalloc (void) {
         escape NULL;
@@ -57047,6 +57190,7 @@ p! = p! + 1;          // 11
 ret = ret + v;      // 21
 escape ret;
 ]],
+    wrn = true,
     run = 21,
 }
 
@@ -57132,6 +57276,7 @@ var Pair p1 = Pair(1,2);
 var Pair p2 = Pair(1,2);
 escape p1==p2;
 ]],
+    wrn = true,
     env = 'line 53 : invalid operation for data',
     --run = 1,
 }
@@ -57140,6 +57285,7 @@ pool[] List l1, l2;
 l2 = new NIL();
 escape l1==l2;
 ]],
+    wrn = true,
     env = 'line 53 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -57152,6 +57298,7 @@ l2 = new CONS(2, NIL());
 ((l1 as CONS).tail) = l2;
 escape (((l1 as CONS).tail) as CONS).head;
 ]],
+    wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
 }
@@ -57164,6 +57311,7 @@ do
 end
 escape (((l1 as CONS).tail) as CONS).head;
 ]],
+    wrn = true,
     adt = 'line 55 : invalid attribution : destination is not a reference',
     --adt = 'line 55 : cannot mix recursive data sources',
     --fin = 'line 54 : attribution to pointer with greater scope',
@@ -57175,6 +57323,7 @@ pool[2] List l2 = new CONS(2, NIL());
 ((l1 as CONS).tail) = l2;
 escape (((l1 as CONS).tail) as CONS).head;
 ]],
+    wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
 }
@@ -57186,6 +57335,7 @@ l2 = new CONS(2, NIL());
 ((l1 as CONS).tail) = l2;
 escape (((l1 as CONS).tail) as CONS).head;
 ]],
+    wrn = true,
     --adt = 'line 55 : invalid attribution : value is not a reference',
     adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
 }
@@ -57230,6 +57380,7 @@ ret = ret + (((l as CONS).tail) as CONS).head;
 
 escape ret;
 ]],
+    wrn = true,
     adt = 'line 72 : invalid attribution : destination is not a reference',
     --adt = 'line 72 : invalid attribution : new reference only to root',
     --adt = 'line 72 : cannot mix recursive data sources',
@@ -57420,6 +57571,7 @@ var List&& lll = &&list;
 
 escape 1;
 ]],
+    wrn = true,
     run = 1,
     --env = 'line 15 : invalid operand to unary "&&"',
     --env = 'line 15 : data must be a pointer',
@@ -57437,6 +57589,7 @@ var List&& lll = list;
 
 escape 1;
 ]],
+    wrn = true,
     adt = 'line 11 : invalid attribution : mutation : cannot mix data sources',
     --adt = 'line 11 : invalid attribution : types mismatch (`List&&´ <= `List[]´)',
     --run = 1,
@@ -57914,6 +58067,7 @@ data Frame;
 
 escape 1;
 ]],
+    wrn = true,
     env = 'line 5 : `data´ fields do not support vectors yet',
 }
 Test { [[
@@ -57940,6 +58094,7 @@ data T with
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -57948,6 +58103,7 @@ data T with
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -58235,6 +58391,7 @@ if false then
 end
 escape 1;
 ]],
+    wrn = true,
     ref = 'line 10 : invalid access to uninitialized variable "n" (declared at tests.lua:8)',
     --run = 1,
 }
@@ -58253,6 +58410,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -62103,6 +62261,7 @@ data List;
 pool[] List lll;     // l is the pool
 escape lll is NIL;       // l is a pointer to the root
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -62117,6 +62276,7 @@ pool[] Command cmds1;
 pool&[] Command cmds2;
 escape 1;
 ]],
+    wrn = true,
     ref = 'line 10 : uninitialized variable "cmds2" crossing compound statement (tests.lua:1)',
 }
 Test { [[
@@ -62130,6 +62290,7 @@ pool[] Command cmds1;
 pool&[] Command cmds2=&cmds1;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -62144,6 +62305,7 @@ pool&[] Command cmds2;
 cmds2 = &cmds1;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[

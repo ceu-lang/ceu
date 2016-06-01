@@ -459,27 +459,27 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- DECLARATIONS
 
-    , __vars_set  = V'__ID_int' * OPT(V'__Sets_one')
+    , __vars_set  = V'__ID_int' * OPT(Ct(V'__Sets_one'))
 
-    , _Vars_set  = CK'var' * OPT(CKK'&') * V'Type' *
+    , _Vars_set  = K'var' * OPT(CKK'&') * V'Type' *
                     V'__vars_set' * (KK','*V'__vars_set')^0
-    , _Vars      = CK'var' * OPT(CKK'&') * V'Type' *
+    , _Vars      = K'var' * OPT(CKK'&') * V'Type' *
                     V'__ID_int' * (KK','*V'__ID_int')^0
 
-    , _Vecs_set  = CK'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
+    , _Vecs_set  = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
                     V'__vars_set' * (KK','*V'__vars_set')^0
                         -- TODO: only vec constr
-    , _Vecs      = CK'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
+    , _Vecs      = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
                     V'__ID_int' * (KK','*V'__ID_int')^0
 
-    , _Pools_set = CK'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
+    , _Pools_set = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
                     V'__vars_set' * (KK','*V'__vars_set')^0
-    , _Pools     = CK'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
+    , _Pools     = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
                     V'__ID_int' * (KK','*V'__ID_int')^0
 
-    , _Evts_set  = CK'event' * OPT(CKK'&') * (PARENS(V'_Typelist')+V'Type') *
+    , _Evts_set  = K'event' * OPT(CKK'&') * (PARENS(V'_Typelist')+V'Type') *
                     V'__vars_set' * (KK','*V'__vars_set')^0
-    , _Evts      = CK'event' * OPT(CKK'&') * (PARENS(V'_Typelist')+V'Type') *
+    , _Evts      = K'event' * OPT(CKK'&') * (PARENS(V'_Typelist')+V'Type') *
                     V'__ID_int' * (KK','*V'__ID_int')^0
 
     , _Exts      = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') *
@@ -581,7 +581,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , _Vec_New = V'Vec_Tup' * (KK'..' * (V'__Exp' + #KK'['*V'Vec_Tup'))^0
 
     , Data_New = OPT(CK'new') * V'Data_New_one'
-    , Data_New_one  = V'__ID_abs' * PARENS(V'_Data_explist')
+    , Data_New_one  = V'ID_abs' * PARENS(V'_Data_explist')
     , _Data_explist    = ( V'__data_expitem'*(KK','*V'__data_expitem')^0 )^-1
     , __data_expitem   = (V'Data_New_one' + V'_Vec_New' + V'__Exp')
 
@@ -617,7 +617,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- Types
 
-    , __type = CK(TYPES,'primitive type') + V'__ID_abs'
+    , __type = CK(TYPES,'primitive type') + V'ID_abs'
     , __type_ptr = CKK'&&' -(P'&'^3)
     , __type_vec = KK'[' * V'__Exp' * KK']'
     , Type = V'__type' * (V'__type_ptr'              )^0 * CKK'?'^-1

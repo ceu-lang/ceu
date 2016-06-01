@@ -2,7 +2,8 @@ TOPS = {
 --[[
     [id] = node + {
         id    = <string>,
-        group = 'primitive' | 'native' | 'data' | 'code',
+        group = 'primitive' | 'native' | 'data' | 'code'
+              | 'input' | 'output' | ...,
     },
 ]]
 }
@@ -89,5 +90,5 @@ F = {
 AST.visit(F)
 
 for _, dcl in pairs(TOPS) do
-    --WRN(not dcl.is_used, me, dcl.group..' "'..dcl.id..' is not used')
+    WRN(dcl.is_used, dcl, dcl.group..' "'..dcl.id..' declared but not used')
 end
