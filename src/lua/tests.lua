@@ -153,6 +153,7 @@ escape a;
 }
 
 -- KKK
+--]===]
 
 Test { [[
 data DDD with
@@ -2765,7 +2766,6 @@ escape 0;
     env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
 
---]===]
 Test { [[
 var u8&& ptr =
     par do
@@ -17505,30 +17505,6 @@ escape x;
     --run = 1,
 }
 
--- REFS: void&
-Test { [[
-var int v = 10;
-var& void p = &v;
-escape *(&&p as int&&);
-]],
-    run = 10,
-}
-Test { [[
-class T with
-    var& void p;
-do
-    escape *(&&this.p as int&&);
-end
-
-var int v = 10;
-var int ret = do T with
-                this.p = &v;
-              end;
-escape ret;
-]],
-    run = 10,
-}
-
 --<<< ALIASES / REFERENCES / REFS / &
 
 Test { [[
@@ -26323,35 +26299,6 @@ end
     run = {['~>2s']=-1},
 }
 
-Test { [[
-native do
-    int V = 1;
-end
-
-class X with
-do
-    every 1s do
-        _V = _V + 1;
-    end
-end
-
-event bool pse;
-par/or do
-    pause/if pse do
-        var X x1, x2;
-        await FOREVER;
-    end
-with
-    emit pse=>true;
-    await 5s;
-end
-
-escape _V;
-]],
-    _ana = {acc=true},
-    run = {['~>5s']=1},
-}
-
 --<<< PAUSE
 
 -- TIGHT LOOPS
@@ -28281,6 +28228,57 @@ await 1s;
 escape 1;
 ]],
     run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+native do
+    int V = 1;
+end
+
+code/delayed X (void)=>void do
+    every 1s do
+        _V = _V + 1;
+    end
+end
+
+event bool pse;
+par/or do
+    pause/if pse do
+        par do
+            await X();
+        with
+            await X();
+        end
+    end
+with
+    emit pse=>true;
+    await 5s;
+end
+
+escape _V;
+]],
+    _ana = {acc=true},
+    run = {['~>5s']=1},
+}
+
+-- REFS: void&
+Test { [[
+var int v = 10;
+var& void p = &v;
+escape *(&&p as int&&);
+]],
+    run = 10,
+}
+Test { [[
+code/delayed T (var& void p)=>int do
+    escape *(&&p as int&&);
+end
+
+var int v = 10;
+var int ret = await T(&v);
+escape ret;
+]],
+    run = 10,
 }
 
 Test { [[

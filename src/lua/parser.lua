@@ -85,7 +85,7 @@ local T = {
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or expression or `await´ or `emit´ or `request´ or `spawn´ or `kill´ or `do´ or `pre´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or expression or `await´ or `emit´ or `request´ or `spawn´ or `kill´ or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
 }
@@ -482,7 +482,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     , __awaits     = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Await_Code')
     , _Awaits      = K'await' * V'__awaits' * OPT(K'until'*V'__Exp')
-    , Await_Ext    = V'ID_ext'
+    , Await_Ext    = V'ID_ext' - V'Await_Code'
     , Await_Int    = V'__Exp' - V'Await_Wclock' - V'Await_Code'
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
     , Await_Code   = V'CALL'
