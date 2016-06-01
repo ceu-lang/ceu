@@ -53338,7 +53338,7 @@ escape _strlen(&&t.name as _char&&);
 -- REQUESTS
 
 Test { [[
-output/input (var int max)=>void X;
+output/input X (var int max)=>void;
 escape 1;
 ]],
     run = 1,
@@ -53348,7 +53348,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-input/output (var int max)=>void X do
+input/output X (var int max)=>void do
     if max then end;
     escape;
 end
@@ -53358,7 +53358,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (var int max)=>byte&& LINE;
+input/output LINE [10] (var int max)=>byte&&;
 request LINE;
 escape 1;
 ]],
@@ -53367,7 +53367,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (var int max)=>byte&& LINE;
+input/output LINE [10] (var int max)=>byte&&;
 request LINE => "oi";
 escape 1;
 ]],
@@ -53375,7 +53375,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (var int max)=>byte&& LINE;
+input/output LINE [10] (var int max)=>byte&&;
 request LINE => 10;
 escape 1;
 ]],
@@ -53386,7 +53386,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input [10] (var int max)=>byte&& LINE;
+output/input LINE [10] (var int max)=>byte&&;
 par/or do
     request LINE => 10;
 with
@@ -53459,7 +53459,7 @@ escape v!;
 }
 
 Test { [[
-output/input [10] (var int max)=>byte&& LINE;
+output/input LINE [10] (var int max)=>byte&&;
 var byte&& ret = null;
 par/or do
     var byte&&? ret1;
@@ -53476,7 +53476,7 @@ escape *ret;
 }
 
 Test { [[
-output/input [10] (var int max)=>byte&& LINE;
+output/input LINE [10] (var int max)=>byte&&;
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
@@ -53492,7 +53492,7 @@ escape 1;
 }
 
 Test { [[
-output/input [10] (var int max)=>byte&& LINE;
+output/input LINE [10] (var int max)=>byte&&;
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
@@ -53509,7 +53509,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (var int max)=>byte&& LINE;
+input/output LINE [10] (var int max)=>byte&&;
 request LINE;
 escape 1;
 ]],
@@ -53518,7 +53518,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (var int max)=>byte&& LINE;
+input/output LINE [10] (var int max)=>byte&&;
 request LINE => "oi";
 escape 1;
 ]],
@@ -53526,7 +53526,7 @@ escape 1;
 }
 
 Test { [[
-input/output [10] (var int max)=>byte&& LINE;
+input/output LINE [10] (var int max)=>byte&&;
 request LINE => 10;
 escape 1;
 ]],
@@ -53537,7 +53537,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input [10] (var int max)=>byte&& LINE;
+output/input LINE [10] (var int max)=>byte&&;
 par/or do
     request LINE => 10;
 with
@@ -53558,7 +53558,7 @@ escape 1;
 }
 
 Test { [[
-output/input [10] (var int max)=>byte&& LINE;
+output/input LINE [10] (var int max)=>byte&&;
 var u8 err;
 var u8? ret;
 (err, ret) = request LINE => 10;
@@ -53572,7 +53572,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input [10] (var int max)=>int LINE;
+output/input LINE [10] (var int max)=>int;
 par/or do
     var u8 err;
     var int? ret;
@@ -53589,7 +53589,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input [10] (var int)=>int LINE do
+output/input LINE [10] (var int)=>int do
     escape 1;     // missing <int "id">
 end
 par/or do
@@ -53606,7 +53606,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input [10] (var int max)=>int LINE do
+output/input LINE [10] (var int max)=>int do
     escape 1;
 end
 par/or do
@@ -53624,7 +53624,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-input/output [10] (var int max)=>int LINE do
+input/output LINE [10] (var int max)=>int do
     escape 1;
 end
 par/or do
@@ -53642,7 +53642,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-input/output [10] (var int max)=>int LINE do
+input/output LINE [10] (var int max)=>int do
     escape 1;
 end
 escape 1;
@@ -53655,7 +53655,7 @@ native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 var int ret = 0;
-input/output [10] (var int max)=>int LINE do
+input/output LINE [10] (var int max)=>int do
     ret = 1;
 end
 escape ret;
@@ -53669,7 +53669,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [10] (var int max)=>int LINE do
+    input/output LINE [10] (var int max)=>int do
         _V = 10;
         escape 1;
     end
@@ -53691,7 +53691,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [10] (var int max)=>int LINE do
+    input/output LINE [10] (var int max)=>int do
         _V = max;
     end
     await 1s;
@@ -53712,7 +53712,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [10] (var int max)=>int LINE do
+    input/output LINE [10] (var int max)=>int do
         _V = _V + max;
     end
     await 1s;
@@ -53734,7 +53734,7 @@ par do
     native do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
     end
-    input/output [2] (var int max)=>int LINE do
+    input/output LINE [2] (var int max)=>int do
         await 1s;
     end
     await 1s;
@@ -53755,7 +53755,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output (var int max)=>int LINE do
+    input/output LINE (var int max)=>int do
         await 1s;
         _V = _V + max;
     end
@@ -53780,7 +53780,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [2] (var int max)=>int LINE do
+    input/output LINE [2] (var int max)=>int do
         await 1s;
         _V = _V + max;
     end
@@ -53807,7 +53807,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [2] (var int max)=>int LINE do
+    input/output LINE [2] (var int max)=>int do
         await 1s;
         _V = _V + max;
     end
@@ -53834,7 +53834,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [2] (var int max)=>int LINE do
+    input/output LINE [2] (var int max)=>int do
         await 1s;
         _V = _V + max;
     end
@@ -53865,7 +53865,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [1] (var int max)=>int LINE do
+    input/output LINE [1] (var int max)=>int do
         await 1s;
         _V = _V + max;
     end
@@ -53896,7 +53896,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [0] (var int max)=>int LINE do
+    input/output LINE [0] (var int max)=>int do
         await 1s;
         _V = _V + max;
     end
@@ -53927,7 +53927,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [10] (var int max)=>int LINE do
+    input/output LINE [10] (var int max)=>int do
         await 1s;
         _V = _V + max;
     end
@@ -53953,7 +53953,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [10] (var int max)=>int LINE do
+    input/output LINE [10] (var int max)=>int do
         await 1s;
         _V = _V + max;
     end
@@ -53979,7 +53979,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output [10] (var int max)=>int LINE do
+    input/output LINE [10] (var int max)=>int do
         await 1s;
         _V = _V + max;
     end
@@ -54005,7 +54005,7 @@ native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
     int V = 0;
 end
-output/input (var int max)=>int LINE;
+output/input LINE (var int max)=>int;
 var int? v   = 0;
 var int err = 0;
 (err,v) = request LINE=>10;
@@ -54020,7 +54020,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
-    output/input (var int max)=>int LINE;
+    output/input LINE (var int max)=>int;
     var int? v  = 0;
     var int err = 0;
     (err,v) = request LINE=>10;
@@ -54040,7 +54040,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
-    output/input (var int max)=>int LINE;
+    output/input LINE (var int max)=>int;
     var int? v;
     var int err = 0;
     (err,v) = request LINE=>10;
@@ -54060,7 +54060,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
-    output/input (var int max)=>int LINE;
+    output/input LINE (var int max)=>int;
     var int? v  = 0;
     var int err = 0;
     par/or do
@@ -54086,7 +54086,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
-    output/input (var int max)=>int LINE;
+    output/input LINE (var int max)=>int;
     var int? v  = 0;
     var int err = 0;
     par/or do
@@ -54112,7 +54112,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
-    output/input (var int max)=>int LINE;
+    output/input LINE (var int max)=>int;
     var int? v  = 0;
     var int err = 0;
     par/or do
@@ -54280,7 +54280,7 @@ escape ret;
 }
 
 Test { [[
-output/input (void)=>byte SERIAL_CHAR;
+output/input SERIAL_CHAR (void)=>byte;
 escape 1;
 ]],
     run = 1,
@@ -54292,7 +54292,7 @@ native do
 end
 
 input void OS_START;
-output/input (void)=>byte SERIAL_CHAR;
+output/input SERIAL_CHAR (void)=>byte;
 
 par/or do
     var int err;
@@ -54311,7 +54311,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
 end
-input/output (void)=>byte SERIAL_CHAR do
+input/output SERIAL_CHAR (void)=>byte do
     escape 'a';
 end
 escape 1;
@@ -54335,7 +54335,7 @@ native do
     }
 end
 
-input/output (var int x)=>byte[]&& PING_PONG do
+input/output PING_PONG (var int x)=>byte[]&& do
     vector[] byte ret = [].."Pong ";
     native/nohold _printf;
     _printf("%s\n", (_char&&)&&ret);
@@ -54352,7 +54352,7 @@ escape _V;
 }
 
 Test { [[
-output/input (var int x)=>byte[]&& PING_PONG;
+output/input PING_PONG (var int x)=>byte[]&&;
 vector[] byte&&? ret;
 par/and do
     var int i,err;
@@ -54396,7 +54396,7 @@ native do
     }
 end
 
-input/output [10] (var u16 t)=>_info&& TEST do
+input/output TEST [10] (var u16 t)=>_info&& do
     var _info i = _info(42,89);
     escape &&i;
 end
@@ -54434,7 +54434,7 @@ printf("RET %p %d\n", evt_buf, k->_2);
     }
 end
 
-input/output [10] (var u16 t)=>_info&& TEST do
+input/output TEST [10] (var u16 t)=>_info&& do
     var _info i = _info(42,89);
     await 1s;
     escape &&i;
@@ -54472,7 +54472,7 @@ var Test t with
 end;
 var Test&&? ptr = &&t;
 
-input/output [10] (void)=>void RESOURCE do
+input/output RESOURCE [10] (void)=>void do
     _V = global:ptr!:k;
 end
 
@@ -63985,7 +63985,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input [10] (var int max)=>int LINE;
+output/input LINE [10] (var int max)=>int;
 par/or do
     var u8 err;
     var u8? ret;

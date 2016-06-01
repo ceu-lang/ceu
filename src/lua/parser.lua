@@ -402,9 +402,9 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- req
     , __extreq = (CK'input/output' + CK'output/input')
+                   * V'__ID_ext'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
                    * V'_Typepars' * KK'=>' * V'Type'
-                   * V'__ID_ext' * (KK','*V'__ID_ext')^0
     , _Extreq_proto = V'__extreq'
     , _Extreq_impl  = V'__extreq' * V'__Do'
 
