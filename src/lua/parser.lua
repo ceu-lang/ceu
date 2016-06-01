@@ -37,10 +37,6 @@ local T = {
     },
 
     {
-        'internal identifier or `_´',
-        'internal identifier'
-    },
-    {
         '`&&´ or `%?´',
         'type modifier'
     },
@@ -71,10 +67,6 @@ local T = {
         '`end´'
     },
 
-    {
-        '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
-        'expression'
-    },
     {
         '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
         'expression'
@@ -258,6 +250,8 @@ KEYS = P
 'loop' +
 'kill' +
 'is' +
+-- TODO: remove class/interface
+'class' + 'interface' + 'traverse' +
 'input/output' +
 'input' +
 'in' +
@@ -662,7 +656,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     , __Prim = PARENS(V'__Exp')
              + V'SIZEOF'
-             + V'CALL'
+             + OPT(CK'call' + CK'call/recursive') * V'CALL'
 -- Field
              + V'ID_int'     + V'ID_nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
@@ -675,8 +669,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __Cast = V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure')
 --<<<
 
-    , CALL   = OPT(CK'call' + CK'call/recursive') *
-                V'ID_abs' * PARENS(OPT(V'Explist'))
+    , CALL   = V'ID_abs' * PARENS(OPT(V'Explist'))
     , SIZEOF = K'sizeof' * PARENS((V'Type' + V'__Exp'))
     , NULL   = CK'null'     -- TODO: the idea is to get rid of this
     , STRING = CKK( CKK'"' * (P(1)-'"'-'\n')^0 * K'"', 'string literal' )
@@ -719,6 +712,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'Emit_Int'
                  + V'Spawn' + V'Kill'
                  + V'Nat_Stmt'
+-- TODO: remove class/interface
++ I((K'class'+K'interface'+K'traverse')) * E'TODO: class/interface'
              + V'CallStmt' -- last
 
     , __Stmt_Block = V'_Code_impl' + V'_Extcall_impl' + V'_Extreq_impl'

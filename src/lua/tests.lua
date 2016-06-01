@@ -28089,7 +28089,7 @@ escape v1==v2;
 --do return end
 
 Test { [[
-code/instantaneous A (void)=>void
+code/delayed A (void)=>void
 do
     escape 1;
 end
@@ -28100,7 +28100,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous T (var int x)=>void
+code/delayed T (var int x)=>void
 do
 end
 escape 1;
@@ -28108,7 +28108,7 @@ escape 1;
     gcc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
 }
 Test { [[
-code/instantaneous T (var int x)=>void
+code/delayed T (var int x)=>void
 do
     if x then end;
 end
@@ -28117,7 +28117,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/instantaneous T (var int x)=>void
+code/delayed T (var int x)=>void
 do
     var int v;
 end
@@ -28135,14 +28135,14 @@ escape _V;
 }
 
 Test { [[
-code/instantaneous T void=>void do end
+code/delayed T (void)=>void do end
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-code/instantaneous T (var int x)=>void
+code/delayed T (var int x)=>void
 do
     var int v;
 end
@@ -28158,7 +28158,7 @@ escape _V;
 }
 
 Test { [[
-code/instantaneous T (var int a)=>void
+code/delayed T (var int a)=>void
 do
 end
 
@@ -28179,7 +28179,7 @@ escape 0;
 }
 
 Test { [[
-code/delayed T void=>void do end
+code/delayed T (void)=>void do end
 T();
 escape 1;
 ]],
@@ -28187,7 +28187,7 @@ escape 1;
 }
 
 Test { [[
-code/delayed T void=>void do end
+code/delayed T (void)=>void do end
 par/or do
     T();
 with
@@ -28205,7 +28205,7 @@ escape 1;
 
 Test { [[
 input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
-code/delayed T void=>void do
+code/delayed T (void)=>void do
     var _SDL_MouseButtonEvent&& but = await SDL_MOUSEBUTTONUP;
 end
 await FOREVER;
@@ -28217,7 +28217,7 @@ await FOREVER;
 }
 
 Test { [[
-code/delayed T void=>void do
+code/delayed T (void)=>void do
     await FOREVER;
 end
 
@@ -28282,117 +28282,7 @@ escape ret;
 }
 
 Test { [[
-class T with
-    var int a;
-do
-end
-
-var int i = 1;
-vector[2] T y with
-    this.a = 10*i;
-    i = i + 1;
-end;
-
-var T x with
-    this.a = 30;
-end;
-
-escape x.a + y[0].a + y[1].a;
-]],
-    run = 60,
-}
-
-Test { [[
-class T with
-    var int a;
-do
-end
-
-var int i = 0;
-
-vector[2] T y with
-    i = i + 1;
-    this.a = i*10;
-end;
-
-var T x with
-    this.a = 30;
-end;
-
-escape x.a + y[0].a + y[1].a;
-]],
-    run = 60,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-
-class T with
-do
-    _V = _V + 1;
-end
-
-var T ts;
-
-escape _V;
-]],
-    run = 1,
-}
-
-Test { [[
-native do
-    int V = 0;
-end
-class T with
-do
-    _V = _V + 1;
-end
-
-vector[20000] T ts;
-
-escape _V;
-]],
-    run = 20000,
-}
-
-Test { [[
-class T with
-do
-    class T1 with var int v=0; do end
-    var int v=0;
-    if v then end;
-end
-escape 0;
-]],
-    run = 0, -- TODO
-    --props = 'line 2 : must be in top-level',
-}
-
-Test { [[
-class T with
-do
-end
-vector[5] T a;
-escape 0;
-]],
-    run = 0,
-}
-
-Test { [[
-native/const _U8_MAX;
-class T with do end;
-vector[_U8_MAX] T ts;
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class T with
-do
+code/delayed T (void)=>void do
 end
 event T a;
 escape 0;
@@ -28401,9 +28291,7 @@ escape 0;
 }
 
 Test { [[
-class T with
-do
-end
+code/delayed T (void)=>void do end
 var T a = 1;
 escape 0;
 ]],
@@ -28411,71 +28299,21 @@ escape 0;
 }
 
 Test { [[
-class T with
-do
-    var int a;
-    var T b;
+code/delayed T (void)=>void do
+    await T();
 end
-var T aa;
 escape 0;
 ]],
     env = 'line 4 : undeclared type `T´',
 }
 
 Test { [[
-class T with
-do
+code/delayed T (var& int a)=>void do
+    a = 5;
 end
-var T a;
-escape 0;
-]],
-    run = 0,
-}
-
-Test { [[
-class T with
-do
-end
-var T a;
-a.v = 0;
-escape a.v;
-]],
-    env = 'line 5 : variable/event "v" is not declared',
-}
-
-Test { [[
-class T with
-    var int a;
-do
-end
-var T aa;
-aa.b = 1;
-escape 0;
-]],
-    env = 'line 6 : variable/event "b" is not declared',
-}
-
-Test { [[
-class T with
-do
-    var int v;
-end
-var T a;
-a.v = 5;
-escape a.v;
-]],
-    env = 'line 6 : variable/event "v" is not declared',
-}
-
-Test { [[
-class T with
-    var int v;
-do
-end
-var T a with
-    this.v = 5;
-end;
-escape a.v;
+var int a = 0;
+spawn T(&a);
+escape a;
 ]],
     run = 5,
 }
@@ -28484,79 +28322,43 @@ Test { [[
 native do
     int V = 10;
 end
-class T with
-do
+code/delayed T (void)=>void do
     _V = 100;
 end
-var T a;
+spawn T();
 escape _V;
 ]],
     run = 100,
 }
 
 Test { [[
-class T with
-    var int a=0;
-do
-    this.a =
-        do/_ escape 1; end;
+code/delayed T (var& int a)=>void do
+    a = do/_
+            escape 5;
+        end;
 end
-var T a;
-escape a.a;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-class T with
-    var int v=0;
-do
-    await FOREVER;
-end
-var T a;
-a.v = 5;
-await OS_START;
-escape a.v;
+var int a = 0;
+spawn T(&a);
+escape a;
 ]],
     run = 5,
 }
 
 Test { [[
-class T with
-    var int v=0;
-do
-end
-do
-    var T a;
-    a.v = 5;
-end
-a.v = 5;
-escape a.v;
-]],
-    env = 'line 9 : variable/event "a" is not declared',
-}
+input void OS_START;
 
-Test { [[
-class T with
-    var int v;
-    native _f;
-do
+code/delayed T (var& int a)=>void do
+    await FOREVER;
 end
-escape 10;
-]],
-    parser = 'line 2 : after `;´ : expected `var´ or `vector´ or `pool´ or `event´ or `code/instantaneous´ or `code/delayed´ or `interface´ or `input/output´ or `output/input´ or `input´ or `output´ or `do´',
-}
 
-Test { [[
-class T with
-    var int v;
-    native _t;
-do
+var int v = 0;
+watching T(&v) do
+    v = 5;
+    await OS_START;
 end
-escape 10;
+escape v;
 ]],
-    parser = 'line 2 : after `;´ : expected `var´ or `vector´ or `pool´ or `event´ or `code/instantaneous´ or `code/delayed´ or `interface´ or `input/output´ or `output/input´ or `input´ or `output´ or `do´',
+    run = 5,
 }
 
 Test { [[
@@ -28565,22 +28367,20 @@ native do
     int V = 1;
 end
 
-class J with
-do
+code/delayed J (void)=>void do
     _V = _V * 2;
 end
 
-class T with
-do
-    var J j;
+code/delayed T (void)=>void do
+    spawn J();
     _V = _V + 1;
 end
 
-var T t1;
+spawn T();
 _V = _V*3;
-var T t2;
+spawn T();
 _V = _V*3;
-var T t3;
+spawn T();
 _V = _V*3;
 escape _V;
 ]],
@@ -28593,25 +28393,24 @@ native do
     int V = 1;
 end
 
-class J with
-do
+code/delayed J (void)=>void do
     _V = _V * 2;
 end
 
-class T with
-do
-    var J j;
+code/delayed T (void)=>void do
+    spawn J();
     _V = _V + 1;
 end
 
 input void OS_START;
 
-var T t1;
+spawn T();
 _V = _V*3;
-var T t2;
+spawn T();
 _V = _V*3;
-var T t3;
+spawn T();
 _V = _V*3;
+
 await OS_START;
 escape _V;
 ]],
@@ -28623,15 +28422,15 @@ native _V;
 native do
     int V = 1;
 end;
-class T with
-do
+
+code/delayed T (void)=>void do
     event void e;
     emit e;
     _V = 10;
 end
 
 do
-    var T t;
+    spawn T();
 end
 escape _V;
 ]],
@@ -31043,6 +30842,115 @@ escape x;
 
 Test { [[
 class T with
+    var int a;
+do
+end
+
+var int i = 1;
+vector[2] T y with
+    this.a = 10*i;
+    i = i + 1;
+end;
+
+var T x with
+    this.a = 30;
+end;
+
+escape x.a + y[0].a + y[1].a;
+]],
+    run = 60,
+}
+
+Test { [[
+class T with
+    var int a;
+do
+end
+
+var int i = 0;
+
+vector[2] T y with
+    i = i + 1;
+    this.a = i*10;
+end;
+
+var T x with
+    this.a = 30;
+end;
+
+escape x.a + y[0].a + y[1].a;
+]],
+    run = 60,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+
+class T with
+do
+    _V = _V + 1;
+end
+
+var T ts;
+
+escape _V;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+class T with
+do
+    _V = _V + 1;
+end
+
+vector[20000] T ts;
+
+escape _V;
+]],
+    run = 20000,
+}
+
+Test { [[
+class T with
+do
+    class T1 with var int v=0; do end
+    var int v=0;
+    if v then end;
+end
+escape 0;
+]],
+    run = 0, -- TODO
+    --props = 'line 2 : must be in top-level',
+}
+
+Test { [[
+class T with
+do
+end
+vector[5] T a;
+escape 0;
+]],
+    run = 0,
+}
+
+Test { [[
+native/const _U8_MAX;
+class T with do end;
+vector[_U8_MAX] T ts;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class T with
 do
     var int a = 1;
     if a then end;
@@ -33257,7 +33165,8 @@ var int a with
 end;
 escape 0;
 ]],
-    env = 'line 1 : invalid type',
+    parser = 'line 1 : after `a´ : expected `=´ or `:=´ or `,´ or `;´',
+    --env = 'line 1 : invalid type',
 }
 
 Test { [[
@@ -34384,7 +34293,7 @@ escape 10;
 Test { [[
 spawn i;
 ]],
-    parser = 'line 1 : after `spawn´ : expected class identifier or `do´',
+    parser = 'line 1 : after `spawn´ : expected abstraction identifier or `do´',
 }
 Test { [[
 _f(spawn T);
@@ -37346,7 +37255,7 @@ var int x =
     end;
 escape x;
 ]],
-    parser = 'line 2 : after `spawn´ : expected class identifier',
+    parser = 'line 2 : after `spawn´ : expected abstraction identifier',
 }
 
 Test { [[
@@ -37445,6 +37354,20 @@ escape ret;
 
 Test { [[
 do T;
+escape 0;
+]],
+    parser = 'line 1 : after `T´ : expected `(´',
+}
+
+Test { [[
+await T;
+escape 0;
+]],
+    env = 'line 1 : undeclared type `T´',
+}
+
+Test { [[
+await T();
 escape 0;
 ]],
     env = 'line 1 : undeclared type `T´',
@@ -37898,9 +37821,7 @@ Test { [[
 do
     var int i = 1;
     every 1s do
-        spawn HelloWorld with
-            this.id = i;
-        end;
+        spawn HelloWorld(i);
         i = i + 1;
     end
 end
@@ -55478,7 +55399,7 @@ Test { DATA..[[
 var List l1 = NIL; /* vs NIL() */
 escape 1;
 ]],
-    parser = 'line 51 : after `NIL´ : expected `.´ or `(´',
+    parser = 'line 51 : after `NIL´ : expected `(´',
     --run = 1,
 }
 
@@ -59890,7 +59811,7 @@ with
                     V(10),
                     V(20));
 
-    var int ret =
+    var int ret = do/_
         traverse widget in &&widgets do
             watching *widget do
                 if (*widget is V) then
@@ -59911,6 +59832,7 @@ with
                 end
             end
             escape 0;
+end
         end;
     escape ret;
 end
@@ -61296,9 +61218,10 @@ data Stmt;
 
 pool[2] Stmt stmts = new NIL();
 
-var int ddd =
+var int ddd = do/_
     traverse stmt in &&stmts do
         escape 10;
+end
     end;
 
 escape ddd;
@@ -61318,11 +61241,12 @@ pool[] Stmt stmts = new NIL();
 
 var int v1 = 10;
 
-var int ret =
+var int ret = do/_
     traverse stmt in &&stmts with
         var int v2 = v1;
     do
         escape v1+v2;
+end
     end;
 
 escape ret;
@@ -61345,7 +61269,7 @@ pool[3] List list = new
             CONS(3,
                 NIL())));
 
-var int s1 =
+var int s1 = do/_
     traverse l in &&list do
         if (*l is NIL) then
             escape 0;
@@ -61355,6 +61279,7 @@ var int s1 =
                 escape sum_tail + ((l as CONS).head);
             end
         end
+end
     end;
 
 escape s1;
@@ -61377,7 +61302,7 @@ pool[3] List list = new
                 NIL())));
 
 var int s2 = 0;
-var int s1 =
+var int s1 = do/_
     traverse l in &&list do
         if (*l is NIL) then
             escape 0;
@@ -61388,6 +61313,7 @@ var int s1 =
                 escape sum_tail + ((l as CONS).head);
             end
         end
+end
     end;
 
 escape s1 + s2;
@@ -61408,9 +61334,10 @@ class C with
     var int v;
 do
     pool[] T ts; // = new T.NEXT(T.NIL());
-    var int ret =
+    var int ret = do/_
         traverse t in ts do
             escape this.v;
+end
         end;
     escape ret;
 end
@@ -61632,7 +61559,7 @@ escape 1;
 
 Test { [[
 var int tot = 4;
-var int ret =
+var int ret = do/_
     traverse idx in [] do
         if idx == tot then
             escape idx;
@@ -61640,6 +61567,7 @@ var int ret =
             var int ret = traverse idx+1;
             escape idx + ret;
         end
+end
     end;
 
 escape ret;
@@ -61650,7 +61578,7 @@ escape ret;
 
 Test { [[
 var int tot = 4;
-var int ret =
+var int ret = do/_
     traverse idx in [3] do
         if idx == tot then
             escape idx;
@@ -61658,6 +61586,7 @@ var int ret =
             var int ret = traverse idx+1;
             escape idx + ret;
         end
+end
     end;
 
 escape ret;
