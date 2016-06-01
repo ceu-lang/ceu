@@ -55719,8 +55719,8 @@ escape 1;
 Test { DATA..[[
 escape NIL();
 ]],
-    ast = 'line 51 : invalid call',
-    --env = 'TODO: not a code',
+    --ast = 'line 51 : invalid call',
+    env = 'TODO: not a code',
     --parser = 'line 51 : after `escape´ : expected expression',
 }
 Test { DATA..[[
@@ -55728,8 +55728,8 @@ var List l;
 var int v = (l==NIL());
 escape v;
 ]],
-    ast = 'line 52 : invalid call',
-    --env = 'TODO: not a code',
+    --ast = 'line 52 : invalid call',
+    env = 'TODO: not a code',
     --parser = 'line 52 : after `==´ : expected expression',
 }
 

@@ -315,7 +315,7 @@ local function f (ln, v1, op, v2, v3, ...)
         ret = v1
     elseif v1=='call' or v1=='call/recursive' then
         -- Prim call
-        ASR(op.tag=='Op2_call', ln, 'invalid call')
+        ASR(op.tag=='Op2_call' or op.tag=='CALL', ln, 'invalid call')
         op[1] = v1  -- change modifier
         ret = op
     elseif v1 then
