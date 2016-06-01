@@ -87,6 +87,7 @@ Test = function (t)
 do return end
     if not check('ast')      then return end
     AST.dump(AST.root)
+    if not check('types')    then return end
     if not check('adj')      then return end
     if not check('sval')     then return end
     if not check('env')      then return end

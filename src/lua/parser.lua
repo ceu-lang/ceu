@@ -46,15 +46,15 @@ local T = {
     },
 
     {
-        '`&´ or `%(´ or primitive type or abstraction identifier or class identifier or adt identifier or native identifier',
+        '`&´ or `%(´ or primitive type or abstraction identifier or class identifier or native identifier',
         'type'
     },
     {
-        '`%(´ or primitive type or abstraction identifier or class identifier or adt identifier or native identifier or `/recursive´',
+        '`%(´ or primitive type or abstraction identifier or class identifier or native identifier or `/recursive´',
         'type'
     },
     {
-        'primitive type or abstraction identifier or class identifier or adt identifier or native identifier',
+        'primitive type or abstraction identifier or class identifier or native identifier',
         'type'
     },
 
@@ -538,7 +538,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     , __sets_one =
                 --Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*K')')
-              --Cc'adt-constr' * V'Adt_constr_root'
               Cc'data-constr' * V'Data_constr_root'
               + Cc'__trav_loop' * V'_TraverseLoop'  -- before Rec
               + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
@@ -667,26 +666,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , _Data_explist    = ( V'__data_expitem'*(KK','*V'__data_expitem')^0 )^-1
     , __data_expitem   = (V'Data_constr_one' + V'_Vecnew' + V'__Exp')
 
-    -- data types
-    , Dcl_adt = K'data' * V'__ID_adt' * K'with'
-               *    (V'__Dcl_adt_struct' + V'__Dcl_adt_union')
-               * K'end'
-    , __Dcl_adt_struct = Cc'struct' * (
-                            (V'_Vars'+V'_Evts'+V'_Vecs') * V'__seqs'
-                         )^1
-    , __Dcl_adt_union  = Cc'union'  * V'Dcl_adt_tag' * (K'or' * V'Dcl_adt_tag')^0
-    , Dcl_adt_tag    = K'tag' * V'__ID_tag' * K'with'
-                      *   ((V'_Vars'+V'_Vecs') * V'__seqs')^0
-                      * K'end'
-                      + K'tag' * V'__ID_tag' * V'__seqs'
-
-    -- adt-constr
-    , Adt_constr_root = OPT(CK'new') * V'Adt_constr_one'
-    , Adt_constr_one  = V'Adt' * #KK'('*PARENS(V'_Adt_explist')
-    , Adt             = V'__ID_adt' * OPT((KK'.'-'..')*V'__ID_tag')
-    , __adt_expitem   = (V'Adt_constr_one' + V'_Vecnew' + V'__Exp')
-    , _Adt_explist    = ( V'__adt_expitem'*(KK','*V'__adt_expitem')^0 )^-1
-
 -- Organism instantiation
 
     -- do organism
@@ -736,12 +715,10 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
         ]]
 
     , __ID_cls   = CK(m.R'AZ'*Alphanum^0 -KEYS, 'class identifier')
-    , __ID_adt   = CK(m.R'AZ'*Alphanum^0 -KEYS, 'adt identifier')
-    , __ID_tag   = CK(m.R'AZ'*ALPHANUM^0 -KEYS, 'tag identifier')
 
 -- Types
 
-    , __type = CK(TYPES,'primitive type') + V'__ID_abs' + V'__ID_cls' + V'__ID_adt'
+    , __type = CK(TYPES,'primitive type') + V'__ID_abs' + V'__ID_cls'
     , __type_ptr = CKK'&&' -(P'&'^3)
     , __type_vec = KK'[' * V'__Exp' * KK']'
     , Type = V'__type'   * (V'__type_ptr'              )^0 * CKK'?'^-1
