@@ -937,7 +937,7 @@ Test { [[if (2) then  else escape 0; end;]],
     run = '1] runtime error: missing `escape´ statement',
 }
 
--- IF vs SEQ priority
+-- IF vs Seq priority
 Test { [[if 1 then var int a=0; if a then end; escape 2; else escape 3; end;]],
     run = 2,
 }
@@ -1150,8 +1150,8 @@ input int A;
 
 A=1;
 ]],
-    --parser = 'line 1 : after `;´ : expected statement',
-    parser = 'line 4 : after `A´ : expected `(´',
+    parser = 'line 1 : after `;´ : expected statement',
+    --parser = 'line 4 : after `A´ : expected `(´',
 }
 
 Test { [[
@@ -1160,9 +1160,8 @@ A=1;
 escape 1;
 ]],
     --adj = 'line 2 : invalid expression',
-    --parser = 'line 1 : after `;´ : expected statement',
-    --parser = 'line 1 : after `;´ : expected statement',
-    parser = 'line 2 : after `A´ : expected `(´',
+    parser = 'line 1 : after `;´ : expected statement',
+    --parser = 'line 2 : after `A´ : expected `(´',
     --parser = 'line 1 : after `;´ : expected statement (usually a missing `var´ or C prefix `_´)',
 }
 
@@ -1291,8 +1290,8 @@ with
 end;
 escape A;
 ]],
-    --parser = "line 9 : after `escape´ : expected expression",
-    parser = 'line 9 : after `A´ : expected `(´',
+    parser = "line 9 : after `escape´ : expected expression",
+    --parser = 'line 9 : after `A´ : expected `(´',
     --adj = 'line 9 : invalid expression',
 }
 
@@ -1887,16 +1886,16 @@ escape ret;
 }
 
 Test { [[
-input void F;
+input void B;
 var int ret = 0;
 par/or do
     await 2s;   // 4
     ret = 10;
-    await F;    // 6
+    await B;    // 6
 with
     await 1s;   // 8
     ret = 1;
-    await F;    // 10
+    await B;    // 10
 end
 escape ret;
 ]],
@@ -1904,7 +1903,7 @@ escape ret;
         acc = 1,  -- false positive
         abrt = 3,
     },
-    run = { ['~>1s; ~>F']=1 },
+    run = { ['~>1s; ~>B']=1 },
 }
 
 Test { [[
@@ -1987,14 +1986,14 @@ end
 }
 
 Test { [[
-input void F;
+input void B;
 var int a = 0;
 loop do
     par/or do       // 4
         await 2s;
     with
         a = a + 1;          // 7
-        await F;
+        await B;
         break;
     with
         await 1s;   // 11
@@ -2009,18 +2008,18 @@ escape a;
     _ana = {
         abrt = 2,
     },
-    run = { ['~>5s; ~>F']=14 },
+    run = { ['~>5s; ~>B']=14 },
 }
 
 Test { [[
-input void F;
+input void B;
 var int a = 0;
 loop do
     par/or do       // 4
         await 2s;
     with
         a = a + 1;          // 7
-        await F;
+        await B;
         break;
     with
         await 1s;   // 11
@@ -2036,7 +2035,7 @@ escape a;
         abrt = 2,
         acc  = 3,
     },
-    run = { ['~>5s; ~>F']=14 },
+    run = { ['~>5s; ~>B']=14 },
     safety = 2,
 }
 
@@ -2473,7 +2472,7 @@ end;
 
 -- testa ParOr que da clean em ParOr que ja terminou
 Test { [[
-input int A,B,F;
+input int A,B,C;
 par/or do
     await A;
 with
@@ -2484,7 +2483,7 @@ var int a=0;
 par/or do
     a = 255+255+3;
 with
-    await F;
+    await C;
 end;
 escape a;
 ]],
@@ -2492,11 +2491,11 @@ escape a;
         --unreachs = 1,
         abrt = 1,
     },
-    run = { ['1~>A;1~>F']=513, ['2~>B;0~>F']=513 },
+    run = { ['1~>A;1~>C']=513, ['2~>B;0~>C']=513 },
 }
 
 Test { [[
-input int A,B,F;
+input int A,B,C;
 par/or do
     await A;
 with
@@ -2507,7 +2506,7 @@ var int a;
 par/or do
     a = 255+255+3;
 with
-    await F;
+    await C;
 end;
 escape a;
 ]],
@@ -2545,7 +2544,7 @@ end;
 }
 
 Test { [[
-input int A,B,F;
+input int A,B,C;
 var int a=0;
 par/or do
     par/or do
@@ -2559,13 +2558,13 @@ par/or do
     end;
     await FOREVER;
 with
-    await F;
+    await C;
 end;
 escape a;
 ]],
     run = {
-        ['1~>B; ~>20us; 1~>F'] = 1,
-        ['~>20us; 5~>B; 2~>F'] = 10,
+        ['1~>B; ~>20us; 1~>C'] = 1,
+        ['~>20us; 5~>B; 2~>C'] = 10,
     }
 }
 Test { [[
@@ -2632,7 +2631,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,F;
+input int A,B,C;
 var int a = do/_
     par/or do
         escape 1;
@@ -2646,7 +2645,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,F;
+input int A,B,C;
 var int a = do/_
         par/or do
             par do
@@ -2663,7 +2662,7 @@ var int a = do/_
                 escape v;     // 15
             end;
         with
-            await F;
+            await C;
         end;
         escape 0;
     end;
@@ -2671,13 +2670,13 @@ escape a;
 ]],
     wrn = true,
     run = {
-        ['1~>B; ~>20ms; 1~>F'] = 1,
-        ['~>20ms; 5~>B; 2~>F'] = 10000,
+        ['1~>B; ~>20ms; 1~>C'] = 1,
+        ['~>20ms; 5~>B; 2~>C'] = 10000,
     }
 }
 
 Test { [[
-input int A,B,F;
+input int A,B,C;
 var int a = do/_
         par/or do
             par do
@@ -2694,7 +2693,7 @@ var int a = do/_
                 escape v;     // 15
             end;
         with
-            await F;
+            await C;
         end;
         escape 0;
     end;
@@ -2702,8 +2701,8 @@ escape a;
 ]],
     wrn = true,
     run = {
-        ['1~>B; ~>20ms; 1~>F'] = 1,
-        ['~>20ms; 5~>B; 2~>F'] = 10000,
+        ['1~>B; ~>20ms; 1~>C'] = 1,
+        ['~>20ms; 5~>B; 2~>C'] = 10000,
     },
     safety = 2,
     _ana = {
@@ -2712,7 +2711,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,F;
+input int A,B,C;
 var int a = do/_
         par/or do
             par do
@@ -2731,7 +2730,7 @@ var int a = do/_
             // unreachable
             await FOREVER;
         with
-            await F;
+            await C;
         end;
         escape 0;
     end;
@@ -2741,14 +2740,14 @@ escape a;
     parser = "line 16 : after `;´ : expected `with´",
     --unreachs = 1,
     run = {
-        ['1~>B; ~>20ms; 1~>F'] = 1,
-        ['~>20ms; 5~>B; 2~>F'] = 10,
+        ['1~>B; ~>20ms; 1~>C'] = 1,
+        ['~>20ms; 5~>B; 2~>C'] = 10,
     }
 }
 
 -- testa ParOr que da clean em await vivo
 Test { [[
-input int A,B,D;
+input int A,B,X;
 par/and do
     par/or do
         await A;
@@ -2756,11 +2755,11 @@ par/and do
         await B;
     end;
 with
-    await D;
+    await C;
 end;
 escape 100;
 ]],
-    run = { ['1~>A;1~>D']=100 }
+    run = { ['1~>A;1~>C']=100 }
 }
 
 Test { [[
@@ -3581,18 +3580,18 @@ end
 }
 
 Test { [[
-input void A,F;
+input void A,C;
 var int ret = 0;
 par/or do
     every A do
         ret = ret + 1;
     end
 with
-    await F;
+    await C;
 end
 escape ret;
 ]],
-    run = { ['~>A;~>A;~>A;~>F;~>A']=3 },
+    run = { ['~>A;~>A;~>A;~>C;~>A']=3 },
 }
 
 Test { [[
@@ -4083,9 +4082,9 @@ escape 1;
     run = 1,
 }
 Test { [[
-input int F, A;
+input int C, A;
 loop do
-    var int v = await F;
+    var int v = await C;
     if v then
         await A;
     else
@@ -4095,8 +4094,8 @@ end;
 escape 1;
 ]],
     run = {
-        ['0~>F'] = 1,
-        ['1~>F;0~>A;0~>F'] = 1,
+        ['0~>C'] = 1,
+        ['1~>C;0~>A;0~>C'] = 1,
     }
 }
 
@@ -4436,7 +4435,7 @@ escape sum;
     run = {['~>A;~>B;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=10},
 }
 Test { [[
-input int A,B,Z,D,F;
+input int A,B,Z,X,C;
 var int ret=0;
 par/and do
     ret = await A;
@@ -4449,7 +4448,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B,Z,D,F;
+input int A,B,Z,X,C;
 var int ret=0;
 par/and do
     ret = await A;
@@ -4466,7 +4465,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B,Z,D,F;
+input int A,B,Z,X,C;
 var int ret=0;
 par/or do
     par/and do
@@ -4481,18 +4480,18 @@ par/or do
             ret = await Z;      // 13 (false w/ 10)
         end;
     with
-        ret = await D;          // 16 (false w/10,9)
+        ret = await X;          // 16 (false w/10,9)
     end;
 with
-    ret = await F;
+    ret = await C;
 end;
 escape ret;
 ]],
-    run = { ['1~>F'] = 1 }
+    run = { ['1~>C'] = 1 }
 }
 
 Test { [[
-input int A,B,Z,D,F;
+input int A,B,Z,X,C;
 var int ret=0;
 par/or do
     par/and do
@@ -4507,14 +4506,14 @@ par/or do
             ret = await Z;      // 13 (false w/ 10)
         end;
     with
-        ret = await D;          // 16 (false w/10,9)
+        ret = await X;          // 16 (false w/10,9)
     end;
 with
-    ret = await F;
+    ret = await C;
 end;
 escape ret;
 ]],
-    run = { ['1~>F'] = 1 },
+    run = { ['1~>C'] = 1 },
     safety = 2,
     _ana = {
         acc = 9,
@@ -4540,30 +4539,30 @@ escape a;
 }
 
 Test { [[
-input int F;
+input int C;
 var int a = 0;
 par do
     a = a + 1;
     await FOREVER;
 with
-    await F;
+    await C;
     escape a;
 end;
 ]],
     _ana = {
         isForever = false,
     },
-    run = { ['~>1min; ~>1min ; 0~>F'] = 1 },
+    run = { ['~>1min; ~>1min ; 0~>C'] = 1 },
 }
 
 Test { [[
-input int F;
+input int C;
 var int a = 0;
 par do
     a = a + 1;
     await FOREVER;
 with
-    await F;
+    await C;
     escape a;
 end;
 ]],
@@ -4572,7 +4571,7 @@ end;
         isForever = false,
         acc = 1,
     },
-    run = { ['~>1min; ~>1min ; 0~>F'] = 1 },
+    run = { ['~>1min; ~>1min ; 0~>C'] = 1 },
 }
 
 Test { [[
@@ -4595,20 +4594,20 @@ escape a + b;
 
 -- A changes twice, but first value must be used
 Test { [[
-input int A,F;
+input int A,C;
 var int a=0,f=0;
 par/and do
     a = await A;
 with
-    f = await F;
+    f = await C;
 end;
 escape a+f;
 ]],
-    run = { ['1~>A;5~>A;1~>F'] = 2 },
+    run = { ['1~>A;5~>A;1~>C'] = 2 },
 }
 
 Test { [[
-input int A,F;
+input int A,C;
 var int a=0,f=0;
 par/or do
     par do
@@ -4617,11 +4616,11 @@ par/or do
         await FOREVER;
     end
 with
-    f = await F;
+    f = await C;
 end;
 escape a+f;
 ]],
-    run = { ['1~>A;5~>A;1~>F'] = 2 },
+    run = { ['1~>A;5~>A;1~>C'] = 2 },
 }
 
 -->>> INTERNAL EVENTS
@@ -7009,7 +7008,7 @@ escape 1;
 }
 
 Test { [[
-input void F;
+input void C;
 var int a=0;
 par do
     await 5s;
@@ -7021,15 +7020,15 @@ with
         a = a + 1;
     end;
 with
-    await F;
+    await C;
     escape a;
 end;
 ]],
-    run = { ['~>10s;~>F']=10 }
+    run = { ['~>10s;~>C']=10 }
 }
 
 Test { [[
-input void F;
+input void C;
 do
     var int a=0, b=0, c=0;
     par do
@@ -7048,20 +7047,20 @@ do
             c = c + 1;
         end;
     with
-        await F;
+        await C;
         escape a + b + c;
     end;
 end;
 ]],
     run = {
-        ['~>999ms; ~>F'] = 108,
-        ['~>5s; ~>F'] = 555,
-        ['~>F'] = 0,
+        ['~>999ms; ~>C'] = 108,
+        ['~>5s; ~>C'] = 555,
+        ['~>C'] = 0,
     }
 }
 
 Test { [[
-input void F;
+input void C;
 do
     var int a=0, b=0, c=0;
     par do
@@ -7080,15 +7079,15 @@ do
             c = c + 1;
         end;
     with
-        await F;
+        await C;
         escape a + b + c;
     end;
 end;
 ]],
     run = {
-        ['~>999ms; ~>F'] = 108,
-        ['~>5s; ~>F'] = 555,
-        ['~>F'] = 0,
+        ['~>999ms; ~>C'] = 108,
+        ['~>5s; ~>C'] = 555,
+        ['~>C'] = 0,
     },
     safety = 2,
     _ana = {
@@ -7109,7 +7108,7 @@ escape 1;
 }
 
 Test { [[
-input int F;
+input int C;
 var int late = 0;
 var int v=0;
 par do
@@ -7118,18 +7117,18 @@ par do
         late = late + v;
     end;
 with
-    await F;
+    await C;
     escape late;
 end;
 ]],
     run = {
-        ['~>1ms; ~>1ms; ~>1ms; ~>1ms; ~>1ms; 1~>F'] = 0,
-        ['~>1ms; ~>1ms; ~>1ms; ~>10ms; 1~>F'] = 45000,
-        ['~>1ms; ~>1ms; ~>2ms; 1~>F'] = 1000,
-        ['~>2ms; 1~>F'] = 1000,
-        ['~>2ms; ~>2ms; 1~>F'] = 2000,
-        ['~>4ms; 1~>F'] = 6000,
-        ['1~>F'] = 0,
+        ['~>1ms; ~>1ms; ~>1ms; ~>1ms; ~>1ms; 1~>C'] = 0,
+        ['~>1ms; ~>1ms; ~>1ms; ~>10ms; 1~>C'] = 45000,
+        ['~>1ms; ~>1ms; ~>2ms; 1~>C'] = 1000,
+        ['~>2ms; 1~>C'] = 1000,
+        ['~>2ms; ~>2ms; 1~>C'] = 2000,
+        ['~>4ms; 1~>C'] = 6000,
+        ['1~>C'] = 0,
     }
 }
 
@@ -7203,28 +7202,28 @@ escape a;
 
 -- 1st to test timer clean
 Test { [[
-input int A, F;
+input int A, C;
 var int a=0;
 par/or do
     a = await 10min;
 with
     a = await A;
 end;
-await F;
+await C;
 escape a;
 ]],
     run = {
-        ['1~>A  ; 1~>F'] = 1,
-        ['~>10min ; 1~>F'] = 0,
-        ['~>10min ; 1~>A ; 1~>F'] = 0,
-        ['1~>A  ; ~>10min; 1~>F'] = 1,
+        ['1~>A  ; 1~>C'] = 1,
+        ['~>10min ; 1~>C'] = 0,
+        ['~>10min ; 1~>A ; 1~>C'] = 0,
+        ['1~>A  ; ~>10min; 1~>C'] = 1,
     }
 }
 
 Test { [[
 native do ##include <assert.h> end
 native _assert;
-input void T;
+input void A;
 var int ret = 0;
 par/or do
     loop do
@@ -7240,7 +7239,7 @@ with
             t = await 1s;
         with
             loop do
-                await T;
+                await A;
                 i = i + 1;
             end
         end
@@ -7249,31 +7248,31 @@ with
 with
     async do
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
     end
 end
 escape ret;
@@ -10478,7 +10477,7 @@ escape v;
 }
 
 Test { [[
-input int A,B,Z,D,E,F,G,H,I,J,K,L;
+input int A,B,Z,X,E,EE,GG,H,I,J,K,L;
 var int v=0;
 par/or do
     await A;
@@ -10486,10 +10485,10 @@ with
     await B;
 end;
 await Z;
-await D;
+await X;
 await E;
-await F;
-var int g = await G;
+await EE;
+var int g = await GG;
 if g then
     await H;
 else
@@ -10507,8 +10506,8 @@ end;
 escape v;
 ]],
     run = {
-        ['0~>A ; 0~>Z ; 0~>D ; 0~>E ; 0~>F ; 0~>G ; 0~>I ; 0~>J ; 0~>K ; 10~>L'] = 10,
-        ['0~>B ; 0~>Z ; 0~>D ; 0~>E ; 0~>F ; 1~>G ; 0~>H ; 0~>J ; 0~>K ; 11~>L'] = 11,
+        ['0~>A ; 0~>Z ; 0~>X ; 0~>E ; 0~>EE ; 0~>GG ; 0~>I ; 0~>J ; 0~>K ; 10~>L'] = 10,
+        ['0~>B ; 0~>Z ; 0~>X ; 0~>E ; 0~>EE ; 1~>GG ; 0~>H ; 0~>J ; 0~>K ; 11~>L'] = 11,
     },
 }
 
@@ -12190,7 +12189,7 @@ escape v;
 }
 
 Test { [[
-input int A,B,Z,D;
+input int A,B,Z,X;
 var int a = 0;
 a = do/_ par do
     par/and do
@@ -12205,15 +12204,15 @@ with
 end
 end;
 a = a + 1;
-await D;
+await X;
 escape a;
 ]],
     --ref = 'line 9 : invalid access to uninitialized variable "a" (declared at tests.lua:2)',
-    run = { ['0~>A;0~>B;0~>Z;0~>D'] = 2 }
+    run = { ['0~>A;0~>B;0~>Z;0~>X'] = 2 }
 }
 
 Test { [[
-input int A,B,Z,D;
+input int A,B,Z,X;
 var int a = 0;
 a = do/_ par do
     par/and do
@@ -12228,10 +12227,10 @@ with
 end
 end;
 a = a + 1;
-await D;
+await X;
 escape a;
 ]],
-    run = { ['0~>A;0~>B;0~>Z;0~>D'] = 2 },
+    run = { ['0~>A;0~>B;0~>Z;0~>X'] = 2 },
     safety = 2,
     _ana = {
         acc = true,
@@ -12239,7 +12238,7 @@ escape a;
 }
 
 Test { [[
-input int A,B,Z,D;
+input int A,B,Z,X;
 var int a = 0;
 a = do/_ par do
     par do
@@ -12255,14 +12254,14 @@ with
 end
 end;
 a = a + 1;
-await D;
+await X;
 escape a;
 ]],
-    run = { ['0~>A;0~>B;0~>Z;0~>D'] = 1 }
+    run = { ['0~>A;0~>B;0~>Z;0~>X'] = 1 }
 }
 
 Test { [[
-input int A,B,Z,D;
+input int A,B,Z,X;
 var int a = 0;
 a = do/_ par do
     par do
@@ -12279,10 +12278,10 @@ with
 end
 end;
 a = a + 1;
-await D;
+await X;
 escape a;
 ]],
-    run = { ['0~>A;0~>B;0~>Z;0~>D'] = 1 }
+    run = { ['0~>A;0~>B;0~>Z;0~>X'] = 1 }
 }
 
 Test { [[
@@ -12798,7 +12797,7 @@ escape b+c+d;
 }
 
 Test { [[
-input int A,Z,D;
+input int A,Z,X;
 var int b=0;
 par/or do
     b = 0;
@@ -12813,7 +12812,7 @@ par/or do
     end;
 with
     await Z;
-    await D;
+    await X;
     escape b;
 end;
 ]],
@@ -12821,7 +12820,7 @@ end;
         unreachs = 1,
     },
     run = {
-        ['2~>Z ; 1~>A ; 1~>D'] = 2,
+        ['2~>Z ; 1~>A ; 1~>X'] = 2,
     }
 }
 
@@ -12848,7 +12847,7 @@ escape ret;
 }
 Test { [[
 input int A;
-input void D,Z;
+input void X,Z;
 var int b=0;
 par/or do
     b = 0;
@@ -12862,14 +12861,14 @@ par/or do
     end;
 with
     await Z;
-    await D;
+    await X;
     escape b;
 end;
 ]],
     _ana = {
         unreachs = 1,
     },
-    run = { ['1~>A;~>Z;2~>A;~>D']=3 },
+    run = { ['1~>A;~>Z;2~>A;~>X']=3 },
 }
 
 Test { [[
@@ -13053,17 +13052,17 @@ escape v;
 }
 
 Test { [[
-input int D, E;
+input int X, E;
 event int a, b;
 var int c=0;
 par/or do
-    await D;
+    await X;
     par/or do
         emit a => 8;
     with
         emit b => 5;
     end;
-    var int v = await D;
+    var int v = await X;
     escape v;
 with
     c = 0;
@@ -13088,22 +13087,22 @@ end;
         --trig_wo = 1,
     },
     run = {
-        ['1~>D ; 1~>E'] = 8,    -- TODO: stack change (8 or 5)
+        ['1~>X ; 1~>E'] = 8,    -- TODO: stack change (8 or 5)
     }
 }
 
 Test { [[
-input int D, E;
+input int X, E;
 event int a, b;
 var int c=0;
 par/or do
-    await D;
+    await X;
     par/or do
         emit a => 8;
     with
         emit b => 5;
     end;
-    var int v = await D;
+    var int v = await X;
     escape v;
 with
     c = 0;
@@ -13129,7 +13128,7 @@ end;
         --trig_wo = 1,
     },
     run = {
-        ['1~>D ; 1~>E'] = 8,    -- TODO: stack change (8 or 5)
+        ['1~>X ; 1~>E'] = 8,    -- TODO: stack change (8 or 5)
     },
 }
 
@@ -13331,10 +13330,10 @@ end;
 
 -- EX.07: o `and` executa 2 vezes
 Test { [[
-input int D;
+input int X;
 event int a;
 loop do
-    var int v = await D;
+    var int v = await X;
     emit a => v;
 end;
 ]],
@@ -13345,7 +13344,7 @@ end;
 }
 
 Test { [[
-input int A, D, E;
+input int A, X, E;
 event int a, b, c;
 var int cc=0;                   // 0: cc=0
 par/or do
@@ -13356,7 +13355,7 @@ par/or do
 with
     var int bb = 0;             // 0: cc=0/bb=0
     loop do
-        var int v = await D;    // 1: v=1
+        var int v = await X;    // 1: v=1
         bb = v + bb;            // 1: bb=2
         emit b => bb;
     end;
@@ -13382,7 +13381,7 @@ end;
     },
     --trig_wo = 1,
     run = {
-        ['1~>D ; 1~>D ; 3~>A ; 1~>D ; 8~>A ; 1~>E'] = 8,
+        ['1~>X ; 1~>X ; 3~>A ; 1~>X ; 8~>A ; 1~>E'] = 8,
     }
 }
 
@@ -13413,7 +13412,7 @@ end;
 
     -- SLIDESHOW
 Test { [[
-input int A,Z,D;
+input int A,Z,X;
 var int i=0;
 par/or do
     await A;
@@ -13427,7 +13426,7 @@ with
                 var int c = await Z;
                 escape c;
             with
-                var int d = await D;
+                var int d = await X;
                 escape d;
 end
             end;
@@ -13449,20 +13448,20 @@ end;
     run = {
         [ [[
 0~>Z ; 0~>Z ; 0~>Z ;  // 2
-0~>Z ; 0~>Z ; 2~>D ;  // 1
-0~>Z ; 1~>D ;         // 2
+0~>Z ; 0~>Z ; 2~>X ;  // 1
+0~>Z ; 1~>X ;         // 2
 0~>Z ; 0~>Z ; 0~>Z ;  // 3
 0~>Z ; 0~>Z ; 0~>Z ;  // 4
-0~>Z ; 0~>Z ; 2~>D ;  // 3
-1~>D ;                // 4
-1~>D ;                // 5
+0~>Z ; 0~>Z ; 2~>X ;  // 3
+1~>X ;                // 4
+1~>X ;                // 5
 1~>A ;                // 5
 ]] ] = 5
     }
 }
 
 Test { [[
-input int A, B, Z, D;
+input int A, B, Z, X;
 var int v=0;
 par/and do
     par/and do
@@ -13474,14 +13473,14 @@ with
     par/or do
         await Z;
     with
-        await D;
+        await X;
     end;
 end;
 escape v;
 ]],
     run = {
         ['0~>B ; 0~>B ; 1~>A ; 2~>Z'] = 1,
-        ['0~>B ; 0~>B ; 1~>D ; 2~>A'] = 2,
+        ['0~>B ; 0~>B ; 1~>X ; 2~>A'] = 2,
     }
 }
 Test { [[
@@ -13852,7 +13851,7 @@ escape 0;
 }
 
 Test { [[
-input int A, B, Z, D, E;
+input int A, B, Z, X, E;
 var int d=0;
 par/or do
     await A;
@@ -13861,15 +13860,15 @@ with
 end;
 await Z;
 par/and do
-    d = await D;
+    d = await X;
 with
     await E;
 end;
 escape d;
 ]],
     run = {
-        ['1~>A ; 0~>Z ; 9~>D ; 10~>E'] = 9,
-        ['0~>B ; 0~>Z ; 9~>E ; 10~>D'] = 10,
+        ['1~>A ; 0~>Z ; 9~>X ; 10~>E'] = 9,
+        ['0~>B ; 0~>Z ; 9~>E ; 10~>X'] = 10,
     },
 }
 Test { [[
@@ -13983,7 +13982,7 @@ end;
 }
 
 Test { [[
-input void OS_START, F;
+input void OS_START, Z;
 event void a, b;
 par/or do
     loop do
@@ -13999,11 +13998,11 @@ with
     emit a;
     await FOREVER;
 with
-    await F;
+    await Z;
 end;
 escape 1;
 ]],
-    run = { ['~>F'] = 1 },
+    run = { ['~>Z'] = 1 },
 }
 
 Test { [[
@@ -14069,7 +14068,7 @@ escape 10;
 }
 
 Test { [[
-input int A,B,X,F;
+input int A,B,X,Z;
 var int v1=0,v2=0;
 par do
     loop do
@@ -14088,7 +14087,7 @@ par do
         end;
     end;
 with
-    await F;
+    await Z;
     v1 = 1;
     v2 = 1;
     escape v1 + v2;
@@ -14145,7 +14144,7 @@ escape a;
 }
 
 Test { [[
-input void F;
+input void Z;
 var int v=2;
 var int ret = 0;
 par/or do
@@ -14154,7 +14153,7 @@ par/or do
     end;
 with
     v = 3;                  // nd
-    await F;
+    await Z;
 end
 escape ret + v;
 ]],
@@ -14165,7 +14164,7 @@ escape ret + v;
 }
 
 Test { [[
-input int A,B,X,F;
+input int A,B,X,Z;
 var int v1=0,v2=0;
 par do
     loop do
@@ -14186,17 +14185,17 @@ par do
         end;
     end;
 with
-    await F;
+    await Z;
     v1 = 1;
     v2 = 1;
     escape v1 + v2;
 end;
 ]],
-    run = { ['1~>F']=2 },
+    run = { ['1~>Z']=2 },
 }
 
 Test { [[
-input int A,B,X,F;
+input int A,B,X,Z;
 var int v1=0,v2=0;
 par do
     loop do
@@ -14215,7 +14214,7 @@ par do
         end;
     end;
 with
-    await F;
+    await Z;
     v1 = 1;
     v2 = 1;
     escape v1 + v2;
@@ -14225,7 +14224,7 @@ end;
 }
 
 Test { [[
-input void A,F;
+input void A,Z;
 var int v=0;
 par do
     loop do
@@ -14237,12 +14236,12 @@ par do
         end;
     end;
 with
-    await F;
+    await Z;
     escape v;
 end;
 ]],
     run = {
-        ['~>A; ~>A; ~>25ms; ~>F'] = 2,
+        ['~>A; ~>A; ~>25ms; ~>Z'] = 2,
     }
 }
 
@@ -14344,11 +14343,11 @@ escape aa+bb;
 }
 
 Test { [[
-input int F;
+input int Z;
 event int draw, occurring, sleeping;
 var int x=0, vis=0;
 par do
-    await F;
+    await Z;
     escape vis;
 with
     par/and do
@@ -14394,15 +14393,15 @@ end;
         acc = 3,
         abrt = 1,
     },
-    run = { ['~>1000ms;1~>F'] = 1 }
+    run = { ['~>1000ms;1~>Z'] = 1 }
 }
 
 Test { [[
-input int F;
+input int Z;
 event int draw, occurring, sleeping;
 var int x=0, vis=0;
 par do
-    await F;
+    await Z;
     escape vis;
 with
     par/and do
@@ -14449,7 +14448,7 @@ end;
         acc = 6,
         abrt = 1,
     },
-    run = { ['~>1000ms;1~>F'] = 1 }
+    run = { ['~>1000ms;1~>Z'] = 1 }
 }
 
 Test { [[
@@ -14756,7 +14755,7 @@ escape aa;
 
 Test { [[
 input void OS_START;
-input int A, F;
+input int A, Z;
 event int c;
 var int cc = 0;
 par do
@@ -14770,16 +14769,16 @@ with
         cc = cc + 1;
     end;
 with
-    await F;
+    await Z;
     escape cc;
 end;
 ]],
-    run = { ['1~>A;1~>A;1~>A;1~>F'] = 3 },
+    run = { ['1~>A;1~>A;1~>A;1~>Z'] = 3 },
 }
 
 Test { [[
 input void OS_START;
-input int A, F;
+input int A, Z;
 event int c;
 var int cc = 0;
 par do
@@ -14793,11 +14792,11 @@ with
         cc = cc + 1;
     end;
 with
-    await F;
+    await Z;
     escape cc;
 end;
 ]],
-    run = { ['1~>A;1~>A;1~>A;1~>F'] = 3 },
+    run = { ['1~>A;1~>A;1~>A;1~>Z'] = 3 },
     safety = 2,
     _ana = {
         acc = 4,
@@ -14902,7 +14901,7 @@ escape a;
 }
 
 Test { [[
-input int A, F;
+input int A, Z;
 var int i = 0;
 event int a, b;
 par do
@@ -14926,16 +14925,16 @@ par do
         end;
     end;
 with
-    await F;
+    await Z;
     escape i;
 end;
 ]],
     wrn = true,
-    run = { ['1~>A;1~>A;1~>A;1~>A;1~>A;1~>F'] = 5 },
+    run = { ['1~>A;1~>A;1~>A;1~>A;1~>A;1~>Z'] = 5 },
 }
 
 Test { [[
-input void F;
+input void Z;
 event int x;
 event int y;
 var int xx = 0;
@@ -14966,18 +14965,18 @@ with
         c = a + b;
     end;
 with
-    await F;
+    await Z;
     escape c;
 end;
 ]],
     _ana = {
         abrt = 2,
     },
-    run = { ['~>1100ms ; ~>F'] = 66 }   -- TODO: stack change
+    run = { ['~>1100ms ; ~>Z'] = 66 }   -- TODO: stack change
 }
 
 Test { [[
-input void F;
+input void Z;
 event int x;
 event int y;
 var int xx = 0;
@@ -15008,7 +15007,7 @@ with
         c = a + b;
     end;
 with
-    await F;
+    await Z;
     escape c;
 end;
 ]],
@@ -15017,7 +15016,7 @@ end;
         acc = 1,
         abrt = 2,
     },
-    run = { ['~>1100ms ; ~>F'] = 66 }   -- TODO: stack change
+    run = { ['~>1100ms ; ~>Z'] = 66 }   -- TODO: stack change
 }
 
 Test { [[
@@ -15055,7 +15054,7 @@ escape x + y;
 }
 
 Test { [[
-input void F;
+input void Z;
 event int x;
 event int y;
 var int xx = 0;
@@ -15087,7 +15086,7 @@ with
         c = a + b + c;
     end;
 with
-    await F;
+    await Z;
     escape c;
 end;
 ]],
@@ -15095,13 +15094,13 @@ end;
         abrt = 2,
     },
     run = {
-        ['~>99ms;  ~>F'] = 0,
-        ['~>199ms; ~>F'] = 2,
-        ['~>299ms; ~>F'] = 6,
-        ['~>300ms; ~>F'] = 13,
-        ['~>330ms; ~>F'] = 13,
-        ['~>430ms; ~>F'] = 24,
-        ['~>501ms; ~>F'] = 40,
+        ['~>99ms;  ~>Z'] = 0,
+        ['~>199ms; ~>Z'] = 2,
+        ['~>299ms; ~>Z'] = 6,
+        ['~>300ms; ~>Z'] = 13,
+        ['~>330ms; ~>Z'] = 13,
+        ['~>430ms; ~>Z'] = 24,
+        ['~>501ms; ~>Z'] = 40,
     }
 }
 
@@ -15499,7 +15498,7 @@ end;
 -- TODO: STACK
 Test { [[
 input void OS_START;
-input int F;
+input int Z;
 event int x, w, y, z, a, vis;
 var int xx=0, ww=0, yy=0, zz=0, aa=0, vvis=0;
 par do
@@ -15530,7 +15529,7 @@ with
     vvis=1;
     emit vis => vvis;
 with
-    await F;
+    await Z;
     escape aa+xx+yy+zz+ww;
 end;
 ]],
@@ -15539,8 +15538,8 @@ end;
         --trig_wo = 2,
         unreachs = 2,
     },
-    --run = { ['1~>F']=7 },
-    run = { ['1~>F']=5 },
+    --run = { ['1~>Z']=7 },
+    run = { ['1~>Z']=5 },
 }
 
     -- SCOPE / BLOCK
@@ -15991,7 +15990,7 @@ escape v;
 }
 
 Test { [[
-native _T;
+native _Tx;
 native do
     int f (int v) {
         escape v + 1;
@@ -15999,11 +15998,11 @@ native do
     typedef struct {
         int (*f) (int);
     } tp;
-    tp T = { f };
+    tp Tx = { f };
 end
 var int v = 1;
 var& int ref = &v;
-escape _T.f(v);
+escape _Tx.f(v);
 ]],
     run = 2,
 }
@@ -16439,14 +16438,14 @@ escape v;
 }
 
 Test { [[
-data V with
+data Vx with
     var int v;
 end
 
-var& V v1 = V(1);
-var& V v2, v3;
-    v2 = V(2);
-    v3 = V(3);
+var& Vx v1 = Vx(1);
+var& Vx v2, v3;
+    v2 = Vx(2);
+    v3 = Vx(3);
 escape v1.v+v2.v+v3.v;
 ]],
     ref = 'line 5 : invalid attribution : missing alias operator `&´',
@@ -16454,19 +16453,19 @@ escape v1.v+v2.v+v3.v;
 }
 
 Test { [[
-data V with
+data Vx with
     var int v;
 end
 
-var V v1_ = V(1);
-var& V v1 = &v1_;
-var& V v2, v3;
+var Vx v1_ = Vx(1);
+var& Vx v1 = &v1_;
+var& Vx v2, v3;
 do
-    var V v2_ = V(2);
+    var Vx v2_ = Vx(2);
     v2 = &v2_;
 end
 do
-    var V v3_ = V(3);
+    var Vx v3_ = Vx(3);
     v3 = &v3_;
 end
 escape v1.v+v2.v+v3.v;
@@ -17097,7 +17096,7 @@ escape 10;
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (vector&[] byte vec)=>int do
+code/instantaneous Fx (vector&[] byte vec)=>int do
     escape vec[1];
 end
 
@@ -17109,7 +17108,7 @@ escape f(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (vector&[] int vec)=>int do
+code/instantaneous Fx (vector&[] int vec)=>int do
     escape vec[1];
 end
 
@@ -17121,7 +17120,7 @@ escape f(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (vector&[] byte vec)=>int do
+code/instantaneous Fx (vector&[] byte vec)=>int do
     escape vec[1];
 end
 
@@ -17133,7 +17132,7 @@ escape f(str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (void) => byte[] do
+code/instantaneous Fx (void) => byte[] do
     escape &this.str;
 end
 
@@ -17149,7 +17148,7 @@ escape ref[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (var void&& x, vector[] int vec)=>int do
+code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
     escape vec[1];
 end
 
@@ -17161,7 +17160,7 @@ escape f(str);
 }
 
 Test { [[
-code/instantaneous F (var int a, var  void b)=>int do
+code/instantaneous Fx (var int a, var  void b)=>int do
 end
 escape 1;
 ]],
@@ -17170,7 +17169,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var void, var  int)=>int do
+code/instantaneous Fx (var void, var  int)=>int do
 end
 escape 1;
 ]],
@@ -18269,7 +18268,7 @@ escape ret;
 }
 
 Test { [[
-input void A, F;
+input void A, B;
 event void e;
 var int v = 1;
 par/or do
@@ -18287,13 +18286,13 @@ with
     await e;
     v = v * 3;
 with
-    await F;
+    await B;
     v = v * 5;
 end
 escape v;
 ]],
     run = {
-        ['~>F'] = 12,
+        ['~>B'] = 12,
         ['~>A'] = 10,
     }
 }
@@ -19123,8 +19122,8 @@ escape _V;
 
 Test { [[
 pre native do
-    struct T;
-    typedef struct T t;
+    struct Tx;
+    typedef struct Tx t;
     int V = 1;
     t* alloc (int ok) {
         if (ok) {
@@ -19261,7 +19260,7 @@ do
     ptr = &_f();
 finalize
 with
-    _g(&&ptr!);    // error (ptr is NIL)
+    _g(&&ptr!);    // error (ptr is Nil)
 end
 
 escape not ptr?;
@@ -19351,8 +19350,8 @@ escape &tex2==&_V;
 Test { [[
 native _V, _t, _alloc;
 pre native do
-    struct T;
-    typedef struct T t;
+    struct Tx;
+    typedef struct Tx t;
     int V = 1;
     t* alloc (int ok) {
         if (ok) {
@@ -19947,7 +19946,7 @@ escape ret;
 
 -- sync version
 Test { [[
-input int F;
+input int B;
 var int ret = 0;
 var int f = 0;
 par/or do
@@ -19966,18 +19965,18 @@ par/or do
         escape sum;
     end;
 with
-    f = await F;
+    f = await B;
 end;
 escape ret+f;
 ]],
     run = {
-        ['10~>F'] = 10,
+        ['10~>B'] = 10,
         ['~>1s'] = 5050,
     }
 }
 
 Test { [[
-input int F;
+input int B;
 var int ret = 0;
 var int f=0;
 par/and do
@@ -19995,15 +19994,15 @@ par/and do
         ret = sum;
     end;
 with
-    f = await F;
+    f = await B;
 end;
 escape ret+f;
 ]],
-    run = { ['10~>F']=5060 }
+    run = { ['10~>B']=5060 }
 }
 
 Test { [[
-input int F;
+input int B;
 var int ret = 0;
 var int f=0;
 par/and do
@@ -20021,16 +20020,16 @@ par/and do
         ret = sum;
     end;
 with
-    f = await F;
+    f = await B;
 end;
 escape ret+f;
 ]],
-    run = { ['10~>F']=5060 },
+    run = { ['10~>B']=5060 },
     safety = 2,
 }
 
 Test { [[
-input int F;
+input int B;
 var int ret = 0;
 var int f=0;
 par/or do
@@ -20048,17 +20047,17 @@ par/or do
         ret =  sum;
     end;
 with
-    f = await F;
+    f = await B;
 end;
 escape ret+f;
 ]],
-    run = { ['10~>F']=10 }
+    run = { ['10~>B']=10 }
 }
 
 Test { [[
-input int F;
+input int B;
 par do
-    await F;
+    await B;
     escape 1;
 with
     async do
@@ -20071,13 +20070,13 @@ with
     escape 0;
 end;
 ]],
-    run = { ['1~>F'] = 1 },
+    run = { ['1~>B'] = 1 },
 }
 
 Test { [[
-input int F;
+input int B;
 par/or do
-    await F;
+    await B;
 with
     async do
         loop do
@@ -20697,8 +20696,8 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) F(d)
-    void F (void* p) {
+    ##define ceu_out_emit(a,b,c,d) Fx(d)
+    void Fx (void* p) {
         tceu__int___int_* v = (tceu__int___int_*) p;
         *(v->_1) = 1;
         *(v->_2) = 2;
@@ -20716,8 +20715,8 @@ escape a + b;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) F(a,b,d)
-    void F (tceu_app* app, int evt, void* p) {
+    ##define ceu_out_emit(a,b,c,d) Fx(a,b,d)
+    void Fx (tceu_app* app, int evt, void* p) {
         tceu__int___int_* v = (tceu__int___int_*) p;
         *(v->_1) = (evt == CEU_OUT_RADIO_SEND);
         *(v->_2) = 2;
@@ -20734,15 +20733,15 @@ escape a + b;
 }
 
 Test { [[
-native _F;
-output int F;
+native _Fx;
+output int Z;
 native do
-    void F() {};
+    void Z() {};
 end
 par do
-    _F();
+    _Fx();
 with
-    emit F => 1;
+    emit Z => 1;
 end
 ]],
     _ana = {
@@ -20753,17 +20752,17 @@ end
 }
 
 Test { [[
-native _F;
-output int F,G;
+native _Fx;
+output int Z,W;
 native do
-    void F() {};
+    void Z() {};
 end
 par do
-    _F();
+    _Fx();
 with
-    emit F => 1;
+    emit Z => 1;
 with
-    emit G => 0;
+    emit W => 0;
 end
 ]],
     _ana = {
@@ -20774,18 +20773,18 @@ end
 }
 
 Test { [[
-native _F;
-deterministic _F with F,G;
-output int F,G;
+native _Fx;
+deterministic _Fx with Z,W;
+output int Z,W;
 native do
-    void F() {};
+    void Z() {};
 end
 par do
-    _F();
+    _Fx();
 with
-    emit F => 1;
+    emit Z => 1;
 with
-    emit G => 0;
+    emit W => 0;
 end
 ]],
     todo = true,
@@ -20796,20 +20795,20 @@ end
 }
 
 Test { [[
-native _F;
-output int&& F,G;
-deterministic _F with F,G;
+native _Fx;
+output int&& Z,W;
+deterministic _Fx with Z,W;
 int a = 1;
 int&& b;
 native do
-    void F (int v) {};
+    void Z (int v) {};
 end
 par do
-    _F(&&a);
+    _Fx(&&a);
 with
-    emit F => b;
+    emit Z => b;
 with
-    emit G => &&a;
+    emit W => &&a;
 end
 ]],
     todo = true,
@@ -20820,20 +20819,20 @@ end
 }
 
 Test { [[
-native _F;
-@pure _F;
-output int&& F,G;
+native _Fx;
+@pure _Fx;
+output int&& Z,W;
 int a = 1;
 int&& b;
 native do
-    void F (int v) {};
+    void Z (int v) {};
 end
 par do
-    _F(&&a);
+    _Fx(&&a);
 with
-    emit F => b;
+    emit Z => b;
 with
-    emit G => &&a;
+    emit W => &&a;
 end
 ]],
     todo = true,
@@ -20844,13 +20843,13 @@ end
 }
 
 Test { [[
-native _F;
-deterministic F with G;
-output void F,G;
+native _Fx;
+deterministic Z with W;
+output void Z,W;
 par do
-    emit F;
+    emit Z;
 with
-    emit G;
+    emit W;
 end
 ]],
     todo = true,
@@ -20861,26 +20860,26 @@ end
 }
 
 Test { [[
-output (var int)=>int F;
-escape call F=>1;
+output (var int)=>int Z;
+escape call Z=>1;
 ]],
+    parser = 'line 2 : after `call´ : expected expression',
     --parser = 'line 2 : after `call´ : expected expression',
-    --parser = 'line 2 : after `call´ : expected expression',
-    --parser = 'line 2 : after `F´ : expected `;´',
-    parser = 'line 2 : after `F´ : expected `(´',
+    --parser = 'line 2 : after `Z´ : expected `;´',
+    --parser = 'line 2 : after `Z´ : expected `(´',
 }
 
 Test { [[
-output (var int)=>int F;
-call F=>1;
+output (var int)=>int Z;
+call Z=>1;
 escape 1;
 ]],
     gcc = 'error: #error ceu_out_call_* is not defined',
 }
 
 Test { [[
-output (var int)=>int F;
-emit F=>1;
+output (var int)=>int Z;
+emit Z=>1;
 escape 1;
 ]],
     env = 'line 2 : invalid `emit´',
@@ -20889,13 +20888,13 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_emit_F(a) F(a)
-    int F (int v) {
+    ##define ceu_out_emit_F(a) Z(a)
+    int Z (int v) {
         escape v+1;
     }
 end
-output (var int)=>int F;
-call F=>1;
+output (var int)=>int Z;
+call Z=>1;
 escape 1;
 ]],
     gcc = 'error: #error ceu_out_call_* is not defined',
@@ -20904,13 +20903,13 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_call_F(a) F((int*)a)
-    int F (int* v) {
+    ##define ceu_out_call_F(a) Z((int*)a)
+    int Z (int* v) {
         escape *v+1;
     }
 end
-output (var int)=>int F;
-call F=>1;
+output (var int)=>int Z;
+call Z=>1;
 escape 1;
 ]],
     run = 1,
@@ -20918,13 +20917,13 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_call(a,b,c) F((int*)c)
-    int F (int* v) {
+    ##define ceu_out_call(a,b,c) Z((int*)c)
+    int Z (int* v) {
         escape *v+1;
     }
 end
-output (var int)=>int F;
-var int ret = call F=>1;
+output (var int)=>int Z;
+var int ret = call Z=>1;
 escape ret;
 ]],
     run = 2,
@@ -20932,13 +20931,13 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_call_F(a) F(a)
-    int F (int v) {
+    ##define ceu_out_call_F(a) Z(a)
+    int Z (int v) {
         escape v+1;
     }
 end
-output (var int)=>int F;
-var int ret = call F=>(1,2);
+output (var int)=>int Z;
+var int ret = call Z=>(1,2);
 escape ret;
 ]],
     env = 'line 8 : arity mismatch',
@@ -20996,33 +20995,33 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_call_F(a) F(a)
-    int F (tceu__int__int* p) {
+    ##define ceu_out_call_F(a) Z(a)
+    int Z (tceu__int__int* p) {
         escape p->_1 + p->_2;
     }
 end
-output (var int, var int)=>int F;
-var int ret = call F=>(1,2);
+output (var int, var int)=>int Z;
+var int ret = call Z=>(1,2);
 escape ret;
 ]],
     run = 3,
 }
 
 Test { [[
-var int ret = (call F=>2);
+var int ret = (call Z=>2);
 ]],
     run = 3,
 }
 
 Test { [[
 native do
-    ##define ceu_out_call(a,b,c) F(a,b,c)
-    int F (tceu_app* app, tceu_nevt evt, int* p) {
+    ##define ceu_out_call(a,b,c) Z(a,b,c)
+    int Z (tceu_app* app, tceu_nevt evt, int* p) {
         escape (evt == CEU_OUT_F) + *p;
     }
 end
-output (var int)=>int F;
-var int ret = (call F=>2);
+output (var int)=>int Z;
+var int ret = (call Z=>2);
 escape ret;
 ]],
     run = 3,
@@ -21030,13 +21029,13 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) F(a,b,d)
-    int F (tceu_app* app, tceu_nevt evt, void* p) {
+    ##define ceu_out_emit(a,b,c,d) Z(a,b,d)
+    int Z (tceu_app* app, tceu_nevt evt, void* p) {
         escape (evt==CEU_OUT_F && p==NULL);
     }
 end
-output void F;
-var int ret = (emit F);
+output void Z;
+var int ret = (emit Z);
 escape ret;
 ]],
     run = 1,
@@ -21044,13 +21043,13 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_emit_F() F()
-    int F () {
+    ##define ceu_out_emit_F() Z()
+    int Z () {
         escape 1;
     }
 end
-output void F;
-var int ret = (emit F);
+output void Z;
+var int ret = (emit Z);
 escape ret;
 ]],
     run = 1,
@@ -21058,16 +21057,16 @@ escape ret;
 
 Test { [[
 native do
-    ##define ceu_out_emit(a,b,c,d) F(a,b,d)
-    int F (tceu_app* app, tceu_nevt evt, int* p) {
+    ##define ceu_out_emit(a,b,c,d) Z(a,b,d)
+    int Z (tceu_app* app, tceu_nevt evt, int* p) {
         escape (evt == CEU_OUT_F) + *p;
     }
 end
-output int F;
+output int Z;
 par/and do
-    emit F=>1;
+    emit Z=>1;
 with
-    emit F=>1;
+    emit Z=>1;
 end
 escape 1;
 ]],
@@ -21079,16 +21078,16 @@ escape 1;
 
 Test { [[
 native do
-    ##define ceu_out_call(a,b,c) F(a,b,c)
-    int F (tceu_app* app, tceu_nevt evt, int* p) {
+    ##define ceu_out_call(a,b,c) Z(a,b,c)
+    int Z (tceu_app* app, tceu_nevt evt, int* p) {
         escape (evt == CEU_OUT_F) + *p;
     }
 end
-output (var int)=>int F;
+output (var int)=>int Z;
 par/and do
-    call F=>1;
+    call Z=>1;
 with
-    call F=>1;
+    call Z=>1;
 end
 escape 1;
 ]],
@@ -21099,7 +21098,7 @@ escape 1;
 }
 
 Test { [[
-input (var int a)=>int F,G do
+input (var int a)=>int Z,W do
     escape a + 1;
 end
 ]],
@@ -21108,11 +21107,11 @@ end
 
 -- XXX
 Test { [[
-input (var int a)=>int F do
+input (var int a)=>int Z do
     escape a + 1;
 end
-input (var int a)=>int G;
-var int ret = call F=>1;
+input (var int a)=>int W;
+var int ret = call Z=>1;
 escape ret;
 ]],
     code = 'line 4 : missing function body',
@@ -21120,11 +21119,11 @@ escape ret;
 }
 
 Test { [[
-input (var int a)=>void F do
+input (var int a)=>void Z do
     this.v = a;
 end
 var int v = 0;
-call F=>1;
+call Z=>1;
 escape this.v;
 ]],
     env = 'line 2 : variable/event "v" is not declared',
@@ -21133,12 +21132,12 @@ escape this.v;
 Test { [[
 native/nohold _fprintf, _stderr;
 var int v = 0;
-input (var int a)=>void F do
+input (var int a)=>void Z do
     this.v = a;
     _fprintf(_stderr,"a=%d v=%d\n", a, v);
 end
 _fprintf(_stderr,"v=%d\n", v);
-call F=>1;
+call Z=>1;
 _fprintf(_stderr,"v=%d\n", v);
 escape this.v;
 ]],
@@ -21147,13 +21146,13 @@ escape this.v;
 
 Test { [[
 var int v = 0;
-input (var int a)=>int G do
+input (var int a)=>int W do
     escape a + 1;
 end
-input (var int a)=>void F do
-    this.v = call G=>a;
+input (var int a)=>void Z do
+    this.v = call W=>a;
 end
-call F=>1;
+call Z=>1;
 escape this.v;
 ]],
     run = 2,
@@ -21993,8 +21992,8 @@ N;
 ]],
     --adj = 'line 1 : invalid expression',
     --parser = 'line 1 : after `<BOF>´ : expected statement',
-    --parser = 'line 1 : after `begin of file´ : expected statement',
-    parser = 'after `N´ : expected `(´',
+    parser = 'line 1 : after `begin of file´ : expected statement',
+    --parser = 'after `N´ : expected `(´',
 }
 
 Test { [[
@@ -22060,11 +22059,11 @@ pre native do
     typedef struct {
         int v[10];
         int c;
-    } T;
+    } Tx;
 end
-native _T ;
+native _Tx ;
 
-var _T[10] vec = [];
+var _Tx[10] vec = [];
 var int i = 110;
 
 vec[3].v[5] = 10;
@@ -22343,11 +22342,11 @@ escape 0;
 Test { [[
 native _char;
 
-data T with
+data Tx with
     var _char[255] str;
     var int x;
 end
-var T t = T([], 1);
+var Tx t = Tx([], 1);
 t.str[0] = '\0';
 escape t.x;
 ]],
@@ -22357,10 +22356,10 @@ escape t.x;
 Test { [[
 native _char;
 native/pure _strlen;
-data T with
+data Tx with
     var _char[255] xxxx;
 end
-var T t = T("oioioi");
+var Tx t = Tx("oioioi");
 escape _strlen(t.xxxx);
 ]],
     run = 6,
@@ -22884,7 +22883,7 @@ native do
     typedef struct {
         byte* (*f) (void);
     } tp;
-    tp T = { f };
+    tp Tx = { f };
 end
 vector[] byte str = [] .. "oi";
 escape str[1]=='i';
@@ -22900,10 +22899,10 @@ native do
     typedef struct {
         byte* (*f) (void);
     } tp;
-    tp T = { f };
+    tp Tx = { f };
 end
-native _char, _T;
-vector[] byte str = [] .. (_T.f() as _char&&);
+native _char, _Tx;
+vector[] byte str = [] .. (_Tx.f() as _char&&);
 escape str[2]=='a';
 ]],
     run = 1,
@@ -22917,10 +22916,10 @@ native do
     typedef struct {
         byte* (*f) (void);
     } tp;
-    tp T = { f };
+    tp Tx = { f };
 end
-native _char, _T;
-vector[] byte str = [] .. (_T.f() as _char&&) .. "oi";
+native _char, _Tx;
+vector[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
 escape str[4]=='i';
 ]],
     run = 1,
@@ -22947,7 +22946,7 @@ escape _strlen(&&str as _char&&);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (void) => byte[]& do
+code/instantaneous Fx (void) => byte[]& do
     escape &this.str;
 end
 
@@ -22962,7 +22961,7 @@ escape ref[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (void) => byte[]& do
+code/instantaneous Fx (void) => byte[]& do
     escape &this.str;
 end
 
@@ -22978,7 +22977,7 @@ escape str[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous F (void) => byte[]& do
+code/instantaneous Fx (void) => byte[]& do
     escape &this.str;
 end
 
@@ -23000,7 +22999,7 @@ native do
     }
 end
 
-code/instantaneous F (void) => byte[]& do
+code/instantaneous Fx (void) => byte[]& do
     escape &this.str;
 end
 
@@ -23527,7 +23526,7 @@ escape $$bs;
 }
 
 Test { [[
-code/instantaneous F (void)=>void do
+code/instantaneous Fx (void)=>void do
     var int x = 0;
 
     vector[10] byte cs;
@@ -23539,11 +23538,11 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (vector&[] byte cs)=>void do
+code/instantaneous Fx (vector&[] byte cs)=>void do
     cs[0] = 10;
 end
 vector[] byte cs = [0];
-F(&cs);
+Fx(&cs);
 escape cs[0];
 ]],
     run = 10,
@@ -23709,8 +23708,8 @@ escape 1;
 ]],
     --adj = 'line 4 : invalid expression',
     --parser = 'line 3 : after `end´ : expected statement'
-    --parser = 'line 3 : after `end´ : expected statement',
-    parser = 'line 4 : after `A´ : expected `(´',
+    parser = 'line 3 : after `end´ : expected `;´ or statement',
+    --parser = 'line 4 : after `A´ : expected `(´',
 }
 
 Test { [[
@@ -24155,31 +24154,31 @@ Test { [[
 pre native do
     typedef struct {
         int a,b,c;
-    } F;
+    } Fx;
 end
-native _F, _fff;
+native _Fx, _fff;
 native do
-    F* fff;
+    Fx* fff;
 end
 
 native ___ceu_nothing;
-input (var byte&& path, var  byte&& mode)=>_F&& OPEN do
+input (var byte&& path, var  byte&& mode)=>_Fx&& OPEN do
     ___ceu_nothing(path);
     ___ceu_nothing(mode);
     escape _fff;
 end
 
-input (var _F&& f)=>int CLOSE do
+input (var _Fx&& f)=>int CLOSE do
     ___ceu_nothing(f);
     escape 1;
 end
 
-input (var _F&& f)=>int SIZE do
+input (var _Fx&& f)=>int SIZE do
     ___ceu_nothing(f);
     escape 1;
 end
 
-input (var void&& ptr, var int size, var int nmemb, var  _F&& f)=>int READ do
+input (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)=>int READ do
     ___ceu_nothing(ptr);
     ___ceu_nothing(&&size);
     ___ceu_nothing(&&nmemb);
@@ -25348,7 +25347,7 @@ escape 1;
     fin = 'line 4 : attribution does not require `finalize´',
 }
 Test { [[
-code/instantaneous F (var void&& o1)=>void do
+code/instantaneous Fx (var void&& o1)=>void do
     var void&& tmp := o1;
 end
 escape 1;
@@ -25808,8 +25807,8 @@ end
 escape 0;
 ]],
     --adj = 'line 2 : invalid expression',
-    --parser = 'line 2 : after `pause/if´ : expected expression',
-    parser = 'line 2 : after `A´ : expected `(´',
+    parser = 'line 2 : after `pause/if´ : expected expression',
+    --parser = 'line 2 : after `A´ : expected `(´',
 }
 
 Test { [[
@@ -26008,7 +26007,7 @@ escape ret;
 }
 
 Test { [[
-input int  A,B,F;
+input int  A,B,C;
 input void Z;
 event bool a;
 var int ret = 50;
@@ -26022,26 +26021,26 @@ with
         ret = await B;
     end
 with
-    await F;
+    await C;
 end
 escape ret;
 ]],
     run = {
-        ['1~>A ; 10~>B ; 1~>F'] = 50,
+        ['1~>A ; 10~>B ; 1~>C'] = 50,
     },
 }
 
 Test { [[
-input void F;
+input void C;
 par/or do
-    await F;
+    await C;
 with
     await 1us;
 end
 var int v = await 1us;
 escape v;
 ]],
-    run = { ['~>1us; ~>F; ~>4us; ~>F']=3 }
+    run = { ['~>1us; ~>C; ~>4us; ~>C']=3 }
 }
 
 Test { [[
@@ -26503,7 +26502,7 @@ escape 1;
 if REENTRANT then
 
 Test { [[
-input int E,F;
+input int E,C;
 
 par do
     async do
@@ -27108,7 +27107,7 @@ end
 Test { [[
 native do ##include <assert.h> end
 native _assert;
-input void T;
+input void A;
 var int ret = 0;
 par/or do
     loop do
@@ -27124,7 +27123,7 @@ with
             t = await 1s;
         with
             loop do
-                await T;
+                await A;
                 i = i + 1;
             end
         end
@@ -27132,31 +27131,31 @@ with
 with
     async/thread do
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
     end
 end
 escape ret;
@@ -27167,7 +27166,7 @@ escape ret;
 Test { [[
 native do ##include <assert.h> end
 native _assert;
-input void T;
+input void A;
 var int ret = 0;
 par/or do
     loop do
@@ -27184,7 +27183,7 @@ with
             if t then end;
         with
             loop do
-                await T;
+                await A;
                 i = i + 1;
             end
         end
@@ -27192,31 +27191,31 @@ with
 with
     async do
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
         emit 12ms;
-        emit T;
+        emit A;
     end
 end
 escape ret;
@@ -27932,11 +27931,11 @@ escape is_int+is_float;
 }
 
 Test { [=[
-code/instantaneous F (void)=>int do
+code/instantaneous Fx (void)=>int do
     var int v = [[ 1 ]];
     escape v;
 end
-escape F();
+escape Fx();
 ]=],
     run = 1,
 }
@@ -27955,7 +27954,17 @@ escape v1==v2;
 --do return end
 
 Test { [[
-code/delayed A (void)=>void
+code/delayed F (void)=>void
+do
+    escape 1;
+end
+escape 1;
+]],
+    parser = 'line 1 : after `code/delayed´ : expected `/recursive´ or abstraction identifier',
+}
+
+Test { [[
+code/delayed Fx (void)=>void
 do
     escape 1;
 end
@@ -27967,7 +27976,7 @@ escape 1;
 }
 
 Test { [[
-code/delayed T (var int x)=>void
+code/delayed Tx (var int x)=>void
 do
 end
 escape 1;
@@ -27976,7 +27985,7 @@ escape 1;
     gcc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
 }
 Test { [[
-code/delayed T (var int x)=>void
+code/delayed Tx (var int x)=>void
 do
     if x then end;
 end
@@ -27986,7 +27995,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/delayed T (var int x)=>void
+code/delayed Tx (var int x)=>void
 do
     var int v;
 end
@@ -27996,7 +28005,7 @@ native do
 end
 
 native _V;
-var T t;
+var Tx t;
 escape _V;
 ]],
     todo = 'recalculate',
@@ -28004,7 +28013,7 @@ escape _V;
 }
 
 Test { [[
-code/delayed T (void)=>void do end
+code/delayed Tx (void)=>void do end
 escape 1;
 ]],
     wrn = true,
@@ -28012,7 +28021,7 @@ escape 1;
 }
 
 Test { [[
-code/delayed T (var int x)=>void
+code/delayed Tx (var int x)=>void
 do
     var int v;
 end
@@ -28028,7 +28037,7 @@ escape _V;
 }
 
 Test { [[
-code/delayed T (var int a)=>void
+code/delayed Tx (var int a)=>void
 do
 end
 
@@ -28050,19 +28059,19 @@ escape 0;
 }
 
 Test { [[
-code/delayed T (void)=>void do end
-T();
+code/delayed Tx (void)=>void do end
+Tx();
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-code/delayed T (void)=>void do end
+code/delayed Tx (void)=>void do end
 par/or do
-    T();
+    Tx();
 with
-    T();
+    Tx();
 end
 
 input void OS_START;
@@ -28077,7 +28086,7 @@ escape 1;
 Test { [[
 native _SDL_MouseButtonEvent;
 input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
-code/delayed T (void)=>void do
+code/delayed Tx (void)=>void do
     var _SDL_MouseButtonEvent&& but = await SDL_MOUSEBUTTONUP;
 end
 await FOREVER;
@@ -28089,11 +28098,11 @@ await FOREVER;
 }
 
 Test { [[
-code/delayed T (void)=>void do
+code/delayed Tx (void)=>void do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 
 await 1s;
 
@@ -28107,7 +28116,7 @@ native do
     int V = 1;
 end
 
-code/delayed X (void)=>void do
+code/delayed Xx (void)=>void do
     every 1s do
 native _V;
         _V = _V + 1;
@@ -28118,9 +28127,9 @@ event bool pse;
 par/or do
     pause/if pse do
         par do
-            await X();
+            await Xx();
         with
-            await X();
+            await Xx();
         end
     end
 with
@@ -28303,49 +28312,49 @@ escape *(&&p as int&&);
     run = 10,
 }
 Test { [[
-code/delayed T (var& void p)=>int do
+code/delayed Tx (var& void p)=>int do
     escape *(&&p as int&&);
 end
 
 var int v = 10;
-var int ret = await T(&v);
+var int ret = await Tx(&v);
 escape ret;
 ]],
     run = 10,
 }
 
 Test { [[
-code/delayed T (void)=>void do
+code/delayed Tx (void)=>void do
 end
-event T a;
+event Tx a;
 escape 0;
 ]],
     env = 'line 4 : invalid event type',
 }
 
 Test { [[
-code/delayed T (void)=>void do end
-var T a = 1;
+code/delayed Tx (void)=>void do end
+var Tx a = 1;
 escape 0;
 ]],
     env = 'line 4 : types mismatch',
 }
 
 Test { [[
-code/delayed T (void)=>void do
-    await T();
+code/delayed Tx (void)=>void do
+    await Tx();
 end
 escape 0;
 ]],
-    tops = 'line 2 : abstraction "T" is not declared',
+    tops = 'line 2 : abstraction "Tx" is not declared',
 }
 
 Test { [[
-code/delayed T (var& int a)=>void do
+code/delayed Tx (var& int a)=>void do
     a = 5;
 end
 var int a = 0;
-spawn T(&a);
+spawn Tx(&a);
 escape a;
 ]],
     run = 5,
@@ -28355,24 +28364,24 @@ Test { [[
 native do
     int V = 10;
 end
-code/delayed T (void)=>void do
+code/delayed Tx (void)=>void do
 native _V;
     _V = 100;
 end
-spawn T();
+spawn Tx();
 escape _V;
 ]],
     run = 100,
 }
 
 Test { [[
-code/delayed T (var& int a)=>void do
+code/delayed Tx (var& int a)=>void do
     a = do/_
             escape 5;
         end;
 end
 var int a = 0;
-spawn T(&a);
+spawn Tx(&a);
 escape a;
 ]],
     run = 5,
@@ -28381,12 +28390,12 @@ escape a;
 Test { [[
 input void OS_START;
 
-code/delayed T (var& int a)=>void do
+code/delayed Tx (var& int a)=>void do
     await FOREVER;
 end
 
 var int v = 0;
-watching T(&v) do
+watching Tx(&v) do
     v = 5;
     await OS_START;
 end
@@ -28401,20 +28410,20 @@ native do
     int V = 1;
 end
 
-code/delayed J (void)=>void do
+code/delayed Jj (void)=>void do
     _V = _V * 2;
 end
 
-code/delayed T (void)=>void do
-    spawn J();
+code/delayed Tx (void)=>void do
+    spawn Jj();
     _V = _V + 1;
 end
 
-spawn T();
+spawn Tx();
 _V = _V*3;
-spawn T();
+spawn Tx();
 _V = _V*3;
-spawn T();
+spawn Tx();
 _V = _V*3;
 escape _V;
 ]],
@@ -28427,22 +28436,22 @@ native do
     int V = 1;
 end
 
-code/delayed J (void)=>void do
+code/delayed Jj (void)=>void do
     _V = _V * 2;
 end
 
-code/delayed T (void)=>void do
-    spawn J();
+code/delayed Tx (void)=>void do
+    spawn Jj();
     _V = _V + 1;
 end
 
 input void OS_START;
 
-spawn T();
+spawn Tx();
 _V = _V*3;
-spawn T();
+spawn Tx();
 _V = _V*3;
-spawn T();
+spawn Tx();
 _V = _V*3;
 
 await OS_START;
@@ -28457,14 +28466,14 @@ native do
     int V = 1;
 end;
 
-code/delayed T (void)=>void do
+code/delayed Tx (void)=>void do
     event void e;
     emit e;
     _V = 10;
 end
 
 do
-    spawn T();
+    spawn Tx();
 end
 escape _V;
 ]],
@@ -28476,7 +28485,7 @@ class J with
 do
 end
 
-class T with
+class Tx with
 do
     var J j;
     await FOREVER;
@@ -28485,8 +28494,8 @@ end
 input void OS_START;
 event void a;
 
-var T t1;
-var T t2;
+var Tx t1;
+var Tx t2;
 emit a;
 await OS_START;
 escape 1;
@@ -28495,12 +28504,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int x=0;
 do
     this.x = await 999ms;
 end
-var T t;
+var Tx t;
 await 1s;
 escape t.x;
 ]],
@@ -28512,7 +28521,7 @@ native do
     int V = 10;
 end
 
-class T with
+class Tx with
     event void e;
 do
     await 1s;
@@ -28522,7 +28531,7 @@ native _V;
 end
 
 do
-    var T t;
+    var Tx t;
     await t.e;
 end
 await 1s;
@@ -28531,7 +28540,7 @@ escape _V;
     run = { ['~>2s']=10 },
 }
 Test { [[
-class T with
+class Tx with
 do
     native do
         int XXX = sizeof(CEU_T);
@@ -28544,7 +28553,7 @@ escape _XXX > 0;
 
 Test { [[
 class U with do end;
-class T with
+class Tx with
 do
     native do
         int XXX = sizeof(CEU_U);
@@ -28566,7 +28575,7 @@ do
     _V = _V * 2;
 end
 
-class T with
+class Tx with
 do
     var J j;
     _V = _V + 1;
@@ -28575,11 +28584,11 @@ end
 
 input void OS_START;
 
-var T t1;
+var Tx t1;
 _V = _V*3;
-var T t2;
+var Tx t2;
 _V = _V*3;
-var T t3;
+var Tx t3;
 _V = _V*3;
 await OS_START;
 escape _V;
@@ -28600,14 +28609,14 @@ escape a;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 8;
     var int a = 1;
     this.a = this.a + a + 5;
 end
-var T t;
+var Tx t;
 input void OS_START;
 await OS_START;
 escape t.a;
@@ -28620,7 +28629,7 @@ escape t.a;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 8;
@@ -28629,7 +28638,7 @@ do
         this.a = this.a + a + 5;
     end
 end
-var T t;
+var Tx t;
 input void OS_START;
 await OS_START;
 escape t.a;
@@ -28642,11 +28651,11 @@ Test { [[
 class T2 with
 do
 end
-class T with
+class Tx with
     var T2 x;
 do
 end
-var T a;
+var Tx a;
 escape 1;
 ]],
     props = 'line 5 : not permitted inside an interface',
@@ -28655,13 +28664,13 @@ Test { [[
 class T2 with
 do
 end
-class T with
+class Tx with
     var T2&&? x;
 do
     var T2 xx;
     this.x = &&xx;
 end
-var T a;
+var Tx a;
 escape 1;
 ]],
     run = 1,
@@ -28689,12 +28698,12 @@ class T2 with
     var int v=0;
 do
 end
-class T with
+class Tx with
     var int v=0,v2=0;
     var T2 x;
 do
 end
-var T a;
+var Tx a;
 a.v = 5;
 a.x.v = 5;
 a.v2 = 10;
@@ -28717,7 +28726,7 @@ do
     this.t3 = &&t33;
     await FOREVER;
 end
-class T with
+class Tx with
     var int v=0,v2=0;
     var T2&&? x;
 do
@@ -28725,7 +28734,7 @@ do
     x = &&xx;
     await FOREVER;
 end
-var T a;
+var Tx a;
 a.v = 5;
 a.x!:v = 5;
 a.v2 = 10;
@@ -28737,7 +28746,7 @@ escape a . v + a.x! :v + a .v2 + a.x!  :  t3! : v3;
 
 Test { [[
 var int v;
-class T with
+class Tx with
     var int v;
     v = 5;
 do
@@ -28748,36 +28757,36 @@ end
 
 Test { [[
 var int v=0;
-class T with
+class Tx with
     var int v=5;
 do
 end
-var T t;
+var Tx t;
 escape t.v;
 ]],
     run = 5,
 }
 Test { [[
 //var int v;
-class T with
+class Tx with
     var int v;
 do
 end
-var T t;
+var Tx t;
 escape t.v;
 ]],
     ref = 'line 6 : missing initialization for field "v" (declared in tests.lua:3)',
 }
 Test { [[
 //var int v;
-class T with
+class Tx with
     var int v;
 do
 end
-var T t with
+var Tx t with
     this.v = 1;
 end;
-var T x;
+var Tx x;
 escape t.v + x.v;
 ]],
     ref = 'line 9 : missing initialization for field "v" (declared in tests.lua:3)',
@@ -28785,11 +28794,11 @@ escape t.v + x.v;
 
 Test { [[
 var int v = 0;
-class T with
+class Tx with
     var int v=5;
 do
 end
-var T t with
+var Tx t with
     this.v = 10;
 end;
 escape t.v;
@@ -28817,12 +28826,12 @@ escape 1;
 
 Test { [[
 var int v = 0;
-class T with
+class Tx with
     var int v=5;
 do
     this.v = 100;
 end
-var T t with
+var Tx t with
     this.v = 10;
 end;
 escape t.v;
@@ -28838,7 +28847,7 @@ class U with
 do
 end
 
-class T with
+class Tx with
     var int v=5;
     var U u with
         this.x = 20;
@@ -28846,7 +28855,7 @@ class T with
 do
     this.v = 100;
 end
-var T t with
+var Tx t with
     this.v = 10;
 end;
 escape t.v + t.u.x;
@@ -28861,7 +28870,7 @@ class U with
 do
 end
 
-class T with
+class Tx with
     var int v=5;
     var U&& u;
 do
@@ -28871,7 +28880,7 @@ do
     this.u = &&uu;
     this.v = 100;
 end
-var T t with
+var Tx t with
     this.v = 10;
 end;
 escape t.v + t.u:x;
@@ -28930,7 +28939,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var int v=5;
     var U&&? u;
 do
@@ -28941,7 +28950,7 @@ do
     this.v = 100;
     await FOREVER;
 end
-var T t with
+var Tx t with
     this.v = 10;
 end;
 escape t.v + t.u!:x;
@@ -28950,13 +28959,13 @@ escape t.v + t.u!:x;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
-var T   t;
-var T&&  p  = &&t;
-var T&& && pp = &&p;
+var Tx   t;
+var Tx&&  p  = &&t;
+var Tx&& && pp = &&p;
 
 escape (p==&&t and pp==&&p and *pp==&&t);
 ]],
@@ -28990,12 +28999,12 @@ escape v;
 
 Test { [[
 var int i = 0;
-class T with
+class Tx with
     var& int i;
 do
     i = 10;
 end
-var T t;
+var Tx t;
 escape i;
 ]],
     ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
@@ -29005,13 +29014,13 @@ escape i;
 }
 Test { [[
 var int i = 1;
-class T with
+class Tx with
     var& int i;
 do
     var int v = 10;
     i = v;
 end
-var T t;
+var Tx t;
 escape i;
 ]],
     ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
@@ -29021,13 +29030,13 @@ escape i;
 }
 Test { [[
 var int i = 1;
-class T with
+class Tx with
     var& int i;
 do
     var int v = 10;
     i = v;
 end
-var T t;
+var Tx t;
 escape t.i;
 ]],
     ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
@@ -29037,12 +29046,12 @@ escape t.i;
 }
 Test { [[
 var int i = 0;
-class T with
+class Tx with
     var& int i;
 do
     i = 10;
 end
-spawn T;
+spawn Tx;
 escape i;
 ]],
     ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
@@ -29051,10 +29060,10 @@ escape i;
     --run = 1,
 }
 Test { [[
-class T with
+class Tx with
 do
 end
-spawn T;
+spawn Tx;
 escape 10;
 ]],
     --ref = 'line 7 : field "i" must be assigned',
@@ -29062,13 +29071,13 @@ escape 10;
 }
 Test { [[
 var int i = 0;
-class T with
+class Tx with
     var& int i;
 do
     var int v = 10;
     i = v;
 end
-var T&&? p = spawn T;
+var Tx&&? p = spawn Tx;
 escape p!:i;
 ]],
     ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
@@ -29077,13 +29086,13 @@ escape p!:i;
 }
 Test { [[
 var int i = 0;
-class T with
+class Tx with
     var& int i;
 do
     var int v = 10;
     i = v;
 end
-var T t with
+var Tx t with
     this.i = &outer.i;
 end;
 escape i;
@@ -29093,13 +29102,13 @@ escape i;
 }
 Test { [[
 var int i = 1;
-class T with
+class Tx with
     var& int i;
     var int v = 10;
 do
     v = i;
 end
-var T t with
+var Tx t with
     this.i = &outer.i;
 end;
 escape i;
@@ -29110,14 +29119,14 @@ escape i;
 Test { [[
 input void OS_START;
 var int i = 1;
-class T with
+class Tx with
     var& int i;
     var int v = 10;
 do
     await OS_START;
     v = i;
 end
-var T t with
+var Tx t with
     this.i = &outer.i;
 end;
 i = 10;
@@ -29129,13 +29138,13 @@ escape t.v;
 }
 Test { [[
 var int i = 0;
-class T with
+class Tx with
     var& int i;
 do
     var int v = 10;
     i = v;
 end
-spawn T with
+spawn Tx with
     this.i = &outer.i;
 end;
 escape i;
@@ -29146,7 +29155,7 @@ escape i;
 
 Test { [[
 var int i = 1;
-class T with
+class Tx with
     var& int? i;
 do
     var int v = 10;
@@ -29155,18 +29164,18 @@ end
 
 var int ret = 0;
 
-var T t1;
+var Tx t1;
 ret = ret + i;  // 1
-spawn T;
+spawn Tx;
 ret = ret + i;  // 2
 
-var T t2 with
+var Tx t2 with
     this.i = &outer.i;
 end;
 ret = ret + i;  // 12
 
 i = 0;
-spawn T with
+spawn Tx with
     this.i = &i;
 end;
 ret = ret + i;  // 22
@@ -29179,7 +29188,7 @@ escape ret;
 }
 Test { [[
 var int i = 1;
-class T with
+class Tx with
     var& int? i;
 do
     var int v = 10;
@@ -29190,18 +29199,18 @@ end
 
 var int ret = 0;
 
-var T t1;
+var Tx t1;
 ret = ret + i;  // 1    1
-spawn T;
+spawn Tx;
 ret = ret + i;  // 1    2
 
-var T t2 with
+var Tx t2 with
     this.i = &outer.i;
 end;
 ret = ret + i;  // 11   13
 
 i = 0;
-spawn T with
+spawn Tx with
     this.i = &i;
 end;
 ret = ret + i;  // 10   23
@@ -29213,13 +29222,13 @@ escape ret;
 }
 Test { [[
 var int i = 1;
-class T with
+class Tx with
     var& int? i;
 do
     if i? then
     end
 end
-var T t with
+var Tx t with
     this.i = &outer.i;
 end;
 escape 1;
@@ -29228,7 +29237,7 @@ escape 1;
 }
 Test { [[
 var int i = 1;
-class T with
+class Tx with
     var& int? i;
     var int  v = 0;
 do
@@ -29239,18 +29248,18 @@ end
 
 var int ret = 0;
 
-var T t1;
+var Tx t1;
 ret = ret + i;  // 1
-spawn T;
+spawn Tx;
 ret = ret + i;  // 2
 
-var T t2 with
+var Tx t2 with
     this.i = &outer.i;
 end;
 ret = ret + t2.v;  // 12
 
 i = 0;
-spawn T with
+spawn Tx with
     this.i = &i;
 end;
 ret = ret + t2.v;  // 22
@@ -29264,13 +29273,13 @@ Test { [[
 var int i = 1;
 var& int v = i;
 
-class T with
+class Tx with
     var int&& p = null;
     var& int v = null;
 do
 end
 
-var T t with
+var Tx t with
     this.p = v;
     this.v = &v;
 end;
@@ -29284,13 +29293,13 @@ Test { [[
 var int i = 1;
 var& int v = &i;
 
-class T with
+class Tx with
     var int&& p = null;
     var& int v;
 do
 end
 
-var T t with
+var Tx t with
     this.p = &&v;
     this.v = &v;
 end;
@@ -29304,7 +29313,7 @@ Test { [[
 var int i = 1;
 var& int v = &i;
 
-class T with
+class Tx with
     var int&& p = null;
     var& int v;
 do
@@ -29313,7 +29322,7 @@ do
     *p = 1;
 end
 
-var T t with
+var Tx t with
     this.p := &&v;
     this.v = &v;
 end;
@@ -29324,7 +29333,7 @@ escape *(t.p) + (t.v);
 }
 
 Test { [[
-class T with
+class Tx with
     var _SDL_Rect&& cell_rects = null;
 do
     var _SDL_Rect&& cell_rect = &&this.cell_rects[1];
@@ -29437,12 +29446,12 @@ escape *t.x;
 Test { [[
 input void OS_START;
 var int v=0;
-class T with
+class Tx with
     var int v=0;
 do
     v = 5;
 end
-var T a;
+var Tx a;
 await OS_START;
 v = a.v;
 a.v = 4;
@@ -29453,13 +29462,13 @@ escape a.v + v;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int v=0;
 do
     this.v = 5;
 end
 do
-    var T a;
+    var Tx a;
     await OS_START;
     var int v = a.v;
     a.v = 4;
@@ -29471,14 +29480,14 @@ end
 
 Test { [[
 input void OS_START, A;
-class T with
+class Tx with
     var int v=0;
 do
     await OS_START;
     this.v = 5;
 end
 do
-    var T a;
+    var Tx a;
         a.v = 0;
     await A;
     escape a.v;
@@ -29520,7 +29529,7 @@ escape sum;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event void go;
     var int v=0;
 do
@@ -29528,7 +29537,7 @@ do
     v = 5;
 end
 do
-    var T a;
+    var Tx a;
     await OS_START;
     par/and do
         emit a.go;      // 13
@@ -29548,7 +29557,7 @@ end
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event int a, go, ok;
     var int aa=0;
 do
@@ -29557,7 +29566,7 @@ do
     aa = 5;
     emit ok => 1;
 end
-var T aa;
+var Tx aa;
     par/or do
         await OS_START;
         emit aa.go => 1;
@@ -29618,12 +29627,12 @@ escape _V;
 }
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int v=0;
 do
     v = 5;
 end
-var T a;
+var Tx a;
     await OS_START;
 var int v = a.v;
 a.v = 4;
@@ -29637,11 +29646,11 @@ var int ret = 0;
 do
     var int a;
     do
-        class T with
+        class Tx with
         do
             a = 1;
         end
-        var T v;
+        var Tx v;
     end
     ret = a;
 end
@@ -29655,13 +29664,13 @@ Test { [[
 do
     var int a;
     do
-        class T with
+        class Tx with
         do
             a = 1;
         end
     end
 end
-var T v;
+var Tx v;
 emit v.go;
 escape 0;
 ]],
@@ -29673,7 +29682,7 @@ Test { [[
 var int a;
 do
     do
-        class T with
+        class Tx with
         do
             a = 1;
             b = 1;
@@ -29681,7 +29690,7 @@ do
     end
 end
 var int b;
-var T v;
+var Tx v;
 emit v.go;
 escape a;
 ]],
@@ -29694,7 +29703,7 @@ var int a;
 var int b;
 do
     do
-        class T with
+        class Tx with
         do
             a = 1;
             b = 3;
@@ -29707,7 +29716,7 @@ end
 do
     var int b;
     do
-        var T v;
+        var Tx v;
         emit v.go;
     end
 end
@@ -29715,13 +29724,13 @@ escape a+b;
 ]],
     env = 'line 7 : variable/event "a" is not declared',
     --props = 'line 5 : must be in top-level',
-    --env = 'line 17 : class "T" is not declared',
+    --env = 'line 17 : class "Tx" is not declared',
 }
 
 Test { [[
 var int a;
 var int b;
-class T with
+class Tx with
 do
     a = 1;
     b = 3;
@@ -29732,7 +29741,7 @@ end
 do
     var int b;
     do
-        var T v;
+        var Tx v;
         emit v.go;
     end
 end
@@ -29891,26 +29900,26 @@ escape img1.sm:id + img2.sm:id + img3.sm:id;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v=0;
 do
 end
 
-var T t;
+var Tx t;
     t.v = 10;
-var T&& p = &&t;
+var Tx&& p = &&t;
 escape p:v;
 ]],
     run = 10,
 }
 
 Test { [[
-class T with
+class Tx with
     var int v=0;
 do
 end
 
-var T t1, t2;
+var Tx t1, t2;
 t1.v = 1;
 t2.v = 2;
 escape t1.v+t2.v;
@@ -29919,14 +29928,14 @@ escape t1.v+t2.v;
 }
 
 Test { [[
-class T with
+class Tx with
 native _char;
     var _char&& ptr;
 do
 end
 
 var _char&& ptr=null;
-var T t with
+var Tx t with
     this.ptr = ptr;
 end;
 escape 1;
@@ -29936,13 +29945,13 @@ escape 1;
     --fin = 'line 8 : attribution to pointer with greater scope',
 }
 Test { [[
-class T with
+class Tx with
 native _char;
     var _char&& ptr=null;
 do
 end
 
-var T t with
+var Tx t with
     do
         var _char&& ptr=null;
         this.ptr = ptr;
@@ -29957,11 +29966,11 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     event void go;
 do
 end
-var T aa;
+var Tx aa;
 loop do
     emit aa.go;
 end
@@ -29974,16 +29983,16 @@ end
 
 Test { [[
 input void OS_START;
-input void A,F;
+input void A,B;
 var int v = 0;
-class T with
+class Tx with
     event void e, ok, go;
 do
     await A;
     emit e;
     emit ok;
 end
-var T a;
+var Tx a;
 await OS_START;
 par/or do
     loop i in 3 do
@@ -29997,25 +30006,25 @@ par/or do
         end
     end
 with
-    await F;
+    await B;
 end
 escape v;
 ]],
-    run = { ['~>A;~>A;~>A;~>F']=1 },
+    run = { ['~>A;~>A;~>A;~>B']=1 },
 }
 
 Test { [[
 input void OS_START;
-input void A,F;
+input void A,B;
 var int v=0;
-class T with
+class Tx with
     event void e, ok;
 do
     await A;
     emit e;
     emit ok;
 end
-var T a;
+var Tx a;
 await OS_START;
 par/or do
     loop i in 3 do
@@ -30027,21 +30036,21 @@ par/or do
         end
     end
 with
-    await F;
+    await B;
 end
 escape v;
 ]],
-    run = { ['~>A;~>A;~>A;~>F']=1 },
+    run = { ['~>A;~>A;~>A;~>B']=1 },
 }
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
 do
     await FOREVER;
 end
 await OS_START;
-var T a;
+var Tx a;
 escape 1;
 ]],
     run = 1,
@@ -30049,9 +30058,9 @@ escape 1;
 
 Test { [[
 input void OS_START;
-input void A,F;
+input void A,B;
 var int v=0;
-class T with
+class Tx with
     event void e;
 do
     loop do
@@ -30060,25 +30069,25 @@ do
     end
 end
 await OS_START;
-var T a;
+var Tx a;
 par/or do
     loop i in 3 do
         await a.e;
         v = v + 1;
     end
 with
-    await F;
+    await B;
 end
 escape v;
 ]],
-    run = { ['~>A;~>A;~>A;~>F']=3 },
+    run = { ['~>A;~>A;~>A;~>B']=3 },
 }
 
 Test { [[
 input void OS_START;
-input void A,F;
+input void A,B;
 var int v=0;
-class T with
+class Tx with
     event void e;
 do
     loop do
@@ -30086,7 +30095,7 @@ do
         emit e;
     end
 end
-var T a;
+var Tx a;
 await OS_START;
 loop i in 3 do
     await a.e;
@@ -30099,14 +30108,14 @@ escape v;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event void go, ok;
 do
     await go;
     await 1s;
     emit ok;
 end
-var T aa;
+var Tx aa;
 par/and do
     await OS_START;
     emit aa.go;
@@ -30121,14 +30130,14 @@ escape 10;
 Test { [[
 input void OS_START;
 do
-class T with
+class Tx with
     event void go, ok;
 do
     await 1s;
     emit ok;
 end
 end
-var T aa;
+var Tx aa;
 par/and do
     await OS_START;
 with
@@ -30140,9 +30149,9 @@ escape 10;
 }
 
 Test { [[
-input int F;
-class T with
-    var int v = await F;
+input int B;
+class Tx with
+    var int v = await B;
 do
 end
 escape 0;
@@ -30152,17 +30161,17 @@ escape 0;
 
 Test { [[
 input void OS_START;
-input int F;
+input int B;
 do
-    class T with
+    class Tx with
         event void ok;
         var int v=0;
     do
-        v = await F;
+        v = await B;
         emit ok;
     end
 end
-var T aa;
+var Tx aa;
 par/and do
     await OS_START;
 with
@@ -30170,19 +30179,19 @@ with
 end
 escape aa.v;
 ]],
-    run = { ['10~>F']=10 },
+    run = { ['10~>B']=10 },
 }
 
 Test { [[
-class T with
+class Tx with
     event void e;
 do
 end
 
-input void F, OS_START;
+input void B, OS_START;
 var int ret = 0;
 
-var T a, b;
+var Tx a, b;
 par/and do
     await a.e;
     ret = 2;
@@ -30196,15 +30205,15 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     event void e;
 do
 end
 
-input void F, OS_START;
+input void B, OS_START;
 var int ret = 0;
 
-var T a, b;
+var Tx a, b;
 par/or do
     par/and do
         await a.e;
@@ -30214,17 +30223,17 @@ par/or do
         emit b.e;
     end
 with
-    await F;
+    await B;
     ret = 1;
 end
 escape ret;
 ]],
-    run = { ['~>F']=1 }
+    run = { ['~>B']=1 }
 }
 
 Test { [[
 input void OS_START;
-input void F;
+input void B;
 class T1 with
     event void ok;
 do
@@ -30233,7 +30242,7 @@ do
         emit this.ok;
     end
 end
-class T with
+class Tx with
     event void ok;
 do
     var T1 a;
@@ -30248,7 +30257,7 @@ end
 var int ret = 10;
 par/or do
     do
-        var T aa;
+        var Tx aa;
         par/and do
             await OS_START;
         with
@@ -30257,26 +30266,26 @@ par/or do
     end
     ret = ret + 1;
 with
-    await F;
+    await B;
 end
-await F;
+await B;
 escape ret;
 ]],
     run = {
-        --['~>F;~>5s;~>F'] = 10,
-        ['~>1s;~>F;~>F;~>1s'] = 10,
-        --['~>1s;~>F;~>1s;~>F'] = 10,
-        --['~>1s;~>2s;~>F'] = 11,
+        --['~>B;~>5s;~>B'] = 10,
+        ['~>1s;~>B;~>B;~>1s'] = 10,
+        --['~>1s;~>B;~>1s;~>B'] = 10,
+        --['~>1s;~>2s;~>B'] = 11,
     },
 }
 
 Test { [[
 input void OS_START;
-input void F;
+input void B;
 class T1 with
 do
 end
-class T with
+class Tx with
 do
     var T1 a;
     par/and do
@@ -30286,7 +30295,7 @@ do
     end
 end
 var int ret = 10;
-var T aa;
+var Tx aa;
 par/or do
     par/and do
         await OS_START;
@@ -30294,22 +30303,22 @@ par/or do
         await FOREVER;
     end
 with
-    await F;
+    await B;
 end
 escape ret;
 ]],
     ana = 'line 10 : trail should terminate',
     run = {
-        ['~>F'] = 10,
+        ['~>B'] = 10,
     },
 }
 Test { [[
 input void OS_START;
-input void F;
+input void B;
 class T1 with
 do
 end
-class T with
+class Tx with
 do
     var T1 a;
     par/and do
@@ -30319,7 +30328,7 @@ do
     end
 end
 var int ret = 10;
-var T aa;
+var Tx aa;
 par/or do
     par/and do
         await OS_START;
@@ -30327,19 +30336,19 @@ par/or do
         await FOREVER;
     end
 with
-    await F;
+    await B;
 end
 escape ret;
 ]],
     wrn = true,
     run = {
-        ['~>F'] = 10,
+        ['~>B'] = 10,
     },
 }
 
 Test { [[
 input void OS_START;
-input void F;
+input void B;
 class T1 with
     event void ok;
 do
@@ -30347,7 +30356,7 @@ do
     emit ok;
     await FOREVER;
 end
-class T with
+class Tx with
     event void ok;
 do
     var T1 a;
@@ -30361,7 +30370,7 @@ do
     await FOREVER;
 end
 var int ret = 10;
-var T aa;
+var Tx aa;
 par/or do
     do
         par/and do
@@ -30372,46 +30381,46 @@ par/or do
     end
     ret = ret + 1;
 with
-    await F;
+    await B;
 end
-await F;
+await B;
 escape ret;
 ]],
     run = {
-        ['~>F;~>5s;~>F'] = 10,
-        ['~>1s;~>F;~>F;~>1s'] = 10,
-        ['~>1s;~>F;~>1s;~>F'] = 10,
-        ['~>1s;~>1s;~>F'] = 11,
+        ['~>B;~>5s;~>B'] = 10,
+        ['~>1s;~>B;~>B;~>1s'] = 10,
+        ['~>1s;~>B;~>1s;~>B'] = 10,
+        ['~>1s;~>1s;~>B'] = 11,
     },
 }
 
 Test { [[
-input void E,F;
+input void E,B;
 
-class T with
+class Tx with
 do
     await E;
 end
 var int ret = 10;
 par/or do
-    var T aa;
+    var Tx aa;
     await FOREVER;
 with
-    await F;
+    await B;
     ret = 5;
 end
 escape ret;
 ]],
     run = {
-        ['~>F;~>E'] = 5,
-        ['~>E;~>F'] = 5,
+        ['~>B;~>E'] = 5,
+        ['~>E;~>B'] = 5,
     },
 }
 
 Test { [[
-input void E,F;
+input void E,B;
 
-class T with
+class Tx with
 do
     par/or do
         await E;
@@ -30421,24 +30430,24 @@ do
 end
 var int ret = 10;
 par/or do
-    var T aa;
+    var Tx aa;
     await FOREVER;
 with
-    await F;
+    await B;
     ret = 5;
 end
 escape ret;
 ]],
     run = {
-        ['~>F;~>1s;~>E'] = 5,
-        ['~>E;~>1s;~>F'] = 5,
+        ['~>B;~>1s;~>E'] = 5,
+        ['~>E;~>1s;~>B'] = 5,
     },
 }
 
 Test { [[
 input void OS_START;
-input void F;
-class T with
+input void B;
+class Tx with
     event void ok;
 do
     input void E;
@@ -30453,28 +30462,28 @@ end
 var int ret = 10;
 par/or do
     do
-        var T aa;
+        var Tx aa;
         await aa.ok;
     end
     ret = ret + 1;
 with
-    await F;
+    await B;
 end
-await F;
+await B;
 escape ret;
 ]],
     run = {
-        --['~>F;~>5s;~>F'] = 10,
-        ['~>1s;~>F;~>F;~>1s'] = 10,
-        --['~>1s;~>F;~>1s;~>F'] = 10,
-        --['~>1s;~>1s;~>F'] = 11,
-        --['~>1s;~>E;~>1s;~>F'] = 11,
+        --['~>B;~>5s;~>B'] = 10,
+        ['~>1s;~>B;~>B;~>1s'] = 10,
+        --['~>1s;~>B;~>1s;~>B'] = 10,
+        --['~>1s;~>1s;~>B'] = 11,
+        --['~>1s;~>E;~>1s;~>B'] = 11,
     },
 }
 
 Test { [[
 input void OS_START;
-input void F;
+input void B;
 native _V;
 native do
     int V = 0;
@@ -30487,7 +30496,7 @@ do
     emit ok;
     _V = _V + 1000;
 end
-class T with
+class Tx with
     event void ok;
 do
     do
@@ -30499,30 +30508,30 @@ do
     _V = _V + 1;
 end
 do
-    var T aa;
-    await F;
+    var Tx aa;
+    await B;
     _V = _V * 2;
 end
 escape _V;
 ]],
     run = {
-        ['~>F;~>5s;~>F'] = 0,
-        ['~>1s;~>F;~>F;~>1s'] = 8,
-        ['~>1s;~>F;~>1s;~>F'] = 8,
-        ['~>1s;~>1s;~>F'] = 10,
+        ['~>B;~>5s;~>B'] = 0,
+        ['~>1s;~>B;~>B;~>1s'] = 8,
+        ['~>1s;~>B;~>1s;~>B'] = 8,
+        ['~>1s;~>1s;~>B'] = 10,
     },
     --run = { ['~>1s']=0 },
 }
 Test { [[
 input void OS_START;
-input void F;
+input void B;
 class T1 with
     event void ok;
 do
     await 1s;
     emit ok;
 end
-class T with
+class Tx with
     event void ok;
 do
     input void E;
@@ -30542,36 +30551,36 @@ end
 var int ret = 10;
 par/or do
     do
-        var T aa;
+        var Tx aa;
         await aa.ok;
     end
     ret = ret + 1;
 with
-    await F;
+    await B;
 end
-await F;
+await B;
 escape ret;
 ]],
     run = {
-        ['~>F;~>5s;~>F'] = 10,
-        ['~>1s;~>F;~>F;~>1s'] = 10,
-        ['~>1s;~>F;~>1s;~>F'] = 10,
-        ['~>1s;~>1s;~>F'] = 11,
-        ['~>1s;~>E;~>1s;~>F'] = 11,
+        ['~>B;~>5s;~>B'] = 10,
+        ['~>1s;~>B;~>B;~>1s'] = 10,
+        ['~>1s;~>B;~>1s;~>B'] = 10,
+        ['~>1s;~>1s;~>B'] = 11,
+        ['~>1s;~>E;~>1s;~>B'] = 11,
     },
     --run = { ['~>1s']=0 },
 }
 
 Test { [[
 input void OS_START;
-input void F;
-class T with
+input void B;
+class Tx with
     event void ok;
 do
     await 1s;
     emit ok;
 end
-var T aa;
+var Tx aa;
 var int ret = 10;
 par/or do
     par/and do
@@ -30581,21 +30590,21 @@ par/or do
     end
     ret = ret + 1;
 with
-    await F;
+    await B;
 end
-await F;
+await B;
 escape ret;
 ]],
     run = {
-        ['~>1s;~>F'] = 11,
-        ['~>F;~>1s;~>F'] = 10,
+        ['~>1s;~>B'] = 11,
+        ['~>B;~>1s;~>B'] = 10,
     },
 }
 
 Test { [[
 input void OS_START;
-input void F;
-class T with
+input void B;
+class Tx with
     event void ok;
 do
     loop do
@@ -30603,7 +30612,7 @@ do
         emit this.ok;       // 8
     end
 end
-var T aa;
+var Tx aa;
 var int ret = 0;
 par/or do
     loop do
@@ -30615,25 +30624,25 @@ par/or do
         ret = ret + 1;
     end
 with
-    await F;
+    await B;
 end
 escape ret;
 ]],
     _ana = {
         --acc = 1,  -- TODO
     },
-    run = { ['~>5s;~>F'] = 5 },
+    run = { ['~>5s;~>B'] = 5 },
 }
 
 Test { [[
 input void A;
-class T with
+class Tx with
     var int v=0;
 do
     await A;
     v = 1;
 end
-var T a;
+var Tx a;
 await A;
 a.v = 2;
 escape a.v;
@@ -30646,7 +30655,7 @@ escape a.v;
 
 Test { [[
 input void A;
-class T with
+class Tx with
     var int v=0;
     event void ok;
 do
@@ -30656,7 +30665,7 @@ do
         v = v + 1;      // 9
     end
 end
-var T aa;
+var Tx aa;
 par do
     await aa.ok;
 with
@@ -30675,7 +30684,7 @@ end
 Test { [[
 input void OS_START;
 input void A;
-class T with
+class Tx with
     event int a, ok;
     var int aa=0;
 do
@@ -30689,7 +30698,7 @@ do
     end
     emit ok => 1;
 end
-var T aa;
+var Tx aa;
 par/and do
     await OS_START;
 with
@@ -30703,7 +30712,7 @@ escape aa.aa;
 Test { [[
 input void OS_START;
 input void A;
-class T with
+class Tx with
     event int a, ok;
     var int aa=0;
 do
@@ -30717,7 +30726,7 @@ do
     end
     emit ok => 1;
 end
-var T aa;
+var Tx aa;
 par/and do
     await OS_START;
 with
@@ -30734,7 +30743,7 @@ escape aa.aa;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event int a;
     var int aa=0;
 do
@@ -30746,7 +30755,7 @@ do
         aa = 7;
     end
 end
-var T aa;
+var Tx aa;
 await OS_START;
 escape aa.aa;
 ]],
@@ -30777,18 +30786,18 @@ escape a;
 }
 
 Test { [[
-class T with do end
-var T a;
-var T&& p = a;
+class Tx with do end
+var Tx a;
+var Tx&& p = a;
 ]],
     env = 'line 3 : types mismatch',
 }
 
 Test { [[
-class T with do end;
+class Tx with do end;
 do
     var int ret = 1;
-    var T t;
+    var Tx t;
     escape ret;
 end
 ]],
@@ -30796,9 +30805,9 @@ end
 }
 
 Test { [[
-class T with do end;
+class Tx with do end;
 do
-    var T t;
+    var Tx t;
     var int ret = 1;
     escape ret;
 end
@@ -30807,11 +30816,11 @@ end
 }
 
 Test { [[
-class T with do end;
+class Tx with do end;
 do
     var int a = 1;
     var int&& pa = &&a;
-    var T t;
+    var Tx t;
     var int ret = *pa;
     escape ret;
 end
@@ -30825,7 +30834,7 @@ native do
     int c, d;
 end
 
-class T with
+class Tx with
     var int a=0;
 do
 end
@@ -30834,9 +30843,9 @@ var int i;
 i = 10;
 var int&& pi = &&i;
 
-var T t;
+var Tx t;
 t.a = 10;
-var T&& p = &&t;
+var Tx&& p = &&t;
 _c = t.a;
 _d = p:a;
 escape p:a + t.a + _c + _d;
@@ -30845,7 +30854,7 @@ escape p:a + t.a + _c + _d;
 }
 
 Test { [[
-input void F, B;
+input void A, B;
 
 var s16 x = 10;
 
@@ -30869,12 +30878,12 @@ par/or do
         end
     end
 with
-    await F;
+    await A;
 with
     async do
         emit B;
         emit 10ms;
-        emit F;
+        emit A;
     end
 end
 escape x;
@@ -30883,18 +30892,18 @@ escape x;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a;
 do
 end
 
 var int i = 1;
-vector[2] T y with
+vector[2] Tx y with
     this.a = 10*i;
     i = i + 1;
 end;
 
-var T x with
+var Tx x with
     this.a = 30;
 end;
 
@@ -30904,19 +30913,19 @@ escape x.a + y[0].a + y[1].a;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a;
 do
 end
 
 var int i = 0;
 
-vector[2] T y with
+vector[2] Tx y with
     i = i + 1;
     this.a = i*10;
 end;
 
-var T x with
+var Tx x with
     this.a = 30;
 end;
 
@@ -30931,12 +30940,12 @@ native do
 end
 native _V;
 
-class T with
+class Tx with
 do
     _V = _V + 1;
 end
 
-var T ts;
+var Tx ts;
 
 escape _V;
 ]],
@@ -30948,12 +30957,12 @@ native do
     int V = 0;
 end
 native _V;
-class T with
+class Tx with
 do
     _V = _V + 1;
 end
 
-vector[20000] T ts;
+vector[20000] Tx ts;
 
 escape _V;
 ]],
@@ -30961,7 +30970,7 @@ escape _V;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     class T1 with var int v=0; do end
     var int v=0;
@@ -30974,10 +30983,10 @@ escape 0;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[5] T a;
+vector[5] Tx a;
 escape 0;
 ]],
     run = 0,
@@ -30985,8 +30994,8 @@ escape 0;
 
 Test { [[
 native/const _U8_MAX;
-class T with do end;
-vector[_U8_MAX] T ts;
+class Tx with do end;
+vector[_U8_MAX] Tx ts;
 
 escape 1;
 ]],
@@ -30994,22 +31003,22 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     var int a = 1;
     if a then end;
 end
-vector[2] T ts;
+vector[2] Tx ts;
 escape 1;
 ]],
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
 end
-vector[2] T ts;
+vector[2] Tx ts;
 par/and do
     ts[0].a = 10;   // 7
 with
@@ -31023,11 +31032,11 @@ escape ts[0].a + ts[1].a;
     run = 30,
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
 end
-var T t1, t2;
+var Tx t1, t2;
 par/and do
     t1.a = 10;   // 7
 with
@@ -31039,13 +31048,13 @@ escape t1.a + t2.a;
 }
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int a=0;
 do
     await OS_START;
     a = 0;
 end
-vector[2] T ts;
+vector[2] Tx ts;
 await OS_START;
 par/and do
     ts[0].a = 10;   // 11
@@ -31061,13 +31070,13 @@ escape ts[0].a + ts[1].a;
 }
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int a=0;
 do
     await OS_START;
     this.a = 0;
 end
-vector[2] T ts;
+vector[2] Tx ts;
 await OS_START;
 par/and do
     ts[0].a = 10;
@@ -31083,13 +31092,13 @@ escape ts[0].a + ts[1].a;
 }
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int a=0;
 do
     await OS_START;
     a = 0;
 end
-var T t1, t2;
+var Tx t1, t2;
 await OS_START;
 par/and do
     t1.a = 10;
@@ -31105,13 +31114,13 @@ escape t1.a + t2.a;
 }
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int a=0;
 do
     await OS_START;
     this.a = 0;
 end
-var T t1, t2;
+var Tx t1, t2;
 await OS_START;
 par/and do
     t1.a = 10;
@@ -31131,12 +31140,12 @@ native/nohold _f;
 native do
     void f (void* t) {}
 end
-class T with
+class Tx with
 do
     await OS_START;
     _f(&&this);       // 9
 end
-vector[2] T ts;
+vector[2] Tx ts;
 await OS_START;
 par/and do
     _f(&&ts[0]);     // 14
@@ -31157,12 +31166,12 @@ native/nohold _f;
 native do
     void f (void* t) {}
 end
-class T with
+class Tx with
 do
     await OS_START;
     _f(&&this);       // 9
 end
-var T t0,t1;
+var Tx t0,t1;
 await OS_START;
 par/and do
     _f(&&t0);     // 14
@@ -31183,7 +31192,7 @@ native do ##include <assert.h> end
 native _assert;
 native _assert;
 input int  BUTTON;
-input void F;
+input void B;
 
 class Rect with
     var s16 x=0;
@@ -31238,7 +31247,7 @@ par/or do
         emit rs[i].go;
     end
 with
-    await F;
+    await B;
 with
     async do
         emit 100ms;
@@ -31297,7 +31306,7 @@ escape 100;
 }
 
 Test { [[
-class T with
+class Tx with
     event int a, go, ok;
     var int aa=0;
 do
@@ -31309,7 +31318,7 @@ do
         aa = 7;
     end
 end
-var T aa;
+var Tx aa;
 par/or do
     par/and do
         emit aa.go => 1;
@@ -31329,14 +31338,14 @@ escape aa.aa;
 }
 
 Test { [[
-class T with
+class Tx with
     event int a, ok, go;
     var int aa=0;
 do
     emit a => 10;
     aa = 5;
 end
-var T aa;
+var Tx aa;
 par/or do
     par/and do
         emit aa.go => 1;
@@ -31379,7 +31388,7 @@ native do
     void inc() { V++; }
 end
 
-class T with
+class Tx with
     event void a, ok, go, b;
     var int aa=0, bb=0;
 do
@@ -31394,7 +31403,7 @@ do
     emit ok;                // 8.
 end
 
-var T aa;
+var Tx aa;
 
 _inc();                     // 1. V=1
 par/or do
@@ -31412,7 +31421,7 @@ escape _V + aa.aa + aa.bb;
 
 Test { [[
     input void OS_START;
-class T with
+class Tx with
     event void a, ok, go, b;
     var int aa=0, bb=0;
 do
@@ -31427,7 +31436,7 @@ do
     bb = 4;
     emit ok;
 end
-var T aa;
+var Tx aa;
 
 native _inc, _V;
 native do
@@ -31455,7 +31464,7 @@ escape _V + aa.aa + aa.bb;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event void a, ok, go, b;
     var int aa=0, bb=0;
 do
@@ -31470,7 +31479,7 @@ do
     bb = 4;
     emit ok;
 end
-var T aa;
+var Tx aa;
 
 var int ret=0;
 par/or do
@@ -31488,7 +31497,7 @@ escape ret + aa.aa + aa.bb;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event void e, ok, go;
     var int ee=0;
 do
@@ -31499,7 +31508,7 @@ do
     await (0)ms;
     emit ok;
 end
-var T a1, a2;
+var Tx a1, a2;
 var int ret = 0;
 await OS_START;
 
@@ -31529,7 +31538,7 @@ escape ret;
 Test { [[
 native/nohold _f;
 input void OS_START;
-class T with
+class Tx with
     event void e, ok, go, b;
     var u8 a=0;
 do
@@ -31537,7 +31546,7 @@ do
     a = 1;
     emit ok;
 end
-var T a, b;
+var Tx a, b;
 native do
     int f (byte* a, byte* b) {
         escape *a + *b;
@@ -31561,13 +31570,13 @@ escape _f(&&a.a as byte&&,&&b.a as byte&&);
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event void e, f;
 do
     await e;
     emit f;
 end
-vector[2] T ts;
+vector[2] Tx ts;
 par/and do
     await OS_START;
     emit ts[0].e;
@@ -31582,7 +31591,7 @@ escape 10;
 
 Test { [[
 input void OS_START, B;
-class T with
+class Tx with
     var int v=0;
     event void ok, go, b;
     event void e, f;
@@ -31594,7 +31603,7 @@ do
     v = 100;
     emit ok;
 end
-vector[2] T ts;
+vector[2] Tx ts;
 var int ret = 0;
 par/and do
     par/and do
@@ -31638,8 +31647,8 @@ escape ret + ts[0].v + ts[1].v;
 
 Test { [[
 input int S;
-input void F;
-class T with
+input void B;
+class Tx with
     event void a,ok;
     var int aa=0;
 do
@@ -31653,21 +31662,21 @@ do
     end
     emit ok;
 end
-var T aa;
+var Tx aa;
 await aa.ok;
-await F;
+await B;
 escape aa.aa;
 ]],
     run = {
-        ['11~>S;~>10s;~>F'] = 11,
-        ['~>10s;11~>S;~>F'] = 7,
+        ['11~>S;~>10s;~>B'] = 11,
+        ['~>10s;11~>S;~>B'] = 7,
     },
 }
 
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
     event void ok;
 do
     await OS_START;
@@ -31675,7 +31684,7 @@ do
 end
 
 var int ret = 10;
-var T t;
+var Tx t;
 await t.ok;
 
 escape ret;
@@ -31686,15 +31695,15 @@ escape ret;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
     event void ok;
 do
     await OS_START;
     emit ok;
 end
 
-pool[] T ts;
-var T&&? t1 = spawn T in ts;
+pool[] Tx ts;
+var Tx&&? t1 = spawn Tx in ts;
 
 await t1!:ok;
 
@@ -31706,16 +31715,16 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
     event void ok;
 do
     await OS_START;
     emit ok;
 end
 
-pool[] T ts;
-var T&&? t1 = spawn T in ts;
-var T&&? t2 = spawn T in ts;
+pool[] Tx ts;
+var Tx&&? t1 = spawn Tx in ts;
+var Tx&&? t2 = spawn Tx in ts;
 
 par/and do
     await t1!:ok;
@@ -31731,14 +31740,14 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
 do
     await OS_START;
 end
 
-pool[] T ts;
-var T&&? t1 = spawn T in ts;
-var T&&? t2 = spawn T in ts;
+pool[] Tx ts;
+var Tx&&? t1 = spawn Tx in ts;
+var Tx&&? t2 = spawn Tx in ts;
 
 par/and do
     await *t1!;
@@ -31756,14 +31765,14 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
     event void ok;
 do
     await OS_START;
     emit ok;
 end
 
-var T t1, t2;
+var Tx t1, t2;
 
 par/and do
     await t1.ok;
@@ -31781,14 +31790,14 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
     event void ok;
 do
     await OS_START;
     emit ok;
 end
 
-vector[2] T ts;
+vector[2] Tx ts;
 
 par/and do
     await ts[0].ok;
@@ -31806,7 +31815,7 @@ escape 1;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int v=0;
     event void e, f, ok;
 do
@@ -31817,7 +31826,7 @@ do
     v = 100;
     emit ok;
 end
-vector[2] T ts;
+vector[2] Tx ts;
 var int ret = 0;
 par/and do
     par/and do
@@ -31852,12 +31861,12 @@ escape ret + ts[0].v + ts[1].v;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int v=0;
 do
     v = 1;
 end
-var T a, b;
+var Tx a, b;
 await OS_START;
 escape a.v + b.v;
 ]],
@@ -31866,14 +31875,14 @@ escape a.v + b.v;
 
 Test { [[
 input void OS_START;
-input void F;
+input void B;
 class T1 with
     event void ok;
 do
     await 1s;
     emit ok;
 end
-class T with
+class Tx with
     event void ok;
 do
     var T1 a;
@@ -31885,21 +31894,21 @@ var int ret = 10;
 await OS_START;
 par/or do
     do
-        var T aa;
+        var Tx aa;
         await aa.ok;
     end
     ret = ret + 1;
 with
-    await F;
+    await B;
 end
-await F;
+await B;
 escape ret;
 ]],
     run = {
-        ['~>F;~>5s;~>F'] = 10,
-        ['~>1s;~>F;~>F;~>1s'] = 10,
-        ['~>1s;~>F;~>1s;~>F'] = 10,
-        ['~>1s;~>1s;~>F'] = 11,
+        ['~>B;~>5s;~>B'] = 10,
+        ['~>1s;~>B;~>B;~>1s'] = 10,
+        ['~>1s;~>B;~>1s;~>B'] = 10,
+        ['~>1s;~>1s;~>B'] = 11,
     },
 }
 
@@ -31909,7 +31918,7 @@ native do
     int V=1;
 end
 
-class T with
+class Tx with
     event void a;
 do
     loop do
@@ -31918,7 +31927,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 emit t.a;
 emit t.a;
 emit t.a;
@@ -31952,19 +31961,19 @@ native _V;
 native do
     static int V = 0;
 end
-input void F;
-class T with
+input void B;
+class Tx with
     // nothing
 do
     do
         do finalize with
             _V = 100;
         end
-        await F;
+        await B;
     end
 end
 do
-    var T t;
+    var Tx t;
     input void OS_START;
     await OS_START;
 end
@@ -31978,20 +31987,20 @@ native _V;
 native do
     static int V = 1;
 end
-input void F;
-class T with
+input void B;
+class Tx with
 do
     _V = 10;
     do
         do finalize with
             _V = _V + 100;
         end
-        await F;
+        await B;
     end
 end
 par/or do
-    var T t;
-    await F;
+    var Tx t;
+    await B;
 with
     // nothing;
 end
@@ -32006,7 +32015,7 @@ native do
     static int V = 0;
 end
 input void OS_START;
-class T with
+class Tx with
     // nothing
 do
     do
@@ -32017,7 +32026,7 @@ do
     end
 end
 par/or do
-    var T t;
+    var Tx t;
     await OS_START;
 with
     await OS_START;
@@ -32032,11 +32041,11 @@ escape _V;
 
 Test { [[
 native _V;
-input void A, F, OS_START;
+input void A, B, OS_START;
 native do
     int V = 0;
 end
-class T with
+class Tx with
     event void e, ok;
     var int v=0;
 do
@@ -32049,7 +32058,7 @@ do
     emit e;
     emit ok;
 end
-var T t;
+var Tx t;
 await OS_START;
 par/or do
     do                  // 22
@@ -32062,7 +32071,7 @@ with
     await t.e;          // 29
     t.v = t.v * 3;
 with
-    await F;
+    await B;
     t.v = t.v * 5;
 end
 escape t.v + _V;        // * reads before
@@ -32071,20 +32080,20 @@ escape t.v + _V;        // * reads before
         abrt = 1,        -- false positive
     },
     run = {
-        ['~>F'] = 5,
+        ['~>B'] = 5,
         ['~>A'] = 12,
     }
 }
 
 -- internal binding binding
 Test { [[
-class T with
+class Tx with
     var& int i;
 do
     var int v = 10;
     i = v;
 end
-var T t;
+var Tx t;
 escape t.i;
 ]],
     ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
@@ -32094,14 +32103,14 @@ escape t.i;
 
 -- internal/constr binding
 Test { [[
-class T with
+class Tx with
     var& int i;
 do
     var int v = 10;
     i = v;
 end
 var int v = 0;
-var T t with
+var Tx t with
     this.i = &v;
 end;
 escape v;
@@ -32111,13 +32120,13 @@ escape v;
 }
 -- internal binding
 Test { [[
-class T with
+class Tx with
     var& int i;
 do
     var int v = 10;
     i = v;
 end
-var T t;
+var Tx t;
 escape t.i;
 ]],
     ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
@@ -32126,13 +32135,13 @@ escape t.i;
 }
 -- internal binding w/ default
 Test { [[
-class T with
+class Tx with
     var& int? i;
 do
     var int v = 10;
     i! = v;
 end
-var T t;
+var Tx t;
 escape t.i!;
 ]],
     asr = '5] runtime error: invalid tag',
@@ -32140,7 +32149,7 @@ escape t.i!;
 }
 -- internal binding w/ default
 Test { [[
-class T with
+class Tx with
     var& int? i;
 do
 native _assert;
@@ -32148,7 +32157,7 @@ native _assert;
     var int v = 10;
     i! = v;
 end
-var T t;
+var Tx t;
 escape t.i!;
 ]],
     asr = '6] runtime error: invalid tag',
@@ -32156,14 +32165,14 @@ escape t.i!;
 }
 -- external binding w/ default
 Test { [[
-class T with
+class Tx with
     var& int? i;
 do
 native _assert;
     _assert(i?);
 end
 var int i = 10;
-var T t with
+var Tx t with
     this.i = &outer.i;
 end;
 escape t.i!;
@@ -32171,14 +32180,14 @@ escape t.i!;
     run = 10,
 }
 Test { [[
-class T with
+class Tx with
     var& int? i;
 do
 native _assert;
     _assert(not i?);
 end
 var int i = 10;
-var T t;
+var Tx t;
 escape not t.i?;
 ]],
     run = 1,
@@ -32186,11 +32195,11 @@ escape not t.i?;
 
 -- no binding
 Test { [[
-class T with
+class Tx with
     var& int i;
 do
 end
-var T t;
+var Tx t;
 escape 1;
 ]],
     ref = 'line 5 : missing initialization for field "i" (declared in tests.lua:2)',
@@ -32198,16 +32207,16 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var& int i;
 do
 end
 
 var int i = 1;
 
-var T t1;
+var Tx t1;
 
-var T t2 with
+var Tx t2 with
     this.i = &outer.i;
 end;
 
@@ -32218,18 +32227,18 @@ escape t1.i;
 }
 
 Test { [[
-class T with
+class Tx with
     var& int i;
 do
 end
 
 var int i = 1;
 
-var T t2 with
+var Tx t2 with
     this.i = &outer.i;
 end;
 
-var T t1;
+var Tx t1;
 
 escape t1.i;
 ]],
@@ -32238,13 +32247,13 @@ escape t1.i;
 }
 
 Test { [[
-class T with
+class Tx with
     var& int i;
 do
     var int v = 10;
     i = v;
 end
-var T t;
+var Tx t;
 var int v = 0;
 t.i = v;
 escape 1;
@@ -32326,13 +32335,13 @@ end
 var int  um = 111;
 var& int v = &um;
 
-class T with
+class Tx with
     var int v=0;
 do
     this.v = global:v;
 end
 
-var T t;
+var Tx t;
 escape t.v;
 ]],
     run = 111,
@@ -32349,34 +32358,34 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
 end
 
 interface Global with
-    var& T t;
+    var& Tx t;
 end
 
-var T t_;
-var& T t = &t_;
+var Tx t_;
+var& Tx t = &t_;
 
 escape global:t.v;
 ]],
     run = 10,
 }
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
 end
 
 interface Global with
-    var& T t;
+    var& Tx t;
 end
 
-var T t_;
-var& T t = &t_;
+var Tx t_;
+var& Tx t = &t_;
 global:t = &t;
 
 escape global:t.v;
@@ -32385,14 +32394,14 @@ escape global:t.v;
 }
 
 Test { [[
-class T with
+class Tx with
     event void e;
 do
 end
-var T t;
+var Tx t;
 
 class U with
-    var& T t;
+    var& Tx t;
 do
     emit t.e;
 end
@@ -32407,14 +32416,14 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int x=0;
 do
 end
-var T t;
+var Tx t;
 
 class U with
-    var& T t;
+    var& Tx t;
 do
     t.x = 1;
 end
@@ -32439,14 +32448,14 @@ escape t.x + u.t.x + v.u.t.x;
 }
 
 Test { [[
-class T with
+class Tx with
     var int x=0;
 do
 end
-var T t;
+var Tx t;
 
 class U with
-    var& T t;
+    var& Tx t;
 do
     t.x = 1;
 end
@@ -32490,11 +32499,11 @@ end
 }
 
 Test { [[
-class T with
+class Tx with
     var& int v;
 do
 end
-var T t with
+var Tx t with
     var int x;
     this.v = &x;
 end;
@@ -32503,11 +32512,11 @@ escape 1;
     ref = 'line 7 : invalid access to uninitialized variable "x" (declared at tests.lua:6)',
 }
 Test { [[
-class T with
+class Tx with
     var& int v;
 do
 end
-var T t with
+var Tx t with
     var int x=0;
     this.v = &x;
 end;
@@ -32555,12 +32564,12 @@ escape 1;
     --run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var& int v;
 do
 end
 var int x = 10;
-var T t with
+var Tx t with
     this.v = &x;
 end;
 x = 11;
@@ -32570,25 +32579,25 @@ escape t.v;
 }
 
 Test { [[
-data V with
+data Vv with
     var int v;
 end
 
-class T with
-    var& V v;
+class Tx with
+    var& Vv v;
 do
 end
 
-var T t1 with
-    var V v_ = V(1);
+var Tx t1 with
+    var Vv v_ = Vv(1);
     this.v = &v_;
 end;
-var T t2 with
-    var V v_ = V(2);
+var Tx t2 with
+    var Vv v_ = Vv(2);
     this.v = &v_;
 end;
-var T t3 with
-    var V v_ = V(3);
+var Tx t3 with
+    var Vv v_ = Vv(3);
     this.v = &v_;
 end;
 
@@ -32600,12 +32609,12 @@ escape t1.v.v + t2.v.v + t3.v.v;
 }
 
 Test { [[
-class T with
+class Tx with
     var& int v;
 do
 end
 var int x = 10;
-var T t with
+var Tx t with
     this.v = &x;
 end;
 var int y = 15;
@@ -32628,7 +32637,7 @@ end
 
 event void e;
 
-class T with
+class Tx with
 do
     await OS_START;
     emit global:e; // TODO: must also check if org trail is active
@@ -32637,7 +32646,7 @@ do
 end
 
 do
-    var T t;
+    var Tx t;
     await e;
 end
 escape 2;
@@ -32659,7 +32668,7 @@ end
 
 event void e;
 
-class T with
+class Tx with
 do
     await OS_START;
     emit global:e;
@@ -32671,7 +32680,7 @@ par/or do
     await global:e;
     _V = 2;
 with
-    var T t;
+    var Tx t;
     await FOREVER;
 end
 
@@ -32693,7 +32702,7 @@ interface Global with
     event void e;
 end
 
-class T with
+class Tx with
 do
     emit global:e; // TODO: must also check if org trail is active
     _V = 1;
@@ -32708,7 +32717,7 @@ par/or do
 with
     await OS_START;
     do
-        var T t;
+        var Tx t;
         await FOREVER;
     end
 end
@@ -32730,7 +32739,7 @@ interface Global with
     event void e;
 end
 
-class T with
+class Tx with
 do
     emit global:e; // TODO: must also check if org trail is active
     _assert(0);
@@ -32746,7 +32755,7 @@ par/or do
 with
     await OS_START;
     do
-        var T t;
+        var Tx t;
         _assert(0);
         await FOREVER;
     end
@@ -32770,9 +32779,9 @@ interface Global with
     event void e;
 end
 
-class T with
+class Tx with
 do
-    _assert(_X==0); // second T does not execute
+    _assert(_X==0); // second Tx does not execute
     _X = _X + 1;
     emit global:e;
     _assert(0);
@@ -32788,7 +32797,7 @@ par/or do
 with
     await OS_START;
     do
-        vector[2] T t;
+        vector[2] Tx t;
         _assert(0);
         await FOREVER;
     end
@@ -32807,7 +32816,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int x;
     event void ok;
 do
@@ -32818,7 +32827,7 @@ end
 
 var int ret=1;
 do
-    var T t with
+    var Tx t with
         this.x = 10;
     end;
 
@@ -32839,7 +32848,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int x=0;
     event void ok;
 do
@@ -32859,10 +32868,10 @@ end
 
 var int ret=0;
 do
-    var T t with
+    var Tx t with
         this.x = 10;
     end;
-    var T u;
+    var Tx u;
     await t.ok;
     ret = t.x;
 end
@@ -32872,7 +32881,7 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int&& a1=null;
 do
     var int&& a2=null;
@@ -32885,7 +32894,7 @@ escape 10;
 
 Test { [[
 native/pure _UI_align;
-class T with
+class Tx with
     var _SDL_rect rect;
 do
     do
@@ -32902,7 +32911,7 @@ escape 1;
 
 Test { [[
 native/pure _UI_align;
-class T with
+class Tx with
     var _SDL_rect rect;
 do
     do
@@ -32929,7 +32938,7 @@ pre native do
         escape 0;
     }
 end
-class T with
+class Tx with
     var _SDL_Rect rect;
 do
     do
@@ -32956,7 +32965,7 @@ pre native do
         escape 0;
     }
 end
-class T with
+class Tx with
     var _SDL_Rect rect;
 do
     do
@@ -32984,7 +32993,7 @@ pre native do
         escape 0;
     }
 end
-class T with
+class Tx with
     var _SDL_Rect rect;
 do
     do
@@ -33003,11 +33012,11 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
 end
-vector[N] T ts;
+vector[N] Tx ts;
 escape _V;
 ]],
     run = 5,
@@ -33018,11 +33027,11 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
 end
-vector[N+1] T ts;
+vector[N+1] Tx ts;
 escape _V;
 ]],
     run = 6,
@@ -33033,11 +33042,11 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
 end
-vector[N+1] T ts;
+vector[N+1] Tx ts;
 escape _V;
 ]],
     run = 6,
@@ -33048,12 +33057,12 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
 end
 #error oi
-vector[N+1] T ts;
+vector[N+1] Tx ts;
 escape _V;
 ]],
     lines = 'error oi',
@@ -33062,11 +33071,11 @@ escape _V;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
 do
     await FOREVER;
 end
-var T t;
+var Tx t;
 par/and do
     await t;
 with
@@ -33080,11 +33089,11 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
 do
     await OS_START;
 end
-var T t;
+var Tx t;
 await t;
 
 escape 1;
@@ -33093,11 +33102,11 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int size;
-    code/instantaneous Run (var int size)=>T;
+    code/instantaneous Run (var int size)=>Tx;
 do
-    code/instantaneous Run (var int size)=>T do
+    code/instantaneous Run (var int size)=>Tx do
         this.size = size;
     end
     await 1s;
@@ -33109,14 +33118,14 @@ do
     do
         var int n = 0;
         do
-            var T t = T.run(4);
+            var Tx t = Tx.run(4);
             n = await t;
         end
     end
     do
         native/plain _char;
         var _char[8] v = [];
-        var T t = T.run(2);
+        var Tx t = Tx.run(2);
         par/or do
             await FOREVER;
         with
@@ -33135,11 +33144,11 @@ escape 1;
     run = { ['~>2s']=1 },
 }
 Test { [[
-class T with
+class Tx with
     var int size;
-    code/instantaneous Run (var int size)=>T;
+    code/instantaneous Run (var int size)=>Tx;
 do
-    code/instantaneous Run (var int size)=>T do
+    code/instantaneous Run (var int size)=>Tx do
         this.size = size;
     end
     await 1s;
@@ -33149,12 +33158,12 @@ end
 class U with
 do
     do
-        var int n = do T.run(4);
+        var int n = do Tx.run(4);
     end
     do
         native/plain _char;
         var _char[8] v = [];
-        var T t = T.run(2);
+        var Tx t = Tx.run(2);
         par/or do
             await FOREVER;
         with
@@ -33175,11 +33184,11 @@ escape 1;
 
 
 Test { [[
-class T with
+class Tx with
     var int size;
-    code/instantaneous Run (var int size)=>T;
+    code/instantaneous Run (var int size)=>Tx;
 do
-    code/instantaneous Run (var int size)=>T do
+    code/instantaneous Run (var int size)=>Tx do
         this.size = size;
     end
     await 1s;
@@ -33190,11 +33199,11 @@ class U with
 do
     do
         vector[7] byte buf;
-        var int n = do T.run(4);
+        var int n = do Tx.run(4);
     end
     do
         vector[] byte buf;
-        var int n = do T.run(2);
+        var int n = do Tx.run(2);
 native _assert;
         _assert(n == 2);
     end
@@ -33222,14 +33231,14 @@ escape 0;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a;
     var int b;
 do
     b = a * 2;
 end
 
-var T t1, t2 with
+var Tx t1, t2 with
     this.a = 10;
 end;
 
@@ -33239,14 +33248,14 @@ escape t1.b;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a;
     var int b=0;
 do
     b = a * 2;
 end
 
-vector[2] T t with
+vector[2] Tx t with
     this.a = 10;
 end;
 
@@ -33277,7 +33286,7 @@ class U with
 do
 end
 
-class T with
+class Tx with
     var int ret = 0;
 do
     var U u with
@@ -33286,7 +33295,7 @@ do
     this.ret = u.i == &&this;
 end
 
-var T t;
+var Tx t;
 
 escape t.ret;
 ]],
@@ -33294,14 +33303,14 @@ escape t.ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
     var int b=0;
 do
     b = a * 2;
 end
 
-var T t with
+var Tx t with
     await 1s;
 end;
 
@@ -33311,14 +33320,14 @@ escape t.b;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a;
     var int b=0;
 do
     b = a * 2;
 end
 
-var T t with
+var Tx t with
     this.a = 10;
 end;
 
@@ -33328,10 +33337,10 @@ escape t.b;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v;
 do end;
-var T _ with
+var Tx _ with
     this.v = 1;
 end;
 escape 1;
@@ -33341,7 +33350,7 @@ escape 1;
 
 Test { [[
 native do
-    void* PTR;
+    void* Ptr;
     void* myalloc (void) {
         escape NULL;
     }
@@ -33350,7 +33359,7 @@ native do
 end
 native/nohold _myfree;
 
-class T with
+class Tx with
     var int x = 10;
 do
 native _myalloc;
@@ -33359,7 +33368,7 @@ native _myalloc;
         _myfree(_PTR);
     end
 end
-var T t;
+var Tx t;
 escape t.x;
 ]],
     fin = 'line 15 : cannot finalize a variable defined in another class',
@@ -33376,7 +33385,7 @@ native do
 end
 native/nohold _myfree;
 
-class T with
+class Tx with
     var int x = 10;
 do
     var& void? ptr;
@@ -33386,7 +33395,7 @@ native _myalloc;
         _myfree(&&ptr);
     end
 end
-var T t;
+var Tx t;
 escape t.x;
 ]],
     env = 'line 18 : invalid operand to unary "&&" : option type',
@@ -33403,7 +33412,7 @@ native do
 end
 native/nohold _myfree;
 
-class T with
+class Tx with
     var int x = 10;
 do
     var& void? ptr;
@@ -33413,7 +33422,7 @@ native _myalloc;
         _myfree(&&ptr!);
     end
 end
-var T t;
+var Tx t;
 escape t.x;
 ]],
     run = 10,
@@ -33458,7 +33467,7 @@ pre do
     tot = tot + 2;              // 3
 end
 
-class T with
+class Tx with
 do
     pre do
         tot = tot * 2;          // 6
@@ -33485,7 +33494,7 @@ var int tot2;
     tot = tot + 2;              // 3
 end
 
-class T with
+class Tx with
 do
 pre do
         tot = tot * 2;          // 6
@@ -33512,7 +33521,7 @@ var int tot2 = 1;                       // 1
     tot = tot + 2;              // 3
 end
 
-class T with
+class Tx with
 do
     class U with
     do
@@ -33554,8 +33563,8 @@ escape tot + tot2;              // 31
 -->>> SPAWN
 
 Test { [[
-class T with do end
-spawn T;
+class Tx with do end
+spawn Tx;
 escape 1;
 ]],
     --env = 'line 2 : `spawn´ requires enclosing `do ... end´',
@@ -33567,7 +33576,7 @@ native _V;
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = 10;
 end
@@ -33584,12 +33593,12 @@ native _V;
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = 10;
 end
 do
-    spawn T;
+    spawn Tx;
 end
 escape _V;
 ]],
@@ -33601,13 +33610,13 @@ native _V;
 native do
     int V = 0;
 end
-class T with
+class Tx with
     var int a;
 do
     _V = this.a;
 end
 do
-    spawn T with
+    spawn Tx with
         this.a = 10;
     end;
 end
@@ -33617,18 +33626,18 @@ escape _V;
 }
 
 Test { [[
-class T with do end
+class Tx with do end
 do
-    var u8? x = spawn T;
+    var u8? x = spawn Tx;
 end
 ]],
     env = 'line 3 : types mismatch',
 }
 
 Test { [[
-class T with do end
+class Tx with do end
 code/instantaneous Fff (void)=>void do
-    spawn T;
+    spawn Tx;
 end
 escape 1;
 ]],
@@ -33636,7 +33645,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v=0;
 do
 end
@@ -33646,7 +33655,7 @@ input int E;
 par/or do
     var int yyy=0;
     every xxx in E do
-        spawn T with
+        spawn Tx with
             yyy = 1;
             xxx = 1;
         end;
@@ -33662,11 +33671,11 @@ escape 1;
 Test { [[
 event void e;
 
-class T with do end;
+class Tx with do end;
 
 par/or do
     every e do
-        spawn T;
+        spawn Tx;
     end
 with
     emit e;
@@ -33681,7 +33690,7 @@ escape 1;
 Test { [[
 event void x,e,f,g;
 var int ret = 0;
-class T with do end;
+class Tx with do end;
 par/or do
     every x do
         loop i in 1000 do
@@ -33699,7 +33708,7 @@ with
 with
     every g do
         ret = ret + 1;
-        spawn T;
+        spawn Tx;
     end
 with
     emit x;
@@ -33751,15 +33760,15 @@ escape ret;
 -- MEM/MEMORY POOL
 
 Test { [[
-class T with
+class Tx with
 do
 end
-pool T t;
+pool Tx t;
 escape 1;
 ]],
     parser = 'line 4 : after `pool´ : expected `&´ or `[´',
     --env = 'line 4 : missing `pool´ dimension',
-    --parser = 'line 4 : after `T´ : expected `[´',
+    --parser = 'line 4 : after `Tx´ : expected `[´',
 }
 
 Test { [[
@@ -33776,9 +33785,9 @@ escape 1;
 }
 
 Test { [[
-class T with do end
-pool[] T ts;
-var T t;
+class Tx with do end
+pool[] Tx ts;
+var Tx t;
 ts = t;
 escape 1;
 ]],
@@ -33786,29 +33795,29 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-pool[] T t;
+pool[] Tx t;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-pool[1] T t;
+pool[1] Tx t;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with do end
-pool[0] T ts;
-var T&&? ok = spawn T in ts;
+class Tx with do end
+pool[0] Tx ts;
+var Tx&&? ok = spawn Tx in ts;
 if ok? then
     escape 0;
 else
@@ -33819,12 +33828,12 @@ end
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-pool[1] T t;
-var T&&? ok1 = spawn T in t with end;
-var T&&? ok2 = spawn T in t;
+pool[1] Tx t;
+var Tx&&? ok1 = spawn Tx in t with end;
+var Tx&&? ok2 = spawn Tx in t;
 escape (ok1?) + (ok2?) + 1;
 ]],
     run = 1,
@@ -33832,15 +33841,15 @@ escape (ok1?) + (ok2?) + 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-pool[1] T t;
-var T&&? ok1 = spawn T in t with end;
+pool[1] Tx t;
+var Tx&&? ok1 = spawn Tx in t with end;
 var int sum = 1;
 if ok1? then
     watching *(ok1!) do
-        var T&&? ok2 = spawn T in t;
+        var Tx&&? ok2 = spawn Tx in t;
         sum = sum + (ok1?) + (ok2?);
     end
 end
@@ -33852,11 +33861,11 @@ escape sum;
 -- POOL ITERATORS
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
-var T ts;
+var Tx ts;
 loop t in ts do
 end
 escape 1;
@@ -33866,11 +33875,11 @@ escape 1;
     --run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
-pool[1] T ts;
+pool[1] Tx ts;
 loop t in ts do
 end
 escape 1;
@@ -33879,17 +33888,17 @@ escape 1;
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
-pool[1] T ts;
-var T&&?  ok1 = spawn T in ts with
+pool[1] Tx ts;
+var Tx&&?  ok1 = spawn Tx in ts with
                 this.v = 10;
               end;
-var int ok2 = 0;// spawn T in ts;
+var int ok2 = 0;// spawn Tx in ts;
 var int ret = 0;
-loop (T&&)t in ts do
+loop (Tx&&)t in ts do
     ret = ret + t:v;
 end
 escape (ok1?) + ok2 + ret;
@@ -33899,15 +33908,15 @@ escape (ok1?) + ok2 + ret;
     --run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
-pool[1] T ts;
-var T&&?  ok1 = spawn T in ts with
+pool[1] Tx ts;
+var Tx&&?  ok1 = spawn Tx in ts with
                 this.v = 10;
               end;
-var int ok2 = 0;// spawn T in ts;
+var int ok2 = 0;// spawn Tx in ts;
 var int ret = 0;
 loop t in ts do
     ret = ret + t:v;
@@ -33918,14 +33927,14 @@ escape (ok1?) + ok2 + ret + 1;
     run = 1,
 }
 Test { [[
-class T with do await FOREVER; end;
-pool[] T ts;
+class Tx with do await FOREVER; end;
+pool[] Tx ts;
 event void e;
-spawn T in ts;
+spawn Tx in ts;
 var int ret = 0;
 loop t in ts do
     ret = ret + 1;
-    spawn T in ts;
+    spawn Tx in ts;
 end
 escape ret;
 ]],
@@ -33933,31 +33942,31 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-pool[] T t;
-spawn T in t;
+pool[] Tx t;
+spawn Tx in t;
 escape 1;
 ]],
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
 do
 end
-spawn T;
+spawn Tx;
 escape 1;
 ]],
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
 do
 end
-pool[] T t;
-spawn T in t;
-spawn T;
+pool[] Tx t;
+spawn Tx in t;
+spawn Tx;
 escape 1;
 ]],
     run = 1,
@@ -33967,17 +33976,17 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
     var int v = 0;
 do
     async do end;
 end
-pool[] T ts;
-spawn T in ts with
+pool[] Tx ts;
+spawn Tx in ts with
     this.v = 10;
     _V = _V + 10;
 end;
-spawn T with
+spawn Tx with
     this.v = 20;
     _V = _V + 20;
 end;
@@ -33994,17 +34003,17 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
     var int v = 0;
 do
     async do end;
 end
-pool[] T ts;
-spawn T with
+pool[] Tx ts;
+spawn Tx with
     this.v = 10;
     _V = _V + 10;
 end;
-spawn T in ts with
+spawn Tx in ts with
     this.v = 20;
     _V = _V + 20;
 end;
@@ -34018,14 +34027,14 @@ escape ret + _V;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-pool[2] T ts;
-spawn T in ts;
-spawn T in ts;
+pool[2] Tx ts;
+spawn Tx in ts;
+spawn Tx in ts;
 
 input void OS_START;
 await OS_START;
@@ -34034,14 +34043,14 @@ escape 60;
     run = 60,
 }
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-pool[] T ts;
-spawn T in ts;
-spawn T in ts;
+pool[] Tx ts;
+spawn Tx in ts;
+spawn Tx in ts;
 
 escape 60;
 ]],
@@ -34049,14 +34058,14 @@ escape 60;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-pool[] T ts;
-spawn T in ts;
-spawn T in ts;
+pool[] Tx ts;
+spawn Tx in ts;
+spawn Tx in ts;
 
 input void OS_START;
 await OS_START;
@@ -34069,17 +34078,17 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
     var int v = 0;
 do
     async do end;
 end
-pool[] T ts;
-spawn T in ts with
+pool[] Tx ts;
+spawn Tx in ts with
     this.v = 10;
     _V = _V + 10;
 end;
-spawn T in ts with
+spawn Tx in ts with
     this.v = 20;
     _V = _V + 20;
 end;
@@ -34095,8 +34104,8 @@ escape ret + _V;
 -->> POOL/SPAWN/OPTION
 
 Test { [[
-class T with do end
-var T&& ok = spawn T;
+class Tx with do end
+var Tx&& ok = spawn Tx;
 escape ok != null;
 ]],
     env = 'line 2 : must assign to option pointer',
@@ -34105,17 +34114,17 @@ escape ok != null;
 
 Test { [[
 class U with do end
-class T with do end
-var U&&? ok = spawn T;
+class Tx with do end
+var U&&? ok = spawn Tx;
 escape ok != null;
 ]],
-    env = 'line 3 : types mismatch (`U&&?´ <= `T&&´)',
+    env = 'line 3 : types mismatch (`U&&?´ <= `Tx&&´)',
     --run = 1,
 }
 
 Test { [[
-class T with do end
-var T&&? ok = spawn T;
+class Tx with do end
+var Tx&&? ok = spawn Tx;
 escape &&(ok!) != null;
 ]],
     asr = '3] runtime error: invalid tag',
@@ -34133,22 +34142,22 @@ escape 1;
 }
 
 Test { [[
-class T with do
+class Tx with do
 end
-var T&&? kkk;
-pool[] T ppp;
-spawn T in ppp;
+var Tx&&? kkk;
+pool[] Tx ppp;
+spawn Tx in ppp;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with do end
+class Tx with do end
 var bool ok_=true;
 do
-    var T&&? ok;
-    ok = spawn T;
+    var Tx&&? ok;
+    ok = spawn Tx;
     ok_ = (ok?);
 end
 escape ok_+1;
@@ -34157,11 +34166,11 @@ escape ok_+1;
 }
 
 Test { [[
-class T with do end
-var T&&? ok;
+class Tx with do end
+var Tx&&? ok;
 var bool ok_=true;
 do
-    ok = spawn T;
+    ok = spawn Tx;
     ok_ = (ok?);
 end
 escape ok_+1;
@@ -34170,10 +34179,10 @@ escape ok_+1;
 }
 
 Test { [[
-class T with do end
-var T&&? ok;
+class Tx with do end
+var Tx&&? ok;
 do
-    ok = spawn T;
+    ok = spawn Tx;
 end
 escape ok?+1;
 ]],
@@ -34182,14 +34191,14 @@ escape ok?+1;
 }
 
 Test { [[
-class T with do
+class Tx with do
     await FOREVER;
 end
-var T&&? ok;
+var Tx&&? ok;
 native _assert;
 do
     loop i in 5 do
-        ok = spawn T;
+        ok = spawn Tx;
     end
 end
 escape ok?+1;
@@ -34199,15 +34208,15 @@ escape ok?+1;
     run = 2,
 }
 Test { [[
-class T with do
+class Tx with do
     await FOREVER;
 end
-var T&&? ok;
+var Tx&&? ok;
 var bool ok_=false;
 native _assert;
 do
     loop i in 5 do
-        ok = spawn T;
+        ok = spawn Tx;
         ok_ = (ok?);
     end
 end
@@ -34218,17 +34227,17 @@ escape ok_+1;
 }
 
 Test { [[
-class T with do
+class Tx with do
     await FOREVER;
 end
-var T&&? ok;
+var Tx&&? ok;
 var bool ok_=true;
 native _assert;
 do
     loop i in 100 do
-        ok = spawn T;
+        ok = spawn Tx;
     end
-    var T&&? ok1 = spawn T;
+    var Tx&&? ok1 = spawn Tx;
     ok_ = (ok1?);
 end
 escape ok_+1;
@@ -34237,16 +34246,16 @@ escape ok_+1;
     run = 1,
 }
 Test { [[
-class T with do
+class Tx with do
     await FOREVER;
 end
-var T&&? ok;
+var Tx&&? ok;
 native _assert;
 do
     loop i in 100 do
-        ok = spawn T;
+        ok = spawn Tx;
     end
-    ok = spawn T;
+    ok = spawn Tx;
 end
 escape (ok?)+1;
 ]],
@@ -34256,12 +34265,12 @@ escape (ok?)+1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
 end
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 escape t!:a;
 ]],
     asr = '7] runtime error: invalid tag',
@@ -34270,12 +34279,12 @@ escape t!:a;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
 end
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 await OS_START;
 escape t!:a;
 ]],
@@ -34284,10 +34293,10 @@ escape t!:a;
 }
 
 Test { [[
-class T with do end
+class Tx with do end
 do
-    var T&&? t;
-    t = spawn T;
+    var Tx&&? t;
+    t = spawn Tx;
 end
 escape 10;
 ]],
@@ -34295,16 +34304,16 @@ escape 10;
 }
 
 Test { [[
-class T with do end
-var T&&? t;
-t = spawn T;
+class Tx with do end
+var Tx&&? t;
+t = spawn Tx;
 escape 10;
 ]],
     run = 10,
 }
 
 Test { [[
-class T with
+class Tx with
 do
     par/or do
         await 10s;
@@ -34314,17 +34323,17 @@ do
         await 10s;
     end
 end
-var T&&? t;
-    t = spawn T;
-    t = spawn T;
-    t = spawn T;
+var Tx&&? t;
+    t = spawn Tx;
+    t = spawn Tx;
+    t = spawn Tx;
 escape 10;
 ]],
     run = 10;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     par/or do
         await 10s;
@@ -34334,11 +34343,11 @@ do
         await 10s;
     end
 end
-var T&&? t;
+var Tx&&? t;
 do
-    t = spawn T;
-    t = spawn T;
-    t = spawn T;
+    t = spawn Tx;
+    t = spawn Tx;
+    t = spawn Tx;
 end
 escape 10;
 ]],
@@ -34352,25 +34361,25 @@ spawn i;
     parser = 'line 1 : after `spawn´ : expected abstraction identifier or `do´',
 }
 Test { [[
-_f(spawn T);
+_f(spawn Tx);
 ]],
     --parser = 'line 1 : after `(´ : expected `)´',
     parser = 'line 1 : after `(´ : expected expression',
 }
 
 Test { [[
-class T with do end
-var T&&? a;
+class Tx with do end
+var Tx&&? a;
 a = spawn U;
 ]],
     env = 'line 3 : undeclared type `U´',
 }
 
 Test { [[
-class T with do end
+class Tx with do end
 do
-    var T&&? t;
-    t = spawn T;
+    var Tx&&? t;
+    t = spawn Tx;
 end
 escape 10;
 ]],
@@ -34378,11 +34387,11 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 if not t? then
     escape 10;
 end
@@ -34393,12 +34402,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 if not t? then
     escape 10;
 end
@@ -34409,11 +34418,11 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 await *(t!);
 escape 1;
 ]],
@@ -34423,13 +34432,13 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
 do
     await OS_START;
 end
-pool[] T ts;
+pool[] Tx ts;
 
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 await *(t!);
 escape 1;
 ]],
@@ -34439,12 +34448,12 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 par/or do
     await t;
 with
@@ -34462,13 +34471,13 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
 do
     await OS_START;
 end
 
 do
-    var T t;
+    var Tx t;
     await t;
 end
 do
@@ -34486,16 +34495,16 @@ escape 1;
 Test { [[
 input void A;
 
-class T with
+class Tx with
 do
     await A;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
-var T&&? t1 = spawn T;
+var Tx&&? t1 = spawn Tx;
 await *(t1!);
-var T&&? t2 = spawn T;
+var Tx&&? t2 = spawn Tx;
 await *(t2!);
 
 escape 1;
@@ -34505,16 +34514,16 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
 do
     await 1us;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
-var T&&? t1 = spawn T;
+var Tx&&? t1 = spawn Tx;
 await *(t1!);
-var T&&? t2 = spawn T;
+var Tx&&? t2 = spawn Tx;
 await *(t2!);
 
 escape 1;
@@ -34525,16 +34534,16 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
 do
     await 1us;
 end
-pool[] T ts;
+pool[] Tx ts;
 
-var T&&? t1 = spawn T;
-var T&&? t2 = spawn T;
+var Tx&&? t1 = spawn Tx;
+var Tx&&? t2 = spawn Tx;
 await *(t2!);
-var T&&? t3 = spawn T;
+var Tx&&? t3 = spawn Tx;
 await *(t3!);
 
 escape 1;
@@ -34549,14 +34558,14 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     event void e;
 do
     await FOREVER;
 end
 
 class U with
-    var& T t;
+    var& Tx t;
     var bool only_await;
 do
     par/or do
@@ -34573,7 +34582,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 
 var U _ with
     this.t = &t;
@@ -34596,14 +34605,14 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     event void e;
 do
     await FOREVER;
 end
 
 class U with
-    var& T t;
+    var& Tx t;
     var bool only_await;
 do
     par/or do
@@ -34623,7 +34632,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 
 var U _ with
     this.t = &t;
@@ -34646,14 +34655,14 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     event void e;
 do
     await FOREVER;
 end
 
 class U with
-    var& T t;
+    var& Tx t;
     var bool only_await;
 do
     par/or do
@@ -34670,7 +34679,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 
 var U _ with
     this.t = &t;
@@ -34693,14 +34702,14 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     event void e;
 do
     await FOREVER;
 end
 
 class U with
-    var& T t;
+    var& Tx t;
     var bool only_await;
 do
     par/or do
@@ -34717,7 +34726,7 @@ do
     end
 end
 
-var T tt;
+var Tx tt;
 
 spawn U with
     this.t = &tt;
@@ -34742,14 +34751,14 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     event void e;
 do
     await FOREVER;
 end
 
 class U with
-    var& T t;
+    var& Tx t;
     var bool only_await;
 do
     if only_await then
@@ -34762,7 +34771,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 
 var U _ with
     this.t = &t;
@@ -34786,14 +34795,14 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     event void e;
 do
     await FOREVER;
 end
 
 class U with
-    var& T t;
+    var& Tx t;
     var bool only_await;
 do
     if only_await then
@@ -34806,7 +34815,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 
 spawn U with
     this.t = &t;
@@ -34833,15 +34842,15 @@ do
     await 1us;
 end
 
-class T with
+class Tx with
 do
     do U;
 end
 
 do
-    pool[] T ts;
-    spawn T in ts;
-    var T&&? t = spawn T in ts;
+    pool[] Tx ts;
+    spawn Tx in ts;
+    var Tx&&? t = spawn Tx in ts;
     await *t!;
 end
 
@@ -34858,15 +34867,15 @@ do
     await 1us;
 end
 
-class T with
+class Tx with
 do
     do U;
 end
 
 do
-    pool[] T ts;
-    spawn T in ts;
-    var T&&? t = spawn T in ts;
+    pool[] Tx ts;
+    spawn Tx in ts;
+    var Tx&&? t = spawn Tx in ts;
     await *t!;
 end
 
@@ -34883,16 +34892,16 @@ do
     await 1us;
 end
 
-class T with
+class Tx with
 do
     do U;
 end
-pool[] T ts;
+pool[] Tx ts;
 
-var T&&? t1 = spawn T;
-var T&&? t2 = spawn T;
+var Tx&&? t1 = spawn Tx;
+var Tx&&? t2 = spawn Tx;
 await *t2!;
-var T&&? t3 = spawn T;
+var Tx&&? t3 = spawn Tx;
 await *t3!;
 
 escape 1;
@@ -34901,43 +34910,43 @@ escape 1;
 }
 
 Test { [[
-pool[0] T ts;
-class T with
+pool[0] Tx ts;
+class Tx with
     var int a;
 do
     this.a = 1;
 end
-var T&&? t = spawn T in ts;
+var Tx&&? t = spawn Tx in ts;
 escape not t?;
 ]],
-    env = 'line 1 : undeclared type `T´',
+    env = 'line 1 : undeclared type `Tx´',
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
 end
-pool[0] T ts;
-var T&&? t = spawn T in ts;
+pool[0] Tx ts;
+var Tx&&? t = spawn Tx in ts;
 escape not t?;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&&? a = spawn T in ts;
+pool[1] Tx ts;
+var Tx&&? a = spawn Tx in ts;
 var int sum = 0;
 watching *(a!) do
-    var T&&? b = spawn T in ts;
+    var Tx&&? b = spawn Tx in ts;
     sum = a? and (not b?);
 end
 escape sum;
@@ -34946,17 +34955,17 @@ escape sum;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&&? a = spawn T in ts;
+pool[1] Tx ts;
+var Tx&&? a = spawn Tx in ts;
 var int sum = 0;
 watching *(a!) do
-    var T&&? b = spawn T in ts;
+    var Tx&&? b = spawn Tx in ts;
     sum = a? and (not b?);
 end
 escape sum;
@@ -34965,15 +34974,15 @@ escape sum;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
 do
-pool[0] T ts;
-var T&&? t = spawn T in ts;
+pool[0] Tx ts;
+var Tx&&? t = spawn Tx in ts;
 escape not t?;
 end
 ]],
@@ -34981,19 +34990,19 @@ end
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T aas;
-pool[0] T bs;
-var T&&? a = spawn T in aas;
+pool[1] Tx aas;
+pool[0] Tx bs;
+var Tx&&? a = spawn Tx in aas;
 var int sum = 0;
 if a? then
     watching *a! do
-        var T&&? b = spawn T in bs;
+        var Tx&&? b = spawn Tx in bs;
         sum = a? and (not b?);
     end
 end
@@ -35003,19 +35012,19 @@ escape sum;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&&? a = spawn T in ts;
+pool[1] Tx ts;
+var Tx&&? a = spawn Tx in ts;
 //free(a);
 var int sum = 0;
 if a? then
     watching *a! do
-        var T&&? b = spawn T in ts;   // fails (a is freed on end)
+        var Tx&&? b = spawn Tx in ts;   // fails (a is freed on end)
         sum = a? and (not b?);
     end
 end
@@ -35025,22 +35034,22 @@ escape sum;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&& a = null;
+pool[1] Tx ts;
+var Tx&& a = null;
 do
-    var T&&? aa = spawn T in ts;
+    var Tx&&? aa = spawn Tx in ts;
         a = aa!;
 end
 var int sum = 0;
 if a != null then
     watching *a do
-        var T&&? b = spawn T in ts;   // fails (a is free on end)
+        var Tx&&? b = spawn Tx in ts;   // fails (a is free on end)
         sum = a!=null and (not b?) and a!=b!;
     end
 end
@@ -35052,16 +35061,16 @@ escape sum;
     --run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[2] T ts;
-var T&& a = null;
+pool[2] Tx ts;
+var Tx&& a = null;
 do
-    var T&&? aa = spawn T in ts;
+    var Tx&&? aa = spawn Tx in ts;
         a = aa!;
 end
 watching *a do
@@ -35073,22 +35082,22 @@ escape 0;
     --run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[2] T ts;
-var T&& a = null;
+pool[2] Tx ts;
+var Tx&& a = null;
 do
-    var T&&? aa = spawn T in ts;
+    var Tx&&? aa = spawn Tx in ts;
         a = aa!;
 end
 var int sum = 0;
 if a != null then
     watching *a do
-        var T&&? b = spawn T in ts;   // fails (a is free on end)
+        var Tx&&? b = spawn Tx in ts;   // fails (a is free on end)
         sum = a!=null and (b?) and a!=b!;
     end
 end
@@ -35099,11 +35108,11 @@ escape sum;
     --run = 1,
 }
 Test { [[
-class T with
+class Tx with
 do
 end
 do
-    var T&&? aa = spawn T;
+    var Tx&&? aa = spawn Tx;
 end
 par/or do
 with
@@ -35114,22 +35123,22 @@ escape 1;
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&&? a;
+pool[1] Tx ts;
+var Tx&&? a;
 do
-    var T&&? aa = spawn T in ts;
+    var Tx&&? aa = spawn Tx in ts;
         a = aa;
 end
 var int sum = 0;
 if a? then
     watching *a! do
-        var T&&? b = spawn T in ts;   // fails (a is free on end)
+        var Tx&&? b = spawn Tx in ts;   // fails (a is free on end)
         sum = a? and (not b?);// and a! !=b;
     end
 end
@@ -35139,46 +35148,46 @@ escape sum;
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&& a=null;
+pool[1] Tx ts;
+var Tx&& a=null;
 do
-    var T&&? aa = spawn T in ts;
+    var Tx&&? aa = spawn Tx in ts;
         a = aa!;
 end
-var T&&? b = spawn T in ts;   // fails (a is free on end)
+var Tx&&? b = spawn Tx in ts;   // fails (a is free on end)
 escape (not b?);
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&& a=null, b=null;
+pool[1] Tx ts;
+var Tx&& a=null, b=null;
 var int sum = 0;
 do
     do
-        var T&&? aa = spawn T in ts;
+        var Tx&&? aa = spawn Tx in ts;
             a = aa!;
     end
     sum = a!=null;
-    var T&&? bb = spawn T in ts;  // fails
+    var Tx&&? bb = spawn Tx in ts;  // fails
         b = bb!;
 end
 if b != null then
     watching *b do
-        var T&&? c = spawn T in ts;       // fails
+        var Tx&&? c = spawn Tx in ts;       // fails
         sum = (b==null) and (not c?);// and a!=b and b==c;
     end
 end
@@ -35190,50 +35199,50 @@ escape sum;
     --run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&&? a, b;
+pool[1] Tx ts;
+var Tx&&? a, b;
 var int sum = 0;
 do
     do
-        var T&&? aa = spawn T in ts;
+        var Tx&&? aa = spawn Tx in ts;
             a = aa!;
     end
     sum = a?;
-    var T&&? bb = spawn T in ts;  // fails
+    var Tx&&? bb = spawn Tx in ts;  // fails
         b = bb;
     sum = sum and (not b?);
 end
-var T&&? c = spawn T in ts;       // fails
+var Tx&&? c = spawn Tx in ts;       // fails
 escape sum and (not c?);
 ]],
     --fin = 'line 19 : pointer access across `await´',
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&&? a, b;
+pool[1] Tx ts;
+var Tx&&? a, b;
 var bool b_=true;
 do
     do
-        var T&&? aa = spawn T in ts;
+        var Tx&&? aa = spawn Tx in ts;
             a = aa!;
     end
-    var T&&? bb = spawn T in ts;  // fails
+    var Tx&&? bb = spawn Tx in ts;  // fails
     b_ = (bb?);
 end
-var T&&? c = spawn T in ts;       // fails
+var Tx&&? c = spawn Tx in ts;       // fails
 //native/nohold _fprintf(), _stderr;
         //_fprintf(_stderr, "%p %p\n",a, b);
 escape b_==false and (not c?);
@@ -35242,40 +35251,40 @@ escape b_==false and (not c?);
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&&? a;
+pool[1] Tx ts;
+var Tx&&? a;
 var int sum = 0;
 do
-    var T&&? aa = spawn T in ts;
+    var Tx&&? aa = spawn Tx in ts;
         a = aa!;
     sum = a?;
 end
-var T&&? b = spawn T in ts;   // fails
+var Tx&&? b = spawn Tx in ts;   // fails
 escape sum and (not b?);
 ]],
     --fin = 'line 13 : pointer access across `await´',
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-pool[1] T ts;
-var T&& a=null;
+pool[1] Tx ts;
+var Tx&& a=null;
 do
-    var T&&? aa = spawn T in ts;
+    var Tx&&? aa = spawn Tx in ts;
         a = aa!;
 end
-var T&&? b = spawn T in ts;   // fails
+var Tx&&? b = spawn Tx in ts;   // fails
 escape (not b?);
 ]],
     run = 1,
@@ -35285,18 +35294,18 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
     await FOREVER;
 end
-pool[1] T ts;
+pool[1] Tx ts;
 do
     loop i in 2 do
-        spawn T in ts;
+        spawn Tx in ts;
     end
     loop i in 2 do
-        spawn T;
+        spawn Tx;
     end
 end
 escape _V;
@@ -35307,18 +35316,18 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
     await FOREVER;
 end
-pool[1] T ts;
+pool[1] Tx ts;
 do
     loop i in 2 do
-        spawn T in ts;
+        spawn Tx in ts;
     end
     loop i in 2 do
-        spawn T;
+        spawn Tx;
     end
 end
 escape _V;
@@ -35330,14 +35339,14 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
 end
 do
-    pool[1] T ts;
+    pool[1] Tx ts;
     loop i in 1000 do
-        var T&&? ok = spawn T in ts;  // 999 fails
+        var Tx&&? ok = spawn Tx in ts;  // 999 fails
         if (not ok?) then
             escape 0;
         end
@@ -35354,15 +35363,15 @@ input void A;
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
     await A;
 end
-pool[1] T ts;
+pool[1] Tx ts;
 do
     loop i in 10 do
-        spawn T in ts;
+        spawn Tx in ts;
     end
 end
 escape _V;
@@ -35375,15 +35384,15 @@ input void A;
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
     await A;
 end
-pool[1] T ts;
+pool[1] Tx ts;
 do
     loop i in 1000 do
-        var T&&? ok = spawn T in ts;
+        var Tx&&? ok = spawn Tx in ts;
         if not ok? then
             escape 10;
         end
@@ -35432,7 +35441,7 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var int u=0,v=0,x=0;
 do
 end
@@ -35444,7 +35453,7 @@ end
 
 pool[10] I iss;
 
-spawn T in iss;
+spawn Tx in iss;
 spawn U in iss;
 
 escape sizeof(CEU_T) >= sizeof(CEU_U);
@@ -35452,7 +35461,7 @@ escape sizeof(CEU_T) >= sizeof(CEU_U);
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int v=0;
 do
 end
@@ -35461,13 +35470,13 @@ class U with
 do
 end
 
-pool[1] T ts;
+pool[1] Tx ts;
 
 spawn U in ts;
 
 escape 1;
 ]],
-    env = 'line 12 : invalid `spawn´ : types mismatch (`T´ <= `U´)',
+    env = 'line 12 : invalid `spawn´ : types mismatch (`Tx´ <= `U´)',
 }
 Test { [[
 interface I with
@@ -35491,7 +35500,7 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
 do
 end
 
@@ -35507,20 +35516,20 @@ end
 
 pool[1] I iss;
 
-spawn T in iss;
+spawn Tx in iss;
 spawn U in iss;
 spawn V in iss;
 
 escape 1;
 ]],
-    env = 'line 21 : invalid `spawn´ : types mismatch (`I´ <= `T´)',
+    env = 'line 21 : invalid `spawn´ : types mismatch (`I´ <= `Tx´)',
 }
 Test { [[
 interface I with
     var int v;
 end
 
-class T with
+class Tx with
 do
 end
 
@@ -35548,15 +35557,15 @@ interface I with
     var int v;
 end
 
-class T with do end
+class Tx with do end
 
 pool[1] I iss;
 
-spawn T in iss;
+spawn Tx in iss;
 
 escape 1;
 ]],
-    env = 'line 9 : invalid `spawn´ : types mismatch (`I´ <= `T´)',
+    env = 'line 9 : invalid `spawn´ : types mismatch (`I´ <= `Tx´)',
 }
 
 Test { [[
@@ -35564,7 +35573,7 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var int u=0,v=0,x=0;
 do
 end
@@ -35577,13 +35586,13 @@ end
 class V with
 do
     pool[10] I iss;
-    spawn T in iss;
+    spawn Tx in iss;
     spawn U in iss;
 end
 
 pool[10] I iss;
 
-spawn T in iss;
+spawn Tx in iss;
 spawn U in iss;
 spawn V in iss;
 
@@ -35596,7 +35605,7 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var int u=0,v=0,x=0;
 do
 end
@@ -35609,13 +35618,13 @@ end
 class V with
 do
     pool[10] I iss;
-    spawn T in iss;
+    spawn Tx in iss;
     spawn U in iss;
 end
 
 pool[10] I iss;
 
-spawn T in iss;
+spawn Tx in iss;
 spawn U in iss;
 spawn V;
 
@@ -35624,7 +35633,7 @@ escape sizeof(CEU_T) >= sizeof(CEU_U);
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int a;
     var int b=0;
 do
@@ -35632,8 +35641,8 @@ do
     await FOREVER;
 end
 
-var T&&? t =
-    spawn T with
+var Tx&&? t =
+    spawn Tx with
         this.a = 10;
     end;
 
@@ -35648,7 +35657,7 @@ input void OS_START;
 native do
     tceu_trl* V;
 end
-class T with
+class Tx with
 do
     _V = &&__ceu_org:trls[1];
     await OS_START;
@@ -35659,7 +35668,7 @@ native _assert;
     end
 end
 do
-    var T t;
+    var Tx t;
     await t;
 end
 //_V:lbl = _CEU_LBL__STACKED;
@@ -35669,7 +35678,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     par/or do
     with
@@ -35677,7 +35686,7 @@ native _assert;
         _assert(0);
     end
 end
-spawn T;
+spawn Tx;
 escape 1;
 ]],
     run = 1,
@@ -35685,11 +35694,11 @@ escape 1;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
 do
     await OS_START;
 end
-spawn T;
+spawn Tx;
 await OS_START;
 escape 1;
 ]],
@@ -35702,7 +35711,7 @@ native do
     int V=0;
 end
 input void OS_START;
-class T with
+class Tx with
 do
     par/or do
     with
@@ -35711,8 +35720,8 @@ do
     await OS_START;
     _V = _V + 1;
 end
-var T&&? t1 = spawn T;
-var T&&? t2 = spawn T;
+var Tx&&? t1 = spawn Tx;
+var Tx&&? t2 = spawn Tx;
 await OS_START;
 escape _V;
 ]],
@@ -35774,8 +35783,8 @@ escape 1;
 -- FREE
 
 Test { [[
-class T with do end
-var T&& a = null;
+class Tx with do end
+var Tx&& a = null;
 //free a;
 escape 10;
 ]],
@@ -35783,8 +35792,8 @@ escape 10;
 }
 
 Test { [[
-class T with do end
-var T&&? a = spawn T;
+class Tx with do end
+var Tx&&? a = spawn Tx;
 //free a;
 escape 10;
 ]],
@@ -35792,10 +35801,10 @@ escape 10;
 }
 
 Test { [[
-class T with do end
-var T&&? a = spawn T;
+class Tx with do end
+var Tx&&? a = spawn Tx;
 //free a;
-var T&&? b = spawn T;
+var Tx&&? b = spawn Tx;
 //free b;
 escape 10;
 ]],
@@ -35803,9 +35812,9 @@ escape 10;
 }
 
 Test { [[
-class T with do end
-var T&&? a = spawn T;
-var T&&? b = spawn T;
+class Tx with do end
+var Tx&&? a = spawn Tx;
+var Tx&&? b = spawn Tx;
 //free a;
 //free b;
 escape 10;
@@ -35814,9 +35823,9 @@ escape 10;
 }
 
 Test { [[
-class T with do end
-var T&&? a = spawn T;
-var T&&? b = spawn T;
+class Tx with do end
+var Tx&&? a = spawn Tx;
+var Tx&&? b = spawn Tx;
 //free b;
 //free a;
 escape 10;
@@ -35829,14 +35838,14 @@ native _V;
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     do finalize with
         _V = _V + 1;
     end
 end
 
-var T&&? a = spawn T;
+var Tx&&? a = spawn Tx;
 //free a;
 escape _V;
 ]],
@@ -35848,15 +35857,15 @@ native _V;
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     do finalize with
         _V = _V + 1;
     end
 end
 
-var T&&? a = spawn T;
-var T&&? b = spawn T;
+var Tx&&? a = spawn Tx;
+var Tx&&? b = spawn Tx;
 //free b;
 //free a;
 escape _V;
@@ -35868,8 +35877,8 @@ escape _V;
 -- remove from tracks
 -- invalid pointers
 Test { [[
-class T with do end
-var T a;
+class Tx with do end
+var Tx a;
 //free a;
 escape 0;
 ]],
@@ -35878,28 +35887,28 @@ escape 0;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     spawn U;
 end
 class U with
 do
-    spawn T;
+    spawn Tx;
 end
-var T t;
+var Tx t;
 escape 1;
 ]],
     env = 'line 3 : undeclared type `U´',
 }
 
 Test { [[
-class T with do end;
+class Tx with do end;
 class U with
-    pool&[] T ts;
+    pool&[] Tx ts;
 do
 end
-pool[] T ts1;
-pool[2] T ts2;
+pool[] Tx ts1;
+pool[2] Tx ts2;
 var U _ with
     this.ts = &ts1;
 end;
@@ -35917,25 +35926,25 @@ end
 var int i=0;
 var& int r = &i;
 
-class T with
+class Tx with
 do
     _V = _V + 1;
     await FOREVER;
 end;
 
-pool[2] T ts;
+pool[2] Tx ts;
 
 class U with
-    pool&[] T xxx;  // TODO: test also T[K<2], T[K>2]
+    pool&[] Tx xxx;  // TODO: test also Tx[K<2], Tx[K>2]
                     //       should <= be allowed?
 do
-    spawn T in xxx;
-    spawn T in xxx;
-    spawn T in xxx;
+    spawn Tx in xxx;
+    spawn Tx in xxx;
+    spawn Tx in xxx;
     _V = _V + 10;
 end
 
-spawn T in ts;
+spawn Tx in ts;
 var U u with
     this.xxx = &outer.ts;
 end;
@@ -36015,8 +36024,8 @@ var Body b with
     this.sum    = &sum;
 end;
 
-class T with do end;
-spawn T;
+class Tx with do end;
+spawn Tx;
 
 escape sum;
 ]],
@@ -36053,8 +36062,8 @@ var Body b with
     this.sum    = &sum;
 end;
 
-class T with do end;
-spawn T;
+class Tx with do end;
+spawn Tx;
 
 escape sum;
 ]],
@@ -36094,13 +36103,13 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
 do
     await 1us;
 end
 
 do
-    var T t;
+    var Tx t;
     await t;
 end
 do
@@ -36123,14 +36132,14 @@ do
     await 1us;
 end
 
-class T with
+class Tx with
 do
     do U;
 end
 
 do
-    var T t1;
-    var T t2;
+    var Tx t1;
+    var Tx t2;
     await t2;
 end
 do
@@ -36138,7 +36147,7 @@ native _char;
     var _char[1000] v = [];
     native/nohold _memset;
     _memset(&&v, 0, 1000);
-    var T t3;
+    var Tx t3;
     await t3;
 end
 
@@ -36158,7 +36167,7 @@ do
     emit this.ok;
     await FOREVER;
 end;
-class T with do
+class Tx with do
     do finalize with
         _V = _V + 2;
     end
@@ -36181,7 +36190,7 @@ par/or do
     await 1s;
 with
     do
-        var T t;
+        var Tx t;
         var U u;
         par/or do
             await u.ok;
@@ -36189,7 +36198,7 @@ with
             await u.ok;
         end;
     end
-    var T t1;
+    var Tx t1;
     var U u1;
     await u1.ok;
 native _assert;
@@ -36207,14 +36216,14 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
     if _V < 10 then
-        spawn T;
+        spawn Tx;
     end
 end
-var T t;
+var Tx t;
 escape _V;
 ]],
     wrn = 'line 8 : unbounded recursive spawn',
@@ -36225,12 +36234,12 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
-    spawn T;
+    spawn Tx;
 end
-var T t;
+var Tx t;
 escape _V;
 ]],
     wrn = 'line 7 : unbounded recursive spawn',
@@ -36241,13 +36250,13 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     _V = _V + 1;
-    spawn T;
+    spawn Tx;
     await FOREVER;
 end
-var T t;
+var Tx t;
 escape _V;
 ]],
     wrn = 'line 7 : unbounded recursive spawn',
@@ -36571,15 +36580,15 @@ escape v;
     fin = 'line 12 : unsafe access to pointer "v" across `class´ (tests.lua : 7)',
 }
 
-    -- AWAIT/KILL ORG
+    -- Await/KILL ORG
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
 end
-var T a;
+var Tx a;
 var int ret = 0;
 par/and do
     await a;
@@ -36597,12 +36606,12 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
 end
-var T a;
+var Tx a;
 var int ret = 0;
 par/and do
     watching a do
@@ -36620,20 +36629,20 @@ escape ret;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
     var int a=0;
 do
 end
 
-event T&& e;
+event Tx&& e;
 
 par/or do
     await OS_START;
-    var T a;
+    var Tx a;
     emit e => &&a;
     await FOREVER;
 with
-    var T&& pa = await e;
+    var Tx&& pa = await e;
     watching *pa do
         await FOREVER;
     end
@@ -36649,16 +36658,16 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
     var int a=0;
 do
     await 1s;
 end
 
-event T&& e;
+event Tx&& e;
 
 par do
-    var T&& pa = await e;
+    var Tx&& pa = await e;
     watching *pa do
         await FOREVER;
     end
@@ -36666,7 +36675,7 @@ par do
 with
     await OS_START;
     do
-        var T a;
+        var Tx a;
         emit e => &&a;
     end
     await 2s;
@@ -36679,10 +36688,10 @@ end
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-var T a;
+var Tx a;
 var int&& v = await a;
 escape 1;
 ]],
@@ -36690,13 +36699,13 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-var T a;
+var Tx a;
 var int rrr = 0;
 par/and do
     var int v = await a;
@@ -36714,13 +36723,13 @@ escape rrr;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     this.a = 1;
     await FOREVER;
 end
-var T a;
+var Tx a;
 var int ret = 10;
 par/and do
     var int v =
@@ -36740,7 +36749,7 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     do finalize with
         _V = 10;
@@ -36748,7 +36757,7 @@ do
     await FOREVER;
 end
 do
-    var T t;
+    var Tx t;
 end
 escape _V;
 ]],
@@ -36758,7 +36767,7 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     do finalize with
         _V = 10;
@@ -36766,8 +36775,8 @@ do
     await FOREVER;
 end
 do
-    pool[] T ts;
-    var T&&? t = spawn T in ts;
+    pool[] Tx ts;
+    var Tx&&? t = spawn Tx in ts;
 end
 escape _V;
 ]],
@@ -36778,14 +36787,14 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     do finalize with
         _V = 10;
     end
     await FOREVER;
 end
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 kill *t!;
 escape _V;
 ]],
@@ -36796,14 +36805,14 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     do finalize with
         _V = 10;
     end
     await FOREVER;
 end
-var T t;
+var Tx t;
 kill t;
 escape _V;
 ]],
@@ -36814,14 +36823,14 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     do finalize with
         _V = 10;
     end
     await FOREVER;
 end
-var T t;
+var Tx t;
 par/and do
     kill t;
 with
@@ -36834,24 +36843,24 @@ escape _V;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
     await 1s;
 end
 
 input void OS_START;
-event T&& e;
+event Tx&& e;
 
 var int ret = 2;
 
 par/and do
     await OS_START;
-    var T&&? t = spawn T;
+    var Tx&&? t = spawn Tx;
     emit e => t!;
     ret = ret + t!:v;
 with
-    var T&& t1 = await e;
+    var Tx&& t1 = await e;
     ret = ret * 2;
 end
 
@@ -36864,20 +36873,20 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
     await 1s;
 end
 
 input void OS_START;
-event T&& e;
+event Tx&& e;
 
 var int ret = 1;
 
 par/and do
     await OS_START;
-    var T&&? t = spawn T;
+    var Tx&&? t = spawn Tx;
     watching *t! do
         emit e => t!;
         ret = ret + t!:v;
@@ -36885,7 +36894,7 @@ par/and do
         ret = ret + 1;
     end
 with
-    var T&& t1 = await e;
+    var Tx&& t1 = await e;
     ret = ret * 2;
 end
 
@@ -36897,13 +36906,13 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
     await FOREVER;
 end
 
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 do finalize with
     kill *t!;
 end
@@ -36914,20 +36923,20 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
     await FOREVER;
 end
 
 input void OS_START;
-event T&& e;
+event Tx&& e;
 
 var int ret = 1;
 
 par/and do
     await OS_START;
-    var T&&? t = spawn T;
+    var Tx&&? t = spawn Tx;
     ret = ret * 2;
     watching *t! do
         emit e => t!;
@@ -36937,7 +36946,7 @@ par/and do
     end
     ret = ret * 2;
 with
-    var T&& t1 = await e;
+    var Tx&& t1 = await e;
     ret = ret + t1:v;
     kill *t1;
     ret = ret + 1;
@@ -36951,13 +36960,13 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
 var int ret = 0;
 loop i do
-    var T t1;
+    var Tx t1;
     par/or do
         await t1;
     with
@@ -36965,7 +36974,7 @@ loop i do
         await FOREVER;
     end
 
-    var T&&? t = spawn T;
+    var Tx&&? t = spawn Tx;
     par/or do
         await *t!;
     with
@@ -36987,12 +36996,12 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 var int ret = 0;
 loop i do
-    var T t1;
+    var Tx t1;
     par/or do
         await t1;
     with
@@ -37000,7 +37009,7 @@ loop i do
         await FOREVER;
     end
 
-    var T&&? t = spawn T;
+    var Tx&&? t = spawn Tx;
     par/or do
         if t? then
             await *t!;
@@ -37024,12 +37033,12 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 loop t1 in ts do
     loop t2 in ts do
@@ -37045,12 +37054,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 loop t1 in ts do
     loop t2 in ts do
@@ -37067,12 +37076,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 loop t1 in ts do
     watching *t1 do
@@ -37094,9 +37103,9 @@ escape 1;
 Test { [[
 input void OS_START;
 event void a;
-class T with do end
+class Tx with do end
 do
-    var T t;
+    var Tx t;
     par/or do
         await a;
 native _assert;
@@ -37114,11 +37123,11 @@ escape 1;
 Test { [[
 input void OS_START;
 event void a;
-class T with do
+class Tx with do
     await FOREVER;
 end
 do
-    var T t;
+    var Tx t;
     par/or do
         await t;
 native _assert;
@@ -37144,7 +37153,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var S&& s;
 do
     watching *s do
@@ -37156,8 +37165,8 @@ end
 
 par/or do
     var S s;
-    var T&&? t =
-        spawn T with
+    var Tx&&? t =
+        spawn Tx with
             this.s = &&s;
         end;
     await *t!;
@@ -37202,13 +37211,13 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
-do T;
+do Tx;
 
-vector[31245] T ts;
+vector[31245] Tx ts;
 
 escape 1;
 ]],
@@ -37216,13 +37225,13 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
-do T;
+do Tx;
 
-vector[31246] T ts;
+vector[31246] Tx ts;
 
 escape 1;
 ]],
@@ -37230,13 +37239,13 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
-do T;
+do Tx;
 
-vector[65500] T ts;
+vector[65500] Tx ts;
 
 escape 1;
 ]],
@@ -37244,13 +37253,13 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
-do T;
+do Tx;
 
-vector[65532] T ts;
+vector[65532] Tx ts;
 
 escape 1;
 ]],
@@ -37259,13 +37268,13 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
-do T;
+do Tx;
 
-vector[65533] T ts;
+vector[65533] Tx ts;
 
 escape 1;
 ]],
@@ -37395,7 +37404,7 @@ escape xxx;
 }
 
 Test { [[
-class T with
+class Tx with
     var int xxx=0;
 do
     var int aaa = 0;
@@ -37406,7 +37415,7 @@ do
     end
     escape aaa;
 end
-var int ret = do T;
+var int ret = do Tx;
 escape ret;
 ]],
     _ana = {acc=1},
@@ -37415,34 +37424,34 @@ escape ret;
 
 --<<< SPAWN-DO SUGAR
 
--->>> DO-T SUGAR
+-->>> DO-Tx SUGAR
 
 Test { [[
-do T;
+do Tx;
 escape 0;
 ]],
-    parser = 'line 1 : after `T´ : expected `(´',
+    parser = 'line 1 : after `Tx´ : expected `(´',
 }
 
 Test { [[
-await T;
+await Tx;
 escape 0;
 ]],
-    env = 'line 1 : undeclared type `T´',
+    parser = 'line 1 : after `Tx´ : expected `(´',
 }
 
 Test { [[
-await T();
+await Tx();
 escape 0;
 ]],
-    tops = 'line 1 : abstraction "T" is not declared',
+    tops = 'line 1 : abstraction "Tx" is not declared',
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-do T;
+do Tx;
 escape 0;
 ]],
     run = 0,
@@ -37450,14 +37459,14 @@ escape 0;
 }
 
 Test { [[
-class T with
+class Tx with
     event void ok;
 do
     emit ok;
 end
 par/or do
     loop do
-        do T;
+        do Tx;
     end
 with
 end
@@ -37469,13 +37478,13 @@ escape 1;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event void ok;
 do
     emit ok;
 end
 par do
-    do T;
+    do Tx;
     escape 1;
 with
     await OS_START;
@@ -37487,13 +37496,13 @@ end
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event void ok;
 do
     await OS_START;
     emit ok;
 end
-do T;
+do Tx;
 escape 1;
 ]],
     run = 1,
@@ -37501,13 +37510,13 @@ escape 1;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event int ok;
 do
     await OS_START;
     emit ok => 1;
 end
-do T;
+do Tx;
 escape 1;
 ]],
     run = 1,
@@ -37515,22 +37524,22 @@ escape 1;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
 do
     await OS_START;
     escape 1;
 end
-var int ddd = do T;
+var int ddd = do Tx;
 escape ddd;
 ]],
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
 do
     escape 1;
 end
-var int ddd = do T;
+var int ddd = do Tx;
 escape ddd;
 ]],
     run = 1,
@@ -37538,13 +37547,13 @@ escape ddd;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int v;
 do
     await OS_START;
     escape v;
 end
-var int v = do T with
+var int v = do Tx with
     this.v = 10;
 end;
 escape v;
@@ -37554,14 +37563,14 @@ escape v;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int vv;
 do
     await OS_START;
     escape vv;
 end
 var int a;
-a = do T with
+a = do Tx with
     this.vv = 10;
 end;
 escape a;
@@ -37571,13 +37580,13 @@ escape a;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int v;
 do
     await OS_START;
     escape 10;
 end
-var int&& v = do T with
+var int&& v = do Tx with
     this.v = 10;
 end;
 escape *v;
@@ -37587,14 +37596,14 @@ escape *v;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int v;
 do
     await OS_START;
     escape v;
 end
 var int v;
-v = do T with
+v = do Tx with
     this.v = 10;
 end;
 escape v;
@@ -37604,14 +37613,14 @@ escape v;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int v;
 do
     await OS_START;
     escape (v,v*2);
 end
 var int v1, v2;
-(v1,v2) = do T with
+(v1,v2) = do Tx with
     this.v = 10;
 end;
 escape v1+v2;
@@ -37727,30 +37736,30 @@ escape 1;
 }
 
 Test { [[
-class T with do
+class Tx with do
     await FOREVER;
 end
-var T&&? ok;
+var Tx&&? ok;
 native do ##include <assert.h> end
 native _assert;
 do
     loop i in 100 do
-        ok = spawn T;
+        ok = spawn Tx;
     end
     _assert(ok?);
-    ok = spawn T;
-    ok = spawn T;
+    ok = spawn Tx;
+    ok = spawn Tx;
     _assert(not ok?);
 end
 do
     loop i in 100 do
-        ok = spawn T;
+        ok = spawn Tx;
     end
     _assert(not ok?);
 end
 do
     loop i in 101 do
-        ok = spawn T;
+        ok = spawn Tx;
     end
     _assert(not ok?);
 end
@@ -37762,33 +37771,33 @@ escape (not ok?);
 }
 
 Test { [[
-class T with do
+class Tx with do
     await FOREVER;
 end
 native do ##include <assert.h> end
 native _assert;
 do
     loop i in 100 do
-        var T&&? ok;
-        ok = spawn T;
+        var Tx&&? ok;
+        ok = spawn Tx;
         _assert(ok?);
     end
-    var T&&? ok1 = spawn T;
+    var Tx&&? ok1 = spawn Tx;
     _assert(not ok1?);
-    var T&&? ok2 = spawn T;
+    var Tx&&? ok2 = spawn Tx;
     _assert(not ok2?);
 end
 do
     loop i in 100 do
-        var T&&? ok;
-        ok = spawn T;
+        var Tx&&? ok;
+        ok = spawn Tx;
         _assert(ok?);
     end
 end
 do
     loop i in 101 do
-        var T&&? ok;
-        ok = spawn T;
+        var Tx&&? ok;
+        ok = spawn Tx;
         _assert(i<100 or (not ok?));
     end
 end
@@ -37800,36 +37809,36 @@ escape 1;
 }
 
 Test { [[
-class T with do
+class Tx with do
     await FOREVER;
 end
 native do ##include <assert.h> end
 native _assert;
 do
-    pool[] T ts;
+    pool[] Tx ts;
     loop i in 100 do
-        var T&&? ok;
-        ok = spawn T in ts;
+        var Tx&&? ok;
+        ok = spawn Tx in ts;
         _assert(not ok?);
     end
-    var T&&? ok1 = spawn T;
+    var Tx&&? ok1 = spawn Tx;
     _assert(not ok1?);
-    var T&&? ok2 = spawn T;
+    var Tx&&? ok2 = spawn Tx;
     _assert(not ok2?);
 end
 do
-    pool[] T ts;
+    pool[] Tx ts;
     loop i in 100 do
-        var T&&? ok;
-        ok = spawn T in ts;
+        var Tx&&? ok;
+        ok = spawn Tx in ts;
         _assert(ok?);
     end
 end
 do
-    pool[] T ts;
+    pool[] Tx ts;
     loop i in 101 do
-        var T&&? ok;
-        ok = spawn T in ts;
+        var Tx&&? ok;
+        ok = spawn Tx in ts;
         if i < 100 then
             _assert(ok?);
         else
@@ -37850,7 +37859,7 @@ native _V;
 native do
     int V = 0;
 end
-class T with
+class Tx with
     var int inc;
 do
     do finalize with
@@ -37860,10 +37869,10 @@ do
 end
 var int v = 0;
 do
-    pool[] T ts;
+    pool[] Tx ts;
     loop i in 200 do
-        var T&&? ok =
-            spawn T in ts with
+        var Tx&&? ok =
+            spawn Tx in ts with
                 this.inc = 1;
             end;
         if (not ok?) then
@@ -37899,19 +37908,19 @@ native _V;
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     await 2s;
     _V = _V + 1;
 end
 do
-    spawn T;
+    spawn Tx;
     await 1s;
-    spawn T;
+    spawn Tx;
     await 1s;
-    spawn T;
+    spawn Tx;
     await 1s;
-    spawn T;
+    spawn Tx;
     await 50s;
 end
 escape _V;
@@ -37925,13 +37934,13 @@ native _V;
 native do
     int V = 1;
 end
-class T with
+class Tx with
 do
     await OS_START;
     _V = 10;
 end
 do
-    spawn T;
+    spawn Tx;
     await OS_START;
 end
 escape _V;
@@ -37946,12 +37955,12 @@ native _V;
 native do
     int V = 1;
 end
-class T with
+class Tx with
 do
     _V = 10;
 end
 do
-    spawn T;
+    spawn Tx;
     await OS_START;
 end
 escape _V;
@@ -37960,9 +37969,9 @@ escape _V;
 }
 
 Test { [[
-class T with do end;
-var T a;
-var T&& b;
+class Tx with do end;
+var Tx a;
+var Tx&& b;
 b = &&a;
 escape 1;
 ]],
@@ -37971,11 +37980,11 @@ escape 1;
 }
 
 Test { [[
-class T with do
+class Tx with do
     await FOREVER;
 end;
-var T&&? a = spawn T;
-var T&& b;
+var Tx&&? a = spawn Tx;
+var Tx&& b;
 b = a!;
 escape 10;
 ]],
@@ -37983,9 +37992,9 @@ escape 10;
 }
 
 Test { [[
-class T with do end;
-var T&&? a = spawn T;
-var T&& b;
+class Tx with do end;
+var Tx&&? a = spawn Tx;
+var Tx&& b;
 b = a!;
 escape 10;
 ]],
@@ -37993,15 +38002,15 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v=0;
 do
     await FOREVER;
 end
 
-var T&& a=null;
+var Tx&& a=null;
 do
-    var T&&? b = spawn T;
+    var Tx&&? b = spawn Tx;
     b!:v = 10;
     a = b!;
 end
@@ -38013,15 +38022,15 @@ escape a:v;
     fin = 'line 13 : unsafe access to pointer "a" across `spawn´ (tests.lua : 9)',
 }
 Test { [[
-class T with
+class Tx with
     var int v=0;
 do
     await FOREVER;
 end
 
-var T&&? a;
+var Tx&&? a;
 do
-    var T&&? b = spawn T;
+    var Tx&&? b = spawn Tx;
     b!:v = 10;
     a = b!;
 end
@@ -38032,15 +38041,15 @@ escape a!:v;
     run = 10,
 }
 Test { [[
-class T with
+class Tx with
     var int v=0;
 do
     await FOREVER;
 end
 
-var T&&? a;
+var Tx&&? a;
 do
-    var T&&? b = spawn T;
+    var Tx&&? b = spawn Tx;
     b!:v = 10;
     a = b!;
     escape a!:v;
@@ -38051,14 +38060,14 @@ end
 }
 
 Test { [[
-class T with
+class Tx with
     var int v=0;
 do
 end
 
-var T&& a=null;
+var Tx&& a=null;
 do
-    var T&&? b = spawn T;
+    var Tx&&? b = spawn Tx;
     b!:v = 10;
     a = b!;
 end
@@ -38069,16 +38078,16 @@ escape a:v;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v=0;
 do
     await FOREVER;
 end
 
-var T&& a=null;
-var T aa;
+var Tx&& a=null;
+var Tx aa;
 do
-    var T&&? b = spawn T;
+    var Tx&&? b = spawn Tx;
     b!:v = 10;
         a = b!;
 end
@@ -38092,7 +38101,7 @@ native _V;
 native do
     int V = 1;
 end
-class T with
+class Tx with
     var int v=0;
 do
     do finalize with   // enters!
@@ -38101,11 +38110,11 @@ do
     await FOREVER;
 end
 
-var T&& a=null;
-var T aa;
+var Tx&& a=null;
+var Tx aa;
 do
-    pool[] T ts;
-    var T&&? b = spawn T in ts;
+    pool[] Tx ts;
+    var Tx&&? b = spawn Tx in ts;
     b!:v = 10;
         a = b!;
 end
@@ -38120,7 +38129,7 @@ native _V;
 native do
     int V = 0;
 end
-class T with
+class Tx with
     var int v=0;
 do
     do finalize with
@@ -38129,11 +38138,11 @@ do
     await FOREVER;
 end
 
-var T&& a=null;
-var T aa;
+var Tx&& a=null;
+var Tx aa;
 do
-    pool[] T ts;
-    var T&&? b = spawn T in ts;
+    pool[] Tx ts;
+    var Tx&&? b = spawn Tx in ts;
     b!:v = 10;
         a = b!;
     await OS_START;
@@ -38148,7 +38157,7 @@ native _V;
 native do
     int V = 5;
 end
-class T with
+class Tx with
     var int v=0;
 do
     do finalize with   // enters!
@@ -38157,10 +38166,10 @@ do
     await FOREVER;
 end
 
-var T&& a=null;
+var Tx&& a=null;
 do
-    pool[] T ts;
-    var T&&? b = spawn T in ts;
+    pool[] Tx ts;
+    var Tx&&? b = spawn Tx in ts;
     b!:v = 10;
         a = b!;
 end
@@ -38174,7 +38183,7 @@ native _V;
 native do
     int V = 5;
 end
-class T with
+class Tx with
     var int v=0;
 do
     do finalize with
@@ -38183,10 +38192,10 @@ do
     await FOREVER;
 end
 
-var T&& a=null;
+var Tx&& a=null;
 do
-    pool[] T ts;
-    var T&&? b = spawn T in ts;
+    pool[] Tx ts;
+    var Tx&&? b = spawn Tx in ts;
     b!:v = 10;
         a = b!;
     await OS_START;
@@ -38196,24 +38205,24 @@ escape _V;
     run = 10,
 }
 Test { [[
-class T with
+class Tx with
     var int&& i1=null;
 do
     var int i2=0;
     i1 = &&i2;
 end
-var T a;
+var Tx a;
 escape 10;
 ]],
     run = 10,
 }
 
 Test { [[
-class T with do end
-var T&& t1=null;
+class Tx with do end
+var Tx&& t1=null;
 do
 do
-    var T t2;
+    var Tx t2;
     t1 = &&t2;
 end
 end
@@ -38224,11 +38233,11 @@ escape 10;
 }
 
 Test { [[
-class T with do end
-var T&& t1=null;
+class Tx with do end
+var Tx&& t1=null;
 do
 do
-    var T t2;
+    var Tx t2;
     //finalize
         t1 = &&t2;
     //with
@@ -38243,10 +38252,10 @@ escape 10;
 }
 
 Test { [[
-class T with do end
-var T&&? t;
+class Tx with do end
+var Tx&&? t;
 do
-    t = spawn T;
+    t = spawn Tx;
 end
 escape 10;
 ]],
@@ -38255,17 +38264,17 @@ escape 10;
 }
 
 Test { [[
-class T with do end
-var T&&? a = spawn T;
+class Tx with do end
+var Tx&&? a = spawn Tx;
 escape 10;
 ]],
     run = 10,
 }
 
 Test { [[
-class T with do end
+class Tx with do end
 class U with do end
-var T&&? a;
+var Tx&&? a;
 a = spawn U;
 ]],
     env = 'line 4 : types mismatch',
@@ -38278,7 +38287,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int a=0;
 do
     do finalize with
@@ -38290,8 +38299,8 @@ end
 var int ret = 0;
 
 do
-    var T&&? o;
-    o = spawn T;
+    var Tx&&? o;
+    o = spawn Tx;
     await OS_START;
     ret = o!:a;
 end
@@ -38304,13 +38313,13 @@ escape ret + _V;
 }
 
 Test { [[
-input void OS_START, F;
+input void OS_START, B;
 native _V;
 native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int a=0;
 do
     do finalize with
@@ -38323,28 +38332,28 @@ end
 var int ret = 0;
 
 par/or do
-    pool[] T ts;
-    var T&&? o;
-    o = spawn T in ts;
+    pool[] Tx ts;
+    var Tx&&? o;
+    o = spawn Tx in ts;
     //await OS_START;
     ret = o!:a;
 with
-    await F;
+    await B;
 end
 
 escape ret + _V;
 ]],
-    run = { ['~>F']=11 },
+    run = { ['~>B']=11 },
 }
 
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
 par/or do
-    spawn T;
+    spawn Tx;
 with
 native _assert;
     _assert(0);
@@ -38356,13 +38365,13 @@ escape 1;
 }
 
 Test { [[
-input void OS_START, F;
+input void OS_START, B;
 native _V;
 native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int a=0;
 do
     do finalize with
@@ -38375,17 +38384,17 @@ end
 var int ret = 0;
 
 par/or do
-    var T&&? o;
-    o = spawn T;
+    var Tx&&? o;
+    o = spawn Tx;
     //await OS_START;
     ret = o!:a;
 with
-    await F;
+    await B;
 end
 
 escape ret + _V;    // V still 0
 ]],
-    run = { ['~>F']=10 },
+    run = { ['~>B']=10 },
 }
 
 Test { [[
@@ -38414,12 +38423,12 @@ do
     var V&&? vv = spawn V;
 end
 
-class T with
+class Tx with
     var U u;
 do
 end
 
-var T t;
+var Tx t;
 escape 1;
 ]],
     props = 'line 13 : not permitted inside an interface',
@@ -38437,14 +38446,14 @@ do
     var V&&? vv = spawn V;
 end
 
-class T with
+class Tx with
     var U&& u=null;
 do
     var U uu;
     this.u = &&uu;
 end
 
-var T t;
+var Tx t;
 escape 1;
 ]],
     run = 1,
@@ -38474,7 +38483,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U u;
 do
     //u.v = spawn V;
@@ -38482,7 +38491,7 @@ do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 escape _V;
 ]],
     props = 'line 26 : not permitted inside an interface',
@@ -38512,7 +38521,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U&& u=null;
 do
     var U uu;
@@ -38522,7 +38531,7 @@ do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 escape _V;
 ]],
     run = 1,
@@ -38550,14 +38559,14 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U u;
 do
     await FOREVER;
 end
 
 do
-    var T t;
+    var Tx t;
 end
 
 escape _V;
@@ -38588,7 +38597,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U&& u=null;
 do
     var U uu;
@@ -38597,7 +38606,7 @@ do
 end
 
 do
-    var T t;
+    var Tx t;
 end
 
 escape _V;
@@ -38630,7 +38639,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U u;
 do
     //u.v = spawn V;
@@ -38639,7 +38648,7 @@ do
 end
 
 do
-    var T t;
+    var Tx t;
 end
 
 escape _V;
@@ -38672,7 +38681,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U&& u=null;
 do
     var U uu;
@@ -38683,7 +38692,7 @@ do
 end
 
 do
-    var T t;
+    var Tx t;
 end
 
 escape _V;
@@ -38752,7 +38761,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U u;
 do
     //u.v = spawn V;
@@ -38761,7 +38770,7 @@ do
 end
 
 do
-    var T t;
+    var Tx t;
     await OS_START;
 end
 
@@ -38795,7 +38804,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U&& u=null;
 do
     var U uu;
@@ -38806,7 +38815,7 @@ do
 end
 
 do
-    var T t;
+    var Tx t;
     await OS_START;
 end
 
@@ -38840,7 +38849,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U u;
 do
     //u.v = spawn V;
@@ -38848,7 +38857,7 @@ do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 do
     await OS_START;
     var V&& v = t.u.x;
@@ -38885,7 +38894,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U&& u=null;
 do
     var U uu;
@@ -38895,7 +38904,7 @@ do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 do
     await OS_START;
     var V&& v = t.u:v;
@@ -38932,7 +38941,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U u;
 do
     //u.v = spawn V;
@@ -38942,7 +38951,7 @@ end
 
 input void OS_START;
 
-var T t;
+var Tx t;
 do
     var U u;
     u.v = t.u.v;
@@ -38979,7 +38988,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U u;
 do
     //u.v = spawn V;
@@ -38989,7 +38998,7 @@ end
 
 input void OS_START;
 
-var T t;
+var Tx t;
 do
     var U u;
     u.v = t.u.v;
@@ -39028,7 +39037,7 @@ do
     await FOREVER;
 end
 
-class T with
+class Tx with
     var U&& u=null;
 do
     var U uu;
@@ -39040,7 +39049,7 @@ end
 
 input void OS_START;
 
-var T t;
+var Tx t;
 do
     var U u;
     u.v = t.u:v;
@@ -39059,14 +39068,14 @@ class V with
 do
 end
 
-class T with
+class Tx with
     var V&&? v;
 do
     await 1s;
     v = spawn V;
 end
 
-var T t;
+var Tx t;
 await 1s;
 escape 1;
 
@@ -39087,7 +39096,7 @@ class U with
 do
 end
 
-class T with
+class Tx with
     var U&& u=null;
 do
     await OS_START;
@@ -39096,7 +39105,7 @@ end
 
 do
     var U u;
-    var T t;
+    var Tx t;
         t.u = &&u;
     await OS_START;
 end
@@ -39118,7 +39127,7 @@ do
     await A;
 end
 
-class T with
+class Tx with
     var U&& u=null;
 do
     await OS_START;
@@ -39127,7 +39136,7 @@ end
 
 do
     var U u;
-    var T t;
+    var Tx t;
         t.u = &&u;
     await OS_START;
 end
@@ -39155,7 +39164,7 @@ class U with
 do
 end
 
-class T with
+class Tx with
     var U&& u=null;
 do
     await 1s;
@@ -39165,7 +39174,7 @@ end
 do
     var U u;
     do              // 26
-        var T t;
+        var Tx t;
         t.u = &&u;
         await 2s;
     end
@@ -39185,7 +39194,7 @@ native _V;
 native do
     int V = 10;
 end
-class T with
+class Tx with
 do
     do finalize with
         _V = _V - 1;
@@ -39195,8 +39204,8 @@ do
 end
 
 do
-    var T&&? a;
-    a = spawn T;
+    var Tx&&? a;
+    a = spawn Tx;
     //free a;
     _assert(_V == 10);
     await 1s;
@@ -39215,7 +39224,7 @@ native _V;
 native do
     int V = 10;
 end
-class T with
+class Tx with
 do
     do finalize with
         _V = _V - 1;
@@ -39225,9 +39234,9 @@ do
 end
 
 do
-    pool[] T ts;
-    var T&&? a;
-    a = spawn T in ts;
+    pool[] Tx ts;
+    var Tx&&? a;
+    a = spawn Tx in ts;
     //free a;
     _assert(_V == 10);
 end
@@ -39247,7 +39256,7 @@ native do
     int Y = 0;
 end
 
-class T with
+class Tx with
 do
     do finalize with
         _Y = _Y + 1;
@@ -39257,12 +39266,12 @@ do
 end
 
 do
-    var T&&? ptr;
+    var Tx&&? ptr;
     loop i in 100 do
         if ptr? then
             //free ptr;
         end
-        ptr = spawn T;
+        ptr = spawn Tx;
     end
     _assert(_X == 100 and _Y == 0);
 end
@@ -39284,7 +39293,7 @@ native do
     int Y = 0;
 end
 
-class T with
+class Tx with
 do
     do finalize with
         _Y = _Y + 1;
@@ -39294,13 +39303,13 @@ do
 end
 
 do
-    pool[] T ts;
-    var T&&? ptr;
+    pool[] Tx ts;
+    var Tx&&? ptr;
     loop i in 100 do
         if ptr? then
             //free ptr;
         end
-        ptr = spawn T in ts;
+        ptr = spawn Tx in ts;
     end
     _assert(_X == 100 and _Y == 0);
 end
@@ -39322,7 +39331,7 @@ native do
     int Y = 0;
 end
 
-class T with
+class Tx with
 do
     do finalize with
         _Y = _Y + 1;
@@ -39332,12 +39341,12 @@ do
 end
 
 do
-    var T&&? ptr;
+    var Tx&&? ptr;
     loop i in 100 do
         if ptr? then
             //free ptr;
         end
-        ptr = spawn T;
+        ptr = spawn Tx;
     end
     _assert(_X == 100 and _Y == 99);
 end
@@ -39352,14 +39361,14 @@ escape 10;
 
 Test { [[
 class U with do end;
-class T with
+class Tx with
     var U&& u;
 do
 end
 
 do
     var U u;
-    spawn T with
+    spawn Tx with
         this.u = &&u;
     end;
 end
@@ -39372,14 +39381,14 @@ escape 1;
 
 Test { [[
 class U with do end;
-class T with
+class Tx with
     var& U u;
 do
 end
 
 do
     var U u;
-    spawn T with
+    spawn Tx with
         this.u = &u;
     end;
 end
@@ -39393,13 +39402,13 @@ escape 1;
 
 Test { [[
 class U with do end;
-class T with
+class Tx with
     var U&& u;
 do
 end
 
     var U u;
-    spawn T with
+    spawn Tx with
         this.u = &&u;
     end;
 escape 1;
@@ -39409,13 +39418,13 @@ escape 1;
 
 Test { [[
 class U with do end;
-class T with
+class Tx with
     var& U u;
 do
 end
 
     var U u;
-    spawn T with
+    spawn Tx with
         this.u = &u;
     end;
 escape 1;
@@ -39425,7 +39434,7 @@ escape 1;
 
 Test { [[
 class U with do end;
-class T with
+class Tx with
     var U&& u;
 do
     var U&& u1 = u;
@@ -39435,7 +39444,7 @@ end
 
 do
     var U u;
-    spawn T with
+    spawn Tx with
         this.u = &&u;
     end;
 end
@@ -39448,7 +39457,7 @@ escape 1;
 
 Test { [[
 class U with do end;
-class T with
+class Tx with
     var U&& u;
 do
     var U&& u1 = u;
@@ -39457,7 +39466,7 @@ do
 end
 
     var U u;
-    spawn T with
+    spawn Tx with
         this.u = &&u;
     end;
 escape 1;
@@ -39467,7 +39476,7 @@ escape 1;
 
 Test { [[
 class U with do end;
-class T with
+class Tx with
     var U&& u;
 do
     var U&& u1 = u;
@@ -39477,7 +39486,7 @@ end
 
 do
     var U u;
-    spawn T with
+    spawn Tx with
         this.u = &&u;
     end;
 end
@@ -39514,11 +39523,11 @@ escape n;
 --[=[
 Test { [[
 var void&& ptr;
-class T with
+class Tx with
 do
 end
 loop i in 100000 do
-    ptr = spawn T;
+    ptr = spawn Tx;
 end
 escape 10;
 ]],
@@ -39533,7 +39542,7 @@ native _V, _assert;
 native do
     int V = 0;
 end
-class T with
+class Tx with
     var int v=0;
 do
     do finalize with
@@ -39547,13 +39556,13 @@ do
     await FOREVER;
 end
 do
-    pool[] T ts;
-    var T&&? p;
-    p = spawn T in ts;
+    pool[] Tx ts;
+    var Tx&&? p;
+    p = spawn Tx in ts;
     p!:v = 1;
-    p = spawn T in ts;
+    p = spawn Tx in ts;
     p!:v = 2;
-    p = spawn T in ts;
+    p = spawn Tx in ts;
     p!:v = 3;
     input void OS_START;
     await OS_START;
@@ -39566,11 +39575,11 @@ escape _V;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-var T&&? t;
-t = spawn T;
+var Tx&&? t;
+t = spawn Tx;
 escape t!.v;
 ]],
     env = 'line 6 : not a struct',
@@ -39578,18 +39587,18 @@ escape t!.v;
 
 Test { [[
 native/plain _void;
-class T with
+class Tx with
     var int v=0;
 do
     await FOREVER;
 end
 
 var _void&&[10] ts = [];
-var T&&? t;
-t = spawn T;
+var Tx&&? t;
+t = spawn Tx;
 t!:v = 10;
 ts[0] = (t!) as void&&;
-escape t!:v + (ts[0] as T&&):v;
+escape t!:v + (ts[0] as Tx&&):v;
 ]],
     fin = 'line 12 : unsafe access to pointer "ts" across `spawn´ (tests.lua : 10)',
 }
@@ -39599,18 +39608,18 @@ pre native do
     typedef void* void_;
 end
 native/plain _void_;
-class T with
+class Tx with
     var int v=0;
 do
     await FOREVER;
 end
 
 var _void_[10] ts = [];
-var T&&? t;
-t = spawn T;
+var Tx&&? t;
+t = spawn Tx;
 t!:v = 10;
 ts[0] = (t!) as void&&;
-escape t!:v + (ts[0] as T&&):v;
+escape t!:v + (ts[0] as Tx&&):v;
 ]],
     run = 20,
 }
@@ -39621,7 +39630,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
 do
     _V = _V + 1;
     par/and do
@@ -39640,7 +39649,7 @@ end
 do
     loop i in 10 do
         await 1s;
-        spawn T;
+        spawn Tx;
     end
     await 5s;
 end
@@ -39651,13 +39660,13 @@ escape _V;
 }
 
 Test { [[
-class T with
+class Tx with
     var int&& ptr = null;
 do
 end
 do
     var int&& p = null;
-    var T&&? ui = spawn T with
+    var Tx&&? ui = spawn Tx with
         this.ptr = p;   // ptr > p
     end;
 end
@@ -39669,15 +39678,15 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& ptr = null;
 do
 end
 do
-    pool[] T ts;
+    pool[] Tx ts;
     var void&& p = null;
-    var T&&? ui;
-    ui = spawn T in ts with
+    var Tx&&? ui;
+    ui = spawn Tx in ts with
         this.ptr = p;
     end;
 end
@@ -39693,14 +39702,14 @@ pre native do
     typedef int s;
 end
 
-class T with
+class Tx with
     var _s&& ptr = null;
 do
 end
 
 do
     var _s&& p = null;
-    var T&&? ui = spawn T with
+    var Tx&&? ui = spawn Tx with
         this.ptr = p;
     end;
 end
@@ -39718,16 +39727,16 @@ pre native do
     typedef int s;
 end
 
-class T with
+class Tx with
     var _s&& ptr = null;
 do
 end
 
-var T&&? ui;
+var Tx&&? ui;
 do
     var _s&& p = null;
     do
-        ui = spawn T with
+        ui = spawn Tx with
             this.ptr = p;
         end;
     end
@@ -39746,7 +39755,7 @@ pre native do
     typedef int s;
 end
 
-class T with
+class Tx with
     var _s&& ptr = null;
 do
 end
@@ -39754,7 +39763,7 @@ end
 do
     loop i in 10 do
         var _s&& p = null;
-        spawn T with
+        spawn Tx with
             this.ptr = p;
         end;
         await 1s;
@@ -39773,7 +39782,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     event void a;
 do
     par/or do
@@ -39787,7 +39796,7 @@ do
     _V = _V + 10;
 end
 
-var T t;
+var Tx t;
 _V = _V * 2;
 emit t.a;
 escape _V;
@@ -39803,7 +39812,7 @@ pre native do
     typedef int s;
 end
 
-class T with
+class Tx with
     var _s&& ptr = null;
 do
     _V = _V + 1;
@@ -39818,7 +39827,7 @@ end
 do
     loop i in 10 do
         var _s&& p = null;
-        spawn T with
+        spawn Tx with
             this.ptr = p;
         end;
         await 1s;
@@ -39834,12 +39843,12 @@ escape _V;
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& ptr;
 do
 end
 
-var T t with
+var Tx t with
         do this.ptr = _malloc(10);
     finalize with
         _free();
@@ -39852,12 +39861,12 @@ end;
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& ptr;
 do
 end
 
-spawn T with
+spawn Tx with
         do this.ptr = _malloc(10);
     finalize with
         _free();
@@ -39875,7 +39884,7 @@ pre native do
     typedef int s;
 end
 
-class T with
+class Tx with
     var _s&& ptr = null;
 do
 end
@@ -39889,7 +39898,7 @@ end
 do
     loop i in 10 do
         var _s&& p = null;
-        spawn T with
+        spawn Tx with
                 do this.ptr = p;
             finalize with
                 _V = _V + 1;
@@ -39927,7 +39936,7 @@ pre native do
     typedef int s;
 end
 
-class T with
+class Tx with
     var _s&& ptr = null;
 do
     _V = _V + 1;
@@ -39939,11 +39948,11 @@ native do
     int V=0;
 end
 
-var T&&? ui;
+var Tx&&? ui;
 do
     loop i in 10 do
         var _s&& p = null;
-        ui = spawn T with
+        ui = spawn Tx with
             this.ptr = p;
         end;
         await 1s;
@@ -39963,7 +39972,7 @@ pre native do
     typedef int s;
 end
 
-class T with
+class Tx with
     var _s&& ptr = null;
 do
 end
@@ -39974,11 +39983,11 @@ native do
     int V=0;
 end
 
-var T&&? ui;
+var Tx&&? ui;
 do
     var _s&& p = null;
     loop i in 10 do
-        ui = spawn T with
+        ui = spawn Tx with
                 do this.ptr = p;
             finalize with
                 _V = _V + 1;
@@ -40003,7 +40012,7 @@ pre native do
     typedef int s;
 end
 
-class T with
+class Tx with
     var _s&& ptr = null;
 do
 end
@@ -40017,7 +40026,7 @@ end
 do
     loop i in 10 do
         var _s&& p = null;
-        var T&&? ui = spawn T with
+        var Tx&&? ui = spawn Tx with
                 do this.ptr = p;   // p == ptr
             finalize with
                 _V = _V + 1;
@@ -40107,8 +40116,8 @@ escape 2;
 }
 
 Test { [[
-class T with do end;
-pool[] T ts;
+class Tx with do end;
+pool[] Tx ts;
 loop t in ts do
 end
 escape 1;
@@ -40122,7 +40131,7 @@ Test { [[
 input void OS_START;
 input int A,B;
 
-class T with
+class Tx with
     event int e;
 do
     var int v = await A;
@@ -40134,7 +40143,7 @@ event int a;
 var int ret=0;
 par/or do
     pause/if a do
-        var T t;
+        var Tx t;
         ret = await t.e;
     end
 with
@@ -40154,7 +40163,7 @@ input void A,X, OS_START;
 event int a;//=0;
 var int ret = 0;
 
-class T with
+class Tx with
     event void v, ok, go;
 do
     await A;
@@ -40164,7 +40173,7 @@ end
 
 par/or do
     pause/if a do
-        vector[2] T ts;
+        vector[2] Tx ts;
         par/or do
             par/and do
                 await ts[0].ok;
@@ -40204,7 +40213,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int c;
 do
     do finalize with
@@ -40215,9 +40224,9 @@ end
 
 par/or do
     do
-        pool[] T ts;
+        pool[] Tx ts;
         loop i do
-            spawn T in ts with
+            spawn Tx in ts with
                 this.c = i;
             end;
             await 1s;
@@ -40238,7 +40247,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int c;
 do
     do finalize with
@@ -40253,9 +40262,9 @@ event int pse;
 par/or do
     pause/if pse do
         do
-            pool[] T ts;
+            pool[] Tx ts;
             loop i do
-                spawn T in ts with
+                spawn Tx in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -40283,7 +40292,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int c;
 do
     do finalize with
@@ -40297,10 +40306,10 @@ event int pse;
 
 par/or do
     do
-        pool[] T ts;
+        pool[] Tx ts;
         loop i do
             pause/if pse do
-                spawn T in ts with
+                spawn Tx in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -40327,7 +40336,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int c;
 do
     do finalize with
@@ -40342,10 +40351,10 @@ event int pse;
 
 par/or do
     do
-        pool[] T ts;
+        pool[] Tx ts;
         loop i do
             pause/if pse do
-                spawn T in ts with
+                spawn Tx in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -40373,7 +40382,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int c;
 do
     do finalize with
@@ -40389,9 +40398,9 @@ event int pse;
 par/or do
     pause/if pse do
         do
-            pool[] T ts;
+            pool[] Tx ts;
             loop i do
-                spawn T in ts with
+                spawn Tx in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -40419,7 +40428,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int c;
 do
     do finalize with
@@ -40434,10 +40443,10 @@ event int pse;
 
 par/or do
     do
-        pool[] T ts;
+        pool[] Tx ts;
         loop i do
             pause/if pse do
-                spawn T in ts with
+                spawn Tx in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -40464,7 +40473,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int c;
 do
     do finalize with
@@ -40480,9 +40489,9 @@ event int pse;
 par/or do
     pause/if pse do
         do
-            pool[] T ts;
+            pool[] Tx ts;
             loop i do
-                spawn T in ts with
+                spawn Tx in ts with
                     this.c = i;
                 end;
                 await 1s;
@@ -40509,7 +40518,7 @@ event int a;
 input void A;
 var int v = 0;
 
-class T with
+class Tx with
     event int a;
 do
     pause/if a do
@@ -40527,7 +40536,7 @@ with
         v = v + 1;
     end
 with
-    var T t;
+    var Tx t;
     var int pse_ = 0;
     loop do
         await 1s;
@@ -40545,12 +40554,12 @@ escape v;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v;
 do
     await FOREVER;
 end
-var T&&? t = spawn T with
+var Tx&&? t = spawn Tx with
              this.v = 10;
            end;
 //free(t);
@@ -40561,17 +40570,17 @@ escape t!:v;
 
 -- kill org inside iterator
 Test { [[
-class T with
+class Tx with
     event void e;
 do
     await e;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 1;
 
-spawn T in ts;
+spawn Tx in ts;
 async do end;
 
 loop t in ts do
@@ -40589,8 +40598,8 @@ escape ret;
 }
 
 Test { [[
-class T with
-    var T&& t;
+class Tx with
+    var Tx&& t;
     event void e;
 do
     watching *t do
@@ -40598,14 +40607,14 @@ do
     end
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 1;
 
-var T&&? t1 = spawn T in ts with
+var Tx&&? t1 = spawn Tx in ts with
                 this.t = &&this;
             end;
-var T&&? t2 = spawn T in ts with
+var Tx&&? t2 = spawn Tx in ts with
                 this.t = t1!;
             end;
 
@@ -40630,15 +40639,15 @@ interface I with
     var int v;
     event void e;
 end
-class T with
+class Tx with
     interface I;
 do
     await e;
 end
-pool[] T ts;
+pool[] Tx ts;
 var int ret = 0;
 do
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 10;
     end;
     async do end;
@@ -40657,18 +40666,18 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     event void e;
 do
     await e;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 1;
 
-spawn T in ts;
-spawn T in ts;
+spawn Tx in ts;
+spawn Tx in ts;
 async do end;
 
 loop t1 in ts do
@@ -40682,18 +40691,18 @@ escape ret;
     run = 5,
 }
 Test { [[
-class T with
+class Tx with
     event void e;
 do
     await e;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 1;
 
-spawn T in ts;
-spawn T in ts;
+spawn Tx in ts;
+spawn Tx in ts;
 async do end;
 
 loop t1 in ts do
@@ -40709,18 +40718,18 @@ escape ret;
     --run = 3,
 }
 Test { [[
-class T with
+class Tx with
     event void e;
 do
     await e;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 1;
 
-spawn T in ts;
-spawn T in ts;
+spawn Tx in ts;
+spawn Tx in ts;
 async do end;
 
 loop t1 in ts do
@@ -40741,18 +40750,18 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     event void e;
 do
     await e;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 1;
 
-spawn T in ts;
-spawn T in ts;
+spawn Tx in ts;
+spawn Tx in ts;
 async do end;
 
 loop t1 in ts do
@@ -40819,12 +40828,12 @@ interface I with
     interface A;
     interface B,C;
 end
-class T with
+class Tx with
     interface I;
 do
     await FOREVER;
 end
-var T t with
+var Tx t with
     this.a1 = 1;
     this.a2 = 2;
     this.b1 = 3;
@@ -40851,11 +40860,11 @@ interface I with
     interface A;
     interface B,C;
 end
-class T with
+class Tx with
     interface I;
 do
 end
-var T t with
+var Tx t with
     this.a1 = 1;
     this.a2 = 2;
     this.b1 = 3;
@@ -40872,10 +40881,10 @@ Test { [[
 interface I with
     var int a;
 end
-class T with
+class Tx with
 do end
 do
-    pool[] T ts;
+    pool[] Tx ts;
     loop i in ts do
     end
 end
@@ -40934,7 +40943,7 @@ Test { [[
 native do ##include <assert.h> end
 native _assert;
 
-interface T with
+interface Tx with
 end
 
 class T1 with
@@ -40947,7 +40956,7 @@ end
 
 var T1 t1;
 var T2 t2;
-var T&& t;
+var Tx&& t;
 
 t = &&t1;
 var T1&& x1 = ( t as T1&&);
@@ -40965,13 +40974,13 @@ escape 10;
 Test { [[
 interface I with
 end
-class T with
+class Tx with
     var I&& parent;
 do
 end
 class U with
 do
-    var T move with
+    var Tx move with
         this.parent = &&outer;
     end;
 end
@@ -41027,7 +41036,7 @@ class U with
     event int a_;
 do
 end
-class T with
+class Tx with
     event int a_;
     var Global&& g;
 do
@@ -41036,7 +41045,7 @@ do
 end
 var U u;
 var Global&& g = &&u;
-var T t;
+var Tx t;
 t.g = &&u;
 var int v = await g:a_;
 escape v;
@@ -41100,7 +41109,7 @@ interface Global with
     var int&& a;
 end
 var int&& a = null;
-class T with
+class Tx with
 do
     var int&& b;
     b = global:a;
@@ -41115,7 +41124,7 @@ interface Global with
     var int&& a;
 end
 var int&& a = null;
-class T with
+class Tx with
 do
     var int&& b=null;
     global:a = b;
@@ -41133,13 +41142,13 @@ interface Global with
     event int a;
 end
 event int a;
-class T with
+class Tx with
     event int a;
 do
     await OS_START;
     emit global:a  =>  10;
 end
-var T t;
+var Tx t;
 var int v = await a;
 escape v;
 ]],
@@ -41153,13 +41162,13 @@ interface Global with
 end
 event int a;
 var int aa = 0;
-class T with
+class Tx with
     event int a;
     var int aa=0;
 do
     aa = await global:a;
 end
-var T t;
+var Tx t;
 await OS_START;
 emit a  =>  10;
 escape t.aa;
@@ -41173,12 +41182,12 @@ interface Global with
 end
 var int v;
 
-class T with
+class Tx with
     var int v = 1;
 do
     this.v = global:v;
 end
-var T t;
+var Tx t;
 
 escape t.v;
 ]],
@@ -41192,12 +41201,12 @@ interface Global with
 end
 var int v;
 
-class T with
+class Tx with
     var int v = 1;
 do
     //this.v = global:v;
 end
-var T t;
+var Tx t;
 
 escape v;
 ]],
@@ -41211,12 +41220,12 @@ interface Global with
 end
 var int v;
 
-class T with
+class Tx with
     var int v = 1;
 do
     //this.v = global:v;
 end
-var T t;
+var Tx t;
 
 escape t.v;
 ]],
@@ -41230,12 +41239,12 @@ interface Global with
 end
 var int v=0;
 
-class T with
+class Tx with
     var int v = 1;
 do
     //this.v = global:v;
 end
-var T t;
+var Tx t;
 
 escape t.v;
 ]],
@@ -41247,12 +41256,12 @@ interface Global with
     var int v;
 end
 
-class T with
+class Tx with
     var int v = 1;
 do
     //this.v = global:v;
 end
-var T t;
+var Tx t;
 
 var int v=0;
 escape t.v;
@@ -41266,12 +41275,12 @@ interface Global with
     var& int vvv;
 end
 
-class T with
+class Tx with
     var int v = 1;
 do
     this.v = global:vvv;
 end
-var T t;
+var Tx t;
 
 var int  um = 111;
 var& int vvv = &um;
@@ -41281,13 +41290,13 @@ escape t.v;
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
 do
     a = global:a;
 end
 var int a = 10;
-var T t;
+var Tx t;
 input void OS_START;
 await OS_START;
 t.a = t.a + a;
@@ -41300,14 +41309,14 @@ Test { [[
 interface Global with
     var int a;
 end
-class T with
+class Tx with
     var int a=0;
 do
     a = global:a;
 end
 do
     var int a = 10;
-    var T t;
+    var Tx t;
 input void OS_START;
 await OS_START;
     t.a = t.a + a;
@@ -41322,13 +41331,13 @@ interface Global with
     var int a;
 end
 var int a = 10;
-class T with
+class Tx with
     var int a=0;
 do
     a = global:a;
 end
 do
-    var T t;
+    var Tx t;
 input void OS_START;
 await OS_START;
     t.a = t.a + a;
@@ -41349,7 +41358,7 @@ end
 interface Global with
     var int a;
 end
-class T with
+class Tx with
     var int a=0;
 do
     a = global:a;
@@ -41358,7 +41367,7 @@ do
 end
 var int a = 10;
 do
-    var T t;
+    var Tx t;
 input void OS_START;
 await OS_START;
     t.a = t.a + a;
@@ -41388,7 +41397,7 @@ interface III with
     code/instantaneous Fff (var int)=>int;
 end
 
-class T with
+class Tx with
     var int vvv;
     code/instantaneous Fff (var int)=>int;
 do
@@ -41398,7 +41407,7 @@ do
     await FOREVER;
 end
 
-var T t with
+var Tx t with
     this.vvv = 100;
 end;
 
@@ -41419,7 +41428,7 @@ interface Global with
 end
 event void e;
 
-class T with
+class Tx with
 do
     emit global:e;
     _V = 1;
@@ -41430,7 +41439,7 @@ par/or do
     par/or do
         await 1s;
         do
-            var T t;
+            var Tx t;
             emit a;
             _V = 1;
         end
@@ -41465,7 +41474,7 @@ interface Global with
 end
 event void e;
 
-class T with
+class Tx with
 do
     emit global:e;
 end
@@ -41474,7 +41483,7 @@ var int ret = 0;
 par/or do
     await 1s;
     do
-        var T t;
+        var Tx t;
         await FOREVER;
     end
 with
@@ -41511,7 +41520,7 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
@@ -41520,7 +41529,7 @@ interface I with
 end
 
 var I&& i;
-var T t;
+var Tx t;
 i = &&t;
 escape 10;
 ]],
@@ -41528,7 +41537,7 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     event void a;
 do
 end
@@ -41538,7 +41547,7 @@ interface I with
 end
 
 var I&& i;
-var T t;
+var Tx t;
 i = &&t;
 escape 10;
 ]],
@@ -41546,7 +41555,7 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     event int a;
 do
 end
@@ -41556,7 +41565,7 @@ interface I with
 end
 
 var I&& i;
-var T t;
+var Tx t;
 i = t;
 escape 10;
 ]],
@@ -41564,7 +41573,7 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     event int a;
 do
 end
@@ -41574,7 +41583,7 @@ interface I with
 end
 
 var I&& i;
-var T t;
+var Tx t;
 i = &&t;
 escape 10;
 ]],
@@ -41583,7 +41592,7 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     event int a;
 do
 end
@@ -41592,7 +41601,7 @@ interface I with
     event int a;
 end
 
-var T t;
+var Tx t;
 var I&& i;
 i = &&t;
 escape 10;
@@ -41601,7 +41610,7 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     event int a;
 do
 end
@@ -41613,7 +41622,7 @@ interface J with
     event int a;
 end
 
-var T t;
+var Tx t;
 var I&& i;
 i = &&t;
 var J&& j = i;
@@ -41623,7 +41632,7 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     event int a;
 do
 end
@@ -41636,7 +41645,7 @@ interface J with
 end
 
 var I&& i;
-var T t;
+var Tx t;
 i = &&t;
 var J&& j = i;
 escape 10;
@@ -41645,7 +41654,7 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v;
     var int&& x;
     event int a;
@@ -41662,7 +41671,7 @@ interface J with
 end
 
 var I&& i;
-var T t;
+var Tx t;
 i = &&t;
 var J&& j = i;
 escape 0;
@@ -41672,7 +41681,7 @@ escape 0;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event int a;
     var int aa=0;
 do
@@ -41688,7 +41697,7 @@ interface J with
     var int aa;
 end
 
-var T t;
+var Tx t;
 var I&& i;
 i = &&t;
 var J&& j = i;
@@ -41699,7 +41708,7 @@ escape i:aa + j:aa + t.aa;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     event int a;
     var int aa=0;
 do
@@ -41715,7 +41724,7 @@ interface J with
     var int aa;
 end
 
-var T t;
+var Tx t;
 var I&& i;
 i = &&t;
 var J&& j = i;
@@ -41727,7 +41736,7 @@ escape i:aa + j:aa + t.aa;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int v=0;
     var int&& x=null;
     var int a=0;
@@ -41744,7 +41753,7 @@ interface J with
     var int a;
 end
 
-var T t;
+var Tx t;
 var I&& i;
 i = &&t;
 var J&& j = i;
@@ -41755,7 +41764,7 @@ escape i:a + j:a + t.a + i:v + t.v;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int v=0;
     var int&& x=null;
     var int a=0;
@@ -41772,7 +41781,7 @@ interface J with
     var int a;
 end
 
-var T t;
+var Tx t;
 var I&& i;
 i = &&t;
 var J&& j = i;
@@ -41810,12 +41819,12 @@ Test { [[
 interface I with
     var int a;
 end
-class T with
+class Tx with
     interface J;
 do
     a = 10;
 end
-var T t;
+var Tx t;
 escape t.a;
 ]],
     adj = 'line 5 : interface "J" is not declared',
@@ -41841,13 +41850,13 @@ Test { [[
 interface I with
     var int a;
 end
-class T with
+class Tx with
     interface I;
     var int a=0;
 do
     a = 10;
 end
-var T t;
+var Tx t;
 input void OS_START;
 await OS_START;
 escape t.a;
@@ -41860,12 +41869,12 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var int v;
 do
 end
 
-var T t;
+var Tx t;
     t.v = 10;
 var I&& i = &&t;
 escape t._ins();
@@ -41878,12 +41887,12 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var int v;
 do
 end
 
-var T t;
+var Tx t;
     t.v = 10;
 var I&& i = &&t;
 escape i:_ins();
@@ -41892,37 +41901,37 @@ escape i:_ins();
     env = 'line 13 : variable/event "_ins" is not declared',
 }
 Test { [[
-class T with do end
+class Tx with do end
 class U with
-    interface T;
+    interface Tx;
 do
 end
 escape 0;
 ]],
-    adj = 'line 3 : interface "T" is not declared',
+    adj = 'line 3 : interface "Tx" is not declared',
 }
 
 Test { [[
 interface Global with
-    var G&& g;
+    var Gx&& g;
 end
-var G&& g;
+var Gx&& g;
 escape 1;
 ]],
-    env = 'line 2 : undeclared type `G´',
+    env = 'line 2 : undeclared type `Gx´',
 }
 
 Test { [[
 interface Global with
-    event (G&&,int) g;
+    event (Gx&&,int) g;
 end
-event (G&&,int) g;
+event (Gx&&,int) g;
 escape 1;
 ]],
     env = 'line 2 : invalid event type'
-    --env = 'line 2 : undeclared type `G´',
+    --env = 'line 2 : undeclared type `Gx´',
     --run = 1,
-    --gcc = '22:2: error: unknown type name ‘G’',
+    --gcc = '22:2: error: unknown type name ‘Gx’',
     --gcc = 'error: unknown type name',
 }
 
@@ -41931,20 +41940,20 @@ interface I with
 native _char;
     var _char c;
 end
-class T with
+class Tx with
     interface I;
     var _char c=0;
 do
     this.c = 1;
 end
-var T t;
+var Tx t;
 var I&& i = &&t;
 escape i:c == 1;
 ]],
     run = 1,
 }
 
--- XXX: T-vs-Opt
+-- XXX: Tx-vs-Opt
 
 Test { [[
 input _vldoor_t&& T_VERTICAL_DOOR;
@@ -41992,12 +42001,12 @@ end
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& v=null;
 do
 end
 
-var T t;
+var Tx t;
 t.v = null;
 var void&& ptr = null;
 t.v = ptr;
@@ -42008,12 +42017,12 @@ escape 1;
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var void&& v;
 do
 end
 
-var T t with
+var Tx t with
     this.v = null;
 end;
 var void&& ptr = null;
@@ -42026,12 +42035,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& v=null;
 do
 end
 
-var T t, s;
+var Tx t, s;
 t.v = null;
 t.v = s.v;
 escape 1;
@@ -42050,7 +42059,7 @@ end
 
 var I&& t = null;
 
-class T with
+class Tx with
 do
     global:t = &&this;
 end
@@ -42066,11 +42075,11 @@ Test { [[
 native do
     void* v;
 end
-class T with
+class Tx with
     var& _void ptr;
 do
 end
-var T t with
+var Tx t with
     this.ptr = &_v;
 end;
 escape 1;
@@ -42079,7 +42088,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var byte && str;
 do
     str = "oioi";
@@ -42091,37 +42100,37 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 var int&& p1=null;
 var& int&&  v=&p1;
-var T&& p=null;
-var& T&&  t=&p;
+var Tx&& p=null;
+var& Tx&&  t=&p;
 escape 1;
 ]],
     run = 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 var& int && v;
-var& T && t;
+var& Tx && t;
 escape 1;
 ]],
     env = 'line 4 : invalid type modifier : `&&&´',
 }
 
 Test { [[
-class T with
+class Tx with
     var byte&& str;
 do
 end
 
 do
-    spawn T with
+    spawn Tx with
         var byte&& s = "str";
         this.str = s;
     end;
@@ -42133,7 +42142,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int&& v;
 do
     *v = 1;
@@ -42150,11 +42159,11 @@ interface Global with
     var int&& a;
 end
 var int&& a = null;
-class T with
+class Tx with
     var int&& v;
 do
 end
-var T t with
+var Tx t with
     this.v = global:a;
 end;
 escape 1;
@@ -42168,12 +42177,12 @@ interface Global with
     var int&& a;
 end
 var int&& a = null;
-class T with
+class Tx with
     var int&& v;
 do
 end
 await OS_START;
-var T t with
+var Tx t with
     this.v = global:a;
 end;
 escape 1;
@@ -42211,12 +42220,12 @@ escape *p;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int&& p;
 do
 end
 var int i = 1;
-var T t with
+var Tx t with
     this.p = null;
 end;
 await OS_START;
@@ -42231,10 +42240,10 @@ Test { [[
 native do
     void* V;
 end
-class T with
-    code/instantaneous F (var void&& v)=>void;
+class Tx with
+    code/instantaneous Fx (var void&& v)=>void;
 do
-    code/instantaneous F (var void&& v)=>void do
+    code/instantaneous Fx (var void&& v)=>void do
         _V := v;
     end
 end
@@ -42296,7 +42305,7 @@ Test { [[
 interface I with
     var int v;
 end
-class T with
+class Tx with
     var& I parent;
     pool[1] I iss;
 do
@@ -42310,8 +42319,8 @@ escape 1;
 
 Test { [[
 interface I with end
-class T with do end
-pool[] T ts;
+class Tx with do end
+pool[] Tx ts;
 do
     loop i in ts do
 native _f;
@@ -42324,8 +42333,8 @@ end
 
 Test { [[
 interface I with end
-class T with do end
-pool[] T ts;
+class Tx with do end
+pool[] Tx ts;
 var I&& p=null;
 do
     loop i in ts do
@@ -42419,22 +42428,22 @@ interface I with
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
 do
     await FOREVER;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 var int ret = 0;
 do
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 1;
     end;
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 2;
     end;
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 3;
     end;
 
@@ -42453,7 +42462,7 @@ interface I with
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
     var int v=0;
 do
@@ -42466,7 +42475,7 @@ do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 var U u;
 
 var I&& i1 = &&t;
@@ -42482,8 +42491,8 @@ end
 var I&& i3 = ( _f(&&t) as I&&);
 var I&& i4 = ( _f(&&u) as I&&);
 
-var T&& i5 = ( _f(&&t) as T&&);
-var T&& i6 = ( _f(&&u) as T&&);
+var Tx&& i5 = ( _f(&&t) as Tx&&);
+var Tx&& i6 = ( _f(&&u) as Tx&&);
 
 escape i1==&&t and i2==null and i3==&&t and i4==null and i5==&&t and i6==null;
 ]],
@@ -42495,12 +42504,12 @@ interface I with
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
 do
     await FOREVER;
 end
-pool[] T ts;
+pool[] Tx ts;
 
 class U with
     var int v;
@@ -42510,13 +42519,13 @@ end
 
 var int ret = 0;
 do
-    spawn T with
+    spawn Tx with
         this.v = 1;
     end;
     spawn U with
         this.v = 2;
     end;
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 3;
     end;
 
@@ -42534,7 +42543,7 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     interface I;
 do
     await FOREVER;
@@ -42544,11 +42553,11 @@ pool[] I iss;
 
 var int ret = 0;
 
-spawn T with
+spawn Tx with
     this.v = 1;
 end;
 
-spawn T in iss with
+spawn Tx in iss with
     this.v = 3;
 end;
 
@@ -42569,7 +42578,7 @@ end
 
 pool[] I iss;
 
-class T with
+class Tx with
     interface I;
 do
     await FOREVER;
@@ -42583,13 +42592,13 @@ end
 
 var int ret = 0;
 do
-    spawn T with
+    spawn Tx with
         this.v = 1;
     end;
     spawn U in iss with
         this.v = 2;
     end;
-    spawn T in iss with
+    spawn Tx in iss with
         this.v = 3;
     end;
 
@@ -42608,11 +42617,11 @@ interface I with
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
 do
 end
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 1;
 do
@@ -42631,21 +42640,21 @@ interface I with
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
 do
 end
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 1;
 do
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 1;
     end;
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 2;
     end;
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 3;
     end;
 
@@ -42660,30 +42669,30 @@ escape ret;
 
 -- TODO: STACK
 Test { [[
-input void A,F;
+input void A,B;
 
 interface I with
     var int v;
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
 do
     await inc;
     this.v = v + 1;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 var int ret = 1;
 do
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 1;
     end;
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 2;
     end;
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 3;
     end;
 
@@ -42702,14 +42711,14 @@ escape ret;
     --run = 13,
 }
 Test { [[
-input void A,F;
+input void A,B;
 
 interface I with
     var int v;
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
 do
     await inc;
@@ -42717,16 +42726,16 @@ do
     await FOREVER;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 var int ret = 1;
 do
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 1;
     end;
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 2;
     end;
-    spawn T in ts with
+    spawn Tx in ts with
         this.v = 3;
     end;
 
@@ -42745,30 +42754,30 @@ escape ret;
     --run = 13,
 }
 Test { [[
-input void A,F;
+input void A,B;
 
 interface I with
     var int v;
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
 do
     await inc;
     this.v = v + 1;
     await FOREVER;
 end
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 0;
 do
     par/or do
-        await F;
+        await B;
     with
         var int i=1;
         every 1s do
-            spawn T in ts with
+            spawn Tx in ts with
                 this.v = i;
                 i = i + 1;
             end;
@@ -42788,16 +42797,16 @@ end
 escape ret;
 ]],
     props = 'line 32 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
-    --run = { ['~>3s;~>F'] = 16 },
-    --run = { ['~>3s;~>F'] = 13 },
+    --run = { ['~>3s;~>B'] = 16 },
+    --run = { ['~>3s;~>B'] = 13 },
 }
 
 Test { [[
-class T with
+class Tx with
     var int a;
 do
 end
-pool[] T ts;
+pool[] Tx ts;
 
 do
     loop t in ts do
@@ -42811,7 +42820,7 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     event void e;
 do
     await FOREVER;
@@ -42819,7 +42828,7 @@ end
 
 event void f;
 
-var T t;
+var Tx t;
 
 par do
     par/or do
@@ -42842,8 +42851,8 @@ Test { [[
 native do
     int f() { escape 1; }
 end
-class T with do end
-spawn T with
+class Tx with do end
+spawn Tx with
 native _int;
             var& _int? intro_story_str;
 native _f;
@@ -42871,12 +42880,12 @@ finalize with
     nothing;
 end
 
-class T with
+class Tx with
     var& int v;
 do
     v = 20;
 end
-do T with
+do Tx with
     this.v = &v;
 end;
 
@@ -42913,30 +42922,30 @@ escape 1;
 }
 
 Test { [[
-class T with do end
-vector[1] T ts = [];
+class Tx with do end
+vector[1] Tx ts = [];
 escape 1;
 ]],
     env = 'line 2 : invalid attribution : destination is not a vector',
 }
 Test { [[
-class T with do end
-pool[10] T ts;
+class Tx with do end
+pool[10] Tx ts;
 escape $$ts;
 ]],
     env = 'line 3 : invalid operand to unary "$$" : vector expected',
 }
 
 Test { [[
-class T with do end
-pool[10] T ts;
+class Tx with do end
+pool[10] Tx ts;
 escape $ts;
 ]],
     env = 'line 3 : invalid operand to unary "$" : vector expected',
 }
 
 Test { [[
-class T with
+class Tx with
     vector&[] int v1;
     vector[] int  v2;
 do
@@ -42948,12 +42957,12 @@ escape 1;
     --props = 'line 3 : not permitted inside an interface',
 }
 Test { [[
-class T with
+class Tx with
     vector[] int  v2;
 do
     await FOREVER;
 end
-var T t with
+var Tx t with
     this.v2 = [1,2,3];
 end;
 escape t.v2[0]+t.v2[2];
@@ -43103,49 +43112,49 @@ escape Code(a+10);
 }
 
 Test { [[
-code/instantaneous F (var int v)=>int do
+code/instantaneous Fx (var int v)=>int do
     escape v+1;
 end
-escape F();
+escape Fx();
 ]],
     env = 'line 4 : arity mismatch',
 }
 
 Test { [[
-code/instantaneous F (var int v)=>int do
+code/instantaneous Fx (var int v)=>int do
     escape v+1;
 end
 var int&& ptr;
-escape F(ptr);
+escape Fx(ptr);
 ]],
     env = 'line 5 : wrong argument #1',
 }
 
 Test { [[
-code/instantaneous F (var int v)=>int do
+code/instantaneous Fx (var int v)=>int do
     escape v+1;
 end
-escape F(1);
+escape Fx(1);
 ]],
     run = 2,
 }
 
 Test { [[
-code/instantaneous F (void);
+code/instantaneous Fx (void);
 escape 1;
 ]],
     parser = 'line 1 : after `)´ : expected `=>´',
 }
 
 Test { [[
-code/instantaneous F (void) => void
+code/instantaneous Fx (void) => void
 escape 1;
 ]],
     parser = 'line 1 : after `void´ : expected type modifier or `;´ or `do´'
 }
 
 Test { [[
-code/instantaneous F (void) => void;
+code/instantaneous Fx (void) => void;
 escape 1;
 ]],
     wrn = true,
@@ -43153,17 +43162,17 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F void => (void);
+code/instantaneous Fx void => (void);
 escape 1;
 ]],
     wrn = true,
-    parser = 'line 1 : after `F´ : expected `(´',
-    --parser = 'line 1 : after `F´ : expected param list',
+    parser = 'line 1 : after `Fx´ : expected `(´',
+    --parser = 'line 1 : after `Fx´ : expected param list',
     --parser = 'line 1 : after `=>´ : expected type',
 }
 
 Test { [[
-code/instantaneous F (void) => void;
+code/instantaneous Fx (void) => void;
 escape 1;
 ]],
     wrn = true,
@@ -43171,7 +43180,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var int) => void do
+code/instantaneous Fx (var int) => void do
     escape 1;
 end
 escape 1;
@@ -43181,7 +43190,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (void) => void do
+code/instantaneous Fx (void) => void do
     event void i;
     emit i;
     await i;
@@ -43193,7 +43202,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (void) => void do
+code/instantaneous Fx (void) => void do
     var int a = 1;
     if a then end;
 end
@@ -43204,7 +43213,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (void) => void do
+code/instantaneous Fx (void) => void do
     escape;
 end
 escape 1;
@@ -43214,7 +43223,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (void) => void do
+code/instantaneous Fx (void) => void do
     escape 1;
 end
 escape 1;
@@ -43225,7 +43234,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (void) => void do
+code/instantaneous Fx (void) => void do
     escape;
 end
 escape 1;
@@ -43252,27 +43261,27 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (void)=>int do
+code/instantaneous Fx (void)=>int do
     escape 1;
 end
-escape F();
+escape Fx();
 ]],
     run = 1,
 }
 
 Test { [[
-code/instantaneous F (void)=>int do
+code/instantaneous Fx (void)=>int do
     escape 1;
 end
-escape call F();
+escape call Fx();
 ]],
     todo = 'call?',
     run = 1,
 }
 
 Test { [[
-code/instantaneous F (void) => int;
-code/instantaneous F (var int)  => int do end
+code/instantaneous Fx (void) => int;
+code/instantaneous Fx (var int)  => int do end
 escape 1;
 ]],
     env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
@@ -43280,16 +43289,16 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (void) => int;
-code/instantaneous F (var int)  => int;
+code/instantaneous Fx (void) => int;
+code/instantaneous Fx (var int)  => int;
 escape 1;
 ]],
-    tops = 'line 2 : identifier "F" is already declared',
+    tops = 'line 2 : identifier "Fx" is already declared',
 }
 
 Test { [[
-code/instantaneous F (void) => int;
-code/instantaneous F (var int)  => int do end
+code/instantaneous Fx (void) => int;
+code/instantaneous Fx (var int)  => int do end
 escape 1;
 ]],
     wrn = true,
@@ -43297,8 +43306,8 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (void) => int;
-code/instantaneous F (void) => int do escape 1; end
+code/instantaneous Fx (void) => int;
+code/instantaneous Fx (void) => int do escape 1; end
 escape 1;
 ]],
     wrn = true,
@@ -43306,7 +43315,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var void, var int) => int;
+code/instantaneous Fx (var void, var int) => int;
 escape 1;
 ]],
     wrn = true,
@@ -43314,7 +43323,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var int) => void;
+code/instantaneous Fx (var int) => void;
 escape 1;
 ]],
     wrn = true,
@@ -43322,8 +43331,8 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var int, var int) => int;
-code/instantaneous F (var int a, var  int b) => int do
+code/instantaneous Fx (var int, var int) => int;
+code/instantaneous Fx (var int a, var  int b) => int do
     escape a + b;
 end
 escape 1;
@@ -43333,11 +43342,11 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var int, var int) => int;
-code/instantaneous F (var int a, var  int b) => int do
+code/instantaneous Fx (var int, var int) => int;
+code/instantaneous Fx (var int a, var  int b) => int do
     escape a + b;
 end
-escape F(1,2);
+escape Fx(1,2);
 ]],
     run = 3,
 }
@@ -43406,7 +43415,7 @@ escape 1;
 
 Test { [[
 escape 1;
-code/instantaneous F (var int x)=>int do
+code/instantaneous Fx (var int x)=>int do
     if x then end;
     loop i in 10 do
     end
@@ -43418,15 +43427,15 @@ end
 }
 
 Test { [[
-class T with
+class Tx with
 do
-    code/instantaneous F (var int)=>int;
-    code/instantaneous F (var int x)=>int do
+    code/instantaneous Fx (var int)=>int;
+    code/instantaneous Fx (var int x)=>int do
         escape x;
     end
-    escape F(10);
+    escape Fx(10);
 end
-var int x = do T;
+var int x = do Tx;
 escape x;
 ]],
     run = {['~>1s']=10},
@@ -43434,7 +43443,7 @@ escape x;
 
 Test { [[
 escape 1;
-code/instantaneous F (void) => int do
+code/instantaneous Fx (void) => int do
     escape 1;
 end
 ]],
@@ -43443,7 +43452,7 @@ end
 }
 
 Test { [[
-code/instantaneous F (void) => void do
+code/instantaneous Fx (void) => void do
     escape 1;
 end
 escape 1;
@@ -43543,12 +43552,12 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var int x)=>int do
+code/instantaneous Fx (var int x)=>int do
     escape x + 1;
 end
 
 if true then
-    escape F(1);
+    escape Fx(1);
 else
     escape 0;
 end
@@ -43557,56 +43566,56 @@ end
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
 end
 
-var T t;
+var Tx t;
 
-code/instantaneous F (void)=>T&& do
+code/instantaneous Fx (void)=>Tx&& do
     escape &&t;
 end
 
-var T&& p = F();
+var Tx&& p = Fx();
 
 escape p:v;
 ]],
     run = 10,
 }
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
 end
 
-var T t;
+var Tx t;
 
-code/instantaneous F (void)=>T&& do
-    var T&& p = &&t;
+code/instantaneous Fx (void)=>Tx&& do
+    var Tx&& p = &&t;
     escape p;
 end
 
-var T&& p = F();
+var Tx&& p = Fx();
 
 escape p:v;
 ]],
     run = 10,
 }
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
 end
 
-var T t;
+var Tx t;
 
-code/instantaneous F (void)=>T&& do
-    var T&& p = &&t;
+code/instantaneous Fx (void)=>Tx&& do
+    var Tx&& p = &&t;
     escape p;
 end
 
-var T&& p = F();
+var Tx&& p = Fx();
 await 1s;
 
 escape p:v;
@@ -43615,13 +43624,13 @@ escape p:v;
 }
 
 Test { [[
-code/instantaneous F (var int x)=>int;
+code/instantaneous Fx (var int x)=>int;
 var int x = 0;
-code/instantaneous F (var int x)=>int do
+code/instantaneous Fx (var int x)=>int do
     this.x = x;
     escape 2;
 end
-escape F(1) + this.x;
+escape Fx(1) + this.x;
 ]],
     run = 3,
 }
@@ -43644,20 +43653,20 @@ escape 1;
 -->>> RECURSIVE / FUNCTIONS
 
 Test { [[
-code/instantaneous/recursive F (void)=>void;
-code/instantaneous/recursive F (void)=>void do end
-code/instantaneous G      (void)=>void;
-code/instantaneous/recursive G (void)=>void do end
+code/instantaneous/recursive Fx (void)=>void;
+code/instantaneous/recursive Fx (void)=>void do end
+code/instantaneous Gx      (void)=>void;
+code/instantaneous/recursive Gx (void)=>void do end
 escape 1;
 ]],
     wrn = true,
     env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
 }
 Test { [[
-code/instantaneous/recursive F (void)=>void;
-code/instantaneous/recursive F (void)=>void do end
-code/instantaneous/recursive G (void)=>void;
-code/instantaneous G      (void)=>void do end
+code/instantaneous/recursive Fx (void)=>void;
+code/instantaneous/recursive Fx (void)=>void do end
+code/instantaneous/recursive Gx (void)=>void;
+code/instantaneous Gx      (void)=>void do end
 escape 1;
 ]],
     wrn = true,
@@ -43755,37 +43764,37 @@ escape 1;
 -->>> METHODS
 
 Test { [[
-class T with
+class Tx with
     var int a;
-    code/instantaneous F (void)=>int;
+    code/instantaneous Fx (void)=>int;
 do
     var int b;
-    code/instantaneous F (void)=>int do
+    code/instantaneous Fx (void)=>int do
         escape b;
     end
     a = 1;
     b = 2;
 end
 
-var T t;
+var Tx t;
 escape t.a + t.f();
 ]],
     ref = 'line 7 : invalid access to uninitialized variable "b" (declared at tests.lua:5)',
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
-    code/instantaneous F (void)=>int;
+    code/instantaneous Fx (void)=>int;
 do
     var int b=0;
-    code/instantaneous F (void)=>int do
+    code/instantaneous Fx (void)=>int do
         escape b;
     end
     a = 1;
     b = 2;
 end
 
-var T t;
+var Tx t;
 escape t.a + t.f();
 ]],
     run = 3,
@@ -43806,23 +43815,23 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     var int x;
     this.x = 10;
     _V = this.x;
 end
-var T t;
+var Tx t;
 escape _V;
 ]],
     run = 10,
 }
 
 Test { [[
-class T with do end;
+class Tx with do end;
 
 code/instantaneous Fff (void)=>void do
-    var T&& ttt = null;
+    var Tx&& ttt = null;
     if ttt==null then end;
 end
 
@@ -43839,14 +43848,14 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
-    code/instantaneous F (var int a, var  int b)=>int do
+class Tx with
+    code/instantaneous Fx (var int a, var  int b)=>int do
         escape a + b;
     end
 do
     _V = _V + f(1,2) + this.f(3,4);
 end
-vector[2] T ts;
+vector[2] Tx ts;
 escape _V;
 ]],
     parser = 'line 5 : after `int´ : expected type modifier or `;´',
@@ -43856,14 +43865,14 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
-    code/instantaneous F (var int a, var  int b)=>int do
+    code/instantaneous Fx (var int a, var  int b)=>int do
         escape a + b;
     end
     _V = _V + f(1,2) + this.f(3,4);
 end
-vector[2] T ts;
+vector[2] Tx ts;
 escape _V;
 ]],
     run = 20,
@@ -43873,44 +43882,44 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
 do
     var int v=0;
-    code/instantaneous F (var int a, var  int b)=>void do
+    code/instantaneous Fx (var int a, var  int b)=>void do
         this.v = this.v + a + b;
     end
     f(1,2);
     this.f(3,4);
     _V = _V + v;
 end
-vector[2] T ts;
+vector[2] Tx ts;
 escape _V;
 ]],
     run = 20,
 }
 
 Test { [[
-class T with
+class Tx with
     var int a=0;
-    code/instantaneous F (void)=>int;
+    code/instantaneous Fx (void)=>int;
 do
     var int b=0;
-    code/instantaneous F (void)=>int do
+    code/instantaneous Fx (void)=>int do
         escape this.b;
     end
     a = 1;
     b = 2;
 end
 
-var T t;
+var Tx t;
 escape t.a + t.f();
 ]],
     run = 3,
 }
 Test { [[
-class T with
+class Tx with
     var int a=0;
-    code/instantaneous F (void)=>int do
+    code/instantaneous Fx (void)=>int do
         escape this.b;
     end
 do
@@ -43919,7 +43928,7 @@ do
     b = 2;
 end
 
-var T t;
+var Tx t;
 escape t.a + t.f();
 ]],
     parser = 'line 3 : after `int´ : expected type modifier or `;´',
@@ -43928,7 +43937,7 @@ escape t.a + t.f();
 Test { [[
 interface I with
     var int v;
-    code/instantaneous F (void)=>void;
+    code/instantaneous Fx (void)=>void;
 end
 escape 10;
 ]],
@@ -43936,20 +43945,20 @@ escape 10;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v=0;
-    code/instantaneous F (var int)=>void;
+    code/instantaneous Fx (var int)=>void;
 do
     v = 50;
     this.f(10);
 
-    code/instantaneous F (var int v)=>int do
+    code/instantaneous Fx (var int v)=>int do
         this.v = this.v + v;
         escape this.v;
     end
 end
 
-var T t;
+var Tx t;
 input void OS_START;
 await OS_START;
 escape t.v + t.f(20) + t.v;
@@ -43959,20 +43968,20 @@ escape t.v + t.f(20) + t.v;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v=0;
-    code/instantaneous F (var int)=>int;
+    code/instantaneous Fx (var int)=>int;
 do
     v = 50;
     this.f(10);
 
-    code/instantaneous F (var int v)=>int do
+    code/instantaneous Fx (var int v)=>int do
         this.v = this.v + v;
         escape this.v;
     end
 end
 
-var T t;
+var Tx t;
 input void OS_START;
 await OS_START;
 escape t.v + t.f(20) + t.v;
@@ -43983,14 +43992,14 @@ escape t.v + t.f(20) + t.v;
 
 Test { [[
 interface I with
-    code/instantaneous F (void)=>int;
+    code/instantaneous Fx (void)=>int;
     code/instantaneous Fa (void)=>int;
 end
 
-class T with
+class Tx with
     interface I;
 do
-    code/instantaneous F (void)=>int do
+    code/instantaneous Fx (void)=>int do
         escape this.f1();
     end
     code/instantaneous Fa (void)=>int do
@@ -43998,7 +44007,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 escape t.f() + i:f();
 ]],
@@ -44008,21 +44017,21 @@ escape t.f() + i:f();
 Test { [[
 interface I with
     code/instantaneous Fa (void)=>int;
-    code/instantaneous F (void)=>int;
+    code/instantaneous Fx (void)=>int;
 end
 
-class T with
+class Tx with
     interface I;
 do
     code/instantaneous Fa (void)=>int do
         escape 1;
     end
-    code/instantaneous F (void)=>int do
+    code/instantaneous Fx (void)=>int do
         escape this.f1();
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 escape t.f() + i:f();
 ]],
@@ -44031,14 +44040,14 @@ escape t.f() + i:f();
 
 Test { [[
 interface I with
-    code/instantaneous G (var int)=>int;
+    code/instantaneous Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous G (var int v)=>int do
+    code/instantaneous Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44046,7 +44055,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape i:g(5);
@@ -44057,14 +44066,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive G (var int)=>int;
+    code/instantaneous/recursive Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i;
 do
-    code/instantaneous G (var int v)=>int do
+    code/instantaneous Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44072,7 +44081,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape i:g(5);
@@ -44083,14 +44092,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous G (var int)=>int;
+    code/instantaneous Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i;
 do
-    code/instantaneous/recursive G (var int v)=>int do
+    code/instantaneous/recursive Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44098,7 +44107,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape i:g(5);
@@ -44109,14 +44118,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous G (var int)=>int;
+    code/instantaneous Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous G (var int v)=>int do
+    code/instantaneous Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44124,7 +44133,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape i:g(5);
@@ -44135,14 +44144,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive G (var int)=>int;
+    code/instantaneous/recursive Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive G (var int v)=>int do
+    code/instantaneous/recursive Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44150,7 +44159,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape call/recursive i:g(5);
@@ -44160,14 +44169,14 @@ escape call/recursive i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive G (var int)=>int;
+    code/instantaneous/recursive Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive G (var int v)=>int do
+    code/instantaneous/recursive Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44175,7 +44184,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape i:g(5);
@@ -44186,19 +44195,19 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive G (var int)=>int;
+    code/instantaneous/recursive Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive G (var int v)=>int do
+    code/instantaneous/recursive Gx (var int v)=>int do
         escape 1;
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape i:g(5);
@@ -44208,19 +44217,19 @@ escape i:g(5);
 }
 Test { [[
 interface I with
-    code/instantaneous/recursive G (var int)=>int;
+    code/instantaneous/recursive Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive G (var int v)=>int do
+    code/instantaneous/recursive Gx (var int v)=>int do
         escape 1;
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape i:g(5);
@@ -44231,19 +44240,19 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive G (var int)=>int;
+    code/instantaneous/recursive Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive G (var int v)=>int do
+    code/instantaneous/recursive Gx (var int v)=>int do
         escape v;
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape call/recursive i:g(5);
@@ -44257,19 +44266,19 @@ escape call/recursive i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive G (var int)=>int;
+    code/instantaneous/recursive Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive G (var int v)=>int do
+    code/instantaneous/recursive Gx (var int v)=>int do
         escape v;
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape call/recursive i:g(5);
@@ -44282,19 +44291,19 @@ escape call/recursive i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous G (var int)=>int;
+    code/instantaneous Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous G (var int v)=>int do
+    code/instantaneous Gx (var int v)=>int do
         escape v;
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape i:g(5);
@@ -44306,19 +44315,19 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous G (var int)=>int;
+    code/instantaneous Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous G (var int v)=>int do
+    code/instantaneous Gx (var int v)=>int do
         escape v;
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape i:g(5);
@@ -44329,23 +44338,23 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous G (var int)=>int;
+    code/instantaneous Gx (var int)=>int;
 end
 
 class U with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous G (var int v)=>int do
+    code/instantaneous Gx (var int v)=>int do
         escape 1;
     end
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous G (var int v)=>int do
+    code/instantaneous Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44353,7 +44362,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 var I&& i1 = &&t;
 t.i = i1;
 
@@ -44369,14 +44378,14 @@ escape i1:g(5) + i2:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous G (var int)=>int;
+    code/instantaneous Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive G (var int v)=>int do
+    code/instantaneous/recursive Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44392,14 +44401,14 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous G (var int)=>int;
+    code/instantaneous Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous G (var int v)=>int do
+    code/instantaneous Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44411,12 +44420,12 @@ class U with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous G (var int v)=>int do
+    code/instantaneous Gx (var int v)=>int do
         escape 1;
     end
 end
 
-var T t;
+var Tx t;
 var I&& i1 = &&t;
 t.i = i1;
 
@@ -44433,14 +44442,14 @@ escape i1:g(5) + i2:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive G (var int)=>int;
+    code/instantaneous/recursive Gx (var int)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive G (var int v)=>int do
+    code/instantaneous/recursive Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -44448,7 +44457,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 t.i = i;
 escape i:g(5);
@@ -44462,7 +44471,7 @@ pre native do
     typedef int (*f_t) (int v);
 end
 
-class T with
+class Tx with
     var int ret1=0, ret2=0;
     code/instantaneous Fa (var int)=>int;
     var _f_t f2;
@@ -44481,7 +44490,7 @@ do
     ret2 = this.f2(2);
 end
 
-var T t with
+var Tx t with
     this.f2 = _f2;
 end;
 escape t.ret1 + t.ret2;
@@ -44495,7 +44504,7 @@ pre native do
     typedef int (*f_t) (int v);
 end
 
-class T with
+class Tx with
     var int ret1=0, ret2=0;
     code/instantaneous Fa (var int)=>int;
     var _f_t f2;
@@ -44514,7 +44523,7 @@ do
     ret2 = this.f2(2);
 end
 
-var T t with
+var Tx t with
     this.f2 = _f2;
 end;
 escape t.ret1 + t.ret2;
@@ -44528,18 +44537,18 @@ interface I with
     code/instantaneous Ins (void)=>void;
 end
 
-class T with
+class Tx with
     var int v=0;
 do
 end
 
-var T t;
+var Tx t;
     t.v = 10;
 var I&& i = &&t;
 escape i:_ins() + t._ins();;
 ]],
     --env = 'line 14 : native function "CEU_T__ins" is not declared',
-    env = 'line 13 : types mismatch (`I&&´ <= `T&&´)',
+    env = 'line 13 : types mismatch (`I&&´ <= `Tx&&´)',
 }
 
 Test { [[
@@ -44548,7 +44557,7 @@ interface I with
     code/instantaneous Ins (void)=>int;
 end
 
-class T with
+class Tx with
     interface I;
     var int v=0;
     //native/nohold _ins;
@@ -44558,7 +44567,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
     t.v = 10;
 var I&& i = &&t;
 escape i:ins() + t.ins();
@@ -44567,8 +44576,8 @@ escape i:ins() + t.ins();
 }
 
 Test { [[
-interface F with
-    code/instantaneous F (void)=>void;
+interface Fx with
+    code/instantaneous Fx (void)=>void;
     var int i=10;
 end
 ]],
@@ -44576,24 +44585,24 @@ end
 }
 
 Test { [[
-interface F with
+interface Fx with
     var int i;
-    code/instantaneous F (var int i)=>void;
+    code/instantaneous Fx (var int i)=>void;
 end
 
-class T with
+class Tx with
     var int i=10;   // 1
-    interface F;
+    interface Fx;
 do
     this.f(1);
-    code/instantaneous F (var int i)=>void do
+    code/instantaneous Fx (var int i)=>void do
         this.i = this.i + i;
     end
 end
 
-var T t1;
+var Tx t1;
 
-var F&& f = &&t1;
+var Fx&& f = &&t1;
 f:f(3);
 
 escape t1.i + f:i;
@@ -44603,24 +44612,24 @@ escape t1.i + f:i;
 }
 
 Test { [[
-interface F with
+interface Fx with
     var int i;
-    code/instantaneous F (var int)=>void;
+    code/instantaneous Fx (var int)=>void;
 end
 
-class T with
-    interface F;
+class Tx with
+    interface Fx;
     var int i=10;   // 2
 do
     this.f(1);
-    code/instantaneous F (var int i)=>void do
+    code/instantaneous Fx (var int i)=>void do
         this.i = this.i + i;
     end
 end
 
-var T t1;
+var Tx t1;
 
-var F&& f = &&t1;
+var Fx&& f = &&t1;
 f:f(3);
 
 escape t1.i + f:i;
@@ -44634,7 +44643,7 @@ native _V;
 native do
     void* V;
 end
-code/instantaneous F (var void&& v)=>void do
+code/instantaneous Fx (var void&& v)=>void do
     _V = v;
 end
 escape 1;
@@ -44648,7 +44657,7 @@ Test { [[
 native do
     void* V;
 end
-code/instantaneous F (var void&& v)=>void do
+code/instantaneous Fx (var void&& v)=>void do
     if v then end;
 end
 escape 1;
@@ -44662,10 +44671,10 @@ Test { [[
 native do
     void* V;
 end
-class T with
-    code/instantaneous F (var void&& v)=>void;
+class Tx with
+    code/instantaneous Fx (var void&& v)=>void;
 do
-    code/instantaneous F (var void&& v)=>void do
+    code/instantaneous Fx (var void&& v)=>void do
 native _V;
         _V = v;
     end
@@ -44678,15 +44687,15 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& v=null;
-    code/instantaneous F (var void&& v)=>void;
+    code/instantaneous Fx (var void&& v)=>void;
 do
-    code/instantaneous F (var void&& v)=>void do
+    code/instantaneous Fx (var void&& v)=>void do
         if v then end;
     end
 end
-var T t;
+var Tx t;
 t.f(null);
 escape 1;
 ]],
@@ -44696,11 +44705,11 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& a=null;
-    code/instantaneous F (var void&& v)=>void;
+    code/instantaneous Fx (var void&& v)=>void;
 do
-    code/instantaneous F (var void&& v)=>void do
+    code/instantaneous Fx (var void&& v)=>void do
         var void&& a = v;
         if a then end;
     end
@@ -44712,11 +44721,11 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& a=null;
-    code/instantaneous F (void)=>void;
+    code/instantaneous Fx (void)=>void;
 do
-    code/instantaneous F (void)=>void do
+    code/instantaneous Fx (void)=>void do
         var void&& v=null;
         a = v;
     end
@@ -44727,11 +44736,11 @@ escape 1;
     fin = 'line 7 : attribution to pointer with greater scope',
 }
 Test { [[
-class T with
+class Tx with
     var void&& a=null;
-    code/instantaneous F (var void&& v)=>void;
+    code/instantaneous Fx (var void&& v)=>void;
 do
-    code/instantaneous F (var void&& v)=>void do
+    code/instantaneous Fx (var void&& v)=>void do
         a = v;
     end
 end
@@ -44742,11 +44751,11 @@ escape 1;
     --fin = ' line 6 : parameter must be `hold´',
 }
 Test { [[
-class T with
+class Tx with
     var void&& a=null;
-    code/instantaneous F (var void&& v)=>void;
+    code/instantaneous Fx (var void&& v)=>void;
 do
-    code/instantaneous F (var void&& v)=>void do
+    code/instantaneous Fx (var void&& v)=>void do
         a := v;
     end
 end
@@ -44756,11 +44765,11 @@ escape 1;
     fin = ' line 6 : parameter must be `hold´',
 }
 Test { [[
-class T with
+class Tx with
     var void&& a=null;
-    code/instantaneous F (var/hold void&& v)=>void;
+    code/instantaneous Fx (var/hold void&& v)=>void;
 do
-    code/instantaneous F (var/hold void&& v)=>void do
+    code/instantaneous Fx (var/hold void&& v)=>void do
         a := v;
     end
 end
@@ -44770,11 +44779,11 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& v=null;
-    code/instantaneous F (var void&& v)=>void;
+    code/instantaneous Fx (var void&& v)=>void;
 do
-    code/instantaneous F (var/hold void&& v)=>void do
+    code/instantaneous Fx (var/hold void&& v)=>void do
         this.v = v;
     end
 end
@@ -44785,16 +44794,16 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& v=null;
-    code/instantaneous F (var/hold void&& v)=>void;
+    code/instantaneous Fx (var/hold void&& v)=>void;
 do
-    code/instantaneous F (var/hold void&& v)=>void do
+    code/instantaneous Fx (var/hold void&& v)=>void do
         this.v := v;
     end
 end
 var void&& v=null;
-var T t;
+var Tx t;
 t.f(null);
 t.f(v);
 do
@@ -44810,16 +44819,16 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var void&& v=null;
-    code/instantaneous F (var/hold void&& v)=>void;
+    code/instantaneous Fx (var/hold void&& v)=>void;
 do
-    code/instantaneous F (var/hold void&& v)=>void do
+    code/instantaneous Fx (var/hold void&& v)=>void do
         this.v := v;
     end
 end
 var void&& v=null;
-var T t;
+var Tx t;
 t.f(null);
 t.f(v);
 do
@@ -44841,12 +44850,12 @@ Test { [[
 native do
     void* V;
 end
-code/instantaneous F (var void&& v)=>void do
+code/instantaneous Fx (var void&& v)=>void do
 native _V;
     _V := v;
 end
 var void&& x=null;
-F(5 as void&&);
+Fx(5 as void&&);
 escape _V==(5 as void&&);
 ]],
     fin = 'line 5 : parameter must be `hold´',
@@ -44858,12 +44867,12 @@ Test { [[
 native do
     void* V;
 end
-code/instantaneous F (var/hold void&& v)=>void do
+code/instantaneous Fx (var/hold void&& v)=>void do
 native _V;
     _V := v;
 end
 var void&& x=null;
-do F(5 as void&&);
+do Fx(5 as void&&);
     finalize with nothing; end;
 escape _V==(5 as void&&);
 ]],
@@ -44874,12 +44883,12 @@ Test { [[
 native do
     int V;
 end
-code/instantaneous F (var int v)=>void do
+code/instantaneous Fx (var int v)=>void do
 native _V;
     _V = v;
 end
 var void&& x=null;
-F(5);
+Fx(5);
 escape _V==5;
 ]],
     run = 1,
@@ -44887,25 +44896,25 @@ escape _V==5;
 
 Test { [[
 interface I with
-    code/instantaneous F (void)=>void;
+    code/instantaneous Fx (void)=>void;
 end
 
-class T with
+class Tx with
     interface I;
-    code/instantaneous/recursive F (void)=>void;
+    code/instantaneous/recursive Fx (void)=>void;
 do
-    code/instantaneous/recursive F (void)=>void do
+    code/instantaneous/recursive Fx (void)=>void do
         if 0 then
-            call/recursive this.F();
+            call/recursive this.Fx();
         end
     end
 end
 
-var T t;
-call/recursive t.F();
+var Tx t;
+call/recursive t.Fx();
 
 var I&& i = &&t;
-call i:F();
+call i:Fx();
 
 escape 1;
 ]],
@@ -44915,52 +44924,52 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous/recursive F (void)=>void;
+    code/instantaneous/recursive Fx (void)=>void;
 end
 
-class T with
+class Tx with
     interface I;
-    code/instantaneous/recursive F (void)=>void;
+    code/instantaneous/recursive Fx (void)=>void;
 do
-    code/instantaneous/recursive F (void)=>void do
+    code/instantaneous/recursive Fx (void)=>void do
         if 0 then
-            call/recursive this.F();
+            call/recursive this.Fx();
         end
     end
 end
 
-var T t;
-call/recursive t.F();
+var Tx t;
+call/recursive t.Fx();
 
 var I&& i = &&t;
-call i:F();
+call i:Fx();
 
 escape 1;
 ]],
-    tight = 'line 20 : `call/recursive´ is required for "F"',
+    tight = 'line 20 : `call/recursive´ is required for "Fx"',
 }
 
 Test { [[
 interface I with
-    code/instantaneous/recursive F (void)=>void;
+    code/instantaneous/recursive Fx (void)=>void;
 end
 
-class T with
+class Tx with
     interface I;
-    code/instantaneous/recursive F (void)=>void;
+    code/instantaneous/recursive Fx (void)=>void;
 do
-    code/instantaneous/recursive F (void)=>void do
+    code/instantaneous/recursive Fx (void)=>void do
         if 0 then
-            call/recursive this.F();
+            call/recursive this.Fx();
         end
     end
 end
 
-var T t;
-call/recursive t.F();
+var Tx t;
+call/recursive t.Fx();
 
 var I&& i = &&t;
-call/recursive i:F();
+call/recursive i:Fx();
 
 escape 1;
 ]],
@@ -44969,22 +44978,22 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous/recursive F (void)=>void;
+    code/instantaneous/recursive Fx (void)=>void;
 end
 
-class T with
+class Tx with
     interface I;
-    code/instantaneous F (void)=>void; // ignored
+    code/instantaneous Fx (void)=>void; // ignored
 do
-    code/instantaneous F (void)=>void do
+    code/instantaneous Fx (void)=>void do
     end
 end
 
-var T t;
-call t.F();
+var Tx t;
+call t.Fx();
 
 var I&& i = &&t;
-call/recursive i:F();
+call/recursive i:Fx();
 
 escape 1;
 ]],
@@ -44993,46 +45002,46 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous F (void)=>void;
+    code/instantaneous Fx (void)=>void;
 end
 
-class T with
+class Tx with
     interface I;
-    code/instantaneous F (void)=>void; // ignored
+    code/instantaneous Fx (void)=>void; // ignored
 do
-    code/instantaneous F (void)=>void do
+    code/instantaneous Fx (void)=>void do
     end
 end
 
-var T t;
-call t.F();
+var Tx t;
+call t.Fx();
 
 var I&& i = &&t;
-call/recursive i:F();
+call/recursive i:Fx();
 
 escape 1;
 ]],
-    tight = 'line 17 : `call/recursive´ is not required for "F"',
+    tight = 'line 17 : `call/recursive´ is not required for "Fx"',
 }
 
 Test { [[
 interface I with
-    code/instantaneous F (void)=>void;
+    code/instantaneous Fx (void)=>void;
 end
 
-class T with
+class Tx with
     interface I;
-    code/instantaneous F (void)=>void; // ignored
+    code/instantaneous Fx (void)=>void; // ignored
 do
-    code/instantaneous F (void)=>void do
+    code/instantaneous Fx (void)=>void do
     end
 end
 
-var T t;
-call t.F();
+var Tx t;
+call t.Fx();
 
 var I&& i = &&t;
-i:F();
+i:Fx();
 
 escape 1;
 ]],
@@ -45043,22 +45052,22 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous/recursive F (void)=>void;
+    code/instantaneous/recursive Fx (void)=>void;
 end
 
-class T with
+class Tx with
     interface I;
-    code/instantaneous/recursive F (void)=>void; // ignored
+    code/instantaneous/recursive Fx (void)=>void; // ignored
 do
-    code/instantaneous/recursive F (void)=>void do
+    code/instantaneous/recursive Fx (void)=>void do
     end
 end
 
-var T t;
-call/recursive t.F();
+var Tx t;
+call/recursive t.Fx();
 
 var I&& i = &&t;
-call/recursive i:F();
+call/recursive i:Fx();
 
 escape 1;
 ]],
@@ -45069,22 +45078,22 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous/recursive F (void)=>void;
+    code/instantaneous/recursive Fx (void)=>void;
 end
 
-class T with
-    code/instantaneous/recursive F (void)=>void;
+class Tx with
+    code/instantaneous/recursive Fx (void)=>void;
     interface I;
 do
-    code/instantaneous/recursive F (void)=>void do
+    code/instantaneous/recursive Fx (void)=>void do
     end
 end
 
-var T t;
-call/recursive t.F();
+var Tx t;
+call/recursive t.Fx();
 
 var I&& i = &&t;
-call/recursive i:F();
+call/recursive i:Fx();
 
 escape 1;
 ]],
@@ -45093,14 +45102,14 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous F (var int v)=>int;
-code/instantaneous F (var int v)=>int do
+code/instantaneous Fx (var int v)=>int;
+code/instantaneous Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v*F(v-1);
+    escape v*Fx(v-1);
 end
-escape F(5);
+escape Fx(5);
 ]],
     tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
     --run = 120,
@@ -45108,21 +45117,21 @@ escape F(5);
 
 Test { [[
 interface I with
-    code/instantaneous F (void)=>void;
+    code/instantaneous Fx (void)=>void;
 end
 
-class T with
+class Tx with
     interface I;
 do
-    code/instantaneous F (void)=>void do
+    code/instantaneous Fx (void)=>void do
     end
 end
 
-var T t;
+var Tx t;
 var& I i = &t;
 
-code/instantaneous G (void)=>void do
-    i.F();
+code/instantaneous Gx (void)=>void do
+    i.Fx();
 end
 
 code/instantaneous H (void)=>void do
@@ -45135,21 +45144,21 @@ escape 1;
 }
 Test { [[
 interface I with
-    code/instantaneous F (void)=>void;
+    code/instantaneous Fx (void)=>void;
 end
 
-class T with
+class Tx with
     interface I;
 do
-    code/instantaneous F (void)=>void do
+    code/instantaneous Fx (void)=>void do
     end
 end
 
-var T t;
+var Tx t;
 var& I i = &t;
 
-code/instantaneous G (void)=>void do
-    i.F();
+code/instantaneous Gx (void)=>void do
+    i.Fx();
 end
 
 code/instantaneous H (void)=>void do
@@ -45158,12 +45167,12 @@ end
 
 class U with
     interface I;
-    code/instantaneous G (void)=>void;
+    code/instantaneous Gx (void)=>void;
 do
-    code/instantaneous F (void)=>void do
+    code/instantaneous Fx (void)=>void do
         this.g();
     end
-    code/instantaneous G (void)=>void do
+    code/instantaneous Gx (void)=>void do
     end
 end
 
@@ -45173,21 +45182,21 @@ escape 1;
 }
 Test { [[
 interface I with
-    code/instantaneous/recursive F (void)=>void;
+    code/instantaneous/recursive Fx (void)=>void;
 end
 
-class T with
+class Tx with
     interface I;
 do
-    code/instantaneous/recursive F (void)=>void do
+    code/instantaneous/recursive Fx (void)=>void do
     end
 end
 
-var T t;
+var Tx t;
 var& I i = &t;
 
-code/instantaneous G (void)=>void do
-    call/recursive i.F();
+code/instantaneous Gx (void)=>void do
+    call/recursive i.Fx();
 end
 
 code/instantaneous H (void)=>void do
@@ -45196,12 +45205,12 @@ end
 
 class U with
     interface I;
-    code/instantaneous G (void)=>void;
+    code/instantaneous Gx (void)=>void;
 do
-    code/instantaneous/recursive F (void)=>void do
+    code/instantaneous/recursive Fx (void)=>void do
         this.g();
     end
-    code/instantaneous G (void)=>void do
+    code/instantaneous Gx (void)=>void do
     end
 end
 
@@ -45212,29 +45221,29 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous/recursive F (var int v)=>int;
-code/instantaneous F (var int v)=>int do
+code/instantaneous/recursive Fx (var int v)=>int;
+code/instantaneous Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v*F(v-1);
+    escape v*Fx(v-1);
 end
-escape F(5);
+escape Fx(5);
 ]],
     env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
     --run = 120,
 }
 Test { [[
-code/instantaneous/recursive F (var int v)=>int;
-code/instantaneous/recursive F (var int v)=>int do
+code/instantaneous/recursive Fx (var int v)=>int;
+code/instantaneous/recursive Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v*F(v-1);
+    escape v*Fx(v-1);
 end
-escape F(5);
+escape Fx(5);
 ]],
-    tight = 'line 6 : `call/recursive´ is required for "F"',
+    tight = 'line 6 : `call/recursive´ is required for "Fx"',
     --run = 120,
 }
 Test { [[
@@ -45246,26 +45255,26 @@ call 1;
 }
 
 Test { [[
-code/instantaneous/recursive F (var int v)=>int;
-code/instantaneous/recursive F (var int v)=>int do
+code/instantaneous/recursive Fx (var int v)=>int;
+code/instantaneous/recursive Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v * (call/recursive F(v-1));
+    escape v * (call/recursive Fx(v-1));
 end
-escape F(5);
+escape Fx(5);
 ]],
-    tight = 'line 8 : `call/recursive´ is required for "F"',
+    tight = 'line 8 : `call/recursive´ is required for "Fx"',
 }
 Test { [[
-code/instantaneous/recursive F (var int v)=>int;
-code/instantaneous/recursive F (var int v)=>int do
+code/instantaneous/recursive Fx (var int v)=>int;
+code/instantaneous/recursive Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v * call/recursive F(v-1);
+    escape v * call/recursive Fx(v-1);
 end
-escape call/recursive F(5);
+escape call/recursive Fx(5);
 ]],
     run = 120,
 }
@@ -45385,7 +45394,7 @@ escape w:x;     // escapes with "10"
 }
 
 Test { [[
-code/instantaneous F (void)=>int&& do
+code/instantaneous Fx (void)=>int&& do
     escape 1;
 end
 escape 10;
@@ -45399,28 +45408,28 @@ escape 10;
 Test { [[
 var int x = 10;
 
-code/instantaneous F (void)=>int& do
+code/instantaneous Fx (void)=>int& do
     escape &this.x;
 end
 
-escape F();
+escape Fx();
 ]],
     parser = 'line 3 : after `int´ : expected type modifier or `;´ or `do´',
     --run = 10,
 }
 Test { [[
-class T with
-    code/instantaneous F (void)=>int&;
+class Tx with
+    code/instantaneous Fx (void)=>int&;
 do
     var int x = 10;
-    code/instantaneous F (void)=>int& do
+    code/instantaneous Fx (void)=>int& do
         escape &this.x;
     end
 end
 
-var T t;
+var Tx t;
 
-escape t.F();
+escape t.Fx();
 ]],
     parser = 'line 2 : after `int´ : expected type modifier or `;´',
     --run = 10,
@@ -45429,28 +45438,28 @@ escape t.F();
 Test { [[
 var int x = 10;
 
-code/instantaneous F (void)=>int& do
+code/instantaneous Fx (void)=>int& do
     escape &&this.x;
 end
 
-escape F();
+escape Fx();
 ]],
     parser = 'line 3 : after `int´ : expected type modifier or `;´ or `do´',
     --env = 'line 4 : invalid escape value : types mismatch (`int&´ <= `int&&´)',
 }
 Test { [[
-class T with
-    code/instantaneous F (void)=>int&&;
+class Tx with
+    code/instantaneous Fx (void)=>int&&;
 do
     var int x = 10;
-    code/instantaneous F (void)=>int&& do
+    code/instantaneous Fx (void)=>int&& do
         escape &this.x;
     end
 end
 
-var T t;
+var Tx t;
 
-escape t.F();
+escape t.Fx();
 ]],
     env = 'line 6 : invalid escape value : types mismatch (`int&&´ <= `int&´)',
 }
@@ -45495,22 +45504,22 @@ escape buffer[0];
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
 end
 
-code/instantaneous F (var& T t)=>int do
+code/instantaneous Fx (var& Tx t)=>int do
     escape t.v * 2;
 end
 
-var T t;
-var& int ret = F(t);
+var Tx t;
+var& int ret = Fx(t);
 
-    var T u with
+    var Tx u with
         this.v = 20;
     end;
-    ret = ret + F(&u);
+    ret = ret + Fx(&u);
 
 escape ret;
 ]],
@@ -45518,23 +45527,23 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
 end
 
-code/instantaneous F (var& T t)=>int do
+code/instantaneous Fx (var& Tx t)=>int do
     escape t.v * 2;
 end
 
-var T t;
-var& int ret = F(t);
+var Tx t;
+var& int ret = Fx(t);
 
 do
-    var T u with
+    var Tx u with
         this.v = 20;
     end;
-    ret = ret + F(&u);
+    ret = ret + Fx(&u);
 end
 
 escape ret;
@@ -45544,23 +45553,23 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
 end
 
-code/instantaneous F (var T&& t)=>int do
+code/instantaneous Fx (var Tx&& t)=>int do
     escape t:v * 2;
 end
 
-var T t;
-var int ret = F(&&t);
+var Tx t;
+var int ret = Fx(&&t);
 
 do
-    var T u with
+    var Tx u with
         this.v = 20;
     end;
-    ret = ret + F(&&u);
+    ret = ret + Fx(&&u);
 end
 
 escape ret;
@@ -45750,9 +45759,9 @@ escape p.get().value;
 }
 
 Test { [[
-class T with do end
+class Tx with do end
 
-pool[] T ts;
+pool[] Tx ts;
 
 class U with
     var& int ts;
@@ -45767,15 +45776,15 @@ escape 1;
 }
 
 Test { [[
-class T with do end
+class Tx with do end
 
-pool[] T ts;
+pool[] Tx ts;
 
 class U with
-    pool&[] T ts;
+    pool&[] Tx ts;
 do
-    var T&&? t =
-        spawn T in ts with
+    var Tx&&? t =
+        spawn Tx in ts with
         end;
 end
 
@@ -45789,35 +45798,35 @@ escape 1;
 Test { [[
 interface I with end;
 
-class T with
+class Tx with
     interface I;
-    code/instantaneous F (void)=>I&&;
+    code/instantaneous Fx (void)=>I&&;
 do
-    code/instantaneous F (void)=>I&& do
+    code/instantaneous Fx (void)=>I&& do
         var I&& i = &&this;
         escape i;
     end
 end
 
-var T t;
-var I&& p = t.F();
+var Tx t;
+var I&& p = t.Fx();
 escape p==&&t;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
-    code/instantaneous F (void)=>int&&;
+class Tx with
+    code/instantaneous Fx (void)=>int&&;
 do
     var int x = 1;
-    code/instantaneous F (void)=>int&& do
+    code/instantaneous Fx (void)=>int&& do
         escape &&this.x;
     end
 end
 
-var T t;
-escape *(t.F());
+var Tx t;
+escape *(t.Fx());
 ]],
     run = 1,
 }
@@ -45825,24 +45834,24 @@ escape *(t.F());
 Test { [[
 interface I with end;
 
-class T with
+class Tx with
     interface I;
-    code/instantaneous F (void)=>I&&;
+    code/instantaneous Fx (void)=>I&&;
 do
-    code/instantaneous F (void)=>I&& do
+    code/instantaneous Fx (void)=>I&& do
         escape &&this;
     end
 end
 
-var T t;
-t.F();
+var Tx t;
+t.Fx();
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
+class Tx with
     var int xxx2=0;
     code/instantaneous Fff (var int xxx3)=>void;
 do
@@ -45853,14 +45862,14 @@ do
 end
 
 var int xxx1 = 10;
-var T ttt;
+var Tx ttt;
 ttt.fff(xxx1);
 escape ttt.xxx2;
 ]],
     run = 10,
 }
 Test { [[
-class T with
+class Tx with
     var int xxx2=0;
     code/instantaneous Fff (var& int xxx3)=>void;
 do
@@ -45872,7 +45881,7 @@ do
 end
 
 var int xxx1 = 10;
-var T ttt;
+var Tx ttt;
 ttt.fff(&xxx1);
 escape ttt.xxx2;
 ]],
@@ -45882,85 +45891,85 @@ escape ttt.xxx2;
 Test { [[
 class U with do end
 
-class T with
-    code/instantaneous F (var int x)=>T;
+class Tx with
+    code/instantaneous Fx (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous F (var int x)=>T do
+    code/instantaneous Fx (var int x)=>Tx do
         this.x = 1;
     end
 end
 
-var T t = U.F(1);
+var Tx t = U.Fx(1);
 escape t.x;
 ]],
     adj = 'line 12 : invalid constructor',
 }
 
 Test { [[
-class T with
-    code/instantaneous F (var int x)=>T;
+class Tx with
+    code/instantaneous Fx (var int x)=>Tx;
 do
     var int x = 0;
 
-    code/instantaneous F (var int x)=>T do
+    code/instantaneous Fx (var int x)=>Tx do
         this.x = 1;
     end
 end
 
-var T t;
-t = T.F(1);
+var Tx t;
+t = Tx.Fx(1);
 escape t.x;
 ]],
-    parser = 'line 12 : after `T´ : expected `(´',
+    parser = 'line 12 : after `Tx´ : expected `(´',
     --parser = 'line 12 : after `.´ : expected tag identifier',
     --parser = 'line 12 : before `.´ : expected expression',
     --run = 2,
 }
 
 Test { [[
-class T with
-    code/instantaneous Fff (var int x)=>T;
+class Tx with
+    code/instantaneous Fff (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fff (var int x)=>T do
+    code/instantaneous Fff (var int x)=>Tx do
         this.x = x;
     end
 end
 
-var T ttt = T.fff(2);
+var Tx ttt = Tx.fff(2);
 escape ttt.x;
 ]],
     run = 2,
 }
 
 Test { [[
-class T with
-    code/instantaneous Fff (var int x)=>T;
+class Tx with
+    code/instantaneous Fff (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fff (var int x)=>T do
+    code/instantaneous Fff (var int x)=>Tx do
         this.x = x;
     end
 end
 
-var T ttt = T.fff(2) with
+var Tx ttt = Tx.fff(2) with
 end;
 escape ttt.x;
 ]],
     run = 2,
 }
 Test { [[
-class T with
-    code/instantaneous Fff (var int x)=>T;
+class Tx with
+    code/instantaneous Fff (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fff (var int x)=>T do
+    code/instantaneous Fff (var int x)=>Tx do
         this.x = x;
     end
 end
 
-var T ttt = T.fff(2) with
+var Tx ttt = Tx.fff(2) with
     this.x = 1;
 end;
 escape ttt.x;
@@ -45969,59 +45978,59 @@ escape ttt.x;
 }
 
 Test { [[
-class T with
-    code/instantaneous Fff (var int x)=>T;
+class Tx with
+    code/instantaneous Fff (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fff (var int x)=>T do
+    code/instantaneous Fff (var int x)=>Tx do
         this.x = x;
     end
     this.x = 1;
 end
 
-var T ttt = T.fff(2);
+var Tx ttt = Tx.fff(2);
 escape ttt.x;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
-    code/instantaneous Fa (var int x)=>T;
-    code/instantaneous Fb (var int x)=>T;
+class Tx with
+    code/instantaneous Fa (var int x)=>Tx;
+    code/instantaneous Fb (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fa (var int x)=>T do
+    code/instantaneous Fa (var int x)=>Tx do
         this.x = x;
     end
-    code/instantaneous Fb (var int x)=>T do
+    code/instantaneous Fb (var int x)=>Tx do
         this.f1(x);
     end
 end
 
-var T ttt = T.f2(2);
+var Tx ttt = Tx.f2(2);
 escape ttt.x;
 ]],
     run = 2,
 }
 
 Test { [[
-class T with
-    code/instantaneous Fa (var int x)=>T;
-    code/instantaneous Fb (var int x)=>T;
+class Tx with
+    code/instantaneous Fa (var int x)=>Tx;
+    code/instantaneous Fb (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fa (var int x)=>T do
+    code/instantaneous Fa (var int x)=>Tx do
         this.x = x;
     end
-    code/instantaneous Fb (var int x)=>T do
+    code/instantaneous Fb (var int x)=>Tx do
         this.f1(x);
     end
     await FOREVER;
 end
 
-pool[] T ts;
-spawn T.f2(2) in ts;
+pool[] Tx ts;
+spawn Tx.f2(2) in ts;
 
 var int ret = 0;
 loop t in ts do
@@ -46034,50 +46043,50 @@ escape ret;
 }
 
 Test { [[
-class T with
-    code/instantaneous Fa (var int x)=>T;
-    code/instantaneous Fb (var int x)=>T;
+class Tx with
+    code/instantaneous Fa (var int x)=>Tx;
+    code/instantaneous Fb (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fa (var int x)=>T do
+    code/instantaneous Fa (var int x)=>Tx do
         this.x = x;
     end
-    code/instantaneous Fb (var int x)=>T do
+    code/instantaneous Fb (var int x)=>Tx do
         this.f1(x);
     end
     escape this.x;
 end
 
-var int ret = do T.f2(2);
+var int ret = do Tx.f2(2);
 escape ret;
 ]],
     run = 2,
 }
 
 Test { [[
-class T with
+class Tx with
     var& int x;
-    code/instantaneous Fff (var& int x)=>T;
+    code/instantaneous Fff (var& int x)=>Tx;
 do
-    code/instantaneous Fff (var& int x)=>T do
+    code/instantaneous Fff (var& int x)=>Tx do
         this.x = x;
     end
     this.x = 1;
 end
 
 var int x = 10;
-var T ttt = T.fff(&x);
+var Tx ttt = Tx.fff(&x);
 escape x;
 ]],
     ref = 'line 6 : invalid attribution : missing alias operator `&´ on the right',
 }
 
 Test { [[
-class T with
+class Tx with
     var& int x;
-    code/instantaneous Fff (var& int x)=>T;
+    code/instantaneous Fff (var& int x)=>Tx;
 do
-    code/instantaneous Fff (var& int x)=>T do
+    code/instantaneous Fff (var& int x)=>Tx do
     end
 end
 escape 1;
@@ -46086,12 +46095,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var& int x;
-    code/instantaneous Fff (var& int x)=>T;
+    code/instantaneous Fff (var& int x)=>Tx;
 do
     this.x = 1;
-    code/instantaneous Fff (var& int x)=>T do
+    code/instantaneous Fff (var& int x)=>Tx do
     end
 end
 escape 1;
@@ -46100,47 +46109,47 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int xxx2;
-    code/instantaneous Fff (var& int xxx3)=>T;
+    code/instantaneous Fff (var& int xxx3)=>Tx;
 do
-    code/instantaneous Fff (var& int xxx3)=>T do
+    code/instantaneous Fff (var& int xxx3)=>Tx do
         this.xxx2 = xxx3;
     end
     this.xxx2 = 1;
 end
 
 var int xxx1 = 10;
-var T ttt = T.fff(&xxx1);
+var Tx ttt = Tx.fff(&xxx1);
 escape ttt.xxx2;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
+class Tx with
     var& int xxx2;
-    code/instantaneous Fff (var& int xxx3)=>T;
+    code/instantaneous Fff (var& int xxx3)=>Tx;
 do
-    code/instantaneous Fff (var& int xxx3)=>T do
+    code/instantaneous Fff (var& int xxx3)=>Tx do
         this.xxx2 = &xxx3;
     end
     this.xxx2 = 1;
 end
 
 var int xxx1 = 10;
-var T ttt = T.fff(&xxx1);
+var Tx ttt = Tx.fff(&xxx1);
 escape xxx1;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
+class Tx with
     var& int vvv;
 do
 end
-var T t;
+var Tx t;
 escape 1;
 ]],
     ref = 'line 5 : missing initialization for field "vvv" (declared in tests.lua:2)',
@@ -46205,12 +46214,12 @@ finalize with
     nothing;
 end
 
-class T with
+class Tx with
     var& int? v;
 do
     v! = 20;
 end
-do T with
+do Tx with
     this.v = &v!;
 end;
 
@@ -46232,12 +46241,12 @@ finalize with
     nothing;
 end
 
-class T with
+class Tx with
     var& int? v;
 do
     v! = 20;
 end
-do T with
+do Tx with
     this.v = &v!;
 end;
 
@@ -46259,12 +46268,12 @@ finalize with
     nothing;
 end
 
-class T with
+class Tx with
     var& int v;
 do
     v = 20;
 end
-do T with
+do Tx with
     this.v = &v;
 end;
 
@@ -46286,12 +46295,12 @@ finalize with
     nothing;
 end
 
-class T with
+class Tx with
     var& int v;
 do
     v = 20;
 end
-do T with
+do Tx with
     this.v = &v!;
 end;
 
@@ -46313,12 +46322,12 @@ finalize with
     nothing;
 end
 
-class T with
+class Tx with
     var& _int v;
 do
     v = 20;
 end
-do T with
+do Tx with
     this.v = &v;
 end;
 
@@ -46365,13 +46374,13 @@ escape 1;
 -->>> CLASS-VECTORS-FOR-POINTERS-TO-ORGS
 
 Test { [[
-class T with
+class Tx with
     vector[10] int vs;
 do
     this.vs = [1];
 end
 
-var T t;
+var Tx t;
 t.vs[0] = t.vs[0] + 2;
 
 escape t.vs[0];
@@ -46381,14 +46390,14 @@ escape t.vs[0];
 }
 
 Test { [[
-class T with
+class Tx with
     vector&[10] int vs;
 do
     this.vs = [1];
 end
 
 vector[10] int vs;
-var T t with
+var Tx t with
     this.vs = &vs;
 end;
 t.vs[0] = t.vs[0] + 2;
@@ -46403,14 +46412,14 @@ interface I with
     var& int v;
 end
 
-class T with
+class Tx with
     interface I;
 do
     this.v = 1;
 end
 
 var int v;
-var T t with
+var Tx t with
     this.v = &v;
 end;
 v = 1;
@@ -46431,14 +46440,14 @@ interface I with
     var& int v;
 end
 
-class T with
+class Tx with
     interface I;
 do
     this.v = 1;
 end
 
 var int v=10;
-var T t with
+var Tx t with
     this.v = &v;
 end;
 t.v = t.v + 2;
@@ -46468,13 +46477,13 @@ interface I with
     vector&[10] int vs;
 end
 
-class T with
+class Tx with
     interface I;
 do
 end
 
 vector[10] int vs;
-var T t with
+var Tx t with
     this.vs = &vs;
 end;
 
@@ -46492,13 +46501,13 @@ interface I with
     vector&[10] int vs;
 end
 
-class T with
+class Tx with
     interface I;
 do
 end
 
 vector[10] int vs;
-var T t with
+var Tx t with
     this.vs = &vs;
 end;
 
@@ -46516,14 +46525,14 @@ interface I with
     vector&[10] int vs;
 end
 
-class T with
+class Tx with
     interface I;
 do
     this.vs = [1];
 end
 
 vector[10] int vs;
-var T t with
+var Tx t with
     this.vs = &vs;
 end;
 t.vs[0] = t.vs[0] + 2;
@@ -46537,41 +46546,41 @@ escape t.vs[0];
     run = 9,
 }
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&&  ts;
+vector[] Tx&&  ts;
 escape 1;
 ]],
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&& ts;
+vector[] Tx&& ts;
 var int x = $ts;
 escape x+$ts+1;
 ]],
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&& ts;
-var T t;
+vector[] Tx&& ts;
+var Tx t;
 ts = [] .. ts .. [t];
 escape $ts+1;
 ]],
-    env = 'line 6 : wrong argument #1 : types mismatch (`T&&´ <= `T´)',
+    env = 'line 6 : wrong argument #1 : types mismatch (`Tx&&´ <= `Tx´)',
 }
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&& ts;
-var T t;
+vector[] Tx&& ts;
+var Tx t;
 ts = [] .. ts .. [&&t];
 escape $ts+1;
 ]],
@@ -46579,81 +46588,81 @@ escape $ts+1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&& ts;
-var T t;
+vector[] Tx&& ts;
+var Tx t;
 ts = [] .. ts .. [&&t];
-var T&& p = ts[0];
+var Tx&& p = ts[0];
 escape p == &&t;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&& ts;
-var T t;
+vector[] Tx&& ts;
+var Tx t;
 ts = [] .. ts .. [&&t];
-var T&& p = ts[1];
+var Tx&& p = ts[1];
 escape p == &&t;
 ]],
     run = '7] runtime error: access out of bounds',
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&& ts;
-var T t;
+vector[] Tx&& ts;
+var Tx t;
 ts = [] .. ts .. [&&t];
 await 1s;
-var T&& p = ts[0];
+var Tx&& p = ts[0];
 escape p == &&t;
 ]],
     fin = 'line 8 : unsafe access to pointer "ts" across `await´ (tests.lua : 7)',
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
     await FOREVER;
 end
 
-var T t;
-var T&&? p = &&t;
+var Tx t;
+var Tx&&? p = &&t;
 
 escape t.v + p!:v;
 ]],
     run = 20,
 }
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
 end
 
-var T t;
-var T&&? p = &&t;
+var Tx t;
+var Tx&&? p = &&t;
 
 escape t.v + p!:v;
 ]],
     run = '9] runtime error: invalid tag',
 }
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
     await 1s;
 end
 
-var T t;
-var T&&? p = &&t;
+var Tx t;
+var Tx&&? p = &&t;
 
 await 500ms;
 
@@ -46662,13 +46671,13 @@ escape t.v + p!:v;
     run = { ['~>1s'] = 20 },
 }
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
 end
 
-var T t;
-var T&&? p = &&t;
+var Tx t;
+var Tx&&? p = &&t;
 
 await 500ms;
 
@@ -46678,14 +46687,14 @@ escape t.v + p!:v;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
     await 1s;
 end
 
-var T t;
-var T&&? ppp = &&t;
+var Tx t;
+var Tx&&? ppp = &&t;
 
 await 1s;
 
@@ -46695,14 +46704,14 @@ escape t.v + ppp!:v;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
     await 1s;
 end
 
-var T t;
-var T&&? p = &&t;
+var Tx t;
+var Tx&&? p = &&t;
 
 await 500ms;
 
@@ -46717,14 +46726,14 @@ class U with
 do
     await FOREVER;
 end
-class T with
+class Tx with
     var int v = 10;
 do
     await 1s;
 end
 
 var U u;
-var T t;
+var Tx t;
 var U&&? p = &&u;
 
 await 1s;
@@ -46735,23 +46744,23 @@ escape t.v + p!:v;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-//vector[] T   ts;
-vector[] T&&  ts1;
-vector[] T&&? ts2;
+//vector[] Tx   ts;
+vector[] Tx&&  ts1;
+vector[] Tx&&? ts2;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&&? ts;
-var T t;
+vector[] Tx&&? ts;
+var Tx t;
 ts = [] .. [&&t];
 escape $ts;
 ]],
@@ -46759,12 +46768,12 @@ escape $ts;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&&? ts;
+vector[] Tx&&? ts;
 
-var T t;
+var Tx t;
 ts = [] .. [&&t];
 
 escape ts[0] == &&t;
@@ -46773,12 +46782,12 @@ escape ts[0] == &&t;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
-vector[] T&&? ts;
-var T t;
+vector[] Tx&&? ts;
+var Tx t;
 ts = [] .. [&&t];
 escape ts[0]! == &&t;
 ]],
@@ -46786,11 +46795,11 @@ escape ts[0]! == &&t;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&&? ts;
-var T t;
+vector[] Tx&&? ts;
+var Tx t;
 ts = [] .. [&&t];
 escape ts[0]! == &&t;
 ]],
@@ -46798,11 +46807,11 @@ escape ts[0]! == &&t;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&&? ts;
-var T t;
+vector[] Tx&&? ts;
+var Tx t;
 ts = [] .. [&&t] .. [&&t];
 escape ts[1]! == &&t;
 ]],
@@ -46810,11 +46819,11 @@ escape ts[1]! == &&t;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-vector[] T&&? ts;
-var T t1,t2;
+vector[] Tx&&? ts;
+var Tx t1,t2;
 ts = [] .. [&&t1];
 ts[0]! = &&t2;
 escape ts[0]! == &&t2;
@@ -46823,12 +46832,12 @@ escape ts[0]! == &&t2;
 }
 
 Test { [[
-class T with
+class Tx with
 do
     await 1s;
 end
-vector[] T&&? ts;
-var T t;
+vector[] Tx&&? ts;
+var Tx t;
 ts = [] .. [&&t];
 await 1s;
 escape ts[0]! == &&t;
@@ -46839,11 +46848,11 @@ escape ts[0]! == &&t;
 Test { [[
 interface I with
 end
-class T with
+class Tx with
 do
 end
 
-var T t;
+var Tx t;
 vector[] I&&? iss;
 iss = [&&t];
 
@@ -46855,7 +46864,7 @@ escape iss[0]? + 1;
 Test { [[
 interface I with
 end
-class T with
+class Tx with
 do
 end
 class U with
@@ -46867,7 +46876,7 @@ do
     await 1s;
 end
 
-var T t;
+var Tx t;
 var U u;
 var V v;
 
@@ -46887,18 +46896,18 @@ escape ret;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
 do
     native/pure _printf;
     _printf("%p\n", &&this);
     await FOREVER;
 end
 
-var T&&? t;
+var Tx&&? t;
 par/or do
     do
-        pool[] T ts;
-        t = spawn T in ts;
+        pool[] Tx ts;
+        t = spawn Tx in ts;
         await OS_START;
     end
     await FOREVER;
@@ -46914,16 +46923,16 @@ escape 1;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-var T&&? t;
+var Tx&&? t;
 par/and do
     do
-        pool[] T ts;
-        t = spawn T in ts;
+        pool[] Tx ts;
+        t = spawn Tx in ts;
         await OS_START;
     end
 with
@@ -46937,16 +46946,16 @@ escape t?==false;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-vector[] T&&? v;
+vector[] Tx&&? v;
 par/and do
     do
-        pool[] T ts;
-        var T&&? ptr = spawn T in ts;
+        pool[] Tx ts;
+        var Tx&&? ptr = spawn Tx in ts;
         v = [] .. v .. [ptr];
         await OS_START;
     end
@@ -46962,17 +46971,17 @@ escape v[0]?==false;
 Test { [[
 class U with do end;
 
-class T with
+class Tx with
     vector&[] U&&  us;
-    code/instantaneous Build (vector&[] U&& us)=>T;
+    code/instantaneous Build (vector&[] U&& us)=>Tx;
 do
-    code/instantaneous Build (vector&[] U&& us)=>T do
+    code/instantaneous Build (vector&[] U&& us)=>Tx do
         this.us = &us;
     end
 end
 
 vector[] U&& us;
-var T t = T.build(&us);
+var Tx t = Tx.build(&us);
 
 escape 1;
 ]],
@@ -46982,11 +46991,11 @@ escape 1;
 Test { [[
 class U with do end;
 
-class T with
+class Tx with
     vector&[] U&&  us;
-    code/instantaneous Build (vector&[] U&& us)=>T;
+    code/instantaneous Build (vector&[] U&& us)=>Tx;
 do
-    code/instantaneous Build (vector&[] U&& us)=>T do
+    code/instantaneous Build (vector&[] U&& us)=>Tx do
         this.us = &us;
     end
 end
@@ -46995,7 +47004,7 @@ vector[] U&& us = [null];
 
 await 1s;
 
-var& T t = T.build(us);
+var& Tx t = Tx.build(us);
 var U&& u = us[0];
 
 escape u==null;
@@ -47005,11 +47014,11 @@ escape u==null;
 Test { [[
 class U with do end;
 
-class T with
+class Tx with
     vector&[] U&&? us;
-    code/instantaneous Build (vector&[] U&&? us)=>T;
+    code/instantaneous Build (vector&[] U&&? us)=>Tx;
 do
-    code/instantaneous Build (vector&[] U&&? us)=>T do
+    code/instantaneous Build (vector&[] U&&? us)=>Tx do
         this.us = &us;
     end
 end
@@ -47019,7 +47028,7 @@ vector[] U&&? us = [&&u1];
 
 await 1s;
 
-var T t = T.build(&us);
+var Tx t = Tx.build(&us);
 var U&&? u2 = us[0];
 
 escape u2?+1;
@@ -47033,11 +47042,11 @@ do
     await FOREVER;
 end;
 
-class T with
+class Tx with
     vector&[] U&&? us;
-    code/instantaneous Build (vector&[] U&&? us)=>T;
+    code/instantaneous Build (vector&[] U&&? us)=>Tx;
 do
-    code/instantaneous Build (vector&[] U&&? us)=>T do
+    code/instantaneous Build (vector&[] U&&? us)=>Tx do
         this.us = &us;
     end
 end
@@ -47047,7 +47056,7 @@ vector[] U&&? us = [&&u1];
 
 await 1s;
 
-var T t = T.build(&us);
+var Tx t = Tx.build(&us);
 emit us[0]!:go => true;
 
 escape us[0]?+1;
@@ -47061,11 +47070,11 @@ do
     await FOREVER;
 end;
 
-class T with
+class Tx with
     vector&[] U&&? us;
-    code/instantaneous Build (vector&[] U&&? us)=>T;
+    code/instantaneous Build (vector&[] U&&? us)=>Tx;
 do
-    code/instantaneous Build (vector&[] U&&? us)=>T do
+    code/instantaneous Build (vector&[] U&&? us)=>Tx do
         this.us = &us;
     end
 end
@@ -47076,7 +47085,7 @@ vector&[] U&&? xx = &us;
 
 await 1s;
 
-var T t = T.build(&us);
+var Tx t = Tx.build(&us);
 emit xx[0]!:go => true;
 
 escape us[0]?+1;
@@ -47085,18 +47094,18 @@ escape us[0]?+1;
 }
 
 Test { [[
-class T with
+class Tx with
     var& int i;
-    code/instantaneous Build (var& int i)=>T;
+    code/instantaneous Build (var& int i)=>Tx;
 do
-    code/instantaneous Build (var& int i)=>T do
+    code/instantaneous Build (var& int i)=>Tx do
         this.i = &i;
     end
     escape this.i;
 end
 
 var int i = 10;
-var int ret = do T.build(&this.i);
+var int ret = do Tx.build(&this.i);
 escape ret;
 ]],
     run = 10,
@@ -47106,18 +47115,18 @@ native do
     ##define ID(x) x
 end
 native/pure _ID;
-class T with
+class Tx with
     var& int i;
-    code/instantaneous Build (var& int i)=>T;
+    code/instantaneous Build (var& int i)=>Tx;
 do
-    code/instantaneous Build (var& int i)=>T do
+    code/instantaneous Build (var& int i)=>Tx do
         this.i = &i;
     end
     escape this.i;
 end
 
 var int i = 10;
-var int ret = do T.build(&_ID(&&this.i));
+var int ret = do Tx.build(&_ID(&&this.i));
 escape ret;
 ]],
     run = 10,
@@ -47198,9 +47207,9 @@ escape 1;
 
 Test { PRE_ISR..[[
 output int O;
-code/instantaneous F (void)=>void do end
+code/instantaneous Fx (void)=>void do end
 atomic do
-    F();
+    Fx();
 end
 escape 1;
 ]],
@@ -47537,13 +47546,13 @@ escape 1;
 }
 
 Test { PRE_ISR..[[
-code/instantaneous F (void)=>int do
+code/instantaneous Fx (void)=>int do
     escape 2;
 end
-var int v = F();
+var int v = Fx();
 par/or do
     async/isr [20] do
-        F();
+        Fx();
     end
     await FOREVER;
 with
@@ -47555,13 +47564,13 @@ escape v;
 }
 
 Test { PRE_ISR..[[
-code/instantaneous F (void)=>int do
+code/instantaneous Fx (void)=>int do
     escape 2;
 end
-var int v = F();
+var int v = Fx();
 par/or do
     async/isr[20] do
-        F();
+        Fx();
     end
     await FOREVER;
 with
@@ -47569,7 +47578,7 @@ end
 escape v;
 ]],
     --wrn = true,
-    --isr = 'line 4 : access to "F" must be atomic',
+    --isr = 'line 4 : access to "Fx" must be atomic',
     run = 2,
 }
 
@@ -47980,12 +47989,12 @@ escape 1;
 
 Test { [[
 class U with do end;
-class T with
+class Tx with
     pool[0] U us;
 do
 end
 
-var T t;
+var Tx t;
 
 escape 1;
 ]],
@@ -47999,12 +48008,12 @@ interface I with
     pool[10] U us;
 end
 
-class T with
+class Tx with
     interface I;
 do
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 spawn U in i:us;
 
@@ -48025,7 +48034,7 @@ interface Global with
 end
 var _int[10]  vs = [];
 
-class T with
+class Tx with
     interface I;
 do
     global:vs[0] = 1;
@@ -48034,7 +48043,7 @@ end
 vs[0] = 1;
 global:vs[0] = 1;
 
-var T t;
+var Tx t;
 t.vs[0] = 1;
 
 var I&& i = &&t;
@@ -48057,7 +48066,7 @@ interface Global with
 end
 var _int[10]  vs = [];
 
-class T with
+class Tx with
     interface I;
 do
     global:vs[0] = 1;
@@ -48066,7 +48075,7 @@ end
 vs[0] = 1;
 global:vs[0] = 1;
 
-var T t with
+var Tx t with
     this.vs = [];
 end;
 t.vs[0] = 1;
@@ -48091,7 +48100,7 @@ interface Global with
 end
 pool[10] U  us;
 
-class T with
+class Tx with
     pool[10] U us;
     interface I;
 do
@@ -48104,7 +48113,7 @@ spawn U in global:us;
 pool[1] U us1;
 spawn U in us1;
 
-var T t;
+var Tx t;
 spawn U in t.us;
 
 var I&& i = &&t;
@@ -48137,19 +48146,19 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     async do end;
 end
 
 interface Global with
-    pool[] T ts;
+    pool[] Tx ts;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
-spawn T in ts with
+spawn Tx in ts with
     this.v = 10;
 end;
 
@@ -48164,19 +48173,19 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     async do end;
 end
 
 interface Global with
-    pool[1] T ts;
+    pool[1] Tx ts;
 end
 
-pool[1] T ts;
+pool[1] Tx ts;
 
-spawn T in ts with
+spawn Tx in ts with
     this.v = 10;
 end;
 
@@ -48191,18 +48200,18 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
 
 interface Global with
-    pool[] T ts;
+    pool[] Tx ts;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
-spawn T in global:ts;
+spawn Tx in global:ts;
 
 escape 1;
 ]],
@@ -48210,19 +48219,19 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     async do end;
 end
 
 interface Global with
-    pool[] T ts;
+    pool[] Tx ts;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
-spawn T in global:ts with
+spawn Tx in global:ts with
     this.v = 10;
 end;
 
@@ -48237,19 +48246,19 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     async do end;
 end
 
 interface Global with
-    pool[] T ts;
+    pool[] Tx ts;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
-spawn T in global:ts with
+spawn Tx in global:ts with
     this.v = 10;
 end;
 
@@ -48264,20 +48273,20 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
 interface Global with
-    pool[] T ts;
+    pool[] Tx ts;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 class U with
     var int v = 0;
 do
-    spawn T in global:ts with
+    spawn Tx in global:ts with
     end;
 end
 
@@ -48287,25 +48296,25 @@ escape 1;
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     async do end;
 end
 
 interface Global with
-    pool[] T ts;
+    pool[] Tx ts;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 class U with
     var int v = 0;
 do
-    spawn T in global:ts with
+    spawn Tx in global:ts with
         this.v = 10;
     end;
-    spawn T in global:ts with
+    spawn Tx in global:ts with
         this.v = 20;
     end;
 
@@ -48331,25 +48340,25 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     async do end;
 end
 
 interface Global with
-    pool[1] T ts;
+    pool[1] Tx ts;
 end
 
-pool[1] T ts;
+pool[1] Tx ts;
 
 class U with
     var int v = 0;
 do
-    spawn T in global:ts with
+    spawn Tx in global:ts with
         this.v = 10;
     end;
-    spawn T in global:ts with
+    spawn Tx in global:ts with
         this.v = 20;
     end;
 
@@ -48379,7 +48388,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int v = 0;
 do
     do finalize with
@@ -48391,7 +48400,7 @@ end
 
 class U with
     var int v = 0;
-    pool[1] T ts;
+    pool[1] Tx ts;
 do
     await FOREVER;
 end
@@ -48400,10 +48409,10 @@ var int ret = 0;
 
 do
     var U u;
-    spawn T in u.ts with
+    spawn Tx in u.ts with
         this.v = 10;
     end;
-    spawn T in u.ts with
+    spawn Tx in u.ts with
         this.v = 20;
     end;
 
@@ -48424,7 +48433,7 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
     var int v = 0;
 do
     do finalize with
@@ -48436,7 +48445,7 @@ end
 
 class U with
     var int v = 0;
-    pool[] T ts;
+    pool[] Tx ts;
 do
     await FOREVER;
 end
@@ -48445,10 +48454,10 @@ var int ret = 0;
 
 do
     var U u;
-    spawn T in u.ts with
+    spawn Tx in u.ts with
         this.v = 10;
     end;
-    spawn T in u.ts with
+    spawn Tx in u.ts with
         this.v = 20;
     end;
 
@@ -48698,14 +48707,14 @@ end
 }
 
 Test { [[
-class T with
+class Tx with
     event int e;
 do
     await 1s;
     escape 10;
 end
 
-var T t;
+var Tx t;
 var int n =
     watching t do
         await FOREVER;
@@ -48766,14 +48775,14 @@ end
 
 Test { [[
 input void E;
-class T with
+class Tx with
     event int e;
 do
     await E;
     escape 10;
 end
 
-var T t;
+var Tx t;
 var int n =
     watching t do
         await 500ms;
@@ -48786,7 +48795,7 @@ escape n;
 }
 
 Test { [[
-class T with
+class Tx with
     event void e;
 do
     await this.e;
@@ -48800,7 +48809,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     event int e;
 do
     await this.e;
@@ -48816,7 +48825,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     event int e;
 do
     await this.e;
@@ -48832,11 +48841,11 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
 
-var T t;
+var Tx t;
 
 par/or do
 every 1s do
@@ -48852,7 +48861,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     event void e;
 do
     await this.e;
@@ -48956,13 +48965,13 @@ escape ret;
     }
 }
 
--- TODO: "e" has type "T*"
+-- TODO: "e" has type "Tx*"
 -- this type is defined inside the application and only makes sense there
 -- if it is not the case, simply use void* and the other application casts back 
--- to T*
+-- to Tx*
 Test { [[
-data T;
-event T&& e;
+data Tx;
+event Tx&& e;
 var int ret = -1;
 watching e do
     await 1s;
@@ -48971,7 +48980,7 @@ end
 escape 1;
 ]],
     env = 'line 1 : invalid event type',
-    --gcc = ' error: unknown type name ‘T’',
+    --gcc = ' error: unknown type name ‘Tx’',
     --run = { ['~>1s'] = 1 }
 }
 
@@ -48986,13 +48995,13 @@ interface I with
     pool[2] U us2;
 end
 
-class T with
+class Tx with
     pool[2] U us1;
     interface I;
 do
 end
 
-var T t;
+var Tx t;
 spawn U in t.us2 with
     this.v = 1;
 end;
@@ -49028,14 +49037,14 @@ interface I with
     pool[2] U us2;
 end
 
-class T with
+class Tx with
     pool[2] U us1;
     interface I;
 do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 spawn U in t.us2 with
     this.v = 1;
 end;
@@ -49074,13 +49083,13 @@ interface I with
     pool[2] U us2;
 end
 
-class T with
+class Tx with
     pool[2] U us1;
     interface I;
 do
 end
 
-var T t;
+var Tx t;
 spawn U in t.us2 with
     this.v = 1;
 end;
@@ -49109,22 +49118,22 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 0;
 
 par/or do
-    var T t with
+    var Tx t with
         this.v = 10;
     end;
     async do end;
     emit e => &&t;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     ret = p:v;
 end
 
@@ -49136,22 +49145,22 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 0;
 
 par/or do
-    var T t with
+    var Tx t with
         this.v = 10;
     end;
     async do end;
     emit e => &&t;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     ret = p:v;
 end
 
@@ -49164,22 +49173,22 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 0;
 
 par/or do
-    var T t with
+    var Tx t with
         this.v = 10;
     end;
     async do end;
     emit e => &&t;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     async do end;
     ret = p:v;
 end
@@ -49196,16 +49205,16 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var int v = 0;
 do
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 0;
 
 par/or do
-    var T t with
+    var Tx t with
         this.v = 10;
     end;
     async do end;
@@ -49228,13 +49237,13 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var int v = 0;
 do
     await FOREVER;
 end
 
-var I&&? p = spawn T with
+var I&&? p = spawn Tx with
     this.v = 10;
 end;
 escape p!:v;
@@ -49248,7 +49257,7 @@ native do
     int V = 0;
 end
 input void OS_START;
-class T with
+class Tx with
     var int id = 0;
 do
     await OS_START;
@@ -49256,8 +49265,8 @@ native _V;
     _V = _V + 1;
 end
 
-pool[1] T ts;
-var T&&? t = spawn T in ts with
+pool[1] Tx ts;
+var Tx&&? t = spawn Tx in ts with
     this.id = 10;
 end;
 
@@ -49275,14 +49284,14 @@ escape ret;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int id = 0;
 do
     await OS_START;
 end
 
-pool[1] T ts;
-var T&&? t = spawn T in ts with
+pool[1] Tx ts;
+var Tx&&? t = spawn Tx in ts with
     this.id = 10000;
 end;
 
@@ -49299,17 +49308,17 @@ escape ret;
 }
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int id = 0;
 do
     await OS_START;
 end
 
-pool[2] T ts;
-var T&&? t1 = spawn T in ts with
+pool[2] Tx ts;
+var Tx&&? t1 = spawn Tx in ts with
     this.id = 10000;
 end;
-var T&&? t = spawn T in ts with
+var Tx&&? t = spawn Tx in ts with
     this.id = 10000;
 end;
 
@@ -49329,7 +49338,7 @@ native do
     int V = 0;
 end
 input void OS_START;
-class T with
+class Tx with
     var int id = 0;
 do
     await OS_START;
@@ -49337,11 +49346,11 @@ native _V;
     _V = _V + 1;
 end
 
-pool[10000] T ts;
-var T&& t0 = null;
-var T&& tF = null;
+pool[10000] Tx ts;
+var Tx&& t0 = null;
+var Tx&& tF = null;
 loop i in 10000 do
-    var T&&? t = spawn T in ts with
+    var Tx&&? t = spawn Tx in ts with
         this.id = 10000-i;
     end;
     if t0 == null then
@@ -49371,7 +49380,7 @@ native do
     int V = 0;
 end
 input void OS_START;
-class T with
+class Tx with
     var int id = 0;
 do
     await OS_START;
@@ -49379,11 +49388,11 @@ native _V;
     _V = _V + 1;
 end
 
-pool[10000] T ts;
-var T&& tF = null;
+pool[10000] Tx ts;
+var Tx&& tF = null;
 loop i in 10000 do
-var T&& t0 = null;
-    var T&&? t = spawn T in ts with
+var Tx&& t0 = null;
+    var Tx&&? t = spawn Tx in ts with
         this.id = 10000-i;
     end;
     if t0 == null then
@@ -49412,13 +49421,13 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var int v = 10;
 do
     await FOREVER;
 end
 
-var I&&? p = spawn T;
+var I&&? p = spawn Tx;
 escape p!:v;
 ]],
     run = 10,
@@ -49429,12 +49438,12 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var int v = 0;
 do
 end
 
-var I&&? p = spawn T with
+var I&&? p = spawn Tx with
     p!:v = 10;
 end;
 async do end;
@@ -49490,7 +49499,7 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var I&& i = null;
 do
     watching *i do
@@ -49509,7 +49518,7 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var I&& i = null;
 do
     await 1s;
@@ -49528,7 +49537,7 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var I&& i = null;
 do
     watching *i do
@@ -49607,10 +49616,10 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
 do
 end
-var T t;
+var Tx t;
 watching t do
 end
 escape 100;
@@ -49619,23 +49628,23 @@ escape 100;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 1;
 
 par/and do
     async do end;
-    var T t with
+    var Tx t with
         this.v = 10;
     end;
     emit e => &&t;
     await 1s;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 1 then
@@ -49655,23 +49664,23 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 1;
 
 par/and do
     async do end;
-    var T t with
+    var Tx t with
         this.v = 10;
     end;
     emit e => &&t;
     await 1s;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 1 then
@@ -49692,22 +49701,22 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 1;
 
 par/and do
     async do end;
-    var T t with
+    var Tx t with
         this.v = 10;
     end;
     emit e => &&t;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 1 then
@@ -49727,24 +49736,24 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     await 5s;
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 0;
 
 par/and do
     async do end;
-    var T t with
+    var Tx t with
         this.v = 10;
     end;
     emit e => &&t;
     await 6s;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 0 then
@@ -49764,24 +49773,24 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     await 4s;
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 0;
 
 par/and do
     async do end;
-    var T t with
+    var Tx t with
         this.v = 10;
     end;
     emit e => &&t;
     await 6s;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 0 then
@@ -49801,24 +49810,24 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     await 6s;
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 0;
 
 par/and do
     async do end;
-    var T t with
+    var Tx t with
         this.v = 10;
     end;
     emit e => &&t;
     await 6s;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 0 then
@@ -49838,12 +49847,12 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
 
-event T&& e;
+event Tx&& e;
 emit e => null;
 escape 1;
 ]],
@@ -49853,25 +49862,25 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     async do end
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 1;
 
 par/and do
     async do end;
-    pool[] T ts;
-    var T&&? t = spawn T in ts with
+    pool[] Tx ts;
+    var Tx&&? t = spawn Tx in ts with
         this.v = 10;
     end;
     emit e => t!;
     await 1s;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 1 then
@@ -49891,24 +49900,24 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     async do end
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 1;
 
 par/and do
     async do end;
-    pool[] T ts;
-    var T&&? t = spawn T in ts with
+    pool[] Tx ts;
+    var Tx&&? t = spawn Tx in ts with
         this.v = 10;
     end;
     emit e => t!;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 0 then
@@ -49928,25 +49937,25 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     await 4s;
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 0;
 
 par/and do
     async do end;
-    pool[] T ts;
-    var T&&? t = spawn T in ts with
+    pool[] Tx ts;
+    var Tx&&? t = spawn Tx in ts with
         this.v = 10;
     end;
     emit e => t!;
     await 6s;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 0 then
@@ -49966,25 +49975,25 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     await 6s;
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 0;
 
 par/and do
     async do end;
-    pool[] T ts;
-    var T&&? t = spawn T in ts with
+    pool[] Tx ts;
+    var Tx&&? t = spawn Tx in ts with
         this.v = 10;
     end;
     emit e => t!;
     await 6s;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 0 then
@@ -50004,24 +50013,24 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     await 6s;
 end
 
-event T&& e;
+event Tx&& e;
 var int ret = 0;
 
 par/and do
     async do end;
-    pool[] T ts;
-    var T&&? t = spawn T in ts with
+    pool[] Tx ts;
+    var Tx&&? t = spawn Tx in ts with
         this.v = 10;
     end;
     emit e => t!;
 with
-    var T&& p = await e;
+    var Tx&& p = await e;
     watching *p do
         do finalize with
             if ret == 0 then
@@ -50133,7 +50142,7 @@ escape _V;
 
 Test { [[
 class U with do end;
-class T with
+class Tx with
     var U&& u;
 do
     watching *u do
@@ -50149,7 +50158,7 @@ end
 
 do
     var U u;
-    spawn T with
+    spawn Tx with
         this.u = &&u;
     end;
     await 1s;
@@ -50166,7 +50175,7 @@ native do
     int V = 0;
 end
 class U with do end;
-class T with
+class Tx with
     var U&& u;
 do
     watching *u do
@@ -50177,7 +50186,7 @@ native _V;
 end
 do
     var U u;
-    spawn T with
+    spawn Tx with
         this.u = &&u;
     end;
     await 1s;
@@ -50191,7 +50200,7 @@ escape 1;
 }
 Test { [[
 class U with do end;
-class T with
+class Tx with
     var U&& u;
 do
     watching *u do
@@ -50201,7 +50210,7 @@ end
 
 do
     var U u;
-    spawn T with
+    spawn Tx with
         this.u = &&u;
     end;
 end
@@ -50212,7 +50221,7 @@ escape 1;
 }
 Test { [[
 class U with do end;
-class T with
+class Tx with
     var U&& u;
 do
     watching *u do
@@ -50221,7 +50230,7 @@ do
 end
 
 class X with
-    pool[] T ts;
+    pool[] Tx ts;
 do
     await FOREVER;
 end
@@ -50229,7 +50238,7 @@ end
 var X x;
 do
     var U u;
-    spawn T in x.ts with
+    spawn Tx in x.ts with
         this.u = &&u;
     end;
 end
@@ -50330,7 +50339,7 @@ class Unit with
     var int pos;
 do end;
 
-class T with
+class Tx with
     event Unit&& org;
     event int   ok;
 do
@@ -50343,7 +50352,7 @@ do
     emit ok => pos;
 end
 
-var T t;
+var Tx t;
 await 1s;
 
 do
@@ -50366,7 +50375,7 @@ native do
     int V = 0;
 end
 input void OS_START,B;
-class T with
+class Tx with
     event void ok, go, b;
     event void e, f;
     var int v=0;
@@ -50380,8 +50389,8 @@ do
     emit ok;
     await FOREVER;
 end
-var T a;                    // (1) v=10
-var T&& ptr;
+var Tx a;                    // (1) v=10
+var Tx&& ptr;
 ptr = &&a;
 watching *ptr do
     var int ret = 0;
@@ -50445,7 +50454,7 @@ native do
     int V = 0;
 end
 input void OS_START;
-class T with
+class Tx with
     event void ok, go;
     var int v=0, going=0;
 do
@@ -50454,8 +50463,8 @@ do
     v = 10;
     emit ok;
 end
-var T a;
-var T&& ptr;
+var Tx a;
+var Tx&& ptr;
 ptr = &&a;
 watching *ptr do
     par/or do
@@ -50478,17 +50487,17 @@ escape _V + 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     await FOREVER;
 end
-pool[1] T ts;
-var T&&? ok1 = spawn T in ts with
+pool[1] Tx ts;
+var Tx&&? ok1 = spawn Tx in ts with
                 this.v = 10;
               end;
 watching *ok1! do
-    var int ok2 = 0;// spawn T in ts;
+    var int ok2 = 0;// spawn Tx in ts;
     var int ret = 0;
     loop t in ts do
         ret = ret + t:v;
@@ -50505,17 +50514,17 @@ Test { [[
 native do
     int V = 0;
 end
-class T with
+class Tx with
     var int v = 0;
 do
     async do end;
 end
-pool[1] T ts;
-var T&&? ok1 = spawn T in ts with
+pool[1] Tx ts;
+var Tx&&? ok1 = spawn Tx in ts with
                 this.v = 10;
               end;
 watching *ok1! do
-    var int ok2 = 0;// spawn T in ts;
+    var int ok2 = 0;// spawn Tx in ts;
     var int ret = 0;
     loop t in ts do
         ret = ret + t:v;
@@ -50534,14 +50543,14 @@ escape _V + 1;  // this one executes because of strong abortion in the watching
 }
 
 Test { [[
-class T with
+class Tx with
     event (int,int) ok_game;
 do
     await 1s;
     emit this.ok_game => (1,2);
 end
-var T t;
-var T&& i = &&t;
+var Tx t;
+var Tx&& i = &&t;
 var int a,b;
 watching *i do
     (a,b) = await i:ok_game;
@@ -50556,7 +50565,7 @@ escape a+b;
 Test { [[
 input void OS_START;
 
-class T with
+class Tx with
 do
     event void x;
     par/or do
@@ -50568,7 +50577,7 @@ do
 end
 
 do
-    var T t;
+    var Tx t;
     await OS_START;
 end
 
@@ -50585,7 +50594,7 @@ do
     await x;
 end
 
-class T with
+class Tx with
     var U&& u;
 do
     watching *u do
@@ -50596,7 +50605,7 @@ end
 
 do
     var U u;
-    var T t with
+    var Tx t with
         this.u = &&u;
     end;
     await OS_START;
@@ -50625,7 +50634,7 @@ do
     end
 end
 
-class T with
+class Tx with
     var U&& u;
 do
     watching *u do
@@ -50638,7 +50647,7 @@ end
 
 do
     var U u;
-    var T t with
+    var Tx t with
         this.u = &&u;
     end;
     await OS_START;
@@ -50655,7 +50664,7 @@ Test { [[
 interface UI with
 end
 
-class T with
+class Tx with
     interface UI;
 do
 end
@@ -50685,7 +50694,7 @@ do
         this.uis = &pool1;
     end;
 
-    var T g2;
+    var Tx g2;
     spawn UIGridItem in g1.uis.all with
         this.ui = &&g2;
     end;
@@ -50700,7 +50709,7 @@ Test { [[
 interface UI with
 end
 
-class T with
+class Tx with
     interface UI;
 do
 end
@@ -50729,7 +50738,7 @@ end
         this.uis = &pool1;
     end;
 
-    var T g2;
+    var Tx g2;
     spawn UIGridItem in g1.uis.all with
         this.ui = &&g2;
     end;
@@ -50765,7 +50774,7 @@ Test { [[
 interface UI with
 end
 
-class T with
+class Tx with
     interface UI;
 do
 end
@@ -50795,7 +50804,7 @@ do
         this.uis = &pool1;
     end;
 
-    var T g2;
+    var Tx g2;
     spawn UIGridItem in pool1.all with
         this.ui = &&g2;
     end;
@@ -50816,14 +50825,14 @@ interface I with
     var int e;
 end
 
-class T with
+class Tx with
     var int e=0;
 do
     e = 100;
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 watching *i do
     await OS_START;
@@ -50849,7 +50858,7 @@ interface I with
     var int ee;
 end
 
-class T with
+class Tx with
     event void e;
     var int ee=0;
 do
@@ -50858,7 +50867,7 @@ do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 
 watching *i do
@@ -50886,7 +50895,7 @@ interface I with
     var int vv;
 end
 
-class T with
+class Tx with
     event int e, f;
     var int vv=0;
 do
@@ -50896,7 +50905,7 @@ do
     await FOREVER;
 end
 
-var T t1;
+var Tx t1;
 var I&& i1 = &&t1;
 
 watching *i1 do
@@ -50931,7 +50940,7 @@ interface I with
     event int e, f;
 end
 
-class T with
+class Tx with
     event int e, f;
 do
     var int v = await e;
@@ -50939,7 +50948,7 @@ do
     await FOREVER;
 end
 
-var T t1, t2;
+var Tx t1, t2;
 var I&& i1 = &&t1;
 
 watching *i1 do
@@ -50980,28 +50989,28 @@ end
 
 interface I with
     var int v;
-    code/instantaneous F (var int)=>void;
+    code/instantaneous Fx (var int)=>void;
 end
 
-class T with
+class Tx with
     var int v=0;
-    code/instantaneous F (var int)=>void;
+    code/instantaneous Fx (var int)=>void;
 do
     v = 50;
-    this.F(10);
+    this.Fx(10);
 
-    code/instantaneous F (var int v)=>void do
+    code/instantaneous Fx (var int v)=>void do
         this.v = this.v + v;
     end
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 input void OS_START;
 watching *i do
     await OS_START;
-    i:F(100);
+    i:Fx(100);
 native _V;
     _V = i:v;
     escape i:v;
@@ -51020,28 +51029,28 @@ end
 
 interface I with
     var int v;
-    code/instantaneous F (var int)=>void;
+    code/instantaneous Fx (var int)=>void;
 end
 
-class T with
+class Tx with
     interface I;
     var int v=0;
 do
     v = 50;
-    this.F(10);
+    this.Fx(10);
 
-    code/instantaneous F (var int a)=>void do
+    code/instantaneous Fx (var int a)=>void do
         v = v + a;
     end
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 input void OS_START;
 watching *i do
     await OS_START;
-    i:F(100);
+    i:Fx(100);
 native _V;
     _V = i:v;
     escape i:v;
@@ -51059,7 +51068,7 @@ interface I with
     code/instantaneous Set (var int)=>void;
 end
 
-class T with
+class Tx with
     interface I;
     var int v = 50;
 do
@@ -51072,7 +51081,7 @@ do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 var I&& i = &&t;
 var int v = i:v;
 i:set(100);
@@ -51089,17 +51098,17 @@ end
 
 interface I with
     var int v;
-    code/instantaneous F (var int)=>void;
+    code/instantaneous Fx (var int)=>void;
 end
 
-class T with
+class Tx with
     interface I;
     var int v=0;
 do
     v = 50;
-    this.F(10);
+    this.Fx(10);
 
-    code/instantaneous F (var int v)=>void do
+    code/instantaneous Fx (var int v)=>void do
         this.v = this.v + v;
     end
     await FOREVER;
@@ -51110,25 +51119,25 @@ class U with
     var int v=0;
 do
     v = 50;
-    this.F(10);
+    this.Fx(10);
 
-    code/instantaneous F (var int v)=>void do
+    code/instantaneous Fx (var int v)=>void do
         this.v = this.v + 2*v;
     end
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 var U u;
 var I&& i = &&t;
 input void OS_START;
 watching *i do
     await OS_START;
-    i:F(100);
+    i:Fx(100);
     var int ret = i:v;
 
     i=&&u;
-    i:F(200);
+    i:Fx(200);
 native _V;
     _V = ret + i:v;
     escape ret + i:v;
@@ -51141,14 +51150,14 @@ escape _V+1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     this.v = 10;
 end
 
 var int ret = 1;
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 if t? then
     watching *t! do
         do finalize with
@@ -51164,13 +51173,13 @@ escape ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     this.v = 10;
 end
 
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 watching *t! do
     await FOREVER;
 end
@@ -51182,13 +51191,13 @@ escape t!:v;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
     this.v = 10;
 end
 
-var T&&? t = spawn T;
+var Tx&&? t = spawn Tx;
 watching *t! do
     await FOREVER;
 end
@@ -51203,16 +51212,16 @@ escape t!:v;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int id = 0;
 do
     await OS_START;
 end
 
-pool[9999] T ts;
-var T&& t0 = null;
+pool[9999] Tx ts;
+var Tx&& t0 = null;
 loop i in 9999 do
-    var T&&? t = spawn T with
+    var Tx&&? t = spawn Tx with
         this.id = 9999-i;
     end;
     if t0 == null then
@@ -51233,16 +51242,16 @@ escape ret;
 
 Test { [[
 input void OS_START;
-class T with
+class Tx with
     var int id = 0;
 do
     await OS_START;
 end
 
-pool[9999] T ts;
+pool[9999] Tx ts;
 loop i in 9999 do
-    var T&& t0 = null;
-    var T&&? t = spawn T with
+    var Tx&& t0 = null;
+    var Tx&&? t = spawn Tx with
         this.id = 9999-i;
     end;
     if t0 == null then
@@ -51257,16 +51266,16 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int v = 10;
 do
     await 1s;
 end
 
-var T t1;
-var T&&? ptr = &&t1;
+var Tx t1;
+var Tx&&? ptr = &&t1;
 await 1s;
-var T t2;
+var Tx t2;
 ptr = &&t2;
 await 200ms;
 
@@ -51371,13 +51380,13 @@ end
 
 var int x = 10;
 
-class T with
+class Tx with
     var int x=0;
 do
     this.x = global:x;
 end
 
-var T t;
+var Tx t;
 await OS_START;
 escape t.x;
 ]],
@@ -51385,11 +51394,11 @@ escape t.x;
 }
 
 Test { [[
-input int F, E;
+input int A, E;
 var int n_shields = 0;
 var int ret = 1;
 par/or do
-    await F;
+    await A;
 with
     loop do
         var int v = await E until (n_shields > 0);
@@ -51399,14 +51408,14 @@ end
 
 escape ret;
 ]],
-    run = { ['1~>E; 1~>E; 1~>F'] = 1 }
+    run = { ['1~>E; 1~>E; 1~>A'] = 1 }
 }
 Test { [[
-input void F, E;
+input void A, E;
 var int n_shields = 0;
 var int ret = 1;
 par/or do
-    await F;
+    await A;
 with
     loop do
         await E until (n_shields > 0);
@@ -51416,7 +51425,7 @@ end
 
 escape ret;
 ]],
-    run = { ['~>E; ~>E; ~>F'] = 1 }
+    run = { ['~>E; ~>E; ~>A'] = 1 }
 }
 
 Test { [[
@@ -51482,7 +51491,7 @@ escape ret;
     run = 6,
 }
 
--- AWAITS // AWAIT MANY // SELECT
+-- AWAITS // Await MANY // SELECT
 
 --[=[
 Test { [[
@@ -51704,15 +51713,15 @@ input void A,B;
 }
 
 Test { [[
-input void A,B, D;
+input void A,B, X;
 loop do
     par/or do
         loop do
             await A;
         end
-        await D;
+        await X;
     with
-        await D;
+        await X;
         loop do
             await B;
         end
@@ -51727,14 +51736,14 @@ end
 }
 
 Test { [[
-input void A,B, D;
+input void A,B, X;
 loop do
     par/or do
         loop do
             await A;
         end
     with
-        await D;
+        await X;
         loop do
             await A;
         end
@@ -51750,13 +51759,13 @@ end
 
 Test { [[
 input void A, B;
-class T with
+class Tx with
     event void e;
 do
     await A;
     await A;
 end
-var T a,b;
+var Tx a,b;
 native _f;
 var int c=0;
 par do
@@ -51797,13 +51806,13 @@ end
 }
 Test { [[
 input void A, B;
-class T with
+class Tx with
     event void e;
 do
     await A;
     await A;
 end
-var T a,b;
+var Tx a,b;
 native _f;
 var int c=0;
 par do
@@ -51848,13 +51857,13 @@ end
 
 Test { [[
 input int A, B;
-class T with
+class Tx with
     event int e;
 do
     await A;
     await A;
 end
-var T a,b;
+var Tx a,b;
 native _f;
 var int c=0;
 par do
@@ -51895,14 +51904,14 @@ end
 }
 
 Test { [[
-input void A, B, D;
+input void A, B, X;
 loop do
     par/or do
         await A;
     with
         await B;
     end
-    await D;
+    await X;
 end
 ]],
     _ana = {
@@ -51914,7 +51923,7 @@ end
 
 Test { [[
 input void A;
-class T with
+class Tx with
 do
     loop do
         await A;
@@ -51937,7 +51946,7 @@ end
 
 Test { [[
 input void A;
-class T with
+class Tx with
 do
     loop do
         await A;
@@ -51948,7 +51957,7 @@ par do
         await A;
     end
 with
-    var T a;
+    var Tx a;
     await FOREVER;
 end
 ]],
@@ -52318,7 +52327,7 @@ escape _f();
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
-interface T with
+interface Tx with
     var int i;
 end
 var int i = 0;
@@ -52327,18 +52336,18 @@ Test { [[
 //
 //
 #include "/tmp/_ceu_MOD1.ceu"
-interface T with
+interface Tx with
     var int i;
 end
 var int i = 10;
 escape i;
 ]],
-    env = 'line 4 : top-level identifier "T" already taken',
-    --env = 'tests.lua : line 4 : interface/class "T" is already declared',
+    env = 'line 4 : top-level identifier "Tx" already taken',
+    --env = 'tests.lua : line 4 : interface/class "Tx" is already declared',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
-interface T with
+interface Tx with
     var int i;
 end
 var int i = 0;
@@ -52346,15 +52355,15 @@ var int i = 0;
 Test { [[
 //
 //
-interface T with
+interface Tx with
     var int i;
 end
 #include "/tmp/_ceu_MOD1.ceu"
 var int i = 10;
 escape i;
 ]],
-    env = 'line 1 : top-level identifier "T" already taken',
-    --env = '/tmp/_ceu_MOD1.ceu : line 1 : interface/class "T" is already declared',
+    env = 'line 1 : top-level identifier "Tx" already taken',
+    --env = '/tmp/_ceu_MOD1.ceu : line 1 : interface/class "Tx" is already declared',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -52427,7 +52436,7 @@ escape 1;
 -- CLASSES/THREADS
 
 Test { [[
-class T with
+class Tx with
     event int ok;
 do
     var int v=0;
@@ -52446,7 +52455,7 @@ do
     emit ok => v;
 end
 
-var T t1, t2;
+var Tx t1, t2;
 var int v1=0, v2=0;
 
 par/and do
@@ -52473,46 +52482,46 @@ escape v1;
 -- CLASSES/REFS / &
 
 Test { [[
-class T with
+class Tx with
     var int x=0;
 do
 end
 class U with do end;
-event T& e;
+event Tx& e;
 par/and do
    do
       await 1s;
-      var T t;
+      var Tx t;
       emit e => t;
    end
    var U u;
 with
-   var& T t = await e;
+   var& Tx t = await e;
    t.x = 1;
    await 1s;
 end
 escape 1;
 ]],
-    parser = 'line 6 : after `T´ : expected type modifier or internal identifier',
+    parser = 'line 6 : after `Tx´ : expected type modifier or internal identifier',
     --env = 'line 6 : invalid event type',
 }
 
 Test { [[
-class T with
+class Tx with
     var int x=0;
 do
 end
 class U with do end;
-event (T&,int) e;
+event (Tx&,int) e;
 par/and do
    do
       await 1s;
-      var T t;
+      var Tx t;
       emit e => (t,1);
    end
    var U u;
 with
-   var& T t;
+   var& Tx t;
    var int i;
    (t,i) = await e;
    t.x = 1;
@@ -52520,8 +52529,8 @@ with
 end
 escape 1;
 ]],
-    parser = 'line 6 : after `T´ : expected type modifier or `,´ or `)´',
-    --parser = 'line 6 : after `T´ : expected `,´',
+    parser = 'line 6 : after `Tx´ : expected type modifier or `,´ or `)´',
+    --parser = 'line 6 : after `Tx´ : expected `,´',
     --env = 'line 6 : invalid event type',
     --run = 1,
 }
@@ -52564,7 +52573,7 @@ pre native do
     #define f(a)
     typedef int t;
 end
-class T with
+class Tx with
     var& _t t;
 do
     await 1s;
@@ -52577,12 +52586,12 @@ escape 1;
 
 Test { [[
 interface I with end;
-class T with
+class Tx with
     var I&& i = null;
 do
 end
 
-var T t;
+var Tx t;
 await 1s;
 native _assert;
 _assert(t.i == null);
@@ -52593,12 +52602,12 @@ escape 1;
 
 Test { [[
 interface I with end;
-class T with
+class Tx with
     var I&& i = null;
 do
 end
 
-var T t;
+var Tx t;
 var I&& i = t.i;
 await 1s;
 native _assert;
@@ -52611,12 +52620,12 @@ escape 1;
 
 Test { [[
 interface I with end;
-class T with
+class Tx with
     var I&& i = null;
 do
 end
 
-var T t;
+var Tx t;
 var I&& i = t.i;
 await 1s;
 native _assert;
@@ -52627,10 +52636,10 @@ escape 1;
 }
 
 Test { [[
-class T with do end
+class Tx with do end
 
 class Pool with
-    pool[] T all;
+    pool[] Tx all;
 do
     await FOREVER;
 end
@@ -52643,7 +52652,7 @@ var Pool&& p = null;
 class S with
 do
     await 1s;
-    spawn T in global:p:all with
+    spawn Tx in global:p:all with
     end;
 end
 
@@ -52806,14 +52815,14 @@ escape o.v;
     run = 10,
 }
 Test { [[
-class T with
+class Tx with
     var int v = 0;
 do
 end
-var T t with
+var Tx t with
     this.v = 10;
 end;
-var& T tt = &t;
+var& Tx tt = &t;
 tt.v = 5;
 escape t.v;
 ]],
@@ -52884,7 +52893,7 @@ escape 1;
 Test { [[
 class U with do end;
 
-class T with
+class Tx with
     var U&& u;
 do
     watching *u do
@@ -52892,7 +52901,7 @@ do
 end
 
 var U&& u = null;
-var T t with
+var Tx t with
     this.u = u;
 end;
 
@@ -52907,12 +52916,12 @@ escape 1;
 -->>> INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 
 Test { [[
-class T with
+class Tx with
     input:
         var int i;
 do
 end
-var T t;
+var Tx t;
 escape t.i;
 ]],
     ref = 'line 6 : missing initialization for field "i" (declared in tests.lua:3)',
@@ -52920,12 +52929,12 @@ escape t.i;
 }
 
 Test { [[
-class T with
+class Tx with
     output:
         var int o;
 do
 end
-var T t with
+var Tx t with
     this.o  = 1;
 end;
 escape 1;
@@ -52934,12 +52943,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     output:
         var int o;
 do
 end
-var T t;
+var Tx t;
 t.o = 1;
 escape 1;
 ]],
@@ -52947,7 +52956,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     input:
         var int i;
 do
@@ -52958,7 +52967,7 @@ escape 1;
     mode = 'line 5 : cannot write to field with mode `input´',
 }
 Test { [[
-class T with
+class Tx with
     input:
         var int i;
 do
@@ -52970,7 +52979,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     input:
         var int i;
 
@@ -52987,7 +52996,7 @@ do
     io = 1;
     oi = 1;
 end
-var T t with
+var Tx t with
     this.i  = 1;
     this.io = 1;
     this.oi = 1;
@@ -53000,7 +53009,7 @@ escape t.o+t.io+t.oi;
     run = 3,
 }
 Test { [[
-class T with
+class Tx with
     input:
         var int i;
 
@@ -53017,7 +53026,7 @@ do
     this.io = 1;
     this.oi = 1;
 end
-var T t with
+var Tx t with
     this.i  = 1;
     this.io = 1;
     this.oi = 1;
@@ -53031,7 +53040,7 @@ escape t.o+t.io+t.oi;
 }
 
 Test { [[
-class T with
+class Tx with
     input/output:
         var& int io;
 do
@@ -53043,7 +53052,7 @@ escape 1;
     ref = 'line 6 : invalid attribution : variable "io" is already bound',
 }
 Test { [[
-class T with
+class Tx with
     input/output:
         var& int io;
 do
@@ -53056,7 +53065,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     output/input:
         var& int oi;
 do
@@ -53065,7 +53074,7 @@ do
 end
 
 var int oi = 1;
-var T t with
+var Tx t with
     this.oi = &oi;
 end;
 escape 1;
@@ -53073,7 +53082,7 @@ escape 1;
     ref = 'line 11 : invalid attribution : variable "oi" is already bound',
 }
 Test { [[
-class T with
+class Tx with
     output/input:
         var& int oi;
 do
@@ -53082,7 +53091,7 @@ do
 end
 
 var int oi = 1;
-var T t with
+var Tx t with
     this.oi = &oi;
 end;
 escape 1;
@@ -53091,7 +53100,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     input:
         var& int i;
 
@@ -53122,7 +53131,7 @@ end
 var int i  = 1;
 var int io = 1;
 var int oi = 1;
-var T t with
+var Tx t with
     this.i  = &i;
     this.io = &io;
 end;
@@ -53134,7 +53143,7 @@ escape t.o+t.io+t.oi;
     run = 3,
 }
 Test { [[
-class T with
+class Tx with
     input:
         var& int i;
 
@@ -53162,7 +53171,7 @@ end
 var int i  = 1;
 var int io = 1;
 var int oi = 1;
-var T t with
+var Tx t with
     this.i  = &i;
     this.io = &io;
 end;
@@ -53175,7 +53184,7 @@ escape t.o+t.io+t.oi;
 }
 
 Test { [[
-class T with
+class Tx with
     input:
         var int i=1;
 
@@ -53189,7 +53198,7 @@ class T with
         var int oi=1;
 do
 end
-var T t with
+var Tx t with
 end;
 escape 1;
 ]],
@@ -53197,12 +53206,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     input/output:
         var int io;
 do
 end
-var T t with
+var Tx t with
 end;
 escape 1;
 ]],
@@ -53210,12 +53219,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     input:
         var int i;
 do
 end
-var T t with
+var Tx t with
 end;
 escape 1;
 ]],
@@ -53223,7 +53232,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     input:
         var int i;
 
@@ -53239,7 +53248,7 @@ do
     this.o  = 1;
     this.oi = 1;
 end
-var T t with
+var Tx t with
     this.i  = 1;
     this.io = 1;
 end;
@@ -53249,12 +53258,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     input:
         var& int i;
 do
 end
-var T t with
+var Tx t with
 end;
 escape 1;
 ]],
@@ -53262,12 +53271,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     input:
         var& int io;
 do
 end
-var T t with
+var Tx t with
 end;
 escape 1;
 ]],
@@ -53275,7 +53284,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     output:
         var& int o;
 do
@@ -53286,7 +53295,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     output/input:
         var& int oi;
 do
@@ -53297,7 +53306,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     input:
         var& int i;
 
@@ -53315,7 +53324,7 @@ do
     oi = &o_;
 end
 var int i=0;
-var T t with
+var Tx t with
     this.i  = &i;
     this.io = &i;
 end;
@@ -53324,7 +53333,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     input:
         var& int i;
 
@@ -53342,7 +53351,7 @@ do
     this.oi = &o_;
 end
 var int i=0;
-var T t with
+var Tx t with
     this.i  = &i;
     this.io = &i;
 end;
@@ -53378,12 +53387,12 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     input:
         var int v;
-    code/instantaneous Build (var int v)=>T;
+    code/instantaneous Build (var int v)=>Tx;
 do
-    code/instantaneous Build (var int v)=>T do
+    code/instantaneous Build (var int v)=>Tx do
         this.v = v;
     end
 end
@@ -53393,11 +53402,11 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int i;
 do
 end
-var T t with
+var Tx t with
     var int i  = this.i;
 end;
 escape 1;
@@ -53424,7 +53433,7 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     output:
         vector&[] byte name;
 do
@@ -53433,7 +53442,7 @@ do
     await FOREVER;
 end
 
-var T t;
+var Tx t;
 native/nohold _strlen;
 native _char;
 escape _strlen(&&t.name as _char&&);
@@ -53447,7 +53456,7 @@ interface I with
         vector&[] byte name;
 end
 
-class T with
+class Tx with
     interface I;
 do
     vector[] byte name_ = [].."oi";
@@ -53456,12 +53465,12 @@ do
 end
 
 class U with
-    var& T t;
+    var& Tx t;
 do
     vector&[] byte name = &this.t.name;
 end
 
-var T t;
+var Tx t;
 var U u with
     this.t = &t;
 end;
@@ -54081,8 +54090,8 @@ par do
 native _V;
         _V = _V + max;
     end
-    input void F;
-    await F;
+    input void A;
+    await A;
     escape _V+1;
 with
     async do
@@ -54090,7 +54099,7 @@ with
         emit LINE_REQUEST => (2,22);
         emit LINE_CANCEL => 1;
         emit 3s;
-        emit F;
+        emit A;
     end
 end
 ]],
@@ -54108,8 +54117,8 @@ par do
 native _V;
         _V = _V + max;
     end
-    input void F;
-    await F;
+    input void A;
+    await A;
     escape _V+1;
 with
     async do
@@ -54117,7 +54126,7 @@ with
         emit LINE_REQUEST => (2,22);
         emit LINE_CANCEL => 2;
         emit 3s;
-        emit F;
+        emit A;
     end
 end
 ]],
@@ -54135,8 +54144,8 @@ par do
 native _V;
         _V = _V + max;
     end
-    input void F;
-    await F;
+    input void A;
+    await A;
     escape _V+1;
 with
     async do
@@ -54145,7 +54154,7 @@ with
         emit LINE_CANCEL => 2;
         emit LINE_CANCEL => 1;
         emit 3s;
-        emit F;
+        emit A;
     end
 end
 ]],
@@ -54309,14 +54318,14 @@ output byte[]& && OUT;
     --env = 'line 1 : invalid event type',
 }
 Test { [[
-class T with do end
-output T OUT;
+class Tx with do end
+output Tx OUT;
 ]],
     env = 'line 2 : invalid event type',
 }
 Test { [[
-class T with do end
-output T&& OUT;
+class Tx with do end
+output Tx&& OUT;
 ]],
     env = 'line 2 : invalid event type',
 }
@@ -54657,15 +54666,15 @@ end
 
 // "Nullable pointer"
 data Opt;
-data NOTHING is Opt;
-data PTR is Opt with
+data Nothing is Opt;
+data Ptr is Opt with
     var void&& v;
 end
 
 // List (recursive type)
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
@@ -54718,7 +54727,7 @@ escape 1;
     parser = 'line 1 : after `data´ : expected abstraction identifier'
 }
 Test { [[
-data T with
+data Tx with
     var int x;
 end
 escape 1;
@@ -54729,55 +54738,55 @@ escape 1;
 
 -- data type identifiers cannot clash with interface/classe identifiers
 Test { [[
-data T with
+data Tx with
     var int x;
 end
-interface T with
+interface Tx with
 end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 4 : top-level identifier "T" already taken',
+    env = 'line 4 : top-level identifier "Tx" already taken',
 }
 Test { [[
-interface T with
+interface Tx with
 end
-data T with
+data Tx with
     var int x;
 end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 3 : top-level identifier "T" already taken',
+    env = 'line 3 : top-level identifier "Tx" already taken',
 }
 Test { [[
-data T with
+data Tx with
     var int x;
 end
-data T with
+data Tx with
     var int y;
 end
 escape 1;
 ]],
-    tops = 'line 4 : identifier "T" is already declared (tests.lua : line 1)',
+    tops = 'line 4 : identifier "Tx" is already declared (tests.lua : line 1)',
 }
 Test { [[
-class T with
+class Tx with
 do
 end
-interface T with
+interface Tx with
 end
 escape 1;
 ]],
-    env = 'top-level identifier "T" already taken',
+    env = 'top-level identifier "Tx" already taken',
 }
 
 Test { [[
-data D with
+data Dx with
     var int x;
 end
 class C with
-    var D d = D(200);
+    var Dx d = Dx(200);
 do
 end
 var C c;
@@ -54868,25 +54877,25 @@ escape 1;
 
 Test { [[
 data Opt;
-data NOTHING is Opt;
+data Nothing is Opt;
 
 data Opt1;
-data NOTHING is Opt1;
+data Nothing is Opt1;
 
 escape 1;
 ]],
-    tops = 'line 5 : identifier "NOTHING" is already declared (tests.lua : line 2)',
+    tops = 'line 5 : identifier "Nothing" is already declared (tests.lua : line 2)',
 }
 
 -->>> DATA/EVENTS
 
 Test { [[
-data DDD with
+data Ddd with
     var int xxx;
     event void e;
 end
 
-var DDD d = DDD(1);
+var Ddd d = Ddd(1);
 
 par/and do
     await d.e;
@@ -55023,16 +55032,16 @@ escape sum;
 }
 
 Test { [[
-data T with
+data Tx with
     var int x;
 end
 
-code/instantaneous F (void)=>T do
-    var T t = T(10);
+code/instantaneous Fx (void)=>Tx do
+    var Tx t = Tx(10);
     escape t;
 end
 
-var T t = F();
+var Tx t = Fx();
 escape t.x;
 ]],
     wrn = true,
@@ -55063,7 +55072,7 @@ end
 var List l = ListCONS(1,
                ListCONS(2,
                    ListNIL()));
-escape 1;//((l as CONS).tail) as CONS).@head@;
+escape 1;//((l as Cons).tail) as Cons).@head@;
 ]],
     adt = 'line 9 : invalid constructor : recursive data must use `new´',
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
@@ -55079,7 +55088,7 @@ end
 var List l = new ListCONS(1,
                   ListCONS(2,
                    ListNIL()));
-escape 1;//(((l as CONS).tail) as CONS).@head@;
+escape 1;//(((l as Cons).tail) as Cons).@head@;
 ]],
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
@@ -55096,7 +55105,7 @@ end
 var List&& l = ListCONS(1,
                 ListCONS(2,
                     ListNIL()));
-escape 1;//((l as CONS).tail) as CONS).@head@;
+escape 1;//((l as Cons).tail) as Cons).@head@;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     adt = 'line 7 : invalid constructor : recursive data must use `new´',
@@ -55113,7 +55122,7 @@ end
 var List&& l = new ListCONS(1,
                    ListCONS(2,
                     ListNIL()));
-escape 0;//((l as CONS).tail) as CONS).@head@;
+escape 0;//((l as Cons).tail) as Cons).@head@;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
@@ -55134,7 +55143,7 @@ l = ListCONS(1,
         ListCONS(2,
             ListNIL()));
 
-escape 0;//((l as CONS).tail) as CONS).@head@;
+escape 0;//((l as Cons).tail) as Cons).@head@;
 ]],
     adt = 'line 9 : invalid constructor : recursive data must use `new´',
 }
@@ -55359,11 +55368,11 @@ escape 1;
 }
 
 Test { [[
-data D with
+data Dx with
     var int x;
 end
 class C with
-    var D d = D(200);
+    var Dx d = Dx(200);
 do
 end
 var C c;
@@ -55373,21 +55382,21 @@ escape c.d.x;
 }
 
 Test { [[
-class T with
+class Tx with
     var& float v;
 do
     await FOREVER;
 end
 
-data D with
+data Dx with
     var float v;
 end
 
-var D d;
-var T t with
+var Dx d;
+var Tx t with
     this.v = &d.v;   // 13
 end;
-d = D(1);
+d = Dx(1);
 
 escape t.v;
 ]],
@@ -55396,18 +55405,18 @@ escape t.v;
 }
 
 Test { [[
-class T with
+class Tx with
     var& float v;
 do
     await FOREVER;
 end
 
-data D with
+data Dx with
     var float v;
 end
 
-var D d;
-var T _ with
+var Dx d;
+var Tx _ with
     this.v = &d.v;   // 13
 end;
 
@@ -55418,18 +55427,18 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var& float v;
 do
     await FOREVER;
 end
 
-data D with
+data Dx with
     var float v;
 end
 
-var T _ with
-    var D d = D(1);
+var Tx _ with
+    var Dx d = Dx(1);
     this.v = &d.v;
 end;
 
@@ -55440,13 +55449,13 @@ escape 1;
 }
 
 Test { [[
-data E;
-data NOTHING is E;
-data X is E with
+data Ee;
+data Nothing is Ee;
+data Xx is Ee with
     var int x;
 end
 
-var E e = E(1);
+var Ee e = Ee(1);
 
 escape 1;
 ]],
@@ -55455,83 +55464,83 @@ escape 1;
 }
 
 Test { [[
-data D with
+data Dx with
     var int x;
 end
 
-data E;
-data NOTHING is E;
-data X is E with
-    var& D d;
+data Ee;
+data Nothing is Ee;
+data Xx is Ee with
+    var& Dx d;
 end
 
-var D d = D(10);
-var E e = X(&d);
+var Dx d = Dx(10);
+var Ee e = Xx(&d);
 
-escape (e as X).d.x;
+escape (e as Xx).d.x;
 ]],
     wrn = true,
     run = 10,
 }
 
 Test { [[
-data D with
+data Dx with
     var int x;
 end
 
-data E;
-data NOTHING is E;
-data X is E with
-    var& D d;
+data Ee;
+data Nothing is Ee;
+data Xx is Ee with
+    var& Dx d;
 end
 
-var E e;    // TODO: should bind here
+var Ee e;    // TODO: should bind here
 do
-    var D d = D(1);
-    (e as X).d = &d;
+    var Dx d = Dx(1);
+    (e as Xx).d = &d;
 end
 
-escape 1;//e.X.d.x;
+escape 1;//e.Xx.d.x;
 ]],
     wrn = true,
     ref = 'line 11 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
 }
 Test { [[
-data D with
+data Dx with
     var int x;
 end
 
-data E;
-data NOTHING is E;
-data X is E with
-    var& D d;
+data Ee;
+data Nothing is Ee;
+data Xx is Ee with
+    var& Dx d;
 end
 
-    var D d = D(1);
-var E e = X(&d);
-    (e as X).d = &d;
+    var Dx d = Dx(1);
+var Ee e = Xx(&d);
+    (e as Xx).d = &d;
 
-escape (e as X).d.x;
+escape (e as Xx).d.x;
 ]],
     wrn = true,
     run = 1,
 }
 Test { [[
-data D with
+data Dx with
     var int x;
 end
 
-data E;
-data NOTHING is E;
-data X is E with
-    var& D d;
+data Ee;
+data Nothing is Ee;
+data Xx is Ee with
+    var& Dx d;
 end
 
-var E e = E(null);
-    var D d = D(10);
-    (e as X).d = &&d;
+var Ee e = Ee(null);
+    var Dx d = Dx(10);
+    (e as Xx).d = &&d;
 
-escape (e as X).d:x;
+escape (e as Xx).d:x;
 ]],
     wrn = true,
     run = 10,
@@ -55543,20 +55552,20 @@ data Ball with
 end
 
 data Leaf;
-data NOTHING is Leaf;
-data TWEEN is Leaf with
+data Nothing is Leaf;
+data Tween is Leaf with
     var& Ball ball;
 end
 
 class LeafHandler with
     var& Leaf leaf;
 do
-    var& Ball ball = &(leaf as TWEEN).ball;
+    var& Ball ball = &(leaf as Tween).ball;
     escape ball.x;
 end
 
 var Ball ball = Ball(10);
-var Leaf leaf = TWEEN(&ball);
+var Leaf leaf = Tween(&ball);
 
 var int x = do LeafHandler with
                 this.leaf = &leaf;
@@ -55569,21 +55578,21 @@ escape x;
 }
 
 Test { [[
-data D;
-data NIL is D;
-data REC is D with
-    var D r1;
-    var D r2;
+data Dx;
+data Nil is Dx;
+data Rec is Dx with
+    var Dx r1;
+    var Dx r2;
 end
 
-pool[] D ds = new REC(
-                    REC(NIL(),NIL()),
-                    NIL());
+pool[] Dx ds = new Rec(
+                    Rec(Nil(),Nil()),
+                    Nil());
 
 par/or do
-    await (ds as REC).r1;
+    await (ds as Rec).r1;
 with
-    (ds as REC).r1 = new NIL();
+    (ds as Rec).r1 = new Nil();
 end
 
 escape 1;
@@ -55594,17 +55603,17 @@ escape 1;
 
 Test { [[
 data Tree;
-data NIL is Tree;
-data NODE is Tree with
+data Nil is Tree;
+data Node is Tree with
     var int   v;
     var Tree  left;
     var Tree  right;
 end
 
 pool[3] Tree tree;
-tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 class Sum with
     var int&& v;
@@ -55618,11 +55627,11 @@ class Body with
     var&   Sum    sum;
 do
     watching *n do
-        if *n is NODE then
-            *this.sum.v = *this.sum.v + (*n as NODE).v;
+        if *n is Node then
+            *this.sum.v = *this.sum.v + (*n as Node).v;
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = && (*n as NODE).left;
+                this.n      = && (*n as Node).left;
                 this.sum    = &sum;
             end;
         end
@@ -55663,13 +55672,13 @@ end
 }
 
 Test { [[
-data D with
+data Dx with
     var int x;
     var int y;
 end
 
-var D d1 = D(10,10);
-var D d2 = d1;
+var Dx d1 = Dx(10,10);
+var Dx d2 = d1;
 d2.y = 20;
 
 escape d1.x + d2.x + d1.y + d2.y;
@@ -55678,14 +55687,14 @@ escape d1.x + d2.x + d1.y + d2.y;
 }
 
 Test { [[
-data D with
+data Dx with
     var int  x;
     var& int y;
 end
 
 var int v = 10;
-var D d1 = D(10,&v);
-var D d2 = d1;
+var Dx d1 = Dx(10,&v);
+var Dx d2 = d1;
 d2.y = 20;
 
 escape d1.x + d2.x + d1.y + d2.y;
@@ -55708,27 +55717,27 @@ escape 1;
 -- constructors
 Test { DATA..[[
 var Pair p1 = Pair(1,2);        /* struct, no tags */
-var Opt  o1 = NOTHING();        /* unions, explicit tag */
-var Opt  o2 = PTR(&&p1);
+var Opt  o1 = Nothing();        /* unions, explicit tag */
+var Opt  o2 = Ptr(&&p1);
 pool[] List l1;
-l1 = new NIL();       /* recursive union */
-pool[] List l2 = new CONS(1, l1);
+l1 = new Nil();       /* recursive union */
+pool[] List l2 = new Cons(1, l1);
 escape 1;
 ]],
-    env = 'line 56 : invalid constructor : recursive field "CONS" must be new data',
-    -- TODO-ADT-REC-STATIC-CONSTRS
+    env = 'line 56 : invalid constructor : recursive field "Cons" must be new data',
+    -- TODO-ADT-Rec-STATIC-CONSTRS
     --run = 1,
 }
 
 -- recursive fields are pointers
 Test { DATA..[[
-pool[] List l1 = new NIL();
+pool[] List l1 = new Nil();
 pool[] List l2;
-l2 = new CONS(1, l1);     /* should be &&l1 */
+l2 = new Cons(1, l1);     /* should be &&l1 */
 escape 1;
 ]],
     wrn = true,
-    env = 'line 53 : invalid constructor : recursive field "CONS" must be new data',
+    env = 'line 53 : invalid constructor : recursive field "Cons" must be new data',
 }
 
 -- constructors must specify the ADT identifier
@@ -55741,11 +55750,11 @@ escape 1;
     --run = 1,
 }
 Test { DATA..[[
-pool[] List l1 = new NIL();    /* vs NIL() */
+pool[] List l1 = new Nil();    /* vs Nil() */
 escape 1;
 ]],
     wrn = true,
-    env = 'line 51 : data "NIL" is not declared',
+    env = 'line 51 : data "Nil" is not declared',
     --run = 1,
 }
 
@@ -55766,18 +55775,18 @@ escape 1;
 
 -- tag has to be defined
 Test { DATA..[[
-var Opt o1 = UNKNOWN();
+var Opt o1 = Unknown();
 escape 1;
 ]],
-    tops = 'line 51 : abstraction "UNKNOWN" is not declared',
+    tops = 'line 51 : abstraction "Unknown" is not declared',
 }
 
 -- constructors have call syntax
 Test { DATA..[[
-var List l1 = NIL; /* vs NIL() */
+var List l1 = Nil; /* vs Nil() */
 escape 1;
 ]],
-    parser = 'line 51 : after `NIL´ : expected `(´',
+    parser = 'line 51 : after `Nil´ : expected `(´',
     --run = 1,
 }
 
@@ -55797,7 +55806,7 @@ escape 1;
     env = 'line 51 : wrong argument #2',
 }
 Test { DATA..[[
-var Opt o1 = NOTHING(1);       /* expected (void) */
+var Opt o1 = Nothing(1);       /* expected (void) */
 escape 1;
 ]],
     wrn = true,
@@ -55806,7 +55815,7 @@ escape 1;
 
 -- constructors are not expressions...
 Test { DATA..[[
-escape NIL();
+escape Nil();
 ]],
     wrn = true,
     --ast = 'line 51 : invalid call',
@@ -55815,7 +55824,7 @@ escape NIL();
 }
 Test { DATA..[[
 var List l;
-var int v = (l==NIL());
+var int v = (l==Nil());
 escape v;
 ]],
     wrn = true,
@@ -55827,7 +55836,7 @@ escape v;
 -- ...but have to be assigned to a variable
 Test { DATA..[[
 var Opt o;
-o = NOTHING();
+o = Nothing();
 escape 1;
 ]],
     wrn = true,
@@ -55835,7 +55844,7 @@ escape 1;
 }
 Test { DATA..[[
 pool[] List l;
-l = new NIL();
+l = new Nil();
 escape 1;
 ]],
     wrn = true,
@@ -55857,8 +55866,8 @@ escape 1;
 
 -- distinction "constructor" vs "tag check"
 Test { DATA..[[
-pool[] List l = new NIL();   /* call syntax: constructor */
-var bool no_ = (l is NIL);     /* no-call syntax: check tag */
+pool[] List l = new Nil();   /* call syntax: constructor */
+var bool no_ = (l is Nil);     /* no-call syntax: check tag */
 escape no_;
 ]],
     wrn = true,
@@ -55866,8 +55875,8 @@ escape no_;
 }
 Test { DATA..[[
 pool[] List l;
-l = new NIL();   /* call syntax: constructor */
-var bool no_ = l is CONS;    /* no-call syntax: check tag */
+l = new Nil();   /* call syntax: constructor */
+var bool no_ = l is Cons;    /* no-call syntax: check tag */
 escape no_;
 ]],
     wrn = true,
@@ -55882,18 +55891,18 @@ escape p1.x + p1.y;
     wrn = true,
     run = 3,
 }
--- tag NIL has no fields
+-- tag Nil has no fields
 Test { DATA..[[
 pool[] List l;
-escape (l as NIL).v;
+escape (l as Nil).v;
 ]],
     wrn = true,
     env = 'line 52 : field "v" is not declared',
 }
--- tag Opt.PTR has no field "x"
+-- tag Opt.Ptr has no field "x"
 Test { DATA..[[
 var Opt o;
-escape (o as PTR).x;
+escape (o as Ptr).x;
 ]],
     wrn = true,
     env = 'line 52 : field "x" is not declared',
@@ -55901,8 +55910,8 @@ escape (o as PTR).x;
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor
 Test { DATA..[[
-pool[] List l1 = new NIL();
-pool[] List l2 = new CONS(1, NIL());
+pool[] List l1 = new Nil();
+pool[] List l2 = new Cons(1, Nil());
 escape 1;
 ]],
     wrn = true,
@@ -55911,21 +55920,21 @@ escape 1;
 
 Test { DATA..[[
 var Pair p1 = Pair(1,2);
-var Opt  o1 = NOTHING();
-var Opt  o2 = PTR(&&p1);
-pool[] List l1 = new NIL();
+var Opt  o1 = Nothing();
+var Opt  o2 = Ptr(&&p1);
+pool[] List l1 = new Nil();
 pool[] List l2;
-l2 = new CONS(1, NIL());
-pool[] List l3 = new CONS(1, CONS(2, NIL()));
+l2 = new Cons(1, Nil());
+pool[] List l3 = new Cons(1, Cons(2, Nil()));
 
 var int ret = 0;                                // 0
 
 ret = ret + p1.x + p1.y;                        // 3
-ret = ret + (o1 is NOTHING);                             // 4
-ret = ret + ((o2 as PTR).v==&&p1);                    // 5
-ret = ret + (l1 is NIL);                             // 6
-ret = ret + (l2 as CONS).head + ((l2 as CONS).tail is NIL);    // 8
-ret = ret + (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);   // 12
+ret = ret + (o1 is Nothing);                             // 4
+ret = ret + ((o2 as Ptr).v==&&p1);                    // 5
+ret = ret + (l1 is Nil);                             // 6
+ret = ret + (l2 as Cons).head + ((l2 as Cons).tail is Nil);    // 8
+ret = ret + (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + (((l3 as Cons).tail as Cons).tail is Nil);   // 12
 
 escape ret;
 ]],
@@ -55933,22 +55942,22 @@ escape ret;
 }
 
 -- destructors are checked at runtime
---      v = ((l as CONS).head)
+--      v = ((l as Cons).head)
 -- becomes
---      assert(l.CONS)
---      v = ((l as CONS).head)
+--      assert(l.Cons)
+--      v = ((l as Cons).head)
 Test { DATA..[[
 pool[] List l;
-l = new NIL();
-escape (l as CONS).head;         // runtime error
+l = new Nil();
+escape (l as Cons).head;         // runtime error
 ]],
     wrn = true,
     asr = true,
     --run = 1,
 }
 Test { DATA..[[
-pool[] List l = new CONS(2, NIL());
-escape (l as CONS).head;
+pool[] List l = new Cons(2, Nil());
+escape (l as Cons).head;
 ]],
     wrn = true,
     run = 2,
@@ -55957,13 +55966,13 @@ escape (l as CONS).head;
 -- mixes everything:
 Test { DATA..[[
 var Pair p  = Pair(1,2);
-var Opt  o1 = NOTHING();
-var Opt  o2 = PTR(&&p);
+var Opt  o1 = Nothing();
+var Opt  o2 = Ptr(&&p);
 pool[] List l1;
-l1 = new NIL();
-pool[] List l2 = new CONS(1, NIL());
+l1 = new Nil();
+pool[] List l2 = new Cons(1, Nil());
 pool[] List l3;
-l3 = new CONS(1, CONS(2, NIL()));
+l3 = new Cons(1, Cons(2, Nil()));
 
 var int ret = 0;            // 0
 
@@ -55973,51 +55982,51 @@ native _assert;
 _assert(x+y == 3);
 ret = ret + 3;              // 3
 
-if o1 is NOTHING then
+if o1 is Nothing then
     ret = ret + 1;          // 4
-else/if o1 is PTR then
+else/if o1 is Ptr then
     _assert(0);             // never reachable
 end
 
-if o2 is NOTHING then
+if o2 is Nothing then
     _assert(0);             // never reachable
-else/if o2 is PTR then
+else/if o2 is Ptr then
     ret = ret + 1;          // 5
-    _assert((o2 as PTR).v==&&p);
+    _assert((o2 as Ptr).v==&&p);
 end
 
-if l1 is NIL then
+if l1 is Nil then
     ret = ret + 1;          // 6
-else/if l1 is CONS then
+else/if l1 is Cons then
     _assert(0);             // never reachable
 end
 
-if l2 is NIL then
+if l2 is Nil then
     _assert(0);             // never reachable
-else/if l2 is CONS then
-    _assert((l2 as CONS).head == 1);
+else/if l2 is Cons then
+    _assert((l2 as Cons).head == 1);
     ret = ret + 1;          // 7
-    if (l2 as CONS).tail is NIL then
+    if (l2 as Cons).tail is Nil then
         ret = ret + 1;      // 8
-    else/if (l2 as CONS).tail is CONS then
+    else/if (l2 as Cons).tail is Cons then
         _assert(0);         // never reachable
     end
     ret = ret + 1;          // 9
 end
 
-if l3 is NIL then
+if l3 is Nil then
     _assert(0);             // never reachable
-else/if l3 is CONS then
-    _assert((l3 as CONS).head == 1);
+else/if l3 is Cons then
+    _assert((l3 as Cons).head == 1);
     ret = ret + 1;          // 10
-    if (l3 as CONS).tail is NIL then
+    if (l3 as Cons).tail is Nil then
         _assert(0);         // never reachable
-    else/if (l3 as CONS).tail is CONS then
-        _assert(((l3 as CONS).tail as CONS).head == 2);
+    else/if (l3 as Cons).tail is Cons then
+        _assert(((l3 as Cons).tail as Cons).head == 2);
         ret = ret + 2;      // 12
-        if ((l3 as CONS).tail as CONS).tail is NIL then
+        if ((l3 as Cons).tail as Cons).tail is Nil then
             ret = ret + 1;  // 13
-        else/if ((l3 as CONS).tail as CONS).tail is CONS then
+        else/if ((l3 as Cons).tail as Cons).tail is Cons then
             _assert(0);     // never reachable
         end
         ret = ret + 1;      // 14
@@ -56033,17 +56042,17 @@ escape ret;
 -- POINTERS
 -- TODO: more discussion
 --  - not an lvalue if rvalue not a constructor:
---      ptr as CONS).@tail@ = new ...             // ok
---      ptr as CONS).@tail@ = l....               // no
---      ptr as CONS).@tail@ = ptr as CONS).@tail@....   // ok
+--      ptr as Cons).@tail@ = new ...             // ok
+--      ptr as Cons).@tail@ = l....               // no
+--      ptr as Cons).@tail@ = ptr as Cons).@tail@....   // ok
 --          same prefix
 
 -- cannot cross await statements
 Test { DATA..[[
-pool[] List l = new CONS(1, NIL());
-var List&& p = (l as CONS).tail;
+pool[] List l = new Cons(1, Nil());
+var List&& p = (l as Cons).tail;
 await 1s;
-escape (*p as CONS).head;
+escape (*p as Cons).head;
 ]],
     wrn = true,
     adt = 'line 52 : invalid attribution : mutation : cannot mix data sources',
@@ -56051,10 +56060,10 @@ escape (*p as CONS).head;
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
-pool[] List l = new CONS(1, NIL());
-var List&& p = &&(l as CONS).tail;
+pool[] List l = new Cons(1, Nil());
+var List&& p = &&(l as Cons).tail;
 await 1s;
-escape (*p as CONS).head;
+escape (*p as Cons).head;
 ]],
     wrn = true,
     --adt = 'line 52 : mutation : cannot mix data sources',
@@ -56062,10 +56071,10 @@ escape (*p as CONS).head;
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
-pool[] List l = new CONS(1, NIL());
-var List&& p = &&(l as CONS).tail;
+pool[] List l = new Cons(1, Nil());
+var List&& p = &&(l as Cons).tail;
 await 1s;
-escape (*p as CONS).head;
+escape (*p as Cons).head;
 ]],
     wrn = true,
     --adt = 'line 52 : cannot mix recursive data sources',
@@ -56078,41 +56087,41 @@ escape (*p as CONS).head;
 --  - must be "as efficient" and with similar semantics
 -- TODO: more discussion
 
--- linking a list: 2-1-NIL
+-- linking a list: 2-1-Nil
 Test { DATA..[[
 pool[] List l1;
-l1 = new NIL();
-pool[] List l2 = new CONS(1, l1);
+l1 = new Nil();
+pool[] List l2 = new Cons(1, l1);
 pool[] List l3;
-l3 = new CONS(2, l2);
-escape (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);
+l3 = new Cons(2, l2);
+escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + (((l3 as Cons).tail as Cons).tail is Nil);
 ]],
     wrn = true,
     --run = 4,
-    env = 'line 53 : invalid constructor : recursive field "CONS" must be new data',
-    -- TODO-ADT-REC-STATIC-CONSTRS
+    env = 'line 53 : invalid constructor : recursive field "Cons" must be new data',
+    -- TODO-ADT-Rec-STATIC-CONSTRS
 }
 Test { DATA..[[
-pool[] List l3 = new CONS(2, CONS(1, NIL()));
-escape (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);
+pool[] List l3 = new Cons(2, Cons(1, Nil()));
+escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + (((l3 as Cons).tail as Cons).tail is Nil);
 ]],
     wrn = true,
     run = 4,
 }
 Test { DATA..[[
-pool[] List l3 = new CONS(2, CONS(1, NIL()));
-escape (l3 as CONS).head + ((l3 as CONS).tail as CONS).head + (((l3 as CONS).tail as CONS).tail is NIL);
+pool[] List l3 = new Cons(2, Cons(1, Nil()));
+escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + (((l3 as Cons).tail as Cons).tail is Nil);
 ]],
     wrn = true,
     run = 4,
 }
--- breaking a list: 2-1-NIL => 2-NIL
+-- breaking a list: 2-1-Nil => 2-Nil
 Test { DATA..[[
 pool[] List l1;
-l1 = new NIL();
-pool[] List l3 = new CONS(2, CONS(1, NIL()));
-(l3 as CONS).tail = l1;
-escape (l3 as CONS).head + ((l3 as CONS).tail is NIL);
+l1 = new Nil();
+pool[] List l3 = new Cons(2, Cons(1, Nil()));
+(l3 as Cons).tail = l1;
+escape (l3 as Cons).head + ((l3 as Cons).tail is Nil);
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
@@ -56122,10 +56131,10 @@ escape (l3 as CONS).head + ((l3 as CONS).tail is NIL);
 }
 Test { DATA..[[
 pool[] List l1;
-l1 = new NIL();
-pool[] List l3 = new CONS(2, CONS(1, NIL()));
-(l3 as CONS).tail = &&l1;
-escape (l3 as CONS).head + ((l3 as CONS).tail is NIL);
+l1 = new Nil();
+pool[] List l3 = new Cons(2, Cons(1, Nil()));
+(l3 as Cons).tail = &&l1;
+escape (l3 as Cons).head + ((l3 as Cons).tail is Nil);
 ]],
     wrn = true,
     adt = 'line 54 : invalid attribution : destination is not a reference',
@@ -56137,10 +56146,10 @@ escape (l3 as CONS).head + ((l3 as CONS).tail is NIL);
 Test { DATA..[[
 pool[] List l1;
 pool[] List l2;
-l1 = new NIL();
-l2 = new CONS(1, NIL());
+l1 = new Nil();
+l2 = new Cons(1, Nil());
 l1 = l2;
-escape (l1 is CONS) + (l1 as CONS).head==1;
+escape (l1 is Cons) + (l1 as Cons).head==1;
 ]],
     wrn = true,
     --adt = 'line 55 : invalid attribution : value is not a reference',
@@ -56150,10 +56159,10 @@ escape (l1 is CONS) + (l1 as CONS).head==1;
 Test { DATA..[[
 pool[] List l1;
 pool[] List l2;
-l1 = new NIL();
-l2 = new CONS(1, NIL());
+l1 = new Nil();
+l2 = new Cons(1, Nil());
 l1 = &&l2;
-escape (l1 is CONS) + (l1 as CONS).head==1;
+escape (l1 is Cons) + (l1 as Cons).head==1;
 ]],
     wrn = true,
     adt = 'line 55 : invalid attribution : destination is not a reference',
@@ -56162,10 +56171,10 @@ escape (l1 is CONS) + (l1 as CONS).head==1;
     run = 2,
 }
 Test { DATA..[[
-pool[] List l1 = new NIL(),
-            l2 = new CONS(1, NIL());
+pool[] List l1 = new Nil(),
+            l2 = new Cons(1, Nil());
 l1 = l2;
-escape (l1 is CONS) + ((l1 as CONS).head==1) + ((((l1 as CONS).tail as CONS).tail as CONS).head==1);
+escape (l1 is Cons) + ((l1 as Cons).head==1) + ((((l1 as Cons).tail as Cons).tail as Cons).head==1);
 ]],
     wrn = true,
     adt = 'line 53 : invalid attribution : value is not a reference',
@@ -56175,12 +56184,12 @@ escape (l1 is CONS) + ((l1 as CONS).head==1) + ((((l1 as CONS).tail as CONS).tai
 
 -- circular list: 1-2-1-2-...
 Test { DATA..[[
-pool[] List l1 = new CONS(1, NIL()),
-            l2 = new CONS(2, NIL());
-((l1 as CONS).tail) = l2;
-escape (((l1 as CONS).head)==1) + ((((l1 as CONS).tail) as CONS).head==2) +
-       (((l2 as CONS).head)==2) + ((((l2 as CONS).tail) as CONS).head==1) +
-       ((((((l1 as CONS).tail) as CONS).tail as CONS).tail as CONS).head==2);
+pool[] List l1 = new Cons(1, Nil()),
+            l2 = new Cons(2, Nil());
+((l1 as Cons).tail) = l2;
+escape (((l1 as Cons).head)==1) + ((((l1 as Cons).tail) as Cons).head==2) +
+       (((l2 as Cons).head)==2) + ((((l2 as Cons).tail) as Cons).head==1) +
+       ((((((l1 as Cons).tail) as Cons).tail as Cons).tail as Cons).head==2);
 ]],
     wrn = true,
     --adt = 'line 53 : invalid attribution : value is not a reference',
@@ -56189,12 +56198,12 @@ escape (((l1 as CONS).head)==1) + ((((l1 as CONS).tail) as CONS).head==2) +
 }
 
 Test { DATA..[[
-pool[] List l1 = new CONS(1, NIL()),
-            l2 = new CONS(2, NIL());
-((l1 as CONS).tail) = &&l2;
-escape (((l1 as CONS).head)==1) + ((((l1 as CONS).tail) as CONS).head==2) +
-       (((l2 as CONS).head)==2) + ((((l2 as CONS).tail) as CONS).head==1) +
-       ((((((l1 as CONS).tail) as CONS).tail as CONS).tail as CONS).head==2);
+pool[] List l1 = new Cons(1, Nil()),
+            l2 = new Cons(2, Nil());
+((l1 as Cons).tail) = &&l2;
+escape (((l1 as Cons).head)==1) + ((((l1 as Cons).tail) as Cons).head==2) +
+       (((l2 as Cons).head)==2) + ((((l2 as Cons).tail) as Cons).head==1) +
+       ((((((l1 as Cons).tail) as Cons).tail as Cons).tail as Cons).head==2);
 ]],
     wrn = true,
     adt = 'line 53 : invalid attribution : destination is not a reference',
@@ -56205,12 +56214,12 @@ escape (((l1 as CONS).head)==1) + ((((l1 as CONS).tail) as CONS).head==2) +
 -- another circular list
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new CONS(1, NIL());
-l2 = new CONS(2, NIL());
-((l1 as CONS).tail) = l2;
-((l2 as CONS).tail) = l1;
+l1 = new Cons(1, Nil());
+l2 = new Cons(2, Nil());
+((l1 as Cons).tail) = l2;
+((l2 as Cons).tail) = l1;
 
-escape ((l1 as CONS).head) + (((l1 as CONS).tail) as CONS).head + ((l2 as CONS).head) + (((l2 as CONS).tail) as CONS).head;
+escape ((l1 as Cons).head) + (((l1 as Cons).tail) as Cons).head + ((l2 as Cons).head) + (((l2 as Cons).tail) as Cons).head;
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
@@ -56222,10 +56231,10 @@ escape ((l1 as CONS).head) + (((l1 as CONS).tail) as CONS).head + ((l2 as CONS).
 -- not circular
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new NIL();
-l2 = new CONS(1, NIL());
-l1 = ((l2 as CONS).tail);
-escape l1 is NIL;
+l1 = new Nil();
+l2 = new Cons(1, Nil());
+l1 = ((l2 as Cons).tail);
+escape l1 is Nil;
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
@@ -56237,10 +56246,10 @@ escape l1 is NIL;
 -- not circular
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new NIL();
-l2 = new CONS(1, NIL());
-l1 = &&((l2 as CONS).tail);
-escape l1 is NIL;
+l1 = new Nil();
+l2 = new Cons(1, Nil());
+l1 = &&((l2 as Cons).tail);
+escape l1 is Nil;
 ]],
     wrn = true,
     adt = 'line 54 : invalid attribution : destination is not a reference',
@@ -56277,14 +56286,14 @@ escape 1;
 --  - represents the root of the tree
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape l is NIL;       // l is a pointer to the root
+escape l is Nil;       // l is a pointer to the root
 ]],
     wrn = true,
     run = 1,
 }
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape (l) is NIL;    // equivalent to above
+escape (l) is Nil;    // equivalent to above
 ]],
     wrn = true,
     run = 1,
@@ -56292,7 +56301,7 @@ escape (l) is NIL;    // equivalent to above
 -- the pointer must be dereferenced
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape *l is NIL;       // "l" is not a struct
+escape *l is Nil;       // "l" is not a struct
 ]],
     wrn = true,
     env = 'line 52 : invalid operand to unary "*"',
@@ -56300,7 +56309,7 @@ escape *l is NIL;       // "l" is not a struct
 }
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape ((l as CONS).head); // "l" is not a struct
+escape ((l as Cons).head); // "l" is not a struct
 ]],
     wrn = true,
     env = 'line 52 : invalid operand to unary "*"',
@@ -56308,7 +56317,7 @@ escape ((l as CONS).head); // "l" is not a struct
 }
 Test { DATA..[[
 pool[] List l;             // l is the pool
-escape *((l as CONS).tail) is CONS;    // "((l as CONS).tail)" is not a struct
+escape *((l as Cons).tail) is Cons;    // "((l as Cons).tail)" is not a struct
 ]],
     wrn = true,
     env = 'line 52 : invalid operand to unary "*"',
@@ -56320,7 +56329,7 @@ escape *((l as CONS).tail) is CONS;    // "((l as CONS).tail)" is not a struct
 --  must appear first in the ADT declaration)
 Test { DATA..[[
 pool[] List l;
-escape l is CONS;      // runtime error
+escape l is Cons;      // runtime error
 ]],
     wrn = true,
     asr = true,
@@ -56332,7 +56341,7 @@ Test { DATA..[[
 var int ret = 0;
 do
     pool[] List lll;
-    ret = lll is NIL;
+    ret = lll is Nil;
 end
 // all instances in "lll" have been collected
 escape ret;
@@ -56349,22 +56358,22 @@ escape ret;
 --  - the pool is inferred from the l-value
 Test { DATA..[[
 pool[] List l;
-l = new NIL();
-escape l is NIL;
+l = new Nil();
+escape l is Nil;
 ]],
     wrn = true,
     run = 1,
 }
 Test { DATA..[[
-pool[] List l = new CONS(2, NIL());
-escape ((l as CONS).head);
+pool[] List l = new Cons(2, Nil());
+escape ((l as Cons).head);
 ]],
     wrn = true,
     run = 2,
 }
 Test { DATA..[[
-pool[] List l = new CONS(1, CONS(2, NIL()));
-escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + ((((l as CONS).tail) as CONS).tail is NIL);
+pool[] List l = new Cons(1, Cons(2, Nil()));
+escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((l as Cons).tail) as Cons).tail is Nil);
 ]],
     wrn = true,
     run = 4,
@@ -56372,8 +56381,8 @@ escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + ((((l as CONS).t
 -- wrong tag
 Test { DATA..[[
 pool[] List l;
-l = new NIL();
-escape l is CONS;
+l = new Nil();
+escape l is Cons;
 ]],
     wrn = true,
     asr = true,
@@ -56381,8 +56390,8 @@ escape l is CONS;
 -- no "new"
 Test { DATA..[[
 pool[] List l;
-l = CONS(2, NIL());
-escape ((l as CONS).head);
+l = Cons(2, Nil());
+escape ((l as Cons).head);
 ]],
     wrn = true,
     adt = 'line 52 : invalid constructor : recursive data must use `new´',
@@ -56390,8 +56399,8 @@ escape ((l as CONS).head);
 }
 -- cannot assign "l" directly (in the pool declaration)
 Test { DATA..[[
-pool[] List l = new CONS(2, NIL());
-escape ((l as CONS).head);
+pool[] List l = new Cons(2, Nil());
+escape ((l as Cons).head);
 ]],
     wrn = true,
     run = 2,
@@ -56399,8 +56408,8 @@ escape ((l as CONS).head);
 -- no dereference
 Test { DATA..[[
 pool[] List l;
-l = new NIL();
-escape l is NIL;
+l = new Nil();
+escape l is Nil;
 ]],
     wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -56408,8 +56417,8 @@ escape l is NIL;
 }
 Test { DATA..[[
 pool[] List l;
-l = new CONS(2, NIL());
-escape ((l as CONS).head);
+l = new Cons(2, Nil());
+escape ((l as Cons).head);
 ]],
     wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -56428,36 +56437,36 @@ escape ((l as CONS).head);
 --  must appear first in the ADT declaration)
 -- (
 Test { DATA..[[
-pool[0] List l = new CONS(2, NIL());
-escape l is NIL;
+pool[0] List l = new Cons(2, Nil());
+escape l is Nil;
 ]],
     wrn = true,
     run = 1,
 }
 Test { DATA..[[
 pool[0] List l;
-l = new CONS(2, NIL());
-escape ((l as CONS).head);     // runtime error
+l = new Cons(2, Nil());
+escape ((l as Cons).head);     // runtime error
 ]],
     wrn = true,
     asr = true,
 }
 -- 2nd allocation fails (1 space)
 Test { DATA..[[
-pool[1] List l = new CONS(2, CONS(1, NIL()));
+pool[1] List l = new Cons(2, Cons(1, Nil()));
 native _assert;
-_assert(((l as CONS).tail) is NIL);
-escape ((l as CONS).head);
+_assert(((l as Cons).tail) is Nil);
+escape ((l as Cons).head);
 ]],
     wrn = true,
     run = 2,
 }
 -- 3rd allocation fails (2 space)
 Test { DATA..[[
-pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));
+pool[2] List l = new Cons(1, Cons(2, Cons(3, Nil())));
 native _assert;
-_assert((((l as CONS).tail) as CONS).tail is NIL);
-escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + (((l as CONS).tail) as CONS).tail is NIL;
+_assert((((l as Cons).tail) as Cons).tail is Nil);
+escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((l as Cons).tail) as Cons).tail is Nil;
 ]],
     wrn = true,
     run = 4,
@@ -56467,8 +56476,8 @@ escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + (((l as CONS).ta
 -- (nothing new here)
 Test { DATA..[[
 pool[0] List l;
-l = new CONS(2, NIL());
-escape l is NIL;
+l = new Cons(2, Nil());
+escape l is Nil;
 ]],
     wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -56476,17 +56485,17 @@ escape l is NIL;
 }
 
 Test { [[
-data T;
-data NIL is T;
-data NXT is T with
+data Tx;
+data Nil is Tx;
+data Nxt is Tx with
     var int v;
-    var T&&  nxt;
+    var Tx&&  nxt;
 end
-pool[] T ts;
+pool[] Tx ts;
 do
-    ts = new NIL();
+    ts = new Nil();
 end
-escape ts is NIL;
+escape ts is Nil;
 ]],
     wrn = true,
     run = 1,
@@ -56501,12 +56510,12 @@ escape ts is NIL;
 --      l = tmp
 --  (this is why dynamic ADTs have to be a directed rooted trees)
 
--- 1-NIL => 2-NIL
--- 1-NIL can be safely reclaimed
+-- 1-Nil => 2-Nil
+-- 1-Nil can be safely reclaimed
 Test { DATA..[[
-pool[1] List l = new CONS(1, NIL());
-l = new CONS(2, NIL());    // this fails (new before free)!
-escape ((l as CONS).head);
+pool[1] List l = new Cons(1, Nil());
+l = new Cons(2, Nil());    // this fails (new before free)!
+escape ((l as Cons).head);
 ]],
     wrn = true,
     asr = true,
@@ -56514,75 +56523,75 @@ escape ((l as CONS).head);
 
 Test { DATA..[[
 pool[1] List l;
-l = new CONS(1, NIL());
-((l as CONS).tail) = new CONS(2, NIL()); // fails
-escape ((l as CONS).tail) is NIL;
+l = new Cons(1, Nil());
+((l as Cons).tail) = new Cons(2, Nil()); // fails
+escape ((l as Cons).tail) is Nil;
 ]],
     wrn = true,
     run = 1,
     --asr = true,
 }
 
--- 1-2-NIL
+-- 1-2-Nil
 Test { DATA..[[
-pool[2] List l = new CONS(1, NIL());
-((l as CONS).tail) = new CONS(2, NIL()); // fails
-escape (((l as CONS).tail) as CONS).head;
+pool[2] List l = new Cons(1, Nil());
+((l as Cons).tail) = new Cons(2, Nil()); // fails
+escape (((l as Cons).tail) as Cons).head;
 ]],
     wrn = true,
     run = 2,
 }
 
--- 1-NIL => 2-NIL
--- 1-NIL can be safely reclaimed
+-- 1-Nil => 2-Nil
+-- 1-Nil can be safely reclaimed
 Test { DATA..[[
 pool[2] List l;
-l = new CONS(1, NIL());
-l = new CONS(2, NIL());    // no allocation fail
-escape ((l as CONS).head);
+l = new Cons(1, Nil());
+l = new Cons(2, Nil());    // no allocation fail
+escape ((l as Cons).head);
 ]],
     wrn = true,
     run = 2,
 }
 
--- 1-2-3-NIL => 1-2-NIL (3 fails)
--- 4-5-6-NIL => NIL     (all fail)
+-- 1-2-3-Nil => 1-2-Nil (3 fails)
+-- 4-5-6-Nil => Nil     (all fail)
 Test { DATA..[[
 native _ceu_out_assert_msg;
-pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
-_ceu_out_assert_msg((((l as CONS).tail) as CONS).tail is NIL, "1");
-l = new NIL();
-l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
-_ceu_out_assert_msg((((l as CONS).tail) as CONS).tail is NIL, "2");
-escape (((l as CONS).tail) as CONS).head;
+pool[2] List l = new Cons(1, Cons(2, Cons(3, Nil())));   // 3 fails
+_ceu_out_assert_msg((((l as Cons).tail) as Cons).tail is Nil, "1");
+l = new Nil();
+l = new Cons(4, Cons(5, Cons(6, Nil())));   // 6 fails
+_ceu_out_assert_msg((((l as Cons).tail) as Cons).tail is Nil, "2");
+escape (((l as Cons).tail) as Cons).head;
 ]],
     wrn = true,
     run = 5,
 }
 
 Test { DATA..[[
-pool[2] List l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
+pool[2] List l = new Cons(1, Cons(2, Cons(3, Nil())));   // 3 fails
 native _ceu_out_assert_msg;
-_ceu_out_assert_msg((((l as CONS).tail) as CONS).tail is NIL, "1");
-l = new CONS(4, CONS(5, CONS(6, NIL())));   // all fail
-escape l is NIL;
+_ceu_out_assert_msg((((l as Cons).tail) as Cons).tail is Nil, "1");
+l = new Cons(4, Cons(5, Cons(6, Nil())));   // all fail
+escape l is Nil;
 ]],
     wrn = true,
     run = 1,
 }
 
--- 1-2-3-NIL => 1-2-NIL (3 fails)
+-- 1-2-3-Nil => 1-2-Nil (3 fails)
 -- (clear all)
--- 4-5-6-NIL => 4-5-NIL (6 fails)
+-- 4-5-6-Nil => 4-5-Nil (6 fails)
 Test { DATA..[[
 pool[2] List l;
-l = new CONS(1, CONS(2, CONS(3, NIL())));   // 3 fails
+l = new Cons(1, Cons(2, Cons(3, Nil())));   // 3 fails
 native _assert;
-_assert((((l as CONS).tail) as CONS).tail is NIL);
-l = new NIL();                                                // clear all
-l = new CONS(4, CONS(5, CONS(6, NIL())));   // 6 fails
-_assert((((l as CONS).tail) as CONS).tail is NIL);
-escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + (((((l as CONS).tail) as CONS).tail is NIL));
+_assert((((l as Cons).tail) as Cons).tail is Nil);
+l = new Nil();                                                // clear all
+l = new Cons(4, Cons(5, Cons(6, Nil())));   // 6 fails
+_assert((((l as Cons).tail) as Cons).tail is Nil);
+escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((((l as Cons).tail) as Cons).tail is Nil));
 ]],
     wrn = true,
     run = 10,
@@ -56598,34 +56607,34 @@ escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + (((((l as CONS).
 --                 l-val is prefix of r-val
 
 -- ok: child is constructor (with no previous parent)
--- NIL
--- 1-NIL
--- 1-2-NIL
+-- Nil
+-- 1-Nil
+-- 1-2-Nil
 Test { DATA..[[
-pool[2] List l = new CONS(1, NIL());
-((l as CONS).tail) = new CONS(2, NIL());
-escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head;
+pool[2] List l = new Cons(1, Nil());
+((l as Cons).tail) = new Cons(2, Nil());
+escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head;
 ]],
     wrn = true,
     run = 3,
 }
 -- ok: tail is child of l
--- NIL
--- 1-2-NIL
--- 1-NIL
+-- Nil
+-- 1-2-Nil
+-- 1-Nil
 Test { DATA..[[
 pool[2] List lll;
-lll = new CONS(1, CONS(2, NIL()));
-lll = (lll as CONS).tail;    // parent=child
-escape (lll as CONS).head;
+lll = new Cons(1, Cons(2, Nil()));
+lll = (lll as Cons).tail;    // parent=child
+escape (lll as Cons).head;
 ]],
     wrn = true,
     run = 2,
 }
 Test { DATA..[[
-pool[2] List lll = new CONS(1, CONS(2, NIL()));
-lll = (lll as CONS).tail;
-(lll as CONS).tail = new CONS(3, NIL());
+pool[2] List lll = new Cons(1, Cons(2, Nil()));
+lll = (lll as Cons).tail;
+(lll as Cons).tail = new Cons(3, Nil());
 escape 1;
 ]],
     wrn = true,
@@ -56633,32 +56642,32 @@ escape 1;
 }
 Test { DATA..[[
 pool[2] List lll;
-lll = new CONS(1, CONS(2, NIL()));
-lll = (lll as CONS).tail;    // parent=child
-(lll as CONS).tail = new CONS(3, CONS(4, NIL()));    // 4 fails
-escape (lll as CONS).head + (((lll as CONS).tail) as CONS).head + ((((lll as CONS).tail) as CONS).tail is NIL);
+lll = new Cons(1, Cons(2, Nil()));
+lll = (lll as Cons).tail;    // parent=child
+(lll as Cons).tail = new Cons(3, Cons(4, Nil()));    // 4 fails
+escape (lll as Cons).head + (((lll as Cons).tail) as Cons).head + ((((lll as Cons).tail) as Cons).tail is Nil);
 ]],
     wrn = true,
     run = 6,
 }
 Test { DATA..[[
-pool[2] List l = new CONS(1, CONS(2, NIL()));
-l = ((l as CONS).tail);    // parent=child
-((l as CONS).tail) = new CONS(3, CONS(4, NIL()));    // 4 fails
-escape ((l as CONS).head) + (((l as CONS).tail) as CONS).head + ((((l as CONS).tail) as CONS).tail is NIL);
+pool[2] List l = new Cons(1, Cons(2, Nil()));
+l = ((l as Cons).tail);    // parent=child
+((l as Cons).tail) = new Cons(3, Cons(4, Nil()));    // 4 fails
+escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((l as Cons).tail) as Cons).tail is Nil);
 ]],
     wrn = true,
     run = 6,
 }
 
 -- no: l is parent of tail
--- NIL
--- 1-2-NIL
+-- Nil
+-- 1-2-Nil
 -- 1-2-^1   (no)
 Test { DATA..[[
 pool[2] List l;
-l = new CONS(1, CONS(2, NIL()));
-((l as CONS).tail) = l;    // child=parent
+l = new Cons(1, Cons(2, Nil()));
+((l as Cons).tail) = l;    // child=parent
 escape 1;
 ]],
     wrn = true,
@@ -56669,32 +56678,32 @@ escape 1;
 
 Test { [[
 data OptionInt;
-data NIL1 is OptionInt;
-data SOME1 is OptionInt with
+data Nil1 is OptionInt;
+data Some1 is OptionInt with
     var int v;
 end
 
 data OptionPtr;
-data NIL2 is OptionPtr;
-data SOME2 is OptionPtr with
+data Nil2 is OptionPtr;
+data Some2 is OptionPtr with
     var int&& v;
 end
 
 var int ret = 0;            // 0
 
-var OptionInt i = NIL1();
-var OptionPtr p = NIL2();
-ret = ret + (i is NIL1) + (p is NIL2);  // 2
+var OptionInt i = Nil1();
+var OptionPtr p = Nil2();
+ret = ret + (i is Nil1) + (p is Nil2);  // 2
 
-i = SOME1(3);
-ret = ret + (i as SOME1).v;       // 5
+i = Some1(3);
+ret = ret + (i as Some1).v;       // 5
 
-p = SOME2(&&ret);
-*(p as SOME2).v = *(p as SOME2).v + 2;    // 7
+p = Some2(&&ret);
+*(p as Some2).v = *(p as Some2).v + 2;    // 7
 
 var int v = 10;
-p = SOME2(&&v);
-*(p as SOME2).v = *(p as SOME2).v + 1;
+p = Some2(&&v);
+*(p as Some2).v = *(p as Some2).v + 1;
 
 ret = ret + v;              // 18
 escape ret;
@@ -56834,27 +56843,27 @@ escape v1 + v2 + ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var& int? i;
 do
     var int v = 10;
     this.i! = v;
 end
-var T t;
+var Tx t;
 escape t.i!;
 ]],
     asr = ':5] runtime error: invalid tag',
     --run = 10,
 }
 Test { [[
-class T with
+class Tx with
     var& int? i;
 do
     var int v = 10;
     this.i! = v;
 end
 var int i = 0;
-var T t with
+var Tx t with
     this.i = &i;
 end;
 escape t.i!;
@@ -56865,13 +56874,13 @@ escape t.i!;
 }
 Test { [[
 var int v = 10;
-class T with
+class Tx with
     var& int? i;
 do
     var int v = 10;
     if v then end;
 end
-var T t with
+var Tx t with
     this.i = &v;
 end;
 v = v / 2;
@@ -56880,38 +56889,38 @@ escape t.i? + t.i! + 1;
     run = 7,
 }
 Test { [[
-class T with
+class Tx with
     var& int? i;
 do
     var int v = 10;
     if v then end;
 end
-var T t;
+var Tx t;
 escape t.i? + 1;
 ]],
     run = 1,
 }
 Test { [[
-class T with
+class Tx with
     var& int? i;
 do
     var int v = 10;
     if v then end;
 end
-var T t;
+var Tx t;
 escape t.i!;
 ]],
     asr = true,
 }
 Test { [[
-class T with
+class Tx with
     var& int? i;
 do
     var int v = 10;
     if v then end;
 end
 var int v = 1;
-var T t with
+var Tx t with
     this.i = &v;
 end;
 v = 11;
@@ -56959,12 +56968,12 @@ escape ret + _id(t_!.x) + t.x;
 }
 
 Test { [[
-class T with
+class Tx with
     var& int? v;
 do
     if v? then end;
 end
-var T t;
+var Tx t;
 escape 1;
 ]],
     run = 1,
@@ -57156,14 +57165,14 @@ escape 1;
 
 Test { [[
 data OptionInt;
-data NIL1 is OptionInt;
-data SOME1 is OptionInt with
+data Nil1 is OptionInt;
+data Some1 is OptionInt with
     var int v;
 end
 
 data OptionPtr;
-data NIL2 is OptionPtr;
-data SOME2 is OptionPtr with
+data Nil2 is OptionPtr;
+data Some2 is OptionPtr with
     var int&& v;
 end
 
@@ -57226,12 +57235,12 @@ finalize with
     nothing;
 end
 
-class T with
+class Tx with
     var& int? v;
 do
     v! = 20;
 end
-do T with
+do Tx with
     this.v = &v;
 end;
 
@@ -57254,12 +57263,12 @@ finalize with
     nothing;
 end
 
-class T with
+class Tx with
     var& int? v;
 do
     v! = 20;
 end
-do T with
+do Tx with
     this.v = &v!;
 end;
 
@@ -57282,7 +57291,7 @@ escape p1==p2;
 }
 Test { DATA..[[
 pool[] List l1, l2;
-l2 = new NIL();
+l2 = new Nil();
 escape l1==l2;
 ]],
     wrn = true,
@@ -57293,23 +57302,23 @@ escape l1==l2;
 -- cannot mix recursive ADTs
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new CONS(1, NIL());
-l2 = new CONS(2, NIL());
-((l1 as CONS).tail) = l2;
-escape (((l1 as CONS).tail) as CONS).head;
+l1 = new Cons(1, Nil());
+l2 = new Cons(2, Nil());
+((l1 as Cons).tail) = l2;
+escape (((l1 as Cons).tail) as Cons).head;
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
 }
 Test { DATA..[[
-pool[] List l1 = new CONS(1, NIL());
+pool[] List l1 = new Cons(1, Nil());
 do
     pool[] List l2;
-    l2 = new CONS(2, NIL());
-    ((l1 as CONS).tail) = &&l2;
+    l2 = new Cons(2, Nil());
+    ((l1 as Cons).tail) = &&l2;
 end
-escape (((l1 as CONS).tail) as CONS).head;
+escape (((l1 as Cons).tail) as Cons).head;
 ]],
     wrn = true,
     adt = 'line 55 : invalid attribution : destination is not a reference',
@@ -57318,10 +57327,10 @@ escape (((l1 as CONS).tail) as CONS).head;
 }
 Test { DATA..[[
 pool[] List l1;
-l1 = new CONS(1, NIL());
-pool[2] List l2 = new CONS(2, NIL());
-((l1 as CONS).tail) = l2;
-escape (((l1 as CONS).tail) as CONS).head;
+l1 = new Cons(1, Nil());
+pool[2] List l2 = new Cons(2, Nil());
+((l1 as Cons).tail) = l2;
+escape (((l1 as Cons).tail) as Cons).head;
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
@@ -57330,10 +57339,10 @@ escape (((l1 as CONS).tail) as CONS).head;
 Test { DATA..[[
 pool[2] List l1;
 pool[2] List l2;
-l1 = new CONS(1, NIL());
-l2 = new CONS(2, NIL());
-((l1 as CONS).tail) = l2;
-escape (((l1 as CONS).tail) as CONS).head;
+l1 = new Cons(1, Nil());
+l2 = new Cons(2, Nil());
+((l1 as Cons).tail) = l2;
+escape (((l1 as Cons).tail) as Cons).head;
 ]],
     wrn = true,
     --adt = 'line 55 : invalid attribution : value is not a reference',
@@ -57346,37 +57355,37 @@ var int ret = 0;                // 0
 pool[5] List l;
 
 // change head [2]
-l = new CONS(1, NIL());
-ret = ret + ((l as CONS).head);        // 2
+l = new Cons(1, Nil());
+ret = ret + ((l as Cons).head);        // 2
 native _assert;
 _assert(ret == 1);
 
 // add 2 [1, 2]
-((l as CONS).tail) = new CONS(1, NIL());
-ret = ret + ((l as CONS).head);        // 3
-ret = ret + ((l as CONS).head) + (((l as CONS).tail) as CONS).head;
+((l as Cons).tail) = new Cons(1, Nil());
+ret = ret + ((l as Cons).head);        // 3
+ret = ret + ((l as Cons).head) + (((l as Cons).tail) as Cons).head;
                                 // 6
 _assert(ret == 6);
 
 // change tail [1, 2, 4]
-(((l as CONS).tail) as CONS).tail = new CONS(4, NIL());
+(((l as Cons).tail) as Cons).tail = new Cons(4, Nil());
                                 // 10
 
-pool[] List l3 = new CONS(3, NIL());
-(((l as CONS).tail) as CONS).tail = &&l3;
-_assert((((l as CONS).tail) as CONS).head == 3);
-_assert(((((l as CONS).tail) as CONS).tail as CONS).head == 4);
-ret = ret + (((l as CONS).tail) as CONS).head + ((((l as CONS).tail) as CONS).tail as CONS).head;
+pool[] List l3 = new Cons(3, Nil());
+(((l as Cons).tail) as Cons).tail = &&l3;
+_assert((((l as Cons).tail) as Cons).head == 3);
+_assert(((((l as Cons).tail) as Cons).tail as Cons).head == 4);
+ret = ret + (((l as Cons).tail) as Cons).head + ((((l as Cons).tail) as Cons).tail as Cons).head;
                                 // 17
 
 // drop middle [1, 3, 4]
-((l as CONS).tail) = (((l as CONS).tail) as CONS).tail;
-ret = ret + (((l as CONS).tail) as CONS).head;
+((l as Cons).tail) = (((l as Cons).tail) as Cons).tail;
+ret = ret + (((l as Cons).tail) as Cons).head;
                                 // 20
 
 // fill the list [1, 3, 4, 5, 6] (7 fails)
-((((l as CONS).tail) as CONS).tail as CONS).tail =
-    new CONS(5, CONS(6, CONS(7, NIL())));
+((((l as Cons).tail) as Cons).tail as Cons).tail =
+    new Cons(5, Cons(6, Cons(7, Nil())));
 
 escape ret;
 ]],
@@ -57404,17 +57413,17 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     var int? x;
 do
 end
 
 class U with
-    var& T t;
+    var& Tx t;
 do
 end
 
-var T t with
+var Tx t with
     this.x = 10;
 end;
 
@@ -57428,19 +57437,19 @@ escape u.t.x!;
 }
 
 Test { [[
-class T with
+class Tx with
     var int? x;
 do
 end
 
 class U with
-    var& T t;
+    var& Tx t;
     var int ret=0;
 do
     this.ret = t.x!;
 end
 
-var T t with
+var Tx t with
     this.x = 10;
 end;
 
@@ -57454,13 +57463,13 @@ escape u.t.x! + u.ret;
 }
 
 Test { [[
-class T with
+class Tx with
     var& int? x;
 do
 end
 
 class U with
-    var& T t;
+    var& Tx t;
     var int ret=0;
 do
     this.ret = t.x!;
@@ -57468,7 +57477,7 @@ end
 
 var int z = 10;
 
-var T t with
+var Tx t with
     this.x = &z;
 end;
 
@@ -57486,17 +57495,17 @@ interface I with
     var int? x;
 end
 
-class T with
+class Tx with
     interface I;
 do
 end
 
 class U with
-    var& T t;
+    var& Tx t;
 do
 end
 
-var T t with
+var Tx t with
     this.x = 10;
 end;
 
@@ -57530,13 +57539,13 @@ escape i:v!;
 }
 
 Test { [[
-class T with
+class Tx with
     var int? x;
 do
 end
 
 interface I with
-    var& T t;
+    var& Tx t;
 end
 
 class U with
@@ -57544,7 +57553,7 @@ class U with
 do
 end
 
-var T t with
+var Tx t with
     this.x = 10;
 end;
 
@@ -57560,8 +57569,8 @@ escape ((*i).t).x!;
 
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
@@ -57578,8 +57587,8 @@ escape 1;
 }
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
@@ -57599,15 +57608,15 @@ escape 1;
 
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list
 
-= new CONS(10, NIL());
+= new Cons(10, Nil());
 var List&& l = list;
 
 watching l do
@@ -57623,64 +57632,64 @@ escape 0;
 
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 
 pool&[] List lll = &list;
 
-escape (lll as CONS).head;
+escape (lll as Cons).head;
 ]],
     run = 10,
 }
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 
 pool[] List&& lll = &&list;
 
-escape (lll as CONS).head;
+escape (lll as Cons).head;
 ]],
     run = 10,
 }
 
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 pool[] List&& l = &&list;
 
-((l as CONS).tail) = new CONS(9, NIL());
-l = ((l as CONS).tail);
+((l as Cons).tail) = new Cons(9, Nil());
+l = ((l as Cons).tail);
 
-((l as CONS).tail) = new CONS(8, NIL());
-l = ((l as CONS).tail);
+((l as Cons).tail) = new Cons(8, Nil());
+l = ((l as Cons).tail);
 
-escape (*l as CONS) +
-        (list as CONS).head +
-        ((list as CONS).tail as CONS).head +
-        ((((list as CONS).tail as CONS).tail) as CONS).head;
+escape (*l as Cons) +
+        (list as Cons).head +
+        ((list as Cons).tail as Cons).head +
+        ((((list as Cons).tail as Cons).tail) as Cons).head;
 ]],
     adt = 'line 16 : invalid attribution : mutation : destination cannot be a pointer',
 }
@@ -57690,22 +57699,22 @@ escape (*l as CONS) +
 --   which is a problem
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 
 pool[] List&& l1 = &&list;
 pool&[] List  l2 = &list;
 
-list = new NIL();
+list = new Nil();
 
-escape (*l1 as CONS)+(l2 as CONS)+(list as CONS)+1;
+escape (*l1 as Cons)+(l2 as Cons)+(list as Cons)+1;
 ]],
     --run = 1,
     fin = 'line 19 : unsafe access to pointer "l1" across `assignment´ (tests.lua : 17)',
@@ -57716,24 +57725,24 @@ escape (*l1 as CONS)+(l2 as CONS)+(list as CONS)+1;
 --   which is a problem
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 pool[] List&& lll = &&list;
 
 var int ret = 0;
 
 watching *lll do
-    *lll = (lll as CONS).tail;
-    ret = (*lll as CONS) +
-            (list as CONS).head +
-            (list as CONS).tail is NIL;
+    *lll = (lll as Cons).tail;
+    ret = (*lll as Cons) +
+            (list as Cons).head +
+            (list as Cons).tail is Nil;
 end
 
 escape ret;
@@ -57744,23 +57753,23 @@ escape ret;
 
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, CONS(20, NIL()));
+list = new Cons(10, Cons(20, Nil()));
 pool[] List&& lll = &&list;
 
 var int ret = 0;
 watching *lll do
-    (lll as CONS).tail = (((lll as CONS).tail) as CONS).tail;
-    ret = (*lll as CONS) +
-            (list as CONS).head +
-            ((list as CONS).tail is NIL);
+    (lll as Cons).tail = (((lll as Cons).tail) as Cons).tail;
+    ret = (*lll as Cons) +
+            (list as Cons).head +
+            ((list as Cons).tail is Nil);
 end
 escape ret;
 ]],
@@ -57770,97 +57779,97 @@ escape ret;
 
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 vector[] List&& lll = &&list; // TODO fat pointer
 
-*lll = (lll as CONS).tail;
+*lll = (lll as Cons).tail;
 
-escape (*lll as CONS) + (list as CONS) + 1;
+escape (*lll as Cons) + (list as Cons) + 1;
 ]],
     adt = 'line 15 : invalid attribution : mutation : cannot mutate from pointers',
 }
 
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 pool[] List&& lll = &&list;
 
-*lll = (lll as CONS).tail;
+*lll = (lll as Cons).tail;
 
-escape (*lll as CONS) +
-        (list as CONS).head +
-        (list as CONS).tail is NIL;
+escape (*lll as Cons) +
+        (list as Cons).head +
+        (list as Cons).tail is Nil;
 ]],
     --run = 10,
     adt = 'line 15 : invalid attribution : mutation : cannot mutate root of a reference',
 }
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 pool[] List&& lll = &&list;
 
-(lll as CONS).tail = new CONS(9, NIL());
-*lll = (lll as CONS).tail;
+(lll as Cons).tail = new Cons(9, Nil());
+*lll = (lll as Cons).tail;
 
-(lll as CONS).tail = new CONS(8, NIL());
-*lll = (lll as CONS).tail;
+(lll as Cons).tail = new Cons(8, Nil());
+*lll = (lll as Cons).tail;
 
-escape (*lll as CONS) +
-        (list as CONS).head +
-        ((list as CONS).tail is NIL);
+escape (*lll as Cons) +
+        (list as Cons).head +
+        ((list as Cons).tail is Nil);
 ]],
     adt = 'line 16 : invalid attribution : mutation : cannot mutate root of a reference',
 }
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 pool[] List&& l = &&list;
 
 var int ret = 0;
 
 watching *l do
-    ((l as CONS).tail) = new CONS(9, NIL());
-    l = &&((l as CONS).tail);
+    ((l as Cons).tail) = new Cons(9, Nil());
+    l = &&((l as Cons).tail);
 
-    ((l as CONS).tail) = new CONS(8, NIL());
-    l = &&((l as CONS).tail);
+    ((l as Cons).tail) = new Cons(8, Nil());
+    l = &&((l as Cons).tail);
 
-    ret = (*l as CONS) +
-            (list as CONS).head +
-            ((list as CONS).tail as CONS).head +
-            ((((list as CONS).tail as CONS).tail) as CONS).head;
+    ret = (*l as Cons) +
+            (list as Cons).head +
+            ((list as Cons).tail as Cons).head +
+            ((((list as Cons).tail as Cons).tail) as Cons).head;
 end
 escape ret;
 ]],
@@ -57870,30 +57879,30 @@ escape ret;
 
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 pool[] List&& l = &&list;
 
 watching *l do
-    ((l as CONS).tail) = new CONS(9, NIL());
-    l = &&((l as CONS).tail);
+    ((l as Cons).tail) = new Cons(9, Nil());
+    l = &&((l as Cons).tail);
 
     await 1s;
 
-    ((l as CONS).tail) = new CONS(8, NIL());
-    l = &&((l as CONS).tail);
+    ((l as Cons).tail) = new Cons(8, Nil());
+    l = &&((l as Cons).tail);
 
-    escape ((l as CONS).head) +
-            (list as CONS).head +
-            ((list as CONS).tail as CONS).head +
-            ((((list as CONS).tail as CONS).tail) as CONS).head;
+    escape ((l as Cons).head) +
+            (list as Cons).head +
+            ((list as Cons).tail as Cons).head +
+            ((((list as Cons).tail as Cons).tail) as Cons).head;
 end
 
 escape 0;
@@ -57905,36 +57914,36 @@ escape 0;
 -- fails if inner is killed before outer
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
 pool[10] List list;
 
-list = new CONS(10, NIL());
+list = new Cons(10, Nil());
 pool[] List&& lll = &&list;
 
 watching *lll do
-    (lll as CONS).tail = new CONS(9, NIL());
-    lll = &&(lll as CONS).tail;
+    (lll as Cons).tail = new Cons(9, Nil());
+    lll = &&(lll as Cons).tail;
 
     par do
         watching *lll do
             await 1s;
 
-            (lll as CONS).tail = new CONS(8, NIL());
-            lll = &&(lll as CONS).tail;
+            (lll as Cons).tail = new Cons(8, Nil());
+            lll = &&(lll as Cons).tail;
 
-            escape (lll as CONS).head +
-                    (list as CONS).head +
-                    ((list as CONS).tail as CONS).head +
-                    (((list as CONS).tail as CONS).tail as CONS).head;
+            escape (lll as Cons).head +
+                    (list as Cons).head +
+                    ((list as Cons).tail as Cons).head +
+                    (((list as Cons).tail as Cons).tail as Cons).head;
         end
         escape 1;
     with
-        list = new NIL();
+        list = new Nil();
         await FOREVER;
     end
 end
@@ -57946,31 +57955,31 @@ escape -1;
 
 Test { [[
 data List;
-data NIL is List;
-data CONS is List with
+data Nil is List;
+data Cons is List with
     var int  head;
     var List tail;
 end
 
-pool[] List list = new CONS(10, NIL());
+pool[] List list = new Cons(10, Nil());
 pool[] List&& lll = &&list;
 
 watching *lll do
-    (lll as CONS).tail = new CONS(9, NIL());
-    lll = &&(lll as CONS).tail;
+    (lll as Cons).tail = new Cons(9, Nil());
+    lll = &&(lll as Cons).tail;
 
     par do
         await 1s;
 
-        (lll as CONS).tail = new CONS(8, NIL());
-        lll = &&(lll as CONS).tail;
+        (lll as Cons).tail = new Cons(8, Nil());
+        lll = &&(lll as Cons).tail;
 
-        escape (lll as CONS).head +
-                (list as CONS).head +
-                ((list as CONS).tail as CONS).head +
-                (((list as CONS).tail as CONS).tail as CONS).head;
+        escape (lll as Cons).head +
+                (list as Cons).head +
+                ((list as Cons).tail as Cons).head +
+                (((list as Cons).tail as Cons).tail as Cons).head;
     with
-        list = new NIL();
+        list = new Nil();
         await FOREVER;
     end
 end
@@ -58060,8 +58069,8 @@ escape f1.bytes[0];
 }
 Test { [[
 data Frame;
-    data X is Frame;
-    data Y is Frame with
+    data Xx is Frame;
+    data Yy is Frame with
         vector[3] u8 bytes;
     end
 
@@ -58089,7 +58098,7 @@ escape frames[0].bytes[0];
 }
 
 Test { [[
-data T with
+data Tx with
     var& int i;
 end
 escape 1;
@@ -58098,7 +58107,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-data T with
+data Tx with
     vector&[] byte str;
 end
 escape 1;
@@ -58112,22 +58121,22 @@ pre native do
 end
 native/nohold _strlen;
 native/plain _char_ptr;
-data D with
+data Dx with
     var _char_ptr str;
 end
 vector[] byte s = [].. "oi";
 native _char;
-var D d = D(&&s as _char&& as _char_ptr);
+var Dx d = Dx(&&s as _char&& as _char_ptr);
 escape _strlen(d.str as _char&&);
 ]],
     run = 2,
 }
 Test { [[
-data D with
+data Dx with
     vector&[] byte str;
 end
 vector[] byte s = [].. "oi";
-var D d = D(&s);
+var Dx d = Dx(&s);
 escape $d.str;
 ]],
     run = 2,
@@ -58139,12 +58148,12 @@ escape $d.str;
 
 -- crashes with org->ret
 Test { [[
-class T with
+class Tx with
 do
     await FOREVER;
 end
 
-event T&& e;
+event Tx&& e;
 
 input void OS_START;
 
@@ -58152,11 +58161,11 @@ par do
     do
         par/or do
             await OS_START;
-            pool[1] T ts;
-            var T&&? ptr = spawn T in ts;
+            pool[1] Tx ts;
+            var Tx&&? ptr = spawn Tx in ts;
             emit e => ptr!;
         with
-            var T&& t = await e;
+            var Tx&& t = await e;
         end
     end
     do
@@ -58169,7 +58178,7 @@ native _int;
     await 1s;
     escape 1;
 with
-    var T&& t = await e;
+    var Tx&& t = await e;
     var int ret = await *t;     // crash!
     escape ret;
 end
@@ -58181,15 +58190,15 @@ end
 
 Test { [[
 data Widget;
-    data NIL is Widget;
-    data ROW is Widget with
+    data Nil is Widget;
+    data Row is Widget with
         var Widget w1;
     end
 
 pool[] Widget widgets;
 traverse widget in &&widgets do
     watching *widget do
-        var int v1 = traverse &&(*widget as ROW).w1;
+        var int v1 = traverse &&(*widget as Row).w1;
     end
 end
 
@@ -58202,19 +58211,19 @@ escape 1;
 
 -- leaks memory because of lost "free" in IN__STK
 Test { [[
-data T;
-    data NIL is T;
-    data NXT is T with
+data Tx;
+    data Nil is Tx;
+    data Nxt is Tx with
         var int v;
-        var T   nxt;
+        var Tx   nxt;
     end
 
-pool[] T ts = new NXT(10, NXT(9, NIL()));
+pool[] Tx ts = new Nxt(10, Nxt(9, Nil()));
 
 par/or do
     await ts;           // 2. but continuation is aborted
 with
-    ts = new NIL();   // 1. free is on continuation
+    ts = new Nil();   // 1. free is on continuation
 end
 
 escape 1;
@@ -58224,16 +58233,16 @@ escape 1;
 }
 
 Test { [[
-data T;
-    data NIL is T;
-    data NXT is T with
+data Tx;
+    data Nil is Tx;
+    data Nxt is Tx with
         var int v;
-        var T   nxt;
+        var Tx   nxt;
     end
 
-pool[] T ts;
+pool[] Tx ts;
 
-ts = new NXT(10, NXT(9, NIL()));
+ts = new Nxt(10, Nxt(9, Nil()));
 
 var int ret = 10;
 
@@ -58243,18 +58252,18 @@ par/or do
     end
     ret = ret * 2;
 with
-    watching (ts as NXT).nxt do
+    watching (ts as Nxt).nxt do
         await FOREVER;
     end
     ret = 0;
 with
-    watching ((ts as NXT).nxt as NXT).nxt do
+    watching ((ts as Nxt).nxt as Nxt).nxt do
         await FOREVER;
     end
-    ret = ret - 1;  // awakes first from NIL
+    ret = ret - 1;  // awakes first from Nil
     await FOREVER;
 with
-    ts = new NIL();
+    ts = new Nil();
     ret = 0;
 end
 
@@ -58381,8 +58390,8 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var Tree left;
     end
 var Tree&& n;
@@ -58397,8 +58406,8 @@ escape 1;
 }
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var Tree left;
     end
 class Body with
@@ -58415,17 +58424,17 @@ escape 1;
 }
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree;
-tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 class Body with
     pool&[]  Body bodies;
@@ -58436,11 +58445,11 @@ do
     watching *n do
         var int i = this.sum;
         if i then end;
-        if (*n is NODE) then
+        if (*n is Node) then
             var Body&&? left =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n as NODE).left;
+                    this.n      = &&(*n as Node).left;
                     this.sum    = &sum;
                 end;
             if left? then
@@ -58454,7 +58463,7 @@ do
             var Body&&? right =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n as NODE).right;
+                    this.n      = &&(*n as Node).right;
                     this.sum    = &sum;
                 end;
             if right? then
@@ -58485,17 +58494,17 @@ escape sum;
 }
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree;
-tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 class Body with
     pool&[]  Body bodies;
@@ -58505,11 +58514,11 @@ class Body with
 do
     watching *n do
         var int i = this.sum;
-        if (*n is NODE) then
+        if (*n is Node) then
             var Body&&? left =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n as NODE).left;
+                    this.n      = &&(*n as Node).left;
                     this.sum    = &sum;
                 end;
             if left? then
@@ -58518,12 +58527,12 @@ do
                 end
             end
 
-            this.sum = this.sum + i + (*n as NODE).v;
+            this.sum = this.sum + i + (*n as Node).v;
 
             var Body&&? right =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n as NODE).right;
+                    this.n      = &&(*n as Node).right;
                     this.sum    = &sum;
                 end;
             if right? then
@@ -58553,16 +58562,16 @@ escape sum;
 }
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
-pool[3] Tree tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+pool[3] Tree tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 class Body with
     pool&[7]  Body bodies;
@@ -58572,11 +58581,11 @@ class Body with
 do
     watching *n do
         var int i = this.sum;
-        if (*n is NODE) then
+        if (*n is Node) then
             var Body&&? left =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n as NODE).left;
+                    this.n      = &&(*n as Node).left;
                     this.sum    = &sum;
                 end;
             if left? then
@@ -58585,12 +58594,12 @@ do
                 end
             end
 
-            this.sum = this.sum + i + (*n as NODE).v;
+            this.sum = this.sum + i + (*n as Node).v;
 
             var Body&&? right =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n as NODE).right;
+                    this.n      = &&(*n as Node).right;
                     this.sum    = &sum;
                 end;
             if right? then
@@ -58600,7 +58609,7 @@ do
             end
 
             //do/spawn Body in this.bodies with
-                //this.n = (*n as NODE).left;
+                //this.n = (*n as Node).left;
             //end;
         end
     end
@@ -58624,29 +58633,29 @@ escape sum;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list
-    = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+    = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 class Body with
     pool&[]  Body bodies;
     var   List&&   n;
 do
     await 1s;
-    if (*n is NIL) then
+    if (*n is Nil) then
     end
     watching *n do
-        if (*n is CONS) then
+        if (*n is Cons) then
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = &&(*n is CONS).tail;
+                this.n      = &&(*n is Cons).tail;
             end;
         end
     end
@@ -58664,28 +58673,28 @@ escape 1;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list
-    = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+    = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 class Body with
     pool&[]  Body bodies;
     var   List&&   n;
 do
-    if (*n is NIL) then
+    if (*n is Nil) then
     end
     watching *n do
-        if (*n is CONS) then
+        if (*n is Cons) then
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = &&(*n is CONS).tail;
+                this.n      = &&(*n is Cons).tail;
             end;
         end
     end
@@ -58705,24 +58714,24 @@ escape 1;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is CONS) then
-        sum = sum + (*n is CONS).head;
-        traverse &&(*n is CONS).tail;
+    if (*n is Cons) then
+        sum = sum + (*n is Cons).head;
+        traverse &&(*n is Cons).tail;
     end
 end
 
@@ -58732,25 +58741,25 @@ escape sum;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is CONS) then
-        sum = sum + (*n is CONS).head;
+    if (*n is Cons) then
+        sum = sum + (*n is Cons).head;
         await 1s;
-        traverse &&(*n is CONS).tail;
+        traverse &&(*n is Cons).tail;
     end
 end
 
@@ -58760,25 +58769,25 @@ escape sum;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
     await 1s;
-    if (*n is CONS) then
-        sum = sum + (*n is CONS).head;
-        traverse &&(*n is CONS).tail;
+    if (*n is Cons) then
+        sum = sum + (*n is Cons).head;
+        traverse &&(*n is Cons).tail;
     end
 end
 
@@ -58788,26 +58797,26 @@ escape sum;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is CONS) then
-        sum = sum + (*n is CONS).head;
+    if (*n is Cons) then
+        sum = sum + (*n is Cons).head;
         watching *n do
             await 1s;
-            traverse &&(*n is CONS).tail;
+            traverse &&(*n is Cons).tail;
         end
     end
 end
@@ -58818,16 +58827,16 @@ escape sum;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
@@ -58835,9 +58844,9 @@ traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         //await 1s;
-        if (*n is CONS) then
-            sum = sum + (*n is CONS).head;
-            traverse &&(*n is CONS).tail;
+        if (*n is Cons) then
+            sum = sum + (*n is Cons).head;
+            traverse &&(*n is Cons).tail;
         end
     //end
 end
@@ -58848,16 +58857,16 @@ escape sum;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
@@ -58865,9 +58874,9 @@ traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         await 1s;
-        if (*n is CONS) then
-            sum = sum + (*n is CONS).head;
-            traverse &&(*n is CONS).tail;
+        if (*n is Cons) then
+            sum = sum + (*n is Cons).head;
+            traverse &&(*n is Cons).tail;
         end
     //end
 end
@@ -58878,27 +58887,27 @@ escape sum;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list
-    = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+    = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
-    if (*n is NIL) then
+    if (*n is Nil) then
         sum = sum * 2;
     end
     watching *n do
-        if (*n is CONS) then
-            sum = sum + (*n is CONS).head;
-            traverse &&(*n is CONS).tail;
+        if (*n is Cons) then
+            sum = sum + (*n is Cons).head;
+            traverse &&(*n is Cons).tail;
         end
     end
 end
@@ -58912,26 +58921,26 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree =
-    new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+    new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int  v = 0;
 var int&& ptr = &&v;
 
 traverse t in &&tree do
     *ptr = *ptr + 1;
-    if (*t is NODE) then
-        traverse &&(*t as NODE).left;
-        traverse &&(*t as NODE).right;
+    if (*t is Node) then
+        traverse &&(*t as Node).left;
+        traverse &&(*t as Node).right;
     end
 end
 
@@ -58943,27 +58952,27 @@ escape v;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree =
-    new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+    new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int  v = 0;
 var int&& ptr = &&v;
 
 traverse t in &&tree do
     *ptr = *ptr + 1;
-    if (*t is NODE) then
+    if (*t is Node) then
         watching *t do
-            traverse &&(*t as NODE).left;
-            traverse &&(*t as NODE).right;
+            traverse &&(*t as Node).left;
+            traverse &&(*t as Node).right;
         end
     end
 end
@@ -58976,16 +58985,16 @@ escape v;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 native do
     int V = 0;
@@ -58994,9 +59003,9 @@ end
 /*
 traverse n in &&list do
     _V = _V + 1;
-    if (*n is CONS) then
-        _V = _V + (*n is CONS).head;
-        traverse &&(*n is CONS).tail;
+    if (*n is Cons) then
+        _V = _V + (*n is Cons).head;
+        traverse &&(*n is Cons).tail;
     end
 end
 */
@@ -59005,19 +59014,19 @@ class Body with
     pool&[3]  Body bodies;
     var   List&&    n;
 do
-    if (*n is NIL) then
+    if (*n is Nil) then
 native _V;
         _V = _V * 2;
     end
     watching *n do
         _V = _V + 1;
-        if (*n is CONS) then
-            _V = _V + (*n is CONS).head;
+        if (*n is Cons) then
+            _V = _V + (*n is Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n is CONS).tail;
+                    this.n      = &&(*n is Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -59041,16 +59050,16 @@ escape _V;
 
 Test { [[
 data List;
-    data NIL_;
-    data NIL is List;
-    data CONS is List with
+    data Nil_;
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
-pool[4] List list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+pool[4] List list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 native do
     int V = 0;
@@ -59059,9 +59068,9 @@ end
 /*
 traverse n in &&list do
     _V = _V + 1;
-    if (*n is CONS) then
-        _V = _V + (*n is CONS).head;
-        traverse &&(*n is CONS).tail;
+    if (*n is Cons) then
+        _V = _V + (*n is Cons).head;
+        traverse &&(*n is Cons).tail;
     end
 end
 */
@@ -59071,17 +59080,17 @@ class Body with
     var   List&&    n;
 do
     watching *n do
-        if (*n is NIL) then
+        if (*n is Nil) then
 native _V;
             _V = _V * 2;
-        else/if (*n is CONS) then
+        else/if (*n is Cons) then
             _V = _V + 1;
-            _V = _V + (*n is CONS).head;
+            _V = _V + (*n is Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n is CONS).tail;
+                    this.n      = &&(*n is Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -59104,16 +59113,16 @@ escape _V;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 native do
     int V = 0;
@@ -59122,9 +59131,9 @@ end
 traverse n in &&list do
 native _V;
     _V = _V + 1;
-    if (*n is CONS) then
-        _V = _V + (*n is CONS).head;
-        traverse &&(*n is CONS).tail;
+    if (*n is Cons) then
+        _V = _V + (*n is Cons).head;
+        traverse &&(*n is Cons).tail;
     end
 end
 
@@ -59135,13 +59144,13 @@ class Body with
 do
     watching *n do
         _V = _V + 1;
-        if (*n is CONS) then
-            _V = _V + (*n is CONS).head;
+        if (*n is Cons) then
+            _V = _V + (*n is Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n is CONS).tail;
+                    this.n      = &&(*n is Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -59165,15 +59174,15 @@ escape _V;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
-pool[3] List list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+pool[3] List list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 native do
     int V = 0;
@@ -59182,9 +59191,9 @@ end
 traverse n in &&list do
 native _V;
     _V = _V + 1;
-    if (*n is CONS) then
-        _V = _V + (*n is CONS).head;
-        traverse &&(*n is CONS).tail;
+    if (*n is Cons) then
+        _V = _V + (*n is Cons).head;
+        traverse &&(*n is Cons).tail;
     end
 end
 
@@ -59195,13 +59204,13 @@ class Body with
 do
     watching *n do
         _V = _V + 1;
-        if (*n is CONS) then
-            _V = _V + (*n is CONS).head;
+        if (*n is Cons) then
+            _V = _V + (*n is Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n is CONS).tail;
+                    this.n      = &&(*n is Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -59225,15 +59234,15 @@ escape _V;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
-pool[3] List list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+pool[3] List list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
@@ -59241,9 +59250,9 @@ traverse n in &&list do
     sum = sum + 1;
     watching *n do
         await 1s;
-        if (*n is CONS) then
-            sum = sum + (*n is CONS).head;
-            traverse &&(*n is CONS).tail;
+        if (*n is Cons) then
+            sum = sum + (*n is Cons).head;
+            traverse &&(*n is Cons).tail;
         end
     end
 end
@@ -59255,16 +59264,16 @@ escape sum;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
@@ -59272,9 +59281,9 @@ traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         await 1s;
-        if (*n is CONS) then
-            sum = sum + (*n is CONS).head;
-            traverse &&(*n is CONS).tail;
+        if (*n is Cons) then
+            sum = sum + (*n is Cons).head;
+            traverse &&(*n is Cons).tail;
         end
     //end
 end
@@ -59293,25 +59302,25 @@ native do
 end
 
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
-pool[3] List list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+pool[3] List list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 traverse n in &&list do
     sum = sum + 1;
     watching *n do
         await 1s;
-        if (*n is CONS) then
-            sum = sum + (*n is CONS).head;
-            traverse &&(*n is CONS).tail;
-            sum = sum + (*n is CONS).head;
+        if (*n is Cons) then
+            sum = sum + (*n is Cons).head;
+            traverse &&(*n is Cons).tail;
+            sum = sum + (*n is Cons).head;
         end
     end
 end
@@ -59329,35 +59338,35 @@ native do
 end
 
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
-class T with
+class Tx with
 do
     pool[3] List list;
-    list = new CONS(1,
-                CONS(2,
-                    CONS(3, NIL())));
+    list = new Cons(1,
+                Cons(2,
+                    Cons(3, Nil())));
 
     var int sum = 0;
     traverse n in &&list do
         sum = sum + 1;
         watching *n do
             await 1s;
-            if (*n is CONS) then
-                sum = sum + (*n is CONS).head;
-                traverse &&(*n is CONS).tail;
-                sum = sum + (*n is CONS).head;
+            if (*n is Cons) then
+                sum = sum + (*n is Cons).head;
+                traverse &&(*n is Cons).tail;
+                sum = sum + (*n is Cons).head;
             end
         end
     end
     escape sum;
 end
 
-var int sum = do T;
+var int sum = do Tx;
 
 escape sum;
 ]],
@@ -59366,27 +59375,27 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[] Tree tree;
-tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 0;
 
 traverse n in &&tree do
     sum = sum + 1;
     watching *n do
-        if (*n is NODE) then
-            traverse &&(*n as NODE).left;
-            sum = sum + (*n as NODE).v;
-            traverse &&(*n as NODE).right;
+        if (*n is Node) then
+            traverse &&(*n as Node).left;
+            sum = sum + (*n as Node).v;
+            traverse &&(*n as Node).right;
         end
     end
 end
@@ -59399,26 +59408,26 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
-pool[3] Tree tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+pool[3] Tree tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 0;
 
 traverse n in &&tree do
     sum = sum + 1;
     watching *n do
-        if (*n is NODE) then
-            traverse &&(*n as NODE).left;
-            sum = sum + (*n as NODE).v;
-            traverse &&(*n as NODE).right;
+        if (*n is Node) then
+            traverse &&(*n as Node).left;
+            sum = sum + (*n as Node).v;
+            traverse &&(*n as Node).right;
         end
     end
 end
@@ -59430,27 +59439,27 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
-pool[3] Tree tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+pool[3] Tree tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 0;
 
 traverse n in &&tree do
     sum = sum + 1;
     watching *n do
-        if (*n is NODE) then
+        if (*n is Node) then
             await 1s;
-            traverse &&(*n as NODE).left;
-            sum = sum + (*n as NODE).v;
-            traverse &&(*n as NODE).right;
+            traverse &&(*n as Node).left;
+            sum = sum + (*n as Node).v;
+            traverse &&(*n as Node).right;
         end
     end
 end
@@ -59462,26 +59471,26 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[] Tree tree;
-tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 1;
 
 traverse n in &&tree do
     watching *n do
-        if (*n is NODE) then
-            traverse &&(*n as NODE).left;
-            sum = sum * (*n as NODE).v + (*n as NODE).v;
-            traverse &&(*n as NODE).right;
+        if (*n is Node) then
+            traverse &&(*n as Node).left;
+            sum = sum * (*n as Node).v + (*n as Node).v;
+            traverse &&(*n as Node).right;
         end
     end
 end
@@ -59493,26 +59502,26 @@ escape sum;
 }
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree;
-tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 1;
 
 traverse n in &&tree do
     watching *n do
-        if (*n is NODE) then
-            traverse &&(*n as NODE).left;
-            sum = sum * (*n as NODE).v + (*n as NODE).v;
-            traverse &&(*n as NODE).right;
+        if (*n is Node) then
+            traverse &&(*n as Node).left;
+            sum = sum * (*n as Node).v + (*n as Node).v;
+            traverse &&(*n as Node).right;
         end
     end
 end
@@ -59523,22 +59532,22 @@ escape sum;
 }
 
 Test { [[
-data T;
-    data NIL is T;
-    data NXT is T with
+data Tx;
+    data Nil is Tx;
+    data Nxt is Tx with
         var int v;
-        var T   nxt;
+        var Tx   nxt;
     end
 
-pool[] T ts;
+pool[] Tx ts;
 
 var void&& p1 = this as void&&;
 
 traverse t in &&ts do
 native _assert;
     _assert(p1 == (this as void&&));
-    if (*t is NXT) then
-        traverse &&(*t as NXT).nxt;
+    if (*t is Nxt) then
+        traverse &&(*t as Nxt).nxt;
     end
 end
 
@@ -59550,22 +59559,22 @@ escape 1;
     run = 1,
 }
 Test { [[
-data T;
-    data NIL is T;
-    data NXT is T with
+data Tx;
+    data Nil is Tx;
+    data Nxt is Tx with
         var int v;
-        var T   nxt;
+        var Tx   nxt;
     end
 
-pool[] T ts;
+pool[] Tx ts;
 
 var void&& p1 = &&this as void&&;
 
 traverse t in &&ts do
 native _assert;
     _assert(p1 == (&&this as void&&));
-    if (*t is NXT) then
-        traverse &&(*t as NXT).nxt;
+    if (*t is Nxt) then
+        traverse &&(*t as Nxt).nxt;
     end
 end
 
@@ -59576,14 +59585,14 @@ escape 1;
     run = 1,
 }
 Test { [[
-data T;
-    data NIL is T;
-    data NXT is T with
+data Tx;
+    data Nil is Tx;
+    data Nxt is Tx with
         var int v;
-        var T   nxt;
+        var Tx   nxt;
     end
 
-pool[] T ts;
+pool[] Tx ts;
 
 native do
     ##define PTR2REF(x) &x
@@ -59597,8 +59606,8 @@ end
 traverse t in &&ts do
 native _assert;
     _assert(&&p1! == (&&this as void&&));
-    if (*t is NXT) then
-        traverse &&(*t as NXT).nxt;
+    if (*t is Nxt) then
+        traverse &&(*t as Nxt).nxt;
     end
 end
 
@@ -59608,14 +59617,14 @@ escape 1;
     run = 1,
 }
 Test { [[
-data T;
-    data NIL is T;
-    data NXT is T with
+data Tx;
+    data Nil is Tx;
+    data Nxt is Tx with
         var int v;
-        var T   nxt;
+        var Tx   nxt;
     end
 
-pool[1] T ts;
+pool[1] Tx ts;
 
 native do
     ##define PTR2REF(x) &x
@@ -59629,8 +59638,8 @@ end
 traverse t in &&ts do
 native _assert;
     _assert(&&p1! == (&&this as void&&));
-    if (*t is NXT) then
-        traverse &&(*t as NXT).nxt;
+    if (*t is Nxt) then
+        traverse &&(*t as Nxt).nxt;
     end
 end
 
@@ -59640,14 +59649,14 @@ escape 1;
 }
 
 Test { [[
-data T;
-    data NIL is T;
-    data NXT is T with
+data Tx;
+    data Nil is Tx;
+    data Nxt is Tx with
         var int v;
-        var T   nxt;
+        var Tx   nxt;
     end
 
-pool[] T ts;
+pool[] Tx ts;
 
 native do
     ##define PTR2REF(x) &x
@@ -59676,8 +59685,8 @@ native _assert;
         this.v3 = outer.v3;
     end;
     _assert(x.v1 + x.v2 + x.v3 == 6);
-    if (*t is NXT) then
-        traverse &&(*t as NXT).nxt;
+    if (*t is Nxt) then
+        traverse &&(*t as Nxt).nxt;
     end
 end
 
@@ -59687,14 +59696,14 @@ escape 1;
     run = 1,
 }
 Test { [[
-data T;
-    data NIL is T;
-    data NXT is T with
+data Tx;
+    data Nil is Tx;
+    data Nxt is Tx with
         var int v;
-        var T   nxt;
+        var Tx   nxt;
     end
 
-pool[1] T ts;
+pool[1] Tx ts;
 
 native do
     ##define PTR2REF(x) &x
@@ -59723,8 +59732,8 @@ native _assert;
         this.v3 = outer.v3;
     end;
     _assert(x.v1 + x.v2 + x.v3 == 6);
-    if (*t is NXT) then
-        traverse &&(*t as NXT).nxt;
+    if (*t is Nxt) then
+        traverse &&(*t as Nxt).nxt;
     end
 end
 
@@ -59735,26 +59744,26 @@ escape 1;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
-pool[3] Tree tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+pool[3] Tree tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 1;
 
 traverse n in &&tree do
     watching *n do
         await 1s;
-        if (*n is NODE) then
-            traverse &&(*n as NODE).left;
-            sum = sum * (*n as NODE).v + (*n as NODE).v;
-            traverse &&(*n as NODE).right;
+        if (*n is Node) then
+            traverse &&(*n as Node).left;
+            sum = sum * (*n as Node).v + (*n as Node).v;
+            traverse &&(*n as Node).right;
         end
     end
 end
@@ -59766,26 +59775,26 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
-pool[3] Tree tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+pool[3] Tree tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 1;
 
 traverse n in &&tree do
     await 1s;
     watching *n do
-        if (*n is NODE) then
-            traverse &&(*n as NODE).left;
-            sum = sum * (*n as NODE).v + (*n as NODE).v;
-            traverse &&(*n as NODE).right;
+        if (*n is Node) then
+            traverse &&(*n as Node).left;
+            sum = sum * (*n as Node).v + (*n as Node).v;
+            traverse &&(*n as Node).right;
         end
     end
 end
@@ -59797,17 +59806,17 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree;
-tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 1;
 
@@ -59815,10 +59824,10 @@ do
     traverse n in &&tree do
         watching *n do
             await 1s;
-            if (*n is NODE) then
-                traverse &&(*n as NODE).left;
-                sum = sum * (*n as NODE).v + (*n as NODE).v;
-                traverse &&(*n as NODE).right;
+            if (*n is Node) then
+                traverse &&(*n as Node).left;
+                sum = sum * (*n as Node).v + (*n as Node).v;
+                traverse &&(*n as Node).right;
             end
         end
     end
@@ -59831,27 +59840,27 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL is Tree;
-    data NODE is Tree with
+    data Nil is Tree;
+    data Node is Tree with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
-pool[3] Tree tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+pool[3] Tree tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 1;
 
 par/and do
     traverse n in &&tree do
         watching *n do
-            if (*n is NODE) then
+            if (*n is Node) then
                 await 1s;
-                traverse &&(*n as NODE).left;
-                sum = sum * (*n as NODE).v + (*n as NODE).v;
-                traverse &&(*n as NODE).right;
+                traverse &&(*n as Node).left;
+                sum = sum * (*n as Node).v + (*n as Node).v;
+                traverse &&(*n as Node).right;
                 await 1s;
             end
         end
@@ -59865,7 +59874,7 @@ native _ceu_out_assert_msg;
     _ceu_out_assert_msg(sum == 4, "2");
     await 1s;
     _ceu_out_assert_msg(sum == 5, "3");
-    tree = new NIL();
+    tree = new Nil();
     _ceu_out_assert_msg(sum == 4, "4");
 end
 
@@ -59877,25 +59886,25 @@ escape sum;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is CONS) then
-        sum = sum + (*n is CONS).head;
+    if (*n is Cons) then
+        sum = sum + (*n is Cons).head;
         loop i in 1 do
-            traverse &&(*n is CONS).tail;
+            traverse &&(*n is Cons).tail;
         end
     end
 end
@@ -59906,25 +59915,25 @@ escape sum;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is CONS) then
-        sum = sum + (*n is CONS).head;
+    if (*n is Cons) then
+        sum = sum + (*n is Cons).head;
         //loop i in 1 do
-            traverse &&(*n is CONS).tail;
+            traverse &&(*n is Cons).tail;
         //end
     end
 end
@@ -59936,25 +59945,25 @@ escape sum;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list
-    = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+    = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is CONS) then
-        sum = sum + (*n is CONS).head;
+    if (*n is Cons) then
+        sum = sum + (*n is Cons).head;
         //loop i in 1 do
-            traverse &&(*n is CONS).tail;
+            traverse &&(*n is Cons).tail;
         //end
     end
 end
@@ -59986,16 +59995,16 @@ escape 1;
 
 Test { [[
 data Widget;
-    data EMPTY is Widget;
-    data SEQ is Widget with
+    data Empty is Widget;
+    data Seq is Widget with
         var Widget  w1;
         var Widget  w2;
     end
 
 pool[] Widget widgets;
-widgets = new SEQ(
-            EMPTY(),
-            EMPTY());
+widgets = new Seq(
+            Empty(),
+            Empty());
 
 var int ret = 0;
 
@@ -60005,14 +60014,14 @@ do
     ret = ret + param;
 
     watching *widget do
-        if (*widget is EMPTY) then
+        if (*widget is Empty) then
             nothing;
 
-        else/if (*widget is SEQ) then
-            traverse &&(*widget as SEQ).w1 with
+        else/if (*widget is Seq) then
+            traverse &&(*widget as Seq).w1 with
                 this.param = param + 1;
             end;
-            traverse &&(*widget as SEQ).w2 with
+            traverse &&(*widget as Seq).w2 with
                 this.param = param + 1;
             end;
 
@@ -60025,20 +60034,20 @@ end
 
 escape ret;
 ]],
-    adt = 'line 23 : ineffective use of data "EMPTY" due to enclosing `watching´',
+    adt = 'line 23 : ineffective use of data "Empty" due to enclosing `watching´',
 }
 Test { [[
 data Widget;
-    data EMPTY is Widget;
-    data SEQ is Widget with
+    data Empty is Widget;
+    data Seq is Widget with
         var Widget  w1;
         var Widget  w2;
     end
 
 pool[] Widget widgets;
-widgets = new SEQ(
-            EMPTY(),
-            EMPTY());
+widgets = new Seq(
+            Empty(),
+            Empty());
 
 var int ret = 0;
 
@@ -60048,11 +60057,11 @@ do
     ret = ret + param;
 
     watching *widget do
-        if (*widget is SEQ) then
-            traverse &&(*widget as SEQ).w1 with
+        if (*widget is Seq) then
+            traverse &&(*widget as Seq).w1 with
                 this.param = param + 1;
             end;
-            traverse &&(*widget as SEQ).w2 with
+            traverse &&(*widget as Seq).w2 with
                 this.param = param + 1;
             end;
 
@@ -60071,16 +60080,16 @@ escape ret;
 }
 Test { [[
 data Widget;
-    data EMPTY is Widget;
-    data SEQ is Widget with
+    data Empty is Widget;
+    data Seq is Widget with
         var Widget  w1;
         var Widget  w2;
     end
 
 pool[10] Widget widgets;
-widgets = new SEQ(
-            EMPTY(),
-            EMPTY());
+widgets = new Seq(
+            Empty(),
+            Empty());
 
 var int ret = 0;
 
@@ -60090,11 +60099,11 @@ do
     ret = ret + param;
 
     watching *widget do
-        if (*widget is SEQ) then
-            traverse &&(*widget as SEQ).w1 with
+        if (*widget is Seq) then
+            traverse &&(*widget as Seq).w1 with
                 this.param = param + 1;
             end;
-            traverse &&(*widget as SEQ).w2 with
+            traverse &&(*widget as Seq).w2 with
                 this.param = param + 1;
             end;
 
@@ -60114,16 +60123,16 @@ escape ret;
 
 Test { [[
 data Widget;
-    data EMPTY is Widget;
-    data SEQ is Widget with
+    data Empty is Widget;
+    data Seq is Widget with
         var Widget  w1;
         var Widget  w2;
     end
 
 pool[] Widget widgets
-    = new SEQ(
-            EMPTY(),
-            EMPTY());
+    = new Seq(
+            Empty(),
+            Empty());
 
 var int ret = 0;
 
@@ -60133,11 +60142,11 @@ do
     ret = ret + param;
 
     watching *widget do
-        if (*widget is SEQ) then
-            traverse &&(*widget as SEQ).w1 with
+        if (*widget is Seq) then
+            traverse &&(*widget as Seq).w1 with
                 this.param = param + 1;
             end;
-            traverse &&(*widget as SEQ).w2 with
+            traverse &&(*widget as Seq).w2 with
                 this.param = param + 1;
             end;
 
@@ -60156,15 +60165,15 @@ escape ret;
 }
 Test { [[
 data Widget;
-    data EMPTY is Widget;
-    data SEQ is Widget with
+    data Empty is Widget;
+    data Seq is Widget with
         var Widget  w1;
         var Widget  w2;
     end
 
-pool[10] Widget widgets = new SEQ(
-            EMPTY(),
-            EMPTY());
+pool[10] Widget widgets = new Seq(
+            Empty(),
+            Empty());
 
 var int ret = 0;
 
@@ -60174,11 +60183,11 @@ do
     ret = ret + param;
 
     watching *widget do
-        if (*widget is SEQ) then
-            traverse &&(*widget as SEQ).w1 with
+        if (*widget is Seq) then
+            traverse &&(*widget as Seq).w1 with
                 this.param = param + 1;
             end;
-            traverse &&(*widget as SEQ).w2 with
+            traverse &&(*widget as Seq).w2 with
                 this.param = param + 1;
             end;
 
@@ -60197,26 +60206,26 @@ escape ret;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
-pool[] List l = new CONS(1,
-            CONS(2,
-                CONS(3,
-                    CONS(4,
-                        CONS(5,
-                            NIL())))));
+pool[] List l = new Cons(1,
+            Cons(2,
+                Cons(3,
+                    Cons(4,
+                        Cons(5,
+                            Nil())))));
 
 var int ret = 0;
 
 par/or do
-    await (((l as CONS).tail) as CONS).tail;
+    await (((l as Cons).tail) as Cons).tail;
     ret = 100;
 with
-    (((l as CONS).tail) as CONS).tail = new NIL();
+    (((l as Cons).tail) as Cons).tail = new Nil();
     ret = 10;
 end
 
@@ -60228,57 +60237,57 @@ escape ret;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[] List l;
-l = new CONS(1,
-            CONS(2,
-                CONS(3,
-                    CONS(4,
-                        CONS(5,
-                            NIL())))));
+l = new Cons(1,
+            Cons(2,
+                Cons(3,
+                    Cons(4,
+                        Cons(5,
+                            Nil())))));
 
 var int ret = 0;
 
 par/or do
-    await (((l as CONS).tail) as CONS).tail;
-    ret = ret + ((((l as CONS).tail) as CONS).tail as CONS).head;    // 0+4
+    await (((l as Cons).tail) as Cons).tail;
+    ret = ret + ((((l as Cons).tail) as Cons).tail as Cons).head;    // 0+4
 native _ceu_out_assert_msg;
     _ceu_out_assert_msg(ret == 4, "1");
-    (((l as CONS).tail) as CONS).tail = ((((l as CONS).tail) as CONS).tail as CONS).tail;
-    ret = ret + ((((l as CONS).tail) as CONS).tail as CONS).head;    // 0+4+5
+    (((l as Cons).tail) as Cons).tail = ((((l as Cons).tail) as Cons).tail as Cons).tail;
+    ret = ret + ((((l as Cons).tail) as Cons).tail as Cons).head;    // 0+4+5
     _ceu_out_assert_msg(ret == 9, "2");
 
-    await (((l as CONS).tail) as CONS).tail;
-    ret = ret + ((((l as CONS).tail) as CONS).tail is NIL);          // 0+4+5+5+1
+    await (((l as Cons).tail) as Cons).tail;
+    ret = ret + ((((l as Cons).tail) as Cons).tail is Nil);          // 0+4+5+5+1
     _ceu_out_assert_msg(ret == 15, "4");
     await FOREVER;
 with
-    await (((l as CONS).tail) as CONS).tail;
+    await (((l as Cons).tail) as Cons).tail;
     _ceu_out_assert_msg(ret == 9, "3");
-    ret = ret + ((((l as CONS).tail) as CONS).tail as CONS).head;    // 0+4+5+5
-    (((l as CONS).tail) as CONS).tail = new NIL();
+    ret = ret + ((((l as Cons).tail) as Cons).tail as Cons).head;    // 0+4+5+5
+    (((l as Cons).tail) as Cons).tail = new Nil();
 
     _ceu_out_assert_msg(ret == 15, "5");
-    await (((l as CONS).tail) as CONS).tail;
+    await (((l as Cons).tail) as Cons).tail;
     // never reached
     _ceu_out_assert_msg(ret == 15, "6");
     await FOREVER;
 with
-    await (((l as CONS).tail) as CONS).tail;
-    ret = ret + ((((l as CONS).tail) as CONS).tail is NIL);          // 0+4+5+5+1+1
+    await (((l as Cons).tail) as Cons).tail;
+    ret = ret + ((((l as Cons).tail) as Cons).tail is Nil);          // 0+4+5+5+1+1
 
-    await (((l as CONS).tail) as CONS).tail;
+    await (((l as Cons).tail) as Cons).tail;
     _ceu_out_assert_msg(ret == 16, "7");
     await FOREVER;
 with
-    (((l as CONS).tail) as CONS).tail = ((((l as CONS).tail) as CONS).tail as CONS).tail;
+    (((l as Cons).tail) as Cons).tail = ((((l as Cons).tail) as Cons).tail as Cons).tail;
     ret = ret * 2;  // (0+4+5+5+1+1) * 2
-    (((l as CONS).tail) as CONS).tail = new CONS(10, NIL());
+    (((l as Cons).tail) as Cons).tail = new Cons(10, Nil());
 end
 
 escape ret;
@@ -60291,11 +60300,11 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data NIL is Wiget;
-    data V is Widget with
+    data Nil is Wiget;
+    data Vv is Widget with
         var int v;
     end
-    data ROW is Widget with
+    data Row is Widget with
         var Widget  w1;
         var Widget  w2;
     end
@@ -60303,23 +60312,23 @@ data Widget;
 par/or do
     await 21s;
 with
-    pool[] Widget widgets = new ROW(
-                    V(10),
-                    V(20));
+    pool[] Widget widgets = new Row(
+                    Vv(10),
+                    Vv(20));
 
     var int ret = do/_
         traverse widget in &&widgets do
             watching *widget do
-                if (*widget is V) then
-                    await ((*widget as V).v)s;
-                    escape (*widget as V).v;
+                if (*widget is Vv) then
+                    await ((*widget as Vv).v)s;
+                    escape (*widget as Vv).v;
 
-                else/if (*widget is ROW) then
+                else/if (*widget is Row) then
                     var int v1=0, v2=0;
                     par/and do
-                        v1 = traverse &&(*widget as ROW).w1;
+                        v1 = traverse &&(*widget as Row).w1;
                     with
-                        v2 = traverse &&(*widget as ROW).w2;
+                        v2 = traverse &&(*widget as Row).w2;
                     end
                     escape v1 + v2;
 
@@ -60345,10 +60354,10 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data NIL_;
-    data NIL is Wiget;
-    data EMPTY is Wiget;
-    data ROW is Widget with
+    data Nil_;
+    data Nil is Wiget;
+    data Empty is Wiget;
+    data Row is Widget with
         var Widget  w1;
         var Widget  w2;
     end
@@ -60357,26 +60366,26 @@ par/or do
     await OS_START;
 with
     pool[] Widget widgets;
-    widgets = new ROW(
-                    EMPTY(),
-                    EMPTY());
+    widgets = new Row(
+                    Empty(),
+                    Empty());
 
     traverse widget in &&widgets do
         watching *widget do
-            if (*widget is NIL) then
+            if (*widget is Nil) then
                 await FOREVER;
-            else/if (*widget is EMPTY) then
+            else/if (*widget is Empty) then
                 escape 1;
 
-            else/if (*widget is ROW) then
+            else/if (*widget is Row) then
                 loop i in 3 do
                     par/or do
-                        var int ret = traverse &&(*widget as ROW).w1;
+                        var int ret = traverse &&(*widget as Row).w1;
                         if ret == 0 then
                             await FOREVER;
                         end
                     with
-                        var int ret = traverse &&(*widget as ROW).w2;
+                        var int ret = traverse &&(*widget as Row).w2;
                         if ret == 0 then
                             await FOREVER;
                         end
@@ -60402,24 +60411,24 @@ Test { [[
 input void OS_START;
 
 data List;
-    data NIL is List;
-    data EMPTY is List;
-    data CONS is List with
+    data Nil is List;
+    data Empty is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
-pool[] List l = new CONS(1, EMPTY());
+pool[] List l = new Cons(1, Empty());
 
 par/or do
     traverse e in &&l do
         watching *e do
-            if (*e is EMPTY) then
+            if (*e is Empty) then
                 await FOREVER;
 
-            else/if (*e is CONS) then
+            else/if (*e is Cons) then
                 loop do
-                    traverse &&(*e as CONS).tail;
+                    traverse &&(*e as Cons).tail;
 native _ceu_out_assert_msg;
                     _ceu_out_assert_msg(0, "0");
                 end
@@ -60443,9 +60452,9 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data NIL is Widget;
-    data EMPTY is Widget;
-    data SEQ is Widget with
+    data Nil is Widget;
+    data Empty is Widget;
+    data Seq is Widget with
         var Widget  w1;
         var Widget  w2;
     end
@@ -60454,9 +60463,9 @@ var int ret = 0;
 
 par/or do
     pool[] Widget widgets;
-    widgets = new SEQ(
-                EMPTY(),
-                EMPTY());
+    widgets = new Seq(
+                Empty(),
+                Empty());
 
     traverse widget in &&widgets with
         var int param = 1;
@@ -60464,23 +60473,23 @@ par/or do
         ret = ret + param;
 
         watching *widget do
-            if (*widget is EMPTY) then
+            if (*widget is Empty) then
                 await FOREVER;
 
-            else/if (*widget is SEQ) then
+            else/if (*widget is Seq) then
                 loop do
                     par/or do
-                        traverse &&(*widget as SEQ).w1 with
+                        traverse &&(*widget as Seq).w1 with
                             this.param = param + 1;
                         end;
-if ((*widget is SEQ).w1 is NIL) then
+if ((*widget is Seq).w1 is Nil) then
     await FOREVER;
 end
                     with
-                        traverse &&(*widget as SEQ).w2 with
+                        traverse &&(*widget as Seq).w2 with
                             this.param = param + 1;
                         end;
-if ((*widget is SEQ).w2 is NIL) then
+if ((*widget is Seq).w2 is Nil) then
     await FOREVER;
 end
                     end
@@ -60506,9 +60515,9 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data NIL is Widget;
-    data EMPTY is Widget;
-    data SEQ is Widget with
+    data Nil is Widget;
+    data Empty is Widget;
+    data Seq is Widget with
         var Widget  w1;
         var Widget  w2;
     end
@@ -60516,9 +60525,9 @@ data Widget;
 var int ret = 0;
 
 par/or do
-    pool[10] Widget widgets = new SEQ(
-                EMPTY(),
-                EMPTY());
+    pool[10] Widget widgets = new Seq(
+                Empty(),
+                Empty());
 
     traverse widget in &&widgets with
         var int param = 1;
@@ -60526,23 +60535,23 @@ par/or do
         ret = ret + param;
 
         watching *widget do
-            if (*widget is EMPTY) then
+            if (*widget is Empty) then
                 await FOREVER;
 
-            else/if (*widget is SEQ) then
+            else/if (*widget is Seq) then
                 loop do
                     par/or do
-                        traverse &&(*widget as SEQ).w1 with
+                        traverse &&(*widget as Seq).w1 with
                             this.param = param + 1;
                         end;
-if ((*widget is SEQ).w1 is NIL) then
+if ((*widget is Seq).w1 is Nil) then
     await FOREVER;
 end
                     with
-                        traverse &&(*widget as SEQ).w2 with
+                        traverse &&(*widget as Seq).w2 with
                             this.param = param + 1;
                         end;
-if ((*widget is SEQ).w2 is NIL) then
+if ((*widget is Seq).w2 is Nil) then
     await FOREVER;
 end
                     end
@@ -60568,17 +60577,17 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data NIL is Widget;
-    data EMPTY is Widget;
-    data SEQ is Widget with
+    data Nil is Widget;
+    data Empty is Widget;
+    data Seq is Widget with
         var Widget  w1;
         var Widget  w2;
     end
 
 pool[] Widget widgets;
-widgets = new SEQ(
-            EMPTY(),
-            EMPTY());
+widgets = new Seq(
+            Empty(),
+            Empty());
 
 var int ret = 0;
 
@@ -60589,25 +60598,25 @@ par/or do
         ret = ret + param;
 
         watching *widget do
-            if (*widget is EMPTY) then
+            if (*widget is Empty) then
                 await FOREVER;
 
-            else/if (*widget is SEQ) then
+            else/if (*widget is Seq) then
                 loop do
                     par/or do
-                        traverse &&(*widget as SEQ).w1 with
+                        traverse &&(*widget as Seq).w1 with
                             this.param = param + 1;
                         end;
-if ((*widget is SEQ).w1 is NIL) then
+if ((*widget is Seq).w1 is Nil) then
 native _ceu_out_assert_msg;
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     with
-                        traverse &&(*widget as SEQ).w2 with
+                        traverse &&(*widget as Seq).w2 with
                             this.param = param + 1;
                         end;
-if ((*widget is SEQ).w2 is NIL) then
+if ((*widget is Seq).w2 is Nil) then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -60633,16 +60642,16 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data NIL is Widget;
-    data EMPTY is Widget;
-    data SEQ is Widget with
+    data Nil is Widget;
+    data Empty is Widget;
+    data Seq is Widget with
         var Widget  w1;
         var Widget  w2;
     end
 
-pool[10] Widget widgets = new SEQ(
-            EMPTY(),
-            EMPTY());
+pool[10] Widget widgets = new Seq(
+            Empty(),
+            Empty());
 
 var int ret = 0;
 
@@ -60653,25 +60662,25 @@ par/or do
         ret = ret + param;
 
         watching *widget do
-            if (*widget is EMPTY) then
+            if (*widget is Empty) then
                 await FOREVER;
 
-            else/if (*widget is SEQ) then
+            else/if (*widget is Seq) then
                 loop do
                     par/or do
-                        traverse &&(*widget as SEQ).w1 with
+                        traverse &&(*widget as Seq).w1 with
                             this.param = param + 1;
                         end;
-if ((*widget is SEQ).w1 is NIL) then
+if ((*widget is Seq).w1 is Nil) then
 native _ceu_out_assert_msg;
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     with
-                        traverse &&(*widget as SEQ).w2 with
+                        traverse &&(*widget as Seq).w2 with
                             this.param = param + 1;
                         end;
-if ((*widget is SEQ).w2 is NIL) then
+if ((*widget is Seq).w2 is Nil) then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -60695,31 +60704,31 @@ escape ret;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data FORWARD is Command with
+    data Nothing is Command;
+    data Forward is Command with
         var int pixels;
     end
-    data SEQUENCE is Command with
+    data Sequence is Command with
         var Command  one;
         var Command  two;
     end
 
 pool[] Command cmds;
 
-cmds = new SEQUENCE(
-            FORWARD(100),
-            FORWARD(500));
+cmds = new Sequence(
+            Forward(100),
+            Forward(500));
 
 par/or do
     traverse cmd in &&cmds do
 do finalize with
 end
         watching *cmd do
-            if (*cmd is FORWARD) then
+            if (*cmd is Forward) then
                 await FOREVER;
 
-            else/if (*cmd is SEQUENCE) then
-                traverse &&(*cmd as SEQUENCE).one;
+            else/if (*cmd is Sequence) then
+                traverse &&(*cmd as Sequence).one;
 
             else
             end
@@ -60739,19 +60748,19 @@ escape 10;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data SEQUENCE is Command with
+    data Nothing is Command;
+    data Sequence is Command with
         var Command  one;
     end
 
-pool[] Command cmds = new SEQUENCE(NOTHING());
+pool[] Command cmds = new Sequence(Nothing());
 
 par/or do
     traverse cmd in &&cmds do
-        if (*cmd is NOTHING) then
+        if (*cmd is Nothing) then
             await FOREVER;
-        else/if (*cmd is SEQUENCE) then
-            traverse &&(*cmd as SEQUENCE).one;
+        else/if (*cmd is Sequence) then
+            traverse &&(*cmd as Sequence).one;
         end
     end
 with
@@ -60765,29 +60774,29 @@ escape 10;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data FORWARD is Command with
+    data Nothing is Command;
+    data Forward is Command with
         var int pixels;
     end
-    data SEQUENCE is Command with
+    data Sequence is Command with
         var Command  one;
         var Command  two;
     end
 
 pool[] Command cmds;
 
-cmds = new SEQUENCE(
-            FORWARD(100),
-            FORWARD(500));
+cmds = new Sequence(
+            Forward(100),
+            Forward(500));
 
 par/or do
     traverse cmd in &&cmds do
         watching *cmd do
-            if (*cmd is FORWARD) then
+            if (*cmd is Forward) then
                 await FOREVER;
 
-            else/if (*cmd is SEQUENCE) then
-                traverse &&(*cmd as SEQUENCE).one;
+            else/if (*cmd is Sequence) then
+                traverse &&(*cmd as Sequence).one;
 
             else
             end
@@ -60809,33 +60818,33 @@ Test { [[
 input int SDL_DT;
 
 data Command;
-    data NOTHING is Command;
-    data FORWARD is Command with
+    data Nothing is Command;
+    data Forward is Command with
         var int pixels;
     end
-    data SEQUENCE is Command with
+    data Sequence is Command with
         var Command  one;
         var Command  two;
     end
 
 // TODO: aceitar estatico
-pool[] Command cmds = new SEQUENCE(
-            FORWARD(100),
-            FORWARD(500));
+pool[] Command cmds = new Sequence(
+            Forward(100),
+            Forward(500));
 
 par/or do
     await 100s;
 with
     traverse cmd in &&cmds do
         watching *cmd do
-            if (*cmd is FORWARD) then
+            if (*cmd is Forward) then
                 await FOREVER;
 
-            else/if (*cmd is SEQUENCE) then
-                traverse &&(*cmd as SEQUENCE).one;
+            else/if (*cmd is Sequence) then
+                traverse &&(*cmd as Sequence).one;
 native _ceu_out_assert_msg;
                 _ceu_out_assert_msg(0, "bug found"); // cmds has to die entirely before children
-                traverse &&(*cmd as SEQUENCE).two;
+                traverse &&(*cmd as Sequence).two;
             end
         end
     end
@@ -60852,11 +60861,11 @@ Test { [[
 input int SDL_DT;
 
 data Command;
-    data NOTHING is Command;
-    data FORWARD is Command with
+    data Nothing is Command;
+    data Forward is Command with
         var int pixels;
     end
-    data SEQUENCE is Command with
+    data Sequence is Command with
         var Command  one;
         var Command  two;
     end
@@ -60864,21 +60873,21 @@ data Command;
 // TODO: aceitar estatico
 pool[] Command cmds;
 
-cmds = new SEQUENCE(
-            FORWARD(100),
-            FORWARD(500));
+cmds = new Sequence(
+            Forward(100),
+            Forward(500));
 
 par/or do
     await 100s;
 with
     traverse cmd in &&cmds do
         watching *cmd do
-            if (*cmd is FORWARD) then
+            if (*cmd is Forward) then
                 await FOREVER;
 
-            else/if (*cmd is SEQUENCE) then
-                traverse &&(*cmd as SEQUENCE).one;
-                traverse &&(*cmd as SEQUENCE).two;
+            else/if (*cmd is Sequence) then
+                traverse &&(*cmd as Sequence).one;
+                traverse &&(*cmd as Sequence).two;
             end
         end
     end
@@ -60894,14 +60903,14 @@ escape 10;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data LEFT;
-    data REPEAT is Command with
+    data Nothing is Command;
+    data Left;
+    data Repeat is Command with
         var Command  command;
     end
 
-pool[] Command cmds = new REPEAT(
-            LEFT());
+pool[] Command cmds = new Repeat(
+            Left());
 
 class TurtleTurn with
 do
@@ -60910,12 +60919,12 @@ end
 
 traverse cmd in &&cmds do
     watching *cmd do
-        if (*cmd is LEFT) then
+        if (*cmd is Left) then
             do TurtleTurn;
 
-        else/if (*cmd is REPEAT) then
-            traverse &&(*cmd as REPEAT).command;
-            traverse &&(*cmd as REPEAT).command;
+        else/if (*cmd is Repeat) then
+            traverse &&(*cmd as Repeat).command;
+            traverse &&(*cmd as Repeat).command;
 
         else
 native _ceu_out_assert_msg;
@@ -60936,27 +60945,27 @@ Test { [[
 input int SDL_DT;
 
 data Command;
-    data NOTHING is Command;
-    data AWAIT is Command with
+    data Nothing is Command;
+    data Await is Command with
         var int ms;
     end
-    data RIGHT is Command with
+    data Right is Command with
         var int angle;
     end
-    data LEFT is Command with
+    data Left is Command with
         var int angle;
     end
-    data FORWARD is Command with
+    data Forward is Command with
         var int pixels;
     end
-    data BACKWARD is Command with
+    data Backward is Command with
         var int pixels;
     end
-    data SEQUENCE is Command with
+    data Sequence is Command with
         var Command  one;
         var Command  two;
     end
-    data REPEAT is Command with
+    data Repeat is Command with
         var int      times;
         var Command  command;
     end
@@ -60964,22 +60973,22 @@ data Command;
 // TODO: aceitar estatico
 pool[] Command cmds;
 
-cmds = new REPEAT(2,
-            SEQUENCE(
-                AWAIT(500),
-                SEQUENCE(
-                    RIGHT(45),
-                    SEQUENCE(
-                        FORWARD(100),
-                        SEQUENCE(
-                            LEFT(90),
-                            SEQUENCE(
-                                FORWARD(100),
-                                SEQUENCE(
-                                    RIGHT(45),
-                                    SEQUENCE(
-                                        BACKWARD(100),
-                                        AWAIT(500)))))))));
+cmds = new Repeat(2,
+            Sequence(
+                Await(500),
+                Sequence(
+                    Right(45),
+                    Sequence(
+                        Forward(100),
+                        Sequence(
+                            Left(90),
+                            Sequence(
+                                Forward(100),
+                                Sequence(
+                                    Right(45),
+                                    Sequence(
+                                        Backward(100),
+                                        Await(500)))))))));
 
 class Turtle with
     var int angle=0;
@@ -61057,42 +61066,42 @@ with
 
     traverse cmd in &&cmds do
         watching *cmd do
-            if (*cmd is AWAIT) then
-                await ((*cmd as AWAIT).ms) ms;
+            if (*cmd is Await) then
+                await ((*cmd as Await).ms) ms;
 
-            else/if (*cmd is RIGHT) or (*cmd is LEFT) then
+            else/if (*cmd is Right) or (*cmd is Left) then
                 var int angle;
-                if (*cmd is RIGHT) then
-                    angle = (*cmd as RIGHT).angle;
+                if (*cmd is Right) then
+                    angle = (*cmd as Right).angle;
                 else
-                    angle = (*cmd as LEFT).angle;
+                    angle = (*cmd as Left).angle;
                 end
                 do TurtleTurn with
                     this.turtle  = &turtle;
                     this.angle   = angle;
-                    this.isRight = (*cmd is RIGHT);
+                    this.isRight = (*cmd is Right);
                 end;
 
-            else/if (*cmd is FORWARD) or (*cmd is BACKWARD) then
+            else/if (*cmd is Forward) or (*cmd is Backward) then
                 var int pixels;
-                if (*cmd is FORWARD) then
-                    pixels = (*cmd as FORWARD).pixels;
+                if (*cmd is Forward) then
+                    pixels = (*cmd as Forward).pixels;
                 else
-                    pixels = (*cmd as BACKWARD).pixels;
+                    pixels = (*cmd as Backward).pixels;
                 end
                 do TurtleMove with
                     this.turtle    = &turtle;
                     this.pixels    = pixels;
-                    this.isForward = (*cmd is FORWARD);
+                    this.isForward = (*cmd is Forward);
                 end;
 
-            else/if (*cmd is SEQUENCE) then
-                traverse &&(*cmd as SEQUENCE).one;
-                traverse &&(*cmd as SEQUENCE).two;
+            else/if (*cmd is Sequence) then
+                traverse &&(*cmd as Sequence).one;
+                traverse &&(*cmd as Sequence).two;
 
-            else/if (*cmd is REPEAT) then
-                loop i in (*cmd as REPEAT).times do
-                    traverse &&(*cmd as REPEAT).command;
+            else/if (*cmd is Repeat) then
+                loop i in (*cmd as Repeat).times do
+                    traverse &&(*cmd as Repeat).command;
                 end
 
             else
@@ -61113,45 +61122,45 @@ escape 10;
 -- creates a loop when reusing address of organisms being killed
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data AWAIT is Command with
+    data Nothing is Command;
+    data Await is Command with
         var int ms;
     end
-    data SEQUENCE is Command with
+    data Sequence is Command with
         var Command  one;
         var Command  two;
     end
-    data REPEAT is Command with
+    data Repeat is Command with
         var int      times;
         var Command  command;
     end
 
 pool[] Command cmds;
 
-cmds = new REPEAT(2,
-            SEQUENCE(
-                AWAIT(100),
-                SEQUENCE(
-                    AWAIT(100),
-                    AWAIT(500))));
+cmds = new Repeat(2,
+            Sequence(
+                Await(100),
+                Sequence(
+                    Await(100),
+                    Await(500))));
 
 var int ret = 0;
 
 traverse cmd in &&cmds do
     watching *cmd do
-        if (*cmd is AWAIT) then
-            await ((*cmd as AWAIT).ms) ms;
+        if (*cmd is Await) then
+            await ((*cmd as Await).ms) ms;
             ret = ret + 1;
 
-        else/if (*cmd is SEQUENCE) then
+        else/if (*cmd is Sequence) then
             ret = ret + 2;
-            traverse &&(*cmd as SEQUENCE).one;
-            traverse &&(*cmd as SEQUENCE).two;
+            traverse &&(*cmd as Sequence).one;
+            traverse &&(*cmd as Sequence).two;
 
-        else/if (*cmd is REPEAT) then
-            loop i in (*cmd as REPEAT).times do
+        else/if (*cmd is Repeat) then
+            loop i in (*cmd as Repeat).times do
                 ret = ret + 3;
-                traverse &&(*cmd as REPEAT).command;
+                traverse &&(*cmd as Repeat).command;
             end
 
         else
@@ -61177,44 +61186,44 @@ finalize with
 end
 
 data Command;
-    data NOTHING is Command;
-    data AWAIT is Command with
+    data Nothing is Command;
+    data Await is Command with
         var int ms;
     end
-    data SEQUENCE is Command with
+    data Sequence is Command with
         var Command  one;
         var Command  two;
     end
-    data REPEAT is Command with
+    data Repeat is Command with
         var int      times;
         var Command  command;
     end
 
 // TODO: aceitar estatico
-pool[] Command cmds = new REPEAT(2,
-            SEQUENCE(
-                AWAIT(100),
-                SEQUENCE(
-                    AWAIT(300),
-                    AWAIT(500))));
+pool[] Command cmds = new Repeat(2,
+            Sequence(
+                Await(100),
+                Sequence(
+                    Await(300),
+                    Await(500))));
 
 var int ret = 0;
 
 traverse cmd in &&cmds do
     watching *cmd do
-        if (*cmd is AWAIT) then
-            await ((*cmd as AWAIT).ms) ms;
+        if (*cmd is Await) then
+            await ((*cmd as Await).ms) ms;
             ret = ret + 1;
 
-        else/if (*cmd is SEQUENCE) then
+        else/if (*cmd is Sequence) then
             ret = ret + 2;
-            traverse &&(*cmd as SEQUENCE).one;
-            traverse &&(*cmd as SEQUENCE).two;
+            traverse &&(*cmd as Sequence).one;
+            traverse &&(*cmd as Sequence).two;
 
-        else/if (*cmd is REPEAT) then
-            loop i in (*cmd as REPEAT).times do
+        else/if (*cmd is Repeat) then
+            loop i in (*cmd as Repeat).times do
                 ret = ret + 3;
-                traverse &&(*cmd as REPEAT).command;
+                traverse &&(*cmd as Repeat).command;
             end
 
         else
@@ -61233,21 +61242,21 @@ escape ret;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var List tail;
     end
 
 pool[] List ls;
-ls = new CONS(NIL());
+ls = new Cons(Nil());
 
 traverse l in &&ls do
-    if (*l is NIL) then
+    if (*l is Nil) then
         await FOREVER;
     else
         watching *l do
             par/or do
-                traverse &&((l as CONS).tail);
+                traverse &&((l as Cons).tail);
             with
                 await 1s;
             end
@@ -61262,31 +61271,31 @@ escape 1;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data HOLD is List;
-    data CONS is List with
+    data Nil is List;
+    data Hold is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[] List ls;
-ls = new CONS(1,
-            CONS(2,
-                HOLD()));
+ls = new Cons(1,
+            Cons(2,
+                Hold()));
 
 var int ret = 0;
 
 traverse l in &&ls do
     ret = ret + 1;
     watching *l do
-        if (*l is HOLD) then
+        if (*l is Hold) then
             do finalize with
                 ret = ret + 1;
             end
             await FOREVER;
         else
             par/or do
-                traverse &&((l as CONS).tail);
+                traverse &&((l as Cons).tail);
             with
                 await 1s;
             end
@@ -61301,17 +61310,17 @@ escape ret;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data HOLD is List;
-    data CONS is List with
+    data Nil is List;
+    data Hold is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[] List ls;
-ls = new CONS(1,
-            CONS(2,
-                HOLD()));
+ls = new Cons(1,
+            Cons(2,
+                Hold()));
 
 var int ret = 0;
 
@@ -61319,14 +61328,14 @@ do
     traverse l in &&ls do
         ret = ret + 1;
         watching *l do
-            if (*l is HOLD) then
+            if (*l is Hold) then
                 do finalize with
                     ret = ret + 1;
                 end
                 await FOREVER;
             else
                 par/or do
-                    traverse &&((l as CONS).tail);
+                    traverse &&((l as Cons).tail);
                 with
                     await 1s;
                 end
@@ -61342,30 +61351,30 @@ escape ret;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data HOLD is List;
-    data CONS is List with
+    data Nil is List;
+    data Hold is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
-pool[10] List ls = new CONS(1,
-            CONS(2,
-                HOLD()));
+pool[10] List ls = new Cons(1,
+            Cons(2,
+                Hold()));
 
 var int ret = 0;
 
 traverse l in &&ls do
     ret = ret + 1;
     watching *l do
-        if *l is HOLD then
+        if *l is Hold then
             do finalize with
                 ret = ret + 1;
             end
             await FOREVER;
         else
             par/or do
-                traverse &&((l as CONS).tail);
+                traverse &&((l as Cons).tail);
             with
                 await 1s;
             end
@@ -61379,16 +61388,16 @@ escape ret;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data HOLD is List;
-    data CONS is List with
+    data Nil is List;
+    data Hold is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
-pool[10] List ls = new CONS(1,
-            CONS(2,
-                HOLD()));
+pool[10] List ls = new Cons(1,
+            Cons(2,
+                Hold()));
 
 var int ret = 0;
 
@@ -61396,14 +61405,14 @@ do
     traverse l in &&ls do
         ret = ret + 1;
         watching *l do
-            if *l is HOLD then
+            if *l is Hold then
                 do finalize with
                     ret = ret + 1;
                 end
                 await FOREVER;
             else
                 par/or do
-                    traverse &&((l as CONS).tail);
+                    traverse &&((l as Cons).tail);
                 with
                     await 1s;
                 end
@@ -61419,8 +61428,8 @@ escape ret;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
@@ -61429,7 +61438,7 @@ pool[10] List list;
 
 var int i = 10;
 traverse l in &&list do
-    list = new CONS(i, NIL());
+    list = new Cons(i, Nil());
 end
 
 escape 1;
@@ -61438,8 +61447,8 @@ escape 1;
 }
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
@@ -61448,13 +61457,13 @@ pool[10] List list;
 
 loop i in 10 do
     traverse l in &&list do
-        if (*l is NIL) then
-            list = new CONS(i, NIL());
-        else/if (*l as CONS) then
-            if ((l as CONS).tail) is NIL then
-                ((l as CONS).tail) = new CONS(i, NIL());
+        if (*l is Nil) then
+            list = new Cons(i, Nil());
+        else/if (*l as Cons) then
+            if ((l as Cons).tail) is Nil then
+                ((l as Cons).tail) = new Cons(i, Nil());
             else
-                traverse &&((l as CONS).tail);
+                traverse &&((l as Cons).tail);
             end
         end
     end
@@ -61463,9 +61472,9 @@ end
 var int sum = 0;
 
 traverse l in &&list do
-    if (*l as CONS) then
-        sum = sum + ((l as CONS).head);
-        traverse &&((l as CONS).tail);
+    if (*l as Cons) then
+        sum = sum + ((l as Cons).head);
+        traverse &&((l as Cons).tail);
     end
 end
 
@@ -61474,19 +61483,19 @@ escape sum;
     run = 45,
 }
 
--- innefective NIL inside watching
+-- innefective Nil inside watching
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 native do
     int V = 0;
@@ -61497,17 +61506,17 @@ class Body with
     var   List&&   n;
 do
     watching *n do
-        if (*n is NIL) then
+        if (*n is Nil) then
 native _V;
             _V = _V * 2;
-        else/if (*n is CONS) then
+        else/if (*n is Cons) then
             _V = _V + 1;
-            _V = _V + (*n is CONS).head;
+            _V = _V + (*n is Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &&(*n is CONS).tail;
+                    this.n      = &&(*n is Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -61524,21 +61533,21 @@ end;
 
 escape _V;
 ]],
-    adt = 'line 24 : ineffective use of data "NIL" due to enclosing `watching´',
+    adt = 'line 24 : ineffective use of data "Nil" due to enclosing `watching´',
 }
 Test { [[
 data List;
-    data NIL_;
-    data NIL is List;
-    data CONS is List with
+    data Nil_;
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[4] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 native do
     int V = 0;
@@ -61549,17 +61558,17 @@ class Body with
     var   List&&   n;
 do
     watching *n do
-        if (*n is NIL) then
+        if (*n is Nil) then
 native _V;
             _V = _V * 2;
-        else/if (*n is CONS) then
+        else/if (*n is Cons) then
             _V = _V + 1;
-            _V = _V + (*n is CONS).head;
+            _V = _V + (*n is Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n is CONS).tail;
+                    this.n      = &&(*n is Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -61580,19 +61589,19 @@ escape _V;
     _ana = { acc=true },
     run = 18,
 }
--- innefective NIL inside watching
+-- innefective Nil inside watching
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 native do
     int V = 0;
@@ -61602,11 +61611,11 @@ traverse n in &&list do
 native _V;
     _V = _V + 1;
     watching *n do
-        if (*n is NIL) then
+        if (*n is Nil) then
             _V = _V * 2;
-        else/if (*n is CONS) then
-            _V = _V + (*n is CONS).head;
-            traverse &&(*n is CONS).tail;
+        else/if (*n is Cons) then
+            _V = _V + (*n is Cons).head;
+            traverse &&(*n is Cons).tail;
         end
     end
     await 1s;
@@ -61614,22 +61623,22 @@ end
 
 escape _V;
 ]],
-    adt = 'line 22 : ineffective use of data "NIL" due to enclosing `watching´',
+    adt = 'line 22 : ineffective use of data "Nil" due to enclosing `watching´',
 }
 
 Test { [[
 data List;
-    data NIL_ is List;
-    data NIL is List;
-    data CONS is List with
+    data Nil_ is List;
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[4] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 native do
     int V = 0;
@@ -61639,11 +61648,11 @@ traverse n in &&list do
 native _V;
     _V = _V + 1;
     watching *n do
-        if (*n is NIL) then
+        if (*n is Nil) then
             _V = _V * 2;
-        else/if (*n is CONS) then
-            _V = _V + (*n is CONS).head;
-            traverse &&(*n is CONS).tail;
+        else/if (*n is Cons) then
+            _V = _V + (*n is Cons).head;
+            traverse &&(*n is Cons).tail;
         end
     end
     await 1s;
@@ -61657,13 +61666,13 @@ escape _V;
 }
 
 Test { [[
-data L;
-    data NIL is L;
-    data VAL is L with
-        var L  l;
+data List;
+    data Nil is List;
+    data Val is List with
+        var List  l;
     end
 
-pool[] L ls;
+pool[] List ls;
 
 var int v = 10;
 var int&& p = &&v;
@@ -61671,8 +61680,8 @@ var int&& p = &&v;
 traverse l in &&ls do
     await 1s;
     *p = 1;
-    if *l is VAL then
-        traverse &&(*l as VAL).l;
+    if *l is Val then
+        traverse &&(*l as Val).l;
     end
 end
 
@@ -61723,12 +61732,12 @@ escape 1;
 
 Test { [[
 data Stmt;
-    data NIL is Stmt;
-    data SEQ is Stmt with
+    data Nil is Stmt;
+    data Seq is Stmt with
         var Stmt s1;
     end
 
-pool[2] Stmt stmts = new NIL();
+pool[2] Stmt stmts = new Nil();
 
 var int ddd = do/_
     traverse stmt in &&stmts do
@@ -61744,12 +61753,12 @@ escape ddd;
 
 Test { [[
 data Stmt;
-    data NIL is Stmt;
-    data SEQ is Stmt with
+    data Nil is Stmt;
+    data Seq is Stmt with
         var Stmt s1;
     end
 
-pool[] Stmt stmts = new NIL();
+pool[] Stmt stmts = new Nil();
 
 var int v1 = 10;
 
@@ -61769,26 +61778,26 @@ escape ret;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list = new
-    CONS(1,
-        CONS(2,
-            CONS(3,
-                NIL())));
+    Cons(1,
+        Cons(2,
+            Cons(3,
+                Nil())));
 
 var int s1 = do/_
     traverse l in &&list do
-        if (*l is NIL) then
+        if (*l is Nil) then
             escape 0;
         else
             watching *l do
-                var int sum_tail = traverse &&((l as CONS).tail);
-                escape sum_tail + ((l as CONS).head);
+                var int sum_tail = traverse &&((l as Cons).tail);
+                escape sum_tail + ((l as Cons).head);
             end
         end
 end
@@ -61801,28 +61810,28 @@ escape s1;
 
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list = new
-    CONS(1,
-        CONS(2,
-            CONS(3,
-                NIL())));
+    Cons(1,
+        Cons(2,
+            Cons(3,
+                Nil())));
 
 var int s2 = 0;
 var int s1 = do/_
     traverse l in &&list do
-        if (*l is NIL) then
+        if (*l is Nil) then
             escape 0;
         else
             watching *l do
-                var int sum_tail = traverse &&((l as CONS).tail);
-                s2 = s2 + ((l as CONS).head);
-                escape sum_tail + ((l as CONS).head);
+                var int sum_tail = traverse &&((l as Cons).tail);
+                s2 = s2 + ((l as Cons).head);
+                escape sum_tail + ((l as Cons).head);
             end
         end
 end
@@ -61834,18 +61843,18 @@ escape s1 + s2;
 }
 
 Test { [[
-data T with
-    data NIL is List;
+data Tx with
+    data Nil is List;
 or
-    data NEXT is Command with
-        var T  next;
+    data Next is Command with
+        var Tx  next;
     end
 end
 
 class C with
     var int v;
 do
-    pool[] T ts; // = new T.NEXT(T.NIL());
+    pool[] Tx ts; // = new Tx.Next(Tx.Nil());
     var int ret = do/_
         traverse t in ts do
             escape this.v;
@@ -61867,36 +61876,36 @@ escape v;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data AWAIT is Command with
+    data Nothing is Command;
+    data Await is Command with
         var int ms;
     end
-    data STREAM_ROOT is Command with
+    data Stream_Root is Command with
         var Command  run;
         var Command  now;
         var Command  nxt;
     end
-    data STREAM_NEXT is Command with
+    data Stream_Next is Command with
         var Command  one;
         var Command  two;
     end
-    data STREAM_END;
+    data Stream_End;
 
 pool[100] Command cmds = new
-    STREAM_ROOT(
-        AWAIT(1000),
-        STREAM_END(),
-        STREAM_END());
+    Stream_Root(
+        Await(1000),
+        Stream_End(),
+        Stream_End());
 
-                (cmds as STREAM_ROOT).nxt = new STREAM_END();
+                (cmds as Stream_Root).nxt = new Stream_End();
 
     traverse cmd in &&cmds do
         watching *cmd do
-            if (*cmd is AWAIT) then
-                await ((*cmd as AWAIT).ms) ms;
+            if (*cmd is Await) then
+                await ((*cmd as Await).ms) ms;
 
-            else/if (*cmd is STREAM_ROOT) then
-                (cmds as STREAM_ROOT).nxt = new STREAM_END();
+            else/if (*cmd is Stream_Root) then
+                (cmds as Stream_Root).nxt = new Stream_End();
             end
         end
     end
@@ -61924,28 +61933,28 @@ escape 1;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data STREAM_ROOT is Command with
+    data Nothing is Command;
+    data Stream_Root is Command with
         var Command  run;
         var Command  now;
         var Command  nxt;
     end
-    data STREAM_NEXT is Command with
+    data Stream_Next is Command with
         var Command  one;
         var Command  two;
     end
-    data STREAM_END;
+    data Stream_End;
 
 pool[] Command cmds;
-((cmds as STREAM_ROOT).now as STREAM_NEXT).one = (cmds as STREAM_ROOT).nxt;
-(cmds as STREAM_ROOT).run = ((cmds as STREAM_ROOT).nxt as STREAM_NEXT).two;
+((cmds as Stream_Root).now as Stream_Next).one = (cmds as Stream_Root).nxt;
+(cmds as Stream_Root).run = ((cmds as Stream_Root).nxt as Stream_Next).two;
 traverse cmd in &&cmds do
-    ((*cmd as STREAM_ROOT).now as STREAM_NEXT).one = (*cmd as STREAM_ROOT).nxt;
-    (*cmd as STREAM_ROOT).run = ((*cmd as STREAM_ROOT).nxt as STREAM_NEXT).two;
-    ((cmds as STREAM_ROOT).now as STREAM_NEXT).one = (cmds as STREAM_ROOT).nxt;
-    (cmds as STREAM_ROOT).run = ((cmds as STREAM_ROOT).nxt as STREAM_NEXT).two;
+    ((*cmd as Stream_Root).now as Stream_Next).one = (*cmd as Stream_Root).nxt;
+    (*cmd as Stream_Root).run = ((*cmd as Stream_Root).nxt as Stream_Next).two;
+    ((cmds as Stream_Root).now as Stream_Next).one = (cmds as Stream_Root).nxt;
+    (cmds as Stream_Root).run = ((cmds as Stream_Root).nxt as Stream_Next).two;
 end
-((cmds as STREAM_ROOT).now as STREAM_NEXT).one = (cmds as STREAM_ROOT).now;
+((cmds as Stream_Root).now as Stream_Next).one = (cmds as Stream_Root).now;
 escape 1;
 ]],
     adt = 'line 27 : cannot assign parent to child',
@@ -61957,38 +61966,38 @@ data Val with
 end
 
 data Exp;
-    data NIL is Exp;
-    data VAL is Exp with
+    data Nil is Exp;
+    data Val is Exp with
         var Val v;
     end
-    data ADD is Exp with
+    data Add is Exp with
         var Exp e1;
         var Exp e2;
     end
 
 data Stmt;
-    data NIL is Stmt;
-    data SEQ is Stmt with
+    data Nil is Stmt;
+    data Seq is Stmt with
         var Stmt s1;
         var Stmt s2;
     end
-    data PRINT is Stmt with
+    data Print is Stmt with
         var Exp e;
     end
 
 pool[] Stmt stmts =
-    new SEQ(
-            PRINT(
-                ADD(
-                    VAL(Val(10)),
-                    VAL(Val(5)))),
-            NIL());
+    new Seq(
+            Print(
+                Add(
+                    Val(Val(10)),
+                    Val(Val(5)))),
+            Nil());
 
 traverse stmt in stmts do
-    if *stmt is SEQ then
-        traverse &&(*stmt as SEQ).s1;
-    else/if *stmt is PRINT then
-        var int v = traverse &&(*stmt as PRINT).e;
+    if *stmt is Seq then
+        traverse &&(*stmt as Seq).s1;
+    else/if *stmt is Print then
+        var int v = traverse &&(*stmt as Print).e;
     end
 end
 
@@ -62000,11 +62009,11 @@ escape 1;
 -- par/or kills (2) which should be aborted
 Test { [[
 data Exp;
-    data NIL is Exp;
-    data V is Exp with
+    data Nil is Exp;
+    data Vv is Exp with
         var int e;
     end
-    data ADD is Exp with
+    data Add is Exp with
         var Exp e1;
         var Exp e2;
     end
@@ -62012,21 +62021,21 @@ data Exp;
 var int ret = 0;
 
 pool[] Exp exps = new
-    ADD(NIL(), V(20));
+    Add(Nil(), Vv(20));
 
 traverse e in &&exps do
     watching *e do
-        if *e is ADD then
+        if *e is Add then
             ret = ret + 1;
             par/or do
-                traverse &&(*e as ADD).e2;
+                traverse &&(*e as Add).e2;
             with
-                traverse &&(*e as ADD).e1;
+                traverse &&(*e as Add).e1;
             end
             await 5s;
-        else/if *e is V then
+        else/if *e is Vv then
             every 1s do
-                ret = ret + (*e as V).e;
+                ret = ret + (*e as Vv).e;
             end
         end
     end
@@ -62041,14 +62050,14 @@ escape ret;
 
 Test { [[
 data Exp;
-    data NIL is Exp;
-    data SUB is Exp with
+    data Nil is Exp;
+    data Sub is Exp with
         var Exp e2;
     end
 
 data Stmt;
-    data NIL is Stmt;
-    data SEQ is Stmt with
+    data Nil is Stmt;
+    data Seq is Stmt with
         var Stmt s1;
         var Exp e;
     end
@@ -62128,26 +62137,26 @@ escape 1;
 -->> TRAVERSE / NESTED-RECURSIVE-DATA
 Test { [[
 data List;
-    data NIL is List;
-    data CONS is List with
+    data Nil is List;
+    data Cons is List with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new CONS(1,
-            CONS(2,
-                CONS(3, NIL())));
+list = new Cons(1,
+            Cons(2,
+                Cons(3, Nil())));
 
 var int sum = 0;
 
-pool[] List&& lll = &&(list as CONS).tail;
+pool[] List&& lll = &&(list as Cons).tail;
 
 traverse n in lll do
     sum = sum + 1;
-    if (*n is CONS) then
-        sum = sum + (*n is CONS).head;
-        traverse &&(*n is CONS).tail;
+    if (*n is Cons) then
+        sum = sum + (*n is Cons).head;
+        traverse &&(*n is Cons).tail;
     end
 end
 
@@ -62158,27 +62167,27 @@ escape sum;
 }
 
 Test { [[
-data X;
-    data NIL is X;
-    data NIL is X;
+data Xx;
+    data Nil is Xx;
+    data Nil is Xx;
 
 escape 1;
 ]],
-    tops = 'line 3 : identifier "NIL" is already declared (tests.lua : line 2)',
-    --env = 'line 4 : duplicated data : "NIL"',
+    tops = 'line 3 : identifier "Nil" is already declared (tests.lua : line 2)',
+    --env = 'line 4 : duplicated data : "Nil"',
 }
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data SEQUENCE is Command with
+    data Nothing is Command;
+    data Sequence is Command with
         var Command  one;
         var Command  two;
     end
 
 data CommandQueue;
-    data NOTHING is CommandQueue;
-    data NXT with
+    data Nothing is CommandQueue;
+    data Nxt with
         var Command       cmd;
         var CommandQueue  nxt;
     end
@@ -62186,34 +62195,34 @@ data CommandQueue;
 escape 1;
 ]],
     --run = 1,
-    --env = 'line 13 : duplicated data : "NOTHING"',
-    tops = 'line 9 : identifier "NOTHING" is already declared (tests.lua : line 2)',
+    --env = 'line 13 : duplicated data : "Nothing"',
+    tops = 'line 9 : identifier "Nothing" is already declared (tests.lua : line 2)',
 }
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data SEQUENCE is Command with
+    data Nothing is Command;
+    data Sequence is Command with
         var Command  one;
         var Command  two;
     end
 
 data CommandQueue;
-    data NIL is CommandQueue;
-    data NXT with
+    data Nil is CommandQueue;
+    data Nxt with
         var Command       cmd;
         var CommandQueue  nxt;
     end
 
-pool[10] CommandQueue cq1 = new NOTHING();
-pool[10] CommandQueue cq2 = new NIL();
+pool[10] CommandQueue cq1 = new Nothing();
+pool[10] CommandQueue cq2 = new Nil();
 
 pool[10] CommandQueue cq3 = new
-    NXT(
-        SEQUENCE(
-            NOTHING(),
-            NOTHING()),
-        NIL());
+    Nxt(
+        Sequence(
+            Nothing(),
+            Nothing()),
+        Nil());
 
 escape 1;
 ]],
@@ -62222,29 +62231,29 @@ escape 1;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data SEQUENCE is Command with
+    data Nothing is Command;
+    data Sequence is Command with
         var Command  one;
         var Command  two;
     end
 
 data CommandQueue;
-    data NIL is CommandQueue;
-    data NXT with
+    data Nil is CommandQueue;
+    data Nxt with
         var Command       cmd;
         var CommandQueue  nxt;
     end
 
-pool[10] CommandQueue cq1 = new NIL();
+pool[10] CommandQueue cq1 = new Nil();
 
 pool[10] CommandQueue cq2 = new
-    NXT(
-        SEQUENCE(
-            NOTHING(),
-            NOTHING()),
-        NIL());
+    Nxt(
+        Sequence(
+            Nothing(),
+            Nothing()),
+        Nil());
 
-escape (cq1 is NIL) + (((cq2 as NXT).cmd as SEQUENCE).one is NOTHING);
+escape (cq1 is Nil) + (((cq2 as Nxt).cmd as Sequence).one is Nothing);
 ]],
     run = 2,
 }
@@ -62254,12 +62263,12 @@ escape (cq1 is NIL) + (((cq2 as NXT).cmd as SEQUENCE).one is NOTHING);
 
 Test { [[
 data List;
-    data NIL is List;
-    data X with
+    data Nil is List;
+    data Xx with
         var List  nxt;
     end
 pool[] List lll;     // l is the pool
-escape lll is NIL;       // l is a pointer to the root
+escape lll is Nil;       // l is a pointer to the root
 ]],
     wrn = true,
     run = 1,
@@ -62267,8 +62276,8 @@ escape lll is NIL;       // l is a pointer to the root
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62281,8 +62290,8 @@ escape 1;
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62295,8 +62304,8 @@ escape 1;
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62310,33 +62319,33 @@ escape 1;
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
 pool[] Command cmds1;
-cmds1 = new NEXT(
-            NEXT(
-                NOTHING()));
+cmds1 = new Next(
+            Next(
+                Nothing()));
 
 pool&[] Command cmds2 = &cmds1;
 
-escape (((cmds2 as NEXT).nxt as NEXT).nxt is NOTHING);
+escape (((cmds2 as Next).nxt as Next).nxt is Nothing);
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
 pool&[] Command cmds2
-    = &new NEXT(
-            NEXT(
-                NOTHING()));
+    = &new Next(
+            Next(
+                Nothing()));
 
 escape 1;
 ]],
@@ -62348,8 +62357,8 @@ escape 1;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62357,21 +62366,21 @@ pool[2] Command cmds1;
 pool&[2] Command cmds2
         = &cmds1;
 
-cmds1 = new NEXT(
-            NEXT(
-                NOTHING()));
-cmds1 = new NOTHING();
-cmds2 = new NEXT(
-            NEXT(
-                NOTHING()));
-escape cmds1 is NEXT;
+cmds1 = new Next(
+            Next(
+                Nothing()));
+cmds1 = new Nothing();
+cmds2 = new Next(
+            Next(
+                Nothing()));
+escape cmds1 is Next;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62379,149 +62388,149 @@ pool[2] Command cmds1;
 pool&[2] Command cmds2
         = &cmds1;
 
-cmds1 = new NEXT(
-            NEXT(
-                NOTHING()));
-cmds2 = new NEXT(
-            NEXT(
-                NOTHING()));
-escape cmds1 is NOTHING;
+cmds1 = new Next(
+            Next(
+                Nothing()));
+cmds2 = new Next(
+            Next(
+                Nothing()));
+escape cmds1 is Nothing;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
 pool[2] Command cmds1;
 
-cmds1 = new NEXT(
-                NEXT(
-                    NEXT(
-                        NOTHING())));
-escape (((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING);
+cmds1 = new Next(
+                Next(
+                    Next(
+                        Nothing())));
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing);
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
 pool[2] Command cmds1;
 
-cmds1 = new NEXT(NOTHING());
-(cmds1 as NEXT).nxt = new NEXT(NOTHING());
-((cmds1 as NEXT).nxt as NEXT).nxt = new NEXT(NOTHING());
-escape (((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING);
+cmds1 = new Next(Nothing());
+(cmds1 as Next).nxt = new Next(Nothing());
+((cmds1 as Next).nxt as Next).nxt = new Next(Nothing());
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing);
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
 pool[1] Command cmds1;
 
-cmds1 = new NEXT(NOTHING());
-cmds1 = new NOTHING();
-cmds1 = new NEXT(NOTHING());
-escape ((cmds1 as NEXT).nxt is NOTHING);
+cmds1 = new Next(Nothing());
+cmds1 = new Nothing();
+cmds1 = new Next(Nothing());
+escape ((cmds1 as Next).nxt is Nothing);
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
 pool[1] Command cmds1;
 
-cmds1 = new NEXT(NOTHING());
-cmds1 = new NEXT(NOTHING());
-escape cmds1 is NOTHING;
+cmds1 = new Next(Nothing());
+cmds1 = new Next(Nothing());
+escape cmds1 is Nothing;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
-pool[2] Command cmds1 = new NEXT(NOTHING());
-cmds1 = new NOTHING();
-cmds1 = new NEXT(
-                NEXT(
-                    NOTHING()));
-escape (((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING);
+pool[2] Command cmds1 = new Next(Nothing());
+cmds1 = new Nothing();
+cmds1 = new Next(
+                Next(
+                    Nothing()));
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing);
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
-pool[2] Command cmds1 = new NEXT(NOTHING());
-cmds1 = new NEXT(
-                NEXT(
-                    NOTHING()));
-escape (cmds1 as NEXT).nxt is NOTHING;
+pool[2] Command cmds1 = new Next(Nothing());
+cmds1 = new Next(
+                Next(
+                    Nothing()));
+escape (cmds1 as Next).nxt is Nothing;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
 pool[2] Command cmds1;
 pool&[2] Command cmds2 = &cmds1;
 
-cmds1 = new NEXT(NOTHING());
-(cmds2 as NEXT).nxt = new NEXT(NOTHING());
-escape (((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING);
+cmds1 = new Next(Nothing());
+(cmds2 as Next).nxt = new Next(Nothing());
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing);
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
 pool[2] Command cmds1;
 pool&[2] Command cmds2 = &cmds1;
 
-cmds1 = new NEXT(NOTHING());
-(cmds2 as NEXT).nxt = new NEXT(
-                        NEXT(
-                            NOTHING()));
-escape ((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING;
+cmds1 = new Next(Nothing());
+(cmds2 as Next).nxt = new Next(
+                        Next(
+                            Nothing()));
+escape ((cmds1 as Next).nxt as Next).nxt is Nothing;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62529,20 +62538,20 @@ pool[3] Command cmds1;
 pool&[3] Command cmds2;
 cmds2 = &cmds1;
 
-cmds1 = new NEXT(
-            NEXT(
-                NOTHING()));
-((cmds2 as NEXT).nxt as NEXT).nxt = new NEXT(
-                            NEXT(
-                                NOTHING()));
-escape (((cmds1 as NEXT).nxt as NEXT).nxt as NEXT).nxt is NOTHING;
+cmds1 = new Next(
+            Next(
+                Nothing()));
+((cmds2 as Next).nxt as Next).nxt = new Next(
+                            Next(
+                                Nothing()));
+escape (((cmds1 as Next).nxt as Next).nxt as Next).nxt is Nothing;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62551,21 +62560,21 @@ pool[10] Command cmds1;
 pool&[10] Command cmds2;
 cmds2 = &cmds1;
 
-cmds1 = new NEXT(
-            NEXT(
-                NOTHING()));
-cmds2 = new NEXT(
-            NEXT(
-                NOTHING()));
+cmds1 = new Next(
+            Next(
+                Nothing()));
+cmds2 = new Next(
+            Next(
+                Nothing()));
 
-escape ((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING;
+escape ((cmds1 as Next).nxt as Next).nxt is Nothing;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62573,22 +62582,22 @@ pool[] Command cmds1;
 
 pool&[] Command cmds2 = &cmds1;
 
-cmds1 = new NEXT(
-            NEXT(
-                NOTHING()));
-cmds2 = new NEXT(
-            NEXT(
-                NOTHING()));
+cmds1 = new Next(
+            Next(
+                Nothing()));
+cmds2 = new Next(
+            Next(
+                Nothing()));
 
-escape ((cmds1 as NEXT).nxt as NEXT).nxt is NOTHING;
+escape ((cmds1 as Next).nxt as Next).nxt is Nothing;
 ]],
     run = 1,
 }
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62597,25 +62606,25 @@ pool[] Command cmds1;
 pool&[] Command cmds2;
 cmds2 = &cmds1;
 
-cmds1 = new NEXT(
-            NEXT(
-                NOTHING()));
-cmds2 = new NEXT(
-            NEXT(
-                NOTHING()));
+cmds1 = new Next(
+            Next(
+                Nothing()));
+cmds2 = new Next(
+            Next(
+                Nothing()));
 
 var int sum = 0;
 
 traverse cmd in &&cmds1 do
-    if (*cmd is NEXT) then
+    if (*cmd is Next) then
         sum = sum + 1;
-        traverse &&(*cmd as NEXT).nxt;
+        traverse &&(*cmd as Next).nxt;
     end
 end
 traverse cmd in &&cmds2 do
-    if (*cmd is NEXT) then
+    if (*cmd is Next) then
         sum = sum + 1;
-        traverse &&(*cmd as NEXT).nxt;
+        traverse &&(*cmd as Next).nxt;
     end
 end
 
@@ -62627,22 +62636,22 @@ escape sum;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
 class Run with
     pool&[] Command cmds1;
 do
-    cmds1 = new NEXT(
-                NEXT(
-                    NOTHING()));
+    cmds1 = new Next(
+                Next(
+                    Nothing()));
     var int sum = 0;
     traverse cmd111 in &&cmds1 do
-        if *cmd111 is NEXT then
+        if *cmd111 is Next then
             sum = sum + 1;
-            traverse &&(*cmd111 as NEXT).nxt;
+            traverse &&(*cmd111 as Next).nxt;
         end
     end
     escape sum;
@@ -62665,8 +62674,8 @@ escape ddd;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62682,8 +62691,8 @@ escape 1;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data NEXT is Command with
+    data Nothing is Command;
+    data Next is Command with
         var Command  nxt;
     end
 
@@ -62692,17 +62701,17 @@ class Run with
 do
     var int sum = 0;
     traverse cmd in &&cmds do
-        if (*cmd is NEXT) then
+        if (*cmd is Next) then
             sum = sum + 1;
-            traverse &&(*cmd as NEXT).nxt;
+            traverse &&(*cmd as Next).nxt;
         end
     end
     escape sum;
 end
 
-pool[] Command cmds = new NEXT(
-            NEXT(
-                NOTHING()));
+pool[] Command cmds = new Next(
+            Next(
+                Nothing()));
 
 var int ret = do Run with
     this.cmds = &cmds;
@@ -62716,28 +62725,28 @@ escape ret;
 
 Test { [[
 data Command;
-    data NOTHING is Command;
-    data AWAIT is Command;
-    data PAROR is Command with
+    data Nothing is Command;
+    data Await is Command;
+    data ParOr is Command with
         var Command  one;
     end
 
 pool[] Command cmds;
 
-cmds = new PAROR(
-            PAROR(
-                AWAIT()));
+cmds = new ParOr(
+            ParOr(
+                Await()));
 
 class Run with
     pool&[] Command cmds;
 do
     traverse cmd in &&cmds do
-        if (*cmd is AWAIT) then
+        if (*cmd is Await) then
             await 1ms;
 
-        else/if (*cmd is PAROR) then
+        else/if (*cmd is ParOr) then
             par/or do
-                traverse &&(*cmd as PAROR).one;
+                traverse &&(*cmd as ParOr).one;
             with
             end
         end
@@ -62756,8 +62765,8 @@ escape 1;
 
 Test { [[
 data Dummy;
-  data NIL is Dummy;
-  data REC is Dummy with
+  data Nil is Dummy;
+  data Rec is Dummy with
     var Dummy  rec;
   end
 
@@ -62795,8 +62804,8 @@ escape (_vec[0]==0) + (_vec[1]==1) + (_vec[2]==2);
 
 Test { [[
 data NoRec;
-    data NIL is NoRec;
-    data SEQ is NoRec with
+    data Nil is NoRec;
+    data Seq is NoRec with
         var int x;
     end
 
@@ -62812,8 +62821,8 @@ escape 1;
 
 Test { [[
 data BTree;
-    data NIL is BTree;
-    data SEQ is BTree with
+    data Nil is BTree;
+    data Seq is BTree with
         var BTree  nxt;
     end
 
@@ -62837,21 +62846,21 @@ escape 1;
 
 Test { [[
 data BTree;
-    data NIL is BTree;
-    data SEQ is BTree with
+    data Nil is BTree;
+    data Seq is BTree with
         var BTree  nxt;
     end
 
-pool[3] BTree bs = new SEQ(SEQ(NIL()));
+pool[3] BTree bs = new Seq(Seq(Nil()));
 
 class BTreeTraverse with
     pool&[3] BTree btree;
 do
     var int ret = 0;
     traverse t in &&this.btree do
-        if t is SEQ then
+        if t is Seq then
             ret = ret + 1;
-            traverse &&(*t as SEQ).nxt;
+            traverse &&(*t as Seq).nxt;
         end
     end
     escape ret;
@@ -62870,21 +62879,21 @@ escape ret;
 
 Test { [[
 data List;
-    data NIL;
+    data Nil;
 with
-    data CONS is List with
+    data Cons is List with
         var int  head;
         var List tail;
     end
 end
-var List l = CONS(1, CONS(2, CONS(3, NIL())));
+var List l = Cons(1, Cons(2, Cons(3, Nil())));
 
 var int sum = 0;
 
 loop/1 i in &&l do
-    if i:CONS then
-        sum = sum + i:CONS.head;
-        traverse &&i:CONS.tail;
+    if i:Cons then
+        sum = sum + i:Cons.head;
+        traverse &&i:Cons.tail;
     end
 end
 
@@ -62895,21 +62904,21 @@ escape sum;
 
 Test { [[
 data List;
-    data NIL;
+    data Nil;
 with
-    data CONS is List with
+    data Cons is List with
         var int  head;
         var List tail;
     end
 end
-var List l = CONS(1, CONS(2, CONS(3, NIL())));
+var List l = Cons(1, Cons(2, Cons(3, Nil())));
 
 var int sum = 0;
 
 loop/3 i in &&l do
-    if i:CONS then
-        sum = sum + i:CONS.head;
-        traverse &&i:CONS.tail;
+    if i:Cons then
+        sum = sum + i:Cons.head;
+        traverse &&i:Cons.tail;
     end
 end
 
@@ -62920,21 +62929,21 @@ escape sum;
 
 Test { [[
 data List;
-    data NIL;
+    data Nil;
 with
-    data CONS is List with
+    data Cons is List with
         var int  head;
         var List tail;
     end
 end
-var List l = CONS(1, CONS(2, CONS(3, NIL())));
+var List l = Cons(1, Cons(2, Cons(3, Nil())));
 
 var int sum = 0;
 
 loop i in &&l do
-    if i:CONS then
-        sum = sum + i:CONS.head;
-        traverse &&i:CONS.tail;
+    if i:Cons then
+        sum = sum + i:Cons.head;
+        traverse &&i:Cons.tail;
     end
 end
 
@@ -62945,9 +62954,9 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL;
+    data Nil;
 with
-    data NODE with
+    data Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -62955,19 +62964,19 @@ with
 end
 
 var Tree t =
-    NODE(1,
-        NODE(2, NIL(), NIL()),
-        NODE(3, NIL(), NIL()));
+    Node(1,
+        Node(2, Nil(), Nil()),
+        Node(3, Nil(), Nil()));
 
 var int sum = 0;
 
     finalize with end;
 
 loop i in &&t do
-    if (*i is NODE) then
-        traverse &&(*i as NODE).left;
-        sum = sum + (*i as NODE).v;
-        traverse &&(*i as NODE).right;
+    if (*i is Node) then
+        traverse &&(*i as Node).left;
+        sum = sum + (*i as Node).v;
+        traverse &&(*i as Node).right;
     end
 end
 
@@ -62978,23 +62987,23 @@ escape sum;
 
 Test { [[
 data List;
-    data NIL;
+    data Nil;
 with
-    data CONS is List with
+    data Cons is List with
         var int  head;
         var List tail;
     end
 end
 
 pool[3] List l;
-l = new CONS(1, CONS(2, CONS(3, NIL())));
+l = new Cons(1, Cons(2, Cons(3, Nil())));
 
 var int sum = 0;
 
 loop i in l do
-    if i:CONS then
-        sum = sum + i:CONS.head;
-        traverse &&i:CONS.tail;
+    if i:Cons then
+        sum = sum + i:Cons.head;
+        traverse &&i:Cons.tail;
     end
 end
 
@@ -63005,9 +63014,9 @@ escape sum;
 
 Test { [[
 data Tree;
-    data NIL;
+    data Nil;
 with
-    data NODE with
+    data Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -63015,17 +63024,17 @@ with
 end
 
 pool[3] Tree t;
-t = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+t = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 0;
 
 loop i in t do
-    if (*i is NODE) then
-        traverse &&(*i as NODE).left;
-        sum = sum + (*i as NODE).v;
-        traverse &&(*i as NODE).right;
+    if (*i is Node) then
+        traverse &&(*i as Node).left;
+        sum = sum + (*i as Node).v;
+        traverse &&(*i as Node).right;
     end
 end
 
@@ -63051,9 +63060,9 @@ error 'TODO: List& l = ...  // for temporary parts (tests w/ no reassign)'
 -- anonymous fields
 Test { [[
 data Pair = (int, int);
-data Opt  = NIL(void) | PTR(void*);
-data List = NIL  (void)
-           | CONS (int, List&);
+data Opt  = Nil(void) | Ptr(void*);
+data List = Nil  (void)
+           | Cons (int, List&);
 escape 1;
 ]],
     todo = 'implement? trying only w/ named fields for now',
@@ -63067,17 +63076,17 @@ data Pair with
 end
 
 data Opt with
-    data NIL;
+    data Nil;
 with
-    data PTR with
+    data Ptr with
         var void* v = null;
     end
 end
 
 data List;
-    data NIL;
+    data Nil;
 with
-    data CONS is List with
+    data Cons is List with
         var int   head = 0;
         var& List tail = List.nil();
     end
@@ -63093,11 +63102,11 @@ escape 1;
 -- constructors may specify the field names
 Test { DATA..[[
 var Pair p1 = Pair(x=1,x=2);
-var Opt  o1 = Opt.NIL();
-var Opt  o2 = Opt.PTR(v=&p1);
-var List l1 = NIL();
-var List l2 = CONS(head=1, tail=l1);
-var List l3 = CONS(head=1, (tail as CONS).head)=2, tail=NIL()));
+var Opt  o1 = Opt.Nil();
+var Opt  o2 = Opt.Ptr(v=&p1);
+var List l1 = Nil();
+var List l2 = Cons(head=1, tail=l1);
+var List l3 = Cons(head=1, (tail as Cons).head)=2, tail=Nil()));
 
 escape 1;
 ]],
@@ -63108,11 +63117,11 @@ escape 1;
 -- anonymous destructors / pattern matching
 Test { DATA..[[
 var Pair p1 = Pair(1,2);
-var Opt  o1 = Opt.NIL();
-var Opt  o2 = Opt.PTR(&p1);
-var List l1 = NIL();
-var List l2 = CONS(1, l1);
-var List l3 = CONS(1, CONS(2, NIL()));
+var Opt  o1 = Opt.Nil();
+var Opt  o2 = Opt.Ptr(&p1);
+var List l1 = Nil();
+var List l2 = Cons(1, l1);
+var List l3 = Cons(1, Cons(2, Nil()));
 
 var int ret = 0;
 
@@ -63122,48 +63131,48 @@ _assert(x+y == 3);
 ret = ret + 3;              // 3
 
 switch o1 with
-    case Opt.NIL() do
+    case Opt.Nil() do
         ret = ret + 1;      // 4
         _assert(1);
     end
-    case Opt.PTR(void* v) do
+    case Opt.Ptr(void* v) do
         _assert(0);
     end
 end
 
 switch o2 with
-    case Opt.NIL() do
+    case Opt.Nil() do
         _assert(0);
     end
-    case Opt.PTR(void* v) do
+    case Opt.Ptr(void* v) do
         ret = ret + 1;      // 5
         _assert(v==&p1);
     end
 end
 
 switch l1 with
-    case NIL() do
+    case Nil() do
         ret = ret + 1;      // 6
         _assert(1);
     end
-    case CONS(int head, List& tail) do
+    case Cons(int head, List& tail) do
         _assert(0);
     end
 end
 
 switch l2 with
-    case NIL() do
+    case Nil() do
         _assert(0);
     end
-    case CONS(int head1, List& tail1) do
+    case Cons(int head1, List& tail1) do
         _assert(head1 == 1);
         ret = ret + 1;      // 7
         switch *tail1 with
-            case NIL() do
+            case Nil() do
                 ret = ret + 1;      // 8
                 _assert(1);
             end
-            case CONS(int head2, List& tail2) do
+            case Cons(int head2, List& tail2) do
                 _assert(0);
             end
         end
@@ -63173,25 +63182,25 @@ switch l2 with
 end
 
 switch l3 with
-    case NIL() do
+    case Nil() do
         _assert(0);
     end
-    case CONS(int head1, List& tail1) do
+    case Cons(int head1, List& tail1) do
         _assert(head1 == 1);
         ret = ret + 1;      // 10
         switch *tail1 with
-            case NIL() do
+            case Nil() do
                 _assert(0);
             end
-            case CONS(int head2, List& tail2) do
+            case Cons(int head2, List& tail2) do
                 _assert(head2 == 2);
                 ret = ret + 2;      // 12
                 switch *tail2 with
-                    case NIL() do
+                    case Nil() do
                         _assert(1);
                         ret = ret + 1;      // 13
                     end
-                    case CONS(int head3, List& tail3) do
+                    case Cons(int head3, List& tail3) do
                         _assert(0);
                     end
                 end
@@ -63391,7 +63400,7 @@ escape tm_app.v;
     run = 1,
 }
 
--- FORWARD
+-- Forward
 Test { [[
 native do
     int CEU_TIMEMACHINE_ON = 0;
@@ -63602,7 +63611,7 @@ escape tm_app.v;
     run = 3,
 }
 
--- BACKWARD
+-- Backward
 Test { [[
 native do
     int CEU_TIMEMACHINE_ON = 0;
@@ -63821,7 +63830,7 @@ escape tm_app.v;
     run = 1,
 }
 
--- FORWARD / BACKWARD
+-- Forward / Backward
 Test { [[
 native do
     int CEU_TIMEMACHINE_ON = 0;
@@ -64136,7 +64145,7 @@ interface Global with
 end
 var int i = 1;
 
-class T with
+class Tx with
     code/instantaneous Get (void)=>int;
 do
     code/instantaneous Get (void)=>int do
@@ -64144,7 +64153,7 @@ do
     end
 end
 
-var T t;
+var Tx t;
 
 escape t.get();
 ]],
@@ -64170,8 +64179,6 @@ escape 1;
     run = 1,
 }
 
-do return end
-
 Test { [[
 native/plain _rect;
 pre native do
@@ -64188,23 +64195,23 @@ escape *(r.x);
 }
 
 Test { [[
-data D with
+data Dx with
     var int x;
 end
 
-data E with
-    data NOTHING;
+data Ee with
+    data Nothing;
 or
-    data X with
-        var& D d;
+    data Xx with
+        var& Dx d;
     end
 end
 
-    var D d = D(1);
-var E e = E.X(&d);
-    e.X.d = &d;     // BUG: error?
+    var Dx d = Dx(1);
+var Ee e = Ee.Xx(&d);
+    e.Xx.d = &d;     // BUG: error?
 
-escape e.X.d.x;
+escape e.Xx.d.x;
 ]],
     run = 1,
 }
@@ -64212,16 +64219,16 @@ escape e.X.d.x;
 -- TODO: bug
 Test { [[
 data LLRB with
-    data NIL;
+    data Nil;
 or
-    data NODE with
+    data Node with
         var LLRB left;
         var LLRB right;
     end
 end
 
 var& LLRB h;
-h.NODE.right = h.NODE.left;
+h.Node.right = h.Node.left;
 
 escape 1;
 ]],
@@ -64231,16 +64238,16 @@ escape 1;
 -- TODO: bug
 Test { [[
 data LLRB with
-    data NIL;
+    data Nil;
 or
-    data NODE with
+    data Node with
         var LLRB left;
     end
 end
 
 pool[] LLRB llrb;
 traverse e in llrb do
-    e:NODE.left = traverse e:NODE.left;
+    e:Node.left = traverse e:Node.left;
 end
 
 escape 1;
@@ -64251,7 +64258,7 @@ escape 1;
 -----------------------
 
 Test { [[
-class T with
+class Tx with
     var int xxx2=0;
     code/instantaneous Fff (var int xxx3)=>void;
 do
@@ -64263,7 +64270,7 @@ do
 end
 
 var int xxx1 = 10;
-var T ttt;
+var Tx ttt;
 ttt.fff(&xxx1);
 escape ttt.xxx2;
 ]],
@@ -64301,8 +64308,6 @@ escape 1;
 ]],
     run = 1,
 }
-
-do return end
 
 --[=[
 ---
@@ -64402,7 +64407,7 @@ var SDL _;
 
 -- BUG: deallocates byte: ifc/body dcls should not terminate
 Test { [[
-class T with
+class Tx with
     output:
         vector&[] byte name;
 do
@@ -64411,7 +64416,7 @@ do
     // bug: deallocates byte[]
 end
 
-var T t;
+var Tx t;
 native/nohold _strlen;
 escape _strlen((byte&&)&&t.name);
 ]],
@@ -64433,29 +64438,29 @@ escape _strlen((byte&&)&&t.name);
 --
 -- bug: arity mismatch on constructor/creation
 Test { [[
-class T with
+class Tx with
     var& void p;
-    code/instantaneous Build (var& void p)=>T;
+    code/instantaneous Build (var& void p)=>Tx;
 do
-    code/instantaneous Build (var& void p)=>T do
+    code/instantaneous Build (var& void p)=>Tx do
         this.p = &p;
     end
     escape *(&&this.p as int&&);
 end
 
 var int v = 10;
-var int ret = do T.build(&v);
+var int ret = do Tx.build(&v);
 escape ret;
 ]],
     run = 10,
 }
 
 Test { [[
-data D with
+data Dx with
     vector&[] byte str;
 end
 vector[] byte s = [].. "oi";
-var D d = D(s);    // BUG: nao detecta erro de tipo
+var Dx d = Dx(s);    // BUG: nao detecta erro de tipo
 escape $d.str;
 ]],
     run = 2,
@@ -64499,34 +64504,34 @@ native do
     int V = 0;
 end
 
-class G with
+class Gx with
     event void e;
 do
     await FOREVER;
 end
 
 interface I with
-    var& G g;
+    var& Gx g;
 end
 
 pool[] I is;
 
-class T with
-    var& G g;
+class Tx with
+    var& Gx g;
     pool&[] I is;
 do
     every g.e do
 native _V;
         _V = _V + 1;
-        spawn T in is with
+        spawn Tx in is with
             this.g = &outer.g;
             this.is = &outer.is;
         end;
     end
 end
 
-var G g;
-spawn T in is with
+var Gx g;
+spawn Tx in is with
     this.g = &g;
     this.is = &is;
 end;
@@ -64536,7 +64541,6 @@ escape _V;
 ]],
     run = 1,
 }
-do return end
 
 -- BUG: must enforce alias
 Test { [[
@@ -64545,9 +64549,9 @@ data Ball with
 end
 
 data Leaf with
-    data NOTHING;
+    data Nothing;
 or
-    data TWEEN with
+    data Tween with
         var& Ball ball;
     end
 end
@@ -64555,12 +64559,12 @@ end
 class LeafHandler with
     var& Leaf leaf;
 do
-    var& Ball ball = &leaf.TWEEN.ball;
+    var& Ball ball = &leaf.Tween.ball;
     escape ball.x;
 end
 
 var Ball ball = Ball(10);
-var Leaf leaf = Leaf.TWEEN(ball);   // must be alias
+var Leaf leaf = Leaf.Tween(ball);   // must be alias
 
 var int x = do LeafHandler with
                 this.leaf = &outer.leaf;
@@ -64572,12 +64576,12 @@ escape x;
     run = 1,
 }
 ---------------------------------------------------
--- BUG: should be type error, T&& <= T[]
+-- BUG: should be type error, Tx&& <= Tx[]
 Test { [[
 data Tree;
-    data NIL;
+    data Nil;
 or
-    data NODE with
+    data Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -64585,9 +64589,9 @@ or
 end
 
 pool[3] Tree tree;
-tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 class Sum with
     var int&& v;
@@ -64601,11 +64605,11 @@ class Body with
     var&   Sum    sum;
 do
     watching *n do
-        if (*n is NODE) then
-            *this.sum.v = *this.sum.v + (*n as NODE).v;
+        if (*n is Node) then
+            *this.sum.v = *this.sum.v + (*n as Node).v;
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = &&(*n as NODE).left;
+                this.n      = &&(*n as Node).left;
                 this.sum    = &sum;
             end;
         end
@@ -64631,8 +64635,8 @@ escape v;
 }
 Test { [[
 data List;
-    data NIL;
-    data CONS is List with
+    data Nil;
+    data Cons is List with
         var int  head;
         var List tail;
     end
@@ -64646,13 +64650,13 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     vector[] byte xxx;
 do
     await FOREVER;
 end
 
-var T t with
+var Tx t with
     this.xxx = [].."oioi";
 end;
 
@@ -64664,12 +64668,12 @@ escape $t.xxx;
 -- TODO: vectors in the class interface
 Test { [[
 native/pure _strlen;
-class T with
+class Tx with
     vector[] byte str;
 do
     escape _strlen(&&this.str);
 end
-var int n = do T with
+var int n = do Tx with
                 this.str = [] .. "1234";
             end;
 escape n;
@@ -64692,14 +64696,14 @@ end
 
 Test { [[
 data Stmt;
-    data NIL;
+    data Nil;
 or
-    data SEQ is Stmt with
+    data Seq is Stmt with
         var Stmt s1;
     end
 end
 
-pool[] Stmt stmts = new Stmt.NIL();
+pool[] Stmt stmts = new Stmt.Nil();
 
 var int v1 = 10;
 
@@ -64739,11 +64743,11 @@ escape 1;
 -- TODO: bug: what if the "o" expression contains other pointers?
 -- (below: pi)
 Test { [[
-class T with
+class Tx with
 do
 end
 
-vector[10] T ts;
+vector[10] Tx ts;
 var int   i = 0;
 var int* pi = &i;
 await ts[*pi];
@@ -64780,13 +64784,13 @@ escape ret;
     run = 2,
 }
 
--- XXX: T-vs-Opt
+-- XXX: Tx-vs-Opt
 Test { [[
-class T with
+class Tx with
 do
 end
-var& T*? t;
-    do t = _malloc(10 * sizeof(T**));
+var& Tx*? t;
+    do t = _malloc(10 * sizeof(Tx**));
 finalize with
     nothing;
 end
@@ -64856,7 +64860,7 @@ native _V;
 native do
     int V = 1;
 end
-class T with
+class Tx with
 do
     par/or do
         await OS_START;
@@ -64866,7 +64870,7 @@ do
     _V = 10;
 end
 do
-    spawn T;
+    spawn Tx;
     await 1s;
 end
 escape _V;
@@ -64900,14 +64904,14 @@ escape ret;
 }
 
 Test { [[
-input void A,F;
+input void A,B;
 
 interface I with
     var int v;
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
 do
     await inc;
@@ -64917,11 +64921,11 @@ end
 var int ret = 0;
 do
     par/or do
-        await F;
+        await B;
     with
         var int i=1;
         every 1s do
-            spawn T with
+            spawn Tx with
                 this.v = i;
                 i = i + 1;
             end;
@@ -64938,7 +64942,7 @@ end
 escape ret;
 ]],
 -- BUG: erro de valgrind
-    run = { ['~>3s;~>F'] = 11 },
+    run = { ['~>3s;~>B'] = 11 },
 }
 
 -- BUG: should be: field must be assigned
@@ -65021,15 +65025,15 @@ native do
     int V = 0;
 end
 
-class T with
+class Tx with
 do
     _V = 10;
     do finalize with
-        _V = 100;   // TODO: deveria executar qd "var T t" sai de escopo
+        _V = 100;   // TODO: deveria executar qd "var Tx t" sai de escopo
     end
 end
 
-var T t;
+var Tx t;
 _assert(_V == 10);
 escape _V;
 ]],
@@ -65037,7 +65041,7 @@ escape _V;
 }
 
 Test { [[
-code/instantaneous F () => void;
+code/instantaneous Fx () => void;
 escape 1;
 ]],
     run = 1,
@@ -65047,11 +65051,11 @@ escape 1;
 -- put back to XXXX
 Test { [[
 native _V;
-input void A, F, OS_START;
+input void A, B, OS_START;
 native do
     int V = 0;
 end
-class T with
+class Tx with
     event void e, ok;
     var int v;
 do
@@ -65067,7 +65071,7 @@ end
 await OS_START;
 var int ret;
 do
-    var T t;
+    var Tx t;
     par/or do
         do                  // 24
             do finalize with
@@ -65079,7 +65083,7 @@ do
         await t.e;          // 31
         t.v = t.v * 3;
     with
-        await F;
+        await B;
         t.v = t.v * 5;
     end
     ret = t.v;
@@ -65090,18 +65094,18 @@ escape ret + _V;        // * reads after
         abrt = 1,        -- false positive
     },
     run = {
-        ['~>F'] = 6,
+        ['~>B'] = 6,
         ['~>A'] = 13,
     }
 }
 
 -- TODO_TYPECAST (search and replace)
 Test { [[
-class T with
+class Tx with
 do
 end
 // TODO: "typecast" esconde "call", finalization nao acha que eh call
-var T** t := (T**)_malloc(10 * sizeof(T**));
+var Tx** t := (Tx**)_malloc(10 * sizeof(Tx**));
 native/nohold _free;
 do finalize with
     _free(t);
@@ -65116,19 +65120,19 @@ Test { [[
 interface I with
     var int v;
 end
-class T with
+class Tx with
     interface I;
 do
 end
-pool[1] T ts;
-var T a with
+pool[1] Tx ts;
+var Tx a with
     a.v = 15;
 end
 var int ret = 0;
-ret = ret + spawn T[ts] with
+ret = ret + spawn Tx[ts] with
                 this.v = 10;
             end;
-ret = ret + spawn T[ts];
+ret = ret + spawn Tx[ts];
 loop i in (I*)(ts in a) do
     ret = ret + i:v;
 end
@@ -65138,15 +65142,15 @@ escape 26;
 }
 
 Test { [[
-class T with
+class Tx with
     var void* ptr = null;
 do
 end
-var T* ui;
+var Tx* ui;
 do
-    pool[] T ts;
+    pool[] Tx ts;
     var void* p = null;
-    ui = spawn T in ts with // ui > ts (should require fin)
+    ui = spawn Tx in ts with // ui > ts (should require fin)
         this.ptr = p;
     end;
 end
@@ -65209,7 +65213,7 @@ end;
 ]],
 
 Test { [[
-class T with
+class Tx with
     var int* a1;
 do
     var int* a2 = a1;
@@ -65227,7 +65231,7 @@ escape 10;
 
 -- TODO: should require finalization
 Test { [[
-class T with
+class Tx with
 native _int;
     var _int to;
 do
@@ -65235,7 +65239,7 @@ end
 
 var _int to = 1;
 
-var T move with
+var Tx move with
     this.to = to;  // TODO: := ??
 end;
 
@@ -65250,7 +65254,7 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     interface I;
 do
     await FOREVER;
@@ -65260,11 +65264,11 @@ pool[100] I is;
 
 var int ret = 0;
 
-spawn T with
+spawn Tx with
     this.v = 1;
 end;
 
-spawn T in is with
+spawn Tx in is with
     this.v = 3;
 end;
 
@@ -65284,7 +65288,7 @@ interface I with
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
 do
     await FOREVER;
@@ -65300,13 +65304,13 @@ end
 
 var int ret = 0;
 do
-    spawn T with
+    spawn Tx with
         this.v = 1;
     end;
     spawn U in is with
         this.v = 2;
     end;
-    spawn T in is with
+    spawn Tx in is with
         this.v = 3;
     end;
 
@@ -65332,7 +65336,7 @@ interface Global with
 end
 pool[] U  us;
 
-class T with
+class Tx with
     pool[10] U us;
     interface I;
 do
@@ -65345,7 +65349,7 @@ spawn U in global:us;
 pool[1] U us1;
 spawn U in us1;
 
-var T t;
+var Tx t;
 spawn U in t.us;
 
 var I* i = &t;
@@ -65374,14 +65378,14 @@ escape 10;
     fin = 'line 5 : invalid pointer "ptr"',
 }
 
--- TODO: t.v // T.v
+-- TODO: t.v // Tx.v
 Test { [[
-class T with
+class Tx with
     var int v;
 do
     v = 1;
 end
-var T t;
+var Tx t;
 t.v = 10;
 escape t.v;
 ]],
@@ -65410,15 +65414,15 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     interface I;
 do
     this.v = 1;
 end
-pool[] T ts;
+pool[] Tx ts;
 
 par/or do
-    spawn T in ts with
+    spawn Tx in ts with
     end;
 with
     loop i in ts do
@@ -65432,16 +65436,16 @@ escape 1;
 
 -- TODO: spawn vs watching impossible
 Test { [[
-class T with
+class Tx with
 do
 end
 
 par/and do
-    pool[] T ts;
-    var T* t = spawn T in ts with
+    pool[] Tx ts;
+    var Tx* t = spawn Tx in ts with
     end;
 with
-    var T* p;
+    var Tx* p;
     watching p do
     end
 end
@@ -65457,7 +65461,7 @@ interface I with
     var int v;
 end
 
-class T with
+class Tx with
     var int u,v,x;
 do
 end
@@ -65471,13 +65475,13 @@ class V with
     var int v;
 do
     pool[10] I is;
-    spawn T in is;
+    spawn Tx in is;
     spawn U in is;
 end
 
 pool[10] I is;
 
-spawn T in is;
+spawn Tx in is;
 spawn U in is;
 spawn V in is;
 
@@ -65600,7 +65604,6 @@ escape 0;
     },
     run = 1;
 }
-do return end
 
 Test { [[
 class Rect with
@@ -65623,11 +65626,10 @@ escape 10;
 ]],
     run = 10,
 }
-do return end
 
 Test { [[
-class T with do end;
-pool[] T ts;
+class Tx with do end;
+pool[] Tx ts;
 loop t in ts do
     await 1s;
 end
@@ -65639,11 +65641,11 @@ escape 1;
 Test { [[
 interface I with
 end
-class T with
+class Tx with
     interface I;
 do end
 do
-    pool[] T ts;
+    pool[] Tx ts;
     loop i in ts do
         await 1s;
     end
@@ -65687,10 +65689,10 @@ end
 -- PROCURAR XXX e recolocar tudo ate o ok la
 
 Test { [[
-input (var int a)=>int F do
+input (var int a)=>int B do
     escape a + 1;
 end
-var int ret = call F=>1;
+var int ret = call B=>1;
 escape ret;
 ]],
     run = 2,
@@ -65708,10 +65710,10 @@ escape ret;
 }
 
 Test { [[
-input (var int a, var  int b)=>int F do
+input (var int a, var  int b)=>int B do
     escape a + b;
 end
-var int ret = call F=>(1,2);
+var int ret = call B=>(1,2);
 escape ret;
 ]],
     run = 3,
@@ -65842,7 +65844,7 @@ end
 }
 
 Test { [[
-input (var void* v)=>void F do
+input (var void* v)=>void B do
     _V = v;
 end
 escape 1;
@@ -65851,7 +65853,7 @@ escape 1;
 }
 
 Test { [[
-input (var void* v)=>void F do
+input (var void* v)=>void B do
     _V := v;
 end
 escape 1;
@@ -65863,7 +65865,7 @@ Test { [[
 native do
     void* V;
 end
-input (var/hold void* v)=>void F do
+input (var/hold void* v)=>void B do
     _V := v;
 end
 escape 1;
@@ -65872,50 +65874,50 @@ escape 1;
 }
 
 Test { [[
-input (var byte* buf)=>void F do
+input (var byte* buf)=>void B do
 end;
 var byte* buf;
-call F => (buf);
+call B => (buf);
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-input (var byte* buf, var  int i)=>void F do
+input (var byte* buf, var  int i)=>void B do
 end;
 var byte* buf;
-call F => (buf, 1);
+call B => (buf, 1);
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-input (void)=>void F do
+input (void)=>void B do
 end;
 var byte* buf;
-call F;
+call B;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-input (var byte* buf)=>void F do
+input (var byte* buf)=>void B do
 end;
 var byte* buf;
-call F => buf;
+call B => buf;
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-input (var/hold byte* buf)=>void F do
+input (var/hold byte* buf)=>void B do
 end;
 var byte* buf;
-call F => buf;
+call B => buf;
 escape 1;
 ]],
     fin = 'line 2 : call requires `finalize´',
@@ -66045,19 +66047,18 @@ escape _f(&v) == _V;
 }
 
 Test { [[
-input (var int* p1, var  int* p2)=>void F;
+input (var int* p1, var  int* p2)=>void B;
 do
     var int* p1 = null;
     do
         var int* p2 = null;
-        call F => (p1, p2);
+        call B => (p1, p2);
     end
 end
 escape 1;
 ]],
     fin = 'line 6 : invalid call (multiple scopes)',
 }
-do return end
 
 -- TODO: finalize not required
 Test { [[
@@ -66109,16 +66110,16 @@ Test { [[
 pre native do
     typedef struct {
         int a,b,c;
-    } F;
+    } Fx;
 end
 native do
-    F* f;
+    Fx* f;
     #define ceu_out_call_OPEN(x) f
 end
-output (var byte* path, var  byte* mode)=>_F* OPEN;
+output (var byte* path, var  byte* mode)=>_Fx* OPEN;
 
 // Default device
-var _F[] f;
+var _Fx[] f;
     f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
 escape 1;
 ]],
@@ -66126,13 +66127,13 @@ escape 1;
 }
 
 Test { [[
-output (var byte* path, var  byte* mode)=>_F* OPEN;
-output (var _F* f)=>int CLOSE;
-output (var _F* f)=>int SIZE;
-output (var void* ptr, var int size, var int nmemb, var  _F* f)=>int READ;
+output (var byte* path, var  byte* mode)=>_Fx* OPEN;
+output (var _Fx* f)=>int CLOSE;
+output (var _Fx* f)=>int SIZE;
+output (var void* ptr, var int size, var int nmemb, var  _Fx* f)=>int READ;
 
 // Default device
-var _F[] f;
+var _Fx[] f;
     do f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
 finalize with
     call CLOSE => f;
@@ -66178,7 +66179,7 @@ end
 Test { [[
 vector[10] int vec1;
 
-class T with
+class Tx with
     var& int* vec2;
 do
     this.vec2[0] = 10;
@@ -66186,7 +66187,7 @@ end
 
 vec1[0] = 0;
 
-var T t with
+var Tx t with
     this.vec2 = outer.vec1;
 end;
 
@@ -66197,14 +66198,12 @@ escape vec1[0];
 
 -------------------------------------------------------------------------------
 
-do return end
-
 -- BUG: new inside constructor (requires stack manipulation?)
 Test { [[
 data Command;
-    data NOTHING;
+    data Nothing;
 or
-    data SEQUENCE is Command with
+    data Sequence is Command with
         var Command* one;
         var Command* two;
     end
@@ -66216,7 +66215,7 @@ do
 end
 
 var TCommand cmds with
-    this.cs = new NOTHING();
+    this.cs = new Nothing();
 end;
 
 escape 1;
@@ -66255,7 +66254,7 @@ escape 1;
 ]],
     run = 1,
 }
-do return end
+
 Test { [[
 interface UI with
 end
@@ -66284,7 +66283,6 @@ escape 1;
 ]],
     run = 1,
 }
-do return end
 
 Test { [[
 pre native do
@@ -66292,11 +66290,11 @@ pre native do
         int v;
     } tp;
 end
-class T with
+class Tx with
     var& _tp? i = nil;
 do
 end
-var T t;
+var Tx t;
 escape t.i!==nil;
 ]],
     run = 1,
@@ -66309,11 +66307,11 @@ pre native do
     } tp;
     tp V = { 10 };
 end
-class T with
+class Tx with
     var& _tp? i = nil;
 do
 end
-var T t with
+var Tx t with
     this.i = &_V;
 end;
 escape t.i!.v;
@@ -66328,7 +66326,7 @@ escape 1;
     asr = true,
 }
 
--- BUG: do T quando ok acontece na mesma reacao
+-- BUG: do Tx quando ok acontece na mesma reacao
 Test { [[
 class Body with
     pool&[]  Body bodies;
@@ -66367,12 +66365,12 @@ escape sum;
     run = 6,
 }
 
--- BUG: do T quando ok acontece na mesma reacao
+-- BUG: do Tx quando ok acontece na mesma reacao
 Test { [[
 data Tree;
-    data NIL;
+    data Nil;
 with
-    data NODE with
+    data Node with
         var int   v;
         var Tree* left;
         var Tree* right;
@@ -66380,9 +66378,9 @@ with
 end
 
 pool[3] Tree tree;
-tree = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+tree = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 class Body with
     pool&[]  Body bodies;
@@ -66392,23 +66390,23 @@ class Body with
 do
     //watching n do
         var int i = this.sum;
-        if (*n is NODE) then
+        if (*n is Node) then
             var Body* left =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = (*n as NODE).left;
+                    this.n      = (*n as Node).left;
                     this.sum    = sum;
                 end;
             //watching left do
                 await left:ok;
             //end
 
-            this.sum = this.sum + i + (*n as NODE).v;
+            this.sum = this.sum + i + (*n as Node).v;
 
             var Body* right =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = (*n as NODE).right;
+                    this.n      = (*n as Node).right;
                     this.sum    = sum;
                 end;
             //watching right do
@@ -66416,7 +66414,7 @@ do
             //end
 
             //do/spawn Body in this.bodies with
-                //this.n = (*n as NODE).left;
+                //this.n = (*n as Node).left;
             //end;
         end
     //end
@@ -66438,10 +66436,10 @@ escape sum;
 var int sum = 0;
 loop n in &&tree do
     var int i = sum;
-    if (*n is NODE) then
-        traverse &(*n as NODE).left;
-        sum = i + (*n as NODE).v;
-        traverse &(*n as NODE).right;
+    if (*n is Node) then
+        traverse &(*n as Node).left;
+        sum = i + (*n as Node).v;
+        traverse &(*n as Node).right;
     end
 end
 escape sum;
@@ -66453,15 +66451,15 @@ escape sum;
 
 -- BUG: loop between declaration and watching
 Test { [[
-class T with
+class Tx with
     event void e;
 do
     await FOREVER;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
-var T*? t = spawn T in ts;
+var Tx*? t = spawn Tx in ts;
 
 loop do
     watching *t! do
@@ -66479,18 +66477,18 @@ escape 1;
 }
 
 Test { [[
-class T with
+class Tx with
     event void e;
 do
     await e;
 end
 
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 1;
 
-spawn T in ts;
-spawn T in ts;
+spawn Tx in ts;
+spawn Tx in ts;
 async do end;
 
 loop t1 in ts do
@@ -66513,9 +66511,9 @@ escape ret;
 -- TODO: precisa do watching
 Test { [[
 data Tree;
-    data NIL;
+    data Nil;
 with
-    data NODE with
+    data Node with
         var int   v;
         var Tree* left;
         var Tree* right;
@@ -66523,19 +66521,19 @@ with
 end
 
 pool[3] Tree t;
-t = new NODE(1,
-            NODE(2, NIL(), NIL()),
-            NODE(3, NIL(), NIL()));
+t = new Node(1,
+            Node(2, Nil(), Nil()),
+            Node(3, Nil(), Nil()));
 
 var int sum = 0;
 
 par/or do
     loop i in t do
-        if (*i is NODE) then
-            traverse &(*i as NODE).left;
+        if (*i is Node) then
+            traverse &(*i as Node).left;
             await 1s;
-            sum = sum + (*i as NODE).v;
-            traverse &(*i as NODE).right;
+            sum = sum + (*i as Node).v;
+            traverse &(*i as Node).right;
             await 1s;
         end
     end
@@ -66593,30 +66591,30 @@ escape target:x;
 
 -- BUG: cannot contain await nao se aplica a par/or com caminho sem await
 Test { [[
-input void A,F;
+input void A,B;
 
 interface I with
     var int v;
     event void inc;
 end
 
-class T with
+class Tx with
     interface I;
 do
     await inc;
     this.v = v + 1;
     await FOREVER;
 end
-pool[] T ts;
+pool[] Tx ts;
 
 var int ret = 0;
 do
     par/or do
-        await F;
+        await B;
     with
         var int i=1;
         every 1s do
-            spawn T in ts with
+            spawn Tx in ts with
                 this.v = i;
                 i = i + 1;
             end;
@@ -66634,17 +66632,17 @@ do
 end
 escape ret;
 ]],
-    run = { ['~>3s;~>F'] = 13 },
+    run = { ['~>3s;~>B'] = 13 },
 }
 
 -- TODO: como capturar o retorno de um org que termina de imediato?
 -- R: option type
 Test { [[
-class T with
+class Tx with
 do
     escape 1;
 end
-var T*? t = spawn T;
+var Tx*? t = spawn Tx;
 var int ret = -1;
 if t? then
     ret = await *t!;

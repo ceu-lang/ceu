@@ -72,6 +72,10 @@ local T = {
         'expression'
     },
     {
+        'abstraction identifier or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or `call´ or `call/recursive´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
+        'expression'
+    },
+    {
         '`not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or `call´ or `call/recursive´ or abstraction identifier or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
         'expression'
     },
@@ -593,12 +597,15 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , ID_nat  = V'__ID_nat'
     , ID_none = V'__ID_none'
 
-    , __ID_ext  = CK(m.R'AZ'*ALPHANUM^0 -KEYS, 'external identifier')
-    , __ID_int  = CK(m.R'az'*Alphanum^0 -KEYS, 'internal identifier')
-    , __ID_abs  = CK(m.R'AZ'*Alphanum^0 -KEYS, 'abstraction identifier')
-    , __ID_nat  = CK(P'_' * Alphanum^1,          'native identifier')
-    , __ID_none = CK(P'_' * -Alphanum,           '`_´')
-    , __ID_esc  = CK(Alpha*(Alphanum)^0 -KEYS, '`escape´ identifier')
+    , __ID_ext  = CK(m.R'AZ'*ALPHANUM^0  -KEYS, 'external identifier')
+    , __ID_int  = CK(m.R'az'*Alphanum^0  -KEYS, 'internal identifier')
+    , __ID_abs  = CK(m.R'AZ'*V'__one_az' -KEYS, 'abstraction identifier')
+    , __ID_nat  = CK(P'_' * Alphanum^1,         'native identifier')
+    , __ID_none = CK(P'_' * -Alphanum,          '`_´')
+    , __ID_esc  = CK(Alpha*(Alphanum)^0 -KEYS,  '`escape´ identifier')
+
+    -- at least one lowercase character
+    , __one_az = #(ALPHANUM^0*m.R'az') * Alphanum^0
 
 
 -- MODS
