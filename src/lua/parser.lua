@@ -46,15 +46,15 @@ local T = {
     },
 
     {
-        '`&´ or `%(´ or primitive type or abstraction identifier or class identifier or native identifier',
+        '`&´ or `%(´ or primitive type or abstraction identifier or native identifier',
         'type'
     },
     {
-        '`%(´ or primitive type or abstraction identifier or class identifier or native identifier or `/recursive´',
+        '`%(´ or primitive type or abstraction identifier or native identifier or `/recursive´',
         'type'
     },
     {
-        'primitive type or abstraction identifier or class identifier or native identifier',
+        'primitive type or abstraction identifier or native identifier',
         'type'
     },
 
@@ -72,11 +72,11 @@ local T = {
     },
 
     {
-        'class identifier or `new´ or abstraction identifier or `traverse´ or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
+        '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
         'expression'
     },
     {
-        '`new´ or abstraction identifier or `traverse´ or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
+        '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
         'expression'
     },
     {
@@ -85,7 +85,7 @@ local T = {
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or expression or `await´ or `emit´ or `request´ or `spawn´ or `kill´ or `traverse´ or `do´ or `interface´ or `class´ or `pre´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or expression or `await´ or `emit´ or `request´ or `spawn´ or `kill´ or `do´ or `pre´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
 }
@@ -234,7 +234,6 @@ KEYS = P
 'var' +
 'until' +
 'true' +
-'traverse' +
 'this' +
 'then' +
 'tag' +
@@ -259,7 +258,6 @@ KEYS = P
 'loop' +
 'kill' +
 'is' +
-'interface' +
 'input/output' +
 'input' +
 'in' +
@@ -280,7 +278,6 @@ KEYS = P
 'data' +
 'continue' +
 'code' +
-'class' +
 'call/recursive' +
 'call' +
 'break' +
@@ -537,10 +534,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __Sets_many = (CKK'='+CKK':=') * (V'__sets_many' + PARENS(V'__sets_many'))
 
     , __sets_one =
-                --Cc'emit-ext'   * (V'EmitExt' + K'('*V'EmitExt'*K')')
-              Cc'data-constr' * V'Data_constr_root'
-              + Cc'__trav_loop' * V'_TraverseLoop'  -- before Rec
-              + Cc'__trav_rec'  * V'_TraverseRec'   -- after Loop
+          V'_Set_Data'
         + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call' + V'_Set_Emit_Ext_req'
         + V'_Set_Do'
         + V'_Set_Await'
@@ -551,19 +545,19 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
         + V'_Set_Vec'
         + V'_Set_None'
         + V'_Set_Exp'
-              + Cc'do-org'     * V'_DoOrg'
 
     , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await' + V'_Set_Watching'
 
     -- after `=´
 
-    , _Set_Do       = #(K'do'*KK'/')     * V'Do'
+    , _Set_Do       = #(K'do'*KK'/')    * V'Do'
     , _Set_Await    = #K'await'         * V'_Awaits'
     , _Set_Watching = #K'watching'      * V'_Watching'
     , _Set_Spawn    = #K'spawn'         * V'Spawn'
     , _Set_Thread   = #K'async/thread'  * V'_Thread'
     , _Set_Lua      = #V'__lua_pre'     * V'_Lua'
     , _Set_Vec      = #V'__vec_pre'     * V'_Vecnew'
+    , _Set_Data     = #V'__data_pre'    * V'Datanew'
     , _Set_None     = #K'_'             * V'ID_none'
     , _Set_Exp      =                     V'__Exp'
 
@@ -574,10 +568,15 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __extcall_pre = (K'call/recursive'+K'call') * V'ID_ext'
     , __lua_pre     = KK'[' * (P'='^0) * '['
     , __vec_pre     = KK'[' - V'__lua_pre'
+    , __data_pre    = K'new'^-1 * V'__ID_abs'
 
     , Vectup  = V'__vec_pre' * OPT(V'Explist') * KK']'
     , _Vecnew = V'Vectup' * (KK'..' * (V'__Exp' + #KK'['*V'Vectup'))^0
 
+    , Datanew = OPT(CK'new') * V'Datanew_one'
+    , Datanew_one  = V'__ID_abs' * PARENS(V'_Data_explist')
+    , _Data_explist    = ( V'__data_expitem'*(KK','*V'__data_expitem')^0 )^-1
+    , __data_expitem   = (V'Datanew_one' + V'_Vecnew' + V'__Exp')
 
 -- IDS
 
@@ -607,51 +606,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
  --<<<
 
-
-
-
-
-
-
-
-
-
-    -- variables, organisms
-    , __Org = CK'var' * OPT(CKK'&') * V'Type' * (V'__ID_int'+V'ID_none') *
-                        ( K'with' * V'Dcl_constr' * K'end'
-                        + KK'=' * V'_Var_constr' * (
-                            OPT(K'with' * V'Dcl_constr' * K'end')
-                          ) )
-            + CK'vector' * OPT(CKK'&') * V'__Dim' * V'Type' * (V'__ID_int'+V'ID_none') *
-                        ( K'with' * V'Dcl_constr' * K'end'
-                        + KK'=' * V'_Var_constr' * (
-                            OPT(K'with' * V'Dcl_constr' * K'end')
-                          ) )
-    , _Var_constr = V'__ID_cls' * (KK'.'-'..') * V'__ID_int' *
-                        PARENS(OPT(V'Explist'))
-
-    -- auxiliary
-    , Dcl_constr = V'Block'
-
-    -- classes / interfaces
-    , Dcl_cls  = K'class'
-               * V'__ID_cls'
-               * K'with' * V'_BlockI' * V'__Do'
-    , _Dcl_ifc = K'interface'
-               * V'__ID_cls'
-               * K'with' * V'_BlockI' * K'end'
-    , _BlockI = ( (V'__Org'
-                  + V'_Vars_set'  + V'_Vars'
-                  + V'_Vecs_set'  + V'_Vecs'
-                  + V'_Pools_set' + V'_Pools'
-                  + V'_Evts_set'  + V'_Evts'
-                  + V'_Code_proto' + V'_Dcl_imp')
-                    * V'__seqs'
-                + V'Dcl_mode' * KK':'
-                )^0
-    , _Dcl_imp = K'interface' * V'__ID_cls' * (KK',' * V'__ID_cls')^0
-    , Dcl_mode = CK'input/output'+CK'output/input'+CK'input'+CK'output'
-
     -- data types
     , __data       = K'data' * V'__ID_abs' * OPT(K'is' * V'ID_abs')
     , _Data_simple = V'__data'
@@ -660,65 +614,16 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                             V'__seqs'
                      )^1 * K'end'
 
-    -- data-constr
-    , Data_constr_root = OPT(CK'new') * V'Data_constr_one'
-    , Data_constr_one  = V'__ID_abs' * PARENS(V'_Data_explist')
-    , _Data_explist    = ( V'__data_expitem'*(KK','*V'__data_expitem')^0 )^-1
-    , __data_expitem   = (V'Data_constr_one' + V'_Vecnew' + V'__Exp')
-
--- Organism instantiation
-
-    -- do organism
-    , _DoOrg = K'do' * (V'__ID_cls' + KK'@'*V'__Exp')
-             * OPT(V'_Spawn_constr')
-             * OPT(K'with'*V'Dcl_constr'* K'end')
-
     -- spawn / kill
     , _SpawnAnon = K'spawn' * V'__Do'
-    , Spawn = K'spawn' * V'__ID_cls'
-            * OPT(V'_Spawn_constr')
-            * OPT(K'in'*V'__Exp')
-            * OPT(K'with'*V'Dcl_constr'* K'end')
-    , _Spawn_constr = (KK'.'-'..') * V'__ID_int' * PARENS(OPT(V'Explist'))
-
+    , Spawn = K'spawn' * V'CALL'
     , Kill  = K'kill' * V'__Exp' * OPT(KK'=>'*V'__Exp')
 
 -- Flow control
 
-    -- traverse
-    , _TraverseLoop = K'traverse' * (V'ID_int'+V'ID_none') * K'in' * (
-                        Cc'number' * (KK'['*(V'__Exp'+Cc'[]')*KK']')
-                      +
-                        Cc'adt'    * V'__Exp'
-                    )
-                    * OPT(K'with'*V'_BlockI')
-                    * V'__Do'
-    , _TraverseRec  = K'traverse' * OPT('/'*V'NUMBER') * V'__Exp'
-                    * OPT(K'with'*V'Block'*K'end')
-
-        --[[
-        loop/N i in <e-num> do
-            ...
-        end
-        loop (T*)i in <e-pool-org> do
-            ...
-        end
-        loop i in <e-rec-data> do
-            ...
-        end
-        loop (a,b,c) in <e-evt> do
-            ...
-        end
-            , _Iter   = K'loop' * K'('*V'Type'*K')'
-                      *     V'__ID_int' * K'in' * V'__Exp'
-                      * V'__Do'
-        ]]
-
-    , __ID_cls   = CK(m.R'AZ'*Alphanum^0 -KEYS, 'class identifier')
-
 -- Types
 
-    , __type = CK(TYPES,'primitive type') + V'__ID_abs' + V'__ID_cls'
+    , __type = CK(TYPES,'primitive type') + V'__ID_abs'
     , __type_ptr = CKK'&&' -(P'&'^3)
     , __type_vec = KK'[' * V'__Exp' * KK']'
     , Type = V'__type'   * (V'__type_ptr'              )^0 * CKK'?'^-1
@@ -762,7 +667,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
              + V'ID_int'     + V'ID_nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
-             + V'Nat_Exp'  --+ V'Vector_constr'
+             + V'Nat_Exp'
              + CK'call'     * V'__Exp'
              + CK'call/recursive' * V'__Exp'
 
@@ -800,7 +705,6 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __Stmt_Last  = V'_Escape' + V'_Break' + V'_Continue' + V'Await_Forever'
     , __Stmt_Last_Block = V'Par'
     , __Stmt_Simple    = V'Nothing'
-                 + V'__Org'
                  + V'_Vars_set'  + V'_Vars'
                  + V'_Vecs_set'  + V'_Vecs'
                  + V'_Pools_set' + V'_Pools'
@@ -814,16 +718,14 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                  + V'Emit_Int'
                  + V'Spawn' + V'Kill'
-                 + V'_TraverseRec'
-                 + V'_DoOrg'
                  + V'Nat_Stmt'
              + V'CallStmt' -- last
 
     , __Stmt_Block = V'_Code_impl' + V'_Extcall_impl' + V'_Extreq_impl'
-              + V'_Dcl_ifc'  + V'Dcl_cls' + V'_Data_block'
+              + V'_Data_block'
               + V'Nat_Block'
               + V'Do'    + V'If'
-              + V'_Loop' + V'_Every' + V'_TraverseLoop'
+              + V'_Loop' + V'_Every'
               + V'_SpawnAnon'
               + V'Finalize'
               + V'Paror' + V'Parand' + V'_Watching'

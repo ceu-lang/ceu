@@ -153,7 +153,6 @@ escape a;
 }
 
 -- KKK
---]===]
 
 Test { [[
 data DDD with
@@ -300,11 +299,7 @@ do
     x = x + 1;
     escape x;
 end
-var int a = do @ Code(1);
-/*
-var Code c = Code(1);
-await c;
-*/
+var int a = await Code(1);
 escape a;
 ]],
     run = { ['~>1s']=3 },
@@ -907,7 +902,7 @@ var bool a? = 1;
 a? = 2;
 escape a?;
 ]],
-    parser = 'line 2 : after `a´ : expected `with´',
+    parser = 'line 2 : after `a´ : expected `=´ or `:=´ or `,´ or `;´',
     --run = 2,
 }
 
@@ -964,7 +959,8 @@ var int _ = 2;
 
 escape __;
 ]],
-    parser = 'line 6 : after `=´ : expected class identifier',
+    parser = 'line 6 : after `int´ : expected type modifier or internal identifier',
+    --parser = 'line 6 : after `=´ : expected class identifier',
     --env = 'line 6 : invalid access to `_´',
     --env = 'line 6 : variable/event "_" is not declared',
     --run = 3,
@@ -998,7 +994,8 @@ end
 
 escape (int) __;
 ]],
-    parser = 'line 6 : after `_´ : expected `with´',
+    parser = 'line 6 : after `int´ : expected type modifier or internal identifier',
+    --parser = 'line 6 : after `_´ : expected `with´',
     --run = 3,
 }
 
@@ -2768,6 +2765,7 @@ escape 0;
     env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
 
+--]===]
 Test { [[
 var u8&& ptr =
     par do
@@ -28144,7 +28142,7 @@ escape v1==v2;
 --do return end
 
 Test { [[
-class A with
+code/instantaneous A (void)=>void
 do
     escape 1;
 end
@@ -28155,8 +28153,7 @@ escape 1;
 }
 
 Test { [[
-class T with
-    var int x;
+code/instantaneous T (var int x)=>void
 do
 end
 escape 1;
@@ -28164,8 +28161,7 @@ escape 1;
     gcc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
 }
 Test { [[
-class T with
-    var int x=0;
+code/instantaneous T (var int x)=>void
 do
     if x then end;
 end
@@ -28174,8 +28170,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-class T with
-    var int x;
+code/instantaneous T (var int x)=>void
 do
     var int v;
 end
@@ -28193,15 +28188,14 @@ escape _V;
 }
 
 Test { [[
-class T with do end
+code/instantaneous T void=>void do end
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
-    var int x;
+code/instantaneous T (var int x)=>void
 do
     var int v;
 end
@@ -28217,8 +28211,7 @@ escape _V;
 }
 
 Test { [[
-class T with
-    var int a;
+code/instantaneous T (var int a)=>void
 do
 end
 
@@ -28232,87 +28225,40 @@ escape t.a;
 }
 
 Test { [[
-var TestX x with
-  this.k = 5;
-end;
+call TestX(5);
+escape 0;
 ]],
     env = 'line 1 : undeclared type `TestX´',
 }
-Test { [[
-do TestX with
-  this.k = 5;
-end;
-]],
-    env = 'line 1 : undeclared type `TestX´',
-}
-Test { [[
-class Test with
-    var u8 k;
-do
-end
-
-do TestX with
-  this.k = 5;
-end;
-]],
-    env = 'line 6 : undeclared type `TestX´',
-}
-Test { [[
-interface I with end
-
-class T with
-    var int x;
-do
-    var int v;
-end
-
-native do
-    int V = sizeof(CEU_T);
-end
-native _V;
-escape _V;
-]],
-    todo = 'recalculate',
-    run = 8,   -- 1/1 cls / 2 trl / 0 x / 4 v
-}
 
 Test { [[
-class T with
-do
-end
-var T y;
+code/delayed T void=>void do end
+T();
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
-class T with
-    var int a;
-do
+code/delayed T void=>void do end
+par/or do
+    T();
+with
+    T();
 end
-
-var T y with
-    this.a = 10;
-end;
-
-var T x with
-    this.a = 10;
-end;
 
 input void OS_START;
 await OS_START;
 
-escape x.a;
+escape 1;
 ]],
-    run = 10,
+    run = 1,
 }
+
 
 Test { [[
 input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
-class UITexture with
-    var int pad_y = 0;
-do
+code/delayed T void=>void do
     var _SDL_MouseButtonEvent&& but = await SDL_MOUSEBUTTONUP;
 end
 await FOREVER;
@@ -28324,9 +28270,7 @@ await FOREVER;
 }
 
 Test { [[
-class T with
-    var int v = 10;
-do
+code/delayed T void=>void do
     await FOREVER;
 end
 
@@ -28338,36 +28282,7 @@ escape 1;
 ]],
     run = { ['~>1s'] = 1 },
 }
-Test { [[
-class T with
-    var int a;
-do
-end
-var T x with
-    this.a = 30;
-end;
 
-escape x.a;
-]],
-    run = 30,
-}
-Test { [[
-class T with
-    var int a, b;
-do
-end
-
-vector[2] T y;
-    y[0].a = 10;
-    y[1].a = 20;
-
-var T x;
-    x.a = 30;
-
-escape x.a + y[0].a + y[1].a;
-]],
-    ref = 'line 6 : missing initialization for field "a" (declared in tests.lua:2)',
-}
 Test { [[
 class T with
     var int a;
