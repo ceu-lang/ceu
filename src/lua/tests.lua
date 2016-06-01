@@ -75,7 +75,6 @@ escape a;
 }
 
 --]===]
-
 --do return end
 
 ----------------------------------------------------------------------------
@@ -28048,7 +28047,7 @@ escape a;
 }
 
 Test { [[
-ddd Data with
+data Data with
     var& int v;
 end
 
