@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -18807,7 +18806,7 @@ do
     with
         await OS_START;
         var int i = 1;
-        async do
+        async (i) do
             emit E => &&i;
         end
     end
@@ -21297,12 +21296,13 @@ escape ret;
 
 Test { [[
 input Z  (var int a)=>void do
-    this.v = a;
+    v = a;
 end
 var int v = 0;
 call Z=>1;
-escape this.v;
+escape v;
 ]],
+    todo = 'globals',
     syms = 'line 2 : internal identifier "v" is not declared',
 }
 
@@ -21318,6 +21318,7 @@ call Z=>1;
 _fprintf(_stderr,"v=%d\n", v);
 escape this.v;
 ]],
+    todo = 'globals',
     run = 1,
 }
 
@@ -21374,6 +21375,15 @@ input A  (var void a, var  int a)=>void do
 end
 escape 1;
 ]],
+    syms = 'line 1 : declaration of "a" hides previous declaration (tests.lua : line 1)',
+}
+
+Test { [[
+input A  (var void a, var  int v)=>void do
+    v = 1;
+end
+escape 1;
+]],
     env = 'line 1 : type cannot be `void´',
 }
 
@@ -21386,6 +21396,7 @@ end
 call A;
 escape v;
 ]],
+    todo = 'global',
     run = 1,
 }
 
@@ -26656,6 +26667,7 @@ escape ret;
 
 -->>> DONT CARE, NONE
 
+--]===]
 Test { [[
 var int a = _;
 loop _ in [0|>10[ do

@@ -14,15 +14,25 @@ F = {
 
 -------------------------------------------------------------------------------
 
+    _Data_block__PRE = function (me)
+        local id, super =  unpack(me)
+        return node('Data_block', me.ln,
+                id, super,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        unpack(me, 3))))
+    end,
+
+    Extcall_impl__PRE = 'Code_impl__PRE',
     Code_impl__PRE = function (me)
         local pre, is_rec, id, ins, out, blk = unpack(me)
 
         -- insert parameters "ins" in "blk"
-        AST.asr(ins,'_Typepars')
+        AST.asr(ins,'Typepars_ids')
         local dcls = node('Stmts', me.ln)
         for _, v in ipairs(ins) do
             if v ~= 'void' then
-                AST.asr(v,'_Typepars_item_id')
+                AST.asr(v,'Typepars_ids_item')
                 local pre,is_alias = unpack(v)
                 if pre == 'var' then
                     local _,_,hold,tp,id = unpack(v)
@@ -40,7 +50,7 @@ F = {
             end
         end
         local stmts = AST.asr(blk,'Block', 1,'_Stmts')
-        table.insert(stmts, 1, dcls)
+        table.insert(stmts[1], 1, dcls)
     end,
 
 -------------------------------------------------------------------------------
@@ -204,7 +214,7 @@ DBG('TODO: _Loop_Pool')
     __dcls__PRE = function (me, tag, idx)
         local ids = { unpack(me, idx+1) }
         local ret = node('Stmts', me.ln)
-        for id in ipairs(ids) do
+        for _,id in ipairs(ids) do
             local t = {}
             for i=1, idx do
                 t[i] = AST.copy(me[i])

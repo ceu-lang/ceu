@@ -23,7 +23,7 @@ local function iter_boundary (cur, id)
                 if not cross then
                     return nil
                 end
-            elseif c.tag=='Data' or c.tag=='Code' then
+            elseif c.tag=='Data' or c.tag=='Code_impl' or c.tag=='Extcall_impl' then
                 return nil
             end
         end

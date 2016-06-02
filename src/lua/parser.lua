@@ -407,9 +407,9 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __extcall = (CK'input' + CK'output')
                     * OPT(CK'/recursive')
                     * V'__ID_ext'
-    , _Extcall_proto = V'__extcall' * (V'Typepars_ids'+V'Typepars_anon') *
+    , Extcall_proto = V'__extcall' * (V'Typepars_ids'+V'Typepars_anon') *
                                         KK'=>' * V'Type'
-    , _Extcall_impl  = V'__extcall' * V'Typepars_ids' *
+    , Extcall_impl  = V'__extcall' * V'Typepars_ids' *
                                         KK'=>' * V'Type' *
                        V'__Do'
 
@@ -432,23 +432,23 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                      + CK'event'  * CKK'&'
                      + CK'var'   * OPT(CKK'&') * OPT(KK'/'*CK'hold')
 
-    , Typepars_item_id   = V'__typepars_pre' * V'Type' * V'__ID_int'
-    , Typepars_item_anon = V'__typepars_pre' * V'Type'
+    , Typepars_ids_item  = V'__typepars_pre' * V'Type' * V'__ID_int'
+    , Typepars_anon_item = V'__typepars_pre' * V'Type'
 
     , Typepars_ids = #KK'(' * (
                     PARENS(P'void') +
-                    PARENS(V'Typepars_item_id'   * (KK','*V'Typepars_item_id')^0)
+                    PARENS(V'Typepars_ids_item'   * (KK','*V'Typepars_ids_item')^0)
                   )
     , Typepars_anon = #KK'(' * (
                     PARENS(P'void') +
-                    PARENS(V'Typepars_item_anon' * (KK','*V'Typepars_item_anon')^0)
+                    PARENS(V'Typepars_anon_item' * (KK','*V'Typepars_anon_item')^0)
                   )
 
 -- DATA
 
     , __data       = K'data' * V'__ID_abs' * OPT(K'is' * V'ID_abs')
-    , Data_simple = V'__data'
-    , Data_block  = V'__data' * K'with' * (
+    , _Data_simple = V'__data'
+    , _Data_block  = V'__data' * K'with' * (
                         (V'_Vars'+V'_Vecs'+V'_Pools'+V'_Evts') *
                             V'__seqs'
                      )^1 * K'end'
@@ -734,8 +734,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Pools_set' + V'_Pools'
                  + V'_Evts_set'  + V'_Evts'
                  + V'_Exts'
-                 + V'Data_simple'
-                 + V'Code_proto' + V'_Extcall_proto' + V'_Extreq_proto'
+                 + V'_Data_simple'
+                 + V'Code_proto' + V'Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Nat_End'
                  + V'Deterministic'
                  + V'_Set_one' + V'_Set_many'
@@ -748,8 +748,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 + I((K'class'+K'interface'+K'traverse')) * E'TODO: class/interface'
              + V'CallStmt' -- last
 
-    , __Stmt_Block = V'Code_impl' + V'_Extcall_impl' + V'_Extreq_impl'
-              + V'Data_block'
+    , __Stmt_Block = V'Code_impl' + V'Extcall_impl' + V'_Extreq_impl'
+              + V'_Data_block'
               + V'Nat_Block'
               + V'Do'    + V'If'
               + V'Loop' + V'_Loop_Num' + V'_Loop_Pool'
