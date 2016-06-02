@@ -26,7 +26,7 @@ syn keyword cStatement  event every finalize FOREVER global if input loop nothin
 syn keyword cStatement  output pre par pause return then until var vector with
 syn keyword cStatement  include kill spawn thread
 syn keyword cStatement  escape call isr atomic request in is
-syn keyword cStatement  watching tag new pool
+syn keyword cStatement  watching new pool
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 " A bunch of useful C keywords

@@ -232,7 +232,6 @@ KEYS = P
 'true' +
 'this' +
 'then' +
-'tag' +
 'spawn' +
 'sizeof' +
 'request' +
@@ -346,9 +345,22 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
            OPT(K'else' * V'Block') *
            K'end'
 
-    , _Loop   = K'loop' * OPT('/'*V'__Exp') *
-                    OPT((V'ID_int'+V'ID_none') * OPT(K'in'*V'__Exp')) *
-                V'__Do'
+    , Loop       = K'loop' * OPT('/'*V'__Exp') *
+                   V'__Do'
+    , _Loop_Num  = K'loop' * OPT('/'*V'__Exp') *
+                    (V'ID_int'+V'ID_none') * OPT(
+                        K'in' * (KK'[' + KK']') *
+                                    OPT(V'__Exp') *
+                                    (KK'->' + KK'<-') *
+                                    OPT(V'__Exp') *
+                                (KK'[' + KK']') *
+                                OPT(KK',' * V'__Exp')
+                    ) *
+                   V'__Do'
+    , _Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
+                    (V'ID_int'+V'ID_none') * K'in' * V'__Exp' *
+                   V'__Do'
+
     , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
                     (V'__awaits'-I(V'Await_Code')) *
                 V'__Do'
@@ -730,7 +742,8 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
               + V'Data_block'
               + V'Nat_Block'
               + V'Do'    + V'If'
-              + V'_Loop' + V'_Every'
+              + V'Loop' + V'_Loop_Num' + V'_Loop_Pool'
+              + V'_Every'
               + V'_Spawn_Block'
               + V'Finalize'
               + V'Paror' + V'Parand' + V'_Watching'
