@@ -417,9 +417,9 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __extreq = (CK'input/output' + CK'output/input')
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
                    * V'__ID_ext'
-    , Extreq_proto = V'__extreq' * (V'Typepars_ids'+V'Typepars_anon') *
+    , _Extreq_proto = V'__extreq' * (V'Typepars_ids'+V'Typepars_anon') *
                                         KK'=>' * V'Type'
-    , Extreq_impl  = V'__extreq' * V'Typepars_ids' *
+    , _Extreq_impl  = V'__extreq' * V'Typepars_ids' *
                                         KK'=>' * V'Type' *
                       V'__Do'
 
@@ -735,7 +735,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Evts_set'  + V'_Evts'
                  + V'_Exts'
                  + V'_Data_simple'
-                 + V'Code_proto' + V'Extcall_proto' + V'Extreq_proto'
+                 + V'Code_proto' + V'Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Nat_End'
                  + V'Deterministic'
                  + V'_Set_one' + V'_Set_many'
@@ -748,7 +748,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 + I((K'class'+K'interface'+K'traverse')) * E'TODO: class/interface'
              + V'CallStmt' -- last
 
-    , __Stmt_Block = V'Code_impl' + V'Extcall_impl' + V'Extreq_impl'
+    , __Stmt_Block = V'Code_impl' + V'Extcall_impl' + V'_Extreq_impl'
               + V'_Data_block'
               + V'Nat_Block'
               + V'Do'    + V'If'

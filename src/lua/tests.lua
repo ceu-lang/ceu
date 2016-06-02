@@ -53721,7 +53721,9 @@ escape _strlen(&&t.name as _char&&);
 
 --<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 
--- REQUESTS
+-->>> REQUESTS
+
+if false then
 
 Test { [[
 output/input X (var int max)=>void;
@@ -54890,7 +54892,9 @@ escape _V;
     run = 5,
 }
 
---<< REQUESTS
+end
+
+--<<< REQUESTS
 
 -->>> DATA INI
 

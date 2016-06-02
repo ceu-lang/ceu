@@ -34,7 +34,6 @@ F = {
                         unpack(me, 3))))
     end,
 
-    Extreq_impl__PRE = 'Code_impl__PRE',
     Extcall_impl__PRE = 'Code_impl__PRE',
     Code_impl__PRE = function (me)
         local pre, is_rec, id, ins, out, blk = unpack(me)
@@ -63,6 +62,14 @@ F = {
         end
         local stmts = AST.asr(blk,'Block', 1,'Stmts')
         table.insert(stmts, 1, dcls)
+    end,
+
+    Emit_Ext_req__PRE = '_Extreq_proto__PRE',
+    _Extreq_impl__PRE = '_Extreq_proto__PRE',
+    _Extreq_proto__PRE = function (me)
+-- TODO
+DBG('TODO: _Extreq', me.tag)
+        return node('Nothing', me.ln)
     end,
 
 -------------------------------------------------------------------------------

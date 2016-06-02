@@ -57,14 +57,6 @@ F = {
         tops_new(me)
     end,
 
-    Extreq_proto = 'Extcall_impl',
-    Extreq_impl = function (me)
-        local grp, _, id = unpack(me)
-        me.id    = id
-        me.group = grp
-        tops_new(me)
-    end,
-
     Ext = function (me)
         local grp, tp, id = unpack(me)
         me.id    = id
