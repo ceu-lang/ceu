@@ -221,21 +221,6 @@ DBG('TODO: _Loop_Pool')
 
     -- single declaration with multiple ids
     --      => multiple declarations with single id
-    _Nats__PRE = function (me)
-        local mod = unpack(me)
-        local ids = { unpack(me,2) }
-
-        local ret = node('Stmts', me.ln)
-        for _, id in ipairs(ids) do
-            ret[#ret+1] = node('Nat', me.ln, id, mod)
-        end
-        return ret
-    end,
-
--------------------------------------------------------------------------------
-
-    -- single declaration with multiple ids
-    --      => multiple declarations with single id
 
     __dcls__PRE = function (me, tag, idx)
         local ids = { unpack(me, idx+1) }
@@ -261,6 +246,9 @@ DBG('TODO: _Loop_Pool')
     end,
     _Evts__PRE = function (me)
         return F.__dcls__PRE(me, 'Evt', 2)
+    end,
+    _Nats__PRE = function (me)
+        return F.__dcls__PRE(me, 'Nat', 1)
     end,
 
     __dcls_set__PRE = function (me, tag, idx)

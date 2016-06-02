@@ -34,7 +34,7 @@ F = {
         native_end = true
     end,
     Nat = function (me)
-        local id = unpack(me)
+        local _,id = unpack(me)
         me.id    = id
         me.group = 'native'
         tops_new(me)
