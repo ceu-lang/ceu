@@ -1288,7 +1288,7 @@ Test { [[var int a; a = emit a => 1; escape a;]],
 }
 
 Test { [[var int a; emit a => 1; escape a;]],
-    locs = 'line 1 : identifier "a" is not an event (tests.lua : line 1)',
+    env = 'line 1 : identifier "a" is not an event (tests.lua : line 1)',
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; escape a;]],
@@ -15892,7 +15892,7 @@ end;
 escape a;
 ]],
     wrn = true,
-    locs = 'line 8 : identifier "a" is not an event (tests.lua : line 5)',
+    env = 'line 8 : identifier "a" is not an event (tests.lua : line 5)',
 }
 
 Test { [[
@@ -22398,7 +22398,7 @@ escape t.v[0];
 Test { [[vector[2] int v; await v;     escape 0;]],
         env='event "v" is not declared' }
 Test { [[vector[2] int v; emit v;    escape 0;]],
-        locs = 'line 1 : identifier "v" is not an event (tests.lua : line 1)',
+        env = 'line 1 : identifier "v" is not an event (tests.lua : line 1)',
 }
 Test { [[vector[0] int[2] v; await v;  escape 0;]],
         --env='line 1 : event "?" is not declared'
