@@ -351,7 +351,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                     (V'ID_int'+V'ID_none') * OPT(
                         K'in' * (KK'[' + KK']') *
                                     OPT(V'__Exp') *
-                                    (KK'->' + KK'<-') *
+                                    (KK'|>' + KK'<|') *
                                     OPT(V'__Exp') *
                                 (KK'[' + KK']') *
                                 OPT(KK',' * V'__Exp')
