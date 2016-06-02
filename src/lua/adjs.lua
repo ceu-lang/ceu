@@ -14,6 +14,107 @@ F = {
 
 -------------------------------------------------------------------------------
 
+    _Loop_Num__PRE = function (me)
+        local max, i, lb, fr, dir, to, rb, step, blk = unpack(me)
+
+        -- loop i do end
+        -- loop i in [0 |> _] do end
+        if #me == 3 then
+            blk  = fr
+            lb   = '['
+            fr   = node('NUMBER', me.ln, 0)
+            dir  = '|>'
+            to   = node('ID_none', me.ln)
+            rb   = ']'
+            step = false
+        end
+
+        -- loop i in ]0 ...] do end
+        -- loop i in [0+1 ...] do end
+        if lb == ']' then
+            fr = node('Op2_+', me.ln, fr, node('NUMBER',me.ln,1))
+        end
+
+        -- loop i in [... 10[ do end
+        -- loop i in [... 10-1] do end
+        if rb == '[' then
+            fr = node('Op2_-', me.ln, to, node('NUMBER',me.ln,1))
+        end
+
+        -- loop i in [...] do end
+        -- loop i in [...], 1 do end
+        if step == false then
+            step = node('NUMBER', me.ln, 1)
+        end
+
+        -- loop i in [0 <| 10], 1 do end
+        -- loop i in [10 |> 1], -1 do end
+        if dir == '<|' then
+            fr, to = to, fr
+            step = node('Op1_-', me.ln, step)
+        end
+
+        local dcl_i = node('Var', me.ln,
+                        node('Type', me.ln,
+                            node('ID_prim', me.ln, 'int')),
+                            i)
+        dcl_i.is_implicit = true
+        local dcl_to = node('Var', me.ln,
+                        node('Type', me.ln,
+                            node('ID_prim', me.ln, 'int')),
+                            '__to_'..me.n)
+
+        local cmp
+        if dir == '|>' then
+            -- if i > to then break end
+            cmp = node('Op2_>', me.ln,
+                    node('ID_int', me.ln, i),
+                    node('ID_int', me.ln, '__to_'..me.n))
+        else
+            -- if i < to then break end
+            cmp = node('Op2_<', me.ln,
+                    node('ID_int', me.ln, i),
+                    node('ID_int', me.ln, '__to_'..me.n))
+        end
+        cmp = node('If', me.ln, cmp,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        node('Break', me.ln))),
+                node('Block', me.ln,
+                    node('Stmts', me.ln)))
+
+        return node('Block', me.ln,
+                node('Stmts', me.ln,
+                    dcl_i,
+                    dcl_to,
+                    node('Set_Exp', me.ln,
+                        fr,
+                        node('ID_int', me.ln, i)),
+                    node('Set_Exp', me.ln,
+                        to,
+                        node('ID_int', me.ln, '__to_'..me.n)),
+                    node('Loop', me.ln,
+                        max,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                cmp,
+                                blk)))))
+    end,
+
+    _Loop_Pool__PRE = function (me)
+-- TODO
+DBG('TODO: _Loop_Pool')
+        return node('Nothing', me.ln)
+    end,
+
+    _Every__PRE = function (me)
+-- TODO
+DBG('TODO: _Every')
+        return node('Nothing', me.ln)
+    end,
+
+-------------------------------------------------------------------------------
+
     -- single declaration with multiple ids
     --      => multiple declarations with single id
     _Nats__PRE = function (me)

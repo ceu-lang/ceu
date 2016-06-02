@@ -348,12 +348,11 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , Loop       = K'loop' * OPT('/'*V'__Exp') *
                    V'__Do'
     , _Loop_Num  = K'loop' * OPT('/'*V'__Exp') *
-                    (V'ID_int'+V'ID_none') * OPT(
-                        K'in' * (KK'[' + KK']') *
-                                    OPT(V'__Exp') *
-                                    (KK'|>' + KK'<|') *
-                                    OPT(V'__Exp') *
-                                (KK'[' + KK']') *
+                    (V'__ID_int'+V'ID_none') * OPT(
+                        K'in' * (CKK'[' + CKK']') * (
+                                    V'__Exp' * CKK'|>' * (V'ID_none' + V'__Exp') +
+                                    (V'ID_none' + V'__Exp') * CKK'<|' * V'__Exp'
+                                ) * (CKK'[' + CKK']') *
                                 OPT(KK',' * V'__Exp')
                     ) *
                    V'__Do'

@@ -20,8 +20,9 @@ local function syms_new (me, blk)
     AST.asr(blk, 'Block')
 
     local old = SYMS.get(me.id, blk)
+    local implicit = (me.is_implicit and 'implicit ') or ''
     WRN(not old, me, old and
-        'declaration of "'..me.id..'" hides previous declaration'..
+        implicit..'declaration of "'..me.id..'" hides previous declaration'..
             ' ('..old.ln[1]..' : line '..old.ln[2]..')')
 
     blk.syms[#blk.syms+1] = me

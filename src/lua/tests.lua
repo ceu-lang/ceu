@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2010,6 +2009,19 @@ var int a = do/B
 end;
 escape a;
 ]],
+    syms = 'line 2 : declaration of "a" hides previous declaration (tests.lua : line 1)',
+}
+
+Test { [[
+var int a = do/B
+    var int a = do/A
+        escape/B 1;
+    end;
+    escape/A a;
+end;
+escape a;
+]],
+    wrn = true,
     env = 'A not defined',
 }
 
@@ -2093,6 +2105,12 @@ a = do end;
 
 Test { [[
 a = do/X end;
+]],
+    syms = 'line 1 : internal identifier "a" is not declared',
+}
+
+Test { [[
+var int a = do/X end;
 ]],
     run = 'assertion',
 }
@@ -2509,7 +2527,7 @@ escape b;
 -->>> LOOP
 
 Test { [[
-loop i in [0 |> 10[ do
+loop i in 10 do
 end
 escape 1;
 ]],
@@ -2578,7 +2596,32 @@ escape ret;
 
 Test { [[
 var int sum = 0;
-loop i in [0|>] do
+loop i in [_|>0] do
+    if i == 10 then
+        break;
+    end
+    sum = sum + 1;
+end
+escape sum;
+]],
+    parser = 'line 2 : after `_´ : expected `<|´',
+}
+Test { [[
+var int sum = 0;
+loop i in [0<|_] do
+    if i == 10 then
+        break;
+    end
+    sum = sum + 1;
+end
+escape sum;
+]],
+    parser = 'line 2 : after `<|´ : expected expression',
+}
+
+Test { [[
+var int sum = 0;
+loop i in [0|>_] do
     if i == 10 then
         break;
     end
@@ -2652,7 +2695,7 @@ escape ret;
 
 Test { [[
 var int sum = 0;
-loop i in [<|0] do
+loop i in [_<|0] do
     if i == -10 then
         break;
     end
@@ -2681,6 +2724,21 @@ loop i in [0|>n[ do
     sum = sum + 1;
 end
 escape n;
+]],
+    loop = true,
+    tight = 'tight loop',
+    run = 10,
+}
+
+Test { [[
+var int sum = 0;
+loop i do
+    if i == 10 then
+        break;
+    end
+    sum = sum + 1;
+end
+escape sum;
 ]],
     loop = true,
     tight = 'tight loop',
@@ -3376,6 +3434,15 @@ end;
     },
 }
 
+Test { [[
+var int i;
+loop i do
+end
+escape 0;
+]],
+    syms = 'line 2 : implicit declaration of "i" hides previous declaration (tests.lua : line 1)',
+}
+
 -- EVERY
 
 Test { [[
@@ -3411,7 +3478,7 @@ every x in E do
 end
 escape 1;
 ]],
-    syms = 'line 3 : implicit declaration of "x" hides previous declaration',
+    env = 'line 3 : implicit declaration of "x" hides previous declaration',
 }
 
 Test { [[
@@ -3583,7 +3650,7 @@ with
     end
 end
 ]],
-    syms = 'line 4 : implicit declaration of "a" hides previous declaration',
+    env = 'line 4 : implicit declaration of "a" hides previous declaration',
 }
 Test { [[
 input (int,int) A;
@@ -5292,6 +5359,7 @@ escape ret;
     run = 5,
 }
 
+--]===]
 Test { [[
 vector[2] int v;
 v[0] = 1;
