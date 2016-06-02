@@ -328,6 +328,17 @@ var bool a = 1;
 a = 2;
 escape a;
 ]],
+    tops = 'line 1 : input "A declared but not used',
+    --run = 2,
+}
+
+Test { [[
+input void A;
+var bool a = 1;
+a = 2;
+escape a;
+]],
+    wrn = true,
     run = 2,
 }
 
@@ -444,6 +455,7 @@ end
 var _int x = _f() as /plain;
 escape x;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -456,6 +468,7 @@ end
 var _int x = _f();
 escape x;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -467,6 +480,7 @@ end
 var _int x = (_f as /pure)();
 escape x;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -480,6 +494,7 @@ var void&& ptr = null;
 var int x = (_f as/nohold)(ptr);
 escape x;
 ]],
+    wrn = true,
     run = 1,
 }
 Test { [[
@@ -493,6 +508,7 @@ var void&& ptr = null;
 var int x = (_f as/pure)(ptr);
 escape x;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -519,6 +535,7 @@ with
 end
 escape ret;
 ]],
+    wrn = true,
     run = { ['~>1s;~>A;~>B']=5 },
 }
 
@@ -618,6 +635,7 @@ var int a = 1;
 a = 2;
 escape a;
 ]],
+    wrn = true,
     run = 2,
 }
 
@@ -627,6 +645,7 @@ var usize a = 1;
 a = 2;
 escape a;
 ]],
+    wrn = true,
     run = 2,
 }
 
@@ -636,6 +655,7 @@ var byte a = 1;
 a = 2;
 escape a;
 ]],
+    wrn = true,
     run = 2,
 }
 
@@ -1107,12 +1127,8 @@ Test { [[input  int A;]],
     },
 }
 Test { [[input int A,A; escape 0;]],
-    --env = 'event "A" is already declared',
-    run = 0,
-}
-Test { [[input int A,A; escape 0;]],
-    wrn = true,
-    --env = 'event "A" is already declared',
+    tops = 'line 1 : identifier "A" is already declared (tests.lua : line 1)',
+    --tops = 'external "A" is already declared',
     run = 0,
 }
 Test { [[
@@ -1125,7 +1141,7 @@ input int A,B,Z;
 }
 
 Test { [[await A; escape 0;]],
-    env = 'event "A" is not declared',
+    tops = 'external "A" is not declared',
 }
 
 Test { [[
@@ -2353,7 +2369,6 @@ escape a;
 }
 
 Test { [[
-input int A,B,C;
 var int a = do/_
     par/or do
         escape 1;
@@ -2469,7 +2484,7 @@ escape a;
 
 -- testa ParOr que da clean em await vivo
 Test { [[
-input int A,B,X;
+input int A,B,C;
 par/and do
     par/or do
         await A;
@@ -4563,7 +4578,7 @@ escape sum;
     run = 4,
 }
 Test { [[
-input void A, B;
+input void A;
 var int sum = 0;
 loop i in [0 |> 10[ do
     await A;
@@ -4577,7 +4592,7 @@ escape sum;
 --<<< LOOP
 
 Test { [[
-input int A,B,Z,X,C;
+input int A,B;
 var int ret=0;
 par/and do
     ret = await A;
@@ -14220,7 +14235,7 @@ escape 0;
 }
 
 Test { [[
-input int A,B,X,Z;
+input int A,B,Z;
 var int v1=0,v2=0;
 par do
     loop do
@@ -14316,7 +14331,7 @@ escape ret + v;
 }
 
 Test { [[
-input int A,B,X,Z;
+input int A,B,Z;
 var int v1=0,v2=0;
 par do
     loop do
@@ -14347,7 +14362,7 @@ end;
 }
 
 Test { [[
-input int A,B,X,Z;
+input int A,B,Z;
 var int v1=0,v2=0;
 par do
     loop do
@@ -14775,7 +14790,7 @@ escape v1 + v2;
 
 -- TODO: STACK
 Test { [[
-input void OS_START,A;
+input void OS_START;
 event int a;
 var int aa=0;
 par/or do
@@ -14906,7 +14921,6 @@ escape aa;
 }
 
 Test { [[
-input void OS_START;
 input int A, Z;
 event int c;
 var int cc = 0;
@@ -15872,6 +15886,7 @@ par/or do
         ret = a;
     end;
 with
+input void A;
     a = await A;
 end;
 escape a;
@@ -17991,7 +18006,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B, Z;
+input void A, B;
 event void a;
 var int ret = 1;
 par/or do
@@ -20548,7 +20563,7 @@ input void A;
 input void A;
 escape 1;
 ]],
-    run = 1,
+    tops = 'line 2 : identifier "A" is already declared (tests.lua : line 1)',
 }
 
 Test { [[
@@ -20556,7 +20571,7 @@ input void A;
 input int A;
 escape 1;
 ]],
-    env = 'line 2 : event "A" is already declared',
+    tops = 'line 2 : identifier "A" is already declared (tests.lua : line 1)',
 }
 
 --if not OS then
@@ -20673,6 +20688,7 @@ native _char;
 output _char A;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
     --env = "line 1 : invalid event type",
 }
@@ -20829,7 +20845,7 @@ end
 emit A => 1;
 escape 0;
 ]],
-    env = 'event "A" is not declared',
+    tops = 'external "A" is not declared',
 }
 
 Test { [[
@@ -20857,6 +20873,22 @@ native do
 end
 deterministic A with B;
 output void A, B;
+par/or do
+    emit A;
+with
+    emit B;
+end
+escape 1;
+]],
+    tops = 'line 4 : external "A" is not declared',
+}
+
+Test { [[
+native do
+    #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
+end
+output void A, B;
+deterministic A with B;
 par/or do
     emit A;
 with
@@ -21186,7 +21218,7 @@ escape ret;
 Test { [[
 var int ret = (call Z=>2);
 ]],
-    run = 3,
+    tops = 'line 1 : external "Z" is not declared',
 }
 
 Test { [[
@@ -21291,6 +21323,18 @@ input W  (var int a)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
+    tops = 'line 4 : input "W declared but not used',
+}
+
+Test { [[
+input Z  (var int a)=>int do
+    escape a + 1;
+end
+input W  (var int a)=>int;
+var int ret = call Z=>1;
+escape ret;
+]],
+    wrn = true,
     code = 'line 4 : missing function body',
     --run = 2,
 }
@@ -21341,24 +21385,28 @@ Test { [[
 input (void,int) A;
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : type cannot be `void´',
 }
 Test { [[
 input (int,void) A;
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : type cannot be `void´',
 }
 Test { [[
 output (void,int) A;
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : type cannot be `void´',
 }
 Test { [[
 output (int,void) A;
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : type cannot be `void´',
 }
 
@@ -21367,6 +21415,7 @@ input A  (void)=>void do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -21374,6 +21423,7 @@ Test { [[
 input A  (var void a, var  int a)=>void do
     v = 1;
 end
+call A => ();
 escape 1;
 ]],
     syms = 'line 1 : declaration of "a" hides previous declaration (tests.lua : line 1)',
@@ -21385,6 +21435,7 @@ input A  (var void a, var  int v)=>void do
 end
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : type cannot be `void´',
 }
 
@@ -21482,6 +21533,7 @@ Test { [[
 input (int) X;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -22525,6 +22577,7 @@ do ret = _ceu_uv_read_start(&&client as _uv_stream_t&&, &&buf);
 _assert(ret == 0);
 escape 0;
 ]],
+    wrn = true,
     gcc = 'implicit declaration of function ‘uv_buf_init’',
 }
 
@@ -23956,7 +24009,7 @@ escape v;
 }
 
 Test { [[emit A => 10; escape 0;]],
-    env = 'event "A" is not declared'
+    tops = 'external "A" is not declared'
 }
 
 Test { [[
@@ -24377,6 +24430,7 @@ end
 
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -26197,7 +26251,6 @@ escape ret;
 
 Test { [[
 input int  A,B,C;
-input void Z;
 event bool a;
 var int ret = 50;
 par/or do
@@ -26234,7 +26287,6 @@ escape v;
 
 Test { [[
 input int  A;
-input void Z;
 event int a;
 var int ret = 0;
 par/or do
@@ -43558,6 +43610,7 @@ call/recursive Load(null);
 
 escape 1;
 ]],
+    wrn = true,
     tight = 'tight loop',
     --run = 1,
 }
@@ -47378,7 +47431,6 @@ Test { PRE_ISR..[[
 native do
     void f (void){}
 end
-output int O;
 atomic do
 native _f;
     _f();
@@ -47389,7 +47441,6 @@ escape 1;
 }
 
 Test { PRE_ISR..[[
-output int O;
 code/instantaneous Fx (void)=>void do end
 atomic do
     Fx();
@@ -47401,7 +47452,6 @@ escape 1;
 }
 
 Test { [[
-output int O;
 atomic do
     loop do
     end
@@ -47945,7 +47995,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 3 : event "A" is not declared',
+    tops = 'line 3 : external "A" is not declared',
 }
 
 Test { [[
@@ -48091,7 +48141,6 @@ escape 1;
 }
 
 Test { [[
-input int PIN02;
 var int i = 0;
 par/or do
     async/isr [1] (i) do
@@ -52178,6 +52227,7 @@ Test { [[
 input (int) A;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -52186,6 +52236,7 @@ native _int;
 input (_int,int) A;
 escape 1;
 ]],
+    wrn = true,
     run = 1;
 }
 
@@ -52194,6 +52245,7 @@ input (int&&,int) A;
 //event (int,int&&) a;
 escape 1;
 ]],
+    wrn = true,
     run = 1;
 }
 
@@ -52202,6 +52254,7 @@ input (int,int) A;
 event (int,int) a;
 escape 1;
 ]],
+    wrn = true,
     run = 1;
 }
 
@@ -52436,6 +52489,7 @@ Test { [[
 await A;
 escape 1;
 ]],
+    tops = '/tmp/_ceu_MOD2.ceu : line 1 : identifier "A" is already declared (/tmp/_ceu_MOD1.ceu : line 1)',
     wrn = true,
     run = { ['~>A']=1 },
 }

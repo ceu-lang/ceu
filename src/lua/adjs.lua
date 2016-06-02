@@ -247,6 +247,9 @@ DBG('TODO: _Loop_Pool')
     _Evts__PRE = function (me)
         return F.__dcls__PRE(me, 'Evt', 2)
     end,
+    _Exts__PRE = function (me)
+        return F.__dcls__PRE(me, 'Ext', 2)
+    end,
     _Nats__PRE = function (me)
         return F.__dcls__PRE(me, 'Nat', 1)
     end,

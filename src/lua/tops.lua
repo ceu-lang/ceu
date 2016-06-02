@@ -47,6 +47,36 @@ F = {
         me.dcl = tops_use(me, id, 'native')
     end,
 
+-- EXT
+
+    Extcall_proto = 'Extcall_impl',
+    Extcall_impl = function (me)
+        local grp, _, id = unpack(me)
+        me.id    = id
+        me.group = grp
+        tops_new(me)
+    end,
+
+    Extreq_proto = 'Extcall_impl',
+    Extreq_impl = function (me)
+        local grp, _, id = unpack(me)
+        me.id    = id
+        me.group = grp
+        tops_new(me)
+    end,
+
+    Ext = function (me)
+        local grp, tp, id = unpack(me)
+        me.id    = id
+        me.group = grp
+        tops_new(me)
+    end,
+
+    ID_ext = function (me)
+        local id = unpack(me)
+        me.dcl = tops_use(me, id, 'external')
+    end,
+
 -- CODE / DATA
 
     Code_proto = function (me)
