@@ -33,14 +33,7 @@ end
 
 local _N = 0
 function AST.node (tag, ln, ...)
-    local me
-    if tag == '_Stmts' then
-        -- "Ct" as a special case to avoid "too many captures" (HACK_1)
-        tag = 'Stmts'
-        me = setmetatable((...), MT)
-    else
-        me = setmetatable({ ... }, MT)
-    end
+    local me = setmetatable({ ... }, MT)
     me.n = _N
     --me.xxx = debug.traceback()
     _N = _N + 1
@@ -316,7 +309,7 @@ local function f (ln, v1, op, v2, v3, ...)
     elseif v1=='call' or v1=='call/recursive' then
         -- Prim call
         ASR(op.tag=='Op2_call' or op.tag=='CALL', ln, 'invalid call')
-        op[1] = v1  -- change modifier
+        --op[1] = v1  -- change modifier
         ret = op
     elseif v1 then
         -- Op2_*

@@ -9,71 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
--------------------------------------------------------------------------------
-
--- TODO: incomplete
-Test { [[
-ddd Data with
-    var& int v;
-end
-
-code/delayed Code (var& Data d, var  var int ini) => int
-do
-    var int v = ini;
-    d.v = &v;
-    every 1s do
-        v = v + 1;
-    end
-end
-
-pool[] Data datas;
-pool[] Code cs;
-
-var Data&&? d = new Data(0) in datas;
-var bool ok = spawn SpawnCode(d!) in cs;
-
-var bool ok = spawn SpawnCode(
-                new Data(0) in datas
-              ) in cs; 
-
-// implicitly does the above (creates a SpawnX and calls it)
-var bool ok = spawn/deref Code(
-                new Data(0) in datas
-              ) in cs; 
-
-loop d in datas do
-    _printf("%d\n", d:v);
-end
-
-loop d,x,y in cs do
-    // each Data (all & args) running in Code
-end
-
-
-code/delayed SpawnCode (var Data&& d)=>void
-do
-    watching *d do
-        await Code(&(*d)...)
-        kill *d;
-    end
-end
-
-var int a =
-    watching @ Code(&d, 10) do
-        var int ret = 0;
-        watching 5s do
-            every 1s do
-                ret = ret + d.v;
-            end
-        end
-        escape ret;
-    end;
-
-escape a;
-]],
-    run = {['~>10s']=50 },
-}
-
 do return end
 --]===]
 
@@ -208,28 +143,6 @@ escape 0;
 
 --<<< NATIVE
 
--- PRECEDENCE (TODO)
-Test { [[
-native _assert;
-var int v1 = 1 + 1 and 0;    // 0
-_assert(v1 == 0);
-
-var int v2 = 1 + 1 or  0;    // 1
-_assert(v2 == 1);
-
-var int v3 = 0 and 0 or 1;   // 1
-_assert(v3 == 1);
-
-var int v4 = 0 == 0 | 1;     // 0
-_assert(v4 == 0);
-
-var int v5 = 0 == 0 & 0;     // 1
-_assert(v5 == 1);
-
-escape 1;
-]],
-    run = 1,
-}
 Test { [[var int a;]],
     ref = 'uninitialized variable "a" crossing compound statement (tests.lua:1)',
 }
@@ -270,7 +183,7 @@ escape 10;
 }
 
 Test { [[a = 1; escape a;]],
-    env = 'variable/event "a" is not declared',
+    syms = 'internal identifier "a" is not declared',
 }
 Test { [[var int a; a = 1; escape a;]],
     run = 1,
@@ -289,16 +202,16 @@ Test { [[var int a = 1;]],
     }
 }
 Test { [[var int a=1;var int a=0; escape a;]],
-    env = 'line 1 : declaration of "a" hides the one at line 1',
+    syms = 'line 1 : declaration of "a" hides previous declaration',
 }
 Test { [[var int a=1;var int a=0; escape a;]],
-    --env = 'line 1 : variable/event "a" is already declared at line 1',
+    --syms = 'line 1 : internal identifier "a" is already declared at line 1',
     wrn = true,
     run = 0,
 }
 Test { [[var int b=2; var int a=1; b=a; var int a=0; escape b+a;]],
     wrn = true,
-    --env = 'line 1 : variable/event "a" is already declared at line 1',
+    --syms = 'line 1 : internal identifier "a" is already declared at line 1',
     run = 1,
 }
 Test { [[do var int a=1; end var int a=0; escape a;]],
@@ -307,14 +220,14 @@ Test { [[do var int a=1; end var int a=0; escape a;]],
 }
 Test { [[var int a=1,a=0; escape a;]],
     wrn = true,
-    --env = 'line 1 : variable/event "a" is already declared at line 1',
+    --syms = 'line 1 : internal identifier "a" is already declared at line 1',
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
     parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `;´",
 }
 Test { [[var int a = b; escape 0;]],
-    env = 'variable/event "b" is not declared',
+    syms = 'internal identifier "b" is not declared',
 }
 Test { [[escape 1;2;]],
     parser = "line 1 : after `;´ : expected end of file",
@@ -345,6 +258,28 @@ Test { [[var int a; a=1 ; ]],
     }
 }
 
+-- PRECEDENCE (TODO)
+Test { [[
+native _assert;
+var int v1 = 1 + 1 and 0;    // 0
+_assert(v1 == 0);
+
+var int v2 = 1 + 1 or  0;    // 1
+_assert(v2 == 1);
+
+var int v3 = 0 and 0 or 1;   // 1
+_assert(v3 == 1);
+
+var int v4 = 0 == 0 | 1;     // 0
+_assert(v4 == 0);
+
+var int v5 = 0 == 0 & 0;     // 1
+_assert(v5 == 1);
+
+escape 1;
+]],
+    run = 1,
+}
 Test { [[
 inputintMY_EVT;
 ifv==0thenbreak;end
@@ -356,7 +291,7 @@ Test { [[
 inputintMY_EVT;
 escape 1;
 ]],
-    env = 'line 1 : variable/event "inputintMY_EVT" is not declared',
+    syms = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
 }
 
 Test { [[
@@ -365,7 +300,7 @@ Test { [[
 native_printf();
 escape 0;
 ]],
-    env = 'line 3 : variable/event "native_printf" is not declared',
+    syms = 'line 3 : internal identifier "native_printf" is not declared',
 }
 
 Test { [[
@@ -443,7 +378,7 @@ escape __;
     parser = 'line 6 : after `int´ : expected type modifier or internal identifier',
     --parser = 'line 6 : after `=´ : expected class identifier',
     --env = 'line 6 : invalid access to `_´',
-    --env = 'line 6 : variable/event "_" is not declared',
+    --syms = 'line 6 : internal identifier "_" is not declared',
     --run = 3,
 }
 Test { [[
@@ -625,7 +560,7 @@ event void a;
 var _abc a;
 ]],
     wrn = true,
-    --env = 'line 3 : variable/event "a" is already declared at line 2',
+    --syms = 'line 3 : internal identifier "a" is already declared at line 2',
     env = 'line 3 : cannot instantiate type "_abc"',
 }
 
@@ -758,7 +693,7 @@ native _ISPOINTER, _MINDIST, _TILESHIFT;
                                 escape 0;
 end
 ]],
-    env = 'line 2 : variable/event "check" is not declared',
+    syms = 'line 2 : internal identifier "check" is not declared',
 }
 
     -- INVALID TYPE MODIFIERS
@@ -1325,7 +1260,7 @@ escape v;
 }
 
 Test { [[var int a = a+1; escape a;]],
-    --env = 'variable/event "a" is not declared',
+    --syms = 'internal identifier "a" is not declared',
     todo = 'TODO: deveria dar erro!',
     run = 1,
 }
@@ -1702,7 +1637,7 @@ async do
 end;
 escape a + 1;
 ]],
-    --env = 'line 1 : variable/event "_ret" is not declared',
+    --syms = 'line 1 : internal identifier "_ret" is not declared',
     --props = 'line 4 : not permitted inside `async´',
     props = 'line 4 : not permitted across `async´ declaration',
 }
@@ -3340,7 +3275,7 @@ every x in E do
 end
 escape 1;
 ]],
-    env = 'line 3 : implicit declaration of "x" hides the one at line 2',
+    syms = 'line 3 : implicit declaration of "x" hides previous declaration',
 }
 
 Test { [[
@@ -3394,7 +3329,7 @@ loop do
     end
 end
 ]],
-    env = 'line 4 : declaration of "dt" hides the one at line 2',
+    syms = 'line 4 : declaration of "dt" hides previous declaration',
 }
 
 Test { [[
@@ -3512,7 +3447,7 @@ with
     end
 end
 ]],
-    env = 'line 4 : implicit declaration of "a" hides the one at line 3',
+    syms = 'line 4 : implicit declaration of "a" hides previous declaration',
 }
 Test { [[
 input (int,int) A;
@@ -14093,7 +14028,7 @@ with
     escape v1 + v2;
 end;
 ]],
-    env = 'line 8 : variable/event "v1" is not declared',
+    syms = 'line 8 : internal identifier "v1" is not declared',
 }
 
 Test { [[
@@ -14220,7 +14155,7 @@ with
     escape v1 + v2;
 end;
 ]],
-    env = 'line 8 : variable/event "v1" is not declared',
+    syms = 'line 8 : internal identifier "v1" is not declared',
 }
 
 Test { [[
@@ -16749,7 +16684,7 @@ do
 end
 escape ret;
 ]],
-    env = 'line 6 : variable/event "a" is not declared',
+    syms = 'line 6 : internal identifier "a" is not declared',
 }
 
 Test { [[
@@ -19572,7 +19507,7 @@ async (b) do
 end;
 escape a;
 ]],
-    env = 'line 3 : variable/event "a" is not declared',
+    syms = 'line 3 : internal identifier "a" is not declared',
     --run = 1,
 }
 
@@ -19583,7 +19518,7 @@ async do
 end;
 escape a;
 ]],
-    env = 'line 3 : variable/event "a" is not declared',
+    syms = 'line 3 : internal identifier "a" is not declared',
     --run = 1,
 }
 
@@ -19645,7 +19580,7 @@ with
 end;
 escape a;
 ]],
-    env = 'line 4 : variable/event "a" is not declared',
+    syms = 'line 4 : internal identifier "a" is not declared',
     _ana = {
         --acc = 1,
     },
@@ -19695,7 +19630,7 @@ async do
 end;
 escape a;
 ]],
-    env = 'line 4 : variable/event "a" is not declared',
+    syms = 'line 4 : internal identifier "a" is not declared',
     --run=1
 }
 
@@ -19708,7 +19643,7 @@ end;
 escape a;
 ]],
     --env = "line 4 : invalid attribution",
-    env = 'line 4 : variable/event "a" is not declared',
+    syms = 'line 4 : internal identifier "a" is not declared',
     --parser = 'line 4 : after `=´ : expected expression',
 }
 
@@ -19719,7 +19654,7 @@ async do
 end;
 escape 0;
 ]],
-    env = 'line 3 : variable/event "a" is not declared',
+    syms = 'line 3 : internal identifier "a" is not declared',
 }
 Test { [[
 event int a;
@@ -19728,7 +19663,7 @@ async do
 end;
 escape 0;
 ]],
-    env = 'line 3 : variable/event "a" is not declared',
+    syms = 'line 3 : internal identifier "a" is not declared',
 }
 Test { [[
 async do
@@ -20205,7 +20140,7 @@ async (pi) do
 end;
 escape i;
 ]],
-    env = 'line 5 : variable/event "i" is not declared',
+    syms = 'line 5 : internal identifier "i" is not declared',
 }
 
 Test { [[
@@ -21126,7 +21061,7 @@ var int v = 0;
 call Z=>1;
 escape this.v;
 ]],
-    env = 'line 2 : variable/event "v" is not declared',
+    syms = 'line 2 : internal identifier "v" is not declared',
 }
 
 Test { [[
@@ -25531,7 +25466,7 @@ Test { [[
 
 a = 1;
 ]],
-    env = 'line 3 : variable/event "a" is not declared',
+    syms = 'line 3 : internal identifier "a" is not declared',
 }
 
 Test { [[
@@ -27370,7 +27305,7 @@ async do
 end
 escape x;
 ]],
-    env = 'line 3 : variable/event "x" is not declared',
+    syms = 'line 3 : internal identifier "x" is not declared',
 }
 
 Test { [[
@@ -27380,7 +27315,7 @@ async/thread do
 end
 escape x;
 ]],
-    env = 'line 3 : variable/event "x" is not declared',
+    syms = 'line 3 : internal identifier "x" is not declared',
 }
 
 Test { [[
@@ -29656,7 +29591,7 @@ do
 end
 escape ret;
 ]],
-    env = 'line 7 : variable/event "a" is not declared',
+    syms = 'line 7 : internal identifier "a" is not declared',
     --props = 'line 5 : must be in top-level',
 }
 
@@ -29674,7 +29609,7 @@ var Tx v;
 emit v.go;
 escape 0;
 ]],
-    env = 'line 6 : variable/event "a" is not declared',
+    syms = 'line 6 : internal identifier "a" is not declared',
     --props = 'line 4 : must be in top-level',
 }
 
@@ -29694,8 +29629,8 @@ var Tx v;
 emit v.go;
 escape a;
 ]],
-    env = 'line 6 : variable/event "a" is not declared',
-    --env = 'line 6 : variable/event "b" is not declared',
+    syms = 'line 6 : internal identifier "a" is not declared',
+    --syms = 'line 6 : internal identifier "b" is not declared',
 }
 
 Test { [[
@@ -29722,7 +29657,7 @@ do
 end
 escape a+b;
 ]],
-    env = 'line 7 : variable/event "a" is not declared',
+    syms = 'line 7 : internal identifier "a" is not declared',
     --props = 'line 5 : must be in top-level',
     --env = 'line 17 : class "Tx" is not declared',
 }
@@ -29747,7 +29682,7 @@ do
 end
 escape a+b;
 ]],
-    env = 'line 5 : variable/event "a" is not declared',
+    syms = 'line 5 : internal identifier "a" is not declared',
     --run = 4,
 }
 
@@ -33443,7 +33378,7 @@ tot = tot * 2;                  // 6
 
 escape tot;
 ]],
-    env = 'line 4 : variable/event "tot" is not declared',
+    syms = 'line 4 : internal identifier "tot" is not declared',
 }
 
 Test { [[
@@ -37455,7 +37390,7 @@ do Tx;
 escape 0;
 ]],
     run = 0,
-    --env = 'line 4 : variable/event "ok" is not declared',
+    --syms = 'line 4 : internal identifier "ok" is not declared',
 }
 
 Test { [[
@@ -39855,7 +39790,7 @@ var Tx t with
     end
 end;
 ]],
-    --env = 'line 22 : variable/event "_" is not declared',
+    --syms = 'line 22 : internal identifier "_" is not declared',
     fin = 'line 7 : constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -39873,7 +39808,7 @@ spawn Tx with
     end
 end;
 ]],
-    --env = 'line 22 : variable/event "_" is not declared',
+    --syms = 'line 22 : internal identifier "_" is not declared',
     fin = 'line 7 : constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -39911,7 +39846,7 @@ end
 
 escape _V;
 ]],
-    --env = 'line 22 : variable/event "_" is not declared',
+    --syms = 'line 22 : internal identifier "_" is not declared',
     fin = 'constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -40001,7 +39936,7 @@ end
 
 escape _V;
 ]],
-    --env = 'line 23 : variable/event "_" is not declared',
+    --syms = 'line 23 : internal identifier "_" is not declared',
     fin = 'constructor cannot contain `finalize´',
     --props = 'line 24 : not permitted inside a constructor',
 }
@@ -40039,7 +39974,7 @@ end
 
 escape _V;
 ]],
-    --env = 'line 22 : variable/event "_" is not declared',
+    --syms = 'line 22 : internal identifier "_" is not declared',
     fin = 'constructor cannot contain `finalize´',
     --fin = 'line 21 : invalid `finalize´',
 }
@@ -41880,7 +41815,7 @@ var I&& i = &&t;
 escape t._ins();
 ]],
     --env = 'line 13 : native function "CEU_T__ins" is not declared',
-    env = 'line 13 : variable/event "_ins" is not declared',
+    syms = 'line 13 : internal identifier "_ins" is not declared',
 }
 Test { [[
 interface I with
@@ -41898,7 +41833,7 @@ var I&& i = &&t;
 escape i:_ins();
 ]],
     --env = 'line 13 : native function "CEU_I__ins" is not declared',
-    env = 'line 13 : variable/event "_ins" is not declared',
+    syms = 'line 13 : internal identifier "_ins" is not declared',
 }
 Test { [[
 class Tx with do end
@@ -47887,7 +47822,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 5 : variable/event "i" is not declared',
+    syms = 'line 5 : internal identifier "i" is not declared',
 }
 
 Test { [[
@@ -51518,7 +51453,7 @@ await (e) or
       (f);
 escape 1;
 ]],
-    env = 'line 1 : variable/event "e" is not declared',
+    syms = 'line 1 : internal identifier "e" is not declared',
 }
 
 Test { [[
@@ -53809,7 +53744,7 @@ input/output LINE [10] (var int max)=>int do
 end
 escape ret;
 ]],
-    env = 'line 6 : variable/event "ret" is not declared',
+    syms = 'line 6 : internal identifier "ret" is not declared',
 }
 
 Test { [[

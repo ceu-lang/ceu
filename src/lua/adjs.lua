@@ -1,6 +1,19 @@
 local node = AST.node
 
 F = {
+    ['1__PRE'] = function (me)
+        local _stmts = unpack(me)
+        AST.asr(_stmts, '_Stmts')
+        AST.root = node('Block', me.ln, _stmts)
+        return AST.root
+    end,
+    _Stmts__PRE = function (me)
+        local t = unpack(me)
+        return node('Stmts', me.ln, unpack(t))
+    end,
+
+-------------------------------------------------------------------------------
+
     -- single declaration with multiple ids
     --      => multiple declarations with single id
     _Nats__PRE = function (me)
