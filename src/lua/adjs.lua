@@ -24,15 +24,17 @@ F = {
 
 -------------------------------------------------------------------------------
 
+    _Data_simple__PRE = '_Data_block__PRE',
     _Data_block__PRE = function (me)
         local id, super =  unpack(me)
-        return node('Data_block', me.ln,
+        return node('Data', me.ln,
                 id, super,
                 node('Block', me.ln,
                     node('Stmts', me.ln,
                         unpack(me, 3))))
     end,
 
+    Extreq_impl__PRE = 'Code_impl__PRE',
     Extcall_impl__PRE = 'Code_impl__PRE',
     Code_impl__PRE = function (me)
         local pre, is_rec, id, ins, out, blk = unpack(me)

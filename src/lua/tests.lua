@@ -48070,7 +48070,7 @@ with
 end
 escape 1;
 ]],
-    syms = 'line 5 : internal identifier "i" is not declared',
+    syms = 'line 6 : internal identifier "i" is not declared',
 }
 
 Test { [[
@@ -52287,7 +52287,7 @@ par/or do
     (a,b) = await a;
     escape a + b;
 with
-    async do
+    async (a) do
         emit a => (1,2);
     end
 end

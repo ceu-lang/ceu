@@ -73,8 +73,7 @@ F = {
         dcl.blk = blk
     end,
 
-    Data_simple = 'Data_block',
-    Data_block = function (me)
+    Data = function (me)
         local id, super = unpack(me)
         me.id    = id
         me.group = 'data'
