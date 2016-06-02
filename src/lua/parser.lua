@@ -513,10 +513,10 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- AWAIT, EMIT
 
-    , __awaits     = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Await_Code')
+    , __awaits     = (V'Await_Ext' + V'Await_Evt' + V'Await_Wclock' + V'Await_Code')
     , _Awaits      = K'await' * V'__awaits' * OPT(K'until'*V'__Exp')
     , Await_Ext    = V'ID_ext' - V'Await_Code'
-    , Await_Int    = V'__Exp' - V'Await_Wclock' - V'Await_Code'
+    , Await_Evt    = V'__Exp' - V'Await_Wclock' - V'Await_Code'
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
     , Await_Code   = V'CALL'
 
@@ -532,7 +532,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , Emit_Ext_req  = K'request' *
                         V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
 
-    , Emit_Int = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') *
+    , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') *
                     V'__Exp' * OPT(KK'=>' * V'__evts_ps')
 
     , _Watching = K'watching' * V'__awaits' * V'__Do'
@@ -741,7 +741,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Set_one' + V'_Set_many'
                  + V'_Awaits'
                  + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
-                 + V'Emit_Int'
+                 + V'Emit_Evt'
                  + V'Spawn_Code' + V'Kill'
                  + V'Nat_Stmt'
 -- TODO: remove class/interface
