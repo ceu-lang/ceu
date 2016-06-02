@@ -392,9 +392,11 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , __code   = (CK'code/instantaneous' + CK'code/delayed')
                     * OPT(CK'/recursive')
                     * V'__ID_abs'
-                    * V'_Typepars' * KK'=>' * V'Type'
-    , Code_proto = V'__code'
-    , Code_impl  = V'__code' * V'__Do'
+    , Code_proto = V'__code' * (V'Typepars_ids'+V'Typepars_anon') *
+                                    KK'=>' * V'Type'
+    , Code_impl  = V'__code' * V'Typepars_ids' *
+                                    KK'=>' * V'Type' *
+                   V'__Do'
 
     , _Spawn_Block = K'spawn' * V'__Do'
     , Spawn_Code   = K'spawn' * V'CALL'
@@ -404,33 +406,42 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     -- call
     , __extcall = (CK'input' + CK'output')
                     * OPT(CK'/recursive')
-                    * V'_Typepars' * KK'=>' * V'Type'
-                    * V'__ID_ext' * (KK','*V'__ID_ext')^0
-    , _Extcall_proto = V'__extcall'
-    , _Extcall_impl  = V'__extcall' * V'__Do'
+                    * V'__ID_ext'
+    , _Extcall_proto = V'__extcall' * (V'Typepars_ids'+V'Typepars_anon') *
+                                        KK'=>' * V'Type'
+    , _Extcall_impl  = V'__extcall' * V'Typepars_ids' *
+                                        KK'=>' * V'Type' *
+                       V'__Do'
 
     -- req
     , __extreq = (CK'input/output' + CK'output/input')
-                   * V'__ID_ext'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
-                   * V'_Typepars' * KK'=>' * V'Type'
-    , _Extreq_proto = V'__extreq'
-    , _Extreq_impl  = V'__extreq' * V'__Do'
+                   * V'__ID_ext'
+    , _Extreq_proto = V'__extreq' * (V'Typepars_ids'+V'Typepars_anon') *
+                                        KK'=>' * V'Type'
+    , _Extreq_impl  = V'__extreq' * V'Typepars_ids' *
+                                        KK'=>' * V'Type' *
+                      V'__Do'
 
     -- TYPEPARS
 
     -- (var& int, var/nohold void&&)
     -- (var& int v, var/nohold void&& ptr)
-    , __typepars_pre = K'vector' * KK'&' * V'__Dim'
-                     + K'pool'   * KK'&' * V'__Dim'
-                     + K'var'   * OPT(CKK'&') * OPT(KK'/'*CK'hold')
+    , __typepars_pre = CK'vector' * CKK'&' * V'__Dim'
+                     + CK'pool'   * CKK'&' * V'__Dim'
+                     + CK'event'  * CKK'&'
+                     + CK'var'   * OPT(CKK'&') * OPT(KK'/'*CK'hold')
 
-    , _Typepars_item_id   = V'__typepars_pre' * V'Type' * V'__ID_int'
-    , _Typepars_item_anon = V'__typepars_pre' * V'Type'
-    , _Typepars = #KK'(' * (
+    , Typepars_item_id   = V'__typepars_pre' * V'Type' * V'__ID_int'
+    , Typepars_item_anon = V'__typepars_pre' * V'Type'
+
+    , Typepars_ids = #KK'(' * (
                     PARENS(P'void') +
-                    PARENS(V'_Typepars_item_anon' * (KK','*V'_Typepars_item_anon')^0) +
-                    PARENS(V'_Typepars_item_id'   * (KK','*V'_Typepars_item_id')^0)
+                    PARENS(V'Typepars_item_id'   * (KK','*V'Typepars_item_id')^0)
+                  )
+    , Typepars_anon = #KK'(' * (
+                    PARENS(P'void') +
+                    PARENS(V'Typepars_item_anon' * (KK','*V'Typepars_item_anon')^0)
                   )
 
 -- DATA

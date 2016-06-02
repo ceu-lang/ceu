@@ -14,6 +14,37 @@ F = {
 
 -------------------------------------------------------------------------------
 
+    Code_impl__PRE = function (me)
+        local pre, is_rec, id, ins, out, blk = unpack(me)
+
+        -- insert parameters "ins" in "blk"
+        AST.asr(ins,'_Typepars')
+        local dcls = node('Stmts', me.ln)
+        for _, v in ipairs(ins) do
+            if v ~= 'void' then
+                AST.asr(v,'_Typepars_item_id')
+                local pre,is_alias = unpack(v)
+                if pre == 'var' then
+                    local _,_,hold,tp,id = unpack(v)
+                    dcls[#dcls+1] = node('Var', me.ln, is_alias, tp, id)
+                elseif pre == 'vector' then
+                    local _,_,dim,tp,id = unpack(v)
+                    dcls[#dcls+1] = node('Vec', me.ln, is_alias, dim, tp, id)
+                elseif pre == 'pool' then
+                    local _,_,dim,tp,id = unpack(v)
+                    dcls[#dcls+1] = node('Pool', me.ln, is_alias, dim, tp, id)
+                elseif pre == 'event' then
+                    local _,_,tp,id = unpack(v)
+                    dcls[#dcls+1] = node('Evt', me.ln, is_alias, tp, id)
+                end
+            end
+        end
+        local stmts = AST.asr(blk,'Block', 1,'_Stmts')
+        table.insert(stmts, 1, dcls)
+    end,
+
+-------------------------------------------------------------------------------
+
     _Loop_Num__PRE = function (me)
         local max, i, lb, fr, dir, to, rb, step, blk = unpack(me)
 
