@@ -55,14 +55,16 @@ F = {
         end
 
         local dcl_i = node('Var', me.ln,
+                        false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
-                            i)
+                        i)
         dcl_i.is_implicit = true
         local dcl_to = node('Var', me.ln,
+                        false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
-                            '__to_'..me.n)
+                        '__to_'..me.n)
 
         local cmp
         if dir == '|>' then
@@ -132,120 +134,65 @@ DBG('TODO: _Every')
 
     -- single declaration with multiple ids
     --      => multiple declarations with single id
-    _Vars__PRE = function (me)
-        local is_alias, tp = unpack(me)
-        local ids = { unpack(me,3) }
 
+    __dcls__PRE = function (me, tag, idx)
+        local ids = { unpack(me, idx+1) }
         local ret = node('Stmts', me.ln)
         for id in ipairs(ids) do
-            ret[#ret+1] = node('Var', me.ln, AST.copy(tp), id)
+            local t = {}
+            for i=1, idx do
+                t[i] = AST.copy(me[i])
+            end
+            t[#t+1] = id
+            ret[#ret+1] = node(tag, me.ln, unpack(t))
         end
         return ret
     end,
-    _Vars_set__PRE = function (me)
-        local is_alias, tp = unpack(me)
-        local sets = { unpack(me,3) }
+    _Vars__PRE = function (me)
+        return F.__dcls__PRE(me, 'Var', 2)
+    end,
+    _Vecs__PRE = function (me)
+        return F.__dcls__PRE(me, 'Vec', 3)
+    end,
+    _Pools__PRE = function (me)
+        return F.__dcls__PRE(me, 'Pool', 3)
+    end,
+    _Evts__PRE = function (me)
+        return F.__dcls__PRE(me, 'Evt', 2)
+    end,
 
-        -- id, set
+    __dcls_set__PRE = function (me, tag, idx)
+        local sets = { unpack(me, idx+1) }
         local ret = node('Stmts', me.ln)
         for i=1, #sets, 2 do
             local id, set = unpack(sets,i)
-            ret[#ret+1] = node('Var', me.ln, AST.copy(tp), id)
+            local t = {}
+            for i=1, idx do
+                t[i] = AST.copy(me[i])
+            end
+            t[#t+1] = id
+            ret[#ret+1] = node(tag, me.ln, unpack(t))
             if set then
                 ret[#ret+1] = node('_Set', me.ln, unpack(set))
-                -- TODO: set
+-- TODO: set
+DBG('TODO: _Set')
             end
         end
         return ret
     end,
 
-    -- single declaration with multiple ids
-    --      => multiple declarations with single id
-    _Vecs__PRE = function (me)
-        local is_alias, dim, tp = unpack(me)
-        local ids = { unpack(me,4) }
-
-        local ret = node('Stmts', me.ln)
-        for id in ipairs(ids) do
-            ret[#ret+1] = node('Vec', me.ln, dim, AST.copy(tp), id)
-        end
-        return ret
+    _Vars_set__PRE = function (me)
+        return F.__dcls_set__PRE(me, 'Var', 2)
     end,
     _Vecs_set__PRE = function (me)
-        local is_alias, dim, tp = unpack(me)
-        local sets = { unpack(me,4) }
-
-        -- id, set
-        local ret = node('Stmts', me.ln)
-        for i=1, #sets, 2 do
-            local id, set = unpack(sets,i)
-            ret[#ret+1] = node('Vec', me.ln, dim, AST.copy(tp), id)
-            if set then
-                ret[#ret+1] = node('_Set', me.ln, unpack(set))
-                -- TODO: set
-            end
-        end
-        return ret
-    end,
-
-    -- single declaration with multiple ids
-    --      => multiple declarations with single id
-    _Pools__PRE = function (me)
-        local is_alias, dim, tp = unpack(me)
-        local ids = { unpack(me,4) }
-
-        local ret = node('Stmts', me.ln)
-        for id in ipairs(ids) do
-            ret[#ret+1] = node('Pool', me.ln, dim, AST.copy(tp), id)
-        end
-        return ret
+        return F.__dcls_set__PRE(me, 'Vec', 3)
     end,
     _Pools_set__PRE = function (me)
-        local is_alias, dim, tp = unpack(me)
-        local sets = { unpack(me,4) }
-
-        -- id, set
-        local ret = node('Stmts', me.ln)
-        for i=1, #sets, 2 do
-            local id, set = unpack(sets,i)
-            ret[#ret+1] = node('Pool', me.ln, dim, AST.copy(tp), id)
-            if set then
-                ret[#ret+1] = node('_Set', me.ln, unpack(set))
-                -- TODO: set
-            end
-        end
-        return ret
-    end,
-
-    -- single declaration with multiple ids
-    --      => multiple declarations with single id
-    _Evts__PRE = function (me)
-        local is_alias, tp = unpack(me)
-        local ids = { unpack(me,3) }
-
-        local ret = node('Stmts', me.ln)
-        for id in ipairs(ids) do
-            ret[#ret+1] = node('Evt', me.ln, AST.copy(tp), id)
-        end
-        return ret
+        return F.__dcls_set__PRE(me, 'Pool', 3)
     end,
     _Evts_set__PRE = function (me)
-        local is_alias, tp = unpack(me)
-        local sets = { unpack(me,3) }
-
-        -- id, set
-        local ret = node('Stmts', me.ln)
-        for i=1, #sets, 2 do
-            local id, set = unpack(sets,i)
-            ret[#ret+1] = node('Evt', me.ln, AST.copy(tp), id)
-            if set then
-                ret[#ret+1] = node('_Set', me.ln, unpack(set))
-                -- TODO: set
-            end
-        end
-        return ret
+        return F.__dcls_set__PRE(me, 'Evt', 2)
     end,
-
 }
 
 AST.visit(F)

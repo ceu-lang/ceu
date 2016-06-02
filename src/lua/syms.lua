@@ -46,13 +46,19 @@ F = {
     end,
 
     Var = function (me)
-        local tp, id = unpack(me)
+        local is_alias, tp, id = unpack(me)
         me.id = id
         syms_new(me, AST.par(me,'Block'))
     end,
 
     Evt = function (me)
-        local tp, id = unpack(me)
+        local is_alias, tp, id = unpack(me)
+        me.id = id
+        syms_new(me, AST.par(me,'Block'))
+    end,
+
+    Vec = function (me)
+        local is_alias, tp, dim, id = unpack(me)
         me.id = id
         syms_new(me, AST.par(me,'Block'))
     end,
