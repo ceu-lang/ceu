@@ -115,6 +115,36 @@ F = {
         end
         return ret
     end,
+
+    -- single declaration with multiple ids
+    --      => multiple declarations with single id
+    _Evts__PRE = function (me)
+        local is_alias, tp = unpack(me)
+        local ids = { unpack(me,3) }
+
+        local ret = node('Stmts', me.ln)
+        for id in ipairs(ids) do
+            ret[#ret+1] = node('Evt', me.ln, AST.copy(tp), id)
+        end
+        return ret
+    end,
+    _Evts_set__PRE = function (me)
+        local is_alias, tp = unpack(me)
+        local sets = { unpack(me,3) }
+
+        -- id, set
+        local ret = node('Stmts', me.ln)
+        for i=1, #sets, 2 do
+            local id, set = unpack(sets,i)
+            ret[#ret+1] = node('Evt', me.ln, AST.copy(tp), id)
+            if set then
+                ret[#ret+1] = node('_Set', me.ln, unpack(set))
+                -- TODO: set
+            end
+        end
+        return ret
+    end,
+
 }
 
 AST.visit(F)

@@ -227,8 +227,8 @@ local function visit_aux (me, F)
     me.__par   = STACK[#STACK]
     me.__depth = (me.__par and me.__par.__depth+1) or 1
 
-    local pre, mid, pos = FF(F,me.tag..'__PRE'), FF(F,me.tag), FF(F,me.tag..'_pos')
-    local bef, aft = FF(F,me.tag..'_bef'), FF(F,me.tag..'_aft')
+    local pre, mid, pos = FF(F,me.tag..'__PRE'), FF(F,me.tag), FF(F,me.tag..'__POS')
+    local bef, aft = FF(F,me.tag..'__BEF'), FF(F,me.tag..'__AFT')
 
     if F.Node__PRE then
         me = F.Node__PRE(me) or me

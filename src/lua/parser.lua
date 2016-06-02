@@ -591,12 +591,14 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- IDS
 
+    , ID_prim = V'__ID_prim'
     , ID_ext  = V'__ID_ext'
     , ID_int  = V'__ID_int'
     , ID_abs  = V'__ID_abs'
     , ID_nat  = V'__ID_nat'
     , ID_none = V'__ID_none'
 
+    , __ID_prim = CK(TYPES,                     'primitive type')
     , __ID_ext  = CK(m.R'AZ'*ALPHANUM^0  -KEYS, 'external identifier')
     , __ID_int  = CK(m.R'az'*Alphanum^0  -KEYS, 'internal identifier')
     , __ID_abs  = CK(m.R'AZ'*V'__one_az' -KEYS, 'abstraction identifier')
@@ -624,7 +626,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- Types
 
-    , __type = CK(TYPES,'primitive type') + V'ID_abs'
+    , __type = V'ID_prim' + V'ID_abs'
     , __type_ptr = CKK'&&' -(P'&'^3)
     , __type_vec = KK'[' * V'__Exp' * KK']'
     , Type = V'__type' * (V'__type_ptr'              )^0 * CKK'?'^-1

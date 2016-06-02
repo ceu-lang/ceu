@@ -693,7 +693,7 @@ native _ISPOINTER, _MINDIST, _TILESHIFT;
                                 escape 0;
 end
 ]],
-    syms = 'line 2 : internal identifier "check" is not declared',
+    syms = 'line 3 : internal identifier "check" is not declared',
 }
 
     -- INVALID TYPE MODIFIERS

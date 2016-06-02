@@ -49,6 +49,13 @@ F = {
         me.id = id
         syms_new(me, AST.par(me,'Block'))
     end,
+
+    Evt = function (me)
+        local tp, id = unpack(me)
+        me.id = id
+        syms_new(me, AST.par(me,'Block'))
+    end,
+
     ID_int = function (me)
         local id = unpack(me)
         me.sym = ASR(SYMS.get(id, AST.par(me,'Block')), me,
