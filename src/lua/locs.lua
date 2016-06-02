@@ -97,6 +97,9 @@ F = {
 
     Emit_Evt = function (me)
         local id_ = unpack(me)
+if id_.tag ~= 'ID_int' then
+    return
+end
         ASR(id_.dcl.tag == 'Evt', me,
             'identifier "'..id_.dcl.id..'" is not an event'..
             ' ('..id_.dcl.ln[1]..' : line '..id_.dcl.ln[2]..')')

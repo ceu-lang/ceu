@@ -15892,7 +15892,7 @@ end;
 escape a;
 ]],
     wrn = true,
-    env = 'line 8 : event "a" is not declared',
+    locs = 'line 8 : identifier "a" is not an event (tests.lua : line 5)',
 }
 
 Test { [[
@@ -22398,7 +22398,8 @@ escape t.v[0];
 Test { [[vector[2] int v; await v;     escape 0;]],
         env='event "v" is not declared' }
 Test { [[vector[2] int v; emit v;    escape 0;]],
-        env='event "v" is not declared' }
+        locs = 'line 1 : identifier "v" is not an event (tests.lua : line 1)',
+}
 Test { [[vector[0] int[2] v; await v;  escape 0;]],
         --env='line 1 : event "?" is not declared'
         parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
