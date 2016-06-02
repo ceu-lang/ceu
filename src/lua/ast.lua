@@ -47,6 +47,9 @@ function AST.copy (node, ln)
     if not AST.isNode(node) then
         return node
     end
+    if node.tag == 'Ref' then
+        return node
+    end
 
     local ret = setmetatable({}, MT)
     local N = _N

@@ -110,9 +110,44 @@ DBG('TODO: _Loop_Pool')
     end,
 
     _Every__PRE = function (me)
--- TODO
-DBG('TODO: _Every')
-        return node('Nothing', me.ln)
+        local to, awt, body = unpack(me)
+
+        --[[
+        --      every a=EXT do ... end
+        -- becomes
+        --      loop do var t a; a=await EXT; ... end
+        --]]
+
+        local dcls = node('Stmts', me.ln)
+        if to then
+            if to.tag ~= 'Varlist' then
+                to = { to }
+            end
+            for i, id_ in ipairs(to) do
+                local id = unpack(id_)
+                local var = node('Var', me.ln,
+                                false,
+                                node('Ref', me.ln, awt, i),
+                                id)
+                var.is_implicit = true
+                dcls[#dcls+1] = var
+            end
+        end
+
+        local set_awt
+        if to then
+            set_awt = node('Set_Await', me.ln, awt, to)
+        else
+            set_awt = awt
+        end
+
+        return node('Loop', me.ln,
+                false,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        dcls,
+                        set_awt,
+                        body)))
     end,
 
 -------------------------------------------------------------------------------

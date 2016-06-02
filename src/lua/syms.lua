@@ -14,8 +14,8 @@ local function iter_boundary (cur, id)
                 local cross = false
                 local varlist = unpack(c)
                 if varlist then
-                    for _, n in ipairs(varlist) do
-                        if n.sym.id == id then
+                    for _, id_ in ipairs(varlist) do
+                        if id_.sym.id == id then
                             cross = true
                         end
                     end

@@ -3478,7 +3478,7 @@ every x in E do
 end
 escape 1;
 ]],
-    env = 'line 3 : implicit declaration of "x" hides previous declaration',
+    syms = 'line 3 : implicit declaration of "x" hides previous declaration',
 }
 
 Test { [[
@@ -3637,6 +3637,7 @@ end
     --run = 4;
 }
 
+--]===]
 Test { [[
 input (int,int) A;
 par do
@@ -14247,7 +14248,6 @@ end;
     syms = 'line 8 : internal identifier "v1" is not declared',
 }
 
---]===]
 Test { [[
 var int v=2;
 async (v) do
