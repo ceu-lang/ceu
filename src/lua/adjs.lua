@@ -60,8 +60,8 @@ F = {
 
         -- loop i do end
         -- loop i in [0 |> _] do end
-        if #me == 3 then
-            blk  = fr
+        if #me == 4 then
+            max, i, _, blk = unpack(me)
             lb   = '['
             fr   = node('NUMBER', me.ln, 0)
             dir  = '|>'
@@ -95,52 +95,66 @@ F = {
             step = node('Op1_-', me.ln, step)
         end
 
+        if AST.isNode(i) then
+            AST.asr(i, 'ID_none')
+            i = '__i_'..me.n    -- invent an ID not referenceable
+        end
+
         local dcl_i = node('Var', me.ln,
                         false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
                         i)
         dcl_i.is_implicit = true
-        local dcl_to = node('Var', me.ln,
-                        false,
-                        node('Type', me.ln,
-                            node('ID_prim', me.ln, 'int')),
-                        '__to_'..me.n)
 
-        local cmp
-        if dir == '|>' then
-            -- if i > to then break end
-            cmp = node('Op2_>', me.ln,
-                    node('ID_int', me.ln, i),
-                    node('ID_int', me.ln, '__to_'..me.n))
-        else
-            -- if i < to then break end
-            cmp = node('Op2_<', me.ln,
-                    node('ID_int', me.ln, i),
-                    node('ID_int', me.ln, '__to_'..me.n))
+        local lim_ini = node('Stmts', me.ln)
+        local lim_cmp = node('Nothing', me.ln)
+
+        if to.tag ~= 'ID_none' then
+            lim_ini[#lim_ini+1] =
+                node('Var', me.ln,
+                    false,
+                    node('Type', me.ln,
+                        node('ID_prim', me.ln, 'int')),
+                    '__lim_'..me.n)
+            lim_ini[#lim_ini+1] =
+                node('Set_Exp', me.ln,
+                    to,
+                    node('ID_int', me.ln, '__lim_'..me.n))
+
+            -- lim_cmp
+            if dir == '|>' then
+                -- if i > lim then break end
+                lim_cmp = node('Op2_>', me.ln,
+                            node('ID_int', me.ln, i),
+                            node('ID_int', me.ln, '__lim_'..me.n))
+            else
+                assert(dir == '<|')
+                -- if i < lim then break end
+                lim_cmp = node('Op2_<', me.ln,
+                            node('ID_int', me.ln, i),
+                            node('ID_int', me.ln, '__lim_'..me.n))
+            end
+            lim_cmp = node('If', me.ln, lim_cmp,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Break', me.ln))),
+                        node('Block', me.ln,
+                            node('Stmts', me.ln)))
         end
-        cmp = node('If', me.ln, cmp,
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        node('Break', me.ln))),
-                node('Block', me.ln,
-                    node('Stmts', me.ln)))
 
         return node('Block', me.ln,
                 node('Stmts', me.ln,
                     dcl_i,
-                    dcl_to,
                     node('Set_Exp', me.ln,
                         fr,
                         node('ID_int', me.ln, i)),
-                    node('Set_Exp', me.ln,
-                        to,
-                        node('ID_int', me.ln, '__to_'..me.n)),
+                    lim_ini,
                     node('Loop', me.ln,
                         max,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                cmp,
+                                lim_cmp,
                                 blk)))))
     end,
 
