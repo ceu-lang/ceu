@@ -183,7 +183,7 @@ escape 10;
 }
 
 Test { [[a = 1; escape a;]],
-    syms = 'internal identifier "a" is not declared',
+    locs = 'internal identifier "a" is not declared',
 }
 Test { [[var int a; a = 1; escape a;]],
     run = 1,
@@ -202,16 +202,16 @@ Test { [[var int a = 1;]],
     }
 }
 Test { [[var int a=1;var int a=0; escape a;]],
-    syms = 'line 1 : declaration of "a" hides previous declaration',
+    locs = 'line 1 : declaration of "a" hides previous declaration',
 }
 Test { [[var int a=1;var int a=0; escape a;]],
-    --syms = 'line 1 : internal identifier "a" is already declared at line 1',
+    --locs = 'line 1 : internal identifier "a" is already declared at line 1',
     wrn = true,
     run = 0,
 }
 Test { [[var int b=2; var int a=1; b=a; var int a=0; escape b+a;]],
     wrn = true,
-    --syms = 'line 1 : internal identifier "a" is already declared at line 1',
+    --locs = 'line 1 : internal identifier "a" is already declared at line 1',
     run = 1,
 }
 Test { [[do var int a=1; end var int a=0; escape a;]],
@@ -220,14 +220,14 @@ Test { [[do var int a=1; end var int a=0; escape a;]],
 }
 Test { [[var int a=1,a=0; escape a;]],
     wrn = true,
-    --syms = 'line 1 : internal identifier "a" is already declared at line 1',
+    --locs = 'line 1 : internal identifier "a" is already declared at line 1',
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
     parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `;´",
 }
 Test { [[var int a = b; escape 0;]],
-    syms = 'internal identifier "b" is not declared',
+    locs = 'internal identifier "b" is not declared',
 }
 Test { [[escape 1;2;]],
     parser = "line 1 : after `;´ : expected end of file",
@@ -291,7 +291,7 @@ Test { [[
 inputintMY_EVT;
 escape 1;
 ]],
-    syms = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
+    locs = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
 }
 
 Test { [[
@@ -300,7 +300,7 @@ Test { [[
 native_printf();
 escape 0;
 ]],
-    syms = 'line 3 : internal identifier "native_printf" is not declared',
+    locs = 'line 3 : internal identifier "native_printf" is not declared',
 }
 
 Test { [[
@@ -389,7 +389,7 @@ escape __;
     parser = 'line 6 : after `int´ : expected type modifier or internal identifier',
     --parser = 'line 6 : after `=´ : expected class identifier',
     --env = 'line 6 : invalid access to `_´',
-    --syms = 'line 6 : internal identifier "_" is not declared',
+    --locs = 'line 6 : internal identifier "_" is not declared',
     --run = 3,
 }
 Test { [[
@@ -577,7 +577,7 @@ event void a;
 var _abc a;
 ]],
     wrn = true,
-    --syms = 'line 3 : internal identifier "a" is already declared at line 2',
+    --locs = 'line 3 : internal identifier "a" is already declared at line 2',
     env = 'line 3 : cannot instantiate type "_abc"',
 }
 
@@ -713,7 +713,7 @@ native _ISPOINTER, _MINDIST, _TILESHIFT;
                                 escape 0;
 end
 ]],
-    syms = 'line 3 : internal identifier "check" is not declared',
+    locs = 'line 3 : internal identifier "check" is not declared',
 }
 
     -- INVALID TYPE MODIFIERS
@@ -1276,7 +1276,7 @@ escape v;
 }
 
 Test { [[var int a = a+1; escape a;]],
-    --syms = 'internal identifier "a" is not declared',
+    --locs = 'internal identifier "a" is not declared',
     todo = 'TODO: deveria dar erro!',
     run = 1,
 }
@@ -1288,7 +1288,7 @@ Test { [[var int a; a = emit a => 1; escape a;]],
 }
 
 Test { [[var int a; emit a => 1; escape a;]],
-    env = 'line 1 : event "a" is not declared',
+    locs = 'line 1 : identifier "a" is not an event (tests.lua : line 1)',
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; escape a;]],
@@ -1529,7 +1529,7 @@ async do
 end;
 escape a + 1;
 ]],
-    --syms = 'line 1 : internal identifier "_ret" is not declared',
+    --locs = 'line 1 : internal identifier "_ret" is not declared',
     --props = 'line 4 : not permitted inside `async´',
     props = 'line 4 : not permitted across `async´ declaration',
 }
@@ -2026,7 +2026,7 @@ var int a = do/B
 end;
 escape a;
 ]],
-    syms = 'line 2 : declaration of "a" hides previous declaration (tests.lua : line 1)',
+    locs = 'line 2 : declaration of "a" hides previous declaration (tests.lua : line 1)',
 }
 
 Test { [[
@@ -2123,7 +2123,7 @@ a = do end;
 Test { [[
 a = do/X end;
 ]],
-    syms = 'line 1 : internal identifier "a" is not declared',
+    locs = 'line 1 : internal identifier "a" is not declared',
 }
 
 Test { [[
@@ -3456,7 +3456,7 @@ loop i do
 end
 escape 0;
 ]],
-    syms = 'line 2 : implicit declaration of "i" hides previous declaration (tests.lua : line 1)',
+    locs = 'line 2 : implicit declaration of "i" hides previous declaration (tests.lua : line 1)',
 }
 
 -- EVERY
@@ -3494,7 +3494,7 @@ every x in E do
 end
 escape 1;
 ]],
-    syms = 'line 3 : implicit declaration of "x" hides previous declaration',
+    locs = 'line 3 : implicit declaration of "x" hides previous declaration',
 }
 
 Test { [[
@@ -3548,7 +3548,7 @@ loop do
     end
 end
 ]],
-    syms = 'line 4 : declaration of "dt" hides previous declaration',
+    locs = 'line 4 : declaration of "dt" hides previous declaration',
 }
 
 Test { [[
@@ -3666,7 +3666,7 @@ with
     end
 end
 ]],
-    syms = 'line 4 : implicit declaration of "a" hides previous declaration',
+    locs = 'line 4 : implicit declaration of "a" hides previous declaration',
 }
 Test { [[
 input (int,int) A;
@@ -14231,7 +14231,7 @@ async do
 end;
 escape 0;
 ]],
-    syms = 'line 3 : internal identifier "v1" is not declared',
+    locs = 'line 3 : internal identifier "v1" is not declared',
 }
 
 Test { [[
@@ -14260,7 +14260,7 @@ with
     escape v1 + v2;
 end;
 ]],
-    syms = 'line 8 : internal identifier "v1" is not declared',
+    locs = 'line 8 : internal identifier "v1" is not declared',
 }
 
 Test { [[
@@ -14387,7 +14387,7 @@ with
     escape v1 + v2;
 end;
 ]],
-    syms = 'line 8 : internal identifier "v1" is not declared',
+    locs = 'line 8 : internal identifier "v1" is not declared',
 }
 
 Test { [[
@@ -16916,7 +16916,7 @@ do
 end
 escape ret;
 ]],
-    syms = 'line 6 : internal identifier "a" is not declared',
+    locs = 'line 6 : internal identifier "a" is not declared',
 }
 
 Test { [[
@@ -19763,7 +19763,7 @@ async (b) do
 end;
 escape a;
 ]],
-    syms = 'line 3 : internal identifier "a" is not declared',
+    locs = 'line 3 : internal identifier "a" is not declared',
     --run = 1,
 }
 
@@ -19774,7 +19774,7 @@ async do
 end;
 escape a;
 ]],
-    syms = 'line 3 : internal identifier "a" is not declared',
+    locs = 'line 3 : internal identifier "a" is not declared',
     --run = 1,
 }
 
@@ -19836,7 +19836,7 @@ with
 end;
 escape a;
 ]],
-    syms = 'line 4 : internal identifier "a" is not declared',
+    locs = 'line 4 : internal identifier "a" is not declared',
     _ana = {
         --acc = 1,
     },
@@ -19886,7 +19886,7 @@ async do
 end;
 escape a;
 ]],
-    syms = 'line 4 : internal identifier "a" is not declared',
+    locs = 'line 4 : internal identifier "a" is not declared',
     --run=1
 }
 
@@ -19899,7 +19899,7 @@ end;
 escape a;
 ]],
     --env = "line 4 : invalid attribution",
-    syms = 'line 4 : internal identifier "a" is not declared',
+    locs = 'line 4 : internal identifier "a" is not declared',
     --parser = 'line 4 : after `=´ : expected expression',
 }
 
@@ -19910,7 +19910,7 @@ async do
 end;
 escape 0;
 ]],
-    syms = 'line 3 : internal identifier "a" is not declared',
+    locs = 'line 3 : internal identifier "a" is not declared',
 }
 Test { [[
 event int a;
@@ -19919,7 +19919,7 @@ async do
 end;
 escape 0;
 ]],
-    syms = 'line 3 : internal identifier "a" is not declared',
+    locs = 'line 3 : internal identifier "a" is not declared',
 }
 Test { [[
 async do
@@ -20396,7 +20396,7 @@ async (pi) do
 end;
 escape i;
 ]],
-    syms = 'line 5 : internal identifier "i" is not declared',
+    locs = 'line 5 : internal identifier "i" is not declared',
 }
 
 Test { [[
@@ -21348,7 +21348,7 @@ call Z=>1;
 escape v;
 ]],
     todo = 'globals',
-    syms = 'line 2 : internal identifier "v" is not declared',
+    locs = 'line 2 : internal identifier "v" is not declared',
 }
 
 Test { [[
@@ -21426,7 +21426,7 @@ end
 call A => ();
 escape 1;
 ]],
-    syms = 'line 1 : declaration of "a" hides previous declaration (tests.lua : line 1)',
+    locs = 'line 1 : declaration of "a" hides previous declaration (tests.lua : line 1)',
 }
 
 Test { [[
@@ -25774,7 +25774,7 @@ Test { [[
 
 a = 1;
 ]],
-    syms = 'line 3 : internal identifier "a" is not declared',
+    locs = 'line 3 : internal identifier "a" is not declared',
 }
 
 Test { [[
@@ -27611,7 +27611,7 @@ async do
 end
 escape x;
 ]],
-    syms = 'line 3 : internal identifier "x" is not declared',
+    locs = 'line 3 : internal identifier "x" is not declared',
 }
 
 Test { [[
@@ -27621,7 +27621,7 @@ async/thread do
 end
 escape x;
 ]],
-    syms = 'line 3 : internal identifier "x" is not declared',
+    locs = 'line 3 : internal identifier "x" is not declared',
 }
 
 Test { [[
@@ -29897,7 +29897,7 @@ do
 end
 escape ret;
 ]],
-    syms = 'line 7 : internal identifier "a" is not declared',
+    locs = 'line 7 : internal identifier "a" is not declared',
     --props = 'line 5 : must be in top-level',
 }
 
@@ -29915,7 +29915,7 @@ var Tx v;
 emit v.go;
 escape 0;
 ]],
-    syms = 'line 6 : internal identifier "a" is not declared',
+    locs = 'line 6 : internal identifier "a" is not declared',
     --props = 'line 4 : must be in top-level',
 }
 
@@ -29935,8 +29935,8 @@ var Tx v;
 emit v.go;
 escape a;
 ]],
-    syms = 'line 6 : internal identifier "a" is not declared',
-    --syms = 'line 6 : internal identifier "b" is not declared',
+    locs = 'line 6 : internal identifier "a" is not declared',
+    --locs = 'line 6 : internal identifier "b" is not declared',
 }
 
 Test { [[
@@ -29963,7 +29963,7 @@ do
 end
 escape a+b;
 ]],
-    syms = 'line 7 : internal identifier "a" is not declared',
+    locs = 'line 7 : internal identifier "a" is not declared',
     --props = 'line 5 : must be in top-level',
     --env = 'line 17 : class "Tx" is not declared',
 }
@@ -29988,7 +29988,7 @@ do
 end
 escape a+b;
 ]],
-    syms = 'line 5 : internal identifier "a" is not declared',
+    locs = 'line 5 : internal identifier "a" is not declared',
     --run = 4,
 }
 
@@ -33684,7 +33684,7 @@ tot = tot * 2;                  // 6
 
 escape tot;
 ]],
-    syms = 'line 4 : internal identifier "tot" is not declared',
+    locs = 'line 4 : internal identifier "tot" is not declared',
 }
 
 Test { [[
@@ -37696,7 +37696,7 @@ do Tx;
 escape 0;
 ]],
     run = 0,
-    --syms = 'line 4 : internal identifier "ok" is not declared',
+    --locs = 'line 4 : internal identifier "ok" is not declared',
 }
 
 Test { [[
@@ -40096,7 +40096,7 @@ var Tx t with
     end
 end;
 ]],
-    --syms = 'line 22 : internal identifier "_" is not declared',
+    --locs = 'line 22 : internal identifier "_" is not declared',
     fin = 'line 7 : constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -40114,7 +40114,7 @@ spawn Tx with
     end
 end;
 ]],
-    --syms = 'line 22 : internal identifier "_" is not declared',
+    --locs = 'line 22 : internal identifier "_" is not declared',
     fin = 'line 7 : constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -40152,7 +40152,7 @@ end
 
 escape _V;
 ]],
-    --syms = 'line 22 : internal identifier "_" is not declared',
+    --locs = 'line 22 : internal identifier "_" is not declared',
     fin = 'constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -40242,7 +40242,7 @@ end
 
 escape _V;
 ]],
-    --syms = 'line 23 : internal identifier "_" is not declared',
+    --locs = 'line 23 : internal identifier "_" is not declared',
     fin = 'constructor cannot contain `finalize´',
     --props = 'line 24 : not permitted inside a constructor',
 }
@@ -40280,7 +40280,7 @@ end
 
 escape _V;
 ]],
-    --syms = 'line 22 : internal identifier "_" is not declared',
+    --locs = 'line 22 : internal identifier "_" is not declared',
     fin = 'constructor cannot contain `finalize´',
     --fin = 'line 21 : invalid `finalize´',
 }
@@ -42121,7 +42121,7 @@ var I&& i = &&t;
 escape t._ins();
 ]],
     --env = 'line 13 : native function "CEU_T__ins" is not declared',
-    syms = 'line 13 : internal identifier "_ins" is not declared',
+    locs = 'line 13 : internal identifier "_ins" is not declared',
 }
 Test { [[
 interface I with
@@ -42139,7 +42139,7 @@ var I&& i = &&t;
 escape i:_ins();
 ]],
     --env = 'line 13 : native function "CEU_I__ins" is not declared',
-    syms = 'line 13 : internal identifier "_ins" is not declared',
+    locs = 'line 13 : internal identifier "_ins" is not declared',
 }
 Test { [[
 class Tx with do end
@@ -48120,7 +48120,7 @@ with
 end
 escape 1;
 ]],
-    syms = 'line 6 : internal identifier "i" is not declared',
+    locs = 'line 6 : internal identifier "i" is not declared',
 }
 
 Test { [[
@@ -51750,7 +51750,7 @@ await (e) or
       (f);
 escape 1;
 ]],
-    syms = 'line 1 : internal identifier "e" is not declared',
+    locs = 'line 1 : internal identifier "e" is not declared',
 }
 
 Test { [[
@@ -54049,7 +54049,7 @@ input/output [10] LINE (var int max)=>int do
 end
 escape ret;
 ]],
-    syms = 'line 6 : internal identifier "ret" is not declared',
+    locs = 'line 6 : internal identifier "ret" is not declared',
 }
 
 Test { [[
@@ -64647,7 +64647,7 @@ var SDL _;
     run = 1,
 }
 
--- BUG: deallocates byte: ifc/body dcls should not terminate
+-- BUG: deallocates byte: ifc/body locs should not terminate
 Test { [[
 class Tx with
     output:

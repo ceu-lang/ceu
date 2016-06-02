@@ -1,4 +1,5 @@
-SYMS = {
+LOCS = {
+    -- get()
 }
 
 local function iter_boundary (cur, id)
@@ -42,7 +43,7 @@ end
 local function dcls_new (me, blk)
     AST.asr(blk, 'Block')
 
-    local old = SYMS.get(me.id, blk)
+    local old = LOCS.get(me.id, blk)
     local implicit = (me.is_implicit and 'implicit ') or ''
     WRN(not old, me, old and
         implicit..'declaration of "'..me.id..'" hides previous declaration'..
@@ -52,7 +53,7 @@ local function dcls_new (me, blk)
     blk.dcls[me.id] = me
 end
 
-function SYMS.get (id, blk)
+function LOCS.get (id, blk)
     AST.asr(blk, 'Block')
     for blk in iter_boundary(blk, id) do
         local dcl = blk.dcls[id]
@@ -103,7 +104,7 @@ F = {
 
     ID_int = function (me)
         local id = unpack(me)
-        me.dcl = ASR(SYMS.get(id, AST.par(me,'Block')), me,
+        me.dcl = ASR(LOCS.get(id, AST.par(me,'Block')), me,
                     'internal identifier "'..id..'" is not declared')
     end,
 }
