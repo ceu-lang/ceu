@@ -33,7 +33,14 @@ end
 
 local _N = 0
 function AST.node (tag, ln, ...)
-    local me = setmetatable({ ... }, MT)
+    local me
+    if tag == '_Stmts' then
+        -- "Ct" as a special case to avoid "too many captures" (HACK_1)
+        tag = 'Stmts'
+        me = setmetatable((...), MT)
+    else
+        me = setmetatable({ ... }, MT)
+    end
     me.n = _N
     --me.xxx = debug.traceback()
     _N = _N + 1

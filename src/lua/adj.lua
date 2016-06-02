@@ -99,13 +99,6 @@ F = {
 
     -- global do end
 
-    _DoPre_pos = function (me)
-        local cls = AST.iter'Dcl_cls'()
-        AST.asr(me,'', 1,'Block', 1,'Stmts')
-        DO_PRE[#DO_PRE+1] = me[1][1]
-        return AST.node('Nothing', me.ln)
-    end,
-
     Dcl_cls_pre = function (me)
         local is_ifc, id, blk_ifc, blk_body = unpack(me)
 -- TODO

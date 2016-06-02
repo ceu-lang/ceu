@@ -1,15 +1,25 @@
 local node = AST.node
 
+local Dopre_Stmts
+
 F = {
     ['1__PRE'] = function (me)
-        local _stmts = unpack(me)
-        AST.asr(_stmts, '_Stmts')
-        AST.root = node('Block', me.ln, _stmts)
+        local stmts = unpack(me)
+        AST.asr(stmts, 'Stmts')
+
+        Dopre_Stmts = node('Stmts', me.ln)
+        table.insert(stmts, 1, Dopre_Stmts)
+
+        AST.root = node('Block', me.ln, stmts)
         return AST.root
     end,
     _Stmts__PRE = function (me)
         local t = unpack(me)
         return node('Stmts', me.ln, unpack(t))
+    end,
+    _Dopre__POS = function (me)
+        Dopre_Stmts[#Dopre_Stmts+1] = AST.asr(me,'', 1,'Block', 1,'Stmts')
+        return AST.node('Nothing', me.ln)
     end,
 
 -------------------------------------------------------------------------------
@@ -49,8 +59,8 @@ F = {
                 end
             end
         end
-        local stmts = AST.asr(blk,'Block', 1,'_Stmts')
-        table.insert(stmts[1], 1, dcls)
+        local stmts = AST.asr(blk,'Block', 1,'Stmts')
+        table.insert(stmts, 1, dcls)
     end,
 
 -------------------------------------------------------------------------------
