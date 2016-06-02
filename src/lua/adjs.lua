@@ -283,6 +283,13 @@ DBG('TODO: _Set')
     _Evts_set__PRE = function (me)
         return F.__dcls_set__PRE(me, 'Evt', 2)
     end,
+
+-------------------------------------------------------------------------------
+
+    NUMBER = function (me)
+        local v = unpack(me)
+        ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
+    end,
 }
 
 AST.visit(F)

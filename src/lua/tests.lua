@@ -648,7 +648,7 @@ escape 0x1 + 0X1 + 001;
 Test { [[
 escape 0x1 + 0X1 + 0a01;
 ]],
-    env = 'line 1 : malformed number',
+    adjs = 'line 1 : malformed number',
 }
 
 Test { [[
