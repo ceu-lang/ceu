@@ -1,15 +1,29 @@
 SYMS = {
 }
 
-local function iter_boundary (cur)
+local function iter_boundary (cur, id)
     return function ()
         while cur do
             local c = cur
             cur = cur.__par
             if c.tag == 'Block' then
                 return c
-            elseif false then
-                -- Data, Code, Async, Thread, Isr
+            elseif c.tag=='Async' or c.tag=='_Thread' then
+                -- see if varlist matches id to cross the boundary
+                -- async (a,b,c) do ... end
+                local cross = false
+                local varlist = unpack(c)
+                if varlist then
+                    for _, n in ipairs(varlist) do
+                        if n.sym.id == id then
+                            cross = true
+                        end
+                    end
+                end
+                if not cross then
+                    return nil
+                end
+            elseif c.tag=='Data' or c.tag=='Code' then
                 return nil
             end
         end
@@ -31,7 +45,7 @@ end
 
 function SYMS.get (id, blk)
     AST.asr(blk, 'Block')
-    for blk in iter_boundary(blk) do
+    for blk in iter_boundary(blk, id) do
         local sym = blk.syms[id]
         if sym then
             return sym

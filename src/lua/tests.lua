@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -14210,6 +14209,16 @@ escape 10;
 }
 
 Test { [[
+var int v1=0;
+async do
+    var int v = v1 + 1;
+end;
+escape 0;
+]],
+    syms = 'line 3 : internal identifier "v1" is not declared',
+}
+
+Test { [[
 input int A,B,X,Z;
 var int v1=0,v2=0;
 par do
@@ -14238,6 +14247,7 @@ end;
     syms = 'line 8 : internal identifier "v1" is not declared',
 }
 
+--]===]
 Test { [[
 var int v=2;
 async (v) do
