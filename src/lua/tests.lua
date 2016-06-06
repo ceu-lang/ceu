@@ -437,6 +437,67 @@ escape 0;
     run = 1,
 }
 
+-- TODO: mterber
+Test { [[
+input void HELLO;
+input void WORLD;
+par do      // par/and, par/or would behave the same
+    loop do
+        await HELLO;
+        _printf("Hello!\n");
+    end
+with
+    loop do
+        await WORLD;
+        _printf("World!\n");
+    end
+end
+
+escape 0;
+]],
+    run = 1,
+}
+
+Test { [[
+native do
+    int V = 0;
+end
+
+input void OS_START;
+
+class T with
+do
+    finalize with
+        _V = _V * 2;
+        _printf("<< T\n");
+    end
+    await FOREVER;
+end
+
+class U with
+do
+    finalize with
+        _V = _V + 1;
+        _printf("<< U\n");
+    end
+    await FOREVER;
+end
+
+par/or do
+    var T t;
+    watching t do
+        var U u;
+        await FOREVER;
+    end
+with
+    await OS_START;
+end
+
+escape _V;
+]],
+    run = 2,
+}
+
 do return end
 
 ----------------------------------------------------------------------------
@@ -17005,212 +17066,6 @@ escape v1!+v2!+_V;
     run = 60,
 }
 
---<<< FINALLY / FINALIZE
-
-Test { [[
-native @pure _f();
-native do
-    typedef struct t {
-        int* ptr;
-    } t;
-    int* f (int* ptr) {
-        return ptr;
-    }
-end
-var int v = 10;
-var _t t;
-escape *(t.ptr);
-]],
-    ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
-    --run = 10,
-}
-Test { [[
-native @pure _f();
-native do
-    typedef struct t {
-        int* ptr;
-    } t;
-    int* f (int* ptr) {
-        return ptr;
-    }
-end
-var int v = 10;
-var _t t;
-t.ptr = &_f(&&v);
-escape *(t.ptr);
-]],
-    env = 'line 12 : invalid attribution : l-value cannot hold an alias',
-    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
-    --run = 10,
-}
-
-Test { [[
-function (void)=>int&& get do
-    var int x;
-    return &&x;
-end
-escape 10;
-]],
-    env = 'line 3 : invalid return value : local reference',
-    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
-}
-
-Test { [[
-function (void)=>int&& get do
-    var int x=0;
-    return &&x;
-end
-escape 10;
-]],
-    env = 'line 3 : invalid return value : local reference',
-    --fin = 'line 3 : attribution to pointer with greater scope',
-}
-
-Test { [[
-function (void)=>int& get do
-    var int x=1;
-    return &x;
-end
-escape 10;
-]],
-    env = 'line 3 : invalid return value : local reference',
-    --ref = 'line 3 : attribution to reference with greater scope',
-}
-
-Test { [[
-var char[] str = [0,1,2];
-
-function (char[]& vec)=>int f do
-    return vec[1];
-end
-
-escape f(&str);
-]],
-    run = 1,
-}
-Test { [[
-var char[] str = [0,1,2];
-
-function (int[]& vec)=>int f do
-    return vec[1];
-end
-
-escape f(&str);
-]],
-    env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `char´)',
-}
-Test { [[
-var char[] str = [0,1,2];
-
-function (char[]& vec)=>int f do
-    return vec[1];
-end
-
-escape f(str);
-]],
-    ref = 'line 7 : invalid attribution : missing alias operator `&´',
-}
-Test { [[
-var char[] str = [0,1,2];
-
-function (void) => char[] f do
-    return &this.str;
-end
-
-var char[]& ref = &f();
-
-escape ref[1];
-]],
-    env = 'line 4 : invalid return value : types mismatch (`char[]´ <= `char[]&´)',
-}
-
--- vectors as argument (NO)
-Test { [[
-var char[] str = [0,1,2];
-
-function (void&&, int[] vec)=>int f do
-    return vec[1];
-end
-
-escape f(str);
-]],
-    env = 'line 3 : wrong argument #2 : vectors are not supported',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `char[]´)',
-}
-
-Test { [[
-function (int a, void)=>int f do
-end
-escape 1;
-]],
-    env = 'line 1 : type cannot be `void´',
-}
-
-Test { [[
-function (void, int a)=>int f do
-end
-escape 1;
-]],
-    env = 'line 1 : type cannot be `void´',
-}
-
-Test { [[
-data Test with
-    var u8& b;
-end
-
-var u8 b = 7;
-var Test[3] v;
-var Test t = Test(&b);
-v = [] .. v .. [t];
-
-// reassignments
-b = 10;
-t.b = 88;
-v[0].b = 36; // invalid attribution : missing alias operator `&´
-
-escape b;
-]],
-    run = 36,
-}
-
-Test { [[
-var int x;
-do
-    x = 1;
-end
-escape x;
-]],
-    ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
-    --run = 1,
-}
-
--- REFS: void&
-Test { [[
-var int v = 10;
-var void& p = &v;
-escape *((int&&)&&p);
-]],
-    run = 10,
-}
-Test { [[
-class T with
-    var void& p;
-do
-    escape *((int&&)&&this.p);
-end
-
-var int v = 10;
-var int ret = do T with
-                this.p = &v;
-              end;
-escape ret;
-]],
-    run = 10,
-}
-
---<<< ALIASES / REFERENCES / REFS / &
-
 Test { [[
 native _f();
 _f() finalize with nothing;
@@ -18912,6 +18767,212 @@ escape 1;
 ]],
     run = 1;
 }
+
+--<<< FINALLY / FINALIZE
+
+Test { [[
+native @pure _f();
+native do
+    typedef struct t {
+        int* ptr;
+    } t;
+    int* f (int* ptr) {
+        return ptr;
+    }
+end
+var int v = 10;
+var _t t;
+escape *(t.ptr);
+]],
+    ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    --run = 10,
+}
+Test { [[
+native @pure _f();
+native do
+    typedef struct t {
+        int* ptr;
+    } t;
+    int* f (int* ptr) {
+        return ptr;
+    }
+end
+var int v = 10;
+var _t t;
+t.ptr = &_f(&&v);
+escape *(t.ptr);
+]],
+    env = 'line 12 : invalid attribution : l-value cannot hold an alias',
+    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    --run = 10,
+}
+
+Test { [[
+function (void)=>int&& get do
+    var int x;
+    return &&x;
+end
+escape 10;
+]],
+    env = 'line 3 : invalid return value : local reference',
+    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
+}
+
+Test { [[
+function (void)=>int&& get do
+    var int x=0;
+    return &&x;
+end
+escape 10;
+]],
+    env = 'line 3 : invalid return value : local reference',
+    --fin = 'line 3 : attribution to pointer with greater scope',
+}
+
+Test { [[
+function (void)=>int& get do
+    var int x=1;
+    return &x;
+end
+escape 10;
+]],
+    env = 'line 3 : invalid return value : local reference',
+    --ref = 'line 3 : attribution to reference with greater scope',
+}
+
+Test { [[
+var char[] str = [0,1,2];
+
+function (char[]& vec)=>int f do
+    return vec[1];
+end
+
+escape f(&str);
+]],
+    run = 1,
+}
+Test { [[
+var char[] str = [0,1,2];
+
+function (int[]& vec)=>int f do
+    return vec[1];
+end
+
+escape f(&str);
+]],
+    env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `char´)',
+}
+Test { [[
+var char[] str = [0,1,2];
+
+function (char[]& vec)=>int f do
+    return vec[1];
+end
+
+escape f(str);
+]],
+    ref = 'line 7 : invalid attribution : missing alias operator `&´',
+}
+Test { [[
+var char[] str = [0,1,2];
+
+function (void) => char[] f do
+    return &this.str;
+end
+
+var char[]& ref = &f();
+
+escape ref[1];
+]],
+    env = 'line 4 : invalid return value : types mismatch (`char[]´ <= `char[]&´)',
+}
+
+-- vectors as argument (NO)
+Test { [[
+var char[] str = [0,1,2];
+
+function (void&&, int[] vec)=>int f do
+    return vec[1];
+end
+
+escape f(str);
+]],
+    env = 'line 3 : wrong argument #2 : vectors are not supported',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `char[]´)',
+}
+
+Test { [[
+function (int a, void)=>int f do
+end
+escape 1;
+]],
+    env = 'line 1 : type cannot be `void´',
+}
+
+Test { [[
+function (void, int a)=>int f do
+end
+escape 1;
+]],
+    env = 'line 1 : type cannot be `void´',
+}
+
+Test { [[
+data Test with
+    var u8& b;
+end
+
+var u8 b = 7;
+var Test[3] v;
+var Test t = Test(&b);
+v = [] .. v .. [t];
+
+// reassignments
+b = 10;
+t.b = 88;
+v[0].b = 36; // invalid attribution : missing alias operator `&´
+
+escape b;
+]],
+    run = 36,
+}
+
+Test { [[
+var int x;
+do
+    x = 1;
+end
+escape x;
+]],
+    ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
+    --run = 1,
+}
+
+-- REFS: void&
+Test { [[
+var int v = 10;
+var void& p = &v;
+escape *((int&&)&&p);
+]],
+    run = 10,
+}
+Test { [[
+class T with
+    var void& p;
+do
+    escape *((int&&)&&this.p);
+end
+
+var int v = 10;
+var int ret = do T with
+                this.p = &v;
+              end;
+escape ret;
+]],
+    run = 10,
+}
+
+--<<< ALIASES / REFERENCES / REFS / &
 
 Test { [[
 native do
