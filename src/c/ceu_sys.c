@@ -348,9 +348,14 @@ int ceu_threads_gc (tceu_app* app, int force_join) {
         tceu_threads_data** nxt_ = &head->nxt;
         if (head->has_terminated || head->has_aborted)
         {
-            if (app->isAlive && !head->has_notified) {
-                ceu_out_go(app, CEU_IN__THREAD, &head->id);
-                head->has_notified = 1;
+#ifdef CEU_RET
+            if (app->isAlive)
+#endif
+            {
+                if (!head->has_notified) {
+                    ceu_out_go(app, CEU_IN__THREAD, &head->id);
+                    head->has_notified = 1;
+                }
             }
 
             if (! head->has_joined) {
