@@ -129,9 +129,6 @@ local function ERR ()
 end
 
 local function fail (i, err)
-    if err == true then
-        return false
-    end
     if i==ERR_i and (not ERR_strs[err]) then
         ERR_strs[#ERR_strs+1] = err
         ERR_strs[err] = true
@@ -164,7 +161,7 @@ local function KK (patt, err, nox)
               + m.Cmt(P'',
                     -- FAILURE
                     function (_,i)
-                        if IGN>0 then return false end
+                        if err==true or IGN>0 then return false end
                         return fail(i,err)
                     end) * P(false)
                            -- (avoids "left recursive" error (explicit fail))
@@ -689,7 +686,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
              + V'SIZEOF'
              + (CK'call' + CK'call/recursive' + Cc'call') * V'CALL'
 -- Field
-             + V'ID_int'     + V'ID_nat'
+             + V'ID_int'  + V'ID_nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
              + V'Nat_Exp'
