@@ -29,6 +29,7 @@ end
 ]]
 
 local x = V'__SPACE'^0
+local X = V'__SPACE'^1
 
 local T = {
     {
@@ -179,11 +180,19 @@ local function K (patt, err, nox)
     return KK(patt, err, nox)
 end
 
-local CKK = function (tk,err)
-    return C(KK(tk,err,true)) * x
+local CKK = function (tk,err,nox)
+    local patt = C(KK(tk,err,true))
+    if nox == nil then
+        patt = patt * x
+    end
+    return patt
 end
-local CK = function (tk,err)
-    return C(K(tk,err,true)) * x
+local CK = function (tk,err,nox)
+    local patt = C(K(tk,err,true))
+    if nox == nil then
+        patt = patt * x
+    end
+    return patt
 end
 
 local OPT = function (patt)
