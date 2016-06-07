@@ -367,14 +367,14 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                     ) *
                    V'__Do'
     , _Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                    (V'ID_int'+V'ID_none') * K'in' * V'__Exp' *
+                    (V'ID_int'+V'ID_none') * K'in' * V'__Exp_Var' *
                    V'__Do'
 
     , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
                     (V'__awaits'-I(V'Await_Code')) *
                 V'__Do'
 
-    , CallStmt = V'__Exp'
+    , CallStmt = V'__Exp_Call'
 
     , Finalize = K'do' *
                     V'Block' *
@@ -382,7 +382,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                     V'Block' *
                  K'end'
 
-    , _Pause   = K'pause/if' * V'__Exp' * V'__Do'
+    , _Pause   = K'pause/if' * V'__Exp_Var' * V'__Do'
 
 -- ASYNCHRONOUS
 
@@ -526,7 +526,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __awaits     = (V'Await_Ext' + V'Await_Evt' + V'Await_Wclock' + V'Await_Code')
     , _Awaits      = K'await' * V'__awaits' * OPT(K'until'*V'__Exp')
     , Await_Ext    = V'ID_ext' - V'Await_Code'
-    , Await_Evt    = V'__Exp' - V'Await_Wclock' - V'Await_Code'
+    , Await_Evt    = V'__Exp_Var' - V'Await_Wclock' - V'Await_Code'
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
     , Await_Code   = V'CALL'
 
@@ -534,7 +534,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     , __evts_ps = V'__Exp' + PARENS(OPT(V'Explist'))
     , Emit_Ext_emit = K'emit' * (
-                        (V'WCLOCKK'+V'WCLOCKE') * OPT(KK'=>' * V'__Exp') +
+                        (V'WCLOCKK'+V'WCLOCKE') +
                         V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
                       )
     , Emit_Ext_call = (K'call/recursive'+K'call') *
@@ -543,7 +543,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                         V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
 
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') *
-                    V'__Exp' * OPT(KK'=>' * V'__evts_ps')
+                    V'__Exp_Var' * OPT(KK'=>' * V'__evts_ps')
 
     , _Watching = K'watching' * V'__awaits' * V'__Do'
 
@@ -570,7 +570,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- SETS
 
-    , _Set_one   = V'__Exp'           * V'__Sets_one'
+    , _Set_one   = V'__Exp_Var'       * V'__Sets_one'
     , _Set_many  = PARENS(V'Varlist') * V'__Sets_many'
 
     , __Sets_one  = (CKK'='+CKK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
@@ -654,7 +654,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
  --<<<
 
-    , Kill  = K'kill' * V'__Exp' * OPT(KK'=>'*V'__Exp')
+    , Kill  = K'kill' * V'__Exp_Var' * OPT(KK'=>'*V'__Exp')
 
 -- Types
 
@@ -666,6 +666,8 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- Expressions
 
+    , __Exp_Call = V'__Exp'
+    , __Exp_Var  = V'__Exp'
     , __Exp  = V'__1'
     , __1    = V'__2'  * (CK'or'  * V'__2')^0
     , __2    = V'__3'  * (CK'and' * V'__3')^0
