@@ -360,8 +360,8 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , _Loop_Num  = K'loop' * OPT('/'*V'__Exp') *
                     (V'__ID_int'+V'ID_none') * OPT(
                         K'in' * (CKK'[' + CKK']') * (
-                                    V'__Exp' * CKK'|>' * (V'ID_none' + V'__Exp') +
-                                    (V'ID_none' + V'__Exp') * CKK'<|' * V'__Exp'
+                                    V'__Exp' * CKK'->' * (V'ID_none' + V'__Exp') +
+                                    (V'ID_none' + V'__Exp') * CKK'<-' * V'__Exp'
                                 ) * (CKK'[' + CKK']') *
                                 OPT(KK',' * V'__Exp')
                     ) *
@@ -670,7 +670,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __1    = V'__2'  * (CK'or'  * V'__2')^0
     , __2    = V'__3'  * (CK'and' * V'__3')^0
     , __3    = V'__4'  * ( ( (CKK'!='-'!==')+CKK'=='+CKK'<='+CKK'>='
-                           + (CKK'<'-'<<')+(CKK'>'-'>>')
+                           + (CKK'<'-'<<'-'<-')+(CKK'>'-'>>')
                            ) * V'__4'
                          + CK'is' * V'Type'
                          + CK'as' * V'__Cast'

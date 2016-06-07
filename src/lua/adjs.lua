@@ -78,12 +78,12 @@ DBG('TODO: _Extreq', me.tag)
         local max, i, lb, fr, dir, to, rb, step, blk = unpack(me)
 
         -- loop i do end
-        -- loop i in [0 |> _] do end
+        -- loop i in [0 -> _] do end
         if #me == 4 then
             max, i, _, blk = unpack(me)
             lb   = '['
             fr   = node('NUMBER', me.ln, 0)
-            dir  = '|>'
+            dir  = '->'
             to   = node('ID_none', me.ln)
             rb   = ']'
             step = false
@@ -107,9 +107,9 @@ DBG('TODO: _Extreq', me.tag)
             step = node('NUMBER', me.ln, 1)
         end
 
-        -- loop i in [0 <| 10], 1 do end
-        -- loop i in [10 |> 1], -1 do end
-        if dir == '<|' then
+        -- loop i in [0 <- 10], 1 do end
+        -- loop i in [10 -> 1], -1 do end
+        if dir == '<-' then
             fr, to = to, fr
             step = node('Op1_-', me.ln, step)
         end
@@ -142,13 +142,13 @@ DBG('TODO: _Extreq', me.tag)
                     node('ID_int', me.ln, '__lim_'..me.n))
 
             -- lim_cmp
-            if dir == '|>' then
+            if dir == '->' then
                 -- if i > lim then break end
                 lim_cmp = node('Op2_>', me.ln,
                             node('ID_int', me.ln, i),
                             node('ID_int', me.ln, '__lim_'..me.n))
             else
-                assert(dir == '<|')
+                assert(dir == '<-')
                 -- if i < lim then break end
                 lim_cmp = node('Op2_<', me.ln,
                             node('ID_int', me.ln, i),
