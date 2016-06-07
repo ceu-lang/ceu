@@ -1,32 +1,33 @@
 local P, C, V, S, Cc, Ct = m.P, m.C, m.V, m.S, m.Cc, m.Ct
 
---[[
-local VV = V
+local __debug = false
 local spc = 0
-V = function (id)
-    return
-        m.Cmt(P'',
-            function ()
-                DBG(string.rep(' ',spc)..'>>>', id)
-                spc = spc + 2
-                return true
-            end)
-        * (
-            VV(id) * m.Cmt(P'',
-                        function ()
-                            spc = spc - 2
-                            DBG(string.rep(' ',spc)..'+++', id)
-                            return true
-                        end)
-          + m.Cmt(P'',
+if __debug then
+    local VV = V
+    V = function (id)
+        return
+            m.Cmt(P'',
                 function ()
-                    spc = spc - 2
-                    DBG(string.rep(' ',spc)..'---', id)
-                    return false
-                end) * P(false)
-        )
+                    DBG(string.rep(' ',spc)..'>>>', id)
+                    spc = spc + 2
+                    return true
+                end)
+            * (
+                VV(id) * m.Cmt(P'',
+                            function ()
+                                spc = spc - 2
+                                DBG(string.rep(' ',spc)..'+++', id)
+                                return true
+                            end)
+              + m.Cmt(P'',
+                    function ()
+                        spc = spc - 2
+                        DBG(string.rep(' ',spc)..'---', id)
+                        return false
+                    end) * P(false)
+            )
+    end
 end
-]]
 
 local x = V'__SPACE'^0
 local X = V'__SPACE'^1
@@ -153,6 +154,9 @@ local function KK (patt, err, nox)
                     -- SUCCESS
                     function (_, i, tk)
                         if IGN>0 then return true end
+if __debug then
+    DBG(string.rep(' ',spc)..'|||', '|'..id..'|')
+end
                         if i > LST_i then
                             LST_i   = i
                             LST_str = tk
