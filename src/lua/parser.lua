@@ -28,7 +28,7 @@ V = function (id)
 end
 ]]
 
-local X = V'__SPACES'
+local x = V'__SPACE'^0
 
 local T = {
     {
@@ -170,7 +170,7 @@ local function KK (patt, err, nox)
                            -- (avoids "left recursive" error (explicit fail))
 
     if not nox then
-        ret = ret * X
+        ret = ret * x
     end
     return ret
 end
@@ -183,10 +183,10 @@ local function K (patt, err, nox)
 end
 
 local CKK = function (tk,err)
-    return C(KK(tk,err,true)) * X
+    return C(KK(tk,err,true)) * x
 end
 local CK = function (tk,err)
-    return C(K(tk,err,true)) * X
+    return C(K(tk,err,true)) * x
 end
 
 local OPT = function (patt)
@@ -299,7 +299,7 @@ local alphanum = m.R'az' + '_' + m.R'09'
 -- __Rule:  container for other rules, not in the AST
 -- __rule:  (local) container for other rules
 
-GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
+GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -->>> OK
 
@@ -465,7 +465,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , Nat_End = K'native' * KK'/' * K'end'
     , Nat_Block = OPT(CK'pre') * K'native' * (#K'do')*'do' *
                 ( C(V'_C') + C((P(1)-(S'\t\n\r '*'end'*P';'^0*'\n'))^0) ) *
-             X* K'end'
+             x* K'end'
 
     , Nat_Stmt = KK'{' * C(V'__nat') * KK'}'
     , Nat_Exp  = KK'{' * C(V'__nat') * KK'}'
@@ -475,7 +475,7 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     , _Lua     = KK'[' * m.Cg(P'='^0,'lua') * KK'[' *
                  ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
-                  * (V'__luacl'/function()end) *X
+                  * (V'__luacl'/function()end) *x
     , __luaext = P'@' * V'__Exp'
     , __luacl  = ']' * C(P'='^0) * KK']'
     , __luacmp = m.Cmt(V'__luacl' * m.Cb'lua',
@@ -539,11 +539,11 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
 
     , __num = CKK(m.R'09'^1,'number') / tonumber
     , WCLOCKK = #V'__num' *
-                (V'__num' * P'h'   *X + Cc(0)) *
-                (V'__num' * P'min' *X + Cc(0)) *
-                (V'__num' * P's'   *X + Cc(0)) *
-                (V'__num' * P'ms'  *X + Cc(0)) *
-                (V'__num' * P'us'  *X + Cc(0)) *
+                (V'__num' * P'h'   *x + Cc(0)) *
+                (V'__num' * P'min' *x + Cc(0)) *
+                (V'__num' * P's'   *x + Cc(0)) *
+                (V'__num' * P'ms'  *x + Cc(0)) *
+                (V'__num' * P'us'  *x + Cc(0)) *
                 (V'__num' * E'<h,min,s,ms,us>')^-1
                     * OPT(CK'/_')
     , WCLOCKE = PARENS(V'__Exp') * (
@@ -770,12 +770,11 @@ GG = { [1] = X * V'_Stmts' * (P(-1) + E('end of file'))
     , _CEND = m.Cmt(C(V'_CSEP') * m.Cb'mark',
                     function (s,i,a,b) return a == b end)
 
-    , __SPACES = (('\n' * (V'__comm'+S'\t\n\r ')^0 *
-                    '#' * (P(1)-'\n')^0)
-                + ('//' * (P(1)-'\n')^0)
-                + S'\t\n\r '
-                + V'__comm'
-                )^0
+    , __SPACE = ('\n' * (V'__comm'+S'\t\n\r ')^0 *
+                  '#' * (P(1)-'\n')^0)
+              + ('//' * (P(1)-'\n')^0)
+              + S'\t\n\r '
+              + V'__comm'
 
     , __comm    = '/' * m.Cg(P'*'^1,'comm') * (P(1)-V'__commcmp')^0 * 
                     V'__commcl'
