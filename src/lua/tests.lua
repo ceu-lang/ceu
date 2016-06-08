@@ -45486,7 +45486,8 @@ escape Fx(5);
 Test { [[
 call 1;
 ]],
-    ast = 'line 1 : invalid call',
+    env = 'TODO: not a call',
+    --ast = 'line 1 : invalid call',
     --env = 'TODO: 1 not func',
     --parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
 }

@@ -34,7 +34,7 @@ local X = V'__SPACE'^1
 
 local T = {
     {
-        '`%*´ or `/´ or `%%´ or `%+´ or `%-´ or `>>´ or `<<´ or `&´ or `^´ or `|´ or `!=´ or `==´ or `<=´ or `>=´ or `<´ or `>´ or `is´ or `as´ or `and´ or `or´',
+        '`is´ or `as´ or `%*´ or `/´ or `%%´ or `%+´ or `%-´ or `>>´ or `<<´ or `&´ or `^´ or `|´ or `!=´ or `==´ or `<=´ or `>=´ or `<´ or `>´ or `and´ or `or´',
         'binary operator'
     },
 
@@ -674,8 +674,6 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __3    = V'__4'  * ( ( (CKK'!='-'!==')+CKK'=='+CKK'<='+CKK'>='
                            + (CKK'<'-'<<'-'<-')+(CKK'>'-'>>')
                            ) * V'__4'
-                         + CK'is' * V'Type'
-                         + CK'as' * V'__Cast'
                          )^0
     , __4    = V'__5'  * ((CKK'|'-'||') * V'__5')^0
     , __5    = V'__6'  * (CKK'^' * V'__6')^0
@@ -683,34 +681,33 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __7    = V'__8'  * ((CKK'>>'+CKK'<<') * V'__8')^0
     , __8    = V'__9'  * ((CKK'+'+CKK'-') * V'__9')^0
     , __9    = V'__10' * ((CKK'*'+(CKK'/'-'//'-'/*')+CKK'%') * V'__10')^0
-    , __10   = ( Cc(false) * ( CK'not'+CKK'-'+CKK'+'+CKK'~'+CKK'*'+
-                               (CKK'&&'-P'&'^3) + (CKK'&'-'&&') +
-                               CKK'$$' + (CKK'$'-'$$') )
+    , __10   = ( Cc('pre') *
+                    ( CK'not'+CKK'-'+CKK'+'+CKK'~'+CKK'*'+
+                      (CKK'&&'-P'&'^3) + (CKK'&'-'&&') +
+                      CKK'$$' + (CKK'$'-'$$') )
                )^0 * V'__11'
     , __11   = V'__12' *
-                  (
-                      PARENS(Cc'call' * OPT(V'Explist'))
-                  +
-                      KK'[' * Cc'idx'  * V'__Exp'    * KK']' +
+                (Cc'pos' * (
+                      Cc'call'      * PARENS(OPT(V'Explist')) +
+                      KK'[' * Cc'idx' * V'__Exp' * KK']' +
                       (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
-                      CKK'?' + (CKK'!'-'!=')
-                  )^0
+                      CKK'?'        * Cc(false) +
+                      (CKK'!'-'!=') * Cc(false) +
+                      CK'is'        * V'Type' +
+                      CK'as'        * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
+                    )
+                )^0
     , __12   = V'__Prim'
 
     , __Prim = PARENS(V'__Exp')
              + V'SIZEOF'
-             + (CK'call' + CK'call/recursive' + Cc'call') * V'CALL'
--- Field
+             + Cc'pos' * (CK'call'+CK'call/recursive'+Cc'call') * V'CALL'
              + V'ID_int'  + V'ID_nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
              + V'Nat_Exp'
-             + CK'call'     * V'__Exp'
-             + CK'call/recursive' * V'__Exp'
-
--->>> OK
-    , __Cast = V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure')
---<<<
+             + Cc'pos' * CK'call'           * V'__Exp'
+             + Cc'pos' * CK'call/recursive' * V'__Exp'
 
     , CALL   = V'ID_abs' * PARENS(OPT(V'Explist'))
     , SIZEOF = K'sizeof' * PARENS((V'Type' + V'__Exp'))

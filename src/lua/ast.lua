@@ -311,37 +311,22 @@ for tag, patt in pairs(GG) do
     end
 end
 
-local function f (ln, v1, op, v2, v3, ...)
-    --DBG('2',ln[2],v1,op,v2,v3,...)
-    local ret
-    if not op then
-        ret = v1
-    elseif v1=='call' or v1=='call/recursive' then
-        -- Prim call
-        ASR(op.tag=='Op2_call' or op.tag=='CALL', ln, 'invalid call')
-        --op[1] = v1  -- change modifier
-        ret = op
-    elseif v1 then
-        -- Op2_*
-        if op == 'call' then
-            ret = f(ln, AST.node('Op2_'..op,ln,op,v1,v2,v3), ...)
-        elseif op == '?' then
-            ret = f(ln, AST.node('Op1_'..op,ln,op,v1) ,v2, v3, ...)
-        elseif op == '!' then
-            ret = f(ln, AST.node('Op1_'..op,ln,op,v1) ,v2, v3, ...)
-        else
-            ret = f(ln, AST.node('Op2_'..op,ln,op,v1,v2), v3, ...)
+local function f (ln, v1, v2, v3, v4, ...)
+    --DBG('>>>',ln[2],v1,v2,v3,v4,...)
+    if v1 == 'pre' then
+        if v2=='+' or v2=='-' then
+            v2 = '1'..v2    -- unary +/-
         end
+        return AST.node('Exp_'..v2, ln, v2, f(v1,v3,v4,...))
+    elseif v2 == 'pos' then
+        return f(ln, AST.node('Exp_'..v3,ln,v3,v1,v4), ...)
+    elseif v2 then
+        -- binary
+        return f(ln, AST.node('Exp_'..v2,ln,v2,v1,v3), v4, ...)
     else
-        -- Op1_*
-        if op == 'cast' then
-            -- consume the type
-            ret = AST.node('Op1_'..op, ln, v2, f(ln,v3,...))
-        else
-            ret = AST.node('Op1_'..op, ln, op, f(ln,v2,v3,...))
-        end
+        -- primary
+        return v1
     end
-    return ret
 end
 
 for i=1, 12 do
