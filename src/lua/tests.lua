@@ -97,10 +97,12 @@ Test { [[escape (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
-    parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´",
+    --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
+    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
 }
 Test { [[nt sizeof;]],
-    parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´",
+    --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
+    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
 }
 Test { [[var int sizeof;]],
     parser = "line 1 : after `int´ : expected type modifier or internal identifier",
@@ -224,7 +226,8 @@ Test { [[var int a=1,a=0; escape a;]],
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
-    parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `;´",
+    --parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´",
+    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `(´ or `?´ or `is´ or binary operator or `;´',
 }
 Test { [[var int a = b; escape 0;]],
     locs = 'internal identifier "b" is not declared',
@@ -284,14 +287,17 @@ Test { [[
 inputintMY_EVT;
 ifv==0thenbreak;end
 ]],
-    parser = 'line 2 : after `==´ : expected expression',
-    --parser = 'line 2 : after `0´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´',
+    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
+    --parser = 'line 2 : after `ifv´ : `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
+    --parser = 'line 2 : after `==´ : expected expression',
+    --parser = 'line 2 : after `0´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
 }
 Test { [[
 inputintMY_EVT;
 escape 1;
 ]],
-    locs = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
+    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
+    --locs = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
 }
 
 Test { [[
@@ -307,7 +313,9 @@ Test { [[
 native_printf();
 loopdo await250ms;_printf("Hello World!\n");end
 ]],
-    parser = 'line 2 : after `loopdo´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´',
+    parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
+    --parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´ or `?´ or `is´ or binary operator or `;´',
+    --parser = 'line 2 : after `loopdo´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
 }
 
 -- TYPE / BOOL
@@ -1452,15 +1460,16 @@ escape 0;
 Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     --parser = 'line 1 : after `1´ : expected `;´',
-    --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `until´ or `;´',
-    parser = 'line 1 : after `-´ : expected expression',
+    --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `until´ or `;´',
+    parser = 'line 1 : after `await´ : expected abstraction identifier or external identifier or number or `(´ or name expression or `{´ or `FOREVER´',
 }
 
 Test { [[await 1; escape 0;]],
     parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
 }
 Test { [[await -1; escape 0;]],
-    env = 'line 1 : event "?" is not declared',
+    parser = 'expected abstraction identifier or external identifier or number or `(´ or name expression or `{´ or `FOREVER´',
+    --env = 'line 1 : event "?" is not declared',
 }
 
 Test { [[var s32 a=await 10s; escape a==8000000;]],
@@ -2547,7 +2556,8 @@ loop i in 10 do
 end
 escape 1;
 ]],
-    env = 'TODO: not a pool',
+    parser = 'line 1 : after `in´ : expected `[´ or `]´ or name expression',
+    --env = 'TODO: not a pool',
 }
 
 Test { [[
@@ -16497,7 +16507,7 @@ finalize () with
     _SDL_FreeSurface(&&(sfc!));
 end
 ]],
-    parser = 'line 3 : after `(´ : expected expression',
+    parser = 'line 3 : after `(´ : expected internal identifier',
 }
 
 Test { [[
@@ -18887,7 +18897,7 @@ do
     escape r;
 end
 ]],
-    --parser = 'line 10 : after `i´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `)´',
+    --parser = 'line 10 : after `i´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `)´',
     --adj = 'line 9 : invalid `finalize´',
     --run = 1,
     -- TODO: impossible to place the finally in the correct parameter?
@@ -21071,7 +21081,7 @@ Test { [[
 output Z  (var int)=>int;
 escape call Z=>1;
 ]],
-    parser = 'line 2 : after `call´ : expected expression',
+    parser = 'line 2 : after `call´ : expected name expression',
     --parser = 'line 2 : after `call´ : expected expression',
     --parser = 'line 2 : after `Z´ : expected `;´',
     --parser = 'line 2 : after `Z´ : expected `(´',
@@ -21610,7 +21620,9 @@ Test { [[var int&&p; escape p+10 and 0;]], env='invalid operands to binary' }
 -- ptr
 Test { [[var int a; escape *a;]], env='invalid operand to unary "*"' }
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
-        env='invalid operands to binary'}
+    --parser = 'line 1 : after `pa´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `)´ or `,´',
+    env='invalid operands to binary'
+}
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
 Test { [[
@@ -22683,7 +22695,7 @@ Test { [[
 vector[10] u8 vec = (1,2,3);
 escape 1;
 ]],
-    parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `)´',
+    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `)´',
 }
 Test { [[
 vector[10] u8 vec = (1);
@@ -22835,7 +22847,7 @@ v1 = v2;
 v1 = v2..v3;
 escape 1;
 ]],
-    parser = 'line 3 : after `v2´ : expected `(´ or `[´ or `:´ or `?´ or `!´ or binary operator or `;´',
+    parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `as´ or `(´ or `?´ or `is´ or binary operator or `;´',
 }
 
 Test { [[
@@ -23014,14 +23026,14 @@ Test { [[
 escape 1..2;
 ]],
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `?´ or `!´ or binary operator or `;´',
+    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´',
 }
 Test { [[
 escape 1 .. 2;
 ]],
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
     --parser = 'line 1 : after `1´ : expected `;´',
-    parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `?´ or `!´ or binary operator or `;´',
+    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´',
 }
 Test { [[
 vector[] int x = [1]..2;
@@ -23582,7 +23594,7 @@ _f(v..[1]);
 escape 1;
 ]],
     --parser = 'line 2 : after `..´ : invalid constructor syntax',
-    parser = 'line 2 : after `v´ : expected `(´ or `[´ or `:´ or `?´ or `!´ or binary operator or `,´ or `)´',
+    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `as´ or `(´ or `?´ or `is´ or binary operator or `,´ or `)´',
     --run = 1,
 }
 
@@ -23875,7 +23887,8 @@ escape 1;
 Test { [[
 _f()
 ]],
-    parser = 'line 1 : after `)´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´ or `;´',
+    parser = 'line 1 : after `)´ : expected `;´',
+    --parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
 }
 
 Test { [[
@@ -25041,7 +25054,8 @@ end
 var int i = {fff}(3,4);
 escape i;
 ]],
-    parser = 'line 8 : after `)´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `=´ or `:=´',
+    run = 'TODO',
+    --parser = 'line 8 : after `)´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´',
 }
 
 Test { [[
@@ -26051,7 +26065,7 @@ end
 escape 0;
 ]],
     --adj = 'line 2 : invalid expression',
-    parser = 'line 2 : after `pause/if´ : expected expression',
+    parser = 'line 2 : after `pause/if´ : expected name expression',
     --parser = 'line 2 : after `A´ : expected `(´',
 }
 
@@ -27873,7 +27887,7 @@ Test { [==[
 var int a = [[a]];
 escape a;
 ]==],
-    parser = 'line 3 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `;´',
+    parser = 'line 3 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´',
 }
 
 Test { [==[
@@ -37867,7 +37881,7 @@ var int v1, v2;
 end;
 escape v1+v2;
 ]],
-    parser = 'line 6 : after `v´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `)´',
+    parser = 'line 6 : after `v´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `)´',
     --env = 'line 10 : arity mismatch',
     --run = 30,
 }
@@ -45486,7 +45500,8 @@ escape Fx(5);
 Test { [[
 call 1;
 ]],
-    env = 'TODO: not a call',
+    parser = 'line 1 : after `call´ : expected external identifier or name expression',
+    --env = 'TODO: not a call',
     --ast = 'line 1 : invalid call',
     --env = 'TODO: 1 not func',
     --parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
@@ -55990,7 +56005,7 @@ var Pair p1 = (1,2);    /* vs Pair(1,2) */
 escape 1;
 ]],
     -- TODO: better error message
-    parser = 'line 51 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `)´',
+    parser = 'line 51 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `)´',
     --run = 1,
 }
 Test { DATA..[[

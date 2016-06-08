@@ -34,7 +34,7 @@ local X = V'__SPACE'^1
 
 local T = {
     {
-        '`is´ or `as´ or `%*´ or `/´ or `%%´ or `%+´ or `%-´ or `>>´ or `<<´ or `&´ or `^´ or `|´ or `!=´ or `==´ or `<=´ or `>=´ or `<´ or `>´ or `and´ or `or´',
+        '`%*´ or `/´ or `%%´ or `%+´ or `%-´ or `>>´ or `<<´ or `&´ or `^´ or `|´ or `!=´ or `==´ or `<=´ or `>=´ or `<´ or `>´ or `and´ or `or´',
         'binary operator'
     },
 
@@ -70,20 +70,32 @@ local T = {
     },
 
     {
-        '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
+        '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
     {
-        'abstraction identifier or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or `call´ or `call/recursive´ or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
+        '`not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `call/recursive´ or `call´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
     {
-        '`not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `sizeof´ or `call´ or `call/recursive´ or abstraction identifier or internal identifier or native identifier or `null´ or number or `false´ or `true´ or `"´ or string literal or `global´ or `this´ or `outer´ or `{´',
+        '`%*´ or `&&´ or `&´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´',
+        'name expression'
+    },
+    {
+        '`%*´ or `&&´ or `&´ or internal identifier or native identifier or `global´ or `this´ or `outer´',
+        'name expression'
+    },
+    {
+        'name expression or abstraction identifier',
+        'name expression'
+    },
+    {
+        '`%(´ or `call/recursive´ or `call´ or name expression or `{´ or abstraction identifier or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `%$´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or expression or `await´ or `emit´ or `request´ or `spawn´ or `kill´ or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or abstraction identifier or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
 }
@@ -367,22 +379,20 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                     ) *
                    V'__Do'
     , _Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                    (V'ID_int'+V'ID_none') * K'in' * V'__Exp_Var' *
+                    (V'ID_int'+V'ID_none') * K'in' * V'__Exp_Name' *
                    V'__Do'
 
     , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
                     (V'__awaits'-I(V'Await_Code')) *
                 V'__Do'
 
-    , CallStmt = V'__Exp_Call'
-
     , Finalize = K'do' *
                     V'Block' *
-                 K'finalize' * OPT(V'Explist') * K'with' *
+                 K'finalize' * OPT(PARENS(V'Varlist')) * K'with' *
                     V'Block' *
                  K'end'
 
-    , _Pause   = K'pause/if' * V'__Exp_Var' * V'__Do'
+    , _Pause   = K'pause/if' * V'__Exp_Name' * V'__Do'
 
 -- ASYNCHRONOUS
 
@@ -409,7 +419,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                    V'__Do'
 
     , _Spawn_Block = K'spawn' * V'__Do'
-    , Spawn_Code   = K'spawn' * V'CALL'
+    , Spawn_Code   = K'spawn' * V'ID_abs' * PARENS(OPT(V'Explist'))
 
     -- EXTS
 
@@ -526,9 +536,9 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __awaits     = (V'Await_Ext' + V'Await_Evt' + V'Await_Wclock' + V'Await_Code')
     , _Awaits      = K'await' * V'__awaits' * OPT(K'until'*V'__Exp')
     , Await_Ext    = V'ID_ext' - V'Await_Code'
-    , Await_Evt    = V'__Exp_Var' - V'Await_Wclock' - V'Await_Code'
+    , Await_Evt    = V'__Exp_Name' - V'Await_Wclock' - V'Await_Code'
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
-    , Await_Code   = V'CALL'
+    , Await_Code   = V'ID_abs' * PARENS(OPT(V'Explist'))
 
     , Await_Forever = K'await' * K'FOREVER'
 
@@ -543,7 +553,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                         V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
 
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') *
-                    V'__Exp_Var' * OPT(KK'=>' * V'__evts_ps')
+                    V'__Exp_Name' * OPT(KK'=>' * V'__evts_ps')
 
     , _Watching = K'watching' * V'__awaits' * V'__Do'
 
@@ -570,11 +580,11 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- SETS
 
-    , _Set_one   = V'__Exp_Var'       * V'__Sets_one'
+    , _Set_one   = (V'__Exp_Name'+#P'$'*V'__Exp') * V'__Sets_one'
     , _Set_many  = PARENS(V'Varlist') * V'__Sets_many'
 
-    , __Sets_one  = (CKK'='+CKK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
-    , __Sets_many = (CKK'='+CKK':=') * (V'__sets_many' + PARENS(V'__sets_many'))
+    , __Sets_one  = (CKK'='-'=='+CKK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
+    , __Sets_many = (CKK'='-'=='+CKK':=') * (V'__sets_many' + PARENS(V'__sets_many'))
 
     , __sets_one =
           V'_Set_Data'
@@ -654,7 +664,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
  --<<<
 
-    , Kill  = K'kill' * V'__Exp_Var' * OPT(KK'=>'*V'__Exp')
+    , Kill  = K'kill' * V'__Exp_Name' * OPT(KK'=>'*V'__Exp')
 
 -- Types
 
@@ -666,8 +676,28 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- Expressions
 
-    , __Exp_Call = V'__Exp'
-    , __Exp_Var  = V'__Exp'
+    --, Call = V'__Exp'
+    --, __Exp_Name  = V'__Exp'
+
+    -- Exp_Name
+
+    , __Exp_Name = V'__01_Name'
+    , __01_Name  = (Cc('pre') * (CKK'*'+CKK'&&'+(CKK'&'-'&&')))^0 * V'__02_Name'
+    , __02_Name  = V'__03_Name' *
+                    (Cc'pos' * (
+                        KK'[' * Cc'idx' * V'__Exp' * KK']' +
+                        (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
+                        (CKK'!'-'!=') * Cc(false) +
+                        CK'as'        * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
+                      )
+                    )^0
+    , __03_Name  = PARENS(V'__Exp')
+                 + V'ID_int'  + V'ID_nat'
+                 + V'Global'  + V'This'   + V'Outer'
+                 + V'Nat_Exp'
+
+    -- Exp
+
     , __Exp  = V'__1'
     , __1    = V'__2'  * (CK'or'  * V'__2')^0
     , __2    = V'__3'  * (CK'and' * V'__3')^0
@@ -688,7 +718,6 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                )^0 * V'__11'
     , __11   = V'__12' *
                 (Cc'pos' * (
-                      Cc'call'      * PARENS(OPT(V'Explist')) +
                       KK'[' * Cc'idx' * V'__Exp' * KK']' +
                       (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
                       CKK'?'        * Cc(false) +
@@ -697,19 +726,14 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                       CK'as'        * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
                     )
                 )^0
-    , __12   = V'__Prim'
-
-    , __Prim = PARENS(V'__Exp')
+    , __12   = V'Call'  -- TODO: ambiguous w/ PARENS
+             + PARENS(V'__Exp')
              + V'SIZEOF'
-             + Cc'pos' * (CK'call'+CK'call/recursive'+Cc'call') * V'CALL'
              + V'ID_int'  + V'ID_nat'
              + V'NULL'    + V'NUMBER' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
              + V'Nat_Exp'
-             + Cc'pos' * CK'call'           * V'__Exp'
-             + Cc'pos' * CK'call/recursive' * V'__Exp'
 
-    , CALL   = V'ID_abs' * PARENS(OPT(V'Explist'))
     , SIZEOF = K'sizeof' * PARENS((V'Type' + V'__Exp'))
     , NULL   = CK'null'     -- TODO: the idea is to get rid of this
     , STRING = CKK( CKK'"' * (P(1)-'"'-'\n')^0 * K'"', 'string literal' )
@@ -724,6 +748,15 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , Global  = K'global'
     , This    = K'this' * Cc(false)
     , Outer   = K'outer'
+
+    , Call = PARENS(V'Call')
+           + Cc'pos' * ( CK'call/recursive'
+                       + CK'call'
+                       + Cc'call' ) *
+                           ( V'__Exp_Name'
+                           + V'ID_abs'
+                           + PARENS(V'__Exp') ) *
+                              PARENS(OPT(V'Explist'))
 
 ---------
                 -- "Ct" as a special case to avoid "too many captures" (HACK_1)
@@ -752,10 +785,10 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                  + V'Emit_Evt'
                  + V'Spawn_Code' + V'Kill'
-                 + V'Nat_Stmt'
 -- TODO: remove class/interface
 + I((K'class'+K'interface'+K'traverse')) * E'TODO: class/interface'
-             + V'CallStmt' -- last
+                 + V'Call' -- TODO: ambiguous with Nat_Stmt
+                 + V'Nat_Stmt'
 
     , __Stmt_Block = V'Code_impl' + V'Extcall_impl' + V'_Extreq_impl'
               + V'_Data_block'

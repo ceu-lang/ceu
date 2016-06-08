@@ -329,8 +329,14 @@ end
 dofile 'tests.lua'
 
 -- check if all translation messages were used
-for i=1, #RUNTESTS.parser_translate.original do
-    assert(RUNTESTS.parser_translate.ok[i]==true, 'parser translate '..i)
+do
+    local err = false
+    for i=1, #RUNTESTS.parser_translate.original do
+        if not RUNTESTS.parser_translate.ok[i] then
+            DBG('parser translate '..i)
+        end
+    end
+    assert(not err)
 end
 
 print([[
