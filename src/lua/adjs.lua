@@ -201,9 +201,10 @@ DBG('TODO: _Loop_Pool')
             end
             for i, id_ in ipairs(to) do
                 local id = unpack(id_)
+                local ID_ext = AST.asr(awt,'Await_Ext', 1,'ID_ext')
                 local var = node('Var', me.ln,
                                 false,
-                                node('Ref', me.ln, awt, i),
+                                node('Ref', me.ln, 'every', ID_ext, i),
                                 id)
                 var.is_implicit = true
                 dcls[#dcls+1] = var
@@ -304,6 +305,7 @@ DBG('TODO: _Set')
     --          var int _1, _2;
     --      end
     --      event _int_int e;
+    Ext__PRE = 'Evt__PRE',
     Evt__PRE = function (me)
         local _, list = unpack(me)
         if list.tag == 'Type' then

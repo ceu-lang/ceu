@@ -111,6 +111,21 @@ F = {
         me.dcl = ASR(LOCS.get(id, AST.par(me,'Block')), me,
                     'internal identifier "'..id..'" is not declared')
     end,
+
+    ---------------------------------------------------------------------------
+
+    Ref__PRE = function (me)
+        local id, ID_ext, i = unpack(me)
+        assert(id == 'every')
+        AST.asr(ID_ext,'ID_ext')
+        assert(ID_ext.top.group == 'input')
+        local _, Type = unpack(ID_ext.top)
+        local ID = unpack(Type)
+        assert(ID.top.group == 'data')
+        local fields = AST.asr(ID.top,'', 3,'Block', 1,'Stmts')
+        local _, Type = unpack(fields[i])
+        return AST.copy(Type)
+    end,
 }
 
 AST.visit(F)

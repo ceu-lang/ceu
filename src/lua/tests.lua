@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3634,7 +3633,7 @@ input (int,int) A;
 par do
     var int a, b;
     (a,b) = await A;
-    if a and b then end
+    if (a as bool) and (b as bool) then end
 with
     await A;
     escape 1;
@@ -3652,7 +3651,7 @@ input (int,int) A;
 par do
     var int a, b;
     (a,b) = await A;
-    if a and b then end
+    if (a as bool) and (b as bool) then end
 with
     escape 1;
 end
@@ -3720,6 +3719,7 @@ end
 ]],
     locs = 'line 4 : implicit declaration of "a" hides previous declaration',
 }
+--]===]
 Test { [[
 input (int,int) A;
 par do
