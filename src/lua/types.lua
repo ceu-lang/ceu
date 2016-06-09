@@ -65,49 +65,81 @@ function TYPES.check_int (tp)
     return top.prim and top.prim.is_int and (not mod)
 end
 
-local __max_num = {
-    { 'f64','f32' },
-    { 'float','int' },
-    { 'u64','u32','u16','u8' },
-    { 's64','s32','s16','s8' },
-}
-local function max_num (id1, id2)
-    for _, t in ipairs(__max_num) do
-        for i=1,#t do
-            local t1 = t[i]
-            if t1==id1 or t1==id2 then
-                for j=i,#t do
-                    local t2 = t[j]
-                    if t2==id1 or t2==id2 then
-                        return t1
+do
+    local __contains_num = {
+        -- TODO: should 'int' be bottom?
+        { 'f64','f32','float','int' },
+        { 'u64','u32','u16','u8','int' },
+        { 's64','s32','s16','s8','int' },
+    }
+    local function contains_num (id1, id2)
+        for _, t in ipairs(__contains_num) do
+            for i=1,#t do
+                local t1 = t[i]
+                if t1 == id1 then
+                    for j=i,#t do
+                        local t2 = t[j]
+                        if t2 == id2 then
+                            return true
+                        end
                     end
                 end
             end
         end
-    end
-    return nil
-end
-
-function TYPES.max (tp1, tp2)
-    assert(#tp1==1 and #tp2==1)
-    local top1 = unpack(tp1)
-    local top2 = unpack(tp2)
-    if top1.prim and top2.prim and top1.prim.is_num and top2.prim.is_num then
-        local max = max_num(top1.id,top2.id)
-        return max and {TOPS[max]} or nil
-    else
-        return nil
-    end
-end
-
-function TYPES.contains (tp1, tp2)
-    if TYPES.is_equal(tp1, tp2) then
-        return true
+        return false
     end
 
-    local max = TYPES.max(tp1,tp2)
-    if max and TYPES.is_equal(tp1,max) then
-        return true
+    function TYPES.contains (tp1, tp2)
+        if #tp1 ~= #tp2 then
+            return false
+        end
+        if TYPES.is_equal(tp1, tp2) then
+            return true
+        end
+
+        if TYPES.check_num(tp1) and TYPES.check_num(tp2) then
+            local top1 = unpack(tp1)
+            local top2 = unpack(tp2)
+            return contains_num(top1.id,top2.id)
+        end
+
+return false
+--[[
+        -- any pointer or alias can be used with "null"
+        elseif TP.check(tp1,'&&') and TP.check(tp2,'null','&&') or
+               TP.check(tp2,'&&') and TP.check(tp1,'null','&&')
+        then
+            return true
+
+        -- single-pointer casts
+        elseif TP.check(tp1,id1,'&&') and TP.check(tp2,id2,'&&') then
+            -- TODO: allows any cast to byte*, char* and void*
+            --       is it correct?
+            --       (I think "void*" should fail)
+            if id1=='byte' or id1=='char' or id1=='void' then
+                local tp2 = TP.copy(tp2)
+                tp2.tt[1] = id1
+                return TP.contains(tp1, tp2, {numeric=false})
+
+            -- both are external types: let "gcc" handle it
+            elseif TP.is_ext(tp1,'_') or TP.is_ext(tp2,'_') then
+                return true
+
+            else
+                return false, __err(tp1, tp2)
+            end
+        end
+]]
+    end
+
+    function TYPES.max (tp1, tp2)
+        if TYPES.contains(tp1, tp2) then
+            return tp1
+        elseif TYPES.contains(tp2, tp1) then
+            return tp2
+        else
+            return nil
+        end
     end
 end
 

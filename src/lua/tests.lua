@@ -1523,7 +1523,6 @@ Test { [[await FOREVER;]],
 }
 
 -- tests var.isTmp
---]===]
 Test { [[
 native ___ceu_a_1;
 var int a = await 999ms;
@@ -2131,6 +2130,7 @@ escape ptr == null;
 ]],
     parser = 'line 1 : after `=´ : expected expression',
 }
+--]===]
 Test { [[
 var u8&& ptr = do/_
     par do
