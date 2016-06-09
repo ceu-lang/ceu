@@ -44,7 +44,9 @@ F = {
         local op, e1, e2 = unpack(me)
         ASR(TYPES.check_num(e1.tp) and TYPES.check_num(e2.tp), me,
             'invalid expression : operands to `'..op..'´ must be of numeric type')
-        me.tp = TYPES.copy( TYPES.max(e1.tp, e2.tp) )
+        local max = TYPES.max(e1.tp, e2.tp)
+        ASR(max, me, 'invalid expression : incompatible numeric types')
+        me.tp = TYPES.copy(max)
     end,
 
     ['Exp_1+'] = 'Exp_num_num',

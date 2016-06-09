@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -134,6 +133,59 @@ Test { [[escape 1<2>3;]],
     exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
 }
 Test { [[escape (1<2 as int)<3;]], run=1 }
+
+Test { [[
+var uint x = 1.5;
+escape x + 0.5;
+]],
+    exps = 'line 2 : invalid expression : incompatible numeric types',
+}
+
+Test { [[
+escape 0x1 + 0X1 + 001;
+]],
+    run = 3,
+}
+
+Test { [[
+escape 0x1 + 0X1 + 0a01;
+]],
+    adjs = 'line 1 : malformed number',
+}
+
+Test { [[
+escape 1.;
+]],
+    run = 1,
+}
+
+Test { [[
+var float x = 1.5;
+escape x + 0.5;
+]],
+    run = 2,
+}
+
+Test { [[
+var uint x = 1.5;
+escape x + (0.5 as uint);
+]],
+    run = 1,
+}
+
+Test { [[
+var byte x = 1.5;
+escape x + (0.5 as byte);
+]],
+    run = 1,
+}
+
+Test { [[
+var byte x = 255;
+escape x + (0.5 as byte);
+]],
+    run = 0,
+}
 
 --<<< EXPS / EXPRESSIONS
 
@@ -700,52 +752,6 @@ escape a;
 ]],
     wrn = true,
     run = 2,
-}
-
-Test { [[
-escape 0x1 + 0X1 + 001;
-]],
-    run = 3,
-}
-
-Test { [[
-escape 0x1 + 0X1 + 0a01;
-]],
-    adjs = 'line 1 : malformed number',
-}
-
-Test { [[
-escape 1.;
-]],
-    run = 1,
-}
-
-Test { [[
-var float x = 1.5;
-escape x + 0.5;
-]],
-    run = 2,
-}
-
-Test { [[
-var uint x = 1.5;
-escape x + 0.5;
-]],
-    run = 1,
-}
-
-Test { [[
-var byte x = 1.5;
-escape x + 0.5;
-]],
-    run = 1,
-}
-
-Test { [[
-var byte x = 255;
-escape x + 0.5;
-]],
-    run = 0,
 }
 
 Test { [[
@@ -1524,6 +1530,7 @@ Test { [[await FOREVER;]],
 }
 
 -- tests var.isTmp
+--]===]
 Test { [[
 native ___ceu_a_1;
 var int a = await 999ms;
