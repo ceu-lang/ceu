@@ -114,7 +114,8 @@ Test { [[escape 10==true;]],
 Test { [[escape (10!=0) as int;]], run=1 }
 Test { [[escape true and true;]], run=1 }
 Test { [[escape 2>1 and 10!=0;]], run=1 }
-Test { [[escape (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
+Test { [[escape (1<=2 as int) + 3;]], run=2 }
+Test { [[escape (1<=2 as int) + (1<2 as int) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
@@ -250,7 +251,7 @@ Test { [[var int a=1,a=0; escape a;]],
 }
 Test { [[var int a; a = b = 1]],
     --parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´",
-    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `(´ or `?´ or `is´ or binary operator or `;´',
+    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `(´ or `?´ or binary operator or `is´ or `;´',
 }
 Test { [[var int a = b; escape 0;]],
     locs = 'internal identifier "b" is not declared',
@@ -22727,7 +22728,7 @@ Test { [[
 vector[10] u8 vec = (1,2,3);
 escape 1;
 ]],
-    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `)´',
+    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `is´ or `as´ or `)´',
 }
 Test { [[
 vector[10] u8 vec = (1);
@@ -22879,7 +22880,7 @@ v1 = v2;
 v1 = v2..v3;
 escape 1;
 ]],
-    parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `as´ or `(´ or `?´ or `is´ or binary operator or `;´',
+    parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `as´ or `(´ or `?´ or binary operator or `is´ or `;´',
 }
 
 Test { [[
@@ -23058,14 +23059,14 @@ Test { [[
 escape 1..2;
 ]],
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´',
+    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `?´ or `!´ or binary operator or `is´ or `as´ or `;´',
 }
 Test { [[
 escape 1 .. 2;
 ]],
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
     --parser = 'line 1 : after `1´ : expected `;´',
-    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´',
+    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `?´ or `!´ or binary operator or `is´ or `as´ or `;´',
 }
 Test { [[
 vector[] int x = [1]..2;
@@ -23626,7 +23627,7 @@ _f(v..[1]);
 escape 1;
 ]],
     --parser = 'line 2 : after `..´ : invalid constructor syntax',
-    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `as´ or `(´ or `?´ or `is´ or binary operator or `,´ or `)´',
+    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `as´ or `(´ or `?´ or binary operator or `is´ or `,´ or `)´',
     --run = 1,
 }
 
@@ -27919,7 +27920,7 @@ Test { [==[
 var int a = [[a]];
 escape a;
 ]==],
-    parser = 'line 3 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´',
+    parser = 'line 3 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `is´ or `as´ or `;´',
 }
 
 Test { [==[
@@ -56038,7 +56039,7 @@ var Pair p1 = (1,2);    /* vs Pair(1,2) */
 escape 1;
 ]],
     -- TODO: better error message
-    parser = 'line 51 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `)´',
+    parser = 'line 51 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `is´ or `as´ or `)´',
     --run = 1,
 }
 Test { DATA..[[
@@ -58408,6 +58409,11 @@ escape 1;
     run = 1,
 }
 Test { [[
+var Dx d = Dx(&&s as _char&& as _char_ptr);
+]],
+    parser = 'line 1 : after `&&´ : expected `&&´ or `[´ or `?´ or `(´ or `,´ or `)´',
+}
+Test { [[
 pre native do
     typedef byte* char_ptr;
 end
@@ -58418,7 +58424,7 @@ data Dx with
 end
 vector[] byte s = [].. "oi";
 native _char;
-var Dx d = Dx(&&s as _char&& as _char_ptr);
+var Dx d = Dx((&&s as _char&&) as _char_ptr);
 escape _strlen(d.str as _char&&);
 ]],
     run = 2,

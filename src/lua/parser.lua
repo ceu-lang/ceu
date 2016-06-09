@@ -681,14 +681,17 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- Exp_Name
 
-    , __Exp_Name = V'__01_Name'
+    , __Exp_Name = V'__00_Name'
+    , __00_Name  = V'__01_Name' *
+                        (CK'as' *
+                            (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
+                        )^-1
     , __01_Name  = (Cc('pre') * (CKK'*'+CKK'&&'+(CKK'&'-'&&')))^0 * V'__02_Name'
     , __02_Name  = V'__03_Name' *
                     (Cc'pos' * (
                         KK'[' * Cc'idx' * V'__Exp' * KK']' +
                         (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
-                        (CKK'!'-'!=') * Cc(false) +
-                        CK'as'        * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
+                        (CKK'!'-'!=') * Cc(false)
                       )
                     )^0
     , __03_Name  = PARENS(V'__Exp')
@@ -698,7 +701,10 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- Exp
 
-    , __Exp  = V'__1'
+    , __Exp  = V'__0'
+    , __0    = V'__1'  * ( CK'is' * V'Type'
+                         + CK'as' * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
+                         )^-1
     , __1    = V'__2'  * (CK'or'  * V'__2')^0
     , __2    = V'__3'  * (CK'and' * V'__3')^0
     , __3    = V'__4'  * ( ( CKK'!='+CKK'=='+CKK'<='+CKK'>='
@@ -721,16 +727,14 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                       KK'[' * Cc'idx' * V'__Exp' * KK']' +
                       (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
                       CKK'?'        * Cc(false) +
-                      (CKK'!'-'!=') * Cc(false) +
-                      CK'is'        * V'Type' +
-                      CK'as'        * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
+                      (CKK'!'-'!=') * Cc(false)
                     )
                 )^0
     , __12   = V'Call'  -- TODO: ambiguous w/ PARENS
              + PARENS(V'__Exp')
              + V'SIZEOF'
              + V'ID_int'  + V'ID_nat'
-             + V'NULL'    + V'NUMBER' + V'STRING' + V'BOOL'
+             + V'NULL'    + V'NUMBER' + V'BOOL' + V'STRING'
              + V'Global'  + V'This'   + V'Outer'
              + V'Nat_Exp'
 
