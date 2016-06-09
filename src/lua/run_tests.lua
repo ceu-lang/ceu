@@ -98,8 +98,11 @@ Test = function (t)
     if not check('adjs')     then return end
     if not check('tops')     then return end
     if not check('locs')     then return end
+    if not check('types')    then return end
+    if not check('exps')     then return end
 do return end
     AST.dump(AST.root)
+    if not check('consts')   then return end
     if not check('sval')     then return end
     if not check('env')      then return end
     --if not check('exp')      then return end

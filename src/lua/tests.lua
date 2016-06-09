@@ -77,6 +77,8 @@ escape 1;
     run = 1
 }
 
+-->>> EXPS / EXPRESSIONS
+
 Test { [[escape 0;]], run=0 }
 Test { [[escape 9999;]], run=9999 }
 Test { [[escape -1;]], run=-1 }
@@ -85,13 +87,32 @@ Test { [[escape - -1;]], run=1 }
 Test { [[escape -9999;]], run=-9999 }
 Test { [[escape 'A';]], run=65, }
 Test { [[escape (((1)));]], run=1 }
+Test { [[
+escape 1 + null;
+]],
+    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+}
+Test { [[
+escape 1 or false;
+]],
+    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+}
+
 Test { [[escape 1+2*3;]], run=7 }
 Test { [[escape(4/2*3);]], run=6 }
 Test { [[escape 2-1;]], run=1 }
 
 Test { [[escape 1==2;]], run=0 }
-Test { [[escape 0  or  10;]], run=1 }
-Test { [[escape 0 and 10;]], run=0 }
+Test { [[escape 0  or  10;]],
+    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+}
+Test { [[escape (0 as bool)  or  (10 as bool);]], run=1 }
+Test { [[escape (0 as bool) and (10 as bool);]], run=0 }
+Test { [[escape 10==true;]],
+    exps = 'line 1 : invalid expression : operands to `==´ must be of the same type',
+}
+Test { [[escape (10!=0) as int;]], run=1 }
+Test { [[escape true and true;]], run=1 }
 Test { [[escape 2>1 and 10!=0;]], run=1 }
 Test { [[escape (1<=2) + (1<2) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
@@ -109,6 +130,8 @@ Test { [[var int sizeof;]],
 }
 Test { [[escape sizeof(int);]], run=4 }
 Test { [[escape 1<2>3;]], run=0 }
+
+--<<< EXPS / EXPRESSIONS
 
 -->>> NATIVE
 
@@ -283,6 +306,7 @@ escape 1;
 ]],
     run = 1,
 }
+
 Test { [[
 inputintMY_EVT;
 ifv==0thenbreak;end

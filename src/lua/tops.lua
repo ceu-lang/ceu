@@ -13,15 +13,30 @@ TOPS = {
 -- Primitive types: id / is_num
 do
     local prims = {
-        bool=false, byte=true, f32=true, f64 =true, float=true, int =true,
-        s16 =true,  s32 =true, s64=true, s8  =true, ssize=true, u16 =true,
-        u32 =true,  u64 =true, u8 =true, uint=true, usize=true, void=false,
+        bool  = { is_num=false, is_int=false },
+        byte  = { is_num=true,  is_int=true  },
+        f32   = { is_num=true,  is_int=false },
+        f64   = { is_num=true,  is_int=false },
+        float = { is_num=true,  is_int=false },
+        int   = { is_num=true,  is_int=true  },
+        s16   = { is_num=true,  is_int=true  },
+        s32   = { is_num=true,  is_int=true  },
+        s64   = { is_num=true,  is_int=true  },
+        s8    = { is_num=true,  is_int=true  },
+        ssize = { is_num=true,  is_int=true  },
+        u16   = { is_num=true,  is_int=true  },
+        u32   = { is_num=true,  is_int=true  },
+        u64   = { is_num=true,  is_int=true  },
+        u8    = { is_num=true,  is_int=true  },
+        uint  = { is_num=true,  is_int=true  },
+        usize = { is_num=true,  is_int=true  },
+        void  = { is_num=false, is_int=false },
     }
-    for id, is_num in pairs(prims) do
+    for id, t in pairs(prims) do
         TOPS[id] = {
-            id      = id,
-            group   = 'primitive',
-            is_num  = is_num,
+            id    = id,
+            group = 'primitive',
+            prim  = t,
             is_used = true,
         }
     end

@@ -730,20 +730,21 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
              + PARENS(V'__Exp')
              + V'SIZEOF'
              + V'ID_int'  + V'ID_nat'
-             + V'NULL'    + V'NUMBER' + V'STRING'
+             + V'NULL'    + V'NUMBER' + V'STRING' + V'BOOL'
              + V'Global'  + V'This'   + V'Outer'
              + V'Nat_Exp'
 
     , SIZEOF = K'sizeof' * PARENS((V'Type' + V'__Exp'))
-    , NULL   = CK'null'     -- TODO: the idea is to get rid of this
-    , STRING = CKK( CKK'"' * (P(1)-'"'-'\n')^0 * K'"', 'string literal' )
 
     , NUMBER = CK( #m.R'09' * (m.R'09'+S'xX'+m.R'AF'+m.R'af'+(P'.'-'..')
                                       +(S'Ee'*'-')+S'Ee')^1,
                    'number' )
              + CKK( "'" * (P(1)-"'")^0 * "'" , 'number' )
-             + K'false' / function() return 0 end
+
+    , BOOL   = K'false' / function() return 0 end
              + K'true'  / function() return 1 end
+    , STRING = CKK( CKK'"' * (P(1)-'"'-'\n')^0 * K'"', 'string literal' )
+    , NULL   = CK'null'     -- TODO: the idea is to get rid of this
 
     , Global  = K'global'
     , This    = K'this' * Cc(false)
