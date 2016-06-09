@@ -90,6 +90,17 @@ F = {
     Evt = function (me)
         local is_alias, tp, id = unpack(me)
         me.id = id
+
+        -- check event type
+        do
+            local id, mod = unpack(tp)
+            local top = assert(id.dcl,'bug found')
+            local is_tuple = (top.group=='data' and string.sub(top.id,1,1)=='_')
+            ASR(is_tuple or top.group=='primitive', me,
+                'invalid event type : must be primitive')
+            ASR(not mod,    me, mod and 'invalid event type : cannot use `'..mod..'´')
+        end
+
         dcls_new(me, AST.par(me,'Block'))
     end,
 

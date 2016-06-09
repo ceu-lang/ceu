@@ -530,6 +530,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     , _Exts      = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') *
                     V'__ID_ext' * (KK','*V'__ID_ext')^0
+    , _Typelist = V'Type'   * (KK',' * V'Type')^0
 
 -- AWAIT, EMIT
 
@@ -660,7 +661,6 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     , Varlist   = V'ID_int' * (KK',' * V'ID_int')^0
     , Explist   = V'__Exp'  * (KK',' * V'__Exp')^0
-    , _Typelist = V'Type'   * (KK',' * V'Type')^0
 
  --<<<
 

@@ -92,13 +92,13 @@ DBG('TODO: _Extreq', me.tag)
         -- loop i in ]0 ...] do end
         -- loop i in [0+1 ...] do end
         if lb == ']' then
-            fr = node('Op2_+', me.ln, fr, node('NUMBER',me.ln,1))
+            fr = node('Exp_+', me.ln, fr, node('NUMBER',me.ln,1))
         end
 
         -- loop i in [... 10[ do end
         -- loop i in [... 10-1] do end
         if rb == '[' then
-            fr = node('Op2_-', me.ln, to, node('NUMBER',me.ln,1))
+            fr = node('Exp_-', me.ln, to, node('NUMBER',me.ln,1))
         end
 
         -- loop i in [...] do end
@@ -111,7 +111,7 @@ DBG('TODO: _Extreq', me.tag)
         -- loop i in [10 -> 1], -1 do end
         if dir == '<-' then
             fr, to = to, fr
-            step = node('Op1_-', me.ln, step)
+            step = node('Exp_1-', me.ln, step)
         end
 
         if AST.isNode(i) then
@@ -144,13 +144,13 @@ DBG('TODO: _Extreq', me.tag)
             -- lim_cmp
             if dir == '->' then
                 -- if i > lim then break end
-                lim_cmp = node('Op2_>', me.ln,
+                lim_cmp = node('Exp_>', me.ln,
                             node('ID_int', me.ln, i),
                             node('ID_int', me.ln, '__lim_'..me.n))
             else
                 assert(dir == '<-')
                 -- if i < lim then break end
-                lim_cmp = node('Op2_<', me.ln,
+                lim_cmp = node('Exp_<', me.ln,
                             node('ID_int', me.ln, i),
                             node('ID_int', me.ln, '__lim_'..me.n))
             end
@@ -292,6 +292,41 @@ DBG('TODO: _Set')
     end,
     _Evts_set__PRE = function (me)
         return F.__dcls_set__PRE(me, 'Evt', 2)
+    end,
+
+-------------------------------------------------------------------------------
+
+    --      event (int,int) e;
+    -- to
+    --      data _int_int with
+    --          var int _1, _2;
+    --      end
+    --      event _int_int e;
+    Evt__PRE = function (me)
+        local _, list = unpack(me)
+        if list.tag == 'Type' then
+            return
+        end
+        assert(list.tag == '_Typelist')
+
+        local dcls = node('Stmts', me.ln)
+        local id = ''
+        for i, tp in ipairs(list) do
+            local id2 = unpack( AST.asr(tp,'Type',1,'ID_prim') )
+            id = id..'_'..id2
+            dcls[#dcls+1] = node('Var', me.ln, false, tp, '_'..i)
+        end
+
+        me[2] = node('Type', me.ln, node('ID_abs',me.ln,id))
+
+        return node('Stmts', me.ln,
+                node('Data', me.ln,
+                    id, false,
+                    node('Block', me.ln,
+                        dcls)),
+                me)
+    end,
+    _Typelist = function (me)
     end,
 
 -------------------------------------------------------------------------------

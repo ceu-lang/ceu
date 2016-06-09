@@ -449,7 +449,7 @@ var u8 k = 5;
 
 emit a => &&k; // leads to compiler error
 ]],
-    env = 'line 1 : invalid event type'
+    locs = 'line 1 : invalid event type : cannot use `&&´'
 }
 
 -->>> OS_START / ANY
@@ -1447,7 +1447,7 @@ end
     -- WALL-CLOCK TIME / WCLOCK
 
 Test { [[await 0ms; escape 0;]],
-    sval = 'line 1 : constant is out of range',
+    consts = 'line 1 : constant is out of range',
 }
 Test { [[
 input void A;
@@ -3030,7 +3030,7 @@ escape 1;
     --loop = true,
     wrn = true,
     run = 1,
-    -- TODO: with sval -1 would be constant
+    -- TODO: with consts -1 would be constant
 }
 Test { [[
 loop i in [0 -> 0] do
@@ -5135,7 +5135,7 @@ with
 end
 escape ret;
 ]],
-    env = 'line 3 : invalid event type',
+    locs = 'line 3 : invalid event type : cannot use `&&´',
     --env = 'line 11 : wrong argument : cannot pass pointers',
     --run = { ['~>1s']=10 },
 }
@@ -5207,6 +5207,14 @@ escape ret;
 ]],
     _ana = {acc=1},
     run = 1000, -- had stack overflow
+}
+
+Test { [[
+var int x;
+event (int,int) e;
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -7024,7 +7032,7 @@ Test { [[
 await 35min;
 escape 0;
 ]],
-    sval = 'line 1 : constant is out of range',
+    consts = 'line 1 : constant is out of range',
 }
 Test { [[
 var int a = 2;
@@ -18639,7 +18647,7 @@ event void&& e;
 var void&& v = await e;
 escape 1;
 ]],
-    env = 'line 1 : invalid event type',
+    locs = 'line 1 : invalid event type : cannot use `&&´',
 }
 
 Test { [[
@@ -28585,7 +28593,7 @@ end
 event Tx a;
 escape 0;
 ]],
-    env = 'line 4 : invalid event type',
+    locs = 'line 3 : invalid event type : must be primitive',
 }
 
 Test { [[
@@ -49228,7 +49236,8 @@ watching e do
 end
 escape 1;
 ]],
-    env = 'line 1 : invalid event type',
+    locs = 'line 2 : invalid event type : must be primitive',
+    --env = 'line 1 : invalid event type',
     --gcc = ' error: unknown type name ‘Tx’',
     --run = { ['~>1s'] = 1 }
 }

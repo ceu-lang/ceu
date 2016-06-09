@@ -4,9 +4,28 @@ TOPS = {
         id    = <string>,
         group = 'primitive' | 'native' | 'data' | 'code'
               | 'input' | 'output' | ...,
+        is_num = true | false,
+        is_used = ...,
     },
 ]]
 }
+
+-- Primitive types: id / is_num
+do
+    local prims = {
+        bool=false, byte=true, f32=true, f64 =true, float=true, int =true,
+        s16 =true,  s32 =true, s64=true, s8  =true, ssize=true, u16 =true,
+        u32 =true,  u64 =true, u8 =true, uint=true, usize=true, void=false,
+    }
+    for id, is_num in pairs(prims) do
+        TOPS[id] = {
+            id      = id,
+            group   = 'primitive',
+            is_num  = is_num,
+            is_used = true,
+        }
+    end
+end
 
 -- native declarations are allowed until `native/end´
 local native_end = false
@@ -27,6 +46,13 @@ local function tops_use (me, id, group)
 end
 
 F = {
+
+-- PRIMITIVE
+
+    ID_prim = function (me)
+        local id = unpack(me)
+        me.dcl = tops_use(me, id, 'primitive')
+    end,
 
 -- NATIVE
 
@@ -111,5 +137,9 @@ F = {
 AST.visit(F)
 
 for _, dcl in pairs(TOPS) do
-    WRN(dcl.is_used, dcl, dcl.group..' "'..dcl.id..' declared but not used')
+    if dcl.group=='data' and string.sub(dcl.id,1,1)=='_' then
+        -- auto generated
+    else
+        WRN(dcl.is_used, dcl, dcl.group..' "'..dcl.id..' declared but not used')
+    end
 end
