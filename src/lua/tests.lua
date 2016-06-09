@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3547,6 +3548,14 @@ escape 1;
 ]],
     locs = 'line 3 : implicit declaration of "x" hides previous declaration',
 }
+Test { [[
+input int E;
+every x in E do
+end
+escape 1;
+]],
+    run = 0,
+}
 
 Test { [[
 input void A;
@@ -3719,7 +3728,6 @@ end
 ]],
     locs = 'line 4 : implicit declaration of "a" hides previous declaration',
 }
---]===]
 Test { [[
 input (int,int) A;
 par do
