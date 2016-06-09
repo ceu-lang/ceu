@@ -135,23 +135,21 @@ F = {
         me.tp = TYPES.push(e.tp,'&&')
     end,
 
+-- OPTION
 
-
-
-
-
-
-
-    Op1_int = function (me)
-        local op, e1 = unpack(me)
-        me.tp = TP.new{'int'}
-        ASR(TP.isNumeric(e1.tp), me,
-                'invalid operand to unary "'..op..'"')
+    ['Exp_!'] = function (me)
+        local op,e = unpack(me)
+        ASR(TYPES.check(e.tp,'?'), me,
+            'invalid expression : operand to `'..op..'´ must be of option type')
+        me.tp = TYPES.pop(e.tp)
     end,
-    ['Op1_~'] = 'Op1_int',
-    ['Op1_-'] = 'Op1_int',
-    ['Op1_+'] = 'Op1_int',
 
+
+
+
+
+
+    ['Op1_~'] = 'Op1_int',
     ['Op1_?'] = function (me)
         local op, e1 = unpack(me)
         me.tp = TP.new{'bool'}
@@ -160,11 +158,6 @@ F = {
     ['Op1_!'] = function (me)
         local op, e1 = unpack(me)
         me.lval = e1.lval and e1
-
-        local tp,ok = TP.pop(e1.tp, '?')
-        ASR(ok, me, 'not an option type')
-        me.tp = TP.new(tp)
-
         me.fst = e1.fst
         me.lst = e1.lst
     end,
@@ -181,11 +174,6 @@ F = {
         me.lst = e1.lst
     end,
     ['Op1_$$'] = 'Op1_$',
-
-    Op2_any = function (me)
-        me.tp = TP.new{'int'}
-        ASR(not ENV.adts[TP.tostr(me.tp)], me, 'invalid operation for data')
-    end,
     ['Op1_not'] = 'Op2_any',
 
 }

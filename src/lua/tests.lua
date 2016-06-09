@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -16336,7 +16335,8 @@ do
 end
 escape *v;
 ]],
-    env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
+    exps = 'line 11 : invalid expression : operand to `*´ must be of pointer type',
+    --env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
 }
 Test { [[
 native do
@@ -16351,7 +16351,8 @@ do
 end
 escape *v;
 ]],
-    env = 'line 11 : invalid operand to unary "*"',
+    exps = 'line 11 : invalid expression : operand to `*´ must be of pointer type',
+    --env = 'line 11 : invalid operand to unary "*"',
     --run = { ['~>1s']=10 };
 }
 Test { [[
@@ -16530,7 +16531,8 @@ end
 escape v;
 ]],
     wrn = true,
-    env = 'line 4 : invalid operands to binary "+"',
+    --env = 'line 4 : invalid operands to binary "+"',
+    exps = 'line 4 : invalid expression : operands to `+´ must be of numeric type',
 }
 
 Test { [[
@@ -16705,6 +16707,7 @@ escape v;
     run = 1,
 }
 
+--]===]
 Test { [[
 data Vx with
     var int v;
