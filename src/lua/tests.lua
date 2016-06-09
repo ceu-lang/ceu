@@ -2130,7 +2130,6 @@ escape ptr == null;
 ]],
     parser = 'line 1 : after `=´ : expected expression',
 }
---]===]
 Test { [[
 var u8&& ptr = do/_
     par do
@@ -2595,6 +2594,7 @@ escape 1;
     --env = 'TODO: not a pool',
 }
 
+--]===]
 Test { [[
 var int ret = 0;
 loop i in [0 -> 256-1[ do

@@ -13,6 +13,13 @@ function TYPES.copy (tp)
     return ret
 end
 
+function TYPES.pop (tp)
+    local v = tp[#tp]
+    tp = TP.copy(tp)
+    tp[#tp] = nil
+    return tp, v
+end
+
 function TYPES.is_equal (tp1, tp2)
     if #tp1 ~= #tp2 then
         return false
@@ -93,14 +100,26 @@ do
         if #tp1 ~= #tp2 then
             return false
         end
+
+-- EQUAL TYPES
         if TYPES.is_equal(tp1, tp2) then
             return true
-        end
 
-        if TYPES.check_num(tp1) and TYPES.check_num(tp2) then
+-- NUMERIC TYPES
+        elseif TYPES.check_num(tp1) and TYPES.check_num(tp2) then
             local top1 = unpack(tp1)
             local top2 = unpack(tp2)
             return contains_num(top1.id,top2.id)
+
+-- POINTER TYPES
+        elseif TYPES.check(tp1,'&&') and TYPES.check(tp2,'&&') then
+            if TYPES.check(tp1,'void','&&') or TYPES.check(tp2,'void','&&') then
+                return true
+            elseif TYPES.contains(tp1,tp2) then
+                tp1 = TYPES.pop(tp1)
+                tp2 = TYPES.pop(tp2)
+                return true
+            end
         end
 
 return false
