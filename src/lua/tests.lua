@@ -195,8 +195,28 @@ escape *1;
 }
 
 Test { [[
+escape &&1;
+]],
+    exps = 'line 1 : invalid expression : operand to `&&´ must be a name',
+}
+
+Test { [[
+var int x = 1;
+escape &&x == &&x;
+]],
+    run = 1,
+}
+
+Test { [[
 var int x = 1;
 escape *&&x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int x = 1;
+escape *&&*&&x;
 ]],
     run = 1,
 }

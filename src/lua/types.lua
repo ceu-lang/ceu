@@ -20,6 +20,12 @@ function TYPES.pop (tp)
     return tp, v
 end
 
+function TYPES.push (tp,v)
+    tp = TP.copy(tp)
+    tp[#tp+1] = v
+    return tp
+end
+
 function TYPES.is_equal (tp1, tp2)
     if #tp1 ~= #tp2 then
         return false

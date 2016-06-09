@@ -15,7 +15,7 @@ F = {
         me.tp = { TOPS.void, '&&' }
     end,
 
--- ID_*
+-- ID_*, Exp_Name
 
     ID_int = function (me)
         local _,TP = unpack(me.dcl)
@@ -23,6 +23,11 @@ F = {
     end,
     ID_nat = function (me)
         me.tp = { me.top }
+    end,
+
+    Exp_Name = function (me)
+        local e = unpack(me)
+        me.tp = AST.copy(e.tp)
     end,
 
 -- CAST
@@ -115,9 +120,9 @@ F = {
 
     ['Exp_&&'] = function (me)
         local op, e = unpack(me)
-        ASR(TYPES.check(e.tp,'&&'), me,
-            'invalid expression : operand to `'..op..'´ must be of pointer type')
-        me.tp = TYPES.copy(e.tp)
+        ASR(e.tag=='Exp_Name' or e.tag=='Exp_1*', me,
+            'invalid expression : operand to `'..op..'´ must be a name')
+        me.tp = TYPES.push(e.tp,'&&')
     end,
 
 

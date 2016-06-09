@@ -318,7 +318,7 @@ local function f (ln, v1, v2, v3, v4, ...)
         if v2=='+' or v2=='-' or v2=='&' or v2=='*' then
             x = '1' -- unary +/-
         end
-        return AST.node('Exp_'..x..v2, ln, v2, f(v1,v3,v4,...))
+        return AST.node('Exp_'..x..v2, ln, v2, f(ln,v3,v4,...))
     elseif v2 == 'pos' then
         return f(ln, AST.node('Exp_'..v3,ln,v3,v1,v4), ...)
     elseif v2 then
