@@ -731,8 +731,8 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                     )
                 )^0
     , __12   = V'Exp_Call'  -- TODO: ambiguous w/ PARENS
-             + V'Exp_Name'
              + PARENS(V'__Exp')
+             + V'Exp_Name'
              + V'SIZEOF'
              + V'ID_int'  + V'ID_nat'
              + V'NULL'    + V'NUMBER' + V'BOOL' + V'STRING'
