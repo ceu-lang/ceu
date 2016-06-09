@@ -23,7 +23,7 @@ local function iter_boundary (cur, id)
 
                 if varlist then
                     for _, id_ in ipairs(varlist) do
-                        if id_.dcl.id == id then
+                        if id_.top.id == id then
                             cross = true
                         end
                     end
@@ -56,9 +56,9 @@ end
 function LOCS.get (id, blk)
     AST.asr(blk, 'Block')
     for blk in iter_boundary(blk, id) do
-        local dcl = blk.dcls[id]
-        if dcl then
-            return dcl
+        local top = blk.dcls[id]
+        if top then
+            return top
         end
     end
     return nil
@@ -94,7 +94,7 @@ F = {
         -- check event type
         do
             local id, mod = unpack(tp)
-            local top = assert(id.dcl,'bug found')
+            local top = assert(id.top,'bug found')
             local is_tuple = (top.group=='data' and string.sub(top.id,1,1)=='_')
             ASR(is_tuple or top.group=='primitive', me,
                 'invalid event type : must be primitive')
@@ -108,7 +108,7 @@ F = {
 
     ID_int = function (me)
         local id = unpack(me)
-        me.dcl = ASR(LOCS.get(id, AST.par(me,'Block')), me,
+        me.top = ASR(LOCS.get(id, AST.par(me,'Block')), me,
                     'internal identifier "'..id..'" is not declared')
     end,
 }

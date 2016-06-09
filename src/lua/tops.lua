@@ -39,19 +39,31 @@ local function tops_new (me)
 end
 
 local function tops_use (me, id, group)
-    local dcl = ASR(TOPS[id], me,
+    local top = ASR(TOPS[id], me,
                     group..' "'..id..'" is not declared')
-    dcl.is_used = true
-    return dcl
+    top.is_used = true
+    return top
 end
 
 F = {
 
--- PRIMITIVE
+-- ID -> DCL
 
     ID_prim = function (me)
         local id = unpack(me)
-        me.dcl = tops_use(me, id, 'primitive')
+        me.top = tops_use(me, id, 'primitive')
+    end,
+    ID_nat = function (me)
+        local id = unpack(me)
+        me.top = tops_use(me, id, 'native')
+    end,
+    ID_ext = function (me)
+        local id = unpack(me)
+        me.top = tops_use(me, id, 'external')
+    end,
+    ID_abs = function (me)
+        local id = unpack(me)
+        me.top = tops_use(me, id, 'abstraction')
     end,
 
 -- NATIVE
@@ -67,10 +79,6 @@ F = {
 
         ASR(not native_end, me,
             'native declarations are disabled')
-    end,
-    ID_nat = function (me)
-        local id = unpack(me)
-        me.dcl = tops_use(me, id, 'native')
     end,
 
 -- EXT
@@ -90,11 +98,6 @@ F = {
         tops_new(me)
     end,
 
-    ID_ext = function (me)
-        local id = unpack(me)
-        me.dcl = tops_use(me, id, 'external')
-    end,
-
 -- CODE / DATA
 
     Code_proto = function (me)
@@ -108,17 +111,17 @@ F = {
         me.id    = id
         me.group = 'code'
 
-        local dcl = TOPS[id]
-        if (not dcl) or dcl.blk then
+        local top = TOPS[id]
+        if (not top) or top.blk then
             tops_new(me)
-            dcl = me
+            top = me
         end
 
         -- CHECK prototype
-        if me ~= dcl then
+        if me ~= top then
             -- ...
         end
-        dcl.blk = blk
+        top.blk = blk
     end,
 
     Data = function (me)
@@ -127,19 +130,14 @@ F = {
         me.group = 'data'
         tops_new(me)
     end,
-
-    ID_abs = function (me)
-        local id = unpack(me)
-        me.dcl = tops_use(me, id, 'abstraction')
-    end,
 }
 
 AST.visit(F)
 
-for _, dcl in pairs(TOPS) do
-    if dcl.group=='data' and string.sub(dcl.id,1,1)=='_' then
+for _, top in pairs(TOPS) do
+    if top.group=='data' and string.sub(top.id,1,1)=='_' then
         -- auto generated
     else
-        WRN(dcl.is_used, dcl, dcl.group..' "'..dcl.id..' declared but not used')
+        WRN(top.is_used, top, top.group..' "'..top.id..' declared but not used')
     end
 end
