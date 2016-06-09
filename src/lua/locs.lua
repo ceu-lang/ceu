@@ -23,7 +23,7 @@ local function iter_boundary (cur, id)
 
                 if varlist then
                     for _, id_ in ipairs(varlist) do
-                        if id_.top.id == id then
+                        if id_.dcl.id == id then
                             cross = true
                         end
                     end
@@ -56,9 +56,9 @@ end
 function LOCS.get (id, blk)
     AST.asr(blk, 'Block')
     for blk in iter_boundary(blk, id) do
-        local top = blk.dcls[id]
-        if top then
-            return top
+        local dcl = blk.dcls[id]
+        if dcl then
+            return dcl
         end
     end
     return nil
@@ -108,7 +108,7 @@ F = {
 
     ID_int = function (me)
         local id = unpack(me)
-        me.top = ASR(LOCS.get(id, AST.par(me,'Block')), me,
+        me.dcl = ASR(LOCS.get(id, AST.par(me,'Block')), me,
                     'internal identifier "'..id..'" is not declared')
     end,
 }

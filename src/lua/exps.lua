@@ -15,6 +15,16 @@ F = {
         me.tp = { TOPS.void, '&&' }
     end,
 
+-- INT
+
+    ID_int = function (me)
+        local _,TP = unpack(me.dcl)
+        me.tp = TYPES.copy(TP.tp)
+    end,
+    ID_nat = function (me)
+        me.tp = { me.top }
+    end,
+
 -- CAST
 
     ['Exp_as'] = function (me)

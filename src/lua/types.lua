@@ -10,6 +10,7 @@ function TYPES.copy (tp)
     for i,v in ipairs(tp) do
         ret[i] = v
     end
+    return ret
 end
 
 function TYPES.is_equal (tp1, tp2)
@@ -55,23 +56,45 @@ end
 
 function TYPES.check_num (tp)
     local top, mod = unpack(tp)
-    return top.prim and top.prim.is_num and (not mod)
+    local is_prim_num = top.prim and top.prim.is_num
+    local is_nat      = (top.group=='native')
+    return (is_prim_num or is_nat) and (not mod)
 end
 function TYPES.check_int (tp)
     local top, mod = unpack(tp)
     return top.prim and top.prim.is_int and (not mod)
 end
 
-local __max = {
-    int = { int='int' },
+local __max_num = {
+    { 'f64','f32' },
+    { 'float','int' },
+    { 'u64','u32','u16','u8' },
+    { 's64','s32','s16','s8' },
 }
+local function max_num (id1, id2)
+    for _, t in ipairs(__max_num) do
+        for i=1,#t do
+            local t1 = t[i]
+            if t1==id1 or t1==id2 then
+                for j=i,#t do
+                    local t2 = t[j]
+                    if t2==id1 or t2==id2 then
+                        return t1
+                    end
+                end
+            end
+        end
+    end
+    return nil
+end
+
 function TYPES.max (tp1, tp2)
     assert(#tp1==1 and #tp2==1)
     local top1 = unpack(tp1)
     local top2 = unpack(tp2)
     if top1.prim and top2.prim and top1.prim.is_num and top2.prim.is_num then
-        local max = assert(__max[top1.id][top2.id])
-        return { TOPS[max] }
+        local max = max_num(top1.id,top2.id)
+        return max and {TOPS[max]} or nil
     else
         return nil
     end

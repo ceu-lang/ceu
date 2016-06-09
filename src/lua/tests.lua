@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -130,7 +129,10 @@ Test { [[var int sizeof;]],
     parser = "line 1 : after `int´ : expected type modifier or internal identifier",
 }
 Test { [[escape sizeof(int);]], run=4 }
-Test { [[escape 1<2>3;]], run=0 }
+Test { [[escape 1<2>3;]],
+    exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
+}
+Test { [[escape (1<2 as int)<3;]], run=1 }
 
 --<<< EXPS / EXPRESSIONS
 
@@ -287,21 +289,28 @@ Test { [[var int a; a=1 ; ]],
 
 -- PRECEDENCE (TODO)
 Test { [[
+var int v1 = (1 + 1 as bool) and (0 as bool);    // 0
+escape 0;
+]],
+    env = 'TODO: set',
+}
+
+Test { [[
 native _assert;
-var int v1 = 1 + 1 and 0;    // 0
-_assert(v1 == 0);
+var bool v1 = (1 + 1 as bool) and (0 as bool);    // 0
+_assert(v1 == false);
 
-var int v2 = 1 + 1 or  0;    // 1
-_assert(v2 == 1);
+var bool v2 = (1 + 1 as bool) or  (0 as bool);    // 1
+_assert(v2 == true);
 
-var int v3 = 0 and 0 or 1;   // 1
-_assert(v3 == 1);
+var bool v3 = false and false or true;   // 1
+_assert(v3 == true);
 
-var int v4 = 0 == 0 | 1;     // 0
-_assert(v4 == 0);
+var bool v4 = 0 == 0 | 1;     // 0
+_assert(v4 == false);
 
-var int v5 = 0 == 0 & 0;     // 1
-_assert(v5 == 1);
+var bool v5 = 0 == 0 & 0;     // 1
+_assert(v5 == true);
 
 escape 1;
 ]],
@@ -1514,6 +1523,7 @@ Test { [[await FOREVER;]],
 }
 
 -- tests var.isTmp
+--]===]
 Test { [[
 native ___ceu_a_1;
 var int a = await 999ms;

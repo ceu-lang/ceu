@@ -314,7 +314,7 @@ end
 local function f (ln, v1, v2, v3, v4, ...)
     --DBG('>>>',ln[2],v1,v2,v3,v4,...)
     if v1 == 'pre' then
-        if v2=='+' or v2=='-' then
+        if v2=='+' or v2=='-' or v2=='&' then
             v2 = '1'..v2    -- unary +/-
         end
         return AST.node('Exp_'..v2, ln, v2, f(v1,v3,v4,...))
