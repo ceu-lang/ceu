@@ -95,12 +95,12 @@ Test = function (t)
 
     if not check('parser')   then return end
     if not check('ast')      then return end
+do return end
     if not check('adjs')     then return end
     if not check('tops')     then return end
     if not check('locs')     then return end
     if not check('types')    then return end
     if not check('exps')     then return end
-do return end
     AST.dump(AST.root)
     if not check('consts')   then return end
     if not check('sval')     then return end

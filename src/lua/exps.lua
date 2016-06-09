@@ -15,7 +15,7 @@ F = {
         me.tp = { TOPS.void, '&&' }
     end,
 
--- INT
+-- ID_*
 
     ID_int = function (me)
         local _,TP = unpack(me.dcl)
@@ -102,6 +102,22 @@ F = {
         ASR(TYPES.contains(e1.tp,e2.tp) or TYPES.contains(e2.tp,e1.tp), me,
             'invalid expression : operands to `'..op..'´ must be of the same type')
         me.tp = { TOPS.bool }
+    end,
+
+-- POINTERS
+
+    ['Exp_1*'] = function (me)
+        local op, e = unpack(me)
+        ASR(TYPES.check(e.tp,'&&'), me,
+            'invalid expression : operand to `'..op..'´ must be of pointer type')
+        me.tp = TYPES.copy(e.tp)
+    end,
+
+    ['Exp_&&'] = function (me)
+        local op, e = unpack(me)
+        ASR(TYPES.check(e.tp,'&&'), me,
+            'invalid expression : operand to `'..op..'´ must be of pointer type')
+        me.tp = TYPES.copy(e.tp)
     end,
 
 

@@ -379,7 +379,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                     ) *
                    V'__Do'
     , _Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                    (V'ID_int'+V'ID_none') * K'in' * V'__Exp_Name' *
+                    (V'ID_int'+V'ID_none') * K'in' * V'Exp_Name' *
                    V'__Do'
 
     , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
@@ -392,7 +392,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                     V'Block' *
                  K'end'
 
-    , _Pause   = K'pause/if' * V'__Exp_Name' * V'__Do'
+    , _Pause   = K'pause/if' * V'Exp_Name' * V'__Do'
 
 -- ASYNCHRONOUS
 
@@ -537,7 +537,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __awaits     = (V'Await_Ext' + V'Await_Evt' + V'Await_Wclock' + V'Await_Code')
     , _Awaits      = K'await' * V'__awaits' * OPT(K'until'*V'__Exp')
     , Await_Ext    = V'ID_ext' - V'Await_Code'
-    , Await_Evt    = V'__Exp_Name' - V'Await_Wclock' - V'Await_Code'
+    , Await_Evt    = V'Exp_Name' - V'Await_Wclock' - V'Await_Code'
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
     , Await_Code   = V'ID_abs' * PARENS(OPT(V'Explist'))
 
@@ -554,7 +554,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                         V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
 
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') *
-                    V'__Exp_Name' * OPT(KK'=>' * V'__evts_ps')
+                    V'Exp_Name' * OPT(KK'=>' * V'__evts_ps')
 
     , _Watching = K'watching' * V'__awaits' * V'__Do'
 
@@ -581,7 +581,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- SETS
 
-    , _Set_one   = (V'__Exp_Name'+#P'$'*V'__Exp') * V'__Sets_one'
+    , _Set_one   = (V'Exp_Name'+#P'$'*V'__Exp') * V'__Sets_one'
     , _Set_many  = PARENS(V'Varlist') * V'__Sets_many'
 
     , __Sets_one  = (CKK'='-'=='+CKK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
@@ -664,7 +664,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
  --<<<
 
-    , Kill  = K'kill' * V'__Exp_Name' * OPT(KK'=>'*V'__Exp')
+    , Kill  = K'kill' * V'Exp_Name' * OPT(KK'=>'*V'__Exp')
 
 -- Types
 
@@ -676,12 +676,12 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- Expressions
 
-    --, Call = V'__Exp'
-    --, __Exp_Name  = V'__Exp'
+    --, Exp_Call = V'__Exp'
+    --, Exp_Name  = V'__Exp'
 
     -- Exp_Name
 
-    , __Exp_Name = V'__00_Name'
+    , Exp_Name = V'__00_Name'
     , __00_Name  = V'__01_Name' *
                         (CK'as' *
                             (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
@@ -730,7 +730,8 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                       (CKK'!'-'!=') * Cc(false)
                     )
                 )^0
-    , __12   = V'Call'  -- TODO: ambiguous w/ PARENS
+    , __12   = V'Exp_Call'  -- TODO: ambiguous w/ PARENS
+             + V'Exp_Name'
              + PARENS(V'__Exp')
              + V'SIZEOF'
              + V'ID_int'  + V'ID_nat'
@@ -754,11 +755,11 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , This    = K'this' * Cc(false)
     , Outer   = K'outer'
 
-    , Call = PARENS(V'Call')
+    , Exp_Call = PARENS(V'Exp_Call')
            + Cc'pos' * ( CK'call/recursive'
                        + CK'call'
                        + Cc'call' ) *
-                           ( V'__Exp_Name'
+                           ( V'Exp_Name'
                            + V'ID_abs'
                            + PARENS(V'__Exp') ) *
                               PARENS(OPT(V'Explist'))
@@ -792,7 +793,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'Spawn_Code' + V'Kill'
 -- TODO: remove class/interface
 + I((K'class'+K'interface'+K'traverse')) * E'TODO: class/interface'
-                 + V'Call' -- TODO: ambiguous with Nat_Stmt
+                 + V'Exp_Call' -- TODO: ambiguous with Nat_Stmt
                  + V'Nat_Stmt'
 
     , __Stmt_Block = V'Code_impl' + V'Extcall_impl' + V'_Extreq_impl'

@@ -188,6 +188,19 @@ escape x + (0.5 as byte);
     run = 0,
 }
 
+Test { [[
+escape *1;
+]],
+    exps = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
+}
+
+Test { [[
+var int x = 1;
+escape *&&x;
+]],
+    run = 1,
+}
+
 --<<< EXPS / EXPRESSIONS
 
 -->>> NATIVE
@@ -58436,7 +58449,8 @@ escape 1;
 Test { [[
 var Dx d = Dx(&&s as _char&& as _char_ptr);
 ]],
-    parser = 'line 1 : after `&&´ : expected `&&´ or `[´ or `?´ or `(´ or `,´ or `)´',
+    --parser = 'line 1 : after `&&´ : expected `&&´ or `[´ or `?´ or `(´ or `,´ or `)´',
+    env = 'TODO',
 }
 Test { [[
 pre native do
