@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1530,7 +1531,6 @@ Test { [[await FOREVER;]],
 }
 
 -- tests var.isTmp
---]===]
 Test { [[
 native ___ceu_a_1;
 var int a = await 999ms;

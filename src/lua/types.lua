@@ -109,6 +109,9 @@ do
         elseif TYPES.check_num(tp1) and TYPES.check_num(tp2) then
             local top1 = unpack(tp1)
             local top2 = unpack(tp2)
+            if top2.group == 'native' then
+                return true
+            end
             return contains_num(top1.id,top2.id)
 
 -- POINTER TYPES
