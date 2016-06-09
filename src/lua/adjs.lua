@@ -92,13 +92,13 @@ DBG('TODO: _Extreq', me.tag)
         -- loop i in ]0 ...] do end
         -- loop i in [0+1 ...] do end
         if lb == ']' then
-            fr = node('Exp_+', me.ln, fr, node('NUMBER',me.ln,1))
+            fr = node('Exp_+', me.ln, '+', fr, node('NUMBER',me.ln,1))
         end
 
         -- loop i in [... 10[ do end
         -- loop i in [... 10-1] do end
         if rb == '[' then
-            fr = node('Exp_-', me.ln, to, node('NUMBER',me.ln,1))
+            fr = node('Exp_-', me.ln, '-', to, node('NUMBER',me.ln,1))
         end
 
         -- loop i in [...] do end
@@ -111,7 +111,7 @@ DBG('TODO: _Extreq', me.tag)
         -- loop i in [10 -> 1], -1 do end
         if dir == '<-' then
             fr, to = to, fr
-            step = node('Exp_1-', me.ln, step)
+            step = node('Exp_1-', me.ln, '-', step)
         end
 
         if AST.isNode(i) then
@@ -145,12 +145,14 @@ DBG('TODO: _Extreq', me.tag)
             if dir == '->' then
                 -- if i > lim then break end
                 lim_cmp = node('Exp_>', me.ln,
+                            '>',
                             node('ID_int', me.ln, i),
                             node('ID_int', me.ln, '__lim_'..me.n))
             else
                 assert(dir == '<-')
                 -- if i < lim then break end
                 lim_cmp = node('Exp_<', me.ln,
+                            '<',
                             node('ID_int', me.ln, i),
                             node('ID_int', me.ln, '__lim_'..me.n))
             end

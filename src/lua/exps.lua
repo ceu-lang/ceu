@@ -29,7 +29,7 @@ F = {
 
     ['Exp_as'] = function (me)
         local _,_,TP = unpack(me)
-        me.tp = TP.tp
+        me.tp = TYPES.copy(TP.tp)
     end,
 
 -- NUMERIC
@@ -44,7 +44,16 @@ F = {
         local op, e1, e2 = unpack(me)
         ASR(TYPES.check_num(e1.tp) and TYPES.check_num(e2.tp), me,
             'invalid expression : operands to `'..op..'´ must be of numeric type')
-        me.tp = TYPES.max(e1.tp, e2.tp)
+        me.tp = TYPES.copy( TYPES.max(e1.tp, e2.tp) )
+    end,
+
+    ['Exp_1+'] = 'Exp_num_num',
+    ['Exp_1-'] = 'Exp_num_num',
+    Exp_num_num = function (me)
+        local op, e = unpack(me)
+        ASR(TYPES.check_num(e.tp), me,
+            'invalid expression : operand to `'..op..'´ must be of numeric type')
+        me.tp = TYPES.copy(e.tp)
     end,
 
     ['Exp_>='] = 'Exp_num_num_bool',
@@ -68,7 +77,7 @@ F = {
         local op, e1, e2 = unpack(me)
         ASR(TYPES.check_int(e1.tp) and TYPES.check_int(e2.tp), me,
             'invalid expression : operands to `'..op..'´ must be of integer type')
-        me.tp = TYPES.max(e1.tp, e2.tp)
+        me.tp = TYPES.copy( TYPES.max(e1.tp, e2.tp) )
     end,
 
 -- BOOL
