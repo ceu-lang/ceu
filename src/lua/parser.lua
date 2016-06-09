@@ -681,48 +681,48 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- Exp_Name
 
-    , Exp_Name   = V'__00_Name'
-    , __00_Name  = V'__01_Name' *
+    , Exp_Name   = V'__01_Name'
+    , __01_Name  = V'__02_Name' *
                         (CK'as' *
                             (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
                         )^-1
-    , __01_Name  = (Cc('pre') * (CKK'*'+CKK'&&'+(CKK'&'-'&&')))^0 * V'__02_Name'
-    , __02_Name  = V'__03_Name' *
+    , __02_Name  = (Cc('pre') * (CKK'*'+CKK'&&'+(CKK'&'-'&&')))^0 * V'__03_Name'
+    , __03_Name  = V'__04_Name' *
                     (Cc'pos' * (
                         KK'[' * Cc'idx' * V'__Exp' * KK']' +
                         (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
                         (CKK'!'-'!=') * Cc(false)
                       )
                     )^0
-    , __03_Name  = PARENS(V'__Exp')
+    , __04_Name  = PARENS(V'__Exp')
                  + V'ID_int'  + V'ID_nat'
                  + V'Global'  + V'This'   + V'Outer'
                  + V'Nat_Exp'
 
     -- Exp
 
-    , __Exp  = V'__00'
-    , __00   = V'__01' * ( CK'is' * V'Type'
+    , __Exp  = V'__01'
+    , __01   = V'__02' * ( CK'is' * V'Type'
                          + CK'as' * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
                          )^-1
-    , __01   = V'__02' * (CK'or'  * V'__02')^0
-    , __02   = V'__03' * (CK'and' * V'__03')^0
-    , __03   = V'__04' * ( ( CKK'!='+CKK'=='+CKK'<='+CKK'>='
+    , __02   = V'__03' * (CK'or'  * V'__03')^0
+    , __03   = V'__04' * (CK'and' * V'__04')^0
+    , __04   = V'__05' * ( ( CKK'!='+CKK'=='+CKK'<='+CKK'>='
                            + (CKK'<'-'<<'-'<-')+(CKK'>'-'>>')
-                           ) * V'__04'
+                           ) * V'__05'
                          )^0
-    , __04   = V'__05' * ((CKK'|'-'||') * V'__05')^0
-    , __05   = V'__06' * (CKK'^' * V'__06')^0
-    , __06   = V'__07' * (CKK'&' * V'__07')^0
-    , __07   = V'__08' * ((CKK'>>'+CKK'<<') * V'__08')^0
-    , __08   = V'__09' * ((CKK'+'+CKK'-') * V'__09')^0
-    , __09   = V'__10' * ((CKK'*'+(CKK'/'-'//'-'/*')+CKK'%') * V'__10')^0
-    , __10   = ( Cc('pre') *
+    , __05   = V'__06' * ((CKK'|'-'||') * V'__06')^0
+    , __06   = V'__07' * (CKK'^' * V'__07')^0
+    , __07   = V'__08' * (CKK'&' * V'__08')^0
+    , __08   = V'__09' * ((CKK'>>'+CKK'<<') * V'__09')^0
+    , __09   = V'__10' * ((CKK'+'+CKK'-') * V'__10')^0
+    , __10   = V'__11' * ((CKK'*'+(CKK'/'-'//'-'/*')+CKK'%') * V'__11')^0
+    , __11   = ( Cc('pre') *
                     ( CK'not'+CKK'-'+CKK'+'+CKK'~'+CKK'*'+
                       CKK'&&' + (CKK'&'-'&&') +
                       CKK'$$' + (CKK'$'-'$$') )
-               )^0 * V'__11'
-    , __11   = V'__12' *
+               )^0 * V'__12'
+    , __12   = V'__13' *
                 (Cc'pos' * (
                       KK'[' * Cc'idx' * V'__Exp' * KK']' +
                       (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
@@ -730,7 +730,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                       (CKK'!'-'!=') * Cc(false)
                     )
                 )^0
-    , __12   = V'Exp_Call'  -- TODO: ambiguous w/ PARENS
+    , __13   = V'Exp_Call'  -- TODO: ambiguous w/ PARENS
              + PARENS(V'__Exp')
              + V'Exp_Name'
              + V'SIZEOF'
