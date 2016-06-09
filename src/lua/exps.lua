@@ -15,7 +15,7 @@ F = {
         me.tp = { TOPS.void, '&&' }
     end,
 
--- ID_*, Exp_Name
+-- ID_*
 
     ID_int = function (me)
         local _,TP = unpack(me.dcl)
@@ -25,8 +25,14 @@ F = {
         me.tp = { me.top }
     end,
 
+-- Exp_Name, Exp_Call
+
     Exp_Name = function (me)
         local e = unpack(me)
+        me.tp = AST.copy(e.tp)
+    end,
+    Exp_Call = function (me)
+        local _,e = unpack(me)
         me.tp = AST.copy(e.tp)
     end,
 
@@ -34,7 +40,11 @@ F = {
 
     ['Exp_as'] = function (me)
         local _,_,TP = unpack(me)
-        me.tp = TYPES.copy(TP.tp)
+        if AST.isNode(TP) then
+            me.tp = TYPES.copy(TP.tp)
+        else
+            -- annotation (/plain, etc)
+        end
     end,
 
 -- NUMERIC

@@ -330,9 +330,17 @@ local function f (ln, v1, v2, v3, v4, ...)
     end
 end
 
-for i=1, 12 do
-    local tag = '__'..i
-    GG[tag] = (m.Cp()/i2l) * GG[tag] / f
+local __exps = { '', '_Name', '_Call' }
+for _, id in ipairs(__exps) do
+    for i=0, 12 do
+        if i < 10 then
+            i = '0'..i
+        end
+        local tag = '__'..i..id
+        if GG[tag] then
+            GG[tag] = (m.Cp()/i2l) * GG[tag] / f
+        end
+    end
 end
 
 AST.root = m.P(GG):match(OPTS.source)

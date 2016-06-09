@@ -681,7 +681,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- Exp_Name
 
-    , Exp_Name = V'__00_Name'
+    , Exp_Name   = V'__00_Name'
     , __00_Name  = V'__01_Name' *
                         (CK'as' *
                             (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
@@ -701,22 +701,22 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- Exp
 
-    , __Exp  = V'__0'
-    , __0    = V'__1'  * ( CK'is' * V'Type'
+    , __Exp  = V'__00'
+    , __00   = V'__01' * ( CK'is' * V'Type'
                          + CK'as' * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
                          )^-1
-    , __1    = V'__2'  * (CK'or'  * V'__2')^0
-    , __2    = V'__3'  * (CK'and' * V'__3')^0
-    , __3    = V'__4'  * ( ( CKK'!='+CKK'=='+CKK'<='+CKK'>='
+    , __01   = V'__02' * (CK'or'  * V'__02')^0
+    , __02   = V'__03' * (CK'and' * V'__03')^0
+    , __03   = V'__04' * ( ( CKK'!='+CKK'=='+CKK'<='+CKK'>='
                            + (CKK'<'-'<<'-'<-')+(CKK'>'-'>>')
-                           ) * V'__4'
+                           ) * V'__04'
                          )^0
-    , __4    = V'__5'  * ((CKK'|'-'||') * V'__5')^0
-    , __5    = V'__6'  * (CKK'^' * V'__6')^0
-    , __6    = V'__7'  * (CKK'&' * V'__7')^0
-    , __7    = V'__8'  * ((CKK'>>'+CKK'<<') * V'__8')^0
-    , __8    = V'__9'  * ((CKK'+'+CKK'-') * V'__9')^0
-    , __9    = V'__10' * ((CKK'*'+(CKK'/'-'//'-'/*')+CKK'%') * V'__10')^0
+    , __04   = V'__05' * ((CKK'|'-'||') * V'__05')^0
+    , __05   = V'__06' * (CKK'^' * V'__06')^0
+    , __06   = V'__07' * (CKK'&' * V'__07')^0
+    , __07   = V'__08' * ((CKK'>>'+CKK'<<') * V'__08')^0
+    , __08   = V'__09' * ((CKK'+'+CKK'-') * V'__09')^0
+    , __09   = V'__10' * ((CKK'*'+(CKK'/'-'//'-'/*')+CKK'%') * V'__10')^0
     , __10   = ( Cc('pre') *
                     ( CK'not'+CKK'-'+CKK'+'+CKK'~'+CKK'*'+
                       CKK'&&' + (CKK'&'-'&&') +
@@ -756,13 +756,13 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , Outer   = K'outer'
 
     , Exp_Call = PARENS(V'Exp_Call')
-           + Cc'pos' * ( CK'call/recursive'
-                       + CK'call'
-                       + Cc'call' ) *
-                           ( V'Exp_Name'
-                           + V'ID_abs'
-                           + PARENS(V'__Exp') ) *
-                              PARENS(OPT(V'Explist'))
+               + ( CK'call/recursive'
+                 + CK'call'
+                 + Cc'call' ) *
+                    ( V'Exp_Name'
+                    + V'ID_abs'
+                    + PARENS(V'__Exp') ) *
+                        PARENS(OPT(V'Explist'))
 
 ---------
                 -- "Ct" as a special case to avoid "too many captures" (HACK_1)
