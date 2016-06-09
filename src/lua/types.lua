@@ -113,7 +113,7 @@ do
 
 -- POINTER TYPES
         elseif TYPES.check(tp1,'&&') and TYPES.check(tp2,'&&') then
-            if TYPES.check(tp1,'void','&&') or TYPES.check(tp2,'void','&&') then
+            if TYPES.check(tp2,'void','&&') then
                 return true
             elseif TYPES.contains(tp1,tp2) then
                 tp1 = TYPES.pop(tp1)
@@ -121,34 +121,7 @@ do
                 return true
             end
         end
-
-return false
---[[
-        -- any pointer or alias can be used with "null"
-        elseif TP.check(tp1,'&&') and TP.check(tp2,'null','&&') or
-               TP.check(tp2,'&&') and TP.check(tp1,'null','&&')
-        then
-            return true
-
-        -- single-pointer casts
-        elseif TP.check(tp1,id1,'&&') and TP.check(tp2,id2,'&&') then
-            -- TODO: allows any cast to byte*, char* and void*
-            --       is it correct?
-            --       (I think "void*" should fail)
-            if id1=='byte' or id1=='char' or id1=='void' then
-                local tp2 = TP.copy(tp2)
-                tp2.tt[1] = id1
-                return TP.contains(tp1, tp2, {numeric=false})
-
-            -- both are external types: let "gcc" handle it
-            elseif TP.is_ext(tp1,'_') or TP.is_ext(tp2,'_') then
-                return true
-
-            else
-                return false, __err(tp1, tp2)
-            end
-        end
-]]
+        return false
     end
 
     function TYPES.max (tp1, tp2)
