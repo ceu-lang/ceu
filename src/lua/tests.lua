@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17434,26 +17433,6 @@ escape 1;
 }
 
 Test { [[
-data Test with
-    var& u8 b;
-end
-
-var u8 b = 7;
-vector[3] Test v;
-var Test t = Test(&b);
-v = [] .. v .. [t];
-
-// reassignments
-b = 10;
-t.b = 88;
-v[0].b = 36; // invalid attribution : missing alias operator `&´
-
-escape b;
-]],
-    run = 36,
-}
-
-Test { [[
 var int x;
 do
     x = 1;
@@ -19439,6 +19418,7 @@ escape ret;
     run = 16,
 }
 
+--]===]
 Test { [[
 native _f;
 native do
@@ -56054,6 +56034,26 @@ escape v1.v+v2.v+v3.v;
     --ref = 'line 10 : attribution to reference with greater scope',
     --ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',
     --run = 6,
+}
+
+Test { [[
+data Test with
+    var& u8 b;
+end
+
+var u8 b = 7;
+vector[3] Test v;
+var Test t = Test(&b);
+v = [] .. v .. [t];
+
+// reassignments
+b = 10;
+t.b = 88;
+v[0].b = 36; // invalid attribution : missing alias operator `&´
+
+escape b;
+]],
+    run = 36,
 }
 
 -- << ADT : MISC

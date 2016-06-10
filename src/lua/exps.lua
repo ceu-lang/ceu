@@ -32,7 +32,7 @@ F = {
         me.tp = AST.copy(e.tp)
     end,
     Exp_Call = function (me)
-        local e = unpack(me)
+        local _,e = unpack(me)
         me.tp = AST.copy(e.tp)
     end,
 
