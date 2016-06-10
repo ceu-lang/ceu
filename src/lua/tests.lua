@@ -13,6 +13,7 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
+--]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -229,6 +230,30 @@ Test { [[
 escape (not false) as int;
 ]],
     run = 1,
+}
+
+Test { [[
+escape 1?;
+]],
+    parser = 'ERR : tests.lua : line 1 : after `1´ : expected binary operator or `is´ or `as´ or `;´',
+}
+Test { [[
+var int i;
+escape i?;
+]],
+    exps = 'line 2 : invalid expression : operand to `?´ must be of option type',
+}
+Test { [[
+var int? i = 1;
+escape i?;
+]],
+    run=1,
+}
+Test { [[
+var int? i;
+escape (i? as int)+1;
+]],
+    run=1,
 }
 
 --<<< EXPS / EXPRESSIONS
@@ -17335,7 +17360,6 @@ escape 10;
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
---]===]
 Test { [[
 vector[] byte str = [0,1,2];
 

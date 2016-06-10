@@ -149,6 +149,12 @@ F = {
             'invalid expression : operand to `'..op..'´ must be of option type')
         me.tp = TYPES.pop(e.tp)
     end,
+    ['Exp_?'] = function (me)
+        local op,e = unpack(me)
+        ASR(TYPES.check(e.tp,'?'), me,
+            'invalid expression : operand to `'..op..'´ must be of option type')
+        me.tp = { TOPS.bool }
+    end,
 
 -- DOT
 
