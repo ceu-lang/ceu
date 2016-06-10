@@ -92,7 +92,7 @@ F = {
     ['Exp_>>'] = 'Exp_int_int_int',
     Exp_int_int_int = function (me)
         local op, e1, e2 = unpack(me)
-        ASR(TYPES.check_int(e1.tp) and TYPES.check_int(e2.tp), me,
+        ASR(TYPES.is_int(e1.tp) and TYPES.is_int(e2.tp), me,
             'invalid expression : operands to `'..op..'´ must be of integer type')
         me.tp = TYPES.copy( TYPES.max(e1.tp, e2.tp) )
     end,
@@ -149,11 +149,13 @@ F = {
     ['Exp_.'] = function (me)
         local op, e, field = unpack(me)
 
-        local top = ASR(TYPES.check(e.tp), me, 'TODO')
-        if TYPES.is_native(e.tp) then
-            me.tp = TYPES.copy(e.tp)
-        else
+        --ASR(AST.par(me,'Exp_Name', me,
+            --'invalid expression : must be a name'))
+        local top = TYPES.check(e.tp)
+        if top.group == 'data' then
             error'TODO'
+        else
+            me.tp = TYPES.copy(e.tp)
         end
     end,
 

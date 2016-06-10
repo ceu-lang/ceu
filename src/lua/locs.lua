@@ -76,7 +76,7 @@ F = {
     end,
 
     Vec = function (me)
-        local is_alias, tp, dim, id = unpack(me)
+        local is_alias, dim, tp, id = unpack(me)
         me.id = id
         dcls_new(me, AST.par(me,'Block'))
     end,

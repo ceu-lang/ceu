@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -16540,7 +16539,7 @@ Test { [[
 var int v = 10;
 escape v!;
 ]],
-    env = 'line 2 : not an option type',
+    exps = 'line 2 : invalid expression : operand to `!´ must be of option type',
 }
 
 Test { [[
@@ -17325,6 +17324,7 @@ escape 10;
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
+--]===]
 Test { [[
 vector[] byte str = [0,1,2];
 
