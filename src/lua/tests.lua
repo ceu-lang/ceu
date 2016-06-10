@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -16707,46 +16708,6 @@ escape v;
     run = 1,
 }
 
---]===]
-Test { [[
-data Vx with
-    var int v;
-end
-
-var& Vx v1 = Vx(1);
-var& Vx v2, v3;
-    v2 = Vx(2);
-    v3 = Vx(3);
-escape v1.v+v2.v+v3.v;
-]],
-    ref = 'line 5 : invalid attribution : missing alias operator `&´',
-    --run = 6,
-}
-
-Test { [[
-data Vx with
-    var int v;
-end
-
-var Vx v1_ = Vx(1);
-var& Vx v1 = &v1_;
-var& Vx v2, v3;
-do
-    var Vx v2_ = Vx(2);
-    v2 = &v2_;
-end
-do
-    var Vx v3_ = Vx(3);
-    v3 = &v3_;
-end
-escape v1.v+v2.v+v3.v;
-]],
-    ref = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
-    --ref = 'line 10 : attribution to reference with greater scope',
-    --ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',
-    --run = 6,
-}
-
 Test { [[
 native _SDL_Renderer, _f;
 native/nohold _g;
@@ -16960,11 +16921,11 @@ Test { [[
 native _f;
 input void E;
 var& int? n;
-do this.n = &_f();
+do n = &_f();
 finalize with
 end
 await E;
-escape this.n!;
+escape n!;
 ]],
     gcc = 'error: implicit declaration of function ‘f’',
 }
@@ -22789,7 +22750,7 @@ Test { [[
 vector[10] u8 vec = (1,2,3);
 escape 1;
 ]],
-    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `is´ or `as´ or `)´',
+    parser = 'line 1 : after `1´ : expected binary operator or `is´ or `as´',
 }
 Test { [[
 vector[10] u8 vec = (1);
@@ -23120,14 +23081,14 @@ Test { [[
 escape 1..2;
 ]],
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `?´ or `!´ or binary operator or `is´ or `as´ or `;´',
+    parser = 'line 1 : after `1´ : expected binary operator or `is´ or `as´ or `;´',
 }
 Test { [[
 escape 1 .. 2;
 ]],
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
     --parser = 'line 1 : after `1´ : expected `;´',
-    parser = 'line 1 : after `1´ : expected `[´ or `:´ or `?´ or `!´ or binary operator or `is´ or `as´ or `;´',
+    parser = 'line 1 : after `1´ : expected binary operator or `is´ or `as´ or `;´',
 }
 Test { [[
 vector[] int x = [1]..2;
@@ -27981,7 +27942,7 @@ Test { [==[
 var int a = [[a]];
 escape a;
 ]==],
-    parser = 'line 3 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `is´ or `as´ or `;´',
+    parser = 'line 3 : after `1´ : expected binary operator or `is´ or `as´ or `;´',
 }
 
 Test { [==[
@@ -56056,6 +56017,45 @@ escape d1.x + d2.x + d1.y + d2.y;
     run = 60,
 }
 
+Test { [[
+data Vx with
+    var int v;
+end
+
+var& Vx v1 = Vx(1);
+var& Vx v2, v3;
+    v2 = Vx(2);
+    v3 = Vx(3);
+escape v1.v+v2.v+v3.v;
+]],
+    ref = 'line 5 : invalid attribution : missing alias operator `&´',
+    --run = 6,
+}
+
+Test { [[
+data Vx with
+    var int v;
+end
+
+var Vx v1_ = Vx(1);
+var& Vx v1 = &v1_;
+var& Vx v2, v3;
+do
+    var Vx v2_ = Vx(2);
+    v2 = &v2_;
+end
+do
+    var Vx v3_ = Vx(3);
+    v3 = &v3_;
+end
+escape v1.v+v2.v+v3.v;
+]],
+    ref = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
+    --ref = 'line 10 : attribution to reference with greater scope',
+    --ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',
+    --run = 6,
+}
+
 -- << ADT : MISC
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")
@@ -56100,7 +56100,7 @@ var Pair p1 = (1,2);    /* vs Pair(1,2) */
 escape 1;
 ]],
     -- TODO: better error message
-    parser = 'line 51 : after `1´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or binary operator or `is´ or `as´ or `)´',
+    parser = 'line 51 : after `1´ : expected binary operator or `is´ or `as´ or `)´',
     --run = 1,
 }
 Test { DATA..[[

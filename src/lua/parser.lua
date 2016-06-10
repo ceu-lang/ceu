@@ -722,22 +722,11 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                       CKK'&&' + (CKK'&'-'&&') +
                       CKK'$$' + (CKK'$'-'$$') )
                )^0 * V'__12'
-    , __12   = V'__13' *
-                (Cc'pos' * (
-                      KK'[' * Cc'idx' * V'__Exp' * KK']' +
-                      (CKK':' + (CKK'.'-'..')) * (V'__ID_int'+V'__ID_nat') +
-                      CKK'?'        * Cc(false) +
-                      (CKK'!'-'!=') * Cc(false)
-                    )
-                )^0
-    , __13   = V'Exp_Call'  -- TODO: ambiguous w/ PARENS
+    , __12   = V'Exp_Call'  -- TODO: ambiguous w/ PARENS,Name
+             + V'Exp_Name' * (Cc'pos' * (CKK'?' * Cc(false)))^-1
              + PARENS(V'__Exp')
-             + V'Exp_Name'
              + V'SIZEOF'
-             + V'ID_int'  + V'ID_nat'
-             + V'NULL'    + V'NUMBER' + V'BOOL' + V'STRING'
-             + V'Global'  + V'This'   + V'Outer'
-             + V'Nat_Exp'
+             + V'NULL' + V'NUMBER' + V'BOOL' + V'STRING'
 
     , SIZEOF = K'sizeof' * PARENS((V'Type' + V'__Exp'))
 

@@ -38,8 +38,9 @@ function TYPES.is_equal (tp1, tp2)
     return true
 end
 
-function TYPES.check (tp, ...)
-    local E = { ... }
+function TYPES.check (tp, e, ...)
+    e = e or tp[1].id
+    local E = { e, ... }
     local j = 0
     for i=0, #E-1 do
         local J = #tp-j
@@ -64,18 +65,20 @@ function TYPES.check (tp, ...)
         end
         j = j + 1
     end
-    return true
+    return tp[#E]
 end
 
-function TYPES.check_num (tp)
-    local top, mod = unpack(tp)
-    local is_prim_num = top.prim and top.prim.is_num
-    local is_nat      = (top.group=='native')
-    return (is_prim_num or is_nat) and (not mod)
+function TYPES.is_num (tp)
+    local top = TYPES.check(tp)
+    return TYPES.is_native(tp) or (top and top.prim and top.prim.is_num)
 end
-function TYPES.check_int (tp)
-    local top, mod = unpack(tp)
-    return top.prim and top.prim.is_int and (not mod)
+function TYPES.is_int (tp)
+    local top = TYPES.check(tp)
+    return TYPES.is_native(tp) or (top and top.prim and top.prim.is_int)
+end
+function TYPES.is_native (tp)
+    local top = TYPES.check(tp)
+    return top and top.group=='native'
 end
 
 do
@@ -112,7 +115,7 @@ do
             return true
 
 -- NUMERIC TYPES
-        elseif TYPES.check_num(tp1) and TYPES.check_num(tp2) then
+        elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
             local top1 = unpack(tp1)
             local top2 = unpack(tp2)
             if top2.group == 'native' then

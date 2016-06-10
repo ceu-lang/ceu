@@ -57,7 +57,7 @@ F = {
     ['Exp_^']  = 'Exp_num_num_num',
     Exp_num_num_num = function (me)
         local op, e1, e2 = unpack(me)
-        ASR(TYPES.check_num(e1.tp) and TYPES.check_num(e2.tp), me,
+        ASR(TYPES.is_num(e1.tp) and TYPES.is_num(e2.tp), me,
             'invalid expression : operands to `'..op..'´ must be of numeric type')
         local max = TYPES.max(e1.tp, e2.tp)
         ASR(max, me, 'invalid expression : incompatible numeric types')
@@ -68,7 +68,7 @@ F = {
     ['Exp_1-'] = 'Exp_num_num',
     Exp_num_num = function (me)
         local op, e = unpack(me)
-        ASR(TYPES.check_num(e.tp), me,
+        ASR(TYPES.is_num(e.tp), me,
             'invalid expression : operand to `'..op..'´ must be of numeric type')
         me.tp = TYPES.copy(e.tp)
     end,
@@ -79,7 +79,7 @@ F = {
     ['Exp_<']  = 'Exp_num_num_bool',
     Exp_num_num_bool = function (me)
         local op, e1, e2 = unpack(me)
-        ASR(TYPES.check_num(e1.tp) and TYPES.check_num(e2.tp), me,
+        ASR(TYPES.is_num(e1.tp) and TYPES.is_num(e2.tp), me,
             'invalid expression : operands to `'..op..'´ must be of numeric type')
         me.tp = { TOPS.bool }
     end,
@@ -123,9 +123,9 @@ F = {
 
     ['Exp_1*'] = function (me)
         local op, e = unpack(me)
-        ASR(TYPES.check(e.tp,'&&'), me,
+        ASR(TYPES.is_native(e.tp) or TYPES.check(e.tp,'&&'), me,
             'invalid expression : operand to `'..op..'´ must be of pointer type')
-        me.tp = TYPES.copy(e.tp)
+        me.tp = TYPES.pop(e.tp)
     end,
 
     ['Exp_&&'] = function (me)
@@ -144,7 +144,18 @@ F = {
         me.tp = TYPES.pop(e.tp)
     end,
 
+-- DOT
 
+    ['Exp_.'] = function (me)
+        local op, e, field = unpack(me)
+
+        local top = ASR(TYPES.check(e.tp), me, 'TODO')
+        if TYPES.is_native(e.tp) then
+            me.tp = TYPES.copy(e.tp)
+        else
+            error'TODO'
+        end
+    end,
 
 
 
