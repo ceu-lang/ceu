@@ -21468,7 +21468,6 @@ escape this.v;
     run = 1,
 }
 
---]===]
 Test { [[
 var int v = 0;
 input W  (var int a)=>int do
@@ -21585,12 +21584,20 @@ escape ret;
 
 -->>> OS_START
 
+--]===]
+Test { [[
+var int&&&& x = null;
+escape 1;
+]],
+    run = 1,
+}
+
 Test { [[
 native _char,_assert;
 native/pure _strcmp;
-input (int,_char&& &&) OS_START;
+input (int,_char&&&&) OS_START;
 var int argc;
-var _char&& && argv;
+var _char&&&& argv;
 (argc, argv) = await OS_START;
 _assert(_strcmp(argv[1],"arg")==0);
 escape argc;

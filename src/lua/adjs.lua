@@ -333,10 +333,12 @@ DBG('TODO: _Set')
 
         local dcls = node('Stmts', me.ln)
         local id = ''
-        for i, tp in ipairs(list) do
-            local id2 = unpack( AST.asr(tp,'Type',1,'ID_prim') )
+        for i, Type in ipairs(list) do
+            local ID = unpack(Type)
+            assert(ID.tag=='ID_prim' or ID.tag=='ID_nat')
+            local id2 = unpack(ID)
             id = id..'_'..id2
-            dcls[#dcls+1] = node('Var', me.ln, tp, false, '_'..i)
+            dcls[#dcls+1] = node('Var', me.ln, Type, false, '_'..i)
         end
 
         me[1] = node('Type', me.ln, node('ID_abs',me.ln,id))
