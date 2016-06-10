@@ -117,6 +117,7 @@ Test { [[escape (1<=2 as int) + 3;]], run=2 }
 Test { [[escape (1<=2 as int) + (1<2 as int) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
+--]===]
 Test { [[nt a;]],
     --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
     parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
@@ -21584,7 +21585,6 @@ escape ret;
 
 -->>> OS_START
 
---]===]
 Test { [[
 var int&&&& x = null;
 escape 1;
@@ -21693,24 +21693,40 @@ input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position
     -- POINTERS & ARRAYS
 
 -- int_int
-Test { [[var int&&p; escape p/10;]],  env='invalid operands to binary "/"'}
-Test { [[var int&&p; escape p|10;]],  env='invalid operands to binary "|"'}
-Test { [[var int&&p; escape p>>10;]], env='invalid operands to binary ">>"'}
-Test { [[var int&&p; escape p^10;]],  env='invalid operands to binary "^"'}
-Test { [[var int&&p; escape ~p;]],    env='invalid operand to unary "~"'}
+Test { [[var int&&p; escape p/10;]],
+    exps = 'line 1 : invalid expression : operands to `/´ must be of numeric type'
+}
+Test { [[var int&&p; escape p|10;]],
+    exps = 'line 1 : invalid expression : operands to `|´ must be of integer type',
+}
+Test { [[var int&&p; escape p>>10;]],
+    exps = 'line 1 : invalid expression : operands to `>>´ must be of integer type',
+}
+Test { [[var int&&p; escape p^10;]],
+    exps = 'line 1 : invalid expression : operands to `^´ must be of numeric type',
+}
+Test { [[var int&&p; escape ~p;]],
+    exps = 'line 1 : invalid expression : operand to `~´ must be of integer type',
+}
 
 -- same
 Test { [[var int&&p; var int a; escape p==a;]],
-        env='invalid operands to binary "=="'}
+    exps = 'line 1 : invalid expression : operands to `==´ must be of the same type',
+}
 Test { [[var int&&p; var int a; escape p!=a;]],
-        env='invalid operands to binary "!="'}
+    exps = 'line 1 : invalid expression : operands to `!=´ must be of the same type',
+}
 Test { [[var int&&p; var int a; escape p>a;]],
-        env='invalid operands to binary ">"'}
+    exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
+}
 
 -- any
-Test { [[var int&&p=null; escape p or 10;]], run=1 }
-Test { [[var int&&p=null; escape p and 0;]],  run=0 }
-Test { [[var int&&p=null; escape not p;]], run=1 }
+Test { [[var int&&p=null; escape p or 10;]],
+    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+}
+Test { [[var int&&p=null; escape p!=null or true as int;]], run=1 }
+Test { [[var int&&p=null; escape p!=null and false as int;]],  run=0 }
+Test { [[var int&&p=null; escape not (p!=null) as int;]], run=1 }
 
 -- arith
 Test { [[var int&&p; escape p+p;]],     env='invalid operands to binary'}--TODO: "+"'}
