@@ -107,6 +107,12 @@ F = {
             'invalid expression : operands to `'..op..'´ must be of boolean type')
         me.tp = { TOPS.bool }
     end,
+    ['Exp_not'] = function (me)
+        local op, e = unpack(me)
+        ASR(TYPES.check(e.tp,'bool'), me,
+            'invalid expression : operand to `'..op..'´ must be of boolean type')
+        me.tp = { TOPS.bool }
+    end,
 
 -- EQUALITY
 
@@ -162,10 +168,11 @@ F = {
 -- BIND
 
     ['Exp_1&'] = function (me)
-        local op = unpack(me)
+        local op, e = unpack(me)
 DBG('TODO: _Set_Exp => Bind')
         ASR(me.__par.tag == '_Set_Exp', me,
             'invalid expression : operand `'..op..'´')
+        me.tp = TYPES.copy(e.tp)
     end,
 
 

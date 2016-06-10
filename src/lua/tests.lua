@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -216,6 +217,17 @@ escape *&&x;
 Test { [[
 var int x = 1;
 escape *&&*&&x;
+]],
+    run = 1,
+}
+
+Test { [[
+escape not 1;
+]],
+    exps = 'line 1 : invalid expression : operand to `not´ must be of boolean type',
+}
+Test { [[
+escape (not false) as int;
 ]],
     run = 1,
 }
@@ -19504,7 +19516,6 @@ escape not ptr?;
     asr = true
 }
 
---]===]
 Test { [[
 native _f;
 native do
