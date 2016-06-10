@@ -668,11 +668,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- Types
 
-    , __type = V'ID_prim' + V'ID_abs'
-    , __type_ptr = CKK'&&'
-    , __type_vec = KK'[' * V'__Exp' * KK']'
-    , Type = V'__type' * (V'__type_ptr'              )^0 * CKK'?'^-1
-           + V'ID_nat' * (V'__type_ptr'+V'__type_vec')^0 * CKK'?'^-1
+    , Type = (V'ID_prim' + V'ID_abs' + V'ID_nat') * (CKK'&&')^0 * CKK'?'^-1
 
 -- Expressions
 

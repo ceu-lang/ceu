@@ -3,7 +3,12 @@ F = {
 -- PRIMITIVES
 
     NUMBER = function (me)
-        me.tp = { TOPS.int }
+        local v = unpack(me)
+        if math.floor(v) == tonumber(v) then
+            me.tp = { TOPS.int }
+        else
+            me.tp = { TOPS.float }
+        end
     end,
     BOOL = function (me)
         me.tp = { TOPS.bool }
@@ -36,7 +41,7 @@ F = {
         me.tp = AST.copy(e.tp)
     end,
 
--- CAST
+-- CAST, SIZEOF
 
     ['Exp_as'] = function (me)
         local _,_,Type = unpack(me)
@@ -45,6 +50,10 @@ F = {
         else
             -- annotation (/plain, etc)
         end
+    end,
+
+    ['SIZEOF'] = function (me)
+        me.tp = { TOPS.usize }
     end,
 
 -- NUMERIC
@@ -176,6 +185,13 @@ F = {
         else
             me.tp = TYPES.copy(e.tp)
         end
+    end,
+
+-- IDX
+
+    ['Exp_idx'] = function (me)
+        local _, e, num = unpack(me)
+        me.tp = TYPES.copy(e.tp)
     end,
 
 -- BIND

@@ -2,7 +2,7 @@ TYPES = {
 }
 
 function TYPES.dump (tp)
-    DBG('>>>', tp[1], tp[1].id)
+    DBG('>>>', tp[1], tp[1].id, unpack(tp,2))
 end
 
 function TYPES.copy (tp)
@@ -86,6 +86,7 @@ do
         -- TODO: should 'int' be bottom?
         { 'f64','f32','float','int' },
         { 'u64','u32','u16','u8','int' },
+        { 'usize','uint','int' },
         { 's64','s32','s16','s8','int' },
     }
     local function contains_num (id1, id2)
