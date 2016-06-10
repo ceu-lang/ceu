@@ -112,12 +112,17 @@ F = {
                     'internal identifier "'..id..'" is not declared')
 
         local ok = false
+        local stmt = me.__par.__par
         if me.dcl.tag == 'Var' then
             ok = true
+            if stmt.tag=='Emit_Evt' or stmt.tag=='Await_Evt' then
+                if stmt[1][1] == me then
+                    ok = false
+                end
+            end
         elseif me.dcl.tag == 'Evt' then
             -- emit e => x
             -- await e
-            local stmt = me.__par.__par
             if stmt.tag=='Emit_Evt' or stmt.tag=='Await_Evt' then
                 if stmt[1][1] == me then
                     ok = true
@@ -131,9 +136,9 @@ F = {
         end
 
         local err = (not ok) and assert(F.__tag2str[me.dcl.tag]) or ''
-        ASR(ok, me, 'invalid expression : cannot use `'..err..'´')
+        ASR(ok, me, 'invalid use of `'..err..'´')
     end,
-    __tag2str = { Evt='event', Vec='vector' },
+    __tag2str = { Evt='event', Vec='vector', Var='var' },
 
     ---------------------------------------------------------------------------
 

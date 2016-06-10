@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1408,12 +1407,14 @@ Test { [[var int a; a = emit a => 1; escape a;]],
     --trig_wo = 1,
 }
 
+--]===]
 Test { [[var int a; emit a => 1; escape a;]],
-    env = 'line 1 : identifier "a" is not an event (tests.lua : line 1)',
+    locs = 'line 1 : invalid use of `var´',
+    --env = 'line 1 : identifier "a" is not an event (tests.lua : line 1)',
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; escape a;]],
-    locs = 'line 1 : invalid expression : cannot use `event´',
+    locs = 'line 1 : invalid use of `event´',
     --parser = 'line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
@@ -1422,7 +1423,7 @@ event int a;
 emit a => 1;
 escape a;
 ]],
-    locs = 'line 3 : invalid expression : cannot use `event´',
+    locs = 'line 3 : invalid use of `event´',
     --run = 1,
     --trig_wo = 1,
 }
@@ -2193,7 +2194,7 @@ with
 end;
 escape 0;
 ]],
-    locs = 'line 3 : invalid expression : cannot use `event´',
+    locs = 'line 3 : invalid use of `event´',
     --env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
 
@@ -5058,7 +5059,7 @@ emit c => 10;
 emit c => 10;
 escape c;
 ]],
-    locs = 'line 4 : invalid expression : cannot use `event´',
+    locs = 'line 4 : invalid use of `event´',
     --env = 'line 4 : types mismatch (`int´ <= `void´)',
     --trig_wo = 2,
 }
@@ -16034,7 +16035,7 @@ escape a;
 ]],
     wrn = true,
     env = 'line 8 : identifier "a" is not an event (tests.lua : line 5)',
-    --locs = 'line 23 : invalid expression : cannot use `event´',
+    --locs = 'line 23 : invalid use of `event´',
 }
 
 Test { [[
