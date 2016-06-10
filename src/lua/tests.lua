@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1407,7 +1408,6 @@ Test { [[var int a; a = emit a => 1; escape a;]],
     --trig_wo = 1,
 }
 
---]===]
 Test { [[var int a; emit a => 1; escape a;]],
     locs = 'line 1 : invalid use of `var´',
     --env = 'line 1 : identifier "a" is not an event (tests.lua : line 1)',
@@ -16034,7 +16034,8 @@ end;
 escape a;
 ]],
     wrn = true,
-    env = 'line 8 : identifier "a" is not an event (tests.lua : line 5)',
+    locs = 'line 8 : invalid use of `var´ "a"',
+    --env = 'line 8 : identifier "a" is not an event (tests.lua : line 5)',
     --locs = 'line 23 : invalid use of `event´',
 }
 

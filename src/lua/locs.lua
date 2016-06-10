@@ -113,7 +113,10 @@ F = {
 
         local ok = false
         local stmt = me.__par.__par
-        if me.dcl.tag == 'Var' then
+        if stmt.tag=='Exp_1&' and stmt[2][1]==me then
+            -- &x
+            ok = true
+        elseif me.dcl.tag == 'Var' then
             ok = true
             if stmt.tag=='Emit_Evt' or stmt.tag=='Await_Evt' then
                 if stmt[1][1] == me then
@@ -136,7 +139,7 @@ F = {
         end
 
         local err = (not ok) and assert(F.__tag2str[me.dcl.tag]) or ''
-        ASR(ok, me, 'invalid use of `'..err..'´')
+        ASR(ok, me, 'invalid use of `'..err..'´ "'..id..'"')
     end,
     __tag2str = { Evt='event', Vec='vector', Var='var' },
 
