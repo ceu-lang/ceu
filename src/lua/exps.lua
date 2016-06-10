@@ -155,9 +155,16 @@ F = {
 
     ['Exp_&&'] = function (me)
         local op, e = unpack(me)
-        local ee = unpack(e)
-        local is_name = (e.tag=='Exp_Name' and
-                         (TYPES.is_native(ee.tp) or ee.tag=='ID_int'))
+
+        local is_name = false
+        if e.tag=='Exp_Name' then
+            local ee,_ = unpack(e)
+            if ee.tag == 'Exp_!' then
+                _,ee = unpack(ee)
+            end
+            is_name = (TYPES.is_native(ee.tp) or ee.tag=='ID_int')
+        end
+
         ASR(is_name or e.tag=='Exp_1*', me,
             'invalid expression : operand to `'..op..'´ must be a name')
         me.tp = TYPES.push(e.tp,'&&')
@@ -209,7 +216,6 @@ F = {
 
     ['Exp_1&'] = function (me)
         local op, e = unpack(me)
-DBG('TODO: _Set_Exp => Bind')
         local par = me.__par
         ASR(par.tag=='_Set_Exp' or par.tag=='Explist', me,
             'invalid expression : operand `'..op..'´')

@@ -22519,6 +22519,14 @@ Test { [[vector[1] int v; escape v;]], env='cannot index a non array' }
 Test { [[native _int; vector[2] _int v; escape v[v];]], env='invalid array index' }
 
 Test { [[
+vector[2] int v ;
+escape v == &&v[0] ;
+]],
+    exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
+    --env = 'line 2 : invalid operands to binary "=="',
+    --run = 1,
+}
+Test { [[
 native _int;
 vector[2] _int v ;
 escape v == &&v[0] ;
