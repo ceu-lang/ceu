@@ -681,7 +681,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- Exp_Name
 
-    , Exp_Name   = V'__01_Name'
+    , Exp_Name   = V'__02_Name'
     , __01_Name  = V'__02_Name' *
                         (CK'as' *
                             (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))

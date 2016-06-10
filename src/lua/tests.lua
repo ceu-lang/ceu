@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -117,14 +118,13 @@ Test { [[escape (1<=2 as int) + 3;]], run=2 }
 Test { [[escape (1<=2 as int) + (1<2 as int) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
---]===]
 Test { [[nt a;]],
     --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
-    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
+    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
 }
 Test { [[nt sizeof;]],
     --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
-    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
+    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
 }
 Test { [[var int sizeof;]],
     parser = "line 1 : after `int´ : expected type modifier or internal identifier",
@@ -375,7 +375,7 @@ Test { [[var int a=1,a=0; escape a;]],
 }
 Test { [[var int a; a = b = 1]],
     --parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´",
-    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `(´ or `?´ or binary operator or `is´ or `;´',
+    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `;´',
 }
 Test { [[var int a = b; escape 0;]],
     locs = 'internal identifier "b" is not declared',
@@ -443,7 +443,7 @@ Test { [[
 inputintMY_EVT;
 ifv==0thenbreak;end
 ]],
-    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
+    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
     --parser = 'line 2 : after `ifv´ : `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
     --parser = 'line 2 : after `==´ : expected expression',
     --parser = 'line 2 : after `0´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
@@ -452,7 +452,7 @@ Test { [[
 inputintMY_EVT;
 escape 1;
 ]],
-    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
+    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
     --locs = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
 }
 
@@ -469,7 +469,7 @@ Test { [[
 native_printf();
 loopdo await250ms;_printf("Hello World!\n");end
 ]],
-    parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
+    parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
     --parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´ or `?´ or `is´ or binary operator or `;´',
     --parser = 'line 2 : after `loopdo´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
 }
@@ -22963,7 +22963,7 @@ v1 = v2;
 v1 = v2..v3;
 escape 1;
 ]],
-    parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `as´ or `(´ or `?´ or binary operator or `is´ or `;´',
+    parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `;´',
 }
 
 Test { [[
@@ -23710,7 +23710,7 @@ _f(v..[1]);
 escape 1;
 ]],
     --parser = 'line 2 : after `..´ : invalid constructor syntax',
-    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `as´ or `(´ or `?´ or binary operator or `is´ or `,´ or `)´',
+    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `,´ or `)´',
     --run = 1,
 }
 
@@ -58553,8 +58553,7 @@ escape 1;
 Test { [[
 var Dx d = Dx(&&s as _char&& as _char_ptr);
 ]],
-    --parser = 'line 1 : after `&&´ : expected `&&´ or `[´ or `?´ or `(´ or `,´ or `)´',
-    env = 'TODO',
+    parser = 'line 1 : after `&&´ : expected `&&´ or `[´ or `?´ or `,´ or `)´',
 }
 Test { [[
 pre native do
