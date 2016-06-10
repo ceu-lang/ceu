@@ -13,7 +13,6 @@ do return end
 
 ----------------------------------------------------------------------------
 -- OK: well tested
---]===]
 ----------------------------------------------------------------------------
 
 Test { [[escape (1);]], run=1 }
@@ -19565,7 +19564,7 @@ do
             ret = ret + 1;
         end
     end
-    ret = ret + (not ptr?);
+    ret = ret + (not ptr? as int);
 end
 
 escape ret;
@@ -19592,7 +19591,8 @@ var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
+    exps = 'line 17 : invalid expression : operand `&´',
+    --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
     --run = 1,
 }
 
@@ -19615,7 +19615,8 @@ var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
+    exps = 'line 17 : invalid expression : operand `&´',
+    --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
     --asr = true,
 }
 
@@ -20421,6 +20422,25 @@ async (pi) do
 end;
 escape i;
 ]],
+    exps = 'line 7 : invalid expression : operand to `not´ must be of boolean type',
+    wrn = true,
+}
+
+Test { [[
+var int i=0;
+var& int pi=&i;
+async (pi) do
+    var int i = 10;
+    loop do
+        i = i - 1;
+        if not (i as bool) then
+            pi = i;
+            break;
+        end;
+    end;
+end;
+escape i;
+]],
     run = 0,
     wrn = true,
 }
@@ -20432,7 +20452,7 @@ async (pi) do
     var int i = 10;
     loop do
         i = i - 1;
-        if not i then
+        if not (i as bool) then
             pi = i;
             break;
         end;
@@ -20469,7 +20489,7 @@ var& int pi = &i;
 async (pi) do
     loop do
         i = i - 1;
-        if not i then
+        if not (i as bool) then
             pi = i;
             break;
         end;
@@ -20489,7 +20509,7 @@ async (p) do
     loop do
         sum = sum + i;
         i = i - 1;
-        if not i then
+        if not (i as bool) then
             p = sum;
             break;
         end;
@@ -21448,6 +21468,7 @@ escape this.v;
     run = 1,
 }
 
+--]===]
 Test { [[
 var int v = 0;
 input W  (var int a)=>int do
@@ -21459,6 +21480,7 @@ end
 call Z=>1;
 escape this.v;
 ]],
+    todo = 'globals',
     run = 2,
 }
 

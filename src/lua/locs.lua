@@ -122,7 +122,7 @@ F = {
 
         local Type = unpack(ID_ext.top)
         local ID, mod = unpack(Type)
-        if ID.tag == 'ID_prim' then
+        if ID.tag=='ID_prim' or ID.tag=='ID_nat' then
             return AST.copy(Type)
         else
             assert(mod == nil)
