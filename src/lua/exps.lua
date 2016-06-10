@@ -29,6 +29,9 @@ F = {
     ID_nat = function (me)
         me.tp = { me.top }
     end,
+    Nat_Exp = function (me)
+        me.tp = { TOPS._ }
+    end,
 
 -- Exp_Name, Exp_Call
 
@@ -152,7 +155,10 @@ F = {
 
     ['Exp_&&'] = function (me)
         local op, e = unpack(me)
-        ASR(e.tag=='Exp_Name' or e.tag=='Exp_1*', me,
+        local ee = unpack(e)
+        local is_name = (e.tag=='Exp_Name' and
+                         (TYPES.is_native(ee.tp) or ee.tag=='ID_int'))
+        ASR(is_name or e.tag=='Exp_1*', me,
             'invalid expression : operand to `'..op..'´ must be a name')
         me.tp = TYPES.push(e.tp,'&&')
     end,
@@ -187,11 +193,16 @@ F = {
         end
     end,
 
--- IDX
+-- IDX, $$, $
 
     ['Exp_idx'] = function (me)
         local _, e, num = unpack(me)
         me.tp = TYPES.copy(e.tp)
+    end,
+
+    ['Exp_$']  = 'Exp_$$',
+    ['Exp_$$'] = function (me)
+        me.tp = { TOPS.usize }
     end,
 
 -- BIND

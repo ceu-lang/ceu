@@ -8,6 +8,11 @@ TOPS = {
         is_used = ...,
     },
 ]]
+    _ = {
+        id = '_',
+        group = 'native',
+        is_used = true,
+    },
 }
 
 -- Primitive types: id / is_num

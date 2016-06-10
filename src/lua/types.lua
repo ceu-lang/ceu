@@ -70,11 +70,13 @@ end
 
 function TYPES.is_num (tp)
     local top = TYPES.check(tp)
-    return TYPES.is_native(tp) or (top and top.prim and top.prim.is_num)
+    return TYPES.is_native(tp) and (not TYPES.check(tp,'&&'))
+        or (top and top.prim and top.prim.is_num)
 end
 function TYPES.is_int (tp)
     local top = TYPES.check(tp)
-    return TYPES.is_native(tp) or (top and top.prim and top.prim.is_int)
+    return TYPES.is_native(tp) and (not TYPES.check(tp,'&&'))
+        or (top and top.prim and top.prim.is_int)
 end
 function TYPES.is_native (tp)
     local top = TYPES.check(tp)
@@ -88,6 +90,7 @@ do
         { 'u64','u32','u16','u8','int' },
         { 'usize','uint','int' },
         { 's64','s32','s16','s8','int' },
+        { 'byte','int' },
     }
     local function contains_num (id1, id2)
         for _, t in ipairs(__contains_num) do
@@ -107,7 +110,11 @@ do
     end
 
     function TYPES.contains (tp1, tp2)
-        if #tp1 ~= #tp2 then
+        local tp1_is_nat = TYPES.is_native(tp1)
+        local tp2_is_nat = TYPES.is_native(tp2)
+        if tp1_is_nat or tp2_is_nat then
+            -- continue
+        elseif #tp1 ~= #tp2 then
             return false
         end
 
@@ -125,12 +132,18 @@ do
             return contains_num(top1.id,top2.id)
 
 -- POINTER TYPES
-        elseif TYPES.check(tp1,'&&') and TYPES.check(tp2,'&&') then
-            if TYPES.check(tp2,'void','&&') then
+        elseif (TYPES.check(tp1,'&&') or tp1_is_nat) and
+               (TYPES.check(tp2,'&&') or tp2_is_nat)
+        then
+            if not tp1_is_nat then
+                tp1 = TYPES.pop(tp1)
+            end
+            if not tp2_is_nat then
+                tp2 = TYPES.pop(tp2)
+            end
+            if TYPES.check(tp2,'void') then
                 return true
             elseif TYPES.contains(tp1,tp2) then
-                tp1 = TYPES.pop(tp1)
-                tp2 = TYPES.pop(tp2)
                 return true
             end
         end

@@ -22690,32 +22690,6 @@ escape 0;
 }
 
 Test { [[
-native _char;
-
-data Tx with
-    vector[255] _char str;
-    var int x;
-end
-var Tx t = Tx([], 1);
-t.str[0] = '\0';
-escape t.x;
-]],
-    run = 1,
-}
-
-Test { [[
-native _char;
-native/pure _strlen;
-data Tx with
-    vector[255] _char xxxx;
-end
-var Tx t = Tx("oioioi");
-escape _strlen(t.xxxx);
-]],
-    run = 6,
-}
-
-Test { [[
 native/pure _strlen;
 
 native _char;
@@ -22836,6 +22810,12 @@ Test { [[
 vector[10] u8 vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
+    exps = 'line 2 : invalid expression : incompatible numeric types',
+}
+Test { [[
+vector[10] u8 vec = [1,2,3];
+escape ($$vec as int) + ($vec as int) + vec[0] + vec[1] + vec[2];
+]],
     run = 19,
 }
 
@@ -22844,7 +22824,7 @@ vector[10] u8 vec = [1,2,3];
 vec[0] = 4;
 vec[1] = 5;
 vec[2] = 6;
-escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+escape ($$vec as int) + ($vec as int) + vec[0] + vec[1] + vec[2];
 ]],
     run = 28,
 }
@@ -22854,7 +22834,7 @@ vector[10] int vec = [1,2,3];
 vec[0] = 4;
 vec[1] = 5;
 vec[2] = 6;
-escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+escape ($$vec as int) + ($vec as int) + vec[0] + vec[1] + vec[2];
 ]],
     run = 28,
 }
@@ -22876,7 +22856,7 @@ escape vec[0];
 
 Test { [[
 vector[] u8 vec = [1,2,3];
-escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+escape ($$vec as int) + ($vec as int) + vec[0] + vec[1] + vec[2];
 ]],
     run = 6,
 }
@@ -22984,7 +22964,7 @@ escape v2[0] + v2[1] + v2[2];
 Test { [[
 vector[10] u8 vec = [1,2,3];
 vector&[] u8  ref = &vec;
-escape $$ref + $ref + ref[0] + ref[1] + ref[2];
+escape ($$ref as int) + ($ref as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 19,
 }
@@ -22992,7 +22972,7 @@ escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 Test { [[
 vector[10] u8  vec = [1,2,3];
 vector&[11] u8 ref = &vec;
-escape $$ref + $ref + ref[0] + ref[1] + ref[2];
+escape ($$ref as int) + ($ref as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 1,
     env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
@@ -23001,7 +22981,7 @@ escape $$ref + $ref + ref[0] + ref[1] + ref[2];
 Test { [[
 vector[10] u8 vec = [1,2,3];
 vector&[9] u8 ref = &vec;
-escape $$ref + $ref + ref[0] + ref[1] + ref[2];
+escape ($$ref as int) + ($ref as int) + ref[0] + ref[1] + ref[2];
 ]],
     env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
@@ -23010,7 +22990,9 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
+    --exps = 'line 2 : invalid expression : operands to `==´ must be of the same type',
+    --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
+    exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
 }
 
 Test { [[
@@ -23205,27 +23187,6 @@ escape $v + 1;
     run = 1,
 }
 Test { [[
-data SDL_Rect with
-    var int x;
-end
-vector[] SDL_Rect cell_rects;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-data SDL_Rect with
-    var int x;
-end
-var SDL_Rect r1 = SDL_Rect(10);
-vector[] SDL_Rect cell_rects = [r1];
-escape cell_rects[0].x;
-]],
-    run = 10,
-}
-
-Test { [[
 native do
     byte* f (void) {
         escape "ola";
@@ -23236,7 +23197,7 @@ native do
     tp Tx = { f };
 end
 vector[] byte str = [] .. "oi";
-escape str[1]=='i';
+escape str[1]=={'i'};
 ]],
     run = 1,
 }
@@ -23253,7 +23214,7 @@ native do
 end
 native _char, _Tx;
 vector[] byte str = [] .. (_Tx.f() as _char&&);
-escape str[2]=='a';
+escape str[2]=={'a'};
 ]],
     run = 1,
 }
@@ -23270,7 +23231,7 @@ native do
 end
 native _char, _Tx;
 vector[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
-escape str[4]=='i';
+escape str[4]=={'i'};
 ]],
     run = 1,
 }
@@ -23456,7 +23417,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[] byte v = [1,2,0,4,5];
 var byte c = 3;
 _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 1);
-escape v[2] + $v;
+escape v[2] + ($v as int);
 ]],
     run = 8,
 }
@@ -23466,7 +23427,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[5] byte v = [1,2,0,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 1);
-escape v[2] + $v + ok;
+escape v[2] + ($v as int) + ok;
 ]],
     run = 9,
 }
@@ -23476,7 +23437,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[5] byte v = [1,2,1,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 1);
-escape v[2] + $v + ok;
+escape v[2] + ($v as int) + ok;
 ]],
     run = 6,
 }
@@ -23486,7 +23447,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[] byte v = [1,2,0,4,5];
 var byte c = 3;
 _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 0);
-escape v[2] + $v;
+escape v[2] + ($v as int);
 ]],
     run = 8,
 }
@@ -23496,7 +23457,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[5] byte v = [1,2,0,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 0);
-escape v[2] + $v + ok;
+escape v[2] + ($v as int) + ok;
 ]],
     run = 9,
 }
@@ -23506,7 +23467,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[] byte v = [1,2,1,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 0);
-escape v[2] + $v + ok;
+escape v[2] + ($v as int) + ok;
 ]],
     run = 6,
 }
@@ -23538,50 +23499,6 @@ escape r1+r2;
 }
 
 --<<< VECTORS / STRINGS
-
-Test { [[
-data SDL_Rect with
-    var int x;
-end
-vector[1] SDL_Rect rcs;
-var SDL_Rect ri;
-ri = SDL_Rect(10);
-rcs[0] = ri;
-escape rcs[0].x;
-]],
-    run = '7] runtime error: access out of bounds',
-}
-
-Test { [[
-data SDL_Rect with
-    var int x;
-end
-var SDL_Rect ri;
-ri = SDL_Rect(10);
-vector[1] SDL_Rect rcs = [ri];
-escape rcs[0].x;
-]],
-    run = 10,
-}
-
-Test { [[
-native/pure _f;
-native do
-    int f (int* rect) {
-        escape *rect;
-    }
-end
-
-data SDL_Rect with
-    var int x;
-end
-var SDL_Rect ri;
-ri = SDL_Rect(10);
-vector[1] SDL_Rect rcs = [ri];
-escape _f(&&rcs[0] as int&&);
-]],
-    run = 10,
-}
 
 Test { [[
 var byte b = 1;
@@ -23618,7 +23535,7 @@ escape *b;
 
 Test { [[
 native/nohold _strlen;
-vector[] byte v = ['a','b','c','\0'];
+vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
 native _char;
 escape _strlen(&&v as _char&&);
 ]],
@@ -23626,7 +23543,7 @@ escape _strlen(&&v as _char&&);
 }
 Test { [[
 native/nohold _strlen;
-vector[] byte v = ['a','b','c','\0'];
+vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
 native _char;
 escape _strlen(&&v as _char&&);
 ]],
@@ -23649,7 +23566,7 @@ vector[10] byte v;
 vector[10] byte v_;
 native _char;
 _garbage(&&v as _char&&);
-v = ['a','b','c'];
+v = [{'a'},{'b'},{'c'}];
 escape _strlen(&&v as _char&&);
 ]],
     run = 3,
@@ -23964,7 +23881,8 @@ finalize with
 end
 escape p! ==null;
 ]],
-    env = 'line 7 : invalid operands to binary "=="',
+    exps = 'line 6 : invalid expression : operands to `==´ must be of the same type',
+    --env = 'line 7 : invalid operands to binary "=="',
     --run = 1,
 }
 
@@ -24013,7 +23931,7 @@ native _END;
 native do
     int END = 1;
 end
-if not  _END-1 then
+if 0 ==  _END-1 then
     escape 1;
 else
     escape 0;
@@ -56149,6 +56067,97 @@ end
 var Test t = Test(1, [], 1);
 t.v[0] = 10;
 escape t.v[0];
+]],
+    run = 10,
+}
+
+Test { [[
+native _char;
+
+data Tx with
+    vector[255] _char str;
+    var int x;
+end
+var Tx t = Tx([], 1);
+t.str[0] = '\0';
+escape t.x;
+]],
+    run = 1,
+}
+
+Test { [[
+native _char;
+native/pure _strlen;
+data Tx with
+    vector[255] _char xxxx;
+end
+var Tx t = Tx("oioioi");
+escape _strlen(t.xxxx);
+]],
+    run = 6,
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+vector[] SDL_Rect cell_rects;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect r1 = SDL_Rect(10);
+vector[] SDL_Rect cell_rects = [r1];
+escape cell_rects[0].x;
+]],
+    run = 10,
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+vector[1] SDL_Rect rcs;
+var SDL_Rect ri;
+ri = SDL_Rect(10);
+rcs[0] = ri;
+escape rcs[0].x;
+]],
+    run = '7] runtime error: access out of bounds',
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect ri;
+ri = SDL_Rect(10);
+vector[1] SDL_Rect rcs = [ri];
+escape rcs[0].x;
+]],
+    run = 10,
+}
+
+Test { [[
+native/pure _f;
+native do
+    int f (int* rect) {
+        escape *rect;
+    }
+end
+
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect ri;
+ri = SDL_Rect(10);
+vector[1] SDL_Rect rcs = [ri];
+escape _f(&&rcs[0] as int&&);
 ]],
     run = 10,
 }
