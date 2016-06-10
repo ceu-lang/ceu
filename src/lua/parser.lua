@@ -507,9 +507,9 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     , __vars_set  = V'__ID_int' * OPT(Ct(V'__Sets_one'))
 
-    , _Vars_set  = K'var' * OPT(CKK'&') * Cc(false) * V'Type' *
+    , _Vars_set  = K'var' * OPT(CKK'&') * V'Type' *
                     V'__vars_set' * (KK','*V'__vars_set')^0
-    , _Vars      = K'var' * OPT(CKK'&') * Cc(false) * V'Type' *
+    , _Vars      = K'var' * OPT(CKK'&') * V'Type' *
                     V'__ID_int' * (KK','*V'__ID_int')^0
 
     , _Vecs_set  = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
@@ -523,9 +523,9 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , _Pools     = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
                     V'__ID_int' * (KK','*V'__ID_int')^0
 
-    , _Evts_set  = K'event' * OPT(CKK'&') * Cc(false) * (PARENS(V'_Typelist')+V'Type') *
+    , _Evts_set  = K'event' * OPT(CKK'&') * (PARENS(V'_Typelist')+V'Type') *
                     V'__vars_set' * (KK','*V'__vars_set')^0
-    , _Evts      = K'event' * OPT(CKK'&') * Cc(false) * (PARENS(V'_Typelist')+V'Type') *
+    , _Evts      = K'event' * OPT(CKK'&') * (PARENS(V'_Typelist')+V'Type') *
                     V'__ID_int' * (KK','*V'__ID_int')^0
 
     , _Exts      = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') *

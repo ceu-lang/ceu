@@ -107,7 +107,7 @@ F = {
     end,
 
     Ext = function (me)
-        local grp, tp, id = unpack(me)
+        local tp, grp, id = unpack(me)
         me.id    = id
         me.group = grp
         tops_new(me)

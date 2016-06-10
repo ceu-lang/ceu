@@ -70,30 +70,30 @@ F = {
     end,
 
     Var = function (me)
-        local is_alias, _, tp, id = unpack(me)
+        local Type, is_alias, id = unpack(me)
         me.id = id
         dcls_new(me, AST.par(me,'Block'))
     end,
 
     Vec = function (me)
-        local is_alias, dim, tp, id = unpack(me)
+        local Type, is_alias, dim, id = unpack(me)
         me.id = id
         dcls_new(me, AST.par(me,'Block'))
     end,
 
     Pool = function (me)
-        local is_alias, tp, dim, id = unpack(me)
+        local Type, is_alias, dim, id = unpack(me)
         me.id = id
         dcls_new(me, AST.par(me,'Block'))
     end,
 
     Evt = function (me)
-        local is_alias, _, tp, id = unpack(me)
+        local Type, is_alias, id = unpack(me)
         me.id = id
 
         -- check event type
         do
-            local id, mod = unpack(tp)
+            local id, mod = unpack(Type)
             local top = assert(id.top,'bug found')
             local is_tuple = (top.group=='data' and string.sub(top.id,1,1)=='_')
             ASR(is_tuple or top.group=='primitive', me,
@@ -120,7 +120,7 @@ F = {
         AST.asr(ID_ext,'ID_ext')
         assert(ID_ext.top.group == 'input')
 
-        local _, Type = unpack(ID_ext.top)
+        local Type = unpack(ID_ext.top)
         local ID, mod = unpack(Type)
         if ID.tag == 'ID_prim' then
             return AST.copy(Type)
@@ -128,7 +128,7 @@ F = {
             assert(mod == nil)
             assert(ID.top.group == 'data')
             local fields = AST.asr(ID.top,'', 3,'Block', 1,'Stmts')
-            local _,_, Type = unpack(fields[i])
+            local Type = unpack(fields[i])
             return AST.copy(Type)
         end
     end,

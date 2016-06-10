@@ -47,16 +47,16 @@ F = {
                 local pre,is_alias = unpack(v)
                 if pre == 'var' then
                     local _,_,hold,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Var', me.ln, is_alias, false, tp, id)
+                    dcls[#dcls+1] = node('Var', me.ln, tp, is_alias, id)
                 elseif pre == 'vector' then
                     local _,_,dim,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Vec', me.ln, is_alias, dim, tp, id)
+                    dcls[#dcls+1] = node('Vec', me.ln, tp, is_alias, dim, id)
                 elseif pre == 'pool' then
                     local _,_,dim,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Pool', me.ln, is_alias, dim, tp, id)
+                    dcls[#dcls+1] = node('Pool', me.ln, tp, is_alias, dim, id)
                 elseif pre == 'event' then
                     local _,_,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Evt', me.ln, is_alias, false, tp, id)
+                    dcls[#dcls+1] = node('Evt', me.ln, tp, is_alias, id)
                 end
             end
         end
@@ -120,10 +120,9 @@ DBG('TODO: _Extreq', me.tag)
         end
 
         local dcl_i = node('Var', me.ln,
-                        false,
-                        false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
+                        false,
                         i)
         dcl_i.is_implicit = true
 
@@ -133,10 +132,9 @@ DBG('TODO: _Extreq', me.tag)
         if to.tag ~= 'ID_none' then
             lim_ini[#lim_ini+1] =
                 node('Var', me.ln,
-                    false,
-                    false,
                     node('Type', me.ln,
                         node('ID_prim', me.ln, 'int')),
+                    false,
                     '__lim_'..me.n)
             lim_ini[#lim_ini+1] =
                 node('Set_Exp', me.ln,
@@ -205,9 +203,8 @@ DBG('TODO: _Loop_Pool')
                 local id = unpack(id_)
                 local ID_ext = AST.asr(awt,'Await_Ext', 1,'ID_ext')
                 local var = node('Var', me.ln,
-                                false,
-                                false,
                                 node('Ref', me.ln, 'every', ID_ext, i),
+                                false,
                                 id)
                 var.is_implicit = true
                 dcls[#dcls+1] = var
@@ -249,18 +246,28 @@ DBG('TODO: _Loop_Pool')
         return ret
     end,
     _Vars__PRE = function (me)
-        return F.__dcls__PRE(me, 'Var', 3)
+        local tp = table.remove(me,2)
+        table.insert(me,1,tp)
+        return F.__dcls__PRE(me, 'Var', 2)
     end,
     _Vecs__PRE = function (me)
+        local tp = table.remove(me,3)
+        table.insert(me,1,tp)
         return F.__dcls__PRE(me, 'Vec', 3)
     end,
     _Pools__PRE = function (me)
+        local tp = table.remove(me,3)
+        table.insert(me,1,tp)
         return F.__dcls__PRE(me, 'Pool', 3)
     end,
     _Evts__PRE = function (me)
-        return F.__dcls__PRE(me, 'Evt', 3)
+        local tp = table.remove(me,2)
+        table.insert(me,1,tp)
+        return F.__dcls__PRE(me, 'Evt', 2)
     end,
     _Exts__PRE = function (me)
+        local tp = table.remove(me,2)
+        table.insert(me,1,tp)
         return F.__dcls__PRE(me, 'Ext', 2)
     end,
     _Nats__PRE = function (me)
@@ -288,16 +295,24 @@ DBG('TODO: _Set')
     end,
 
     _Vars_set__PRE = function (me)
-        return F.__dcls_set__PRE(me, 'Var', 3)
+        local tp = table.remove(me,2)
+        table.insert(me,1,tp)
+        return F.__dcls_set__PRE(me, 'Var', 2)
     end,
     _Vecs_set__PRE = function (me)
+        local tp = table.remove(me,3)
+        table.insert(me,1,tp)
         return F.__dcls_set__PRE(me, 'Vec', 3)
     end,
     _Pools_set__PRE = function (me)
+        local tp = table.remove(me,3)
+        table.insert(me,1,tp)
         return F.__dcls_set__PRE(me, 'Pool', 3)
     end,
     _Evts_set__PRE = function (me)
-        return F.__dcls_set__PRE(me, 'Evt', 3)
+        local tp = table.remove(me,2)
+        table.insert(me,1,tp)
+        return F.__dcls_set__PRE(me, 'Evt', 2)
     end,
 
 -------------------------------------------------------------------------------
@@ -310,11 +325,7 @@ DBG('TODO: _Set')
     --      event _int_int e;
     Ext__PRE = 'Evt__PRE',
     Evt__PRE = function (me)
-        local _,l1,l2 = unpack(me)
-
-        -- Ext: 2nd position
-        -- Evt: 3rd position
-        local list = (me.tag=='Ext' and l1) or l2
+        local list = unpack(me)
         if list.tag == 'Type' then
             return
         end
@@ -325,13 +336,10 @@ DBG('TODO: _Set')
         for i, tp in ipairs(list) do
             local id2 = unpack( AST.asr(tp,'Type',1,'ID_prim') )
             id = id..'_'..id2
-            dcls[#dcls+1] = node('Var', me.ln, false, false, tp, '_'..i)
+            dcls[#dcls+1] = node('Var', me.ln, tp, false, '_'..i)
         end
 
-        -- Ext: 2nd position
-        -- Evt: 3rd position
-        me[(me.tag=='Ext' and 2) or 3] =
-            node('Type', me.ln, node('ID_abs',me.ln,id))
+        me[1] = node('Type', me.ln, node('ID_abs',me.ln,id))
 
         return node('Stmts', me.ln,
                 node('Data', me.ln,

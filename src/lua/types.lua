@@ -15,13 +15,13 @@ end
 
 function TYPES.pop (tp)
     local v = tp[#tp]
-    tp = TP.copy(tp)
+    tp = TYPES.copy(tp)
     tp[#tp] = nil
     return tp, v
 end
 
 function TYPES.push (tp,v)
-    tp = TP.copy(tp)
+    tp = TYPES.copy(tp)
     tp[#tp+1] = v
     return tp
 end

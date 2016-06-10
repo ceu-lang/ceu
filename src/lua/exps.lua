@@ -18,8 +18,8 @@ F = {
 -- ID_*
 
     ID_int = function (me)
-        local _,_,TP = unpack(me.dcl)
-        me.tp = TYPES.copy(TP.tp)
+        local Type = unpack(me.dcl)
+        me.tp = TYPES.copy(Type.tp)
     end,
     ID_nat = function (me)
         me.tp = { me.top }
@@ -32,16 +32,16 @@ F = {
         me.tp = AST.copy(e.tp)
     end,
     Exp_Call = function (me)
-        local _,e = unpack(me)
+        local e = unpack(me)
         me.tp = AST.copy(e.tp)
     end,
 
 -- CAST
 
     ['Exp_as'] = function (me)
-        local _,_,TP = unpack(me)
-        if AST.isNode(TP) then
-            me.tp = TYPES.copy(TP.tp)
+        local _,_,Type = unpack(me)
+        if AST.isNode(Type) then
+            me.tp = TYPES.copy(Type.tp)
         else
             -- annotation (/plain, etc)
         end
