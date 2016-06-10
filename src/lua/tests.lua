@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -21729,15 +21728,23 @@ Test { [[var int&&p=null; escape p!=null and false as int;]],  run=0 }
 Test { [[var int&&p=null; escape not (p!=null) as int;]], run=1 }
 
 -- arith
-Test { [[var int&&p; escape p+p;]],     env='invalid operands to binary'}--TODO: "+"'}
-Test { [[var int&&p; escape p+10;]],    env='invalid operands to binary'}
-Test { [[var int&&p; escape p+10 and 0;]], env='invalid operands to binary' }
+Test { [[var int&&p; escape p+p;]],
+    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+}--TODO: "+"'}
+Test { [[var int&&p; escape p+10;]],
+    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+}
+Test { [[var int&&p; escape p+10 and 0;]],
+    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+}
 
 -- ptr
-Test { [[var int a; escape *a;]], env='invalid operand to unary "*"' }
+Test { [[var int a; escape *a;]],
+    exps = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
+}
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
     --parser = 'line 1 : after `pa´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `)´ or `,´',
-    env='invalid operands to binary'
+    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
@@ -22326,7 +22333,7 @@ do
     var int x = 0;
     await OS_START;
     var int z = 0;
-    if x and z then end;
+    if x!=0 and z!=0 then end;
 end
 escape p;
 ]],
@@ -22386,6 +22393,7 @@ escape v[0];
     run = 5
 }
 
+--]===]
 Test { [[
 native _int;
 var _int[2] v = [];

@@ -353,6 +353,13 @@ DBG('TODO: _Set')
 
 -------------------------------------------------------------------------------
 
+    ['Exp_:__PRE'] = function (me)
+        local op, e, field = unpack(me)
+        return node('Exp_.', me.ln, '.',
+                node('Exp_1*', me.ln, '*', e),
+                field)
+    end,
+
     NUMBER = function (me)
         local v = unpack(me)
         ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
