@@ -19418,7 +19418,6 @@ escape ret;
     run = 16,
 }
 
---]===]
 Test { [[
 native _f;
 native do
@@ -19435,7 +19434,8 @@ end
 
 escape &ptr! == &ptr!;  // ptr.SOME fails
 ]],
-    env = 'line 14 : invalid use of operator "&" : not a binding assignment',
+    exps = 'line 14 : invalid expression : operand `&´',
+    --env = 'line 14 : invalid use of operator "&" : not a binding assignment',
 }
 
 Test { [[
@@ -19504,6 +19504,7 @@ escape not ptr?;
     asr = true
 }
 
+--]===]
 Test { [[
 native _f;
 native do

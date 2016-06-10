@@ -159,7 +159,14 @@ F = {
         end
     end,
 
+-- BIND
 
+    ['Exp_1&'] = function (me)
+        local op = unpack(me)
+DBG('TODO: _Set_Exp => Bind')
+        ASR(me.__par.tag == '_Set_Exp', me,
+            'invalid expression : operand `'..op..'´')
+    end,
 
 
     ['Op1_~'] = 'Op1_int',
