@@ -110,7 +110,30 @@ F = {
         local id = unpack(me)
         me.dcl = ASR(LOCS.get(id, AST.par(me,'Block')), me,
                     'internal identifier "'..id..'" is not declared')
+
+        local ok = false
+        if me.dcl.tag == 'Var' then
+            ok = true
+        elseif me.dcl.tag == 'Evt' then
+            -- emit e => x
+            -- await e
+            local stmt = me.__par.__par
+            if stmt.tag=='Emit_Evt' or stmt.tag=='Await_Evt' then
+                if stmt[1][1] == me then
+                    ok = true
+                end
+            end
+        elseif me.dcl.tag == 'Vec' then
+            local exp = me.__par
+            if exp.tag=='Exp_idx' and exp[2]==me then
+                ok = true
+            end
+        end
+
+        local err = (not ok) and assert(F.__tag2str[me.dcl.tag]) or ''
+        ASR(ok, me, 'invalid expression : cannot use `'..err..'´')
     end,
+    __tag2str = { Evt='event', Vec='vector' },
 
     ---------------------------------------------------------------------------
 
