@@ -170,7 +170,8 @@ F = {
     ['Exp_1&'] = function (me)
         local op, e = unpack(me)
 DBG('TODO: _Set_Exp => Bind')
-        ASR(me.__par.tag == '_Set_Exp', me,
+        local par = me.__par
+        ASR(par.tag=='_Set_Exp' or par.tag=='Explist', me,
             'invalid expression : operand `'..op..'´')
         me.tp = TYPES.copy(e.tp)
     end,

@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -5800,7 +5799,7 @@ par/or do
         a = await A;
     end;
 with
-    if not 1 then
+    if not true then
         a = await A;
     end;
 end;
@@ -17336,6 +17335,7 @@ escape 10;
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
+--]===]
 Test { [[
 vector[] byte str = [0,1,2];
 
