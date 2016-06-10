@@ -70,7 +70,7 @@ F = {
     end,
 
     Var = function (me)
-        local is_alias, tp, id = unpack(me)
+        local is_alias, _, tp, id = unpack(me)
         me.id = id
         dcls_new(me, AST.par(me,'Block'))
     end,
@@ -88,7 +88,7 @@ F = {
     end,
 
     Evt = function (me)
-        local is_alias, tp, id = unpack(me)
+        local is_alias, _, tp, id = unpack(me)
         me.id = id
 
         -- check event type
@@ -128,7 +128,7 @@ F = {
             assert(mod == nil)
             assert(ID.top.group == 'data')
             local fields = AST.asr(ID.top,'', 3,'Block', 1,'Stmts')
-            local _, Type = unpack(fields[i])
+            local _,_, Type = unpack(fields[i])
             return AST.copy(Type)
         end
     end,

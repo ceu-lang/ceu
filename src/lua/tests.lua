@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17324,7 +17325,6 @@ escape 10;
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
---]===]
 Test { [[
 vector[] byte str = [0,1,2];
 

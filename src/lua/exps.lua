@@ -18,7 +18,7 @@ F = {
 -- ID_*
 
     ID_int = function (me)
-        local _,TP = unpack(me.dcl)
+        local _,_,TP = unpack(me.dcl)
         me.tp = TYPES.copy(TP.tp)
     end,
     ID_nat = function (me)
