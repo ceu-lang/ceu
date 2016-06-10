@@ -729,7 +729,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , NUMBER = CK( #m.R'09' * (m.R'09'+S'xX'+m.R'AF'+m.R'af'+(P'.'-'..')
                                       +(S'Ee'*'-')+S'Ee')^1,
                    'number' )
-             + CKK( "'" * (P(1)-"'")^0 * "'" , 'number' )
+             --+ CKK( "'" * (P(1)-"'")^0 * "'" , 'number' )
 
     , BOOL   = K'false' / function() return 0 end
              + K'true'  / function() return 1 end

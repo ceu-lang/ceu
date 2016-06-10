@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -84,7 +85,10 @@ Test { [[escape -1;]], run=-1 }
 Test { [[escape --1;]], run=1 }
 Test { [[escape - -1;]], run=1 }
 Test { [[escape -9999;]], run=-9999 }
-Test { [[escape 'A';]], run=65, }
+Test { [[escape 'A';]],
+    parser = 'line 1 : after `escape´ : expected expression or `;´',
+}
+Test { [[escape {'A'};]], run=65, }
 Test { [[escape (((1)));]], run=1 }
 Test { [[
 escape 1 + null;
@@ -416,7 +420,6 @@ escape 0;
     env = 'TODO: set',
 }
 
---]===]
 Test { [[
 native _assert;
 var bool v1 = (1 + 1 as bool) and (0 as bool);    // 0

@@ -362,7 +362,7 @@ DBG('TODO: _Set')
 
     NUMBER = function (me)
         local v = unpack(me)
-        me[1] = ASR(string.sub(v,1,1)=="'" or tonumber(v), me, 'malformed number')
+        me[1] = ASR(tonumber(v), me, 'malformed number')
     end,
 }
 
