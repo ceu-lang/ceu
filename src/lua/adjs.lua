@@ -31,7 +31,7 @@ F = {
                             node('ID_prim', me.ln, 'int')),
                             false,
                             '_ret'),
-                    node('_Set_one', me.ln,
+                    node('_Set', me.ln,
                         node('ID_int', me.ln, '_ret'),
                         '=',
                         node('_Set_Do', me.ln,
@@ -260,7 +260,7 @@ DBG('TODO: _Loop_Pool')
 
 -------------------------------------------------------------------------------
 
-    _Set_one__PRE = function (me)
+    _Set__PRE = function (me)
         local to,op,set = unpack(me)
         if set.tag=='_Set_Exp' or set.tag=='_Set_Await' then
             set.tag = string.sub(set.tag,2)
@@ -348,7 +348,7 @@ DBG('TODO: _Loop_Pool')
             t[#t+1] = id
             ret[#ret+1] = node(tag, me.ln, unpack(t))
             if set then
-                ret[#ret+1] = node('_Set_one', me.ln,
+                ret[#ret+1] = node('_Set', me.ln,
                                 node('ID_int', me.ln, id),
                                 unpack(set))
             end

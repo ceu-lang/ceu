@@ -3921,6 +3921,44 @@ end
 }
 Test { [[
 input (int,int) A;
+var int a;
+a = await A;
+]],
+    sets = 'line 3 : invalid assignment : types mismatch : "int" <= "_int_int"',
+}
+Test { [[
+input (int) A;
+var int a;
+a = await A;
+]],
+    sets = 'line 3 : invalid assignment : types mismatch : "int" <= "_int"',
+}
+Test { [[
+input (int) A;
+var int a;
+(a) = await A;
+]],
+    sets = 'line 3 : invalid assignment : types mismatch : "int" <= "_int"',
+}
+Test { [[
+input int A;
+var int a;
+(a) = await A;
+]],
+    run = 1,
+}
+Test { [[
+input int A;
+var int a,b;
+(a,b) = await A;
+]],
+    run = 1,
+}
+
+do return end
+
+Test { [[
+input (int,int) A;
 par do
     every (a,b) in A do
         escape a+b;

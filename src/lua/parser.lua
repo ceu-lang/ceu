@@ -588,8 +588,8 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- SETS
 
-    , _Set_one   = (V'Exp_Name'+#P'$'*V'__Exp') * V'__Sets_one'
-    , _Set_many  = PARENS(V'Varlist') * V'__Sets_many'
+    , _Set = (V'Exp_Name'+#P'$'*V'__Exp') * V'__Sets_one'
+           + PARENS(V'Varlist') * V'__Sets_many'
 
     , __Sets_one  = (CKK'='-'=='+CKK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
     , __Sets_many = (CKK'='-'=='+CKK':=') * (V'__sets_many' + PARENS(V'__sets_many'))
@@ -777,7 +777,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'Code_proto' + V'Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Nat_End'
                  + V'Deterministic'
-                 + V'_Set_one' + V'_Set_many'
+                 + V'_Set'
                  + V'Await_Until'
                  + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                  + V'Emit_Evt'

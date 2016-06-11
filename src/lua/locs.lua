@@ -160,7 +160,9 @@ DBG('TODO: _Pause')
                 ok = true
             end
             -- v = ?
-            if exp.tag=='_Set_one' and AST.asr(exp,'',1,'Exp_Name')[1]==me then
+            if string.sub(exp.tag,1,4) == 'Set_' and
+               AST.asr(exp,'',1,'Exp_Name')[1] == me
+            then
                 ok = true
             end
             -- ? = [] .. v
