@@ -543,7 +543,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 -- AWAIT, EMIT
 
     , __awaits     = (V'Await_Ext' + V'Await_Evt' + V'Await_Wclock' + V'Await_Code')
-    , _Awaits      = K'await' * V'__awaits' * OPT(K'until'*V'__Exp')
+    , Await_Until  = K'await' * V'__awaits' * OPT(K'until'*V'__Exp')
     , Await_Ext    = V'ID_ext' - V'Await_Code'
     , Await_Evt    = V'Exp_Name' - V'Await_Wclock' - V'Await_Code'
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
@@ -613,7 +613,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     -- after `=´
 
     , _Set_Do       = #(K'do'*KK'/')    * V'Do'
-    , _Set_Await    = #K'await'         * V'_Awaits'
+    , _Set_Await    = #K'await'         * V'Await_Until'
     , _Set_Watching = #K'watching'      * V'_Watching'
     , _Set_Spawn    = #K'spawn'         * V'Spawn_Code'
     , _Set_Thread   = #K'async/thread'  * V'_Thread'
@@ -779,7 +779,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Nats'  + V'Nat_End'
                  + V'Deterministic'
                  + V'_Set_one' + V'_Set_many'
-                 + V'_Awaits'
+                 + V'Await_Until'
                  + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                  + V'Emit_Evt'
                  + V'Spawn_Code' + V'Kill'

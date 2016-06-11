@@ -229,6 +229,21 @@ DBG('TODO: _Loop_Pool')
 
 -------------------------------------------------------------------------------
 
+    _Set_one__PRE = function (me)
+        local to,op,set = unpack(me)
+        if set.tag=='_Set_Exp' or set.tag=='_Set_Await' then
+            set.tag = string.sub(set.tag,2)
+            set[#set+1] = to
+            set[#set+1] = op
+        else
+AST.dump(me)
+            error 'TODO'
+        end
+        return set
+    end,
+
+-------------------------------------------------------------------------------
+
     -- single declaration with multiple ids
     --      => multiple declarations with single id
 

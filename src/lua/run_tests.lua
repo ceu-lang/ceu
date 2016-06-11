@@ -100,6 +100,7 @@ Test = function (t)
     if not check('locs')     then return end
     if not check('types')    then return end
     if not check('exps')     then return end
+    if not check('sets')     then return end
 do return end
     AST.dump(AST.root)
     if not check('consts')   then return end

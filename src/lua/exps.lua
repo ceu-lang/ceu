@@ -248,6 +248,16 @@ F = {
     ['Op1_$$'] = 'Op1_$',
     ['Op1_not'] = 'Op2_any',
 
+-- STATEMENTS
+
+    Await_Until = function (me)
+        local _, cond = unpack(me)
+        if cond then
+            ASR(TYPES.check(cond.tp,'bool'), me,
+                'invalid expression : `until´ condition must be of boolean type')
+        end
+    end,
+
 }
 
 AST.visit(F)

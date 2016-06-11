@@ -1,8 +1,11 @@
 TYPES = {
 }
 
+function TYPES.tostring (tp)
+    return tp[1].id .. table.concat(tp,'',2)
+end
 function TYPES.dump (tp)
-    DBG('>>>', tp[1], tp[1].id, unpack(tp,2))
+    DBG('TYPE', TYPES.tostring(tp))
 end
 
 function TYPES.copy (tp)

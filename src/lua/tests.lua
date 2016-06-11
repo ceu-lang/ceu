@@ -415,6 +415,12 @@ Test { [[var int a; a=1 ; ]],
 
 -- PRECEDENCE (TODO)
 Test { [[
+var int v;
+v = false;
+]],
+    sets = 'line 2 : invalid assignment : types mismatch : "int" <= "bool"',
+}
+Test { [[
 var int v1 = (1 + 1 as bool) and (0 as bool);    // 0
 escape 0;
 ]],
@@ -504,6 +510,17 @@ Test { [[
 input void A;
 var bool a = 1;
 a = 2;
+escape a;
+]],
+    wrn = true,
+    sets = 'line 3 : invalid assignment : types mismatch : "bool" <= "int"',
+    run = 2,
+}
+
+Test { [[
+input void A;
+var bool a = 1;
+a = (2 as bool);
 escape a;
 ]],
     wrn = true,
@@ -1322,6 +1339,23 @@ escape 10;
     },
     run = 10,
 }
+Test { [[
+input int A;
+var int v;
+v = await A until 1;
+escape v;
+]],
+    exps = 'line 3 : invalid expression : `until´ condition must be of boolean type',
+}
+Test { [[
+input int A;
+var bool v;
+v = await A;
+escape v;
+]],
+    sets = 'line 3 : invalid assignment : types mismatch : "bool" <= "int"',
+}
+
 Test { [[
 input int A;
 var int ret=0;
