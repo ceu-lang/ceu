@@ -47996,7 +47996,8 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
+    locs = 'line 4 : invalid use of `vector´ "v"',
+    --env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
     --env = 'line 4 : invalid operand to unary "&&"',
 }
 
@@ -52296,7 +52297,8 @@ with
 end
 escape 1;
 ]],
-    env = 'line 4 : wrong argument #1',
+    locs = 'line 4 : invalid use of `event´ "a"',
+    --env = 'line 4 : wrong argument #1',
     --env = 'line 4 : invalid attribution',
 }
 
@@ -52363,7 +52365,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 4 : event "a" is not declared',
+    --env = 'line 4 : event "a" is not declared',
+    locs = 'line 4 : invalid use of `var´ "a"',
 }
 
 Test { [[

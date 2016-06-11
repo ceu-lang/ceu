@@ -323,6 +323,7 @@ DBG('TODO: _Set')
     --          var int _1, _2;
     --      end
     --      event _int_int e;
+    __datas = {},
     Ext__PRE = 'Evt__PRE',
     Evt__PRE = function (me)
         local list = unpack(me)
@@ -343,12 +344,15 @@ DBG('TODO: _Set')
 
         me[1] = node('Type', me.ln, node('ID_abs',me.ln,id))
 
-        return node('Stmts', me.ln,
-                node('Data', me.ln,
-                    id, false,
-                    node('Block', me.ln,
-                        dcls)),
-                me)
+        local has = F.__datas[id]
+        F.__datas[id] = true
+        local data = (has and node('Nothing',me.ln)) or
+                                node('Data', me.ln,
+                                    id, false,
+                                    node('Block', me.ln,
+                                        dcls))
+
+        return node('Stmts', me.ln, data, me)
     end,
 
 -------------------------------------------------------------------------------
