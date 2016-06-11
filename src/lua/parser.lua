@@ -74,6 +74,10 @@ local T = {
         'expression'
     },
     {
+        'name expression or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `call/recursive´ or `call´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
+        'expression'
+    },
+    {
         '`not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `call/recursive´ or `call´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
@@ -91,6 +95,10 @@ local T = {
     },
     {
         '`%(´ or `call/recursive´ or `call´ or name expression or `{´ or abstraction identifier or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `%$´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
+        'expression'
+    },
+    {
+        'name expression or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `%$´ or `call/recursive´ or `call´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
 
@@ -690,7 +698,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                         (CKK'!'-'!=') * Cc(false)
                       )
                     )^0
-    , __04_Name  = PARENS(V'__Exp')
+    , __04_Name  = PARENS(V'Exp_Name')
                  + V'ID_int'  + V'ID_nat'
                  + V'Global'  + V'This'   + V'Outer'
                  + V'Nat_Exp'

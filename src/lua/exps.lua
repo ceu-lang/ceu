@@ -191,8 +191,6 @@ F = {
     ['Exp_.'] = function (me)
         local op, e, field = unpack(me)
 
-        --ASR(AST.par(me,'Exp_Name', me,
-            --'invalid expression : must be a name'))
         local top = TYPES.check(e.tp)
         if top.group == 'data' then
             error'TODO'

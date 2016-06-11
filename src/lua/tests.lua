@@ -324,7 +324,8 @@ escape (_x);
 Test { [[
 escape (1+1).v;
 ]],
-    env = 'line 1 : not a struct',
+    parser = 'line 1 : after `)´ : expected `(´ or binary operator or `is´ or `as´ or `;´',
+    --env = 'line 1 : not a struct',
 }
 
 Test { [[
@@ -21762,10 +21763,19 @@ Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
 Test { [[
 native _V;
-*(0x100 as u32&&) = _V;
+*({(u32*)0x100}) = _V;
 escape 1;
 ]],
     gcc = 'error: ‘V’ undeclared (first use in this function)',
+}
+
+Test { [[
+native _V;
+*(0x100 as u32&&) = _V;
+escape 1;
+]],
+    parser = 'line 2 : after `(´ : expected name expression',
+    --gcc = 'error: ‘V’ undeclared (first use in this function)',
 }
 
 Test { [[var int  a;  var int&& pa=a; escape a;]], env='types mismatch' }
@@ -24457,6 +24467,13 @@ native __ceu_app, _CEU_Main;
 var int xxx = 10;
 escape ((__ceu_app:_data as _CEU_Main&&)):xxx;
 ]],
+    parser = 'line 3 : after `)´ : expected `(´ or binary operator or `is´ or `as´ or `;´',
+}
+Test { [[
+//native __ceu_app, _CEU_Main;
+var int xxx = 10;
+escape ({(CEU_Main*)(_ceu_app->_data)}):xxx;
+]],
     run = 10,
 }
 -- NATIVE/PRE
@@ -25922,6 +25939,14 @@ Test { [[
 #define UART0_BASE 0x20201000
 #define UART0_CR ((UART0_BASE + 0x30) as u32&&)
 *UART0_CR = 0x00000000;
+escape 1;
+]],
+    parser = 'line 3 : after `(´ : expected name expression',
+}
+Test { [[
+#define UART0_BASE 0x20201000
+#define UART0_CR ((UART0_BASE + 0x30) as u32&&)
+*{UART0_CR} = 0x00000000;
 escape 1;
 ]],
     valgrind = false,
