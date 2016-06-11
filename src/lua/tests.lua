@@ -21756,8 +21756,9 @@ Test { [[var int a; escape *a;]],
     exps = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
 }
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
+    parser = 'line 1 : after `)´ : expected `(´',
     --parser = 'line 1 : after `pa´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `)´ or `,´',
-    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    --exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
