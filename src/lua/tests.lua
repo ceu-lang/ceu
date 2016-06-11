@@ -17418,7 +17418,8 @@ end
 escape Fx(str);
 ]],
     wrn = true,
-    ref = 'line 7 : invalid attribution : missing alias operator `&´',
+    --ref = 'line 7 : invalid attribution : missing alias operator `&´',
+    locs = 'line 7 : invalid use of `vector´ "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -17590,7 +17591,8 @@ vector[255] byte buf;
 _enqueue(buf);
 escape 1;
 ]],
-    env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
+    locs = 'line 3 : invalid use of `vector´ "buf"',
+    --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
     --fin = 'line 2 : call requires `finalize´',
 }
 Test { [[
@@ -17599,7 +17601,8 @@ vector[255] byte buf;
 _enqueue(&&buf);
 escape 1;
 ]],
-    fin = 'line 2 : call requires `finalize´',
+    locs = 'line 3 : invalid use of `vector´ "buf"',
+    --fin = 'line 2 : call requires `finalize´',
 }
 
 Test { [[
@@ -22361,14 +22364,17 @@ Test { [[vector[0] int v; escape 0;]],
     --env='invalid dimension'
 }
 Test { [[vector[2] int v; escape v;]],
-    env = 'types mismatch'
+    locs = 'line 1 : invalid use of `vector´ "v"',
+    --env = 'types mismatch'
 }
 Test { [[native _u8; vector[2] _u8 v; escape &&v;]],
-    env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
+    locs = 'line 1 : invalid use of `vector´ "v"',
+    --env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
 Test { [[vector[2] u8 v; escape &&v;]],
-    env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
+    locs = 'line 1 : invalid use of `vector´ "v"',
+    --env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
 
@@ -22507,9 +22513,12 @@ escape v[0];
 }
 
 Test { [[vector[2] int v; await v;     escape 0;]],
-        env='event "v" is not declared' }
+    --env='event "v" is not declared'
+    locs = 'line 1 : invalid use of `vector´ "v"',
+}
 Test { [[vector[2] int v; emit v;    escape 0;]],
-        env = 'line 1 : identifier "v" is not an event (tests.lua : line 1)',
+    locs = 'line 1 : invalid use of `vector´ "v"',
+    --env = 'line 1 : identifier "v" is not an event (tests.lua : line 1)',
 }
 Test { [[vector[0] int[2] v; await v;  escape 0;]],
         --env='line 1 : event "?" is not declared'
@@ -22520,14 +22529,21 @@ Test { [[vector[0] int[2] v; emit v; escape 0;]],
         parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
 }
 Test { [[native _int; vector[2] _int v; v=v; escape 0;]], env='types mismatch' }
-Test { [[vector[1] int v; escape v;]], env='cannot index a non array' }
-Test { [[native _int; vector[2] _int v; escape v[v];]], env='invalid array index' }
+Test { [[vector[1] int v; escape v;]],
+    locs = 'line 1 : invalid use of `vector´ "v"',
+    --env='cannot index a non array'
+}
+Test { [[native _int; vector[2] _int v; escape v[v];]],
+    locs = 'line 1 : invalid use of `vector´ "v"',
+    env='invalid array index'
+}
 
 Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
+    locs = 'line 2 : invalid use of `vector´ "v"',
+    --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -22536,7 +22552,8 @@ native _int;
 vector[2] _int v ;
 escape v == &&v[0] ;
 ]],
-    exps = 'line 3 : invalid expression : operands to `==´ must be of the same type',
+    locs = 'line 3 : invalid use of `vector´ "v"',
+    --exps = 'line 3 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -22554,7 +22571,7 @@ var int b=0;
 par/and do
     b = 2;
 with
-    _f(&&a);
+    _f(&&a[0]);
 end
 escape a[0] + b;
 ]],
@@ -22576,7 +22593,7 @@ var int b=0;
 par/and do
     b = 2;
 with
-    _f(a);
+    _f(&&a[0]);
 end
 escape a[0] + b;
 ]],
@@ -22603,7 +22620,7 @@ var int b=0;
 par/or do
     b = 2;
 with
-    _f(&&a);
+    _f(&&a[0]);
 end
 escape a[0] + b;
 ]],
@@ -22677,7 +22694,7 @@ end
 native _int;
 vector[2] _int v = [];
 v[0] = 10;
-escape _f(v);
+escape _f(&&v[0]);
 ]],
     run = 10,
 }
@@ -22688,7 +22705,7 @@ input void UV_READ;
 native/plain _char, _uv_buf_t, _uv_stream_t;
 native/nohold _uv_buf_init, _uv_read_stop;
 vector[3] _char buf_ = [];
-var _uv_buf_t buf = _uv_buf_init(buf_, sizeof(buf_)-1);
+var _uv_buf_t buf = _uv_buf_init(&&buf_[0], 1);
 var _uv_stream_t client = _uv_stream_t();
 var int ret;
 do ret = _ceu_uv_read_start(&&client as _uv_stream_t&&, &&buf);
@@ -22709,8 +22726,9 @@ native _char;
 vector[255] _char str;
 str = "oioioi";
 
-escape _strlen(&&str);
+escape _strlen(&&str[0]);
 ]],
+    locs = 'line 5 : invalid use of `vector´ "str"',
     gcc = '4:34: error: assignment to expression with array type',
 }
 
@@ -64570,6 +64588,16 @@ do return end
 -------------------------------------------------------------------------------
 -- BUGS & INCOMPLETNESS
 -------------------------------------------------------------------------------
+
+-- TODO: should accept
+Test { [[
+native _char;
+vector[3] _char buf_ = [];
+escape sizeof(buf_);
+]],
+    todo = 'should accept sizeof(static-vector)',
+    run = 0,
+}
 
 -- BUG: bad message, I want to say that you cannot copy vectors in a single stmt
 Test { [[

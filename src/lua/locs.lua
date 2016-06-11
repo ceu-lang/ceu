@@ -113,13 +113,13 @@ F = {
 
         local ok = false
         local stmt = me.__par.__par
-        if stmt.tag=='Exp_1&' and stmt[2][1]==me then
+        if stmt.tag=='Exp_1&' and AST.asr(stmt,'',2,'Exp_Name')[1]==me then
             -- &x
             ok = true
         elseif me.dcl.tag == 'Var' then
             ok = true
             if stmt.tag=='Emit_Evt' or stmt.tag=='Await_Evt' then
-                if stmt[1][1] == me then
+                if AST.asr(stmt,'',1,'Exp_Name')[1] == me then
                     ok = false
                 end
             end
@@ -127,13 +127,21 @@ F = {
             -- emit e => x
             -- await e
             if stmt.tag=='Emit_Evt' or stmt.tag=='Await_Evt' then
-                if stmt[1][1] == me then
+                if AST.asr(stmt,'',1,'Exp_Name')[1] == me then
                     ok = true
                 end
             end
         elseif me.dcl.tag == 'Vec' then
+            -- v[i]
             local exp = me.__par
             if exp.tag=='Exp_idx' and exp[2]==me then
+                ok = true
+            end
+            -- $v, $$v
+            local exp = me.__par.__par
+            if (exp.tag=='Exp_$' or exp.tag=='Exp_$$') and
+               AST.asr(exp[2],'Exp_Name')[1]==me
+            then
                 ok = true
             end
         end
