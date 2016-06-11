@@ -41,7 +41,12 @@ F = {
     end,
     Exp_Call = function (me)
         local _,e = unpack(me)
-        me.tp = AST.copy(e.tp)
+        if e.tag == 'ID_abs' then
+            local _,_,_,_,out = unpack(e.top)
+            me.tp = AST.copy(out.tp)
+        else
+            me.tp = AST.copy(e.tp)
+        end
     end,
 
 -- CAST, SIZEOF

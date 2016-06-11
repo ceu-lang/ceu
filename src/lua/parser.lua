@@ -74,7 +74,7 @@ local T = {
         'expression'
     },
     {
-        '`not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or `call/recursive´ or `call´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
+        '`not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `call/recursive´ or `call´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
     {
@@ -740,8 +740,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , This    = K'this' * Cc(false)
     , Outer   = K'outer'
 
-    , Exp_Call = PARENS(V'Exp_Call')
-               + ( CK'call/recursive'
+    , Exp_Call = ( CK'call/recursive'
                  + CK'call'
                  + Cc'call' ) *
                     ( V'Exp_Name'

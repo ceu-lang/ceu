@@ -9,7 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-do return end
+do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -22735,7 +22736,7 @@ str = "oioioi";
 
 escape _strlen(&&str[0]);
 ]],
-    locs = 'line 5 : invalid use of `vector´ "str"',
+    --locs = 'line 5 : invalid use of `vector´ "str"',
     gcc = '4:34: error: assignment to expression with array type',
 }
 
@@ -28845,7 +28846,6 @@ escape _V;
 ]],
     run = 345;
 }
---]===]
 Test { [[
 var int a=8;
 do
@@ -37645,7 +37645,7 @@ escape x;
 Test { [[
 var int xxx=0;
 spawn do
-    this.xxx = 1;
+    xxx = 1;
     await FOREVER;
 end
 escape xxx;
@@ -43511,7 +43511,8 @@ event int a;
 a = 1;
 escape 1;
 ]],
-    env = 'types mismatch',
+    locs = 'line 2 : invalid use of `event´ "a"',
+    --env = 'types mismatch',
 }
 
 Test { [[
@@ -43878,6 +43879,7 @@ code/instantaneous Fx (var int x)=>int do
 end
 escape Fx(1) + this.x;
 ]],
+    todo = 'globals',
     run = 3,
 }
 
@@ -47954,6 +47956,7 @@ with
 end
 escape v;
 ]],
+    todo = 'globals',
     --isr = 'line 12 : access to "v" must be atomic',
     props = 'line 27 : not permitted inside `async/isr´',
 }
