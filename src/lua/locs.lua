@@ -111,9 +111,18 @@ F = {
         me.dcl = ASR(LOCS.get(id, AST.par(me,'Block')), me,
                     'internal identifier "'..id..'" is not declared')
 
+        -- check use contexts for ID_*
+
         local ok = false
         local stmt = me.__par.__par
-        if stmt.tag=='Exp_1&' and AST.asr(stmt,'',2,'Exp_Name')[1]==me then
+        if stmt.tag=='_Thread' and stmt[1].tag=='Varlist' then
+            for _,var in ipairs(stmt[1]) do
+                if var == me then
+                    ok = true
+                    break
+                end
+            end
+        elseif stmt.tag=='Exp_1&' and AST.asr(stmt,'',2,'Exp_Name')[1]==me then
             -- &x
             ok = true
         elseif me.dcl.tag == 'Var' then
@@ -156,6 +165,7 @@ DBG('TODO: _Vec_New')
                 for _,e in ipairs(exp) do
                     if e.tag=='Exp_Name' and e[1]==me then
                         ok = true
+                        break
                     end
                 end
             end

@@ -26022,7 +26022,6 @@ escape a;
 }
 
 -- BIG // FULL // COMPLETE
---]===]
 Test { [[
 input int KEY;
 if 1 then escape 50; end
@@ -26893,7 +26892,7 @@ var int ret =
             p = a;
         end
     end;
-escape (ret==1) + a + b + p;
+escape ((ret==1) as int) + a + b + p;
 ]],
     run = 46,
 }
@@ -28058,7 +28057,7 @@ var byte&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy = [[ str ]];
-escape ret and (not _strcmp(str,&&cpy as _char&&));
+escape ret and (0 == _strcmp(str,&&cpy[0] as _char&&));
 ]=],
     run = 1,
 }
@@ -28066,28 +28065,28 @@ escape ret and (not _strcmp(str,&&cpy as _char&&));
 Test { [=[
 native/nohold _strcmp, _strcpy;
 vector[10] byte str;
-_strcpy(&&str,"oioioi");
-[[ str = @str ]]
+_strcpy(&&str[0],"oioioi");
+[[ str = @(&&str[0]) ]]
 var bool ret = [[ str == 'oioioi' ]];
 
 vector[10] byte cpy;
 var byte&& ptr = cpy;
 ptr = [[ str ]];
-escape ret and (not _strcmp(&&str,&&cpy));
+escape ret and (0 == _strcmp(&&str[0],&&cpy[0]));
 ]=],
-    env = 'line 7 : types mismatch (`byte&&´ <= `byte[]´)',
+    locs = 'line 8 : invalid use of `vector´ "cpy"',
 }
 
 Test { [=[
 native/nohold _strcmp;
 vector[10] byte str = [] .. "oioioi";
-[[ str = @str ]]
+[[ str = @&&str[0] ]]
 var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy;
 vector&[10] byte ptr = &cpy;
 ptr = [[ str ]];
 native _char;
-escape ret and (not _strcmp(&&str as _char&&,&&cpy as _char&&));
+escape ret and (0 == _strcmp(&&str[0] as _char&&,&&cpy[0] as _char&&));
 ]=],
     run = 1,
 }
@@ -28097,7 +28096,7 @@ native/nohold _strcmp;
 [[ str = '1234567890' ]]
 vector[2] byte cpy = [[ str ]];
 native _char;
-escape (_strcmp(&&cpy as _char&&,"1") == 0);
+escape (_strcmp(&&cpy[0] as _char&&,"1") == 0);
 ]=],
     run = '3] runtime error: access out of bounds',
 }
@@ -28110,7 +28109,7 @@ vector[20] byte cpy_;
 vector&[] byte ptr = &cpy;
 ptr = [[ str ]];
 native _char;
-escape (not _strcmp(&&cpy as _char&&,"1234567890"));
+escape (0 == _strcmp(&&cpy[0] as _char&&,"1234567890"));
 ]=],
     run = '6] runtime error: access out of bounds',
 }
@@ -28159,7 +28158,7 @@ str_from_lua = 'string from lua'
 vector[100] byte str_from_ceu = [[str_from_lua]];
 native _assert;
 native _char;
-_assert(0==_strcmp(&&str_from_ceu as _char&&, "string from lua"));
+_assert(0==_strcmp(&&str_from_ceu[0] as _char&&, "string from lua"));
 
 [[
 print(@v_from_ceu)
@@ -28194,7 +28193,7 @@ var int ret = [[ @b1==true and @b2==false ]];
 ]];
 var bool b1_ = [[b1]];
 var bool b2_ = [[b2]];
-escape ret + b1_ + b2_;
+escape ret + (b1_ as int) + (b2_ as int);
 ]=],
     run = 2,
 }
@@ -28239,7 +28238,7 @@ var bool is_float = [[math.type(@f)=='float']];
 [[assert(math.type(@(1.0))=='float')]];
 [[assert(math.type(@(1))=='integer')]];
 
-escape is_int+is_float;
+escape (is_int as int)+(is_float as int);
 ]=],
     run = 2,
 }
@@ -28554,69 +28553,6 @@ escape a;
     run = {['~>1s']=11 },
 }
 
-Test { [[
-data Data with
-    var int v;
-end
-
-code/delayed Code (var& Data d, var  int ini) => int
-do
-    d.v = ini;
-    every 1s do
-        d.v = d.v + 1;
-    end
-end
-
-var Data d = Data(0);
-
-var int a =
-    watching Code(&d, 10) do
-        var int ret = 0;
-        watching 5s do
-            every 1s do
-                ret = ret + d.v;
-            end
-        end
-        escape ret;
-    end;
-
-escape a;
-]],
-    run = {['~>10s']=50 },
-}
-
-Test { [[
-data Data with
-    var& int v;
-end
-
-code/delayed Code (var& Data d, var  int ini) => int
-do
-    var int v = ini;
-    d.v = &v;
-    every 1s do
-        v = v + 1;
-    end
-end
-
-var Data d = Data(0);
-
-var int a =
-    watching Code(&d, 10) do
-        var int ret = 0;
-        watching 5s do
-            every 1s do
-                ret = ret + d.v;
-            end
-        end
-        escape ret;
-    end;
-
-escape a;
-]],
-    run = {['~>10s']=50 },
-}
-
 -- REFS: void&
 Test { [[
 var int v = 10;
@@ -28909,11 +28845,12 @@ escape _V;
 ]],
     run = 345;
 }
+--]===]
 Test { [[
 var int a=8;
 do
     var int a = 1;
-    this.a = this.a + a + 5;
+    a = a + a + 5;
 end
 escape a;
 ]],
@@ -56205,6 +56142,69 @@ vector[1] SDL_Rect rcs = [ri];
 escape _f(&&rcs[0] as int&&);
 ]],
     run = 10,
+}
+
+Test { [[
+data Data with
+    var int v;
+end
+
+code/delayed Code (var& Data d, var  int ini) => int
+do
+    d.v = ini;
+    every 1s do
+        d.v = d.v + 1;
+    end
+end
+
+var Data d = Data(0);
+
+var int a =
+    watching Code(&d, 10) do
+        var int ret = 0;
+        watching 5s do
+            every 1s do
+                ret = ret + d.v;
+            end
+        end
+        escape ret;
+    end;
+
+escape a;
+]],
+    run = {['~>10s']=50 },
+}
+
+Test { [[
+data Data with
+    var& int v;
+end
+
+code/delayed Code (var& Data d, var  int ini) => int
+do
+    var int v = ini;
+    d.v = &v;
+    every 1s do
+        v = v + 1;
+    end
+end
+
+var Data d = Data(0);
+
+var int a =
+    watching Code(&d, 10) do
+        var int ret = 0;
+        watching 5s do
+            every 1s do
+                ret = ret + d.v;
+            end
+        end
+        escape ret;
+    end;
+
+escape a;
+]],
+    run = {['~>10s']=50 },
 }
 
 -- << ADT : MISC
