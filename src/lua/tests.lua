@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -252,7 +253,6 @@ escape i?;
 ]],
     exps = 'line 2 : invalid expression : operand to `?´ must be of option type',
 }
---]===]
 Test { [[
 var int? i = 1;
 escape i?;
@@ -431,7 +431,7 @@ Test { [[
 var int v1 = (1 + 1 as bool) and (0 as bool);    // 0
 escape 0;
 ]],
-    env = 'TODO: set',
+    sets = 'line 1 : invalid assignment : types mismatch : "int" <= "bool"',
 }
 
 Test { [[
@@ -515,23 +515,31 @@ escape a;
 
 Test { [[
 input void A;
-var bool a = 1;
+var bool a;
 a = 2;
 escape a;
 ]],
     wrn = true,
     sets = 'line 3 : invalid assignment : types mismatch : "bool" <= "int"',
-    run = 2,
 }
 
 Test { [[
 input void A;
 var bool a = 1;
+escape a;
+]],
+    wrn = true,
+    sets = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
+}
+
+Test { [[
+input void A;
+var bool a = (1 as bool);
 a = (2 as bool);
 escape a;
 ]],
     wrn = true,
-    run = 2,
+    run = 1,
 }
 
 Test { [[
@@ -2146,6 +2154,34 @@ end
 ]],
     run = 1,
 }
+
+Test { [[
+var bool a = do/A
+    escape/A 1;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var bool a = do/A
+    escape/A;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+do/A
+    escape/A 1;
+end;
+escape 1;
+]],
+    run = 1,
+}
+do return end
 
 Test { [[
 var int a = do/A

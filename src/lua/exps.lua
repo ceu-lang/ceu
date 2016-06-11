@@ -52,11 +52,12 @@ F = {
 -- CAST, SIZEOF
 
     ['Exp_as'] = function (me)
-        local _,_,Type = unpack(me)
+        local _,e,Type = unpack(me)
         if AST.isNode(Type) then
             me.tp = TYPES.copy(Type.tp)
         else
             -- annotation (/plain, etc)
+            me.tp = TYPES.copy(e.tp)
         end
     end,
 
@@ -216,7 +217,7 @@ F = {
     ['Exp_1&'] = function (me)
         local op, e = unpack(me)
         local par = me.__par
-        ASR(par.tag=='_Set_Exp' or par.tag=='Explist', me,
+        ASR(par.tag=='Set_Exp' or par.tag=='Explist', me,
             'invalid expression : operand `'..op..'´')
         me.tp = TYPES.copy(e.tp)
     end,

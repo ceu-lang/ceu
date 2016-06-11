@@ -1,5 +1,8 @@
 F = {
     __check = function (me, to_tp, fr_tp)
+        if TYPES.check(to_tp,'?') then
+            to_tp = TYPES.pop(to_tp)
+        end
         ASR(TYPES.contains(to_tp,fr_tp), me,
             'invalid assignment : types mismatch : "'..TYPES.tostring(to_tp)..
                                                         '" <= "'..

@@ -129,7 +129,7 @@ do
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
             local top1 = unpack(tp1)
             local top2 = unpack(tp2)
-            if top2.group == 'native' then
+            if top1.group=='native' or top2.group=='native' then
                 return true
             end
             return contains_num(top1.id,top2.id)
