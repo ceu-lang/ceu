@@ -224,6 +224,7 @@ DBG('TODO: _Loop_Pool')
 
         local dcls = node('Stmts', me.ln)
         if to then
+            local to = to
             if to.tag ~= 'Varlist' then
                 to = { to }
             end
@@ -241,9 +242,11 @@ DBG('TODO: _Loop_Pool')
 
         local set_awt
         if to then
-            set_awt = node('Set_Await', me.ln, awt, to)
+            set_awt = node('Set_Await', me.ln,
+                        node('Await_Until', me.ln, awt, false),
+                        to)
         else
-            set_awt = awt
+            set_awt = node('Await_Until', me.ln, awt, false)
         end
 
         return node('Loop', me.ln,
