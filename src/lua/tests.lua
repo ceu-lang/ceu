@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -22528,7 +22527,15 @@ Test { [[vector[0] int[2] v; emit v; escape 0;]],
         --env='event "?" is not declared'
         parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
 }
-Test { [[native _int; vector[2] _int v; v=v; escape 0;]], env='types mismatch' }
+Test { [[
+native _int;
+vector[2] _int v;
+v=v;
+escape 0;
+]],
+    locs = 'line 3 : invalid use of `vector´ "v"',
+    --env='types mismatch'
+}
 Test { [[vector[1] int v; escape v;]],
     locs = 'line 1 : invalid use of `vector´ "v"',
     --env='cannot index a non array'
@@ -22944,7 +22951,8 @@ vector[10] u8 v1 = [1,2,3];
 vector[20] u8 v2 = v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
-    env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
+    locs = 'line 2 : invalid use of `vector´ "v1"',
+    --env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
 }
 
 Test { [[
@@ -23023,7 +23031,8 @@ escape v == &&v[0] ;
 ]],
     --exps = 'line 2 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
-    exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
+    --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
+    locs = 'line 2 : invalid use of `vector´ "v"',
 }
 
 Test { [[
@@ -23036,7 +23045,7 @@ native do
 end
 vector[2] int a = [1,2];
 native _int;
-_f(&&a as _int&&);
+_f(&&a[0] as _int&&);
 escape a[0] + a[1];
 ]],
     run = 5,
@@ -23053,7 +23062,7 @@ end
 vector[2] int a  = [1,2];
 vector&[2] int b = &a;
 native _char;
-_f(&&b as _char&&);
+_f(&&b[0] as _char&&);
 escape b[0] + b[1];
 ]],
     env = 'line 10 : invalid type cast',
@@ -23070,7 +23079,7 @@ end
 vector[2] int a  = [1,2];
 vector&[2] int b = &a;
 native _int;
-_f(&&b as _int&&);
+_f(&&b[0] as _int&&);
 escape b[0] + b[1];
 ]],
     run = 5,
@@ -23278,7 +23287,7 @@ vector&[] byte ref = &str;
 native _char;
 ref = [] .. ({f}() as _char&&) .. "oi";
 native/pure _strlen;
-escape _strlen(&&str as _char&&);
+escape _strlen(&&str[0] as _char&&);
 ]],
     run = 5,
 }
@@ -23383,8 +23392,8 @@ native/pure _ID, _strlen;
 native _char;
 vector[] byte str = [] .. "abc"
                     .. (_ID("def") as _char&&);
-var byte&& str2 = _ID(&&str as _char&&);
-escape _strlen(&&str as _char&&) + _strlen(str2);
+var byte&& str2 = _ID(&&str[0] as _char&&);
+escape _strlen(&&str[0] as _char&&) + _strlen(str2);
 ]],
     run = 12,
 }
@@ -23404,7 +23413,7 @@ native/pure _strcmp;
 vector[] byte str1;
 vector[] byte str2 = [].."";
 native _char;
-escape _strcmp(&&str1 as _char&&,"")==0 and _strcmp(&&str2 as _char&&,"")==0;
+escape _strcmp(&&str1[0] as _char&&,"")==0 and _strcmp(&&str2[0] as _char&&,"")==0;
 ]],
     run = 1,
 }
@@ -23416,7 +23425,7 @@ code/instantaneous Strlen (var byte&& str)=>int do
 end
 
 vector[] byte str = [].."Ola Mundo!";
-escape Strlen(&&str);
+escape Strlen(&&str[0]);
 ]],
     env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
 }
@@ -23424,11 +23433,11 @@ escape Strlen(&&str);
 Test { [[
 native _char, _strlen;
 code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(str);
+    escape _strlen(str[0]);
 end
 
 vector[] byte str = [].."Ola Mundo!";
-escape Strlen(&&str as _char&&);
+escape Strlen(&&str[0] as _char&&);
 ]],
     run = 10,
 }
@@ -23447,7 +23456,7 @@ Test { [[
 native/nohold _ceu_vector_copy_buffer;
 vector[] byte v = [1,2,0,4,5];
 var byte c = 3;
-_ceu_vector_copy_buffer(&&v, 2, &&c, 1, 1);
+_ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 1);
 escape v[2] + ($v as int);
 ]],
     run = 8,
@@ -23457,7 +23466,7 @@ Test { [[
 native/nohold _ceu_vector_copy_buffer;
 vector[5] byte v = [1,2,0,4,5];
 var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 1);
+var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 1);
 escape v[2] + ($v as int) + ok;
 ]],
     run = 9,
@@ -23467,7 +23476,7 @@ Test { [[
 native/nohold _ceu_vector_copy_buffer;
 vector[5] byte v = [1,2,1,4,5];
 var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 1);
+var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 8, 1);
 escape v[2] + ($v as int) + ok;
 ]],
     run = 6,
@@ -23477,7 +23486,7 @@ Test { [[
 native/nohold _ceu_vector_copy_buffer;
 vector[] byte v = [1,2,0,4,5];
 var byte c = 3;
-_ceu_vector_copy_buffer(&&v, 2, &&c, 1, 0);
+_ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 0);
 escape v[2] + ($v as int);
 ]],
     run = 8,
@@ -23487,7 +23496,7 @@ Test { [[
 native/nohold _ceu_vector_copy_buffer;
 vector[5] byte v = [1,2,0,4,5];
 var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 1, 0);
+var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 0);
 escape v[2] + ($v as int) + ok;
 ]],
     run = 9,
@@ -23497,7 +23506,7 @@ Test { [[
 native/nohold _ceu_vector_copy_buffer;
 vector[] byte v = [1,2,1,4,5];
 var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v, 2, &&c, 8, 0);
+var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 8, 0);
 escape v[2] + ($v as int) + ok;
 ]],
     run = 6,
@@ -23522,8 +23531,8 @@ escape ok;
 Test { [=[
 vector[] byte str = [].."12345";
 vector[] byte bts = [1,2,3,4,5];
-var int r1 = [[ string.len(@str) ]];
-var int r2 = [[ string.len(@bts) ]];
+var int r1 = [[ string.len(@&&str[0]) ]];
+var int r2 = [[ string.len(@&&bts[0]) ]];
 escape r1+r2;
 ]=],
     run = 10,
@@ -23568,7 +23577,7 @@ Test { [[
 native/nohold _strlen;
 vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
 native _char;
-escape _strlen(&&v as _char&&);
+escape _strlen(&&v[0] as _char&&);
 ]],
     run = 3,
 }
@@ -23576,7 +23585,7 @@ Test { [[
 native/nohold _strlen;
 vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
 native _char;
-escape _strlen(&&v as _char&&);
+escape _strlen(&&v[0] as _char&&);
 ]],
     run = 3,
 }
@@ -23596,9 +23605,9 @@ end
 vector[10] byte v;
 vector[10] byte v_;
 native _char;
-_garbage(&&v as _char&&);
+_garbage(&&v[0] as _char&&);
 v = [{'a'},{'b'},{'c'}];
-escape _strlen(&&v as _char&&);
+escape _strlen(&&v[0] as _char&&);
 ]],
     run = 3,
 }
@@ -23647,14 +23656,15 @@ vector[] byte v = "abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
-    env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
+    locs = 'line 4 : invalid use of `vector´ "v"',
+    --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
 }
 Test { [[
 native/nohold _strlen;
 vector[] byte v = [].."abc";
 native _char;
-escape _strlen(&&v as _char&&);
+escape _strlen(&&v[0] as _char&&);
 ]],
     run = 3,
 }
@@ -23663,7 +23673,7 @@ native/nohold _strlen;
 vector[] byte v = [].."abc";
 v = [] .. v .. "def";
 native _char;
-escape _strlen(&&v as _char&&);
+escape _strlen(&&v[0] as _char&&);
 ]],
     run = 6,
 }
@@ -24239,7 +24249,7 @@ native _u8;
 vector[2] _u8 v = [];
 v[0] = 8;
 v[1] = 5;
-escape _f2(&&v[0],&&v[1]) + _f1(&&v) + _f1(&&v[0]);
+escape _f2(&&v[0],&&v[1]) + _f1(&&v[0]) + _f1(&&v[0]);
 ]],
     run = 39,
 }
@@ -25183,8 +25193,8 @@ Test { [[
 native/nohold _strncpy, _printf, _strlen;
 native _char ;
 vector[10] _char str = [];
-_strncpy(&&str, "123", 4);
-_printf("END: %d %s\n", _strlen(&&str) as int, &&str);
+_strncpy(&&str[0], "123", 4);
+_printf("END: %d %s\n", _strlen(&&str[0]) as int, &&str[0]);
 escape 0;
 ]],
     run = '3 123'
@@ -25193,16 +25203,16 @@ escape 0;
 Test { [[
 native/nohold _printf, _strlen, _strcpy;
 native _char;
-vector[6] _char a=[]; _strcpy(&&a, "Hello");
-vector[2] _char b=[]; _strcpy(&&b, " ");
-vector[7] _char c=[]; _strcpy(&&c, "World!");
+vector[6] _char a=[]; _strcpy(&&a[0], "Hello");
+vector[2] _char b=[]; _strcpy(&&b[0], " ");
+vector[7] _char c=[]; _strcpy(&&c[0], "World!");
 vector[30] _char d=[];
 
 var int len = 0;
-_strcpy(&&d,&&a);
-_strcpy(&&d[_strlen(&&d)], &&b);
-_strcpy(&&d[_strlen(&&d)], &&c);
-_printf("END: %d %s\n", _strlen(&&d) as int, &&d);
+_strcpy(&&d[0],&&a[0]);
+_strcpy(&&d[_strlen(&&d[0])], &&b[0]);
+_strcpy(&&d[_strlen(&&d[0])], &&c[0]);
+_printf("END: %d %s\n", _strlen(&&d[0]) as int, &&d[0]);
 escape 0;
 ]],
     run = '12 Hello World!'
@@ -25667,7 +25677,8 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    env = 'line 4 : types mismatch (`_int&&´ <= `_int[]´)',
+    locs = 'line 5 : invalid use of `vector´ "i"',
+    --env = 'line 4 : types mismatch (`_int&&´ <= `_int[]´)',
     --run = { ['~>1s']=1 },
 }
 Test { [[
@@ -25698,7 +25709,8 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    env = 'line 4 : types mismatch (`int&&´ <= `int[]´)',
+    locs = 'line 4 : invalid use of `vector´ "i"',
+    --env = 'line 4 : types mismatch (`int&&´ <= `int[]´)',
     --run = { ['~>1s']=1 },
 }
 Test { [[
@@ -25715,7 +25727,8 @@ do
 end
 escape *u;
 ]],
-    env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
+    locs = 'line 6 : invalid use of `vector´ "i"',
+    --env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
 }
 Test { [[
 native _int;
@@ -26009,6 +26022,7 @@ escape a;
 }
 
 -- BIG // FULL // COMPLETE
+--]===]
 Test { [[
 input int KEY;
 if 1 then escape 50; end
@@ -26061,7 +26075,7 @@ end
             await 1s;
             await KEY;
         with
-            if not win then
+            if win==0 then
                 loop do
                     await 100ms;
                     await 100ms;

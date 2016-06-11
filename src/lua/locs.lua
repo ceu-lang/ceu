@@ -126,7 +126,9 @@ F = {
         elseif me.dcl.tag == 'Evt' then
             -- emit e => x
             -- await e
-            if stmt.tag=='Emit_Evt' or stmt.tag=='Await_Evt' then
+DBG('TODO: _Pause')
+            if stmt.tag=='Emit_Evt' or stmt.tag=='Await_Evt' or stmt.tag=='_Pause'
+            then
                 if AST.asr(stmt,'',1,'Exp_Name')[1] == me then
                     ok = true
                 end
@@ -143,6 +145,19 @@ F = {
                AST.asr(exp[2],'Exp_Name')[1]==me
             then
                 ok = true
+            end
+            -- v = ?
+            if exp.tag=='_Set_one' and AST.asr(exp,'',1,'Exp_Name')[1]==me then
+                ok = true
+            end
+            -- ? = [] .. v
+            if exp.tag=='_Vec_New' then
+DBG('TODO: _Vec_New')
+                for _,e in ipairs(exp) do
+                    if e.tag=='Exp_Name' and e[1]==me then
+                        ok = true
+                    end
+                end
             end
         end
 

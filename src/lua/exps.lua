@@ -148,24 +148,20 @@ F = {
 
     ['Exp_1*'] = function (me)
         local op, e = unpack(me)
-        ASR(TYPES.is_native(e.tp) or TYPES.check(e.tp,'&&'), me,
+        local is_nat = TYPES.is_native(e.tp)
+        local is_ptr = TYPES.check(e.tp,'&&')
+        ASR(is_nat or is_ptr, me,
             'invalid expression : operand to `'..op..'´ must be of pointer type')
-        me.tp = TYPES.pop(e.tp)
+        if is_ptr then
+            me.tp = TYPES.pop(e.tp)
+        else
+            me.tp = TYPES.copy(e.tp)
+        end
     end,
 
     ['Exp_&&'] = function (me)
         local op, e = unpack(me)
-
-        local is_name = false
-        if e.tag=='Exp_Name' then
-            local ee,_ = unpack(e)
-            if ee.tag == 'Exp_!' then
-                _,ee = unpack(ee)
-            end
-            is_name = (TYPES.is_native(ee.tp) or ee.tag=='ID_int')
-        end
-
-        ASR(is_name or e.tag=='Exp_1*', me,
+        ASR(e.tag=='Exp_Name' or e.tag=='Exp_1*', me,
             'invalid expression : operand to `'..op..'´ must be a name')
         me.tp = TYPES.push(e.tp,'&&')
     end,
