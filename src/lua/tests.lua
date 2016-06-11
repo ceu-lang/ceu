@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -174,11 +173,18 @@ Test { [[
 var uint x = 1.5;
 escape x + (0.5 as uint);
 ]],
+    sets = ' line 1 : invalid assignment : types mismatch : "uint" <= "float"',
+}
+
+Test { [[
+var uint x = (1.5 as uint);
+escape x + (0.5 as uint);
+]],
     run = 1,
 }
 
 Test { [[
-var byte x = 1.5;
+var byte x = (1.5 as byte);
 escape x + (0.5 as byte);
 ]],
     run = 1,
@@ -246,6 +252,7 @@ escape i?;
 ]],
     exps = 'line 2 : invalid expression : operand to `?´ must be of option type',
 }
+--]===]
 Test { [[
 var int? i = 1;
 escape i?;
@@ -1735,6 +1742,19 @@ escape v;
         ['3~>A ; 1~>B'] = 1,
         ['1~>B ; 2~>A ; 3~>B'] = 3,
     }
+}
+Test { [[
+var bool a;
+a = await 10ms;
+escape a;
+]],
+    sets = 'line 2 : invalid assignment : destination must be of integer type',
+}
+Test { [[
+var bool a = await 10ms;
+escape a;
+]],
+    sets = 'line 1 : invalid assignment : destination must be of integer type',
 }
 Test { [[
 var int a = await 10ms;

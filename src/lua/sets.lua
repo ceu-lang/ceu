@@ -21,7 +21,11 @@ F = {
             local top = AST.asr(ID_ext.top,'Ext')
             local Type = unpack(top)
             F.__check(me, to.tp, Type.tp)
+        elseif awt.tag == 'Await_Wclock' then
+            ASR(TYPES.is_int(to.tp), me,
+                'invalid assignment : destination must be of integer type')
         else
+AST.dump(me)
             error 'TODO'
         end
     end,

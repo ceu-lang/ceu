@@ -102,7 +102,7 @@ Test = function (t)
     if not check('exps')     then return end
     if not check('sets')     then return end
 do return end
-    AST.dump(AST.root)
+AST.dump(AST.root)
     if not check('consts')   then return end
     if not check('sval')     then return end
     if not check('env')      then return end

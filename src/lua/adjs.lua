@@ -236,7 +236,6 @@ DBG('TODO: _Loop_Pool')
             set[#set+1] = to
             set[#set+1] = op
         else
-AST.dump(me)
             error 'TODO'
         end
         return set
@@ -301,7 +300,9 @@ AST.dump(me)
             t[#t+1] = id
             ret[#ret+1] = node(tag, me.ln, unpack(t))
             if set then
-                ret[#ret+1] = node('_Set', me.ln, unpack(set))
+                ret[#ret+1] = node('_Set_one', me.ln,
+                                node('ID_int', me.ln, id),
+                                unpack(set))
 -- TODO: set
 DBG('TODO: _Set')
             end
