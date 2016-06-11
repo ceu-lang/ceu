@@ -105,18 +105,19 @@ Test { [[escape 1+2*3;]], run=7 }
 Test { [[escape(4/2*3);]], run=6 }
 Test { [[escape 2-1;]], run=1 }
 
-Test { [[escape 1==2;]], run=0 }
+Test { [[escape 1==2;]], sets='line 1 : invalid assignment : types mismatch : "int" <= "bool"', }
+Test { [[escape (1!=2) as int;]], run=1 }
 Test { [[escape 0  or  10;]],
     exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
 }
-Test { [[escape (0 as bool)  or  (10 as bool);]], run=1 }
-Test { [[escape (0 as bool) and (10 as bool);]], run=0 }
-Test { [[escape 10==true;]],
+Test { [[escape (0 as bool)  or  (10 as bool) as int;]], run=1 }
+Test { [[escape (0 as bool) and (10 as bool) as int;]], run=0 }
+Test { [[escape 10==true as int;]],
     exps = 'line 1 : invalid expression : operands to `==´ must be of the same type',
 }
 Test { [[escape (10!=0) as int;]], run=1 }
-Test { [[escape true and true;]], run=1 }
-Test { [[escape 2>1 and 10!=0;]], run=1 }
+Test { [[escape true and true as int;]], run=1 }
+Test { [[escape 2>1 and 10!=0 as int;]], run=1 }
 Test { [[escape (1<=2 as int) + 3;]], run=2 }
 Test { [[escape (1<=2 as int) + (1<2 as int) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
@@ -132,11 +133,12 @@ Test { [[nt sizeof;]],
 Test { [[var int sizeof;]],
     parser = "line 1 : after `int´ : expected type modifier or internal identifier",
 }
-Test { [[escape sizeof(int);]], run=4 }
+Test { [[escape sizeof(int);]], sets='line 1 : invalid assignment : types mismatch : "int" <= "usize"' }
+Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
     exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
 }
-Test { [[escape (1<2 as int)<3;]], run=1 }
+Test { [[escape (1<2 as int)<3 as int;]], run=1 }
 
 Test { [[
 var uint x = 1.5;
@@ -165,7 +167,7 @@ escape 1.;
 
 Test { [[
 var float x = 1.5;
-escape x + 0.5;
+escape x + 0.5 as int;
 ]],
     run = 2,
 }
@@ -179,21 +181,21 @@ escape x + (0.5 as uint);
 
 Test { [[
 var uint x = (1.5 as uint);
-escape x + (0.5 as uint);
+escape x + (0.5 as uint) as int;
 ]],
     run = 1,
 }
 
 Test { [[
 var byte x = (1.5 as byte);
-escape x + (0.5 as byte);
+escape x + (0.5 as byte) as int;
 ]],
     run = 1,
 }
 
 Test { [[
 var byte x = 255;
-escape x + (0.5 as byte);
+escape x + (0.5 as byte) as int;
 ]],
     run = 0,
 }
@@ -212,7 +214,7 @@ escape &&1;
 
 Test { [[
 var int x = 1;
-escape &&x == &&x;
+escape &&x == &&x as int;
 ]],
     run = 1,
 }
@@ -255,7 +257,7 @@ escape i?;
 }
 Test { [[
 var int? i = 1;
-escape i?;
+escape i? as int;
 ]],
     run=1,
 }
@@ -536,7 +538,7 @@ Test { [[
 input void A;
 var bool a = (1 as bool);
 a = (2 as bool);
-escape a;
+escape a as int;
 ]],
     wrn = true,
     run = 1,
@@ -843,7 +845,7 @@ Test { [[
 input void A;
 var usize a = 1;
 a = 2;
-escape a;
+escape a as int;
 ]],
     wrn = true,
     run = 2,
@@ -853,7 +855,7 @@ Test { [[
 input void A;
 var byte a = 1;
 a = 2;
-escape a;
+escape a as int;
 ]],
     wrn = true,
     run = 2,
@@ -1636,7 +1638,7 @@ Test { [[await -1; escape 0;]],
     --env = 'line 1 : event "?" is not declared',
 }
 
-Test { [[var s32 a=await 10s; escape a==8000000;]],
+Test { [[var s32 a=await 10s; escape a==8000000 as int;]],
     _ana = {
         isForever = false,
     },
@@ -1704,7 +1706,8 @@ escape a + 1;
 ]],
     --locs = 'line 1 : internal identifier "_ret" is not declared',
     --props = 'line 4 : not permitted inside `async´',
-    props = 'line 4 : not permitted across `async´ declaration',
+    --props = 'line 4 : not permitted across `async´ declaration',
+    locs = 'line 4 : invalid `escape´ : no matching enclosing `do´',
 }
 
 Test { [[
@@ -2127,7 +2130,15 @@ do/A
     escape/A 1;
 end
 ]],
-    env = 'do/A has no escape value',
+    locs = 'line 2 : invalid `escape´ : unexpected expression',
+}
+
+Test { [[
+var int x = do/A
+    escape/A;
+end;
+]],
+    locs = 'line 2 : invalid `escape´ : expected expression',
 }
 
 Test { [[
@@ -2144,7 +2155,7 @@ do/A
     escape;
 end
 ]],
-    env = 'missing value',
+    locs = 'line 2 : invalid `escape´ : expected expression',
 }
 
 Test { [[
@@ -2156,8 +2167,33 @@ end
 }
 
 Test { [[
+do
+    escape;
+end;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+do/A
+    escape/A;
+end;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
 var bool a = do/A
     escape/A 1;
+end;
+escape 1;
+]],
+    sets = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
+}
+
+Test { [[
+var bool a = do/A
+    escape/A 1 as bool;
 end;
 escape 1;
 ]],
@@ -2170,18 +2206,8 @@ var bool a = do/A
 end;
 escape 1;
 ]],
-    run = 1,
+    locs = 'line 2 : invalid `escape´ : expected expression',
 }
-
-Test { [[
-do/A
-    escape/A 1;
-end;
-escape 1;
-]],
-    run = 1,
-}
-do return end
 
 Test { [[
 var int a = do/A
@@ -2193,7 +2219,7 @@ escape 1;
 }
 
 Test { [[
-var int a = do/_
+var int a = do
     var int a = do/A
         escape/A 1;
     end;
@@ -2253,7 +2279,7 @@ end;
 escape a;
 ]],
     wrn = true,
-    env = 'A not defined',
+    locs = 'line 5 : invalid `escape´ : no matching enclosing `do´',
 }
 
 Test { [[
@@ -2303,7 +2329,7 @@ escape ptr == null;
     parser = 'line 1 : after `=´ : expected expression',
 }
 Test { [[
-var u8&& ptr = do/_
+var u8&& ptr = do
     par do
         //_idle();
         await FOREVER;
@@ -2312,7 +2338,7 @@ var u8&& ptr = do/_
         escape null;
 end
     end;
-escape ptr == null;
+escape ptr == null as int;
 ]],
     run = {['~>1s']=1},
 }
@@ -2330,9 +2356,10 @@ escape ret;
 }
 
 Test { [[
-a = do end;
+var int a = do end;
 ]],
-    parser = 'line 1 : after `do´ : expected `/´',
+    --parser = 'line 1 : after `do´ : expected `/´',
+    todo = 'forever'
 }
 
 Test { [[
@@ -3000,7 +3027,7 @@ escape 1;
 Test { [[
 input int A;
 loop do
-    do
+    do/_
         escape 1;
     end;
 end;

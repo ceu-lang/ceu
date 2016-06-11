@@ -1,16 +1,44 @@
 local node = AST.node
 
-local Dopre_Stmts
+local Pre_Stmts
 
 F = {
     ['1__PRE'] = function (me)
         local stmts = unpack(me)
         AST.asr(stmts, 'Stmts')
 
-        Dopre_Stmts = node('Stmts', me.ln)
-        table.insert(stmts, 1, Dopre_Stmts)
+        --  Stmts
+        --      to
+        --  Block
+        --      Stmts
+        --          Var             -- _ret
+        --          Set
+        --              ret
+        --              Do
+        --                  Block
+        --                      Stmts
+        --                          Stmts   -- pre do (Pre_Stmts)
+        --                          Stmts   -- orig
 
-        AST.root = node('Block', me.ln, stmts)
+        Pre_Stmts = node('Stmts', me.ln)
+        table.insert(stmts, 1, Pre_Stmts)
+
+        AST.root =
+            node('Block', me.ln,
+                node('Stmts', me.ln,
+                    node('Var', me.ln,
+                        node('Type', me.ln,
+                            node('ID_prim', me.ln, 'int')),
+                            false,
+                            '_ret'),
+                    node('_Set_one', me.ln,
+                        node('ID_int', me.ln, '_ret'),
+                        '=',
+                        node('_Set_Do', me.ln,
+                            node('Do', me.ln,
+                                false,
+                                node('Block', me.ln,
+                                    stmts))))))
         return AST.root
     end,
     _Stmts__PRE = function (me)
@@ -18,7 +46,7 @@ F = {
         return node('Stmts', me.ln, unpack(t))
     end,
     _Dopre__POS = function (me)
-        Dopre_Stmts[#Dopre_Stmts+1] = AST.asr(me,'', 1,'Block', 1,'Stmts')
+        Pre_Stmts[#Pre_Stmts+1] = AST.asr(me,'', 1,'Block', 1,'Stmts')
         return AST.node('Nothing', me.ln)
     end,
 
@@ -235,10 +263,27 @@ DBG('TODO: _Loop_Pool')
             set.tag = string.sub(set.tag,2)
             set[#set+1] = to
             set[#set+1] = op
+        elseif set.tag == '_Set_Do' then
+            -- set to "to" happens on "escape"
+            local do_ = unpack(set)
+            do_[#do_+1] = to
+            do_[#do_+1] = op
+            return do_
         else
             error 'TODO'
         end
         return set
+    end,
+
+    _Escape__PRE = function (me)
+        local _, fr = unpack(me)
+        local set = node('Set_Exp', me.ln,
+                        fr,
+                        node('Ref', me.ln, 'escape', me),   -- see locs.lua
+                        nil) -- op
+        me.tag = 'Escape'
+        me[2] = nil
+        return node('Stmts', me.ln, set, me)
     end,
 
 -------------------------------------------------------------------------------
@@ -303,8 +348,6 @@ DBG('TODO: _Loop_Pool')
                 ret[#ret+1] = node('_Set_one', me.ln,
                                 node('ID_int', me.ln, id),
                                 unpack(set))
--- TODO: set
-DBG('TODO: _Set')
             end
         end
         return ret

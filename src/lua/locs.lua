@@ -183,21 +183,60 @@ DBG('TODO: _Vec_New')
     ---------------------------------------------------------------------------
 
     Ref__PRE = function (me)
-        local id, ID_ext, i = unpack(me)
-        assert(id == 'every')
-        AST.asr(ID_ext,'ID_ext')
-        assert(ID_ext.top.group == 'input')
+        local id = unpack(me)
 
-        local Type = unpack(ID_ext.top)
-        local ID, mod = unpack(Type)
-        if ID.tag=='ID_prim' or ID.tag=='ID_nat' then
-            return AST.copy(Type)
+        if id == 'every' then
+            local _, ID_ext, i = unpack(me)
+            assert(id == 'every')
+            AST.asr(ID_ext,'ID_ext')
+            assert(ID_ext.top.group == 'input')
+
+            local Type = unpack(ID_ext.top)
+            local ID, mod = unpack(Type)
+            if ID.tag=='ID_prim' or ID.tag=='ID_nat' then
+                return AST.copy(Type)
+            else
+                assert(mod == nil)
+                assert(ID.top.group == 'data')
+                local fields = AST.asr(ID.top,'', 3,'Block', 1,'Stmts')
+                local Type = unpack(fields[i])
+                return AST.copy(Type)
+            end
+        elseif id == 'escape' then
+            local _, esc = unpack(me)
+            local lbl1 = unpack(esc)
+            local do_ = nil
+            for n in AST.iter() do
+                if n.tag=='Async' or n.tag=='_Thread'   or n.tag=='_Isr' or
+                   n.tag=='Data'  or n.tag=='Code_impl' or
+                   n.tag=='Extcall_impl' or n.tag=='Extreq_impl'
+                then
+                    break
+                end
+                if n.tag == 'Do' then
+                    local lbl2 = unpack(n)
+                    if lbl1 == lbl2 then
+                        do_ = n
+                        break
+                    end
+                end
+            end
+            ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
+            local _,_,to,op = unpack(do_)
+            local set = AST.asr(me.__par,'Set_Exp')
+            local fr = unpack(set)
+            if to then
+                ASR(fr, me, 'invalid `escape´ : expected expression')
+                set[3] = op
+                return to
+            else
+                ASR(not fr, me, 'invalid `escape´ : unexpected expression')
+                set.tag = 'Nothing'
+                return AST.node('Nothing', me.ln)
+            end
         else
-            assert(mod == nil)
-            assert(ID.top.group == 'data')
-            local fields = AST.asr(ID.top,'', 3,'Block', 1,'Stmts')
-            local Type = unpack(fields[i])
-            return AST.copy(Type)
+AST.dump(me)
+error'TODO'
         end
     end,
 }

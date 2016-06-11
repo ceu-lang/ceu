@@ -341,8 +341,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     -- escape/A 10
     -- break/i
     -- continue/i
-    , _Escape   = K'escape'   * OPT('/'*V'__ID_esc')
-                                * OPT(V'__Exp')
+    , _Escape   = K'escape'   * OPT('/'*V'__ID_esc') * OPT(V'__Exp')
     , _Break    = K'break'    * OPT('/'*V'ID_int')
     , _Continue = K'continue' * OPT('/'*V'ID_int')
 
@@ -612,7 +611,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- after `=´
 
-    , _Set_Do       = #(K'do'*KK'/')    * V'Do'
+    , _Set_Do       = #K'do'            * V'Do'
     , _Set_Await    = #K'await'         * V'Await_Until'
     , _Set_Watching = #K'watching'      * V'_Watching'
     , _Set_Spawn    = #K'spawn'         * V'Spawn_Code'
