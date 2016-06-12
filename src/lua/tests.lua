@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17846,7 +17845,7 @@ native do
     }
 end
 var int&& v = _f(0);
-escape v == null;
+escape v == null as int;
 ]],
     run = 1,
 }
@@ -17873,7 +17872,7 @@ native do
     }
 end
 var int v=0;
-escape _f(&&v) == 1;
+escape _f(&&v) == 1 as int;
 ]],
     fin = 'line 8 : call requires `finalize´',
 }
@@ -17886,7 +17885,7 @@ native do
     }
 end
 var int v=0;
-escape _f(&&v) == 1;
+escape _f(&&v) == 1 as int;
 ]],
     run = 1,
 }
@@ -17901,7 +17900,7 @@ native do
     }
 end
 var int v=0;
-escape _f(&&v) == _V;
+escape _f(&&v) == _V as int;
 ]],
     run = 1,
 }
@@ -18624,10 +18623,10 @@ Test { [[
 var int ret = do/_
     var int ret = 0;
     loop do
-        do
+        do/_
             await 1s;
             ret = ret + 1;
-            do escape ret * 2; end
+            do/_ escape ret * 2; end
             do finalize with
                 ret = ret + 4;  // executed after `escape´ assigns to outer `ret´
     end
@@ -18646,7 +18645,7 @@ Test { [[
 var int ret = do/_
     var int ret = 0;
     loop do
-        do
+        do/_
             await 1s;
             ret = ret + 1;
             do finalize with
@@ -18952,7 +18951,7 @@ escape 1;
 
 Test { [[
 var int&& p1=null;
-do
+do/_
     var int&& p;
     input int&& E;
     p = await E;
@@ -18970,7 +18969,7 @@ escape 1;
 Test { [[
 native _f;
 var int&& p1 = null;
-do
+do/_
     var int&& p;
     input int&& E;
     p = await E;
@@ -19138,6 +19137,7 @@ escape ret + *p;
     --fin = 'line 14 : cannot `await´ again on this block',
 }
 
+--]===]
 Test { [[
 native _assert;
 var void&& p;
