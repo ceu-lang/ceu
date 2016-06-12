@@ -110,6 +110,7 @@ F = {
         local id = unpack(me)
         me.dcl = ASR(LOCS.get(id, AST.par(me,'Block')), me,
                     'internal identifier "'..id..'" is not declared')
+        local _, is_alias = unpack(me.dcl)
 
         -- check use contexts for ID_*
 
@@ -128,6 +129,9 @@ DBG('TODO: _Thread, _Isr')
             end
         elseif stmt.tag=='Exp_1&' and AST.asr(stmt,'',2,'Exp_Name')[1]==me then
             -- &x
+            ok = true
+        elseif me.__par.tag=='Set_Exp' and is_alias then
+            -- <kind>& v = ?
             ok = true
         elseif me.dcl.tag == 'Var' then
             ok = true
@@ -148,30 +152,47 @@ DBG('TODO: _Pause')
             end
         elseif me.dcl.tag == 'Vec' then
             -- v[i]
-            local exp = me.__par
-            if exp.tag=='Exp_idx' and exp[2]==me then
-                ok = true
+            do
+                local exp = me.__par
+                if exp.tag=='Exp_idx' and exp[2]==me then
+                    ok = true
+                end
             end
             -- $v, $$v
-            local exp = me.__par.__par
-            if (exp.tag=='Exp_$' or exp.tag=='Exp_$$') and
-               AST.asr(exp[2],'Exp_Name')[1]==me
-            then
-                ok = true
+            do
+                local exp = me.__par.__par
+                if (exp.tag=='Exp_$' or exp.tag=='Exp_$$') and
+                   AST.asr(exp[2],'Exp_Name')[1]==me
+                then
+                    ok = true
+                end
+            end
+            -- v = [] .. ?
+            do
+                local exp = me.__par
+                if exp.tag=='Set_Vec' and exp[2]==me then
+                    ok = true
+                end
             end
             -- v = ?
-            if string.sub(exp.tag,1,4) == 'Set_' and
-               AST.asr(exp,'',1,'Exp_Name')[1] == me
-            then
-                ok = true
+            do
+                local exp = me.__par.__par
+                if string.sub(exp.tag,1,4) == 'Set_' and
+                   AST.asr(exp,'',1,'Exp_Name')[1] == me
+                then
+                    ok = true
+                end
             end
             -- ? = [] .. v
-            if exp.tag=='_Vec_New' then
+            do
+                local exp = me.__par.__par
+                if exp.tag=='_Vec_New' then
 DBG('TODO: _Vec_New')
-                for _,e in ipairs(exp) do
-                    if e.tag=='Exp_Name' and e[1]==me then
-                        ok = true
-                        break
+                    for _,e in ipairs(exp) do
+                        if e.tag=='Exp_Name' and e[1]==me then
+                            ok = true
+                            break
+                        end
                     end
                 end
             end

@@ -17552,6 +17552,18 @@ end
 escape Fx(&str);
 ]],
     wrn = true,
+    sets = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1] as int;
+end
+
+escape Fx(&str);
+]],
+    wrn = true,
     run = 1,
 }
 Test { [[
