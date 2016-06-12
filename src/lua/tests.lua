@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -5079,6 +5078,7 @@ escape a+f;
 
 -->>> INTERNAL EVENTS
 
+--]===]
 Test { [[
 input void OS_START;
 event int a;
