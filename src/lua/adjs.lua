@@ -65,10 +65,13 @@ F = {
     Extcall_impl__PRE = '_Code_impl__PRE',
     _Code_impl__PRE = function (me)
         local pre, is_rec, id, ins, out, blk = unpack(me)
+        me.tag = string.sub(me.tag,2)
+
         local stmts = AST.asr(blk,'Block', 1,'Stmts')
 
-        -- enclose "stmts" with "_ret = do ... end"
-        local ret = node('Stmts', me.ln,
+        -- enclose "blk" with "_ret = do ... end"
+        me[6] = node('Block', me.ln,
+                    node('Stmts', me.ln,
                         node('Var', me.ln,
                             AST.copy(out),
                             false,
@@ -80,7 +83,7 @@ F = {
                                 node('Do', me.ln,
                                     true,
                                     node('Block', me.ln,
-                                        stmts)))))
+                                        stmts))))))
 
         -- insert int "stmts" all parameters "ins"
         AST.asr(ins,'Typepars_ids')
@@ -105,8 +108,6 @@ F = {
             end
         end
         table.insert(stmts, 1, dcls)
-
-        return ret
     end,
 
     Emit_Ext_req__PRE = '_Extreq_proto__PRE',
@@ -279,7 +280,9 @@ DBG('TODO: _Loop_Pool')
 
     _Set__PRE = function (me)
         local to,op,set = unpack(me)
-        if set.tag=='_Set_Exp' or set.tag=='_Set_Await' then
+        if set.tag=='_Set_Exp' or set.tag=='_Set_Await' or
+           set.tag=='_Set_Vec'
+        then
             set.tag = string.sub(set.tag,2)
             set[#set+1] = to
             set[#set+1] = op
@@ -290,7 +293,8 @@ DBG('TODO: _Loop_Pool')
             do_[#do_+1] = op
             return do_
         else
-            error 'TODO'
+AST.dump(me)
+error 'TODO'
         end
         return set
     end,
