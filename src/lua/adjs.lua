@@ -1,6 +1,27 @@
+ADJS = {
+}
+
 local node = AST.node
 
 local Pre_Stmts
+
+function ADJS.list2data (list)
+    local id_abs = ''
+    for _,Type in ipairs(list) do
+        local ID = unpack(Type)
+        assert(ID.tag=='ID_prim' or ID.tag=='ID_nat')
+
+        local id = unpack(ID)
+        local mods = ''
+        if #Type > 1 then
+            mods = table.concat({unpack(Type,2)},'_')
+            mods = '_'..string.gsub(mods,'&&','ptr')
+        end
+
+        id_abs = id_abs..'_'..id..mods
+    end
+    return id_abs
+end
 
 F = {
     ['1__PRE'] = function (me)
@@ -415,27 +436,26 @@ error 'TODO'
         end
         assert(list.tag == '_Typelist')
 
-        local dcls = node('Stmts', me.ln)
-        local id_abs = ''
-        for i, Type in ipairs(list) do
-            local ID,mod = unpack(Type)
-            assert(not mod, 'TODO')
-            assert(ID.tag=='ID_prim' or ID.tag=='ID_nat')
-            local id2 = unpack(ID)
-            id_abs = id_abs..'_'..id2
-            dcls[#dcls+1] = node('Var', me.ln, Type, false, '_'..i)
+        local id_abs = ADJS.list2data(list)
+        local has = F.__datas[id_abs]
+        local data
+        if has then
+            data = node('Nothing', me.ln)
+        else
+            F.__datas[id_abs] = true
+
+            local dcls = node('Stmts', me.ln)
+            for i, Type in ipairs(list) do
+                dcls[#dcls+1] = node('Var', me.ln, Type, false, '_'..i)
+            end
+
+            data = node('Data', me.ln,
+                    id_abs, false,
+                    node('Block', me.ln,
+                        dcls))
         end
 
         me[1] = node('Type', me.ln, node('ID_abs',me.ln,id_abs))
-
-        local has = F.__datas[id_abs]
-        F.__datas[id_abs] = true
-        local data = (has and node('Nothing',me.ln)) or
-                                node('Data', me.ln,
-                                    id_abs, false,
-                                    node('Block', me.ln,
-                                        dcls))
-
         return node('Stmts', me.ln, data, me)
     end,
 

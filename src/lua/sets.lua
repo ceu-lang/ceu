@@ -47,16 +47,13 @@ end
             return
         end
 
-        local id_abs = ''
+        local list = {}
         for i, var in ipairs(me) do
             assert(var.tag == 'ID_int')
             local Type = unpack(var.dcl)
-            local ID,mod = unpack(Type)
-            assert(not mod, 'TODO')
-            assert(ID.tag=='ID_prim' or ID.tag=='ID_nat')
-            local id2 = unpack(ID)
-            id_abs = id_abs..'_'..id2
+            list[i] = Type
         end
+        local id_abs = ADJS.list2data(list)
 
         local top = TOPS[id_abs]
         ASR(top and top.group=='data', me,

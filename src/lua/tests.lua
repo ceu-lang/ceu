@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -19137,13 +19138,12 @@ escape ret + *p;
     --fin = 'line 14 : cannot `await´ again on this block',
 }
 
---]===]
 Test { [[
 native _assert;
 var void&& p;
 var int i;
 input void OS_START;
-do
+do/_
     var int r;
     do
         input (int,void&&) PTR;
