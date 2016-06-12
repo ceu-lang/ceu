@@ -18,19 +18,22 @@ F = {
     Set_Await = function (me)
         local fr, to = unpack(me)
         local awt = unpack(AST.asr(fr,'Await_Until'))
+        F.__check(me, to.tp, awt.tp)
 
-        if awt.tag == 'Await_Ext' then
-            local ID_ext = unpack(awt)
-            local top = AST.asr(ID_ext.top,'Ext')
-            local Type = unpack(top)
-            F.__check(me, to.tp, Type.tp)
-        elseif awt.tag == 'Await_Wclock' then
-            ASR(TYPES.is_int(to.tp), me,
-                'invalid assignment : destination must be of integer type')
-        else
-AST.dump(me)
-            error 'TODO'
-        end
+if not awt.tp then
+    AST.dump(me)
+    error 'TODO'
+end
+        assert(awt.tp, 'bug found')
+    end,
+    Await_Ext = function (me)
+        local ID_ext = unpack(me)
+        local top = AST.asr(ID_ext.top,'Ext')
+        local Type = unpack(top)
+        me.tp = Type.tp
+    end,
+    Await_Wclock = function (me)
+        me.tp = { TOPS.int }
     end,
 
     Varlist = function (me)

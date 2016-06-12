@@ -1759,13 +1759,13 @@ var bool a;
 a = await 10ms;
 escape a;
 ]],
-    sets = 'line 2 : invalid assignment : destination must be of integer type',
+    sets = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
 }
 Test { [[
 var bool a = await 10ms;
 escape a;
 ]],
-    sets = 'line 1 : invalid assignment : destination must be of integer type',
+    sets = 'line 1 : invalid assignment : types mismatch : "bool" <= "int"',
 }
 Test { [[
 var int a = await 10ms;
