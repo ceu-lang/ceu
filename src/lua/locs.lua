@@ -227,12 +227,14 @@ DBG('TODO: _Vec_New')
             local _,_,to,op = unpack(do_)
             local set = AST.asr(me.__par,'Set_Exp')
             local fr = unpack(set)
-            if to then
-                ASR(fr, me, 'invalid `escape´ : expected expression')
+            if to and type(to)~='boolean' then
+                ASR(type(fr)~='boolean', me,
+                    'invalid `escape´ : expected expression')
                 set[3] = op
                 return to
             else
-                ASR(not fr, me, 'invalid `escape´ : unexpected expression')
+                ASR(type(fr)=='boolean', me,
+                    'invalid `escape´ : unexpected expression')
                 set.tag = 'Nothing'
                 return AST.node('Nothing', me.ln)
             end

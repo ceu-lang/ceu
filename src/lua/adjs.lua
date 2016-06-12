@@ -36,7 +36,7 @@ F = {
                         '=',
                         node('_Set_Do', me.ln,
                             node('Do', me.ln,
-                                false,
+                                true,
                                 node('Block', me.ln,
                                     stmts))))))
         return AST.root

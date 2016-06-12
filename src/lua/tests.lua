@@ -2124,6 +2124,7 @@ end
     parser = 'line 2 : after `escape´ : expected `escape´ identifier',
 }
 
+--]===]
 Test { [[
 do/A
     escape/A 1;
@@ -5078,7 +5079,6 @@ escape a+f;
 
 -->>> INTERNAL EVENTS
 
---]===]
 Test { [[
 input void OS_START;
 event int a;
@@ -5259,7 +5259,7 @@ with
     await OS_START;
     emit x => 1.1;
 end
-escape ret>1.0 and ret<1.2;
+escape ret>1.0 and ret<1.2 as int;
 ]],
     run = 1,
 }
@@ -5274,7 +5274,7 @@ with
         emit X => 1.1;
     end
 end
-escape ret>1.0 and ret<1.2;
+escape ret>1.0 and ret<1.2 as int;
 ]],
     run = 1,
 }
@@ -7297,7 +7297,7 @@ end;
     },
 }
 Test { [[
-var s32 a=0,b=0;
+var int a=0,b=0;
 par do
     a = await 10min;
     escape a;
@@ -7378,7 +7378,7 @@ escape a;
     },
 }
 Test { [[
-var s32 v1=0,v2=0;
+var int v1=0,v2=0;
 par do
     v1 = await 5min;
     escape v1;
@@ -7492,7 +7492,7 @@ end;
 
 Test { [[
 input void C;
-do
+do/_
     var int a=0, b=0, c=0;
     par do
         loop do
@@ -7524,7 +7524,7 @@ end;
 
 Test { [[
 input void C;
-do
+do/_
     var int a=0, b=0, c=0;
     par do
         loop do
@@ -7565,7 +7565,8 @@ var int a, b;
 (a,b) = await 1s;
 escape 1;
 ]],
-    env = 'line 2 : arity mismatch',
+    sets = 'line 2 : invalid assignment : types mismatch',
+    --env = 'line 2 : arity mismatch',
     --gcc = 'error: ‘tceu__s32’ has no member named ‘_2’',
     --run = 1,
 }
@@ -14964,7 +14965,7 @@ native do
 end
 _pinMode(13, 1);
 _digitalWrite(13, 1);
-do escape 1; end
+do/_ escape 1; end
 
 par do
     await OS_START;
@@ -16029,7 +16030,7 @@ Test { [[do var int a=0; end;]],
     },
 }
 Test { [[
-do
+do/_
     var int a=0;
     if a then end;
     escape 1;
@@ -16039,7 +16040,7 @@ end;
 }
 
 Test { [[
-do
+do/_
     var int a = 1;
     do
         var int a = 0;
@@ -16054,7 +16055,7 @@ end;
 
 Test { [[
 input void A, B;
-do
+do/_
     var int a = 1;
     var int tot = 0;
     par/and do
@@ -16074,10 +16075,10 @@ end;
 }
 
 Test { [[
-do
+do/_
     var int a = 1;
     var int b = 0;
-    do
+    do/_
         escape a + b;
     end;
 end;
@@ -16087,7 +16088,7 @@ end;
 
 Test { [[
 input void A, B;
-do
+do/_
     var int a = 0;
     par/or do
         await A;
@@ -16439,7 +16440,8 @@ var& int b = &&a;
 a = 2;
 escape b;
 ]],
-    env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
+    sets = 'line 2 : invalid assignment : types mismatch : "int" <= "int&&"',
+    --env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
     --run = 2,
 }
 Test { [[
@@ -16447,7 +16449,8 @@ var int x = 10;
 var& int y = &&x;
 escape y;
 ]],
-    env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
+    --env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
+    sets = 'line 2 : invalid assignment : types mismatch : "int" <= "int&&"',
 }
 
 Test { [[
@@ -16521,7 +16524,8 @@ await 1s;
 var int&& c = a;
 escape 1;
 ]],
-    env = 'line 3 : types mismatch (`int&´ <= `int&&´)',
+    sets = 'line 3 : invalid assignment : types mismatch : "int" <= "int&&"',
+    --env = 'line 3 : types mismatch (`int&´ <= `int&&´)',
     --run = { ['~>1s']=1 },
 }
 Test { [[
@@ -16857,7 +16861,8 @@ finalize (r) with
 end
 escape r;
 ]],
-    env = 'line 16 : types mismatch (`int´ <= `int&?´)',
+    sets = 'line 16 : invalid assignment : types mismatch : "int" <= "int?"',
+    --env = 'line 16 : types mismatch (`int´ <= `int&?´)',
 }
 
 Test { [[

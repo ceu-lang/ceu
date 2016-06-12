@@ -341,12 +341,12 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     -- escape/A 10
     -- break/i
     -- continue/i
-    , _Escape   = K'escape'   * OPT('/'*V'__ID_esc') * OPT(V'__Exp')
+    , _Escape   = K'escape'   * ('/'*V'__ID_esc' + Cc(true)) * OPT(V'__Exp')
     , _Break    = K'break'    * OPT('/'*V'ID_int')
     , _Continue = K'continue' * OPT('/'*V'ID_int')
 
     -- do/A ... end
-    , Do = K'do' * OPT('/'*V'__ID_esc') *
+    , Do = K'do' * ('/'*V'__ID_esc' + Cc(true)) *
                 V'Block' *
            K'end'
 
