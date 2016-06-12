@@ -3952,10 +3952,18 @@ input int A;
 var int a,b;
 (a,b) = await A;
 ]],
-    run = 1,
+    sets = 'line 3 : invalid assignment : types mismatch',
 }
 
-do return end
+Test { [[
+input (int,int) B;
+input int A;
+var int a,b;
+(a,b) = await A;
+await B;
+]],
+    sets = 'line 4 : invalid assignment : types mismatch : "_int_int" <= "int"',
+}
 
 Test { [[
 input (int,int) A;

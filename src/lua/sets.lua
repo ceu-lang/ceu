@@ -32,5 +32,27 @@ AST.dump(me)
             error 'TODO'
         end
     end,
+
+    Varlist = function (me)
+        if not AST.par(me,'Set_Await') then
+            return
+        end
+
+        local id_abs = ''
+        for i, var in ipairs(me) do
+            assert(var.tag == 'ID_int')
+            local Type = unpack(var.dcl)
+            local ID,mod = unpack(Type)
+            assert(not mod, 'TODO')
+            assert(ID.tag=='ID_prim' or ID.tag=='ID_nat')
+            local id2 = unpack(ID)
+            id_abs = id_abs..'_'..id2
+        end
+
+        local top = TOPS[id_abs]
+        ASR(top and top.group=='data', me,
+            'invalid assignment : types mismatch')
+        me.tp = { top }
+    end,
 }
 AST.visit(F)

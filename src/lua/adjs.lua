@@ -395,22 +395,23 @@ DBG('TODO: _Loop_Pool')
         assert(list.tag == '_Typelist')
 
         local dcls = node('Stmts', me.ln)
-        local id = ''
+        local id_abs = ''
         for i, Type in ipairs(list) do
-            local ID = unpack(Type)
+            local ID,mod = unpack(Type)
+            assert(not mod, 'TODO')
             assert(ID.tag=='ID_prim' or ID.tag=='ID_nat')
             local id2 = unpack(ID)
-            id = id..'_'..id2
+            id_abs = id_abs..'_'..id2
             dcls[#dcls+1] = node('Var', me.ln, Type, false, '_'..i)
         end
 
-        me[1] = node('Type', me.ln, node('ID_abs',me.ln,id))
+        me[1] = node('Type', me.ln, node('ID_abs',me.ln,id_abs))
 
-        local has = F.__datas[id]
-        F.__datas[id] = true
+        local has = F.__datas[id_abs]
+        F.__datas[id_abs] = true
         local data = (has and node('Nothing',me.ln)) or
                                 node('Data', me.ln,
-                                    id, false,
+                                    id_abs, false,
                                     node('Block', me.ln,
                                         dcls))
 
