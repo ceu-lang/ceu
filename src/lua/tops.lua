@@ -36,6 +36,7 @@ do
         uint  = { is_num=true,  is_int=true  },
         usize = { is_num=true,  is_int=true  },
         void  = { is_num=false, is_int=false },
+        null  = { is_num=false, is_int=false },
     }
     for id, t in pairs(prims) do
         TOPS[id] = {

@@ -17,7 +17,7 @@ F = {
         me.tp = { TOPS._char }
     end,
     NULL = function (me)
-        me.tp = { TOPS.void, '&&' }
+        me.tp = { TOPS.null, '&&' }
     end,
 
 -- ID_*
@@ -27,7 +27,7 @@ F = {
         me.tp = TYPES.copy(Type.tp)
     end,
     ID_nat = function (me)
-        me.tp = { me.top }
+        me.tp = { TOPS._ }
     end,
     Nat_Exp = function (me)
         me.tp = { TOPS._ }

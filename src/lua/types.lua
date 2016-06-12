@@ -125,6 +125,10 @@ do
         if TYPES.is_equal(tp1, tp2) then
             return true
 
+-- VOID <- *
+        elseif TYPES.check(tp1,'void') then
+            return true
+
 -- NUMERIC TYPES
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
             local top1 = unpack(tp1)
@@ -144,7 +148,7 @@ do
             if not tp2_is_nat then
                 tp2 = TYPES.pop(tp2)
             end
-            if TYPES.check(tp2,'void') then
+            if TYPES.check(tp2,'null') then
                 return true
             elseif TYPES.contains(tp1,tp2) then
                 return true
