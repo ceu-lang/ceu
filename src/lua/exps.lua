@@ -33,20 +33,11 @@ F = {
         me.tp = { TOPS._ }
     end,
 
--- Exp_Name, Exp_Call
+-- Exp_Name
 
     Exp_Name = function (me)
         local e = unpack(me)
         me.tp = AST.copy(e.tp)
-    end,
-    Exp_Call = function (me)
-        local _,e = unpack(me)
-        if e.tag == 'ID_abs' then
-            local _,_,_,_,out = unpack(e.top)
-            me.tp = AST.copy(out.tp)
-        else
-            me.tp = AST.copy(e.tp)
-        end
     end,
 
 -- CAST, SIZEOF
@@ -223,31 +214,35 @@ F = {
     end,
 
 
-    ['Op1_?'] = function (me)
-        local op, e1 = unpack(me)
-        me.tp = TP.new{'bool'}
-        ASR(TP.check(e1.tp,'?'), me, 'not an option type')
-    end,
-    ['Op1_!'] = function (me)
-        local op, e1 = unpack(me)
-        me.lval = e1.lval and e1
-        me.fst = e1.fst
-        me.lst = e1.lst
+-- CALL, EMIT
+
+    Exp_Call = function (me)
+        local _,e = unpack(me)
+        if e.tag == 'ID_abs' then
+            local _,_,_,_,out = unpack(e.top)
+            me.tp = AST.copy(out.tp)
+        else
+            me.tp = AST.copy(e.tp)
+        end
     end,
 
-    ['Op1_$'] = function (me)
-        local op, e1 = unpack(me)
-        ASR(TP.check(e1.tp,'[]','-&'), me,
-            'invalid operand to unary "'..op..'" : vector expected')
-        ASR(not (e1.var and e1.var.pre=='pool'), me,
-            'invalid operand to unary "'..op..'" : vector expected')
-        me.tp = TP.new{'int'}
-        me.lval = op=='$' and e1
-        me.fst = e1.fst
-        me.lst = e1.lst
+    Emit_Ext_emit = function (me)
+        local ID_ext, ps = unpack(me)
+        local top = AST.asr(ID_ext.top, 'Ext')
+        local Type = unpack(top)
+        if TYPES.check(Type.tp,'void') and (not ps) then
+            -- ok
+        else
+TYPES.dump(Type.tp)
+TYPES.dump(ps.tp)
+            ASR(TYPES.contains(Type.tp,ps.tp), me,
+                'invalid `emit´ : types mismatch : "'..
+                    TYPES.tostring(Type.tp)..
+                    '" <= "'..
+                    TYPES.tostring(ps.tp)..
+                    '"')
+        end
     end,
-    ['Op1_$$'] = 'Op1_$',
-    ['Op1_not'] = 'Op2_any',
 
 -- STATEMENTS
 

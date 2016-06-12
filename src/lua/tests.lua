@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -20186,7 +20187,6 @@ escape a;
     --parser = 'line 4 : after `=´ : expected expression',
 }
 
---]===]
 Test { [[
 input void A;
 async do
@@ -20204,9 +20204,8 @@ async do
 end;
 escape 1;
 ]],
-    sets = 'TODO',
+    sets = 'line 3 : invalid `emit´ : types mismatch : "void" <= "int"',
 }
-do return end
 
 Test { [[
 event int a;
