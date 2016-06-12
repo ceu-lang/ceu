@@ -302,11 +302,13 @@ DBG('TODO: _Loop_Pool')
     _Set__PRE = function (me)
         local to,op,set = unpack(me)
         if set.tag=='_Set_Exp' or set.tag=='_Set_Await' or
-           set.tag=='_Set_Vec'
+           set.tag=='_Set_Vec' or set.tag=='_Set_Emit_Ext_emit'
         then
+            assert(#set == 1, 'bug found')
             set.tag = string.sub(set.tag,2)
             set[#set+1] = to
             set[#set+1] = op
+            return set
         elseif set.tag == '_Set_Do' then
             -- set to "to" happens on "escape"
             local do_ = unpack(set)
@@ -317,7 +319,6 @@ DBG('TODO: _Loop_Pool')
 AST.dump(me)
 error 'TODO'
         end
-        return set
     end,
 
     _Escape__PRE = function (me)

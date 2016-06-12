@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -19687,7 +19686,7 @@ with
     nothing;
 end
 
-escape &&ptr! == &&ptr!;  // ptr.SOME fails
+escape &&ptr! == &&ptr! as int;  // ptr.SOME fails
 ]],
     asr = true,
 }
@@ -19708,7 +19707,7 @@ with
     nothing;
 end
 
-escape not ptr?;
+escape not ptr? as int;
 ]],
     run = 1,
 }
@@ -19732,7 +19731,7 @@ with
     _g(&&ptr!);    // error (ptr is Nil)
 end
 
-escape not ptr?;
+escape not ptr? as int;
 ]],
     asr = true
 }
@@ -20024,7 +20023,8 @@ end;
 escape 0;
 ]],
     --props = 'line 2 : not permitted inside `async´',
-    props = 'line 2 : not permitted across `async´ declaration',
+    --props = 'line 2 : not permitted across `async´ declaration',
+    locs = 'line 2 : invalid `escape´ : no matching enclosing `do´',
 }
 
 Test { [[
@@ -20067,7 +20067,8 @@ with
     escape 2;
 end;
 ]],
-    props = 'line 3 : not permitted across `async´ declaration',
+    locs = 'line 3 : invalid `escape´ : no matching enclosing `do´',
+    --props = 'line 3 : not permitted across `async´ declaration',
     --props = 'line 3 : not permitted inside `async´',
 }
 
@@ -20128,14 +20129,15 @@ async do
 end;
 ]],
     --props = 'line 2 : not permitted inside `async´',
-    props = 'line 2 : not permitted across `async´ declaration',
+    --props = 'line 2 : not permitted across `async´ declaration',
+    locs = 'line 2 : invalid `escape´ : no matching enclosing `do´',
 }
 
 Test { [[
 var int a = 1;
 var& int pa = &a;
 async (a) do
-    var int a = do/_
+    var int a = do
         escape 1;
     end;
     escape a;
@@ -20145,6 +20147,7 @@ escape a;
     wrn = true,
     props = 'line 7 : not permitted across `async´ declaration',
     --props = 'line 5 : not permitted inside `async´',
+    locs = 'line 7 : invalid `escape´ : no matching enclosing `do´',
 }
 
 Test { [[
@@ -20182,6 +20185,28 @@ escape a;
     locs = 'line 4 : internal identifier "a" is not declared',
     --parser = 'line 4 : after `=´ : expected expression',
 }
+
+--]===]
+Test { [[
+input void A;
+async do
+    var int a;
+    a = emit A;
+end;
+escape 1;
+]],
+    sets = 'line 4 : invalid assignment : `input´',
+}
+Test { [[
+input void A;
+async do
+    emit A=>1;
+end;
+escape 1;
+]],
+    sets = 'TODO',
+}
+do return end
 
 Test { [[
 event int a;

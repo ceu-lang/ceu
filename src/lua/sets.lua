@@ -60,5 +60,12 @@ end
             'invalid assignment : types mismatch')
         me.tp = { top }
     end,
+
+    Set_Emit_Ext_emit = function (me)
+        local ID_ext = unpack(AST.asr(me,'', 1,'Emit_Ext_emit'))
+        local _,io = unpack(AST.asr(ID_ext.top,'Ext'))
+        ASR(io=='output', me,
+            'invalid assignment : `input´')
+    end,
 }
 AST.visit(F)
