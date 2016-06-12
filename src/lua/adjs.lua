@@ -29,8 +29,8 @@ F = {
                     node('Var', me.ln,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
-                            false,
-                            '_ret'),
+                        false,
+                        '_ret'),
                     node('_Set', me.ln,
                         node('ID_int', me.ln, '_ret'),
                         '=',
@@ -62,11 +62,27 @@ F = {
                         unpack(me, 3))))
     end,
 
-    Extcall_impl__PRE = 'Code_impl__PRE',
-    Code_impl__PRE = function (me)
+    Extcall_impl__PRE = '_Code_impl__PRE',
+    _Code_impl__PRE = function (me)
         local pre, is_rec, id, ins, out, blk = unpack(me)
+        local stmts = AST.asr(blk,'Block', 1,'Stmts')
 
-        -- insert parameters "ins" in "blk"
+        -- enclose "stmts" with "_ret = do ... end"
+        local ret = node('Stmts', me.ln,
+                        node('Var', me.ln,
+                            AST.copy(out),
+                            false,
+                            '_ret'),
+                        node('_Set', me.ln,
+                            node('ID_int', me.ln, '_ret'),
+                            '=',
+                            node('_Set_Do', me.ln,
+                                node('Do', me.ln,
+                                    true,
+                                    node('Block', me.ln,
+                                        stmts)))))
+
+        -- insert int "stmts" all parameters "ins"
         AST.asr(ins,'Typepars_ids')
         local dcls = node('Stmts', me.ln)
         for _, v in ipairs(ins) do
@@ -88,8 +104,9 @@ F = {
                 end
             end
         end
-        local stmts = AST.asr(blk,'Block', 1,'Stmts')
         table.insert(stmts, 1, dcls)
+
+        return ret
     end,
 
     Emit_Ext_req__PRE = '_Extreq_proto__PRE',

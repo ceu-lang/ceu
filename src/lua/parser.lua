@@ -106,6 +106,10 @@ local T = {
         '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or abstraction identifier or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
+    {
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or abstraction identifier or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
+        'statement'
+    },
 }
 if RUNTESTS then
     RUNTESTS.parser_translate = RUNTESTS.parser_translate or { ok={}, original=T }
@@ -416,14 +420,14 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- CODE
 
-    , __code   = (CK'code/instantaneous' + CK'code/delayed')
-                    * OPT(CK'/recursive')
-                    * V'__ID_abs'
-    , Code_proto = V'__code' * (V'Typepars_ids'+V'Typepars_anon') *
+    , __code = (CK'code/instantaneous' + CK'code/delayed')
+                * OPT(CK'/recursive')
+                * V'__ID_abs'
+    , Code_proto  = V'__code' * (V'Typepars_ids'+V'Typepars_anon') *
                                     KK'=>' * V'Type'
-    , Code_impl  = V'__code' * V'Typepars_ids' *
+    , _Code_impl  = V'__code' * V'Typepars_ids' *
                                     KK'=>' * V'Type' *
-                   V'__Do'
+                    V'__Do'
 
     , _Spawn_Block = K'spawn' * V'__Do'
     , Spawn_Code   = K'spawn' * V'ID_abs' * PARENS(OPT(V'Explist'))
@@ -434,9 +438,9 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __extcall = (CK'input' + CK'output')
                     * OPT(CK'/recursive')
                     * V'__ID_ext'
-    , Extcall_proto = V'__extcall' * (V'Typepars_ids'+V'Typepars_anon') *
+    , Extcall_proto  = V'__extcall' * (V'Typepars_ids'+V'Typepars_anon') *
                                         KK'=>' * V'Type'
-    , Extcall_impl  = V'__extcall' * V'Typepars_ids' *
+    , _Extcall_impl  = V'__extcall' * V'Typepars_ids' *
                                         KK'=>' * V'Type' *
                        V'__Do'
 
@@ -763,7 +767,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  * ( V'__Stmt_Last' * V'__seqs' +
                      V'__Stmt_Last_Block' * (KK';'^0)
                    )^-1
-                 * (V'Nat_Block'+V'Code_impl')^0 )
+                 * (V'Nat_Block'+V'_Code_impl')^0 )
 
     , __Stmt_Last  = V'_Escape' + V'_Break' + V'_Continue' + V'Await_Forever'
     , __Stmt_Last_Block = V'Par'
@@ -787,7 +791,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'Exp_Call' -- TODO: ambiguous with Nat_Stmt
                  + V'Nat_Stmt'
 
-    , __Stmt_Block = V'Code_impl' + V'Extcall_impl' + V'_Extreq_impl'
+    , __Stmt_Block = V'_Code_impl' + V'_Extcall_impl' + V'_Extreq_impl'
               + V'_Data_block'
               + V'Nat_Block'
               + V'Do'    + V'If'

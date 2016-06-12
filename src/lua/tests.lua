@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2124,7 +2125,6 @@ end
     parser = 'line 2 : after `escape´ : expected `escape´ identifier',
 }
 
---]===]
 Test { [[
 do/A
     escape/A 1;
@@ -16979,7 +16979,7 @@ escape 1;
 
 Test { [[
 do finalize with
-    do escape 1; end;
+    do/_ escape 1; end;
 end
 escape 0;
 ]],
@@ -17035,11 +17035,11 @@ end
 
 Test { [[
 native _f;
-do
+do/_
     var& int? a;
     do a = &_f();
     finalize with
-        do escape 0; end;
+        do/_ escape 0; end;
     end
 end
 ]],
@@ -17214,7 +17214,7 @@ native do
     }
 end
 var int r = 0;
-do
+do/_
     var& int? a;
     do a = &_f();
     finalize with
@@ -17236,7 +17236,7 @@ native do
     }
 end
 var int r = 0;
-do
+do/_
     var& int? a;
     do a = &_f();
     finalize with
@@ -17286,6 +17286,11 @@ escape(a);
 }
 
 Test { [[
+do/_ v(&&a); finalize with nothing; end;
+]],
+    parser = 'line 1 : after `;´ : expected statement',
+}
+Test { [[
 native _f;
 native do
     void f (int* a) {
@@ -17317,7 +17322,7 @@ var _t v = _f;
     native/nohold ___ceu_nothing;
     ___ceu_nothing(v);
 await 1s;
-do
+do/_
     var int a=0;
     do _f(&&a); finalize with nothing; end;
     escape(a);
