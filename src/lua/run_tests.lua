@@ -3,7 +3,6 @@
 --RUNTESTS_file = assert(io.open('/tmp/fin.txt','w'))
 
 RUNTESTS = {}
-RUNTESTS_TODO = false
 
 -- Execution option for the tests:
 --VALGRIND = true
@@ -29,7 +28,9 @@ STATS = {
 }
 
 function check (mod)
-if RUNTESTS_TODO then
+if RUNTESTS_TODO and mod~='lines'  and mod~='parser' and mod~='ast'
+                 and mod~='adjs'   and mod~='tops'
+then
     return true
 end
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
@@ -44,6 +45,7 @@ end
 end
 
 Test = function (t)
+    RUNTESTS_TODO = false
     T = t
 
     --assert(T.todo == nil)
