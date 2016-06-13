@@ -201,7 +201,7 @@ DBG('TODO: _Extreq', me.tag)
             lim_ini[#lim_ini+1] =
                 node('Set_Exp', me.ln,
                     to,
-                    node('Exp_name', me.ln,
+                    node('Exp_Name', me.ln,
                         node('ID_int', me.ln, '__lim_'..me.n)))
 
             -- lim_cmp
@@ -209,18 +209,18 @@ DBG('TODO: _Extreq', me.tag)
                 -- if i > lim then break end
                 lim_cmp = node('Exp_>', me.ln,
                             '>',
-                            node('Exp_name', me.ln,
+                            node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, i)),
-                            node('Exp_name', me.ln,
+                            node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, '__lim_'..me.n)))
             else
                 assert(dir == '<-')
                 -- if i < lim then break end
                 lim_cmp = node('Exp_<', me.ln,
                             '<',
-                            node('Exp_name', me.ln,
+                            node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, i)),
-                            node('Exp_name', me.ln,
+                            node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, '__lim_'..me.n)))
             end
             lim_cmp = node('If', me.ln, lim_cmp,
@@ -236,7 +236,7 @@ DBG('TODO: _Extreq', me.tag)
                     dcl_i,
                     node('Set_Exp', me.ln,
                         fr,
-                        node('Exp_name', me.ln,
+                        node('Exp_Name', me.ln,
                             node('ID_int', me.ln, i))),
                     lim_ini,
                     node('Loop', me.ln,
