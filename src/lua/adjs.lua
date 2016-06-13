@@ -301,6 +301,7 @@ DBG('TODO: _Loop_Pool')
 
     _Set__PRE = function (me)
         local to,op,set = unpack(me)
+
         if set.tag=='_Set_Exp' or set.tag=='_Set_Await' or
            set.tag=='_Set_Vec' or set.tag=='_Set_Emit_Ext_emit'
         then
@@ -422,6 +423,9 @@ error 'TODO'
 
 -------------------------------------------------------------------------------
 
+--[[
+-- TODO: talvez precise para gerar codigo final
+
     --      event (int,int) e;
     -- to
     --      data _int_int with
@@ -435,7 +439,7 @@ error 'TODO'
         if list.tag == 'Type' then
             return
         end
-        assert(list.tag == '_Typelist')
+        assert(list.tag == 'Typelist')
 
         local id_abs = ADJS.list2data(list)
         local has = F.__datas[id_abs]
@@ -458,6 +462,38 @@ error 'TODO'
 
         me[1] = node('Type', me.ln, node('ID_abs',me.ln,id_abs))
         return node('Stmts', me.ln, data, me)
+    end,
+]]
+    -- Type => Typelist
+    -- input int X  => input (int) X;
+    -- input void X => input () X;
+    Ext__PRE = 'Evt__PRE',
+    Evt__PRE = function (me)
+        local Type = unpack(me)
+        if Type.tag == 'Typelist' then
+            return
+        end
+
+        me[1] = node('Typelist')
+
+        local ID, mod = unpack(Type)
+        if ID.tag=='ID_prim' and (not mod) and ID[1]=='void' then
+            -- void: no elements
+        else
+            me[1][1] = Type
+        end
+    end,
+
+    _Emit_ps__PRE = function (me)
+        local exp = unpack(me)
+        if exp and exp.tag == 'Explist' then
+            return exp
+        end
+        local ret = node('Explist')
+        if exp then
+            ret[1] = exp
+        end
+        return ret
     end,
 
 -------------------------------------------------------------------------------
