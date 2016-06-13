@@ -17,7 +17,7 @@ end
 
 function TYPES.copy (tp)
     if tp.is_list then
-        local ret = {}
+        local ret = { is_list=true }
         for i,tp1 in ipairs(tp) do
             ret[i] = TYPES.copy(tp1)
         end

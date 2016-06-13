@@ -28,15 +28,11 @@ F = {
     end,
     Await_Ext = function (me)
         local ID_ext = unpack(me)
-        local top = AST.asr(ID_ext.top,'Ext')
-        local Type = unpack(top)
-        me.tp = Type.tp
+        me.tp = AST.copy(ID_ext.tp)
     end,
     Await_Evt = function (me)
         local ID_int = AST.asr(me,'', 1,'Exp_Name', 1,'ID_int')
-        local dcl = AST.asr(ID_int.dcl,'Evt')
-        local Type = unpack(dcl)
-        me.tp = Type.tp
+        me.tp = AST.copy(ID_int.tp)
     end,
     Await_Wclock = function (me)
         me.tp = { TOPS.int }

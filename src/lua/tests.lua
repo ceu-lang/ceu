@@ -17687,7 +17687,6 @@ escape x;
     --run = 1,
 }
 
---]===]
 Test { [[
 event void  a;
 event& void b = &a;
@@ -18923,6 +18922,7 @@ escape 1;
     locs = 'line 1 : invalid event type : cannot use `&&´',
 }
 
+--]===]
 Test { [[
 event int e;
 var int v = await e;

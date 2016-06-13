@@ -22,9 +22,13 @@ F = {
 
 -- ID_*
 
+    ID_ext = function (me)
+        local Typelist = unpack(me.top)
+        me.tp = TYPES.copy(Typelist.tp)
+    end,
     ID_int = function (me)
-        local Type = unpack(me.dcl)
-        me.tp = TYPES.copy(Type.tp)
+        local Type_or_Typelist = unpack(me.dcl)
+        me.tp = TYPES.copy(Type_or_Typelist.tp)
     end,
     ID_nat = function (me)
         me.tp = { TOPS._ }

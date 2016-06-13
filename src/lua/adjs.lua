@@ -5,24 +5,6 @@ local node = AST.node
 
 local Pre_Stmts
 
-function ADJS.list2data (list)
-    local id_abs = ''
-    for _,Type in ipairs(list) do
-        local ID = unpack(Type)
-        assert(ID.tag=='ID_prim' or ID.tag=='ID_nat')
-
-        local id = unpack(ID)
-        local mods = ''
-        if #Type > 1 then
-            mods = table.concat({unpack(Type,2)},'_')
-            mods = '_'..string.gsub(mods,'&&','ptr')
-        end
-
-        id_abs = id_abs..'_'..id..mods
-    end
-    return id_abs
-end
-
 F = {
     ['1__PRE'] = function (me)
         local stmts = unpack(me)
@@ -302,19 +284,6 @@ DBG('TODO: _Loop_Pool')
     _Set__PRE = function (me)
         local to,op,set = unpack(me)
 
-        -- __Sets_many
---[[
-        if set.tag == '_Set_Emit_Ext_req' or
-           set.tag == '_Set_Await'        or
-           set.tag == '_Set_Watching'
-        then
-            if to.tag == 'ID_int' then
-                to = node('Varlist', to.ln, to)
-                me[1] = to
-            end
-        end
-]]
-
         if set.tag=='_Set_Exp' or
            set.tag=='_Set_Await_one' or set.tag=='_Set_Await_many' or
            set.tag=='_Set_Vec' or set.tag=='_Set_Emit_Ext_emit'
@@ -446,47 +415,6 @@ error 'TODO'
 
 -------------------------------------------------------------------------------
 
---[[
--- TODO: talvez precise para gerar codigo final
-
-    --      event (int,int) e;
-    -- to
-    --      data _int_int with
-    --          var int _1, _2;
-    --      end
-    --      event _int_int e;
-    __datas = {},
-    Ext__PRE = 'Evt__PRE',
-    Evt__PRE = function (me)
-        local list = unpack(me)
-        if list.tag == 'Type' then
-            return
-        end
-        assert(list.tag == 'Typelist')
-
-        local id_abs = ADJS.list2data(list)
-        local has = F.__datas[id_abs]
-        local data
-        if has then
-            data = node('Nothing', me.ln)
-        else
-            F.__datas[id_abs] = true
-
-            local dcls = node('Stmts', me.ln)
-            for i, Type in ipairs(list) do
-                dcls[#dcls+1] = node('Var', me.ln, Type, false, '_'..i)
-            end
-
-            data = node('Data', me.ln,
-                    id_abs, false,
-                    node('Block', me.ln,
-                        dcls))
-        end
-
-        me[1] = node('Type', me.ln, node('ID_abs',me.ln,id_abs))
-        return node('Stmts', me.ln, data, me)
-    end,
-]]
     -- Type => Typelist
     -- input int X  => input (int) X;
     -- input void X => input () X;
