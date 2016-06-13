@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1459,8 +1458,8 @@ escape v;
 
 Test { [[var int a = a+1; escape a;]],
     --locs = 'internal identifier "a" is not declared',
-    todo = 'TODO: deveria dar erro!',
-    run = 1,
+    --todo = 'TODO: deveria dar erro!',
+    run = 100,
 }
 
 Test { [[var int a; a = emit a => 1; escape a;]],
@@ -1470,12 +1469,12 @@ Test { [[var int a; a = emit a => 1; escape a;]],
 }
 
 Test { [[var int a; emit a => 1; escape a;]],
-    locs = 'line 1 : invalid use of `var´',
+    kinds = 'line 1 : invalid `emit´ : expected `event´',
     --env = 'line 1 : identifier "a" is not an event (tests.lua : line 1)',
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; escape a;]],
-    locs = 'line 1 : invalid use of `event´',
+    kinds = 'line 1 : invalid assignment : unexpected `event´',
     --parser = 'line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
@@ -1484,7 +1483,7 @@ event int a;
 emit a => 1;
 escape a;
 ]],
-    locs = 'line 3 : invalid use of `event´',
+    kinds = 'line 3 : invalid assignment : kinds mismatch : `var´ <= `event´',
     --run = 1,
     --trig_wo = 1,
 }
@@ -2320,9 +2319,10 @@ with
 end;
 escape 0;
 ]],
-    locs = 'line 3 : invalid use of `event´',
+    kinds = 'line 3 : invalid use of `event´',
     --env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
+--]===]
 
 Test { [[
 var u8&& ptr =

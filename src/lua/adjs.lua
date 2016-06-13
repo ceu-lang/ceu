@@ -473,6 +473,9 @@ error 'TODO'
 
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
+        if var.tag == 'Exp_Name' then
+            var = AST.asr(var,'', 1,'ID_int')
+        end
         if var.tag == 'ID_int' then
             me[2] = node('Varlist', var.ln, var)
         end
