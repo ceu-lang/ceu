@@ -70,7 +70,7 @@ local T = {
     },
 
     {
-        '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `request´ or `do´ or `await´ or `watching´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
+        '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `do´ or `await´ or `spawn´ or `async/thread´ or `%[´ or `_´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `request´ or `watching´',
         'expression'
     },
     {
@@ -179,7 +179,7 @@ local function KK (patt, err, nox)
                     function (_, i, tk)
                         if IGN>0 then return true end
 if __debug then
-    DBG(string.rep(' ',spc)..'|||', '|'..id..'|')
+    DBG(string.rep(' ',spc)..'|||', '|'..tk..'|')
 end
                         if i > LST_i then
                             LST_i   = i
@@ -394,7 +394,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                    V'__Do'
 
     , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
-                    (V'__awaits'-I(V'Await_Code')) *
+                    (V'Await_Ext'+V'Await_Evt'+V'Await_Wclock') *
                 V'__Do'
 
     , Finalize = K'do' *
@@ -516,7 +516,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- DECLARATIONS
 
-    , __vars_set  = V'__ID_int' * OPT(Ct(V'__Sets_one'))
+    , __vars_set  = V'__ID_int' * OPT(Ct(V'__Sets_one'+V'__Sets_many'))
 
     , _Vars_set  = K'var' * OPT(CKK'&') * V'Type' *
                     V'__vars_set' * (KK','*V'__vars_set')^0
@@ -534,47 +534,47 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , _Pools     = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
                     V'__ID_int' * (KK','*V'__ID_int')^0
 
-    , _Evts_set  = K'event' * OPT(CKK'&') * (PARENS(V'_Typelist')+V'Type') *
+    , _Evts_set  = K'event' * OPT(CKK'&') * (PARENS(V'Typelist')+V'Type') *
                     V'__vars_set' * (KK','*V'__vars_set')^0
-    , _Evts      = K'event' * OPT(CKK'&') * (PARENS(V'_Typelist')+V'Type') *
+    , _Evts      = K'event' * OPT(CKK'&') * (PARENS(V'Typelist')+V'Type') *
                     V'__ID_int' * (KK','*V'__ID_int')^0
 
-    , _Exts      = (CK'input'+CK'output') * (PARENS(V'_Typelist')+V'Type') *
+    , _Exts      = (CK'input'+CK'output') * (PARENS(V'Typelist')+V'Type') *
                     V'__ID_ext' * (KK','*V'__ID_ext')^0
-    , _Typelist = V'Type'   * (KK',' * V'Type')^0
+    , Typelist   = V'Type'   * (KK',' * V'Type')^0
 
 -- AWAIT, EMIT
 
-    , __awaits     = (V'Await_Ext' + V'Await_Evt' + V'Await_Wclock' + V'Await_Code')
-    , Await_Until  = K'await' * V'__awaits' * OPT(K'until'*V'__Exp')
-    , Await_Ext    = V'ID_ext' - V'Await_Code'
-    , Await_Evt    = V'Exp_Name' - V'Await_Wclock' - V'Await_Code'
+    , __Awaits_one  = K'await' * (V'Await_Wclock' + V'Await_Code')
+    , __Awaits_many = K'await' * V'Await_Until'
+
+    , Await_Until  = (V'Await_Ext' + V'Await_Evt') * OPT(K'until'*V'__Exp')
+
+    , Await_Ext    = V'ID_ext' -I(V'Await_Code') -- TODO: rem
+    , Await_Evt    = V'Exp_Name' -I(V'Await_Wclock'+V'Await_Code') -- TODO: rem
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
     , Await_Code   = V'ID_abs' * PARENS(OPT(V'Explist'))
 
     , Await_Forever = K'await' * K'FOREVER'
 
-    , __evts_ps = V'__Exp' + PARENS(OPT(V'Explist'))
+    , _Emit_ps = OPT(KK'=>' * (V'__Exp' + PARENS(OPT(V'Explist'))))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
-    , Emit_Ext_emit = K'emit' * V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
-    , Emit_Ext_call = (K'call/recursive'+K'call') *
-                        V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
-    , Emit_Ext_req  = K'request' *
-                        V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
+    , Emit_Ext_emit = K'emit'                     * V'ID_ext' * V'_Emit_ps'
+    , Emit_Ext_call = (K'call/recursive'+K'call') * V'ID_ext' * V'_Emit_ps'
+    , Emit_Ext_req  = K'request'                  * V'ID_ext' * V'_Emit_ps'
 
-    , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') *
-                    V'Exp_Name' * OPT(KK'=>' * V'__evts_ps')
+    , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
-    , _Watching = K'watching' * V'__awaits' * V'__Do'
+    , __watch = (V'Await_Ext' + V'Await_Evt' + V'Await_Wclock' + V'Await_Code')
+    , _Watching = K'watching' * V'__watch' * V'__Do'
 
     , __num = CKK(m.R'09'^1,'number') / tonumber
     , WCLOCKK = #V'__num' *
-                (V'__num' * P'h'   *x + Cc(0)) *
-                (V'__num' * P'min' *x + Cc(0)) *
-                (V'__num' * P's'   *x + Cc(0)) *
-                (V'__num' * P'ms'  *x + Cc(0)) *
-                (V'__num' * P'us'  *x + Cc(0)) *
-                (V'__num' * E'<h,min,s,ms,us>')^-1
+                (V'__num' * K'h'   *x + Cc(0)) *
+                (V'__num' * K'min' *x + Cc(0)) *
+                (V'__num' * K's'   *x + Cc(0)) *
+                (V'__num' * K'ms'  *x + Cc(0)) *
+                (V'__num' * K'us'  *x + Cc(0))
                     * OPT(CK'/_')
     , WCLOCKE = PARENS(V'__Exp') * (
                     CK'h' + CK'min' + CK's' + CK'ms' + CK'us'
@@ -590,8 +590,8 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- SETS
 
-    , _Set = (V'Exp_Name'+#P'$'*V'__Exp') * V'__Sets_one'
-           + PARENS(V'Varlist') * V'__Sets_many'
+    , _Set = (V'Exp_Name'+#P'$'*V'__Exp')     * V'__Sets_one'
+           + (V'ID_int' + PARENS(V'Varlist')) * V'__Sets_many'
 
     , __Sets_one  = (CKK'='-'=='+CKK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
     , __Sets_many = (CKK'='-'=='+CKK':=') * (V'__sets_many' + PARENS(V'__sets_many'))
@@ -599,10 +599,9 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __sets_one =
           V'_Set_Data'
         + V'_Set_Emit_Wclock'
-        + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call' + V'_Set_Emit_Ext_req'
+        + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call'
         + V'_Set_Do'
-        + V'_Set_Await'
-        + V'_Set_Watching'
+        + V'_Set_Await_one'
         + V'_Set_Spawn'
         + V'_Set_Thread'
         + V'_Set_Lua'
@@ -610,20 +609,21 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
         + V'_Set_None'
         + V'_Set_Exp'
 
-    , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await' + V'_Set_Watching'
+    , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await_many' + V'_Set_Watching'
 
     -- after `=´
 
-    , _Set_Do       = #K'do'            * V'Do'
-    , _Set_Await    = #K'await'         * V'Await_Until'
-    , _Set_Watching = #K'watching'      * V'_Watching'
-    , _Set_Spawn    = #K'spawn'         * V'Spawn_Code'
-    , _Set_Thread   = #K'async/thread'  * V'_Thread'
-    , _Set_Lua      = #V'__lua_pre'     * V'_Lua'
-    , _Set_Vec      = #V'__vec_pre'     * V'_Vec_New'
-    , _Set_Data     = #V'__data_pre'    * V'Data_New'
-    , _Set_None     = #K'_'             * V'ID_none'
-    , _Set_Exp      =                     V'__Exp'
+    , _Set_Do         = #K'do'            * V'Do'
+    , _Set_Await_one  = #K'await'         * V'__Awaits_one'
+    , _Set_Await_many = #K'await'         * V'__Awaits_many'
+    , _Set_Watching   = #K'watching'      * V'_Watching'
+    , _Set_Spawn      = #K'spawn'         * V'Spawn_Code'
+    , _Set_Thread     = #K'async/thread'  * V'_Thread'
+    , _Set_Lua        = #V'__lua_pre'     * V'_Lua'
+    , _Set_Vec        = #V'__vec_pre'     * V'_Vec_New'
+    , _Set_Data       = #V'__data_pre'    * V'Data_New'
+    , _Set_None       = #K'_'             * V'ID_none'
+    , _Set_Exp        =                     V'__Exp'
 
     , _Set_Emit_Wclock    = #K'emit'          * V'Emit_Wclock'
     , _Set_Emit_Ext_emit  = #K'emit'          * V'Emit_Ext_emit'
@@ -688,7 +688,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- Exp_Name
 
-    , Exp_Name   = V'__02_Name'
+    , Exp_Name   = V'__01_Name'
     , __01_Name  = V'__02_Name' *
                         (CK'as' *
                             (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure'))
@@ -782,7 +782,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Nats'  + V'Nat_End'
                  + V'Deterministic'
                  + V'_Set'
-                 + V'Await_Until'
+                 + V'__Awaits_one' + V'__Awaits_many'
                  + V'Emit_Wclock'
                  + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                  + V'Emit_Evt'
