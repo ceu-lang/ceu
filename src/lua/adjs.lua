@@ -440,7 +440,7 @@ error 'TODO'
         if exp and exp.tag == 'Explist' then
             return exp
         end
-        local ret = node('Explist')
+        local ret = node('Explist', exp.ln)
         if exp then
             ret[1] = exp
         end

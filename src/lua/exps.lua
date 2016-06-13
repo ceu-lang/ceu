@@ -24,6 +24,7 @@ F = {
 
     ID_ext = function (me)
         local Typelist = unpack(me.top)
+assert(Typelist.tag=='Typelist', 'TODO')
         me.tp = TYPES.copy(Typelist.tp)
     end,
     ID_int = function (me)
