@@ -28,9 +28,7 @@ STATS = {
 }
 
 function check (mod)
-if RUNTESTS_TODO and mod~='lines'  and mod~='parser' and mod~='ast'
-                 and mod~='adjs'   and mod~='tops'
-then
+if RUNTESTS_TODO then
     return true
 end
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
@@ -93,6 +91,7 @@ Test = function (t)
     if not check('adjs')     then return end
     if not check('tops')     then return end
     if not check('locs')     then return end
+    if not check('kinds')    then return end
     if not check('types')    then return end
     if not check('exps')     then return end
     if not check('sets')     then return end

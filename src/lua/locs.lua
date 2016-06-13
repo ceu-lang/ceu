@@ -110,6 +110,7 @@ F = {
                     'internal identifier "'..id..'" is not declared')
         local _, is_alias = unpack(me.dcl)
 
+--[[
         -- check use contexts for ID_*
 
         local ok = false
@@ -168,15 +169,16 @@ DBG('TODO: _Pause')
             -- v = [] .. ?
             do
                 local exp = me.__par
-                if exp.tag=='Set_Vec' and exp[2]==me then
+                if exp[2]==me and (exp.tag=='Set_Vec' or exp.tag=='Set_Exp') then
                     ok = true
                 end
             end
             -- v = ?
             do
                 local exp = me.__par.__par
+DBG'TODO: remove'
                 if string.sub(exp.tag,1,4) == 'Set_' and
-                   AST.asr(exp,'',1,'Exp_Name')[1] == me
+                   AST.asr(exp,'',1,'Exp_Name')[2] == me
                 then
                     ok = true
                 end
@@ -198,8 +200,9 @@ DBG('TODO: _Vec_New')
 
         local err = (not ok) and assert(F.__tag2str[me.dcl.tag]) or ''
         ASR(ok, me, 'invalid use of `'..err..'´ "'..id..'"')
+]]
     end,
-    __tag2str = { Evt='event', Vec='vector', Var='var' },
+    --__tag2str = { Evt='event', Vec='vector', Var='var' },
 
     ---------------------------------------------------------------------------
 

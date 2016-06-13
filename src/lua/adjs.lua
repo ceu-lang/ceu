@@ -7,6 +7,15 @@ local Pre_Stmts
 
 F = {
 Extcall_proto = function() RUNTESTS_TODO=true end,
+Emit_Ext_call = 'Extcall_proto',
+_Extcall_impl = 'Extcall_proto',
+Var = function (me)
+    local _,is_alias = unpack(me)
+    if is_alias then 
+        RUNTESTS_TODO = true
+    end
+end,
+
 -------------------------------------------------------------------------------
     ['1__PRE'] = function (me)
         local stmts = unpack(me)
@@ -37,7 +46,8 @@ Extcall_proto = function() RUNTESTS_TODO=true end,
                         false,
                         '_ret'),
                     node('_Set', me.ln,
-                        node('ID_int', me.ln, '_ret'),
+                        node('Exp_Name', me.ln,
+                            node('ID_int', me.ln, '_ret')),
                         '=',
                         node('_Set_Do', me.ln,
                             node('Do', me.ln,
@@ -82,7 +92,8 @@ Extcall_proto = function() RUNTESTS_TODO=true end,
                             false,
                             '_ret'),
                         node('_Set', me.ln,
-                            node('ID_int', me.ln, '_ret'),
+                            node('Exp_Name', me.ln,
+                                node('ID_int', me.ln, '_ret')),
                             '=',
                             node('_Set_Do', me.ln,
                                 node('Do', me.ln,
@@ -190,22 +201,27 @@ DBG('TODO: _Extreq', me.tag)
             lim_ini[#lim_ini+1] =
                 node('Set_Exp', me.ln,
                     to,
-                    node('ID_int', me.ln, '__lim_'..me.n))
+                    node('Exp_name', me.ln,
+                        node('ID_int', me.ln, '__lim_'..me.n)))
 
             -- lim_cmp
             if dir == '->' then
                 -- if i > lim then break end
                 lim_cmp = node('Exp_>', me.ln,
                             '>',
-                            node('ID_int', me.ln, i),
-                            node('ID_int', me.ln, '__lim_'..me.n))
+                            node('Exp_name', me.ln,
+                                node('ID_int', me.ln, i)),
+                            node('Exp_name', me.ln,
+                                node('ID_int', me.ln, '__lim_'..me.n)))
             else
                 assert(dir == '<-')
                 -- if i < lim then break end
                 lim_cmp = node('Exp_<', me.ln,
                             '<',
-                            node('ID_int', me.ln, i),
-                            node('ID_int', me.ln, '__lim_'..me.n))
+                            node('Exp_name', me.ln,
+                                node('ID_int', me.ln, i)),
+                            node('Exp_name', me.ln,
+                                node('ID_int', me.ln, '__lim_'..me.n)))
             end
             lim_cmp = node('If', me.ln, lim_cmp,
                         node('Block', me.ln,
@@ -220,7 +236,8 @@ DBG('TODO: _Extreq', me.tag)
                     dcl_i,
                     node('Set_Exp', me.ln,
                         fr,
-                        node('ID_int', me.ln, i)),
+                        node('Exp_name', me.ln,
+                            node('ID_int', me.ln, i))),
                     lim_ini,
                     node('Loop', me.ln,
                         max,
@@ -302,6 +319,10 @@ DBG('TODO: _Loop_Pool')
             do_[#do_+1] = op
             return do_
         else
+if set.tag=='_Set_Emit_Ext_call' then
+    RUNTESTS_TODO = true
+    return node('Nothing', me.ln)
+end
 AST.dump(me)
 error 'TODO'
         end
@@ -384,7 +405,8 @@ error 'TODO'
             ret[#ret+1] = node(tag, me.ln, unpack(t))
             if set then
                 ret[#ret+1] = node('_Set', me.ln,
-                                node('ID_int', me.ln, id),
+                                node('Exp_Name', me.ln,
+                                    node('ID_int', me.ln, id)),
                                 unpack(set))
             end
         end

@@ -154,11 +154,6 @@ do
 
         local tp1_is_nat = TYPES.is_native(tp1)
         local tp2_is_nat = TYPES.is_native(tp2)
-        if tp1_is_nat or tp2_is_nat then
-            -- continue
-        elseif #tp1 ~= #tp2 then
-            return false
-        end
 
 -- EQUAL TYPES
         if TYPES.is_equal(tp1, tp2) then

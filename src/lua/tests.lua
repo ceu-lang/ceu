@@ -21511,7 +21511,8 @@ output int E;
 emit E=>(1,2);
 escape 1;
 ]],
-    env = 'line 2 : arity mismatch',
+    exps = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "(int,int)"',
+    --env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21535,7 +21536,8 @@ output int E;
 emit E;
 escape 1;
 ]],
-    env = 'line 2 : arity mismatch',
+    exps = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    --env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21543,7 +21545,8 @@ output (int,int) E;
 emit E=>1;
 escape 1;
 ]],
-    env = 'line 2 : arity mismatch',
+    exps = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int)"',
+    --env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -22018,25 +22021,33 @@ escape 1;
     --gcc = 'error: ‘V’ undeclared (first use in this function)',
 }
 
-Test { [[var int  a;  var int&& pa=a; escape a;]], env='types mismatch' }
-Test { [[var int&& pa; var int a=pa;  escape a;]], env='types mismatch' }
+Test { [[var int  a;  var int&& pa=a; escape a;]],
+    sets = 'line 1 : invalid assignment : types mismatch : "int&&" <= "int"',
+    --env = 'types mismatch'
+}
+Test { [[var int&& pa; var int a=pa;  escape a;]],
+    sets = 'line 1 : invalid assignment : types mismatch : "int" <= "int&&"',
+    --env = 'types mismatch',
+}
 Test { [[
 var int a;
-var int&& pa = do/_
+var int&& pa = do
     escape a;
 end;
 escape a;
 ]],
-    env='types mismatch'
+    sets = 'line 3 : invalid assignment : types mismatch : "int&&" <= "int"',
+    --env='types mismatch'
 }
 Test { [[
 var int&& pa;
-var int a = do/_
+var int a = do
     escape pa;
 end;
 escape a;
 ]],
-    env='types mismatch'
+    --env='types mismatch'
+    sets = 'line 3 : invalid assignment : types mismatch : "int" <= "int&&"',
 }
 
 Test { [[
@@ -22126,7 +22137,8 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 escape 1;
 ]],
-    env = 'line 4 : types mismatch (`int&&´ <= `void&&´)',
+    sets = 'line 4 : invalid assignment : types mismatch : "int&&" <= "void&&"',
+    --env = 'line 4 : types mismatch (`int&&´ <= `void&&´)',
     run = 1,
 }
 
@@ -22138,10 +22150,11 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 escape ptr2 as int;
 ]],
-    env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
+    sets = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
+    --env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
-    gcc = 'error: assignment from incompatible pointer type'
+    --gcc = 'error: assignment from incompatible pointer type'
 }
 Test { [[
 native _char;
@@ -22151,10 +22164,11 @@ ptr1 = (ptr2 as _char&&);
 ptr2 =  ptr1 as int&&;
 escape (ptr2 as int);
 ]],
-    env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
+    sets = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
+    --env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
-    gcc = 'error: cast from pointer to integer of different size',
+    --gcc = 'error: cast from pointer to integer of different size',
 }
 Test { [[
 native _char;
@@ -22390,7 +22404,7 @@ escape a + b;
 
 Test { [[
 var int b = 10;
-var int&& a = (&&b as int&&);
+var int&& a = ((&&b) as int&&);
 var int&& c = &&b;
 escape *a + *c;
 ]],
@@ -22408,6 +22422,7 @@ end
 var& int? p = _f();
 escape p;
 ]],
+    --sets = 'line 9 : invalid assignment : types mismatch : "int" <= "int?"',
     env = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
 }
 
@@ -22422,7 +22437,8 @@ end
 var& int? p = &_f();
 escape p;
 ]],
-    env = 'line 9 : types mismatch (`int´ <= `int&?´)',
+    exps = 'line 9 : invalid assignment : types mismatch : "int" <= "int?"',
+    --env = 'line 9 : types mismatch (`int´ <= `int&?´)',
 }
 
 Test { [[
@@ -22916,6 +22932,17 @@ escape a;
 }
 
 Test { [[
+input (byte, u32) HTTP_GET;
+var byte p2Buff;
+var u32 len;
+(p2Buff, len) = await HTTP_GET;
+vector[0] byte c = p2Buff; // doesn't work
+escape 1;
+]],
+    groups = 'line 5 : invalid assignment : kinds mismatch : "vector" <= "var"',
+}
+
+Test { [[
 input (byte&&, u32) HTTP_GET;
 var byte&& p2Buff;
 var u32 len;
@@ -22923,23 +22950,8 @@ var u32 len;
 vector[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
-    env = 'line 5 : cannot index pointers to internal types',
-}
-
-Test { [[
-native _char;
-input (byte&&, u32) HTTP_GET;
-par/or do
-    var _char&& p2Buff;
-    var u32 len;
-    (p2Buff, len) = await HTTP_GET;
-    vector[0] byte c = p2Buff; // doesn't work
-    if len!=0 and p2Buff!=null then end;
-with
-end
-escape 1;
-]],
-    run = 1,
+    --env = 'line 5 : cannot index pointers to internal types',
+    groups = 'line 5 : invalid assignment : kinds mismatch : "vector" <= "var"',
 }
 
 Test { [[
