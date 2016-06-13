@@ -555,10 +555,8 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , Await_Forever = K'await' * K'FOREVER'
 
     , __evts_ps = V'__Exp' + PARENS(OPT(V'Explist'))
-    , Emit_Ext_emit = K'emit' * (
-                        (V'WCLOCKK'+V'WCLOCKE') +
-                        V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
-                      )
+    , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
+    , Emit_Ext_emit = K'emit' * V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
     , Emit_Ext_call = (K'call/recursive'+K'call') *
                         V'ID_ext' * OPT(KK'=>' * V'__evts_ps')
     , Emit_Ext_req  = K'request' *
@@ -600,6 +598,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     , __sets_one =
           V'_Set_Data'
+        + V'_Set_Emit_Wclock'
         + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call' + V'_Set_Emit_Ext_req'
         + V'_Set_Do'
         + V'_Set_Await'
@@ -626,6 +625,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , _Set_None     = #K'_'             * V'ID_none'
     , _Set_Exp      =                     V'__Exp'
 
+    , _Set_Emit_Wclock    = #K'emit'          * V'Emit_Wclock'
     , _Set_Emit_Ext_emit  = #K'emit'          * V'Emit_Ext_emit'
     , _Set_Emit_Ext_req   = #K'request'       * V'Emit_Ext_req'
     , _Set_Emit_Ext_call  = #V'__extcall_pre' * V'Emit_Ext_call'
@@ -783,6 +783,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'Deterministic'
                  + V'_Set'
                  + V'Await_Until'
+                 + V'Emit_Wclock'
                  + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
                  + V'Emit_Evt'
                  + V'Spawn_Code' + V'Kill'
