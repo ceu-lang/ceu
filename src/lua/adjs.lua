@@ -6,6 +6,8 @@ local node = AST.node
 local Pre_Stmts
 
 F = {
+Extcall_proto = function() RUNTESTS_TODO=true end,
+-------------------------------------------------------------------------------
     ['1__PRE'] = function (me)
         local stmts = unpack(me)
         AST.asr(stmts, 'Stmts')
@@ -440,7 +442,7 @@ error 'TODO'
         if exp and exp.tag == 'Explist' then
             return exp
         end
-        local ret = node('Explist', exp.ln)
+        local ret = node('Explist', me.ln)
         if exp then
             ret[1] = exp
         end

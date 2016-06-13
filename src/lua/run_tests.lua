@@ -3,6 +3,7 @@
 --RUNTESTS_file = assert(io.open('/tmp/fin.txt','w'))
 
 RUNTESTS = {}
+RUNTESTS_TODO = false
 
 -- Execution option for the tests:
 --VALGRIND = true
@@ -28,24 +29,16 @@ STATS = {
 }
 
 function check (mod)
+if RUNTESTS_TODO then
+    return true
+end
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
     local ok, msg = pcall(dofile, mod..'.lua')
     if T[mod]~=nil then
         assert(ok==false, 'no error found')
--- TODO: remove class/interface
-if string.find(msg,'expected TODO: class/interface',nil,true) then
-        return false
-else
         assert(string.find(msg, T[mod], nil, true), tostring(msg))
-end
-        return false
     else
--- TODO: remove class/interface
-if (not ok) and string.find(msg,'expected TODO: class/interface',nil,true) then
-        return false
-else
         assert(ok==true, msg)
-end
         return true
     end
 end
