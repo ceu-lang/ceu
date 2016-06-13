@@ -33,6 +33,23 @@ F = {
         me.tp = { TOPS._ }
     end,
 
+-- VARLIST, EXPLIST
+
+    Varlist = function (me)
+        local tps = { is_list=true }
+        for i, var in ipairs(me) do
+            tps[i] = var.tp
+        end
+        me.tp = tps
+    end,
+
+    Explist = function (me)
+        me.tp = { is_list=true }
+        for i, e in ipairs(me) do
+            me.tp[i] = e.tp
+        end
+    end,
+
 -- Exp_Name
 
     Exp_Name = function (me)
@@ -229,19 +246,15 @@ F = {
     Emit_Ext_emit = function (me)
         local ID_ext, ps = unpack(me)
         local top = AST.asr(ID_ext.top, 'Ext')
-        local Type = unpack(top)
-        if TYPES.check(Type.tp,'void') and (not ps) then
-            -- ok
-        else
-TYPES.dump(Type.tp)
-TYPES.dump(ps.tp)
-            ASR(TYPES.contains(Type.tp,ps.tp), me,
-                'invalid `emit´ : types mismatch : "'..
-                    TYPES.tostring(Type.tp)..
-                    '" <= "'..
-                    TYPES.tostring(ps.tp)..
-                    '"')
-        end
+        local tp = unpack(top).tp
+
+        local ps_tp = (ps and ps.tp) or {TOPS.void}
+        ASR(TYPES.contains(tp,ps_tp), me,
+            'invalid `emit´ : types mismatch : "'..
+                TYPES.tostring(tp)..
+                '" <= "'..
+                TYPES.tostring(ps_tp)..
+                '"')
     end,
 
 -- STATEMENTS

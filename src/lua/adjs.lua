@@ -302,7 +302,21 @@ DBG('TODO: _Loop_Pool')
     _Set__PRE = function (me)
         local to,op,set = unpack(me)
 
-        if set.tag=='_Set_Exp' or set.tag=='_Set_Await' or
+        -- __Sets_many
+--[[
+        if set.tag == '_Set_Emit_Ext_req' or
+           set.tag == '_Set_Await'        or
+           set.tag == '_Set_Watching'
+        then
+            if to.tag == 'ID_int' then
+                to = node('Varlist', to.ln, to)
+                me[1] = to
+            end
+        end
+]]
+
+        if set.tag=='_Set_Exp' or
+           set.tag=='_Set_Await_one' or set.tag=='_Set_Await_many' or
            set.tag=='_Set_Vec' or set.tag=='_Set_Emit_Ext_emit'
         then
             assert(#set == 1, 'bug found')
@@ -368,11 +382,17 @@ error 'TODO'
     end,
     _Evts__PRE = function (me)
         local tp = table.remove(me,2)
+        if tp.tag == 'Type' then
+            tp = node('Typelist', me.ln, tp)
+        end
         table.insert(me,1,tp)
         return F.__dcls__PRE(me, 'Evt', 2)
     end,
     _Exts__PRE = function (me)
         local tp = table.remove(me,2)
+        if tp.tag == 'Type' then
+            tp = node('Typelist', me.ln, tp)
+        end
         table.insert(me,1,tp)
         return F.__dcls__PRE(me, 'Ext', 2)
     end,
@@ -417,6 +437,9 @@ error 'TODO'
     end,
     _Evts_set__PRE = function (me)
         local tp = table.remove(me,2)
+        if tp.tag == 'Type' then
+            tp = node('Typelist', me.ln, tp)
+        end
         table.insert(me,1,tp)
         return F.__dcls_set__PRE(me, 'Evt', 2)
     end,
@@ -494,6 +517,23 @@ error 'TODO'
             ret[1] = exp
         end
         return ret
+    end,
+
+    Set_Await_many__PRE = function (me)
+        local _,var,_ = unpack(me)
+        if var.tag == 'ID_int' then
+            me[2] = node('Varlist', var.ln, var)
+        end
+    end,
+
+    Typelist__PRE = function (me)
+        local Type, snd = unpack(me)
+        local ID_prim, mod = unpack(Type)
+        if (not snd) and
+           ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod)
+        then
+            table.remove(me,1)
+        end
     end,
 
 -------------------------------------------------------------------------------

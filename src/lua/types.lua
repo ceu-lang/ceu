@@ -2,6 +2,13 @@ TYPES = {
 }
 
 function TYPES.tostring (tp)
+    if tp.is_list then
+        local ret = {}
+        for i, tp in ipairs(tp) do
+            ret[i] = TYPES.tostring(tp)
+        end
+        return '('..table.concat(ret,',')..')'
+    end
     return tp[1].id .. table.concat(tp,'',2)
 end
 function TYPES.dump (tp)
@@ -9,6 +16,14 @@ function TYPES.dump (tp)
 end
 
 function TYPES.copy (tp)
+    if tp.is_list then
+        local ret = {}
+        for i,tp1 in ipairs(tp) do
+            ret[i] = TYPES.copy(tp1)
+        end
+        return ret
+    end
+
     local ret = {}
     for i,v in ipairs(tp) do
         ret[i] = v
@@ -17,6 +32,7 @@ function TYPES.copy (tp)
 end
 
 function TYPES.pop (tp)
+    assert(not tp.is_list)
     local v = tp[#tp]
     tp = TYPES.copy(tp)
     tp[#tp] = nil
@@ -24,12 +40,14 @@ function TYPES.pop (tp)
 end
 
 function TYPES.push (tp,v)
+    assert(not tp.is_list)
     tp = TYPES.copy(tp)
     tp[#tp+1] = v
     return tp
 end
 
 function TYPES.is_equal (tp1, tp2)
+    assert((not tp1.is_list) and (not tp2.is_list))
     if #tp1 ~= #tp2 then
         return false
     end
@@ -42,6 +60,10 @@ function TYPES.is_equal (tp1, tp2)
 end
 
 function TYPES.check (tp, e, ...)
+    if tp.is_list then
+        return false
+    end
+
     e = e or tp[1].id
     local E = { e, ... }
     local j = 0
@@ -72,16 +94,19 @@ function TYPES.check (tp, e, ...)
 end
 
 function TYPES.is_num (tp)
+    assert(not tp.is_list)
     local top = TYPES.check(tp)
     return TYPES.is_native(tp) and (not TYPES.check(tp,'&&'))
         or (top and top.prim and top.prim.is_num)
 end
 function TYPES.is_int (tp)
+    assert(not tp.is_list)
     local top = TYPES.check(tp)
     return TYPES.is_native(tp) and (not TYPES.check(tp,'&&'))
         or (top and top.prim and top.prim.is_int)
 end
 function TYPES.is_native (tp)
+    assert(not tp.is_list)
     local top = TYPES.check(tp)
     return top and top.group=='native'
 end
@@ -113,6 +138,20 @@ do
     end
 
     function TYPES.contains (tp1, tp2)
+        if tp1.is_list or tp2.is_list then
+            if tp1.is_list and tp2.is_list then
+                if #tp1 == #tp2 then
+                    for i=1, #tp1 do
+                        if not TYPES.contains(tp1[i],tp2[i]) then
+                            return false
+                        end
+                    end
+                    return true
+                end
+            end
+            return false
+        end
+
         local tp1_is_nat = TYPES.is_native(tp1)
         local tp2_is_nat = TYPES.is_native(tp2)
         if tp1_is_nat or tp2_is_nat then
@@ -173,6 +212,26 @@ F = {
         local id = unpack(me)
         me.tp = { id.top, unpack(me,2) }
     end,
+
+    Typelist = function (me)
+        me.tp = { is_list=true }
+        for i, Type in ipairs(me) do
+            me.tp[i] = Type.tp
+        end
+    end,
+
+--[[
+    Data = function (me)
+        local dcls = AST.asr(me,'', 3,'Block', 1,'Stmts')
+        local tps = { is_list=true }
+        for i, dcl in ipairs(dcls) do
+            assert(dcl.tag == 'Var')
+            local Type = unpack(dcl)
+            tps[i] = assert(Type.tp, 'bug found')
+        end
+        me.tp = tps
+    end,
+]]
 }
 
 AST.visit(F)

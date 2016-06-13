@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -110,24 +109,32 @@ Test { [[escape (1!=2) as int;]], run=1 }
 Test { [[escape 0  or  10;]],
     exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
 }
-Test { [[escape (0 as bool)  or  (10 as bool) as int;]], run=1 }
-Test { [[escape (0 as bool) and (10 as bool) as int;]], run=0 }
-Test { [[escape 10==true as int;]],
+Test { [[escape (0 as bool)  or  (10 as bool) as int;]],
+    parser = 'line 1 : after `)´ : expected `(´ or binary operator or `;´',
+    --run = 1,
+}
+Test { [[escape ((0 as bool)  or  (10 as bool)) as int;]],
+    run = 1,
+}
+Test { [[escape ((0 as bool) and (10 as bool)) as int;]], run=0 }
+Test { [[escape (10==true) as int;]],
     exps = 'line 1 : invalid expression : operands to `==´ must be of the same type',
 }
 Test { [[escape (10!=0) as int;]], run=1 }
-Test { [[escape true and true as int;]], run=1 }
-Test { [[escape 2>1 and 10!=0 as int;]], run=1 }
-Test { [[escape (1<=2 as int) + 3;]], run=2 }
-Test { [[escape (1<=2 as int) + (1<2 as int) + 2/1 - 2%3;]], run=2 }
+Test { [[escape (true and true) as int;]], run=1 }
+Test { [[escape (2>1 and 10!=0) as int;]], run=1 }
+Test { [[escape ((1<=2) as int) + 3;]], run=2 }
+Test { [[escape ((1<=2) as int) + ((1<2) as int) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }
 Test { [[nt a;]],
     --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
+    --parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
     parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
 }
 Test { [[nt sizeof;]],
     --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
+    --parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
     parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
 }
 Test { [[var int sizeof;]],
@@ -138,7 +145,7 @@ Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
     exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
 }
-Test { [[escape (1<2 as int)<3 as int;]], run=1 }
+Test { [[escape (((1<2) as int)<3) as int;]], run=1 }
 
 Test { [[
 var uint x = 1.5;
@@ -167,7 +174,7 @@ escape 1.;
 
 Test { [[
 var float x = 1.5;
-escape x + 0.5 as int;
+escape (x + 0.5) as int;
 ]],
     run = 2,
 }
@@ -181,21 +188,21 @@ escape x + (0.5 as uint);
 
 Test { [[
 var uint x = (1.5 as uint);
-escape x + (0.5 as uint) as int;
+escape (x + (0.5 as uint)) as int;
 ]],
     run = 1,
 }
 
 Test { [[
 var byte x = (1.5 as byte);
-escape x + (0.5 as byte) as int;
+escape (x + (0.5 as byte)) as int;
 ]],
     run = 1,
 }
 
 Test { [[
 var byte x = 255;
-escape x + (0.5 as byte) as int;
+escape ( x + (0.5 as byte) )as int;
 ]],
     run = 0,
 }
@@ -216,7 +223,8 @@ Test { [[
 var int x = 1;
 escape &&x == &&x as int;
 ]],
-    run = 1,
+    parser = 'line 2 : after `x´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or binary operator or `;´',
+    --run = 1,
 }
 
 Test { [[
@@ -247,7 +255,7 @@ escape (not false) as int;
 Test { [[
 escape 1?;
 ]],
-    parser = 'ERR : tests.lua : line 1 : after `1´ : expected binary operator or `is´ or `as´ or `;´',
+    parser = 'ERR : tests.lua : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
 }
 Test { [[
 var int i;
@@ -333,7 +341,7 @@ escape (_x);
 Test { [[
 escape (1+1).v;
 ]],
-    parser = 'line 1 : after `)´ : expected `(´ or binary operator or `is´ or `as´ or `;´',
+    parser = 'line 1 : after `)´ : expected `(´ or `is´ or `as´ or binary operator or `;´',
     --env = 'line 1 : not a struct',
 }
 
@@ -388,7 +396,7 @@ Test { [[var int a=1,a=0; escape a;]],
 }
 Test { [[var int a; a = b = 1]],
     --parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´",
-    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `;´',
+    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
 }
 Test { [[var int a = b; escape 0;]],
     locs = 'internal identifier "b" is not declared',
@@ -430,7 +438,7 @@ v = false;
     sets = 'line 2 : invalid assignment : types mismatch : "int" <= "bool"',
 }
 Test { [[
-var int v1 = (1 + 1 as bool) and (0 as bool);    // 0
+var int v1 = ((1 + 1) as bool) and (0 as bool);    // 0
 escape 0;
 ]],
     sets = 'line 1 : invalid assignment : types mismatch : "int" <= "bool"',
@@ -438,10 +446,10 @@ escape 0;
 
 Test { [[
 native _assert;
-var bool v1 = (1 + 1 as bool) and (0 as bool);    // 0
+var bool v1 = ((1 + 1) as bool) and (0 as bool);    // 0
 _assert(v1 == false);
 
-var bool v2 = (1 + 1 as bool) or  (0 as bool);    // 1
+var bool v2 = ((1 + 1) as bool) or  (0 as bool);    // 1
 _assert(v2 == true);
 
 var bool v3 = false and false or true;   // 1
@@ -1368,9 +1376,9 @@ Test { [[
 input int A;
 var bool v;
 v = await A;
-escape v;
+escape v as int;
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "bool" <= "int"',
+    sets = 'line 3 : invalid assignment : types mismatch : "(bool)" <= "(int)"',
 }
 
 Test { [[
@@ -1627,18 +1635,18 @@ Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     --parser = 'line 1 : after `1´ : expected `;´',
     --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `until´ or `;´',
-    parser = 'line 1 : after `await´ : expected abstraction identifier or external identifier or number or `(´ or name expression or `{´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `FOREVER´',
 }
 
 Test { [[await 1; escape 0;]],
-    parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
+    parser = 'line 1 : after `1´ : expected `h´ or `min´ or `s´ or `ms´ or `us´',
 }
 Test { [[await -1; escape 0;]],
-    parser = 'expected abstraction identifier or external identifier or number or `(´ or name expression or `{´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `FOREVER´',
     --env = 'line 1 : event "?" is not declared',
 }
 
-Test { [[var s32 a=await 10s; escape a==8000000 as int;]],
+Test { [[var s32 a=await 10s; escape (a==8000000) as int;]],
     _ana = {
         isForever = false,
     },
@@ -1757,7 +1765,7 @@ escape v;
 Test { [[
 var bool a;
 a = await 10ms;
-escape a;
+escape a as int;
 ]],
     sets = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
 }
@@ -2338,7 +2346,7 @@ var u8&& ptr = do
         escape null;
 end
     end;
-escape ptr == null as int;
+escape (ptr == null) as int;
 ]],
     run = {['~>1s']=1},
 }
@@ -3924,21 +3932,23 @@ input (int,int) A;
 var int a;
 a = await A;
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "int" <= "_int_int"',
+    sets = 'line 3 : invalid assignment : types mismatch : "(int)" <= "(int,int)"',
 }
 Test { [[
 input (int) A;
 var int a;
 a = await A;
+escape a;
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "int" <= "_int"',
+    run = {['1~>A']=1},
 }
 Test { [[
 input (int) A;
 var int a;
 (a) = await A;
+escape a;
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "int" <= "_int"',
+    run = {['1~>A']=1},
 }
 Test { [[
 input int A;
@@ -3962,7 +3972,7 @@ var int a,b;
 (a,b) = await A;
 await B;
 ]],
-    sets = 'line 4 : invalid assignment : types mismatch : "_int_int" <= "int"',
+    sets = 'line 4 : invalid assignment : types mismatch : "(int,int)" <= "(int)"',
 }
 
 Test { [[
@@ -5259,7 +5269,7 @@ with
     await OS_START;
     emit x => 1.1;
 end
-escape ret>1.0 and ret<1.2 as int;
+escape (ret>1.0 and ret<1.2) as int;
 ]],
     run = 1,
 }
@@ -5274,7 +5284,7 @@ with
         emit X => 1.1;
     end
 end
-escape ret>1.0 and ret<1.2 as int;
+escape( ret>1.0 and ret<1.2 )as int;
 ]],
     run = 1,
 }
@@ -7466,7 +7476,8 @@ async do
 end
 escape 1;
 ]],
-    env = 'line 3 : arity mismatch',
+    exps = 'line 3 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    --env = 'line 3 : arity mismatch',
     --env = 'line 3 : missing parameters on `emit´',
 }
 
@@ -7565,7 +7576,9 @@ var int a, b;
 (a,b) = await 1s;
 escape 1;
 ]],
-    sets = 'line 2 : invalid assignment : types mismatch',
+    parser = 'line 2 : after `await´ : expected external identifier',
+    --parser = 'line 2 : after `1´ : expected number or `/_´',
+    --sets = 'line 2 : invalid assignment : types mismatch',
     --env = 'line 2 : arity mismatch',
     --gcc = 'error: ‘tceu__s32’ has no member named ‘_2’',
     --run = 1,
@@ -17674,6 +17687,7 @@ escape x;
     --run = 1,
 }
 
+--]===]
 Test { [[
 event void  a;
 event& void b = &a;
@@ -17846,7 +17860,7 @@ native do
     }
 end
 var int&& v = _f(0);
-escape v == null as int;
+escape (v == null) as int;
 ]],
     run = 1,
 }
@@ -17873,7 +17887,7 @@ native do
     }
 end
 var int v=0;
-escape _f(&&v) == 1 as int;
+escape (_f(&&v) == 1 )as int;
 ]],
     fin = 'line 8 : call requires `finalize´',
 }
@@ -17886,7 +17900,7 @@ native do
     }
 end
 var int v=0;
-escape _f(&&v) == 1 as int;
+escape (_f(&&v) == 1 )as int;
 ]],
     run = 1,
 }
@@ -17901,7 +17915,7 @@ native do
     }
 end
 var int v=0;
-escape _f(&&v) == _V as int;
+escape (_f(&&v) == _V) as int;
 ]],
     run = 1,
 }
@@ -19687,7 +19701,7 @@ with
     nothing;
 end
 
-escape &&ptr! == &&ptr! as int;  // ptr.SOME fails
+escape (&&ptr! == &&ptr!) as int;  // ptr.SOME fails
 ]],
     asr = true,
 }
@@ -19708,7 +19722,7 @@ with
     nothing;
 end
 
-escape not ptr? as int;
+escape (not ptr? )as int;
 ]],
     run = 1,
 }
@@ -19732,7 +19746,7 @@ with
     _g(&&ptr!);    // error (ptr is Nil)
 end
 
-escape not ptr? as int;
+escape (not ptr? )as int;
 ]],
     asr = true
 }
@@ -19762,7 +19776,7 @@ do
             ret = ret + 1;
         end
     end
-    ret = ret + (not ptr? as int);
+    ret = ret + ((not ptr?) as int);
 end
 
 escape ret;
@@ -21945,9 +21959,9 @@ Test { [[var int&&p; var int a; escape p>a;]],
 Test { [[var int&&p=null; escape p or 10;]],
     exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
 }
-Test { [[var int&&p=null; escape p!=null or true as int;]], run=1 }
-Test { [[var int&&p=null; escape p!=null and false as int;]],  run=0 }
-Test { [[var int&&p=null; escape not (p!=null) as int;]], run=1 }
+Test { [[var int&&p=null; escape (p!=null or true) as int;]], run=1 }
+Test { [[var int&&p=null; escape (p!=null and false) as int;]],  run=0 }
+Test { [[var int&&p=null; escape( not (p!=null)) as int;]], run=1 }
 
 -- arith
 Test { [[var int&&p; escape p+p;]],
@@ -23023,7 +23037,7 @@ Test { [[
 vector[10] u8 vec = (1,2,3);
 escape 1;
 ]],
-    parser = 'line 1 : after `1´ : expected binary operator or `is´ or `as´',
+    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator',
 }
 Test { [[
 vector[10] u8 vec = (1);
@@ -23073,7 +23087,7 @@ escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 }
 Test { [[
 vector[10] u8 vec = [1,2,3];
-escape ($$vec as int) + ($vec as int) + vec[0] + vec[1] + vec[2];
+escape (($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2];
 ]],
     run = 19,
 }
@@ -23083,7 +23097,7 @@ vector[10] u8 vec = [1,2,3];
 vec[0] = 4;
 vec[1] = 5;
 vec[2] = 6;
-escape ($$vec as int) + ($vec as int) + vec[0] + vec[1] + vec[2];
+escape (($$vec) as int) + (($vec )as int) + vec[0] + vec[1] + vec[2];
 ]],
     run = 28,
 }
@@ -23093,7 +23107,7 @@ vector[10] int vec = [1,2,3];
 vec[0] = 4;
 vec[1] = 5;
 vec[2] = 6;
-escape ($$vec as int) + ($vec as int) + vec[0] + vec[1] + vec[2];
+escape (($$vec )as int) + (($vec) as int) + vec[0] + vec[1] + vec[2];
 ]],
     run = 28,
 }
@@ -23115,7 +23129,7 @@ escape vec[0];
 
 Test { [[
 vector[] u8 vec = [1,2,3];
-escape ($$vec as int) + ($vec as int) + vec[0] + vec[1] + vec[2];
+escape (($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2];
 ]],
     run = 6,
 }
@@ -23182,7 +23196,8 @@ v1 = v2;
 v1 = v2..v3;
 escape 1;
 ]],
-    parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `;´',
+    parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `;´',
 }
 
 Test { [[
@@ -23224,7 +23239,7 @@ escape v2[0] + v2[1] + v2[2];
 Test { [[
 vector[10] u8 vec = [1,2,3];
 vector&[] u8  ref = &vec;
-escape ($$ref as int) + ($ref as int) + ref[0] + ref[1] + ref[2];
+escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 19,
 }
@@ -23232,7 +23247,7 @@ escape ($$ref as int) + ($ref as int) + ref[0] + ref[1] + ref[2];
 Test { [[
 vector[10] u8  vec = [1,2,3];
 vector&[11] u8 ref = &vec;
-escape ($$ref as int) + ($ref as int) + ref[0] + ref[1] + ref[2];
+escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 1,
     env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
@@ -23241,7 +23256,7 @@ escape ($$ref as int) + ($ref as int) + ref[0] + ref[1] + ref[2];
 Test { [[
 vector[10] u8 vec = [1,2,3];
 vector&[9] u8 ref = &vec;
-escape ($$ref as int) + ($ref as int) + ref[0] + ref[1] + ref[2];
+escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
@@ -23364,14 +23379,14 @@ Test { [[
 escape 1..2;
 ]],
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    parser = 'line 1 : after `1´ : expected binary operator or `is´ or `as´ or `;´',
+    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
 }
 Test { [[
 escape 1 .. 2;
 ]],
     --parser = 'line 1 : after `..´ : invalid constructor syntax',
     --parser = 'line 1 : after `1´ : expected `;´',
-    parser = 'line 1 : after `1´ : expected binary operator or `is´ or `as´ or `;´',
+    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
 }
 Test { [[
 vector[] int x = [1]..2;
@@ -23678,7 +23693,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[] byte v = [1,2,0,4,5];
 var byte c = 3;
 _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 1);
-escape v[2] + ($v as int);
+escape v[2] + (($v) as int);
 ]],
     run = 8,
 }
@@ -23688,7 +23703,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[5] byte v = [1,2,0,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 1);
-escape v[2] + ($v as int) + ok;
+escape v[2] + (($v) as int) + ok;
 ]],
     run = 9,
 }
@@ -23698,7 +23713,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[5] byte v = [1,2,1,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 8, 1);
-escape v[2] + ($v as int) + ok;
+escape v[2] + (($v) as int) + ok;
 ]],
     run = 6,
 }
@@ -23708,7 +23723,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[] byte v = [1,2,0,4,5];
 var byte c = 3;
 _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 0);
-escape v[2] + ($v as int);
+escape v[2] + (($v) as int);
 ]],
     run = 8,
 }
@@ -23718,7 +23733,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[5] byte v = [1,2,0,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 0);
-escape v[2] + ($v as int) + ok;
+escape v[2] + (($v) as int) + ok;
 ]],
     run = 9,
 }
@@ -23728,7 +23743,7 @@ native/nohold _ceu_vector_copy_buffer;
 vector[] byte v = [1,2,1,4,5];
 var byte c = 3;
 var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 8, 0);
-escape v[2] + ($v as int) + ok;
+escape v[2] + (($v) as int) + ok;
 ]],
     run = 6,
 }
@@ -23867,7 +23882,7 @@ _f(v..[1]);
 escape 1;
 ]],
     --parser = 'line 2 : after `..´ : invalid constructor syntax',
-    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `,´ or `)´',
+    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `,´ or `)´',
     --run = 1,
 }
 
@@ -24677,7 +24692,16 @@ native __ceu_app, _CEU_Main;
 var int xxx = 10;
 escape ((__ceu_app:_data as _CEU_Main&&)):xxx;
 ]],
-    parser = 'line 3 : after `)´ : expected `(´ or binary operator or `is´ or `as´ or `;´',
+    run = 10,
+    --parser = 'line 3 : after `)´ : expected `(´ or binary operator or `is´ or `as´ or `;´',
+}
+Test { [[
+native __ceu_app, _CEU_Main;
+var int xxx = 10;
+escape (__ceu_app:_data as _CEU_Main&&):xxx;
+]],
+    run = 10,
+    --parser = 'line 3 : after `)´ : expected `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
 }
 Test { [[
 //native __ceu_app, _CEU_Main;
@@ -28180,7 +28204,7 @@ Test { [==[
 var int a = [[a]];
 escape a;
 ]==],
-    parser = 'line 3 : after `1´ : expected binary operator or `is´ or `as´ or `;´',
+    parser = 'line 3 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
 }
 
 Test { [==[
@@ -28716,12 +28740,12 @@ Test { [[
 code/delayed Code (void)=>void;
 await Code(1) until true;
 ]],
-    env = 'TODO: until not allowed',
+    parser = 'line 2 : after `)´ : expected `;´',
 }
 Test { [[
 await 1s until true;
 ]],
-    env = 'TODO: until not allowed',
+    parser = 'line 1 : after `s´ : expected number or `/_´ or `;´',
 }
 Test { [[
 code/delayed Code (var int x) => int
@@ -51792,7 +51816,12 @@ native _V;
         _V = _V + 1;
     end
 with
-    await 10s until v;
+    loop do
+        await 10s;
+        if v as bool then
+            break;
+        end
+    end
 with
     await 10s;
     v = 1;
@@ -51820,7 +51849,12 @@ native _V;
         _V = _V + 1;
     end
 with
-    await 10s until v;
+    loop do
+        await 10s;
+        if v as bool then
+            break;
+        end
+    end
 with
     await 20s;
     v = 1;
@@ -51840,7 +51874,12 @@ Test { [[
 input int A;
 var int v = 0;
 par do
-    await 10s until v;
+    loop do
+        await 10s;
+        if v as bool then
+            break;
+        end
+    end
     escape 10;
 with
     await 10min;
@@ -56302,7 +56341,7 @@ data Tx with
     var int x;
 end
 var Tx t = Tx([], 1);
-t.str[0] = '\0';
+t.str[0] = {'\0'};
 escape t.x;
 ]],
     run = 1,
@@ -56492,7 +56531,7 @@ var Pair p1 = (1,2);    /* vs Pair(1,2) */
 escape 1;
 ]],
     -- TODO: better error message
-    parser = 'line 51 : after `1´ : expected binary operator or `is´ or `as´ or `)´',
+    parser = 'line 51 : after `1´ : expected `is´ or `as´ or binary operator or `)´',
     --run = 1,
 }
 Test { DATA..[[
@@ -57212,7 +57251,7 @@ Test { DATA..[[
 pool[2] List l = new Cons(1, Cons(2, Cons(3, Nil())));
 native _assert;
 _assert((((l as Cons).tail) as Cons).tail is Nil);
-escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((l as Cons).tail) as Cons).tail is Nil;
+escape (((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((l as Cons).tail) as Cons).tail) is Nil;
 ]],
     wrn = true,
     run = 4,
@@ -58486,9 +58525,9 @@ var int ret = 0;
 
 watching *lll do
     *lll = (lll as Cons).tail;
-    ret = (*lll as Cons) +
-            (list as Cons).head +
-            (list as Cons).tail is Nil;
+    //ret = (*lll as Cons) +
+            //(list as Cons).head +
+            //(list as Cons).tail is Nil;
 end
 
 escape ret;
@@ -58558,9 +58597,10 @@ pool[] List&& lll = &&list;
 
 *lll = (lll as Cons).tail;
 
-escape (*lll as Cons) +
-        (list as Cons).head +
-        (list as Cons).tail is Nil;
+escape 0;
+//escape (*lll as Cons) +
+        //(list as Cons).head +
+        //(list as Cons).tail is Nil;
 ]],
     --run = 10,
     adt = 'line 15 : invalid attribution : mutation : cannot mutate root of a reference',
@@ -58864,7 +58904,7 @@ escape 1;
 Test { [[
 var Dx d = Dx(&&s as _char&& as _char_ptr);
 ]],
-    parser = 'line 1 : after `&&´ : expected `&&´ or `[´ or `?´ or `,´ or `)´',
+    parser = 'line 1 : after `&&´ : expected type modifier or `,´ or `)´',
 }
 Test { [[
 pre native do

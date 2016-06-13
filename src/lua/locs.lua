@@ -88,17 +88,15 @@ F = {
     end,
 
     Evt = function (me)
-        local Type, is_alias, id = unpack(me)
+        local Typelist, is_alias, id = unpack(me)
         me.id = id
 
-        -- check event type
-        do
+        -- no modifiers allowed
+        for _, Type in ipairs(Typelist) do
             local id, mod = unpack(Type)
             local top = assert(id.top,'bug found')
-            local is_tuple = (top.group=='data' and string.sub(top.id,1,1)=='_')
-            ASR(is_tuple or top.group=='primitive', me,
-                'invalid event type : must be primitive')
-            ASR(not mod,    me, mod and 'invalid event type : cannot use `'..mod..'´')
+            ASR(not mod, me,
+                mod and 'invalid event type : cannot use `'..mod..'´')
         end
 
         dcls_new(me, AST.par(me,'Block'))
@@ -214,17 +212,10 @@ DBG('TODO: _Vec_New')
             AST.asr(ID_ext,'ID_ext')
             assert(ID_ext.top.group == 'input')
 
-            local Type = unpack(ID_ext.top)
-            local ID, mod = unpack(Type)
-            if ID.tag=='ID_prim' or ID.tag=='ID_nat' then
-                return AST.copy(Type)
-            else
-                assert(mod == nil)
-                assert(ID.top.group == 'data')
-                local fields = AST.asr(ID.top,'', 3,'Block', 1,'Stmts')
-                local Type = unpack(fields[i])
-                return AST.copy(Type)
-            end
+            local Typelist = AST.asr(unpack(ID_ext.top), 'Typelist')
+            local Type = Typelist[i]
+            return AST.copy(Type)
+
         elseif id == 'escape' then
             local _, esc = unpack(me)
             local lbl1 = unpack(esc)

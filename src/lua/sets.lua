@@ -15,16 +15,16 @@ F = {
         F.__check(me, to.tp, fr.tp)
     end,
 
-    Set_Await = function (me)
+    Set_Await_one = function (me)
+        local fr, to = unpack(me)
+        local awt = AST.asr(fr,'Await_Wclock')
+        F.__check(me, to.tp, awt.tp)
+    end,
+
+    Set_Await_many = function (me)
         local fr, to = unpack(me)
         local awt = unpack(AST.asr(fr,'Await_Until'))
         F.__check(me, to.tp, awt.tp)
-
-if not awt.tp then
-    AST.dump(me)
-    error 'TODO'
-end
-        assert(awt.tp, 'bug found')
     end,
     Await_Ext = function (me)
         local ID_ext = unpack(me)
@@ -40,25 +40,6 @@ end
     end,
     Await_Wclock = function (me)
         me.tp = { TOPS.int }
-    end,
-
-    Varlist = function (me)
-        if not AST.par(me,'Set_Await') then
-            return
-        end
-
-        local list = {}
-        for i, var in ipairs(me) do
-            assert(var.tag == 'ID_int')
-            local Type = unpack(var.dcl)
-            list[i] = Type
-        end
-        local id_abs = ADJS.list2data(list)
-
-        local top = TOPS[id_abs]
-        ASR(top and top.group=='data', me,
-            'invalid assignment : types mismatch')
-        me.tp = { top }
     end,
 
     Set_Emit_Ext_emit = function (me)
