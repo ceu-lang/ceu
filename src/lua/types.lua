@@ -164,6 +164,11 @@ do
         if TYPES.is_equal(tp1, tp2) then
             return true
 
+-- VOID <- _
+        -- var& void? ptr = &_f()
+        elseif TYPES.check(tp1,'void') and TYPES.check(tp2,'_') then
+            return true
+
 -- NUMERIC TYPES
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
             local top1 = unpack(tp1)

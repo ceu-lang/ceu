@@ -70,11 +70,11 @@ local T = {
     },
 
     {
-        '`%*´ or `&&´ or `&´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´',
+        '`%*´ or `&´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´',
         'name expression'
     },
     {
-        '`%*´ or `&&´ or `&´ or internal identifier or native identifier or `global´ or `this´ or `outer´',
+        '`%*´ or `&´ or internal identifier or native identifier or `global´ or `this´ or `outer´',
         'name expression'
     },
     {
@@ -98,7 +98,6 @@ local T = {
         '`not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `call/recursive´ or `call´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
-
     {
         '`call/recursive´ or `call´ or name expression or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `%$´',
         'expression'
@@ -127,6 +126,18 @@ local T = {
         'name expression or `call/recursive´ or `call´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `%$´',
         'expression'
     },
+    {
+        '`call/recursive´ or `call´ or `%*´ or `&´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `&&´ or `%$%$´ or `%$´',
+        'expression'
+    },
+    {
+        '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `do´ or `await´ or `spawn´ or `async/thread´ or `%[´ or `_´ or name expression or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `&&´ or `%$%$´ or `%$´ or `request´ or `watching´',
+        'expression'
+    },
+    {
+        '`call/recursive´ or `call´ or name expression or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `&&´ or `%$%$´ or `%$´',
+        'expression'
+    },
 
     {
         '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or abstraction identifier or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
@@ -142,6 +153,10 @@ local T = {
     },
     {
         '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%(´ or name expression or `{´ or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or abstraction identifier or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
+        'statement'
+    },
+    {
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or `&´ or `%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or abstraction identifier or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
 }
@@ -723,7 +738,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     -- Exp_Name
 
     , Exp_Name   = V'__01_Name'
-    , __01_Name  = (Cc('pre') * (CKK'*'+CKK'&&'+(CKK'&'-'&&')))^0 * V'__02_Name'
+    , __01_Name  = (Cc('pre') * (CKK'*'+(CKK'&'-'&&')))^0 * V'__02_Name'
     , __02_Name  = V'__03_Name' *
                     (Cc'pos' * (
                         KK'[' * Cc'idx' * V'__Exp' * KK']' +

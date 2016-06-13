@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -18922,7 +18923,6 @@ escape 1;
     locs = 'line 1 : invalid event type : cannot use `&&´',
 }
 
---]===]
 Test { [[
 event int e;
 var int v = await e;
@@ -19076,6 +19076,17 @@ escape v;
 }
 
 Test { [[
+var int v;
+var int&& p1 = &&v;
+var int&& p2 = ((&&v) as void&&);
+]],
+    sets = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
+    --env = 'line 12 : wrong argument #1',
+    --wrn = true,
+    --run = 10,
+}
+
+Test { [[
 input int&& A;
 var int v=0;
 par/or do
@@ -19087,13 +19098,14 @@ par/or do
 with
     async do
         var int v = 10;
-        emit A => (&&v as void&&);
+        emit A => ((&&v) as void&&);
         emit A => null;
     end
 end
 escape v;
 ]],
-    env = 'line 12 : wrong argument #1',
+    exps = 'line 12 : invalid `emit´ : types mismatch : "(int&&)" <= "(void&&)"',
+    --env = 'line 12 : wrong argument #1',
     --wrn = true,
     --run = 10,
 }
@@ -20218,7 +20230,7 @@ async do
 end;
 escape 1;
 ]],
-    sets = 'line 3 : invalid `emit´ : types mismatch : "void" <= "int"',
+    exps = 'line 3 : invalid `emit´ : types mismatch : "()" <= "(int)"',
 }
 
 Test { [[
@@ -20971,7 +20983,8 @@ output _t&& A;
 emit A => 1;
 escape(1);
 ]],
-    env = 'line 2 : wrong argument #1',
+    exps = 'line 3 : invalid `emit´ : types mismatch : "(_t&&)" <= "(int)"',
+    --env = 'line 2 : wrong argument #1',
 }
 Test { [[
 native _t;
@@ -21007,7 +21020,8 @@ var int a;
 emit A => &&a;
 escape(1);
 ]],
-    env = 'line 3 : wrong argument #1',
+    exps = 'line 3 : invalid `emit´ : types mismatch : "(int)" <= "(int&&)"',
+    --env = 'line 3 : wrong argument #1',
 }
 Test { [[
 output int A;
@@ -21146,7 +21160,8 @@ end
 var _cahr v = emit A => 1;
 escape 0;
 ]],
-    env = 'line 6 : arity mismatch',
+    exps = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
+    --env = 'line 6 : arity mismatch',
     --env = 'line 6 : non-matching types on `emit´',
     --parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : undeclared type `_cahr´',
@@ -21172,7 +21187,8 @@ escape 0;
 ]],
     --parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : non-matching types on `emit´',
-    env = 'line 6 : arity mismatch',
+    --env = 'line 6 : arity mismatch',
+    exps = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
 }
 
 Test { [[
