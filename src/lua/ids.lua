@@ -27,6 +27,19 @@ AST.dump(me.__par.__par)
         end
     end,
 
+    -- &id
+    ['Exp_1&__PRE'] = function (me)
+        local _,e = unpack(me)
+        if e.tag == 'Exp_Name' then
+            local ID_int = AST.asr(e,'', 1,'ID_int')
+            use(ID_int)
+        elseif e.tag == 'Exp_Call' then
+DBG'TODO'
+        else
+            error'bug found'
+        end
+    end,
+
     --------------------------------------------------------------------------
 
     Set_Exp__PRE = function (me)
@@ -44,9 +57,8 @@ AST.dump(me.__par.__par)
 
         -- VEC
         if to_id.dcl.tag == 'Vec' then
-            -- vec = vec
-            local fr_id = AST.asr(fr,'Exp_Name', 1,'ID_int')
-            ASR(fr_id.dcl.tag == 'Vec', me, 'invalid assignment : '..use(fr_id))
+            -- vec = <NO>
+            ASR(false, me, 'invalid assignment : '..err)
 
         -- EVT
         elseif to_id.dcl.tag == 'Evt' then
@@ -69,11 +81,13 @@ AST.dump(me.__par.__par)
 
     -- id = &id
     ['Set_Alias__PRE'] = function (me)
-        local fr,to = unpack(me)
-        local fr_id = AST.asr(fr,'Exp_1&', 2,'Exp_Name', 1,'ID_int')
-        local to_id = AST.asr(to,'Exp_Name', 1,'ID_int')
-        use(to_id)
-        use(fr_id)
+        local fr,to = unpack(me) -- "fr" handled in "Exp_1&"
+        local to = unpack(AST.asr(to,'Exp_Name'))
+        if to.tag == 'ID_int' then
+            use(to)
+        else
+DBG'TODO'
+        end
     end,
 
     -- vec = ...

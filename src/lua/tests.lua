@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17784,7 +17785,6 @@ escape 1;
     fin = 'line 2 : call requires `finalize´',
 }
 
---]===]
 Test { [[
 native _enqueue;
 vector[255] byte buf;
@@ -22630,16 +22630,16 @@ Test { [[vector[0] int v; escape 0;]],
     --env='invalid dimension'
 }
 Test { [[vector[2] int v; escape v;]],
-    locs = 'line 1 : invalid use of `vector´ "v"',
+    ids = 'line 1 : invalid assignment : unexpected context for vector "v"',
     --env = 'types mismatch'
 }
 Test { [[native _u8; vector[2] _u8 v; escape &&v;]],
-    locs = 'line 1 : invalid use of `vector´ "v"',
+    ids = 'line 1 : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
 Test { [[vector[2] u8 v; escape &&v;]],
-    locs = 'line 1 : invalid use of `vector´ "v"',
+    ids = 'line 1 : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
@@ -22780,10 +22780,10 @@ escape v[0];
 
 Test { [[vector[2] int v; await v;     escape 0;]],
     --env='event "v" is not declared'
-    locs = 'line 1 : invalid use of `vector´ "v"',
+    ids = 'line 1 : invalid `await´ : unexpected context for vector "v"',
 }
 Test { [[vector[2] int v; emit v;    escape 0;]],
-    locs = 'line 1 : invalid use of `vector´ "v"',
+    ids = 'line 1 : invalid `emit´ : unexpected context for vector "v"',
     --env = 'line 1 : identifier "v" is not an event (tests.lua : line 1)',
 }
 Test { [[vector[0] int[2] v; await v;  escape 0;]],
@@ -22800,15 +22800,15 @@ vector[2] _int v;
 v=v;
 escape 0;
 ]],
-    locs = 'line 3 : invalid use of `vector´ "v"',
+    ids = 'line 3 : invalid use of `vector´ "v"',
     --env='types mismatch'
 }
 Test { [[vector[1] int v; escape v;]],
-    locs = 'line 1 : invalid use of `vector´ "v"',
+    ids = 'line 1 : invalid use of `vector´ "v"',
     --env='cannot index a non array'
 }
 Test { [[native _int; vector[2] _int v; escape v[v];]],
-    locs = 'line 1 : invalid use of `vector´ "v"',
+    ids = 'line 1 : invalid use of `vector´ "v"',
     env='invalid array index'
 }
 
@@ -22816,7 +22816,7 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    locs = 'line 2 : invalid use of `vector´ "v"',
+    ids = 'line 2 : invalid use of `vector´ "v"',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
@@ -22826,7 +22826,7 @@ native _int;
 vector[2] _int v ;
 escape v == &&v[0] ;
 ]],
-    locs = 'line 3 : invalid use of `vector´ "v"',
+    ids = 'line 3 : invalid use of `vector´ "v"',
     --exps = 'line 3 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
@@ -23214,7 +23214,7 @@ vector[10] u8 v1 = [1,2,3];
 vector[20] u8 v2 = v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
-    locs = 'line 2 : invalid use of `vector´ "v1"',
+    ids = 'line 2 : invalid use of `vector´ "v1"',
     --env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
 }
 
@@ -23296,7 +23296,7 @@ escape v == &&v[0] ;
     --exps = 'line 2 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
-    locs = 'line 2 : invalid use of `vector´ "v"',
+    ids = 'line 2 : invalid use of `vector´ "v"',
 }
 
 Test { [[
@@ -23920,7 +23920,7 @@ vector[] byte v = "abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
-    locs = 'line 4 : invalid use of `vector´ "v"',
+    ids = 'line 4 : invalid use of `vector´ "v"',
     --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
 }
@@ -25957,7 +25957,7 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    locs = 'line 5 : invalid use of `vector´ "i"',
+    ids = 'line 5 : invalid use of `vector´ "i"',
     --env = 'line 4 : types mismatch (`_int&&´ <= `_int[]´)',
     --run = { ['~>1s']=1 },
 }
@@ -25989,7 +25989,7 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    locs = 'line 4 : invalid use of `vector´ "i"',
+    ids = 'line 4 : invalid use of `vector´ "i"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]´)',
     --run = { ['~>1s']=1 },
 }
@@ -26007,7 +26007,7 @@ do
 end
 escape *u;
 ]],
-    locs = 'line 6 : invalid use of `vector´ "i"',
+    ids = 'line 6 : invalid use of `vector´ "i"',
     --env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
 }
 Test { [[
@@ -28362,7 +28362,7 @@ var byte&& ptr = cpy;
 ptr = [[ str ]];
 escape ret and (0 == _strcmp(&&str[0],&&cpy[0]));
 ]=],
-    locs = 'line 8 : invalid use of `vector´ "cpy"',
+    ids = 'line 8 : invalid use of `vector´ "cpy"',
 }
 
 Test { [=[
@@ -43798,7 +43798,7 @@ event int a;
 a = 1;
 escape 1;
 ]],
-    locs = 'line 2 : invalid use of `event´ "a"',
+    ids = 'line 2 : invalid use of `event´ "a"',
     --env = 'types mismatch',
 }
 
@@ -48283,7 +48283,7 @@ with
 end
 escape 1;
 ]],
-    locs = 'line 4 : invalid use of `vector´ "v"',
+    ids = 'line 4 : invalid use of `vector´ "v"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
     --env = 'line 4 : invalid operand to unary "&&"',
 }
@@ -52599,7 +52599,7 @@ with
 end
 escape 1;
 ]],
-    locs = 'line 4 : invalid use of `event´ "a"',
+    ids = 'line 4 : invalid use of `event´ "a"',
     --env = 'line 4 : wrong argument #1',
     --env = 'line 4 : invalid attribution',
 }
@@ -52668,7 +52668,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 4 : event "a" is not declared',
-    locs = 'line 4 : invalid use of `var´ "a"',
+    ids = 'line 4 : invalid use of `var´ "a"',
 }
 
 Test { [[
