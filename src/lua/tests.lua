@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -23124,10 +23125,9 @@ escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
     exps = 'line 2 : invalid expression : incompatible numeric types',
 }
---]===]
 Test { [[
 vector[10] u8 vec = [1,2,3];
-escape (($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2];
+escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
 ]],
     run = 19,
 }
@@ -23137,7 +23137,7 @@ vector[10] u8 vec = [1,2,3];
 vec[0] = 4;
 vec[1] = 5;
 vec[2] = 6;
-escape (($$vec) as int) + (($vec )as int) + vec[0] + vec[1] + vec[2];
+escape ((($$vec) as int) + (($vec )as int) + vec[0] + vec[1] + vec[2]) as int;
 ]],
     run = 28,
 }
@@ -23162,14 +23162,14 @@ escape 1;
 
 Test { [[
 vector[10] u8 vec;
-escape vec[0];
+escape vec[0] as int;
 ]],
     run = '2] runtime error: access out of bounds',
 }
 
 Test { [[
 vector[] u8 vec = [1,2,3];
-escape (($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2];
+escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
 ]],
     run = 6,
 }
@@ -23177,14 +23177,14 @@ escape (($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2];
 Test { [[
 vector[10] u8 vec = [1,2,3];
 $$vec = 0;
-escape vec[0];
+escape vec[0] as int;
 ]],
     env = 'line 2 : invalid attribution',
 }
 Test { [[
 vector[10] u8 vec = [1,2,3];
 $vec = 0;
-escape vec[0];
+escape vec[0] as int;
 ]],
     run = '3] runtime error: access out of bounds',
 }
@@ -23200,7 +23200,7 @@ escape 1;
 Test { [[
 vector[] byte bs;
 $bs := 1;
-escape $bs;
+escape ($bs) as int;
 ]],
     run = 1,
 }
@@ -23208,7 +23208,7 @@ escape $bs;
 Test { [[
 vector[10] byte bs;
 $bs := 10;
-escape $bs;
+escape ($bs) as int;
 ]],
     run = 10,
 }
@@ -23216,7 +23216,7 @@ escape $bs;
 Test { [[
 vector[10] byte bs;
 $bs := 11;
-escape $bs;
+escape ($bs) as int;
 ]],
     run = '2] runtime error: invalid attribution : out of bounds',
 }
@@ -23226,7 +23226,7 @@ vector[10] u8 v1 = [1,2,3];
 vector[20] u8 v2 = v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
-    ids = 'line 2 : invalid use of `vector´ "v1"',
+    ids = 'line 2 : invalid assignment : unexpected context for vector "v2"',
     --env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
 }
 
@@ -23308,7 +23308,7 @@ escape v == &&v[0] ;
     --exps = 'line 2 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
-    ids = 'line 2 : invalid use of `vector´ "v"',
+    ids = 'line 2 : unexpected context for vector "v"',
 }
 
 Test { [[
@@ -23321,7 +23321,7 @@ native do
 end
 vector[2] int a = [1,2];
 native _int;
-_f(&&a[0] as _int&&);
+_f((&&a[0]) as _int&&);
 escape a[0] + a[1];
 ]],
     run = 5,
@@ -23338,7 +23338,7 @@ end
 vector[2] int a  = [1,2];
 vector&[2] int b = &a;
 native _char;
-_f(&&b[0] as _char&&);
+_f((&&b[0]) as _char&&);
 escape b[0] + b[1];
 ]],
     env = 'line 10 : invalid type cast',
@@ -23355,7 +23355,7 @@ end
 vector[2] int a  = [1,2];
 vector&[2] int b = &a;
 native _int;
-_f(&&b[0] as _int&&);
+_f((&&b[0]) as _int&&);
 escape b[0] + b[1];
 ]],
     run = 5,
@@ -23513,7 +23513,7 @@ native do
     tp Tx = { f };
 end
 vector[] byte str = [] .. "oi";
-escape str[1]=={'i'};
+escape (str[1]=={'i'}) as int;
 ]],
     run = 1,
 }
@@ -23530,7 +23530,7 @@ native do
 end
 native _char, _Tx;
 vector[] byte str = [] .. (_Tx.f() as _char&&);
-escape str[2]=={'a'};
+escape (str[2]=={'a'}) as int;
 ]],
     run = 1,
 }
@@ -23547,7 +23547,7 @@ native do
 end
 native _char, _Tx;
 vector[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
-escape str[4]=={'i'};
+escape (str[4]=={'i'}) as int;
 ]],
     run = 1,
 }
@@ -23563,7 +23563,7 @@ vector&[] byte ref = &str;
 native _char;
 ref = [] .. ({f}() as _char&&) .. "oi";
 native/pure _strlen;
-escape _strlen(&&str[0] as _char&&);
+escape _strlen((&&str[0]) as _char&&);
 ]],
     run = 5,
 }
@@ -23668,8 +23668,8 @@ native/pure _ID, _strlen;
 native _char;
 vector[] byte str = [] .. "abc"
                     .. (_ID("def") as _char&&);
-var byte&& str2 = _ID(&&str[0] as _char&&);
-escape _strlen(&&str[0] as _char&&) + _strlen(str2);
+var byte&& str2 = _ID((&&str[0]) as _char&&);
+escape _strlen((&&str[0]) as _char&&) + _strlen(str2);
 ]],
     run = 12,
 }
@@ -23689,7 +23689,7 @@ native/pure _strcmp;
 vector[] byte str1;
 vector[] byte str2 = [].."";
 native _char;
-escape _strcmp(&&str1[0] as _char&&,"")==0 and _strcmp(&&str2[0] as _char&&,"")==0;
+escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
 ]],
     run = 1,
 }
@@ -23713,7 +23713,7 @@ code/instantaneous Strlen (var byte&& str)=>int do
 end
 
 vector[] byte str = [].."Ola Mundo!";
-escape Strlen(&&str[0] as _char&&);
+escape Strlen((&&str[0]) as _char&&);
 ]],
     run = 10,
 }
@@ -23788,32 +23788,6 @@ escape v[2] + (($v) as int) + ok;
     run = 6,
 }
 
-Test { [=[
-var float f = 3.2;
-var bool ok = [[ 3.1<(@f) and 3.3>(@f) ]];
-escape ok;
-]=],
-    run = 1,
-}
-
-Test { [=[
-var int f = 3;
-var bool ok = [[ 3.0==@f ]];
-escape ok;
-]=],
-    run = 1,
-}
-
-Test { [=[
-vector[] byte str = [].."12345";
-vector[] byte bts = [1,2,3,4,5];
-var int r1 = [[ string.len(@&&str[0]) ]];
-var int r2 = [[ string.len(@&&bts[0]) ]];
-escape r1+r2;
-]=],
-    run = 10,
-}
-
 --<<< VECTORS / STRINGS
 
 Test { [[
@@ -23853,7 +23827,7 @@ Test { [[
 native/nohold _strlen;
 vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
 native _char;
-escape _strlen(&&v[0] as _char&&);
+escape _strlen((&&v[0]) as _char&&);
 ]],
     run = 3,
 }
@@ -23861,7 +23835,7 @@ Test { [[
 native/nohold _strlen;
 vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
 native _char;
-escape _strlen(&&v[0] as _char&&);
+escape _strlen((&&v[0]) as _char&&);
 ]],
     run = 3,
 }
@@ -23881,9 +23855,9 @@ end
 vector[10] byte v;
 vector[10] byte v_;
 native _char;
-_garbage(&&v[0] as _char&&);
+_garbage((&&v[0]) as _char&&);
 v = [{'a'},{'b'},{'c'}];
-escape _strlen(&&v[0] as _char&&);
+escape _strlen((&&v[0]) as _char&&);
 ]],
     run = 3,
 }
@@ -23928,11 +23902,11 @@ escape 1;
 
 Test { [[
 native/nohold _strlen;
-vector[] byte v = "abc";
+vector[] byte v = [].."abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
-    ids = 'line 4 : invalid use of `vector´ "v"',
+    ids = 'line 4 : unexpected context for vector "v"',
     --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
 }
@@ -23940,7 +23914,7 @@ Test { [[
 native/nohold _strlen;
 vector[] byte v = [].."abc";
 native _char;
-escape _strlen(&&v[0] as _char&&);
+escape _strlen((&&v[0]) as _char&&);
 ]],
     run = 3,
 }
@@ -23949,7 +23923,7 @@ native/nohold _strlen;
 vector[] byte v = [].."abc";
 v = [] .. v .. "def";
 native _char;
-escape _strlen(&&v[0] as _char&&);
+escape _strlen((&&v[0]) as _char&&);
 ]],
     run = 6,
 }
@@ -24149,7 +24123,7 @@ native/plain _int;
 var _int a=1, b=1;
 a = b;
 await 1s;
-escape a==b;
+escape (a==b) as int;
 ]],
     run = { ['~>1s'] = 1 },
 }
@@ -24158,7 +24132,7 @@ Test { [[
 var int a=1, b=1;
 a = b;
 await 1s;
-escape a==b;
+escape (a==b) as int;
 ]],
     run = { ['~>1s'] = 1 },
 }
@@ -24425,7 +24399,7 @@ native do
     }
 end
 var void v = _VD(10);
-escape v;
+escape 0;
 ]],
     env = 'line 5 : cannot instantiate type "void"',
 }
@@ -28559,6 +28533,32 @@ var float v2 = 0.5;
 escape v1==v2;
 ]=],
     run = 1,
+}
+
+Test { [=[
+var float f = 3.2;
+var bool ok = [[ 3.1<(@f) and 3.3>(@f) ]];
+escape ok;
+]=],
+    run = 1,
+}
+
+Test { [=[
+var int f = 3;
+var bool ok = [[ 3.0==@f ]];
+escape ok;
+]=],
+    run = 1,
+}
+
+Test { [=[
+vector[] byte str = [].."12345";
+vector[] byte bts = [1,2,3,4,5];
+var int r1 = [[ string.len(@&&str[0]) ]];
+var int r2 = [[ string.len(@&&bts[0]) ]];
+escape r1+r2;
+]=],
+    run = 10,
 }
 
 --<<< LUA

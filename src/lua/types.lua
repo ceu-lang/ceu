@@ -118,7 +118,7 @@ do
         { 'u64','u32','u16','u8','int' },
         { 'usize','uint','int' },
         { 's64','s32','s16','s8','int' },
-        { 'byte','int' },
+        { 'int','byte','int' },
     }
     local function contains_num (id1, id2)
         for _, t in ipairs(__contains_num) do
