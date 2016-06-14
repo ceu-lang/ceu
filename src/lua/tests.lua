@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17566,7 +17565,8 @@ end
 escape Fx(&str);
 ]],
     wrn = true,
-    sets = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
+    --sets = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
+    run = 1,
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -23032,7 +23032,7 @@ escape ($v) as int;
 
 Test { [[
 vector[10] u8 vec;
-escape $$vec + $vec;
+escape ($$vec + $vec) as int;
 ]],
     run = 10,
 }
@@ -23243,50 +23243,50 @@ escape 1;
 Test { [[
 vector[10] u8 v1 = [1,2,3];
 vector[20] u8 v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
+escape (v2[0] + v2[1] + v2[2]) as int;
 ]],
     run = 6,
 }
 Test { [[
 vector[20] u8 v1 = [1,2,3];
 vector[10] u8 v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
+escape (v2[0] + v2[1] + v2[2]) as int;
 ]],
     run = 6,
 }
 Test { [[
 vector[] u8 v1   = [1,2,3];
 vector[10] u8 v2 = []..v1;
+escape (v2[0] + v2[1] + v2[2]) as int;
+]],
+    run = 6,
+}
+Test { [[
+vector[10] byte v1 = [1,2,3];
+vector[] byte   v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = 6,
 }
 Test { [[
-vector[10] u8 v1 = [1,2,3];
-vector[] u8   v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    run = 6,
-}
-Test { [[
-vector[3] u8 v1 = [1,2,3];
-vector[2] u8 v2 = []..v1;
+vector[3] byte v1 = [1,2,3];
+vector[2] byte v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = '2] runtime error: access out of bounds',
 }
 
 Test { [[
-vector[10] u8 vec = [1,2,3];
-vector&[] u8  ref = &vec;
+vector[10] byte vec = [1,2,3];
+vector&[] byte  ref = &vec;
 escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 19,
 }
 
 Test { [[
-vector[10] u8  vec = [1,2,3];
-vector&[11] u8 ref = &vec;
+vector[10] byte  vec = [1,2,3];
+vector&[11] byte ref = &vec;
 escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 1,
@@ -23294,8 +23294,8 @@ escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 }
 
 Test { [[
-vector[10] u8 vec = [1,2,3];
-vector&[9] u8 ref = &vec;
+vector[10] byte vec = [1,2,3];
+vector&[9] byte ref = &vec;
 escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
@@ -23371,9 +23371,9 @@ escape bs[i];
 }
 
 Test { [[
-vector[5] u8 foo = [1, 2, 3, 4, 5];
+vector[5] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
-loop i in [0 -> $foo[ do
+loop i in [0 -> ($foo) as int[ do
     tot = tot + foo[i];
 end
 escape tot;
@@ -23381,9 +23381,9 @@ escape tot;
     tight = 'line 3 : tight loop',
 }
 Test { [[
-vector[5] u8 foo = [1, 2, 3, 4, 5];
+vector[5] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
-loop i in [0 -> $foo[ do
+loop i in [0 -> ($foo) as int[ do
     tot = tot + foo[i];
 end
 escape tot;
@@ -23394,9 +23394,9 @@ escape tot;
 }
 
 Test { [[
-vector[5] u8 foo = [1, 2, 3, 4, 5];
+vector[5] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
-loop i in [0 -> $$foo[ do
+loop i in [0 -> ($$foo) as int[ do
     tot = tot + foo[i];
 end
 escape tot;
@@ -23405,9 +23405,9 @@ escape tot;
 }
 
 Test { [[
-vector[] u8 foo = [1, 2, 3, 4, 5];
+vector[] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
-loop i in [0 -> $$foo[ do
+loop i in [0 -> ($$foo) as int[ do
     tot = tot + foo[i];
 end
 escape tot+1;
@@ -23482,7 +23482,7 @@ escape ret;
 Test { [[
 vector[] int v = [1,2,3];
 v = [] .. v .. v;
-escape $v + v[5];
+escape ($v + v[5]) as int;
 ]],
     run = 9,
 }
@@ -23490,7 +23490,7 @@ escape $v + v[5];
 Test { [[
 vector[] int v = [1,2,3];
 v = [1] .. v;
-escape $v + v[1];
+escape ($v + v[1]) as int;
 ]],
     run = 3,
 }
@@ -23498,7 +23498,7 @@ escape $v + v[1];
 Test { [[
 vector[] int v;
 $v = 0;
-escape $v + 1;
+escape ($v + 1) as int;
 ]],
     run = 1,
 }
@@ -23723,7 +23723,7 @@ vector[3] u8 bytes;
 
 bytes = [] .. bytes .. [5];
 
-escape bytes[0];
+escape bytes[0] as int;
 ]],
     run = 5,
 }
@@ -23939,7 +23939,7 @@ escape 1;
 
 Test { [[
 var int nnn = 10;
-vector[nnn] u8 xxx;
+vector[nnn] byte xxx;
 $xxx := nnn;
 xxx[0] = 10;
 xxx[9] = 1;
@@ -23950,7 +23950,7 @@ escape xxx[0]+xxx[9];
 
 Test { [[
 var int nnn = 10;
-vector[nnn] u8 xxx;
+vector[nnn] byte xxx;
 $xxx := nnn+1;
 escape 1;
 ]],
@@ -23959,7 +23959,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-vector[n] u8 us;
+vector[n] byte us;
 $us := n;
 $us = 20;
 escape 1;
@@ -23969,7 +23969,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-vector[] u8 us;
+vector[] byte us;
 $us = n;
 escape 1;
 ]],
@@ -23978,7 +23978,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-vector[] u8 us;
+vector[] byte us;
 $us := n;
 escape 1;
 ]],
@@ -23987,7 +23987,7 @@ escape 1;
 
 Test { [[
 var int n = 10;
-vector[n] u8 us = [0,1,2,3,4,5,6,7,8,9];
+vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n] = 10;
 escape us[0]+us[9];
 ]],
@@ -23996,7 +23996,7 @@ escape us[0]+us[9];
 
 Test { [[
 var int n = 10;
-vector[n] u8 us = [0,1,2,3,4,5,6,7,8,9];
+vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
 us[n-1] = 1;
 escape us[0]+us[9];
 ]],
@@ -24067,6 +24067,7 @@ escape xxxx[0]+xxxx[_N-1];
     gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
 }
 
+--]===]
 Test { [[
 #define HASH_BYTES 32
 vector[HASH_BYTES+sizeof(u32)] byte bs;
