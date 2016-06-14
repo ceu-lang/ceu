@@ -23077,12 +23077,12 @@ escape 1;
 ]],
     parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator',
 }
---]===]
 Test { [[
 vector[10] u8 vec = (1);
 escape 1;
 ]],
-    env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
+    --env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
+    ids = 'line 1 : invalid assignment : unexpected context for vector "vec"',
 }
 Test { [[
 native _int;
@@ -23124,6 +23124,7 @@ escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
     exps = 'line 2 : invalid expression : incompatible numeric types',
 }
+--]===]
 Test { [[
 vector[10] u8 vec = [1,2,3];
 escape (($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2];

@@ -10,7 +10,7 @@ end
 F = {
     ID_int = function (me)
         if me.dcl.tag ~= 'Var' then
-AST.dump(me.__par.__par)
+AST.dump(me.__par.__par.__par)
             ASR(me.__ctxs_ok, me, use(me))
         end
     end,
@@ -98,12 +98,26 @@ DBG'TODO'
         end
     end,
 
-    -- vec = ...
     Set_Vec__PRE = function (me)
-        local _,to = unpack(me)
+        local fr,to = unpack(me)
+
+        -- vec = ...
         local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
         assert(ID_int.dcl.tag == 'Vec')
         use(ID_int)
+
+        -- ... = []..vec
+        if fr.tag == '_Vec_New' then
+DBG'TODO: _Vec_New'
+            for _, e in ipairs(fr) do
+                if e.tag == 'Exp_Name' then
+                    local ID_int = unpack(e)
+                    if ID_int.tag=='ID_int' and ID_int.dcl.tag=='Vec' then
+                        use(ID_int)
+                    end
+                end
+            end
+        end
     end,
 
     --------------------------------------------------------------------------

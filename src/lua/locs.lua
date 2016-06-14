@@ -126,19 +126,6 @@ DBG('TODO: _Thread, _Isr')
                     break
                 end
             end
-        elseif stmt.tag=='Exp_1&' and AST.asr(stmt,'',2,'Exp_Name')[1]==me then
-            -- &x
-            ok = true
-        elseif me.__par.tag=='Set_Exp' and is_alias then
-            -- <kind>& v = ?
-            ok = true
-        elseif me.dcl.tag == 'Var' then
-            ok = true
-            if stmt.tag=='Emit_Evt' or stmt.tag=='Await_Evt' then
-                if AST.asr(stmt,'',1,'Exp_Name')[1] == me then
-                    ok = false
-                end
-            end
         elseif me.dcl.tag == 'Evt' then
             -- emit e => x
             -- await e
@@ -150,36 +137,10 @@ DBG('TODO: _Pause')
                 end
             end
         elseif me.dcl.tag == 'Vec' then
-            -- v[i]
-            do
-                local exp = me.__par
-                if exp.tag=='Exp_idx' and exp[2]==me then
-                    ok = true
-                end
-            end
-            -- $v, $$v
-            do
-                local exp = me.__par.__par
-                if (exp.tag=='Exp_$' or exp.tag=='Exp_$$') and
-                   AST.asr(exp[2],'Exp_Name')[1]==me
-                then
-                    ok = true
-                end
-            end
             -- v = [] .. ?
             do
                 local exp = me.__par
                 if exp[2]==me and (exp.tag=='Set_Vec' or exp.tag=='Set_Exp') then
-                    ok = true
-                end
-            end
-            -- v = ?
-            do
-                local exp = me.__par.__par
-DBG'TODO: remove'
-                if string.sub(exp.tag,1,4) == 'Set_' and
-                   AST.asr(exp,'',1,'Exp_Name')[2] == me
-                then
                     ok = true
                 end
             end
