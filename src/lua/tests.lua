@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2322,7 +2323,6 @@ escape 0;
     kinds = 'line 3 : invalid use of `event´',
     --env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
---]===]
 
 Test { [[
 var u8&& ptr =
@@ -5234,7 +5234,7 @@ emit c => 10;
 emit c => 10;
 escape c;
 ]],
-    locs = 'line 4 : invalid use of `event´',
+    kinds = 'line 4 : invalid assignment : kinds mismatch : `var´ <= `event´',
     --env = 'line 4 : types mismatch (`int´ <= `void´)',
     --trig_wo = 2,
 }
