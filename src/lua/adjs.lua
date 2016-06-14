@@ -303,10 +303,10 @@ DBG('TODO: _Loop_Pool')
     _Set__PRE = function (me)
         local to,op,set = unpack(me)
 
-        if set.tag=='_Set_Exp' or
+        if set.tag=='_Set_Exp'       or set.tag=='_Set_None'       or
            set.tag=='_Set_Await_one' or set.tag=='_Set_Await_many' or
-           set.tag=='_Set_Vec' or set.tag=='_Set_Emit_Ext_emit' or
-           set.tag=='_Set_None'
+           set.tag=='_Set_Vec'       or set.tag=='_Set_Emit_Ext_emit' or
+           set.tag=='_Set_Thread'
         then
             assert(#set == 1, 'bug found')
             set.tag = string.sub(set.tag,2)

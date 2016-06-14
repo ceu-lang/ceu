@@ -27077,7 +27077,6 @@ escape ret;
 
 -->>> DONT CARE, NONE
 
---]===]
 Test { [[
 var int a = _;
 loop _ in [0->10[ do
@@ -27145,11 +27144,12 @@ escape a + b + p;
     run = 20,
 }
 
+--]===]
 Test { [[
 var int ret =
     async/thread do
     end;
-escape (ret == 1);
+escape (ret == 1) as int;
 ]],
     run = 1,
 }
