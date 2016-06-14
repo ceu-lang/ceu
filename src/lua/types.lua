@@ -189,6 +189,9 @@ do
             elseif TYPES.check(tp2,'null') then
                 -- ?&& <- null
                 return true
+            elseif tp1_is_nat then
+                -- _ <- ?&&
+                return true
             elseif TYPES.contains(tp1,tp2) then
                 return true
             end

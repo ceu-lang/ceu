@@ -14,7 +14,7 @@ F = {
         me.tp = { TOPS.bool }
     end,
     STRING = function (me)
-        me.tp = { TOPS._char }
+        me.tp = { TOPS._char, '&&' }
     end,
     NULL = function (me)
         me.tp = { TOPS.null, '&&' }

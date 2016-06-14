@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -24067,11 +24068,10 @@ escape xxxx[0]+xxxx[_N-1];
     gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
 }
 
---]===]
 Test { [[
 #define HASH_BYTES 32
 vector[HASH_BYTES+sizeof(u32)] byte bs;
-escape $$bs;
+escape ($$bs) as int;
 ]],
     run = 36,
 }
@@ -24079,7 +24079,7 @@ escape $$bs;
 Test { [[
 var int n = 32;
 vector[n] byte bs;
-escape $$bs;
+escape ($$bs) as int;
 ]],
     run = 32,
 }
@@ -24525,14 +24525,14 @@ var void&& v=null;
 native _V;
 _V = v;
 await 1s;
-escape _V==null;
+escape (_V==null) as int;
 ]],
     run = false,
     --fin = 'line 7 : pointer access across `await´',
 }
 
 Test { [[
-do
+do/_
     var int&& p, p1;
     input int&& E;
     p = await E;
@@ -25399,7 +25399,7 @@ escape i;
 Test { [[
 native _char;
 vector[10] _char a;
-a = "oioioi";
+a = [].."oioioi";
 escape 1;
 ]],
     gcc = '2:32: error: assignment to expression with array type',
@@ -25420,7 +25420,8 @@ var int a;
 a = "oioioi";
 escape 1;
 ]],
-    env = 'line 2 : types mismatch (`int´ <= `_char&&´)',
+    sets = 'line 2 : invalid assignment : types mismatch : "int" <= "_char&&"',
+    --env = 'line 2 : types mismatch (`int´ <= `_char&&´)',
 }
 
 Test { [[

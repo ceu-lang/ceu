@@ -11,7 +11,12 @@ TOPS = {
     _ = {
         id = '_',
         group = 'native',
-        is_used = true,
+        is_predefined = true,
+    },
+    _char = {
+        id = '_char',
+        group = 'native',
+        is_predefined = true,
     },
 }
 
@@ -53,9 +58,11 @@ local native_end = false
 
 local function tops_new (me)
     local old = TOPS[me.id]
-    ASR(not old, me, old and
-        'identifier "'..me.id..'" is already declared'..
-            ' ('..old.ln[1]..' : line '..old.ln[2]..')')
+    if old and (not old.is_predefined) then
+        ASR(false, me,
+            'identifier "'..me.id..'" is already declared'..
+                ' ('..old.ln[1]..' : line '..old.ln[2]..')')
+    end
     TOPS[me.id] = me
 end
 
@@ -159,6 +166,7 @@ for _, top in pairs(TOPS) do
     if top.group=='data' and string.sub(top.id,1,1)=='_' then
         -- auto generated
     else
-        WRN(top.is_used, top, top.group..' "'..top.id..' declared but not used')
+        WRN(top.is_used or top.is_predefined, top,
+            top.group..' "'..top.id..' declared but not used')
     end
 end
