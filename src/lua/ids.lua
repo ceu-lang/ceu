@@ -27,6 +27,14 @@ AST.dump(me.__par.__par)
         end
     end,
 
+    -- $/$$vec
+    ['Exp_$$__PRE'] = 'Exp_$__PRE',
+    ['Exp_$__PRE'] = function (me)
+        local _,vec = unpack(me)
+        local ID_int = AST.asr(vec,'Exp_Name', 1,'ID_int')
+        use(ID_int)
+    end,
+
     -- &id
     ['Exp_1&__PRE'] = function (me)
         local _,e = unpack(me)

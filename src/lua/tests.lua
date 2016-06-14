@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -22800,23 +22799,23 @@ vector[2] _int v;
 v=v;
 escape 0;
 ]],
-    ids = 'line 3 : invalid use of `vector´ "v"',
+    ids = 'line 3 : invalid assignment : unexpected context for vector "v"',
     --env='types mismatch'
 }
 Test { [[vector[1] int v; escape v;]],
-    ids = 'line 1 : invalid use of `vector´ "v"',
+    ids = 'line 1 : invalid assignment : unexpected context for vector "v"',
     --env='cannot index a non array'
 }
 Test { [[native _int; vector[2] _int v; escape v[v];]],
-    ids = 'line 1 : invalid use of `vector´ "v"',
-    env='invalid array index'
+    ids = 'line 1 : unexpected context for vector "v"',
+    --env='invalid array index'
 }
 
 Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    ids = 'line 2 : invalid use of `vector´ "v"',
+    ids = 'line 2 : unexpected context for vector "v"',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
@@ -22826,7 +22825,7 @@ native _int;
 vector[2] _int v ;
 escape v == &&v[0] ;
 ]],
-    ids = 'line 3 : invalid use of `vector´ "v"',
+    ids = 'line 3 : unexpected context for vector "v"',
     --exps = 'line 3 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
@@ -22939,7 +22938,7 @@ var u32 len;
 vector[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
-    groups = 'line 5 : invalid assignment : ids mismatch : "vector" <= "var"',
+    ids = 'line 5 : invalid assignment : unexpected context for vector "c"',
 }
 
 Test { [[
@@ -22951,7 +22950,7 @@ vector[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
     --env = 'line 5 : cannot index pointers to internal types',
-    groups = 'line 5 : invalid assignment : ids mismatch : "vector" <= "var"',
+    ids = 'line 5 : invalid assignment : unexpected context for vector "c"',
 }
 
 Test { [[
@@ -22978,9 +22977,9 @@ vector[3] _char buf_ = [];
 var _uv_buf_t buf = _uv_buf_init(&&buf_[0], 1);
 var _uv_stream_t client = _uv_stream_t();
 var int ret;
-do ret = _ceu_uv_read_start(&&client as _uv_stream_t&&, &&buf);
+do ret = _ceu_uv_read_start((&&client) as _uv_stream_t&&, &&buf);
                     finalize with
-                        _uv_read_stop(&&client as _uv_stream_t&&);
+                        _uv_read_stop((&&client) as _uv_stream_t&&);
                     end;
 _assert(ret == 0);
 escape 0;
@@ -22998,6 +22997,17 @@ str = "oioioi";
 
 escape _strlen(&&str[0]);
 ]],
+    ids = 'line 5 : invalid assignment : unexpected context for vector "str"',
+}
+Test { [[
+native/pure _strlen;
+
+native _char;
+vector[255] _char str;
+str = [].."oioioi";
+
+escape _strlen(&&str[0]);
+]],
     --locs = 'line 5 : invalid use of `vector´ "str"',
     gcc = '4:34: error: assignment to expression with array type',
 }
@@ -23008,13 +23018,13 @@ escape _strlen(&&str[0]);
 
 Test { [[
 var u8 v;
-escape $$v;
+escape ($$v) as int;
 ]],
     env = 'line 2 : invalid operand to unary "$$" : vector expected',
 }
 Test { [[
 var u8 v;
-escape $v;
+escape ($v) as int;
 ]],
     env = 'line 2 : invalid operand to unary "$" : vector expected',
 }
@@ -23028,7 +23038,7 @@ escape $$vec + $vec;
 
 Test { [[
 vector[] u8 vec;
-escape $$vec + $vec + 1;
+escape ($$vec + $vec + 1) as int;
 ]],
     run = 1,
 }
@@ -23067,6 +23077,7 @@ escape 1;
 ]],
     parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator',
 }
+--]===]
 Test { [[
 vector[10] u8 vec = (1);
 escape 1;
