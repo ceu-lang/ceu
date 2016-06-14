@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2308,7 +2309,6 @@ escape 0;
     },
 }
 
---]===]
 Test { [[
 event int a;
 par/and do
@@ -5234,7 +5234,7 @@ emit c => 10;
 emit c => 10;
 escape c;
 ]],
-    ids = 'line 4 : invalid assignment : ids mismatch : `var´ <= `event´',
+    ids = 'line 4 : invalid assignment : unexpected context for event "c"',
     --env = 'line 4 : types mismatch (`int´ <= `void´)',
     --trig_wo = 2,
 }
