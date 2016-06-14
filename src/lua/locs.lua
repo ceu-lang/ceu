@@ -126,16 +126,6 @@ DBG('TODO: _Thread, _Isr')
                     break
                 end
             end
-        elseif me.dcl.tag == 'Evt' then
-            -- emit e => x
-            -- await e
-DBG('TODO: _Pause')
-            if stmt.tag=='Emit_Evt' or stmt.tag=='Await_Evt' or stmt.tag=='_Pause'
-            then
-                if AST.asr(stmt,'',1,'Exp_Name')[1] == me then
-                    ok = true
-                end
-            end
         elseif me.dcl.tag == 'Vec' then
             -- v = [] .. ?
             do

@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -25744,7 +25743,7 @@ end
 
 var int ret = 0;
 loop i in [0 -> 10[ do
-    ret = ret + (v2[i] as u8) - v1[i];
+    ret = ret + (v2[i] as int) - v1[i];
 end
 
 escape ret;
@@ -25945,7 +25944,7 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    ids = 'line 5 : invalid use of `vector´ "i"',
+    ids = 'line 5 : invalid assignment : unexpected context for vector "i"',
     --env = 'line 4 : types mismatch (`_int&&´ <= `_int[]´)',
     --run = { ['~>1s']=1 },
 }
@@ -25977,7 +25976,7 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    ids = 'line 4 : invalid use of `vector´ "i"',
+    ids = 'line 4 : invalid assignment : unexpected context for vector "i"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]´)',
     --run = { ['~>1s']=1 },
 }
@@ -25995,7 +25994,7 @@ do
 end
 escape *u;
 ]],
-    ids = 'line 6 : invalid use of `vector´ "i"',
+    ids = 'line 6 : invalid assignment : unexpected context for vector "i"',
     --env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
 }
 Test { [[
@@ -26392,6 +26391,15 @@ escape 1;
 }
 
 Test { [[
+var bool a;
+pause/if a do
+end
+escape 1;
+]],
+    ids = 'line 2 : invalid `pause/if´ : unexpected context for variable "a"',
+}
+
+Test { [[
 input void A;
 pause/if A do
 end
@@ -26409,7 +26417,8 @@ escape 0;
 ]],
     --env = 'line 2 : event type must be numeric',
     --env = 'line 2 : invalid attribution',
-    env = 'line 2 : arity mismatch',
+    --env = 'line 2 : arity mismatch',
+    sets = 'line 2 : invalid assignment : types mismatch : "(int)" <= "()"',
     --env = 'line 2 : invalid attribution (int vs void)',
 }
 
@@ -27068,13 +27077,14 @@ escape ret;
 
 -->>> DONT CARE, NONE
 
+--]===]
 Test { [[
 var int a = _;
 loop _ in [0->10[ do
 end
 
 do/_
-    escape;
+    escape/_;
 end
 
 await 1ms/_;

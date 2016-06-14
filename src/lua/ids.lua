@@ -122,6 +122,7 @@ DBG'TODO: _Vec_New'
 
     --------------------------------------------------------------------------
 
+    _Pause__PRE   = function(me) return F.Await_Evt__PRE(me,'pause/if') end,
     Emit_Evt__PRE = function(me) return F.Await_Evt__PRE(me,'emit') end,
     Await_Evt__PRE = function (me, tag)
         local name = unpack(me)
