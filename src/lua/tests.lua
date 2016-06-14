@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -16213,7 +16212,7 @@ end;
 escape a;
 ]],
     wrn = true,
-    locs = 'line 8 : invalid use of `var´ "a"',
+    ids = 'line 8 : invalid `emit´ : unexpected context for variable "a"',
     --env = 'line 8 : identifier "a" is not an event (tests.lua : line 5)',
     --locs = 'line 23 : invalid use of `event´',
 }
@@ -17608,6 +17607,7 @@ escape Fx(&str);
     wrn = true,
     env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
 }
+--]===]
 Test { [[
 vector[] byte str = [0,1,2];
 
@@ -17619,7 +17619,7 @@ escape Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    locs = 'line 7 : invalid use of `vector´ "str"',
+    ids = 'line 7 : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];

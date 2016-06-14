@@ -17,13 +17,20 @@ F = {
     --------------------------------------------------------------------------
 
     -- vec[i]
-    Exp_idx__PRE = function (me)
+    ['Exp_idx__PRE'] = function (me)
         local _,vec = unpack(me)
         if vec.tag == 'ID_int' then
             if vec.dcl.tag == 'Vec' then
                 use(vec)
             end
         end
+    end,
+
+    -- &id
+    ['Exp_1&__PRE'] = function (me)
+        local _,e = unpack(me)
+        local ID_int = AST.asr(e,'Exp_Name', 1,'ID_int')
+        use(ID_int)
     end,
 
     --------------------------------------------------------------------------
@@ -65,6 +72,16 @@ F = {
             end
         end
     end,
+
+    -- vec = ...
+    Set_Vec__PRE = function (me)
+        local _,to = unpack(me)
+        local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
+        assert(ID_int.dcl.tag == 'Vec')
+        use(ID_int)
+    end,
+
+    --------------------------------------------------------------------------
 
     Emit_Evt__PRE = function(me) return F.Await_Evt__PRE(me,'emit') end,
     Await_Evt__PRE = function (me, tag)
