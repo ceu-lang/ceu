@@ -17607,7 +17607,6 @@ escape Fx(&str);
     wrn = true,
     env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
 }
---]===]
 Test { [[
 vector[] byte str = [0,1,2];
 
@@ -17785,13 +17784,14 @@ escape 1;
     fin = 'line 2 : call requires `finalize´',
 }
 
+--]===]
 Test { [[
 native _enqueue;
 vector[255] byte buf;
 _enqueue(buf);
 escape 1;
 ]],
-    locs = 'line 3 : invalid use of `vector´ "buf"',
+    ids = 'line 3 : unexpected context for vector "buf"',
     --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
     --fin = 'line 2 : call requires `finalize´',
 }
@@ -17801,7 +17801,7 @@ vector[255] byte buf;
 _enqueue(&&buf);
 escape 1;
 ]],
-    locs = 'line 3 : invalid use of `vector´ "buf"',
+    ids = 'line 3 : unexpected context for vector "buf"',
     --fin = 'line 2 : call requires `finalize´',
 }
 

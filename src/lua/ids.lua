@@ -10,6 +10,7 @@ end
 F = {
     ID_int = function (me)
         if me.dcl.tag ~= 'Var' then
+AST.dump(me.__par.__par)
             ASR(me.__ctxs_ok, me, use(me))
         end
     end,
@@ -24,13 +25,6 @@ F = {
                 use(vec)
             end
         end
-    end,
-
-    -- &id
-    ['Exp_1&__PRE'] = function (me)
-        local _,e = unpack(me)
-        local ID_int = AST.asr(e,'Exp_Name', 1,'ID_int')
-        use(ID_int)
     end,
 
     --------------------------------------------------------------------------
@@ -71,6 +65,15 @@ F = {
                 end
             end
         end
+    end,
+
+    -- id = &id
+    ['Set_Alias__PRE'] = function (me)
+        local fr,to = unpack(me)
+        local fr_id = AST.asr(fr,'Exp_1&', 2,'Exp_Name', 1,'ID_int')
+        local to_id = AST.asr(to,'Exp_Name', 1,'ID_int')
+        use(to_id)
+        use(fr_id)
     end,
 
     -- vec = ...

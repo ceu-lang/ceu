@@ -311,6 +311,12 @@ DBG('TODO: _Loop_Pool')
             set.tag = string.sub(set.tag,2)
             set[#set+1] = to
             set[#set+1] = op
+
+            -- a = &b   (Set_Exp->Set_Alias)
+            if set.tag=='Set_Exp' and set[1].tag=='Exp_1&' then
+                set.tag = 'Set_Alias'
+            end
+
             return set
         elseif set.tag == '_Set_Do' then
             -- set to "to" happens on "escape"

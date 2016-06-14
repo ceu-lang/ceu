@@ -230,7 +230,7 @@ assert(Typelist.tag=='Typelist', 'TODO')
     ['Exp_1&'] = function (me)
         local op, e = unpack(me)
         local par = me.__par
-        ASR(par.tag=='Set_Exp' or par.tag=='Explist', me,
+        ASR(par.tag=='Set_Alias' or par.tag=='Explist', me,
             'invalid expression : operand `'..op..'´')
         me.tp = TYPES.copy(e.tp)
     end,
