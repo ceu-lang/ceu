@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1470,12 +1469,12 @@ Test { [[var int a; a = emit a => 1; escape a;]],
 }
 
 Test { [[var int a; emit a => 1; escape a;]],
-    kinds = 'line 1 : invalid `emit´ : expected `event´',
+    ids = 'line 1 : invalid `emit´ : unexpected context for variable "a"',
     --env = 'line 1 : identifier "a" is not an event (tests.lua : line 1)',
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; escape a;]],
-    kinds = 'line 1 : invalid assignment : unexpected `event´',
+    ids = 'line 1 : invalid assignment : unexpected context for event "a"',
     --parser = 'line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
@@ -1484,7 +1483,7 @@ event int a;
 emit a => 1;
 escape a;
 ]],
-    kinds = 'line 3 : invalid assignment : kinds mismatch : `var´ <= `event´',
+    ids = 'line 3 : invalid assignment : unexpected context for event "a"',
     --run = 1,
     --trig_wo = 1,
 }
@@ -2309,6 +2308,7 @@ escape 0;
     },
 }
 
+--]===]
 Test { [[
 event int a;
 par/and do
@@ -2320,7 +2320,7 @@ with
 end;
 escape 0;
 ]],
-    kinds = 'line 3 : invalid use of `event´',
+    ids = 'line 3 : unexpected context for event "a"',
     --env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
 
@@ -5234,7 +5234,7 @@ emit c => 10;
 emit c => 10;
 escape c;
 ]],
-    kinds = 'line 4 : invalid assignment : kinds mismatch : `var´ <= `event´',
+    ids = 'line 4 : invalid assignment : ids mismatch : `var´ <= `event´',
     --env = 'line 4 : types mismatch (`int´ <= `void´)',
     --trig_wo = 2,
 }
@@ -22939,7 +22939,7 @@ var u32 len;
 vector[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
-    groups = 'line 5 : invalid assignment : kinds mismatch : "vector" <= "var"',
+    groups = 'line 5 : invalid assignment : ids mismatch : "vector" <= "var"',
 }
 
 Test { [[
@@ -22951,7 +22951,7 @@ vector[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
     --env = 'line 5 : cannot index pointers to internal types',
-    groups = 'line 5 : invalid assignment : kinds mismatch : "vector" <= "var"',
+    groups = 'line 5 : invalid assignment : ids mismatch : "vector" <= "var"',
 }
 
 Test { [[

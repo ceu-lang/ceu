@@ -51,11 +51,12 @@ F = {
         end
     end,
 
-    Emit_Evt = function (me)
+    Emit_Evt__PRE = function(me) return F.Await_Evt__PRE(me,'emit') end,
+    Await_Evt__PRE = function (me, tag)
         local name = unpack(me)
+        local tag = tag or 'await'
         local ID = AST.asr(name,'Exp_Name', 1,'ID_int')
-        ASR(ID.dcl.tag == 'Evt', me,
-            'invalid `emit´ : '..use(ID))
+        ASR(ID.dcl.tag == 'Evt', me, 'invalid `'..tag..'´ : '..use(ID))
     end,
 }
 AST.visit(F)
