@@ -47754,7 +47754,6 @@ escape 1;
     props = 'line 3 : not permitted inside `atomic´',
 }
 
---]===]
 PRE_ISR = [[
 pre native do
     tceu_app CEU_APP;
@@ -48333,7 +48332,7 @@ with
 end
 escape 1;
 ]],
-    ids = 'line 4 : invalid use of `vector´ "v"',
+    ids = 'line 4 : unexpected context for vector "v"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
     --env = 'line 4 : invalid operand to unary "&&"',
 }
@@ -48377,7 +48376,8 @@ with
 end
 escape 1;
 ]],
-    env = ' line 4 : arity mismatch',
+    exps = 'line 4 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    --env = ' line 4 : arity mismatch',
 }
 
 Test { [[
@@ -49274,6 +49274,17 @@ escape n;
     run = { ['~>1001ms'] = 1000 },
 }
 
+Test { [[
+input void OS_START;
+watching OS_START do
+    await FOREVER;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+--]===]
 Test { [[
 event int e;
 par do

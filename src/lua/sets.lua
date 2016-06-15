@@ -17,7 +17,7 @@ F = {
 
     Set_Await_one = function (me)
         local fr, to = unpack(me)
-        assert(fr.tag=='Await_Wclock' or fr.tag=='Await_Code')
+        assert(fr.tag=='Await_Wclock' or fr.tag=='Await_Code' or fr.tag=='Await_Evt')
         F.__check(me, to.tp, fr.tp)
     end,
 

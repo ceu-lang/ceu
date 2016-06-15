@@ -332,8 +332,13 @@ DBG('TODO: _Loop_Pool')
         if set.tag == '_Set_Watching' then
             local watching = AST.asr(unpack(set),'_Watching')
             local awt = unpack(watching)
-            local tag = (awt.tag=='Await_Until' and '_Set_Await_many')
-                        or '_Set_Await_one'
+            local tag do
+                if awt.tag=='Await_Until' or awt.tag=='_Await_Until' then
+                    tag = '_Set_Await_many'
+                else
+                    tag = '_Set_Await_one'
+                end
+            end
             me[3] = node(tag, me.ln, awt)
             watching[1] = me
             return watching
@@ -371,6 +376,10 @@ end
 AST.dump(me)
 error 'TODO'
         end
+    end,
+
+    _Await_Until = function (me)
+        me.tag = 'Await_Until'
     end,
 
     _Escape__PRE = function (me)
