@@ -303,6 +303,29 @@ DBG('TODO: _Loop_Pool')
     _Set__PRE = function (me)
         local to,op,set = unpack(me)
 
+        --  _Set
+        --      to
+        --      =
+        --      _Set_Watching
+        --          _Watching
+        --              Await_*
+        --              Block
+        --  _Watching
+        --      _Set
+        --          to
+        --          =
+        --          _Set_Await_many
+        --              Await_*
+        --      Block
+        if set.tag == '_Set_Watching' then
+            local watching = AST.asr(unpack(set),'_Watching')
+            local awt = unpack(watching)
+            me[3] = node('_Set_Await_many', me.ln, awt)
+            watching[1] = me
+            return watching
+        end
+
+
         if set.tag=='_Set_Exp'       or set.tag=='_Set_None'       or
            set.tag=='_Set_Await_one' or set.tag=='_Set_Await_many' or
            set.tag=='_Set_Vec'       or set.tag=='_Set_Emit_Ext_emit' or
