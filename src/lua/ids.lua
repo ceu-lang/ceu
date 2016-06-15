@@ -103,8 +103,9 @@ DBG'TODO'
 
         -- vec = ...
         local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
-        assert(ID_int.dcl.tag == 'Vec')
-        use(ID_int)
+        ASR(ID_int.dcl.tag == 'Vec', me,
+            'invalid constructor : '..use(ID_int))
+        --use(ID_int)
 
         -- ... = []..vec
         if fr.tag == '_Vec_New' then

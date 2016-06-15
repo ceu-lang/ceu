@@ -646,7 +646,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __data_pre    = K'new'^-1 * V'__ID_abs'
 
     , Vec_Tup  = V'__vec_pre' * OPT(V'Explist') * KK']'
-    , _Vec_New = V'Vec_Tup' * (KK'..' * (V'__Exp' + #KK'['*V'Vec_Tup'))^0
+    , _Vec_New = V'Vec_Tup' * (KK'..' * (V'__Exp' + V'_Lua' + #KK'['*V'Vec_Tup'))^0
 
     , Data_New = OPT(CK'new') * V'Data_New_one'
     , Data_New_one  = V'ID_abs' * PARENS(V'_Data_explist')

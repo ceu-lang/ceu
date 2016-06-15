@@ -24107,6 +24107,13 @@ escape cs[0];
     run = 10,
 }
 
+Test { [=[
+var int r1 = [1,2,3];
+escape 1;
+]=],
+    ids = 'line 1 : invalid constructor : unexpected context for variable "r1"',
+}
+
 --<<< VECTORS / STRINGS
 
     -- NATIVE C FUNCS BLOCK RAW
@@ -28247,21 +28254,21 @@ escape a;
 
 Test { [=[
 var bool v = [["ok" == 'ok']];
-escape v;
+escape v as int;
 ]=],
     run = 1,
 }
 
 Test { [=[
 var bool v = [[true]];
-escape v;
+escape v as int;
 ]=],
     run = 1,
 }
 
 Test { [=[
 var bool v = [[false]];
-escape v;
+escape v as int;
 ]=],
     run = 0,
 }
@@ -28325,7 +28332,7 @@ escape ret;
 }
 Test { [=[
 var bool ret = [[ nil ]];
-escape ret==false;
+escape (ret==false) as int;
 ]=],
     run = 1,
 }
@@ -28346,6 +28353,19 @@ var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy = [[ str ]];
 escape ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&));
 ]=],
+    ids = 'line 6 : unexpected context for vector "cpy"',
+    --run = 1,
+}
+
+Test { [=[
+native _char;
+native/nohold _strcmp;
+var byte&& str = "oioioi";
+[[ str = @str ]]
+var bool ret = [[ str == 'oioioi' ]];
+vector[10] byte cpy = [].. [[ str ]];
+escape (ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&))) as int;
+]=],
     run = 1,
 }
 
@@ -28361,7 +28381,7 @@ var byte&& ptr = cpy;
 ptr = [[ str ]];
 escape ret and (0 == _strcmp(&&str[0],&&cpy[0]));
 ]=],
-    ids = 'line 8 : invalid use of `vector´ "cpy"',
+    ids = 'line 8 : invalid assignment : unexpected context for vector "cpy"',
 }
 
 Test { [=[
@@ -28371,7 +28391,7 @@ vector[10] byte str = [] .. "oioioi";
 var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy;
 vector&[10] byte ptr = &cpy;
-ptr = [[ str ]];
+ptr = [].. [[ str ]];
 native _char;
 escape (ret and (0 == _strcmp((&&str[0]) as _char&&,(&&cpy[0]) as _char&&))) as int;
 ]=],
@@ -28381,9 +28401,9 @@ escape (ret and (0 == _strcmp((&&str[0]) as _char&&,(&&cpy[0]) as _char&&))) as 
 Test { [=[
 native/nohold _strcmp;
 [[ str = '1234567890' ]]
-vector[2] byte cpy = [[ str ]];
+vector[2] byte cpy = [].. [[ str ]];
 native _char;
-escape (_strcmp((&&cpy[0]) as _char&&,"1") == 0);
+escape (_strcmp((&&cpy[0]) as _char&&,"1") == 0) as int;
 ]=],
     run = '3] runtime error: access out of bounds',
 }
@@ -28394,9 +28414,9 @@ native/nohold _strcmp;
 vector[2] byte cpy;
 vector[20] byte cpy_;
 vector&[] byte ptr = &cpy;
-ptr = [[ str ]];
+ptr = [].. [[ str ]];
 native _char;
-escape (0 == _strcmp((&&cpy[0]) as _char&&,"1234567890"));
+escape (0 == _strcmp((&&cpy[0]) as _char&&,"1234567890")) as int;
 ]=],
     run = '6] runtime error: access out of bounds',
 }
@@ -28442,7 +28462,7 @@ var int v_from_ceu = [[v_from_lua]];
 [[
 str_from_lua = 'string from lua'
 ]]
-vector[100] byte str_from_ceu = [[str_from_lua]];
+vector[100] byte str_from_ceu = [].. [[str_from_lua]];
 native _assert;
 native _char;
 _assert(0==_strcmp((&&str_from_ceu[0]) as _char&&, "string from lua"));
@@ -28465,7 +28485,7 @@ var int a=0;
 var void&& ptr1 = &&a;
 [[ ptr = @ptr1 ]];
 var void&& ptr2 = [[ ptr ]];
-escape ptr2==&&a;
+escape (ptr2==&&a) as int;
 ]=],
     run = 1,
 }
@@ -28543,7 +28563,7 @@ escape Fx();
 Test { [=[
 var float v1 = [[ 0.5 ]];
 var float v2 = 0.5;
-escape v1==v2;
+escape (v1==v2) as int;
 ]=],
     run = 1,
 }
@@ -28551,7 +28571,7 @@ escape v1==v2;
 Test { [=[
 var float f = 3.2;
 var bool ok = [[ 3.1<(@f) and 3.3>(@f) ]];
-escape ok;
+escape ok as int;
 ]=],
     run = 1,
 }
@@ -28559,7 +28579,7 @@ escape ok;
 Test { [=[
 var int f = 3;
 var bool ok = [[ 3.0==@f ]];
-escape ok;
+escape ok as int;
 ]=],
     run = 1,
 }
@@ -28573,6 +28593,7 @@ escape r1+r2;
 ]=],
     run = 10,
 }
+do return end
 
 --<<< LUA
 
