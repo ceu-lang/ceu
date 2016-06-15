@@ -44218,7 +44218,6 @@ escape Fx(1) + this.x;
     run = 3,
 }
 
---]===]
 Test { [[
 code/instantaneous Code (var int)=>void;
 code/instantaneous Code (var int a)=>void
@@ -45440,7 +45439,7 @@ native _V;
 end
 var void&& x=null;
 Fx(5 as void&&);
-escape _V==(5 as void&&);
+escape (_V==(5 as void&&)) as int;
 ]],
     fin = 'line 5 : parameter must be `hold´',
     --fin = 'line 5 : invalid attribution',
@@ -45458,7 +45457,7 @@ end
 var void&& x=null;
 do Fx(5 as void&&);
     finalize with nothing; end;
-escape _V==(5 as void&&);
+escape (_V==(5 as void&&)) as int;
 ]],
     fin = 'line 8 : invalid `finalize´',
 }
@@ -45473,7 +45472,7 @@ native _V;
 end
 var void&& x=null;
 Fx(5);
-escape _V==5;
+escape (_V==5) as int;
 ]],
     run = 1,
 }
@@ -45986,7 +45985,8 @@ end
 escape 10;
 ]],
     wrn = true,
-    env = 'line 2 : invalid escape value : types mismatch (`int&&´ <= `int´)',
+    --env = 'line 2 : invalid escape value : types mismatch (`int&&´ <= `int´)',
+    sets = 'line 2 : invalid assignment : types mismatch : "int&&" <= "int"',
 }
 
 -- TODO: dropped support for returning alias, is this a problem?
@@ -47754,6 +47754,7 @@ escape 1;
     props = 'line 3 : not permitted inside `atomic´',
 }
 
+--]===]
 PRE_ISR = [[
 pre native do
     tceu_app CEU_APP;

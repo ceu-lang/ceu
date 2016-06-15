@@ -137,7 +137,12 @@ DBG'TODO: _Vec_New'
     _Thread__PRE = '_Async__PRE',
     _Async__PRE = function (me)
 DBG('TODO: _Thread, _Isr, _Async')
-        local varlist = (me.tag=='_Isr' and me[2]) or me[1]
+
+        local varlist = unpack(me)
+        if me.tag == '_Isr' then
+            varlist = me[2]
+        end
+
         if varlist then
             AST.asr(varlist,'Varlist')
             for _,var in ipairs(varlist) do
