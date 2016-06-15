@@ -49284,7 +49284,6 @@ escape 1;
     run = 1,
 }
 
---]===]
 Test { [[
 event int e;
 par do
@@ -52660,7 +52659,7 @@ with
 end
 escape 1;
 ]],
-    ids = 'line 4 : invalid use of `event´ "a"',
+    ids = 'line 4 : unexpected context for event "a"',
     --env = 'line 4 : wrong argument #1',
     --env = 'line 4 : invalid attribution',
 }
@@ -52673,29 +52672,28 @@ par/or do
     escape a + b;
 with
     async do
-        emit A => (1,2);
+        //emit A => (1,null);
     end
 end
 escape 1;
 ]],
-    env = 'line 4 : wrong argument #2',
+    sets = 'line 4 : invalid assignment : types mismatch : "(int,int)" <= "(int,int&&)"',
 }
 
 Test { [[
 input (int,int&&) A;
 par/or do
     var int a,b;
-    (a,b) = await A;
+    //(a,b) = await A;
     escape a + b;
 with
     async do
-        var int x = 2;
-        emit A=> (1,&&x);
+        emit A => (1,2);
     end
 end
 escape 1;
 ]],
-    env = 'line 4 : wrong argument #2',
+    exps = 'line 8 : invalid `emit´ : types mismatch : "(int,int&&)" <= "(int,int)"',
 }
 
 Test { [[
@@ -52714,6 +52712,7 @@ escape 1;
     run = 3;
 }
 
+--]===]
 Test { [[
 event (int,int) a;
 par/or do
@@ -52729,7 +52728,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 4 : event "a" is not declared',
-    ids = 'line 4 : invalid use of `var´ "a"',
+    ids = 'line 4 : invalid `await´ : unexpected context for variable "a"',
 }
 
 Test { [[
