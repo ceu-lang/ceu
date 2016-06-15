@@ -82,16 +82,26 @@ end,
         local pre, is_rec, id, ins, out, blk = unpack(me)
         me.tag = string.sub(me.tag,2)
 
-        local stmts = AST.asr(blk,'Block', 1,'Stmts')
-
         -- enclose "blk" with "_ret = do ... end"
-        me[6] = node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        node('Var', me.ln,
+
+        local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
+        local stmts_new = node('Stmts', me.ln)
+        blk[1] = stmts_new
+
+        local Type = AST.asr(out,'Type')
+        local ID_prim,mod = unpack(Type)
+        local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
+        if is_void then
+            stmts_new[1] = node('Do', me.ln,
+                            false,
+                            node('Block', me.ln,
+                                stmts_old))
+        else
+            stmts_new[1] = node('Var', me.ln,
                             AST.copy(out),
                             false,
-                            '_ret'),
-                        node('_Set', me.ln,
+                            '_ret')
+            stmts_new[2] = node('_Set', me.ln,
                             node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, '_ret')),
                             '=',
@@ -99,9 +109,11 @@ end,
                                 node('Do', me.ln,
                                     true,
                                     node('Block', me.ln,
-                                        stmts))))))
+                                        stmts_old))))
+        end
 
         -- insert int "stmts" all parameters "ins"
+
         AST.asr(ins,'Typepars_ids')
         local dcls = node('Stmts', me.ln)
         for _, v in ipairs(ins) do
@@ -123,7 +135,7 @@ end,
                 end
             end
         end
-        table.insert(stmts, 1, dcls)
+        table.insert(stmts_old, 1, dcls)
     end,
 
     Emit_Ext_req__PRE = '_Extreq_proto__PRE',
@@ -320,7 +332,9 @@ DBG('TODO: _Loop_Pool')
         if set.tag == '_Set_Watching' then
             local watching = AST.asr(unpack(set),'_Watching')
             local awt = unpack(watching)
-            me[3] = node('_Set_Await_many', me.ln, awt)
+            local tag = (awt.tag=='Await_Until' and '_Set_Await_many')
+                        or '_Set_Await_one'
+            me[3] = node(tag, me.ln, awt)
             watching[1] = me
             return watching
         end
