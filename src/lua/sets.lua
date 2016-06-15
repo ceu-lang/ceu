@@ -17,8 +17,8 @@ F = {
 
     Set_Await_one = function (me)
         local fr, to = unpack(me)
-        local awt = AST.asr(fr,'Await_Wclock')
-        F.__check(me, to.tp, awt.tp)
+        assert(fr.tag=='Await_Wclock' or fr.tag=='Await_Code')
+        F.__check(me, to.tp, fr.tp)
     end,
 
     Set_Await_many = function (me)
@@ -36,6 +36,11 @@ F = {
     end,
     Await_Wclock = function (me)
         me.tp = { TOPS.int }
+    end,
+    Await_Code = function (me)
+        local ID_abs = AST.asr(unpack(me),'ID_abs')
+        local Type = AST.asr(ID_abs.top,'Code_impl', 5,'Type')
+        me.tp = Type.tp
     end,
 
     Set_Emit_Ext_emit = function (me)

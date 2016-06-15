@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -28593,7 +28592,6 @@ escape r1+r2;
 ]=],
     run = 10,
 }
-do return end
 
 --<<< LUA
 
@@ -28617,6 +28615,7 @@ end
 escape 1;
 ]],
     wrn = true,
+    sets = 'line 3 : invalid assignment : types mismatch : "void" <= "int"',
     --adj = 'line 3 : invalid `escape´',
     run = 1,
 }
@@ -28850,6 +28849,7 @@ escape _X;
     run = { ['~>1s']=3 },
 }
 
+--]===]
 Test { [[
 code/delayed Code (var int x) => int
 do
