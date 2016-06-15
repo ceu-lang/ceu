@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -28209,9 +28210,9 @@ Test { [=[
 --<<< THREADS / EMITS
 --<<< ASYNCS / THREADS
 
+--do return end
 -->>> LUA
 
---]===]
 Test { [==[
 [[
     a = 1
@@ -28343,7 +28344,7 @@ var byte&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy = [[ str ]];
-escape ret and (0 == _strcmp(str,&&cpy[0] as _char&&));
+escape ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&));
 ]=],
     run = 1,
 }
@@ -28372,7 +28373,7 @@ vector[10] byte cpy;
 vector&[10] byte ptr = &cpy;
 ptr = [[ str ]];
 native _char;
-escape ret and (0 == _strcmp(&&str[0] as _char&&,&&cpy[0] as _char&&));
+escape (ret and (0 == _strcmp((&&str[0]) as _char&&,(&&cpy[0]) as _char&&))) as int;
 ]=],
     run = 1,
 }
@@ -28382,7 +28383,7 @@ native/nohold _strcmp;
 [[ str = '1234567890' ]]
 vector[2] byte cpy = [[ str ]];
 native _char;
-escape (_strcmp(&&cpy[0] as _char&&,"1") == 0);
+escape (_strcmp((&&cpy[0]) as _char&&,"1") == 0);
 ]=],
     run = '3] runtime error: access out of bounds',
 }
@@ -28395,7 +28396,7 @@ vector[20] byte cpy_;
 vector&[] byte ptr = &cpy;
 ptr = [[ str ]];
 native _char;
-escape (0 == _strcmp(&&cpy[0] as _char&&,"1234567890"));
+escape (0 == _strcmp((&&cpy[0]) as _char&&,"1234567890"));
 ]=],
     run = '6] runtime error: access out of bounds',
 }
@@ -28444,7 +28445,7 @@ str_from_lua = 'string from lua'
 vector[100] byte str_from_ceu = [[str_from_lua]];
 native _assert;
 native _char;
-_assert(0==_strcmp(&&str_from_ceu[0] as _char&&, "string from lua"));
+_assert(0==_strcmp((&&str_from_ceu[0]) as _char&&, "string from lua"));
 
 [[
 print(@v_from_ceu)
@@ -28576,7 +28577,6 @@ escape r1+r2;
 --<<< LUA
 
 -->>> CLASSES, ORGS, ORGANISMS
---do return end
 
 Test { [[
 code/delayed F (void)=>void
@@ -28869,13 +28869,13 @@ escape a;
 Test { [[
 var int v = 10;
 var& void p = &v;
-escape *(&&p as int&&);
+escape *((&&p) as int&&);
 ]],
     run = 10,
 }
 Test { [[
 code/delayed Tx (var& void p)=>int do
-    escape *(&&p as int&&);
+    escape *((&&p) as int&&);
 end
 
 var int v = 10;
@@ -32125,7 +32125,7 @@ with
 with
     await b.ok;
 end
-escape _f(&&a.a as byte&&,&&b.a as byte&&);
+escape _f((&&a.a) as byte&&,(&&b.a) as byte&&);
 ]],
     run = 2,
 }
@@ -56471,7 +56471,7 @@ end
 var SDL_Rect ri;
 ri = SDL_Rect(10);
 vector[1] SDL_Rect rcs = [ri];
-escape _f(&&rcs[0] as int&&);
+escape _f((&&rcs[0]) as int&&);
 ]],
     run = 10,
 }
@@ -58956,7 +58956,7 @@ escape 1;
 Test { [[
 var Dx d = Dx(&&s as _char&& as _char_ptr);
 ]],
-    parser = 'line 1 : after `&&´ : expected type modifier or `,´ or `)´',
+    parser = 'line 1 : after `s´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or binary operator or `,´ or `)´',
 }
 Test { [[
 pre native do
@@ -58969,7 +58969,7 @@ data Dx with
 end
 vector[] byte s = [].. "oi";
 native _char;
-var Dx d = Dx((&&s as _char&&) as _char_ptr);
+var Dx d = Dx(((&&s) as _char&&) as _char_ptr);
 escape _strlen(d.str as _char&&);
 ]],
     run = 2,
@@ -60411,13 +60411,13 @@ data Tx;
 
 pool[] Tx ts;
 
-var void&& p1 = &&this as void&&;
+var void&& p1 = (&&this) as void&&;
 
 traverse t in &&ts do
 native _assert;
-    _assert(p1 == (&&this as void&&));
+    _assert(p1 == ((&&this) as void&&));
     if (*t is Nxt) then
-        traverse &&(*t as Nxt).nxt;
+        traverse &&((*t) as Nxt).nxt;
     end
 end
 
