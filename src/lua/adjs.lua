@@ -282,7 +282,7 @@ DBG('TODO: _Loop_Pool')
             end
             for i, id_ in ipairs(to) do
                 local id = unpack(id_)
-                local ID_ext = AST.asr(awt,'Await_Ext', 1,'ID_ext')
+                local ID_ext = AST.asr(awt,'_Await_Until', 1,'Await_Ext', 1,'ID_ext')
                 local var = node('Var', me.ln,
                                 node('Ref', me.ln, 'every', ID_ext, i),
                                 false,
