@@ -27144,7 +27144,6 @@ escape a + b + p;
     run = 20,
 }
 
---]===]
 Test { [[
 var int ret =
     async/thread do
@@ -28179,7 +28178,7 @@ escape a;
 Test { [[
 var int ret = 0;
 async (ret) do
-    ret = do/_ escape 1; end;
+    ret = do escape 1; end;
 end
 escape ret;
 ]],
@@ -28188,7 +28187,7 @@ escape ret;
 Test { [[
 var int ret = 0;
 async/thread (ret) do
-    ret = do/_ escape 1; end;
+    ret = do escape 1; end;
 end
 escape ret;
 ]],
@@ -28212,6 +28211,7 @@ Test { [=[
 
 -->>> LUA
 
+--]===]
 Test { [==[
 [[
     a = 1

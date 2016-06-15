@@ -130,5 +130,19 @@ DBG'TODO: _Vec_New'
         local ID = AST.asr(name,'Exp_Name', 1,'ID_int')
         ASR(ID.dcl.tag == 'Evt', me, 'invalid `'..tag..'´ : '..use(ID))
     end,
+
+    -- async (v), isr [] (v)
+    _Isr__PRE    = '_Async__PRE',
+    _Thread__PRE = '_Async__PRE',
+    _Async__PRE = function (me)
+DBG('TODO: _Thread, _Isr, _Async')
+        local varlist = (me.tag=='_Isr' and me[2]) or me[1]
+        if varlist then
+            AST.asr(varlist,'Varlist')
+            for _,var in ipairs(varlist) do
+                use(AST.asr(var,'ID_int'))
+            end
+        end
+    end,
 }
 AST.visit(F)

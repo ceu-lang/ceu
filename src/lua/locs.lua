@@ -115,17 +115,6 @@ F = {
 
         local ok = false
         local stmt = me.__par.__par
-        if stmt.tag=='_Thread' or stmt.tag=='_Isr' then
-DBG('TODO: _Thread, _Isr')
-            -- async (v), isr [] (v)
-            local varlist = (stmt.tag=='_Thread' and stmt[1]) or stmt[2]
-            AST.asr(varlist,'Varlist')
-            for _,var in ipairs(varlist) do
-                if var == me then
-                    ok = true
-                    break
-                end
-            end
         elseif me.dcl.tag == 'Vec' then
             -- v = [] .. ?
             do

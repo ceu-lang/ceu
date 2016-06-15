@@ -217,7 +217,12 @@ assert(Typelist.tag=='Typelist', 'TODO')
 
     ['Exp_idx'] = function (me)
         local _, e, num = unpack(me)
-        me.tp = TYPES.copy(e.tp)
+
+        if TYPES.check(e.tp,'&&') then
+            me.tp = TYPES.pop(e.tp)
+        else
+            me.tp = TYPES.copy(e.tp)
+        end
     end,
 
     ['Exp_$']  = 'Exp_$$',
