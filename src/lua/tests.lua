@@ -17555,7 +17555,6 @@ escape 10;
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
---]===]
 Test { [[
 vector[] byte str = [0,1,2];
 
@@ -28616,7 +28615,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    sets = 'line 3 : invalid assignment : types mismatch : "void" <= "int"',
+    locs = 'line 3 : invalid `escape´ : unexpected expression',
+    --sets = 'line 3 : invalid assignment : types mismatch : "void" <= "int"',
     --adj = 'line 3 : invalid `escape´',
     run = 1,
 }
@@ -43818,7 +43818,8 @@ escape 1;
 ]],
     wrn = true,
     --gcc = 'error: ‘escape’ with a value, in function returning void',
-    env = 'line 2 : invalid escape value : types mismatch (`void´ <= `int´)',
+    --env = 'line 2 : invalid escape value : types mismatch (`void´ <= `int´)',
+    locs = 'line 2 : invalid `escape´ : unexpected expression',
 }
 
 Test { [[
@@ -43832,7 +43833,7 @@ escape 1;
 }
 
 Test { [[
-do
+do/_
     escape 1;
 end
 escape 1;
@@ -43845,7 +43846,7 @@ event int a;
 a = 1;
 escape 1;
 ]],
-    ids = 'line 2 : invalid use of `event´ "a"',
+    ids = 'line 2 : invalid assignment : unexpected context for event "a"',
     --env = 'types mismatch',
 }
 
@@ -44033,7 +44034,7 @@ end
 }
 
 Test { [[
-code/instantaneous Fx (void) => void do
+code/instantaneous Fx (void) => int do
     escape 1;
 end
 escape 1;
@@ -44048,7 +44049,7 @@ code/instantaneous Set (var u8&& v)=>void do
 end
 var u8 v = 0;
 Set(&&v);
-escape v;
+escape v as int;
 ]],
     run = 3,
 }
@@ -44070,7 +44071,7 @@ code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
 end
 vector[10] u8 buffer;
 FillBuffer(&buffer);
-escape buffer[0];
+escape buffer[0] as int;
 ]],
     run = 3,
 }
@@ -44081,7 +44082,7 @@ code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
 end
 vector[10] u8 buffer;
 FillBuffer(&buffer);
-escape buffer[0];
+escape buffer[0] as int;
 ]],
     env = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
@@ -44092,7 +44093,7 @@ code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
 end
 vector[3] u8 buffer = [1];
 FillBuffer(&buffer);
-escape buffer[0];
+escape buffer[0] as int;
 ]],
     run = '2] runtime error: access out of bounds',
 }
@@ -44104,7 +44105,7 @@ code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
 end
 vector[10] u8 buffer;
 FillBuffer(&&buffer);
-escape buffer[0];
+escape buffer[0] as int;
 ]],
     run = 3,
     todo = 'no pointers to vectors',
@@ -44116,7 +44117,7 @@ code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
 end
 vector[3] u8 buffer = [1];
 FillBuffer(&&buffer);
-escape buffer[0];
+escape buffer[0] as int;
 ]],
     run = '2] runtime error: access out of bounds',
     todo = 'no pointers to vectors',
@@ -44217,6 +44218,7 @@ escape Fx(1) + this.x;
     run = 3,
 }
 
+--]===]
 Test { [[
 code/instantaneous Code (var int)=>void;
 code/instantaneous Code (var int a)=>void
@@ -44226,7 +44228,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    env = 'TODO: 1 vs void',
+    locs = 'line 4 : invalid `escape´ : unexpected expression',
     run = 1,
 }
 
