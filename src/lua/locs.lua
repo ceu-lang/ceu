@@ -22,9 +22,10 @@ local function iter_boundary (cur, id)
                 end
 
                 if varlist then
-                    for _, id_ in ipairs(varlist) do
-                        if id_.dcl.id == id then
+                    for _, ID in ipairs(varlist) do
+                        if ID[1] == id then
                             cross = true
+                            break
                         end
                     end
                 end
@@ -56,9 +57,9 @@ end
 function LOCS.get (id, blk)
     AST.asr(blk, 'Block')
     for blk in iter_boundary(blk, id) do
-        local dcl = blk.dcls[id]
-        if dcl then
-            return dcl
+        local loc = blk.dcls[id]
+        if loc then
+            return loc
         end
     end
     return nil
@@ -108,43 +109,10 @@ F = {
 
     ID_int = function (me)
         local id = unpack(me)
-        me.dcl = ASR(LOCS.get(id, AST.par(me,'Block')), me,
+        me.loc = ASR(LOCS.get(id, AST.par(me,'Block')), me,
                     'internal identifier "'..id..'" is not declared')
-        local _, is_alias = unpack(me.dcl)
-
---[[
-        -- check use contexts for ID_*
-
-        local ok = false
-        local stmt = me.__par.__par
-        elseif me.dcl.tag == 'Vec' then
-            -- v = [] .. ?
-            do
-                local exp = me.__par
-                if exp[2]==me and (exp.tag=='Set_Vec' or exp.tag=='Set_Exp') then
-                    ok = true
-                end
-            end
-            -- ? = [] .. v
-            do
-                local exp = me.__par.__par
-                if exp.tag=='_Vec_New' then
-DBG('TODO: _Vec_New')
-                    for _,e in ipairs(exp) do
-                        if e.tag=='Exp_Name' and e[1]==me then
-                            ok = true
-                            break
-                        end
-                    end
-                end
-            end
-        end
-
-        local err = (not ok) and assert(F.__tag2str[me.dcl.tag]) or ''
-        ASR(ok, me, 'invalid use of `'..err..'´ "'..id..'"')
-]]
+        local _, is_alias = unpack(me.loc)
     end,
-    --__tag2str = { Evt='event', Vec='vector', Var='var' },
 
     ---------------------------------------------------------------------------
 

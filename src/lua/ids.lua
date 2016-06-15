@@ -4,13 +4,12 @@ local kind2str = { Evt='event', Vec='vector', Var='variable' }
 local function use (ID)
     ID.__ctxs_ok = true
     local id = unpack(ID)
-    return 'unexpected context for '..kind2str[ID.dcl.tag]..' "'..id..'"'
+    return 'unexpected context for '..kind2str[ID.loc.tag]..' "'..id..'"'
 end
 
 F = {
     ID_int = function (me)
-        if me.dcl.tag ~= 'Var' then
-AST.dump(me.__par.__par.__par)
+        if me.loc.tag ~= 'Var' then
             ASR(me.__ctxs_ok, me, use(me))
         end
     end,
@@ -21,7 +20,7 @@ AST.dump(me.__par.__par.__par)
     ['Exp_idx__PRE'] = function (me)
         local _,vec = unpack(me)
         if vec.tag == 'ID_int' then
-            if vec.dcl.tag == 'Vec' then
+            if vec.loc.tag == 'Vec' then
                 use(vec)
             end
         end
@@ -64,23 +63,23 @@ DBG'TODO'
         local err = use(to_id)
 
         -- VEC
-        if to_id.dcl.tag == 'Vec' then
+        if to_id.loc.tag == 'Vec' then
             -- vec = <NO>
             ASR(false, me, 'invalid assignment : '..err)
 
         -- EVT
-        elseif to_id.dcl.tag == 'Evt' then
+        elseif to_id.loc.tag == 'Evt' then
             -- evt = <NO>
             ASR(false, me, 'invalid assignment : '..err)
 
         -- VAR
-        elseif to_id.dcl.tag == 'Var' then
+        elseif to_id.loc.tag == 'Var' then
             if fr.tag == 'Exp_Name' then
                 local fr_id = unpack(fr)
                 if fr_id.tag == 'ID_int' then
                     local id = unpack(fr_id)
                     -- var = var
-                    ASR(fr_id.dcl.tag == 'Var', me,
+                    ASR(fr_id.loc.tag == 'Var', me,
                         'invalid assignment : '..use(fr_id))
                 end
             end
@@ -103,7 +102,7 @@ DBG'TODO'
 
         -- vec = ...
         local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
-        ASR(ID_int.dcl.tag == 'Vec', me,
+        ASR(ID_int.loc.tag == 'Vec', me,
             'invalid constructor : '..use(ID_int))
         --use(ID_int)
 
@@ -113,7 +112,7 @@ DBG'TODO: _Vec_New'
             for _, e in ipairs(fr) do
                 if e.tag == 'Exp_Name' then
                     local ID_int = unpack(e)
-                    if ID_int.tag=='ID_int' and ID_int.dcl.tag=='Vec' then
+                    if ID_int.tag=='ID_int' and ID_int.loc.tag=='Vec' then
                         use(ID_int)
                     end
                 end
@@ -129,7 +128,7 @@ DBG'TODO: _Vec_New'
         local name = unpack(me)
         local tag = tag or 'await'
         local ID = AST.asr(name,'Exp_Name', 1,'ID_int')
-        ASR(ID.dcl.tag == 'Evt', me, 'invalid `'..tag..'´ : '..use(ID))
+        ASR(ID.loc.tag == 'Evt', me, 'invalid `'..tag..'´ : '..use(ID))
     end,
 
     -- async (v), isr [] (v)

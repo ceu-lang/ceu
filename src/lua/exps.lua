@@ -28,7 +28,7 @@ assert(Typelist.tag=='Typelist', 'TODO')
         me.tp = TYPES.copy(Typelist.tp)
     end,
     ID_int = function (me)
-        local Type_or_Typelist = unpack(me.dcl)
+        local Type_or_Typelist = unpack(me.loc)
         me.tp = TYPES.copy(Type_or_Typelist.tp)
     end,
     ID_nat = function (me)

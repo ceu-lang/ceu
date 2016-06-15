@@ -91,6 +91,7 @@ Test = function (t)
     if not check('adjs')     then return end
     if not check('tops')     then return end
     if not check('locs')     then return end
+    if not check('names')    then return end
     if not check('ids')      then return end
     if not check('types')    then return end
     if not check('exps')     then return end
