@@ -17555,6 +17555,7 @@ escape 10;
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
+--]===]
 Test { [[
 vector[] byte str = [0,1,2];
 
@@ -28849,7 +28850,6 @@ escape _X;
     run = { ['~>1s']=3 },
 }
 
---]===]
 Test { [[
 code/delayed Code (var int x) => int
 do
@@ -28920,7 +28920,7 @@ code/delayed Tx (void)=>void do end
 var Tx a = 1;
 escape 0;
 ]],
-    env = 'line 4 : types mismatch',
+    sets = 'line 2 : invalid assignment : types mismatch : "Tx" <= "int"',
 }
 
 Test { [[
@@ -31469,7 +31469,7 @@ with
         emit A;
     end
 end
-escape x;
+escape x as int;
 ]],
     run = 9,
 }
@@ -33850,6 +33850,7 @@ escape t[0].b + t[1].b;
 Test { [[
 escape outer;
 ]],
+    todo = 'remove',
     env = 'line 1 : types mismatch (`int´ <= `Main´)',
 }
 
@@ -33857,6 +33858,7 @@ Test { [[
 native _f;
 _f(outer);
 ]],
+    todo = 'remove',
     props = 'line 1 : `outer´ can only be unsed inside constructors',
 }
 

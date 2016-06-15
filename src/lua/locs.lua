@@ -95,6 +95,8 @@ F = {
         for _, Type in ipairs(Typelist) do
             local id, mod = unpack(Type)
             local top = assert(id.top,'bug found')
+            ASR(top.group=='primitive', me,
+                'invalid event type : must be primitive')
             ASR(not mod, me,
                 mod and 'invalid event type : cannot use `'..mod..'´')
         end
