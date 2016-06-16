@@ -251,6 +251,9 @@ assert(Typelist.tag=='Typelist', 'TODO')
     Exp_Call = function (me)
         local _,e = unpack(me)
         if e.tag == 'ID_abs' then
+            local id = unpack(e)
+            ASR(e.top.group=='code', me,
+                'invalid call : "'..id..'" is not a `code´ abstraction')
             local _,_,_,_,out = unpack(e.top)
             me.tp = AST.copy(out.tp)
         else

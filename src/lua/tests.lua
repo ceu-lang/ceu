@@ -56693,13 +56693,13 @@ escape 1;
 }
 
 -- constructors are not expressions...
-]==]
 Test { DATA..[[
 escape Nil();
 ]],
     wrn = true,
+    exps = 'line 51 : invalid call : "Nil" is not a `code´ abstraction',
     --ast = 'line 51 : invalid call',
-    env = 'TODO: not a code',
+    --env = 'TODO: not a code',
     --parser = 'line 51 : after `escape´ : expected expression',
 }
 Test { DATA..[[
@@ -56709,7 +56709,8 @@ escape v;
 ]],
     wrn = true,
     --ast = 'line 52 : invalid call',
-    env = 'TODO: not a code',
+    exps = 'line 52 : invalid call : "Nil" is not a `code´ abstraction',
+    --env = 'TODO: not a code',
     --parser = 'line 52 : after `==´ : expected expression',
 }
 
@@ -56748,7 +56749,7 @@ escape 1;
 Test { DATA..[[
 pool[] List l = new Nil();   /* call syntax: constructor */
 var bool no_ = (l is Nil);     /* no-call syntax: check tag */
-escape no_;
+escape no_ as int;
 ]],
     wrn = true,
     run = 1,
@@ -56757,7 +56758,7 @@ Test { DATA..[[
 pool[] List l;
 l = new Nil();   /* call syntax: constructor */
 var bool no_ = l is Cons;    /* no-call syntax: check tag */
-escape no_;
+escape no_ as int;
 ]],
     wrn = true,
     run = 0,
@@ -56777,7 +56778,8 @@ pool[] List l;
 escape (l as Nil).v;
 ]],
     wrn = true,
-    env = 'line 52 : field "v" is not declared',
+    names = 'line 52 : pool "l" has no member "v" : `data´ "Nil" (tests.lua:16)',
+    --env = 'line 52 : field "v" is not declared',
 }
 -- tag Opt.Ptr has no field "x"
 Test { DATA..[[
@@ -56785,7 +56787,7 @@ var Opt o;
 escape (o as Ptr).x;
 ]],
     wrn = true,
-    env = 'line 52 : field "x" is not declared',
+    names = 'line 52 : variable "o" has no member "x" : `data´ "Ptr" (tests.lua:10)',
 }
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor
@@ -56810,11 +56812,11 @@ pool[] List l3 = new Cons(1, Cons(2, Nil()));
 var int ret = 0;                                // 0
 
 ret = ret + p1.x + p1.y;                        // 3
-ret = ret + (o1 is Nothing);                             // 4
-ret = ret + ((o2 as Ptr).v==&&p1);                    // 5
-ret = ret + (l1 is Nil);                             // 6
-ret = ret + (l2 as Cons).head + ((l2 as Cons).tail is Nil);    // 8
-ret = ret + (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + (((l3 as Cons).tail as Cons).tail is Nil);   // 12
+ret = ret + ((o1 is Nothing) as int);                             // 4
+ret = ret + (((o2 as Ptr).v==&&p1)as int);                    // 5
+ret = ret + ((l1 is Nil) as int);                             // 6
+ret = ret + (l2 as Cons).head + (((l2 as Cons).tail is Nil) as int);    // 8
+ret = ret + (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + ((((l3 as Cons).tail as Cons).tail is Nil) as int);   // 12
 
 escape ret;
 ]],
@@ -56928,6 +56930,7 @@ escape ret;
 --          same prefix
 
 -- cannot cross await statements
+]==]
 Test { DATA..[[
 pool[] List l = new Cons(1, Nil());
 var List&& p = (l as Cons).tail;
