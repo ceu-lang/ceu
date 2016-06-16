@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1469,12 +1470,12 @@ Test { [[var int a; a = emit a => 1; escape a;]],
 }
 
 Test { [[var int a; emit a => 1; escape a;]],
-    ids = 'line 1 : invalid `emit´ : unexpected context for variable "a"',
+    ctxs = 'line 1 : invalid `emit´ : unexpected context for variable "a"',
     --env = 'line 1 : identifier "a" is not an event (tests.lua : line 1)',
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; escape a;]],
-    ids = 'line 1 : invalid assignment : unexpected context for event "a"',
+    ctxs = 'line 1 : invalid assignment : unexpected context for event "a"',
     --parser = 'line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
@@ -1483,7 +1484,7 @@ event int a;
 emit a => 1;
 escape a;
 ]],
-    ids = 'line 3 : invalid assignment : unexpected context for event "a"',
+    ctxs = 'line 3 : invalid assignment : unexpected context for event "a"',
     --run = 1,
     --trig_wo = 1,
 }
@@ -2319,7 +2320,7 @@ with
 end;
 escape 0;
 ]],
-    ids = 'line 3 : unexpected context for event "a"',
+    ctxs = 'line 3 : unexpected context for event "a"',
     --env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
 
@@ -5233,7 +5234,7 @@ emit c => 10;
 emit c => 10;
 escape c;
 ]],
-    ids = 'line 4 : invalid assignment : unexpected context for event "c"',
+    ctxs = 'line 4 : invalid assignment : unexpected context for event "c"',
     --env = 'line 4 : types mismatch (`int´ <= `void´)',
     --trig_wo = 2,
 }
@@ -16212,7 +16213,7 @@ end;
 escape a;
 ]],
     wrn = true,
-    ids = 'line 8 : invalid `emit´ : unexpected context for variable "a"',
+    ctxs = 'line 8 : invalid `emit´ : unexpected context for variable "a"',
     --env = 'line 8 : identifier "a" is not an event (tests.lua : line 5)',
     --locs = 'line 23 : invalid use of `event´',
 }
@@ -17619,7 +17620,7 @@ escape Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    ids = 'line 7 : unexpected context for vector "str"',
+    ctxs = 'line 7 : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -17791,7 +17792,7 @@ vector[255] byte buf;
 _enqueue(buf);
 escape 1;
 ]],
-    ids = 'line 3 : unexpected context for vector "buf"',
+    ctxs = 'line 3 : unexpected context for vector "buf"',
     --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
     --fin = 'line 2 : call requires `finalize´',
 }
@@ -17801,7 +17802,7 @@ vector[255] byte buf;
 _enqueue(&&buf);
 escape 1;
 ]],
-    ids = 'line 3 : unexpected context for vector "buf"',
+    ctxs = 'line 3 : unexpected context for vector "buf"',
     --fin = 'line 2 : call requires `finalize´',
 }
 
@@ -22630,16 +22631,16 @@ Test { [[vector[0] int v; escape 0;]],
     --env='invalid dimension'
 }
 Test { [[vector[2] int v; escape v;]],
-    ids = 'line 1 : invalid assignment : unexpected context for vector "v"',
+    ctxs = 'line 1 : invalid assignment : unexpected context for vector "v"',
     --env = 'types mismatch'
 }
 Test { [[native _u8; vector[2] _u8 v; escape &&v;]],
-    ids = 'line 1 : unexpected context for vector "v"',
+    ctxs = 'line 1 : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
 Test { [[vector[2] u8 v; escape &&v;]],
-    ids = 'line 1 : unexpected context for vector "v"',
+    ctxs = 'line 1 : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
@@ -22780,10 +22781,10 @@ escape v[0];
 
 Test { [[vector[2] int v; await v;     escape 0;]],
     --env='event "v" is not declared'
-    ids = 'line 1 : invalid `await´ : unexpected context for vector "v"',
+    ctxs = 'line 1 : invalid `await´ : unexpected context for vector "v"',
 }
 Test { [[vector[2] int v; emit v;    escape 0;]],
-    ids = 'line 1 : invalid `emit´ : unexpected context for vector "v"',
+    ctxs = 'line 1 : invalid `emit´ : unexpected context for vector "v"',
     --env = 'line 1 : identifier "v" is not an event (tests.lua : line 1)',
 }
 Test { [[vector[0] int[2] v; await v;  escape 0;]],
@@ -22800,15 +22801,15 @@ vector[2] _int v;
 v=v;
 escape 0;
 ]],
-    ids = 'line 3 : invalid assignment : unexpected context for vector "v"',
+    ctxs = 'line 3 : invalid assignment : unexpected context for vector "v"',
     --env='types mismatch'
 }
 Test { [[vector[1] int v; escape v;]],
-    ids = 'line 1 : invalid assignment : unexpected context for vector "v"',
+    ctxs = 'line 1 : invalid assignment : unexpected context for vector "v"',
     --env='cannot index a non array'
 }
 Test { [[native _int; vector[2] _int v; escape v[v];]],
-    ids = 'line 1 : unexpected context for vector "v"',
+    ctxs = 'line 1 : unexpected context for vector "v"',
     --env='invalid array index'
 }
 
@@ -22816,7 +22817,7 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    ids = 'line 2 : unexpected context for vector "v"',
+    ctxs = 'line 2 : unexpected context for vector "v"',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
@@ -22826,7 +22827,7 @@ native _int;
 vector[2] _int v ;
 escape v == &&v[0] ;
 ]],
-    ids = 'line 3 : unexpected context for vector "v"',
+    ctxs = 'line 3 : unexpected context for vector "v"',
     --exps = 'line 3 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
@@ -22939,7 +22940,7 @@ var u32 len;
 vector[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
-    ids = 'line 5 : invalid assignment : unexpected context for vector "c"',
+    ctxs = 'line 5 : invalid assignment : unexpected context for vector "c"',
 }
 
 Test { [[
@@ -22951,7 +22952,7 @@ vector[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
     --env = 'line 5 : cannot index pointers to internal types',
-    ids = 'line 5 : invalid assignment : unexpected context for vector "c"',
+    ctxs = 'line 5 : invalid assignment : unexpected context for vector "c"',
 }
 
 Test { [[
@@ -22998,7 +22999,7 @@ str = "oioioi";
 
 escape _strlen(&&str[0]);
 ]],
-    ids = 'line 5 : invalid assignment : unexpected context for vector "str"',
+    ctxs = 'line 5 : invalid assignment : unexpected context for vector "str"',
 }
 Test { [[
 native/pure _strlen;
@@ -23083,7 +23084,7 @@ vector[10] u8 vec = (1);
 escape 1;
 ]],
     --env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
-    ids = 'line 1 : invalid assignment : unexpected context for vector "vec"',
+    ctxs = 'line 1 : invalid assignment : unexpected context for vector "vec"',
 }
 Test { [[
 native _int;
@@ -23226,7 +23227,7 @@ vector[10] u8 v1 = [1,2,3];
 vector[20] u8 v2 = v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
-    ids = 'line 2 : invalid assignment : unexpected context for vector "v2"',
+    ctxs = 'line 2 : invalid assignment : unexpected context for vector "v2"',
     --env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
 }
 
@@ -23308,7 +23309,7 @@ escape v == &&v[0] ;
     --exps = 'line 2 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
-    ids = 'line 2 : unexpected context for vector "v"',
+    ctxs = 'line 2 : unexpected context for vector "v"',
 }
 
 Test { [[
@@ -23906,7 +23907,7 @@ vector[] byte v = [].."abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
-    ids = 'line 4 : unexpected context for vector "v"',
+    ctxs = 'line 4 : unexpected context for vector "v"',
     --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
 }
@@ -24110,7 +24111,7 @@ Test { [=[
 var int r1 = [1,2,3];
 escape 1;
 ]=],
-    ids = 'line 1 : invalid constructor : unexpected context for variable "r1"',
+    ctxs = 'line 1 : invalid constructor : unexpected context for variable "r1"',
 }
 
 --<<< VECTORS / STRINGS
@@ -25951,7 +25952,7 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    ids = 'line 5 : invalid assignment : unexpected context for vector "i"',
+    ctxs = 'line 5 : invalid assignment : unexpected context for vector "i"',
     --env = 'line 4 : types mismatch (`_int&&´ <= `_int[]´)',
     --run = { ['~>1s']=1 },
 }
@@ -25983,7 +25984,7 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    ids = 'line 4 : invalid assignment : unexpected context for vector "i"',
+    ctxs = 'line 4 : invalid assignment : unexpected context for vector "i"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]´)',
     --run = { ['~>1s']=1 },
 }
@@ -26001,7 +26002,7 @@ do
 end
 escape *u;
 ]],
-    ids = 'line 6 : invalid assignment : unexpected context for vector "i"',
+    ctxs = 'line 6 : invalid assignment : unexpected context for vector "i"',
     --env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
 }
 Test { [[
@@ -26403,7 +26404,7 @@ pause/if a do
 end
 escape 1;
 ]],
-    ids = 'line 2 : invalid `pause/if´ : unexpected context for variable "a"',
+    ctxs = 'line 2 : invalid `pause/if´ : unexpected context for variable "a"',
 }
 
 Test { [[
@@ -28352,7 +28353,7 @@ var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy = [[ str ]];
 escape ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&));
 ]=],
-    ids = 'line 6 : unexpected context for vector "cpy"',
+    ctxs = 'line 6 : unexpected context for vector "cpy"',
     --run = 1,
 }
 
@@ -28380,7 +28381,7 @@ var byte&& ptr = cpy;
 ptr = [[ str ]];
 escape ret and (0 == _strcmp(&&str[0],&&cpy[0]));
 ]=],
-    ids = 'line 8 : invalid assignment : unexpected context for vector "cpy"',
+    ctxs = 'line 8 : invalid assignment : unexpected context for vector "cpy"',
 }
 
 Test { [=[
@@ -43846,7 +43847,7 @@ event int a;
 a = 1;
 escape 1;
 ]],
-    ids = 'line 2 : invalid assignment : unexpected context for event "a"',
+    ctxs = 'line 2 : invalid assignment : unexpected context for event "a"',
     --env = 'types mismatch',
 }
 
@@ -48332,7 +48333,7 @@ with
 end
 escape 1;
 ]],
-    ids = 'line 4 : unexpected context for vector "v"',
+    ctxs = 'line 4 : unexpected context for vector "v"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
     --env = 'line 4 : invalid operand to unary "&&"',
 }
@@ -52659,7 +52660,7 @@ with
 end
 escape 1;
 ]],
-    ids = 'line 4 : unexpected context for event "a"',
+    ctxs = 'line 4 : unexpected context for event "a"',
     --env = 'line 4 : wrong argument #1',
     --env = 'line 4 : invalid attribution',
 }
@@ -52727,7 +52728,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 4 : event "a" is not declared',
-    ids = 'line 4 : invalid `await´ : unexpected context for variable "a"',
+    ctxs = 'line 4 : invalid `await´ : unexpected context for variable "a"',
 }
 
 Test { [[
@@ -55712,7 +55713,7 @@ var List l = new ListCONS(1,
                    ListNIL()));
 escape 1;//(((l as Cons).tail) as Cons).@head@;
 ]],
-    ids = 'line 7 : invalid constructor : unexpected context for variable "l"',
+    ctxs = 'line 7 : invalid constructor : unexpected context for variable "l"',
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
     --adt = 'line 7 : invalid attribution : not a pool',
@@ -55751,7 +55752,7 @@ escape 0;//((l as Cons).tail) as Cons).@head@;
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
     --adt = 'line 8 : invalid attribution : not a pool',
-    ids = 'line 8 : invalid constructor : unexpected context for variable "l"',
+    ctxs = 'line 8 : invalid constructor : unexpected context for variable "l"',
 }
 
 Test { [[
@@ -55769,7 +55770,7 @@ l = ListCONS(1,
 
 escape 0;//((l as Cons).tail) as Cons).@head@;
 ]],
-    ids = 'line 9 : invalid constructor : unexpected context for pool "l"',
+    ctxs = 'line 9 : invalid constructor : unexpected context for pool "l"',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
 }
 
@@ -55803,7 +55804,6 @@ escape ((lll is ListCONS) as int) + 1;
     run = 1,
 }
 
---]===]
 Test { [[
 native do
     ##ifndef CEU_ADTS_NEWS_POOL
