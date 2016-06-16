@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -55768,7 +55767,8 @@ l = ListCONS(1,
 
 escape 0;//((l as Cons).tail) as Cons).@head@;
 ]],
-    adt = 'line 9 : invalid constructor : recursive data must use `new´',
+    ids = 'line 9 : invalid constructor : unexpected context for pool "l"',
+    --adt = 'line 9 : invalid constructor : recursive data must use `new´',
 }
 
 Test { [[
@@ -55780,7 +55780,7 @@ data ListCONS is List with
 end
 
 pool[10] List lll;
-escape lll is ListNIL;
+escape (lll is ListNIL) as int;
 ]],
     wrn = true,
     run = 1,
@@ -55795,12 +55795,13 @@ data ListCONS is List with
 end
 
 pool[10] List lll;
-escape (lll is ListCONS) + 1;
+escape ((lll is ListCONS) as int) + 1;
 ]],
     wrn = true,
     run = 1,
 }
 
+--]===]
 Test { [[
 native do
     ##ifndef CEU_ADTS_NEWS_POOL

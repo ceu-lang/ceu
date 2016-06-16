@@ -1,5 +1,6 @@
 
 local function err_str2 (loc)
+AST.dump(loc)
     return 'unexpected context for '..loc.tag_str..' "'..loc.id..'"'
 end
 
@@ -14,6 +15,7 @@ end
 
 F = {
     ID_int = function (me)
+AST.dump(me.__par.__par)
         if me.loc.tag ~= 'Var' then
             ASR(me.__ctxs_ok, me, err_str(me))
         end
@@ -50,6 +52,13 @@ DBG'TODO'
         else
             error'bug found'
         end
+    end,
+
+    -- is(*)
+    ['Exp_is__PRE'] = function (me)
+        local _,e = unpack(me)
+        local ID_int = AST.asr(e,'Exp_Name', 1,'ID_int')
+        use(ID_int)
     end,
 
     --------------------------------------------------------------------------
@@ -123,6 +132,18 @@ DBG'TODO: _Vec_New'
                     end
                 end
             end
+        end
+    end,
+
+    Set_Data__PRE = function (me)
+        local Data_New, name = unpack(me)
+        local is_new = unpack(Data_New)
+        if is_new then
+            ASR(name.loc.tag == 'Pool', me,
+                'invalid constructor : '..err_str2(name.loc))
+        else
+            ASR(name.loc.tag ~= 'Pool', me,
+                'invalid constructor : '..err_str2(name.loc))
         end
     end,
 

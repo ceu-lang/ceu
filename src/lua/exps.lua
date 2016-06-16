@@ -62,9 +62,13 @@ assert(Typelist.tag=='Typelist', 'TODO')
         me.tp = AST.copy(e.tp)
     end,
 
--- CAST, SIZEOF
+-- IS, AS/CAST, SIZEOF
 
-    ['Exp_as'] = function (me)
+    Exp_is = function (me)
+        me.tp = { TOPS.bool }
+    end,
+
+    Exp_as = function (me)
         local _,e,Type = unpack(me)
         if AST.isNode(Type) then
             me.tp = TYPES.copy(Type.tp)
