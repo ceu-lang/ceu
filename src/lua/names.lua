@@ -6,16 +6,12 @@ F = {
 
     --------------------------------------------------------------------------
 
-    ID_nat = 'Nat_Exp',
-    Nat_Exp = function (me)
-        me.loc = true
-    end,
-
-    --------------------------------------------------------------------------
-
     Exp_as = function (me)
-        local _,e = unpack(me)
-        me.loc = e.loc
+        local _,e, Type = unpack(me)
+        if e.loc then
+            me.loc = AST.copy(e.loc)
+            me.loc[1] = AST.copy(Type)
+        end
     end,
 
     ['Exp_idx__PRE'] = function (me)
@@ -24,20 +20,23 @@ F = {
     end,
 
     ['Exp_.'] = function (me)
-        local _, ID_int, field = unpack(me)
-        if ID_int.tag == 'ID_int' then
-            local Type = unpack(ID_int.loc)
-            local ID_abs, mod = unpack(Type)
-            assert(not mod)
-            if ID_abs.top.group == 'data' then
-                -- data.field
-                local blk = AST.asr(ID_abs.top,'Data', 3,'Block')
-                me.loc = ASR(LOCS.get(field, blk), me,
-                            'field "'..field..'" does not exist in `data´ : TODO')
-            else
-                -- struct.field
-                me.loc = ID_int
-            end
+        local _, e, member = unpack(me)
+        if not e.loc then
+            return
+        end
+
+        local Type = unpack(e.loc)
+        local ID_abs, mod = unpack(Type)
+        assert(not mod)
+        if ID_abs.top.group == 'data' then
+            -- data.member
+            local blk = AST.asr(ID_abs.top,'Data', 3,'Block')
+            me.loc = ASR(LOCS.get(member, blk), me,
+                        --'invalid member access : '..
+                        e.loc.tag_str..' "'..e.loc.id..
+                        '" has no member "'..member..'" : '..
+                        '`data´ "'..ID_abs.top.id..
+                        '" ('..ID_abs.top.ln[1]..':'..  ID_abs.top.ln[2]..')')
         end
     end,
 }

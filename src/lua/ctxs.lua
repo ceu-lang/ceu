@@ -69,6 +69,13 @@ DBG'TODO'
         use_if_name_id(e)
     end,
 
+    -- as(*)
+    ['Exp_as__PRE'] = function (me)
+        local _,e = unpack(me)
+        use_if_id(e, 'Var')
+        use_if_id(e, 'Pool')
+    end,
+
     --------------------------------------------------------------------------
 
     Set_Exp__PRE = function (me)
@@ -122,14 +129,23 @@ DBG'TODO: _Vec_New'
     end,
 
     Set_Data__PRE = function (me)
-        local Data_New, name = unpack(me)
+        local Data_New, Exp_Name = unpack(me)
         local is_new = unpack(Data_New)
         if is_new then
-            ASR(use_if_name_id(name,'Pool'), me,
-                'invalid constructor : '..loc2err(name.loc))
+            -- pool = ...
+            local ok = use_if_name_id(Exp_Name,'Pool')
+            if not ok then
+                -- var.data = ...
+                local e = unpack(Exp_Name)
+                if e.tag == 'Exp_.' then
+                    ok = (e.loc.tag == 'Var')
+                end
+            end
+            ASR(ok, me,
+                'invalid constructor : '..loc2err(Exp_Name.loc))
         else
-            ASR(use_if_name_id(name,'Var'), me,
-                'invalid constructor : '..loc2err(name.loc))
+            ASR(use_if_name_id(Exp_Name,'Var'), me,
+                'invalid constructor : '..loc2err(Exp_Name.loc))
         end
     end,
 

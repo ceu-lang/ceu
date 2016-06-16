@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -55278,6 +55277,7 @@ end
 --<<< REQUESTS
 
 -->>> DATA INI
+--]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -55337,7 +55337,6 @@ end
 
 --[==[
 -- HERE:
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -55842,7 +55841,8 @@ end
 pool[10] List lll = new ListCONS(1, ListNIL());
 escape lll.head;
 ]],
-    env = 'TODO: no head in lll',
+    names = 'line 15 : pool "lll" has no member "head" : `data´ "List" (tests.lua:7)',
+    --env = 'TODO: no head in lll',
 }
 
 Test { [[
@@ -55874,8 +55874,9 @@ pool[] Stack xxx = new StackNONEMPTY(
 
 escape 1;
 ]],
+    ctxs = 'line 8 : unexpected context for pool "xxx"',
     wrn = true,
-    env = 'line 10 : invalid constructor : recursive field "NONEMPTY" must be new data',
+    --env = 'line 10 : invalid constructor : recursive field "NONEMPTY" must be new data',
 }
 
 Test { [[
@@ -55894,7 +55895,7 @@ end
 pool[] Grid g;
 g = new GridSPLIT(SplitHORIZONTAL(), GridEMPTY(), GridEMPTY());
 
-escape ((g as GridSPLIT).one is GridEMPTY) + ((g as GridSPLIT).two is GridEMPTY) + ((g as GridSPLIT).dir is SplitHORIZONTAL);
+escape (((g as GridSPLIT).one is GridEMPTY) as int) + (((g as GridSPLIT).two is GridEMPTY) as int) + (((g as GridSPLIT).dir is SplitHORIZONTAL) as int);
 ]],
     wrn = true,
     run = 3,
@@ -55912,7 +55913,7 @@ end
 var Grid g1 = Grid(SplitHORIZONTAL());
 var Grid g2 = Grid(SplitVERTICAL());
 
-escape (g1.dir is SplitHORIZONTAL) + (g2.dir is SplitVERTICAL);
+escape ((g1.dir is SplitHORIZONTAL) as int) + ((g2.dir is SplitVERTICAL) as int);
 ]],
     run = 2,
 }
@@ -56600,7 +56601,8 @@ l1 = new Nil();       /* recursive union */
 pool[] List l2 = new Cons(1, l1);
 escape 1;
 ]],
-    env = 'line 56 : invalid constructor : recursive field "Cons" must be new data',
+    ctxs = 'line 56 : unexpected context for pool "l1"',
+    --env = 'line 56 : invalid constructor : recursive field "Cons" must be new data',
     -- TODO-ADT-Rec-STATIC-CONSTRS
     --run = 1,
 }
@@ -56613,7 +56615,8 @@ l2 = new Cons(1, l1);     /* should be &&l1 */
 escape 1;
 ]],
     wrn = true,
-    env = 'line 53 : invalid constructor : recursive field "Cons" must be new data',
+    --env = 'line 53 : invalid constructor : recursive field "Cons" must be new data',
+    ctxs = 'line 53 : unexpected context for pool "l1"',
 }
 
 -- constructors must specify the ADT identifier
@@ -56690,6 +56693,7 @@ escape 1;
 }
 
 -- constructors are not expressions...
+]==]
 Test { DATA..[[
 escape Nil();
 ]],
