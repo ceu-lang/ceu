@@ -708,7 +708,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                         (CKK'!'-'!=') * Cc(false)
                       )
                     )^0
-    , __03_Name  = PARENS(V'Exp_Name' *
+    , __03_Name  = PARENS(V'__01_Name' *
                     (CK'as' * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure')))^-1
                    )
                  + V'ID_int'  + V'ID_nat'

@@ -1,9 +1,11 @@
 
-local kind2str = { Evt='event', Vec='vector', Var='variable' }
+local function err_str2 (loc)
+    return 'unexpected context for '..loc.tag_str..' "'..loc.id..'"'
+end
 
 local function err_str (ID)
     local id = unpack(ID)
-    return 'unexpected context for '..kind2str[ID.loc.tag]..' "'..id..'"'
+    return 'unexpected context for '..ID.loc.tag_str..' "'..ID.loc.id..'"'
 end
 
 local function use (ID)
@@ -131,9 +133,14 @@ DBG'TODO: _Vec_New'
     Await_Evt__PRE = function (me, tag)
         local name = unpack(me)
         local tag = tag or 'await'
-        local ID = AST.asr(name,'Exp_Name', 1,'ID_int')
-        use(ID)
-        ASR(ID.loc.tag == 'Evt', me, 'invalid `'..tag..'´ : '..err_str(ID))
+
+        local ID_int = unpack(name)
+        if ID_int.tag == 'ID_int' then
+            use(ID_int)
+        end
+
+        ASR(name.loc.tag == 'Evt', me,
+            'invalid `'..tag..'´ : '..err_str2(name.loc))
     end,
 
     -- async (v), isr [] (v)

@@ -31,8 +31,8 @@ F = {
         me.tp = AST.copy(ID_ext.tp)
     end,
     Await_Evt = function (me)
-        local ID_int = AST.asr(me,'', 1,'Exp_Name', 1,'ID_int')
-        me.tp = AST.copy(ID_int.tp)
+        local e = unpack(me)
+        me.tp = AST.copy(e.tp)
     end,
     Await_Wclock = function (me)
         me.tp = { TOPS.int }

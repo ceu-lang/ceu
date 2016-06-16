@@ -207,7 +207,8 @@ assert(Typelist.tag=='Typelist', 'TODO')
 
         local top = TYPES.check(e.tp)
         if top.group == 'data' then
-            error'TODO'
+            local Type = unpack(me.loc)
+            me.tp = TYPES.copy(Type.tp)
         else
             me.tp = TYPES.copy(e.tp)
         end

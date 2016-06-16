@@ -503,7 +503,7 @@ error 'TODO'
             return
         end
 
-        me[1] = node('Typelist')
+        me[1] = node('Typelist',me.ln)
 
         local ID, mod = unpack(Type)
         if ID.tag=='ID_prim' and (not mod) and ID[1]=='void' then
