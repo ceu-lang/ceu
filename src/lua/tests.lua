@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -55801,7 +55802,6 @@ escape ((lll is ListCONS) as int) + 1;
     run = 1,
 }
 
---]===]
 Test { [[
 native do
     ##ifndef CEU_ADTS_NEWS_POOL

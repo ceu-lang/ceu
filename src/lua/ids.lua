@@ -9,8 +9,25 @@ local function err_str (ID)
     return 'unexpected context for '..ID.loc.tag_str..' "'..ID.loc.id..'"'
 end
 
-local function use (ID)
-    ID.__ctxs_ok = true
+local function use_id (ID_int)
+    ID_int.__ctxs_ok = true
+    return true
+end
+
+local function use_if_id (ID_int)
+    if ID_int.tag == 'ID_int' then
+        return use_id(ID_int)
+    else
+        return false
+    end
+end
+
+local function use_if_name_id (Exp_Name)
+    if Exp_Name.tag == 'Exp_Name' then
+        return use_if_id(unpack(Exp_Name))
+    else
+        return false
+    end
 end
 
 F = {
@@ -28,7 +45,7 @@ AST.dump(me.__par.__par)
         local _,vec = unpack(me)
         if vec.tag == 'ID_int' then
             if vec.loc.tag == 'Vec' then
-                use(vec)
+                use_id(vec)
             end
         end
     end,
@@ -37,16 +54,14 @@ AST.dump(me.__par.__par)
     ['Exp_$$__PRE'] = 'Exp_$__PRE',
     ['Exp_$__PRE'] = function (me)
         local _,vec = unpack(me)
-        local ID_int = AST.asr(vec,'Exp_Name', 1,'ID_int')
-        use(ID_int)
+        use_if_name_id(vec)
     end,
 
     -- &id
     ['Exp_1&__PRE'] = function (me)
         local _,e = unpack(me)
-        if e.tag == 'Exp_Name' then
-            local ID_int = AST.asr(e,'', 1,'ID_int')
-            use(ID_int)
+        if use_if_name_id(e) then
+            -- ok
         elseif e.tag == 'Exp_Call' then
 DBG'TODO'
         else
@@ -57,8 +72,7 @@ DBG'TODO'
     -- is(*)
     ['Exp_is__PRE'] = function (me)
         local _,e = unpack(me)
-        local ID_int = AST.asr(e,'Exp_Name', 1,'ID_int')
-        use(ID_int)
+        use_if_name_id(e)
     end,
 
     --------------------------------------------------------------------------
@@ -66,34 +80,28 @@ DBG'TODO'
     Set_Exp__PRE = function (me)
         local fr, to = unpack(me)
 
-        if to.tag ~= 'Exp_Name' then
+        if not use_if_name_id(to) then
             return
         end
-        local to_id = unpack(to)
-        if to_id.tag ~= 'ID_int' then
-            return
-        end
-
-        use(to_id)
 
         -- VEC
-        if to_id.loc.tag == 'Vec' then
+        if to.loc.tag == 'Vec' then
             -- vec = <NO>
-            ASR(false, me, 'invalid assignment : '..err_str(to_id))
+            ASR(false, me, 'invalid assignment : '..err_str2(to.loc))
 
         -- EVT
-        elseif to_id.loc.tag == 'Evt' then
+        elseif to.loc.tag == 'Evt' then
             -- evt = <NO>
-            ASR(false, me, 'invalid assignment : '..err_str(to_id))
+            ASR(false, me, 'invalid assignment : '..err_str2(to.loc))
 
         -- VAR
-        elseif to_id.loc.tag == 'Var' then
+        elseif to.loc.tag == 'Var' then
             if fr.tag == 'Exp_Name' then
                 local fr_id = unpack(fr)
                 if fr_id.tag == 'ID_int' then
                     local id = unpack(fr_id)
                     -- var = var
-                    use(fr_id)
+                    use_id(fr_id)
                     ASR(fr_id.loc.tag == 'Var', me,
                         'invalid assignment : '..err_str(fr_id))
                 end
@@ -106,7 +114,7 @@ DBG'TODO'
         local fr,to = unpack(me) -- "fr" handled in "Exp_1&"
         local to = unpack(AST.asr(to,'Exp_Name'))
         if to.tag == 'ID_int' then
-            use(to)
+            use_id(to)
         else
 DBG'TODO'
         end
@@ -117,7 +125,7 @@ DBG'TODO'
 
         -- vec = ...
         local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
-        use(ID_int)
+        use_id(ID_int)
         ASR(ID_int.loc.tag == 'Vec', me,
             'invalid constructor : '..err_str(ID_int))
 
@@ -128,7 +136,7 @@ DBG'TODO: _Vec_New'
                 if e.tag == 'Exp_Name' then
                     local ID_int = unpack(e)
                     if ID_int.tag=='ID_int' and ID_int.loc.tag=='Vec' then
-                        use(ID_int)
+                        use_id(ID_int)
                     end
                 end
             end
@@ -141,6 +149,10 @@ DBG'TODO: _Vec_New'
         if is_new then
             ASR(name.loc.tag == 'Pool', me,
                 'invalid constructor : '..err_str2(name.loc))
+            local ID_int = unpack(name)
+            if ID_int.tag == 'ID_int' then
+                use_id(ID_int)
+            end
         else
             ASR(name.loc.tag ~= 'Pool', me,
                 'invalid constructor : '..err_str2(name.loc))
@@ -157,7 +169,7 @@ DBG'TODO: _Vec_New'
 
         local ID_int = unpack(name)
         if ID_int.tag == 'ID_int' then
-            use(ID_int)
+            use_id(ID_int)
         end
 
         ASR(name.loc.tag == 'Evt', me,
@@ -178,7 +190,7 @@ DBG('TODO: _Thread, _Isr, _Async')
         if varlist then
             AST.asr(varlist,'Varlist')
             for _,var in ipairs(varlist) do
-                use(AST.asr(var,'ID_int'))
+                use_id(AST.asr(var,'ID_int'))
             end
         end
     end,
