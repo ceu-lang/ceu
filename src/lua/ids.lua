@@ -3,11 +3,6 @@ local function loc2err (loc)
     return 'unexpected context for '..loc.tag_str..' "'..loc.id..'"'
 end
 
-local function err_str (ID)
-    local id = unpack(ID)
-    return 'unexpected context for '..ID.loc.tag_str..' "'..ID.loc.id..'"'
-end
-
 local function use_id (ID_int, cnd)
     assert(ID_int.tag == 'ID_int')
     if (not cnd) or ID_int.loc.tag==cnd then
@@ -145,8 +140,10 @@ DBG'TODO: _Vec_New'
     Await_Evt__PRE = function (me, tag)
         local name = unpack(me)
         local tag = tag or 'await'
-        ASR(use_if_name_id(name,'Evt'), me,
-            'invalid `'..tag..'´ : '..loc2err(name.loc))
+        if use_if_name_id(name) then
+            ASR(name.loc.tag=='Evt', me,
+                'invalid `'..tag..'´ : '..loc2err(name.loc))
+        end
     end,
 
     -- async (v), isr [] (v)

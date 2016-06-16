@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -55713,9 +55712,10 @@ var List l = new ListCONS(1,
                    ListNIL()));
 escape 1;//(((l as Cons).tail) as Cons).@head@;
 ]],
+    ids = 'line 7 : invalid constructor : unexpected context for variable "l"',
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
-    adt = 'line 7 : invalid attribution : not a pool',
+    --adt = 'line 7 : invalid attribution : not a pool',
 }
 
 Test { [[
@@ -55750,7 +55750,8 @@ escape 0;//((l as Cons).tail) as Cons).@head@;
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
-    adt = 'line 8 : invalid attribution : not a pool',
+    --adt = 'line 8 : invalid attribution : not a pool',
+    ids = 'line 8 : invalid constructor : unexpected context for variable "l"',
 }
 
 Test { [[
@@ -55802,6 +55803,7 @@ escape ((lll is ListCONS) as int) + 1;
     run = 1,
 }
 
+--]===]
 Test { [[
 native do
     ##ifndef CEU_ADTS_NEWS_POOL
