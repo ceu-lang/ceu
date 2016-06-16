@@ -1,16 +1,19 @@
 
 local kind2str = { Evt='event', Vec='vector', Var='variable' }
 
-local function use (ID)
-    ID.__ctxs_ok = true
+local function err_str (ID)
     local id = unpack(ID)
     return 'unexpected context for '..kind2str[ID.loc.tag]..' "'..id..'"'
+end
+
+local function use (ID)
+    ID.__ctxs_ok = true
 end
 
 F = {
     ID_int = function (me)
         if me.loc.tag ~= 'Var' then
-            ASR(me.__ctxs_ok, me, use(me))
+            ASR(me.__ctxs_ok, me, err_str(me))
         end
     end,
 
@@ -60,17 +63,17 @@ DBG'TODO'
             return
         end
 
-        local err = use(to_id)
+        use(to_id)
 
         -- VEC
         if to_id.loc.tag == 'Vec' then
             -- vec = <NO>
-            ASR(false, me, 'invalid assignment : '..err)
+            ASR(false, me, 'invalid assignment : '..err_str(to_id))
 
         -- EVT
         elseif to_id.loc.tag == 'Evt' then
             -- evt = <NO>
-            ASR(false, me, 'invalid assignment : '..err)
+            ASR(false, me, 'invalid assignment : '..err_str(to_id))
 
         -- VAR
         elseif to_id.loc.tag == 'Var' then
@@ -79,8 +82,9 @@ DBG'TODO'
                 if fr_id.tag == 'ID_int' then
                     local id = unpack(fr_id)
                     -- var = var
+                    use(fr_id)
                     ASR(fr_id.loc.tag == 'Var', me,
-                        'invalid assignment : '..use(fr_id))
+                        'invalid assignment : '..err_str(fr_id))
                 end
             end
         end
@@ -102,9 +106,9 @@ DBG'TODO'
 
         -- vec = ...
         local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
+        use(ID_int)
         ASR(ID_int.loc.tag == 'Vec', me,
-            'invalid constructor : '..use(ID_int))
-        --use(ID_int)
+            'invalid constructor : '..err_str(ID_int))
 
         -- ... = []..vec
         if fr.tag == '_Vec_New' then
@@ -128,7 +132,8 @@ DBG'TODO: _Vec_New'
         local name = unpack(me)
         local tag = tag or 'await'
         local ID = AST.asr(name,'Exp_Name', 1,'ID_int')
-        ASR(ID.loc.tag == 'Evt', me, 'invalid `'..tag..'´ : '..use(ID))
+        use(ID)
+        ASR(ID.loc.tag == 'Evt', me, 'invalid `'..tag..'´ : '..err_str(ID))
     end,
 
     -- async (v), isr [] (v)
