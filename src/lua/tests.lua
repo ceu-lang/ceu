@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -55277,7 +55278,6 @@ end
 --<<< REQUESTS
 
 -->>> DATA INI
---]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -55337,6 +55337,7 @@ end
 
 --[==[
 -- HERE:
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -56930,7 +56931,6 @@ escape ret;
 --          same prefix
 
 -- cannot cross await statements
-]==]
 Test { DATA..[[
 pool[] List l = new Cons(1, Nil());
 var List&& p = (l as Cons).tail;

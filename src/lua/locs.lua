@@ -41,7 +41,7 @@ local function iter_boundary (cur, id)
     end
 end
 
-local function dcls_new (me, blk)
+local function locs_new (me, blk)
     AST.asr(blk, 'Block')
 
     local old = LOCS.get(me.id, blk)
@@ -50,14 +50,14 @@ local function dcls_new (me, blk)
         implicit..'declaration of "'..me.id..'" hides previous declaration'..
             ' ('..old.ln[1]..' : line '..old.ln[2]..')')
 
-    blk.dcls[#blk.dcls+1] = me
-    blk.dcls[me.id] = me
+    blk.locs[#blk.locs+1] = me
+    blk.locs[me.id] = me
 end
 
 function LOCS.get (id, blk)
     AST.asr(blk, 'Block')
     for blk in iter_boundary(blk, id) do
-        local loc = blk.dcls[id]
+        local loc = blk.locs[id]
         if loc then
             return loc
         end
@@ -67,28 +67,28 @@ end
 
 F = {
     Block__PRE = function (me)
-        me.dcls = {}
+        me.locs = {}
     end,
 
     Var = function (me)
         local Type, is_alias, id = unpack(me)
         me.id = id
         me.tag_str = 'variable'
-        dcls_new(me, AST.par(me,'Block'))
+        locs_new(me, AST.par(me,'Block'))
     end,
 
     Vec = function (me)
         local Type, is_alias, dim, id = unpack(me)
         me.id = id
         me.tag_str = 'vector'
-        dcls_new(me, AST.par(me,'Block'))
+        locs_new(me, AST.par(me,'Block'))
     end,
 
     Pool = function (me)
         local Type, is_alias, dim, id = unpack(me)
         me.id = id
         me.tag_str = 'pool'
-        dcls_new(me, AST.par(me,'Block'))
+        locs_new(me, AST.par(me,'Block'))
     end,
 
     Evt = function (me)
@@ -106,7 +106,7 @@ F = {
                 mod and 'invalid event type : cannot use `'..mod..'´')
         end
 
-        dcls_new(me, AST.par(me,'Block'))
+        locs_new(me, AST.par(me,'Block'))
     end,
 
     ---------------------------------------------------------------------------
