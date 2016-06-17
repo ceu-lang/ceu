@@ -257,13 +257,13 @@ local EE = function (msg)
 end
 
 -->>> OK
-TYPES = P'bool' + 'byte'
-      + 'f32' + 'f64' + 'float'
-      + 'int'
-      + 's16' + 's32' + 's64' + 's8'
-      + 'ssize'
-      + 'u16' + 'u32' + 'u64' + 'u8'
-      + 'uint' + 'usize' + 'void'
+local TYPES = P'bool' + 'byte'
+            + 'f32' + 'f64' + 'float'
+            + 'int'
+            + 's16' + 's32' + 's64' + 's8'
+            + 'ssize'
+            + 'u16' + 'u32' + 'u64' + 'u8'
+            + 'uint' + 'usize' + 'void'
 --<<<
 
 -- must be in reverse order (to count superstrings as keywords)
