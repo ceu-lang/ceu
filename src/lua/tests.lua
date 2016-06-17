@@ -56938,7 +56938,8 @@ await 1s;
 escape (*p as Cons).head;
 ]],
     wrn = true,
-    adt = 'line 52 : invalid attribution : mutation : cannot mix data sources',
+    sets = 'line 52 : invalid assignment : types mismatch : "List&&" <= "List"',
+    --adt = 'line 52 : invalid attribution : mutation : cannot mix data sources',
     --fin = 'line 54 : unsafe access to pointer "p" across `await´',
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
@@ -56981,19 +56982,20 @@ escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + (((l3 as Cons).tai
 ]],
     wrn = true,
     --run = 4,
-    env = 'line 53 : invalid constructor : recursive field "Cons" must be new data',
+    --env = 'line 53 : invalid constructor : recursive field "Cons" must be new data',
+    ctxs = 'line 53 : unexpected context for pool "l1"',
     -- TODO-ADT-Rec-STATIC-CONSTRS
 }
 Test { DATA..[[
 pool[] List l3 = new Cons(2, Cons(1, Nil()));
-escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + (((l3 as Cons).tail as Cons).tail is Nil);
+escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + ((((l3 as Cons).tail as Cons).tail is Nil) as int);
 ]],
     wrn = true,
     run = 4,
 }
 Test { DATA..[[
 pool[] List l3 = new Cons(2, Cons(1, Nil()));
-escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + (((l3 as Cons).tail as Cons).tail is Nil);
+escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + ((((l3 as Cons).tail as Cons).tail is Nil) as int);
 ]],
     wrn = true,
     run = 4,
@@ -57004,12 +57006,13 @@ pool[] List l1;
 l1 = new Nil();
 pool[] List l3 = new Cons(2, Cons(1, Nil()));
 (l3 as Cons).tail = l1;
-escape (l3 as Cons).head + ((l3 as Cons).tail is Nil);
+escape (l3 as Cons).head + (((l3 as Cons).tail is Nil) as int);
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
-    adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
+    --adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
+    ctxs = 'line 54 : unexpected context for pool "l1"',
     run = 3,
 }
 Test { DATA..[[
@@ -57020,7 +57023,8 @@ pool[] List l3 = new Cons(2, Cons(1, Nil()));
 escape (l3 as Cons).head + ((l3 as Cons).tail is Nil);
 ]],
     wrn = true,
-    adt = 'line 54 : invalid attribution : destination is not a reference',
+    ctxs = 'line 54 : unexpected context for pool "l1"',
+    --adt = 'line 54 : invalid attribution : destination is not a reference',
     --adt = 'line 54 : cannot mix recursive data sources',
     run = 3,
 }
@@ -57036,7 +57040,8 @@ escape (l1 is Cons) + (l1 as Cons).head==1;
 ]],
     wrn = true,
     --adt = 'line 55 : invalid attribution : value is not a reference',
-    adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
+    --adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
+    ctxs = 'line 55 : unexpected context for pool "l2"',
     run = 2,
 }
 Test { DATA..[[
@@ -57048,7 +57053,8 @@ l1 = &&l2;
 escape (l1 is Cons) + (l1 as Cons).head==1;
 ]],
     wrn = true,
-    adt = 'line 55 : invalid attribution : destination is not a reference',
+    --adt = 'line 55 : invalid attribution : destination is not a reference',
+    ctxs = 'line 55 : unexpected context for pool "l2"',
     --adt = 'line 55 : invalid attribution : new reference only to pointer or alias',
     --adt = 'line 55 : cannot mix recursive data sources',
     run = 2,
@@ -57059,10 +57065,11 @@ pool[] List l1 = new Nil(),
 l1 = l2;
 escape (l1 is Cons) + ((l1 as Cons).head==1) + ((((l1 as Cons).tail as Cons).tail as Cons).head==1);
 ]],
+    ctxs = 'line 53 : unexpected context for pool "l2"',
     wrn = true,
-    adt = 'line 53 : invalid attribution : value is not a reference',
-    adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
-    run = 3,
+    --adt = 'line 53 : invalid attribution : value is not a reference',
+    --adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
+    --run = 3,
 }
 
 -- circular list: 1-2-1-2-...
@@ -57076,7 +57083,8 @@ escape (((l1 as Cons).head)==1) + ((((l1 as Cons).tail) as Cons).head==2) +
 ]],
     wrn = true,
     --adt = 'line 53 : invalid attribution : value is not a reference',
-    adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
+    --adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
+    ctxs = 'line 53 : unexpected context for pool "l2"',
     run = 5,
 }
 
@@ -57089,7 +57097,8 @@ escape (((l1 as Cons).head)==1) + ((((l1 as Cons).tail) as Cons).head==2) +
        ((((((l1 as Cons).tail) as Cons).tail as Cons).tail as Cons).head==2);
 ]],
     wrn = true,
-    adt = 'line 53 : invalid attribution : destination is not a reference',
+    ctxs = 'line 53 : unexpected context for pool "l2"',
+    --adt = 'line 53 : invalid attribution : destination is not a reference',
     --adt = 'line 53 : cannot mix recursive data sources',
     run = 5,
 }
@@ -57107,7 +57116,8 @@ escape ((l1 as Cons).head) + (((l1 as Cons).tail) as Cons).head + ((l2 as Cons).
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to root',
-    adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
+    --adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
+    ctxs = 'line 54 : unexpected context for pool "l2"',
     run = 6,
 }
 
@@ -57117,7 +57127,7 @@ pool[] List l1, l2;
 l1 = new Nil();
 l2 = new Cons(1, Nil());
 l1 = ((l2 as Cons).tail);
-escape l1 is Nil;
+escape (l1 is Nil) as int;
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
@@ -57135,10 +57145,11 @@ l1 = &&((l2 as Cons).tail);
 escape l1 is Nil;
 ]],
     wrn = true,
-    adt = 'line 54 : invalid attribution : destination is not a reference',
+    --adt = 'line 54 : invalid attribution : destination is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
     --adt = 'line 54 : cannot mix recursive data sources',
-    run = 1,
+    --run = 1,
+    sets = 'line 54 : invalid assignment : types mismatch : "List" <= "List&&"',
 }
 
 -- DYNAMIC ADTs:
@@ -57169,14 +57180,14 @@ escape 1;
 --  - represents the root of the tree
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape l is Nil;       // l is a pointer to the root
+escape (l is Nil) as int;       // l is a pointer to the root
 ]],
     wrn = true,
     run = 1,
 }
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape (l) is Nil;    // equivalent to above
+escape ((l) is Nil) as int;    // equivalent to above
 ]],
     wrn = true,
     run = 1,
@@ -57184,10 +57195,11 @@ escape (l) is Nil;    // equivalent to above
 -- the pointer must be dereferenced
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape *l is Nil;       // "l" is not a struct
+escape (*l is Nil) as int;       // "l" is not a struct
 ]],
     wrn = true,
-    env = 'line 52 : invalid operand to unary "*"',
+    ctxs = 'line 52 : unexpected context for pool "l"',
+    --env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
@@ -57203,7 +57215,8 @@ pool[] List l;             // l is the pool
 escape *((l as Cons).tail) is Cons;    // "((l as Cons).tail)" is not a struct
 ]],
     wrn = true,
-    env = 'line 52 : invalid operand to unary "*"',
+    --env = 'line 52 : invalid operand to unary "*"',
+    exps = 'line 52 : invalid expression : operand to `*´ must be of pointer type',
     --env = 'line 52 : not a struct',
 }
 
@@ -57212,7 +57225,7 @@ escape *((l as Cons).tail) is Cons;    // "((l as Cons).tail)" is not a struct
 --  must appear first in the ADT declaration)
 Test { DATA..[[
 pool[] List l;
-escape l is Cons;      // runtime error
+escape (l is Cons) as int;      // runtime error
 ]],
     wrn = true,
     asr = true,
@@ -57224,7 +57237,7 @@ Test { DATA..[[
 var int ret = 0;
 do
     pool[] List lll;
-    ret = lll is Nil;
+    ret = (lll is Nil) as int;
 end
 // all instances in "lll" have been collected
 escape ret;
@@ -57242,7 +57255,7 @@ escape ret;
 Test { DATA..[[
 pool[] List l;
 l = new Nil();
-escape l is Nil;
+escape (l is Nil) as int;
 ]],
     wrn = true,
     run = 1,
@@ -57256,7 +57269,7 @@ escape ((l as Cons).head);
 }
 Test { DATA..[[
 pool[] List l = new Cons(1, Cons(2, Nil()));
-escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((l as Cons).tail) as Cons).tail is Nil);
+escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((((l as Cons).tail) as Cons).tail is Nil) as int);
 ]],
     wrn = true,
     run = 4,
@@ -57265,7 +57278,7 @@ escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((l as Cons).t
 Test { DATA..[[
 pool[] List l;
 l = new Nil();
-escape l is Cons;
+escape (l is Cons) as int;
 ]],
     wrn = true,
     asr = true,
@@ -57277,7 +57290,8 @@ l = Cons(2, Nil());
 escape ((l as Cons).head);
 ]],
     wrn = true,
-    adt = 'line 52 : invalid constructor : recursive data must use `new´',
+    --adt = 'line 52 : invalid constructor : recursive data must use `new´',
+    ctxs = 'line 52 : invalid constructor : unexpected context for pool "l"',
     --env = 'line 52 : invalid call parameter #2 (List vs List&&)',
 }
 -- cannot assign "l" directly (in the pool declaration)
@@ -57292,7 +57306,7 @@ escape ((l as Cons).head);
 Test { DATA..[[
 pool[] List l;
 l = new Nil();
-escape l is Nil;
+escape (l is Nil) as int;
 ]],
     wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -57321,7 +57335,7 @@ escape ((l as Cons).head);
 -- (
 Test { DATA..[[
 pool[0] List l = new Cons(2, Nil());
-escape l is Nil;
+escape (l is Nil) as int;
 ]],
     wrn = true,
     run = 1,
@@ -57349,7 +57363,7 @@ Test { DATA..[[
 pool[2] List l = new Cons(1, Cons(2, Cons(3, Nil())));
 native _assert;
 _assert((((l as Cons).tail) as Cons).tail is Nil);
-escape (((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((l as Cons).tail) as Cons).tail) is Nil;
+escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((((l as Cons).tail) as Cons).tail) is Nil) as int);
 ]],
     wrn = true,
     run = 4,
@@ -57360,7 +57374,7 @@ escape (((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((l as Cons).t
 Test { DATA..[[
 pool[0] List l;
 l = new Cons(2, Nil());
-escape l is Nil;
+escape (l is Nil) as int;
 ]],
     wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -57378,7 +57392,7 @@ pool[] Tx ts;
 do
     ts = new Nil();
 end
-escape ts is Nil;
+escape (ts is Nil) as int;
 ]],
     wrn = true,
     run = 1,
@@ -57408,7 +57422,7 @@ Test { DATA..[[
 pool[1] List l;
 l = new Cons(1, Nil());
 ((l as Cons).tail) = new Cons(2, Nil()); // fails
-escape ((l as Cons).tail) is Nil;
+escape (((l as Cons).tail) is Nil) as int;
 ]],
     wrn = true,
     run = 1,
@@ -57457,7 +57471,7 @@ pool[2] List l = new Cons(1, Cons(2, Cons(3, Nil())));   // 3 fails
 native _ceu_out_assert_msg;
 _ceu_out_assert_msg((((l as Cons).tail) as Cons).tail is Nil, "1");
 l = new Cons(4, Cons(5, Cons(6, Nil())));   // all fail
-escape l is Nil;
+escape (l is Nil) as int;
 ]],
     wrn = true,
     run = 1,
@@ -57474,7 +57488,7 @@ _assert((((l as Cons).tail) as Cons).tail is Nil);
 l = new Nil();                                                // clear all
 l = new Cons(4, Cons(5, Cons(6, Nil())));   // 6 fails
 _assert((((l as Cons).tail) as Cons).tail is Nil);
-escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((((l as Cons).tail) as Cons).tail is Nil));
+escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((((l as Cons).tail) as Cons).tail is Nil)) as int);
 ]],
     wrn = true,
     run = 10,
@@ -57528,7 +57542,7 @@ pool[2] List lll;
 lll = new Cons(1, Cons(2, Nil()));
 lll = (lll as Cons).tail;    // parent=child
 (lll as Cons).tail = new Cons(3, Cons(4, Nil()));    // 4 fails
-escape (lll as Cons).head + (((lll as Cons).tail) as Cons).head + ((((lll as Cons).tail) as Cons).tail is Nil);
+escape (lll as Cons).head + (((lll as Cons).tail) as Cons).head + (((((lll as Cons).tail) as Cons).tail is Nil) as int);
 ]],
     wrn = true,
     run = 6,
@@ -57537,7 +57551,7 @@ Test { DATA..[[
 pool[2] List l = new Cons(1, Cons(2, Nil()));
 l = ((l as Cons).tail);    // parent=child
 ((l as Cons).tail) = new Cons(3, Cons(4, Nil()));    // 4 fails
-escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((l as Cons).tail) as Cons).tail is Nil);
+escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((((l as Cons).tail) as Cons).tail is Nil) as int);
 ]],
     wrn = true,
     run = 6,
@@ -57554,7 +57568,8 @@ l = new Cons(1, Cons(2, Nil()));
 escape 1;
 ]],
     wrn = true,
-    adt = 'line 53 : cannot assign parent to child',
+    --adt = 'line 53 : cannot assign parent to child',
+    ctxs = 'line 53 : unexpected context for pool "l"',
 }
 
 -->>> OPTION TYPES
@@ -57576,7 +57591,7 @@ var int ret = 0;            // 0
 
 var OptionInt i = Nil1();
 var OptionPtr p = Nil2();
-ret = ret + (i is Nil1) + (p is Nil2);  // 2
+ret = ret + ((i is Nil1)as int) + ((p is Nil2)as int);  // 2
 
 i = Some1(3);
 ret = ret + (i as Some1).v;       // 5
@@ -57611,14 +57626,14 @@ escape i!;
 
 Test { [[
 var int? i;
-escape not i?;
+escape (not i?) as int;
 ]],
     run = 1,
 }
 
 Test { [[
 var int? i;
-escape not i?;
+escape (not i?) as int;
 ]],
     run = 1,
 }
@@ -57626,7 +57641,7 @@ escape not i?;
 Test { [[
 var int v = 10;
 var& int? i;
-escape not i?;
+escape (not i?) as int;
 ]],
     --ref = 'line 3 : reference must be bounded before use',
     run = 1,
@@ -57635,7 +57650,7 @@ escape not i?;
 Test { [[
 var int v = 10;
 var& int? i;
-escape not i?;
+escape (not i?) as int;
 ]],
     run = 1,
 }
@@ -57643,7 +57658,7 @@ escape not i?;
 Test { [[
 var int v = 10;
 var& int? i;
-escape not i?;
+escape (not i?) as int;
 ]],
     run = 1,
 }
@@ -57979,8 +57994,10 @@ var SDL_Color clr = SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr.v;
 ]],
-    env = 'line 6 : invalid `.´ operation : cannot be an option type',
+    --names = 'line 6 : invalid member access : "bg_clr" must be of plain type',
+    --env = 'line 6 : invalid `.´ operation : cannot be an option type',
 }
+
 Test { [[
 data SDL_Color with
     var int v;

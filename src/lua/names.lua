@@ -14,9 +14,14 @@ F = {
         end
     end,
 
-    ['Exp_idx__PRE'] = function (me)
+    ['Exp_idx'] = function (me)
         local _,vec = unpack(me)
         me.loc = vec.loc
+    end,
+
+    ['Exp_1*'] = function (me)
+        local _,ptr = unpack(me)
+        me.loc = ptr.loc
     end,
 
     ['Exp_.'] = function (me)
@@ -27,7 +32,6 @@ F = {
 
         local Type = unpack(e.loc)
         local ID_abs, mod = unpack(Type)
-        assert(not mod)
         if ID_abs.top.group == 'data' then
             -- data.member
             local blk = AST.asr(ID_abs.top,'Data', 3,'Block')
@@ -38,6 +42,11 @@ F = {
                         '`data´ "'..ID_abs.top.id..
                         '" ('..ID_abs.top.ln[1]..':'..  ID_abs.top.ln[2]..')')
         end
+    end,
+
+    ['Exp_!'] = function (me)
+        local _, e = unpack(me)
+        me.loc = e.loc
     end,
 }
 
