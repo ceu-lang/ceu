@@ -35,12 +35,12 @@ F = {
         me.tp = AST.copy(e.tp)
     end,
     Await_Wclock = function (me)
-        me.tp = { TOPS.int }
+        me.tp = TYPES.new(me, 'int')
     end,
     Await_Code = function (me)
         local ID_abs = AST.asr(unpack(me),'ID_abs')
         local Type = AST.asr(ID_abs.top,'Code_impl', 5,'Type')
-        me.tp = Type.tp
+        me.tp = AST.copy(Type)
     end,
 
     Set_Emit_Ext_emit = function (me)

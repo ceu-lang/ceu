@@ -1,77 +1,82 @@
 TYPES = {
 }
 
+function TYPES.new (me, id, ...)
+    return AST.node('Type', me.ln,
+            AST.node('ID_prim', me.ln,
+                id),
+            ...)
+end
+
+function TYPES.id (tp)
+    local ID = unpack(tp)
+    local id = unpack(ID)
+    return id
+end
+
+function TYPES.top (tp)
+    return assert(TOPS[TYPES.id(tp)])
+end
+
 function TYPES.tostring (tp)
-    if tp.is_list then
+    if tp.tag == 'Typelist' then
         local ret = {}
         for i, tp in ipairs(tp) do
             ret[i] = TYPES.tostring(tp)
         end
         return '('..table.concat(ret,',')..')'
     end
-    return tp[1].id .. table.concat(tp,'',2)
+    return TYPES.id(tp) .. table.concat(tp,'',2)
 end
 function TYPES.dump (tp)
     DBG('TYPE', TYPES.tostring(tp))
 end
 
-function TYPES.copy (tp)
-    if tp.is_list then
-        local ret = { is_list=true }
-        for i,tp1 in ipairs(tp) do
-            ret[i] = TYPES.copy(tp1)
-        end
-        return ret
-    end
-
-    local ret = {}
-    for i,v in ipairs(tp) do
-        ret[i] = v
-    end
-    return ret
-end
-
 function TYPES.pop (tp)
-    assert(not tp.is_list)
+    assert(tp.tag ~= 'Typelist')
     local v = tp[#tp]
-    tp = TYPES.copy(tp)
+    tp = AST.copy(tp)
     tp[#tp] = nil
     return tp, v
 end
 
 function TYPES.push (tp,v)
-    assert(not tp.is_list)
-    tp = TYPES.copy(tp)
+    assert(tp.tag ~= 'Typelist')
+    tp = AST.copy(tp)
     tp[#tp+1] = v
     return tp
 end
 
 function TYPES.is_equal (tp1, tp2)
-    assert((not tp1.is_list) and (not tp2.is_list))
+    assert(tp1.tag~='Typelist' and tp2.tag~='Typelist')
     if #tp1 ~= #tp2 then
         return false
     end
     for i=1, #tp1 do
-        if tp1[i] ~= tp2[i] then
+        local v1, v2 = tp1[i], tp2[i]
+        if i == 1 then
+            v1, v2 = unpack(v1), unpack(v2)
+        end
+        if v1 ~= v2 then
             return false
         end
     end
     return true
 end
 
-function TYPES.check (tp, e, ...)
-    if tp.is_list then
+function TYPES.check (tp, ...)
+    if tp.tag == 'Typelist' then
         return false
     end
 
-    e = e or tp[1].id
-    local E = { e, ... }
+    local E = { ... }
     local j = 0
     for i=0, #E-1 do
         local J = #tp-j
         local v = tp[J]
         if J == 1 then
-            v = v.id
+            assert(AST.isNode(v))
+            v = unpack(v)
         end
 
         local e = E[#E-i]
@@ -94,21 +99,23 @@ function TYPES.check (tp, e, ...)
 end
 
 function TYPES.is_num (tp)
-    assert(not tp.is_list)
-    local top = TYPES.check(tp)
-    return TYPES.is_native(tp) and (not TYPES.check(tp,'&&'))
-        or (top and top.prim and top.prim.is_num)
+    assert(tp.tag ~= 'Typelist')
+    local top = TYPES.top(tp)
+    return TYPES.is_nat(tp)
+        or (top.prim and top.prim.is_num and TYPES.check(tp,top.id))
 end
 function TYPES.is_int (tp)
-    assert(not tp.is_list)
-    local top = TYPES.check(tp)
-    return TYPES.is_native(tp) and (not TYPES.check(tp,'&&'))
-        or (top and top.prim and top.prim.is_int)
+    assert(tp.tag ~= 'Typelist')
+    local top = TYPES.top(tp)
+    return TYPES.is_nat(tp)
+        or (top.prim and top.prim.is_int and TYPES.check(tp,top.id))
 end
-function TYPES.is_native (tp)
-    assert(not tp.is_list)
-    local top = TYPES.check(tp)
-    return top and top.group=='native'
+function TYPES.is_nat (tp)
+    assert(tp.tag ~= 'Typelist')
+    local top = TYPES.top(tp)
+    return top and top.group=='native' and TYPES.check(tp,top.id)
+        -- _char    yes
+        -- _char&&  no
 end
 
 do
@@ -138,8 +145,8 @@ do
     end
 
     function TYPES.contains (tp1, tp2)
-        if tp1.is_list or tp2.is_list then
-            if tp1.is_list and tp2.is_list then
+        if tp1.tag=='Typelist' or tp2.tag=='Typelist' then
+            if tp1.tag=='Typelist' and tp2.tag=='Typelist' then
                 if #tp1 == #tp2 then
                     for i=1, #tp1 do
                         if not TYPES.contains(tp1[i],tp2[i]) then
@@ -152,8 +159,8 @@ do
             return false
         end
 
-        local tp1_is_nat = TYPES.is_native(tp1)
-        local tp2_is_nat = TYPES.is_native(tp2)
+        local tp1_is_nat = TYPES.is_nat(tp1)
+        local tp2_is_nat = TYPES.is_nat(tp2)
 
 -- EQUAL TYPES
         if TYPES.is_equal(tp1, tp2) then
@@ -166,8 +173,8 @@ do
 
 -- NUMERIC TYPES
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
-            local top1 = unpack(tp1)
-            local top2 = unpack(tp2)
+            local top1 = TYPES.top(tp1)
+            local top2 = TYPES.top(tp2)
             if top1.group=='native' or top2.group=='native' then
                 return true
             end
@@ -209,32 +216,3 @@ do
         end
     end
 end
-
-F = {
-    Type = function (me)
-        local id = unpack(me)
-        me.tp = { id.top, unpack(me,2) }
-    end,
-
-    Typelist = function (me)
-        me.tp = { is_list=true }
-        for i, Type in ipairs(me) do
-            me.tp[i] = Type.tp
-        end
-    end,
-
---[[
-    Data = function (me)
-        local dcls = AST.asr(me,'', 3,'Block', 1,'Stmts')
-        local tps = { is_list=true }
-        for i, dcl in ipairs(dcls) do
-            assert(dcl.tag == 'Var')
-            local Type = unpack(dcl)
-            tps[i] = assert(Type.tp, 'bug found')
-        end
-        me.tp = tps
-    end,
-]]
-}
-
-AST.visit(F)

@@ -78,8 +78,6 @@ Test = function (t)
 
     STATS.count = STATS.count   + 1
 
-    dofile 'tp.lua'
-
     if not check('lines')    then return end
     local _WRN = WRN
     if (not t.wrn) and (not t._ana) then
