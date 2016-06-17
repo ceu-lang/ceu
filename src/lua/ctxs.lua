@@ -80,29 +80,8 @@ DBG'TODO'
 
     Set_Exp__PRE = function (me)
         local fr, to = unpack(me)
-
-        if not use_if_name_id(to) then
-            return
-        end
-
-        -- VEC
-        if to.loc.tag == 'Vec' then
-            -- vec = <NO>
-            ASR(false, me, 'invalid assignment : '..loc2err(to.loc))
-
-        -- EVT
-        elseif to.loc.tag == 'Evt' then
-            -- evt = <NO>
-            ASR(false, me, 'invalid assignment : '..loc2err(to.loc))
-
-        -- VAR
-        elseif to.loc.tag == 'Var' then
-            -- var = var
-            if use_if_name_id(fr) then
-                ASR(fr.loc.tag == 'Var', me,
-                    'invalid assignment : '..loc2err(fr.loc))
-            end
-        end
+        use_if_name_id(to,'Var')
+        use_if_name_id(to,'Pool')
     end,
 
     -- id = &id
