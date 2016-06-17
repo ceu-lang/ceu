@@ -23,11 +23,11 @@ F = {
 -- ID_*
 
     ID_ext = function (me)
-        me.tp = me.top.tp
+        me.tp = AST.copy(me.top.tp)
     end,
     ID_int = function (me)
         local Type_or_Typelist = unpack(me.loc)
-        me.tp = Type_or_Typelist
+        me.tp = AST.copy(Type_or_Typelist)
     end,
     ID_nat = function (me)
         me.tp = TYPES.new(me, '_')

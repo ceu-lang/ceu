@@ -71,29 +71,22 @@ F = {
     end,
 
     Var = function (me)
-        local Type, is_alias, id = unpack(me)
-        me.id = id
         me.tag_str = 'variable'
         locs_new(me, AST.par(me,'Block'))
     end,
 
     Vec = function (me)
-        local Type, is_alias, dim, id = unpack(me)
-        me.id = id
         me.tag_str = 'vector'
         locs_new(me, AST.par(me,'Block'))
     end,
 
     Pool = function (me)
-        local Type, is_alias, dim, id = unpack(me)
-        me.id = id
         me.tag_str = 'pool'
         locs_new(me, AST.par(me,'Block'))
     end,
 
     Evt = function (me)
-        local Typelist, is_alias, id = unpack(me)
-        me.id = id
+        local Typelist = unpack(me)
         me.tag_str = 'event'
 
         -- no modifiers allowed

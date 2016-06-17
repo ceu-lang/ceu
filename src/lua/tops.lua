@@ -100,11 +100,8 @@ F = {
         native_end = true
     end,
     Nat = function (me)
-        local _,id = unpack(me)
-        me.id    = id
         me.group = 'native'
         tops_new(me)
-
         ASR(not native_end, me,
             'native declarations are disabled')
     end,
@@ -114,33 +111,26 @@ F = {
     Extcall_proto = 'Extcall_impl',
     Extcall_impl = function (me)
         local grp, _, id = unpack(me)
-        me.id    = id
-        me.group = grp
+-- TODO
+        --me.id    = id
+        --me.group = grp
         tops_new(me)
     end,
 
     Ext = function (me)
-        local tp, grp, id = unpack(me)
-        me.tp    = tp
-        me.group = grp
-        me.id    = id
         tops_new(me)
     end,
 
 -- CODE / DATA
 
     Code_proto = function (me)
-        local mod, is_rec, id, ins, out = unpack(me)
-        me.id    = id
         me.group = 'code'
         tops_new(me)
     end,
     Code_impl = function (me)
-        local mod, is_rec, id, ins, out, blk = unpack(me)
-        me.id    = id
         me.group = 'code'
 
-        local top = TOPS[id]
+        local top = TOPS[me.id]
         if (not top) or top.blk then
             tops_new(me)
             top = me
@@ -154,8 +144,6 @@ F = {
     end,
 
     Data = function (me)
-        local id, super = unpack(me)
-        me.id    = id
         me.group = 'data'
         tops_new(me)
     end,
