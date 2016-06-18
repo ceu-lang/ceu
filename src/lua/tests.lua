@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -56471,6 +56470,18 @@ end
 var Tx t = Tx("oioioi");
 escape _strlen(t.xxxx);
 ]],
+    ctxs = 'line 7 : unexpected context for vector "xxxx"',
+}
+
+Test { [[
+native _char;
+native/pure _strlen;
+data Tx with
+    vector[255] _char xxxx;
+end
+var Tx t = Tx("oioioi");
+escape _strlen(&&t.xxxx[0]);
+]],
     run = 6,
 }
 
@@ -56495,6 +56506,7 @@ escape cell_rects[0].x;
     run = 10,
 }
 
+--]===]
 Test { [[
 data SDL_Rect with
     var int x;

@@ -133,7 +133,7 @@ DBG'TODO: _Vec_New'
         local is_new = unpack(Data_New)
         if is_new then
             -- pool = ...
-            use(Exp_Name, 'Pool', 'constructor')
+            use(Exp_Name, {'Var','Pool'}, 'constructor')
         else
             use(Exp_Name, 'Var', 'constructor')
         end
@@ -173,7 +173,11 @@ DBG'TODO: _Vec_New'
                 tag = 'pause/if'
             end
         end
-        use(Exp_Name, 'Evt', '`'..tag..'´')
+        if me.tag == 'Await_Evt' then
+            use(Exp_Name, {'Var','Evt','Pool'}, '`'..tag..'´')
+        else
+            use(Exp_Name, {'Evt'}, '`'..tag..'´')
+        end
     end,
 
     -- async (v), isr [] (v)
