@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -18921,7 +18920,8 @@ with
 end
 escape v;
 ]],
-    run = 1,
+    ctxs = 'line 5 : invalid operand to `*´ : expected name expression',
+    --run = 1,
 }
 
 Test { [[
@@ -23212,12 +23212,14 @@ escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
     run = 6,
 }
 
+--]===]
 Test { [[
 vector[10] u8 vec = [1,2,3];
 $$vec = 0;
 escape vec[0] as int;
 ]],
-    env = 'line 2 : invalid attribution',
+    parser = 'line 1 : after `;´ : expected statement',
+    --env = 'line 2 : invalid attribution',
 }
 Test { [[
 vector[10] u8 vec = [1,2,3];

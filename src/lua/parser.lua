@@ -601,7 +601,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- SETS
 
-    , _Set = (V'Exp_Name'+#P'$'*V'__Exp')     * V'__Sets_one'
+    , _Set = (V'Exp_Name'+(#P'$'-'$$')*V'__Exp') * V'__Sets_one'
            + (#V'ID_int'*V'Exp_Name' + PARENS(V'Varlist')) * V'__Sets_many'
 
     , __Sets_one  = (CKK'='-'=='+CKK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
