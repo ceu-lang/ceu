@@ -1475,7 +1475,7 @@ Test { [[var int a; emit a => 1; escape a;]],
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; escape a;]],
-    ctxs = 'line 1 : unexpected context for event "a"',
+    ctxs = 'line 1 : invalid assignment : unexpected context for event "a"',
     --parser = 'line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
@@ -1484,7 +1484,7 @@ event int a;
 emit a => 1;
 escape a;
 ]],
-    ctxs = 'line 3 : unexpected context for event "a"',
+    ctxs = 'line 3 : invalid assignment : unexpected context for event "a"',
     --run = 1,
     --trig_wo = 1,
 }
@@ -5234,7 +5234,7 @@ emit c => 10;
 emit c => 10;
 escape c;
 ]],
-    ctxs = 'line 4 : unexpected context for event "c"',
+    ctxs = 'line 4 : invalid assignment : unexpected context for event "c"',
     --env = 'line 4 : types mismatch (`int´ <= `void´)',
     --trig_wo = 2,
 }
@@ -22631,7 +22631,7 @@ Test { [[vector[0] int v; escape 0;]],
     --env='invalid dimension'
 }
 Test { [[vector[2] int v; escape v;]],
-    ctxs = 'line 1 : unexpected context for vector "v"',
+    ctxs = 'line 1 : invalid assignment : unexpected context for vector "v"',
     --env = 'types mismatch'
 }
 Test { [[native _u8; vector[2] _u8 v; escape &&v;]],
@@ -22801,11 +22801,11 @@ vector[2] _int v;
 v=v;
 escape 0;
 ]],
-    ctxs = 'line 3 : unexpected context for vector "v"',
+    ctxs = 'line 3 : invalid assignment : unexpected context for vector "v"',
     --env='types mismatch'
 }
 Test { [[vector[1] int v; escape v;]],
-    ctxs = 'line 1 : unexpected context for vector "v"',
+    ctxs = 'line 1 : invalid assignment : unexpected context for vector "v"',
     --env='cannot index a non array'
 }
 Test { [[native _int; vector[2] _int v; escape v[v];]],
@@ -22940,7 +22940,7 @@ var u32 len;
 vector[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
-    ctxs = 'line 5 : unexpected context for vector "c"',
+    ctxs = 'line 5 : invalid assignment : unexpected context for vector "c"',
 }
 
 Test { [[
@@ -22952,7 +22952,7 @@ vector[0] byte c = p2Buff; // doesn't work
 escape 1;
 ]],
     --env = 'line 5 : cannot index pointers to internal types',
-    ctxs = 'line 5 : unexpected context for vector "c"',
+    ctxs = 'line 5 : invalid assignment : unexpected context for vector "c"',
 }
 
 Test { [[
@@ -22999,7 +22999,7 @@ str = "oioioi";
 
 escape _strlen(&&str[0]);
 ]],
-    ctxs = 'line 5 : unexpected context for vector "str"',
+    ctxs = 'line 5 : invalid assignment : unexpected context for vector "str"',
 }
 Test { [[
 native/pure _strlen;
@@ -23022,13 +23022,14 @@ Test { [[
 var u8 v;
 escape ($$v) as int;
 ]],
-    env = 'line 2 : invalid operand to unary "$$" : vector expected',
+    ctxs = 'line 2 : invalid `$$´ expression : unexpected context for variable "v"',
+    --env = 'line 2 : invalid operand to unary "$$" : vector expected',
 }
 Test { [[
 var u8 v;
 escape ($v) as int;
 ]],
-    env = 'line 2 : invalid operand to unary "$" : vector expected',
+    ctxs = 'line 2 : invalid `$´ expression : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -23084,7 +23085,7 @@ vector[10] u8 vec = (1);
 escape 1;
 ]],
     --env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
-    ctxs = 'line 1 : unexpected context for vector "vec"',
+    ctxs = 'line 1 : invalid assignment : unexpected context for vector "vec"',
 }
 Test { [[
 native _int;
@@ -23227,7 +23228,7 @@ vector[10] u8 v1 = [1,2,3];
 vector[20] u8 v2 = v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
-    ctxs = 'line 2 : unexpected context for vector "v1"',
+    ctxs = 'line 2 : invalid assignment : unexpected context for vector "v1"',
     --env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
 }
 
@@ -23907,7 +23908,7 @@ vector[] byte v = [].."abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
-    ctxs = 'line 4 : unexpected context for vector "v"',
+    ctxs = 'line 4 : invalid `as´ expression : unexpected context for vector "v"',
     --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
 }
@@ -25952,7 +25953,7 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    ctxs = 'line 5 : unexpected context for vector "i"',
+    ctxs = 'line 5 : invalid assignment : unexpected context for vector "i"',
     --env = 'line 4 : types mismatch (`_int&&´ <= `_int[]´)',
     --run = { ['~>1s']=1 },
 }
@@ -25984,7 +25985,7 @@ await 1s;
 u = i;
 escape 1;
 ]],
-    ctxs = 'line 4 : unexpected context for vector "i"',
+    ctxs = 'line 4 : invalid assignment : unexpected context for vector "i"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]´)',
     --run = { ['~>1s']=1 },
 }
@@ -26002,7 +26003,7 @@ do
 end
 escape *u;
 ]],
-    ctxs = 'line 6 : unexpected context for vector "i"',
+    ctxs = 'line 6 : invalid assignment : unexpected context for vector "i"',
     --env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
 }
 Test { [[
@@ -28381,7 +28382,7 @@ var byte&& ptr = cpy;
 ptr = [[ str ]];
 escape ret and (0 == _strcmp(&&str[0],&&cpy[0]));
 ]=],
-    ctxs = 'line 8 : unexpected context for vector "cpy"',
+    ctxs = 'line 8 : invalid assignment : unexpected context for vector "cpy"',
 }
 
 Test { [=[
@@ -43847,7 +43848,7 @@ event int a;
 a = 1;
 escape 1;
 ]],
-    ctxs = 'line 2 : unexpected context for event "a"',
+    ctxs = 'line 2 : invalid assignment : unexpected context for event "a"',
     --env = 'types mismatch',
 }
 

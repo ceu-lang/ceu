@@ -1,29 +1,42 @@
-
-local function loc2err (loc)
-    return 'unexpected context for '..loc.tag_str..' "'..loc.id..'"'
-end
-
-local function use_id (ID_int, cnd)
+local function use_id (ID_int, cnd, err)
     assert(ID_int.tag == 'ID_int')
-    if (not cnd) or ID_int.loc.tag==cnd then
-        ID_int.__ctxs_ok = true
+    assert(ID_int.__ctxs == nil)
+    local ok do
+        if cnd == nil then
+            ok = true
+        elseif type(cnd) == 'table' then
+            for _, tag in ipairs(cnd) do
+                if tag == ID_int.loc.tag then
+                    ok = true
+                    break
+                end
+            end
+        elseif cnd == ID_int.loc.tag then
+            ok = true
+        end
+    end
+    if ok then
+        ID_int.__ctxs = true
         return true
     else
+        if err then
+            ID_int.__ctxs = err
+        end
         return false
     end
 end
 
-local function use_if_id (ID_int, cnd)
+local function use_if_id (ID_int, cnd, err)
     if ID_int.tag == 'ID_int' then
-        return use_id(ID_int,cnd)
+        return use_id(ID_int,cnd,err)
     else
         return false
     end
 end
 
-local function use_if_name_id (Exp_Name, cnd)
+local function use_if_name_id (Exp_Name, cnd, err)
     if Exp_Name.tag == 'Exp_Name' then
-        return use_if_id(unpack(Exp_Name),cnd)
+        return use_if_id(unpack(Exp_Name),cnd,err)
     else
         return false
     end
@@ -31,8 +44,20 @@ end
 
 F = {
     ID_int = function (me)
-        if me.loc.tag ~= 'Var' then
-            ASR(me.__ctxs_ok, me, loc2err(me.loc))
+        if me.__ctxs == nil then
+            if me.loc.tag == 'Var' then
+                -- ok
+            else
+                ASR(false, me,
+                    'unexpected context for '..me.loc.tag_str..' "'..me.loc.id..'"')
+            end
+        elseif me.__ctxs == true then
+            -- ok
+        else
+            assert(type(me.__ctxs) == 'string')
+            ASR(false, me,
+                'invalid '..me.__ctxs..' : '..
+                    'unexpected context for '..me.loc.tag_str..' "'..me.loc.id..'"')
         end
     end,
 
@@ -41,14 +66,14 @@ F = {
     -- vec[i]
     ['Exp_idx__PRE'] = function (me)
         local _,vec = unpack(me)
-        use_if_id(vec, 'Vec')
+        use_if_id(vec, {'Vec','Var'}, 'indexing expression')
     end,
 
     -- $/$$vec
     ['Exp_$$__PRE'] = 'Exp_$__PRE',
     ['Exp_$__PRE'] = function (me)
-        local _,vec = unpack(me)
-        use_if_name_id(vec)
+        local op,vec = unpack(me)
+        use_if_name_id(vec, 'Vec', '`'..op..'´ expression')
     end,
 
     -- &id
@@ -65,23 +90,22 @@ DBG'TODO'
 
     -- is(*)
     ['Exp_is__PRE'] = function (me)
-        local _,e = unpack(me)
-        use_if_name_id(e)
+        local op,e = unpack(me)
+        use_if_name_id(e, {'Var','Pool'}, '`'..op..'´ expression')
     end,
 
     -- as(*)
     ['Exp_as__PRE'] = function (me)
-        local _,e = unpack(me)
-        use_if_id(e, 'Var')
-        use_if_id(e, 'Pool')
+        local op,e = unpack(me)
+        use_if_name_id(e, {'Var','Pool'}, '`'..op..'´ expression')
     end,
 
     --------------------------------------------------------------------------
 
     Set_Exp__PRE = function (me)
         local fr, to = unpack(me)
-        use_if_name_id(to,'Var')
-        use_if_name_id(to,'Pool')
+        use_if_name_id(to, {'Var','Pool'}, 'assignment')
+        use_if_name_id(fr, 'Var', 'assignment')
     end,
 
     -- id = &id
@@ -96,13 +120,13 @@ DBG'TODO'
         local fr,to = unpack(me)
 
         -- vec = ...
-        ASR(use_if_name_id(to,'Vec'), me, 'invalid constructor : '..loc2err(to.loc))
+        use_if_name_id(to, 'Vec', 'constructor')
 
         -- ... = []..vec
         if fr.tag == '_Vec_New' then
 DBG'TODO: _Vec_New'
             for _, e in ipairs(fr) do
-                use_if_name_id(e, 'Vec')
+                use_if_name_id(e, 'Vec', 'constructor')
             end
         end
     end,
@@ -112,8 +136,18 @@ DBG'TODO: _Vec_New'
         local is_new = unpack(Data_New)
         if is_new then
             -- pool = ...
-            local ok = use_if_name_id(Exp_Name,'Pool')
-            if not ok then
+            use_if_name_id(Exp_Name, 'Pool', 'constructor')
+        else
+            use_if_name_id(Exp_Name, 'Var', 'constructor')
+        end
+    end,
+--[[
+    Set_Data = function (me)
+        local Data_New, Exp_Name = unpack(me)
+        local is_new = unpack(Data_New)
+        if is_new then
+            local ID_int = unpack(Exp_Name)
+            if Exp_Name.tag~='Exp_Name' or ID_int.tag~='ID_int' then
                 -- var.data = ...
                 local e = unpack(Exp_Name)
                 if e.tag == 'Exp_.' then
@@ -122,23 +156,27 @@ DBG'TODO: _Vec_New'
             end
             ASR(ok, me,
                 'invalid constructor : '..loc2err(Exp_Name.loc))
-        else
-            ASR(use_if_name_id(Exp_Name,'Var'), me,
-                'invalid constructor : '..loc2err(Exp_Name.loc))
         end
     end,
+]]
 
     --------------------------------------------------------------------------
 
-    _Pause__PRE   = function(me) return F.Await_Evt__PRE(me,'pause/if') end,
-    Emit_Evt__PRE = function(me) return F.Await_Evt__PRE(me,'emit') end,
+    _Pause__PRE    = 'Await_Evt__PRE',
+    Emit_Evt__PRE  = 'Await_Evt__PRE',
     Await_Evt__PRE = function (me, tag)
-        local name = unpack(me)
-        local tag = tag or 'await'
-        if use_if_name_id(name) then
-            ASR(name.loc.tag=='Evt', me,
-                'invalid `'..tag..'´ : '..loc2err(name.loc))
+        local Exp_Name = unpack(me)
+        local tag do
+            if me.tag == 'Await_Evt' then
+                tag = 'await'
+            elseif me.tag == 'Emit_Evt' then
+                tag = 'emit'
+            else
+                assert(me.tag == '_Pause')
+                tag = 'pause/if'
+            end
         end
+        use_if_name_id(Exp_Name, 'Evt', '`'..tag..'´')
     end,
 
     -- async (v), isr [] (v)

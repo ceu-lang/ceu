@@ -153,7 +153,7 @@ F = {
                 ASR(type(fr)~='boolean', me,
                     'invalid `escape´ : expected expression')
                 set[3] = op
-                return to
+                return AST.copy(to)
             else
                 ASR(type(fr)=='boolean', me,
                     'invalid `escape´ : unexpected expression')

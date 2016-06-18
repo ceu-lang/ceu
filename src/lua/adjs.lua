@@ -212,7 +212,7 @@ DBG('TODO: _Extreq', me.tag)
                     '__lim_'..me.n)
             lim_ini[#lim_ini+1] =
                 node('Set_Exp', me.ln,
-                    to,
+                    AST.copy(to),
                     node('Exp_Name', me.ln,
                         node('ID_int', me.ln, '__lim_'..me.n)))
 
@@ -247,7 +247,7 @@ DBG('TODO: _Extreq', me.tag)
                 node('Stmts', me.ln,
                     dcl_i,
                     node('Set_Exp', me.ln,
-                        fr,
+                        AST.copy(fr),
                         node('Exp_Name', me.ln,
                             node('ID_int', me.ln, i))),
                     lim_ini,
