@@ -211,13 +211,15 @@ escape ( x + (0.5 as byte) )as int;
 Test { [[
 escape *1;
 ]],
-    exps = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
+    ctxs = 'line 1 : invalid operand to `*´ : expected name expression',
+    --exps = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
 }
 
 Test { [[
 escape &&1;
 ]],
-    exps = 'line 1 : invalid expression : operand to `&&´ must be a name',
+    ctxs = 'line 1 : invalid operand to `&&´ : expected name expression',
+    --exps = 'line 1 : invalid expression : operand to `&&´ must be a name',
 }
 
 Test { [[
@@ -17641,7 +17643,7 @@ escape Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    ctxs = 'line 7 : unexpected context for vector "str"',
+    ctxs = 'line 7 : invalid argument to call : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -17813,7 +17815,7 @@ vector[255] byte buf;
 _enqueue(buf);
 escape 1;
 ]],
-    ctxs = 'line 3 : unexpected context for vector "buf"',
+    ctxs = 'line 3 : invalid argument to call : unexpected context for vector "buf"',
     --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
     --fin = 'line 2 : call requires `finalize´',
 }
@@ -17823,7 +17825,7 @@ vector[255] byte buf;
 _enqueue(&&buf);
 escape 1;
 ]],
-    ctxs = 'line 3 : unexpected context for vector "buf"',
+    ctxs = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
     --fin = 'line 2 : call requires `finalize´',
 }
 
@@ -22656,12 +22658,12 @@ Test { [[vector[2] int v; escape v;]],
     --env = 'types mismatch'
 }
 Test { [[native _u8; vector[2] _u8 v; escape &&v;]],
-    ctxs = 'line 1 : unexpected context for vector "v"',
+    ctxs = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
 Test { [[vector[2] u8 v; escape &&v;]],
-    ctxs = 'line 1 : unexpected context for vector "v"',
+    ctxs = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
@@ -22830,7 +22832,7 @@ Test { [[vector[1] int v; escape v;]],
     --env='cannot index a non array'
 }
 Test { [[native _int; vector[2] _int v; escape v[v];]],
-    ctxs = 'line 1 : unexpected context for vector "v"',
+    ctxs = 'line 1 : invalid index : unexpected context for vector "v"',
     --env='invalid array index'
 }
 
@@ -22838,7 +22840,7 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    ctxs = 'line 2 : unexpected context for vector "v"',
+    ctxs = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
@@ -22848,7 +22850,7 @@ native _int;
 vector[2] _int v ;
 escape v == &&v[0] ;
 ]],
-    ctxs = 'line 3 : unexpected context for vector "v"',
+    ctxs = 'line 3 : invalid operand to `==´ : unexpected context for vector "v"',
     --exps = 'line 3 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
@@ -23043,14 +23045,14 @@ Test { [[
 var u8 v;
 escape ($$v) as int;
 ]],
-    ctxs = 'line 2 : invalid `$$´ expression : unexpected context for variable "v"',
+    ctxs = 'line 2 : invalid operand to `$$´ : unexpected context for variable "v"',
     --env = 'line 2 : invalid operand to unary "$$" : vector expected',
 }
 Test { [[
 var u8 v;
 escape ($v) as int;
 ]],
-    ctxs = 'line 2 : invalid `$´ expression : unexpected context for variable "v"',
+    ctxs = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -23249,7 +23251,7 @@ vector[10] u8 v1 = [1,2,3];
 vector[20] u8 v2 = v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
-    ctxs = 'line 2 : invalid assignment : unexpected context for vector "v1"',
+    ctxs = 'line 2 : invalid assignment : unexpected context for vector "v2"',
     --env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
 }
 
@@ -23331,7 +23333,7 @@ escape v == &&v[0] ;
     --exps = 'line 2 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
-    ctxs = 'line 2 : unexpected context for vector "v"',
+    ctxs = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
 }
 
 Test { [[
@@ -23929,7 +23931,7 @@ vector[] byte v = [].."abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
-    ctxs = 'line 4 : invalid `as´ expression : unexpected context for vector "v"',
+    ctxs = 'line 4 : invalid operand to `as´ : unexpected context for vector "v"',
     --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
 }
@@ -28375,7 +28377,7 @@ var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy = [[ str ]];
 escape ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&));
 ]=],
-    ctxs = 'line 6 : unexpected context for vector "cpy"',
+    ctxs = 'line 6 : invalid Lua assignment : unexpected context for vector "cpy"',
     --run = 1,
 }
 
@@ -48355,7 +48357,7 @@ with
 end
 escape 1;
 ]],
-    ctxs = 'line 4 : unexpected context for vector "v"',
+    ctxs = 'line 4 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
     --env = 'line 4 : invalid operand to unary "&&"',
 }
@@ -52682,7 +52684,7 @@ with
 end
 escape 1;
 ]],
-    ctxs = 'line 4 : unexpected context for event "a"',
+    ctxs = 'line 4 : invalid variable : unexpected context for event "a"',
     --env = 'line 4 : wrong argument #1',
     --env = 'line 4 : invalid attribution',
 }
@@ -52750,7 +52752,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 4 : event "a" is not declared',
-    ctxs = 'line 7 : unexpected context for event "a"',
+    ctxs = 'line 7 : invalid variable : unexpected context for event "a"',
 }
 
 Test { [[
@@ -55300,6 +55302,7 @@ end
 --<<< REQUESTS
 
 -->>> DATA INI
+-- HERE:
 
 -- ADTs used in most examples below
 DATA = [[
@@ -55735,10 +55738,10 @@ var List l = new ListCONS(1,
                    ListNIL()));
 escape 1;//(((l as Cons).tail) as Cons).@head@;
 ]],
-    ctxs = 'line 7 : invalid constructor : unexpected context for variable "l"',
+    --ctxs = 'line 7 : invalid constructor : unexpected context for variable "l"',
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
-    --adt = 'line 7 : invalid attribution : not a pool',
+    adt = 'line 7 : invalid attribution : not a pool',
 }
 
 Test { [[
@@ -55773,8 +55776,8 @@ escape 0;//((l as Cons).tail) as Cons).@head@;
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
-    --adt = 'line 8 : invalid attribution : not a pool',
-    ctxs = 'line 8 : invalid constructor : unexpected context for variable "l"',
+    adt = 'line 8 : invalid attribution : not a pool',
+    --ctxs = 'line 8 : invalid constructor : unexpected context for variable "l"',
 }
 
 Test { [[
@@ -55897,7 +55900,7 @@ pool[] Stack xxx = new StackNONEMPTY(
 
 escape 1;
 ]],
-    ctxs = 'line 8 : unexpected context for pool "xxx"',
+    ctxs = 'line 8 : invalid argument to constructor : unexpected context for pool "xxx"',
     wrn = true,
     --env = 'line 10 : invalid constructor : recursive field "NONEMPTY" must be new data',
 }
@@ -56471,7 +56474,7 @@ end
 var Tx t = Tx("oioioi");
 escape _strlen(t.xxxx);
 ]],
-    ctxs = 'line 7 : unexpected context for vector "xxxx"',
+    ctxs = 'line 7 : invalid argument to call : unexpected context for vector "xxxx"',
 }
 
 Test { [[
@@ -56722,7 +56725,7 @@ l1 = new Nil();       /* recursive union */
 pool[] List l2 = new Cons(1, l1);
 escape 1;
 ]],
-    ctxs = 'line 56 : unexpected context for pool "l1"',
+    ctxs = 'line 56 : invalid argument to constructor : unexpected context for pool "l1"',
     --env = 'line 56 : invalid constructor : recursive field "Cons" must be new data',
     -- TODO-ADT-Rec-STATIC-CONSTRS
     --run = 1,
@@ -56737,7 +56740,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 53 : invalid constructor : recursive field "Cons" must be new data',
-    ctxs = 'line 53 : unexpected context for pool "l1"',
+    ctxs = 'line 53 : invalid argument to constructor : unexpected context for pool "l1"',
 }
 
 -- constructors must specify the ADT identifier
@@ -56818,7 +56821,8 @@ Test { DATA..[[
 escape Nil();
 ]],
     wrn = true,
-    exps = 'line 51 : invalid call : "Nil" is not a `code´ abstraction',
+    ctxs = 'line 51 : invalid call : unexpected context for data "Nil"',
+    --exps = 'line 51 : invalid call : "Nil" is not a `code´ abstraction',
     --ast = 'line 51 : invalid call',
     --env = 'TODO: not a code',
     --parser = 'line 51 : after `escape´ : expected expression',
@@ -56830,7 +56834,8 @@ escape v;
 ]],
     wrn = true,
     --ast = 'line 52 : invalid call',
-    exps = 'line 52 : invalid call : "Nil" is not a `code´ abstraction',
+    ctxs = 'line 52 : invalid call : unexpected context for data "Nil"',
+    --exps = 'line 52 : invalid call : "Nil" is not a `code´ abstraction',
     --env = 'TODO: not a code',
     --parser = 'line 52 : after `==´ : expected expression',
 }
@@ -57103,7 +57108,7 @@ escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + (((l3 as Cons).tai
     wrn = true,
     --run = 4,
     --env = 'line 53 : invalid constructor : recursive field "Cons" must be new data',
-    ctxs = 'line 53 : unexpected context for pool "l1"',
+    ctxs = 'line 53 : invalid argument to constructor : unexpected context for pool "l1"',
     -- TODO-ADT-Rec-STATIC-CONSTRS
 }
 Test { DATA..[[
@@ -57132,7 +57137,7 @@ escape (l3 as Cons).head + (((l3 as Cons).tail is Nil) as int);
     --adt = 'line 54 : invalid attribution : value is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
     --adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
-    ctxs = 'line 54 : unexpected context for pool "l1"',
+    ctxs = 'line 54 : invalid assignment : unexpected context for pool "l1"',
     run = 3,
 }
 Test { DATA..[[
@@ -57140,12 +57145,12 @@ pool[] List l1;
 l1 = new Nil();
 pool[] List l3 = new Cons(2, Cons(1, Nil()));
 (l3 as Cons).tail = &&l1;
-escape (l3 as Cons).head + ((l3 as Cons).tail is Nil);
+escape (l3 as Cons).head + (((l3 as Cons).tail is Nil) as int);
 ]],
     wrn = true,
-    ctxs = 'line 54 : unexpected context for pool "l1"',
+    --ctxs = 'line 54 : unexpected context for pool "l1"',
     --adt = 'line 54 : invalid attribution : destination is not a reference',
-    --adt = 'line 54 : cannot mix recursive data sources',
+    adt = 'line 54 : cannot mix recursive data sources',
     run = 3,
 }
 
@@ -57161,7 +57166,7 @@ escape (l1 is Cons) + (l1 as Cons).head==1;
     wrn = true,
     --adt = 'line 55 : invalid attribution : value is not a reference',
     --adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
-    ctxs = 'line 55 : unexpected context for pool "l2"',
+    ctxs = 'line 55 : invalid assignment : unexpected context for pool "l2"',
     run = 2,
 }
 Test { DATA..[[
@@ -57174,9 +57179,9 @@ escape (l1 is Cons) + (l1 as Cons).head==1;
 ]],
     wrn = true,
     --adt = 'line 55 : invalid attribution : destination is not a reference',
-    ctxs = 'line 55 : unexpected context for pool "l2"',
+    --ctxs = 'line 55 : unexpected context for pool "l2"',
     --adt = 'line 55 : invalid attribution : new reference only to pointer or alias',
-    --adt = 'line 55 : cannot mix recursive data sources',
+    adt = 'line 55 : cannot mix recursive data sources',
     run = 2,
 }
 Test { DATA..[[
@@ -57185,7 +57190,7 @@ pool[] List l1 = new Nil(),
 l1 = l2;
 escape (l1 is Cons) + ((l1 as Cons).head==1) + ((((l1 as Cons).tail as Cons).tail as Cons).head==1);
 ]],
-    ctxs = 'line 53 : unexpected context for pool "l2"',
+    ctxs = 'line 53 : invalid assignment : unexpected context for pool "l2"',
     wrn = true,
     --adt = 'line 53 : invalid attribution : value is not a reference',
     --adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
@@ -57204,7 +57209,7 @@ escape (((l1 as Cons).head)==1) + ((((l1 as Cons).tail) as Cons).head==2) +
     wrn = true,
     --adt = 'line 53 : invalid attribution : value is not a reference',
     --adt = 'line 53 : invalid attribution : mutation : cannot mix data sources',
-    ctxs = 'line 53 : unexpected context for pool "l2"',
+    ctxs = 'line 53 : invalid assignment : unexpected context for pool "l2"',
     run = 5,
 }
 
@@ -57217,9 +57222,9 @@ escape (((l1 as Cons).head)==1) + ((((l1 as Cons).tail) as Cons).head==2) +
        ((((((l1 as Cons).tail) as Cons).tail as Cons).tail as Cons).head==2);
 ]],
     wrn = true,
-    ctxs = 'line 53 : unexpected context for pool "l2"',
+    --ctxs = 'line 53 : unexpected context for pool "l2"',
     --adt = 'line 53 : invalid attribution : destination is not a reference',
-    --adt = 'line 53 : cannot mix recursive data sources',
+    adt = 'line 53 : cannot mix recursive data sources',
     run = 5,
 }
 
@@ -57237,7 +57242,7 @@ escape ((l1 as Cons).head) + (((l1 as Cons).tail) as Cons).head + ((l2 as Cons).
     --adt = 'line 54 : invalid attribution : value is not a reference',
     --adt = 'line 54 : invalid attribution : new reference only to root',
     --adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
-    ctxs = 'line 54 : unexpected context for pool "l2"',
+    ctxs = 'line 54 : invalid assignment : unexpected context for pool "l2"',
     run = 6,
 }
 
@@ -57318,7 +57323,7 @@ pool[] List l;     // l is the pool
 escape (*l is Nil) as int;       // "l" is not a struct
 ]],
     wrn = true,
-    ctxs = 'line 52 : unexpected context for pool "l"',
+    ctxs = 'line 52 : invalid operand to `*´ : unexpected context for pool "l"',
     --env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
@@ -57689,7 +57694,7 @@ escape 1;
 ]],
     wrn = true,
     --adt = 'line 53 : cannot assign parent to child',
-    ctxs = 'line 53 : unexpected context for pool "l"',
+    ctxs = 'line 53 : invalid assignment : unexpected context for pool "l"',
 }
 
 -->>> OPTION TYPES
@@ -58315,7 +58320,8 @@ l2 = new Nil();
 escape l1==l2;
 ]],
     wrn = true,
-    env = 'line 53 : invalid operands to binary "=="',
+    ctxs = 'line 53 : invalid operand to `==´ : unexpected context for pool "l1"',
+    --env = 'line 53 : invalid operands to binary "=="',
     --run = 1,
 }
 
@@ -58328,8 +58334,8 @@ l2 = new Cons(2, Nil());
 escape (((l1 as Cons).tail) as Cons).head;
 ]],
     wrn = true,
-    --adt = 'line 54 : invalid attribution : value is not a reference',
     adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
+    ctxs = 'line 54 : invalid assignment : unexpected context for pool "l2"',
 }
 Test { DATA..[[
 pool[] List l1 = new Cons(1, Nil());
@@ -58353,8 +58359,8 @@ pool[2] List l2 = new Cons(2, Nil());
 escape (((l1 as Cons).tail) as Cons).head;
 ]],
     wrn = true,
-    --adt = 'line 54 : invalid attribution : value is not a reference',
-    adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
+    --adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
+    ctxs = 'line 54 : invalid assignment : unexpected context for pool "l2"',
 }
 Test { DATA..[[
 pool[2] List l1;
@@ -58365,8 +58371,8 @@ l2 = new Cons(2, Nil());
 escape (((l1 as Cons).tail) as Cons).head;
 ]],
     wrn = true,
-    --adt = 'line 55 : invalid attribution : value is not a reference',
-    adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
+    --adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
+    ctxs = 'line 55 : invalid assignment : unexpected context for pool "l2"',
 }
 
 Test { DATA..[[
@@ -58619,8 +58625,8 @@ var List&& lll = list;
 escape 1;
 ]],
     wrn = true,
-    adt = 'line 11 : invalid attribution : mutation : cannot mix data sources',
-    --adt = 'line 11 : invalid attribution : types mismatch (`List&&´ <= `List[]´)',
+    --adt = 'line 11 : invalid attribution : mutation : cannot mix data sources',
+    ctxs = 'line 9 : invalid assignment : unexpected context for pool "list"',
     --run = 1,
     --env = 'line 15 : invalid operand to unary "&&"',
     --env = 'line 15 : data must be a pointer',
@@ -58645,9 +58651,8 @@ end
 
 escape 0;
 ]],
-    env = 'line 15 : not a struct',
-    --env = 'line 15 : invalid operand to unary "&&"',
-    --env = 'line 15 : data must be a pointer',
+    ctxs = 'line 11 : invalid assignment : unexpected context for pool "list"',
+    --env = 'line 15 : not a struct',
 }
 
 Test { [[
@@ -58808,7 +58813,7 @@ end
 pool[] List list;
 
 list = new Cons(10, Nil());
-vector[] List&& lll = &&list; // TODO fat pointer
+pool[] List&& lll = &&list; // TODO fat pointer
 
 *lll = (lll as Cons).tail;
 
@@ -59152,7 +59157,7 @@ data Dx with
 end
 vector[] byte s = [].. "oi";
 native _char;
-var Dx d = Dx(((&&s) as _char&&) as _char_ptr);
+var Dx d = Dx(((&&s[0]) as _char&&) as _char_ptr);
 escape _strlen(d.str as _char&&);
 ]],
     run = 2,

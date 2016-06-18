@@ -10,6 +10,9 @@ F = {
     ID_nat = function (me)
         me.loc = AST.copy(me.top)
     end,
+    ID_abs = function (me)
+        me.loc = AST.copy(me.top)
+    end,
 
     --------------------------------------------------------------------------
 
@@ -69,6 +72,14 @@ F = {
 
         me.loc = AST.copy(e.loc)
         me.loc[1] = TYPES.pop(me.loc[1])
+    end,
+
+    ['Exp_$'] = function (me)
+        local _, e = unpack(me)
+        if not e.loc then return end
+
+        me.loc = AST.copy(e.loc)
+        me.loc.tag = 'Var'
     end,
 }
 

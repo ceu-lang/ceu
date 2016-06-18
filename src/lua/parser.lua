@@ -650,8 +650,8 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , _Vec_New = V'Vec_Tup' * (KK'..' * (V'__Exp' + V'_Lua' + #KK'['*V'Vec_Tup'))^0
 
     , Data_New = OPT(CK'new') * V'Data_New_one'
-    , Data_New_one  = V'ID_abs' * PARENS(V'_Data_explist')
-    , _Data_explist    = ( V'__data_expitem'*(KK','*V'__data_expitem')^0 )^-1
+    , Data_New_one  = V'ID_abs' * PARENS(V'_Data_Explist')
+    , _Data_Explist    = ( V'__data_expitem'*(KK','*V'__data_expitem')^0 )^-1
     , __data_expitem   = (V'Data_New_one' + V'_Vec_New' + V'__Exp')
 
 -- IDS
