@@ -9,46 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-Test { [[
-data Tt with
-    var        int x;
-    vector[10] int v;
-    event      int e;
-end
-
-var Tt t;
-
-t.x = 1;
-var int x = t.x;
-
-t.v = [1,2,3];
-x = t.v[0];
-
-emit t.e;
-await t.e;
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-data Tt with
-    var        int x;
-    vector[10] int v;
-    event      int e;
-end
-
-var Tt t;
-
-emit t.x;
-
-escape 1;
-]],
-    ctxs = 'line 9 : invalid `emit´ : unexpected context for variable "x"',
-}
-
---do return end -- OK
+do return end -- OK
 --]===]
 
 ----------------------------------------------------------------------------
@@ -56639,6 +56600,92 @@ var int a =
 escape a;
 ]],
     run = {['~>10s']=50 },
+}
+
+Test { [[
+data Tt with
+    var        int x;
+    vector[10] int v;
+    event      int e;
+end
+
+var Tt t;
+
+t.x = 1;
+var int x = t.x;
+
+t.v = [1,2,3];
+x = t.v[0];
+
+emit t.e;
+await t.e;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data Tt with
+    var        int x;
+    vector[10] int v;
+    event      int e;
+end
+
+var Tt t;
+
+emit t.x;
+
+escape 1;
+]],
+    ctxs = 'line 9 : invalid `emit´ : unexpected context for variable "x"',
+}
+
+Test { [[
+data Ta with
+    var        int x;
+    vector[10] int v;
+    event      int e;
+end
+
+data Tb with
+    var Ta a;
+end
+
+var Tb b;
+
+emit b.a.x;
+
+escape 1;
+]],
+    ctxs = 'line 13 : invalid `emit´ : unexpected context for variable "x"',
+}
+
+Test { [[
+data Ta with
+    var        int x;
+    vector[10] int v;
+    event      int e;
+end
+
+data Tb with
+    var Ta a;
+end
+
+var Tb b;
+
+b.a.x = 1;
+var int x = b.a.x;
+
+b.a.v = [1,2,3];
+x = b.a.v[0];
+
+emit b.a.e;
+await b.a.e;
+
+escape 1;
+]],
+    run = 1,
 }
 
 -- << ADT : MISC
