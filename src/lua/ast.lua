@@ -3,7 +3,7 @@ AST = {
 }
 
 local __mt = {
-    Nat  = { id=2 },
+    Nat  = { id=3 },
     Ext  = { tp=1, group=2, id=3 },
     Var  = { id=3 },
     Vec  = { id=4 },

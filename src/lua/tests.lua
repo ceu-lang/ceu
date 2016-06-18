@@ -8,6 +8,7 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--[===[
 Test { [[
 data Tt with
     var        int x;
@@ -44,11 +45,10 @@ emit t.x;
 
 escape 1;
 ]],
-    run = 1,
+    ctxs = 'line 9 : invalid `emit´ : unexpected context for variable "x"',
 }
 
 --do return end -- OK
---[===[
 --]===]
 
 ----------------------------------------------------------------------------
@@ -17332,9 +17332,10 @@ do v(&&a);
 finalize with nothing; end;
 escape(a);
 ]],
+    ctxs = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    fin = 'line 11 : unsafe access to pointer "v" across `await´',
+    --fin = 'line 11 : unsafe access to pointer "v" across `await´',
     --run = { ['~>1s']=10 },
 }
 
@@ -17358,9 +17359,10 @@ var int a=0;
 do v(&&a); finalize with nothing; end;
 escape(a);
 ]],
+    ctxs = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
-    fin = 'line 11 : unsafe access to pointer "v" across `await´',
+    --fin = 'line 11 : unsafe access to pointer "v" across `await´',
 }
 Test { [[
 native _f;
@@ -17422,6 +17424,25 @@ native _t;
 var _t v = _f;
 var int a=0;
 do v(&&a); finalize with nothing; end;
+escape(a);
+]],
+    ctxs = 'line 11 : invalid call : unexpected context for variable "v"',
+    --env = 'line 8 : native variable/function "_f" is not declared',
+    --run = 10,
+}
+
+Test { [[
+native _f;
+pre native do
+    void f (int* a) {
+        *a = 10;
+    }
+    typedef void (*t)(int*);
+end
+native _t;
+var _t v = _f;
+var int a=0;
+do _f(&&a); finalize with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -18832,7 +18853,7 @@ var _t v = _f;
 var int ret=0;
 do
     var int a=0;
-    do v(&&a);
+    do _f(&&a);
         finalize with nothing; end;
     ret = a;
 end
@@ -18857,7 +18878,7 @@ end
 do
     var int a = 10;;
     var _t v = _f;
-    do v(&&a);
+    do _f(&&a);
         finalize with
             do
                 ret = ret + a;
@@ -18893,7 +18914,7 @@ end
 par/or do
         var int a = 10;;
         var _t v = _f;
-        do v(&&a);
+        do _f(&&a);
             finalize with
                 do
                     ret = ret + a;

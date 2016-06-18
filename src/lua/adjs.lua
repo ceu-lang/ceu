@@ -25,6 +25,7 @@ end,
         --      to
         --  Block
         --      Stmts
+        --          nats
         --          Var             -- _ret
         --          Set
         --              ret
@@ -37,9 +38,21 @@ end,
         Pre_Stmts = node('Stmts', me.ln)
         table.insert(stmts, 1, Pre_Stmts)
 
+        local nats = node('Stmts', me.ln,
+                        node('Nat', me.ln,
+                            node('Type', me.ln,
+                                node('ID_prim', me.ln, '_')),
+                            false,
+                            '_'),
+                        node('Nat', me.ln,
+                            false,
+                            'plain',
+                            '_char'))
+
         AST.root =
             node('Block', me.ln,
                 node('Stmts', me.ln,
+                    nats,
                     node('Var', me.ln,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
@@ -280,8 +293,9 @@ DBG('TODO: _Loop_Pool')
             if to.tag ~= 'Varlist' then
                 to = { to }
             end
-            for i, id_ in ipairs(to) do
-                local id = unpack(id_)
+            for i, Exp_Name in ipairs(to) do
+                local ID_int = AST.asr(Exp_Name,'Exp_Name', 1,'ID_int')
+                local id = unpack(ID_int)
                 local ID_ext = AST.asr(awt,'_Await_Until', 1,'Await_Ext', 1,'ID_ext')
                 local var = node('Var', me.ln,
                                 node('Ref', me.ln, 'every', ID_ext, i),
@@ -443,7 +457,10 @@ error 'TODO'
         return F.__dcls__PRE(me, 'Ext', 2)
     end,
     _Nats__PRE = function (me)
-        return F.__dcls__PRE(me, 'Nat', 1)
+        table.insert(me, 1,
+            node('Type', me.ln,
+                node('ID_prim', me.ln, '_')))
+        return F.__dcls__PRE(me, 'Nat', 2)
     end,
 
     __dcls_set__PRE = function (me, tag, idx)

@@ -4,6 +4,13 @@ F = {
         me.loc = AST.copy(e.loc)
     end,
 
+    Nat_Exp = function (me)
+        me.loc = AST.copy(TOPS._)
+    end,
+    ID_nat = function (me)
+        me.loc = AST.copy(me.top)
+    end,
+
     --------------------------------------------------------------------------
 
     Exp_as = function (me)
@@ -21,7 +28,7 @@ F = {
         me.loc = AST.copy(vec.loc)
         if me.loc.tag == 'Vec' then
             me.loc.tag = 'Var'
-        else
+        elseif not TYPES.is_nat(me.loc[1]) then
             me.loc[1] = TYPES.pop(me.loc[1])
         end
     end,
@@ -31,7 +38,9 @@ F = {
         if not ptr.loc then return end
 
         me.loc = AST.copy(ptr.loc)
-        me.loc[1] = TYPES.pop(me.loc[1])
+        if not TYPES.is_nat(me.loc[1]) then
+            me.loc[1] = TYPES.pop(me.loc[1])
+        end
     end,
 
     ['Exp_.'] = function (me)
@@ -49,6 +58,8 @@ F = {
                         '" has no member "'..member..'" : '..
                         '`data´ "'..ID_abs.top.id..
                         '" ('..ID_abs.top.ln[1]..':'..  ID_abs.top.ln[2]..')')
+        else
+            me.loc = AST.copy(e.loc)
         end
     end,
 

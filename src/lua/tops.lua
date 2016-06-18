@@ -8,16 +8,6 @@ TOPS = {
         is_used = ...,
     },
 ]]
-    _ = {
-        id = '_',
-        group = 'native',
-        is_predefined = true,
-    },
-    _char = {
-        id = '_char',
-        group = 'native',
-        is_predefined = true,
-    },
 }
 
 -- Primitive types: id / is_num
@@ -99,11 +89,16 @@ F = {
     Nat_End = function (me)
         native_end = true
     end,
-    Nat = function (me)
+    Nat__PRE = function (me)
         me.group = 'native'
         tops_new(me)
         ASR(not native_end, me,
             'native declarations are disabled')
+
+        local _,_,id = unpack(me)
+        if id=='_' or id=='_char' then
+            me.is_predefined = true
+        end
     end,
 
 -- EXT

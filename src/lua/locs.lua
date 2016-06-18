@@ -22,8 +22,9 @@ local function iter_boundary (cur, id)
                 end
 
                 if varlist then
-                    for _, ID in ipairs(varlist) do
-                        if ID[1] == id then
+                    for _, Exp_Name in ipairs(varlist) do
+                        local ID_int = unpack(Exp_Name)
+                        if ID_int[1] == id then
                             cross = true
                             break
                         end
