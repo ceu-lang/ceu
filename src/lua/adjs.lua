@@ -293,8 +293,7 @@ DBG('TODO: _Loop_Pool')
             if to.tag ~= 'Varlist' then
                 to = { to }
             end
-            for i, Exp_Name in ipairs(to) do
-                local ID_int = AST.asr(Exp_Name,'Exp_Name', 1,'ID_int')
+            for i, ID_int in ipairs(to) do
                 local id = unpack(ID_int)
                 local ID_ext = AST.asr(awt,'_Await_Until', 1,'Await_Ext', 1,'ID_ext')
                 local var = node('Var', me.ln,
@@ -544,9 +543,6 @@ error 'TODO'
 
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
-        if var.tag == 'Exp_Name' then
-            var = AST.asr(var,'', 1,'ID_int')
-        end
         if var.tag == 'ID_int' then
             me[2] = node('Varlist', var.ln, var)
         end
