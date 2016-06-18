@@ -8,8 +8,47 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+data Tt with
+    var        int x;
+    vector[10] int v;
+    event      int e;
+end
+
+var Tt t;
+
+t.x = 1;
+var int x = t.x;
+
+t.v = [1,2,3];
+x = t.v[0];
+
+emit t.e;
+await t.e;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data Tt with
+    var        int x;
+    vector[10] int v;
+    event      int e;
+end
+
+var Tt t;
+
+emit t.x;
+
+escape 1;
+]],
+    run = 1,
+}
+
+--do return end -- OK
 --[===[
-do return end -- OK
 --]===]
 
 ----------------------------------------------------------------------------

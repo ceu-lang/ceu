@@ -1,34 +1,42 @@
 F = {
     Exp_Name = function (me)
         local e = unpack(me)
-        me.loc = e.loc
+        me.loc = AST.copy(e.loc)
     end,
 
     --------------------------------------------------------------------------
 
     Exp_as = function (me)
         local _,e, Type = unpack(me)
-        if e.loc then
-            me.loc = AST.copy(e.loc)
-            me.loc[1] = AST.copy(Type)
-        end
+        if not e.loc then return end
+
+        me.loc = AST.copy(e.loc)
+        me.loc[1] = AST.copy(Type)
     end,
 
     ['Exp_idx'] = function (me)
         local _,vec = unpack(me)
-        me.loc = vec.loc
+        if not vec.loc then return end
+
+        me.loc = AST.copy(vec.loc)
+        if me.loc.tag == 'Vec' then
+            me.loc.tag = 'Var'
+        else
+            me.loc[1] = TYPES.pop(me.loc[1])
+        end
     end,
 
     ['Exp_1*'] = function (me)
         local _,ptr = unpack(me)
-        me.loc = ptr.loc
+        if not ptr.loc then return end
+
+        me.loc = AST.copy(ptr.loc)
+        me.loc[1] = TYPES.pop(me.loc[1])
     end,
 
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
-        if not e.loc then
-            return
-        end
+        if not e.loc then return end
 
         local Type = unpack(e.loc)
         local ID_abs, mod = unpack(Type)
@@ -46,7 +54,10 @@ F = {
 
     ['Exp_!'] = function (me)
         local _, e = unpack(me)
-        me.loc = e.loc
+        if not e.loc then return end
+
+        me.loc = AST.copy(e.loc)
+        me.loc[1] = TYPES.pop(me.loc[1])
     end,
 }
 

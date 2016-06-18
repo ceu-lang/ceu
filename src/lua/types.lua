@@ -33,7 +33,7 @@ function TYPES.dump (tp)
 end
 
 function TYPES.pop (tp)
-    assert(tp.tag ~= 'Typelist')
+    assert(tp.tag == 'Type')
     local v = tp[#tp]
     tp = AST.copy(tp)
     tp[#tp] = nil
@@ -41,14 +41,14 @@ function TYPES.pop (tp)
 end
 
 function TYPES.push (tp,v)
-    assert(tp.tag ~= 'Typelist')
+    assert(tp.tag == 'Type')
     tp = AST.copy(tp)
     tp[#tp+1] = v
     return tp
 end
 
 function TYPES.is_equal (tp1, tp2)
-    assert(tp1.tag~='Typelist' and tp2.tag~='Typelist')
+    assert(tp1.tag=='Type' and tp2.tag=='Type')
     if #tp1 ~= #tp2 then
         return false
     end
@@ -68,6 +68,7 @@ function TYPES.check (tp, ...)
     if tp.tag == 'Typelist' then
         return false
     end
+    assert(tp.tag == 'Type')
 
     local E = { ... }
     local j = 0
@@ -99,19 +100,19 @@ function TYPES.check (tp, ...)
 end
 
 function TYPES.is_num (tp)
-    assert(tp.tag ~= 'Typelist')
+    assert(tp.tag == 'Type')
     local top = TYPES.top(tp)
     return TYPES.is_nat(tp)
         or (top.prim and top.prim.is_num and TYPES.check(tp,top.id))
 end
 function TYPES.is_int (tp)
-    assert(tp.tag ~= 'Typelist')
+    assert(tp.tag == 'Type')
     local top = TYPES.top(tp)
     return TYPES.is_nat(tp)
         or (top.prim and top.prim.is_int and TYPES.check(tp,top.id))
 end
 function TYPES.is_nat (tp)
-    assert(tp.tag ~= 'Typelist')
+    assert(tp.tag == 'Type')
     local top = TYPES.top(tp)
     return top and top.group=='native' and TYPES.check(tp,top.id)
         -- _char    yes

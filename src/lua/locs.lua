@@ -59,7 +59,7 @@ function LOCS.get (id, blk)
     for blk in iter_boundary(blk, id) do
         local loc = blk.locs[id]
         if loc then
-            return loc
+            return AST.copy(loc)
         end
     end
     return nil
@@ -108,7 +108,6 @@ F = {
         local id = unpack(me)
         me.loc = ASR(LOCS.get(id, AST.par(me,'Block')), me,
                     'internal identifier "'..id..'" is not declared')
-        local _, is_alias = unpack(me.loc)
     end,
 
     ---------------------------------------------------------------------------
