@@ -1,17 +1,13 @@
-local function asr (e, cnd, err)
+local function asr (e, cnds, err)
     ASR(e.loc, e, 'invalid '..err..' : expected name expression')
     local ok do
-        if type(cnd) == 'table' then
-            for _, tag in ipairs(cnd) do
-                if tag == e.loc.tag
-                or tag == e.loc.group
-                then
-                    ok = true
-                    break
-                end
+        for _, tag in ipairs(cnds) do
+            if tag == e.loc.tag
+            or tag == e.loc.group
+            then
+                ok = true
+                break
             end
-        else
-            ok = (cnd==e.loc.tag or cnd==e.loc.group)
         end
     end
     if err then
@@ -40,7 +36,7 @@ F = {
     ['Exp_$$'] = 'Exp_$',
     ['Exp_$'] = function (me)
         local op,vec = unpack(me)
-        asr(vec, 'Vec', 'operand to `'..op..'´')
+        asr(vec, {'Vec'}, 'operand to `'..op..'´')
     end,
 
     -- &id
@@ -114,14 +110,14 @@ DBG('TODO: remove pool')
         local fr,to = unpack(me)
 
         -- vec = ...
-        asr(to, 'Vec', 'constructor')
+        asr(to, {'Vec'}, 'constructor')
 
         -- ... = []..vec
         if fr.tag == '_Vec_New' then
 DBG'TODO: _Vec_New'
             for _, e in ipairs(fr) do
                 if e.loc then
-                    asr(e, 'Vec', 'constructor')
+                    asr(e, {'Vec'}, 'constructor')
                 end
             end
         end
@@ -139,7 +135,7 @@ DBG'TODO: _Vec_New'
             -- pool = ...
             asr(Exp_Name, {'Var','Pool'}, 'constructor')
         else
-            asr(Exp_Name, 'Var', 'constructor')
+            asr(Exp_Name, {'Var'}, 'constructor')
         end
     end,
 
