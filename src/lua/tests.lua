@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -229,7 +230,6 @@ escape &&x == &&x as int;
     --run = 1,
 }
 
---]===]
 Test { [[
 var int x = 1;
 escape *&&x;
@@ -2315,6 +2315,17 @@ escape 0;
 
 Test { [[
 event int a;
+a = do/_
+    escape 1;
+end;
+escape 0;
+]],
+    ctxs = 'line 2 : invalid assignment : unexpected context for event "a"',
+    --env = 'line 4 : types mismatch (`void´ <= `int´)',
+}
+
+Test { [[
+event int a;
 par/and do
     a = do/_
         escape 1;
@@ -2324,7 +2335,7 @@ with
 end;
 escape 0;
 ]],
-    ctxs = 'line 3 : unexpected context for event "a"',
+    ctxs = 'line 3 : invalid assignment : unexpected context for event "a"',
     --env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
 

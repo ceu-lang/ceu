@@ -171,5 +171,12 @@ DBG'TODO: _Vec_New'
             asr(var, {'native','Var'}, 'variable')
         end
     end,
+
+    Do = function (me)
+        local _,_,e = unpack(me)
+        if e then
+            asr(e, {'native','Var'}, 'assignment')
+        end
+    end,
 }
 AST.visit(F)
