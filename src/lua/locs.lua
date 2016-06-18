@@ -72,22 +72,29 @@ F = {
     end,
 
     Var = function (me)
+        local _,_,id = unpack(me)
+        me.id = id
         me.tag_str = 'variable'
         locs_new(me, AST.par(me,'Block'))
     end,
 
     Vec = function (me)
+        local _,_,_,id = unpack(me)
+        me.id = id
         me.tag_str = 'vector'
         locs_new(me, AST.par(me,'Block'))
     end,
 
     Pool = function (me)
+        local _,_,_,id = unpack(me)
+        me.id = id
         me.tag_str = 'pool'
         locs_new(me, AST.par(me,'Block'))
     end,
 
     Evt = function (me)
-        local Typelist = unpack(me)
+        local Typelist,_,id = unpack(me)
+        me.id = id
         me.tag_str = 'event'
 
         -- no modifiers allowed

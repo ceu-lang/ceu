@@ -2,23 +2,11 @@ AST = {
     root = nil,
 }
 
-local __mt = {
-    Nat  = { id=3 },
-    Ext  = { tp=1, group=2, id=3 },
-    Var  = { id=3 },
-    Vec  = { id=4 },
-    Pool = { id=4 },
-    Evt  = { id=3 },
-
-    Data       = { id=1 },
-    Code_proto = { id=3 },
-    Code_impl  = { id=3 },
-}
-
 local MT = {
     __index = function (me, k)
-        local t = __mt[me.tag]
-        return (t and rawget(me,t[k])) or nil
+        if k=='tp' then
+            return rawget(me,1)
+        end
     end,
 }
 

@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -52749,7 +52750,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 4 : event "a" is not declared',
-    ctxs = 'line 4 : invalid `await´ : unexpected context for variable "a"',
+    ctxs = 'line 7 : unexpected context for event "a"',
 }
 
 Test { [[
@@ -56506,7 +56507,6 @@ escape cell_rects[0].x;
     run = 10,
 }
 
---]===]
 Test { [[
 data SDL_Rect with
     var int x;
