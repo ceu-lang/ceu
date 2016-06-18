@@ -700,7 +700,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     -- Exp_Name
 
     , Exp_Name   = V'__01_Name'
-    , __01_Name  = (Cc('pre') * (CKK'*'+(CKK'&'-'&&')))^0 * V'__02_Name'
+    , __01_Name  = (Cc('pre') * (CKK'*'+(CKK'&'-'&&')))^-1 * V'__02_Name'
     , __02_Name  = V'__03_Name' *
                     (Cc'pos' * (
                         KK'[' * Cc'idx' * V'__Exp' * KK']' +

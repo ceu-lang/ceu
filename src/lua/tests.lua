@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -230,18 +229,21 @@ escape &&x == &&x as int;
     --run = 1,
 }
 
+--]===]
 Test { [[
 var int x = 1;
 escape *&&x;
 ]],
-    run = 1,
+    ctxs = 'line 2 : invalid operand to `*´ : expected name expression',
+    --run = 1,
 }
 
 Test { [[
 var int x = 1;
 escape *&&*&&x;
 ]],
-    run = 1,
+    ctxs = 'line 2 : invalid operand to `*´ : expected name expression',
+    --run = 1,
 }
 
 Test { [[
