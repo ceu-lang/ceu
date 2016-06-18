@@ -9,13 +9,13 @@ local function iter_boundary (cur, id)
             cur = cur.__par
             if c.tag == 'Block' then
                 return c
-            elseif c.tag=='Async' or c.tag=='_Thread' or c.tag=='_Isr' then
+            elseif c.tag=='Async' or string.sub(c.tag,1,7)=='_Async_' then
                 -- see if varlist matches id to cross the boundary
                 -- async (a,b,c) do ... end
                 local cross = false
 
                 local varlist
-                if c.tag == '_Isr' then
+                if c.tag == '_Async_Isr' then
                     _,varlist = unpack(c)
                 else
                     varlist = unpack(c)
@@ -138,7 +138,7 @@ F = {
             local lbl1 = unpack(esc)
             local do_ = nil
             for n in AST.iter() do
-                if n.tag=='Async' or n.tag=='_Thread'   or n.tag=='_Isr' or
+                if n.tag=='Async' or string.sub(n.tag,1,7)=='_Async' or
                    n.tag=='Data'  or n.tag=='Code_impl' or
                    n.tag=='Extcall_impl' or n.tag=='Extreq_impl'
                 then

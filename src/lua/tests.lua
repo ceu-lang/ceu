@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -23212,7 +23213,6 @@ escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
     run = 6,
 }
 
---]===]
 Test { [[
 vector[10] u8 vec = [1,2,3];
 $$vec = 0;
@@ -57338,8 +57338,8 @@ pool[] List l;     // l is the pool
 escape (*l is Nil) as int;       // "l" is not a struct
 ]],
     wrn = true,
-    ctxs = 'line 52 : invalid operand to `*´ : unexpected context for pool "l"',
-    --env = 'line 52 : invalid operand to unary "*"',
+    --ctxs = 'line 52 : invalid operand to `*´ : unexpected context for pool "l"',
+    env = 'line 52 : invalid operand to unary "*"',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[

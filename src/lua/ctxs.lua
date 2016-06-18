@@ -167,8 +167,12 @@ DBG'TODO: _Vec_New'
     end,
 
     Varlist = function (me)
+        local cnds = {'native','Var'}
+        if string.sub(me.__par.tag,1,7) == '_Async_' then
+            cnds[#cnds+1] = 'Vec'
+        end
         for _, var in ipairs(me) do
-            asr(var, {'native','Var'}, 'variable')
+            asr(var, cnds, 'variable')
         end
     end,
 

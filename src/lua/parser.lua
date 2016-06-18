@@ -99,7 +99,7 @@ local T = {
         'expression'
     },
     {
-        'name expression or `not´ or `%-´ or `%+´ or `~´ or `&&´ or `%$%$´ or `%$´ or `call/recursive´ or `call´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
+        '`%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `call/recursive´ or `call´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
 
@@ -419,11 +419,11 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     , Async   = K'async' * (-P'/thread'-'/isr') * OPT(PARENS(V'Varlist')) *
                 V'__Do'
-    , _Thread = K'async/thread' * OPT(PARENS(V'Varlist')) * V'__Do'
-    , _Isr    = K'async/isr'    *
-                    KK'[' * V'Explist' * KK']' *
-                    OPT(PARENS(V'Varlist')) *
-                V'__Do'
+    , _Async_Thread = K'async/thread' * OPT(PARENS(V'Varlist')) * V'__Do'
+    , _Async_Isr    = K'async/isr'    *
+                        KK'[' * V'Explist' * KK']' *
+                            OPT(PARENS(V'Varlist')) *
+                      V'__Do'
     , Atomic  = K'atomic' * V'__Do'
 
 -- CODE / EXTS (call, req)
@@ -614,7 +614,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
         + V'_Set_Do'
         + V'_Set_Await_one'
         + V'_Set_Spawn'
-        + V'_Set_Thread'
+        + V'_Set_Async_Thread'
         + V'_Set_Lua'
         + V'_Set_Vec'
         + V'_Set_None'
@@ -624,17 +624,17 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- after `=´
 
-    , _Set_Do         = #K'do'            * V'Do'
-    , _Set_Await_one  = #K'await'         * V'__Awaits_one'
-    , _Set_Await_many = #K'await'         * V'__Awaits_many'
-    , _Set_Watching   = #K'watching'      * V'_Watching'
-    , _Set_Spawn      = #K'spawn'         * V'Spawn_Code'
-    , _Set_Thread     = #K'async/thread'  * V'_Thread'
-    , _Set_Lua        = #V'__lua_pre'     * V'_Lua'
-    , _Set_Vec        = #V'__vec_pre'     * V'_Vec_New'
-    , _Set_Data       = #V'__data_pre'    * V'Data_New'
-    , _Set_None       = #K'_'             * V'ID_none'
-    , _Set_Exp        =                     V'__Exp'
+    , _Set_Do           = #K'do'            * V'Do'
+    , _Set_Await_one    = #K'await'         * V'__Awaits_one'
+    , _Set_Await_many   = #K'await'         * V'__Awaits_many'
+    , _Set_Watching     = #K'watching'      * V'_Watching'
+    , _Set_Spawn        = #K'spawn'         * V'Spawn_Code'
+    , _Set_Async_Thread = #K'async/thread'  * V'_Async_Thread'
+    , _Set_Lua          = #V'__lua_pre'     * V'_Lua'
+    , _Set_Vec          = #V'__vec_pre'     * V'_Vec_New'
+    , _Set_Data         = #V'__data_pre'    * V'Data_New'
+    , _Set_None         = #K'_'             * V'ID_none'
+    , _Set_Exp          =                     V'__Exp'
 
     , _Set_Emit_Wclock    = #K'emit'          * V'Emit_Wclock'
     , _Set_Emit_Ext_emit  = #K'emit'          * V'Emit_Ext_emit'
@@ -812,7 +812,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
               + V'Finalize'
               + V'Paror' + V'Parand' + V'_Watching'
               + V'_Pause'
-              + V'Async' + V'_Thread' + V'_Isr' + V'Atomic'
+              + V'Async' + V'_Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'
               + V'_Lua'
 
