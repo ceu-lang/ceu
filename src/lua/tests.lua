@@ -1741,7 +1741,6 @@ Test { [[await FOREVER;]],
 }
 
 -- tests var.isTmp
---]===]
 Test { [[
 native ___ceu_a_1;
 var int a = await 999ms;
@@ -16852,11 +16851,12 @@ escape v;
     exps = 'line 4 : invalid expression : operands to `+´ must be of numeric type',
 }
 
+--]===]
 Test { [[
 var int v = 10;
 escape v!;
 ]],
-    exps = 'line 2 : invalid expression : operand to `!´ must be of option type',
+    ctxs = 'line 2 : invalid expression : operand to `!´ must be of option type',
 }
 
 Test { [[
@@ -23915,6 +23915,12 @@ vector[] int v;
 escape v?;
 ]],
     ctxs = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
+}
+Test { [[
+vector[] int v;
+escape v!;
+]],
+    ctxs = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
@@ -56878,6 +56884,13 @@ pool[] Dd dds;
 escape dds?;
 ]],
     ctxs = 'line 3 : invalid operand to `?´ : unexpected context for pool "dds"',
+}
+Test { [[
+data Dd;
+pool[] Dd dds;
+escape dds!;
+]],
+    ctxs = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
 }
 
 -- << ADT : MISC

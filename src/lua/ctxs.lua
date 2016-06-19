@@ -48,6 +48,12 @@ F = {
         me.dcl = TYPES.new(me, 'bool')
     end,
 
+    STRING = function (me)
+        me.dcl = TYPES.new(me, '_char', '&&')
+    end,
+
+-- SIZEOF
+
     SIZEOF = function (me)
         local e = unpack(me)
 
@@ -100,13 +106,14 @@ F = {
         local op,e = unpack(me)
 
         -- ctx
+        asr_name(e, {'Nat','Var'}, 'operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.check(e.tp,'?'), me,
+        ASR(TYPES.check(e.dcl[1],'?'), me,
             'invalid expression : operand to `'..op..'´ must be of option type')
 
         -- dcl
-        me.tp = TYPES.pop(e.tp)
+        -- names.lua
     end,
 
     ['Exp_?'] = function (me)

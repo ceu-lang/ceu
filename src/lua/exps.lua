@@ -1,23 +1,4 @@
 F = {
-
--- PRIMITIVES
-    STRING = function (me)
-        me.tp = TYPES.new(me, '_char', '&&')
-    end,
-
--- ID_*
-
-    ID_ext = function (me)
-        me.tp = AST.copy(me.top.tp)
-    end,
-    ID_int = function (me)
-        local Type_or_Typelist = unpack(me.loc)
-        me.tp = AST.copy(Type_or_Typelist)
-    end,
-    ID_nat = function (me)
-        me.tp = TYPES.new(me, '_')
-    end,
-
 -- VARLIST, EXPLIST
 
     Varlist = function (me)
@@ -34,13 +15,6 @@ F = {
             Typelist[i] = AST.copy(e.tp)
         end
         me.tp = Typelist
-    end,
-
--- Exp_Name
-
-    Exp_Name = function (me)
-        local e = unpack(me)
-        me.tp = AST.copy(e.tp)
     end,
 
 -- DOT
