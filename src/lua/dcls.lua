@@ -188,7 +188,7 @@ F = {
         ASR(not native_end, me,
             'native declarations are disabled')
 
-        if id=='_@' or id=='_char' then
+        if id=='_{}' or id=='_char' then
             me.is_predefined = true
         end
     end,
