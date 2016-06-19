@@ -159,6 +159,7 @@ F = {
 
         -- dcl
         me.dcl = AST.copy(vec.dcl)
+        me.dcl.tag = 'Val'
         if TYPES.check(vec.dcl[1],'&&') then
             me.dcl[1] = TYPES.pop(vec.dcl[1])
         end

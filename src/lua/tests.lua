@@ -23144,7 +23144,6 @@ escape ($v) as int;
     ctxs = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
 }
 
---]===]
 Test { [[
 vector[10] u8 vec;
 escape ($$vec + $vec) as int;
@@ -23238,7 +23237,7 @@ Test { [[
 vector[10] u8 vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
-    exps = 'line 2 : invalid expression : incompatible numeric types',
+    ctxs = 'line 2 : invalid expression : incompatible numeric types',
 }
 Test { [[
 vector[10] u8 vec = [1,2,3];
@@ -25879,6 +25878,7 @@ Test { [[
     }
 }
 
+--]===]
 Test { [[
 native/plain _char;
 native _u8;
