@@ -87,10 +87,6 @@ local T = {
         'expression'
     },
     {
-        '`%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´ or `not´ or `%-´ or `%+´ or `~´ or `%*´ or `&&´ or `&´ or `%$%$´ or `%$´ or `call/recursive´ or `call´ or abstraction identifier or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
-        'expression'
-    },
-    {
         '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `do´ or `await´ or `spawn´ or `async/thread´ or `%[´ or `_´ or name expression or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `&&´ or `&´ or `%$%$´ or `request´ or `watching´',
         'expression'
     },
