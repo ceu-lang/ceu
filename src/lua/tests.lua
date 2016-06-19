@@ -289,14 +289,21 @@ Test { [[
 _f();
 escape 0;
 ]],
-    tops = 'line 1 : native "_f" is not declared',
+    dcls = 'line 1 : native identifier "_f" is not declared',
 }
 
 Test { [[
 native _f, _f;
 escape 0;
 ]],
-    tops = 'line 1 : identifier "_f" is already declared',
+    dcls = 'line 1 : declaration of "_f" hides previous declaration (tests.lua : line 1)',
+}
+
+Test { [[
+native _f, _f;
+escape 0;
+]],
+    wrn = true,
 }
 
 Test { [[
@@ -304,7 +311,7 @@ native _f;
 native _f;
 escape 0;
 ]],
-    tops = 'line 2 : identifier "_f" is already declared',
+    dcls = 'line 2 : declaration of "_f" hides previous declaration (tests.lua : line 1)',
 }
 
 Test { [[
@@ -313,12 +320,17 @@ native/end;
 native _g;
 escape 0;
 ]],
-    tops = 'line 3 : native declarations are disabled',
+    dcls = 'line 3 : native declarations are disabled',
 }
 
 --<<< NATIVE
 
 Test { [[var int a;]],
+    dcls = 'line 1 : variable "a" declared but not used',
+}
+
+Test { [[var int a;]],
+    wrn = true,
     ref = 'uninitialized variable "a" crossing compound statement (tests.lua:1)',
 }
 
@@ -359,7 +371,7 @@ escape 10;
 }
 
 Test { [[a = 1; escape a;]],
-    locs = 'internal identifier "a" is not declared',
+    dcls = 'internal identifier "a" is not declared',
 }
 Test { [[var int a; a = 1; escape a;]],
     run = 1,
@@ -378,16 +390,16 @@ Test { [[var int a = 1;]],
     }
 }
 Test { [[var int a=1;var int a=0; escape a;]],
-    locs = 'line 1 : declaration of "a" hides previous declaration',
+    dcls = 'line 1 : declaration of "a" hides previous declaration',
 }
 Test { [[var int a=1;var int a=0; escape a;]],
-    --locs = 'line 1 : internal identifier "a" is already declared at line 1',
+    --dcls = 'line 1 : internal identifier "a" is already declared at line 1',
     wrn = true,
     run = 0,
 }
 Test { [[var int b=2; var int a=1; b=a; var int a=0; escape b+a;]],
     wrn = true,
-    --locs = 'line 1 : internal identifier "a" is already declared at line 1',
+    --dcls = 'line 1 : internal identifier "a" is already declared at line 1',
     run = 1,
 }
 Test { [[do var int a=1; end var int a=0; escape a;]],
@@ -396,7 +408,7 @@ Test { [[do var int a=1; end var int a=0; escape a;]],
 }
 Test { [[var int a=1,a=0; escape a;]],
     wrn = true,
-    --locs = 'line 1 : internal identifier "a" is already declared at line 1',
+    --dcls = 'line 1 : internal identifier "a" is already declared at line 1',
     run = 0,
 }
 Test { [[var int a; a = b = 1]],
@@ -404,7 +416,7 @@ Test { [[var int a; a = b = 1]],
     parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
 }
 Test { [[var int a = b; escape 0;]],
-    locs = 'internal identifier "b" is not declared',
+    dcls = 'internal identifier "b" is not declared',
 }
 Test { [[escape 1;2;]],
     parser = "line 1 : after `;´ : expected end of file",
@@ -485,7 +497,7 @@ inputintMY_EVT;
 escape 1;
 ]],
     parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
-    --locs = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
+    --dcls = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
 }
 
 Test { [[
@@ -494,7 +506,7 @@ Test { [[
 native_printf();
 escape 0;
 ]],
-    locs = 'line 3 : internal identifier "native_printf" is not declared',
+    dcls = 'line 3 : internal identifier "native_printf" is not declared',
 }
 
 Test { [[
@@ -524,7 +536,7 @@ var bool a = 1;
 a = 2;
 escape a;
 ]],
-    tops = 'line 1 : external "A" declared but not used',
+    dcls = 'line 1 : external "A" declared but not used',
     --run = 2,
 }
 
@@ -604,7 +616,7 @@ escape __;
     parser = 'line 6 : after `int´ : expected type modifier or internal identifier',
     --parser = 'line 6 : after `=´ : expected class identifier',
     --env = 'line 6 : invalid access to `_´',
-    --locs = 'line 6 : internal identifier "_" is not declared',
+    --dcls = 'line 6 : internal identifier "_" is not declared',
     --run = 3,
 }
 Test { [[
@@ -646,6 +658,15 @@ native _abc; // TODO: = 0;
 event void a;
 var _abc b;
 ]],
+    dcls = 'line 2 : event "a" declared but not used',
+}
+
+Test { [[
+native _abc; // TODO: = 0;
+event void a;
+var _abc b;
+]],
+    wrn = true,
     env = 'line 3 : cannot instantiate type "_abc"',
 }
 
@@ -656,7 +677,7 @@ var u8 k = 5;
 
 emit a => &&k; // leads to compiler error
 ]],
-    locs = 'line 1 : invalid event type : cannot use `&&´'
+    dcls = 'line 1 : invalid event type : cannot use `&&´'
 }
 
 -->>> OS_START / ANY
@@ -783,6 +804,7 @@ event void a;
 var _abc b=0;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -792,7 +814,7 @@ event void a;
 var _abc a;
 ]],
     wrn = true,
-    --locs = 'line 3 : internal identifier "a" is already declared at line 2',
+    --dcls = 'line 3 : internal identifier "a" is already declared at line 2',
     env = 'line 3 : cannot instantiate type "_abc"',
 }
 
@@ -882,7 +904,7 @@ native _ISPOINTER, _MINDIST, _TILESHIFT;
                                 escape 0;
 end
 ]],
-    locs = 'line 3 : internal identifier "check" is not declared',
+    dcls = 'line 3 : internal identifier "check" is not declared',
 }
 
     -- INVALID TYPE MODIFIERS
@@ -907,6 +929,14 @@ Test { [[
 vector[1] int? v;
 escape 1;
 ]],
+    dcls = 'line 1 : vector "v" declared but not used',
+    --env = 'line 1 : invalid type modifier : `[]?´',
+}
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    wrn = true,
     env = 'line 1 : `data´ fields do not support vectors yet',
     --env = 'line 1 : invalid type modifier : `[]?´',
 }
@@ -939,6 +969,7 @@ Test { [[
 vector&[] int v;
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : invalid type modifier : `&[]´',
 }
 Test { [[
@@ -960,6 +991,7 @@ Test { [[
 vector[1] int? v;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
     --env = 'line 1 : invalid type modifier : `?[]´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
@@ -1296,8 +1328,9 @@ Test { [[input  int A;]],
     },
 }
 Test { [[input int A,A; escape 0;]],
-    tops = 'line 1 : identifier "A" is already declared (tests.lua : line 1)',
-    --tops = 'external "A" is already declared',
+    dcls = 'line 1 : declaration of "A" hides previous declaration (tests.lua : line 1)',
+    --dcls = 'line 1 : identifier "A" is already declared (tests.lua : line 1)',
+    --dcls = 'external "A" is already declared',
     run = 0,
 }
 Test { [[
@@ -1310,7 +1343,7 @@ input int A,B,Z;
 }
 
 Test { [[await A; escape 0;]],
-    tops = 'external "A" is not declared',
+    dcls = 'external identifier "A" is not declared',
 }
 
 Test { [[
@@ -1462,7 +1495,7 @@ escape v;
 }
 
 Test { [[var int a = a+1; escape a;]],
-    --locs = 'internal identifier "a" is not declared',
+    --dcls = 'internal identifier "a" is not declared',
     --todo = 'TODO: deveria dar erro!',
     run = 100,
 }
@@ -1717,10 +1750,10 @@ async do
 end;
 escape a + 1;
 ]],
-    --locs = 'line 1 : internal identifier "_ret" is not declared',
+    --dcls = 'line 1 : internal identifier "_ret" is not declared',
     --props = 'line 4 : not permitted inside `async´',
     --props = 'line 4 : not permitted across `async´ declaration',
-    locs = 'line 4 : invalid `escape´ : no matching enclosing `do´',
+    dcls = 'line 4 : invalid `escape´ : no matching enclosing `do´',
 }
 
 Test { [[
@@ -2143,7 +2176,7 @@ do/A
     escape/A 1;
 end
 ]],
-    locs = 'line 2 : invalid `escape´ : unexpected expression',
+    dcls = 'line 2 : invalid `escape´ : unexpected expression',
 }
 
 Test { [[
@@ -2151,7 +2184,7 @@ var int x = do/A
     escape/A;
 end;
 ]],
-    locs = 'line 2 : invalid `escape´ : expected expression',
+    dcls = 'line 2 : invalid `escape´ : expected expression',
 }
 
 Test { [[
@@ -2168,7 +2201,7 @@ do/A
     escape;
 end
 ]],
-    locs = 'line 2 : invalid `escape´ : expected expression',
+    dcls = 'line 2 : invalid `escape´ : expected expression',
 }
 
 Test { [[
@@ -2219,7 +2252,7 @@ var bool a = do/A
 end;
 escape 1;
 ]],
-    locs = 'line 2 : invalid `escape´ : expected expression',
+    dcls = 'line 2 : invalid `escape´ : expected expression',
 }
 
 Test { [[
@@ -2279,7 +2312,7 @@ var int a = do/B
 end;
 escape a;
 ]],
-    locs = 'line 2 : declaration of "a" hides previous declaration (tests.lua : line 1)',
+    dcls = 'line 2 : declaration of "a" hides previous declaration (tests.lua : line 1)',
 }
 
 Test { [[
@@ -2292,7 +2325,7 @@ end;
 escape a;
 ]],
     wrn = true,
-    locs = 'line 5 : invalid `escape´ : no matching enclosing `do´',
+    dcls = 'line 5 : invalid `escape´ : no matching enclosing `do´',
 }
 
 Test { [[
@@ -2389,7 +2422,7 @@ var int a = do end;
 Test { [[
 a = do/X end;
 ]],
-    locs = 'line 1 : internal identifier "a" is not declared',
+    dcls = 'line 1 : internal identifier "a" is not declared',
 }
 
 Test { [[
@@ -3723,7 +3756,7 @@ loop i do
 end
 escape 0;
 ]],
-    locs = 'line 2 : implicit declaration of "i" hides previous declaration (tests.lua : line 1)',
+    dcls = 'line 2 : implicit declaration of "i" hides previous declaration (tests.lua : line 1)',
 }
 
 -- EVERY
@@ -3761,7 +3794,7 @@ every x in E do
 end
 escape 1;
 ]],
-    locs = 'line 3 : implicit declaration of "x" hides previous declaration',
+    dcls = 'line 3 : implicit declaration of "x" hides previous declaration',
 }
 Test { [[
 input int E;
@@ -3823,7 +3856,7 @@ loop do
     end
 end
 ]],
-    locs = 'line 4 : declaration of "dt" hides previous declaration',
+    dcls = 'line 4 : declaration of "dt" hides previous declaration',
 }
 
 Test { [[
@@ -3941,7 +3974,7 @@ with
     end
 end
 ]],
-    locs = 'line 4 : implicit declaration of "a" hides previous declaration',
+    dcls = 'line 4 : implicit declaration of "a" hides previous declaration',
 }
 Test { [[
 input (int,int) A;
@@ -5449,7 +5482,7 @@ with
 end
 escape ret;
 ]],
-    locs = 'line 3 : invalid event type : cannot use `&&´',
+    dcls = 'line 3 : invalid event type : cannot use `&&´',
     --env = 'line 11 : wrong argument : cannot pass pointers',
     --run = { ['~>1s']=10 },
 }
@@ -5528,6 +5561,7 @@ var int x;
 event (int,int) e;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -10173,7 +10207,7 @@ end;
 
 Test { [[
 input int A;
-event int a, d, e, i, j;
+event int a, i, j;
 var int dd=0, ee=0;
 par/and do
     await A;
@@ -14567,7 +14601,7 @@ async do
 end;
 escape 0;
 ]],
-    locs = 'line 3 : internal identifier "v1" is not declared',
+    dcls = 'line 3 : internal identifier "v1" is not declared',
 }
 
 Test { [[
@@ -14596,7 +14630,7 @@ with
     escape v1 + v2;
 end;
 ]],
-    locs = 'line 8 : internal identifier "v1" is not declared',
+    dcls = 'line 8 : internal identifier "v1" is not declared',
 }
 
 Test { [[
@@ -14723,7 +14757,7 @@ with
     escape v1 + v2;
 end;
 ]],
-    locs = 'line 8 : internal identifier "v1" is not declared',
+    dcls = 'line 8 : internal identifier "v1" is not declared',
 }
 
 Test { [[
@@ -16230,7 +16264,7 @@ escape a;
     wrn = true,
     ctxs = 'line 8 : invalid `emit´ : unexpected context for variable "a"',
     --env = 'line 8 : identifier "a" is not an event (tests.lua : line 5)',
-    --locs = 'line 23 : invalid use of `event´',
+    --dcls = 'line 23 : invalid use of `event´',
 }
 
 Test { [[
@@ -16561,7 +16595,7 @@ Test { [[
 native _V;
 escape 0;
 ]],
-    tops = 'line 1 : native "_V" declared but not used',
+    dcls = 'line 1 : native "_V" declared but not used',
 }
 Test { [[
 native do
@@ -16618,6 +16652,7 @@ Test { [[
 vector[] int v;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -17147,7 +17182,6 @@ escape v;
 }
 
 Test { [[
-event void e;
 var int v = 1;
 var int&& x = &&v;
 loop i in *x do
@@ -17222,7 +17256,7 @@ do
 end
 escape ret;
 ]],
-    locs = 'line 6 : internal identifier "a" is not declared',
+    dcls = 'line 6 : internal identifier "a" is not declared',
 }
 
 Test { [[
@@ -18958,7 +18992,7 @@ event void&& e;
 var void&& v = await e;
 escape 1;
 ]],
-    locs = 'line 1 : invalid event type : cannot use `&&´',
+    dcls = 'line 1 : invalid event type : cannot use `&&´',
 }
 
 Test { [[
@@ -20089,7 +20123,7 @@ escape 0;
 ]],
     --props = 'line 2 : not permitted inside `async´',
     --props = 'line 2 : not permitted across `async´ declaration',
-    locs = 'line 2 : invalid `escape´ : no matching enclosing `do´',
+    dcls = 'line 2 : invalid `escape´ : no matching enclosing `do´',
 }
 
 Test { [[
@@ -20108,7 +20142,7 @@ async (b) do
 end;
 escape a;
 ]],
-    locs = 'line 3 : internal identifier "a" is not declared',
+    dcls = 'line 3 : internal identifier "a" is not declared',
     --run = 1,
 }
 
@@ -20119,7 +20153,7 @@ async do
 end;
 escape a;
 ]],
-    locs = 'line 3 : internal identifier "a" is not declared',
+    dcls = 'line 3 : internal identifier "a" is not declared',
     --run = 1,
 }
 
@@ -20132,7 +20166,7 @@ with
     escape 2;
 end;
 ]],
-    locs = 'line 3 : invalid `escape´ : no matching enclosing `do´',
+    dcls = 'line 3 : invalid `escape´ : no matching enclosing `do´',
     --props = 'line 3 : not permitted across `async´ declaration',
     --props = 'line 3 : not permitted inside `async´',
 }
@@ -20182,7 +20216,7 @@ with
 end;
 escape a;
 ]],
-    locs = 'line 4 : internal identifier "a" is not declared',
+    dcls = 'line 4 : internal identifier "a" is not declared',
     _ana = {
         --acc = 1,
     },
@@ -20195,7 +20229,7 @@ end;
 ]],
     --props = 'line 2 : not permitted inside `async´',
     --props = 'line 2 : not permitted across `async´ declaration',
-    locs = 'line 2 : invalid `escape´ : no matching enclosing `do´',
+    dcls = 'line 2 : invalid `escape´ : no matching enclosing `do´',
 }
 
 Test { [[
@@ -20212,7 +20246,7 @@ escape a;
     wrn = true,
     props = 'line 7 : not permitted across `async´ declaration',
     --props = 'line 5 : not permitted inside `async´',
-    locs = 'line 7 : invalid `escape´ : no matching enclosing `do´',
+    dcls = 'line 7 : invalid `escape´ : no matching enclosing `do´',
 }
 
 Test { [[
@@ -20234,7 +20268,7 @@ async do
 end;
 escape a;
 ]],
-    locs = 'line 4 : internal identifier "a" is not declared',
+    dcls = 'line 4 : internal identifier "a" is not declared',
     --run=1
 }
 
@@ -20247,7 +20281,7 @@ end;
 escape a;
 ]],
     --env = "line 4 : invalid attribution",
-    locs = 'line 4 : internal identifier "a" is not declared',
+    dcls = 'line 4 : internal identifier "a" is not declared',
     --parser = 'line 4 : after `=´ : expected expression',
 }
 
@@ -20278,7 +20312,7 @@ async do
 end;
 escape 0;
 ]],
-    locs = 'line 3 : internal identifier "a" is not declared',
+    dcls = 'line 3 : internal identifier "a" is not declared',
 }
 Test { [[
 event int a;
@@ -20287,7 +20321,7 @@ async do
 end;
 escape 0;
 ]],
-    locs = 'line 3 : internal identifier "a" is not declared',
+    dcls = 'line 3 : internal identifier "a" is not declared',
 }
 Test { [[
 async do
@@ -20783,7 +20817,7 @@ async (pi) do
 end;
 escape i;
 ]],
-    locs = 'line 5 : internal identifier "i" is not declared',
+    dcls = 'line 5 : internal identifier "i" is not declared',
 }
 
 Test { [[
@@ -20950,7 +20984,8 @@ input void A;
 input void A;
 escape 1;
 ]],
-    tops = 'line 2 : identifier "A" is already declared (tests.lua : line 1)',
+    dcls = 'line 2 : declaration of "A" hides previous declaration (tests.lua : line 1)',
+    --dcls = 'line 2 : identifier "A" is already declared (tests.lua : line 1)',
 }
 
 Test { [[
@@ -20958,7 +20993,8 @@ input void A;
 input int A;
 escape 1;
 ]],
-    tops = 'line 2 : identifier "A" is already declared (tests.lua : line 1)',
+    dcls = 'line 2 : declaration of "A" hides previous declaration (tests.lua : line 1)',
+    --dcls = 'line 2 : identifier "A" is already declared (tests.lua : line 1)',
 }
 
 --if not OS then
@@ -21236,7 +21272,7 @@ end
 emit A => 1;
 escape 0;
 ]],
-    tops = 'external "A" is not declared',
+    dcls = 'external identifier "A" is not declared',
 }
 
 Test { [[
@@ -21271,7 +21307,7 @@ with
 end
 escape 1;
 ]],
-    tops = 'line 4 : external "A" is not declared',
+    dcls = 'line 4 : external identifier "A" is not declared',
 }
 
 Test { [[
@@ -21612,7 +21648,7 @@ escape ret;
 Test { [[
 var int ret = (call Z=>2);
 ]],
-    tops = 'line 1 : external "Z" is not declared',
+    dcls = 'line 1 : external "Z" is not declared',
 }
 
 Test { [[
@@ -21717,7 +21753,7 @@ input W  (var int a)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
-    tops = 'line 4 : external "W" declared but not used',
+    dcls = 'line 4 : external "W" declared but not used',
 }
 
 Test { [[
@@ -21742,7 +21778,7 @@ call Z=>1;
 escape v;
 ]],
     todo = 'globals',
-    locs = 'line 2 : internal identifier "v" is not declared',
+    dcls = 'line 2 : internal identifier "v" is not declared',
 }
 
 Test { [[
@@ -21821,7 +21857,7 @@ end
 call A => ();
 escape 1;
 ]],
-    locs = 'line 1 : declaration of "a" hides previous declaration (tests.lua : line 1)',
+    dcls = 'line 1 : declaration of "a" hides previous declaration (tests.lua : line 1)',
 }
 
 Test { [[
@@ -22664,6 +22700,7 @@ Test { [[input int[1] E; escape 0;]],
     parser = 'line 1 : after `int´ : expected type modifier or external identifier',
 }
 Test { [[vector[0] int v; escape 0;]],
+    wrn = true,
     run = 0,
     --env='invalid dimension'
 }
@@ -22704,6 +22741,7 @@ void[10] a;
 Test { [[
 vector[10] void a;
 ]],
+    wrn = true,
     env = 'line 1 : cannot instantiate type "void"',
 }
 
@@ -22740,16 +22778,9 @@ escape v[i+1];
 }
 
 Test { [[
-var void a;
 vector[1] void b;
 ]],
-    env = 'line 1 : cannot instantiate type "void"',
-}
-
-Test { [[
-var int a;
-vector[1] void b;
-]],
+    wrn = true,
     env = 'line 2 : cannot instantiate type "void"',
 }
 
@@ -22779,6 +22810,7 @@ var int i = do/_
 end;
 escape i;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -22787,6 +22819,7 @@ native _int;
 vector[1] _int v;
 escape 1;
 ]],
+    wrn = true,
     --run = 1,
     --cval = 'line 1 : invalid dimension',
     ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
@@ -22947,6 +22980,7 @@ vector[255] u8 vec;
 event void  e;
 escape 1;
 ]],
+    wrn = true,
     --mem = 'too many events',    -- TODO
     run = 1,
 }
@@ -22959,6 +22993,7 @@ Test { [[
 ]]..evts..[[
 escape 1;
 ]],
+    wrn = true,
     env = 'line 1 : too many events',
 }
 
@@ -23047,7 +23082,7 @@ str = [].."oioioi";
 
 escape _strlen(&&str[0]);
 ]],
-    --locs = 'line 5 : invalid use of `vector´ "str"',
+    --dcls = 'line 5 : invalid use of `vector´ "str"',
     gcc = '4:34: error: assignment to expression with array type',
 }
 
@@ -23899,6 +23934,7 @@ _garbage((&&v[0]) as _char&&);
 v = [{'a'},{'b'},{'c'}];
 escape _strlen((&&v[0]) as _char&&);
 ]],
+    wrn = true,
     run = 3,
 }
 
@@ -24374,7 +24410,7 @@ escape v;
 }
 
 Test { [[emit A => 10; escape 0;]],
-    tops = 'external "A" is not declared'
+    dcls = 'external identifier "A" is not declared'
 }
 
 Test { [[
@@ -26143,6 +26179,7 @@ Test { [[
 vector[_OBJ_N] void&& objs;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -26152,6 +26189,7 @@ Test { [[
 vector[_OBJ_N] void&& objs;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -26160,7 +26198,7 @@ Test { [[
 
 a = 1;
 ]],
-    locs = 'line 3 : internal identifier "a" is not declared',
+    dcls = 'line 3 : internal identifier "a" is not declared',
 }
 
 Test { [[
@@ -27599,10 +27637,10 @@ pre native do
     ##include <unistd.h>
     int V = 0;
 end
+native _usleep;
 par/or do
     async do
         loop i in [0 -> 3[ do
-native _usleep;
             _usleep(500);
         end
     end
@@ -27610,6 +27648,32 @@ with
     async/thread do
         loop i in [0 -> 2[ do
 native _V;
+            _V = _V + 1;
+            _usleep(500);
+        end
+    end
+end
+escape _V;
+]],
+    dcls = 'line 21 : native identifier "_V" is not declared',
+}
+
+Test { [[
+pre native do
+    ##include <unistd.h>
+    int V = 0;
+end
+native _usleep;
+native _V;
+par/or do
+    async do
+        loop i in [0 -> 3[ do
+            _usleep(500);
+        end
+    end
+with
+    async/thread do
+        loop i in [0 -> 2[ do
             _V = _V + 1;
             _usleep(500);
         end
@@ -28015,7 +28079,7 @@ async do
 end
 escape x;
 ]],
-    locs = 'line 3 : internal identifier "x" is not declared',
+    dcls = 'line 3 : internal identifier "x" is not declared',
 }
 
 Test { [[
@@ -28025,7 +28089,7 @@ async/thread do
 end
 escape x;
 ]],
-    locs = 'line 3 : internal identifier "x" is not declared',
+    dcls = 'line 3 : internal identifier "x" is not declared',
 }
 
 Test { [[
@@ -28457,6 +28521,7 @@ ptr = [].. [[ str ]];
 native _char;
 escape (0 == _strcmp((&&cpy[0]) as _char&&,"1234567890")) as int;
 ]=],
+    wrn = true,
     run = '6] runtime error: access out of bounds',
 }
 
@@ -28655,7 +28720,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    locs = 'line 3 : invalid `escape´ : unexpected expression',
+    dcls = 'line 3 : invalid `escape´ : unexpected expression',
     --sets = 'line 3 : invalid assignment : types mismatch : "void" <= "int"',
     --adj = 'line 3 : invalid `escape´',
     run = 1,
@@ -28741,7 +28806,7 @@ Test { [[
 call TestX(5);
 escape 0;
 ]],
-    tops = 'line 1 : abstraction "TestX" is not declared',
+    dcls = 'line 1 : abstraction "TestX" is not declared',
 }
 
 Test { [[
@@ -28794,6 +28859,7 @@ await 1s;
 
 escape 1;
 ]],
+    wrn = true,
     run = { ['~>1s'] = 1 },
 }
 
@@ -28801,10 +28867,10 @@ Test { [[
 native do
     int V = 1;
 end
+native _V;
 
 code/delayed Xx (void)=>void do
     every 1s do
-native _V;
         _V = _V + 1;
     end
 end
@@ -28952,7 +29018,7 @@ end
 event Tx a;
 escape 0;
 ]],
-    locs = 'line 3 : invalid event type : must be primitive',
+    dcls = 'line 3 : invalid event type : must be primitive',
 }
 
 Test { [[
@@ -28969,7 +29035,7 @@ code/delayed Tx (void)=>void do
 end
 escape 0;
 ]],
-    tops = 'line 2 : abstraction "Tx" is not declared',
+    dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 
 Test { [[
@@ -28989,6 +29055,20 @@ native do
 end
 code/delayed Tx (void)=>void do
 native _V;
+    _V = 100;
+end
+spawn Tx();
+escape _V;
+]],
+    dcls = 'line 9 : native identifier "_V" is not declared',
+}
+
+Test { [[
+native do
+    int V = 10;
+end
+native _V;
+code/delayed Tx (void)=>void do
     _V = 100;
 end
 spawn Tx();
@@ -30031,6 +30111,8 @@ escape *(r.x);
 }
 Test { [[
 native/plain _rect;
+native ___ceu_nothing;
+native _V;
 pre native do
     typedef struct rect {
         int* x, y;
@@ -30040,8 +30122,6 @@ end
 do
     var int v = 10;
     var _rect r;
-native ___ceu_nothing;
-native _V;
 do r = _rect(&&v); finalize with _V=v; end;
     ___ceu_nothing(&&r);
 end
@@ -30279,7 +30359,7 @@ do
 end
 escape ret;
 ]],
-    locs = 'line 7 : internal identifier "a" is not declared',
+    dcls = 'line 7 : internal identifier "a" is not declared',
     --props = 'line 5 : must be in top-level',
 }
 
@@ -30297,7 +30377,7 @@ var Tx v;
 emit v.go;
 escape 0;
 ]],
-    locs = 'line 6 : internal identifier "a" is not declared',
+    dcls = 'line 6 : internal identifier "a" is not declared',
     --props = 'line 4 : must be in top-level',
 }
 
@@ -30317,8 +30397,8 @@ var Tx v;
 emit v.go;
 escape a;
 ]],
-    locs = 'line 6 : internal identifier "a" is not declared',
-    --locs = 'line 6 : internal identifier "b" is not declared',
+    dcls = 'line 6 : internal identifier "a" is not declared',
+    --dcls = 'line 6 : internal identifier "b" is not declared',
 }
 
 Test { [[
@@ -30345,7 +30425,7 @@ do
 end
 escape a+b;
 ]],
-    locs = 'line 7 : internal identifier "a" is not declared',
+    dcls = 'line 7 : internal identifier "a" is not declared',
     --props = 'line 5 : must be in top-level',
     --env = 'line 17 : class "Tx" is not declared',
 }
@@ -30370,7 +30450,7 @@ do
 end
 escape a+b;
 ]],
-    locs = 'line 5 : internal identifier "a" is not declared',
+    dcls = 'line 5 : internal identifier "a" is not declared',
     --run = 4,
 }
 
@@ -34068,7 +34148,7 @@ tot = tot * 2;                  // 6
 
 escape tot;
 ]],
-    locs = 'line 4 : internal identifier "tot" is not declared',
+    dcls = 'line 4 : internal identifier "tot" is not declared',
 }
 
 Test { [[
@@ -38069,7 +38149,7 @@ Test { [[
 await Tx();
 escape 0;
 ]],
-    tops = 'line 1 : abstraction "Tx" is not declared',
+    dcls = 'line 1 : abstraction "Tx" is not declared',
 }
 
 Test { [[
@@ -38080,7 +38160,7 @@ do Tx;
 escape 0;
 ]],
     run = 0,
-    --locs = 'line 4 : internal identifier "ok" is not declared',
+    --dcls = 'line 4 : internal identifier "ok" is not declared',
 }
 
 Test { [[
@@ -38525,7 +38605,7 @@ do
     end
 end
 ]],
-    tops = 'line 4 : abstraction "HelloWorld" is not declared',
+    dcls = 'line 4 : abstraction "HelloWorld" is not declared',
 }
 
 Test { [[
@@ -40480,7 +40560,7 @@ var Tx t with
     end
 end;
 ]],
-    --locs = 'line 22 : internal identifier "_" is not declared',
+    --dcls = 'line 22 : internal identifier "_" is not declared',
     fin = 'line 7 : constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -40498,7 +40578,7 @@ spawn Tx with
     end
 end;
 ]],
-    --locs = 'line 22 : internal identifier "_" is not declared',
+    --dcls = 'line 22 : internal identifier "_" is not declared',
     fin = 'line 7 : constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -40536,7 +40616,7 @@ end
 
 escape _V;
 ]],
-    --locs = 'line 22 : internal identifier "_" is not declared',
+    --dcls = 'line 22 : internal identifier "_" is not declared',
     fin = 'constructor cannot contain `finalize´',
     --props = 'line 23 : not permitted inside a constructor',
 }
@@ -40626,7 +40706,7 @@ end
 
 escape _V;
 ]],
-    --locs = 'line 23 : internal identifier "_" is not declared',
+    --dcls = 'line 23 : internal identifier "_" is not declared',
     fin = 'constructor cannot contain `finalize´',
     --props = 'line 24 : not permitted inside a constructor',
 }
@@ -40664,7 +40744,7 @@ end
 
 escape _V;
 ]],
-    --locs = 'line 22 : internal identifier "_" is not declared',
+    --dcls = 'line 22 : internal identifier "_" is not declared',
     fin = 'constructor cannot contain `finalize´',
     --fin = 'line 21 : invalid `finalize´',
 }
@@ -42505,7 +42585,7 @@ var I&& i = &&t;
 escape t._ins();
 ]],
     --env = 'line 13 : native function "CEU_T__ins" is not declared',
-    locs = 'line 13 : internal identifier "_ins" is not declared',
+    dcls = 'line 13 : internal identifier "_ins" is not declared',
 }
 Test { [[
 interface I with
@@ -42523,7 +42603,7 @@ var I&& i = &&t;
 escape i:_ins();
 ]],
     --env = 'line 13 : native function "CEU_I__ins" is not declared',
-    locs = 'line 13 : internal identifier "_ins" is not declared',
+    dcls = 'line 13 : internal identifier "_ins" is not declared',
 }
 Test { [[
 class Tx with do end
@@ -43859,7 +43939,7 @@ escape 1;
     wrn = true,
     --gcc = 'error: ‘escape’ with a value, in function returning void',
     --env = 'line 2 : invalid escape value : types mismatch (`void´ <= `int´)',
-    locs = 'line 2 : invalid `escape´ : unexpected expression',
+    dcls = 'line 2 : invalid `escape´ : unexpected expression',
 }
 
 Test { [[
@@ -43925,7 +44005,7 @@ escape 1;
 ]],
     wrn = true,
     env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
-    --tops = 'line 2 : identifier "Fx" is already declared',
+    --dcls = 'line 2 : identifier "Fx" is already declared',
 }
 
 Test { [[
@@ -44269,7 +44349,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    locs = 'line 4 : invalid `escape´ : unexpected expression',
+    dcls = 'line 4 : invalid `escape´ : unexpected expression',
     run = 1,
 }
 
@@ -45475,8 +45555,8 @@ Test { [[
 native do
     void* V;
 end
-code/instantaneous Fx (var void&& v)=>void do
 native _V;
+code/instantaneous Fx (var void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
@@ -45492,8 +45572,8 @@ Test { [[
 native do
     void* V;
 end
-code/instantaneous Fx (var/hold void&& v)=>void do
 native _V;
+code/instantaneous Fx (var/hold void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
@@ -45508,8 +45588,8 @@ Test { [[
 native do
     int V;
 end
-code/instantaneous Fx (var int v)=>void do
 native _V;
+code/instantaneous Fx (var int v)=>void do
     _V = v;
 end
 var void&& x=null;
@@ -48389,7 +48469,7 @@ with
 end
 escape 1;
 ]],
-    tops = 'line 3 : external "A" is not declared',
+    dcls = 'line 3 : external identifier "A" is not declared',
 }
 
 Test { [[
@@ -48466,8 +48546,8 @@ pre native do
     }
 end
 
-par/or do
 native _V;
+par/or do
     _assert(_V==0);
     async/isr [1] do
     end
@@ -48515,7 +48595,7 @@ with
 end
 escape 1;
 ]],
-    locs = 'line 6 : internal identifier "i" is not declared',
+    dcls = 'line 6 : internal identifier "i" is not declared',
 }
 
 Test { [[
@@ -49616,7 +49696,7 @@ watching e do
 end
 escape 1;
 ]],
-    locs = 'line 2 : invalid event type : must be primitive',
+    dcls = 'line 2 : invalid event type : must be primitive',
     --env = 'line 1 : invalid event type',
     --gcc = ' error: unknown type name ‘Tx’',
     --run = { ['~>1s'] = 1 }
@@ -51940,9 +52020,9 @@ native do
 end
 input int A;
 var int v = 0;
+native _V;
 par/or do
     every 10s do
-native _V;
         _V = _V + 1;
     end
 with
@@ -51973,9 +52053,9 @@ native do
 end
 input int A;
 var int v = 0;
+native _V;
 par/or do
     every 10s do
-native _V;
         _V = _V + 1;
     end
 with
@@ -52171,7 +52251,7 @@ await (e) or
       (f);
 escape 1;
 ]],
-    locs = 'line 1 : internal identifier "e" is not declared',
+    dcls = 'line 1 : internal identifier "e" is not declared',
 }
 
 Test { [[
@@ -52628,6 +52708,7 @@ var int a, b;
 (a) = 1;
 escape 1;
 ]],
+    wrn = true,
     --parser = 'line 2 : before `=´ : expected `,´',
     --env = 'line 2 : arity mismatch',
     run = 1,
@@ -52911,8 +52992,9 @@ Test { [[
 await A;
 escape 1;
 ]],
-    tops = '/tmp/_ceu_MOD2.ceu : line 1 : identifier "A" is already declared (/tmp/_ceu_MOD1.ceu : line 1)',
-    wrn = true,
+    dcls = '/tmp/_ceu_MOD2.ceu : line 1 : declaration of "A" hides previous declaration (/tmp/_ceu_MOD1.ceu : line 1)',
+    --dcls = '/tmp/_ceu_MOD2.ceu : line 1 : identifier "A" is already declared (/tmp/_ceu_MOD1.ceu : line 1)',
+    --wrn = true,
     run = { ['~>A']=1 },
 }
 
@@ -54471,7 +54553,7 @@ input/output [10] LINE (var int max)=>int do
 end
 escape ret;
 ]],
-    locs = 'line 6 : internal identifier "ret" is not declared',
+    dcls = 'line 6 : internal identifier "ret" is not declared',
 }
 
 Test { [[
@@ -55433,7 +55515,8 @@ data Tx with
 end
 escape 1;
 ]],
-    tops = 'line 4 : identifier "Tx" is already declared (tests.lua : line 1)',
+    dcls = 'line 4 : declaration of "Tx" hides previous declaration (tests.lua : line 1)',
+    --dcls = 'line 4 : identifier "Tx" is already declared (tests.lua : line 1)',
 }
 Test { [[
 class Tx with
@@ -55497,7 +55580,7 @@ data Opt;
 data OptNIL is Opt_;
 escape 1;
 ]],
-    tops = 'line 2 : abstraction "Opt_" is not declared',
+    dcls = 'line 2 : abstraction "Opt_" is not declared',
 }
 
 -- recursive ADTs must have a base case
@@ -55549,7 +55632,8 @@ data Nothing is Opt1;
 
 escape 1;
 ]],
-    tops = 'line 5 : identifier "Nothing" is already declared (tests.lua : line 2)',
+    --dcls = 'line 5 : identifier "Nothing" is already declared (tests.lua : line 2)',
+    dcls = 'line 5 : declaration of "Nothing" hides previous declaration (tests.lua : line 2)',
 }
 
 -->>> DATA/EVENTS
@@ -55668,6 +55752,7 @@ native do
         escape a + b + c;
     }
 end
+native _add;
 
 var int sum = 0;
 do
@@ -55677,7 +55762,6 @@ do
         var float radius;
     end
     var Ball1 ball = Ball1(130,130,8);
-native _add;
     sum = sum + _add(ball.x, ball.y, ball.radius);
 end
 
@@ -56513,6 +56597,7 @@ end
 vector[] SDL_Rect cell_rects;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -56783,13 +56868,13 @@ Test { DATA..[[
 var Pair p1 = Unknown(1,2);
 escape 1;
 ]],
-    tops = 'line 51 : abstraction "Unknown" is not declared',
+    dcls = 'line 51 : abstraction "Unknown" is not declared',
 }
 Test { DATA..[[
 var Opt  o1 = UnknownNIL();
 escape 1;
 ]],
-    tops = 'line 51 : abstraction "UnknownNIL" is not declared',
+    dcls = 'line 51 : abstraction "UnknownNIL" is not declared',
     --env = 'line 51 : data "Unknown" is not declared',
 }
 
@@ -56798,7 +56883,7 @@ Test { DATA..[[
 var Opt o1 = Unknown();
 escape 1;
 ]],
-    tops = 'line 51 : abstraction "Unknown" is not declared',
+    dcls = 'line 51 : abstraction "Unknown" is not declared',
 }
 
 -- constructors have call syntax
@@ -61301,10 +61386,10 @@ l = new Cons(1,
 
 var int ret = 0;
 
+native _ceu_out_assert_msg;
 par/or do
     await (((l as Cons).tail) as Cons).tail;
     ret = ret + ((((l as Cons).tail) as Cons).tail as Cons).head;    // 0+4
-native _ceu_out_assert_msg;
     _ceu_out_assert_msg(ret == 4, "1");
     (((l as Cons).tail) as Cons).tail = ((((l as Cons).tail) as Cons).tail as Cons).tail;
     ret = ret + ((((l as Cons).tail) as Cons).tail as Cons).head;    // 0+4+5
@@ -63221,7 +63306,8 @@ data Xx;
 
 escape 1;
 ]],
-    tops = 'line 3 : identifier "Nil" is already declared (tests.lua : line 2)',
+    dcls = 'line 3 : declaration of "Nil" hides previous declaration (tests.lua : line 2)',
+    --dcls = 'line 3 : identifier "Nil" is already declared (tests.lua : line 2)',
     --env = 'line 4 : duplicated data : "Nil"',
 }
 
@@ -63244,7 +63330,8 @@ escape 1;
 ]],
     --run = 1,
     --env = 'line 13 : duplicated data : "Nothing"',
-    tops = 'line 9 : identifier "Nothing" is already declared (tests.lua : line 2)',
+    dcls = 'line 9 : declaration of "Nothing" hides previous declaration (tests.lua : line 2)',
+    --dcls = 'line 9 : identifier "Nothing" is already declared (tests.lua : line 2)',
 }
 
 Test { [[
