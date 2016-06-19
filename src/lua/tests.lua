@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -105,10 +104,14 @@ Test { [[escape 1+2*3;]], run=7 }
 Test { [[escape(4/2*3);]], run=6 }
 Test { [[escape 2-1;]], run=1 }
 
+Test { [[escape 1 as int;]],
+    run = 1,
+}
+
 Test { [[escape 1==2;]], sets='line 1 : invalid assignment : types mismatch : "int" <= "bool"', }
 Test { [[escape (1!=2) as int;]], run=1 }
 Test { [[escape 0  or  10;]],
-    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+    ctxs = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
 }
 Test { [[escape (0 as bool)  or  (10 as bool) as int;]],
     parser = 'line 1 : after `)´ : expected `(´ or binary operator or `;´',
@@ -119,7 +122,7 @@ Test { [[escape ((0 as bool)  or  (10 as bool)) as int;]],
 }
 Test { [[escape ((0 as bool) and (10 as bool)) as int;]], run=0 }
 Test { [[escape (10==true) as int;]],
-    exps = 'line 1 : invalid expression : operands to `==´ must be of the same type',
+    ctxs = 'line 1 : invalid expression : operands to `==´ must be of the same type',
 }
 Test { [[escape (10!=0) as int;]], run=1 }
 Test { [[escape (true and true) as int;]], run=1 }
@@ -144,10 +147,11 @@ Test { [[var int sizeof;]],
 Test { [[escape sizeof(int);]], sets='line 1 : invalid assignment : types mismatch : "int" <= "usize"' }
 Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
-    exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
+    ctxs = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
 }
 Test { [[escape (((1<2) as int)<3) as int;]], run=1 }
 
+--]===]
 Test { [[
 var uint x = 1.5;
 escape x + 0.5;
@@ -661,6 +665,18 @@ var _abc b;
     dcls = 'line 2 : event "a" declared but not used',
 }
 
+Test { [[
+event void e;
+escape 0  or  e;
+]],
+    ctxs = 'line 2 : invalid operand to `or´ : unexpected context for event "e"',
+}
+Test { [[
+event void e;
+escape sizeof(e);
+]],
+    ctxs = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
+}
 Test { [[
 native _abc; // TODO: = 0;
 event void a;
@@ -23863,6 +23879,12 @@ escape v[2] + (($v) as int) + ok;
     run = 6,
 }
 
+Test { [[
+vector[] int v;
+escape v > 0;
+]],
+    ctxs = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
+}
 --<<< VECTORS / STRINGS
 
 Test { [[
@@ -56805,6 +56827,13 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+data Ts;
+pool[] Ts ts;
+escape ts + 1;
+]],
+    ctxs = 'line 3 : invalid operand to `+´ : unexpected context for pool "ts"',
+}
 -- << ADT : MISC
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")

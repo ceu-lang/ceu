@@ -1,18 +1,6 @@
 F = {
 
 -- PRIMITIVES
-
-    NUMBER = function (me)
-        local v = unpack(me)
-        if math.floor(v) == tonumber(v) then
-            me.tp = TYPES.new(me, 'int')
-        else
-            me.tp = TYPES.new(me, 'float')
-        end
-    end,
-    BOOL = function (me)
-        me.tp = TYPES.new(me, 'bool')
-    end,
     STRING = function (me)
         me.tp = TYPES.new(me, '_char', '&&')
     end,
@@ -58,43 +46,6 @@ F = {
         me.tp = AST.copy(e.tp)
     end,
 
--- IS, AS/CAST, SIZEOF
-
-    Exp_is = function (me)
-        me.tp = TYPES.new(me, 'bool')
-    end,
-
-    Exp_as = function (me)
-        local _,e,Type = unpack(me)
-        if AST.isNode(Type) then
-            me.tp = AST.copy(Type)
-        else
-            -- annotation (/plain, etc)
-            me.tp = AST.copy(e.tp)
-        end
-    end,
-
-    SIZEOF = function (me)
-        me.tp = TYPES.new(me, 'usize')
-    end,
-
--- NUMERIC
-
-    ['Exp_+']  = 'Exp_num_num_num',
-    ['Exp_-']  = 'Exp_num_num_num',
-    ['Exp_%']  = 'Exp_num_num_num',
-    ['Exp_*']  = 'Exp_num_num_num',
-    ['Exp_/']  = 'Exp_num_num_num',
-    ['Exp_^']  = 'Exp_num_num_num',
-    Exp_num_num_num = function (me)
-        local op, e1, e2 = unpack(me)
-        ASR(TYPES.is_num(e1.tp) and TYPES.is_num(e2.tp), me,
-            'invalid expression : operands to `'..op..'´ must be of numeric type')
-        local max = TYPES.max(e1.tp, e2.tp)
-        ASR(max, me, 'invalid expression : incompatible numeric types')
-        me.tp = AST.copy(max)
-    end,
-
     ['Exp_1+'] = 'Exp_num_num',
     ['Exp_1-'] = 'Exp_num_num',
     Exp_num_num = function (me)
@@ -102,17 +53,6 @@ F = {
         ASR(TYPES.is_num(e.tp), me,
             'invalid expression : operand to `'..op..'´ must be of numeric type')
         me.tp = AST.copy(e.tp)
-    end,
-
-    ['Exp_>='] = 'Exp_num_num_bool',
-    ['Exp_<='] = 'Exp_num_num_bool',
-    ['Exp_>']  = 'Exp_num_num_bool',
-    ['Exp_<']  = 'Exp_num_num_bool',
-    Exp_num_num_bool = function (me)
-        local op, e1, e2 = unpack(me)
-        ASR(TYPES.is_num(e1.tp) and TYPES.is_num(e2.tp), me,
-            'invalid expression : operands to `'..op..'´ must be of numeric type')
-        me.tp = TYPES.new(me, 'bool')
     end,
 
 -- BITWISE
@@ -137,29 +77,10 @@ F = {
 
 -- BOOL
 
-    ['Exp_or']  = 'Exp_bool_bool_bool',
-    ['Exp_and'] = 'Exp_bool_bool_bool',
-    Exp_bool_bool_bool = function (me)
-        local op, e1, e2 = unpack(me)
-        ASR(TYPES.check(e1.tp,'bool') and TYPES.check(e2.tp,'bool'), me,
-            'invalid expression : operands to `'..op..'´ must be of boolean type')
-        me.tp = TYPES.new(me, 'bool')
-    end,
     ['Exp_not'] = function (me)
         local op, e = unpack(me)
         ASR(TYPES.check(e.tp,'bool'), me,
             'invalid expression : operand to `'..op..'´ must be of boolean type')
-        me.tp = TYPES.new(me, 'bool')
-    end,
-
--- EQUALITY
-
-    ['Exp_=='] = 'Exp_eq_bool',
-    ['Exp_!='] = 'Exp_eq_bool',
-    Exp_eq_bool = function (me)
-        local op, e1, e2 = unpack(me)
-        ASR(TYPES.contains(e1.tp,e2.tp) or TYPES.contains(e2.tp,e1.tp), me,
-            'invalid expression : operands to `'..op..'´ must be of the same type')
         me.tp = TYPES.new(me, 'bool')
     end,
 

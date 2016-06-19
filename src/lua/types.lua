@@ -2,10 +2,11 @@ TYPES = {
 }
 
 function TYPES.new (me, id, ...)
-    return AST.node('Type', me.ln,
-            AST.node('ID_prim', me.ln,
-                id),
-            ...)
+    return AST.node('Val', me.ln,
+            AST.node('Type', me.ln,
+                AST.node('ID_prim', me.ln,
+                    id),
+                ...))
 end
 
 function TYPES.id (tp)
