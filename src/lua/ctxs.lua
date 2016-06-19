@@ -31,6 +31,10 @@ end
 F = {
 -- PRIMITIVES
 
+    NULL = function (me)
+        me.dcl = TYPES.new(me, 'null', '&&')
+    end,
+
     NUMBER = function (me)
         local v = unpack(me)
         if math.floor(v) == tonumber(v) then
@@ -59,32 +63,31 @@ F = {
         me.dcl = TYPES.new(me, 'usize')
     end,
 
--- EXPS
-
-    -- vec[i]
-    ['Exp_idx'] = function (me)
-        local _,vec,idx = unpack(me)
-        asr_name(vec, {'Nat','Vec','Var'}, 'vector')
-        asr_if_name(idx, {'Nat','Var'}, 'index')
-    end,
-
-    -- $/$$vec
-    ['Exp_$$'] = 'Exp_$',
-    ['Exp_$'] = function (me)
-        local op,vec = unpack(me)
-        asr_name(vec, {'Vec'}, 'operand to `'..op..'´')
-    end,
-
-    -- &id
-    ['Exp_1&'] = function (me)
-        local _,e = unpack(me)
-        assert(e.dcl or e.tag=='Exp_Call')
-    end,
+-- CALL
 
     Exp_Call = function (me)
         local _, e = unpack(me)
+
+        -- ctx
         asr_name(e, {'Nat','Code'}, 'call')
+
+        -- tp
+        if e.tag == 'ID_abs' then
+            local id = unpack(e)
+            ASR(e.dcl.tag=='Code', me,
+                'invalid call : "'..id..'" is not a `code´ abstraction')
+        end
+
+        -- dcl
+        if e.tag == 'ID_abs' then
+            local _,_,_,_,out = unpack(e.top)
+            me.dcl = TYPES.new(me, 'void')
+            me.dcl[1] = AST.copy(out)
+        else
+            me.dcl = AST.copy(e.dcl)
+        end
     end,
+
     Explist = function (me)
         for _, e in ipairs(me) do
             asr_if_name(e, {'Nat','Var'}, 'argument to call')
@@ -132,9 +135,8 @@ F = {
         -- any
 
         -- dcl
-        me.dcl = AST.copy(e.dcl)
+        me.dcl = TYPES.new(me, 'void')
         me.dcl[1] = TYPES.push(e.dcl[1],'&&')
-        me.dcl.tag = 'Val'
     end,
 
     ['Exp_1*'] = function (me)
@@ -173,6 +175,25 @@ DBG('TODO: remove pool')
         me.dcl = TYPES.new(me, 'bool')
     end,
 
+-- UNARY: +,-
+
+    ['Exp_1+'] = 'Exp_num_num',
+    ['Exp_1-'] = 'Exp_num_num',
+    Exp_num_num = function (me)
+        local op, e = unpack(me)
+
+        -- ctx
+        asr_if_name(e, {'Nat','Var'}, 'operand to `'..op..'´')
+
+        -- tp
+        ASR(TYPES.is_num(e.dcl[1]), me,
+            'invalid expression : operand to `'..op..'´ must be of numeric type')
+
+        -- dcl
+        me.dcl = AST.copy(e.dcl)
+        me.dcl.tag = 'Val'
+    end,
+
 -- NUMERIC: +, -, %, *, /, ^
 
     ['Exp_+']  = 'Exp_num_num_num',
@@ -195,9 +216,8 @@ DBG('TODO: remove pool')
         -- dcl
         local max = TYPES.max(e1.dcl[1], e2.dcl[1])
         ASR(max, me, 'invalid expression : incompatible numeric types')
-        me.dcl = AST.copy(e1.dcl)
+        me.dcl = TYPES.new(me,'void')
         me.dcl[1] = AST.copy(max)
-        me.dcl.tag = 'Val'
     end,
 
 -- BITWISE
@@ -220,9 +240,8 @@ DBG('TODO: remove pool')
         -- dcl
         local max = TYPES.max(e1.dcl[1], e2.dcl[1])
         ASR(max, me, 'invalid expression : incompatible numeric types')
-        me.dcl = AST.copy(e1.dcl)
+        me.dcl = TYPES.new(me,'void')
         me.dcl[1] = AST.copy(max)
-        me.dcl.tag = 'Val'
     end,
 
     ['Exp_~'] = function (me)
@@ -333,6 +352,29 @@ error'TODO'
             -- annotation (/plain, etc)
             me.tp = AST.copy(e.tp)
         end
+    end,
+
+-------------------------------------------------------------------------------
+-- EXPS
+
+    -- vec[i]
+    ['Exp_idx'] = function (me)
+        local _,vec,idx = unpack(me)
+        asr_name(vec, {'Nat','Vec','Var'}, 'vector')
+        asr_if_name(idx, {'Nat','Var'}, 'index')
+    end,
+
+    -- $/$$vec
+    ['Exp_$$'] = 'Exp_$',
+    ['Exp_$'] = function (me)
+        local op,vec = unpack(me)
+        asr_name(vec, {'Vec'}, 'operand to `'..op..'´')
+    end,
+
+    -- &id
+    ['Exp_1&'] = function (me)
+        local _,e = unpack(me)
+        assert(e.dcl or e.tag=='Exp_Call')
     end,
 
     --------------------------------------------------------------------------

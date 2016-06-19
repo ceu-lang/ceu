@@ -4,9 +4,6 @@ F = {
     STRING = function (me)
         me.tp = TYPES.new(me, '_char', '&&')
     end,
-    NULL = function (me)
-        me.tp = TYPES.new(me, 'null', '&&')
-    end,
 
 -- ID_*
 
@@ -43,15 +40,6 @@ F = {
 
     Exp_Name = function (me)
         local e = unpack(me)
-        me.tp = AST.copy(e.tp)
-    end,
-
-    ['Exp_1+'] = 'Exp_num_num',
-    ['Exp_1-'] = 'Exp_num_num',
-    Exp_num_num = function (me)
-        local op, e = unpack(me)
-        ASR(TYPES.is_num(e.tp), me,
-            'invalid expression : operand to `'..op..'´ must be of numeric type')
         me.tp = AST.copy(e.tp)
     end,
 
@@ -98,19 +86,6 @@ F = {
 
 
 -- CALL, EMIT
-
-    Exp_Call = function (me)
-        local _,e = unpack(me)
-        if e.tag == 'ID_abs' then
-            local id = unpack(e)
-            ASR(e.top.tag=='Code', me,
-                'invalid call : "'..id..'" is not a `code´ abstraction')
-            local _,_,_,_,out = unpack(e.top)
-            me.tp = AST.copy(out)
-        else
-            me.tp = AST.copy(e.tp)
-        end
-    end,
 
     Emit_Ext_emit = function (me)
         local ID_ext, ps = unpack(me)

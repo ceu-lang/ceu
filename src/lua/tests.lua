@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -92,12 +93,12 @@ Test { [[escape (((1)));]], run=1 }
 Test { [[
 escape 1 + null;
 ]],
-    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    ctxs = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }
 Test { [[
 escape 1 or false;
 ]],
-    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+    ctxs = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
 }
 
 Test { [[escape 1+2*3;]], run=7 }
@@ -694,6 +695,12 @@ escape e|e;
 ]],
     ctxs = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
 }
+Test { [[
+event void e;
+escape -e;
+]],
+    ctxs = 'line 2 : invalid operand to `-´ : unexpected context for event "e"',
+}
 
 Test { [[
 native _abc; // TODO: = 0;
@@ -716,7 +723,6 @@ emit a => &&k; // leads to compiler error
 
 -->>> OS_START / ANY
 
---]===]
 Test { [[
 native _f,_int;
 input void OS_START;
