@@ -43,7 +43,7 @@ end,
                             node('Type', me.ln,
                                 node('ID_prim', me.ln, '_')),
                             false,
-                            '_'),
+                            '_@'),
                         node('Nat', me.ln,
                             false,
                             'plain',
@@ -559,6 +559,10 @@ error 'TODO'
     end,
 
 -------------------------------------------------------------------------------
+
+    _Nat_Exp__PRE = function (me)
+        return node('ID_nat', me.ln, '_@', unpack(me))
+    end,
 
     ['Exp_:__PRE'] = function (me)
         local op, e, field = unpack(me)

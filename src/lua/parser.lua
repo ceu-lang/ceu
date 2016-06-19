@@ -517,7 +517,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
              x* K'end'
 
     , Nat_Stmt = KK'{' * C(V'__nat') * KK'}'
-    , Nat_Exp  = KK'{' * C(V'__nat') * KK'}'
+    , _Nat_Exp = KK'{' * C(V'__nat') * KK'}'
     , __nat   = ((1-S'{}') + '{'*V'__nat'*'}')^0
 
     -- Lua
@@ -721,7 +721,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                    )
                  + V'ID_int'  + V'ID_nat'
                  + V'Global'  + V'This'   + V'Outer'
-                 + V'Nat_Exp'
+                 + V'_Nat_Exp'
 
     -- Exp
 
