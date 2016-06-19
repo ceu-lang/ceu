@@ -171,12 +171,10 @@ do
 
 -- NUMERIC TYPES
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
-            local dcl1 = DCLS.get(AST.iter'Block'(), TYPES.id(tp1))
-            local dcl2 = DCLS.get(AST.iter'Block'(), TYPES.id(tp2))
-            if dcl1.Nat=='native' or dcl2.Nat=='native' then
+            if TYPES.is_nat(tp1) or TYPES.is_nat(tp2) then
                 return true
             end
-            return contains_num(dcl1.id,dcl2.id)
+            return contains_num(TYPES.id(tp1),TYPES.id(tp2))
 
 -- POINTER TYPES
         elseif (TYPES.check(tp1,'&&') or tp1_is_nat) and

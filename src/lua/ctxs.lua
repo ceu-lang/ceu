@@ -344,13 +344,12 @@ DBG('TODO: remove pool')
         -- any
 
         -- dcl
+        me.dcl = AST.copy(e.dcl)
         if AST.isNode(Type) then
-            me.dcl = AST.copy(e.dcl)
             me.dcl[1] = AST.copy(Type)
         else
-error'TODO'
             -- annotation (/plain, etc)
-            me.tp = AST.copy(e.tp)
+DBG'TODO: type annotation'
         end
     end,
 
