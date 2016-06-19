@@ -151,12 +151,11 @@ Test { [[escape 1<2>3;]],
 }
 Test { [[escape (((1<2) as int)<3) as int;]], run=1 }
 
---]===]
 Test { [[
 var uint x = 1.5;
 escape x + 0.5;
 ]],
-    exps = 'line 2 : invalid expression : incompatible numeric types',
+    ctxs = 'line 2 : invalid expression : incompatible numeric types',
 }
 
 Test { [[
@@ -253,7 +252,7 @@ escape *&&*&&x;
 Test { [[
 escape not 1;
 ]],
-    exps = 'line 1 : invalid expression : operand to `not´ must be of boolean type',
+    ctxs = 'line 1 : invalid expression : operand to `not´ must be of boolean type',
 }
 Test { [[
 escape (not false) as int;
@@ -270,7 +269,7 @@ Test { [[
 var int i;
 escape i?;
 ]],
-    exps = 'line 2 : invalid expression : operand to `?´ must be of option type',
+    ctxs = 'line 2 : invalid expression : operand to `?´ must be of option type',
 }
 Test { [[
 var int? i = 1;
@@ -465,6 +464,7 @@ escape 0;
     sets = 'line 1 : invalid assignment : types mismatch : "int" <= "bool"',
 }
 
+--]===]
 Test { [[
 native _assert;
 var bool v1 = ((1 + 1) as bool) and (0 as bool);    // 0
@@ -677,6 +677,19 @@ escape sizeof(e);
 ]],
     ctxs = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
 }
+Test { [[
+event void e;
+escape not e;
+]],
+    ctxs = 'line 2 : invalid operand to `not´ : unexpected context for event "e"',
+}
+Test { [[
+event int e;
+escape e?;
+]],
+    ctxs = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
+}
+
 Test { [[
 native _abc; // TODO: = 0;
 event void a;
@@ -23884,6 +23897,12 @@ vector[] int v;
 escape v > 0;
 ]],
     ctxs = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
+}
+Test { [[
+vector[] int v;
+escape v?;
+]],
+    ctxs = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
 }
 --<<< VECTORS / STRINGS
 
@@ -56834,6 +56853,14 @@ escape ts + 1;
 ]],
     ctxs = 'line 3 : invalid operand to `+´ : unexpected context for pool "ts"',
 }
+Test { [[
+data Dd;
+pool[] Dd dds;
+escape dds?;
+]],
+    ctxs = 'line 3 : invalid operand to `?´ : unexpected context for pool "dds"',
+}
+
 -- << ADT : MISC
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")

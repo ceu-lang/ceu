@@ -75,52 +75,6 @@ F = {
         me.tp = AST.copy(e.tp)
     end,
 
--- BOOL
-
-    ['Exp_not'] = function (me)
-        local op, e = unpack(me)
-        ASR(TYPES.check(e.tp,'bool'), me,
-            'invalid expression : operand to `'..op..'´ must be of boolean type')
-        me.tp = TYPES.new(me, 'bool')
-    end,
-
--- POINTERS
-
-    ['Exp_1*'] = function (me)
-        local op, e = unpack(me)
-        local is_nat = TYPES.is_nat(e.tp)
-        local is_ptr = TYPES.check(e.tp,'&&')
-        ASR(is_nat or is_ptr, me,
-            'invalid expression : operand to `'..op..'´ must be of pointer type')
-        if is_ptr then
-            me.tp = TYPES.pop(e.tp)
-        else
-            me.tp = AST.copy(e.tp)
-        end
-    end,
-
-    ['Exp_&&'] = function (me)
-        local op, e = unpack(me)
-        ASR(e.tag=='Exp_Name' or e.tag=='Exp_1*', me,
-            'invalid expression : operand to `'..op..'´ must be a name')
-        me.tp = TYPES.push(e.tp,'&&')
-    end,
-
--- OPTION
-
-    ['Exp_!'] = function (me)
-        local op,e = unpack(me)
-        ASR(TYPES.check(e.tp,'?'), me,
-            'invalid expression : operand to `'..op..'´ must be of option type')
-        me.tp = TYPES.pop(e.tp)
-    end,
-    ['Exp_?'] = function (me)
-        local op,e = unpack(me)
-        ASR(TYPES.check(e.tp,'?'), me,
-            'invalid expression : operand to `'..op..'´ must be of option type')
-        me.tp = TYPES.new(me, 'bool')
-    end,
-
 -- DOT
 
     ['Exp_.'] = function (me)

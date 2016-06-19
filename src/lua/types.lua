@@ -171,8 +171,8 @@ do
 
 -- NUMERIC TYPES
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
-            local dcl1 = DCLS.get( TYPES.id(tp1) )
-            local dcl2 = DCLS.get( TYPES.id(tp2) )
+            local dcl1 = DCLS.get(AST.iter'Block'(), TYPES.id(tp1))
+            local dcl2 = DCLS.get(AST.iter'Block'(), TYPES.id(tp2))
             if dcl1.Nat=='native' or dcl2.Nat=='native' then
                 return true
             end

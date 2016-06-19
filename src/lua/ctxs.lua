@@ -81,16 +81,6 @@ F = {
         assert(e.dcl or e.tag=='Exp_Call')
     end,
 
-    ['Exp_1*'] = function (me)
-        local op,e = unpack(me)
-        asr_name(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
-DBG('TODO: remove pool')
-    end,
-    ['Exp_&&'] = function (me)
-        local op,e = unpack(me)
-        asr_name(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
-    end,
-
     Exp_Call = function (me)
         local _, e = unpack(me)
         asr_name(e, {'Nat','Code'}, 'call')
@@ -99,6 +89,88 @@ DBG('TODO: remove pool')
         for _, e in ipairs(me) do
             asr_if_name(e, {'Nat','Var'}, 'argument to call')
         end
+    end,
+
+-- OPTION
+
+    ['Exp_!'] = function (me)
+        local op,e = unpack(me)
+
+        -- ctx
+
+        -- tp
+        ASR(TYPES.check(e.tp,'?'), me,
+            'invalid expression : operand to `'..op..'´ must be of option type')
+
+        -- dcl
+        me.tp = TYPES.pop(e.tp)
+    end,
+
+    ['Exp_?'] = function (me)
+        local op,e = unpack(me)
+
+        -- ctx
+        asr_name(e, {'Nat','Var'}, 'operand to `'..op..'´')
+
+        -- tp
+        ASR(TYPES.check(e.dcl[1],'?'), me,
+            'invalid expression : operand to `'..op..'´ must be of option type')
+
+        -- dcl
+        me.dcl = TYPES.new(me, 'bool')
+    end,
+
+-- POINTERS
+
+    ['Exp_&&'] = function (me)
+        local op, e = unpack(me)
+
+        -- ctx
+        asr_name(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
+
+        -- tp
+        -- any
+
+        -- dcl
+        me.dcl = AST.copy(e.dcl)
+        me.dcl[1] = TYPES.push(e.dcl[1],'&&')
+        me.dcl.tag = 'Val'
+    end,
+
+    ['Exp_1*'] = function (me)
+        local op,e = unpack(me)
+
+        -- ctx
+        asr_name(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
+DBG('TODO: remove pool')
+
+        -- tp
+        local is_nat = TYPES.is_nat(e.dcl[1])
+        local is_ptr = TYPES.check(e.dcl[1],'&&')
+        ASR(is_nat or is_ptr, me,
+            'invalid expression : operand to `'..op..'´ must be of pointer type')
+
+        -- dcl
+        me.dcl = AST.copy(e.dcl)
+        if is_ptr then
+            me.dcl[1] = TYPES.pop(e.dcl[1])
+        end
+    end,
+
+-- NOT
+
+    ['Exp_not'] = function (me)
+        local op, e = unpack(me)
+
+        -- ctx
+        asr_if_name(e, {'Nat','Var'}, 'operand to `'..op..'´')
+
+        -- tp
+        ASR(TYPES.check(e.dcl[1],'bool'), me,
+            'invalid expression : operand to `'..op..'´ must be of boolean type')
+
+        -- dcl
+        me.dcl = TYPES.new(me, 'bool')
     end,
 
 -- NUMERIC: +, -, %, *, /, ^
