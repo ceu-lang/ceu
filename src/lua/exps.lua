@@ -31,13 +31,6 @@ F = {
         end
     end,
 
--- IDX, $$, $
-
-    ['Exp_$']  = 'Exp_$$',
-    ['Exp_$$'] = function (me)
-        me.tp = TYPES.new(me, 'usize')
-    end,
-
 -- CALL, EMIT
 
     Emit_Ext_emit = function (me)

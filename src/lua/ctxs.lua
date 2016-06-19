@@ -130,6 +130,22 @@ F = {
         me.dcl = TYPES.new(me, 'bool')
     end,
 
+-- VECTOR LENGTH: $, $$
+
+    ['Exp_$$'] = 'Exp_$',
+    ['Exp_$'] = function (me)
+        local op,vec = unpack(me)
+
+        -- ctx
+        asr_name(vec, {'Vec'}, 'operand to `'..op..'´')
+
+        -- tp
+        -- any
+
+        -- dcl
+        me.dcl = TYPES.new(me, 'usize')
+    end,
+
 -- INDEX
 
     ['Exp_idx'] = function (me)
@@ -397,13 +413,6 @@ DBG'TODO: type annotation'
 
 -------------------------------------------------------------------------------
 -- EXPS
-
-    -- $/$$vec
-    ['Exp_$$'] = 'Exp_$',
-    ['Exp_$'] = function (me)
-        local op,vec = unpack(me)
-        asr_name(vec, {'Vec'}, 'operand to `'..op..'´')
-    end,
 
     --------------------------------------------------------------------------
 

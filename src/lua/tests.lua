@@ -17666,7 +17666,6 @@ escape 10;
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
---]===]
 Test { [[
 vector[] byte str = [0,1,2];
 
@@ -22063,35 +22062,35 @@ input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position
 
 -- int_int
 Test { [[var int&&p; escape p/10;]],
-    exps = 'line 1 : invalid expression : operands to `/´ must be of numeric type'
+    ctxs = 'line 1 : invalid expression : operands to `/´ must be of numeric type'
 }
 Test { [[var int&&p; escape p|10;]],
-    exps = 'line 1 : invalid expression : operands to `|´ must be of integer type',
+    ctxs = 'line 1 : invalid expression : operands to `|´ must be of integer type',
 }
 Test { [[var int&&p; escape p>>10;]],
-    exps = 'line 1 : invalid expression : operands to `>>´ must be of integer type',
+    ctxs = 'line 1 : invalid expression : operands to `>>´ must be of integer type',
 }
 Test { [[var int&&p; escape p^10;]],
-    exps = 'line 1 : invalid expression : operands to `^´ must be of numeric type',
+    ctxs = 'line 1 : invalid expression : operands to `^´ must be of numeric type',
 }
 Test { [[var int&&p; escape ~p;]],
-    exps = 'line 1 : invalid expression : operand to `~´ must be of integer type',
+    ctxs = 'line 1 : invalid expression : operand to `~´ must be of integer type',
 }
 
 -- same
 Test { [[var int&&p; var int a; escape p==a;]],
-    exps = 'line 1 : invalid expression : operands to `==´ must be of the same type',
+    ctxs = 'line 1 : invalid expression : operands to `==´ must be of the same type',
 }
 Test { [[var int&&p; var int a; escape p!=a;]],
-    exps = 'line 1 : invalid expression : operands to `!=´ must be of the same type',
+    ctxs = 'line 1 : invalid expression : operands to `!=´ must be of the same type',
 }
 Test { [[var int&&p; var int a; escape p>a;]],
-    exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
+    ctxs = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
 }
 
 -- any
 Test { [[var int&&p=null; escape p or 10;]],
-    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+    ctxs = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
 }
 Test { [[var int&&p=null; escape (p!=null or true) as int;]], run=1 }
 Test { [[var int&&p=null; escape (p!=null and false) as int;]],  run=0 }
@@ -22099,23 +22098,23 @@ Test { [[var int&&p=null; escape( not (p!=null)) as int;]], run=1 }
 
 -- arith
 Test { [[var int&&p; escape p+p;]],
-    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    ctxs = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }--TODO: "+"'}
 Test { [[var int&&p; escape p+10;]],
-    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    ctxs = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }
 Test { [[var int&&p; escape p+10 and 0;]],
-    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    ctxs = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }
 
 -- ptr
 Test { [[var int a; escape *a;]],
-    exps = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
+    ctxs = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
 }
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
     parser = 'line 1 : after `)´ : expected `(´',
     --parser = 'line 1 : after `pa´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `)´ or `,´',
-    --exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    --ctxs = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
@@ -23145,6 +23144,7 @@ escape ($v) as int;
     ctxs = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
 }
 
+--]===]
 Test { [[
 vector[10] u8 vec;
 escape ($$vec + $vec) as int;
