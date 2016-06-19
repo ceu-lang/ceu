@@ -93,9 +93,9 @@ Test = function (t)
     --if not check('types')    then return end
     if not check('names')    then return end
     if not check('ctxs')     then return end
+do return end
     if not check('exps')     then return end
     if not check('sets')     then return end
-do return end
 AST.dump(AST.root)
     if not check('consts')   then return end
     if not check('sval')     then return end
