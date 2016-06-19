@@ -245,14 +245,12 @@ local function visit_aux (me, F)
     if F.Node__PRE then
         me = F.Node__PRE(me) or me
         if me ~= _me then
-            --DBG('Node__PRE', me.tag, me)
             return visit_aux(me, F)
         end
     end
     if pre then
         me = pre(me) or me
         if me ~= _me then
-            --DBG('XXXX__PRE', me.tag, me, _me.tag, _me)
             return visit_aux(me, F)
         end
     end
@@ -280,20 +278,18 @@ local function visit_aux (me, F)
 
     if pos then
         me = pos(me) or me
-        if AST.isNode(me) then
-            me.__par = STACK[#STACK]
-            me.__depth = (me.__par and me.__par.__depth+1) or 0
+        if me ~= _me then
+            return visit_aux(me, F)
         end
     end
-    if F.Node_pos then
-        me = F.Node_pos(me) or me
-        if AST.isNode(me) then
-            me.__par = STACK[#STACK]
-            me.__depth = (me.__par and me.__par.__depth+1) or 0
+     if F.Node__POS then
+        me = F.Node__POS(me) or me
+        if me ~= _me then
+            return visit_aux(me, F)
         end
     end
 
-    return me
+   return me
 end
 AST.visit_aux = visit_aux
 
