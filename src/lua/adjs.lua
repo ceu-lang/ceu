@@ -565,7 +565,7 @@ error 'TODO'
 -------------------------------------------------------------------------------
 
     _Nat_Exp__PRE = function (me)
-        return node('ID_nat', me.ln, '_@', unpack(me))
+        return node('ID_nat', me.ln, '_{}', unpack(me))
     end,
 
     ['Exp_:__PRE'] = function (me)
