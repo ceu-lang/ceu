@@ -58,7 +58,7 @@ end
 local function tops_use (me, id, tag)
     local top = TOPS[id]
     ASR(top and ((not tag) or top.tag==tag), me,
-        (tag and AST.tag2id[tag] or '')..' "'..id..'" is not declared')
+        (tag and AST.tag2id[tag] or 'abstraction')..' "'..id..'" is not declared')
     top.is_used = true
     return top
 end
@@ -120,11 +120,12 @@ F = {
 -- CODE / DATA
 
     Code = function (me)
-        local _,_,id,blk = unpack(me)
+        local _,_,id,_,_blk = unpack(me)
         me.id = id
 
         local top = TOPS[me.id]
-        if not (top and top.blk) then
+        if (not top) or top.blk then
+        --if not (top and top.blk) then
             tops_new(me)
             top = me
         end

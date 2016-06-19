@@ -25,6 +25,7 @@ AST.tag2id = {
     Evt  = 'event',
     Ext  = 'external',
     Code = 'code',
+    Data = 'data',
 }
 
 function AST.isParent (n1, n2)

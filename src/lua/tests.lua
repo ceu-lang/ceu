@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -23733,7 +23734,6 @@ escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&
     run = 1,
 }
 
---]===]
 Test { [[
 native _strlen;
 code/instantaneous Strlen (var byte&& str)=>int do
@@ -43923,7 +43923,9 @@ code/instantaneous Fx (void) => int;
 code/instantaneous Fx (var int)  => int;
 escape 1;
 ]],
-    tops = 'line 2 : identifier "Fx" is already declared',
+    wrn = true,
+    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+    --tops = 'line 2 : identifier "Fx" is already declared',
 }
 
 Test { [[

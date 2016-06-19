@@ -114,7 +114,7 @@ end
 function TYPES.is_nat (tp)
     assert(tp.tag == 'Type')
     local top = TYPES.top(tp)
-    return top and top.tag=='Nat' and TYPES.check(tp,top.id)
+    return top and (top.tag=='Nat' or top.id=='_') and TYPES.check(tp,top.id)
         -- _char    yes
         -- _char&&  no
 end
