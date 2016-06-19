@@ -464,7 +464,6 @@ escape 0;
     sets = 'line 1 : invalid assignment : types mismatch : "int" <= "bool"',
 }
 
---]===]
 Test { [[
 native _assert;
 var bool v1 = ((1 + 1) as bool) and (0 as bool);    // 0
@@ -689,6 +688,12 @@ escape e?;
 ]],
     ctxs = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
 }
+Test { [[
+event int e;
+escape e|e;
+]],
+    ctxs = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
+}
 
 Test { [[
 native _abc; // TODO: = 0;
@@ -711,6 +716,7 @@ emit a => &&k; // leads to compiler error
 
 -->>> OS_START / ANY
 
+--]===]
 Test { [[
 native _f,_int;
 input void OS_START;
@@ -23904,6 +23910,13 @@ escape v?;
 ]],
     ctxs = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
 }
+Test { [[
+vector[] int v;
+escape ~v;
+]],
+    ctxs = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
+}
+
 --<<< VECTORS / STRINGS
 
 Test { [[

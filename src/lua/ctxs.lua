@@ -200,6 +200,46 @@ DBG('TODO: remove pool')
         me.dcl.tag = 'Val'
     end,
 
+-- BITWISE
+
+    ['Exp_|']  = 'Exp_int_int_int',
+    ['Exp_&']  = 'Exp_int_int_int',
+    ['Exp_<<'] = 'Exp_int_int_int',
+    ['Exp_>>'] = 'Exp_int_int_int',
+    Exp_int_int_int = function (me)
+        local op, e1, e2 = unpack(me)
+
+        -- ctx
+        asr_if_name(e1, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_if_name(e2, {'Nat','Var'}, 'operand to `'..op..'´')
+
+        -- tp
+        ASR(TYPES.is_int(e1.dcl[1]) and TYPES.is_int(e2.dcl[1]), me,
+            'invalid expression : operands to `'..op..'´ must be of integer type')
+
+        -- dcl
+        local max = TYPES.max(e1.dcl[1], e2.dcl[1])
+        ASR(max, me, 'invalid expression : incompatible numeric types')
+        me.dcl = AST.copy(e1.dcl)
+        me.dcl[1] = AST.copy(max)
+        me.dcl.tag = 'Val'
+    end,
+
+    ['Exp_~'] = function (me)
+        local op, e = unpack(me)
+
+        -- ctx
+        asr_if_name(e, {'Nat','Var'}, 'operand to `'..op..'´')
+
+        -- tp
+        ASR(TYPES.is_int(e.dcl[1]), me,
+            'invalid expression : operand to `'..op..'´ must be of integer type')
+
+        -- dcl
+        me.dcl = AST.copy(e.dcl)
+        me.dcl.tag = 'Val'
+    end,
+
 -- COMPARISON: >, >=, <, <=
 
     ['Exp_>='] = 'Exp_num_num_bool',

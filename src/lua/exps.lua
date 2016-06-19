@@ -55,26 +55,6 @@ F = {
         me.tp = AST.copy(e.tp)
     end,
 
--- BITWISE
-
-    ['Exp_|']  = 'Exp_int_int_int',
-    ['Exp_&']  = 'Exp_int_int_int',
-    ['Exp_<<'] = 'Exp_int_int_int',
-    ['Exp_>>'] = 'Exp_int_int_int',
-    Exp_int_int_int = function (me)
-        local op, e1, e2 = unpack(me)
-        ASR(TYPES.is_int(e1.tp) and TYPES.is_int(e2.tp), me,
-            'invalid expression : operands to `'..op..'´ must be of integer type')
-        me.tp = AST.copy( TYPES.max(e1.tp, e2.tp) )
-    end,
-
-    ['Exp_~'] = function (me)
-        local op, e = unpack(me)
-        ASR(TYPES.is_int(e.tp), me,
-            'invalid expression : operand to `'..op..'´ must be of integer type')
-        me.tp = AST.copy(e.tp)
-    end,
-
 -- DOT
 
     ['Exp_.'] = function (me)
