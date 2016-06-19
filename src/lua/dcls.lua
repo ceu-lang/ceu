@@ -64,15 +64,29 @@ function DCLS.get (blk, id, can_cross)
         local dcl = blk.dcls[id]
         if dcl then
             dcl.is_used = true
-            return dcl --AST.copy(dcl)
+            return AST.copy(dcl)
         end
     end
     return nil
 end
 
 function DCLS.asr (me, blk, id, can_cross, err)
-    return ASR(DCLS.get(blk,id,can_cross), me,
-            err..' "'..id..'" is not declared')
+    local ret = DCLS.get(blk, id, can_cross)
+    if ret then
+        return ret
+    else
+        local data = AST.par(blk, 'Data')
+        if data then
+            ASR(false, me, 
+                'invalid member access : "'..
+                err..  '" has no member "'..id..'" : '..
+                '`data´ "'..data.id..
+                '" ('..data.ln[1]..':'..  data.ln[2]..')')
+        else
+            ASR(false, me,
+                err..' "'..id..'" is not declared')
+        end
+    end
 end
 
 -- native declarations are allowed until `native/end´

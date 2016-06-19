@@ -55968,7 +55968,7 @@ end
 pool[10] List lll = new ListCONS(1, ListNIL());
 escape lll.head;
 ]],
-    names = 'line 15 : pool "lll" has no member "head" : `data´ "List" (tests.lua:7)',
+    names = 'line 15 : invalid member access : "lll" has no member "head" : `data´ "List" (tests.lua:7)',
     --env = 'TODO: no head in lll',
 }
 
@@ -57006,7 +57006,7 @@ pool[] List l;
 escape (l as Nil).v;
 ]],
     wrn = true,
-    names = 'line 52 : pool "l" has no member "v" : `data´ "Nil" (tests.lua:16)',
+    names = 'line 52 : invalid member access : "l" has no member "v" : `data´ "Nil" (tests.lua:16)',
     --env = 'line 52 : field "v" is not declared',
 }
 -- tag Opt.Ptr has no field "x"
@@ -57015,7 +57015,7 @@ var Opt o;
 escape (o as Ptr).x;
 ]],
     wrn = true,
-    names = 'line 52 : variable "o" has no member "x" : `data´ "Ptr" (tests.lua:10)',
+    names = 'line 52 : invalid member access : "o" has no member "x" : `data´ "Ptr" (tests.lua:10)',
 }
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor

@@ -1,82 +1,70 @@
 F = {
     Exp_Name = function (me)
         local e = unpack(me)
-        me.loc = AST.copy(e.loc)
-    end,
-
-    ID_nat = function (me)
-        me.loc = AST.copy(me.top)
-    end,
-    ID_abs = function (me)
-        me.loc = AST.copy(me.top)
+        me.dcl = AST.copy(e.dcl)
     end,
 
     --------------------------------------------------------------------------
 
     Exp_as = function (me)
         local _,e, Type = unpack(me)
-        if not e.loc then return end
+        if not e.dcl then return end
 
-        me.loc = AST.copy(e.loc)
-        me.loc[1] = AST.copy(Type)
+        me.dcl = AST.copy(e.dcl)
+        me.dcl[1] = AST.copy(Type)
     end,
 
     ['Exp_idx'] = function (me)
         local _,vec = unpack(me)
-        if not vec.loc then return end
+        if not vec.dcl then return end
 
-        me.loc = AST.copy(vec.loc)
-        if me.loc.tag == 'Vec' then
-            me.loc.tag = 'Var'
-        elseif not TYPES.is_nat(me.loc[1]) then
-            me.loc[1] = TYPES.pop(me.loc[1])
+        me.dcl = AST.copy(vec.dcl)
+        if me.dcl.tag == 'Vec' then
+            me.dcl.tag = 'Var'
+        elseif not TYPES.is_nat(me.dcl[1]) then
+            me.dcl[1] = TYPES.pop(me.dcl[1])
         end
     end,
 
     ['Exp_1*'] = function (me)
         local _,ptr = unpack(me)
-        if not ptr.loc then return end
+        if not ptr.dcl then return end
 
-        me.loc = AST.copy(ptr.loc)
-        if not TYPES.is_nat(me.loc[1]) then
-            me.loc[1] = TYPES.pop(me.loc[1])
+        me.dcl = AST.copy(ptr.dcl)
+        if not TYPES.is_nat(me.dcl[1]) then
+            me.dcl[1] = TYPES.pop(me.dcl[1])
         end
     end,
 
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
-        if not e.loc then return end
+        if not e.dcl then return end
 
-        local Type = unpack(e.loc)
+        local Type = unpack(e.dcl)
         local ID_abs, mod = unpack(Type)
-        if ID_abs.top.tag == 'Data' then
+        if ID_abs.dcl.tag == 'Data' then
             -- data.member
-            local blk = AST.asr(ID_abs.top,'Data', 3,'Block')
-            me.loc = ASR(LOCS.get(member, blk), me,
-                        --'invalid member access : '..
-                        AST.tag2id[e.loc.tag]..' "'..e.loc.id..
-                        '" has no member "'..member..'" : '..
-                        '`data´ "'..ID_abs.top.id..
-                        '" ('..ID_abs.top.ln[1]..':'..  ID_abs.top.ln[2]..')')
+            local blk = AST.asr(ID_abs.dcl,'Data', 3,'Block')
+            me.dcl = DCLS.asr(me,blk,member,false,e.dcl.id)
         else
-            me.loc = AST.copy(e.loc)
+            me.dcl = AST.copy(e.dcl)
         end
     end,
 
     ['Exp_!'] = function (me)
         local _, e = unpack(me)
-        if not e.loc then return end
+        if not e.dcl then return end
 
-        me.loc = AST.copy(e.loc)
-        me.loc[1] = TYPES.pop(me.loc[1])
+        me.dcl = AST.copy(e.dcl)
+        me.dcl[1] = TYPES.pop(me.dcl[1])
     end,
 
     ['Exp_$'] = function (me)
         local _, e = unpack(me)
-        if not e.loc then return end
+        if not e.dcl then return end
 
-        me.loc = AST.copy(e.loc)
-        me.loc.tag = 'Var'
+        me.dcl = AST.copy(e.dcl)
+        me.dcl.tag = 'Var'
     end,
 }
 

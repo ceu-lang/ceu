@@ -14,10 +14,6 @@ function TYPES.id (tp)
     return id
 end
 
-function TYPES.top (tp)
-    return assert(TOPS[TYPES.id(tp)])
-end
-
 function TYPES.tostring (tp)
     if tp.tag == 'Typelist' then
         local ret = {}
@@ -101,20 +97,20 @@ end
 
 function TYPES.is_num (tp)
     assert(tp.tag == 'Type')
-    local top = TYPES.top(tp)
+    local dcl = DCLS.asr(AST.iter()(), AST.iter'Block'(), TYPES.id(tp), true)
     return TYPES.is_nat(tp)
-        or (top.prim and top.prim.is_num and TYPES.check(tp,top.id))
+        or (dcl.prim and dcl.prim.is_num and TYPES.check(tp,dcl.id))
 end
 function TYPES.is_int (tp)
     assert(tp.tag == 'Type')
-    local top = TYPES.top(tp)
+    local dcl = DCLS.asr(AST.iter()(), AST.iter'Block'(), TYPES.id(tp), true)
     return TYPES.is_nat(tp)
-        or (top.prim and top.prim.is_int and TYPES.check(tp,top.id))
+        or (dcl.prim and dcl.prim.is_int and TYPES.check(tp,dcl.id))
 end
 function TYPES.is_nat (tp)
     assert(tp.tag == 'Type')
-    local top = TYPES.top(tp)
-    return top and (top.tag=='Nat' or top.id=='_') and TYPES.check(tp,top.id)
+    local dcl = DCLS.asr(AST.iter()(), AST.iter'Block'(), TYPES.id(tp), true)
+    return dcl and (dcl.tag=='Nat' or dcl.id=='_') and TYPES.check(tp,dcl.id)
         -- _char    yes
         -- _char&&  no
 end
@@ -174,12 +170,12 @@ do
 
 -- NUMERIC TYPES
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
-            local top1 = TYPES.top(tp1)
-            local top2 = TYPES.top(tp2)
-            if top1.Nat=='native' or top2.Nat=='native' then
+            local dcl1 = DCLS.get( TYPES.id(tp1) )
+            local dcl2 = DCLS.get( TYPES.id(tp2) )
+            if dcl1.Nat=='native' or dcl2.Nat=='native' then
                 return true
             end
-            return contains_num(top1.id,top2.id)
+            return contains_num(dcl1.id,dcl2.id)
 
 -- POINTER TYPES
         elseif (TYPES.check(tp1,'&&') or tp1_is_nat) and
