@@ -73,34 +73,30 @@ F = {
     Var = function (me)
         local _,_,id = unpack(me)
         me.id = id
-        me.tag_str = 'variable'
         locs_new(me, AST.par(me,'Block'))
     end,
 
     Vec = function (me)
         local _,_,_,id = unpack(me)
         me.id = id
-        me.tag_str = 'vector'
         locs_new(me, AST.par(me,'Block'))
     end,
 
     Pool = function (me)
         local _,_,_,id = unpack(me)
         me.id = id
-        me.tag_str = 'pool'
         locs_new(me, AST.par(me,'Block'))
     end,
 
     Evt = function (me)
         local Typelist,_,id = unpack(me)
         me.id = id
-        me.tag_str = 'event'
 
         -- no modifiers allowed
         for _, Type in ipairs(Typelist) do
             local id, mod = unpack(Type)
             local top = assert(id.top,'bug found')
-            ASR(top.group=='primitive', me,
+            ASR(top.tag=='Prim', me,
                 'invalid event type : must be primitive')
             ASR(not mod, me,
                 mod and 'invalid event type : cannot use `'..mod..'´')
@@ -126,8 +122,10 @@ F = {
             local _, ID_ext, i = unpack(me)
             assert(id == 'every')
             AST.asr(ID_ext,'ID_ext')
-            assert(ID_ext.top.group == 'input')
-
+            do
+                local _, input = unpack(ID_ext.top)
+                assert(input == 'input')
+            end
             local Typelist = AST.asr(unpack(ID_ext.top), 'Typelist')
             local Type = Typelist[i]
             return AST.copy(Type)

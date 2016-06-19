@@ -2,9 +2,7 @@ local function asr (e, cnds, err)
     ASR(e.loc, e, 'invalid '..err..' : expected name expression')
     local ok do
         for _, tag in ipairs(cnds) do
-            if tag == e.loc.tag
-            or tag == e.loc.group
-            then
+            if tag == e.loc.tag then
                 ok = true
                 break
             end
@@ -13,11 +11,11 @@ local function asr (e, cnds, err)
     if err then
         ASR(ok, e,
             'invalid '..err..' : '..
-            'unexpected context for '..(e.loc.tag_str or e.loc.group)
+            'unexpected context for '..AST.tag2id[e.loc.tag]
                                      ..' "'..e.loc.id..'"')
     else
         ASR(ok, e,
-            'unexpected context for '..(e.loc.tag_str or e.loc.group)
+            'unexpected context for '..AST.tag2id[e.loc.tag]
                                      ..' "'..e.loc.id..'"')
     end
 end
@@ -26,9 +24,9 @@ F = {
     -- vec[i]
     ['Exp_idx'] = function (me)
         local _,vec,idx = unpack(me)
-        asr(vec, {'native','Vec','Var'}, 'vector')
+        asr(vec, {'Nat','Vec','Var'}, 'vector')
         if idx.loc then
-            asr(idx, {'native','Var'}, 'index')
+            asr(idx, {'Nat','Var'}, 'index')
         end
     end,
 
@@ -47,30 +45,30 @@ F = {
 
     ['Exp_1*'] = function (me)
         local op,e = unpack(me)
-        asr(e, {'native','Var','Pool'}, 'operand to `'..op..'´')
+        asr(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
 DBG('TODO: remove pool')
     end,
     ['Exp_&&'] = function (me)
         local op,e = unpack(me)
-        asr(e, {'native','Var','Pool'}, 'operand to `'..op..'´')
+        asr(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
     end,
 
     Exp_as = 'Exp_is',
     Exp_is = function (me)
         local op,e = unpack(me)
         if e.loc then
-            asr(e, {'native','Var','Pool'}, 'operand to `'..op..'´')
+            asr(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
         end
     end,
 
     Exp_Call = function (me)
         local _, e = unpack(me)
-        asr(e, {'native','code'}, 'call')
+        asr(e, {'Nat','Code'}, 'call')
     end,
     Explist = function (me)
         for _, e in ipairs(me) do
             if e.loc then
-                asr(e, {'native','Var'}, 'argument to call')
+                asr(e, {'Nat','Var'}, 'argument to call')
             end
         end
     end,
@@ -79,10 +77,10 @@ DBG('TODO: remove pool')
     ['Exp_=='] = function (me)
         local op, e1, e2 = unpack(me)
         if e1.loc then
-            asr(e1, {'native','Var'}, 'operand to `'..op..'´')
+            asr(e1, {'Nat','Var'}, 'operand to `'..op..'´')
         end
         if e2.loc then
-            asr(e2, {'native','Var'}, 'operand to `'..op..'´')
+            asr(e2, {'Nat','Var'}, 'operand to `'..op..'´')
         end
     end,
 
@@ -91,7 +89,7 @@ DBG('TODO: remove pool')
     _Data_Explist = function (me)
         for _, e in ipairs(me) do
             if e.loc then
-                asr(e, {'native','Var'}, 'argument to constructor')
+                asr(e, {'Nat','Var'}, 'argument to constructor')
             end
         end
     end,
@@ -100,9 +98,9 @@ DBG('TODO: remove pool')
 
     Set_Exp = function (me)
         local fr, to = unpack(me)
-        asr(to, {'native','Var','Pool'}, 'assignment')
+        asr(to, {'Nat','Var','Pool'}, 'assignment')
         if fr.loc then
-            asr(fr, {'native','Var'}, 'assignment')
+            asr(fr, {'Nat','Var'}, 'assignment')
         end
     end,
 
@@ -125,7 +123,7 @@ DBG'TODO: _Vec_New'
 
     Set_Lua = function (me)
         local _,to = unpack(me)
-        asr(to, {'native','Var'}, 'Lua assignment')
+        asr(to, {'Nat','Var'}, 'Lua assignment')
     end,
 
     Set_Data = function (me)
@@ -163,7 +161,7 @@ DBG'TODO: _Vec_New'
     end,
 
     Varlist = function (me)
-        local cnds = {'native','Var'}
+        local cnds = {'Nat','Var'}
         if string.sub(me.__par.tag,1,7) == '_Async_' then
             cnds[#cnds+1] = 'Vec'
         end
@@ -175,7 +173,7 @@ DBG'TODO: _Vec_New'
     Do = function (me)
         local _,_,e = unpack(me)
         if e then
-            asr(e, {'native','Var'}, 'assignment')
+            asr(e, {'Nat','Var'}, 'assignment')
         end
     end,
 }

@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -524,7 +523,7 @@ var bool a = 1;
 a = 2;
 escape a;
 ]],
-    tops = 'line 1 : input "A declared but not used',
+    tops = 'line 1 : external "A" declared but not used',
     --run = 2,
 }
 
@@ -16561,7 +16560,7 @@ Test { [[
 native _V;
 escape 0;
 ]],
-    tops = 'line 1 : native "_V declared but not used',
+    tops = 'line 1 : native "_V" declared but not used',
 }
 Test { [[
 native do
@@ -21717,7 +21716,7 @@ input W  (var int a)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
-    tops = 'line 4 : input "W declared but not used',
+    tops = 'line 4 : external "W" declared but not used',
 }
 
 Test { [[
@@ -23734,6 +23733,7 @@ escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&
     run = 1,
 }
 
+--]===]
 Test { [[
 native _strlen;
 code/instantaneous Strlen (var byte&& str)=>int do

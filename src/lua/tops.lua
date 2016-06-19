@@ -1,10 +1,8 @@
 TOPS = {
 --[[
     [id] = node + {
-        id    = <string>,
-        group = 'primitive' | 'native' | 'data' | 'code'
-              | 'input' | 'output' | ...,
-        is_num = true | false,
+        id      = <string>,
+        is_num  = true | false,
         is_used = ...,
     },
 ]]
@@ -32,11 +30,12 @@ do
         usize = { is_num=true,  is_int=true  },
         void  = { is_num=false, is_int=false },
         null  = { is_num=false, is_int=false },
+        _     = { is_num=true,  is_int=true  },
     }
     for id, t in pairs(prims) do
         TOPS[id] = {
+            tag   = 'Prim',
             id    = id,
-            group = 'primitive',
             prim  = t,
             is_used = true,
         }
@@ -56,9 +55,10 @@ local function tops_new (me)
     TOPS[me.id] = me
 end
 
-local function tops_use (me, id, group)
-    local top = ASR(TOPS[id], me,
-                    group..' "'..id..'" is not declared')
+local function tops_use (me, id, tag)
+    local top = TOPS[id]
+    ASR(top and ((not tag) or top.tag==tag), me,
+        (tag and AST.tag2id[tag] or '')..' "'..id..'" is not declared')
     top.is_used = true
     return top
 end
@@ -69,19 +69,19 @@ F = {
 
     ID_prim = function (me)
         local id = unpack(me)
-        me.top = tops_use(me, id, 'primitive')
+        me.top = tops_use(me, id, 'Prim')
     end,
     ID_nat = function (me)
         local id = unpack(me)
-        me.top = tops_use(me, id, 'native')
+        me.top = tops_use(me, id, 'Nat')
     end,
     ID_ext = function (me)
         local id = unpack(me)
-        me.top = tops_use(me, id, 'external')
+        me.top = tops_use(me, id, 'Ext')
     end,
     ID_abs = function (me)
         local id = unpack(me)
-        me.top = tops_use(me, id, 'abstraction')
+        me.top = tops_use(me, id)
     end,
 
 -- NATIVE
@@ -91,14 +91,13 @@ F = {
     end,
     Nat__PRE = function (me)
         local _,_,id = unpack(me)
-        me.id    = id
-        me.group = 'native'
+        me.id = id
         tops_new(me)
 
         ASR(not native_end, me,
             'native declarations are disabled')
 
-        if id=='_' or id=='_char' then
+        if id=='_@' or id=='_char' then
             me.is_predefined = true
         end
     end,
@@ -108,33 +107,24 @@ F = {
     Extcall_proto = 'Extcall_impl',
     Extcall_impl = function (me)
         local grp, _, id = unpack(me)
-        me.id    = id
-        me.group = grp
+        me.id = id
         tops_new(me)
     end,
 
     Ext = function (me)
         local _, grp, id = unpack(me)
-        me.id    = id
-        me.group = grp
+        me.id = id
         tops_new(me)
     end,
 
 -- CODE / DATA
 
-    Code_proto = function (me)
-        local _,_,id = unpack(me)
-        me.id    = id
-        me.group = 'code'
-        tops_new(me)
-    end,
-    Code_impl = function (me)
-        local _,_,id = unpack(me)
-        me.id    = id
-        me.group = 'code'
+    Code = function (me)
+        local _,_,id,blk = unpack(me)
+        me.id = id
 
         local top = TOPS[me.id]
-        if (not top) or top.blk then
+        if not (top and top.blk) then
             tops_new(me)
             top = me
         end
@@ -143,13 +133,15 @@ F = {
         if me ~= top then
             -- ...
         end
-        top.blk = blk
+        if blk then
+            assert(not top.blk)
+            top.blk = blk
+        end
     end,
 
     Data = function (me)
         local id = unpack(me)
-        me.id    = id
-        me.group = 'data'
+        me.id = id
         tops_new(me)
     end,
 }
@@ -157,10 +149,10 @@ F = {
 AST.visit(F)
 
 for _, top in pairs(TOPS) do
-    if top.group=='data' and string.sub(top.id,1,1)=='_' then
+    if top.tag=='Data' and string.sub(top.id,1,1)=='_' then
         -- auto generated
     else
         WRN(top.is_used or top.is_predefined, top,
-            top.group..' "'..top.id..' declared but not used')
+            AST.tag2id[top.tag]..' "'..top.id..'" declared but not used')
     end
 end

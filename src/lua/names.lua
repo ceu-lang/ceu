@@ -4,9 +4,6 @@ F = {
         me.loc = AST.copy(e.loc)
     end,
 
-    Nat_Exp = function (me)
-        me.loc = AST.copy(TOPS._)
-    end,
     ID_nat = function (me)
         me.loc = AST.copy(me.top)
     end,
@@ -52,12 +49,12 @@ F = {
 
         local Type = unpack(e.loc)
         local ID_abs, mod = unpack(Type)
-        if ID_abs.top.group == 'data' then
+        if ID_abs.top.tag == 'Data' then
             -- data.member
             local blk = AST.asr(ID_abs.top,'Data', 3,'Block')
             me.loc = ASR(LOCS.get(member, blk), me,
                         --'invalid member access : '..
-                        e.loc.tag_str..' "'..e.loc.id..
+                        AST.tag2id[e.loc.tag]..' "'..e.loc.id..
                         '" has no member "'..member..'" : '..
                         '`data´ "'..ID_abs.top.id..
                         '" ('..ID_abs.top.ln[1]..':'..  ID_abs.top.ln[2]..')')

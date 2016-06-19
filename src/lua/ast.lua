@@ -17,19 +17,14 @@ function AST.isNode (node)
 end
 
 AST.tag2id = {
-    EmitInt = 'emit',
-    Spawn   = 'spawn',
-    Kill    = 'kill',
-    Await   = 'await',
-    AwaitN  = 'await',
-    Async   = 'async',
-    Thread  = 'async/thread',
-    ParOr   = 'par/or',
-    ParAnd  = 'par/and',
-    ParEver = 'par',
-    Loop    = 'loop',
-    Dcl_cls = 'class',
-    Set     = 'assignment',
+    Prim = 'primitive',
+    Nat  = 'native',
+    Var  = 'variable',
+    Vec  = 'vector',
+    Pool = 'pool',
+    Evt  = 'event',
+    Ext  = 'external',
+    Code = 'code',
 }
 
 function AST.isParent (n1, n2)

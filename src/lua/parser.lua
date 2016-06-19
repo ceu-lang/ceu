@@ -441,7 +441,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __code = (CK'code/instantaneous' + CK'code/delayed')
                 * OPT(CK'/recursive')
                 * V'__ID_abs'
-    , Code_proto  = V'__code' * (V'Typepars_ids'+V'Typepars_anon') *
+    , _Code_proto = V'__code' * (V'Typepars_ids'+V'Typepars_anon') *
                                     KK'=>' * V'Type'
     , _Code_impl  = V'__code' * V'Typepars_ids' *
                                     KK'=>' * V'Type' *
@@ -796,7 +796,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Evts_set'  + V'_Evts'
                  + V'_Exts'
                  + V'_Data_simple'
-                 + V'Code_proto' + V'Extcall_proto' + V'_Extreq_proto'
+                 + V'_Code_proto' + V'Extcall_proto' + V'_Extreq_proto'
                  + V'_Nats'  + V'Nat_End'
                  + V'Deterministic'
                  + V'_Set'

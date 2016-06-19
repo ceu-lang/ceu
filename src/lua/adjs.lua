@@ -90,10 +90,14 @@ end,
                         unpack(me, 3))))
     end,
 
+    _Code_proto = function (me)
+        me.tag = 'Code'
+    end,
+
     Extcall_impl__PRE = '_Code_impl__PRE',
     _Code_impl__PRE = function (me)
         local pre, is_rec, id, ins, out, blk = unpack(me)
-        me.tag = string.sub(me.tag,2)
+        me.tag = string.match(me.tag,'_(.*)_impl')
 
         -- enclose "blk" with "_ret = do ... end"
 

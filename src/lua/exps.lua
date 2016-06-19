@@ -32,9 +32,6 @@ F = {
     ID_nat = function (me)
         me.tp = TYPES.new(me, '_')
     end,
-    Nat_Exp = function (me)
-        me.tp = TYPES.new(me, '_')
-    end,
 
 -- VARLIST, EXPLIST
 
@@ -209,7 +206,7 @@ F = {
         local op, e, field = unpack(me)
 
         local top = TYPES.top(e.tp)
-        if top.group == 'data' then
+        if top.tag == 'Data' then
             local Type = unpack(me.loc)
             me.tp = AST.copy(Type)
         else
@@ -251,7 +248,7 @@ F = {
         local _,e = unpack(me)
         if e.tag == 'ID_abs' then
             local id = unpack(e)
-            ASR(e.top.group=='code', me,
+            ASR(e.top.tag=='Code', me,
                 'invalid call : "'..id..'" is not a `code´ abstraction')
             local _,_,_,_,out = unpack(e.top)
             me.tp = AST.copy(out)

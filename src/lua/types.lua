@@ -114,7 +114,7 @@ end
 function TYPES.is_nat (tp)
     assert(tp.tag == 'Type')
     local top = TYPES.top(tp)
-    return top and top.group=='native' and TYPES.check(tp,top.id)
+    return top and top.tag=='Nat' and TYPES.check(tp,top.id)
         -- _char    yes
         -- _char&&  no
 end
@@ -176,7 +176,7 @@ do
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
             local top1 = TYPES.top(tp1)
             local top2 = TYPES.top(tp2)
-            if top1.group=='native' or top2.group=='native' then
+            if top1.Nat=='native' or top2.Nat=='native' then
                 return true
             end
             return contains_num(top1.id,top2.id)
