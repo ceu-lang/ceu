@@ -16851,7 +16851,6 @@ escape v;
     exps = 'line 4 : invalid expression : operands to `+´ must be of numeric type',
 }
 
---]===]
 Test { [[
 var int v = 10;
 escape v!;
@@ -17667,6 +17666,7 @@ escape 10;
     --ref = 'line 3 : attribution to reference with greater scope',
 }
 
+--]===]
 Test { [[
 vector[] byte str = [0,1,2];
 

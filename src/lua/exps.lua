@@ -33,31 +33,10 @@ F = {
 
 -- IDX, $$, $
 
-    ['Exp_idx'] = function (me)
-        local _, e, num = unpack(me)
-
-        if TYPES.check(e.tp,'&&') then
-            me.tp = TYPES.pop(e.tp)
-        else
-            me.tp = AST.copy(e.tp)
-        end
-    end,
-
     ['Exp_$']  = 'Exp_$$',
     ['Exp_$$'] = function (me)
         me.tp = TYPES.new(me, 'usize')
     end,
-
--- BIND
-
-    ['Exp_1&'] = function (me)
-        local op, e = unpack(me)
-        local par = me.__par
-        ASR(par.tag=='Set_Alias' or par.tag=='Explist', me,
-            'invalid expression : operand `'..op..'´')
-        me.tp = AST.copy(e.tp)
-    end,
-
 
 -- CALL, EMIT
 

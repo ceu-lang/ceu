@@ -86,7 +86,7 @@ F = {
 
         -- dcl
         if e.tag == 'ID_abs' then
-            local _,_,_,_,out = unpack(e.top)
+            local _,_,_,_,out = unpack(e.dcl)
             me.dcl = TYPES.new(me, 'void')
             me.dcl[1] = AST.copy(out)
         else
@@ -128,6 +128,41 @@ F = {
 
         -- dcl
         me.dcl = TYPES.new(me, 'bool')
+    end,
+
+-- INDEX
+
+    ['Exp_idx'] = function (me)
+        local _,vec,idx = unpack(me)
+
+        -- ctx
+        asr_name(vec, {'Nat','Vec','Var'}, 'vector')
+        asr_if_name(idx, {'Nat','Var'}, 'index')
+
+        -- tp
+
+        -- dcl
+        me.dcl = AST.copy(vec.dcl)
+        if TYPES.check(vec.dcl[1],'&&') then
+            me.dcl[1] = TYPES.pop(vec.dcl[1])
+        end
+    end,
+
+-- BIND
+
+    ['Exp_1&'] = function (me)
+        local op, e = unpack(me)
+
+        -- ctx
+        local par = me.__par
+        ASR(par.tag=='Set_Alias' or par.tag=='Explist', me,
+            'invalid expression : unexpected context for operation `'..op..'´')
+
+        -- tp
+
+        -- dcl
+        me.dcl = AST.copy(e.dcl)
+        me.dcl.tag = 'Val'
     end,
 
 -- POINTERS
@@ -363,24 +398,11 @@ DBG'TODO: type annotation'
 -------------------------------------------------------------------------------
 -- EXPS
 
-    -- vec[i]
-    ['Exp_idx'] = function (me)
-        local _,vec,idx = unpack(me)
-        asr_name(vec, {'Nat','Vec','Var'}, 'vector')
-        asr_if_name(idx, {'Nat','Var'}, 'index')
-    end,
-
     -- $/$$vec
     ['Exp_$$'] = 'Exp_$',
     ['Exp_$'] = function (me)
         local op,vec = unpack(me)
         asr_name(vec, {'Vec'}, 'operand to `'..op..'´')
-    end,
-
-    -- &id
-    ['Exp_1&'] = function (me)
-        local _,e = unpack(me)
-        assert(e.dcl or e.tag=='Exp_Call')
     end,
 
     --------------------------------------------------------------------------
@@ -409,7 +431,7 @@ DBG'TODO: type annotation'
         if fr.tag == '_Vec_New' then
 DBG'TODO: _Vec_New'
             for _, e in ipairs(fr) do
-                asr_if_name(e, {'Vec'}, 'constructor')
+                --asr_if_name(e, {'Vec'}, 'constructor')
             end
         end
     end,
