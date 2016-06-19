@@ -6,12 +6,22 @@ F = {
 
     --------------------------------------------------------------------------
 
-    Exp_as = function (me)
-        local _,e, Type = unpack(me)
+    ['Exp_1*'] = function (me)
+        local _,ptr = unpack(me)
+        if not ptr.dcl then return end
+
+        me.dcl = AST.copy(ptr.dcl)
+        if not TYPES.is_nat(me.dcl[1]) then
+            me.dcl[1] = TYPES.pop(me.dcl[1])
+        end
+    end,
+
+    ['Exp_$'] = function (me)
+        local _, e = unpack(me)
         if not e.dcl then return end
 
         me.dcl = AST.copy(e.dcl)
-        me.dcl[1] = AST.copy(Type)
+        me.dcl.tag = 'Var'
     end,
 
     ['Exp_idx'] = function (me)
@@ -22,16 +32,6 @@ F = {
         if me.dcl.tag == 'Vec' then
             me.dcl.tag = 'Var'
         elseif not TYPES.is_nat(me.dcl[1]) then
-            me.dcl[1] = TYPES.pop(me.dcl[1])
-        end
-    end,
-
-    ['Exp_1*'] = function (me)
-        local _,ptr = unpack(me)
-        if not ptr.dcl then return end
-
-        me.dcl = AST.copy(ptr.dcl)
-        if not TYPES.is_nat(me.dcl[1]) then
             me.dcl[1] = TYPES.pop(me.dcl[1])
         end
     end,
@@ -59,12 +59,12 @@ F = {
         me.dcl[1] = TYPES.pop(me.dcl[1])
     end,
 
-    ['Exp_$'] = function (me)
-        local _, e = unpack(me)
+    Exp_as = function (me)
+        local _,e, Type = unpack(me)
         if not e.dcl then return end
 
         me.dcl = AST.copy(e.dcl)
-        me.dcl.tag = 'Var'
+        me.dcl[1] = AST.copy(Type)
     end,
 }
 
