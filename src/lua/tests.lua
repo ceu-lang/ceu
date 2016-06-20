@@ -93,12 +93,12 @@ Test { [[escape (((1)));]], run=1 }
 Test { [[
 escape 1 + null;
 ]],
-    ctxs = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }
 Test { [[
 escape 1 or false;
 ]],
-    ctxs = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
 }
 
 Test { [[escape 1+2*3;]], run=7 }
@@ -112,7 +112,7 @@ Test { [[escape 1 as int;]],
 Test { [[escape 1==2;]], sets='line 1 : invalid assignment : types mismatch : "int" <= "bool"', }
 Test { [[escape (1!=2) as int;]], run=1 }
 Test { [[escape 0  or  10;]],
-    ctxs = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
 }
 Test { [[escape (0 as bool)  or  (10 as bool) as int;]],
     parser = 'line 1 : after `)´ : expected `(´ or binary operator or `;´',
@@ -123,7 +123,7 @@ Test { [[escape ((0 as bool)  or  (10 as bool)) as int;]],
 }
 Test { [[escape ((0 as bool) and (10 as bool)) as int;]], run=0 }
 Test { [[escape (10==true) as int;]],
-    ctxs = 'line 1 : invalid expression : operands to `==´ must be of the same type',
+    exps = 'line 1 : invalid expression : operands to `==´ must be of the same type',
 }
 Test { [[escape (10!=0) as int;]], run=1 }
 Test { [[escape (true and true) as int;]], run=1 }
@@ -148,7 +148,7 @@ Test { [[var int sizeof;]],
 Test { [[escape sizeof(int);]], sets='line 1 : invalid assignment : types mismatch : "int" <= "usize"' }
 Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
-    ctxs = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
+    exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
 }
 Test { [[escape (((1<2) as int)<3) as int;]], run=1 }
 
@@ -156,7 +156,7 @@ Test { [[
 var uint x = 1.5;
 escape x + 0.5;
 ]],
-    ctxs = 'line 2 : invalid expression : incompatible numeric types',
+    exps = 'line 2 : invalid expression : incompatible numeric types',
 }
 
 Test { [[
@@ -188,7 +188,7 @@ Test { [[
 var uint x = 1.5;
 escape x + (0.5 as uint);
 ]],
-    sets = ' line 1 : invalid assignment : types mismatch : "uint" <= "float"',
+    stmts = ' line 1 : invalid assignment : types mismatch : "uint" <= "float"',
 }
 
 Test { [[
@@ -215,14 +215,14 @@ escape ( x + (0.5 as byte) )as int;
 Test { [[
 escape *1;
 ]],
-    ctxs = 'line 1 : invalid operand to `*´ : expected name expression',
+    exps = 'line 1 : invalid operand to `*´ : expected name expression',
     --exps = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
 }
 
 Test { [[
 escape &&1;
 ]],
-    ctxs = 'line 1 : invalid operand to `&&´ : expected name expression',
+    exps = 'line 1 : invalid operand to `&&´ : expected name expression',
     --exps = 'line 1 : invalid expression : operand to `&&´ must be a name',
 }
 
@@ -238,7 +238,7 @@ Test { [[
 var int x = 1;
 escape *&&x;
 ]],
-    ctxs = 'line 2 : invalid operand to `*´ : expected name expression',
+    exps = 'line 2 : invalid operand to `*´ : expected name expression',
     --run = 1,
 }
 
@@ -246,14 +246,14 @@ Test { [[
 var int x = 1;
 escape *&&*&&x;
 ]],
-    ctxs = 'line 2 : invalid operand to `*´ : expected name expression',
+    exps = 'line 2 : invalid operand to `*´ : expected name expression',
     --run = 1,
 }
 
 Test { [[
 escape not 1;
 ]],
-    ctxs = 'line 1 : invalid expression : operand to `not´ must be of boolean type',
+    exps = 'line 1 : invalid expression : operand to `not´ must be of boolean type',
 }
 Test { [[
 escape (not false) as int;
@@ -270,7 +270,7 @@ Test { [[
 var int i;
 escape i?;
 ]],
-    ctxs = 'line 2 : invalid expression : operand to `?´ must be of option type',
+    exps = 'line 2 : invalid expression : operand to `?´ must be of option type',
 }
 Test { [[
 var int? i = 1;
@@ -456,13 +456,13 @@ Test { [[
 var int v;
 v = false;
 ]],
-    sets = 'line 2 : invalid assignment : types mismatch : "int" <= "bool"',
+    stmts = 'line 2 : invalid assignment : types mismatch : "int" <= "bool"',
 }
 Test { [[
 var int v1 = ((1 + 1) as bool) and (0 as bool);    // 0
 escape 0;
 ]],
-    sets = 'line 1 : invalid assignment : types mismatch : "int" <= "bool"',
+    stmts = 'line 1 : invalid assignment : types mismatch : "int" <= "bool"',
 }
 
 Test { [[
@@ -551,7 +551,7 @@ a = 2;
 escape a;
 ]],
     wrn = true,
-    sets = 'line 3 : invalid assignment : types mismatch : "bool" <= "int"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "bool" <= "int"',
 }
 
 Test { [[
@@ -560,7 +560,7 @@ var bool a = 1;
 escape a;
 ]],
     wrn = true,
-    sets = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
+    stmts = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
 }
 
 Test { [[
@@ -669,37 +669,37 @@ Test { [[
 event void e;
 escape 0  or  e;
 ]],
-    ctxs = 'line 2 : invalid operand to `or´ : unexpected context for event "e"',
+    exps = 'line 2 : invalid operand to `or´ : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape sizeof(e);
 ]],
-    ctxs = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
+    exps = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape not e;
 ]],
-    ctxs = 'line 2 : invalid operand to `not´ : unexpected context for event "e"',
+    exps = 'line 2 : invalid operand to `not´ : unexpected context for event "e"',
 }
 Test { [[
 event int e;
 escape e?;
 ]],
-    ctxs = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
+    exps = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
 }
 Test { [[
 event int e;
 escape e|e;
 ]],
-    ctxs = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
+    exps = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
 }
 Test { [[
 event void e;
 escape -e;
 ]],
-    ctxs = 'line 2 : invalid operand to `-´ : unexpected context for event "e"',
+    exps = 'line 2 : invalid operand to `-´ : unexpected context for event "e"',
 }
 
 Test { [[
@@ -1449,7 +1449,7 @@ var int v;
 v = await A until 1;
 escape v;
 ]],
-    exps = 'line 3 : invalid expression : `until´ condition must be of boolean type',
+    stmts = 'line 3 : invalid expression : `until´ condition must be of boolean type',
 }
 Test { [[
 input int A;
@@ -1457,7 +1457,7 @@ var bool v;
 v = await A;
 escape v as int;
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "(bool)" <= "(int)"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "(bool)" <= "(int)"',
 }
 
 Test { [[
@@ -1846,13 +1846,13 @@ var bool a;
 a = await 10ms;
 escape a as int;
 ]],
-    sets = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
+    stmts = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
 }
 Test { [[
 var bool a = await 10ms;
 escape a;
 ]],
-    sets = 'line 1 : invalid assignment : types mismatch : "bool" <= "int"',
+    stmts = 'line 1 : invalid assignment : types mismatch : "bool" <= "int"',
 }
 Test { [[
 var int a = await 10ms;
@@ -2275,7 +2275,7 @@ var bool a = do/A
 end;
 escape 1;
 ]],
-    sets = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
+    stmts = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
 }
 
 Test { [[
@@ -4022,7 +4022,7 @@ input (int,int) A;
 var int a;
 a = await A;
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "(int)" <= "(int,int)"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "(int)" <= "(int,int)"',
 }
 Test { [[
 input (int) A;
@@ -4052,7 +4052,7 @@ input int A;
 var int a,b;
 (a,b) = await A;
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch',
+    stmts = 'line 3 : invalid assignment : types mismatch',
 }
 
 Test { [[
@@ -4062,7 +4062,7 @@ var int a,b;
 (a,b) = await A;
 await B;
 ]],
-    sets = 'line 4 : invalid assignment : types mismatch : "(int,int)" <= "(int)"',
+    stmts = 'line 4 : invalid assignment : types mismatch : "(int,int)" <= "(int)"',
 }
 
 Test { [[
@@ -7567,7 +7567,7 @@ async do
 end
 escape 1;
 ]],
-    exps = 'line 3 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    stmts = 'line 3 : invalid `emit´ : types mismatch : "(int)" <= "()"',
     --env = 'line 3 : arity mismatch',
     --env = 'line 3 : missing parameters on `emit´',
 }
@@ -7669,7 +7669,7 @@ escape 1;
 ]],
     parser = 'line 2 : after `await´ : expected external identifier',
     --parser = 'line 2 : after `1´ : expected number or `/_´',
-    --sets = 'line 2 : invalid assignment : types mismatch',
+    --stmts = 'line 2 : invalid assignment : types mismatch',
     --env = 'line 2 : arity mismatch',
     --gcc = 'error: ‘tceu__s32’ has no member named ‘_2’',
     --run = 1,
@@ -16544,7 +16544,7 @@ var& int b = &&a;
 a = 2;
 escape b;
 ]],
-    sets = 'line 2 : invalid assignment : types mismatch : "int" <= "int&&"',
+    stmts = 'line 2 : invalid assignment : types mismatch : "int" <= "int&&"',
     --env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
     --run = 2,
 }
@@ -16554,7 +16554,7 @@ var& int y = &&x;
 escape y;
 ]],
     --env = 'line 2 : types mismatch (`int&´ <= `int&&´)',
-    sets = 'line 2 : invalid assignment : types mismatch : "int" <= "int&&"',
+    stmts = 'line 2 : invalid assignment : types mismatch : "int" <= "int&&"',
 }
 
 Test { [[
@@ -16628,7 +16628,7 @@ await 1s;
 var int&& c = a;
 escape 1;
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "int" <= "int&&"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "int" <= "int&&"',
     --env = 'line 3 : types mismatch (`int&´ <= `int&&´)',
     --run = { ['~>1s']=1 },
 }
@@ -16856,7 +16856,7 @@ Test { [[
 var int v = 10;
 escape v!;
 ]],
-    ctxs = 'line 2 : invalid expression : operand to `!´ must be of option type',
+    exps = 'line 2 : invalid expression : operand to `!´ must be of option type',
 }
 
 Test { [[
@@ -16966,7 +16966,7 @@ finalize (r) with
 end
 escape r;
 ]],
-    sets = 'line 16 : invalid assignment : types mismatch : "int" <= "int?"',
+    stmts = 'line 16 : invalid assignment : types mismatch : "int" <= "int?"',
     --env = 'line 16 : types mismatch (`int´ <= `int&?´)',
 }
 
@@ -17383,7 +17383,7 @@ do v(&&a);
 finalize with nothing; end;
 escape(a);
 ]],
-    ctxs = 'line 12 : invalid call : unexpected context for variable "v"',
+    exps = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
     --fin = 'line 11 : unsafe access to pointer "v" across `await´',
@@ -17410,7 +17410,7 @@ var int a=0;
 do v(&&a); finalize with nothing; end;
 escape(a);
 ]],
-    ctxs = 'line 12 : invalid call : unexpected context for variable "v"',
+    exps = 'line 12 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --fin = 'line 8 : attribution to pointer with greater scope',
     --fin = 'line 11 : unsafe access to pointer "v" across `await´',
@@ -17477,7 +17477,7 @@ var int a=0;
 do v(&&a); finalize with nothing; end;
 escape(a);
 ]],
-    ctxs = 'line 11 : invalid call : unexpected context for variable "v"',
+    exps = 'line 11 : invalid call : unexpected context for variable "v"',
     --env = 'line 8 : native variable/function "_f" is not declared',
     --run = 10,
 }
@@ -17677,7 +17677,7 @@ end
 escape Fx(&str);
 ]],
     wrn = true,
-    --sets = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
+    --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
     run = 1,
 }
 Test { [[
@@ -17731,7 +17731,7 @@ escape Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    ctxs = 'line 7 : invalid argument to call : unexpected context for vector "str"',
+    exps = 'line 7 : invalid argument to call : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -17903,7 +17903,7 @@ vector[255] byte buf;
 _enqueue(buf);
 escape 1;
 ]],
-    ctxs = 'line 3 : invalid argument to call : unexpected context for vector "buf"',
+    exps = 'line 3 : invalid argument to call : unexpected context for vector "buf"',
     --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
     --fin = 'line 2 : call requires `finalize´',
 }
@@ -17913,7 +17913,7 @@ vector[255] byte buf;
 _enqueue(&&buf);
 escape 1;
 ]],
-    ctxs = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
+    exps = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
     --fin = 'line 2 : call requires `finalize´',
 }
 
@@ -18996,7 +18996,7 @@ with
 end
 escape v;
 ]],
-    ctxs = 'line 5 : invalid operand to `*´ : expected name expression',
+    exps = 'line 5 : invalid operand to `*´ : expected name expression',
     --run = 1,
 }
 
@@ -19193,7 +19193,7 @@ var int v;
 var int&& p1 = &&v;
 var int&& p2 = ((&&v) as void&&);
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
     --env = 'line 12 : wrong argument #1',
     --wrn = true,
     --run = 10,
@@ -19217,7 +19217,7 @@ with
 end
 escape v;
 ]],
-    exps = 'line 12 : invalid `emit´ : types mismatch : "(int&&)" <= "(void&&)"',
+    stmts = 'line 12 : invalid `emit´ : types mismatch : "(int&&)" <= "(void&&)"',
     --env = 'line 12 : wrong argument #1',
     --wrn = true,
     --run = 10,
@@ -20334,7 +20334,7 @@ async do
 end;
 escape 1;
 ]],
-    sets = 'line 4 : invalid assignment : `input´',
+    stmts = 'line 4 : invalid assignment : `input´',
 }
 Test { [[
 input void A;
@@ -20343,7 +20343,7 @@ async do
 end;
 escape 1;
 ]],
-    exps = 'line 3 : invalid `emit´ : types mismatch : "()" <= "(int)"',
+    stmts = 'line 3 : invalid `emit´ : types mismatch : "()" <= "(int)"',
 }
 
 Test { [[
@@ -21098,7 +21098,7 @@ output _t&& A;
 emit A => 1;
 escape(1);
 ]],
-    exps = 'line 3 : invalid `emit´ : types mismatch : "(_t&&)" <= "(int)"',
+    stmts = 'line 3 : invalid `emit´ : types mismatch : "(_t&&)" <= "(int)"',
     --env = 'line 2 : wrong argument #1',
 }
 Test { [[
@@ -21135,7 +21135,7 @@ var int a;
 emit A => &&a;
 escape(1);
 ]],
-    exps = 'line 3 : invalid `emit´ : types mismatch : "(int)" <= "(int&&)"',
+    stmts = 'line 3 : invalid `emit´ : types mismatch : "(int)" <= "(int&&)"',
     --env = 'line 3 : wrong argument #1',
 }
 Test { [[
@@ -21275,7 +21275,7 @@ end
 var _cahr v = emit A => 1;
 escape 0;
 ]],
-    exps = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
+    stmts = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
     --env = 'line 6 : arity mismatch',
     --env = 'line 6 : non-matching types on `emit´',
     --parser = 'line 6 : after `=´ : expected expression',
@@ -21303,7 +21303,7 @@ escape 0;
     --parser = 'line 6 : after `=´ : expected expression',
     --env = 'line 6 : non-matching types on `emit´',
     --env = 'line 6 : arity mismatch',
-    exps = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
+    stmts = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
 }
 
 Test { [[
@@ -21626,7 +21626,7 @@ output int E;
 emit E=>(1,2);
 escape 1;
 ]],
-    exps = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "(int,int)"',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "(int,int)"',
     --env = 'line 2 : arity mismatch',
 }
 
@@ -21651,7 +21651,7 @@ output int E;
 emit E;
 escape 1;
 ]],
-    exps = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "()"',
     --env = 'line 2 : arity mismatch',
 }
 
@@ -21660,7 +21660,7 @@ output (int,int) E;
 emit E=>1;
 escape 1;
 ]],
-    exps = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int)"',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int)"',
     --env = 'line 2 : arity mismatch',
 }
 
@@ -22063,35 +22063,35 @@ input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position
 
 -- int_int
 Test { [[var int&&p; escape p/10;]],
-    ctxs = 'line 1 : invalid expression : operands to `/´ must be of numeric type'
+    exps = 'line 1 : invalid expression : operands to `/´ must be of numeric type'
 }
 Test { [[var int&&p; escape p|10;]],
-    ctxs = 'line 1 : invalid expression : operands to `|´ must be of integer type',
+    exps = 'line 1 : invalid expression : operands to `|´ must be of integer type',
 }
 Test { [[var int&&p; escape p>>10;]],
-    ctxs = 'line 1 : invalid expression : operands to `>>´ must be of integer type',
+    exps = 'line 1 : invalid expression : operands to `>>´ must be of integer type',
 }
 Test { [[var int&&p; escape p^10;]],
-    ctxs = 'line 1 : invalid expression : operands to `^´ must be of numeric type',
+    exps = 'line 1 : invalid expression : operands to `^´ must be of numeric type',
 }
 Test { [[var int&&p; escape ~p;]],
-    ctxs = 'line 1 : invalid expression : operand to `~´ must be of integer type',
+    exps = 'line 1 : invalid expression : operand to `~´ must be of integer type',
 }
 
 -- same
 Test { [[var int&&p; var int a; escape p==a;]],
-    ctxs = 'line 1 : invalid expression : operands to `==´ must be of the same type',
+    exps = 'line 1 : invalid expression : operands to `==´ must be of the same type',
 }
 Test { [[var int&&p; var int a; escape p!=a;]],
-    ctxs = 'line 1 : invalid expression : operands to `!=´ must be of the same type',
+    exps = 'line 1 : invalid expression : operands to `!=´ must be of the same type',
 }
 Test { [[var int&&p; var int a; escape p>a;]],
-    ctxs = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
+    exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
 }
 
 -- any
 Test { [[var int&&p=null; escape p or 10;]],
-    ctxs = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
 }
 Test { [[var int&&p=null; escape (p!=null or true) as int;]], run=1 }
 Test { [[var int&&p=null; escape (p!=null and false) as int;]],  run=0 }
@@ -22099,23 +22099,23 @@ Test { [[var int&&p=null; escape( not (p!=null)) as int;]], run=1 }
 
 -- arith
 Test { [[var int&&p; escape p+p;]],
-    ctxs = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }--TODO: "+"'}
 Test { [[var int&&p; escape p+10;]],
-    ctxs = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }
 Test { [[var int&&p; escape p+10 and 0;]],
-    ctxs = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }
 
 -- ptr
 Test { [[var int a; escape *a;]],
-    ctxs = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
+    exps = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
 }
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
     parser = 'line 1 : after `)´ : expected `(´',
     --parser = 'line 1 : after `pa´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `)´ or `,´',
-    --ctxs = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    --exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
 }
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
@@ -22137,11 +22137,11 @@ escape 1;
 }
 
 Test { [[var int  a;  var int&& pa=a; escape a;]],
-    sets = 'line 1 : invalid assignment : types mismatch : "int&&" <= "int"',
+    stmts = 'line 1 : invalid assignment : types mismatch : "int&&" <= "int"',
     --env = 'types mismatch'
 }
 Test { [[var int&& pa; var int a=pa;  escape a;]],
-    sets = 'line 1 : invalid assignment : types mismatch : "int" <= "int&&"',
+    stmts = 'line 1 : invalid assignment : types mismatch : "int" <= "int&&"',
     --env = 'types mismatch',
 }
 Test { [[
@@ -22151,7 +22151,7 @@ var int&& pa = do
 end;
 escape a;
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "int&&" <= "int"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "int&&" <= "int"',
     --env='types mismatch'
 }
 Test { [[
@@ -22162,7 +22162,7 @@ end;
 escape a;
 ]],
     --env='types mismatch'
-    sets = 'line 3 : invalid assignment : types mismatch : "int" <= "int&&"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "int" <= "int&&"',
 }
 
 Test { [[
@@ -22252,7 +22252,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 escape 1;
 ]],
-    sets = 'line 4 : invalid assignment : types mismatch : "int&&" <= "void&&"',
+    stmts = 'line 4 : invalid assignment : types mismatch : "int&&" <= "void&&"',
     --env = 'line 4 : types mismatch (`int&&´ <= `void&&´)',
     run = 1,
 }
@@ -22265,7 +22265,7 @@ ptr1 = ptr2;
 ptr2 = ptr1;
 escape ptr2 as int;
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
     --env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
@@ -22279,7 +22279,7 @@ ptr1 = (ptr2 as _char&&);
 ptr2 =  ptr1 as int&&;
 escape (ptr2 as int);
 ]],
-    sets = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "int&&" <= "void&&"',
     --env = 'line 3 : types mismatch (`int&&´ <= `void&&´)',
     --env = 'line 4 : invalid attribution',
     --run = 255,
@@ -22537,7 +22537,7 @@ end
 var& int? p = _f();
 escape p;
 ]],
-    --sets = 'line 9 : invalid assignment : types mismatch : "int" <= "int?"',
+    --stmts = 'line 9 : invalid assignment : types mismatch : "int" <= "int?"',
     env = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
 }
 
@@ -22552,7 +22552,7 @@ end
 var& int? p = &_f();
 escape p;
 ]],
-    exps = 'line 9 : invalid assignment : types mismatch : "int" <= "int?"',
+    stmts = 'line 9 : invalid assignment : types mismatch : "int" <= "int?"',
     --env = 'line 9 : types mismatch (`int´ <= `int&?´)',
 }
 
@@ -22750,12 +22750,12 @@ Test { [[vector[2] int v; escape v;]],
     --env = 'types mismatch'
 }
 Test { [[native _u8; vector[2] _u8 v; escape &&v;]],
-    ctxs = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
+    exps = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
 Test { [[vector[2] u8 v; escape &&v;]],
-    ctxs = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
+    exps = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
@@ -22920,7 +22920,7 @@ Test { [[vector[1] int v; escape v;]],
     --env='cannot index a non array'
 }
 Test { [[native _int; vector[2] _int v; escape v[v];]],
-    ctxs = 'line 1 : invalid index : unexpected context for vector "v"',
+    exps = 'line 1 : invalid index : unexpected context for vector "v"',
     --env='invalid array index'
 }
 
@@ -22928,7 +22928,7 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    ctxs = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
+    exps = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
@@ -22938,7 +22938,7 @@ native _int;
 vector[2] _int v ;
 escape v == &&v[0] ;
 ]],
-    ctxs = 'line 3 : invalid operand to `==´ : unexpected context for vector "v"',
+    exps = 'line 3 : invalid operand to `==´ : unexpected context for vector "v"',
     --exps = 'line 3 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
@@ -23135,14 +23135,14 @@ Test { [[
 var u8 v;
 escape ($$v) as int;
 ]],
-    ctxs = 'line 2 : invalid operand to `$$´ : unexpected context for variable "v"',
+    exps = 'line 2 : invalid operand to `$$´ : unexpected context for variable "v"',
     --env = 'line 2 : invalid operand to unary "$$" : vector expected',
 }
 Test { [[
 var u8 v;
 escape ($v) as int;
 ]],
-    ctxs = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
+    exps = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -23238,7 +23238,7 @@ Test { [[
 vector[10] u8 vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
-    ctxs = 'line 2 : invalid expression : incompatible numeric types',
+    exps = 'line 2 : invalid expression : incompatible numeric types',
 }
 Test { [[
 vector[10] u8 vec = [1,2,3];
@@ -23424,7 +23424,7 @@ escape v == &&v[0] ;
     --exps = 'line 2 : invalid expression : operands to `==´ must be of the same type',
     --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
-    ctxs = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
+    exps = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
 }
 
 Test { [[
@@ -23908,25 +23908,25 @@ Test { [[
 vector[] int v;
 escape v > 0;
 ]],
-    ctxs = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
+    exps = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape v?;
 ]],
-    ctxs = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
+    exps = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape v!;
 ]],
-    ctxs = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
+    exps = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
 escape ~v;
 ]],
-    ctxs = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
+    exps = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
 }
 
 --<<< VECTORS / STRINGS
@@ -24048,7 +24048,7 @@ vector[] byte v = [].."abc";
 native _char;
 escape _strlen(v as _char&&);
 ]],
-    ctxs = 'line 4 : invalid operand to `as´ : unexpected context for vector "v"',
+    exps = 'line 4 : invalid operand to `as´ : unexpected context for vector "v"',
     --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
     --run = 3,
 }
@@ -25568,7 +25568,7 @@ var int a;
 a = "oioioi";
 escape 1;
 ]],
-    sets = 'line 2 : invalid assignment : types mismatch : "int" <= "_char&&"',
+    stmts = 'line 2 : invalid assignment : types mismatch : "int" <= "_char&&"',
     --env = 'line 2 : types mismatch (`int´ <= `_char&&´)',
 }
 
@@ -25896,7 +25896,7 @@ if false then
 end
 escape v2[0][0];
 ]],
-    ctxs = 'line 5 : invalid vector : expected name expression',
+    exps = 'line 5 : invalid vector : expected name expression',
 }
 
 Test { [[
@@ -26589,7 +26589,7 @@ escape 0;
     --env = 'line 2 : event type must be numeric',
     --env = 'line 2 : invalid attribution',
     --env = 'line 2 : arity mismatch',
-    sets = 'line 2 : invalid assignment : types mismatch : "(int)" <= "()"',
+    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "()"',
     --env = 'line 2 : invalid attribution (int vs void)',
 }
 
@@ -28807,7 +28807,7 @@ escape 1;
 ]],
     wrn = true,
     dcls = 'line 3 : invalid `escape´ : unexpected expression',
-    --sets = 'line 3 : invalid assignment : types mismatch : "void" <= "int"',
+    --stmts = 'line 3 : invalid assignment : types mismatch : "void" <= "int"',
     --adj = 'line 3 : invalid `escape´',
     run = 1,
 }
@@ -29112,7 +29112,7 @@ code/delayed Tx (void)=>void do end
 var Tx a = 1;
 escape 0;
 ]],
-    sets = 'line 2 : invalid assignment : types mismatch : "Tx" <= "int"',
+    stmts = 'line 2 : invalid assignment : types mismatch : "Tx" <= "int"',
 }
 
 Test { [[
@@ -46194,7 +46194,7 @@ escape 10;
 ]],
     wrn = true,
     --env = 'line 2 : invalid escape value : types mismatch (`int&&´ <= `int´)',
-    sets = 'line 2 : invalid assignment : types mismatch : "int&&" <= "int"',
+    stmts = 'line 2 : invalid assignment : types mismatch : "int&&" <= "int"',
 }
 
 -- TODO: dropped support for returning alias, is this a problem?
@@ -48540,7 +48540,7 @@ with
 end
 escape 1;
 ]],
-    ctxs = 'line 4 : invalid operand to `&&´ : unexpected context for vector "v"',
+    exps = 'line 4 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 4 : types mismatch (`int&&´ <= `int[]&&´)',
     --env = 'line 4 : invalid operand to unary "&&"',
 }
@@ -48584,7 +48584,7 @@ with
 end
 escape 1;
 ]],
-    exps = 'line 4 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    stmts = 'line 4 : invalid `emit´ : types mismatch : "(int)" <= "()"',
     --env = ' line 4 : arity mismatch',
 }
 
@@ -52886,7 +52886,7 @@ with
 end
 escape 1;
 ]],
-    sets = 'line 4 : invalid assignment : types mismatch : "(int,int)" <= "(int,int&&)"',
+    stmts = 'line 4 : invalid assignment : types mismatch : "(int,int)" <= "(int,int&&)"',
 }
 
 Test { [[
@@ -52902,7 +52902,7 @@ with
 end
 escape 1;
 ]],
-    exps = 'line 8 : invalid `emit´ : types mismatch : "(int,int&&)" <= "(int,int)"',
+    stmts = 'line 8 : invalid `emit´ : types mismatch : "(int,int&&)" <= "(int,int)"',
 }
 
 Test { [[
@@ -55925,7 +55925,7 @@ var List l = new ListCONS(1,
                    ListNIL()));
 escape 1;//(((l as Cons).tail) as Cons).@head@;
 ]],
-    --ctxs = 'line 7 : invalid constructor : unexpected context for variable "l"',
+    --exps = 'line 7 : invalid constructor : unexpected context for variable "l"',
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
     adt = 'line 7 : invalid attribution : not a pool',
@@ -55964,7 +55964,7 @@ escape 0;//((l as Cons).tail) as Cons).@head@;
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
     --adt = 'line 9 : invalid attribution : must assign to recursive field',
     adt = 'line 8 : invalid attribution : not a pool',
-    --ctxs = 'line 8 : invalid constructor : unexpected context for variable "l"',
+    --exps = 'line 8 : invalid constructor : unexpected context for variable "l"',
 }
 
 Test { [[
@@ -56661,7 +56661,7 @@ end
 var Tx t = Tx("oioioi");
 escape _strlen(t.xxxx);
 ]],
-    ctxs = 'line 7 : invalid argument to call : unexpected context for vector "xxxx"',
+    exps = 'line 7 : invalid argument to call : unexpected context for vector "xxxx"',
 }
 
 Test { [[
@@ -56896,21 +56896,21 @@ data Ts;
 pool[] Ts ts;
 escape ts + 1;
 ]],
-    ctxs = 'line 3 : invalid operand to `+´ : unexpected context for pool "ts"',
+    exps = 'line 3 : invalid operand to `+´ : unexpected context for pool "ts"',
 }
 Test { [[
 data Dd;
 pool[] Dd dds;
 escape dds?;
 ]],
-    ctxs = 'line 3 : invalid operand to `?´ : unexpected context for pool "dds"',
+    exps = 'line 3 : invalid operand to `?´ : unexpected context for pool "dds"',
 }
 Test { [[
 data Dd;
 pool[] Dd dds;
 escape dds!;
 ]],
-    ctxs = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
+    exps = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
 }
 
 -- << ADT : MISC
@@ -57031,7 +57031,7 @@ Test { DATA..[[
 escape Nil();
 ]],
     wrn = true,
-    ctxs = 'line 51 : invalid call : unexpected context for data "Nil"',
+    exps = 'line 51 : invalid call : unexpected context for data "Nil"',
     --exps = 'line 51 : invalid call : "Nil" is not a `code´ abstraction',
     --ast = 'line 51 : invalid call',
     --env = 'TODO: not a code',
@@ -57044,7 +57044,7 @@ escape v;
 ]],
     wrn = true,
     --ast = 'line 52 : invalid call',
-    ctxs = 'line 52 : invalid call : unexpected context for data "Nil"',
+    exps = 'line 52 : invalid call : unexpected context for data "Nil"',
     --exps = 'line 52 : invalid call : "Nil" is not a `code´ abstraction',
     --env = 'TODO: not a code',
     --parser = 'line 52 : after `==´ : expected expression',
@@ -57273,7 +57273,7 @@ await 1s;
 escape (*p as Cons).head;
 ]],
     wrn = true,
-    sets = 'line 52 : invalid assignment : types mismatch : "List&&" <= "List"',
+    stmts = 'line 52 : invalid assignment : types mismatch : "List&&" <= "List"',
     --adt = 'line 52 : invalid attribution : mutation : cannot mix data sources',
     --fin = 'line 54 : unsafe access to pointer "p" across `await´',
     --adt = 'line 52 : invalid attribution : value is not a reference',
@@ -57358,7 +57358,7 @@ pool[] List l3 = new Cons(2, Cons(1, Nil()));
 escape (l3 as Cons).head + (((l3 as Cons).tail is Nil) as int);
 ]],
     wrn = true,
-    --ctxs = 'line 54 : unexpected context for pool "l1"',
+    --exps = 'line 54 : unexpected context for pool "l1"',
     --adt = 'line 54 : invalid attribution : destination is not a reference',
     adt = 'line 54 : cannot mix recursive data sources',
     run = 3,
@@ -57389,7 +57389,7 @@ escape ((l1 is Cons)as int) + (l1 as Cons).head==1;
 ]],
     wrn = true,
     --adt = 'line 55 : invalid attribution : destination is not a reference',
-    --ctxs = 'line 55 : unexpected context for pool "l2"',
+    --exps = 'line 55 : unexpected context for pool "l2"',
     --adt = 'line 55 : invalid attribution : new reference only to pointer or alias',
     adt = 'line 55 : cannot mix recursive data sources',
     run = 2,
@@ -57432,7 +57432,7 @@ escape ((((l1 as Cons).head)==1) as int) + (((((l1 as Cons).tail) as Cons).head=
        (((((((l1 as Cons).tail) as Cons).tail as Cons).tail as Cons).head==2) as int);
 ]],
     wrn = true,
-    --ctxs = 'line 53 : unexpected context for pool "l2"',
+    --exps = 'line 53 : unexpected context for pool "l2"',
     --adt = 'line 53 : invalid attribution : destination is not a reference',
     adt = 'line 53 : cannot mix recursive data sources',
     run = 5,
@@ -57484,7 +57484,7 @@ escape l1 is Nil;
     --adt = 'line 54 : invalid attribution : new reference only to pointer or alias',
     --adt = 'line 54 : cannot mix recursive data sources',
     --run = 1,
-    sets = 'line 54 : invalid assignment : types mismatch : "List" <= "List&&"',
+    stmts = 'line 54 : invalid assignment : types mismatch : "List" <= "List&&"',
 }
 
 -- DYNAMIC ADTs:
@@ -57533,8 +57533,8 @@ pool[] List l;     // l is the pool
 escape (*l is Nil) as int;       // "l" is not a struct
 ]],
     wrn = true,
-    --ctxs = 'line 52 : invalid operand to `*´ : unexpected context for pool "l"',
-    ctxs = 'line 52 : invalid expression : operand to `*´ must be of pointer type',
+    --exps = 'line 52 : invalid operand to `*´ : unexpected context for pool "l"',
+    exps = 'line 52 : invalid expression : operand to `*´ must be of pointer type',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
@@ -57551,7 +57551,7 @@ escape *((l as Cons).tail) is Cons;    // "((l as Cons).tail)" is not a struct
 ]],
     wrn = true,
     --env = 'line 52 : invalid operand to unary "*"',
-    ctxs = 'line 52 : invalid expression : operand to `*´ must be of pointer type',
+    exps = 'line 52 : invalid expression : operand to `*´ must be of pointer type',
     --env = 'line 52 : not a struct',
 }
 
@@ -58530,7 +58530,7 @@ l2 = new Nil();
 escape l1==l2;
 ]],
     wrn = true,
-    ctxs = 'line 53 : invalid operand to `==´ : unexpected context for pool "l1"',
+    exps = 'line 53 : invalid operand to `==´ : unexpected context for pool "l1"',
     --env = 'line 53 : invalid operands to binary "=="',
     --run = 1,
 }
