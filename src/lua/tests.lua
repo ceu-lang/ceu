@@ -712,7 +712,7 @@ event void a;
 var _abc b;
 ]],
     wrn = true,
-    env = 'line 3 : cannot instantiate type "_abc"',
+    gcc = 'TODO'
 }
 
 Test { [[
@@ -860,7 +860,8 @@ var _abc a;
 ]],
     wrn = true,
     --dcls = 'line 3 : internal identifier "a" is already declared at line 2',
-    env = 'line 3 : cannot instantiate type "_abc"',
+    --env = 'line 3 : cannot instantiate type "_abc"',
+    gcc = 'TODO',
 }
 
 Test { [[
@@ -989,7 +990,7 @@ vector[1] int? v;
 escape 1;
 ]],
     wrn = true,
-    env = 'line 1 : `data´ fields do not support vectors yet',
+    run = 'line 1 : `data´ fields do not support vectors yet',
     --env = 'line 1 : invalid type modifier : `[]?´',
 }
 Test { [[
@@ -1002,7 +1003,7 @@ Test { [[
 var& int&& v;
 escape 1;
 ]],
-    env = 'TODO: uninit',
+    run = 'TODO: uninit',
 }
 Test { [[
 var& int&&  v;
@@ -1022,7 +1023,8 @@ vector&[] int v;
 escape 1;
 ]],
     wrn = true,
-    env = 'line 1 : invalid type modifier : `&[]´',
+    --env = 'line 1 : invalid type modifier : `&[]´',
+    run = 1,
 }
 Test { [[
 var& int&  v;
@@ -1052,7 +1054,7 @@ Test { [[
 var& int? v;
 escape 1;
 ]],
-    env = 'line 1 : invalid type modifier : `?&´',
+    run = 'line 1 : invalid type modifier : `?&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
@@ -52920,7 +52922,7 @@ with
 end
 escape 1;
 ]],
-    stmts = 'line 4 : invalid assignment : unexpected context for event "a"',
+    stmts = 'line 4 : invalid variable : unexpected context for event "a"',
     --env = 'line 4 : wrong argument #1',
     --env = 'line 4 : invalid attribution',
 }

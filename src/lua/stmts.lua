@@ -184,7 +184,7 @@ DBG(e.tag)
     Varlist = function (me)
         -- ctx
         for _, var in ipairs(me) do
-            EXPS.asr_name(var, {'Var'}, 'invalid variable')
+            EXPS.asr_name(var, {'Var','Vec'}, 'invalid variable')
         end
 
         -- dcl
