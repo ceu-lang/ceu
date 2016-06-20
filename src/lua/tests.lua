@@ -5770,7 +5770,7 @@ emit a;
 escape ret;
 ]],
     --env = 'line 10 : missing parameters on `emit´',
-    env = 'line 10 : arity mismatch',
+    stmts = 'line 10 : invalid `emit´ : types mismatch : "(int)" <= "()"',
 }
 
 Test { [[
@@ -15907,8 +15907,7 @@ escape x;
         unreachs = 2,
     },
     run = 1,
-    env = 'line 6 : arity mismatch',
-    --env = 'line 6 : non-matching types on `emit´ (void vs int)',
+    stmts = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
 }
 
 -- TODO: STACK
@@ -21647,7 +21646,7 @@ event (int) e;
 emit e=>(1,2);
 escape 1;
 ]],
-    env = 'line 2 : arity mismatch',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "(int,int)"',
 }
 
 Test { [[
@@ -21655,7 +21654,7 @@ event (int) e;
 emit e;
 escape 1;
 ]],
-    env = 'line 2 : arity mismatch',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "()"',
 }
 
 Test { [[
@@ -21681,7 +21680,7 @@ event (int,int) e;
 emit e=>(1);
 escape 1;
 ]],
-    env = 'line 2 : arity mismatch',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int)"',
 }
 
 Test { [[
@@ -26663,6 +26662,24 @@ with
     end
 end
 ]],
+    stmts = 'line 6 : invalid `emit´ : types mismatch : "(bool)" <= "(int)"',
+}
+
+Test { [[
+input int A, B;
+event bool a;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v as bool;
+    end
+with
+    pause/if a do
+        var int v = await B;
+        escape v;
+    end
+end
+]],
     _ana = {
         unreachs = 1,
     },
@@ -26715,12 +26732,12 @@ var int ret = 0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v;
+        emit a => v as bool;
     end
 with
     loop do
         var int v = await B;
-        emit b => v;
+        emit b => v as bool;
     end
 with
     pause/if a do
@@ -26771,7 +26788,7 @@ input void Z;
 event bool a;
 var int ret = 0;
 par/or do
-    emit a => 1;
+    emit a => true;
     await A;
 with
     pause/if a do
@@ -26827,7 +26844,7 @@ var int ret = 50;
 par/or do
     loop do
         var int v = await A;
-        emit a => v;
+        emit a => v as bool;
     end
 with
     pause/if a do
@@ -53012,8 +53029,7 @@ event (int,int) e;
 emit e => (1,2,3);
 escape 1;
 ]],
-    env = 'arity mismatch',
-    --env = 'line 2 : invalid attribution (void vs int)',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int,int,int)"',
 }
 
 -- INCLUDE
@@ -56877,6 +56893,29 @@ await t.e;
 
 escape 1;
 ]],
+    stmts = 'line 15 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+}
+
+Test { [[
+data Tt with
+    var        int x;
+    vector[10] int v;
+    event      int e;
+end
+
+var Tt t;
+
+t.x = 1;
+var int x = t.x;
+
+t.v = [1,2,3];
+x = t.v[0];
+
+emit t.e => 1;
+var int k = await t.e;
+
+escape 1;
+]],
     run = 1,
 }
 
@@ -56935,7 +56974,7 @@ var int x = b.a.x;
 b.a.v = [1,2,3];
 x = b.a.v[0];
 
-emit b.a.e;
+emit b.a.e=>0;
 await b.a.e;
 
 escape 1;
