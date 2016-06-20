@@ -57,9 +57,9 @@ DBG('TODO: _Lua')
         local is_new = unpack(Data_New)
         if is_new then
             -- pool = ...
-            asr_name(Exp_Name, {'Var','Pool'}, 'constructor')
+            EXPS.asr_name(Exp_Name, {'Var','Pool'}, 'constructor')
         else
-            asr_name(Exp_Name, {'Var'}, 'constructor')
+            EXPS.asr_name(Exp_Name, {'Var'}, 'constructor')
         end
     end,
 

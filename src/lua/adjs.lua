@@ -480,7 +480,7 @@ error 'TODO'
             if set then
                 local _,v = unpack(set)
                 local to = node('ID_int', me.ln, id)
-                if v.tag ~= '_Set_Await_many' then
+                if not (v.tag=='_Set_Await_many' or v.tag=='_Set_Watching') then
                     to = node('Exp_Name', me.ln, to)
                 end
                 ret[#ret+1] = node('_Set', me.ln,

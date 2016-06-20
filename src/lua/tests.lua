@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -44192,7 +44191,6 @@ escape Fx(1,2);
     run = 3,
 }
 
-error'OK'
 Test { [[
 code/instantaneous Fff (var int x)=>int do
     escape x + 1;
@@ -49545,6 +49543,7 @@ escape 1;
     run = 1,
 }
 
+--]===]
 Test { [[
 event int e;
 par do
