@@ -3,14 +3,19 @@ F = {
 -- SETS
 
     __check = function (me, to_tp, fr_tp)
+        local to_str = TYPES.tostring(to_tp)
+        local fr_str = TYPES.tostring(fr_tp)
+
         if TYPES.check(to_tp,'?') then
             to_tp = TYPES.pop(to_tp)
+            if TYPES.check(fr_tp,'?') then
+                fr_tp = TYPES.pop(fr_tp)
+            end
         end
+
         ASR(TYPES.contains(to_tp,fr_tp), me,
-            'invalid assignment : types mismatch : "'..TYPES.tostring(to_tp)..
-                                                        '" <= "'..
-                                                       TYPES.tostring(fr_tp)..
-                                                        '"')
+            'invalid assignment : types mismatch : "'..
+                to_str..'" <= "'..fr_str..'"')
     end,
 
     Set_Exp = function (me)
@@ -57,9 +62,20 @@ DBG('TODO: _Lua')
         local is_new = unpack(Data_New)
         if is_new then
             -- pool = ...
-            EXPS.asr_name(Exp_Name, {'Var','Pool'}, 'constructor')
+            EXPS.asr_name(Exp_Name, {'Var','Pool'}, 'invalid constructor')
         else
-            EXPS.asr_name(Exp_Name, {'Var'}, 'constructor')
+            EXPS.asr_name(Exp_Name, {'Var'}, 'invalid constructor')
+        end
+    end,
+    _Data_Explist = function (me)
+        for _, e in ipairs(me) do
+            if e.tag=='Data_New_one' or e.tag=='_Vec_New' then
+                -- ok
+            else
+DBG(e.tag)
+                EXPS.asr_if_name(e, {'Nat','Var'},
+                    'invalid argument to constructor')
+            end
         end
     end,
 
@@ -183,18 +199,6 @@ DBG('TODO: _Lua')
 -------------------------------------------------------------------------------
 
 --[=[
-    --------------------------------------------------------------------------
-
-    _Data_Explist = function (me)
-        for _, e in ipairs(me) do
-            asr_if_name(e, {'Nat','Var'}, 'argument to constructor')
-        end
-    end,
-
-    --------------------------------------------------------------------------
-
-    --------------------------------------------------------------------------
-
     Varlist = function (me)
         local cnds = {'Nat','Var'}
         if string.sub(me.__par.tag,1,7) == '_Async_' then

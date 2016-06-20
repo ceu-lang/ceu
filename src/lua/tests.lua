@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -52972,7 +52973,6 @@ escape 1;
     run = 3;
 }
 
---]===]
 Test { [[
 event (int,int) a;
 par/or do
@@ -57410,9 +57410,10 @@ pool[] List l3 = new Cons(2, Cons(1, Nil()));
 escape (l3 as Cons).head + (((l3 as Cons).tail is Nil) as int);
 ]],
     wrn = true,
+    stmts = 'line 54 : invalid assignment : types mismatch : "List" <= "List&&"',
     --exps = 'line 54 : unexpected context for pool "l1"',
     --adt = 'line 54 : invalid attribution : destination is not a reference',
-    adt = 'line 54 : cannot mix recursive data sources',
+    --adt = 'line 54 : cannot mix recursive data sources',
     run = 3,
 }
 
@@ -57440,10 +57441,11 @@ l1 = &&l2;
 escape ((l1 is Cons)as int) + (l1 as Cons).head==1;
 ]],
     wrn = true,
+    stmts = 'line 55 : invalid assignment : types mismatch : "List" <= "List&&"',
     --adt = 'line 55 : invalid attribution : destination is not a reference',
     --exps = 'line 55 : unexpected context for pool "l2"',
     --adt = 'line 55 : invalid attribution : new reference only to pointer or alias',
-    adt = 'line 55 : cannot mix recursive data sources',
+    --adt = 'line 55 : cannot mix recursive data sources',
     run = 2,
 }
 Test { DATA..[[
@@ -57484,9 +57486,10 @@ escape ((((l1 as Cons).head)==1) as int) + (((((l1 as Cons).tail) as Cons).head=
        (((((((l1 as Cons).tail) as Cons).tail as Cons).tail as Cons).head==2) as int);
 ]],
     wrn = true,
+    stmts = 'line 53 : invalid assignment : types mismatch : "List" <= "List&&"',
     --exps = 'line 53 : unexpected context for pool "l2"',
     --adt = 'line 53 : invalid attribution : destination is not a reference',
-    adt = 'line 53 : cannot mix recursive data sources',
+    --adt = 'line 53 : cannot mix recursive data sources',
     run = 5,
 }
 
@@ -58570,7 +58573,7 @@ escape v!;
 Test { DATA..[[
 var Pair p1 = Pair(1,2);
 var Pair p2 = Pair(1,2);
-escape p1==p2;
+escape (p1==p2) as int;
 ]],
     wrn = true,
     env = 'line 53 : invalid operation for data',
@@ -58609,7 +58612,8 @@ end
 escape (((l1 as Cons).tail) as Cons).head;
 ]],
     wrn = true,
-    adt = 'line 55 : invalid attribution : destination is not a reference',
+    stmts = 'line 55 : invalid assignment : types mismatch : "List" <= "List&&"',
+    --adt = 'line 55 : invalid attribution : destination is not a reference',
     --adt = 'line 55 : cannot mix recursive data sources',
     --fin = 'line 54 : attribution to pointer with greater scope',
 }
@@ -58678,7 +58682,8 @@ ret = ret + (((l as Cons).tail) as Cons).head;
 escape ret;
 ]],
     wrn = true,
-    adt = 'line 72 : invalid attribution : destination is not a reference',
+    stmts = 'line 73 : invalid assignment : types mismatch : "List" <= "List&&"',
+    --adt = 'line 72 : invalid attribution : destination is not a reference',
     --adt = 'line 72 : invalid attribution : new reference only to root',
     --adt = 'line 72 : cannot mix recursive data sources',
     run = -1,
@@ -58978,7 +58983,8 @@ escape ((*l is Cons) as int) +
         ((list as Cons).tail as Cons).head +
         ((((list as Cons).tail as Cons).tail) as Cons).head;
 ]],
-    adt = 'line 16 : invalid attribution : mutation : destination cannot be a pointer',
+    stmts = 'line 14 : invalid assignment : types mismatch : "List&&" <= "List"',
+    --adt = 'line 16 : invalid attribution : mutation : destination cannot be a pointer',
 }
 
 -- mutation in the root of &&
@@ -59286,7 +59292,7 @@ var Test a = Test(1);
 var Test b = Test(2);
 var Test c = Test(3);
 vector[3] Test vs = [ a, b, c ];
-escape vs[0].v + vs[1].v + vs[2].v;
+escape (vs[0].v + vs[1].v + vs[2].v) as int;
 ]],
     run = 6,
 }
@@ -59339,7 +59345,7 @@ Test { [[
 
 bytes = [] .. bytes .. [5];
 
-escape bytes[0];
+escape bytes[0] as int;
 ]],
     run = 5,
 }
@@ -59351,7 +59357,7 @@ end
 var Frame f1;
 f1.bytes = [] .. f1.bytes .. [5];
 
-escape f1.bytes[0];
+escape f1.bytes[0] as int;
 ]],
     env = 'line 2 : `data´ fields do not support vectors yet',
 }
@@ -59431,7 +59437,7 @@ data Dx with
 end
 vector[] byte s = [].. "oi";
 var Dx d = Dx(&s);
-escape $d.str;
+escape $d.str as int;
 ]],
     run = 2,
 }
@@ -63564,7 +63570,7 @@ data List;
         var List  nxt;
     end
 pool[] List lll;     // l is the pool
-escape lll is Nil;       // l is a pointer to the root
+escape (lll is Nil) as int;       // l is a pointer to the root
 ]],
     wrn = true,
     run = 1,
@@ -63627,7 +63633,7 @@ cmds1 = new Next(
 
 pool&[] Command cmds2 = &cmds1;
 
-escape (((cmds2 as Next).nxt as Next).nxt is Nothing);
+escape ((((cmds2 as Next).nxt as Next).nxt is Nothing)) as int;
 ]],
     run = 1,
 }
@@ -63669,7 +63675,7 @@ cmds1 = new Nothing();
 cmds2 = new Next(
             Next(
                 Nothing()));
-escape cmds1 is Next;
+escape (cmds1 is Next) as int;
 ]],
     run = 1,
 }
@@ -63690,7 +63696,7 @@ cmds1 = new Next(
 cmds2 = new Next(
             Next(
                 Nothing()));
-escape cmds1 is Nothing;
+escape (cmds1 is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63707,7 +63713,7 @@ cmds1 = new Next(
                 Next(
                     Next(
                         Nothing())));
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing);
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63723,7 +63729,7 @@ pool[2] Command cmds1;
 cmds1 = new Next(Nothing());
 (cmds1 as Next).nxt = new Next(Nothing());
 ((cmds1 as Next).nxt as Next).nxt = new Next(Nothing());
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing);
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63739,7 +63745,7 @@ pool[1] Command cmds1;
 cmds1 = new Next(Nothing());
 cmds1 = new Nothing();
 cmds1 = new Next(Nothing());
-escape ((cmds1 as Next).nxt is Nothing);
+escape ((cmds1 as Next).nxt is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63754,7 +63760,7 @@ pool[1] Command cmds1;
 
 cmds1 = new Next(Nothing());
 cmds1 = new Next(Nothing());
-escape cmds1 is Nothing;
+escape (cmds1 is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63770,7 +63776,7 @@ cmds1 = new Nothing();
 cmds1 = new Next(
                 Next(
                     Nothing()));
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing);
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63785,7 +63791,7 @@ pool[2] Command cmds1 = new Next(Nothing());
 cmds1 = new Next(
                 Next(
                     Nothing()));
-escape (cmds1 as Next).nxt is Nothing;
+escape( (cmds1 as Next).nxt is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63801,7 +63807,7 @@ pool&[2] Command cmds2 = &cmds1;
 
 cmds1 = new Next(Nothing());
 (cmds2 as Next).nxt = new Next(Nothing());
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing);
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63819,7 +63825,7 @@ cmds1 = new Next(Nothing());
 (cmds2 as Next).nxt = new Next(
                         Next(
                             Nothing()));
-escape ((cmds1 as Next).nxt as Next).nxt is Nothing;
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63840,7 +63846,7 @@ cmds1 = new Next(
 ((cmds2 as Next).nxt as Next).nxt = new Next(
                             Next(
                                 Nothing()));
-escape (((cmds1 as Next).nxt as Next).nxt as Next).nxt is Nothing;
+escape ((((cmds1 as Next).nxt as Next).nxt as Next).nxt is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63863,7 +63869,7 @@ cmds2 = new Next(
             Next(
                 Nothing()));
 
-escape ((cmds1 as Next).nxt as Next).nxt is Nothing;
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
 ]],
     run = 1,
 }
@@ -63885,7 +63891,7 @@ cmds2 = new Next(
             Next(
                 Nothing()));
 
-escape ((cmds1 as Next).nxt as Next).nxt is Nothing;
+escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
 ]],
     run = 1,
 }
