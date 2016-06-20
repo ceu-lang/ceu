@@ -478,9 +478,13 @@ error 'TODO'
             t[#t+1] = id
             ret[#ret+1] = node(tag, me.ln, unpack(t))
             if set then
+                local _,v = unpack(set)
+                local to = node('ID_int', me.ln, id)
+                if v.tag ~= '_Set_Await_many' then
+                    to = node('Exp_Name', me.ln, to)
+                end
                 ret[#ret+1] = node('_Set', me.ln,
-                                node('Exp_Name', me.ln,
-                                    node('ID_int', me.ln, id)),
+                                to,
                                 unpack(set))
             end
         end

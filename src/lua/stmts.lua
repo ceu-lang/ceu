@@ -99,6 +99,12 @@ F = {
         --me.tp = AST.copy(e.tp)
     --end,
 
+    Do = function (me)
+        local _,_,e = unpack(me)
+        if e then
+            EXPS.asr_name(e, {'Nat','Var'}, 'invalid assignment')
+        end
+    end,
 }
 
 -------------------------------------------------------------------------------
@@ -154,13 +160,6 @@ DBG'TODO: _Vec_New'
         end
         for _, var in ipairs(me) do
             asr_name(var, cnds, 'variable')
-        end
-    end,
-
-    Do = function (me)
-        local _,_,e = unpack(me)
-        if e then
-            asr_name(e, {'Nat','Var'}, 'assignment')
         end
     end,
 
