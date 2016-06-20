@@ -989,7 +989,7 @@ vector[1] int? v;
 escape 1;
 ]],
     wrn = true,
-    env = 'line 1 : `data´ fields do not support vectors yet',
+    tmp = 'line 1 : `data´ fields do not support vectors yet',
     --env = 'line 1 : invalid type modifier : `[]?´',
 }
 Test { [[
@@ -1002,7 +1002,7 @@ Test { [[
 var& int&& v;
 escape 1;
 ]],
-    env = 'TODO: uninit',
+    tmp = 'TODO: uninit',
 }
 Test { [[
 var& int&&  v;
@@ -1022,7 +1022,7 @@ vector&[] int v;
 escape 1;
 ]],
     wrn = true,
-    env = 'line 1 : invalid type modifier : `&[]´',
+    run = 1,
 }
 Test { [[
 var& int&  v;
@@ -1054,6 +1054,29 @@ escape 1;
 ]],
     env = 'line 1 : invalid type modifier : `?&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var int? k;
+var& int? v = &k;
+escape 1 + (v? as int);
+]],
+    run = 1,
+}
+Test { [[
+var int? k;
+var& int? v = &k;
+v = 10;
+escape k!;
+]],
+    run = 10,
+}
+Test { [[
+var int? k;
+k = 10;
+var& int? v = &k;
+escape v!;
+]],
+    run = 10,
 }
 Test { [[
 var int?? v;
@@ -17779,7 +17802,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 1 : type cannot be `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
 }
 
 Test { [[
@@ -17796,7 +17819,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 1 : type cannot be `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
 }
 
 Test { [[
@@ -43896,7 +43919,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    adj = 'line 1 : wrong argument #1 : cannot be `void´',
+    --adj = 'line 1 : wrong argument #1 : cannot be `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
 }
 
 Test { [[
@@ -43929,7 +43953,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    adj = 'line 1 : cannot instantiate type "void"',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
 }
 
 Test { [[
@@ -43939,7 +43963,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    env = 'TODO: var void',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
 }
 
 Test { [[
