@@ -712,7 +712,7 @@ event void a;
 var _abc b;
 ]],
     wrn = true,
-    env = 'line 3 : cannot instantiate type "_abc"',
+    tmp = 'line 3 : cannot instantiate type "_abc"',
 }
 
 Test { [[
@@ -860,7 +860,7 @@ var _abc a;
 ]],
     wrn = true,
     --dcls = 'line 3 : internal identifier "a" is already declared at line 2',
-    env = 'line 3 : cannot instantiate type "_abc"',
+    tmp = 'line 3 : cannot instantiate type "_abc"',
 }
 
 Test { [[
@@ -22810,7 +22810,7 @@ Test { [[
 vector[10] void a;
 ]],
     wrn = true,
-    env = 'line 1 : cannot instantiate type "void"',
+    dcls = 'line 1 : invalid declaration : vector cannot be of type `void´',
 }
 
 Test { [[
@@ -22849,7 +22849,7 @@ Test { [[
 vector[1] void b;
 ]],
     wrn = true,
-    env = 'line 2 : cannot instantiate type "void"',
+    dcls = 'line 1 : invalid declaration : vector cannot be of type `void´',
 }
 
 Test { [[
@@ -24591,7 +24591,7 @@ end
 var void v = _VD(10);
 escape 0;
 ]],
-    env = 'line 5 : cannot instantiate type "void"',
+    dcls = 'line 6 : invalid declaration : variable cannot be of type `void´',
 }
 
 Test { [[

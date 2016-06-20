@@ -172,15 +172,27 @@ F = {
     -- LOC
 
     Var = function (me)
-        local _,_,id = unpack(me)
+        local Type,_,id = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
+
+        local ID_prim,mod = unpack(Type)
+        if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
+            ASR(false, me,
+                'invalid declaration : variable cannot be of type `void´') 
+        end
     end,
 
     Vec = function (me)
-        local _,_,_,id = unpack(me)
+        local Type,_,_,id = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
+
+        local ID_prim,mod = unpack(Type)
+        if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
+            ASR(false, me,
+                'invalid declaration : vector cannot be of type `void´') 
+        end
     end,
 
     Pool = function (me)
