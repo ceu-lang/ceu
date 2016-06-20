@@ -43,22 +43,7 @@ local function iter_boundary (cur, id, can_cross)
     end
 end
 
-local function dcls_new (blk, me, can_cross)
-    AST.asr(blk, 'Block')
-
-    local old = DCLS.get(blk, me.id, can_cross)
-    local implicit = (me.is_implicit and 'implicit ') or ''
-    if old and (not old.is_predefined) then
-        WRN(false, me, old and
-            implicit..'declaration of "'..me.id..'" hides previous declaration'..
-                ' ('..old.ln[1]..' : line '..old.ln[2]..')')
-    end
-
-    blk.dcls[#blk.dcls+1] = me
-    blk.dcls[me.id] = me
-end
-
-function DCLS.get (blk, id, can_cross)
+function dcls_get (blk, id, can_cross)
     AST.asr(blk, 'Block')
     for blk in iter_boundary(blk,id,can_cross) do
         local dcl = blk.dcls[id]
@@ -71,7 +56,7 @@ function DCLS.get (blk, id, can_cross)
 end
 
 function DCLS.asr (me, blk, id, can_cross, err)
-    local ret = DCLS.get(blk, id, can_cross)
+    local ret = dcls_get(blk, id, can_cross)
     if ret then
         return ret
     else
@@ -87,6 +72,38 @@ function DCLS.asr (me, blk, id, can_cross, err)
                 err..' "'..id..'" is not declared')
         end
     end
+end
+
+local function dcls_new (blk, me, can_cross)
+    AST.asr(blk, 'Block')
+
+    local old = dcls_get(blk, me.id, can_cross)
+    local implicit = (me.is_implicit and 'implicit ') or ''
+    if old and (not old.is_predefined) then
+        WRN(false, me, old and
+            implicit..'declaration of "'..me.id..'" hides previous declaration'..
+                ' ('..old.ln[1]..' : line '..old.ln[2]..')')
+    end
+
+    blk.dcls[#blk.dcls+1] = me
+    blk.dcls[me.id] = me
+end
+
+function DCLS.new (me, id, ...)
+    local tp
+    if AST.isNode(id) and (id.tag=='Type' or id.tag=='Typelist') then
+        assert(not ...)
+        tp = id
+    else
+        assert(type(id) == 'string')
+        tp = AST.node('Type', me.ln,
+                AST.node('ID_prim', me.ln,
+                    id),
+                ...)
+    end
+    local ret = AST.node('Val', me.ln, tp)
+    ret.id = 'unknown'
+    return ret
 end
 
 -- native declarations are allowed until `native/end´
@@ -228,7 +245,7 @@ F = {
         local _,_,id,_,_blk = unpack(me)
         me.id = id
 
-        local dcl = DCLS.get(AST.par(me,'Block'), me.id, true)
+        local dcl = dcls_get(AST.par(me,'Block'), me.id, true)
         if (not dcl) or dcl.blk then
         --if not (dcl and dcl.blk) then
             dcls_new(AST.par(me,'Block'), me)

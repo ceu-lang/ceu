@@ -148,7 +148,7 @@ DBG('TODO: remove pool')
         -- any
 
         -- dcl
-        me.dcl = TYPES.new(me, 'usize')
+        me.dcl = DCLS.new(me, 'usize')
         me.dcl.tag = 'Var'
     end,
 }
@@ -168,24 +168,24 @@ G = {
 -- PRIMITIVES
 
     NULL = function (me)
-        me.dcl = TYPES.new(me, 'null', '&&')
+        me.dcl = DCLS.new(me, 'null', '&&')
     end,
 
     NUMBER = function (me)
         local v = unpack(me)
         if math.floor(v) == tonumber(v) then
-            me.dcl = TYPES.new(me, 'int')
+            me.dcl = DCLS.new(me, 'int')
         else
-            me.dcl = TYPES.new(me, 'float')
+            me.dcl = DCLS.new(me, 'float')
         end
     end,
 
     BOOL = function (me)
-        me.dcl = TYPES.new(me, 'bool')
+        me.dcl = DCLS.new(me, 'bool')
     end,
 
     STRING = function (me)
-        me.dcl = TYPES.new(me, '_char', '&&')
+        me.dcl = DCLS.new(me, '_char', '&&')
     end,
 
 -- SIZEOF
@@ -202,7 +202,7 @@ G = {
         -- any
 
         -- dcl
-        me.dcl = TYPES.new(me, 'usize')
+        me.dcl = DCLS.new(me, 'usize')
     end,
 
 -- CALL
@@ -223,8 +223,7 @@ G = {
         -- dcl
         if e.tag == 'ID_abs' then
             local _,_,_,_,out = unpack(e.dcl)
-            me.dcl = TYPES.new(me, 'void')
-            me.dcl[1] = AST.copy(out)
+            me.dcl = DCLS.new(me, AST.copy(out))
         else
             me.dcl = AST.copy(e.dcl)
         end
@@ -274,8 +273,7 @@ G = {
         -- any
 
         -- dcl
-        me.dcl = TYPES.new(me, 'void')
-        me.dcl[1] = TYPES.push(e.dcl[1],'&&')
+        me.dcl = DCLS.new(me, TYPES.push(e.dcl[1],'&&'))
     end,
 
 -- OPTION: ?
@@ -291,7 +289,7 @@ G = {
             'invalid operand to `'..op..'´ : expected option type')
 
         -- dcl
-        me.dcl = TYPES.new(me, 'bool')
+        me.dcl = DCLS.new(me, 'bool')
     end,
 
 -- VECTOR LENGTH: $$
@@ -311,7 +309,7 @@ G = {
             'invalid operand to `'..op..'´ : expected boolean type')
 
         -- dcl
-        me.dcl = TYPES.new(me, 'bool')
+        me.dcl = DCLS.new(me, 'bool')
     end,
 
 -- UNARY: +,-
@@ -358,8 +356,7 @@ G = {
                         'incompatible numeric types : "'..
                         TYPES.tostring(e1.dcl[1])..'" vs "'..
                         TYPES.tostring(e2.dcl[1])..'"')
-        me.dcl = TYPES.new(me,'void')
-        me.dcl[1] = AST.copy(max)
+        me.dcl = DCLS.new(me, AST.copy(max))
     end,
 
 -- BITWISE
@@ -385,8 +382,7 @@ G = {
                         'incompatible integer types : "'..
                         TYPES.tostring(e1.dcl[1])..'" vs "'..
                         TYPES.tostring(e2.dcl[1])..'"')
-        me.dcl = TYPES.new(me,'void')
-        me.dcl[1] = AST.copy(max)
+        me.dcl = DCLS.new(me, AST.copy(max))
     end,
 
     ['Exp_~'] = function (me)
@@ -422,7 +418,7 @@ G = {
             'invalid operand to `'..op..'´ : expected numeric type')
 
         -- dcl
-        me.dcl = TYPES.new(me, 'bool')
+        me.dcl = DCLS.new(me, 'bool')
     end,
 
 -- EQUALITY: ==, !=
@@ -445,7 +441,7 @@ G = {
                 TYPES.tostring(e2.dcl[1])..'"')
 
         -- dcl
-        me.dcl = TYPES.new(me, 'bool')
+        me.dcl = DCLS.new(me, 'bool')
     end,
 
 -- AND, OR
@@ -464,7 +460,7 @@ G = {
             'invalid operand to `'..op..'´ : expected boolean type')
 
         -- dcl
-        me.dcl = TYPES.new(me, 'bool')
+        me.dcl = DCLS.new(me, 'bool')
     end,
 
 -- IS, AS/CAST
@@ -480,7 +476,7 @@ G = {
         -- any
 
         -- dcl
-        me.dcl = TYPES.new(me, 'bool')
+        me.dcl = DCLS.new(me, 'bool')
     end,
 }
 AST.visit(G)

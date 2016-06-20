@@ -90,14 +90,13 @@ DBG('TODO: _Lua')
     end,
 
     Await_Wclock = function (me)
-        me.dcl = TYPES.new(me, 'int')
+        me.dcl = DCLS.new(me, 'int')
     end,
 
     Await_Code = function (me)
         local ID_abs = AST.asr(unpack(me),'ID_abs')
         local Type = AST.asr(ID_abs.dcl,'Code', 5,'Type')
-        me.dcl = TYPES.new(me, 'void')
-        me.dcl[1] = AST.copy(Type)
+        me.dcl = DCLS.new(me, AST.copy(Type))
     end,
 
     Await_Evt = function (me, tag)
@@ -156,8 +155,7 @@ DBG('TODO: _Lua')
         for i, e in ipairs(me) do
             Typelist[i] = AST.copy(e.dcl[1])
         end
-        me.dcl = TYPES.new(me, 'void')
-        me.dcl[1] = Typelist
+        me.dcl = DCLS.new(me, Typelist)
     end,
 
     Varlist = function (me)
@@ -165,8 +163,7 @@ DBG('TODO: _Lua')
         for i, var in ipairs(me) do
             Typelist[i] = AST.copy(var.dcl[1])
         end
-        me.dcl = TYPES.new(me, 'void')
-        me.dcl[1] = Typelist
+        me.dcl = DCLS.new(me, Typelist)
     end,
 }
 

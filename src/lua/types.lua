@@ -1,16 +1,6 @@
 TYPES = {
 }
 
-function TYPES.new (me, id, ...)
-    local ret = AST.node('Val', me.ln,
-                    AST.node('Type', me.ln,
-                        AST.node('ID_prim', me.ln,
-                            id),
-                        ...))
-    ret.id = 'unknown'
-    return ret
-end
-
 function TYPES.id (tp)
     local ID = unpack(tp)
     local id = unpack(ID)
