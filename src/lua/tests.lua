@@ -48584,7 +48584,7 @@ atomic do
 end
 par/or do
     async/isr [20] do
-        this.v[1] = 1;
+        //this.v[1] = 1;
     end
     await FOREVER;
 with

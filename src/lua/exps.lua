@@ -26,6 +26,28 @@ end
 -------------------------------------------------------------------------------
 
 F = {
+-- TYPECAST: as
+
+    Exp_as = function (me)
+        local op,e,Type = unpack(me)
+        if not e.dcl then return end
+
+        -- ctx
+        asr_if_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
+
+        -- tp
+        -- any
+
+        -- dcl
+        me.dcl = AST.copy(e.dcl)
+        if AST.isNode(Type) then
+            me.dcl[1] = AST.copy(Type)
+        else
+            -- annotation (/plain, etc)
+DBG'TODO: type annotation'
+        end
+    end,
+
 -- OPTION: !
 
     ['Exp_!'] = function (me)
@@ -43,35 +65,55 @@ F = {
         me.dcl[1] = TYPES.pop(me.dcl[1])
     end,
 
-    ['Exp_1*'] = function (me)
-        local _,ptr = unpack(me)
-        if not ptr.dcl then return end
-
-        me.dcl = AST.copy(ptr.dcl)
-        if not TYPES.is_nat(me.dcl[1]) then
-            me.dcl[1] = TYPES.pop(me.dcl[1])
-        end
-    end,
-
-    ['Exp_$'] = function (me)
-        local _, e = unpack(me)
-        if not e.dcl then return end
-
-        me.dcl = AST.copy(e.dcl)
-        me.dcl.tag = 'Var'
-    end,
+-- INDEX
 
     ['Exp_idx'] = function (me)
-        local _,vec = unpack(me)
-        if not vec.dcl then return end
+        local _,vec,idx = unpack(me)
 
+        -- ctx, tp
+
+        local tp = AST.copy(vec.dcl[1])
+        tp[2] = nil
+        if (vec.dcl.tag=='Var' or vec.dcl.tag=='Nat') and TYPES.is_nat(tp) then
+            -- _V[0][0]
+            -- var _char&&&& argv; argv[1][0]
+            -- v[1]._plain[0]
+            asr_name(vec, {'Nat','Var'}, 'invalid vector')
+        else
+            asr_name(vec, {'Vec'}, 'invalid vector')
+        end
+
+        -- dcl
         me.dcl = AST.copy(vec.dcl)
-        if me.dcl.tag == 'Vec' then
-            me.dcl.tag = 'Var'
-        elseif not TYPES.is_nat(me.dcl[1]) then
-            me.dcl[1] = TYPES.pop(me.dcl[1])
+        me.dcl.tag = 'Var'
+        if TYPES.check(vec.dcl[1],'&&') then
+            me.dcl[1] = TYPES.pop(vec.dcl[1])
         end
     end,
+
+-- PTR: *
+
+    ['Exp_1*'] = function (me)
+        local op,e = unpack(me)
+
+        -- ctx
+        asr_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
+DBG('TODO: remove pool')
+
+        -- tp
+        local is_nat = TYPES.is_nat(e.dcl[1])
+        local is_ptr = TYPES.check(e.dcl[1],'&&')
+        ASR(is_nat or is_ptr, me,
+            'invalid operand to `'..op..'´ : expected pointer type')
+
+        -- dcl
+        me.dcl = AST.copy(e.dcl)
+        if is_ptr then
+            me.dcl[1] = TYPES.pop(e.dcl[1])
+        end
+    end,
+
+-- MEMBER: .
 
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
@@ -88,12 +130,19 @@ F = {
         end
     end,
 
-    Exp_as = function (me)
-        local _,e, Type = unpack(me)
-        if not e.dcl then return end
+-- VECTOR LENGTH: $
 
-        me.dcl = AST.copy(e.dcl)
-        me.dcl[1] = AST.copy(Type)
+    ['Exp_$'] = function (me)
+        local op,vec = unpack(me)
+
+        -- ctx
+        asr_name(vec, {'Vec'}, 'invalid operand to `'..op..'´')
+
+        -- tp
+        -- any
+
+        -- dcl
+        me.dcl = TYPES.new(me, 'usize')
     end,
 }
 
@@ -180,66 +229,6 @@ G = {
         end
     end,
 
--- OPTION: ?
-
-    ['Exp_?'] = function (me)
-        local op,e = unpack(me)
-
-        -- ctx
-        asr_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
-
-        -- tp
-        ASR(TYPES.check(e.dcl[1],'?'), me,
-            'invalid operand to `'..op..'´ : expected option type')
-
-        -- dcl
-        me.dcl = TYPES.new(me, 'bool')
-    end,
-
--- VECTOR LENGTH: $, $$
-
-    ['Exp_$$'] = 'Exp_$',
-    ['Exp_$'] = function (me)
-        local op,vec = unpack(me)
-
-        -- ctx
-        asr_name(vec, {'Vec'}, 'invalid operand to `'..op..'´')
-
-        -- tp
-        -- any
-
-        -- dcl
-        me.dcl = TYPES.new(me, 'usize')
-    end,
-
--- INDEX
-
-    ['Exp_idx'] = function (me)
-        local _,vec,idx = unpack(me)
-
-        -- ctx, tp
-
-        local tp = AST.copy(vec.dcl[1])
-        tp[2] = nil
-        if (vec.dcl.tag=='Var' or vec.dcl.tag=='Nat') and TYPES.is_nat(tp) then
-            -- _V[0][0]
-            -- var _char&&&& argv; argv[1][0]
-            -- v[1]._plain[0]
-            asr_name(vec, {'Nat','Var'}, 'invalid vector')
-        else
-            asr_name(vec, {'Vec'}, 'invalid vector')
-        end
-
-        asr_if_name(idx, {'Nat','Var'}, 'invalid index')
-
-        -- dcl
-        me.dcl = AST.copy(vec.dcl)
-        me.dcl.tag = 'Var'
-        if TYPES.check(vec.dcl[1],'&&') then
-            me.dcl[1] = TYPES.pop(vec.dcl[1])
-        end
-    end,
-
 -- BIND
 
     ['Exp_1&'] = function (me)
@@ -259,6 +248,13 @@ G = {
         me.dcl.tag = 'Val'
     end,
 
+-- INDEX ("idx" is Exp, not Exp_Name)
+
+    ['Exp_idx'] = function (me)
+        local _,_,idx = unpack(me)
+        asr_if_name(idx, {'Nat','Var'}, 'invalid index')
+    end,
+
 -- POINTERS
 
     ['Exp_&&'] = function (me)
@@ -275,25 +271,25 @@ G = {
         me.dcl[1] = TYPES.push(e.dcl[1],'&&')
     end,
 
-    ['Exp_1*'] = function (me)
+-- OPTION: ?
+
+    ['Exp_?'] = function (me)
         local op,e = unpack(me)
 
         -- ctx
-        asr_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
-DBG('TODO: remove pool')
+        asr_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        local is_nat = TYPES.is_nat(e.dcl[1])
-        local is_ptr = TYPES.check(e.dcl[1],'&&')
-        ASR(is_nat or is_ptr, me,
-            'invalid operand to `'..op..'´ : expected pointer type')
+        ASR(TYPES.check(e.dcl[1],'?'), me,
+            'invalid operand to `'..op..'´ : expected option type')
 
         -- dcl
-        me.dcl = AST.copy(e.dcl)
-        if is_ptr then
-            me.dcl[1] = TYPES.pop(e.dcl[1])
-        end
+        me.dcl = TYPES.new(me, 'bool')
     end,
+
+-- VECTOR LENGTH: $$
+
+    ['Exp_$$'] = F['Exp_$'],
 
 -- NOT
 
@@ -466,6 +462,7 @@ DBG('TODO: remove pool')
 
 -- IS, AS/CAST
 
+    Exp_as = F.Exp_as,
     Exp_is = function (me)
         local op,e = unpack(me)
 
@@ -477,25 +474,6 @@ DBG('TODO: remove pool')
 
         -- dcl
         me.dcl = TYPES.new(me, 'bool')
-    end,
-
-    Exp_as = function (me)
-        local op,e,Type = unpack(me)
-
-        -- ctx
-        asr_if_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
-
-        -- tp
-        -- any
-
-        -- dcl
-        me.dcl = AST.copy(e.dcl)
-        if AST.isNode(Type) then
-            me.dcl[1] = AST.copy(Type)
-        else
-            -- annotation (/plain, etc)
-DBG'TODO: type annotation'
-        end
     end,
 
 -------------------------------------------------------------------------------
