@@ -1,5 +1,5 @@
-local function asr_name (e, cnds, err)
-    ASR(e.dcl.tag~='Val', e, 'invalid '..err..' : expected name expression')
+local function asr_name (e, cnds, err_msg)
+    ASR(e.dcl.tag~='Val', e, 'invalid '..err_msg..' : expected name expression')
     local ok do
         for _, tag in ipairs(cnds) do
             if tag == e.dcl.tag then
@@ -8,23 +8,16 @@ local function asr_name (e, cnds, err)
             end
         end
     end
-    if err then
-        ASR(ok, e,
-            'invalid '..err..' : '..
-            'unexpected context for '..AST.tag2id[e.dcl.tag]
-                                     ..' "'..e.dcl.id..'"')
-    else
-        ASR(ok, e,
-            'unexpected context for '..AST.tag2id[e.dcl.tag]
-                                     ..' "'..e.dcl.id..'"')
-    end
+    ASR(ok, e, err_msg..' : '..
+                'unexpected context for '..AST.tag2id[e.dcl.tag]
+                                         ..' "'..e.dcl.id..'"')
 end
 
-local function asr_if_name (e, cnds, err)
+local function asr_if_name (e, cnds, err_msg)
     if e.dcl.tag == 'Val' then
         return
     else
-        return asr_name(e, cnds, err)
+        return asr_name(e, cnds, err_msg)
     end
 end
 
@@ -64,7 +57,7 @@ F = {
 
         -- ctx
         if e.tag ~= 'Type' then
-            asr_if_name(e, {'Nat','Var'}, 'operand to `sizeof´')
+            asr_if_name(e, {'Nat','Var'}, 'invalid operand to `sizeof´')
         end
 
         -- tp
@@ -80,7 +73,7 @@ F = {
         local _, e = unpack(me)
 
         -- ctx
-        asr_name(e, {'Nat','Code'}, 'call')
+        asr_name(e, {'Nat','Code'}, 'invalid call')
 
         -- tp
         if e.tag == 'ID_abs' then
@@ -101,7 +94,7 @@ F = {
 
     Explist = function (me)
         for _, e in ipairs(me) do
-            asr_if_name(e, {'Nat','Var'}, 'argument to call')
+            asr_if_name(e, {'Nat','Var'}, 'invalid argument to call')
         end
     end,
 
@@ -111,11 +104,11 @@ F = {
         local op,e = unpack(me)
 
         -- ctx
-        asr_name(e, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.check(e.dcl[1],'?'), me,
-            'invalid expression : operand to `'..op..'´ must be of option type')
+            'invalid operand to `'..op..'´ : expected option type')
 
         -- dcl
         -- names.lua
@@ -125,11 +118,11 @@ F = {
         local op,e = unpack(me)
 
         -- ctx
-        asr_name(e, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.check(e.dcl[1],'?'), me,
-            'invalid expression : operand to `'..op..'´ must be of option type')
+            'invalid operand to `'..op..'´ : expected option type')
 
         -- dcl
         me.dcl = TYPES.new(me, 'bool')
@@ -142,7 +135,7 @@ F = {
         local op,vec = unpack(me)
 
         -- ctx
-        asr_name(vec, {'Vec'}, 'operand to `'..op..'´')
+        asr_name(vec, {'Vec'}, 'invalid operand to `'..op..'´')
 
         -- tp
         -- any
@@ -164,12 +157,12 @@ F = {
             -- _V[0][0]
             -- var _char&&&& argv; argv[1][0]
             -- v[1]._plain[0]
-            asr_name(vec, {'Nat','Var'}, 'vector')
+            asr_name(vec, {'Nat','Var'}, 'invalid vector')
         else
-            asr_name(vec, {'Vec'}, 'vector')
+            asr_name(vec, {'Vec'}, 'invalid vector')
         end
 
-        asr_if_name(idx, {'Nat','Var'}, 'index')
+        asr_if_name(idx, {'Nat','Var'}, 'invalid index')
 
         -- dcl
         me.dcl = AST.copy(vec.dcl)
@@ -187,7 +180,9 @@ F = {
         -- ctx
         local par = me.__par
         ASR(par.tag=='Set_Alias' or par.tag=='Explist' or par.tag=='_Data_Explist', me,
-            'invalid expression : unexpected context for operation `'..op..'´')
+            'invalid operand to `'..op..'´ : '..
+            'unexpected context for '..AST.tag2id[e.dcl.tag]
+                                     ..' "'..e.dcl.id..'"')
 
         -- tp
 
@@ -202,7 +197,7 @@ F = {
         local op, e = unpack(me)
 
         -- ctx
-        asr_name(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
+        asr_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
         -- any
@@ -216,14 +211,14 @@ F = {
         local op,e = unpack(me)
 
         -- ctx
-        asr_name(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
+        asr_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 DBG('TODO: remove pool')
 
         -- tp
         local is_nat = TYPES.is_nat(e.dcl[1])
         local is_ptr = TYPES.check(e.dcl[1],'&&')
         ASR(is_nat or is_ptr, me,
-            'invalid expression : operand to `'..op..'´ must be of pointer type')
+            'invalid operand to `'..op..'´ : expected pointer type')
 
         -- dcl
         me.dcl = AST.copy(e.dcl)
@@ -238,11 +233,11 @@ DBG('TODO: remove pool')
         local op, e = unpack(me)
 
         -- ctx
-        asr_if_name(e, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_if_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.check(e.dcl[1],'bool'), me,
-            'invalid expression : operand to `'..op..'´ must be of boolean type')
+            'invalid operand to `'..op..'´ : expected boolean type')
 
         -- dcl
         me.dcl = TYPES.new(me, 'bool')
@@ -256,11 +251,11 @@ DBG('TODO: remove pool')
         local op, e = unpack(me)
 
         -- ctx
-        asr_if_name(e, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_if_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.is_num(e.dcl[1]), me,
-            'invalid expression : operand to `'..op..'´ must be of numeric type')
+            'invalid operand to `'..op..'´ : expected numeric type')
 
         -- dcl
         me.dcl = AST.copy(e.dcl)
@@ -279,16 +274,17 @@ DBG('TODO: remove pool')
         local op, e1, e2 = unpack(me)
 
         -- ctx
-        asr_if_name(e1, {'Nat','Var'}, 'operand to `'..op..'´')
-        asr_if_name(e2, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_if_name(e1, {'Nat','Var'}, 'invalid operand to `'..op..'´')
+        asr_if_name(e2, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.is_num(e1.dcl[1]) and TYPES.is_num(e2.dcl[1]), me,
-            'invalid expression : operands to `'..op..'´ must be of numeric type')
+            'invalid operand to `'..op..'´ : expected numeric type')
 
         -- dcl
         local max = TYPES.max(e1.dcl[1], e2.dcl[1])
-        ASR(max, me, 'invalid expression : incompatible numeric types : "'..
+        ASR(max, me, 'invalid operands to `'..op..'´ : '..
+                        'incompatible numeric types : "'..
                         TYPES.tostring(e1.dcl[1])..'" vs "'..
                         TYPES.tostring(e2.dcl[1])..'"')
         me.dcl = TYPES.new(me,'void')
@@ -305,16 +301,17 @@ DBG('TODO: remove pool')
         local op, e1, e2 = unpack(me)
 
         -- ctx
-        asr_if_name(e1, {'Nat','Var'}, 'operand to `'..op..'´')
-        asr_if_name(e2, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_if_name(e1, {'Nat','Var'}, 'invalid operand to `'..op..'´')
+        asr_if_name(e2, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.is_int(e1.dcl[1]) and TYPES.is_int(e2.dcl[1]), me,
-            'invalid expression : operands to `'..op..'´ must be of integer type')
+            'invalid operand to `'..op..'´ : expected integer type')
 
         -- dcl
         local max = TYPES.max(e1.dcl[1], e2.dcl[1])
-        ASR(max, me, 'invalid expression : incompatible numeric types : "'..
+        ASR(max, me, 'invalid operands to `'..op..'´ : '..
+                        'incompatible integer types : "'..
                         TYPES.tostring(e1.dcl[1])..'" vs "'..
                         TYPES.tostring(e2.dcl[1])..'"')
         me.dcl = TYPES.new(me,'void')
@@ -325,11 +322,11 @@ DBG('TODO: remove pool')
         local op, e = unpack(me)
 
         -- ctx
-        asr_if_name(e, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_if_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.is_int(e.dcl[1]), me,
-            'invalid expression : operand to `'..op..'´ must be of integer type')
+            'invalid operand to `'..op..'´ : expected integer type')
 
         -- dcl
         me.dcl = AST.copy(e.dcl)
@@ -346,12 +343,12 @@ DBG('TODO: remove pool')
         local op, e1, e2 = unpack(me)
 
         -- ctx
-        asr_if_name(e1, {'Nat','Var'}, 'operand to `'..op..'´')
-        asr_if_name(e2, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_if_name(e1, {'Nat','Var'}, 'invalid operand to `'..op..'´')
+        asr_if_name(e2, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.is_num(e1.dcl[1]) and TYPES.is_num(e2.dcl[1]), me,
-            'invalid expression : operands to `'..op..'´ must be of numeric type')
+            'invalid operand to `'..op..'´ : expected numeric type')
 
         -- dcl
         me.dcl = TYPES.new(me, 'bool')
@@ -365,13 +362,16 @@ DBG('TODO: remove pool')
         local op, e1, e2 = unpack(me)
 
         -- ctx
-        asr_if_name(e1, {'Nat','Var'}, 'operand to `'..op..'´')
-        asr_if_name(e2, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_if_name(e1, {'Nat','Var'}, 'invalid operand to `'..op..'´')
+        asr_if_name(e2, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.contains(e1.dcl[1],e2.dcl[1]) or
             TYPES.contains(e2.dcl[1],e1.dcl[1]), me,
-            'invalid expression : operands to `'..op..'´ must be of the same type')
+            'invalid operands to `'..op..'´ : '..
+            'incompatible types : "'..
+                TYPES.tostring(e1.dcl[1])..'" vs "'..
+                TYPES.tostring(e2.dcl[1])..'"')
 
         -- dcl
         me.dcl = TYPES.new(me, 'bool')
@@ -385,12 +385,12 @@ DBG('TODO: remove pool')
         local op, e1, e2 = unpack(me)
 
         -- ctx
-        asr_if_name(e1, {'Nat','Var'}, 'operand to `'..op..'´')
-        asr_if_name(e2, {'Nat','Var'}, 'operand to `'..op..'´')
+        asr_if_name(e1, {'Nat','Var'}, 'invalid operand to `'..op..'´')
+        asr_if_name(e2, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.check(e1.dcl[1],'bool') and TYPES.check(e2.dcl[1],'bool'), me,
-            'invalid expression : operands to `'..op..'´ must be of boolean type')
+            'invalid operand to `'..op..'´ : expected boolean type')
 
         -- dcl
         me.dcl = TYPES.new(me, 'bool')
@@ -402,7 +402,7 @@ DBG('TODO: remove pool')
         local op,e = unpack(me)
 
         -- ctx
-        asr_if_name(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
+        asr_if_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
         -- any
@@ -415,7 +415,7 @@ DBG('TODO: remove pool')
         local op,e,Type = unpack(me)
 
         -- ctx
-        asr_if_name(e, {'Nat','Var','Pool'}, 'operand to `'..op..'´')
+        asr_if_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
         -- any

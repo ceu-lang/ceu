@@ -93,12 +93,12 @@ Test { [[escape (((1)));]], run=1 }
 Test { [[
 escape 1 + null;
 ]],
-    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 Test { [[
 escape 1 or false;
 ]],
-    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+    exps = 'line 1 : invalid operand to `or´ : expected boolean type',
 }
 
 Test { [[escape 1+2*3;]], run=7 }
@@ -112,7 +112,7 @@ Test { [[escape 1 as int;]],
 Test { [[escape 1==2;]], sets='line 1 : invalid assignment : types mismatch : "int" <= "bool"', }
 Test { [[escape (1!=2) as int;]], run=1 }
 Test { [[escape 0  or  10;]],
-    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+    exps = 'line 1 : invalid operand to `or´ : expected boolean type',
 }
 Test { [[escape (0 as bool)  or  (10 as bool) as int;]],
     parser = 'line 1 : after `)´ : expected `(´ or binary operator or `;´',
@@ -123,7 +123,7 @@ Test { [[escape ((0 as bool)  or  (10 as bool)) as int;]],
 }
 Test { [[escape ((0 as bool) and (10 as bool)) as int;]], run=0 }
 Test { [[escape (10==true) as int;]],
-    exps = 'line 1 : invalid expression : operands to `==´ must be of the same type',
+    exps = 'line 1 : invalid operands to `==´ : incompatible types : "int" vs "bool"',
 }
 Test { [[escape (10!=0) as int;]], run=1 }
 Test { [[escape (true and true) as int;]], run=1 }
@@ -148,7 +148,7 @@ Test { [[var int sizeof;]],
 Test { [[escape sizeof(int);]], sets='line 1 : invalid assignment : types mismatch : "int" <= "usize"' }
 Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
-    exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
+    exps = 'line 1 : invalid operand to `>´ : expected numeric type',
 }
 Test { [[escape (((1<2) as int)<3) as int;]], run=1 }
 
@@ -156,7 +156,7 @@ Test { [[
 var uint x = 1.5;
 escape x + 0.5;
 ]],
-    exps = 'line 2 : invalid expression : incompatible numeric types',
+    exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "uint" vs "float"',
 }
 
 Test { [[
@@ -215,14 +215,16 @@ escape ( x + (0.5 as byte) )as int;
 Test { [[
 escape *1;
 ]],
-    exps = 'line 1 : invalid operand to `*´ : expected name expression',
-    --exps = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
+    parser = 'line 1 : after `*´ : expected name expression',
+    --exps = 'line 1 : invalid operand to `*´ : expected name expression',
+    --exps = 'line 1 : invalid operand to `*´ : expected pointer type',
 }
 
 Test { [[
 escape &&1;
 ]],
-    exps = 'line 1 : invalid operand to `&&´ : expected name expression',
+    parser = 'line 1 : after `&&´ : expected name expression',
+    --exps = 'line 1 : invalid operand to `&&´ : expected name expression',
     --exps = 'line 1 : invalid expression : operand to `&&´ must be a name',
 }
 
@@ -238,7 +240,8 @@ Test { [[
 var int x = 1;
 escape *&&x;
 ]],
-    exps = 'line 2 : invalid operand to `*´ : expected name expression',
+    parser = 'line 2 : after `*´ : expected name expression',
+    --exps = 'line 2 : invalid operand to `*´ : expected name expression',
     --run = 1,
 }
 
@@ -246,14 +249,15 @@ Test { [[
 var int x = 1;
 escape *&&*&&x;
 ]],
-    exps = 'line 2 : invalid operand to `*´ : expected name expression',
+    parser = 'line 2 : after `*´ : expected name expression',
+    --exps = 'line 2 : invalid operand to `*´ : expected name expression',
     --run = 1,
 }
 
 Test { [[
 escape not 1;
 ]],
-    exps = 'line 1 : invalid expression : operand to `not´ must be of boolean type',
+    exps = 'line 1 : invalid operand to `not´ : expected boolean type',
 }
 Test { [[
 escape (not false) as int;
@@ -270,7 +274,7 @@ Test { [[
 var int i;
 escape i?;
 ]],
-    exps = 'line 2 : invalid expression : operand to `?´ must be of option type',
+    exps = 'line 2 : invalid operand to `?´ : expected option type',
 }
 Test { [[
 var int? i = 1;
@@ -938,6 +942,12 @@ escape a as int;
 }
 
 Test { [[
+escape a && b;
+]],
+    parser = 'TODO',
+}
+
+Test { [[
 native _ISPOINTER, _MINDIST, _TILESHIFT;
 
                             if (_ISPOINTER(check) && ((check:x+_MINDIST) >> 
@@ -945,7 +955,8 @@ native _ISPOINTER, _MINDIST, _TILESHIFT;
                                 escape 0;
 end
 ]],
-    dcls = 'line 3 : internal identifier "check" is not declared',
+    parser = 'TODO',
+    --dcls = 'line 3 : internal identifier "check" is not declared',
 }
 
     -- INVALID TYPE MODIFIERS
@@ -16651,7 +16662,7 @@ do
 end
 escape *v;
 ]],
-    exps = 'line 11 : invalid expression : operand to `*´ must be of pointer type',
+    exps = 'line 11 : invalid operand to `*´ : expected pointer type',
     --env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
 }
 Test { [[
@@ -16667,7 +16678,7 @@ do
 end
 escape *v;
 ]],
-    exps = 'line 11 : invalid expression : operand to `*´ must be of pointer type',
+    exps = 'line 11 : invalid operand to `*´ : expected pointer type',
     --env = 'line 11 : invalid operand to unary "*"',
     --run = { ['~>1s']=10 };
 }
@@ -16849,14 +16860,14 @@ escape v;
 ]],
     wrn = true,
     --env = 'line 4 : invalid operands to binary "+"',
-    exps = 'line 4 : invalid expression : operands to `+´ must be of numeric type',
+    exps = 'line 4 : invalid operand to `+´ : expected numeric type',
 }
 
 Test { [[
 var int v = 10;
 escape v!;
 ]],
-    exps = 'line 2 : invalid expression : operand to `!´ must be of option type',
+    exps = 'line 2 : invalid operand to `!´ : expected option type',
 }
 
 Test { [[
@@ -18996,7 +19007,8 @@ with
 end
 escape v;
 ]],
-    exps = 'line 5 : invalid operand to `*´ : expected name expression',
+    parser = 'line 5 : after `(´ : expected name expression',
+    --exps = 'line 5 : invalid operand to `*´ : expected name expression',
     --run = 1,
 }
 
@@ -20783,7 +20795,7 @@ async (pi) do
 end;
 escape i;
 ]],
-    exps = 'line 7 : invalid expression : operand to `not´ must be of boolean type',
+    exps = 'line 7 : invalid operand to `not´ : expected boolean type',
     wrn = true,
 }
 
@@ -21978,6 +21990,22 @@ escape argc;
 }
 
 Test { [[
+native _char,_assert;
+native/pure _strcmp;
+input (int,_char&&&&) OS_START;
+var int argc;
+var _char&&&& argv;
+(argc, argv) = await OS_START;
+_assert(argv[1][0] == {'a'});
+escape argc;
+]],
+    --ana = 'line 3 : `loop´ iteration is not reachable',
+    wrn = true,
+    run = 2,
+    args = 'arg',
+}
+
+Test { [[
 input void OS_START;
 event void e;
 await OS_START;
@@ -22063,35 +22091,35 @@ input (int tilex, int tiley, bool vertical, int lock, int door, usize&& position
 
 -- int_int
 Test { [[var int&&p; escape p/10;]],
-    exps = 'line 1 : invalid expression : operands to `/´ must be of numeric type'
+    exps = 'line 1 : invalid operand to `/´ : expected numeric type'
 }
 Test { [[var int&&p; escape p|10;]],
-    exps = 'line 1 : invalid expression : operands to `|´ must be of integer type',
+    exps = 'line 1 : invalid operand to `|´ : expected integer type',
 }
 Test { [[var int&&p; escape p>>10;]],
-    exps = 'line 1 : invalid expression : operands to `>>´ must be of integer type',
+    exps = 'line 1 : invalid operand to `>>´ : expected integer type',
 }
 Test { [[var int&&p; escape p^10;]],
-    exps = 'line 1 : invalid expression : operands to `^´ must be of numeric type',
+    exps = 'line 1 : invalid operand to `^´ : expected numeric type',
 }
 Test { [[var int&&p; escape ~p;]],
-    exps = 'line 1 : invalid expression : operand to `~´ must be of integer type',
+    exps = 'line 1 : invalid operand to `~´ : expected integer type',
 }
 
 -- same
 Test { [[var int&&p; var int a; escape p==a;]],
-    exps = 'line 1 : invalid expression : operands to `==´ must be of the same type',
+    exps = 'line 1 : invalid operands to `==´ : incompatible types : "int&&" vs "int"',
 }
 Test { [[var int&&p; var int a; escape p!=a;]],
-    exps = 'line 1 : invalid expression : operands to `!=´ must be of the same type',
+    exps = 'line 1 : invalid operands to `!=´ : incompatible types : "int&&" vs "int"',
 }
 Test { [[var int&&p; var int a; escape p>a;]],
-    exps = 'line 1 : invalid expression : operands to `>´ must be of numeric type',
+    exps = 'line 1 : invalid operand to `>´ : expected numeric type',
 }
 
 -- any
 Test { [[var int&&p=null; escape p or 10;]],
-    exps = 'line 1 : invalid expression : operands to `or´ must be of boolean type',
+    exps = 'line 1 : invalid operand to `or´ : expected boolean type',
 }
 Test { [[var int&&p=null; escape (p!=null or true) as int;]], run=1 }
 Test { [[var int&&p=null; escape (p!=null and false) as int;]],  run=0 }
@@ -22099,23 +22127,23 @@ Test { [[var int&&p=null; escape( not (p!=null)) as int;]], run=1 }
 
 -- arith
 Test { [[var int&&p; escape p+p;]],
-    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
 }--TODO: "+"'}
 Test { [[var int&&p; escape p+10;]],
-    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 Test { [[var int&&p; escape p+10 and 0;]],
-    exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    exps = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 
 -- ptr
 Test { [[var int a; escape *a;]],
-    exps = 'line 1 : invalid expression : operand to `*´ must be of pointer type',
+    exps = 'line 1 : invalid operand to `*´ : expected pointer type',
 }
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
     parser = 'line 1 : after `)´ : expected `(´',
     --parser = 'line 1 : after `pa´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `)´ or `,´',
-    --exps = 'line 1 : invalid expression : operands to `+´ must be of numeric type',
+    --exps = 'line 1 : invalid operand to `+´ : expected numeric type',
 }
 Test { [[var int a; var int&&pa; a=1; pa=&&a; *pa=3; escape a;]], run=3 }
 
@@ -22939,7 +22967,7 @@ vector[2] _int v ;
 escape v == &&v[0] ;
 ]],
     exps = 'line 3 : invalid operand to `==´ : unexpected context for vector "v"',
-    --exps = 'line 3 : invalid expression : operands to `==´ must be of the same type',
+    --exps = 'line 3 : invalid operand to `==´ : expected the same type',
     --env = 'line 2 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -23238,7 +23266,7 @@ Test { [[
 vector[10] u8 vec = [1,2,3];
 escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
-    exps = 'line 2 : invalid expression : incompatible numeric types',
+    exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "usize" vs "u8"',
 }
 Test { [[
 vector[10] u8 vec = [1,2,3];
@@ -23421,7 +23449,7 @@ Test { [[
 vector[2] int v ;
 escape v == &&v[0] ;
 ]],
-    --exps = 'line 2 : invalid expression : operands to `==´ must be of the same type',
+    --exps = 'line 2 : invalid operand to `==´ : expected the same type',
     --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
     --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
     exps = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
@@ -23826,6 +23854,19 @@ Test { [[
 native _char, _strlen;
 code/instantaneous Strlen (var byte&& str)=>int do
     escape _strlen(str[0]);
+end
+
+vector[] byte str = [].."Ola Mundo!";
+escape Strlen((&&str[0]) as _char&&);
+]],
+    exps = 'line 3 : invalid vector : unexpected context for variable "str"',
+    --run = 10,
+}
+
+Test { [[
+native _char, _strlen;
+code/instantaneous Strlen (var byte&& str)=>int do
+    escape _strlen(*str);
 end
 
 vector[] byte str = [].."Ola Mundo!";
@@ -24321,7 +24362,7 @@ finalize with
 end
 escape p! ==null;
 ]],
-    exps = 'line 6 : invalid expression : operands to `==´ must be of the same type',
+    exps = 'line 6 : invalid operand to `==´ : expected the same type',
     --env = 'line 7 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -25896,7 +25937,8 @@ if false then
 end
 escape v2[0][0];
 ]],
-    exps = 'line 5 : invalid vector : expected name expression',
+    exps = 'line 5 : invalid vector : unexpected context for variable "v2"',
+    --exps = 'line 5 : invalid vector : expected name expression',
 }
 
 Test { [[
@@ -29084,11 +29126,20 @@ var int v = 10;
 var& void p = &v;
 escape *((&&p) as int&&);
 ]],
+    parser = 'line 3 : after `(´ : expected name expression',
+}
+Test { [[
+var int v = 10;
+var& void p = &v;
+var void&& p1 = ((&&p) as int&&);
+escape *((p1));
+]],
     run = 10,
 }
 Test { [[
 code/delayed Tx (var& void p)=>int do
-    escape *((&&p) as int&&);
+    var void&& p1 = ((&&p) as int&&);
+    escape *((p1) as int&&);
 end
 
 var int v = 10;
@@ -57534,7 +57585,7 @@ escape (*l is Nil) as int;       // "l" is not a struct
 ]],
     wrn = true,
     --exps = 'line 52 : invalid operand to `*´ : unexpected context for pool "l"',
-    exps = 'line 52 : invalid expression : operand to `*´ must be of pointer type',
+    exps = 'line 52 : invalid operand to `*´ : expected pointer type',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
@@ -57551,7 +57602,7 @@ escape *((l as Cons).tail) is Cons;    // "((l as Cons).tail)" is not a struct
 ]],
     wrn = true,
     --env = 'line 52 : invalid operand to unary "*"',
-    exps = 'line 52 : invalid expression : operand to `*´ must be of pointer type',
+    exps = 'line 52 : invalid operand to `*´ : expected pointer type',
     --env = 'line 52 : not a struct',
 }
 
