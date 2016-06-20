@@ -56105,7 +56105,7 @@ end
 pool[10] List lll = new ListCONS(1, ListNIL());
 escape lll.head;
 ]],
-    names = 'line 15 : invalid member access : "lll" has no member "head" : `data´ "List" (tests.lua:7)',
+    exps = 'line 15 : invalid member access : "lll" has no member "head" : `data´ "List" (tests.lua:7)',
     --env = 'TODO: no head in lll',
 }
 
@@ -57165,7 +57165,7 @@ pool[] List l;
 escape (l as Nil).v;
 ]],
     wrn = true,
-    names = 'line 52 : invalid member access : "l" has no member "v" : `data´ "Nil" (tests.lua:16)',
+    exps = 'line 52 : invalid member access : "l" has no member "v" : `data´ "Nil" (tests.lua:16)',
     --env = 'line 52 : field "v" is not declared',
 }
 -- tag Opt.Ptr has no field "x"
@@ -57174,7 +57174,7 @@ var Opt o;
 escape (o as Ptr).x;
 ]],
     wrn = true,
-    names = 'line 52 : invalid member access : "o" has no member "x" : `data´ "Ptr" (tests.lua:10)',
+    exps = 'line 52 : invalid member access : "o" has no member "x" : `data´ "Ptr" (tests.lua:10)',
 }
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor
@@ -58380,7 +58380,7 @@ var SDL_Color clr = SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr.v;
 ]],
-    --names = 'line 6 : invalid member access : "bg_clr" must be of plain type',
+    --exps = 'line 6 : invalid member access : "bg_clr" must be of plain type',
     --env = 'line 6 : invalid `.´ operation : cannot be an option type',
 }
 
