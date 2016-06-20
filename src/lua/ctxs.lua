@@ -159,9 +159,11 @@ F = {
 
         -- dcl
         me.dcl = AST.copy(vec.dcl)
-        me.dcl.tag = 'Val'
         if TYPES.check(vec.dcl[1],'&&') then
             me.dcl[1] = TYPES.pop(vec.dcl[1])
+        end
+        if not TYPES.is_nat(vec.dcl[1]) then
+            me.dcl.tag = 'Val'
         end
     end,
 
@@ -172,7 +174,7 @@ F = {
 
         -- ctx
         local par = me.__par
-        ASR(par.tag=='Set_Alias' or par.tag=='Explist', me,
+        ASR(par.tag=='Set_Alias' or par.tag=='Explist' or par.tag=='_Data_Explist', me,
             'invalid expression : unexpected context for operation `'..op..'´')
 
         -- tp
@@ -413,8 +415,8 @@ DBG'TODO: type annotation'
     end,
 
 -------------------------------------------------------------------------------
--- EXPS
 
+--[=[
     --------------------------------------------------------------------------
 
     _Data_Explist = function (me)
@@ -441,7 +443,7 @@ DBG'TODO: type annotation'
         if fr.tag == '_Vec_New' then
 DBG'TODO: _Vec_New'
             for _, e in ipairs(fr) do
-                --asr_if_name(e, {'Vec'}, 'constructor')
+                asr_if_name(e, {'Vec'}, 'constructor')
             end
         end
     end,
@@ -501,5 +503,6 @@ DBG'TODO: _Vec_New'
             asr_name(e, {'Nat','Var'}, 'assignment')
         end
     end,
+]=]
 }
 AST.visit(F)
