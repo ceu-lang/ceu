@@ -109,7 +109,7 @@ Test { [[escape 1 as int;]],
     run = 1,
 }
 
-Test { [[escape 1==2;]], sets='line 1 : invalid assignment : types mismatch : "int" <= "bool"', }
+Test { [[escape 1==2;]], stmts='line 1 : invalid assignment : types mismatch : "int" <= "bool"', }
 Test { [[escape (1!=2) as int;]], run=1 }
 Test { [[escape 0  or  10;]],
     exps = 'line 1 : invalid operand to `or´ : expected boolean type',
@@ -145,7 +145,7 @@ Test { [[nt sizeof;]],
 Test { [[var int sizeof;]],
     parser = "line 1 : after `int´ : expected type modifier or internal identifier",
 }
-Test { [[escape sizeof(int);]], sets='line 1 : invalid assignment : types mismatch : "int" <= "usize"' }
+Test { [[escape sizeof(int);]], stmts='line 1 : invalid assignment : types mismatch : "int" <= "usize"' }
 Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
     exps = 'line 1 : invalid operand to `>´ : expected numeric type',

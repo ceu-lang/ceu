@@ -92,8 +92,8 @@ Test = function (t)
     if not check('dcls')     then return end
     dofile 'types.lua'
     if not check('exps')     then return end
+    if not check('stmts')    then return end
 do return end
-    if not check('sets')     then return end
 AST.dump(AST.root)
     if not check('consts')   then return end
     if not check('sval')     then return end
