@@ -712,7 +712,7 @@ event void a;
 var _abc b;
 ]],
     wrn = true,
-    tmp = 'line 3 : cannot instantiate type "_abc"',
+    env = 'line 3 : cannot instantiate type "_abc"',
 }
 
 Test { [[
@@ -860,7 +860,7 @@ var _abc a;
 ]],
     wrn = true,
     --dcls = 'line 3 : internal identifier "a" is already declared at line 2',
-    tmp = 'line 3 : cannot instantiate type "_abc"',
+    env = 'line 3 : cannot instantiate type "_abc"',
 }
 
 Test { [[
@@ -989,7 +989,7 @@ vector[1] int? v;
 escape 1;
 ]],
     wrn = true,
-    tmp = 'line 1 : `data´ fields do not support vectors yet',
+    env = 'line 1 : `data´ fields do not support vectors yet',
     --env = 'line 1 : invalid type modifier : `[]?´',
 }
 Test { [[
@@ -1002,7 +1002,7 @@ Test { [[
 var& int&& v;
 escape 1;
 ]],
-    tmp = 'TODO: uninit',
+    env = 'TODO: uninit',
 }
 Test { [[
 var& int&&  v;
@@ -1022,8 +1022,7 @@ vector&[] int v;
 escape 1;
 ]],
     wrn = true,
-    --env = 'line 1 : invalid type modifier : `&[]´',
-    run = 1,
+    env = 'line 1 : invalid type modifier : `&[]´',
 }
 Test { [[
 var& int&  v;
@@ -1053,8 +1052,7 @@ Test { [[
 var& int? v;
 escape 1;
 ]],
-    run = 1,
-    --env = 'line 1 : invalid type modifier : `?&´',
+    env = 'line 1 : invalid type modifier : `?&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
@@ -5772,8 +5770,7 @@ emit a;
 escape ret;
 ]],
     --env = 'line 10 : missing parameters on `emit´',
-    --stmts = 'line 10 : arity mismatch',
-    stmts = 'line 10 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    env = 'line 10 : arity mismatch',
 }
 
 Test { [[
@@ -15910,7 +15907,7 @@ escape x;
         unreachs = 2,
     },
     run = 1,
-    stmts = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
+    env = 'line 6 : arity mismatch',
     --env = 'line 6 : non-matching types on `emit´ (void vs int)',
 }
 
@@ -17559,8 +17556,8 @@ end
 
 escape v1!+v2!+_V;
 ]],
-    --env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    run = 60,
+    env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    --run = 60,
 }
 Test { [[
 native _V, _getV;
@@ -17628,7 +17625,7 @@ var _t t;
 t.ptr = &_f(&&v);
 escape *(t.ptr);
 ]],
-    stmts = 'line 12 : invalid attribution : l-value cannot hold an alias',
+    env = 'line 12 : invalid attribution : l-value cannot hold an alias',
     --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
@@ -17652,7 +17649,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    tmp = 'line 3 : invalid escape value : local reference',
+    env = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
 }
 
@@ -17664,7 +17661,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    tmp = 'line 3 : invalid escape value : local reference',
+    env = 'line 3 : invalid escape value : local reference',
     --fin = 'line 3 : attribution to pointer with greater scope',
 }
 
@@ -17732,7 +17729,7 @@ end
 escape Fx(&str);
 ]],
     wrn = true,
-    exps = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
+    env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -17783,7 +17780,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : type cannot be `void´',
+    env = 'line 1 : type cannot be `void´',
 }
 
 Test { [[
@@ -17800,7 +17797,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : type cannot be `void´',
+    env = 'line 1 : type cannot be `void´',
 }
 
 Test { [[
@@ -19605,7 +19602,7 @@ end
 
 escape 1;
 ]],
-    exps = 'line 15 : invalid operand to unary "&&" : option type',
+    env = 'line 15 : invalid operand to unary "&&" : option type',
 }
 
 Test { [[
@@ -19680,7 +19677,7 @@ end
 
 escape _V;
 ]],
-    exps = 'line 19 : wrong argument #1 : cannot pass option values to native calls',
+    env = 'line 19 : wrong argument #1 : cannot pass option values to native calls',
     --run = 1,
 }
 
@@ -19709,7 +19706,7 @@ end
 
 escape _V;
 ]],
-    exps = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
+    env = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
     --run = '19] runtime error: invalid tag',
 }
 
@@ -21573,7 +21570,7 @@ output Z  (var int)=>int;
 emit Z=>1;
 escape 1;
 ]],
-    tmp = 'line 2 : invalid `emit´',
+    env = 'line 2 : invalid `emit´',
     --run = 1,
 }
 
@@ -21631,7 +21628,7 @@ output Z  (var int)=>int;
 var int ret = call Z=>(1,2);
 escape ret;
 ]],
-    exps = 'line 8 : arity mismatch',
+    env = 'line 8 : arity mismatch',
     --env = 'line 8 : invalid attribution (void vs int)',
     --env = 'line 8 : invalid type',
 }
@@ -21650,7 +21647,7 @@ event (int) e;
 emit e=>(1,2);
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "(int,int)"',
+    env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21658,7 +21655,7 @@ event (int) e;
 emit e;
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+    env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21684,7 +21681,7 @@ event (int,int) e;
 emit e=>(1);
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int)"',
+    env = 'line 2 : arity mismatch',
 }
 
 Test { [[
@@ -21873,28 +21870,28 @@ input (void,int) A;
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : type cannot be `void´',
+    env = 'line 1 : type cannot be `void´',
 }
 Test { [[
 input (int,void) A;
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : type cannot be `void´',
+    env = 'line 1 : type cannot be `void´',
 }
 Test { [[
 output (void,int) A;
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : type cannot be `void´',
+    env = 'line 1 : type cannot be `void´',
 }
 Test { [[
 output (int,void) A;
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : type cannot be `void´',
+    env = 'line 1 : type cannot be `void´',
 }
 
 Test { [[
@@ -21923,7 +21920,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : type cannot be `void´',
+    env = 'line 1 : type cannot be `void´',
 }
 
 Test { [[
@@ -22569,7 +22566,7 @@ var& int? p = _f();
 escape p;
 ]],
     --stmts = 'line 9 : invalid assignment : types mismatch : "int" <= "int?"',
-    stmts = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    env = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
 }
 
 Test { [[
@@ -22814,7 +22811,7 @@ Test { [[
 vector[10] void a;
 ]],
     wrn = true,
-    dcls = 'line 1 : cannot instantiate type "void"',
+    env = 'line 1 : cannot instantiate type "void"',
 }
 
 Test { [[
@@ -22853,7 +22850,7 @@ Test { [[
 vector[1] void b;
 ]],
     wrn = true,
-    dcls = 'line 2 : cannot instantiate type "void"',
+    env = 'line 2 : cannot instantiate type "void"',
 }
 
 Test { [[
@@ -22901,7 +22898,7 @@ native _u8, _V;
 vector[10] _u8 v = [_V];
 escape v[0];
 ]],
-    stmts = 'invalid attribution : external vectors accept only empty initialization `[]´',
+    env = 'invalid attribution : external vectors accept only empty initialization `[]´',
 }
 
 Test { [[
@@ -23066,7 +23063,7 @@ Test { [[
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : too many events',
+    env = 'line 1 : too many events',
 }
 
 Test { [[
@@ -23245,7 +23242,7 @@ var int x;
 vector[10] u8 vec = [ &&x ];
 escape 1;
 ]],
-    stmts = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int&&´)',
+    env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int&&´)',
 }
 
 Test { [[
@@ -23262,7 +23259,7 @@ vector[] int&& v1;
 vector[] int  v2 = []..v1;
 escape 1;
 ]],
-    stmts = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int&&´)',
+    env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int&&´)',
 }
 
 Test { [[
@@ -23437,7 +23434,7 @@ vector&[11] byte ref = &vec;
 escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 1,
-    stmts = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+    env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
 Test { [[
@@ -23445,7 +23442,7 @@ vector[10] byte vec = [1,2,3];
 vector&[9] byte ref = &vec;
 escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
-    stmts = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+    env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
 Test { [[
@@ -23488,7 +23485,7 @@ native _char;
 _f((&&b[0]) as _char&&);
 escape b[0] + b[1];
 ]],
-    exps = 'line 10 : invalid type cast',
+    env = 'line 10 : invalid type cast',
 }
 
 Test { [[
@@ -23851,7 +23848,7 @@ end
 vector[] byte str = [].."Ola Mundo!";
 escape Strlen(&&str[0]);
 ]],
-    stmts = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
+    env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
 }
 
 Test { [[
@@ -24199,7 +24196,7 @@ us[0] = 10;
 us[9] = 1;
 escape us[0]+us[9];
 ]],
-    dcls = 'line 2 : dimension must be constant',
+    env = 'line 2 : dimension must be constant',
 }
 
 Test { [[
@@ -24210,7 +24207,7 @@ us[_U8_MAX-1] = 10;
 us[0] = 1;
 escape us[0]+us[_U8_MAX-1];
 ]],
-    dcls = 'line 2 : dimension must be constant',
+    env = 'line 2 : dimension must be constant',
 }
 
 Test { [[
@@ -24236,7 +24233,7 @@ us[_N-1] = 10;
 us[0] = 1;
 escape us[0]+us[_N-1];
 ]],
-    dcls = 'line 5 : dimension must be constant',
+    env = 'line 5 : dimension must be constant',
 }
 
 Test { [[
@@ -24377,7 +24374,7 @@ p := { NULL };
 escape 1;
 //escape p==null;
 ]],
-    stmts = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    env = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
     --ref = 'line 2 : invalid attribution : missing alias operator `&´',
     --fin = 'line 2 : attribution requires `finalize´',
 }
@@ -24595,7 +24592,7 @@ end
 var void v = _VD(10);
 escape 0;
 ]],
-    dcls = 'line 5 : cannot instantiate type "void"',
+    env = 'line 5 : cannot instantiate type "void"',
 }
 
 Test { [[
@@ -26646,7 +26643,7 @@ end
 escape 0;
 ]],
     --env = 'line 2 : event type must be numeric',
-    dcls = 'line 2 : arity mismatch',
+    env = 'line 2 : arity mismatch',
     --env = 'line 2 : invalid attribution',
     --env = 'line 2 : invalid attribution (bool vs void)',
 }
@@ -26947,7 +26944,7 @@ loop i in [0 -> 10[ do
     i = 0;
 end
 ]],
-    stmts = 'line 2 : read-only variable',
+    env = 'line 2 : read-only variable',
 }
 
 Test { [[
@@ -30130,7 +30127,7 @@ end;
 
 escape *(t.p) + *(t.v);
 ]],
-    stmts = 'line 6 : types mismatch (`int&´ <= `null&&´)',
+    env = 'line 6 : types mismatch (`int&´ <= `null&&´)',
 }
 
 Test { [[
@@ -30218,7 +30215,7 @@ end
 var _t v = 2;
 escape *v;
 ]],
-    exps = 'line 6 : invalid operand to unary "*"',
+    env = 'line 6 : invalid operand to unary "*"',
 }
 
 Test { [[
@@ -31634,7 +31631,7 @@ class Tx with do end
 var Tx a;
 var Tx&& p = a;
 ]],
-    stmts = 'line 3 : types mismatch',
+    env = 'line 3 : types mismatch',
 }
 
 Test { [[
@@ -33133,7 +33130,7 @@ end
 
 var LaserExitFactory x;
 ]],
-    stmts = 'line 4 : arity mismatch',
+    env = 'line 4 : arity mismatch',
 }
 
 Test { [[
@@ -34112,7 +34109,7 @@ Test { [[
 escape outer;
 ]],
     todo = 'remove',
-    stmts = 'line 1 : types mismatch (`int´ <= `Main´)',
+    env = 'line 1 : types mismatch (`int´ <= `Main´)',
 }
 
 Test { [[
@@ -34244,7 +34241,7 @@ end
 var Tx t;
 escape t.x;
 ]],
-    exps = 'line 18 : invalid operand to unary "&&" : option type',
+    env = 'line 18 : invalid operand to unary "&&" : option type',
 }
 
 Test { [[
@@ -34431,7 +34428,7 @@ do
 end
 escape _V;
 ]],
-    dcls = 'line 10 : undeclared type `U´',
+    env = 'line 10 : undeclared type `U´',
 }
 
 Test { [[
@@ -34477,7 +34474,7 @@ do
     var u8? x = spawn Tx;
 end
 ]],
-    stmts = 'line 3 : types mismatch',
+    env = 'line 3 : types mismatch',
 }
 
 Test { [[
@@ -34627,7 +34624,7 @@ pool[n] Org a;
 
 escape 1;
 ]],
-    dcls = 'line 6 : dimension must be constant',
+    env = 'line 6 : dimension must be constant',
 }
 
 Test { [[
@@ -34637,7 +34634,7 @@ var Tx t;
 ts = t;
 escape 1;
 ]],
-    stmts = 'line 4 : types mismatch',
+    env = 'line 4 : types mismatch',
 }
 
 Test { [[
@@ -34717,7 +34714,7 @@ end
 escape 1;
 ]],
     --fin = 'line 14 : pointer access across `await´',
-    stmts = 'line 6 : invalid pool',
+    env = 'line 6 : invalid pool',
     --run = 1,
 }
 Test { [[
@@ -34954,7 +34951,7 @@ class Tx with do end
 var Tx&& ok = spawn Tx;
 escape ok != null;
 ]],
-    stmts = 'line 2 : must assign to option pointer',
+    env = 'line 2 : must assign to option pointer',
     --run = 1,
 }
 
@@ -34964,7 +34961,7 @@ class Tx with do end
 var U&&? ok = spawn Tx;
 escape ok != null;
 ]],
-    stmts = 'line 3 : types mismatch (`U&&?´ <= `Tx&&´)',
+    env = 'line 3 : types mismatch (`U&&?´ <= `Tx&&´)',
     --run = 1,
 }
 
@@ -35218,7 +35215,7 @@ class Tx with do end
 var Tx&&? a;
 a = spawn U;
 ]],
-    dcls = 'line 3 : undeclared type `U´',
+    env = 'line 3 : undeclared type `U´',
 }
 
 Test { [[
@@ -35765,7 +35762,7 @@ end
 var Tx&&? t = spawn Tx in ts;
 escape not t?;
 ]],
-    dcls = 'line 1 : undeclared type `Tx´',
+    env = 'line 1 : undeclared type `Tx´',
 }
 
 Test { [[
@@ -36322,7 +36319,7 @@ spawn U in ts;
 
 escape 1;
 ]],
-    stmts = 'line 12 : invalid `spawn´ : types mismatch (`Tx´ <= `U´)',
+    env = 'line 12 : invalid `spawn´ : types mismatch (`Tx´ <= `U´)',
 }
 Test { [[
 interface I with
@@ -36339,7 +36336,7 @@ spawn V in iss;
 
 escape 1;
 ]],
-    stmts = 'line 11 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
+    env = 'line 11 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
 }
 Test { [[
 interface I with
@@ -36368,7 +36365,7 @@ spawn V in iss;
 
 escape 1;
 ]],
-    stmts = 'line 21 : invalid `spawn´ : types mismatch (`I´ <= `Tx´)',
+    env = 'line 21 : invalid `spawn´ : types mismatch (`I´ <= `Tx´)',
 }
 Test { [[
 interface I with
@@ -36396,7 +36393,7 @@ spawn V in iss;
 
 escape 1;
 ]],
-    stmts = 'line 22 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
+    env = 'line 22 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
 }
 Test { [[
 interface I with
@@ -36411,7 +36408,7 @@ spawn Tx in iss;
 
 escape 1;
 ]],
-    stmts = 'line 9 : invalid `spawn´ : types mismatch (`I´ <= `Tx´)',
+    env = 'line 9 : invalid `spawn´ : types mismatch (`I´ <= `Tx´)',
 }
 
 Test { [[
@@ -36444,7 +36441,7 @@ spawn V in iss;
 
 escape sizeof(CEU_T) >= sizeof(CEU_U);
 ]],
-    stmts = 'line 26 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
+    env = 'line 26 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
 }
 Test { [[
 interface I with
@@ -36729,7 +36726,7 @@ var Tx a;
 escape 0;
 ]],
     todo = 'removed free',
-    --env = 'line 3 : invalid `free´',
+    env = 'line 3 : invalid `free´',
 }
 
 Test { [[
@@ -36744,7 +36741,7 @@ end
 var Tx t;
 escape 1;
 ]],
-    dcls = 'line 3 : undeclared type `U´',
+    env = 'line 3 : undeclared type `U´',
 }
 
 Test { [[
@@ -37496,7 +37493,7 @@ end
 
 escape 1;
 ]],
-    dcls = 'line 8 : invalid event type',
+    env = 'line 8 : invalid event type',
     --env = 'line 13 : wrong argument : cannot pass pointers',
     --run = 1,
 }
@@ -37528,7 +37525,7 @@ with
     escape 1;
 end
 ]],
-    dcls = 'line 9 : invalid event type',
+    env = 'line 9 : invalid event type',
     --env = 'line 21 : wrong argument : cannot pass pointers',
     --run = { ['~>2s']=1 },
 }
@@ -37541,7 +37538,7 @@ var Tx a;
 var int&& v = await a;
 escape 1;
 ]],
-    stmts = 'line 5 : types mismatch (`int&&´ <= `int´)',
+    env = 'line 5 : types mismatch (`int&&´ <= `int´)',
 }
 
 Test { [[
@@ -37712,7 +37709,7 @@ end
 
 escape ret;
 ]],
-    dcls = 'line 8 : invalid event type',
+    env = 'line 8 : invalid event type',
     --env = 'line 15 : wrong argument : cannot pass pointers',
     --run = { ['~>1s'] = 14 },
     --fin = 'line 16 : unsafe access to pointer "t" across `emit´',
@@ -37746,7 +37743,7 @@ end
 
 escape ret;
 ]],
-    dcls = 'line 8 : invalid event type',
+    env = 'line 8 : invalid event type',
     --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s'] = 12 },
 }
@@ -37800,7 +37797,7 @@ end
 
 escape ret;
 ]],
-    dcls = 'line 8 : invalid event type',
+    env = 'line 8 : invalid event type',
     --env = 'line 17 : wrong argument : cannot pass pointers',
     --run = 25,
 }
@@ -38437,7 +38434,7 @@ var int&& v = do Tx with
 end;
 escape *v;
 ]],
-    stmts = 'line 8 : types mismatch (`int&&´ <= `int´)',
+    env = 'line 8 : types mismatch (`int&&´ <= `int´)',
 }
 
 Test { [[
@@ -39123,7 +39120,7 @@ class U with do end
 var Tx&&? a;
 a = spawn U;
 ]],
-    stmts = 'line 4 : types mismatch',
+    env = 'line 4 : types mismatch',
 }
 
 Test { [[
@@ -39959,7 +39956,7 @@ end
 escape 10;
 ]],
     --run = 10,
-    tmp = 'line 15 : invalid attribution (no scope)',
+    env = 'line 15 : invalid attribution (no scope)',
 }
 Test { [[
 class V with
@@ -39990,7 +39987,7 @@ end
 escape 10;
 ]],
     --run = { ['~>A']=10 },
-    tmp = 'line 16 : invalid attribution',
+    env = 'line 16 : invalid attribution',
 }
 
 Test { [[
@@ -40030,7 +40027,7 @@ _assert(_V == 10);
 escape _V;
 ]],
     --run = { ['~>2s']=10, }       -- TODO: stack change
-    tmp = 'line 21 : invalid attribution',
+    env = 'line 21 : invalid attribution',
 }
 
 Test { [[
@@ -40428,7 +40425,7 @@ var Tx&&? t;
 t = spawn Tx;
 escape t!.v;
 ]],
-    exps = 'line 6 : not a struct',
+    env = 'line 6 : not a struct',
 }
 
 Test { [[
@@ -53015,7 +53012,7 @@ event (int,int) e;
 emit e => (1,2,3);
 escape 1;
 ]],
-    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int,int,int)"',
+    env = 'arity mismatch',
     --env = 'line 2 : invalid attribution (void vs int)',
 }
 
@@ -56880,29 +56877,6 @@ await t.e;
 
 escape 1;
 ]],
-    stmts = 'line 15 : invalid `emit´ : types mismatch : "(int)" <= "()"',
-}
-
-Test { [[
-data Tt with
-    var        int x;
-    vector[10] int v;
-    event      int e;
-end
-
-var Tt t;
-
-t.x = 1;
-var int x = t.x;
-
-t.v = [1,2,3];
-x = t.v[0];
-
-emit t.e => 1;
-var int k = await t.e;
-
-escape 1;
-]],
     run = 1,
 }
 
@@ -56961,7 +56935,7 @@ var int x = b.a.x;
 b.a.v = [1,2,3];
 x = b.a.v[0];
 
-emit b.a.e => 0;
+emit b.a.e;
 await b.a.e;
 
 escape 1;
