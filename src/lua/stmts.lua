@@ -47,6 +47,15 @@ F = {
         local Type = AST.asr(ID_abs.top,'Code_impl', 5,'Type')
         me.tp = AST.copy(Type)
     end,
+    Await_Evt = function (me, tag)
+        local e = unpack(me)
+
+        -- ctx
+        EXPS.asr_name(e, {'Var','Evt','Pool'}, 'invalid `await´')
+
+        -- tp
+        me.dcl = AST.copy(e.dcl)
+    end,
 
     Set_Emit_Ext_emit = function (me)
         local ID_ext = unpack(AST.asr(me,'', 1,'Emit_Ext_emit'))
@@ -74,30 +83,15 @@ F = {
         end
     end,
 
-    _Pause    = 'Await_Evt',
-    Emit_Evt  = 'Await_Evt',
-    Await_Evt = function (me, tag)
-        local Exp_Name = unpack(me)
-        local tag do
-            if me.tag == 'Await_Evt' then
-                tag = 'await'
-            elseif me.tag == 'Emit_Evt' then
-                tag = 'emit'
-            else
-                assert(me.tag == '_Pause')
-                tag = 'pause/if'
-            end
-        end
-        if me.tag == 'Await_Evt' then
-            EXPS.asr_name(Exp_Name, {'Var','Evt','Pool'}, 'invalid `'..tag..'´')
-        else
-            EXPS.asr_name(Exp_Name, {'Evt'}, 'invalid `'..tag..'´')
-        end
+    _Pause = function (me)
+        local e = unpack(me)
+        EXPS.asr_name(e, {'Evt'}, 'invalid `pause/if´')
     end,
-    --Await_Evt = function (me)
-        --local e = unpack(me)
-        --me.tp = AST.copy(e.tp)
-    --end,
+
+    Emit_Evt = function (me)
+        local e = unpack(me)
+        EXPS.asr_name(e, {'Evt'}, 'invalid `emit´')
+    end,
 
     Do = function (me)
         local _,_,e = unpack(me)
