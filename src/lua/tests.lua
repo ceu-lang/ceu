@@ -7570,7 +7570,6 @@ end;
     },
 }
 
---]===]
 Test { [[
 input int A;
 async do
@@ -14834,6 +14833,7 @@ end;
     }
 }
 
+--]===]
 Test { [[
 input int P2;
 par do

@@ -45,6 +45,7 @@ F = {
     Await_Code = function (me)
         local ID_abs = AST.asr(unpack(me),'ID_abs')
         local Type = AST.asr(ID_abs.top,'Code_impl', 5,'Type')
+error'oi'
         me.tp = AST.copy(Type)
     end,
     Await_Evt = function (me, tag)
@@ -108,7 +109,7 @@ F = {
     Explist = function (me)
         local Typelist = AST.node('Typelist', me.ln)
         for i, e in ipairs(me) do
-            Typelist[i] = AST.copy(e.tp)
+            Typelist[i] = AST.copy(e.dcl[1])
         end
         me.dcl = TYPES.new(me, 'void')
         me.dcl[1] = Typelist
