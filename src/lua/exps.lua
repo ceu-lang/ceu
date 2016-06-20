@@ -29,6 +29,11 @@ local function asr_if_name (e, cnds, err)
 end
 
 F = {
+    Exp_Name = function (me)
+        local e = unpack(me)
+        me.dcl = AST.copy(e.dcl)
+    end,
+
 -- PRIMITIVES
 
     NULL = function (me)
@@ -151,19 +156,26 @@ F = {
     ['Exp_idx'] = function (me)
         local _,vec,idx = unpack(me)
 
-        -- ctx
-        asr_name(vec, {'Nat','Vec','Var'}, 'vector')
-        asr_if_name(idx, {'Nat','Var'}, 'index')
+        -- ctx, tp
 
-        -- tp
+        local tp = AST.copy(vec.dcl[1])
+        tp[2] = nil
+        if (vec.dcl.tag=='Var' or vec.dcl.tag=='Nat') and TYPES.is_nat(tp) then
+            -- _V[0][0]
+            -- var _char&&&& argv; argv[1][0]
+            -- v[1]._plain[0]
+            asr_name(vec, {'Nat','Var'}, 'vector')
+        else
+            asr_name(vec, {'Vec'}, 'vector')
+        end
+
+        asr_if_name(idx, {'Nat','Var'}, 'index')
 
         -- dcl
         me.dcl = AST.copy(vec.dcl)
+        me.dcl.tag = 'Var'
         if TYPES.check(vec.dcl[1],'&&') then
             me.dcl[1] = TYPES.pop(vec.dcl[1])
-        end
-        if not TYPES.is_nat(vec.dcl[1]) then
-            me.dcl.tag = 'Val'
         end
     end,
 
@@ -276,7 +288,9 @@ DBG('TODO: remove pool')
 
         -- dcl
         local max = TYPES.max(e1.dcl[1], e2.dcl[1])
-        ASR(max, me, 'invalid expression : incompatible numeric types')
+        ASR(max, me, 'invalid expression : incompatible numeric types : "'..
+                        TYPES.tostring(e1.dcl[1])..'" vs "'..
+                        TYPES.tostring(e2.dcl[1])..'"')
         me.dcl = TYPES.new(me,'void')
         me.dcl[1] = AST.copy(max)
     end,
@@ -300,7 +314,9 @@ DBG('TODO: remove pool')
 
         -- dcl
         local max = TYPES.max(e1.dcl[1], e2.dcl[1])
-        ASR(max, me, 'invalid expression : incompatible numeric types')
+        ASR(max, me, 'invalid expression : incompatible numeric types : "'..
+                        TYPES.tostring(e1.dcl[1])..'" vs "'..
+                        TYPES.tostring(e2.dcl[1])..'"')
         me.dcl = TYPES.new(me,'void')
         me.dcl[1] = AST.copy(max)
     end,

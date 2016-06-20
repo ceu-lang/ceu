@@ -29,9 +29,12 @@ function TYPES.dump (tp)
     DBG('TYPE', TYPES.tostring(tp))
 end
 
-function TYPES.pop (tp)
+function TYPES.pop (tp, mod)
     assert(tp.tag == 'Type')
     local v = tp[#tp]
+    if mod and v~=mod then
+        return nil
+    end
     tp = AST.copy(tp)
     tp[#tp] = nil
     return tp, v
