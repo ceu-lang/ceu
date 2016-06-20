@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1735,7 +1736,6 @@ Test { [[await -1; escape 0;]],
     --env = 'line 1 : event "?" is not declared',
 }
 
---]===]
 Test { [[var s32 a=await 10s; escape (a==8000000) as int;]],
     _ana = {
         isForever = false,
