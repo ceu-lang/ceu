@@ -28575,7 +28575,6 @@ escape ret;
     run = '2] lua error : number expected',
 }
 
---]===]
 Test { [=[
 native _char;
 native/nohold _strcmp;
@@ -44192,6 +44191,7 @@ escape Fx(1,2);
     run = 3,
 }
 
+--]===]
 Test { [[
 code/instantaneous Fff (var int x)=>int do
     escape x + 1;

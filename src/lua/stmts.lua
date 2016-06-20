@@ -32,8 +32,12 @@ F = {
         if fr.tag == '_Vec_New' then
 DBG'TODO: _Vec_New'
             for _, e in ipairs(fr) do
-                if not (e.tag=='Vec_Tup' or e.tag=='STRING' or e.tag=='Exp_as')
+                if e.tag=='Vec_Tup' or e.tag=='STRING' or
+                   e.tag=='Exp_as'  or e.tag=='_Lua'
                 then
+DBG('TODO: _Lua')
+                    -- ok
+                else
                     EXPS.asr_name(e, {'Vec'}, 'invalid constructor')
                 end
             end
@@ -41,6 +45,22 @@ DBG'TODO: _Vec_New'
 
         -- tp
         -- TODO
+    end,
+
+    Set_Lua = function (me)
+        local _,to = unpack(me)
+        EXPS.asr_name(to, {'Nat','Var'}, 'invalid Lua assignment')
+    end,
+
+    Set_Data = function (me)
+        local Data_New, Exp_Name = unpack(me)
+        local is_new = unpack(Data_New)
+        if is_new then
+            -- pool = ...
+            asr_name(Exp_Name, {'Var','Pool'}, 'constructor')
+        else
+            asr_name(Exp_Name, {'Var'}, 'constructor')
+        end
     end,
 
     Set_Emit_Ext_emit = function (me)
@@ -75,9 +95,9 @@ DBG'TODO: _Vec_New'
 
     Await_Code = function (me)
         local ID_abs = AST.asr(unpack(me),'ID_abs')
-        local Type = AST.asr(ID_abs.top,'Code_impl', 5,'Type')
-error'oi'
-        me.tp = AST.copy(Type)
+        local Type = AST.asr(ID_abs.dcl,'Code', 5,'Type')
+        me.dcl = TYPES.new(me, 'void')
+        me.dcl[1] = AST.copy(Type)
     end,
 
     Await_Evt = function (me, tag)
@@ -162,22 +182,6 @@ error'oi'
     end,
 
     --------------------------------------------------------------------------
-
-    Set_Lua = function (me)
-        local _,to = unpack(me)
-        asr_name(to, {'Nat','Var'}, 'Lua assignment')
-    end,
-
-    Set_Data = function (me)
-        local Data_New, Exp_Name = unpack(me)
-        local is_new = unpack(Data_New)
-        if is_new then
-            -- pool = ...
-            asr_name(Exp_Name, {'Var','Pool'}, 'constructor')
-        else
-            asr_name(Exp_Name, {'Var'}, 'constructor')
-        end
-    end,
 
     --------------------------------------------------------------------------
 
