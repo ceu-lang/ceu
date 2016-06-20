@@ -5772,7 +5772,8 @@ emit a;
 escape ret;
 ]],
     --env = 'line 10 : missing parameters on `emit´',
-    stmts = 'line 10 : arity mismatch',
+    --stmts = 'line 10 : arity mismatch',
+    stmts = 'line 10 : invalid `emit´ : types mismatch : "(int)" <= "()"',
 }
 
 Test { [[
@@ -15909,7 +15910,7 @@ escape x;
         unreachs = 2,
     },
     run = 1,
-    stmts = 'line 6 : arity mismatch',
+    stmts = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
     --env = 'line 6 : non-matching types on `emit´ (void vs int)',
 }
 
@@ -21649,7 +21650,7 @@ event (int) e;
 emit e=>(1,2);
 escape 1;
 ]],
-    exps = 'line 2 : arity mismatch',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "(int,int)"',
 }
 
 Test { [[
@@ -21657,7 +21658,7 @@ event (int) e;
 emit e;
 escape 1;
 ]],
-    exps = 'line 2 : arity mismatch',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "()"',
 }
 
 Test { [[
@@ -21683,7 +21684,7 @@ event (int,int) e;
 emit e=>(1);
 escape 1;
 ]],
-    exps = 'line 2 : arity mismatch',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int)"',
 }
 
 Test { [[

@@ -1,22 +1,21 @@
+local function check (me, to_tp, fr_tp, err_msg)
+    local to_str = TYPES.tostring(to_tp)
+    local fr_str = TYPES.tostring(fr_tp)
+
+    if TYPES.check(to_tp,'?') then
+        to_tp = TYPES.pop(to_tp)
+        if TYPES.check(fr_tp,'?') then
+            fr_tp = TYPES.pop(fr_tp)
+        end
+    end
+
+    ASR(TYPES.contains(to_tp,fr_tp), me,
+        err_msg..' : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
+end
+
 F = {
 
 -- SETS
-
-    __check = function (me, to_tp, fr_tp)
-        local to_str = TYPES.tostring(to_tp)
-        local fr_str = TYPES.tostring(fr_tp)
-
-        if TYPES.check(to_tp,'?') then
-            to_tp = TYPES.pop(to_tp)
-            if TYPES.check(fr_tp,'?') then
-                fr_tp = TYPES.pop(fr_tp)
-            end
-        end
-
-        ASR(TYPES.contains(to_tp,fr_tp), me,
-            'invalid assignment : types mismatch : "'..
-                to_str..'" <= "'..fr_str..'"')
-    end,
 
     Set_Exp = function (me)
         local fr, to = unpack(me)
@@ -26,7 +25,7 @@ F = {
         EXPS.asr_if_name(fr, {'Nat','Var'}, 'invalid assignment')
 
         -- tp
-        F.__check(me, to.dcl[1], fr.dcl[1])
+        check(me, to.dcl[1], fr.dcl[1], 'invalid assignment')
     end,
 
     Set_Vec = function (me)
@@ -89,7 +88,7 @@ DBG(e.tag)
     Set_Await_one = function (me)
         local fr, to = unpack(me)
         assert(fr.tag=='Await_Wclock' or fr.tag=='Await_Code' or fr.tag=='Await_Evt')
-        F.__check(me, to.dcl[1], fr.dcl[1])
+        check(me, to.dcl[1], fr.dcl[1], 'invalid assignment')
     end,
 
     Set_Await_many = function (me)
@@ -102,7 +101,7 @@ DBG(e.tag)
 
         -- tp
         local awt = unpack(AST.asr(fr,'Await_Until'))
-        F.__check(me, to.dcl[1], awt.dcl[1])
+        check(me, to.dcl[1], awt.dcl[1], 'invalid assignment')
     end,
 
 -- AWAITS
@@ -157,18 +156,20 @@ DBG(e.tag)
 -- CALL, EMIT
 
     Emit_Evt = function (me)
-        local e = unpack(me)
+        local e, ps = unpack(me)
+
+        -- ctx
         EXPS.asr_name(e, {'Evt'}, 'invalid `emit´')
+
+        -- tp
+        check(me, e.dcl[1], ps.dcl[1], 'invalid `emit´')
     end,
 
     Emit_Ext_emit = function (me)
         local ID_ext, ps = unpack(me)
-        ASR(TYPES.contains(ID_ext.dcl[1],ps.dcl[1]), me,
-            'invalid `emit´ : types mismatch : "'..
-                TYPES.tostring(ID_ext.dcl[1])..
-                '" <= "'..
-                TYPES.tostring(ps.dcl[1])..
-                '"')
+
+        -- tp
+        check(me, ID_ext.dcl[1], ps.dcl[1], 'invalid `emit´')
     end,
 
 -- VARLIST, EXPLIST
