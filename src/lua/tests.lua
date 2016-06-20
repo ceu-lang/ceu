@@ -712,7 +712,7 @@ event void a;
 var _abc b;
 ]],
     wrn = true,
-    gcc = 'TODO'
+    env = 'line 3 : cannot instantiate type "_abc"',
 }
 
 Test { [[
@@ -860,8 +860,7 @@ var _abc a;
 ]],
     wrn = true,
     --dcls = 'line 3 : internal identifier "a" is already declared at line 2',
-    --env = 'line 3 : cannot instantiate type "_abc"',
-    gcc = 'TODO',
+    env = 'line 3 : cannot instantiate type "_abc"',
 }
 
 Test { [[
@@ -990,7 +989,7 @@ vector[1] int? v;
 escape 1;
 ]],
     wrn = true,
-    run = 'line 1 : `data´ fields do not support vectors yet',
+    env = 'line 1 : `data´ fields do not support vectors yet',
     --env = 'line 1 : invalid type modifier : `[]?´',
 }
 Test { [[
@@ -1003,7 +1002,7 @@ Test { [[
 var& int&& v;
 escape 1;
 ]],
-    run = 'TODO: uninit',
+    env = 'TODO: uninit',
 }
 Test { [[
 var& int&&  v;
@@ -1023,8 +1022,7 @@ vector&[] int v;
 escape 1;
 ]],
     wrn = true,
-    --env = 'line 1 : invalid type modifier : `&[]´',
-    run = 1,
+    env = 'line 1 : invalid type modifier : `&[]´',
 }
 Test { [[
 var& int&  v;
@@ -1054,7 +1052,7 @@ Test { [[
 var& int? v;
 escape 1;
 ]],
-    run = 'line 1 : invalid type modifier : `?&´',
+    env = 'line 1 : invalid type modifier : `?&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
