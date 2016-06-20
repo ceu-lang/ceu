@@ -35,7 +35,9 @@ if RUNTESTS_TODO then
 end
     if T[mod]~=nil then
         assert(ok==false, 'no error found')
+--if mod~='parser' then
         assert(string.find(msg, T[mod], nil, true), tostring(msg))
+--end
     else
         assert(ok==true, msg)
         return true

@@ -232,7 +232,7 @@ Test { [[
 var int x = 1;
 escape &&x == &&x as int;
 ]],
-    parser = 'line 2 : after `x´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or binary operator or `;´',
+    parser = 'line 2 : after `x´ : expected `[´ or `:´ or `.´ or `!´ or binary operator or `;´',
     --run = 1,
 }
 
@@ -944,7 +944,7 @@ escape a as int;
 Test { [[
 escape a && b;
 ]],
-    parser = 'TODO',
+    parser = 'line 1 : after `a´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
 }
 
 Test { [[
@@ -955,7 +955,7 @@ native _ISPOINTER, _MINDIST, _TILESHIFT;
                                 escape 0;
 end
 ]],
-    parser = 'TODO',
+    parser = 'line 3 : after `)´ : expected `is´ or `as´ or binary operator or `)´',
     --dcls = 'line 3 : internal identifier "check" is not declared',
 }
 
@@ -59405,7 +59405,8 @@ escape 1;
 Test { [[
 var Dx d = Dx(&&s as _char&& as _char_ptr);
 ]],
-    parser = 'line 1 : after `s´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or binary operator or `,´ or `)´',
+    parser = 'line 1 : after `&&´ : expected type modifier or `,´ or `)´',
+    --parser = 'line 1 : after `s´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or binary operator or `,´ or `)´',
 }
 Test { [[
 pre native do
@@ -63643,7 +63644,7 @@ pool&[] Command cmds2
 
 escape 1;
 ]],
-    parser = 'line 8 : after `&´ : expected expression',
+    parser = 'line 8 : after `&´ : expected `call/recursive´ or `call´ or name expression',
     --parser = 'line 10 : after `new´ : expected `;´'
     --ref = 'line 9 : invalid attribution (not a reference)',
     --ref = 'line 10 : reference must be bounded before use',
