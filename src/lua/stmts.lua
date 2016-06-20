@@ -24,6 +24,32 @@ F = {
         F.__check(me, to.dcl[1], fr.dcl[1])
     end,
 
+    Set_Vec = function (me)
+        local fr,to = unpack(me)
+
+        -- ctx
+        EXPS.asr_name(to, {'Vec'}, 'invalid constructor')
+        if fr.tag == '_Vec_New' then
+DBG'TODO: _Vec_New'
+            for _, e in ipairs(fr) do
+                if not (e.tag=='Vec_Tup' or e.tag=='STRING' or e.tag=='Exp_as')
+                then
+                    EXPS.asr_name(e, {'Vec'}, 'invalid constructor')
+                end
+            end
+        end
+
+        -- tp
+        -- TODO
+    end,
+
+    Set_Emit_Ext_emit = function (me)
+        local ID_ext = AST.asr(me,'', 1,'Emit_Ext_emit', 1,'ID_ext')
+        local _,io = unpack(ID_ext.dcl)
+        ASR(io=='output', me,
+            'invalid assignment : `input´')
+    end,
+
     Set_Await_one = function (me)
         local fr, to = unpack(me)
         assert(fr.tag=='Await_Wclock' or fr.tag=='Await_Code' or fr.tag=='Await_Evt')
@@ -35,19 +61,25 @@ F = {
         local awt = unpack(AST.asr(fr,'Await_Until'))
         F.__check(me, to.dcl[1], awt.dcl[1])
     end,
+
+-- AWAITS
+
     Await_Ext = function (me)
         local ID_ext = unpack(me)
         me.dcl = AST.copy(ID_ext.dcl)
     end,
+
     Await_Wclock = function (me)
         me.dcl = TYPES.new(me, 'int')
     end,
+
     Await_Code = function (me)
         local ID_abs = AST.asr(unpack(me),'ID_abs')
         local Type = AST.asr(ID_abs.top,'Code_impl', 5,'Type')
 error'oi'
         me.tp = AST.copy(Type)
     end,
+
     Await_Evt = function (me, tag)
         local e = unpack(me)
 
@@ -56,13 +88,6 @@ error'oi'
 
         -- tp
         me.dcl = AST.copy(e.dcl)
-    end,
-
-    Set_Emit_Ext_emit = function (me)
-        local ID_ext = AST.asr(me,'', 1,'Emit_Ext_emit', 1,'ID_ext')
-        local _,io = unpack(ID_ext.dcl)
-        ASR(io=='output', me,
-            'invalid assignment : `input´')
     end,
 
 -- STATEMENTS
@@ -137,21 +162,6 @@ error'oi'
     end,
 
     --------------------------------------------------------------------------
-
-    Set_Vec = function (me)
-        local fr,to = unpack(me)
-
-        -- vec = ...
-        asr_name(to, {'Vec'}, 'constructor')
-
-        -- ... = []..vec
-        if fr.tag == '_Vec_New' then
-DBG'TODO: _Vec_New'
-            for _, e in ipairs(fr) do
-                asr_if_name(e, {'Vec'}, 'constructor')
-            end
-        end
-    end,
 
     Set_Lua = function (me)
         local _,to = unpack(me)

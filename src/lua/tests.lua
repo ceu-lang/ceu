@@ -23324,7 +23324,6 @@ escape vec[0] as int;
     parser = 'line 1 : after `;´ : expected statement',
     --env = 'line 2 : invalid attribution',
 }
---]===]
 Test { [[
 vector[10] u8 vec = [1,2,3];
 $vec = 0;
@@ -23576,7 +23575,8 @@ Test { [[
 vector[] int x = [1]..2;
 escape 1;
 ]],
-    env = 'line 1 : wrong argument #2 : source is not a vector',
+    stmts = 'line 1 : invalid invalid constructor : expected name expression',
+    --env = 'line 1 : wrong argument #2 : source is not a vector',
 }
 
 Test { [[
@@ -28575,6 +28575,7 @@ escape ret;
     run = '2] lua error : number expected',
 }
 
+--]===]
 Test { [=[
 native _char;
 native/nohold _strcmp;
