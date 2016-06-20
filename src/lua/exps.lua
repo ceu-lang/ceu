@@ -1,5 +1,5 @@
 local function asr_name (e, cnds, err_msg)
-    ASR(e.dcl.tag~='Val', e, 'invalid '..err_msg..' : expected name expression')
+    assert(e.dcl.tag ~= 'Val')
     local ok do
         for _, tag in ipairs(cnds) do
             if tag == e.dcl.tag then
@@ -148,6 +148,7 @@ DBG('TODO: remove pool')
 
         -- dcl
         me.dcl = TYPES.new(me, 'usize')
+        me.dcl.tag = 'Var'
     end,
 }
 

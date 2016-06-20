@@ -20337,7 +20337,6 @@ escape a;
     --parser = 'line 4 : after `=´ : expected expression',
 }
 
---]===]
 Test { [[
 input void A;
 async do
@@ -23325,6 +23324,7 @@ escape vec[0] as int;
     parser = 'line 1 : after `;´ : expected statement',
     --env = 'line 2 : invalid attribution',
 }
+--]===]
 Test { [[
 vector[10] u8 vec = [1,2,3];
 $vec = 0;
