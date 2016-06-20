@@ -547,8 +547,9 @@ error 'TODO'
 
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
-        if var.tag == 'ID_int' then
-            me[2] = node('Varlist', var.ln, var)
+        if var.tag == 'Exp_Name' then
+            local ID_int = ASR(var,'', 1,'ID_int')
+            me[2] = node('Varlist', ID_int.ln, ID_int)
         end
     end,
 

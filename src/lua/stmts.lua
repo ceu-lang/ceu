@@ -1,4 +1,7 @@
 F = {
+
+-- SETS
+
     __check = function (me, to_tp, fr_tp)
         if TYPES.check(to_tp,'?') then
             to_tp = TYPES.pop(to_tp)
@@ -12,30 +15,32 @@ F = {
 
     Set_Exp = function (me)
         local fr, to = unpack(me)
-        F.__check(me, to.tp, fr.tp)
+
+        -- ctx
+        EXPS.asr_name(to, {'Nat','Var','Pool'}, 'invalid assignment')
+        EXPS.asr_if_name(fr, {'Nat','Var'}, 'invalid assignment')
+
+        -- tp
+        F.__check(me, to.dcl[1], fr.dcl[1])
     end,
 
     Set_Await_one = function (me)
         local fr, to = unpack(me)
         assert(fr.tag=='Await_Wclock' or fr.tag=='Await_Code' or fr.tag=='Await_Evt')
-        F.__check(me, to.tp, fr.tp)
+        F.__check(me, to.dcl[1], fr.dcl[1])
     end,
 
     Set_Await_many = function (me)
         local fr, to = unpack(me)
         local awt = unpack(AST.asr(fr,'Await_Until'))
-        F.__check(me, to.tp, awt.tp)
+        F.__check(me, to.dcl[1], awt.dcl[1])
     end,
     Await_Ext = function (me)
         local ID_ext = unpack(me)
-        me.tp = AST.copy(ID_ext.tp)
-    end,
-    Await_Evt = function (me)
-        local e = unpack(me)
-        me.tp = AST.copy(e.tp)
+        me.dcl = AST.copy(ID_ext.dcl)
     end,
     Await_Wclock = function (me)
-        me.tp = TYPES.new(me, 'int')
+        me.dcl = TYPES.new(me, 'int')
     end,
     Await_Code = function (me)
         local ID_abs = AST.asr(unpack(me),'ID_abs')
@@ -49,6 +54,51 @@ F = {
         ASR(io=='output', me,
             'invalid assignment : `input´')
     end,
+
+    Varlist = function (me)
+        local Typelist = AST.node('Typelist', me.ln)
+        for i, var in ipairs(me) do
+            Typelist[i] = AST.copy(var.dcl[1])
+        end
+        me.dcl = TYPES.new(me, 'void')
+        me.dcl[1] = Typelist
+    end,
+
+-- STATEMENTS
+
+    Await_Until = function (me)
+        local _, cond = unpack(me)
+        if cond then
+            ASR(TYPES.check(cond.dcl[1],'bool'), me,
+                'invalid expression : `until´ condition must be of boolean type')
+        end
+    end,
+
+    _Pause    = 'Await_Evt',
+    Emit_Evt  = 'Await_Evt',
+    Await_Evt = function (me, tag)
+        local Exp_Name = unpack(me)
+        local tag do
+            if me.tag == 'Await_Evt' then
+                tag = 'await'
+            elseif me.tag == 'Emit_Evt' then
+                tag = 'emit'
+            else
+                assert(me.tag == '_Pause')
+                tag = 'pause/if'
+            end
+        end
+        if me.tag == 'Await_Evt' then
+            EXPS.asr_name(Exp_Name, {'Var','Evt','Pool'}, 'invalid `'..tag..'´')
+        else
+            EXPS.asr_name(Exp_Name, {'Evt'}, 'invalid `'..tag..'´')
+        end
+    end,
+    --Await_Evt = function (me)
+        --local e = unpack(me)
+        --me.tp = AST.copy(e.tp)
+    --end,
+
 }
 
 -------------------------------------------------------------------------------
@@ -63,12 +113,6 @@ F = {
     end,
 
     --------------------------------------------------------------------------
-
-    Set_Exp = function (me)
-        local fr, to = unpack(me)
-        asr_name(to, {'Nat','Var','Pool'}, 'assignment')
-        asr_if_name(fr, {'Nat','Var'}, 'assignment')
-    end,
 
     Set_Vec = function (me)
         local fr,to = unpack(me)
@@ -103,27 +147,6 @@ DBG'TODO: _Vec_New'
 
     --------------------------------------------------------------------------
 
-    _Pause    = 'Await_Evt',
-    Emit_Evt  = 'Await_Evt',
-    Await_Evt = function (me, tag)
-        local Exp_Name = unpack(me)
-        local tag do
-            if me.tag == 'Await_Evt' then
-                tag = 'await'
-            elseif me.tag == 'Emit_Evt' then
-                tag = 'emit'
-            else
-                assert(me.tag == '_Pause')
-                tag = 'pause/if'
-            end
-        end
-        if me.tag == 'Await_Evt' then
-            asr_name(Exp_Name, {'Var','Evt','Pool'}, '`'..tag..'´')
-        else
-            asr_name(Exp_Name, {'Evt'}, '`'..tag..'´')
-        end
-    end,
-
     Varlist = function (me)
         local cnds = {'Nat','Var'}
         if string.sub(me.__par.tag,1,7) == '_Async_' then
@@ -142,14 +165,6 @@ DBG'TODO: _Vec_New'
     end,
 
 -- VARLIST, EXPLIST
-
-    Varlist = function (me)
-        local Typelist = AST.node('Typelist', me.ln)
-        for i, var in ipairs(me) do
-            Typelist[i] = AST.copy(var.tp)
-        end
-        me.tp = Typelist
-    end,
 
     Explist = function (me)
         local Typelist = AST.node('Typelist', me.ln)
@@ -184,16 +199,6 @@ DBG'TODO: _Vec_New'
                 '" <= "'..
                 TYPES.tostring(ps_tp)..
                 '"')
-    end,
-
--- STATEMENTS
-
-    Await_Until = function (me)
-        local _, cond = unpack(me)
-        if cond then
-            ASR(TYPES.check(cond.tp,'bool'), me,
-                'invalid expression : `until´ condition must be of boolean type')
-        end
     end,
 
 ]=]
