@@ -49543,7 +49543,6 @@ escape 1;
     run = 1,
 }
 
---]===]
 Test { [[
 event int e;
 par do
@@ -52920,7 +52919,7 @@ with
 end
 escape 1;
 ]],
-    stmts = 'line 4 : invalid variable : unexpected context for event "a"',
+    stmts = 'line 4 : invalid assignment : unexpected context for event "a"',
     --env = 'line 4 : wrong argument #1',
     --env = 'line 4 : invalid attribution',
 }
@@ -52973,11 +52972,12 @@ escape 1;
     run = 3;
 }
 
+--]===]
 Test { [[
 event (int,int) a;
 par/or do
     var int a,b;
-    (a,b) = await a;
+    //(a,b) = await a;
     escape a + b;
 with
     async (a) do

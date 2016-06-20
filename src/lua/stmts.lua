@@ -78,6 +78,13 @@ DBG('TODO: _Lua')
 
     Set_Await_many = function (me)
         local fr, to = unpack(me)
+
+        -- ctx
+        for _, var in ipairs(to) do
+            EXPS.asr_name(var, {'Nat','Var'}, 'invalid assignment')
+        end
+
+        -- tp
         local awt = unpack(AST.asr(fr,'Await_Until'))
         F.__check(me, to.dcl[1], awt.dcl[1])
     end,
@@ -159,6 +166,12 @@ DBG('TODO: _Lua')
     end,
 
     Varlist = function (me)
+        -- ctx
+        for _, var in ipairs(me) do
+            EXPS.asr_name(var, {'Var'}, 'invalid variable')
+        end
+
+        -- dcl
         local Typelist = AST.node('Typelist', me.ln)
         for i, var in ipairs(me) do
             Typelist[i] = AST.copy(var.dcl[1])
@@ -186,9 +199,6 @@ DBG('TODO: _Lua')
         local cnds = {'Nat','Var'}
         if string.sub(me.__par.tag,1,7) == '_Async_' then
             cnds[#cnds+1] = 'Vec'
-        end
-        for _, var in ipairs(me) do
-            asr_name(var, cnds, 'variable')
         end
     end,
 
