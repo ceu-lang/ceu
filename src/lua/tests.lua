@@ -5189,7 +5189,6 @@ escape a+f;
 
 -->>> INTERNAL EVENTS
 
---]===]
 Test { [[
 input void OS_START;
 event int a;
@@ -7571,6 +7570,7 @@ end;
     },
 }
 
+--]===]
 Test { [[
 input int A;
 async do

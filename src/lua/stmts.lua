@@ -64,15 +64,6 @@ F = {
             'invalid assignment : `input´')
     end,
 
-    Varlist = function (me)
-        local Typelist = AST.node('Typelist', me.ln)
-        for i, var in ipairs(me) do
-            Typelist[i] = AST.copy(var.dcl[1])
-        end
-        me.dcl = TYPES.new(me, 'void')
-        me.dcl[1] = Typelist
-    end,
-
 -- STATEMENTS
 
     Await_Until = function (me)
@@ -88,16 +79,48 @@ F = {
         EXPS.asr_name(e, {'Evt'}, 'invalid `pause/if´')
     end,
 
-    Emit_Evt = function (me)
-        local e = unpack(me)
-        EXPS.asr_name(e, {'Evt'}, 'invalid `emit´')
-    end,
-
     Do = function (me)
         local _,_,e = unpack(me)
         if e then
             EXPS.asr_name(e, {'Nat','Var'}, 'invalid assignment')
         end
+    end,
+
+-- CALL, EMIT
+
+    Emit_Evt = function (me)
+        local e = unpack(me)
+        EXPS.asr_name(e, {'Evt'}, 'invalid `emit´')
+    end,
+
+    Emit_Ext_emit = function (me)
+        local ID_ext, ps = unpack(me)
+        ASR(TYPES.contains(ID_ext.dcl[1],ps.dcl[1]), me,
+            'invalid `emit´ : types mismatch : "'..
+                TYPES.tostring(ID_ext.dcl[1])..
+                '" <= "'..
+                TYPES.tostring(ps.dcl[1])..
+                '"')
+    end,
+
+-- VARLIST, EXPLIST
+
+    Explist = function (me)
+        local Typelist = AST.node('Typelist', me.ln)
+        for i, e in ipairs(me) do
+            Typelist[i] = AST.copy(e.tp)
+        end
+        me.dcl = TYPES.new(me, 'void')
+        me.dcl[1] = Typelist
+    end,
+
+    Varlist = function (me)
+        local Typelist = AST.node('Typelist', me.ln)
+        for i, var in ipairs(me) do
+            Typelist[i] = AST.copy(var.dcl[1])
+        end
+        me.dcl = TYPES.new(me, 'void')
+        me.dcl[1] = Typelist
     end,
 }
 
@@ -157,16 +180,6 @@ DBG'TODO: _Vec_New'
         end
     end,
 
--- VARLIST, EXPLIST
-
-    Explist = function (me)
-        local Typelist = AST.node('Typelist', me.ln)
-        for i, e in ipairs(me) do
-            Typelist[i] = AST.copy(e.tp)
-        end
-        me.tp = Typelist
-    end,
-
 -- DOT
 
     ['Exp_.'] = function (me)
@@ -179,19 +192,6 @@ DBG'TODO: _Vec_New'
         else
             me.tp = AST.copy(e.tp)
         end
-    end,
-
--- CALL, EMIT
-
-    Emit_Ext_emit = function (me)
-        local ID_ext, ps = unpack(me)
-        local ps_tp = (ps and ps.tp) or TYPES.new(me,'void')
-        ASR(TYPES.contains(ID_ext.tp,ps_tp), me,
-            'invalid `emit´ : types mismatch : "'..
-                TYPES.tostring(ID_ext.tp)..
-                '" <= "'..
-                TYPES.tostring(ps_tp)..
-                '"')
     end,
 
 ]=]
