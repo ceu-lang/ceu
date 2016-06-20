@@ -53015,7 +53015,7 @@ event (int,int) e;
 emit e => (1,2,3);
 escape 1;
 ]],
-    env = 'arity mismatch',
+    stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int,int,int)"',
     --env = 'line 2 : invalid attribution (void vs int)',
 }
 
@@ -56880,6 +56880,29 @@ await t.e;
 
 escape 1;
 ]],
+    stmts = 'line 15 : invalid `emit´ : types mismatch : "(int)" <= "()"',
+}
+
+Test { [[
+data Tt with
+    var        int x;
+    vector[10] int v;
+    event      int e;
+end
+
+var Tt t;
+
+t.x = 1;
+var int x = t.x;
+
+t.v = [1,2,3];
+x = t.v[0];
+
+emit t.e => 1;
+var int k = await t.e;
+
+escape 1;
+]],
     run = 1,
 }
 
@@ -56938,7 +56961,7 @@ var int x = b.a.x;
 b.a.v = [1,2,3];
 x = b.a.v[0];
 
-emit b.a.e;
+emit b.a.e => 0;
 await b.a.e;
 
 escape 1;
