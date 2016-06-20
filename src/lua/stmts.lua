@@ -59,8 +59,8 @@ error'oi'
     end,
 
     Set_Emit_Ext_emit = function (me)
-        local ID_ext = unpack(AST.asr(me,'', 1,'Emit_Ext_emit'))
-        local _,io = unpack(AST.asr(ID_ext.top,'Ext'))
+        local ID_ext = AST.asr(me,'', 1,'Emit_Ext_emit', 1,'ID_ext')
+        local _,io = unpack(ID_ext.dcl)
         ASR(io=='output', me,
             'invalid assignment : `input´')
     end,

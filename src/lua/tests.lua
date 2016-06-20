@@ -14833,7 +14833,6 @@ end;
     }
 }
 
---]===]
 Test { [[
 input int P2;
 par do
@@ -20338,6 +20337,7 @@ escape a;
     --parser = 'line 4 : after `=´ : expected expression',
 }
 
+--]===]
 Test { [[
 input void A;
 async do
