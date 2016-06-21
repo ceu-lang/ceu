@@ -143,11 +143,7 @@ do
                 if #tp1 == #tp2 then
                     for i=1, #tp1 do
                         if not TYPES.contains(tp1[i],tp2[i]) then
-                            if #tp1 > 1 then
-                                return false, i
-                            else
-                                return false
-                            end
+                            return false
                         end
                     end
                     return true

@@ -9,10 +9,8 @@ local function check (me, to_tp, fr_tp, err_msg)
         end
     end
 
-    local ok, pos = TYPES.contains(to_tp,fr_tp)
-    pos = (pos and '(position #'..pos..') ') or ''
-    ASR(ok, me,
-        err_msg..' : types mismatch '..pos..': "'..to_str..'" <= "'..fr_str..'"')
+    ASR(TYPES.contains(to_tp,fr_tp), me,
+        err_msg..' : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
 end
 
 F = {
