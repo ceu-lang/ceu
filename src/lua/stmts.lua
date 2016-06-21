@@ -219,29 +219,4 @@ DBG(e.tag)
     end,
 }
 
--------------------------------------------------------------------------------
-
---[=[
-    Varlist = function (me)
-        local cnds = {'Nat','Var'}
-        if string.sub(me.__par.tag,1,7) == '_Async_' then
-            cnds[#cnds+1] = 'Vec'
-        end
-    end,
-
--- DOT
-
-    ['Exp_.'] = function (me)
-        local op, e, field = unpack(me)
-
-        local top = TYPES.top(e.tp)
-        if top.tag == 'Data' then
-            local Type = unpack(me.loc)
-            me.tp = AST.copy(Type)
-        else
-            me.tp = AST.copy(e.tp)
-        end
-    end,
-
-]=]
 AST.visit(F)

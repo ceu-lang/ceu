@@ -17727,7 +17727,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    env = 'line 3 : invalid escape value : local reference',
+    fins = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
 }
 
@@ -17739,7 +17739,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    env = 'line 3 : invalid escape value : local reference',
+    fins = 'line 3 : invalid escape value : local reference',
     --fin = 'line 3 : attribution to pointer with greater scope',
 }
 
@@ -19693,7 +19693,7 @@ end
 
 escape 1;
 ]],
-    env = 'line 15 : invalid operand to unary "&&" : option type',
+    exps = 'line 15 : invalid operand to `&&´ : unexpected option type',
 }
 
 Test { [[
@@ -24062,6 +24062,12 @@ escape ~v;
     exps = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
 }
 
+Test { [[
+vector[] int v;
+v[true] = 1;
+]],
+    exps = 'line 2 : invalid index : expected integer type',
+}
 --<<< VECTORS / STRINGS
 
 Test { [[
@@ -34352,7 +34358,7 @@ end
 var Tx t;
 escape t.x;
 ]],
-    env = 'line 18 : invalid operand to unary "&&" : option type',
+    exps = 'line 18 : invalid operand to unary "&&" : option type',
 }
 
 Test { [[
@@ -58706,6 +58712,53 @@ escape v!;
     run = 20,
 }
 
+Test { [[
+var int? i = 10;
+var& int? ai = &i;
+escape ai!;
+]],
+    run = 10,
+}
+Test { [[
+var int? i;
+var& int? ai = &i;
+i = 10;
+escape ai!;
+]],
+    run = 10,
+}
+Test { [[
+var int? i;
+var& int? ai = &i;
+escape 1 + (ai? as int);
+]],
+    run = 1,
+}
+
+Test { [[
+var int? i;
+escape i as int;
+]],
+    exps = 'line 2 : invalid operand to `as´ : unexpected option type',
+}
+Test { [[
+var int? i;
+escape i is int;
+]],
+    exps = 'line 2 : invalid operand to `is´ : unexpected option type',
+}
+Test { [[
+var int? i = 10;
+escape (i! is int) as int;
+]],
+    run = 1,
+}
+Test { [[
+var int? i = 10;
+escape (i! as int);
+]],
+    run = 10,
+}
 --<<< OPTION TYPES
 
 -- cannot compare ADTs

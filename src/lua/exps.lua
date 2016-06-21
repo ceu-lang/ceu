@@ -42,7 +42,8 @@ F = {
         asr_if_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        -- any
+        ASR(not TYPES.check(e.dcl[1],'?'), me,
+            'invalid operand to `'..op..'´ : unexpected option type')
 
         -- dcl
         me.dcl = AST.copy(e.dcl)
@@ -246,6 +247,7 @@ G = {
             'invalid expression : unexpected context for operation `&´')
 
         -- tp
+        -- any
 
         -- dcl
         me.dcl = AST.copy(e.dcl)
@@ -256,7 +258,13 @@ G = {
 
     ['Exp_idx'] = function (me)
         local _,_,idx = unpack(me)
+
+        -- ctx
         asr_if_name(idx, {'Nat','Var'}, 'invalid index')
+
+        -- tp
+        ASR(TYPES.is_int(idx.dcl[1]), me,
+            'invalid index : expected integer type')
     end,
 
 -- POINTERS
@@ -268,7 +276,8 @@ G = {
         asr_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        -- any
+        ASR(not TYPES.check(e.dcl[1],'?'), me,
+            'invalid operand to `'..op..'´ : unexpected option type')
 
         -- dcl
         me.dcl = DCLS.new(me, TYPES.push(e.dcl[1],'&&'))
@@ -471,7 +480,8 @@ G = {
         asr_if_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        -- any
+        ASR(not TYPES.check(e.dcl[1],'?'), me,
+            'invalid operand to `'..op..'´ : unexpected option type')
 
         -- dcl
         me.dcl = DCLS.new(me, 'bool')
