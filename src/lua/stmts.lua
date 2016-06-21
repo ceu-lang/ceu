@@ -190,8 +190,45 @@ DBG(e.tag)
     Emit_Ext_emit = function (me)
         local ID_ext, ps = unpack(me)
 
+        -- ctx
+AST.dump(ID_ext.dcl)
+        local _,have do
+            if ID_ext.dcl.tag == 'Ext' then
+                _,have = unpack(ID_ext.dcl)
+            else
+                have = unpack(ID_ext.dcl)
+            end
+        end
+
+        local expects do
+            if AST.par(me, 'Async') then
+                expects = 'input'
+            else
+                expects = 'output'
+            end
+        end
+
+DBG('>>>', have, expects)
+        ASR(have==expects, me,
+            'invalid `emit´ : '..
+            'unexpected context for '..AST.tag2id[ID_ext.dcl.tag]..' `'..
+            have..'´ "'..ID_ext.dcl.id..'"')
+
         -- tp
         check(me, ID_ext.dcl[1], ps.dcl[1], 'invalid `emit´')
+    end,
+
+    Emit_Ext_call = function (me)
+        local ID_ext, ps = unpack(me)
+
+        -- tp
+        local _,_,_,ins = unpack(ID_ext.dcl)
+        local Typelist = AST.node('Typelist', me)
+        for i, item in ipairs(ins) do
+            local Type = AST.asr(item,'', 4,'Type')
+            Typelist[i] = Type
+        end
+        check(me, Typelist, ps.dcl[1], 'invalid call')
     end,
 
     Exp_Call = function (me)

@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -20505,7 +20504,7 @@ end;
 emit X => 1;
 escape 0;
 ]],
-  props='invalid `emit´'
+    stmts = 'line 5 : invalid `emit´ : unexpected context for external `input´ "X"',
 }
 Test { [[
 async do
@@ -21695,12 +21694,13 @@ escape 1;
     gcc = 'error: #error ceu_out_call_* is not defined',
 }
 
+--]===]
 Test { [[
 output/instantaneous Z  (var int)=>int;
 emit Z=>1;
 escape 1;
 ]],
-    tmp = 'line 2 : invalid `emit´',
+    stmts = 'line 2 : invalid `emit´ : unexpected context for external code',
     --run = 1,
 }
 
@@ -21758,7 +21758,8 @@ output/instantaneous Z  (var int)=>int;
 var int ret = call Z=>(1,2);
 escape ret;
 ]],
-    env = 'line 8 : arity mismatch',
+    stmts = 'line 8 : invalid call : types mismatch : "(int)" <= "(int,int)"',
+    --env = 'line 8 : arity mismatch',
     --env = 'line 8 : invalid attribution (void vs int)',
     --env = 'line 8 : invalid type',
 }
