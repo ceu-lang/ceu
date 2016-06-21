@@ -20,12 +20,21 @@ F = {
     Set_Exp = function (me)
         local fr, to = unpack(me)
 
+        local err do
+            local _, esc = unpack( ASR(me.__par,'Stmts') )
+            if esc and esc.tag=='Escape' then
+                err = 'invalid `escape´'
+            else
+                err = 'invalid assignment'
+            end
+        end
+
         -- ctx
-        EXPS.asr_name(to, {'Nat','Var','Pool'}, 'invalid assignment')
-        EXPS.asr_if_name(fr, {'Nat','Var'}, 'invalid assignment')
+        EXPS.asr_name(to, {'Nat','Var','Pool'}, err)
+        EXPS.asr_if_name(fr, {'Nat','Var'}, err)
 
         -- tp
-        check(me, to.dcl[1], fr.dcl[1], 'invalid assignment')
+        check(me, to.dcl[1], fr.dcl[1], err)
     end,
 
     Set_Vec = function (me)

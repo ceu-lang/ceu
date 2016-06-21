@@ -109,7 +109,7 @@ Test { [[escape 1 as int;]],
     run = 1,
 }
 
-Test { [[escape 1==2;]], stmts='line 1 : invalid assignment : types mismatch : "int" <= "bool"', }
+Test { [[escape 1==2;]], stmts='line 1 : invalid `escape´ : types mismatch : "int" <= "bool"', }
 Test { [[escape (1!=2) as int;]], run=1 }
 Test { [[escape 0  or  10;]],
     exps = 'line 1 : invalid operand to `or´ : expected boolean type',
@@ -145,7 +145,7 @@ Test { [[nt sizeof;]],
 Test { [[var int sizeof;]],
     parser = "line 1 : after `int´ : expected type modifier or internal identifier",
 }
-Test { [[escape sizeof(int);]], stmts='line 1 : invalid assignment : types mismatch : "int" <= "usize"' }
+Test { [[escape sizeof(int);]], stmts='line 1 : invalid `escape´ : types mismatch : "int" <= "usize"' }
 Test { [[escape sizeof(int) as int;]], run=4 }
 Test { [[escape 1<2>3;]],
     exps = 'line 1 : invalid operand to `>´ : expected numeric type',
@@ -1597,7 +1597,7 @@ event int a;
 emit a => 1;
 escape a;
 ]],
-    stmts = 'line 3 : invalid assignment : unexpected context for event "a"',
+    stmts = 'line 3 : invalid `escape´ : unexpected context for event "a"',
     --run = 1,
     --trig_wo = 1,
 }
@@ -2310,7 +2310,7 @@ var bool a = do/A
 end;
 escape 1;
 ]],
-    stmts = 'line 2 : invalid assignment : types mismatch : "bool" <= "int"',
+    stmts = 'line 2 : invalid `escape´ : types mismatch : "bool" <= "int"',
 }
 
 Test { [[
@@ -5358,7 +5358,7 @@ emit c => 10;
 emit c => 10;
 escape c;
 ]],
-    stmts = 'line 4 : invalid assignment : unexpected context for event "c"',
+    stmts = 'line 4 : invalid `escape´ : unexpected context for event "c"',
     --env = 'line 4 : types mismatch (`int´ <= `void´)',
     --trig_wo = 2,
 }
@@ -17000,7 +17000,7 @@ finalize (r) with
 end
 escape r;
 ]],
-    stmts = 'line 16 : invalid assignment : types mismatch : "int" <= "int?"',
+    stmts = 'line 16 : invalid `escape´ : types mismatch : "int" <= "int?"',
     --env = 'line 16 : types mismatch (`int´ <= `int&?´)',
 }
 
@@ -17820,7 +17820,20 @@ end
 escape Fx(&str);
 ]],
     wrn = true,
-    env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
+    run = 1,
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] int vec)=>bool do
+    escape vec[1];
+end
+
+escape Fx(&str);
+]],
+    wrn = true,
+    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -22270,7 +22283,7 @@ var int&& pa = do
 end;
 escape a;
 ]],
-    stmts = 'line 3 : invalid assignment : types mismatch : "int&&" <= "int"',
+    stmts = 'line 3 : invalid `escape´ : types mismatch : "int&&" <= "int"',
     --env='types mismatch'
 }
 Test { [[
@@ -22281,7 +22294,7 @@ end;
 escape a;
 ]],
     --env='types mismatch'
-    stmts = 'line 3 : invalid assignment : types mismatch : "int" <= "int&&"',
+    stmts = 'line 3 : invalid `escape´ : types mismatch : "int" <= "int&&"',
 }
 
 Test { [[
@@ -22671,7 +22684,7 @@ end
 var& int? p = &_f();
 escape p;
 ]],
-    stmts = 'line 9 : invalid assignment : types mismatch : "int" <= "int?"',
+    stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
     --env = 'line 9 : types mismatch (`int´ <= `int&?´)',
 }
 
@@ -22865,7 +22878,7 @@ Test { [[vector[0] int v; escape 0;]],
     --env='invalid dimension'
 }
 Test { [[vector[2] int v; escape v;]],
-    stmts = 'line 1 : invalid assignment : unexpected context for vector "v"',
+    stmts = 'line 1 : invalid `escape´ : unexpected context for vector "v"',
     --env = 'types mismatch'
 }
 Test { [[native _u8; vector[2] _u8 v; escape &&v;]],
@@ -23035,7 +23048,7 @@ escape 0;
     --env='types mismatch'
 }
 Test { [[vector[1] int v; escape v;]],
-    stmts = 'line 1 : invalid assignment : unexpected context for vector "v"',
+    stmts = 'line 1 : invalid `escape´ : unexpected context for vector "v"',
     --env='cannot index a non array'
 }
 Test { [[native _int; vector[2] _int v; escape v[v];]],
@@ -46356,7 +46369,7 @@ escape 10;
 ]],
     wrn = true,
     --env = 'line 2 : invalid escape value : types mismatch (`int&&´ <= `int´)',
-    stmts = 'line 2 : invalid assignment : types mismatch : "int&&" <= "int"',
+    stmts = 'line 2 : invalid `escape´ : types mismatch : "int&&" <= "int"',
 }
 
 -- TODO: dropped support for returning alias, is this a problem?
