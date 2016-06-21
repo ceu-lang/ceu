@@ -55,9 +55,8 @@ DBG('TODO: _Lua')
         local fr, to = unpack(me)
 
         -- ctx
-AST.dump(me)
         EXPS.asr_name(to, {'Var','Vec','Pool','Evt'}, 'invalid binding')
-        local _, is_alias = unpack(to)
+        local _, is_alias = unpack(to.dcl)
         ASR(is_alias, me, 'invalid binding : expected declaration with `&´')
 
         -- tp

@@ -23667,7 +23667,7 @@ Test { [[
 vector[] int x = [1]..2;
 escape 1;
 ]],
-    stmts = 'line 1 : invalid invalid constructor : expected name expression',
+    stmts = 'line 1 : invalid constructor : expected name expression',
     --env = 'line 1 : wrong argument #2 : source is not a vector',
 }
 
