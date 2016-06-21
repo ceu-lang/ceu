@@ -162,7 +162,7 @@ do
 -- VOID <- _
         -- var& void ptr = &_f()
         -- var& void p = &v;
-        elseif TYPES.check(tp1,'void') then
+        elseif TYPES.check(tp1,'void') and TYPES.check(tp2,TYPES.id(tp2)) then
             return true
 
 -- NUMERIC TYPES
