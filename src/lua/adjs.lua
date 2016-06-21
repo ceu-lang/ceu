@@ -339,6 +339,7 @@ DBG('TODO: _Loop_Pool')
         --          _Watching
         --              Await_*
         --              Block
+        -->>>
         --  _Watching
         --      _Set
         --          to
@@ -361,17 +362,29 @@ DBG('TODO: _Loop_Pool')
             return watching
         end
 
+        -----------------------------------------------------------------------
 
         if set.tag=='_Set_Exp'          or set.tag=='_Set_None'       or
            set.tag=='_Set_Await_one'    or set.tag=='_Set_Await_many' or
            set.tag=='_Set_Vec'          or set.tag=='_Set_Emit_Ext_emit' or
            set.tag=='_Set_Async_Thread' or set.tag=='_Set_Lua' or
-           set.tag=='_Set_Data'
+           set.tag=='_Set_Data'         or set.tag=='_Set_Emit_Ext_call'
         then
+            --  _Set
+            --      to
+            --      =
+            --      _Set_*
+            --          fr
+            -->>>
+            --  _Set_*
+            --      fr
+            --      to
+            --      =
+
             assert(#set == 1, 'bug found')
             set.tag = string.sub(set.tag,2)
-            set[#set+1] = to
-            set[#set+1] = op
+            set[2] = to
+            set[3] = op
 
             -- a = &b   (Set_Exp->Set_Alias)
             if set.tag=='Set_Exp' and set[1].tag=='Exp_1&' then
@@ -386,12 +399,8 @@ DBG('TODO: _Loop_Pool')
             do_[#do_+1] = op
             return do_
         else
-if set.tag=='_Set_Emit_Ext_call' then
-    RUNTESTS_TODO = true
-    return node('Nothing', me.ln)
-end
 AST.dump(me)
-error 'TODO'
+error 'TODO: remove all tests above when this never fails again'
         end
     end,
 
