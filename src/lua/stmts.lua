@@ -209,6 +209,10 @@ DBG(e.tag)
             check(me, Typelist, ps.dcl[1], 'invalid call')
         else
             -- NATIVE CALL
+            for _,p in ipairs(ps) do
+                ASR(not TYPES.check(p.dcl[1],'?'), me,
+                    'invalid call : unexpected operator `?´')
+            end
         end
     end,
 

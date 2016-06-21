@@ -19778,7 +19778,8 @@ end
 
 escape _V;
 ]],
-    env = 'line 19 : wrong argument #1 : cannot pass option values to native calls',
+    stmts = 'line 19 : invalid call : unexpected operator `?´',
+    --env = 'line 19 : wrong argument #1 : cannot pass option values to native calls',
     --run = 1,
 }
 
