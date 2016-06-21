@@ -51,6 +51,18 @@ DBG('TODO: _Lua')
         -- TODO
     end,
 
+    Set_Alias = function (me)
+        local fr, to = unpack(me)
+
+        -- ctx
+AST.dump(me)
+        EXPS.asr_name(to, {'Var','Vec','Pool','Evt'}, 'invalid binding')
+        local _, is_alias = unpack(to)
+        ASR(is_alias, me, 'invalid binding : expected declaration with `&´')
+
+        -- tp
+    end,
+
     Set_Lua = function (me)
         local _,to = unpack(me)
         EXPS.asr_name(to, {'Nat','Var'}, 'invalid Lua assignment')

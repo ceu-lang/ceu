@@ -1052,7 +1052,8 @@ Test { [[
 var& int? v;
 escape 1;
 ]],
-    env = 'line 1 : invalid type modifier : `?&´',
+    run = 1,
+    --env = 'line 1 : invalid type modifier : `?&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 Test { [[
@@ -17578,8 +17579,8 @@ end
 
 escape v1!+v2!+_V;
 ]],
-    env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    --run = 60,
+    --env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    run = 60,
 }
 Test { [[
 native _V, _getV;
@@ -17631,6 +17632,32 @@ escape *(t.ptr);
     ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
+
+Test { [[
+native _V;
+var int x;
+_V = &x;
+escape 0;
+]],
+    stmts = 'line 3 : invalid binding : unexpected context for native "_V"',
+}
+
+Test { [[
+var int x;
+var _char p = &x;
+escape 0;
+]],
+    stmts = 'line 2 : invalid binding : expected declaration with `&´',
+}
+
+Test { [[
+var int x;
+var& _char p = &x;
+escape 0;
+]],
+    stmts = 'line 3 : invalid binding : unexpected context for native "_V"',
+}
+
 Test { [[
 native _t;
 native/pure _f;
@@ -17647,7 +17674,49 @@ var _t t;
 t.ptr = &_f(&&v);
 escape *(t.ptr);
 ]],
-    env = 'line 12 : invalid attribution : l-value cannot hold an alias',
+    stmts = 'line 13 : invalid binding : expected declaration with `&´',
+    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    --run = 10,
+}
+
+Test { [[
+native _t;
+native/pure _f;
+native do
+    typedef struct t {
+        int* ptr;
+    } t;
+    int* f (int* ptr) {
+        escape ptr;
+    }
+end
+var int v = 10;
+var& _t t;
+t.ptr = &_f(&&v);
+escape *(t.ptr);
+]],
+    stmts = 'line 13 : invalid binding : expected name expression',
+    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    --run = 10,
+}
+
+Test { [[
+native _t;
+native/pure _f;
+native do
+    typedef struct t {
+        int* ptr;
+    } t;
+    int* f (int* ptr) {
+        escape ptr;
+    }
+end
+var int v = 10;
+var& _t t;
+t.ptr = &_f(&&v);
+escape *(t.ptr);
+]],
+    stmts = 'line 13 : invalid binding : expected name expression',
     --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
@@ -46520,7 +46589,8 @@ var int x = &v;
 ptr:ceu = &v;
 escape *((ptr:ceu as int&&));
 ]],
-    env = 'line 10 : invalid attribution : l-value cannot hold an alias',
+    stmts = 'line 10 : invalid binding : expected declaration with `&´',
+    --env = 'line 10 : invalid attribution : l-value cannot hold an alias',
     --ref = 'line 9 : invalid attribution : l-value already bounded',
     --run = 10,
 }
@@ -46537,7 +46607,8 @@ var int v = 10;
 ptr:ceu = &v;
 escape *((ptr:ceu as int&&));
 ]],
-    env = 'line 10 : invalid attribution : l-value cannot hold an alias',
+    stmts = 'line 10 : invalid binding : expected declaration with `&´',
+    --env = 'line 10 : invalid attribution : l-value cannot hold an alias',
     --ref = 'line 9 : invalid attribution : l-value already bounded',
     --run = 10,
 }
@@ -46564,7 +46635,8 @@ ptr:xxx = &c;
 escape (ptr:xxx as C&&):v;
 ]],
     --run = 10,
-    env = 'line 16 : invalid attribution : l-value cannot hold an alias',
+    stmts = 'TODO',
+    --env = 'line 16 : invalid attribution : l-value cannot hold an alias',
     --ref = 'line 16 : invalid attribution : l-value already bounded',
 }
 
@@ -46592,7 +46664,8 @@ emit (ptr:xxx as C&&):e => 1;
 
 escape (ptr:xxx as C&&):v;
 ]],
-    env = 'line 17 : invalid attribution : l-value cannot hold an alias',
+    stmts = 'TODO',
+    --env = 'line 17 : invalid attribution : l-value cannot hold an alias',
     --run = 10,
 }
 Test { [[
