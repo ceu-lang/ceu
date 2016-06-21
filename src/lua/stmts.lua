@@ -210,8 +210,15 @@ DBG(e.tag)
         else
             -- NATIVE CALL
             for _,p in ipairs(ps) do
+                -- tp
                 ASR(not TYPES.check(p.dcl[1],'?'), me,
-                    'invalid call : unexpected operator `?´')
+                    'invalid call : unexpected context for operator `?´')
+
+                if p.dcl.tag ~= 'Nat' then
+                    local _,is_alias = unpack(p.dcl)
+                    ASR(not is_alias, me,
+                        'invalid call : unexpected context for operator `&´')
+                end
             end
         end
     end,
@@ -221,6 +228,10 @@ DBG(e.tag)
     Explist = function (me)
         local Typelist = AST.node('Typelist', me.ln)
         for i, e in ipairs(me) do
+            -- ctx
+            EXPS.asr_if_name(e, {'Nat','Var'}, 'invalid argument to call')
+
+            -- dcl
             Typelist[i] = AST.copy(e.dcl[1])
         end
         me.dcl = DCLS.new(me, Typelist)

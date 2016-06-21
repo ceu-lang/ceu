@@ -134,6 +134,7 @@ DBG('TODO: remove pool')
             me.dcl = DCLS.asr(me,blk,member,false,e.dcl.id)
         else
             me.dcl = AST.copy(e.dcl)
+            me.dcl[2] = false   -- &
         end
     end,
 
@@ -227,12 +228,6 @@ G = {
             me.dcl = DCLS.new(me, AST.copy(out))
         else
             me.dcl = AST.copy(e.dcl)
-        end
-    end,
-
-    Explist = function (me)
-        for _, e in ipairs(me) do
-            asr_if_name(e, {'Nat','Var'}, 'invalid argument to call')
         end
     end,
 

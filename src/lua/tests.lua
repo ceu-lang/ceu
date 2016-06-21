@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17833,7 +17832,7 @@ escape Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    exps = 'line 7 : invalid argument to call : unexpected context for vector "str"',
+    stmts = 'line 7 : invalid argument to call : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -18015,7 +18014,7 @@ vector[255] byte buf;
 _enqueue(buf);
 escape 1;
 ]],
-    exps = 'line 3 : invalid argument to call : unexpected context for vector "buf"',
+    stmts = 'line 3 : invalid argument to call : unexpected context for vector "buf"',
     --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
     --fin = 'line 2 : call requires `finalize´',
 }
@@ -19778,9 +19777,18 @@ end
 
 escape _V;
 ]],
-    stmts = 'line 19 : invalid call : unexpected operator `?´',
+    stmts = 'line 19 : invalid call : unexpected context for operator `?´',
     --env = 'line 19 : wrong argument #1 : cannot pass option values to native calls',
     --run = 1,
+}
+
+Test { [[
+native _f;
+event int e;
+_f(e);
+escape 0;
+]],
+    stmts = 'line 3 : invalid argument to call : unexpected context for event "e"',
 }
 
 Test { [[
@@ -19808,7 +19816,8 @@ end
 
 escape _V;
 ]],
-    env = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
+    stmts = 'line 19 : invalid call : unexpected context for operator `&´',
+    --env = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
     --run = '19] runtime error: invalid tag',
 }
 
@@ -20136,14 +20145,14 @@ escape ret;
 
 Test { [[
 native _SDL_Window, _SDL_CreateWindow, _SDL_WINDOW_SHOWN;
-native/nohold _SDL_DestroyWindow;
+//native/nohold _SDL_DestroyWindow;
 
 
 var& _SDL_Window win;
 do win = &_SDL_CreateWindow("UI - Texture",
                             500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
     finalize with
-        _SDL_DestroyWindow(win);
+        //_SDL_DestroyWindow(win);
     end
 escape 0;
 ]],
@@ -56859,7 +56868,7 @@ end
 var Tx t = Tx("oioioi");
 escape _strlen(t.xxxx);
 ]],
-    exps = 'line 7 : invalid argument to call : unexpected context for vector "xxxx"',
+    stmts = 'line 7 : invalid argument to call : unexpected context for vector "xxxx"',
 }
 
 Test { [[
@@ -58401,6 +58410,7 @@ escape 1;
     gcc = 'error: unknown type name ‘SDL_Texture’',
 }
 
+--]===]
 Test { [[
 pre native do
     typedef struct {
