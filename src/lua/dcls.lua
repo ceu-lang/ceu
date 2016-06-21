@@ -172,13 +172,13 @@ F = {
     -- LOC
 
     Var = function (me)
-        local Type,_,id = unpack(me)
+        local Type,is_alias,id = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
 
         local ID_prim,mod = unpack(Type)
         if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
-            ASR(false, me,
+            ASR(is_alias, me,
                 'invalid declaration : variable cannot be of type `void´') 
         end
     end,

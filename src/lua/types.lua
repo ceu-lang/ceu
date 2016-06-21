@@ -160,8 +160,9 @@ do
             return true
 
 -- VOID <- _
-        -- var& void? ptr = &_f()
-        elseif TYPES.check(tp1,'void') and TYPES.check(tp2,'_') then
+        -- var& void ptr = &_f()
+        -- var& void p = &v;
+        elseif TYPES.check(tp1,'void') then
             return true
 
 -- NUMERIC TYPES

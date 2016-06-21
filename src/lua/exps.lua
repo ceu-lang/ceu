@@ -243,9 +243,7 @@ G = {
         -- ctx
         local par = me.__par
         ASR(par.tag=='Set_Alias' or par.tag=='Explist' or par.tag=='_Data_Explist', me,
-            'invalid operand to `'..op..'´ : '..
-            'unexpected context for '..AST.tag2id[e.dcl.tag]
-                                     ..' "'..e.dcl.id..'"')
+            'invalid expression : unexpected context for operation `&´')
 
         -- tp
 

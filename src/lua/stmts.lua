@@ -65,10 +65,12 @@ DBG('TODO: _Lua')
 
         -- ctx
         EXPS.asr_name(to, {'Var','Vec','Pool','Evt'}, 'invalid binding')
+
         local _, is_alias = unpack(to.dcl)
         ASR(is_alias, me, 'invalid binding : expected declaration with `&´')
 
         -- tp
+        check(me, to.dcl[1], fr.dcl[1], 'invalid binding')
     end,
 
     Set_Lua = function (me)

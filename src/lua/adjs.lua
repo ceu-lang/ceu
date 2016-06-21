@@ -9,12 +9,6 @@ F = {
 Extcall_proto = function() RUNTESTS_TODO=true end,
 Emit_Ext_call = 'Extcall_proto',
 _Extcall_impl = 'Extcall_proto',
-Var = function (me)
-    local _,is_alias = unpack(me)
-    if is_alias then 
-        RUNTESTS_TODO = true
-    end
-end,
 
 -------------------------------------------------------------------------------
     ['1__PRE'] = function (me)

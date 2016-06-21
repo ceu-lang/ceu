@@ -1002,12 +1002,20 @@ Test { [[
 var& int&& v;
 escape 1;
 ]],
+    dcls = 'line 1 : variable "v" declared but not used',
+}
+Test { [[
+var& int&& v;
+escape 1;
+]],
+    wrn = true,
     tmp = 'TODO: uninit',
 }
 Test { [[
 var& int&&  v;
 escape 1;
 ]],
+    wrn = true,
     ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
 }
 Test { [[
@@ -1052,6 +1060,7 @@ Test { [[
 var& int? v;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
     --env = 'line 1 : invalid type modifier : `?&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
@@ -17651,11 +17660,11 @@ escape 0;
 }
 
 Test { [[
-var int x;
-var& _char p = &x;
+var s8 x;
+var& u8 p = &x;
 escape 0;
 ]],
-    stmts = 'line 3 : invalid binding : unexpected context for native "_V"',
+    stmts = 'line 2 : invalid binding : types mismatch : "u8" <= "s8"',
 }
 
 Test { [[
@@ -17695,29 +17704,7 @@ var& _t t;
 t.ptr = &_f(&&v);
 escape *(t.ptr);
 ]],
-    stmts = 'line 13 : invalid binding : expected name expression',
-    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
-    --run = 10,
-}
-
-Test { [[
-native _t;
-native/pure _f;
-native do
-    typedef struct t {
-        int* ptr;
-    } t;
-    int* f (int* ptr) {
-        escape ptr;
-    }
-end
-var int v = 10;
-var& _t t;
-t.ptr = &_f(&&v);
-escape *(t.ptr);
-]],
-    stmts = 'line 13 : invalid binding : expected name expression',
-    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
 
@@ -19922,7 +19909,7 @@ end
 
 escape &ptr! == &ptr!;  // ptr.SOME fails
 ]],
-    exps = 'line 14 : invalid expression : operand `&´',
+    exps = 'line 14 : invalid expression : unexpected context for operation `&´',
     --env = 'line 14 : invalid use of operator "&" : not a binding assignment',
 }
 
@@ -20044,7 +20031,7 @@ var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    exps = 'line 17 : invalid expression : operand `&´',
+    exps = 'line 17 : invalid expression : unexpected context for operation `&´',
     --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
     --run = 1,
 }
@@ -20068,7 +20055,7 @@ var& int tex2 = tex1;
 
 escape &tex2==&_V;
 ]],
-    exps = 'line 17 : invalid expression : operand `&´',
+    exps = 'line 17 : invalid expression : unexpected context for operation `&´',
     --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
     --asr = true,
 }
@@ -22667,10 +22654,10 @@ native do
     }
 end
 var& int? p = _f();
-escape p;
+escape 0;
 ]],
-    --stmts = 'line 9 : invalid assignment : types mismatch : "int" <= "int?"',
-    env = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    --stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
+    inits = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
 }
 
 Test { [[
@@ -24467,7 +24454,7 @@ finalize with
 end
 escape p! ==null;
 ]],
-    exps = 'line 6 : invalid operand to `==´ : expected the same type',
+    exps = 'line 6 : invalid operands to `==´ : incompatible types : "void" vs "null&&"',
     --env = 'line 7 : invalid operands to binary "=="',
     --run = 1,
 }
@@ -27666,6 +27653,7 @@ end
 
 for i=1, 50 do
     Test { [[
+native _usleep;
 native do
     ##include <unistd.h>
 end
@@ -27814,9 +27802,9 @@ native do
     }
 end
 
+native _calc, _assert;
 par/and do
     async/thread (p1) do
-native _calc, _assert;
         var int ret = _calc();
         atomic do
             p1 = ret;
@@ -29254,8 +29242,8 @@ escape *((&&p) as int&&);
 Test { [[
 var int v = 10;
 var& void p = &v;
-var void&& p1 = ((&&p) as int&&);
-escape *((p1));
+var void&& p1 = &&p;
+escape *((p1 as int&&));
 ]],
     run = 10,
 }
@@ -29339,7 +29327,7 @@ escape _V;
 
 Test { [[
 code/delayed Tx (var& int a)=>void do
-    a = do/_
+    a = do
             escape 5;
         end;
 end
@@ -29364,6 +29352,7 @@ watching Tx(&v) do
 end
 escape v;
 ]],
+    wrn = true,
     run = 5,
 }
 
@@ -44443,7 +44432,7 @@ code/instantaneous Set (var& u8 v)=>void do
 end
 var u8 v = 0;
 Set(&v);
-escape v;
+escape v as int;
 ]],
     run = 3,
 }
@@ -56551,7 +56540,7 @@ end
 data Ee;
 data Nothing is Ee;
 data Xx is Ee with
-    var& Dx d;
+    var Dx&& d;
 end
 
 var Ee e = Ee(null);
@@ -56774,7 +56763,7 @@ b = 10;
 t.b = 88;
 v[0].b = 36; // invalid attribution : missing alias operator `&´
 
-escape b;
+escape b as int;
 ]],
     run = 36,
 }
@@ -58377,6 +58366,7 @@ finalize with
 end
 escape 1;
 ]],
+    wrn = true,
     gcc = 'error: unknown type name ‘SDL_Texture’',
 }
 
@@ -58507,7 +58497,7 @@ var& int? v4;
         nothing;
     end
 
-escape (not v1?) + (not v3?) + v2? + v4? + (&&v2! ==_V2) + (&&v4! ==_V2) + v2!  
+escape ((not v1?)as int) + ((not v3?) as int) + (v2? as int) + (v4? as int) + ((&&v2! ==_V2)as int) + ((&&v4! ==_V2) as int) + v2!  
 + v4!;
 ]],
     run = 26,
@@ -58619,7 +58609,7 @@ var int ret = 0;    // 0
 
 var int?  i;
 var& int? p;
-ret = ret + (not i?) + (not p?);  // 2
+ret = ret + ((not i?)as int) + ((not p?)as int);  // 2
 
 i = 3;
 ret = ret + i!;      // 5
@@ -59454,7 +59444,7 @@ end
 var u8 v = 7;
 var Test t=Test(&v);
 v = 10;
-escape t.v;
+escape t.v as int;
 ]],
     run = 10,
 }
@@ -59466,7 +59456,7 @@ end
 var u8 v = 7;
 var Test t = Test(&v);
 v = 10;
-escape t.v;
+escape t.v as int;
 ]],
     run = 10,
 }
@@ -59484,7 +59474,7 @@ vs = [] .. vs .. [t];
 v = 10;
 t.v = 88;
 vs[0].v = 36;
-escape v;
+escape v as int;
 ]],
     run = 36,
 }
