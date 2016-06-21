@@ -35,7 +35,7 @@ local function iter_boundary (cur, id, can_cross)
                     return nil
                 end
             elseif c.tag=='Data' or c.tag=='Code' or
-                   c.tag=='Extcall' or c.tag=='Extreq'
+                   c.tag=='Ext_Code' or c.tag=='Ext_Req'
             then
                 return nil
             end
@@ -239,18 +239,13 @@ F = {
 
     -- EXT
 
-    Extcall_proto = 'Extcall_impl',
-    Extcall_impl = function (me)
-        local grp, _, id = unpack(me)
-        me.id = id
-        dcls_new(AST.par(me,'Block'), me)
-    end,
-
     Ext = function (me)
         local _, grp, id = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
     end,
+
+    Ext_Code = 'Code',
 
     -- CODE / DATA
 
@@ -326,7 +321,7 @@ DBG'TODO: CHECK prototype'
             for n in AST.iter() do
                 if n.tag=='Async' or string.sub(n.tag,1,7)=='_Async' or
                    n.tag=='Data'  or n.tag=='Code_impl' or
-                   n.tag=='Extcall_impl' or n.tag=='Extreq_impl'
+                   n.tag=='Ext_Code_impl' or n.tag=='Ext_Req_impl'
                 then
                     break
                 end

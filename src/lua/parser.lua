@@ -52,10 +52,6 @@ local T = {
         'type'
     },
     {
-        '`%(´ or primitive type or abstraction identifier or native identifier or `/recursive´',
-        'type'
-    },
-    {
         'primitive type or abstraction identifier or native identifier',
         'type'
     },

@@ -21166,10 +21166,17 @@ escape 1;
 --if not OS then
 
 Test { [[
+output int A;
+input  int A;
+escape(1);
+]],
+    dcls = 'line 2 : declaration of "A" hides previous declaration (tests.lua : line 1)',
+}
+Test { [[
 output xxx A;
 escape(1);
 ]],
-    parser = "line 1 : after `output´ : expected type",
+    parser = 'line 1 : after `output´ : expected `(´ or type or `/instantaneous´',
 }
 Test { [[
 native do
@@ -21208,14 +21215,14 @@ output t A;
 emit A => 1;
 escape(1);
 ]],
-    parser = 'line 1 : after `output´ : expected type',
+    parser = 'after `output´ : expected `(´ or type or `/instantaneous´',
 }
 Test { [[
 output t A;
 emit A => 1;
 escape(1);
 ]],
-    parser = 'line 1 : after `output´ : expected type',
+    parser = 'after `output´ : expected `(´ or type or `/instantaneous´',
 }
 Test { [[
 native _t;
@@ -21664,6 +21671,16 @@ Test { [[
 output Z  (var int)=>int;
 escape call Z=>1;
 ]],
+    parser = 'line 1 : after `output´ : expected `(´ or type or `/instantaneous´',
+    --parser = 'line 2 : after `call´ : expected expression',
+    --parser = 'line 2 : after `Z´ : expected `;´',
+    --parser = 'line 2 : after `Z´ : expected `(´',
+}
+
+Test { [[
+output/instantaneous Z  (var int)=>int;
+escape call Z=>1;
+]],
     parser = 'line 2 : after `call´ : expected name expression',
     --parser = 'line 2 : after `call´ : expected expression',
     --parser = 'line 2 : after `Z´ : expected `;´',
@@ -21671,7 +21688,7 @@ escape call Z=>1;
 }
 
 Test { [[
-output Z  (var int)=>int;
+output/instantaneous Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
@@ -21679,7 +21696,7 @@ escape 1;
 }
 
 Test { [[
-output Z  (var int)=>int;
+output/instantaneous Z  (var int)=>int;
 emit Z=>1;
 escape 1;
 ]],
@@ -21694,7 +21711,7 @@ native do
         escape v+1;
     }
 end
-output Z  (var int)=>int;
+output/instantaneous Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
@@ -21709,7 +21726,7 @@ native do
         escape *v+1;
     }
 end
-output Z  (var int)=>int;
+output/instantaneous Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
@@ -21723,7 +21740,7 @@ native do
         escape *v+1;
     }
 end
-output Z  (var int)=>int;
+output/instantaneous Z  (var int)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
@@ -21737,7 +21754,7 @@ native do
         escape v+1;
     }
 end
-output Z  (var int)=>int;
+output/instantaneous Z  (var int)=>int;
 var int ret = call Z=>(1,2);
 escape ret;
 ]],
@@ -21804,7 +21821,7 @@ native do
         escape p->_1 + p->_2;
     }
 end
-output Z  (var int, var int)=>int;
+output/instantaneous Z  (var int, var int)=>int;
 var int ret = call Z=>(1,2);
 escape ret;
 ]],
@@ -21814,7 +21831,7 @@ escape ret;
 Test { [[
 var int ret = (call Z=>2);
 ]],
-    dcls = 'line 1 : external "Z" is not declared',
+    dcls = 'line 1 : external identifier "Z" is not declared',
 }
 
 Test { [[
@@ -21824,7 +21841,7 @@ native do
         escape (evt == CEU_OUT_F) + *p;
     }
 end
-output Z  (var int)=>int;
+output/instantaneous Z  (var int)=>int;
 var int ret = (call Z=>2);
 escape ret;
 ]],
@@ -21887,7 +21904,7 @@ native do
         escape (evt == CEU_OUT_F) + *p;
     }
 end
-output Z  (var int)=>int;
+output/instantaneous Z  (var int)=>int;
 par/and do
     call Z=>1;
 with
@@ -21902,7 +21919,7 @@ escape 1;
 }
 
 Test { [[
-input Z,W  (var int a)=>int do
+input/instantaneous Z,W  (var int a)=>int do
     escape a + 1;
 end
 ]],
@@ -21910,23 +21927,22 @@ end
     --adj = 'line 1 : same body for multiple declarations',
 }
 
--- XXX
 Test { [[
-input Z  (var int a)=>int do
+input/instantaneous Z  (var int a)=>int do
     escape a + 1;
 end
-input W  (var int a)=>int;
+input/instantaneous W  (var int a)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
-    dcls = 'line 4 : external "W" declared but not used',
+    dcls = 'line 4 : external code "W" declared but not used',
 }
 
 Test { [[
-input Z  (var int a)=>int do
+input/instantaneous Z  (var int a)=>int do
     escape a + 1;
 end
-input W  (var int a)=>int;
+input/instantaneous W  (var int a)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
@@ -21936,7 +21952,7 @@ escape ret;
 }
 
 Test { [[
-input Z  (var int a)=>void do
+input/instantaneous Z  (var int a)=>void do
     v = a;
 end
 var int v = 0;
@@ -21950,7 +21966,7 @@ escape v;
 Test { [[
 native/nohold _fprintf, _stderr;
 var int v = 0;
-input Z  (var int a)=>void do
+input/instantaneous Z  (var int a)=>void do
     this.v = a;
     _fprintf(_stderr,"a=%d v=%d\n", a, v);
 end
@@ -21965,10 +21981,10 @@ escape this.v;
 
 Test { [[
 var int v = 0;
-input W  (var int a)=>int do
+input/instantaneous W  (var int a)=>int do
     escape a + 1;
 end
-input Z  (var int a)=>void do
+input/instantaneous Z  (var int a)=>void do
     this.v = call W=>a;
 end
 call Z=>1;
@@ -22008,7 +22024,7 @@ escape 1;
 }
 
 Test { [[
-input A  (void)=>void do
+input/instantaneous A  (void)=>void do
 end
 escape 1;
 ]],
@@ -22017,7 +22033,7 @@ escape 1;
 }
 
 Test { [[
-input A  (var void a, var  int a)=>void do
+input/instantaneous A  (var u8 a, var  int a)=>void do
     v = 1;
 end
 call A => ();
@@ -22027,19 +22043,19 @@ escape 1;
 }
 
 Test { [[
-input A  (var void a, var  int v)=>void do
+input/instantaneous A  (var void a, var  int v)=>void do
     v = 1;
 end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 1 : type cannot be `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
 }
 
 Test { [[
 input void OS_START;
 var int v = 0;
-input A  (void)=>void do
+input/instantaneous A  (void)=>void do
     v = 1;
 end
 call A;
@@ -22050,7 +22066,7 @@ escape v;
 }
 
 Test { [[
-input WRITE  (var int c)=>int do
+input/instantaneous WRITE  (var int c)=>int do
     escape c + 1;
 end
 var byte b = 1;
@@ -22062,10 +22078,10 @@ escape ret;
 
 Test { [[
 native ___ceu_nothing;
-input IA  (var int c)=>int do
+input/instantaneous IA  (var int c)=>int do
     escape c + 1;
 end
-input IB  (var int c)=>void do
+input/instantaneous IB  (var int c)=>void do
     ___ceu_nothing(&&c);
 end
 call IB => 0;
@@ -25048,23 +25064,23 @@ native do
 end
 
 native ___ceu_nothing;
-input OPEN  (var byte&& path, var  byte&& mode)=>_Fx&& do
+input/instantaneous OPEN  (var byte&& path, var  byte&& mode)=>_Fx&& do
     ___ceu_nothing(path);
     ___ceu_nothing(mode);
     escape _fff;
 end
 
-input CLOSE  (var _Fx&& f)=>int do
+input/instantaneous CLOSE  (var _Fx&& f)=>int do
     ___ceu_nothing(f);
     escape 1;
 end
 
-input SIZE  (var _Fx&& f)=>int do
+input/instantaneous SIZE  (var _Fx&& f)=>int do
     ___ceu_nothing(f);
     escape 1;
 end
 
-input READ  (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)=>int do
+input/instantaneous READ  (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)=>int do
     ___ceu_nothing(ptr);
     ___ceu_nothing(&&size);
     ___ceu_nothing(&&nmemb);
@@ -25090,7 +25106,7 @@ end
 
 native ___ceu_nothing;
 native/plain _draw_string_t;
-input DRAW_STRING  (var _draw_string_t&& ptr)=>void do
+input/instantaneous DRAW_STRING  (var _draw_string_t&& ptr)=>void do
     ___ceu_nothing(ptr);
 end
 
@@ -44360,7 +44376,7 @@ escape Fff(x);
     run = 12,
 }
 Test { [[
-output LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
+output/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
 code/instantaneous/recursive Load (var int&& l)=>void do
     loop i do
     end
@@ -44380,7 +44396,7 @@ native do
     ##define ceu_out_call_LUA_GETGLOBAL
 end
 
-output LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
+output/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
 code/instantaneous/recursive Load (var int&& l)=>void do
     // TODO: load file
     call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
@@ -67229,7 +67245,7 @@ end
 -- PROCURAR XXX e recolocar tudo ate o ok la
 
 Test { [[
-input B  (var int a)=>int do
+input/instantaneous B  (var int a)=>int do
     escape a + 1;
 end
 var int ret = call B=>1;
@@ -67239,7 +67255,7 @@ escape ret;
 }
 
 Test { [[
-input WRITE  (var int c)=>int do
+input/instantaneous WRITE  (var int c)=>int do
     escape c + 1;
 end
 var byte b = 1;
@@ -67250,7 +67266,7 @@ escape ret;
 }
 
 Test { [[
-input B  (var int a, var  int b)=>int do
+input/instantaneous B  (var int a, var  int b)=>int do
     escape a + b;
 end
 var int ret = call B=>(1,2);
@@ -67265,7 +67281,7 @@ pre native do
     void lua_pushnil (lua_State* l) {}
 end
 
-input PUSHNIL  (var _lua_State* l)=>void do
+input/instantaneous PUSHNIL  (var _lua_State* l)=>void do
     _lua_pushnil(l);
 end
 escape 1;
@@ -67274,7 +67290,7 @@ escape 1;
 }
 
 Test { [[
-input DRAW_STRING  (var byte* str, var int len, var int x, var  int y)=>int do
+input/instantaneous DRAW_STRING  (var byte* str, var int len, var int x, var  int y)=>int do
     escape x + y + len;
 end
 
@@ -67286,21 +67302,21 @@ escape ret;
 }
 
 Test { [[
-input MALLOC  (void)=>void*;
+input/instantaneous MALLOC  (void)=>void*;
 var void* ptr = (call MALLOC);
 ]],
     fin = 'line 2 : destination pointer must be declared with the `[]´ buffer modifier',
 }
 
 Test { [[
-input MALLOC  (void)=>void*;
+input/instantaneous MALLOC  (void)=>void*;
 vector[] void ptr = (call MALLOC);
 ]],
     fin = 'line 2 : attribution requires `finalize´',
 }
 
 Test { [[
-input MALLOC  (void)=>void*;
+input/instantaneous MALLOC  (void)=>void*;
 vector[] void ptr;
     do ptr = (call MALLOC);
 finalize with
@@ -67311,7 +67327,7 @@ escape 1;
 }
 
 Test { [[
-input MALLOC  (var int, var int)=>void*;
+input/instantaneous MALLOC  (var int, var int)=>void*;
 vector[] void ptr;
     do ptr = (call MALLOC=>(1,1));
 finalize with
@@ -67322,7 +67338,7 @@ escape 1;
 }
 
 Test { [[
-input MALLOC  (var int, var int)=>int;
+input/instantaneous MALLOC  (var int, var int)=>int;
 var int v;
     do v = (call MALLOC=>(1,1));
 finalize with
@@ -67333,7 +67349,7 @@ escape 1;
 }
 
 Test { [[
-input MALLOC  (var int a, var int b, var  void* ptr)=>void* do
+input/instantaneous MALLOC  (var int a, var int b, var  void* ptr)=>void* do
     if a+b == 11 then
         escape ptr;
     else
@@ -67351,7 +67367,7 @@ escape ptr==&i;
     run = 1,
 }
 Test { [[
-input MALLOC  (var int a, var int b, var  void* ptr)=>void* do
+input/instantaneous MALLOC  (var int a, var int b, var  void* ptr)=>void* do
     if a+b == 11 then
         escape ptr;
     else
@@ -67370,7 +67386,7 @@ escape ptr==null;
 }
 
 Test { [[
-input MALLOC  (void)=>void*;
+input/instantaneous MALLOC  (void)=>void*;
 native _f;
 do
     var void* a;
@@ -67384,7 +67400,7 @@ end
 }
 
 Test { [[
-input B  (var void* v)=>void do
+input/instantaneous B  (var void* v)=>void do
     _V = v;
 end
 escape 1;
@@ -67393,7 +67409,7 @@ escape 1;
 }
 
 Test { [[
-input B  (var void* v)=>void do
+input/instantaneous B  (var void* v)=>void do
     _V := v;
 end
 escape 1;
@@ -67405,7 +67421,7 @@ Test { [[
 native do
     void* V;
 end
-input B  (var/hold void* v)=>void do
+input/instantaneous B  (var/hold void* v)=>void do
     _V := v;
 end
 escape 1;
@@ -67414,7 +67430,7 @@ escape 1;
 }
 
 Test { [[
-input B  (var byte* buf)=>void do
+input/instantaneous B  (var byte* buf)=>void do
 end;
 var byte* buf;
 call B => (buf);
@@ -67424,7 +67440,7 @@ escape 1;
 }
 
 Test { [[
-input B  (var byte* buf, var  int i)=>void do
+input/instantaneous B  (var byte* buf, var  int i)=>void do
 end;
 var byte* buf;
 call B => (buf, 1);
@@ -67434,7 +67450,7 @@ escape 1;
 }
 
 Test { [[
-input B  (void)=>void do
+input/instantaneous B  (void)=>void do
 end;
 var byte* buf;
 call B;
@@ -67444,7 +67460,7 @@ escape 1;
 }
 
 Test { [[
-input B  (var byte* buf)=>void do
+input/instantaneous B  (var byte* buf)=>void do
 end;
 var byte* buf;
 call B => buf;
@@ -67454,7 +67470,7 @@ escape 1;
 }
 
 Test { [[
-input B  (var/hold byte* buf)=>void do
+input/instantaneous B  (var/hold byte* buf)=>void do
 end;
 var byte* buf;
 call B => buf;
@@ -67587,7 +67603,7 @@ escape _f(&v) == _V;
 }
 
 Test { [[
-input B  (var int* p1, var  int* p2)=>void;
+input/instantaneous B  (var int* p1, var  int* p2)=>void;
 do
     var int* p1 = null;
     do
@@ -67606,7 +67622,7 @@ native do
     #define ceu_out_call_VVV(x) x
 end
 
-output VVV  (var int n)=>int;
+output/instantaneous VVV  (var int n)=>int;
 var int v;
     do v = (call VVV => 10);
 finalize with
@@ -67623,7 +67639,7 @@ native do
     #define ceu_out_call_MALLOC(x) NULL
 end
 
-output MALLOC  (var int n)=>void*;
+output/instantaneous MALLOC  (var int n)=>void*;
 var byte* buf;
 buf = (call MALLOC => 10);
 escape 1;
@@ -67637,7 +67653,7 @@ native do
     #define ceu_out_call_SEND(x) 0
 end
 
-output SEND  (var byte* buf)=>void;
+output/instantaneous SEND  (var byte* buf)=>void;
 vector[255] byte buf;
 call SEND => buf;
 escape 1;
@@ -67656,7 +67672,7 @@ native do
     Fx* f;
     #define ceu_out_call_OPEN(x) f
 end
-output OPEN  (var byte* path, var  byte* mode)=>_Fx*;
+output/instantaneous OPEN  (var byte* path, var  byte* mode)=>_Fx*;
 
 // Default device
 vector[] _Fx f;
@@ -67667,10 +67683,10 @@ escape 1;
 }
 
 Test { [[
-output OPEN  (var byte* path, var  byte* mode)=>_Fx*;
-output CLOSE  (var _Fx* f)=>int;
-output SIZE  (var _Fx* f)=>int;
-output READ  (var void* ptr, var int size, var int nmemb, var  _Fx* f)=>int;
+output/instantaneous OPEN  (var byte* path, var  byte* mode)=>_Fx*;
+output/instantaneous CLOSE  (var _Fx* f)=>int;
+output/instantaneous SIZE  (var _Fx* f)=>int;
+output/instantaneous READ  (var void* ptr, var int size, var int nmemb, var  _Fx* f)=>int;
 
 // Default device
 vector[] _Fx f;

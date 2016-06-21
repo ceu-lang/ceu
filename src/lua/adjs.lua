@@ -6,11 +6,6 @@ local node = AST.node
 local Pre_Stmts
 
 F = {
-Extcall_proto = function() RUNTESTS_TODO=true end,
-Emit_Ext_call = 'Extcall_proto',
-_Extcall_impl = 'Extcall_proto',
-
--------------------------------------------------------------------------------
     ['1__PRE'] = function (me)
         local stmts = unpack(me)
         AST.asr(stmts, 'Stmts')
@@ -84,11 +79,12 @@ _Extcall_impl = 'Extcall_proto',
                         unpack(me, 3))))
     end,
 
+    _Ext_Code_proto = '_Code_proto',
     _Code_proto = function (me)
-        me.tag = 'Code'
+        me.tag = string.match(me.tag,'_(.*)_proto')
     end,
 
-    Extcall_impl__PRE = '_Code_impl__PRE',
+    _Ext_Code_impl__PRE = '_Code_impl__PRE',
     _Code_impl__PRE = function (me)
         local pre, is_rec, id, ins, out, blk = unpack(me)
         me.tag = string.match(me.tag,'_(.*)_impl')
@@ -149,11 +145,11 @@ _Extcall_impl = 'Extcall_proto',
         table.insert(stmts_old, 1, dcls)
     end,
 
-    Emit_Ext_req__PRE = '_Extreq_proto__PRE',
-    _Extreq_impl__PRE = '_Extreq_proto__PRE',
-    _Extreq_proto__PRE = function (me)
+    Emit_Ext_req__PRE = '_Ext_Req_proto__PRE',
+    _Ext_Req_impl__PRE = '_Ext_Req_proto__PRE',
+    _Ext_Req_proto__PRE = function (me)
 -- TODO
-DBG('TODO: _Extreq', me.tag)
+DBG('TODO: _Ext_Req', me.tag)
         return node('Nothing', me.ln)
     end,
 

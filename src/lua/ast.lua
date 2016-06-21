@@ -17,15 +17,16 @@ function AST.isNode (node)
 end
 
 AST.tag2id = {
-    Prim = 'primitive',
-    Nat  = 'native',
-    Var  = 'variable',
-    Vec  = 'vector',
-    Pool = 'pool',
-    Evt  = 'event',
-    Ext  = 'external',
-    Code = 'code',
-    Data = 'data',
+    Prim     = 'primitive',
+    Nat      = 'native',
+    Var      = 'variable',
+    Vec      = 'vector',
+    Pool     = 'pool',
+    Evt      = 'event',
+    Ext      = 'external',
+    Ext_Code = 'external code',
+    Code     = 'code',
+    Data     = 'data',
 }
 
 function AST.isParent (n1, n2)
