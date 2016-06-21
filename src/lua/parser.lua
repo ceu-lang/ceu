@@ -454,22 +454,22 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     -- EXTS
 
     -- call
-    , __extcall = (CK'input' + CK'output')
+    , __extcode = (CK'input' + CK'output') * K'/instantaneous'
                     * OPT(CK'/recursive')
                     * V'__ID_ext'
-    , Extcall_proto  = V'__extcall' * (V'Typepars_ids'+V'Typepars_anon') *
+    , _Ext_Code_proto  = V'__extcode' * (V'Typepars_ids'+V'Typepars_anon') *
                                         KK'=>' * V'Type'
-    , _Extcall_impl  = V'__extcall' * V'Typepars_ids' *
+    , _Ext_Code_impl  = V'__extcode' * V'Typepars_ids' *
                                         KK'=>' * V'Type' *
                        V'__Do'
 
     -- req
-    , __extreq = (CK'input/output' + CK'output/input')
+    , __extreq = (CK'input/output' + CK'output/input') * K'/delayed'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
                    * V'__ID_ext'
-    , _Extreq_proto = V'__extreq' * (V'Typepars_ids'+V'Typepars_anon') *
+    , _Ext_Req_proto = V'__extreq' * (V'Typepars_ids'+V'Typepars_anon') *
                                         KK'=>' * V'Type'
-    , _Extreq_impl  = V'__extreq' * V'Typepars_ids' *
+    , _Ext_Req_impl  = V'__extreq' * V'Typepars_ids' *
                                         KK'=>' * V'Type' *
                       V'__Do'
 
@@ -648,9 +648,9 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , _Set_Emit_Wclock    = #K'emit'          * V'Emit_Wclock'
     , _Set_Emit_Ext_emit  = #K'emit'          * V'Emit_Ext_emit'
     , _Set_Emit_Ext_req   = #K'request'       * V'Emit_Ext_req'
-    , _Set_Emit_Ext_call  = #V'__extcall_pre' * V'Emit_Ext_call'
+    , _Set_Emit_Ext_call  = #V'__extcode_pre' * V'Emit_Ext_call'
 
-    , __extcall_pre = (K'call/recursive'+K'call') * V'ID_ext'
+    , __extcode_pre = (K'call/recursive'+K'call') * V'ID_ext'
     , __lua_pre     = KK'[' * (P'='^0) * '['
     , __vec_pre     = KK'[' - V'__lua_pre'
     , __data_pre    = K'new'^-1 * V'__ID_abs'
@@ -797,7 +797,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'_Evts_set'  + V'_Evts'
                  + V'_Exts'
                  + V'_Data_simple'
-                 + V'_Code_proto' + V'Extcall_proto' + V'_Extreq_proto'
+                 + V'_Code_proto' + V'_Ext_Code_proto' + V'_Ext_Req_proto'
                  + V'_Nats'  + V'Nat_End'
                  + V'Deterministic'
                  + V'_Set'
@@ -811,7 +811,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                  + V'Exp_Call' -- TODO: ambiguous with Nat_Stmt
                  + V'Nat_Stmt'
 
-    , __Stmt_Block = V'_Code_impl' + V'_Extcall_impl' + V'_Extreq_impl'
+    , __Stmt_Block = V'_Code_impl' + V'_Ext_Code_impl' + V'_Ext_Req_impl'
               + V'_Data_block'
               + V'Nat_Block'
               + V'Do'    + V'If'

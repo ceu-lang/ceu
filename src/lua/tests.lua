@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17703,7 +17704,8 @@ var& _t t;
 t.ptr = &_f(&&v);
 escape *(t.ptr);
 ]],
-    ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    stmts = 'line 13 : invalid binding : expected declaration with `&´',
+    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
 
@@ -21681,7 +21683,7 @@ output Z  (var int)=>int;
 emit Z=>1;
 escape 1;
 ]],
-    env = 'line 2 : invalid `emit´',
+    tmp = 'line 2 : invalid `emit´',
     --run = 1,
 }
 
@@ -58410,7 +58412,6 @@ escape 1;
     gcc = 'error: unknown type name ‘SDL_Texture’',
 }
 
---]===]
 Test { [[
 pre native do
     typedef struct {
