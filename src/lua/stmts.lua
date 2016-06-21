@@ -9,8 +9,10 @@ local function check (me, to_tp, fr_tp, err_msg)
         end
     end
 
-    ASR(TYPES.contains(to_tp,fr_tp), me,
-        err_msg..' : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
+    local ok, pos = TYPES.contains(to_tp,fr_tp)
+    pos = (pos and '(position #'..pos..') ') or ''
+    ASR(ok, me,
+        err_msg..' : types mismatch '..pos..': "'..to_str..'" <= "'..fr_str..'"')
 end
 
 F = {
@@ -192,6 +194,24 @@ DBG(e.tag)
 
         -- tp
         check(me, ID_ext.dcl[1], ps.dcl[1], 'invalid `emit´')
+    end,
+
+    Exp_Call = function (me)
+        local _, e, ps = unpack(me)
+
+        -- tp
+        if e.tag == 'ID_abs' then
+            -- ABS CALL
+            local _,_,_,ins = unpack(e.dcl)
+            local Typelist = AST.node('Typelist', me)
+            for i, item in ipairs(ins) do
+                local Type = AST.asr(item,'Typepars_ids_item', 4,'Type')
+                Typelist[i] = Type
+            end
+            check(me, Typelist, ps.dcl[1], 'invalid call')
+        else
+            -- NATIVE CALL
+        end
     end,
 
 -- VARLIST, EXPLIST

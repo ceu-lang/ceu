@@ -17892,6 +17892,16 @@ escape 1;
 }
 
 Test { [[
+code/instantaneous Fx (var u8 v)=>int do
+    escape v as int;
+end
+var s8 i = 0;
+escape Fx(i);
+]],
+    stmts = 'line 5 : invalid call : types mismatch : "(u8)" <= "(s8)"',
+}
+
+Test { [[
 var int x;
 do
     x = 1;
@@ -44080,7 +44090,7 @@ code/instantaneous Fx (var int v)=>int do
 end
 escape Fx();
 ]],
-    env = 'line 4 : arity mismatch',
+    stmts = 'line 4 : invalid call : types mismatch : "(int)" <= "()"',
 }
 
 Test { [[
@@ -44090,7 +44100,7 @@ end
 var int&& ptr;
 escape Fx(ptr);
 ]],
-    env = 'line 5 : wrong argument #1',
+    stmts = 'line 5 : invalid call : types mismatch : "(int)" <= "(int&&)"',
 }
 
 Test { [[
@@ -44308,6 +44318,19 @@ end
 escape Fx(1,2);
 ]],
     run = 3,
+}
+
+Test { [[
+code/instantaneous Fx (var int, var int) => int;
+code/instantaneous Fx (var int a, var  int b) => int do
+    escape a + b;
+end
+code/instantaneous Fx (var int a, var  int b) => int do
+    escape a + b;
+end
+escape Fx(1,2);
+]],
+    dcls = 'line 5 : invalid declaration : body for `code´ "Fx" already exists',
 }
 
 Test { [[
@@ -44653,6 +44676,7 @@ call/recursive Fa();
 
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 

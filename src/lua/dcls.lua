@@ -87,6 +87,7 @@ local function dcls_new (blk, me, can_cross)
 
     blk.dcls[#blk.dcls+1] = me
     blk.dcls[me.id] = me
+    return me
 end
 
 function DCLS.new (me, id, ...)
@@ -254,24 +255,20 @@ F = {
     -- CODE / DATA
 
     Code = function (me)
-        local _,_,id,_,_blk = unpack(me)
+        local _,_,id,_,_,blk = unpack(me)
         me.id = id
 
-        local dcl = dcls_get(AST.par(me,'Block'), me.id, true)
-        if (not dcl) or dcl.blk then
-        --if not (dcl and dcl.blk) then
-            dcls_new(AST.par(me,'Block'), me)
-            dcl = me
+        local old = dcls_get(AST.par(me,'Block'), me.id, true)
+        if old then
+            local _,_,_,_,_,blk2 = unpack(old)
+            ASR(not (blk and blk2), me, 'invalid declaration : body for `code´ "'..id..'" already exists')
+DBG'TODO: CHECK prototype'
         end
 
-        -- CHECK prototype
-        if me ~= dcl then
-            -- ...
-        end
-        if blk then
-            assert(not dcl.blk)
-            dcl.blk = blk
-        end
+        local blk = AST.par(me,'Block')
+        blk.dcls[#blk.dcls+1] = me
+        blk.dcls[me.id] = me
+        me.is_used = (old and old.is_used)
     end,
 
     Data = function (me)

@@ -551,6 +551,17 @@ error 'TODO: remove all tests above when this never fails again'
         end
         return ret
     end,
+    Exp_Call__PRE = function (me)
+        local _,_, ps = unpack(me)
+        if ps and ps.tag == 'Explist' then
+            -- ok
+        else
+            me[3] = node('Explist', me.ln)
+            if ps then
+                me[3][1] = ps
+            end
+        end
+    end,
 
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
