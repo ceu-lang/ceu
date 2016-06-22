@@ -45104,7 +45104,7 @@ await OS_START;
 escape t.v + t.f(20) + t.v;
 ]],
     wrn = true,
-    env = 'line 8 : function declaration does not match the one at "tests.lua:3"',
+    tmp = 'line 8 : function declaration does not match the one at "tests.lua:3"',
 }
 
 Test { [[
@@ -45227,7 +45227,7 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    env = 'line 9 : function declaration does not match the one at "tests.lua:2"',
+    tmp = 'line 9 : function declaration does not match the one at "tests.lua:2"',
 }
 
 Test { [[
@@ -45253,7 +45253,7 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    env = 'line 9 : function declaration does not match the one at "tests.lua:2"',
+    tmp = 'line 9 : function declaration does not match the one at "tests.lua:2"',
 }
 
 Test { [[
@@ -45536,7 +45536,7 @@ end
 escape 1;
 ]],
     --run = 120,
-    env = 'line 9 : function declaration does not match the one at "tests.lua:2"',
+    tmp = 'line 9 : function declaration does not match the one at "tests.lua:2"',
 }
 
 Test { [[
@@ -45688,7 +45688,7 @@ var I&& i = &&t;
 escape i:_ins() + t._ins();;
 ]],
     --env = 'line 14 : native function "CEU_T__ins" is not declared',
-    env = 'line 13 : types mismatch (`I&&´ <= `Tx&&´)',
+    tmp = 'line 13 : types mismatch (`I&&´ <= `Tx&&´)',
 }
 
 Test { [[
@@ -45721,7 +45721,7 @@ interface Fx with
     var int i=10;
 end
 ]],
-    env = 'line 3 : invalid attribution',
+    tmp = 'line 3 : invalid attribution',
 }
 
 Test { [[
@@ -45930,7 +45930,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 5 : function declaration does not match the one at "tests.lua:3"',
+    tmp = 'line 5 : function declaration does not match the one at "tests.lua:3"',
 }
 
 Test { [[
@@ -46058,7 +46058,7 @@ call i:Fx();
 
 escape 1;
 ]],
-    env = 'line 2 : function declaration does not match the one at "tests.lua:7"',
+    tmp = 'line 2 : function declaration does not match the one at "tests.lua:7"',
     --tight = 'line 2 : function must be declared with `recursive´',
 }
 
@@ -46137,7 +46137,7 @@ call/recursive i:Fx();
 
 escape 1;
 ]],
-    env = 'line 2 : function declaration does not match the one at "tests.lua:7"',
+    tmp = 'line 2 : function declaration does not match the one at "tests.lua:7"',
 }
 
 Test { [[
@@ -46438,7 +46438,7 @@ var IWorld&&? ptr = spawn World with end;
 
 escape 1;
 ]],
-    env = 'line 2 : undeclared type `PinguHolder´',
+    tmp = 'line 2 : undeclared type `PinguHolder´',
 }
 
 Test { [[
@@ -46457,7 +46457,7 @@ var IWorld&&? ptr = spawn World with end;
 
 escape 1;
 ]],
-    env = 'line 2 : undeclared type `PinguHolder´',
+    tmp = 'line 2 : undeclared type `PinguHolder´',
 }
 
 Test { [[
@@ -46476,7 +46476,7 @@ var IWorld&&? ptr = spawn World with end;
 
 escape 1;
 ]],
-    env = 'line 2 : undeclared type `PinguHolder´',
+    tmp = 'line 2 : undeclared type `PinguHolder´',
 }
 
 Test { [[
@@ -46605,7 +46605,7 @@ var Tx t;
 
 escape t.Fx();
 ]],
-    env = 'line 6 : invalid escape value : types mismatch (`int&&´ <= `int&´)',
+    tmp = 'line 6 : invalid escape value : types mismatch (`int&&´ <= `int&´)',
 }
 
 Test { [[
@@ -47427,7 +47427,7 @@ end;
 
 escape v!;
 ]],
-    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+    tmp = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
 Test { [[
 native do
@@ -47481,7 +47481,7 @@ end;
 
 escape v!;
 ]],
-    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+    tmp = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
 
 Test { [[
@@ -47926,7 +47926,7 @@ ts = [] .. [&&t];
 
 escape ts[0] == &&t;
 ]],
-    env = 'line 9 : invalid operands to binary "=="',
+    tmp = 'line 9 : invalid operands to binary "=="',
 }
 
 Test { [[
@@ -49631,7 +49631,7 @@ end
 pool[] Unit units;
 escape 1;
 ]],
-    env = 'line 3 : interface "Global" is not defined',
+    tmp = 'line 3 : interface "Global" is not defined',
     --env = 'line 3 : undeclared type `Unit´',
 }
 Test { [[
@@ -49645,7 +49645,7 @@ end
 pool[] Unit units;
 escape 1;
 ]],
-    env = 'line 2 : undeclared type `Unit´',
+    tmp = 'line 2 : undeclared type `Unit´',
 }
 Test { [[
 interface U with end;
@@ -49688,7 +49688,7 @@ Test { [[
     end
     escape 1;
 ]],
-    env = 'line 2 : undeclared type `QueueForever´',
+    tmp = 'line 2 : undeclared type `QueueForever´',
 }
 Test { [[
     var Queue q;
@@ -49698,7 +49698,7 @@ Test { [[
     end
     escape 1;
 ]],
-    env = 'line 1 : undeclared type `Queue´',
+    tmp = 'line 1 : undeclared type `Queue´',
 }
 Test { [[
     class Queue with
@@ -49708,7 +49708,7 @@ Test { [[
     var Queue q;
     escape 1;
 ]],
-    env = 'line 3 : undeclared type `Queue´',
+    tmp = 'line 3 : undeclared type `Queue´',
 }
 Test { [[
     class Queue with
@@ -49733,7 +49733,7 @@ Test { [[
 
     escape 1;
 ]],
-    env = 'line 2 : undeclared type `QueueForever´',
+    tmp = 'line 2 : undeclared type `QueueForever´',
 }
 Test { [[
     interface I with
@@ -49742,7 +49742,7 @@ Test { [[
     spawn I;
     escape 1;
 ]],
-    env = 'line 4 : cannot instantiate an interface',
+    tmp = 'line 4 : cannot instantiate an interface',
 }
 Test { [[
     class QueueForever with
@@ -49787,7 +49787,7 @@ Test { [[
     end
     escape 0;
 ]],
-    env = 'line 2 : undeclared type `QueueForever´',
+    tmp = 'line 2 : undeclared type `QueueForever´',
 }
 
 Test { [[escape(1);]],
@@ -50297,7 +50297,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 6 : invalid event type',
+    tmp = 'line 6 : invalid event type',
     --env = 'line 14 : wrong argument : cannot pass pointers',
     --run = 10,
 }
@@ -50324,7 +50324,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 6 : invalid event type',
+    tmp = 'line 6 : invalid event type',
     --env = 'line 14 : wrong argument : cannot pass pointers',
     --run = 10,
     safety = 2,
@@ -50353,7 +50353,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 6 : invalid event type',
+    tmp = 'line 6 : invalid event type',
     --env = 'line 14 : wrong argument : cannot pass pointers',
     --fin = 'line 18 : unsafe access to pointer "p" across `async´'
 }
@@ -50385,7 +50385,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 10 : invalid event type',
+    tmp = 'line 10 : invalid event type',
     --env = 'line 18 : wrong argument : cannot pass pointers',
     --fin = 'line 22 : unsafe access to pointer "p" across `async´',
 }
@@ -50816,7 +50816,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 6 : invalid event type',
+    tmp = 'line 6 : invalid event type',
     --env = 'line 14 : wrong argument : cannot pass pointers',
     --run = { ['~>5s']=1 },
 }
@@ -50852,7 +50852,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 6 : invalid event type',
+    tmp = 'line 6 : invalid event type',
     --env = 'line 14 : wrong argument : cannot pass pointers',
     --run = { ['~>5s']=1 },
     safety = 2,
@@ -50888,7 +50888,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 6 : invalid event type',
+    tmp = 'line 6 : invalid event type',
     --env = 'line 14 : wrong argument : cannot pass pointers',
     --run = { ['~>5s']=1 },
 }
@@ -50925,7 +50925,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 7 : invalid event type',
+    tmp = 'line 7 : invalid event type',
     --env = 'line 15 : wrong argument : cannot pass pointers',
     --run = { ['~>10s']=10 },
 }
@@ -50962,7 +50962,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 7 : invalid event type',
+    tmp = 'line 7 : invalid event type',
     --env = 'line 15 : wrong argument : cannot pass pointers',
     --run = { ['~>10s']=-1 },
 }
@@ -50999,7 +50999,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 7 : invalid event type',
+    tmp = 'line 7 : invalid event type',
     --env = 'line 15 : wrong argument : cannot pass pointers',
     --run = { ['~>10s']=10 },
 }
@@ -51014,7 +51014,7 @@ event Tx&& e;
 emit e => null;
 escape 1;
 ]],
-    env = 'line 6 : invalid event type',
+    tmp = 'line 6 : invalid event type',
     --env = 'line 7 : wrong argument : cannot pass pointers',
     --run = 1;
 }
@@ -51052,7 +51052,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 7 : invalid event type',
+    tmp = 'line 7 : invalid event type',
     --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
@@ -51089,7 +51089,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 7 : invalid event type',
+    tmp = 'line 7 : invalid event type',
     --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s']=1 },
 }
@@ -51127,7 +51127,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 7 : invalid event type',
+    tmp = 'line 7 : invalid event type',
     --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
@@ -51165,7 +51165,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 7 : invalid event type',
+    tmp = 'line 7 : invalid event type',
     --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=10 },
 }
@@ -51202,7 +51202,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 7 : invalid event type',
+    tmp = 'line 7 : invalid event type',
     --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s;~>1s']=-1 },
 }
@@ -51523,7 +51523,7 @@ end
 var int v = await t.ok;
 escape v;
 ]],
-    env = 'line 6 : invalid event type',
+    tmp = 'line 6 : invalid event type',
     --env = 'line 25 : wrong argument : cannot pass pointers',
     --run = { ['~>2s']=1 },
 }
@@ -52617,7 +52617,7 @@ i = &&c;
 escape 1;
 ]],
     wrn = true,
-    env = 'line 12 : types mismatch (`Controller&&´ <= `KeyController&&´)',
+    tmp = 'line 12 : types mismatch (`Controller&&´ <= `KeyController&&´)',
 }
 
 Test { [[
@@ -52663,119 +52663,6 @@ escape ret;
 ]],
     run = 6,
 }
-
--- AWAITS // Await MANY // SELECT
-
---[=[
-Test { [[
-await (10ms);
-escape 1;
-]],
-    parser = 'line 1 : after `)´ : expected `or´',
-}
-Test { [[
-await (10ms) or (20ms);
-escape 1;
-]],
-    env = 'line 1 : invalid await: multiple timers',
-}
-Test { [[
-await ((10)ms);
-escape 1;
-]],
-    parser = 'line 1 : after `)´ : expected `or´',
-}
-
-Test { [[
-await (e) or
-      (f);
-escape 1;
-]],
-    dcls = 'line 1 : internal identifier "e" is not declared',
-}
-
-Test { [[
-event void e;
-var int f;
-await (e) or
-      (f);
-escape 1;
-]],
-    env = 'line 3 : event "f" is not declared',
-}
-
-Test { [[
-event void e;
-event int f;
-input void OS_START;
-await (e) or
-      (f) or
-      (OS_START);
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-await (10ms) or (OS_START);
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-var int&& x = await (10ms) or (OS_START);
-escape 1;
-]],
-    env = 'line 2 : invalid attribution',
-}
-
-Test { [[
-input void OS_START;
-par/or do
-    loop do
-        await (OS_START) or (OS_START);
-    end
-with
-    await OS_START;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-await (10ms) or (OS_START)
-        until 1;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-var int i = await (10ms) or (OS_START)
-        until i==1;
-escape i;
-]],
-    run = 1,
-}
-Test { [[
-input void OS_START;
-var int i = await (10ms) or (OS_START)
-        until i==0;
-escape i+1;
-]],
-    run = {['~>10ms']=1},
-}
-]=]
-
---do return end
-
--- GLOBAL AWAITS (deprecated)
 
 Test { [[
 input void A, B;
@@ -53522,7 +53409,7 @@ end
 var int i = 10;
 escape i;
 ]],
-    env = 'line 4 : top-level identifier "Tx" already taken',
+    tmp = 'line 4 : top-level identifier "Tx" already taken',
     --env = 'tests.lua : line 4 : interface/class "Tx" is already declared',
 }
 
@@ -53542,7 +53429,7 @@ end
 var int i = 10;
 escape i;
 ]],
-    env = 'line 1 : top-level identifier "Tx" already taken',
+    tmp = 'line 1 : top-level identifier "Tx" already taken',
     --env = '/tmp/_ceu_MOD1.ceu : line 1 : interface/class "Tx" is already declared',
 }
 
@@ -53560,7 +53447,7 @@ end
 var int i = 10;
 escape i;
 ]],
-    env = 'line 2 : top-level identifier "Global" already taken',
+    tmp = 'line 2 : top-level identifier "Global" already taken',
     --env = 'line 2 : interface/class "Global" is already declared',
 }
 
@@ -54693,7 +54580,7 @@ input/output [10] LINE (var int max)=>byte&&;
 request LINE;
 escape 1;
 ]],
-    env = 'line 2 : arity mismatch',
+    tmp = 'line 2 : arity mismatch',
     --env = 'line 2 : missing parameters on `emit´',
 }
 
@@ -54702,7 +54589,7 @@ input/output [10] LINE (var int max)=>byte&&;
 request LINE => "oi";
 escape 1;
 ]],
-    env = 'line 2 : wrong argument #2',
+    tmp = 'line 2 : wrong argument #2',
 }
 
 Test { [[
@@ -54819,7 +54706,7 @@ with
 end
 escape 1;
 ]],
-    env = 'line 8 : payload "ret" must be an option type',
+    tmp = 'line 8 : payload "ret" must be an option type',
 }
 
 Test { [[
@@ -54844,7 +54731,7 @@ input/output [10] LINE (var int max)=>byte&&;
 request LINE;
 escape 1;
 ]],
-    env = 'line 2 : arity mismatch',
+    tmp = 'line 2 : arity mismatch',
     --env = 'line 2 : missing parameters on `emit´',
 }
 
@@ -54853,7 +54740,7 @@ input/output [10] LINE (var int max)=>byte&&;
 request LINE => "oi";
 escape 1;
 ]],
-    env = 'line 2 : wrong argument #2',
+    tmp = 'line 2 : wrong argument #2',
 }
 
 Test { [[
@@ -54879,6 +54766,16 @@ escape 1;
 }
 
 Test { [[
+input int LINE;
+var int? ret;
+ret = await LINE;
+escape ret!;
+]],
+    run = { ['10~>LINE'] = 10 },
+    --env = 'line 4 : wrong argument #2',
+}
+
+Test { [[
 input (int, byte&&) LINE;
 var u8 err;
 var u8? ret;
@@ -54895,7 +54792,7 @@ var u8? ret;
 (err, ret) = request LINE => 10;
 escape 1;
 ]],
-    env = 'line 4 : wrong argument #3',
+    tmp = 'line 4 : wrong argument #3',
     --env = 'line 3 : invalid attribution (u8 vs byte&&)',
 }
 
@@ -55504,13 +55401,13 @@ Test { [[
 class Tx with do end
 output Tx OUT;
 ]],
-    env = 'line 2 : invalid event type',
+    tmp = 'line 2 : invalid event type',
 }
 Test { [[
 class Tx with do end
 output Tx&& OUT;
 ]],
-    env = 'line 2 : invalid event type',
+    tmp = 'line 2 : invalid event type',
 }
 
 -- TODO: dropped support for i/o vectors
