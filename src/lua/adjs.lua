@@ -79,11 +79,13 @@ F = {
                         unpack(me, 3))))
     end,
 
+    _Ext_Req_proto  = '_Code_proto',
     _Ext_Code_proto = '_Code_proto',
     _Code_proto = function (me)
         me.tag = string.match(me.tag,'_(.*)_proto')
     end,
 
+    _Ext_Req_impl__PRE  = '_Code_impl__PRE',
     _Ext_Code_impl__PRE = '_Code_impl__PRE',
     _Code_impl__PRE = function (me)
         local pre, is_rec, id, ins, out, blk = unpack(me)
@@ -143,14 +145,6 @@ F = {
             end
         end
         table.insert(stmts_old, 1, dcls)
-    end,
-
-    Emit_Ext_req__PRE = '_Ext_Req_proto__PRE',
-    _Ext_Req_impl__PRE = '_Ext_Req_proto__PRE',
-    _Ext_Req_proto__PRE = function (me)
--- TODO
-DBG('TODO: _Ext_Req', me.tag)
-        return node('Nothing', me.ln)
     end,
 
 -------------------------------------------------------------------------------
@@ -359,11 +353,12 @@ DBG('TODO: _Loop_Pool')
 
         -----------------------------------------------------------------------
 
-        if set.tag=='_Set_Exp'          or set.tag=='_Set_None'       or
-           set.tag=='_Set_Await_one'    or set.tag=='_Set_Await_many' or
+        if set.tag=='_Set_Exp'          or set.tag=='_Set_None'          or
+           set.tag=='_Set_Await_one'    or set.tag=='_Set_Await_many'    or
            set.tag=='_Set_Vec'          or set.tag=='_Set_Emit_Ext_emit' or
-           set.tag=='_Set_Async_Thread' or set.tag=='_Set_Lua' or
-           set.tag=='_Set_Data'         or set.tag=='_Set_Emit_Ext_call'
+           set.tag=='_Set_Async_Thread' or set.tag=='_Set_Lua'           or
+           set.tag=='_Set_Data'         or set.tag=='_Set_Emit_Ext_call' or
+           set.tag=='_Set_Emit_Ext_req'
         then
             --  _Set
             --      to

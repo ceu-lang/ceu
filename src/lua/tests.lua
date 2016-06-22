@@ -21187,7 +21187,7 @@ Test { [[
 output xxx A;
 escape(1);
 ]],
-    parser = 'line 1 : after `output´ : expected `(´ or type or `/instantaneous´',
+    parser = 'line 1 : after `output´ : expected `(´ or type',
 }
 Test { [[
 native do
@@ -21226,14 +21226,14 @@ output t A;
 emit A => 1;
 escape(1);
 ]],
-    parser = 'after `output´ : expected `(´ or type or `/instantaneous´',
+    parser = 'after `output´ : expected `(´ or type',
 }
 Test { [[
 output t A;
 emit A => 1;
 escape(1);
 ]],
-    parser = 'after `output´ : expected `(´ or type or `/instantaneous´',
+    parser = 'after `output´ : expected `(´ or type',
 }
 Test { [[
 native _t;
@@ -21682,14 +21682,14 @@ Test { [[
 output Z  (var int)=>int;
 escape call Z=>1;
 ]],
-    parser = 'line 1 : after `output´ : expected `(´ or type or `/instantaneous´',
+    parser = 'line 1 : after `output´ : expected `(´ or type',
     --parser = 'line 2 : after `call´ : expected expression',
     --parser = 'line 2 : after `Z´ : expected `;´',
     --parser = 'line 2 : after `Z´ : expected `(´',
 }
 
 Test { [[
-output/instantaneous Z  (var int)=>int;
+output/input/instantaneous Z  (var int)=>int;
 escape call Z=>1;
 ]],
     parser = 'line 2 : after `call´ : expected name expression',
@@ -21699,7 +21699,7 @@ escape call Z=>1;
 }
 
 Test { [[
-output/instantaneous Z  (var int)=>int;
+output/input/instantaneous Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
@@ -21707,7 +21707,7 @@ escape 1;
 }
 
 Test { [[
-output/instantaneous Z  (var int)=>int;
+output/input/instantaneous Z  (var int)=>int;
 emit Z=>1;
 escape 1;
 ]],
@@ -21722,7 +21722,7 @@ native do
         escape v+1;
     }
 end
-output/instantaneous Z  (var int)=>int;
+output/input/instantaneous Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
@@ -21737,7 +21737,7 @@ native do
         escape *v+1;
     }
 end
-output/instantaneous Z  (var int)=>int;
+output/input/instantaneous Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
@@ -21751,7 +21751,7 @@ native do
         escape *v+1;
     }
 end
-output/instantaneous Z  (var int)=>int;
+output/input/instantaneous Z  (var int)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
@@ -21765,7 +21765,7 @@ native do
         escape v+1;
     }
 end
-output/instantaneous Z  (var int)=>int;
+output/input/instantaneous Z  (var int)=>int;
 var int ret = call Z=>(1,2);
 escape ret;
 ]],
@@ -21833,7 +21833,7 @@ native do
         escape p->_1 + p->_2;
     }
 end
-output/instantaneous Z  (var int, var int)=>int;
+output/input/instantaneous Z  (var int, var int)=>int;
 var int ret = call Z=>(1,2);
 escape ret;
 ]],
@@ -21853,7 +21853,7 @@ native do
         escape (evt == CEU_OUT_F) + *p;
     }
 end
-output/instantaneous Z  (var int)=>int;
+output/input/instantaneous Z  (var int)=>int;
 var int ret = (call Z=>2);
 escape ret;
 ]],
@@ -21916,7 +21916,7 @@ native do
         escape (evt == CEU_OUT_F) + *p;
     }
 end
-output/instantaneous Z  (var int)=>int;
+output/input/instantaneous Z  (var int)=>int;
 par/and do
     call Z=>1;
 with
@@ -21931,7 +21931,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous Z,W  (var int a)=>int do
+input/output/instantaneous Z,W  (var int a)=>int do
     escape a + 1;
 end
 ]],
@@ -21940,10 +21940,10 @@ end
 }
 
 Test { [[
-input/instantaneous Z  (var int a)=>int do
+input/output/instantaneous Z  (var int a)=>int do
     escape a + 1;
 end
-input/instantaneous W  (var int a)=>int;
+input/output/instantaneous W  (var int a)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
@@ -21951,10 +21951,10 @@ escape ret;
 }
 
 Test { [[
-input/instantaneous Z  (var int a)=>int do
+input/output/instantaneous Z  (var int a)=>int do
     escape a + 1;
 end
-input/instantaneous W  (var int a)=>int;
+input/output/instantaneous W  (var int a)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
@@ -21964,7 +21964,7 @@ escape ret;
 }
 
 Test { [[
-input/instantaneous Z  (var int a)=>void do
+input/output/instantaneous Z  (var int a)=>void do
     v = a;
 end
 var int v = 0;
@@ -21978,7 +21978,7 @@ escape v;
 Test { [[
 native/nohold _fprintf, _stderr;
 var int v = 0;
-input/instantaneous Z  (var int a)=>void do
+input/output/instantaneous Z  (var int a)=>void do
     this.v = a;
     _fprintf(_stderr,"a=%d v=%d\n", a, v);
 end
@@ -21993,10 +21993,10 @@ escape this.v;
 
 Test { [[
 var int v = 0;
-input/instantaneous W  (var int a)=>int do
+input/output/instantaneous W  (var int a)=>int do
     escape a + 1;
 end
-input/instantaneous Z  (var int a)=>void do
+input/output/instantaneous Z  (var int a)=>void do
     this.v = call W=>a;
 end
 call Z=>1;
@@ -22032,7 +22032,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous A  (void)=>void do
+input/output/instantaneous A  (void)=>void do
 end
 escape 1;
 ]],
@@ -22041,7 +22041,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous A  (var u8 a, var  int a)=>void do
+input/output/instantaneous A  (var u8 a, var  int a)=>void do
     v = 1;
 end
 call A => ();
@@ -22051,7 +22051,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous A  (var void a, var  int v)=>void do
+input/output/instantaneous A  (var void a, var  int v)=>void do
     v = 1;
 end
 escape 1;
@@ -22063,7 +22063,7 @@ escape 1;
 Test { [[
 input void OS_START;
 var int v = 0;
-input/instantaneous A  (void)=>void do
+input/output/instantaneous A  (void)=>void do
     v = 1;
 end
 call A;
@@ -22074,7 +22074,7 @@ escape v;
 }
 
 Test { [[
-input/instantaneous WRITE  (var int c)=>int do
+input/output/instantaneous WRITE  (var int c)=>int do
     escape c + 1;
 end
 var byte b = 1;
@@ -22086,10 +22086,10 @@ escape ret;
 
 Test { [[
 native ___ceu_nothing;
-input/instantaneous IA  (var int c)=>int do
+input/output/instantaneous IA  (var int c)=>int do
     escape c + 1;
 end
-input/instantaneous IB  (var int c)=>void do
+input/output/instantaneous IB  (var int c)=>void do
     ___ceu_nothing(&&c);
 end
 call IB => 0;
@@ -25135,23 +25135,23 @@ native do
 end
 
 native ___ceu_nothing;
-input/instantaneous OPEN  (var byte&& path, var  byte&& mode)=>_Fx&& do
+input/output/instantaneous OPEN  (var byte&& path, var  byte&& mode)=>_Fx&& do
     ___ceu_nothing(path);
     ___ceu_nothing(mode);
     escape _fff;
 end
 
-input/instantaneous CLOSE  (var _Fx&& f)=>int do
+input/output/instantaneous CLOSE  (var _Fx&& f)=>int do
     ___ceu_nothing(f);
     escape 1;
 end
 
-input/instantaneous SIZE  (var _Fx&& f)=>int do
+input/output/instantaneous SIZE  (var _Fx&& f)=>int do
     ___ceu_nothing(f);
     escape 1;
 end
 
-input/instantaneous READ  (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)=>int do
+input/output/instantaneous READ  (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)=>int do
     ___ceu_nothing(ptr);
     ___ceu_nothing(&&size);
     ___ceu_nothing(&&nmemb);
@@ -25177,7 +25177,7 @@ end
 
 native ___ceu_nothing;
 native/plain _draw_string_t;
-input/instantaneous DRAW_STRING  (var _draw_string_t&& ptr)=>void do
+input/output/instantaneous DRAW_STRING  (var _draw_string_t&& ptr)=>void do
     ___ceu_nothing(ptr);
 end
 
@@ -44490,7 +44490,7 @@ escape Fff(x);
     run = 12,
 }
 Test { [[
-output/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
+output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
 code/instantaneous/recursive Load (var int&& l)=>void do
     loop i do
     end
@@ -44510,7 +44510,7 @@ native do
     ##define ceu_out_call_LUA_GETGLOBAL
 end
 
-output/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
+output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
 code/instantaneous/recursive Load (var int&& l)=>void do
     // TODO: load file
     call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
@@ -54716,7 +54716,7 @@ par/or do
     var byte&&? ret;
     var u8 err;
     (err, ret) = request LINE => 10;
-    if err and ret? then end;
+    if err!=0 and ret? then end;
 with
 end
 escape 1;
@@ -54775,12 +54775,13 @@ escape ret!;
 
 Test { [[
 input (int, byte&&) LINE;
-var u8 err;
+var int err;
 var u8? ret;
 (err, ret) = await LINE;
 escape 1;
 ]],
-    env = 'line 4 : wrong argument #2',
+    --env = 'line 4 : wrong argument #2',
+    stmts = 'line 4 : invalid assignment : types mismatch : "(int,u8?)" <= "(int,byte&&)"',
 }
 
 Test { [[
@@ -54887,17 +54888,18 @@ input/output/delayed [10] LINE (var int max)=>int do
 end
 escape ret;
 ]],
+    wrn = true,
     dcls = 'line 6 : internal identifier "ret" is not declared',
 }
 
 Test { [[
+native _V;
 par do
     native do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
     input/output/delayed [10] LINE (var int max)=>int do
-native _V;
         _V = 10;
         escape 1;
     end
@@ -54910,6 +54912,7 @@ with
     end
 end
 ]],
+    wrn = true,
     run = 11,
 }
 
@@ -55519,7 +55522,7 @@ escape ret;
 }
 
 Test { [[
-output/input SERIAL_CHAR (void)=>byte;
+output/input/delayed SERIAL_CHAR (void)=>byte;
 escape 1;
 ]],
     run = 1,
@@ -55531,7 +55534,7 @@ native do
 end
 
 input void OS_START;
-output/input SERIAL_CHAR (void)=>byte;
+output/input/delayed SERIAL_CHAR (void)=>byte;
 
 par/or do
     var int err;
@@ -55550,7 +55553,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
 end
-input/output SERIAL_CHAR (void)=>byte do
+input/output/delayed SERIAL_CHAR (void)=>byte do
     escape 'a';
 end
 escape 1;
@@ -55574,7 +55577,7 @@ native do
     }
 end
 
-input/output PING_PONG (var int x)=>byte[]&& do
+input/output/delayed PING_PONG (var int x)=>byte[]&& do
     vector[] byte ret = [].."Pong ";
     native/nohold _printf;
 native _char;
@@ -55593,7 +55596,7 @@ escape _V;
 }
 
 Test { [[
-output/input PING_PONG (var int x)=>byte[]&&;
+output/input/delayed PING_PONG (var int x)=>byte[]&&;
 vector[] byte&&? ret;
 par/and do
     var int i,err;
@@ -55638,7 +55641,7 @@ native do
     }
 end
 
-input/output [10] TEST (var u16 t)=>_info&& do
+input/output/delayed [10] TEST (var u16 t)=>_info&& do
     var _info i = _info(42,89);
     escape &&i;
 end
@@ -55677,7 +55680,7 @@ printf("RET %p %d\n", evt_buf, k->_2);
     }
 end
 
-input/output [10] TEST (var u16 t)=>_info&& do
+input/output/delayed [10] TEST (var u16 t)=>_info&& do
     var _info i = _info(42,89);
     await 1s;
     escape &&i;
@@ -55716,7 +55719,7 @@ var Test t with
 end;
 var Test&&? ptr = &&t;
 
-input/output RESOURCE [10] (void)=>void do
+input/output/delayed RESOURCE [10] (void)=>void do
 native _V;
     _V = global:ptr!:k;
 end
@@ -65937,7 +65940,7 @@ Test { [[
 native do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input LINE [10] (var int max)=>int;
+output/input/delayed LINE [10] (var int max)=>int;
 par/or do
     var u8 err;
     var u8? ret;
@@ -67276,7 +67279,7 @@ end
 -- PROCURAR XXX e recolocar tudo ate o ok la
 
 Test { [[
-input/instantaneous B  (var int a)=>int do
+input/output/instantaneous B  (var int a)=>int do
     escape a + 1;
 end
 var int ret = call B=>1;
@@ -67286,7 +67289,7 @@ escape ret;
 }
 
 Test { [[
-input/instantaneous WRITE  (var int c)=>int do
+input/output/instantaneous WRITE  (var int c)=>int do
     escape c + 1;
 end
 var byte b = 1;
@@ -67297,7 +67300,7 @@ escape ret;
 }
 
 Test { [[
-input/instantaneous B  (var int a, var  int b)=>int do
+input/output/instantaneous B  (var int a, var  int b)=>int do
     escape a + b;
 end
 var int ret = call B=>(1,2);
@@ -67312,7 +67315,7 @@ pre native do
     void lua_pushnil (lua_State* l) {}
 end
 
-input/instantaneous PUSHNIL  (var _lua_State* l)=>void do
+input/output/instantaneous PUSHNIL  (var _lua_State* l)=>void do
     _lua_pushnil(l);
 end
 escape 1;
@@ -67321,7 +67324,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous DRAW_STRING  (var byte* str, var int len, var int x, var  int y)=>int do
+input/output/instantaneous DRAW_STRING  (var byte* str, var int len, var int x, var  int y)=>int do
     escape x + y + len;
 end
 
@@ -67333,21 +67336,21 @@ escape ret;
 }
 
 Test { [[
-input/instantaneous MALLOC  (void)=>void*;
+input/output/instantaneous MALLOC  (void)=>void*;
 var void* ptr = (call MALLOC);
 ]],
     fin = 'line 2 : destination pointer must be declared with the `[]´ buffer modifier',
 }
 
 Test { [[
-input/instantaneous MALLOC  (void)=>void*;
+input/output/instantaneous MALLOC  (void)=>void*;
 vector[] void ptr = (call MALLOC);
 ]],
     fin = 'line 2 : attribution requires `finalize´',
 }
 
 Test { [[
-input/instantaneous MALLOC  (void)=>void*;
+input/output/instantaneous MALLOC  (void)=>void*;
 vector[] void ptr;
     do ptr = (call MALLOC);
 finalize with
@@ -67358,7 +67361,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous MALLOC  (var int, var int)=>void*;
+input/output/instantaneous MALLOC  (var int, var int)=>void*;
 vector[] void ptr;
     do ptr = (call MALLOC=>(1,1));
 finalize with
@@ -67369,7 +67372,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous MALLOC  (var int, var int)=>int;
+input/output/instantaneous MALLOC  (var int, var int)=>int;
 var int v;
     do v = (call MALLOC=>(1,1));
 finalize with
@@ -67380,7 +67383,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous MALLOC  (var int a, var int b, var  void* ptr)=>void* do
+input/output/instantaneous MALLOC  (var int a, var int b, var  void* ptr)=>void* do
     if a+b == 11 then
         escape ptr;
     else
@@ -67398,7 +67401,7 @@ escape ptr==&i;
     run = 1,
 }
 Test { [[
-input/instantaneous MALLOC  (var int a, var int b, var  void* ptr)=>void* do
+input/output/instantaneous MALLOC  (var int a, var int b, var  void* ptr)=>void* do
     if a+b == 11 then
         escape ptr;
     else
@@ -67417,7 +67420,7 @@ escape ptr==null;
 }
 
 Test { [[
-input/instantaneous MALLOC  (void)=>void*;
+input/output/instantaneous MALLOC  (void)=>void*;
 native _f;
 do
     var void* a;
@@ -67431,7 +67434,7 @@ end
 }
 
 Test { [[
-input/instantaneous B  (var void* v)=>void do
+input/output/instantaneous B  (var void* v)=>void do
     _V = v;
 end
 escape 1;
@@ -67440,7 +67443,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous B  (var void* v)=>void do
+input/output/instantaneous B  (var void* v)=>void do
     _V := v;
 end
 escape 1;
@@ -67452,7 +67455,7 @@ Test { [[
 native do
     void* V;
 end
-input/instantaneous B  (var/hold void* v)=>void do
+input/output/instantaneous B  (var/hold void* v)=>void do
     _V := v;
 end
 escape 1;
@@ -67461,7 +67464,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous B  (var byte* buf)=>void do
+input/output/instantaneous B  (var byte* buf)=>void do
 end;
 var byte* buf;
 call B => (buf);
@@ -67471,7 +67474,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous B  (var byte* buf, var  int i)=>void do
+input/output/instantaneous B  (var byte* buf, var  int i)=>void do
 end;
 var byte* buf;
 call B => (buf, 1);
@@ -67481,7 +67484,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous B  (void)=>void do
+input/output/instantaneous B  (void)=>void do
 end;
 var byte* buf;
 call B;
@@ -67491,7 +67494,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous B  (var byte* buf)=>void do
+input/output/instantaneous B  (var byte* buf)=>void do
 end;
 var byte* buf;
 call B => buf;
@@ -67501,7 +67504,7 @@ escape 1;
 }
 
 Test { [[
-input/instantaneous B  (var/hold byte* buf)=>void do
+input/output/instantaneous B  (var/hold byte* buf)=>void do
 end;
 var byte* buf;
 call B => buf;
@@ -67634,7 +67637,7 @@ escape _f(&v) == _V;
 }
 
 Test { [[
-input/instantaneous B  (var int* p1, var  int* p2)=>void;
+input/output/instantaneous B  (var int* p1, var  int* p2)=>void;
 do
     var int* p1 = null;
     do
@@ -67653,7 +67656,7 @@ native do
     #define ceu_out_call_VVV(x) x
 end
 
-output/instantaneous VVV  (var int n)=>int;
+output/input/instantaneous VVV  (var int n)=>int;
 var int v;
     do v = (call VVV => 10);
 finalize with
@@ -67670,7 +67673,7 @@ native do
     #define ceu_out_call_MALLOC(x) NULL
 end
 
-output/instantaneous MALLOC  (var int n)=>void*;
+output/input/instantaneous MALLOC  (var int n)=>void*;
 var byte* buf;
 buf = (call MALLOC => 10);
 escape 1;
@@ -67684,7 +67687,7 @@ native do
     #define ceu_out_call_SEND(x) 0
 end
 
-output/instantaneous SEND  (var byte* buf)=>void;
+output/input/instantaneous SEND  (var byte* buf)=>void;
 vector[255] byte buf;
 call SEND => buf;
 escape 1;
@@ -67703,7 +67706,7 @@ native do
     Fx* f;
     #define ceu_out_call_OPEN(x) f
 end
-output/instantaneous OPEN  (var byte* path, var  byte* mode)=>_Fx*;
+output/input/instantaneous OPEN  (var byte* path, var  byte* mode)=>_Fx*;
 
 // Default device
 vector[] _Fx f;
@@ -67714,10 +67717,10 @@ escape 1;
 }
 
 Test { [[
-output/instantaneous OPEN  (var byte* path, var  byte* mode)=>_Fx*;
-output/instantaneous CLOSE  (var _Fx* f)=>int;
-output/instantaneous SIZE  (var _Fx* f)=>int;
-output/instantaneous READ  (var void* ptr, var int size, var int nmemb, var  _Fx* f)=>int;
+output/input/instantaneous OPEN  (var byte* path, var  byte* mode)=>_Fx*;
+output/input/instantaneous CLOSE  (var _Fx* f)=>int;
+output/input/instantaneous SIZE  (var _Fx* f)=>int;
+output/input/instantaneous READ  (var void* ptr, var int size, var int nmemb, var  _Fx* f)=>int;
 
 // Default device
 vector[] _Fx f;

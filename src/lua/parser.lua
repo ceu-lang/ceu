@@ -450,7 +450,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     -- EXTS
 
     -- call
-    , __extcode = (CK'input' + CK'output') * K'/instantaneous'
+    , __extcode = (CK'input/output' + CK'output/input') * K'/instantaneous'
                     * OPT(CK'/recursive')
                     * V'__ID_ext'
     , _Ext_Code_proto  = V'__extcode' * (V'Typepars_ids'+V'Typepars_anon') *
@@ -465,9 +465,11 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
                    * V'__ID_ext'
     , _Ext_Req_proto = V'__extreq' * (V'Typepars_ids'+V'Typepars_anon') *
                                         KK'=>' * V'Type'
+* EE'TODO: request'
     , _Ext_Req_impl  = V'__extreq' * V'Typepars_ids' *
                                         KK'=>' * V'Type' *
                       V'__Do'
+* EE'TODO: request'
 
     -- TYPEPARS
 
@@ -578,6 +580,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , Emit_Ext_emit = K'emit'                     * V'ID_ext' * V'_Emit_ps'
     , Emit_Ext_call = (K'call/recursive'+K'call') * V'ID_ext' * V'_Emit_ps'
     , Emit_Ext_req  = K'request'                  * V'ID_ext' * V'_Emit_ps'
+* EE'TODO: request'
 
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
