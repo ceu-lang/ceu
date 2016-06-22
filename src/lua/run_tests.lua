@@ -96,10 +96,7 @@ Test = function (t)
     if not check('stmts')    then return end
 do return end
 AST.dump(AST.root)
-    if not check('consts')   then return end
-    if not check('sval')     then return end
     if not check('env')      then return end
-    --if not check('exp')      then return end
     if not check('adt')      then return end
     if not check('mode')     then return end
     if not check('ref')      then return end

@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -23653,11 +23652,28 @@ native do
 end
 vector[2] int a  = [1,2];
 vector&[2] int b = &a;
-native _char;
-_f((&&b[0]) as _char&&);
+_f((&&b[0]) as byte&&);
 escape b[0] + b[1];
 ]],
-    env = 'line 10 : invalid type cast',
+    --env = 'line 10 : invalid type cast',
+    run = 5,
+}
+
+Test { [[
+native/nohold _f;
+native do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+vector[2] int a  = [1,2];
+vector&[2] int b = &a;
+_f((&&b[0]) as int&&);
+escape b[0] + b[1];
+]],
+    --env = 'line 10 : invalid type cast',
+    run = 5,
 }
 
 Test { [[
@@ -24026,7 +24042,8 @@ end
 vector[] byte str = [].."Ola Mundo!";
 escape Strlen(&&str[0]);
 ]],
-    env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
+    --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
+    run = 10,
 }
 
 Test { [[
@@ -24556,6 +24573,7 @@ escape p! ==null;
     --run = 1,
 }
 
+--]===]
 Test { [[
 var& void? p;
 p := { NULL };
@@ -44559,11 +44577,11 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/instantaneous F (var& int a)=>void do
+code/instantaneous Ff (var& int a)=>void do
     a = 1;
 end
 var int v;
-F(v);
+Ff(v);
 escape v;
 ]],
     tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
