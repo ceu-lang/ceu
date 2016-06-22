@@ -24380,10 +24380,13 @@ vector[1.5] u8 us = [];
 }
 
 Test { [[
+native _u8;
 native/const _U8_MAX;
-vector[_U8_MAX] u8 us = [];
+vector[_U8_MAX] _u8 us = [];
+escape 1;
 ]],
-    env = 'line 2 : dimension must be constant',
+    run = 1,
+    --env = 'line 2 : dimension must be constant',
 }
 
 Test { [[
@@ -24395,35 +24398,30 @@ us[_U8_MAX-1] = 10;
 us[0] = 1;
 escape us[0]+us[_U8_MAX-1];
 ]],
+    run = 'TODO: error',
+}
+
+Test { [[
+native _t_vec;
+native do
+    typedef int t_vec[10];
+end
+var _t_vec us = _;
+us[9] = 10;
+us[0] =  1;
+escape us[0]+us[9];
+]],
     run = 11,
 }
 
 Test { [[
-native/const _N;
-native _u8;
-pre native do
-    int N = 10;
-end
-var int n = 10;
-vector[_N] _u8 us = [];
-us[_N-1] = 10;
-us[0] = 1;
-escape us[0]+us[_N-1];
-]],
-    env = 'line 5 : dimension must be constant',
-}
-
-Test { [[
 native _u8;
 native/const _N;
 pre native do
     int N = 10;
 end
-var int n = 10;
-vector[_N] _u8 xxxx = [];
-xxxx[_N-1] = 10;
-xxxx[0] = 1;
-escape xxxx[0]+xxxx[_N-1];
+vector&[_N] _u8 xxxx = [];
+escape 1;
 ]],
     gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
 }
