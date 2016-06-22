@@ -59,7 +59,7 @@ F = {
             return
         end
 
-        if is_alias then
+        if is_alias or AST.par(me,'Data') then
             -- vector[n] int vec;
             ASR(dim.is_num=='int' or dim.is_num==true, dim,
                 'invalid declaration : vector dimension must be an integer constant')

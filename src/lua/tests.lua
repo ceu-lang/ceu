@@ -57203,6 +57203,16 @@ escape dds!;
     exps = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
 }
 
+Test { [[
+data Dd with
+    var int n;
+    vector[n] int vs;
+end
+]],
+    wrn = true,
+    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+}
+
 -- << ADT : MISC
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")
