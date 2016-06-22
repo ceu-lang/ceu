@@ -46,6 +46,13 @@ F = {
         end
     end,
 
+    ['Exp_1+'] = '__Exp_num',
+    ['Exp_1-'] = '__Exp_num',
+    __Exp_num = function (me)
+        local _, e = unpack(me)
+        me.is_num = e.is_num
+    end,
+
     Exp_Name = function (me)
         local e = unpack(me)
         me.is_num = e.is_num
@@ -72,25 +79,6 @@ F = {
 
 --[=[
 
-    Op2_any = function (me)
-        local op, e1, e2 = unpack(me)
-        if e1.sval and e2.sval then
-            me.sval = '('..e1.sval..ceu2c(op)..e2.sval..')'
-        end
-    end,
-    ['Op2_-']   = 'Op2_any',
-    ['Op2_+']   = 'Op2_any',
-    ['Op2_%']   = 'Op2_any',
-    ['Op2_*']   = 'Op2_any',
-    ['Op2_/']   = 'Op2_any',
-    ['Op2_|']   = 'Op2_any',
-    ['Op2_&']   = 'Op2_any',
-    ['Op2_<<']  = 'Op2_any',
-    ['Op2_>>']  = 'Op2_any',
-    ['Op2_^']   = 'Op2_any',
-    ['Op2_==']  = 'Op2_any',
-    ['Op2_!=']  = 'Op2_any',
-    ['Op2_>=']  = 'Op2_any',
     ['Op2_<=']  = 'Op2_any',
     ['Op2_>']   = 'Op2_any',
     ['Op2_<']   = 'Op2_any',

@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1754,6 +1753,7 @@ end
 
     -- WALL-CLOCK TIME / WCLOCK
 
+--]===]
 Test { [[await 0ms; escape 0;]],
     sval = 'line 1 : constant is out of range',
 }
@@ -24155,6 +24155,19 @@ v[true] = 1;
 ]],
     exps = 'line 2 : invalid index : expected integer type',
 }
+
+Test { [[
+native/const _X;
+native do
+    ##define X 1;
+end
+vector&[-_X] int iis;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 --<<< VECTORS / STRINGS
 
 Test { [[
