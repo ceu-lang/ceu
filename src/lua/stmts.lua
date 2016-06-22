@@ -68,7 +68,14 @@ DBG('TODO: _Lua')
                             'invalid expression list : item #'..j)
                     end
                 end
-            elseif e.dcl and e.dcl.tag == 'Vec' then
+            elseif e.tag == 'STRING' then
+                local dcl = DCLS.new(e,'byte')
+                check(me, to.dcl[1], dcl[1],
+                    'invalid constructor : item #'..i)
+            elseif e.tag == '_Lua' then
+            elseif e.tag == 'Exp_as' then
+            else
+                assert(e.dcl and e.dcl.tag == 'Vec')
                 check(me, to.dcl[1], e.dcl[1],
                     'invalid constructor : item #'..i)
             end

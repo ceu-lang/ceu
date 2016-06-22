@@ -23987,6 +23987,12 @@ escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&
 }
 
 Test { [[
+vector[] u8 str = [].."Ola Mundo!";
+]],
+    stmts = 'line 1 : invalid constructor : item #2 : types mismatch : "u8" <= "byte"',
+}
+
+Test { [[
 native _strlen;
 code/instantaneous Strlen (var byte&& str)=>int do
     escape _strlen(str);
