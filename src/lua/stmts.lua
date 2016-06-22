@@ -42,8 +42,7 @@ F = {
 
         -- ctx
         EXPS.asr_name(to, {'Vec'}, 'invalid constructor')
-        if fr.tag == '_Vec_New' then
-DBG'TODO: _Vec_New'
+        if fr.tag == 'Vec_New' then
             for _, e in ipairs(fr) do
                 if e.tag=='Vec_Tup' or e.tag=='STRING' or
                    e.tag=='Exp_as'  or e.tag=='_Lua'
@@ -57,7 +56,19 @@ DBG('TODO: _Lua')
         end
 
         -- tp
-        -- TODO
+        AST.asr(fr, 'Vec_New')
+        for _, e in ipairs(fr) do
+            if e.tag == 'Vec_Tup' then
+                local ps = unpack(e)
+                if ps then
+                    AST.asr(ps,'Explist')
+                    for _, p in ipairs(ps) do
+                        check(me, to.dcl[1], p.dcl[1],
+                            'invalid constructor')
+                    end
+                end
+            end
+        end
     end,
 
     Set_Alias = function (me)
@@ -90,7 +101,7 @@ DBG('TODO: _Lua')
     end,
     _Data_Explist = function (me)
         for _, e in ipairs(me) do
-            if e.tag=='Data_New_one' or e.tag=='_Vec_New' then
+            if e.tag=='Data_New_one' or e.tag=='Vec_New' then
                 -- ok
             else
 DBG(e.tag)
@@ -267,7 +278,8 @@ DBG'TODO: _Async_Isr'
         local Typelist = AST.node('Typelist', me.ln)
         for i, e in ipairs(me) do
             -- ctx
-            EXPS.asr_if_name(e, {'Nat','Var'}, 'invalid argument to call')
+            EXPS.asr_if_name(e, {'Nat','Var'}, 'invalid expression list : item #'..i)
+-- TODO: invalid expression : item #x : ...'
 
             -- dcl
             Typelist[i] = AST.copy(e.dcl[1])

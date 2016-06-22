@@ -636,7 +636,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , _Set_Spawn        = #K'spawn'         * V'Spawn_Code'
     , _Set_Async_Thread = #K'async/thread'  * V'_Async_Thread'
     , _Set_Lua          = #V'__lua_pre'     * V'_Lua'
-    , _Set_Vec          = #V'__vec_pre'     * V'_Vec_New'
+    , _Set_Vec          = #V'__vec_pre'     * V'Vec_New'
     , _Set_Data         = #V'__data_pre'    * V'Data_New'
     , _Set_None         = #K'_'             * V'ID_none'
     , _Set_Exp          =                     V'__Exp'
@@ -652,12 +652,12 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __data_pre    = K'new'^-1 * V'__ID_abs'
 
     , Vec_Tup  = V'__vec_pre' * OPT(V'Explist') * KK']'
-    , _Vec_New = V'Vec_Tup' * (KK'..' * (V'__Exp' + V'_Lua' + #KK'['*V'Vec_Tup'))^0
+    , Vec_New = V'Vec_Tup' * (KK'..' * (V'__Exp' + V'_Lua' + #KK'['*V'Vec_Tup'))^0
 
     , Data_New = OPT(CK'new') * V'Data_New_one'
     , Data_New_one  = V'ID_abs' * PARENS(V'_Data_Explist')
     , _Data_Explist    = ( V'__data_expitem'*(KK','*V'__data_expitem')^0 )^-1
-    , __data_expitem   = (V'Data_New_one' + V'_Vec_New' + V'__Exp')
+    , __data_expitem   = (V'Data_New_one' + V'Vec_New' + V'__Exp')
 
 -- IDS
 

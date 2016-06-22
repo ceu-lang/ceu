@@ -17845,7 +17845,7 @@ escape Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    stmts = 'line 7 : invalid argument to call : unexpected context for vector "str"',
+    stmts = 'line 7 : invalid expression list : item #1 : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -18027,7 +18027,7 @@ vector[255] byte buf;
 _enqueue(buf);
 escape 1;
 ]],
-    stmts = 'line 3 : invalid argument to call : unexpected context for vector "buf"',
+    stmts = 'line 3 : invalid expression list : item #1 : unexpected context for vector "buf"',
     --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
     --fin = 'line 2 : call requires `finalize´',
 }
@@ -19801,7 +19801,7 @@ event int e;
 _f(e);
 escape 0;
 ]],
-    stmts = 'line 3 : invalid argument to call : unexpected context for event "e"',
+    stmts = 'line 3 : invalid expression list : item #1 : unexpected context for event "e"',
 }
 
 Test { [[
@@ -23035,7 +23035,7 @@ native _u8, _V;
 vector[10] _u8 v = [_V];
 escape v[0];
 ]],
-    env = 'invalid attribution : external vectors accept only empty initialization `[]´',
+    tmp = 'invalid attribution : external vectors accept only empty initialization `[]´',
 }
 
 Test { [[
@@ -23200,7 +23200,7 @@ Test { [[
 escape 1;
 ]],
     wrn = true,
-    env = 'line 1 : too many events',
+    tmp = 'line 1 : too many events',
 }
 
 Test { [[
@@ -23375,11 +23375,20 @@ escape 1;
 }
 
 Test { [[
+event void e;
+vector[10] u8 vec = [ e ];
+escape 1;
+]],
+    stmts = 'line 2 : invalid expression list : item #1 : unexpected context for event "e"',
+}
+
+Test { [[
 var int x;
 vector[10] u8 vec = [ &&x ];
 escape 1;
 ]],
-    env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int&&´)',
+    --env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int&&´)',
+    stmts = 'line 2 : invalid constructor : types mismatch : "u8" <= "int&&"',
 }
 
 Test { [[
@@ -47601,7 +47610,7 @@ var Tx t;
 ts = [] .. ts .. [t];
 escape $ts+1;
 ]],
-    env = 'line 6 : wrong argument #1 : types mismatch (`Tx&&´ <= `Tx´)',
+    stmts = 'line 6 : wrong argument #1 : types mismatch (`Tx&&´ <= `Tx´)',
 }
 Test { [[
 class Tx with
@@ -56894,7 +56903,7 @@ end
 var Tx t = Tx("oioioi");
 escape _strlen(t.xxxx);
 ]],
-    stmts = 'line 7 : invalid argument to call : unexpected context for vector "xxxx"',
+    stmts = 'line 7 : invalid expression list : item #1 : unexpected context for vector "xxxx"',
 }
 
 Test { [[
@@ -65687,7 +65696,7 @@ vector[10] u8 buffer;
 fillBuffer(&&buffer);
 escape buffer[0];
 ]],
-    env = 'line 5 : wrong argument #1 : types mismatch (`u8[]&&´ <= `u8[]&&´) : dimension mismatch',
+    stmts = 'line 5 : wrong argument #1 : types mismatch (`u8[]&&´ <= `u8[]&&´) : dimension mismatch',
 }
 
 --cbuffer "attr to greater scope"
