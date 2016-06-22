@@ -23388,7 +23388,7 @@ vector[10] u8 vec = [ &&x ];
 escape 1;
 ]],
     --env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int&&´)',
-    stmts = 'line 2 : invalid constructor : types mismatch : "u8" <= "int&&"',
+    stmts = 'line 2 : invalid constructor : item #1 : invalid expression list : item #1 : types mismatch : "u8" <= "int&&"',
 }
 
 Test { [[

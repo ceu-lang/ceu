@@ -57,14 +57,15 @@ DBG('TODO: _Lua')
 
         -- tp
         AST.asr(fr, 'Vec_New')
-        for _, e in ipairs(fr) do
+        for i, e in ipairs(fr) do
             if e.tag == 'Vec_Tup' then
                 local ps = unpack(e)
                 if ps then
                     AST.asr(ps,'Explist')
-                    for _, p in ipairs(ps) do
+                    for j, p in ipairs(ps) do
                         check(me, to.dcl[1], p.dcl[1],
-                            'invalid constructor')
+                            'invalid constructor : item #'..i..' : '..
+                            'invalid expression list : item #'..j)
                     end
                 end
             end
