@@ -68,6 +68,9 @@ DBG('TODO: _Lua')
                             'invalid expression list : item #'..j)
                     end
                 end
+            elseif e.dcl and e.dcl.tag == 'Vec' then
+                check(me, to.dcl[1], e.dcl[1],
+                    'invalid constructor : item #'..i)
             end
         end
     end,

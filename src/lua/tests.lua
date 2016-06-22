@@ -23405,7 +23405,8 @@ vector[] int&& v1;
 vector[] int  v2 = []..v1;
 escape 1;
 ]],
-    env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int&&´)',
+    stmts = 'line 2 : invalid constructor : item #2 : types mismatch : "int" <= "int&&"',
+    --env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int&&´)',
 }
 
 Test { [[
