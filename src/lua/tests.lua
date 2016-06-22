@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1753,10 +1754,6 @@ end
 
     -- WALL-CLOCK TIME / WCLOCK
 
---]===]
-Test { [[await 0ms; escape 0;]],
-    sval = 'line 1 : constant is out of range',
-}
 Test { [[
 input void A;
 await A;
@@ -7472,11 +7469,14 @@ end;
         ['~>20min']  = 600000000,
     }
 }
+Test { [[await 0ms; escape 0;]],
+    consts = 'line 1 : invalid wall-clock time : constant is out of range',
+}
 Test { [[
 await 35min;
 escape 0;
 ]],
-    sval = 'line 1 : constant is out of range',
+    consts = 'line 1 : invalid wall-clock time : constant is out of range',
 }
 Test { [[
 var int a = 2;
