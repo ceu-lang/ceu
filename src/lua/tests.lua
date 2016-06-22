@@ -22010,29 +22010,25 @@ Test { [[
 input (void,int) A;
 escape 1;
 ]],
-    wrn = true,
-    env = 'line 1 : type cannot be `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 Test { [[
 input (int,void) A;
 escape 1;
 ]],
-    wrn = true,
-    env = 'line 1 : type cannot be `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 Test { [[
 output (void,int) A;
 escape 1;
 ]],
-    wrn = true,
-    env = 'line 1 : type cannot be `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 Test { [[
 output (int,void) A;
 escape 1;
 ]],
-    wrn = true,
-    env = 'line 1 : type cannot be `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 
 Test { [[
@@ -44328,8 +44324,7 @@ Test { [[
 code/instantaneous Fx (var void, var int) => int;
 escape 1;
 ]],
-    wrn = true,
-    env = 'line 1 : type cannot be `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 
 Test { [[

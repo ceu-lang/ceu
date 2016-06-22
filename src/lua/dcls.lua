@@ -279,6 +279,31 @@ DBG'TODO: CHECK prototype'
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
     end,
+
+    -- Typelists
+
+    Typelist = function (me)
+        if #me == 1 then
+            return
+        end
+        for _, Type in ipairs(me) do
+            local ID_prim,mod = unpack(Type)
+            if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
+                ASR(is_alias, me,
+                    'invalid declaration : unexpected type `void´')
+            end
+        end
+    end,
+
+    Typepars_anon = function (me)
+        local t = AST.node('Typelist',me.ln)
+        for i, item in ipairs(me) do
+            local _,_,_,Type = unpack(item)
+            t[i] = Type
+        end
+        F.Typelist(t)
+    end,
+
     ---------------------------------------------------------------------------
 
 -- GET: ID -> DCL
