@@ -108,7 +108,15 @@ DBG'TODO: type annotation'
 DBG('TODO: remove pool')
 
         -- tp
+        local _,mod = unpack(e.dcl[1])
         local is_nat = TYPES.is_nat(e.dcl[1])
+        if is_nat then
+            local ID_nat = AST.asr(e.dcl,'', 1,'Type', 1,'ID_nat')
+            local _,mod = unpack(ID_nat.dcl)
+            if mod == 'plain' then
+                is_nat = false
+            end
+        end
         local is_ptr = TYPES.check(e.dcl[1],'&&')
         ASR(is_nat or is_ptr, me,
             'invalid operand to `'..op..'´ : expected pointer type')

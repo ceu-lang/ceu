@@ -30466,7 +30466,8 @@ end
 var _t v = 2;
 escape *v;
 ]],
-    env = 'line 6 : invalid operand to unary "*"',
+    exps = 'line 6 : invalid operand to `*´ : expected pointer type',
+    --env = 'line 6 : invalid operand to unary "*"',
 }
 
 Test { [[
@@ -30480,10 +30481,23 @@ var int v = 10;
 var _rect r = _rect(&&v);
 escape *(r.x);
 ]],
+    exps = 'line 9 : invalid operand to `*´ : expected pointer type',
+}
+Test { [[
+native _rect;
+pre native do
+    typedef struct rect {
+        int* x, y;
+    } rect;
+end
+var int v = 10;
+var _rect r = _rect(&&v);
+escape *(r.x);
+]],
     fin = 'line 8 : call requires `finalize´',
 }
 Test { [[
-native/plain _rect;
+native _rect;
 pre native do
     typedef struct rect {
         int* x, y;
@@ -30499,7 +30513,7 @@ escape *(r.x);
     run = 10,
 }
 Test { [[
-native/plain _rect;
+native _rect;
 native ___ceu_nothing;
 native _V;
 pre native do
@@ -30525,7 +30539,7 @@ pre native do
         int* x;
     } t;
 end
-native/plain _t;
+native _t;
 var int v = 10;
 var _t t;
 do t = _t(&&v); finalize with nothing; end;
