@@ -137,7 +137,6 @@ DBG('TODO: _Lua')
             if e.tag=='Data_New_one' or e.tag=='Vec_New' then
                 -- ok
             else
-DBG(e.tag)
                 EXPS.asr_if_name(e, {'Nat','Var'},
                     'invalid argument to constructor')
             end

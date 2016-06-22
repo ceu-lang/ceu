@@ -34820,7 +34820,7 @@ pool[n] Org a;
 
 escape 1;
 ]],
-    env = 'line 6 : dimension must be constant',
+    consts = 'line 6 : dimension must be constant',
 }
 
 Test { [[
@@ -44546,6 +44546,17 @@ escape buffer[0] as int;
 }
 
 Test { [[
+code/instantaneous F (var& int a)=>void do
+    a = 1;
+end
+var int v;
+F(v);
+escape v;
+]],
+    tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+}
+
+Test { [[
 code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
     buf = [] .. buf .. [3];
 end
@@ -44553,7 +44564,7 @@ vector[10] u8 buffer;
 FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
-    env = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+    tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
 Test { [[
