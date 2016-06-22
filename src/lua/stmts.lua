@@ -191,7 +191,6 @@ DBG(e.tag)
         local ID_ext, ps = unpack(me)
 
         -- ctx
-AST.dump(ID_ext.dcl)
         local _,have do
             if ID_ext.dcl.tag == 'Ext' then
                 _,have = unpack(ID_ext.dcl)
@@ -201,14 +200,16 @@ AST.dump(ID_ext.dcl)
         end
 
         local expects do
-            if AST.par(me, 'Async') then
+            if ID_ext.dcl.tag ~= 'Ext' then
+                expects = 'error'
+            elseif AST.par(me,'Async') or AST.par(me,'_Async_Isr') then
+DBG'TODO: _Async_Isr'
                 expects = 'input'
             else
                 expects = 'output'
             end
         end
 
-DBG('>>>', have, expects)
         ASR(have==expects, me,
             'invalid `emit´ : '..
             'unexpected context for '..AST.tag2id[ID_ext.dcl.tag]..' `'..

@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -21694,7 +21695,6 @@ escape 1;
     gcc = 'error: #error ceu_out_call_* is not defined',
 }
 
---]===]
 Test { [[
 output/instantaneous Z  (var int)=>int;
 emit Z=>1;
@@ -27987,7 +27987,8 @@ escape 10;
         isForever = false,
     },
     --run = 10,
-    props = 'not permitted inside `thread´',
+    stmts = 'line 6 : invalid `emit´ : unexpected context for external `input´ "A"',
+    --props = 'not permitted inside `thread´',
     --props = 'line 6 : invalid `emit´',
 }
 Test { [[
@@ -28154,7 +28155,7 @@ end
 escape ret;
 ]],
     --run = 72000,
-    props = 'not permitted inside `thread´',
+    stmts = 'line 27 : invalid `emit´ : unexpected context for external `input´ "A"',
 }
 Test { [[
 native do ##include <assert.h> end
@@ -28246,7 +28247,7 @@ with
 end;
 ]],
     --run = 0,
-    props = 'not permitted inside `thread´',
+    stmts = 'line 17 : invalid `emit´ : unexpected context for external `input´ "P2"',
 }
 Test { [[
 input int P2;
