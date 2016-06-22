@@ -1,14 +1,6 @@
 local function check (me, to_tp, fr_tp, err_msg)
     local to_str = TYPES.tostring(to_tp)
     local fr_str = TYPES.tostring(fr_tp)
-
-    if TYPES.check(to_tp,'?') then
-        to_tp = TYPES.pop(to_tp)
-        if TYPES.check(fr_tp,'?') then
-            fr_tp = TYPES.pop(fr_tp)
-        end
-    end
-
     ASR(TYPES.contains(to_tp,fr_tp), me,
         err_msg..' : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
 end

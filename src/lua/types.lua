@@ -155,6 +155,13 @@ do
         local tp1_is_nat = TYPES.is_nat(tp1)
         local tp2_is_nat = TYPES.is_nat(tp2)
 
+        if TYPES.check(tp1,'?') then
+            tp1 = TYPES.pop(tp1)
+            if TYPES.check(tp2,'?') then
+                tp2 = TYPES.pop(tp2)
+            end
+        end
+
 -- EQUAL TYPES
         if TYPES.is_equal(tp1, tp2) then
             return true
