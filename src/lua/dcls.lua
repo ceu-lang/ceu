@@ -1,5 +1,4 @@
 DCLS = {
-    -- get()
 }
 
 local function iter_boundary (cur, id, can_cross)
@@ -80,7 +79,16 @@ local function dcls_new (blk, me, can_cross)
     local old = dcls_get(blk, me.id, can_cross)
     local implicit = (me.is_implicit and 'implicit ') or ''
     if old and (not old.is_predefined) then
-        WRN(false, me, old and
+        local F do
+            if me.tag=='Nat'      or me.tag=='Ext' or
+               me.tag=='Ext_Code' or me.tag=='Ext_Req'
+            then
+                F = ASR
+            else
+                F = WRN
+            end
+        end
+        F(false, me, old and
             implicit..'declaration of "'..me.id..'" hides previous declaration'..
                 ' ('..old.ln[1]..' : line '..old.ln[2]..')')
     end

@@ -311,7 +311,7 @@ Test { [[
 native _f, _f;
 escape 0;
 ]],
-    wrn = true,
+    dcls = ' line 1 : declaration of "_f" hides previous declaration (tests.lua : line 1)',
 }
 
 Test { [[
@@ -528,6 +528,17 @@ loopdo await250ms;_printf("Hello World!\n");end
 
 -- TYPE / BOOL
 
+Test { [[
+input void A, A;
+]],
+    dcls = 'line 1 : declaration of "A" hides previous declaration (tests.lua : line 1)',
+}
+Test { [[
+input void A;
+output void A;
+]],
+    dcls = 'line 2 : declaration of "A" hides previous declaration (tests.lua : line 1)',
+}
 Test { [[
 input void A;
 var bool a? = 1;
