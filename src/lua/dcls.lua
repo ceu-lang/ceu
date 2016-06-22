@@ -178,6 +178,29 @@ F = {
 
 -- NEW
 
+    -- PRIMITIVES
+
+    NULL = function (me)
+        me.dcl = DCLS.new(me, 'null', '&&')
+    end,
+
+    NUMBER = function (me)
+        local v = unpack(me)
+        if math.floor(v) == tonumber(v) then
+            me.dcl = DCLS.new(me, 'int')
+        else
+            me.dcl = DCLS.new(me, 'float')
+        end
+    end,
+
+    BOOL = function (me)
+        me.dcl = DCLS.new(me, 'bool')
+    end,
+
+    STRING = function (me)
+        me.dcl = DCLS.new(me, '_char', '&&')
+    end,
+
     -- LOC
 
     Var = function (me)
@@ -193,10 +216,11 @@ F = {
     end,
 
     Vec = function (me)
-        local Type,_,_,id = unpack(me)
+        local Type,_,dim,id = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
 
+        -- vector[] void vec;
         local ID_prim,mod = unpack(Type)
         if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
             ASR(false, me,

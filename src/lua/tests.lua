@@ -1755,7 +1755,7 @@ end
     -- WALL-CLOCK TIME / WCLOCK
 
 Test { [[await 0ms; escape 0;]],
-    consts = 'line 1 : constant is out of range',
+    sval = 'line 1 : constant is out of range',
 }
 Test { [[
 input void A;
@@ -7476,7 +7476,7 @@ Test { [[
 await 35min;
 escape 0;
 ]],
-    consts = 'line 1 : constant is out of range',
+    sval = 'line 1 : constant is out of range',
 }
 Test { [[
 var int a = 2;
@@ -23576,6 +23576,29 @@ escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 }
 
 Test { [[
+var int n = 10;
+vector[n] byte vec = [1,2,3];
+vector&[] byte ref = &vec;
+]],
+    run = 19,
+}
+Test { [[
+var int n = 10;
+vector[n] byte vec = [1,2,3];
+vector&[n] byte ref = &vec;
+]],
+    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+}
+
+Test { [[
+var int n = 10;
+vector[] byte vec = [1,2,3];
+vector&[n] byte ref = &vec;
+]],
+    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+}
+
+Test { [[
 vector[10] byte  vec = [1,2,3];
 vector&[11] byte ref = &vec;
 escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
@@ -24350,23 +24373,15 @@ escape us[0]+us[9];
 
 
 Test { [[
-native _u8;
-var int n = 10;
-vector[n] _u8 us = [];
-us[0] = 10;
-us[9] = 1;
-escape us[0]+us[9];
+vector[1.5] u8 us = [];
 ]],
-    env = 'line 2 : dimension must be constant',
+    consts = 'line 1 : invalid declaration : vector dimension must be an integer',
+    --env = 'line 2 : dimension must be constant',
 }
 
 Test { [[
-native _u8, _U8_MAX;
-var int n = 10;
-vector[_U8_MAX] _u8 us = [];
-us[_U8_MAX-1] = 10;
-us[0] = 1;
-escape us[0]+us[_U8_MAX-1];
+native/const _U8_MAX;
+vector[_U8_MAX] u8 us = [];
 ]],
     env = 'line 2 : dimension must be constant',
 }
@@ -24384,7 +24399,8 @@ escape us[0]+us[_U8_MAX-1];
 }
 
 Test { [[
-native _u8, _N;
+native/const _N;
+native _u8;
 pre native do
     int N = 10;
 end
