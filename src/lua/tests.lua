@@ -26906,12 +26906,34 @@ end
 -- TODO: nesting with same event
 Test { [[
 input int A,B;
-event int a;
+event bool a;
 var int ret = 0;
 par/or do
     loop do
         var int v = await A;
         emit a => v;
+    end
+with
+
+    pause/if a do
+        pause/if a do
+            ret = await B;
+        end
+    end
+end
+escape ret;
+]],
+    stmts = 'line 7 : invalid `emit´ : types mismatch : "(bool)" <= "(int)"',
+}
+
+Test { [[
+input int A,B;
+event bool a;
+var int ret = 0;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v as bool;
     end
 with
 
@@ -26967,12 +26989,12 @@ Test { [[
 input int  A;
 input int  B;
 input void Z;
-event int a;
+event bool a;
 var int ret = 0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v;
+        emit a => v as bool;
     end
 with
     pause/if a do
@@ -27019,12 +27041,12 @@ escape ret;
 Test { [[
 input int  A;
 input void Z;
-event int a;
+event bool a;
 var int ret = 0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v;
+        emit a => v as bool;
     end
 with
     pause/if a do
@@ -27083,12 +27105,12 @@ escape v;
 
 Test { [[
 input int  A;
-event int a;
+event bool a;
 var int ret = 0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v;
+        emit a => v as bool;
     end
 with
     pause/if a do
