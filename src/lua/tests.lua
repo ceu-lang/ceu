@@ -44391,7 +44391,7 @@ code/instantaneous Fx (void) => int;
 code/instantaneous Fx (var int x)  => int do end
 escape 1;
 ]],
-    dcls = 'line 2 : invalid declaration : unmatching `code´ prototypes (vs. tests.lua:1)',
+    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:1)',
     --env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
     wrn = true,
 }
@@ -44404,7 +44404,7 @@ escape 1;
     wrn = true,
     --env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
     --dcls = 'line 2 : identifier "Fx" is already declared',
-    dcls = 'line 2 : invalid declaration : unmatching `code´ prototypes (vs. tests.lua:1)',
+    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:1)',
 }
 
 Test { [[
@@ -44449,7 +44449,7 @@ code/instantaneous Fx (var int a, var  u8 b) => int do
 end
 escape 1;
 ]],
-    dcls = 'line 2 : invalid declaration : unmatching `code´ prototypes (vs. tests.lua:1)',
+    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:1)',
 }
 
 Test { [[
@@ -44472,7 +44472,7 @@ code/instantaneous Fx (var int a, var  int b) => int do
 end
 escape Fx(1,2);
 ]],
-    dcls = 'line 5 : invalid declaration : body for `code´ "Fx" already exists',
+    dcls = 'line 5 : invalid `code´ declaration : body for "Fx" already exists',
 }
 
 Test { [[
@@ -44797,7 +44797,8 @@ code/instantaneous/recursive Gx (void)=>void do end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
+    --env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
+    dcls = 'line 4 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:3)',
 }
 Test { [[
 code/instantaneous/recursive Fx (void)=>void;
@@ -44807,7 +44808,8 @@ code/instantaneous Gx      (void)=>void do end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
+    --env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
+    dcls = 'line 4 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:3)',
 }
 Test { [[
 //var int x;
@@ -46368,7 +46370,8 @@ code/instantaneous Fx (var int v)=>int do
 end
 escape Fx(5);
 ]],
-    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:1)',
+    --env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
     --run = 120,
 }
 Test { [[

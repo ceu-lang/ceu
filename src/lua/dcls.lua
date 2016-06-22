@@ -282,15 +282,15 @@ F = {
     -- CODE / DATA
 
     Code = function (me)
-        local _,_,id,ins1,_,blk1 = unpack(me)
+        local _,mod1,id,ins1,_,blk1 = unpack(me)
         me.id = id
 
         local old = dcls_get(AST.par(me,'Block'), me.id, true)
         if old then
-            local _,_,_,ins2,_,blk2 = unpack(old)
-            ASR(not (blk1 and blk2), me, 'invalid declaration : body for `code´ "'..id..'" already exists')
+            local _,mod2,_,ins2,_,blk2 = unpack(old)
+            ASR(not (blk1 and blk2), me, 'invalid `code´ declaration : body for "'..id..'" already exists')
 
-            local ok = (#ins1 == #ins2)
+            local ok = (mod1==mod2 and #ins1==#ins2)
             if ok then
                 for i=1, #ins1 do
                     local Type1 = AST.asr(ins1[i],'', 4,'Type')
@@ -302,7 +302,7 @@ F = {
                 end
             end
             ASR(ok, me,
-                'invalid declaration : unmatching `code´ prototypes '..
+                'invalid `code´ declaration : unmatching prototypes '..
                 '(vs. '..ins2.ln[1]..':'..ins2.ln[2]..')')
         end
 
