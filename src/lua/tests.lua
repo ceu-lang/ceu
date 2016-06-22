@@ -31896,7 +31896,7 @@ class Tx with do end
 var Tx a;
 var Tx&& p = a;
 ]],
-    env = 'line 3 : types mismatch',
+    tmp = 'line 3 : types mismatch',
 }
 
 Test { [[
@@ -33395,7 +33395,7 @@ end
 
 var LaserExitFactory x;
 ]],
-    env = 'line 4 : arity mismatch',
+    tmp = 'line 4 : arity mismatch',
 }
 
 Test { [[
@@ -34371,13 +34371,6 @@ escape t[0].b + t[1].b;
 }
 
 Test { [[
-escape outer;
-]],
-    todo = 'remove',
-    env = 'line 1 : types mismatch (`int´ <= `Main´)',
-}
-
-Test { [[
 native _f;
 _f(outer);
 ]],
@@ -34693,7 +34686,7 @@ do
 end
 escape _V;
 ]],
-    env = 'line 10 : undeclared type `U´',
+    tmp = 'line 10 : undeclared type `U´',
 }
 
 Test { [[
@@ -34739,7 +34732,7 @@ do
     var u8? x = spawn Tx;
 end
 ]],
-    env = 'line 3 : types mismatch',
+    tmp = 'line 3 : types mismatch',
 }
 
 Test { [[
@@ -34899,7 +34892,7 @@ var Tx t;
 ts = t;
 escape 1;
 ]],
-    env = 'line 4 : types mismatch',
+    tmp = 'line 4 : types mismatch',
 }
 
 Test { [[
@@ -34979,7 +34972,7 @@ end
 escape 1;
 ]],
     --fin = 'line 14 : pointer access across `await´',
-    env = 'line 6 : invalid pool',
+    tmp = 'line 6 : invalid pool',
     --run = 1,
 }
 Test { [[
@@ -35216,7 +35209,7 @@ class Tx with do end
 var Tx&& ok = spawn Tx;
 escape ok != null;
 ]],
-    env = 'line 2 : must assign to option pointer',
+    tmp = 'line 2 : must assign to option pointer',
     --run = 1,
 }
 
@@ -35226,7 +35219,7 @@ class Tx with do end
 var U&&? ok = spawn Tx;
 escape ok != null;
 ]],
-    env = 'line 3 : types mismatch (`U&&?´ <= `Tx&&´)',
+    tmp = 'line 3 : types mismatch (`U&&?´ <= `Tx&&´)',
     --run = 1,
 }
 
@@ -35480,7 +35473,7 @@ class Tx with do end
 var Tx&&? a;
 a = spawn U;
 ]],
-    env = 'line 3 : undeclared type `U´',
+    tmp = 'line 3 : undeclared type `U´',
 }
 
 Test { [[
@@ -36027,7 +36020,7 @@ end
 var Tx&&? t = spawn Tx in ts;
 escape not t?;
 ]],
-    env = 'line 1 : undeclared type `Tx´',
+    tmp = 'line 1 : undeclared type `Tx´',
 }
 
 Test { [[
@@ -36584,7 +36577,7 @@ spawn U in ts;
 
 escape 1;
 ]],
-    env = 'line 12 : invalid `spawn´ : types mismatch (`Tx´ <= `U´)',
+    tmp = 'line 12 : invalid `spawn´ : types mismatch (`Tx´ <= `U´)',
 }
 Test { [[
 interface I with
@@ -36601,7 +36594,7 @@ spawn V in iss;
 
 escape 1;
 ]],
-    env = 'line 11 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
+    tmp = 'line 11 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
 }
 Test { [[
 interface I with
@@ -36630,7 +36623,7 @@ spawn V in iss;
 
 escape 1;
 ]],
-    env = 'line 21 : invalid `spawn´ : types mismatch (`I´ <= `Tx´)',
+    tmp = 'line 21 : invalid `spawn´ : types mismatch (`I´ <= `Tx´)',
 }
 Test { [[
 interface I with
@@ -36658,7 +36651,7 @@ spawn V in iss;
 
 escape 1;
 ]],
-    env = 'line 22 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
+    tmp = 'line 22 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
 }
 Test { [[
 interface I with
@@ -36673,7 +36666,7 @@ spawn Tx in iss;
 
 escape 1;
 ]],
-    env = 'line 9 : invalid `spawn´ : types mismatch (`I´ <= `Tx´)',
+    tmp = 'line 9 : invalid `spawn´ : types mismatch (`I´ <= `Tx´)',
 }
 
 Test { [[
@@ -36706,7 +36699,7 @@ spawn V in iss;
 
 escape sizeof(CEU_T) >= sizeof(CEU_U);
 ]],
-    env = 'line 26 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
+    tmp = 'line 26 : invalid `spawn´ : types mismatch (`I´ <= `V´)',
 }
 Test { [[
 interface I with
@@ -36991,7 +36984,7 @@ var Tx a;
 escape 0;
 ]],
     todo = 'removed free',
-    env = 'line 3 : invalid `free´',
+    tmp = 'line 3 : invalid `free´',
 }
 
 Test { [[
@@ -37006,7 +36999,7 @@ end
 var Tx t;
 escape 1;
 ]],
-    env = 'line 3 : undeclared type `U´',
+    tmp = 'line 3 : undeclared type `U´',
 }
 
 Test { [[
@@ -37758,7 +37751,7 @@ end
 
 escape 1;
 ]],
-    env = 'line 8 : invalid event type',
+    tmp = 'line 8 : invalid event type',
     --env = 'line 13 : wrong argument : cannot pass pointers',
     --run = 1,
 }
@@ -37790,7 +37783,7 @@ with
     escape 1;
 end
 ]],
-    env = 'line 9 : invalid event type',
+    tmp = 'line 9 : invalid event type',
     --env = 'line 21 : wrong argument : cannot pass pointers',
     --run = { ['~>2s']=1 },
 }
@@ -37803,7 +37796,7 @@ var Tx a;
 var int&& v = await a;
 escape 1;
 ]],
-    env = 'line 5 : types mismatch (`int&&´ <= `int´)',
+    tmp = 'line 5 : types mismatch (`int&&´ <= `int´)',
 }
 
 Test { [[
@@ -37974,7 +37967,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 8 : invalid event type',
+    tmp = 'line 8 : invalid event type',
     --env = 'line 15 : wrong argument : cannot pass pointers',
     --run = { ['~>1s'] = 14 },
     --fin = 'line 16 : unsafe access to pointer "t" across `emit´',
@@ -38008,7 +38001,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 8 : invalid event type',
+    tmp = 'line 8 : invalid event type',
     --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s'] = 12 },
 }
@@ -38062,7 +38055,7 @@ end
 
 escape ret;
 ]],
-    env = 'line 8 : invalid event type',
+    tmp = 'line 8 : invalid event type',
     --env = 'line 17 : wrong argument : cannot pass pointers',
     --run = 25,
 }
@@ -38699,7 +38692,7 @@ var int&& v = do Tx with
 end;
 escape *v;
 ]],
-    env = 'line 8 : types mismatch (`int&&´ <= `int´)',
+    tmp = 'line 8 : types mismatch (`int&&´ <= `int´)',
 }
 
 Test { [[
@@ -39385,7 +39378,7 @@ class U with do end
 var Tx&&? a;
 a = spawn U;
 ]],
-    env = 'line 4 : types mismatch',
+    tmp = 'line 4 : types mismatch',
 }
 
 Test { [[
@@ -40221,7 +40214,7 @@ end
 escape 10;
 ]],
     --run = 10,
-    env = 'line 15 : invalid attribution (no scope)',
+    tmp = 'line 15 : invalid attribution (no scope)',
 }
 Test { [[
 class V with
@@ -40252,7 +40245,7 @@ end
 escape 10;
 ]],
     --run = { ['~>A']=10 },
-    env = 'line 16 : invalid attribution',
+    tmp = 'line 16 : invalid attribution',
 }
 
 Test { [[
@@ -40292,7 +40285,7 @@ _assert(_V == 10);
 escape _V;
 ]],
     --run = { ['~>2s']=10, }       -- TODO: stack change
-    env = 'line 21 : invalid attribution',
+    tmp = 'line 21 : invalid attribution',
 }
 
 Test { [[
@@ -40690,7 +40683,7 @@ var Tx&&? t;
 t = spawn Tx;
 escape t!.v;
 ]],
-    env = 'line 6 : not a struct',
+    tmp = 'line 6 : not a struct',
 }
 
 Test { [[
@@ -41181,7 +41174,7 @@ var Game game;
 emit game.go => (1, 1, null);
 escape 1;
 ]],
-    env = 'line 2 : invalid event type',
+    tmp = 'line 2 : invalid event type',
     --env = 'line 7 : wrong argument #3 : cannot pass pointers',
     --run = 1;
 }
@@ -42012,7 +42005,7 @@ end
 var J&& i = _ptr;
 escape 10;
 ]],
-    env = 'line 8 : undeclared type `J´',
+    tmp = 'line 8 : undeclared type `J´',
 }
 
 Test { [[
@@ -42111,7 +42104,7 @@ interface I with
 end
 vector[10] I a;
 ]],
-    env = 'line 3 : cannot instantiate an interface',
+    tmp = 'line 3 : cannot instantiate an interface',
 }
 
 Test { [[
@@ -42410,7 +42403,7 @@ await OS_START;
 t.a = t.a + a;
 escape t.a;
 ]],
-    env = 'line 4 : interface "Global" is not defined',
+    tmp = 'line 4 : interface "Global" is not defined',
 }
 
 Test { [[
@@ -42431,7 +42424,7 @@ await OS_START;
     escape t.a;
 end
 ]],
-    env = 'line 1 : interface "Global" must be implemented by class "Main"',
+    tmp = 'line 1 : interface "Global" must be implemented by class "Main"',
 }
 
 Test { [[
@@ -42573,7 +42566,7 @@ end
 var I t;
 escape 10;
 ]],
-    env = 'line 4 : cannot instantiate an interface',
+    tmp = 'line 4 : cannot instantiate an interface',
 }
 
 Test { [[
@@ -42613,7 +42606,7 @@ end
 vector[10] I t;
 escape 10;
 ]],
-    env = 'line 4 : cannot instantiate an interface',
+    tmp = 'line 4 : cannot instantiate an interface',
 }
 
 Test { [[
@@ -42624,7 +42617,7 @@ var I&&? t;
 t = spawn I;
 escape 10;
 ]],
-    env = 'line 5 : cannot instantiate an interface',
+    tmp = 'line 5 : cannot instantiate an interface',
 }
 
 Test { [[
@@ -42641,7 +42634,7 @@ var Tx t;
 i = &&t;
 escape 10;
 ]],
-    env = 'line 11 : types mismatch',
+    tmp = 'line 11 : types mismatch',
 }
 
 Test { [[
@@ -42659,7 +42652,7 @@ var Tx t;
 i = &&t;
 escape 10;
 ]],
-    env = 'line 12 : types mismatch',
+    tmp = 'line 12 : types mismatch',
 }
 
 Test { [[
@@ -42677,7 +42670,7 @@ var Tx t;
 i = t;
 escape 10;
 ]],
-    env = 'line 12 : types mismatch',
+    tmp = 'line 12 : types mismatch',
 }
 
 Test { [[
@@ -42758,7 +42751,7 @@ i = &&t;
 var J&& j = i;
 escape 10;
 ]],
-    env = 'line 16 : types mismatch',
+    tmp = 'line 16 : types mismatch',
 }
 
 Test { [[
@@ -42784,7 +42777,7 @@ i = &&t;
 var J&& j = i;
 escape 0;
 ]],
-    env = 'line 6 : types mismatch',
+    tmp = 'line 6 : types mismatch',
 }
 
 Test { [[
@@ -43026,7 +43019,7 @@ end
 var Gx&& g;
 escape 1;
 ]],
-    env = 'line 2 : undeclared type `Gx´',
+    tmp = 'line 2 : undeclared type `Gx´',
 }
 
 Test { [[
@@ -43036,7 +43029,7 @@ end
 event (Gx&&,int) g;
 escape 1;
 ]],
-    env = 'line 2 : invalid event type'
+    tmp = 'line 2 : invalid event type'
     --env = 'line 2 : undeclared type `Gx´',
     --run = 1,
     --gcc = '22:2: error: unknown type name ‘Gx’',
@@ -43228,7 +43221,7 @@ var& int && v;
 var& Tx && t;
 escape 1;
 ]],
-    env = 'line 4 : invalid type modifier : `&&&´',
+    tmp = 'line 4 : invalid type modifier : `&&&´',
 }
 
 Test { [[
@@ -43999,7 +43992,7 @@ end;
 
 escape v!;
 ]],
-    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+    tmp = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
 Test { [[
 input int&& SPRITE_DELETE;
@@ -44034,14 +44027,14 @@ class Tx with do end
 vector[1] Tx ts = [];
 escape 1;
 ]],
-    env = 'line 2 : invalid attribution : destination is not a vector',
+    tmp = 'line 2 : invalid attribution : destination is not a vector',
 }
 Test { [[
 class Tx with do end
 pool[10] Tx ts;
 escape $$ts;
 ]],
-    env = 'line 3 : invalid operand to unary "$$" : vector expected',
+    tmp = 'line 3 : invalid operand to unary "$$" : vector expected',
 }
 
 Test { [[
@@ -44049,7 +44042,7 @@ class Tx with do end
 pool[10] Tx ts;
 escape $ts;
 ]],
-    env = 'line 3 : invalid operand to unary "$" : vector expected',
+    tmp = 'line 3 : invalid operand to unary "$" : vector expected',
 }
 
 Test { [[
@@ -44398,7 +44391,8 @@ code/instantaneous Fx (void) => int;
 code/instantaneous Fx (var int x)  => int do end
 escape 1;
 ]],
-    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+    dcls = 'line 2 : invalid declaration : unmatching `code´ prototypes (vs. tests.lua:1)',
+    --env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
     wrn = true,
 }
 
@@ -44408,8 +44402,9 @@ code/instantaneous Fx (var int)  => int;
 escape 1;
 ]],
     wrn = true,
-    env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+    --env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
     --dcls = 'line 2 : identifier "Fx" is already declared',
+    dcls = 'line 2 : invalid declaration : unmatching `code´ prototypes (vs. tests.lua:1)',
 }
 
 Test { [[
@@ -44445,6 +44440,16 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
+}
+
+Test { [[
+code/instantaneous Fx (var int, var int) => int;
+code/instantaneous Fx (var int a, var  u8 b) => int do
+    escape a + b;
+end
+escape 1;
+]],
+    dcls = 'line 2 : invalid declaration : unmatching `code´ prototypes (vs. tests.lua:1)',
 }
 
 Test { [[

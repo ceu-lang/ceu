@@ -89,8 +89,8 @@ Test = function (t)
     if not check('parser')   then return end
     if not check('ast')      then return end
     if not check('adjs')     then return end
-    if not check('dcls')     then return end
     dofile 'types.lua'
+    if not check('dcls')     then return end
     if not check('exps')     then return end
     if not check('consts')   then return end
     if not check('stmts')    then return end
