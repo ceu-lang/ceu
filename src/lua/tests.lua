@@ -23564,7 +23564,20 @@ vector[3] byte v1 = [1,2,3];
 vector[2] byte v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
-    run = '2] runtime error: access out of bounds',
+    stmts = 'line 2 : invalid constructor : item #2 : dimension mismatch',
+    --run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+native _N;
+native do
+    ##define N 2
+end
+vector[3] byte v1 = [1,2,3];
+vector[_N] byte v2 = []..v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = '6] runtime error: access out of bounds',
 }
 
 Test { [[
@@ -23581,7 +23594,8 @@ vector&[11] byte ref = &vec;
 escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
     run = 1,
-    env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+    stmts = 'line 2 : invalid binding : dimension mismatch',
+    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
 Test { [[
@@ -23589,7 +23603,8 @@ vector[10] byte vec = [1,2,3];
 vector&[9] byte ref = &vec;
 escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
-    env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+    stmts = 'line 2 : invalid binding : dimension mismatch',
+    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
 Test { [[
