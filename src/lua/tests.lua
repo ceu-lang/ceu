@@ -23564,20 +23564,7 @@ vector[3] byte v1 = [1,2,3];
 vector[2] byte v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
-    stmts = 'line 2 : invalid constructor : item #2 : dimension mismatch',
-    --run = '2] runtime error: access out of bounds',
-}
-
-Test { [[
-native _N;
-native do
-    ##define N 2
-end
-vector[3] byte v1 = [1,2,3];
-vector[_N] byte v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    run = '6] runtime error: access out of bounds',
+    run = '2] runtime error: access out of bounds',
 }
 
 Test { [[

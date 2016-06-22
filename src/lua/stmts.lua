@@ -37,31 +37,6 @@ F = {
         check(me, to.dcl[1], fr.dcl[1], err)
     end,
 
-    __dim_cmp = function (to, fr, is_set_vec)
-        if to == '[]' then
-            -- vector&[] to = <...>
-            return true
-        elseif fr == '[]' then
-            -- vector&[K] to;
-            -- vector[]   fr;
-            return is_set_vec
-        elseif to.tag ~= fr.tag then
-            -- vector&[_NAT] to;
-            -- vector[NUM] fr;
-            return is_set_vec;
-        elseif to.tag=='ID_nat' or to.tag=='NUMBER' then
-            -- vector&[_NAT] to;
-            -- vector[_NAT] fr;
-            if is_set_vec then
-                return (to.tag=='ID_nat' or to[1]>=fr[1])
-            else
-                return (to[1] == fr[1])
-            end
-        else
-            error'TODO'
-        end
-    end,
-
     Set_Vec = function (me)
         local fr,to = unpack(me)
 
@@ -103,13 +78,21 @@ DBG('TODO: _Lua')
                 assert(e.dcl and e.dcl.tag == 'Vec')
                 check(me, to.dcl[1], e.dcl[1],
                     'invalid constructor : item #'..i)
-
-                local _,_,to_dim = unpack(to.dcl)
-                local _,_,fr_dim = unpack(e.dcl)
-                ASR(F.__dim_cmp(to_dim,fr_dim,true), me,
-                    'invalid constructor : item #'..i..' : '..
-                    'dimension mismatch')
             end
+        end
+    end,
+
+    __dim_cmp = function (to, fr)
+        if to == '[]' then
+            return true
+        elseif fr == '[]' then
+            return false
+        elseif to.tag ~= fr.tag then
+            return false
+        elseif to.tag=='ID_nat' or to.tag=='NUMBER' then
+            return (to[1] == fr[1])
+        else
+            error'TODO'
         end
     end,
 
@@ -129,7 +112,7 @@ DBG('TODO: _Lua')
         if to.dcl.tag == 'Vec' then
             local _,_,to_dim = unpack(to.dcl)
             local _,_,fr_dim = unpack(fr.dcl)
-            ASR(F.__dim_cmp(to_dim,fr_dim,false), me,
+            ASR(F.__dim_cmp(to_dim,fr_dim), me,
                 'invalid binding : dimension mismatch')
         end
     end,
