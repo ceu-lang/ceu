@@ -29,6 +29,11 @@ F = {
             end
         end
 
+        if to.dcl.is_read_only then
+            ASR(me.set_read_only, me,
+                'invalid assignment : read-only variable "'..to.dcl.id..'"')
+        end
+
         -- ctx
         EXPS.asr_name(to, {'Nat','Var','Pool'}, err)
         EXPS.asr_if_name(fr, {'Nat','Var'}, err)
@@ -208,7 +213,14 @@ DBG('TODO: _Lua')
 
     _Pause = function (me)
         local e = unpack(me)
+
+        -- ctx
         EXPS.asr_name(e, {'Evt'}, 'invalid `pause/if´')
+
+        -- tp
+        local Typelist = AST.asr(e.dcl[1],'Typelist')
+        ASR(#Typelist==1 and TYPES.check(Typelist[1],'bool'), me,
+            'invalid `pause/if´ : expected event of type `bool´')
     end,
 
     Do = function (me)

@@ -206,6 +206,7 @@ DBG('TODO: _Ext_Req', me.tag)
                         false,
                         i)
         dcl_i.is_implicit = true
+        dcl_i.is_read_only = true
 
         local lim_ini = node('Stmts', me.ln)
         local lim_cmp = node('Nothing', me.ln)
@@ -250,13 +251,17 @@ DBG('TODO: _Ext_Req', me.tag)
                             node('Stmts', me.ln)))
         end
 
+        local ini_i = node('Set_Exp', me.ln,
+                        AST.copy(fr),
+                        node('Exp_Name', me.ln,
+                            node('ID_int', me.ln, i)))
+        ini_i.set_read_only = true
+DBG'TODO: set_i'
+
         return node('Block', me.ln,
                 node('Stmts', me.ln,
                     dcl_i,
-                    node('Set_Exp', me.ln,
-                        AST.copy(fr),
-                        node('Exp_Name', me.ln,
-                            node('ID_int', me.ln, i))),
+                    ini_i,
                     lim_ini,
                     node('Loop', me.ln,
                         max,

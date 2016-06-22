@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -24573,14 +24574,13 @@ escape p! ==null;
     --run = 1,
 }
 
---]===]
 Test { [[
 var& void? p;
 p := { NULL };
 escape 1;
 //escape p==null;
 ]],
-    env = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    tmp = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
     --ref = 'line 2 : invalid attribution : missing alias operator `&´',
     --fin = 'line 2 : attribution requires `finalize´',
 }
@@ -26848,8 +26848,9 @@ pause/if a do
 end
 escape 0;
 ]],
+    stmts = 'line 2 : invalid `pause/if´ : expected event of type `bool´',
     --env = 'line 2 : event type must be numeric',
-    env = 'line 2 : arity mismatch',
+    --env = 'line 2 : arity mismatch',
     --env = 'line 2 : invalid attribution',
     --env = 'line 2 : invalid attribution (bool vs void)',
 }
@@ -27168,7 +27169,8 @@ loop i in [0 -> 10[ do
     i = 0;
 end
 ]],
-    env = 'line 2 : read-only variable',
+    stmts = 'line 2 : invalid assignment : read-only variable "i"',
+    --env = 'line 2 : read-only variable',
 }
 
 Test { [[
@@ -30354,7 +30356,7 @@ end;
 
 escape *(t.p) + *(t.v);
 ]],
-    env = 'line 6 : types mismatch (`int&´ <= `null&&´)',
+    tmp = 'line 6 : types mismatch (`int&´ <= `null&&´)',
 }
 
 Test { [[
