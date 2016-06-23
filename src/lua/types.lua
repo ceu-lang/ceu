@@ -196,7 +196,7 @@ do
 -- VOID <- _
         -- var& void ptr = &_f()
         -- var& void p = &v;
-        elseif TYPES.check(tp1,'void') and tp2_is_plain then
+        elseif TYPES.check(tp1,'void') and tp2_ID then
             return true
 
 -- NUMERIC TYPES
