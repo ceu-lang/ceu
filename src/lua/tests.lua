@@ -55754,6 +55754,7 @@ escape _V;
 
 -->>> DATA INI
 -- HERE:
+--]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -56901,7 +56902,6 @@ escape b as int;
     run = 36,
 }
 
---]===]
 Test { [[
 native _u8;
 data Test with

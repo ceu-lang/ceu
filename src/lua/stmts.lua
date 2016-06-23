@@ -34,11 +34,8 @@ F = {
         check(me, to.dcl[1], fr.dcl[1], err)
     end,
 
-    Set_Vec = function (me)
-        local fr,to = unpack(me)
-
+    __set_vec = function (fr, to_dcl)
         -- ctx
-        EXPS.asr_name(to, {'Vec'}, 'invalid constructor')
         if fr.tag == 'Vec_Cons' then
             for _, e in ipairs(fr) do
                 if e.tag=='Vec_Tup' or e.tag=='STRING' or
@@ -60,23 +57,28 @@ DBG('TODO: _Lua')
                 if ps then
                     AST.asr(ps,'Explist')
                     for j, p in ipairs(ps) do
-                        check(me, to.dcl[1], p.dcl[1],
+                        check(me, to_dcl[1], p.dcl[1],
                             'invalid constructor : item #'..i..' : '..
                             'invalid expression list : item #'..j)
                     end
                 end
             elseif e.tag == 'STRING' then
                 local dcl = DCLS.new(e,'byte')
-                check(me, to.dcl[1], dcl[1],
+                check(me, to_dcl[1], dcl[1],
                     'invalid constructor : item #'..i)
             elseif e.tag == '_Lua' then
             elseif e.tag == 'Exp_as' then
             else
                 assert(e.dcl and e.dcl.tag == 'Vec')
-                check(me, to.dcl[1], e.dcl[1],
+                check(me, to_dcl[1], e.dcl[1],
                     'invalid constructor : item #'..i)
             end
         end
+    end,
+    Set_Vec = function (me)
+        local fr, to = unpack(me)
+        EXPS.asr_name(to, {'Vec'}, 'invalid constructor')
+        F.__set_vec(fr, to.dcl)
     end,
 
     __dim_cmp = function (to, fr)
@@ -140,10 +142,11 @@ DBG('TODO: _Lua')
         -- to
         local to = AST.node('Typelist', me.ln)
         local err_str
+        local block
         if ID_abs.dcl.tag == 'Data' then
             -- Data
             -- tp
-            local block = AST.asr(ID_abs.dcl,'Data', 3,'Block')
+            block = AST.asr(ID_abs.dcl,'Data', 3,'Block')
             for i, dcl in ipairs(block.dcls) do
                 local Type = unpack(dcl)
                 to[i] = AST.copy(Type)
@@ -167,9 +170,11 @@ DBG('TODO: _Lua')
                 -- ok: ignore _
                 -- Data(1,_)
 -- TODO: check default, check event/vector
+            elseif e.tag == 'Vec_Cons' then
+assert(ID_abs.dcl.tag == 'Data', 'TODO')
+                F.__set_vec(e, block.dcls[i])
             else
                 -- ctx
-AST.dump(e)
                 EXPS.asr_if_name(e, {'Nat','Var'}, err_str..' : argument #'..i)
 
                 -- tp
