@@ -18031,7 +18031,6 @@ escape 1;
     fin = 'line 2 : call requires `finalize´',
 }
 
---]===]
 Test { [[
 native _enqueue;
 vector[255] byte buf;
@@ -56003,7 +56002,7 @@ data Ddd with
     event void e;
 end
 
-var Ddd d = val Ddd(1);
+var Ddd d = val Ddd(1,_);
 
 par/and do
     await d.e;
@@ -56348,6 +56347,7 @@ escape ((lll as ListCONS).tail as ListCONS).head;
     run = 2,
 }
 
+--]===]
 Test { [[
 data Stack;
 data StackEMPTY;
@@ -56360,7 +56360,7 @@ pool[] Stack xxx = new StackNONEMPTY(
 
 escape 1;
 ]],
-    stmts = 'line 8 : invalid argument to constructor : unexpected context for pool "xxx"',
+    stmts = 'line 8 : invalid constructor : argument #1 : unexpected context for pool "xxx"',
     wrn = true,
     --env = 'line 10 : invalid constructor : recursive field "NONEMPTY" must be new data',
 }

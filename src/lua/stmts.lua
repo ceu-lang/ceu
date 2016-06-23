@@ -121,7 +121,7 @@ DBG('TODO: _Lua')
 
 -- ABS
 
-    Set_Abs = function (me)
+    Set_Abs_Val = function (me)
         local _, Exp_Name = unpack(me)
 
         -- ctx
@@ -131,7 +131,6 @@ DBG('TODO: _Lua')
         local _, Exp_Name = unpack(me)
 
         -- ctx
-        -- pool = ...
         EXPS.asr_name(Exp_Name, {'Var','Pool'}, 'invalid constructor')
     end,
 

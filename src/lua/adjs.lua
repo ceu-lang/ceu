@@ -159,7 +159,7 @@ F = {
             lb   = '['
             fr   = node('NUMBER', me.ln, 0)
             dir  = '->'
-            to   = node('ID_none', me.ln)
+            to   = node('ID_any', me.ln)
             rb   = ']'
             step = false
         end
@@ -190,7 +190,7 @@ F = {
         end
 
         if AST.isNode(i) then
-            AST.asr(i, 'ID_none')
+            AST.asr(i, 'ID_any')
             i = '__i_'..me.n    -- invent an ID not referenceable
         end
 
@@ -205,7 +205,7 @@ F = {
         local lim_ini = node('Stmts', me.ln)
         local lim_cmp = node('Nothing', me.ln)
 
-        if to.tag ~= 'ID_none' then
+        if to.tag ~= 'ID_any' then
             lim_ini[#lim_ini+1] =
                 node('Var', me.ln,
                     node('Type', me.ln,
@@ -357,7 +357,7 @@ DBG('TODO: _Loop_Pool')
            set.tag=='_Set_Await_one'     or set.tag=='_Set_Await_many'    or
            set.tag=='_Set_Vec'           or set.tag=='_Set_Emit_Ext_emit' or
            set.tag=='_Set_Async_Thread'  or set.tag=='_Set_Lua'           or
-           set.tag=='_Set_Abs'           or set.tag=='_Set_Abs_New'       or
+           set.tag=='_Set_Abs_Val'       or set.tag=='_Set_Abs_New'       or
            set.tag=='_Set_Emit_Ext_call' or set.tag=='_Set_Emit_Ext_req'
         then
             --  _Set

@@ -401,16 +401,16 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , Loop       = K'loop' * OPT('/'*V'__Exp') *
                    V'__Do'
     , _Loop_Num  = K'loop' * OPT('/'*V'__Exp') *
-                    (V'__ID_int'+V'ID_none') * OPT(
+                    (V'__ID_int'+V'ID_any') * OPT(
                         K'in' * (CKK'[' + CKK']') * (
-                                    V'__Exp' * CKK'->' * (V'ID_none' + V'__Exp') +
-                                    (V'ID_none' + V'__Exp') * CKK'<-' * V'__Exp'
+                                    V'__Exp' * CKK'->' * (V'ID_any' + V'__Exp') +
+                                    (V'ID_any' + V'__Exp') * CKK'<-' * V'__Exp'
                                 ) * (CKK'[' + CKK']') *
                                 OPT(KK',' * V'__Exp')
                     ) *
                    V'__Do'
     , _Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                    (V'ID_int'+V'ID_none') * K'in' * V'Exp_Name' *
+                    (V'ID_int'+V'ID_any') * K'in' * V'Exp_Name' *
                    V'__Do'
 
     , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
@@ -621,7 +621,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
     , Abslist    = ( V'__abs_item'*(KK','*V'__abs_item')^0 )^-1
-    , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp')
+    , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp' + V'ID_any')
 
 
 -- SETS
@@ -643,7 +643,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
         + V'_Set_Abs_Val'
         + V'_Set_Abs_New'
         + V'_Set_Abs_Spawn'
-        + V'_Set_None'
+        + V'_Set_Any'
         + V'_Set_Exp'
 
     , __sets_many = V'_Set_Emit_Ext_req' + V'_Set_Await_many' + V'_Set_Watching'
@@ -669,7 +669,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , _Set_Abs_New        = #K'new'           * V'Abs_New'
     , _Set_Abs_Spawn      = #K'spawn'         * V'Abs_Spawn'
 
-    , _Set_None           = #K'_'             * V'ID_none'
+    , _Set_Any            = #K'_'             * V'ID_any'
     , _Set_Exp            =                     V'__Exp'
 
     , __extcode_pre = (K'call/recursive'+K'call') * V'ID_ext'
@@ -686,14 +686,14 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , ID_int  = V'__ID_int'
     , ID_abs  = V'__ID_abs'
     , ID_nat  = V'__ID_nat'
-    , ID_none = V'__ID_none'
+    , ID_any  = V'__ID_any'
 
     , __ID_prim = CK(TYPES,                     'primitive type')
     , __ID_ext  = CK(m.R'AZ'*ALPHANUM^0  -KEYS, 'external identifier')
     , __ID_int  = CK(m.R'az'*Alphanum^0  -KEYS, 'internal identifier')
     , __ID_abs  = CK(m.R'AZ'*V'__one_az' -KEYS, 'abstraction identifier')
     , __ID_nat  = CK(P'_' * Alphanum^1,         'native identifier')
-    , __ID_none = CK(P'_' * -Alphanum,          '`_´')
+    , __ID_any = CK(P'_' * -Alphanum,          '`_´')
     , __ID_esc  = CK(Alpha*(Alphanum)^0 -KEYS,  '`escape´ identifier')
 
     -- at least one lowercase character

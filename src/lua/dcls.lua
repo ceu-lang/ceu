@@ -352,14 +352,17 @@ F = {
         local id = unpack(me)
         me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'primitive identifier')
     end,
+
     ID_nat = function (me)
         local id = unpack(me)
         me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'native identifier')
     end,
+
     ID_ext = function (me)
         local id = unpack(me)
         me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'external identifier')
     end,
+
     ID_abs = function (me)
         local id = unpack(me)
         me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'abstraction')
