@@ -365,12 +365,12 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     -- escape/A 10
     -- break/i
     -- continue/i
-    , _Escape   = K'escape'   * ('/'*V'__ID_esc' + Cc(true)) * OPT(V'__Exp')
+    , _Escape   = K'escape'   * ('/'*V'ID_int' + Cc(true)) * OPT(V'__Exp')
     , _Break    = K'break'    * OPT('/'*V'ID_int')
     , _Continue = K'continue' * OPT('/'*V'ID_int')
 
     -- do/A ... end
-    , Do = K'do' * ('/'*V'__ID_esc' + Cc(true)) *
+    , Do = K'do' * ('/'*(V'ID_int'+V'ID_any') + Cc(true)) *
                 V'Block' *
            K'end'
 
@@ -694,7 +694,6 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __ID_abs  = CK(m.R'AZ'*V'__one_az' -KEYS, 'abstraction identifier')
     , __ID_nat  = CK(P'_' * Alphanum^1,         'native identifier')
     , __ID_any = CK(P'_' * -Alphanum,          '`_´')
-    , __ID_esc  = CK(Alpha*(Alphanum)^0 -KEYS,  '`escape´ identifier')
 
     -- at least one lowercase character
     , __one_az = #(ALPHANUM^0*m.R'az') * Alphanum^0

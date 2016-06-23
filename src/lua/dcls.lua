@@ -392,7 +392,7 @@ F = {
 
         elseif id == 'escape' then
             local _, esc = unpack(me)
-            local lbl1 = unpack(esc)
+            local id_int1 = (esc[1]==true) or esc[1][1]
             local do_ = nil
             for n in AST.iter() do
                 if n.tag=='Async' or string.sub(n.tag,1,7)=='_Async' or
@@ -402,8 +402,8 @@ F = {
                     break
                 end
                 if n.tag == 'Do' then
-                    local lbl2 = unpack(n)
-                    if lbl1 == lbl2 then
+                    local id_int2 = (n[1]==true) or n[1][1]
+                    if id_int1 == id_int2 then
                         do_ = n
                         break
                     end

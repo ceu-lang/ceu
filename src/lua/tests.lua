@@ -26,7 +26,7 @@ Test { [[escape /*
 */ 1;]], run=1 }
 Test { [[escape /**/* **/ 1;]], run=1 }
 Test { [[escape /**/* */ 1;]],
-    parser = 'line 1 : after `escape´ : expected `escape´ identifier',
+    parser = 'line 1 : after `escape´ : expected internal identifier',
 }
 
 Test { [[
@@ -2253,7 +2253,7 @@ do/
     escape/A 1;
 end
 ]],
-    parser = 'line 1 : after `do´ : expected `escape´ identifier',
+    parser = 'line 1 : after `do´ : expected internal identifier',
 }
 
 Test { [[
@@ -2261,28 +2261,46 @@ do/A
     escape/ 1;
 end
 ]],
-    parser = 'line 2 : after `escape´ : expected `escape´ identifier',
+    parser = 'line 1 : after `do´ : expected internal identifier',
 }
 
 Test { [[
-do/A
-    escape/A 1;
+do/a
+    escape/ 1;
 end
 ]],
-    dcls = 'line 2 : invalid `escape´ : unexpected expression',
+    parser = 'line 2 : after `escape´ : expected internal identifier',
 }
 
 Test { [[
-var int x = do/A
-    escape/A;
+do/a
+    escape/a 1;
+end
+]],
+    dcls = 'line 1 : internal identifier "a" is not declared',
+}
+
+Test { [[
+var int a;
+do/a
+    escape/a 1;
+end
+]],
+    dcls = 'line 3 : invalid `escape´ : unexpected expression',
+}
+
+Test { [[
+var int x = do/x
+    escape/x;
 end;
 ]],
     dcls = 'line 2 : invalid `escape´ : expected expression',
 }
 
 Test { [[
-do/A
-    escape/A;
+var int a;
+do/a
+    escape/a;
 end
 escape 1;
 ]],
@@ -2290,15 +2308,17 @@ escape 1;
 }
 
 Test { [[
-do/A
+var int a;
+do/a
     escape;
 end
 ]],
-    dcls = 'line 2 : invalid `escape´ : expected expression',
+    dcls = 'line 3 : invalid `escape´ : expected expression',
 }
 
 Test { [[
-do/A
+var int a;
+do/a
     escape 1;
 end
 ]],
@@ -2314,16 +2334,17 @@ escape 1;
     run = 1,
 }
 Test { [[
-do/A
-    escape/A;
+var int a;
+do/a
+    escape/a;
 end;
 escape 1;
 ]],
     run = 1,
 }
 Test { [[
-var bool a = do/A
-    escape/A 1;
+var bool a = do/a
+    escape/a 1;
 end;
 escape 1;
 ]],
@@ -2331,8 +2352,8 @@ escape 1;
 }
 
 Test { [[
-var bool a = do/A
-    escape/A 1 as bool;
+var bool a = do/a
+    escape/a 1 as bool;
 end;
 escape 1;
 ]],
@@ -2340,8 +2361,8 @@ escape 1;
 }
 
 Test { [[
-var bool a = do/A
-    escape/A;
+var bool a = do/a
+    escape/a;
 end;
 escape 1;
 ]],
@@ -2349,8 +2370,8 @@ escape 1;
 }
 
 Test { [[
-var int a = do/A
-    escape/A 1;
+var int a = do/a
+    escape/a 1;
 end;
 escape 1;
 ]],
@@ -2359,8 +2380,8 @@ escape 1;
 
 Test { [[
 var int a = do
-    var int a = do/A
-        escape/A 1;
+    var int a = do/a
+        escape/a 1;
     end;
     escape a;
 end;
@@ -2371,9 +2392,9 @@ escape a;
 }
 
 Test { [[
-var int a = do/B
-    var int a = do/A
-        escape/A 1;
+var int a = do/a
+    var int a = do/a
+        escape/a 1;
     end;
     escape a;
 end;
@@ -2384,11 +2405,12 @@ escape a;
 }
 
 Test { [[
-var int a = do/B
-    var int a = do/A
-        escape/B 1;
+var int b;
+var int a = do/b
+    var int a = do/a
+        escape/a 1;
     end;
-    escape/B 10;
+    escape a;
 end;
 escape a;
 ]],
@@ -2397,27 +2419,27 @@ escape a;
 }
 
 Test { [[
-var int a = do/B
-    var int a = do/A
-        escape/B 1;
+var int a = do/a
+    var int z = do/z
+        escape/a 1;
     end;
-    escape/A a;
-end;
-escape a;
-]],
-    dcls = 'line 2 : declaration of "a" hides previous declaration (tests.lua : line 1)',
-}
-
-Test { [[
-var int a = do/B
-    var int a = do/A
-        escape/B 1;
-    end;
-    escape/A a;
+    escape/a 10;
 end;
 escape a;
 ]],
     wrn = true,
+    run = 1
+}
+
+Test { [[
+var int a = do/a
+    var int z = do/z
+        escape/a 1;
+    end;
+    escape/z a;
+end;
+escape a;
+]],
     dcls = 'line 5 : invalid `escape´ : no matching enclosing `do´',
 }
 
@@ -2513,13 +2535,13 @@ var int a = do end;
 }
 
 Test { [[
-a = do/X end;
+a = do/a end;
 ]],
     dcls = 'line 1 : internal identifier "a" is not declared',
 }
 
 Test { [[
-var int a = do/X end;
+var int a = do/a end;
 ]],
     run = 'assertion',
 }
@@ -27556,7 +27578,7 @@ loop _ in [0->10[ do
 end
 
 do/_
-    escape/_;
+    //escape/_;
 end
 
 await 1ms/_;
