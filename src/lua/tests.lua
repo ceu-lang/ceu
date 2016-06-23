@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -55754,7 +55755,6 @@ escape _V;
 
 -->>> DATA INI
 -- HERE:
---]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -57270,7 +57270,7 @@ l1 = new Nil();       /* recursive union */
 pool[] List l2 = new Cons(1, l1);
 escape 1;
 ]],
-    stmts = 'line 56 : invalid argument to constructor : unexpected context for pool "l1"',
+    stmts = 'line 56 : invalid constructor : argument #2 : unexpected context for pool "l1"',
     --env = 'line 56 : invalid constructor : recursive field "Cons" must be new data',
     -- TODO-ADT-Rec-STATIC-CONSTRS
     --run = 1,
@@ -57285,7 +57285,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 53 : invalid constructor : recursive field "Cons" must be new data',
-    stmts = 'line 53 : invalid argument to constructor : unexpected context for pool "l1"',
+    stmts = 'line 53 : invalid constructor : argument #2 : unexpected context for pool "l1"',
 }
 
 -- constructors must specify the ADT identifier
@@ -57344,21 +57344,24 @@ var Pair p1 = val Pair();           /* expected (x,y) */
 escape 1;
 ]],
     wrn = true,
-    env = 'line 51 : arity mismatch',
+    --env = 'line 51 : arity mismatch',
+    stmts = 'line 51 : invalid constructor : expected 2 argument(s)',
 }
 Test { DATA..[[
 var Pair p1 = val Pair(1,null);     /* expected (int,int) */
 escape 1;
 ]],
     wrn = true,
-    env = 'line 51 : wrong argument #2',
+    --env = 'line 51 : wrong argument #2',
+    stmts = 'line 51 : invalid constructor : argument #2 : types mismatch : "int" <= "null&&"',
 }
 Test { DATA..[[
 var Opt o1 = val Nothing(1);       /* expected (void) */
 escape 1;
 ]],
     wrn = true,
-    env = 'line 51 : arity mismatch',
+    --env = 'line 51 : arity mismatch',
+    stmts = 'line 51 : invalid constructor : expected 0 argument(s)',
 }
 
 -- constructors are not expressions...
@@ -57653,7 +57656,7 @@ escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + ((((l3 as Cons).ta
     wrn = true,
     --run = 4,
     --env = 'line 53 : invalid constructor : recursive field "Cons" must be new data',
-    stmts = 'line 53 : invalid argument to constructor : unexpected context for pool "l1"',
+    stmts = 'line 53 : invalid constructor : argument #2 : unexpected context for pool "l1"',
     -- TODO-ADT-Rec-STATIC-CONSTRS
 }
 Test { DATA..[[

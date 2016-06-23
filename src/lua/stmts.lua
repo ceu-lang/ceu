@@ -164,7 +164,7 @@ DBG('TODO: _Lua')
             err_str = 'invalid call'
         end
 
-        ASR(#to == #Abslist, me, err_str..' : number of arguments mismatch')
+        ASR(#to == #Abslist, me, err_str..' : expected '..#to..' argument(s)')
         for i, e in ipairs(Abslist) do
             if e.tag == 'ID_any' then
                 -- ok: ignore _
