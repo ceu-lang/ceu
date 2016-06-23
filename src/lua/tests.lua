@@ -339,7 +339,7 @@ Test { [[var int a;]],
 
 Test { [[var int a;]],
     wrn = true,
-    ref = 'uninitialized variable "a" crossing compound statement (tests.lua:1)',
+    init = 'uninitialized variable "a"',
 }
 
 Test { [[var int a=0;]],

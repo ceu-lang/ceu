@@ -38,15 +38,18 @@ F = {
                             'plain',
                             '_char'))
 
+        local ret = node('Var', me.ln,
+                        node('Type', me.ln,
+                            node('ID_prim', me.ln, 'int')),
+                        false,
+                        '_ret')
+        ret.is_implicit = true
+
         AST.root =
             node('Block', me.ln,
                 node('Stmts', me.ln,
                     nats,
-                    node('Var', me.ln,
-                        node('Type', me.ln,
-                            node('ID_prim', me.ln, 'int')),
-                        false,
-                        '_ret'),
+                    ret,
                     node('_Set', me.ln,
                         node('Exp_Name', me.ln,
                             node('ID_int', me.ln, '_ret')),

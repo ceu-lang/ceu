@@ -48,7 +48,8 @@ function dcls_get (blk, id, can_cross)
         local dcl = blk.dcls[id]
         if dcl then
             dcl.is_used = true
-            return AST.copy(dcl)
+            return dcl
+            --return AST.copy(dcl)
         end
     end
     return nil
