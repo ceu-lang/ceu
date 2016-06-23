@@ -17920,7 +17920,7 @@ end
 var s8 i = 0;
 escape call Fx(i);
 ]],
-    stmts = 'line 5 : invalid call : types mismatch : "(u8)" <= "(s8)"',
+    stmts = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
 }
 
 Test { [[
@@ -44238,7 +44238,7 @@ code/instantaneous Fx (var int v)=>int do
 end
 escape call Fx();
 ]],
-    stmts = 'line 4 : invalid call : types mismatch : "(int)" <= "()"',
+    stmts = 'line 4 : invalid call : number of arguments mismatch',
 }
 
 Test { [[
@@ -44248,7 +44248,7 @@ end
 var int&& ptr;
 escape call Fx(ptr);
 ]],
-    stmts = 'line 5 : invalid call : types mismatch : "(int)" <= "(int&&)"',
+    stmts = 'line 5 : invalid call : argument #1 : types mismatch : "int" <= "int&&"',
 }
 
 Test { [[
@@ -56347,7 +56347,6 @@ escape ((lll as ListCONS).tail as ListCONS).head;
     run = 2,
 }
 
---]===]
 Test { [[
 data Stack;
 data StackEMPTY;
@@ -56371,8 +56370,8 @@ data SplitHORIZONTAL is Split;
 data SplitVERTICAL   is Split;
 
 data Grid;
-data GridEMPTY;
-data GridSPLIT with
+data GridEMPTY is Grid;
+data GridSPLIT is Grid with
     var Split dir;
     var Grid  one;
     var Grid  two;
@@ -56426,7 +56425,7 @@ pool[5] Grid g = new GridSPLIT(
 
 escape 1;
 ]],
-    stmts = 'line 13 : invalid assignment : types mismatch : "(Split,Grid,Grid)" <= "(SplitHORIZONTAL,GridSPLIT)"',
+    stmts = 'line 13 : invalid constructor : number of arguments mismatch',
 }
 
 Test { [[
@@ -56453,7 +56452,7 @@ g = new GridSPLIT(
 
 escape 1;
 ]],
-    stmts = 'line 16 : invalid assignment : types mismatch : "(Split,Grid,Grid)" <= "(SplitVERTICAL,GridEMPTY,GridEMPTY)"',
+    stmts = 'line 16 : invalid constructor : argument #2 : types mismatch : "Grid" <= "GridEMPTY"',
 }
 
 Test { [[
@@ -56600,7 +56599,8 @@ var Ee e = val Ee(1);
 escape 1;
 ]],
     wrn = true,
-    env = 'line 7 : union data constructor requires a tag',
+    --env = 'line 7 : union data constructor requires a tag',
+    stmts = 'line 7 : invalid constructor : number of arguments mismatch',
 }
 
 Test { [[
@@ -56676,7 +56676,7 @@ data Xx is Ee with
     var Dx&& d;
 end
 
-var Ee e = val Ee(null);
+var Ee e = val Xx(null);
     var Dx d = val Dx(10);
     (e as Xx).d = &&d;
 
@@ -56901,6 +56901,7 @@ escape b as int;
     run = 36,
 }
 
+--]===]
 Test { [[
 native _u8;
 data Test with
@@ -56909,7 +56910,8 @@ end
 var Test t = val Test();
 escape t.v[0];
 ]],
-    env = 'line 4 : arity mismatch',
+    --env = 'line 4 : arity mismatch',
+    stmts = 'line 5 : invalid constructor : number of arguments mismatch',
 }
 
 Test { [[

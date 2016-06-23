@@ -224,16 +224,6 @@ G = {
         me.dcl = DCLS.new(me, AST.copy(out))
     end,
 
-    Abs_Cons = function (me)
-        local ID_abs = unpack(me)
-
-        -- tp
-        -- stmts
-
-        -- dcl
-        me.dcl = DCLS.new(me, ID_abs[1])
-    end,
-
 -- BIND
 
     ['Exp_1&'] = function (me)

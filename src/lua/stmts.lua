@@ -137,28 +137,47 @@ DBG('TODO: _Lua')
     Abs_Cons = function (me)
         local ID_abs, Abslist = unpack(me)
 
-        -- tp
-
         -- to
         local to = AST.node('Typelist', me.ln)
+        local err_str
         if ID_abs.dcl.tag == 'Data' then
             -- Data
+            -- tp
             local block = AST.asr(ID_abs.dcl,'Data', 3,'Block')
             for i, dcl in ipairs(block.dcls) do
                 local Type = unpack(dcl)
                 to[i] = AST.copy(Type)
             end
-            check(me, to, Abslist.dcl[1], 'invalid constructor')
+            err_str = 'invalid constructor'
         else
             -- Code
+            -- tp
             assert(ID_abs.dcl.tag == 'Code')
             local _,_,_,ins = unpack(ID_abs.dcl)
             for i, item in ipairs(ins) do
                 local Type = AST.asr(item,'Typepars_ids_item', 4,'Type')
                 to[i] = Type
             end
-            check(me, to, Abslist.dcl[1], 'invalid call')
+            err_str = 'invalid call'
         end
+
+        ASR(#to == #Abslist, me, err_str..' : number of arguments mismatch')
+        for i, e in ipairs(Abslist) do
+            if e.tag == 'ID_any' then
+                -- ok: ignore _
+                -- Data(1,_)
+-- TODO: check default, check event/vector
+            else
+                -- ctx
+AST.dump(e)
+                EXPS.asr_if_name(e, {'Nat','Var'}, err_str..' : argument #'..i)
+
+                -- tp
+                check(me, to[i], e.dcl[1], err_str..' : argument #'..i)
+            end
+        end
+
+        me.dcl = DCLS.new(me,ID_abs[1])
     end,
 
 -- EMIT
@@ -319,7 +338,7 @@ DBG'TODO: _Async_Isr'
         end
     end,
 
--- VARLIST, EXPLIST, ABSLIST
+-- VARLIST, EXPLIST
 
     Explist = function (me)
         local Typelist = AST.node('Typelist', me.ln)
@@ -328,26 +347,6 @@ DBG'TODO: _Async_Isr'
 -- TODO: call/emit, argument
             EXPS.asr_if_name(e, {'Nat','Var'},
                 'invalid expression list : item #'..i)
-
-            -- dcl
-            Typelist[i] = AST.copy(e.dcl[1])
-        end
-        me.dcl = DCLS.new(me, Typelist)
-    end,
-
-    Abslist = function (me)
-        local Typelist = AST.node('Typelist', me.ln)
-        local ID_abs = AST.asr(me.__par,'Abs_Cons', 1,'ID_abs')
-        for i, e in ipairs(me) do
-            -- ctx
-            if ID_abs.dcl.tag == 'Data' then
-                EXPS.asr_if_name(e, {'Nat','Var'},
-                    'invalid constructor : argument #'..i)
-            else
-                assert(ID_abs.dcl.tag == 'Code')
-                EXPS.asr_if_name(e, {'Nat','Var'},
-                    'invalid call : argument #'..i)
-            end
 
             -- dcl
             Typelist[i] = AST.copy(e.dcl[1])
