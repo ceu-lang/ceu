@@ -119,29 +119,22 @@ DBG('TODO: _Lua')
         EXPS.asr_name(to, {'Nat','Var'}, 'invalid Lua assignment')
     end,
 
-    Set_Data = function (me)
-        local Data_New, Exp_Name = unpack(me)
-        local is_new = unpack(Data_New)
+-- TODO
+    Set_Abs = function (me)
+        local _, Exp_Name = unpack(me)
 
         -- ctx
-        if is_new then
-            -- pool = ...
-            EXPS.asr_name(Exp_Name, {'Var','Pool'}, 'invalid constructor')
-        else
-            EXPS.asr_name(Exp_Name, {'Var'}, 'invalid constructor')
-        end
+        EXPS.asr_name(Exp_Name, {'Var'}, 'invalid constructor')
     end,
-    _Data_Explist = function (me)
-        for _, e in ipairs(me) do
-            if e.tag=='Data_New_one' or e.tag=='Vec_Cons' then
-                -- ok
-            else
-                EXPS.asr_if_name(e, {'Nat','Var'},
-                    'invalid argument to constructor')
-            end
-        end
+    Set_Abs_New = function (me)
+        local _, Exp_Name = unpack(me)
+
+        -- ctx
+        -- pool = ...
+        EXPS.asr_name(Exp_Name, {'Var','Pool'}, 'invalid constructor')
     end,
-    Data_New_one = function (me)
+
+    Abs_Cons = function (me)
         local ID_abs, Data_Explist = unpack(me)
 
         -- tp
@@ -175,7 +168,6 @@ DBG('TODO: _Lua')
 
     Set_Await_one = function (me)
         local fr, to = unpack(me)
-AST.dump(fr)
         assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Await' or fr.tag=='Await_Evt')
         check(me, to.dcl[1], fr.dcl[1], 'invalid assignment')
     end,
@@ -338,13 +330,27 @@ DBG'TODO: _Async_Isr'
 
 -- VARLIST, EXPLIST, ABSLIST
 
-    Abslist = 'Explist',
     Explist = function (me)
         local Typelist = AST.node('Typelist', me.ln)
         for i, e in ipairs(me) do
             -- ctx
             EXPS.asr_if_name(e, {'Nat','Var'},
                 'invalid expression list : item #'..i..' : '..
+                'unexpected context for '..AST.tag2id[e.dcl.tag]..' "'..
+                e.dcl.id..'"')
+
+            -- dcl
+            Typelist[i] = AST.copy(e.dcl[1])
+        end
+        me.dcl = DCLS.new(me, Typelist)
+    end,
+
+    Abslist = function (me)
+        local Typelist = AST.node('Typelist', me.ln)
+        for i, e in ipairs(me) do
+            -- ctx
+            EXPS.asr_if_name(e, {'Nat','Var'},
+                'invalid constructor : item #'..i..' : '..
                 'unexpected context for '..AST.tag2id[e.dcl.tag]..' "'..
                 e.dcl.id..'"')
 

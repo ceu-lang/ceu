@@ -105,8 +105,10 @@ function DCLS.new (me, id, ...)
         tp = id
     else
         assert(type(id) == 'string')
+        local ID = (string.sub(id,1,1)==string.sub(string.upper(id),1,1) and
+                    'ID_abs' or 'ID_prim')
         tp = AST.node('Type', me.ln,
-                AST.node('ID_prim', me.ln,
+                AST.node(ID, me.ln,
                     id),
                 ...)
     end

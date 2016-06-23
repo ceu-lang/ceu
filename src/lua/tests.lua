@@ -44474,7 +44474,6 @@ escape Fx(1,2);
     dcls = 'line 5 : invalid `code´ declaration : body for "Fx" already exists',
 }
 
---]===]
 Test { [[
 code/instantaneous Fff (var int x)=>int do
     escape x + 1;
@@ -56216,6 +56215,7 @@ escape 0;//((l as Cons).tail) as Cons).@head@;
     --exps = 'line 8 : invalid constructor : unexpected context for variable "l"',
 }
 
+--]===]
 Test { [[
 data List;
 data ListNIL is List;
