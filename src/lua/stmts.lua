@@ -57,20 +57,20 @@ DBG('TODO: _Lua')
                 if ps then
                     AST.asr(ps,'Explist')
                     for j, p in ipairs(ps) do
-                        check(me, to_dcl[1], p.dcl[1],
+                        check(fr, to_dcl[1], p.dcl[1],
                             'invalid constructor : item #'..i..' : '..
                             'invalid expression list : item #'..j)
                     end
                 end
             elseif e.tag == 'STRING' then
                 local dcl = DCLS.new(e,'byte')
-                check(me, to_dcl[1], dcl[1],
+                check(fr, to_dcl[1], dcl[1],
                     'invalid constructor : item #'..i)
             elseif e.tag == '_Lua' then
             elseif e.tag == 'Exp_as' then
             else
                 assert(e.dcl and e.dcl.tag == 'Vec')
-                check(me, to_dcl[1], e.dcl[1],
+                check(fr, to_dcl[1], e.dcl[1],
                     'invalid constructor : item #'..i)
             end
         end

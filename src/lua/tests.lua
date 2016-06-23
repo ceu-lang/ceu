@@ -44239,7 +44239,7 @@ code/instantaneous Fx (var int v)=>int do
 end
 escape call Fx();
 ]],
-    stmts = 'line 4 : invalid call : number of arguments mismatch',
+    stmts = 'line 4 : invalid call : expected 1 argument(s)',
 }
 
 Test { [[
@@ -56426,7 +56426,7 @@ pool[5] Grid g = new GridSPLIT(
 
 escape 1;
 ]],
-    stmts = 'line 13 : invalid constructor : number of arguments mismatch',
+    stmts = 'line 13 : invalid constructor : expected 3 argument(s)',
 }
 
 Test { [[
@@ -56601,7 +56601,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 7 : union data constructor requires a tag',
-    stmts = 'line 7 : invalid constructor : number of arguments mismatch',
+    stmts = 'line 7 : invalid constructor : expected 0 argument(s)',
 }
 
 Test { [[
@@ -56911,7 +56911,7 @@ var Test t = val Test();
 escape t.v[0];
 ]],
     --env = 'line 4 : arity mismatch',
-    stmts = 'line 5 : invalid constructor : number of arguments mismatch',
+    stmts = 'line 5 : invalid constructor : expected 1 argument(s)',
 }
 
 Test { [[
