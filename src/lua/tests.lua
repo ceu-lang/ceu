@@ -265,30 +265,6 @@ escape (not false) as int;
     run = 1,
 }
 
-Test { [[
-escape 1?;
-]],
-    parser = 'ERR : tests.lua : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
-}
-Test { [[
-var int i;
-escape i?;
-]],
-    exps = 'line 2 : invalid operand to `?´ : expected option type',
-}
-Test { [[
-var int? i = 1;
-escape i? as int;
-]],
-    run=1,
-}
-Test { [[
-var int? i;
-escape (i? as int)+1;
-]],
-    run=1,
-}
-
 --<<< EXPS / EXPRESSIONS
 
 -->>> NATIVE
@@ -723,6 +699,15 @@ event void a;
 var _abc b;
 ]],
     wrn = true,
+    init = 'line 3 : uninitialized variable "b"',
+}
+
+Test { [[
+native _abc; // TODO: = 0;
+event void a;
+var _abc b = _;
+]],
+    wrn = true,
     tmp = 'line 3 : cannot instantiate type "_abc"',
 }
 
@@ -867,7 +852,7 @@ escape 1;
 Test { [[
 native _abc;// TODO = 0;
 event void a;
-var _abc a;
+var _abc a = _;
 ]],
     wrn = true,
     --dcls = 'line 3 : internal identifier "a" is already declared at line 2',
@@ -968,144 +953,6 @@ end
 ]],
     parser = 'line 3 : after `)´ : expected `is´ or `as´ or binary operator or `)´',
     --dcls = 'line 3 : internal identifier "check" is not declared',
-}
-
-    -- INVALID TYPE MODIFIERS
-
-Test { [[
-vector int[1][1] v;
-escape 1;
-]],
-    --adj = 'line 1 : not implemented : multiple `[]´',
-    --env = 'line 1 : invalid type modifier : `[][]´',
-    parser = 'line 1 : after `vector´ : expected `&´ or `[´',
-}
-Test { [[
-vector[1][1] int v;
-escape 1;
-]],
-    --adj = 'line 1 : not implemented : multiple `[]´',
-    --env = 'line 1 : invalid type modifier : `[][]´',
-    parser = 'line 1 : after `]´ : expected type',
-}
-Test { [[
-vector[1] int? v;
-escape 1;
-]],
-    dcls = 'line 1 : vector "v" declared but not used',
-    --env = 'line 1 : invalid type modifier : `[]?´',
-}
-Test { [[
-vector[1] int? v;
-escape 1;
-]],
-    wrn = true,
-    tmp = 'line 1 : `data´ fields do not support vectors yet',
-    --env = 'line 1 : invalid type modifier : `[]?´',
-}
-Test { [[
-var int* v;
-escape 1;
-]],
-    parser = 'after `int´ : expected type modifier or internal identifier',
-}
-Test { [[
-var& int&& v;
-escape 1;
-]],
-    dcls = 'line 1 : variable "v" declared but not used',
-}
-Test { [[
-var& int&& v;
-escape 1;
-]],
-    wrn = true,
-    tmp = 'TODO: uninit',
-}
-Test { [[
-var& int&&  v;
-escape 1;
-]],
-    wrn = true,
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
-}
-Test { [[
-var int&& p = null;
-var& int&&  v = &p;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-vector&[] int v;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-var& int&  v;
-escape 1;
-]],
-    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
-    --env = 'line 1 : invalid type modifier : `&&´',
-}
-Test { [[
-var int?&& v;
-escape 1;
-]],
-    parser = 'line 1 : after `?´ : expected internal identifier',
-    --env = 'line 1 : invalid type modifier : `?&&´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-Test { [[
-vector[1] int? v;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-    --env = 'line 1 : invalid type modifier : `?[]´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-Test { [[
-var& int? v;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-    --env = 'line 1 : invalid type modifier : `?&´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-Test { [[
-var int? k;
-var& int? v = &k;
-escape 1 + (v? as int);
-]],
-    run = 1,
-}
-Test { [[
-var int? k;
-var& int? v = &k;
-v = 10;
-escape k!;
-]],
-    run = 10,
-}
-Test { [[
-var int? k;
-k = 10;
-var& int? v = &k;
-escape v!;
-]],
-    run = 10,
-}
-Test { [[
-var int?? v;
-escape 1;
-]],
-    parser = 'line 1 : after `?´ : expected internal identifier',
-    --env = 'line 1 : invalid type modifier : `??´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 
     -- IF
@@ -17980,6 +17827,67 @@ escape 1;
     run = { ['~>1s'] = 1 },
 }
 
+Test { [[
+var int* v;
+escape 1;
+]],
+    parser = 'after `int´ : expected type modifier or internal identifier',
+}
+Test { [[
+var& int&& v;
+escape 1;
+]],
+    dcls = 'line 1 : variable "v" declared but not used',
+}
+Test { [[
+var& int&& v;
+escape 1;
+]],
+    wrn = true,
+    init = 'line 1 : uninitialized variable "v"',
+}
+Test { [[
+var& int&&  v;
+escape 1;
+]],
+    wrn = true,
+    init = 'line 1 : uninitialized variable "v"',
+}
+Test { [[
+var int i;
+var& int a = &i;
+escape i;
+]],
+    init = 'TODO: a',
+}
+Test { [[
+var int i = 1;
+var& int a = &i;
+escape a;
+]],
+    run = 1,
+}
+Test { [[
+var int&& p = null;
+var& int&&  v = &p;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+vector&[] int v;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+var& int&  v;
+escape 1;
+]],
+    parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
+    --env = 'line 1 : invalid type modifier : `&&´',
+}
 --<<< ALIASES / REFERENCES / REFS / &
 
 Test { [[
@@ -24219,6 +24127,37 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+vector int[1][1] v;
+escape 1;
+]],
+    --adj = 'line 1 : not implemented : multiple `[]´',
+    --env = 'line 1 : invalid type modifier : `[][]´',
+    parser = 'line 1 : after `vector´ : expected `&´ or `[´',
+}
+Test { [[
+vector[1][1] int v;
+escape 1;
+]],
+    --adj = 'line 1 : not implemented : multiple `[]´',
+    --env = 'line 1 : invalid type modifier : `[][]´',
+    parser = 'line 1 : after `]´ : expected type',
+}
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    dcls = 'line 1 : vector "v" declared but not used',
+    --env = 'line 1 : invalid type modifier : `[]?´',
+}
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    wrn = true,
+    tmp = 'line 1 : `data´ fields do not support vectors yet',
+    --env = 'line 1 : invalid type modifier : `[]?´',
+}
 --<<< VECTORS / STRINGS
 
 Test { [[
@@ -58923,6 +58862,89 @@ escape (i! as int);
 ]],
     run = 10,
 }
+
+Test { [[
+escape 1?;
+]],
+    parser = 'ERR : tests.lua : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
+}
+Test { [[
+var int i;
+escape i?;
+]],
+    exps = 'line 2 : invalid operand to `?´ : expected option type',
+}
+Test { [[
+var int? i = 1;
+escape i? as int;
+]],
+    run=1,
+}
+Test { [[
+var int? i;
+escape (i? as int)+1;
+]],
+    run=1,
+}
+
+Test { [[
+var int?&& v;
+escape 1;
+]],
+    parser = 'line 1 : after `?´ : expected internal identifier',
+    --env = 'line 1 : invalid type modifier : `?&&´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+    --env = 'line 1 : invalid type modifier : `?[]´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var& int? v;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+    --env = 'line 1 : invalid type modifier : `?&´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var int? k;
+var& int? v = &k;
+escape 1 + (v? as int);
+]],
+    run = 1,
+}
+Test { [[
+var int? k;
+var& int? v = &k;
+v = 10;
+escape k!;
+]],
+    run = 10,
+}
+Test { [[
+var int? k;
+k = 10;
+var& int? v = &k;
+escape v!;
+]],
+    run = 10,
+}
+Test { [[
+var int?? v;
+escape 1;
+]],
+    parser = 'line 1 : after `?´ : expected internal identifier',
+    --env = 'line 1 : invalid type modifier : `??´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+
 --<<< OPTION TYPES
 
 -- cannot compare ADTs

@@ -97,10 +97,9 @@ Test = function (t)
     if not check('exps')     then return end
     if not check('consts')   then return end
     if not check('stmts')    then return end
-do return end
     dofile 'run.lua'
     if not check('init')     then return end
-AST.dump(AST.root)
+do return end
 AST.dump(AST.root)
     if not check('adt')      then return end
     if not check('mode')     then return end
