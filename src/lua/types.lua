@@ -71,20 +71,8 @@ function TYPES.check (tp, ...)
             assert(AST.isNode(v))
             v = unpack(v)
         end
-
-        local e = E[#E-i]
-        local opt = false
-        if string.sub(e,1,1) == '-' then
-            e   = string.sub(e,2)
-            opt = true
-        end
-
-        if v ~= e then
-            if opt then
-                j = j - 1
-            else
-                return false
-            end
+        if v ~= E[#E-i] then
+            return false
         end
         j = j + 1
     end
