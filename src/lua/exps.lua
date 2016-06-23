@@ -200,22 +200,28 @@ G = {
         local _, e = unpack(me)
 
         -- ctx
-        asr_name(e, {'Nat','Code'}, 'invalid call')
+        asr_name(e, {'Nat'}, 'invalid call')
 
         -- tp
-        if e.tag == 'ID_abs' then
-            local id = unpack(e)
-            ASR(e.dcl.tag=='Code', me,
-                'invalid call : "'..id..'" is not a `code´ abstraction')
-        end
 
         -- dcl
-        if e.tag == 'ID_abs' then
-            local _,_,_,_,out = unpack(e.dcl)
-            me.dcl = DCLS.new(me, AST.copy(out))
-        else
-            me.dcl = AST.copy(e.dcl)
-        end
+        me.dcl = AST.copy(e.dcl)
+    end,
+
+    Abs_Call = function (me)
+        local ID_abs = AST.asr(me,'', 2,'Abs_Cons', 1,'ID_abs')
+
+        -- ctx
+        asr_name(ID_abs, {'Code'}, 'invalid call')
+
+        -- tp
+        local id = unpack(ID_abs)
+        ASR(ID_abs.dcl.tag=='Code', me,
+            'invalid call : "'..id..'" is not a `code´ abstraction')
+
+        -- dcl
+        local _,_,_,_,out = unpack(ID_abs.dcl)
+        me.dcl = DCLS.new(me, AST.copy(out))
     end,
 
 -- BIND
@@ -225,7 +231,7 @@ G = {
 
         -- ctx
         local par = me.__par
-        ASR(par.tag=='Set_Alias' or par.tag=='Explist' or par.tag=='_Data_Explist', me,
+        ASR(par.tag=='Set_Alias' or par.tag=='Explist' or par.tag=='Abslist', me,
             'invalid expression : unexpected context for operation `&´')
 
         -- tp

@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -44475,6 +44474,7 @@ escape Fx(1,2);
     dcls = 'line 5 : invalid `code´ declaration : body for "Fx" already exists',
 }
 
+--]===]
 Test { [[
 code/instantaneous Fff (var int x)=>int do
     escape x + 1;

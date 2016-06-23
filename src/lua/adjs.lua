@@ -357,7 +357,7 @@ DBG('TODO: _Loop_Pool')
            set.tag=='_Set_Await_one'    or set.tag=='_Set_Await_many'    or
            set.tag=='_Set_Vec'          or set.tag=='_Set_Emit_Ext_emit' or
            set.tag=='_Set_Async_Thread' or set.tag=='_Set_Lua'           or
-           set.tag=='_Set_Data'         or set.tag=='_Set_Emit_Ext_call' or
+           set.tag=='_Set_Abs'          or set.tag=='_Set_Emit_Ext_call' or
            set.tag=='_Set_Emit_Ext_req'
         then
             --  _Set
