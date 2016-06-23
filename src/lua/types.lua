@@ -137,6 +137,21 @@ do
         return false
     end
 
+    local function contains_data (ID_abs_1, ID_abs_2)
+        local id1 = unpack(ID_abs_1)
+        local id2 = unpack(ID_abs_2)
+        if id1 == id2 then
+            return true
+        end
+        local dcl2 = DCLS.asr(AST.iter()(), AST.iter'Block'(), id2, true)
+        local _,ID_abs_2 = unpack(dcl2)
+        if ID_abs_2 then
+            return contains_data(ID_abs_1, ID_abs_2)
+        else
+            return false
+        end
+    end
+
     function TYPES.contains (tp1, tp2)
         if tp1.tag=='Typelist' or tp2.tag=='Typelist' then
             if tp1.tag=='Typelist' and tp2.tag=='Typelist' then
@@ -155,6 +170,12 @@ do
         local tp1_is_nat = TYPES.is_nat(tp1)
         local tp2_is_nat = TYPES.is_nat(tp2)
 
+        local tp1_is_plain = TYPES.check(tp1, TYPES.id(tp1))
+        local tp2_is_plain = TYPES.check(tp2, TYPES.id(tp2))
+
+        local tp1_ID = unpack(tp1)
+        local tp2_ID = unpack(tp2)
+
         if TYPES.check(tp1,'?') then
             tp1 = TYPES.pop(tp1)
             if TYPES.check(tp2,'?') then
@@ -166,10 +187,16 @@ do
         if TYPES.is_equal(tp1, tp2) then
             return true
 
+-- DATA vs DATA
+        elseif tp1_is_plain and tp1_ID.tag=='ID_abs' and
+               tp2_is_plain and tp2_ID.tag=='ID_abs'
+        then
+            return contains_data(tp1_ID, tp2_ID)
+
 -- VOID <- _
         -- var& void ptr = &_f()
         -- var& void p = &v;
-        elseif TYPES.check(tp1,'void') and TYPES.check(tp2,TYPES.id(tp2)) then
+        elseif TYPES.check(tp1,'void') and tp2_is_plain then
             return true
 
 -- NUMERIC TYPES

@@ -122,6 +122,8 @@ DBG('TODO: _Lua')
     Set_Data = function (me)
         local Data_New, Exp_Name = unpack(me)
         local is_new = unpack(Data_New)
+
+        -- ctx
         if is_new then
             -- pool = ...
             EXPS.asr_name(Exp_Name, {'Var','Pool'}, 'invalid constructor')
@@ -138,6 +140,30 @@ DBG('TODO: _Lua')
                     'invalid argument to constructor')
             end
         end
+    end,
+    Data_New_one = function (me)
+        local ID_abs, Data_Explist = unpack(me)
+
+        -- tp
+
+        -- to
+        local block = AST.asr(ID_abs.dcl,'Data', 3,'Block')
+        local to = AST.node('Typelist', me.ln)
+        for i, dcl in ipairs(block.dcls) do
+            local Type = unpack(dcl)
+            to[i] = AST.copy(Type)
+        end
+
+        -- fr
+        local fr = AST.node('Typelist', Data_Explist.ln)
+        for i, e in ipairs(Data_Explist) do
+            if e.tag == 'Data_New_one' then
+                fr[i] = AST.node('Type', me.ln,
+                            AST.copy(AST.asr(e,'', 1,'ID_abs')))
+            end
+        end
+
+        check(me, to, fr, 'invalid assignment')
     end,
 
     Set_Emit_Ext_emit = function (me)

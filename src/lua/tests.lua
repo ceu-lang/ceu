@@ -55484,7 +55484,7 @@ vector[] int xxx = [1,2,3,4,5];
 var int ret = emit OUT => (0,&&xxx,1);
 escape ret;
 ]],
-    env = 'line 4 : invalid event type : vector only as the last argument',
+    tmp = 'line 4 : invalid event type : vector only as the last argument',
     todo = 'TODO: dropped support for vector i/o',
 }
 
@@ -55828,7 +55828,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 4 : top-level identifier "Tx" already taken',
+    tmp = 'line 4 : top-level identifier "Tx" already taken',
 }
 Test { [[
 interface Tx with
@@ -55839,7 +55839,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    env = 'line 3 : top-level identifier "Tx" already taken',
+    tmp = 'line 3 : top-level identifier "Tx" already taken',
 }
 Test { [[
 data Tx with
@@ -55861,7 +55861,7 @@ interface Tx with
 end
 escape 1;
 ]],
-    env = 'top-level identifier "Tx" already taken',
+    tmp = 'top-level identifier "Tx" already taken',
 }
 
 Test { [[
@@ -56386,8 +56386,8 @@ data SplitHORIZONTAL is Split;
 data SplitVERTICAL   is Split;
 
 data Grid;
-data GridEMPTY;
-data GridSPLIT with
+data GridEMPTY is Grid;
+data GridSPLIT is Grid with
     var Split dir;
     var Grid  one;
     var Grid  two;
@@ -56402,7 +56402,7 @@ pool[5] Grid g = new GridSPLIT(
 
 escape 1;
 ]],
-    env = 'line 13 : arity mismatch',
+    stmts = 'line 13 : invalid assignment : types mismatch : "(Split,Grid,Grid)" <= "(SplitHORIZONTAL,GridSPLIT)"',
 }
 
 Test { [[
@@ -56429,6 +56429,33 @@ g = new GridSPLIT(
 
 escape 1;
 ]],
+    stmts = 'line 16 : invalid assignment : types mismatch : "(Split,Grid,Grid)" <= "(SplitVERTICAL,GridEMPTY,GridEMPTY)"',
+}
+
+Test { [[
+data Split;
+data SplitHORIZONTAL is Split;
+data SplitVERTICAL   is Split;
+
+data Grid;
+data GridEMPTY is Grid;
+data GridSPLIT is Grid with
+    var Split dir;
+    var Grid  one;
+    var Grid  two;
+end
+
+pool[5] Grid g;
+g = new GridSPLIT(
+            SplitHORIZONTAL(),
+            GridSPLIT(
+                SplitVERTICAL(),
+                GridEMPTY(),
+                GridEMPTY()),
+            GridEMPTY());
+
+escape 1;
+]],
     run = 1,
 }
 
@@ -56438,8 +56465,8 @@ data SplitHORIZONTAL is Split;
 data SplitVERTICAL   is Split;
 
 data Grid;
-data GridEMPTY;
-data GridSPLIT with
+data GridEMPTY is Grid;
+data GridSPLIT is Grid with
     var Split dir;
     var Grid  one;
     var Grid  two;
