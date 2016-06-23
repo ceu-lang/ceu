@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17776,6 +17777,17 @@ end
 
 escape Fx(&str);
 ]],
+    parser = 'line 7 : after `escape´ : expected expression or `;´',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
     wrn = true,
     --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
     run = 1,
@@ -17787,7 +17799,7 @@ code/instantaneous Fx (vector&[] byte vec)=>int do
     escape vec[1] as int;
 end
 
-escape Fx(&str);
+escape call Fx(&str);
 ]],
     wrn = true,
     run = 1,
@@ -17815,7 +17827,7 @@ code/instantaneous Fx (vector&[] int vec)=>int do
     escape vec[1];
 end
 
-escape Fx(&str);
+escape call Fx(&str);
 ]],
     wrn = true,
     run = 1,
@@ -17827,7 +17839,7 @@ code/instantaneous Fx (vector&[] int vec)=>bool do
     escape vec[1];
 end
 
-escape Fx(&str);
+escape call Fx(&str);
 ]],
     wrn = true,
     stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
@@ -17840,7 +17852,7 @@ code/instantaneous Fx (vector&[] byte vec)=>int do
     escape vec[1];
 end
 
-escape Fx(str);
+escape call Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
@@ -17853,7 +17865,7 @@ code/instantaneous Fx (void) => byte[] do
     escape &this.str;
 end
 
-vector&[] byte ref = &Fx();
+vector&[] byte ref = &call Fx();
 
 escape ref[1];
 ]],
@@ -17869,7 +17881,7 @@ code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
     escape vec[1];
 end
 
-escape Fx(str);
+escape call Fx(str);
 ]],
     parser = 'line 3 : after `vector´ : expected `&´',
     --env = 'line 3 : wrong argument #2 : vectors are not supported',
@@ -17907,7 +17919,7 @@ code/instantaneous Fx (var u8 v)=>int do
     escape v as int;
 end
 var s8 i = 0;
-escape Fx(i);
+escape call Fx(i);
 ]],
     stmts = 'line 5 : invalid call : types mismatch : "(u8)" <= "(s8)"',
 }
@@ -24040,7 +24052,7 @@ code/instantaneous Strlen (var byte&& str)=>int do
 end
 
 vector[] byte str = [].."Ola Mundo!";
-escape Strlen(&&str[0]);
+escape call Strlen(&&str[0]);
 ]],
     --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
     run = 10,
@@ -24053,7 +24065,7 @@ code/instantaneous Strlen (var byte&& str)=>int do
 end
 
 vector[] byte str = [].."Ola Mundo!";
-escape Strlen((&&str[0]) as _char&&);
+escape call Strlen((&&str[0]) as _char&&);
 ]],
     exps = 'line 3 : invalid vector : unexpected context for variable "str"',
     --run = 10,
@@ -24066,7 +24078,7 @@ code/instantaneous Strlen (var byte&& str)=>int do
 end
 
 vector[] byte str = [].."Ola Mundo!";
-escape Strlen((&&str[0]) as _char&&);
+escape call Strlen((&&str[0]) as _char&&);
 ]],
     run = 10,
 }
@@ -24489,7 +24501,7 @@ code/instantaneous Fx (vector&[] byte cs)=>void do
     cs[0] = 10;
 end
 vector[] byte cs = [0];
-Fx(&cs);
+call Fx(&cs);
 escape cs[0];
 ]],
     run = 10,
@@ -29037,7 +29049,7 @@ code/instantaneous Fx (void)=>int do
     var int v = [[ 1 ]];
     escape v;
 end
-escape Fx();
+escape call Fx();
 ]=],
     run = 1,
 }
@@ -29189,7 +29201,7 @@ escape 0;
 
 Test { [[
 code/delayed Tx (void)=>void do end
-Tx();
+call Tx();
 escape 1;
 ]],
     run = 1,
@@ -29198,9 +29210,9 @@ escape 1;
 Test { [[
 code/delayed Tx (void)=>void do end
 par/or do
-    Tx();
+    call Tx();
 with
-    Tx();
+    call Tx();
 end
 
 input void OS_START;
@@ -38530,6 +38542,13 @@ Test { [[
 do Tx;
 escape 0;
 ]],
+    parser = 'line 1 : after `do´ : expected statement',
+}
+
+Test { [[
+do call Tx;
+escape 0;
+]],
     parser = 'line 1 : after `Tx´ : expected `(´',
 }
 
@@ -44209,7 +44228,7 @@ do
     escape x;
 end
 var int a = call Code(1);
-escape Code(a+10);
+escape call Code(a+10);
 ]],
     run = 13,
 }
@@ -44218,7 +44237,7 @@ Test { [[
 code/instantaneous Fx (var int v)=>int do
     escape v+1;
 end
-escape Fx();
+escape call Fx();
 ]],
     stmts = 'line 4 : invalid call : types mismatch : "(int)" <= "()"',
 }
@@ -44228,7 +44247,7 @@ code/instantaneous Fx (var int v)=>int do
     escape v+1;
 end
 var int&& ptr;
-escape Fx(ptr);
+escape call Fx(ptr);
 ]],
     stmts = 'line 5 : invalid call : types mismatch : "(int)" <= "(int&&)"',
 }
@@ -44237,7 +44256,7 @@ Test { [[
 code/instantaneous Fx (var int v)=>int do
     escape v+1;
 end
-escape Fx(1);
+escape call Fx(1);
 ]],
     run = 2,
 }
@@ -44370,7 +44389,7 @@ Test { [[
 code/instantaneous Fx (void)=>int do
     escape 1;
 end
-escape Fx();
+escape call Fx();
 ]],
     run = 1,
 }
@@ -44456,7 +44475,7 @@ code/instantaneous Fx (var int, var int) => int;
 code/instantaneous Fx (var int a, var  int b) => int do
     escape a + b;
 end
-escape Fx(1,2);
+escape call Fx(1,2);
 ]],
     run = 3,
 }
@@ -44469,7 +44488,7 @@ end
 code/instantaneous Fx (var int a, var  int b) => int do
     escape a + b;
 end
-escape Fx(1,2);
+escape call Fx(1,2);
 ]],
     dcls = 'line 5 : invalid `code´ declaration : body for "Fx" already exists',
 }
@@ -44479,12 +44498,12 @@ code/instantaneous Fff (var int x)=>int do
     escape x + 1;
 end
 
-var int x = Fff(10);
+var int x = call Fff(10);
 
 input void OS_START;
 await OS_START;
 
-escape Fff(x);
+escape call Fff(x);
 ]],
     run = 12,
 }
@@ -44557,7 +44576,7 @@ do
     code/instantaneous Fx (var int x)=>int do
         escape x;
     end
-    escape Fx(10);
+    escape call Fx(10);
 end
 var int x = do Tx;
 escape x;
@@ -44590,7 +44609,7 @@ code/instantaneous Set (var u8&& v)=>void do
     *v = 3;
 end
 var u8 v = 0;
-Set(&&v);
+call Set(&&v);
 escape v as int;
 ]],
     run = 3,
@@ -44601,7 +44620,7 @@ code/instantaneous Set (var& u8 v)=>void do
     v = 3;
 end
 var u8 v = 0;
-Set(&v);
+call Set(&v);
 escape v as int;
 ]],
     run = 3,
@@ -44612,7 +44631,7 @@ code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
     buf = [] .. buf .. [3];
 end
 vector[10] u8 buffer;
-FillBuffer(&buffer);
+call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
     run = 3,
@@ -44623,7 +44642,7 @@ code/instantaneous Ff (var& int a)=>void do
     a = 1;
 end
 var int v;
-Ff(v);
+call Ff(v);
 escape v;
 ]],
     tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
@@ -44634,7 +44653,7 @@ code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
     buf = [] .. buf .. [3];
 end
 vector[10] u8 buffer;
-FillBuffer(&buffer);
+call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
     tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
@@ -44645,7 +44664,7 @@ code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
     buf = [] .. buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
-FillBuffer(&buffer);
+call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
     run = '2] runtime error: access out of bounds',
@@ -44657,7 +44676,7 @@ code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
     *buf = [] .. *buf .. [3];
 end
 vector[10] u8 buffer;
-FillBuffer(&&buffer);
+call FillBuffer(&&buffer);
 escape buffer[0] as int;
 ]],
     run = 3,
@@ -44669,7 +44688,7 @@ code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
     *buf = [] .. *buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
-FillBuffer(&&buffer);
+call FillBuffer(&&buffer);
 escape buffer[0] as int;
 ]],
     run = '2] runtime error: access out of bounds',
@@ -44692,7 +44711,7 @@ code/instantaneous Fx (var int x)=>int do
 end
 
 if true then
-    escape Fx(1);
+    escape call Fx(1);
 else
     escape 0;
 end
@@ -44712,7 +44731,7 @@ code/instantaneous Fx (void)=>Tx&& do
     escape &&t;
 end
 
-var Tx&& p = Fx();
+var Tx&& p = call Fx();
 
 escape p:v;
 ]],
@@ -44731,7 +44750,7 @@ code/instantaneous Fx (void)=>Tx&& do
     escape p;
 end
 
-var Tx&& p = Fx();
+var Tx&& p = call Fx();
 
 escape p:v;
 ]],
@@ -44750,7 +44769,7 @@ code/instantaneous Fx (void)=>Tx&& do
     escape p;
 end
 
-var Tx&& p = Fx();
+var Tx&& p = call Fx();
 await 1s;
 
 escape p:v;
@@ -44765,7 +44784,7 @@ code/instantaneous Fx (var int x)=>int do
     this.x = x;
     escape 2;
 end
-escape Fx(1) + this.x;
+escape call Fx(1) + this.x;
 ]],
     todo = 'globals',
     run = 3,
@@ -44841,13 +44860,13 @@ code/instantaneous Fa (void)=>void;
 code/instantaneous Fb (void)=>void;
 
 code/instantaneous Fa (void)=>void do
-    Fb();
+    call Fb();
 end
 
 code/instantaneous Fb (void)=>void do
 end
 
-Fa();
+call Fa();
 
 escape 1;
 ]],
@@ -44861,14 +44880,14 @@ code/instantaneous Fa (void)=>void;
 code/instantaneous Fb (void)=>void;
 
 code/instantaneous Fa (void)=>void do
-    Fb();
+    call Fb();
 end
 
 code/instantaneous Fb (void)=>void do
-    Fa();
+    call Fa();
 end
 
-Fa();
+call Fa();
 
 escape 1;
 ]],
@@ -44888,10 +44907,10 @@ code/instantaneous Fa (void)=>void do
 end
 
 code/instantaneous/recursive Fb (void)=>void do
-    Fa();
+    call Fa();
 end
 
-Fa();
+call Fa();
 
 escape 1;
 ]],
@@ -45994,7 +46013,7 @@ code/instantaneous Fx (var void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
-Fx(5 as void&&);
+call Fx(5 as void&&);
 escape (_V==(5 as void&&)) as int;
 ]],
     fin = 'line 5 : parameter must be `hold´',
@@ -46011,7 +46030,7 @@ code/instantaneous Fx (var/hold void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
-do Fx(5 as void&&);
+do call Fx(5 as void&&);
     finalize with nothing; end;
 escape (_V==(5 as void&&)) as int;
 ]],
@@ -46027,7 +46046,7 @@ code/instantaneous Fx (var int v)=>void do
     _V = v;
 end
 var void&& x=null;
-Fx(5);
+call Fx(5);
 escape (_V==5) as int;
 ]],
     run = 1,
@@ -46246,9 +46265,9 @@ code/instantaneous Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v*Fx(v-1);
+    escape v*call Fx(v-1);
 end
-escape Fx(5);
+escape call Fx(5);
 ]],
     tight = 'line 2 : function must be annotated as `@rec´ (recursive)',
     --run = 120,
@@ -46365,9 +46384,9 @@ code/instantaneous Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v*Fx(v-1);
+    escape v*call Fx(v-1);
 end
-escape Fx(5);
+escape call Fx(5);
 ]],
     dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:1)',
     --env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
@@ -46379,9 +46398,9 @@ code/instantaneous/recursive Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
-    escape v*Fx(v-1);
+    escape v*call Fx(v-1);
 end
-escape Fx(5);
+escape call Fx(5);
 ]],
     tight = 'line 6 : `call/recursive´ is required for "Fx"',
     --run = 120,
@@ -46404,7 +46423,7 @@ code/instantaneous/recursive Fx (var int v)=>int do
     end
     escape v * (call/recursive Fx(v-1));
 end
-escape Fx(5);
+escape call Fx(5);
 ]],
     tight = 'line 8 : `call/recursive´ is required for "Fx"',
 }
@@ -46555,7 +46574,7 @@ code/instantaneous Fx (void)=>int& do
     escape &this.x;
 end
 
-escape Fx();
+escape call Fx();
 ]],
     parser = 'line 3 : after `int´ : expected type modifier or `;´ or `do´',
     --run = 10,
@@ -46585,7 +46604,7 @@ code/instantaneous Fx (void)=>int& do
     escape &&this.x;
 end
 
-escape Fx();
+escape call Fx();
 ]],
     parser = 'line 3 : after `int´ : expected type modifier or `;´ or `do´',
     --env = 'line 4 : invalid escape value : types mismatch (`int&´ <= `int&&´)',
@@ -46657,12 +46676,12 @@ code/instantaneous Fx (var& Tx t)=>int do
 end
 
 var Tx t;
-var& int ret = Fx(t);
+var& int ret = call Fx(t);
 
     var Tx u with
         this.v = 20;
     end;
-    ret = ret + Fx(&u);
+    ret = ret + call Fx(&u);
 
 escape ret;
 ]],
@@ -46680,13 +46699,13 @@ code/instantaneous Fx (var& Tx t)=>int do
 end
 
 var Tx t;
-var& int ret = Fx(t);
+var& int ret = call Fx(t);
 
 do
     var Tx u with
         this.v = 20;
     end;
-    ret = ret + Fx(&u);
+    ret = ret + call Fx(&u);
 end
 
 escape ret;
@@ -46706,13 +46725,13 @@ code/instantaneous Fx (var Tx&& t)=>int do
 end
 
 var Tx t;
-var int ret = Fx(&&t);
+var int ret = call Fx(&&t);
 
 do
     var Tx u with
         this.v = 20;
     end;
-    ret = ret + Fx(&&u);
+    ret = ret + call Fx(&&u);
 end
 
 escape ret;
@@ -48354,7 +48373,7 @@ escape 1;
 Test { PRE_ISR..[[
 code/instantaneous Fx (void)=>void do end
 atomic do
-    Fx();
+    call Fx();
 end
 escape 1;
 ]],
@@ -48693,10 +48712,10 @@ Test { PRE_ISR..[[
 code/instantaneous Fx (void)=>int do
     escape 2;
 end
-var int v = Fx();
+var int v = call Fx();
 par/or do
     async/isr [20] do
-        Fx();
+        call Fx();
     end
     await FOREVER;
 with
@@ -48711,10 +48730,10 @@ Test { PRE_ISR..[[
 code/instantaneous Fx (void)=>int do
     escape 2;
 end
-var int v = Fx();
+var int v = call Fx();
 par/or do
     async/isr[20] do
-        Fx();
+        call Fx();
     end
     await FOREVER;
 with
@@ -55868,7 +55887,7 @@ data Dx with
     var int x;
 end
 class C with
-    var Dx d = Dx(200);
+    var Dx d = val Dx(200);
 do
 end
 var C c;
@@ -55973,12 +55992,18 @@ escape 1;
 -->>> DATA/EVENTS
 
 Test { [[
+var Ddd d = Ddd(1);
+]],
+    parser = 'line 1 : after `=´ : expected expression',
+}
+
+Test { [[
 data Ddd with
     var int xxx;
     event void e;
 end
 
-var Ddd d = Ddd(1);
+var Ddd d = val Ddd(1);
 
 par/and do
     await d.e;
@@ -56014,7 +56039,7 @@ data SDL_Rect with
     var int x,y,w,h;
 end
 
-var SDL_Rect rect = SDL_Rect(1,2,3,4);
+var SDL_Rect rect = val SDL_Rect(1,2,3,4);
 var SDL_Rect r = rect;
 
 escape r.x+r.y+r.w+r.h;
@@ -56027,7 +56052,7 @@ data Ball with
     var int radius;
 end
 
-var Ball ball = Ball(130,130,8);
+var Ball ball = val Ball(130,130,8);
 escape ball.x + ball.y + ball.radius;
 ]],
     run = 268,
@@ -56040,7 +56065,7 @@ data Ball with
     var float radius;
 end
 
-var Ball ball = Ball(130,130,8);
+var Ball ball = val Ball(130,130,8);
 
 native _add;
 native do
@@ -56095,7 +56120,7 @@ do
         var float y;
         var float radius;
     end
-    var Ball1 ball = Ball1(130,130,8);
+    var Ball1 ball = val Ball1(130,130,8);
     sum = sum + _add(ball.x, ball.y, ball.radius);
 end
 
@@ -56105,7 +56130,7 @@ do
         var float y;
         var float radius;
     end
-    var Ball2 ball = Ball2(130,130,8);
+    var Ball2 ball = val Ball2(130,130,8);
     sum = sum + _add(ball.x, ball.y, ball.radius);
 end
 
@@ -56120,11 +56145,11 @@ data Tx with
 end
 
 code/instantaneous Fx (void)=>Tx do
-    var Tx t = Tx(10);
+    var Tx t = val Tx(10);
     escape t;
 end
 
-var Tx t = Fx();
+var Tx t = call Fx();
 escape t.x;
 ]],
     wrn = true,
@@ -56152,7 +56177,7 @@ data ListCONS is List with
     var int  head;
     var List tail;
 end
-var List l = ListCONS(1,
+var List l = val ListCONS(1,
                ListCONS(2,
                    ListNIL()));
 escape 1;//((l as Cons).tail) as Cons).@head@;
@@ -56186,7 +56211,7 @@ data ListCONS is List with
     var int  head;
     var List tail;
 end
-var List&& l = ListCONS(1,
+var List&& l = val ListCONS(1,
                 ListCONS(2,
                     ListNIL()));
 escape 1;//((l as Cons).tail) as Cons).@head@;
@@ -56215,7 +56240,6 @@ escape 0;//((l as Cons).tail) as Cons).@head@;
     --exps = 'line 8 : invalid constructor : unexpected context for variable "l"',
 }
 
---]===]
 Test { [[
 data List;
 data ListNIL is List;
@@ -56225,7 +56249,7 @@ data ListCONS is List with
 end
 
 pool[10] List l;
-l = ListCONS(1,
+l = val ListCONS(1,
         ListCONS(2,
             ListNIL()));
 
@@ -56372,8 +56396,8 @@ data Grid with
     var Split dir;
 end
 
-var Grid g1 = Grid(SplitHORIZONTAL());
-var Grid g2 = Grid(SplitVERTICAL());
+var Grid g1 = val Grid(SplitHORIZONTAL());
+var Grid g2 = val Grid(SplitVERTICAL());
 
 escape ((g1.dir is SplitHORIZONTAL) as int) + ((g2.dir is SplitVERTICAL) as int);
 ]],
@@ -56488,7 +56512,7 @@ data Dx with
     var int x;
 end
 class C with
-    var Dx d = Dx(200);
+    var Dx d = val Dx(200);
 do
 end
 var C c;
@@ -56512,7 +56536,7 @@ var Dx d;
 var Tx t with
     this.v = &d.v;   // 13
 end;
-d = Dx(1);
+d = val Dx(1);
 
 escape t.v;
 ]],
@@ -56554,7 +56578,7 @@ data Dx with
 end
 
 var Tx _ with
-    var Dx d = Dx(1);
+    var Dx d = val Dx(1);
     this.v = &d.v;
 end;
 
@@ -56571,7 +56595,7 @@ data Xx is Ee with
     var int x;
 end
 
-var Ee e = Ee(1);
+var Ee e = val Ee(1);
 
 escape 1;
 ]],
@@ -56590,8 +56614,8 @@ data Xx is Ee with
     var& Dx d;
 end
 
-var Dx d = Dx(10);
-var Ee e = Xx(&d);
+var Dx d = val Dx(10);
+var Ee e = val Xx(&d);
 
 escape (e as Xx).d.x;
 ]],
@@ -56612,7 +56636,7 @@ end
 
 var Ee e;    // TODO: should bind here
 do
-    var Dx d = Dx(1);
+    var Dx d = val Dx(1);
     (e as Xx).d = &d;
 end
 
@@ -56632,8 +56656,8 @@ data Xx is Ee with
     var& Dx d;
 end
 
-    var Dx d = Dx(1);
-var Ee e = Xx(&d);
+    var Dx d = val Dx(1);
+var Ee e = val Xx(&d);
     (e as Xx).d = &d;
 
 escape (e as Xx).d.x;
@@ -56652,8 +56676,8 @@ data Xx is Ee with
     var Dx&& d;
 end
 
-var Ee e = Ee(null);
-    var Dx d = Dx(10);
+var Ee e = val Ee(null);
+    var Dx d = val Dx(10);
     (e as Xx).d = &&d;
 
 escape (e as Xx).d:x;
@@ -56680,8 +56704,8 @@ do
     escape ball.x;
 end
 
-var Ball ball = Ball(10);
-var Leaf leaf = Tween(&ball);
+var Ball ball = val Ball(10);
+var Leaf leaf = val Tween(&ball);
 
 var int x = do LeafHandler with
                 this.leaf = &leaf;
@@ -56793,7 +56817,7 @@ data Dx with
     var int y;
 end
 
-var Dx d1 = Dx(10,10);
+var Dx d1 =val  Dx(10,10);
 var Dx d2 = d1;
 d2.y = 20;
 
@@ -56809,7 +56833,7 @@ data Dx with
 end
 
 var int v = 10;
-var Dx d1 = Dx(10,&v);
+var Dx d1 = val Dx(10,&v);
 var Dx d2 = d1;
 d2.y = 20;
 
@@ -56823,10 +56847,10 @@ data Vx with
     var int v;
 end
 
-var& Vx v1 = Vx(1);
+var& Vx v1 = val Vx(1);
 var& Vx v2, v3;
-    v2 = Vx(2);
-    v3 = Vx(3);
+    v2 = val Vx(2);
+    v3 = val Vx(3);
 escape v1.v+v2.v+v3.v;
 ]],
     ref = 'line 5 : invalid attribution : missing alias operator `&´',
@@ -56838,15 +56862,15 @@ data Vx with
     var int v;
 end
 
-var Vx v1_ = Vx(1);
+var Vx v1_ = val Vx(1);
 var& Vx v1 = &v1_;
 var& Vx v2, v3;
 do
-    var Vx v2_ = Vx(2);
+    var Vx v2_ = val Vx(2);
     v2 = &v2_;
 end
 do
-    var Vx v3_ = Vx(3);
+    var Vx v3_ = val Vx(3);
     v3 = &v3_;
 end
 escape v1.v+v2.v+v3.v;
@@ -56864,7 +56888,7 @@ end
 
 var u8 b = 7;
 vector[3] Test v;
-var Test t = Test(&b);
+var Test t = val Test(&b);
 v = [] .. v .. [t];
 
 // reassignments
@@ -56882,7 +56906,7 @@ native _u8;
 data Test with
   vector[10] _u8 v;
 end
-var Test t = Test();
+var Test t = val Test();
 escape t.v[0];
 ]],
     env = 'line 4 : arity mismatch',
@@ -56893,7 +56917,7 @@ native _u8;
 data Test with
   vector[10] _u8 v;
 end
-var Test t = Test([]);
+var Test t = val Test([]);
 t.v[9] = 10;
 escape t.v[9];
 ]],
@@ -56907,7 +56931,7 @@ data Test with
     vector[10] _u8 v;
     var int b;
 end
-var Test t = Test(1, [], 1);
+var Test t = val Test(1, [], 1);
 t.v[0] = 10;
 escape t.v[0];
 ]],
@@ -56921,7 +56945,7 @@ data Tx with
     vector[255] _char str;
     var int x;
 end
-var Tx t = Tx([], 1);
+var Tx t = val Tx([], 1);
 t.str[0] = {'\0'};
 escape t.x;
 ]],
@@ -56934,7 +56958,7 @@ native/pure _strlen;
 data Tx with
     vector[255] _char xxxx;
 end
-var Tx t = Tx("oioioi");
+var Tx t = val Tx("oioioi");
 escape _strlen(t.xxxx);
 ]],
     stmts = 'line 7 : invalid expression list : item #1 : unexpected context for vector "xxxx"',
@@ -56946,7 +56970,7 @@ native/pure _strlen;
 data Tx with
     vector[255] _char xxxx;
 end
-var Tx t = Tx("oioioi");
+var Tx t = val Tx("oioioi");
 escape _strlen(&&t.xxxx[0]);
 ]],
     run = 6,
@@ -56967,7 +56991,7 @@ Test { [[
 data SDL_Rect with
     var int x;
 end
-var SDL_Rect r1 = SDL_Rect(10);
+var SDL_Rect r1 = val SDL_Rect(10);
 vector[] SDL_Rect cell_rects = [r1];
 escape cell_rects[0].x;
 ]],
@@ -56980,7 +57004,7 @@ data SDL_Rect with
 end
 vector[1] SDL_Rect rcs;
 var SDL_Rect ri;
-ri = SDL_Rect(10);
+ri = val SDL_Rect(10);
 rcs[0] = ri;
 escape rcs[0].x;
 ]],
@@ -56992,7 +57016,7 @@ data SDL_Rect with
     var int x;
 end
 var SDL_Rect ri;
-ri = SDL_Rect(10);
+ri = val SDL_Rect(10);
 vector[1] SDL_Rect rcs = [ri];
 escape rcs[0].x;
 ]],
@@ -57011,7 +57035,7 @@ data SDL_Rect with
     var int x;
 end
 var SDL_Rect ri;
-ri = SDL_Rect(10);
+ri = val SDL_Rect(10);
 vector[1] SDL_Rect rcs = [ri];
 escape _f((&&rcs[0]) as int&&);
 ]],
@@ -57031,7 +57055,7 @@ do
     end
 end
 
-var Data d = Data(0);
+var Data d = val Data(0);
 
 var int a =
     watching Code(&d, 10) do
@@ -57063,7 +57087,7 @@ do
     end
 end
 
-var Data d = Data(0);
+var Data d = val Data(0);
 
 var int a =
     watching Code(&d, 10) do
@@ -57236,9 +57260,9 @@ escape 1;
 
 -- constructors
 Test { DATA..[[
-var Pair p1 = Pair(1,2);        /* struct, no tags */
-var Opt  o1 = Nothing();        /* unions, explicit tag */
-var Opt  o2 = Ptr(&&p1);
+var Pair p1 = val Pair(1,2);        /* struct, no tags */
+var Opt  o1 = val Nothing();        /* unions, explicit tag */
+var Opt  o2 = val Ptr(&&p1);
 pool[] List l1;
 l1 = new Nil();       /* recursive union */
 pool[] List l2 = new Cons(1, l1);
@@ -57282,13 +57306,13 @@ escape 1;
 
 -- ADT/constructor has to be defined
 Test { DATA..[[
-var Pair p1 = Unknown(1,2);
+var Pair p1 = val Unknown(1,2);
 escape 1;
 ]],
     dcls = 'line 51 : abstraction "Unknown" is not declared',
 }
 Test { DATA..[[
-var Opt  o1 = UnknownNIL();
+var Opt  o1 = val UnknownNIL();
 escape 1;
 ]],
     dcls = 'line 51 : abstraction "UnknownNIL" is not declared',
@@ -57297,7 +57321,7 @@ escape 1;
 
 -- tag has to be defined
 Test { DATA..[[
-var Opt o1 = Unknown();
+var Opt o1 = val Unknown();
 escape 1;
 ]],
     dcls = 'line 51 : abstraction "Unknown" is not declared',
@@ -57305,7 +57329,7 @@ escape 1;
 
 -- constructors have call syntax
 Test { DATA..[[
-var List l1 = Nil; /* vs Nil() */
+var List l1 = val Nil; /* vs Nil() */
 escape 1;
 ]],
     parser = 'line 51 : after `Nil´ : expected `(´',
@@ -57314,21 +57338,21 @@ escape 1;
 
 -- constructors must respect parameters
 Test { DATA..[[
-var Pair p1 = Pair();           /* expected (x,y) */
+var Pair p1 = val Pair();           /* expected (x,y) */
 escape 1;
 ]],
     wrn = true,
     env = 'line 51 : arity mismatch',
 }
 Test { DATA..[[
-var Pair p1 = Pair(1,null);     /* expected (int,int) */
+var Pair p1 = val Pair(1,null);     /* expected (int,int) */
 escape 1;
 ]],
     wrn = true,
     env = 'line 51 : wrong argument #2',
 }
 Test { DATA..[[
-var Opt o1 = Nothing(1);       /* expected (void) */
+var Opt o1 = val Nothing(1);       /* expected (void) */
 escape 1;
 ]],
     wrn = true,
@@ -57337,7 +57361,7 @@ escape 1;
 
 -- constructors are not expressions...
 Test { DATA..[[
-escape Nil();
+escape call Nil();
 ]],
     wrn = true,
     exps = 'line 51 : invalid call : unexpected context for data "Nil"',
@@ -57348,7 +57372,7 @@ escape Nil();
 }
 Test { DATA..[[
 var List l;
-var int v = (l==Nil());
+var int v = (l==call Nil());
 escape v;
 ]],
     wrn = true,
@@ -57362,7 +57386,7 @@ escape v;
 -- ...but have to be assigned to a variable
 Test { DATA..[[
 var Opt o;
-o = Nothing();
+o = val Nothing();
 escape 1;
 ]],
     wrn = true,
@@ -57411,7 +57435,7 @@ escape no_ as int;
 
 -- destructor == field access
 Test { DATA..[[
-var Pair p1 = Pair(1,2);
+var Pair p1 = val Pair(1,2);
 escape p1.x + p1.y;
 ]],
     wrn = true,
@@ -57446,9 +57470,9 @@ escape 1;
 }
 
 Test { DATA..[[
-var Pair p1 = Pair(1,2);
-var Opt  o1 = Nothing();
-var Opt  o2 = Ptr(&&p1);
+var Pair p1 = val Pair(1,2);
+var Opt  o1 = val Nothing();
+var Opt  o2 = val Ptr(&&p1);
 pool[] List l1 = new Nil();
 pool[] List l2;
 l2 = new Cons(1, Nil());
@@ -57492,9 +57516,9 @@ escape (l as Cons).head;
 
 -- mixes everything:
 Test { DATA..[[
-var Pair p  = Pair(1,2);
-var Opt  o1 = Nothing();
-var Opt  o2 = Ptr(&&p);
+var Pair p  = val Pair(1,2);
+var Opt  o1 = val Nothing();
+var Opt  o2 = val Ptr(&&p);
 pool[] List l1;
 l1 = new Nil();
 pool[] List l2 = new Cons(1, Nil());
@@ -57933,7 +57957,7 @@ escape (l is Cons) as int;
 -- no "new"
 Test { DATA..[[
 pool[] List l;
-l = Cons(2, Nil());
+l = val Cons(2, Nil());
 escape ((l as Cons).head);
 ]],
     wrn = true,
@@ -58236,18 +58260,18 @@ end
 
 var int ret = 0;            // 0
 
-var OptionInt i = Nil1();
-var OptionPtr p = Nil2();
+var OptionInt i = val Nil1();
+var OptionPtr p = val Nil2();
 ret = ret + ((i is Nil1)as int) + ((p is Nil2)as int);  // 2
 
-i = Some1(3);
+i = val Some1(3);
 ret = ret + (i as Some1).v;       // 5
 
-p = Some2(&&ret);
+p = val Some2(&&ret);
 *(p as Some2).v = *(p as Some2).v + 2;    // 7
 
 var int v = 10;
-p = Some2(&&v);
+p = val Some2(&&v);
 *(p as Some2).v = *(p as Some2).v + 1;
 
 ret = ret + v;              // 18
@@ -58638,7 +58662,7 @@ Test { [[
 data SDL_Color with
     var int v;
 end
-var SDL_Color clr = SDL_Color(10);
+var SDL_Color clr = val SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr.v;
 ]],
@@ -58650,7 +58674,7 @@ Test { [[
 data SDL_Color with
     var int v;
 end
-var SDL_Color clr = SDL_Color(10);
+var SDL_Color clr = val SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr!.v;
 ]],
@@ -58660,7 +58684,7 @@ Test { [[
 data SDL_Color with
     var int v;
 end
-var SDL_Color? bg_clr = SDL_Color(10);
+var SDL_Color? bg_clr = val SDL_Color(10);
 escape bg_clr!.v;
 ]],
     run = 10,
@@ -58675,7 +58699,7 @@ class UI with
 do
 end
 var UI ui with
-    this.bg_clr = SDL_Color(10);
+    this.bg_clr = val SDL_Color(10);
 end;
 escape ui.bg_clr!.v;
 ]],
@@ -58694,7 +58718,7 @@ class UI with
 do
 end
 var UI ui with
-    this.bg_clr = SDL_Color(10);
+    this.bg_clr = val SDL_Color(10);
 end;
 native _fff;
 escape _fff(ui.bg_clr!).v;
@@ -58876,8 +58900,8 @@ escape (i! as int);
 
 -- cannot compare ADTs
 Test { DATA..[[
-var Pair p1 = Pair(1,2);
-var Pair p2 = Pair(1,2);
+var Pair p1 = val Pair(1,2);
+var Pair p2 = val Pair(1,2);
 escape (p1==p2) as int;
 ]],
     wrn = true,
@@ -59593,9 +59617,9 @@ Test { [[
 data Test with
     var u8 v;
 end
-var Test a = Test(1);
-var Test b = Test(2);
-var Test c = Test(3);
+var Test a = val Test(1);
+var Test b = val Test(2);
+var Test c = val Test(3);
 vector[3] Test vs = [ a, b, c ];
 escape (vs[0].v + vs[1].v + vs[2].v) as int;
 ]],
@@ -59608,7 +59632,7 @@ data Test with
 end
 
 var u8 v = 7;
-var Test t=Test(&v);
+var Test t=val Test(&v);
 v = 10;
 escape t.v as int;
 ]],
@@ -59620,7 +59644,7 @@ data Test with
     var& u8 v;
 end
 var u8 v = 7;
-var Test t = Test(&v);
+var Test t = val Test(&v);
 v = 10;
 escape t.v as int;
 ]],
@@ -59634,7 +59658,7 @@ end
 
 var u8 v = 7;
 vector[3] Test vs;
-var Test t = Test(&v);
+var Test t = val Test(&v);
 vs = [] .. vs .. [t];
 
 v = 10;
@@ -59715,7 +59739,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-var Dx d = Dx(&&s as _char&& as _char_ptr);
+var Dx d = val Dx(&&s as _char&& as _char_ptr);
 ]],
     parser = 'line 1 : after `&&´ : expected type modifier or `,´ or `)´',
     --parser = 'line 1 : after `s´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or binary operator or `,´ or `)´',
@@ -59731,7 +59755,7 @@ data Dx with
 end
 vector[] byte s = [].. "oi";
 native _char;
-var Dx d = Dx(((&&s[0]) as _char&&) as _char_ptr);
+var Dx d = val Dx(((&&s[0]) as _char&&) as _char_ptr);
 escape _strlen(d.str as _char&&);
 ]],
     run = 2,
@@ -59741,7 +59765,7 @@ data Dx with
     vector&[] byte str;
 end
 vector[] byte s = [].. "oi";
-var Dx d = Dx(&s);
+var Dx d = val Dx(&s);
 escape $d.str as int;
 ]],
     run = 2,
@@ -65824,7 +65848,7 @@ or
     end
 end
 
-    var Dx d = Dx(1);
+    var Dx d = val Dx(1);
 var Ee e = Ee.Xx(&d);
     e.Xx.d = &d;     // BUG: error?
 
@@ -66077,7 +66101,7 @@ data Dx with
     vector&[] byte str;
 end
 vector[] byte s = [].. "oi";
-var Dx d = Dx(s);    // BUG: nao detecta erro de tipo
+var Dx d = val Dx(s);    // BUG: nao detecta erro de tipo
 escape $d.str;
 ]],
     run = 2,
@@ -66180,7 +66204,7 @@ do
     escape ball.x;
 end
 
-var Ball ball = Ball(10);
+var Ball ball = val Ball(10);
 var Leaf leaf = Leaf.Tween(ball);   // must be alias
 
 var int x = do LeafHandler with

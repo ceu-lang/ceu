@@ -87,32 +87,36 @@ local T = {
     },
 
     {
-        '`new´ or abstraction identifier or `emit´ or `call/recursive´ or `call´ or `do´ or `await´ or `spawn´ or `async/thread´ or `%[´ or `_´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `request´ or `watching´',
+        '`call/recursive´ or `call´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´',
         'expression'
     },
     {
-        'name expression or `call/recursive´ or `call´ or abstraction identifier or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´',
+        '`do´ or `await´ or `async/thread´ or `%[´ or `emit´ or `call/recursive´ or `call´ or `val´ or `new´ or `spawn´ or `_´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `request´ or `watching´',
         'expression'
     },
     {
-        '`not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `call/recursive´ or `call´ or name expression or abstraction identifier or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
+        'name expression or `call/recursive´ or `call´ or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´',
         'expression'
     },
     {
-        '`call/recursive´ or `call´ or name expression or abstraction identifier or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´',
+        '`not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `call/recursive´ or `call´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal',
         'expression'
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or abstraction identifier or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or abstraction identifier or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or abstraction identifier or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `pre´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        'statement'
+    },
+    {
+        'statement or `finalize´',
         'statement'
     },
 }
@@ -277,6 +281,7 @@ KEYS = P
 'watching' +
 'vector' +
 'var' +
+'val' +
 'until' +
 'true' +
 'this' +
@@ -607,7 +612,9 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- ABS
 
-    , Abs_Call  = V'__call' * V'Abs_Cons'
+    , __abs_call = (CK'call/recursive' + CK'call')
+    , Abs_Call  = V'__abs_call' * V'Abs_Cons'
+    , Abs_Val   = CK'val' * V'Abs_Cons'
     , Abs_New   = CK'new' * V'Abs_Cons'
     , Abs_Await = V'Abs_Cons'
     , Abs_Spawn = K'spawn' * V'Abs_Cons'
@@ -626,16 +633,16 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , __Sets_many = (CKK'='-'=='+CKK':=') * (V'__sets_many' + PARENS(V'__sets_many'))
 
     , __sets_one =
-          V'_Set_Abs_New'
-        + V'_Set_Abs'
-        + V'_Set_Emit_Wclock'
-        + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call'
-        + V'_Set_Do'
+          V'_Set_Do'
         + V'_Set_Await_one'
-        + V'_Set_Abs_Spawn'
         + V'_Set_Async_Thread'
         + V'_Set_Lua'
         + V'_Set_Vec'
+        + V'_Set_Emit_Wclock'
+        + V'_Set_Emit_Ext_emit' + V'_Set_Emit_Ext_call'
+        + V'_Set_Abs_Val'
+        + V'_Set_Abs_New'
+        + V'_Set_Abs_Spawn'
         + V'_Set_None'
         + V'_Set_Exp'
 
@@ -643,23 +650,27 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
     -- after `=´
 
-    , _Set_Do           = #K'do'            * V'Do'
-    , _Set_Await_one    = #K'await'         * V'__Awaits_one'
-    , _Set_Await_many   = #K'await'         * V'__Awaits_many'
-    , _Set_Watching     = #K'watching'      * V'_Watching'
-    , _Set_Abs_Spawn    = #K'spawn'         * V'Abs_Spawn'
-    , _Set_Async_Thread = #K'async/thread'  * V'_Async_Thread'
-    , _Set_Lua          = #V'__lua_pre'     * V'_Lua'
-    , _Set_Vec          = #V'__vec_pre'     * V'Vec_Cons'
-    , _Set_Abs_New      = #K'new'           * V'Abs_New'
-    , _Set_Abs          = #V'__ID_abs'      * V'Abs_Cons'  -- before Set_Exp
-    , _Set_None         = #K'_'             * V'ID_none'
-    , _Set_Exp          =                     V'__Exp'
+    , _Set_Do             = #K'do'            * V'Do'
+
+    , _Set_Await_one      = #K'await'         * V'__Awaits_one'
+    , _Set_Await_many     = #K'await'         * V'__Awaits_many'
+    , _Set_Watching       = #K'watching'      * V'_Watching'
+
+    , _Set_Async_Thread   = #K'async/thread'  * V'_Async_Thread'
+    , _Set_Lua            = #V'__lua_pre'     * V'_Lua'
+    , _Set_Vec            = #V'__vec_pre'     * V'Vec_Cons'
 
     , _Set_Emit_Wclock    = #K'emit'          * V'Emit_Wclock'
     , _Set_Emit_Ext_emit  = #K'emit'          * V'Emit_Ext_emit'
     , _Set_Emit_Ext_req   = #K'request'       * V'Emit_Ext_req'
     , _Set_Emit_Ext_call  = #V'__extcode_pre' * V'Emit_Ext_call'
+
+    , _Set_Abs_Val        = #K'val'           * V'Abs_Val'
+    , _Set_Abs_New        = #K'new'           * V'Abs_New'
+    , _Set_Abs_Spawn      = #K'spawn'         * V'Abs_Spawn'
+
+    , _Set_None           = #K'_'             * V'ID_none'
+    , _Set_Exp            =                     V'__Exp'
 
     , __extcode_pre = (K'call/recursive'+K'call') * V'ID_ext'
     , __lua_pre     = KK'[' * (P'='^0) * '['
@@ -773,8 +784,8 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
     , This    = K'this' * Cc(false)
     , Outer   = K'outer'
 
-    , __call = (CK'call/recursive' + CK'call' + Cc'call')
-    , Exp_Call = V'__call' * (V'Exp_Name'+PARENS(V'__Exp')) *
+    , __exp_call = (CK'call/recursive' + CK'call' + Cc'call')
+    , Exp_Call = V'__exp_call' * (V'Exp_Name'+PARENS(V'__Exp')) *
                                 PARENS(OPT(V'Explist'))
 
 ---------
