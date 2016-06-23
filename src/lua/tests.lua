@@ -57302,8 +57302,7 @@ pool[] List l1 = new Nil();    /* vs Nil() */
 escape 1;
 ]],
     wrn = true,
-    env = 'line 51 : data "Nil" is not declared',
-    --run = 1,
+    run = 1,
 }
 
 -- ADT/constructor has to be defined
@@ -57880,10 +57879,11 @@ escape (*l is Nil) as int;       // "l" is not a struct
 }
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape ((l as Cons).head); // "l" is not a struct
+escape ((l as Cons):head); // "l" is not a struct
 ]],
     wrn = true,
-    env = 'line 52 : invalid operand to unary "*"',
+    --env = 'line 52 : invalid operand to unary "*"',
+    exps = 'line 52 : invalid operand to `*´ : expected pointer type',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
@@ -58365,7 +58365,7 @@ var& int? i = &v1;
 i = v2;
 escape v1;
 ]],
-    env = 'line 4 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    tmp = 'line 4 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
 }
 Test { [[
 var int v1 = 0;
@@ -58823,7 +58823,7 @@ end;
 
 escape v!;
 ]],
-    env = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+    tmp = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
 
 Test { [[
@@ -58910,7 +58910,8 @@ var Pair p2 = val Pair(1,2);
 escape (p1==p2) as int;
 ]],
     wrn = true,
-    env = 'line 53 : invalid operation for data',
+    --env = 'line 53 : invalid operation for data',
+    exps = 'line 53 : invalid operands to `==´ : unexpected `data´ value',
     --run = 1,
 }
 Test { DATA..[[
@@ -58933,7 +58934,7 @@ l2 = new Cons(2, Nil());
 escape (((l1 as Cons).tail) as Cons).head;
 ]],
     wrn = true,
-    adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
+    --adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
     stmts = 'line 54 : invalid assignment : unexpected context for pool "l2"',
 }
 Test { DATA..[[
@@ -59693,7 +59694,8 @@ f1.bytes = [] .. f1.bytes .. [5];
 
 escape f1.bytes[0] as int;
 ]],
-    env = 'line 2 : `data´ fields do not support vectors yet',
+    --env = 'line 2 : `data´ fields do not support vectors yet',
+    run = 5,
 }
 Test { [[
 data Frame;
@@ -59705,7 +59707,8 @@ data Frame;
 escape 1;
 ]],
     wrn = true,
-    env = 'line 5 : `data´ fields do not support vectors yet',
+    --env = 'line 5 : `data´ fields do not support vectors yet',
+    run = 1,
 }
 Test { [[
 native _u8;
@@ -59817,7 +59820,7 @@ with
     escape ret;
 end
 ]],
-    env = 'line 6 : invalid event type',
+    dcls = 'line 6 : invalid event type',
     --env = 'line 16 : wrong argument : cannot pass pointers',
     --run = { ['~>1s']=1 },
 }
@@ -64452,7 +64455,7 @@ end
 
 escape 1;
 ]],
-    env = 'line 8 : invalid pool : non-recursive data',
+    tmp = 'line 8 : invalid pool : non-recursive data',
 }
 
 Test { [[
@@ -65757,7 +65760,7 @@ t.fillBuffer(&&buffer);
 
 escape buffer[0];
 ]],
-    env = 'line 5 : types mismatch (`u8[]´ <= `u8[]´)',
+    stmts = 'line 5 : types mismatch (`u8[]´ <= `u8[]´)',
 }
 
 -- BUG: doesn't check dimension of pointer to vector
@@ -68322,7 +68325,7 @@ end
 
 escape 1;
 ]],
-    env = 'line 13 : invalid operands to binary "=="',
+    exps = 'line 13 : invalid operands to binary "=="',
     --run = 1,
 }
 

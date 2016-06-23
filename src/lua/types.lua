@@ -110,6 +110,9 @@ function TYPES.is_nat (tp)
         -- _char    yes
         -- _char&&  no
 end
+function TYPES.ID_plain (tp)
+    return #tp==1 and tp[1]
+end
 
 do
     local __contains_num = {
@@ -170,11 +173,8 @@ do
         local tp1_is_nat = TYPES.is_nat(tp1)
         local tp2_is_nat = TYPES.is_nat(tp2)
 
-        local tp1_is_plain = TYPES.check(tp1, TYPES.id(tp1))
-        local tp2_is_plain = TYPES.check(tp2, TYPES.id(tp2))
-
-        local tp1_ID = unpack(tp1)
-        local tp2_ID = unpack(tp2)
+        local tp1_ID = TYPES.ID_plain(tp1)
+        local tp2_ID = TYPES.ID_plain(tp2)
 
         if TYPES.check(tp1,'?') then
             tp1 = TYPES.pop(tp1)
@@ -188,8 +188,8 @@ do
             return true
 
 -- DATA vs DATA
-        elseif tp1_is_plain and tp1_ID.tag=='ID_abs' and
-               tp2_is_plain and tp2_ID.tag=='ID_abs'
+        elseif tp1_ID and tp1_ID.tag=='ID_abs' and
+               tp2_ID and tp2_ID.tag=='ID_abs'
         then
             return contains_data(tp1_ID, tp2_ID)
 

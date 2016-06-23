@@ -428,6 +428,13 @@ G = {
         asr_if_name(e2, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
+
+        local ID1 = TYPES.ID_plain(e1.dcl[1])
+        local ID2 = TYPES.ID_plain(e2.dcl[1])
+        ASR( (not (ID1 and ID1.tag=='ID_abs')) and
+             (not (ID2 and ID2.tag=='ID_abs')), me,
+            'invalid operands to `'..op..'´ : unexpected `data´ value' )
+
         ASR(TYPES.contains(e1.dcl[1],e2.dcl[1]) or
             TYPES.contains(e2.dcl[1],e1.dcl[1]), me,
             'invalid operands to `'..op..'´ : '..
