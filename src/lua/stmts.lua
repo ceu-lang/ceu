@@ -119,7 +119,8 @@ DBG('TODO: _Lua')
         EXPS.asr_name(to, {'Nat','Var'}, 'invalid Lua assignment')
     end,
 
--- TODO
+-- ABS
+
     Set_Abs = function (me)
         local _, Exp_Name = unpack(me)
 
@@ -135,29 +136,33 @@ DBG('TODO: _Lua')
     end,
 
     Abs_Cons = function (me)
-        local ID_abs, Data_Explist = unpack(me)
+        local ID_abs, Abslist = unpack(me)
 
         -- tp
 
         -- to
-        local block = AST.asr(ID_abs.dcl,'Data', 3,'Block')
         local to = AST.node('Typelist', me.ln)
-        for i, dcl in ipairs(block.dcls) do
-            local Type = unpack(dcl)
-            to[i] = AST.copy(Type)
-        end
-
-        -- fr
-        local fr = AST.node('Typelist', Data_Explist.ln)
-        for i, e in ipairs(Data_Explist) do
-            if e.tag == 'Data_New_one' then
-                fr[i] = AST.node('Type', me.ln,
-                            AST.copy(AST.asr(e,'', 1,'ID_abs')))
+        if ID_abs.dcl.tag == 'Data' then
+            -- Data
+            local block = AST.asr(ID_abs.dcl,'Data', 3,'Block')
+            for i, dcl in ipairs(block.dcls) do
+                local Type = unpack(dcl)
+                to[i] = AST.copy(Type)
             end
+            check(me, to, Abslist.dcl[1], 'invalid constructor')
+        else
+            -- Code
+            assert(ID_abs.dcl.tag == 'Code')
+            local _,_,_,ins = unpack(ID_abs.dcl)
+            for i, item in ipairs(ins) do
+                local Type = AST.asr(item,'Typepars_ids_item', 4,'Type')
+                to[i] = Type
+            end
+            check(me, to, Abslist.dcl[1], 'invalid call')
         end
-
-        check(me, to, fr, 'invalid assignment')
     end,
+
+-- EMIT
 
     Set_Emit_Ext_emit = function (me)
         local ID_ext = AST.asr(me,'', 1,'Emit_Ext_emit', 1,'ID_ext')
@@ -315,29 +320,15 @@ DBG'TODO: _Async_Isr'
         end
     end,
 
-    Abs_Call = function (me)
-        local ID_abs, Abslist = unpack(AST.asr(me,'', 2,'Abs_Cons'))
-
-        -- tp
-        local _,_,_,ins = unpack(ID_abs.dcl)
-        local Typelist = AST.node('Typelist', me)
-        for i, item in ipairs(ins) do
-            local Type = AST.asr(item,'Typepars_ids_item', 4,'Type')
-            Typelist[i] = Type
-        end
-        check(me, Typelist, Abslist.dcl[1], 'invalid call')
-    end,
-
 -- VARLIST, EXPLIST, ABSLIST
 
     Explist = function (me)
         local Typelist = AST.node('Typelist', me.ln)
         for i, e in ipairs(me) do
             -- ctx
+-- TODO: call/emit, argument
             EXPS.asr_if_name(e, {'Nat','Var'},
-                'invalid expression list : item #'..i..' : '..
-                'unexpected context for '..AST.tag2id[e.dcl.tag]..' "'..
-                e.dcl.id..'"')
+                'invalid expression list : item #'..i)
 
             -- dcl
             Typelist[i] = AST.copy(e.dcl[1])
@@ -347,12 +338,17 @@ DBG'TODO: _Async_Isr'
 
     Abslist = function (me)
         local Typelist = AST.node('Typelist', me.ln)
+        local ID_abs = AST.asr(me.__par,'Abs_Cons', 1,'ID_abs')
         for i, e in ipairs(me) do
             -- ctx
-            EXPS.asr_if_name(e, {'Nat','Var'},
-                'invalid constructor : item #'..i..' : '..
-                'unexpected context for '..AST.tag2id[e.dcl.tag]..' "'..
-                e.dcl.id..'"')
+            if ID_abs.dcl.tag == 'Data' then
+                EXPS.asr_if_name(e, {'Nat','Var'},
+                    'invalid constructor : argument #'..i)
+            else
+                assert(ID_abs.dcl.tag == 'Code')
+                EXPS.asr_if_name(e, {'Nat','Var'},
+                    'invalid call : argument #'..i)
+            end
 
             -- dcl
             Typelist[i] = AST.copy(e.dcl[1])

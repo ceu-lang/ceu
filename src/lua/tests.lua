@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17856,7 +17855,7 @@ escape call Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    stmts = 'line 7 : invalid expression list : item #1 : unexpected context for vector "str"',
+    stmts = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -18032,6 +18031,7 @@ escape 1;
     fin = 'line 2 : call requires `finalize´',
 }
 
+--]===]
 Test { [[
 native _enqueue;
 vector[255] byte buf;
