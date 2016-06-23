@@ -14,7 +14,9 @@ OS = false   -- false, true, nil(random)
 OUT_DIR = '/tmp/ceu-tests'
 os.execute('mkdir -p '..OUT_DIR)
 
-assert(loadfile'pak.lua')('lua5.3')
+--assert(loadfile'pak.lua')('lua5.3')
+unpack     = unpack     or table.unpack
+loadstring = loadstring or load
 
 math.randomseed(os.time())
 T = nil
@@ -96,7 +98,6 @@ Test = function (t)
     if not check('stmts')    then return end
 do return end
 AST.dump(AST.root)
-    if not check('env')      then return end
     if not check('adt')      then return end
     if not check('mode')     then return end
     if not check('ref')      then return end
