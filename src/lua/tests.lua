@@ -1179,6 +1179,14 @@ escape a;
 }
 Test { [[
 var int a;
+var int b = a;
+a = 1;
+]],
+    init = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:2)',
+}
+
+Test { [[
+var int a;
 if 1 then
     a = 1;
     if 1 then
@@ -1189,7 +1197,7 @@ if 1 then
 end;
 escape a;
 ]],
-    ref = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:2)',
+    init = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:2)',
 }
 Test { [[
 var int a;

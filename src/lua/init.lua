@@ -1,51 +1,77 @@
 local yields = {
-    'EOF',
-    'Par', 'Par_And', 'Par_Or',
-    'Escape', 'Loop',
-    'Async', 'Async_Thread', 'Async_Isr',
-    'Code', 'Ext_Code', 'Data',
-    'Nat_Block',
-    'Await_Ext', 'Await_Evt', 'Await_Wclock', 'Await_Forever',
-    'Emit_ext_req', 'Emit_Evt',
-    'Abs_Await', 'Abs_Spawn',
-    'Kill',
+    EOF           = 'end of file',
+    Par           = 'par',
+    Par_And       = 'par/and',
+    Par_Or        = 'par/or',
+    Escape        = 'escape',
+    Loop          = 'loop',
+    Async         = 'async',
+    Async_Thread  = 'async/thread',
+    Async_Isr     = 'async/isr',
+    Code          = 'code',
+    Ext_Code      = 'external code',
+    Data          = 'data',
+    Nat_Block     = 'native block',
+    Await_Ext     = 'await',
+    Await_Evt     = 'await',
+    Await_Wclock  = 'await',
+    Await_Forever = 'await',
+    Emit_ext_req  = 'request',
+    Emit_Evt      = 'emit',
+    Abs_Await     = 'await',
+    Abs_Spawn     = 'spawn',
+    Kill          = 'kill',
 }
-for _, tag in ipairs(yields) do
-    yields[tag] = true
-end
 
-
-local function run (par, i, var)
+local function run (par, i, Var)
     local me = par[i]
     if me == nil then
         if par.__par == nil then
             return true, par
         else
-            return run(par.__par, par.__i+1, var)
+            return run(par.__par, par.__i+1, Var)
         end
     elseif not AST.isNode(me) then
-        return run(par, i+1, var)
+        return run(par, i+1, Var)
     end
 --DBG('---', me.tag)
 --AST.dump(me)
 
+    -- error: yielding statement
     if yields[me.tag] then
-        return true, me                 -- stop, didn't find
+        ASR(false, Var,
+            'uninitialized variable "'..Var.id..'" : '..
+            'reached `'..yields[me.tag]..'´ '..
+            '('..me.ln[1]..':'..me.ln[2]..')')
+
+    -- error: access to Var
+    elseif me.tag == 'ID_int' then
+        if me.dcl == Var then
+            ASR(false, Var,
+                'uninitialized variable "'..Var.id..'" : '..
+                'reached read access '..
+                '('..me.ln[1]..':'..me.ln[2]..')')
+        end
+
+    elseif me.tag == 'If' then
+        local _, t, f = unpack(me)
+
+    -- ok: found assignment
     elseif me.tag=='Set_Any' or me.tag=='Set_Exp' then
         local _, to = unpack(me)
         local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
-        if ID_int.dcl == var then
+        if ID_int.dcl == Var then
             return true, nil            -- stop, found init
         end
     elseif me.tag=='Set_Await_many' then
         local _, Varlist = unpack(me)
         for _, ID_int in ipairs(Varlist) do
-            if ID_int.dcl == var then
+            if ID_int.dcl == Var then
                 return true, nil        -- stop, found init
             end
         end
     end
-    return run(me, 1, var)
+    return run(me, 1, Var)
 end
 
 F = {
@@ -59,16 +85,9 @@ F = {
         if me.is_implicit or TYPES.check(tp,'?') then
             -- ok: don't need initialization
             return
+        else
+            run(me.__par, me.__i+1, me)
         end
-
---DBG'>>>'
-        local stop, err = run(me.__par, me.__i+1, me)
---DBG('<<<', stop, err)
-        assert(stop)
-        ASR(not err, me, err and
-            'uninitialized variable "'..me.id..'" : '..
-            'reached `'..assert(AST.tag2id[err.tag],err.tag)..'´ '..
-            '('..err.ln[1]..':'..err.ln[2]..')')
     end,
 }
 

@@ -27,10 +27,6 @@ AST.tag2id = {
     Ext_Code = 'external code',
     Code     = 'code',
     Data     = 'data',
-
-    Par_Or    = 'par/or',
-    Await_Ext = 'await',
-    EOF       = 'end of file',
 }
 
 function AST.isParent (n1, n2)
