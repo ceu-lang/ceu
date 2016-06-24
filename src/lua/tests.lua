@@ -315,7 +315,7 @@ Test { [[var int a;]],
 
 Test { [[var int a;]],
     wrn = true,
-    init = 'uninitialized variable "a" : reached `end of file´ (tests.lua:2)',
+    inits = 'uninitialized variable "a" : reached `end of file´ (tests.lua:2)',
 }
 
 Test { [[var int a=0;]],
@@ -699,7 +699,7 @@ event void a;
 var _abc b;
 ]],
     wrn = true,
-    init = 'line 3 : uninitialized variable "b"',
+    inits = 'line 3 : uninitialized variable "b"',
 }
 
 Test { [[
@@ -1182,7 +1182,7 @@ var int a;
 var int b = a;
 a = 1;
 ]],
-    init = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:2)',
 }
 
 Test { [[
@@ -1197,7 +1197,7 @@ if 1 then
 end;
 escape a;
 ]],
-    init = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:2)',
+    inits = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:2)',
 }
 Test { [[
 var int a;
@@ -1397,7 +1397,7 @@ with
 end
 escape ret;
 ]],
-    init = 'line 2 : uninitialized variable "ret" : reached `par/or´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "ret" : reached `par/or´ (tests.lua:3)',
 }
 
 Test { [[
@@ -17852,21 +17852,21 @@ var& int&& v;
 escape 1;
 ]],
     wrn = true,
-    init = 'line 1 : uninitialized variable "v"',
+    inits = 'line 1 : uninitialized variable "v"',
 }
 Test { [[
 var& int&&  v;
 escape 1;
 ]],
     wrn = true,
-    init = 'line 1 : uninitialized variable "v"',
+    inits = 'line 1 : uninitialized variable "v"',
 }
 Test { [[
 var int i;
 var& int a = &i;
 escape i;
 ]],
-    init = 'TODO: a',
+    inits = 'TODO: a',
 }
 Test { [[
 var int i = 1;
