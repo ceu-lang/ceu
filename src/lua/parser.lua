@@ -381,13 +381,13 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
 
 -- PAR, PAR/AND, PAR/OR
 
-    , Par    = K'par' * K'do' *
+    , Par     = K'par' * K'do' *
+                 V'Block' * (K'with' * V'Block')^1 *
+                K'end'
+    , Par_And = K'par/and' * K'do' *
                 V'Block' * (K'with' * V'Block')^1 *
                K'end'
-    , Parand = K'par/and' * K'do' *
-                V'Block' * (K'with' * V'Block')^1 *
-               K'end'
-    , Paror  = K'par/or' * K'do' *
+    , Par_Or  = K'par/or' * K'do' *
                 V'Block' * (K'with' * V'Block')^1 *
                K'end'
 
@@ -829,7 +829,7 @@ GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
               + V'_Every'
               + V'_Spawn_Block'
               + V'Finalize'
-              + V'Paror' + V'Parand' + V'_Watching'
+              + V'Par_Or' + V'Par_And' + V'_Watching'
               + V'_Pause'
               + V'Async' + V'_Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'

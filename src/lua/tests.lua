@@ -1389,7 +1389,7 @@ with
 end
 escape ret;
 ]],
-    ref = 'line 2 : uninitialized variable "ret" crossing compound statement (tests.lua:3)',
+    init = 'line 2 : uninitialized variable "ret" : reached `par/or´ (tests.lua:3)',
 }
 
 Test { [[

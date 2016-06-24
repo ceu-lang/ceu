@@ -27,6 +27,9 @@ AST.tag2id = {
     Ext_Code = 'external code',
     Code     = 'code',
     Data     = 'data',
+
+    Par_Or    = 'par/or',
+    Await_Ext = 'await',
 }
 
 function AST.isParent (n1, n2)
@@ -235,9 +238,10 @@ local function FF (F, str)
     return f
 end
 
-local function visit_aux (me, F)
+local function visit_aux (F, me, I)
     local _me = me
     me.__par   = STACK[#STACK]
+    me.__i     = I or me.__i
     me.__depth = (me.__par and me.__par.__depth+1) or 1
 
     local pre, mid, pos = FF(F,me.tag..'__PRE'), FF(F,me.tag), FF(F,me.tag..'__POS')
@@ -246,13 +250,13 @@ local function visit_aux (me, F)
     if F.Node__PRE then
         me = F.Node__PRE(me) or me
         if me ~= _me then
-            return visit_aux(me, F)
+            return visit_aux(F, me)
         end
     end
     if pre then
         me = pre(me) or me
         if me ~= _me then
-            return visit_aux(me, F)
+            return visit_aux(F, me)
         end
     end
 
@@ -262,7 +266,7 @@ local function visit_aux (me, F)
         if bef then assert(bef(me, sub, i)==nil) end
         if AST.isNode(sub) then
             sub.__idx = i
-            sub = visit_aux(sub, F)
+            sub = visit_aux(F, sub, i)
             me[i] = sub
         end
         if aft then assert(aft(me, sub, i)==nil) end
@@ -280,13 +284,13 @@ local function visit_aux (me, F)
     if pos then
         me = pos(me) or me
         if me ~= _me then
-            return visit_aux(me, F)
+            return visit_aux(F, me)
         end
     end
      if F.Node__POS then
         me = F.Node__POS(me) or me
         if me ~= _me then
-            return visit_aux(me, F)
+            return visit_aux(F, me)
         end
     end
 
@@ -297,7 +301,7 @@ AST.visit_aux = visit_aux
 function AST.visit (F, node)
     assert(AST)
     --STACK = {}
-    return visit_aux(node or AST.root, F)
+    return visit_aux(F, node or AST.root)
 end
 
 local function i2l (p)
