@@ -25105,7 +25105,7 @@ escape (_V==null) as int;
 
 Test { [[
 do/_
-    var int&& p, p1;
+    var int&& p=_, p1=_;
     input int&& E;
     p = await E;
     p1 = p;
@@ -25224,7 +25224,8 @@ await 1s;
 var _SDL_Rect r = rect;
 escape 1;
 ]],
-    ref = 'line 4 : invalid access to uninitialized variable "pos" (declared at tests.lua:2)',
+    inits = 'line 2 : uninitialized variable "pos" : reached read access (tests.lua:4)',
+    --ref = 'line 4 : invalid access to uninitialized variable "pos" (declared at tests.lua:2)',
 }
 Test { [[
 native/plain _SDL_Rect, _SDL_Point;
@@ -26218,7 +26219,8 @@ var _Payload final;
 var u8&& neighs = &&(final._data[4]);
 escape 1;
 ]],
-    ref = 'line 9 : invalid access to uninitialized variable "final" (declared at tests.lua:8)',
+    inits = 'line 8 : uninitialized variable "final" : reached read access (tests.lua:9)',
+    --ref = 'line 9 : invalid access to uninitialized variable "final" (declared at tests.lua:8)',
 }
 Test { [[
 pre native do
@@ -26420,7 +26422,8 @@ var int&& x;
 *x = 1;
 escape 1;
 ]],
-    ref = 'line 2 : invalid access to uninitialized variable "x" (declared at tests.lua:1)',
+    inits = 'line 1 : uninitialized variable "x" : reached read access (tests.lua:2)',
+    --ref = 'line 2 : invalid access to uninitialized variable "x" (declared at tests.lua:1)',
 }
 
 Test { [[
@@ -26431,8 +26434,9 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 1 : uninitialized variable "p" crossing compound statement (tests.lua:2)',
-    fin = 'line 4 : attribution to pointer with greater scope',
+    inits = 'line 3 : uninitialized variable "i" : reached read access (tests.lua:4)',
+    --ref = 'line 1 : uninitialized variable "p" crossing compound statement (tests.lua:2)',
+    --fin = 'line 4 : attribution to pointer with greater scope',
 }
 Test { [[
 var int&& p=null;
@@ -26544,7 +26548,7 @@ escape 1;
 }
 Test { [[
 native _int;
-var _int&& u;
+var _int&& u = _;
 vector[1] _int i=[];
 await 1s;
 u = &&i[0];
@@ -26554,7 +26558,7 @@ escape 1;
 }
 Test { [[
 native/plain _int;
-var _int&& u;
+var _int&& u = _;
 vector[1] _int i=[];
 await 1s;
 u = &&i[0];

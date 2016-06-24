@@ -58,8 +58,9 @@ local function run (par, i, Var)
 
     -- ok: found assignment
     elseif me.tag=='Set_Any' or me.tag=='Set_Exp' or me.tag=='Set_Alias' or
-           me.tag=='Set_Await_one' or
-           me.tag=='Set_Emit_Ext_emit' or me.tag=='Set_Emit_Ext_call'
+           me.tag=='Set_Await_one' or me.tag=='Set_Async_Thread' or
+           me.tag=='Set_Emit_Ext_emit' or me.tag=='Set_Emit_Ext_call' or
+           me.tag=='Set_Lua'
     then
         local fr, to = unpack(me)
 
