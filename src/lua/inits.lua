@@ -58,11 +58,35 @@ local function run (par, i, Var)
 
     -- ok: found assignment
     elseif me.tag=='Set_Any' or me.tag=='Set_Exp' or me.tag=='Set_Alias' or
-           me.tag=='Set_Await_one' then
-        local _, to = unpack(me)
-        local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
-        if ID_int.dcl == Var then
-            return true, nil            -- stop, found init
+           me.tag=='Set_Await_one' or
+           me.tag=='Set_Emit_Ext_emit' or me.tag=='Set_Emit_Ext_call'
+    then
+        local fr, to = unpack(me)
+
+        -- some assertions
+        do
+            if me.tag == 'Set_Emit_Ext_emit' then
+                -- input would be inside async, which is catched elsewhere
+                local ID_ext = AST.asr(fr,'Emit_Ext_emit', 1,'ID_ext')
+                local dcl = AST.asr(ID_ext.dcl,'Ext')
+                assert(dcl[2] == 'output')
+            end
+        end
+
+        if to[1].tag ~= 'ID_int' then
+            -- ID.field = ...;  // ERR: counts as read, not write
+            if to.dcl == Var then
+                ASR(false, Var,
+                    'uninitialized variable "'..Var.id..'" : '..
+                    'reached read access '..
+                    '('..to.ln[1]..':'..to.ln[2]..')')
+            end
+        else
+            -- ID = ...;
+            local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
+            if ID_int.dcl == Var then
+                return true, nil            -- stop, found init
+            end
         end
     elseif me.tag=='Set_Await_many' then
         local _, Varlist = unpack(me)

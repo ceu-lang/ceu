@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -21443,7 +21444,6 @@ escape _end;
     run = 1
 }
 
---]===]
 Test { [[
 pre native do
     typedef struct {
@@ -21457,7 +21457,22 @@ v.a = 1;
 v.b = 2;
 escape v.a + v.b;
 ]],
-    ref = 'line 8 : invalid access to uninitialized variable "v" (declared at tests.lua:7)',
+    inits = 'line 8 : uninitialized variable "v" : reached read access (tests.lua:9)',
+}
+Test { [[
+pre native do
+    typedef struct {
+        int a;
+        int b;
+    } t;
+end
+native _t;
+var _t v = _;
+v.a = 1;
+v.b = 2;
+escape v.a + v.b;
+]],
+    run = 3,
 }
 Test { [[
 pre native do
