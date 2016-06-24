@@ -2833,7 +2833,6 @@ escape 100;
     run = { ['1~>A;1~>C']=100 }
 }
 
---]===]
 Test { [[
 input int A;
 var int b = _;
@@ -5644,6 +5643,15 @@ event (int,int) e;
 escape 1;
 ]],
     wrn = true,
+    inits = 'line 1 : uninitialized variable "x" : reached `escape´ (tests.lua:3)',
+}
+
+Test { [[
+var int x=0;
+event (int,int) e;
+escape 1;
+]],
+    wrn = true,
     run = 1,
 }
 
@@ -8141,7 +8149,8 @@ v1=2;
 v2=3;
 escape v1+v2;
 ]],
-    ref = 'line 1 : uninitialized variable "v1" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "v1" : reached `par/or´ (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "v1" crossing compound statement (tests.lua:2)',
 }
 Test { [[
 par/or do
@@ -11679,7 +11688,8 @@ with
     escape a;
 end;
 ]],
-    ref = 'line 1 : uninitialized variable "a" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `par´ (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "a" crossing compound statement (tests.lua:2)',
 }
 Test { [[
 var int a=0;
@@ -13753,7 +13763,8 @@ with
 end;
 escape v;
 ]],
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)'
+    inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)'
 }
 
 Test { [[
@@ -13764,7 +13775,8 @@ with
 end;
 escape v;
 ]],
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
 }
 
 Test { [[
@@ -13780,7 +13792,8 @@ end
 escape a;
 ]],
     wrn = true,
-    ref = 'line 1 : uninitialized variable "a" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `loop´ (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "a" crossing compound statement (tests.lua:2)',
 }
 
 Test { [[
@@ -13791,7 +13804,8 @@ with
 end;
 escape v;
 ]],
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached `par/or´ (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
 }
 
 Test { [[
@@ -13816,7 +13830,8 @@ with
 end;
 ]],
     wrn = true,
-    ref = 'line 3 : uninitialized variable "v" crossing compound statement (tests.lua:4)',
+    inits = 'line 3 : uninitialized variable "v" : reached `par/or´ (tests.lua:4)',
+    --ref = 'line 3 : uninitialized variable "v" crossing compound statement (tests.lua:4)',
 }
 
 Test { [[
@@ -15453,6 +15468,15 @@ end;
 }
 
 Test { [[
+event int a;
+    var int v1,v2;
+    v1 = await a;
+    v2 = await a;
+]],
+    inits = 'line 2 : uninitialized variable "v2" : reached `await´ (tests.lua:3)',
+}
+
+Test { [[
 input void OS_START, A;
 event int a;
 par do
@@ -15464,7 +15488,7 @@ par do
         await 10s;
     end;
 with
-    var int v1,v2;
+    var int v1=_,v2=_;
     v1 = await a;
     v2 = await a;
     escape v1 + v2;
@@ -16255,8 +16279,8 @@ Test { [[
 input void A, B;
 var int a=0;
 par/or do
-    var int a;
     await A;
+    var int a;
     a = 1;
     await A;
     if a then end;
@@ -16638,7 +16662,8 @@ var& int b;
 escape b;
 ]],
     --ref = 'line 3 : reference must be bounded before use',
-    ref = 'line 3 : invalid access to uninitialized variable "b"',
+    --ref = 'line 3 : invalid access to uninitialized variable "b"',
+    inits = 'line 2 : uninitialized variable "b" : reached read access (tests.lua:3)',
     --run = 2,
 }
 Test { [[
@@ -16878,7 +16903,8 @@ escape v;
 ]],
     wrn = true,
     --ref = 'reference declaration and first binding cannot be separated by loops',
-    ref = 'line 2 : uninitialized variable "i" crossing compound statement (tests.lua:3)',
+    --ref = 'line 2 : uninitialized variable "i" crossing compound statement (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (tests.lua:3)',
 }
 
 Test { [[
@@ -17036,13 +17062,41 @@ escape r!;
 
 Test { [[
 var& int v;
+if 1 then
+    var int x=0;
+    v = &x;
+else
+    var int x=0;
+    v = &x;
+end
+escape 1;
+]],
+    fins = 'TODO',
+}
+Test { [[
+var& int v;
+var int x=10;
+var int y=100;
+if x > y then
+    v = &x;
+else
+    v = &y;
+end
+escape v;
+]],
+    run = 100,
+}
+
+Test { [[
+var& int v;
 do
     var int x;
     v = &x;
 end
 escape 1;
 ]],
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    inits = 'line 3 : uninitialized variable "x" : reached read access (tests.lua:4)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --ref = 'line 4 : invalid access to uninitialized variable "x" (declared at tests.lua:3)',
 }
 
@@ -17054,8 +17108,9 @@ do
 end
 escape 1;
 ]],
+    fins = 'TODO',
     --ref = 'line 4 : invalid attribution : variable "x" has narrower scope than its destination',
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --run = 1,
 }
 
@@ -17407,7 +17462,8 @@ finalize with
 end
 escape(a);
 ]],
-    ref = 'line 2 : invalid access to uninitialized variable "a"',
+    --ref = 'line 2 : invalid access to uninitialized variable "a"',
+    inits = 'line 2 : uninitialized variable "a" : reached read access (tests.lua:3)',
 }
 
 Test { [[
@@ -17638,7 +17694,8 @@ var int v = 10;
 var _t t;
 escape *(t.ptr);
 ]],
-    ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    inits = 'line 11 : uninitialized variable "t" : reached read access (tests.lua:12)',
+    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
 
@@ -17723,6 +17780,17 @@ escape 10;
 Test { [[
 code/instantaneous Get (void)=>int&& do
     var int x;
+    escape &&x;
+end
+escape 10;
+]],
+    wrn = true,
+    inits = 'line 2 : uninitialized variable "x" : reached read access (tests.lua:3)',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int&& do
+    var int x=0;
     escape &&x;
 end
 escape 10;
@@ -17978,7 +18046,7 @@ var int i;
 var& int a = &i;
 escape i;
 ]],
-    inits = 'TODO: a',
+    inits = 'line 1 : uninitialized variable "i" : reached read access (tests.lua:2)',
 }
 Test { [[
 var int i = 1;
@@ -19465,11 +19533,11 @@ escape ret + *p;
 
 Test { [[
 native _assert;
-var void&& p;
-var int i;
+var void&& p = _;
+var int i = _;
 input void OS_START;
 do/_
-    var int r;
+    var int r = _;
     do
         input (int,void&&) PTR;
         par/or do
@@ -19491,7 +19559,7 @@ end
 ]],
     --parser = 'line 10 : after `i´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `)´',
     --adj = 'line 9 : invalid `finalize´',
-    --run = 1,
+    run = 1,
     -- TODO: impossible to place the finally in the correct parameter?
 }
 
@@ -21375,6 +21443,7 @@ escape _end;
     run = 1
 }
 
+--]===]
 Test { [[
 pre native do
     typedef struct {
