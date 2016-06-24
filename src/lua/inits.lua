@@ -116,7 +116,10 @@ F = {
 
     Var = function (me)
         local tp = unpack(me)
-        if me.is_implicit or TYPES.check(tp,'?') then
+        if me.is_implicit       or  -- compiler defined
+           me.is_param          or  -- "code" parameter
+           TYPES.check(tp,'?')      -- optional initialization
+        then
             -- ok: don't need initialization
             return
         else

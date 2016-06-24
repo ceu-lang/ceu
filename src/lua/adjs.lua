@@ -160,7 +160,10 @@ F = {
                 elseif pre == 'event' then
                     local _,_,tp,id = unpack(v)
                     dcls[#dcls+1] = node('Evt', me.ln, tp, is_alias, id)
+                else
+                    error'TODO'
                 end
+                dcls[#dcls].is_param = true
             end
         end
         table.insert(stmts_old, 1, dcls)
