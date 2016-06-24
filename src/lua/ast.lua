@@ -30,6 +30,7 @@ AST.tag2id = {
 
     Par_Or    = 'par/or',
     Await_Ext = 'await',
+    EOF       = 'end of file',
 }
 
 function AST.isParent (n1, n2)

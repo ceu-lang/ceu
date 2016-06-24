@@ -1,4 +1,5 @@
 local yields = {
+    'EOF',
     'Par', 'Par_And', 'Par_Or',
     'Escape', 'Loop',
     'Async', 'Async_Thread', 'Async_Isr',
@@ -17,7 +18,11 @@ end
 local function run (par, i, var)
     local me = par[i]
     if me == nil then
-        return run(par.__par, par.__i+1, var)
+        if par.__par == nil then
+            return true, par
+        else
+            return run(par.__par, par.__i+1, var)
+        end
     elseif not AST.isNode(me) then
         return run(par, i+1, var)
     end

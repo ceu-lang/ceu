@@ -7,8 +7,9 @@ local Pre_Stmts
 
 F = {
     ['1__PRE'] = function (me)
-        local stmts = unpack(me)
+        local stmts, eof = unpack(me)
         AST.asr(stmts, 'Stmts')
+        stmts[#stmts+1] = eof
 
         --  Stmts
         --      to

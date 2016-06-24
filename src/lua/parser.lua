@@ -353,12 +353,13 @@ local alphanum = m.R'az' + '_' + m.R'09'
 -- __Rule:  container for other rules, not in the AST
 -- __rule:  (local) container for other rules
 
-GG = { [1] = x * V'_Stmts' * (P(-1) + E('end of file'))
+GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -->>> OK
 
     , __seqs = KK';' * KK(';',true)^0     -- "true": ignore as "expected"
     , Nothing = K'nothing'
+    , EOF = P''
 
 -- DO, BLOCK
 

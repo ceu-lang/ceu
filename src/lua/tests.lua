@@ -315,7 +315,7 @@ Test { [[var int a;]],
 
 Test { [[var int a;]],
     wrn = true,
-    init = 'uninitialized variable "a"',
+    init = 'uninitialized variable "a" : reached `end of file´ (tests.lua:2)',
 }
 
 Test { [[var int a=0;]],
