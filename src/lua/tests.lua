@@ -1118,7 +1118,6 @@ end;
 escape a+c;
 ]],
     run = 4,
-    --ref = 'line 5 : invalid access to uninitialized variable "a"',
 }
 Test { [[
 var int a;
@@ -1132,7 +1131,8 @@ else
 end;
 escape a+c;
 ]],
-    ref = 'line 4 : invalid access to uninitialized variable "a"',
+    inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:4)',
+    --ref = 'line 4 : invalid access to uninitialized variable "a"',
 }
 Test { [[
 var int a;
@@ -1144,7 +1144,8 @@ if 1 then
 end;
 escape a;
 ]],
-    ref = 'line 5 : missing initialization for variable "a" in the other branch of the `if-then-else´',
+    inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:8)',
+    --ref = 'line 5 : missing initialization for variable "a" in the other branch of the `if-then-else´',
 }
 Test { [[
 var int a;
@@ -1188,6 +1189,37 @@ a = 1;
 Test { [[
 var int a;
 if 1 then
+    a = 2;
+end;
+a = 1;
+escape a;
+]],
+    run = 1,
+}
+Test { [[
+var int a;
+if 1 then
+else
+    a = 2;
+end;
+a = 1;
+escape a;
+]],
+    run = 1,
+}
+Test { [[
+var int a;
+if 1 then
+else
+end;
+a = 1;
+escape a;
+]],
+    run = 1,
+}
+Test { [[
+var int a;
+if 1 then
     a = 1;
     if 1 then
         a = 2;
@@ -1197,7 +1229,8 @@ if 1 then
 end;
 escape a;
 ]],
-    inits = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:10)',
+    --inits = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:2)',
 }
 Test { [[
 var int a;
@@ -1207,7 +1240,8 @@ else
     a=1;a=2; escape 3;
 end;
 ]],
-    ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (tests.lua:3)',
+    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (tests.lua:2)',
 }
 Test { [[
 var int a=1;

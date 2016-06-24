@@ -394,10 +394,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -- FLOW CONTROL
 
-    , If = K'if' * V'__Exp' * K'then' * V'Block' *
-           (K'else/if' * V'__Exp' * K'then' * V'Block')^0 *
-           OPT(K'else' * V'Block') *
-           K'end'
+    , _If = K'if' * V'__Exp' * K'then' * V'Block' *
+            (K'else/if' * V'__Exp' * K'then' * V'Block')^0 *
+            OPT(K'else' * V'Block') *
+            K'end'
 
     , Loop       = K'loop' * OPT('/'*V'__Exp') *
                    V'__Do'
@@ -825,7 +825,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __Stmt_Block = V'_Code_impl' + V'_Ext_Code_impl' + V'_Ext_Req_impl'
               + V'_Data_block'
               + V'Nat_Block'
-              + V'Do'    + V'If'
+              + V'Do'    + V'_If'
               + V'Loop' + V'_Loop_Num' + V'_Loop_Pool'
               + V'_Every'
               + V'_Spawn_Block'

@@ -73,6 +73,21 @@ F = {
 
 -------------------------------------------------------------------------------
 
+    -- TODO: "__PRE" because of "continue"
+    _If__PRE = function (me)
+        if #me==3 and me[3] then
+            return      -- has no "else/if" and has "else" clause
+        end
+        local ret = me[#me] or node('Nothing', me.ln)
+        for i=#me-1, 1, -2 do
+            local c, b = me[i-1], me[i]
+            ret = node('If', c.ln, c, b, ret)
+        end
+        return ret
+    end,
+
+-------------------------------------------------------------------------------
+
     _Data_simple__PRE = '_Data_block__PRE',
     _Data_block__PRE = function (me)
         local id, super =  unpack(me)

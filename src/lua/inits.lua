@@ -26,11 +26,7 @@ local yields = {
 local function run (par, i, Var)
     local me = par[i]
     if me == nil then
-        if par.__par == nil then
-            return true, par
-        else
-            return run(par.__par, par.__i+1, Var)
-        end
+        return run(par.__par, par.__i+1, Var)
     elseif not AST.isNode(me) then
         return run(par, i+1, Var)
     end
@@ -55,6 +51,8 @@ local function run (par, i, Var)
 
     elseif me.tag == 'If' then
         local _, t, f = unpack(me)
+        run(t, 1, Var)
+        run(f, 1, Var)
 
     -- ok: found assignment
     elseif me.tag=='Set_Any' or me.tag=='Set_Exp' then
@@ -86,7 +84,7 @@ F = {
             -- ok: don't need initialization
             return
         else
-            run(me.__par, me.__i+1, me)
+            run(me, #me+1, me)
         end
     end,
 }
