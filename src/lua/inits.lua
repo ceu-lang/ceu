@@ -42,7 +42,9 @@ local function run (par, i, Var)
 
     -- error: access to Var
     elseif me.tag == 'ID_int' then
-        if me.dcl == Var then
+        if me.__par.tag == 'Do' then
+            -- ok: do/a end
+        elseif me.dcl == Var then
             ASR(false, Var,
                 'uninitialized variable "'..Var.id..'" : '..
                 'reached read access '..
@@ -55,7 +57,8 @@ local function run (par, i, Var)
         run(f, 1, Var)
 
     -- ok: found assignment
-    elseif me.tag=='Set_Any' or me.tag=='Set_Exp' then
+    elseif me.tag=='Set_Any' or me.tag=='Set_Exp' or me.tag=='Set_Alias' or
+           me.tag=='Set_Await_one' then
         local _, to = unpack(me)
         local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
         if ID_int.dcl == Var then
@@ -66,6 +69,15 @@ local function run (par, i, Var)
         for _, ID_int in ipairs(Varlist) do
             if ID_int.dcl == Var then
                 return true, nil        -- stop, found init
+            end
+        end
+    elseif me.tag == 'Do' then
+        -- a = do ... end
+        local _,_,Exp_Name = unpack(me)
+        if Exp_Name then
+            local ID_int = AST.asr(Exp_Name,'Exp_Name', 1,'ID_int')
+            if ID_int.dcl == Var then
+                return true, nil            -- stop, found init
             end
         end
     end

@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1740,6 +1739,16 @@ escape a + 1;
 
 Test { [[
 var int a;
+async (a) do
+    a = 1;
+end;
+escape a + 1;
+]],
+    inits = 'line 1 : uninitialized variable "a" : reached `async´ (tests.lua:2)',
+}
+
+Test { [[
+var int a;
 var& int pa = &a;
 async (pa) do
     emit 1min;
@@ -1747,7 +1756,7 @@ async (pa) do
 end;
 escape a + 1;
 ]],
-    ref = ' line 2 : invalid access to uninitialized variable "a"',
+    inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:2)',
 }
 
 Test { [[
@@ -1860,7 +1869,8 @@ with
 end
 escape ret;
 ]],
-    ref = 'line 1 : uninitialized variable "ret" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "ret" crossing compound statement (tests.lua:2)',
 }
 
 Test { [[
@@ -2107,7 +2117,8 @@ if 1 then
 end;
 escape v;
 ]],
-    ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "v" : reached read access (tests.lua:6)',
+    --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (tests.lua:3)',
 }
 
 Test { [[
@@ -2189,11 +2200,22 @@ end;
 Test { [[
 var int a;
 do/a
-    escape/a;
 end
-escape 1;
+a = 1;
+escape a;
 ]],
     run = 1,
+}
+
+Test { [[
+var int a;
+do/a
+    escape/a;
+end
+a = 1;
+escape a;
+]],
+    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (tests.lua:3)',
 }
 
 Test { [[
@@ -2206,7 +2228,7 @@ end
 }
 
 Test { [[
-var int a;
+var int a = 0;
 do/a
     escape 1;
 end
@@ -2223,7 +2245,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-var int a;
+var int a = 0;
 do/a
     escape/a;
 end;
@@ -2269,6 +2291,14 @@ escape 1;
 
 Test { [[
 var int a = do
+end;
+escape 1;
+]],
+    run = 'TODO: error',
+}
+
+Test { [[
+var int a = do
     var int a = do/a
         escape/a 1;
     end;
@@ -2294,7 +2324,7 @@ escape a;
 }
 
 Test { [[
-var int b;
+var int b = 0;
 var int a = do/b
     var int a = do/a
         escape/a 1;
@@ -2581,7 +2611,8 @@ with
 end;
 escape a;
 ]],
-    ref = 'line 8 : uninitialized variable "a" crossing compound statement (tests.lua:9)',
+    inits = 'line 8 : uninitialized variable "a" : reached `par/or´ (tests.lua:9)',
+    --ref = 'line 8 : uninitialized variable "a" crossing compound statement (tests.lua:9)',
 }
 
 Test { [[
@@ -2802,6 +2833,27 @@ escape 100;
     run = { ['1~>A;1~>C']=100 }
 }
 
+--]===]
+Test { [[
+input int A;
+var int b = _;
+await A;
+b = 1;
+escape b;
+]],
+    run = { ['1~>A']=1 },
+}
+
+Test { [[
+input int A;
+var int b;
+await A;
+b = 1;
+escape b;
+]],
+    inits = 'line 2 : uninitialized variable "b" : reached `await´ (tests.lua:3)',
+}
+
 Test { [[
 input int A;
 var int b;
@@ -2819,6 +2871,27 @@ else
 end;
 escape b;
 ]],
+    inits = 'line 2 : uninitialized variable "b" : reached `await´ (tests.lua:4)',
+}
+
+Test { [[
+input int A;
+var int b = do
+    if 1 then
+        await A;
+        escape 1;
+    else
+        if 1 then
+            await A;
+            escape 1;
+        else
+            await A;
+            escape 0;
+        end;
+    end;
+end;
+escape b;
+]],
     run = {
         ['0~>A ; 0~>A'] = 1,
     },
@@ -2826,21 +2899,24 @@ escape b;
 
 Test { [[
 input int A;
-var int b;
-if 1 then
-    await A;
-    b = 1;
-else
-    if 1 then
-        await A;
-        b = 1;
-    else
-        await A;
+var int b =
+    do
+        if 1 then
+            await A;
+            escape 1;
+        else
+            if 1 then
+                await A;
+                escape 1;
+            else
+                await A;
+            end;
+        end;
     end;
-end;
 escape b;
 ]],
-    ref = 'line 9 : missing initialization for variable "b" in the other branch of the `if-then-else´ (tests.lua:7)'
+    tmp = 'TODO: missing escape',
+    --ref = 'line 9 : missing initialization for variable "b" in the other branch of the `if-then-else´ (tests.lua:7)'
 }
 
 -->>> LOOP
@@ -3233,7 +3309,8 @@ var int a;
 loop do a=1; end;
 escape a;
 ]],
-    ref = 'line 1 : uninitialized variable "a" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `loop´ (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "a" crossing compound statement (tests.lua:2)',
 }
 
 Test { [[
@@ -4072,7 +4149,8 @@ with
     end
 end
 ]],
-    ref = 'line 3 : uninitialized variable "a" crossing compound statement (tests.lua:4)',
+    inits = 'line 3 : uninitialized variable "a" : reached `loop´ (tests.lua:4)',
+    --ref = 'line 3 : uninitialized variable "a" crossing compound statement (tests.lua:4)',
 }
 
 Test { [[
