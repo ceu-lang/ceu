@@ -59,7 +59,8 @@ local function run (par, i, Var)
     elseif me.tag=='Set_Any' or me.tag=='Set_Exp' or me.tag=='Set_Alias' or
            me.tag=='Set_Await_one' or me.tag=='Set_Await_many' or
            me.tag=='Set_Async_Thread' or me.tag=='Set_Lua' or
-           me.tag=='Set_Emit_Ext_emit' or me.tag=='Set_Emit_Ext_call'
+           me.tag=='Set_Emit_Ext_emit' or me.tag=='Set_Emit_Ext_call' or
+           me.tag=='Set_Abs_Val' or me.tag=='Set_Abs_New'
     then
         local fr, to = unpack(me)
 
@@ -125,6 +126,7 @@ F = {
         local tp = unpack(me)
         if me.is_implicit       or  -- compiler defined
            me.is_param          or  -- "code" parameter
+           AST.par(me,'Data')   or  -- "data" member
            TYPES.check(tp,'?')      -- optional initialization
         then
             -- ok: don't need initialization

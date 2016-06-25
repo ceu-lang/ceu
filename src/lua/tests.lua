@@ -56220,7 +56220,8 @@ var SDL_Rect r = rect;
 
 escape r.x+r.y+r.w+r.h;
 ]],
-    ref = 'line 6 : invalid access to uninitialized variable "rect" (declared at tests.lua:5)',
+    inits = 'line 5 : uninitialized variable "rect" : reached read access (tests.lua:6)',
+    --ref = 'line 6 : invalid access to uninitialized variable "rect" (declared at tests.lua:5)',
 }
 Test { [[
 data SDL_Rect with
@@ -56832,7 +56833,8 @@ end
 escape 1;//e.Xx.d.x;
 ]],
     wrn = true,
-    ref = 'line 11 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
+    inits = 'line 11 : uninitialized variable "e" : reached read access (tests.lua:14)',
+    --ref = 'line 11 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
 }
 Test { [[
 data Dx with
@@ -57325,7 +57327,7 @@ data Tt with
     event      int e;
 end
 
-var Tt t;
+var Tt t = val Tt(_,_,_);
 
 t.x = 1;
 var int x = t.x;
@@ -57388,7 +57390,34 @@ data Tb with
     var Ta a;
 end
 
-var Tb b;
+var Tb b = val Tb(Ta(_,_,_));
+
+b.a.x = 1;
+var int x = b.a.x;
+
+b.a.v = [1,2,3];
+x = b.a.v[0];
+
+emit b.a.e=>0;
+await b.a.e;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data Ta with
+    var        int x;
+    vector[10] int v;
+    event      int e;
+end
+
+data Tb with
+    var Ta a;
+end
+
+var Tb b = val Tb(_);
 
 b.a.x = 1;
 var int x = b.a.x;
@@ -59968,7 +59997,7 @@ data Frame with
   vector[3] u8 bytes;
 end
 
-var Frame f1;
+var Frame f1 = val Frame(_);
 f1.bytes = [] .. f1.bytes .. [5];
 
 escape f1.bytes[0] as int;
@@ -59996,7 +60025,7 @@ data Frame with
 end
 
 vector[10] Frame frames;
-var Frame f1;
+var Frame f1 = val Frame(_);
 
 f1.bytes[0] = 5;
 
@@ -60317,8 +60346,9 @@ end
 escape 1;
 ]],
     wrn = true,
-    ref = 'line 10 : invalid access to uninitialized variable "n" (declared at tests.lua:8)',
+    --ref = 'line 10 : invalid access to uninitialized variable "n" (declared at tests.lua:8)',
     --run = 1,
+    inits = 'line 6 : uninitialized variable "n" : reached `await´ (tests.lua:8)',
 }
 Test { [[
 data Tree;
