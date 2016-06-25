@@ -628,7 +628,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- SETS
 
     , _Set = V'Exp_Name' * V'__Sets_one'
-           + (V'ID_int' + PARENS(V'Varlist')) * V'__Sets_many'
+           + (V'Exp_Name' + PARENS(V'Namelist')) * V'__Sets_many'
 
     , __Sets_one  = (CKK'='-'=='+CKK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
     , __Sets_many = (CKK'='-'=='+CKK':=') * (V'__sets_many' + PARENS(V'__sets_many'))
@@ -706,8 +706,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -- LISTS
 
-    , Varlist   = V'ID_int' * (KK',' * V'ID_int')^0
-    , Explist   = V'__Exp'  * (KK',' * V'__Exp')^0
+    , Namelist = V'Exp_Name' * (KK',' * V'Exp_Name')^0
+    , Varlist  = V'ID_int'   * (KK',' * V'ID_int')^0
+    , Explist  = V'__Exp'    * (KK',' * V'__Exp')^0
 
  --<<<
 

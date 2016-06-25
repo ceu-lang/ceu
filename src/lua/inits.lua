@@ -31,7 +31,6 @@ local function run (par, i, Var)
         return run(par, i+1, Var)
     end
 --DBG('---', me.tag)
---AST.dump(me)
 
     -- error: yielding statement
     if yields[me.tag] then
@@ -58,9 +57,9 @@ local function run (par, i, Var)
 
     -- ok: found assignment
     elseif me.tag=='Set_Any' or me.tag=='Set_Exp' or me.tag=='Set_Alias' or
-           me.tag=='Set_Await_one' or me.tag=='Set_Async_Thread' or
-           me.tag=='Set_Emit_Ext_emit' or me.tag=='Set_Emit_Ext_call' or
-           me.tag=='Set_Lua'
+           me.tag=='Set_Await_one' or me.tag=='Set_Await_many' or
+           me.tag=='Set_Async_Thread' or me.tag=='Set_Lua' or
+           me.tag=='Set_Emit_Ext_emit' or me.tag=='Set_Emit_Ext_call'
     then
         local fr, to = unpack(me)
 
@@ -74,25 +73,32 @@ local function run (par, i, Var)
             end
         end
 
-        if to[1].tag ~= 'ID_int' then
-            -- ID.field = ...;  // ERR: counts as read, not write
-            if to.dcl == Var then
-                ASR(false, Var,
-                    'uninitialized variable "'..Var.id..'" : '..
-                    'reached read access '..
-                    '('..to.ln[1]..':'..to.ln[2]..')')
-            end
-        else
-            -- ID = ...;
-            local ID_int = AST.asr(to,'Exp_Name', 1,'ID_int')
-            if ID_int.dcl == Var then
-                return true, nil            -- stop, found init
+        -- equalize all with Set_Await_many
+        if to.tag ~= 'Namelist' then
+            to = { to }
+        end
+
+        for _, sub in ipairs(to) do
+            if sub[1].tag ~= 'ID_int' then
+                -- ID.field = ...;  // ERR: counts as read, not write
+                if sub.dcl == Var then
+                    ASR(false, Var,
+                        'uninitialized variable "'..Var.id..'" : '..
+                        'reached read access '..
+                        '('..sub.ln[1]..':'..sub.ln[2]..')')
+                end
+            else
+                -- ID = ...;
+                local ID_int = AST.asr(sub,'Exp_Name', 1,'ID_int')
+                if ID_int.dcl == Var then
+                    return true, nil            -- stop, found init
+                end
             end
         end
     elseif me.tag=='Set_Await_many' then
-        local _, Varlist = unpack(me)
-        for _, ID_int in ipairs(Varlist) do
-            if ID_int.dcl == Var then
+        local _, Namelist = unpack(me)
+        for _, Exp_Name in ipairs(Namelist) do
+            if Exp_Name.dcl == Var then
                 return true, nil        -- stop, found init
             end
         end

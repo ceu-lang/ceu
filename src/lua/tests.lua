@@ -9,7 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
-do return end -- OK
+--do return end -- OK
 --]===]
 
 ----------------------------------------------------------------------------
@@ -832,6 +832,23 @@ end
 escape ret;
 ]],
     run = { ['~>1s']=1001 },
+}
+
+Test { [[
+native _f;
+input int A;
+_f = await A;
+escape _f;
+]],
+    run = {['1~>A']=1},
+}
+Test { [[
+native _f;
+input int A;
+var int a = await A;
+escape _f;
+]],
+    run = {['1~>A']=1},
 }
 
 --<<< OS_START / ANY
@@ -29587,7 +29604,7 @@ end
 event Tx a;
 escape 0;
 ]],
-    dcls = 'line 3 : invalid event type : must be primitive',
+    dcls = 'line 3 : invalid declaration : unexpected context for `code´ "Tx"',
 }
 
 Test { [[
@@ -29595,7 +29612,7 @@ code/delayed Tx (void)=>void do end
 var Tx a = 1;
 escape 0;
 ]],
-    stmts = 'line 2 : invalid assignment : types mismatch : "Tx" <= "int"',
+    dcls = 'line 2 : invalid declaration : unexpected context for `code´ "Tx"',
 }
 
 Test { [[
@@ -44811,7 +44828,7 @@ Test { [[
 code/instantaneous Ff (var& int a)=>void do
     a = 1;
 end
-var int v;
+var int v = 0;
 call Ff(v);
 escape v;
 ]],
@@ -47494,7 +47511,8 @@ Test { [[
 var& int vvv;
 escape vvv;
 ]],
-    ref = 'line 2 : invalid access to uninitialized variable "vvv" (declared at tests.lua:1)',
+    inits = 'line 1 : uninitialized variable "vvv" : reached read access (tests.lua:2)',
+    --ref = 'line 2 : invalid access to uninitialized variable "vvv" (declared at tests.lua:1)',
 }
 Test { [[
 class TimeDisplay with
@@ -53219,7 +53237,7 @@ end
 -- TUPLES
 
 Test { [[
-var int a, b;
+var int a=_, b=_;
 (a) = 1;
 escape 1;
 ]],
@@ -53353,7 +53371,7 @@ escape 1;
 Test { [[
 event (int,int) a;
 par/or do
-    var int a,b;
+    var int a=_,b=_;
     //(a,b) = await a;
     escape a + b;
 with
@@ -57416,6 +57434,14 @@ end
 ]],
     wrn = true,
     consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+}
+
+Test { [[
+data Tx;
+event Tx a;
+escape 0;
+]],
+    dcls = 'line 2 : invalid event type : must be primitive',
 }
 
 -- << ADT : MISC

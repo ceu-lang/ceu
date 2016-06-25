@@ -204,8 +204,8 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
         local fr, to = unpack(me)
 
         -- ctx
-        for _, var in ipairs(to) do
-            EXPS.asr_name(var, {'Nat','Var'}, 'invalid assignment')
+        for _, Exp_Name in ipairs(to) do
+            EXPS.asr_name(Exp_Name, {'Nat','Var'}, 'invalid assignment')
         end
 
         -- tp
@@ -355,6 +355,20 @@ DBG'TODO: _Async_Isr'
 
             -- dcl
             Typelist[i] = AST.copy(e.dcl[1])
+        end
+        me.dcl = DCLS.new(me, Typelist)
+    end,
+
+    Namelist = function (me)
+        -- ctx
+        for _, var in ipairs(me) do
+            EXPS.asr_name(var, {'Nat','Var'}, 'invalid variable')
+        end
+
+        -- dcl
+        local Typelist = AST.node('Typelist', me.ln)
+        for i, var in ipairs(me) do
+            Typelist[i] = AST.copy(var.dcl[1])
         end
         me.dcl = DCLS.new(me, Typelist)
     end,

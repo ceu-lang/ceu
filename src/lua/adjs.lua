@@ -304,11 +304,11 @@ DBG('TODO: _Loop_Pool')
 
         local dcls = node('Stmts', me.ln)
         if to then
-            local to = to
-            if to.tag ~= 'Varlist' then
-                to = { to }
+            local to1 = to
+            if to1.tag ~= 'Varlist' then
+                to1 = { to1 }
             end
-            for i, ID_int in ipairs(to) do
+            for i, ID_int in ipairs(to1) do
                 local id = unpack(ID_int)
                 local ID_ext = AST.asr(awt,'_Await_Until', 1,'Await_Ext', 1,'ID_ext')
                 local var = node('Var', me.ln,
@@ -322,6 +322,20 @@ DBG('TODO: _Loop_Pool')
 
         local set_awt
         if to then
+            local new do
+                --  (ID_int,ID_int) = ...
+                -->>>
+                --  (Exp_Name,Exp_Name) = ...
+                if to.tag == 'Varlist' then
+                    new = node('Namelist', to.ln)
+                    for i, var in ipairs(to) do
+                        new[i] = node('Exp_Name', var.ln, var)
+                    end
+                else
+                    new = node('Exp_Name', to.ln, to)
+                end
+            end
+            me[1] = new
             set_awt = node('Set_Await', me.ln,
                         node('Await_Until', me.ln, awt, false),
                         to)
@@ -500,10 +514,8 @@ error 'TODO: remove all tests above when this never fails again'
             ret[#ret+1] = node(tag, me.ln, unpack(t))
             if set then
                 local _,v = unpack(set)
-                local to = node('ID_int', me.ln, id)
-                if not (v.tag=='_Set_Await_many' or v.tag=='_Set_Watching') then
-                    to = node('Exp_Name', me.ln, to)
-                end
+                local to = node('Exp_Name', me.ln,
+                            node('ID_int', me.ln, id))
                 ret[#ret+1] = node('_Set', me.ln,
                                 to,
                                 unpack(set))
@@ -583,8 +595,8 @@ error 'TODO: remove all tests above when this never fails again'
 
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
-        if var.tag == 'ID_int' then
-            me[2] = node('Varlist', var.ln, var)
+        if var.tag == 'Exp_Name' then
+            me[2] = node('Namelist', var.ln, var)
         end
     end,
 
