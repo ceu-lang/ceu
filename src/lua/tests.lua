@@ -29418,6 +29418,7 @@ await 1s;
 
 escape 1;
 ]],
+    dcls = 'line 5 : invalid declaration : unexpected context for `code´ "Tx"',
     wrn = true,
     run = { ['~>1s'] = 1 },
 }

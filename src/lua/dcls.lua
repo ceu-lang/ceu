@@ -206,6 +206,14 @@ F = {
 
     -- LOC
 
+    Type = function (me)
+        local ID = unpack(me)
+        if ID.tag == 'ID_abs' then
+            ASR(ID.dcl.tag ~= 'Code', me,
+                'invalid declaration : unexpected context for `code´ "'..ID.dcl.id..'"')
+        end
+    end,
+
     Var = function (me)
         local Type,is_alias,id = unpack(me)
         me.id = id
