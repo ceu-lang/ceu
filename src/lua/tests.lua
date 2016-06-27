@@ -10,7 +10,6 @@ end
 
 --[===[
 --do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -56192,6 +56191,7 @@ escape _V;
 
 -->>> DATA INI
 -- HERE:
+--]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -56251,7 +56251,6 @@ end
 
 --[==[
 -- HERE:
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -57098,12 +57097,33 @@ end
 
     var Dx d = val Dx(1);
 var Ee e = val Xx(&d);
-    (e as Xx).d = &d;
+    (e as Xx).d.x = 10;
 
 escape (e as Xx).d.x;
 ]],
     wrn = true,
     run = 1,
+}
+Test { [[
+data Dx with
+    var int x;
+end
+
+data Ee;
+data Nothing is Ee;
+data Xx is Ee with
+    var& Dx d;
+end
+
+    var Dx d = val Dx(1);
+var Ee e = val Xx(&d);
+    (e as Xx).d = &d;
+
+escape (e as Xx).d.x;
+]],
+    wrn = true,
+    stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
+    --run = 1,
 }
 Test { [[
 data Dx with
@@ -57545,6 +57565,7 @@ var int a =
 
 escape a;
 ]],
+    todo = '&&',
     run = {['~>10s']=50 },
 }
 
@@ -58846,6 +58867,7 @@ escape v1;
 ]],
     tmp = 'line 4 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
 }
+]==]
 Test { [[
 var int v1 = 0;
 var int v2 = 1;
@@ -58853,7 +58875,8 @@ var& int? i = &v1;
 i = &v2;
 escape v1;
 ]],
-    ref = 'line 4 : invalid attribution : variable "i" is already bound',
+    inits = 'line 4 : invalid binding : variable "i" is already bound (tests.lua:3)',
+    --ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --ref = 'line 4 : invalid attribution : l-value already bounded',
 }
 

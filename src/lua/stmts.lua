@@ -97,8 +97,16 @@ DBG('TODO: _Lua')
         -- ctx
         EXPS.asr_name(to, {'Var','Vec','Pool','Evt'}, 'invalid binding')
 
+        -- NO: var int x = &y
         local _, is_alias = unpack(to.dcl)
         ASR(is_alias, me, 'invalid binding : expected declaration with `&´')
+
+        -- NO: d.x = &...
+        if not AST.get(to,'Exp_Name', 1,'ID_int') then
+            AST.asr(to,'Exp_Name', 1,'Exp_.')
+            ASR(false, me,
+                'invalid binding : unexpected context for operator `.´')
+        end
 
         -- tp
         check(me, to.dcl[1], fr.dcl[1], 'invalid binding')
