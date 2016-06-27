@@ -16724,7 +16724,8 @@ else
 end
 escape a+b;
 ]],
-    ref = 'line 6 : invalid extra access to variable "c" inside the initializing `if-then-else´ (tests.lua:4)',
+    run = 110,
+    --ref = 'line 6 : invalid extra access to variable "c" inside the initializing `if-then-else´ (tests.lua:4)',
 }
 Test { [[
 var int a = 1;
@@ -16738,7 +16739,8 @@ else
 end
 escape a+b;
 ]],
-    ref = 'line 8 : invalid extra access to variable "c" inside the initializing `if-then-else´ (tests.lua:4)',
+    run = 11,
+    --ref = 'line 8 : invalid extra access to variable "c" inside the initializing `if-then-else´ (tests.lua:4)',
 }
 
 Test { [[
@@ -17138,7 +17140,8 @@ var& int? i;
 i! = &v;
 escape i!;
 ]],
-    inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
+    stmts = 'line 3 : invalid binding : unexpected context for operator `!´',
+    --inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
     --ref = 'line 3 : invalid attribution : cannot bind with operator `!´',
 }
 
@@ -17156,7 +17159,8 @@ loop do
 end
 escape v;
 ]],
-    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (tests.lua:3)',
+    stmts = 'line 4 : invalid binding : unexpected context for operator `!´',
+    --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (tests.lua:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --run = 11,
     --ref = 'reference declaration and first binding cannot be separated by loops',
@@ -18173,8 +18177,8 @@ do
 end
 escape x;
 ]],
-    ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
-    --run = 1,
+    --ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
+    run = 1,
 }
 
 Test { [[

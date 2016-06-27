@@ -103,9 +103,9 @@ DBG('TODO: _Lua')
 
         -- NO: d.x = &...
         if not AST.get(to,'Exp_Name', 1,'ID_int') then
-            AST.asr(to,'Exp_Name', 1,'Exp_.')
+            local op = to[1][1]
             ASR(false, me,
-                'invalid binding : unexpected context for operator `.´')
+                'invalid binding : unexpected context for operator `'..op..'´')
         end
 
         -- tp
