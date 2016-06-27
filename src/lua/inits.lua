@@ -170,7 +170,10 @@ F = {
             -- ok: don't need initialization
             return
         else
-            if me.tag=='Var' or is_alias then
+            if me.tag=='Var' or     -- all vars must be inited
+               is_alias      or     -- all aliases must be bound
+               tp.tag=='Type' and TYPES.is_nat(tp) and assert(me.tag=='Vec')
+            then
                 -- var x = ...
                 -- event& e = ...
                 run(me, #me+1, me)

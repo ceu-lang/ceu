@@ -23406,7 +23406,17 @@ escape 1;
     wrn = true,
     --run = 1,
     --cval = 'line 1 : invalid dimension',
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
+    inits = 'line 2 : uninitialized vector "v" : reached `escape´ (tests.lua:3)',
+}
+Test { [[
+native _int;
+vector[1] _int v = _;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+    --cval = 'line 1 : invalid dimension',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
 }
 Test { [[
 native _u8, _V;
@@ -23430,7 +23440,8 @@ native _u8;
 vector[10] _u8 v;
 escape v[0];
 ]],
-    ref = 'line 2 : invalid access to uninitialized variable "v" (declared at tests.lua:1)',
+    inits = 'line 2 : uninitialized vector "v" : reached read access (tests.lua:3)',
+    --ref = 'line 2 : invalid access to uninitialized variable "v" (declared at tests.lua:1)',
 }
 
 Test { [[vector[2] int v; await v;     escape 0;]],
@@ -26874,8 +26885,9 @@ do
 end
 escape *u;
 ]],
-    ref = 'line 1 : uninitialized variable "u" crossing compound statement (tests.lua:2)',
-    fin = 'line 5 : attribution to pointer with greater scope',
+    inits = 'line 4 : uninitialized vector "i" : reached read access (tests.lua:5)',
+    --ref = 'line 1 : uninitialized variable "u" crossing compound statement (tests.lua:2)',
+    --fin = 'line 5 : attribution to pointer with greater scope',
 }
 Test { [[
 input int SDL_KEYUP;
