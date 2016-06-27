@@ -2858,6 +2858,17 @@ await A;
 b = 1;
 escape b;
 ]],
+    inits = 'line 2 : uninitialized variable "b"',
+}
+
+Test { [[
+input int A;
+var int b = _;
+await A;
+b = 1;
+escape b;
+]],
+    wrn = true,
     run = { ['1~>A']=1 },
 }
 
@@ -19580,6 +19591,7 @@ do/_
     escape r;
 end
 ]],
+    wrn = true,
     --parser = 'line 10 : after `i´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `)´',
     --adj = 'line 9 : invalid `finalize´',
     run = 1,
@@ -21494,6 +21506,22 @@ v.a = 1;
 v.b = 2;
 escape v.a + v.b;
 ]],
+    inits = 'line 8 : uninitialized variable "v"',
+}
+Test { [[
+pre native do
+    typedef struct {
+        int a;
+        int b;
+    } t;
+end
+native _t;
+var _t v = _;
+v.a = 1;
+v.b = 2;
+escape v.a + v.b;
+]],
+    wrn = true,
     run = 3,
 }
 Test { [[
@@ -24641,6 +24669,7 @@ us[9] = 10;
 us[0] =  1;
 escape us[0]+us[9];
 ]],
+    wrn = true,
     run = 11,
 }
 
@@ -25137,6 +25166,7 @@ do/_
     escape *p1;
 end
 ]],
+    wrn = true,
     --run = 1,
     fin = 'line 7 : unsafe access to pointer "p1" across `await´',
 }
@@ -26578,6 +26608,7 @@ await 1s;
 u = &&i[0];
 escape 1;
 ]],
+    wrn = true,
     fin = 'line 4 : unsafe access to pointer "i" across `await´ (tests.lua : 3)',
 }
 Test { [[
@@ -26589,6 +26620,7 @@ u = &&i[0];
 if u==null then end;
 escape 1;
 ]],
+    wrn = true,
     run = { ['~>1s']=1 },
 }
 Test { [[
@@ -27756,6 +27788,7 @@ await 1ms/_;
 
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 

@@ -104,6 +104,10 @@ local function run (par, i, Var)
                 -- ID = ...;
                 local ID_int = AST.asr(sub,'Exp_Name', 1,'ID_int')
                 if ID_int.dcl == Var then
+                    if me.tag == 'Set_Any' then
+                        WRN(false, Var,
+                            'uninitialized variable "'..Var.id..'"')
+                    end
                     return true, nil            -- stop, found init
                 end
             end
