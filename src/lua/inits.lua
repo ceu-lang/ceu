@@ -74,6 +74,13 @@ local function run (par, i, Var)
             end
         end
 
+        -- NO: var& int x = ... (w/o &)
+        local _,is_alias = unpack(to.dcl)
+        if is_alias then
+            ASR(me.tag == 'Set_Alias', me,
+                'invalid binding : expected `&´ in the right side')
+        end
+
         -- equalize all with Set_Await_many
         if to.tag ~= 'Namelist' then
             to = { to }
@@ -123,11 +130,11 @@ F = {
     end,
 
     Var = function (me)
-        local tp = unpack(me)
-        if me.is_implicit       or  -- compiler defined
-           me.is_param          or  -- "code" parameter
-           AST.par(me,'Data')   or  -- "data" member
-           TYPES.check(tp,'?')      -- optional initialization
+        local tp,is_alias = unpack(me)
+        if me.is_implicit       or                  -- compiler defined
+           me.is_param          or                  -- "code" parameter
+           AST.par(me,'Data')   or                  -- "data" member
+           TYPES.check(tp,'?') and (not is_alias)   -- optional initialization
         then
             -- ok: don't need initialization
             return

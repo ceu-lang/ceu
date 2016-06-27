@@ -22865,7 +22865,8 @@ var& int? p = _f();
 escape 0;
 ]],
     --stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
-    inits = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    --inits = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    inits = 'line 8 : invalid binding : expected `&´ in the right side',
 }
 
 Test { [[
