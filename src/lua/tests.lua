@@ -1120,7 +1120,8 @@ else
 end;
 escape a+c;
 ]],
-    ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´',
+    run = 4,
+    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´',
 }
 Test { [[
 var int a;
@@ -2673,7 +2674,8 @@ var int a =
     end;
 escape a;
 ]],
-    ref = 'line 3 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
+    props_ = 'line 3 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
+    --ref = 'line 3 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
 }
 Test { [[
 var int a =
@@ -2683,8 +2685,9 @@ var int a =
     end;
 escape a;
 ]],
+    props_ = 'line 3 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
     --ref = 'line 4 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
-    run = 1,
+    --run = 1,
 }
 Test { [[
 var int a = do/_ par do
@@ -2705,7 +2708,8 @@ end
             end;
 escape a;
 ]],
-    ref = 'line 2 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
+    props_ = 'line 2 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
+    --ref = 'line 2 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
 }
 
 Test { [[
@@ -12852,6 +12856,30 @@ a = do/_ par do
 with
     await Z;
     escape a;
+end
+end;
+a = a + 1;
+await X;
+escape a;
+]],
+    props_ = 'line 9 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:3)',
+    --ref = 'line 9 : invalid access to uninitialized variable "a" (declared at tests.lua:2)',
+    --run = { ['0~>A;0~>B;0~>Z;0~>X'] = 2 }
+}
+
+Test { [[
+input int A,B,Z,X;
+var int a = 0;
+a = do/_ par do
+    par/and do
+        await A;
+    with
+        await B;
+    end;
+    escape 0+1;
+with
+    await Z;
+    escape 0;
 end
 end;
 a = a + 1;

@@ -174,7 +174,7 @@ AST.visit(F)
 G = {
     Exp_Name = function (me)
         local e = unpack(me)
-        me.dcl = AST.copy(e.dcl)
+        me.dcl = e.dcl
     end,
 
 -- SIZEOF

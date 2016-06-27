@@ -98,6 +98,16 @@ function AST.asr (me, tag, ...)
     return ret
 end
 
+function AST.is_par (par, child)
+    if par == child then
+        return true
+    elseif not child.__par then
+        return false
+    else
+        return AST.is_par(par, child.__par)
+    end
+end
+
 function AST.par (me, pred)
     if type(pred) == 'string' then
         local tag = pred

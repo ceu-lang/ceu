@@ -426,6 +426,7 @@ F = {
                 ASR(type(fr)~='boolean', me,
                     'invalid `escape´ : expected expression')
                 set[3] = op
+                set.is_escape = true
                 return AST.copy(to)
             else
                 ASR(type(fr)=='boolean', me,
