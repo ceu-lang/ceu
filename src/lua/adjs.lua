@@ -90,7 +90,7 @@ F = {
                     t,
                     node('Block', me.ln,
                         node('Stmts', me.ln,
-                            node('_If', f_or_more.ln,
+                            node('_If', me.ln,
                                 f_or_more,
                                 select(4,unpack(me))))))
         end
