@@ -57086,7 +57086,8 @@ end
 escape 1;//e.Xx.d.x;
 ]],
     wrn = true,
-    inits = 'line 11 : uninitialized variable "e" : reached read access (tests.lua:14)',
+    stmts = 'line 14 : invalid binding : unexpected context for operator `.´',
+    --inits = 'line 11 : uninitialized variable "e" : reached read access (tests.lua:14)',
     --ref = 'line 11 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
 }
 Test { [[
