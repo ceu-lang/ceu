@@ -74,19 +74,24 @@ local function run (par, i, Var)
             end
         end
 
-        -- NO: var& int x = ... (w/o &)
-        local _,is_alias = unpack(to.dcl)
-        if is_alias then
-            ASR(me.tag == 'Set_Alias', me,
-                'invalid binding : expected `&´ in the right side')
-        end
-
         -- equalize all with Set_Await_many
         if to.tag ~= 'Namelist' then
             to = { to }
         end
 
         for _, sub in ipairs(to) do
+            -- NO: var& int x = ... (w/o &)
+            local _,is_alias = unpack(sub.dcl)
+            if is_alias and (me.tag~='Set_Alias') then
+                if me.tag == 'Set_Exp' then
+                    ASR(false, me,
+                        'invalid binding : expected operator `&´ in the right side')
+                else
+                    ASR(false, me,
+                        'invalid binding : unexpected statement in the right side')
+                end
+            end
+
             if sub[1].tag ~= 'ID_int' then
                 -- ID.field = ...;  // ERR: counts as read, not write
                 if sub.dcl == Var then

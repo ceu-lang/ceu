@@ -16537,7 +16537,8 @@ var& int b = a;
 a = 2;
 escape b;
 ]],
-    ref = 'line 2 : invalid attribution : missing alias operator `&´ on the right',
+    inits = 'line 2 : invalid binding : expected operator `&´ in the right side',
+    --ref = 'line 2 : invalid attribution : missing alias operator `&´ on the right',
 }
 
 Test { [[
@@ -16966,7 +16967,8 @@ loop do
 end
 escape v;
 ]],
-    ref = 'line 4 : invalid attribution : variable "i" is already bound',
+    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (tests.lua:3)',
+    --ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
 Test { [[
 var int v = 10;
@@ -16974,7 +16976,8 @@ var& int? i;
 i! = &v;
 escape i!;
 ]],
-    ref = 'line 3 : invalid attribution : cannot bind with operator `!´',
+    inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
+    --ref = 'line 3 : invalid attribution : cannot bind with operator `!´',
 }
 
 Test { [[
@@ -16991,7 +16994,8 @@ loop do
 end
 escape v;
 ]],
-    ref = 'line 4 : invalid attribution : variable "i" is already bound',
+    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (tests.lua:3)',
+    --ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --run = 11,
     --ref = 'reference declaration and first binding cannot be separated by loops',
     --ref = 'line 2 : uninitialized variable "i" crossing compound statement (tests.lua:3)',
@@ -17030,7 +17034,8 @@ every 1s do
 end
 escape 1;
 ]],
-    ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
+    inits = 'line 2 : uninitialized variable "sfc" : reached `loop´ (tests.lua:3)',
+    --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
     --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
     --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (tests.lua:2)',
 }
@@ -22866,7 +22871,7 @@ escape 0;
 ]],
     --stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
     --inits = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    inits = 'line 8 : invalid binding : expected `&´ in the right side',
+    inits = 'line 8 : invalid binding : expected operator `&´ in the right side',
 }
 
 Test { [[
@@ -24774,7 +24779,8 @@ p := { NULL };
 escape 1;
 //escape p==null;
 ]],
-    tmp = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    inits = 'line 2 : invalid binding : expected operator `&´ in the right side',
+    --tmp = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
     --ref = 'line 2 : invalid attribution : missing alias operator `&´',
     --fin = 'line 2 : attribution requires `finalize´',
 }
@@ -47708,8 +47714,9 @@ end
     end
 escape 1;
 ]],
+    inits = 'line 8 : uninitialized variable "intro_story_str" : reached read access (tests.lua:9)',
     wrn = true,
-    run = 1,
+    --run = 1,
 }
 
 Test { [[
@@ -53813,7 +53820,8 @@ Test { [[
 var& int i = 1;
 escape 1;
 ]],
-    ref = 'line 1 : invalid attribution',
+    inits = 'line 1 : invalid binding : expected operator `&´ in the right side',
+    --ref = 'line 1 : invalid attribution',
 }
 
 Test { [[
@@ -53821,7 +53829,8 @@ var int&& p=null;
 var& int i = *p;
 escape 1;
 ]],
-    ref = 'line 2 : invalid attribution',
+    inits = 'line 2 : invalid binding : expected operator `&´ in the right side',
+    --ref = 'line 2 : invalid attribution',
 }
 
 Test { [[
@@ -53829,7 +53838,8 @@ event int e;
 var& int i = await e;
 escape 1;
 ]],
-    ref = 'line 2 : invalid attribution',
+    inits = 'line 2 : invalid binding : unexpected statement in the right side',
+    --ref = 'line 2 : invalid attribution',
 }
 
 Test { [[
@@ -57045,7 +57055,9 @@ var& Vx v2, v3;
     v3 = val Vx(3);
 escape v1.v+v2.v+v3.v;
 ]],
-    ref = 'line 5 : invalid attribution : missing alias operator `&´',
+    inits = 'line 5 : invalid binding : unexpected statement in the right side',
+    --inits = 'line 5 : invalid binding : expected operator `&´ in the right side',
+    --ref = 'line 5 : invalid attribution : missing alias operator `&´',
     --run = 6,
 }
 
@@ -58545,6 +58557,7 @@ var int v = 10;
 var& int? i;
 escape (not i?) as int;
 ]],
+    inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
     --ref = 'line 3 : reference must be bounded before use',
     run = 1,
 }
@@ -58554,7 +58567,8 @@ var int v = 10;
 var& int? i;
 escape (not i?) as int;
 ]],
-    run = 1,
+    inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
+    --run = 1,
 }
 
 Test { [[
@@ -58562,7 +58576,8 @@ var int v = 10;
 var& int? i;
 escape (not i?) as int;
 ]],
-    run = 1,
+    inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
+    --run = 1,
 }
 
 Test { [[
@@ -58732,7 +58747,7 @@ escape t.i!;
 Test { [[
 native _SDL_Texture;
 native/nohold _g;
-var& _SDL_Texture? t_enemy_0, t_enemy_1;
+var& _SDL_Texture? t_enemy_1;
 native _f;
     do t_enemy_1 = &_f();
 finalize with
@@ -58742,6 +58757,22 @@ escape 1;
 ]],
     wrn = true,
     gcc = 'error: unknown type name ‘SDL_Texture’',
+}
+
+Test { [[
+native _SDL_Texture;
+native/nohold _g;
+var& _SDL_Texture? t_enemy_0, t_enemy_1;
+native _f;
+    do t_enemy_1 = &_f();
+finalize with
+    _g(&&t_enemy_1!);
+end
+escape 1;
+]],
+    wrn = true,
+    --gcc = 'error: unknown type name ‘SDL_Texture’',
+    inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (tests.lua:9)',
 }
 
 Test { [[
@@ -58983,7 +59014,7 @@ var int ret = 0;    // 0
 
 var int?  i;
 var& int? p;
-ret = ret + ((not i?)as int) + ((not p?)as int);  // 2
+ret = ret + ((not i?)as int) + 1;  // 2
 
 i = 3;
 ret = ret + i!;      // 5
@@ -59174,7 +59205,8 @@ var& int? v;
 escape 1;
 ]],
     wrn = true,
-    run = 1,
+    --run = 1,
+    inits = 'line 1 : uninitialized variable "v" : reached `escape´ (tests.lua:2)',
     --env = 'line 1 : invalid type modifier : `?&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
