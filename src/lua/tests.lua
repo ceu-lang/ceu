@@ -30105,7 +30105,7 @@ end
 var Tx t;
 escape t.v;
 ]],
-    ref = 'line 6 : missing initialization for field "v" (declared in tests.lua:3)',
+    tmp = 'line 6 : missing initialization for field "v" (declared in tests.lua:3)',
 }
 Test { [[
 //var int v;
@@ -30119,7 +30119,7 @@ end;
 var Tx x;
 escape t.v + x.v;
 ]],
-    ref = 'line 9 : missing initialization for field "v" (declared in tests.lua:3)',
+    tmp = 'line 9 : missing initialization for field "v" (declared in tests.lua:3)',
 }
 
 Test { [[
@@ -30215,7 +30215,7 @@ var Tx t with
 end;
 escape t.v + t.u:x;
 ]],
-    ref = 'line 18 : missing initialization for field "u" (declared in tests.lua:9)',
+    tmp = 'line 18 : missing initialization for field "u" (declared in tests.lua:9)',
 }
 Test { [[
 class U with
@@ -30337,7 +30337,7 @@ end
 var Tx t;
 escape i;
 ]],
-    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
     --ref = 'line 7 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --run = 1,
@@ -30353,7 +30353,7 @@ end
 var Tx t;
 escape i;
 ]],
-    ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
     --ref = 'line 8 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --run = 1,
@@ -30369,7 +30369,7 @@ end
 var Tx t;
 escape t.i;
 ]],
-    ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
     --ref = 'line 8 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --run = 10,
@@ -30384,7 +30384,7 @@ end
 spawn Tx;
 escape i;
 ]],
-    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --ref = 'line 7 : field "i" must be assigned',
     --run = 1,
@@ -30410,7 +30410,7 @@ end
 var Tx&&? p = spawn Tx;
 escape p!:i;
 ]],
-    ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
     --ref = 'line 8 : field "i" must be assigned',
     --run = 10,
 }
@@ -33440,7 +33440,7 @@ end
 var Tx t;
 escape t.i;
 ]],
-    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
     --ref = 'line 7 : field "i" must be assigned',
     --run = 10,
 }
@@ -33473,7 +33473,7 @@ end
 var Tx t;
 escape t.i;
 ]],
-    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
     --ref = 'line 7 : field "i" must be assigned',
     --run = 10,
 }
@@ -33546,7 +33546,7 @@ end
 var Tx t;
 escape 1;
 ]],
-    ref = 'line 5 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 5 : missing initialization for field "i" (declared in tests.lua:2)',
     --ref = 'line 5 : field "i" must be assigned',
 }
 
@@ -33566,7 +33566,7 @@ end;
 
 escape t1.i;
 ]],
-    ref = 'line 8 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 8 : missing initialization for field "i" (declared in tests.lua:2)',
     --ref = 'line 8 : field "i" must be assigned',
 }
 
@@ -33586,7 +33586,7 @@ var Tx t1;
 
 escape t1.i;
 ]],
-    ref = 'line 12 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 12 : missing initialization for field "i" (declared in tests.lua:2)',
     --ref = 'line 12 : field "i" must be assigned',
 }
 
@@ -33602,7 +33602,7 @@ var int v = 0;
 t.i = v;
 escape 1;
 ]],
-    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
     --ref = 'line 9 : cannot assign to reference bounded inside the class',
 }
 
@@ -33644,7 +33644,7 @@ var int  um = 1;
 var& int v;// = um;
 escape global:v;
 ]],
-    ref = 'line 6 : invalid access to uninitialized variable "v" (declared at tests.lua:2)',
+    tmp = 'line 6 : invalid access to uninitialized variable "v" (declared at tests.lua:2)',
     --ref = 'line 5 : missing initialization for global variable "v"',
     --ref = 'line 5 : global references must be bounded on declaration',
 }
@@ -33734,7 +33734,7 @@ global:t = &t;
 
 escape global:t.v;
 ]],
-    ref = 'line 12 : invalid attribution : variable "t" is already bound',
+    tmp = 'line 12 : invalid attribution : variable "t" is already bound',
 }
 
 Test { [[
@@ -33853,7 +33853,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    ref = 'line 7 : invalid access to uninitialized variable "x" (declared at tests.lua:6)',
+    tmp = 'line 7 : invalid access to uninitialized variable "x" (declared at tests.lua:6)',
 }
 Test { [[
 class Tx with
@@ -33866,7 +33866,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    ref = 'line 7 : invalid attribution : variable "x" has narrower scope than its destination',
+    tmp = 'line 7 : invalid attribution : variable "x" has narrower scope than its destination',
 }
 
 Test { [[
@@ -33884,7 +33884,7 @@ end;
 
 escape 1;
 ]],
-    ref = 'line 10 : invalid access to uninitialized variable "v" (declared at tests.lua:7)',
+    tmp = 'line 10 : invalid access to uninitialized variable "v" (declared at tests.lua:7)',
     --ref = 'line 7 : uninitialized variable "v"',
     --run = 1,
 }
@@ -33903,7 +33903,7 @@ end;
 
 escape 1;
 ]],
-    ref = 'line 10 : invalid access to uninitialized variable "v" (declared at tests.lua:7)',
+    tmp = 'line 10 : invalid access to uninitialized variable "v" (declared at tests.lua:7)',
     --ref = 'line 7 : uninitialized variable "v"',
     --run = 1,
 }
@@ -33947,7 +33947,7 @@ end;
 
 escape t1.v.v + t2.v.v + t3.v.v;
 ]],
-    ref = 'line 12 : invalid attribution : variable "v_" has narrower scope than its destination',
+    tmp = 'line 12 : invalid attribution : variable "v_" has narrower scope than its destination',
     --ref = 'line 12 : attribution to reference with greater scope',
     --run = 6,
 }
@@ -40743,7 +40743,7 @@ escape 1;
     --fin = 'line 10 : attribution requires `finalize´',
     --run = 1,
     --ref = 'line 10 : attribution to reference with greater scope',
-    ref = 'line 10 : invalid attribution : variable "u" has narrower scope than its destination',
+    tmp = 'line 10 : invalid attribution : variable "u" has narrower scope than its destination',
 }
 
 Test { [[
@@ -42537,7 +42537,7 @@ var Tx t;
 
 escape t.v;
 ]],
-    ref = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
+    tmp = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
     --ref = 'line 9 : invalid access to uninitialized variable "v" (declared at tests.lua:2)',
 }
 
@@ -42556,7 +42556,7 @@ var Tx t;
 
 escape v;
 ]],
-    ref = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
+    tmp = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
     --ref = 'line 13 : invalid access to uninitialized variable "v" (declared at tests.lua:4)',
 }
 
@@ -42575,7 +42575,7 @@ var Tx t;
 
 escape t.v;
 ]],
-    ref = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
+    tmp = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
     --run = 1,
 }
 
@@ -42632,7 +42632,7 @@ var int  um = 111;
 var& int vvv = &um;
 escape t.v;
 ]],
-    ref = 'line 8 : invalid access to uninitialized variable "vvv" (declared at tests.lua:2)',
+    tmp = 'line 8 : invalid access to uninitialized variable "vvv" (declared at tests.lua:2)',
 }
 
 Test { [[
@@ -45164,7 +45164,7 @@ end
 var Tx t;
 escape t.a + t.f();
 ]],
-    ref = 'line 7 : invalid access to uninitialized variable "b" (declared at tests.lua:5)',
+    tmp = 'line 7 : invalid access to uninitialized variable "b" (declared at tests.lua:5)',
 }
 Test { [[
 class Tx with
@@ -47165,7 +47165,7 @@ var U u;
 
 escape 1;
 ]],
-    ref = 'line 10 : missing initialization for field "ts" (declared in tests.lua:6)',
+    tmp = 'line 10 : missing initialization for field "ts" (declared in tests.lua:6)',
 }
 
 Test { [[
@@ -47185,7 +47185,7 @@ var U u;
 
 escape 1;
 ]],
-    ref = 'line 13 : missing initialization for field "ts" (declared in tests.lua:6)',
+    tmp = 'line 13 : missing initialization for field "ts" (declared in tests.lua:6)',
 }
 
 Test { [[
@@ -47471,7 +47471,7 @@ var int x = 10;
 var Tx ttt = Tx.fff(&x);
 escape x;
 ]],
-    ref = 'line 6 : invalid attribution : missing alias operator `&´ on the right',
+    tmp = 'line 6 : invalid attribution : missing alias operator `&´ on the right',
 }
 
 Test { [[
@@ -47484,7 +47484,7 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 5 : missing initialization for field "x" (declared in tests.lua:2)',
+    tmp = 'line 5 : missing initialization for field "x" (declared in tests.lua:2)',
 }
 
 Test { [[
@@ -47498,7 +47498,7 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 6 : missing initialization for field "x" (declared in tests.lua:2)',
+    tmp = 'line 6 : missing initialization for field "x" (declared in tests.lua:2)',
 }
 
 Test { [[
@@ -47545,7 +47545,7 @@ end
 var Tx t;
 escape 1;
 ]],
-    ref = 'line 5 : missing initialization for field "vvv" (declared in tests.lua:2)',
+    tmp = 'line 5 : missing initialization for field "vvv" (declared in tests.lua:2)',
 }
 Test { [[
 var& int vvv;
@@ -47567,7 +47567,7 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 8 : invalid attribution : variable "vvv" is already bound',
+    tmp = 'line 8 : invalid attribution : variable "vvv" is already bound',
 }
 
 Test { [[
@@ -47825,7 +47825,7 @@ i:v = i:v * 3;
 
 escape t.v;
 ]],
-    ref = 'tests.lua : line 13 : invalid access to uninitialized variable "v" (declared at tests.lua:11)',
+    tmp = 'tests.lua : line 13 : invalid access to uninitialized variable "v" (declared at tests.lua:11)',
     --run = 1,
     --ref = 'line 11 : uninitialized variable "v" crossing compound statement (tests.lua:12)',
 }
@@ -49445,7 +49445,7 @@ i:vs[0] = 1;
 
 escape 1;
 ]],
-    ref = 'line 21 : missing initialization for field "vs" (declared in tests.lua:4)',
+    tmp = 'line 21 : missing initialization for field "vs" (declared in tests.lua:4)',
 }
 
 Test { [[
@@ -50225,7 +50225,7 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 7 : invalid access to uninitialized variable "v" (declared at tests.lua:5)',
+    tmp = 'line 7 : invalid access to uninitialized variable "v" (declared at tests.lua:5)',
 }
 
 Test { [[
@@ -51667,7 +51667,7 @@ end
 
 escape 1;
 ]],
-    ref = 'line 9 : invalid attribution : variable "cmds" has narrower scope than its destination',
+    tmp = 'line 9 : invalid attribution : variable "cmds" has narrower scope than its destination',
     --ref = 'line 9 : attribution to reference with greater scope',
 }
 Test { [[
@@ -54241,7 +54241,7 @@ end
 var Tx t;
 escape t.i;
 ]],
-    ref = 'line 6 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 6 : missing initialization for field "i" (declared in tests.lua:3)',
     --mode = 'line 7 : cannot read field with mode `input´',
 }
 
@@ -54366,7 +54366,7 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 6 : invalid attribution : variable "io" is already bound',
+    tmp = 'line 6 : invalid attribution : variable "io" is already bound',
 }
 Test { [[
 class Tx with
@@ -54378,7 +54378,7 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 6 : invalid attribution : variable "io" is already bound',
+    tmp = 'line 6 : invalid attribution : variable "io" is already bound',
 }
 
 Test { [[
@@ -54396,7 +54396,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    ref = 'line 11 : invalid attribution : variable "oi" is already bound',
+    tmp = 'line 11 : invalid attribution : variable "oi" is already bound',
 }
 Test { [[
 class Tx with
@@ -54413,7 +54413,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    ref = 'line 11 : invalid attribution : variable "oi" is already bound',
+    tmp = 'line 11 : invalid attribution : variable "oi" is already bound',
 }
 
 Test { [[
@@ -54532,7 +54532,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    ref = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
 }
 
 Test { [[
@@ -54545,7 +54545,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
 }
 
 Test { [[
@@ -54584,7 +54584,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    ref = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
 }
 
 Test { [[
@@ -54597,7 +54597,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    ref = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
 }
 
 Test { [[
@@ -54608,7 +54608,7 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 3 : uninitialized variable "o" crossing compound statement (tests.lua:1)',
+    tmp = 'line 3 : uninitialized variable "o" crossing compound statement (tests.lua:1)',
 }
 
 Test { [[
@@ -54619,7 +54619,7 @@ do
 end
 escape 1;
 ]],
-    ref = 'line 3 : uninitialized variable "oi" crossing compound statement (tests.lua:1)',
+    tmp = 'line 3 : uninitialized variable "oi" crossing compound statement (tests.lua:1)',
 }
 
 Test { [[
@@ -54728,7 +54728,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    ref = 'line 6 : invalid access to uninitialized variable "i" (declared at tests.lua:2)',
+    tmp = 'line 6 : invalid access to uninitialized variable "i" (declared at tests.lua:2)',
     --mode = ' line 6 : cannot read field inside the constructor',
 }
 
@@ -56774,7 +56774,7 @@ d = val Dx(1);
 escape t.v;
 ]],
     --ref = 'line 11 : uninitialized variable "d" crossing compound statement (tests.lua:12)',
-    ref = 'line 13 : invalid access to uninitialized variable "d" (declared at tests.lua:11)',
+    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at tests.lua:11)',
 }
 
 Test { [[
@@ -56796,7 +56796,7 @@ end;
 escape 1;
 ]],
     --ref = 'line 11 : uninitialized variable "d" crossing compound statement (tests.lua:12)',
-    ref = 'line 13 : invalid access to uninitialized variable "d" (declared at tests.lua:11)',
+    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at tests.lua:11)',
 }
 
 Test { [[
@@ -56818,7 +56818,7 @@ end;
 escape 1;
 ]],
     --ref = 'line 13 : attribution to reference with greater scope',
-    ref = 'line 13 : invalid attribution : variable "d" has narrower scope than its destination',
+    tmp = 'line 13 : invalid attribution : variable "d" has narrower scope than its destination',
 }
 
 Test { [[
