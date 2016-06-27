@@ -1,15 +1,18 @@
 F = {
     NUMBER = function (me)
         me.is_num = (TYPES.is_int(me.dcl[1]) and 'int') or 'float'
+        me.is_const = true
     end,
 
     SIZEOF = function (me)
         me.is_num = 'int'
+        me.is_const = true
     end,
 
     ID_nat = function (me)
-        local _,mod = unpack(me)
+        local _,mod = unpack(me.dcl)
         me.is_num = true
+        me.is_const = (mod == 'const')
     end,
 
     ['Exp_|'] = '__Exp_num_num',
@@ -29,6 +32,7 @@ F = {
                 me.is_num = true
             end
         end
+        me.is_const = (e1.is_const and e2.is_const)
     end,
 
     ['Exp_1~'] = '__Exp_num',
@@ -37,11 +41,13 @@ F = {
     __Exp_num = function (me)
         local _, e = unpack(me)
         me.is_num = e.is_num
+        me.is_const = e.is_const
     end,
 
     Exp_Name = function (me)
         local e = unpack(me)
         me.is_num = e.is_num
+        me.is_const = e.is_const
     end,
 
     ---------------------------------------------------------------------------
