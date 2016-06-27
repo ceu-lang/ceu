@@ -10,6 +10,7 @@ end
 
 --[===[
 --do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -56191,7 +56192,6 @@ escape _V;
 
 -->>> DATA INI
 -- HERE:
---]===]
 
 -- ADTs used in most examples below
 DATA = [[
@@ -56251,6 +56251,7 @@ end
 
 --[==[
 -- HERE:
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -59858,7 +59859,6 @@ escape 0;
     --env = 'line 15 : not a struct',
 }
 
-]==]
 Test { [[
 data List;
 data Nil is List;
@@ -64528,7 +64528,8 @@ pool&[] Command cmds2;
 escape 1;
 ]],
     wrn = true,
-    ref = 'line 10 : uninitialized variable "cmds2" crossing compound statement (tests.lua:1)',
+    --ref = 'line 10 : uninitialized variable "cmds2" crossing compound statement (tests.lua:1)',
+    inits = 'line 8 : uninitialized pool "cmds2" : reached `escape´ (tests.lua:9)',
 }
 Test { [[
 data Command;
