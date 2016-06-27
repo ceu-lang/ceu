@@ -17260,7 +17260,7 @@ else
 end
 escape 1;
 ]],
-    fins = 'TODO',
+    inits = 'line 4 : invalid binding : incompatible scopes',
 }
 Test { [[
 var& int v;
@@ -17297,7 +17297,7 @@ do
 end
 escape 1;
 ]],
-    fins = 'TODO',
+    inits = 'line 4 : invalid binding : incompatible scopes',
     --ref = 'line 4 : invalid attribution : variable "x" has narrower scope than its destination',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --run = 1,
@@ -30533,7 +30533,7 @@ escape *v;
 ]],
     --fin = 'line 4 : attribution requires `finalize´',
     --fin = 'line 4 : attribution to pointer with greater scope',
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    fins = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
 }
 Test { [[
 var& int v;
@@ -30543,8 +30543,9 @@ do
 end
 escape v;
 ]],
+    inits = 'line 4 : invalid binding : incompatible scopes',
     --ref = 'line 4 : attribution to reference with greater scope',
-    ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --run = 1,
 }
 
@@ -38878,8 +38879,8 @@ spawn do
 end
 escape x;
 ]],
-    ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
-    --run = 1,
+    --ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
+    run = 1,
 }
 
 Test { [[
@@ -57355,7 +57356,8 @@ do
 end
 escape v1.v+v2.v+v3.v;
 ]],
-    ref = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
+    inits = 'line 10 : invalid binding : incompatible scopes',
+    --inits = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
     --ref = 'line 10 : attribution to reference with greater scope',
     --ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',
     --run = 6,
@@ -60344,7 +60346,8 @@ frames = [] .. frames .. [f1];
 
 escape frames[0].bytes[0];
 ]],
-    ref = 'line 8 : invalid access to uninitialized variable "f1" (declared at tests.lua:6)'
+    run = 5,
+    --ref = 'line 8 : invalid access to uninitialized variable "f1" (declared at tests.lua:6)'
 }
 
 Test { [[

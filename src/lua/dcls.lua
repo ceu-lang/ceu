@@ -96,6 +96,7 @@ local function dcls_new (blk, me, can_cross)
 
     blk.dcls[#blk.dcls+1] = me
     blk.dcls[me.id] = me
+    me.blk = blk
     return me
 end
 
