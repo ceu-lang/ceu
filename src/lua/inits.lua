@@ -157,9 +157,10 @@ F = {
         F.__i = i
     end,
 
-    Vec = 'Var',
-    Evt = 'Var',
-    Var = function (me)
+    Pool = 'Var',
+    Vec  = 'Var',
+    Evt  = 'Var',
+    Var  = function (me)
         local tp,is_alias = unpack(me)
         if me.is_implicit       or                  -- compiler defined
            me.is_param          or                  -- "code" parameter

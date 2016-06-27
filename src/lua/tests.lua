@@ -58867,7 +58867,6 @@ escape v1;
 ]],
     tmp = 'line 4 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
 }
-]==]
 Test { [[
 var int v1 = 0;
 var int v2 = 1;
@@ -59859,6 +59858,7 @@ escape 0;
     --env = 'line 15 : not a struct',
 }
 
+]==]
 Test { [[
 data List;
 data Nil is List;
