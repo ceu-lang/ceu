@@ -10,7 +10,6 @@ end
 
 --[===[
 --do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -16568,7 +16567,63 @@ b = &a;
 a = 2;
 escape b;
 ]],
-    ref = 'line 3 : invalid attribution : variable "b" is already bound',
+    inits = 'line 3 : invalid binding : variable "b" is already bound (tests.lua:2)',
+    --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+}
+Test { [[
+var int a = 1;
+var& int b;
+if 1 then
+    b = &a;
+else
+    b = &a;
+end
+escape b;
+]],
+    run = 1,
+}
+Test { [[
+var int a = 1;
+var& int b;
+if 1 then
+    b = &a;
+    b = &a;
+else
+    b = &a;
+end
+escape b;
+]],
+    inits = 'line 5 : invalid binding : variable "b" is already bound (tests.lua:4,tests.lua:7)',
+    --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+}
+Test { [[
+var int a = 1;
+var& int b;
+if 1 then
+    b = &a;
+else
+    b = &a;
+    b = &a;
+end
+escape b;
+]],
+    -- TODO: tests.lua:6
+    inits = 'line 7 : invalid binding : variable "b" is already bound (tests.lua:4,tests.lua:6)',
+    --ref = 'line 3 : invalid attribution : variable "b" is already bound',
+}
+Test { [[
+var int a = 1;
+var& int b;
+if 1 then
+    b = &a;
+else
+    b = &a;
+end
+b = &a;
+escape b;
+]],
+    inits = 'line 8 : invalid binding : variable "b" is already bound (tests.lua:4,tests.lua:6)',
+    --ref = 'line 3 : invalid attribution : variable "b" is already bound',
 }
 Test { [[
 var int a = 1;
@@ -16833,8 +16888,9 @@ end
 v = 5;
 escape a + b + v;
 ]],
+    inits = 'line 2 : uninitialized variable "v" : reached end of `if´ (tests.lua:3)',
     --ref = 'line 5 : reference must be bounded in the other if-else branch',
-    ref = 'line 5 : missing initialization for variable "v" in the other branch of the `if-then-else´ (tests.lua:3)',
+    --ref = 'line 5 : missing initialization for variable "v" in the other branch of the `if-then-else´ (tests.lua:3)',
 }
 Test { [[
 var int a=1, b=2;
@@ -16846,7 +16902,8 @@ end
 v = 5;
 escape a + b + v;
 ]],
-    ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (tests.lua:3)',
+    inits = 'tests.lua : line 2 : uninitialized variable "v" : reached end of `if´ (tests.lua:3)',
+    --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (tests.lua:3)',
 }
 Test { [[
 var int a=1, b=2;
@@ -16886,6 +16943,22 @@ escape _V1+_V2;
 ]],
     --gcc = 'error: assignment makes pointer from integer without a cast',
     run = 6,
+}
+
+Test { [[
+var int a=1, b=2, c=3;
+var& int x;
+if false then
+    x = &a;
+else/if true then
+    x = &b;
+else
+    x = &c;
+end
+x = 1;
+escape a + b + x;
+]],
+    run = 5,
 }
 
 Test { [[
@@ -16993,7 +17066,8 @@ i = &v;
 i = &v;
 escape i!;
 ]],
-    ref = 'line 4 : invalid attribution : variable "i" is already bound',
+    inits = 'line 4 : invalid binding : variable "i" is already bound (tests.lua:3)',
+    --ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
 
 Test { [[
@@ -18052,6 +18126,25 @@ escape x;
 ]],
     ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
     --run = 1,
+}
+
+--]===]
+Test { [[
+event void a;
+event& void b = &a;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+event void  a;
+event& void b = &a;
+b = &b;
+escape 1;
+]],
+    inits = 'line 3 : invalid binding : event "b" is already bound (tests.lua:2)',
+    --run = { ['~>1s'] = 1 },
 }
 
 Test { [[

@@ -23,37 +23,47 @@ local yields = {
     Kill          = 'kill',
 }
 
-local function run (par, i, Var)
+local function run (par, i, Dcl, stop)
     local me = par[i]
     if me == nil then
-        return run(par.__par, par.__i+1, Var)
+        if par == stop then
+            return false                        -- stop, not found
+        else
+            return run(par.__par, par.__i+1, Dcl, stop)
+        end
     elseif not AST.is_node(me) then
-        return run(par, i+1, Var)
+        return run(par, i+1, Dcl, stop)
     end
---DBG('---', me.tag)
 
     -- error: yielding statement
     if yields[me.tag] then
-        ASR(false, Var,
-            'uninitialized variable "'..Var.id..'" : '..
+        ASR(false, Dcl,
+            'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
             'reached `'..yields[me.tag]..'´ '..
             '('..me.ln[1]..':'..me.ln[2]..')')
 
-    -- error: access to Var
+    -- error: access to Dcl
     elseif me.tag == 'ID_int' then
         if me.__par.tag == 'Do' then
             -- ok: do/a end
-        elseif me.dcl == Var then
-            ASR(false, Var,
-                'uninitialized variable "'..Var.id..'" : '..
+        elseif me.dcl == Dcl then
+            ASR(false, Dcl,
+                'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                 'reached read access '..
                 '('..me.ln[1]..':'..me.ln[2]..')')
         end
 
     elseif me.tag == 'If' then
         local _, t, f = unpack(me)
-        run(t, 1, Var)
-        run(f, 1, Var)
+        local ok1 = run(t, 1, Dcl, t)
+        local ok2 = run(f, 1, Dcl, f)
+        if ok1 or ok2 then
+            ASR(ok1 and ok2, Dcl,
+                'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
+                'reached end of `if´ '..
+                '('..me.ln[1]..':'..me.ln[2]..')')
+            return true                         -- stop, found init
+        end
 
     -- ok: found assignment
     elseif me.tag=='Set_Any' or me.tag=='Set_Exp' or me.tag=='Set_Alias' or
@@ -94,29 +104,37 @@ local function run (par, i, Var)
 
             if sub[1].tag ~= 'ID_int' then
                 -- ID.field = ...;  // ERR: counts as read, not write
-                if sub.dcl == Var then
-                    ASR(false, Var,
-                        'uninitialized variable "'..Var.id..'" : '..
+                if sub.dcl == Dcl then
+                    ASR(false, Dcl,
+                        'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                         'reached read access '..
                         '('..sub.ln[1]..':'..sub.ln[2]..')')
                 end
             else
                 -- ID = ...;
                 local ID_int = AST.asr(sub,'Exp_Name', 1,'ID_int')
-                if ID_int.dcl == Var then
+                if ID_int.dcl == Dcl then
                     if me.tag == 'Set_Any' then
-                        WRN(false, Var,
-                            'uninitialized variable "'..Var.id..'"')
+                        WRN(false, Dcl,
+                            'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'"')
                     end
-                    return true, nil            -- stop, found init
+                    if me.tag == 'Set_Alias' then
+                        me.is_init = true       -- refuse all others
+                        if ID_int.dcl.inits then
+                            ID_int.dcl.inits[#ID_int.dcl.inits+1] = me
+                        else
+                            ID_int.dcl.inits = {me}
+                        end
+                    end
+                    return true                 -- stop, found init
                 end
             end
         end
     elseif me.tag=='Set_Await_many' then
         local _, Namelist = unpack(me)
         for _, Exp_Name in ipairs(Namelist) do
-            if Exp_Name.dcl == Var then
-                return true, nil        -- stop, found init
+            if Exp_Name.dcl == Dcl then
+                return true                     -- stop, found init
             end
         end
     elseif me.tag == 'Do' then
@@ -124,12 +142,12 @@ local function run (par, i, Var)
         local _,_,Exp_Name = unpack(me)
         if Exp_Name then
             local ID_int = AST.asr(Exp_Name,'Exp_Name', 1,'ID_int')
-            if ID_int.dcl == Var then
-                return true, nil            -- stop, found init
+            if ID_int.dcl == Dcl then
+                return true                     -- stop, found init
             end
         end
     end
-    return run(me, 1, Var)
+    return run(me, 1, Dcl, stop)
 end
 
 F = {
@@ -138,6 +156,7 @@ F = {
         F.__i = i
     end,
 
+    Evt = 'Var',
     Var = function (me)
         local tp,is_alias = unpack(me)
         if me.is_implicit       or                  -- compiler defined
@@ -148,8 +167,36 @@ F = {
             -- ok: don't need initialization
             return
         else
-            run(me, #me+1, me)
+            if me.tag=='Var' or is_alias then
+                -- var x = ...
+                -- event& e = ...
+                run(me, #me+1, me)
+            end
         end
+    end,
+
+    Set_Alias = function (me)
+        local _,to = unpack(me)
+        if me.is_init then
+            return  -- OK
+        end
+
+        local inits do
+            if me.is_init then
+                inits = ''
+            else
+                inits = {}
+                for i, init in ipairs(to.dcl.inits) do
+                    inits[i] = init.ln[1]..':'..init.ln[2]
+                end
+                inits = table.concat(inits,',')
+            end
+        end
+        ASR(me.is_init, me,
+            'invalid binding : '..
+            AST.tag2id[to.dcl.tag]..
+            ' "'..to.dcl.id..'" is already bound ('..
+            inits..')')
     end,
 }
 
