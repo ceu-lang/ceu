@@ -205,7 +205,7 @@ G = {
         -- tp
 
         -- dcl
-        me.dcl = AST.copy(e.dcl)
+        me.dcl = e.dcl
     end,
 
     Abs_Call = function (me)

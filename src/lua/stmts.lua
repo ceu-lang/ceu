@@ -84,14 +84,10 @@ DBG('TODO: _Lua')
     __dim_cmp = function (to, fr)
         if to == '[]' then
             return true
-        elseif fr == '[]' then
-            return false
-        elseif to.tag ~= fr.tag then
-            return false
-        elseif to.tag=='ID_nat' or to.tag=='NUMBER' then
-            return (to[1] == fr[1])
+        elseif AST.is_equal(fr,to) then
+            return true
         else
-            error'TODO'
+            return false
         end
     end,
 

@@ -10,6 +10,7 @@ end
 
 --[===[
 --do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1161,7 +1162,8 @@ if 1 then
 end;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:8)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:8)',
     --ref = 'line 5 : missing initialization for variable "a" in the other branch of the `if-then-else´',
 }
 Test { [[
@@ -1211,7 +1213,52 @@ end;
 a = 1;
 escape a;
 ]],
-    run = 1,
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
+    --run = 1,
+}
+Test { [[
+var int a;
+if 1 then
+    a = 2;
+else/if true then
+else
+    a = 1;
+end;
+a = 1;
+escape a;
+]],
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
+    --run = 1,
+}
+Test { [[
+var int a;
+if 1 then
+    a = 2;
+else/if true then
+    a = 1;
+else
+end;
+a = 1;
+escape a;
+]],
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
+    --run = 1,
+}
+Test { [[
+var int a;
+if 1 then
+    a = 2;
+else/if true then
+    if true then
+        a = 1;
+    end
+else
+end;
+a = 1;
+escape a;
+]],
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:5)',
+    --run = 1,
 }
 Test { [[
 var int a;
@@ -1222,7 +1269,8 @@ end;
 a = 1;
 escape a;
 ]],
-    run = 1,
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
+    --run = 1,
 }
 Test { [[
 var int a;
@@ -1246,7 +1294,8 @@ if 1 then
 end;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:10)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:10)',
     --inits = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:2)',
 }
 Test { [[
@@ -2135,7 +2184,7 @@ if 1 then
 end;
 escape v;
 ]],
-    inits = 'line 2 : uninitialized variable "v" : reached read access (tests.lua:6)',
+    inits = 'line 2 : uninitialized variable "v" : reached end of `if´ (tests.lua:3)',
     --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (tests.lua:3)',
 }
 
@@ -18128,7 +18177,6 @@ escape x;
     --run = 1,
 }
 
---]===]
 Test { [[
 event void a;
 event& void b = &a;
@@ -18219,6 +18267,15 @@ escape 1;
 }
 Test { [[
 vector&[] int v;
+escape 1;
+]],
+    inits = 'line 1 : uninitialized vector "v" : reached `escape´ (tests.lua:2)',
+    wrn = true,
+    --run = 1,
+}
+Test { [[
+vector[] int vv;
+vector&[] int v = &vv;;
 escape 1;
 ]],
     wrn = true,
@@ -24500,6 +24557,20 @@ vector&[-_X] int iis;
 escape 1;
 ]],
     wrn = true,
+    inits = 'line 5 : uninitialized vector "iis" : reached `escape´ (tests.lua:6)',
+    --run = 1,
+}
+
+Test { [[
+native/const _X;
+native do
+    ##define X 1;
+end
+vector[-_X] int vvs;
+vector&[-_X] int iis = &vvs;
+escape 1;
+]],
+    wrn = true,
     run = 1,
 }
 
@@ -24801,6 +24872,19 @@ pre native do
     int N = 10;
 end
 vector&[_N] _u8 xxxx = [];
+escape 1;
+]],
+    inits = 'line 6 : invalid binding : unexpected statement in the right side',
+    --gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
+}
+
+Test { [[
+native _u8;
+native/const _N;
+pre native do
+    int N = 10;
+end
+vector[_N] _u8 xxx = [];
 escape 1;
 ]],
     gcc = '6:26: error: variably modified ‘xxxx’ at file scope',

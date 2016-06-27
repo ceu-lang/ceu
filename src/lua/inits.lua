@@ -67,6 +67,7 @@ local function run (par, i, Dcl, stop)
 
     -- ok: found assignment
     elseif me.tag=='Set_Any' or me.tag=='Set_Exp' or me.tag=='Set_Alias' or
+           me.tag=='Set_Vec' or
            me.tag=='Set_Await_one' or me.tag=='Set_Await_many' or
            me.tag=='Set_Async_Thread' or me.tag=='Set_Lua' or
            me.tag=='Set_Emit_Ext_emit' or me.tag=='Set_Emit_Ext_call' or
