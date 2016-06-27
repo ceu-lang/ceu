@@ -111,8 +111,8 @@ DBG('TODO: remove pool')
         local _,mod = unpack(e.dcl[1])
         local is_nat = TYPES.is_nat(e.dcl[1])
         if is_nat then
-            local ID_nat = unpack(AST.asr(e.dcl,'', 1,'Type'))
-            if ID_nat.tag == 'ID_nat' then
+            local ID_nat = AST.get(e.dcl,'', 1,'Type', 1,'ID_nat')
+            if ID_nat then
                 local _,mod = unpack(ID_nat.dcl)
                 if mod == 'plain' then
                     is_nat = false

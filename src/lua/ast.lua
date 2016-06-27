@@ -112,24 +112,6 @@ function AST.par (me, pred)
     end
 end
 
-function AST.child (me, pred)
-    if type(pred) == 'string' then
-        local tag = pred
-        pred = function(me) return me.tag==tag end
-    end
-    if pred(me) then
-        return me
-    end
-    for i, sub in ipairs(me) do
-        if AST.is_node(sub) then
-            local child = AST.child(sub,pred)
-            if child then
-                return child
-            end
-        end
-    end
-end
-
 function AST.pred_true (me) return true end
 
 function AST.iter (pred, inc)
