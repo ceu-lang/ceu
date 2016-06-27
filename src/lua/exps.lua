@@ -47,7 +47,7 @@ F = {
 
         -- dcl
         me.dcl = AST.copy(e.dcl)
-        if AST.isNode(Type) then
+        if AST.is_node(Type) then
             me.dcl[1] = AST.copy(Type)
         else
             -- annotation (/plain, etc)

@@ -104,7 +104,7 @@ function WRN (cond, ln, code, msg)
     if not tonumber(code) then
         code, msg, extra = '0000', code, msg
     end
-    ln = (AST.isNode(ln) and ln.ln) or ln
+    ln = (AST.is_node(ln) and ln.ln) or ln
     msg = 'WRN ['..code..'] : '..ln[1]..' : line '..ln[2]..' : '..msg
 
     if RUNTESTS_file and tonumber(code)>1100 then
@@ -132,7 +132,7 @@ function ASR (cond, ln, code, msg, extra)
     if not tonumber(code) then
         code, msg, extra = '0000', code, msg
     end
-    ln = (AST.isNode(ln) and ln.ln) or ln
+    ln = (AST.is_node(ln) and ln.ln) or ln
     msg = 'ERR ['..code..'] : '..ln[1]..' : line '..ln[2]..' : '..msg
     if extra and OPTS.verbose then
         msg = msg..'\n'..extra

@@ -68,7 +68,7 @@ function TYPES.check (tp, ...)
         local J = #tp-j
         local v = tp[J]
         if J == 1 then
-            assert(AST.isNode(v))
+            assert(AST.is_node(v))
             v = unpack(v)
         end
         if v ~= E[#E-i] then

@@ -101,7 +101,7 @@ end
 
 function DCLS.new (me, id, ...)
     local tp
-    if AST.isNode(id) and (id.tag=='Type' or id.tag=='Typelist') then
+    if AST.is_node(id) and (id.tag=='Type' or id.tag=='Typelist') then
         assert(not ...)
         tp = id
     else

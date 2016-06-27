@@ -211,7 +211,7 @@ F = {
             step = node('Exp_1-', me.ln, '-', step)
         end
 
-        if AST.isNode(i) then
+        if AST.is_node(i) then
             AST.asr(i, 'ID_any')
             i = '__i_'..me.n    -- invent an ID not referenceable
         end

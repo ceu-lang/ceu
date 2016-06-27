@@ -12,7 +12,7 @@ local MT = {
 
 local STACK = {}
 
-function AST.isNode (node)
+function AST.is_node (node)
     return (getmetatable(node) == MT) and node.tag
 end
 
@@ -28,11 +28,6 @@ AST.tag2id = {
     Code     = 'code',
     Data     = 'data',
 }
-
-function AST.isParent (n1, n2)
-    return n1 == n2
-        or n2.__par and AST.isParent(n1, n2.__par)
-end
 
 local _N = 0
 function AST.node (tag, ln, ...)
@@ -54,7 +49,7 @@ function AST.node (tag, ln, ...)
 end
 
 function AST.copy (node, ln)
-    if not AST.isNode(node) then
+    if not AST.is_node(node) then
         return node
     end
     if node.tag == 'Ref' then
@@ -70,7 +65,7 @@ function AST.copy (node, ln)
             ret[k] = v
         else
             ret[k] = AST.copy(v, ln)
-            if AST.isNode(v) then
+            if AST.is_node(v) then
                 ret[k].ln = ln or ret[k].ln
             end
         end
@@ -83,8 +78,8 @@ end
 function AST.get (me, tag, ...)
     local idx, tag2 = ...
 
-    if not (AST.isNode(me) and (me.tag==tag or tag=='')) then
-        return nil, tag, ((AST.isNode(me) and me.tag) or 'none')
+    if not (AST.is_node(me) and (me.tag==tag or tag=='')) then
+        return nil, tag, ((AST.is_node(me) and me.tag) or 'none')
     end
 
     if idx then
@@ -102,20 +97,6 @@ function AST.asr (me, tag, ...)
     end
     return ret
 end
-
-function AST.pred_async (me)
-    local tag = me.tag
-    return tag=='Async' or tag=='Thread'
-end
-function AST.pred_par (me)
-    local tag = me.tag
-    return tag=='ParOr' or tag=='ParAnd' or tag=='ParEver'
-end
-function AST.pred_aborts (me)
-    local tag = me.tag
-    return tag=='ParOr' or tag=='SetBlock' or tag=='Loop'
-end
-function AST.pred_true (me) return true end
 
 function AST.par (me, pred)
     if type(pred) == 'string' then
@@ -140,7 +121,7 @@ function AST.child (me, pred)
         return me
     end
     for i, sub in ipairs(me) do
-        if AST.isNode(sub) then
+        if AST.is_node(sub) then
             local child = AST.child(sub,pred)
             if child then
                 return child
@@ -148,6 +129,8 @@ function AST.child (me, pred)
         end
     end
 end
+
+function AST.pred_true (me) return true end
 
 function AST.iter (pred, inc)
     if pred == nil then
@@ -218,7 +201,7 @@ end
 --DBG(me.xxx)
 --DBG'---'
     for i, sub in ipairs(me) do
-        if AST.isNode(sub) then
+        if AST.is_node(sub) then
             AST.dump(sub, spc+2, lvl and lvl-1)
         else
             DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
@@ -261,7 +244,7 @@ local function visit_aux (F, me, I)
 
     for i, sub in ipairs(me) do
         if bef then assert(bef(me, sub, i)==nil) end
-        if AST.isNode(sub) then
+        if AST.is_node(sub) then
             sub.__idx = i
             sub = visit_aux(F, sub, i)
             me[i] = sub

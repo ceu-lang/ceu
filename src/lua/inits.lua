@@ -27,7 +27,7 @@ local function run (par, i, Var)
     local me = par[i]
     if me == nil then
         return run(par.__par, par.__i+1, Var)
-    elseif not AST.isNode(me) then
+    elseif not AST.is_node(me) then
         return run(par, i+1, Var)
     end
 --DBG('---', me.tag)
