@@ -140,7 +140,7 @@ DBG('TODO: remove pool')
         local ID_abs, mod = unpack(Type)
         if ID_abs.dcl.tag == 'Data' then
             -- data.member
-            local blk = AST.asr(ID_abs.dcl,'Data', 3,'Block')
+            local blk = AST.asr(ID_abs.dcl,'Data', 2,'Block')
             me.dcl = DCLS.asr(me,blk,member,false,e.dcl.id)
         else
             me.dcl = AST.copy(e.dcl)

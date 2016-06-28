@@ -100,12 +100,12 @@ F = {
 
     _Data_simple__PRE = '_Data_block__PRE',
     _Data_block__PRE = function (me)
-        local id, super =  unpack(me)
+        local id = unpack(me)
         return node('Data', me.ln,
-                id, super,
+                id,
                 node('Block', me.ln,
                     node('Stmts', me.ln,
-                        unpack(me, 3))))
+                        unpack(me, 2))))
     end,
 
     _Ext_Req_proto  = '_Code_proto',

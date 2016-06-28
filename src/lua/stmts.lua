@@ -150,7 +150,7 @@ DBG('TODO: _Lua')
         if ID_abs.dcl.tag == 'Data' then
             -- Data
             -- tp
-            block = AST.asr(ID_abs.dcl,'Data', 3,'Block')
+            block = AST.asr(ID_abs.dcl,'Data', 2,'Block')
             for i, dcl in ipairs(block.dcls) do
                 local Type = unpack(dcl)
                 to[i] = AST.copy(Type)

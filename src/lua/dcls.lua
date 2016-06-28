@@ -325,8 +325,16 @@ F = {
     end,
 
     Data = function (me)
-        local id = unpack(me)
-        me.id = id
+        me.id = unpack(me)
+
+        -- check "super" path
+        local super,_ = string.match(me.id, '(.*)%.(.*)')
+        if super then
+            local dcl = dcls_get(AST.par(me,'Block'), super, true)
+            ASR(dcl, me,
+                'invalid declaration : abstraction "'..super..'" is not declared')
+        end
+
         dcls_new(AST.par(me,'Block'), me)
     end,
 

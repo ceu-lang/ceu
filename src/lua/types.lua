@@ -131,16 +131,7 @@ do
     local function contains_data (ID_abs_1, ID_abs_2)
         local id1 = unpack(ID_abs_1)
         local id2 = unpack(ID_abs_2)
-        if id1 == id2 then
-            return true
-        end
-        local dcl2 = DCLS.asr(AST.iter()(), AST.iter'Block'(), id2, true)
-        local _,ID_abs_2 = unpack(dcl2)
-        if ID_abs_2 then
-            return contains_data(ID_abs_1, ID_abs_2)
-        else
-            return false
-        end
+        return (string.find(id2..'.',id1..'.',1,true) == 1)
     end
 
     function TYPES.contains (tp1, tp2)

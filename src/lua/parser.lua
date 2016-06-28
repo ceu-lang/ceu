@@ -499,7 +499,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -- DATA
 
-    , __data       = K'data' * V'__ID_abs' * OPT(K'is' * V'ID_abs')
+    , __data       = K'data' * V'__ID_abs'
     , _Data_simple = V'__data'
     , _Data_block  = V'__data' * K'with' * (
                         (V'_Vars'+V'_Vecs'+V'_Pools'+V'_Evts') *
@@ -606,7 +606,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -- DETERMINISTIC
 
-    , __det_id = V'ID_ext' + V'ID_int' + V'ID_abs' + V'ID_nat'
+    , __det_id = V'ID_ext' + V'ID_int' + V'ID_nat'
     , Deterministic = K'deterministic' * V'__det_id' * (
                         K'with' * V'__det_id' * (KK',' * V'__det_id')^0
                       )^-1
@@ -692,9 +692,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __ID_prim = CK(TYPES,                     'primitive type')
     , __ID_ext  = CK(m.R'AZ'*ALPHANUM^0  -KEYS, 'external identifier')
     , __ID_int  = CK(m.R'az'*Alphanum^0  -KEYS, 'internal identifier')
-    , __ID_abs  = CK(m.R'AZ'*V'__one_az' -KEYS, 'abstraction identifier')
     , __ID_nat  = CK(P'_' * Alphanum^1,         'native identifier')
-    , __ID_any = CK(P'_' * -Alphanum,          '`_´')
+    , __ID_any  = CK(P'_' * -Alphanum,          '`_´')
+
+    , __id_abs = (m.R'AZ'*V'__one_az' -KEYS)
+    , __ID_abs = CK(V'__id_abs' * ('.' * V'__id_abs')^0, 'abstraction identifier')
 
     -- at least one lowercase character
     , __one_az = #(ALPHANUM^0*m.R'az') * Alphanum^0

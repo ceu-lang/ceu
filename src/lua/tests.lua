@@ -56220,15 +56220,15 @@ end
 
 // "Nullable pointer"
 data Opt;
-data Nothing is Opt;
-data Ptr is Opt with
+data Opt.Nothing;
+data Opt.Ptr with
     var void&& v;
 end
 
 // List (recursive type)
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
@@ -56351,9 +56351,52 @@ escape c.d.x;
 }
 
 Test { [[
+data Ax;
+escape 1;
+]],
+    wrn = true,
+}
+
+Test { [[
+data Ax.Bx;
+escape 1;
+]],
+    dcls = 'line 1 : invalid declaration : abstraction "Ax" is not declared',
+}
+
+Test { [[
+data Ax;
+data Ax.Bx;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Ax;
+data Bx;
+data Ax.Bx.Cx;
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 3 : invalid declaration : abstraction "Ax.Bx" is not declared',
+}
+
+Test { [[
+data Ax;
+data Ax.Bx;
+data Ax.Bx.Cx;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
 data Opt;
-data OptNIL is Opt;
-data OptPTR is Opt with
+data Opt.OptNIL;
+data Opt.OptPTR with
     var void&& v;
 end
 escape 1;
@@ -56363,16 +56406,18 @@ escape 1;
 }
 
 Test { [[
-data OptNIL is;
+data OptNIL.;
 ]],
-    parser = 'line 1 : after `is´ : expected abstraction identifier',
+    parser = 'line 1 : after `OptNIL´ : expected `;´ or `with´',
+    --parser = 'line 1 : after `is´ : expected abstraction identifier',
 }
 
 Test { [[
-data OptNIL is with
+data OptNIL. with
 end
 ]],
-    parser = 'line 1 : after `is´ : expected abstraction identifier',
+    parser = 'line 1 : after `OptNIL´ : expected `;´ or `with´',
+    --parser = 'line 1 : after `is´ : expected abstraction identifier',
 }
 
 Test { [[
@@ -56384,16 +56429,17 @@ end
 
 Test { [[
 data Opt;
-data OptNIL is Opt_;
+data Opt_.OptNIL;
 escape 1;
 ]],
-    dcls = 'line 2 : abstraction "Opt_" is not declared',
+    dcls = 'line 2 : invalid declaration : abstraction "Opt_" is not declared',
+    --dcls = 'line 2 : abstraction "Opt_" is not declared',
 }
 
 -- recursive ADTs must have a base case
 Test { [[
 data Opt;
-data OptPTR is Opt with
+data Opt.OptPTR with
     var void&& v;
 end
 escape 1;
@@ -56405,10 +56451,10 @@ escape 1;
 -- the base case must appear first
 Test { [[
 data Opt;
-data OptPTR is Opt with
+data Opt.OptPTR with
     var void&& v;
 end
-data OptNIL is Opt;
+data Opt.OptNIL;
 escape 1;
 ]],
     wrn = true,
@@ -56418,10 +56464,10 @@ escape 1;
 -- the base must not have fields
 Test { [[
 data Opt;
-data OptNIL is Opt with
+data Opt.OptNIL with
     var int x;
 end
-data OptPTR is Opt with
+data Opt.OptPTR with
     var void&& v;
 end
 escape 1;
@@ -56432,15 +56478,16 @@ escape 1;
 
 Test { [[
 data Opt;
-data Nothing is Opt;
+data Opt.Nothing;
 
 data Opt1;
-data Nothing is Opt1;
+data Opt1.Nothing;
 
 escape 1;
 ]],
+    wrn = true,
     --dcls = 'line 5 : identifier "Nothing" is already declared (tests.lua : line 2)',
-    dcls = 'line 5 : declaration of "Nothing" hides previous declaration (tests.lua : line 2)',
+    --dcls = 'line 5 : declaration of "Nothing" hides previous declaration (tests.lua : line 2)',
 }
 
 -->>> DATA/EVENTS
@@ -56613,8 +56660,8 @@ escape t.x;
 
 Test { [[
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
@@ -56627,15 +56674,15 @@ escape 1;
 
 Test { [[
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
-var List l = val ListCONS(1,
-               ListCONS(2,
-                   ListNIL()));
-escape 1;//((l as Cons).tail) as Cons).@head@;
+var List l = val List.Cons(1,
+               List.Cons(2,
+                   List.Nil()));
+escape 1;//((l as List.Cons).tail) as List.Cons).@head@;
 ]],
     adt = 'line 9 : invalid constructor : recursive data must use `new´',
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
@@ -56643,15 +56690,15 @@ escape 1;//((l as Cons).tail) as Cons).@head@;
 
 Test { [[
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
-var List l = new ListCONS(1,
-                  ListCONS(2,
-                   ListNIL()));
-escape 1;//(((l as Cons).tail) as Cons).@head@;
+var List l = new List.Cons(1,
+                  List.Cons(2,
+                   List.Nil()));
+escape 1;//(((l as List.Cons).tail) as List.Cons).@head@;
 ]],
     --exps = 'line 7 : invalid constructor : unexpected context for variable "l"',
     --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
@@ -56661,15 +56708,15 @@ escape 1;//(((l as Cons).tail) as Cons).@head@;
 
 Test { [[
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
-var List&& l = val ListCONS(1,
-                ListCONS(2,
-                    ListNIL()));
-escape 1;//((l as Cons).tail) as Cons).@head@;
+var List&& l = val List.Cons(1,
+                List.Cons(2,
+                    List.Nil()));
+escape 1;//((l as List.Cons).tail) as List.Cons).@head@;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     adt = 'line 7 : invalid constructor : recursive data must use `new´',
@@ -56677,16 +56724,16 @@ escape 1;//((l as Cons).tail) as Cons).@head@;
 
 Test { [[
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
-var List&& l = new ListCONS(1,
-                   ListCONS(2,
-                    ListNIL()));
-escape 0;//((l as Cons).tail) as Cons).@head@;
+var List&& l = new List.Cons(1,
+                   List.Cons(2,
+                    List.Nil()));
+escape 0;//((l as List.Cons).tail) as List.Cons).@head@;
 ]],
     --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
@@ -56697,18 +56744,18 @@ escape 0;//((l as Cons).tail) as Cons).@head@;
 
 Test { [[
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[10] List l;
-l = val ListCONS(1,
-        ListCONS(2,
-            ListNIL()));
+l = val List.Cons(1,
+        List.Cons(2,
+            List.Nil()));
 
-escape 0;//((l as Cons).tail) as Cons).@head@;
+escape 0;//((l as List.Cons).tail) as List.Cons).@head@;
 ]],
     stmts = 'line 9 : invalid constructor : unexpected context for pool "l"',
     --adt = 'line 9 : invalid constructor : recursive data must use `new´',
@@ -56716,14 +56763,14 @@ escape 0;//((l as Cons).tail) as Cons).@head@;
 
 Test { [[
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[10] List lll;
-escape (lll is ListNIL) as int;
+escape (lll is List.Nil) as int;
 ]],
     wrn = true,
     run = 1,
@@ -56731,14 +56778,14 @@ escape (lll is ListNIL) as int;
 
 Test { [[
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[10] List lll;
-escape ((lll is ListCONS) as int) + 1;
+escape ((lll is List.Cons) as int) + 1;
 ]],
     wrn = true,
     run = 1,
@@ -56752,14 +56799,14 @@ native do
 end
 
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
-pool[10] List lll = new ListCONS(1, ListNIL());
-escape (lll as ListCONS).head;
+pool[10] List lll = new List.Cons(1, List.Nil());
+escape (lll as List.Cons).head;
 ]],
     wrn = true,
     run = 1,
@@ -56773,13 +56820,13 @@ native do
 end
 
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
-pool[10] List lll = new ListCONS(1, ListNIL());
+pool[10] List lll = new List.Cons(1, List.Nil());
 escape lll.head;
 ]],
     exps = 'line 15 : invalid member access : "lll" has no member "head" : `data´ "List" (tests.lua:7)',
@@ -56788,30 +56835,30 @@ escape lll.head;
 
 Test { [[
 data List;
-data ListNIL is List;
-data ListCONS is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[10] List lll;
-lll = new ListCONS(1,
-            ListCONS(2,
-                ListNIL()));
-escape ((lll as ListCONS).tail as ListCONS).head;
+lll = new List.Cons(1,
+            List.Cons(2,
+                List.Nil()));
+escape ((lll as List.Cons).tail as List.Cons).head;
 ]],
     run = 2,
 }
 
 Test { [[
 data Stack;
-data StackEMPTY;
-data StackNONEMPTY with
+data Stack.Empty;
+data Stack.NonEmpty with
     var Stack&& nxt;
 end
 
-pool[] Stack xxx = new StackNONEMPTY(
-                    StackNONEMPTY(xxx));
+pool[] Stack xxx = new Stack.NonEmpty(
+                    Stack.NonEmpty(xxx));
 
 escape 1;
 ]],
@@ -56822,21 +56869,21 @@ escape 1;
 
 Test { [[
 data Split;
-data SplitHORIZONTAL is Split;
-data SplitVERTICAL   is Split;
+data Split.Horizontal;
+data Split.Vertical  ;
 
 data Grid;
-data GridEMPTY is Grid;
-data GridSPLIT is Grid with
+data Grid.Empty;
+data Grid.Split with
     var Split dir;
     var Grid  one;
     var Grid  two;
 end
 
 pool[] Grid g;
-g = new GridSPLIT(SplitHORIZONTAL(), GridEMPTY(), GridEMPTY());
+g = new Grid.Split(Split.Horizontal(), Grid.Empty(), Grid.Empty());
 
-escape (((g as GridSPLIT).one is GridEMPTY) as int) + (((g as GridSPLIT).two is GridEMPTY) as int) + (((g as GridSPLIT).dir is SplitHORIZONTAL) as int);
+escape (((g as Grid.Split).one is Grid.Empty) as int) + (((g as Grid.Split).two is Grid.Empty) as int) + (((g as Grid.Split).dir is Split.Horizontal) as int);
 ]],
     wrn = true,
     run = 3,
@@ -56844,40 +56891,40 @@ escape (((g as GridSPLIT).one is GridEMPTY) as int) + (((g as GridSPLIT).two is 
 
 Test { [[
 data Split;
-data SplitHORIZONTAL is Split;
-data SplitVERTICAL   is Split;
+data Split.Horizontal;
+data Split.Vertical  ;
 
 data Grid with
     var Split dir;
 end
 
-var Grid g1 = val Grid(SplitHORIZONTAL());
-var Grid g2 = val Grid(SplitVERTICAL());
+var Grid g1 = val Grid(Split.Horizontal());
+var Grid g2 = val Grid(Split.Vertical());
 
-escape ((g1.dir is SplitHORIZONTAL) as int) + ((g2.dir is SplitVERTICAL) as int);
+escape ((g1.dir is Split.Horizontal) as int) + ((g2.dir is Split.Vertical) as int);
 ]],
     run = 2,
 }
 
 Test { [[
 data Split;
-data SplitHORIZONTAL is Split;
-data SplitVERTICAL   is Split;
+data Split.Horizontal;
+data Split.Vertical  ;
 
 data Grid;
-data GridEMPTY is Grid;
-data GridSPLIT is Grid with
+data Grid.Empty;
+data Grid.Split with
     var Split dir;
     var Grid  one;
     var Grid  two;
 end
 
-pool[5] Grid g = new GridSPLIT(
-                    SplitHORIZONTAL(),
-                    GridSPLIT(
-                        SplitVERTICAL(),
-                        GridEMPTY(),
-                        GridEMPTY()));
+pool[5] Grid g = new Grid.Split(
+                    Split.Horizontal(),
+                    Grid.Split(
+                        Split.Vertical(),
+                        Grid.Empty(),
+                        Grid.Empty()));
 
 escape 1;
 ]],
@@ -56886,52 +56933,52 @@ escape 1;
 
 Test { [[
 data Split;
-data SplitHORIZONTAL is Split;
-data SplitVERTICAL   is Split;
+data Split.Horizontal;
+data Split.Vertical  ;
 
 data Grid;
-data GridEMPTY;
-data GridSPLIT with
+data GridEmpty;
+data GridSplit with
     var Split dir;
     var Grid  one;
     var Grid  two;
 end
 
 pool[5] Grid g;
-g = new GridSPLIT(
-            SplitHORIZONTAL(),
-            GridSPLIT(
-                SplitVERTICAL(),
-                GridEMPTY(),
-                GridEMPTY()),
-            GridEMPTY());
+g = new GridSplit(
+            Split.Horizontal(),
+            GridSplit(
+                Split.Vertical(),
+                GridEmpty(),
+                GridEmpty()),
+            GridEmpty());
 
 escape 1;
 ]],
-    stmts = 'line 16 : invalid constructor : argument #2 : types mismatch : "Grid" <= "GridEMPTY"',
+    stmts = 'line 16 : invalid constructor : argument #2 : types mismatch : "Grid" <= "GridEmpty"',
 }
 
 Test { [[
 data Split;
-data SplitHORIZONTAL is Split;
-data SplitVERTICAL   is Split;
+data Split.Horizontal;
+data Split.Vertical  ;
 
 data Grid;
-data GridEMPTY is Grid;
-data GridSPLIT is Grid with
+data Grid.Empty;
+data Grid.Split with
     var Split dir;
     var Grid  one;
     var Grid  two;
 end
 
 pool[5] Grid g;
-g = new GridSPLIT(
-            SplitHORIZONTAL(),
-            GridSPLIT(
-                SplitVERTICAL(),
-                GridEMPTY(),
-                GridEMPTY()),
-            GridEMPTY());
+g = new Grid.Split(
+            Split.Horizontal(),
+            Grid.Split(
+                Split.Vertical(),
+                Grid.Empty(),
+                Grid.Empty()),
+            Grid.Empty());
 
 escape 1;
 ]],
@@ -56940,21 +56987,21 @@ escape 1;
 
 Test { [[
 data Split;
-data SplitHORIZONTAL is Split;
-data SplitVERTICAL   is Split;
+data Split.Horizontal;
+data Split.Vertical  ;
 
 data Grid;
-data GridEMPTY is Grid;
-data GridSPLIT is Grid with
+data Grid.Empty;
+data Grid.Split with
     var Split dir;
     var Grid  one;
     var Grid  two;
 end
 
-pool[] Grid g = new GridSPLIT(
-                    SplitHORIZONTAL(),
-                    GridEMPTY(),
-                    GridEMPTY());
+pool[] Grid g = new Grid.Split(
+                    Split.Horizontal(),
+                    Grid.Empty(),
+                    Grid.Empty());
 
 escape 1;
 ]],
@@ -57045,8 +57092,8 @@ escape 1;
 
 Test { [[
 data Ee;
-data Nothing is Ee;
-data Xx is Ee with
+data Ee.Nothing;
+data Ee.Xx with
     var int x;
 end
 
@@ -57065,15 +57112,15 @@ data Dx with
 end
 
 data Ee;
-data Nothing is Ee;
-data Xx is Ee with
+data Ee.Nothing;
+data Ee.Xx with
     var& Dx d;
 end
 
 var Dx d = val Dx(10);
-var Ee e = val Xx(&d);
+var Ee e = val Ee.Xx(&d);
 
-escape (e as Xx).d.x;
+escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
     run = 10,
@@ -57085,15 +57132,15 @@ data Dx with
 end
 
 data Ee;
-data Nothing is Ee;
-data Xx is Ee with
+data Ee.Nothing;
+data Ee.Xx with
     var& Dx d;
 end
 
 var Ee e;    // TODO: should bind here
 do
     var Dx d = val Dx(1);
-    (e as Xx).d = &d;
+    (e as Ee.Xx).d = &d;
 end
 
 escape 1;//e.Xx.d.x;
@@ -57109,16 +57156,16 @@ data Dx with
 end
 
 data Ee;
-data Nothing is Ee;
-data Xx is Ee with
+data Ee.Nothing;
+data Ee.Xx with
     var& Dx d;
 end
 
     var Dx d = val Dx(1);
-var Ee e = val Xx(&d);
-    (e as Xx).d.x = 10;
+var Ee e = val Ee.Xx(&d);
+    (e as Ee.Xx).d.x = 10;
 
-escape (e as Xx).d.x;
+escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
     run = 1,
@@ -57129,16 +57176,16 @@ data Dx with
 end
 
 data Ee;
-data Nothing is Ee;
-data Xx is Ee with
+data Ee.Nothing;
+data Ee.Xx with
     var& Dx d;
 end
 
     var Dx d = val Dx(1);
-var Ee e = val Xx(&d);
-    (e as Xx).d = &d;
+var Ee e = val Ee.Xx(&d);
+    (e as Ee.Xx).d = &d;
 
-escape (e as Xx).d.x;
+escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
     stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
@@ -57150,16 +57197,16 @@ data Dx with
 end
 
 data Ee;
-data Nothing is Ee;
-data Xx is Ee with
+data Ee.Nothing;
+data Ee.Xx with
     var Dx&& d;
 end
 
-var Ee e = val Xx(null);
+var Ee e = val Ee.Xx(null);
     var Dx d = val Dx(10);
-    (e as Xx).d = &&d;
+    (e as Ee.Xx).d = &&d;
 
-escape (e as Xx).d:x;
+escape (e as Ee.Xx).d:x;
 ]],
     wrn = true,
     run = 10,
@@ -57171,8 +57218,8 @@ data Ball with
 end
 
 data Leaf;
-data Nothing is Leaf;
-data Tween is Leaf with
+data Leaf.Nothing;
+data Leaf.Tween with
     var& Ball ball;
 end
 
@@ -57198,20 +57245,20 @@ escape x;
 
 Test { [[
 data Dx;
-data Nil is Dx;
-data Rec is Dx with
+data Dx.Nil;
+data Dx.Rec with
     var Dx r1;
     var Dx r2;
 end
 
-pool[] Dx ds = new Rec(
-                    Rec(Nil(),Nil()),
-                    Nil());
+pool[] Dx ds = new Dx.Rec(
+                    Dx.Rec(Dx.Nil(),Dx.Nil()),
+                    Dx.Nil());
 
 par/or do
-    await (ds as Rec).r1;
+    await (ds as Dx.Rec).r1;
 with
-    (ds as Rec).r1 = new Nil();
+    (ds as Dx.Rec).r1 = new Dx.Nil();
 end
 
 escape 1;
@@ -57222,17 +57269,17 @@ escape 1;
 
 Test { [[
 data Tree;
-data Nil is Tree;
-data Node is Tree with
+data Tree.Nil;
+data Tree.Node with
     var int   v;
     var Tree  left;
     var Tree  right;
 end
 
 pool[3] Tree tree;
-tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+tree = new Tree.Node(1,
+            Tree.Node(2, Tree.Nil(), Tree.Nil()),
+            Tree.Node(3, Tree.Nil(), Tree.Nil()));
 
 class Sum with
     var int&& v;
@@ -57246,11 +57293,11 @@ class Body with
     var&   Sum    sum;
 do
     watching *n do
-        if *n is Node then
-            *this.sum.v = *this.sum.v + (*n as Node).v;
+        if *n is Tree.Node then
+            *this.sum.v = *this.sum.v + (*n as Tree.Node).v;
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = && (*n as Node).left;
+                this.n      = && (*n as Tree.Node).left;
                 this.sum    = &sum;
             end;
         end
@@ -57780,11 +57827,11 @@ escape 1;
 -- constructors
 Test { DATA..[[
 var Pair p1 = val Pair(1,2);        /* struct, no tags */
-var Opt  o1 = val Nothing();        /* unions, explicit tag */
-var Opt  o2 = val Ptr(&&p1);
+var Opt  o1 = val Opt.Nothing();        /* unions, explicit tag */
+var Opt  o2 = val Opt.Ptr(&&p1);
 pool[] List l1;
-l1 = new Nil();       /* recursive union */
-pool[] List l2 = new Cons(1, l1);
+l1 = new List.Nil();       /* recursive union */
+pool[] List l2 = new List.Cons(1, l1);
 escape 1;
 ]],
     stmts = 'line 56 : invalid constructor : argument #2 : unexpected context for pool "l1"',
@@ -57795,9 +57842,9 @@ escape 1;
 
 -- recursive fields are pointers
 Test { DATA..[[
-pool[] List l1 = new Nil();
+pool[] List l1 = new List.Nil();
 pool[] List l2;
-l2 = new Cons(1, l1);     /* should be &&l1 */
+l2 = new List.Cons(1, l1);     /* should be &&l1 */
 escape 1;
 ]],
     wrn = true,
@@ -57815,7 +57862,7 @@ escape 1;
     --run = 1,
 }
 Test { DATA..[[
-pool[] List l1 = new Nil();    /* vs Nil() */
+pool[] List l1 = new List.Nil();    /* vs List.Nil() */
 escape 1;
 ]],
     wrn = true,
@@ -57834,7 +57881,7 @@ var Opt  o1 = val UnknownNIL();
 escape 1;
 ]],
     dcls = 'line 51 : abstraction "UnknownNIL" is not declared',
-    --env = 'line 51 : data "Unknown" is not declared',
+    --env = 'line 51 : data not."Unknown" declared',
 }
 
 -- tag has to be defined
@@ -57847,10 +57894,10 @@ escape 1;
 
 -- constructors have call syntax
 Test { DATA..[[
-var List l1 = val Nil; /* vs Nil() */
+var List l1 = val List.Nil; /* vs List.Nil() */
 escape 1;
 ]],
-    parser = 'line 51 : after `Nil´ : expected `(´',
+    parser = 'line 51 : after `List.Nil´ : expected `(´',
     --run = 1,
 }
 
@@ -57872,7 +57919,7 @@ escape 1;
     stmts = 'line 51 : invalid constructor : argument #2 : types mismatch : "int" <= "null&&"',
 }
 Test { DATA..[[
-var Opt o1 = val Nothing(1);       /* expected (void) */
+var Opt o1 = val Opt.Nothing(1);       /* expected (void) */
 escape 1;
 ]],
     wrn = true,
@@ -57882,10 +57929,10 @@ escape 1;
 
 -- constructors are not expressions...
 Test { DATA..[[
-escape call Nil();
+escape call List.Nil();
 ]],
     wrn = true,
-    exps = 'line 51 : invalid call : unexpected context for data "Nil"',
+    exps = 'line 51 : invalid call : unexpected context for data "List.Nil"',
     --exps = 'line 51 : invalid call : "Nil" is not a `code´ abstraction',
     --ast = 'line 51 : invalid call',
     --env = 'TODO: not a code',
@@ -57893,12 +57940,12 @@ escape call Nil();
 }
 Test { DATA..[[
 var List l;
-var int v = (l==call Nil());
+var int v = (l==call List.Nil());
 escape v;
 ]],
     wrn = true,
     --ast = 'line 52 : invalid call',
-    exps = 'line 52 : invalid call : unexpected context for data "Nil"',
+    exps = 'line 52 : invalid call : unexpected context for data "List.Nil"',
     --exps = 'line 52 : invalid call : "Nil" is not a `code´ abstraction',
     --env = 'TODO: not a code',
     --parser = 'line 52 : after `==´ : expected expression',
@@ -57907,7 +57954,7 @@ escape v;
 -- ...but have to be assigned to a variable
 Test { DATA..[[
 var Opt o;
-o = val Nothing();
+o = val Opt.Nothing();
 escape 1;
 ]],
     wrn = true,
@@ -57915,7 +57962,7 @@ escape 1;
 }
 Test { DATA..[[
 pool[] List l;
-l = new Nil();
+l = new List.Nil();
 escape 1;
 ]],
     wrn = true,
@@ -57937,8 +57984,8 @@ escape 1;
 
 -- distinction "constructor" vs "tag check"
 Test { DATA..[[
-pool[] List l = new Nil();   /* call syntax: constructor */
-var bool no_ = (l is Nil);     /* no-call syntax: check tag */
+pool[] List l = new List.Nil();   /* call syntax: constructor */
+var bool no_ = (l is List.Nil);     /* no-call syntax: check tag */
 escape no_ as int;
 ]],
     wrn = true,
@@ -57946,8 +57993,8 @@ escape no_ as int;
 }
 Test { DATA..[[
 pool[] List l;
-l = new Nil();   /* call syntax: constructor */
-var bool no_ = l is Cons;    /* no-call syntax: check tag */
+l = new List.Nil();   /* call syntax: constructor */
+var bool no_ = l is List.Cons;    /* no-call syntax: check tag */
 escape no_ as int;
 ]],
     wrn = true,
@@ -57965,25 +58012,25 @@ escape p1.x + p1.y;
 -- tag Nil has no fields
 Test { DATA..[[
 pool[] List l;
-escape (l as Nil).v;
+escape (l as List.Nil).v;
 ]],
     wrn = true,
-    exps = 'line 52 : invalid member access : "l" has no member "v" : `data´ "Nil" (tests.lua:16)',
+    exps = 'line 52 : invalid member access : "l" has no member "v" : `data´ "List.Nil" (tests.lua:16)',
     --env = 'line 52 : field "v" is not declared',
 }
 -- tag Opt.Ptr has no field "x"
 Test { DATA..[[
 var Opt o;
-escape (o as Ptr).x;
+escape (o as Opt.Ptr).x;
 ]],
     wrn = true,
-    exps = 'line 52 : invalid member access : "o" has no member "x" : `data´ "Ptr" (tests.lua:10)',
+    exps = 'line 52 : invalid member access : "o" has no member "x" : `data´ "Opt.Ptr" (tests.lua:10)',
 }
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor
 Test { DATA..[[
-pool[] List l1 = new Nil();
-pool[] List l2 = new Cons(1, Nil());
+pool[] List l1 = new List.Nil();
+pool[] List l2 = new List.Cons(1, List.Nil());
 escape 1;
 ]],
     wrn = true,
@@ -57992,21 +58039,21 @@ escape 1;
 
 Test { DATA..[[
 var Pair p1 = val Pair(1,2);
-var Opt  o1 = val Nothing();
-var Opt  o2 = val Ptr(&&p1);
-pool[] List l1 = new Nil();
+var Opt  o1 = val Opt.Nothing();
+var Opt  o2 = val Opt.Ptr(&&p1);
+pool[] List l1 = new List.Nil();
 pool[] List l2;
-l2 = new Cons(1, Nil());
-pool[] List l3 = new Cons(1, Cons(2, Nil()));
+l2 = new List.Cons(1, List.Nil());
+pool[] List l3 = new List.Cons(1, List.Cons(2, List.Nil()));
 
 var int ret = 0;                                // 0
 
 ret = ret + p1.x + p1.y;                        // 3
-ret = ret + ((o1 is Nothing) as int);                             // 4
-ret = ret + (((o2 as Ptr).v==&&p1)as int);                    // 5
-ret = ret + ((l1 is Nil) as int);                             // 6
-ret = ret + (l2 as Cons).head + (((l2 as Cons).tail is Nil) as int);    // 8
-ret = ret + (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + ((((l3 as Cons).tail as Cons).tail is Nil) as int);   // 12
+ret = ret + ((o1 is Opt.Nothing) as int);                             // 4
+ret = ret + (((o2 as Opt.Ptr).v==&&p1)as int);                    // 5
+ret = ret + ((l1 is List.Nil) as int);                             // 6
+ret = ret + (l2 as List.Cons).head + (((l2 as List.Cons).tail is List.Nil) as int);    // 8
+ret = ret + (l3 as List.Cons).head + ((l3 as List.Cons).tail as List.Cons).head + ((((l3 as List.Cons).tail as List.Cons).tail is List.Nil) as int);   // 12
 
 escape ret;
 ]],
@@ -58014,22 +58061,22 @@ escape ret;
 }
 
 -- destructors are checked at runtime
---      v = ((l as Cons).head)
+--      v = ((l as List.Cons).head)
 -- becomes
 --      assert(l.Cons)
---      v = ((l as Cons).head)
+--      v = ((l as List.Cons).head)
 Test { DATA..[[
 pool[] List l;
-l = new Nil();
-escape (l as Cons).head;         // runtime error
+l = new List.Nil();
+escape (l as List.Cons).head;         // runtime error
 ]],
     wrn = true,
     asr = true,
     --run = 1,
 }
 Test { DATA..[[
-pool[] List l = new Cons(2, Nil());
-escape (l as Cons).head;
+pool[] List l = new List.Cons(2, List.Nil());
+escape (l as List.Cons).head;
 ]],
     wrn = true,
     run = 2,
@@ -58038,13 +58085,13 @@ escape (l as Cons).head;
 -- mixes everything:
 Test { DATA..[[
 var Pair p  = val Pair(1,2);
-var Opt  o1 = val Nothing();
-var Opt  o2 = val Ptr(&&p);
+var Opt  o1 = val Opt.Nothing();
+var Opt  o2 = val Opt.Ptr(&&p);
 pool[] List l1;
-l1 = new Nil();
-pool[] List l2 = new Cons(1, Nil());
+l1 = new List.Nil();
+pool[] List l2 = new List.Cons(1, List.Nil());
 pool[] List l3;
-l3 = new Cons(1, Cons(2, Nil()));
+l3 = new List.Cons(1, List.Cons(2, List.Nil()));
 
 var int ret = 0;            // 0
 
@@ -58054,51 +58101,51 @@ native _assert;
 _assert(x+y == 3);
 ret = ret + 3;              // 3
 
-if o1 is Nothing then
+if o1 is Opt.Nothing then
     ret = ret + 1;          // 4
-else/if o1 is Ptr then
+else/if o1 is Opt.Ptr then
     _assert(0);             // never reachable
 end
 
-if o2 is Nothing then
+if o2 is Opt.Nothing then
     _assert(0);             // never reachable
-else/if o2 is Ptr then
+else/if o2 is Opt.Ptr then
     ret = ret + 1;          // 5
-    _assert((o2 as Ptr).v==&&p);
+    _assert((o2 as Opt.Ptr).v==&&p);
 end
 
-if l1 is Nil then
+if l1 is List.Nil then
     ret = ret + 1;          // 6
-else/if l1 is Cons then
+else/if l1 is List.Cons then
     _assert(0);             // never reachable
 end
 
-if l2 is Nil then
+if l2 is List.Nil then
     _assert(0);             // never reachable
-else/if l2 is Cons then
-    _assert((l2 as Cons).head == 1);
+else/if l2 is List.Cons then
+    _assert((l2 as List.Cons).head == 1);
     ret = ret + 1;          // 7
-    if (l2 as Cons).tail is Nil then
+    if (l2 as List.Cons).tail is List.Nil then
         ret = ret + 1;      // 8
-    else/if (l2 as Cons).tail is Cons then
+    else/if (l2 as List.Cons).tail is List.Cons then
         _assert(0);         // never reachable
     end
     ret = ret + 1;          // 9
 end
 
-if l3 is Nil then
+if l3 is List.Nil then
     _assert(0);             // never reachable
-else/if l3 is Cons then
-    _assert((l3 as Cons).head == 1);
+else/if l3 is List.Cons then
+    _assert((l3 as List.Cons).head == 1);
     ret = ret + 1;          // 10
-    if (l3 as Cons).tail is Nil then
+    if (l3 as List.Cons).tail is List.Nil then
         _assert(0);         // never reachable
-    else/if (l3 as Cons).tail is Cons then
-        _assert(((l3 as Cons).tail as Cons).head == 2);
+    else/if (l3 as List.Cons).tail is List.Cons then
+        _assert(((l3 as List.Cons).tail as List.Cons).head == 2);
         ret = ret + 2;      // 12
-        if ((l3 as Cons).tail as Cons).tail is Nil then
+        if ((l3 as List.Cons).tail as List.Cons).tail is List.Nil then
             ret = ret + 1;  // 13
-        else/if ((l3 as Cons).tail as Cons).tail is Cons then
+        else/if ((l3 as List.Cons).tail as List.Cons).tail is List.Cons then
             _assert(0);     // never reachable
         end
         ret = ret + 1;      // 14
@@ -58114,17 +58161,17 @@ escape ret;
 -- POINTERS
 -- TODO: more discussion
 --  - not an lvalue if rvalue not a constructor:
---      ptr as Cons).@tail@ = new ...             // ok
---      ptr as Cons).@tail@ = l....               // no
---      ptr as Cons).@tail@ = ptr as Cons).@tail@....   // ok
+--      ptr as List.Cons).@tail@ = new ...             // ok
+--      ptr as List.Cons).@tail@ = l....               // no
+--      ptr as List.Cons).@tail@ = ptr as List.Cons).@tail@....   // ok
 --          same prefix
 
 -- cannot cross await statements
 Test { DATA..[[
-pool[] List l = new Cons(1, Nil());
-var List&& p = (l as Cons).tail;
+pool[] List l = new List.Cons(1, List.Nil());
+var List&& p = (l as List.Cons).tail;
 await 1s;
-escape (*p as Cons).head;
+escape (*p as List.Cons).head;
 ]],
     wrn = true,
     stmts = 'line 52 : invalid assignment : types mismatch : "List&&" <= "List"',
@@ -58133,10 +58180,10 @@ escape (*p as Cons).head;
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
-pool[] List l = new Cons(1, Nil());
-var List&& p = &&(l as Cons).tail;
+pool[] List l = new List.Cons(1, List.Nil());
+var List&& p = &&(l as List.Cons).tail;
 await 1s;
-escape (*p as Cons).head;
+escape (*p as List.Cons).head;
 ]],
     wrn = true,
     --adt = 'line 52 : mutation : cannot mix data sources',
@@ -58144,10 +58191,10 @@ escape (*p as Cons).head;
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
-pool[] List l = new Cons(1, Nil());
-var List&& p = &&(l as Cons).tail;
+pool[] List l = new List.Cons(1, List.Nil());
+var List&& p = &&(l as List.Cons).tail;
 await 1s;
-escape (*p as Cons).head;
+escape (*p as List.Cons).head;
 ]],
     wrn = true,
     --adt = 'line 52 : cannot mix recursive data sources',
@@ -58163,11 +58210,11 @@ escape (*p as Cons).head;
 -- linking a list: 2-1-Nil
 Test { DATA..[[
 pool[] List l1;
-l1 = new Nil();
-pool[] List l2 = new Cons(1, l1);
+l1 = new List.Nil();
+pool[] List l2 = new List.Cons(1, l1);
 pool[] List l3;
-l3 = new Cons(2, l2);
-escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + ((((l3 as Cons).tail as Cons).tail is Nil) as int);
+l3 = new List.Cons(2, l2);
+escape (l3 as List.Cons).head + ((l3 as List.Cons).tail as List.Cons).head + ((((l3 as List.Cons).tail as List.Cons).tail is List.Nil) as int);
 ]],
     wrn = true,
     --run = 4,
@@ -58176,15 +58223,15 @@ escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + ((((l3 as Cons).ta
     -- TODO-ADT-Rec-STATIC-CONSTRS
 }
 Test { DATA..[[
-pool[] List l3 = new Cons(2, Cons(1, Nil()));
-escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + ((((l3 as Cons).tail as Cons).tail is Nil) as int);
+pool[] List l3 = new List.Cons(2, List.Cons(1, List.Nil()));
+escape (l3 as List.Cons).head + ((l3 as List.Cons).tail as List.Cons).head + ((((l3 as List.Cons).tail as List.Cons).tail is List.Nil) as int);
 ]],
     wrn = true,
     run = 4,
 }
 Test { DATA..[[
-pool[] List l3 = new Cons(2, Cons(1, Nil()));
-escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + ((((l3 as Cons).tail as Cons).tail is Nil) as int);
+pool[] List l3 = new List.Cons(2, List.Cons(1, List.Nil()));
+escape (l3 as List.Cons).head + ((l3 as List.Cons).tail as List.Cons).head + ((((l3 as List.Cons).tail as List.Cons).tail is List.Nil) as int);
 ]],
     wrn = true,
     run = 4,
@@ -58192,10 +58239,10 @@ escape (l3 as Cons).head + ((l3 as Cons).tail as Cons).head + ((((l3 as Cons).ta
 -- breaking a list: 2-1-Nil => 2-Nil
 Test { DATA..[[
 pool[] List l1;
-l1 = new Nil();
-pool[] List l3 = new Cons(2, Cons(1, Nil()));
-(l3 as Cons).tail = l1;
-escape (l3 as Cons).head + (((l3 as Cons).tail is Nil) as int);
+l1 = new List.Nil();
+pool[] List l3 = new List.Cons(2, List.Cons(1, List.Nil()));
+(l3 as List.Cons).tail = l1;
+escape (l3 as List.Cons).head + (((l3 as List.Cons).tail is List.Nil) as int);
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
@@ -58206,10 +58253,10 @@ escape (l3 as Cons).head + (((l3 as Cons).tail is Nil) as int);
 }
 Test { DATA..[[
 pool[] List l1;
-l1 = new Nil();
-pool[] List l3 = new Cons(2, Cons(1, Nil()));
-(l3 as Cons).tail = &&l1;
-escape (l3 as Cons).head + (((l3 as Cons).tail is Nil) as int);
+l1 = new List.Nil();
+pool[] List l3 = new List.Cons(2, List.Cons(1, List.Nil()));
+(l3 as List.Cons).tail = &&l1;
+escape (l3 as List.Cons).head + (((l3 as List.Cons).tail is List.Nil) as int);
 ]],
     wrn = true,
     stmts = 'line 54 : invalid assignment : types mismatch : "List" <= "List&&"',
@@ -58223,10 +58270,10 @@ escape (l3 as Cons).head + (((l3 as Cons).tail is Nil) as int);
 Test { DATA..[[
 pool[] List l1;
 pool[] List l2;
-l1 = new Nil();
-l2 = new Cons(1, Nil());
+l1 = new List.Nil();
+l2 = new List.Cons(1, List.Nil());
 l1 = l2;
-escape ((l1 is Cons)as int) + (l1 as Cons).head==1;
+escape ((l1 is List.Cons)as int) + (l1 as List.Cons).head==1;
 ]],
     wrn = true,
     --adt = 'line 55 : invalid attribution : value is not a reference',
@@ -58237,10 +58284,10 @@ escape ((l1 is Cons)as int) + (l1 as Cons).head==1;
 Test { DATA..[[
 pool[] List l1;
 pool[] List l2;
-l1 = new Nil();
-l2 = new Cons(1, Nil());
+l1 = new List.Nil();
+l2 = new List.Cons(1, List.Nil());
 l1 = &&l2;
-escape ((l1 is Cons)as int) + (l1 as Cons).head==1;
+escape ((l1 is List.Cons)as int) + (l1 as List.Cons).head==1;
 ]],
     wrn = true,
     stmts = 'line 55 : invalid assignment : types mismatch : "List" <= "List&&"',
@@ -58251,10 +58298,10 @@ escape ((l1 is Cons)as int) + (l1 as Cons).head==1;
     run = 2,
 }
 Test { DATA..[[
-pool[] List l1 = new Nil(),
-            l2 = new Cons(1, Nil());
+pool[] List l1 = new List.Nil(),
+            l2 = new List.Cons(1, List.Nil());
 l1 = l2;
-escape ((l1 is Cons)as int) + (((l1 as Cons).head==1)as int) + (((((l1 as Cons).tail as Cons).tail as Cons).head==1)as int);
+escape ((l1 is List.Cons)as int) + (((l1 as List.Cons).head==1)as int) + (((((l1 as List.Cons).tail as List.Cons).tail as List.Cons).head==1)as int);
 ]],
     stmts = 'line 53 : invalid assignment : unexpected context for pool "l2"',
     wrn = true,
@@ -58265,12 +58312,12 @@ escape ((l1 is Cons)as int) + (((l1 as Cons).head==1)as int) + (((((l1 as Cons).
 
 -- circular list: 1-2-1-2-...
 Test { DATA..[[
-pool[] List l1 = new Cons(1, Nil()),
-            l2 = new Cons(2, Nil());
-((l1 as Cons).tail) = l2;
-escape ((((l1 as Cons).head)==1)as int) + (((((l1 as Cons).tail) as Cons).head==2)as int) +
-       ((((l2 as Cons).head)==2)as int) + (((((l2 as Cons).tail) as Cons).head==1)as int) +
-       (((((((l1 as Cons).tail) as Cons).tail as Cons).tail as Cons).head==2)as int);
+pool[] List l1 = new List.Cons(1, List.Nil()),
+            l2 = new List.Cons(2, List.Nil());
+((l1 as List.Cons).tail) = l2;
+escape ((((l1 as List.Cons).head)==1)as int) + (((((l1 as List.Cons).tail) as List.Cons).head==2)as int) +
+       ((((l2 as List.Cons).head)==2)as int) + (((((l2 as List.Cons).tail) as List.Cons).head==1)as int) +
+       (((((((l1 as List.Cons).tail) as List.Cons).tail as List.Cons).tail as List.Cons).head==2)as int);
 ]],
     wrn = true,
     --adt = 'line 53 : invalid attribution : value is not a reference',
@@ -58280,12 +58327,12 @@ escape ((((l1 as Cons).head)==1)as int) + (((((l1 as Cons).tail) as Cons).head==
 }
 
 Test { DATA..[[
-pool[] List l1 = new Cons(1, Nil()),
-            l2 = new Cons(2, Nil());
-((l1 as Cons).tail) = &&l2;
-escape ((((l1 as Cons).head)==1) as int) + (((((l1 as Cons).tail) as Cons).head==2) as int) +
-       ((((l2 as Cons).head)==2) as int) + (((((l2 as Cons).tail) as Cons).head==1) as int) +
-       (((((((l1 as Cons).tail) as Cons).tail as Cons).tail as Cons).head==2) as int);
+pool[] List l1 = new List.Cons(1, List.Nil()),
+            l2 = new List.Cons(2, List.Nil());
+((l1 as List.Cons).tail) = &&l2;
+escape ((((l1 as List.Cons).head)==1) as int) + (((((l1 as List.Cons).tail) as List.Cons).head==2) as int) +
+       ((((l2 as List.Cons).head)==2) as int) + (((((l2 as List.Cons).tail) as List.Cons).head==1) as int) +
+       (((((((l1 as List.Cons).tail) as List.Cons).tail as List.Cons).tail as List.Cons).head==2) as int);
 ]],
     wrn = true,
     stmts = 'line 53 : invalid assignment : types mismatch : "List" <= "List&&"',
@@ -58298,12 +58345,12 @@ escape ((((l1 as Cons).head)==1) as int) + (((((l1 as Cons).tail) as Cons).head=
 -- another circular list
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new Cons(1, Nil());
-l2 = new Cons(2, Nil());
-((l1 as Cons).tail) = l2;
-((l2 as Cons).tail) = l1;
+l1 = new List.Cons(1, List.Nil());
+l2 = new List.Cons(2, List.Nil());
+((l1 as List.Cons).tail) = l2;
+((l2 as List.Cons).tail) = l1;
 
-escape ((l1 as Cons).head) + (((l1 as Cons).tail) as Cons).head + ((l2 as Cons).head) + (((l2 as Cons).tail) as Cons).head;
+escape ((l1 as List.Cons).head) + (((l1 as List.Cons).tail) as List.Cons).head + ((l2 as List.Cons).head) + (((l2 as List.Cons).tail) as List.Cons).head;
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
@@ -58316,10 +58363,10 @@ escape ((l1 as Cons).head) + (((l1 as Cons).tail) as Cons).head + ((l2 as Cons).
 -- not circular
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new Nil();
-l2 = new Cons(1, Nil());
-l1 = ((l2 as Cons).tail);
-escape (l1 is Nil) as int;
+l1 = new List.Nil();
+l2 = new List.Cons(1, List.Nil());
+l1 = ((l2 as List.Cons).tail);
+escape (l1 is List.Nil) as int;
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : value is not a reference',
@@ -58331,10 +58378,10 @@ escape (l1 is Nil) as int;
 -- not circular
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new Nil();
-l2 = new Cons(1, Nil());
-l1 = &&((l2 as Cons).tail);
-escape l1 is Nil;
+l1 = new List.Nil();
+l2 = new List.Cons(1, List.Nil());
+l1 = &&((l2 as List.Cons).tail);
+escape l1 is List.Nil;
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : destination is not a reference',
@@ -58372,14 +58419,14 @@ escape 1;
 --  - represents the root of the tree
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape (l is Nil) as int;       // l is a pointer to the root
+escape (l is List.Nil) as int;       // l is a pointer to the root
 ]],
     wrn = true,
     run = 1,
 }
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape ((l) is Nil) as int;    // equivalent to above
+escape ((l) is List.Nil) as int;    // equivalent to above
 ]],
     wrn = true,
     run = 1,
@@ -58387,7 +58434,7 @@ escape ((l) is Nil) as int;    // equivalent to above
 -- the pointer must be dereferenced
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape (*l is Nil) as int;       // "l" is not a struct
+escape (*l is List.Nil) as int;       // "l" is not a struct
 ]],
     wrn = true,
     --exps = 'line 52 : invalid operand to `*´ : unexpected context for pool "l"',
@@ -58396,7 +58443,7 @@ escape (*l is Nil) as int;       // "l" is not a struct
 }
 Test { DATA..[[
 pool[] List l;     // l is the pool
-escape ((l as Cons):head); // "l" is not a struct
+escape ((l as List.Cons):head); // "l" is not a struct
 ]],
     wrn = true,
     --env = 'line 52 : invalid operand to unary "*"',
@@ -58405,7 +58452,7 @@ escape ((l as Cons):head); // "l" is not a struct
 }
 Test { DATA..[[
 pool[] List l;             // l is the pool
-escape *((l as Cons).tail) is Cons;    // "((l as Cons).tail)" is not a struct
+escape *((l as List.Cons).tail) is List.Cons;    // "((l as List.Cons).tail)" is not a struct
 ]],
     wrn = true,
     --env = 'line 52 : invalid operand to unary "*"',
@@ -58418,7 +58465,7 @@ escape *((l as Cons).tail) is Cons;    // "((l as Cons).tail)" is not a struct
 --  must appear first in the ADT declaration)
 Test { DATA..[[
 pool[] List l;
-escape (l is Cons) as int;      // runtime error
+escape (l is List.Cons) as int;      // runtime error
 ]],
     wrn = true,
     asr = true,
@@ -58430,7 +58477,7 @@ Test { DATA..[[
 var int ret = 0;
 do
     pool[] List lll;
-    ret = (lll is Nil) as int;
+    ret = (lll is List.Nil) as int;
 end
 // all instances in "lll" have been collected
 escape ret;
@@ -58447,22 +58494,22 @@ escape ret;
 --  - the pool is inferred from the l-value
 Test { DATA..[[
 pool[] List l;
-l = new Nil();
-escape (l is Nil) as int;
+l = new List.Nil();
+escape (l is List.Nil) as int;
 ]],
     wrn = true,
     run = 1,
 }
 Test { DATA..[[
-pool[] List l = new Cons(2, Nil());
-escape ((l as Cons).head);
+pool[] List l = new List.Cons(2, List.Nil());
+escape ((l as List.Cons).head);
 ]],
     wrn = true,
     run = 2,
 }
 Test { DATA..[[
-pool[] List l = new Cons(1, Cons(2, Nil()));
-escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((((l as Cons).tail) as Cons).tail is Nil) as int);
+pool[] List l = new List.Cons(1, List.Cons(2, List.Nil()));
+escape ((l as List.Cons).head) + (((l as List.Cons).tail) as List.Cons).head + (((((l as List.Cons).tail) as List.Cons).tail is List.Nil) as int);
 ]],
     wrn = true,
     run = 4,
@@ -58470,8 +58517,8 @@ escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((((l as Cons).
 -- wrong tag
 Test { DATA..[[
 pool[] List l;
-l = new Nil();
-escape (l is Cons) as int;
+l = new List.Nil();
+escape (l is List.Cons) as int;
 ]],
     wrn = true,
     asr = true,
@@ -58479,8 +58526,8 @@ escape (l is Cons) as int;
 -- no "new"
 Test { DATA..[[
 pool[] List l;
-l = val Cons(2, Nil());
-escape ((l as Cons).head);
+l = val List.Cons(2, List.Nil());
+escape ((l as List.Cons).head);
 ]],
     wrn = true,
     --adt = 'line 52 : invalid constructor : recursive data must use `new´',
@@ -58489,8 +58536,8 @@ escape ((l as Cons).head);
 }
 -- cannot assign "l" directly (in the pool declaration)
 Test { DATA..[[
-pool[] List l = new Cons(2, Nil());
-escape ((l as Cons).head);
+pool[] List l = new List.Cons(2, List.Nil());
+escape ((l as List.Cons).head);
 ]],
     wrn = true,
     run = 2,
@@ -58498,8 +58545,8 @@ escape ((l as Cons).head);
 -- no dereference
 Test { DATA..[[
 pool[] List l;
-l = new Nil();
-escape (l is Nil) as int;
+l = new List.Nil();
+escape (l is List.Nil) as int;
 ]],
     wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -58507,8 +58554,8 @@ escape (l is Nil) as int;
 }
 Test { DATA..[[
 pool[] List l;
-l = new Cons(2, Nil());
-escape ((l as Cons).head);
+l = new List.Cons(2, List.Nil());
+escape ((l as List.Cons).head);
 ]],
     wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -58527,36 +58574,36 @@ escape ((l as Cons).head);
 --  must appear first in the ADT declaration)
 -- (
 Test { DATA..[[
-pool[0] List l = new Cons(2, Nil());
-escape (l is Nil) as int;
+pool[0] List l = new List.Cons(2, List.Nil());
+escape (l is List.Nil) as int;
 ]],
     wrn = true,
     run = 1,
 }
 Test { DATA..[[
 pool[0] List l;
-l = new Cons(2, Nil());
-escape ((l as Cons).head);     // runtime error
+l = new List.Cons(2, List.Nil());
+escape ((l as List.Cons).head);     // runtime error
 ]],
     wrn = true,
     asr = true,
 }
 -- 2nd allocation fails (1 space)
 Test { DATA..[[
-pool[1] List l = new Cons(2, Cons(1, Nil()));
+pool[1] List l = new List.Cons(2, List.Cons(1, List.Nil()));
 native _assert;
-_assert(((l as Cons).tail) is Nil);
-escape ((l as Cons).head);
+_assert(((l as List.Cons).tail) is List.Nil);
+escape ((l as List.Cons).head);
 ]],
     wrn = true,
     run = 2,
 }
 -- 3rd allocation fails (2 space)
 Test { DATA..[[
-pool[2] List l = new Cons(1, Cons(2, Cons(3, Nil())));
+pool[2] List l = new List.Cons(1, List.Cons(2, List.Cons(3, List.Nil())));
 native _assert;
-_assert((((l as Cons).tail) as Cons).tail is Nil);
-escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((((l as Cons).tail) as Cons).tail) is Nil) as int);
+_assert((((l as List.Cons).tail) as List.Cons).tail is List.Nil);
+escape ((l as List.Cons).head) + (((l as List.Cons).tail) as List.Cons).head + ((((((l as List.Cons).tail) as List.Cons).tail) is List.Nil) as int);
 ]],
     wrn = true,
     run = 4,
@@ -58566,8 +58613,8 @@ escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((((l as Cons)
 -- (nothing new here)
 Test { DATA..[[
 pool[0] List l;
-l = new Cons(2, Nil());
-escape (l is Nil) as int;
+l = new List.Cons(2, List.Nil());
+escape (l is List.Nil) as int;
 ]],
     wrn = true,
     --env = 'line 53 : invalid access (List[] vs List)',
@@ -58576,16 +58623,16 @@ escape (l is Nil) as int;
 
 Test { [[
 data Tx;
-data Nil is Tx;
-data Nxt is Tx with
+data Tx.Nil;
+data Tx.Nxt with
     var int v;
     var Tx&&  nxt;
 end
 pool[] Tx ts;
 do
-    ts = new Nil();
+    ts = new Tx.Nil();
 end
-escape (ts is Nil) as int;
+escape (ts is Tx.Nil) as int;
 ]],
     wrn = true,
     run = 1,
@@ -58603,9 +58650,9 @@ escape (ts is Nil) as int;
 -- 1-Nil => 2-Nil
 -- 1-Nil can be safely reclaimed
 Test { DATA..[[
-pool[1] List l = new Cons(1, Nil());
-l = new Cons(2, Nil());    // this fails (new before free)!
-escape ((l as Cons).head);
+pool[1] List l = new List.Cons(1, List.Nil());
+l = new List.Cons(2, List.Nil());    // this fails (new before free)!
+escape ((l as List.Cons).head);
 ]],
     wrn = true,
     asr = true,
@@ -58613,9 +58660,9 @@ escape ((l as Cons).head);
 
 Test { DATA..[[
 pool[1] List l;
-l = new Cons(1, Nil());
-((l as Cons).tail) = new Cons(2, Nil()); // fails
-escape (((l as Cons).tail) is Nil) as int;
+l = new List.Cons(1, List.Nil());
+((l as List.Cons).tail) = new List.Cons(2, List.Nil()); // fails
+escape (((l as List.Cons).tail) is List.Nil) as int;
 ]],
     wrn = true,
     run = 1,
@@ -58624,9 +58671,9 @@ escape (((l as Cons).tail) is Nil) as int;
 
 -- 1-2-Nil
 Test { DATA..[[
-pool[2] List l = new Cons(1, Nil());
-((l as Cons).tail) = new Cons(2, Nil()); // fails
-escape (((l as Cons).tail) as Cons).head;
+pool[2] List l = new List.Cons(1, List.Nil());
+((l as List.Cons).tail) = new List.Cons(2, List.Nil()); // fails
+escape (((l as List.Cons).tail) as List.Cons).head;
 ]],
     wrn = true,
     run = 2,
@@ -58636,9 +58683,9 @@ escape (((l as Cons).tail) as Cons).head;
 -- 1-Nil can be safely reclaimed
 Test { DATA..[[
 pool[2] List l;
-l = new Cons(1, Nil());
-l = new Cons(2, Nil());    // no allocation fail
-escape ((l as Cons).head);
+l = new List.Cons(1, List.Nil());
+l = new List.Cons(2, List.Nil());    // no allocation fail
+escape ((l as List.Cons).head);
 ]],
     wrn = true,
     run = 2,
@@ -58648,23 +58695,23 @@ escape ((l as Cons).head);
 -- 4-5-6-Nil => Nil     (all fail)
 Test { DATA..[[
 native _ceu_out_assert_msg;
-pool[2] List l = new Cons(1, Cons(2, Cons(3, Nil())));   // 3 fails
-_ceu_out_assert_msg((((l as Cons).tail) as Cons).tail is Nil, "1");
-l = new Nil();
-l = new Cons(4, Cons(5, Cons(6, Nil())));   // 6 fails
-_ceu_out_assert_msg((((l as Cons).tail) as Cons).tail is Nil, "2");
-escape (((l as Cons).tail) as Cons).head;
+pool[2] List l = new List.Cons(1, List.Cons(2, List.Cons(3, List.Nil())));   // 3 fails
+_ceu_out_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "1");
+l = new List.Nil();
+l = new List.Cons(4, List.Cons(5, List.Cons(6, List.Nil())));   // 6 fails
+_ceu_out_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "2");
+escape (((l as List.Cons).tail) as List.Cons).head;
 ]],
     wrn = true,
     run = 5,
 }
 
 Test { DATA..[[
-pool[2] List l = new Cons(1, Cons(2, Cons(3, Nil())));   // 3 fails
+pool[2] List l = new List.Cons(1, List.Cons(2, List.Cons(3, List.Nil())));   // 3 fails
 native _ceu_out_assert_msg;
-_ceu_out_assert_msg((((l as Cons).tail) as Cons).tail is Nil, "1");
-l = new Cons(4, Cons(5, Cons(6, Nil())));   // all fail
-escape (l is Nil) as int;
+_ceu_out_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "1");
+l = new List.Cons(4, List.Cons(5, List.Cons(6, List.Nil())));   // all fail
+escape (l is List.Nil) as int;
 ]],
     wrn = true,
     run = 1,
@@ -58675,13 +58722,13 @@ escape (l is Nil) as int;
 -- 4-5-6-Nil => 4-5-Nil (6 fails)
 Test { DATA..[[
 pool[2] List l;
-l = new Cons(1, Cons(2, Cons(3, Nil())));   // 3 fails
+l = new List.Cons(1, List.Cons(2, List.Cons(3, List.Nil())));   // 3 fails
 native _assert;
-_assert((((l as Cons).tail) as Cons).tail is Nil);
-l = new Nil();                                                // clear all
-l = new Cons(4, Cons(5, Cons(6, Nil())));   // 6 fails
-_assert((((l as Cons).tail) as Cons).tail is Nil);
-escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((((l as Cons).tail) as Cons).tail is Nil)) as int);
+_assert((((l as List.Cons).tail) as List.Cons).tail is List.Nil);
+l = new List.Nil();                                                // clear all
+l = new List.Cons(4, List.Cons(5, List.Cons(6, List.Nil())));   // 6 fails
+_assert((((l as List.Cons).tail) as List.Cons).tail is List.Nil);
+escape ((l as List.Cons).head) + (((l as List.Cons).tail) as List.Cons).head + ((((((l as List.Cons).tail) as List.Cons).tail is List.Nil)) as int);
 ]],
     wrn = true,
     run = 10,
@@ -58701,9 +58748,9 @@ escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + ((((((l as Cons)
 -- 1-Nil
 -- 1-2-Nil
 Test { DATA..[[
-pool[2] List l = new Cons(1, Nil());
-((l as Cons).tail) = new Cons(2, Nil());
-escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head;
+pool[2] List l = new List.Cons(1, List.Nil());
+((l as List.Cons).tail) = new List.Cons(2, List.Nil());
+escape ((l as List.Cons).head) + (((l as List.Cons).tail) as List.Cons).head;
 ]],
     wrn = true,
     run = 3,
@@ -58714,17 +58761,17 @@ escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head;
 -- 1-Nil
 Test { DATA..[[
 pool[2] List lll;
-lll = new Cons(1, Cons(2, Nil()));
-lll = (lll as Cons).tail;    // parent=child
-escape (lll as Cons).head;
+lll = new List.Cons(1, List.Cons(2, List.Nil()));
+lll = (lll as List.Cons).tail;    // parent=child
+escape (lll as List.Cons).head;
 ]],
     wrn = true,
     run = 2,
 }
 Test { DATA..[[
-pool[2] List lll = new Cons(1, Cons(2, Nil()));
-lll = (lll as Cons).tail;
-(lll as Cons).tail = new Cons(3, Nil());
+pool[2] List lll = new List.Cons(1, List.Cons(2, List.Nil()));
+lll = (lll as List.Cons).tail;
+(lll as List.Cons).tail = new List.Cons(3, List.Nil());
 escape 1;
 ]],
     wrn = true,
@@ -58732,19 +58779,19 @@ escape 1;
 }
 Test { DATA..[[
 pool[2] List lll;
-lll = new Cons(1, Cons(2, Nil()));
-lll = (lll as Cons).tail;    // parent=child
-(lll as Cons).tail = new Cons(3, Cons(4, Nil()));    // 4 fails
-escape (lll as Cons).head + (((lll as Cons).tail) as Cons).head + (((((lll as Cons).tail) as Cons).tail is Nil) as int);
+lll = new List.Cons(1, List.Cons(2, List.Nil()));
+lll = (lll as List.Cons).tail;    // parent=child
+(lll as List.Cons).tail = new List.Cons(3, List.Cons(4, List.Nil()));    // 4 fails
+escape (lll as List.Cons).head + (((lll as List.Cons).tail) as List.Cons).head + (((((lll as List.Cons).tail) as List.Cons).tail is List.Nil) as int);
 ]],
     wrn = true,
     run = 6,
 }
 Test { DATA..[[
-pool[2] List l = new Cons(1, Cons(2, Nil()));
-l = ((l as Cons).tail);    // parent=child
-((l as Cons).tail) = new Cons(3, Cons(4, Nil()));    // 4 fails
-escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((((l as Cons).tail) as Cons).tail is Nil) as int);
+pool[2] List l = new List.Cons(1, List.Cons(2, List.Nil()));
+l = ((l as List.Cons).tail);    // parent=child
+((l as List.Cons).tail) = new List.Cons(3, List.Cons(4, List.Nil()));    // 4 fails
+escape ((l as List.Cons).head) + (((l as List.Cons).tail) as List.Cons).head + (((((l as List.Cons).tail) as List.Cons).tail is List.Nil) as int);
 ]],
     wrn = true,
     run = 6,
@@ -58756,8 +58803,8 @@ escape ((l as Cons).head) + (((l as Cons).tail) as Cons).head + (((((l as Cons).
 -- 1-2-^1   (no)
 Test { DATA..[[
 pool[2] List l;
-l = new Cons(1, Cons(2, Nil()));
-((l as Cons).tail) = l;    // child=parent
+l = new List.Cons(1, List.Cons(2, List.Nil()));
+((l as List.Cons).tail) = l;    // child=parent
 escape 1;
 ]],
     wrn = true,
@@ -58769,32 +58816,32 @@ escape 1;
 
 Test { [[
 data OptionInt;
-data Nil1 is OptionInt;
-data Some1 is OptionInt with
+data OptionInt.Nil1;
+data OptionInt.Some1 with
     var int v;
 end
 
 data OptionPtr;
-data Nil2 is OptionPtr;
-data Some2 is OptionPtr with
+data OptionPtr.Nil2;
+data OptionPtr.Some2 with
     var int&& v;
 end
 
 var int ret = 0;            // 0
 
-var OptionInt i = val Nil1();
-var OptionPtr p = val Nil2();
-ret = ret + ((i is Nil1)as int) + ((p is Nil2)as int);  // 2
+var OptionInt i = val OptionInt.Nil1();
+var OptionPtr p = val OptionPtr.Nil2();
+ret = ret + ((i is OptionInt.Nil1)as int) + ((p is OptionPtr.Nil2)as int);  // 2
 
-i = val Some1(3);
-ret = ret + (i as Some1).v;       // 5
+i = val OptionInt.Some1(3);
+ret = ret + (i as OptionInt.Some1).v;       // 5
 
-p = val Some2(&&ret);
-*(p as Some2).v = *(p as Some2).v + 2;    // 7
+p = val OptionPtr.Some2(&&ret);
+*(p as OptionPtr.Some2).v = *(p as OptionPtr.Some2).v + 2;    // 7
 
 var int v = 10;
-p = val Some2(&&v);
-*(p as Some2).v = *(p as Some2).v + 1;
+p = val OptionPtr.Some2(&&v);
+*(p as OptionPtr.Some2).v = *(p as OptionPtr.Some2).v + 1;
 
 ret = ret + v;              // 18
 escape ret;
@@ -59279,14 +59326,14 @@ escape 1;
 
 Test { [[
 data OptionInt;
-data Nil1 is OptionInt;
-data Some1 is OptionInt with
+data OptionInt.Nil1;
+data OptionInt.Some1 with
     var int v;
 end
 
 data OptionPtr;
-data Nil2 is OptionPtr;
-data Some2 is OptionPtr with
+data OptionPtr.Nil2;
+data OptionPtr.Some2 with
     var int&& v;
 end
 
@@ -59537,7 +59584,7 @@ escape (p1==p2) as int;
 }
 Test { DATA..[[
 pool[] List l1, l2;
-l2 = new Nil();
+l2 = new List.Nil();
 escape l1==l2;
 ]],
     wrn = true,
@@ -59549,23 +59596,23 @@ escape l1==l2;
 -- cannot mix recursive ADTs
 Test { DATA..[[
 pool[] List l1, l2;
-l1 = new Cons(1, Nil());
-l2 = new Cons(2, Nil());
-((l1 as Cons).tail) = l2;
-escape (((l1 as Cons).tail) as Cons).head;
+l1 = new List.Cons(1, List.Nil());
+l2 = new List.Cons(2, List.Nil());
+((l1 as List.Cons).tail) = l2;
+escape (((l1 as List.Cons).tail) as List.Cons).head;
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
     stmts = 'line 54 : invalid assignment : unexpected context for pool "l2"',
 }
 Test { DATA..[[
-pool[] List l1 = new Cons(1, Nil());
+pool[] List l1 = new List.Cons(1, List.Nil());
 do
     pool[] List l2;
-    l2 = new Cons(2, Nil());
-    ((l1 as Cons).tail) = &&l2;
+    l2 = new List.Cons(2, List.Nil());
+    ((l1 as List.Cons).tail) = &&l2;
 end
-escape (((l1 as Cons).tail) as Cons).head;
+escape (((l1 as List.Cons).tail) as List.Cons).head;
 ]],
     wrn = true,
     stmts = 'line 55 : invalid assignment : types mismatch : "List" <= "List&&"',
@@ -59575,10 +59622,10 @@ escape (((l1 as Cons).tail) as Cons).head;
 }
 Test { DATA..[[
 pool[] List l1;
-l1 = new Cons(1, Nil());
-pool[2] List l2 = new Cons(2, Nil());
-((l1 as Cons).tail) = l2;
-escape (((l1 as Cons).tail) as Cons).head;
+l1 = new List.Cons(1, List.Nil());
+pool[2] List l2 = new List.Cons(2, List.Nil());
+((l1 as List.Cons).tail) = l2;
+escape (((l1 as List.Cons).tail) as List.Cons).head;
 ]],
     wrn = true,
     --adt = 'line 54 : invalid attribution : mutation : cannot mix data sources',
@@ -59587,10 +59634,10 @@ escape (((l1 as Cons).tail) as Cons).head;
 Test { DATA..[[
 pool[2] List l1;
 pool[2] List l2;
-l1 = new Cons(1, Nil());
-l2 = new Cons(2, Nil());
-((l1 as Cons).tail) = l2;
-escape (((l1 as Cons).tail) as Cons).head;
+l1 = new List.Cons(1, List.Nil());
+l2 = new List.Cons(2, List.Nil());
+((l1 as List.Cons).tail) = l2;
+escape (((l1 as List.Cons).tail) as List.Cons).head;
 ]],
     wrn = true,
     --adt = 'line 55 : invalid attribution : mutation : cannot mix data sources',
@@ -59603,37 +59650,37 @@ var int ret = 0;                // 0
 pool[5] List l;
 
 // change head [2]
-l = new Cons(1, Nil());
-ret = ret + ((l as Cons).head);        // 2
+l = new List.Cons(1, List.Nil());
+ret = ret + ((l as List.Cons).head);        // 2
 native _assert;
 _assert(ret == 1);
 
 // add 2 [1, 2]
-((l as Cons).tail) = new Cons(1, Nil());
-ret = ret + ((l as Cons).head);        // 3
-ret = ret + ((l as Cons).head) + (((l as Cons).tail) as Cons).head;
+((l as List.Cons).tail) = new List.Cons(1, List.Nil());
+ret = ret + ((l as List.Cons).head);        // 3
+ret = ret + ((l as List.Cons).head) + (((l as List.Cons).tail) as List.Cons).head;
                                 // 6
 _assert(ret == 6);
 
 // change tail [1, 2, 4]
-(((l as Cons).tail) as Cons).tail = new Cons(4, Nil());
+(((l as List.Cons).tail) as List.Cons).tail = new List.Cons(4, List.Nil());
                                 // 10
 
-pool[] List l3 = new Cons(3, Nil());
-(((l as Cons).tail) as Cons).tail = &&l3;
-_assert((((l as Cons).tail) as Cons).head == 3);
-_assert(((((l as Cons).tail) as Cons).tail as Cons).head == 4);
-ret = ret + (((l as Cons).tail) as Cons).head + ((((l as Cons).tail) as Cons).tail as Cons).head;
+pool[] List l3 = new List.Cons(3, List.Nil());
+(((l as List.Cons).tail) as List.Cons).tail = &&l3;
+_assert((((l as List.Cons).tail) as List.Cons).head == 3);
+_assert(((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head == 4);
+ret = ret + (((l as List.Cons).tail) as List.Cons).head + ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head;
                                 // 17
 
 // drop middle [1, 3, 4]
-((l as Cons).tail) = (((l as Cons).tail) as Cons).tail;
-ret = ret + (((l as Cons).tail) as Cons).head;
+((l as List.Cons).tail) = (((l as List.Cons).tail) as List.Cons).tail;
+ret = ret + (((l as List.Cons).tail) as List.Cons).head;
                                 // 20
 
 // fill the list [1, 3, 4, 5, 6] (7 fails)
-((((l as Cons).tail) as Cons).tail as Cons).tail =
-    new Cons(5, Cons(6, Cons(7, Nil())));
+((((l as List.Cons).tail) as List.Cons).tail as List.Cons).tail =
+    new List.Cons(5, List.Cons(6, List.Cons(7, List.Nil())));
 
 escape ret;
 ]],
@@ -59818,8 +59865,8 @@ escape ((*i).t).x!;
 
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
@@ -59836,8 +59883,8 @@ escape 1;
 }
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
@@ -59857,15 +59904,15 @@ escape 1;
 
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list
 
-= new Cons(10, Nil());
+= new List.Cons(10, List.Nil());
 var List&& l = list;
 
 watching l do
@@ -59880,64 +59927,64 @@ escape 0;
 
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 
 pool&[] List lll = &list;
 
-escape (lll as Cons).head;
+escape (lll as List.Cons).head;
 ]],
     run = 10,
 }
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 
 pool[] List&& lll = &&list;
 
-escape (lll as Cons).head;
+escape (lll as List.Cons).head;
 ]],
     run = 10,
 }
 
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 pool[] List&& l = &&list;
 
-((l as Cons).tail) = new Cons(9, Nil());
-l = ((l as Cons).tail);
+((l as List.Cons).tail) = new List.Cons(9, List.Nil());
+l = ((l as List.Cons).tail);
 
-((l as Cons).tail) = new Cons(8, Nil());
-l = ((l as Cons).tail);
+((l as List.Cons).tail) = new List.Cons(8, List.Nil());
+l = ((l as List.Cons).tail);
 
-escape ((*l is Cons) as int) +
-        (list as Cons).head +
-        ((list as Cons).tail as Cons).head +
-        ((((list as Cons).tail as Cons).tail) as Cons).head;
+escape ((*l is List.Cons) as int) +
+        (list as List.Cons).head +
+        ((list as List.Cons).tail as List.Cons).head +
+        ((((list as List.Cons).tail as List.Cons).tail) as List.Cons).head;
 ]],
     stmts = 'line 14 : invalid assignment : types mismatch : "List&&" <= "List"',
     --adt = 'line 16 : invalid attribution : mutation : destination cannot be a pointer',
@@ -59948,22 +59995,22 @@ escape ((*l is Cons) as int) +
 --   which is a problem
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 
 pool[] List&& l1 = &&list;
 pool&[] List  l2 = &list;
 
-list = new Nil();
+list = new List.Nil();
 
-escape ((*l1 is Cons) as int)+((l2 is Cons) as int)+((list is Cons) as int)+1;
+escape ((*l1 is List.Cons) as int)+((l2 is List.Cons) as int)+((list is List.Cons) as int)+1;
 ]],
     --run = 1,
     fin = 'line 19 : unsafe access to pointer "l1" across `assignment´ (tests.lua : 17)',
@@ -59974,24 +60021,24 @@ escape ((*l1 is Cons) as int)+((l2 is Cons) as int)+((list is Cons) as int)+1;
 --   which is a problem
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 pool[] List&& lll = &&list;
 
 var int ret = 0;
 
 watching *lll do
-    *lll = (lll as Cons).tail;
-    //ret = (*lll as Cons) +
-            //(list as Cons).head +
-            //(list as Cons).tail is Nil;
+    *lll = (lll as List.Cons).tail;
+    //ret = (*lll as List.Cons) +
+            //(list as List.Cons).head +
+            //(list as List.Cons).tail is List.Nil;
 end
 
 escape ret;
@@ -60002,23 +60049,23 @@ escape ret;
 
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Cons(20, Nil()));
+list = new List.Cons(10, List.Cons(20, List.Nil()));
 pool[] List&& lll = &&list;
 
 var int ret = 0;
 watching *lll do
-    (lll as Cons).tail = (((lll as Cons).tail) as Cons).tail;
-    ret = ((*lll is Cons) as int) +
-            (list as Cons).head +
-            (((list as Cons).tail is Nil) as int);
+    (lll as List.Cons).tail = (((lll as List.Cons).tail) as List.Cons).tail;
+    ret = ((*lll is List.Cons) as int) +
+            (list as List.Cons).head +
+            (((list as List.Cons).tail is List.Nil) as int);
 end
 escape ret;
 ]],
@@ -60028,98 +60075,98 @@ escape ret;
 
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 pool[] List&& lll = &&list; // TODO fat pointer
 
-*lll = (lll as Cons).tail;
+*lll = (lll as List.Cons).tail;
 
-escape ((*lll is Cons) as int) + ((list is Cons) as int) + 1;
+escape ((*lll is List.Cons) as int) + ((list is List.Cons) as int) + 1;
 ]],
     adt = 'line 15 : invalid attribution : mutation : cannot mutate from pointers',
 }
 
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 pool[] List&& lll = &&list;
 
-*lll = (lll as Cons).tail;
+*lll = (lll as List.Cons).tail;
 
 escape 0;
-//escape (*lll as Cons) +
-        //(list as Cons).head +
-        //(list as Cons).tail is Nil;
+//escape (*lll as List.Cons) +
+        //(list as List.Cons).head +
+        //(list as List.Cons).tail is List.Nil;
 ]],
     --run = 10,
     adt = 'line 15 : invalid attribution : mutation : cannot mutate root of a reference',
 }
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 pool[] List&& lll = &&list;
 
-(lll as Cons).tail = new Cons(9, Nil());
-*lll = (lll as Cons).tail;
+(lll as List.Cons).tail = new List.Cons(9, List.Nil());
+*lll = (lll as List.Cons).tail;
 
-(lll as Cons).tail = new Cons(8, Nil());
-*lll = (lll as Cons).tail;
+(lll as List.Cons).tail = new List.Cons(8, List.Nil());
+*lll = (lll as List.Cons).tail;
 
-escape ((*lll is Cons) as int) +
-        (list as Cons).head +
-        (((list as Cons).tail is Nil) as int);
+escape ((*lll is List.Cons) as int) +
+        (list as List.Cons).head +
+        (((list as List.Cons).tail is List.Nil) as int);
 ]],
     adt = 'line 16 : invalid attribution : mutation : cannot mutate root of a reference',
 }
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 pool[] List&& l = &&list;
 
 var int ret = 0;
 
 watching *l do
-    ((l as Cons).tail) = new Cons(9, Nil());
-    l = &&((l as Cons).tail);
+    ((l as List.Cons).tail) = new List.Cons(9, List.Nil());
+    l = &&((l as List.Cons).tail);
 
-    ((l as Cons).tail) = new Cons(8, Nil());
-    l = &&((l as Cons).tail);
+    ((l as List.Cons).tail) = new List.Cons(8, List.Nil());
+    l = &&((l as List.Cons).tail);
 
-    ret = ((*l is Cons) as int) +
-            (list as Cons).head +
-            ((list as Cons).tail as Cons).head +
-            ((((list as Cons).tail as Cons).tail) as Cons).head;
+    ret = ((*l is List.Cons) as int) +
+            (list as List.Cons).head +
+            ((list as List.Cons).tail as List.Cons).head +
+            ((((list as List.Cons).tail as List.Cons).tail) as List.Cons).head;
 end
 escape ret;
 ]],
@@ -60129,30 +60176,30 @@ escape ret;
 
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 pool[] List&& l = &&list;
 
 watching *l do
-    ((l as Cons).tail) = new Cons(9, Nil());
-    l = &&((l as Cons).tail);
+    ((l as List.Cons).tail) = new List.Cons(9, List.Nil());
+    l = &&((l as List.Cons).tail);
 
     await 1s;
 
-    ((l as Cons).tail) = new Cons(8, Nil());
-    l = &&((l as Cons).tail);
+    ((l as List.Cons).tail) = new List.Cons(8, List.Nil());
+    l = &&((l as List.Cons).tail);
 
-    escape ((l as Cons).head) +
-            (list as Cons).head +
-            ((list as Cons).tail as Cons).head +
-            ((((list as Cons).tail as Cons).tail) as Cons).head;
+    escape ((l as List.Cons).head) +
+            (list as List.Cons).head +
+            ((list as List.Cons).tail as List.Cons).head +
+            ((((list as List.Cons).tail as List.Cons).tail) as List.Cons).head;
 end
 
 escape 0;
@@ -60164,36 +60211,36 @@ escape 0;
 -- fails if inner is killed before outer
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
 pool[10] List list;
 
-list = new Cons(10, Nil());
+list = new List.Cons(10, List.Nil());
 pool[] List&& lll = &&list;
 
 watching *lll do
-    (lll as Cons).tail = new Cons(9, Nil());
-    lll = &&(lll as Cons).tail;
+    (lll as List.Cons).tail = new List.Cons(9, List.Nil());
+    lll = &&(lll as List.Cons).tail;
 
     par do
         watching *lll do
             await 1s;
 
-            (lll as Cons).tail = new Cons(8, Nil());
-            lll = &&(lll as Cons).tail;
+            (lll as List.Cons).tail = new List.Cons(8, List.Nil());
+            lll = &&(lll as List.Cons).tail;
 
-            escape (lll as Cons).head +
-                    (list as Cons).head +
-                    ((list as Cons).tail as Cons).head +
-                    (((list as Cons).tail as Cons).tail as Cons).head;
+            escape (lll as List.Cons).head +
+                    (list as List.Cons).head +
+                    ((list as List.Cons).tail as List.Cons).head +
+                    (((list as List.Cons).tail as List.Cons).tail as List.Cons).head;
         end
         escape 1;
     with
-        list = new Nil();
+        list = new List.Nil();
         await FOREVER;
     end
 end
@@ -60205,31 +60252,31 @@ escape -1;
 
 Test { [[
 data List;
-data Nil is List;
-data Cons is List with
+data List.Nil;
+data List.Cons with
     var int  head;
     var List tail;
 end
 
-pool[] List list = new Cons(10, Nil());
+pool[] List list = new List.Cons(10, List.Nil());
 pool[] List&& lll = &&list;
 
 watching *lll do
-    (lll as Cons).tail = new Cons(9, Nil());
-    lll = &&(lll as Cons).tail;
+    (lll as List.Cons).tail = new List.Cons(9, List.Nil());
+    lll = &&(lll as List.Cons).tail;
 
     par do
         await 1s;
 
-        (lll as Cons).tail = new Cons(8, Nil());
-        lll = &&(lll as Cons).tail;
+        (lll as List.Cons).tail = new List.Cons(8, List.Nil());
+        lll = &&(lll as List.Cons).tail;
 
-        escape (lll as Cons).head +
-                (list as Cons).head +
-                ((list as Cons).tail as Cons).head +
-                (((list as Cons).tail as Cons).tail as Cons).head;
+        escape (lll as List.Cons).head +
+                (list as List.Cons).head +
+                ((list as List.Cons).tail as List.Cons).head +
+                (((list as List.Cons).tail as List.Cons).tail as List.Cons).head;
     with
-        list = new Nil();
+        list = new List.Nil();
         await FOREVER;
     end
 end
@@ -60320,8 +60367,8 @@ escape f1.bytes[0] as int;
 }
 Test { [[
 data Frame;
-    data Xx is Frame;
-    data Yy is Frame with
+    data Frame.Xx;
+    data Frame.Yy with
         vector[3] u8 bytes;
     end
 
@@ -60449,8 +60496,8 @@ end
 
 Test { [[
 data Widget;
-    data Nil is Widget;
-    data Row is Widget with
+    data Widget.Nil;
+    data Widget.Row with
         var Widget w1;
     end
 
@@ -60471,18 +60518,18 @@ escape 1;
 -- leaks memory because of lost "free" in IN__STK
 Test { [[
 data Tx;
-    data Nil is Tx;
-    data Nxt is Tx with
+    data Tx.Nil;
+    data Tx.Nxt with
         var int v;
         var Tx   nxt;
     end
 
-pool[] Tx ts = new Nxt(10, Nxt(9, Nil()));
+pool[] Tx ts = new Tx.Nxt(10, Tx.Nxt(9, Tx.Nil()));
 
 par/or do
     await ts;           // 2. but continuation is aborted
 with
-    ts = new Nil();   // 1. free is on continuation
+    ts = new Tx.Nil();   // 1. free is on continuation
 end
 
 escape 1;
@@ -60493,15 +60540,15 @@ escape 1;
 
 Test { [[
 data Tx;
-    data Nil is Tx;
-    data Nxt is Tx with
+    data Tx.Nil;
+    data Tx.Nxt with
         var int v;
         var Tx   nxt;
     end
 
 pool[] Tx ts;
 
-ts = new Nxt(10, Nxt(9, Nil()));
+ts = new Tx.Nxt(10, Tx.Nxt(9, Tx.Nil()));
 
 var int ret = 10;
 
@@ -60511,18 +60558,18 @@ par/or do
     end
     ret = ret * 2;
 with
-    watching (ts as Nxt).nxt do
+    watching (ts as Tx.Nxt).nxt do
         await FOREVER;
     end
     ret = 0;
 with
-    watching ((ts as Nxt).nxt as Nxt).nxt do
+    watching ((ts as Tx.Nxt).nxt as Tx.Nxt).nxt do
         await FOREVER;
     end
     ret = ret - 1;  // awakes first from Nil
     await FOREVER;
 with
-    ts = new Nil();
+    ts = new Tx.Nil();
     ret = 0;
 end
 
@@ -60649,8 +60696,8 @@ escape sum;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var Tree left;
     end
 var Tree&& n;
@@ -60666,8 +60713,8 @@ escape 1;
 }
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var Tree left;
     end
 class Body with
@@ -60684,8 +60731,8 @@ escape 1;
 }
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -60693,8 +60740,8 @@ data Tree;
 
 pool[3] Tree tree;
 tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 class Body with
     pool&[]  Body bodies;
@@ -60754,8 +60801,8 @@ escape sum;
 }
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -60763,8 +60810,8 @@ data Tree;
 
 pool[3] Tree tree;
 tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 class Body with
     pool&[]  Body bodies;
@@ -60822,16 +60869,16 @@ escape sum;
 }
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 class Body with
     pool&[7]  Body bodies;
@@ -60893,29 +60940,29 @@ escape sum;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list
-    = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+    = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 class Body with
     pool&[]  Body bodies;
     var   List&&   n;
 do
     await 1s;
-    if (*n is Nil) then
+    if (*n is List.Nil) then
     end
     watching *n do
-        if (*n is Cons) then
+        if (*n is List.Cons) then
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = &&(*n is Cons).tail;
+                this.n      = &&(*n is List.Cons).tail;
             end;
         end
     end
@@ -60933,28 +60980,28 @@ escape 1;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list
-    = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+    = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 class Body with
     pool&[]  Body bodies;
     var   List&&   n;
 do
-    if (*n is Nil) then
+    if (*n is List.Nil) then
     end
     watching *n do
-        if (*n is Cons) then
+        if (*n is List.Cons) then
             spawn Body in this.bodies with
                 this.bodies = &bodies;
-                this.n      = &&(*n is Cons).tail;
+                this.n      = &&(*n is List.Cons).tail;
             end;
         end
     end
@@ -60974,24 +61021,24 @@ escape 1;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is Cons) then
-        sum = sum + (*n is Cons).head;
-        traverse &&(*n is Cons).tail;
+    if (*n is List.Cons) then
+        sum = sum + (*n is List.Cons).head;
+        traverse &&(*n is List.Cons).tail;
     end
 end
 
@@ -61001,25 +61048,25 @@ escape sum;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is Cons) then
-        sum = sum + (*n is Cons).head;
+    if (*n is List.Cons) then
+        sum = sum + (*n is List.Cons).head;
         await 1s;
-        traverse &&(*n is Cons).tail;
+        traverse &&(*n is List.Cons).tail;
     end
 end
 
@@ -61029,25 +61076,25 @@ escape sum;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
     await 1s;
-    if (*n is Cons) then
-        sum = sum + (*n is Cons).head;
-        traverse &&(*n is Cons).tail;
+    if (*n is List.Cons) then
+        sum = sum + (*n is List.Cons).head;
+        traverse &&(*n is List.Cons).tail;
     end
 end
 
@@ -61057,26 +61104,26 @@ escape sum;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is Cons) then
-        sum = sum + (*n is Cons).head;
+    if (*n is List.Cons) then
+        sum = sum + (*n is List.Cons).head;
         watching *n do
             await 1s;
-            traverse &&(*n is Cons).tail;
+            traverse &&(*n is List.Cons).tail;
         end
     end
 end
@@ -61087,16 +61134,16 @@ escape sum;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
@@ -61104,9 +61151,9 @@ traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         //await 1s;
-        if (*n is Cons) then
-            sum = sum + (*n is Cons).head;
-            traverse &&(*n is Cons).tail;
+        if (*n is List.Cons) then
+            sum = sum + (*n is List.Cons).head;
+            traverse &&(*n is List.Cons).tail;
         end
     //end
 end
@@ -61117,16 +61164,16 @@ escape sum;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
@@ -61134,9 +61181,9 @@ traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         await 1s;
-        if (*n is Cons) then
-            sum = sum + (*n is Cons).head;
-            traverse &&(*n is Cons).tail;
+        if (*n is List.Cons) then
+            sum = sum + (*n is List.Cons).head;
+            traverse &&(*n is List.Cons).tail;
         end
     //end
 end
@@ -61147,27 +61194,27 @@ escape sum;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list
-    = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+    = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
-    if (*n is Nil) then
+    if (*n is List.Nil) then
         sum = sum * 2;
     end
     watching *n do
-        if (*n is Cons) then
-            sum = sum + (*n is Cons).head;
-            traverse &&(*n is Cons).tail;
+        if (*n is List.Cons) then
+            sum = sum + (*n is List.Cons).head;
+            traverse &&(*n is List.Cons).tail;
         end
     end
 end
@@ -61181,8 +61228,8 @@ escape sum;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -61190,8 +61237,8 @@ data Tree;
 
 pool[3] Tree tree =
     new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int  v = 0;
 var int&& ptr = &&v;
@@ -61212,8 +61259,8 @@ escape v;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -61221,8 +61268,8 @@ data Tree;
 
 pool[3] Tree tree =
     new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int  v = 0;
 var int&& ptr = &&v;
@@ -61245,16 +61292,16 @@ escape v;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 native do
     int V = 0;
@@ -61263,9 +61310,9 @@ end
 /*
 traverse n in &&list do
     _V = _V + 1;
-    if (*n is Cons) then
-        _V = _V + (*n is Cons).head;
-        traverse &&(*n is Cons).tail;
+    if (*n is List.Cons) then
+        _V = _V + (*n is List.Cons).head;
+        traverse &&(*n is List.Cons).tail;
     end
 end
 */
@@ -61274,19 +61321,19 @@ class Body with
     pool&[3]  Body bodies;
     var   List&&    n;
 do
-    if (*n is Nil) then
+    if (*n is List.Nil) then
 native _V;
         _V = _V * 2;
     end
     watching *n do
         _V = _V + 1;
-        if (*n is Cons) then
-            _V = _V + (*n is Cons).head;
+        if (*n is List.Cons) then
+            _V = _V + (*n is List.Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n is Cons).tail;
+                    this.n      = &&(*n is List.Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -61311,15 +61358,15 @@ escape _V;
 Test { [[
 data List;
     data Nil_;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
-pool[4] List list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+pool[4] List list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 native do
     int V = 0;
@@ -61328,9 +61375,9 @@ end
 /*
 traverse n in &&list do
     _V = _V + 1;
-    if (*n is Cons) then
-        _V = _V + (*n is Cons).head;
-        traverse &&(*n is Cons).tail;
+    if (*n is List.Cons) then
+        _V = _V + (*n is List.Cons).head;
+        traverse &&(*n is List.Cons).tail;
     end
 end
 */
@@ -61340,17 +61387,17 @@ class Body with
     var   List&&    n;
 do
     watching *n do
-        if (*n is Nil) then
+        if (*n is List.Nil) then
 native _V;
             _V = _V * 2;
-        else/if (*n is Cons) then
+        else/if (*n is List.Cons) then
             _V = _V + 1;
-            _V = _V + (*n is Cons).head;
+            _V = _V + (*n is List.Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n is Cons).tail;
+                    this.n      = &&(*n is List.Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -61373,16 +61420,16 @@ escape _V;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 native do
     int V = 0;
@@ -61391,9 +61438,9 @@ end
 traverse n in &&list do
 native _V;
     _V = _V + 1;
-    if (*n is Cons) then
-        _V = _V + (*n is Cons).head;
-        traverse &&(*n is Cons).tail;
+    if (*n is List.Cons) then
+        _V = _V + (*n is List.Cons).head;
+        traverse &&(*n is List.Cons).tail;
     end
 end
 
@@ -61404,13 +61451,13 @@ class Body with
 do
     watching *n do
         _V = _V + 1;
-        if (*n is Cons) then
-            _V = _V + (*n is Cons).head;
+        if (*n is List.Cons) then
+            _V = _V + (*n is List.Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n is Cons).tail;
+                    this.n      = &&(*n is List.Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -61434,15 +61481,15 @@ escape _V;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
-pool[3] List list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+pool[3] List list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 native do
     int V = 0;
@@ -61451,9 +61498,9 @@ end
 traverse n in &&list do
 native _V;
     _V = _V + 1;
-    if (*n is Cons) then
-        _V = _V + (*n is Cons).head;
-        traverse &&(*n is Cons).tail;
+    if (*n is List.Cons) then
+        _V = _V + (*n is List.Cons).head;
+        traverse &&(*n is List.Cons).tail;
     end
 end
 
@@ -61464,13 +61511,13 @@ class Body with
 do
     watching *n do
         _V = _V + 1;
-        if (*n is Cons) then
-            _V = _V + (*n is Cons).head;
+        if (*n is List.Cons) then
+            _V = _V + (*n is List.Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n is Cons).tail;
+                    this.n      = &&(*n is List.Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -61494,15 +61541,15 @@ escape _V;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
-pool[3] List list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+pool[3] List list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
@@ -61510,9 +61557,9 @@ traverse n in &&list do
     sum = sum + 1;
     watching *n do
         await 1s;
-        if (*n is Cons) then
-            sum = sum + (*n is Cons).head;
-            traverse &&(*n is Cons).tail;
+        if (*n is List.Cons) then
+            sum = sum + (*n is List.Cons).head;
+            traverse &&(*n is List.Cons).tail;
         end
     end
 end
@@ -61524,16 +61571,16 @@ escape sum;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
@@ -61541,9 +61588,9 @@ traverse n in &&list do
     sum = sum + 1;
     //watching *n do
         await 1s;
-        if (*n is Cons) then
-            sum = sum + (*n is Cons).head;
-            traverse &&(*n is Cons).tail;
+        if (*n is List.Cons) then
+            sum = sum + (*n is List.Cons).head;
+            traverse &&(*n is List.Cons).tail;
         end
     //end
 end
@@ -61562,25 +61609,25 @@ native do
 end
 
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
-pool[3] List list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+pool[3] List list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 traverse n in &&list do
     sum = sum + 1;
     watching *n do
         await 1s;
-        if (*n is Cons) then
-            sum = sum + (*n is Cons).head;
-            traverse &&(*n is Cons).tail;
-            sum = sum + (*n is Cons).head;
+        if (*n is List.Cons) then
+            sum = sum + (*n is List.Cons).head;
+            traverse &&(*n is List.Cons).tail;
+            sum = sum + (*n is List.Cons).head;
         end
     end
 end
@@ -61598,8 +61645,8 @@ native do
 end
 
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
@@ -61607,19 +61654,19 @@ data List;
 class Tx with
 do
     pool[3] List list;
-    list = new Cons(1,
-                Cons(2,
-                    Cons(3, Nil())));
+    list = new List.Cons(1,
+                List.Cons(2,
+                    List.Cons(3, List.Nil())));
 
     var int sum = 0;
     traverse n in &&list do
         sum = sum + 1;
         watching *n do
             await 1s;
-            if (*n is Cons) then
-                sum = sum + (*n is Cons).head;
-                traverse &&(*n is Cons).tail;
-                sum = sum + (*n is Cons).head;
+            if (*n is List.Cons) then
+                sum = sum + (*n is List.Cons).head;
+                traverse &&(*n is List.Cons).tail;
+                sum = sum + (*n is List.Cons).head;
             end
         end
     end
@@ -61635,8 +61682,8 @@ escape sum;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -61644,8 +61691,8 @@ data Tree;
 
 pool[] Tree tree;
 tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int sum = 0;
 
@@ -61668,16 +61715,16 @@ escape sum;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int sum = 0;
 
@@ -61699,16 +61746,16 @@ escape sum;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int sum = 0;
 
@@ -61731,8 +61778,8 @@ escape sum;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -61740,8 +61787,8 @@ data Tree;
 
 pool[] Tree tree;
 tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int sum = 1;
 
@@ -61762,8 +61809,8 @@ escape sum;
 }
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -61771,8 +61818,8 @@ data Tree;
 
 pool[3] Tree tree;
 tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int sum = 1;
 
@@ -61793,8 +61840,8 @@ escape sum;
 
 Test { [[
 data Tx;
-    data Nil is Tx;
-    data Nxt is Tx with
+    data Tx.Nil;
+    data Tx.Nxt with
         var int v;
         var Tx   nxt;
     end
@@ -61820,8 +61867,8 @@ escape 1;
 }
 Test { [[
 data Tx;
-    data Nil is Tx;
-    data Nxt is Tx with
+    data Tx.Nil;
+    data Tx.Nxt with
         var int v;
         var Tx   nxt;
     end
@@ -61846,8 +61893,8 @@ escape 1;
 }
 Test { [[
 data Tx;
-    data Nil is Tx;
-    data Nxt is Tx with
+    data Tx.Nil;
+    data Tx.Nxt with
         var int v;
         var Tx   nxt;
     end
@@ -61878,8 +61925,8 @@ escape 1;
 }
 Test { [[
 data Tx;
-    data Nil is Tx;
-    data Nxt is Tx with
+    data Tx.Nil;
+    data Tx.Nxt with
         var int v;
         var Tx   nxt;
     end
@@ -61910,8 +61957,8 @@ escape 1;
 
 Test { [[
 data Tx;
-    data Nil is Tx;
-    data Nxt is Tx with
+    data Tx.Nil;
+    data Tx.Nxt with
         var int v;
         var Tx   nxt;
     end
@@ -61957,8 +62004,8 @@ escape 1;
 }
 Test { [[
 data Tx;
-    data Nil is Tx;
-    data Nxt is Tx with
+    data Tx.Nil;
+    data Tx.Nxt with
         var int v;
         var Tx   nxt;
     end
@@ -62004,16 +62051,16 @@ escape 1;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int sum = 1;
 
@@ -62035,16 +62082,16 @@ escape sum;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int sum = 1;
 
@@ -62066,8 +62113,8 @@ escape sum;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
@@ -62075,8 +62122,8 @@ data Tree;
 
 pool[3] Tree tree;
 tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int sum = 1;
 
@@ -62100,16 +62147,16 @@ escape sum;
 
 Test { [[
 data Tree;
-    data Nil is Tree;
-    data Node is Tree with
+    data Tree.Nil;
+    data Tree.Node with
         var int   v;
         var Tree  left;
         var Tree  right;
     end
 
 pool[3] Tree tree = new Node(1,
-            Node(2, Nil(), Nil()),
-            Node(3, Nil(), Nil()));
+            Node(2, Tree.Nil(), Tree.Nil()),
+            Node(3, Tree.Nil(), Tree.Nil()));
 
 var int sum = 1;
 
@@ -62134,7 +62181,7 @@ native _ceu_out_assert_msg;
     _ceu_out_assert_msg(sum == 4, "2");
     await 1s;
     _ceu_out_assert_msg(sum == 5, "3");
-    tree = new Nil();
+    tree = new Tree.Nil();
     _ceu_out_assert_msg(sum == 4, "4");
 end
 
@@ -62146,25 +62193,25 @@ escape sum;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is Cons) then
-        sum = sum + (*n is Cons).head;
+    if (*n is List.Cons) then
+        sum = sum + (*n is List.Cons).head;
         loop i in [0 -> 1[ do
-            traverse &&(*n is Cons).tail;
+            traverse &&(*n is List.Cons).tail;
         end
     end
 end
@@ -62175,25 +62222,25 @@ escape sum;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is Cons) then
-        sum = sum + (*n is Cons).head;
+    if (*n is List.Cons) then
+        sum = sum + (*n is List.Cons).head;
         //loop i in [0 -> 1[ do
-            traverse &&(*n is Cons).tail;
+            traverse &&(*n is List.Cons).tail;
         //end
     end
 end
@@ -62205,25 +62252,25 @@ escape sum;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list
-    = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+    = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
 traverse n in &&list do
     sum = sum + 1;
-    if (*n is Cons) then
-        sum = sum + (*n is Cons).head;
+    if (*n is List.Cons) then
+        sum = sum + (*n is List.Cons).head;
         //loop i in [0 -> 1[ do
-            traverse &&(*n is Cons).tail;
+            traverse &&(*n is List.Cons).tail;
         //end
     end
 end
@@ -62255,8 +62302,8 @@ escape 1;
 
 Test { [[
 data Widget;
-    data Empty is Widget;
-    data Seq is Widget with
+    data Widget.Empty;
+    data Widget.Seq with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62298,8 +62345,8 @@ escape ret;
 }
 Test { [[
 data Widget;
-    data Empty is Widget;
-    data Seq is Widget with
+    data Widget.Empty;
+    data Widget.Seq with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62340,8 +62387,8 @@ escape ret;
 }
 Test { [[
 data Widget;
-    data Empty is Widget;
-    data Seq is Widget with
+    data Widget.Empty;
+    data Widget.Seq with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62383,8 +62430,8 @@ escape ret;
 
 Test { [[
 data Widget;
-    data Empty is Widget;
-    data Seq is Widget with
+    data Widget.Empty;
+    data Widget.Seq with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62425,8 +62472,8 @@ escape ret;
 }
 Test { [[
 data Widget;
-    data Empty is Widget;
-    data Seq is Widget with
+    data Widget.Empty;
+    data Widget.Seq with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62466,26 +62513,26 @@ escape ret;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
-pool[] List l = new Cons(1,
-            Cons(2,
-                Cons(3,
-                    Cons(4,
-                        Cons(5,
-                            Nil())))));
+pool[] List l = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3,
+                    List.Cons(4,
+                        List.Cons(5,
+                            List.Nil())))));
 
 var int ret = 0;
 
 par/or do
-    await (((l as Cons).tail) as Cons).tail;
+    await (((l as List.Cons).tail) as List.Cons).tail;
     ret = 100;
 with
-    (((l as Cons).tail) as Cons).tail = new Nil();
+    (((l as List.Cons).tail) as List.Cons).tail = new List.Nil();
     ret = 10;
 end
 
@@ -62497,57 +62544,57 @@ escape ret;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[] List l;
-l = new Cons(1,
-            Cons(2,
-                Cons(3,
-                    Cons(4,
-                        Cons(5,
-                            Nil())))));
+l = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3,
+                    List.Cons(4,
+                        List.Cons(5,
+                            List.Nil())))));
 
 var int ret = 0;
 
 native _ceu_out_assert_msg;
 par/or do
-    await (((l as Cons).tail) as Cons).tail;
-    ret = ret + ((((l as Cons).tail) as Cons).tail as Cons).head;    // 0+4
+    await (((l as List.Cons).tail) as List.Cons).tail;
+    ret = ret + ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head;    // 0+4
     _ceu_out_assert_msg(ret == 4, "1");
-    (((l as Cons).tail) as Cons).tail = ((((l as Cons).tail) as Cons).tail as Cons).tail;
-    ret = ret + ((((l as Cons).tail) as Cons).tail as Cons).head;    // 0+4+5
+    (((l as List.Cons).tail) as List.Cons).tail = ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).tail;
+    ret = ret + ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head;    // 0+4+5
     _ceu_out_assert_msg(ret == 9, "2");
 
-    await (((l as Cons).tail) as Cons).tail;
-    ret = ret + (((((l as Cons).tail) as Cons).tail is Nil)as int);          // 0+4+5+5+1
+    await (((l as List.Cons).tail) as List.Cons).tail;
+    ret = ret + (((((l as List.Cons).tail) as List.Cons).tail is List.Nil)as int);          // 0+4+5+5+1
     _ceu_out_assert_msg(ret == 15, "4");
     await FOREVER;
 with
-    await (((l as Cons).tail) as Cons).tail;
+    await (((l as List.Cons).tail) as List.Cons).tail;
     _ceu_out_assert_msg(ret == 9, "3");
-    ret = ret + ((((l as Cons).tail) as Cons).tail as Cons).head;    // 0+4+5+5
-    (((l as Cons).tail) as Cons).tail = new Nil();
+    ret = ret + ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head;    // 0+4+5+5
+    (((l as List.Cons).tail) as List.Cons).tail = new List.Nil();
 
     _ceu_out_assert_msg(ret == 15, "5");
-    await (((l as Cons).tail) as Cons).tail;
+    await (((l as List.Cons).tail) as List.Cons).tail;
     // never reached
     _ceu_out_assert_msg(ret == 15, "6");
     await FOREVER;
 with
-    await (((l as Cons).tail) as Cons).tail;
-    ret = ret + (((((l as Cons).tail) as Cons).tail is Nil)as int);          // 0+4+5+5+1+1
+    await (((l as List.Cons).tail) as List.Cons).tail;
+    ret = ret + (((((l as List.Cons).tail) as List.Cons).tail is List.Nil)as int);          // 0+4+5+5+1+1
 
-    await (((l as Cons).tail) as Cons).tail;
+    await (((l as List.Cons).tail) as List.Cons).tail;
     _ceu_out_assert_msg(ret == 16, "7");
     await FOREVER;
 with
-    (((l as Cons).tail) as Cons).tail = ((((l as Cons).tail) as Cons).tail as Cons).tail;
+    (((l as List.Cons).tail) as List.Cons).tail = ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).tail;
     ret = ret * 2;  // (0+4+5+5+1+1) * 2
-    (((l as Cons).tail) as Cons).tail = new Cons(10, Nil());
+    (((l as List.Cons).tail) as List.Cons).tail = new List.Cons(10, List.Nil());
 end
 
 escape ret;
@@ -62560,11 +62607,11 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data Nil is Wiget;
-    data Vv is Widget with
+    data Wiget.Nil;
+    data Widget.Vv with
         var int v;
     end
-    data Row is Widget with
+    data Widget.Row with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62615,9 +62662,9 @@ input void OS_START;
 
 data Widget;
     data Nil_;
-    data Nil is Wiget;
-    data Empty is Wiget;
-    data Row is Widget with
+    data Wiget.Nil;
+    data Wiget.Empty;
+    data Widget.Row with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62632,7 +62679,7 @@ with
 
     traverse widget in &&widgets do
         watching *widget do
-            if (*widget is Nil) then
+            if (*widget is List.Nil) then
                 await FOREVER;
             else/if (*widget is Empty) then
                 escape 1;
@@ -62671,14 +62718,14 @@ Test { [[
 input void OS_START;
 
 data List;
-    data Nil is List;
-    data Empty is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Empty;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
-pool[] List l = new Cons(1, Empty());
+pool[] List l = new List.Cons(1, Empty());
 
 par/or do
     traverse e in &&l do
@@ -62686,9 +62733,9 @@ par/or do
             if (*e is Empty) then
                 await FOREVER;
 
-            else/if (*e is Cons) then
+            else/if (*e is List.Cons) then
                 loop do
-                    traverse &&(*e as Cons).tail;
+                    traverse &&(*e as List.Cons).tail;
 native _ceu_out_assert_msg;
                     _ceu_out_assert_msg(0, "0");
                 end
@@ -62712,9 +62759,9 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data Nil is Widget;
-    data Empty is Widget;
-    data Seq is Widget with
+    data Widget.Nil;
+    data Widget.Empty;
+    data Widget.Seq with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62742,14 +62789,14 @@ par/or do
                         traverse &&(*widget as Seq).w1 with
                             this.param = param + 1;
                         end;
-if ((*widget is Seq).w1 is Nil) then
+if ((*widget is Seq).w1 is List.Nil) then
     await FOREVER;
 end
                     with
                         traverse &&(*widget as Seq).w2 with
                             this.param = param + 1;
                         end;
-if ((*widget is Seq).w2 is Nil) then
+if ((*widget is Seq).w2 is List.Nil) then
     await FOREVER;
 end
                     end
@@ -62775,9 +62822,9 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data Nil is Widget;
-    data Empty is Widget;
-    data Seq is Widget with
+    data Widget.Nil;
+    data Widget.Empty;
+    data Widget.Seq with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62804,14 +62851,14 @@ par/or do
                         traverse &&(*widget as Seq).w1 with
                             this.param = param + 1;
                         end;
-if ((*widget is Seq).w1 is Nil) then
+if ((*widget is Seq).w1 is List.Nil) then
     await FOREVER;
 end
                     with
                         traverse &&(*widget as Seq).w2 with
                             this.param = param + 1;
                         end;
-if ((*widget is Seq).w2 is Nil) then
+if ((*widget is Seq).w2 is List.Nil) then
     await FOREVER;
 end
                     end
@@ -62837,9 +62884,9 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data Nil is Widget;
-    data Empty is Widget;
-    data Seq is Widget with
+    data Widget.Nil;
+    data Widget.Empty;
+    data Widget.Seq with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62867,7 +62914,7 @@ par/or do
                         traverse &&(*widget as Seq).w1 with
                             this.param = param + 1;
                         end;
-if ((*widget is Seq).w1 is Nil) then
+if ((*widget is Seq).w1 is List.Nil) then
 native _ceu_out_assert_msg;
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
@@ -62876,7 +62923,7 @@ end
                         traverse &&(*widget as Seq).w2 with
                             this.param = param + 1;
                         end;
-if ((*widget is Seq).w2 is Nil) then
+if ((*widget is Seq).w2 is List.Nil) then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -62902,9 +62949,9 @@ Test { [[
 input void OS_START;
 
 data Widget;
-    data Nil is Widget;
-    data Empty is Widget;
-    data Seq is Widget with
+    data Widget.Nil;
+    data Widget.Empty;
+    data Widget.Seq with
         var Widget  w1;
         var Widget  w2;
     end
@@ -62931,7 +62978,7 @@ par/or do
                         traverse &&(*widget as Seq).w1 with
                             this.param = param + 1;
                         end;
-if ((*widget is Seq).w1 is Nil) then
+if ((*widget is Seq).w1 is List.Nil) then
 native _ceu_out_assert_msg;
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
@@ -62940,7 +62987,7 @@ end
                         traverse &&(*widget as Seq).w2 with
                             this.param = param + 1;
                         end;
-if ((*widget is Seq).w2 is Nil) then
+if ((*widget is Seq).w2 is List.Nil) then
 _ceu_out_assert_msg(0, "ok\n");
     await FOREVER;
 end
@@ -62964,18 +63011,18 @@ escape ret;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Forward is Command with
+    data Command.Nothing;
+    data Command.Forward with
         var int pixels;
     end
-    data Sequence is Command with
+    data Command.Sequence with
         var Command  one;
         var Command  two;
     end
 
 pool[] Command cmds;
 
-cmds = new Sequence(
+cmds = new Command.Sequence(
             Forward(100),
             Forward(500));
 
@@ -62987,8 +63034,8 @@ end
             if (*cmd is Forward) then
                 await FOREVER;
 
-            else/if (*cmd is Sequence) then
-                traverse &&(*cmd as Sequence).one;
+            else/if (*cmd is Command.Sequence) then
+                traverse &&(*cmd as Command.Sequence).one;
 
             else
             end
@@ -63008,19 +63055,19 @@ escape 10;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Sequence is Command with
+    data Command.Nothing;
+    data Command.Sequence with
         var Command  one;
     end
 
-pool[] Command cmds = new Sequence(Nothing());
+pool[] Command cmds = new Command.Sequence(Command.Nothing());
 
 par/or do
     traverse cmd in &&cmds do
         if (*cmd is Nothing) then
             await FOREVER;
-        else/if (*cmd is Sequence) then
-            traverse &&(*cmd as Sequence).one;
+        else/if (*cmd is Command.Sequence) then
+            traverse &&(*cmd as Command.Sequence).one;
         end
     end
 with
@@ -63034,18 +63081,18 @@ escape 10;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Forward is Command with
+    data Command.Nothing;
+    data Command.Forward with
         var int pixels;
     end
-    data Sequence is Command with
+    data Command.Sequence with
         var Command  one;
         var Command  two;
     end
 
 pool[] Command cmds;
 
-cmds = new Sequence(
+cmds = new Command.Sequence(
             Forward(100),
             Forward(500));
 
@@ -63055,8 +63102,8 @@ par/or do
             if (*cmd is Forward) then
                 await FOREVER;
 
-            else/if (*cmd is Sequence) then
-                traverse &&(*cmd as Sequence).one;
+            else/if (*cmd is Command.Sequence) then
+                traverse &&(*cmd as Command.Sequence).one;
 
             else
             end
@@ -63078,17 +63125,17 @@ Test { [[
 input int SDL_DT;
 
 data Command;
-    data Nothing is Command;
-    data Forward is Command with
+    data Command.Nothing;
+    data Command.Forward with
         var int pixels;
     end
-    data Sequence is Command with
+    data Command.Sequence with
         var Command  one;
         var Command  two;
     end
 
 // TODO: aceitar estatico
-pool[] Command cmds = new Sequence(
+pool[] Command cmds = new Command.Sequence(
             Forward(100),
             Forward(500));
 
@@ -63100,11 +63147,11 @@ with
             if (*cmd is Forward) then
                 await FOREVER;
 
-            else/if (*cmd is Sequence) then
-                traverse &&(*cmd as Sequence).one;
+            else/if (*cmd is Command.Sequence) then
+                traverse &&(*cmd as Command.Sequence).one;
 native _ceu_out_assert_msg;
                 _ceu_out_assert_msg(0, "bug found"); // cmds has to die entirely before children
-                traverse &&(*cmd as Sequence).two;
+                traverse &&(*cmd as Command.Sequence).two;
             end
         end
     end
@@ -63121,11 +63168,11 @@ Test { [[
 input int SDL_DT;
 
 data Command;
-    data Nothing is Command;
-    data Forward is Command with
+    data Command.Nothing;
+    data Command.Forward with
         var int pixels;
     end
-    data Sequence is Command with
+    data Command.Sequence with
         var Command  one;
         var Command  two;
     end
@@ -63133,7 +63180,7 @@ data Command;
 // TODO: aceitar estatico
 pool[] Command cmds;
 
-cmds = new Sequence(
+cmds = new Command.Sequence(
             Forward(100),
             Forward(500));
 
@@ -63145,9 +63192,9 @@ with
             if (*cmd is Forward) then
                 await FOREVER;
 
-            else/if (*cmd is Sequence) then
-                traverse &&(*cmd as Sequence).one;
-                traverse &&(*cmd as Sequence).two;
+            else/if (*cmd is Command.Sequence) then
+                traverse &&(*cmd as Command.Sequence).one;
+                traverse &&(*cmd as Command.Sequence).two;
             end
         end
     end
@@ -63163,9 +63210,9 @@ escape 10;
 
 Test { [[
 data Command;
-    data Nothing is Command;
+    data Command.Nothing;
     data Left;
-    data Repeat is Command with
+    data Command.Repeat with
         var Command  command;
     end
 
@@ -63205,27 +63252,27 @@ Test { [[
 input int SDL_DT;
 
 data Command;
-    data Nothing is Command;
-    data Await is Command with
+    data Command.Nothing;
+    data Command.Await with
         var int ms;
     end
-    data Right is Command with
+    data Command.Right with
         var int angle;
     end
-    data Left is Command with
+    data Command.Left with
         var int angle;
     end
-    data Forward is Command with
+    data Command.Forward with
         var int pixels;
     end
-    data Backward is Command with
+    data Command.Backward with
         var int pixels;
     end
-    data Sequence is Command with
+    data Command.Sequence with
         var Command  one;
         var Command  two;
     end
-    data Repeat is Command with
+    data Command.Repeat with
         var int      times;
         var Command  command;
     end
@@ -63234,19 +63281,19 @@ data Command;
 pool[] Command cmds;
 
 cmds = new Repeat(2,
-            Sequence(
+            Command.Sequence(
                 Await(500),
-                Sequence(
+                Command.Sequence(
                     Right(45),
-                    Sequence(
+                    Command.Sequence(
                         Forward(100),
-                        Sequence(
+                        Command.Sequence(
                             Left(90),
-                            Sequence(
+                            Command.Sequence(
                                 Forward(100),
-                                Sequence(
+                                Command.Sequence(
                                     Right(45),
-                                    Sequence(
+                                    Command.Sequence(
                                         Backward(100),
                                         Await(500)))))))));
 
@@ -63355,9 +63402,9 @@ with
                     this.isForward = (*cmd is Forward);
                 end;
 
-            else/if (*cmd is Sequence) then
-                traverse &&(*cmd as Sequence).one;
-                traverse &&(*cmd as Sequence).two;
+            else/if (*cmd is Command.Sequence) then
+                traverse &&(*cmd as Command.Sequence).one;
+                traverse &&(*cmd as Command.Sequence).two;
 
             else/if (*cmd is Repeat) then
                 loop i in (*cmd as Repeat).times do
@@ -63382,15 +63429,15 @@ escape 10;
 -- creates a loop when reusing address of organisms being killed
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Await is Command with
+    data Command.Nothing;
+    data Command.Await with
         var int ms;
     end
-    data Sequence is Command with
+    data Command.Sequence with
         var Command  one;
         var Command  two;
     end
-    data Repeat is Command with
+    data Command.Repeat with
         var int      times;
         var Command  command;
     end
@@ -63398,9 +63445,9 @@ data Command;
 pool[] Command cmds;
 
 cmds = new Repeat(2,
-            Sequence(
+            Command.Sequence(
                 Await(100),
-                Sequence(
+                Command.Sequence(
                     Await(100),
                     Await(500))));
 
@@ -63412,10 +63459,10 @@ traverse cmd in &&cmds do
             await ((*cmd as Await).ms) ms;
             ret = ret + 1;
 
-        else/if (*cmd is Sequence) then
+        else/if (*cmd is Command.Sequence) then
             ret = ret + 2;
-            traverse &&(*cmd as Sequence).one;
-            traverse &&(*cmd as Sequence).two;
+            traverse &&(*cmd as Command.Sequence).one;
+            traverse &&(*cmd as Command.Sequence).two;
 
         else/if (*cmd is Repeat) then
             loop i in [0->(*cmd as Repeat).times[ do
@@ -63446,24 +63493,24 @@ finalize with
 end
 
 data Command;
-    data Nothing is Command;
-    data Await is Command with
+    data Command.Nothing;
+    data Command.Await with
         var int ms;
     end
-    data Sequence is Command with
+    data Command.Sequence with
         var Command  one;
         var Command  two;
     end
-    data Repeat is Command with
+    data Command.Repeat with
         var int      times;
         var Command  command;
     end
 
 // TODO: aceitar estatico
 pool[] Command cmds = new Repeat(2,
-            Sequence(
+            Command.Sequence(
                 Await(100),
-                Sequence(
+                Command.Sequence(
                     Await(300),
                     Await(500))));
 
@@ -63475,10 +63522,10 @@ traverse cmd in &&cmds do
             await ((*cmd as Await).ms) ms;
             ret = ret + 1;
 
-        else/if (*cmd is Sequence) then
+        else/if (*cmd is Command.Sequence) then
             ret = ret + 2;
-            traverse &&(*cmd as Sequence).one;
-            traverse &&(*cmd as Sequence).two;
+            traverse &&(*cmd as Command.Sequence).one;
+            traverse &&(*cmd as Command.Sequence).two;
 
         else/if (*cmd is Repeat) then
             loop i in [0->(*cmd as Repeat).times[ do
@@ -63502,21 +63549,21 @@ escape ret;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var List tail;
     end
 
 pool[] List ls;
-ls = new Cons(Nil());
+ls = new List.Cons(List.Nil());
 
 traverse l in &&ls do
-    if (*l is Nil) then
+    if (*l is List.Nil) then
         await FOREVER;
     else
         watching *l do
             par/or do
-                traverse &&((l as Cons).tail);
+                traverse &&((l as List.Cons).tail);
             with
                 await 1s;
             end
@@ -63531,16 +63578,16 @@ escape 1;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Hold is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Hold;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[] List ls;
-ls = new Cons(1,
-            Cons(2,
+ls = new List.Cons(1,
+            List.Cons(2,
                 Hold()));
 
 var int ret = 0;
@@ -63555,7 +63602,7 @@ traverse l in &&ls do
             await FOREVER;
         else
             par/or do
-                traverse &&((l as Cons).tail);
+                traverse &&((l as List.Cons).tail);
             with
                 await 1s;
             end
@@ -63570,16 +63617,16 @@ escape ret;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Hold is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Hold;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[] List ls;
-ls = new Cons(1,
-            Cons(2,
+ls = new List.Cons(1,
+            List.Cons(2,
                 Hold()));
 
 var int ret = 0;
@@ -63595,7 +63642,7 @@ do
                 await FOREVER;
             else
                 par/or do
-                    traverse &&((l as Cons).tail);
+                    traverse &&((l as List.Cons).tail);
                 with
                     await 1s;
                 end
@@ -63611,15 +63658,15 @@ escape ret;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Hold is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Hold;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
-pool[10] List ls = new Cons(1,
-            Cons(2,
+pool[10] List ls = new List.Cons(1,
+            List.Cons(2,
                 Hold()));
 
 var int ret = 0;
@@ -63634,7 +63681,7 @@ traverse l in &&ls do
             await FOREVER;
         else
             par/or do
-                traverse &&((l as Cons).tail);
+                traverse &&((l as List.Cons).tail);
             with
                 await 1s;
             end
@@ -63648,15 +63695,15 @@ escape ret;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Hold is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Hold;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
-pool[10] List ls = new Cons(1,
-            Cons(2,
+pool[10] List ls = new List.Cons(1,
+            List.Cons(2,
                 Hold()));
 
 var int ret = 0;
@@ -63672,7 +63719,7 @@ do
                 await FOREVER;
             else
                 par/or do
-                    traverse &&((l as Cons).tail);
+                    traverse &&((l as List.Cons).tail);
                 with
                     await 1s;
                 end
@@ -63688,8 +63735,8 @@ escape ret;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
@@ -63698,7 +63745,7 @@ pool[10] List list;
 
 var int i = 10;
 traverse l in &&list do
-    list = new Cons(i, Nil());
+    list = new List.Cons(i, List.Nil());
 end
 
 escape 1;
@@ -63707,8 +63754,8 @@ escape 1;
 }
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
@@ -63717,13 +63764,13 @@ pool[10] List list;
 
 loop i in [0 -> 10[ do
     traverse l in &&list do
-        if (*l is Nil) then
-            list = new Cons(i, Nil());
-        else/if (*l as Cons) then
-            if ((l as Cons).tail) is Nil then
-                ((l as Cons).tail) = new Cons(i, Nil());
+        if (*l is List.Nil) then
+            list = new List.Cons(i, List.Nil());
+        else/if (*l as List.Cons) then
+            if ((l as List.Cons).tail) is List.Nil then
+                ((l as List.Cons).tail) = new List.Cons(i, List.Nil());
             else
-                traverse &&((l as Cons).tail);
+                traverse &&((l as List.Cons).tail);
             end
         end
     end
@@ -63732,9 +63779,9 @@ end
 var int sum = 0;
 
 traverse l in &&list do
-    if (*l as Cons) then
-        sum = sum + ((l as Cons).head);
-        traverse &&((l as Cons).tail);
+    if (*l as List.Cons) then
+        sum = sum + ((l as List.Cons).head);
+        traverse &&((l as List.Cons).tail);
     end
 end
 
@@ -63746,16 +63793,16 @@ escape sum;
 -- innefective Nil inside watching
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 native do
     int V = 0;
@@ -63766,17 +63813,17 @@ class Body with
     var   List&&   n;
 do
     watching *n do
-        if (*n is Nil) then
+        if (*n is List.Nil) then
 native _V;
             _V = _V * 2;
-        else/if (*n is Cons) then
+        else/if (*n is List.Cons) then
             _V = _V + 1;
-            _V = _V + (*n is Cons).head;
+            _V = _V + (*n is List.Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = bodies;
-                    this.n      = &&(*n is Cons).tail;
+                    this.n      = &&(*n is List.Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -63798,16 +63845,16 @@ escape _V;
 Test { [[
 data List;
     data Nil_;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[4] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 native do
     int V = 0;
@@ -63818,17 +63865,17 @@ class Body with
     var   List&&   n;
 do
     watching *n do
-        if (*n is Nil) then
+        if (*n is List.Nil) then
 native _V;
             _V = _V * 2;
-        else/if (*n is Cons) then
+        else/if (*n is List.Cons) then
             _V = _V + 1;
-            _V = _V + (*n is Cons).head;
+            _V = _V + (*n is List.Cons).head;
 
             var Body&&? tail =
                 spawn Body in this.bodies with
                     this.bodies = &bodies;
-                    this.n      = &&(*n is Cons).tail;
+                    this.n      = &&(*n is List.Cons).tail;
                 end;
             if tail? then
                 await *tail!;
@@ -63852,16 +63899,16 @@ escape _V;
 -- innefective Nil inside watching
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 native do
     int V = 0;
@@ -63871,11 +63918,11 @@ traverse n in &&list do
 native _V;
     _V = _V + 1;
     watching *n do
-        if (*n is Nil) then
+        if (*n is List.Nil) then
             _V = _V * 2;
-        else/if (*n is Cons) then
-            _V = _V + (*n is Cons).head;
-            traverse &&(*n is Cons).tail;
+        else/if (*n is List.Cons) then
+            _V = _V + (*n is List.Cons).head;
+            traverse &&(*n is List.Cons).tail;
         end
     end
     await 1s;
@@ -63888,17 +63935,17 @@ escape _V;
 
 Test { [[
 data List;
-    data Nil_ is List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil_;
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[4] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 native do
     int V = 0;
@@ -63908,11 +63955,11 @@ traverse n in &&list do
 native _V;
     _V = _V + 1;
     watching *n do
-        if (*n is Nil) then
+        if (*n is List.Nil) then
             _V = _V * 2;
-        else/if (*n is Cons) then
-            _V = _V + (*n is Cons).head;
-            traverse &&(*n is Cons).tail;
+        else/if (*n is List.Cons) then
+            _V = _V + (*n is List.Cons).head;
+            traverse &&(*n is List.Cons).tail;
         end
     end
     await 1s;
@@ -63927,8 +63974,8 @@ escape _V;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Val is List with
+    data List.Nil;
+    data List.Val with
         var List  l;
     end
 
@@ -63992,12 +64039,12 @@ escape 1;
 
 Test { [[
 data Stmt;
-    data Nil is Stmt;
-    data Seq is Stmt with
+    data Stmt.Nil;
+    data Stmt.Seq with
         var Stmt s1;
     end
 
-pool[2] Stmt stmts = new Nil();
+pool[2] Stmt stmts = new Stmt.Nil();
 
 var int ddd = do/_
     traverse stmt in &&stmts do
@@ -64013,12 +64060,12 @@ escape ddd;
 
 Test { [[
 data Stmt;
-    data Nil is Stmt;
-    data Seq is Stmt with
+    data Stmt.Nil;
+    data Stmt.Seq with
         var Stmt s1;
     end
 
-pool[] Stmt stmts = new Nil();
+pool[] Stmt stmts = new Stmt.Nil();
 
 var int v1 = 10;
 
@@ -64038,26 +64085,26 @@ escape ret;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list = new
-    Cons(1,
-        Cons(2,
-            Cons(3,
-                Nil())));
+    List.Cons(1,
+        List.Cons(2,
+            List.Cons(3,
+                List.Nil())));
 
 var int s1 = do/_
     traverse l in &&list do
-        if (*l is Nil) then
+        if (*l is List.Nil) then
             escape 0;
         else
             watching *l do
-                var int sum_tail = traverse &&((l as Cons).tail);
-                escape sum_tail + ((l as Cons).head);
+                var int sum_tail = traverse &&((l as List.Cons).tail);
+                escape sum_tail + ((l as List.Cons).head);
             end
         end
 end
@@ -64070,28 +64117,28 @@ escape s1;
 
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list = new
-    Cons(1,
-        Cons(2,
-            Cons(3,
-                Nil())));
+    List.Cons(1,
+        List.Cons(2,
+            List.Cons(3,
+                List.Nil())));
 
 var int s2 = 0;
 var int s1 = do/_
     traverse l in &&list do
-        if (*l is Nil) then
+        if (*l is List.Nil) then
             escape 0;
         else
             watching *l do
-                var int sum_tail = traverse &&((l as Cons).tail);
-                s2 = s2 + ((l as Cons).head);
-                escape sum_tail + ((l as Cons).head);
+                var int sum_tail = traverse &&((l as List.Cons).tail);
+                s2 = s2 + ((l as List.Cons).head);
+                escape sum_tail + ((l as List.Cons).head);
             end
         end
 end
@@ -64104,9 +64151,9 @@ escape s1 + s2;
 
 Test { [[
 data Tx with
-    data Nil is List;
+    data List.Nil;
 or
-    data Next is Command with
+    data Command.Next with
         var Tx  next;
     end
 end
@@ -64136,16 +64183,16 @@ escape v;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Await is Command with
+    data Command.Nothing;
+    data Command.Await with
         var int ms;
     end
-    data Stream_Root is Command with
+    data Command.Stream_Root with
         var Command  run;
         var Command  now;
         var Command  nxt;
     end
-    data Stream_Next is Command with
+    data Command.Stream_Next with
         var Command  one;
         var Command  two;
     end
@@ -64193,13 +64240,13 @@ escape 1;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Stream_Root is Command with
+    data Command.Nothing;
+    data Command.Stream_Root with
         var Command  run;
         var Command  now;
         var Command  nxt;
     end
-    data Stream_Next is Command with
+    data Command.Stream_Next with
         var Command  one;
         var Command  two;
     end
@@ -64226,22 +64273,22 @@ data Val with
 end
 
 data Exp;
-    data Nil is Exp;
-    data Val is Exp with
+    data Exp.Nil;
+    data Exp.Val with
         var Val v;
     end
-    data Add is Exp with
+    data Exp.Add with
         var Exp e1;
         var Exp e2;
     end
 
 data Stmt;
-    data Nil is Stmt;
-    data Seq is Stmt with
+    data Stmt.Nil;
+    data Stmt.Seq with
         var Stmt s1;
         var Stmt s2;
     end
-    data Print is Stmt with
+    data Stmt.Print with
         var Exp e;
     end
 
@@ -64251,7 +64298,7 @@ pool[] Stmt stmts =
                 Add(
                     Val(Val(10)),
                     Val(Val(5)))),
-            Nil());
+            Exp.Nil());
 
 traverse stmt in stmts do
     if *stmt is Seq then
@@ -64269,11 +64316,11 @@ escape 1;
 -- par/or kills (2) which should be aborted
 Test { [[
 data Exp;
-    data Nil is Exp;
-    data Vv is Exp with
+    data Exp.Nil;
+    data Exp.Vv with
         var int e;
     end
-    data Add is Exp with
+    data Exp.Add with
         var Exp e1;
         var Exp e2;
     end
@@ -64281,7 +64328,7 @@ data Exp;
 var int ret = 0;
 
 pool[] Exp exps = new
-    Add(Nil(), Vv(20));
+    Add(Exp.Nil(), Vv(20));
 
 traverse e in &&exps do
     watching *e do
@@ -64310,14 +64357,14 @@ escape ret;
 
 Test { [[
 data Exp;
-    data Nil is Exp;
-    data Sub is Exp with
+    data Exp.Nil;
+    data Exp.Sub with
         var Exp e2;
     end
 
 data Stmt;
-    data Nil is Stmt;
-    data Seq is Stmt with
+    data Stmt.Nil;
+    data Stmt.Seq with
         var Stmt s1;
         var Exp e;
     end
@@ -64397,26 +64444,26 @@ escape 1;
 -->> TRAVERSE / NESTED-RECURSIVE-DATA
 Test { [[
 data List;
-    data Nil is List;
-    data Cons is List with
+    data List.Nil;
+    data List.Cons with
         var int   head;
         var List  tail;
     end
 
 pool[3] List list;
-list = new Cons(1,
-            Cons(2,
-                Cons(3, Nil())));
+list = new List.Cons(1,
+            List.Cons(2,
+                List.Cons(3, List.Nil())));
 
 var int sum = 0;
 
-pool[] List&& lll = &&(list as Cons).tail;
+pool[] List&& lll = &&(list as List.Cons).tail;
 
 traverse n in lll do
     sum = sum + 1;
-    if (*n is Cons) then
-        sum = sum + (*n is Cons).head;
-        traverse &&(*n is Cons).tail;
+    if (*n is List.Cons) then
+        sum = sum + (*n is List.Cons).head;
+        traverse &&(*n is List.Cons).tail;
     end
 end
 
@@ -64428,26 +64475,26 @@ escape sum;
 
 Test { [[
 data Xx;
-    data Nil is Xx;
-    data Nil is Xx;
+    data Xx.Nil;
+    data Xx.Nil;
 
 escape 1;
 ]],
-    dcls = 'line 3 : declaration of "Nil" hides previous declaration (tests.lua : line 2)',
+    dcls = 'line 3 : declaration of "Xx.Nil" hides previous declaration (tests.lua : line 2)',
     --dcls = 'line 3 : identifier "Nil" is already declared (tests.lua : line 2)',
     --env = 'line 4 : duplicated data : "Nil"',
 }
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Sequence is Command with
+    data Command.Nothing;
+    data Command.Sequence with
         var Command  one;
         var Command  two;
     end
 
 data CommandQueue;
-    data Nothing is CommandQueue;
+    data CommandQueue.Nothing;
     data Nxt with
         var Command       cmd;
         var CommandQueue  nxt;
@@ -64455,36 +64502,37 @@ data CommandQueue;
 
 escape 1;
 ]],
+    wrn = true,
     --run = 1,
     --env = 'line 13 : duplicated data : "Nothing"',
-    dcls = 'line 9 : declaration of "Nothing" hides previous declaration (tests.lua : line 2)',
+    --dcls = 'line 9 : declaration of "Command.Nothing" hides previous declaration (tests.lua : line 2)',
     --dcls = 'line 9 : identifier "Nothing" is already declared (tests.lua : line 2)',
 }
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Sequence is Command with
+    data Command.Nothing;
+    data Command.Sequence with
         var Command  one;
         var Command  two;
     end
 
 data CommandQueue;
-    data Nil is CommandQueue;
+    data CommandQueue.Nil;
     data Nxt with
         var Command       cmd;
         var CommandQueue  nxt;
     end
 
-pool[10] CommandQueue cq1 = new Nothing();
-pool[10] CommandQueue cq2 = new Nil();
+pool[10] CommandQueue cq1 = new Command.Nothing();
+pool[10] CommandQueue cq2 = new CommandQueue.Nil();
 
 pool[10] CommandQueue cq3 = new
     Nxt(
-        Sequence(
-            Nothing(),
-            Nothing()),
-        Nil());
+        Command.Sequence(
+            Command.Nothing(),
+            Command.Nothing()),
+        CommandQueue.Nil());
 
 escape 1;
 ]],
@@ -64493,29 +64541,29 @@ escape 1;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Sequence is Command with
+    data Command.Nothing;
+    data Command.Sequence with
         var Command  one;
         var Command  two;
     end
 
 data CommandQueue;
-    data Nil is CommandQueue;
+    data CommandQueue.Nil;
     data Nxt with
         var Command       cmd;
         var CommandQueue  nxt;
     end
 
-pool[10] CommandQueue cq1 = new Nil();
+pool[10] CommandQueue cq1 = new CommandQueue.Nil();
 
 pool[10] CommandQueue cq2 = new
     Nxt(
-        Sequence(
-            Nothing(),
-            Nothing()),
-        Nil());
+        Command.Sequence(
+            Command.Nothing(),
+            Command.Nothing()),
+        CommandQueue.Nil());
 
-escape ((cq1 is Nil)as int) + ((((cq2 as Nxt).cmd as Sequence).one is Nothing)as int);
+escape ((cq1 is CommandQueue.Nil)as int) + ((((cq2 as Nxt).cmd as Command.Sequence).one is Command.Nothing)as int);
 ]],
     run = 2,
 }
@@ -64525,12 +64573,12 @@ escape ((cq1 is Nil)as int) + ((((cq2 as Nxt).cmd as Sequence).one is Nothing)as
 
 Test { [[
 data List;
-    data Nil is List;
+    data List.Nil;
     data Xx with
         var List  nxt;
     end
 pool[] List lll;     // l is the pool
-escape (lll is Nil) as int;       // l is a pointer to the root
+escape (lll is List.Nil) as int;       // l is a pointer to the root
 ]],
     wrn = true,
     run = 1,
@@ -64538,8 +64586,8 @@ escape (lll is Nil) as int;       // l is a pointer to the root
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64553,8 +64601,8 @@ escape 1;
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64567,8 +64615,8 @@ escape 1;
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64582,33 +64630,33 @@ escape 1;
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
 pool[] Command cmds1;
-cmds1 = new Next(
-            Next(
-                Nothing()));
+cmds1 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
 
 pool&[] Command cmds2 = &cmds1;
 
-escape ((((cmds2 as Next).nxt as Next).nxt is Nothing)) as int;
+escape ((((cmds2 as Command.Next).nxt as Command.Next).nxt is Command.Nothing)) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
 pool&[] Command cmds2
-    = &new Next(
-            Next(
-                Nothing()));
+    = &new Command.Next(
+            Command.Next(
+                Command.Nothing()));
 
 escape 1;
 ]],
@@ -64620,8 +64668,8 @@ escape 1;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64629,21 +64677,21 @@ pool[2] Command cmds1;
 pool&[2] Command cmds2
         = &cmds1;
 
-cmds1 = new Next(
-            Next(
-                Nothing()));
-cmds1 = new Nothing();
-cmds2 = new Next(
-            Next(
-                Nothing()));
-escape (cmds1 is Next) as int;
+cmds1 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
+cmds1 = new Command.Nothing();
+cmds2 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
+escape (cmds1 is Command.Next) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64651,149 +64699,149 @@ pool[2] Command cmds1;
 pool&[2] Command cmds2
         = &cmds1;
 
-cmds1 = new Next(
-            Next(
-                Nothing()));
-cmds2 = new Next(
-            Next(
-                Nothing()));
-escape (cmds1 is Nothing) as int;
+cmds1 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
+cmds2 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
+escape (cmds1 is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
 pool[2] Command cmds1;
 
-cmds1 = new Next(
-                Next(
-                    Next(
-                        Nothing())));
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
+cmds1 = new Command.Next(
+                Command.Next(
+                    Command.Next(
+                        Command.Nothing())));
+escape (((cmds1 as Command.Next).nxt as Command.Next).nxt is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
 pool[2] Command cmds1;
 
-cmds1 = new Next(Nothing());
-(cmds1 as Next).nxt = new Next(Nothing());
-((cmds1 as Next).nxt as Next).nxt = new Next(Nothing());
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
+cmds1 = new Command.Next(Command.Nothing());
+(cmds1 as Command.Next).nxt = new Command.Next(Command.Nothing());
+((cmds1 as Command.Next).nxt as Command.Next).nxt = new Command.Next(Command.Nothing());
+escape (((cmds1 as Command.Next).nxt as Command.Next).nxt is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
 pool[1] Command cmds1;
 
-cmds1 = new Next(Nothing());
-cmds1 = new Nothing();
-cmds1 = new Next(Nothing());
-escape ((cmds1 as Next).nxt is Nothing) as int;
+cmds1 = new Command.Next(Command.Nothing());
+cmds1 = new Command.Nothing();
+cmds1 = new Command.Next(Command.Nothing());
+escape ((cmds1 as Command.Next).nxt is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
 pool[1] Command cmds1;
 
-cmds1 = new Next(Nothing());
-cmds1 = new Next(Nothing());
-escape (cmds1 is Nothing) as int;
+cmds1 = new Command.Next(Command.Nothing());
+cmds1 = new Command.Next(Command.Nothing());
+escape (cmds1 is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
-pool[2] Command cmds1 = new Next(Nothing());
-cmds1 = new Nothing();
-cmds1 = new Next(
-                Next(
-                    Nothing()));
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
+pool[2] Command cmds1 = new Command.Next(Command.Nothing());
+cmds1 = new Command.Nothing();
+cmds1 = new Command.Next(
+                Command.Next(
+                    Command.Nothing()));
+escape (((cmds1 as Command.Next).nxt as Command.Next).nxt is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
-pool[2] Command cmds1 = new Next(Nothing());
-cmds1 = new Next(
-                Next(
-                    Nothing()));
-escape( (cmds1 as Next).nxt is Nothing) as int;
+pool[2] Command cmds1 = new Command.Next(Command.Nothing());
+cmds1 = new Command.Next(
+                Command.Next(
+                    Command.Nothing()));
+escape( (cmds1 as Command.Next).nxt is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
 pool[2] Command cmds1;
 pool&[2] Command cmds2 = &cmds1;
 
-cmds1 = new Next(Nothing());
-(cmds2 as Next).nxt = new Next(Nothing());
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
+cmds1 = new Command.Next(Command.Nothing());
+(cmds2 as Command.Next).nxt = new Command.Next(Command.Nothing());
+escape (((cmds1 as Command.Next).nxt as Command.Next).nxt is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
 pool[2] Command cmds1;
 pool&[2] Command cmds2 = &cmds1;
 
-cmds1 = new Next(Nothing());
-(cmds2 as Next).nxt = new Next(
-                        Next(
-                            Nothing()));
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
+cmds1 = new Command.Next(Command.Nothing());
+(cmds2 as Command.Next).nxt = new Command.Next(
+                        Command.Next(
+                            Command.Nothing()));
+escape (((cmds1 as Command.Next).nxt as Command.Next).nxt is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64801,20 +64849,20 @@ pool[3] Command cmds1;
 pool&[3] Command cmds2;
 cmds2 = &cmds1;
 
-cmds1 = new Next(
-            Next(
-                Nothing()));
-((cmds2 as Next).nxt as Next).nxt = new Next(
-                            Next(
-                                Nothing()));
-escape ((((cmds1 as Next).nxt as Next).nxt as Next).nxt is Nothing) as int;
+cmds1 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
+((cmds2 as Command.Next).nxt as Command.Next).nxt = new Command.Next(
+                            Command.Next(
+                                Command.Nothing()));
+escape ((((cmds1 as Command.Next).nxt as Command.Next).nxt as Command.Next).nxt is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64823,21 +64871,21 @@ pool[10] Command cmds1;
 pool&[10] Command cmds2;
 cmds2 = &cmds1;
 
-cmds1 = new Next(
-            Next(
-                Nothing()));
-cmds2 = new Next(
-            Next(
-                Nothing()));
+cmds1 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
+cmds2 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
 
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
+escape (((cmds1 as Command.Next).nxt as Command.Next).nxt is Command.Nothing) as int;
 ]],
     run = 1,
 }
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64845,22 +64893,22 @@ pool[] Command cmds1;
 
 pool&[] Command cmds2 = &cmds1;
 
-cmds1 = new Next(
-            Next(
-                Nothing()));
-cmds2 = new Next(
-            Next(
-                Nothing()));
+cmds1 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
+cmds2 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
 
-escape (((cmds1 as Next).nxt as Next).nxt is Nothing) as int;
+escape (((cmds1 as Command.Next).nxt as Command.Next).nxt is Command.Nothing) as int;
 ]],
     run = 1,
 }
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64869,25 +64917,25 @@ pool[] Command cmds1;
 pool&[] Command cmds2;
 cmds2 = &cmds1;
 
-cmds1 = new Next(
-            Next(
-                Nothing()));
-cmds2 = new Next(
-            Next(
-                Nothing()));
+cmds1 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
+cmds2 = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
 
 var int sum = 0;
 
 traverse cmd in &&cmds1 do
-    if (*cmd is Next) then
+    if (*cmd is Command.Next) then
         sum = sum + 1;
-        traverse &&(*cmd as Next).nxt;
+        traverse &&(*cmd as Command.Next).nxt;
     end
 end
 traverse cmd in &&cmds2 do
-    if (*cmd is Next) then
+    if (*cmd is Command.Next) then
         sum = sum + 1;
-        traverse &&(*cmd as Next).nxt;
+        traverse &&(*cmd as Command.Next).nxt;
     end
 end
 
@@ -64899,22 +64947,22 @@ escape sum;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
 class Run with
     pool&[] Command cmds1;
 do
-    cmds1 = new Next(
-                Next(
-                    Nothing()));
+    cmds1 = new Command.Next(
+                Command.Next(
+                    Command.Nothing()));
     var int sum = 0;
     traverse cmd111 in &&cmds1 do
-        if *cmd111 is Next then
+        if *cmd111 is Command.Next then
             sum = sum + 1;
-            traverse &&(*cmd111 as Next).nxt;
+            traverse &&(*cmd111 as Command.Next).nxt;
         end
     end
     escape sum;
@@ -64937,8 +64985,8 @@ escape ddd;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64954,8 +65002,8 @@ escape 1;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Next is Command with
+    data Command.Nothing;
+    data Command.Next with
         var Command  nxt;
     end
 
@@ -64964,17 +65012,17 @@ class Run with
 do
     var int sum = 0;
     traverse cmd in &&cmds do
-        if (*cmd is Next) then
+        if (*cmd is Command.Next) then
             sum = sum + 1;
-            traverse &&(*cmd as Next).nxt;
+            traverse &&(*cmd as Command.Next).nxt;
         end
     end
     escape sum;
 end
 
-pool[] Command cmds = new Next(
-            Next(
-                Nothing()));
+pool[] Command cmds = new Command.Next(
+            Command.Next(
+                Command.Nothing()));
 
 var int ret = do Run with
     this.cmds = &cmds;
@@ -64988,9 +65036,9 @@ escape ret;
 
 Test { [[
 data Command;
-    data Nothing is Command;
-    data Await is Command;
-    data ParOr is Command with
+    data Command.Nothing;
+    data Command.Await;
+    data Command.ParOr with
         var Command  one;
     end
 
@@ -65028,8 +65076,8 @@ escape 1;
 
 Test { [[
 data Dummy;
-  data Nil is Dummy;
-  data Rec is Dummy with
+  data Dummy.Nil;
+  data Dummy.Rec with
     var Dummy  rec;
   end
 
@@ -65067,8 +65115,8 @@ escape (_vec[0]==0) + (_vec[1]==1) + (_vec[2]==2);
 
 Test { [[
 data NoRec;
-    data Nil is NoRec;
-    data Seq is NoRec with
+    data NoRec.Nil;
+    data NoRec.Seq with
         var int x;
     end
 
@@ -65084,8 +65132,8 @@ escape 1;
 
 Test { [[
 data BTree;
-    data Nil is BTree;
-    data Seq is BTree with
+    data BTree.Nil;
+    data BTree.Seq with
         var BTree  nxt;
     end
 
@@ -65109,12 +65157,12 @@ escape 1;
 
 Test { [[
 data BTree;
-    data Nil is BTree;
-    data Seq is BTree with
+    data BTree.Nil;
+    data BTree.Seq with
         var BTree  nxt;
     end
 
-pool[3] BTree bs = new Seq(Seq(Nil()));
+pool[3] BTree bs = new Seq(Seq(BTree.Nil()));
 
 class BTreeTraverse with
     pool&[3] BTree btree;
@@ -65144,12 +65192,12 @@ Test { [[
 data List;
     data Nil;
 with
-    data Cons is List with
+    data List.Cons with
         var int  head;
         var List tail;
     end
 end
-var List l = Cons(1, Cons(2, Cons(3, Nil())));
+var List l = List.Cons(1, List.Cons(2, List.Cons(3, Nil())));
 
 var int sum = 0;
 
@@ -65169,12 +65217,12 @@ Test { [[
 data List;
     data Nil;
 with
-    data Cons is List with
+    data List.Cons with
         var int  head;
         var List tail;
     end
 end
-var List l = Cons(1, Cons(2, Cons(3, Nil())));
+var List l = List.Cons(1, List.Cons(2, List.Cons(3, Nil())));
 
 var int sum = 0;
 
@@ -65194,12 +65242,12 @@ Test { [[
 data List;
     data Nil;
 with
-    data Cons is List with
+    data List.Cons with
         var int  head;
         var List tail;
     end
 end
-var List l = Cons(1, Cons(2, Cons(3, Nil())));
+var List l = List.Cons(1, List.Cons(2, List.Cons(3, Nil())));
 
 var int sum = 0;
 
@@ -65252,14 +65300,14 @@ Test { [[
 data List;
     data Nil;
 with
-    data Cons is List with
+    data List.Cons with
         var int  head;
         var List tail;
     end
 end
 
 pool[3] List l;
-l = new Cons(1, Cons(2, Cons(3, Nil())));
+l = new List.Cons(1, List.Cons(2, List.Cons(3, Nil())));
 
 var int sum = 0;
 
@@ -65349,7 +65397,7 @@ end
 data List;
     data Nil;
 with
-    data Cons is List with
+    data List.Cons with
         var int   head = 0;
         var& List tail = List.nil();
     end
@@ -65368,8 +65416,8 @@ var Pair p1 = Pair(x=1,x=2);
 var Opt  o1 = Opt.Nil();
 var Opt  o2 = Opt.Ptr(v=&p1);
 var List l1 = Nil();
-var List l2 = Cons(head=1, tail=l1);
-var List l3 = Cons(head=1, (tail as Cons).head)=2, tail=Nil()));
+var List l2 = List.Cons(head=1, tail=l1);
+var List l3 = List.Cons(head=1, (tail as List.Cons).head)=2, tail=Nil()));
 
 escape 1;
 ]],
@@ -65383,8 +65431,8 @@ var Pair p1 = Pair(1,2);
 var Opt  o1 = Opt.Nil();
 var Opt  o2 = Opt.Ptr(&p1);
 var List l1 = Nil();
-var List l2 = Cons(1, l1);
-var List l3 = Cons(1, Cons(2, Nil()));
+var List l2 = List.Cons(1, l1);
+var List l3 = List.Cons(1, List.Cons(2, Nil()));
 
 var int ret = 0;
 
@@ -65418,7 +65466,7 @@ switch l1 with
         ret = ret + 1;      // 6
         _assert(1);
     end
-    case Cons(int head, List& tail) do
+    case List.Cons(int head, List& tail) do
         _assert(0);
     end
 end
@@ -65427,7 +65475,7 @@ switch l2 with
     case Nil() do
         _assert(0);
     end
-    case Cons(int head1, List& tail1) do
+    case List.Cons(int head1, List& tail1) do
         _assert(head1 == 1);
         ret = ret + 1;      // 7
         switch *tail1 with
@@ -65435,7 +65483,7 @@ switch l2 with
                 ret = ret + 1;      // 8
                 _assert(1);
             end
-            case Cons(int head2, List& tail2) do
+            case List.Cons(int head2, List& tail2) do
                 _assert(0);
             end
         end
@@ -65448,14 +65496,14 @@ switch l3 with
     case Nil() do
         _assert(0);
     end
-    case Cons(int head1, List& tail1) do
+    case List.Cons(int head1, List& tail1) do
         _assert(head1 == 1);
         ret = ret + 1;      // 10
         switch *tail1 with
             case Nil() do
                 _assert(0);
             end
-            case Cons(int head2, List& tail2) do
+            case List.Cons(int head2, List& tail2) do
                 _assert(head2 == 2);
                 ret = ret + 2;      // 12
                 switch *tail2 with
@@ -65463,7 +65511,7 @@ switch l3 with
                         _assert(1);
                         ret = ret + 1;      // 13
                     end
-                    case Cons(int head3, List& tail3) do
+                    case List.Cons(int head3, List& tail3) do
                         _assert(0);
                     end
                 end
@@ -66909,7 +66957,7 @@ escape v;
 Test { [[
 data List;
     data Nil;
-    data Cons is List with
+    data List.Cons with
         var int  head;
         var List tail;
     end
@@ -66971,7 +67019,7 @@ Test { [[
 data Stmt;
     data Nil;
 or
-    data Seq is Stmt with
+    data Stmt.Seq with
         var Stmt s1;
     end
 end
@@ -68476,7 +68524,7 @@ Test { [[
 data Command;
     data Nothing;
 or
-    data Sequence is Command with
+    data Command.Sequence with
         var Command* one;
         var Command* two;
     end
