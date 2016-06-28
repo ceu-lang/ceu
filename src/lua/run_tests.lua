@@ -90,7 +90,7 @@ Test = function (t)
 
     if not check('parser')   then return end
     --dofile 'ast.lua'
-    if not check('ast')     then return end
+    if not check('ast')      then return end
     if not check('adjs')     then return end
     dofile 'types.lua'
     if not check('dcls')     then return end
@@ -98,14 +98,13 @@ Test = function (t)
     if not check('consts')   then return end
     if not check('stmts')    then return end
     if not check('inits')    then return end
-    if not check('props_')    then return end
+    if not check('props_')   then return end
 do return end
+    if not check('fins')     then return end
 AST.dump(AST.root)
     if not check('adt')      then return end
     if not check('mode')     then return end
-    if not check('ref')      then return end
     if not check('tight')    then return end
-    if not check('fin')      then return end
     if not check('props')    then return end
     if not check('ana')      then return end
     if not check('acc')      then return end

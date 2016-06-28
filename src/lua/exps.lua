@@ -22,6 +22,18 @@ local function asr_if_name (e, cnds, err_msg)
     end
 end
 
+local function dcl_copy (dcl, tag, Type)
+    local new = AST.copy(dcl)
+    if tag then
+        new.tag = tag
+    end
+    if Type then
+        new[1] = AST.copy(Type)
+    end
+    new[2] = false  -- no '&'
+    return new
+end
+
 EXPS = {
     asr_name    = asr_name,
     asr_if_name = asr_if_name,
@@ -46,7 +58,7 @@ F = {
             'invalid operand to `'..op..'´ : unexpected option type')
 
         -- dcl
-        me.dcl = AST.copy(e.dcl)
+        me.dcl = dcl_copy(e.dcl)
         if AST.is_node(Type) then
             me.dcl[1] = AST.copy(Type)
         else
@@ -68,8 +80,7 @@ DBG'TODO: type annotation'
             'invalid operand to `'..op..'´ : expected option type')
 
         -- dcl
-        me.dcl = AST.copy(e.dcl)
-        me.dcl[1] = TYPES.pop(me.dcl[1])
+        me.dcl = dcl_copy(e.dcl, nil, TYPES.pop(e.dcl[1]))
     end,
 
 -- INDEX
@@ -91,11 +102,8 @@ DBG'TODO: type annotation'
         end
 
         -- dcl
-        me.dcl = AST.copy(vec.dcl)
-        me.dcl.tag = 'Var'
-        if TYPES.check(vec.dcl[1],'&&') then
-            me.dcl[1] = TYPES.pop(vec.dcl[1])
-        end
+        me.dcl = dcl_copy(vec.dcl, 'Var',
+                    TYPES.check(vec.dcl[1],'&&') and TYPES.pop(vec.dcl[1]))
     end,
 
 -- PTR: *
@@ -124,10 +132,7 @@ DBG('TODO: remove pool')
             'invalid operand to `'..op..'´ : expected pointer type')
 
         -- dcl
-        me.dcl = AST.copy(e.dcl)
-        if is_ptr then
-            me.dcl[1] = TYPES.pop(e.dcl[1])
-        end
+        me.dcl = dcl_copy(e.dcl, nil, is_ptr and TYPES.pop(e.dcl[1]))
     end,
 
 -- MEMBER: .
@@ -141,10 +146,9 @@ DBG('TODO: remove pool')
         if ID_abs.dcl.tag == 'Data' then
             -- data.member
             local blk = AST.asr(ID_abs.dcl,'Data', 2,'Block')
-            me.dcl = DCLS.asr(me,blk,member,false,e.dcl.id)
+            me.dcl = dcl_copy(DCLS.asr(me,blk,member,false,e.dcl.id))
         else
-            me.dcl = AST.copy(e.dcl)
-            me.dcl[2] = false   -- &
+            me.dcl = dcl_copy(e.dcl)
         end
     end,
 
@@ -238,8 +242,8 @@ G = {
         -- any
 
         -- dcl
-        me.dcl = AST.copy(e.dcl)
-        me.dcl.tag = 'Val'
+        me.dcl = dcl_copy(e.dcl, 'Val')
+        me.dcl[2] = '&'
     end,
 
 -- INDEX ("idx" is Exp, not Exp_Name)
@@ -268,7 +272,7 @@ G = {
             'invalid operand to `'..op..'´ : unexpected option type')
 
         -- dcl
-        me.dcl = DCLS.new(me, TYPES.push(e.dcl[1],'&&'))
+        me.dcl = dcl_copy(e.dcl, 'Val', TYPES.push(e.dcl[1],'&&'))
     end,
 
 -- OPTION: ?
@@ -322,8 +326,7 @@ G = {
             'invalid operand to `'..op..'´ : expected numeric type')
 
         -- dcl
-        me.dcl = AST.copy(e.dcl)
-        me.dcl.tag = 'Val'
+        me.dcl = dcl_copy(e.dcl, 'Val')
     end,
 
 -- NUMERIC: +, -, %, *, /, ^
@@ -391,8 +394,7 @@ G = {
             'invalid operand to `'..op..'´ : expected integer type')
 
         -- dcl
-        me.dcl = AST.copy(e.dcl)
-        me.dcl.tag = 'Val'
+        me.dcl = dcl_copy(e.dcl, 'Val')
     end,
 
 -- COMPARISON: >, >=, <, <=
