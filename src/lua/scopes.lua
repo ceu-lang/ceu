@@ -32,7 +32,9 @@ F = {
                     if AST.get(me.__par,'Stmts', 2,'Escape') then
                         ASR(false, me, 'invalid `escape´ : incompatible scopes')
                     else
-                        ASR(false, me, 'TODO : incompatible scopes')
+                        local fin = AST.par(me, 'Finalize')
+                        ASR(fin, me,
+                            'invalid pointer assignment : expected `finalize´')
                     end
                 end
             end

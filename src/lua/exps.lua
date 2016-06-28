@@ -141,12 +141,12 @@ DBG('TODO: remove pool')
         local _, e, member = unpack(me)
         if not e.dcl then return end
 
-        local Type = unpack(e.dcl)
-        local ID_abs, mod = unpack(Type)
-        if ID_abs.dcl.tag == 'Data' then
+        local ID_abs = AST.get(e.dcl,'', 1,'Type', 1,'ID_abs')
+        if ID_abs and ID_abs.dcl.tag == 'Data' then
             -- data.member
             local blk = AST.asr(ID_abs.dcl,'Data', 2,'Block')
             me.dcl = dcl_copy(DCLS.asr(me,blk,member,false,e.dcl.id))
+            me.dcl.blk = e.dcl.blk
         else
             me.dcl = dcl_copy(e.dcl)
         end

@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -18530,7 +18531,35 @@ escape ret;
     run = 1,
 }
 
---]===]
+Test { [[
+var int ret = 0;
+var int&& pa=null;
+do
+    var int v=0;
+    pa = &&v;
+end
+escape ret;
+]],
+    --run = 1,
+    --fin = 'line 7 : attribution does not require `finalize´',
+    scopes = 'line 5 : invalid pointer assignment : expected `finalize´',
+}
+Test { [[
+var int ret = 0;
+var int&& pa=null;
+do
+    var int v=0;
+    do
+        pa = &&v;
+    finalize with
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    run = 1,
+    --fin = 'line 7 : attribution does not require `finalize´',
+}
 Test { [[
 var int ret = 0;
 var int&& pa=null;
@@ -18567,7 +18596,32 @@ end
 escape ret;
 ]],
     --run = 1,
-    fin = 'line 6 : attribution to pointer with greater scope',
+    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
+    --fin = 'line 6 : attribution to pointer with greater scope',
+}
+
+Test { [[
+var int ret = 0;
+var int&& pa=null;
+do
+    var int v=0;
+    if 1 then
+        do
+            pa = &&v;
+        finalize with
+            ret = ret + 1;
+        end
+    else
+        do
+            pa = &&v;
+        finalize with
+        end
+    end
+end
+escape ret;
+]],
+    run = 1,
+    --fin = 'line 6 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -19570,7 +19624,8 @@ escape 1;
 ]],
     --fin = 'line 6 : attribution requires `finalize´',
     --fin = 'line 8 : pointer access across `await´',
-    fin = 'line 6 : attribution to pointer with greater scope',
+    --fin = 'line 6 : attribution to pointer with greater scope',
+    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
 }
 
 Test { [[
@@ -19888,7 +19943,11 @@ var int i=0;
 par/or do
     var void&& p1;
     (i,p1) = await PTR;
-    p := p1;
+    do
+        p = p1;
+    finalize with
+        nothing;
+    end
 with
     await OS_START;
     async do
@@ -19922,7 +19981,7 @@ var int i = 0;
 par/or do
     var void&& p1;
     (i,p1) = await PTR;
-    p := p1;
+    do p = p1; finalize with end
 with
     await OS_START;
     async do
@@ -19969,7 +20028,7 @@ do
     par/or do
         var void&& p1;
         (i,p1) = await PTR;
-        p := p1;
+        do p = p1; finalize with end
     with
         await OS_START;
         async do
@@ -19994,7 +20053,7 @@ do
     par/or do
         var int&& p1;
         (i,p1) = await PTR;
-        p := p1;
+        do p = p1; finalize with end;
     with
         await OS_START;
         async do
@@ -25368,6 +25427,18 @@ native _V;
 _V = v;
 escape 1;
 ]],
+    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
+}
+
+Test { [[
+native do
+    void* V;
+end
+var void&& v = null;
+native _V;
+do _V = v; finalize with end
+escape 1;
+]],
     run = 1,
 }
 
@@ -25377,7 +25448,7 @@ native do
 end
 var void&& v=null;
 native _V;
-_V = v;
+do _V = v; finalize with end
 await 1s;
 escape (_V==null) as int;
 ]],
@@ -25406,7 +25477,7 @@ native do
     typedef int tp;
 end
 var _tp&& v=null;
-_a = v;
+do _a = v; finalize with end
 await 1s;
 _b = _a;    // _a pode ter escopo menor e nao reclama de FIN
 await FOREVER;
@@ -26725,7 +26796,7 @@ Test { [[
 var int&& p=null;
 do
     var int i=0;
-    p := &&i;
+    do p = &&i; finalize with end
 end
 escape 1;
 ]],
@@ -26938,13 +27009,27 @@ end
 }
 
 Test { [[
+code/instantaneous Ff (var void&& p1, var void&& p2)=>void do
+end
+var int x = 0;
+do
+    var int y = 0;
+    call Ff(&&x, &&y);
+end
+escape 0;
+]],
+    wrn = true,
+    tmp = 'TODO: incomp. scopes',
+}
+
+Test { [[
 code/instantaneous GetVS (var void&& && o1, var  void&& && o2)=>int do
     if (*o1) then
         escape 1;
     else/if (*o2) then
         var void&& tmp = *o1;
         *o1 = *o2;
-        *o2 := tmp;
+        do *o2 = tmp; finalize with end
             // tmp is an alias to "o1"
         escape 1;
     else
@@ -30542,7 +30627,8 @@ escape *v;
 ]],
     --fin = 'line 4 : attribution requires `finalize´',
     --fin = 'line 4 : attribution to pointer with greater scope',
-    fins = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    --fins = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    scopes = 'line 4 : invalid pointer assignment : expected `finalize´',
 }
 Test { [[
 var& int v;
@@ -30921,7 +31007,8 @@ pre native do
     typedef int* t;
 end
 var int v = 2;
-var _t p = &&v;
+var _t p;
+do p = &&v; finalize with end
 escape *p;
 ]],
     run = 2,
@@ -46265,7 +46352,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    fin = 'line 5 : attribution to pointer with greater scope',
+    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
+    --fin = 'line 5 : attribution to pointer with greater scope',
     --fin = 'line 5 : invalid attribution',
 }
 
@@ -46474,7 +46562,7 @@ var void&& x=null;
 call Fx(5 as void&&);
 escape (_V==(5 as void&&)) as int;
 ]],
-    fin = 'line 5 : parameter must be `hold´',
+    todo = 'line 5 : parameter must be `hold´',
     --fin = 'line 5 : invalid attribution',
     --run = 1,
 }
@@ -46492,7 +46580,7 @@ do call Fx(5 as void&&);
     finalize with nothing; end;
 escape (_V==(5 as void&&)) as int;
 ]],
-    fin = 'line 8 : invalid `finalize´',
+    todo = 'line 8 : invalid `finalize´',
 }
 
 Test { [[
@@ -58199,6 +58287,19 @@ escape (*p as List.Cons).head;
     stmts = 'line 52 : invalid assignment : types mismatch : "List&&" <= "List"',
     --adt = 'line 52 : invalid attribution : mutation : cannot mix data sources',
     --fin = 'line 54 : unsafe access to pointer "p" across `await´',
+    --adt = 'line 52 : invalid attribution : value is not a reference',
+}
+Test { DATA..[[
+do/_
+    pool[] List l = new List.Cons(1, List.Nil());
+    var List&& p = &&(l as List.Cons).tail;
+    await 1s;
+    escape (*p as List.Cons).head;
+end
+]],
+    wrn = true,
+    --adt = 'line 52 : mutation : cannot mix data sources',
+    fin = 'line 54 : unsafe access to pointer "p" across `await´',
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
