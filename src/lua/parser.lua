@@ -1,6 +1,6 @@
 local P, C, V, S, Cc, Ct = m.P, m.C, m.V, m.S, m.Cc, m.Ct
 
-local __debug = false
+--local __debug = true
 local spc = 0
 if __debug then
     local VV = V
@@ -443,7 +443,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , __code = (CK'code/instantaneous' + CK'code/delayed')
                 * OPT(CK'/recursive')
-                * V'__ID_abs'
+                * (V'__ID_abs'-V'__id_data')
     , _Code_proto = V'__code' * (V'Typepars_ids'+V'Typepars_anon') *
                                     KK'=>' * V'Type'
     , _Code_impl  = V'__code' * V'Typepars_ids' *
@@ -614,12 +614,13 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- ABS
 
     , __abs_call = (CK'call/recursive' + CK'call')
-    , Abs_Call  = V'__abs_call' * V'Abs_Cons'
+    , Abs_Call  = V'__abs_call' * V'__Abs_Cons_Code'
     , Abs_Val   = CK'val' * V'Abs_Cons'
     , Abs_New   = CK'new' * V'Abs_Cons'
-    , Abs_Await = V'Abs_Cons'
-    , Abs_Spawn = K'spawn' * V'Abs_Cons'
+    , Abs_Await = V'__Abs_Cons_Code'
+    , Abs_Spawn = K'spawn' * V'__Abs_Cons_Code'
 
+    , __Abs_Cons_Code = V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
     , Abslist    = ( V'__abs_item'*(KK','*V'__abs_item')^0 )^-1
     , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp' + V'ID_any')
@@ -695,8 +696,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __ID_nat  = CK(P'_' * Alphanum^1,         'native identifier')
     , __ID_any  = CK(P'_' * -Alphanum,          '`_´')
 
-    , __id_abs = (m.R'AZ'*V'__one_az' -KEYS)
-    , __ID_abs = CK(V'__id_abs' * ('.' * V'__id_abs')^0, 'abstraction identifier')
+    , __id_abs  = m.R'AZ'*V'__one_az' -KEYS
+    , __id_data = V'__id_abs' * ('.' * V'__id_abs')^1
+    , __ID_abs = CK(V'__id_data'+V'__id_abs', 'abstraction identifier')
 
     -- at least one lowercase character
     , __one_az = #(ALPHANUM^0*m.R'az') * Alphanum^0

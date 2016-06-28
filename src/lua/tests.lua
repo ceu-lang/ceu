@@ -9,7 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[===[
---do return end -- OK
+do return end -- OK
 --]===]
 
 ----------------------------------------------------------------------------
@@ -17964,6 +17964,13 @@ escape 10;
 ]],
     parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´ or abstraction identifier',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
+}
+
+Test { [[
+code/instantaneous Fx.Fx (void)=>void do
+end
+]],
+    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´',
 }
 
 Test { [[
@@ -57929,10 +57936,21 @@ escape 1;
 
 -- constructors are not expressions...
 Test { DATA..[[
+escape call List();
+]],
+    wrn = true,
+    exps = 'line 51 : invalid call : unexpected context for data "List"',
+    --exps = 'line 51 : invalid call : "Nil" is not a `code´ abstraction',
+    --ast = 'line 51 : invalid call',
+    --env = 'TODO: not a code',
+    --parser = 'line 51 : after `escape´ : expected expression',
+}
+Test { DATA..[[
 escape call List.Nil();
 ]],
     wrn = true,
-    exps = 'line 51 : invalid call : unexpected context for data "List.Nil"',
+    parser = 'line 51 : after `call´ : expected name expression',
+    --exps = 'line 51 : invalid call : unexpected context for data "List.Nil"',
     --exps = 'line 51 : invalid call : "Nil" is not a `code´ abstraction',
     --ast = 'line 51 : invalid call',
     --env = 'TODO: not a code',
@@ -57940,12 +57958,12 @@ escape call List.Nil();
 }
 Test { DATA..[[
 var List l;
-var int v = (l==call List.Nil());
+var int v = (l==call List());
 escape v;
 ]],
     wrn = true,
     --ast = 'line 52 : invalid call',
-    exps = 'line 52 : invalid call : unexpected context for data "List.Nil"',
+    exps = 'line 52 : invalid call : unexpected context for data "List"',
     --exps = 'line 52 : invalid call : "Nil" is not a `code´ abstraction',
     --env = 'TODO: not a code',
     --parser = 'line 52 : after `==´ : expected expression',
