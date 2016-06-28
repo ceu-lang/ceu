@@ -17262,7 +17262,7 @@ else
 end
 escape 1;
 ]],
-    stmts = 'line 4 : invalid binding : incompatible scopes',
+    scopes = 'line 4 : invalid binding : incompatible scopes',
 }
 Test { [[
 var& int v;
@@ -17299,7 +17299,7 @@ do
 end
 escape 1;
 ]],
-    stmts = 'line 4 : invalid binding : incompatible scopes',
+    scopes = 'line 4 : invalid binding : incompatible scopes',
     --ref = 'line 4 : invalid attribution : variable "x" has narrower scope than its destination',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --run = 1,
@@ -30552,7 +30552,7 @@ do
 end
 escape v;
 ]],
-    stmts = 'line 4 : invalid binding : incompatible scopes',
+    scopes = 'line 4 : invalid binding : incompatible scopes',
     --ref = 'line 4 : attribution to reference with greater scope',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --run = 1,
@@ -57414,7 +57414,7 @@ do
 end
 escape v1.v+v2.v+v3.v;
 ]],
-    stmts = 'line 10 : invalid binding : incompatible scopes',
+    scopes = 'line 10 : invalid binding : incompatible scopes',
     --inits = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
     --ref = 'line 10 : attribution to reference with greater scope',
     --ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',

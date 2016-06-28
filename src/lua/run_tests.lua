@@ -99,8 +99,8 @@ Test = function (t)
     if not check('stmts')    then return end
     if not check('inits')    then return end
     if not check('props_')   then return end
+    if not check('scopes')   then return end
 do return end
-    if not check('fins')     then return end
 AST.dump(AST.root)
     if not check('adt')      then return end
     if not check('mode')     then return end

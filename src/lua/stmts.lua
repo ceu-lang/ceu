@@ -32,17 +32,6 @@ F = {
 
         -- tp
         check_tp(me, to.dcl[1], fr.dcl[1], err)
-
-        -- blk
-        if fr.dcl.blk then
-            local ptr1 = TYPES.check(to.dcl[1],'&&')
-            local ptr2 = TYPES.check(fr.dcl[1],'&&')
-            if ptr1 or ptr2 then
-                local nat1 = TYPES.is_nat(to.dcl[1])
-                local nat2 = TYPES.is_nat(fr.dcl[1])
-                assert((ptr1 or nat1) and (ptr2 or nat2), 'bug found')
-            end
-        end
     end,
 
     __set_vec = function (fr, to_dcl)
@@ -116,17 +105,6 @@ DBG('TODO: _Lua')
 
         -- tp
         check_tp(me, to.dcl[1], fr.dcl[1], 'invalid binding')
-
-        -- check blk
-        --  NO: big = &&small
-        do
-            if to.dcl.blk.__depth >= fr.dcl.blk.__depth then
-                assert(AST.is_par(fr.dcl.blk,to.dcl.blk), 'bug found')
-            else
-                assert(AST.is_par(to.dcl.blk,fr.dcl.blk), 'bug found')
-                ASR(false, me, 'invalid binding : incompatible scopes')
-            end
-        end
 
         -- dim
         if to.dcl.tag == 'Vec' then
