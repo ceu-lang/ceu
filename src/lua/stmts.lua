@@ -1,4 +1,4 @@
-local function check (me, to_tp, fr_tp, err_msg)
+local function check_tp (me, to_tp, fr_tp, err_msg)
     local to_str = TYPES.tostring(to_tp)
     local fr_str = TYPES.tostring(fr_tp)
     ASR(TYPES.contains(to_tp,fr_tp), me,
@@ -31,7 +31,18 @@ F = {
         EXPS.asr_if_name(fr, {'Nat','Var'}, err)
 
         -- tp
-        check(me, to.dcl[1], fr.dcl[1], err)
+        check_tp(me, to.dcl[1], fr.dcl[1], err)
+
+        -- blk
+        if fr.dcl.blk then
+            local ptr1 = TYPES.check(to.dcl[1],'&&')
+            local ptr2 = TYPES.check(fr.dcl[1],'&&')
+            if ptr1 or ptr2 then
+                local nat1 = TYPES.is_nat(to.dcl[1])
+                local nat2 = TYPES.is_nat(fr.dcl[1])
+                assert((ptr1 or nat1) and (ptr2 or nat2), 'bug found')
+            end
+        end
     end,
 
     __set_vec = function (fr, to_dcl)
@@ -57,20 +68,20 @@ DBG('TODO: _Lua')
                 if ps then
                     AST.asr(ps,'Explist')
                     for j, p in ipairs(ps) do
-                        check(fr, to_dcl[1], p.dcl[1],
+                        check_tp(fr, to_dcl[1], p.dcl[1],
                             'invalid constructor : item #'..i..' : '..
                             'invalid expression list : item #'..j)
                     end
                 end
             elseif e.tag == 'STRING' then
                 local dcl = DCLS.new(e,'byte')
-                check(fr, to_dcl[1], dcl[1],
+                check_tp(fr, to_dcl[1], dcl[1],
                     'invalid constructor : item #'..i)
             elseif e.tag == '_Lua' then
             elseif e.tag == 'Exp_as' then
             else
                 assert(e.dcl and e.dcl.tag == 'Vec')
-                check(fr, to_dcl[1], e.dcl[1],
+                check_tp(fr, to_dcl[1], e.dcl[1],
                     'invalid constructor : item #'..i)
             end
         end
@@ -97,19 +108,25 @@ DBG('TODO: _Lua')
         -- ctx
         EXPS.asr_name(to, {'Var','Vec','Pool','Evt'}, 'invalid binding')
 
-        -- NO: var int x = &y
+        -- NO: var int x = &...
+        -- NO: d.x = &...
+        -- NO: x! = &...
         local _, is_alias = unpack(to.dcl)
         ASR(is_alias, me, 'invalid binding : expected declaration with `&´')
 
-        -- NO: d.x = &...
-        if not AST.get(to,'Exp_Name', 1,'ID_int') then
-            local op = to[1][1]
-            ASR(false, me,
-                'invalid binding : unexpected context for operator `'..op..'´')
-        end
-
         -- tp
-        check(me, to.dcl[1], fr.dcl[1], 'invalid binding')
+        check_tp(me, to.dcl[1], fr.dcl[1], 'invalid binding')
+
+        -- check blk
+        --  NO: big = &&small
+        do
+            if to.dcl.blk.__depth >= fr.dcl.blk.__depth then
+                assert(AST.is_par(fr.dcl.blk,to.dcl.blk), 'bug found')
+            else
+                assert(AST.is_par(to.dcl.blk,fr.dcl.blk), 'bug found')
+                ASR(false, me, 'invalid binding : incompatible scopes')
+            end
+        end
 
         -- dim
         if to.dcl.tag == 'Vec' then
@@ -182,7 +199,7 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
                 EXPS.asr_if_name(e, {'Nat','Var'}, err_str..' : argument #'..i)
 
                 -- tp
-                check(me, to[i], e.dcl[1], err_str..' : argument #'..i)
+                check_tp(me, to[i], e.dcl[1], err_str..' : argument #'..i)
             end
         end
 
@@ -201,7 +218,7 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
     Set_Await_one = function (me)
         local fr, to = unpack(me)
         assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Await' or fr.tag=='Await_Evt')
-        check(me, to.dcl[1], fr.dcl[1], 'invalid assignment')
+        check_tp(me, to.dcl[1], fr.dcl[1], 'invalid assignment')
     end,
 
     Set_Await_many = function (me)
@@ -214,7 +231,7 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
 
         -- tp
         local awt = unpack(AST.asr(fr,'Await_Until'))
-        check(me, to.dcl[1], awt.dcl[1], 'invalid assignment')
+        check_tp(me, to.dcl[1], awt.dcl[1], 'invalid assignment')
     end,
 
 -- AWAITS
@@ -282,7 +299,7 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
         EXPS.asr_name(e, {'Evt'}, 'invalid `emit´')
 
         -- tp
-        check(me, e.dcl[1], ps.dcl[1], 'invalid `emit´')
+        check_tp(me, e.dcl[1], ps.dcl[1], 'invalid `emit´')
     end,
 
     Emit_Ext_emit = function (me)
@@ -314,7 +331,7 @@ DBG'TODO: _Async_Isr'
             have..'´ "'..ID_ext.dcl.id..'"')
 
         -- tp
-        check(me, ID_ext.dcl[1], ps.dcl[1], 'invalid `emit´')
+        check_tp(me, ID_ext.dcl[1], ps.dcl[1], 'invalid `emit´')
     end,
 
     Emit_Ext_call = function (me)
@@ -327,7 +344,7 @@ DBG'TODO: _Async_Isr'
             local Type = AST.asr(item,'', 4,'Type')
             Typelist[i] = Type
         end
-        check(me, Typelist, ps.dcl[1], 'invalid call')
+        check_tp(me, Typelist, ps.dcl[1], 'invalid call')
     end,
 
     Exp_Call = function (me)

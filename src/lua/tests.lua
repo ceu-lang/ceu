@@ -17140,7 +17140,8 @@ var& int? i;
 i! = &v;
 escape i!;
 ]],
-    stmts = 'line 3 : invalid binding : unexpected context for operator `!´',
+    stmts = 'line 3 : invalid binding : expected declaration with `&´',
+    --stmts = 'line 3 : invalid binding : unexpected context for operator `!´',
     --inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
     --ref = 'line 3 : invalid attribution : cannot bind with operator `!´',
 }
@@ -17159,7 +17160,8 @@ loop do
 end
 escape v;
 ]],
-    stmts = 'line 4 : invalid binding : unexpected context for operator `!´',
+    stmts = 'line 4 : invalid binding : expected declaration with `&´',
+    --stmts = 'line 4 : invalid binding : unexpected context for operator `!´',
     --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (tests.lua:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --run = 11,
@@ -17260,7 +17262,7 @@ else
 end
 escape 1;
 ]],
-    inits = 'line 4 : invalid binding : incompatible scopes',
+    stmts = 'line 4 : invalid binding : incompatible scopes',
 }
 Test { [[
 var& int v;
@@ -17278,10 +17280,10 @@ escape v;
 
 Test { [[
 var& int v;
-do
+//do
     var int x;
     v = &x;
-end
+//end
 escape 1;
 ]],
     inits = 'line 3 : uninitialized variable "x" : reached read access (tests.lua:4)',
@@ -17297,7 +17299,7 @@ do
 end
 escape 1;
 ]],
-    inits = 'line 4 : invalid binding : incompatible scopes',
+    stmts = 'line 4 : invalid binding : incompatible scopes',
     --ref = 'line 4 : invalid attribution : variable "x" has narrower scope than its destination',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --run = 1,
@@ -17976,12 +17978,23 @@ end
 Test { [[
 code/instantaneous Get (void)=>int&& do
     var int x;
-    escape &&x;
+    //escape &&x;
 end
 escape 10;
 ]],
     wrn = true,
-    inits = 'line 2 : uninitialized variable "x" : reached read access (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (tests.lua:5)',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int&& do
+    var int x;
+    escape null;
+end
+escape 10;
+]],
+    wrn = true,
+    inits = 'line 2 : uninitialized variable "x" : reached `escape´ (tests.lua:3)',
 }
 
 Test { [[
@@ -17992,20 +18005,9 @@ end
 escape 10;
 ]],
     wrn = true,
-    fins = 'line 3 : invalid escape value : local reference',
+    tmp = 'line 3 : invalid `escape´ : incompatible scopes',
+    --fins = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
-}
-
-Test { [[
-code/instantaneous Get (void)=>int&& do
-    var int x=0;
-    escape &&x;
-end
-escape 10;
-]],
-    wrn = true,
-    fins = 'line 3 : invalid escape value : local reference',
-    --fin = 'line 3 : attribution to pointer with greater scope',
 }
 
 Test { [[
@@ -30550,7 +30552,7 @@ do
 end
 escape v;
 ]],
-    inits = 'line 4 : invalid binding : incompatible scopes',
+    stmts = 'line 4 : invalid binding : incompatible scopes',
     --ref = 'line 4 : attribution to reference with greater scope',
     --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
     --run = 1,
@@ -57153,7 +57155,8 @@ end
 escape 1;//e.Xx.d.x;
 ]],
     wrn = true,
-    stmts = 'line 14 : invalid binding : unexpected context for operator `.´',
+    stmts = 'line 14 : invalid binding : expected declaration with `&´',
+    --stmts = 'line 14 : invalid binding : unexpected context for operator `.´',
     --inits = 'line 11 : uninitialized variable "e" : reached read access (tests.lua:14)',
     --ref = 'line 11 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
 }
@@ -57195,7 +57198,8 @@ var Ee e = val Ee.Xx(&d);
 escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
-    stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
+    stmts = 'line 13 : invalid binding : expected declaration with `&´',
+    --stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
     --run = 1,
 }
 Test { [[
@@ -57410,7 +57414,7 @@ do
 end
 escape v1.v+v2.v+v3.v;
 ]],
-    inits = 'line 10 : invalid binding : incompatible scopes',
+    stmts = 'line 10 : invalid binding : incompatible scopes',
     --inits = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
     --ref = 'line 10 : attribution to reference with greater scope',
     --ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',

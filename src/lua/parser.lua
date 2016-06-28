@@ -360,6 +360,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __seqs = KK';' * KK(';',true)^0     -- "true": ignore as "expected"
     , Nothing = K'nothing'
     , EOF = P''
+    , EOC = P''
 
 -- DO, BLOCK
 
@@ -448,7 +449,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                                     KK'=>' * V'Type'
     , _Code_impl  = V'__code' * V'Typepars_ids' *
                                     KK'=>' * V'Type' *
-                    V'__Do'
+                    V'__Do' * V'EOC'
 
     , _Spawn_Block = K'spawn' * V'__Do'
 

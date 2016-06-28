@@ -1,5 +1,6 @@
 local yields = {
     EOF           = 'end of file',
+    EOC           = 'end of code',
     Par           = 'par',
     Par_And       = 'par/and',
     Par_Or        = 'par/or',
@@ -184,35 +185,27 @@ F = {
     Set_Alias = function (me)
         local fr,to = unpack(me)
         if me.is_init then
-            -- NO: scope mistmatch
-            --  big=&small;
-            if to.dcl.blk.__depth >= fr.dcl.blk.__depth then
-                assert(AST.is_par(fr.dcl.blk,to.dcl.blk), 'bug found')
-            else
-                assert(AST.is_par(to.dcl.blk,fr.dcl.blk), 'bug found')
-                ASR(false, me,
-                    'invalid binding : incompatible scopes')
-            end
-        else
-            -- NO: multiple bindings
-            --  x=&a; x=&b
-            local inits do
-                if me.is_init then
-                    inits = ''
-                else
-                    inits = {}
-                    for i, init in ipairs(to.dcl.inits) do
-                        inits[i] = init.ln[1]..':'..init.ln[2]
-                    end
-                    inits = table.concat(inits,',')
-                end
-            end
-            ASR(me.is_init, me,
-                'invalid binding : '..
-                AST.tag2id[to.dcl.tag]..
-                ' "'..to.dcl.id..'" is already bound ('..
-                inits..')')
+            return
         end
+
+        -- NO: multiple bindings
+        --  x=&a; x=&b
+        local inits do
+            if me.is_init then
+                inits = ''
+            else
+                inits = {}
+                for i, init in ipairs(to.dcl.inits) do
+                    inits[i] = init.ln[1]..':'..init.ln[2]
+                end
+                inits = table.concat(inits,',')
+            end
+        end
+        ASR(me.is_init, me,
+            'invalid binding : '..
+            AST.tag2id[to.dcl.tag]..
+            ' "'..to.dcl.id..'" is already bound ('..
+            inits..')')
     end,
 }
 
