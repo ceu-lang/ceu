@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -18005,7 +18004,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    tmp = 'line 3 : invalid `escape´ : incompatible scopes',
+    scopes = 'line 3 : invalid `escape´ : incompatible scopes',
     --fins = 'line 3 : invalid escape value : local reference',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
 }
@@ -18531,6 +18530,7 @@ escape ret;
     run = 1,
 }
 
+--]===]
 Test { [[
 var int ret = 0;
 var int&& pa=null;

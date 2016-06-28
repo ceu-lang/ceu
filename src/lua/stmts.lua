@@ -13,8 +13,7 @@ F = {
         local fr, to = unpack(me)
 
         local err do
-            local _, esc = unpack( ASR(me.__par,'Stmts') )
-            if esc and esc.tag=='Escape' then
+            if AST.get(me.__par,'Stmts', 2,'Escape') then
                 err = 'invalid `escape´'
             else
                 err = 'invalid assignment'
