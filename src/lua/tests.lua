@@ -19599,7 +19599,7 @@ var int&& v = await E;
 await E;
 escape *v;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed `await´ (tests.lua:2)',
+    inits = 'line 4 : invalid pointer access : crossed `await´ (tests.lua:3)',
     --fin = 'line 4 : unsafe access to pointer "v" across `await´',
     --fin = 'line 3 : cannot `await´ again on this block',
     --run = 0,
@@ -19663,11 +19663,28 @@ do/_
     p = await E;
     _f(p);
     await E;
-    escape *p1;
+    //escape *p1;
 end
 escape 1;
 ]],
     fin = 'line 6 : call requires `finalize´',
+}
+
+Test { [[
+native _f;
+var int&& p1 = null;
+do/_
+    var int&& p;
+    input int&& E;
+    p = await E;
+    _f(p);
+    await E;
+    escape *p1;
+end
+escape 1;
+]],
+    inits = 'line 9 : invalid pointer access : crossed `await´ (tests.lua:6)',
+    --fin = 'line 6 : call requires `finalize´',
 }
 
 Test { [[
@@ -19684,13 +19701,28 @@ escape 1;
 }
 
 Test { [[
+var int&& p = null;
+par/or do
+with
+    p = null;
+end
+escape 0;
+]],
+    inits = 'line 4 : invalid pointer access : crossed `par/or´ (tests.lua:2)',
+    --fin = 'line 8 : pointer access across `await´',
+    --fin = 'line 6 : invalid block for pointer across `await´',
+    --fin = 'line 6 : cannot `await´ again on this block',
+    --run = { ['~>1s']=10 },
+}
+Test { [[
 var int x = 10;
 var int&& p = &&x;
 par/or do
     await 1s;
 with
     input int&& E;
-    p = await E;
+    //p = await E;
+    await E;
 end
 escape x;
 ]],
@@ -19784,13 +19816,77 @@ escape v;
 }
 
 Test { [[
+var int ret=0;
+input void OS_START;
+var int p=
+do
+    input int E;
+    par do
+        var int p1;
+        do
+            p1 = await E;
+        finalize with
+            ret = p1;
+            p1 = ret;
+            escape p1;
+        end
+    with
+        await OS_START;
+        var int i = 1;
+        async (i) do
+            emit E => i;
+        end
+    end
+end;
+escape ret + p;
+]],
+    adj = 'line 7 : invalid `finalize´',
+    --fin = 'line 8 : attribution does not require `finalize´',
+    --fin = 'line 8 : invalid block for awoken pointer "p"',
+    --fin = 'line 14 : cannot `await´ again on this block',
+}
+
+Test { [[
+var int ret=0;
+input void OS_START;
+var int&& p=
+do
+    input int&& E;
+    par do
+        var int&& p1;
+        do
+            p1 = await E;
+        finalize with
+            ret = *p1;
+            p1 = &&ret;
+            escape p1;
+        end
+    with
+        await OS_START;
+        var int i = 1;
+        async (i) do
+            emit E => &&i;
+        end
+    end
+end;
+escape ret + *p;
+]],
+    scopes = 'line 13 : invalid `escape´ : incompatible scopes',
+    --adj = 'line 7 : invalid `finalize´',
+    --fin = 'line 8 : attribution does not require `finalize´',
+    --fin = 'line 8 : invalid block for awoken pointer "p"',
+    --fin = 'line 14 : cannot `await´ again on this block',
+}
+
+Test { [[
 var int&& p=null;
 var int ret=0;
 input void OS_START;
 do
     input int&& E;
     par/and do
-        do p = await E;
+        do
+            p = await E;
         finalize with
             ret = *p;
             p = &&ret;
@@ -19805,33 +19901,35 @@ do
 end
 escape ret + *p;
 ]],
-    adj = 'line 7 : invalid `finalize´',
+    inits = 'line 8 : invalid pointer access : crossed `par/and´ (tests.lua:6)',
+    --adj = 'line 7 : invalid `finalize´',
     --fin = 'line 8 : attribution does not require `finalize´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
     --fin = 'line 14 : cannot `await´ again on this block',
 }
 
 Test { [[
+var int&& p = null;
+async do end
+escape *p;
+]],
+    inits = 'line 3 : invalid pointer access : crossed `async´ (tests.lua:2)',
+}
+Test { [[
 var int ret = 0;
 var int&& p = &&ret;
-input void OS_START;
 do
     input int&& E;
     par/and do
         p = await E;
     with
-        await OS_START;
-        var int i = 1;
-        async (i) do
-            emit E => &&i;
-        end
     end
 end
 escape ret + *p;
 ]],
-    run = 1,
+    inits = 'line 6 : invalid pointer access : crossed `par/and´ (tests.lua:5)',
     --env = 'line 11 : wrong argument : cannot pass pointers',
-    fin = 'line 16 : unsafe access to pointer "p" across `async´ (tests.lua : 11)',
+    --fin = 'line 16 : unsafe access to pointer "p" across `async´ (tests.lua : 11)',
     --fin = 'line 14 : unsafe access to pointer "p" across `par/and´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
     --fin = 'line 14 : cannot `await´ again on this block',
@@ -19863,6 +19961,7 @@ do/_
     escape r;
 end
 ]],
+    todo = 'escape PTR',
     wrn = true,
     --parser = 'line 10 : after `i´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `)´',
     --adj = 'line 9 : invalid `finalize´',
@@ -19871,12 +19970,12 @@ end
 }
 
 Test { [[
-var int&& p = null;
 var int ret = 0;
 input void OS_START;
 do
     input int&& E;
     par/and do
+var int&& p = null;
         p = await E;
         ret = *p;
     with
@@ -19896,12 +19995,12 @@ escape ret;
 }
 
 Test { [[
-var int&& p = null;
 var int ret = 0;
 input void OS_START;
 do
     input int&& E;
     par/and do
+var int&& p = null;
         p = await E;
         ret = *p;
     with
@@ -19944,9 +20043,9 @@ escape ret;
 Test { [[
 input void OS_START;
 input (int,void&&) PTR;
-var void&& p=null;
 var int i=0;
 par/or do
+var void&& p=null;
     (i,p) = await PTR;
 with
     await OS_START;
@@ -19964,12 +20063,12 @@ escape i;
 Test { [[
 input void OS_START;
 input (int,void&&) PTR;
-var void&& p=null;
 var int i=0;
 par/or do
     var void&& p1;
     (i,p1) = await PTR;
     do
+var void&& p=null;
         p = p1;
     finalize with
         nothing;
@@ -20002,11 +20101,11 @@ escape i;
 Test { [[
 input void OS_START;
 input (int,void&&) PTR;
-var void&& p = null;
 var int i = 0;
 par/or do
     var void&& p1;
     (i,p1) = await PTR;
+var void&& p = null;
     do p = p1; finalize with end
 with
     await OS_START;
@@ -20023,12 +20122,12 @@ escape i;
 }
 
 Test { [[
-var void&& p = null;
 var int i = 0;
 input void OS_START;
 do
     input (int,void&&) PTR;
     par/or do
+var void&& p = null;
         (i,p) = await PTR;
     with
         await OS_START;
@@ -20046,7 +20145,6 @@ escape i;
 }
 
 Test { [[
-var void&& p = null;
 var int i = 0;
 input void OS_START;
 do
@@ -20054,6 +20152,7 @@ do
     par/or do
         var void&& p1;
         (i,p1) = await PTR;
+var void&& p = null;
         do p = p1; finalize with end
     with
         await OS_START;
@@ -20068,35 +20167,6 @@ escape i;
     --fin = 'line 7 : attribution does not require `finalize´',
     --env = 'line 12 : wrong argument #2 : cannot pass pointers',
     run = 1,
-}
-
-Test { [[
-var int&& p = null;
-var int i = 0;
-input void OS_START;
-do
-    input (int,int&&) PTR;
-    par/or do
-        var int&& p1;
-        (i,p1) = await PTR;
-        do p = p1; finalize with end;
-    with
-        await OS_START;
-        async do
-            var int v = 10;
-            emit PTR => (1, &&v);
-        end
-    end
-    i = *p;
-end
-escape i;
-]],
-    --fin = 'line 7 : wrong operator',
-    --fin = 'line 7 : attribution does not require `finalize´',
-    --fin = 'line 14 : pointer access across `await´',
-    --env = 'line 13 : wrong argument #2 : cannot pass pointers',
-    --run = 10,
-    fin = 'line 17 : unsafe access to pointer "p" across `async´ (tests.lua : 12)',
 }
 
 Test { [[

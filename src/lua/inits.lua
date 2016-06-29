@@ -205,7 +205,6 @@ F = {
            TYPES.check(tp,'?') and (not is_alias)   -- optional initialization
         then
             -- ok: don't need initialization
-            return
         else
             if me.tag=='Var' or     -- all vars must be inited
                is_alias      or     -- all aliases must be bound
@@ -219,7 +218,6 @@ F = {
 
         -- RUN_PTRS
         if TYPES.check(tp,'&&') then
-
             local stmts = AST.asr(me.__par,'Stmts')
             local Var,Do = unpack(stmts)
             if me==Var and Do and Do.tag=='Do' and
