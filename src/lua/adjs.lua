@@ -54,7 +54,6 @@ F = {
                     node('_Set', me.ln,
                         node('Exp_Name', me.ln,
                             node('ID_int', me.ln, '_ret')),
-                        '=',
                         node('_Set_Do', me.ln,
                             node('Do', me.ln,
                                 true,
@@ -142,7 +141,6 @@ F = {
             stmts_new[2] = node('_Set', me.ln,
                             node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, '_ret')),
-                            '=',
                             node('_Set_Do', me.ln,
                                 node('Do', me.ln,
                                     true,
@@ -365,11 +363,10 @@ DBG('TODO: _Loop_Pool')
 -------------------------------------------------------------------------------
 
     _Set__PRE = function (me)
-        local to,op,set = unpack(me)
+        local to,set = unpack(me)
 
         --  _Set
         --      to
-        --      =
         --      _Set_Watching
         --          _Watching
         --              Await_*
@@ -378,7 +375,6 @@ DBG('TODO: _Loop_Pool')
         --  _Watching
         --      _Set
         --          to
-        --          =
         --          _Set_Await_many
         --              Await_*
         --      Block
@@ -392,7 +388,7 @@ DBG('TODO: _Loop_Pool')
                     tag = '_Set_Await_one'
                 end
             end
-            me[3] = node(tag, me.ln, awt)
+            me[2] = node(tag, me.ln, awt)
             watching[1] = me
             return watching
         end
@@ -408,19 +404,16 @@ DBG('TODO: _Loop_Pool')
         then
             --  _Set
             --      to
-            --      =
             --      _Set_*
             --          fr
             -->>>
             --  _Set_*
             --      fr
             --      to
-            --      =
 
             assert(#set == 1, 'bug found')
             set.tag = string.sub(set.tag,2)
             set[2] = to
-            set[3] = op
 
             -- a = &b   (Set_Exp->Set_Alias)
             if set.tag=='Set_Exp' and set[1].tag=='Exp_1&' then
@@ -432,7 +425,6 @@ DBG('TODO: _Loop_Pool')
             -- set to "to" happens on "escape"
             local do_ = unpack(set)
             do_[#do_+1] = to
-            do_[#do_+1] = op
             return do_
         else
 AST.dump(me)
@@ -448,8 +440,7 @@ error 'TODO: remove all tests above when this never fails again'
         local _, fr = unpack(me)
         local set = node('Set_Exp', me.ln,
                         fr,
-                        node('Ref', me.ln, 'escape', me),   -- see locs.lua
-                        nil) -- op
+                        node('Ref', me.ln, 'escape', me))   -- see locs.lua
         me.tag = 'Escape'
         me[2] = nil
         return node('Stmts', me.ln, set, me)

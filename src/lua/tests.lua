@@ -135,12 +135,12 @@ Test { [[escape ((1<=2) as int) + ((1<2) as int) + 2/1 - 2%3;]], run=2 }
 Test { [[nt a;]],
     --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
     --parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
-    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
+    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
 }
 Test { [[nt sizeof;]],
     --parser = "line 1 : after `nt´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´",
     --parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
-    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
+    parser = 'line 1 : after `nt´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
 }
 Test { [[var int sizeof;]],
     parser = "line 1 : after `int´ : expected type modifier or internal identifier",
@@ -471,7 +471,7 @@ Test { [[
 inputintMY_EVT;
 ifv==0thenbreak;end
 ]],
-    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
+    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
     --parser = 'line 2 : after `ifv´ : `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´',
     --parser = 'line 2 : after `==´ : expected expression',
     --parser = 'line 2 : after `0´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
@@ -480,7 +480,7 @@ Test { [[
 inputintMY_EVT;
 escape 1;
 ]],
-    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
+    parser = 'line 1 : after `inputintMY_EVT´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
     --dcls = 'line 1 : internal identifier "inputintMY_EVT" is not declared',
 }
 
@@ -497,7 +497,7 @@ Test { [[
 native_printf();
 loopdo await250ms;_printf("Hello World!\n");end
 ]],
-    parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `:=´ or `(´',
+    parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `=´ or `(´',
     --parser = 'line 2 : after `loopdo´ : expected `[´ or `:´ or `.´ or `!´ or `as´ or `=´ or `:=´ or `(´ or `?´ or `is´ or binary operator or `;´',
     --parser = 'line 2 : after `loopdo´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
 }
@@ -521,7 +521,7 @@ var bool a? = 1;
 a? = 2;
 escape a?;
 ]],
-    parser = 'line 2 : after `a´ : expected `=´ or `:=´ or `,´ or `;´',
+    parser = 'line 2 : after `a´ : expected `=´ or `,´ or `;´',
     --run = 2,
 }
 
@@ -17558,7 +17558,8 @@ loop do
     do
     var int&& a;
         var int&& b = null;
-        do a := b;
+        do
+            a = b;
         finalize with
             do break; end;
         end
@@ -23950,6 +23951,7 @@ vector[] byte bs;
 $bs := 1;
 escape ($bs) as int;
 ]],
+    todo = '$vec := n',
     run = 1,
 }
 
@@ -23958,6 +23960,7 @@ vector[10] byte bs;
 $bs := 10;
 escape ($bs) as int;
 ]],
+    todo = '$vec := n',
     run = 10,
 }
 
@@ -23966,6 +23969,7 @@ vector[10] byte bs;
 $bs := 11;
 escape ($bs) as int;
 ]],
+    todo = '$vec := n',
     run = '2] runtime error: invalid attribution : out of bounds',
 }
 
@@ -24846,6 +24850,7 @@ xxx[0] = 10;
 xxx[9] = 1;
 escape xxx[0]+xxx[9];
 ]],
+    todo = '$vec := n',
     run = 11,
 }
 
@@ -24855,6 +24860,7 @@ vector[nnn] byte xxx;
 $xxx := nnn+1;
 escape 1;
 ]],
+    todo = '$vec := n',
     run = ':3] runtime error: invalid attribution : out of bounds',
 }
 
@@ -24865,6 +24871,7 @@ $us := n;
 $us = 20;
 escape 1;
 ]],
+    todo = '$vec := n',
     run = ':4] runtime error: invalid attribution : out of bounds',
 }
 
@@ -24883,6 +24890,7 @@ vector[] byte us;
 $us := n;
 escape 1;
 ]],
+    todo = '$vec := n',
     run = 1,
 }
 
@@ -25092,7 +25100,7 @@ escape p! ==null;
 
 Test { [[
 var& void? p;
-p := { NULL };
+p = { NULL };
 escape 1;
 //escape p==null;
 ]],
@@ -26806,14 +26814,14 @@ Test { [[
 var int a := 1;
 escape 1;
 ]],
-    fin = 'line 1 : wrong operator',
+    todo = 'line 1 : wrong operator',
 }
 Test { [[
 var int a;
 a := 1;
 escape 1;
 ]],
-    fin = 'line 2 : wrong operator',
+    todo = 'line 2 : wrong operator',
 }
 Test { [[
 var int a;
@@ -26829,14 +26837,14 @@ Test { [[
 var int&& a := null;
 escape 1;
 ]],
-    fin = 'line 1 : wrong operator',
+    todo = 'line 1 : wrong operator',
 }
 Test { [[
 var int&& a;
 a := null;
 escape 1;
 ]],
-    fin = 'line 2 : wrong operator',
+    todo = 'line 2 : wrong operator',
 }
 Test { [[
 var int&& a;
@@ -26856,14 +26864,14 @@ end
 escape 1;
 ]],
     wrn = true,
-    fin = 'line 3 : wrong operator',
+    todo = 'line 3 : wrong operator',
 }
 Test { [[
 var int a=0;
 var int&& pa := &&a;
 escape 1;
 ]],
-    fin = 'line 2 : wrong operator',
+    todo = 'line 2 : wrong operator',
     run = 1,
 }
 Test { [[
@@ -26884,7 +26892,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    fin = 'line 2 : wrong operator',
+    todo = 'line 2 : wrong operator',
     --fin = 'line 2 : pointer access across `await´',
 }
 
@@ -34888,7 +34896,7 @@ var int a with
 end;
 escape 0;
 ]],
-    parser = 'line 1 : after `a´ : expected `=´ or `:=´ or `,´ or `;´',
+    parser = 'line 1 : after `a´ : expected `=´ or `,´ or `;´',
     --env = 'line 1 : invalid type',
 }
 
@@ -34906,7 +34914,7 @@ end;
 
 escape t1.b;
 ]],
-    parser = 'line 8 : after `t2´ : expected `=´ or `:=´ or `,´ or `;´',
+    parser = 'line 8 : after `t2´ : expected `=´ or `,´ or `;´',
 }
 
 Test { [[
@@ -43908,7 +43916,7 @@ class Tx with
     code/instantaneous Fx (var void&& v)=>void;
 do
     code/instantaneous Fx (var void&& v)=>void do
-        _V := v;
+        _V = v;
     end
 end
 escape 1;
@@ -55250,7 +55258,7 @@ par/or do
     var byte&&? ret1;
     var u8 err;
     (err, ret1) = request LINE => 10;
-    ret := ret1!;
+    ret = ret1!;
 with
     await FOREVER;
 end
@@ -68302,7 +68310,7 @@ input/output/instantaneous B  (var void* v)=>void do
 end
 escape 1;
 ]],
-    fin = 'line 2 : parameter must be `hold´',
+    todo = 'line 2 : parameter must be `hold´',
 }
 
 Test { [[
@@ -68310,7 +68318,7 @@ native do
     void* V;
 end
 input/output/instantaneous B  (var/hold void* v)=>void do
-    _V := v;
+    _V = v;
 end
 escape 1;
 ]],

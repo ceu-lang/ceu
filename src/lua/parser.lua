@@ -632,8 +632,8 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , _Set = V'Exp_Name' * V'__Sets_one'
            + (V'Exp_Name' + PARENS(V'Namelist')) * V'__Sets_many'
 
-    , __Sets_one  = (CKK'='-'=='+CKK':=') * (V'__sets_one'  + PARENS(V'__sets_one'))
-    , __Sets_many = (CKK'='-'=='+CKK':=') * (V'__sets_many' + PARENS(V'__sets_many'))
+    , __Sets_one  = (KK'='-'==') * (V'__sets_one'  + PARENS(V'__sets_one'))
+    , __Sets_many = (KK'='-'==') * (V'__sets_many' + PARENS(V'__sets_many'))
 
     , __sets_one =
           V'_Set_Do'
