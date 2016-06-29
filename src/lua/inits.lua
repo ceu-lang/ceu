@@ -67,13 +67,7 @@ local function run_inits (par, i, Dcl, stop)
         end
 
     -- ok: found assignment
-    elseif me.tag=='Set_Any' or me.tag=='Set_Exp' or me.tag=='Set_Alias' or
-           me.tag=='Set_Vec' or
-           me.tag=='Set_Await_one' or me.tag=='Set_Await_many' or
-           me.tag=='Set_Async_Thread' or me.tag=='Set_Lua' or
-           me.tag=='Set_Emit_Ext_emit' or me.tag=='Set_Emit_Ext_call' or
-           me.tag=='Set_Abs_Val' or me.tag=='Set_Abs_New'
-    then
+    elseif string.sub(me.tag,1,4)=='Set_' then
         local fr, to = unpack(me)
 
         -- some assertions
@@ -145,6 +139,8 @@ local function run_inits (par, i, Dcl, stop)
     return run_inits(me, 1, Dcl, stop)
 end
 
+local __is_set = function (me) return string.sub(me.tag,1,4)=='Set_' end
+
 local function run_ptrs (par, i, Dcl)
     local me = par[i]
     if me == nil then
@@ -153,25 +149,49 @@ local function run_ptrs (par, i, Dcl)
         return run_ptrs(par, i+1, Dcl, stop)
     end
 
-    -- yielding statement: stop
+    -- yielding statement: stop?
     if yields[me.tag] then
-        Dcl.__run_ptrs_yield = me
-        return
+        local set = AST.par(me,__is_set)
+        local ok = false
+        if set then
+            local _,to = unpack(set)
+            if to.tag ~= 'Namelist' then
+                to = { to }
+            end
+            for _, v in ipairs(to) do
+                if v.dcl == Dcl then
+                    ok = true
+                    break
+                end
+            end
+        end
+        if ok then
+            -- continue: this is a Set on me
+        else
+            -- stop
+            Dcl.__run_ptrs_yield = me
+            return
+        end
 
     -- access to Dcl: mark as safe
     elseif me.tag=='ID_int' and me.dcl==Dcl then
         me.__run_ptrs_ok = true
+
+    -- skip all |a = do ... end|
+    elseif me.tag == 'Do' then
+        local _,_,Exp_Name = unpack(me)
+        if Exp_Name then
+            local ID_int = AST.asr(Exp_Name,'Exp_Name', 1,'ID_int')
+            if ID_int.dcl == Dcl then
+                return run_ptrs(me, #me, Dcl)   -- skip
+            end
+        end
     end
 
     return run_ptrs(me, 1, Dcl)
 end
 
 F = {
-    __i = nil,
-    Stmts__BEF = function (me, sub, i)
-        F.__i = i
-    end,
-
     Pool = 'Var',
     Vec  = 'Var',
     Evt  = 'Var',
@@ -214,23 +234,24 @@ F = {
         end
     end,
 
+    -- skiped by run_ptrs with tag=='Do'
+    Stmts__PRE = function (me)
+        local Set_Exp, Escape = unpack(me)
+        if #me==2 and Set_Exp.tag=='Set_Exp' and Escape.tag=='Escape' then
+            local ID_int = AST.get(Set_Exp,'', 2,'Exp_Name', 1,'ID_int')
+            if ID_int then
+                ID_int.__run_ptrs_ok = true
+            end
+        end
+    end,
+
     ID_int = function (me)
         if TYPES.check(me.dcl[1],'&&') then
-            local Exp_Name = AST.par(me, 'Exp_Name')
-            local ID_int do
-                ID_int = Exp_Name and AST.get(Exp_Name,'', 1,'ID_int')
-                ID_int = ID_int==me and ID_int
-            end
-            if ID_int and Exp_Name.__dcls_is_escape then
-                -- ok
-                -- ptr = do escape <ptr=...> end
-            else
-                local yield = me.dcl.__run_ptrs_yield
-                --ASR(me.__run_ptrs_ok, me,
-                    --'invalid pointer access : crossed `'..
-                    --yields[yield.tag]..'´ '..
-                    --'('..yield.ln[1]..':'..yield.ln[2]..')')
-            end
+            local yield = me.dcl.__run_ptrs_yield
+            ASR(me.__run_ptrs_ok, me,
+                'invalid pointer access : crossed `'..
+                yields[yield.tag]..'´ '..
+                '('..yield.ln[1]..':'..yield.ln[2]..')')
         end
     end,
 

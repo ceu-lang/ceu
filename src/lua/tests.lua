@@ -2494,8 +2494,8 @@ var u8&& ptr = do
     with
         await 1s;
         escape null;
-end
-    end;
+    end
+end;
 escape (ptr == null) as int;
 ]],
     run = {['~>1s']=1},
@@ -17461,7 +17461,8 @@ var int&& ptr = &&v;
 await 1s;
 escape *ptr;
 ]],
-    fin = 'line 4 : unsafe access to pointer "ptr" across `await´',
+    inits = 'line 4 : invalid pointer access : crossed `await´ (tests.lua:3)',
+    --fin = 'line 4 : unsafe access to pointer "ptr" across `await´',
 }
 
 Test { [[
@@ -17472,7 +17473,8 @@ await 1s;
 var int&& c = a;
 escape 1;
 ]],
-    fin = 'line 5 : unsafe access to pointer "a" across `await´',
+    inits = 'line 5 : invalid pointer access : crossed `await´ (tests.lua:4)',
+    --fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
 Test { [[
@@ -17483,7 +17485,8 @@ await 1s;
 var int&& c = a;
 escape 1;
 ]],
-    fin = 'line 5 : unsafe access to pointer "a" across `await´',
+    inits = 'line 5 : invalid pointer access : crossed `await´ (tests.lua:4)',
+    --fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
 Test { [[
@@ -17495,7 +17498,8 @@ loop i in [0 -> 10[ do
 end
 escape v;
 ]],
-    fin = 'line 4 : unsafe access to pointer "x" across `loop´ (tests.lua : 3)',
+    inits = 'line 4 : invalid pointer access : crossed `loop´ (tests.lua:3)',
+    --fin = 'line 4 : unsafe access to pointer "x" across `loop´ (tests.lua : 3)',
 }
 
 Test { [[
@@ -17508,7 +17512,8 @@ loop i in [0 -> 10[ do
 end
 escape v;
 ]],
-    fin = 'line 5 : unsafe access to pointer "x" across `loop´ (tests.lua : 4)',
+    inits = 'line 5 : invalid pointer access : crossed `loop´ (tests.lua:4)',
+    --fin = 'line 5 : unsafe access to pointer "x" across `loop´ (tests.lua : 4)',
 }
 
 Test { [[
@@ -19594,7 +19599,8 @@ var int&& v = await E;
 await E;
 escape *v;
 ]],
-    fin = 'line 4 : unsafe access to pointer "v" across `await´',
+    inits = 'line 4 : invalid pointer access : crossed `await´ (tests.lua:2)',
+    --fin = 'line 4 : unsafe access to pointer "v" across `await´',
     --fin = 'line 3 : cannot `await´ again on this block',
     --run = 0,
 }
@@ -19614,6 +19620,24 @@ escape 1;
 Test { [[
 var int&& p1=null;
 do/_
+    var int&& p=null;
+    //input int&& E;
+    //p = await E;
+    p1 = p;
+    //await E;
+    escape *p1;
+end
+escape 1;
+]],
+    --fin = 'line 6 : attribution requires `finalize´',
+    --fin = 'line 8 : pointer access across `await´',
+    --fin = 'line 6 : attribution to pointer with greater scope',
+    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
+}
+
+Test { [[
+var int&& p1=null;
+do/_
     var int&& p;
     input int&& E;
     p = await E;
@@ -19626,7 +19650,8 @@ escape 1;
     --fin = 'line 6 : attribution requires `finalize´',
     --fin = 'line 8 : pointer access across `await´',
     --fin = 'line 6 : attribution to pointer with greater scope',
-    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
+    inits = 'line 6 : invalid pointer access : crossed `await´ (tests.lua:5)',
+    --scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
 }
 
 Test { [[

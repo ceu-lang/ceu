@@ -396,13 +396,12 @@ DBG('TODO: _Loop_Pool')
 
         -----------------------------------------------------------------------
 
-        if set.tag=='_Set_Exp'           or set.tag=='_Set_Any'           or
-           set.tag=='_Set_Await_one'     or set.tag=='_Set_Await_many'    or
-           set.tag=='_Set_Vec'           or set.tag=='_Set_Emit_Ext_emit' or
-           set.tag=='_Set_Async_Thread'  or set.tag=='_Set_Lua'           or
-           set.tag=='_Set_Abs_Val'       or set.tag=='_Set_Abs_New'       or
-           set.tag=='_Set_Emit_Ext_call' or set.tag=='_Set_Emit_Ext_req'
-        then
+        if set.tag == '_Set_Do' then
+            -- set to "to" happens on "escape"
+            local do_ = unpack(set)
+            do_[#do_+1] = to
+            return do_
+        else
             --  _Set
             --      to
             --      _Set_*
@@ -422,14 +421,6 @@ DBG('TODO: _Loop_Pool')
             end
 
             return set
-        elseif set.tag == '_Set_Do' then
-            -- set to "to" happens on "escape"
-            local do_ = unpack(set)
-            do_[#do_+1] = to
-            return do_
-        else
-AST.dump(me)
-error 'TODO: remove all tests above when this never fails again'
         end
     end,
 
