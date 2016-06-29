@@ -132,13 +132,6 @@ local function run_inits (par, i, Dcl, stop)
                 end
             end
         end
-    elseif me.tag=='Set_Await_many' then
-        local _, Namelist = unpack(me)
-        for _, Exp_Name in ipairs(Namelist) do
-            if Exp_Name.dcl == Dcl then
-                return true                     -- stop, found init
-            end
-        end
     elseif me.tag == 'Do' then
         -- a = do ... end
         local _,_,Exp_Name = unpack(me)

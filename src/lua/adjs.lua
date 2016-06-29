@@ -343,12 +343,13 @@ DBG('TODO: _Loop_Pool')
                     new = node('Exp_Name', to.ln, to)
                 end
             end
-            me[1] = new
-            set_awt = node('Set_Await', me.ln,
-                        node('Await_Until', me.ln, awt, false),
-                        to)
+            if awt.tag == '_Await_Until' then
+                set_awt = node('Set_Await_many', me.ln, awt, new)
+            else
+                set_awt = node('Set_Await_one', me.ln, awt, new)
+            end
         else
-            set_awt = node('Await_Until', me.ln, awt, false)
+            set_awt = awt
         end
 
         return node('Loop', me.ln,
