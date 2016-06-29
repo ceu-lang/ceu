@@ -4,8 +4,10 @@ F = {
         -- OK
         do
             -- a = do escape 1 end  // a=1
-            local set = AST.par(me, 'Set_Exp')
-            if set and set.is_escape and AST.is_par(set[2],me) then
+            local Exp_Name = AST.par(me, 'Exp_Name')
+            if Exp_Name and Exp_Name.__dcls_is_escape and
+               AST.get(Exp_Name,'', 1,'ID_int')==me
+            then
                 return
             end
             -- first field of Escape

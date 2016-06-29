@@ -440,7 +440,7 @@ error 'TODO: remove all tests above when this never fails again'
         local _, fr = unpack(me)
         local set = node('Set_Exp', me.ln,
                         fr,
-                        node('Ref', me.ln, 'escape', me))   -- see locs.lua
+                        node('Ref', me.ln, 'escape', me))   -- see dcls.lua
         me.tag = 'Escape'
         me[2] = nil
         return node('Stmts', me.ln, set, me)
