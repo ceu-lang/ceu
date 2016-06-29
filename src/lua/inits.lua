@@ -24,16 +24,16 @@ local yields = {
     Kill          = 'kill',
 }
 
-local function run (par, i, Dcl, stop)
+local function run_inits (par, i, Dcl, stop)
     local me = par[i]
     if me == nil then
         if par == stop then
             return false                        -- stop, not found
         else
-            return run(par.__par, par.__i+1, Dcl, stop)
+            return run_inits(par.__par, par.__i+1, Dcl, stop)
         end
     elseif not AST.is_node(me) then
-        return run(par, i+1, Dcl, stop)
+        return run_inits(par, i+1, Dcl, stop)
     end
 
     -- error: yielding statement
@@ -56,8 +56,8 @@ local function run (par, i, Dcl, stop)
 
     elseif me.tag == 'If' then
         local _, t, f = unpack(me)
-        local ok1 = run(t, 1, Dcl, t)
-        local ok2 = run(f, 1, Dcl, f)
+        local ok1 = run_inits(t, 1, Dcl, t)
+        local ok2 = run_inits(f, 1, Dcl, f)
         if ok1 or ok2 then
             ASR(ok1 and ok2, Dcl,
                 'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
@@ -149,7 +149,28 @@ local function run (par, i, Dcl, stop)
             end
         end
     end
-    return run(me, 1, Dcl, stop)
+    return run_inits(me, 1, Dcl, stop)
+end
+
+local function run_ptrs (par, i, Dcl)
+    local me = par[i]
+    if me == nil then
+        return run_ptrs(par.__par, par.__i+1, Dcl, stop)
+    elseif not AST.is_node(me) then
+        return run_ptrs(par, i+1, Dcl, stop)
+    end
+
+    -- yielding statement: stop
+    if yields[me.tag] then
+        Dcl.__run_ptrs_yield = me
+        return
+
+    -- access to Dcl: mark as safe
+    elseif me.tag=='ID_int' and me.dcl==Dcl then
+        me.__run_ptrs_ok = true
+    end
+
+    return run_ptrs(me, 1, Dcl)
 end
 
 F = {
@@ -163,6 +184,8 @@ F = {
     Evt  = 'Var',
     Var  = function (me)
         local tp,is_alias = unpack(me)
+
+        -- RUN_INITS
         if me.is_implicit       or                  -- compiler defined
            me.is_param          or                  -- "code" parameter
            AST.par(me,'Data')   or                  -- "data" member
@@ -177,7 +200,43 @@ F = {
             then
                 -- var x = ...
                 -- event& e = ...
-                run(me, #me+1, me)
+                run_inits(me, #me+1, me)
+            end
+        end
+
+        -- RUN_PTRS
+        if TYPES.check(tp,'&&') then
+
+            local stmts = AST.asr(me.__par,'Stmts')
+            local Var,Do = unpack(stmts)
+            if me==Var and Do and Do.tag=='Do' and
+               AST.asr(Do,'',3,'Exp_Name').dcl==me
+            then
+                -- start "run_ptrs" after the "do"
+                --  var int x = do ... end;
+                run_ptrs(Do, 3, me)
+            else
+                run_ptrs(me, #me+1, me)
+            end
+        end
+    end,
+
+    ID_int = function (me)
+        if TYPES.check(me.dcl[1],'&&') then
+            local Exp_Name = AST.par(me, 'Exp_Name')
+            local ID_int do
+                ID_int = Exp_Name and AST.get(Exp_Name,'', 1,'ID_int')
+                ID_int = ID_int==me and ID_int
+            end
+            if ID_int and Exp_Name.__dcls_is_escape then
+                -- ok
+                -- ptr = do escape <ptr=...> end
+            else
+                local yield = me.dcl.__run_ptrs_yield
+                --ASR(me.__run_ptrs_ok, me,
+                    --'invalid pointer access : crossed `'..
+                    --yields[yield.tag]..'´ '..
+                    --'('..yield.ln[1]..':'..yield.ln[2]..')')
             end
         end
     end,
