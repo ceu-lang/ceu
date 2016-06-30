@@ -98,6 +98,20 @@ function TYPES.is_nat (tp)
         -- _char    yes
         -- _char&&  no
 end
+function TYPES.is_nat_ptr (tp)
+    assert(tp.tag == 'Type')
+    if not TYPES.is_nat(tp) then
+        return false
+    end
+    local ID_nat = AST.get(tp,'', 1,'ID_nat')
+    if ID_nat then
+        local _,mod = unpack(ID_nat.dcl)
+        if mod == 'plain' then
+            return false
+        end
+    end
+    return true
+end
 function TYPES.ID_plain (tp)
     return #tp==1 and tp[1]
 end

@@ -7,8 +7,8 @@ local yields = {
     Escape        = 'escape',
     Loop          = 'loop',
     Async         = 'async',
-    Async_Thread  = 'async/thread',
-    Async_Isr     = 'async/isr',
+    _Async_Thread  = 'async/thread',
+    _Async_Isr     = 'async/isr',
     Code          = 'code',
     Ext_Code      = 'external code',
     Data          = 'data',
@@ -141,10 +141,14 @@ end
 
 local __is_set = function (me) return string.sub(me.tag,1,4)=='Set_' end
 
-local function run_ptrs (par, i, Dcl)
+local function run_ptrs (par, i, Dcl, stop)
     local me = par[i]
     if me == nil then
-        return run_ptrs(par.__par, par.__i+1, Dcl, stop)
+        if par == stop then
+            return true                     -- no stop found, continue with pointer accesses
+        else
+            return run_ptrs(par.__par, par.__i+1, Dcl, stop)
+        end
     elseif not AST.is_node(me) then
         return run_ptrs(par, i+1, Dcl, stop)
     end
@@ -170,15 +174,21 @@ local function run_ptrs (par, i, Dcl)
         else
             -- stop
             Dcl.__run_ptrs_yield = me
-            return
+            return false                    -- stop with pointer acesses
         end
 
     -- If: take the two branches independently
     elseif me.tag == 'If' then
-        local _, t, f = unpack(me)
-        run_ptrs(t, 1, Dcl) -- TODO: stop on #me
-        run_ptrs(f, 1, Dcl) -- TODO: stop on #me
-        return run_ptrs(me, #me, Dcl)
+        local c, t, f = unpack(me)
+        local ok = run_ptrs(c, 1, Dcl, c)
+        assert(ok)
+        local ok1 = run_ptrs(t, 1, Dcl, t)
+        local ok2 = run_ptrs(f, 1, Dcl, f)
+        if ok1 and ok2 then
+            return run_ptrs(me, #me, Dcl, stop)   -- continue with pointer accesses
+        else
+            return false                    -- stopped in one of the branches
+        end
 
     -- access to Dcl: mark as safe
     elseif me.tag=='ID_int' and me.dcl==Dcl then
@@ -190,12 +200,12 @@ local function run_ptrs (par, i, Dcl)
         if Exp_Name then
             local ID_int = AST.asr(Exp_Name,'Exp_Name', 1,'ID_int')
             if ID_int.dcl == Dcl then
-                return run_ptrs(me, #me, Dcl)   -- skip
+                return run_ptrs(me, #me, Dcl, stop)   -- skip
             end
         end
     end
 
-    return run_ptrs(me, 1, Dcl)
+    return run_ptrs(me, 1, Dcl, stop)
 end
 
 F = {
@@ -224,7 +234,11 @@ F = {
         end
 
         -- RUN_PTRS
-        if TYPES.check(tp,'&&') then
+        if me.tag=='Evt' or me.tag=='Pool' then
+            return
+        end
+        local is_ptr = TYPES.check(tp,'&&') or TYPES.is_nat_ptr(tp)
+        if is_ptr then
             local stmts = AST.asr(me.__par,'Stmts')
             local Var,Do = unpack(stmts)
             if me==Var and Do and Do.tag=='Do' and
@@ -251,7 +265,11 @@ F = {
     end,
 
     ID_int = function (me)
-        if TYPES.check(me.dcl[1],'&&') then
+        if me.dcl.tag=='Evt' or me.dcl.tag=='Pool' then
+            return
+        end
+        local is_ptr = TYPES.check(me.dcl[1],'&&') or TYPES.is_nat_ptr(me.dcl[1])
+        if is_ptr then
             local yield = me.dcl.__run_ptrs_yield
             ASR(me.__run_ptrs_ok, me,
                 'invalid pointer access : crossed `'..

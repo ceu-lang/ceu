@@ -117,18 +117,9 @@ DBG('TODO: remove pool')
 
         -- tp
         local _,mod = unpack(e.dcl[1])
-        local is_nat = TYPES.is_nat(e.dcl[1])
-        if is_nat then
-            local ID_nat = AST.get(e.dcl,'', 1,'Type', 1,'ID_nat')
-            if ID_nat then
-                local _,mod = unpack(ID_nat.dcl)
-                if mod == 'plain' then
-                    is_nat = false
-                end
-            end
-        end
         local is_ptr = TYPES.check(e.dcl[1],'&&')
-        ASR(is_nat or is_ptr, me,
+        local is_nat_ptr = TYPES.is_nat_ptr(e.dcl[1])
+        ASR(is_ptr or is_nat_ptr, me,
             'invalid operand to `'..op..'´ : expected pointer type')
 
         -- dcl
@@ -140,6 +131,10 @@ DBG('TODO: remove pool')
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
         if not e.dcl then return end
+
+        ASR(TYPES.ID_plain(e.dcl[1]), me,
+            'invalid operand to `.´ : expected plain type : got "'..
+            TYPES.tostring(e.dcl[1])..'"')
 
         local ID_abs = AST.get(e.dcl,'', 1,'Type', 1,'ID_abs')
         if ID_abs and ID_abs.dcl.tag == 'Data' then

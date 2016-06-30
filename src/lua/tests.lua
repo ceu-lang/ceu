@@ -21632,7 +21632,8 @@ every qu_ in GO do
     end
 end
 ]],
-    fin = 'line 5 : unsafe access to pointer "qu" across `async´',
+    inits = 'line 6 : invalid pointer access : crossed `async´ (tests.lua:6)',
+    --fin = 'line 5 : unsafe access to pointer "qu" across `async´',
     --_ana = { isForever=true },
     --run = 1,
 }
@@ -22889,6 +22890,19 @@ end;
 Test { [[
 var int&& a;
 a = null;
+if true then
+    await 1s;
+else
+end;
+a = null;
+escape 1;
+]],
+    inits = 'line 7 : invalid pointer access : crossed `await´ (tests.lua:4)',
+}
+
+Test { [[
+var int&& a;
+a = null;
 if a!=null then
     escape 1;
 else
@@ -23678,7 +23692,7 @@ escape v == &&v[0] ;
 }
 
 Test { [[
-native _int;
+native/plain _int;
 native/nohold _f;
 native do
     void f (int* p) {
@@ -23704,7 +23718,7 @@ native do
         *p = 1;
     }
 end
-native _int;
+native/plain _int;
 vector[2] _int a = [];
 a[0] = 0;
 a[1] = 0;
@@ -23731,7 +23745,7 @@ native do
         *p = 1;
     }
 end
-native _int;
+native/plain _int;
 vector[2] _int a = [];
 a[0] = 0;
 a[1] = 0;
@@ -25621,7 +25635,7 @@ else
 end
 escape ret;
 ]],
-    inits = 'line 10 : invalid pointer access : crossed `emit´ (tests.lua:7)',
+    inits = 'line 10 : invalid pointer access : crossed `emit´ (tests.lua:9)',
     --fin = 'line 10 : unsafe access to pointer "x" across `emit´',
 }
 
@@ -26812,7 +26826,7 @@ escape v2[0][0];
 
 Test { [[
 native/plain _char;
-native _u8;
+native/plain _u8;
 vector[10] _u8 v1 = [];
 vector[10] byte v2 = [];
 
@@ -27032,20 +27046,31 @@ escape 1;
 }
 Test { [[
 native _int;
-var _int&& u = _;
+var _int ptr = null;
+await 1s;
+escape (ptr == null) as int;
+]],
+    wrn = true,
+    inits = 'line 4 : invalid pointer access : crossed `await´ (tests.lua:3)',
+    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (tests.lua : 3)',
+}
+Test { [[
+native _int;
 vector[1] _int i=[];
 await 1s;
+var _int&& u = _;
 u = &&i[0];
 escape 1;
 ]],
     wrn = true,
-    fin = 'line 4 : unsafe access to pointer "i" across `await´ (tests.lua : 3)',
+    inits = 'line 5 : invalid pointer access : crossed `await´ (tests.lua:3)',
+    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (tests.lua : 3)',
 }
 Test { [[
 native/plain _int;
-var _int&& u = _;
 vector[1] _int i=[];
 await 1s;
+var _int&& u = _;
 u = &&i[0];
 if u==null then end;
 escape 1;
@@ -27269,7 +27294,7 @@ native/const _N;
 pre native do
     #define N 5
 end
-native _int;
+native/plain _int;
 vector[_N] _int vec = [];
 loop i in [0 -> _N[ do
     vec[i] = i;
@@ -29088,12 +29113,12 @@ escape ret;
 -- ASYNC/NONDET
 
 Test { [[
-native _int;
+native/plain _int;
 vector[2] _int v = [];
-var _int&& p = &&v[0];
 par/and do
     v[0] = 1;
 with
+var _int&& p = &&v[0];
     p[1] = 2;
 end
 escape v[0] + v[1];
@@ -29105,7 +29130,7 @@ escape v[0] + v[1];
     run = 3;
 }
 Test { [[
-native _int;
+native/plain _int;
 vector[2] _int v = [];
 par/and do
     v[0] = 1;
@@ -29247,8 +29272,8 @@ escape x;
 
 Test { [[
 var int x  = 0;
-var int&& p = &&x;
 par/and do
+var int&& p = &&x;
     *p = 1;
 with
     var int y = x;
@@ -31220,6 +31245,39 @@ escape _V;
 }
 
 Test { [[
+native/plain _t;
+var _t t = _;
+escape *(t.x);
+]],
+    exps = 'line 3 : invalid operand to `*´ : expected pointer type',
+}
+
+Test { [[
+native _t;
+var _t t = _;
+await 1s;
+escape *(t.x);
+]],
+    wrn = true,
+    inits = 'line 4 : invalid pointer access : crossed `await´ (tests.lua:3)',
+}
+
+Test { [[
+native _t;
+var& _t? t;
+do
+    t = &_t(null);
+finalize with
+    nothing;
+end;
+await 1s;
+escape *(t.x);
+]],
+    exps = 'line 9 : invalid operand to `.´ : expected plain type : got "_t?"',
+    --run = {['~>1s']=10},
+}
+
+Test { [[
 pre native do
     typedef struct t {
         int* x;
@@ -31227,10 +31285,14 @@ pre native do
 end
 native _t;
 var int v = 10;
-var _t t;
-do t = _t(&&v); finalize with nothing; end;
+var& _t? t;
+do
+    t = &_t(&&v);
+finalize with
+    nothing;
+end;
 await 1s;
-escape *t.x;
+escape *(t!.x);
 ]],
     run = {['~>1s']=10},
 }
@@ -41720,8 +41782,9 @@ native _s, _V;
 
 escape _V;
 ]],
-    run = { ['~>1min']=10 },
-    fin = 'line 3 : unsafe access to pointer "p" across `loop´ (tests.lua : 2)',
+    inits = 'line 4 : invalid pointer access : crossed `loop´ (tests.lua:3)',
+    --run = { ['~>1min']=10 },
+    --fin = 'line 3 : unsafe access to pointer "p" across `loop´ (tests.lua : 2)',
 }
 
 Test { [[
@@ -49272,7 +49335,7 @@ end
 }
 
 Test { [[
-native _int;
+native/plain _int;
 pre native do
     int V = 1;
     tceu_app CEU_APP;
@@ -49373,6 +49436,18 @@ escape v;
 
 Test { PRE_ISR..[[
 var int&& v = null;
+    async/isr[20] (v) do
+        *v = 1;
+    end
+    await FOREVER;
+]],
+    inits = 'line 22 : invalid pointer access : crossed `async/isr´ (tests.lua:22)',
+    --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
+    --run = 1,
+}
+
+Test { PRE_ISR..[[
+var int&& v = null;
 par/or do
     async/isr[20] (v) do
         *v = 1;
@@ -49382,8 +49457,9 @@ with
 end
 escape 1;
 ]],
+    inits = 'line 23 : invalid pointer access : crossed `par/or´ (tests.lua:22)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
-    run = 1,
+    --run = 1,
 }
 
 Test { PRE_ISR..[[
@@ -58429,7 +58505,8 @@ end
 ]],
     wrn = true,
     --adt = 'line 52 : mutation : cannot mix data sources',
-    fin = 'line 54 : unsafe access to pointer "p" across `await´',
+    inits = 'line 55 : invalid pointer access : crossed `await´ (tests.lua:54)',
+    --fin = 'line 54 : unsafe access to pointer "p" across `await´',
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
@@ -58440,7 +58517,8 @@ escape (*p as List.Cons).head;
 ]],
     wrn = true,
     --adt = 'line 52 : mutation : cannot mix data sources',
-    fin = 'line 54 : unsafe access to pointer "p" across `await´',
+    inits = 'line 54 : invalid pointer access : crossed `await´ (tests.lua:53)',
+    --fin = 'line 54 : unsafe access to pointer "p" across `await´',
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
 Test { DATA..[[
@@ -58451,7 +58529,8 @@ escape (*p as List.Cons).head;
 ]],
     wrn = true,
     --adt = 'line 52 : cannot mix recursive data sources',
-    fin = 'line 54 : unsafe access to pointer "p" across `await´',
+    inits = 'line 54 : invalid pointer access : crossed `await´ (tests.lua:53)',
+    --fin = 'line 54 : unsafe access to pointer "p" across `await´',
 }
 
 -- COPY / MUTATION
@@ -59508,6 +59587,7 @@ var SDL_Color clr = val SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr.v;
 ]],
+    exps = 'line 6 : invalid operand to `.´ : expected plain type : got "SDL_Color?"',
     --exps = 'line 6 : invalid member access : "bg_clr" must be of plain type',
     --env = 'line 6 : invalid `.´ operation : cannot be an option type',
 }
