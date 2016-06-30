@@ -65,28 +65,34 @@ end
 -------------------------------------------------------------------------------
 
 F = {
--- PRIMITIVES
+-- IDs
 
-    NULL = function (me)
-        me.dcl = INFO.new(me, 'null', '&&')
+--[[
+    ID_prim = function (me)
+        local id = unpack(me)
+        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'primitive identifier')
     end,
 
-    NUMBER = function (me)
-        local v = unpack(me)
-        if math.floor(v) == tonumber(v) then
-            me.dcl = INFO.new(me, 'int')
-        else
-            me.dcl = INFO.new(me, 'float')
-        end
+    ID_nat = function (me)
+        local id = unpack(me)
+        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'native identifier')
     end,
 
-    BOOL = function (me)
-        me.dcl = INFO.new(me, 'bool')
+    ID_ext = function (me)
+        local id = unpack(me)
+        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'external identifier')
     end,
 
-    STRING = function (me)
-        me.dcl = INFO.new(me, '_char', '&&')
+    ID_abs = function (me)
+        local id = unpack(me)
+        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'abstraction')
     end,
+
+    ID_int = function (me)
+        local id = unpack(me)
+        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, false, 'internal identifier')
+    end,
+]]
 
 -- TYPECAST: as
 
@@ -218,6 +224,29 @@ G = {
     Exp_Name = function (me)
         local e = unpack(me)
         me.dcl = e.dcl
+    end,
+
+-- PRIMITIVES
+
+    NULL = function (me)
+        me.dcl = INFO.new(me, 'null', '&&')
+    end,
+
+    NUMBER = function (me)
+        local v = unpack(me)
+        if math.floor(v) == tonumber(v) then
+            me.dcl = INFO.new(me, 'int')
+        else
+            me.dcl = INFO.new(me, 'float')
+        end
+    end,
+
+    BOOL = function (me)
+        me.dcl = INFO.new(me, 'bool')
+    end,
+
+    STRING = function (me)
+        me.dcl = INFO.new(me, '_char', '&&')
     end,
 
 -- SIZEOF

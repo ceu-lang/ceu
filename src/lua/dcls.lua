@@ -49,7 +49,6 @@ function dcls_get (blk, id, can_cross)
         if dcl then
             dcl.is_used = true
             return dcl
-            --return AST.copy(dcl)
         end
     end
     return nil
