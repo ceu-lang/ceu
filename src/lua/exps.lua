@@ -1,21 +1,21 @@
 local function asr_name (e, cnds, err_msg)
-    ASR(e.dcl.tag~='Val', e, err_msg..' : expected name expression')
-    --assert(e.dcl.tag ~= 'Val')
+    ASR(e.info.tag~='Val', e, err_msg..' : expected name expression')
+    --assert(e.info.tag ~= 'Val')
     local ok do
         for _, tag in ipairs(cnds) do
-            if tag == e.dcl.tag then
+            if tag == e.info.tag then
                 ok = true
                 break
             end
         end
     end
     ASR(ok, e, err_msg..' : '..
-                'unexpected context for '..AST.tag2id[e.dcl.tag]
-                                         ..' "'..e.dcl.id..'"')
+                'unexpected context for '..AST.tag2id[e.info.tag]
+                                         ..' "'..e.info.id..'"')
 end
 
 local function asr_if_name (e, cnds, err_msg)
-    if e.dcl.tag == 'Val' then
+    if e.info.tag == 'Val' then
         return
     else
         return asr_name(e, cnds, err_msg)
@@ -29,8 +29,8 @@ EXPS = {
 
 INFO = {}
 
-local function info_copy (dcl, tag, Type)
-    local new = AST.copy(dcl)
+local function info_copy (info, tag, Type)
+    local new = AST.copy(info)
     if tag then
         new.tag = tag
     end
@@ -67,50 +67,48 @@ end
 F = {
 -- IDs
 
---[[
     ID_prim = function (me)
         local id = unpack(me)
-        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'primitive identifier')
+        me.info = me.dcl
     end,
 
     ID_nat = function (me)
         local id = unpack(me)
-        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'native identifier')
+        me.info = me.dcl
     end,
 
     ID_ext = function (me)
         local id = unpack(me)
-        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'external identifier')
+        me.info = me.dcl
     end,
 
     ID_abs = function (me)
         local id = unpack(me)
-        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'abstraction')
+        me.info = me.dcl
     end,
 
     ID_int = function (me)
         local id = unpack(me)
-        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, false, 'internal identifier')
+        me.info = me.dcl
     end,
-]]
 
 -- TYPECAST: as
 
     Exp_as = function (me)
         local op,e,Type = unpack(me)
-        if not e.dcl then return end
+        if not e.info then return end
 
         -- ctx
         asr_if_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(not TYPES.check(e.dcl[1],'?'), me,
+        ASR(not TYPES.check(e.info[1],'?'), me,
             'invalid operand to `'..op..'´ : unexpected option type')
 
-        -- dcl
-        me.dcl = info_copy(e.dcl)
+        -- info
+        me.info = info_copy(e.info)
         if AST.is_node(Type) then
-            me.dcl[1] = AST.copy(Type)
+            me.info[1] = AST.copy(Type)
         else
             -- annotation (/plain, etc)
 DBG'TODO: type annotation'
@@ -126,11 +124,11 @@ DBG'TODO: type annotation'
         asr_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.check(e.dcl[1],'?'), me,
+        ASR(TYPES.check(e.info[1],'?'), me,
             'invalid operand to `'..op..'´ : expected option type')
 
-        -- dcl
-        me.dcl = info_copy(e.dcl, nil, TYPES.pop(e.dcl[1]))
+        -- info
+        me.info = info_copy(e.info, nil, TYPES.pop(e.info[1]))
     end,
 
 -- INDEX
@@ -140,9 +138,9 @@ DBG'TODO: type annotation'
 
         -- ctx, tp
 
-        local tp = AST.copy(vec.dcl[1])
+        local tp = AST.copy(vec.info[1])
         tp[2] = nil
-        if (vec.dcl.tag=='Var' or vec.dcl.tag=='Nat') and TYPES.is_nat(tp) then
+        if (vec.info.tag=='Var' or vec.info.tag=='Nat') and TYPES.is_nat(tp) then
             -- _V[0][0]
             -- var _char&&&& argv; argv[1][0]
             -- v[1]._plain[0]
@@ -151,9 +149,9 @@ DBG'TODO: type annotation'
             asr_name(vec, {'Vec'}, 'invalid vector')
         end
 
-        -- dcl
-        me.dcl = info_copy(vec.dcl, 'Var',
-                    TYPES.check(vec.dcl[1],'&&') and TYPES.pop(vec.dcl[1]))
+        -- info
+        me.info = info_copy(vec.info, 'Var',
+                    TYPES.check(vec.info[1],'&&') and TYPES.pop(vec.info[1]))
     end,
 
 -- PTR: *
@@ -166,34 +164,34 @@ DBG'TODO: type annotation'
 DBG('TODO: remove pool')
 
         -- tp
-        local _,mod = unpack(e.dcl[1])
-        local is_ptr = TYPES.check(e.dcl[1],'&&')
-        local is_nat_ptr = TYPES.is_nat_ptr(e.dcl[1])
+        local _,mod = unpack(e.info[1])
+        local is_ptr = TYPES.check(e.info[1],'&&')
+        local is_nat_ptr = TYPES.is_nat_ptr(e.info[1])
         ASR(is_ptr or is_nat_ptr, me,
             'invalid operand to `'..op..'´ : expected pointer type')
 
-        -- dcl
-        me.dcl = info_copy(e.dcl, nil, is_ptr and TYPES.pop(e.dcl[1]))
+        -- info
+        me.info = info_copy(e.info, nil, is_ptr and TYPES.pop(e.info[1]))
     end,
 
 -- MEMBER: .
 
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
-        if not e.dcl then return end
+        if not e.info then return end
 
-        ASR(TYPES.ID_plain(e.dcl[1]), me,
+        ASR(TYPES.ID_plain(e.info[1]), me,
             'invalid operand to `.´ : expected plain type : got "'..
-            TYPES.tostring(e.dcl[1])..'"')
+            TYPES.tostring(e.info[1])..'"')
 
-        local ID_abs = AST.get(e.dcl,'', 1,'Type', 1,'ID_abs')
-        if ID_abs and ID_abs.dcl.tag == 'Data' then
+        local ID_abs = AST.get(e.info,'', 1,'Type', 1,'ID_abs')
+        if ID_abs and ID_abs.info.tag == 'Data' then
             -- data.member
-            local blk = AST.asr(ID_abs.dcl,'Data', 2,'Block')
-            me.dcl = info_copy(DCLS.asr(me,blk,member,false,e.dcl.id))
-            me.dcl.blk = e.dcl.blk
+            local blk = AST.asr(ID_abs.info,'Data', 2,'Block')
+            me.info = info_copy(DCLS.asr(me,blk,member,false,e.info.id))
+            me.info.blk = e.info.blk
         else
-            me.dcl = info_copy(e.dcl)
+            me.info = info_copy(e.info)
         end
     end,
 
@@ -208,9 +206,9 @@ DBG('TODO: remove pool')
         -- tp
         -- any
 
-        -- dcl
-        me.dcl = INFO.new(me, 'usize')
-        me.dcl.tag = 'Var'
+        -- info
+        me.info = INFO.new(me, 'usize')
+        me.info.tag = 'Var'
     end,
 }
 
@@ -223,30 +221,30 @@ AST.visit(F)
 G = {
     Exp_Name = function (me)
         local e = unpack(me)
-        me.dcl = e.dcl
+        me.info = e.info
     end,
 
 -- PRIMITIVES
 
     NULL = function (me)
-        me.dcl = INFO.new(me, 'null', '&&')
+        me.info = INFO.new(me, 'null', '&&')
     end,
 
     NUMBER = function (me)
         local v = unpack(me)
         if math.floor(v) == tonumber(v) then
-            me.dcl = INFO.new(me, 'int')
+            me.info = INFO.new(me, 'int')
         else
-            me.dcl = INFO.new(me, 'float')
+            me.info = INFO.new(me, 'float')
         end
     end,
 
     BOOL = function (me)
-        me.dcl = INFO.new(me, 'bool')
+        me.info = INFO.new(me, 'bool')
     end,
 
     STRING = function (me)
-        me.dcl = INFO.new(me, '_char', '&&')
+        me.info = INFO.new(me, '_char', '&&')
     end,
 
 -- SIZEOF
@@ -262,8 +260,8 @@ G = {
         -- tp
         -- any
 
-        -- dcl
-        me.dcl = INFO.new(me, 'usize')
+        -- info
+        me.info = INFO.new(me, 'usize')
     end,
 
 -- CALL
@@ -276,8 +274,8 @@ G = {
 
         -- tp
 
-        -- dcl
-        me.dcl = e.dcl
+        -- info
+        me.info = e.info
     end,
 
     Abs_Call = function (me)
@@ -288,12 +286,12 @@ G = {
 
         -- tp
         local id = unpack(ID_abs)
-        ASR(ID_abs.dcl.tag=='Code', me,
+        ASR(ID_abs.info.tag=='Code', me,
             'invalid call : "'..id..'" is not a `code´ abstraction')
 
-        -- dcl
-        local _,_,_,_,out = unpack(ID_abs.dcl)
-        me.dcl = INFO.new(me, AST.copy(out))
+        -- info
+        local _,_,_,_,out = unpack(ID_abs.info)
+        me.info = INFO.new(me, AST.copy(out))
     end,
 
 -- BIND
@@ -309,9 +307,9 @@ G = {
         -- tp
         -- any
 
-        -- dcl
-        me.dcl = info_copy(e.dcl, 'Val')
-        me.dcl[2] = '&'
+        -- info
+        me.info = info_copy(e.info, 'Val')
+        me.info[2] = '&'
     end,
 
 -- INDEX ("idx" is Exp, not Exp_Name)
@@ -323,7 +321,7 @@ G = {
         asr_if_name(idx, {'Nat','Var'}, 'invalid index')
 
         -- tp
-        ASR(TYPES.is_int(idx.dcl[1]), me,
+        ASR(TYPES.is_int(idx.info[1]), me,
             'invalid index : expected integer type')
     end,
 
@@ -336,11 +334,11 @@ G = {
         asr_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(not TYPES.check(e.dcl[1],'?'), me,
+        ASR(not TYPES.check(e.info[1],'?'), me,
             'invalid operand to `'..op..'´ : unexpected option type')
 
-        -- dcl
-        me.dcl = info_copy(e.dcl, 'Val', TYPES.push(e.dcl[1],'&&'))
+        -- info
+        me.info = info_copy(e.info, 'Val', TYPES.push(e.info[1],'&&'))
     end,
 
 -- OPTION: ?
@@ -352,11 +350,11 @@ G = {
         asr_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.check(e.dcl[1],'?'), me,
+        ASR(TYPES.check(e.info[1],'?'), me,
             'invalid operand to `'..op..'´ : expected option type')
 
-        -- dcl
-        me.dcl = INFO.new(me, 'bool')
+        -- info
+        me.info = INFO.new(me, 'bool')
     end,
 
 -- VECTOR LENGTH: $$
@@ -372,11 +370,11 @@ G = {
         asr_if_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.check(e.dcl[1],'bool'), me,
+        ASR(TYPES.check(e.info[1],'bool'), me,
             'invalid operand to `'..op..'´ : expected boolean type')
 
-        -- dcl
-        me.dcl = INFO.new(me, 'bool')
+        -- info
+        me.info = INFO.new(me, 'bool')
     end,
 
 -- UNARY: +,-
@@ -390,11 +388,11 @@ G = {
         asr_if_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.is_num(e.dcl[1]), me,
+        ASR(TYPES.is_num(e.info[1]), me,
             'invalid operand to `'..op..'´ : expected numeric type')
 
-        -- dcl
-        me.dcl = info_copy(e.dcl, 'Val')
+        -- info
+        me.info = info_copy(e.info, 'Val')
     end,
 
 -- NUMERIC: +, -, %, *, /, ^
@@ -413,16 +411,16 @@ G = {
         asr_if_name(e2, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.is_num(e1.dcl[1]) and TYPES.is_num(e2.dcl[1]), me,
+        ASR(TYPES.is_num(e1.info[1]) and TYPES.is_num(e2.info[1]), me,
             'invalid operand to `'..op..'´ : expected numeric type')
 
-        -- dcl
-        local max = TYPES.max(e1.dcl[1], e2.dcl[1])
+        -- info
+        local max = TYPES.max(e1.info[1], e2.info[1])
         ASR(max, me, 'invalid operands to `'..op..'´ : '..
                         'incompatible numeric types : "'..
-                        TYPES.tostring(e1.dcl[1])..'" vs "'..
-                        TYPES.tostring(e2.dcl[1])..'"')
-        me.dcl = INFO.new(me, AST.copy(max))
+                        TYPES.tostring(e1.info[1])..'" vs "'..
+                        TYPES.tostring(e2.info[1])..'"')
+        me.info = INFO.new(me, AST.copy(max))
     end,
 
 -- BITWISE
@@ -439,16 +437,16 @@ G = {
         asr_if_name(e2, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.is_int(e1.dcl[1]) and TYPES.is_int(e2.dcl[1]), me,
+        ASR(TYPES.is_int(e1.info[1]) and TYPES.is_int(e2.info[1]), me,
             'invalid operand to `'..op..'´ : expected integer type')
 
-        -- dcl
-        local max = TYPES.max(e1.dcl[1], e2.dcl[1])
+        -- info
+        local max = TYPES.max(e1.info[1], e2.info[1])
         ASR(max, me, 'invalid operands to `'..op..'´ : '..
                         'incompatible integer types : "'..
-                        TYPES.tostring(e1.dcl[1])..'" vs "'..
-                        TYPES.tostring(e2.dcl[1])..'"')
-        me.dcl = INFO.new(me, AST.copy(max))
+                        TYPES.tostring(e1.info[1])..'" vs "'..
+                        TYPES.tostring(e2.info[1])..'"')
+        me.info = INFO.new(me, AST.copy(max))
     end,
 
     ['Exp_~'] = function (me)
@@ -458,11 +456,11 @@ G = {
         asr_if_name(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.is_int(e.dcl[1]), me,
+        ASR(TYPES.is_int(e.info[1]), me,
             'invalid operand to `'..op..'´ : expected integer type')
 
-        -- dcl
-        me.dcl = info_copy(e.dcl, 'Val')
+        -- info
+        me.info = info_copy(e.info, 'Val')
     end,
 
 -- COMPARISON: >, >=, <, <=
@@ -479,11 +477,11 @@ G = {
         asr_if_name(e2, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.is_num(e1.dcl[1]) and TYPES.is_num(e2.dcl[1]), me,
+        ASR(TYPES.is_num(e1.info[1]) and TYPES.is_num(e2.info[1]), me,
             'invalid operand to `'..op..'´ : expected numeric type')
 
-        -- dcl
-        me.dcl = INFO.new(me, 'bool')
+        -- info
+        me.info = INFO.new(me, 'bool')
     end,
 
 -- EQUALITY: ==, !=
@@ -499,21 +497,21 @@ G = {
 
         -- tp
 
-        local ID1 = TYPES.ID_plain(e1.dcl[1])
-        local ID2 = TYPES.ID_plain(e2.dcl[1])
+        local ID1 = TYPES.ID_plain(e1.info[1])
+        local ID2 = TYPES.ID_plain(e2.info[1])
         ASR( (not (ID1 and ID1.tag=='ID_abs')) and
              (not (ID2 and ID2.tag=='ID_abs')), me,
             'invalid operands to `'..op..'´ : unexpected `data´ value' )
 
-        ASR(TYPES.contains(e1.dcl[1],e2.dcl[1]) or
-            TYPES.contains(e2.dcl[1],e1.dcl[1]), me,
+        ASR(TYPES.contains(e1.info[1],e2.info[1]) or
+            TYPES.contains(e2.info[1],e1.info[1]), me,
             'invalid operands to `'..op..'´ : '..
             'incompatible types : "'..
-                TYPES.tostring(e1.dcl[1])..'" vs "'..
-                TYPES.tostring(e2.dcl[1])..'"')
+                TYPES.tostring(e1.info[1])..'" vs "'..
+                TYPES.tostring(e2.info[1])..'"')
 
-        -- dcl
-        me.dcl = INFO.new(me, 'bool')
+        -- info
+        me.info = INFO.new(me, 'bool')
     end,
 
 -- AND, OR
@@ -528,11 +526,11 @@ G = {
         asr_if_name(e2, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.check(e1.dcl[1],'bool') and TYPES.check(e2.dcl[1],'bool'), me,
+        ASR(TYPES.check(e1.info[1],'bool') and TYPES.check(e2.info[1],'bool'), me,
             'invalid operand to `'..op..'´ : expected boolean type')
 
-        -- dcl
-        me.dcl = INFO.new(me, 'bool')
+        -- info
+        me.info = INFO.new(me, 'bool')
     end,
 
 -- IS, AS/CAST
@@ -545,11 +543,11 @@ G = {
         asr_if_name(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(not TYPES.check(e.dcl[1],'?'), me,
+        ASR(not TYPES.check(e.info[1],'?'), me,
             'invalid operand to `'..op..'´ : unexpected option type')
 
-        -- dcl
-        me.dcl = INFO.new(me, 'bool')
+        -- info
+        me.info = INFO.new(me, 'bool')
     end,
 }
 AST.visit(G)
