@@ -94,10 +94,11 @@ Test = function (t)
     if not check('adjs')     then return end
     dofile 'types.lua'
     if not check('dcls')     then return end
+    if not check('names')    then return end
+do return end
     if not check('exps')     then return end
     if not check('consts')   then return end
     if not check('stmts')    then return end
-do return end
     if not check('inits')    then return end
     if not check('scopes')   then return end
 AST.dump(AST.root)

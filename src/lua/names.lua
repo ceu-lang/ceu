@@ -1,0 +1,234 @@
+local function asr_tag (e, cnds, err_msg)
+    ASR(e.info, e, err_msg..' : expected name expression')
+    --assert(e.info.obj.tag ~= 'Val')
+    local ok do
+        for _, tag in ipairs(cnds) do
+            if tag == e.info.tag then
+                ok = true
+                break
+            end
+        end
+    end
+    ASR(ok, e, err_msg..' : '..
+                'unexpected context for '..AST.tag2id[e.info.tag]
+                                         ..' "'..e.info.id..'"')
+end
+
+--[[
+local function asr_if_tag (e, cnds, err_msg)
+    if not e.info then
+        return
+    else
+        return asr_tag(e, cnds, err_msg)
+    end
+end
+
+EXPS = {
+    asr_tag    = asr_tag,
+    asr_if_tag = asr_if_tag,
+}
+]]
+
+INFO = {}
+
+local function info_copy (old)
+    local new = {}
+    for k,v in pairs(old) do
+        new[k] = v
+    end
+    return new
+end
+
+function INFO.new (me, tag, tp, ...)
+    if AST.is_node(tp) and (tp.tag=='Type' or tp.tag=='Typelist') then
+        assert(not ...)
+    else
+        assert(type(tp) == 'string')
+        local id = tp
+        local ID = (string.sub(id,1,1)==string.sub(string.upper(id),1,1) and
+                    'ID_abs' or 'ID_prim')
+        tp = AST.node('Type', me.ln,
+                AST.node(ID, me.ln,
+                    id),
+                ...)
+    end
+    return {
+        id  = 'unknown',
+        tag = tag,
+        tp  = tp,
+    }
+end
+
+function INFO.dump (info)
+    DBG([[
+{
+    tp       = ]]..TYPES.tostring(info.tp)..[[,
+    lval     = ]]..tostring(info.lval)..[[,
+    is_alias = ]]..tostring(info.is_alias)..[[,
+    dcl      = ]]..tostring(info.dcl)..[[,
+    obj      = ]]..tostring(info.obj)..[[,
+    member   = ]]..tostring(info.member)..[[,
+}
+]])
+end
+
+-------------------------------------------------------------------------------
+-- NAMES
+-------------------------------------------------------------------------------
+
+F = {
+-- IDs
+
+    ID_nat = function (me)
+        local id = unpack(me)
+        me.info = {
+            id  = id,
+            tag = me.dcl.tag,
+            tp  = me.dcl[1],
+        }
+    end,
+
+    ID_int = function (me)
+        local id = unpack(me)
+        me.info = {
+            id  = id,
+            tag = me.dcl.tag,
+            tp  = me.dcl[1],
+            dcl = me.dcl,
+        }
+    end,
+
+-- TYPECAST: as
+
+    Exp_as = function (me)
+        local op,e,Type = unpack(me)
+        if not e.info then return end   -- see EXPS below
+
+        -- ctx
+        asr_tag(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
+
+        -- tp
+        ASR(not TYPES.check(e.info.tp,'?'), me,
+            'invalid operand to `'..op..'´ : unexpected option type : got "'..
+            TYPES.tostring(e.info.tp)..'"')
+
+        -- info
+        me.info = info_copy(e.info)
+        if AST.is_node(Type) then
+            me.info.tp = AST.copy(Type)
+        else
+            -- annotation (/plain, etc)
+DBG'TODO: type annotation'
+        end
+    end,
+
+-- OPTION: !
+
+    ['Exp_!'] = function (me)
+        local op,e = unpack(me)
+
+        -- ctx
+        asr_tag(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
+
+        -- tp
+        ASR(TYPES.check(e.info.tp,'?'), me,
+            'invalid operand to `'..op..'´ : expected option type : got "'..
+            TYPES.tostring(e.info.tp)..'"')
+
+        -- info
+        me.info = info_copy(e.info)
+        me.info.tp = TYPES.pop(e.info.tp)
+    end,
+
+-- INDEX
+
+    ['Exp_idx'] = function (me)
+        local _,vec,idx = unpack(me)
+
+        -- ctx, tp
+
+        local tp = AST.copy(vec.info.tp)
+        tp[2] = nil
+        if (vec.info.tag=='Var' or vec.info.tag=='Nat') and TYPES.is_nat(tp) then
+            -- _V[0][0]
+            -- var _char&&&& argv; argv[1][0]
+            -- v[1]._plain[0]
+            asr_tag(vec, {'Nat','Var'}, 'invalid vector')
+        else
+            asr_tag(vec, {'Vec'}, 'invalid vector')
+        end
+
+        -- info
+        me.info = info_copy(vec.info)
+        me.info.tag = 'Var'
+        if TYPES.check(vec.info.tp,'&&') then
+            me.info.tp = TYPES.pop(vec.info.tp)
+        end
+    end,
+
+-- PTR: *
+
+    ['Exp_1*'] = function (me)
+        local op,e = unpack(me)
+
+        -- ctx
+        asr_tag(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
+DBG('TODO: remove pool')
+
+        -- tp
+        local _,mod = unpack(e.info.tp)
+        local is_ptr = TYPES.check(e.info.tp,'&&')
+        local is_nat_ptr = TYPES.is_nat_ptr(e.info.tp)
+        ASR(is_ptr or is_nat_ptr, me,
+            'invalid operand to `'..op..'´ : expected pointer type : got "'..
+            TYPES.tostring(e.info.tp)..'"')
+
+        -- info
+        me.info = info_copy(e.info)
+        if is_ptr then
+            me.info.tp = TYPES.pop(e.info.tp)
+        end
+    end,
+
+-- MEMBER: .
+
+    ['Exp_.'] = function (me)
+        local _, e, member = unpack(me)
+
+        ASR(TYPES.ID_plain(e.info.tp), me,
+            'invalid operand to `.´ : expected plain type : got "'..
+            TYPES.tostring(e.info.tp)..'"')
+
+        local ID_abs = unpack(e.info.tp)
+        if ID_abs and ID_abs.dcl.tag == 'Data' then
+            -- data.member
+            local blk = AST.asr(ID_abs.dcl,'Data', 2,'Block')
+            local Dcl = DCLS.asr(me,blk,member,false,e.info.id)
+            me.info = {
+                id  = 'TODO',
+                tag = Dcl.tag,
+                tp  = Dcl[1],
+                dcl = Dcl,
+            }
+        else
+            me.info = info_copy(e.info)
+        end
+    end,
+
+-- VECTOR LENGTH: $
+
+    ['Exp_$'] = function (me)
+        local op,vec = unpack(me)
+
+        -- ctx
+        asr_tag(vec, {'Vec'}, 'invalid operand to `'..op..'´')
+
+        -- tp
+        -- any
+
+        -- info
+        me.info = INFO.new(me, 'Var', 'usize')
+    end,
+}
+
+AST.visit(F)

@@ -16967,37 +16967,13 @@ escape 0;
     dcls = 'line 1 : native "_V" declared but not used',
 }
 Test { [[
-native do
-    int V = 10;
-end
 var int vv = 10;
 var& int v;
 v = &&vv;
-await 1s;
-do
-    var int vvv = 1;
-end
 escape *v;
 ]],
-    exps = 'line 11 : invalid operand to `*´ : expected pointer type',
+    names = 'line 4 : invalid operand to `*´ : expected pointer type',
     --env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
-}
-Test { [[
-native do
-    int V = 10;
-end
-var int vv = 10;
-var& int v;
-v = vv;
-await 1s;
-do
-    var int vvv = 1;
-end
-escape *v;
-]],
-    exps = 'line 11 : invalid operand to `*´ : expected pointer type',
-    --env = 'line 11 : invalid operand to unary "*"',
-    --run = { ['~>1s']=10 };
 }
 Test { [[
 native do
@@ -17203,7 +17179,7 @@ Test { [[
 var int v = 10;
 escape v!;
 ]],
-    exps = 'line 2 : invalid operand to `!´ : expected option type',
+    names = 'line 2 : invalid operand to `!´ : expected option type',
 }
 
 Test { [[
@@ -22913,7 +22889,7 @@ Test { [[var int&&p; escape p+10 and 0;]],
 
 -- ptr
 Test { [[var int a; escape *a;]],
-    exps = 'line 1 : invalid operand to `*´ : expected pointer type',
+    names = 'line 1 : invalid operand to `*´ : expected pointer type',
 }
 Test { [[var int a; var int&&pa; (pa+10)=&&a; escape a;]],
     parser = 'line 1 : after `)´ : expected `(´',
@@ -23982,7 +23958,7 @@ Test { [[
 var u8 v;
 escape ($v) as int;
 ]],
-    exps = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
+    names = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -24734,7 +24710,7 @@ end
 vector[] byte str = [].."Ola Mundo!";
 escape call Strlen((&&str[0]) as _char&&);
 ]],
-    exps = 'line 3 : invalid vector : unexpected context for variable "str"',
+    names = 'line 3 : invalid vector : unexpected context for variable "str"',
     --run = 10,
 }
 
@@ -24836,7 +24812,7 @@ Test { [[
 vector[] int v;
 escape v!;
 ]],
-    exps = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
+    names = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
 }
 Test { [[
 vector[] int v;
@@ -26915,6 +26891,17 @@ escape v2[0][0];
 ]],
     exps = 'line 5 : invalid vector : unexpected context for variable "v2"',
     --exps = 'line 5 : invalid vector : expected name expression',
+}
+
+Test { [[
+vector[10] byte v2 = [];
+
+var int ret = (v2[0] as int);
+
+escape ret;
+]],
+    --loop = 1,
+    run = 45,
 }
 
 Test { [[
@@ -31271,7 +31258,7 @@ end
 var _t v = 2;
 escape *v;
 ]],
-    exps = 'line 6 : invalid operand to `*´ : expected pointer type',
+    names = 'line 6 : invalid operand to `*´ : expected pointer type',
     --env = 'line 6 : invalid operand to unary "*"',
 }
 
@@ -31286,7 +31273,7 @@ var int v = 10;
 var _rect r = _rect(&&v);
 escape *(r.x);
 ]],
-    exps = 'line 9 : invalid operand to `*´ : expected pointer type',
+    names = 'line 9 : invalid operand to `*´ : expected pointer type',
 }
 Test { [[
 native _rect;
@@ -31343,7 +31330,7 @@ native/plain _t;
 var _t t = _;
 escape *(t.x);
 ]],
-    exps = 'line 3 : invalid operand to `*´ : expected pointer type',
+    names = 'line 3 : invalid operand to `*´ : expected pointer type : got "_t"',
 }
 
 Test { [[
@@ -31367,7 +31354,7 @@ end;
 await 1s;
 escape *(t.x);
 ]],
-    exps = 'line 9 : invalid operand to `.´ : expected plain type : got "_t?"',
+    names = 'line 9 : invalid operand to `.´ : expected plain type : got "_t?"',
     --run = {['~>1s']=10},
 }
 
@@ -57226,7 +57213,7 @@ end
 pool[10] List lll = new List.Cons(1, List.Nil());
 escape lll.head;
 ]],
-    exps = 'line 15 : invalid member access : "lll" has no member "head" : `data´ "List" (tests.lua:7)',
+    names = 'line 15 : invalid member access : "lll" has no member "head" : `data´ "List" (tests.lua:7)',
     --env = 'TODO: no head in lll',
 }
 
@@ -57609,6 +57596,26 @@ escape (e as Ee.Xx).d:x;
 ]],
     wrn = true,
     run = 10,
+}
+
+Test { [[
+data Ax with
+    var int v;
+end
+
+data Bx with
+    var Ax a;
+end
+
+data Cx with
+    var Bx b;
+end
+
+var Cx c = val Cx(Bx(Ax(1)));
+
+escape c.b.a;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -58190,7 +58197,7 @@ data Dd;
 pool[] Dd dds;
 escape dds!;
 ]],
-    exps = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
+    names = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
 }
 
 Test { [[
@@ -58425,7 +58432,7 @@ pool[] List l;
 escape (l as List.Nil).v;
 ]],
     wrn = true,
-    exps = 'line 52 : invalid member access : "l" has no member "v" : `data´ "List.Nil" (tests.lua:16)',
+    names = 'line 52 : invalid member access : "l" has no member "v" : `data´ "List.Nil" (tests.lua:16)',
     --env = 'line 52 : field "v" is not declared',
 }
 -- tag Opt.Ptr has no field "x"
@@ -58434,7 +58441,7 @@ var Opt o;
 escape (o as Opt.Ptr).x;
 ]],
     wrn = true,
-    exps = 'line 52 : invalid member access : "o" has no member "x" : `data´ "Opt.Ptr" (tests.lua:10)',
+    names = 'line 52 : invalid member access : "o" has no member "x" : `data´ "Opt.Ptr" (tests.lua:10)',
 }
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor
@@ -58864,7 +58871,7 @@ escape (*l is List.Nil) as int;       // "l" is not a struct
 ]],
     wrn = true,
     --exps = 'line 52 : invalid operand to `*´ : unexpected context for pool "l"',
-    exps = 'line 52 : invalid operand to `*´ : expected pointer type',
+    names = 'line 52 : invalid operand to `*´ : expected pointer type',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
@@ -58873,7 +58880,7 @@ escape ((l as List.Cons):head); // "l" is not a struct
 ]],
     wrn = true,
     --env = 'line 52 : invalid operand to unary "*"',
-    exps = 'line 52 : invalid operand to `*´ : expected pointer type',
+    names = 'line 52 : invalid operand to `*´ : expected pointer type : got "List.Cons"',
     --env = 'line 52 : invalid access (List[] vs List)',
 }
 Test { DATA..[[
@@ -58882,7 +58889,7 @@ escape *((l as List.Cons).tail) is List.Cons;    // "((l as List.Cons).tail)" is
 ]],
     wrn = true,
     --env = 'line 52 : invalid operand to unary "*"',
-    exps = 'line 52 : invalid operand to `*´ : expected pointer type',
+    names = 'line 52 : invalid operand to `*´ : expected pointer type',
     --env = 'line 52 : not a struct',
 }
 
@@ -59681,7 +59688,7 @@ var SDL_Color clr = val SDL_Color(10);
 var SDL_Color? bg_clr = clr;
 escape bg_clr.v;
 ]],
-    exps = 'line 6 : invalid operand to `.´ : expected plain type : got "SDL_Color?"',
+    names = 'line 6 : invalid operand to `.´ : expected plain type : got "SDL_Color?"',
     --exps = 'line 6 : invalid member access : "bg_clr" must be of plain type',
     --env = 'line 6 : invalid `.´ operation : cannot be an option type',
 }
