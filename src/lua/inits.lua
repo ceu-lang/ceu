@@ -198,8 +198,8 @@ local function run_ptrs (par, i, Dcl, stop)
     elseif me.tag == 'Do' then
         local _,_,Exp_Name = unpack(me)
         if Exp_Name then
-            local ID_int = AST.asr(Exp_Name,'Exp_Name', 1,'ID_int')
-            if ID_int.dcl == Dcl then
+            assert(Exp_Name.dcl, 'bug found')
+            if Exp_Name.dcl == Dcl then
                 return run_ptrs(me, #me, Dcl, stop)   -- skip
             end
         end
@@ -302,6 +302,38 @@ F = {
             AST.tag2id[to.dcl.tag]..
             ' "'..to.dcl.id..'" is already bound ('..
             inits..')')
+    end,
+
+    -- NO: a = do ... a ... end
+    Exp_Name = function (me)
+        -- OK
+        do
+            -- a = do escape 1 end  // a=1
+            if me.__dcls_is_escape then
+                return
+            end
+            -- 3rd field of Do
+            local do_ = AST.par(me, 'Do')
+            if do_ and do_[3]==me then
+                return
+            end
+        end
+
+
+        -- NO
+        for par in AST.iter() do
+            if par.tag == 'Do' then
+                local _,_,Exp_Name = unpack(par)
+                if Exp_Name then
+                    --ASR(not AST.is_equal(Exp_Name.dcl,me.dcl), me,
+                    ASR(Exp_Name.dcl ~= me.dcl, me,
+                        'invalid access to '..AST.tag2id[me.dcl.tag]
+                            ..' "'..me.dcl.id..'" : '
+                            ..'assignment in enclosing `do` ('
+                            ..Exp_Name.ln[1]..':'..Exp_Name.ln[2]..')')
+                end
+            end
+        end
     end,
 }
 

@@ -2718,6 +2718,97 @@ escape a;
 ]],
     run = 1,
 }
+
+Test { [[
+native _V;
+native do
+    int V = 0;
+end
+_V = do
+    escape _V+1;
+end;
+escape _V;
+]],
+    inits = 'line 6 : invalid access to native "_V" : assignment in enclosing `do` (tests.lua:5)',
+    --run = 1,
+}
+Test { [[
+native _V;
+native do
+    int V = 0;
+end
+_V = do
+    escape 1;
+end;
+escape _V;
+]],
+    run = 1,
+}
+Test { [[
+native _V;
+native do
+    int V = 1;
+end
+var int v = do
+    escape _V;
+end;
+escape v;
+]],
+    run = 1,
+}
+
+Test { [[
+native/plain _t;
+native do
+    typedef struct {
+        int v;
+    } t;
+end
+var _t t = _;
+t.v = do
+    escape t.v;
+end;
+escape t.v;
+]],
+    wrn = true,
+    inits = 'line 9 : invalid access to variable "t" : assignment in enclosing `do` (tests.lua:8)',
+}
+
+Test { [[
+native/plain _t;
+native do
+    typedef struct {
+        int v;
+    } t;
+end
+var _t t = _;
+t.v = do
+    escape 1;
+end;
+escape t.v;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native/plain _t;
+native do
+    typedef struct {
+        int v;
+    } t;
+end
+var int v = do
+    var _t t = _;
+    t.v = 1;
+    escape t.v;
+end;
+escape v;
+]],
+    wrn = true,
+    run = 1,
+}
+
 Test { [[
 var int a =
     do/_
@@ -2725,7 +2816,7 @@ var int a =
     end;
 escape a;
 ]],
-    props_ = 'line 3 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
+    inits = 'line 3 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
     --ref = 'line 3 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
 }
 Test { [[
@@ -2736,16 +2827,18 @@ var int a =
     end;
 escape a;
 ]],
-    props_ = 'line 3 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
+    inits = 'line 3 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
     --ref = 'line 4 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
     --run = 1,
 }
 Test { [[
-var int a = do/_ par do
-                escape 1;
-            with
-            end;
-end;
+var int a =
+    do/_
+        par do
+            escape 1;
+        with
+        end;
+    end;
 escape a;
 ]],
     run = 1,
@@ -2759,7 +2852,7 @@ end
             end;
 escape a;
 ]],
-    props_ = 'line 2 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
+    inits = 'line 2 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
     --ref = 'line 2 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
 }
 
@@ -12913,7 +13006,7 @@ a = a + 1;
 await X;
 escape a;
 ]],
-    props_ = 'line 9 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:3)',
+    inits = 'line 9 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:3)',
     --ref = 'line 9 : invalid access to uninitialized variable "a" (declared at tests.lua:2)',
     --run = { ['0~>A;0~>B;0~>Z;0~>X'] = 2 }
 }

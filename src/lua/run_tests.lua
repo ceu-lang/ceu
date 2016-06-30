@@ -7,7 +7,7 @@ RUNTESTS = {}
 -- Execution option for the tests:
 --VALGRIND = true
 --REENTRANT = true
---LUACOV = 'lua -lluacov'
+--LUACOV = 'lua5.3 -lluacov'
 --COMPLETE = true
 OS = false   -- false, true, nil(random)
 
@@ -98,7 +98,6 @@ Test = function (t)
     if not check('consts')   then return end
     if not check('stmts')    then return end
     if not check('inits')    then return end
-    if not check('props_')   then return end
     if not check('scopes')   then return end
 do return end
 AST.dump(AST.root)
