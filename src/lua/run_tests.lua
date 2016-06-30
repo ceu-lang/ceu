@@ -97,9 +97,9 @@ Test = function (t)
     if not check('exps')     then return end
     if not check('consts')   then return end
     if not check('stmts')    then return end
+do return end
     if not check('inits')    then return end
     if not check('scopes')   then return end
-do return end
 AST.dump(AST.root)
     if not check('adt')      then return end
     if not check('mode')     then return end

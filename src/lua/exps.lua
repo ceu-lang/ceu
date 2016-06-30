@@ -34,6 +34,25 @@ local function dcl_copy (dcl, tag, Type)
     return new
 end
 
+function DCLS.new (me, id, ...)
+    local tp
+    if AST.is_node(id) and (id.tag=='Type' or id.tag=='Typelist') then
+        assert(not ...)
+        tp = id
+    else
+        assert(type(id) == 'string')
+        local ID = (string.sub(id,1,1)==string.sub(string.upper(id),1,1) and
+                    'ID_abs' or 'ID_prim')
+        tp = AST.node('Type', me.ln,
+                AST.node(ID, me.ln,
+                    id),
+                ...)
+    end
+    local ret = AST.node('Val', me.ln, tp)
+    ret.id = 'unknown'
+    return ret
+end
+
 EXPS = {
     asr_name    = asr_name,
     asr_if_name = asr_if_name,
@@ -44,6 +63,29 @@ EXPS = {
 -------------------------------------------------------------------------------
 
 F = {
+-- PRIMITIVES
+
+    NULL = function (me)
+        me.dcl = DCLS.new(me, 'null', '&&')
+    end,
+
+    NUMBER = function (me)
+        local v = unpack(me)
+        if math.floor(v) == tonumber(v) then
+            me.dcl = DCLS.new(me, 'int')
+        else
+            me.dcl = DCLS.new(me, 'float')
+        end
+    end,
+
+    BOOL = function (me)
+        me.dcl = DCLS.new(me, 'bool')
+    end,
+
+    STRING = function (me)
+        me.dcl = DCLS.new(me, '_char', '&&')
+    end,
+
 -- TYPECAST: as
 
     Exp_as = function (me)
