@@ -17,6 +17,7 @@ function AST.is_node (node)
 end
 
 AST.tag2id = {
+    Val      = 'value',
     Prim     = 'primitive',
     Nat      = 'native',
     Var      = 'variable',

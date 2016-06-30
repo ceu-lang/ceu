@@ -95,8 +95,8 @@ Test = function (t)
     dofile 'types.lua'
     if not check('dcls')     then return end
     if not check('names')    then return end
-do return end
     if not check('exps')     then return end
+do return end
     if not check('consts')   then return end
     if not check('stmts')    then return end
     if not check('inits')    then return end

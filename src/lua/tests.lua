@@ -26889,7 +26889,7 @@ if false then
 end
 escape v2[0][0];
 ]],
-    exps = 'line 5 : invalid vector : unexpected context for variable "v2"',
+    names = 'line 5 : invalid vector : unexpected context for variable "v2"',
     --exps = 'line 5 : invalid vector : expected name expression',
 }
 

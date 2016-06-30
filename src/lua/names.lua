@@ -1,4 +1,7 @@
-local function asr_tag (e, cnds, err_msg)
+INFO = {
+}
+
+function INFO.asr_tag (e, cnds, err_msg)
     ASR(e.info, e, err_msg..' : expected name expression')
     --assert(e.info.obj.tag ~= 'Val')
     local ok do
@@ -14,24 +17,7 @@ local function asr_tag (e, cnds, err_msg)
                                          ..' "'..e.info.id..'"')
 end
 
---[[
-local function asr_if_tag (e, cnds, err_msg)
-    if not e.info then
-        return
-    else
-        return asr_tag(e, cnds, err_msg)
-    end
-end
-
-EXPS = {
-    asr_tag    = asr_tag,
-    asr_if_tag = asr_if_tag,
-}
-]]
-
-INFO = {}
-
-local function info_copy (old)
+function INFO.copy (old)
     local new = {}
     for k,v in pairs(old) do
         new[k] = v
@@ -72,10 +58,6 @@ function INFO.dump (info)
 ]])
 end
 
--------------------------------------------------------------------------------
--- NAMES
--------------------------------------------------------------------------------
-
 F = {
 -- IDs
 
@@ -105,7 +87,7 @@ F = {
         if not e.info then return end   -- see EXPS below
 
         -- ctx
-        asr_tag(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Val','Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(not TYPES.check(e.info.tp,'?'), me,
@@ -113,7 +95,7 @@ F = {
             TYPES.tostring(e.info.tp)..'"')
 
         -- info
-        me.info = info_copy(e.info)
+        me.info = INFO.copy(e.info)
         if AST.is_node(Type) then
             me.info.tp = AST.copy(Type)
         else
@@ -128,7 +110,7 @@ DBG'TODO: type annotation'
         local op,e = unpack(me)
 
         -- ctx
-        asr_tag(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(TYPES.check(e.info.tp,'?'), me,
@@ -136,7 +118,7 @@ DBG'TODO: type annotation'
             TYPES.tostring(e.info.tp)..'"')
 
         -- info
-        me.info = info_copy(e.info)
+        me.info = INFO.copy(e.info)
         me.info.tp = TYPES.pop(e.info.tp)
     end,
 
@@ -153,13 +135,13 @@ DBG'TODO: type annotation'
             -- _V[0][0]
             -- var _char&&&& argv; argv[1][0]
             -- v[1]._plain[0]
-            asr_tag(vec, {'Nat','Var'}, 'invalid vector')
+            INFO.asr_tag(vec, {'Nat','Var'}, 'invalid vector')
         else
-            asr_tag(vec, {'Vec'}, 'invalid vector')
+            INFO.asr_tag(vec, {'Vec'}, 'invalid vector')
         end
 
         -- info
-        me.info = info_copy(vec.info)
+        me.info = INFO.copy(vec.info)
         me.info.tag = 'Var'
         if TYPES.check(vec.info.tp,'&&') then
             me.info.tp = TYPES.pop(vec.info.tp)
@@ -172,7 +154,7 @@ DBG'TODO: type annotation'
         local op,e = unpack(me)
 
         -- ctx
-        asr_tag(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 DBG('TODO: remove pool')
 
         -- tp
@@ -184,7 +166,7 @@ DBG('TODO: remove pool')
             TYPES.tostring(e.info.tp)..'"')
 
         -- info
-        me.info = info_copy(e.info)
+        me.info = INFO.copy(e.info)
         if is_ptr then
             me.info.tp = TYPES.pop(e.info.tp)
         end
@@ -211,7 +193,7 @@ DBG('TODO: remove pool')
                 dcl = Dcl,
             }
         else
-            me.info = info_copy(e.info)
+            me.info = INFO.copy(e.info)
         end
     end,
 
@@ -221,7 +203,7 @@ DBG('TODO: remove pool')
         local op,vec = unpack(me)
 
         -- ctx
-        asr_tag(vec, {'Vec'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(vec, {'Vec'}, 'invalid operand to `'..op..'´')
 
         -- tp
         -- any
