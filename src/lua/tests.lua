@@ -28435,7 +28435,8 @@ async/thread (p) do
 end
 escape 1;
 ]],
-    fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
+    inits = 'line 3 : invalid pointer access : crossed `async/thread´ (tests.lua:3)',
+    --fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
 }
 
 Test { [[
