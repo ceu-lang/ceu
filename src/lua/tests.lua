@@ -975,31 +975,34 @@ end
     -- IF
 
 Test { [[if 1 then escape 1; end; escape 0;]],
+    stmts = 'line 1 : invalid `if´ condition : expected boolean type',
+}
+Test { [[if true then escape 1; end; escape 0;]],
     _ana = {
         isForever = false,
     },
     run = 1,
 }
-Test { [[if 0 then escape 0; end  escape 1;]],
+Test { [[if false then escape 0; end  escape 1;]],
     run = 1,
 }
-Test { [[if 0 then escape 0; else escape 1; end]],
+Test { [[if false then escape 0; else escape 1; end]],
     _ana = {
         isForever = false,
     },
     run = 1,
 }
-Test { [[if (0) then escape 0; else escape 1; end;]],
+Test { [[if (false) then escape 0; else escape 1; end;]],
     run = 1,
 }
-Test { [[if (1) then escape (1); end]],
+Test { [[if (true) then escape (1); end]],
     _ana = {
         reachs = 1,
     },
     run = 1,
 }
 Test { [[
-if (0) then
+if (false) then
     escape 1;
 end
 escape 0;
@@ -1046,7 +1049,7 @@ escape 0;
     },
     run = 1,
 }
-Test { [[if (2) then  else escape 0; end;]],
+Test { [[if (true) then  else escape 0; end;]],
     _ana = {
         reachs = 1,
     },
@@ -1054,15 +1057,15 @@ Test { [[if (2) then  else escape 0; end;]],
 }
 
 -- IF vs Seq priority
-Test { [[if 1 then var int a=0; if a then end; escape 2; else escape 3; end;]],
+Test { [[if true then var int a=0; if a!=0 then end; escape 2; else escape 3; end;]],
     run = 2,
 }
 
 Test { [[
-if 0 then
+if false then
     escape 1;
 else
-    if 1 then
+    if true then
         escape 1;
     end
 end;]],
@@ -1072,10 +1075,10 @@ end;]],
     run = 1,
 }
 Test { [[
-if 0 then
+if false then
     escape 1;
 else
-    if 0 then
+    if false then
         escape 1;
     else
         escape 2;
@@ -1089,7 +1092,7 @@ end;]],
 Test { [[
 var int a = 0;
 var int b = a;
-if b then
+if b!=0 then
     escape 1;
 else
     escape 2;
@@ -1099,7 +1102,7 @@ end;
 }
 Test { [[
 var int a;
-if 0 then
+if false then
     a = 1;
 else
     a = 2;
@@ -1111,7 +1114,7 @@ escape a;
 Test { [[
 var int a;
 var int c = 0;
-if 0 then
+if false then
     a = 1;
     a = 1;
 else
@@ -1126,7 +1129,7 @@ escape a+c;
 Test { [[
 var int a;
 var int c = 0;
-if 0 then
+if false then
     a = 1;
     c = a;
 else
@@ -1140,7 +1143,7 @@ escape a+c;
 Test { [[
 var int a;
 var int c = 0;
-if 0 then
+if false then
     c = a;
     a = 1;
 else
@@ -1154,9 +1157,9 @@ escape a+c;
 }
 Test { [[
 var int a;
-if 1 then
+if true then
     a = 1;
-    if 1 then
+    if true then
         a = 2;
     end;
 end;
@@ -1168,8 +1171,8 @@ escape a;
 }
 Test { [[
 var int a;
-if 1 then
-    if 1 then
+if true then
+    if true then
         a = 2;
     else
         a = 0;
@@ -1183,9 +1186,9 @@ escape a;
 }
 Test { [[
 var int a;
-if 1 then
+if true then
     a = 1;
-    if 1 then
+    if true then
         a = 2;
     else
         a = 0;
@@ -1207,7 +1210,7 @@ a = 1;
 
 Test { [[
 var int a;
-if 1 then
+if true then
     a = 2;
 end;
 a = 1;
@@ -1218,7 +1221,7 @@ escape a;
 }
 Test { [[
 var int a;
-if 1 then
+if true then
     a = 2;
 else/if true then
 else
@@ -1232,7 +1235,7 @@ escape a;
 }
 Test { [[
 var int a;
-if 1 then
+if true then
     a = 2;
 else/if true then
     a = 1;
@@ -1246,7 +1249,7 @@ escape a;
 }
 Test { [[
 var int a;
-if 1 then
+if true then
     a = 2;
 else/if true then
     if true then
@@ -1262,7 +1265,7 @@ escape a;
 }
 Test { [[
 var int a;
-if 1 then
+if true then
 else
     a = 2;
 end;
@@ -1274,7 +1277,7 @@ escape a;
 }
 Test { [[
 var int a;
-if 1 then
+if true then
 else
 end;
 a = 1;
@@ -1284,9 +1287,9 @@ escape a;
 }
 Test { [[
 var int a;
-if 1 then
+if true then
     a = 1;
-    if 1 then
+    if true then
         a = 2;
     else
         a = 0;
@@ -1300,7 +1303,7 @@ escape a;
 }
 Test { [[
 var int a;
-if 0 then
+if false then
     escape 1;
 else
     a=1;a=2; escape 3;
@@ -1311,7 +1314,7 @@ end;
 }
 Test { [[
 var int a=1;
-if 0 then
+if false then
     escape 1;
 else
     a=1;a=2; escape 3;
@@ -1321,7 +1324,7 @@ end;
 }
 Test { [[
 var int a;
-if 0 then
+if false then
     a = 1;
     escape 1;
 else
@@ -1332,7 +1335,7 @@ end;
 }
 Test { [[
 var int a = 0;
-if (0) then
+if (false) then
     a = 1;
 end
 escape a;
@@ -1590,7 +1593,7 @@ Test { [[
 var int a=10;
 do
     var int b=1;
-    if b then end;
+    if b!=0 then end;
 end
 escape a;
 ]],
@@ -1602,7 +1605,7 @@ Test { [[
 input void OS_START;
 do
     var int v = 0;
-    if v then end;
+    if v!=0 then end;
 end
 event void e;
 var int ret = 0;
@@ -1648,7 +1651,7 @@ Test { [[
 input void OS_START;
 do
     var int v = 0;
-    if v then end;
+    if v!=0 then end;
 end
 event void e;
 par do
@@ -1670,7 +1673,7 @@ Test { [[
 input void OS_START;
 do
     var int v = 0;
-    if v then end;
+    if v!=0 then end;
 end
 event void e;
 par do
@@ -2148,7 +2151,7 @@ escape v;
 Test { [[
 input int A,B;
 var int ret;
-if 1 then
+if true then
     ret = await A;
 else
     ret = await B;
@@ -2164,7 +2167,7 @@ escape ret;
 Test { [[
 input int A;
 var int v;
-if 1 then
+if true then
     v = await A;
 else
     v = 0;
@@ -2179,7 +2182,7 @@ escape v;
 Test { [[
 input int A;
 var int v;
-if 1 then
+if true then
     v = await A;
 end;
 escape v;
@@ -2191,7 +2194,7 @@ escape v;
 Test { [[
 input int A;
 var int v = 0;
-if 0 then
+if false then
     v = await A;
 end;
 escape v;
@@ -2937,11 +2940,11 @@ escape b;
 Test { [[
 input int A;
 var int b;
-if 1 then
+if true then
     await A;
     b = 1;
 else
-    if 1 then
+    if true then
         await A;
         b = 1;
     else
@@ -2957,11 +2960,11 @@ escape b;
 Test { [[
 input int A;
 var int b = do
-    if 1 then
+    if true then
         await A;
         escape 1;
     else
-        if 1 then
+        if true then
             await A;
             escape 1;
         else
@@ -2981,11 +2984,11 @@ Test { [[
 input int A;
 var int b =
     do
-        if 1 then
+        if true then
             await A;
             escape 1;
         else
-            if 1 then
+            if true then
                 await A;
                 escape 1;
             else
@@ -3549,7 +3552,7 @@ native _assert;
 input void OS_START;
 event void a;
 loop do
-    if 1 then
+    if true then
         par do
             await a;
             break;
@@ -4285,7 +4288,7 @@ end
 Test { [[
 every 1s do
     loop do
-        if 1 then
+        if true then
             break;
         end
     end
@@ -4300,7 +4303,7 @@ par do
         var int ok = do/_
             escape 1;
         end;
-        if ok then end;
+        if ok!=0 then end;
     end
 with
     await 2s;
@@ -4315,11 +4318,11 @@ end
 Test { [[
 var int ret = 1;
 loop i in [0->10[ do
-    if 1 then
+    if true then
         continue;
     end
     ret = ret + 1;
-    if 0 then
+    if false then
         continue;
     end
 end
@@ -4330,7 +4333,7 @@ escape ret;
 
 Test { [[
 loop do
-    if 0 then
+    if false then
         continue;
     else
         nothing;
@@ -4351,7 +4354,7 @@ end
 Test { [[
 loop do
     do
-        if 0 then
+        if false then
             continue;
         end
     end
@@ -4362,7 +4365,7 @@ end
 
 Test { [[
 loop do
-    if 0 then
+    if false then
         continue;
     end
     await 1s;
@@ -4392,7 +4395,7 @@ escape ret;
 
 Test { [[
 every 1s do
-    if 1 then
+    if true then
         continue;
     end
 end
@@ -4410,7 +4413,7 @@ par/or do
         end
         var int dim = 0;
         var int x = dim;
-        if x then end
+        if x!=0 then end
         do break; end
     end
 with
@@ -4548,7 +4551,7 @@ Test{ [[
 input int E;
 loop do
     var int v = await E;
-    if v then
+    if v!=0 then
     else
     end;
 end;
@@ -4560,7 +4563,7 @@ end;
 Test { [[
 var int a=0;
 loop do
-    if 0 then
+    if false then
         a = 0;
     else
         a = 1;
@@ -4573,7 +4576,7 @@ escape a;
 Test { [[
 var int a=0;
 loop do
-    if 0 then
+    if false then
         a = 0;
     else
         a = 1;
@@ -4589,7 +4592,7 @@ escape a;
 }
 Test { [[
 loop do
-    if 0 then
+    if false then
         break;
     end;
 end;
@@ -4702,7 +4705,7 @@ escape 5;
 
 Test { [[
 input int A;
-if 0 then
+if false then
     loop do await A; end;
 else
     loop do await A; end;
@@ -4716,7 +4719,7 @@ escape 0;   // TODO
 }
 Test { [[
 input int A;
-if 0 then
+if false then
     loop do await A; end;
 else
     loop do await A; end;
@@ -4729,7 +4732,7 @@ end;
 Test { [[
 input int A;
 loop do
-    if 0 then
+    if false then
         await A;
     else
         break;
@@ -4742,7 +4745,7 @@ escape 1;
 Test { [[
 input int A;
 loop do
-    if 0 then
+    if false then
         await A;
         await A;
     else
@@ -4757,7 +4760,7 @@ Test { [[
 input int C, A;
 loop do
     var int v = await C;
-    if v then
+    if v!=0 then
         await A;
     else
         break;
@@ -4947,7 +4950,7 @@ par/or do
         await A;
         async do
             var int a = 1;
-            if a then end
+            if a!=0 then end
         end
     end
     sum = 0;
@@ -4972,7 +4975,7 @@ par/or do
         await A;
         async do
             var int a = 1;
-            if a then end
+            if a!=0 then end
         end
     end
     sum = 0;            // 11
@@ -4980,7 +4983,7 @@ with
     loop i in [0 -> 2[ do        // 13
         async do
             var int a = 1;
-            if a then end
+            if a!=0 then end
         end
         sum = sum + 1;  // 17
     end
@@ -4999,7 +5002,7 @@ par/or do
         await A;
         async do
             var int a = 1;
-            if a then end
+            if a!=0 then end
         end
     end
     sum = 0;            // 11
@@ -5007,7 +5010,7 @@ with
     loop i in [0 -> 2[ do        // 13
         async do
             var int a = 1;
-            if a then end
+            if a!=0 then end
         end
         sum = sum + 1;  // 17
     end
@@ -5932,7 +5935,7 @@ Test { [[
 input int A;
 var int a = 0;
 par/or do
-    if 1 then
+    if true then
         a = await A;
     end;
 with
@@ -5951,7 +5954,7 @@ Test { [[
 input int A,B;
 var int a = do/_ par do
         await A;
-        if 1 then
+        if true then
             await B;
             // unreachable
         end;
@@ -5974,7 +5977,7 @@ Test { [[
 input int A;
 var int a;
 a = do/_ par do
-        if 1 then
+        if true then
             var int v = await A;
             escape v;           // 6
         end;
@@ -5994,7 +5997,7 @@ Test { [[
 input int A;
 var int a;
 a = do/_ par do
-        if 1 then
+        if true then
             var int v = await A;
             escape v;           // 6
         else
@@ -6018,7 +6021,7 @@ input int A;
 var int a;
 a = do/_ par do
     await A;                    // 4
-    if 1 then
+    if true then
         var int v = await A;
         // unreachable
         escape v;               // 8
@@ -6090,7 +6093,7 @@ Test { [[
 input int A,B;
 var int a,v=0;
 a = do/_ par do
-    if 1 then
+    if true then
         v = await A;    // 5
         escape 0;           // 10
     else
@@ -6114,7 +6117,7 @@ Test { [[
 input int A,B;
 var int a,v=0;
 a = do/_ par do
-    if 1 then
+    if true then
         v = await A;
         escape v;       // 6
     else
@@ -6221,7 +6224,7 @@ Test { [[
 input int A;
 var int a = 0;
 par/or do
-    if 1 then
+    if true then
         a = await A;
     end;
 with
@@ -6576,13 +6579,13 @@ Test { [[
 input int A,B;
 var int a=0,b=0;
 par/or do
-    if 1 then
+    if true then
         a = await A;
     else
         b = await B;
     end;
 with
-    if 1 then
+    if true then
         b = await B;
     else
         a = await A;
@@ -7173,7 +7176,7 @@ loop do
         loop do
             await (10)us;
             await 10ms;
-            if 1 then
+            if true then
                 a = 1;      // 9
                 break;
             else
@@ -7200,7 +7203,7 @@ loop do
         loop do
             await (10)us;
             await 10ms;
-            if 1 then
+            if true then
                 a = 1;      // 9
                 break;
             end
@@ -7227,7 +7230,7 @@ loop do
         loop do
             await 10ms;
             await (10)us;
-            if 1 then
+            if true then
                 break;
             end;
         end;
@@ -7268,7 +7271,7 @@ loop do
         loop do             // 4
             await (10)us;
             await 10ms;
-            if 1 then
+            if true then
                 break;
             end;
         end;
@@ -7291,7 +7294,7 @@ Test { [[
 loop do
     await 10ms;
     await (10)us;
-    if 1 then
+    if true then
         break;
     end;
 end;
@@ -7320,7 +7323,7 @@ par/or do
     loop do             // 3
         await 10ms;
         await (10)us;
-        if 1 then
+        if true then
             break;
         end;
     end;
@@ -7362,7 +7365,7 @@ loop do
         loop do
             await 10ms;
             await (10)us;
-            if 1 then
+            if true then
                 break;
             end;
         end;
@@ -7388,7 +7391,7 @@ loop do
         loop do
             await (10)us;
             await 10ms;
-            if 1 then
+            if true then
                 break;
             end;
         end;
@@ -7944,7 +7947,7 @@ with
                 i = i + 1;
             end
         end
-        if t then end;
+        if t!=0 then end;
     end
 with
     async do
@@ -8469,7 +8472,7 @@ par/or do
 with
     await A;
     var int v = a;
-    if v then end;
+    if v!=0 then end;
 end;
 escape a;
 ]],
@@ -8526,7 +8529,7 @@ loop do
         await A;    // 4
     with
         await A;    // 6
-        if 1 then
+        if true then
             break;  // 8
         end;
     end;
@@ -8546,7 +8549,7 @@ loop do
         par/or do
             await 1s;
         with
-            if 0 then
+            if false then
                 await A;
                 break;
             end;
@@ -8570,7 +8573,7 @@ loop do
         await B;
     with
         await A;
-        if 1 then
+        if true then
             break;
         end;
     end;
@@ -9520,7 +9523,7 @@ par/or do
     end;
     await 10ms;
     var int v = a;
-    if v then end;
+    if v!=0 then end;
 with
     await B;
     await 10ms;
@@ -9569,7 +9572,7 @@ par/or do
         await 10ms;
     end;
     var int v = a;
-    if v then end;
+    if v!=0 then end;
 with
     await B;
     await 20ms;
@@ -9599,7 +9602,7 @@ par/or do
     end;
     await 10us;
     var int v = a;
-    if v then end
+    if v!=0 then end
 with
     await A;
     await B;
@@ -9758,7 +9761,7 @@ Test { [[
 input int A;
 var int a=0;
 par/and do
-    if a then
+    if a!=0 then
         await A;
     else
         await A;
@@ -9783,7 +9786,7 @@ escape a;
 Test { [[
 input int A;
 var int a=0;
-if a then
+if a!=0 then
     await A;
 else
     par/and do
@@ -9811,7 +9814,7 @@ input int A;
 var int a=0;
 par do
     loop do
-        if a then           // 5
+        if a!=0 then           // 5
             await A;
         else
             await A;
@@ -9844,7 +9847,7 @@ var int v = do/_ par do
             escape 0;
 end
         end;
-if v then
+if v!=0 then
     escape 1;
 else
     if 1==1 then
@@ -9867,7 +9870,7 @@ var int v = do/_ par do
             escape 0;
 end
         end;
-if v then
+if v!=0 then
     a = 1;
 else
     a = 1;
@@ -10030,7 +10033,7 @@ var int a=0;
 par/or do
     loop do
         await 10ms;     // 4
-        if (1) then
+        if (true) then
             break;      // 6
         end;
     end;
@@ -10052,7 +10055,7 @@ var int a=0;
 par/or do
     loop do
         await 11ms;
-        if (1) then
+        if (true) then
             break;
         end;
     end;
@@ -10922,7 +10925,7 @@ Test { [[
 input int A,B;
 var int v=0;
 par/or do
-    if 1 then
+    if true then
         v = await A;
     else
         v = await B;
@@ -10949,7 +10952,7 @@ Test { [[
 input int A,B;
 var int v=0;
 par/or do
-    if 1 then
+    if true then
         v = await A;
     else
         v = await B;
@@ -10995,7 +10998,7 @@ Test { [[
 input int A,B,Z;
 var int v=0;
 par/or do
-    if 1 then
+    if true then
         v = await A;
     else
         v = await B;
@@ -11063,7 +11066,7 @@ input int A,B,Z;
 var int a = 0;
 par do
     loop do
-        if a then
+        if a!=0 then
             a = await A;
             break;
         else
@@ -11084,7 +11087,7 @@ end;
 
 Test { [[
 input int A,B;
-if 11 then
+if 11!=0 then
     var int v = await A;
     escape v;
 else
@@ -11103,7 +11106,7 @@ input int A,B;
 loop do
     await A;
 end;
-if 1 then       // TODO: unreach
+if true then       // TODO: unreach
     await A;
 else
     await B;
@@ -11162,7 +11165,7 @@ input int A,B,Z;
 var int v=0;
 loop do
     v = await A;
-    if v then
+    if v!=0 then
         v = await B;
         break;
     else
@@ -11191,7 +11194,7 @@ await X;
 await E;
 await EE;
 var int g = await GG;
-if g then
+if g!=0 then
     await H;
 else
     await I;
@@ -12154,7 +12157,7 @@ with
     await A;
     await B;
     var int v = a;
-    if v then end;
+    if v!=0 then end;
 end;
 escape a;
 ]],
@@ -13887,7 +13890,7 @@ escape v;
 Test { [[
 var int a;
 loop do
-    if 0 then
+    if false then
         a = 1;
     else
         do break; end
@@ -14747,7 +14750,7 @@ par/or do
             emit b => aa;
         with
             var int bb = await b;
-            if bb then end;
+            if bb != 0 then end;
         end;
     end;
 with
@@ -14773,7 +14776,7 @@ par/or do
         with
             loop do
                 var int bb = await b;
-                if bb then
+                if bb != 0 then
                     break;
                 end;
             end;
@@ -14842,7 +14845,7 @@ Test { [[
 var int v=2;
 async (v) do
     var int a = v;
-    if a then end;
+    if a!=0 then end;
 end;
 escape v;
 ]],
@@ -14914,13 +14917,13 @@ par do
             await B;
             async (v1) do
                 var int v = v1 + 1;
-                if v then end
+                if v!=0 then end
             end;
         with
             await B;
             async (v2) do
                 var int v = v2 + 1;
-                if v then end
+                if v!=0 then end
             end;
         with
             await A;
@@ -16308,7 +16311,7 @@ Test { [[do var int a=0; end;]],
 Test { [[
 do/_
     var int a=0;
-    if a then end;
+    if a!=0 then end;
     escape 1;
 end;
 ]],
@@ -16320,7 +16323,7 @@ do/_
     var int a = 1;
     do
         var int a = 0;
-        if a then end;
+        if a!=0 then end;
     end;
     escape a;
 end;
@@ -16388,7 +16391,7 @@ par/or do
     var int a;
     a = 1;
     await A;
-    if a then end;
+    if a!=0 then end;
 with
     a = 2;
     await B;
@@ -16622,7 +16625,7 @@ escape b;
 Test { [[
 var int a = 1;
 var& int b;
-if 1 then
+if true then
     b = &a;
 else
     b = &a;
@@ -16634,7 +16637,7 @@ escape b;
 Test { [[
 var int a = 1;
 var& int b;
-if 1 then
+if true then
     b = &a;
     b = &a;
 else
@@ -16648,7 +16651,7 @@ escape b;
 Test { [[
 var int a = 1;
 var& int b;
-if 1 then
+if true then
     b = &a;
 else
     b = &a;
@@ -16663,7 +16666,7 @@ escape b;
 Test { [[
 var int a = 1;
 var& int b;
-if 1 then
+if true then
     b = &a;
 else
     b = &a;
@@ -17152,7 +17155,7 @@ var& int? i;
 loop do
     i! = &v;
     i! = i! + 1;
-    if 1 then
+    if true then
         break;
     else
         await 1s;
@@ -17253,7 +17256,7 @@ escape r!;
 
 Test { [[
 var& int v;
-if 1 then
+if true then
     var int x=0;
     v = &x;
 else
@@ -18521,8 +18524,8 @@ var int ret = 0;
 var int&& pa=null;
 do
     var int v=0;
-    if v then end;
-    if 1 then
+    if v!=0 then end;
+    if true then
         do finalize with
             ret = ret + 1;
     end
@@ -18571,7 +18574,7 @@ var int ret = 0;
 var int&& pa=null;
 do
     var int v=0;
-    if 1 then
+    if true then
         do pa = &&v;
         finalize with
             ret = ret + 1;
@@ -18593,7 +18596,7 @@ var int ret = 0;
 var int&& pa=null;
 do
     var int v=0;
-    if 1 then
+    if true then
             pa = &&v;
     else
             pa = &&v;
@@ -18611,7 +18614,7 @@ var int ret = 0;
 var int&& pa=null;
 do
     var int v=0;
-    if 1 then
+    if true then
         do
             pa = &&v;
         finalize with
@@ -18662,7 +18665,7 @@ escape ret;
 Test { [[
 do
     do finalize with
-        if 1 then
+        if true then
         end;
     end
 end
@@ -19461,7 +19464,7 @@ native do
     typedef void (*t)(int*);
 end
 var int ret = 0;
-if _A then
+if _A!=0 then
     ret = ret + *(_A as int&&);
 end
 do
@@ -19474,11 +19477,11 @@ do
                 _A = null;
         end
             end;
-    if _A then
+    if _A!=0 then
         a = a + *(_A as int&&);
     end
 end
-if _A then
+if _A!=0 then
     ret = ret + *(_A as int&&);
 end
 escape(ret);
@@ -19497,7 +19500,7 @@ native do
     typedef void (*t)(int*);
 end
 var int ret = 0;
-if _A then
+if _A!=0 then
     ret = ret + *(_A as int&&);
 end
 par/or do
@@ -19510,14 +19513,14 @@ par/or do
                     _A = null;
             end
                 end;
-        if _A then
+        if _A!=0 then
             a = a + *(_A as int&&);
         end
         await FOREVER;
 with
     await OS_START;
 end
-if _A then
+if _A!=0 then
     ret = ret + *(_A as int&&);
 end
 escape(ret);
@@ -20740,7 +20743,7 @@ escape 1;
 Test { [[
 do finalize with
     loop do
-        if 1 then
+        if true then
             break;
         end
     end
@@ -21342,7 +21345,7 @@ par do
 with
     async do
         loop do
-            if 0 then
+            if false then
                 break;
             end;
         end;
@@ -21402,7 +21405,7 @@ Test { [[
 var int ret=0;
 async(ret) do
     var int i = 0;
-    if i then
+    if i!=0 then
         i = 1;
     else
         i = 2;
@@ -21656,7 +21659,7 @@ var int a = 1;
 var int&& b = &&a;
 do
 var int a = 0;
-if a then end;
+if a!=0 then end;
 end
 escape *b;
 ]],
@@ -22880,6 +22883,18 @@ else
     escape -1;
 end;
 ]],
+    stmts = 'line 3 : invalid `if´ condition : expected boolean type',
+}
+
+Test { [[
+var int&& a;
+a = null;
+if a!=null then
+    escape 1;
+else
+    escape -1;
+end;
+]],
     run = -1,
 }
 
@@ -22915,7 +22930,7 @@ escape 10;
 Test { [[
 var int&& ptr1=null;
 var void&& ptr2=null;
-if 1 then
+if true then
     ptr2 = ptr1;
 else
     ptr2 = ptr2;
@@ -22930,7 +22945,7 @@ escape 1;
 Test { [[
 var int&& ptr1 = null;
 var void&& ptr2 = null;
-if 1 then
+if true then
     ptr2 = ptr1 as void&&;
 else
     ptr2 = ptr2;
@@ -25597,7 +25612,7 @@ var int v = 10;
 var int&& x = &&v;
 event void e;
 var int ret=0;
-if 1 then
+if true then
     ret = *x;
     emit e;
 else
@@ -25615,7 +25630,7 @@ var int v = 10;
 var int&& x = &&v;
 event void e;
 var int ret=0;
-if 1 then
+if true then
     ret = *x;
     emit e;
 else
@@ -25768,7 +25783,6 @@ escape 1;
     wrn = true,
     run = 1,
 }
-do return end
 
 Test { [[
 pre native do
@@ -27140,9 +27154,9 @@ escape 0;
 
 Test { [[
 code/instantaneous GetVS (var void&& && o1, var  void&& && o2)=>int do
-    if (*o1) then
+    if (*o1!=null) then
         escape 1;
-    else/if (*o2) then
+    else/if (*o2!=null) then
         var void&& tmp = *o1;
         *o1 = *o2;
         do *o2 = tmp; finalize with end
@@ -27386,12 +27400,12 @@ escape a;
 -- BIG // FULL // COMPLETE
 Test { [[
 input int KEY;
-if 1 then escape 50; end
+if true then escape 50; end
 par do
     var int pct=0, dt=0, step=0, ship=0, points=0;
     var int win = 0;
     loop do
-        if win then
+        if win!=0 then
             // next phase (faster, harder, keep points)
             step = 0;
             ship = 0;
@@ -28936,7 +28950,7 @@ with
         par/or do
             var int t;
             t = await 1s;
-            if t then end;
+            if t!=0 then end;
         with
             loop do
                 await A;
@@ -29785,7 +29799,7 @@ escape 1;
 Test { [[
 code/delayed Tx (var int x)=>void
 do
-    if x then end;
+    if x!=0 then end;
 end
 escape 1;
 ]],
@@ -32548,7 +32562,7 @@ input void A,B;
 var int a = 0;
 do
     var u8 a = 1;
-    if a then end;
+    if a!=0 then end;
 end
 par/and do
     await A;
@@ -32752,7 +32766,7 @@ class Tx with
 do
     class T1 with var int v=0; do end
     var int v=0;
-    if v then end;
+    if v!=0 then end;
 end
 escape 0;
 ]],
@@ -32784,7 +32798,7 @@ Test { [[
 class Tx with
 do
     var int a = 1;
-    if a then end;
+    if a!=0 then end;
 end
 vector[2] Tx ts;
 escape 1;
@@ -37858,13 +37872,13 @@ pool&[10] Job jobs_alias = &jobs;
 var Job&& ptr = null;
 loop j in jobs do
     ptr = j;
-    if 1 then break; end
+    if true then break; end
 end // ok, no compile error
 
 ptr = null;
 loop j in jobs_alias do
     ptr = j;
-    if 1 then break; end
+    if true then break; end
 end // compile error occurs
 
 escape 1;
@@ -44988,7 +45002,7 @@ escape 1;
 Test { [[
 code/instantaneous Fx (void) => void do
     var int a = 1;
-    if a then end;
+    if a!=0 then end;
 end
 escape 1;
 ]],
@@ -45220,7 +45234,7 @@ escape 1;
 Test { [[
 escape 1;
 code/instantaneous Fx (var int x)=>int do
-    if x then end;
+    if x!=0 then end;
     loop i in [0 -> 10[ do
     end
     escape 1;
@@ -46478,7 +46492,7 @@ native do
     void* V;
 end
 code/instantaneous Fx (var void&& v)=>void do
-    if v then end;
+    if v!=null then end;
 end
 escape 1;
 ]],
@@ -46512,7 +46526,7 @@ class Tx with
     code/instantaneous Fx (var void&& v)=>void;
 do
     code/instantaneous Fx (var void&& v)=>void do
-        if v then end;
+        if v!=0 then end;
     end
 end
 var Tx t;
@@ -46531,7 +46545,7 @@ class Tx with
 do
     code/instantaneous Fx (var void&& v)=>void do
         var void&& a = v;
-        if a then end;
+        if a!=0 then end;
     end
 end
 escape 1;
@@ -46724,7 +46738,7 @@ class Tx with
     code/instantaneous/recursive Fx (void)=>void;
 do
     code/instantaneous/recursive Fx (void)=>void do
-        if 0 then
+        if false then
             call/recursive this.Fx();
         end
     end
@@ -46752,7 +46766,7 @@ class Tx with
     code/instantaneous/recursive Fx (void)=>void;
 do
     code/instantaneous/recursive Fx (void)=>void do
-        if 0 then
+        if false then
             call/recursive this.Fx();
         end
     end
@@ -46779,7 +46793,7 @@ class Tx with
     code/instantaneous/recursive Fx (void)=>void;
 do
     code/instantaneous/recursive Fx (void)=>void do
-        if 0 then
+        if false then
             call/recursive this.Fx();
         end
     end
@@ -50396,7 +50410,7 @@ Test { [[
     class Queue with
     do
         var Queue&& q=null;
-        if q then end;
+        if q!=0 then end;
     end
     var Queue q;
     escape 1;
@@ -50654,7 +50668,7 @@ do
     await this.e;
     var int v;
     watching this.e do
-        if v then end;
+        if v!=0 then end;
         nothing;
     end
 end
@@ -50670,7 +50684,7 @@ do
     await this.e;
     var int v =
         watching this.e do
-            if v then end;
+            if v!=0 then end;
             nothing;
         end;
 end
@@ -51344,7 +51358,7 @@ class Tx with
 do
     watching *i do
         var int v = i:v;
-        if v then end
+        if v!=0 then end
     end
 end
 
@@ -51383,7 +51397,7 @@ do
     watching *i do
         await 1s;
         var int v = i:v;
-        if v then end
+        if v!=0 then end
     end
 end
 
@@ -53349,7 +53363,7 @@ escape ret;
 Test { [[
 input void A, B;
 loop do
-    if 1 then
+    if true then
         await B;
     end
     await A;
@@ -53365,7 +53379,7 @@ end
 Test { [[
 input void A, B;
 loop do
-    if 1 then
+    if true then
         await B;
     else
         await A;
@@ -53383,7 +53397,7 @@ end
 Test { [[
 input void A, B;
 loop do
-    if 1 then
+    if true then
         await B;
     end
 end
@@ -53514,7 +53528,7 @@ par do
     loop do
         _f();
         await A;
-        if 0 then
+        if false then
             break;
         end
     end
@@ -53561,7 +53575,7 @@ par do
     loop do
         _f();
         await A;
-        if 0 then
+        if false then
             break;
         end
     end
@@ -53612,7 +53626,7 @@ par do
     loop do
         _f();
         var int x = await A;
-        if 0 then
+        if false then
             break;
         end
     end
@@ -54618,7 +54632,7 @@ do end;
 class Frame with
     code/instantaneous RawWriteByte (var int)=>void;
 do
-    code/instantaneous RawWriteByte (var int v)=>void do if v then end end;
+    code/instantaneous RawWriteByte (var int v)=>void do if v!=0 then end end;
 end;
 
 class Receiver with
@@ -55118,7 +55132,7 @@ class SDL with
         var int w;
 do
     var int x = w;
-    if x then end
+    if x!=0 then end
 end
 escape 1;
 ]],
@@ -55177,7 +55191,7 @@ class Bridger with
     var& I i;
 do
     var& int v = &this.i.v;
-    if v then end;
+    if v!=0 then end;
 end
 escape 1;
 ]],
@@ -55339,7 +55353,7 @@ end
 Test { [[
 var int v = 1;
 var& int? x;
-if 0 then
+if false then
     x = &v;
 else
     x = &v;
@@ -55351,7 +55365,7 @@ escape x!;
 
 Test { [[
 var int? v;
-if 1 then
+if true then
     v = 1;
 end
 escape v!;
@@ -59259,7 +59273,7 @@ class Tx with
     var& int? i;
 do
     var int v = 10;
-    if v then end;
+    if v!=0 then end;
 end
 var Tx t with
     this.i = &v;
@@ -59274,7 +59288,7 @@ class Tx with
     var& int? i;
 do
     var int v = 10;
-    if v then end;
+    if v!=0 then end;
 end
 var Tx t;
 escape t.i? + 1;
@@ -59286,7 +59300,7 @@ class Tx with
     var& int? i;
 do
     var int v = 10;
-    if v then end;
+    if v!=0 then end;
 end
 var Tx t;
 escape t.i!;
@@ -59298,7 +59312,7 @@ class Tx with
     var& int? i;
 do
     var int v = 10;
-    if v then end;
+    if v!=0 then end;
 end
 var int v = 1;
 var Tx t with
@@ -59940,7 +59954,7 @@ class EnterLeave with
     var& IGUI_Component gui;
 do
     var _void&& g = &&(gui.nat!);
-    if g then end;
+    if g!=0 then end;
 end
 escape 1;
 ]],
@@ -60990,7 +61004,7 @@ class Body with
 do
     watching *n do
         var int i = this.sum;
-        if i then end;
+        if i!=0 then end;
         if (*n is Node) then
             var Body&&? left =
                 spawn Body in this.bodies with
@@ -65384,7 +65398,7 @@ do
     pool&[3] BTree btree2 = &this.btree;
     traverse t in &&this.btree do
         var int a = this.x;
-        if a then end;
+        if a!=0 then end;
     end
     escape 1;
 end

@@ -267,6 +267,12 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
         end
     end,
 
+    If = function (me)
+        local cnd = unpack(me)
+        ASR(TYPES.check(cnd.dcl[1],'bool'), me,
+            'invalid `if´ condition : expected boolean type')
+    end,
+
 -- CALL, EMIT
 
     Emit_Evt = function (me)
