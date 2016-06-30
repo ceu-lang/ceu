@@ -21,6 +21,15 @@ function TYPES.dump (tp)
     DBG('TYPE', TYPES.tostring(tp))
 end
 
+function TYPES.new (me, id, ...)
+    local ID = (string.sub(id,1,1)==string.sub(string.upper(id),1,1) and
+                'ID_abs' or 'ID_prim')
+    return AST.node('Type', me.ln,
+            AST.node(ID, me.ln,
+                id),
+            ...)
+end
+
 function TYPES.pop (tp, mod)
     assert(tp.tag == 'Type')
     local v = tp[#tp]

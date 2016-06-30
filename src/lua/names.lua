@@ -30,13 +30,7 @@ function INFO.new (me, tag, tp, ...)
         assert(not ...)
     else
         assert(type(tp) == 'string')
-        local id = tp
-        local ID = (string.sub(id,1,1)==string.sub(string.upper(id),1,1) and
-                    'ID_abs' or 'ID_prim')
-        tp = AST.node('Type', me.ln,
-                AST.node(ID, me.ln,
-                    id),
-                ...)
+        tp = TYPES.new(me, tp, ...)
     end
     return {
         id  = 'unknown',
