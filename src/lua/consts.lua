@@ -1,6 +1,6 @@
 F = {
     NUMBER = function (me)
-        me.is_const = (TYPES.is_int(me.info[1]) and 'int') or 'float'
+        me.is_const = (TYPES.is_int(me.info.tp) and 'int') or 'float'
     end,
 
     SIZEOF = function (me)
@@ -8,7 +8,7 @@ F = {
     end,
 
     ID_nat = function (me)
-        local _,mod = unpack(me.info)
+        local _,mod = unpack(me.dcl)
         me.is_const = (mod == 'const')
     end,
 
@@ -73,7 +73,7 @@ F = {
                 'invalid declaration : vector dimension must be an integer constant')
         else
             -- vector[1.5] int vec;
-            ASR(TYPES.is_int(dim.info[1]), me,
+            ASR(TYPES.is_int(dim.info.tp), me,
                 'invalid declaration : vector dimension must be an integer')
         end
     end,
