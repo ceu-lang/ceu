@@ -62,7 +62,7 @@ DBG('TODO: _Lua')
                     end
                 end
             elseif e.tag == 'STRING' then
-                local dcl = DCLS.new(e,'byte')
+                local dcl = INFO.new(e,'byte')
                 check_tp(fr, to_dcl[1], dcl[1],
                     'invalid constructor : item #'..i)
             elseif e.tag == '_Lua' then
@@ -180,7 +180,7 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
             end
         end
 
-        me.dcl = DCLS.new(me,ID_abs[1])
+        me.dcl = INFO.new(me,ID_abs[1])
     end,
 
 -- EMIT
@@ -219,13 +219,13 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
     end,
 
     Await_Wclock = function (me)
-        me.dcl = DCLS.new(me, 'int')
+        me.dcl = INFO.new(me, 'int')
     end,
 
     Abs_Await = function (me)
         local ID_abs = AST.asr(me,'', 1,'Abs_Cons', 1,'ID_abs')
         local Type = AST.asr(ID_abs.dcl,'Code', 5,'Type')
-        me.dcl = DCLS.new(me, AST.copy(Type))
+        me.dcl = INFO.new(me, AST.copy(Type))
     end,
 
     Await_Evt = function (me, tag)
@@ -360,7 +360,7 @@ DBG'TODO: _Async_Isr'
             -- dcl
             Typelist[i] = AST.copy(e.dcl[1])
         end
-        me.dcl = DCLS.new(me, Typelist)
+        me.dcl = INFO.new(me, Typelist)
     end,
 
     Namelist = function (me)
@@ -374,7 +374,7 @@ DBG'TODO: _Async_Isr'
         for i, var in ipairs(me) do
             Typelist[i] = AST.copy(var.dcl[1])
         end
-        me.dcl = DCLS.new(me, Typelist)
+        me.dcl = INFO.new(me, Typelist)
     end,
 
     Varlist = function (me)
@@ -388,7 +388,7 @@ DBG'TODO: _Async_Isr'
         for i, var in ipairs(me) do
             Typelist[i] = AST.copy(var.dcl[1])
         end
-        me.dcl = DCLS.new(me, Typelist)
+        me.dcl = INFO.new(me, Typelist)
     end,
 }
 

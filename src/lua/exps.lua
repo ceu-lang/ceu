@@ -22,7 +22,14 @@ local function asr_if_name (e, cnds, err_msg)
     end
 end
 
-local function dcl_copy (dcl, tag, Type)
+EXPS = {
+    asr_name    = asr_name,
+    asr_if_name = asr_if_name,
+}
+
+INFO = {}
+
+local function info_copy (dcl, tag, Type)
     local new = AST.copy(dcl)
     if tag then
         new.tag = tag
@@ -34,7 +41,7 @@ local function dcl_copy (dcl, tag, Type)
     return new
 end
 
-function DCLS.new (me, id, ...)
+function INFO.new (me, id, ...)
     local tp
     if AST.is_node(id) and (id.tag=='Type' or id.tag=='Typelist') then
         assert(not ...)
@@ -53,11 +60,6 @@ function DCLS.new (me, id, ...)
     return ret
 end
 
-EXPS = {
-    asr_name    = asr_name,
-    asr_if_name = asr_if_name,
-}
-
 -------------------------------------------------------------------------------
 -- NAMES
 -------------------------------------------------------------------------------
@@ -66,24 +68,24 @@ F = {
 -- PRIMITIVES
 
     NULL = function (me)
-        me.dcl = DCLS.new(me, 'null', '&&')
+        me.dcl = INFO.new(me, 'null', '&&')
     end,
 
     NUMBER = function (me)
         local v = unpack(me)
         if math.floor(v) == tonumber(v) then
-            me.dcl = DCLS.new(me, 'int')
+            me.dcl = INFO.new(me, 'int')
         else
-            me.dcl = DCLS.new(me, 'float')
+            me.dcl = INFO.new(me, 'float')
         end
     end,
 
     BOOL = function (me)
-        me.dcl = DCLS.new(me, 'bool')
+        me.dcl = INFO.new(me, 'bool')
     end,
 
     STRING = function (me)
-        me.dcl = DCLS.new(me, '_char', '&&')
+        me.dcl = INFO.new(me, '_char', '&&')
     end,
 
 -- TYPECAST: as
@@ -100,7 +102,7 @@ F = {
             'invalid operand to `'..op..'´ : unexpected option type')
 
         -- dcl
-        me.dcl = dcl_copy(e.dcl)
+        me.dcl = info_copy(e.dcl)
         if AST.is_node(Type) then
             me.dcl[1] = AST.copy(Type)
         else
@@ -122,7 +124,7 @@ DBG'TODO: type annotation'
             'invalid operand to `'..op..'´ : expected option type')
 
         -- dcl
-        me.dcl = dcl_copy(e.dcl, nil, TYPES.pop(e.dcl[1]))
+        me.dcl = info_copy(e.dcl, nil, TYPES.pop(e.dcl[1]))
     end,
 
 -- INDEX
@@ -144,7 +146,7 @@ DBG'TODO: type annotation'
         end
 
         -- dcl
-        me.dcl = dcl_copy(vec.dcl, 'Var',
+        me.dcl = info_copy(vec.dcl, 'Var',
                     TYPES.check(vec.dcl[1],'&&') and TYPES.pop(vec.dcl[1]))
     end,
 
@@ -165,7 +167,7 @@ DBG('TODO: remove pool')
             'invalid operand to `'..op..'´ : expected pointer type')
 
         -- dcl
-        me.dcl = dcl_copy(e.dcl, nil, is_ptr and TYPES.pop(e.dcl[1]))
+        me.dcl = info_copy(e.dcl, nil, is_ptr and TYPES.pop(e.dcl[1]))
     end,
 
 -- MEMBER: .
@@ -182,10 +184,10 @@ DBG('TODO: remove pool')
         if ID_abs and ID_abs.dcl.tag == 'Data' then
             -- data.member
             local blk = AST.asr(ID_abs.dcl,'Data', 2,'Block')
-            me.dcl = dcl_copy(DCLS.asr(me,blk,member,false,e.dcl.id))
+            me.dcl = info_copy(DCLS.asr(me,blk,member,false,e.dcl.id))
             me.dcl.blk = e.dcl.blk
         else
-            me.dcl = dcl_copy(e.dcl)
+            me.dcl = info_copy(e.dcl)
         end
     end,
 
@@ -201,7 +203,7 @@ DBG('TODO: remove pool')
         -- any
 
         -- dcl
-        me.dcl = DCLS.new(me, 'usize')
+        me.dcl = INFO.new(me, 'usize')
         me.dcl.tag = 'Var'
     end,
 }
@@ -232,7 +234,7 @@ G = {
         -- any
 
         -- dcl
-        me.dcl = DCLS.new(me, 'usize')
+        me.dcl = INFO.new(me, 'usize')
     end,
 
 -- CALL
@@ -262,7 +264,7 @@ G = {
 
         -- dcl
         local _,_,_,_,out = unpack(ID_abs.dcl)
-        me.dcl = DCLS.new(me, AST.copy(out))
+        me.dcl = INFO.new(me, AST.copy(out))
     end,
 
 -- BIND
@@ -279,7 +281,7 @@ G = {
         -- any
 
         -- dcl
-        me.dcl = dcl_copy(e.dcl, 'Val')
+        me.dcl = info_copy(e.dcl, 'Val')
         me.dcl[2] = '&'
     end,
 
@@ -309,7 +311,7 @@ G = {
             'invalid operand to `'..op..'´ : unexpected option type')
 
         -- dcl
-        me.dcl = dcl_copy(e.dcl, 'Val', TYPES.push(e.dcl[1],'&&'))
+        me.dcl = info_copy(e.dcl, 'Val', TYPES.push(e.dcl[1],'&&'))
     end,
 
 -- OPTION: ?
@@ -325,7 +327,7 @@ G = {
             'invalid operand to `'..op..'´ : expected option type')
 
         -- dcl
-        me.dcl = DCLS.new(me, 'bool')
+        me.dcl = INFO.new(me, 'bool')
     end,
 
 -- VECTOR LENGTH: $$
@@ -345,7 +347,7 @@ G = {
             'invalid operand to `'..op..'´ : expected boolean type')
 
         -- dcl
-        me.dcl = DCLS.new(me, 'bool')
+        me.dcl = INFO.new(me, 'bool')
     end,
 
 -- UNARY: +,-
@@ -363,7 +365,7 @@ G = {
             'invalid operand to `'..op..'´ : expected numeric type')
 
         -- dcl
-        me.dcl = dcl_copy(e.dcl, 'Val')
+        me.dcl = info_copy(e.dcl, 'Val')
     end,
 
 -- NUMERIC: +, -, %, *, /, ^
@@ -391,7 +393,7 @@ G = {
                         'incompatible numeric types : "'..
                         TYPES.tostring(e1.dcl[1])..'" vs "'..
                         TYPES.tostring(e2.dcl[1])..'"')
-        me.dcl = DCLS.new(me, AST.copy(max))
+        me.dcl = INFO.new(me, AST.copy(max))
     end,
 
 -- BITWISE
@@ -417,7 +419,7 @@ G = {
                         'incompatible integer types : "'..
                         TYPES.tostring(e1.dcl[1])..'" vs "'..
                         TYPES.tostring(e2.dcl[1])..'"')
-        me.dcl = DCLS.new(me, AST.copy(max))
+        me.dcl = INFO.new(me, AST.copy(max))
     end,
 
     ['Exp_~'] = function (me)
@@ -431,7 +433,7 @@ G = {
             'invalid operand to `'..op..'´ : expected integer type')
 
         -- dcl
-        me.dcl = dcl_copy(e.dcl, 'Val')
+        me.dcl = info_copy(e.dcl, 'Val')
     end,
 
 -- COMPARISON: >, >=, <, <=
@@ -452,7 +454,7 @@ G = {
             'invalid operand to `'..op..'´ : expected numeric type')
 
         -- dcl
-        me.dcl = DCLS.new(me, 'bool')
+        me.dcl = INFO.new(me, 'bool')
     end,
 
 -- EQUALITY: ==, !=
@@ -482,7 +484,7 @@ G = {
                 TYPES.tostring(e2.dcl[1])..'"')
 
         -- dcl
-        me.dcl = DCLS.new(me, 'bool')
+        me.dcl = INFO.new(me, 'bool')
     end,
 
 -- AND, OR
@@ -501,7 +503,7 @@ G = {
             'invalid operand to `'..op..'´ : expected boolean type')
 
         -- dcl
-        me.dcl = DCLS.new(me, 'bool')
+        me.dcl = INFO.new(me, 'bool')
     end,
 
 -- IS, AS/CAST
@@ -518,7 +520,7 @@ G = {
             'invalid operand to `'..op..'´ : unexpected option type')
 
         -- dcl
-        me.dcl = DCLS.new(me, 'bool')
+        me.dcl = INFO.new(me, 'bool')
     end,
 }
 AST.visit(G)
