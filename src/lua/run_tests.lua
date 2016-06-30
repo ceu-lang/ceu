@@ -97,8 +97,8 @@ Test = function (t)
     if not check('names')    then return end
     if not check('exps')     then return end
     if not check('consts')   then return end
-do return end
     if not check('stmts')    then return end
+do return end
     if not check('inits')    then return end
     if not check('scopes')   then return end
 AST.dump(AST.root)

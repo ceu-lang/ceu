@@ -226,8 +226,9 @@ F = {
         native_end = true
     end,
     Nat__PRE = function (me)
-        local _,_,id = unpack(me)
+        local _,mod,id = unpack(me)
         me.id = id
+        me.is_read_only = (mod == 'const')
         dcls_new(AST.par(me,'Block'), me)
 
         ASR(not native_end, me,

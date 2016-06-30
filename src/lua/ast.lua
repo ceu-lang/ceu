@@ -18,6 +18,7 @@ end
 
 AST.tag2id = {
     Val      = 'value',
+    Alias    = 'alias',
     Prim     = 'primitive',
     Nat      = 'native',
     Var      = 'variable',

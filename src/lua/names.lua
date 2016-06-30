@@ -25,7 +25,7 @@ function INFO.copy (old)
     return new
 end
 
-function INFO.new (me, tag, tp, ...)
+function INFO.new (me, tag, id, tp, ...)
     if AST.is_node(tp) and (tp.tag=='Type' or tp.tag=='Typelist') then
         assert(not ...)
     else
@@ -33,23 +33,11 @@ function INFO.new (me, tag, tp, ...)
         tp = TYPES.new(me, tp, ...)
     end
     return {
-        id  = 'unknown',
+        id  = id or 'unknown',
         tag = tag,
         tp  = tp,
+        --dcl
     }
-end
-
-function INFO.dump (info)
-    DBG([[
-{
-    tp       = ]]..TYPES.tostring(info.tp)..[[,
-    lval     = ]]..tostring(info.lval)..[[,
-    is_alias = ]]..tostring(info.is_alias)..[[,
-    dcl      = ]]..tostring(info.dcl)..[[,
-    obj      = ]]..tostring(info.obj)..[[,
-    member   = ]]..tostring(info.member)..[[,
-}
-]])
 end
 
 F = {
@@ -61,6 +49,7 @@ F = {
             id  = id,
             tag = me.dcl.tag,
             tp  = me.dcl[1],
+            dcl = me.dcl,
         }
     end,
 
@@ -181,7 +170,7 @@ DBG('TODO: remove pool')
             local blk = AST.asr(ID_abs.dcl,'Data', 2,'Block')
             local Dcl = DCLS.asr(me,blk,member,false,e.info.id)
             me.info = {
-                id  = 'TODO',
+                id  = member,
                 tag = Dcl.tag,
                 tp  = Dcl[1],
                 dcl = Dcl,
@@ -203,7 +192,9 @@ DBG('TODO: remove pool')
         -- any
 
         -- info
-        me.info = INFO.new(me, 'Var', 'usize')
+        me.info = INFO.copy(vec.info)
+        me.info.tp = TYPES.new(me, 'usize')
+        me.info.tag = 'Var'
     end,
 }
 

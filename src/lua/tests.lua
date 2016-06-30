@@ -2720,6 +2720,16 @@ escape a;
 }
 
 Test { [[
+native/const _V;
+native do
+    int V = 0;
+end
+_V = 0;
+escape _V;
+]],
+    stmts = 'line 5 : invalid assignment : read-only variable "_V"',
+}
+Test { [[
 native _V;
 native do
     int V = 0;
@@ -17212,8 +17222,8 @@ var& int? i;
 i! = &v;
 escape i!;
 ]],
-    stmts = 'line 3 : invalid binding : expected declaration with `&´',
-    --stmts = 'line 3 : invalid binding : unexpected context for operator `!´',
+    --stmts = 'line 3 : invalid binding : expected declaration with `&´',
+    stmts = 'line 3 : invalid binding : unexpected context for operator `!´',
     --inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
     --ref = 'line 3 : invalid attribution : cannot bind with operator `!´',
 }
@@ -17232,8 +17242,8 @@ loop do
 end
 escape v;
 ]],
-    stmts = 'line 4 : invalid binding : expected declaration with `&´',
-    --stmts = 'line 4 : invalid binding : unexpected context for operator `!´',
+    --stmts = 'line 4 : invalid binding : expected declaration with `&´',
+    stmts = 'line 4 : invalid binding : unexpected context for operator `!´',
     --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (tests.lua:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --run = 11,
@@ -18009,7 +18019,8 @@ var _t t;
 t.ptr = &_f(&&v);
 escape *(t.ptr);
 ]],
-    stmts = 'line 13 : invalid binding : expected declaration with `&´',
+    stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
+    --stmts = 'line 13 : invalid binding : expected declaration with `&´',
     --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
@@ -18030,7 +18041,8 @@ var& _t t;
 t.ptr = &_f(&&v);
 escape *(t.ptr);
 ]],
-    stmts = 'line 13 : invalid binding : expected declaration with `&´',
+    stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
+    --stmts = 'line 13 : invalid binding : expected declaration with `&´',
     --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
     --run = 10,
 }
@@ -20411,7 +20423,8 @@ end
 
 escape _V;
 ]],
-    stmts = 'line 19 : invalid call : unexpected context for operator `&´',
+    stmts = 'line 19 : invalid expression list : item #1 : unexpected context for alias "tex"',
+    --stmts = 'line 19 : invalid call : unexpected context for operator `&´',
     --env = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
     --run = '19] runtime error: invalid tag',
 }
@@ -24419,7 +24432,8 @@ Test { [[
 vector[] int x = [1]..2;
 escape 1;
 ]],
-    stmts = 'line 1 : invalid constructor : expected name expression',
+    stmts = 'line 1 : invalid constructor : unexpected context for value "2"',
+    --stmts = 'line 1 : invalid constructor : expected name expression',
     --env = 'line 1 : wrong argument #2 : source is not a vector',
 }
 
@@ -47633,7 +47647,8 @@ var int v = 10;
 ptr:ceu = &v;
 escape *((ptr:ceu as int&&));
 ]],
-    stmts = 'line 10 : invalid binding : expected declaration with `&´',
+    stmts = 'line 10 : invalid binding : unexpected context for operator `.´',
+    --stmts = 'line 10 : invalid binding : expected declaration with `&´',
     --env = 'line 10 : invalid attribution : l-value cannot hold an alias',
     --ref = 'line 9 : invalid attribution : l-value already bounded',
     --run = 10,
@@ -57530,8 +57545,8 @@ end
 escape 1;//e.Xx.d.x;
 ]],
     wrn = true,
-    stmts = 'line 14 : invalid binding : expected declaration with `&´',
-    --stmts = 'line 14 : invalid binding : unexpected context for operator `.´',
+    --stmts = 'line 14 : invalid binding : expected declaration with `&´',
+    stmts = 'line 14 : invalid binding : unexpected context for operator `.´',
     --inits = 'line 11 : uninitialized variable "e" : reached read access (tests.lua:14)',
     --ref = 'line 11 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
 }
@@ -57573,8 +57588,8 @@ var Ee e = val Ee.Xx(&d);
 escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
-    stmts = 'line 13 : invalid binding : expected declaration with `&´',
-    --stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
+    --stmts = 'line 13 : invalid binding : expected declaration with `&´',
+    stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
     --run = 1,
 }
 Test { [[
@@ -57614,6 +57629,26 @@ end
 var Cx c = val Cx(Bx(Ax(1)));
 
 escape c.b.a;
+]],
+    stmts = 'line 15 : invalid `escape´ : types mismatch : "int" <= "Ax"',
+}
+
+Test { [[
+data Ax with
+    var int v;
+end
+
+data Bx with
+    var Ax a;
+end
+
+data Cx with
+    var Bx b;
+end
+
+var Cx c = val Cx(Bx(Ax(1)));
+
+escape c.b.a.v;
 ]],
     run = 1,
 }

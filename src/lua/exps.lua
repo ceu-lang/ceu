@@ -10,24 +10,24 @@ F = {
 -- PRIMITIVES
 
     NULL = function (me)
-        me.info = INFO.new(me, 'Val', 'null', '&&')
+        me.info = INFO.new(me, 'Val', 'null', 'null', '&&')
     end,
 
     NUMBER = function (me)
         local v = unpack(me)
         if math.floor(v) == tonumber(v) then
-            me.info = INFO.new(me, 'Val', 'int')
+            me.info = INFO.new(me, 'Val', v, 'int')
         else
-            me.info = INFO.new(me, 'Val', 'float')
+            me.info = INFO.new(me, 'Val', v, 'float')
         end
     end,
 
     BOOL = function (me)
-        me.info = INFO.new(me, 'Val', 'bool')
+        me.info = INFO.new(me, 'Val', me[1], 'bool')
     end,
 
     STRING = function (me)
-        me.info = INFO.new(me, 'Val', '_char', '&&')
+        me.info = INFO.new(me, 'Val', me[1], '_char', '&&')
     end,
 
 -- SIZEOF
@@ -44,7 +44,7 @@ F = {
         -- any
 
         -- info
-        me.info = INFO.new(me, 'Val', 'usize')
+        me.info = INFO.new(me, 'Val', nil, 'usize')
     end,
 
 -- CALL
@@ -72,7 +72,7 @@ F = {
 
         -- info
         local _,_,_,_,out = unpack(ID_abs.dcl)
-        me.info = INFO.new(me, 'Val', AST.copy(out))
+        me.info = INFO.new(me, 'Val', nil, AST.copy(out))
     end,
 
 -- BIND
@@ -90,8 +90,7 @@ F = {
 
         -- info
         me.info = INFO.copy(e.info)
-        me.lval = nil
-        me.is_alias = true
+        me.info.tag = 'Alias'
     end,
 
 -- INDEX ("idx" is Exp, not Exp_Name)
@@ -121,7 +120,7 @@ F = {
 
         -- info
         me.info = INFO.copy(e.info)
-        me.info.lval = nil
+        me.info.tag = 'Val'
         me.info.tp = TYPES.push(e.info.tp,'&&')
     end,
 
@@ -138,7 +137,7 @@ F = {
             'invalid operand to `'..op..'´ : expected option type')
 
         -- info
-        me.info = INFO.new(me, 'Val', 'bool')
+        me.info = INFO.new(me, 'Val', nil, 'bool')
     end,
 
 -- VECTOR LENGTH: $$
@@ -158,7 +157,7 @@ F = {
             'invalid operand to `'..op..'´ : expected boolean type')
 
         -- info
-        me.info = INFO.new(me, 'Val', 'bool')
+        me.info = INFO.new(me, 'Val', nil, 'bool')
     end,
 
 -- UNARY: +,-
@@ -177,7 +176,7 @@ F = {
 
         -- info
         me.info = INFO.copy(e.info)
-        me.lval = nil
+        me.info.tag = 'Val'
     end,
 
 -- NUMERIC: +, -, %, *, /, ^
@@ -205,7 +204,7 @@ F = {
                         'incompatible numeric types : "'..
                         TYPES.tostring(e1.info.tp)..'" vs "'..
                         TYPES.tostring(e2.info.tp)..'"')
-        me.info = INFO.new(me, 'Val', AST.copy(max))
+        me.info = INFO.new(me, 'Val', nil, AST.copy(max))
     end,
 
 -- BITWISE
@@ -231,7 +230,7 @@ F = {
                         'incompatible integer types : "'..
                         TYPES.tostring(e1.info.tp)..'" vs "'..
                         TYPES.tostring(e2.info.tp)..'"')
-        me.info = INFO.new(me, 'Val', AST.copy(max))
+        me.info = INFO.new(me, 'Val', nil, AST.copy(max))
     end,
 
     ['Exp_~'] = function (me)
@@ -246,7 +245,7 @@ F = {
 
         -- info
         me.info = INFO.copy(e.info)
-        me.info.lval = nil
+        me.info.tag = 'Val'
     end,
 
 -- COMPARISON: >, >=, <, <=
@@ -267,7 +266,7 @@ F = {
             'invalid operand to `'..op..'´ : expected numeric type')
 
         -- info
-        me.info = INFO.new(me, 'Val', 'bool')
+        me.info = INFO.new(me, 'Val', nil, 'bool')
     end,
 
 -- EQUALITY: ==, !=
@@ -297,7 +296,7 @@ F = {
                 TYPES.tostring(e2.info.tp)..'"')
 
         -- info
-        me.info = INFO.new(me, 'Val', 'bool')
+        me.info = INFO.new(me, 'Val', nil, 'bool')
     end,
 
 -- AND, OR
@@ -316,7 +315,7 @@ F = {
             'invalid operand to `'..op..'´ : expected boolean type')
 
         -- info
-        me.info = INFO.new(me, 'Val', 'bool')
+        me.info = INFO.new(me, 'Val', nil, 'bool')
     end,
 
 -- IS, AS/CAST
@@ -334,7 +333,7 @@ F = {
             'invalid operand to `'..op..'´ : unexpected option type')
 
         -- info
-        me.info = INFO.new(me, 'Val', 'bool')
+        me.info = INFO.new(me, 'Val', nil, 'bool')
     end,
 }
 
