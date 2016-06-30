@@ -23049,10 +23049,10 @@ escape a;
 
 Test { [[
 var int a=0;
-var int&& pa=null;
 par/or do
     a = 1;
 with
+var int&& pa=null;
     pa = &&a;
 end;
 escape a;
@@ -23065,11 +23065,11 @@ escape a;
 
 Test { [[
 var int b = 1;
-var int&& a = &&b;
+var& int a = &b;
 par/or do
     b = 1;
 with
-    *a = 0;
+    a = 0;
 end
 escape b;
 ]],
@@ -23083,16 +23083,16 @@ escape b;
 Test { [[
 var int b = 1;
 var int c = 2;
-var int&& a = &&c;
-deterministic b with a, c;
 par/and do
     b = 1;
 with
+var int&& a = &&c;
+deterministic b with a, c;
     *a = 3;
 end
-escape *a+b+c;
+escape b+c;
 ]],
-    run = 7,
+    run = 4,
 }
 
 Test { [[
@@ -23124,7 +23124,6 @@ native do
     }
 end
 var int a=1, b=1;
-var int&& pb = &&b;
 par/and do
     a = 1;              // 10
 with
@@ -23132,6 +23131,7 @@ with
 with
     _f(&&a);             // 14
 with
+var int&& pb = &&b;
     _f(pb);             // 16
 end
 escape a + b;
@@ -23150,7 +23150,6 @@ native do
     }
 end
 var int a=1, b=0;
-var int&& pb = &&b;
 par/or do
     a = 1;
 with
@@ -23158,6 +23157,7 @@ with
 with
     _f(&&a);
 with
+var int&& pb = &&b;
     _f(pb);
 end
 escape a + b;
@@ -25571,7 +25571,8 @@ end
 ]],
     wrn = true,
     --run = 1,
-    fin = 'line 7 : unsafe access to pointer "p1" across `await´',
+    inits = 'line 5 : invalid pointer access : crossed `await´ (tests.lua:4)',
+    --fin = 'line 7 : unsafe access to pointer "p1" across `await´',
 }
 
 Test { [[
@@ -25605,7 +25606,8 @@ else
 end
 escape ret;
 ]],
-    fin = 'line 10 : unsafe access to pointer "x" across `emit´',
+    inits = 'line 10 : invalid pointer access : crossed `emit´ (tests.lua:7)',
+    --fin = 'line 10 : unsafe access to pointer "x" across `emit´',
 }
 
 Test { [[
@@ -25626,14 +25628,14 @@ escape ret;
 
 Test { [[
 var int v = 10;
-var int&& x = &&v;
+var& int x = &v;
 event void e;
 var int ret=0;
 par do
-    ret = *x;
+    ret = x;
     emit e;
 with
-    escape *x;
+    escape x;
 end
 ]],
     _ana = {acc=2},
@@ -25642,30 +25644,30 @@ end
 
 Test { [[
 var int v = 10;
-var int&& x = &&v;
+var& int x = &v;
 event void e;
 var int ret=0;
 par do
-    ret = *x;
+    ret = x;
     emit e;
 with
     par/or do
-        ret = *x;
+        ret = x;
         emit e;
     with
-        ret = *x;
+        ret = x;
         await e;
     with
         par/and do
-            ret = *x;
+            ret = x;
             emit e;
         with
-            ret = *x;
+            ret = x;
             await e;
         end
     end
 with
-    escape *x;
+    escape x;
 end
 ]],
     _ana = {acc=true},
@@ -25756,6 +25758,17 @@ escape ({(CEU_Main*)(_ceu_app->_data)}):xxx;
     run = 10,
 }
 -- NATIVE/PRE
+
+Test { [[
+input/output/instantaneous OPEN  (var byte&& path, var byte mode)=>void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+do return end
 
 Test { [[
 pre native do

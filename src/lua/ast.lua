@@ -200,7 +200,10 @@ end
 ]]
 --
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
+    local me_str  = string.gsub(tostring(me),       'table: ', '')
+    local par_str = string.gsub(tostring(me.__par), 'table: ', '')
     DBG(string.rep(' ',spc)..me.tag..
+        ' |'..me_str..'/'..par_str..'['..tostring(me.__i)..']|'..
 --[[
         '')
 ]]

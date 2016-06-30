@@ -158,16 +158,16 @@ F = {
                 local pre,is_alias = unpack(v)
                 if pre == 'var' then
                     local _,_,hold,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Var', me.ln, tp, is_alias, id)
+                    dcls[#dcls+1] = node('Var', me.ln, AST.copy(tp), is_alias, id)
                 elseif pre == 'vector' then
                     local _,_,dim,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Vec', me.ln, tp, is_alias, dim, id)
+                    dcls[#dcls+1] = node('Vec', me.ln, AST.copy(tp), is_alias, dim, id)
                 elseif pre == 'pool' then
                     local _,_,dim,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Pool', me.ln, tp, is_alias, dim, id)
+                    dcls[#dcls+1] = node('Pool', me.ln, AST.copy(tp), is_alias, dim, id)
                 elseif pre == 'event' then
                     local _,_,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Evt', me.ln, tp, is_alias, id)
+                    dcls[#dcls+1] = node('Evt', me.ln, AST.copy(tp), is_alias, id)
                 else
                     error'TODO'
                 end

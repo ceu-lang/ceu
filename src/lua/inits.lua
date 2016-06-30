@@ -173,6 +173,13 @@ local function run_ptrs (par, i, Dcl)
             return
         end
 
+    -- If: take the two branches independently
+    elseif me.tag == 'If' then
+        local _, t, f = unpack(me)
+        run_ptrs(t, 1, Dcl) -- TODO: stop on #me
+        run_ptrs(f, 1, Dcl) -- TODO: stop on #me
+        return run_ptrs(me, #me, Dcl)
+
     -- access to Dcl: mark as safe
     elseif me.tag=='ID_int' and me.dcl==Dcl then
         me.__run_ptrs_ok = true
