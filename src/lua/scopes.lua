@@ -48,6 +48,23 @@ F = {
         local ok = check_blk(to.info.dcl.blk, fr.info.dcl.blk)
         ASR(ok, me, 'invalid binding : incompatible scopes')
     end,
+
+    __stmts = { Nothing=true, Set_Exp=true, Set_Alias=true,
+                Emit_Ext_emit=true, Emit_Ext_call=true,
+                Abs_Call=true, Exp_Call=true },
+
+    Finalize = function (me)
+        local Stmt, Varlist, Block = unpack(me)
+        if Stmt then
+            local tag_id = AST.tag2id[Stmt.tag]
+            ASR(F.__stmts[Stmt.tag], me,
+                'invalid `finalize´ : unexpected '..
+                (tag_id and '`'..tag_id..'´' or 'statement'))
+        else
+            ASR(Varlist==false or #Varlist==0, me,
+                'invalid `finalize´ : unexpected `varlist´')
+        end
+    end,
 }
 
 AST.visit(F)

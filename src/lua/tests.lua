@@ -17313,6 +17313,19 @@ escape r;
 }
 
 Test { [[
+event int e;
+var int x;
+do
+    x = await e;
+finalize (x) with
+    nothing;
+end
+escape 0;
+]],
+    scopes = 'line 3 : invalid `finalize´ : unexpected `await´',
+}
+
+Test { [[
 native _fff;
 native do
     int V = 10;
@@ -17324,7 +17337,8 @@ end
 var int   v = 1;
 var int&& p = &&v;
 var& int? r;
-do r = &_fff(*p);
+do
+    r = &_fff(*p);
 finalize (r) with
     nothing;
 end
@@ -17969,6 +17983,15 @@ escape i;
     --env = 'line 11 : wrong argument #2 : cannot pass pointers',
     --fin = 'line 6 : invalid block for awoken pointer "p"',
     --run = 1,
+}
+
+Test { [[
+var int a = 0;
+do
+finalize (a) with
+end
+]],
+    scopes = 'line 2 : invalid `finalize´ : unexpected `varlist´',
 }
 
 --<<< FINALLY / FINALIZE

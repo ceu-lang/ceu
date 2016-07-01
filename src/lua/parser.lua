@@ -430,7 +430,6 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                   + V'Emit_Ext_emit' + V'Emit_Ext_call'
                   + V'Abs_Call'
                   + V'Exp_Call' -- TODO: ambiguous with Nat_Stmt
-                  + V'Nat_Stmt'
 
     , __Stmt_Block = V'_Code_impl' + V'_Ext_Code_impl' + V'_Ext_Req_impl'
               + V'_Data_block'

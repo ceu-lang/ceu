@@ -1,27 +1,27 @@
 local yields = {
-    EOF           = 'end of file',
-    EOC           = 'end of code',
-    Par           = 'par',
-    Par_And       = 'par/and',
-    Par_Or        = 'par/or',
-    Escape        = 'escape',
-    Loop          = 'loop',
-    Async         = 'async',
-    _Async_Thread  = 'async/thread',
-    _Async_Isr     = 'async/isr',
-    Code          = 'code',
-    Ext_Code      = 'external code',
-    Data          = 'data',
-    Nat_Block     = 'native block',
-    Await_Ext     = 'await',
-    Await_Evt     = 'await',
-    Await_Wclock  = 'await',
-    Await_Forever = 'await',
-    Emit_ext_req  = 'request',
-    Emit_Evt      = 'emit',
-    Abs_Await     = 'await',
-    Abs_Spawn     = 'spawn',
-    Kill          = 'kill',
+    EOF           = true,
+    EOC           = true,
+    Par           = true,
+    Par_And       = true,
+    Par_Or        = true,
+    Escape        = true,
+    Loop          = true,
+    Async         = true,
+    _Async_Thread = true,
+    _Async_Isr    = true,
+    Code          = true,
+    Ext_Code      = true,
+    Data          = true,
+    Nat_Block     = true,
+    Await_Ext     = true,
+    Await_Evt     = true,
+    Await_Wclock  = true,
+    Await_Forever = true,
+    Emit_ext_req  = true,
+    Emit_Evt      = true,
+    Abs_Await     = true,
+    Abs_Spawn     = true,
+    Kill          = true,
 }
 
 local function run_inits (par, i, Dcl, stop)
@@ -40,7 +40,7 @@ local function run_inits (par, i, Dcl, stop)
     if yields[me.tag] then
         ASR(false, Dcl,
             'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
-            'reached `'..yields[me.tag]..'´ '..
+            'reached `'..AST.tag2id[me.tag]..'´ '..
             '('..me.ln[1]..':'..me.ln[2]..')')
 
     -- error: access to Dcl
@@ -273,7 +273,7 @@ F = {
             local yield = me.dcl.__run_ptrs_yield
             ASR(me.__run_ptrs_ok, me,
                 'invalid pointer access : crossed `'..
-                yields[yield.tag]..'´ '..
+                AST.tag2id[yield.tag]..'´ '..
                 '('..yield.ln[1]..':'..yield.ln[2]..')')
         end
     end,

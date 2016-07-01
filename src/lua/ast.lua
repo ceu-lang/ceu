@@ -19,6 +19,7 @@ end
 AST.tag2id = {
     Val      = 'value',
     Alias    = 'alias',
+--
     Prim     = 'primitive',
     Nat      = 'native',
     Var      = 'variable',
@@ -29,6 +30,32 @@ AST.tag2id = {
     Ext_Code = 'external code',
     Code     = 'code',
     Data     = 'data',
+--
+    EOF           = 'end of file',
+    EOC           = 'end of code',
+    Par           = 'par',
+    Par_And       = 'par/and',
+    Par_Or        = 'par/or',
+    Escape        = 'escape',
+    Loop          = 'loop',
+    Async         = 'async',
+    _Async_Thread  = 'async/thread',
+    _Async_Isr     = 'async/isr',
+    Code          = 'code',
+    Ext_Code      = 'external code',
+    Data          = 'data',
+    Nat_Block     = 'native block',
+    Await_Ext     = 'await',
+    Await_Evt     = 'await',
+    Await_Wclock  = 'await',
+    Await_Forever = 'await',
+    Emit_ext_req  = 'request',
+    Emit_Evt      = 'emit',
+    Abs_Await     = 'await',
+    Abs_Spawn     = 'spawn',
+    Kill          = 'kill',
+--
+    Set_Await_many = 'await',
 }
 
 local _N = 0
