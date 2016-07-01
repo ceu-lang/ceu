@@ -420,10 +420,32 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                 V'__Do'
 
     , Finalize = K'do' *
-                    V'Block' *
+                    OPT(V'__fin_stmt') *
                  K'finalize' * OPT(PARENS(V'Varlist')) * K'with' *
                     V'Block' *
                  K'end'
+    , __fin_stmt  = V'___fin_stmt' * V'__seqs'
+    , ___fin_stmt = V'Nothing'
+                  + V'_Set'
+                  + V'Emit_Ext_emit' + V'Emit_Ext_call'
+                  + V'Abs_Call'
+                  + V'Exp_Call' -- TODO: ambiguous with Nat_Stmt
+                  + V'Nat_Stmt'
+
+    , __Stmt_Block = V'_Code_impl' + V'_Ext_Code_impl' + V'_Ext_Req_impl'
+              + V'_Data_block'
+              + V'Nat_Block'
+              + V'Do'    + V'_If'
+              + V'Loop' + V'_Loop_Num' + V'_Loop_Pool'
+              + V'_Every'
+              + V'_Spawn_Block'
+              + V'Finalize'
+              + V'Par_Or' + V'Par_And' + V'_Watching'
+              + V'_Pause'
+              + V'Async' + V'_Async_Thread' + V'_Async_Isr' + V'Atomic'
+              + V'_Dopre'
+              + V'_Lua'
+
 
     , _Pause   = K'pause/if' * V'Exp_Name' * V'__Do'
 

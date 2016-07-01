@@ -17957,6 +17957,20 @@ escape v1!+v2!+_V;
     run = 60,
 }
 
+Test { [[
+do
+    emit e;
+finalize with
+    nothing;
+end
+escape i;
+]],
+    parser = 'line 2 : after `;´ : expected statement',
+    --env = 'line 11 : wrong argument #2 : cannot pass pointers',
+    --fin = 'line 6 : invalid block for awoken pointer "p"',
+    --run = 1,
+}
+
 --<<< FINALLY / FINALIZE
 
 Test { [[
@@ -20151,8 +20165,8 @@ var int i=0;
 par/or do
     var void&& p1;
     (i,p1) = await PTR;
+    var void&& p=null;
     do
-var void&& p=null;
         p = p1;
     finalize with
         nothing;
