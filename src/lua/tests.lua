@@ -59868,7 +59868,7 @@ native/nohold _g;
 var& _SDL_Texture? t_enemy_1;
 native _f;
     do t_enemy_1 = &_f();
-finalize with
+finalize(t_enemy_1) with
     _g(&&t_enemy_1!);
 end
 escape 1;
@@ -59942,7 +59942,7 @@ native/nohold _myfree;
 
 var& void? v;
     do v = &_myalloc();
-finalize with
+finalize(v) with
     _myfree(&&v!);
 end
 
@@ -59964,7 +59964,7 @@ native/nohold _myfree;
 
 var& void? v;
     do v = &_myalloc();
-finalize with
+finalize(v) with
     if v? then
         _myfree(&&v!);
     end
@@ -59997,26 +59997,26 @@ end
 var& int? v1;
 native _fff;
         do v1 = &_fff(1);
-    finalize with
+    finalize(v1) with
         nothing;
     end
 
 var& int? v2;
         do v2 = &_fff(2);
-    finalize with
+    finalize(v2) with
         nothing;
     end
 
 var& int? v3;
 native _V1, _V2;
         do v3 = &_UNSAFE_POINTER_TO_REFERENCE(_V1);
-    finalize with
+    finalize(v3) with
         nothing;
     end
 
 var& int? v4;
         do v4 = &_UNSAFE_POINTER_TO_REFERENCE(_V2);
-    finalize with
+    finalize(v4) with
         nothing;
     end
 
