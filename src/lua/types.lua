@@ -122,16 +122,6 @@ function TYPES.is_nat_not_plain (tp)
     return true
 end
 
--- check if _nat&&
-function TYPES.is_nat_ptr (tp)
-    local tp, ok = TYPES.pop(tp,'&&')
-    if ok then
-        tp[2] = nil
-        return TYPES.is_nat(tp)
-    end
-    return false
-end
-
 function TYPES.ID_plain (tp)
     return #tp==1 and tp[1]
 end

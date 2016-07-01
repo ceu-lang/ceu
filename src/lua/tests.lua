@@ -24987,7 +24987,7 @@ vector[] u8 str = [].."Ola Mundo!";
 }
 
 Test { [[
-native _strlen;
+native/pure _strlen;
 code/instantaneous Strlen (var byte&& str)=>int do
     escape _strlen(str);
 end
@@ -25947,7 +25947,10 @@ native do
 end
 var void&& v=null;
 native _V;
-do _V = v; finalize with end
+do
+    _V = v;
+finalize (v)
+with end
 await 1s;
 escape (_V==null) as int;
 ]],
@@ -25977,7 +25980,10 @@ native do
     typedef int tp;
 end
 var _tp&& v=null;
-do _a = v; finalize with end
+do
+    _a = v;
+finalize with
+end
 await 1s;
 _b = _a;    // _a pode ter escopo menor e nao reclama de FIN
 await FOREVER;

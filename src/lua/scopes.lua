@@ -27,7 +27,6 @@ F = {
         local to_ptr = TYPES.check(TYPES.pop(to.info.tp,'?'),'&&')
         local fr_ptr = TYPES.check(fr.info.tp,'&&')
         local to_nat = TYPES.is_nat(to.info.tp)
-        local fr_nat = TYPES.is_nat(fr.info.tp) or TYPES.is_nat_ptr(fr.info.tp)
 
         -- ptr = _f()
         if fr.tag=='Exp_Call' and (to_ptr or to_nat) then
@@ -37,10 +36,11 @@ F = {
         end
 
         if to_ptr or fr_ptr then
+            local fr_nat = TYPES.is_nat(fr.info.tp)
             assert((to_ptr or to_nat) and (fr_ptr or fr_nat), 'bug found')
 
             local ok do
-                if fr_nat or (not fr.info.dcl) then
+                if (not fr.info.dcl) or (fr.info.dcl.tag=='Nat') then
                     ok = true   -- var int&& x = _X/null/""/...;
                 elseif to_nat then
                     ok = false  -- _X = &&x;
