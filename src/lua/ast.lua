@@ -30,7 +30,7 @@ AST.tag2id = {
     Ext_Code = 'external code',
     Code     = 'code',
     Data     = 'data',
---
+-->>> yields
     EOF           = 'end of file',
     EOC           = 'end of code',
     Par           = 'par',
@@ -54,8 +54,9 @@ AST.tag2id = {
     Abs_Await     = 'await',
     Abs_Spawn     = 'spawn',
     Kill          = 'kill',
---
+-->>> no/finalize
     Set_Await_many = 'await',
+    Nothing        = 'nothing',
 }
 
 local _N = 0

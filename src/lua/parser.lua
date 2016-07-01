@@ -421,7 +421,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Finalize = K'do' *
                     OPT(V'__fin_stmt') *
-                 K'finalize' * OPT(PARENS(V'Varlist')) * K'with' *
+                 K'finalize' * OPT(PARENS(V'Namelist')) * K'with' *
                     V'Block' *
                  K'end'
     , __fin_stmt  = V'___fin_stmt' * V'__seqs'

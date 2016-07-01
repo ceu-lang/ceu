@@ -54,9 +54,9 @@ F = {
                 Abs_Call=true, Exp_Call=true },
 
     Finalize = function (me)
-        local Stmt, Varlist, Block = unpack(me)
+        local Stmt, Namelist, Block = unpack(me)
         if not Stmt then
-            ASR(not Varlist, me,
+            ASR(not Namelist, me,
                 'invalid `finalize´ : unexpected `varlist´')
             return
         end
@@ -72,8 +72,12 @@ F = {
             local Exp_Name = AST.asr(Stmt,'', 2,'Exp_Name')
             local ID = AST.get(Exp_Name,'', 1,'ID_int') or
                        AST.get(Exp_Name,'', 1,'ID_nat')
-            ASR(ID, me,
+            ASR(ID, Exp_Name,
                 'invalid `finalize´ : expected identifier : got "'..Exp_Name.info.id..'"')
+            ASR(Namelist, Stmt, 'invalid `finalize´ : expected `varlist´')
+            ASR(#Namelist==1 and Namelist[1].info.dcl==ID.info.dcl, Namelist,
+                'invalid `finalize´ : unmatching identifiers : expected "'..
+                ID.info.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
         end
     end,
 }

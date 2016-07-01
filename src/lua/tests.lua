@@ -17269,7 +17269,7 @@ finalize with
 end
 escape 0;
 ]],
-    fin = 'TODO',
+    scopes = 'line 2 : invalid `finalize´ : unexpected `nothing´',
 }
 
 Test { [[
@@ -17487,8 +17487,37 @@ Test { [[
 native _f;
 do
     var int&& a;
-    do a = _f();
+    do
+        a = _f();
     finalize with
+        do await FOREVER; end;
+    end
+end
+]],
+    scopes = 'line 5 : invalid `finalize´ : expected `varlist´',
+}
+
+Test { [[
+native _f;
+do
+    var int&& a;
+    do
+        a = _f();
+    finalize (_f) with
+        do await FOREVER; end;
+    end
+end
+]],
+    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "a" (vs. tests.lua:5)',
+}
+
+Test { [[
+native _f;
+do
+    var int&& a;
+    do
+        a = _f();
+    finalize (a) with
         do await FOREVER; end;
     end
 end
@@ -17500,8 +17529,9 @@ Test { [[
 native _f;
 do
     var& int? a;
-    do a = &_f();
-    finalize with
+    do
+        a = &_f();
+    finalize (a) with
         do await FOREVER; end;
     end
 end
@@ -17514,7 +17544,7 @@ native _f;
 do
     var& int? a;
     do a = &_f();
-    finalize with
+    finalize (a) with
         async do
         end;
     end
@@ -17528,7 +17558,7 @@ native _f;
 do/_
     var& int? a;
     do a = &_f();
-    finalize with
+    finalize (a) with
         do/_ escape 0; end;
     end
 end
@@ -17628,7 +17658,7 @@ native _f;
 input void E;
 var& int? n;
 do n = &_f();
-finalize with
+finalize (n) with
 end
 await E;
 escape n!;
@@ -17642,7 +17672,7 @@ loop do
     var int&& a;
         var int&& b = null;
         do a = b;
-        finalize with
+        finalize (a) with
             do break; end;
         end
     end
@@ -17661,7 +17691,7 @@ loop do
         var int&& b = null;
         do
             a = b;
-        finalize with
+        finalize (a) with
             do break; end;
         end
     end
@@ -17712,7 +17742,7 @@ var int r = 0;
 do/_
     var& int? a;
     do a = &_f();
-    finalize with
+    finalize (a) with
         var int b = do/_ escape 2; end;
     end
     r = 1;
@@ -17734,7 +17764,7 @@ var int r = 0;
 do/_
     var& int? a;
     do a = &_f();
-    finalize with
+    finalize (a) with
         if a? then end
         var int b = do/_ escape 2; end;
     end
@@ -17904,7 +17934,7 @@ end
 var& int? v;
 do
     v = &_getV();
-finalize
+finalize (v)
 with
     nothing;
 end
@@ -17924,14 +17954,14 @@ end
 
 var& int? v1;
 do v1 = &_getV();
-finalize with
+finalize (v1) with
     nothing;
 end
 v1 = 20;
 
 var& int? v2;
 do v2 = &_getV();
-finalize with
+finalize (v2) with
     nothing;
 end
 
@@ -17952,7 +17982,7 @@ end
 var& int? v1;
 do
     v1 = &_getV();
-finalize
+finalize (v1)
 with
     nothing;
 end
@@ -17961,7 +17991,7 @@ v1! = 20;
 var& int? v2;
 do
     v2 = &_getV();
-finalize
+finalize (v2)
 with
     nothing;
 end
@@ -18678,7 +18708,7 @@ do
     var int v=0;
     do
         pa = &&v;
-    finalize with
+    finalize (pa) with
         ret = ret + 1;
     end
 end
@@ -18694,12 +18724,12 @@ do
     var int v=0;
     if true then
         do pa = &&v;
-        finalize with
+        finalize (pa) with
             ret = ret + 1;
     end
     else
         do pa = &&v;
-        finalize with
+        finalize (pa) with
             ret = ret + 2;
     end
     end
@@ -18735,13 +18765,13 @@ do
     if true then
         do
             pa = &&v;
-        finalize with
+        finalize (pa) with
             ret = ret + 1;
         end
     else
         do
             pa = &&v;
-        finalize with
+        finalize (pa) with
         end
     end
 end
@@ -20192,7 +20222,7 @@ par/or do
     var void&& p=null;
     do
         p = p1;
-    finalize with
+    finalize (p) with
         nothing;
     end
 with
@@ -20228,7 +20258,7 @@ par/or do
     var void&& p1;
     (i,p1) = await PTR;
 var void&& p = null;
-    do p = p1; finalize with end
+    do p = p1; finalize (p) with end
 with
     await OS_START;
     async do
@@ -20275,7 +20305,7 @@ do
         var void&& p1;
         (i,p1) = await PTR;
 var void&& p = null;
-        do p = p1; finalize with end
+        do p = p1; finalize (p) with end
     with
         await OS_START;
         async do
@@ -20320,7 +20350,7 @@ finalize with
 end
 escape 1;
 ]],
-    scopes = 'line 2 : invalid `finalize´ : expected identifier : got "_ptr.x"',
+    scopes = 'line 3 : invalid `finalize´ : expected identifier : got "_ptr.x"',
 }
 
 Test { [[
@@ -20331,7 +20361,7 @@ native do
 end
 do
     _ptr = _malloc(100);
-finalize with
+finalize (_ptr) with
     _free(_ptr);
 end
 escape 1;
@@ -20353,7 +20383,7 @@ native/nohold _dealloc;
 
 var& int? tex;
 do tex = &_alloc(1);    // v=2
-finalize with
+finalize (tex) with
     _dealloc(&&tex);
 end
 
@@ -20376,7 +20406,7 @@ native/nohold _dealloc;
 
 var& int? tex;
 do tex = &_alloc(1);    // v=2
-finalize with
+finalize (tex) with
     _dealloc(&&tex!);
 end
 
@@ -20399,7 +20429,7 @@ native/nohold _dealloc;
 var& int? tex;
 do
     tex = &_alloc(1);    // v=2
-finalize
+finalize (tex)
 with
     _dealloc(&&tex!);
 end
@@ -20427,7 +20457,7 @@ native/nohold _dealloc;
 do
     var& int? tex;
 do tex = &_alloc(1);
-    finalize with
+    finalize (tex) with
         _dealloc(tex);
     end
 end
@@ -20466,7 +20496,7 @@ native/nohold _dealloc;
 do
     var& int? tex;
     do tex = &_alloc(1);
-    finalize with
+    finalize (tex) with
         _dealloc(&tex!);
     end
 end
@@ -20497,7 +20527,7 @@ native/nohold _dealloc;
 do
     var& int? tex;
     do tex = &_alloc(1);
-    finalize with
+    finalize (tex) with
         _dealloc(&&tex!);
     end
 end
@@ -20536,7 +20566,7 @@ do
     var& _t? tex;
 do
         tex = &_alloc(1);    // v=2
-    finalize
+    finalize (tex)
     with
         _dealloc(&&tex!);
     end
@@ -20552,7 +20582,7 @@ do
     var& _t? tex;
 do
         tex = &_alloc(0);    // v=4
-    finalize
+    finalize (tex)
     with
         if tex? then
             _dealloc(&&tex!);
@@ -20581,7 +20611,7 @@ end
 
 var& void? ptr;
 do ptr = &_f();
-finalize with
+finalize (ptr) with
     nothing;
 end
 
@@ -20602,7 +20632,7 @@ end
 var& void? ptr;
 do
     ptr = &_f();
-finalize
+finalize (ptr)
 with
     nothing;
 end
@@ -20623,7 +20653,7 @@ end
 var& void? ptr;
 do
     ptr = &_f();
-finalize
+finalize (ptr)
 with
     nothing;
 end
@@ -20647,7 +20677,7 @@ native/nohold _g;
 var& void? ptr;
 do
     ptr = &_f();
-finalize
+finalize (ptr)
 with
     _g(&&ptr!);    // error (ptr is Nil)
 end
@@ -20674,7 +20704,7 @@ do
     var& void? ptr;
 do
         ptr = &_f();
-    finalize
+    finalize (ptr)
     with
         if ptr? then
             _g(&&ptr!);
@@ -20701,7 +20731,7 @@ end
 
 var& int? tex1;
 do tex1 = &_alloc(1);
-finalize with
+finalize (tex1) with
     nothing;
 end
 
@@ -20725,7 +20755,7 @@ end
 
 var& int? tex1;
 do tex1 = &_alloc(1);
-finalize with
+finalize (tex1) with
     nothing;
 end
 
@@ -20766,7 +20796,7 @@ do
     var& _t? tex;
 do
         tex = &_alloc(1);    // v=2
-    finalize
+    finalize (tex)
     with
         _dealloc(&&tex!);
     end
@@ -20782,7 +20812,7 @@ do
     var& _t? tex;
 do
         tex = &_alloc(0);    // v=4
-    finalize
+    finalize (tex)
     with
         if tex? then
             _dealloc(&&tex!);
@@ -20809,7 +20839,7 @@ native _SDL_Window, _SDL_CreateWindow, _SDL_WINDOW_SHOWN;
 var& _SDL_Window win;
 do win = &_SDL_CreateWindow("UI - Texture",
                             500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
-    finalize with
+    finalize (win) with
         //_SDL_DestroyWindow(win);
     end
 escape 0;
@@ -20840,7 +20870,7 @@ with
         var& void? srf;
 do
             srf = &_my_alloc();
-        finalize
+        finalize (srf)
         with
             if srf? then end;
             _my_free();
@@ -23450,7 +23480,7 @@ end
 var& int? p;
 do
     p = &_f();
-finalize
+finalize (p)
 with
     nothing;
 end
@@ -23470,7 +23500,7 @@ end
 var& int? p;
 do
     p = &_f();
-finalize
+finalize (p)
 with
     nothing;
 end
@@ -23506,7 +23536,7 @@ do
     var& int? p;
 do
         p = &_f();
-    finalize
+    finalize (p)
     with
         a = p!;
 end
@@ -23530,7 +23560,7 @@ do
     //do
 do
             p = &_f();
-        finalize
+        finalize (p)
         with
             a = a + p!;
         end
