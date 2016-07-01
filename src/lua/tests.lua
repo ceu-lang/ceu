@@ -788,7 +788,6 @@ escape x;
     run = 1,
 }
 
---]===]
 Test { [[
 input void ANY;
 await ANY;
@@ -18856,6 +18855,23 @@ escape ret;
     --run = 1,
     --fin = 'line 7 : attribution does not require `finalize´',
     scopes = 'line 5 : invalid pointer assignment : expected `finalize´',
+}
+--]===]
+Test { [[
+var int ret = 0;
+var int&& pa=null;
+do
+    var u8 v=0;
+    do
+        pa = (&&v as int&&);
+    finalize (pa) with
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    run = 1,
+    --fin = 'line 7 : attribution does not require `finalize´',
 }
 Test { [[
 var int ret = 0;

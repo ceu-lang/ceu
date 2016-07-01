@@ -73,7 +73,22 @@ F = {
     end,
 
     Exp_Call = function (me)
-        local _,_,ps = unpack(me)
+        local _,f,ps = unpack(me)
+
+        -- ignore if "f" is "nohold" or "pure"
+        local mod do
+            local Exp_Name = AST.asr(f,'Exp_Name')
+            local Node = unpack(Exp_Name)
+            if Node.tag == 'Exp_as' then
+                _,_,mod = unpack(Node)
+            else
+                _,mod = unpack(AST.asr(Exp_Name.info.dcl,'Nat'))
+            end
+        end
+        if mod=='nohold' or mod=='pure' then
+            return
+        end
+
         for _, p in ipairs(ps) do
             if TYPES.check(p.info.tp,'&&') and (not TYPES.is_nat_ptr(p.info.tp))
             then
