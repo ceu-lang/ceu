@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17487,21 +17488,10 @@ Test { [[
 native _malloc;
 var int&& ptr = _malloc();
 ]],
-    fin = 'line 1 : must assign to a option reference (declared with `&?´)',
+    scopes = 'line 2 : invalid assignment : expected binding for "_malloc"',
+    --fin = 'line 1 : must assign to a option reference (declared with `&?´)',
 }
 
-Test { [[
-native _f;
-var int&& a;
-do
-    a = _f();
-finalize with
-    do await FOREVER; end;
-end
-]],
-    scopes = 'line 3 : invalid `finalize´ : nothing to finalize',
-    --scopes = 'line 5 : invalid `finalize´ : expected `varlist´',
-}
 Test { [[
 native _f;
 var int&& a;
@@ -18527,19 +18517,6 @@ escape r;
 Test { [[
 native _f;
 var int x = 0;
-var int&& r;
-do
-    r = _f(&&x);
-finalize (x) with
-    nothing;
-end
-escape 0;
-]],
-    run = 1,
-}
-Test { [[
-native _f;
-var int x = 0;
 var& int? r;
 do
     r = &_f(&&x);
@@ -18856,7 +18833,6 @@ escape ret;
     --fin = 'line 7 : attribution does not require `finalize´',
     scopes = 'line 5 : invalid pointer assignment : expected `finalize´',
 }
---]===]
 Test { [[
 var int ret = 0;
 var int&& pa=null;
@@ -18865,6 +18841,22 @@ do
     do
         pa = (&&v as int&&);
     finalize (pa) with
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    scopes = 'line 7 : invalid `finalize´ : unmatching identifiers : expected "v" (vs. tests.lua:6)',
+    --fin = 'line 7 : attribution does not require `finalize´',
+}
+Test { [[
+var int ret = 0;
+var int&& pa=null;
+do
+    var u8 v=0;
+    do
+        pa = (&&v as int&&);
+    finalize (v) with
         ret = ret + 1;
     end
 end
@@ -18880,7 +18872,7 @@ do
     var int v=0;
     do
         pa = &&v;
-    finalize (pa) with
+    finalize (v) with
         ret = ret + 1;
     end
 end
@@ -18891,17 +18883,17 @@ escape ret;
 }
 Test { [[
 var int ret = 0;
-var int&& pa=null;
 do
+var int&& pa=null;
     var int v=0;
     if true then
         do pa = &&v;
-        finalize (pa) with
+        finalize (v) with
             ret = ret + 1;
     end
     else
         do pa = &&v;
-        finalize (pa) with
+        finalize (v) with
             ret = ret + 2;
     end
     end
@@ -18909,7 +18901,8 @@ end
 escape ret;
 ]],
     --run = 1,
-    fin = 'line 7 : attribution does not require `finalize´',
+    scopes = 'line 6 : invalid `finalize´ : nothing to finalize',
+    --fin = 'line 7 : attribution does not require `finalize´',
 }
 Test { [[
 var int ret = 0;
@@ -18937,13 +18930,13 @@ do
     if true then
         do
             pa = &&v;
-        finalize (pa) with
+        finalize (v) with
             ret = ret + 1;
         end
     else
         do
             pa = &&v;
-        finalize (pa) with
+        finalize (v) with
         end
     end
 end
@@ -19765,8 +19758,11 @@ var _t v = _f;
 var int ret=0;
 do
     var int a=0;
-    do _f(&&a);
-        finalize with nothing; end;
+    do
+        _f(&&a);
+    //finalize with
+        //nothing;
+    end;
     ret = a;
 end
 escape(ret);
@@ -19791,7 +19787,7 @@ do
     var int a = 10;;
     var _t v = _f;
     do _f(&&a);
-        finalize with
+        finalize (a) with
             do
                 ret = ret + a;
                 _A = null;
@@ -19827,7 +19823,7 @@ par/or do
         var int a = 10;;
         var _t v = _f;
         do _f(&&a);
-            finalize with
+            finalize (a) with
                 do
                     ret = ret + a;
                     _A = null;
@@ -19881,7 +19877,7 @@ end
 var int ret = 10;
 do
     var int x = 5;
-    do _f(&&x); finalize with
+    do _f(&&x); finalize (x) with
         _V = _V + 1;
     end;
 end
@@ -19990,7 +19986,8 @@ do/_
 end
 escape 1;
 ]],
-    fin = 'line 6 : call requires `finalize´',
+    scopes = 'line 7 : invalid `call´ : expected `finalize´ for variable "p"',
+    --fin = 'line 6 : call requires `finalize´',
 }
 
 Test { [[
@@ -20392,11 +20389,7 @@ par/or do
     var void&& p1;
     (i,p1) = await PTR;
     var void&& p=null;
-    do
         p = p1;
-    finalize (p) with
-        nothing;
-    end
 with
     await OS_START;
     async do
@@ -20430,7 +20423,7 @@ par/or do
     var void&& p1;
     (i,p1) = await PTR;
 var void&& p = null;
-    do p = p1; finalize (p) with end
+    p = p1;
 with
     await OS_START;
     async do
@@ -20477,7 +20470,7 @@ do
         var void&& p1;
         (i,p1) = await PTR;
 var void&& p = null;
-        do p = p1; finalize (p) with end
+        p = p1;
     with
         await OS_START;
         async do
@@ -20505,16 +20498,6 @@ escape 1;
 }
 
 Test { [[
-native _ptr, _malloc;
-native do
-    void&& ptr;
-end
-_ptr = _malloc(1);
-escape 1;
-]],
-    fin = 'line 4 : attribution requires `finalize´',
-}
-Test { [[
 native _ptr;
 do
     _ptr.x = null;
@@ -20522,9 +20505,35 @@ finalize with
 end
 escape 1;
 ]],
-    scopes = 'line 3 : invalid `finalize´ : expected identifier : got "_ptr.x"',
+    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
 }
 
+Test { [[
+native _ptr;
+    _ptr.x = null;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _malloc;
+var void&& ptr = _malloc(100);
+escape 1;
+]],
+    scopes = 'line 2 : invalid assignment : expected binding for "_malloc"',
+}
+Test { [[
+native _ptr, _malloc;
+native do
+    void* ptr;
+end
+_ptr = _malloc(100);
+escape 1;
+]],
+    scopes = 'line 5 : invalid assignment : expected binding for "_malloc"',
+    --run = 1,
+}
 Test { [[
 native _ptr, _malloc;
 native/nohold _free;
@@ -20538,7 +20547,8 @@ finalize (_ptr) with
 end
 escape 1;
 ]],
-    run = 1,
+    scopes = 'line 7 : invalid assignment : expected binding for "_malloc"',
+    --run = 1,
 }
 
 Test { [[
@@ -22209,6 +22219,14 @@ escape v.a + v.b;
     run = 3,
 }
 Test { [[
+native _t;
+var _t v = _t(1,2);
+escape 0;
+]],
+    scopes = 'line 2 : invalid assignment : expected binding for "_t"',
+}
+
+Test { [[
 pre native do
     typedef struct {
         int a;
@@ -22965,6 +22983,16 @@ escape ret;
 
 Test { [[
 native ___ceu_nothing;
+input/output/instantaneous IB  (var int c)=>void do
+    ___ceu_nothing(&&c);
+end
+call IB => 0;
+escape 0;
+]],
+    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "c"',
+}
+Test { [[
+native/pure ___ceu_nothing;
 input/output/instantaneous IA  (var int c)=>int do
     escape c + 1;
 end
@@ -23637,7 +23665,8 @@ end
 var& int? p = &_f();
 escape p!;
 ]],
-    fin = 'line 8 : attribution requires `finalize´',
+    scopes = 'line 8 : invalid binding : expected `finalize´',
+    --fin = 'line 8 : attribution requires `finalize´',
 }
 
 Test { [[
@@ -23750,16 +23779,18 @@ native do
     ##define f(p)
 end
 par/or do
-do _f(_p);
-        finalize with
-            _f(null);
-        end;
+    do
+        _f(_p);
+    finalize with
+        _f(null);
+    end;
 with
     await FOREVER;
 end
 escape 1;
 ]],
-    fin = 'line 5 : invalid `finalize´',
+    scopes = 'line 6 : invalid `finalize´ : nothing to finalize',
+    --fin = 'line 5 : invalid `finalize´',
     --run = 1,
 }
 
@@ -24173,10 +24204,11 @@ vector[3] _char buf_ = [];
 var _uv_buf_t buf = _uv_buf_init(&&buf_[0], 1);
 var _uv_stream_t client = _uv_stream_t();
 var int ret;
-do ret = _ceu_uv_read_start((&&client) as _uv_stream_t&&, &&buf);
-                    finalize with
-                        _uv_read_stop((&&client) as _uv_stream_t&&);
-                    end;
+do
+    ret = _ceu_uv_read_start((&&client) as _uv_stream_t&&, &&buf);
+finalize (client, buf) with
+    _uv_read_stop((&&client) as _uv_stream_t&&);
+end;
 _assert(ret == 0);
 escape 0;
 ]],

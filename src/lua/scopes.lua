@@ -9,15 +9,36 @@ local function check_blk (to_blk, fr_blk)
     end
 end
 
+local function f2mod (f)
+    local Exp_Name = AST.asr(f,'Exp_Name')
+    local Node = unpack(Exp_Name)
+    if Node.tag == 'Exp_as' then
+        local _,_,mod = unpack(Node)
+        return mod
+    else
+        local _,mod = unpack(AST.asr(Exp_Name.info.dcl,'Nat'))
+        return mod
+    end
+end
+
 F = {
     Set_Exp = function (me)
         local fr, to = unpack(me)
         local to_ptr = TYPES.check(TYPES.pop(to.info.tp,'?'),'&&')
         local fr_ptr = TYPES.check(fr.info.tp,'&&')
+        local to_nat = TYPES.is_nat(to.info.tp)
+        local fr_nat = TYPES.is_nat(fr.info.tp) or TYPES.is_nat_ptr(fr.info.tp)
+
+        -- ptr = _f()
+        if fr.tag=='Exp_Call' and (to_ptr or to_nat) then
+            local mod = f2mod(AST.asr(fr,'',2,'Exp_Name'))
+            ASR(mod=='nohold' or mod=='pure' or mod=='plain', me,
+                'invalid assignment : expected binding for "'..fr.info.dcl.id..'"')
+        end
+
         if to_ptr or fr_ptr then
-            local to_nat = TYPES.is_nat(to.info.tp)
-            local fr_nat = TYPES.is_nat(fr.info.tp) or TYPES.is_nat_ptr(fr.info.tp)
             assert((to_ptr or to_nat) and (fr_ptr or fr_nat), 'bug found')
+
             local ok do
                 if fr_nat or (not fr.info.dcl) then
                     ok = true   -- var int&& x = _X/null/""/...;
@@ -39,7 +60,10 @@ F = {
                     ASR(fin and fin[1]==me, me,
                         'invalid pointer assignment : expected `finalize´ for variable "'..fr.info.id..'"')
                     assert(not fin.__fin_vars, 'TODO')
-                    fin.__fin_vars = { blk=fr_blk, AST.asr(fr,'Exp_Name') }
+                    fin.__fin_vars = {
+                        blk = fr_blk,
+                        assert(fr.info.dcl_obj or fr.info.dcl)
+                    }
                 end
             end
         end
@@ -66,9 +90,9 @@ F = {
         if fin.__fin_vars then
             ASR(blk == fin.__fin_vars.blk, me,
                 'invalid `finalize´ : incompatible scopes')
-            fin.__fin_vars[#fin.__fin_vars+1] = AST.asr(to,'Exp_Name')
+            fin.__fin_vars[#fin.__fin_vars+1] = assert(to.info.dcl)
         else
-            fin.__fin_vars = { blk=blk, AST.asr(to,'Exp_Name') }
+            fin.__fin_vars = { blk=blk, assert(to.info.dcl) }
         end
     end,
 
@@ -76,21 +100,14 @@ F = {
         local _,f,ps = unpack(me)
 
         -- ignore if "f" is "nohold" or "pure"
-        local mod do
-            local Exp_Name = AST.asr(f,'Exp_Name')
-            local Node = unpack(Exp_Name)
-            if Node.tag == 'Exp_as' then
-                _,_,mod = unpack(Node)
-            else
-                _,mod = unpack(AST.asr(Exp_Name.info.dcl,'Nat'))
-            end
-        end
+        local mod = f2mod(f)
         if mod=='nohold' or mod=='pure' then
             return
         end
 
         for _, p in ipairs(ps) do
-            if TYPES.check(p.info.tp,'&&') and (not TYPES.is_nat_ptr(p.info.tp))
+            if p.info.dcl and TYPES.check(p.info.tp,'&&')   -- NO: _f(&&v)
+                          and (p.info.dcl.tag ~= 'Nat')     -- OK: _f(&&_V)
             then
                 local fin = AST.par(me, 'Finalize')
                 local ok = fin and (
@@ -109,10 +126,9 @@ F = {
                 if fin.__fin_vars then
                     ASR(blk == fin.__fin_vars.blk, me,
                         'invalid `finalize´ : incompatible scopes')
-                    fin.__fin_vars[#fin.__fin_vars+1] = AST.asr(fr,'Exp_Name')
+                    fin.__fin_vars[#fin.__fin_vars+1] = assert(p.info.dcl)
                 else
-                    fin.__fin_vars = { blk=blk, AST.get(p,'Exp_Name') or
-                                                AST.asr(p,'', 2,'Exp_Name') }
+                    fin.__fin_vars = { blk=blk, p.info.dcl }
                 end
             end
         end
@@ -145,21 +161,19 @@ F = {
             'invalid `finalize´ : expected `varlist´')
 
         for _, v1 in ipairs(me.__fin_vars) do
-            v1 = AST.get(v1,'', 1,'ID_int') or
-                 AST.get(v1,'', 1,'ID_nat')
-            ASR(v1, Stmt,
-                'invalid `finalize´ : expected identifier : got "'..v1.info.id..'"')
+            ASR(v1.tag=='Nat' or v1.tag=='Var', Stmt,
+                'invalid `finalize´ : expected identifier : got "'..v1.id..'"')
 
             local ok = false
             for _, v2 in ipairs(Namelist) do
-                if v2.info.dcl == v1.info.dcl then
+                if v2.info.dcl == v1 then
                     ok = true
                     break
                 end
             end
             ASR(ok, Namelist,
                 'invalid `finalize´ : unmatching identifiers : expected "'..
-                v1.info.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
+                v1.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
         end
     end,
 }
