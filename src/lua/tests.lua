@@ -18062,6 +18062,49 @@ end
     scopes = 'line 2 : invalid `finalize´ : unexpected `varlist´',
 }
 
+Test { [[
+native _int, _f;
+var int v = 2;
+var& _int? p = &_f(&&v)
+                finalize (v) with
+                    v = 5;
+                end;
+escape p!;
+]],
+    scopes = 'line 4 : invalid `finalize´ : unmatching identifiers : expected "p" (vs. tests.lua:3)',
+    --run = 5,
+}
+
+Test { [[
+native _int, _f;
+pre native do
+    int* f (int* ptr) { return ptr }
+end
+var int v = 2;
+var& _int? p = &_f(&&v)
+                finalize (p,v) with
+                    v = 5;
+                end;
+escape p!;
+]],
+    run = 5,
+}
+
+Test { [[
+native _int, _f;
+pre native do
+    int* f (int* ptr) { return ptr }
+end
+var int v = 2;
+var& _int? p = &_f(&&v)
+                finalize (p,v) with
+                    v = 5;
+                end
+escape p!;
+]],
+    run = 5,
+}
+
 --<<< FINALLY / FINALIZE
 
 Test { [[

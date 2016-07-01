@@ -419,18 +419,20 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     (V'_Await_Until'+V'Await_Wclock') *
                 V'__Do'
 
-    , Mark     = C''
-    , Finalize = K'do' *
-                    OPT(V'__fin_stmt') *
-                 K'finalize' * (PARENS(V'Namelist') + V'Mark') * K'with' *
-                    V'Block' *
-                 K'end'
-    , __fin_stmt  = V'___fin_stmt' * V'__seqs'
-    , ___fin_stmt = V'Nothing'
-                  + V'_Set'
-                  + V'Emit_Ext_emit' + V'Emit_Ext_call'
-                  + V'Abs_Call'
-                  + V'Exp_Call' -- TODO: ambiguous with Nat_Stmt
+    , Mark = C''
+    , __fin_stmt   = V'___fin_stmt' * V'__seqs'
+    , ___fin_stmt  = V'Nothing'
+                   + V'_Set'
+                   + V'Emit_Ext_emit' + V'Emit_Ext_call'
+                   + V'Abs_Call'
+                   + V'Exp_Call' -- TODO: ambiguous with Nat_Stmt
+    , __finalize   = K'finalize' * (PARENS(V'Namelist') + V'Mark') * K'with' *
+                     V'Block' *
+                   K'end'
+    , Finalize     = K'do' * OPT(V'__fin_stmt') * V'__finalize'
+
+    , _Var_set_fin = K'var' * KK'&' * V'Type' * V'__ID_int'
+                   * (KK'='-'==') * KK'&' * V'Exp_Call' * V'__finalize'
 
     , __Stmt_Block = V'_Code_impl' + V'_Ext_Code_impl' + V'_Ext_Req_impl'
               + V'_Data_block'
@@ -828,22 +830,22 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , __Stmt_Last  = V'_Escape' + V'_Break' + V'_Continue' + V'Await_Forever'
     , __Stmt_Last_Block = V'Par'
-    , __Stmt_Simple    = V'Nothing'
-                 + V'_Vars_set'  + V'_Vars'
-                 + V'_Vecs_set'  + V'_Vecs'
-                 + V'_Pools_set' + V'_Pools'
-                 + V'_Evts_set'  + V'_Evts'
-                 + V'_Exts'
-                 + V'_Data_simple'
-                 + V'_Code_proto' + V'_Ext_Code_proto' + V'_Ext_Req_proto'
-                 + V'_Nats'  + V'Nat_End'
-                 + V'Deterministic'
-                 + V'_Set'
-                 + V'__Awaits_one' + V'__Awaits_many'
-                 + V'Emit_Wclock'
-                 + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
-                 + V'Emit_Evt'
-                 + V'Abs_Spawn' + V'Kill'
+    , __Stmt_Simple = V'Nothing'
+                    + V'_Vars_set'  + V'_Vars'
+                    + V'_Vecs_set'  + V'_Vecs'
+                    + V'_Pools_set' + V'_Pools'
+                    + V'_Evts_set'  + V'_Evts'
+                    + V'_Exts'
+                    + V'_Data_simple'
+                    + V'_Code_proto' + V'_Ext_Code_proto' + V'_Ext_Req_proto'
+                    + V'_Nats'  + V'Nat_End'
+                    + V'Deterministic'
+                    + V'_Set'
+                    + V'__Awaits_one' + V'__Awaits_many'
+                    + V'Emit_Wclock'
+                    + V'Emit_Ext_emit' + V'Emit_Ext_call' + V'Emit_Ext_req'
+                    + V'Emit_Evt'
+                    + V'Abs_Spawn' + V'Kill'
 -- TODO: remove class/interface
 + I((K'class'+K'interface'+K'traverse')) * EE'TODO: class/interface'
                  + V'Abs_Call'
@@ -863,6 +865,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
               + V'Async' + V'_Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'
               + V'_Lua'
+              + V'_Var_set_fin'
 
     --, _C = '/******/' * (P(1)-'/******/')^0 * '/******/'
     , _C      = m.Cg(V'_CSEP','mark') *

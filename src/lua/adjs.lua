@@ -543,6 +543,34 @@ DBG('TODO: _Loop_Pool')
 
 -------------------------------------------------------------------------------
 
+    _Var_set_fin__PRE = function (me)
+        local Type, __ID_int, Exp_Call = unpack(me)
+
+        --  var & Type __ID_int = & Exp_Call finalize with ... end
+        -->>>
+        --  var & Type __ID_int;
+        --  do
+        --      ID_int = & Exp_Call;
+        --  finalize with
+        --      ...
+        --  end
+
+        return node('Stmts', me.ln,
+                node('Var', me.ln,
+                    Type,
+                    '&',
+                    __ID_int),
+                node('Finalize', me.ln,
+                    node('Set_Alias', me.ln,
+                        node('Exp_1&', Exp_Call.ln, '&',
+                            Exp_Call),
+                        node('Exp_Name', Type.ln,
+                            node('ID_int', Type.ln, __ID_int))),
+                    unpack(me,4)))
+    end,
+
+-------------------------------------------------------------------------------
+
     -- Type => Typelist
     -- input int X  => input (int) X;
     -- input void X => input () X;
