@@ -143,7 +143,7 @@ DBG('TODO: remove pool')
         -- tp
         local _,mod = unpack(e.info.tp)
         local is_ptr = TYPES.check(e.info.tp,'&&')
-        local is_nat_ptr = TYPES.is_nat_ptr(e.info.tp)
+        local is_nat_ptr = TYPES.is_nat_not_plain(e.info.tp)
         ASR(is_ptr or is_nat_ptr, me,
             'invalid operand to `'..op..'´ : expected pointer type : got "'..
             TYPES.tostring(e.info.tp)..'"')

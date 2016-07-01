@@ -17,6 +17,14 @@ F = {
         if to_ptr or fr_ptr then
             local to_nat = TYPES.is_nat(to.info.tp)
             local fr_nat = TYPES.is_nat(fr.info.tp)
+            if not fr_nat then
+                -- check if _nat&&
+                local tp, ok = TYPES.pop(fr.info.tp,'&&')
+                if ok then
+                    tp[2] = nil
+                    fr_nat = TYPES.is_nat(tp)
+                end
+            end
             assert((to_ptr or to_nat) and (fr_ptr or fr_nat), 'bug found')
             local ok do
                 if fr_nat or (not fr.info.dcl) then
@@ -36,8 +44,9 @@ F = {
                     ASR(false, me, 'invalid `escape´ : incompatible scopes')
                 else
                     local fin = AST.par(me, 'Finalize')
-                    ASR(fin, me,
+                    ASR(fin and fin[1]==me, me,
                         'invalid pointer assignment : expected `finalize´')
+                    fin.__fin_vars = { AST.asr(fr,'Exp_Name') }
                 end
             end
         end
@@ -47,6 +56,14 @@ F = {
         local fr, to = unpack(me)
         local ok = check_blk(to.info.dcl.blk, fr.info.dcl.blk)
         ASR(ok, me, 'invalid binding : incompatible scopes')
+
+        local _, call = unpack(fr)
+        if call.tag == 'Exp_Call' then
+            local fin = AST.par(me, 'Finalize')
+            ASR(fin, me,
+                'invalid binding : expected `finalize´')
+            fin.__fin_vars = { AST.asr(to,'Exp_Name') }
+        end
     end,
 
     __stmts = { Set_Exp=true, Set_Alias=true,
@@ -56,7 +73,7 @@ F = {
     Finalize = function (me)
         local Stmt, Namelist, Block = unpack(me)
         if not Stmt then
-            ASR(not Namelist.tag=='Mark', me,
+            ASR(Namelist.tag=='Mark', me,
                 'invalid `finalize´ : unexpected `varlist´')
             return
         end
@@ -68,17 +85,23 @@ F = {
             'invalid `finalize´ : unexpected '..
             (tag_id and '`'..tag_id..'´' or 'statement'))
 
-        if Stmt.tag=='Set_Exp' or Stmt.tag=='Set_Alias' then
-            local Exp_Name = AST.asr(Stmt,'', 2,'Exp_Name')
-            local ID = AST.get(Exp_Name,'', 1,'ID_int') or
-                       AST.get(Exp_Name,'', 1,'ID_nat')
-            ASR(ID, Exp_Name,
-                'invalid `finalize´ : expected identifier : got "'..Exp_Name.info.id..'"')
-            ASR(Namelist.tag=='Namelist', Namelist,
-                'invalid `finalize´ : expected `varlist´')
-            ASR(#Namelist==1 and Namelist[1].info.dcl==ID.info.dcl, Namelist,
-                'invalid `finalize´ : unmatching identifiers : expected "'..
-                ID.info.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
+        ASR(me.__fin_vars, me,
+            'invalid `finalize´ : nothing to finalize')
+        ASR(Namelist.tag=='Namelist', Namelist,
+            'invalid `finalize´ : expected `varlist´')
+
+        for _, v1 in ipairs(me.__fin_vars) do
+            v1 = AST.get(v1,'', 1,'ID_int') or
+                 AST.get(v1,'', 1,'ID_nat')
+            ASR(v1, Stmt,
+                'invalid `finalize´ : expected identifier : got "'..v1.info.id..'"')
+
+            local ok = false
+            for _, v2 in ipairs(Namelist) do
+                ASR(v2.info.dcl==v1.info.dcl, Namelist,
+                    'invalid `finalize´ : unmatching identifiers : expected "'..
+                    v1.info.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
+            end
         end
     end,
 }

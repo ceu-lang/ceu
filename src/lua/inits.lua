@@ -237,7 +237,7 @@ F = {
         if me.tag=='Evt' or me.tag=='Pool' then
             return
         end
-        local is_ptr = TYPES.check(tp,'&&') or TYPES.is_nat_ptr(tp)
+        local is_ptr = TYPES.check(tp,'&&') or TYPES.is_nat_not_plain(tp)
         if is_ptr then
             local stmts = AST.asr(me.__par,'Stmts')
             local Var,Do = unpack(stmts)
@@ -268,7 +268,7 @@ F = {
         if me.dcl.tag=='Evt' or me.dcl.tag=='Pool' then
             return
         end
-        local is_ptr = TYPES.check(me.dcl[1],'&&') or TYPES.is_nat_ptr(me.dcl[1])
+        local is_ptr = TYPES.check(me.dcl[1],'&&') or TYPES.is_nat_not_plain(me.dcl[1])
         if is_ptr then
             local yield = me.dcl.__run_ptrs_yield
             ASR(me.__run_ptrs_ok, me,

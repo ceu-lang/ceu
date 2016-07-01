@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17325,6 +17326,14 @@ escape 0;
 }
 
 Test { [[
+native _f;
+var& int? v = &_f();
+escape 0;
+]],
+    scopes = 'line 2 : invalid binding : expected `finalize´',
+}
+
+Test { [[
 native _fff;
 native do
     int V = 10;
@@ -17484,44 +17493,70 @@ var int&& ptr = _malloc();
 
 Test { [[
 native _f;
+var int&& a;
 do
-    var int&& a;
-    do
-        a = _f();
-    finalize with
-        do await FOREVER; end;
-    end
+    a = _f();
+finalize with
+    do await FOREVER; end;
 end
 ]],
-    scopes = 'line 5 : invalid `finalize´ : expected `varlist´',
+    scopes = 'line 3 : invalid `finalize´ : nothing to finalize',
+    --scopes = 'line 5 : invalid `finalize´ : expected `varlist´',
+}
+Test { [[
+native _f;
+var int&& a;
+do
+    a = _f;
+finalize with
+    do await FOREVER; end;
+end
+]],
+    scopes = 'line 3 : invalid `finalize´ : nothing to finalize',
+    --scopes = 'line 5 : invalid `finalize´ : expected `varlist´',
 }
 
 Test { [[
 native _f;
+var int&& a = null;
 do
-    var int&& a;
-    do
-        a = _f();
-    finalize (_f) with
-        do await FOREVER; end;
-    end
+    _f = a;
+finalize (_f) with
+    do await FOREVER; end;
 end
 ]],
-    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "a" (vs. tests.lua:5)',
+    scopes = 'line 5 : invalid `finalize´ : unmatching identifiers : expected "a" (vs. tests.lua:4)',
+}
+
+Test { [[
+var int&& a = null;
+do
+    var int&& b = null;
+    do
+        a = b;
+    finalize (b) with
+        a = (&&a as int&&);
+    end
+end
+escape (a==(&&a as int&&)) as int;
+]],
+    run = 1,
 }
 
 Test { [[
 native _f;
-do
-    var int&& a;
-    do
-        a = _f();
-    finalize (a) with
-        do await FOREVER; end;
-    end
+native do
+    int* f;
 end
+var int&& a = null;
+do
+    _f = a;
+finalize (a) with
+    _f = &&_f;
+end
+escape (_f == &&_f) as int;
 ]],
-    fin = 'line 5 : must assign to a option reference (declared with `&?´)',
+    run = 1,
 }
 
 Test { [[
@@ -17677,9 +17712,10 @@ loop do
     end
 end
 ]],
+    scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
     --loop = 'line 1 : tight loop', -- TODO: par/and
     --props = "line 8 : not permitted inside `finalize´",
-    fin = 'line 6 : attribution does not require `finalize´',
+    --fin = 'line 6 : attribution does not require `finalize´',
     --fin = 'line 6 : attribution to pointer with greater scope',
 }
 
@@ -17698,7 +17734,8 @@ end
 ]],
     --loop = 'line 1 : tight loop', -- TODO: par/and
     --props = "line 8 : not permitted inside `finalize´",
-    fin = 'line 6 : attribution does not require `finalize´',
+    --fin = 'line 6 : attribution does not require `finalize´',
+    scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
 }
 
 Test { [[
@@ -17851,7 +17888,11 @@ var _t v = _f;
 await 1s;
 do/_
     var int a=0;
-    do _f(&&a); finalize with nothing; end;
+    do
+        _f(&&a);
+    finalize with
+        nothing;
+    end;
     escape(a);
 end
 ]],
@@ -24010,7 +24051,6 @@ escape 0;
     wrn = true,
     gcc = 'implicit declaration of function ‘uv_buf_init’',
 }
---]===]
 
 Test { [[
 native/pure _strlen;
@@ -25731,7 +25771,7 @@ native do
 end
 var void&& v = null;
 native _V;
-do _V = v; finalize with end
+do _V = v; finalize(v) with end
 escape 1;
 ]],
     run = 1,
@@ -58012,7 +58052,7 @@ end
 var Tx t = val Tx("oioioi");
 escape _strlen(t.xxxx);
 ]],
-    stmts = 'line 7 : invalid expression list : item #1 : unexpected context for vector "xxxx"',
+    stmts = 'line 7 : invalid expression list : item #1 : unexpected context for vector "t.xxxx"',
 }
 
 Test { [[
@@ -58216,7 +58256,7 @@ emit t.x;
 
 escape 1;
 ]],
-    stmts = 'line 9 : invalid `emit´ : unexpected context for variable "x"',
+    stmts = 'line 9 : invalid `emit´ : unexpected context for variable "t.x"',
 }
 
 Test { [[
@@ -58236,7 +58276,7 @@ emit b.a.x;
 
 escape 1;
 ]],
-    stmts = 'line 13 : invalid `emit´ : unexpected context for variable "x"',
+    stmts = 'line 13 : invalid `emit´ : unexpected context for variable "b.a.x"',
 }
 
 Test { [[
