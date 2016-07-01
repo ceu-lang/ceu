@@ -25982,7 +25982,7 @@ end
 var _tp&& v=null;
 do
     _a = v;
-finalize with
+finalize (v) with
 end
 await 1s;
 _b = _a;    // _a pode ter escopo menor e nao reclama de FIN
@@ -26182,7 +26182,7 @@ native do
     Fx* fff;
 end
 
-native ___ceu_nothing;
+native/pure ___ceu_nothing;
 input/output/instantaneous OPEN  (var byte&& path, var  byte&& mode)=>_Fx&& do
     ___ceu_nothing(path);
     ___ceu_nothing(mode);
@@ -26223,7 +26223,7 @@ pre native do
     } draw_string_t;
 end
 
-native ___ceu_nothing;
+native/pure ___ceu_nothing;
 native/plain _draw_string_t;
 input/output/instantaneous DRAW_STRING  (var _draw_string_t&& ptr)=>void do
     ___ceu_nothing(ptr);
@@ -27324,7 +27324,7 @@ Test { [[
 var int&& p=null;
 do
     var int i=0;
-    do p = &&i; finalize with end
+    do p = &&i; finalize (i) with end
 end
 escape 1;
 ]],
@@ -27351,7 +27351,8 @@ finalize with
 end
 escape 1;
 ]],
-    fin = 'line 3 : attribution does not require `finalize´',
+    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
+    --fin = 'line 3 : attribution does not require `finalize´',
 }
 Test { [[
 var int&& a := null;
@@ -27374,7 +27375,8 @@ finalize with
 end
 escape 1;
 ]],
-    fin = 'line 3 : attribution does not require `finalize´',
+    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
+    --fin = 'line 3 : attribution does not require `finalize´',
 }
 Test { [[
 code/instantaneous Faca (void)=>void do
@@ -27403,7 +27405,8 @@ finalize with
 end
 escape 1;
 ]],
-    fin = 'line 4 : attribution does not require `finalize´',
+    scopes = 'line 3 : invalid `finalize´ : nothing to finalize',
+    --fin = 'line 4 : attribution does not require `finalize´',
 }
 Test { [[
 code/instantaneous Fx (var void&& o1)=>void do
@@ -27568,7 +27571,10 @@ code/instantaneous GetVS (var void&& && o1, var  void&& && o2)=>int do
     else/if (*o2!=null) then
         var void&& tmp = *o1;
         *o1 = *o2;
-        do *o2 = tmp; finalize with end
+        do
+            *o2 = tmp;
+        finalize (tmp) with
+        end
             // tmp is an alias to "o1"
         escape 1;
     else
@@ -31548,7 +31554,7 @@ pre native do
 end
 var int v = 2;
 var _t p;
-do p = &&v; finalize with end
+do p = &&v; finalize(v) with end
 escape *p;
 ]],
     run = 2,
@@ -31590,10 +31596,36 @@ var int v = 10;
 var _rect r = _rect(&&v);
 escape *(r.x);
 ]],
-    fin = 'line 8 : call requires `finalize´',
+    scopes = 'line 8 : invalid `call´ : expected `finalize´ for variable "v"',
+    --fin = 'line 8 : call requires `finalize´',
 }
 Test { [[
 native _rect;
+var int v = 10;
+var _rect r;
+do
+    r = _rect(&&v);
+finalize with
+    nothing;
+end
+escape 0;
+]],
+    scopes = 'line 5 : invalid assignment : expected binding for "_rect"',
+}
+Test { [[
+native/plain _rect;
+var int v = 10;
+var _rect r;
+do
+    r = _rect(&&v);
+finalize
+    with nothing; end
+escape *(r.x);
+]],
+    names = 'line 8 : invalid operand to `*´ : expected pointer type : got "_rect"',
+}
+Test { [[
+native/plain _rect;
 pre native do
     typedef struct rect {
         int* x, y;
@@ -31603,14 +31635,15 @@ var int v = 10;
 var _rect r;
 do
     r = _rect(&&v);
-finalize with nothing; end
-escape *(r.x);
+finalize(v)
+    with nothing; end
+escape *(r.x as int&&);
 ]],
     run = 10,
 }
 Test { [[
-native _rect;
-native ___ceu_nothing;
+native/plain _rect;
+native/pure ___ceu_nothing;
 native _V;
 pre native do
     typedef struct rect {
@@ -31621,7 +31654,7 @@ end
 do
     var int v = 10;
     var _rect r;
-do r = _rect(&&v); finalize with _V=v; end;
+do r = _rect(&&v); finalize(v) with _V=v; end;
     ___ceu_nothing(&&r);
 end
 escape _V;
@@ -31673,7 +31706,7 @@ var int v = 10;
 var& _t? t;
 do
     t = &_t(&&v);
-finalize with
+finalize(t,v) with
     nothing;
 end;
 await 1s;
