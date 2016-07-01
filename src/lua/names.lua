@@ -174,6 +174,7 @@ DBG('TODO: remove pool')
                 tag = Dcl.tag,
                 tp  = Dcl[1],
                 dcl = Dcl,
+                dcl_obj = e.info.dcl,
             }
         else
             me.info = INFO.copy(e.info)

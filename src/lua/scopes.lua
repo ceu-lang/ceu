@@ -12,30 +12,32 @@ end
 F = {
     Set_Exp = function (me)
         local fr, to = unpack(me)
-        if fr.dcl.blk then
-            local to_ptr = TYPES.check(to.dcl[1],'&&')
-            local fr_ptr = TYPES.check(fr.dcl[1],'&&')
-            if to_ptr or fr_ptr then
-                local to_nat = TYPES.is_nat(to.dcl[1])
-                local fr_nat = TYPES.is_nat(fr.dcl[1])
-                assert((to_ptr or to_nat) and (fr_ptr or fr_nat), 'bug found')
-                local ok do
-                    if fr_nat then
-                        ok = true   -- var int&& x = _X;
-                    elseif to_nat then
-                        ok = false  -- _X = &&x;
-                    else
-                        ok = check_blk(to.dcl.blk, fr.dcl.blk)
-                    end
-                end 
-                if not ok then
-                    if AST.get(me.__par,'Stmts', 2,'Escape') then
-                        ASR(false, me, 'invalid `escape´ : incompatible scopes')
-                    else
-                        local fin = AST.par(me, 'Finalize')
-                        ASR(fin, me,
-                            'invalid pointer assignment : expected `finalize´')
-                    end
+        local to_ptr = TYPES.check(TYPES.pop(to.info.tp,'?'),'&&')
+        local fr_ptr = TYPES.check(fr.info.tp,'&&')
+        if to_ptr or fr_ptr then
+            local to_nat = TYPES.is_nat(to.info.tp)
+            local fr_nat = TYPES.is_nat(fr.info.tp)
+            assert((to_ptr or to_nat) and (fr_ptr or fr_nat), 'bug found')
+            local ok do
+                if fr_nat or (not fr.info.dcl) then
+                    ok = true   -- var int&& x = _X/null/""/...;
+                elseif to_nat then
+                    ok = false  -- _X = &&x;
+                else
+                    local to_blk = to.info.dcl_obj and to.info.dcl_obj.blk or
+                                    to.info.dcl.blk
+                    local fr_blk = fr.info.dcl_obj and fr.info.dcl_obj.blk or
+                                    fr.info.dcl.blk
+                    ok = check_blk(to_blk, fr_blk)
+                end
+            end 
+            if not ok then
+                if AST.get(me.__par,'Stmts', 2,'Escape') then
+                    ASR(false, me, 'invalid `escape´ : incompatible scopes')
+                else
+                    local fin = AST.par(me, 'Finalize')
+                    ASR(fin, me,
+                        'invalid pointer assignment : expected `finalize´')
                 end
             end
         end
@@ -43,7 +45,7 @@ F = {
 
     Set_Alias = function (me)
         local fr, to = unpack(me)
-        local ok = check_blk(to.dcl.blk, fr.dcl.blk)
+        local ok = check_blk(to.info.dcl.blk, fr.info.dcl.blk)
         ASR(ok, me, 'invalid binding : incompatible scopes')
     end,
 }
