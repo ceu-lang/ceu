@@ -57,11 +57,11 @@ F = {
         local Stmt, Varlist, Block = unpack(me)
         if Stmt then
             local tag_id = AST.tag2id[Stmt.tag]
-            ASR(F.__stmts[Stmt.tag], me,
+            ASR(F.__stmts[Stmt.tag], Stmt,
                 'invalid `finalize´ : unexpected '..
                 (tag_id and '`'..tag_id..'´' or 'statement'))
         else
-            ASR(Varlist==false or #Varlist==0, me,
+            ASR(not Varlist, me,
                 'invalid `finalize´ : unexpected `varlist´')
         end
     end,

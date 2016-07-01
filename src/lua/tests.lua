@@ -19961,7 +19961,8 @@ do
 end;
 escape ret + p;
 ]],
-    adj = 'line 7 : invalid `finalize´',
+    scopes = 'line 9 : invalid `finalize´ : unexpected `await´',
+    --adj = 'line 7 : invalid `finalize´',
     --fin = 'line 8 : attribution does not require `finalize´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
     --fin = 'line 14 : cannot `await´ again on this block',
