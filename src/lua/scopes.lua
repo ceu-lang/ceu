@@ -16,15 +16,7 @@ F = {
         local fr_ptr = TYPES.check(fr.info.tp,'&&')
         if to_ptr or fr_ptr then
             local to_nat = TYPES.is_nat(to.info.tp)
-            local fr_nat = TYPES.is_nat(fr.info.tp)
-            if not fr_nat then
-                -- check if _nat&&
-                local tp, ok = TYPES.pop(fr.info.tp,'&&')
-                if ok then
-                    tp[2] = nil
-                    fr_nat = TYPES.is_nat(tp)
-                end
-            end
+            local fr_nat = TYPES.is_nat(fr.info.tp) or TYPES.is_nat_ptr(fr.info.tp)
             assert((to_ptr or to_nat) and (fr_ptr or fr_nat), 'bug found')
             local ok do
                 if fr_nat or (not fr.info.dcl) then
@@ -45,8 +37,9 @@ F = {
                 else
                     local fin = AST.par(me, 'Finalize')
                     ASR(fin and fin[1]==me, me,
-                        'invalid pointer assignment : expected `finalize´')
-                    fin.__fin_vars = { AST.asr(fr,'Exp_Name') }
+                        'invalid pointer assignment : expected `finalize´ for variable "'..fr.info.id..'"')
+                    assert(not fin.__fin_vars, 'TODO')
+                    fin.__fin_vars = { blk=fr_blk, AST.asr(fr,'Exp_Name') }
                 end
             end
         end
@@ -58,13 +51,59 @@ F = {
         ASR(ok, me, 'invalid binding : incompatible scopes')
 
         local _, call = unpack(fr)
-        if call.tag == 'Exp_Call' then
-            local fin = AST.par(me, 'Finalize')
-            ASR(fin, me,
-                'invalid binding : expected `finalize´')
-            fin.__fin_vars = { AST.asr(to,'Exp_Name') }
+        if call.tag ~= 'Exp_Call' then
+            return
+        end
+
+        local fin = AST.par(me, 'Finalize')
+        ASR(fin, me,
+            'invalid binding : expected `finalize´')
+
+        -- all finalization vars must be in the same block
+        local blk = to.info.dcl_obj and to.info.dcl_obj.blk or
+                        to.info.dcl.blk
+
+        if fin.__fin_vars then
+            ASR(blk == fin.__fin_vars.blk, me,
+                'invalid `finalize´ : incompatible scopes')
+            fin.__fin_vars[#fin.__fin_vars+1] = AST.asr(to,'Exp_Name')
+        else
+            fin.__fin_vars = { blk=blk, AST.asr(to,'Exp_Name') }
         end
     end,
+
+    Exp_Call = function (me)
+        local _,_,ps = unpack(me)
+        for _, p in ipairs(ps) do
+            if TYPES.check(p.info.tp,'&&') and (not TYPES.is_nat_ptr(p.info.tp))
+            then
+                local fin = AST.par(me, 'Finalize')
+                local ok = fin and (
+                            (AST.get(fin,'',1,'')                          == me) or
+                            (AST.get(fin,'',1,'Set_Alias',1,'Exp_1&',2,'') == me) or
+                            (AST.get(fin,'',1,'Set_Exp',1,'')              == me) )
+
+                    -- _f(...);
+                    -- x = &_f(...);
+                    -- x = _f(...);
+                ASR(ok, me,
+                    'invalid `call´ : expected `finalize´ for variable "'..p.info.id..'"')
+                -- all finalization vars must be in the same block
+                local blk = p.info.dcl_obj and p.info.dcl_obj.blk or
+                                p.info.dcl.blk
+                if fin.__fin_vars then
+                    ASR(blk == fin.__fin_vars.blk, me,
+                        'invalid `finalize´ : incompatible scopes')
+                    fin.__fin_vars[#fin.__fin_vars+1] = AST.asr(fr,'Exp_Name')
+                else
+                    fin.__fin_vars = { blk=blk, AST.get(p,'Exp_Name') or
+                                                AST.asr(p,'', 2,'Exp_Name') }
+                end
+            end
+        end
+    end,
+
+    --------------------------------------------------------------------------
 
     __stmts = { Set_Exp=true, Set_Alias=true,
                 Emit_Ext_emit=true, Emit_Ext_call=true,
@@ -98,10 +137,14 @@ F = {
 
             local ok = false
             for _, v2 in ipairs(Namelist) do
-                ASR(v2.info.dcl==v1.info.dcl, Namelist,
-                    'invalid `finalize´ : unmatching identifiers : expected "'..
-                    v1.info.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
+                if v2.info.dcl == v1.info.dcl then
+                    ok = true
+                    break
+                end
             end
+            ASR(ok, Namelist,
+                'invalid `finalize´ : unmatching identifiers : expected "'..
+                v1.info.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
         end
     end,
 }

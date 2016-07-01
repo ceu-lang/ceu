@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -789,6 +788,7 @@ escape x;
     run = 1,
 }
 
+--]===]
 Test { [[
 input void ANY;
 await ANY;
@@ -17875,6 +17875,15 @@ escape(a);
 }
 Test { [[
 native _f;
+var int a = 0;
+_f(&&a);
+escape 0;
+]],
+    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "a"',
+}
+
+Test { [[
+native _f;
 native do
     void f (int* a) {
         *a = 10;
@@ -17890,7 +17899,7 @@ do/_
     var int a=0;
     do
         _f(&&a);
-    finalize with
+    finalize (a) with
         nothing;
     end;
     escape(a);
@@ -17916,7 +17925,7 @@ var _t v = _f;
     ___ceu_nothing(v);
 await 1s;
 var int a=0;
-do _f(&&a); finalize with nothing; end;
+do _f(&&a); finalize (a) with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -17955,7 +17964,7 @@ end
 native _t;
 var _t v = _f;
 var int a=0;
-do _f(&&a); finalize with nothing; end;
+do _f(&&a); finalize (a) with nothing; end;
 escape(a);
 ]],
     --env = 'line 8 : native variable/function "_f" is not declared',
@@ -18502,11 +18511,111 @@ escape 1;
 
 Test { [[
 native _f;
+native do
+    int f (int* p) { return *p }
+end
+var int x = 1;
+var int r;
+do
+    r = _f(&&x);
+finalize (x) with
+    nothing;
+end
+escape r;
+]],
+    run = 2,
+}
+Test { [[
+native _f;
+var int x = 0;
+var int&& r;
+do
+    r = _f(&&x);
+finalize (x) with
+    nothing;
+end
+escape 0;
+]],
+    run = 1,
+}
+Test { [[
+native _f;
+var int x = 0;
+var& int? r;
+do
+    r = &_f(&&x);
+finalize (x) with
+    nothing;
+end
+escape 0;
+]],
+    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "r" (vs. tests.lua:5)',
+}
+Test { [[
+native _f;
+var int x = 0;
+var& int? r;
+do
+    r = &_f(&&x);
+finalize (r) with
+    nothing;
+end
+escape 0;
+]],
+    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "x" (vs. tests.lua:5)',
+}
+Test { [[
+native _f;
+var int x = 0;
+var& int? r;
+do
+    r = &_f(&&x);
+finalize (r,x) with
+    nothing;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+native _f;
+var int x = 0;
+do
+    var& int? r;
+    do
+        r = &_f(&&x);
+    finalize (r,x) with
+        nothing;
+    end
+end
+escape 1;
+]],
+    scopes = 'line 6 : invalid `finalize´ : incompatible scopes',
+}
+Test { [[
+native _f;
+var int x = 0;
+do
+    var int y = 0;
+    do
+        _f(&&x,&&y);
+    finalize with
+        nothing;
+    end
+end
+escape 1;
+]],
+    scopes = 'line 6 : invalid `finalize´ : incompatible scopes',
+}
+
+Test { [[
+native _f;
 do _f(); finalize with nothing;
     end;
 escape 1;
 ]],
-    fin = 'line 2 : invalid `finalize´',
+    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
+    --fin = 'line 2 : invalid `finalize´',
 }
 
 Test { [[
@@ -18530,8 +18639,11 @@ native _f;
 native do void f (void* p) {} end
 
 var void&& p=null;
-do _f(p); finalize with nothing;
-    end;
+do
+    _f(p);
+finalize (p) with
+    nothing;
+end;
 escape 1;
 ]],
     run = 1,
@@ -18546,7 +18658,8 @@ do _f(p!=null); finalize with nothing;
     end;
 escape 1;
 ]],
-    fin = 'line 5 : invalid `finalize´',
+    scopes = 'line 5 : invalid `finalize´ : nothing to finalize',
+    --fin = 'line 5 : invalid `finalize´',
     --run = 1,
 }
 
@@ -18561,7 +18674,24 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 6 : invalid call (multiple scopes)',
+    scopes = 'line 6 : invalid `call´ : expected `finalize´ for variable "p1"',
+}
+Test { [[
+native _f;
+do
+    var int&& p1 = null;
+    do
+        var int&& p2 = null;
+        do
+            _f(p1, p2);
+        finalize with
+        end
+    end
+end
+escape 1;
+]],
+    scopes = 'line 7 : invalid `finalize´ : incompatible scopes',
+    --fin = 'line 6 : invalid call (multiple scopes)',
 }
 Test { [[
 native _enqueue, _V;
@@ -18569,7 +18699,8 @@ var byte&& buf = _V;
 _enqueue(buf);
 escape 1;
 ]],
-    fin = 'line 2 : call requires `finalize´',
+    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "buf"',
+    --fin = 'line 2 : call requires `finalize´',
 }
 
 Test { [[
@@ -18590,22 +18721,6 @@ escape 1;
 ]],
     exps = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
     --fin = 'line 2 : call requires `finalize´',
-}
-
-Test { [[
-native _f;
-do
-    var int&& p1 = null;
-    do
-        var int&& p2 = null;
-        _f(p1, p2);
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    fin = 'line 6 : call requires `finalize´',
-    -- multiple scopes
 }
 
 Test { [[
@@ -18676,7 +18791,8 @@ end
 var int v=0;
 escape (_f(&&v) == 1 )as int;
 ]],
-    fin = 'line 8 : call requires `finalize´',
+    scopes = 'line 8 : invalid `call´ : expected `finalize´ for variable "v"',
+    --fin = 'line 8 : call requires `finalize´',
 }
 
 Test { [[
