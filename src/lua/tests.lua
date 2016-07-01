@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17258,7 +17257,7 @@ finalize () with
     _SDL_FreeSurface(&&(sfc!));
 end
 ]],
-    parser = 'line 3 : after `(´ : expected internal identifier',
+    parser = 'line 3 : after `(´ : expected name expression',
 }
 
 Test { [[
@@ -17416,7 +17415,7 @@ native/nohold _g;
 
 var& _SDL_Renderer? ren;
     do ren = &_f();
-    finalize with
+    finalize (ren) with
     end
 
 await 1s;
@@ -24011,6 +24010,7 @@ escape 0;
     wrn = true,
     gcc = 'implicit declaration of function ‘uv_buf_init’',
 }
+--]===]
 
 Test { [[
 native/pure _strlen;

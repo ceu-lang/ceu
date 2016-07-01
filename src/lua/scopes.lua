@@ -56,7 +56,7 @@ F = {
     Finalize = function (me)
         local Stmt, Namelist, Block = unpack(me)
         if not Stmt then
-            ASR(not Namelist, me,
+            ASR(not Namelist.tag=='Mark', me,
                 'invalid `finalize´ : unexpected `varlist´')
             return
         end
@@ -74,7 +74,8 @@ F = {
                        AST.get(Exp_Name,'', 1,'ID_nat')
             ASR(ID, Exp_Name,
                 'invalid `finalize´ : expected identifier : got "'..Exp_Name.info.id..'"')
-            ASR(Namelist, Stmt, 'invalid `finalize´ : expected `varlist´')
+            ASR(Namelist.tag=='Namelist', Namelist,
+                'invalid `finalize´ : expected `varlist´')
             ASR(#Namelist==1 and Namelist[1].info.dcl==ID.info.dcl, Namelist,
                 'invalid `finalize´ : unmatching identifiers : expected "'..
                 ID.info.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')

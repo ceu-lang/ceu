@@ -419,9 +419,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     (V'_Await_Until'+V'Await_Wclock') *
                 V'__Do'
 
+    , Mark     = C''
     , Finalize = K'do' *
                     OPT(V'__fin_stmt') *
-                 K'finalize' * OPT(PARENS(V'Namelist')) * K'with' *
+                 K'finalize' * (PARENS(V'Namelist') + V'Mark') * K'with' *
                     V'Block' *
                  K'end'
     , __fin_stmt  = V'___fin_stmt' * V'__seqs'
