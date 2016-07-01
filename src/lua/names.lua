@@ -170,7 +170,7 @@ DBG('TODO: remove pool')
             local blk = AST.asr(ID_abs.dcl,'Data', 2,'Block')
             local Dcl = DCLS.asr(me,blk,member,false,e.info.id)
             me.info = {
-                id  = member,
+                id  = e.info.id..'.'..member,
                 tag = Dcl.tag,
                 tp  = Dcl[1],
                 dcl = Dcl,
@@ -178,6 +178,7 @@ DBG('TODO: remove pool')
             }
         else
             me.info = INFO.copy(e.info)
+            me.info.id = e.info.id..'.'..member
         end
     end,
 

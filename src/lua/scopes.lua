@@ -49,20 +49,31 @@ F = {
         ASR(ok, me, 'invalid binding : incompatible scopes')
     end,
 
-    __stmts = { Nothing=true, Set_Exp=true, Set_Alias=true,
+    __stmts = { Set_Exp=true, Set_Alias=true,
                 Emit_Ext_emit=true, Emit_Ext_call=true,
                 Abs_Call=true, Exp_Call=true },
 
     Finalize = function (me)
         local Stmt, Varlist, Block = unpack(me)
-        if Stmt then
-            local tag_id = AST.tag2id[Stmt.tag]
-            ASR(F.__stmts[Stmt.tag], Stmt,
-                'invalid `finalize´ : unexpected '..
-                (tag_id and '`'..tag_id..'´' or 'statement'))
-        else
+        if not Stmt then
             ASR(not Varlist, me,
                 'invalid `finalize´ : unexpected `varlist´')
+            return
+        end
+        assert(Stmt)
+
+        -- NO: |do r=await... finalize...end|
+        local tag_id = AST.tag2id[Stmt.tag]
+        ASR(F.__stmts[Stmt.tag], Stmt,
+            'invalid `finalize´ : unexpected '..
+            (tag_id and '`'..tag_id..'´' or 'statement'))
+
+        if Stmt.tag=='Set_Exp' or Stmt.tag=='Set_Alias' then
+            local Exp_Name = AST.asr(Stmt,'', 2,'Exp_Name')
+            local ID = AST.get(Exp_Name,'', 1,'ID_int') or
+                       AST.get(Exp_Name,'', 1,'ID_nat')
+            ASR(ID, me,
+                'invalid `finalize´ : expected identifier : got "'..Exp_Name.info.id..'"')
         end
     end,
 }

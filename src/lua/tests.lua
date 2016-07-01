@@ -17322,7 +17322,7 @@ finalize (x) with
 end
 escape 0;
 ]],
-    scopes = 'line 3 : invalid `finalize´ : unexpected `await´',
+    scopes = 'line 4 : invalid `finalize´ : unexpected `await´',
 }
 
 Test { [[
@@ -20313,12 +20313,24 @@ escape 1;
     fin = 'line 4 : attribution requires `finalize´',
 }
 Test { [[
+native _ptr;
+do
+    _ptr.x = null;
+finalize with
+end
+escape 1;
+]],
+    scopes = 'line 2 : invalid `finalize´ : expected identifier : got "_ptr.x"',
+}
+
+Test { [[
 native _ptr, _malloc;
 native/nohold _free;
 native do
     void* ptr;
 end
-do _ptr = _malloc(100);
+do
+    _ptr = _malloc(100);
 finalize with
     _free(_ptr);
 end
