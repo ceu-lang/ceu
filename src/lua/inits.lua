@@ -87,7 +87,7 @@ local function run_inits (par, i, Dcl, stop)
 
         for _, sub in ipairs(to) do
             -- NO: var& int x = ... (w/o &)
-            local _,is_alias = unpack(sub.dcl)
+            local _,is_alias = unpack(sub.info.dcl)
             if is_alias and (me.tag~='Set_Alias') then
                 if me.tag == 'Set_Exp' then
                     ASR(false, me,
@@ -100,7 +100,7 @@ local function run_inits (par, i, Dcl, stop)
 
             if sub[1].tag ~= 'ID_int' then
                 -- ID.field = ...;  // ERR: counts as read, not write
-                if sub.dcl == Dcl then
+                if sub.info.dcl == Dcl then
                     ASR(false, Dcl,
                         'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                         'reached read access '..
@@ -163,7 +163,7 @@ local function run_ptrs (par, i, Dcl, stop)
                 to = { to }
             end
             for _, v in ipairs(to) do
-                if v.dcl == Dcl then
+                if v.info.dcl == Dcl then
                     ok = true
                     break
                 end
@@ -198,8 +198,8 @@ local function run_ptrs (par, i, Dcl, stop)
     elseif me.tag == 'Do' then
         local _,_,Exp_Name = unpack(me)
         if Exp_Name then
-            assert(Exp_Name.dcl, 'bug found')
-            if Exp_Name.dcl == Dcl then
+            assert(Exp_Name.info.dcl, 'bug found')
+            if Exp_Name.info.dcl == Dcl then
                 return run_ptrs(me, #me, Dcl, stop)   -- skip
             end
         end
@@ -291,7 +291,7 @@ F = {
                 inits = ''
             else
                 inits = {}
-                for i, init in ipairs(to.dcl.inits) do
+                for i, init in ipairs(to.info.dcl.inits) do
                     inits[i] = init.ln[1]..':'..init.ln[2]
                 end
                 inits = table.concat(inits,',')
@@ -299,8 +299,8 @@ F = {
         end
         ASR(me.is_init, me,
             'invalid binding : '..
-            AST.tag2id[to.dcl.tag]..
-            ' "'..to.dcl.id..'" is already bound ('..
+            AST.tag2id[to.info.dcl.tag]..
+            ' "'..to.info.dcl.id..'" is already bound ('..
             inits..')')
     end,
 
@@ -326,9 +326,9 @@ F = {
                 local _,_,Exp_Name = unpack(par)
                 if Exp_Name then
                     --ASR(not AST.is_equal(Exp_Name.dcl,me.dcl), me,
-                    ASR(Exp_Name.dcl ~= me.dcl, me,
-                        'invalid access to '..AST.tag2id[me.dcl.tag]
-                            ..' "'..me.dcl.id..'" : '
+                    ASR(Exp_Name.info.dcl ~= me.info.dcl, me,
+                        'invalid access to '..AST.tag2id[me.info.dcl.tag]
+                            ..' "'..me.info.dcl.id..'" : '
                             ..'assignment in enclosing `do` ('
                             ..Exp_Name.ln[1]..':'..Exp_Name.ln[2]..')')
                 end
