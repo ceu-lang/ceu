@@ -241,14 +241,6 @@ local PARENS = function (patt)
     return KK'(' * patt * KK')'
 end
 
-local Ccs = function (...)
-    local ret = Cc(true)
-    for _, v in ipairs(...) do
-        ret = ret * Cc(v)
-    end
-    return ret
-end
-
 local E = function (msg)
     return m.Cmt(P'',
             function (_,i)

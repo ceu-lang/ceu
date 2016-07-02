@@ -2,16 +2,9 @@ AST = {
     root = nil,
 }
 
-local MT = {
-    __index = function (me, k)
-        if k=='tp' then
-            return rawget(me,1)
-        end
-    end,
-}
-
 local STACK = {}
 
+local MT = {}
 function AST.is_node (node)
     return (getmetatable(node) == MT) and node.tag
 end
@@ -82,9 +75,7 @@ function AST.copy (node, ln)
     if not AST.is_node(node) then
         return node
     end
-    if node.tag == 'Ref' then
-        return node
-    end
+    assert(node.tag ~= 'Ref')
 
     local ret = setmetatable({}, MT)
     local N = _N
@@ -117,6 +108,7 @@ function AST.is_equal (n1, n2)
             end
             return true
         else
+error'TODO: luacov never executes this?'
             return false
         end
     else
@@ -151,6 +143,7 @@ function AST.is_par (par, child)
     if par == child then
         return true
     elseif not child.__par then
+error'TODO: luacov never executes this?'
         return false
     else
         return AST.is_par(par, child.__par)
@@ -272,6 +265,7 @@ local function visit_aux (F, me, I)
     local bef, aft = FF(F,me.tag..'__BEF'), FF(F,me.tag..'__AFT')
 
     if F.Node__PRE then
+error'TODO: luacov never executes this?'
         me = F.Node__PRE(me) or me
         if me ~= _me then
             return visit_aux(F, me)
@@ -300,6 +294,7 @@ local function visit_aux (F, me, I)
         assert(mid(me) == nil, me.tag)
     end
     if F.Node then
+error'TODO: luacov never executes this?'
         assert(F.Node(me) == nil)
     end
 
@@ -313,6 +308,7 @@ local function visit_aux (F, me, I)
     end
      if F.Node__POS then
         me = F.Node__POS(me) or me
+error'TODO: luacov never executes this?'
         if me ~= _me then
             return visit_aux(F, me)
         end

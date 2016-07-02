@@ -244,6 +244,7 @@ F = {
             'invalid operand to `'..op..'´ : expected integer type')
 
         -- info
+error'TODO: luacov never executes this?'
         me.info = INFO.copy(e.info)
         me.info.tag = 'Val'
     end,

@@ -2,12 +2,19 @@
 
 --RUNTESTS_file = assert(io.open('/tmp/fin.txt','w'))
 
-RUNTESTS = {}
+RUNTESTS = {
+    luacov = 'lua5.3 -lluacov'
+}
+
+if RUNTESTS.luacov then
+    require 'luacov'
+    os.remove('luacov.stats.out')
+    os.remove('luacov.report.out')
+end
 
 -- Execution option for the tests:
 --VALGRIND = true
 --REENTRANT = true
---LUACOV = 'lua5.3 -lluacov'
 --COMPLETE = true
 OS = false   -- false, true, nil(random)
 
@@ -100,7 +107,9 @@ Test = function (t)
     if not check('stmts')    then return end
     if not check('inits')    then return end
     if not check('scopes')   then return end
+
 do return end
+--[[
 AST.dump(AST.root)
     if not check('adt')      then return end
     if not check('mode')     then return end
@@ -123,21 +132,17 @@ AST.dump(AST.root)
     --STATS.mem     = STATS.mem     + AST.root.mem.max
     STATS.trails  = STATS.trails  + AST.root.trails_n
 
---[[
-    if T.awaits then
-        assert(T.awaits==_AWAITS.n, 'awaits '.._AWAITS.n)
-    end
-]]
-
     if T.tot then
         assert(T.tot==MEM.max, 'mem '..MEM.max)
     end
 
     assert(t._ana or (TIGHT and T.loop) or
                      (not (TIGHT or T.loop)))
+]]
 
     -- ANALYSIS
     --AST.dump(AST.root)
+--[[
     assert((not T.unreachs) and (not T.isForever)) -- move to analysis
     do
         local _defs = { reachs=0, unreachs=0, isForever=false,
@@ -172,7 +177,6 @@ end
             end
         end
     end
---[[
 ]]
 --do return end
 
@@ -185,18 +189,18 @@ end
     end
 
     -- TODO: pedantic
--- TODO: remove all warnings
+-- TODO: remove all "no" warnings
     local O = ' -Wall -Wextra -Wformat=2 -Wstrict-overflow=3 -Werror '
-            ..' -Wno-missing-field-initializers'
-            ..' -Wno-maybe-uninitialized'
+            --..' -Wno-missing-field-initializers'
+            --..' -Wno-maybe-uninitialized'
             --..' -Wno-unused'
-            ..' -Wno-unused-function'
-            ..' -Wno-unused-parameter'
-            ..' -I'..OUT_DIR
-            ..((PROPS.has_lua and '') or ' -ansi')
-            ..' -DCEU_DEBUG'
+            --..' -Wno-unused-function'
+            --..' -Wno-unused-parameter'
+            --..' -I'..OUT_DIR
+            --..((PROPS.has_lua and '') or ' -ansi')
+            --..' -DCEU_DEBUG'
             --..' -DCEU_DEBUG_TRAILS'
-            ..' '..(OPTS.cpp_args or '')
+            --..' '..(OPTS.cpp_args or '')
 
     if VALGRIND then
         O = O .. ' -g'
@@ -215,12 +219,13 @@ end
     local tm  = (T.timemachine and '--timemachine') or ''
     local r = (math.random(2) == 1)
     if OS==true or (OS==nil and r) then
-        CEU = (LUACOV or '')..' ./ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts..'  --run-tests --os '..tm..' 2>&1'
+        CEU = './ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts
+                      ..' --run-tests --os '..tm..' 2>&1'
         GCC = 'gcc '..O..' -include _ceu_app.h -o ceu.exe '..main..'  ceu_sys.c _ceu_app.c 2>&1'
     else
-        CEU = (LUACOV or '')..' ./ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts
-                ..(REENTRANT and '--reentrant' or '')
-                ..' --run-tests '..tm..' 2>&1'
+        CEU = './ceu '..OUT_DIR..'/_ceu_tmp.ceu '..cpp..' '..opts
+                      ..(REENTRANT and '--reentrant' or '')
+                       ..' --run-tests '..tm..' 2>&1'
         GCC = 'gcc '..O..' -o '..OUT_DIR..'/ceu.exe -I'..ARCH..' '..main..' 2>&1'
     end
     --local line = debug.getinfo(2).currentline
@@ -228,6 +233,9 @@ end
     --os.execute('cat /tmp/line _ceu_app.c > /tmp/file')
     --os.execute('mv /tmp/file _ceu_app.c')
 
+    if RUNTESTS.luacov then
+        CEU = RUNTESTS.luacov..' '..CEU
+    end
     if PROPS.has_threads then
         GCC = GCC .. ' -lpthread'
     end
@@ -349,14 +357,17 @@ STATS = {
 }
 ]])
 
-if LUACOV then
-    os.execute('luacov')
-    os.remove('luacov.stats.out')
-end
-
 os.execute('rm -f /tmp/_ceu_*')
 
 --[[
+# luacov
+
+1. Set `RUNTESTS.luacov=true`
+2. Run `run_tests.lua`
+    - It will generate `luacov.stats.out`
+3. Run `luacov` in the same directory
+    - It will generate `luacov.report.out`
+4. Edit `luacov.report.out` and look for lines starting with `*****0`
 ===
 
 -- COMPLETE=false, VALGRIND=false

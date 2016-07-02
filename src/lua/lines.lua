@@ -92,10 +92,6 @@ function DBG (...)
     io.stderr:write(table.concat(t,'\t')..'\n')
 end
 
-function MAX (v1, v2)
-    return (v1 > v2) and v1 or v2
-end
-
 function WRN (cond, ln, code, msg)
     if cond then
         return cond

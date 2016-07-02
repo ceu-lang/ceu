@@ -160,6 +160,7 @@ local function run_ptrs (par, i, Dcl, stop)
         if set then
             local _,to = unpack(set)
             if to.tag ~= 'Namelist' then
+error'TODO: luacov never executes this?'
                 to = { to }
             end
             for _, v in ipairs(to) do
@@ -246,6 +247,7 @@ F = {
             then
                 -- start "run_ptrs" after the "do"
                 --  var int x = do ... end;
+error'TODO: luacov never executes this?'
                 run_ptrs(Do, 3, me)
             else
                 run_ptrs(me, #me+1, me)
@@ -289,6 +291,7 @@ F = {
         local inits do
             if me.is_init then
                 inits = ''
+error'TODO: luacov never executes this?'
             else
                 inits = {}
                 for i, init in ipairs(to.info.dcl.inits) do

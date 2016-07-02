@@ -62,6 +62,7 @@ F = {
         return AST.root
     end,
     _Stmts__PRE = function (me)
+error'TODO: luacov never executes this?'
         local t = unpack(me)
         return node('Stmts', me.ln, unpack(t))
     end,
@@ -163,6 +164,7 @@ F = {
                     local _,_,dim,tp,id = unpack(v)
                     dcls[#dcls+1] = node('Vec', me.ln, AST.copy(tp), is_alias, dim, id)
                 elseif pre == 'pool' then
+error'TODO: luacov never executes this?'
                     local _,_,dim,tp,id = unpack(v)
                     dcls[#dcls+1] = node('Pool', me.ln, AST.copy(tp), is_alias, dim, id)
                 elseif pre == 'event' then
@@ -347,6 +349,7 @@ DBG('TODO: _Loop_Pool')
                 set_awt = node('Set_Await_many', me.ln, awt, new)
             else
                 set_awt = node('Set_Await_one', me.ln, awt, new)
+error'TODO: luacov never executes this?'
             end
         else
             set_awt = awt
@@ -469,6 +472,7 @@ DBG('TODO: _Loop_Pool')
     _Pools__PRE = function (me)
         local tp = table.remove(me,3)
         table.insert(me,1,tp)
+error'TODO: luacov never executes this?'
         return F.__dcls__PRE(me, 'Pool', 3)
     end,
     _Evts__PRE = function (me)
@@ -610,6 +614,7 @@ DBG('TODO: _Loop_Pool')
             me[3] = node('Explist', me.ln)
             if ps then
                 me[3][1] = ps
+error'TODO: luacov never executes this?'
             end
         end
     end,
