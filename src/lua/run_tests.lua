@@ -1,9 +1,7 @@
 #!/usr/bin/env lua5.3
 
---RUNTESTS_file = assert(io.open('/tmp/fin.txt','w'))
-
 RUNTESTS = {
-    luacov = 'lua5.3 -lluacov'
+    --luacov = 'lua5.3 -lluacov'
 }
 
 if RUNTESTS.luacov then
@@ -16,7 +14,6 @@ end
 --VALGRIND = true
 --REENTRANT = true
 --COMPLETE = true
-OS = false   -- false, true, nil(random)
 
 OUT_DIR = '/tmp/ceu-tests'
 os.execute('mkdir -p '..OUT_DIR)
@@ -44,9 +41,7 @@ if RUNTESTS_TODO then
 end
     if T[mod]~=nil then
         assert(ok==false, 'no error found')
---if mod~='parser' then
         assert(string.find(msg, T[mod], nil, true), tostring(msg))
---end
     else
         assert(ok==true, msg)
         return true
@@ -89,12 +84,12 @@ Test = function (t)
 
     STATS.count = STATS.count   + 1
 
+    dofile 'dbg.lua'
     if not check('lines')    then return end
     local _WRN = WRN
     if (not t.wrn) and (not t._ana) then
         WRN = ASR
     end
-
     if not check('parser')   then return end
     --dofile 'ast.lua'
     if not check('ast')      then return end
@@ -108,8 +103,16 @@ Test = function (t)
     if not check('inits')    then return end
     if not check('scopes')   then return end
 
+    CEU = './ceu --ceu --ceu-input=/tmp/tmp.ceu --ceu-output=/tmp/tmp.c'
+
+    if RUNTESTS.luacov then
+        CEU = RUNTESTS.luacov..' '..CEU
+    end
+
+    --local exec_ceu = os.execute(CEU)
+    --assert(exec_ceu==0 or exec_ceu==true)
+
 do return end
---[[
 AST.dump(AST.root)
     if not check('adt')      then return end
     if not check('mode')     then return end
@@ -138,11 +141,9 @@ AST.dump(AST.root)
 
     assert(t._ana or (TIGHT and T.loop) or
                      (not (TIGHT or T.loop)))
-]]
 
     -- ANALYSIS
     --AST.dump(AST.root)
---[[
     assert((not T.unreachs) and (not T.isForever)) -- move to analysis
     do
         local _defs = { reachs=0, unreachs=0, isForever=false,
@@ -177,7 +178,6 @@ end
             end
         end
     end
-]]
 --do return end
 
     -- RUN
