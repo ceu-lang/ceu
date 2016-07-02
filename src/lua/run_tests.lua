@@ -84,15 +84,13 @@ Test = function (t)
 
     STATS.count = STATS.count   + 1
 
-    dofile 'dbg.lua'
     if not check('lines')    then return end
     local _WRN = WRN
     if (not t.wrn) and (not t._ana) then
         WRN = ASR
     end
     if not check('parser')   then return end
-    --dofile 'ast.lua'
-    if not check('ast')      then return end
+    dofile 'ast.lua'
     if not check('adjs')     then return end
     dofile 'types.lua'
     if not check('dcls')     then return end
