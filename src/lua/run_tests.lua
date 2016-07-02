@@ -90,7 +90,8 @@ Test = function (t)
         WRN = ASR
     end
     if not check('parser')   then return end
-    dofile 'ast.lua'
+    --dofile 'ast.lua'
+    if not check('ast')      then return end
     if not check('adjs')     then return end
     dofile 'types.lua'
     if not check('dcls')     then return end
