@@ -18105,6 +18105,65 @@ escape p!;
     run = 5,
 }
 
+Test { [[
+var int&& ptr = null;
+loop i in [0 -> 100[ do
+    await 1s;
+    var int&& p = null;
+    if (ptr != null) then
+        p = ptr;
+    end
+    ptr = p;
+end
+escape 10;
+]],
+    --loop = true,
+    --fin = 'line 5 : invalid pointer "ptr"',
+    inits = 'line 5 : invalid pointer access : crossed `loop´ (tests.lua:2)',
+}
+
+Test { [[
+native _enqueue;
+vector[255] byte buf;
+_enqueue(&&buf[0]);
+escape 1;
+]],
+    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "buf"',
+    --fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
+native _f;
+do
+    var int&& p1 = null;
+    do
+        var int&& p2 = null;
+        _f(p1, p2);
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    scopes = 'line 6 : invalid `call´ : expected `finalize´ for variable "p1"',
+    --fin = 'line 6 : call requires `finalize´',
+    -- multiple scopes
+}
+
+Test { [[
+native _f;
+native do
+    int f (int* v) {
+        escape 1;
+    }
+end
+var int v = _;
+escape _f(&&v);
+]],
+    wrn = true,
+    scopes = 'line 8 : invalid `call´ : expected `finalize´ for variable "v"',
+    --fin = 'line 8 : call requires `finalize´',
+}
+
 --<<< FINALLY / FINALIZE
 
 Test { [[
@@ -21060,16 +21119,26 @@ Test { [[
 native _SDL_Window, _SDL_CreateWindow, _SDL_WINDOW_SHOWN;
 //native/nohold _SDL_DestroyWindow;
 
-
-var& _SDL_Window win;
-do win = &_SDL_CreateWindow("UI - Texture",
-                            500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
-    finalize (win) with
-        //_SDL_DestroyWindow(win);
-    end
+var& _SDL_Window win =
+    &_SDL_CreateWindow("UI - Texture", 500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
 escape 0;
 ]],
-    fin = 'line 6 : must assign to a option reference (declared with `&?´)',
+    scopes = 'line 5 : invalid binding : expected option type `?´ as destination : got "_SDL_Window"',
+    --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
+}
+Test { [[
+native _SDL_Window, _SDL_CreateWindow, _SDL_WINDOW_SHOWN;
+//native/nohold _SDL_DestroyWindow;
+
+var& _SDL_Window win =
+    &_SDL_CreateWindow("UI - Texture", 500, 1300, 800, 480, _SDL_WINDOW_SHOWN)
+        finalize (win) with
+            //_SDL_DestroyWindow(win);
+        end
+escape 0;
+]],
+    scopes = 'line 4 : invalid binding : expected option type `?´ as destination : got "_SDL_Window"',
+    --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
 }
 
 Test { [[
@@ -68517,23 +68586,6 @@ escape 1;
     run = 1,
 }
 
--- TODO: invalid pointer access
-Test { [[
-var int* ptr = null;
-loop i in [0 -> 100[ do
-    await 1s;
-    var int* p;
-    if (ptr != null) then
-        p = ptr;
-    end
-    ptr = p;
-end
-escape 10;
-]],
-    --loop = true,
-    fin = 'line 5 : invalid pointer "ptr"',
-}
-
 -- TODO: t.v // Tx.v
 Test { [[
 class Tx with
@@ -69080,30 +69132,6 @@ escape 1;
 }
 
 Test { [[
-vector[255] byte buf;
-_enqueue(buf);
-escape 1;
-]],
-    fin = 'line 2 : call requires `finalize´',
-}
-
-Test { [[
-native _f;
-do
-    var int* p1 = null;
-    do
-        var int* p2 = null;
-        _f(p1, p2);
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    fin = 'line 6 : call requires `finalize´',
-    -- multiple scopes
-}
-
-Test { [[
 native _f;
 native _v;
 native do
@@ -69159,19 +69187,6 @@ native/const _V;
 escape _f(_V);
 ]],
     run = 10;
-}
-
-Test { [[
-native _f;
-native do
-    int f (int* v) {
-        escape 1;
-    }
-end
-var int v;
-escape _f(&v) == 1;
-]],
-    fin = 'line 8 : call requires `finalize´',
 }
 
 Test { [[

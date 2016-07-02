@@ -79,6 +79,10 @@ F = {
             return
         end
 
+        ASR(TYPES.check(to.info.tp,'?'), me,
+            'invalid binding : expected option type `?´ as destination : got "'
+            ..TYPES.tostring(to.info.tp)..'"')
+
         local fin = AST.par(me, 'Finalize')
         ASR(fin, me,
             'invalid binding : expected `finalize´')
