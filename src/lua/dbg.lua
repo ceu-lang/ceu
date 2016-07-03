@@ -19,8 +19,13 @@ function ASR1 (cond, msg)
     if cond then
         return cond
     end
-    DBG1('>>> ERROR : '..msg)
-    os.exit(1)
+    if RUNTESTS then
+        return assert(false, msg)
+                -- TODO: error(msg) ???
+    else
+        DBG('>>> ERROR : '..msg)
+        os.exit(1)
+    end
 end
 
 -------------------------------------------------------------------------------
