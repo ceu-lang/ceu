@@ -31,7 +31,7 @@ local function subst (name, returns)
     fin = string.sub(fin, 1, (s-1)) .. src .. string.sub(fin, (e+1))
 end
 
---subst('optparse.lua', true)
+subst('optparse.lua', true)
 subst 'dbg.lua'
 subst 'cmd.lua'
 subst 'pre.lua'

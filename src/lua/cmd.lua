@@ -2,8 +2,6 @@ CEU_VER = CEU_VER or '?'
 CEU_GIT = CEU_GIT or '?'
 
 if not RUNTESTS then
-    local optparse = dofile 'optparse.lua'
-
     CEU = {}
 
     local help = [[

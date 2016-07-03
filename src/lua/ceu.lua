@@ -1,3 +1,5 @@
+optparse = dofile 'optparse.lua'
+
 dofile 'dbg.lua'    ; DBG,ASR = DBG1,ASR1
 dofile 'cmd.lua'
 dofile 'pre.lua'    ; DBG,ASR = DBG2,ASR2
