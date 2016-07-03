@@ -22,6 +22,25 @@ os.execute('mkdir -p '..OUT_DIR)
 unpack     = unpack     or table.unpack
 loadstring = loadstring or load
 
+function DBG (...)
+    local t = {}
+    for i=1, select('#',...) do
+        t[#t+1] = tostring( select(i,...) )
+    end
+    if #t == 0 then
+        t = { [1]=debug.traceback() }
+    end
+    io.stderr:write(table.concat(t,'\t')..'\n')
+end
+
+function ASR (cond, msg)
+    if cond then
+        return cond
+    end
+    DBG(msg)
+    os.exit(1)
+end
+
 math.randomseed(os.time())
 T = nil
 
@@ -67,24 +86,32 @@ Test = function (t)
         print('\n=============\n---\n'..source..'\n---\n')
     end
 
-    local ARCH = '../../arch/pthread'
-    OPTS = {
-        tp_word = 4,
-        tp_off  = 2,
-        tp_lbl  = 2,
-        safety  = t.safety or 1,
+    local f = assert(io.open('/tmp/tmp.ceu', 'w'))
+    f:write(source)
+    f:close()
 
-        out_dir = '/tmp',
-        cpp     = true,
-        cpp_exe = 'cpp',
-        cpp_args = (T.cpp_args or '')..'-I'..ARCH..' -I'..ARCH..'/up',
-        input   = 'tests.lua',
-        source  = source,
+    CEU = {
+        arg  = {},
+        opts = T.opts or {
+            ceu        = true,
+            ceu_input  = '/tmp/tmp.ceu',
+            ceu_output = '/tmp/tmp.c',
+        }
     }
+    if T.opts_pre then
+        CEU.opts.pre        = true
+        CEU.opts.pre_input  = '/tmp/tmp.ceu'
+        CEU.opts.pre_output = '/tmp/tmp.ceu.cpp'
+        CEU.opts.ceu_input  = CEU.opts.pre_output
+    end
 
     STATS.count = STATS.count   + 1
 
+    dofile 'cmd.lua'
     if not check('lines')    then return end
+
+    if not CEU.opts.ceu then return end
+
     local _WRN = WRN
     if (not t.wrn) and (not t._ana) then
         WRN = ASR
@@ -102,14 +129,15 @@ Test = function (t)
     if not check('inits')    then return end
     if not check('scopes')   then return end
 
-    CEU = './ceu --ceu --ceu-input=/tmp/tmp.ceu --ceu-output=/tmp/tmp.c'
+    do
+        local ceu = './ceu --ceu --ceu-input=/tmp/tmp.ceu --ceu-output=/tmp/tmp.c'
+        if RUNTESTS.luacov then
+            ceu = RUNTESTS.luacov..' '..ceu
+        end
 
-    if RUNTESTS.luacov then
-        CEU = RUNTESTS.luacov..' '..CEU
+        --local exec_ceu = os.execute(local ceu)
+        --assert(exec_ceu==0 or exec_ceu==true)
     end
-
-    --local exec_ceu = os.execute(CEU)
-    --assert(exec_ceu==0 or exec_ceu==true)
 
 do return end
 AST.dump(AST.root)

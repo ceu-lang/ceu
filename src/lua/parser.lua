@@ -157,7 +157,7 @@ end
 
 local function ERR ()
 --DBG(LST_i, ERR_i, ERR_strs, _I2L[LST_i], I2TK[LST_i])
-    local file, line = unpack(LINES.i2l[LST_i])
+    local file, line = unpack(CEU.i2l[LST_i])
     return 'ERR : '..file..
               ' : line '..line..
               ' : after `'..LST_str..'´'..
@@ -883,9 +883,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 }
 
 if RUNTESTS then
-    assert(m.P(GG):match(OPTS.source), ERR())
+    assert(m.P(GG):match(CEU.source), ERR())
 else
-    if not m.P(GG):match(OPTS.source) then
+    if not m.P(GG):match(CEU.source) then
              -- TODO: match only in ast.lua?
         DBG(ERR())
         os.exit(1)

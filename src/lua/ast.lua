@@ -325,7 +325,7 @@ function AST.visit (F, node)
 end
 
 local function i2l (p)
-    return LINES.i2l[p]
+    return CEU.i2l[p]
 end
 
 for tag, patt in pairs(GG) do
@@ -366,5 +366,5 @@ for _, id in ipairs(__exps) do
     end
 end
 
-AST.root = m.P(GG):match(OPTS.source)
+AST.root = m.P(GG):match(CEU.source)
 AST.visit({})

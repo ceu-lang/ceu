@@ -8,6 +8,33 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+#if 0
+escape 0;
+#else
+escape 1;
+#endif
+]],
+    opts = {
+        pre        = true,
+        pre_input  = '/tmp/tmp.ceu',
+        pre_output = '/tmp/tmp.ceu.cpp',
+    },
+    run = 1,
+}
+
+Test { [[
+#oiii
+escape 0;
+]],
+    opts = {
+        pre        = true,
+        pre_input  = '/tmp/tmp.ceu',
+        pre_output = '/tmp/tmp.ceu.cpp',
+    },
+    lines = '1:2: error: invalid preprocessing directive #oiii',
+}
+
 --[===[
 do return end -- OK
 --]===]
@@ -280,14 +307,14 @@ Test { [[
 native _f, _f;
 escape 0;
 ]],
-    dcls = 'line 1 : declaration of "_f" hides previous declaration (tests.lua : line 1)',
+    dcls = 'line 1 : declaration of "_f" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 
 Test { [[
 native _f, _f;
 escape 0;
 ]],
-    dcls = ' line 1 : declaration of "_f" hides previous declaration (tests.lua : line 1)',
+    dcls = ' line 1 : declaration of "_f" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 
 Test { [[
@@ -295,7 +322,7 @@ native _f;
 native _f;
 escape 0;
 ]],
-    dcls = 'line 2 : declaration of "_f" hides previous declaration (tests.lua : line 1)',
+    dcls = 'line 2 : declaration of "_f" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 
 Test { [[
@@ -315,7 +342,7 @@ Test { [[var int a;]],
 
 Test { [[var int a;]],
     wrn = true,
-    inits = 'uninitialized variable "a" : reached `end of file´ (tests.lua:2)',
+    inits = 'uninitialized variable "a" : reached `end of file´ (/tmp/tmp.ceu:1)',
 }
 
 Test { [[var int a=0;]],
@@ -507,13 +534,13 @@ loopdo await250ms;_printf("Hello World!\n");end
 Test { [[
 input void A, A;
 ]],
-    dcls = 'line 1 : declaration of "A" hides previous declaration (tests.lua : line 1)',
+    dcls = 'line 1 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 Test { [[
 input void A;
 output void A;
 ]],
-    dcls = 'line 2 : declaration of "A" hides previous declaration (tests.lua : line 1)',
+    dcls = 'line 2 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 Test { [[
 input void A;
@@ -1152,7 +1179,7 @@ else
 end;
 escape a+c;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:4)',
+    inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:4)',
     --ref = 'line 4 : invalid access to uninitialized variable "a"',
 }
 Test { [[
@@ -1165,8 +1192,8 @@ if true then
 end;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
-    --inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:8)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:8)',
     --ref = 'line 5 : missing initialization for variable "a" in the other branch of the `if-then-else´',
 }
 Test { [[
@@ -1205,7 +1232,7 @@ var int a;
 var int b = a;
 a = 1;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -1216,7 +1243,7 @@ end;
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
     --run = 1,
 }
 Test { [[
@@ -1230,7 +1257,7 @@ end;
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
     --run = 1,
 }
 Test { [[
@@ -1244,7 +1271,7 @@ end;
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
     --run = 1,
 }
 Test { [[
@@ -1260,7 +1287,7 @@ end;
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:5)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:5)',
     --run = 1,
 }
 Test { [[
@@ -1272,7 +1299,7 @@ end;
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
     --run = 1,
 }
 Test { [[
@@ -1297,9 +1324,9 @@ if true then
 end;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (tests.lua:2)',
-    --inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:10)',
-    --inits = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:10)',
+    --inits = 'line 3 : missing initialization for variable "a" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:2)',
 }
 Test { [[
 var int a;
@@ -1309,8 +1336,8 @@ else
     a=1;a=2; escape 3;
 end;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (tests.lua:3)',
-    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
 }
 Test { [[
 var int a=1;
@@ -1382,8 +1409,8 @@ Test { [[input  int A;]],
     },
 }
 Test { [[input int A,A; escape 0;]],
-    dcls = 'line 1 : declaration of "A" hides previous declaration (tests.lua : line 1)',
-    --dcls = 'line 1 : identifier "A" is already declared (tests.lua : line 1)',
+    dcls = 'line 1 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
+    --dcls = 'line 1 : identifier "A" is already declared (/tmp/tmp.ceu : line 1)',
     --dcls = 'external "A" is already declared',
     run = 0,
 }
@@ -1500,7 +1527,7 @@ with
 end
 escape ret;
 ]],
-    inits = 'line 2 : uninitialized variable "ret" : reached `par/or´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -1562,7 +1589,7 @@ Test { [[var int a; a = emit a => 1; escape a;]],
 
 Test { [[var int a; emit a => 1; escape a;]],
     stmts = 'line 1 : invalid `emit´ : unexpected context for variable "a"',
-    --env = 'line 1 : identifier "a" is not an event (tests.lua : line 1)',
+    --env = 'line 1 : identifier "a" is not an event (/tmp/tmp.ceu : line 1)',
     --trig_wo = 1,
 }
 Test { [[event int a=0; emit a => 1; escape a;]],
@@ -1814,7 +1841,7 @@ async (a) do
 end;
 escape a + 1;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached `async´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `async´ (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -1826,7 +1853,7 @@ async (pa) do
 end;
 escape a + 1;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached read access (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -1939,8 +1966,8 @@ with
 end
 escape ret;
 ]],
-    inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (tests.lua:2)',
-    --ref = 'line 1 : uninitialized variable "ret" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    --ref = 'line 1 : uninitialized variable "ret" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -2187,8 +2214,8 @@ if true then
 end;
 escape v;
 ]],
-    inits = 'line 2 : uninitialized variable "v" : reached end of `if´ (tests.lua:3)',
-    --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+    --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -2285,7 +2312,7 @@ end
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (tests.lua:3)',
+    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -2681,8 +2708,8 @@ with
 end;
 escape a;
 ]],
-    inits = 'line 8 : uninitialized variable "a" : reached `par/or´ (tests.lua:9)',
-    --ref = 'line 8 : uninitialized variable "a" crossing compound statement (tests.lua:9)',
+    inits = 'line 8 : uninitialized variable "a" : reached `par/or´ (/tmp/tmp.ceu:9)',
+    --ref = 'line 8 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
@@ -2739,7 +2766,7 @@ _V = do
 end;
 escape _V;
 ]],
-    inits = 'line 6 : invalid access to native "_V" : assignment in enclosing `do` (tests.lua:5)',
+    inits = 'line 6 : invalid access to native "_V" : assignment in enclosing `do` (/tmp/tmp.ceu:5)',
     --run = 1,
 }
 Test { [[
@@ -2781,7 +2808,7 @@ end;
 escape t.v;
 ]],
     wrn = true,
-    inits = 'line 9 : invalid access to variable "t" : assignment in enclosing `do` (tests.lua:8)',
+    inits = 'line 9 : invalid access to variable "t" : assignment in enclosing `do` (/tmp/tmp.ceu:8)',
 }
 
 Test { [[
@@ -2826,8 +2853,8 @@ var int a =
     end;
 escape a;
 ]],
-    inits = 'line 3 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
-    --ref = 'line 3 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
+    inits = 'line 3 : invalid access to variable "a" : assignment in enclosing `do` (/tmp/tmp.ceu:1)',
+    --ref = 'line 3 : invalid access to uninitialized variable "a" (declared at /tmp/tmp.ceu:1)',
 }
 Test { [[
 var int a =
@@ -2837,8 +2864,8 @@ var int a =
     end;
 escape a;
 ]],
-    inits = 'line 3 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
-    --ref = 'line 4 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
+    inits = 'line 3 : invalid access to variable "a" : assignment in enclosing `do` (/tmp/tmp.ceu:1)',
+    --ref = 'line 4 : invalid access to uninitialized variable "a" (declared at /tmp/tmp.ceu:1)',
     --run = 1,
 }
 Test { [[
@@ -2862,8 +2889,8 @@ end
             end;
 escape a;
 ]],
-    inits = 'line 2 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:1)',
-    --ref = 'line 2 : invalid access to uninitialized variable "a" (declared at tests.lua:1)',
+    inits = 'line 2 : invalid access to variable "a" : assignment in enclosing `do` (/tmp/tmp.ceu:1)',
+    --ref = 'line 2 : invalid access to uninitialized variable "a" (declared at /tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -3037,7 +3064,7 @@ await A;
 b = 1;
 escape b;
 ]],
-    inits = 'line 2 : uninitialized variable "b" : reached `await´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "b" : reached `await´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -3057,7 +3084,7 @@ else
 end;
 escape b;
 ]],
-    inits = 'line 2 : uninitialized variable "b" : reached `await´ (tests.lua:4)',
+    inits = 'line 2 : uninitialized variable "b" : reached `await´ (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -3102,7 +3129,7 @@ var int b =
 escape b;
 ]],
     tmp = 'TODO: missing escape',
-    --ref = 'line 9 : missing initialization for variable "b" in the other branch of the `if-then-else´ (tests.lua:7)'
+    --ref = 'line 9 : missing initialization for variable "b" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:7)'
 }
 
 -->>> LOOP
@@ -3495,8 +3522,8 @@ var int a;
 loop do a=1; end;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached `loop´ (tests.lua:2)',
-    --ref = 'line 1 : uninitialized variable "a" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
+    --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -3759,6 +3786,7 @@ loop/(10+10+_A+A) i in [0->lim[ do
 end
 escape ret;
 ]],
+    opts_pre = true,
     run = 40;
 }
 
@@ -4023,7 +4051,7 @@ loop i do
 end
 escape 0;
 ]],
-    dcls = 'line 2 : implicit declaration of "i" hides previous declaration (tests.lua : line 1)',
+    dcls = 'line 2 : implicit declaration of "i" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 
 -- EVERY
@@ -4335,8 +4363,8 @@ with
     end
 end
 ]],
-    inits = 'line 3 : uninitialized variable "a" : reached `loop´ (tests.lua:4)',
-    --ref = 'line 3 : uninitialized variable "a" crossing compound statement (tests.lua:4)',
+    inits = 'line 3 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:4)',
+    --ref = 'line 3 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -5830,7 +5858,7 @@ event (int,int) e;
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "x" : reached `escape´ (tests.lua:3)',
+    inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -6094,7 +6122,7 @@ escape a;
 ]],
     run = {['6~>A']=6},
     _ana = {acc=true},
-    --ref = 'line 6 : missing initialization for variable "a" in the other branch of the `if-then-else´ (tests.lua:4)',
+    --ref = 'line 6 : missing initialization for variable "a" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:4)',
 }
 Test { [[
 input int A;
@@ -8336,8 +8364,8 @@ v1=2;
 v2=3;
 escape v1+v2;
 ]],
-    inits = 'line 1 : uninitialized variable "v1" : reached `par/or´ (tests.lua:2)',
-    --ref = 'line 1 : uninitialized variable "v1" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "v1" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    --ref = 'line 1 : uninitialized variable "v1" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 Test { [[
 par/or do
@@ -11875,8 +11903,8 @@ with
     escape a;
 end;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached `par´ (tests.lua:2)',
-    --ref = 'line 1 : uninitialized variable "a" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `par´ (/tmp/tmp.ceu:2)',
+    --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 Test { [[
 var int a=0;
@@ -13016,8 +13044,8 @@ a = a + 1;
 await X;
 escape a;
 ]],
-    inits = 'line 9 : invalid access to variable "a" : assignment in enclosing `do` (tests.lua:3)',
-    --ref = 'line 9 : invalid access to uninitialized variable "a" (declared at tests.lua:2)',
+    inits = 'line 9 : invalid access to variable "a" : assignment in enclosing `do` (/tmp/tmp.ceu:3)',
+    --ref = 'line 9 : invalid access to uninitialized variable "a" (declared at /tmp/tmp.ceu:2)',
     --run = { ['0~>A;0~>B;0~>Z;0~>X'] = 2 }
 }
 
@@ -13040,7 +13068,7 @@ a = a + 1;
 await X;
 escape a;
 ]],
-    --ref = 'line 9 : invalid access to uninitialized variable "a" (declared at tests.lua:2)',
+    --ref = 'line 9 : invalid access to uninitialized variable "a" (declared at /tmp/tmp.ceu:2)',
     run = { ['0~>A;0~>B;0~>Z;0~>X'] = 2 }
 }
 
@@ -13974,8 +14002,8 @@ with
 end;
 escape v;
 ]],
-    inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (tests.lua:2)',
-    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)'
+    inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (/tmp/tmp.ceu:2)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)'
 }
 
 Test { [[
@@ -13986,8 +14014,8 @@ with
 end;
 escape v;
 ]],
-    inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (tests.lua:2)',
-    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached `par/and´ (/tmp/tmp.ceu:2)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -14003,8 +14031,8 @@ end
 escape a;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "a" : reached `loop´ (tests.lua:2)',
-    --ref = 'line 1 : uninitialized variable "a" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
+    --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -14015,8 +14043,8 @@ with
 end;
 escape v;
 ]],
-    inits = 'line 1 : uninitialized variable "v" : reached `par/or´ (tests.lua:2)',
-    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached `par/or´ (/tmp/tmp.ceu:2)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -14041,8 +14069,8 @@ with
 end;
 ]],
     wrn = true,
-    inits = 'line 3 : uninitialized variable "v" : reached `par/or´ (tests.lua:4)',
-    --ref = 'line 3 : uninitialized variable "v" crossing compound statement (tests.lua:4)',
+    inits = 'line 3 : uninitialized variable "v" : reached `par/or´ (/tmp/tmp.ceu:4)',
+    --ref = 'line 3 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -15684,7 +15712,7 @@ event int a;
     v1 = await a;
     v2 = await a;
 ]],
-    inits = 'line 2 : uninitialized variable "v2" : reached `await´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "v2" : reached `await´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -16582,7 +16610,7 @@ escape a;
 ]],
     wrn = true,
     stmts = 'line 8 : invalid `emit´ : unexpected context for variable "a"',
-    --env = 'line 8 : identifier "a" is not an event (tests.lua : line 5)',
+    --env = 'line 8 : identifier "a" is not an event (/tmp/tmp.ceu : line 5)',
     --dcls = 'line 23 : invalid use of `event´',
 }
 
@@ -16722,7 +16750,7 @@ b = &a;
 a = 2;
 escape b;
 ]],
-    inits = 'line 3 : invalid binding : variable "b" is already bound (tests.lua:2)',
+    inits = 'line 3 : invalid binding : variable "b" is already bound (/tmp/tmp.ceu:2)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
 }
 Test { [[
@@ -16748,7 +16776,7 @@ else
 end
 escape b;
 ]],
-    inits = 'line 5 : invalid binding : variable "b" is already bound (tests.lua:4,tests.lua:7)',
+    inits = 'line 5 : invalid binding : variable "b" is already bound (/tmp/tmp.ceu:4,/tmp/tmp.ceu:7)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
 }
 Test { [[
@@ -16762,8 +16790,8 @@ else
 end
 escape b;
 ]],
-    -- TODO: tests.lua:6
-    inits = 'line 7 : invalid binding : variable "b" is already bound (tests.lua:4,tests.lua:6)',
+    -- TODO: /tmp/tmp.ceu:6
+    inits = 'line 7 : invalid binding : variable "b" is already bound (/tmp/tmp.ceu:4,/tmp/tmp.ceu:6)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
 }
 Test { [[
@@ -16777,7 +16805,7 @@ end
 b = &a;
 escape b;
 ]],
-    inits = 'line 8 : invalid binding : variable "b" is already bound (tests.lua:4,tests.lua:6)',
+    inits = 'line 8 : invalid binding : variable "b" is already bound (/tmp/tmp.ceu:4,/tmp/tmp.ceu:6)',
     --ref = 'line 3 : invalid attribution : variable "b" is already bound',
 }
 Test { [[
@@ -16831,7 +16859,7 @@ end
 escape a+b;
 ]],
     run = 110,
-    --ref = 'line 6 : invalid extra access to variable "c" inside the initializing `if-then-else´ (tests.lua:4)',
+    --ref = 'line 6 : invalid extra access to variable "c" inside the initializing `if-then-else´ (/tmp/tmp.ceu:4)',
 }
 Test { [[
 var int a = 1;
@@ -16846,7 +16874,7 @@ end
 escape a+b;
 ]],
     run = 11,
-    --ref = 'line 8 : invalid extra access to variable "c" inside the initializing `if-then-else´ (tests.lua:4)',
+    --ref = 'line 8 : invalid extra access to variable "c" inside the initializing `if-then-else´ (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -16933,7 +16961,7 @@ escape b;
 ]],
     --ref = 'line 3 : reference must be bounded before use',
     --ref = 'line 3 : invalid access to uninitialized variable "b"',
-    inits = 'line 2 : uninitialized variable "b" : reached read access (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "b" : reached read access (/tmp/tmp.ceu:3)',
     --run = 2,
 }
 Test { [[
@@ -17021,9 +17049,9 @@ end
 v = 5;
 escape a + b + v;
 ]],
-    inits = 'line 2 : uninitialized variable "v" : reached end of `if´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
     --ref = 'line 5 : reference must be bounded in the other if-else branch',
-    --ref = 'line 5 : missing initialization for variable "v" in the other branch of the `if-then-else´ (tests.lua:3)',
+    --ref = 'line 5 : missing initialization for variable "v" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:3)',
 }
 Test { [[
 var int a=1, b=2;
@@ -17035,8 +17063,8 @@ end
 v = 5;
 escape a + b + v;
 ]],
-    inits = 'tests.lua : line 2 : uninitialized variable "v" : reached end of `if´ (tests.lua:3)',
-    --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (tests.lua:3)',
+    inits = '/tmp/tmp.ceu : line 2 : uninitialized variable "v" : reached end of `if´ (/tmp/tmp.ceu:3)',
+    --ref = 'line 4 : missing initialization for variable "v" in the other branch of the `if-then-else´ (/tmp/tmp.ceu:3)',
 }
 Test { [[
 var int a=1, b=2;
@@ -17167,8 +17195,8 @@ escape v;
 ]],
     wrn = true,
     --ref = 'reference declaration and first binding cannot be separated by loops',
-    --ref = 'line 2 : uninitialized variable "i" crossing compound statement (tests.lua:3)',
-    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (tests.lua:3)',
+    --ref = 'line 2 : uninitialized variable "i" crossing compound statement (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -17199,7 +17227,7 @@ i = &v;
 i = &v;
 escape i!;
 ]],
-    inits = 'line 4 : invalid binding : variable "i" is already bound (tests.lua:3)',
+    inits = 'line 4 : invalid binding : variable "i" is already bound (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
 
@@ -17213,7 +17241,7 @@ loop do
 end
 escape v;
 ]],
-    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
 }
 Test { [[
@@ -17224,7 +17252,7 @@ escape i!;
 ]],
     --stmts = 'line 3 : invalid binding : expected declaration with `&´',
     stmts = 'line 3 : invalid binding : unexpected context for operator `!´',
-    --inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
+    --inits = 'line 2 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:3)',
     --ref = 'line 3 : invalid attribution : cannot bind with operator `!´',
 }
 
@@ -17244,11 +17272,11 @@ escape v;
 ]],
     --stmts = 'line 4 : invalid binding : expected declaration with `&´',
     stmts = 'line 4 : invalid binding : unexpected context for operator `!´',
-    --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (tests.lua:3)',
+    --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --run = 11,
     --ref = 'reference declaration and first binding cannot be separated by loops',
-    --ref = 'line 2 : uninitialized variable "i" crossing compound statement (tests.lua:3)',
+    --ref = 'line 2 : uninitialized variable "i" crossing compound statement (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -17284,10 +17312,10 @@ every 1s do
 end
 escape 1;
 ]],
-    inits = 'line 2 : uninitialized variable "sfc" : reached `loop´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "sfc" : reached `loop´ (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
     --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
-    --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -17390,9 +17418,9 @@ var& int v;
 //end
 escape 1;
 ]],
-    inits = 'line 3 : uninitialized variable "x" : reached read access (tests.lua:4)',
-    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
-    --ref = 'line 4 : invalid access to uninitialized variable "x" (declared at tests.lua:3)',
+    inits = 'line 3 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
+    --ref = 'line 4 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -17405,7 +17433,7 @@ escape 1;
 ]],
     scopes = 'line 4 : invalid binding : incompatible scopes',
     --ref = 'line 4 : invalid attribution : variable "x" has narrower scope than its destination',
-    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
     --run = 1,
 }
 
@@ -17514,7 +17542,7 @@ finalize (_f) with
     do await FOREVER; end;
 end
 ]],
-    scopes = 'line 5 : invalid `finalize´ : unmatching identifiers : expected "a" (vs. tests.lua:4)',
+    scopes = 'line 5 : invalid `finalize´ : unmatching identifiers : expected "a" (vs. /tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -17610,7 +17638,7 @@ var int&& ptr = &&v;
 await 1s;
 escape *ptr;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed `await´ (tests.lua:3)',
+    inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
     --fin = 'line 4 : unsafe access to pointer "ptr" across `await´',
 }
 
@@ -17622,7 +17650,7 @@ await 1s;
 var int&& c = a;
 escape 1;
 ]],
-    inits = 'line 5 : invalid pointer access : crossed `await´ (tests.lua:4)',
+    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
     --fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
@@ -17634,7 +17662,7 @@ await 1s;
 var int&& c = a;
 escape 1;
 ]],
-    inits = 'line 5 : invalid pointer access : crossed `await´ (tests.lua:4)',
+    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
     --fin = 'line 5 : unsafe access to pointer "a" across `await´',
 }
 
@@ -17647,8 +17675,8 @@ loop i in [0 -> 10[ do
 end
 escape v;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed `loop´ (tests.lua:3)',
-    --fin = 'line 4 : unsafe access to pointer "x" across `loop´ (tests.lua : 3)',
+    inits = 'line 4 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:3)',
+    --fin = 'line 4 : unsafe access to pointer "x" across `loop´ (/tmp/tmp.ceu : 3)',
 }
 
 Test { [[
@@ -17661,8 +17689,8 @@ loop i in [0 -> 10[ do
 end
 escape v;
 ]],
-    inits = 'line 5 : invalid pointer access : crossed `loop´ (tests.lua:4)',
-    --fin = 'line 5 : unsafe access to pointer "x" across `loop´ (tests.lua : 4)',
+    inits = 'line 5 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:4)',
+    --fin = 'line 5 : unsafe access to pointer "x" across `loop´ (/tmp/tmp.ceu : 4)',
 }
 
 Test { [[
@@ -17811,7 +17839,7 @@ end
 escape(a);
 ]],
     --ref = 'line 2 : invalid access to uninitialized variable "a"',
-    inits = 'line 2 : uninitialized variable "a" : reached read access (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -18071,7 +18099,7 @@ var& _int? p = &_f(&&v)
                 end;
 escape p!;
 ]],
-    scopes = 'line 4 : invalid `finalize´ : unmatching identifiers : expected "p" (vs. tests.lua:3)',
+    scopes = 'line 4 : invalid `finalize´ : unmatching identifiers : expected "p" (vs. /tmp/tmp.ceu:3)',
     --run = 5,
 }
 
@@ -18119,7 +18147,7 @@ escape 10;
 ]],
     --loop = true,
     --fin = 'line 5 : invalid pointer "ptr"',
-    inits = 'line 5 : invalid pointer access : crossed `loop´ (tests.lua:2)',
+    inits = 'line 5 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -18180,8 +18208,8 @@ var int v = 10;
 var _t t;
 escape *(t.ptr);
 ]],
-    inits = 'line 11 : uninitialized variable "t" : reached read access (tests.lua:12)',
-    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    inits = 'line 11 : uninitialized variable "t" : reached read access (/tmp/tmp.ceu:12)',
+    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at /tmp/tmp.ceu:11)',
     --run = 10,
 }
 
@@ -18228,7 +18256,7 @@ escape *(t.ptr);
 ]],
     stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
     --stmts = 'line 13 : invalid binding : expected declaration with `&´',
-    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at /tmp/tmp.ceu:11)',
     --run = 10,
 }
 
@@ -18250,7 +18278,7 @@ escape *(t.ptr);
 ]],
     stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
     --stmts = 'line 13 : invalid binding : expected declaration with `&´',
-    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at tests.lua:11)',
+    --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at /tmp/tmp.ceu:11)',
     --run = 10,
 }
 
@@ -18262,7 +18290,7 @@ end
 escape 10;
 ]],
     parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´ or abstraction identifier',
-    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
+    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -18280,7 +18308,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (tests.lua:5)',
+    inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (/tmp/tmp.ceu:5)',
 }
 
 Test { [[
@@ -18291,7 +18319,7 @@ end
 escape 10;
 ]],
     wrn = true,
-    inits = 'line 2 : uninitialized variable "x" : reached `escape´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -18304,7 +18332,7 @@ escape 10;
     wrn = true,
     scopes = 'line 3 : invalid `escape´ : incompatible scopes',
     --fins = 'line 3 : invalid escape value : local reference',
-    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at tests.lua:2)',
+    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -18483,7 +18511,7 @@ do
 end
 escape x;
 ]],
-    --ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "x" crossing compound statement (/tmp/tmp.ceu:2)',
     run = 1,
 }
 
@@ -18501,7 +18529,7 @@ event& void b = &a;
 b = &b;
 escape 1;
 ]],
-    inits = 'line 3 : invalid binding : event "b" is already bound (tests.lua:2)',
+    inits = 'line 3 : invalid binding : event "b" is already bound (/tmp/tmp.ceu:2)',
     --run = { ['~>1s'] = 1 },
 }
 
@@ -18559,7 +18587,7 @@ var int i;
 var& int a = &i;
 escape i;
 ]],
-    inits = 'line 1 : uninitialized variable "i" : reached read access (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:2)',
 }
 Test { [[
 var int i = 1;
@@ -18579,7 +18607,7 @@ Test { [[
 vector&[] int v;
 escape 1;
 ]],
-    inits = 'line 1 : uninitialized vector "v" : reached `escape´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:2)',
     wrn = true,
     --run = 1,
 }
@@ -18627,7 +18655,7 @@ finalize (x) with
 end
 escape 0;
 ]],
-    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "r" (vs. tests.lua:5)',
+    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "r" (vs. /tmp/tmp.ceu:5)',
 }
 Test { [[
 native _f;
@@ -18640,7 +18668,7 @@ finalize (r) with
 end
 escape 0;
 ]],
-    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "x" (vs. tests.lua:5)',
+    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "x" (vs. /tmp/tmp.ceu:5)',
 }
 Test { [[
 native _f;
@@ -18948,7 +18976,7 @@ do
 end
 escape ret;
 ]],
-    scopes = 'line 7 : invalid `finalize´ : unmatching identifiers : expected "v" (vs. tests.lua:6)',
+    scopes = 'line 7 : invalid `finalize´ : unmatching identifiers : expected "v" (vs. /tmp/tmp.ceu:6)',
     --fin = 'line 7 : attribution does not require `finalize´',
 }
 Test { [[
@@ -20020,7 +20048,7 @@ var int&& v = await E;
 await E;
 escape *v;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed `await´ (tests.lua:3)',
+    inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
     --fin = 'line 4 : unsafe access to pointer "v" across `await´',
     --fin = 'line 3 : cannot `await´ again on this block',
     --run = 0,
@@ -20071,7 +20099,7 @@ escape 1;
     --fin = 'line 6 : attribution requires `finalize´',
     --fin = 'line 8 : pointer access across `await´',
     --fin = 'line 6 : attribution to pointer with greater scope',
-    inits = 'line 6 : invalid pointer access : crossed `await´ (tests.lua:5)',
+    inits = 'line 6 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:5)',
     --scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
 }
 
@@ -20105,7 +20133,7 @@ do/_
 end
 escape 1;
 ]],
-    inits = 'line 9 : invalid pointer access : crossed `await´ (tests.lua:6)',
+    inits = 'line 9 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:6)',
     --fin = 'line 6 : call requires `finalize´',
 }
 
@@ -20130,7 +20158,7 @@ with
 end
 escape 0;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed `par/or´ (tests.lua:2)',
+    inits = 'line 4 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:2)',
     --fin = 'line 8 : pointer access across `await´',
     --fin = 'line 6 : invalid block for pointer across `await´',
     --fin = 'line 6 : cannot `await´ again on this block',
@@ -20324,7 +20352,7 @@ do
 end
 escape ret + *p;
 ]],
-    inits = 'line 8 : invalid pointer access : crossed `par/and´ (tests.lua:6)',
+    inits = 'line 8 : invalid pointer access : crossed `par/and´ (/tmp/tmp.ceu:6)',
     --adj = 'line 7 : invalid `finalize´',
     --fin = 'line 8 : attribution does not require `finalize´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
@@ -20336,7 +20364,7 @@ var int&& p = null;
 async do end
 escape *p;
 ]],
-    inits = 'line 3 : invalid pointer access : crossed `async´ (tests.lua:2)',
+    inits = 'line 3 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:2)',
 }
 Test { [[
 var int ret = 0;
@@ -20350,9 +20378,9 @@ do
 end
 escape ret + *p;
 ]],
-    inits = 'line 6 : invalid pointer access : crossed `par/and´ (tests.lua:5)',
+    inits = 'line 6 : invalid pointer access : crossed `par/and´ (/tmp/tmp.ceu:5)',
     --env = 'line 11 : wrong argument : cannot pass pointers',
-    --fin = 'line 16 : unsafe access to pointer "p" across `async´ (tests.lua : 11)',
+    --fin = 'line 16 : unsafe access to pointer "p" across `async´ (/tmp/tmp.ceu : 11)',
     --fin = 'line 14 : unsafe access to pointer "p" across `par/and´',
     --fin = 'line 8 : invalid block for awoken pointer "p"',
     --fin = 'line 14 : cannot `await´ again on this block',
@@ -22088,7 +22116,7 @@ every qu_ in GO do
     end
 end
 ]],
-    inits = 'line 6 : invalid pointer access : crossed `async´ (tests.lua:6)',
+    inits = 'line 6 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:6)',
     --fin = 'line 5 : unsafe access to pointer "qu" across `async´',
     --_ana = { isForever=true },
     --run = 1,
@@ -22131,8 +22159,8 @@ input void A;
 input void A;
 escape 1;
 ]],
-    dcls = 'line 2 : declaration of "A" hides previous declaration (tests.lua : line 1)',
-    --dcls = 'line 2 : identifier "A" is already declared (tests.lua : line 1)',
+    dcls = 'line 2 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
+    --dcls = 'line 2 : identifier "A" is already declared (/tmp/tmp.ceu : line 1)',
 }
 
 Test { [[
@@ -22140,8 +22168,8 @@ input void A;
 input int A;
 escape 1;
 ]],
-    dcls = 'line 2 : declaration of "A" hides previous declaration (tests.lua : line 1)',
-    --dcls = 'line 2 : identifier "A" is already declared (tests.lua : line 1)',
+    dcls = 'line 2 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
+    --dcls = 'line 2 : identifier "A" is already declared (/tmp/tmp.ceu : line 1)',
 }
 
 --if not OS then
@@ -22151,7 +22179,7 @@ output int A;
 input  int A;
 escape(1);
 ]],
-    dcls = 'line 2 : declaration of "A" hides previous declaration (tests.lua : line 1)',
+    dcls = 'line 2 : declaration of "A" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 Test { [[
 output xxx A;
@@ -22297,7 +22325,7 @@ v.a = 1;
 v.b = 2;
 escape v.a + v.b;
 ]],
-    inits = 'line 8 : uninitialized variable "v" : reached read access (tests.lua:9)',
+    inits = 'line 8 : uninitialized variable "v" : reached read access (/tmp/tmp.ceu:9)',
 }
 Test { [[
 pre native do
@@ -23056,7 +23084,7 @@ end
 call A => ();
 escape 1;
 ]],
-    dcls = 'line 1 : declaration of "a" hides previous declaration (tests.lua : line 1)',
+    dcls = 'line 1 : declaration of "a" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 
 Test { [[
@@ -23371,7 +23399,7 @@ end;
 a = null;
 escape 1;
 ]],
-    inits = 'line 7 : invalid pointer access : crossed `await´ (tests.lua:4)',
+    inits = 'line 7 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -24076,7 +24104,7 @@ escape 1;
     wrn = true,
     --run = 1,
     --cval = 'line 1 : invalid dimension',
-    inits = 'line 2 : uninitialized vector "v" : reached `escape´ (tests.lua:3)',
+    inits = 'line 2 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:3)',
 }
 Test { [[
 native _int;
@@ -24086,7 +24114,7 @@ escape 1;
     wrn = true,
     run = 1,
     --cval = 'line 1 : invalid dimension',
-    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:1)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:1)',
 }
 Test { [[
 native _u8, _V;
@@ -24110,8 +24138,8 @@ native _u8;
 vector[10] _u8 v;
 escape v[0];
 ]],
-    inits = 'line 2 : uninitialized vector "v" : reached read access (tests.lua:3)',
-    --ref = 'line 2 : invalid access to uninitialized variable "v" (declared at tests.lua:1)',
+    inits = 'line 2 : uninitialized vector "v" : reached read access (/tmp/tmp.ceu:3)',
+    --ref = 'line 2 : invalid access to uninitialized variable "v" (declared at /tmp/tmp.ceu:1)',
 }
 
 Test { [[vector[2] int v; await v;     escape 0;]],
@@ -24120,7 +24148,7 @@ Test { [[vector[2] int v; await v;     escape 0;]],
 }
 Test { [[vector[2] int v; emit v;    escape 0;]],
     stmts = 'line 1 : invalid `emit´ : unexpected context for vector "v"',
-    --env = 'line 1 : identifier "v" is not an event (tests.lua : line 1)',
+    --env = 'line 1 : identifier "v" is not an event (/tmp/tmp.ceu : line 1)',
 }
 Test { [[vector[0] int[2] v; await v;  escape 0;]],
         --env='line 1 : event "?" is not declared'
@@ -25247,7 +25275,7 @@ vector&[-_X] int iis;
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 5 : uninitialized vector "iis" : reached `escape´ (tests.lua:6)',
+    inits = 'line 5 : uninitialized vector "iis" : reached `escape´ (/tmp/tmp.ceu:6)',
     --run = 1,
 }
 
@@ -26082,7 +26110,7 @@ end
 ]],
     wrn = true,
     --run = 1,
-    inits = 'line 5 : invalid pointer access : crossed `await´ (tests.lua:4)',
+    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
     --fin = 'line 7 : unsafe access to pointer "p1" across `await´',
 }
 
@@ -26120,7 +26148,7 @@ else
 end
 escape ret;
 ]],
-    inits = 'line 10 : invalid pointer access : crossed `emit´ (tests.lua:9)',
+    inits = 'line 10 : invalid pointer access : crossed `emit´ (/tmp/tmp.ceu:9)',
     --fin = 'line 10 : unsafe access to pointer "x" across `emit´',
 }
 
@@ -26197,8 +26225,8 @@ await 1s;
 var _SDL_Rect r = rect;
 escape 1;
 ]],
-    inits = 'line 2 : uninitialized variable "pos" : reached read access (tests.lua:4)',
-    --ref = 'line 4 : invalid access to uninitialized variable "pos" (declared at tests.lua:2)',
+    inits = 'line 2 : uninitialized variable "pos" : reached read access (/tmp/tmp.ceu:4)',
+    --ref = 'line 4 : invalid access to uninitialized variable "pos" (declared at /tmp/tmp.ceu:2)',
 }
 Test { [[
 native/plain _SDL_Rect, _SDL_Point;
@@ -27202,8 +27230,8 @@ var _Payload final;
 var u8&& neighs = &&(final._data[4]);
 escape 1;
 ]],
-    inits = 'line 8 : uninitialized variable "final" : reached read access (tests.lua:9)',
-    --ref = 'line 9 : invalid access to uninitialized variable "final" (declared at tests.lua:8)',
+    inits = 'line 8 : uninitialized variable "final" : reached read access (/tmp/tmp.ceu:9)',
+    --ref = 'line 9 : invalid access to uninitialized variable "final" (declared at /tmp/tmp.ceu:8)',
 }
 Test { [[
 pre native do
@@ -27416,8 +27444,8 @@ var int&& x;
 *x = 1;
 escape 1;
 ]],
-    inits = 'line 1 : uninitialized variable "x" : reached read access (tests.lua:2)',
-    --ref = 'line 2 : invalid access to uninitialized variable "x" (declared at tests.lua:1)',
+    inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:2)',
+    --ref = 'line 2 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -27428,8 +27456,8 @@ do
 end
 escape 1;
 ]],
-    inits = 'line 3 : uninitialized variable "i" : reached read access (tests.lua:4)',
-    --ref = 'line 1 : uninitialized variable "p" crossing compound statement (tests.lua:2)',
+    inits = 'line 3 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:4)',
+    --ref = 'line 1 : uninitialized variable "p" crossing compound statement (/tmp/tmp.ceu:2)',
     --fin = 'line 4 : attribution to pointer with greater scope',
 }
 Test { [[
@@ -27550,8 +27578,8 @@ await 1s;
 escape (ptr == null) as int;
 ]],
     wrn = true,
-    inits = 'line 4 : invalid pointer access : crossed `await´ (tests.lua:3)',
-    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (tests.lua : 3)',
+    inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
 }
 Test { [[
 native _int;
@@ -27562,8 +27590,8 @@ u = &&i[0];
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 5 : invalid pointer access : crossed `await´ (tests.lua:3)',
-    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (tests.lua : 3)',
+    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
 }
 Test { [[
 native/plain _int;
@@ -27619,8 +27647,8 @@ do
 end
 escape *u;
 ]],
-    inits = 'line 4 : uninitialized vector "i" : reached read access (tests.lua:5)',
-    --ref = 'line 1 : uninitialized variable "u" crossing compound statement (tests.lua:2)',
+    inits = 'line 4 : uninitialized vector "i" : reached read access (/tmp/tmp.ceu:5)',
+    --ref = 'line 1 : uninitialized variable "u" crossing compound statement (/tmp/tmp.ceu:2)',
     --fin = 'line 5 : attribution to pointer with greater scope',
 }
 Test { [[
@@ -28937,7 +28965,7 @@ async/thread (p) do
 end
 escape 1;
 ]],
-    inits = 'line 3 : invalid pointer access : crossed `async/thread´ (tests.lua:3)',
+    inits = 'line 3 : invalid pointer access : crossed `async/thread´ (/tmp/tmp.ceu:3)',
     --fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
 }
 
@@ -31078,7 +31106,7 @@ end
 var Tx t;
 escape t.v;
 ]],
-    tmp = 'line 6 : missing initialization for field "v" (declared in tests.lua:3)',
+    tmp = 'line 6 : missing initialization for field "v" (declared in /tmp/tmp.ceu:3)',
 }
 Test { [[
 //var int v;
@@ -31092,7 +31120,7 @@ end;
 var Tx x;
 escape t.v + x.v;
 ]],
-    tmp = 'line 9 : missing initialization for field "v" (declared in tests.lua:3)',
+    tmp = 'line 9 : missing initialization for field "v" (declared in /tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -31188,7 +31216,7 @@ var Tx t with
 end;
 escape t.v + t.u:x;
 ]],
-    tmp = 'line 18 : missing initialization for field "u" (declared in tests.lua:9)',
+    tmp = 'line 18 : missing initialization for field "u" (declared in /tmp/tmp.ceu:9)',
 }
 Test { [[
 class U with
@@ -31285,7 +31313,7 @@ escape *v;
 ]],
     --fin = 'line 4 : attribution requires `finalize´',
     --fin = 'line 4 : attribution to pointer with greater scope',
-    --fins = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    --fins = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
     scopes = 'line 4 : invalid pointer assignment : expected `finalize´',
 }
 Test { [[
@@ -31298,7 +31326,7 @@ escape v;
 ]],
     scopes = 'line 4 : invalid binding : incompatible scopes',
     --ref = 'line 4 : attribution to reference with greater scope',
-    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:2)',
     --run = 1,
 }
 
@@ -31312,7 +31340,7 @@ end
 var Tx t;
 escape i;
 ]],
-    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --ref = 'line 7 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --run = 1,
@@ -31328,7 +31356,7 @@ end
 var Tx t;
 escape i;
 ]],
-    tmp = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 8 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --ref = 'line 8 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --run = 1,
@@ -31344,7 +31372,7 @@ end
 var Tx t;
 escape t.i;
 ]],
-    tmp = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 8 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --ref = 'line 8 : field "i" must be assigned',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --run = 10,
@@ -31359,7 +31387,7 @@ end
 spawn Tx;
 escape i;
 ]],
-    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --ref = 'line 5 : invalid attribution (not a reference)',
     --ref = 'line 7 : field "i" must be assigned',
     --run = 1,
@@ -31385,7 +31413,7 @@ end
 var Tx&&? p = spawn Tx;
 escape p!:i;
 ]],
-    tmp = 'line 8 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 8 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --ref = 'line 8 : field "i" must be assigned',
     --run = 10,
 }
@@ -31789,7 +31817,7 @@ await 1s;
 escape *(t.x);
 ]],
     wrn = true,
-    inits = 'line 4 : invalid pointer access : crossed `await´ (tests.lua:3)',
+    inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -34480,7 +34508,7 @@ end
 var Tx t;
 escape t.i;
 ]],
-    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:2)',
     --ref = 'line 7 : field "i" must be assigned',
     --run = 10,
 }
@@ -34513,7 +34541,7 @@ end
 var Tx t;
 escape t.i;
 ]],
-    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:2)',
     --ref = 'line 7 : field "i" must be assigned',
     --run = 10,
 }
@@ -34586,7 +34614,7 @@ end
 var Tx t;
 escape 1;
 ]],
-    tmp = 'line 5 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 5 : missing initialization for field "i" (declared in /tmp/tmp.ceu:2)',
     --ref = 'line 5 : field "i" must be assigned',
 }
 
@@ -34606,7 +34634,7 @@ end;
 
 escape t1.i;
 ]],
-    tmp = 'line 8 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 8 : missing initialization for field "i" (declared in /tmp/tmp.ceu:2)',
     --ref = 'line 8 : field "i" must be assigned',
 }
 
@@ -34626,7 +34654,7 @@ var Tx t1;
 
 escape t1.i;
 ]],
-    tmp = 'line 12 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 12 : missing initialization for field "i" (declared in /tmp/tmp.ceu:2)',
     --ref = 'line 12 : field "i" must be assigned',
 }
 
@@ -34642,7 +34670,7 @@ var int v = 0;
 t.i = v;
 escape 1;
 ]],
-    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:2)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:2)',
     --ref = 'line 9 : cannot assign to reference bounded inside the class',
 }
 
@@ -34684,7 +34712,7 @@ var int  um = 1;
 var& int v;// = um;
 escape global:v;
 ]],
-    tmp = 'line 6 : invalid access to uninitialized variable "v" (declared at tests.lua:2)',
+    tmp = 'line 6 : invalid access to uninitialized variable "v" (declared at /tmp/tmp.ceu:2)',
     --ref = 'line 5 : missing initialization for global variable "v"',
     --ref = 'line 5 : global references must be bounded on declaration',
 }
@@ -34893,7 +34921,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    tmp = 'line 7 : invalid access to uninitialized variable "x" (declared at tests.lua:6)',
+    tmp = 'line 7 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:6)',
 }
 Test { [[
 class Tx with
@@ -34924,7 +34952,7 @@ end;
 
 escape 1;
 ]],
-    tmp = 'line 10 : invalid access to uninitialized variable "v" (declared at tests.lua:7)',
+    tmp = 'line 10 : invalid access to uninitialized variable "v" (declared at /tmp/tmp.ceu:7)',
     --ref = 'line 7 : uninitialized variable "v"',
     --run = 1,
 }
@@ -34943,7 +34971,7 @@ end;
 
 escape 1;
 ]],
-    tmp = 'line 10 : invalid access to uninitialized variable "v" (declared at tests.lua:7)',
+    tmp = 'line 10 : invalid access to uninitialized variable "v" (declared at /tmp/tmp.ceu:7)',
     --ref = 'line 7 : uninitialized variable "v"',
     --run = 1,
 }
@@ -37434,7 +37462,7 @@ if a != null then
 end
 escape sum;
 ]],
-    fin = 'line 14 : unsafe access to pointer "a" across `spawn´ (tests.lua : 10)',
+    fin = 'line 14 : unsafe access to pointer "a" across `spawn´ (/tmp/tmp.ceu : 10)',
     --fin = 'line 15 : pointer access across `await´',
     --asr = ':15] runtime error: invalid tag',
     --run = 1,
@@ -37456,7 +37484,7 @@ watching *a do
 end
 escape 0;
 ]],
-    fin = 'line 13 : unsafe access to pointer "a" across `spawn´ (tests.lua : 10)',
+    fin = 'line 13 : unsafe access to pointer "a" across `spawn´ (/tmp/tmp.ceu : 10)',
     --fin = 'line 15 : pointer access across `await´',
     --run = 1,
 }
@@ -37482,7 +37510,7 @@ if a != null then
 end
 escape sum;
 ]],
-    fin = 'line 14 : unsafe access to pointer "a" across `spawn´ (tests.lua : 10)',
+    fin = 'line 14 : unsafe access to pointer "a" across `spawn´ (/tmp/tmp.ceu : 10)',
     --fin = 'line 15 : pointer access across `await´',
     --run = 1,
 }
@@ -37572,7 +37600,7 @@ if b != null then
 end
 escape sum;
 ]],
-    fin = 'line 15 : unsafe access to pointer "a" across `spawn´ (tests.lua : 12)',
+    fin = 'line 15 : unsafe access to pointer "a" across `spawn´ (/tmp/tmp.ceu : 12)',
     --asr = ':14] runtime error: invalid tag',
     --fin = 'line 19 : pointer access across `await´',
     --run = 1,
@@ -38920,7 +38948,7 @@ end;
 
 escape v;
 ]],
-    fin = 'line 11 : unsafe access to pointer "v" across `class´ (tests.lua : 7)',
+    fin = 'line 11 : unsafe access to pointer "v" across `class´ (/tmp/tmp.ceu : 7)',
     --wrn = true,
     --run = 8,
 }
@@ -38956,7 +38984,7 @@ end;
 
 escape v;
 ]],
-    fin = 'line 12 : unsafe access to pointer "v" across `class´ (tests.lua : 7)',
+    fin = 'line 12 : unsafe access to pointer "v" across `class´ (/tmp/tmp.ceu : 7)',
 }
 
     -- Await/KILL ORG
@@ -39428,7 +39456,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 10 : unsafe access to pointer "t1" across `loop´ (tests.lua : 9)',
+    fin = 'line 10 : unsafe access to pointer "t1" across `loop´ (/tmp/tmp.ceu : 9)',
     --fin = 'line 11 : unsafe access to pointer "t2" across `kill´',
 }
 
@@ -39451,7 +39479,7 @@ end
 
 escape 1;
 ]],
-    fin = ' line 11 : unsafe access to pointer "t1" across `loop´ (tests.lua : 9)',
+    fin = ' line 11 : unsafe access to pointer "t1" across `loop´ (/tmp/tmp.ceu : 9)',
 }
 
 Test { [[
@@ -39697,7 +39725,7 @@ spawn do
 end
 escape x;
 ]],
-    --ref = 'line 1 : uninitialized variable "x" crossing compound statement (tests.lua:2)',
+    --ref = 'line 1 : uninitialized variable "x" crossing compound statement (/tmp/tmp.ceu:2)',
     run = 1,
 }
 
@@ -40405,7 +40433,7 @@ escape a:v;
     --fin = 'line 10 : attribution requires `finalize´',
     --fin = 'line 12 : pointer access across `await´',
     --run = 10,
-    fin = 'line 13 : unsafe access to pointer "a" across `spawn´ (tests.lua : 9)',
+    fin = 'line 13 : unsafe access to pointer "a" across `spawn´ (/tmp/tmp.ceu : 9)',
 }
 Test { [[
 class Tx with
@@ -40460,7 +40488,7 @@ end
 await 1s;
 escape a:v;
 ]],
-    fin = 'line 13 : unsafe access to pointer "a" across `spawn´ (tests.lua : 8)'
+    fin = 'line 13 : unsafe access to pointer "a" across `spawn´ (/tmp/tmp.ceu : 8)'
 }
 
 Test { [[
@@ -40479,7 +40507,7 @@ do
 end
 escape a:v;
 ]],
-    fin = 'line 14 : unsafe access to pointer "a" across `spawn´ (tests.lua : 10)',
+    fin = 'line 14 : unsafe access to pointer "a" across `spawn´ (/tmp/tmp.ceu : 10)',
 }
 
 Test { [[
@@ -41986,7 +42014,7 @@ t!:v = 10;
 ts[0] = (t!) as void&&;
 escape t!:v + (ts[0] as Tx&&):v;
 ]],
-    fin = 'line 12 : unsafe access to pointer "ts" across `spawn´ (tests.lua : 10)',
+    fin = 'line 12 : unsafe access to pointer "ts" across `spawn´ (/tmp/tmp.ceu : 10)',
 }
 
 Test { [[
@@ -42312,9 +42340,9 @@ native _s, _V;
 
 escape _V;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed `loop´ (tests.lua:3)',
+    inits = 'line 4 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:3)',
     --run = { ['~>1min']=10 },
-    --fin = 'line 3 : unsafe access to pointer "p" across `loop´ (tests.lua : 2)',
+    --fin = 'line 3 : unsafe access to pointer "p" across `loop´ (/tmp/tmp.ceu : 2)',
 }
 
 Test { [[
@@ -43503,7 +43531,7 @@ do
 end
 escape 1;
 ]],
-    fin = 'line 8 : unsafe access to pointer "a" across `class´ (tests.lua : 5)',
+    fin = 'line 8 : unsafe access to pointer "a" across `class´ (/tmp/tmp.ceu : 5)',
     --run = 1,
 }
 Test { [[
@@ -43519,7 +43547,7 @@ end
 escape 1;
 ]],
     fin = 'line 8 : attribution to pointer with greater scope',
-    --fin = 'line 7 : unsafe access to pointer "a" across `class´ (tests.lua : 4)',
+    --fin = 'line 7 : unsafe access to pointer "a" across `class´ (/tmp/tmp.ceu : 4)',
     --fin = 'line 7 : organism pointer attribution only inside constructors',
 }
 
@@ -43578,8 +43606,8 @@ var Tx t;
 
 escape t.v;
 ]],
-    tmp = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
-    --ref = 'line 9 : invalid access to uninitialized variable "v" (declared at tests.lua:2)',
+    tmp = 'line 4 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:6)',
+    --ref = 'line 9 : invalid access to uninitialized variable "v" (declared at /tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -43597,8 +43625,8 @@ var Tx t;
 
 escape v;
 ]],
-    tmp = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
-    --ref = 'line 13 : invalid access to uninitialized variable "v" (declared at tests.lua:4)',
+    tmp = 'line 4 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:6)',
+    --ref = 'line 13 : invalid access to uninitialized variable "v" (declared at /tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -43616,7 +43644,7 @@ var Tx t;
 
 escape t.v;
 ]],
-    tmp = 'line 4 : uninitialized variable "v" crossing compound statement (tests.lua:6)',
+    tmp = 'line 4 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:6)',
     --run = 1,
 }
 
@@ -43673,7 +43701,7 @@ var int  um = 111;
 var& int vvv = &um;
 escape t.v;
 ]],
-    tmp = 'line 8 : invalid access to uninitialized variable "vvv" (declared at tests.lua:2)',
+    tmp = 'line 8 : invalid access to uninitialized variable "vvv" (declared at /tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -43975,7 +44003,7 @@ i = &&t;
 escape 10;
 ]],
     run = 10,
-    --ref = 'line 10 : uninitialized variable "i" crossing compound statement (tests.lua:11)',
+    --ref = 'line 10 : uninitialized variable "i" crossing compound statement (/tmp/tmp.ceu:11)',
 }
 
 Test { [[
@@ -45677,8 +45705,8 @@ code/instantaneous Fx (void) => int;
 code/instantaneous Fx (var int x)  => int do end
 escape 1;
 ]],
-    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:1)',
-    --env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
+    --env = 'line 2 : function declaration does not match the one at "/tmp/tmp.ceu:1"',
     wrn = true,
 }
 
@@ -45688,9 +45716,9 @@ code/instantaneous Fx (var int)  => int;
 escape 1;
 ]],
     wrn = true,
-    --env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+    --env = 'line 2 : function declaration does not match the one at "/tmp/tmp.ceu:1"',
     --dcls = 'line 2 : identifier "Fx" is already declared',
-    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:1)',
+    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -45735,7 +45763,7 @@ code/instantaneous Fx (var int a, var  u8 b) => int do
 end
 escape 1;
 ]],
-    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:1)',
+    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -46042,7 +46070,7 @@ await 1s;
 
 escape p:v;
 ]],
-    fin = 'line 16 : unsafe access to pointer "p" across `await´ (tests.lua : 14)',
+    fin = 'line 16 : unsafe access to pointer "p" across `await´ (/tmp/tmp.ceu : 14)',
 }
 
 Test { [[
@@ -46083,8 +46111,8 @@ code/instantaneous/recursive Gx (void)=>void do end
 escape 1;
 ]],
     wrn = true,
-    --env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
-    dcls = 'line 4 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:3)',
+    --env = 'line 4 : function declaration does not match the one at "/tmp/tmp.ceu:3"',
+    dcls = 'line 4 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:3)',
 }
 Test { [[
 code/instantaneous/recursive Fx (void)=>void;
@@ -46094,8 +46122,8 @@ code/instantaneous Gx      (void)=>void do end
 escape 1;
 ]],
     wrn = true,
-    --env = 'line 4 : function declaration does not match the one at "tests.lua:3"',
-    dcls = 'line 4 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:3)',
+    --env = 'line 4 : function declaration does not match the one at "/tmp/tmp.ceu:3"',
+    dcls = 'line 4 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:3)',
 }
 Test { [[
 //var int x;
@@ -46205,7 +46233,7 @@ end
 var Tx t;
 escape t.a + t.f();
 ]],
-    tmp = 'line 7 : invalid access to uninitialized variable "b" (declared at tests.lua:5)',
+    tmp = 'line 7 : invalid access to uninitialized variable "b" (declared at /tmp/tmp.ceu:5)',
 }
 Test { [[
 class Tx with
@@ -46390,7 +46418,7 @@ await OS_START;
 escape t.v + t.f(20) + t.v;
 ]],
     wrn = true,
-    tmp = 'line 8 : function declaration does not match the one at "tests.lua:3"',
+    tmp = 'line 8 : function declaration does not match the one at "/tmp/tmp.ceu:3"',
 }
 
 Test { [[
@@ -46513,7 +46541,7 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    tmp = 'line 9 : function declaration does not match the one at "tests.lua:2"',
+    tmp = 'line 9 : function declaration does not match the one at "/tmp/tmp.ceu:2"',
 }
 
 Test { [[
@@ -46539,7 +46567,7 @@ t.i = i;
 escape i:g(5);
 ]],
     --run = 120,
-    tmp = 'line 9 : function declaration does not match the one at "tests.lua:2"',
+    tmp = 'line 9 : function declaration does not match the one at "/tmp/tmp.ceu:2"',
 }
 
 Test { [[
@@ -46822,7 +46850,7 @@ end
 escape 1;
 ]],
     --run = 120,
-    tmp = 'line 9 : function declaration does not match the one at "tests.lua:2"',
+    tmp = 'line 9 : function declaration does not match the one at "/tmp/tmp.ceu:2"',
 }
 
 Test { [[
@@ -47217,7 +47245,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    tmp = 'line 5 : function declaration does not match the one at "tests.lua:3"',
+    tmp = 'line 5 : function declaration does not match the one at "/tmp/tmp.ceu:3"',
 }
 
 Test { [[
@@ -47345,7 +47373,7 @@ call i:Fx();
 
 escape 1;
 ]],
-    tmp = 'line 2 : function declaration does not match the one at "tests.lua:7"',
+    tmp = 'line 2 : function declaration does not match the one at "/tmp/tmp.ceu:7"',
     --tight = 'line 2 : function must be declared with `recursive´',
 }
 
@@ -47424,7 +47452,7 @@ call/recursive i:Fx();
 
 escape 1;
 ]],
-    tmp = 'line 2 : function declaration does not match the one at "tests.lua:7"',
+    tmp = 'line 2 : function declaration does not match the one at "/tmp/tmp.ceu:7"',
 }
 
 Test { [[
@@ -47657,8 +47685,8 @@ code/instantaneous Fx (var int v)=>int do
 end
 escape call Fx(5);
 ]],
-    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. tests.lua:1)',
-    --env = 'line 2 : function declaration does not match the one at "tests.lua:1"',
+    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
+    --env = 'line 2 : function declaration does not match the one at "/tmp/tmp.ceu:1"',
     --run = 120,
 }
 Test { [[
@@ -48208,7 +48236,7 @@ var U u;
 
 escape 1;
 ]],
-    tmp = 'line 10 : missing initialization for field "ts" (declared in tests.lua:6)',
+    tmp = 'line 10 : missing initialization for field "ts" (declared in /tmp/tmp.ceu:6)',
 }
 
 Test { [[
@@ -48228,7 +48256,7 @@ var U u;
 
 escape 1;
 ]],
-    tmp = 'line 13 : missing initialization for field "ts" (declared in tests.lua:6)',
+    tmp = 'line 13 : missing initialization for field "ts" (declared in /tmp/tmp.ceu:6)',
 }
 
 Test { [[
@@ -48527,7 +48555,7 @@ do
 end
 escape 1;
 ]],
-    tmp = 'line 5 : missing initialization for field "x" (declared in tests.lua:2)',
+    tmp = 'line 5 : missing initialization for field "x" (declared in /tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -48541,7 +48569,7 @@ do
 end
 escape 1;
 ]],
-    tmp = 'line 6 : missing initialization for field "x" (declared in tests.lua:2)',
+    tmp = 'line 6 : missing initialization for field "x" (declared in /tmp/tmp.ceu:2)',
 }
 
 Test { [[
@@ -48588,14 +48616,14 @@ end
 var Tx t;
 escape 1;
 ]],
-    tmp = 'line 5 : missing initialization for field "vvv" (declared in tests.lua:2)',
+    tmp = 'line 5 : missing initialization for field "vvv" (declared in /tmp/tmp.ceu:2)',
 }
 Test { [[
 var& int vvv;
 escape vvv;
 ]],
-    inits = 'line 1 : uninitialized variable "vvv" : reached read access (tests.lua:2)',
-    --ref = 'line 2 : invalid access to uninitialized variable "vvv" (declared at tests.lua:1)',
+    inits = 'line 1 : uninitialized variable "vvv" : reached read access (/tmp/tmp.ceu:2)',
+    --ref = 'line 2 : invalid access to uninitialized variable "vvv" (declared at /tmp/tmp.ceu:1)',
 }
 Test { [[
 class TimeDisplay with
@@ -48790,7 +48818,7 @@ end
     end
 escape 1;
 ]],
-    inits = 'line 8 : uninitialized variable "intro_story_str" : reached read access (tests.lua:9)',
+    inits = 'line 8 : uninitialized variable "intro_story_str" : reached read access (/tmp/tmp.ceu:9)',
     wrn = true,
     --run = 1,
 }
@@ -48868,9 +48896,9 @@ i:v = i:v * 3;
 
 escape t.v;
 ]],
-    tmp = 'tests.lua : line 13 : invalid access to uninitialized variable "v" (declared at tests.lua:11)',
+    tmp = '/tmp/tmp.ceu : line 13 : invalid access to uninitialized variable "v" (declared at /tmp/tmp.ceu:11)',
     --run = 1,
-    --ref = 'line 11 : uninitialized variable "v" crossing compound statement (tests.lua:12)',
+    --ref = 'line 11 : uninitialized variable "v" crossing compound statement (/tmp/tmp.ceu:12)',
 }
 
 Test { [[
@@ -49062,7 +49090,7 @@ await 1s;
 var Tx&& p = ts[0];
 escape p == &&t;
 ]],
-    fin = 'line 8 : unsafe access to pointer "ts" across `await´ (tests.lua : 7)',
+    fin = 'line 8 : unsafe access to pointer "ts" across `await´ (/tmp/tmp.ceu : 7)',
 }
 
 Test { [[
@@ -49447,7 +49475,7 @@ var U&& u = us[0];
 
 escape u==null;
 ]],
-    fin = 'line 16 : unsafe access to pointer "us" across `await´ (tests.lua : 14)',
+    fin = 'line 16 : unsafe access to pointer "us" across `await´ (/tmp/tmp.ceu : 14)',
 }
 Test { [[
 class U with do end;
@@ -49972,7 +50000,7 @@ var int&& v = null;
     end
     await FOREVER;
 ]],
-    inits = 'line 22 : invalid pointer access : crossed `async/isr´ (tests.lua:22)',
+    inits = 'line 22 : invalid pointer access : crossed `async/isr´ (/tmp/tmp.ceu:22)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
     --run = 1,
 }
@@ -49988,7 +50016,7 @@ with
 end
 escape 1;
 ]],
-    inits = 'line 23 : invalid pointer access : crossed `par/or´ (tests.lua:22)',
+    inits = 'line 23 : invalid pointer access : crossed `par/or´ (/tmp/tmp.ceu:22)',
     --isr = 'line 4 : pointer access breaks the static check for `atomic´ sections',
     --run = 1,
 }
@@ -50320,7 +50348,7 @@ end
 escape 1;
 ]],
     --_ana = {acc=1},
-    acc = 'line 8 : access to symbol "_digitalWrite" must be atomic (vs symbol `_digitalRead´ (tests.lua:4))',
+    acc = 'line 8 : access to symbol "_digitalWrite" must be atomic (vs symbol `_digitalRead´ (/tmp/tmp.ceu:4))',
     run = 1,
 }
 
@@ -50370,7 +50398,7 @@ with
 end
 escape 1;
 ]],
-    acc = 'line 9 : access to symbol "i" must be atomic (vs variable/event `i´ (tests.lua:5))',
+    acc = 'line 9 : access to symbol "i" must be atomic (vs variable/event `i´ (/tmp/tmp.ceu:5))',
 }
 
 Test { [[
@@ -50432,7 +50460,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    fin = 'line 15 : unsafe access to pointer "ui" across `class´ (tests.lua : 9)',
+    fin = 'line 15 : unsafe access to pointer "ui" across `class´ (/tmp/tmp.ceu : 9)',
 }
 
 -- POOLS / 1ST-CLASS
@@ -50501,7 +50529,7 @@ i:vs[0] = 1;
 
 escape 1;
 ]],
-    tmp = 'line 21 : missing initialization for field "vs" (declared in tests.lua:4)',
+    tmp = 'line 21 : missing initialization for field "vs" (declared in /tmp/tmp.ceu:4)',
 }
 
 Test { [[
@@ -51281,7 +51309,7 @@ do
 end
 escape 1;
 ]],
-    tmp = 'line 7 : invalid access to uninitialized variable "v" (declared at tests.lua:5)',
+    tmp = 'line 7 : invalid access to uninitialized variable "v" (declared at /tmp/tmp.ceu:5)',
 }
 
 Test { [[
@@ -53697,7 +53725,7 @@ var int ret = t0:id;
 
 escape ret;
 ]],
-    fin = 'line 14 : unsafe access to pointer "t0" across `loop´ (tests.lua : 10)',
+    fin = 'line 14 : unsafe access to pointer "t0" across `loop´ (/tmp/tmp.ceu : 10)',
     --run = 9999,
 }
 
@@ -54713,7 +54741,7 @@ var int i = 10;
 escape i;
 ]],
     tmp = 'line 4 : top-level identifier "Tx" already taken',
-    --env = 'tests.lua : line 4 : interface/class "Tx" is already declared',
+    --env = '/tmp/tmp.ceu : line 4 : interface/class "Tx" is already declared',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -55297,7 +55325,7 @@ end
 var Tx t;
 escape t.i;
 ]],
-    tmp = 'line 6 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --mode = 'line 7 : cannot read field with mode `input´',
 }
 
@@ -55588,7 +55616,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    tmp = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "io" (declared in /tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -55601,7 +55629,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -55640,7 +55668,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    tmp = 'line 7 : missing initialization for field "i" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -55653,7 +55681,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    tmp = 'line 7 : missing initialization for field "io" (declared in tests.lua:3)',
+    tmp = 'line 7 : missing initialization for field "io" (declared in /tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -55664,7 +55692,7 @@ do
 end
 escape 1;
 ]],
-    tmp = 'line 3 : uninitialized variable "o" crossing compound statement (tests.lua:1)',
+    tmp = 'line 3 : uninitialized variable "o" crossing compound statement (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -55675,7 +55703,7 @@ do
 end
 escape 1;
 ]],
-    tmp = 'line 3 : uninitialized variable "oi" crossing compound statement (tests.lua:1)',
+    tmp = 'line 3 : uninitialized variable "oi" crossing compound statement (/tmp/tmp.ceu:1)',
 }
 
 Test { [[
@@ -55784,7 +55812,7 @@ var Tx t with
 end;
 escape 1;
 ]],
-    tmp = 'line 6 : invalid access to uninitialized variable "i" (declared at tests.lua:2)',
+    tmp = 'line 6 : invalid access to uninitialized variable "i" (declared at /tmp/tmp.ceu:2)',
     --mode = ' line 6 : cannot read field inside the constructor',
 }
 
@@ -57156,8 +57184,8 @@ data Tx with
 end
 escape 1;
 ]],
-    dcls = 'line 4 : declaration of "Tx" hides previous declaration (tests.lua : line 1)',
-    --dcls = 'line 4 : identifier "Tx" is already declared (tests.lua : line 1)',
+    dcls = 'line 4 : declaration of "Tx" hides previous declaration (/tmp/tmp.ceu : line 1)',
+    --dcls = 'line 4 : identifier "Tx" is already declared (/tmp/tmp.ceu : line 1)',
 }
 Test { [[
 class Tx with
@@ -57320,8 +57348,8 @@ data Opt1.Nothing;
 escape 1;
 ]],
     wrn = true,
-    --dcls = 'line 5 : identifier "Nothing" is already declared (tests.lua : line 2)',
-    --dcls = 'line 5 : declaration of "Nothing" hides previous declaration (tests.lua : line 2)',
+    --dcls = 'line 5 : identifier "Nothing" is already declared (/tmp/tmp.ceu : line 2)',
+    --dcls = 'line 5 : declaration of "Nothing" hides previous declaration (/tmp/tmp.ceu : line 2)',
 }
 
 -->>> DATA/EVENTS
@@ -57367,8 +57395,8 @@ var SDL_Rect r = rect;
 
 escape r.x+r.y+r.w+r.h;
 ]],
-    inits = 'line 5 : uninitialized variable "rect" : reached read access (tests.lua:6)',
-    --ref = 'line 6 : invalid access to uninitialized variable "rect" (declared at tests.lua:5)',
+    inits = 'line 5 : uninitialized variable "rect" : reached read access (/tmp/tmp.ceu:6)',
+    --ref = 'line 6 : invalid access to uninitialized variable "rect" (declared at /tmp/tmp.ceu:5)',
 }
 Test { [[
 data SDL_Rect with
@@ -57663,7 +57691,7 @@ end
 pool[10] List lll = new List.Cons(1, List.Nil());
 escape lll.head;
 ]],
-    names = 'line 15 : invalid member access : "lll" has no member "head" : `data´ "List" (tests.lua:7)',
+    names = 'line 15 : invalid member access : "lll" has no member "head" : `data´ "List" (/tmp/tmp.ceu:7)',
     --env = 'TODO: no head in lll',
 }
 
@@ -57876,8 +57904,8 @@ d = val Dx(1);
 
 escape t.v;
 ]],
-    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (tests.lua:12)',
-    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at tests.lua:11)',
+    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
+    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
 }
 
 Test { [[
@@ -57898,8 +57926,8 @@ end;
 
 escape 1;
 ]],
-    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (tests.lua:12)',
-    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at tests.lua:11)',
+    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
+    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
 }
 
 Test { [[
@@ -57982,8 +58010,8 @@ escape 1;//e.Xx.d.x;
     wrn = true,
     --stmts = 'line 14 : invalid binding : expected declaration with `&´',
     stmts = 'line 14 : invalid binding : unexpected context for operator `.´',
-    --inits = 'line 11 : uninitialized variable "e" : reached read access (tests.lua:14)',
-    --ref = 'line 11 : uninitialized variable "e" crossing compound statement (tests.lua:14)',
+    --inits = 'line 11 : uninitialized variable "e" : reached read access (/tmp/tmp.ceu:14)',
+    --ref = 'line 11 : uninitialized variable "e" crossing compound statement (/tmp/tmp.ceu:14)',
 }
 Test { [[
 data Dx with
@@ -58194,7 +58222,7 @@ end;
 
 escape v;
 ]],
-    fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
+    fin = 'line 29 : unsafe access to pointer "v" across `class´ (/tmp/tmp.ceu : 22)',
 }
 
 Test { [[
@@ -58280,7 +58308,7 @@ end
 escape v1.v+v2.v+v3.v;
 ]],
     scopes = 'line 10 : invalid binding : incompatible scopes',
-    --inits = 'line 7 : uninitialized variable "v2" crossing compound statement (tests.lua:8)',
+    --inits = 'line 7 : uninitialized variable "v2" crossing compound statement (/tmp/tmp.ceu:8)',
     --ref = 'line 10 : attribution to reference with greater scope',
     --ref = 'line 10 : invalid attribution : variable "v2_" has narrower scope than its destination',
     --run = 6,
@@ -58902,7 +58930,7 @@ pool[] List l;
 escape (l as List.Nil).v;
 ]],
     wrn = true,
-    names = 'line 52 : invalid member access : "l" has no member "v" : `data´ "List.Nil" (tests.lua:16)',
+    names = 'line 52 : invalid member access : "l" has no member "v" : `data´ "List.Nil" (/tmp/tmp.ceu:16)',
     --env = 'line 52 : field "v" is not declared',
 }
 -- tag Opt.Ptr has no field "x"
@@ -58911,7 +58939,7 @@ var Opt o;
 escape (o as Opt.Ptr).x;
 ]],
     wrn = true,
-    names = 'line 52 : invalid member access : "o" has no member "x" : `data´ "Opt.Ptr" (tests.lua:10)',
+    names = 'line 52 : invalid member access : "o" has no member "x" : `data´ "Opt.Ptr" (/tmp/tmp.ceu:10)',
 }
 
 -- mixes Pair/Opt/List and also construcor/tag-check/destructor
@@ -59076,7 +59104,7 @@ end
 ]],
     wrn = true,
     --adt = 'line 52 : mutation : cannot mix data sources',
-    inits = 'line 55 : invalid pointer access : crossed `await´ (tests.lua:54)',
+    inits = 'line 55 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:54)',
     --fin = 'line 54 : unsafe access to pointer "p" across `await´',
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
@@ -59088,7 +59116,7 @@ escape (*p as List.Cons).head;
 ]],
     wrn = true,
     --adt = 'line 52 : mutation : cannot mix data sources',
-    inits = 'line 54 : invalid pointer access : crossed `await´ (tests.lua:53)',
+    inits = 'line 54 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:53)',
     --fin = 'line 54 : unsafe access to pointer "p" across `await´',
     --adt = 'line 52 : invalid attribution : value is not a reference',
 }
@@ -59100,7 +59128,7 @@ escape (*p as List.Cons).head;
 ]],
     wrn = true,
     --adt = 'line 52 : cannot mix recursive data sources',
-    inits = 'line 54 : invalid pointer access : crossed `await´ (tests.lua:53)',
+    inits = 'line 54 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:53)',
     --fin = 'line 54 : unsafe access to pointer "p" across `await´',
 }
 
@@ -59786,7 +59814,7 @@ var int v = 10;
 var& int? i;
 escape (not i?) as int;
 ]],
-    inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:3)',
     --ref = 'line 3 : reference must be bounded before use',
     run = 1,
 }
@@ -59796,7 +59824,7 @@ var int v = 10;
 var& int? i;
 escape (not i?) as int;
 ]],
-    inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:3)',
     --run = 1,
 }
 
@@ -59805,7 +59833,7 @@ var int v = 10;
 var& int? i;
 escape (not i?) as int;
 ]],
-    inits = 'line 2 : uninitialized variable "i" : reached read access (tests.lua:3)',
+    inits = 'line 2 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:3)',
     --run = 1,
 }
 
@@ -59844,7 +59872,7 @@ var& int? i = &v1;
 i = &v2;
 escape v1;
 ]],
-    inits = 'line 4 : invalid binding : variable "i" is already bound (tests.lua:3)',
+    inits = 'line 4 : invalid binding : variable "i" is already bound (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
     --ref = 'line 4 : invalid attribution : l-value already bounded',
 }
@@ -60002,7 +60030,7 @@ escape 1;
 ]],
     wrn = true,
     --gcc = 'error: unknown type name ‘SDL_Texture’',
-    inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (tests.lua:9)',
+    inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
@@ -60393,7 +60421,7 @@ escape (i! as int);
 Test { [[
 escape 1?;
 ]],
-    parser = 'ERR : tests.lua : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
+    parser = 'ERR : /tmp/tmp.ceu : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
 }
 Test { [[
 var int i;
@@ -60437,7 +60465,7 @@ escape 1;
 ]],
     wrn = true,
     --run = 1,
-    inits = 'line 1 : uninitialized variable "v" : reached `escape´ (tests.lua:2)',
+    inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:2)',
     --env = 'line 1 : invalid type modifier : `?&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
@@ -60917,7 +60945,7 @@ list = new List.Nil();
 escape ((*l1 is List.Cons) as int)+((l2 is List.Cons) as int)+((list is List.Cons) as int)+1;
 ]],
     --run = 1,
-    fin = 'line 19 : unsafe access to pointer "l1" across `assignment´ (tests.lua : 17)',
+    fin = 'line 19 : unsafe access to pointer "l1" across `assignment´ (/tmp/tmp.ceu : 17)',
 }
 
 -- mutation in the root of &&
@@ -61298,7 +61326,7 @@ frames = [] .. frames .. [f1];
 escape frames[0].bytes[0];
 ]],
     run = 5,
-    --ref = 'line 8 : invalid access to uninitialized variable "f1" (declared at tests.lua:6)'
+    --ref = 'line 8 : invalid access to uninitialized variable "f1" (declared at /tmp/tmp.ceu:6)'
 }
 
 Test { [[
@@ -61611,9 +61639,9 @@ end
 escape 1;
 ]],
     wrn = true,
-    --ref = 'line 10 : invalid access to uninitialized variable "n" (declared at tests.lua:8)',
+    --ref = 'line 10 : invalid access to uninitialized variable "n" (declared at /tmp/tmp.ceu:8)',
     --run = 1,
-    inits = 'line 6 : uninitialized variable "n" : reached `await´ (tests.lua:8)',
+    inits = 'line 6 : uninitialized variable "n" : reached `await´ (/tmp/tmp.ceu:8)',
 }
 Test { [[
 data Tree;
@@ -61880,7 +61908,7 @@ end;
 
 escape 1;
 ]],
-    fin = 'line 20 : unsafe access to pointer "n" across `await´ (tests.lua : 19)',
+    fin = 'line 20 : unsafe access to pointer "n" across `await´ (/tmp/tmp.ceu : 19)',
 }
 Test { [[
 data List;
@@ -61921,7 +61949,7 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
-    --fin = 'line 19 : unsafe access to pointer "n" across `class´ (tests.lua : 15)',
+    --fin = 'line 19 : unsafe access to pointer "n" across `class´ (/tmp/tmp.ceu : 15)',
 }
 Test { [[
 data List;
@@ -61976,7 +62004,7 @@ end
 
 escape sum;
 ]],
-    fin = 'line 22 : unsafe access to pointer "n" across `await´ (tests.lua : 21)',
+    fin = 'line 22 : unsafe access to pointer "n" across `await´ (/tmp/tmp.ceu : 21)',
 }
 Test { [[
 data List;
@@ -62004,7 +62032,7 @@ end
 
 escape sum;
 ]],
-    fin = 'line 20 : unsafe access to pointer "n" across `await´ (tests.lua : 19)',
+    fin = 'line 20 : unsafe access to pointer "n" across `await´ (/tmp/tmp.ceu : 19)',
 }
 Test { [[
 data List;
@@ -62094,7 +62122,7 @@ end
 
 escape sum;
 ]],
-    fin = 'line 21 : unsafe access to pointer "n" across `await´ (tests.lua : 20)',
+    fin = 'line 21 : unsafe access to pointer "n" across `await´ (/tmp/tmp.ceu : 20)',
 }
 Test { [[
 data List;
@@ -62157,7 +62185,7 @@ end
 
 escape v;
 ]],
-    fin = 'line 23 : unsafe access to pointer "t" across `spawn´ (tests.lua : 22)',
+    fin = 'line 23 : unsafe access to pointer "t" across `spawn´ (/tmp/tmp.ceu : 22)',
     --run = 7,
 }
 
@@ -62502,7 +62530,7 @@ end
 escape sum;
 ]],
     --run = { ['~>10s'] = 10 },
-    fin = 'line 21 : unsafe access to pointer "n" across `await´ (tests.lua : 20)',
+    fin = 'line 21 : unsafe access to pointer "n" across `await´ (/tmp/tmp.ceu : 20)',
 }
 
 Test { [[
@@ -62764,7 +62792,7 @@ end
 
 escape 1;
 ]],
-    --fin = 'line 15 : unsafe access to pointer "p1" across `class´ (tests.lua : 14)',
+    --fin = 'line 15 : unsafe access to pointer "p1" across `class´ (/tmp/tmp.ceu : 14)',
     gcc = '12:5: error: cannot convert to a pointer type',
     wrn = true,
     run = 1,
@@ -62791,7 +62819,7 @@ end
 
 escape 1;
 ]],
-    --fin = 'line 15 : unsafe access to pointer "p1" across `class´ (tests.lua : 14)',
+    --fin = 'line 15 : unsafe access to pointer "p1" across `class´ (/tmp/tmp.ceu : 14)',
     wrn = true,
     run = 1,
 }
@@ -63012,7 +63040,7 @@ end
 
 escape sum;
 ]],
-    fin = 'line 19 : unsafe access to pointer "n" across `await´ (tests.lua : 18)',
+    fin = 'line 19 : unsafe access to pointer "n" across `await´ (/tmp/tmp.ceu : 18)',
 }
 
 Test { [[
@@ -63122,7 +63150,7 @@ end
 
 escape sum;
 ]],
-    fin = 'line 22 : unsafe access to pointer "n" across `loop´ (tests.lua : 21)',
+    fin = 'line 22 : unsafe access to pointer "n" across `loop´ (/tmp/tmp.ceu : 21)',
 }
 Test { [[
 data List;
@@ -64917,7 +64945,7 @@ end
 
 escape 1;
 ]],
-    fin = 'line 11 : unsafe access to pointer "p" across `class´ (tests.lua : 8)',
+    fin = 'line 11 : unsafe access to pointer "p" across `class´ (/tmp/tmp.ceu : 8)',
     --run = 1,
 }
 
@@ -65384,8 +65412,8 @@ data Xx;
 
 escape 1;
 ]],
-    dcls = 'line 3 : declaration of "Xx.Nil" hides previous declaration (tests.lua : line 2)',
-    --dcls = 'line 3 : identifier "Nil" is already declared (tests.lua : line 2)',
+    dcls = 'line 3 : declaration of "Xx.Nil" hides previous declaration (/tmp/tmp.ceu : line 2)',
+    --dcls = 'line 3 : identifier "Nil" is already declared (/tmp/tmp.ceu : line 2)',
     --env = 'line 4 : duplicated data : "Nil"',
 }
 
@@ -65409,8 +65437,8 @@ escape 1;
     wrn = true,
     --run = 1,
     --env = 'line 13 : duplicated data : "Nothing"',
-    --dcls = 'line 9 : declaration of "Command.Nothing" hides previous declaration (tests.lua : line 2)',
-    --dcls = 'line 9 : identifier "Nothing" is already declared (tests.lua : line 2)',
+    --dcls = 'line 9 : declaration of "Command.Nothing" hides previous declaration (/tmp/tmp.ceu : line 2)',
+    --dcls = 'line 9 : identifier "Nothing" is already declared (/tmp/tmp.ceu : line 2)',
 }
 
 Test { [[
@@ -65500,8 +65528,8 @@ pool&[] Command cmds2;
 escape 1;
 ]],
     wrn = true,
-    --ref = 'line 10 : uninitialized variable "cmds2" crossing compound statement (tests.lua:1)',
-    inits = 'line 8 : uninitialized pool "cmds2" : reached `escape´ (tests.lua:9)',
+    --ref = 'line 10 : uninitialized variable "cmds2" crossing compound statement (/tmp/tmp.ceu:1)',
+    inits = 'line 8 : uninitialized pool "cmds2" : reached `escape´ (/tmp/tmp.ceu:9)',
 }
 Test { [[
 data Command;
@@ -67857,7 +67885,7 @@ end;
 escape v;
 ]],
     todo = 'bug',
-    fin = 'line 29 : unsafe access to pointer "v" across `class´ (tests.lua : 22)',
+    fin = 'line 29 : unsafe access to pointer "v" across `class´ (/tmp/tmp.ceu : 22)',
 }
 Test { [[
 data List;
