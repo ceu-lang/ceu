@@ -19,11 +19,45 @@ dofile 'scopes.lua' ; DBG,ASR = DBG1,ASR1
 
 --ceu
 if CEU.opts.ceu then
-        local f = ASR(io.open(CEU.opts.ceu_output,'w'))
-        f:write([[
-#define CEU_OK
-]])
-        f:close()
+    local function SUB (str, from, to)
+        assert(to, from)
+        local i,e = string.find(str, from, 1, true)
+        if i then
+            return SUB(string.sub(str,1,i-1) .. to .. string.sub(str,e+1),
+                       from, to)
+        else
+            return str
+        end
+    end
+
+    local h = ASR(io.open(CEU.opts.ceu_output_h,'w'))
+    local c = ASR(io.open(CEU.opts.ceu_output_c,'w'))
+
+    -- TEMPLATE.H
+    do
+        local H = '\n\n/* CEU_TEMPLATE_H */\n\n'
+        H = H..PAK.files.template_h
+        H = SUB(H, '#include "ceu_sys.h"',  PAK.files.ceu_sys_h)
+        H = SUB(H, '=== DEFS_H ===',
+             string.upper(string.gsub(CEU.opts.ceu_output_h,'[./]','_')))
+        h:write(H)
+        c:write(H)
+    end
+
+    -- TEMPLATE.C
+    do
+        local C = '\n\n/* CEU_TEMPLATE_C */\n\n'
+        C = C..PAK.files.template_c
+        c:write(C)
+    end
+
+c:write[[
+typedef struct CEU_Main {
+} CEU_Main;
+]]
+
+    h:close()
+    c:close()
 end
 
 --env

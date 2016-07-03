@@ -66,9 +66,10 @@ Test = function (t)
     CEU = {
         arg  = {},
         opts = T.opts or {
-            ceu        = true,
-            ceu_input  = '/tmp/tmp.ceu',
-            ceu_output = '/tmp/tmp.c',
+            ceu          = true,
+            ceu_input    = '/tmp/tmp.ceu',
+            ceu_output_h = '/tmp/tmp.h',
+            ceu_output_c = '/tmp/tmp.c',
         }
     }
     if T.opts_pre then

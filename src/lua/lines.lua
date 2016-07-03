@@ -35,6 +35,6 @@ local dir_lins = m.Cmt( m.P'#' *SS* m.P'line'^-1
 patt = (line + dir_lins + 1)^0
 
 local f = ASR(io.open(CEU.opts.ceu_input))
-CEU.source = '\n#line 1 "'..FILE..'"\n'..f:read'*a'..'\n'
+CEU.source = '\n#line 1 "'..FILE..'"'..'\n'..f:read'*a'..'\n'
 f:close()
 patt:match(CEU.source)

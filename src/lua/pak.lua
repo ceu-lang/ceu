@@ -48,29 +48,6 @@ subst 'stmts.lua'
 subst 'inits.lua'
 subst 'scopes.lua'
 
---[=[
-fin = [[
-FILES = {
-    template_h =
-        [====[]]..'\n'..assert(io.open'../c/template.h'):read'*a'..[[]====],
-    template_c =
-        [====[]]..'\n'..assert(io.open'../c/template.c'):read'*a'..[[]====],
-    ceu_sys_h =
-        [====[]]..'\n'..assert(io.open'../c/ceu_sys.h'):read'*a'..[[]====],
-    ceu_sys_c =
-        [====[]]..'\n'..assert(io.open'../c/ceu_sys.c'):read'*a'..[[]====],
-    ceu_pool_h =
-        [====[]]..'\n'..assert(io.open'../c/ceu_pool.h'):read'*a'..[[]====],
-    ceu_pool_c =
-        [====[]]..'\n'..assert(io.open'../c/ceu_pool.c'):read'*a'..[[]====],
-    ceu_vector_h =
-        [====[]]..'\n'..assert(io.open'../c/ceu_vector.h'):read'*a'..[[]====],
-    ceu_vector_c =
-        [====[]]..'\n'..assert(io.open'../c/ceu_vector.c'):read'*a'..[[]====],
-}
-]]..fin
-]=]
-
 fout:write([=[
 #!/usr/bin/env ]=]..LUA_EXE..[=[
 
@@ -105,11 +82,30 @@ SOFTWARE.
 --
 --]]
 
-LUA_EXE = ']=]..LUA_EXE..[=['
-CEU_VER = ']=]..CEU_VER..[=['
-CEU_GIT = ']=]..CEU_GIT..[=['
-
-]=] .. fin)
+PAK = {
+    lua_exe = ']=]..LUA_EXE..[=[',
+    ceu_ver = ']=]..CEU_VER..[=[',
+    ceu_git = ']=]..CEU_GIT..[=[',
+    files = {
+        template_h =
+            [====[]=]..'\n'..assert(io.open'../c/template.h'):read'*a'..[=[]====],
+        template_c =
+            [====[]=]..'\n'..assert(io.open'../c/template.c'):read'*a'..[=[]====],
+        ceu_sys_h =
+            [====[]=]..'\n'..assert(io.open'../c/ceu_sys.h'):read'*a'..[=[]====],
+        ceu_sys_c =
+            [====[]=]..'\n'..assert(io.open'../c/ceu_sys.c'):read'*a'..[=[]====],
+        ceu_pool_h =
+            [====[]=]..'\n'..assert(io.open'../c/ceu_pool.h'):read'*a'..[=[]====],
+        ceu_pool_c =
+            [====[]=]..'\n'..assert(io.open'../c/ceu_pool.c'):read'*a'..[=[]====],
+        ceu_vector_h =
+            [====[]=]..'\n'..assert(io.open'../c/ceu_vector.h'):read'*a'..[=[]====],
+        ceu_vector_c =
+            [====[]=]..'\n'..assert(io.open'../c/ceu_vector.c'):read'*a'..[=[]====],
+    }
+}
+]=]..fin)
 
 fout:close()
 os.execute('chmod +x ceu')

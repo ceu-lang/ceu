@@ -1,11 +1,13 @@
-CEU_VER = CEU_VER or '?'
-CEU_GIT = CEU_GIT or '?'
+PAK = PAK or {
+    ceu_ver = '?',
+    ceu_git = '?',
+}
 
 if not RUNTESTS then
     CEU = {}
 
     local help = [[
-ceu ]]..CEU_VER..' ('..CEU_GIT..[[)
+ceu ]]..PAK.ceu_ver..' ('..PAK.ceu_git..[[)
 
 Usage: ceu [<options>] <file>...
 
@@ -22,7 +24,8 @@ Options:
 
     --ceu               Céu phase: compiles Céu into C
     --ceu-input=FILE        input file to compile (Céu source)
-    --ceu-output=FILE       output file to generate (C source)
+    --ceu-output-h=FILE      output header file to generate (C source)
+    --ceu-output-c=FILE      output source file to generate (C source)
 
     --env               Environment phase: packs all C files together
     --env-header=FILE       header file with declarations (C source)
@@ -35,6 +38,8 @@ Options:
     --cc-args=ARGS          compiler arguments
     --cc-input=FILE         input file to compile (C source)
     --cc-output=FILE        output file to generate (binary)
+
+    --no-line-directives    do not insert `#line´ directives in the C output
 
   -b                       a short option with no long option
       --long               a long option with no short option
@@ -93,8 +98,9 @@ else
 end
 
 if CEU.opts.ceu then
-    ASR(CEU.opts.ceu_input,  'ceu_input')
-    ASR(CEU.opts.ceu_output, 'ceu_output')
+    ASR(CEU.opts.ceu_input,    'ceu_input')
+    ASR(CEU.opts.ceu_output_h, 'ceu_output_h')
+    ASR(CEU.opts.ceu_output_c, 'ceu_output_c')
 else
     check_no('ceu')
 end
