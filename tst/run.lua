@@ -1,7 +1,7 @@
 #!/usr/bin/env lua5.3
 
 RUNTESTS = {
-    --luacov = 'lua5.3 -lluacov'
+    luacov = 'lua5.3 -lluacov'
 -- Execution option for the tests:
 --VALGRIND = true
 --REENTRANT = true
