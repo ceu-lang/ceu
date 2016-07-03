@@ -110,14 +110,16 @@ Test = function (t)
     dofile 'cmd.lua'
 
     if CEU.opts.pre then
-        if not check('pre')  then return end
+        if not check('pre') then return end
     end
     if not CEU.opts.ceu then return end
-    if not check('lines')    then return end
+
+    dofile 'lines.lua'
     local _WRN = WRN
     if (not t.wrn) and (not t._ana) then
         WRN = ASR
     end
+
     if not check('parser')   then return end
     --dofile 'ast.lua'
     if not check('ast')      then return end
