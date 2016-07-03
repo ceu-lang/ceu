@@ -110,6 +110,9 @@ else
     check_no('env')
 end
 
-if not CEU.opts.c then
+if CEU.opts.c then
+    CEU.opts.c_exe  = CEU.opts.c_exe  or 'gcc'
+    CEU.opts.c_args = CEU.opts.c_args or ''
+else
     check_no('c')
 end
