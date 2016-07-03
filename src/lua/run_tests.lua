@@ -108,10 +108,12 @@ Test = function (t)
     STATS.count = STATS.count   + 1
 
     dofile 'cmd.lua'
-    if not check('lines')    then return end
 
+    if CEU.opts.pre then
+        if not check('pre')  then return end
+    end
     if not CEU.opts.ceu then return end
-
+    if not check('lines')    then return end
     local _WRN = WRN
     if (not t.wrn) and (not t._ana) then
         WRN = ASR

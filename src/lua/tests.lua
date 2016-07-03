@@ -8,35 +8,9 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-#if 0
-escape 0;
-#else
-escape 1;
-#endif
-]],
-    opts = {
-        pre        = true,
-        pre_input  = '/tmp/tmp.ceu',
-        pre_output = '/tmp/tmp.ceu.cpp',
-    },
-    run = 1,
-}
-
-Test { [[
-#oiii
-escape 0;
-]],
-    opts = {
-        pre        = true,
-        pre_input  = '/tmp/tmp.ceu',
-        pre_output = '/tmp/tmp.ceu.cpp',
-    },
-    lines = '1:2: error: invalid preprocessing directive #oiii',
-}
-
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35486,7 +35460,7 @@ vector[N+1] Tx ts;
 escape _V;
 ]],
     opts_pre = true,
-    lines = 'error oi',
+    pre = 'error oi',
 }
 
 Test { [[
@@ -54544,7 +54518,34 @@ escape 1;
     stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int,int,int)"',
 }
 
--- INCLUDE
+-->>> INCLUDE/PRE
+
+Test { [[
+#if 0
+escape 0;
+#else
+escape 1;
+#endif
+]],
+    opts = {
+        pre        = true,
+        pre_input  = '/tmp/tmp.ceu',
+        pre_output = '/tmp/tmp.ceu.cpp',
+    },
+    run = 1,
+}
+
+Test { [[
+#oiii
+escape 0;
+]],
+    opts = {
+        pre        = true,
+        pre_input  = '/tmp/tmp.ceu',
+        pre_output = '/tmp/tmp.ceu.cpp',
+    },
+    pre = '1:2: error: invalid preprocessing directive #oiii',
+}
 
 Test { [[
 native do
@@ -54556,13 +54557,12 @@ escape 1;
     run = 1,
 }
 
---]===]
 Test { [[
 #include
 escape 1;
 ]],
     opts_pre = true,
-    lines = 'error: #include expects "FILENAME" or <FILENAME>',
+    pre = 'error: #include expects "FILENAME" or <FILENAME>',
 }
 
 Test { [[
@@ -54573,7 +54573,7 @@ Test { [[
 escape 1;
 ]],
     opts_pre = true,
-    lines = 'fatal error: MOD1: No such file or directory',
+    pre = 'fatal error: MOD1: No such file or directory',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
