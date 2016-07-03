@@ -22,25 +22,6 @@ os.execute('mkdir -p '..OUT_DIR)
 unpack     = unpack     or table.unpack
 loadstring = loadstring or load
 
-function DBG (...)
-    local t = {}
-    for i=1, select('#',...) do
-        t[#t+1] = tostring( select(i,...) )
-    end
-    if #t == 0 then
-        t = { [1]=debug.traceback() }
-    end
-    io.stderr:write(table.concat(t,'\t')..'\n')
-end
-
-function ASR (cond, msg)
-    if cond then
-        return cond
-    end
-    DBG(msg)
-    os.exit(1)
-end
-
 math.randomseed(os.time())
 T = nil
 
@@ -107,12 +88,15 @@ Test = function (t)
 
     STATS.count = STATS.count   + 1
 
+    dofile 'dbg.lua'
+    DBG,ASR = DBG1,ASR1
     dofile 'cmd.lua'
 
     if CEU.opts.pre then
         if not check('pre') then return end
     end
     if not CEU.opts.ceu then return end
+    DBG,ASR = DBG2,ASR2
 
     dofile 'lines.lua'
     local _WRN = WRN
@@ -133,11 +117,17 @@ Test = function (t)
     if not check('inits')    then return end
     if not check('scopes')   then return end
 
+do return end
+    DBG,ASR = DBG1,ASR1
     do
-        local ceu = './ceu --ceu --ceu-input=/tmp/tmp.ceu --ceu-output=/tmp/tmp.c'
+        local ceu = './ceu --ceu --ceu-input='..CEU.opts.ceu_input..
+                                '--ceu-output='..CEU.opts.ceu_output..
+                          '--c   --c-input='..CEU.opts.c_input..
+                                '--c-output='..CEU.opts.c_output
         if RUNTESTS.luacov then
             ceu = RUNTESTS.luacov..' '..ceu
         end
+        local gcc = 'gcc -o '..OUT_DIR..'/ceu.exe -I'..ARCH..' '..main..' 2>&1'
 
         --local exec_ceu = os.execute(local ceu)
         --assert(exec_ceu==0 or exec_ceu==true)
