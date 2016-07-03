@@ -39,28 +39,6 @@ if CEU.opts.ceu then
     -- CEU_SYS.C
     C:write('\n\n/* CEU_SYS_C */\n\n'..PAK.files.ceu_sys_c)
 
-    -- TEMPLATE.H
-    do
-        local h = '\n\n/* CEU_TEMPLATE_H */\n\n'
-        h = h..PAK.files.template_h
-        h = SUB(h, '=== DEFS_H ===',
-             string.upper(string.gsub(CEU.opts.ceu_output_h,'[./]','_')))
-        H:write(h)
-        C:write(h)
-    end
-
-    -- TEMPLATE.C
-    do
-        local c = '\n\n/* CEU_TEMPLATE_C */\n\n'
-        c = c..PAK.files.template_c
-        C:write(c)
-    end
-
-    C:write[[
-typedef struct CEU_Main {
-} CEU_Main;
-]]
-
     H:close()
     C:close()
 end
