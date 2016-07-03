@@ -37,7 +37,6 @@ escape 0;
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -25617,6 +25616,7 @@ Test { [[
 vector[HASH_BYTES+sizeof(u32)] byte bs;
 escape ($$bs) as int;
 ]],
+    opts_pre = true,
     run = 36,
 }
 
@@ -27750,6 +27750,7 @@ Test { [[
 vector[_OBJ_N] void&& objs;
 escape 1;
 ]],
+    opts_pre = true,
     wrn = true,
     run = 1,
 }
@@ -27760,6 +27761,7 @@ Test { [[
 vector[_OBJ_N] void&& objs;
 escape 1;
 ]],
+    opts_pre = true,
     wrn = true,
     run = 1,
 }
@@ -27794,6 +27796,7 @@ vector[N] _u8 vec = [];
 vec[0] = 10;
 escape vec[N-1];
 ]],
+    opts_pre = true,
     run = 10,
 }
 
@@ -27806,6 +27809,7 @@ vector[N+1] _u8 vec = [];
 vec[1] = 10;
 escape vec[1];
 ]],
+    opts_pre = true,
     run = 10,
 }
 
@@ -27816,6 +27820,7 @@ vector[N+1] _u8 vec = [];
 vec[1] = 10;
 escape vec[1];
 ]],
+    opts_pre = true,
     run = 10,
 }
 
@@ -27835,6 +27840,7 @@ loop i in [0 -> _N[ do
 end
 escape ret;
 ]],
+    opts_pre = true,
     --loop = true,
     wrn = true,
     run = 10,
@@ -27846,6 +27852,7 @@ Test { [[
 *UART0_CR = 0x00000000;
 escape 1;
 ]],
+    opts_pre = true,
     parser = 'line 3 : after `(´ : expected name expression',
 }
 Test { [[
@@ -27854,6 +27861,7 @@ Test { [[
 *{UART0_CR} = 0x00000000;
 escape 1;
 ]],
+    opts_pre = true,
     valgrind = false,
     asr = true,
 }
@@ -35477,6 +35485,7 @@ end
 vector[N+1] Tx ts;
 escape _V;
 ]],
+    opts_pre = true,
     lines = 'error oi',
 }
 
@@ -54547,10 +54556,12 @@ escape 1;
     run = 1,
 }
 
+--]===]
 Test { [[
 #include
 escape 1;
 ]],
+    opts_pre = true,
     lines = 'error: #include expects "FILENAME" or <FILENAME>',
 }
 
@@ -54561,6 +54572,7 @@ Test { [[
 #include "^4!_"
 escape 1;
 ]],
+    opts_pre = true,
     lines = 'fatal error: MOD1: No such file or directory',
 }
 
@@ -54572,6 +54584,7 @@ Test { [[
 await A;
 escape 1;
 ]],
+    opts_pre = true,
     run = { ['~>A']=1 },
 }
 
@@ -54587,6 +54600,7 @@ nothing;
 await A;
 escape 1;
 ]],
+    opts_pre = true,
     parser = '/tmp/_ceu_MOD1.ceu : line 4 : after `A´ : expected `,´ or `;´',
 }
 
@@ -54601,6 +54615,7 @@ Test { [[
 await A;
 escape 1;
 ]],
+    opts_pre = true,
     --run = { ['~>A']=1 },
     run = "ceu_app_go: Assertion `0' failed",
 }
@@ -54616,6 +54631,7 @@ Test { [[
 await A;
 escape 1;
 ]],
+    opts_pre = true,
     run = { ['~>A']=1 },
 }
 
@@ -54631,6 +54647,7 @@ Test { [[
 await A;
 escape 1;
 ]],
+    opts_pre = true,
     parser = '/tmp/_ceu_MOD2.ceu : line 2 : after `nothing´ : expected `;´',
 }
 
@@ -54649,6 +54666,7 @@ Test { [[
 await A;
 escape 1;
 ]],
+    opts_pre = true,
     dcls = '/tmp/_ceu_MOD2.ceu : line 1 : declaration of "A" hides previous declaration (/tmp/_ceu_MOD1.ceu : line 1)',
     --dcls = '/tmp/_ceu_MOD2.ceu : line 1 : identifier "A" is already declared (/tmp/_ceu_MOD1.ceu : line 1)',
     --wrn = true,
@@ -54671,6 +54689,7 @@ Test { [[
 await A;
 escape 1;
 ]],
+    opts_pre = true,
     parser = '/tmp/_ceu_MOD1.ceu : line 2 : after `A´ : expected `,´ or `;´',
 }
 
@@ -54686,6 +54705,7 @@ Test { [[
 native _f;
 escape _f();
 ]],
+    opts_pre = true,
     run = 10,
 }
 
@@ -54702,6 +54722,7 @@ Test { [[
 native _f;
 escape _f();
 ]],
+    opts_pre = true,
     gcc = 'error: redefinition of',
 }
 
@@ -54721,6 +54742,7 @@ Test { [[
 native _f;
 escape _f();
 ]],
+    opts_pre = true,
     run = 10,
 }
 
@@ -54740,6 +54762,7 @@ end
 var int i = 10;
 escape i;
 ]],
+    opts_pre = true,
     tmp = 'line 4 : top-level identifier "Tx" already taken',
     --env = '/tmp/tmp.ceu : line 4 : interface/class "Tx" is already declared',
 }
@@ -54760,6 +54783,7 @@ end
 var int i = 10;
 escape i;
 ]],
+    opts_pre = true,
     tmp = 'line 1 : top-level identifier "Tx" already taken',
     --env = '/tmp/_ceu_MOD1.ceu : line 1 : interface/class "Tx" is already declared',
 }
