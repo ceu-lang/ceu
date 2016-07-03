@@ -27,7 +27,7 @@ T = nil
 
 function check (mod)
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
-    local ok, msg = pcall(dofile, mod..'.lua')
+    local ok, msg = pcall(dofile, '../src/lua/'..mod..'.lua')
 if RUNTESTS_TODO then
     return true
 end
@@ -80,9 +80,11 @@ Test = function (t)
 
     --STATS.count = STATS.count   + 1
 
-    dofile 'dbg.lua'
+    local DIR = '../src/lua/'
+
+    dofile(DIR..'dbg.lua')
     DBG,ASR = DBG1,ASR1
-    dofile 'cmd.lua'
+    dofile(DIR..'cmd.lua')
 
     if CEU.opts.pre then
         if not check('pre') then return end
@@ -90,7 +92,7 @@ Test = function (t)
     if not CEU.opts.ceu then return end
     DBG,ASR = DBG2,ASR2
 
-    dofile 'lines.lua'
+    dofile(DIR..'lines.lua')
     local _WRN = WRN
     if (not t.wrn) and (not t._ana) then
         WRN = ASR
@@ -100,7 +102,7 @@ Test = function (t)
     --dofile 'ast.lua'
     if not check('ast')      then return end
     if not check('adjs')     then return end
-    dofile 'types.lua'
+    dofile(DIR..'types.lua')
     if not check('dcls')     then return end
     if not check('names')    then return end
     if not check('exps')     then return end
@@ -357,6 +359,8 @@ do
     assert(not err)
 end
 
+do return end
+
 print([[
 
 =====================================
@@ -369,8 +373,6 @@ STATS = {
     n_go    = ]]..STATS.n_go   ..[[,
 }
 ]])
-
-os.execute('rm -f /tmp/_ceu_*')
 
 --[[
 # luacov

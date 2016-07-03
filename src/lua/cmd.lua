@@ -1,30 +1,6 @@
 CEU_VER = CEU_VER or '?'
 CEU_GIT = CEU_GIT or '?'
 
-function DBG (...)
-    local t = {}
-    for i=1, select('#',...) do
-        t[#t+1] = tostring( select(i,...) )
-    end
-    if #t == 0 then
-        t = { [1]=debug.traceback() }
-    end
-    io.stderr:write(table.concat(t,'\t')..'\n')
-end
-
-function ASR (cond, msg)
-    if cond then
-        return cond
-    end
-    if RUNTESTS then
-        return assert(false, msg)
-                -- TODO: error(msg) ???
-    else
-        DBG(msg)
-        os.exit(1)
-    end
-end
-
 -------------------------------------------------------------------------------
                                                                                 
 if not RUNTESTS then
@@ -100,38 +76,38 @@ end
 
 for i,v in pairs(CEU.arg) do
     DBG(CEU.help)
-    ASR(false, '>>> ERROR : invalid option "'..v..'"')
+    ASR(false, 'invalid option "'..v..'"')
 end
 
 local function check_no (pre)
     for k,v in pairs(CEU.opts) do
         ASR(not string.find(k, '^'..pre..'_'),
-            '>>> ERROR : invalid option "'..k..'" : '..
-                        'expected option "'..pre..'"')
+            'invalid option "'..k..'" : '..
+            'expected option "'..pre..'"')
     end
 end
 
 if CEU.opts.pre then
     CEU.opts.pre_exe  = CEU.opts.pre_exe  or 'cpp'
     CEU.opts.pre_args = CEU.opts.pre_args or ''
-    ASR(CEU.opts.pre_input,  '>>> ERROR : pre_input')
-    ASR(CEU.opts.pre_output, '>>> ERROR : pre_output')
+    ASR(CEU.opts.pre_input,  'pre_input')
+    ASR(CEU.opts.pre_output, 'pre_output')
 else
     check_no('pre')
 end
 
 if CEU.opts.ceu then
-    ASR(CEU.opts.ceu_input,  '>>> ERROR : ceu_input')
-    ASR(CEU.opts.ceu_output, '>>> ERROR : ceu_output')
+    ASR(CEU.opts.ceu_input,  'ceu_input')
+    ASR(CEU.opts.ceu_output, 'ceu_output')
 else
     check_no('ceu')
 end
 
 if CEU.opts.env then
-    ASR(CEU.opts.env_header, '>>> ERROR : env_header')
-    ASR(CEU.opts.env_ceu,    '>>> ERROR : env_ceu')
-    ASR(CEU.opts.env_main,   '>>> ERROR : env_main')
-    ASR(CEU.opts.env_output, '>>> ERROR : env_output')
+    ASR(CEU.opts.env_header, 'env_header')
+    ASR(CEU.opts.env_ceu,    'env_ceu')
+    ASR(CEU.opts.env_main,   'env_main')
+    ASR(CEU.opts.env_output, 'env_output')
 else
     check_no('env')
 end
