@@ -30,11 +30,11 @@ Options:
     --env-main=FILE         source file with main function (C source)
     --env-output=FILE       output file to generate (C source)
 
-    --c                 C phase: compiles C into binary
-    --c-exe=FILE            C compiler executable
-    --c-args=ARGS           compiler arguments
-    --c-input=FILE          input file to compile (C source)
-    --c-output=FILE         output file to generate (binary)
+    --cc                C phase: compiles C into binary
+    --cc-exe=FILE           C compiler executable
+    --cc-args=ARGS          compiler arguments
+    --cc-input=FILE         input file to compile (C source)
+    --cc-output=FILE        output file to generate (binary)
 
   -b                       a short option with no long option
       --long               a long option with no short option
@@ -108,9 +108,9 @@ else
     check_no('env')
 end
 
-if CEU.opts.c then
-    CEU.opts.c_exe  = CEU.opts.c_exe  or 'gcc'
-    CEU.opts.c_args = CEU.opts.c_args or ''
+if CEU.opts.cc then
+    CEU.opts.cc_exe  = CEU.opts.cc_exe  or 'gcc'
+    CEU.opts.cc_args = CEU.opts.cc_args or ''
 else
-    check_no('c')
+    check_no('cc')
 end

@@ -22,12 +22,6 @@ void ceu_sys_log (int mode, long s) {
     }
 }
 
-#ifdef CEU_OS
-    #include "ceu_sys.h"
-#else
-    #include "_ceu_app.c"
-#endif
-
 extern void ceu_app_init (tceu_app* app);
 
 int main (int argc, char *argv[])

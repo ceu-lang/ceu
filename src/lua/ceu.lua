@@ -89,10 +89,10 @@ SOFTWARE.
     end
 end
 
---c
-if CEU.opts.c then
-    local c = CEU.opts.c_exe..' '..CEU.opts.c_input..' '..
-                '-o '..CEU.opts.c_output..' '..
-                CEU.opts.c_args
-    os.execute(c)
+--cc
+if CEU.opts.cc then
+    local cc = CEU.opts.cc_exe..' '..CEU.opts.cc_input..' '..
+                '-o '..CEU.opts.cc_output..' '..
+                CEU.opts.cc_args
+    os.execute(cc)
 end
