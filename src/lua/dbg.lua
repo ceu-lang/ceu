@@ -1,3 +1,9 @@
+-- Lua 5.3
+unpack     = unpack     or table.unpack
+loadstring = loadstring or load
+
+-------------------------------------------------------------------------------
+
 function DBG1 (...)
     local t = {}
     for i=1, select('#',...) do
@@ -16,7 +22,6 @@ function ASR1 (cond, msg)
     DBG1(msg)
     os.exit(1)
 end
-
 
 -------------------------------------------------------------------------------
 

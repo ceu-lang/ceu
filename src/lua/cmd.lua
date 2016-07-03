@@ -1,7 +1,3 @@
--- Lua 5.3
-unpack     = unpack     or table.unpack
-loadstring = loadstring or load
-
 CEU_VER = CEU_VER or '?'
 CEU_GIT = CEU_GIT or '?'
 

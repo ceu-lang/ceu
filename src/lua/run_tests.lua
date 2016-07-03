@@ -2,6 +2,19 @@
 
 RUNTESTS = {
     --luacov = 'lua5.3 -lluacov'
+-- Execution option for the tests:
+--VALGRIND = true
+--REENTRANT = true
+--COMPLETE = true
+--[[
+STATS = {
+    count   = 0,
+    mem     = 0,
+    trails  = 0,
+    bytes   = 0,
+    n_go    = 0,
+}
+]]
 }
 
 if RUNTESTS.luacov then
@@ -10,28 +23,7 @@ if RUNTESTS.luacov then
     os.remove('luacov.report.out')
 end
 
--- Execution option for the tests:
---VALGRIND = true
---REENTRANT = true
---COMPLETE = true
-
-OUT_DIR = '/tmp/ceu-tests'
-os.execute('mkdir -p '..OUT_DIR)
-
---assert(loadfile'pak.lua')('lua5.3')
-unpack     = unpack     or table.unpack
-loadstring = loadstring or load
-
-math.randomseed(os.time())
 T = nil
-
-STATS = {
-    count   = 0,
-    mem     = 0,
-    trails  = 0,
-    bytes   = 0,
-    n_go    = 0,
-}
 
 function check (mod)
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
@@ -86,7 +78,7 @@ Test = function (t)
         CEU.opts.ceu_input  = CEU.opts.pre_output
     end
 
-    STATS.count = STATS.count   + 1
+    --STATS.count = STATS.count   + 1
 
     dofile 'dbg.lua'
     DBG,ASR = DBG1,ASR1
