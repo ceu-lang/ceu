@@ -95,14 +95,6 @@ PAK = {
             [====[]=]..'\n'..assert(io.open'../c/ceu_sys.h'):read'*a'..[=[]====],
         ceu_sys_c =
             [====[]=]..'\n'..assert(io.open'../c/ceu_sys.c'):read'*a'..[=[]====],
-        ceu_pool_h =
-            [====[]=]..'\n'..assert(io.open'../c/ceu_pool.h'):read'*a'..[=[]====],
-        ceu_pool_c =
-            [====[]=]..'\n'..assert(io.open'../c/ceu_pool.c'):read'*a'..[=[]====],
-        ceu_vector_h =
-            [====[]=]..'\n'..assert(io.open'../c/ceu_vector.h'):read'*a'..[=[]====],
-        ceu_vector_c =
-            [====[]=]..'\n'..assert(io.open'../c/ceu_vector.c'):read'*a'..[=[]====],
     }
 }
 ]=]..fin)

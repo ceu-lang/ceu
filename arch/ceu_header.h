@@ -1,5 +1,5 @@
-#ifndef _CEU_TYPES_H
-#define _CEU_TYPES_H
+#ifndef _CEU_HEADER_H
+#define _CEU_HEADER_H
 
 #include <stdint.h>
 
@@ -31,4 +31,4 @@ typedef double   f64;
 void ceu_sys_assert (int v);
 void ceu_sys_log (int mode, long s);
 
-#endif
+#endif /* _CEU_HEADER_H */
