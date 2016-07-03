@@ -30,58 +30,63 @@ if CEU.opts.ceu then
         end
     end
 
-    local h = ASR(io.open(CEU.opts.ceu_output_h,'w'))
-    local c = ASR(io.open(CEU.opts.ceu_output_c,'w'))
+    local H = ASR(io.open(CEU.opts.ceu_output_h,'w'))
+    local C = ASR(io.open(CEU.opts.ceu_output_c,'w'))
+
+    -- CEU_SYS.H
+    C:write('\n\n/* CEU_SYS_H */\n\n'..PAK.files.ceu_sys_h)
+
+    -- CEU_SYS.C
+    C:write('\n\n/* CEU_SYS_C */\n\n'..PAK.files.ceu_sys_c)
 
     -- TEMPLATE.H
     do
-        local H = '\n\n/* CEU_TEMPLATE_H */\n\n'
-        H = H..PAK.files.template_h
-        H = SUB(H, '#include "ceu_sys.h"',  PAK.files.ceu_sys_h)
-        H = SUB(H, '=== DEFS_H ===',
+        local h = '\n\n/* CEU_TEMPLATE_H */\n\n'
+        h = h..PAK.files.template_h
+        h = SUB(h, '=== DEFS_H ===',
              string.upper(string.gsub(CEU.opts.ceu_output_h,'[./]','_')))
-        h:write(H)
-        c:write(H)
+        H:write(h)
+        C:write(h)
     end
 
     -- TEMPLATE.C
     do
-        local C = '\n\n/* CEU_TEMPLATE_C */\n\n'
-        C = C..PAK.files.template_c
-        c:write(C)
+        local c = '\n\n/* CEU_TEMPLATE_C */\n\n'
+        c = c..PAK.files.template_c
+        C:write(c)
     end
 
-c:write[[
+    C:write[[
 typedef struct CEU_Main {
 } CEU_Main;
 ]]
 
-    h:close()
-    c:close()
+    H:close()
+    C:close()
 end
 
 --env
 if CEU.opts.env then
-    local C = ''
+    local c = ''
 
     --env-header
     do
         local f = ASR(io.open(CEU.opts.env_header))
-        C = C..'\n\n/* ENV_HEADER */\n\n'..f:read'*a'
+        c = c..'\n\n/* ENV_HEADER */\n\n'..f:read'*a'
         f:close()
     end
 
     --env-ceu
     do
         local f = ASR(io.open(CEU.opts.env_ceu))
-        C = C..'\n\n/* ENV_CEU */\n\n'..f:read'*a'
+        c = c..'\n\n/* ENV_CEU */\n\n'..f:read'*a'
         f:close()
     end
 
     --env-main
     do
         local f = ASR(io.open(CEU.opts.env_main))
-        C = C..'\n\n/* ENV_MAIN */\n\n'..f:read'*a'
+        c = c..'\n\n/* ENV_MAIN */\n\n'..f:read'*a'
         f:close()
     end
 
@@ -118,7 +123,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-]] .. C)
+]] .. c)
         f:close()
     end
 end
