@@ -63,20 +63,41 @@ Test = function (t)
     f:write(source)
     f:close()
 
+    PAK = {
+        lua_exe = '?',
+        ceu_ver = '?',
+        ceu_git = '?',
+        files = {
+            ceu_sys_h = assert(io.open'../src/c/ceu_sys.h'):read'*a',
+            ceu_sys_c = assert(io.open'../src/c/ceu_sys.c'):read'*a',
+        }
+    }
     CEU = {
         arg  = {},
         opts = T.opts or {
             ceu          = true,
             ceu_input    = '/tmp/tmp.ceu',
-            ceu_output_h = '/tmp/tmp.h',
-            ceu_output_c = '/tmp/tmp.c',
+            ceu_output_h = '/tmp/tmp.ceu.h',
+            ceu_output_c = '/tmp/tmp.ceu.c',
+
+            env          = true,
+            env_header   = '../arch/ceu_header.h',
+            env_ceu      = '/tmp/tmp.ceu.c',
+            env_main     = '../arch/ceu_main.c',
+            env_output   = '/tmp/tmp.c',
+
+            cc           = true,
+            cc_input     = '/tmp/tmp.c',
+            cc_output    = '/tmp/tmp.exe',
+
+            --ceu_line_directives = 'false',
         }
     }
     if T.opts_pre then
-        CEU.opts.pre        = true
-        CEU.opts.pre_input  = '/tmp/tmp.ceu'
-        CEU.opts.pre_output = '/tmp/tmp.ceu.cpp'
-        CEU.opts.ceu_input  = CEU.opts.pre_output
+        CEU.opts.pre          = true
+        CEU.opts.pre_input    = '/tmp/tmp.ceu'
+        CEU.opts.pre_output   = '/tmp/tmp.ceu.cpp'
+        CEU.opts.ceu_input    = '/tmp/tmp.ceu.cpp'
     end
 
     --STATS.count = STATS.count   + 1
@@ -111,22 +132,50 @@ Test = function (t)
     if not check('stmts')    then return end
     if not check('inits')    then return end
     if not check('scopes')   then return end
+    if not check('labels')   then return end
     if not check('code')     then return end
+
+    DBG,ASR = DBG1,ASR1
+    if CEU.opts.env then
+        dofile(DIR..'env.lua')
+    end
+    if CEU.opts.cc then
+        dofile(DIR..'cc.lua')
+    end
+
+    local f = io.popen(CEU.opts.cc_output)
+    local out = f:read'*a'
+    local ret = f:close()
+
+    if type(T.run) == 'number' then
+        assert(out == '')
+        assert(ret == T.run)
+    elseif type(T.run) == 'table' then
+        assert(out == '')
+        error'TODO'
+    else
+        assert(type(T.run) == 'string')
+        assert(string.find(out, T.run, nil, true), out)
+    end
 
 do return end
     DBG,ASR = DBG1,ASR1
     do
-        local ceu = './ceu --ceu --ceu-input='..CEU.opts.ceu_input..
-                                '--ceu-output='..CEU.opts.ceu_output..
-                          '--c   --c-input='..CEU.opts.c_input..
-                                '--c-output='..CEU.opts.c_output
+        local ceu = [[
+./ceu --pre --pre-input=/tmp/tmp.ceu --pre-output=/tmp/tmp.ceu.cpp      \
+      --ceu --ceu-input=/tmp/tmp.ceu.cpp --ceu-output-h=/tmp/tmp.ceu.h  \
+                                         --ceu-output-c=/tmp/tmp.ceu.c  \
+      --env --env-header=../arch/ceu_header.h --env-ceu=/tmp/tmp.ceu.c  \
+            --env-main=../arch/ceu_main.c --env-output=/tmp/tmp.c       \
+      --cc --cc-input=/tmp/tmp.c --cc-output=/tmp/tmp.exe               \
+      --ceu-line-directives=true
+]]
+        os.execute(ceu)
+DBG(ceu)
+error'oi'
         if RUNTESTS.luacov then
             ceu = RUNTESTS.luacov..' '..ceu
         end
-        local gcc = 'gcc -o '..OUT_DIR..'/ceu.exe -I'..ARCH..' '..main..' 2>&1'
-
-        --local exec_ceu = os.execute(local ceu)
-        --assert(exec_ceu==0 or exec_ceu==true)
     end
 
 do return end

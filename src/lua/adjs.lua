@@ -47,18 +47,19 @@ F = {
         ret.is_implicit = true
 
         AST.root =
-            node('Block', me.ln,
-                node('Stmts', me.ln,
-                    nats,
-                    ret,
-                    node('_Set', me.ln,
-                        node('Exp_Name', me.ln,
-                            node('ID_int', me.ln, '_ret')),
-                        node('_Set_Do', me.ln,
-                            node('Do', me.ln,
-                                true,
-                                node('Block', me.ln,
-                                    stmts))))))
+            node('ROOT', me.ln,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        nats,
+                        ret,
+                        node('_Set', me.ln,
+                            node('Exp_Name', me.ln,
+                                node('ID_int', me.ln, '_ret')),
+                            node('_Set_Do', me.ln,
+                                node('Do', me.ln,
+                                    true,
+                                    node('Block', me.ln,
+                                        stmts)))))))
         return AST.root
     end,
     _Stmts__PRE = function (me)

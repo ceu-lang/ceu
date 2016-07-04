@@ -47,6 +47,7 @@ subst 'consts.lua'
 subst 'stmts.lua'
 subst 'inits.lua'
 subst 'scopes.lua'
+subst 'labels.lua'
 subst 'code.lua'
 
 fout:write([=[

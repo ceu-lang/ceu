@@ -1,6 +1,17 @@
 TYPES = {
 }
 
+function TYPES.n2uint (n)
+    if n < 2^8 then
+        return 'u8'
+    elseif n < 2^16 then
+        return 'u16'
+    elseif n < 2^32 then
+        return 'u32'
+    end
+    error'out of bounds'
+end
+
 function TYPES.id (tp)
     local ID = unpack(tp)
     local id = unpack(ID)
