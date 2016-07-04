@@ -94,6 +94,13 @@ if (]]..V(c)..[[) {
     Par_And = 'Par',
     Par = function (me)
         for i, sub in ipairs(me) do
+            -- Par_And: close gates
+            if me.tag == 'Par_And' then
+                LINE(me, [[
+]]..V(me,i)..[[ = 0;
+]])
+            end
+
             if i < #me then
                 LINE(me, [[
 ceu_go(]]..me.lbls_in[i].id..[[);
@@ -108,11 +115,35 @@ ceu_go(]]..me.lbls_in[i].id..[[);
                 CASE(me, me.lbls_in[i])
             end
             CONC(me, sub)
-            HALT(me)
+
+            if me.tag == 'Par' then
+                HALT(me)
+            else
+                -- Par_And: open gates
+                if me.tag == 'Par_And' then
+                LINE(me, [[
+]]..V(me,i)..[[ = 1;
+]])
+                end
+                GOTO(me, me.lbl_out)
+            end
         end
 
         if me.lbl_out then
             CASE(me, me.lbl_out)
+        end
+
+        -- Par_And: test gates
+        if me.tag == 'Par_And' then
+            for i, sub in ipairs(me) do
+                LINE(me, [[
+if (!]]..V(me,i)..[[) {
+]])
+                HALT(me)
+                LINE(me, [[
+}
+]])
+            end
         end
     end,
 

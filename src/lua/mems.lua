@@ -24,6 +24,15 @@ typedef struct CEU_DATA_ROOT {
         end
         MEMS.code = MEMS.code..code
     end,
+
+    Par_And = function (me)
+        local code = ''
+        for i=1, #me do
+            code = code..'u8 __and_'..me.n..'_'..i..': 1;\n'
+        end
+        MEMS.code = MEMS.code..code
+    end,
+
 }
 
 AST.visit(F)

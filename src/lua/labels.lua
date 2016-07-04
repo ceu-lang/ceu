@@ -42,10 +42,6 @@ F = {
         if me.tag ~= 'Par' then
             me.lbl_out = new{me.tag..'_out'}
         end
-
-        if me.tag == 'Par_And' then
-            me.lbl_tst = new{'Par_And_tst'}
-        end
     end,
 }
 

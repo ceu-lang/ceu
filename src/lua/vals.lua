@@ -5,13 +5,13 @@ end
 
 local F
 
-function V (me)
+function V (me, ...)
     local f = assert(F[me.tag], 'bug found : V('..me.tag..')')
     while type(f) == 'string' do
         f = assert(F[f], 'bug found : V('..me.tag..')')
     end
 
-    return f(me)
+    return f(me, ...)
 end
 
 F = {
@@ -114,5 +114,11 @@ F = {
         else
             return V(e)
         end
+    end,
+
+    ---------------------------------------------------------------------------
+
+    Par_And = function (me, i)
+        return '(CEU_APP.data.__and_'..me.n..'_'..i..')'
     end,
 }

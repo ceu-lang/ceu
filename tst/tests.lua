@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1401,14 +1400,30 @@ Test { [[await A; escape 0;]],
     dcls = 'external identifier "A" is not declared',
 }
 
+--]===]
 Test { [[
-par/or do
+var int ret=0;
+par/and do
+    ret = 1;
 with
+    ret = 2;
 end
-escape 1;
+escape ret;
+]],
+    run = 2,
+}
+Test { [[
+var int ret=0;
+par/or do
+    ret = 1;
+with
+    ret = 2;
+end
+escape ret;
 ]],
     run = 1,
 }
+do return end
 Test { [[
 input void A;
 par/or do
@@ -1474,29 +1489,6 @@ escape v as int;
     stmts = 'line 3 : invalid assignment : types mismatch : "(bool)" <= "(int)"',
 }
 
-Test { [[
-var int ret=0;
-par/or do
-    ret = 1;
-with
-    ret = 2;
-end
-escape ret;
-]],
-    run = 1,
-}
-do return end
-Test { [[
-var int ret=0;
-par/and do
-    ret = 1;
-with
-    ret = 2;
-end
-escape ret;
-]],
-    run = 2,
-}
 Test { [[
 input int A;
 var int ret=0;

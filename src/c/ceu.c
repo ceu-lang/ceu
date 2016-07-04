@@ -67,6 +67,6 @@ int ceu_go_all (void) {
     memset(&CEU_APP.trails, 0, TRAILS_N*sizeof(tceu_trl));
 
     ceu_go(CEU_LABEL_ROOT);
-    ceu_out_assert(CEU_APP.is_alive == 0);
+    ceu_out_assert_msg(CEU_APP.is_alive == 0, "bug found : app still alive?");
     return CEU_APP.ret;
 }
