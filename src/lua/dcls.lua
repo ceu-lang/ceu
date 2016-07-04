@@ -385,7 +385,7 @@ F = {
                     end
                 end
             end
-            ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
+            esc.do_ = do_
             local _,_,to,op = unpack(do_)
             local set = AST.asr(me.__par,'Set_Exp')
             local fr = unpack(set)

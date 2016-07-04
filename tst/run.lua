@@ -68,8 +68,7 @@ Test = function (t)
         ceu_ver = '?',
         ceu_git = '?',
         files = {
-            ceu_sys_h = assert(io.open'../src/c/ceu_sys.h'):read'*a',
-            ceu_sys_c = assert(io.open'../src/c/ceu_sys.c'):read'*a',
+            ceu_c = assert(io.open'../src/c/ceu.c'):read'*a',
         }
     }
     CEU = {
@@ -81,9 +80,9 @@ Test = function (t)
             ceu_output_c = '/tmp/tmp.ceu.c',
 
             env          = true,
-            env_header   = '../arch/ceu_header.h',
+            env_header   = '../arch/ceu.h',
             env_ceu      = '/tmp/tmp.ceu.c',
-            env_main     = '../arch/ceu_main.c',
+            env_main     = '../arch/main.c',
             env_output   = '/tmp/tmp.c',
 
             cc           = true,
@@ -133,7 +132,9 @@ Test = function (t)
     if not check('inits')    then return end
     if not check('scopes')   then return end
     if not check('labels')   then return end
-    if not check('code')     then return end
+    if not check('mems')     then return end
+    dofile(DIR..'vals.lua')
+    if not check('codes')    then return end
 
     DBG,ASR = DBG1,ASR1
     if CEU.opts.env then
@@ -143,13 +144,13 @@ Test = function (t)
         dofile(DIR..'cc.lua')
     end
 
-    local f = io.popen(CEU.opts.cc_output)
+    local f = io.popen(CEU.opts.cc_output..' 2>&1')
     local out = f:read'*a'
-    local ret = f:close()
+    local _,_,ret = f:close()
 
     if type(T.run) == 'number' then
         assert(out == '')
-        assert(ret == T.run)
+        assert(ret == T.run%256)
     elseif type(T.run) == 'table' then
         assert(out == '')
         error'TODO'
@@ -188,10 +189,8 @@ AST.dump(AST.root)
     if not check('acc')      then return end
 
     if not check('trails')   then return end
-    if not check('labels')   then return end
     if not check('tmps')     then return end
     if not check('mem')      then return end
-    if not check('val')      then return end
 
     if (not t.wrn) and (not t._ana) then
         WRN = _WRN

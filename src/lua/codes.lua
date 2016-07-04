@@ -1,3 +1,7 @@
+CODES = {
+    code = ''
+}
+
 local function LINE (me, line)
     me.code = me.code..'\n'
     if CEU.opts.ceu_line_directives then
@@ -17,7 +21,14 @@ local function CONC_ALL (me)
 end
 
 local function CASE (me, lbl)
-    LINE(me, 'case CEU_LABEL_'..lbl.id..':;')
+    LINE(me, 'case '..lbl.id..':;')
+end
+
+local function GOTO (me, lbl)
+    LINE(me, [[
+_ceu_lbl = ]]..lbl.id..[[;
+goto _CEU_GOTO_;
+]])
 end
 
 F = {
@@ -30,6 +41,9 @@ F = {
 
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
+    end,
+    ROOT__POS = function (me)
+        CODES.code = me.code
     end,
 
     Do = function (me)
@@ -44,12 +58,7 @@ ceu_out_assert_msg(0, "reached end of block");
         end
     end,
     Escape = function (me)
-        local lbl = unpack(me)
-        for do_ in AST.iter('Do') do
-AST.dump(do_)
-        end
-AST.dump(me)
-error'oi'
+        GOTO(me, me.do_.lbl_out)
     end,
 
     ---------------------------------------------------------------------------
@@ -57,9 +66,16 @@ error'oi'
     Set_Exp = function (me)
         local fr, to = unpack(me)
 
-        assert(to.info.dcl.id == '_ret')
+        if to.info.dcl.id == '_ret' then
+            LINE(me, [[
+_ceu_app->ret = ]]..V(fr)..[[;
+]])
+        else
+        end
     end,
 }
+
+-------------------------------------------------------------------------------
 
 local function SUB (str, from, to)
     assert(to, from)
@@ -77,15 +93,13 @@ local C = ASR(io.open(CEU.opts.ceu_output_c,'w'))
 
 AST.visit(F)
 
--- CEU_SYS.H
-C:write('\n\n/* CEU_SYS_H */\n\n'..PAK.files.ceu_sys_h)
-
--- CEU_SYS.C
-local c = PAK.files.ceu_sys_c
+-- CEU.C
+local c = PAK.files.ceu_c
 local c = SUB(c, '=== TCEU_NLBL ===', TYPES.n2uint(#LABELS.list))
 local c = SUB(c, '=== LABELS ===',    LABELS.code)
-local c = SUB(c, '=== CODE ===',      AST.root.code)
-C:write('\n\n/* CEU_SYS_C */\n\n'..c)
+local c = SUB(c, '=== DATA ===',      MEMS.code)
+local c = SUB(c, '=== CODE ===',      CODES.code)
+C:write('\n\n/* CEU_C */\n\n'..c)
 
 H:close()
 C:close()

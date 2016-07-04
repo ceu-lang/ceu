@@ -18,7 +18,6 @@ do return end -- OK
 
 Test { [[]], run='1] runtime error: reached end of block' }
 Test { [[escape (1);]], run=1 }
-do return end
 Test { [[escape 1;]], run=1 }
 
 Test { [[escape 1; // escape 1;]], run=1 }
@@ -130,7 +129,7 @@ Test { [[escape (10==true) as int;]],
 Test { [[escape (10!=0) as int;]], run=1 }
 Test { [[escape (true and true) as int;]], run=1 }
 Test { [[escape (2>1 and 10!=0) as int;]], run=1 }
-Test { [[escape ((1<=2) as int) + 3;]], run=2 }
+Test { [[escape ((1<=2) as int) + 3;]], run=4 }
 Test { [[escape ((1<=2) as int) + ((1<2) as int) + 2/1 - 2%3;]], run=2 }
 -- TODO: linux gcc only?
 --Test { [[escape (~(~0b1010 & 0XF) | 0b0011 ^ 0B0010) & 0xF;]], run=11 }

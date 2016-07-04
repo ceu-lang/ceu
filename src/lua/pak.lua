@@ -89,10 +89,8 @@ PAK = {
     ceu_ver = ']=]..CEU_VER..[=[',
     ceu_git = ']=]..CEU_GIT..[=[',
     files = {
-        ceu_sys_h =
-            [====[]=]..'\n'..assert(io.open'../c/ceu_sys.h'):read'*a'..[=[]====],
-        ceu_sys_c =
-            [====[]=]..'\n'..assert(io.open'../c/ceu_sys.c'):read'*a'..[=[]====],
+        ceu_c =
+            [====[]=]..'\n'..assert(io.open'../c/ceu.c'):read'*a'..[=[]====],
     }
 }
 ]=]..fin)

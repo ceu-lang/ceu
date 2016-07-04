@@ -5,9 +5,9 @@ LABELS = {
 
 local function new (lbl)
     if lbl[2] then
-        lbl.id = lbl[1]
+        lbl.id = 'CEU_LABEL_'..lbl[1]
     else
-        lbl.id = lbl[1]..'_'..#LABELS.list
+        lbl.id = 'CEU_LABEL_'..lbl[1]..'_'..#LABELS.list
     end
     LABELS.list[lbl] = true
     lbl.n = #LABELS.list                   -- starts from 0
@@ -17,7 +17,7 @@ local function new (lbl)
 end
 
 F = {
-    ROOT = function (me)
+    ROOT__PRE = function (me)
         me.lbl_in = new{'ROOT', true}
     end,
 
@@ -33,5 +33,5 @@ AST.visit(F)
 
 LABELS.code = ''
 for _, lbl in ipairs(LABELS.list) do
-    LABELS.code = LABELS.code..'CEU_LABEL_'..lbl.id..',\n'
+    LABELS.code = LABELS.code..lbl.id..',\n'
 end
