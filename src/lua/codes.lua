@@ -35,8 +35,23 @@ goto _CEU_GOTO_;
 ]])
 end
 
-local function HALT (me)
-    LINE(me, 'return;')
+local function CLEAR (me)
+    LINE(me, [[
+ceu_stack_clear(_ceu_stk, ]]..me.trails[1]..','..me.trails[2]..[[);
+]])
+end
+
+local function HALT (me, t)
+    if not t then
+        LINE(me, 'return;')
+        return
+    end
+    LINE(me, [[
+_ceu_trl->evt = ]]..t.evt..[[;
+_ceu_trl->lbl = ]]..t.lbl..[[;
+return;
+case ]]..t.lbl..[[:;
+]])
 end
 
 F = {
@@ -103,7 +118,10 @@ if (]]..V(c)..[[) {
 
             if i < #me then
                 LINE(me, [[
-ceu_go(]]..me.lbls_in[i].id..[[);
+{
+    tceu_stk __ceu_stk = { _ceu_stk, ]]..sub.trails[1]..[[, 1 };
+    CEU_GO_LBL_ABORT(&__ceu_stk, ]]..me.lbls_in[i].id..[[);
+}
 ]])
             end
         end
@@ -117,12 +135,14 @@ ceu_go(]]..me.lbls_in[i].id..[[);
             CONC(me, sub)
 
             if me.tag == 'Par' then
-                HALT(me)
+                LINE(me, [[
+return;
+]])
             else
                 -- Par_And: open gates
                 if me.tag == 'Par_And' then
                 LINE(me, [[
-]]..V(me,i)..[[ = 1;
+    ]]..V(me,i)..[[ = 1;
 ]])
                 end
                 GOTO(me, me.lbl_out)
@@ -138,12 +158,14 @@ ceu_go(]]..me.lbls_in[i].id..[[);
             for i, sub in ipairs(me) do
                 LINE(me, [[
 if (!]]..V(me,i)..[[) {
-]])
-                HALT(me)
-                LINE(me, [[
+    return;
 }
 ]])
             end
+
+        -- Par_Or: clear trails
+        elseif me.tag == 'Par_Or' then
+            CLEAR(me)
         end
     end,
 
@@ -162,6 +184,29 @@ CEU_APP.is_alive = 0;           /* TODO */
 ]]..V(to)..' = '..V(fr)..[[;
 ]])
         end
+    end,
+
+    ---------------------------------------------------------------------------
+
+    Await_Ext = function (me)
+        local ID_ext = unpack(me)
+        HALT(me, {
+            evt = ID_ext.dcl.id_,
+            lbl = me.lbl.id,
+        })
+    end,
+
+    Async = function (me)
+        local _,blk = unpack(me)
+        LINE(me, [[
+ceu_out_async();
+_ceu_app->pending_async = 1;
+]])
+        HALT(me, {
+            evt = 'CEU_IN__ASYNC',
+            lbl = me.lbl.id,
+        })
+        CONC(me, blk)
     end,
 }
 
@@ -183,15 +228,38 @@ local C = ASR(io.open(CEU.opts.ceu_output_c,'w'))
 
 AST.visit(F)
 
+local labels do
+    labels = ''
+    for _, lbl in ipairs(LABELS.list) do
+        labels = labels..lbl.id..',\n'
+    end
+end
+
+local exts_input do
+    exts_input = ''
+    for _, id in ipairs(MEMS.exts.input) do
+        exts_input = exts_input..id..',\n'
+    end
+end
+local exts_output do
+    exts_output = ''
+    for _, id in ipairs(MEMS.exts.output) do
+        exts_output = exts_output..id..',\n'
+    end
+end
+
 -- CEU.C
 local c = PAK.files.ceu_c
-local c = SUB(c, '=== TCEU_NLBL ===',  TYPES.n2uint(#LABELS.list))
-local c = SUB(c, '=== LABELS ===',     LABELS.code)
-local c = SUB(c, '=== NATIVE_PRE ===', CODES.native[true])
-local c = SUB(c, '=== DATA ===',       MEMS.code)
-local c = SUB(c, '=== NATIVE ===',     CODES.native[false])
-local c = SUB(c, '=== TRAILS_N ===',   AST.root.trails_n)
-local c = SUB(c, '=== CODE ===',       AST.root.code)
+local c = SUB(c, '=== NATIVE_PRE ===',  CODES.native[true])
+local c = SUB(c, '=== DATA ===',        MEMS.code)
+local c = SUB(c, '=== EXTS_INPUT ===',  exts_input)
+local c = SUB(c, '=== EXTS_OUTPUT ===', exts_output)
+local c = SUB(c, '=== NATIVE ===',      CODES.native[false])
+local c = SUB(c, '=== TRAILS_N ===',    AST.root.trails_n)
+local c = SUB(c, '=== TCEU_NTRL ===',   TYPES.n2uint(AST.root.trails_n))
+local c = SUB(c, '=== TCEU_NLBL ===',   TYPES.n2uint(#LABELS.list))
+local c = SUB(c, '=== LABELS ===',      labels)
+local c = SUB(c, '=== CODE ===',        AST.root.code)
 C:write('\n\n/* CEU_C */\n\n'..c)
 
 H:close()

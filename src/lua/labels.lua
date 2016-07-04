@@ -1,6 +1,5 @@
 LABELS = {
     list = {},      -- { [lbl]={}, [i]=lbl }
-    code = nil,     -- see below
 }
 
 local function new (lbl)
@@ -28,6 +27,8 @@ F = {
         end
     end,
 
+    ---------------------------------------------------------------------------
+
     Par_Or__PRE  = 'Par__PRE',
     Par_And__PRE = 'Par__PRE',
     Par__PRE = function (me)
@@ -43,11 +44,13 @@ F = {
             me.lbl_out = new{me.tag..'_out'}
         end
     end,
+
+    ---------------------------------------------------------------------------
+
+    Await_Ext = function (me)
+        local ID_ext = unpack(me)
+        me.lbl = new{'Awake_'..ID_ext.dcl.id}
+    end,
 }
 
 AST.visit(F)
-
-LABELS.code = ''
-for _, lbl in ipairs(LABELS.list) do
-    LABELS.code = LABELS.code..lbl.id..',\n'
-end

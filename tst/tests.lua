@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1400,7 +1401,6 @@ Test { [[await A; escape 0;]],
     dcls = 'external identifier "A" is not declared',
 }
 
---]===]
 Test { [[
 var int ret=0;
 par/and do
@@ -1423,7 +1423,6 @@ escape ret;
 ]],
     run = 1,
 }
-do return end
 Test { [[
 input void A;
 par/or do
@@ -1503,6 +1502,7 @@ escape ret;
 ]],
     run = 10
 }
+do return end
 
 Test { [[
 input int A;

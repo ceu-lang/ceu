@@ -37,3 +37,35 @@ F = {
 }
 
 AST.visit(F)
+
+-------------------------------------------------------------------------------
+
+G = {
+    ROOT__PRE = function (me)
+        me.trails = { 0, me.trails_n }     -- [0, N[
+    end,
+
+    Node__PRE = function (me)
+        if me.__par then
+            me.trails = me.__par.trails
+        end
+    end,
+
+    Par_Or__PRE  = 'Par__PRE',
+    Par_And__PRE = 'Par__PRE',
+    Par__PRE = function (me)
+        for i, sub in ipairs(me) do
+            sub.trails = {}
+            if i == 1 then
+                sub.trails[1] = me.trails[1]
+            else
+                local pre = me[i-1]
+                sub.trails[1] = pre.trails[1] + pre.trails_n
+            end
+            sub.trails[2] = sub.trails[1] + sub.trails_n
+        end
+    end,
+}
+
+AST.visit(G)
+
