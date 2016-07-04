@@ -29,17 +29,26 @@
 === DATA ===
 === NATIVE ===
 
+#define TRAILS_N (=== TRAILS_N ===)
+
+typedef === TCEU_NLBL === tceu_nlbl;
+typedef u8 tceu_nevt;   /* TODO */
+
+enum {
+    === LABELS ===
+};
+
+typedef union tceu_trl {
+    tceu_nevt evt;
+    tceu_nlbl lbl;
+} tceu_trl;
+
 typedef struct tceu_app {
     u8 is_alive:        1;
     int ret;
     CEU_DATA_ROOT data;
+    tceu_trl trails[TRAILS_N];
 } tceu_app;
-
-
-typedef === TCEU_NLBL === tceu_nlbl;
-enum {
-    === LABELS ===
-};
 
 static void ceu_go (tceu_app* _ceu_app, tceu_nlbl _ceu_lbl)
 {
@@ -51,6 +60,10 @@ _CEU_GOTO_:
 }
 
 int ceu_go_all (tceu_app* app) {
+    /* INIT */
+    app->is_alive = 0;  /* TODO */
+    memset(&app->trails, 0, TRAILS_N*sizeof(tceu_trl));
+
     ceu_go(app, CEU_LABEL_ROOT);
     ceu_out_assert(app->is_alive == 0);
     return app->ret;

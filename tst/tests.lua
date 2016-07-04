@@ -1475,6 +1475,29 @@ escape v as int;
 }
 
 Test { [[
+var int ret=0;
+par/or do
+    ret = 1;
+with
+    ret = 2;
+end
+escape ret;
+]],
+    run = 1,
+}
+do return end
+Test { [[
+var int ret=0;
+par/and do
+    ret = 1;
+with
+    ret = 2;
+end
+escape ret;
+]],
+    run = 2,
+}
+Test { [[
 input int A;
 var int ret=0;
 par/or do

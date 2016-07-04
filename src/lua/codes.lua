@@ -1,5 +1,4 @@
 CODES = {
-    code   = '',
     native = { [true]='', [false]='' }
 }
 
@@ -43,12 +42,10 @@ F = {
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
     end,
-    ROOT__POS = function (me)
-        CODES.code = me.code
-    end,
 
     Nat_Block = function (me)
         local pre, code = unpack(me)
+        pre = pre and true
 
         -- unescape `##´ => `#´
         code = string.gsub(code, '^%s*##',  '#')
@@ -125,7 +122,8 @@ local c = SUB(c, '=== LABELS ===',     LABELS.code)
 local c = SUB(c, '=== NATIVE_PRE ===', CODES.native[true])
 local c = SUB(c, '=== DATA ===',       MEMS.code)
 local c = SUB(c, '=== NATIVE ===',     CODES.native[false])
-local c = SUB(c, '=== CODE ===',       CODES.code)
+local c = SUB(c, '=== TRAILS_N ===',   AST.root.trails_n)
+local c = SUB(c, '=== CODE ===',       AST.root.code)
 C:write('\n\n/* CEU_C */\n\n'..c)
 
 H:close()

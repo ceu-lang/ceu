@@ -131,6 +131,7 @@ Test = function (t)
     if not check('stmts')    then return end
     if not check('inits')    then return end
     if not check('scopes')   then return end
+    if not check('trails')   then return end
     if not check('labels')   then return end
     if not check('mems')     then return end
     dofile(DIR..'vals.lua')
