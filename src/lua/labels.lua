@@ -27,6 +27,26 @@ F = {
             me.lbl_out = new{'Do'}
         end
     end,
+
+    Par_Or__PRE  = 'Par__PRE',
+    Par_And__PRE = 'Par__PRE',
+    Par__PRE = function (me)
+        me.lbls_in = {}
+        for i, sub in ipairs(me) do
+            if i < #me then
+                -- the last executes directly (no label needed)
+                me.lbls_in[i] = new{me.tag..'_sub_'..i}
+            end
+        end
+
+        if me.tag ~= 'Par' then
+            me.lbl_out = new{me.tag..'_out'}
+        end
+
+        if me.tag == 'Par_And' then
+            me.lbl_tst = new{'Par_And_tst'}
+        end
+    end,
 }
 
 AST.visit(F)

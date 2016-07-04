@@ -16,7 +16,7 @@ do return end -- OK
 -- OK: well tested
 ----------------------------------------------------------------------------
 
-Test { [[]], run='1] runtime error: reached end of block' }
+Test { [[]], run='1] runtime error: reached end of `do´' }
 Test { [[escape (1);]], run=1 }
 Test { [[escape 1;]], run=1 }
 

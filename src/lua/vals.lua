@@ -70,7 +70,7 @@ F = {
     end,
 
     ID_int = function (me)
-        return '(_ceu_app->data.'..me.dcl.id_..')'
+        return '(CEU_APP.data.'..me.dcl.id_..')'
     end,
 
     ---------------------------------------------------------------------------

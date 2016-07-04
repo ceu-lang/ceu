@@ -21,7 +21,6 @@ void ceu_log (int mode, long s) {
 
 int main (int argc, char *argv[])
 {
-    tceu_app CEU_APP;
-    int ret = ceu_go_all(&CEU_APP);
+    int ret = ceu_go_all();
     return ret;
 }

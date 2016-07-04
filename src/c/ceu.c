@@ -1,4 +1,5 @@
-#include <stdlib.h>
+#include <stdlib.h>     /* NULL */
+#include <string.h>     /* memset */
 
 #ifndef ceu_out_assert
     #error "Missing definition for macro \"ceu_out_assert\"."
@@ -50,7 +51,9 @@ typedef struct tceu_app {
     tceu_trl trails[TRAILS_N];
 } tceu_app;
 
-static void ceu_go (tceu_app* _ceu_app, tceu_nlbl _ceu_lbl)
+static tceu_app CEU_APP = { 1, 0, {} ,{} };
+
+static void ceu_go (tceu_nlbl _ceu_lbl)
 {
 _CEU_GOTO_:
 
@@ -59,12 +62,11 @@ _CEU_GOTO_:
     }
 }
 
-int ceu_go_all (tceu_app* app) {
+int ceu_go_all (void) {
     /* INIT */
-    app->is_alive = 0;  /* TODO */
-    memset(&app->trails, 0, TRAILS_N*sizeof(tceu_trl));
+    memset(&CEU_APP.trails, 0, TRAILS_N*sizeof(tceu_trl));
 
-    ceu_go(app, CEU_LABEL_ROOT);
-    ceu_out_assert(app->is_alive == 0);
-    return app->ret;
+    ceu_go(CEU_LABEL_ROOT);
+    ceu_out_assert(CEU_APP.is_alive == 0);
+    return CEU_APP.ret;
 }

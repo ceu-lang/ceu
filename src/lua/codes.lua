@@ -12,10 +12,14 @@ local function LINE (me, line)
     me.code = me.code..line
 end
 
+local function CONC (me, sub)
+    me.code = me.code..sub.code
+end
+
 local function CONC_ALL (me)
     for _, sub in ipairs(me) do
         if AST.is_node(sub) then
-            me.code = me.code..sub.code
+            CONC(me, sub)
         end
     end
 end
@@ -29,6 +33,10 @@ local function GOTO (me, lbl)
 _ceu_lbl = ]]..lbl.id..[[;
 goto _CEU_GOTO_;
 ]])
+end
+
+local function HALT (me)
+    LINE(me, 'return;')
 end
 
 F = {
@@ -60,7 +68,7 @@ F = {
         local _,_,set = unpack(me)
         if set then
             LINE(me, [[
-ceu_out_assert_msg(0, "reached end of block");
+ceu_out_assert_msg(0, "reached end of `do´");
 ]])
             CASE(me, me.lbl_out)
         end
@@ -82,12 +90,41 @@ if (]]..V(c)..[[) {
 
     ---------------------------------------------------------------------------
 
+    Par_Or  = 'Par',
+    Par_And = 'Par',
+    Par = function (me)
+        for i, sub in ipairs(me) do
+            if i < #me then
+                LINE(me, [[
+ceu_go(]]..me.lbls_in[i].id..[[);
+]])
+            end
+        end
+
+        -- inverse order to execute me[#me] directly
+        for i=#me, 1, -1 do
+            local sub = me[i]
+            if i < #me then
+                CASE(me, me.lbls_in[i])
+            end
+            CONC(me, sub)
+            HALT(me)
+        end
+
+        if me.lbl_out then
+            CASE(me, me.lbl_out)
+        end
+    end,
+
+    ---------------------------------------------------------------------------
+
     Set_Exp = function (me)
         local fr, to = unpack(me)
 
         if to.info.dcl.id == '_ret' then
             LINE(me, [[
-_ceu_app->ret = ]]..V(fr)..[[;
+CEU_APP.ret = ]]..V(fr)..[[;
+CEU_APP.is_alive = 0;           /* TODO */
 ]])
         else
             LINE(me, [[
