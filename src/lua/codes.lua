@@ -1,5 +1,6 @@
 CODES = {
-    code = ''
+    code   = '',
+    native = '',
 }
 
 local function LINE (me, line)
@@ -46,6 +47,11 @@ F = {
         CODES.code = me.code
     end,
 
+    Nat_Block = function (me)
+        local _, code = unpack(me)
+        CODES.native = CODES.native..code
+    end,
+
     Do = function (me)
         CONC_ALL(me)
 
@@ -59,6 +65,17 @@ ceu_out_assert_msg(0, "reached end of block");
     end,
     Escape = function (me)
         GOTO(me, me.do_.lbl_out)
+    end,
+
+    If = function (me)
+        local c, t, f = unpack(me)
+        LINE(me, [[
+if (]]..V(c)..[[) {
+    ]]..t.code..[[
+} else {
+    ]]..f.code..[[
+}
+]])
     end,
 
     ---------------------------------------------------------------------------
@@ -101,6 +118,7 @@ local c = PAK.files.ceu_c
 local c = SUB(c, '=== TCEU_NLBL ===', TYPES.n2uint(#LABELS.list))
 local c = SUB(c, '=== LABELS ===',    LABELS.code)
 local c = SUB(c, '=== DATA ===',      MEMS.code)
+local c = SUB(c, '=== NATIVE ===',    CODES.native)
 local c = SUB(c, '=== CODE ===',      CODES.code)
 C:write('\n\n/* CEU_C */\n\n'..c)
 

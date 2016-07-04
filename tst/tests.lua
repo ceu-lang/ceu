@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -388,7 +387,7 @@ Test { [[var int b=2; var int a=1; b=a; var int a=0; escape b+a;]],
     run = 1,
 }
 Test { [[do var int a=1; end var int a=0; escape a;]],
-    gcc = 'error: variable ‘__ceu_a_1’ set but not used',
+    tmp = 'error: variable ‘__ceu_a_1’ set but not used',
     --run = 0,
 }
 Test { [[var int a=1,a=0; escape a;]],
@@ -728,7 +727,7 @@ Test { [[
 native _f,_int;
 input void OS_START;
 native do
-    int f () { escape 1; }
+    int f () { return 1; }
 end
 var _int x = _f() as /plain;
 escape x;
@@ -741,7 +740,7 @@ input void OS_START;
 native _int;
 native/pure _f;
 native do
-    int f () { escape 1; }
+    int f () { return 1; }
 end
 var _int x = _f();
 escape x;
@@ -753,7 +752,7 @@ Test { [[
 input void OS_START;
 native _int, _f;
 native do
-    int f () { escape 1; }
+    int f () { return 1; }
 end
 var _int x = (_f as /pure)();
 escape x;
@@ -766,7 +765,7 @@ input void OS_START;
 native _f;
 native do
     void* V;
-    int f (void* v) { escape 1; }
+    int f (void* v) { return 1; }
 end
 var void&& ptr = null;
 var int x = (_f as/nohold)(ptr);
@@ -780,7 +779,7 @@ input void OS_START;
 native _f;
 native do
     void* V;
-    int f (void* v) { escape 1; }
+    int f (void* v) { return 1; }
 end
 var void&& ptr = null;
 var int x = (_f as/pure)(ptr);
@@ -790,6 +789,7 @@ escape x;
     run = 1,
 }
 
+--]===]
 Test { [[
 input void ANY;
 await ANY;
@@ -886,7 +886,7 @@ end
 escape 1;
 ]],
     run = 1,
-    gcc = 'error: #error bug found',
+    cc = 'error: #error bug found',
 }
 
 Test { [[
@@ -3696,7 +3696,7 @@ loop/_V do
 end
 escape 1;
 ]],
-    gcc = '5:5: error: variable-sized object may not be initialized',
+    cc = '5:5: error: variable-sized object may not be initialized',
 }
 Test { [[
 loop/10 do
@@ -17434,7 +17434,7 @@ _g(&&(ren!));
 
 escape 1;
 ]],
-    gcc = 'error: unknown type name ‘SDL_Renderer’',
+    cc = 'error: unknown type name ‘SDL_Renderer’',
 }
 
 -->>> FINALLY / FINALIZE
@@ -17688,7 +17688,7 @@ end
 await E;
 escape n!;
 ]],
-    gcc = 'error: implicit declaration of function ‘f’',
+    cc = 'error: implicit declaration of function ‘f’',
 }
 
 Test { [[
@@ -17777,7 +17777,7 @@ end
 escape r;
 ]],
     --props = "line 8 : not permitted inside `finalize´",
-    gcc = '9:27: error: variable ‘__ceu_a_3’ set but not used [-Werror=unused-but-set-variable]',
+    cc = '9:27: error: variable ‘__ceu_a_3’ set but not used [-Werror=unused-but-set-variable]',
 }
 
 Test { [[
@@ -22225,7 +22225,7 @@ escape(1);
 ]],
     --env = 'line 2 : undeclared type `_t´',
     --env = 'line 3 : non-matching types on `emit´',
-    gcc = 'error: unknown type name',
+    cc = 'error: unknown type name',
 }
 Test { [[
 native _t;
@@ -22714,7 +22714,7 @@ output/input/instantaneous Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
-    gcc = 'error: #error ceu_out_call_* is not defined',
+    cc = 'error: #error ceu_out_call_* is not defined',
 }
 
 Test { [[
@@ -22737,7 +22737,7 @@ output/input/instantaneous Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
-    gcc = 'error: #error ceu_out_call_* is not defined',
+    cc = 'error: #error ceu_out_call_* is not defined',
     --run = 1,
 }
 
@@ -23310,7 +23310,7 @@ native _V;
 *({(u32*)0x100}) = _V;
 escape 1;
 ]],
-    gcc = 'error: ‘V’ undeclared (first use in this function)',
+    cc = 'error: ‘V’ undeclared (first use in this function)',
 }
 
 Test { [[
@@ -23526,7 +23526,7 @@ ptr2 = ptr1;
 escape 1;
 ]],
     --env = 'line 4 : invalid attribution (int&& vs _FILE&&)',
-    gcc = 'error: assignment from incompatible pointer type',
+    cc = 'error: assignment from incompatible pointer type',
     --run = 1,
     --env = 'line 4 : invalid attribution',
 }
@@ -23930,7 +23930,7 @@ var _char&& p=null;
 escape 1;
 ]],
     --env = 'line 3 : invalid operand to unary "*"',
-    gcc = 'error: request for member',
+    cc = 'error: request for member',
 }
 
 Test { [[
@@ -24327,7 +24327,7 @@ _assert(ret == 0);
 escape 0;
 ]],
     wrn = true,
-    gcc = 'implicit declaration of function ‘uv_buf_init’',
+    cc = 'implicit declaration of function ‘uv_buf_init’',
 }
 
 Test { [[
@@ -24351,7 +24351,7 @@ str = [].."oioioi";
 escape _strlen(&&str[0]);
 ]],
     --dcls = 'line 5 : invalid use of `vector´ "str"',
-    gcc = '4:34: error: assignment to expression with array type',
+    cc = '4:34: error: assignment to expression with array type',
 }
 
 --<<< NATIVE/POINTERS/VECTORS
@@ -25319,14 +25319,14 @@ var byte  c = 2;
 var& byte b = &c;
 escape b;
 ]],
-    gcc = 'error: pointer targets in assignment differ',
+    cc = 'error: pointer targets in assignment differ',
 }
 Test { [[
 var byte   c = 2;
 var byte&& b = &&c;
 escape *b;
 ]],
-    gcc = 'error: pointer targets in assignment differ',
+    cc = 'error: pointer targets in assignment differ',
 }
 --<< VECTORS
 
@@ -25583,7 +25583,7 @@ end
 vector[_N] _u8 xxx = [];
 escape 1;
 ]],
-    gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
+    cc = '6:26: error: variably modified ‘xxxx’ at file scope',
 }
 
 Test { [[
@@ -25829,7 +25829,7 @@ escape 0;
 ]],
     --env = 'line 5 : native function "_A" is not declared',
     --run  = 1,
-    gcc = 'error: too few arguments to function ‘A’',
+    cc = 'error: too few arguments to function ‘A’',
 }
 
 Test { [[
@@ -25851,7 +25851,7 @@ end
 var int v = _A();
 escape v;
 ]],
-    gcc = 'error: void value not ignored as it ought to be',
+    cc = 'error: void value not ignored as it ought to be',
 }
 
 Test { [[emit A => 10; escape 0;]],
@@ -25917,7 +25917,7 @@ end
 var int ret = _VD(10);
 escape ret;
 ]],
-    gcc = 'error: void value not ignored as it ought to be',
+    cc = 'error: void value not ignored as it ought to be',
 }
 
 Test { [[
@@ -26212,7 +26212,7 @@ await 1s;
 var _SDL_Rect r = rect;
 escape 1;
 ]],
-    gcc = 'error: unknown type name ‘SDL_Point’',
+    cc = 'error: unknown type name ‘SDL_Point’',
 }
 
 Test { [[
@@ -26226,7 +26226,7 @@ var _SDL_Rect r = rect;
     r.y = r.y - r.h/2;
 escape 1;
 ]],
-    gcc = 'error: unknown type name ‘SDL_Point’',
+    cc = 'error: unknown type name ‘SDL_Point’',
 }
 
 Test { [[
@@ -26961,7 +26961,7 @@ vector[10] _char a;
 a = [].."oioioi";
 escape 1;
 ]],
-    gcc = '2:32: error: assignment to expression with array type',
+    cc = '2:32: error: assignment to expression with array type',
     --env = 'line 2 : types mismatch (`_char[]´ <= `_char&&´)',
     --env = 'line 2 : invalid attribution',
 }
@@ -30333,7 +30333,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    gcc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
+    cc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
 }
 Test { [[
 code/delayed Tx (var int x)=>void
@@ -30398,7 +30398,7 @@ t.a = 1;
 escape t.a;
 ]],
     wrn = true,
-    gcc = 'error: unknown type name ‘TCEU_T’',
+    cc = 'error: unknown type name ‘TCEU_T’',
     --run = 1,
 }
 
@@ -30862,7 +30862,7 @@ do
 end
 escape _XXX > 0;
 ]],
-    gcc = 'error: ‘CEU_T’ undeclared here (not in a function)',
+    cc = 'error: ‘CEU_T’ undeclared here (not in a function)',
 }
 
 Test { [[
@@ -30935,7 +30935,7 @@ input void OS_START;
 await OS_START;
 escape t.a;
 ]],
-    gcc = 'error: duplicate member ‘a’',
+    cc = 'error: duplicate member ‘a’',
     wrn = true,
     --run = 14,
     run = 8,
@@ -31656,7 +31656,7 @@ do
 end
 escape 1;
 ]],
-    gcc = 'error: unknown type name ‘SDL_Rect’',
+    cc = 'error: unknown type name ‘SDL_Rect’',
 }
 
 Test { [[
@@ -35301,7 +35301,7 @@ end
 escape 1;
 ]],
     --fin = 'line 7 : attribution requires `finalize´',
-    gcc = 'error: unknown type name ‘SDL_rect’',
+    cc = 'error: unknown type name ‘SDL_rect’',
 }
 
 Test { [[
@@ -35318,7 +35318,7 @@ end
 escape 1;
 ]],
     --fin = 'line 7 : attribution requires `finalize´',
-    gcc = 'error: unknown type name ‘SDL_rect’',
+    cc = 'error: unknown type name ‘SDL_rect’',
 }
 
 Test { [[
@@ -45261,7 +45261,7 @@ native _f;
     end;
 escape 1;
 ]],
-    gcc = '24: note: expected ‘int *’ but argument is of type ‘int’',
+    cc = '24: note: expected ‘int *’ but argument is of type ‘int’',
     --run = 1,
 }
 
@@ -47794,7 +47794,7 @@ var IWorld&&? ptr = spawn World with end;
 
 escape 1;
 ]],
-    gcc = "undefined reference to `CEU_World_get_pingus'",
+    cc = "undefined reference to `CEU_World_get_pingus'",
 }
 
 Test { [[
@@ -49707,7 +49707,7 @@ with
 end
 escape 1;
 ]],
-    gcc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
+    cc = 'error: implicit declaration of function ‘ceu_out_isr_attach’',
 }
 
 Test { [[
@@ -49724,7 +49724,7 @@ with
 end
 escape 1;
 ]],
-    gcc = 'error: #error "Missing definition for macro \\"ceu_out_isr_on\\"."',
+    cc = 'error: #error "Missing definition for macro \\"ceu_out_isr_on\\"."',
 }
 
 Test { [[
@@ -49741,7 +49741,7 @@ with
 end
 escape 1;
 ]],
-    gcc = '5: error: too many arguments to function ‘ceu_out_isr_attach’',
+    cc = '5: error: too many arguments to function ‘ceu_out_isr_attach’',
 }
 
 Test { [[
@@ -49781,7 +49781,7 @@ with
 end
 escape 1;
 ]],
-    gcc = '8:28: error: too few arguments to function ‘ceu_sys_isr_detach’',
+    cc = '8:28: error: too few arguments to function ‘ceu_sys_isr_detach’',
 }
 
 Test { [[
@@ -50367,7 +50367,7 @@ with
 end
 escape 1;
 ]],
-    gcc = '#error "Missing definition for macro',
+    cc = '#error "Missing definition for macro',
 }
 
 Test { [[
@@ -50401,7 +50401,7 @@ end
 escape 1;
 ]],
     _ana = {acc=1},
-    gcc = '#error "Missing definition for macro',
+    cc = '#error "Missing definition for macro',
 }
 
 --<<< ISR / ATOMIC
@@ -54176,7 +54176,7 @@ end
     _ana = {
         isForever = true,
     },
-    gcc = 'error: implicit declaration of function',
+    cc = 'error: implicit declaration of function',
     awaits = 3,
 }
 Test { [[
@@ -54226,7 +54226,7 @@ end
         isForever = true,
     },
     awaits = 3,
-    gcc = 'error: implicit declaration of function',
+    cc = 'error: implicit declaration of function',
 }
 --do return end
 
@@ -54275,7 +54275,7 @@ end
         isForever = true,
     },
     awaits = 1,
-    gcc = 'error: implicit declaration of function',
+    cc = 'error: implicit declaration of function',
 }
 
 Test { [[
@@ -54724,7 +54724,7 @@ native _f;
 escape _f();
 ]],
     opts_pre = true,
-    gcc = 'error: redefinition of',
+    cc = 'error: redefinition of',
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
@@ -55809,7 +55809,7 @@ native _f;
 end
 escape 1;
 ]],
-    gcc = 'implicit declaration of function ‘f’',
+    cc = 'implicit declaration of function ‘f’',
 }
 
 Test { [[
@@ -60039,7 +60039,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    gcc = 'error: unknown type name ‘SDL_Texture’',
+    cc = 'error: unknown type name ‘SDL_Texture’',
 }
 
 Test { [[
@@ -62818,7 +62818,7 @@ end
 escape 1;
 ]],
     --fin = 'line 15 : unsafe access to pointer "p1" across `class´ (/tmp/tmp.ceu : 14)',
-    gcc = '12:5: error: cannot convert to a pointer type',
+    cc = '12:5: error: cannot convert to a pointer type',
     wrn = true,
     run = 1,
 }
@@ -65192,7 +65192,7 @@ do
 end
 escape 1;
 ]],
-    gcc = '5: error: implicit declaration of function ‘f’',
+    cc = '5: error: implicit declaration of function ‘f’',
 }
 
 Test { [[

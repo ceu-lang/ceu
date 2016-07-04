@@ -26,6 +26,7 @@
 #define ceu_out_assert_msg(v,msg) ceu_out_assert_msg_ex((v),(msg),__FILE__,__LINE__)
 
 === DATA ===
+=== NATIVE ===
 
 typedef struct tceu_app {
     u8 is_alive:        1;

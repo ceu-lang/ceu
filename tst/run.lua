@@ -136,14 +136,14 @@ Test = function (t)
     dofile(DIR..'vals.lua')
     if not check('codes')    then return end
 
-if T.ana or T._ana then return end
+if T.ana or T._ana or T.tmp then return end
 
     DBG,ASR = DBG1,ASR1
     if CEU.opts.env then
         dofile(DIR..'env.lua')
     end
     if CEU.opts.cc then
-        dofile(DIR..'cc.lua')
+        if not check('cc') then return end
     end
 
     local f = io.popen(CEU.opts.cc_output..' 2>&1')

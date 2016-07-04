@@ -28,8 +28,27 @@ function TYPES.tostring (tp)
     end
     return TYPES.id(tp) .. table.concat(tp,'',2)
 end
+
 function TYPES.dump (tp)
     DBG('TYPE', TYPES.tostring(tp))
+end
+
+function TYPES.toc (tp)
+    assert(tp.tag == 'Type')
+
+    local id = TYPES.id(tp)
+    id = string.gsub(id,'^_', '')
+
+    local mods = {}
+    for i=2, #tp do
+        local mod = tp[i]
+        if mod == '&&' then
+            mod = '*'
+        end
+        mods[i-1] = mod
+    end
+
+    return id..table.concat(mods)
 end
 
 function TYPES.new (me, id, ...)

@@ -20,6 +20,12 @@ F = {
         return V(e)
     end,
 
+-- PRIMITIVES
+
+    NULL = function (me)
+        return 'NULL'
+    end,
+
     NUMBER = function (me)
         return me[1]
     end,
@@ -28,13 +34,26 @@ F = {
         return me[1]
     end,
 
+-- SIZEOF
+
     SIZEOF = function (me)
         local e = unpack(me)
         if e.tag == 'Type' then
-            return '(sizeof('..TYPES.tostring(e)..'))'
+            return '(sizeof('..TYPES.toc(e)..'))'
         else
             return '(sizeof('..V(e)..'))'
         end
+    end,
+
+-- CALL
+
+    Exp_Call = function (me)
+        local _, e, ps = unpack(me)
+        local vs = {}
+        for i, p in ipairs(ps) do
+            vs[i] = V(p)
+        end
+        return V(e)..'('..table.concat(vs,',')..')'
     end,
 
     ---------------------------------------------------------------------------
@@ -68,6 +87,8 @@ F = {
     ['Exp_*']   = 'Exp_2',
     ['Exp_/']   = 'Exp_2',
     ['Exp_%']   = 'Exp_2',
+    ['Exp_|']   = 'Exp_2',
+    ['Exp_&']   = 'Exp_2',
     ['Exp_==']  = 'Exp_2',
     ['Exp_!=']  = 'Exp_2',
     ['Exp_or']  = 'Exp_2',
@@ -84,6 +105,14 @@ F = {
 
     Exp_as = function (me)
         local _, e, Type = unpack(me)
-        return '(('..TYPES.tostring(Type)..')'..V(e)..')'
+        if Type.tag == 'Type' then
+            local ret = '(('..TYPES.toc(Type)..')'..V(e)..')'
+            if TYPES.check(Type,'bool') then
+                ret = '('..ret..'? 1 : 0)'
+            end
+            return ret
+        else
+            return V(e)
+        end
     end,
 }
