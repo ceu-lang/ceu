@@ -25,6 +25,7 @@
     }
 #define ceu_out_assert_msg(v,msg) ceu_out_assert_msg_ex((v),(msg),__FILE__,__LINE__)
 
+=== NATIVE_PRE ===
 === DATA ===
 === NATIVE ===
 

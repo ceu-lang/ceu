@@ -1,6 +1,6 @@
 CODES = {
     code   = '',
-    native = '',
+    native = { [true]='', [false]='' }
 }
 
 local function LINE (me, line)
@@ -48,8 +48,13 @@ F = {
     end,
 
     Nat_Block = function (me)
-        local _, code = unpack(me)
-        CODES.native = CODES.native..code
+        local pre, code = unpack(me)
+
+        -- unescape `##´ => `#´
+        code = string.gsub(code, '^%s*##',  '#')
+        code = string.gsub(code, '\n%s*##', '\n#')
+
+        CODES.native[pre] = CODES.native[pre]..code
     end,
 
     Do = function (me)
@@ -115,11 +120,12 @@ AST.visit(F)
 
 -- CEU.C
 local c = PAK.files.ceu_c
-local c = SUB(c, '=== TCEU_NLBL ===', TYPES.n2uint(#LABELS.list))
-local c = SUB(c, '=== LABELS ===',    LABELS.code)
-local c = SUB(c, '=== DATA ===',      MEMS.code)
-local c = SUB(c, '=== NATIVE ===',    CODES.native)
-local c = SUB(c, '=== CODE ===',      CODES.code)
+local c = SUB(c, '=== TCEU_NLBL ===',  TYPES.n2uint(#LABELS.list))
+local c = SUB(c, '=== LABELS ===',     LABELS.code)
+local c = SUB(c, '=== NATIVE_PRE ===', CODES.native[true])
+local c = SUB(c, '=== DATA ===',       MEMS.code)
+local c = SUB(c, '=== NATIVE ===',     CODES.native[false])
+local c = SUB(c, '=== CODE ===',       CODES.code)
 C:write('\n\n/* CEU_C */\n\n'..c)
 
 H:close()
