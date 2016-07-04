@@ -265,7 +265,6 @@ local function visit_aux (F, me, I)
     local bef, aft = FF(F,me.tag..'__BEF'), FF(F,me.tag..'__AFT')
 
     if F.Node__PRE then
-error'TODO: luacov never executes this?'
         me = F.Node__PRE(me) or me
         if me ~= _me then
             return visit_aux(F, me)
@@ -308,7 +307,6 @@ error'TODO: luacov never executes this?'
     end
      if F.Node__POS then
         me = F.Node__POS(me) or me
-error'TODO: luacov never executes this?'
         if me ~= _me then
             return visit_aux(F, me)
         end

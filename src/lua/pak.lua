@@ -47,6 +47,7 @@ subst 'consts.lua'
 subst 'stmts.lua'
 subst 'inits.lua'
 subst 'scopes.lua'
+subst 'code.lua'
 
 fout:write([=[
 #!/usr/bin/env ]=]..LUA_EXE..[=[

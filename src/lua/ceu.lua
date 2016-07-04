@@ -1,20 +1,28 @@
 optparse = dofile 'optparse.lua'
 
-dofile 'dbg.lua'    ; DBG,ASR = DBG1,ASR1
+dofile 'dbg.lua'
+DBG,ASR = DBG1,ASR1
 dofile 'cmd.lua'
-dofile 'pre.lua'    ; DBG,ASR = DBG2,ASR2
-dofile 'lines.lua'
-dofile 'parser.lua'
-dofile 'ast.lua'
-dofile 'adjs.lua'
-dofile 'types.lua'
-dofile 'dcls.lua'
-dofile 'names.lua'
-dofile 'exps.lua'
-dofile 'consts.lua'
-dofile 'stmts.lua'
-dofile 'inits.lua'
-dofile 'scopes.lua' ; DBG,ASR = DBG1,ASR1
+if CEU.opts.pre then
+    dofile 'pre.lua'
+end
+if CEU.opts.ceu then
+    DBG,ASR = DBG2,ASR2
+    dofile 'lines.lua'
+    dofile 'parser.lua'
+    dofile 'ast.lua'
+    dofile 'adjs.lua'
+    dofile 'types.lua'
+    dofile 'dcls.lua'
+    dofile 'names.lua'
+    dofile 'exps.lua'
+    dofile 'consts.lua'
+    dofile 'stmts.lua'
+    dofile 'inits.lua'
+    dofile 'scopes.lua'
+    dofile 'code.lua'
+end
+DBG,ASR = DBG1,ASR1
 --AST.dump(AST.root)
 
 --ceu
@@ -38,6 +46,7 @@ if CEU.opts.ceu then
 
     -- CEU_SYS.C
     C:write('\n\n/* CEU_SYS_C */\n\n'..PAK.files.ceu_sys_c)
+    C:write(AST.root.code)
 
     H:close()
     C:close()

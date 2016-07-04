@@ -13,33 +13,33 @@ Usage: ceu [<options>] <file>...
 
 Options:
 
-    --help              display this help, then exit
-    --version           display version information, then exit
+    --help                      display this help, then exit
+    --version                   display version information, then exit
 
-    --pre               Preprocessor phase: preprocess Céu into Céu
-    --pre-exe=FILE          preprocessor executable
-    --pre-args=ARGS         preprocessor arguments
-    --pre-input=FILE        input file to compile (Céu source)
-    --pre-output=FILE       output file to generate (Céu source)
+    --pre                       Preprocessor phase: preprocess Céu into Céu
+    --pre-exe=FILE                  preprocessor executable
+    --pre-args=ARGS                 preprocessor arguments
+    --pre-input=FILE                input file to compile (Céu source)
+    --pre-output=FILE               output file to generate (Céu source)
 
-    --ceu               Céu phase: compiles Céu into C
-    --ceu-input=FILE        input file to compile (Céu source)
-    --ceu-output-h=FILE      output header file to generate (C source)
-    --ceu-output-c=FILE      output source file to generate (C source)
+    --ceu                       Céu phase: compiles Céu into C
+    --ceu-input=FILE                input file to compile (Céu source)
+    --ceu-output-h=FILE             output header file to generate (C source)
+    --ceu-output-c=FILE             output source file to generate (C source)
+    --ceu-line-directives=BOOL      insert `#line´ directives in the C output
 
-    --env               Environment phase: packs all C files together
-    --env-header=FILE       header file with declarations (C source)
-    --env-ceu=FILE          output from Céu phase (C source)
-    --env-main=FILE         source file with main function (C source)
-    --env-output=FILE       output file to generate (C source)
 
-    --cc                C phase: compiles C into binary
-    --cc-exe=FILE           C compiler executable
-    --cc-args=ARGS          compiler arguments
-    --cc-input=FILE         input file to compile (C source)
-    --cc-output=FILE        output file to generate (binary)
+    --env                       Environment phase: packs all C files together
+    --env-header=FILE               header file with declarations (C source)
+    --env-ceu=FILE                  output from Céu phase (C source)
+    --env-main=FILE                 source file with main function (C source)
+    --env-output=FILE               output file to generate (C source)
 
-    --no-line-directives    do not insert `#line´ directives in the C output
+    --cc                        C phase: compiles C into binary
+    --cc-exe=FILE                   C compiler executable
+    --cc-args=ARGS                  compiler arguments
+    --cc-input=FILE                 input file to compile (C source)
+    --cc-output=FILE                output file to generate (binary)
 
   -b                       a short option with no long option
       --long               a long option with no short option
@@ -98,6 +98,12 @@ else
 end
 
 if CEU.opts.ceu then
+    local lines = CEU.opts.ceu_line_directives or 'true'
+    if lines then
+        ASR(lines=='true' or lines=='false', 'ceu_line_directives')
+    end
+    CEU.opts.ceu_line_directives = (lines == 'true')
+
     ASR(CEU.opts.ceu_input,    'ceu_input')
     ASR(CEU.opts.ceu_output_h, 'ceu_output_h')
     ASR(CEU.opts.ceu_output_c, 'ceu_output_c')

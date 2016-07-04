@@ -111,6 +111,7 @@ Test = function (t)
     if not check('stmts')    then return end
     if not check('inits')    then return end
     if not check('scopes')   then return end
+    if not check('code')     then return end
 
 do return end
     DBG,ASR = DBG1,ASR1
@@ -142,7 +143,6 @@ AST.dump(AST.root)
     if not check('tmps')     then return end
     if not check('mem')      then return end
     if not check('val')      then return end
-    if not check('code')     then return end
 
     if (not t.wrn) and (not t._ana) then
         WRN = _WRN
