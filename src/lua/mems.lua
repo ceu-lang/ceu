@@ -17,7 +17,8 @@ typedef struct CEU_DATA_ROOT {
             if dcl.tag == 'Var' then
                 if dcl.id ~= '_ret' then
                     local tp = unpack(dcl)
-                    code = code..TYPES.tostring(tp)..' '..dcl.id..';\n'
+                    dcl.id_ = dcl.id..'_'..dcl.n
+                    code = code..TYPES.tostring(tp)..' '..dcl.id_..';\n'
                 end
             end
         end

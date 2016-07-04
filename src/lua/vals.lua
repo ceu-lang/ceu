@@ -40,13 +40,18 @@ F = {
     ---------------------------------------------------------------------------
 
     ID_nat = function (me)
-AST.dump(me)
-        local _, v = unpack(me)
-        return v
+        local v1,v2 = unpack(me)
+        if v1 == '_{}' then
+            -- { nat }
+            return v2
+        else
+            -- _nat
+            return string.sub(v1, 2)
+        end
     end,
 
     ID_int = function (me)
-        return '(_ceu_app->data.'..me.dcl.id..')'
+        return '(_ceu_app->data.'..me.dcl.id_..')'
     end,
 
     ---------------------------------------------------------------------------
