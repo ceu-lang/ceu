@@ -136,6 +136,8 @@ Test = function (t)
     dofile(DIR..'vals.lua')
     if not check('codes')    then return end
 
+if T.ana or T._ana then return end
+
     DBG,ASR = DBG1,ASR1
     if CEU.opts.env then
         dofile(DIR..'env.lua')

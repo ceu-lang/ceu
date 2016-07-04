@@ -71,6 +71,9 @@ ceu_out_assert_msg(0, "reached end of block");
 _ceu_app->ret = ]]..V(fr)..[[;
 ]])
         else
+            LINE(me, [[
+]]..V(to)..' = '..V(fr)..[[;
+]])
         end
     end,
 }

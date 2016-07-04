@@ -40,6 +40,7 @@ F = {
     ---------------------------------------------------------------------------
 
     ID_nat = function (me)
+AST.dump(me)
         local _, v = unpack(me)
         return v
     end,
@@ -50,7 +51,8 @@ F = {
 
     ---------------------------------------------------------------------------
 
-    ['Exp_1-'] = 'Exp_1',
+    ['Exp_1-']  = 'Exp_1',
+    ['Exp_not'] = 'Exp_1',
     Exp_1 = function (me)
         local op,e = unpack(me)
         return '('..ceu2c(op)..V(e)..')'

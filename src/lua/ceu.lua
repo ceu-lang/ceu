@@ -21,7 +21,9 @@ if CEU.opts.ceu then
     dofile 'inits.lua'
     dofile 'scopes.lua'
     dofile 'labels.lua'
-    dofile 'code.lua'
+    dofile 'mems.lua'
+    dofile 'vals.lua'
+    dofile 'codes.lua'
 end
 DBG,ASR = DBG1,ASR1
 if CEU.opts.env then

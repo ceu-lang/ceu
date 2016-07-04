@@ -210,7 +210,7 @@ Test { [[
 var byte x = 255;
 escape ( x + (0.5 as byte) )as int;
 ]],
-    run = 0,
+    run = 255,
 }
 
 Test { [[
