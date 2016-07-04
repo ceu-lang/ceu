@@ -1,5 +1,4 @@
-#ifndef _CEU_SYS_H
-#define _CEU_SYS_H
+#include <stdlib.h>
 
 #ifndef ceu_out_assert
     #error "Missing definition for macro \"ceu_out_assert\"."
@@ -26,9 +25,31 @@
     }
 #define ceu_out_assert_msg(v,msg) ceu_out_assert_msg_ex((v),(msg),__FILE__,__LINE__)
 
+=== DATA ===
+
 typedef struct tceu_app {
     u8 is_alive:        1;
     int ret;
+    CEU_DATA_ROOT data;
 } tceu_app;
 
-#endif  /* _CEU_OS_H */
+
+typedef === TCEU_NLBL === tceu_nlbl;
+enum {
+    === LABELS ===
+};
+
+static void ceu_go (tceu_app* _ceu_app, tceu_nlbl _ceu_lbl)
+{
+_CEU_GOTO_:
+
+    switch (_ceu_lbl) {
+        === CODE ===
+    }
+}
+
+int ceu_go_all (tceu_app* app) {
+    ceu_go(app, CEU_LABEL_ROOT);
+    ceu_out_assert(app->is_alive == 0);
+    return app->ret;
+}

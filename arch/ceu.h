@@ -1,6 +1,3 @@
-#ifndef _CEU_HEADER_H
-#define _CEU_HEADER_H
-
 #include <stdint.h>
 
 #ifdef __LP64__
@@ -26,9 +23,7 @@ typedef uint8_t   u8;
 typedef float    f32;
 typedef double   f64;
 
-#define ceu_out_assert(v) ceu_sys_assert(v)
-#define ceu_out_log(m,s) ceu_sys_log(m,s)
-void ceu_sys_assert (int v);
-void ceu_sys_log (int mode, long s);
-
-#endif /* _CEU_HEADER_H */
+#define ceu_out_assert(v) ceu_assert(v)
+#define ceu_out_log(m,s) ceu_log(m,s)
+void ceu_assert (int v);
+void ceu_log (int mode, long s);
