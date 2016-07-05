@@ -151,7 +151,6 @@ end
     if not check(T,'stmts')  then return end
     if not check(T,'inits')  then return end
     if not check(T,'scopes') then return end
-do return end
     if not check(T,'trails') then return end
     if not check(T,'labels') then return end
     if not check(T,'mems')   then return end

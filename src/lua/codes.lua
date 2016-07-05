@@ -106,6 +106,13 @@ if (]]..V(c)..[[) {
 ]])
     end,
 
+    Stmt_Call = function (me)
+        local call = unpack(me)
+        LINE(me, [[
+]]..V(call)..[[;
+]])
+    end,
+
     ---------------------------------------------------------------------------
 
     Par_Or  = 'Par',
@@ -231,16 +238,21 @@ assert(inout == 'input', 'TODO')
         local ps = 'NULL'
         if Explist then
             LINE(me, [[
-tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',')..[[ };
+{
+    tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',')..[[ };
 ]])
             ps = '&__ceu_ps'
         end
 
         LINE(me, [[
-ceu_go_ext(]]..ID_ext.dcl.id_..', '..ps..[[);
-if (!_ceu_stk->is_alive) {
-    return;
+    ceu_go_ext(]]..ID_ext.dcl.id_..', '..ps..[[);
+    if (!_ceu_stk->is_alive) {
+        return;
+    }
 }
+#ifdef CEU_OPT_GO_ALL
+ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+#endif
 ]])
         HALT(me, {
             evt  = 'CEU_INPUT__ASYNC',

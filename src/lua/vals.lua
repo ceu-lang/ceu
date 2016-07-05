@@ -34,6 +34,10 @@ F = {
         return me[1]
     end,
 
+    STRING = function (me)
+        return me[1]
+    end,
+
 -- SIZEOF
 
     SIZEOF = function (me)

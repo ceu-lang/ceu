@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1691,6 +1690,7 @@ with
 end
 escape ret;
 ]],
+    todo = 'OS_START',
     run = 2,
 }
 
@@ -1804,6 +1804,7 @@ native ___ceu_a_1;
 var int a = await 999ms;
 escape a + ___ceu_a_1;
 ]],
+    todo = 'var.is_tmp',
     run = { ['~>1s']=2000 },
 }
 
@@ -1905,9 +1906,10 @@ escape v;
 ]],
     run = {
         ['3~>A ; 1~>B'] = 1,
-        ['1~>B ; 2~>A ; 3~>B'] = 3,
+        --['1~>B ; 2~>A ; 3~>B'] = 3,
     }
 }
+
 Test { [[
 var bool a;
 a = await 10ms;
@@ -1920,6 +1922,19 @@ var bool a = await 10ms;
 escape a;
 ]],
     stmts = 'line 1 : invalid assignment : types mismatch : "bool" <= "int"',
+}
+--]===]
+Test { [[
+par do
+    var int a = await 10us;
+    escape a;
+with
+    async do
+        emit 11us;
+    end
+end
+]],
+    run = 1,
 }
 Test { [[
 var int a = await 10ms;

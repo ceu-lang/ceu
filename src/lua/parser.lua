@@ -411,13 +411,14 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     (V'_Await_Until'+V'Await_Wclock') *
                 V'__Do'
 
+    , Stmt_Call = V'Abs_Call' + V'Exp_Call'
+
     , Mark = C''
     , __fin_stmt   = V'___fin_stmt' * V'__seqs'
     , ___fin_stmt  = V'Nothing'
                    + V'_Set'
                    + V'Emit_Ext_emit' + V'Emit_Ext_call'
-                   + V'Abs_Call'
-                   + V'Exp_Call' -- TODO: ambiguous with Nat_Stmt
+                   + V'Stmt_Call'
     , __finalize   = K'finalize' * (PARENS(V'Namelist') + V'Mark') * K'with' *
                      V'Block' *
                    K'end'
@@ -840,9 +841,8 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     + V'Abs_Spawn' + V'Kill'
 -- TODO: remove class/interface
 + I((K'class'+K'interface'+K'traverse')) * EE'TODO: class/interface'
-                 + V'Abs_Call'
-                 + V'Exp_Call' -- TODO: ambiguous with Nat_Stmt
-                 + V'Nat_Stmt'
+                    + V'Stmt_Call'
+                    + V'Nat_Stmt'
 
     , __Stmt_Block = V'_Code_impl' + V'_Ext_Code_impl' + V'_Ext_Req_impl'
               + V'_Data_block'
