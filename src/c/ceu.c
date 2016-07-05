@@ -35,6 +35,7 @@ enum {
 
 enum {
     CEU_INPUT__NONE = 0,
+    CEU_INPUT__INIT,
     CEU_INPUT__CLEAR,
     CEU_INPUT__ASYNC,
     === EXTS_INPUT ===
@@ -79,11 +80,11 @@ static tceu_app CEU_APP;
 
 typedef struct tceu_stk {
     struct tceu_stk* down;
-    tceu_ntrl trl;
+    tceu_trl* trl;
     u8        is_alive : 1;
 } tceu_stk;
 
-void ceu_stack_clear (tceu_stk* stk, tceu_ntrl trl1, tceu_ntrl trl2) {
+void ceu_stack_clear (tceu_stk* stk, tceu_trl* trl1, tceu_trl* trl2) {
     for (; stk!=NULL; stk=stk->down) {
         if (!stk->is_alive) {
             continue;
@@ -96,17 +97,19 @@ void ceu_stack_clear (tceu_stk* stk, tceu_ntrl trl1, tceu_ntrl trl2) {
 
 /*****************************************************************************/
 
-static void ceu_callback_ceu (int msg, int p1, void* p2);
+static void ceu_callback_go_all (int msg, int p1, void* p2);
 
 /*****************************************************************************/
 
-#define CEU_GO_LBL_ABORT(stk,trl,lbl)   \
-    ceu_go_lbl(stk, trl, lbl);          \
-    if (!(stk)->is_alive) {             \
-        return;                         \
-    }
+#define CEU_GO_LBL_ABORT(stk_old,trl,lbl) {     \
+    tceu_stk _ceu_stk = { stk_old, trl };       \
+    ceu_go_lbl(&_ceu_stk, lbl);                 \
+    if (!_ceu_stk.is_alive) {                   \
+        return;                                 \
+    }                                           \
+}
 
-static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_trl* _ceu_trl, tceu_nlbl _ceu_lbl)
+static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_nlbl _ceu_lbl)
 {
 _CEU_GOTO_:
     switch (_ceu_lbl) {
@@ -122,6 +125,11 @@ void ceu_go_bcast (tceu_stk* stk, tceu_evt* evt, tceu_ntrl trl0, tceu_ntrl trlF)
          trlI<trlF;
          trlI++, trl++)
     {
+#if 1
+#include <stdio.h>
+printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, evt->id, trl0, trlF);
+printf("\ttrlI=%d, trl=%p, lbl=%d\n", trlI, trl, trl->lbl);
+#endif
         /* IN__CLEAR and "finalize" clause */
         int matches_clear = (evt->id==CEU_INPUT__CLEAR &&
                              trl->evt==CEU_INPUT__CLEAR);
@@ -142,8 +150,12 @@ void ceu_go_bcast (tceu_stk* stk, tceu_evt* evt, tceu_ntrl trl0, tceu_ntrl trlF)
 
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
 {
-    tceu_evt evt = { evt_id, evt_params };
-    ceu_go_bcast(NULL, &evt, 0, CEU_TRAILS_N);
+    if (evt_id == CEU_INPUT__INIT) {
+        CEU_GO_LBL_ABORT(NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
+    } else {
+        tceu_evt evt = { evt_id, evt_params };
+        ceu_go_bcast(NULL, &evt, 0, CEU_TRAILS_N);
+    }
 }
 
 /*****************************************************************************/
@@ -154,7 +166,7 @@ static int ceu_cb_terminating = 0;
 static int ceu_cb_terminating_ret;
 static int ceu_cb_pending_async = 0;
 
-void ceu_callback_go_all (int msg, int p1, void* p2) {
+static void ceu_callback_go_all (int msg, int p1, void* p2) {
     switch (msg) {
         case CEU_CALLBACK_TERMINATING:
             ceu_cb_terminating     = 1;
@@ -170,7 +182,7 @@ int ceu_go_all (void)
 {
     /* TODO: INIT */
     memset(&CEU_APP.trails, 0, CEU_TRAILS_N*sizeof(tceu_trl));
-    ceu_go_lbl(NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
+    ceu_go_ext(CEU_INPUT__INIT, NULL);
 
     while (!ceu_cb_terminating && ceu_cb_pending_async) {
         ceu_cb_pending_async = 0;

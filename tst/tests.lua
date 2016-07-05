@@ -1456,6 +1456,23 @@ escape 1;
 }
 
 Test { [[
+input void A;
+var int ret = 0;
+par/or do
+    await A;
+    ret = 10;
+with
+    async do
+        emit A;
+    end
+    await FOREVER;
+end;
+escape ret;
+]],
+    run = 10,
+}
+do return end
+Test { [[
 input int A;
 par/or do
     await A;
@@ -1471,6 +1488,7 @@ escape 10;
     },
     run = 10,
 }
+
 Test { [[
 input int A;
 var int v;
@@ -1502,7 +1520,6 @@ escape ret;
 ]],
     run = 10
 }
-do return end
 
 Test { [[
 input int A;

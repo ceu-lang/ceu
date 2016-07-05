@@ -37,7 +37,8 @@ end
 
 local function CLEAR (me)
     LINE(me, [[
-ceu_stack_clear(_ceu_stk, ]]..me.trails[1]..','..me.trails[2]..[[);
+ceu_stack_clear(_ceu_stk, &CEU_APP.trails[]]..me.trails[1]..[[],
+                          &CEU_APP.trails[]]..me.trails[2]..[[]);
 ]])
 end
 
@@ -47,20 +48,22 @@ local function HALT (me, t)
         return
     end
     LINE(me, [[
-_ceu_trl->evt = ]]..t.evt..[[;
-_ceu_trl->lbl = ]]..t.lbl..[[;
+_ceu_stk->_ceu_trl->evt = ]]..t.evt..[[;
+_ceu_stk->_ceu_trl->lbl = ]]..t.lbl..[[;
 return;
 case ]]..t.lbl..[[:;
 ]])
 end
 
 F = {
+    ROOT = CONC_ALL,
+    Block = CONC_ALL,
+    Stmts = CONC_ALL,
+    Await_Until = CONC_ALL,
+
     Node__PRE = function (me)
         me.code = ''
     end,
-    Block = CONC_ALL,
-    Stmts = CONC_ALL,
-    ROOT = CONC_ALL,
 
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
@@ -118,10 +121,9 @@ if (]]..V(c)..[[) {
 
             if i < #me then
                 LINE(me, [[
-{
-    tceu_stk __ceu_stk = { _ceu_stk, ]]..sub.trails[1]..[[, 1 };
-    CEU_GO_LBL_ABORT(&__ceu_stk, _ceu_trl, ]]..me.lbls_in[i].id..[[);
-}
+CEU_GO_LBL_ABORT(_ceu_stk,
+                 CEU_APP.trails[]]..sub.trails[1]..[[],
+                 ]]..me.lbls_in[i].id..[[);
 ]])
             end
         end
@@ -192,6 +194,10 @@ if (!]]..V(me,i)..[[) {
     end,
 
     ---------------------------------------------------------------------------
+
+    Await_Forever = function (me)
+        HALT(me)
+    end,
 
     Await_Ext = function (me)
         local ID_ext = unpack(me)

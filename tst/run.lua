@@ -89,8 +89,8 @@ Test = function (t)
             cc_input     = '/tmp/tmp.c',
             cc_output    = '/tmp/tmp.exe',
 
-            ceu_line_directives = 'true',
-            --ceu_line_directives = 'false',
+            --ceu_line_directives = 'true',
+            ceu_line_directives = 'false',
         }
     }
     if T.opts_pre then
@@ -137,6 +137,7 @@ Test = function (t)
     if not check('mems')     then return end
     dofile(DIR..'vals.lua')
     if not check('codes')    then return end
+--AST.dump(AST.root)
 
 if T.ana or T._ana or T.tmp then return end
 
