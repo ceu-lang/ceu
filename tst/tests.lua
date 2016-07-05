@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1436,6 +1435,22 @@ escape 1;
 ]],
     run = 1,
 }
+--]===]
+Test { [[
+input void A;
+par/or do
+    await A;
+with
+    async do
+        emit A;
+    end
+    await FOREVER;
+end
+escape 1;
+]],
+    run = 1,
+}
+do return end
 Test { [[
 input void A;
 await A;

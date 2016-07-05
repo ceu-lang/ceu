@@ -102,9 +102,9 @@ static void ceu_callback_go_all (int msg, int p1, void* p2);
 /*****************************************************************************/
 
 #define CEU_GO_LBL_ABORT(stk_old,trl,lbl) {     \
-    tceu_stk _ceu_stk = { stk_old, trl };       \
-    ceu_go_lbl(&_ceu_stk, lbl);                 \
-    if (!_ceu_stk.is_alive) {                   \
+    tceu_stk __ceu_stk = { stk_old, trl, 1 };   \
+    ceu_go_lbl(&__ceu_stk, lbl);                \
+    if (!__ceu_stk.is_alive) {                  \
         return;                                 \
     }                                           \
 }
@@ -125,7 +125,7 @@ void ceu_go_bcast (tceu_stk* stk, tceu_evt* evt, tceu_ntrl trl0, tceu_ntrl trlF)
          trlI<trlF;
          trlI++, trl++)
     {
-#if 1
+#if 0
 #include <stdio.h>
 printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, evt->id, trl0, trlF);
 printf("\ttrlI=%d, trl=%p, lbl=%d\n", trlI, trl, trl->lbl);

@@ -48,8 +48,8 @@ local function HALT (me, t)
         return
     end
     LINE(me, [[
-_ceu_stk->_ceu_trl->evt = ]]..t.evt..[[;
-_ceu_stk->_ceu_trl->lbl = ]]..t.lbl..[[;
+_ceu_stk->trl->evt = ]]..t.evt..[[;
+_ceu_stk->trl->lbl = ]]..t.lbl..[[;
 return;
 case ]]..t.lbl..[[:;
 ]])
@@ -122,7 +122,7 @@ if (]]..V(c)..[[) {
             if i < #me then
                 LINE(me, [[
 CEU_GO_LBL_ABORT(_ceu_stk,
-                 CEU_APP.trails[]]..sub.trails[1]..[[],
+                 &CEU_APP.trails[]]..sub.trails[1]..[[],
                  ]]..me.lbls_in[i].id..[[);
 ]])
             end
