@@ -121,7 +121,7 @@ if (]]..V(c)..[[) {
 
             if i < #me then
                 LINE(me, [[
-CEU_GO_LBL_ABORT(_ceu_stk,
+CEU_GO_LBL_ABORT(_ceu_evt, _ceu_stk,
                  &CEU_APP.trails[]]..sub.trails[1]..[[],
                  ]]..me.lbls_in[i].id..[[);
 ]])
@@ -197,6 +197,18 @@ if (!]]..V(me,i)..[[) {
         end
     end,
 
+    Set_Await_many = function (me)
+        local Await_Until, Namelist = unpack(me)
+        local ID_ext = AST.asr(Await_Until,'Await_Until', 1,'Await_Ext', 1,'ID_ext')
+        CONC(me, Await_Until)
+        for i, name in ipairs(Namelist) do
+            local ps = '((tceu_input_'..ID_ext.dcl.id..'*)(_ceu_evt->params))'
+            LINE(me, [[
+]]..V(name)..' = '..ps..'->_'..i..[[;
+]])
+        end
+    end,
+
     ---------------------------------------------------------------------------
 
     Await_Forever = function (me)
@@ -213,11 +225,19 @@ if (!]]..V(me,i)..[[) {
 
     Emit_Ext_emit = function (me)
         local ID_ext, Explist = unpack(me)
-        local Typelist, in_out = unpack(ID_ext.dcl)
-assert(in_out == 'input', 'TODO')
+        local Typelist, inout = unpack(ID_ext.dcl)
+assert(inout == 'input', 'TODO')
+
+        local ps = 'NULL'
+        if Explist then
+            LINE(me, [[
+tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',')..[[ };
+]])
+            ps = '&__ceu_ps'
+        end
 
         LINE(me, [[
-ceu_go_ext(]]..ID_ext.dcl.id_..[[, NULL);
+ceu_go_ext(]]..ID_ext.dcl.id_..', '..ps..[[);
 if (!_ceu_stk->is_alive) {
     return;
 }
@@ -269,31 +289,19 @@ local labels do
     end
 end
 
-local exts_input do
-    exts_input = ''
-    for _, id in ipairs(MEMS.exts.input) do
-        exts_input = exts_input..id..',\n'
-    end
-end
-local exts_output do
-    exts_output = ''
-    for _, id in ipairs(MEMS.exts.output) do
-        exts_output = exts_output..id..',\n'
-    end
-end
-
 -- CEU.C
 local c = PAK.files.ceu_c
-local c = SUB(c, '=== NATIVE_PRE ===',  CODES.native[true])
-local c = SUB(c, '=== DATA ===',        MEMS.code)
-local c = SUB(c, '=== EXTS_INPUT ===',  exts_input)
-local c = SUB(c, '=== EXTS_OUTPUT ===', exts_output)
-local c = SUB(c, '=== NATIVE ===',      CODES.native[false])
-local c = SUB(c, '=== TRAILS_N ===',    AST.root.trails_n)
-local c = SUB(c, '=== TCEU_NTRL ===',   TYPES.n2uint(AST.root.trails_n))
-local c = SUB(c, '=== TCEU_NLBL ===',   TYPES.n2uint(#LABELS.list))
-local c = SUB(c, '=== LABELS ===',      labels)
-local c = SUB(c, '=== CODE ===',        AST.root.code)
+local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native[true])
+local c = SUB(c, '=== DATA ===',             MEMS.data)
+local c = SUB(c, '=== EXTS_TYPES ===',       MEMS.exts.types)
+local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
+local c = SUB(c, '=== EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
+local c = SUB(c, '=== NATIVE ===',           CODES.native[false])
+local c = SUB(c, '=== TRAILS_N ===',         AST.root.trails_n)
+local c = SUB(c, '=== TCEU_NTRL ===',        TYPES.n2uint(AST.root.trails_n))
+local c = SUB(c, '=== TCEU_NLBL ===',        TYPES.n2uint(#LABELS.list))
+local c = SUB(c, '=== LABELS ===',           labels)
+local c = SUB(c, '=== CODE ===',             AST.root.code)
 C:write('\n\n/* CEU_C */\n\n'..c)
 
 H:close()

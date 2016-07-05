@@ -1435,7 +1435,6 @@ escape 1;
 ]],
     run = 1,
 }
---]===]
 Test { [[
 input void A;
 par/or do
@@ -1450,7 +1449,6 @@ escape 1;
 ]],
     run = 1,
 }
-do return end
 Test { [[
 input void A;
 await A;
@@ -1486,7 +1484,6 @@ escape ret;
 ]],
     run = 10,
 }
-do return end
 Test { [[
 input int A;
 par/or do
@@ -1521,6 +1518,7 @@ escape v as int;
     stmts = 'line 3 : invalid assignment : types mismatch : "(bool)" <= "(int)"',
 }
 
+--]===]
 Test { [[
 input int A;
 var int ret=0;
@@ -1535,6 +1533,7 @@ escape ret;
 ]],
     run = 10
 }
+do return end
 
 Test { [[
 input int A;

@@ -25,13 +25,14 @@
 
 === NATIVE_PRE ===
 === DATA ===
+=== EXTS_TYPES ===
 
 enum {
     CEU_CALLBACK_ABORT,
     CEU_CALLBACK_LOG,
     CEU_CALLBACK_TERMINATING,
     CEU_CALLBACK_PENDING_ASYNC,
-    === EXTS_OUTPUT ===
+    === EXTS_ENUM_OUTPUT ===
 };
 
 enum {
@@ -39,7 +40,7 @@ enum {
     CEU_INPUT__INIT,
     CEU_INPUT__CLEAR,
     CEU_INPUT__ASYNC,
-    === EXTS_INPUT ===
+    === EXTS_ENUM_INPUT ===
 };
 
 /*****************************************************************************/
@@ -99,15 +100,15 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 
 /*****************************************************************************/
 
-#define CEU_GO_LBL_ABORT(stk_old,trl,lbl) {     \
-    tceu_stk __ceu_stk = { stk_old, trl, 1 };   \
-    ceu_go_lbl(&__ceu_stk, lbl);                \
-    if (!__ceu_stk.is_alive) {                  \
-        return;                                 \
-    }                                           \
+#define CEU_GO_LBL_ABORT(evt,stk_old,trl,lbl) {     \
+    tceu_stk __ceu_stk = { stk_old, trl, 1 };       \
+    ceu_go_lbl(evt,&__ceu_stk, lbl);                \
+    if (!__ceu_stk.is_alive) {                      \
+        return;                                     \
+    }                                               \
 }
 
-static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_nlbl _ceu_lbl)
+static void ceu_go_lbl (tceu_evt* _ceu_evt, tceu_stk* _ceu_stk, tceu_nlbl _ceu_lbl)
 {
 _CEU_GOTO_:
     switch (_ceu_lbl) {
@@ -115,7 +116,7 @@ _CEU_GOTO_:
     }
 }
 
-void ceu_go_bcast (tceu_stk* stk, tceu_evt* evt, tceu_ntrl trl0, tceu_ntrl trlF)
+void ceu_go_bcast (tceu_evt* evt, tceu_stk* stk, tceu_ntrl trl0, tceu_ntrl trlF)
 {
     tceu_ntrl trlI;
     tceu_trl* trl;
@@ -137,7 +138,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d\n", trlI, trl, trl->lbl);
 
         if (matches_clear || matches_await) {
             trl->evt = CEU_INPUT__NONE;
-            CEU_GO_LBL_ABORT(stk, trl, trl->lbl);
+            CEU_GO_LBL_ABORT(evt, stk, trl, trl->lbl);
         } else {
             if (evt->id==CEU_INPUT__CLEAR) {
                 trl->evt = CEU_INPUT__NONE;
@@ -149,10 +150,10 @@ printf("\ttrlI=%d, trl=%p, lbl=%d\n", trlI, trl, trl->lbl);
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
 {
     if (evt_id == CEU_INPUT__INIT) {
-        CEU_GO_LBL_ABORT(NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
+        CEU_GO_LBL_ABORT(NULL, NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
     } else {
         tceu_evt evt = { evt_id, evt_params };
-        ceu_go_bcast(NULL, &evt, 0, CEU_TRAILS_N);
+        ceu_go_bcast(&evt, NULL, 0, CEU_TRAILS_N);
     }
 }
 

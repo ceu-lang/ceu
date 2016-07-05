@@ -1,44 +1,64 @@
 MEMS = {
-    code = '',
-    exts = { input={}, output={} },
+    data = '',
+    exts = {
+        types       = '',
+        enum_input  = '',
+        enum_output = '',
+    },
 }
 
 F = {
     ROOT__POS = function (me)
-        MEMS.code = [[
+        MEMS.data = [[
 typedef struct CEU_DATA_ROOT {
-]]..MEMS.code..[[
+]]..MEMS.data..[[
 } CEU_DATA_ROOT;
 ]]
     end,
 
     Block__PRE = function (me)
-        local code = ''
+        local data = ''
         for _, dcl in ipairs(me.dcls) do
             if dcl.tag == 'Var' then
                 if dcl.id ~= '_ret' then
                     local tp = unpack(dcl)
                     dcl.id_ = dcl.id..'_'..dcl.n
-                    code = code..TYPES.toc(tp)..' '..dcl.id_..';\n'
+                    data = data..TYPES.toc(tp)..' '..dcl.id_..';\n'
                 end
             elseif dcl.tag == 'Ext' then
-                local _, in_out, id = unpack(dcl)
-                dcl.id_ = string.upper('CEU_'..in_out..'_'..id)
-                local t = MEMS.exts[in_out]
-                t[#t+1] = dcl.id_
+                MEMS.exts[#MEMS.exts+1] = dcl
             end
         end
-        MEMS.code = MEMS.code..code
+        MEMS.data = MEMS.data..data
     end,
 
     Par_And = function (me)
-        local code = ''
+        local data = ''
         for i=1, #me do
-            code = code..'u8 __and_'..me.n..'_'..i..': 1;\n'
+            data = data..'u8 __and_'..me.n..'_'..i..': 1;\n'
         end
-        MEMS.code = MEMS.code..code
+        MEMS.data = MEMS.data..data
     end,
 
 }
 
 AST.visit(F)
+
+for _, dcl in ipairs(MEMS.exts) do
+    local Typelist, inout, id = unpack(dcl)
+    dcl.id_ = string.upper('CEU_'..inout..'_'..id)
+
+    if inout == 'input' then
+        MEMS.exts.enum_input  = MEMS.exts.enum_input..dcl.id_..',\n'
+    else
+        MEMS.exts.enum_output = MEMS.exts.enum_output..dcl.id_..',\n'
+    end
+
+    local data = 'typedef struct tceu_'..inout..'_'..dcl.id..' {\n'
+    for i,Type in ipairs(Typelist) do
+        data = data..'    '..TYPES.toc(Type)..' _'..i..';\n'
+    end
+    data = data..'} tceu_'..inout..'_'..dcl.id..';\n'
+
+    MEMS.exts.types = MEMS.exts.types..data
+end

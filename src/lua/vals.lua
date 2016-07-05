@@ -49,11 +49,15 @@ F = {
 
     Exp_Call = function (me)
         local _, e, ps = unpack(me)
+        return V(e)..'('..table.concat(V(ps),',')..')'
+    end,
+
+    Explist = function (me)
         local vs = {}
-        for i, p in ipairs(ps) do
+        for i, p in ipairs(me) do
             vs[i] = V(p)
         end
-        return V(e)..'('..table.concat(vs,',')..')'
+        return vs
     end,
 
     ---------------------------------------------------------------------------
