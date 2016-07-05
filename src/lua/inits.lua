@@ -69,6 +69,10 @@ local function run_inits (par, i, Dcl, stop)
     -- ok: found assignment
     elseif string.sub(me.tag,1,4)=='Set_' then
         local fr, to = unpack(me)
+        if me.tag == 'Set_Exp' then
+            -- var int a = a+1;
+            run_inits(fr, 1, Dcl, fr)
+        end
 
         -- some assertions
         do

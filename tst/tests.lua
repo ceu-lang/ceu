@@ -1595,9 +1595,10 @@ escape v;
 }
 
 Test { [[var int a = a+1; escape a;]],
+    inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:1)',
     --dcls = 'internal identifier "a" is not declared',
     --todo = 'TODO: deveria dar erro!',
-    run = 100,
+    --run = 100,
 }
 
 Test { [[var int a; a = emit a => 1; escape a;]],
