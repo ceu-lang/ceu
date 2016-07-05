@@ -23,9 +23,7 @@ if RUNTESTS.luacov then
     os.remove('luacov.report.out')
 end
 
-T = nil
-
-function check (mod)
+function check (T, mod)
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
     local ok, msg = pcall(dofile, '../src/lua/'..mod..'.lua')
 if RUNTESTS_TODO then
@@ -40,9 +38,30 @@ end
     end
 end
 
-Test = function (t)
+Test = function (T)
     RUNTESTS_TODO = false
-    T = t
+
+    if type(T.run) == 'table' then
+        local src = [[
+par do
+    ]]..T[1]..[[
+with
+    async do
+        `EVTS
+    end
+    await FOREVER;
+end
+]]
+        for input, ret in pairs(T.run) do
+            input = string.gsub(input, '([^;]*)~>(%d[^;]*);?', 'emit %2;')
+            input = string.gsub(input, '[ ]*(%d+)[ ]*~>([^;]*);?', 'emit %2=>%1;')
+            input = string.gsub(input, '~>([^;]*);?', 'emit %1;')
+            T[1] = string.gsub(src, '`EVTS', input)
+            T.run = ret
+            return Test(T)
+        end
+        return
+    end
 
     --assert(T.todo == nil)
     if T.todo then
@@ -52,15 +71,14 @@ Test = function (t)
         return  -- only run "t.complete=true" with the "COMPLETE=true" flag
     end
 
-    local source = T[1]
     if not T.complete then
         -- do not print large files
         --local source = 'C _fprintf(), _stderr;'..T[1]
-        print('\n=============\n---\n'..source..'\n---\n')
+        print('\n=============\n---\n'..T[1]..'\n---\n')
     end
 
     local f = assert(io.open('/tmp/tmp.ceu', 'w'))
-    f:write(source)
+    f:write(T[1])
     f:close()
 
     PAK = {
@@ -89,8 +107,8 @@ Test = function (t)
             cc_input     = '/tmp/tmp.c',
             cc_output    = '/tmp/tmp.exe',
 
-            --ceu_line_directives = 'true',
-            ceu_line_directives = 'false',
+            ceu_line_directives = 'true',
+            --ceu_line_directives = 'false',
         }
     }
     if T.opts_pre then
@@ -109,34 +127,34 @@ Test = function (t)
     dofile(DIR..'cmd.lua')
 
     if CEU.opts.pre then
-        if not check('pre') then return end
+        if not check(T,'pre') then return end
     end
     if not CEU.opts.ceu then return end
     DBG,ASR = DBG2,ASR2
 
     dofile(DIR..'lines.lua')
     local _WRN = WRN
-    if (not t.wrn) and (not t._ana) then
+    if (not T.wrn) and (not T._ana) then
         WRN = ASR
     end
 
-    if not check('parser')   then return end
+    if not check(T,'parser') then return end
     --dofile 'ast.lua'
-    if not check('ast')      then return end
-    if not check('adjs')     then return end
+    if not check(T,'ast')    then return end
+    if not check(T,'adjs')   then return end
     dofile(DIR..'types.lua')
-    if not check('dcls')     then return end
-    if not check('names')    then return end
-    if not check('exps')     then return end
-    if not check('consts')   then return end
-    if not check('stmts')    then return end
-    if not check('inits')    then return end
-    if not check('scopes')   then return end
-    if not check('trails')   then return end
-    if not check('labels')   then return end
-    if not check('mems')     then return end
+    if not check(T,'dcls')   then return end
+    if not check(T,'names')  then return end
+    if not check(T,'exps')   then return end
+    if not check(T,'consts') then return end
+    if not check(T,'stmts')  then return end
+    if not check(T,'inits')  then return end
+    if not check(T,'scopes') then return end
+    if not check(T,'trails') then return end
+    if not check(T,'labels') then return end
+    if not check(T,'mems')   then return end
     dofile(DIR..'vals.lua')
-    if not check('codes')    then return end
+    if not check(T,'codes')  then return end
 --AST.dump(AST.root)
 
 if T.ana or T._ana or T.tmp then return end
@@ -146,7 +164,7 @@ if T.ana or T._ana or T.tmp then return end
         dofile(DIR..'env.lua')
     end
     if CEU.opts.cc then
-        if not check('cc') then return end
+        if not check(T,'cc') then return end
     end
 
     local f = io.popen(CEU.opts.cc_output..' 2>&1')
@@ -156,9 +174,6 @@ if T.ana or T._ana or T.tmp then return end
     if type(T.run) == 'number' then
         assert(out == '')
         assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
-    elseif type(T.run) == 'table' then
-        assert(out == '')
-        error'TODO'
     else
         assert(type(T.run) == 'string')
         assert(string.find(out, T.run, nil, true), out)
@@ -197,7 +212,7 @@ AST.dump(AST.root)
     if not check('tmps')     then return end
     if not check('mem')      then return end
 
-    if (not t.wrn) and (not t._ana) then
+    if (not T.wrn) and (not T._ana) then
         WRN = _WRN
     end
 
@@ -208,7 +223,7 @@ AST.dump(AST.root)
         assert(T.tot==MEM.max, 'mem '..MEM.max)
     end
 
-    assert(t._ana or (TIGHT and T.loop) or
+    assert(T._ana or (TIGHT and T.loop) or
                      (not (TIGHT or T.loop)))
 
     -- ANALYSIS

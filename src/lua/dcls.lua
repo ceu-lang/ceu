@@ -244,7 +244,8 @@ F = {
     Ext = function (me)
         local _, grp, id = unpack(me)
         me.id = id
-        dcls_new(AST.par(me,'Block'), me)
+        local blk = AST.asr(AST.root,'', 1,'Block')
+        dcls_new(blk, me)
     end,
 
     Ext_Code = 'Code',
