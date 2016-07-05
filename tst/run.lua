@@ -44,6 +44,7 @@ Test = function (T)
     if type(T.run) == 'table' then
         local src = [[
 par do
+#line 1 "/tmp/tmp.ceu"
     ]]..T[1]..[[
 with
     async do
@@ -150,6 +151,7 @@ end
     if not check(T,'stmts')  then return end
     if not check(T,'inits')  then return end
     if not check(T,'scopes') then return end
+do return end
     if not check(T,'trails') then return end
     if not check(T,'labels') then return end
     if not check(T,'mems')   then return end

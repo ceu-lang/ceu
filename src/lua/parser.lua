@@ -610,11 +610,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , __num = CKK(m.R'09'^1,'number') / tonumber
     , WCLOCKK = #V'__num' *
-                (V'__num' * K'h'   *x + Cc(0)) *
-                (V'__num' * K'min' *x + Cc(0)) *
-                (V'__num' * K's'   *x + Cc(0)) *
-                (V'__num' * K'ms'  *x + Cc(0)) *
-                (V'__num' * K'us'  *x + Cc(0))
+                (V'__num' * KK'h'   *x + Cc(0)) *
+                (V'__num' * KK'min' *x + Cc(0)) *
+                (V'__num' * KK's'   *x + Cc(0)) *
+                (V'__num' * KK'ms'  *x + Cc(0)) *
+                (V'__num' * KK'us'  *x + Cc(0))
                     * OPT(CK'/_')
     , WCLOCKE = PARENS(V'__Exp') * (
                     CK'h' + CK'min' + CK's' + CK'ms' + CK'us'

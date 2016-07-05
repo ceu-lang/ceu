@@ -5250,7 +5250,7 @@ escape sum;
     run = 4,
 }
 Test { [[
-input void A;
+input void A, B;
 var int sum = 0;
 loop i in [0 -> 10[ do
     await A;
@@ -53895,14 +53895,16 @@ par do
 with
     await 10min;
     v = 1;
+with
+    async do
+        emit 10min10s;
+    end
 end
 ]],
     _ana = {
         acc = 1,
     },
-    run = {
-        ['~>10min10s'] = 10,
-    },
+    run = 10,
 }
 
 Test { [[
