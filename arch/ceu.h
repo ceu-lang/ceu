@@ -23,7 +23,5 @@ typedef uint64_t u64;
 typedef float    f32;
 typedef double   f64;
 
-#define ceu_out_assert(v) ceu_assert(v)
-#define ceu_out_log(m,s) ceu_log(m,s)
-void ceu_assert (int v);
-void ceu_log (int mode, long s);
+#define ceu_callback(msg,p1,p2) callback(msg,p1,p2)
+void callback (int msg, int p1, void* p2);

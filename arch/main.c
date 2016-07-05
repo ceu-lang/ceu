@@ -1,21 +1,24 @@
+#include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
 
-void ceu_assert (int v) {
-    assert(v);
-}
-
-void ceu_log (int mode, long s) {
-    switch (mode) {
-        case 0:
-            printf("%s", (char*)s);
+void callback (int msg, int p1, void* p2) {
+    switch (msg) {
+        case CEU_CALLBACK_ABORT:
+            abort();
+        case CEU_CALLBACK_LOG: {
+            switch (p1) {
+                case 0:
+                    printf("%s", (char*)p2);
+                    break;
+                case 1:
+                    printf("%p", p2);
+                    break;
+                case 2:
+                    printf("%ld", (long)p2);
+                    break;
+            }
             break;
-        case 1:
-            printf("%lX", s);
-            break;
-        case 2:
-            printf("%ld", s);
-            break;
+        }
     }
 }
 

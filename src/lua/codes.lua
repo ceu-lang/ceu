@@ -120,7 +120,7 @@ if (]]..V(c)..[[) {
                 LINE(me, [[
 {
     tceu_stk __ceu_stk = { _ceu_stk, ]]..sub.trails[1]..[[, 1 };
-    CEU_GO_LBL_ABORT(&__ceu_stk, ]]..me.lbls_in[i].id..[[);
+    CEU_GO_LBL_ABORT(&__ceu_stk, _ceu_trl, ]]..me.lbls_in[i].id..[[);
 }
 ]])
             end
@@ -176,8 +176,13 @@ if (!]]..V(me,i)..[[) {
 
         if to.info.dcl.id == '_ret' then
             LINE(me, [[
-CEU_APP.ret = ]]..V(fr)..[[;
-CEU_APP.is_alive = 0;           /* TODO */
+{
+    int __ceu_ret = ]]..V(fr)..[[;
+    ceu_callback(CEU_CALLBACK_TERMINATING, __ceu_ret, NULL);
+#ifdef CEU_OPT_GO_ALL
+    ceu_callback_go_all(CEU_CALLBACK_TERMINATING, __ceu_ret, NULL);
+#endif
+}
 ]])
         else
             LINE(me, [[
@@ -192,19 +197,21 @@ CEU_APP.is_alive = 0;           /* TODO */
         local ID_ext = unpack(me)
         HALT(me, {
             evt = ID_ext.dcl.id_,
-            lbl = me.lbl.id,
+            lbl = me.lbl_out.id,
         })
     end,
 
     Async = function (me)
         local _,blk = unpack(me)
         LINE(me, [[
-ceu_out_async();
-_ceu_app->pending_async = 1;
+ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+#ifdef CEU_OPT_GO_ALL
+ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+#endif
 ]])
         HALT(me, {
-            evt = 'CEU_IN__ASYNC',
-            lbl = me.lbl.id,
+            evt = 'CEU_INPUT__ASYNC',
+            lbl = me.lbl_in.id,
         })
         CONC(me, blk)
     end,

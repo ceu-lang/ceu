@@ -49,7 +49,11 @@ F = {
 
     Await_Ext = function (me)
         local ID_ext = unpack(me)
-        me.lbl = new{'Awake_'..ID_ext.dcl.id}
+        me.lbl_out = new{'Await_'..ID_ext.dcl.id}
+    end,
+
+    Async = function (me)
+        me.lbl_in = new{'Async'}
     end,
 }
 
