@@ -125,6 +125,10 @@ CEU_GO_LBL_ABORT(_ceu_stk,
                  &CEU_APP.trails[]]..sub.trails[1]..[[],
                  ]]..me.lbls_in[i].id..[[);
 ]])
+            else
+                LINE(me, [[
+_ceu_stk->trl = &CEU_APP.trails[]]..sub.trails[1]..[[];
+]])
             end
         end
 
@@ -204,6 +208,23 @@ if (!]]..V(me,i)..[[) {
         HALT(me, {
             evt = ID_ext.dcl.id_,
             lbl = me.lbl_out.id,
+        })
+    end,
+
+    Emit_Ext_emit = function (me)
+        local ID_ext, Explist = unpack(me)
+        local Typelist, in_out = unpack(ID_ext.dcl)
+assert(in_out == 'input', 'TODO')
+
+        LINE(me, [[
+ceu_go_ext(]]..ID_ext.dcl.id_..[[, NULL);
+if (!_ceu_stk->is_alive) {
+    return;
+}
+]])
+        HALT(me, {
+            evt  = 'CEU_INPUT__ASYNC',
+            lbl  = me.lbl_out.id,
         })
     end,
 

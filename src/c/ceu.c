@@ -31,6 +31,7 @@ enum {
     CEU_CALLBACK_LOG,
     CEU_CALLBACK_TERMINATING,
     CEU_CALLBACK_PENDING_ASYNC,
+    === EXTS_OUTPUT ===
 };
 
 enum {
@@ -39,10 +40,6 @@ enum {
     CEU_INPUT__CLEAR,
     CEU_INPUT__ASYNC,
     === EXTS_INPUT ===
-};
-enum {
-    CEU_OUTPUT_NONE = -1,
-    === EXTS_OUTPUT ===
 };
 
 /*****************************************************************************/
@@ -98,6 +95,7 @@ void ceu_stack_clear (tceu_stk* stk, tceu_trl* trl1, tceu_trl* trl2) {
 /*****************************************************************************/
 
 static void ceu_callback_go_all (int msg, int p1, void* p2);
+static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 
 /*****************************************************************************/
 

@@ -46,7 +46,7 @@ G = {
     end,
 
     Node__PRE = function (me)
-        if me.__par then
+        if (not me.trails) and me.__par then
             me.trails = me.__par.trails
         end
     end,

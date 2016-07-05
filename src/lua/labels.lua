@@ -52,6 +52,11 @@ F = {
         me.lbl_out = new{'Await_'..ID_ext.dcl.id}
     end,
 
+    Emit_Ext_emit = function (me)
+        local ID_ext = unpack(me)
+        me.lbl_out = new{'Emit_Ext_emit'..ID_ext.dcl.id}
+    end,
+
     Async = function (me)
         me.lbl_in = new{'Async'}
     end,

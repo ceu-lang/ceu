@@ -151,11 +151,11 @@ if T.ana or T._ana or T.tmp then return end
 
     local f = io.popen(CEU.opts.cc_output..' 2>&1')
     local out = f:read'*a'
-    local _,_,ret = f:close()
+    local _1,_,ret = f:close()
 
     if type(T.run) == 'number' then
         assert(out == '')
-        assert(ret == T.run%256)
+        assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
     elseif type(T.run) == 'table' then
         assert(out == '')
         error'TODO'
