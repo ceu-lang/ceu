@@ -138,7 +138,7 @@ static int ceu_wclock (s32 dt, s32* set, s32* sub)
 /*****************************************************************************/
 
 static void ceu_callback_go_all (int msg, int p1, void* p2);
-static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
+static void ceu_go_ext (tceu_nevt evt_id, void* evt_params, tceu_ntrl trl0, tceu_ntrl trlF);
 
 /*****************************************************************************/
 
@@ -174,7 +174,7 @@ void ceu_go_bcast (tceu_evt* evt, tceu_stk* stk, tceu_ntrl trl0, tceu_ntrl trlF)
 #if 0
 #include <stdio.h>
 printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, evt->id, trl0, trlF);
-printf("\ttrlI=%d, trl=%p, lbl=%d\n", trlI, trl, trl->lbl);
+printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlI, trl, trl->lbl, trl->evt);
 #endif
         /* IN__CLEAR and "finalize" clause */
         int matches_clear = (evt->id==CEU_INPUT__CLEAR &&
@@ -194,7 +194,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d\n", trlI, trl, trl->lbl);
     }
 }
 
-static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
+static void ceu_go_ext (tceu_nevt evt_id, void* evt_params, tceu_ntrl trl0, tceu_ntrl trlF)
 {
     switch (evt_id)
     {
@@ -209,13 +209,13 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
             if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
                 CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
             }
-            ceu_go_bcast(&evt, NULL, 0, CEU_TRAILS_N);
+            ceu_go_bcast(&evt, NULL, trl0, trlF);
             break;
         }
 
         default: {
             tceu_evt evt = { evt_id, evt_params };
-            ceu_go_bcast(&evt, NULL, 0, CEU_TRAILS_N);
+            ceu_go_bcast(&evt, NULL, trl0, trlF);
         }
     }
 }
@@ -247,11 +247,11 @@ int ceu_go_all (void)
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
     memset(&CEU_APP.trails, 0, CEU_TRAILS_N*sizeof(tceu_trl));
-    ceu_go_ext(CEU_INPUT__INIT, NULL);
+    ceu_go_ext(CEU_INPUT__INIT, NULL, 0, CEU_TRAILS_N);
 
     while (!ceu_cb_terminating && ceu_cb_pending_async) {
         ceu_cb_pending_async = 0;
-        ceu_go_ext(CEU_INPUT__ASYNC, NULL);
+        ceu_go_ext(CEU_INPUT__ASYNC, NULL, 0, CEU_TRAILS_N);
     }
 
     return ceu_cb_terminating_ret;

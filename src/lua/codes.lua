@@ -31,7 +31,7 @@ end
 local function CLEAR (me)
     LINE(me, [[
 {
-    ceu_go_ext(CEU_INPUT__CLEAR, NULL);
+    ceu_go_ext(CEU_INPUT__CLEAR, NULL, ]]..me.trails[1]..', '..me.trails[2]..[[);
     ceu_stack_clear(_ceu_stk->down, &CEU_APP.trails[]]..me.trails[1]..[[],
                                     &CEU_APP.trails[]]..me.trails[2]..[[]);
     if (!_ceu_stk->is_alive) {
@@ -271,7 +271,7 @@ assert(inout == 'input', 'TODO')
         end
 
         LINE(me, [[
-    ceu_go_ext(]]..ID_ext.dcl.id_..', '..ps..[[);
+    ceu_go_ext(]]..ID_ext.dcl.id_..', '..ps..[[, 0, CEU_TRAILS_N);
     if (!_ceu_stk->is_alive) {
         return;
     }
@@ -317,7 +317,7 @@ _CEU_HALT_]]..me.n..[[_:
 {
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
-        ceu_go_ext(CEU_INPUT__WCLOCK, &__ceu_dt);
+        ceu_go_ext(CEU_INPUT__WCLOCK, &__ceu_dt, 0, CEU_TRAILS_N);
         if (!_ceu_stk->is_alive) {
             return;
         }
