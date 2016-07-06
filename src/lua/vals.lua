@@ -46,9 +46,8 @@ F = {
     end,
 
     WCLOCKE = function (me)
-error'TODO'
-        local exp, unit = unpack(me)
-        return '((s32)'.. V(exp,CTX) .. ')*' .. SVAL.t2n[unit]
+        local e, unit = unpack(me)
+        return '('.. V(e) .. ')*' .. CONSTS.t2n[unit]
     end,
 
 -- SIZEOF

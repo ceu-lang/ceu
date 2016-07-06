@@ -1,3 +1,13 @@
+CONSTS = {
+    t2n = {
+         us = 10^0,
+         ms = 10^3,
+          s = 10^6,
+        min = 60*10^6,
+          h = 60*60*10^6,
+    },
+}
+
 F = {
     NUMBER = function (me)
         me.is_const = (TYPES.is_int(me.info.tp) and 'int') or 'float'
@@ -48,16 +58,9 @@ error'TODO: luacov never executes this?'
 
     ---------------------------------------------------------------------------
 
-    __t2n = {
-         us = 10^0,
-         ms = 10^3,
-          s = 10^6,
-        min = 60*10^6,
-          h = 60*60*10^6,
-    },
     WCLOCKK = function (me)
         local h,min,s,ms,us = unpack(me)
-        local T = F.__t2n
+        local T = CONSTS.t2n
         me.us = us*T.us + ms*T.ms + s*T.s + min*T.min + h*T.h
         ASR(me.us>0 and me.us<=2000000000, me,
             'invalid wall-clock time : constant is out of range')
