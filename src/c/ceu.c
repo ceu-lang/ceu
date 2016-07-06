@@ -138,7 +138,7 @@ static int ceu_wclock (s32 dt, s32* set, s32* sub)
 
 static void ceu_callback_go_all (int msg, int p1, void* p2);
 static void ceu_go_bcast (tceu_evt* evt, tceu_stk* stk, tceu_ntrl trl0, tceu_ntrl trlF);
-static void ceu_go_ext (tceu_nevt evt_id, void* evt_params, tceu_ntrl trl0, tceu_ntrl trlF);
+static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 
 /*****************************************************************************/
 
@@ -203,7 +203,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlI, trl, trl->lbl, trl->evt);
     }
 }
 
-static void ceu_go_ext (tceu_nevt evt_id, void* evt_params, tceu_ntrl trl0, tceu_ntrl trlF)
+static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
 {
     tceu_evt evt = { evt_id, evt_params };
     switch (evt_id)
@@ -217,7 +217,7 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params, tceu_ntrl trl0, tceu
             break;
         }
     }
-    ceu_go_bcast(&evt, NULL, trl0, trlF);
+    ceu_go_bcast(&evt, NULL, 0, CEU_TRAILS_N);
 }
 
 /*****************************************************************************/
@@ -251,7 +251,7 @@ int ceu_go_all (void)
 
     while (!ceu_cb_terminating && ceu_cb_pending_async) {
         ceu_cb_pending_async = 0;
-        ceu_go_ext(CEU_INPUT__ASYNC, NULL, 0, CEU_TRAILS_N);
+        ceu_go_ext(CEU_INPUT__ASYNC, NULL);
     }
 
     return ceu_cb_terminating_ret;

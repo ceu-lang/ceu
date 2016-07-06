@@ -275,7 +275,7 @@ _ceu_stk->trl->lbl = ]]..me.lbl_out.id..[[;
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    ceu_go_ext(]]..ID_ext.dcl.id_..', '..ps..[[, 0, CEU_TRAILS_N);
+    ceu_go_ext(]]..ID_ext.dcl.id_..', '..ps..[[);
 }
 return;
 case ]]..me.lbl_out.id..[[:;
@@ -318,7 +318,7 @@ _ceu_stk->trl->lbl = ]]..me.lbl_out.id..[[;
 {
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
-        ceu_go_ext(CEU_INPUT__WCLOCK, &__ceu_dt, 0, CEU_TRAILS_N);
+        ceu_go_ext(CEU_INPUT__WCLOCK, &__ceu_dt);
         if (!_ceu_stk->is_alive) {
             return;
         }
