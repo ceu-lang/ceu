@@ -107,6 +107,13 @@ F = {
         return '(&'..V(e)..')'
     end,
 
+-- MEMBER: .
+
+    ['Exp_.'] = function (me)
+        local _, e, member = unpack(me)
+        return '('..V(e)..'.'..member..')'
+    end,
+
 -- UNARY
 
     ['Exp_1-']  = 'Exp_1',

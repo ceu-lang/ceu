@@ -1820,7 +1820,7 @@ Test { [[await FOREVER; escape 0;]],
 }
 
 Test { [[emit 1ms; escape 0;]],
-    props = 'line 1 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
+    props_ = 'line 1 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
 }
 
 Test { [[
@@ -2852,6 +2852,20 @@ escape t.v;
 Test { [[
 native/plain _t;
 native do
+    typedef struct {
+        int v;
+    } t;
+end
+var _t t = _;
+escape 0;
+]],
+    wrn = true,
+    cc = 'error: unknown type name ‘t’',
+}
+
+Test { [[
+native/plain _t;
+pre native do
     typedef struct {
         int v;
     } t;
