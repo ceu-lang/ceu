@@ -88,8 +88,8 @@ F = {
             LINE(me, [[
 ceu_out_assert_msg(0, "reached end of `do´");
 ]])
-            CASE(me, me.lbl_out)
         end
+        CASE(me, me.lbl_out)
     end,
     Escape = function (me)
         GOTO(me, me.do_.lbl_out)

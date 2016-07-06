@@ -22,9 +22,7 @@ F = {
 
     Do = function (me)
         local _,_,set = unpack(me)
-        if set then
-            me.lbl_out = new{'Do'}
-        end
+        me.lbl_out = new{'Do'}
     end,
 
     ---------------------------------------------------------------------------

@@ -2370,7 +2370,6 @@ end
     run = 1,
 }
 
---]===]
 Test { [[
 do
     escape;
@@ -2429,7 +2428,7 @@ var int a = do
 end;
 escape 1;
 ]],
-    run = 'TODO: error',
+    run = '1] runtime error: reached end of `do´',
 }
 
 Test { [[
@@ -2597,7 +2596,7 @@ a = do/a end;
 Test { [[
 var int a = do/a end;
 ]],
-    run = 'assertion',
+    run = '1] runtime error: reached end of `do´',
 }
 
 --<<< DO/_, SETBLOCK, ESCAPE
@@ -2750,6 +2749,7 @@ escape a;
     --ref = 'line 8 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:9)',
 }
 
+--]===]
 Test { [[
 input int A,B,C;
 var int a=0;

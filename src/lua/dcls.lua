@@ -347,7 +347,16 @@ F = {
 
     ID_int = function (me)
         local id = unpack(me)
-        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, false, 'internal identifier')
+        local blk = AST.par(me, 'Block')
+        do
+            -- escape should refer to the parent "a"
+            -- var int a = do var int a; ... escape ...; end;
+            local set = AST.par(me,'Set_Exp')
+            if set and set.__dcls_is_escape then
+                blk = AST.par(blk, 'Block')
+            end
+        end
+        me.dcl = DCLS.asr(me, blk, id, false, 'internal identifier')
     end,
 
     ---------------------------------------------------------------------------
@@ -390,6 +399,7 @@ F = {
             esc.do_ = do_
             local _,_,to,op = unpack(do_)
             local set = AST.asr(me.__par,'Set_Exp')
+            set.__dcls_is_escape = true
             local fr = unpack(set)
             if to and type(to)~='boolean' then
                 ASR(type(fr)~='boolean', me,
