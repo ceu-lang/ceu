@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2749,7 +2750,6 @@ escape a;
     --ref = 'line 8 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:9)',
 }
 
---]===]
 Test { [[
 input int A,B,C;
 var int a=0;

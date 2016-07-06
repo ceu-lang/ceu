@@ -37,8 +37,17 @@ end
 
 local function CLEAR (me)
     LINE(me, [[
-ceu_stack_clear(_ceu_stk, &CEU_APP.trails[]]..me.trails[1]..[[],
-                          &CEU_APP.trails[]]..me.trails[2]..[[]);
+{
+    int __ceu_is_alive;
+    ceu_go_ext(CEU_INPUT__CLEAR, NULL);
+    __ceu_is_alive = _ceu_stk->is_alive;
+    ceu_stack_clear(_ceu_stk, &CEU_APP.trails[]]..me.trails[1]..[[],
+                              &CEU_APP.trails[]]..me.trails[2]..[[]);
+    if (!__ceu_is_alive) {
+        return;
+    }
+    _ceu_stk->is_alive = 1;
+}
 ]])
 end
 
@@ -124,33 +133,30 @@ if (]]..V(c)..[[) {
     Par_Or  = 'Par',
     Par_And = 'Par',
     Par = function (me)
-        for i, sub in ipairs(me) do
-            -- Par_And: close gates
-            if me.tag == 'Par_And' then
+        -- Par_And: close gates
+        if me.tag == 'Par_And' then
+            for i, sub in ipairs(me) do
                 LINE(me, [[
 CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 0;
 ]])
             end
+        end
 
-            if i < #me then
-                LINE(me, [[
+        -- call each branch
+        for i, sub in ipairs(me) do
+            LINE(me, [[
 CEU_GO_LBL_ABORT(_ceu_evt, _ceu_stk,
                  &CEU_APP.trails[]]..sub.trails[1]..[[],
                  ]]..me.lbls_in[i].id..[[);
 ]])
-            else
-                LINE(me, [[
-_ceu_stk->trl = &CEU_APP.trails[]]..sub.trails[1]..[[];
-]])
-            end
         end
+        LINE(me, [[
+return;
+]])
 
-        -- inverse order to execute me[#me] directly
-        for i=#me, 1, -1 do
-            local sub = me[i]
-            if i < #me then
-                CASE(me, me.lbls_in[i])
-            end
+        -- code for each branch
+        for i, sub in ipairs(me) do
+            CASE(me, me.lbls_in[i])
             CONC(me, sub)
 
             if me.tag == 'Par' then
@@ -168,6 +174,7 @@ CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 1;
             end
         end
 
+        -- rejoin
         if me.lbl_out then
             CASE(me, me.lbl_out)
         end

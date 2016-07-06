@@ -32,12 +32,8 @@ F = {
     Par__PRE = function (me)
         me.lbls_in = {}
         for i, sub in ipairs(me) do
-            if i < #me then
-                -- the last executes directly (no label needed)
-                me.lbls_in[i] = new{me.tag..'_sub_'..i}
-            end
+            me.lbls_in[i] = new{me.tag..'_sub_'..i}
         end
-
         if me.tag ~= 'Par' then
             me.lbl_out = new{me.tag..'_out'}
         end
