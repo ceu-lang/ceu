@@ -92,7 +92,7 @@ ceu_out_assert_msg(0, "reached end of `do´");
     end,
     Escape = function (me)
         LINE(me, [[
-CEU_GO_STK_LBL(NULL, _ceu_stk, _ceu_stk->trl,
+CEU_STK_LBL(NULL, _ceu_stk, _ceu_stk->trl,
                ]]..me.do_.lbl_out.id..[[);
 return;
 ]])
@@ -139,7 +139,7 @@ CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 0;
         -- call each branch
         for i, sub in ipairs(me) do
             LINE(me, [[
-CEU_GO_STK_LBL_ABORT(NULL, _ceu_stk,
+CEU_STK_LBL_ABORT(NULL, _ceu_stk,
                  &CEU_APP.trails[]]..sub.trails[1]..[[],
                  ]]..me.lbls_in[i].id..[[);
 ]])
@@ -165,7 +165,7 @@ CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 1;
 ]])
                 end
                 LINE(me, [[
-CEU_GO_STK_LBL(NULL, _ceu_stk, _ceu_stk->trl,
+CEU_STK_LBL(NULL, _ceu_stk, _ceu_stk->trl,
                ]]..me.lbl_out.id..[[);
 return;
 ]])
