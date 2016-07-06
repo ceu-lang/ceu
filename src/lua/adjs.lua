@@ -206,7 +206,7 @@ error'TODO: luacov never executes this?'
         -- loop i in [... 10[ do end
         -- loop i in [... 10-1] do end
         if rb == '[' then
-            fr = node('Exp_-', me.ln, '-', to, node('NUMBER',me.ln,1))
+            to = node('Exp_-', me.ln, '-', to, node('NUMBER',me.ln,1))
         end
 
         -- loop i in [...] do end
@@ -270,6 +270,7 @@ error'TODO: luacov never executes this?'
                             node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, '__lim_'..me.n)))
             end
+
             lim_cmp = node('If', me.ln, lim_cmp,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
@@ -285,6 +286,15 @@ error'TODO: luacov never executes this?'
         ini_i.set_read_only = true
 DBG'TODO: set_i'
 
+            local inc_i = node('Set_Exp', me.ln,
+                            node('Exp_+', me.ln, '+',
+                                node('Exp_Name', me.ln,
+                                    node('ID_int', me.ln, i)),
+                                step),
+                            node('Exp_Name', me.ln,
+                                node('ID_int', me.ln, i)))
+            inc_i.set_read_only = true
+
         return node('Block', me.ln,
                 node('Stmts', me.ln,
                     dcl_i,
@@ -295,7 +305,8 @@ DBG'TODO: set_i'
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 lim_cmp,
-                                blk)))))
+                                blk,
+                                inc_i)))))
     end,
 
     _Loop_Pool__PRE = function (me)

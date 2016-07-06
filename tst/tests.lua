@@ -2889,7 +2889,7 @@ escape t.v;
 
 Test { [[
 native/plain _t;
-native/pos do
+native/pre do
     typedef struct {
         int v;
     } t;
@@ -2967,14 +2967,14 @@ escape a;
 Test { [[
 var int a = do/_
     par/or do
-        escape 1;
+        escape 111;
     with
     end;
     escape 0;
 end;
 escape a;
 ]],
-    run = 1,
+    run = 111,
 }
 
 Test { [[

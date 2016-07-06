@@ -88,6 +88,7 @@ ceu_out_assert_msg(0, "reached end of `do´");
 ]])
         end
         CASE(me, me.lbl_out)
+        CLEAR(me)
     end,
     Escape = function (me)
         LINE(me, [[
@@ -106,6 +107,20 @@ if (]]..V(c)..[[) {
     ]]..f.code..[[
 }
 ]])
+    end,
+
+    Loop = function (me)
+        local max, body = unpack(me)
+        LINE(me, [[
+while (1) {
+]]..body.code..[[
+}
+]])
+    end,
+    Break = function (me)
+        local lbl = unpack(me)
+assert(not lbl)
+        LINE(me, 'break;')
     end,
 
     Stmt_Call = function (me)
