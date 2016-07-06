@@ -31,7 +31,9 @@ end
 local function CLEAR (me)
     LINE(me, [[
 {
-    CEU_STK_BCAST_ABORT(CEU_INPUT__CLEAR, NULL, _ceu_stk, ]]..me.trails[1]..', '..me.trails[2]..[[);
+    CEU_STK_BCAST_ABORT(_ceu_stk,
+                        CEU_INPUT__CLEAR, NULL,]]..
+                        me.trails[1]..', '..me.trails[2]..[[);
     ceu_stack_clear(_ceu_stk->down, &CEU_APP.trails[]]..me.trails[1]..[[],
                                     &CEU_APP.trails[]]..me.trails[2]..[[]);
 }
@@ -136,9 +138,10 @@ CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 0;
         -- call each branch
         for i, sub in ipairs(me) do
             LINE(me, [[
-CEU_STK_LBL_ABORT(NULL, _ceu_stk,
+CEU_STK_LBL_ABORT(_ceu_stk,
                  &CEU_APP.trails[]]..sub.trails[1]..[[],
-                 ]]..me.lbls_in[i].id..[[);
+                 ]]..me.lbls_in[i].id..[[,
+                 NULL);
 ]])
         end
         LINE(me, [[

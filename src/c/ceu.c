@@ -144,18 +144,18 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 
 #define CEU_STK_LBL(stk_old,trl,lbl) {              \
     tceu_stk __ceu_stk = { stk_old, trl, 1 };       \
-    ceu_go_lbl(NULL,&__ceu_stk, lbl);               \
+    ceu_go_lbl(&__ceu_stk, lbl, NULL);              \
 }
 
-#define CEU_STK_LBL_ABORT(evt,stk_old,trl,lbl) {    \
+#define CEU_STK_LBL_ABORT(stk_old,trl,lbl,evt) {    \
     tceu_stk __ceu_stk = { stk_old, trl, 1 };       \
-    ceu_go_lbl(evt,&__ceu_stk, lbl);                \
+    ceu_go_lbl(&__ceu_stk, lbl, evt);               \
     if (!__ceu_stk.is_alive) {                      \
         return;                                     \
     }                                               \
 }
 
-#define CEU_STK_BCAST_ABORT(evt_id,evt_ps,stk_old,trl0,trlF) {  \
+#define CEU_STK_BCAST_ABORT(stk_old,evt_id,evt_ps,trl0,trlF) {  \
     tceu_stk __ceu_stk = { stk_old, stk_old->trl, 1 };          \
     tceu_evt __ceu_evt = { evt_id, evt_ps };                    \
     ceu_go_bcast(&__ceu_evt, &__ceu_stk, trl0, trlF);           \
@@ -164,7 +164,7 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
     }                                                           \
 }
 
-static void ceu_go_lbl (tceu_evt* _ceu_evt, tceu_stk* _ceu_stk, tceu_nlbl _ceu_lbl)
+static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_nlbl _ceu_lbl, tceu_evt* _ceu_evt)
 {
 _CEU_GOTO_:
     switch (_ceu_lbl) {
@@ -194,7 +194,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlI, trl, trl->lbl, trl->evt);
 
         if (matches_clear || matches_await) {
             trl->evt = CEU_INPUT__NONE;
-            CEU_STK_LBL_ABORT(evt, stk, trl, trl->lbl);
+            CEU_STK_LBL_ABORT(stk, trl, trl->lbl, evt);
         } else {
             if (evt->id==CEU_INPUT__CLEAR) {
                 trl->evt = CEU_INPUT__NONE;
