@@ -1,5 +1,5 @@
 CODES = {
-    native = { [true]='', [false]='' }
+    native = { pre='', pos='' }
 }
 
 local function LINE (me, line)
@@ -68,14 +68,14 @@ F = {
     end,
 
     Nat_Block = function (me)
-        local pre, code = unpack(me)
-        pre = pre and true
+        local pre_pos, code = unpack(me)
+        pre_pos = string.sub(pre_pos,2)
 
         -- unescape `##´ => `#´
         code = string.gsub(code, '^%s*##',  '#')
         code = string.gsub(code, '\n%s*##', '\n#')
 
-        CODES.native[pre] = CODES.native[pre]..code
+        CODES.native[pre_pos] = CODES.native[pre_pos]..code
     end,
 
     Do = function (me)
@@ -376,16 +376,16 @@ end
 
 -- CEU.C
 local c = PAK.files.ceu_c
-local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native[true])
+local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== DATA ===',             MEMS.data)
 local c = SUB(c, '=== EXTS_TYPES ===',       MEMS.exts.types)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
 local c = SUB(c, '=== EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
-local c = SUB(c, '=== NATIVE ===',           CODES.native[false])
 local c = SUB(c, '=== TRAILS_N ===',         AST.root.trails_n)
 local c = SUB(c, '=== TCEU_NTRL ===',        TYPES.n2uint(AST.root.trails_n))
 local c = SUB(c, '=== TCEU_NLBL ===',        TYPES.n2uint(#LABELS.list))
 local c = SUB(c, '=== LABELS ===',           labels)
+local c = SUB(c, '=== NATIVE_POS ===',       CODES.native.pos)
 local c = SUB(c, '=== CODE ===',             AST.root.code)
 C:write('\n\n/* CEU_C */\n\n'..c)
 

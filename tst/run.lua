@@ -152,12 +152,12 @@ end
     if not check(T,'inits')  then return end
     if not check(T,'scopes') then return end
     if not check(T,'props_') then return end
-do return end
     if not check(T,'trails') then return end
     if not check(T,'labels') then return end
     if not check(T,'mems')   then return end
     dofile(DIR..'vals.lua')
     if not check(T,'codes')  then return end
+--do return end
 --AST.dump(AST.root)
 
 if T.ana or T._ana or T.tmp then return end
