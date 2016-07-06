@@ -137,6 +137,7 @@ static int ceu_wclock (s32 dt, s32* set, s32* sub)
 /*****************************************************************************/
 
 static void ceu_callback_go_all (int msg, int p1, void* p2);
+static void ceu_go_bcast (tceu_evt* evt, tceu_stk* stk, tceu_ntrl trl0, tceu_ntrl trlF);
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params, tceu_ntrl trl0, tceu_ntrl trlF);
 
 /*****************************************************************************/
@@ -154,6 +155,15 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params, tceu_ntrl trl0, tceu
     }                                               \
 }
 
+#define CEU_STK_BCAST_ABORT(evt_id,evt_ps,stk_old,trl0,trlF) {  \
+    tceu_stk __ceu_stk = { stk_old, stk_old->trl, 1 };          \
+    tceu_evt __ceu_evt = { evt_id, evt_ps };                    \
+    ceu_go_bcast(&__ceu_evt, &__ceu_stk, trl0, trlF);           \
+    if (!__ceu_stk.is_alive) {                                  \
+        return;                                                 \
+    }                                                           \
+}
+
 static void ceu_go_lbl (tceu_evt* _ceu_evt, tceu_stk* _ceu_stk, tceu_nlbl _ceu_lbl)
 {
 _CEU_GOTO_:
@@ -162,7 +172,7 @@ _CEU_GOTO_:
     }
 }
 
-void ceu_go_bcast (tceu_evt* evt, tceu_stk* stk, tceu_ntrl trl0, tceu_ntrl trlF)
+static void ceu_go_bcast (tceu_evt* evt, tceu_stk* stk, tceu_ntrl trl0, tceu_ntrl trlF)
 {
     tceu_ntrl trlI;
     tceu_trl* trl;

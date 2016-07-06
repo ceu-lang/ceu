@@ -31,12 +31,9 @@ end
 local function CLEAR (me)
     LINE(me, [[
 {
-    ceu_go_ext(CEU_INPUT__CLEAR, NULL, ]]..me.trails[1]..', '..me.trails[2]..[[);
+    CEU_STK_BCAST_ABORT(CEU_INPUT__CLEAR, NULL, _ceu_stk, ]]..me.trails[1]..', '..me.trails[2]..[[);
     ceu_stack_clear(_ceu_stk->down, &CEU_APP.trails[]]..me.trails[1]..[[],
                                     &CEU_APP.trails[]]..me.trails[2]..[[]);
-    if (!_ceu_stk->is_alive) {
-        return;
-    }
 }
 ]])
 end
