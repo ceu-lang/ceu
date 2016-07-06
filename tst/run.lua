@@ -108,8 +108,8 @@ end
             cc_input     = '/tmp/tmp.c',
             cc_output    = '/tmp/tmp.exe',
 
-            --ceu_line_directives = 'true',
-            ceu_line_directives = 'false',
+            ceu_line_directives = 'true',
+            --ceu_line_directives = 'false',
         }
     }
     if T.opts_pre then

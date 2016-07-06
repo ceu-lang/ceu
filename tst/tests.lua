@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1880,7 +1881,6 @@ escape a + 1;
     inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:2)',
 }
 
---]===]
 Test { [[
 var int a = 0;
 var& int pa = &a;
