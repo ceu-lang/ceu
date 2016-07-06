@@ -115,7 +115,7 @@ F = {
             then
                 local fin = AST.par(me, 'Finalize')
                 local ok = fin and (
-                            (AST.get(fin,'',1,'')                          == me) or
+                            (AST.get(fin,'',1,'Stmt_Call',1,'')            == me) or
                             (AST.get(fin,'',1,'Set_Alias',1,'Exp_1&',2,'') == me) or
                             (AST.get(fin,'',1,'Set_Exp',1,'')              == me) )
 
@@ -142,7 +142,7 @@ F = {
 
     __stmts = { Set_Exp=true, Set_Alias=true,
                 Emit_Ext_emit=true, Emit_Ext_call=true,
-                Abs_Call=true, Exp_Call=true },
+                Stmt_Call=true },
 
     Finalize = function (me)
         local Stmt, Namelist, Block = unpack(me)
