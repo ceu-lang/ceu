@@ -28,25 +28,15 @@ local function CASE (me, lbl)
     LINE(me, 'case '..lbl.id..':;')
 end
 
-local function GOTO (me, lbl)
-    LINE(me, [[
-_ceu_lbl = ]]..lbl.id..[[;
-goto _CEU_GOTO_;
-]])
-end
-
 local function CLEAR (me)
     LINE(me, [[
 {
-    int __ceu_is_alive;
     ceu_go_ext(CEU_INPUT__CLEAR, NULL);
-    __ceu_is_alive = _ceu_stk->is_alive;
-    ceu_stack_clear(_ceu_stk, &CEU_APP.trails[]]..me.trails[1]..[[],
-                              &CEU_APP.trails[]]..me.trails[2]..[[]);
-    if (!__ceu_is_alive) {
+    ceu_stack_clear(_ceu_stk->down, &CEU_APP.trails[]]..me.trails[1]..[[],
+                                    &CEU_APP.trails[]]..me.trails[2]..[[]);
+    if (!_ceu_stk->is_alive) {
         return;
     }
-    _ceu_stk->is_alive = 1;
 }
 ]])
 end
@@ -101,7 +91,11 @@ ceu_out_assert_msg(0, "reached end of `do´");
         CASE(me, me.lbl_out)
     end,
     Escape = function (me)
-        GOTO(me, me.do_.lbl_out)
+        LINE(me, [[
+CEU_GO_STK_LBL(NULL, _ceu_stk, _ceu_stk->trl,
+               ]]..me.do_.lbl_out.id..[[);
+return;
+]])
     end,
 
     If = function (me)
@@ -145,7 +139,7 @@ CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 0;
         -- call each branch
         for i, sub in ipairs(me) do
             LINE(me, [[
-CEU_GO_LBL_ABORT(_ceu_evt, _ceu_stk,
+CEU_GO_STK_LBL_ABORT(NULL, _ceu_stk,
                  &CEU_APP.trails[]]..sub.trails[1]..[[],
                  ]]..me.lbls_in[i].id..[[);
 ]])
@@ -166,11 +160,15 @@ return;
             else
                 -- Par_And: open gates
                 if me.tag == 'Par_And' then
-                LINE(me, [[
+                    LINE(me, [[
 CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 1;
 ]])
                 end
-                GOTO(me, me.lbl_out)
+                LINE(me, [[
+CEU_GO_STK_LBL(NULL, _ceu_stk, _ceu_stk->trl,
+               ]]..me.lbl_out.id..[[);
+return;
+]])
             end
         end
 

@@ -142,7 +142,12 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 
 /*****************************************************************************/
 
-#define CEU_GO_LBL_ABORT(evt,stk_old,trl,lbl) {     \
+#define CEU_GO_STK_LBL(evt,stk_old,trl,lbl) {       \
+    tceu_stk __ceu_stk = { stk_old, trl, 1 };       \
+    ceu_go_lbl(evt,&__ceu_stk, lbl);                \
+}
+
+#define CEU_GO_STK_LBL_ABORT(evt,stk_old,trl,lbl) { \
     tceu_stk __ceu_stk = { stk_old, trl, 1 };       \
     ceu_go_lbl(evt,&__ceu_stk, lbl);                \
     if (!__ceu_stk.is_alive) {                      \
@@ -180,7 +185,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d\n", trlI, trl, trl->lbl);
 
         if (matches_clear || matches_await) {
             trl->evt = CEU_INPUT__NONE;
-            CEU_GO_LBL_ABORT(evt, stk, trl, trl->lbl);
+            CEU_GO_STK_LBL_ABORT(evt, stk, trl, trl->lbl);
         } else {
             if (evt->id==CEU_INPUT__CLEAR) {
                 trl->evt = CEU_INPUT__NONE;
@@ -194,7 +199,7 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
     switch (evt_id)
     {
         case CEU_INPUT__INIT:
-            CEU_GO_LBL_ABORT(NULL, NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
+            CEU_GO_STK_LBL(NULL, NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
             break;
 
         case CEU_INPUT__WCLOCK: {
