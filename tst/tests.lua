@@ -29411,7 +29411,7 @@ end;
 escape a + 1;
 ]],
     --run = 11,
-    props = 'not permitted inside `thread´',
+    props_ = 'line 4 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
 }
 Test { [[
 var int a=1;
@@ -29450,7 +29450,7 @@ end
     --run = 5,
     --run = 3,
     --todo = 'nd excpt',
-    props = 'not permitted inside `thread´',
+    props_ = 'line 13 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
 }
 Test { [[
 par do
