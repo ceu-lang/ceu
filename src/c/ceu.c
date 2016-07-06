@@ -44,10 +44,6 @@ enum {
     === EXTS_ENUM_INPUT ===
 };
 
-/*****************************************************************************/
-
-=== NATIVE ===
-
 #define CEU_TRAILS_N (=== TRAILS_N ===)
 
 typedef u8 tceu_nevt;   /* TODO */
@@ -80,6 +76,8 @@ typedef struct tceu_app {
 } tceu_app;
 
 static tceu_app CEU_APP;
+
+=== NATIVE_POS ===
 
 /*****************************************************************************/
 

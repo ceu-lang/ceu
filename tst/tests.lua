@@ -333,7 +333,7 @@ Test { [[var int a=0;]],
 
 Test { [[
 native _x;
-native do
+native/pos do
     int x = 1;
 end
 escape (_x);
@@ -448,6 +448,13 @@ escape 0;
 
 Test { [[
 native do
+end
+]],
+    parser = 'line 1 : after `native´ : expected `/´ or native identifier or `/pre´ or `/pos´',
+}
+
+Test { [[
+native/pos do
     ##include <assert.h>
 end
 native _assert;
@@ -596,13 +603,13 @@ end
 
 Test { [[
 escape 1;
-native do end
+native/pos do end
 ]],
     run = 1,
 }
 
 Test { [[
-native do
+native/pos do
     int _ = 3;
 end
 native/const __;
@@ -619,7 +626,7 @@ escape __;
     --run = 3,
 }
 Test { [[
-native do
+native/pos do
     int _ = 3;
 end
 native/const __;
@@ -634,7 +641,7 @@ escape __;
     --run = 3,
 }
 Test { [[
-native do
+native/pos do
     int _ = 3;
 end
 native/const __;
@@ -730,7 +737,7 @@ emit a => &&k; // leads to compiler error
 Test { [[
 native _f,_int;
 input void OS_START;
-native do
+native/pos do
     int f () { return 1; }
 end
 var _int x = _f() as /plain;
@@ -743,7 +750,7 @@ Test { [[
 input void OS_START;
 native _int;
 native/pure _f;
-native do
+native/pos do
     int f () { return 1; }
 end
 var _int x = _f();
@@ -755,7 +762,7 @@ escape x;
 Test { [[
 input void OS_START;
 native _int, _f;
-native do
+native/pos do
     int f () { return 1; }
 end
 var _int x = (_f as /pure)();
@@ -767,7 +774,7 @@ escape x;
 Test { [[
 input void OS_START;
 native _f;
-native do
+native/pos do
     void* V;
     int f (void* v) { return 1; }
 end
@@ -781,7 +788,7 @@ escape x;
 Test { [[
 input void OS_START;
 native _f;
-native do
+native/pos do
     void* V;
     int f (void* v) { return 1; }
 end
@@ -843,7 +850,7 @@ escape ret;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int f;
 end
 input int A;
@@ -857,7 +864,7 @@ escape _f;
 
 Test { [[
 native _abc;
-pre native do
+native/pre do
     typedef u8  abc;
 end
 event void a;
@@ -879,7 +886,7 @@ var _abc a = _;
 }
 
 Test { [[
-native do
+native/pos do
     ##ifndef CEU_EXTS
     ##error bug found
     ##endif
@@ -892,7 +899,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##ifndef CEU_EXTS
     ##error bug found
     ##endif
@@ -2786,7 +2793,7 @@ escape a;
 
 Test { [[
 native/const _V;
-native do
+native/pos do
     int V = 0;
 end
 _V = 0;
@@ -2796,7 +2803,7 @@ escape _V;
 }
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 _V = do
@@ -2809,7 +2816,7 @@ escape _V;
 }
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 _V = do
@@ -2821,7 +2828,7 @@ escape _V;
 }
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 1;
 end
 var int v = do
@@ -2834,7 +2841,7 @@ escape v;
 
 Test { [[
 native/plain _t;
-native do
+native/pos do
     typedef struct {
         int v;
     } t;
@@ -2851,7 +2858,7 @@ escape t.v;
 
 Test { [[
 native/plain _t;
-native do
+native/pos do
     typedef struct {
         int v;
     } t;
@@ -2865,7 +2872,7 @@ escape 0;
 
 Test { [[
 native/plain _t;
-pre native do
+native/pre do
     typedef struct {
         int v;
     } t;
@@ -2882,7 +2889,7 @@ escape t.v;
 
 Test { [[
 native/plain _t;
-native do
+native/pos do
     typedef struct {
         int v;
     } t;
@@ -3756,7 +3763,7 @@ escape 1;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V;
 end
 loop/_V do
@@ -3767,7 +3774,7 @@ escape 1;
 }
 Test { [[
 native/const _V;
-native do
+native/pos do
     int V;
 end
 loop/_V do
@@ -3826,7 +3833,7 @@ escape 1;
 }
 Test { [[
 native/const _A;
-native do
+native/pos do
     ##define A 10
 end
 #define A 10
@@ -3964,7 +3971,7 @@ escape x;
 }
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 input void OS_START;
 event void a, b, c, d;
 native _assert;
@@ -6346,7 +6353,7 @@ end
 }
 
 Test { [[
-native do
+native/pos do
     ##include <assert.h>
 end
 input void OS_START;
@@ -6635,7 +6642,7 @@ end
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 10;
 end
 event void a;
@@ -6653,7 +6660,7 @@ escape _V;
 }
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 10;
 end
 event void a;
@@ -8108,7 +8115,7 @@ escape a;
 }
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 input void A;
 var int ret = 0;
@@ -15413,7 +15420,7 @@ input void OS_START;
 await OS_START;
 
 native _pinMode, _digitalWrite;
-native do
+native/pos do
 ##define pinMode(a,b)
 ##define digitalWrite(a,b)
 end
@@ -16931,7 +16938,7 @@ escape a+b;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 10;
 end
 var& int v = &_V;
@@ -16943,7 +16950,7 @@ escape v;
 
 Test { [[
 native _V, _f;
-native do
+native/pos do
     int V = 0;
     void f (int* v) {
         *v = 10;
@@ -16976,7 +16983,7 @@ escape y;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 10;
 end
 var& int v;
@@ -16990,7 +16997,7 @@ escape v;
 
 Test { [[
 native _Tx;
-native do
+native/pos do
     int f (int v) {
         escape v + 1;
     }
@@ -17027,7 +17034,7 @@ escape b;
 }
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 10;
 end
 var& int v;
@@ -17066,7 +17073,7 @@ escape *v;
     --env = 'line 6 : types mismatch (`int&´ <= `int&&´)'
 }
 Test { [[
-native do
+native/pos do
     int V = 10;
 end
 var int vv = 10;
@@ -17141,7 +17148,7 @@ escape a + b + x + v;
 
 Test { [[
 native _V1, _V2;
-native do
+native/pos do
     int V1 = 10;
     int V2 = 5;
 end
@@ -17372,7 +17379,7 @@ escape 1;
 
 Test { [[
 native _fff;
-native do
+native/pos do
     int V = 10;
     int* fff (int v) {
         V += v;
@@ -17415,7 +17422,7 @@ escape 0;
 
 Test { [[
 native _fff;
-native do
+native/pos do
     int V = 10;
     int* fff (int v) {
         V += v;
@@ -17614,7 +17621,7 @@ escape (a==(&&a as int&&)) as int;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int* f;
 end
 var int&& a = null;
@@ -17838,7 +17845,7 @@ escape ret;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int* f (void) {
         escape NULL;
     }
@@ -17860,7 +17867,7 @@ escape r;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int* f (void) {
         escape NULL;
     }
@@ -17896,7 +17903,7 @@ escape(a);
 
 Test { [[
 native _f;
-native do
+native/pos do
     void f (int* a) {
         *a = 10;
     }
@@ -17924,7 +17931,7 @@ do/_ v(&&a); finalize with nothing; end;
 }
 Test { [[
 native _f;
-native do
+native/pos do
     void f (int* a) {
         *a = 10;
     }
@@ -17953,7 +17960,7 @@ escape 0;
 
 Test { [[
 native _f;
-native do
+native/pos do
     void f (int* a) {
         *a = 10;
     }
@@ -17982,7 +17989,7 @@ end
 
 Test { [[
 native _f;
-native do
+native/pos do
     void f (int* a) {
         *a = 10;
     }
@@ -18005,7 +18012,7 @@ escape(a);
 
 Test { [[
 native _f;
-pre native do
+native/pre do
     void f (int* a) {
         *a = 10;
     }
@@ -18024,7 +18031,7 @@ escape(a);
 
 Test { [[
 native _f;
-pre native do
+native/pre do
     void f (int* a) {
         *a = 10;
     }
@@ -18042,7 +18049,7 @@ escape(a);
 
 Test { [[
 native _getV;
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -18063,7 +18070,7 @@ escape v!;
 }
 Test { [[
 native _V, _getV;
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -18090,7 +18097,7 @@ escape v1!+v2!+_V;
 }
 Test { [[
 native _V, _getV;
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -18157,7 +18164,7 @@ escape p!;
 
 Test { [[
 native _int, _f;
-pre native do
+native/pre do
     int* f (int* ptr) { return ptr }
 end
 var int v = 2;
@@ -18172,7 +18179,7 @@ escape p!;
 
 Test { [[
 native _int, _f;
-pre native do
+native/pre do
     int* f (int* ptr) { return ptr }
 end
 var int v = 2;
@@ -18231,7 +18238,7 @@ escape 1;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int f (int* v) {
         escape 1;
     }
@@ -18248,7 +18255,7 @@ escape _f(&&v);
 
 Test { [[
 native _t;
-native do
+native/pos do
     typedef struct t {
         int* ptr;
     } t;
@@ -18293,7 +18300,7 @@ escape 0;
 Test { [[
 native _t;
 native/pure _f;
-native do
+native/pos do
     typedef struct t {
         int* ptr;
     } t;
@@ -18315,7 +18322,7 @@ escape *(t.ptr);
 Test { [[
 native _t;
 native/pure _f;
-native do
+native/pos do
     typedef struct t {
         int* ptr;
     } t;
@@ -18682,7 +18689,7 @@ escape 1;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int f (int* p) { return *p }
 end
 var int x = 1;
@@ -18794,7 +18801,7 @@ escape v;
 
 Test { [[
 native _f;
-native do void f (void* p) {} end
+native/pos do void f (void* p) {} end
 
 var void&& p=null;
 do
@@ -18809,7 +18816,7 @@ escape 1;
 
 Test { [[
 native _f;
-native do void f () {} end
+native/pos do void f () {} end
 
 var void&& p = null;
 do _f(p!=null); finalize with nothing;
@@ -18884,7 +18891,7 @@ escape 1;
 Test { [[
 native _f;
 native _v;
-native do
+native/pos do
     int v = 1;
     int f (int v) {
         escape v + 1;
@@ -18899,7 +18906,7 @@ escape _f(_v);
 Test { [[
 native/pure _f;
 native _v;
-native do
+native/pos do
     int v = 1;
     int f (int v) {
         escape v + 1;
@@ -18914,7 +18921,7 @@ escape _f(_v);
 
 Test { [[
 native/pure _f;
-native do
+native/pos do
     int* f (int a) {
         escape NULL;
     }
@@ -18927,7 +18934,7 @@ escape (v == null) as int;
 
 Test { [[
 native/pure _f;
-native do
+native/pos do
     int V = 10;
     int f (int v) {
         escape v;
@@ -18941,7 +18948,7 @@ escape _f(_V);
 
 Test { [[
 native _f;
-native do
+native/pos do
     int f (int* v) {
         escape 1;
     }
@@ -18955,7 +18962,7 @@ escape (_f(&&v) == 1 )as int;
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     int f (int* v) {
         escape 1;
     }
@@ -18969,7 +18976,7 @@ escape (_f(&&v) == 1 )as int;
 Test { [[
 native _V;
 native/nohold _f;
-native do
+native/pos do
     int V=1;
     int f (int* v) {
         escape 1;
@@ -19928,7 +19935,7 @@ escape v;
 }
 
 Test { [[
-pre native do
+native/pre do
     void f (int* a) {
         *a = 10;
     }
@@ -19954,7 +19961,7 @@ escape(ret);
 Test { [[
 native _t, _A;
 native _f;
-native do
+native/pos do
     int* A = NULL;;
     void f (int* a) {
         A = a;
@@ -19990,7 +19997,7 @@ Test { [[
 input void OS_START;
 native _t, _A;
 native _f;
-native do
+native/pos do
     int* A = NULL;;
     void f (int* a) {
         A = a;
@@ -20050,7 +20057,7 @@ escape 1;
 
 Test { [[
 native _f, _V;
-native do
+native/pos do
     int V;
     void f (int* x) {
         V = *x;
@@ -20707,7 +20714,7 @@ escape 1;
 }
 Test { [[
 native _ptr, _malloc;
-native do
+native/pos do
     void* ptr;
 end
 _ptr = _malloc(100);
@@ -20719,7 +20726,7 @@ escape 1;
 Test { [[
 native _ptr, _malloc;
 native/nohold _free;
-native do
+native/pos do
     void* ptr;
 end
 do
@@ -20735,7 +20742,7 @@ escape 1;
 
 Test { [[
 native _alloc;
-native do
+native/pos do
     int V;
     int* alloc (int ok) {
         escape &V;
@@ -20758,7 +20765,7 @@ escape 1;
 
 Test { [[
 native _alloc;
-native do
+native/pos do
     int V;
     int* alloc (int ok) {
         escape &V;
@@ -20781,7 +20788,7 @@ escape 1;
 
 Test { [[
 native _alloc;
-native do
+native/pos do
     int* alloc (int ok) {
         escape NULL;
     }
@@ -20805,7 +20812,7 @@ escape 1;
 
 Test { [[
 native _alloc, _V;
-native do
+native/pos do
     int* alloc (int ok) {
         escape NULL;
     }
@@ -20844,7 +20851,7 @@ escape 0;
 
 Test { [[
 native _alloc, _V;
-native do
+native/pos do
     int* alloc (int ok) {
         escape NULL;
     }
@@ -20874,7 +20881,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int* alloc (int ok) {
         escape NULL;
     }
@@ -20903,7 +20910,7 @@ escape _V;
 }
 
 Test { [[
-pre native do
+native/pre do
     struct Tx;
     typedef struct Tx t;
     int V = 1;
@@ -20967,7 +20974,7 @@ escape ret;
 
 Test { [[
 native _f;
-native do
+native/pos do
     void* f () {
         escape NULL;
     }
@@ -20987,7 +20994,7 @@ escape &ptr! == &ptr!;  // ptr.SOME fails
 
 Test { [[
 native _f;
-native do
+native/pos do
     void* f () {
         escape NULL;
     }
@@ -21008,7 +21015,7 @@ escape (&&ptr! == &&ptr!) as int;  // ptr.SOME fails
 
 Test { [[
 native _f;
-native do
+native/pos do
     void* f () {
         escape NULL;
     }
@@ -21029,7 +21036,7 @@ escape (not ptr? )as int;
 
 Test { [[
 native _f;
-native do
+native/pos do
     void* f () {
         escape NULL;
     }
@@ -21053,7 +21060,7 @@ escape (not ptr? )as int;
 
 Test { [[
 native _f;
-native do
+native/pos do
     void* f () {
         escape NULL;
     }
@@ -21086,7 +21093,7 @@ escape ret;
 
 Test { [[
 native _alloc, _V;
-native do
+native/pos do
     int V = 1;
     int* alloc () {
         escape &V;
@@ -21110,7 +21117,7 @@ escape &tex2==&_V;
 
 Test { [[
 native _alloc, _V;
-native do
+native/pos do
     int V = 1;
     int* alloc () {
         escape NULL;
@@ -21134,7 +21141,7 @@ escape &tex2==&_V;
 
 Test { [[
 native _V, _t, _alloc;
-pre native do
+native/pre do
     struct Tx;
     typedef struct Tx t;
     int V = 1;
@@ -21223,7 +21230,7 @@ escape 0;
 
 Test { [[
 native _V, _my_alloc, _my_free;
-native do
+native/pos do
     int V = 0;
     void* my_alloc (void) {
         V += 1;
@@ -21598,7 +21605,7 @@ escape 0;
 
 Test { [[
 native _a;
-native do
+native/pos do
     int a;
 end
 async do
@@ -21611,7 +21618,7 @@ escape _a;
 
 Test { [[
 native _a;
-native do
+native/pos do
     int a, b;
 end
 par/and do
@@ -21635,7 +21642,7 @@ Test { [[
 @const _a;
 deterministic _b with _c;
 
-native do
+native/pos do
     int a = 1;
     int b;
     int c;
@@ -21659,7 +21666,7 @@ escape _a+_b+_c;
 
 Test { [[
 native _a,_b;
-native do
+native/pos do
     int a=1,b=1;
 end
 par/or do
@@ -21677,7 +21684,7 @@ escape _a + _b;
 
 Test { [[
 native _a,_b;
-native do
+native/pos do
     int a = 1;
 end
 var int a=0;
@@ -21696,7 +21703,7 @@ escape _a + a;
 
 Test { [[
 native _a;
-native do
+native/pos do
     int a = 1;
 end
 var int a=0;
@@ -21715,7 +21722,7 @@ escape _a + a;
 }
 
 Test { [[
-native do
+native/pos do
     int a = 1;
     int b;
     int c;
@@ -22240,7 +22247,7 @@ escape(1);
     parser = 'line 1 : after `output´ : expected `(´ or type',
 }
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing(d)
 end
 output int A;
@@ -22259,7 +22266,7 @@ escape(1);
     parser = 'line 2 : after `if´ : expected expression',
 }
 Test { [[
-native do
+native/pos do
     #define ceu_out_emit(a,b,c,d) 1
 end
 output int A;
@@ -22307,11 +22314,11 @@ escape(1);
 }
 Test { [[
 native _t;
-native do
+native/pos do
     #define ceu_out_emit(a,b,c,d) __ceu_nothing(d)
 end
 output int A;
-pre native do
+native/pre do
     typedef int t;
 end
 var _t v=1;
@@ -22353,7 +22360,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     /******/
     int end = 1;
     /******/
@@ -22365,7 +22372,7 @@ escape _end;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int a;
         int b;
@@ -22380,7 +22387,7 @@ escape v.a + v.b;
     inits = 'line 8 : uninitialized variable "v" : reached read access (/tmp/tmp.ceu:9)',
 }
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int a;
         int b;
@@ -22395,7 +22402,7 @@ escape v.a + v.b;
     inits = 'line 8 : uninitialized variable "v"',
 }
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int a;
         int b;
@@ -22419,7 +22426,7 @@ escape 0;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int a;
         int b;
@@ -22433,14 +22440,14 @@ escape v.a + v.b;
 }
 
 Test { [[
-pre native do
+native/pre do
     ##include <assert.h>
     typedef struct {
         int a;
         int b;
     } t;
 end
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) Fa(a,b,c,d)
     int Fa (tceu_app* app, int evt, int sz, void* v) {
         if (evt == CEU_OUT_A) {
@@ -22466,14 +22473,14 @@ escape a + b;
 }
 
 Test { [[
-pre native do
+native/pre do
     ##include <assert.h>
     typedef struct {
         int a;
         int b;
     } t;
 end
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) Fa(a,b,c,d)
     int Fa (tceu_app* app, int evt, int sz, void* v) {
         if (evt == CEU_OUT_A) {
@@ -22501,7 +22508,7 @@ escape a + b;
 Test { [[
 native _cahr;
 output void A;
-native do
+native/pos do
     void A (int v) {}
 end
 var _cahr v = emit A => 1;
@@ -22525,7 +22532,7 @@ escape v;
 }
 Test { [[
 output void A;
-native do
+native/pos do
     void A (int v) {}
 end
 native _char;
@@ -22539,7 +22546,7 @@ escape 0;
 }
 
 Test { [[
-native do
+native/pos do
     void A (int v) {}
 end
 emit A => 1;
@@ -22549,7 +22556,7 @@ escape 0;
 }
 
 Test { [[
-native do
+native/pos do
     #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
 output void A, B;
@@ -22568,7 +22575,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
 deterministic A with B;
@@ -22584,7 +22591,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     #define ceu_out_emit(a,b,c,d)  __ceu_nothing(d)
 end
 output void A, B;
@@ -22603,7 +22610,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) Fx(d)
     void Fx (void* p) {
         tceu__int___int_* v = (tceu__int___int_*) p;
@@ -22622,7 +22629,7 @@ escape a + b;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) Fx(a,b,d)
     void Fx (tceu_app* app, int evt, void* p) {
         tceu__int___int_* v = (tceu__int___int_*) p;
@@ -22643,7 +22650,7 @@ escape a + b;
 Test { [[
 native _Fx;
 output int Z;
-native do
+native/pos do
     void Z() {};
 end
 par do
@@ -22662,7 +22669,7 @@ end
 Test { [[
 native _Fx;
 output int Z,W;
-native do
+native/pos do
     void Z() {};
 end
 par do
@@ -22684,7 +22691,7 @@ Test { [[
 native _Fx;
 deterministic _Fx with Z,W;
 output int Z,W;
-native do
+native/pos do
     void Z() {};
 end
 par do
@@ -22708,7 +22715,7 @@ output int&& Z,W;
 deterministic _Fx with Z,W;
 int a = 1;
 int&& b;
-native do
+native/pos do
     void Z (int v) {};
 end
 par do
@@ -22732,7 +22739,7 @@ native _Fx;
 output int&& Z,W;
 int a = 1;
 int&& b;
-native do
+native/pos do
     void Z (int v) {};
 end
 par do
@@ -22805,7 +22812,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit_F(a) Z(a)
     int Z (int v) {
         escape v+1;
@@ -22820,7 +22827,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_call_F(a) Z((int*)a)
     int Z (int* v) {
         escape *v+1;
@@ -22834,7 +22841,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_call(a,b,c) Z((int*)c)
     int Z (int* v) {
         escape *v+1;
@@ -22848,7 +22855,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_call_F(a) Z(a)
     int Z (int v) {
         escape v+1;
@@ -22916,7 +22923,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_call_F(a) Z(a)
     int Z (tceu__int__int* p) {
         escape p->_1 + p->_2;
@@ -22936,7 +22943,7 @@ var int ret = (call Z=>2);
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_call(a,b,c) Z(a,b,c)
     int Z (tceu_app* app, tceu_nevt evt, int* p) {
         escape (evt == CEU_OUT_F) + *p;
@@ -22950,7 +22957,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) Z(a,b,d)
     int Z (tceu_app* app, tceu_nevt evt, void* p) {
         escape (evt==CEU_OUT_F && p==NULL);
@@ -22964,7 +22971,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit_F() Z()
     int Z () {
         escape 1;
@@ -22978,7 +22985,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) Z(a,b,d)
     int Z (tceu_app* app, tceu_nevt evt, int* p) {
         escape (evt == CEU_OUT_F) + *p;
@@ -22999,7 +23006,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_call(a,b,c) Z(a,b,c)
     int Z (tceu_app* app, tceu_nevt evt, int* p) {
         escape (evt == CEU_OUT_F) + *p;
@@ -23680,7 +23687,7 @@ escape b+c;
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     void f (int* v) {
         *v = 1;
     }
@@ -23701,7 +23708,7 @@ escape a + b;
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     void f (int* v) {
         *v = 1;
     }
@@ -23727,7 +23734,7 @@ escape a + b;
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     void f (int* v) {
         *v = 1;
     }
@@ -23754,7 +23761,7 @@ escape a + b;
 
 Test { [[
 @pure _f;
-native do
+native/pos do
     void f (int* v) {
         *v = 1;
     }
@@ -23781,7 +23788,7 @@ escape a + b;
 
 Test { [[
 @pure _f;
-native do
+native/pos do
     void f (int* v) {
         *v = 1;
     }
@@ -23817,7 +23824,7 @@ escape *a + *c;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int* f () {
         int a = 10;
         escape &a;
@@ -23833,7 +23840,7 @@ escape 0;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int* f () {
         int a = 10;
         escape &a;
@@ -23848,7 +23855,7 @@ escape p;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int* f () {
         int a = 10;
         escape &a;
@@ -23863,7 +23870,7 @@ escape p!;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int a;
     int* f () {
         a = 10;
@@ -23883,7 +23890,7 @@ escape p!;
 }
 Test { [[
 native _f;
-native do
+native/pos do
     int a;
     int* f () {
         a = 10;
@@ -23903,7 +23910,7 @@ escape p!;
 }
 Test { [[
 native/pure _f;    // its actually impure
-native do
+native/pos do
     int a;
     int* f () {
         a = 10;
@@ -23918,7 +23925,7 @@ escape *p;
 }
 Test { [[
 native _f;
-native do
+native/pos do
     int A = 10;
     int* f () {
         escape &A;
@@ -23941,7 +23948,7 @@ escape a;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int A = 10;
     int* f () {
         escape &A;
@@ -23967,7 +23974,7 @@ escape a;
 
 Test { [[
 native _f, _p;
-native do
+native/pos do
     ##define f(p)
 end
 par/or do
@@ -23988,7 +23995,7 @@ escape 1;
 
 Test { [[
 native _f, _p;
-native do
+native/pos do
     ##define f(p)
 end
 par/or do
@@ -24119,7 +24126,7 @@ vector[1] void b;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int v[10];
         int c;
@@ -24251,7 +24258,7 @@ escape v == &&v[0] ;
 Test { [[
 native/plain _int;
 native/nohold _f;
-native do
+native/pos do
     void f (int* p) {
         *p = 1;
     }
@@ -24270,7 +24277,7 @@ escape a[0] + b;
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     void f (int* p) {
         *p = 1;
     }
@@ -24297,7 +24304,7 @@ escape a[0] + b;
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     void f (int* p) {
         *p = 1;
     }
@@ -24374,7 +24381,7 @@ escape 1;
 
 Test { [[
 native/pure _f;
-native do
+native/pos do
     int f (int* v) {
         escape v[0];
     }
@@ -24772,7 +24779,7 @@ escape v == &&v[0] ;
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     void f (int* v) {
         v[0]++;
         v[1]++;
@@ -24788,7 +24795,7 @@ escape a[0] + a[1];
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     void f (int* v) {
         v[0]++;
         v[1]++;
@@ -24805,7 +24812,7 @@ escape b[0] + b[1];
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     void f (int* v) {
         v[0]++;
         v[1]++;
@@ -24822,7 +24829,7 @@ escape b[0] + b[1];
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     void f (int* v) {
         v[0]++;
         v[1]++;
@@ -24981,7 +24988,7 @@ escape ($v + 1) as int;
     run = 1,
 }
 Test { [[
-native do
+native/pos do
     byte* f (void) {
         escape "ola";
     }
@@ -24997,7 +25004,7 @@ escape (str[1]=={'i'}) as int;
 }
 
 Test { [[
-native do
+native/pos do
     byte* f (void) {
         escape "ola";
     }
@@ -25014,7 +25021,7 @@ escape (str[2]=={'a'}) as int;
 }
 
 Test { [[
-native do
+native/pos do
     byte* f (void) {
         escape "ola";
     }
@@ -25031,7 +25038,7 @@ escape (str[4]=={'i'}) as int;
 }
 
 Test { [[
-native do
+native/pos do
     byte* f (void) {
         escape "ola";
     }
@@ -25098,7 +25105,7 @@ escape str[1] == 'l';
 Test { [[
 vector[] byte str = [0,1,2];
 
-native do
+native/pos do
     byte* g () {
         escape "ola";
     }
@@ -25139,7 +25146,7 @@ escape str[4] == 'u';
 }
 
 Test { [[
-native do
+native/pos do
     ##define ID(x) x
 end
 native/pure _ID, _strlen;
@@ -25320,7 +25327,7 @@ v[true] = 1;
 
 Test { [[
 native/const _X;
-native do
+native/pos do
     ##define X 1;
 end
 vector&[-_X] int iis;
@@ -25333,7 +25340,7 @@ escape 1;
 
 Test { [[
 native/const _X;
-native do
+native/pos do
     ##define X 1;
 end
 vector[-_X] int vvs;
@@ -25430,7 +25437,7 @@ escape _strlen((&&v[0]) as _char&&);
 Test { [[
 native/pure _strlen;
 native/nohold _garbage;
-native do
+native/pos do
     void garbage (byte* v) {
         int i = 0;
         for (; i<20; i++) {
@@ -25627,7 +25634,7 @@ escape us[0]+us[_U8_MAX-1];
 
 Test { [[
 native _t_vec;
-native do
+native/pos do
     typedef int t_vec[10];
 end
 var _t_vec us = _;
@@ -25642,7 +25649,7 @@ escape us[0]+us[9];
 Test { [[
 native _u8;
 native/const _N;
-pre native do
+native/pre do
     int N = 10;
 end
 vector&[_N] _u8 xxxx = [];
@@ -25655,7 +25662,7 @@ escape 1;
 Test { [[
 native _u8;
 native/const _N;
-pre native do
+native/pre do
     int N = 10;
 end
 vector[_N] _u8 xxx = [];
@@ -25813,7 +25820,7 @@ escape 10;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V[2][2] = { {1, 2}, {3, 4} };
 end
 
@@ -25825,7 +25832,7 @@ escape _V[1][0] + _V[0][1];
 
 Test { [[
 native _END;
-native do
+native/pos do
     int END = 1;
 end
 if 0 ==  _END-1 then
@@ -25838,7 +25845,7 @@ end
 }
 
 Test { [[
-native do
+native/pos do
 end
 escape 1;
 ]],
@@ -25846,7 +25853,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     byte* a = "end";
 end
 escape 1;
@@ -25855,7 +25862,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     /*** END ***/
     byte* a = "end";
     /*** END ***/
@@ -25866,7 +25873,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     int A () {}
 end
 A = 1;
@@ -25879,7 +25886,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     void A (int v) {}
 end
 escape 0;
@@ -25888,7 +25895,7 @@ escape 0;
 }
 
 Test { [[
-native do
+native/pos do
     int A (int v) { escape 1; }
 end
 escape 0;
@@ -25899,7 +25906,7 @@ escape 0;
 
 Test { [[
 native _A;
-native do
+native/pos do
     void A (int v) {}
 end
 _A();
@@ -25912,7 +25919,7 @@ escape 0;
 
 Test { [[
 native _A;
-native do
+native/pos do
     void A (int v) { }
 end
 _A(1);
@@ -25923,7 +25930,7 @@ escape 0;
 
 Test { [[
 native _A;
-native do
+native/pos do
     void A () {}
 end
 var int v = _A();
@@ -25938,7 +25945,7 @@ Test { [[emit A => 10; escape 0;]],
 
 Test { [[
 native _Const;
-native do
+native/pos do
     int Const () {
         escape -10;
     }
@@ -25951,7 +25958,7 @@ escape ret;
 
 Test { [[
 native _ID;
-native do
+native/pos do
     int ID (int v) {
         escape v;
     }
@@ -25963,7 +25970,7 @@ escape _ID(10);
 
 Test { [[
 native _ID;
-native do
+native/pos do
     int ID (int v) {
         escape v;
     }
@@ -25976,7 +25983,7 @@ escape v;
 
 Test { [[
 native _VD;
-native do
+native/pos do
     void VD (int v) {
     }
 end
@@ -25988,7 +25995,7 @@ escape 1;
 
 Test { [[
 native _VD;
-native do
+native/pos do
     void VD (int v) {
     }
 end
@@ -26000,7 +26007,7 @@ escape ret;
 
 Test { [[
 native _VD;
-native do
+native/pos do
     void VD (int v) {
     }
 end
@@ -26012,7 +26019,7 @@ escape 0;
 
 Test { [[
 native _NEG;
-native do
+native/pos do
     int NEG (int v) {
         escape -v;
     }
@@ -26024,7 +26031,7 @@ escape _NEG(10);
 
 Test { [[
 native _NEG;
-native do
+native/pos do
     int NEG (int v) {
         escape -v;
     }
@@ -26037,7 +26044,7 @@ escape v;
 
 Test { [[
 native _ID;
-native do
+native/pos do
     int ID (int v) {
         escape v;
     }
@@ -26056,7 +26063,7 @@ escape v;
 
 Test { [[
 native _ID;
-native do
+native/pos do
     int ID (int v) {
         escape v;
     }
@@ -26078,7 +26085,7 @@ escape v;
 
 Test { [[
 native _Z1;
-native do int Z1 (int a) { escape a; } end
+native/pos do int Z1 (int a) { escape a; } end
 input int A;
 var int c;
 _Z1(3);
@@ -26093,7 +26100,7 @@ escape c;
 
 Test { [[
 native/nohold _f1, _f2;
-native do
+native/pos do
     int f1 (u8* v) {
         escape v[0]+v[1];
     }
@@ -26111,7 +26118,7 @@ escape _f2(&&v[0],&&v[1]) + _f1(&&v[0]) + _f1(&&v[0]);
 }
 
 Test { [[
-native do
+native/pos do
     void* V;
 end
 var void&& v = null;
@@ -26123,7 +26130,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     void* V;
 end
 var void&& v = null;
@@ -26135,7 +26142,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     void* V;
 end
 var void&& v=null;
@@ -26169,7 +26176,7 @@ end
 
 Test { [[
 native _tp, _a, _b;
-native do
+native/pos do
     typedef int tp;
 end
 var _tp&& v=null;
@@ -26309,7 +26316,7 @@ escape 1;
 
 Test { [[
 native _int, _f;
-native do
+native/pos do
     int f () {
         escape 1;
     }
@@ -26365,13 +26372,13 @@ escape 1;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int a,b,c;
     } Fx;
 end
 native _Fx, _fff;
-native do
+native/pos do
     Fx* fff;
 end
 
@@ -26407,7 +26414,7 @@ escape 1;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         byte* str;
         u32   length;
@@ -26437,7 +26444,7 @@ escape 1;
 --[=[
 
 PRE = [[
-native do
+native/pos do
     static inline int idx (@const int* vec, int i) {
         escape vec[i];
     }
@@ -26519,7 +26526,7 @@ escape 1;
 
 PRE = [[
 @pure _f3, _f5;
-native do
+native/pos do
 int f1 (int* a, int* b) {
     escape *a + *b;
 }
@@ -26871,7 +26878,7 @@ escape 0;
 
 Test { [[
 deterministic _printf with _assert;
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 par/and do
     _printf("END: 1\n");
 with
@@ -26886,7 +26893,7 @@ escape 0;
 
 Test { [[
 native _a;
-native do
+native/pos do
     int a;
 end
 par/or do
@@ -27001,7 +27008,7 @@ end
     -- RAW
 
 Test { [[
-native do
+native/pos do
     int V = 0;
     int fff (int a, int b) {
         V = V + a + b;
@@ -27017,7 +27024,7 @@ escape i;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
     int fff (int a, int b) {
         V = V + a + b;
@@ -27125,7 +27132,7 @@ escape 0;
 
 Test { [[
 native _const_1;
-native do
+native/pos do
     int const_1 () {
         escape 1;
     }
@@ -27137,7 +27144,7 @@ escape _const_1();
 
 Test { [[
 native _const_1;
-native do
+native/pos do
     int const_1 () {
         escape 1;
     }
@@ -27149,7 +27156,7 @@ escape _const_1() + _const_1();
 
 Test { [[
 native _inv;
-native do
+native/pos do
     int inv (int v) {
         escape -v;
     }
@@ -27164,7 +27171,7 @@ escape a;
 
 Test { [[
 native/pure _inv;
-native do
+native/pos do
     int inv (int v) {
         escape -v;
     }
@@ -27178,7 +27185,7 @@ escape a;
 
 Test { [[
 native _id;
-native do
+native/pos do
     int id (int v) {
         escape v;
     }
@@ -27223,7 +27230,7 @@ escape 0;
 -- STRUCTS / SIZEOF
 
 Test { [[
-pre native do
+native/pre do
 typedef struct {
     u16 a;
     u8 b;
@@ -27238,7 +27245,7 @@ escape vs.a + vs.b + sizeof(_s);
 }
 
 Test { [[
-pre native do
+native/pre do
 typedef struct {
     u16 a;
     u8 b;
@@ -27255,7 +27262,7 @@ escape vs.a + vs.b + sizeof(_s) + sizeof(vs) + sizeof(vs.a);
 Test { [[
 native _SZ;
 native _aaa = (sizeof<void&&,u16>) * 2;
-native do
+native/pos do
     typedef struct {
         void&& a;
         u16 b;
@@ -27272,7 +27279,7 @@ escape sizeof<_aaa> + _SZ;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         u16 ack;
         u8 data[16];
@@ -27287,7 +27294,7 @@ escape 1;
     --ref = 'line 9 : invalid access to uninitialized variable "final" (declared at /tmp/tmp.ceu:8)',
 }
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         u16 ack;
         u8 data[16];
@@ -27302,7 +27309,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
 typedef struct {
     int a;
     int b;
@@ -27323,7 +27330,7 @@ escape vs.a;
 }
 
 Test { [[
-native do
+native/pos do
 typedef struct {
     int a;
     int b;
@@ -27344,7 +27351,7 @@ escape vs.a;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int a;
     } mys;
@@ -27829,7 +27836,7 @@ a = 1;
 
 Test { [[
 native/const _N;
-pre native do
+native/pre do
     #define N 1
 end
 native _u8;
@@ -27841,7 +27848,7 @@ escape vec[_N-1];
 }
 
 Test { [[
-pre native do
+native/pre do
     #define N 1
 end
 native _u8;
@@ -27854,7 +27861,7 @@ escape vec[N-1];
 }
 
 Test { [[
-pre native do
+native/pre do
     #define N 1
 end
 native _u8;
@@ -27879,7 +27886,7 @@ escape vec[1];
 
 Test { [[
 native/const _N;
-pre native do
+native/pre do
     #define N 5
 end
 native/plain _int;
@@ -28951,7 +28958,7 @@ end
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_isr_on();
     ##define ceu_out_isr_off();
 end
@@ -29067,7 +29074,7 @@ escape a + b + p;
 
 for i=1, 50 do
     Test { [[
-native do
+native/pos do
     ##include <unistd.h>
 end
 var int ret = 1;
@@ -29092,7 +29099,7 @@ end
 for i=1, 50 do
     Test { [[
 native _usleep;
-native do
+native/pos do
     ##include <unistd.h>
 end
 var int ret = 0;
@@ -29147,7 +29154,7 @@ var& int p1 = &v1;
 var& int p2 = &v2;
 
 native _calc, _assert;
-native do
+native/pos do
     int calc ()
     {
         int ret, i, j;
@@ -29176,7 +29183,7 @@ with
         end
     end
 end
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 _assert(v1 == v2);
 escape v1;
 ]],
@@ -29214,7 +29221,7 @@ with
         end
     end
 end
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 _assert(v1 == v2);
 escape v1;
 ]],
@@ -29226,7 +29233,7 @@ var int  v1=0, v2=0;
 var& int p1 = &v1;
 var& int p2 = &v2;
 
-native do
+native/pos do
     int calc ()
     {
         int ret, i, j;
@@ -29256,7 +29263,7 @@ with
         end
     end
 end
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 _assert(v1 == v2);
 escape v1;
 ]],
@@ -29295,7 +29302,7 @@ with
         end
     end
 end
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 _assert(v1 == v2);
 escape v1;
 ]],
@@ -29310,7 +29317,7 @@ escape v1;
 }
 
 Test { [[
-pre native do
+native/pre do
     ##include <unistd.h>
     int V = 0;
 end
@@ -29336,7 +29343,7 @@ escape _V;
 }
 
 Test { [[
-pre native do
+native/pre do
     ##include <unistd.h>
     int V = 0;
 end
@@ -29492,7 +29499,7 @@ end
 }
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 input void A;
 var int ret = 0;
@@ -29551,7 +29558,7 @@ escape ret;
     stmts = 'line 27 : invalid `emit´ : unexpected context for external `input´ "A"',
 }
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 input void A;
 var int ret = 0;
@@ -29950,7 +29957,7 @@ escape v;
 
 Test { [[
 native _f;
-native do
+native/pos do
     int f (int v) {
         escape v + 1;
     }
@@ -30429,7 +30436,7 @@ do
     var int v;
 end
 
-native do
+native/pos do
     int V = sizeof(CEU_T);
 end
 
@@ -30455,7 +30462,7 @@ do
     var int v;
 end
 
-native do
+native/pos do
     int V = sizeof(CEU_T);
 end
 native _V;
@@ -30543,7 +30550,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 1;
 end
 native _V;
@@ -30619,7 +30626,7 @@ escape a;
 }
 Test { [[
 native _X;
-native do
+native/pos do
     int X = 0;
 end
 code/delayed Code (var int x) => int
@@ -30738,7 +30745,7 @@ escape a;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 10;
 end
 code/delayed Tx (void)=>void do
@@ -30752,7 +30759,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 10;
 end
 native _V;
@@ -30798,7 +30805,7 @@ escape v;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 1;
 end
 
@@ -30824,7 +30831,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 1;
 end
 
@@ -30854,7 +30861,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 1;
 end;
 
@@ -30909,7 +30916,7 @@ escape t.x;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 10;
 end
 
@@ -30934,7 +30941,7 @@ escape _V;
 Test { [[
 class Tx with
 do
-    native do
+    native/pos do
         int XXX = sizeof(CEU_T);
     end
 end
@@ -30947,7 +30954,7 @@ Test { [[
 class U with do end;
 class Tx with
 do
-    native do
+    native/pos do
         int XXX = sizeof(CEU_U);
     end
 end
@@ -30958,7 +30965,7 @@ escape _XXX > 0;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 1;
 end
 
@@ -31739,7 +31746,7 @@ escape 1;
 
 Test { [[
 native _BGS;
-native do
+native/pos do
     int  vs[] = { 1, 2 };
     int* BGS[] = { &vs[0], &vs[1] };
 end
@@ -31750,7 +31757,7 @@ escape *_BGS[1];
 
 Test { [[
 native _t;
-pre native do
+native/pre do
     typedef int* t;
 end
 var int v = 2;
@@ -31763,7 +31770,7 @@ escape *p;
 
 Test { [[
 native/plain _t;
-pre native do
+native/pre do
     typedef int t;
 end
 var _t v = 2;
@@ -31775,7 +31782,7 @@ escape *v;
 
 Test { [[
 native/plain _rect;
-pre native do
+native/pre do
     typedef struct rect {
         int* x, y;
     } rect;
@@ -31788,7 +31795,7 @@ escape *(r.x);
 }
 Test { [[
 native _rect;
-pre native do
+native/pre do
     typedef struct rect {
         int* x, y;
     } rect;
@@ -31827,7 +31834,7 @@ escape *(r.x);
 }
 Test { [[
 native/plain _rect;
-pre native do
+native/pre do
     typedef struct rect {
         int* x, y;
     } rect;
@@ -31846,7 +31853,7 @@ Test { [[
 native/plain _rect;
 native/pure ___ceu_nothing;
 native _V;
-pre native do
+native/pre do
     typedef struct rect {
         int* x, y;
     } rect;
@@ -31897,7 +31904,7 @@ escape *(t.x);
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct t {
         int* x;
     } t;
@@ -32055,7 +32062,7 @@ escape aa.aa;
 Test { [[
 input void KILL;
 
-native do
+native/pos do
     int V = 0;
 end
 
@@ -32958,7 +32965,7 @@ Test { [[
 input void OS_START;
 input void B;
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 class T1 with
@@ -33303,7 +33310,7 @@ end
 
 Test { [[
 native _c, _d;
-native do
+native/pos do
     int c, d;
 end
 
@@ -33408,7 +33415,7 @@ escape x.a + y[0].a + y[1].a;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 native _V;
@@ -33426,7 +33433,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 native _V;
@@ -33610,7 +33617,7 @@ escape t1.a + t2.a;
 Test { [[
 input void OS_START;
 native/nohold _f;
-native do
+native/pos do
     void f (void* t) {}
 end
 class Tx with
@@ -33636,7 +33643,7 @@ escape 10;
 Test { [[
 input void OS_START;
 native/nohold _f;
-native do
+native/pos do
     void f (void* t) {}
 end
 class Tx with
@@ -33661,7 +33668,7 @@ escape 10;
 }
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 native _assert;
 input int  BUTTON;
@@ -33838,7 +33845,7 @@ Test { [[
 input void OS_START;
 
 native _inc, _V;
-native do
+native/pos do
     int V = 0;
     void inc() { V++; }
 end
@@ -33856,7 +33863,7 @@ Test { [[
 input void OS_START;
 
 native _inc, _V;
-native do
+native/pos do
     int V = 0;
     void inc() { V++; }
 end
@@ -33912,7 +33919,7 @@ end
 var Tx aa;
 
 native _inc, _V;
-native do
+native/pos do
     int V = 0;
     void inc() { V++; }
 end
@@ -34020,7 +34027,7 @@ do
     emit ok;
 end
 var Tx a, b;
-native do
+native/pos do
     int f (byte* a, byte* b) {
         escape *a + *b;
     }
@@ -34387,7 +34394,7 @@ escape ret;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V=1;
 end
 
@@ -34412,7 +34419,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     static int V = 0;
 end
 do
@@ -34431,7 +34438,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     static int V = 0;
 end
 input void B;
@@ -34457,7 +34464,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     static int V = 1;
 end
 input void B;
@@ -34484,7 +34491,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     static int V = 0;
 end
 input void OS_START;
@@ -34515,7 +34522,7 @@ escape _V;
 Test { [[
 native _V;
 input void A, B, OS_START;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -35101,7 +35108,7 @@ escape t.v + x + y;
 -- KILL THEMSELVES
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 input void OS_START;
 
 interface Global with
@@ -35130,7 +35137,7 @@ Test { [[
 input void OS_START;
 
 native _V, _assert;
-native do
+native/pos do
     ##include <assert.h>
     int V = 0;
 end
@@ -35166,7 +35173,7 @@ Test { [[
 input void OS_START;
 
 native _V, _assert;
-native do
+native/pos do
     ##include <assert.h>
     int V = 0;
 end
@@ -35203,7 +35210,7 @@ Test { [[
 input void OS_START;
 
 native _V, _assert;
-native do
+native/pos do
     ##include <assert.h>
     int V = 0;
 end
@@ -35242,7 +35249,7 @@ Test { [[
 input void OS_START;
 
 native _X,_V, _assert;
-native do
+native/pos do
     ##include <assert.h>
     int V = 0;
     int X = 0;
@@ -35284,7 +35291,7 @@ Test { [[
 input void OS_START;
 
 native _V, _assert;
-native do
+native/pos do
     ##include <assert.h>
     int V = 0;
 end
@@ -35316,7 +35323,7 @@ Test { [[
 input void OS_START;
 
 native _V, _assert;
-native do
+native/pos do
     ##include <assert.h>
     int V = 0;
 end
@@ -35402,7 +35409,7 @@ escape 1;
 Test { [[
 native/const _UI_ALIGN_CENTER;
 native/pure _UI_align;
-pre native do
+native/pre do
     typedef struct {
         int x, w;
     } SDL_Rect;
@@ -35429,7 +35436,7 @@ escape 1;
 Test { [[
 native/const _UI_ALIGN_CENTER;
 native/pure _UI_align;
-pre native do
+native/pre do
     typedef struct {
         int x, w;
     } SDL_Rect;
@@ -35457,7 +35464,7 @@ escape 1;
 Test { [[
 native/const _UI_ALIGN_CENTER;
 native/pure _UI_align;
-pre native do
+native/pre do
     typedef struct {
         int x, w;
     } SDL_Rect;
@@ -35482,7 +35489,7 @@ escape 1;
 
 Test { [[
 #define N 5
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -35497,7 +35504,7 @@ escape _V;
 
 Test { [[
 #define N 5
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -35512,7 +35519,7 @@ escape _V;
 
 Test { [[
 #define N 5
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -35527,7 +35534,7 @@ escape _V;
 
 Test { [[
 #define N 5
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -35818,7 +35825,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     void* Ptr;
     void* myalloc (void) {
         escape NULL;
@@ -35844,7 +35851,7 @@ escape t.x;
 }
 
 Test { [[
-native do
+native/pos do
     int V;
     void* myalloc (void) {
         escape &V;
@@ -35871,7 +35878,7 @@ escape t.x;
 }
 
 Test { [[
-native do
+native/pos do
     int V;
     void* myalloc (void) {
         escape &V;
@@ -36042,7 +36049,7 @@ escape 1;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -36059,7 +36066,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -36076,7 +36083,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -36442,7 +36449,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -36469,7 +36476,7 @@ escape ret + _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -36544,7 +36551,7 @@ escape 60;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -37023,7 +37030,7 @@ escape 1;
 -- group of tests fails w/o sudden death check while traversing children
 Test { [[
 input void OS_START;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -37070,7 +37077,7 @@ escape _V;
 }
 Test { [[
 input void OS_START;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -37120,7 +37127,7 @@ escape _V;
 }
 Test { [[
 input void OS_START;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -37167,7 +37174,7 @@ escape _V;
 }
 Test { [[
 input void OS_START;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -37216,7 +37223,7 @@ escape _V;
 -- u1 doesn't die, kills u2, which becomes dangling
 Test { [[
 input void OS_START;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -37260,7 +37267,7 @@ escape _V;
 
 Test { [[
 input void OS_START;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -37760,7 +37767,7 @@ escape (not b?);
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -37782,7 +37789,7 @@ escape _V;
     run = 3,
 }
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -37805,7 +37812,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -37829,7 +37836,7 @@ escape _V;
 }
 Test { [[
 input void A;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -37850,7 +37857,7 @@ escape _V;
 }
 Test { [[
 input void A;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -38123,7 +38130,7 @@ escape t!:b;
 -- fails w/o RET_DEAD check after ceu_app_go for PAR
 Test { [[
 input void OS_START;
-native do
+native/pos do
     tceu_trl* V;
 end
 class Tx with
@@ -38176,7 +38183,7 @@ escape 1;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V=0;
 end
 input void OS_START;
@@ -38304,7 +38311,7 @@ escape 10;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -38323,7 +38330,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -38389,7 +38396,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 var int i=0;
@@ -38505,7 +38512,7 @@ Test { [[
 class X with do
 end;
 
-native do
+native/pos do
     ##ifdef CEU_ORGS_NEWS_POOL
     ##error bug found
     ##endif
@@ -38643,7 +38650,7 @@ class Tx with do
     var U u;
     await FOREVER;
 end;
-native do
+native/pos do
     int V = 1;
 end
 do finalize with
@@ -38682,7 +38689,7 @@ escape _V;
 -- SPAWN / RECURSIVE
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -38700,7 +38707,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -38716,7 +38723,7 @@ escape _V;
     --asr = 'runtime error: stack overflow',
 }
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -39215,7 +39222,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -39233,7 +39240,7 @@ escape _V;
     run = 10,
 }
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -39253,7 +39260,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -39271,7 +39278,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -39289,7 +39296,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -39613,7 +39620,7 @@ escape 1;
 
 -- outer organism dies, nested organism has to awake block
 Test { [[
-native do
+native/pos do
     int V = 1;
 end
 
@@ -40216,7 +40223,7 @@ class Tx with do
     await FOREVER;
 end
 var Tx&&? ok;
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 do
     loop i in [0 -> 100[ do
@@ -40250,7 +40257,7 @@ Test { [[
 class Tx with do
     await FOREVER;
 end
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 do
     loop i in [0 -> 100[ do
@@ -40288,7 +40295,7 @@ Test { [[
 class Tx with do
     await FOREVER;
 end
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 do
     pool[] Tx ts;
@@ -40330,9 +40337,9 @@ escape 1;
 }
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -40381,7 +40388,7 @@ end
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -40407,7 +40414,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _V;
-native do
+native/pos do
     int V = 1;
 end
 class Tx with
@@ -40428,7 +40435,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _V;
-native do
+native/pos do
     int V = 1;
 end
 class Tx with
@@ -40574,7 +40581,7 @@ escape a:v;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 1;
 end
 class Tx with
@@ -40602,7 +40609,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -40630,7 +40637,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 5;
 end
 class Tx with
@@ -40656,7 +40663,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _V;
-native do
+native/pos do
     int V = 5;
 end
 class Tx with
@@ -40759,7 +40766,7 @@ a = spawn U;
 Test { [[
 native _V;
 input void OS_START;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -40791,7 +40798,7 @@ escape ret + _V;
 Test { [[
 input void OS_START, B;
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -40843,7 +40850,7 @@ escape 1;
 Test { [[
 input void OS_START, B;
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -40937,7 +40944,7 @@ escape 1;
 
 Test { [[
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -40974,7 +40981,7 @@ escape _V;
 }
 Test { [[
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -41016,7 +41023,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _f, _V;
-native do
+native/pos do
     int V = 1;
 end
 
@@ -41052,7 +41059,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _f, _V;
-native do
+native/pos do
     int V = 1;
 end
 
@@ -41093,7 +41100,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -41134,7 +41141,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -41215,7 +41222,7 @@ escape 2;
 Test { [[
 input void OS_START;
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -41257,7 +41264,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -41303,7 +41310,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -41347,7 +41354,7 @@ escape _V;
 Test { [[
 input void OS_START;
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -41395,7 +41402,7 @@ escape _V;
 
 Test { [[
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -41442,7 +41449,7 @@ escape _V;
 }
 Test { [[
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -41490,7 +41497,7 @@ escape _V;
 }
 Test { [[
 native _f, _V;
-native do
+native/pos do
     int V = 1;
     int* f (){ escape NULL; }
 end
@@ -41625,7 +41632,7 @@ escape 10;
 
 Test { [[
 native _V, _assert;
-native do
+native/pos do
     int V = 1;
 end
 
@@ -41664,10 +41671,10 @@ escape _V;
 }
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 native _V;
-native do
+native/pos do
     int V = 10;
 end
 class Tx with
@@ -41694,10 +41701,10 @@ escape _V;
 }
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 native _V;
-native do
+native/pos do
     int V = 10;
 end
 class Tx with
@@ -41724,10 +41731,10 @@ escape _V;
 }
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 native _X, _Y;
-native do
+native/pos do
     int X = 0;
     int Y = 0;
 end
@@ -41761,10 +41768,10 @@ escape 10;
 }
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 native _X, _Y;
-native do
+native/pos do
     int X = 0;
     int Y = 0;
 end
@@ -41799,10 +41806,10 @@ escape 10;
 }
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 native _X, _Y;
-native do
+native/pos do
     int X = 0;
     int Y = 0;
 end
@@ -42013,9 +42020,9 @@ escape 10;
 ]=]
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _V, _assert;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -42080,7 +42087,7 @@ escape t!:v + (ts[0] as Tx&&):v;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef void* void_;
 end
 native/plain _void_;
@@ -42102,7 +42109,7 @@ escape t!:v + (ts[0] as Tx&&):v;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -42174,7 +42181,7 @@ escape 10;
 
 Test { [[
 native _s;
-pre native do
+native/pre do
     typedef int s;
 end
 
@@ -42199,7 +42206,7 @@ escape 10;
 
 Test { [[
 native _s;
-pre native do
+native/pre do
     typedef int s;
 end
 
@@ -42227,7 +42234,7 @@ escape 10;
 
 Test { [[
 native _s;
-pre native do
+native/pre do
     typedef int s;
 end
 
@@ -42254,7 +42261,7 @@ escape 1;
 }
 -- TODO: STACK
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -42284,7 +42291,7 @@ escape _V;
 
 Test { [[
 native _s;
-pre native do
+native/pre do
     typedef int s;
 end
 
@@ -42294,9 +42301,9 @@ do
     _V = _V + 1;
 end
 
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _V, _assert;
-native do
+native/pos do
     int V=0;
 end
 
@@ -42356,7 +42363,7 @@ end;
 
 Test { [[
 native _s;
-pre native do
+native/pre do
     typedef int s;
 end
 
@@ -42365,9 +42372,9 @@ class Tx with
 do
 end
 
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _V, _assert;
-native do
+native/pos do
     int V=0;
 end
 
@@ -42409,7 +42416,7 @@ escape _V;
 
 Test { [[
 native _s, _V;
-pre native do
+native/pre do
     typedef int s;
 end
 
@@ -42419,9 +42426,9 @@ do
     _V = _V + 1;
 end
 
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _V, _assert;
-native do
+native/pos do
     int V=0;
 end
 
@@ -42445,7 +42452,7 @@ escape _V;
 
 Test { [[
 native _s;
-pre native do
+native/pre do
     typedef int s;
 end
 
@@ -42454,9 +42461,9 @@ class Tx with
 do
 end
 
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _V, _assert;
-native do
+native/pos do
     int V=0;
 end
 
@@ -42485,7 +42492,7 @@ escape _V;
 
 Test { [[
 native _s;
-pre native do
+native/pre do
     typedef int s;
 end
 
@@ -42494,9 +42501,9 @@ class Tx with
 do
 end
 
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _V, _assert;
-native do
+native/pos do
     int V=0;
 end
 
@@ -42686,7 +42693,7 @@ escape ret;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -42720,7 +42727,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -42765,7 +42772,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -42809,7 +42816,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -42855,7 +42862,7 @@ escape _V;
 }
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -42901,7 +42908,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -42946,7 +42953,7 @@ escape _V;
 
 Test { [[
 native _V;
-native do
+native/pos do
     int V = 0;
 end
 
@@ -43372,7 +43379,7 @@ escape 1;
 
 Test { [[
 native _ptr;
-native do
+native/pos do
     void* ptr;
 end
 interface I with
@@ -43386,7 +43393,7 @@ escape 10;
 
 Test { [[
 native _ptr;
-native do
+native/pos do
     void* ptr;
 end
 interface I with
@@ -43402,7 +43409,7 @@ escape 10;
 
 Test { [[
 native _ptr;
-native do
+native/pos do
     void* ptr;
 end
 interface I with
@@ -43417,7 +43424,7 @@ escape 10;
 -- CAST
 
 Test { [[
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 
 interface Tx with
@@ -43826,7 +43833,7 @@ end
 
 Test { [[
 native/nohold _attr;
-native do
+native/pos do
     void attr (void* org) {
         IFC_Global_a() = CEU_T_a(org) + 1;
     }
@@ -43856,7 +43863,7 @@ end
 }
 
 Test { [[
-native do
+native/pos do
     int fff (CEU_T* t, int v) {
         escape CEU_T_fff(NULL, t, v);
     }
@@ -43896,7 +43903,7 @@ escape t.fff(10) + _fff(&&t, 10) + _iii(i, 10) + _vvv(i);
 }
 
 Test { [[
-native do
+native/pos do
     int V = 10;
 end
 
@@ -44549,7 +44556,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     void* v;
 end
 class Tx with
@@ -44714,7 +44721,7 @@ escape *t.p;
 }
 
 Test { [[
-native do
+native/pos do
     void* V;
 end
 class Tx with
@@ -44867,7 +44874,7 @@ Test { [[
 class I with do end
 pool[] I iss;
 native/nohold _f;
-native do
+native/pos do
     void f (void* p) {
     }
 end
@@ -44885,7 +44892,7 @@ Test { [[
 class I with do end
 pool[] I iss;
 native _f;
-native do
+native/pos do
     void f (void* p) {
     }
 end
@@ -44959,7 +44966,7 @@ var I&& i1 = &&t;
 var I&& i2 = (&&u as I&&);
 
 native/pure _f;
-native do
+native/pos do
     void* f (void* org) {
         escape org;
     }
@@ -45325,7 +45332,7 @@ end
 }
 
 Test { [[
-native do
+native/pos do
     int f() { escape 1; }
 end
 class Tx with do end
@@ -45344,7 +45351,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -45882,7 +45889,7 @@ escape 1;
 
 Test { [[
 native _ceu_out_log;
-native do
+native/pos do
     ##define ceu_out_call_LUA_GETGLOBAL
 end
 
@@ -46328,7 +46335,7 @@ escape 10;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -46361,7 +46368,7 @@ end
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -46378,7 +46385,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -46395,7 +46402,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -46983,7 +46990,7 @@ escape i:g(5);
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef int (*f_t) (int v);
 end
 
@@ -46992,7 +46999,7 @@ class Tx with
     code/instantaneous Fa (var int)=>int;
     var _f_t f2;
 do
-    native do
+    native/pos do
         int f2 (int v) {
             escape v;
         }
@@ -47016,7 +47023,7 @@ escape t.ret1 + t.ret2;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef int (*f_t) (int v);
 end
 
@@ -47025,7 +47032,7 @@ class Tx with
     code/instantaneous Fa (var int)=>int;
     var _f_t f2;
 do
-    native do
+    native/pos do
         int f2 (int v) {
             escape v;
         }
@@ -47156,7 +47163,7 @@ escape t1.i + f:i;
 
 Test { [[
 native _V;
-native do
+native/pos do
     void* V;
 end
 code/instantaneous Fx (var void&& v)=>void do
@@ -47171,7 +47178,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     void* V;
 end
 code/instantaneous Fx (var void&& v)=>void do
@@ -47185,7 +47192,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     void* V;
 end
 class Tx with
@@ -47364,7 +47371,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     void* V;
 end
 native _V;
@@ -47381,7 +47388,7 @@ escape (_V==(5 as void&&)) as int;
 }
 
 Test { [[
-native do
+native/pos do
     void* V;
 end
 native _V;
@@ -47397,7 +47404,7 @@ escape (_V==(5 as void&&)) as int;
 }
 
 Test { [[
-native do
+native/pos do
     int V;
 end
 native _V;
@@ -48141,7 +48148,7 @@ escape m.walk() + m.breath();
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct t {
         void* ceu;
     } t;
@@ -48160,7 +48167,7 @@ escape *((ptr:ceu as int&&));
     --run = 10,
 }
 Test { [[
-native do
+native/pos do
     typedef struct t {
         void* ceu;
     } t;
@@ -48180,7 +48187,7 @@ escape *((ptr:ceu as int&&));
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct t {
         void* xxx;
     } t;
@@ -48207,7 +48214,7 @@ escape (ptr:xxx as C&&):v;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct t {
         void* xxx;
     } t;
@@ -48728,7 +48735,7 @@ escape 1;
 -->>> CLASS-FINALIZE-OPTION
 
 Test { [[
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -48755,7 +48762,7 @@ escape v!;
     run = 20,
 }
 Test { [[
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -48782,7 +48789,7 @@ escape v!;
     run = 20,
 }
 Test { [[
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -48809,7 +48816,7 @@ escape v!;
     tmp = 'line 21 : invalid operand to unary "&" : cannot be aliased',
 }
 Test { [[
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -48836,7 +48843,7 @@ escape v!;
     run = 20,
 }
 Test { [[
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -48865,7 +48872,7 @@ escape v!;
 
 Test { [[
 native _new_Int;
-native do
+native/pos do
     int* new_Int() {
         escape NULL;
     }
@@ -49639,7 +49646,7 @@ escape ret;
     run = 10,
 }
 Test { [[
-native do
+native/pos do
     ##define ID(x) x
 end
 native/pure _ID;
@@ -49697,7 +49704,7 @@ escape 1;
 }
 
 PRE_ISR = [[
-pre native do
+native/pre do
     tceu_app CEU_APP;
     ##define ceu_out_isr_on()
     ##define ceu_out_isr_off()
@@ -49720,7 +49727,7 @@ end
 ]]
 
 Test { PRE_ISR..[[
-native do
+native/pos do
     void f (void){}
 end
 atomic do
@@ -49789,7 +49796,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     tceu_app CEU_APP;
     void ceu_out_isr_attach (void*) {}
     void ceu_out_isr_detach (void*) {}
@@ -49806,7 +49813,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     tceu_app CEU_APP;
     void ceu_out_isr_attach  (void) { }
     void ceu_out_isr_off (void) { }
@@ -49823,7 +49830,7 @@ escape 1;
 }
 
 Test { [[
-pre native do
+native/pre do
     tceu_app CEU_APP;
     ##define ceu_out_isr_on
     ##define ceu_out_isr_off
@@ -49842,7 +49849,7 @@ escape 1;
 }
 
 Test { [[
-pre native do
+native/pre do
     tceu_app CEU_APP;
     void ceu_sys_isr_attach  (void* f, int v) { }
     void ceu_sys_isr_detach  (void* f, int v, int h) { }
@@ -49863,7 +49870,7 @@ escape 1;
 }
 
 Test { [[
-pre native do
+native/pre do
     int V = 1;
     tceu_app CEU_APP;
     ##define ceu_out_isr_on
@@ -49892,7 +49899,7 @@ escape _V;
 }
 
 Test { [[
-pre native do
+native/pre do
     int V = 1;
     tceu_app CEU_APP;
     ##define ceu_out_isr_on
@@ -49957,7 +49964,7 @@ end
 
 Test { [[
 native/plain _int;
-pre native do
+native/pre do
     int V = 1;
     tceu_app CEU_APP;
     ##define ceu_out_isr_on()
@@ -50005,7 +50012,7 @@ await FOREVER;
 }
 
 Test { [[
-pre native do
+native/pre do
     int V = 1;
     tceu_app CEU_APP;
     ##define ceu_out_isr_on()
@@ -50121,7 +50128,7 @@ escape v;
 }
 
 Test { PRE_ISR..[[
-native do
+native/pos do
     int f (void) { escape 2; }
 end
 native _f;
@@ -50142,7 +50149,7 @@ escape v;
 
 Test { [[
 native/pure _f;
-pre native do
+native/pre do
     int f (void) {
         escape 2;
     }
@@ -50201,7 +50208,7 @@ escape v;
 }
 
 Test { [[
-pre native do
+native/pre do
     tceu_app CEU_APP;
     ##define ceu_out_isr_on()
     ##define ceu_out_isr_off()
@@ -50337,7 +50344,7 @@ escape 1;
 
 Test { [[
 input int A;
-pre native do
+native/pre do
     tceu_app CEU_APP;
     ##define ceu_out_isr_on()
     ##define ceu_out_isr_off()
@@ -50364,7 +50371,7 @@ escape 1;
 Test { [[
 native _assert;
 deterministic _assert;
-pre native do
+native/pre do
     ##define ceu_out_isr_on()
     ##define ceu_out_isr_off()
     ##define ceu_out_isr_attach ceu_sys_isr_attach
@@ -50924,7 +50931,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -50969,7 +50976,7 @@ escape ret + _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -51804,7 +51811,7 @@ escape p!:v;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 input void OS_START;
@@ -51885,7 +51892,7 @@ escape ret;
     run = 10000,
 }
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 input void OS_START;
@@ -51927,7 +51934,7 @@ escape ret1+ret2+_V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 input void OS_START;
@@ -52604,7 +52611,7 @@ Test { [[
 class U with
 do
 end
-native do
+native/pos do
     int V = 0;
 end
 class Item with
@@ -52635,7 +52642,7 @@ class U with
 do
     await FOREVER;
 end
-native do
+native/pos do
     int V = 1;
 end
 class Item with
@@ -52666,7 +52673,7 @@ class U with
 do
     await FOREVER;
 end
-native do
+native/pos do
     int V = 1;
 end
 class Item with
@@ -52703,7 +52710,7 @@ native _V;
     _V = _V + 1;
 end
 
-native do
+native/pos do
     int V = 0;
 end
 
@@ -52722,7 +52729,7 @@ escape _V;
     --fin = 'line 17 : attribution to pointer with greater scope',
 }
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class U with do end;
@@ -52922,7 +52929,7 @@ escape v;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 input void OS_START,B;
@@ -53001,7 +53008,7 @@ escape ptr:pos;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 input void OS_START;
@@ -53062,7 +53069,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -53367,7 +53374,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 input void OS_START;
@@ -53398,7 +53405,7 @@ escape _V + 1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -53435,7 +53442,7 @@ escape _V + 1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -53481,7 +53488,7 @@ escape _V+1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -53534,7 +53541,7 @@ escape _V + 1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -53574,7 +53581,7 @@ escape _V+1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -53643,7 +53650,7 @@ escape v + i:get();
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -53848,7 +53855,7 @@ escape x;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 input int A;
@@ -53881,7 +53888,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 input int A;
@@ -54629,7 +54636,7 @@ escape 0;
 }
 
 Test { [[
-native do
+native/pos do
     ##include <stdio.h>
     ##include <stdio.h>
 end
@@ -54687,7 +54694,7 @@ escape 1;
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 input void A;
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 _assert(0);
 ]])
@@ -54775,7 +54782,7 @@ escape 1;
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
-native do
+native/pos do
     int f () {
         escape 10;
     }
@@ -54791,7 +54798,7 @@ escape _f();
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
-native do
+native/pos do
     int f () {
         escape 10;
     }
@@ -54810,7 +54817,7 @@ escape _f();
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
 #ifndef MOD1
 #define MOD1
-native do
+native/pos do
     int f () {
         escape 10;
     }
@@ -54911,7 +54918,7 @@ escape i;
 }
 
 INCLUDE('/tmp/_ceu_MOD1.ceu', [[
-native do
+native/pos do
     int f () {
         escape 10;
     }
@@ -54928,7 +54935,7 @@ escape _f();
 }
 
 Test { [[
-native do
+native/pos do
     ##include <unistd.h>
 end
 escape 1;
@@ -54967,7 +54974,7 @@ with
     v2 = await t2.ok;
 end
 
-native do ##include <assert.h> end
+native/pos do ##include <assert.h> end
 native _assert;
 _assert(v1 == v2);
 escape v1;
@@ -55075,7 +55082,7 @@ escape 1;
 Test { [[
 native/plain _t;
 native/nohold _f;
-pre native do
+native/pre do
     #define f(a)
     typedef int t;
 end
@@ -55169,7 +55176,7 @@ escape 1;
 
 Test { [[
 native/plain _t;
-pre native do
+native/pre do
     typedef struct t {
         int v;
     } t;
@@ -56000,7 +56007,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 input/output/delayed X (var int max)=>void do
@@ -56038,7 +56045,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input/delayed [10] LINE (var int max)=>byte&&;
@@ -56132,7 +56139,7 @@ escape *ret;
 
 Test { [[
 output/input/delayed [10] LINE (var int max)=>byte&&;
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 par/or do
@@ -56148,7 +56155,7 @@ escape 1;
 
 Test { [[
 output/input/delayed [10] LINE (var int max)=>byte&&;
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 par/or do
@@ -56189,7 +56196,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input/delayed [10] LINE (var int max)=>byte&&;
@@ -56235,7 +56242,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input/delayed [10] LINE (var int max)=>int;
@@ -56252,7 +56259,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input/delayed [10] LINE (var int)=>int do
@@ -56270,7 +56277,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input/delayed [10] LINE (var int max)=>int do
@@ -56288,7 +56295,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 input/output/delayed [10] LINE (var int max)=>int do
@@ -56306,7 +56313,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 input/output/delayed [10] LINE (var int max)=>int do
@@ -56318,7 +56325,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 var int ret = 0;
@@ -56334,7 +56341,7 @@ escape ret;
 Test { [[
 native _V;
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56357,7 +56364,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56379,7 +56386,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56403,7 +56410,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
     end
     input/output/delayed [2] LINE (var int max)=>int do
@@ -56423,7 +56430,7 @@ end
 }
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56449,7 +56456,7 @@ end
 }
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56477,7 +56484,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56505,7 +56512,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56537,7 +56544,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56569,7 +56576,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56601,7 +56608,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56628,7 +56635,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56655,7 +56662,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
@@ -56682,7 +56689,7 @@ end
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
     int V = 0;
 end
@@ -56697,7 +56704,7 @@ escape err;
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
@@ -56717,7 +56724,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
@@ -56737,7 +56744,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
@@ -56763,7 +56770,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
@@ -56789,7 +56796,7 @@ end
 
 Test { [[
 par do
-    native do
+    native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
@@ -56871,7 +56878,7 @@ escape $vec;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit_OUT(x) (x->_1->nxt)
 end
 output int[]&& OUT;
@@ -56884,7 +56891,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit_OUT(x) (x->_1->nxt)
 end
 output byte[]&& OUT;
@@ -56915,7 +56922,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit_OUT(x) (x->_2->nxt + x->has_vector)
 end
 output (int,int[]&&,int) OUT;
@@ -56928,7 +56935,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit_OUT(x) (x->_3->nxt + x->vector_offset)
 end
 output (int,int,int[]&&) OUT;
@@ -56942,7 +56949,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) ceu_out_event_F(a,b,c,d)
     int ceu_out_event_F (tceu_app* app, int id_out, int len, byte* data) {
         u8 vector_offset = (((u8*)data)[0]);
@@ -56968,7 +56975,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
 end
 
@@ -56989,7 +56996,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
 end
 input/output/delayed SERIAL_CHAR (void)=>byte do
@@ -57001,7 +57008,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) ceu_out_event_F(a,b,c,d)
     int V = 0;
     int ceu_out_event_F (tceu_app* app, int id_out, int len, byte* data) {
@@ -57058,7 +57065,7 @@ escape 1;
 
 Test { [[
 native/plain _info;
-pre native do
+native/pre do
     int V = 0;
     typedef struct info {
         int8_t i1;
@@ -57066,7 +57073,7 @@ pre native do
     } info;
 end
 
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) ceu_sys_output_handler(a,b,c,d)
     int ceu_sys_output_handler(tceu_app* app, int evt_id, int evt_sz, void* evt_buf) {
         tceu__int__u8__info_h* k;
@@ -57096,7 +57103,7 @@ escape _V;
 }
 Test { [[
 native/plain _info;
-pre native do
+native/pre do
     int V = 0;
     typedef struct info {
         int8_t i1;
@@ -57104,7 +57111,7 @@ pre native do
     } info;
 end
 
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) ceu_sys_output_handler(a,b,c,d)
     int ceu_sys_output_handler(tceu_app* app, int evt_id, int evt_sz, void* evt_buf) {
         tceu__int__u8__info_h* k;
@@ -57138,7 +57145,7 @@ escape _V;
 }
 
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
     int V = 0;
 end
@@ -57537,7 +57544,7 @@ end
 var Ball ball = val Ball(130,130,8);
 
 native _add;
-native do
+native/pos do
     int add (s16 a, s16 b, s16 c) {
         escape a + b + c;
     }
@@ -57575,7 +57582,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     int add (int a, int b, int c) {
         escape a + b + c;
     }
@@ -57759,7 +57766,7 @@ escape ((lll is List.Cons) as int) + 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##ifndef CEU_ADTS_NEWS_POOL
     ##error bug found
     ##endif
@@ -57780,7 +57787,7 @@ escape (lll as List.Cons).head;
 }
 
 Test { [[
-native do
+native/pos do
     ##ifndef CEU_ADTS_NEWS_POOL
     ##error bug found
     ##endif
@@ -58564,7 +58571,7 @@ escape rcs[0].x;
 
 Test { [[
 native/pure _f;
-native do
+native/pos do
     int f (int* rect) {
         escape *rect;
     }
@@ -60139,7 +60146,7 @@ escape 1;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int x;
     } t;
@@ -60176,7 +60183,7 @@ escape 1;
 
 Test { [[
 native _myalloc;
-native do
+native/pos do
     void* myalloc (void) {
         escape NULL;
     }
@@ -60198,7 +60205,7 @@ escape 1;
 
 Test { [[
 native _myalloc;
-native do
+native/pos do
     void* myalloc (void) {
         escape NULL;
     }
@@ -60221,12 +60228,12 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     ##define UNSAFE_POINTER_TO_REFERENCE(ptr) ptr
 end
 native/nohold _UNSAFE_POINTER_TO_REFERENCE;
 
-native do
+native/pos do
     int v2 = 10;
     int* V1 = NULL;
     int* V2 = &v2;
@@ -60333,7 +60340,7 @@ escape ui.bg_clr!.v;
 }
 
 Test { [[
-native do
+native/pos do
     ##define fff(id) id
 end
 data SDL_Color with
@@ -60420,7 +60427,7 @@ escape ret+(v1? as int)+1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -60448,7 +60455,7 @@ escape v!;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 10;
     int* getV (void) {
         escape &V;
@@ -61459,7 +61466,7 @@ var Dx d = val Dx(&&s as _char&& as _char_ptr);
     --parser = 'line 1 : after `s´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or binary operator or `,´ or `)´',
 }
 Test { [[
-pre native do
+native/pre do
     typedef byte* char_ptr;
 end
 native/nohold _strlen;
@@ -62340,7 +62347,7 @@ list = new List.Cons(1,
             List.Cons(2,
                 List.Cons(3, List.Nil())));
 
-native do
+native/pos do
     int V = 0;
 end
 
@@ -62405,7 +62412,7 @@ pool[4] List list = new List.Cons(1,
             List.Cons(2,
                 List.Cons(3, List.Nil())));
 
-native do
+native/pos do
     int V = 0;
 end
 
@@ -62468,7 +62475,7 @@ list = new List.Cons(1,
             List.Cons(2,
                 List.Cons(3, List.Nil())));
 
-native do
+native/pos do
     int V = 0;
 end
 
@@ -62528,7 +62535,7 @@ pool[3] List list = new List.Cons(1,
             List.Cons(2,
                 List.Cons(3, List.Nil())));
 
-native do
+native/pos do
     int V = 0;
 end
 
@@ -62639,7 +62646,7 @@ escape sum;
 }
 
 Test { [[
-native do
+native/pos do
 ##ifdef CEU_ORGS_NEWS_MALLOC
 ##error "malloc found"
 ##endif
@@ -62675,7 +62682,7 @@ escape sum;
 }
 
 Test { [[
-native do
+native/pos do
 ##ifdef CEU_ORGS_NEWS_MALLOC
 ##error "malloc found"
 ##endif
@@ -62938,7 +62945,7 @@ data Tx;
 
 pool[] Tx ts;
 
-native do
+native/pos do
     ##define PTR2REF(x) &x
 end
 var& void? p1;
@@ -62970,7 +62977,7 @@ data Tx;
 
 pool[1] Tx ts;
 
-native do
+native/pos do
     ##define PTR2REF(x) &x
 end
 var& void? p1;
@@ -63002,7 +63009,7 @@ data Tx;
 
 pool[] Tx ts;
 
-native do
+native/pos do
     ##define PTR2REF(x) &x
 end
 var& void? p1;
@@ -63049,7 +63056,7 @@ data Tx;
 
 pool[1] Tx ts;
 
-native do
+native/pos do
     ##define PTR2REF(x) &x
 end
 var& void? p1;
@@ -64841,7 +64848,7 @@ list = new List.Cons(1,
             List.Cons(2,
                 List.Cons(3, List.Nil())));
 
-native do
+native/pos do
     int V = 0;
 end
 
@@ -64893,7 +64900,7 @@ list = new List.Cons(1,
             List.Cons(2,
                 List.Cons(3, List.Nil())));
 
-native do
+native/pos do
     int V = 0;
 end
 
@@ -64947,7 +64954,7 @@ list = new List.Cons(1,
             List.Cons(2,
                 List.Cons(3, List.Nil())));
 
-native do
+native/pos do
     int V = 0;
 end
 
@@ -64984,7 +64991,7 @@ list = new List.Cons(1,
             List.Cons(2,
                 List.Cons(3, List.Nil())));
 
-native do
+native/pos do
     int V = 0;
 end
 
@@ -66118,7 +66125,7 @@ data Dummy;
     var Dummy  rec;
   end
 
-native do
+native/pos do
     byte vec[3] = {5,5,5};
 end
 
@@ -66605,7 +66612,7 @@ for i=1, #t do
 
 -- SEEK
 Test { [[
-native do
+native/pos do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
@@ -66630,7 +66637,7 @@ input int DT;
 #define TM_SNAP_N       1000
 #define TM_DIFF_N       1000000
 
-pre native do
+native/pre do
     ##define CEU_FPS 20
 end
 
@@ -66750,7 +66757,7 @@ escape tm_app.v;
 
 -- Forward
 Test { [[
-native do
+native/pos do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
@@ -66775,7 +66782,7 @@ input int DT;
 #define TM_SNAP_N       1000
 #define TM_DIFF_N       1000000
 
-pre native do
+native/pre do
     ##define CEU_FPS 20
 end
 
@@ -66961,7 +66968,7 @@ escape tm_app.v;
 
 -- Backward
 Test { [[
-native do
+native/pos do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
@@ -66987,7 +66994,7 @@ input int DT;
 #define TM_DIFF_N           1000000
 #define TM_BACKWARD_TICK    30
 
-pre native do
+native/pre do
     ##define CEU_FPS 100
 end
 
@@ -67180,7 +67187,7 @@ escape tm_app.v;
 
 -- Forward / Backward
 Test { [[
-native do
+native/pos do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
@@ -67205,7 +67212,7 @@ input int DT;
 #define TM_SNAP_N       1000
 #define TM_DIFF_N       1000000
 
-pre native do
+native/pre do
     ##define CEU_FPS 100
 end
 
@@ -67286,7 +67293,7 @@ escape tm_app.v;
 }
 
 Test { [[
-native do
+native/pos do
     int CEU_TIMEMACHINE_ON = 0;
 end
 
@@ -67319,7 +67326,7 @@ input int  DT;
 #define TM_SNAP_N       1000
 #define TM_DIFF_N       1000000
 
-pre native do
+native/pre do
     ##define CEU_FPS 100
 end
 
@@ -67523,7 +67530,7 @@ Test { [[
 class WorldObjFactory with
     var _PingusLevel&& plf;
 do
-    native do
+    native/pos do
         ##define std__vector_FileReader std::vector<FileReader>
     end
     loop i in [0->this.plf:get_objects().size()[ do
@@ -67540,7 +67547,7 @@ escape 1;
 
 Test { [[
 native/plain _rect;
-pre native do
+native/pre do
     typedef struct rect {
         int* x, y;
     } rect;
@@ -67706,7 +67713,7 @@ do
 
 -- BUG: u8 vs int
 Test { [[
-native do
+native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 output/input/delayed LINE [10] (var int max)=>int;
@@ -67859,7 +67866,7 @@ escape t.vvv[9];
 -- BUG-EVERY-SPAWN
 -- t1 creates t2, which already reacts to e
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -68216,7 +68223,7 @@ end
 Test { [[
 input void OS_START;
 native _V;
-native do
+native/pos do
     int V = 1;
 end
 class Tx with
@@ -68339,7 +68346,7 @@ escape 1;
 -- makes sense: how an external component would know about a
 -- type defined in Ceu?
 Test { [[
-pre native do
+native/pre do
     typedef int t;
 end
 native _t ;
@@ -68380,7 +68387,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     int V = 0;
 end
 
@@ -68411,7 +68418,7 @@ escape 1;
 Test { [[
 native _V;
 input void A, B, OS_START;
-native do
+native/pos do
     int V = 0;
 end
 class Tx with
@@ -69062,7 +69069,7 @@ escape ret;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef int lua_State;
     void lua_pushnil (lua_State* l) {}
 end
@@ -69204,7 +69211,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     void* V;
 end
 input/output/instantaneous B  (var/hold void* v)=>void do
@@ -69268,7 +69275,7 @@ escape 1;
 Test { [[
 native _f;
 native _v;
-native do
+native/pos do
     int v = 1;
     int f (int v) {
         escape v + 1;
@@ -69283,7 +69290,7 @@ escape _f(_v);
 Test { [[
 native/pure _f;
 native _v;
-native do
+native/pos do
     int v = 1;
     int f (int v) {
         escape v + 1;
@@ -69298,7 +69305,7 @@ escape _f(_v);
 
 Test { [[
 native/pure _f;
-native do
+native/pos do
     int* f (int a) {
         escape NULL;
     }
@@ -69311,7 +69318,7 @@ escape v == null;
 
 Test { [[
 native/pure _f;
-native do
+native/pos do
     int V = 10;
     int f (int v) {
         escape v;
@@ -69325,7 +69332,7 @@ escape _f(_V);
 
 Test { [[
 native/nohold _f;
-native do
+native/pos do
     int f (int* v) {
         escape 1;
     }
@@ -69339,7 +69346,7 @@ escape _f(&v) == 1;
 Test { [[
 native _V;
 native/nohold _f;
-native do
+native/pos do
     int V=1;
     int f (int* v) {
         escape 1;
@@ -69367,7 +69374,7 @@ escape 1;
 
 -- TODO: finalize not required
 Test { [[
-native do
+native/pos do
     #define ceu_out_call_VVV(x) x
 end
 
@@ -69384,7 +69391,7 @@ escape v;
 
 -- TODO: finalize required
 Test { [[
-native do
+native/pos do
     #define ceu_out_call_MALLOC(x) NULL
 end
 
@@ -69398,7 +69405,7 @@ escape 1;
 
 -- TODO: finalize required
 Test { [[
-native do
+native/pos do
     #define ceu_out_call_SEND(x) 0
 end
 
@@ -69412,12 +69419,12 @@ escape 1;
 
 -- TODO: finalize required
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int a,b,c;
     } Fx;
 end
-native do
+native/pos do
     Fx* f;
     #define ceu_out_call_OPEN(x) f
 end
@@ -69590,7 +69597,7 @@ escape 1;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int v;
     } tp;
@@ -69606,7 +69613,7 @@ escape t.i!==nil;
 }
 
 Test { [[
-pre native do
+native/pre do
     typedef struct {
         int v;
     } tp;
@@ -69959,7 +69966,7 @@ escape ret;
 
 -- TODO: TRAVERSE C POINTERS
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -69986,7 +69993,7 @@ escape 1;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -70014,7 +70021,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -70042,7 +70049,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -70069,7 +70076,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -70096,7 +70103,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -70124,7 +70131,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -70151,7 +70158,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -70178,7 +70185,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -70212,7 +70219,7 @@ traverse 1;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -70240,7 +70247,7 @@ escape ret;
     run = 9,
 }
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
@@ -70269,7 +70276,7 @@ escape ret;
 }
 
 Test { [[
-native do
+native/pos do
     typedef struct tp {
         int v;
         struct tp* nxt;
