@@ -142,12 +142,12 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params, tceu_ntrl trl0, tceu
 
 /*****************************************************************************/
 
-#define CEU_STK_LBL(evt,stk_old,trl,lbl) {       \
+#define CEU_STK_LBL(stk_old,trl,lbl) {              \
     tceu_stk __ceu_stk = { stk_old, trl, 1 };       \
-    ceu_go_lbl(evt,&__ceu_stk, lbl);                \
+    ceu_go_lbl(NULL,&__ceu_stk, lbl);               \
 }
 
-#define CEU_STK_LBL_ABORT(evt,stk_old,trl,lbl) { \
+#define CEU_STK_LBL_ABORT(evt,stk_old,trl,lbl) {    \
     tceu_stk __ceu_stk = { stk_old, trl, 1 };       \
     ceu_go_lbl(evt,&__ceu_stk, lbl);                \
     if (!__ceu_stk.is_alive) {                      \
@@ -199,7 +199,7 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params, tceu_ntrl trl0, tceu
     switch (evt_id)
     {
         case CEU_INPUT__INIT:
-            CEU_STK_LBL(NULL, NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
+            CEU_STK_LBL(NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
             break;
 
         case CEU_INPUT__WCLOCK: {

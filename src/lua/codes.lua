@@ -92,7 +92,7 @@ ceu_out_assert_msg(0, "reached end of `do´");
     end,
     Escape = function (me)
         LINE(me, [[
-CEU_STK_LBL(NULL, _ceu_stk, _ceu_stk->trl,
+CEU_STK_LBL(_ceu_stk, _ceu_stk->trl,
                ]]..me.do_.lbl_out.id..[[);
 return;
 ]])
@@ -165,7 +165,7 @@ CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 1;
 ]])
                 end
                 LINE(me, [[
-CEU_STK_LBL(NULL, _ceu_stk, _ceu_stk->trl,
+CEU_STK_LBL(_ceu_stk, _ceu_stk->trl,
                ]]..me.lbl_out.id..[[);
 return;
 ]])
