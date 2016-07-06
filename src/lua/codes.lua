@@ -261,29 +261,28 @@ assert(fr.tag == 'Await_Wclock')
         local Typelist, inout = unpack(ID_ext.dcl)
 assert(inout == 'input', 'TODO')
 
+        LINE(me, [[
+#ifdef CEU_OPT_GO_ALL
+ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+#endif
+_ceu_stk->trl->evt = CEU_INPUT__ASYNC;
+_ceu_stk->trl->lbl = ]]..me.lbl_out.id..[[;
+{
+]])
+
         local ps = 'NULL'
         if Explist then
             LINE(me, [[
-{
     tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',')..[[ };
 ]])
             ps = '&__ceu_ps'
         end
-
         LINE(me, [[
     ceu_go_ext(]]..ID_ext.dcl.id_..', '..ps..[[, 0, CEU_TRAILS_N);
-    if (!_ceu_stk->is_alive) {
-        return;
-    }
 }
-#ifdef CEU_OPT_GO_ALL
-ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-#endif
+return;
+case ]]..me.lbl_out.id..[[:;
 ]])
-        HALT(me, {
-            evt  = 'CEU_INPUT__ASYNC',
-            lbl  = me.lbl_out.id,
-        })
     end,
 
     Await_Wclock = function (me)
@@ -314,6 +313,11 @@ _CEU_HALT_]]..me.n..[[_:
     Emit_Wclock = function (me)
         local e = unpack(me)
         LINE(me, [[
+#ifdef CEU_OPT_GO_ALL
+ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+#endif
+_ceu_stk->trl->evt = CEU_INPUT__ASYNC;
+_ceu_stk->trl->lbl = ]]..me.lbl_out.id..[[;
 {
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
@@ -324,14 +328,9 @@ _CEU_HALT_]]..me.n..[[_:
         __ceu_dt = 0;
     } while (CEU_APP.wclk_min_set <= 0);
 }
-#ifdef CEU_OPT_GO_ALL
-ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-#endif
+return;
+case ]]..me.lbl_out.id..[[:;
 ]])
-        HALT(me, {
-            evt  = 'CEU_INPUT__ASYNC',
-            lbl  = me.lbl_out.id,
-        })
     end,
 
     Async = function (me)
