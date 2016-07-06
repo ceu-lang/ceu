@@ -38,7 +38,6 @@ enum {
 
 enum {
     CEU_INPUT__NONE = 0,
-    CEU_INPUT__INIT,
     CEU_INPUT__CLEAR,
     CEU_INPUT__ASYNC,
     CEU_INPUT__WCLOCK,
@@ -196,28 +195,19 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlI, trl, trl->lbl, trl->evt);
 
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params, tceu_ntrl trl0, tceu_ntrl trlF)
 {
+    tceu_evt evt = { evt_id, evt_params };
     switch (evt_id)
     {
-        case CEU_INPUT__INIT:
-            CEU_STK_LBL(NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
-            break;
-
         case CEU_INPUT__WCLOCK: {
-            tceu_evt evt = { evt_id, evt_params };
             CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;      /* swap "cmp" to last "set" */
             CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;    /* new "set" resets to inactive */
             if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
                 CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
             }
-            ceu_go_bcast(&evt, NULL, trl0, trlF);
             break;
         }
-
-        default: {
-            tceu_evt evt = { evt_id, evt_params };
-            ceu_go_bcast(&evt, NULL, trl0, trlF);
-        }
     }
+    ceu_go_bcast(&evt, NULL, trl0, trlF);
 }
 
 /*****************************************************************************/
@@ -247,7 +237,7 @@ int ceu_go_all (void)
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
     memset(&CEU_APP.trails, 0, CEU_TRAILS_N*sizeof(tceu_trl));
-    ceu_go_ext(CEU_INPUT__INIT, NULL, 0, CEU_TRAILS_N);
+    CEU_STK_LBL(NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
 
     while (!ceu_cb_terminating && ceu_cb_pending_async) {
         ceu_cb_pending_async = 0;
