@@ -5,19 +5,20 @@ end
 
 local F
 
-function V (me, ...)
+function V (me, ctx)
+    ctx = ctx or {}
     local f = assert(F[me.tag], 'bug found : V('..me.tag..')')
     while type(f) == 'string' do
         f = assert(F[f], 'bug found : V('..me.tag..')')
     end
 
-    return f(me, ...)
+    return f(me, ctx)
 end
 
 F = {
-    Exp_Name = function (me)
+    Exp_Name = function (me, ctx)
         local e = unpack(me)
-        return V(e)
+        return V(e, ctx)
     end,
 
 -- PRIMITIVES
@@ -36,6 +37,18 @@ F = {
 
     STRING = function (me)
         return me[1]
+    end,
+
+-- WCLOCK
+
+    WCLOCKK = function (me)
+        return me.us
+    end,
+
+    WCLOCKE = function (me)
+error'TODO'
+        local exp, unit = unpack(me)
+        return '((s32)'.. V(exp,CTX) .. ')*' .. SVAL.t2n[unit]
     end,
 
 -- SIZEOF
@@ -77,11 +90,25 @@ F = {
         end
     end,
 
-    ID_int = function (me)
-        return '(CEU_APP.data.'..me.dcl.id_..')'
+    ID_int = function (me, ctx)
+        local _, is_alias = unpack(me.dcl)
+        local ptr = ''
+        if is_alias and (not ctx.is_bind) then
+            ptr = '*'
+        end
+        return '('..ptr..'CEU_APP.data.'..me.dcl.id_..')'
     end,
 
     ---------------------------------------------------------------------------
+
+-- BIND
+
+    ['Exp_1&'] = function (me)
+        local _, e = unpack(me)
+        return '(&'..V(e)..')'
+    end,
+
+-- UNARY
 
     ['Exp_1-']  = 'Exp_1',
     ['Exp_not'] = 'Exp_1',
@@ -89,6 +116,8 @@ F = {
         local op,e = unpack(me)
         return '('..ceu2c(op)..V(e)..')'
     end,
+
+-- BINARY
 
     ['Exp_+']   = 'Exp_2',
     ['Exp_-']   = 'Exp_2',
@@ -122,11 +151,5 @@ F = {
         else
             return V(e)
         end
-    end,
-
-    ---------------------------------------------------------------------------
-
-    Par_And = function (me, i)
-        return '(CEU_APP.data.__and_'..me.n..'_'..i..')'
     end,
 }

@@ -21,9 +21,10 @@ typedef struct CEU_DATA_ROOT {
         for _, dcl in ipairs(me.dcls) do
             if dcl.tag == 'Var' then
                 if dcl.id ~= '_ret' then
-                    local tp = unpack(dcl)
+                    local tp, is_alias = unpack(dcl)
+                    local ptr = (is_alias and '*' or '')
                     dcl.id_ = dcl.id..'_'..dcl.n
-                    data = data..TYPES.toc(tp)..' '..dcl.id_..';\n'
+                    data = data..TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
                 end
             elseif dcl.tag == 'Ext' then
                 MEMS.exts[#MEMS.exts+1] = dcl
@@ -38,6 +39,10 @@ typedef struct CEU_DATA_ROOT {
             data = data..'u8 __and_'..me.n..'_'..i..': 1;\n'
         end
         MEMS.data = MEMS.data..data
+    end,
+
+    Await_Wclock = function (me)
+        MEMS.data = MEMS.data..'s32 __wclk_'..me.n..';\n'
     end,
 
 }

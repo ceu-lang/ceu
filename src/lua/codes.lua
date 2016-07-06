@@ -115,6 +115,12 @@ if (]]..V(c)..[[) {
 
     ---------------------------------------------------------------------------
 
+
+    ---------------------------------------------------------------------------
+
+    __par_and = function (me, i)
+        return '(CEU_APP.data.__and_'..me.n..'_'..i..')'
+    end,
     Par_Or  = 'Par',
     Par_And = 'Par',
     Par = function (me)
@@ -122,7 +128,7 @@ if (]]..V(c)..[[) {
             -- Par_And: close gates
             if me.tag == 'Par_And' then
                 LINE(me, [[
-]]..V(me,i)..[[ = 0;
+CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 0;
 ]])
             end
 
@@ -155,7 +161,7 @@ return;
                 -- Par_And: open gates
                 if me.tag == 'Par_And' then
                 LINE(me, [[
-    ]]..V(me,i)..[[ = 1;
+CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 1;
 ]])
                 end
                 GOTO(me, me.lbl_out)
@@ -170,7 +176,7 @@ return;
         if me.tag == 'Par_And' then
             for i, sub in ipairs(me) do
                 LINE(me, [[
-if (!]]..V(me,i)..[[) {
+if (! CEU_APP.data.__and_]]..me.n..'_'..i..[[) {
     return;
 }
 ]])
@@ -204,6 +210,21 @@ if (!]]..V(me,i)..[[) {
         end
     end,
 
+    Set_Alias = function (me)
+        local fr, to = unpack(me)
+        LINE(me, [[
+]]..V(to, {is_bind=true})..' = '..V(fr)..[[;
+]])
+    end,
+
+    Set_Await_one = function (me)
+        local fr, to = unpack(me)
+        CONC_ALL(me)
+assert(fr.tag == 'Await_Wclock')
+        LINE(me, [[
+]]..V(to)..[[ = CEU_APP.wclk_late;
+]])
+    end,
     Set_Await_many = function (me)
         local Await_Until, Namelist = unpack(me)
         local ID_ext = AST.asr(Await_Until,'Await_Until', 1,'Await_Ext', 1,'ID_ext')
@@ -249,6 +270,54 @@ assert(inout == 'input', 'TODO')
     if (!_ceu_stk->is_alive) {
         return;
     }
+}
+#ifdef CEU_OPT_GO_ALL
+ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+#endif
+]])
+        HALT(me, {
+            evt  = 'CEU_INPUT__ASYNC',
+            lbl  = me.lbl_out.id,
+        })
+    end,
+
+    Await_Wclock = function (me)
+        local e = unpack(me)
+
+        local wclk = 'CEU_APP.data.__wclk_'..me.n
+
+        LINE(me, [[
+ceu_wclock(]]..V(e)..', &'..wclk..[[, NULL);
+
+_CEU_HALT_]]..me.n..[[_:
+]])
+        HALT(me, {
+            evt = 'CEU_INPUT__WCLOCK',
+            lbl = me.lbl_out.id,
+        })
+        LINE(me, [[
+/* subtract time and check if I have to awake */
+{
+    s32* dt = (s32*)_ceu_evt->params;
+    if (!ceu_wclock(*dt, NULL, &]]..wclk..[[) ) {
+        goto _CEU_HALT_]]..me.n..[[_;
+    }
+}
+]])
+    end,
+
+    Emit_Wclock = function (me)
+        local e = unpack(me)
+        LINE(me, [[
+{
+    s32 __ceu_dt = ]]..V(e)..[[;
+    do {
+        ceu_go_ext(CEU_INPUT__WCLOCK, &__ceu_dt);
+        if (!_ceu_stk->is_alive) {
+            return;
+        }
+        __ceu_dt = 0;
+    } while (CEU_APP.wclk_min_set <= 0);
 }
 #ifdef CEU_OPT_GO_ALL
 ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);

@@ -108,8 +108,8 @@ end
             cc_input     = '/tmp/tmp.c',
             cc_output    = '/tmp/tmp.exe',
 
-            ceu_line_directives = 'true',
-            --ceu_line_directives = 'false',
+            --ceu_line_directives = 'true',
+            ceu_line_directives = 'false',
         }
     }
     if T.opts_pre then
@@ -151,6 +151,7 @@ end
     if not check(T,'stmts')  then return end
     if not check(T,'inits')  then return end
     if not check(T,'scopes') then return end
+    if not check(T,'props')  then return end
     if not check(T,'trails') then return end
     if not check(T,'labels') then return end
     if not check(T,'mems')   then return end

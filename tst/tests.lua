@@ -446,6 +446,9 @@ escape 0;
 }
 
 Test { [[
+native do
+    ##include <assert.h>
+end
 native _assert;
 var bool v1 = ((1 + 1) as bool) and (0 as bool);    // 0
 _assert(v1 == false);
@@ -794,6 +797,7 @@ input void ANY;
 await ANY;
 escape 1;
 ]],
+    todo = 'ANY',
     run = { ['~>1s']=1 },
 }
 
@@ -812,6 +816,7 @@ with
 end
 escape ret;
 ]],
+    todo = 'ANY',
     wrn = true,
     run = { ['~>1s;~>A;~>B']=5 },
 }
@@ -831,21 +836,17 @@ with
 end
 escape ret;
 ]],
+    todo = 'ANY',
     run = { ['~>1s']=1001 },
 }
 
 Test { [[
 native _f;
+native do
+    int f;
+end
 input int A;
 _f = await A;
-escape _f;
-]],
-    run = {['1~>A']=1},
-}
-Test { [[
-native _f;
-input int A;
-var int a = await A;
 escape _f;
 ]],
     run = {['1~>A']=1},
@@ -884,6 +885,7 @@ native do
 end
 escape 1;
 ]],
+    todo = 'defines',
     run = 1,
     cc = 'error: #error bug found',
 }
@@ -930,6 +932,7 @@ var int a = 1;
 a = 2;
 escape a;
 ]],
+    todo = 'defines',
     wrn = true,
     run = 2,
 }
@@ -1816,7 +1819,7 @@ Test { [[await FOREVER; escape 0;]],
 }
 
 Test { [[emit 1ms; escape 0;]],
-    props = 'invalid `emit´'
+    props = 'line 1 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
 }
 
 Test { [[
@@ -1877,6 +1880,7 @@ escape a + 1;
     inits = 'line 1 : uninitialized variable "a" : reached read access (/tmp/tmp.ceu:2)',
 }
 
+--]===]
 Test { [[
 var int a = 0;
 var& int pa = &a;
@@ -1923,7 +1927,6 @@ escape a;
 ]],
     stmts = 'line 1 : invalid assignment : types mismatch : "bool" <= "int"',
 }
---]===]
 Test { [[
 par do
     var int a = await 10us;

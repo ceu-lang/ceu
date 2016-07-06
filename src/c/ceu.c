@@ -32,6 +32,7 @@ enum {
     CEU_CALLBACK_LOG,
     CEU_CALLBACK_TERMINATING,
     CEU_CALLBACK_PENDING_ASYNC,
+    CEU_CALLBACK_WCLOCK_MIN,
     === EXTS_ENUM_OUTPUT ===
 };
 
@@ -40,6 +41,7 @@ enum {
     CEU_INPUT__INIT,
     CEU_INPUT__CLEAR,
     CEU_INPUT__ASYNC,
+    CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
 };
 
@@ -68,6 +70,12 @@ typedef struct tceu_trl {
 } tceu_trl;
 
 typedef struct tceu_app {
+
+    /* WCLOCK */
+    s32 wclk_late;
+    s32 wclk_min_set;
+    s32 wclk_min_cmp;
+
     CEU_DATA_ROOT data;
     tceu_trl trails[CEU_TRAILS_N];
 } tceu_app;
@@ -82,7 +90,7 @@ typedef struct tceu_stk {
     u8        is_alive : 1;
 } tceu_stk;
 
-void ceu_stack_clear (tceu_stk* stk, tceu_trl* trl1, tceu_trl* trl2) {
+static void ceu_stack_clear (tceu_stk* stk, tceu_trl* trl1, tceu_trl* trl2) {
     for (; stk!=NULL; stk=stk->down) {
         if (!stk->is_alive) {
             continue;
@@ -91,6 +99,40 @@ void ceu_stack_clear (tceu_stk* stk, tceu_trl* trl1, tceu_trl* trl2) {
             stk->is_alive = 0;
         }
     }
+}
+
+/*****************************************************************************/
+
+#define CEU_WCLOCK_INACTIVE INT32_MAX
+
+static int ceu_wclock (s32 dt, s32* set, s32* sub)
+{
+    s32 t;          /* expiring time of track to calculate */
+    int ret = 0;    /* if track expired (only for "sub") */
+
+    /* SET */
+    if (set != NULL) {
+        t = dt - CEU_APP.wclk_late;
+        *set = t;
+
+    /* SUB */
+    } else {
+        t = *sub;
+        if ((t > CEU_APP.wclk_min_cmp) || (t > dt)) {
+            *sub -= dt;    /* don't expire yet */
+            t = *sub;
+        } else {
+            ret = 1;    /* single "true" return */
+        }
+    }
+
+    /* didn't awake, but can be the smallest wclk */
+    if ( (!ret) && (CEU_APP.wclk_min_set > t) ) {
+        CEU_APP.wclk_min_set = t;
+        ceu_callback(CEU_CALLBACK_WCLOCK_MIN, t, NULL);
+    }
+
+    return ret;
 }
 
 /*****************************************************************************/
@@ -149,11 +191,27 @@ printf("\ttrlI=%d, trl=%p, lbl=%d\n", trlI, trl, trl->lbl);
 
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
 {
-    if (evt_id == CEU_INPUT__INIT) {
-        CEU_GO_LBL_ABORT(NULL, NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
-    } else {
-        tceu_evt evt = { evt_id, evt_params };
-        ceu_go_bcast(&evt, NULL, 0, CEU_TRAILS_N);
+    switch (evt_id)
+    {
+        case CEU_INPUT__INIT:
+            CEU_GO_LBL_ABORT(NULL, NULL, &CEU_APP.trails[0], CEU_LABEL_ROOT);
+            break;
+
+        case CEU_INPUT__WCLOCK: {
+            tceu_evt evt = { evt_id, evt_params };
+            CEU_APP.wclk_min_cmp = CEU_APP.wclk_min_set;      /* swap "cmp" to last "set" */
+            CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;    /* new "set" resets to inactive */
+            if (CEU_APP.wclk_min_cmp <= *((s32*)evt_params)) {
+                CEU_APP.wclk_late = *((s32*)evt_params) - CEU_APP.wclk_min_cmp;
+            }
+            ceu_go_bcast(&evt, NULL, 0, CEU_TRAILS_N);
+            break;
+        }
+
+        default: {
+            tceu_evt evt = { evt_id, evt_params };
+            ceu_go_bcast(&evt, NULL, 0, CEU_TRAILS_N);
+        }
     }
 }
 
@@ -180,6 +238,9 @@ static void ceu_callback_go_all (int msg, int p1, void* p2) {
 int ceu_go_all (void)
 {
     /* TODO: INIT */
+    CEU_APP.wclk_late = 0;
+    CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
+    CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
     memset(&CEU_APP.trails, 0, CEU_TRAILS_N*sizeof(tceu_trl));
     ceu_go_ext(CEU_INPUT__INIT, NULL);
 

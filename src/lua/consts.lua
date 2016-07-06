@@ -58,8 +58,8 @@ error'TODO: luacov never executes this?'
     WCLOCKK = function (me)
         local h,min,s,ms,us = unpack(me)
         local T = F.__t2n
-        local t = us*T.us + ms*T.ms + s*T.s + min*T.min + h*T.h
-        ASR(t>0 and t<=2000000000, me,
+        me.us = us*T.us + ms*T.ms + s*T.s + min*T.min + h*T.h
+        ASR(me.us>0 and me.us<=2000000000, me,
             'invalid wall-clock time : constant is out of range')
     end,
 
