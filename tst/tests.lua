@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3239,7 +3238,18 @@ loop i in [1->4], -2 do
 end
 escape ret;
 ]],
-    run = 'TODO: must be positive',
+    codes = 'line 2 : invalid `loop´ step : expected positive number : got "-2"',
+}
+
+Test { [[
+var int ret = 0;
+var int step = -2;
+loop i in [1->4], step do
+    ret = ret + i;
+end
+escape ret;
+]],
+    run = '3] runtime error: invalid `loop´ step : expected positive number',
 }
 
 Test { [[
@@ -3252,6 +3262,7 @@ escape ret;
     run = 1,
 }
 
+--]===]
 Test { [[
 var int ret = 1;
 loop i in ]-3->3[ do

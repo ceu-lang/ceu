@@ -111,6 +111,22 @@ if (]]..V(c)..[[) {
 
     Loop = function (me)
         local max, body = unpack(me)
+
+        -- check if step is positive (static)
+        do
+            local Step = AST.asr(body,'Block', 1,'Stmts', 3,'Set_Exp',
+                                               1,'Exp_+', 3,'')
+            local f = load('return '..V(Step))
+            if f then
+                local ok, num = pcall(f)
+                num = tonumber(num)
+                if ok and num then
+                    ASR(num > 0, me,
+                        'invalid `loop´ step : expected positive number : got "'..num..'"')
+                end
+            end
+        end
+
         LINE(me, [[
 while (1) {
 ]]..body.code..[[

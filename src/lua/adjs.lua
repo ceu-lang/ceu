@@ -37,7 +37,13 @@ F = {
                         node('Nat', me.ln,
                             false,
                             'plain',
-                            '_char'))
+                            '_char'),
+                        node('Nat', me.ln,
+                            node('Type', me.ln,
+                                node('ID_prim', me.ln, '_')),
+                            'nohold',
+                            '_ceu_out_assert_msg'))
+        nats[3].is_predefined = true
 
         local ret = node('Var', me.ln,
                         node('Type', me.ln,
@@ -196,6 +202,7 @@ error'TODO: luacov never executes this?'
             rb   = ']'
             step = false
         end
+        local step_check = (step ~= false)
 
         -- loop i in ]0 ...] do end
         -- loop i in [0+1 ...] do end
@@ -295,8 +302,26 @@ DBG'TODO: set_i'
                                 node('ID_int', me.ln, i)))
             inc_i.set_read_only = true
 
+        if step_check then
+            step_check = node('Stmt_Call', me.ln,
+                            node('Exp_Call', me.ln,
+                                'call',
+                                node('Exp_Name', me.ln,
+                                    node('ID_nat', me.ln,
+                                        '_ceu_out_assert_msg')),
+                                node('Explist', me.ln,
+                                    node('Exp_>', me.ln, '>',
+                                        AST.copy(step),
+                                        node('NUMBER', me.ln, '0')),
+                                    node('STRING', me.ln,
+                                        '"invalid `loop´ step : expected positive number"'))))
+        else
+            step_check = node('Nothing', me.ln)
+        end
+
         return node('Block', me.ln,
                 node('Stmts', me.ln,
+                    step_check,
                     dcl_i,
                     ini_i,
                     lim_ini,
