@@ -1,30 +1,42 @@
 function OR_all (me, t)
     t = t or me
-    me.tl_awaits  = false
+    me.tl_awaits = false
+    me.tl_breaks = false
+    me.tl_breaks_or_awaits = false
     for _, sub in ipairs(t) do
         if AST.is_node(sub) then
-            me.tl_awaits  = me.tl_awaits  or sub.tl_awaits
+            me.tl_awaits = me.tl_awaits or sub.tl_awaits
+            me.tl_breaks = me.tl_breaks or sub.tl_breaks
+            me.tl_breaks_or_awaits = me.tl_breaks_or_awaits or sub.tl_breaks_or_awaits
         end
     end
 end
 
 function AND_all (me, t)
     t = t or me
-    me.tl_awaits  = true
+    me.tl_awaits = true
+    me.tl_breaks = true
+    me.tl_breaks_or_awaits = true
     for _, sub in ipairs(t) do
         if AST.is_node(sub) then
-            me.tl_awaits  = me.tl_awaits  and sub.tl_awaits
+            me.tl_awaits = me.tl_awaits and sub.tl_awaits
+            me.tl_breaks = me.tl_breaks and sub.tl_breaks
+            me.tl_breaks_or_awaits = me.tl_breaks_or_awaits and sub.tl_breaks_or_awaits
         end
     end
 end
 
 function SAME (me, sub)
-    me.tl_awaits  = sub.tl_awaits
+    me.tl_awaits = sub.tl_awaits
+    me.tl_breaks = sub.tl_breaks
+    me.tl_breaks_or_awaits = sub.tl_breaks_or_awaits
 end
 
 F = {
     Node__PRE = function (me)
-        me.tl_awaits  = false
+        me.tl_awaits = false
+        me.tl_breaks = false
+        me.tl_breaks_or_awaits = false
     end,
     Node__POS = function (me)
         if not F[me.tag] then
@@ -39,16 +51,18 @@ F = {
     end,
 
     Break = function (me)
-        me.tl_awaits = true
+        me.tl_breaks = true
     end,
 
     Loop = function (me, ok)
         local max, body = unpack(me)
         SAME(me, body)
+        me.tl_breaks = false
+        me.tl_breaks_or_awaits = me.tl_awaits
 
         if AST.par(me,'Async') or AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
             -- ok
-        elseif body.tl_awaits then
+        elseif body.tl_breaks_or_awaits then
             -- ok
         elseif max then
             -- ok
