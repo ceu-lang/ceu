@@ -31,7 +31,7 @@ end
 local function CLEAR (me)
     LINE(me, [[
 {
-    CEU_STK_BCAST_ABORT(_ceu_stk,
+    CEU_STK_BCAST_ABORT(_ceu_stk, _ceu_trl,
                         CEU_INPUT__CLEAR, NULL,]]..
                         me.trails[1]..', '..me.trails[2]..[[);
     ceu_stack_clear(_ceu_stk->down, &CEU_APP.trails[]]..me.trails[1]..[[],
@@ -464,7 +464,7 @@ case ]]..me.lbl_out.id..[[:;
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    CEU_STK_BCAST_ABORT(_ceu_stk,
+    CEU_STK_BCAST_ABORT(_ceu_stk, _ceu_trl,
                         ]]..Exp_Name.info.dcl.id_..[[, &__ceu_ps,
                         0, CEU_TRAILS_N);
 }

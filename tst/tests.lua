@@ -5654,14 +5654,14 @@ par do
     with
         await OS_START;
         emit e;
-        escape 2;   // should continue after the awake below
+        escape 222;   // should continue after the awake below
     end
 with
     await e;
-    escape 1;       // should escape before the one above
+    escape 111;       // should escape before the one above
 end
 ]],
-    run = 1,
+    run = 111,
 }
 
 Test { [[

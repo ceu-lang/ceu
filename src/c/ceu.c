@@ -159,8 +159,8 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
     }                                                           \
 }
 
-#define CEU_STK_BCAST_ABORT(stk_old,evt_id,evt_ps,trl0,trlF) {  \
-    tceu_stk __ceu_stk = { stk_old, stk_old->trl, 1 };          \
+#define CEU_STK_BCAST_ABORT(stk_old,trl_abort,evt_id,evt_ps,trl0,trlF) {  \
+    tceu_stk __ceu_stk = { stk_old, trl_abort, 1 };             \
     tceu_evt __ceu_evt = { evt_id, evt_ps };                    \
     ceu_go_bcast(&__ceu_evt, &__ceu_stk, trl0, trlF);           \
     if (!__ceu_stk.is_alive) {                                  \
