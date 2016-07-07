@@ -3274,6 +3274,16 @@ escape ret;
 }
 
 Test { [[
+var int ret = 1;
+loop i in ]-3 <- 3] do
+    ret = ret + i;
+end
+escape ret;
+]],
+    run = 4,
+}
+
+Test { [[
 var int sum = 0;
 loop i in [_->0] do
     if i == 10 then
@@ -3364,22 +3374,12 @@ escape ret;
 
 Test { [[
 var int ret = 1;
-loop i in ]-3 <- 3] do
-    ret = ret + i;
-end
-escape ret;
-]],
-    run = 6,
-}
-
-Test { [[
-var int ret = 1;
 loop i in [-10 <- -3[ do
     ret = ret + i;
 end
-escape ret;
+escape -ret;
 ]],
-    run = 13,
+    run = 48,
 }
 
 Test { [[

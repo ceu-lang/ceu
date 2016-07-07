@@ -325,6 +325,7 @@ DBG'TODO: set_i'
                     lim_ini,
                     node('Loop', me.ln,
                         max,
+                        (to.tag ~= 'ID_any'),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 lim_cmp,

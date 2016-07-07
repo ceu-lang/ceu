@@ -110,10 +110,10 @@ if (]]..V(c)..[[) {
     end,
 
     Loop = function (me)
-        local max, body = unpack(me)
+        local max, has_i, body = unpack(me)
 
         -- check if step is positive (static)
-        do
+        if has_i then
             local Step = AST.asr(body,'Block', 1,'Stmts', 3,'Set_Exp',
                                                1,'Exp_+', 3,'', 2,'')
             local f = load('return '..V(Step))

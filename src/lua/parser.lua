@@ -388,7 +388,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
             OPT(K'else' * V'Block') *
             K'end'
 
-    , Loop       = K'loop' * OPT('/'*V'__Exp') *
+    , Loop       = K'loop' * OPT('/'*V'__Exp') * Cc(false) *
                    V'__Do'
     , _Loop_Num  = K'loop' * OPT('/'*V'__Exp') *
                     (V'__ID_int'+V'ID_any') * OPT(
