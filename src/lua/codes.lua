@@ -113,8 +113,8 @@ if (]]..V(c)..[[) {
         local max = unpack(me)
         if max then
             return {
+                -- ensures that max is constant
                 ini = [[
-/* ensures that max is constant */
 { char __]]..me.n..'['..V(max)..'/'..V(max)..[[ ] = {0}; }
 CEU_APP.data.__max_]]..me.n..[[ = 0;
 ]],
