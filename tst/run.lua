@@ -41,6 +41,20 @@ end
 Test = function (T)
     RUNTESTS_TODO = false
 
+    -- TODO: remove OS_START
+    if string.find(T[1],'OS_START') and (not T.os_start) then
+        if type(T.run) ~= 'table' then
+            T.run = { [''] = T.run }
+        end
+        local t = {}
+        for input, ret in pairs(T.run) do
+            t['~>OS_START;'..input] = ret
+        end
+        T.run = t
+        T.os_start = true
+        return Test(T)
+    end
+
     if type(T.run) == 'table' then
         local src = [[
 par do
