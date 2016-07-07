@@ -115,7 +115,7 @@ if (]]..V(c)..[[) {
         -- check if step is positive (static)
         do
             local Step = AST.asr(body,'Block', 1,'Stmts', 3,'Set_Exp',
-                                               1,'Exp_+', 3,'')
+                                               1,'Exp_+', 3,'', 2,'')
             local f = load('return '..V(Step))
             if f then
                 local ok, num = pcall(f)

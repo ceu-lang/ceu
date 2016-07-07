@@ -175,7 +175,7 @@ if T.ana or T._ana or T.tmp then return end
     local _1,_,ret = f:close()
 
     if type(T.run) == 'number' then
-        assert(out == '')
+        assert(out == '', 'code with output')
         assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
     else
         assert(type(T.run) == 'string')

@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3262,15 +3263,14 @@ escape ret;
     run = 1,
 }
 
---]===]
 Test { [[
 var int ret = 1;
-loop i in ]-3->3[ do
+loop i in ]-3->4[ do
     ret = ret + i;
 end
 escape ret;
 ]],
-    run = 5,
+    run = 4,
 }
 
 Test { [[
@@ -3311,6 +3311,16 @@ escape sum;
     loop = true,
     tight = 'tight loop',
     run = 10,
+}
+
+Test { [[
+var int ret = 0;
+loop i in [1 <- 4], -1 do
+    ret = ret + i;
+end
+escape ret;
+]],
+    codes = 'line 2 : invalid `loop´ step : expected positive number : got "-1"',
 }
 
 Test { [[
