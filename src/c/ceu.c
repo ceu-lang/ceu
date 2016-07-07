@@ -211,8 +211,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlI, trl, trl->lbl, trl->evt);
          trlI<trlF;
          trlI++, trl++)
     {
-        //if (trl->evt==CEU_INPUT__STK && trl->stk==stk) {
-        if (trl->evt==CEU_INPUT__STK) {
+        if (trl->evt==CEU_INPUT__STK && trl->stk==stk) {
             trl->evt = CEU_INPUT__NONE;
             CEU_STK_LBL(stk, trl, trl->lbl, evt);
         }

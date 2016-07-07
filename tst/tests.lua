@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -5292,7 +5293,7 @@ escape ret;
 ]],
     run = 1,
 }
---]===]
+
 -- works with INPUT__STK, doesn't work with single-pass scheduler
 Test { [[
 event int a;
@@ -5316,7 +5317,25 @@ escape ret;
 ]],
     run = { ['~>1s']=2 },
 }
-do return end
+
+-- requires trl->stk for CEU_INPUT__STK
+Test { [[
+event void a, b;
+par do
+    await a;
+    emit b;
+with
+    await a;
+    escape 99;
+with
+    await b;
+    escape 1;
+with
+    emit a;
+end
+]],
+    run = 1,
+}
 
 Test { [[
 input void OS_START;
