@@ -3338,8 +3338,8 @@ loop i in [1 <- 4], -1 do
 end
 escape ret;
 ]],
-    run = '2] runtime error: invalid `loop´ step : expected positive number',
-    --codes = 'line 2 : invalid `loop´ step : expected positive number : got "-1"',
+    --run = '2] runtime error: invalid `loop´ step : expected positive number',
+    codes = 'line 2 : invalid `loop´ step : expected positive number : got "-1"',
 }
 
 Test { [[
@@ -3933,6 +3933,7 @@ escape 10;
     ana = 'line 3 : `loop´ iteration is not reachable',
     run = { ['~>A']=10 },
 }
+do return end
 
 Test { [[
 input void A;

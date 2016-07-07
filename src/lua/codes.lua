@@ -115,9 +115,7 @@ if (]]..V(c)..[[) {
         -- ensures that max is constant
         if max then
             LINE(me, [[
-{ \
-    char __]]..me.n..'['..V(max)..'/'..V(max)..[[ ] = {0};
-}
+{ char __]]..me.n..'['..V(max)..'/'..V(max)..[[ ] = {0}; }
 ]])
         end
 
@@ -127,6 +125,62 @@ while (1) {
 }
 ]])
     end,
+
+    Loop_Num = function (me)
+        local max, i, fr, dir, to, step, body = unpack(me)
+        local op = (dir=='->' and '>' or '<')
+
+        -- check if step is positive (static)
+        if step then
+            local f = load('return '..V(step))
+            if f then
+                local ok, num = pcall(f)
+                num = tonumber(num)
+                if ok and num then
+                    if dir == '->' then
+                        ASR(num>0, me,
+                            'invalid `loop´ step : expected positive number : got "'..num..'"')
+                    else
+                        ASR(num<0, me,
+                            'invalid `loop´ step : expected positive number : got "-'..num..'"')
+                    end
+                end
+            end
+        end
+
+
+        -- ensures that max is constant
+        if max then
+            LINE(me, [[
+{ char __]]..me.n..'['..V(max)..'/'..V(max)..[[ ] = {0}; }
+]])
+        end
+
+        if to.tag ~= 'ID_any' then
+            LINE(me, [[
+CEU_APP.data.__lim_]]..me.n..' = '..V(to)..[[;
+]])
+        end
+
+        LINE(me, [[
+ceu_out_assert_msg(]]..V(step)..' '..op..[[ 0, "invalid `loop´ step : expected positive number");
+]]..V(i)..' = '..V(fr)..[[;
+while (1) {
+]])
+        if to.tag ~= 'ID_any' then
+            LINE(me, [[
+    if (]]..V(i)..' '..op..' CEU_APP.data.__lim_'..me.n..[[) {
+        break;
+    }
+]])
+        end
+        LINE(me, [[
+]]..body.code..[[
+]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
+}
+]])
+    end,
+
     Break = function (me)
         local lbl = unpack(me)
 assert(not lbl)

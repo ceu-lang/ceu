@@ -17,20 +17,20 @@ typedef struct CEU_DATA_ROOT {
     end,
 
     Block__PRE = function (me)
-        local data = ''
+        local data = {}
         for _, dcl in ipairs(me.dcls) do
             if dcl.tag == 'Var' then
                 if dcl.id ~= '_ret' then
                     local tp, is_alias = unpack(dcl)
                     local ptr = (is_alias and '*' or '')
                     dcl.id_ = dcl.id..'_'..dcl.n
-                    data = data..TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
+                    data[#data+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
                 end
             elseif dcl.tag == 'Ext' then
                 MEMS.exts[#MEMS.exts+1] = dcl
             end
         end
-        MEMS.data = MEMS.data..data
+        MEMS.data = MEMS.data..table.concat(data)
     end,
 
     Par_And = function (me)
@@ -45,6 +45,20 @@ typedef struct CEU_DATA_ROOT {
         MEMS.data = MEMS.data..'s32 __wclk_'..me.n..';\n'
     end,
 
+    Loop = function (me)
+        local max = unpack(me)
+    end,
+    Loop_Num = function (me)
+        local max, i, fr, dir, to, step, body = unpack(me)
+
+        local data = {}
+
+        if to.tag ~= 'ID_any' then
+            data[#data+1]= 'int __lim_'..me.n..';\n'
+        end
+
+        MEMS.data = MEMS.data..table.concat(data)
+    end,
 }
 
 AST.visit(F)

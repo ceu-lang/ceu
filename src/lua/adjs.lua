@@ -189,7 +189,7 @@ error'TODO: luacov never executes this?'
 -------------------------------------------------------------------------------
 
     _Loop__PRE = function (me)
-        local max, body, from_loop_num = unpack(me)
+        local max, body = unpack(me)
 
         local max_dcl = node('Nothing', me.ln)
         local max_ini = node('Nothing', me.ln)
@@ -239,12 +239,12 @@ error'TODO: luacov never executes this?'
                     node('Loop', me.ln, max, body)))
     end,
     _Loop_Num__PRE = function (me)
-        local max, i, lb, fr, dir, to, rb, step, blk = unpack(me)
+        local max, i, lb, fr, dir, to, rb, step, body = unpack(me)
 
         -- loop i do end
         -- loop i in [0 -> _] do end
         if #me == 4 then
-            max, i, _, blk = unpack(me)
+            max, i, _, body = unpack(me)
             lb   = '['
             fr   = node('NUMBER', me.ln, 0)
             dir  = '->'
@@ -293,93 +293,13 @@ error'TODO: luacov never executes this?'
         i_dcl.is_implicit = true
         i_dcl.is_read_only = true
 
-        local lim_ini = node('Stmts', me.ln)
-        local lim_chk = node('Nothing', me.ln)
-
-        if to.tag ~= 'ID_any' then
-            lim_ini[#lim_ini+1] =
-                node('Var', me.ln,
-                    node('Type', me.ln,
-                        node('ID_prim', me.ln, 'int')),
-                    false,
-                    '__lim_'..me.n)
-            lim_ini[#lim_ini+1] =
-                node('Set_Exp', me.ln,
-                    AST.copy(to),
-                    node('Exp_Name', me.ln,
-                        node('ID_int', me.ln, '__lim_'..me.n)))
-
-            -- lim_chk
-            if dir == '->' then
-                -- if i > lim then break end
-                lim_chk = node('Exp_>', me.ln, '>',
-                            node('Exp_Name', me.ln,
-                                node('ID_int', me.ln, i)),
-                            node('Exp_Name', me.ln,
-                                node('ID_int', me.ln, '__lim_'..me.n)))
-            else
-                assert(dir == '<-')
-                -- if i < lim then break end
-                lim_chk = node('Exp_<', me.ln, '<',
-                            node('Exp_Name', me.ln,
-                                node('ID_int', me.ln, i)),
-                            node('Exp_Name', me.ln,
-                                node('ID_int', me.ln, '__lim_'..me.n)))
-            end
-
-            lim_chk = node('If', me.ln, lim_chk,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                node('Break', me.ln))),
-                        node('Block', me.ln,
-                            node('Stmts', me.ln)))
-        end
-
-        local i_ini = node('Set_Exp', me.ln,
-                        AST.copy(fr),
-                        node('Exp_Name', me.ln,
-                            node('ID_int', me.ln, i)))
-        i_ini.set_read_only = true
-DBG'TODO: set_i'
-
-        local i_inc = node('Set_Exp', me.ln,
-                        node('Exp_+', me.ln, '+',
-                            node('Exp_Name', me.ln,
-                                node('ID_int', me.ln, i)),
-                            step),
-                        node('Exp_Name', me.ln,
-                            node('ID_int', me.ln, i)))
-        i_inc.set_read_only = true
-
-        local op = (dir=='->' and '>' or '<')
-        local step_chk =
-            node('Stmt_Call', me.ln,
-                node('Exp_Call', me.ln,
-                    'call',
-                    node('Exp_Name', me.ln,
-                        node('ID_nat', me.ln,
-                            '_ceu_out_assert_msg')),
-                    node('Explist', me.ln,
-                        node('Exp_'..op, me.ln, op,
-                            AST.copy(step),
-                            node('NUMBER', me.ln, '0')),
-                        node('STRING', me.ln,
-                            '"invalid `loop´ step : expected positive number"'))))
+        i = node('ID_int', me.ln, i)
 
         return node('Block', me.ln,
                 node('Stmts', me.ln,
-                    step_chk,
-                    i_dcl,
-                    i_ini,
-                    lim_ini,
-                    node('_Loop', me.ln,
-                        max,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                lim_chk,
-                                blk,
-                                i_inc)),
-                        'from_loop_num')))
+                    AST.copy(i_dcl),
+                    node('Loop_Num', me.ln,
+                        max, i, fr, dir, to, step, body)))
     end,
 
     _Loop_Pool__PRE = function (me)
