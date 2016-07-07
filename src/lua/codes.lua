@@ -46,8 +46,8 @@ local function HALT (me, t)
         return
     end
     LINE(me, [[
-_ceu_stk->trl->evt = ]]..t.evt..[[;
-_ceu_stk->trl->lbl = ]]..t.lbl..[[;
+_ceu_trl->evt = ]]..t.evt..[[;
+_ceu_trl->lbl = ]]..t.lbl..[[;
 return;
 case ]]..t.lbl..[[:;
 ]])
@@ -92,8 +92,7 @@ ceu_out_assert_msg(0, "reached end of `do´");
     end,
     Escape = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk, _ceu_stk->trl,
-               ]]..me.do_.lbl_out.id..[[);
+CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.do_.lbl_out.id..[[, NULL);
 return;
 ]])
     end,
@@ -235,12 +234,23 @@ CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 0;
 
         -- call each branch
         for i, sub in ipairs(me) do
-            LINE(me, [[
+            if i < #me then
+                LINE(me, [[
 CEU_STK_LBL_ABORT(_ceu_stk,
-                 &CEU_APP.trails[]]..sub.trails[1]..[[],
-                 ]]..me.lbls_in[i].id..[[,
-                 NULL);
+                  &CEU_APP.trails[]]..me[i+1].trails[1]..[[],
+                  &CEU_APP.trails[]]..sub.trails[1]..[[],
+                  ]]..me.lbls_in[i].id..[[,
+                  NULL);
 ]])
+            else
+                -- no need to abort since there's a "return" below
+                LINE(me, [[
+CEU_STK_LBL(_ceu_stk,
+            &CEU_APP.trails[]]..sub.trails[1]..[[],
+            ]]..me.lbls_in[i].id..[[,
+            NULL);
+]])
+            end
         end
         LINE(me, [[
 return;
@@ -263,8 +273,7 @@ CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 1;
 ]])
                 end
                 LINE(me, [[
-CEU_STK_LBL(_ceu_stk, _ceu_stk->trl,
-               ]]..me.lbl_out.id..[[);
+CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.lbl_out.id..[[, NULL);
 return;
 ]])
             end
@@ -363,8 +372,8 @@ assert(inout == 'input', 'TODO')
 #ifdef CEU_OPT_GO_ALL
 ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 #endif
-_ceu_stk->trl->evt = CEU_INPUT__ASYNC;
-_ceu_stk->trl->lbl = ]]..me.lbl_out.id..[[;
+_ceu_trl->evt = CEU_INPUT__ASYNC;
+_ceu_trl->lbl = ]]..me.lbl_out.id..[[;
 {
 ]])
 
@@ -414,8 +423,8 @@ _CEU_HALT_]]..me.n..[[_:
 #ifdef CEU_OPT_GO_ALL
 ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 #endif
-_ceu_stk->trl->evt = CEU_INPUT__ASYNC;
-_ceu_stk->trl->lbl = ]]..me.lbl_out.id..[[;
+_ceu_trl->evt = CEU_INPUT__ASYNC;
+_ceu_trl->lbl = ]]..me.lbl_out.id..[[;
 {
     s32 __ceu_dt = ]]..V(e)..[[;
     do {

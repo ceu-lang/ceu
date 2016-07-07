@@ -4013,8 +4013,9 @@ Test { [[
 input int A;
 var int a;
 (a) = await A;
+escape a;
 ]],
-    run = 1,
+    run = { ['1~>A']=1 },
 }
 Test { [[
 input int A;
@@ -4140,23 +4141,34 @@ every 1s do
     end
 end
 ]],
-    tight = 'line 2 : tight loop',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
 }
 
 Test { [[
 par do
+    var int ok = do
+        escape 111;
+    end;
+with
+    await 2s;
+    escape 222;
+end
+]],
+    run = { ['~>10s'] = 222 },
+}
+Test { [[
+par do
     every 1s do
-        var int ok = do/_
-            escape 1;
+        var int ok = do
+            escape 111;
         end;
-        if ok!=0 then end;
     end
 with
     await 2s;
-    escape 10;
+    escape 222;
 end
 ]],
-    run = { ['~>10s'] = 10 },
+    run = { ['~>10s'] = 222 },
 }
 
 -->>> CONTINUE
