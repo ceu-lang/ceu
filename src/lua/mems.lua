@@ -5,6 +5,10 @@ MEMS = {
         enum_input  = '',
         enum_output = '',
     },
+    evts = {
+        types = '',
+        enum  = '',
+    },
 }
 
 F = {
@@ -20,14 +24,19 @@ typedef struct CEU_DATA_ROOT {
         local data = {}
         for _, dcl in ipairs(me.dcls) do
             if dcl.tag == 'Var' then
+                dcl.id_ = dcl.id..'_'..dcl.n
                 if dcl.id ~= '_ret' then
                     local tp, is_alias = unpack(dcl)
                     local ptr = (is_alias and '*' or '')
-                    dcl.id_ = dcl.id..'_'..dcl.n
                     data[#data+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
                 end
+            elseif dcl.tag == 'Evt' then
+                MEMS.evts[#MEMS.evts+1] = dcl
+                dcl.id_ = string.upper('CEU_EVENT_'..dcl.id..'_'..dcl.n)
             elseif dcl.tag == 'Ext' then
+                local _, inout, id = unpack(dcl)
                 MEMS.exts[#MEMS.exts+1] = dcl
+                dcl.id_ = string.upper('CEU_'..inout..'_'..id)
             end
         end
         MEMS.data = MEMS.data..table.concat(data)
@@ -66,15 +75,16 @@ typedef struct CEU_DATA_ROOT {
 AST.visit(F)
 
 for _, dcl in ipairs(MEMS.exts) do
-    local Typelist, inout, id = unpack(dcl)
-    dcl.id_ = string.upper('CEU_'..inout..'_'..id)
+    local Typelist, inout = unpack(dcl)
 
+    -- enum
     if inout == 'input' then
         MEMS.exts.enum_input  = MEMS.exts.enum_input..dcl.id_..',\n'
     else
         MEMS.exts.enum_output = MEMS.exts.enum_output..dcl.id_..',\n'
     end
 
+    -- type
     local data = 'typedef struct tceu_'..inout..'_'..dcl.id..' {\n'
     for i,Type in ipairs(Typelist) do
         data = data..'    '..TYPES.toc(Type)..' _'..i..';\n'
@@ -82,4 +92,20 @@ for _, dcl in ipairs(MEMS.exts) do
     data = data..'} tceu_'..inout..'_'..dcl.id..';\n'
 
     MEMS.exts.types = MEMS.exts.types..data
+end
+
+for _, dcl in ipairs(MEMS.evts) do
+    local Typelist = unpack(dcl)
+
+    -- enum
+    MEMS.evts.enum = MEMS.evts.enum..dcl.id_..',\n'
+
+    -- type
+    local data = 'typedef struct tceu_event_'..dcl.id..'_'..dcl.n..' {\n'
+    for i,Type in ipairs(Typelist) do
+        data = data..'    '..TYPES.toc(Type)..' _'..i..';\n'
+    end
+    data = data..'} tceu_event_'..dcl.id..'_'..dcl.n..';\n'
+
+    MEMS.evts.types = MEMS.evts.types..data
 end

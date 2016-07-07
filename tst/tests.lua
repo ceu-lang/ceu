@@ -5269,6 +5269,19 @@ escape a;
 }
 
 Test { [[
+event int a;
+var int ret = 0;
+par/and do
+    ret = await a;
+with
+    emit a => 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
 input void OS_START;
 event int a;
 var int ret = 0;

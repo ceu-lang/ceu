@@ -378,10 +378,18 @@ assert(fr.tag == 'Await_Wclock')
     end,
     Set_Await_many = function (me)
         local Await_Until, Namelist = unpack(me)
-        local ID_ext = AST.asr(Await_Until,'Await_Until', 1,'Await_Ext', 1,'ID_ext')
+        local id do
+            local ID_ext = AST.get(Await_Until,'', 1,'Await_Ext', 1,'ID_ext')
+            if ID_ext then
+                id = 'tceu_input_'..ID_ext.dcl.id
+            else
+                local Exp_Name = AST.asr(Await_Until,'', 1,'Await_Evt', 1,'Exp_Name')
+                id = 'tceu_event_'..Exp_Name.info.dcl.id..'_'..Exp_Name.info.dcl.n
+            end
+        end
         CONC(me, Await_Until)
         for i, name in ipairs(Namelist) do
-            local ps = '((tceu_input_'..ID_ext.dcl.id..'*)(_ceu_evt->params))'
+            local ps = '(('..id..'*)(_ceu_evt->params))'
             LINE(me, [[
 ]]..V(name)..' = '..ps..'->_'..i..[[;
 ]])
@@ -398,6 +406,14 @@ assert(fr.tag == 'Await_Wclock')
         local ID_ext = unpack(me)
         HALT(me, {
             evt = ID_ext.dcl.id_,
+            lbl = me.lbl_out.id,
+        })
+    end,
+
+    Await_Evt = function (me)
+        local Exp_Name = unpack(me)
+        HALT(me, {
+            evt = Exp_Name.info.dcl.id_,
             lbl = me.lbl_out.id,
         })
     end,
@@ -428,6 +444,30 @@ _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
 }
 return;
 case ]]..me.lbl_out.id..[[:;
+]])
+    end,
+
+    Emit_Evt = function (me)
+        local Exp_Name, Explist = unpack(me)
+        local Typelist = unpack(Exp_Name.info.dcl)
+
+        LINE(me, [[
+{
+]])
+
+        local ps = 'NULL'
+        if Explist then
+            LINE(me, [[
+    tceu_event_]]..Exp_Name.info.dcl.id..'_'..Exp_Name.info.dcl.n..[[
+        __ceu_ps = { ]]..table.concat(V(Explist),',')..[[ };
+]])
+            ps = '&__ceu_ps'
+        end
+        LINE(me, [[
+    CEU_STK_BCAST_ABORT(_ceu_stk,
+                        ]]..Exp_Name.info.dcl.id_..[[, &__ceu_ps,
+                        0, CEU_TRAILS_N);
+}
 ]])
     end,
 
@@ -525,8 +565,10 @@ local c = PAK.files.ceu_c
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== DATA ===',             MEMS.data)
 local c = SUB(c, '=== EXTS_TYPES ===',       MEMS.exts.types)
+local c = SUB(c, '=== EVTS_TYPES ===',       MEMS.evts.types)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
 local c = SUB(c, '=== EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
+local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
 local c = SUB(c, '=== TRAILS_N ===',         AST.root.trails_n)
 local c = SUB(c, '=== TCEU_NTRL ===',        TYPES.n2uint(AST.root.trails_n))
 local c = SUB(c, '=== TCEU_NLBL ===',        TYPES.n2uint(#LABELS.list))

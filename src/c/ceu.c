@@ -26,6 +26,7 @@
 === NATIVE_PRE ===
 === DATA ===
 === EXTS_TYPES ===
+=== EVTS_TYPES ===
 
 enum {
     CEU_CALLBACK_ABORT,
@@ -43,6 +44,7 @@ enum {
     CEU_INPUT__ASYNC,
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
+    === EVTS_ENUM ===
 };
 
 #define CEU_TRAILS_N (=== TRAILS_N ===)
