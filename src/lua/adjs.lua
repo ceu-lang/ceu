@@ -189,7 +189,7 @@ error'TODO: luacov never executes this?'
 -------------------------------------------------------------------------------
 
     _Loop__PRE = function (me)
-        local max, body = unpack(me)
+        local max, body, from_loop_num = unpack(me)
 
         local max_dcl = node('Nothing', me.ln)
         local max_ini = node('Nothing', me.ln)
@@ -222,21 +222,21 @@ error'TODO: luacov never executes this?'
                                 node('Exp_<', me.ln, '<',
                                     node('Exp_Name', me.ln,
                                         node('ID_int', me.ln, '__max_'..me.n)),
-                                    node('NUMBER', me.ln, '0')),
+                                    AST.copy(max)),
                                 node('STRING', me.ln,
                                     '"`loop´ overflow"'))))
         end
 
         local Stmts = AST.asr(body,'Block', 1,'Stmts')
-        table.insert(Stmts, 1,        max_chk)
+        local i = (from_loop_num and 2 or 1)  -- after lim_chk
+        table.insert(Stmts, i,        max_chk)
         table.insert(Stmts, #Stmts+1, max_inc)
 
         return node('Block', me.ln,
                 node('Stmts', me.ln,
                     max_dcl,
                     max_ini,
-                    node('Loop', me.ln,
-                        body)))
+                    node('Loop', me.ln, max, body)))
     end,
     _Loop_Num__PRE = function (me)
         local max, i, lb, fr, dir, to, rb, step, blk = unpack(me)
@@ -378,7 +378,8 @@ DBG'TODO: set_i'
                             node('Stmts', me.ln,
                                 lim_chk,
                                 blk,
-                                i_inc)))))
+                                i_inc)),
+                        'from_loop_num')))
     end,
 
     _Loop_Pool__PRE = function (me)

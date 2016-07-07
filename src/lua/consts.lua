@@ -82,6 +82,14 @@ error'TODO: luacov never executes this?'
                 'invalid declaration : vector dimension must be an integer')
         end
     end,
+
+    Loop = function (me)
+        local max = unpack(me)
+        if max then
+            ASR(max.is_const=='int' or max.is_const==true, max,
+                'invalid `loop´ : limit must be an integer constant')
+        end
+    end,
 }
 
 AST.visit(F)

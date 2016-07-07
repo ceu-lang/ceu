@@ -110,7 +110,17 @@ if (]]..V(c)..[[) {
     end,
 
     Loop = function (me)
-        local body = unpack(me)
+        local max, body = unpack(me)
+
+        -- ensures that max is constant
+        if max then
+            LINE(me, [[
+{ \
+    char __]]..me.n..'['..V(max)..'/'..V(max)..[[ ] = {0};
+}
+]])
+        end
+
         LINE(me, [[
 while (1) {
 ]]..body.code..[[

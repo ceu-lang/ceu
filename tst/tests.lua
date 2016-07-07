@@ -3308,6 +3308,15 @@ escape sum;
     parser = 'line 2 : after `<-´ : expected expression',
 }
 
+--]===]
+Test { [[
+loop do end
+escape 0;
+]],
+    tight = 'tight loop',
+}
+do return end
+
 Test { [[
 var int sum = 0;
 loop i in [0->_] do
@@ -3440,7 +3449,6 @@ break;
 ]],
     props = 'line 1 : `break´ without loop',
 }
---]===]
 
 Test { [[
 input int A;
@@ -3792,7 +3800,8 @@ loop/_V do
 end
 escape 1;
 ]],
-    tight = 'line 4 : `loop´ bound must be constant',
+    consts = 'line 5 : invalid `loop´ : limit must be an integer constant',
+    --tight = 'line 4 : `loop´ bound must be constant',
 }
 Test { [[
 native/const _V;
@@ -3803,14 +3812,14 @@ loop/_V do
 end
 escape 1;
 ]],
-    cc = '5:5: error: variable-sized object may not be initialized',
+    cc = '5:1: error: variable-sized object may not be initialized',
 }
 Test { [[
 loop/10 do
 end
 escape 1;
 ]],
-    asr = 'runtime error: loop overflow',
+    run = 'runtime error: `loop´ overflow',
     --run = 1,
 }
 
@@ -3828,7 +3837,7 @@ loop/3 do
 end
 escape ret;
 ]],
-    asr = 'runtime error: loop overflow',
+    run = 'runtime error: `loop´ overflow',
 }
 
 Test { [[
@@ -3844,14 +3853,15 @@ loop/a i do
 end
 escape 1;
 ]],
-    tight = '`loop´ bound must be constant',
+    consts = 'line 2 : invalid `loop´ : limit must be an integer constant',
+    --tight = '`loop´ bound must be constant',
 }
 Test { [[
 loop/10 i do
 end
 escape 1;
 ]],
-    asr = true,
+    run = '1] runtime error: `loop´ overflow',
 }
 Test { [[
 native/const _A;
@@ -3880,15 +3890,15 @@ loop/1 i in [0->k[ do
 end
 escape 1;
 ]],
-    run = '2] runtime error: loop overflow',
+    run = '3] runtime error: `loop´ overflow',
 }
 
 Test { [[
-native _printf;
+//native _printf;
 var int k = 5;
 loop/10 i in [0->k[ do
     var int x = i + 2;
-    _printf("%d\n", x);
+    //_printf("%d\n", x);
 end
 escape 1;
 ]],
@@ -3910,10 +3920,10 @@ escape 10;
 }
 
 Test { [[
-input void OS_START;
+input void A;
 event void e;
 loop do
-    await OS_START;
+    await A;
     loop i in [0->10[ do
         emit e;
     end
@@ -3922,17 +3932,17 @@ end
 escape 10;
 ]],
     ana = 'line 3 : `loop´ iteration is not reachable',
-    run = 10,
+    run = { ['~>A']=10 },
 }
 
 Test { [[
-input void OS_START;
+input void A;
 event void a, b, c, d;
 native _assert;
 var int v=0;
 par do
     loop do
-        await OS_START;
+        await A;
         v = 0;
         emit a;
         v = 1;
@@ -3946,17 +3956,17 @@ with
 end
 ]],
     wrn = true,
-    run = 1,
+    run = { ['~>A']=1 },
 }
 
 Test { [[
-input void OS_START;
+input void A;
 event void a, b, c, d;
 native _assert;
 var int v=0;
 par do
     loop do
-        await OS_START;
+        await A;
         v = 0;
         emit a;
         v = 1;
@@ -3972,6 +3982,7 @@ end
     safety = 2,
     wrn = true,
     run = 1,
+    run = { ['~>A']=1 },
     _ana = {
         acc = 3,
     },
@@ -3994,13 +4005,13 @@ escape x;
 
 Test { [[
 native/pos do ##include <assert.h> end
-input void OS_START;
+input void A;
 event void a, b, c, d;
 native _assert;
 var int v=0;
 par do
     loop do
-        await OS_START;
+        await A;
         emit a;         // killed
         _assert(0);
     end
@@ -4015,7 +4026,7 @@ end
         unreachs = 1,
         excpt = 1,
     },
-    run = 1,
+    run = { ['~>A']=1 },
 }
 
 Test { [[
@@ -4901,18 +4912,18 @@ escape 0;
 }
 
 Test { [[
-input void OS_START;
+input void A;
 event void a,b;
 par/and do
     await a;
 with
-    await OS_START;
+    await A;
     emit b;
     emit a;
 end
 escape 5;
 ]],
-    run = 5,
+    run = { ['~>A']=5 },
 }
 
 Test { [[
