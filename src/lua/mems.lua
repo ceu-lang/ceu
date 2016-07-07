@@ -47,16 +47,18 @@ typedef struct CEU_DATA_ROOT {
 
     Loop = function (me)
         local max = unpack(me)
+        if max then
+            MEMS.data = MEMS.data..'int __max_'..me.n..';\n'
+        end
     end,
     Loop_Num = function (me)
         local max, i, fr, dir, to, step, body = unpack(me)
+        F.Loop(me)  -- max
 
         local data = {}
-
         if to.tag ~= 'ID_any' then
             data[#data+1]= 'int __lim_'..me.n..';\n'
         end
-
         MEMS.data = MEMS.data..table.concat(data)
     end,
 }

@@ -83,6 +83,7 @@ error'TODO: luacov never executes this?'
         end
     end,
 
+    Loop_Num = 'Loop',
     Loop = function (me)
         local max = unpack(me)
         if max then

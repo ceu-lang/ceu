@@ -109,25 +109,48 @@ if (]]..V(c)..[[) {
 ]])
     end,
 
-    Loop = function (me)
-        local max, body = unpack(me)
-
-        -- ensures that max is constant
+    __loop_max = function (me)
+        local max = unpack(me)
         if max then
-            LINE(me, [[
+            return {
+                ini = [[
+/* ensures that max is constant */
 { char __]]..me.n..'['..V(max)..'/'..V(max)..[[ ] = {0}; }
-]])
+CEU_APP.data.__max_]]..me.n..[[ = 0;
+]],
+                chk = [[
+ceu_out_assert_msg(CEU_APP.data.__max_]]..me.n..' < '..V(max)..[[, "`loop´ overflow");
+]],
+                inc = [[
+CEU_APP.data.__max_]]..me.n..[[++;
+]],
+            }
+        else
+            return {
+                ini = '',
+                chk = '',
+                inc = '',
+            }
         end
+    end,
+
+    Loop = function (me)
+        local _, body = unpack(me)
+        local max = F.__loop_max(me)
 
         LINE(me, [[
+]]..max.ini..[[
 while (1) {
-]]..body.code..[[
+    ]]..max.chk..[[
+    ]]..body.code..[[
+    ]]..max.inc..[[
 }
 ]])
     end,
 
     Loop_Num = function (me)
-        local max, i, fr, dir, to, step, body = unpack(me)
+        local _, i, fr, dir, to, step, body = unpack(me)
+        local max = F.__loop_max(me)
         local op = (dir=='->' and '>' or '<')
 
         -- check if step is positive (static)
@@ -149,13 +172,6 @@ while (1) {
         end
 
 
-        -- ensures that max is constant
-        if max then
-            LINE(me, [[
-{ char __]]..me.n..'['..V(max)..'/'..V(max)..[[ ] = {0}; }
-]])
-        end
-
         if to.tag ~= 'ID_any' then
             LINE(me, [[
 CEU_APP.data.__lim_]]..me.n..' = '..V(to)..[[;
@@ -163,6 +179,7 @@ CEU_APP.data.__lim_]]..me.n..' = '..V(to)..[[;
         end
 
         LINE(me, [[
+]]..max.ini..[[
 ceu_out_assert_msg(]]..V(step)..' '..op..[[ 0, "invalid `loop´ step : expected positive number");
 ]]..V(i)..' = '..V(fr)..[[;
 while (1) {
@@ -175,8 +192,10 @@ while (1) {
 ]])
         end
         LINE(me, [[
-]]..body.code..[[
-]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
+    ]]..max.chk..[[
+    ]]..body.code..[[
+    ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
+    ]]..max.inc..[[
 }
 ]])
     end,

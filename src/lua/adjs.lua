@@ -196,22 +196,6 @@ error'TODO: luacov never executes this?'
         local max_inc = node('Nothing', me.ln)
         local max_chk = node('Nothing', me.ln)
         if max then
-            max_dcl = node('Var', me.ln,
-                        node('Type', me.ln,
-                            node('ID_prim', me.ln, 'int')),
-                        false,
-                        '__max_'..me.n)
-            max_ini = node('Set_Exp', me.ln,
-                        node('NUMBER', me.ln, '0'),
-                        node('Exp_Name', me.ln,
-                            node('ID_int', me.ln, '__max_'..me.n)))
-            max_inc = node('Set_Exp', me.ln,
-                        node('Exp_+', me.ln, '+',
-                            node('Exp_Name', me.ln,
-                                node('ID_int', me.ln, '__max_'..me.n)),
-                            node('NUMBER', me.ln, '1')),
-                        node('Exp_Name', me.ln,
-                            node('ID_int', me.ln, '__max_'..me.n)))
             max_chk = node('Stmt_Call', me.ln,
                         node('Exp_Call', me.ln,
                             'call',
