@@ -188,6 +188,56 @@ error'TODO: luacov never executes this?'
 
 -------------------------------------------------------------------------------
 
+    _Loop__PRE = function (me)
+        local max, body = unpack(me)
+
+        local max_dcl = node('Nothing', me.ln)
+        local max_ini = node('Nothing', me.ln)
+        local max_inc = node('Nothing', me.ln)
+        local max_chk = node('Nothing', me.ln)
+        if max then
+            max_dcl = node('Var', me.ln,
+                        node('Type', me.ln,
+                            node('ID_prim', me.ln, 'int')),
+                        false,
+                        '__max_'..me.n)
+            max_ini = node('Set_Exp', me.ln,
+                        node('NUMBER', me.ln, '0'),
+                        node('Exp_Name', me.ln,
+                            node('ID_int', me.ln, '__max_'..me.n)))
+            max_inc = node('Set_Exp', me.ln,
+                        node('Exp_+', me.ln, '+',
+                            node('Exp_Name', me.ln,
+                                node('ID_int', me.ln, '__max_'..me.n)),
+                            node('NUMBER', me.ln, '1')),
+                        node('Exp_Name', me.ln,
+                            node('ID_int', me.ln, '__max_'..me.n)))
+            max_chk = node('Stmt_Call', me.ln,
+                        node('Exp_Call', me.ln,
+                            'call',
+                            node('Exp_Name', me.ln,
+                                node('ID_nat', me.ln,
+                                    '_ceu_out_assert_msg')),
+                            node('Explist', me.ln,
+                                node('Exp_<', me.ln, '<',
+                                    node('Exp_Name', me.ln,
+                                        node('ID_int', me.ln, '__max_'..me.n)),
+                                    node('NUMBER', me.ln, '0')),
+                                node('STRING', me.ln,
+                                    '"`loop´ overflow"'))))
+        end
+
+        local Stmts = AST.asr(body,'Block', 1,'Stmts')
+        table.insert(Stmts, 1,        max_chk)
+        table.insert(Stmts, #Stmts+1, max_inc)
+
+        return node('Block', me.ln,
+                node('Stmts', me.ln,
+                    max_dcl,
+                    max_ini,
+                    node('Loop', me.ln,
+                        body)))
+    end,
     _Loop_Num__PRE = function (me)
         local max, i, lb, fr, dir, to, rb, step, blk = unpack(me)
 
@@ -235,16 +285,16 @@ error'TODO: luacov never executes this?'
             i = '__i_'..me.n    -- invent an ID not referenceable
         end
 
-        local dcl_i = node('Var', me.ln,
+        local i_dcl = node('Var', me.ln,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
                         false,
                         i)
-        dcl_i.is_implicit = true
-        dcl_i.is_read_only = true
+        i_dcl.is_implicit = true
+        i_dcl.is_read_only = true
 
         local lim_ini = node('Stmts', me.ln)
-        local lim_cmp = node('Nothing', me.ln)
+        local lim_chk = node('Nothing', me.ln)
 
         if to.tag ~= 'ID_any' then
             lim_ini[#lim_ini+1] =
@@ -259,11 +309,10 @@ error'TODO: luacov never executes this?'
                     node('Exp_Name', me.ln,
                         node('ID_int', me.ln, '__lim_'..me.n)))
 
-            -- lim_cmp
+            -- lim_chk
             if dir == '->' then
                 -- if i > lim then break end
-                lim_cmp = node('Exp_>', me.ln,
-                            '>',
+                lim_chk = node('Exp_>', me.ln, '>',
                             node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, i)),
                             node('Exp_Name', me.ln,
@@ -271,15 +320,14 @@ error'TODO: luacov never executes this?'
             else
                 assert(dir == '<-')
                 -- if i < lim then break end
-                lim_cmp = node('Exp_<', me.ln,
-                            '<',
+                lim_chk = node('Exp_<', me.ln, '<',
                             node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, i)),
                             node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, '__lim_'..me.n)))
             end
 
-            lim_cmp = node('If', me.ln, lim_cmp,
+            lim_chk = node('If', me.ln, lim_chk,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Break', me.ln))),
@@ -287,23 +335,24 @@ error'TODO: luacov never executes this?'
                             node('Stmts', me.ln)))
         end
 
-        local ini_i = node('Set_Exp', me.ln,
+        local i_ini = node('Set_Exp', me.ln,
                         AST.copy(fr),
                         node('Exp_Name', me.ln,
                             node('ID_int', me.ln, i)))
-        ini_i.set_read_only = true
+        i_ini.set_read_only = true
 DBG'TODO: set_i'
 
-            local inc_i = node('Set_Exp', me.ln,
-                            node('Exp_+', me.ln, '+',
-                                node('Exp_Name', me.ln,
-                                    node('ID_int', me.ln, i)),
-                                step),
+        local i_inc = node('Set_Exp', me.ln,
+                        node('Exp_+', me.ln, '+',
                             node('Exp_Name', me.ln,
-                                node('ID_int', me.ln, i)))
-            inc_i.set_read_only = true
+                                node('ID_int', me.ln, i)),
+                            step),
+                        node('Exp_Name', me.ln,
+                            node('ID_int', me.ln, i)))
+        i_inc.set_read_only = true
 
-        local step_check =
+        local op = (dir=='->' and '>' or '<')
+        local step_chk =
             node('Stmt_Call', me.ln,
                 node('Exp_Call', me.ln,
                     'call',
@@ -311,7 +360,7 @@ DBG'TODO: set_i'
                         node('ID_nat', me.ln,
                             '_ceu_out_assert_msg')),
                     node('Explist', me.ln,
-                        node('Exp_>', me.ln, (dir=='->' and '>' or '<'),
+                        node('Exp_'..op, me.ln, op,
                             AST.copy(step),
                             node('NUMBER', me.ln, '0')),
                         node('STRING', me.ln,
@@ -319,18 +368,17 @@ DBG'TODO: set_i'
 
         return node('Block', me.ln,
                 node('Stmts', me.ln,
-                    step_check,
-                    dcl_i,
-                    ini_i,
+                    step_chk,
+                    i_dcl,
+                    i_ini,
                     lim_ini,
-                    node('Loop', me.ln,
+                    node('_Loop', me.ln,
                         max,
-                        (to.tag ~= 'ID_any'),
                         node('Block', me.ln,
                             node('Stmts', me.ln,
-                                lim_cmp,
+                                lim_chk,
                                 blk,
-                                inc_i)))))
+                                i_inc)))))
     end,
 
     _Loop_Pool__PRE = function (me)

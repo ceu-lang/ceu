@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3239,7 +3238,8 @@ loop i in [1->4], -2 do
 end
 escape ret;
 ]],
-    codes = 'line 2 : invalid `loop´ step : expected positive number : got "-2"',
+    run = '2] runtime error: invalid `loop´ step : expected positive number',
+    --codes = 'line 2 : invalid `loop´ step : expected positive number : got "-2"',
 }
 
 Test { [[
@@ -3330,7 +3330,8 @@ loop i in [1 <- 4], -1 do
 end
 escape ret;
 ]],
-    codes = 'line 2 : invalid `loop´ step : expected positive number : got "-1"',
+    run = '2] runtime error: invalid `loop´ step : expected positive number',
+    --codes = 'line 2 : invalid `loop´ step : expected positive number : got "-1"',
 }
 
 Test { [[
@@ -3439,6 +3440,7 @@ break;
 ]],
     props = 'line 1 : `break´ without loop',
 }
+--]===]
 
 Test { [[
 input int A;
@@ -3743,22 +3745,21 @@ escape 1;
 }
 
 Test { [[
-input void OS_START;
+input void A;
 var int v = 1;
 loop do
     loop i in [0->v[ do
-        await OS_START;
+        await A;
         escape 2;
     end
 end
 escape 1;
 ]],
     wrn = true,
-    run = 2,
+    run = { ['~>A']=2 },
 }
 
 Test { [[
-native _assert;
 input void OS_START;
 event void a;
 loop do
@@ -3769,7 +3770,7 @@ loop do
         with
             await OS_START;
             emit a;
-            _assert(0);
+            _ceu_out_assert_msg(0, "err");
         end
     else
         await OS_START;
