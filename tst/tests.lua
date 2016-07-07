@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3686,7 +3687,6 @@ end;
     --tight = 'tight loop'
 }
 
---]===]
 Test { [[
 loop do
     loop do
@@ -3694,7 +3694,7 @@ loop do
     end;
 end;
 ]],
-    tight = 'tight loop',
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
     --_ana = {
         --isForever = true,
         --unreachs = 1,

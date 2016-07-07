@@ -1,75 +1,66 @@
-function OR_all (me, t)
-    t = t or me
-    me.tl_awaits = false
-    me.tl_breaks = false
-    me.tl_breaks_or_awaits = false
-    for _, sub in ipairs(t) do
-        if AST.is_node(sub) then
-            me.tl_awaits = me.tl_awaits or sub.tl_awaits
-            me.tl_breaks = me.tl_breaks or sub.tl_breaks
-            me.tl_breaks_or_awaits = me.tl_breaks_or_awaits or sub.tl_breaks_or_awaits
-        end
-    end
-end
+local awaits = {
+    Async         = true,
+    _Async_Thread = true,
+    _Async_Isr    = true,
+    Await_Ext     = true,
+    Await_Wclock  = true,
+    Await_Forever = true,
+}
 
-function AND_all (me, t)
-    t = t or me
-    me.tl_awaits = true
-    me.tl_breaks = true
-    me.tl_breaks_or_awaits = true
-    for _, sub in ipairs(t) do
-        if AST.is_node(sub) then
-            me.tl_awaits = me.tl_awaits and sub.tl_awaits
-            me.tl_breaks = me.tl_breaks and sub.tl_breaks
-            me.tl_breaks_or_awaits = me.tl_breaks_or_awaits and sub.tl_breaks_or_awaits
-        end
-    end
-end
+local function run (me, Loop)
+    assert(AST.is_node(me))
 
-function SAME (me, sub)
-    me.tl_awaits = sub.tl_awaits
-    me.tl_breaks = sub.tl_breaks
-    me.tl_breaks_or_awaits = sub.tl_breaks_or_awaits
+    if awaits[me.tag] then
+        return 'awaits'
+
+    elseif me.tag == 'Break' then
+        return 'breaks'
+
+    elseif me.tag == 'If' then
+        local _,t,f = unpack(me)
+        local ret1 = run(t, Loop)
+        local ret2 = run(f, Loop)
+        if ret1=='tight' or ret2=='tight' then
+            return 'tight'
+        elseif ret1=='awaits' and ret2=='awaits' then
+            return 'awaits'
+        else
+            return 'breaks'
+        end
+
+    elseif me.tag == 'Loop' then
+        if me.tight == 'breaks' then
+            return 'tight'
+        else
+            return 'awaits'
+        end
+
+    else
+        for _, child in ipairs(me) do
+            if AST.is_node(child) then
+                local ret = run(child, Loop)
+                if ret ~= 'tight' then
+                    return ret
+                end
+            end
+        end
+        return 'tight'
+    end
 end
 
 F = {
-    Node__PRE = function (me)
-        me.tl_awaits = false
-        me.tl_breaks = false
-        me.tl_breaks_or_awaits = false
-    end,
-    Node__POS = function (me)
-        if not F[me.tag] then
-            OR_all(me)
-        end
-    end,
-    ParOr = AND_all,
-
-    If = function (me)
-        local c, t, f = unpack(me)
-        AND_all(me, {t,f})
-    end,
-
-    Break = function (me)
-        me.tl_breaks = true
-    end,
-
     Loop = function (me, ok)
         local max, body = unpack(me)
-        SAME(me, body)
-        me.tl_breaks = false
-        me.tl_breaks_or_awaits = me.tl_awaits
 
         if AST.par(me,'Async') or AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
-            -- ok
-        elseif body.tl_breaks_or_awaits then
             -- ok
         elseif max then
             -- ok
         elseif ok then
             -- ok
         else
-            WRN(false, me, 'invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path')
+            me.tight = run(body, me)
+            WRN(me.tight~='tight', me, 'invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path')
         end
     end,
 
@@ -77,18 +68,7 @@ F = {
         local _, _, fr, _, to, _, body = unpack(me)
         F.Loop(me, (fr.is_const and to.is_const))
     end,
-
-    Async_Thread = 'Async',
-    Async_Isr    = 'Async',
-    Async = function (me)
-        me.tl_awaits = true
-    end,
-
-    Await_Forever = 'Await_Ext',
-    Await_Wclock  = 'Await_Ext',
-    Await_Ext = function (me)
-        me.tl_awaits = true
-    end,
 }
 
 AST.visit(F)
+
