@@ -160,7 +160,7 @@ end
 --do return end
 --AST.dump(AST.root)
 
-if T.ana or T._ana or T.tmp then return end
+if T.ana or T._ana or T.tmp or T.tight or T.props then return end
 
     DBG,ASR = DBG1,ASR1
     if CEU.opts.env then

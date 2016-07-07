@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3308,14 +3309,12 @@ escape sum;
     parser = 'line 2 : after `<-´ : expected expression',
 }
 
---]===]
 Test { [[
 loop do end
 escape 0;
 ]],
     tight = 'tight loop',
 }
-do return end
 
 Test { [[
 var int sum = 0;
