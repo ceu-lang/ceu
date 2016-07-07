@@ -659,79 +659,6 @@ escape (int) __;
     --run = 3,
 }
 
-Test { [[
-native _abc; // TODO: = 0;
-event void a;
-var _abc b;
-]],
-    dcls = 'line 2 : event "a" declared but not used',
-}
-
-Test { [[
-event void e;
-escape 0  or  e;
-]],
-    exps = 'line 2 : invalid operand to `or´ : unexpected context for event "e"',
-}
-Test { [[
-event void e;
-escape sizeof(e);
-]],
-    exps = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
-}
-Test { [[
-event void e;
-escape not e;
-]],
-    exps = 'line 2 : invalid operand to `not´ : unexpected context for event "e"',
-}
-Test { [[
-event int e;
-escape e?;
-]],
-    exps = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
-}
-Test { [[
-event int e;
-escape e|e;
-]],
-    exps = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
-}
-Test { [[
-event void e;
-escape -e;
-]],
-    exps = 'line 2 : invalid operand to `-´ : unexpected context for event "e"',
-}
-
-Test { [[
-native _abc; // TODO: = 0;
-event void a;
-var _abc b;
-]],
-    wrn = true,
-    inits = 'line 3 : uninitialized variable "b"',
-}
-
-Test { [[
-native _abc; // TODO: = 0;
-event void a;
-var _abc b = _;
-]],
-    wrn = true,
-    tmp = 'line 3 : cannot instantiate type "_abc"',
-}
-
-Test { [[
-event u8&& a;  // allowed by compiler
-
-var u8 k = 5;
-
-emit a => &&k; // leads to compiler error
-]],
-    dcls = 'line 1 : invalid event type : cannot use `&&´'
-}
-
 -->>> OS_START / ANY
 
 Test { [[
@@ -861,29 +788,6 @@ escape _f;
 }
 
 --<<< OS_START / ANY
-
-Test { [[
-native _abc;
-native/pre do
-    typedef u8  abc;
-end
-event void a;
-var _abc b=0;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-native _abc;// TODO = 0;
-event void a;
-var _abc a = _;
-]],
-    wrn = true,
-    --dcls = 'line 3 : internal identifier "a" is already declared at line 2',
-    tmp = 'line 3 : cannot instantiate type "_abc"',
-}
 
 Test { [[
 native/pos do
@@ -1622,152 +1526,6 @@ Test { [[var int a; emit a => 1; escape a;]],
     --env = 'line 1 : identifier "a" is not an event (/tmp/tmp.ceu : line 1)',
     --trig_wo = 1,
 }
-Test { [[event int a=0; emit a => 1; escape a;]],
-    stmts = 'line 1 : invalid assignment : unexpected context for event "a"',
-    --parser = 'line 1 : after `a´ : expected `;´',
-    --trig_wo = 1,
-}
-Test { [[
-event int a;
-emit a => 1;
-escape a;
-]],
-    stmts = 'line 3 : invalid `escape´ : unexpected context for event "a"',
-    --run = 1,
-    --trig_wo = 1,
-}
-
-Test { [[
-event void e;
-emit e;
-escape 10;
-]],
-    wrn = true,
-    run = 10,
-}
-
-Test { [[
-var int a=10;
-do
-    var int b=1;
-    if b!=0 then end;
-end
-escape a;
-]],
-    run = 10,
-}
-
--- TODO: XXX
-Test { [[
-input void OS_START;
-do
-    var int v = 0;
-    if v!=0 then end;
-end
-event void e;
-var int ret = 0;
-par/or do
-    await OS_START;
-    emit e;
-    ret = 1;
-with
-    await e;
-    ret = 2;
-end
-escape ret;
-]],
-    _ana = {
-        excpt = 1,
-        --unreachs = 1,
-    },
-    run = 2,
-}
-
-Test { [[
-input void OS_START;
-var int ret = 0;
-par/and do
-    await OS_START;
-with
-    event void e;
-    par/or do
-        await OS_START;
-        emit e;
-        ret = 1;
-    with
-        await e;
-        ret = 2;
-    end
-end
-escape ret;
-]],
-    todo = 'OS_START',
-    run = 2,
-}
-
-Test { [[
-input void OS_START;
-do
-    var int v = 0;
-    if v!=0 then end;
-end
-event void e;
-par do
-    await OS_START;
-    emit e;
-    escape 1;       // 9
-with
-    await e;
-    escape 2;       // 12
-end
-]],
-    _ana = {
-        excpt = 1,
-        --unreachs = 1,
-    },
-    run = 2,
-}
-Test { [[
-input void OS_START;
-do
-    var int v = 0;
-    if v!=0 then end;
-end
-event void e;
-par do
-    await OS_START;
-    emit e;
-    escape 1;       // 9
-with
-    await e;
-    escape 2;       // 12
-end
-]],
-    safety = 2,
-    _ana = {
-        acc   = 1,
-        excpt = 1,
-        --unreachs = 1,
-    },
-    run = 2,
-}
-
-Test { [[
-input void OS_START;
-event void a,b;
-par do
-    await OS_START;
-    emit a;
-    escape 10;
-with
-    await a;
-    emit b;
-    escape 100;
-end
-]],
-    run = 100;
-}
-
     -- WALL-CLOCK TIME / WCLOCK
 
 Test { [[
@@ -2502,50 +2260,6 @@ end;
 escape a;
 ]],
     dcls = 'line 5 : invalid `escape´ : no matching enclosing `do´',
-}
-
-Test { [[
-event int aa;
-var int a=0;
-par/and do
-    a = do/_
-        escape 1;
-    end;
-with
-    await aa;
-end;
-escape 0;
-]],
-    _ana = {
-        --unreachs = 2,
-        --isForever = true,
-    },
-}
-
-Test { [[
-event int a;
-a = do/_
-    escape 1;
-end;
-escape 0;
-]],
-    stmts = 'line 2 : invalid assignment : unexpected context for event "a"',
-    --env = 'line 4 : types mismatch (`void´ <= `int´)',
-}
-
-Test { [[
-event int a;
-par/and do
-    a = do/_
-        escape 1;
-    end;
-with
-    await a;
-end;
-escape 0;
-]],
-    stmts = 'line 3 : invalid assignment : unexpected context for event "a"',
-    --env = 'line 4 : types mismatch (`void´ <= `int´)',
 }
 
 Test { [[
@@ -3820,28 +3534,6 @@ escape 1;
     run = { ['~>A']=2 },
 }
 
-Test { [[
-input void OS_START;
-event void a;
-loop do
-    if true then
-        par do
-            await a;
-            break;
-        with
-            await OS_START;
-            emit a;
-            _ceu_out_assert_msg(0, "err");
-        end
-    else
-        await OS_START;
-    end
-end
-await 1s;
-escape 1;
-]],
-    run = {['~>1s']=1},
-}
 -- LOOP / BOUNDED
 
 Test { [[
@@ -3959,90 +3651,6 @@ escape 1;
 }
 
 Test { [[
-input void OS_START;
-event void e;
-every OS_START do
-    loop i in [0->10[ do
-        emit e;
-    end
-    do break; end
-end
-escape 10;
-]],
-    props = 'line 7 : not permitted inside `every´',
-}
-
-Test { [[
-input void A;
-event void e;
-loop do
-    await A;
-    loop i in [0->10[ do
-        emit e;
-    end
-    do break; end
-end
-escape 10;
-]],
-    ana = 'line 3 : `loop´ iteration is not reachable',
-    run = { ['~>A']=10 },
-}
-do return end
-
-Test { [[
-input void A;
-event void a, b, c, d;
-native _assert;
-var int v=0;
-par do
-    loop do
-        await A;
-        v = 0;
-        emit a;
-        v = 1;
-        escape v;
-    end
-with
-    loop do
-        await a;
-        v = 2;
-    end
-end
-]],
-    wrn = true,
-    run = { ['~>A']=1 },
-}
-
-Test { [[
-input void A;
-event void a, b, c, d;
-native _assert;
-var int v=0;
-par do
-    loop do
-        await A;
-        v = 0;
-        emit a;
-        v = 1;
-        escape v;
-    end
-with
-    loop do
-        await a;
-        v = 2;
-    end
-end
-]],
-    safety = 2,
-    wrn = true,
-    run = 1,
-    run = { ['~>A']=1 },
-    _ana = {
-        acc = 3,
-    },
-}
-
-Test { [[
 input int E;
 var int x=0;
 loop do
@@ -4055,32 +3663,6 @@ end
 escape x;
 ]],
     run = { ['1~>E; 2~>E;0~>E']=2 }
-}
-
-Test { [[
-native/pos do ##include <assert.h> end
-input void A;
-event void a, b, c, d;
-native _assert;
-var int v=0;
-par do
-    loop do
-        await A;
-        emit a;         // killed
-        _assert(0);
-    end
-with
-    loop do
-        await a;
-        escape 1;       // kills emit a
-    end                 // unreach
-end
-]],
-    _ana = {
-        unreachs = 1,
-        excpt = 1,
-    },
-    run = { ['~>A']=1 },
 }
 
 Test { [[
@@ -4311,19 +3893,6 @@ loop do
 end
 ]],
     run = { ['~>5s']=10000000 }
-}
-
-Test { [[
-event void inc;
-loop do
-    await inc;
-    nothing;
-end
-every inc do
-    nothing;
-end
-]],
-    _ana = { isForever=true },
 }
 
 Test { [[
@@ -4913,22 +4482,6 @@ escape 0;
 }
 
 Test { [[
-event int a;
-par/and do
-    await a;
-with
-    loop do end;
-end;
-escape 0;
-]],
-    loop='tight loop',
-    _ana = {
-        isForever = true,
-        unreachs = 2,
-    },
-}
-
-Test { [[
 input int A;
 loop do
     par/or do
@@ -4963,21 +4516,6 @@ escape 0;
         isForever = true,
         unreachs = 1,
     },
-}
-
-Test { [[
-input void A;
-event void a,b;
-par/and do
-    await a;
-with
-    await A;
-    emit b;
-    emit a;
-end
-escape 5;
-]],
-    run = { ['~>A']=5 },
 }
 
 Test { [[
@@ -5581,6 +5119,143 @@ escape a+f;
 -->>> INTERNAL EVENTS
 
 Test { [[
+native _abc; // TODO: = 0;
+event void a;
+var _abc b;
+]],
+    dcls = 'line 2 : event "a" declared but not used',
+}
+
+Test { [[
+event void e;
+escape 0  or  e;
+]],
+    exps = 'line 2 : invalid operand to `or´ : unexpected context for event "e"',
+}
+Test { [[
+event void e;
+escape sizeof(e);
+]],
+    exps = 'line 2 : invalid operand to `sizeof´ : unexpected context for event "e"',
+}
+Test { [[
+event void e;
+escape not e;
+]],
+    exps = 'line 2 : invalid operand to `not´ : unexpected context for event "e"',
+}
+Test { [[
+event int e;
+escape e?;
+]],
+    exps = 'line 2 : invalid operand to `?´ : unexpected context for event "e"',
+}
+Test { [[
+event int e;
+escape e|e;
+]],
+    exps = 'line 2 : invalid operand to `|´ : unexpected context for event "e"',
+}
+Test { [[
+event void e;
+escape -e;
+]],
+    exps = 'line 2 : invalid operand to `-´ : unexpected context for event "e"',
+}
+
+Test { [[
+native _abc; // TODO: = 0;
+event void a;
+var _abc b;
+]],
+    wrn = true,
+    inits = 'line 3 : uninitialized variable "b"',
+}
+
+Test { [[
+native _abc; // TODO: = 0;
+event void a;
+var _abc b = _;
+]],
+    wrn = true,
+    tmp = 'line 3 : cannot instantiate type "_abc"',
+}
+
+Test { [[
+event u8&& a;  // allowed by compiler
+
+var u8 k = 5;
+
+emit a => &&k; // leads to compiler error
+]],
+    dcls = 'line 1 : invalid event type : cannot use `&&´'
+}
+
+Test { [[
+var int x;
+event (int,int) e;
+escape 1;
+]],
+    wrn = true,
+    inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+}
+
+Test { [[
+var int x=0;
+event (int,int) e;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+event int c;
+emit c => 10;
+await c;
+escape 0;
+]],
+    _ana = {
+        --unreachs = 1,
+        --isForever = true,
+    },
+    --trig_wo = 1,
+}
+
+-- EX.06: 2 triggers
+Test { [[
+event int c;
+emit c => 10;
+emit c => 10;
+escape c;
+]],
+    stmts = 'line 4 : invalid `escape´ : unexpected context for event "c"',
+    --env = 'line 4 : types mismatch (`int´ <= `void´)',
+    --trig_wo = 2,
+}
+
+Test { [[
+event int c;
+emit c => 10;
+emit c => 10;
+escape 10;
+]],
+    run = 10,
+    --trig_wo = 2,
+}
+
+Test { [[
+event int b;
+var   int a;
+a = 1;
+emit b => a;
+escape a;
+]],
+    run = 1,
+    --trig_wo = 1,
+}
+
+Test { [[
 input void OS_START;
 event int a;
 var int ret = 0;
@@ -5702,52 +5377,6 @@ escape ret;
         acc = 1,
     },
     run = 2,
-}
-
-Test { [[
-event int c;
-emit c => 10;
-await c;
-escape 0;
-]],
-    _ana = {
-        --unreachs = 1,
-        --isForever = true,
-    },
-    --trig_wo = 1,
-}
-
--- EX.06: 2 triggers
-Test { [[
-event int c;
-emit c => 10;
-emit c => 10;
-escape c;
-]],
-    stmts = 'line 4 : invalid `escape´ : unexpected context for event "c"',
-    --env = 'line 4 : types mismatch (`int´ <= `void´)',
-    --trig_wo = 2,
-}
-
-Test { [[
-event int c;
-emit c => 10;
-emit c => 10;
-escape 10;
-]],
-    run = 10,
-    --trig_wo = 2,
-}
-
-Test { [[
-event int b;
-var   int a;
-a = 1;
-emit b => a;
-escape a;
-]],
-    run = 1,
-    --trig_wo = 1,
 }
 
 Test { [[
@@ -5999,24 +5628,6 @@ escape ret;
 }
 
 Test { [[
-var int x;
-event (int,int) e;
-escape 1;
-]],
-    wrn = true,
-    inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
-}
-
-Test { [[
-var int x=0;
-event (int,int) e;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
 input void OS_START;
 event (int,int) e;
 par do
@@ -6191,6 +5802,395 @@ escape ret;
     },
     run = 5,
 }
+
+Test { [[
+native _abc;
+native/pre do
+    typedef u8  abc;
+end
+event void a;
+var _abc b=0;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native _abc;// TODO = 0;
+event void a;
+var _abc a = _;
+]],
+    wrn = true,
+    --dcls = 'line 3 : internal identifier "a" is already declared at line 2',
+    tmp = 'line 3 : cannot instantiate type "_abc"',
+}
+
+Test { [[event int a=0; emit a => 1; escape a;]],
+    stmts = 'line 1 : invalid assignment : unexpected context for event "a"',
+    --parser = 'line 1 : after `a´ : expected `;´',
+    --trig_wo = 1,
+}
+Test { [[
+event int a;
+emit a => 1;
+escape a;
+]],
+    stmts = 'line 3 : invalid `escape´ : unexpected context for event "a"',
+    --run = 1,
+    --trig_wo = 1,
+}
+
+Test { [[
+event void e;
+emit e;
+escape 10;
+]],
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+var int a=10;
+do
+    var int b=1;
+    if b!=0 then end;
+end
+escape a;
+]],
+    run = 10,
+}
+
+-- TODO: XXX
+Test { [[
+input void OS_START;
+do
+    var int v = 0;
+    if v!=0 then end;
+end
+event void e;
+var int ret = 0;
+par/or do
+    await OS_START;
+    emit e;
+    ret = 1;
+with
+    await e;
+    ret = 2;
+end
+escape ret;
+]],
+    _ana = {
+        excpt = 1,
+        --unreachs = 1,
+    },
+    run = 2,
+}
+
+Test { [[
+input void OS_START;
+var int ret = 0;
+par/and do
+    await OS_START;
+with
+    event void e;
+    par/or do
+        await OS_START;
+        emit e;
+        ret = 1;
+    with
+        await e;
+        ret = 2;
+    end
+end
+escape ret;
+]],
+    todo = 'OS_START',
+    run = 2,
+}
+
+Test { [[
+input void OS_START;
+do
+    var int v = 0;
+    if v!=0 then end;
+end
+event void e;
+par do
+    await OS_START;
+    emit e;
+    escape 1;       // 9
+with
+    await e;
+    escape 2;       // 12
+end
+]],
+    _ana = {
+        excpt = 1,
+        --unreachs = 1,
+    },
+    run = 2,
+}
+Test { [[
+input void OS_START;
+do
+    var int v = 0;
+    if v!=0 then end;
+end
+event void e;
+par do
+    await OS_START;
+    emit e;
+    escape 1;       // 9
+with
+    await e;
+    escape 2;       // 12
+end
+]],
+    safety = 2,
+    _ana = {
+        acc   = 1,
+        excpt = 1,
+        --unreachs = 1,
+    },
+    run = 2,
+}
+
+Test { [[
+input void OS_START;
+event void a,b;
+par do
+    await OS_START;
+    emit a;
+    escape 10;
+with
+    await a;
+    emit b;
+    escape 100;
+end
+]],
+    run = 100;
+}
+
+Test { [[
+event int aa;
+var int a=0;
+par/and do
+    a = do/_
+        escape 1;
+    end;
+with
+    await aa;
+end;
+escape 0;
+]],
+    _ana = {
+        --unreachs = 2,
+        --isForever = true,
+    },
+}
+
+Test { [[
+event int a;
+a = do/_
+    escape 1;
+end;
+escape 0;
+]],
+    stmts = 'line 2 : invalid assignment : unexpected context for event "a"',
+    --env = 'line 4 : types mismatch (`void´ <= `int´)',
+}
+
+Test { [[
+event int a;
+par/and do
+    a = do/_
+        escape 1;
+    end;
+with
+    await a;
+end;
+escape 0;
+]],
+    stmts = 'line 3 : invalid assignment : unexpected context for event "a"',
+    --env = 'line 4 : types mismatch (`void´ <= `int´)',
+}
+
+Test { [[
+input void OS_START;
+event void a;
+loop do
+    if true then
+        par do
+            await a;
+            break;
+        with
+            await OS_START;
+            emit a;
+            _ceu_out_assert_msg(0, "err");
+        end
+    else
+        await OS_START;
+    end
+end
+await 1s;
+escape 1;
+]],
+    run = {['~>1s']=1},
+}
+Test { [[
+input void OS_START;
+event void e;
+every OS_START do
+    loop i in [0->10[ do
+        emit e;
+    end
+    do break; end
+end
+escape 10;
+]],
+    props = 'line 7 : not permitted inside `every´',
+}
+
+Test { [[
+input void A;
+event void e;
+loop do
+    await A;
+    loop i in [0->10[ do
+        emit e;
+    end
+    do break; end
+end
+escape 10;
+]],
+    ana = 'line 3 : `loop´ iteration is not reachable',
+    run = { ['~>A']=10 },
+}
+
+Test { [[
+input void A;
+event void a, b, c, d;
+native _assert;
+var int v=0;
+par do
+    loop do
+        await A;
+        v = 0;
+        emit a;
+        v = 1;
+        escape v;
+    end
+with
+    loop do
+        await a;
+        v = 2;
+    end
+end
+]],
+    wrn = true,
+    run = { ['~>A']=1 },
+}
+
+Test { [[
+input void A;
+event void a, b, c, d;
+native _assert;
+var int v=0;
+par do
+    loop do
+        await A;
+        v = 0;
+        emit a;
+        v = 1;
+        escape v;
+    end
+with
+    loop do
+        await a;
+        v = 2;
+    end
+end
+]],
+    safety = 2,
+    wrn = true,
+    run = 1,
+    run = { ['~>A']=1 },
+    _ana = {
+        acc = 3,
+    },
+}
+
+Test { [[
+native/pos do ##include <assert.h> end
+input void A;
+event void a, b, c, d;
+native _assert;
+var int v=0;
+par do
+    loop do
+        await A;
+        emit a;         // killed
+        _assert(0);
+    end
+with
+    loop do
+        await a;
+        escape 1;       // kills emit a
+    end                 // unreach
+end
+]],
+    _ana = {
+        unreachs = 1,
+        excpt = 1,
+    },
+    run = { ['~>A']=1 },
+}
+
+Test { [[
+event void inc;
+loop do
+    await inc;
+    nothing;
+end
+every inc do
+    nothing;
+end
+]],
+    _ana = { isForever=true },
+}
+
+Test { [[
+event int a;
+par/and do
+    await a;
+with
+    loop do end;
+end;
+escape 0;
+]],
+    loop='tight loop',
+    _ana = {
+        isForever = true,
+        unreachs = 2,
+    },
+}
+
+Test { [[
+input void A;
+event void a,b;
+par/and do
+    await a;
+with
+    await A;
+    emit b;
+    emit a;
+end
+escape 5;
+]],
+    run = { ['~>A']=5 },
+}
+--<<< INTERNAL EVENTS
 
 Test { [[
 vector[2] int v;

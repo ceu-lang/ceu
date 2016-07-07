@@ -161,7 +161,7 @@ end
     if not check(T,'codes')  then return end
 --do return end
 
-if T.ana or T._ana or T.tmp or T._tight or T.props then return end
+if T.ana or T._ana or T.tmp or T.props then return end
 
     DBG,ASR = DBG1,ASR1
     if CEU.opts.env then
