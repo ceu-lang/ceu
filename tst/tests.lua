@@ -3179,7 +3179,8 @@ escape sum;
 Test { [[
 break;
 ]],
-    props = 'line 1 : `break´ without loop',
+    codes = 'line 1 : invalid `break´ : expected matching enclosing `loop´',
+    --props = 'line 1 : `break´ without loop',
 }
 
 Test { [[
@@ -4198,7 +4199,7 @@ loop do
     end
 end
 ]],
-    adj = 'line 3 : invalid `continue´',
+    todo = 'line 3 : invalid `continue´',
 }
 
 Test { [[
@@ -4206,7 +4207,7 @@ loop do
     do continue; end
 end
 ]],
-    adj = 'line 2 : invalid `continue´',
+    todo = 'line 2 : invalid `continue´',
 }
 
 Test { [[
@@ -4218,7 +4219,7 @@ loop do
     end
 end
 ]],
-    adj = 'line 4 : invalid `continue´',
+    todo = 'line 4 : invalid `continue´',
 }
 
 Test { [[
@@ -4429,7 +4430,7 @@ loop do
 end;
 escape a;
 ]],
-    tight = 'tight loop',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
 }
 Test { [[
 var int a=0;
@@ -4456,7 +4457,7 @@ loop do
 end;
 escape 0;
 ]],
-    tight = 'line 1 : tight loop',
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
 }
 
 Test { [[

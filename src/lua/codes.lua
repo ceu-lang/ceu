@@ -149,6 +149,7 @@ while (1) {
     ]]..max.inc..[[
 }
 ]])
+        CASE(me, me.lbl_out)
         CLEAR(me)
     end,
 
@@ -206,20 +207,37 @@ while (1) {
     ]]..max.inc..[[
 }
 ]])
+        CASE(me, me.lbl_out)
         CLEAR(me)
     end,
 
     __loop = function (me) return me.tag=='Loop' or me.tag=='Loop_Num' end,
-    Break = function (me)
+    __outer = function (me)
         local lbl = unpack(me)
-assert(not lbl)
-        LINE(me, 'break;')
+        for loop in AST.iter(F.__loop) do
+            if not lbl then
+                return loop
+            else
+                local _, id = unpack(loop)
+                if id and id.dcl==lbl.dcl then
+                    return loop
+                end
+            end
+        end
+    end,
+    Break = function (me)
+        local loop = F.__outer(me)
+        ASR(loop, me,
+            'invalid `break´ : expected matching enclosing `loop´')
+        LINE(me, [[
+CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..loop.lbl_out.id..[[, NULL);
+return;
+]])
     end,
     Continue = function (me)
-        local lbl = unpack(me)
-assert(not lbl)
-        local loop = AST.iter(F.__loop)()
-assert(loop)
+        local loop = F.__outer(me)
+        ASR(loop, me,
+            'invalid `continue´ : expected matching enclosing `loop´')
         LINE(me, [[
 CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..loop.lbl_cnt.id..[[, NULL);
 return;

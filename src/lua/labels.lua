@@ -28,6 +28,7 @@ F = {
     Loop_Num = 'Loop',
     Loop = function (me)
         me.lbl_cnt = new{'Loop_Continue'}
+        me.lbl_out = new{'Loop_Break'}
     end,
 
     ---------------------------------------------------------------------------
