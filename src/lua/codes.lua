@@ -142,9 +142,14 @@ CEU_APP.data.__max_]]..me.n..[[++;
 while (1) {
     ]]..max.chk..[[
     ]]..body.code..[[
+]])
+        CASE(me, me.lbl_cnt)
+        CLEAR(body)
+        LINE(me, [[
     ]]..max.inc..[[
 }
 ]])
+        CLEAR(me)
     end,
 
     Loop_Num = function (me)
@@ -193,16 +198,32 @@ while (1) {
         LINE(me, [[
     ]]..max.chk..[[
     ]]..body.code..[[
+]])
+        CASE(me, me.lbl_cnt)
+        CLEAR(body)
+        LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
     ]]..max.inc..[[
 }
 ]])
+        CLEAR(me)
     end,
 
+    __loop = function (me) return me.tag=='Loop' or me.tag=='Loop_Num' end,
     Break = function (me)
         local lbl = unpack(me)
 assert(not lbl)
         LINE(me, 'break;')
+    end,
+    Continue = function (me)
+        local lbl = unpack(me)
+assert(not lbl)
+        local loop = AST.iter(F.__loop)()
+assert(loop)
+        LINE(me, [[
+CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..loop.lbl_cnt.id..[[, NULL);
+return;
+]])
     end,
 
     Stmt_Call = function (me)

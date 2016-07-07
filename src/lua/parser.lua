@@ -357,7 +357,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     -- continue/i
     , _Escape   = K'escape'   * ('/'*V'ID_int' + Cc(true)) * OPT(V'__Exp')
     , Break    = K'break'    * OPT('/'*V'ID_int')
-    , _Continue = K'continue' * OPT('/'*V'ID_int')
+    , Continue = K'continue' * OPT('/'*V'ID_int')
 
     -- do/A ... end
     , Do = K'do' * ('/'*(V'ID_int'+V'ID_any') + Cc(true)) *
@@ -817,7 +817,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                    )^-1
                  * (V'Nat_Block'+V'_Code_impl')^0 )
 
-    , __Stmt_Last  = V'_Escape' + V'Break' + V'_Continue' + V'Await_Forever'
+    , __Stmt_Last  = V'_Escape' + V'Break' + V'Continue' + V'Await_Forever'
     , __Stmt_Last_Block = V'Par'
     , __Stmt_Simple = V'Nothing'
                     + V'_Vars_set'  + V'_Vars'

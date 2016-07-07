@@ -25,6 +25,11 @@ F = {
         me.lbl_out = new{'Do'}
     end,
 
+    Loop_Num = 'Loop',
+    Loop = function (me)
+        me.lbl_cnt = new{'Loop_Continue'}
+    end,
+
     ---------------------------------------------------------------------------
 
     Par_Or__PRE  = 'Par__PRE',
