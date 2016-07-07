@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -5280,6 +5279,44 @@ escape ret;
 ]],
     run = 1,
 }
+
+Test { [[
+event int a;
+var int ret = 0;
+par/or do
+    ret = await a;
+with
+    emit a => 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+--]===]
+-- works with INPUT__STK, doesn't work with single-pass scheduler
+Test { [[
+event int a;
+var int ret = 0;
+par/or do
+    ret = await a;
+with
+    emit a => 1;
+end
+par/or do
+    await FOREVER;
+with
+    await FOREVER;
+with
+    await 1s;
+    emit a => 2;
+with
+    ret = await a;
+end
+escape ret;
+]],
+    run = { ['~>1s']=2 },
+}
+do return end
 
 Test { [[
 input void OS_START;

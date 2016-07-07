@@ -39,7 +39,7 @@ enum {
 
 enum {
     CEU_INPUT__NONE = 0,
-    CEU_INPUT__GO,
+    CEU_INPUT__STK,
     CEU_INPUT__CLEAR,
     CEU_INPUT__ASYNC,
     CEU_INPUT__WCLOCK,
@@ -198,13 +198,8 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlI, trl, trl->lbl, trl->evt);
         int matches_await = (trl->evt==evt->id);
 
         if (matches_clear || matches_await) {
-#if 1
-            trl->evt = CEU_INPUT__NONE;
-            CEU_STK_LBL(stk, trl, trl->lbl, evt);
-#else
-            trl->evt = CEU_INPUT__GO;
+            trl->evt = CEU_INPUT__STK;
             trl->stk = stk;             /* awake only at this level again */
-#endif
         } else {
             if (evt->id==CEU_INPUT__CLEAR) {
                 trl->evt = CEU_INPUT__NONE;
@@ -212,19 +207,16 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlI, trl, trl->lbl, trl->evt);
         }
     }
 
-#if 1
-#else
     for (trlI=trl0, trl=&CEU_APP.trails[trlI];
          trlI<trlF;
          trlI++, trl++)
     {
-        //if (trl->evt==CEU_INPUT__GO && trl->stk==stk) {
-        if (trl->evt==CEU_INPUT__GO) {
+        //if (trl->evt==CEU_INPUT__STK && trl->stk==stk) {
+        if (trl->evt==CEU_INPUT__STK) {
             trl->evt = CEU_INPUT__NONE;
             CEU_STK_LBL(stk, trl, trl->lbl, evt);
         }
     }
-#endif
 }
 
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
