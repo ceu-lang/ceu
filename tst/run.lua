@@ -143,6 +143,7 @@ end
     --dofile 'ast.lua'
     if not check(T,'ast')    then return end
     if not check(T,'adjs')   then return end
+--AST.dump(AST.root)
     dofile(DIR..'types.lua')
     if not check(T,'dcls')   then return end
     if not check(T,'names')  then return end
@@ -151,6 +152,7 @@ end
     if not check(T,'stmts')  then return end
     if not check(T,'inits')  then return end
     if not check(T,'scopes') then return end
+    if not check(T,'tight_') then return end
     if not check(T,'props_') then return end
     if not check(T,'trails') then return end
     if not check(T,'labels') then return end
@@ -158,9 +160,8 @@ end
     dofile(DIR..'vals.lua')
     if not check(T,'codes')  then return end
 --do return end
---AST.dump(AST.root)
 
-if T.ana or T._ana or T.tmp or T.tight or T.props then return end
+if T.ana or T._ana or T.tmp or T._tight or T.props then return end
 
     DBG,ASR = DBG1,ASR1
     if CEU.opts.env then

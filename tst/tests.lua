@@ -3313,7 +3313,7 @@ Test { [[
 loop do end
 escape 0;
 ]],
-    tight = 'tight loop',
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
 }
 
 Test { [[
@@ -3326,8 +3326,20 @@ loop i in [0->_] do
 end
 escape sum;
 ]],
-    loop = true,
-    tight = 'tight loop',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+}
+
+Test { [[
+var int sum = 0;
+loop i in [0->_] do
+    if i == 10 then
+        break;
+    end
+    sum = sum + 1;
+end
+escape sum;
+]],
+    wrn = true,
     run = 10,
 }
 
@@ -3401,8 +3413,7 @@ loop i in [_<-0] do
 end
 escape sum;
 ]],
-    loop = true,
-    tight = 'tight loop',
+    wrn = true,
     run = 10,
 }
 
@@ -3411,7 +3422,6 @@ loop i in [-1 <- 0] do
 end
 escape 1;
 ]],
-    --tight = 'line 1 : tight loop',
     run = 1,
 }
 
@@ -3423,8 +3433,18 @@ loop i in [0->n[ do
 end
 escape n;
 ]],
-    loop = true,
-    tight = 'tight loop',
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+}
+
+Test { [[
+var int n = 10;
+var int sum = 0;
+loop i in [0->n[ do
+    sum = sum + 1;
+end
+escape n;
+]],
+    wrn = true,
     run = 10,
 }
 
@@ -3438,8 +3458,7 @@ loop i do
 end
 escape sum;
 ]],
-    loop = true,
-    tight = 'tight loop',
+    wrn = true,
     run = 10,
 }
 
@@ -3624,7 +3643,7 @@ escape a;
         --isForever = true,
         --unreachs = 1,
     --},
-    tight = 'tight loop',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
 }
 
 Test { [[break; escape 1;]],
@@ -3736,6 +3755,40 @@ end
 }
 
 Test { [[
+loop/1 i in [0->_[ do
+    break;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+loop do
+    var int v = 10;
+    loop i in [0->v[ do
+        await 1s;
+        escape 2;
+    end
+end
+escape 0;
+]],
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+}
+
+Test { [[
+loop do
+    loop i in [0->_[ do
+        await 1s;
+        escape 2;
+    end
+end
+escape 0;
+]],
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+}
+
+Test { [[
 input void OS_START;
 var int v = 1;
 loop do
@@ -3746,6 +3799,7 @@ loop do
 end
 escape 1;
 ]],
+    wrn = true,
     ana = 'line 4 : `loop´ iteration is not reachable',
     --ana = 'line 4 : statement is not reachable',    -- TODO: should be line 7
     run = 2,

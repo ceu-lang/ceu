@@ -240,13 +240,17 @@ error'TODO: luacov never executes this?'
         -- loop i in ]0 ...] do end
         -- loop i in [0+1 ...] do end
         if lb == ']' then
-            fr = node('Exp_+', me.ln, '+', fr, node('NUMBER',me.ln,1))
+            if fr.tag ~= 'ID_any' then
+                fr = node('Exp_+', me.ln, '+', fr, node('NUMBER',me.ln,1))
+            end
         end
 
         -- loop i in [... 10[ do end
         -- loop i in [... 10-1] do end
         if rb == '[' then
-            to = node('Exp_-', me.ln, '-', to, node('NUMBER',me.ln,1))
+            if to.tag ~= 'ID_any' then
+                to = node('Exp_-', me.ln, '-', to, node('NUMBER',me.ln,1))
+            end
         end
 
         -- loop i in [...] do end
