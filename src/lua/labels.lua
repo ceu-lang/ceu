@@ -54,7 +54,7 @@ F = {
         local ID_ext = unpack(me)
         me.lbl_out = new{'Await_'..ID_ext.dcl.id}
     end,
-    Await_Evt = function (me)
+    Await_Int = function (me)
         local Exp_Name = unpack(me)
         me.lbl_out = new{'Await_'..Exp_Name.info.dcl.id}
     end,

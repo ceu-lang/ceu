@@ -393,7 +393,7 @@ assert(fr.tag == 'Await_Wclock')
             if ID_ext then
                 id = 'tceu_input_'..ID_ext.dcl.id
             else
-                local Exp_Name = AST.asr(Await_Until,'', 1,'Await_Evt', 1,'Exp_Name')
+                local Exp_Name = AST.asr(Await_Until,'', 1,'Await_Int', 1,'Exp_Name')
                 id = 'tceu_event_'..Exp_Name.info.dcl.id..'_'..Exp_Name.info.dcl.n
             end
         end
@@ -420,7 +420,7 @@ assert(fr.tag == 'Await_Wclock')
         })
     end,
 
-    Await_Evt = function (me)
+    Await_Int = function (me)
         local Exp_Name = unpack(me)
         HALT(me, {
             evt = Exp_Name.info.dcl.id_,

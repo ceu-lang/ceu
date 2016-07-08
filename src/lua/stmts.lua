@@ -198,7 +198,7 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
 
     Set_Await_one = function (me)
         local fr, to = unpack(me)
-        assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Await' or fr.tag=='Await_Evt')
+        assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Await' or fr.tag=='Await_Int')
         check_tp(me, to.info.tp, fr.tp or fr.info.tp, 'invalid assignment')
     end,
 
@@ -232,7 +232,7 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
         me.tp = AST.copy(Type)
     end,
 
-    Await_Evt = function (me, tag)
+    Await_Int = function (me, tag)
         local e = unpack(me)
 
         -- ctx

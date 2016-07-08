@@ -584,11 +584,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __Awaits_one  = K'await' * (V'Await_Wclock' + V'Abs_Await')
     , __Awaits_many = K'await' * V'Await_Until'
 
-    , Await_Until  = (V'Await_Ext' + V'Await_Evt') * OPT(K'until'*V'__Exp')
-    , _Await_Until = (V'Await_Ext' + V'Await_Evt') * Cc(false)
+    , Await_Until  = (V'Await_Ext' + V'Await_Int') * OPT(K'until'*V'__Exp')
+    , _Await_Until = (V'Await_Ext' + V'Await_Int') * Cc(false)
 
     , Await_Ext    = V'ID_ext' -I(V'Abs_Await') -- TODO: rem
-    , Await_Evt    = V'Exp_Name' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
+    , Await_Int    = V'Exp_Name' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
     , Await_Wclock = (V'WCLOCKK' + V'WCLOCKE')
 
     , Await_Forever = K'await' * K'FOREVER'
