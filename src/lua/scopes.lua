@@ -39,16 +39,17 @@ F = {
             local fr_nat = TYPES.is_nat(fr.info.tp)
             assert((to_ptr or to_nat) and (fr_ptr or fr_nat), 'bug found')
 
+            local to_blk, fr_blk
             local ok do
                 if (not fr.info.dcl) or (fr.info.dcl.tag=='Nat') then
                     ok = true   -- var int&& x = _X/null/""/...;
                 elseif to_nat then
                     ok = false  -- _X = &&x;
                 else
-                    local to_blk = to.info.dcl_obj and to.info.dcl_obj.blk or
-                                    to.info.dcl.blk
-                    local fr_blk = fr.info.dcl_obj and fr.info.dcl_obj.blk or
-                                    fr.info.dcl.blk
+                    to_blk = to.info.dcl_obj and to.info.dcl_obj.blk or
+                                to.info.dcl.blk
+                    fr_blk = fr.info.dcl_obj and fr.info.dcl_obj.blk or
+                                fr.info.dcl.blk
                     ok = check_blk(to_blk, fr_blk)
                 end
             end 

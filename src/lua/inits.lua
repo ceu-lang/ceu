@@ -7,6 +7,7 @@ local yields = {
     Escape        = true,
     Every         = true,
     Loop          = true,
+    Loop_Num      = true,
     Async         = true,
     _Async_Thread = true,
     _Async_Isr    = true,

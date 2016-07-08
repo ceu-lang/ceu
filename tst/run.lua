@@ -171,9 +171,9 @@ end
     if not check(T,'trails') then return end
     if not check(T,'labels') then return end
     if not check(T,'mems')   then return end
+do return end
     dofile(DIR..'vals.lua')
     if not check(T,'codes')  then return end
---do return end
 
 if T.ana or T._ana or T.tmp or T.props then return end
 

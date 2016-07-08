@@ -32,6 +32,7 @@ AST.tag2id = {
     Escape        = 'escape',
     Every         = 'every',
     Loop          = 'loop',
+    Loop_Num      = 'loop',
     Async         = 'async',
     _Async_Thread  = 'async/thread',
     _Async_Isr     = 'async/isr',

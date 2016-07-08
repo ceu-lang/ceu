@@ -17866,7 +17866,8 @@ loop do
     end
 end
 ]],
-    tight = 'line 1 : tight loop', -- TODO: par/and
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    --tight = 'line 1 : tight loop', -- TODO: par/and
     --props = "line 8 : not permitted inside `finalize´",
     --fin = 'line 6 : attribution does not require `finalize´',
     --fin = 'line 6 : attribution to pointer with greater scope',
@@ -19654,8 +19655,7 @@ with
     end
     end
 with
-    loop do
-        await a;
+    every a do
         ret = ret + 1;
     end
 end
@@ -21474,8 +21474,9 @@ do finalize with
 end
 escape 1;
 ]],
-    tight = 'line 2 : tight loop',
-    run = 1,
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    --tight = 'line 2 : tight loop',
+    --run = 1,
 }
 
 Test { [[
@@ -23408,6 +23409,7 @@ _assert(_strcmp(argv[1],"arg")==0);
 escape argc;
 ]],
     --ana = 'line 3 : `loop´ iteration is not reachable',
+    todo = 'argv',
     wrn = true,
     run = 2,
     args = 'arg',
@@ -23424,6 +23426,7 @@ _assert(argv[1][0] == {'a'});
 escape argc;
 ]],
     --ana = 'line 3 : `loop´ iteration is not reachable',
+    todo = 'argv',
     wrn = true,
     run = 2,
     args = 'arg',
@@ -25042,7 +25045,8 @@ loop i in [0 -> ($foo) as int[ do
 end
 escape tot;
 ]],
-    tight = 'line 3 : tight loop',
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    --tight = 'line 3 : tight loop',
 }
 Test { [[
 vector[5] byte foo = [1, 2, 3, 4, 5];
@@ -25076,6 +25080,18 @@ loop i in [0 -> ($$foo) as int[ do
 end
 escape tot+1;
 ]],
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+}
+
+Test { [[
+vector[] byte foo = [1, 2, 3, 4, 5];
+var int tot = 0;
+loop i in [0 -> ($$foo) as int[ do
+    tot = tot + foo[i];
+end
+escape tot+1;
+]],
+    wrn = true,
     run = 1,
 }
 
@@ -28700,12 +28716,14 @@ end
 Test { [[
 loop do end
 ]],
-    tight = 'line 1 : tight loop',
+    tight_ = 'line 1 : invalid tight `loop´ :',
+    --tight = 'line 1 : tight loop',
 }
 Test { [[
 loop i do end
 ]],
-    tight = 'line 1 : tight loop',
+    tight_ = 'line 1 : invalid tight `loop´ :',
+    --tight = 'line 1 : tight loop',
 }
 Test { [[
 loop i in [0 -> 10[ do end
@@ -28717,7 +28735,8 @@ Test { [[
 var int v=1;
 loop i in [0->v[ do end
 ]],
-    tight = 'line 2 : tight loop',
+    tight_ = 'line 2 : invalid tight `loop´ :',
+    --tight = 'line 2 : tight loop',
 }
 
 -- INFINITE LOOP/EXECUTION
@@ -46115,7 +46134,8 @@ call/recursive Load(null);
 
 escape 1;
 ]],
-    tight = 'tight loop',
+    tight_ = 'line 11 : invalid tight `loop´ :',
+    --tight = 'tight loop',
     run = 1,
 }
 
