@@ -5708,7 +5708,6 @@ escape ret;
     run = 1000, -- had stack overflow
 }
 
---]===]
 Test { [[
 input void OS_START;
 event (int,int) e;
@@ -15877,6 +15876,7 @@ with
     escape cc;
 end;
 ]],
+    wrn = true,
     run = { ['1~>A;1~>A;1~>A;1~>Z'] = 3 },
 }
 
@@ -15984,6 +15984,7 @@ with
 end;
 escape a;
 ]],
+    wrn = true,
     run = { ['10~>A'] = 1 },
 }
 
@@ -16303,6 +16304,7 @@ escape aa;
 }
 
 -- TODO: STACK
+--]===]
 Test { [[
 input void OS_START;
 event int a;
@@ -16313,14 +16315,13 @@ par do
     emit a => 2;
     escape x;
 with
-    loop do
-        await a;
+    every a do
         x = x + 1;
     end
 end
 ]],
-    --run = 2,
-    run = 1,
+    run = 2,
+    --run = 1,
 }
 Test { [[
 input void OS_START;

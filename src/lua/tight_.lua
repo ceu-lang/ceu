@@ -1,4 +1,5 @@
 local awaits = {
+    Every         = true,
     Async         = true,
     _Async_Thread = true,
     _Async_Isr    = true,

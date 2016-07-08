@@ -134,6 +134,15 @@ CEU_APP.data.__max_]]..me.n..[[++;
         end
     end,
 
+    Every = function (me)
+        local body = unpack(me)
+        LINE(me, [[
+while (1) {
+    ]]..body.code..[[
+}
+]])
+    end,
+
     Loop = function (me)
         local _, body = unpack(me)
         local max = F.__loop_max(me)

@@ -5,6 +5,7 @@ local yields = {
     Par_And       = true,
     Par_Or        = true,
     Escape        = true,
+    Every         = true,
     Loop          = true,
     Async         = true,
     _Async_Thread = true,

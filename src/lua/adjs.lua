@@ -348,8 +348,7 @@ error'TODO: luacov never executes this?'
             set_awt = awt
         end
 
-        return node('Loop', me.ln,
-                false,
+        return node('Every', me.ln,
                 node('Block', me.ln,
                     node('Stmts', me.ln,
                         dcls,
