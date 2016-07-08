@@ -15684,47 +15684,6 @@ end
 }
 
 Test { [[
-input void OS_STOP;
-var int ret = 0;
-
-par/or do
-
-input void OS_START;
-
-await OS_START;
-
-do finalize with
-    nothing;
-end
-
-par do
-    loop do
-        await 10min;
-    end
-with
-    await 1s;
-    loop do
-        par/or do
-            loop do
-                await 10min;
-            end
-        with
-            await 1s;
-            ret = ret + 1;
-        end
-    end
-end
-
-with
-    await OS_STOP;
-end
-
-escape ret;
-]],
-    run = { ['~>OS_START; ~>10s; ~>OS_STOP']=9 },
-}
-
-Test { [[
 var int ret = 0;
 input void STOP;
 par/or do
@@ -18431,6 +18390,47 @@ escape _f(&&v);
     wrn = true,
     scopes = 'line 8 : invalid `call´ : expected `finalize´ for variable "v"',
     --fin = 'line 8 : call requires `finalize´',
+}
+
+Test { [[
+input void OS_STOP;
+var int ret = 0;
+
+par/or do
+
+input void OS_START;
+
+await OS_START;
+
+do finalize with
+    nothing;
+end
+
+par do
+    loop do
+        await 10min;
+    end
+with
+    await 1s;
+    loop do
+        par/or do
+            loop do
+                await 10min;
+            end
+        with
+            await 1s;
+            ret = ret + 1;
+        end
+    end
+end
+
+with
+    await OS_STOP;
+end
+
+escape ret;
+]],
+    run = { ['~>OS_START; ~>10s; ~>OS_STOP']=9 },
 }
 
 --<<< FINALLY / FINALIZE

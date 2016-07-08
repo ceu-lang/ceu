@@ -22,9 +22,9 @@ F = {
     end,
 
     Block = function (me)
-        local Stmts = unpack(me)
+        MAX_all(me)
         if me.fins then
-            me.trails_n = Stmts.trails_n + #me.fins
+            me.trails_n = me.trails_n + #me.fins
         end
     end,
 
