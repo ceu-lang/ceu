@@ -21,6 +21,13 @@ F = {
         end
     end,
 
+    Block = function (me)
+        local Stmts = unpack(me)
+        if me.fins then
+            me.trails_n = Stmts.trails_n + #me.fins
+        end
+    end,
+
     If = function (me)
         local c, t, f = unpack(me)
         MAX_all(me, {t,f})
@@ -49,6 +56,21 @@ G = {
         if (not me.trails) and me.__par then
             me.trails = me.__par.trails
         end
+    end,
+
+    Block__PRE = function (me)
+        if not me.fins then
+            return
+        end
+
+        local a,b = unpack(me.trails)
+
+        for i, fin in ipairs(me.fins) do
+            fin.trails = { a+i-1, b+i-1 }
+        end
+
+        local Stmts = unpack(me)
+        Stmts.trails = { a+#me.fins, b }
     end,
 
     Par_Or__PRE  = 'Par__PRE',

@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17785,6 +17784,7 @@ end
     scopes = 'line 5 : invalid `finalize´ : unmatching identifiers : expected "a" (vs. /tmp/tmp.ceu:4)',
 }
 
+--]===]
 Test { [[
 var int&& a = null;
 do

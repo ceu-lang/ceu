@@ -180,6 +180,10 @@ F = {
                 'invalid `finalize´ : unmatching identifiers : expected "'..
                 v1.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
         end
+
+        local blk = me.__fin_vars.blk
+        blk.fins = blk.fins or {}
+        blk.fins[#blk.fins+1] = me
     end,
 }
 

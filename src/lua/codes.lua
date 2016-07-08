@@ -79,6 +79,36 @@ F = {
         CODES.native[pre_pos] = CODES.native[pre_pos]..code
     end,
 
+    If = function (me)
+        local c, t, f = unpack(me)
+        LINE(me, [[
+if (]]..V(c)..[[) {
+    ]]..t.code..[[
+} else {
+    ]]..f.code..[[
+}
+]])
+    end,
+
+    Finalize = function (me)
+        local now,_,later = unpack(me)
+        LINE(me, [[
+CEU_APP.trails[]]..me.trails[1]..[[].evt = CEU_INPUT__CLEAR;
+CEU_APP.trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl_in.id..[[;
+CEU_APP.trails[]]..me.trails[1]..[[].stk = NULL;
+if (0) {
+]])
+        CASE(me, me.lbl_in)
+        CONC(me, later)
+        LINE(me, [[
+    return;
+}
+]])
+        CONC(me, now)
+    end,
+
+    ---------------------------------------------------------------------------
+
     Do = function (me)
         CONC_ALL(me)
 
@@ -91,6 +121,7 @@ ceu_out_assert_msg(0, "reached end of `do´");
         CASE(me, me.lbl_out)
         CLEAR(me)
     end,
+
     Escape = function (me)
         LINE(me, [[
 CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.outer.lbl_out.id..[[, NULL);
@@ -98,16 +129,7 @@ return;
 ]])
     end,
 
-    If = function (me)
-        local c, t, f = unpack(me)
-        LINE(me, [[
-if (]]..V(c)..[[) {
-    ]]..t.code..[[
-} else {
-    ]]..f.code..[[
-}
-]])
-    end,
+    ---------------------------------------------------------------------------
 
     __loop_max = function (me)
         local max = unpack(me)
@@ -240,9 +262,6 @@ return;
 ]]..V(call)..[[;
 ]])
     end,
-
-    ---------------------------------------------------------------------------
-
 
     ---------------------------------------------------------------------------
 

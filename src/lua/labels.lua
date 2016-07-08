@@ -25,6 +25,10 @@ F = {
         me.lbl_out = new{'Do'}
     end,
 
+    Finalize = function (me)
+        me.lbl_in = new{'Finalize'}
+    end,
+
     Loop_Num = 'Loop',
     Loop = function (me)
         me.lbl_cnt = new{'Loop_Continue'}
