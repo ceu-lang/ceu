@@ -30,6 +30,7 @@ AST.tag2id = {
     Par_And       = 'par/and',
     Par_Or        = 'par/or',
     Escape        = 'escape',
+    Every         = 'every',
     Loop          = 'loop',
     Async         = 'async',
     _Async_Thread  = 'async/thread',

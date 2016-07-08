@@ -16304,7 +16304,6 @@ escape aa;
 }
 
 -- TODO: STACK
---]===]
 Test { [[
 input void OS_START;
 event int a;
@@ -17170,7 +17169,7 @@ Test { [[
 native _Tx;
 native/pos do
     int f (int v) {
-        escape v + 1;
+        return v + 1;
     }
     typedef struct {
         int (*f) (int);
@@ -17253,8 +17252,8 @@ v = &vv;
 await 1s;
 do
     var int vvv = 1;
-    native/nohold ___ceu_nothing;
-    ___ceu_nothing(&&vvv);
+    //native/nohold ___ceu_nothing;
+    //___ceu_nothing(&&vvv);
 end
 escape v;
 ]],
@@ -17346,10 +17345,10 @@ else/if true then
 else
     x = &c;
 end
-x = 1;
-escape a + b + x;
+x = 10;
+escape a + b + x + c;
 ]],
-    run = 5,
+    run = 24,
 }
 
 Test { [[
@@ -17542,7 +17541,7 @@ every 1s do
 end
 escape 1;
 ]],
-    inits = 'line 2 : uninitialized variable "sfc" : reached `loop´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "sfc" : reached `every´ (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
     --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
     --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (/tmp/tmp.ceu:2)',
@@ -17589,28 +17588,6 @@ var& int? v = &_f();
 escape 0;
 ]],
     scopes = 'line 2 : invalid binding : expected `finalize´',
-}
-
-Test { [[
-native _fff;
-native/pos do
-    int V = 10;
-    int* fff (int v) {
-        V += v;
-        escape &V;
-    }
-end
-var int   v = 1;
-var int&& p = &&v;
-var& int? r;
-do
-    r = &_fff(*p);
-finalize (r) with
-    nothing;
-end
-escape r!;
-]],
-    run = 11,
 }
 
 Test { [[
@@ -17674,23 +17651,6 @@ var& int v;
 escape v;
 ]],
     run = 1,
-}
-
-Test { [[
-native _SDL_Renderer, _f;
-native/nohold _g;
-
-var& _SDL_Renderer? ren;
-    do ren = &_f();
-    finalize (ren) with
-    end
-
-await 1s;
-_g(&&(ren!));
-
-escape 1;
-]],
-    cc = 'error: unknown type name ‘SDL_Renderer’',
 }
 
 -->>> FINALLY / FINALIZE
@@ -17775,6 +17735,7 @@ end
     scopes = 'line 5 : invalid `finalize´ : unmatching identifiers : expected "a" (vs. /tmp/tmp.ceu:4)',
 }
 
+--]===]
 Test { [[
 var int&& a = null;
 do
@@ -60799,6 +60760,45 @@ escape 1;
     parser = 'line 1 : after `?´ : expected internal identifier',
     --env = 'line 1 : invalid type modifier : `??´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+
+Test { [[
+native _fff;
+native/pos do
+    int V = 10;
+    int* fff (int v) {
+        V += v;
+        escape &V;
+    }
+end
+var int   v = 1;
+var int&& p = &&v;
+var& int? r;
+do
+    r = &_fff(*p);
+finalize (r) with
+    nothing;
+end
+escape r!;
+]],
+    run = 11,
+}
+
+Test { [[
+native _SDL_Renderer, _f;
+native/nohold _g;
+
+var& _SDL_Renderer? ren;
+    do ren = &_f();
+    finalize (ren) with
+    end
+
+await 1s;
+_g(&&(ren!));
+
+escape 1;
+]],
+    cc = 'error: unknown type name ‘SDL_Renderer’',
 }
 
 --<<< OPTION TYPES

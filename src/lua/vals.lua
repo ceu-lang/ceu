@@ -116,6 +116,8 @@ F = {
 
 -- UNARY
 
+    ['Exp_1*']  = 'Exp_1',
+    ['Exp_&&']  = 'Exp_1',
     ['Exp_1+']  = 'Exp_1',
     ['Exp_1-']  = 'Exp_1',
     ['Exp_not'] = 'Exp_1',
