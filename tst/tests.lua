@@ -12,6 +12,7 @@ end
 do return end -- OK
 --]===]
 
+
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
@@ -17764,11 +17765,13 @@ native _f;
 native/pos do
     int* f;
 end
-var int&& a = null;
 do
-    _f = a;
-finalize (a) with
-    _f = &&_f;
+    var int&& a = null;
+    do
+        _f = a;
+    finalize (a) with
+        _f = &&_f;
+    end
 end
 escape (_f == &&_f) as int;
 ]],
@@ -17905,19 +17908,6 @@ escape v;
 }
 
 Test { [[
-native _f;
-input void E;
-var& int? n;
-do n = &_f();
-finalize (n) with
-end
-await E;
-escape n!;
-]],
-    cc = 'error: implicit declaration of function ‘f’',
-}
-
-Test { [[
 loop do
     do
     var int&& a;
@@ -17981,51 +17971,6 @@ do/_
 end;
 escape ret;
 ]],
-    run = 1,
-}
-
-Test { [[
-native _f;
-native/pos do
-    int* f (void) {
-        escape NULL;
-    }
-end
-var int r = 0;
-do/_
-    var& int? a;
-    do a = &_f();
-    finalize (a) with
-        var int b = do/_ escape 2; end;
-    end
-    r = 1;
-end
-escape r;
-]],
-    --props = "line 8 : not permitted inside `finalize´",
-    cc = '9:27: error: variable ‘__ceu_a_3’ set but not used [-Werror=unused-but-set-variable]',
-}
-
-Test { [[
-native _f;
-native/pos do
-    int* f (void) {
-        escape NULL;
-    }
-end
-var int r = 0;
-do/_
-    var& int? a;
-    do a = &_f();
-    finalize (a) with
-        if a? then end
-        var int b = do/_ escape 2; end;
-    end
-    r = 1;
-end
-escape r;
-]],
-    --props = "line 8 : not permitted inside `finalize´",
     run = 1,
 }
 
@@ -18101,7 +18046,7 @@ escape 0;
 
 Test { [[
 native _f;
-native/pos do
+native/pre do
     void f (int* a) {
         *a = 10;
     }
@@ -18109,8 +18054,8 @@ native/pos do
 end
 native _t;
 var _t v = _f;
-    native/nohold ___ceu_nothing;
-    ___ceu_nothing(v);
+    //native/nohold ___ceu_nothing;
+    //___ceu_nothing(v);
 await 1s;
 do/_
     var int a=0;
@@ -18130,7 +18075,7 @@ end
 
 Test { [[
 native _f;
-native/pos do
+native/pre do
     void f (int* a) {
         *a = 10;
     }
@@ -18138,8 +18083,8 @@ native/pos do
 end
 native _t;
 var _t v = _f;
-    native/nohold ___ceu_nothing;
-    ___ceu_nothing(v);
+    //native/nohold ___ceu_nothing;
+    //___ceu_nothing(v);
 await 1s;
 var int a=0;
 do _f(&&a); finalize (a) with nothing; end;
@@ -18189,85 +18134,6 @@ escape(a);
 }
 
 Test { [[
-native _getV;
-native/pos do
-    int V = 10;
-    int* getV (void) {
-        escape &V;
-    }
-end
-
-var& int? v;
-do
-    v = &_getV();
-finalize (v)
-with
-    nothing;
-end
-
-escape v!;
-]],
-    run = 10,
-}
-Test { [[
-native _V, _getV;
-native/pos do
-    int V = 10;
-    int* getV (void) {
-        escape &V;
-    }
-end
-
-var& int? v1;
-do v1 = &_getV();
-finalize (v1) with
-    nothing;
-end
-v1 = 20;
-
-var& int? v2;
-do v2 = &_getV();
-finalize (v2) with
-    nothing;
-end
-
-escape v1!+v2!+_V;
-]],
-    --env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    run = 60,
-}
-Test { [[
-native _V, _getV;
-native/pos do
-    int V = 10;
-    int* getV (void) {
-        escape &V;
-    }
-end
-
-var& int? v1;
-do
-    v1 = &_getV();
-finalize (v1)
-with
-    nothing;
-end
-v1! = 20;
-
-var& int? v2;
-do
-    v2 = &_getV();
-finalize (v2)
-with
-    nothing;
-end
-
-escape v1!+v2!+_V;
-]],
-    run = 60,
-}
-
-Test { [[
 do
     emit e;
 finalize with
@@ -18301,36 +18167,6 @@ escape p!;
 ]],
     scopes = 'line 4 : invalid `finalize´ : unmatching identifiers : expected "p" (vs. /tmp/tmp.ceu:3)',
     --run = 5,
-}
-
-Test { [[
-native _int, _f;
-native/pre do
-    int* f (int* ptr) { return ptr }
-end
-var int v = 2;
-var& _int? p = &_f(&&v)
-                finalize (p,v) with
-                    v = 5;
-                end;
-escape p!;
-]],
-    run = 5,
-}
-
-Test { [[
-native _int, _f;
-native/pre do
-    int* f (int* ptr) { return ptr }
-end
-var int v = 2;
-var& _int? p = &_f(&&v)
-                finalize (p,v) with
-                    v = 5;
-                end
-escape p!;
-]],
-    run = 5,
 }
 
 Test { [[
@@ -18522,6 +18358,8 @@ escape *(t.ptr);
     --ref = 'line 12 : invalid access to uninitialized variable "t" (declared at /tmp/tmp.ceu:11)',
     --run = 10,
 }
+
+-->>> CODE/INSTANTANEOUS
 
 Test { [[
 code/instantaneous get (void)=>int&& do
@@ -60831,6 +60669,8 @@ escape 1;
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 
+-->>> FINALIZE / OPTION
+
 Test { [[
 native _fff;
 native/pos do
@@ -60869,6 +60709,175 @@ escape 1;
 ]],
     cc = 'error: unknown type name ‘SDL_Renderer’',
 }
+
+Test { [[
+native _f;
+input void E;
+var& int? n;
+do n = &_f();
+finalize (n) with
+end
+await E;
+escape n!;
+]],
+    cc = 'error: implicit declaration of function ‘f’',
+}
+
+Test { [[
+native _f;
+native/pos do
+    int* f (void) {
+        escape NULL;
+    }
+end
+var int r = 0;
+do/_
+    var& int? a;
+    do a = &_f();
+    finalize (a) with
+        var int b = do/_ escape 2; end;
+    end
+    r = 1;
+end
+escape r;
+]],
+    --props = "line 8 : not permitted inside `finalize´",
+    cc = '9:27: error: variable ‘__ceu_a_3’ set but not used [-Werror=unused-but-set-variable]',
+}
+
+Test { [[
+native _f;
+native/pos do
+    int* f (void) {
+        escape NULL;
+    }
+end
+var int r = 0;
+do/_
+    var& int? a;
+    do a = &_f();
+    finalize (a) with
+        if a? then end
+        var int b = do/_ escape 2; end;
+    end
+    r = 1;
+end
+escape r;
+]],
+    --props = "line 8 : not permitted inside `finalize´",
+    run = 1,
+}
+
+Test { [[
+native _getV;
+native/pos do
+    int V = 10;
+    int* getV (void) {
+        escape &V;
+    }
+end
+
+var& int? v;
+do
+    v = &_getV();
+finalize (v)
+with
+    nothing;
+end
+
+escape v!;
+]],
+    run = 10,
+}
+Test { [[
+native _V, _getV;
+native/pos do
+    int V = 10;
+    int* getV (void) {
+        escape &V;
+    }
+end
+
+var& int? v1;
+do v1 = &_getV();
+finalize (v1) with
+    nothing;
+end
+v1 = 20;
+
+var& int? v2;
+do v2 = &_getV();
+finalize (v2) with
+    nothing;
+end
+
+escape v1!+v2!+_V;
+]],
+    --env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    run = 60,
+}
+Test { [[
+native _V, _getV;
+native/pos do
+    int V = 10;
+    int* getV (void) {
+        escape &V;
+    }
+end
+
+var& int? v1;
+do
+    v1 = &_getV();
+finalize (v1)
+with
+    nothing;
+end
+v1! = 20;
+
+var& int? v2;
+do
+    v2 = &_getV();
+finalize (v2)
+with
+    nothing;
+end
+
+escape v1!+v2!+_V;
+]],
+    run = 60,
+}
+
+Test { [[
+native _int, _f;
+native/pre do
+    int* f (int* ptr) { return ptr }
+end
+var int v = 2;
+var& _int? p = &_f(&&v)
+                finalize (p,v) with
+                    v = 5;
+                end;
+escape p!;
+]],
+    run = 5,
+}
+
+Test { [[
+native _int, _f;
+native/pre do
+    int* f (int* ptr) { return ptr }
+end
+var int v = 2;
+var& _int? p = &_f(&&v)
+                finalize (p,v) with
+                    v = 5;
+                end
+escape p!;
+]],
+    run = 5,
+}
+
+--<<< FINALIZE / OPTION
 
 --<<< OPTION TYPES
 
