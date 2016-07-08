@@ -43,14 +43,16 @@ F = {
             local ok do
                 if (not fr.info.dcl) or (fr.info.dcl.tag=='Nat') then
                     ok = true   -- var int&& x = _X/null/""/...;
-                elseif to_nat then
-                    ok = false  -- _X = &&x;
                 else
-                    to_blk = to.info.dcl_obj and to.info.dcl_obj.blk or
-                                to.info.dcl.blk
                     fr_blk = fr.info.dcl_obj and fr.info.dcl_obj.blk or
                                 fr.info.dcl.blk
-                    ok = check_blk(to_blk, fr_blk)
+                    if to_nat then
+                        ok = false  -- _X = &&x;
+                    else
+                        to_blk = to.info.dcl_obj and to.info.dcl_obj.blk or
+                                    to.info.dcl.blk
+                        ok = check_blk(to_blk, fr_blk)
+                    end
                 end
             end 
             if not ok then
@@ -62,7 +64,7 @@ F = {
                         'invalid pointer assignment : expected `finalize´ for variable "'..fr.info.id..'"')
                     assert(not fin.__fin_vars, 'TODO')
                     fin.__fin_vars = {
-                        blk = fr_blk,
+                        blk = assert(fr_blk),
                         assert(fr.info.dcl_obj or fr.info.dcl)
                     }
                 end
