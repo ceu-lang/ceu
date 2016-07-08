@@ -51,6 +51,9 @@ AST.tag2id = {
 -->>> no/finalize
     Set_Await_many = 'await',
     Nothing        = 'nothing',
+-->>> props
+    Break    = 'break',
+    Continue = 'continue',
 }
 
 local _N = 0
@@ -144,7 +147,6 @@ function AST.is_par (par, child)
     if par == child then
         return true
     elseif not child.__par then
-error'TODO: luacov never executes this?'
         return false
     else
         return AST.is_par(par, child.__par)
@@ -294,7 +296,6 @@ local function visit_aux (F, me, I)
         assert(mid(me) == nil, me.tag)
     end
     if F.Node then
-error'TODO: luacov never executes this?'
         assert(F.Node(me) == nil)
     end
 

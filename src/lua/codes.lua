@@ -93,7 +93,7 @@ ceu_out_assert_msg(0, "reached end of `do´");
     end,
     Escape = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.do_.lbl_out.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.outer.lbl_out.id..[[, NULL);
 return;
 ]])
     end,
@@ -221,35 +221,15 @@ while (1) {
         CLEAR(me)
     end,
 
-    __loop = function (me) return me.tag=='Loop' or me.tag=='Loop_Num' end,
-    __outer = function (me)
-        local lbl = unpack(me)
-        for loop in AST.iter(F.__loop) do
-            if not lbl then
-                return loop
-            else
-                local _, id = unpack(loop)
-                if id and id.dcl==lbl.dcl then
-                    return loop
-                end
-            end
-        end
-    end,
     Break = function (me)
-        local loop = F.__outer(me)
-        ASR(loop, me,
-            'invalid `break´ : expected matching enclosing `loop´')
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..loop.lbl_out.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.outer.lbl_out.id..[[, NULL);
 return;
 ]])
     end,
     Continue = function (me)
-        local loop = F.__outer(me)
-        ASR(loop, me,
-            'invalid `continue´ : expected matching enclosing `loop´')
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..loop.lbl_cnt.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.outer.lbl_cnt.id..[[, NULL);
 return;
 ]])
     end,

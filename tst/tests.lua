@@ -3179,8 +3179,13 @@ escape sum;
 Test { [[
 break;
 ]],
-    codes = 'line 1 : invalid `break´ : expected matching enclosing `loop´',
+    dcls = 'line 1 : invalid `break´ : expected matching enclosing `loop´',
     --props = 'line 1 : `break´ without loop',
+}
+Test { [[
+continue;
+]],
+    dcls = 'line 1 : invalid `continue´ : expected matching enclosing `loop´',
 }
 
 Test { [[
@@ -3808,7 +3813,8 @@ every A do
     end
 end
 ]],
-    props = 'line 6 : not permitted inside `every´',
+    props_ = 'line 6 : invalid `escape´ : unexpected enclosing `every´',
+    --props = 'line 6 : not permitted inside `every´',
 }
 
 Test { [[
@@ -3853,7 +3859,8 @@ every 1s do
     end
 end
 ]],
-    props = 'line 3 : `every´ cannot contain `await´',
+    props_ = 'line 3 : invalid `await´ : unexpected enclosing `every´',
+    --props = 'line 3 : `every´ cannot contain `await´',
 }
 
 Test { [[
@@ -4048,7 +4055,8 @@ with
     end
 end
 ]],
-    props = 'line 4 : not permitted inside `every´',
+    props_ = 'line 4 : invalid `escape´ : unexpected enclosing `every´',
+    --props = 'line 4 : not permitted inside `every´',
 }
 Test { [[
 input (int,int) A;
@@ -4103,6 +4111,16 @@ end
 }
 
 Test { [[
+every 1s do
+    every 1s do
+    end
+end
+escape 0;
+]],
+    props_ = 'line 2 : invalid `every´ : unexpected enclosing `every´',
+}
+
+Test { [[
 input void A,C;
 var int ret = 0;
 par/or do
@@ -4118,11 +4136,40 @@ escape ret;
 }
 
 Test { [[
+loop do
+    every 1s do
+        break;
+    end
+end
+]],
+    props_ = 'line 3 : invalid `break´ : unexpected enclosing `every´',
+    --props = 'line 2 : not permitted inside `every´',
+}
+Test { [[
 every 1s do
     break;
 end
 ]],
-    props = 'line 2 : not permitted inside `every´',
+    dcls = 'line 2 : invalid `break´ : expected matching enclosing `loop´',
+    --props = 'line 2 : not permitted inside `every´',
+}
+Test { [[
+loop do
+    every 1s do
+        continue;
+    end
+end
+]],
+    props_ = 'line 3 : invalid `continue´ : unexpected enclosing `every´',
+    --props = 'line 2 : not permitted inside `every´',
+}
+Test { [[
+every 1s do
+    continue;
+end
+]],
+    dcls = 'line 2 : invalid `continue´ : expected matching enclosing `loop´',
+    --props = 'line 2 : not permitted inside `every´',
 }
 
 Test { [[
@@ -4130,7 +4177,8 @@ every 1s do
     escape 1;
 end
 ]],
-    props = 'line 2 : not permitted inside `every´',
+    props_ = 'line 2 : invalid `escape´ : unexpected enclosing `every´',
+    --props = 'line 2 : not permitted inside `every´',
 }
 
 Test { [[
@@ -4259,6 +4307,7 @@ every 1s do
     end
 end
 ]],
+    dcls = 'line 3 : invalid `continue´ : expected matching enclosing `loop´',
     _ana = {
         isForever = true,
     },

@@ -361,6 +361,32 @@ F = {
 
     ---------------------------------------------------------------------------
 
+    __loop = function (me) return me.tag=='Loop' or me.tag=='Loop_Num' end,
+    __outer = function (me)
+        local lbl = unpack(me)
+        for loop in AST.iter(F.__loop) do
+            if not lbl then
+                return loop
+            else
+                local _, id = unpack(loop)
+                if id and id.dcl==lbl.dcl then
+                    return loop
+                end
+            end
+        end
+    end,
+    Break = function (me)
+        me.outer = F.__outer(me)
+        ASR(me.outer, me,
+            'invalid `break´ : expected matching enclosing `loop´')
+    end,
+    Continue = function (me)
+        me.outer = F.__outer(me)
+        ASR(me.outer, me,
+            'invalid `continue´ : expected matching enclosing `loop´')
+    end,
+
+
     Ref__POS = function (me)
         local id = unpack(me)
 
@@ -396,7 +422,7 @@ F = {
                 end
             end
             ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
-            esc.do_ = do_
+            esc.outer = do_
             local _,_,to,op = unpack(do_)
             local set = AST.asr(me.__par,'Set_Exp')
             set.__dcls_is_escape = true
