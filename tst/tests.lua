@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -5709,6 +5708,7 @@ escape ret;
     run = 1000, -- had stack overflow
 }
 
+--]===]
 Test { [[
 input void OS_START;
 event (int,int) e;
@@ -5781,12 +5781,23 @@ with
     end
 end
 ]],
-    run = -42,
+    run = 42,
 }
 
 --<<< INTERNAL EVENTS
 
 -- ParOr
+
+Test { [[
+event int a;
+loop do
+    await a;
+end;
+escape 0;
+]],
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    --run = 4,
+}
 
 Test { [[
 input void OS_START;
@@ -5803,7 +5814,7 @@ with
     end;
 end;
 ]],
-    awaits = 0,
+    wrn = true,
     run = 4,
 }
 
@@ -5845,6 +5856,7 @@ with
     end;
 end;
 ]],
+    wrn = true,
     run = 4,
 }
 
@@ -6275,22 +6287,6 @@ escape 5;
 --<<< INTERNAL EVENTS
 
 Test { [[
-vector[2] int v;
-v[0] = 1;
-var int ret=0;
-par/or do
-    ret = v[0];
-with
-    ret = v[1];
-end;
-escape ret;
-]],
-    _ana = {
-        acc = 1,
-        abrt = 3,
-    },
-}
-Test { [[
 input int A;
 var int a = 0;
 par/or do
@@ -6666,6 +6662,7 @@ with
 end
 escape ret;
 ]],
+    wrn = true,
     run = { ['~>A']=2 },
 }
 
@@ -6870,8 +6867,8 @@ with
 end
 escape ret;
 ]],
-    run = { ['~>2s']=10 },
-    --run = { ['~>2s']=2 },
+    --run = { ['~>2s']=10 },
+    run = { ['~>2s']=2 },
 }
 
 Test { [[
@@ -13280,7 +13277,7 @@ escape a;
 Test { [[
 input int A,B,Z,X;
 var int a = 0;
-a = do/_ par do
+a = do par do
     par/and do
         await A;
     with
@@ -13329,7 +13326,7 @@ escape a;
 Test { [[
 input int A,B,Z,X;
 var int a = 0;
-a = do/_ par do
+a = do par do
     par do
         await A;
         escape 0;
@@ -13352,7 +13349,7 @@ escape a;
 Test { [[
 input int A,B,Z,X;
 var int a = 0;
-a = do/_ par do
+a = do par do
     par do
         await A;
         escape 0;
@@ -13977,7 +13974,7 @@ escape c;
 Test { [[
 input int A;
 var int c = 2;
-var int d = do/_ par do
+var int d = do par do
     with
         escape c;
 end
@@ -14786,8 +14783,8 @@ with
 end;
 escape aa;
 ]],
-    run = { ['1~>A;1~>A']=3 }
-    --run = { ['1~>A;1~>A']=4 }
+    --run = { ['1~>A;1~>A']=3 }
+    run = { ['1~>A;1~>A']=4 }
 }
 
 Test { [[
@@ -15096,6 +15093,7 @@ with
 end;
 escape 1;
 ]],
+    wrn = true,
     run = { ['~>Z'] = 1 },
 }
 
@@ -15118,6 +15116,7 @@ with
 end;
 escape 10;
 ]],
+    wrn = true,
     run = 10,
 }
 
@@ -15746,8 +15745,9 @@ with
 end;
 escape aa;
 ]],
-    --run = 7,
-    run = 2,
+    run = 7,
+    --run = 2,
+    wrn = true,
 }
 
 Test { [[
@@ -15775,6 +15775,7 @@ with
 end;
 escape aa;
 ]],
+    wrn = true,
     run = { ['~>A;~>A;~>A;~>A;~>A'] = 7, },
 }
 
@@ -25550,6 +25551,23 @@ escape 1;
     wrn = true,
     tmp = 'line 1 : `data´ fields do not support vectors yet',
     --env = 'line 1 : invalid type modifier : `[]?´',
+}
+
+Test { [[
+vector[2] int v;
+v[0] = 1;
+var int ret=0;
+par/or do
+    ret = v[0];
+with
+    ret = v[1];
+end;
+escape ret;
+]],
+    _ana = {
+        acc = 1,
+        abrt = 3,
+    },
 }
 --<<< VECTORS / STRINGS
 

@@ -48,6 +48,7 @@ local function HALT (me, t)
     LINE(me, [[
 _ceu_trl->evt = ]]..t.evt..[[;
 _ceu_trl->lbl = ]]..t.lbl..[[;
+_ceu_trl->stk = NULL;
 return;
 case ]]..t.lbl..[[:;
 ]])
@@ -429,6 +430,7 @@ ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 #endif
 _ceu_trl->evt = CEU_INPUT__ASYNC;
 _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
+_ceu_trl->stk = NULL;
 {
 ]])
 
@@ -504,6 +506,7 @@ ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 #endif
 _ceu_trl->evt = CEU_INPUT__ASYNC;
 _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
+_ceu_trl->stk = NULL;
 {
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
