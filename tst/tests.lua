@@ -12,7 +12,6 @@ end
 do return end -- OK
 --]===]
 
-
 ----------------------------------------------------------------------------
 -- OK: well tested
 ----------------------------------------------------------------------------
@@ -18359,230 +18358,6 @@ escape *(t.ptr);
     --run = 10,
 }
 
--->>> CODE/INSTANTANEOUS
-
-Test { [[
-code/instantaneous get (void)=>int&& do
-    var int x;
-    escape &&x;
-end
-escape 10;
-]],
-    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´ or abstraction identifier',
-    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
-}
-
-Test { [[
-code/instantaneous Fx.Fx (void)=>void do
-end
-]],
-    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´',
-}
-
-Test { [[
-code/instantaneous Get (void)=>int&& do
-    var int x;
-    //escape &&x;
-end
-escape 10;
-]],
-    wrn = true,
-    inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (/tmp/tmp.ceu:5)',
-}
-
-Test { [[
-code/instantaneous Get (void)=>int&& do
-    var int x;
-    escape null;
-end
-escape 10;
-]],
-    wrn = true,
-    inits = 'line 2 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
-}
-
-Test { [[
-code/instantaneous Get (void)=>int&& do
-    var int x=0;
-    escape &&x;
-end
-escape 10;
-]],
-    wrn = true,
-    scopes = 'line 3 : invalid `escape´ : incompatible scopes',
-    --fins = 'line 3 : invalid escape value : local reference',
-    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
-}
-
-Test { [[
-code/instantaneous Get (void)=>int& do
-    var int x=1;
-    escape &x;
-end
-escape 10;
-]],
-    wrn = true,
-    parser = 'line 1 : after `int´ : expected type modifier or `;´ or `do´',
-    --env = 'line 3 : invalid escape value : local reference',
-    --ref = 'line 3 : attribution to reference with greater scope',
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1];
-end
-
-escape Fx(&str);
-]],
-    parser = 'line 7 : after `escape´ : expected expression or `;´',
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
-    run = 1,
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1] as int;
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-code/delayed Fx (event int e)=>void do
-end
-escape 0;
-]],
-    parser = 'line 1 : after `event´ : expected `&´',
-}
-Test { [[
-code/delayed Fx (event& int e)=>void do
-    await e;
-end
-escape 0;
-]],
-    wrn = true,
-    run = 'TODO',
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] int vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] int vec)=>bool do
-    escape vec[1];
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(str);
-]],
-    wrn = true,
-    --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    stmts = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[] do
-    escape &this.str;
-end
-
-vector&[] byte ref = &call Fx();
-
-escape ref[1];
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
-}
-
--- vectors as argument (NO)
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(str);
-]],
-    parser = 'line 3 : after `vector´ : expected `&´',
-    --env = 'line 3 : wrong argument #2 : vectors are not supported',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
-}
-
-Test { [[
-code/instantaneous Fx (var int a, var  void b)=>int do
-end
-escape 1;
-]],
-    wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-}
-
-Test { [[
-code/instantaneous Fx (var void, var int)=>int do
-end
-escape 1;
-]],
-    parser = 'line 1 : after `int´ : expected type modifier or `;´',
-}
-
-Test { [[
-code/instantaneous Fx (var void a, var  int v)=>int do
-end
-escape 1;
-]],
-    wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-}
-
-Test { [[
-code/instantaneous Fx (var u8 v)=>int do
-    escape v as int;
-end
-var s8 i = 0;
-escape call Fx(i);
-]],
-    stmts = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
-}
-
 Test { [[
 var int x;
 do
@@ -25089,6 +24864,230 @@ escape _strlen((&&str[0]) as _char&&);
 }
 
 -- TODO: dropped support for returning alias, is this a problem?
+
+-->>> CODE/INSTANTANEOUS
+
+Test { [[
+code/instantaneous get (void)=>int&& do
+    var int x;
+    escape &&x;
+end
+escape 10;
+]],
+    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´ or abstraction identifier',
+    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
+}
+
+Test { [[
+code/instantaneous Fx.Fx (void)=>void do
+end
+]],
+    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int&& do
+    var int x;
+    //escape &&x;
+end
+escape 10;
+]],
+    wrn = true,
+    inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (/tmp/tmp.ceu:5)',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int&& do
+    var int x;
+    escape null;
+end
+escape 10;
+]],
+    wrn = true,
+    inits = 'line 2 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int&& do
+    var int x=0;
+    escape &&x;
+end
+escape 10;
+]],
+    wrn = true,
+    scopes = 'line 3 : invalid `escape´ : incompatible scopes',
+    --fins = 'line 3 : invalid escape value : local reference',
+    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int& do
+    var int x=1;
+    escape &x;
+end
+escape 10;
+]],
+    wrn = true,
+    parser = 'line 1 : after `int´ : expected type modifier or `;´ or `do´',
+    --env = 'line 3 : invalid escape value : local reference',
+    --ref = 'line 3 : attribution to reference with greater scope',
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
+end
+
+escape Fx(&str);
+]],
+    parser = 'line 7 : after `escape´ : expected expression or `;´',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
+    run = 1,
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1] as int;
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+code/delayed Fx (event int e)=>void do
+end
+escape 0;
+]],
+    parser = 'line 1 : after `event´ : expected `&´',
+}
+Test { [[
+code/delayed Fx (event& int e)=>void do
+    await e;
+end
+escape 0;
+]],
+    wrn = true,
+    run = 'TODO',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] int vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] int vec)=>bool do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(str);
+]],
+    wrn = true,
+    --ref = 'line 7 : invalid attribution : missing alias operator `&´',
+    stmts = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[] do
+    escape &this.str;
+end
+
+vector&[] byte ref = &call Fx();
+
+escape ref[1];
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
+}
+
+-- vectors as argument (NO)
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(str);
+]],
+    parser = 'line 3 : after `vector´ : expected `&´',
+    --env = 'line 3 : wrong argument #2 : vectors are not supported',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
+}
+
+Test { [[
+code/instantaneous Fx (var int a, var  void b)=>int do
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+}
+
+Test { [[
+code/instantaneous Fx (var void, var int)=>int do
+end
+escape 1;
+]],
+    parser = 'line 1 : after `int´ : expected type modifier or `;´',
+}
+
+Test { [[
+code/instantaneous Fx (var void a, var  int v)=>int do
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+}
+
+Test { [[
+code/instantaneous Fx (var u8 v)=>int do
+    escape v as int;
+end
+var s8 i = 0;
+escape call Fx(i);
+]],
+    stmts = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
+}
 
 Test { [[
 vector[] byte str = [0,1,2];
