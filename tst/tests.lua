@@ -18388,6 +18388,36 @@ escape 1;
 }
 
 Test { [[
+event void a;
+event& void b = &a;
+par/and do
+    await a;
+with
+    await b;
+with
+    emit b;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+event int a;
+event& int b = &a;
+var int ret = 0;
+par/and do
+    ret = await a;
+with
+    await b;
+with
+    emit b=>10;
+end
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
 event void  a;
 event& void b = &a;
 
@@ -18407,7 +18437,7 @@ end
 
 escape 1;
 ]],
-    run = { ['~>1s'] = 1 },
+    run = { ['~>2s'] = 1 },
 }
 
 Test { [[
@@ -18458,22 +18488,6 @@ escape 1;
     run = 1,
 }
 Test { [[
-vector&[] int v;
-escape 1;
-]],
-    inits = 'line 1 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:2)',
-    wrn = true,
-    --run = 1,
-}
-Test { [[
-vector[] int vv;
-vector&[] int v = &vv;;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
 var& int&  v;
 escape 1;
 ]],
@@ -18481,92 +18495,6 @@ escape 1;
     --env = 'line 1 : invalid type modifier : `&&´',
 }
 --<<< ALIASES / REFERENCES / REFS / &
-
-Test { [[
-native _f;
-native/pos do
-    int f (int* p) { return *p }
-end
-var int x = 1;
-var int r;
-do
-    r = _f(&&x);
-finalize (x) with
-    nothing;
-end
-escape r;
-]],
-    run = 2,
-}
-Test { [[
-native _f;
-var int x = 0;
-var& int? r;
-do
-    r = &_f(&&x);
-finalize (x) with
-    nothing;
-end
-escape 0;
-]],
-    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "r" (vs. /tmp/tmp.ceu:5)',
-}
-Test { [[
-native _f;
-var int x = 0;
-var& int? r;
-do
-    r = &_f(&&x);
-finalize (r) with
-    nothing;
-end
-escape 0;
-]],
-    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "x" (vs. /tmp/tmp.ceu:5)',
-}
-Test { [[
-native _f;
-var int x = 0;
-var& int? r;
-do
-    r = &_f(&&x);
-finalize (r,x) with
-    nothing;
-end
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-native _f;
-var int x = 0;
-do
-    var& int? r;
-    do
-        r = &_f(&&x);
-    finalize (r,x) with
-        nothing;
-    end
-end
-escape 1;
-]],
-    scopes = 'line 6 : invalid `finalize´ : incompatible scopes',
-}
-Test { [[
-native _f;
-var int x = 0;
-do
-    var int y = 0;
-    do
-        _f(&&x,&&y);
-    finalize with
-        nothing;
-    end
-end
-escape 1;
-]],
-    scopes = 'line 6 : invalid `finalize´ : incompatible scopes',
-}
 
 Test { [[
 native _f;
@@ -25432,6 +25360,23 @@ escape ret;
         acc = 1,
         abrt = 3,
     },
+}
+
+Test { [[
+vector&[] int v;
+escape 1;
+]],
+    inits = 'line 1 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:2)',
+    wrn = true,
+    --run = 1,
+}
+Test { [[
+vector[] int vv;
+vector&[] int v = &vv;;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
 }
 --<<< VECTORS / STRINGS
 
@@ -60874,6 +60819,92 @@ var& _int? p = &_f(&&v)
 escape p!;
 ]],
     run = 5,
+}
+
+Test { [[
+native _f;
+native/pos do
+    int f (int* p) { return *p+1; }
+end
+var int x = 1;
+var int r;
+do
+    r = _f(&&x);
+finalize (x) with
+    nothing;
+end
+escape r;
+]],
+    run = 2,
+}
+Test { [[
+native _f;
+var int x = 0;
+var& int? r;
+do
+    r = &_f(&&x);
+finalize (x) with
+    nothing;
+end
+escape 0;
+]],
+    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "r" (vs. /tmp/tmp.ceu:5)',
+}
+Test { [[
+native _f;
+var int x = 0;
+var& int? r;
+do
+    r = &_f(&&x);
+finalize (r) with
+    nothing;
+end
+escape 0;
+]],
+    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "x" (vs. /tmp/tmp.ceu:5)',
+}
+Test { [[
+native _f;
+var int x = 0;
+var& int? r;
+do
+    r = &_f(&&x);
+finalize (r,x) with
+    nothing;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+native _f;
+var int x = 0;
+do
+    var& int? r;
+    do
+        r = &_f(&&x);
+    finalize (r,x) with
+        nothing;
+    end
+end
+escape 1;
+]],
+    scopes = 'line 6 : invalid `finalize´ : incompatible scopes',
+}
+Test { [[
+native _f;
+var int x = 0;
+do
+    var int y = 0;
+    do
+        _f(&&x,&&y);
+    finalize with
+        nothing;
+    end
+end
+escape 1;
+]],
+    scopes = 'line 6 : invalid `finalize´ : incompatible scopes',
 }
 
 --<<< FINALIZE / OPTION

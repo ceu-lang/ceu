@@ -24,9 +24,6 @@
 #define ceu_out_assert_msg(v,msg) ceu_out_assert_msg_ex((v),(msg),__FILE__,__LINE__)
 
 === NATIVE_PRE ===
-=== DATA ===
-=== EXTS_TYPES ===
-=== EVTS_TYPES ===
 
 enum {
     CEU_CALLBACK_ABORT,
@@ -49,6 +46,11 @@ enum {
 #define CEU_TRAILS_N (=== TRAILS_N ===)
 
 typedef u8 tceu_nevt;   /* TODO */
+
+=== DATA ===
+=== EXTS_TYPES ===
+=== EVTS_TYPES ===
+
 typedef === TCEU_NTRL === tceu_ntrl;
 typedef === TCEU_NLBL === tceu_nlbl;
 

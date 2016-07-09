@@ -24,15 +24,22 @@ typedef struct CEU_DATA_ROOT {
         local data = {}
         for _, dcl in ipairs(me.dcls) do
             if dcl.tag == 'Var' then
-                dcl.id_ = dcl.id..'_'..dcl.n
                 if dcl.id ~= '_ret' then
+                    dcl.id_ = dcl.id..'_'..dcl.n
                     local tp, is_alias = unpack(dcl)
                     local ptr = (is_alias and '*' or '')
                     data[#data+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
                 end
             elseif dcl.tag == 'Evt' then
-                MEMS.evts[#MEMS.evts+1] = dcl
-                dcl.id_ = string.upper('CEU_EVENT_'..dcl.id..'_'..dcl.n)
+                local _, is_alias = unpack(dcl)
+                if is_alias then
+                    MEMS.evts[#MEMS.evts+1] = dcl
+                    dcl.id_ = dcl.id..'_'..dcl.n
+                    data[#data+1] = 'tceu_nevt '..dcl.id_..';\n'
+                else
+                    MEMS.evts[#MEMS.evts+1] = dcl
+                    dcl.id_ = string.upper('CEU_EVENT_'..dcl.id..'_'..dcl.n)
+                end
             elseif dcl.tag == 'Ext' then
                 local _, inout, id = unpack(dcl)
                 MEMS.exts[#MEMS.exts+1] = dcl
@@ -98,7 +105,10 @@ for _, dcl in ipairs(MEMS.evts) do
     local Typelist = unpack(dcl)
 
     -- enum
-    MEMS.evts.enum = MEMS.evts.enum..dcl.id_..',\n'
+    local _,is_alias = unpack(dcl)
+    if not is_alias then
+        MEMS.evts.enum = MEMS.evts.enum..dcl.id_..',\n'
+    end
 
     -- type
     local data = 'typedef struct tceu_event_'..dcl.id..'_'..dcl.n..' {\n'
@@ -106,6 +116,5 @@ for _, dcl in ipairs(MEMS.evts) do
         data = data..'    '..TYPES.toc(Type)..' _'..i..';\n'
     end
     data = data..'} tceu_event_'..dcl.id..'_'..dcl.n..';\n'
-
     MEMS.evts.types = MEMS.evts.types..data
 end

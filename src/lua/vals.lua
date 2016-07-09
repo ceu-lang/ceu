@@ -91,11 +91,19 @@ F = {
 
     ID_int = function (me, ctx)
         local _, is_alias = unpack(me.dcl)
-        local ptr = ''
-        if is_alias and (not ctx.is_bind) then
-            ptr = '*'
+        if me.dcl.tag == 'Evt' then
+            if is_alias then
+                return '(CEU_APP.data.'..me.dcl.id_..')'
+            else
+                return me.dcl.id_
+            end
+        else
+            local ptr = ''
+            if is_alias and (not ctx.is_bind) then
+                ptr = '*'
+            end
+            return '('..ptr..'CEU_APP.data.'..me.dcl.id_..')'
         end
-        return '('..ptr..'CEU_APP.data.'..me.dcl.id_..')'
     end,
 
     ---------------------------------------------------------------------------
@@ -104,7 +112,12 @@ F = {
 
     ['Exp_1&'] = function (me)
         local _, e = unpack(me)
-        return '(&'..V(e)..')'
+        local dcl = e.info.dcl
+        if dcl.tag == 'Evt' then
+            return dcl.id_
+        else
+            return '(&'..V(e)..')'
+        end
     end,
 
 -- MEMBER: .

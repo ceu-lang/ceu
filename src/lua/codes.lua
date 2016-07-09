@@ -424,7 +424,7 @@ assert(fr.tag == 'Await_Wclock')
     Await_Int = function (me)
         local Exp_Name = unpack(me)
         HALT(me, {
-            evt = Exp_Name.info.dcl.id_,
+            evt = V(Exp_Name),
             lbl = me.lbl_out.id,
         })
     end,
@@ -477,7 +477,7 @@ case ]]..me.lbl_out.id..[[:;
         end
         LINE(me, [[
     CEU_STK_BCAST_ABORT(_ceu_stk, _ceu_trl,
-                        ]]..Exp_Name.info.dcl.id_..[[, &__ceu_ps,
+                        ]]..V(Exp_Name)..[[, &__ceu_ps,
                         0, CEU_TRAILS_N);
 }
 ]])
