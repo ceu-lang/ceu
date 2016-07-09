@@ -28,6 +28,15 @@ F = {
             ASR(me.outer.__depth > Every.__depth, me,
                 'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `every´')
         end
+
+        local Finalize = AST.par(me,'Finalize')
+        if Finalize then
+            local _,_,later = unpack(Finalize)
+            if AST.is_par(later,me) then
+                ASR(me.outer.__depth > Finalize.__depth, me,
+                    'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `finalize´')
+            end
+        end
     end,
 }
 
