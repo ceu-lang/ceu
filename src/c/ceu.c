@@ -215,7 +215,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
     }
 
     for (trlK=trl0, trl=&CEU_APP.trails[trlK];
-         trlK<trlF;
+         trlK<=trlF;
          trlK++, trl++)
     {
         if (trl->stk==stk) {

@@ -80,7 +80,7 @@ G = {
                 local pre = me[i-1]
                 sub.trails[1] = pre.trails[1] + pre.trails_n
             end
-            sub.trails[2] = sub.trails[1] + sub.trails_n
+            sub.trails[2] = sub.trails[1] + sub.trails_n-1
         end
     end,
 }
