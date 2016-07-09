@@ -177,6 +177,22 @@ while (1) {
 ]])
     end,
 
+    __loop_async = function (me)
+        local async = AST.par(me, 'Async')
+        if async then
+            LINE(me, [[
+ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+#ifdef CEU_OPT_GO_ALL
+ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+#endif
+]])
+            HALT(me, {
+                evt = 'CEU_INPUT__ASYNC',
+                lbl = me.lbl_asy.id,
+            })
+        end
+    end,
+
     Loop = function (me)
         local _, body = unpack(me)
         local max = F.__loop_max(me)
@@ -189,6 +205,7 @@ while (1) {
 ]])
         CASE(me, me.lbl_cnt)
         CLEAR(body)
+        F.__loop_async(me)
         LINE(me, [[
     ]]..max.inc..[[
 }
@@ -246,6 +263,7 @@ while (1) {
 ]])
         CASE(me, me.lbl_cnt)
         CLEAR(body)
+        F.__loop_async(me)
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
     ]]..max.inc..[[
@@ -445,6 +463,7 @@ assert(fr.tag == 'Await_Wclock')
 assert(inout == 'input', 'TODO')
 
         LINE(me, [[
+ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 #ifdef CEU_OPT_GO_ALL
 ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 #endif
@@ -521,6 +540,7 @@ _CEU_HALT_]]..me.n..[[_:
     Emit_Wclock = function (me)
         local e = unpack(me)
         LINE(me, [[
+ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 #ifdef CEU_OPT_GO_ALL
 ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 #endif

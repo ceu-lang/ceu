@@ -21095,7 +21095,6 @@ escape ret+f;
     safety = 2,
 }
 
---]===]
 Test { [[
 input int B;
 var int ret = 0;
@@ -21488,6 +21487,7 @@ escape(1);
 ]],
     parser = 'line 1 : after `output´ : expected `(´ or type',
 }
+--]===]
 Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing(d)
