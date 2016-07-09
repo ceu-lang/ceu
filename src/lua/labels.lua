@@ -22,17 +22,17 @@ F = {
 
     Do = function (me)
         local _,_,set = unpack(me)
-        me.lbl_out = new{'Do'}
+        me.lbl_out = new{'Do__OUT'}
     end,
 
     Finalize = function (me)
-        me.lbl_in = new{'Finalize'}
+        me.lbl_in = new{'Finalize__IN'}
     end,
 
     Loop_Num = 'Loop',
     Loop = function (me)
-        me.lbl_cnt = new{'Loop_Continue'}
-        me.lbl_out = new{'Loop_Break'}
+        me.lbl_cnt = new{'Loop_Continue__CNT'}
+        me.lbl_out = new{'Loop_Break__OUT'}
     end,
 
     ---------------------------------------------------------------------------
@@ -42,37 +42,37 @@ F = {
     Par__PRE = function (me)
         me.lbls_in = {}
         for i, sub in ipairs(me) do
-            me.lbls_in[i] = new{me.tag..'_sub_'..i}
+            me.lbls_in[i] = new{me.tag..'_sub_'..i..'_IN'}
         end
         if me.tag ~= 'Par' then
-            me.lbl_out = new{me.tag..'_out'}
+            me.lbl_out = new{me.tag..'__OUT'}
         end
     end,
 
     ---------------------------------------------------------------------------
 
     Await_Wclock = function (me)
-        me.lbl_out = new{'Await_Wclock'}
+        me.lbl_out = new{'Await_Wclock__OUT'}
     end,
     Await_Ext = function (me)
         local ID_ext = unpack(me)
-        me.lbl_out = new{'Await_'..ID_ext.dcl.id}
+        me.lbl_out = new{'Await_'..ID_ext.dcl.id..'__OUT'}
     end,
     Await_Int = function (me)
         local Exp_Name = unpack(me)
-        me.lbl_out = new{'Await_'..Exp_Name.info.dcl.id}
+        me.lbl_out = new{'Await_'..Exp_Name.info.dcl.id..'__OUT'}
     end,
 
     Emit_Wclock = function (me)
-        me.lbl_out = new{'Emit_Wclock'}
+        me.lbl_out = new{'Emit_Wclock__OUT'}
     end,
     Emit_Ext_emit = function (me)
         local ID_ext = unpack(me)
-        me.lbl_out = new{'Emit_Ext_emit'..ID_ext.dcl.id}
+        me.lbl_out = new{'Emit_Ext_emit'..ID_ext.dcl.id..'__OUT'}
     end,
 
     Async = function (me)
-        me.lbl_in = new{'Async'}
+        me.lbl_in = new{'Async__IN'}
     end,
 }
 
