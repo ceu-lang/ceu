@@ -59,26 +59,11 @@ G = {
         end
     end,
 
-    Block__PRE = function (me)
-        if me.fins_n > 0 then
-            local Stmts = unpack(me)
-            Stmts.trails = { unpack(me.trails) }
-            Stmts.trails[1] = Stmts.trails[1] + 1; -- Stmts don't see trails[1]
-        end
-    end,
-
-    -- Finalize
-    Stmts__PRE = function (me)
-        me.trails_orig = { unpack(me.trails) }
-    end,
-    Stmts__AFT = function (me, sub, i)
-        if sub.tag == 'Finalize' then
-            me.trails = { unpack(me.trails) }
-            me.trails[1] = me.trails[1] + 1
-        end
-    end,
-    Stmts__POS = function (me)
-        me.trails = { unpack(me.trails_orig) }
+    Finalize__PRE = function (me)
+        local _,_,fin = unpack(me)
+        local Stmts = AST.asr(me.__par,'Stmts')
+        Stmts.__trl_fins = (Stmts.__trl_fins or Stmts.trails[1]) + 1
+        me.trails = { Stmts.__trl_fins, Stmts.__trl_fins }
     end,
 
     Par_Or__PRE  = 'Par__PRE',

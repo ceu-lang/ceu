@@ -18637,7 +18637,7 @@ native _v;
 native/pos do
     int v = 1;
     int f (int v) {
-        escape v + 1;
+        return v + 1;
     }
 end
 escape _f(_v);
@@ -18652,7 +18652,7 @@ native _v;
 native/pos do
     int v = 1;
     int f (int v) {
-        escape v + 1;
+        return v + 1;
     }
 end
 escape _f(_v);
@@ -18666,7 +18666,7 @@ Test { [[
 native/pure _f;
 native/pos do
     int* f (int a) {
-        escape NULL;
+        return NULL;
     }
 end
 var int&& v = _f(0);
@@ -18680,7 +18680,7 @@ native/pure _f;
 native/pos do
     int V = 10;
     int f (int v) {
-        escape v;
+        return v;
     }
 end
 native/const _V;
@@ -18693,7 +18693,7 @@ Test { [[
 native _f;
 native/pos do
     int f (int* v) {
-        escape 1;
+        return 1;
     }
 end
 var int v=0;
@@ -18707,7 +18707,7 @@ Test { [[
 native/nohold _f;
 native/pos do
     int f (int* v) {
-        escape 1;
+        return 1;
     }
 end
 var int v=0;
@@ -18722,7 +18722,7 @@ native/nohold _f;
 native/pos do
     int V=1;
     int f (int* v) {
-        escape 1;
+        return 1;
     }
 end
 var int v=0;
@@ -18882,16 +18882,17 @@ Test { [[
 var int r = 0;
 do
     await 1s;
-    do finalize with
+    do
+    finalize with
         do
-            var int b = 1;
+            var int b = 111;
             r = b;
         end;
     end
 end
 escape r;
 ]],
-    run = { ['~>1s']=1 },
+    run = { ['~>1s']=111 },
 }
 
 Test { [[

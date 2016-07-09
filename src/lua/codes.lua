@@ -58,6 +58,7 @@ F = {
     ROOT = CONC_ALL,
     Stmts = CONC_ALL,
     Await_Until = CONC_ALL,
+    Block = CONC_ALL,
 
     Node__PRE = function (me)
         me.code = ''
@@ -67,14 +68,13 @@ F = {
         CASE(me, me.lbl_in)
     end,
 
-    Block = function (me)
-        if me.fins_n > 0 then
+    Stmts__BEF = function (me, sub)
+        if sub.trails[1] ~= me.trails[1] then
             LINE(me, [[
-/* TODO: remove to see if something breaks */
-_ceu_trl++; /* switch to next trail, leave this empty only as CLEAR mark */
+/* due to Finalize */
+_ceu_trl = &CEU_APP.trails[]]..sub.trails[1]..[[];
 ]])
         end
-        CONC_ALL(me)
     end,
 
     Nat_Block = function (me)
