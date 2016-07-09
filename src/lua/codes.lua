@@ -56,7 +56,6 @@ end
 
 F = {
     ROOT = CONC_ALL,
-    Block = CONC_ALL,
     Stmts = CONC_ALL,
     Await_Until = CONC_ALL,
 
@@ -66,6 +65,16 @@ F = {
 
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
+    end,
+
+    Block = function (me)
+        if me.fins_n > 0 then
+            LINE(me, [[
+/* TODO: remove to see if something breaks */
+_ceu_trl++; /* switch to next trail, leave this empty only as CLEAR mark */
+]])
+        end
+        CONC_ALL(me)
     end,
 
     Nat_Block = function (me)
@@ -93,6 +102,8 @@ if (]]..V(c)..[[) {
     Finalize = function (me)
         local now,_,later = unpack(me)
         LINE(me, [[
+/* TODO: remove to see if something breaks */
+_ceu_trl++; /* switch to next trail, preserve this for the "later" */
 CEU_APP.trails[]]..me.trails[1]..[[].evt = CEU_INPUT__CLEAR;
 CEU_APP.trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl_in.id..[[;
 CEU_APP.trails[]]..me.trails[1]..[[].stk = NULL;

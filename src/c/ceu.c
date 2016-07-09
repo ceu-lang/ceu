@@ -199,7 +199,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
         /* IN__CLEAR and "finalize" clause */
         int matches_clear = (evt->id==CEU_INPUT__CLEAR &&
                              trl->evt==CEU_INPUT__CLEAR &&
-                             trl);
+                             trl->clr_trl>=trl0 && trl->clr_trl<=trlF);
 
         /* evt->id matches awaiting trail */
         int matches_await = (trl->evt==evt->id);
@@ -214,14 +214,27 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
         }
     }
 
-    for (trlK=trl0, trl=&CEU_APP.trails[trlK];
-         trlK<=trlF;
-         trlK++, trl++)
+    /* CLEAR: inverse execution order */
+    if (evt->id == CEU_INPUT__CLEAR) {
+        tceu_nevt tmp = trl0;
+        trl0 = trlF;
+        trlF = tmp;
+    }
+
+    for (trlK=trl0, trl=&CEU_APP.trails[trlK]; ;)
     {
         if (trl->stk==stk) {
             trl->evt = CEU_INPUT__NONE;
             trl->stk = NULL;
             CEU_STK_LBL(stk, trl, trl->lbl, evt);
+        }
+
+        if (trlK == trlF) {
+            break;
+        } else if (evt->id == CEU_INPUT__CLEAR) {
+            trlK--; trl--;
+        } else {
+            trlK++; trl++;
         }
     }
 }

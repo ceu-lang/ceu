@@ -18228,36 +18228,56 @@ escape _f(&&v);
 }
 
 Test { [[
-input void OS_STOP;
 var int ret = 0;
-
-par/or do
-
-input void OS_START;
-
-await OS_START;
 
 do finalize with
     nothing;
 end
 
-par do
-    loop do
-        await 10min;
-    end
+par/and do
+    await 1s;
+    ret = ret + 111;
 with
     await 1s;
-    loop do
-        par/or do
-            loop do
-                await 10min;
+    ret = ret + 222;
+end
+
+escape ret;
+]],
+    run = { ['~>10s']=333 },
+}
+
+Test { [[
+input void OS_STOP;
+var int ret = 0;
+
+par/or do
+
+    input void OS_START;
+
+    await OS_START;
+
+    do finalize with
+        nothing;
+    end
+
+    par do
+        loop do
+            await 10min;
+        end
+    with
+        await 1s;
+        loop do
+            par/or do
+                loop do
+                    await 10min;
+                end
+            with
+                await 1s;
+                ret = ret + 1;
             end
-        with
-            await 1s;
-            ret = ret + 1;
         end
     end
-end
 
 with
     await OS_STOP;

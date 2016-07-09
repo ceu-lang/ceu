@@ -147,13 +147,16 @@ F = {
                 Emit_Ext_emit=true, Emit_Ext_call=true,
                 Stmt_Call=true },
 
+    Block__PRE = function (me)
+        me.fins_n = 0
+    end,
     Finalize = function (me)
         local Stmt, Namelist, Block = unpack(me)
         if not Stmt then
             ASR(Namelist.tag=='Mark', me,
                 'invalid `finalize´ : unexpected `varlist´')
             me.blk = AST.par(me, 'Block')
-            me.blk.has_fins = true
+            me.blk.fins_n = me.blk.fins_n + 1
             return
         end
         assert(Stmt)
@@ -186,7 +189,7 @@ F = {
         end
 
         me.blk = assert(me.__fin_vars.blk)
-        me.blk.has_fins = true
+        me.blk.fins_n = me.blk.fins_n + 1
     end,
 }
 
