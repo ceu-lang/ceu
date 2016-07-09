@@ -152,6 +152,8 @@ F = {
         if not Stmt then
             ASR(Namelist.tag=='Mark', me,
                 'invalid `finalize´ : unexpected `varlist´')
+            me.blk = AST.par(me, 'Block')
+            me.blk.has_fins = true
             return
         end
         assert(Stmt)
@@ -183,9 +185,8 @@ F = {
                 v1.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
         end
 
-        local blk = me.__fin_vars.blk
-        blk.fins = blk.fins or {}
-        blk.fins[#blk.fins+1] = me
+        me.blk = assert(me.__fin_vars.blk)
+        me.blk.has_fins = true
     end,
 }
 

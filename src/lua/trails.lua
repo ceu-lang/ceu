@@ -23,9 +23,12 @@ F = {
 
     Block = function (me)
         MAX_all(me)
-        if me.fins then
-            me.trails_n = me.trails_n + #me.fins
+        if me.has_fins then
+            me.trails_n = me.trails_n + 1   -- single mark/id for all fins
         end
+    end,
+    Finalize = function (me)
+        me.trails_n = 2
     end,
 
     If = function (me)
@@ -59,18 +62,11 @@ G = {
     end,
 
     Block__PRE = function (me)
-        if not me.fins then
-            return
+        if me.has_fins then
+            local Stmts = unpack(me)
+            Stmts.trails = { unpack(me.trails) }
+            Stmts.trails[1] = Stmts.trails[1] + 1; -- Stmts don't see trails[1]
         end
-
-        local a,b = unpack(me.trails)
-
-        for i, fin in ipairs(me.fins) do
-            fin.trails = { a+i-1, b+i-1 }
-        end
-
-        local Stmts = unpack(me)
-        Stmts.trails = { a+#me.fins, b }
     end,
 
     Par_Or__PRE  = 'Par__PRE',

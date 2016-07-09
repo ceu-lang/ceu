@@ -96,6 +96,7 @@ if (]]..V(c)..[[) {
 CEU_APP.trails[]]..me.trails[1]..[[].evt = CEU_INPUT__CLEAR;
 CEU_APP.trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl_in.id..[[;
 CEU_APP.trails[]]..me.trails[1]..[[].stk = NULL;
+CEU_APP.trails[]]..me.trails[1]..[[].clr_trl = ]]..me.blk.trails[1]..[[;
 if (0) {
 ]])
         CASE(me, me.lbl_in)
