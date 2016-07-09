@@ -52,7 +52,7 @@ AST.visit(F)
 
 G = {
     ROOT__PRE = function (me)
-        me.trails = { 0, me.trails_n }     -- [0, N[
+        me.trails = { 0, me.trails_n-1 }     -- [0, N]
     end,
 
     Node__PRE = function (me)

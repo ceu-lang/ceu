@@ -104,7 +104,7 @@ static void ceu_stack_clear (tceu_stk* stk, tceu_trl* trl1, tceu_trl* trl2) {
         if (!stk->is_alive) {
             continue;
         }
-        if (trl1<=stk->trl && stk->trl<trl2) {  /* [trl1,trl2[ */
+        if (trl1<=stk->trl && stk->trl<=trl2) {  /* [trl1,trl2] */
             stk->is_alive = 0;
         }
     }
@@ -184,22 +184,22 @@ _CEU_GOTO_:
 
 static void ceu_go_bcast (tceu_stk* stk, tceu_evt* evt, tceu_ntrl trl0, tceu_ntrl trlF)
 {
-    tceu_ntrl trlI;
+    tceu_ntrl trlK;
     tceu_trl* trl;
 
-    for (trlI=trl0, trl=&CEU_APP.trails[trlI];
-         trlI<trlF;
-         trlI++, trl++)
+    for (trlK=trl0, trl=&CEU_APP.trails[trlK];
+         trlK<=trlF;
+         trlK++, trl++)
     {
 #if 0
 #include <stdio.h>
 printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, evt->id, trl0, trlF);
-printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlI, trl, trl->lbl, trl->evt);
+printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 #endif
         /* IN__CLEAR and "finalize" clause */
         int matches_clear = (evt->id==CEU_INPUT__CLEAR &&
                              trl->evt==CEU_INPUT__CLEAR &&
-                             trl->clr_trl>=trl0 && trl->clr_trl<trlF);
+                             trl);
 
         /* evt->id matches awaiting trail */
         int matches_await = (trl->evt==evt->id);
@@ -214,9 +214,9 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlI, trl, trl->lbl, trl->evt);
         }
     }
 
-    for (trlI=trl0, trl=&CEU_APP.trails[trlI];
-         trlI<trlF;
-         trlI++, trl++)
+    for (trlK=trl0, trl=&CEU_APP.trails[trlK];
+         trlK<trlF;
+         trlK++, trl++)
     {
         if (trl->stk==stk) {
             trl->evt = CEU_INPUT__NONE;
