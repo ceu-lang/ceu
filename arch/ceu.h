@@ -24,4 +24,4 @@ typedef float    f32;
 typedef double   f64;
 
 #define ceu_callback(msg,p1,p2) callback(msg,p1,p2)
-void callback (int msg, int p1, void* p2);
+int callback (int msg, int p1, void* p2);

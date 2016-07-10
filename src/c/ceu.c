@@ -29,7 +29,7 @@ enum {
     CEU_CALLBACK_TERMINATING,
     CEU_CALLBACK_PENDING_ASYNC,
     CEU_CALLBACK_WCLOCK_MIN,
-    === EXTS_ENUM_OUTPUT ===
+    CEU_CALLBACK_OUTPUT,
 };
 
 enum {
@@ -39,6 +39,11 @@ enum {
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
     === EVTS_ENUM ===
+};
+
+enum {
+    CEU_OUTPUT__NONE = 0,
+    === EXTS_ENUM_OUTPUT ===
 };
 
 #define CEU_TRAILS_N (=== TRAILS_N ===)
@@ -259,7 +264,7 @@ static int ceu_cb_terminating = 0;
 static int ceu_cb_terminating_ret;
 static int ceu_cb_pending_async = 0;
 
-void ceu_callback_go_all (int msg, int p1, void* p2) {
+static void ceu_callback_go_all (int msg, int p1, void* p2) {
     switch (msg) {
         case CEU_CALLBACK_TERMINATING:
             ceu_cb_terminating     = 1;

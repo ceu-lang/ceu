@@ -429,6 +429,8 @@ assert(fr.tag == 'Await_Wclock')
         end
     end,
 
+    Set_Emit_Ext_emit = CONC_ALL,   -- see Emit_Ext_emit
+
     ---------------------------------------------------------------------------
 
     Await_Forever = function (me)
@@ -466,8 +468,15 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',
         end
 
         if inout == 'output' then
+            local set = AST.par(me,'Set_Emit_Ext_emit')
+            if set then
+                local _, to = unpack(set)
+                LINE(me, [[
+]]..V(to)..[[ =
+]])
+            end
             LINE(me, [[
-ceu_callback(]]..ID_ext.dcl.id..', 0, '..ps..[[);
+    ceu_callback(CEU_CALLBACK_OUTPUT, ]]..ID_ext.dcl.id_..', '..ps..[[);
 ]])
         else
             LINE(me, [[

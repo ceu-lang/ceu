@@ -1,9 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void ceu_callback_go_all (int msg, int p1, void* p2);
-
-void callback (int msg, int p1, void* p2) {
+int callback (int msg, int p1, void* p2) {
     switch (msg) {
         case CEU_CALLBACK_ABORT:
             abort();
@@ -21,8 +19,14 @@ void callback (int msg, int p1, void* p2) {
             }
             break;
         }
+        case CEU_CALLBACK_OUTPUT:
+#ifdef ceu_callback_output
+            return ceu_callback_output(p1, p2);
+#endif
+            break;
     }
     ceu_callback_go_all(msg, p1, NULL);
+    return 0;
 }
 
 int main (int argc, char *argv[])

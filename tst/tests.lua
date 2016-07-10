@@ -17708,7 +17708,7 @@ do finalize with
 end
 escape 0;
 ]],
-    props = 'line 2 : not permitted inside `finalize´',
+    props_ = 'line 2 : invalid `escape´ : unexpected enclosing `finalize´',
 }
 
 Test { [[
@@ -17815,7 +17815,8 @@ do/_
     end
 end
 ]],
-    props = "line 7 : not permitted inside `finalize´",
+    props_ = 'line 6 : invalid `escape´ : unexpected enclosing `finalize´',
+    --props = "line 7 : not permitted inside `finalize´",
 }
 
 Test { [[
@@ -21492,11 +21493,11 @@ escape(1);
 }
 Test { [[
 native/pos do
-    ##define ceu_callback(e,b,c)
+    ##define ceu_callback_native(e,b,c)
     /*__ceu_nothing(d)*/
 end
 output int A;
-emit A => 1;
+emit A => 111;
 escape(1);
 ]],
     run=1
@@ -21560,7 +21561,7 @@ escape(1);
 Test { [[
 native _t;
 native/pos do
-    ##define ceu_callback(a,b,c)
+    ##define ceu_callback_native(a,b,c)
     /* __ceu_nothing(d) */
 end
 output int A;
@@ -21689,9 +21690,9 @@ escape v.a + v.b;
 
 Test { [[
 native/pre do
-    ##define ceu_callback(evt,p1,p2) Fa(evt,p2)
+    ##define ceu_callback_output(evt,params) Fa(evt,params)
     ##include <assert.h>
-    typedef struct {
+    typedef struct t {
         int a;
         int b;
     } t;
@@ -21699,10 +21700,10 @@ end
 native/pos do
     int Fa (int evt, void* v) {
         if (evt == CEU_OUTPUT_A) {
-            t* x = ((tceu__t_*)v)->_1;
-            escape x->a + x->b;
+            t* x = ((tceu_output_A*)v)->_1;
+            return x->a + x->b;
         } else {
-            escape *((int*)v);
+            return *((int*)v);
         }
     }
 end
@@ -21711,7 +21712,7 @@ output _t&& A;
 output int B;
 var int a, b;
 
-var _t v = _t(1,-1);
+var _t v = { (struct t){1,-1} };
 a = emit A => &&v;
 b = emit B => 5;
 escape a + b;
