@@ -1,8 +1,6 @@
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset */
 
-#define CEU_OPT_GO_ALL
-
 #ifndef ceu_callback
     #error "Missing definition for macro \"ceu_callback\"."
 #endif
@@ -146,7 +144,6 @@ static int ceu_wclock (s32 dt, s32* set, s32* sub)
 
 /*****************************************************************************/
 
-static void ceu_callback_go_all (int msg, int p1, void* p2);
 static void ceu_go_bcast (tceu_stk* stk, tceu_evt* evt, tceu_ntrl trl0, tceu_ntrl trlF);
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 
@@ -258,13 +255,11 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
 
 /*****************************************************************************/
 
-#ifdef CEU_OPT_GO_ALL
-
 static int ceu_cb_terminating = 0;
 static int ceu_cb_terminating_ret;
 static int ceu_cb_pending_async = 0;
 
-static void ceu_callback_go_all (int msg, int p1, void* p2) {
+void ceu_callback_go_all (int msg, int p1, void* p2) {
     switch (msg) {
         case CEU_CALLBACK_TERMINATING:
             ceu_cb_terminating     = 1;
@@ -292,5 +287,3 @@ int ceu_go_all (void)
 
     return ceu_cb_terminating_ret;
 }
-
-#endif

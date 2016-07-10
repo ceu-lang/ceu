@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -21474,6 +21475,8 @@ escape 1;
 
 --if not OS then
 
+-->>> OUTPUT
+
 Test { [[
 output int A;
 input  int A;
@@ -21487,10 +21490,10 @@ escape(1);
 ]],
     parser = 'line 1 : after `output´ : expected `(´ or type',
 }
---]===]
 Test { [[
 native/pos do
-    ##define ceu_out_emit(a,b,c,d) __ceu_nothing(d)
+    ##define ceu_callback(e,b,c)
+    /*__ceu_nothing(d)*/
 end
 output int A;
 emit A => 1;
@@ -21557,7 +21560,8 @@ escape(1);
 Test { [[
 native _t;
 native/pos do
-    #define ceu_out_emit(a,b,c,d) __ceu_nothing(d)
+    ##define ceu_callback(a,b,c)
+    /* __ceu_nothing(d) */
 end
 output int A;
 native/pre do
@@ -21600,6 +21604,8 @@ escape 1;
     run = 1,
     --env = "line 1 : invalid event type",
 }
+
+--<<< OUTPUT
 
 Test { [[
 native/pos do
@@ -21669,13 +21675,13 @@ escape 0;
 
 Test { [[
 native/pre do
-    typedef struct {
+    typedef struct t {
         int a;
         int b;
     } t;
 end
 native/plain _t;
-var _t v = _t(1,2);
+var _t v = { (struct t){1,2} };
 escape v.a + v.b;
 ]],
     run = 3,
@@ -21683,6 +21689,7 @@ escape v.a + v.b;
 
 Test { [[
 native/pre do
+    ##define ceu_callback(evt,p1,p2) Fa(evt,p2)
     ##include <assert.h>
     typedef struct {
         int a;
@@ -21690,9 +21697,8 @@ native/pre do
     } t;
 end
 native/pos do
-    ##define ceu_out_emit(a,b,c,d) Fa(a,b,c,d)
-    int Fa (tceu_app* app, int evt, int sz, void* v) {
-        if (evt == CEU_OUT_A) {
+    int Fa (int evt, void* v) {
+        if (evt == CEU_OUTPUT_A) {
             t* x = ((tceu__t_*)v)->_1;
             escape x->a + x->b;
         } else {
@@ -21725,7 +21731,7 @@ end
 native/pos do
     ##define ceu_out_emit(a,b,c,d) Fa(a,b,c,d)
     int Fa (tceu_app* app, int evt, int sz, void* v) {
-        if (evt == CEU_OUT_A) {
+        if (evt == CEU_OUTPUT_A) {
             t x = ((tceu__t*)v)->_1;
             escape x.a + x.b;
         } else {

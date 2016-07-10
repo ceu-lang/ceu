@@ -182,9 +182,6 @@ while (1) {
         if async then
             LINE(me, [[
 ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-#ifdef CEU_OPT_GO_ALL
-ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-#endif
 ]])
             HALT(me, {
                 evt = 'CEU_INPUT__ASYNC',
@@ -388,9 +385,6 @@ if (! CEU_APP.data.__and_]]..me.n..'_'..i..[[) {
 {
     int __ceu_ret = ]]..V(fr)..[[;
     ceu_callback(CEU_CALLBACK_TERMINATING, __ceu_ret, NULL);
-#ifdef CEU_OPT_GO_ALL
-    ceu_callback_go_all(CEU_CALLBACK_TERMINATING, __ceu_ret, NULL);
-#endif
 }
 ]])
         else
@@ -460,31 +454,37 @@ assert(fr.tag == 'Await_Wclock')
     Emit_Ext_emit = function (me)
         local ID_ext, Explist = unpack(me)
         local Typelist, inout = unpack(ID_ext.dcl)
-assert(inout == 'input', 'TODO')
-
         LINE(me, [[
-ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-#ifdef CEU_OPT_GO_ALL
-ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-#endif
-_ceu_trl->evt = CEU_INPUT__ASYNC;
-_ceu_trl->lbl = ]]..me.lbl_out.id..[[;
-_ceu_trl->stk = NULL;
 {
 ]])
-
         local ps = 'NULL'
         if Explist then
             LINE(me, [[
-    tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',')..[[ };
+tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',')..[[ };
 ]])
             ps = '&__ceu_ps'
         end
-        LINE(me, [[
+
+        if inout == 'output' then
+            LINE(me, [[
+ceu_callback(]]..ID_ext.dcl.id..', 0, '..ps..[[);
+]])
+        else
+            LINE(me, [[
+ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+_ceu_trl->evt = CEU_INPUT__ASYNC;
+_ceu_trl->lbl = ]]..me.lbl_out.id..[[;
+_ceu_trl->stk = NULL;
+]])
+            LINE(me, [[
     ceu_go_ext(]]..ID_ext.dcl.id_..', '..ps..[[);
-}
 return;
 case ]]..me.lbl_out.id..[[:;
+]])
+        end
+
+        LINE(me, [[
+}
 ]])
     end,
 
@@ -541,9 +541,6 @@ _CEU_HALT_]]..me.n..[[_:
         local e = unpack(me)
         LINE(me, [[
 ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-#ifdef CEU_OPT_GO_ALL
-ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-#endif
 _ceu_trl->evt = CEU_INPUT__ASYNC;
 _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
 _ceu_trl->stk = NULL;
@@ -566,9 +563,6 @@ case ]]..me.lbl_out.id..[[:;
         local _,blk = unpack(me)
         LINE(me, [[
 ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-#ifdef CEU_OPT_GO_ALL
-ceu_callback_go_all(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-#endif
 ]])
         HALT(me, {
             evt = 'CEU_INPUT__ASYNC',
