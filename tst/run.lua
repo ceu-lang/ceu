@@ -119,6 +119,9 @@ end
             cc           = true,
             cc_input     = '/tmp/tmp.c',
             cc_output    = '/tmp/tmp.exe',
+            cc_args      = '-Wall -Wextra -Werror'
+                            -- TODO: remove all "-Wno-*"
+                            ..' -Wno-unused',
 
             ceu_line_directives = 'true',
             --ceu_line_directives = 'false',
@@ -205,6 +208,7 @@ do return end
       --env --env-header=../arch/ceu_header.h --env-ceu=/tmp/tmp.ceu.c  \
             --env-main=../arch/ceu_main.c --env-output=/tmp/tmp.c       \
       --cc --cc-input=/tmp/tmp.c --cc-output=/tmp/tmp.exe               \
+           --cc-args="-Wall -Wextra -Werror"                            \
       --ceu-line-directives=true
 ]]
         os.execute(ceu)

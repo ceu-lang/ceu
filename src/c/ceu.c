@@ -177,7 +177,6 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 
 static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_trl* _ceu_trl, tceu_nlbl _ceu_lbl, tceu_evt* _ceu_evt)
 {
-_CEU_GOTO_:
     switch (_ceu_lbl) {
         === CODE ===
     }
