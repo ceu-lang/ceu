@@ -150,7 +150,7 @@ end
 
     dofile(DIR..'lines.lua')
     local _WRN = WRN
-    if (not T.wrn) and (not T._ana) then
+    if (not T.wrn) then
         WRN = ASR
     end
 
@@ -176,7 +176,8 @@ end
 --do return end
     if not check(T,'codes')  then return end
 
-if T.ana or T._ana or T.tmp or T.props then return end
+if T.tmp then return end
+--if T.ana or T._ana or T.tmp or T.props then return end
 
     DBG,ASR = DBG1,ASR1
     if CEU.opts.env then
@@ -186,6 +187,11 @@ if T.ana or T._ana or T.tmp or T.props then return end
         if not check(T,'cc') then return end
     end
 
+    if T.run == false then
+        -- succeed w/o executing
+        return
+    end
+
     local f = io.popen(CEU.opts.cc_output..' 2>&1')
     local out = f:read'*a'
     local _1,_,ret = f:close()
@@ -193,8 +199,6 @@ if T.ana or T._ana or T.tmp or T.props then return end
     if type(T.run) == 'number' then
         assert(out == '', 'code with output')
         assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
-    elseif T.run == false then
-        -- succeed unconditionally
     else
         assert(type(T.run) == 'string')
         assert(string.find(out, T.run, nil, true), out)

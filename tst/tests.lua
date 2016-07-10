@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -1291,6 +1290,8 @@ escape 1;
 }
 
 Test { [[input  int A;]],
+    wrn = true,
+    run = false,
     _ana = {
         reachs = 1,
         isForever = true,
@@ -1305,6 +1306,8 @@ Test { [[input int A,A; escape 0;]],
 Test { [[
 input int A,B,Z;
 ]],
+    wrn = true,
+    run = false,
     _ana = {
         reachs = 1,
         isForever = true,
@@ -1562,6 +1565,7 @@ Test { [[var s32 a=await 10s; escape (a==8000000) as int;]],
 }
 
 Test { [[await FOREVER;]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -1739,6 +1743,7 @@ with
 end
 escape 0;
 ]],
+    run = false,
     _ana = {
         unreachs = 2,
         isForever = true,
@@ -1878,6 +1883,7 @@ with
 end
 escape 0;
 ]],
+    run = false,
     _ana = {
         unreachs = 2,
         isForever =  true,
@@ -1892,6 +1898,7 @@ with
     await 1s;
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
     }
@@ -1904,6 +1911,7 @@ with
     await FOREVER;
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -1916,6 +1924,7 @@ with
     await 1s;
 end
 ]],
+    run = false,
     _ana = {
         reachs = 1,
         isForever = true,
@@ -3189,7 +3198,6 @@ continue;
 }
 
 Test { [[
-input int A;
 loop do
     do
         break;
@@ -3197,13 +3205,13 @@ loop do
 end;
 escape 1;
 ]],
+    wrn = true,
     _ana = {
         unreachs = 1,    -- re-loop
     },
     run = 1,
 }
 Test { [[
-input int A;
 loop do
     do/_
         escape 1;
@@ -3211,6 +3219,7 @@ loop do
 end;
 escape 0;
 ]],
+    wrn = true,
     _ana = {
         unreachs = 2,
     },
@@ -3218,7 +3227,6 @@ escape 0;
 }
 
 Test { [[
-input int A;
 loop do
     loop do
         escape 1;
@@ -3226,6 +3234,7 @@ loop do
 end;
 escape 0;
 ]],
+    wrn = true,
     _ana = {
         unreachs = 3,
     },
@@ -3233,7 +3242,6 @@ escape 0;
 }
 
 Test { [[
-input int A;
 loop do
     loop do
         break;
@@ -3245,6 +3253,7 @@ escape 0;
         isForever = true,
         unreachs = 2,
     },
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     --tight = 'tight loop',
 }
 
@@ -3328,7 +3337,8 @@ loop do
 end;
 escape 1;
 ]],
-    props = '`break´ without loop',
+    props_ = 'line 3 : invalid `break´ : unexpected enclosing `async´',
+    --props = '`break´ without loop',
 }
 
 Test { [[
@@ -3340,6 +3350,7 @@ loop do
     v = await A;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -3400,6 +3411,8 @@ loop do
     end;
 end;
 ]],
+    wrn = true,
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 1,
@@ -3428,6 +3441,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         unreachs = 2,
         isForever = true,
@@ -3460,6 +3474,7 @@ loop do
     end
 end
 ]],
+    run = false,
     _ana = { isForever=true },
 }
 
@@ -3471,6 +3486,7 @@ loop do
     end
 end
 ]],
+    run = false,
     _ana = { isForever=true },
 }
 
@@ -3740,6 +3756,7 @@ loop do
     end
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
         --acc = 1,
@@ -3754,6 +3771,7 @@ loop do
     await 2s;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -3772,6 +3790,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -3973,6 +3992,7 @@ with
     end
 end
 ]],
+    run = false,
     ana = 'line 3 : `loop´ iteration is not reachable',
     --run = 4;
 }
@@ -4070,6 +4090,7 @@ with
     end
 end
 ]],
+    run = false,
     ana = 'line 3 : `loop´ iteration is not reachable',
 }
 Test { [[
@@ -4277,6 +4298,7 @@ loop do
 end
 ]],
     --tight = 'tight loop',
+    run = false,
     _ana = {
         isForever = true,
         --unreachs = 1,
@@ -4438,6 +4460,7 @@ loop do
     await A;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -4449,6 +4472,7 @@ loop do
     a = await E;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -4462,6 +4486,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -4491,6 +4516,8 @@ end;
 escape a;
 ]],
     --tight = 'tight loop',
+    wrn = true,
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 1,
@@ -4507,6 +4534,7 @@ escape 0;
     tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
+--]===]
 Test { [[
 par/or do
     loop do
@@ -4518,6 +4546,7 @@ end;
 escape 0;
 ]],
     loop='tight loop',
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 2,
@@ -4535,6 +4564,7 @@ end;
 escape 0;
 ]],
     loop='tight loop',
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 2,
@@ -19041,6 +19071,7 @@ loop do
 end
 escape ret;
 ]],
+    run = false,
     ana = 'line 4 : at least one trail should terminate',
 }
 
@@ -19433,6 +19464,7 @@ loop do
 end
 escape ret;
 ]],
+    run = false,
      ana = 'line 6 : statement is not reachable',
 }
 

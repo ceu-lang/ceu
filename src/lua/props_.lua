@@ -23,6 +23,13 @@ F = {
     Escape = 'Continue',
     Break  = 'Continue',
     Continue = function (me)
+-- TODO: join all possibilities (thread/isr tb)
+        local Async = AST.par(me,'Async')
+        if Async then
+            ASR(me.outer.__depth > Async.__depth, me,
+                'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `async´')
+        end
+
         local Every = AST.par(me,'Every')
         if Every then
             ASR(me.outer.__depth > Every.__depth, me,
