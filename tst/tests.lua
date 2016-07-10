@@ -4534,7 +4534,6 @@ escape 0;
     tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
---]===]
 Test { [[
 par/or do
     loop do
@@ -4545,8 +4544,9 @@ with
 end;
 escape 0;
 ]],
-    loop='tight loop',
+    wrn = true,
     run = false,
+    loop='tight loop',
     _ana = {
         isForever = true,
         unreachs = 2,
@@ -4563,6 +4563,7 @@ with
 end;
 escape 0;
 ]],
+    wrn = true,
     loop='tight loop',
     run = false,
     _ana = {
@@ -4571,6 +4572,7 @@ escape 0;
     },
 }
 
+--]===]
 Test { [[
 input int A;
 loop do
@@ -4581,7 +4583,9 @@ loop do
 end;
 escape 0;
 ]],
-    loop='tight loop',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    --run = false,
+    --loop='tight loop',
     _ana = {
         isForever = true,
         unreachs = 1,
@@ -4600,6 +4604,8 @@ loop do
 end;
 escape 0;
 ]],
+    tight_ = 'line 4 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    run = false,
     loop='tight loop',
     _ana = {
         abrt = 1,
@@ -5031,7 +5037,7 @@ escape ret;
 }
 
 Test { [[
-input int A,B,Z,X,C;
+input int A,B;
 var int ret=0;
 par/and do
     ret = await A;

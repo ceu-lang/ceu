@@ -1,4 +1,5 @@
 local awaits = {
+    Par           = true,
     Every         = true,
     Async         = true,
     _Async_Thread = true,
@@ -8,7 +9,7 @@ local awaits = {
     Await_Forever = true,
 }
 
-local function run (me, Loop)
+local function run (me)
     assert(AST.is_node(me))
 
     if awaits[me.tag] then
@@ -17,16 +18,30 @@ local function run (me, Loop)
     elseif me.tag == 'Break' then
         return 'breaks'
 
-    elseif me.tag == 'If' then
-        local _,t,f = unpack(me)
-        local ret1 = run(t, Loop)
-        local ret2 = run(f, Loop)
-        if ret1=='tight' or ret2=='tight' then
-            return 'tight'
-        elseif ret1=='awaits' and ret2=='awaits' then
-            return 'awaits'
+    elseif me.tag=='If' or me.tag=='Par_Or' then
+        local T do
+            if me.tag == 'If' then
+                local _,t,f = unpack(me)
+                T = { t, f }
+            else
+                T = me
+            end
+        end
+        local awaits = true
+        for _,sub in ipairs(T) do
+            local ret = run(sub)
+            if ret == 'tight' then
+                return 'tight'              -- "tight" if found at least one tight
+            elseif ret == 'breaks' then
+                awaits = false
+            else
+                assert(ret == 'awaits')
+            end
+        end
+        if awaits then
+            return 'awaits'                 -- "awaits" if all await
         else
-            return 'breaks'
+            return 'breaks'                 -- "breaks" otherwise
         end
 
     elseif me.tag == 'Loop' then
@@ -39,7 +54,7 @@ local function run (me, Loop)
     else
         for _, child in ipairs(me) do
             if AST.is_node(child) then
-                local ret = run(child, Loop)
+                local ret = run(child)
                 if ret ~= 'tight' then
                     return ret
                 end
@@ -60,7 +75,7 @@ F = {
         elseif ok then
             -- ok
         else
-            me.tight = run(body, me)
+            me.tight = run(body)
             WRN(me.tight~='tight', me, 'invalid tight `loop´ : unbounded number of non-awaiting iterations')
         end
     end,
