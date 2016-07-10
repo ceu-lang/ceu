@@ -23498,6 +23498,2970 @@ escape _strlen(&&str[0]);
 
 --<<< NATIVE/POINTERS/VECTORS
 
+    -- NATIVE C FUNCS BLOCK RAW
+
+Test { [[
+native _char;
+var _char c = 1;
+escape c;
+]],
+    run = 1,
+}
+
+Test { [[
+native/plain _int;
+var _int a=1, b=1;
+a = b;
+await 1s;
+escape (a==b) as int;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+var int a=1, b=1;
+a = b;
+await 1s;
+escape (a==b) as int;
+]],
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+escape {1};
+]],
+    run = 1,
+}
+
+Test { [[
+native _V;
+{ int V = 10; };
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+{
+    static int v;
+    if (0) {
+    } else {
+        v = 1;
+    }
+};
+escape {v};
+]],
+    run = 1,
+}
+
+Test { [[
+var& void? p;
+do p = &{ NULL };
+finalize with
+    nothing;
+end
+escape p! ==null;
+]],
+    exps = 'line 6 : invalid operands to `==´ : incompatible types : "void" vs "null&&"',
+    --env = 'line 7 : invalid operands to binary "=="',
+    --run = 1,
+}
+
+Test { [[
+var& void? p;
+p = { NULL };
+escape 1;
+//escape p==null;
+]],
+    inits = 'line 2 : invalid binding : expected operator `&´ in the right side',
+    --tmp = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    --ref = 'line 2 : invalid attribution : missing alias operator `&´',
+    --fin = 'line 2 : attribution requires `finalize´',
+}
+
+Test { [[
+_f()
+]],
+    parser = 'line 1 : after `)´ : expected `;´',
+    --parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
+}
+
+Test { [[
+native _V;
+native/pos do
+    int V[2][2] = { {1, 2}, {3, 4} };
+end
+
+_V[0][1] = 5;
+escape _V[1][0] + _V[0][1];
+]],
+    run = 8,
+}
+
+Test { [[
+native _END;
+native/pos do
+    int END = 1;
+end
+if 0 ==  _END-1 then
+    escape 1;
+else
+    escape 0;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    byte* a = (byte*)"end";
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    /*** END ***/
+    byte* a = (byte*)"end";
+    /*** END ***/
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    int A () {}
+end
+A = 1;
+escape 1;
+]],
+    --adj = 'line 4 : invalid expression',
+    --parser = 'line 3 : after `end´ : expected statement'
+    parser = 'line 3 : after `end´ : expected `;´ or statement',
+    --parser = 'line 4 : after `A´ : expected `(´',
+}
+
+Test { [[
+native/pos do
+    void A (int v) {}
+end
+escape 0;
+]],
+    run = 0;
+}
+
+Test { [[
+native/pos do
+    int A (int v) { return 1; }
+end
+escape 0;
+]],
+    --env = 'A : incompatible with function definition',
+    run = 0,
+}
+
+Test { [[
+native _A;
+native/pos do
+    void A (int v) {}
+end
+_A();
+escape 0;
+]],
+    --env = 'line 5 : native function "_A" is not declared',
+    --run  = 1,
+    cc = 'error: too few arguments to function ‘A’',
+}
+
+Test { [[
+native _A;
+native/pos do
+    void A (int v) { }
+end
+_A(1);
+escape 0;
+]],
+    run = 0,
+}
+
+Test { [[
+native _A;
+native/pos do
+    void A () {}
+end
+var int v = _A();
+escape v;
+]],
+    cc = 'error: void value not ignored as it ought to be',
+}
+
+Test { [[emit A => 10; escape 0;]],
+    dcls = 'external identifier "A" is not declared'
+}
+
+Test { [[
+native _Const;
+native/pos do
+    int Const () {
+        return -10;
+    }
+end
+var int ret = _Const();
+escape ret;
+]],
+    run = -10
+}
+
+Test { [[
+native _ID;
+native/pos do
+    int ID (int v) {
+        return v;
+    }
+end
+escape _ID(10);
+]],
+    run = 10,
+}
+
+Test { [[
+native _ID;
+native/pos do
+    int ID (int v) {
+        return v;
+    }
+end
+var int v = _ID(10);
+escape v;
+]],
+    run = 10
+}
+
+Test { [[
+native _VD;
+native/pos do
+    void VD (int v) {
+    }
+end
+_VD(10);
+escape 1;
+]],
+    run = 1
+}
+
+Test { [[
+native _VD;
+native/pos do
+    void VD (int v) {
+    }
+end
+var int ret = _VD(10);
+escape ret;
+]],
+    cc = 'error: void value not ignored as it ought to be',
+}
+
+Test { [[
+native _VD;
+native/pos do
+    void VD (int v) {
+    }
+end
+var void v = _VD(10);
+escape 0;
+]],
+    dcls = 'line 6 : invalid declaration : variable cannot be of type `void´',
+}
+
+Test { [[
+native _NEG;
+native/pos do
+    int NEG (int v) {
+        return -v;
+    }
+end
+escape _NEG(10);
+]],
+    run = -10,
+}
+
+Test { [[
+native _NEG;
+native/pos do
+    int NEG (int v) {
+        return -v;
+    }
+end
+var int v = _NEG(10);
+escape v;
+]],
+    run = -10
+}
+
+Test { [[
+native _ID;
+native/pos do
+    int ID (int v) {
+        return v;
+    }
+end
+input int A;
+var int v=0;
+par/and do
+    await A;
+with
+    v = _ID(10);
+end;
+escape v;
+]],
+    run = {['1~>A']=10},
+}
+
+Test { [[
+native _ID;
+native/pos do
+    int ID (int v) {
+        return v;
+    }
+end
+input int A;
+var int v=0;
+par/or do
+    await A;
+with
+    v = _ID(10);
+end
+escape v;
+]],
+    _ana = {
+        unreachs = 1,
+    },
+    run = 10,
+}
+
+Test { [[
+native _Z1;
+native/pos do int Z1 (int a) { return a; } end
+input int A;
+var int c;
+_Z1(3);
+c = await A;
+escape c;
+]],
+    run = {
+        ['10~>A ; 20~>A'] = 10,
+        ['3~>A ; 0~>A'] = 3,
+    }
+}
+
+Test { [[
+native/nohold _f1, _f2;
+native/pos do
+    int f1 (u8* v) {
+        return v[0]+v[1];
+    }
+    int f2 (u8* v1, u8* v2) {
+        return *v1+*v2;
+    }
+end
+native _u8;
+vector[2] _u8 v = [];
+v[0] = 8;
+v[1] = 5;
+escape _f2(&&v[0],&&v[1]) + _f1(&&v[0]) + _f1(&&v[0]);
+]],
+    run = 39,
+}
+
+Test { [[
+native/pos do
+    void* V;
+end
+var void&& v = null;
+native _V;
+_V = v;
+escape 1;
+]],
+    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
+}
+
+Test { [[
+native/pos do
+    void* V;
+end
+var void&& v = null;
+native _V;
+do _V = v; finalize(v) with end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    void* V;
+end
+var void&& v=null;
+native _V;
+do
+    _V = v;
+finalize (v)
+with end
+await 1s;
+escape (_V==null) as int;
+]],
+    run = false,
+    --fin = 'line 7 : pointer access across `await´',
+}
+
+Test { [[
+do/_
+    var int&& p=_, p1=_;
+    input int&& E;
+    p = await E;
+    p1 = p;
+    await E;
+    escape *p1;
+end
+]],
+    wrn = true,
+    --run = 1,
+    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
+    --fin = 'line 7 : unsafe access to pointer "p1" across `await´',
+}
+
+Test { [[
+native _tp, _a, _b;
+native/pos do
+    typedef int tp;
+end
+var _tp&& v=null;
+do
+    _a = v;
+finalize (v) with
+end
+await 1s;
+_b = _a;    // _a pode ter escopo menor e nao reclama de FIN
+await FOREVER;
+]],
+    --fin = 'line 7 : pointer access across `await´',
+    _ana = {
+        isForever = true,
+    },
+}
+
+Test { [[
+var int v = 10;
+var int&& x = &&v;
+event void e;
+var int ret=0;
+if true then
+    ret = *x;
+    emit e;
+else
+    emit e;
+    escape *x;
+end
+escape ret;
+]],
+    inits = 'line 10 : invalid pointer access : crossed `emit´ (/tmp/tmp.ceu:9)',
+    --fin = 'line 10 : unsafe access to pointer "x" across `emit´',
+}
+
+Test { [[
+var int v = 10;
+var int&& x = &&v;
+event void e;
+var int ret=0;
+if true then
+    ret = *x;
+    emit e;
+else
+    escape *x;
+end
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+var int v = 10;
+var& int x = &v;
+event void e;
+var int ret=0;
+par do
+    ret = x;
+    emit e;
+with
+    escape x;
+end
+]],
+    _ana = {acc=2},
+    run = 10,
+}
+
+Test { [[
+var int v = 10;
+var& int x = &v;
+event void e;
+var int ret=0;
+par do
+    ret = x;
+    emit e;
+with
+    par/or do
+        ret = x;
+        emit e;
+    with
+        ret = x;
+        await e;
+    with
+        par/and do
+            ret = x;
+            emit e;
+        with
+            ret = x;
+            await e;
+        end
+    end
+with
+    escape x;
+end
+]],
+    _ana = {acc=true},
+    run = 10,
+}
+
+Test { [[
+native/plain _SDL_Rect, _SDL_Point;
+var _SDL_Point pos;
+
+var _SDL_Rect rect = _SDL_Rect(pos.x, pos.y);
+await 1s;
+var _SDL_Rect r = rect;
+escape 1;
+]],
+    inits = 'line 2 : uninitialized variable "pos" : reached read access (/tmp/tmp.ceu:4)',
+    --ref = 'line 4 : invalid access to uninitialized variable "pos" (declared at /tmp/tmp.ceu:2)',
+}
+Test { [[
+native/plain _SDL_Rect, _SDL_Point;
+var _SDL_Point pos = _SDL_Point(1,1);
+
+var _SDL_Rect rect = _SDL_Rect(pos.x, pos.y);
+await 1s;
+var _SDL_Rect r = rect;
+escape 1;
+]],
+    cc = 'error: unknown type name ‘SDL_Point’',
+}
+
+Test { [[
+native/plain _SDL_Rect, _SDL_Point;
+var _SDL_Point pos = _SDL_Point(1,1);
+
+var _SDL_Rect rect = _SDL_Rect(pos.x, pos.y);
+await 1s;
+var _SDL_Rect r = rect;
+    r.x = r.x - r.w/2;
+    r.y = r.y - r.h/2;
+escape 1;
+]],
+    cc = 'error: unknown type name ‘SDL_Point’',
+}
+
+Test { [[
+native _int, _f;
+native/pos do
+    int f () {
+        return 1;
+    }
+end
+vector[2] _int v = [];
+v[0] = 0;
+v[1] = 1;
+v[_f()] = 2;
+escape v[1];
+]],
+    run = 2,
+}
+
+Test { [[
+var int xxx = 10;
+escape ((__ceu_app:data as _CEU_Main&&)):xxx;
+]],
+    parser = 'line 2 : after `:´ : expected internal identifier or native identifier',
+}
+Test { [[
+native __ceu_app, _CEU_Main;
+var int xxx = 10;
+escape ((__ceu_app:_data as _CEU_Main&&)):xxx;
+]],
+    todo = 'C access to internal data',
+    run = 10,
+    --parser = 'line 3 : after `)´ : expected `(´ or binary operator or `is´ or `as´ or `;´',
+}
+Test { [[
+native __ceu_app, _CEU_Main;
+var int xxx = 10;
+escape (__ceu_app:_data as _CEU_Main&&):xxx;
+]],
+    todo = 'C access to internal data',
+    run = 10,
+    --parser = 'line 3 : after `)´ : expected `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
+}
+Test { [[
+//native __ceu_app, _CEU_Main;
+var int xxx = 10;
+escape ({(CEU_Main*)(_ceu_app->_data)}):xxx;
+]],
+    todo = 'C access to internal data',
+    run = 10,
+}
+-- NATIVE/PRE
+
+Test { [[
+input/output/instantaneous OPEN  (var byte&& path, var byte mode)=>void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native/pre do
+    typedef struct {
+        int a,b,c;
+    } Fx;
+end
+native _Fx, _fff;
+native/pos do
+    Fx* fff;
+end
+
+native/pure ___ceu_nothing;
+input/output/instantaneous OPEN  (var byte&& path, var  byte&& mode)=>_Fx&& do
+    ___ceu_nothing(path);
+    ___ceu_nothing(mode);
+    escape _fff;
+end
+
+input/output/instantaneous CLOSE  (var _Fx&& f)=>int do
+    ___ceu_nothing(f);
+    escape 1;
+end
+
+input/output/instantaneous SIZE  (var _Fx&& f)=>int do
+    ___ceu_nothing(f);
+    escape 1;
+end
+
+input/output/instantaneous READ  (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)=>int do
+    ___ceu_nothing(ptr);
+    ___ceu_nothing(&&size);
+    ___ceu_nothing(&&nmemb);
+    ___ceu_nothing(f);
+    escape 1;
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native/pre do
+    typedef struct {
+        byte* str;
+        u32   length;
+        u32   x;
+        u32   y;
+    } draw_string_t;
+end
+
+native/pure ___ceu_nothing;
+native/plain _draw_string_t;
+input/output/instantaneous DRAW_STRING  (var _draw_string_t&& ptr)=>void do
+    ___ceu_nothing(ptr);
+end
+
+var _draw_string_t v = _draw_string_t(
+    "Welcome to Ceu/OS!\n",
+    20,
+    100,
+    100);
+call DRAW_STRING => &&v;
+
+escape 1;
+]],
+    run = 1,
+}
+
+--[=[
+
+PRE = [[
+native/pos do
+    static inline int idx (@const int* vec, int i) {
+        escape vec[i];
+    }
+    static inline int set (int* vec, int i, int val) {
+        vec[i] = val;
+        escape val;
+    }
+end
+@pure _idx;
+int[2] va;
+
+]]
+
+Test { PRE .. [[
+_set(va,1,1);
+escape _idx(va,1);
+]],
+    run = 1,
+}
+
+Test { PRE .. [[
+_set(va,0,1);
+_set(va,1,2);
+escape _idx(va,0) + _idx(va,1);
+]],
+    run = 3,
+}
+
+Test { PRE .. [[
+par/and do
+    _set(va,0,1);
+with
+    _set(va,1,2);
+end;
+escape _idx(va,0) + _idx(va,1);
+]],
+    _ana = {
+        acc = 2,
+    },
+}
+Test { PRE .. [[
+par/and do
+    _set(va,0,1);
+with
+    _idx(va,1);
+end;
+escape _idx(va,0) + _idx(va,1);
+]],
+    _ana = {
+        acc = 1,
+    },
+}
+Test { PRE .. [[
+_set(va,0,1);
+_set(va,1,2);
+par/and do
+    _idx(va,0);
+with
+    _idx(va,1);
+end;
+escape _idx(va,0) + _idx(va,1);
+]],
+    run = 3,
+}
+
+Test { [[
+int a, b;
+int&& pa, pb;
+
+par/or do
+    pa = &&a;
+with
+    pb = &&b;
+end;
+escape 1;
+]],
+    run = 1
+}
+
+PRE = [[
+@pure _f3, _f5;
+native/pos do
+int f1 (int* a, int* b) {
+    escape *a + *b;
+}
+int f2 (@const int* a, int* b) {
+    escape *a + *b;
+}
+int f3 (@const int* a, const int* b) {
+    escape *a + *b;
+}
+int f4 (int* a) {
+    escape *a;
+}
+int f5 (@const int* a) {
+    escape *a;
+}
+end
+]]
+
+Test { PRE .. [[
+int a = 1;
+int b = 2;
+escape _f1(&&a,&&b);
+]],
+    run = 3,
+}
+
+Test { PRE .. [[
+int&& pa;
+par/or do
+    _f4(pa);
+with
+    int v = 1;
+end;
+escape 0;
+]],
+    _ana = {
+        acc = 1,
+    },
+}
+Test { PRE .. [[
+int a;
+par/or do
+    _f4(&&a);
+with
+    int v = a;
+end;
+escape 0;
+]],
+    _ana = {
+        acc = 1,
+    },
+}
+Test { PRE .. [[
+int a, b;
+par/or do
+    _f5(&&a);
+with
+    a = 1;
+end;
+escape 0;
+]],
+    _ana = {
+        acc = 1,
+    },
+}
+Test { PRE .. [[
+int a = 10;
+par/or do
+    _f5(&&a);
+with
+    escape a;
+end;
+escape 0;
+]],
+    run = false,
+    _ana = {
+        --abrt = 1,
+    }
+}
+Test { PRE .. [[
+int a;
+int&& pa;
+par/or do
+    _f5(pa);
+with
+    escape a;
+end;
+escape 0;
+]],
+    --abrt = 1,
+    _ana = {
+        acc = 1,
+    },
+}
+Test { PRE .. [[
+int a, b;
+par/or do
+    _f4(&&a);
+with
+    int v = b;
+end;
+escape 0;
+]],
+    run = 0,
+}
+Test { PRE .. [[
+int a, b;
+par/or do
+    _f5(&&a);
+with
+    b = 1;
+end;
+escape 0;
+]],
+    run = 0,
+}
+
+Test { PRE .. [[
+int a, b;
+par/or do
+    _f5(&&a);
+with
+    int v = b;
+end;
+escape 0;
+]],
+    run = 0,
+}
+Test { PRE .. [[
+int&& pa;
+do
+    int a;
+    pa = &&a;
+end;
+escape 1;
+]],
+    run = 1,     -- TODO: check_depth
+    --env = 'invalid attribution',
+}
+Test { PRE .. [[
+int a=1;
+do
+    int&& pa = &&a;
+    *pa = 2;
+end;
+escape a;
+]],
+    run = 2,
+}
+
+Test { PRE .. [[
+int a;
+int&& pa;
+par/or do
+    _f4(pa);
+with
+    int v = a;
+end;
+escape 0;
+]],
+    _ana = {
+        acc = 2, -- TODO: scope of v vs pa
+    },
+}
+Test { PRE .. [[
+int a;
+int&& pa;
+par/or do
+    _f5(pa);
+with
+    a = 1;
+end;
+escape a;
+]],
+    _ana = {
+        acc = 1,
+    },
+}
+Test { PRE .. [[
+int a;
+int&& pa;
+par do
+    escape _f5(pa);
+with
+    escape a;
+end;
+]],
+    --abrt = 2,
+    _ana = {
+        acc = 2, -- TODO: $ret vs anything is DET
+    },
+}
+
+Test { PRE .. [[
+int a=1, b=5;
+par/or do
+    _f4(&&a);
+with
+    _f4(&&b);
+end;
+escape a+b;
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 6,
+}
+
+Test { PRE .. [[
+int a = 1;
+int b = 2;
+int v1, v2;
+par/and do
+    v1 = _f1(&&a,&&b);
+with
+    v2 = _f1(&&a,&&b);
+end;
+escape v1 + v2;
+]],
+    _ana = {
+        acc = 3,
+    },
+}
+
+Test { PRE .. [[
+int a = 1;
+int b = 2;
+int v1, v2;
+par/and do
+    v1 = _f2(&&a,&&b);
+with
+    v2 = _f2(&&a,&&b);
+end;
+escape v1 + v2;
+]],
+    _ana = {
+        acc = 3,     -- TODO: f2 is const
+    },
+}
+
+Test { PRE .. [[
+int a = 1;
+int b = 2;
+int v1, v2;
+par/and do
+    v1 = _f3(&&a,&&b);
+with
+    v2 = _f3(&&a,&&b);
+end;
+escape v1 + v2;
+]],
+    run = 6,
+}
+
+Test { PRE .. [[
+int a = 2;
+int b = 2;
+int v1, v2;
+par/and do
+    v1 = _f4(&&a);
+with
+    v2 = _f4(&&b);
+end;
+escape a+b;
+]],
+    run = 4,
+    _ana = {
+        acc = 1,
+    },
+}
+
+Test { PRE .. [[
+int a = 2;
+int b = 2;
+int v1, v2;
+par/and do
+    v1 = _f4(&&a);
+with
+    v2 = _f4(&&a);
+end;
+escape a+a;
+]],
+    _ana = {
+        acc = 2,
+    },
+}
+
+Test { PRE .. [[
+int a = 2;
+int b = 2;
+int v1, v2;
+par/and do
+    v1 = _f5(&&a);
+with
+    v2 = _f5(&&a);
+end;
+escape a+a;
+]],
+    run = 4,
+}
+
+Test { PRE .. [[
+int a;
+int&& pa = &&a;
+a = 2;
+int v1,v2;
+par/and do
+    v1 = _f4(&&a);
+with
+    v2 = _f4(pa);
+end;
+escape v1+v2;
+]],
+    _ana = {
+        acc = 3,
+    },
+}
+
+Test { PRE .. [[
+int a;
+int&& pa = &&a;
+a = 2;
+int v1,v2;
+par/and do
+    v1 = _f5(&&a);
+with
+    v2 = _f5(pa);
+end;
+escape v1+v2;
+]],
+    _ana = {
+        acc = 1,
+    },
+}
+
+Test { [[
+par/and do
+    _printf("END: 1\n");
+with
+    _assert(1);
+end
+escape 0;
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 1,
+}
+
+Test { [[
+deterministic _printf with _assert;
+native/pos do ##include <assert.h> end
+par/and do
+    _printf("END: 1\n");
+with
+    _assert(1);
+end
+escape 0;
+]],
+    todo = true,
+    run = 1,
+}
+--]=]
+
+Test { [[
+native _a;
+native/pos do
+    int a;
+end
+par/or do
+    _a = 1;
+with
+    _a = 2;
+end
+escape _a;
+]],
+    _ana = {
+        acc = 1,
+        abrt = 1,
+    },
+}
+
+Test { [[
+@const _HIGH, _LOW;
+par do
+    loop do
+        _digitalWrite(11, _HIGH);
+        await 1s;
+        _digitalWrite(11, _LOW);
+        await 1s;
+    end
+with
+    loop do
+        _digitalWrite(12, _HIGH);
+        await 500ms;
+        _digitalWrite(12, _LOW);
+        await 500ms;
+    end
+with
+    loop do
+        _digitalWrite(13, _HIGH);
+        await 250ms;
+        _digitalWrite(13, _LOW);
+        await 250ms;
+    end
+end
+]],
+    todo = true,
+    _ana = {
+        acc = 6,
+        isForever = true,
+    },
+}
+
+Test { [[
+native _LOW, _HIGH, _digitalWrite;
+par do
+    loop do
+        _digitalWrite(11, _HIGH);
+        await 1s;
+        _digitalWrite(11, _LOW);
+        await 1s;
+    end
+with
+    loop do
+        _digitalWrite(12, _HIGH);
+        await 500ms;
+        _digitalWrite(12, _LOW);
+        await 500ms;
+    end
+with
+    loop do
+        _digitalWrite(13, _HIGH);
+        await 250ms;
+        _digitalWrite(13, _LOW);
+        await 250ms;
+    end
+end
+]],
+    _ana = {
+        acc = true,
+        isForever = true,
+    },
+    --fin = 'line 4 : call requires `finalize´',
+}
+
+Test { [[
+native/const _LOW, _HIGH;
+native _digitalWrite;
+par do
+    loop do
+        _digitalWrite(11, _HIGH);
+        await 1s;
+        _digitalWrite(11, _LOW);
+        await 1s;
+    end
+with
+    loop do
+        _digitalWrite(12, _HIGH);
+        await 500ms;
+        _digitalWrite(12, _LOW);
+        await 500ms;
+    end
+with
+    loop do
+        _digitalWrite(13, _HIGH);
+        await 250ms;
+        _digitalWrite(13, _LOW);
+        await 250ms;
+    end
+end
+]],
+    _ana = {
+        acc = true,
+        isForever = true,
+    },
+}
+
+    -- RAW
+
+Test { [[
+native/pos do
+    int V = 0;
+    int fff (int a, int b) {
+        V = V + a + b;
+        return V;
+    }
+end
+{fff}(1,2);
+var int i = {fff}(3,4);
+escape i;
+]],
+    run = 10,
+    --parser = 'line 8 : after `)´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´',
+}
+
+Test { [[
+native/pos do
+    int V = 0;
+    int fff (int a, int b) {
+        V = V + a + b;
+        return V;
+    }
+end
+call {fff}(1,2);
+var int i = {fff}(3,4);
+escape i;
+]],
+    run = 10,
+}
+
+    -- STRINGS
+
+Test { [[
+var byte&& a;
+a = "oioioi" as byte&&;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int a;
+a = "oioioi";
+escape 1;
+]],
+    stmts = 'line 2 : invalid assignment : types mismatch : "int" <= "_char&&"',
+    --env = 'line 2 : types mismatch (`int´ <= `_char&&´)',
+}
+
+Test { [[
+native _char;
+var _char&& a = "Abcd12" ;
+escape 1;
+]],
+    --env = 'line 2 : invalid attribution (_char&& vs byte&&)',
+    run = 1,
+}
+Test { [[
+native _char;
+var _char&& a = ("Abcd12"  as _char&&);
+escape 1;
+]],
+    run = 1
+}
+Test { [[
+native _printf;
+_printf("END: %s\n", "Abcd12");
+escape 0;
+]],
+    todo = 'END for tests is not used anymore',
+    run='Abcd12',
+}
+Test { [[
+native _strlen;
+escape _strlen("123");
+]], run=3,
+}
+Test { [[
+native _printf;
+_printf("END: 1%d 0\n",2); escape 0;]],
+    todo = 'END for tests is not used anymore',
+    run=12,
+}
+Test { [[
+native _printf;
+_printf("END: 1%d%d 0\n",2,3); escape 0;]],
+    todo = 'END for tests is not used anymore',
+    run=123,
+}
+
+Test { [[
+native/nohold _strncpy, _printf, _strlen;
+native _char ;
+vector[10] _char str = [];
+_strncpy(&&str[0], "123", 4);
+_printf("END: %d %s\n", _strlen(&&str[0]) as int, &&str[0]);
+escape 0;
+]],
+    todo = 'END for tests is not used anymore',
+    run = '3 123'
+}
+
+Test { [[
+native/nohold _printf, _strlen, _strcpy;
+native _char;
+vector[6] _char a=[]; _strcpy(&&a[0], "Hello");
+vector[2] _char b=[]; _strcpy(&&b[0], " ");
+vector[7] _char c=[]; _strcpy(&&c[0], "World!");
+vector[30] _char d=[];
+
+var int len = 0;
+_strcpy(&&d[0],&&a[0]);
+_strcpy(&&d[_strlen(&&d[0])], &&b[0]);
+_strcpy(&&d[_strlen(&&d[0])], &&c[0]);
+_printf("END: %d %s\n", _strlen(&&d[0]) as int, &&d[0]);
+escape 0;
+]],
+    todo = 'END for tests is not used anymore',
+    run = '12 Hello World!'
+}
+
+Test { [[
+native _const_1;
+native/pos do
+    int const_1 () {
+        return 1;
+    }
+end
+escape _const_1();
+]],
+    run = 1;
+}
+
+Test { [[
+native _const_1;
+native/pos do
+    int const_1 () {
+        return 1;
+    }
+end
+escape _const_1() + _const_1();
+]],
+    run = 2;
+}
+
+Test { [[
+native _inv;
+native/pos do
+    int inv (int v) {
+        return -v;
+    }
+end
+var int a;
+a = _inv(_inv(1));
+escape a;
+]],
+    --fin = 'line 8 : call requires `finalize´',
+    run = 1,
+}
+
+Test { [[
+native/pure _inv;
+native/pos do
+    int inv (int v) {
+        return -v;
+    }
+end
+var int a;
+a = _inv(_inv(1));
+escape a;
+]],
+    run = 1,
+}
+
+Test { [[
+native _id;
+native/pos do
+    int id (int v) {
+        return v;
+    }
+end
+var int a;
+a = _id(1);
+escape a;
+]],
+    run = 1
+}
+
+-- STRUCTS / SIZEOF
+
+Test { [[
+native/pre do
+typedef struct s {
+    u16 a;
+    u8 b;
+    u8 c;
+} s;
+end
+native/plain _s;
+var _s vs = { (struct s){10,1,0} };
+escape vs.a + vs.b + sizeof(_s);
+]],
+    run = 15,
+}
+
+Test { [[
+native/pre do
+typedef struct s {
+    u16 a;
+    u8 b;
+    u8 c;
+} s;
+end
+native/plain _s;
+var _s vs = { (struct s){10,1,0} };
+escape vs.a + vs.b + sizeof(_s) + sizeof(vs) + sizeof(vs.a);
+]],
+    run = 21,
+}
+
+Test { [[
+native _SZ;
+native _aaa = (sizeof<void&&,u16>) * 2;
+native/pos do
+    typedef struct {
+        void&& a;
+        u16 b;
+    } t1;
+    typedef struct {
+        t1 v[2];
+    } aaa;
+    int SZ = sizeof(aaa);
+end
+escape sizeof<_aaa> + _SZ;
+]],
+    todo = 'sizeof',
+    run = 28,   -- TODO: different packings
+}
+
+Test { [[
+native/pre do
+    typedef struct {
+        u16 ack;
+        u8 data[16];
+    } Payload;
+end
+native _Payload ;
+var _Payload final;
+var u8&& neighs = &&(final._data[4]);
+escape 1;
+]],
+    inits = 'line 8 : uninitialized variable "final" : reached read access (/tmp/tmp.ceu:9)',
+    --ref = 'line 9 : invalid access to uninitialized variable "final" (declared at /tmp/tmp.ceu:8)',
+}
+Test { [[
+native/pre do
+    typedef struct Payload {
+        u16 ack;
+        u8 data[16];
+    } Payload;
+end
+native/plain _Payload;
+var _Payload final = { (struct Payload){0,{}} };
+var u8&& neighs = &&(final._data[4]);
+escape 1;
+]],
+    run = 1;
+}
+
+Test { [[
+native/pos do
+typedef struct {
+    int a;
+    int b;
+} s;
+end
+native/plain _s;
+var _s vs = _s(0,0);
+par/and do
+    vs.a = 10;
+with
+    vs.a = 1;
+end;
+escape vs.a;
+]],
+    _ana = {
+        acc = 1,
+    },
+}
+
+Test { [[
+native/pos do
+typedef struct {
+    int a;
+    int b;
+} s;
+end
+native/plain _s;
+var _s vs = _s(0,0);
+par/and do
+    vs.a = 10;
+with
+    vs.b = 1;
+end;
+escape vs.a;
+]],
+    _ana = {
+        acc = 1,     -- TODO: struct
+    },
+}
+
+Test { [[
+native/pre do
+    typedef struct mys {
+        int a;
+    } mys;
+end
+native/plain _mys;
+var _mys v = { (struct mys){ 0 } };
+var _mys&& pv;
+pv = &&v;
+v.a = 10;
+(*pv).a = 20;
+pv:a = pv:a + v.a;
+escape v.a;
+]],
+    run = 40,
+}
+
+Test { [[
+]],
+    _ana = {
+        reachs = 1,
+        isForever = true,
+    }
+}
+
+Test { [[
+native _message_t ;
+native _t = sizeof<_message_t, u8>;
+escape sizeof<_t>;
+]],
+    todo = 'sizeof',
+    run = 53,
+}
+
+Test { [[
+native _char;
+var _char a = (1 as _char);
+escape a as int;
+]],
+    run = 1,
+}
+
+-- Exps
+
+Test { [[var int a = ]],
+    parser = "line 1 : after `=´ : expected expression",
+}
+
+Test { [[escape]],
+    parser = "line 1 : after `escape´ : expected expression",
+}
+
+Test { [[escape()]],
+    --parser = "line 1 : after `(´ : expected expression",
+    parser = "line 1 : after `(´ : expected expression",
+}
+
+Test { [[escape 1+;]],
+    parser = "line 1 : after `+´ : expected expression",
+}
+
+Test { [[if then]],
+    parser = "line 1 : after `if´ : expected expression",
+}
+
+Test { [[b = ;]],
+    parser = "line 1 : after `=´ : expected expression",
+}
+
+
+Test { [[
+
+
+escape 1
+
++
+
+
+;
+]],
+    parser = "line 5 : after `+´ : expected expression"
+}
+
+Test { [[
+var int a;
+a = do/_
+    var int b;
+end
+]],
+    parser = "line 4 : after `end´ : expected `;´",
+}
+
+    -- POINTER ASSIGNMENTS
+
+Test { [[
+var int&& x;
+*x = 1;
+escape 1;
+]],
+    inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:2)',
+    --ref = 'line 2 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:1)',
+}
+
+Test { [[
+var int&& p;
+do
+    var int i;
+    p = &&i;
+end
+escape 1;
+]],
+    inits = 'line 3 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:4)',
+    --ref = 'line 1 : uninitialized variable "p" crossing compound statement (/tmp/tmp.ceu:2)',
+    --fin = 'line 4 : attribution to pointer with greater scope',
+}
+Test { [[
+var int&& p=null;
+do
+    var int i=0;
+    do p = &&i; finalize (i) with end
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+var int a := 1;
+escape 1;
+]],
+    todo = 'line 1 : wrong operator',
+}
+Test { [[
+var int a;
+a := 1;
+escape 1;
+]],
+    todo = 'line 2 : wrong operator',
+}
+Test { [[
+var int a;
+do a = 1;
+finalize with
+    nothing;
+end
+escape 1;
+]],
+    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
+    --fin = 'line 3 : attribution does not require `finalize´',
+}
+Test { [[
+var int&& a := null;
+escape 1;
+]],
+    todo = 'line 1 : wrong operator',
+}
+Test { [[
+var int&& a;
+a := null;
+escape 1;
+]],
+    todo = 'line 2 : wrong operator',
+}
+Test { [[
+var int&& a;
+do a = null;
+finalize with
+    nothing;
+end
+escape 1;
+]],
+    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
+    --fin = 'line 3 : attribution does not require `finalize´',
+}
+Test { [[
+code/instantaneous Faca (void)=>void do
+    var int&& a;
+    a := null;
+end
+escape 1;
+]],
+    wrn = true,
+    todo = 'line 3 : wrong operator',
+}
+Test { [[
+var int a=0;
+var int&& pa := &&a;
+escape 1;
+]],
+    todo = 'line 2 : wrong operator',
+    run = 1,
+}
+Test { [[
+var int a=0;
+var int&& pa;
+do pa = &&a;
+finalize with
+    nothing;
+end
+escape 1;
+]],
+    scopes = 'line 3 : invalid `finalize´ : nothing to finalize',
+    --fin = 'line 4 : attribution does not require `finalize´',
+}
+Test { [[
+code/instantaneous Fx (var void&& o1)=>void do
+    var void&& tmp := o1;
+end
+escape 1;
+]],
+    wrn = true,
+    todo = 'line 2 : wrong operator',
+    --fin = 'line 2 : pointer access across `await´',
+}
+
+Test { [[
+native _int;
+var _int&& u;
+vector[1] _int i;
+await 1s;
+u = i;
+escape 1;
+]],
+    stmts = 'line 5 : invalid assignment : unexpected context for vector "i"',
+    --env = 'line 4 : types mismatch (`_int&&´ <= `_int[]´)',
+    --run = { ['~>1s']=1 },
+}
+Test { [[
+native _int;
+var _int ptr = null;
+await 1s;
+escape (ptr == null) as int;
+]],
+    wrn = true,
+    inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
+}
+Test { [[
+native _int;
+vector[1] _int i=[];
+await 1s;
+var _int&& u = _;
+u = &&i[0];
+escape 1;
+]],
+    wrn = true,
+    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
+    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
+}
+Test { [[
+native/plain _int;
+vector[1] _int i=[];
+await 1s;
+var _int&& u = _;
+u = &&i[0];
+if u==null then end;
+escape 1;
+]],
+    wrn = true,
+    run = { ['~>1s']=1 },
+}
+Test { [[
+var int&& u;
+vector[1] int i;
+await 1s;
+u = i;
+escape 1;
+]],
+    stmts = 'line 4 : invalid assignment : unexpected context for vector "i"',
+    --env = 'line 4 : types mismatch (`int&&´ <= `int[]´)',
+    --run = { ['~>1s']=1 },
+}
+Test { [[
+native _int;
+var _int&& u;
+do
+    vector[1] _int i;
+    i[0] = 2;
+    u = i;
+end
+do
+    vector[1] _int i;
+    i[0] = 5;
+end
+escape *u;
+]],
+    stmts = 'line 6 : invalid assignment : unexpected context for vector "i"',
+    --env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
+}
+Test { [[
+native _int;
+var _int&& u;
+do
+    vector[1] _int i;
+    i[0] = 2;
+    u = &&i[0];
+end
+do
+    vector[1] _int i;
+    i[0] = 5;
+end
+escape *u;
+]],
+    inits = 'line 4 : uninitialized vector "i" : reached read access (/tmp/tmp.ceu:5)',
+    --ref = 'line 1 : uninitialized variable "u" crossing compound statement (/tmp/tmp.ceu:2)',
+    --fin = 'line 5 : attribution to pointer with greater scope',
+}
+Test { [[
+input int SDL_KEYUP;
+var int key;
+key = await SDL_KEYUP;
+escape key;
+]],
+    run = { ['1 ~> SDL_KEYUP']=1 }
+}
+
+Test { [[
+input int&& SDL_KEYUP;
+par/or do
+    var int&& key;
+    key = await SDL_KEYUP;
+    if key==null then end;
+with
+    async do
+        emit SDL_KEYUP => null;
+    end
+end
+escape 1;
+]],
+    run = 1.
+}
+
+Test { [[
+native _SDL_KeyboardEvent;
+input _SDL_KeyboardEvent&& SDL_KEYUP;
+every key in SDL_KEYUP do
+    if key:keysym.sym == 1 then
+    else/if key:keysym.sym == 1 then
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+    },
+}
+
+-->>> CPP / DEFINE / PREPROCESSOR
+
+Test { [[
+#define OI
+
+a = 1;
+]],
+    dcls = 'line 3 : internal identifier "a" is not declared',
+}
+
+Test { [[
+native/const _N;
+native/pre do
+    #define N 1
+end
+native _u8;
+vector[_N] _u8 vec = [];
+vec[0] = 10;
+escape vec[_N-1];
+]],
+    run = 10,
+}
+
+Test { [[
+native/pre do
+    #define N 1
+end
+native _u8;
+vector[N] _u8 vec = [];
+vec[0] = 10;
+escape vec[N-1];
+]],
+    opts_pre = true,
+    run = 10,
+}
+
+Test { [[
+native/pre do
+    #define N 1
+end
+native _u8;
+vector[N+1] _u8 vec = [];
+vec[1] = 10;
+escape vec[1];
+]],
+    opts_pre = true,
+    run = 10,
+}
+
+Test { [[
+#define N 1
+native _u8;
+vector[N+1] _u8 vec = [];
+vec[1] = 10;
+escape vec[1];
+]],
+    opts_pre = true,
+    run = 10,
+}
+
+Test { [[
+native/const _N;
+native/pre do
+    #define N 5
+end
+native/plain _int;
+vector[_N] _int vec = [];
+loop i in [0 -> _N[ do
+    vec[i] = i;
+end
+var int ret = 0;
+loop i in [0 -> _N[ do
+    ret = ret + vec[i];
+end
+escape ret;
+]],
+    opts_pre = true,
+    --loop = true,
+    wrn = true,
+    run = 10,
+}
+
+Test { [[
+#define UART0_BASE 0x20201000
+#define UART0_CR ((UART0_BASE + 0x30) as u32&&)
+*UART0_CR = 0x00000000;
+escape 1;
+]],
+    opts_pre = true,
+    parser = 'line 3 : after `(´ : expected name expression',
+}
+
+Test { [[
+#define UART0_BASE 0x20201000
+#define UART0_CR ((u32*)(UART0_BASE + 0x30))
+*{UART0_CR} = 0x00000000;
+escape 1;
+]],
+    todo = 'segfault',
+    opts_pre = true,
+    valgrind = false,
+    asr = true,
+}
+--<<< CPP / DEFINE / PREPROCESSOR
+
+-- ASYNC
+
+Test { [[
+input void A;
+par/or do
+    async do
+        emit A;
+    end
+    escape -1;
+with
+    await A;
+end
+async do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+async do
+
+    par/or do
+        var int a=0;
+    with
+        var int b=0;
+    end
+end
+]],
+    props = "line 3 : not permitted inside `async´",
+}
+Test { [[
+async do
+
+
+    par/and do
+        var int a=0;
+    with
+        var int b=0;
+    end
+end
+]],
+    props = "line 4 : not permitted inside `async´",
+}
+Test { [[
+async do
+    par do
+        var int a=0;
+    with
+        var int b=0;
+    end
+end
+]],
+    props = "line 2 : not permitted inside `async´",
+}
+
+-- DFA
+
+Test { [[
+var int a=0;
+]],
+    _ana = {
+        reachs = 1,
+        isForever = true,
+    },
+}
+
+Test { [[
+var int a;
+a = do/_
+    var int b=0;
+end;
+]],
+    _ana = {
+        reachs = 1,
+        unreachs = 1,
+        isForever = true,
+    },
+}
+
+Test { [[
+var int a=0;
+par/or do
+    a = 1;
+with
+    a = 2;
+end;
+escape a;
+]],
+    _ana = {
+        acc = 1,
+        abrt = 1,
+    },
+}
+
+-- BIG // FULL // COMPLETE
+Test { [[
+input int KEY;
+if true then escape 50; end
+par do
+    var int pct=0, dt=0, step=0, ship=0, points=0;
+    var int win = 0;
+    loop do
+        if win!=0 then
+            // next phase (faster, harder, keep points)
+            step = 0;
+            ship = 0;
+            if dt > 100 then
+                dt = dt - 50;
+            end
+            if pct > 10 then
+                pct = pct - 1;
+            end
+        else
+            // restart
+            pct    = 35;    // map generator (10 out of 35 for a '#')
+            dt     = 500;   // game speed (500ms/step)
+            step   = 0;     // current step
+            ship   = 0;     // ship position (0=up, 1=down)
+            points = 0;     // number of steps alive
+        end
+        await KEY;
+        win = do/_ par do
+                loop do
+                    await (dt)ms;
+                    step = step + 1;
+
+                    if step == 1 then
+                        escape 1;           // finish line
+                    end
+                    points = points + 1;
+                end
+            with
+                loop do
+                    var int key = await KEY;
+                    if key == 1 then
+                        ship = 0;
+                    end
+                    if key == 1 then
+                        ship = 1;
+                    end
+                end
+end
+            end;
+        par/or do
+            await 1s;
+            await KEY;
+        with
+            if win==0 then
+                loop do
+                    await 100ms;
+                    await 100ms;
+                end
+            end
+        end
+    end
+with
+    var int key = 1;
+    loop do
+        var int read1 = 1;
+            read1 = 1;
+        await 50ms;
+        var int read2 = 1;
+            read2 = 1;
+        if read1==read2 and key!=read1 then
+            key = read1;
+            if key != 1 then
+                async (read1) do
+                    emit KEY => read1;
+                end
+            end
+        end
+    end
+end
+]],
+    run = 50,
+}
+
+-- TIGHT LOOPS
+
+Test { [[
+loop i in [0 -> 10[ do
+    i = 0;
+end
+]],
+    stmts = 'line 2 : invalid assignment : read-only variable "i"',
+    --env = 'line 2 : read-only variable',
+}
+
+Test { [[
+loop do end
+]],
+    tight_ = 'line 1 : invalid tight `loop´ :',
+    --tight = 'line 1 : tight loop',
+}
+Test { [[
+loop i do end
+]],
+    tight_ = 'line 1 : invalid tight `loop´ :',
+    --tight = 'line 1 : tight loop',
+}
+Test { [[
+loop i in [0 -> 10[ do end
+escape 2;
+]],
+    run = 2,
+}
+Test { [[
+var int v=1;
+loop i in [0->v[ do end
+]],
+    tight_ = 'line 2 : invalid tight `loop´ :',
+    --tight = 'line 2 : tight loop',
+}
+
+-- INFINITE LOOP/EXECUTION
+Test { [[
+event void e, f;
+par do
+    loop do
+        par/or do
+            emit f;         // 18
+        with
+            await f;        // 20
+        end
+        await e;            // 23
+    end
+with
+    loop do
+        par/or do
+            await f;        // 8
+        with
+            emit e;         // 11
+            await FOREVER;
+        end
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 3,
+    },
+    awaits = 0,
+    run = 0,
+}
+
+Test { [[
+event void e, f;
+par do
+    loop do
+        par/or do
+            await f;        // 8
+        with
+            emit e;         // 11
+            await FOREVER;
+        end
+    end
+with
+    loop do
+        par/or do
+            emit f;         // 18
+        with
+            await f;        // 20
+        end
+        await e;            // 23
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 3,
+    },
+    awaits = 0,
+    run = 0,
+}
+
+Test { [[
+event void e, f;
+par do
+    loop do
+        par/or do
+            emit e;     // 8
+            await FOREVER;
+        with
+            await f;
+        end
+    end
+with
+    loop do
+        await e;        // 17
+        par/or do
+            emit f;     // 20
+        with
+            await f;    // 22
+        end
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 2,
+    },
+    awaits = 0,
+    run = 0
+}
+
+Test { [[
+event void e, k1, k2;
+par do
+    loop do
+        par/or do
+            emit e;
+            await FOREVER;
+        with
+            await k1;
+        end
+        emit k2;
+    end
+with
+    loop do
+        await e;
+        par/or do
+            emit k1;
+        with
+            await k2;
+        end
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 1,
+    },
+    awaits = 1,
+    run = 0,
+}
+Test { [[
+event void e, f;
+par do
+    loop do
+        par/or do
+            await f;        // 8
+        with
+            emit e;         // 11
+            await FOREVER;
+        end
+    end
+with
+    loop do
+        par/or do
+            await f;        // 20
+        with
+            emit f;         // 18
+        end
+        await e;            // 23
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 3,
+    },
+    awaits = 0,
+    run = 0,
+}
+
+Test { [[
+event void e, f;
+par do
+    loop do
+        par/or do
+            await f;        // 20
+        with
+            emit f;         // 18
+        end
+        await e;            // 23
+    end
+with
+    loop do
+        par/or do
+            await f;        // 8
+        with
+            emit e;         // 11
+            await FOREVER;
+        end
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 3,
+    },
+    awaits = 0,
+    run = 0,
+}
+
+Test { [[
+event void e, f;
+par do
+    loop do
+        await e;        // 17
+        par/or do
+            await f;    // 22
+        with
+            emit f;     // 20
+        end
+    end
+with
+    loop do
+        par/or do
+            await f;
+        with
+            emit e;     // 8
+            await FOREVER;
+        end
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 2,
+    },
+    awaits = 0,
+    run = 0
+}
+
+Test { [[
+event void e, k1, k2;
+par do
+    loop do
+        await e;
+        par/or do
+            await k2;
+        with
+            emit k1;
+            await FOREVER;
+        end
+    end
+with
+    loop do
+        par/or do
+            await k1;
+        with
+            emit e;
+            await FOREVER;
+        end
+        emit k2;
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = 1,
+    },
+    awaits = 1,
+    run = 0,
+}
+Test { [[
+event void e;
+loop do
+    par/or do
+        await e;
+    with
+        emit e;
+        await FOREVER;
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = true,
+    },
+    awaits = 1,
+    run = 0,
+}
+Test { [[
+event void e;
+loop do
+    par/or do
+        await e;
+        await e;
+    with
+        emit e;
+        emit e;
+        await FOREVER;
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = true,
+    },
+    awaits = 1,
+    run = 0,
+}
+Test { [[
+event void e;
+loop do
+    watching e do
+        emit e;
+        await FOREVER;
+    end
+end
+]],
+    _ana = {
+        isForever = true,
+        acc = true,
+    },
+    awaits = 1,
+    run = 0,
+}
+Test { [[
+var int ret = 0;
+event void e;
+par/or do
+    loop do
+        await e;
+        ret = ret + 1;
+    end
+with
+    every e do
+        ret = ret + 1;
+    end
+with
+    emit e;
+    emit e;
+    emit e;
+end
+escape ret;
+]],
+    _ana = { acc=true },
+    run = 3;
+}
+
+do return end
+
+-->>> PAUSE
+
+Test { [[
+event bool a;
+pause/if a do
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var bool a;
+pause/if a do
+end
+escape 1;
+]],
+    stmts = 'line 2 : invalid `pause/if´ : unexpected context for variable "a"',
+}
+
+Test { [[
+input void A;
+pause/if A do
+end
+escape 0;
+]],
+    --adj = 'line 2 : invalid expression',
+    parser = 'line 2 : after `pause/if´ : expected name expression',
+    --parser = 'line 2 : after `A´ : expected `(´',
+}
+
+Test { [[
+event void a;
+var int v = await a;
+escape 0;
+]],
+    --env = 'line 2 : event type must be numeric',
+    --env = 'line 2 : invalid attribution',
+    --env = 'line 2 : arity mismatch',
+    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "()"',
+    --env = 'line 2 : invalid attribution (int vs void)',
+}
+
+Test { [[
+event void a;
+pause/if a do
+end
+escape 0;
+]],
+    stmts = 'line 2 : invalid `pause/if´ : expected event of type `bool´',
+    --env = 'line 2 : event type must be numeric',
+    --env = 'line 2 : arity mismatch',
+    --env = 'line 2 : invalid attribution',
+    --env = 'line 2 : invalid attribution (bool vs void)',
+}
+
+Test { [[
+input int A, B;
+event bool a;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v;
+    end
+with
+    pause/if a do
+        var int v = await B;
+        escape v;
+    end
+end
+]],
+    stmts = 'line 6 : invalid `emit´ : types mismatch : "(bool)" <= "(int)"',
+}
+
+Test { [[
+input int A, B;
+event bool a;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v as bool;
+    end
+with
+    pause/if a do
+        var int v = await B;
+        escape v;
+    end
+end
+]],
+    _ana = {
+        unreachs = 1,
+    },
+    run = {
+        ['1~>B'] = 1,
+        ['0~>A ; 1~>B'] = 1,
+        ['1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 1~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+    },
+}
+
+-- TODO: nesting with same event
+Test { [[
+input int A,B;
+event bool a;
+var int ret = 0;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v;
+    end
+with
+
+    pause/if a do
+        pause/if a do
+            ret = await B;
+        end
+    end
+end
+escape ret;
+]],
+    stmts = 'line 7 : invalid `emit´ : types mismatch : "(bool)" <= "(int)"',
+}
+
+Test { [[
+input int A,B;
+event bool a;
+var int ret = 0;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v as bool;
+    end
+with
+
+    pause/if a do
+        pause/if a do
+            ret = await B;
+        end
+    end
+end
+escape ret;
+]],
+    run = {
+        ['1~>B;1~>B'] = 1,
+        ['0~>A ; 1~>B'] = 1,
+        ['1~>A ; 1~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 0~>A ; 3~>B'] = 3,
+        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
+    },
+}
+
+Test { [[
+input int A, B, Z;
+event bool a, b;
+var int ret = 0;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v as bool;
+    end
+with
+    loop do
+        var int v = await B;
+        emit b => v as bool;
+    end
+with
+    pause/if a do
+        pause/if b do
+            ret = await Z;
+        end
+    end
+end
+escape ret;
+]],
+    run = {
+        ['1~>Z'] = 1,
+        ['1~>A ; 10~>Z ; 1~>B ; 10~>Z ; 0~>B ; 10~>Z ; 0~>A ; 5~>Z'] = 5,
+        ['1~>A ; 1~>B ; 0~>B ; 10~>Z ; 0~>A ; 1~>B ; 5~>Z ; 0~>B ; 100~>Z'] = 100,
+    },
+}
+
+Test { [[
+input int  A;
+input int  B;
+input void Z;
+event bool a;
+var int ret = 0;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v as bool;
+    end
+with
+    pause/if a do
+        await Z;
+        ret = await B;
+    end
+end
+escape ret;
+]],
+    run = {
+        ['~>Z ; 1~>B'] = 1,
+        ['0~>A ; 1~>B ; ~>Z ; 2~>B'] = 2,
+        ['~>Z ; 1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
+        ['~>Z ; 1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
+    },
+}
+
+Test { [[
+input int  A;
+input void Z;
+event bool a;
+var int ret = 0;
+par/or do
+    emit a => true;
+    await A;
+with
+    pause/if a do
+        do finalize with
+            ret = 10;
+    end
+        await Z;
+    end
+end
+escape ret;
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = {
+        ['1~>A'] = 10,
+    },
+}
+
+Test { [[
+input int  A;
+input void Z;
+event bool a;
+var int ret = 0;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v as bool;
+    end
+with
+    pause/if a do
+        await 9s;
+    end
+    ret = 9;
+with
+    await 10s;
+    ret = 10;
+end
+escape ret;
+]],
+    _ana = {
+        acc = 1,     -- TODO: 0
+    },
+    run = {
+        ['1~>A ; ~>5s ; 0~>A ; ~>5s'] = 10,
+    },
+}
+
+Test { [[
+input int  A,B,C;
+event bool a;
+var int ret = 50;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v as bool;
+    end
+with
+    pause/if a do
+        ret = await B;
+    end
+with
+    await C;
+end
+escape ret;
+]],
+    run = {
+        ['1~>A ; 10~>B ; 1~>C'] = 50,
+    },
+}
+
+Test { [[
+input void C;
+par/or do
+    await C;
+with
+    await 1us;
+end
+var int v = await 1us;
+escape v;
+]],
+    run = { ['~>1us; ~>C; ~>4us; ~>C']=3 }
+}
+
+Test { [[
+input int  A;
+event bool a;
+var int ret = 0;
+par/or do
+    loop do
+        var int v = await A;
+        emit a => v as bool;
+    end
+with
+    pause/if a do
+        ret = await 9us;
+    end
+end
+escape ret;
+]],
+    run = {
+        ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
+        --['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
+        --['~>1us;1~>A;~>5us;0~>A;~>5us;1~>A;~>5us;0~>A;~>9us'] = 6,
+    },
+}
+
+Test { [[
+event bool in_tm;
+pause/if in_tm do
+    async do
+        loop i in [0 -> 5[ do
+        end
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+event bool e;
+
+par/or do
+    par/and do
+        pause/if e do
+            await 1s;
+        end
+    with
+        emit e => true;
+    end
+    escape -1;
+with
+    await 2s;
+    escape 1;
+end
+]],
+    _ana = {acc=true},
+    run = {['~>2s']=1},
+}
+
+Test { [[
+event bool e;
+
+par/or do
+    par/and do
+        pause/if e do
+            await 1s;
+        end
+    with
+        emit e => true;
+        emit e => false;
+    end
+    escape -1;
+with
+    await 2s;
+    escape 1;
+end
+]],
+    _ana = {acc=true},
+    run = {['~>2s']=-1},
+}
+
+--<<< PAUSE
+
 -->>> VECTORS / STRINGS
 
 Test { [[
@@ -24204,31 +27168,46 @@ escape Fx(&str);
 ]],
     parser = 'line 7 : after `escape´ : expected expression or `;´',
 }
+
 Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1];
+code/instantaneous Ff (var void&& p1, var void&& p2)=>void do
 end
-
-escape call Fx(&str);
+var int x = 0;
+do
+    var int y = 0;
+    call Ff(&&x, &&y);
+end
+escape 0;
 ]],
     wrn = true,
-    --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
-    run = 1,
+    tmp = 'TODO: incomp. scopes',
 }
+
 Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1] as int;
+code/instantaneous GetVS (var void&& && o1, var  void&& && o2)=>int do
+    if (*o1!=null) then
+        escape 1;
+    else/if (*o2!=null) then
+        var void&& tmp = *o1;
+        *o1 = *o2;
+        do
+            *o2 = tmp;
+        finalize (tmp) with
+        end
+            // tmp is an alias to "o1"
+        escape 1;
+    else
+        //*o1 = NULL;
+        //*o2 = NULL;
+        escape 0;
+    end
 end
-
-escape call Fx(&str);
+escape 1;
 ]],
     wrn = true,
     run = 1,
 }
+
 Test { [[
 code/delayed Fx (event int e)=>void do
 end
@@ -24245,74 +27224,6 @@ escape 0;
     wrn = true,
     run = 'TODO',
 }
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] int vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] int vec)=>bool do
-    escape vec[1];
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(str);
-]],
-    wrn = true,
-    --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    stmts = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[] do
-    escape &this.str;
-end
-
-vector&[] byte ref = &call Fx();
-
-escape ref[1];
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
-}
-
--- vectors as argument (NO)
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(str);
-]],
-    parser = 'line 3 : after `vector´ : expected `&´',
-    --env = 'line 3 : wrong argument #2 : vectors are not supported',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
-}
-
 Test { [[
 code/instantaneous Fx (var int a, var  void b)=>int do
 end
@@ -24761,7 +27672,6 @@ escape _strlen(&&str[0]);
     --dcls = 'line 5 : invalid use of `vector´ "str"',
     cc = '4:34: error: assignment to expression with array type',
 }
---<<< VECTORS / STRINGS
 
 Test { [[
 var byte b = 1;
@@ -25097,1328 +28007,6 @@ escape 1;
     stmts = 'line 1 : invalid constructor : unexpected context for variable "r1"',
 }
 
---<<< VECTORS / STRINGS
-
-    -- NATIVE C FUNCS BLOCK RAW
-
-Test { [[
-native _char;
-var _char c = 1;
-escape c;
-]],
-    run = 1,
-}
-
-Test { [[
-native/plain _int;
-var _int a=1, b=1;
-a = b;
-await 1s;
-escape (a==b) as int;
-]],
-    run = { ['~>1s'] = 1 },
-}
-
-Test { [[
-var int a=1, b=1;
-a = b;
-await 1s;
-escape (a==b) as int;
-]],
-    run = { ['~>1s'] = 1 },
-}
-
-Test { [[
-escape {1};
-]],
-    run = 1,
-}
-
-Test { [[
-native _V;
-{ int V = 10; };
-escape _V;
-]],
-    run = 10,
-}
-
-Test { [[
-{
-    static int v;
-    if (0) {
-    } else {
-        v = 1;
-    }
-};
-escape {v};
-]],
-    run = 1,
-}
-
-Test { [[
-var& void? p;
-do p = &{ NULL };
-finalize with
-    nothing;
-end
-escape p! ==null;
-]],
-    exps = 'line 6 : invalid operands to `==´ : incompatible types : "void" vs "null&&"',
-    --env = 'line 7 : invalid operands to binary "=="',
-    --run = 1,
-}
-
-Test { [[
-var& void? p;
-p = { NULL };
-escape 1;
-//escape p==null;
-]],
-    inits = 'line 2 : invalid binding : expected operator `&´ in the right side',
-    --tmp = 'line 2 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    --ref = 'line 2 : invalid attribution : missing alias operator `&´',
-    --fin = 'line 2 : attribution requires `finalize´',
-}
-
-Test { [[
-_f()
-]],
-    parser = 'line 1 : after `)´ : expected `;´',
-    --parser = 'line 1 : after `)´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´ or `;´',
-}
-
-Test { [[
-native _printf;
-do
-    _printf("oi\n");
-end
-escape 10;
-]],
-    run = 10;
-}
-
-Test { [[
-native _V;
-native/pos do
-    int V[2][2] = { {1, 2}, {3, 4} };
-end
-
-_V[0][1] = 5;
-escape _V[1][0] + _V[0][1];
-]],
-    run = 8,
-}
-
-Test { [[
-native _END;
-native/pos do
-    int END = 1;
-end
-if 0 ==  _END-1 then
-    escape 1;
-else
-    escape 0;
-end
-]],
-    run = 1,
-}
-
-Test { [[
-native/pos do
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    byte* a = "end";
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    /*** END ***/
-    byte* a = "end";
-    /*** END ***/
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    int A () {}
-end
-A = 1;
-escape 1;
-]],
-    --adj = 'line 4 : invalid expression',
-    --parser = 'line 3 : after `end´ : expected statement'
-    parser = 'line 3 : after `end´ : expected `;´ or statement',
-    --parser = 'line 4 : after `A´ : expected `(´',
-}
-
-Test { [[
-native/pos do
-    void A (int v) {}
-end
-escape 0;
-]],
-    run = 0;
-}
-
-Test { [[
-native/pos do
-    int A (int v) { escape 1; }
-end
-escape 0;
-]],
-    --env = 'A : incompatible with function definition',
-    run = 0,
-}
-
-Test { [[
-native _A;
-native/pos do
-    void A (int v) {}
-end
-_A();
-escape 0;
-]],
-    --env = 'line 5 : native function "_A" is not declared',
-    --run  = 1,
-    cc = 'error: too few arguments to function ‘A’',
-}
-
-Test { [[
-native _A;
-native/pos do
-    void A (int v) { }
-end
-_A(1);
-escape 0;
-]],
-    run = 0,
-}
-
-Test { [[
-native _A;
-native/pos do
-    void A () {}
-end
-var int v = _A();
-escape v;
-]],
-    cc = 'error: void value not ignored as it ought to be',
-}
-
-Test { [[emit A => 10; escape 0;]],
-    dcls = 'external identifier "A" is not declared'
-}
-
-Test { [[
-native _Const;
-native/pos do
-    int Const () {
-        escape -10;
-    }
-end
-var int ret = _Const();
-escape ret;
-]],
-    run = -10
-}
-
-Test { [[
-native _ID;
-native/pos do
-    int ID (int v) {
-        escape v;
-    }
-end
-escape _ID(10);
-]],
-    run = 10,
-}
-
-Test { [[
-native _ID;
-native/pos do
-    int ID (int v) {
-        escape v;
-    }
-end
-var int v = _ID(10);
-escape v;
-]],
-    run = 10
-}
-
-Test { [[
-native _VD;
-native/pos do
-    void VD (int v) {
-    }
-end
-_VD(10);
-escape 1;
-]],
-    run = 1
-}
-
-Test { [[
-native _VD;
-native/pos do
-    void VD (int v) {
-    }
-end
-var int ret = _VD(10);
-escape ret;
-]],
-    cc = 'error: void value not ignored as it ought to be',
-}
-
-Test { [[
-native _VD;
-native/pos do
-    void VD (int v) {
-    }
-end
-var void v = _VD(10);
-escape 0;
-]],
-    dcls = 'line 6 : invalid declaration : variable cannot be of type `void´',
-}
-
-Test { [[
-native _NEG;
-native/pos do
-    int NEG (int v) {
-        escape -v;
-    }
-end
-escape _NEG(10);
-]],
-    run = -10,
-}
-
-Test { [[
-native _NEG;
-native/pos do
-    int NEG (int v) {
-        escape -v;
-    }
-end
-var int v = _NEG(10);
-escape v;
-]],
-    run = -10
-}
-
-Test { [[
-native _ID;
-native/pos do
-    int ID (int v) {
-        escape v;
-    }
-end
-input int A;
-var int v=0;
-par/and do
-    await A;
-with
-    v = _ID(10);
-end;
-escape v;
-]],
-    run = {['1~>A']=10},
-}
-
-Test { [[
-native _ID;
-native/pos do
-    int ID (int v) {
-        escape v;
-    }
-end
-input int A;
-var int v=0;
-par/or do
-    await A;
-with
-    v = _ID(10);
-end
-escape v;
-]],
-    _ana = {
-        unreachs = 1,
-    },
-    run = 10,
-}
-
-Test { [[
-native _Z1;
-native/pos do int Z1 (int a) { escape a; } end
-input int A;
-var int c;
-_Z1(3);
-c = await A;
-escape c;
-]],
-    run = {
-        ['10~>A ; 20~>A'] = 10,
-        ['3~>A ; 0~>A'] = 3,
-    }
-}
-
-Test { [[
-native/nohold _f1, _f2;
-native/pos do
-    int f1 (u8* v) {
-        escape v[0]+v[1];
-    }
-    int f2 (u8* v1, u8* v2) {
-        escape *v1+*v2;
-    }
-end
-native _u8;
-vector[2] _u8 v = [];
-v[0] = 8;
-v[1] = 5;
-escape _f2(&&v[0],&&v[1]) + _f1(&&v[0]) + _f1(&&v[0]);
-]],
-    run = 39,
-}
-
-Test { [[
-native/pos do
-    void* V;
-end
-var void&& v = null;
-native _V;
-_V = v;
-escape 1;
-]],
-    scopes = 'line 6 : invalid pointer assignment : expected `finalize´',
-}
-
-Test { [[
-native/pos do
-    void* V;
-end
-var void&& v = null;
-native _V;
-do _V = v; finalize(v) with end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    void* V;
-end
-var void&& v=null;
-native _V;
-do
-    _V = v;
-finalize (v)
-with end
-await 1s;
-escape (_V==null) as int;
-]],
-    run = false,
-    --fin = 'line 7 : pointer access across `await´',
-}
-
-Test { [[
-do/_
-    var int&& p=_, p1=_;
-    input int&& E;
-    p = await E;
-    p1 = p;
-    await E;
-    escape *p1;
-end
-]],
-    wrn = true,
-    --run = 1,
-    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:4)',
-    --fin = 'line 7 : unsafe access to pointer "p1" across `await´',
-}
-
-Test { [[
-native _tp, _a, _b;
-native/pos do
-    typedef int tp;
-end
-var _tp&& v=null;
-do
-    _a = v;
-finalize (v) with
-end
-await 1s;
-_b = _a;    // _a pode ter escopo menor e nao reclama de FIN
-await FOREVER;
-]],
-    --fin = 'line 7 : pointer access across `await´',
-    _ana = {
-        isForever = true,
-    },
-}
-
-Test { [[
-var int v = 10;
-var int&& x = &&v;
-event void e;
-var int ret=0;
-if true then
-    ret = *x;
-    emit e;
-else
-    emit e;
-    escape *x;
-end
-escape ret;
-]],
-    inits = 'line 10 : invalid pointer access : crossed `emit´ (/tmp/tmp.ceu:9)',
-    --fin = 'line 10 : unsafe access to pointer "x" across `emit´',
-}
-
-Test { [[
-var int v = 10;
-var int&& x = &&v;
-event void e;
-var int ret=0;
-if true then
-    ret = *x;
-    emit e;
-else
-    escape *x;
-end
-escape ret;
-]],
-    run = 10,
-}
-
-Test { [[
-var int v = 10;
-var& int x = &v;
-event void e;
-var int ret=0;
-par do
-    ret = x;
-    emit e;
-with
-    escape x;
-end
-]],
-    _ana = {acc=2},
-    run = 10,
-}
-
-Test { [[
-var int v = 10;
-var& int x = &v;
-event void e;
-var int ret=0;
-par do
-    ret = x;
-    emit e;
-with
-    par/or do
-        ret = x;
-        emit e;
-    with
-        ret = x;
-        await e;
-    with
-        par/and do
-            ret = x;
-            emit e;
-        with
-            ret = x;
-            await e;
-        end
-    end
-with
-    escape x;
-end
-]],
-    _ana = {acc=true},
-    run = 10,
-}
-
-Test { [[
-native/plain _SDL_Rect, _SDL_Point;
-var _SDL_Point pos;
-
-var _SDL_Rect rect = _SDL_Rect(pos.x, pos.y);
-await 1s;
-var _SDL_Rect r = rect;
-escape 1;
-]],
-    inits = 'line 2 : uninitialized variable "pos" : reached read access (/tmp/tmp.ceu:4)',
-    --ref = 'line 4 : invalid access to uninitialized variable "pos" (declared at /tmp/tmp.ceu:2)',
-}
-Test { [[
-native/plain _SDL_Rect, _SDL_Point;
-var _SDL_Point pos = _SDL_Point(1,1);
-
-var _SDL_Rect rect = _SDL_Rect(pos.x, pos.y);
-await 1s;
-var _SDL_Rect r = rect;
-escape 1;
-]],
-    cc = 'error: unknown type name ‘SDL_Point’',
-}
-
-Test { [[
-native/plain _SDL_Rect, _SDL_Point;
-var _SDL_Point pos = _SDL_Point(1,1);
-
-var _SDL_Rect rect = _SDL_Rect(pos.x, pos.y);
-await 1s;
-var _SDL_Rect r = rect;
-    r.x = r.x - r.w/2;
-    r.y = r.y - r.h/2;
-escape 1;
-]],
-    cc = 'error: unknown type name ‘SDL_Point’',
-}
-
-Test { [[
-native _int, _f;
-native/pos do
-    int f () {
-        escape 1;
-    }
-end
-vector[2] _int v = [];
-v[0] = 0;
-v[1] = 1;
-v[_f()] = 2;
-escape v[1];
-]],
-    run = 2,
-}
-
-Test { [[
-var int xxx = 10;
-escape ((__ceu_app:data as _CEU_Main&&)):xxx;
-]],
-    parser = 'line 2 : after `:´ : expected internal identifier or native identifier',
-}
-Test { [[
-native __ceu_app, _CEU_Main;
-var int xxx = 10;
-escape ((__ceu_app:_data as _CEU_Main&&)):xxx;
-]],
-    run = 10,
-    --parser = 'line 3 : after `)´ : expected `(´ or binary operator or `is´ or `as´ or `;´',
-}
-Test { [[
-native __ceu_app, _CEU_Main;
-var int xxx = 10;
-escape (__ceu_app:_data as _CEU_Main&&):xxx;
-]],
-    run = 10,
-    --parser = 'line 3 : after `)´ : expected `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
-}
-Test { [[
-//native __ceu_app, _CEU_Main;
-var int xxx = 10;
-escape ({(CEU_Main*)(_ceu_app->_data)}):xxx;
-]],
-    run = 10,
-}
--- NATIVE/PRE
-
-Test { [[
-input/output/instantaneous OPEN  (var byte&& path, var byte mode)=>void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-native/pre do
-    typedef struct {
-        int a,b,c;
-    } Fx;
-end
-native _Fx, _fff;
-native/pos do
-    Fx* fff;
-end
-
-native/pure ___ceu_nothing;
-input/output/instantaneous OPEN  (var byte&& path, var  byte&& mode)=>_Fx&& do
-    ___ceu_nothing(path);
-    ___ceu_nothing(mode);
-    escape _fff;
-end
-
-input/output/instantaneous CLOSE  (var _Fx&& f)=>int do
-    ___ceu_nothing(f);
-    escape 1;
-end
-
-input/output/instantaneous SIZE  (var _Fx&& f)=>int do
-    ___ceu_nothing(f);
-    escape 1;
-end
-
-input/output/instantaneous READ  (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)=>int do
-    ___ceu_nothing(ptr);
-    ___ceu_nothing(&&size);
-    ___ceu_nothing(&&nmemb);
-    ___ceu_nothing(f);
-    escape 1;
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-native/pre do
-    typedef struct {
-        byte* str;
-        u32   length;
-        u32   x;
-        u32   y;
-    } draw_string_t;
-end
-
-native/pure ___ceu_nothing;
-native/plain _draw_string_t;
-input/output/instantaneous DRAW_STRING  (var _draw_string_t&& ptr)=>void do
-    ___ceu_nothing(ptr);
-end
-
-var _draw_string_t v = _draw_string_t(
-    "Welcome to Ceu/OS!\n",
-    20,
-    100,
-    100);
-call DRAW_STRING => &&v;
-
-escape 1;
-]],
-    run = 1,
-}
-
---[=[
-
-PRE = [[
-native/pos do
-    static inline int idx (@const int* vec, int i) {
-        escape vec[i];
-    }
-    static inline int set (int* vec, int i, int val) {
-        vec[i] = val;
-        escape val;
-    }
-end
-@pure _idx;
-int[2] va;
-
-]]
-
-Test { PRE .. [[
-_set(va,1,1);
-escape _idx(va,1);
-]],
-    run = 1,
-}
-
-Test { PRE .. [[
-_set(va,0,1);
-_set(va,1,2);
-escape _idx(va,0) + _idx(va,1);
-]],
-    run = 3,
-}
-
-Test { PRE .. [[
-par/and do
-    _set(va,0,1);
-with
-    _set(va,1,2);
-end;
-escape _idx(va,0) + _idx(va,1);
-]],
-    _ana = {
-        acc = 2,
-    },
-}
-Test { PRE .. [[
-par/and do
-    _set(va,0,1);
-with
-    _idx(va,1);
-end;
-escape _idx(va,0) + _idx(va,1);
-]],
-    _ana = {
-        acc = 1,
-    },
-}
-Test { PRE .. [[
-_set(va,0,1);
-_set(va,1,2);
-par/and do
-    _idx(va,0);
-with
-    _idx(va,1);
-end;
-escape _idx(va,0) + _idx(va,1);
-]],
-    run = 3,
-}
-
-Test { [[
-int a, b;
-int&& pa, pb;
-
-par/or do
-    pa = &&a;
-with
-    pb = &&b;
-end;
-escape 1;
-]],
-    run = 1
-}
-
-PRE = [[
-@pure _f3, _f5;
-native/pos do
-int f1 (int* a, int* b) {
-    escape *a + *b;
-}
-int f2 (@const int* a, int* b) {
-    escape *a + *b;
-}
-int f3 (@const int* a, const int* b) {
-    escape *a + *b;
-}
-int f4 (int* a) {
-    escape *a;
-}
-int f5 (@const int* a) {
-    escape *a;
-}
-end
-]]
-
-Test { PRE .. [[
-int a = 1;
-int b = 2;
-escape _f1(&&a,&&b);
-]],
-    run = 3,
-}
-
-Test { PRE .. [[
-int&& pa;
-par/or do
-    _f4(pa);
-with
-    int v = 1;
-end;
-escape 0;
-]],
-    _ana = {
-        acc = 1,
-    },
-}
-Test { PRE .. [[
-int a;
-par/or do
-    _f4(&&a);
-with
-    int v = a;
-end;
-escape 0;
-]],
-    _ana = {
-        acc = 1,
-    },
-}
-Test { PRE .. [[
-int a, b;
-par/or do
-    _f5(&&a);
-with
-    a = 1;
-end;
-escape 0;
-]],
-    _ana = {
-        acc = 1,
-    },
-}
-Test { PRE .. [[
-int a = 10;
-par/or do
-    _f5(&&a);
-with
-    escape a;
-end;
-escape 0;
-]],
-    run = false,
-    _ana = {
-        --abrt = 1,
-    }
-}
-Test { PRE .. [[
-int a;
-int&& pa;
-par/or do
-    _f5(pa);
-with
-    escape a;
-end;
-escape 0;
-]],
-    --abrt = 1,
-    _ana = {
-        acc = 1,
-    },
-}
-Test { PRE .. [[
-int a, b;
-par/or do
-    _f4(&&a);
-with
-    int v = b;
-end;
-escape 0;
-]],
-    run = 0,
-}
-Test { PRE .. [[
-int a, b;
-par/or do
-    _f5(&&a);
-with
-    b = 1;
-end;
-escape 0;
-]],
-    run = 0,
-}
-
-Test { PRE .. [[
-int a, b;
-par/or do
-    _f5(&&a);
-with
-    int v = b;
-end;
-escape 0;
-]],
-    run = 0,
-}
-Test { PRE .. [[
-int&& pa;
-do
-    int a;
-    pa = &&a;
-end;
-escape 1;
-]],
-    run = 1,     -- TODO: check_depth
-    --env = 'invalid attribution',
-}
-Test { PRE .. [[
-int a=1;
-do
-    int&& pa = &&a;
-    *pa = 2;
-end;
-escape a;
-]],
-    run = 2,
-}
-
-Test { PRE .. [[
-int a;
-int&& pa;
-par/or do
-    _f4(pa);
-with
-    int v = a;
-end;
-escape 0;
-]],
-    _ana = {
-        acc = 2, -- TODO: scope of v vs pa
-    },
-}
-Test { PRE .. [[
-int a;
-int&& pa;
-par/or do
-    _f5(pa);
-with
-    a = 1;
-end;
-escape a;
-]],
-    _ana = {
-        acc = 1,
-    },
-}
-Test { PRE .. [[
-int a;
-int&& pa;
-par do
-    escape _f5(pa);
-with
-    escape a;
-end;
-]],
-    --abrt = 2,
-    _ana = {
-        acc = 2, -- TODO: $ret vs anything is DET
-    },
-}
-
-Test { PRE .. [[
-int a=1, b=5;
-par/or do
-    _f4(&&a);
-with
-    _f4(&&b);
-end;
-escape a+b;
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 6,
-}
-
-Test { PRE .. [[
-int a = 1;
-int b = 2;
-int v1, v2;
-par/and do
-    v1 = _f1(&&a,&&b);
-with
-    v2 = _f1(&&a,&&b);
-end;
-escape v1 + v2;
-]],
-    _ana = {
-        acc = 3,
-    },
-}
-
-Test { PRE .. [[
-int a = 1;
-int b = 2;
-int v1, v2;
-par/and do
-    v1 = _f2(&&a,&&b);
-with
-    v2 = _f2(&&a,&&b);
-end;
-escape v1 + v2;
-]],
-    _ana = {
-        acc = 3,     -- TODO: f2 is const
-    },
-}
-
-Test { PRE .. [[
-int a = 1;
-int b = 2;
-int v1, v2;
-par/and do
-    v1 = _f3(&&a,&&b);
-with
-    v2 = _f3(&&a,&&b);
-end;
-escape v1 + v2;
-]],
-    run = 6,
-}
-
-Test { PRE .. [[
-int a = 2;
-int b = 2;
-int v1, v2;
-par/and do
-    v1 = _f4(&&a);
-with
-    v2 = _f4(&&b);
-end;
-escape a+b;
-]],
-    run = 4,
-    _ana = {
-        acc = 1,
-    },
-}
-
-Test { PRE .. [[
-int a = 2;
-int b = 2;
-int v1, v2;
-par/and do
-    v1 = _f4(&&a);
-with
-    v2 = _f4(&&a);
-end;
-escape a+a;
-]],
-    _ana = {
-        acc = 2,
-    },
-}
-
-Test { PRE .. [[
-int a = 2;
-int b = 2;
-int v1, v2;
-par/and do
-    v1 = _f5(&&a);
-with
-    v2 = _f5(&&a);
-end;
-escape a+a;
-]],
-    run = 4,
-}
-
-Test { PRE .. [[
-int a;
-int&& pa = &&a;
-a = 2;
-int v1,v2;
-par/and do
-    v1 = _f4(&&a);
-with
-    v2 = _f4(pa);
-end;
-escape v1+v2;
-]],
-    _ana = {
-        acc = 3,
-    },
-}
-
-Test { PRE .. [[
-int a;
-int&& pa = &&a;
-a = 2;
-int v1,v2;
-par/and do
-    v1 = _f5(&&a);
-with
-    v2 = _f5(pa);
-end;
-escape v1+v2;
-]],
-    _ana = {
-        acc = 1,
-    },
-}
-
-Test { [[
-par/and do
-    _printf("END: 1\n");
-with
-    _assert(1);
-end
-escape 0;
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 1,
-}
-
-Test { [[
-deterministic _printf with _assert;
-native/pos do ##include <assert.h> end
-par/and do
-    _printf("END: 1\n");
-with
-    _assert(1);
-end
-escape 0;
-]],
-    todo = true,
-    run = 1,
-}
---]=]
-
-Test { [[
-native _a;
-native/pos do
-    int a;
-end
-par/or do
-    _a = 1;
-with
-    _a = 2;
-end
-escape _a;
-]],
-    _ana = {
-        acc = 1,
-        abrt = 1,
-    },
-}
-
-Test { [[
-@const _HIGH, _LOW;
-par do
-    loop do
-        _digitalWrite(11, _HIGH);
-        await 1s;
-        _digitalWrite(11, _LOW);
-        await 1s;
-    end
-with
-    loop do
-        _digitalWrite(12, _HIGH);
-        await 500ms;
-        _digitalWrite(12, _LOW);
-        await 500ms;
-    end
-with
-    loop do
-        _digitalWrite(13, _HIGH);
-        await 250ms;
-        _digitalWrite(13, _LOW);
-        await 250ms;
-    end
-end
-]],
-    todo = true,
-    _ana = {
-        acc = 6,
-        isForever = true,
-    },
-}
-
-Test { [[
-native _LOW, _HIGH, _digitalWrite;
-par do
-    loop do
-        _digitalWrite(11, _HIGH);
-        await 1s;
-        _digitalWrite(11, _LOW);
-        await 1s;
-    end
-with
-    loop do
-        _digitalWrite(12, _HIGH);
-        await 500ms;
-        _digitalWrite(12, _LOW);
-        await 500ms;
-    end
-with
-    loop do
-        _digitalWrite(13, _HIGH);
-        await 250ms;
-        _digitalWrite(13, _LOW);
-        await 250ms;
-    end
-end
-]],
-    _ana = {
-        acc = true,
-        isForever = true,
-    },
-    --fin = 'line 4 : call requires `finalize´',
-}
-
-Test { [[
-native/const _LOW, _HIGH;
-native _digitalWrite;
-par do
-    loop do
-        _digitalWrite(11, _HIGH);
-        await 1s;
-        _digitalWrite(11, _LOW);
-        await 1s;
-    end
-with
-    loop do
-        _digitalWrite(12, _HIGH);
-        await 500ms;
-        _digitalWrite(12, _LOW);
-        await 500ms;
-    end
-with
-    loop do
-        _digitalWrite(13, _HIGH);
-        await 250ms;
-        _digitalWrite(13, _LOW);
-        await 250ms;
-    end
-end
-]],
-    _ana = {
-        acc = true,
-        isForever = true,
-    },
-}
-
-    -- RAW
-
-Test { [[
-native/pos do
-    int V = 0;
-    int fff (int a, int b) {
-        V = V + a + b;
-        escape V;
-    }
-end
-{fff}(1,2);
-var int i = {fff}(3,4);
-escape i;
-]],
-    run = 'TODO',
-    --parser = 'line 8 : after `)´ : expected `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `=´ or `:=´',
-}
-
-Test { [[
-native/pos do
-    int V = 0;
-    int fff (int a, int b) {
-        V = V + a + b;
-        escape V;
-    }
-end
-call {fff}(1,2);
-var int i = {fff}(3,4);
-escape i;
-]],
-    run = 10,
-}
-
-    -- STRINGS
-
 Test { [[
 native _char;
 vector[10] _char a;
@@ -26428,152 +28016,6 @@ escape 1;
     cc = '2:32: error: assignment to expression with array type',
     --env = 'line 2 : types mismatch (`_char[]´ <= `_char&&´)',
     --env = 'line 2 : invalid attribution',
-}
-
-Test { [[
-var byte&& a;
-a = "oioioi";
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-var int a;
-a = "oioioi";
-escape 1;
-]],
-    stmts = 'line 2 : invalid assignment : types mismatch : "int" <= "_char&&"',
-    --env = 'line 2 : types mismatch (`int´ <= `_char&&´)',
-}
-
-Test { [[
-native _char;
-var _char&& a = "Abcd12" ;
-escape 1;
-]],
-    --env = 'line 2 : invalid attribution (_char&& vs byte&&)',
-    run = 1,
-}
-Test { [[
-native _char;
-var _char&& a = ("Abcd12"  as _char&&);
-escape 1;
-]],
-    run = 1
-}
-Test { [[
-native _printf;
-_printf("END: %s\n", "Abcd12");
-escape 0;
-]],
-    run='Abcd12',
-}
-Test { [[
-native _strlen;
-escape _strlen("123");
-]], run=3 }
-Test { [[
-native _printf;
-_printf("END: 1%d 0\n",2); escape 0;]], run=12 }
-Test { [[
-native _printf;
-_printf("END: 1%d%d 0\n",2,3); escape 0;]], run=123 }
-
-Test { [[
-native/nohold _strncpy, _printf, _strlen;
-native _char ;
-vector[10] _char str = [];
-_strncpy(&&str[0], "123", 4);
-_printf("END: %d %s\n", _strlen(&&str[0]) as int, &&str[0]);
-escape 0;
-]],
-    run = '3 123'
-}
-
-Test { [[
-native/nohold _printf, _strlen, _strcpy;
-native _char;
-vector[6] _char a=[]; _strcpy(&&a[0], "Hello");
-vector[2] _char b=[]; _strcpy(&&b[0], " ");
-vector[7] _char c=[]; _strcpy(&&c[0], "World!");
-vector[30] _char d=[];
-
-var int len = 0;
-_strcpy(&&d[0],&&a[0]);
-_strcpy(&&d[_strlen(&&d[0])], &&b[0]);
-_strcpy(&&d[_strlen(&&d[0])], &&c[0]);
-_printf("END: %d %s\n", _strlen(&&d[0]) as int, &&d[0]);
-escape 0;
-]],
-    run = '12 Hello World!'
-}
-
-Test { [[
-native _const_1;
-native/pos do
-    int const_1 () {
-        escape 1;
-    }
-end
-escape _const_1();
-]],
-    run = 1;
-}
-
-Test { [[
-native _const_1;
-native/pos do
-    int const_1 () {
-        escape 1;
-    }
-end
-escape _const_1() + _const_1();
-]],
-    run = 2;
-}
-
-Test { [[
-native _inv;
-native/pos do
-    int inv (int v) {
-        escape -v;
-    }
-end
-var int a;
-a = _inv(_inv(1));
-escape a;
-]],
-    --fin = 'line 8 : call requires `finalize´',
-    run = 1,
-}
-
-Test { [[
-native/pure _inv;
-native/pos do
-    int inv (int v) {
-        escape -v;
-    }
-end
-var int a;
-a = _inv(_inv(1));
-escape a;
-]],
-    run = 1,
-}
-
-Test { [[
-native _id;
-native/pos do
-    int id (int v) {
-        escape v;
-    }
-end
-var int a;
-a = _id(1);
-escape a;
-]],
-    run = 1
 }
 
 Test { [[
@@ -26604,165 +28046,6 @@ escape 0;
         acc = 1,
         abrt = 1,
     },
-}
-
--- STRUCTS / SIZEOF
-
-Test { [[
-native/pre do
-typedef struct {
-    u16 a;
-    u8 b;
-    u8 c;
-} s;
-end
-native/plain _s;
-var _s vs = _s(10,1,0);
-escape vs.a + vs.b + sizeof(_s);
-]],
-    run = 15,
-}
-
-Test { [[
-native/pre do
-typedef struct {
-    u16 a;
-    u8 b;
-    u8 c;
-} s;
-end
-native/plain _s;
-var _s vs = _s(10,1,0);
-escape vs.a + vs.b + sizeof(_s) + sizeof(vs) + sizeof(vs.a);
-]],
-    run = 21,
-}
-
-Test { [[
-native _SZ;
-native _aaa = (sizeof<void&&,u16>) * 2;
-native/pos do
-    typedef struct {
-        void&& a;
-        u16 b;
-    } t1;
-    typedef struct {
-        t1 v[2];
-    } aaa;
-    int SZ = sizeof(aaa);
-end
-escape sizeof<_aaa> + _SZ;
-]],
-    todo = 'sizeof',
-    run = 28,   -- TODO: different packings
-}
-
-Test { [[
-native/pre do
-    typedef struct {
-        u16 ack;
-        u8 data[16];
-    } Payload;
-end
-native _Payload ;
-var _Payload final;
-var u8&& neighs = &&(final._data[4]);
-escape 1;
-]],
-    inits = 'line 8 : uninitialized variable "final" : reached read access (/tmp/tmp.ceu:9)',
-    --ref = 'line 9 : invalid access to uninitialized variable "final" (declared at /tmp/tmp.ceu:8)',
-}
-Test { [[
-native/pre do
-    typedef struct {
-        u16 ack;
-        u8 data[16];
-    } Payload;
-end
-native/plain _Payload;
-var _Payload final = _Payload(0,{});
-var u8&& neighs = &&(final._data[4]);
-escape 1;
-]],
-    run = 1;
-}
-
-Test { [[
-native/pos do
-typedef struct {
-    int a;
-    int b;
-} s;
-end
-native/plain _s;
-var _s vs = _s(0,0);
-par/and do
-    vs.a = 10;
-with
-    vs.a = 1;
-end;
-escape vs.a;
-]],
-    _ana = {
-        acc = 1,
-    },
-}
-
-Test { [[
-native/pos do
-typedef struct {
-    int a;
-    int b;
-} s;
-end
-native/plain _s;
-var _s vs = _s(0,0);
-par/and do
-    vs.a = 10;
-with
-    vs.b = 1;
-end;
-escape vs.a;
-]],
-    _ana = {
-        acc = 1,     -- TODO: struct
-    },
-}
-
-Test { [[
-native/pre do
-    typedef struct {
-        int a;
-    } mys;
-end
-native/plain _mys;
-var _mys v = _mys(0);
-var _mys&& pv;
-pv = &&v;
-v.a = 10;
-(*pv).a = 20;
-pv:a = pv:a + v.a;
-escape v.a;
-]],
-    run = 40,
-}
-
-Test { [[
-]],
-    _ana = {
-        reachs = 1,
-        isForever = true,
-    }
-}
-
-Test { [[
-vector[10] _char v2 = [];
-if false then
-    escape 1;
-end
-escape v2[0][0];
-]],
-    run = 1,
 }
 
 Test { [[
@@ -26810,367 +28093,6 @@ escape ret;
 }
 
 Test { [[
-native _message_t ;
-native _t = sizeof<_message_t, u8>;
-escape sizeof<_t>;
-]],
-    todo = 'sizeof',
-    run = 53,
-}
-
-Test { [[
-native _char;
-var _char a = (1 as _char);
-escape a as int;
-]],
-    run = 1,
-}
-
--- Exps
-
-Test { [[var int a = ]],
-    parser = "line 1 : after `=´ : expected expression",
-}
-
-Test { [[escape]],
-    parser = "line 1 : after `escape´ : expected expression",
-}
-
-Test { [[escape()]],
-    --parser = "line 1 : after `(´ : expected expression",
-    parser = "line 1 : after `(´ : expected expression",
-}
-
-Test { [[escape 1+;]],
-    parser = "line 1 : after `+´ : expected expression",
-}
-
-Test { [[if then]],
-    parser = "line 1 : after `if´ : expected expression",
-}
-
-Test { [[b = ;]],
-    parser = "line 1 : after `=´ : expected expression",
-}
-
-
-Test { [[
-
-
-escape 1
-
-+
-
-
-;
-]],
-    parser = "line 5 : after `+´ : expected expression"
-}
-
-Test { [[
-var int a;
-a = do/_
-    var int b;
-end
-]],
-    parser = "line 4 : after `end´ : expected `;´",
-}
-
-    -- POINTER ASSIGNMENTS
-
-Test { [[
-var int&& x;
-*x = 1;
-escape 1;
-]],
-    inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:2)',
-    --ref = 'line 2 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:1)',
-}
-
-Test { [[
-var int&& p;
-do
-    var int i;
-    p = &&i;
-end
-escape 1;
-]],
-    inits = 'line 3 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:4)',
-    --ref = 'line 1 : uninitialized variable "p" crossing compound statement (/tmp/tmp.ceu:2)',
-    --fin = 'line 4 : attribution to pointer with greater scope',
-}
-Test { [[
-var int&& p=null;
-do
-    var int i=0;
-    do p = &&i; finalize (i) with end
-end
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-var int a := 1;
-escape 1;
-]],
-    todo = 'line 1 : wrong operator',
-}
-Test { [[
-var int a;
-a := 1;
-escape 1;
-]],
-    todo = 'line 2 : wrong operator',
-}
-Test { [[
-var int a;
-do a = 1;
-finalize with
-    nothing;
-end
-escape 1;
-]],
-    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
-    --fin = 'line 3 : attribution does not require `finalize´',
-}
-Test { [[
-var int&& a := null;
-escape 1;
-]],
-    todo = 'line 1 : wrong operator',
-}
-Test { [[
-var int&& a;
-a := null;
-escape 1;
-]],
-    todo = 'line 2 : wrong operator',
-}
-Test { [[
-var int&& a;
-do a = null;
-finalize with
-    nothing;
-end
-escape 1;
-]],
-    scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
-    --fin = 'line 3 : attribution does not require `finalize´',
-}
-Test { [[
-code/instantaneous Faca (void)=>void do
-    var int&& a;
-    a := null;
-end
-escape 1;
-]],
-    wrn = true,
-    todo = 'line 3 : wrong operator',
-}
-Test { [[
-var int a=0;
-var int&& pa := &&a;
-escape 1;
-]],
-    todo = 'line 2 : wrong operator',
-    run = 1,
-}
-Test { [[
-var int a=0;
-var int&& pa;
-do pa = &&a;
-finalize with
-    nothing;
-end
-escape 1;
-]],
-    scopes = 'line 3 : invalid `finalize´ : nothing to finalize',
-    --fin = 'line 4 : attribution does not require `finalize´',
-}
-Test { [[
-code/instantaneous Fx (var void&& o1)=>void do
-    var void&& tmp := o1;
-end
-escape 1;
-]],
-    wrn = true,
-    todo = 'line 2 : wrong operator',
-    --fin = 'line 2 : pointer access across `await´',
-}
-
-Test { [[
-native _int;
-var _int&& u;
-vector[1] _int i;
-await 1s;
-u = i;
-escape 1;
-]],
-    stmts = 'line 5 : invalid assignment : unexpected context for vector "i"',
-    --env = 'line 4 : types mismatch (`_int&&´ <= `_int[]´)',
-    --run = { ['~>1s']=1 },
-}
-Test { [[
-native _int;
-var _int ptr = null;
-await 1s;
-escape (ptr == null) as int;
-]],
-    wrn = true,
-    inits = 'line 4 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
-    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
-}
-Test { [[
-native _int;
-vector[1] _int i=[];
-await 1s;
-var _int&& u = _;
-u = &&i[0];
-escape 1;
-]],
-    wrn = true,
-    inits = 'line 5 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:3)',
-    --fin = 'line 4 : unsafe access to pointer "i" across `await´ (/tmp/tmp.ceu : 3)',
-}
-Test { [[
-native/plain _int;
-vector[1] _int i=[];
-await 1s;
-var _int&& u = _;
-u = &&i[0];
-if u==null then end;
-escape 1;
-]],
-    wrn = true,
-    run = { ['~>1s']=1 },
-}
-Test { [[
-var int&& u;
-vector[1] int i;
-await 1s;
-u = i;
-escape 1;
-]],
-    stmts = 'line 4 : invalid assignment : unexpected context for vector "i"',
-    --env = 'line 4 : types mismatch (`int&&´ <= `int[]´)',
-    --run = { ['~>1s']=1 },
-}
-Test { [[
-native _int;
-var _int&& u;
-do
-    vector[1] _int i;
-    i[0] = 2;
-    u = i;
-end
-do
-    vector[1] _int i;
-    i[0] = 5;
-end
-escape *u;
-]],
-    stmts = 'line 6 : invalid assignment : unexpected context for vector "i"',
-    --env = 'line 5 : types mismatch (`_int&&´ <= `_int[]´)',
-}
-Test { [[
-native _int;
-var _int&& u;
-do
-    vector[1] _int i;
-    i[0] = 2;
-    u = &&i[0];
-end
-do
-    vector[1] _int i;
-    i[0] = 5;
-end
-escape *u;
-]],
-    inits = 'line 4 : uninitialized vector "i" : reached read access (/tmp/tmp.ceu:5)',
-    --ref = 'line 1 : uninitialized variable "u" crossing compound statement (/tmp/tmp.ceu:2)',
-    --fin = 'line 5 : attribution to pointer with greater scope',
-}
-Test { [[
-input int SDL_KEYUP;
-var int key;
-key = await SDL_KEYUP;
-escape key;
-]],
-    run = { ['1 ~> SDL_KEYUP']=1 }
-}
-
-Test { [[
-input int&& SDL_KEYUP;
-par/or do
-    var int&& key;
-    key = await SDL_KEYUP;
-    if key==null then end;
-with
-    async do
-        emit SDL_KEYUP => null;
-    end
-end
-escape 1;
-]],
-    run = 1.
-}
-
-Test { [[
-native _SDL_KeyboardEvent;
-input _SDL_KeyboardEvent&& SDL_KEYUP;
-every key in SDL_KEYUP do
-    if key:keysym.sym == 1 then
-    else/if key:keysym.sym == 1 then
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-    },
-}
-
-Test { [[
-code/instantaneous Ff (var void&& p1, var void&& p2)=>void do
-end
-var int x = 0;
-do
-    var int y = 0;
-    call Ff(&&x, &&y);
-end
-escape 0;
-]],
-    wrn = true,
-    tmp = 'TODO: incomp. scopes',
-}
-
-Test { [[
-code/instantaneous GetVS (var void&& && o1, var  void&& && o2)=>int do
-    if (*o1!=null) then
-        escape 1;
-    else/if (*o2!=null) then
-        var void&& tmp = *o1;
-        *o1 = *o2;
-        do
-            *o2 = tmp;
-        finalize (tmp) with
-        end
-            // tmp is an alias to "o1"
-        escape 1;
-    else
-        //*o1 = NULL;
-        //*o2 = NULL;
-        escape 0;
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-    -- CPP / DEFINE / PREPROCESSOR
-
-Test { [[
 var u8 cnt;
 vector[3] u8 v;
 
@@ -27206,1022 +28128,99 @@ escape 1;
 }
 
 Test { [[
-#define OI
+vector[] byte str = [0,1,2];
 
-a = 1;
-]],
-    dcls = 'line 3 : internal identifier "a" is not declared',
-}
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
+end
 
-Test { [[
-native/const _N;
-native/pre do
-    #define N 1
-end
-native _u8;
-vector[_N] _u8 vec = [];
-vec[0] = 10;
-escape vec[_N-1];
+escape call Fx(&str);
 ]],
-    run = 10,
-}
-
-Test { [[
-native/pre do
-    #define N 1
-end
-native _u8;
-vector[N] _u8 vec = [];
-vec[0] = 10;
-escape vec[N-1];
-]],
-    opts_pre = true,
-    run = 10,
-}
-
-Test { [[
-native/pre do
-    #define N 1
-end
-native _u8;
-vector[N+1] _u8 vec = [];
-vec[1] = 10;
-escape vec[1];
-]],
-    opts_pre = true,
-    run = 10,
-}
-
-Test { [[
-#define N 1
-native _u8;
-vector[N+1] _u8 vec = [];
-vec[1] = 10;
-escape vec[1];
-]],
-    opts_pre = true,
-    run = 10,
-}
-
-Test { [[
-native/const _N;
-native/pre do
-    #define N 5
-end
-native/plain _int;
-vector[_N] _int vec = [];
-loop i in [0 -> _N[ do
-    vec[i] = i;
-end
-var int ret = 0;
-loop i in [0 -> _N[ do
-    ret = ret + vec[i];
-end
-escape ret;
-]],
-    opts_pre = true,
-    --loop = true,
     wrn = true,
-    run = 10,
-}
-
-Test { [[
-#define UART0_BASE 0x20201000
-#define UART0_CR ((UART0_BASE + 0x30) as u32&&)
-*UART0_CR = 0x00000000;
-escape 1;
-]],
-    opts_pre = true,
-    parser = 'line 3 : after `(´ : expected name expression',
-}
-Test { [[
-#define UART0_BASE 0x20201000
-#define UART0_CR ((UART0_BASE + 0x30) as u32&&)
-*{UART0_CR} = 0x00000000;
-escape 1;
-]],
-    opts_pre = true,
-    valgrind = false,
-    asr = true,
-}
--- ASYNC
-
-Test { [[
-input void A;
-par/or do
-    async do
-        emit A;
-    end
-    escape -1;
-with
-    await A;
-end
-async do
-end
-escape 1;
-]],
+    --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
     run = 1,
 }
-
 Test { [[
-async do
+vector[] byte str = [0,1,2];
 
-    par/or do
-        var int a=0;
-    with
-        var int b=0;
-    end
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1] as int;
 end
+
+escape call Fx(&str);
 ]],
-    props = "line 3 : not permitted inside `async´",
-}
-Test { [[
-async do
-
-
-    par/and do
-        var int a=0;
-    with
-        var int b=0;
-    end
-end
-]],
-    props = "line 4 : not permitted inside `async´",
-}
-Test { [[
-async do
-    par do
-        var int a=0;
-    with
-        var int b=0;
-    end
-end
-]],
-    props = "line 2 : not permitted inside `async´",
-}
-
--- DFA
-
-Test { [[
-var int a=0;
-]],
-    _ana = {
-        reachs = 1,
-        isForever = true,
-    },
-}
-
-Test { [[
-var int a;
-a = do/_
-    var int b=0;
-end;
-]],
-    _ana = {
-        reachs = 1,
-        unreachs = 1,
-        isForever = true,
-    },
-}
-
-Test { [[
-var int a=0;
-par/or do
-    a = 1;
-with
-    a = 2;
-end;
-escape a;
-]],
-    _ana = {
-        acc = 1,
-        abrt = 1,
-    },
-}
-
--- BIG // FULL // COMPLETE
-Test { [[
-input int KEY;
-if true then escape 50; end
-par do
-    var int pct=0, dt=0, step=0, ship=0, points=0;
-    var int win = 0;
-    loop do
-        if win!=0 then
-            // next phase (faster, harder, keep points)
-            step = 0;
-            ship = 0;
-            if dt > 100 then
-                dt = dt - 50;
-            end
-            if pct > 10 then
-                pct = pct - 1;
-            end
-        else
-            // restart
-            pct    = 35;    // map generator (10 out of 35 for a '#')
-            dt     = 500;   // game speed (500ms/step)
-            step   = 0;     // current step
-            ship   = 0;     // ship position (0=up, 1=down)
-            points = 0;     // number of steps alive
-        end
-        await KEY;
-        win = do/_ par do
-                loop do
-                    await (dt)ms;
-                    step = step + 1;
-
-                    if step == 1 then
-                        escape 1;           // finish line
-                    end
-                    points = points + 1;
-                end
-            with
-                loop do
-                    var int key = await KEY;
-                    if key == 1 then
-                        ship = 0;
-                    end
-                    if key == 1 then
-                        ship = 1;
-                    end
-                end
-end
-            end;
-        par/or do
-            await 1s;
-            await KEY;
-        with
-            if win==0 then
-                loop do
-                    await 100ms;
-                    await 100ms;
-                end
-            end
-        end
-    end
-with
-    var int key = 1;
-    loop do
-        var int read1 = 1;
-            read1 = 1;
-        await 50ms;
-        var int read2 = 1;
-            read2 = 1;
-        if read1==read2 and key!=read1 then
-            key = read1;
-            if key != 1 then
-                async (read1) do
-                    emit KEY => read1;
-                end
-            end
-        end
-    end
-end
-]],
-    run = 50,
-}
-
--->>> PAUSE
-
-Test { [[
-event bool a;
-pause/if a do
-end
-escape 1;
-]],
+    wrn = true,
     run = 1,
 }
-
 Test { [[
-var bool a;
-pause/if a do
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] int vec)=>int do
+    escape vec[1];
 end
-escape 1;
+
+escape call Fx(&str);
 ]],
-    stmts = 'line 2 : invalid `pause/if´ : unexpected context for variable "a"',
-}
-
-Test { [[
-input void A;
-pause/if A do
-end
-escape 0;
-]],
-    --adj = 'line 2 : invalid expression',
-    parser = 'line 2 : after `pause/if´ : expected name expression',
-    --parser = 'line 2 : after `A´ : expected `(´',
-}
-
-Test { [[
-event void a;
-var int v = await a;
-escape 0;
-]],
-    --env = 'line 2 : event type must be numeric',
-    --env = 'line 2 : invalid attribution',
-    --env = 'line 2 : arity mismatch',
-    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "()"',
-    --env = 'line 2 : invalid attribution (int vs void)',
-}
-
-Test { [[
-event void a;
-pause/if a do
-end
-escape 0;
-]],
-    stmts = 'line 2 : invalid `pause/if´ : expected event of type `bool´',
-    --env = 'line 2 : event type must be numeric',
-    --env = 'line 2 : arity mismatch',
-    --env = 'line 2 : invalid attribution',
-    --env = 'line 2 : invalid attribution (bool vs void)',
-}
-
-Test { [[
-input int A, B;
-event bool a;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v;
-    end
-with
-    pause/if a do
-        var int v = await B;
-        escape v;
-    end
-end
-]],
-    stmts = 'line 6 : invalid `emit´ : types mismatch : "(bool)" <= "(int)"',
-}
-
-Test { [[
-input int A, B;
-event bool a;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v as bool;
-    end
-with
-    pause/if a do
-        var int v = await B;
-        escape v;
-    end
-end
-]],
-    _ana = {
-        unreachs = 1,
-    },
-    run = {
-        ['1~>B'] = 1,
-        ['0~>A ; 1~>B'] = 1,
-        ['1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 1~>B ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
-    },
-}
-
--- TODO: nesting with same event
-Test { [[
-input int A,B;
-event bool a;
-var int ret = 0;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v;
-    end
-with
-
-    pause/if a do
-        pause/if a do
-            ret = await B;
-        end
-    end
-end
-escape ret;
-]],
-    stmts = 'line 7 : invalid `emit´ : types mismatch : "(bool)" <= "(int)"',
-}
-
-Test { [[
-input int A,B;
-event bool a;
-var int ret = 0;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v as bool;
-    end
-with
-
-    pause/if a do
-        pause/if a do
-            ret = await B;
-        end
-    end
-end
-escape ret;
-]],
-    run = {
-        ['1~>B;1~>B'] = 1,
-        ['0~>A ; 1~>B'] = 1,
-        ['1~>A ; 1~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
-    },
-}
-
-Test { [[
-input int A, B, Z;
-event bool a, b;
-var int ret = 0;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v as bool;
-    end
-with
-    loop do
-        var int v = await B;
-        emit b => v as bool;
-    end
-with
-    pause/if a do
-        pause/if b do
-            ret = await Z;
-        end
-    end
-end
-escape ret;
-]],
-    run = {
-        ['1~>Z'] = 1,
-        ['1~>A ; 10~>Z ; 1~>B ; 10~>Z ; 0~>B ; 10~>Z ; 0~>A ; 5~>Z'] = 5,
-        ['1~>A ; 1~>B ; 0~>B ; 10~>Z ; 0~>A ; 1~>B ; 5~>Z ; 0~>B ; 100~>Z'] = 100,
-    },
-}
-
-Test { [[
-input int  A;
-input int  B;
-input void Z;
-event bool a;
-var int ret = 0;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v as bool;
-    end
-with
-    pause/if a do
-        await Z;
-        ret = await B;
-    end
-end
-escape ret;
-]],
-    run = {
-        ['~>Z ; 1~>B'] = 1,
-        ['0~>A ; 1~>B ; ~>Z ; 2~>B'] = 2,
-        ['~>Z ; 1~>A ; 1~>B ; 0~>A ; 3~>B'] = 3,
-        ['~>Z ; 1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 3~>B'] = 3,
-    },
-}
-
-Test { [[
-input int  A;
-input void Z;
-event bool a;
-var int ret = 0;
-par/or do
-    emit a => true;
-    await A;
-with
-    pause/if a do
-        do finalize with
-            ret = 10;
-    end
-        await Z;
-    end
-end
-escape ret;
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = {
-        ['1~>A'] = 10,
-    },
-}
-
-Test { [[
-input int  A;
-input void Z;
-event bool a;
-var int ret = 0;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v as bool;
-    end
-with
-    pause/if a do
-        await 9s;
-    end
-    ret = 9;
-with
-    await 10s;
-    ret = 10;
-end
-escape ret;
-]],
-    _ana = {
-        acc = 1,     -- TODO: 0
-    },
-    run = {
-        ['1~>A ; ~>5s ; 0~>A ; ~>5s'] = 10,
-    },
-}
-
-Test { [[
-input int  A,B,C;
-event bool a;
-var int ret = 50;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v as bool;
-    end
-with
-    pause/if a do
-        ret = await B;
-    end
-with
-    await C;
-end
-escape ret;
-]],
-    run = {
-        ['1~>A ; 10~>B ; 1~>C'] = 50,
-    },
-}
-
-Test { [[
-input void C;
-par/or do
-    await C;
-with
-    await 1us;
-end
-var int v = await 1us;
-escape v;
-]],
-    run = { ['~>1us; ~>C; ~>4us; ~>C']=3 }
-}
-
-Test { [[
-input int  A;
-event bool a;
-var int ret = 0;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v as bool;
-    end
-with
-    pause/if a do
-        ret = await 9us;
-    end
-end
-escape ret;
-]],
-    run = {
-        ['~>1us;0~>A;~>1us;0~>A;~>19us'] = 12,
-        --['~>1us;1~>A;~>1s;0~>A;~>19us'] = 11,
-        --['~>1us;1~>A;~>5us;0~>A;~>5us;1~>A;~>5us;0~>A;~>9us'] = 6,
-    },
-}
-
-Test { [[
-event bool in_tm;
-pause/if in_tm do
-    async do
-        loop i in [0 -> 5[ do
-        end
-    end
-end
-escape 1;
-]],
+    wrn = true,
     run = 1,
 }
-
 Test { [[
-event bool e;
+vector[] byte str = [0,1,2];
 
-par/or do
-    par/and do
-        pause/if e do
-            await 1s;
-        end
-    with
-        emit e => true;
-    end
-    escape -1;
-with
-    await 2s;
-    escape 1;
+code/instantaneous Fx (vector&[] int vec)=>bool do
+    escape vec[1];
 end
+
+escape call Fx(&str);
 ]],
-    _ana = {acc=true},
-    run = {['~>2s']=1},
+    wrn = true,
+    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
 }
-
 Test { [[
-event bool e;
+vector[] byte str = [0,1,2];
 
-par/or do
-    par/and do
-        pause/if e do
-            await 1s;
-        end
-    with
-        emit e => true;
-        emit e => false;
-    end
-    escape -1;
-with
-    await 2s;
-    escape 1;
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
 end
+
+escape call Fx(str);
 ]],
-    _ana = {acc=true},
-    run = {['~>2s']=-1},
+    wrn = true,
+    --ref = 'line 7 : invalid attribution : missing alias operator `&´',
+    stmts = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[] do
+    escape &this.str;
+end
+
+vector&[] byte ref = &call Fx();
+
+escape ref[1];
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
 }
 
---<<< PAUSE
-
--- TIGHT LOOPS
-
+-- vectors as argument (NO)
 Test { [[
-loop i in [0 -> 10[ do
-    i = 0;
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
+    escape vec[1];
 end
-]],
-    stmts = 'line 2 : invalid assignment : read-only variable "i"',
-    --env = 'line 2 : read-only variable',
-}
 
-Test { [[
-loop do end
+escape call Fx(str);
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ :',
-    --tight = 'line 1 : tight loop',
-}
-Test { [[
-loop i do end
-]],
-    tight_ = 'line 1 : invalid tight `loop´ :',
-    --tight = 'line 1 : tight loop',
-}
-Test { [[
-loop i in [0 -> 10[ do end
-escape 2;
-]],
-    run = 2,
-}
-Test { [[
-var int v=1;
-loop i in [0->v[ do end
-]],
-    tight_ = 'line 2 : invalid tight `loop´ :',
-    --tight = 'line 2 : tight loop',
+    parser = 'line 3 : after `vector´ : expected `&´',
+    --env = 'line 3 : wrong argument #2 : vectors are not supported',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
 }
 
--- INFINITE LOOP/EXECUTION
-Test { [[
-event void e, f;
-par do
-    loop do
-        par/or do
-            emit f;         // 18
-        with
-            await f;        // 20
-        end
-        await e;            // 23
-    end
-with
-    loop do
-        par/or do
-            await f;        // 8
-        with
-            emit e;         // 11
-            await FOREVER;
-        end
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 3,
-    },
-    awaits = 0,
-    run = 0,
-}
-
-Test { [[
-event void e, f;
-par do
-    loop do
-        par/or do
-            await f;        // 8
-        with
-            emit e;         // 11
-            await FOREVER;
-        end
-    end
-with
-    loop do
-        par/or do
-            emit f;         // 18
-        with
-            await f;        // 20
-        end
-        await e;            // 23
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 3,
-    },
-    awaits = 0,
-    run = 0,
-}
-
-Test { [[
-event void e, f;
-par do
-    loop do
-        par/or do
-            emit e;     // 8
-            await FOREVER;
-        with
-            await f;
-        end
-    end
-with
-    loop do
-        await e;        // 17
-        par/or do
-            emit f;     // 20
-        with
-            await f;    // 22
-        end
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 2,
-    },
-    awaits = 0,
-    run = 0
-}
-
-Test { [[
-event void e, k1, k2;
-par do
-    loop do
-        par/or do
-            emit e;
-            await FOREVER;
-        with
-            await k1;
-        end
-        emit k2;
-    end
-with
-    loop do
-        await e;
-        par/or do
-            emit k1;
-        with
-            await k2;
-        end
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 1,
-    },
-    awaits = 1,
-    run = 0,
-}
-Test { [[
-event void e, f;
-par do
-    loop do
-        par/or do
-            await f;        // 8
-        with
-            emit e;         // 11
-            await FOREVER;
-        end
-    end
-with
-    loop do
-        par/or do
-            await f;        // 20
-        with
-            emit f;         // 18
-        end
-        await e;            // 23
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 3,
-    },
-    awaits = 0,
-    run = 0,
-}
-
-Test { [[
-event void e, f;
-par do
-    loop do
-        par/or do
-            await f;        // 20
-        with
-            emit f;         // 18
-        end
-        await e;            // 23
-    end
-with
-    loop do
-        par/or do
-            await f;        // 8
-        with
-            emit e;         // 11
-            await FOREVER;
-        end
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 3,
-    },
-    awaits = 0,
-    run = 0,
-}
-
-Test { [[
-event void e, f;
-par do
-    loop do
-        await e;        // 17
-        par/or do
-            await f;    // 22
-        with
-            emit f;     // 20
-        end
-    end
-with
-    loop do
-        par/or do
-            await f;
-        with
-            emit e;     // 8
-            await FOREVER;
-        end
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 2,
-    },
-    awaits = 0,
-    run = 0
-}
-
-Test { [[
-event void e, k1, k2;
-par do
-    loop do
-        await e;
-        par/or do
-            await k2;
-        with
-            emit k1;
-            await FOREVER;
-        end
-    end
-with
-    loop do
-        par/or do
-            await k1;
-        with
-            emit e;
-            await FOREVER;
-        end
-        emit k2;
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = 1,
-    },
-    awaits = 1,
-    run = 0,
-}
-Test { [[
-event void e;
-loop do
-    par/or do
-        await e;
-    with
-        emit e;
-        await FOREVER;
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = true,
-    },
-    awaits = 1,
-    run = 0,
-}
-Test { [[
-event void e;
-loop do
-    par/or do
-        await e;
-        await e;
-    with
-        emit e;
-        emit e;
-        await FOREVER;
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = true,
-    },
-    awaits = 1,
-    run = 0,
-}
-Test { [[
-event void e;
-loop do
-    watching e do
-        emit e;
-        await FOREVER;
-    end
-end
-]],
-    _ana = {
-        isForever = true,
-        acc = true,
-    },
-    awaits = 1,
-    run = 0,
-}
-Test { [[
-var int ret = 0;
-event void e;
-par/or do
-    loop do
-        await e;
-        ret = ret + 1;
-    end
-with
-    every e do
-        ret = ret + 1;
-    end
-with
-    emit e;
-    emit e;
-    emit e;
-end
-escape ret;
-]],
-    _ana = { acc=true },
-    run = 3;
-}
+--<<< VECTORS / STRINGS
 
 -->>> DONT CARE, NONE
 
@@ -29450,6 +29449,7 @@ Test { [==[
 var int v = [[1]];
 escape v;
 ]==],
+    todo = 'END for tests is not used anymore',
     run = 10,
 }
 

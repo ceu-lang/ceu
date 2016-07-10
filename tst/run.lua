@@ -193,6 +193,8 @@ if T.ana or T._ana or T.tmp or T.props then return end
     if type(T.run) == 'number' then
         assert(out == '', 'code with output')
         assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
+    elseif T.run == false then
+        -- succeed unconditionally
     else
         assert(type(T.run) == 'string')
         assert(string.find(out, T.run, nil, true), out)

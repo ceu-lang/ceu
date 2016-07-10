@@ -100,6 +100,9 @@ ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..trl..[[], "bug found : unexpected
 
         CODES.native[pre_pos] = CODES.native[pre_pos]..code
     end,
+    Nat_Stmt = function (me)
+        LINE(me, unpack(me))
+    end,
 
     If = function (me)
         local c, t, f = unpack(me)
