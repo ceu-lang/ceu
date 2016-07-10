@@ -68,7 +68,7 @@ end
             input = string.gsub(input, '~>([^;]*);?', 'emit %1;')
             T[1] = string.gsub(src, '`EVTS', input)
             T.run = ret
-            return Test(T)
+            Test(T)
         end
         return
     end
