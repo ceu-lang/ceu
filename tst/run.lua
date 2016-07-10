@@ -26,6 +26,9 @@ end
 function check (T, mod)
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
     local ok, msg = pcall(dofile, '../src/lua/'..mod..'.lua')
+if not ok and string.find(msg, 'TODO%-PARSER') then
+    return false
+end
     if T[mod]~=nil then
         assert(ok==false, 'no error found')
         assert(string.find(msg, T[mod], nil, true), tostring(msg))

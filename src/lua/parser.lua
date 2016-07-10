@@ -472,7 +472,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __extcode = (CK'input/output' + CK'output/input') * K'/instantaneous'
                     * OPT(CK'/recursive')
                     * V'__ID_ext'
-* EE'TODO: extcode'
+* EE'TODO-PARSER: extcode'
     , _Ext_Code_proto  = V'__extcode' * (V'Typepars_ids'+V'Typepars_anon') *
                                         KK'=>' * V'Type'
     , _Ext_Code_impl  = V'__extcode' * V'Typepars_ids' *
@@ -483,7 +483,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __extreq = (CK'input/output' + CK'output/input') * K'/delayed'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
                    * V'__ID_ext'
-* EE'TODO: request'
+* EE'TODO-PARSER: request'
     , _Ext_Req_proto = V'__extreq' * (V'Typepars_ids'+V'Typepars_anon') *
                                         KK'=>' * V'Type'
     , _Ext_Req_impl  = V'__extreq' * V'Typepars_ids' *
@@ -598,7 +598,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Ext_emit = K'emit'                     * V'ID_ext' * V'_Emit_ps'
     , Emit_Ext_call = (K'call/recursive'+K'call') * V'ID_ext' * V'_Emit_ps'
     , Emit_Ext_req  = K'request'                  * V'ID_ext' * V'_Emit_ps'
-* EE'TODO: request'
+* EE'TODO-PARSER: request'
 
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
@@ -836,7 +836,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     + V'Emit_Evt'
                     + V'Abs_Spawn' + V'Kill'
 -- TODO: remove class/interface
-+ I((K'class'+K'interface'+K'traverse')) * EE'TODO: class/interface'
++ I((K'class'+K'interface'+K'traverse')) * EE'TODO-PARSER: class/interface'
                     + V'Stmt_Call'
                     + V'Nat_Stmt'
 

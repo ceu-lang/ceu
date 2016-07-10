@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -22209,9 +22208,9 @@ escape ret;
 
 Test { [[
 native/pos do
-    ##define ceu_out_emit(a,b,c,d) Z(a,b,d)
-    int Z (tceu_app* app, tceu_nevt evt, void* p) {
-        escape (evt==CEU_OUT_F && p==NULL);
+    ##define ceu_callback_output(a,b) Z(a,b)
+    int Z (tceu_nevt evt, void* p) {
+        return (evt==CEU_OUTPUT_Z && p==NULL);
     }
 end
 output void Z;
@@ -22223,9 +22222,9 @@ escape ret;
 
 Test { [[
 native/pos do
-    ##define ceu_out_emit_F() Z()
+    ##define ceu_callback_output(a,b) Z()
     int Z () {
-        escape 1;
+        return 1;
     }
 end
 output void Z;
@@ -22239,7 +22238,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) Z(a,b,d)
     int Z (tceu_app* app, tceu_nevt evt, int* p) {
-        escape (evt == CEU_OUT_F) + *p;
+        return (evt == CEU_OUT_F) + *p;
     }
 end
 output int Z;
@@ -22260,7 +22259,7 @@ Test { [[
 native/pos do
     ##define ceu_out_call(a,b,c) Z(a,b,c)
     int Z (tceu_app* app, tceu_nevt evt, int* p) {
-        escape (evt == CEU_OUT_F) + *p;
+        return (evt == CEU_OUT_F) + *p;
     }
 end
 output/input/instantaneous Z  (var int)=>int;
@@ -22855,8 +22854,12 @@ escape 1;
     run = 1,
 }
 
+--]===]
 Test { [[
 native _FILE;
+native/pre do
+    ##include <stdio.h>
+end
 var int&& ptr1;
 var _FILE&& ptr2=null;
 ptr1 = ptr2;

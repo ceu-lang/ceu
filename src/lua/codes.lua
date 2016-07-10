@@ -475,7 +475,7 @@ assert(fr.tag == 'Await_Wclock')
 {
 ]])
         local ps = 'NULL'
-        if Explist then
+        if #Explist > 0 then
             LINE(me, [[
 tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',')..[[ };
 ]])
