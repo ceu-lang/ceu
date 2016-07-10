@@ -3027,7 +3027,7 @@ Test { [[
 loop do end
 escape 0;
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -3040,7 +3040,7 @@ loop i in [0->_] do
 end
 escape sum;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -3147,7 +3147,7 @@ loop i in [0->n[ do
 end
 escape n;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -3363,7 +3363,7 @@ escape a;
         --isForever = true,
         --unreachs = 1,
     --},
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[break; escape 1;]],
@@ -3414,7 +3414,7 @@ loop do
     end;
 end;
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     --_ana = {
         --isForever = true,
         --unreachs = 1,
@@ -3493,7 +3493,7 @@ loop do
 end
 escape 0;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -3505,7 +3505,7 @@ loop do
 end
 escape 0;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -4188,7 +4188,7 @@ every 1s do
     end
 end
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -4477,7 +4477,7 @@ loop do
 end;
 escape a;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 Test { [[
 var int a=0;
@@ -4504,7 +4504,7 @@ loop do
 end;
 escape 0;
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -5842,7 +5842,7 @@ loop do
 end;
 escape 0;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     --run = 4,
 }
 
@@ -17818,7 +17818,7 @@ loop do
     end
 end
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     --tight = 'line 1 : tight loop', -- TODO: par/and
     --props = "line 8 : not permitted inside `finalize´",
     --fin = 'line 6 : attribution does not require `finalize´',
@@ -20482,7 +20482,7 @@ do finalize with
 end
 escape 1;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     --tight = 'line 2 : tight loop',
     --run = 1,
 }
@@ -26882,7 +26882,7 @@ loop i in [0 -> ($foo) as int[ do
 end
 escape tot;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     --tight = 'line 3 : tight loop',
 }
 Test { [[
@@ -26917,7 +26917,7 @@ loop i in [0 -> ($$foo) as int[ do
 end
 escape tot+1;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path',
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[

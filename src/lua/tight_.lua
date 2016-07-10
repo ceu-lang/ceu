@@ -61,7 +61,7 @@ F = {
             -- ok
         else
             me.tight = run(body, me)
-            WRN(me.tight~='tight', me, 'invalid tight `loop´ : unbounded number of iterations and body with possible non-awaiting path')
+            WRN(me.tight~='tight', me, 'invalid tight `loop´ : unbounded number of non-awaiting iterations')
         end
     end,
 
