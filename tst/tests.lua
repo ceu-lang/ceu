@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -17267,14 +17268,6 @@ escape v;
 }
 
 Test { [[
-vector[] int v;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
 var int a=1, b=2;
 var& int v;
 if true then
@@ -18184,16 +18177,6 @@ escape 10;
 }
 
 Test { [[
-native _enqueue;
-vector[255] byte buf;
-_enqueue(&&buf[0]);
-escape 1;
-]],
-    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "buf"',
-    --fin = 'line 2 : call requires `finalize´',
-}
-
-Test { [[
 native _f;
 do
     var int&& p1 = null;
@@ -18606,26 +18589,6 @@ _enqueue(buf);
 escape 1;
 ]],
     scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "buf"',
-    --fin = 'line 2 : call requires `finalize´',
-}
-
-Test { [[
-native _enqueue;
-vector[255] byte buf;
-_enqueue(buf);
-escape 1;
-]],
-    stmts = 'line 3 : invalid expression list : item #1 : unexpected context for vector "buf"',
-    --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --fin = 'line 2 : call requires `finalize´',
-}
-Test { [[
-native _enqueue;
-vector[255] byte buf;
-_enqueue(&&buf);
-escape 1;
-]],
-    exps = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
     --fin = 'line 2 : call requires `finalize´',
 }
 
@@ -23192,7 +23155,6 @@ vector[10] void a;
     dcls = 'line 1 : invalid declaration : vector cannot be of type `void´',
 }
 
---]===]
 Test { [[
 native _int;
 vector[2] _int v = [];
@@ -23490,7 +23452,7 @@ Test { [[
 native/pure _f;
 native/pos do
     int f (int* v) {
-        escape v[0];
+        return v[0];
     }
 end
 native _int;
@@ -23532,18 +23494,6 @@ str = "oioioi";
 escape _strlen(&&str[0]);
 ]],
     stmts = 'line 5 : invalid assignment : unexpected context for vector "str"',
-}
-Test { [[
-native/pure _strlen;
-
-native _char;
-vector[255] _char str;
-str = [].."oioioi";
-
-escape _strlen(&&str[0]);
-]],
-    --dcls = 'line 5 : invalid use of `vector´ "str"',
-    cc = '4:34: error: assignment to expression with array type',
 }
 
 --<<< NATIVE/POINTERS/VECTORS
@@ -24759,6 +24709,57 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
+}
+
+Test { [[
+vector[] int v;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native _enqueue;
+vector[255] byte buf;
+_enqueue(&&buf[0]);
+escape 1;
+]],
+    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "buf"',
+    --fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
+native _enqueue;
+vector[255] byte buf;
+_enqueue(buf);
+escape 1;
+]],
+    stmts = 'line 3 : invalid expression list : item #1 : unexpected context for vector "buf"',
+    --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
+    --fin = 'line 2 : call requires `finalize´',
+}
+Test { [[
+native _enqueue;
+vector[255] byte buf;
+_enqueue(&&buf);
+escape 1;
+]],
+    exps = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
+    --fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
+native/pure _strlen;
+
+native _char;
+vector[255] _char str;
+str = [].."oioioi";
+
+escape _strlen(&&str[0]);
+]],
+    --dcls = 'line 5 : invalid use of `vector´ "str"',
+    cc = '4:34: error: assignment to expression with array type',
 }
 --<<< VECTORS / STRINGS
 
