@@ -3,9 +3,11 @@ CODES = {
 }
 
 local function LINE (me, line)
-    me.code = me.code..'\n'
+    me.code = me.code..'\n'..[[
+/* ]]..me.tag..' (n='..me.n..', ln='..me.ln[2]..[[) */
+]]
     if CEU.opts.ceu_line_directives then
-        me.code = me.code..[[
+        me.code = me.code..'\n'..[[
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
 ]]
     end
@@ -58,21 +60,35 @@ F = {
     ROOT = CONC_ALL,
     Stmts = CONC_ALL,
     Await_Until = CONC_ALL,
-    Block = CONC_ALL,
 
     Node__PRE = function (me)
         me.code = ''
+        LINE(me, [[
+ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..me.trails[1]..[[], "bug found : unexpected trail");
+]])
+    end,
+    Node__POS = function (me)
+        LINE(me, [[
+ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..me.trails[1]..[[], "bug found : unexpected trail");
+]])
     end,
 
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
     end,
 
-    Stmts__BEF = function (me, sub)
-        if sub.trails[1] ~= me.trails[1] then
+    Block = function (me)
+        if me.fins_n > 0 then
+            -- skip the finalizes "mark" trail
             LINE(me, [[
-/* due to Finalize */
-_ceu_trl = &CEU_APP.trails[]]..sub.trails[1]..[[];
+_ceu_trl = &CEU_APP.trails[]]..(me.trails[1]+1)..[[];
+]])
+        end
+        CONC_ALL(me)
+        if me.fins_n > 0 then
+            -- returns to [1]
+            LINE(me, [[
+_ceu_trl = &CEU_APP.trails[]]..(me.trails[1]+0)..[[];
 ]])
         end
     end,
@@ -136,7 +152,7 @@ ceu_out_assert_msg(0, "reached end of `do´");
 
     Escape = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.outer.lbl_out.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk, &CEU_APP.trails[]]..me.outer.trails[1]..'], '..me.outer.lbl_out.id..[[, NULL);
 return;
 ]])
     end,
@@ -272,13 +288,13 @@ while (1) {
 
     Break = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.outer.lbl_out.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk, &CEU_APP.trails[]]..me.outer.trails[1]..'], '..me.outer.lbl_out.id..[[, NULL);
 return;
 ]])
     end,
     Continue = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.outer.lbl_cnt.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk, &CEU_APP.trails[]]..me.outer.trails[1]..'], '..me.outer.lbl_cnt.id..[[, NULL);
 return;
 ]])
     end,
@@ -348,7 +364,7 @@ CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 1;
 ]])
                 end
                 LINE(me, [[
-CEU_STK_LBL(_ceu_stk, _ceu_trl, ]]..me.lbl_out.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk, &CEU_APP.trails[]]..me.trails[1]..'], '..me.lbl_out.id..[[, NULL);
 return;
 ]])
             end
