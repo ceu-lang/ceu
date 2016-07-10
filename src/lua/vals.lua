@@ -120,6 +120,14 @@ F = {
         end
     end,
 
+-- INDEX
+
+    ['Exp_idx'] = function (me)
+        local _,e,idx = unpack(me)
+assert(TYPES.is_nat(e.info.tp))
+        return '('..V(e)..'['..V(idx)..'])'
+    end,
+
 -- MEMBER: .
 
     ['Exp_.'] = function (me)

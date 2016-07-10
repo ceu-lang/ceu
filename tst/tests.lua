@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3633,15 +3632,13 @@ escape ret;
 }
 
 Test { [[
-native _printf;
 var int k = 5;
 loop/1 i in [0->k[ do
     var int x = i + 2;
-    _printf("%d\n", x);
 end
 escape 1;
 ]],
-    run = '3] runtime error: `loop´ overflow',
+    run = '2] runtime error: `loop´ overflow',
 }
 
 Test { [[
@@ -17769,10 +17766,10 @@ do
     do
         _f = a;
     finalize (a) with
-        _f = &&_f;
+        _f = &&_f as int&&;
     end
 end
-escape (_f == &&_f) as int;
+escape (_f == (&&_f as int&&)) as int;
 ]],
     run = 1,
 }
@@ -22874,6 +22871,9 @@ escape 1;
 
 Test { [[
 native _FILE;
+native/pre do
+    ##include <stdio.h>
+end
 var int&& ptr1;
 var _FILE&& ptr2=null;
 ptr1 = ptr2 as int&&;
@@ -23079,156 +23079,6 @@ escape *a + *c;
 }
 
 Test { [[
-native _f;
-native/pos do
-    int* f () {
-        int a = 10;
-        escape &a;
-    }
-end
-var& int? p = _f();
-escape 0;
-]],
-    --stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
-    --inits = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    inits = 'line 8 : invalid binding : expected operator `&´ in the right side',
-}
-
-Test { [[
-native _f;
-native/pos do
-    int* f () {
-        int a = 10;
-        escape &a;
-    }
-end
-var& int? p = &_f();
-escape p;
-]],
-    stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
-    --env = 'line 9 : types mismatch (`int´ <= `int&?´)',
-}
-
-Test { [[
-native _f;
-native/pos do
-    int* f () {
-        int a = 10;
-        escape &a;
-    }
-end
-var& int? p = &_f();
-escape p!;
-]],
-    scopes = 'line 8 : invalid binding : expected `finalize´',
-    --fin = 'line 8 : attribution requires `finalize´',
-}
-
-Test { [[
-native _f;
-native/pos do
-    int a;
-    int* f () {
-        a = 10;
-        escape &a;
-    }
-end
-var& int? p;
-do
-    p = &_f();
-finalize (p)
-with
-    nothing;
-end
-escape p!;
-]],
-    run = 10,
-}
-Test { [[
-native _f;
-native/pos do
-    int a;
-    int* f () {
-        a = 10;
-        escape &a;
-    }
-end
-var& int? p;
-do
-    p = &_f();
-finalize (p)
-with
-    nothing;
-end
-escape p!;
-]],
-    run = 10,
-}
-Test { [[
-native/pure _f;    // its actually impure
-native/pos do
-    int a;
-    int* f () {
-        a = 10;
-        escape &a;
-    }
-end
-var int&& p;
-    p = _f();
-escape *p;
-]],
-    run = 10,
-}
-Test { [[
-native _f;
-native/pos do
-    int A = 10;
-    int* f () {
-        escape &A;
-    }
-end
-var int a=0;
-do
-    var& int? p;
-do
-        p = &_f();
-    finalize (p)
-    with
-        a = p!;
-end
-end
-escape a;
-]],
-    run = 10,
-}
-
-Test { [[
-native _f;
-native/pos do
-    int A = 10;
-    int* f () {
-        escape &A;
-    }
-end
-var int a = 10;
-do
-    var& int? p;
-    //do
-do
-            p = &_f();
-        finalize (p)
-        with
-            a = a + p!;
-        end
-    //end
-    a = 0;
-end
-escape a;
-]],
-    run = 10,
-}
-
-Test { [[
 native _f, _p;
 native/pos do
     ##define f(p)
@@ -23342,6 +23192,7 @@ vector[10] void a;
     dcls = 'line 1 : invalid declaration : vector cannot be of type `void´',
 }
 
+--]===]
 Test { [[
 native _int;
 vector[2] _int v = [];
@@ -60959,6 +60810,156 @@ end
 escape _V;
 ]],
     run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=114 },
+}
+
+Test { [[
+native _f;
+native/pos do
+    int* f () {
+        int a = 10;
+        escape &a;
+    }
+end
+var& int? p = _f();
+escape 0;
+]],
+    --stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
+    --inits = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    inits = 'line 8 : invalid binding : expected operator `&´ in the right side',
+}
+
+Test { [[
+native _f;
+native/pos do
+    int* f () {
+        int a = 10;
+        escape &a;
+    }
+end
+var& int? p = &_f();
+escape p;
+]],
+    stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
+    --env = 'line 9 : types mismatch (`int´ <= `int&?´)',
+}
+
+Test { [[
+native _f;
+native/pos do
+    int* f () {
+        int a = 10;
+        escape &a;
+    }
+end
+var& int? p = &_f();
+escape p!;
+]],
+    scopes = 'line 8 : invalid binding : expected `finalize´',
+    --fin = 'line 8 : attribution requires `finalize´',
+}
+
+Test { [[
+native _f;
+native/pos do
+    int a;
+    int* f () {
+        a = 10;
+        escape &a;
+    }
+end
+var& int? p;
+do
+    p = &_f();
+finalize (p)
+with
+    nothing;
+end
+escape p!;
+]],
+    run = 10,
+}
+Test { [[
+native _f;
+native/pos do
+    int a;
+    int* f () {
+        a = 10;
+        escape &a;
+    }
+end
+var& int? p;
+do
+    p = &_f();
+finalize (p)
+with
+    nothing;
+end
+escape p!;
+]],
+    run = 10,
+}
+Test { [[
+native/pure _f;    // its actually impure
+native/pos do
+    int a;
+    int* f () {
+        a = 10;
+        escape &a;
+    }
+end
+var int&& p;
+    p = _f();
+escape *p;
+]],
+    run = 10,
+}
+Test { [[
+native _f;
+native/pos do
+    int A = 10;
+    int* f () {
+        escape &A;
+    }
+end
+var int a=0;
+do
+    var& int? p;
+do
+        p = &_f();
+    finalize (p)
+    with
+        a = p!;
+end
+end
+escape a;
+]],
+    run = 10,
+}
+
+Test { [[
+native _f;
+native/pos do
+    int A = 10;
+    int* f () {
+        escape &A;
+    }
+end
+var int a = 10;
+do
+    var& int? p;
+    //do
+do
+            p = &_f();
+        finalize (p)
+        with
+            a = a + p!;
+        end
+    //end
+    a = 0;
+end
+escape a;
+]],
+    run = 10,
 }
 
 --<<< FINALIZE / OPTION

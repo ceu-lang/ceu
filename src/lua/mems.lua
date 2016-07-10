@@ -22,7 +22,9 @@ typedef struct CEU_DATA_ROOT {
 
     Block__PRE = function (me)
         local data = {}
-        for _, dcl in ipairs(me.dcls) do
+        for _, dcl in ipairs(me.dcls)
+        do
+            -- VAR
             if dcl.tag == 'Var' then
                 if dcl.id ~= '_ret' then
                     dcl.id_ = dcl.id..'_'..dcl.n
@@ -30,6 +32,8 @@ typedef struct CEU_DATA_ROOT {
                     local ptr = (is_alias and '*' or '')
                     data[#data+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
                 end
+
+            -- EVT
             elseif dcl.tag == 'Evt' then
                 local _, is_alias = unpack(dcl)
                 if is_alias then
@@ -40,6 +44,15 @@ typedef struct CEU_DATA_ROOT {
                     MEMS.evts[#MEMS.evts+1] = dcl
                     dcl.id_ = string.upper('CEU_EVENT_'..dcl.id..'_'..dcl.n)
                 end
+
+            -- VEC
+            elseif dcl.tag == 'Vec' then
+                local tp, is_alias, dim = unpack(dcl)
+                dcl.id_ = dcl.id..'_'..dcl.n
+                local ptr = (is_alias and '*' or '')
+                data[#data+1] = TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..'];\n'
+
+            -- EXT
             elseif dcl.tag == 'Ext' then
                 local _, inout, id = unpack(dcl)
                 MEMS.exts[#MEMS.exts+1] = dcl

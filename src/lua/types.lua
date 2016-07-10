@@ -130,9 +130,9 @@ function TYPES.is_int (tp)
     return TYPES.is_nat(tp)
         or (dcl.prim and dcl.prim.is_int and TYPES.check(tp,dcl.id))
 end
-function TYPES.is_nat (tp)
+function TYPES.is_nat (tp,blk)
     assert(tp.tag == 'Type')
-    local dcl = DCLS.asr(AST.iter()(), AST.iter'Block'(), TYPES.id(tp), true)
+    local dcl = DCLS.asr(AST.iter()(), blk or AST.iter'Block'(), TYPES.id(tp), true)
     return dcl and (dcl.tag=='Nat' or dcl.id=='_') and TYPES.check(tp,dcl.id)
         -- _char    yes
         -- _char&&  no
