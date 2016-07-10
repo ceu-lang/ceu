@@ -21724,19 +21724,19 @@ escape a + b;
 Test { [[
 native/pre do
     ##include <assert.h>
-    typedef struct {
+    typedef struct t {
         int a;
         int b;
     } t;
 end
 native/pos do
-    ##define ceu_out_emit(a,b,c,d) Fa(a,b,c,d)
-    int Fa (tceu_app* app, int evt, int sz, void* v) {
+    ##define ceu_callback_output(evt,params) Fa(evt,params)
+    int Fa (int evt, void* v) {
         if (evt == CEU_OUTPUT_A) {
-            t x = ((tceu__t*)v)->_1;
-            escape x.a + x.b;
+            t x = ((tceu_output_A*)v)->_1;
+            return x.a + x.b;
         } else {
-            escape *((int*)v);
+            return *((int*)v);
         }
     }
 end
@@ -21745,7 +21745,7 @@ output _t A;
 output int B;
 var int a, b;
 
-var _t v = _t(1,-1);
+var _t v = { (struct t){1,-1} };
 a = emit A => v;
 b = emit B => 5;
 escape a + b;
@@ -21860,11 +21860,12 @@ escape 1;
 
 Test { [[
 native/pos do
-    ##define ceu_out_emit(a,b,c,d) Fx(d)
-    void Fx (void* p) {
-        tceu__int___int_* v = (tceu__int___int_*) p;
+    ##define ceu_callback_output(evt,params) Fx(params)
+    int Fx (void* p) {
+        tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p;
         *(v->_1) = 1;
         *(v->_2) = 2;
+        return 0;
     }
 end
 
@@ -21879,11 +21880,12 @@ escape a + b;
 
 Test { [[
 native/pos do
-    ##define ceu_out_emit(a,b,c,d) Fx(a,b,d)
-    void Fx (tceu_app* app, int evt, void* p) {
-        tceu__int___int_* v = (tceu__int___int_*) p;
-        *(v->_1) = (evt == CEU_OUT_RADIO_SEND);
+    ##define ceu_callback_output(evt,params) Fx(evt,params)
+    int Fx (int evt, void* p) {
+        tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p;
+        *(v->_1) = (evt == CEU_OUTPUT_RADIO_SEND);
         *(v->_2) = 2;
+        return 0;
     }
 end
 

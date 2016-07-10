@@ -26,9 +26,6 @@ end
 function check (T, mod)
     assert(T[mod]==nil or T[mod]==false or type(T[mod])=='string')
     local ok, msg = pcall(dofile, '../src/lua/'..mod..'.lua')
-if RUNTESTS_TODO then
-    return true
-end
     if T[mod]~=nil then
         assert(ok==false, 'no error found')
         assert(string.find(msg, T[mod], nil, true), tostring(msg))
@@ -39,8 +36,6 @@ end
 end
 
 Test = function (T)
-    RUNTESTS_TODO = false
-
     -- TODO: remove OS_START
     if string.find(T[1],'OS_START') and (not T.os_start) then
         if type(T.run) ~= 'table' then

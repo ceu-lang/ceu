@@ -472,6 +472,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __extcode = (CK'input/output' + CK'output/input') * K'/instantaneous'
                     * OPT(CK'/recursive')
                     * V'__ID_ext'
+* EE'TODO: extcode'
     , _Ext_Code_proto  = V'__extcode' * (V'Typepars_ids'+V'Typepars_anon') *
                                         KK'=>' * V'Type'
     , _Ext_Code_impl  = V'__extcode' * V'Typepars_ids' *
@@ -482,13 +483,12 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __extreq = (CK'input/output' + CK'output/input') * K'/delayed'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
                    * V'__ID_ext'
+* EE'TODO: request'
     , _Ext_Req_proto = V'__extreq' * (V'Typepars_ids'+V'Typepars_anon') *
                                         KK'=>' * V'Type'
-* EE'TODO: request'
     , _Ext_Req_impl  = V'__extreq' * V'Typepars_ids' *
                                         KK'=>' * V'Type' *
                       V'__Do'
-* EE'TODO: request'
 
     -- TYPEPARS
 
