@@ -182,6 +182,12 @@ if T.ana or T.tmp or T.props then return end
     if CEU.opts.env then
         dofile(DIR..'env.lua')
     end
+
+    if T.cc == false then
+        -- succeed w/o compiling
+        return
+    end
+
     if CEU.opts.cc then
         if not check(T,'cc') then return end
     end

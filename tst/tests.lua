@@ -324,6 +324,7 @@ Test { [[var int a=0;]],
 }
 
 Test { [[var int a=0;]],
+    run = false,
     wrn = true,
     _ana = {
         reachs = 1,
@@ -368,6 +369,7 @@ Test { [[var int a = 1; escape (a);]],
     run = 1,
 }
 Test { [[var int a = 1;]],
+    run = false,
     wrn = true,
     _ana = {
         reachs = 1,
@@ -425,6 +427,7 @@ Test { [[var int a; a=1 ; a=a; escape a;]],
     run = 1,
 }
 Test { [[var int a; a=1 ; ]],
+    run = false,
     wrn = true,
     _ana = {
         reachs = 1,
@@ -964,11 +967,17 @@ escape 0;
     },
     run = 1,
 }
-Test { [[if (true) then  else escape 0; end;]],
+Test { [[
+if (true) then
+else
+    escape 0;
+end;
+]],
+    run = '1] runtime error: reached end of `do´',
     _ana = {
         reachs = 1,
     },
-    run = '1] runtime error: missing `escape´ statement',
+    --run = '1] runtime error: missing `escape´ statement',
 }
 
 -- IF vs Seq priority
@@ -4623,6 +4632,7 @@ else
 end;
 escape 0;   // TODO
 ]],
+    run = false,
     _ana = {
         unreachs = 1,
         isForever = true,
@@ -4636,6 +4646,7 @@ else
     loop do await A; end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -4700,6 +4711,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 1,
         acc = 1,
@@ -4726,6 +4738,7 @@ with
     end
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 2,        -- 6/16  10/16
@@ -4753,6 +4766,7 @@ with
     end
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 3,        -- 6/16  10/16  6/10
@@ -4776,7 +4790,6 @@ with
 end
 escape sum;
 ]],
-    todo = 'for',
     _ana = {
         acc = 1,
         unreachs = 1,
@@ -5311,6 +5324,7 @@ emit c => 10;
 await c;
 escape 0;
 ]],
+    run = false,
     _ana = {
         --unreachs = 1,
         --isForever = true,
@@ -5648,8 +5662,8 @@ escape ret;
 ]],
     --_ana = {acc=3},
     _ana = {acc=true},
-    run = 6,
-    --run = 9,
+    --run = 6,
+    run = 9,
     --run = -2,
 }
 
@@ -5683,8 +5697,8 @@ escape ret;
 ]],
     --_ana = {acc=3},
     _ana = {acc=true},
-    run = 6,
-    --run = 9,
+    --run = 6,
+    run = 9,
     --run = 4,
 }
 
@@ -6174,6 +6188,7 @@ with
 end;
 escape 0;
 ]],
+    run = false,
     _ana = {
         --unreachs = 2,
         --isForever = true,
@@ -6419,6 +6434,7 @@ end
     end;
 escape a;
 ]],
+    run = false,
     _ana = {
         --unreachs = 1,
         acc = 1,
@@ -6463,6 +6479,7 @@ end
     end;
 escape a;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 4,
@@ -6561,6 +6578,7 @@ end;
 escape a;
 ]],
     wrn = true,
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -6711,6 +6729,7 @@ with
     escape 2;
 end;
 ]],
+    run = false,
     _ana = {
         --unreachs = 1,
         abrt = 6,      -- TODO: not checked
@@ -6733,6 +6752,7 @@ with
     escape 3;
 end;
 ]],
+    run = false,
     _ana = {
         --unreachs = 1,
         abrt = 8,      -- TODO: not checked
@@ -6810,8 +6830,8 @@ end
 escape ret;
 ]],
     _ana = { acc=1 },
-    --run = 2,
-    run = 1,
+    run = 2,
+    --run = 1,
 }
 
 -- TODO: STACK
@@ -7062,6 +7082,7 @@ with
     escape 2;
 end;
 ]],
+    run = 1,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -7375,6 +7396,7 @@ with
     escape b;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -7427,6 +7449,7 @@ with
     escape b;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 4,
@@ -7443,6 +7466,7 @@ with
     escape b;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 1,     -- TODO: =0 (await(5) cannot be 0)
         abrt = 4,
@@ -7522,6 +7546,7 @@ with
     end
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 1,
@@ -7543,6 +7568,7 @@ with
     end
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 1,
@@ -7561,6 +7587,7 @@ with
 end
 escape v;
 ]],
+    run = false,
     _ana = {
         unreachs = 1,
         acc = 1,
@@ -7619,6 +7646,7 @@ loop do
     end
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -7646,6 +7674,7 @@ loop do
     end
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -7672,6 +7701,7 @@ loop do
 end
 ]],
     safety = 2,
+    run = false,
     _ana = {
         acc = 1,
         isForever = true,
@@ -7696,6 +7726,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -7739,6 +7770,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 1,
@@ -7768,6 +7800,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true
     },
@@ -7808,6 +7841,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 1,
         isForever = true,
@@ -7833,6 +7867,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 1,
         isForever = true,
@@ -7859,6 +7894,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 1,
         isForever = true,
@@ -7927,6 +7963,7 @@ with
     escape c;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 3,
         abrt = 9,
@@ -7980,6 +8017,7 @@ with
     escape c;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 9,
         acc = 3,
@@ -8064,6 +8102,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -8099,6 +8138,7 @@ loop do
     await 10ms;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -8111,6 +8151,7 @@ loop do
     await 10ms;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -8124,6 +8165,7 @@ loop do
     await A;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -8136,6 +8178,7 @@ loop do
     await A;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -8146,6 +8189,7 @@ loop do
     await 10ms;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -8504,8 +8548,8 @@ escape 10;
     _ana = {
         acc = 1,
     },
-    --run = 10,
-    run = 0,
+    run = 10,
+    --run = 0,
 }
 
 Test { [[
@@ -8573,6 +8617,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 1,
@@ -8611,6 +8656,7 @@ await a;
 // unreachable
 escape 0;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         --unreachs = 2,
@@ -8662,6 +8708,7 @@ end;
 await a;
 escape 0;
 ]],
+    run = false,
     _ana = {
         --unreachs = 2,
         abrt = 3,
@@ -8858,8 +8905,8 @@ escape ret;
         abrt = 4,
         acc = 1,
     },
-    run = 9,
-    --run = 4,
+    --run = 9,
+    run = 4,
 }
 
 Test { [[
@@ -8953,6 +9000,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -8971,6 +9019,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -9013,6 +9062,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 1,
         unreachs = 1,
@@ -9045,6 +9095,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -9838,6 +9889,7 @@ with
 end;
 escape x;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc  = 2,    -- TODO: timer kills timer
@@ -9866,6 +9918,7 @@ with
 end;
 escape x;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 3,     -- TODO: timer kills timer
@@ -9915,6 +9968,7 @@ with
     escape 2;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 1,
@@ -9935,6 +9989,7 @@ with
     escape 2;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -9962,6 +10017,7 @@ with
     escape 2;           // 18
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 4,
         acc = 1,
@@ -10011,6 +10067,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 1,
@@ -10095,6 +10152,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 4,
         acc = 1,
@@ -10112,6 +10170,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 1,
@@ -10136,6 +10195,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 1,
@@ -10159,6 +10219,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 1,       -- fiz na mao!
@@ -10184,6 +10245,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 1,       -- nao fiz na mao!!!
@@ -10234,6 +10296,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         --acc = 1,
         acc = 3,
@@ -10260,6 +10323,7 @@ else
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         --acc = 1,
         acc = 3,
@@ -10291,6 +10355,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 5,
@@ -10313,6 +10378,7 @@ else
     end;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -10333,6 +10399,7 @@ else
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -10347,6 +10414,7 @@ end
         end;
 escape v;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -10366,6 +10434,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 1,
@@ -10383,6 +10452,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 4,
         acc = 1,
@@ -10404,6 +10474,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 4,
         acc = 1,
@@ -10424,6 +10495,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 4,
         acc = 1,
@@ -10444,6 +10516,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 4,
         acc = 1,
@@ -10462,6 +10535,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 4,
         acc = 1,
@@ -10500,6 +10574,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 4,   -- TODO: break is inside par/or (should be 3)
         acc = 1,
@@ -10522,6 +10597,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 4,
         acc = 1,
@@ -10542,6 +10618,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 1,
@@ -10562,6 +10639,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 1,
@@ -10676,6 +10754,7 @@ with
 end;
 escape x;
 ]],
+    run = false,
     _ana = {
         abrt = 5,
         acc = 1,
@@ -10696,6 +10775,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 1,
@@ -10714,6 +10794,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 1,
@@ -10738,6 +10819,7 @@ with
 end;
 escape x;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 3,
@@ -10758,6 +10840,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -10810,7 +10893,7 @@ loop do
     end
 end
 ]],
-    todo = 'TIGHT',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     _ana = {
         loop = true,
     },
@@ -10872,6 +10955,7 @@ with
     escape aa;
 end;
 ]],
+    run = false,
     _ana = {
         --nd_esc = 1,
         abrt = 1,
@@ -10892,6 +10976,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 1,
@@ -10913,6 +10998,7 @@ with
 end;
 ]],
     wrn = true,
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -10974,6 +11060,7 @@ end;
 escape 0;
 ]],
     wrn = true,
+    run = false,
     _ana = {
         abrt = 5,
         --unreachs = 2,
@@ -11448,6 +11535,7 @@ with
 end;
 escape v;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -11572,6 +11660,7 @@ else
 end;
 escape 1;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 1,
@@ -11598,6 +11687,7 @@ with
 end;
 ]],
 --1and(~A)*]],
+    run = false,
     _ana = {
         isForever = true
     },
@@ -11615,6 +11705,7 @@ with
 end;
 ]],
 --(~A)* and (~B)*]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -11686,6 +11777,7 @@ with
     escape a;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
     acc = 2,
@@ -11703,6 +11795,7 @@ with
     escape a;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 2,
         abrt = 3,
@@ -11727,6 +11820,7 @@ with
     escape aa;
 end;
 ]],
+    run = false,
     _ana = {
         --unreachs = 1,
         abrt = 3,
@@ -12179,6 +12273,7 @@ with
 end;
 escape aa;
 ]],
+    run = false,
     _ana = {
         --unreachs = 1,
         abrt = 4,
@@ -12202,6 +12297,7 @@ with
     escape aa;
 end;
 ]],
+    run = false,
     _ana = {
         --unreachs = 1,
         abrt = 4,
@@ -12216,6 +12312,7 @@ with
     escape a;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -12242,6 +12339,7 @@ with
     escape a;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 2,
         abrt = 3,
@@ -12256,6 +12354,7 @@ with
     escape a;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 2,
@@ -12270,6 +12369,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 1,
@@ -12286,6 +12386,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         abrt = 9,
         acc = 3,
@@ -12301,6 +12402,7 @@ with
     escape v;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -12325,8 +12427,8 @@ escape aa;
         acc = 1,
         --trig_wo = 1,
     },
-    run = 1,
-    --run = 10,
+    --run = 1,
+    run = 10,
 }
 Test { [[
 event int a;
@@ -12394,6 +12496,7 @@ end
 end;
 escape v;
 ]],
+    run = false,
     _ana = {
         acc = 8, -- TODO: not checked
         abrt = 9,
@@ -12412,6 +12515,7 @@ end
 end;
 escape v;
 ]],
+    run = false,
     _ana = {
         acc = 3,
         abrt = 9,
@@ -12429,6 +12533,7 @@ with
     escape a;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 1,
@@ -12446,6 +12551,7 @@ with
     escape a;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 2,
@@ -12528,6 +12634,7 @@ end;
 escape aa;
 ]],
     wrn = true,
+    run = false,
     _ana = {
         --nd_esc = 1,
         --unreachs = 1,
@@ -12552,6 +12659,7 @@ escape aa;
 ]],
     wrn = true,
     safety = 2,
+    run = false,
     _ana = {
         --nd_esc = 1,
         --unreachs = 1,
@@ -12576,6 +12684,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 1,
@@ -12599,6 +12708,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 1,
@@ -12645,6 +12755,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -12837,6 +12948,7 @@ with
 end;
 escape 0;
 ]],
+    run = false,
     _ana = {
         acc = 2,
         abrt = 1,
@@ -12854,6 +12966,7 @@ with
 end;
 escape 0;
 ]],
+    run = false,
     _ana = {
         acc = 2,
         abrt = 1,
@@ -12870,6 +12983,7 @@ with
     await a;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 2,
@@ -12922,6 +13036,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -12939,6 +13054,7 @@ with
 end;
 escape x;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 4,
@@ -13015,6 +13131,7 @@ with
     escape b+2;
 end;
 ]],
+    run = false,
     _ana = {
         abrt = 3,
         acc = 1,
@@ -13327,6 +13444,7 @@ end;
 // unreachable
 escape v1+v2+v3+v4+v5+v6;   // TODO: unreach
 ]],
+    run = false,
     _ana = {
         unreachs = 3,
         acc = 1,
@@ -13404,7 +13522,7 @@ escape a;
 Test { [[
 input int A,B,Z,X;
 var int a = 0;
-a = do/_ par do
+a = do par do
     par/and do
         await A;
     with
@@ -13890,6 +14008,7 @@ with
 end;
 ]],
     wrn = true,
+    run = false,
     _ana = {
         unreachs = 2,
         acc = 1,
@@ -14132,6 +14251,7 @@ with
 end;
 // unreachable
 ]],
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 3,
@@ -14158,6 +14278,7 @@ end;
 // unreachable
 ]],
     safety = 2,
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 3,
@@ -14183,6 +14304,7 @@ with
     end;
 end;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         isForever = true,
@@ -14202,6 +14324,7 @@ with
 end;
 ]],
     wrn = true,
+    run = false,
     _ana = {
         acc = 1,
         isForever = true,
@@ -14548,6 +14671,7 @@ with
     a = await A;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         acc = 1,
@@ -14564,6 +14688,7 @@ loop do
     emit a => v;
 end;
 ]],
+    run = false,
     _ana = {
         isForever = true,
         --trig_wo = 1,
@@ -14632,6 +14757,7 @@ with
 end;
 ]],
     wrn = true,
+    run = false,
     _ana = {
         isForever = true,
         unreachs = 1,
@@ -14649,7 +14775,7 @@ par/or do
 with
     i = 1;
     loop do
-        var int o = do/_ par do
+        var int o = do par do
                 await Z;
                 await Z;
                 var int c = await Z;
@@ -14726,6 +14852,7 @@ with
     escape a;
 end;
 ]],
+    run = false,
     _ana = {
         unreachs = 1,
         acc = 1,
@@ -14785,6 +14912,7 @@ with
     escape 1;
 end;
 ]],
+    run = false,
     _ana = {
         --isForever = true,
         unreachs = 2,
@@ -14819,6 +14947,7 @@ end;
 // unreachable
 escape 0;
 ]],
+    run = false,
     _ana = {
         --isForever = true,
         unreachs = 4,
@@ -14855,6 +14984,7 @@ end;
 // unreachable
 escape 0;
 ]],
+    run = false,
     _ana = {
         --isForever = true,
         unreachs = 4,
@@ -14879,6 +15009,7 @@ end;
 // unreachable
 escape 0;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         --isForever = true,
@@ -14966,6 +15097,7 @@ end;
 // unreachable
 escape 0;
 ]],
+    run = false,
     _ana = {
         --isForever = true,
         unreachs = 2,
@@ -15296,6 +15428,7 @@ escape 10;
     --nd_esc = 1,
     --run = { ['~>A;~>A'] = 1 },
     run = { ['~>A;~>A'] = 4 },
+    run = false,
     _ana = {
         unreachs = 1,
     },
@@ -15562,6 +15695,7 @@ loop do
     end;
 end;
 ]],
+    run = false,
     _ana = {
         --acc = 3,
         acc = 12,           -- TODO: not checked
@@ -16445,8 +16579,8 @@ with
     end
 end
 ]],
-    --run = 2,
-    run = 1,
+    run = 2,
+    --run = 1,
     safety = 2,
     _ana = {
         acc = 1,
@@ -16507,6 +16641,7 @@ with
     end
 end
 ]],
+    run = false,
     _ana = {
         acc = 1,
         --abrt = 1,
@@ -16568,8 +16703,8 @@ escape x;
         acc = 1,
         unreachs = 2,
     },
-    --run = 2,
-    run = 1,
+    run = 2,
+    --run = 1,
 }
 
 Test { [[
@@ -16596,6 +16731,7 @@ with
 end;
 ]],
     wrn = true,
+    run = false,
     _ana = {
         --acc = 1,
         acc = 6,     -- TODO: not checked
@@ -16641,8 +16777,8 @@ escape ret;
         --trig_wo = 2,
         unreachs = 1,
     },
-    --run = 10,
-    run = 1,
+    run = 10,
+    --run = 1,
 }
 
 Test { [[
@@ -16709,6 +16845,7 @@ with
 end;
 ]],
     wrn = true,
+    run = false,
     _ana = {
         acc = 6,
         --trig_wo = 2,
@@ -16761,19 +16898,21 @@ end;
         --trig_wo = 2,
         unreachs = 2,
     },
-    --run = { ['1~>Z']=7 },
-    run = { ['1~>Z']=5 },
+    run = { ['1~>Z']=7 },
+    --run = { ['1~>Z']=5 },
 }
 
     -- SCOPE / BLOCK
 
 Test { [[do end;]],
+    run = false,
     _ana = {
         reachs = 1,
         isForever = true,
     },
 }
 Test { [[do var int a=0; end;]],
+    run = false,
     _ana = {
         reachs = 1,
         isForever = true,
@@ -16884,6 +17023,7 @@ do
 end;
 escape 0;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 1,
@@ -17770,6 +17910,7 @@ native _Cnt;
     end
 ]],
     --fin = 'line 5 : pointer access across `await´',
+    cc = '1: error: unknown type name ‘message_t’',
     _ana = {
         isForever = true,
     },
@@ -17784,6 +17925,7 @@ native _Cnt;
         var _Cnt&& snd = _Radio_getPayload(&&msg, sizeof(_Cnt));
     end
 ]],
+    cc = '1: error: unknown type name ‘message_t’',
     _ana = {
         isForever = true,
     },
@@ -20339,6 +20481,7 @@ escape ret;
     --fin = 'line 7 : wrong operator',
     --run = 1,
     safety = 2,
+    run = false,
     _ana = {
         acc = 1,
     },
@@ -21503,6 +21646,7 @@ every qu_ in GO do
     end
 end
 ]],
+    cc = '1: error: unknown type name ‘tceu_queue’',
     _ana = {
         isForever = true,
     },
@@ -21978,6 +22122,7 @@ with
     emit Z => 1;
 end
 ]],
+    cc = '1: error: implicit declaration of function ‘Fx’',
     _ana = {
         reachs = 1,
         acc = 1,
@@ -21999,6 +22144,7 @@ with
     emit W => 0;
 end
 ]],
+    cc = '1: error: implicit declaration of function ‘Fx’',
     _ana = {
         reachs = 1,
         acc = 3,
@@ -22265,7 +22411,7 @@ Test { [[
 native/pos do
     ##define ceu_out_call(a,b,c) Z(a,b,c)
     int Z (tceu_app* app, tceu_nevt evt, int* p) {
-        escape (evt == CEU_OUT_F) + *p;
+        escape (evt == CEU_OUTPUT_Z) + *p;
     }
 end
 output/input/instantaneous Z  (var int)=>int;
@@ -22307,7 +22453,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) Z(a,b,d)
     int Z (tceu_app* app, tceu_nevt evt, int* p) {
-        return (evt == CEU_OUT_F) + *p;
+        return (evt == CEU_OUTPUT_Z) + *p;
     }
 end
 output int Z;
@@ -22328,7 +22474,7 @@ Test { [[
 native/pos do
     ##define ceu_out_call(a,b,c) Z(a,b,c)
     int Z (tceu_app* app, tceu_nevt evt, int* p) {
-        return (evt == CEU_OUT_F) + *p;
+        return (evt == CEU_OUTPUT_Z) + *p;
     }
 end
 output/input/instantaneous Z  (var int)=>int;
@@ -24065,6 +24211,7 @@ _b = _a;    // _a pode ter escopo menor e nao reclama de FIN
 await FOREVER;
 ]],
     --fin = 'line 7 : pointer access across `await´',
+    cc = '1: error: unknown type name ‘tp’',
     _ana = {
         isForever = true,
     },
@@ -24360,6 +24507,7 @@ with
 end;
 escape _idx(va,0) + _idx(va,1);
 ]],
+    run = false,
     _ana = {
         acc = 2,
     },
@@ -24372,6 +24520,7 @@ with
 end;
 escape _idx(va,0) + _idx(va,1);
 ]],
+    run = false,
     _ana = {
         acc = 1,
     },
@@ -24441,6 +24590,7 @@ with
 end;
 escape 0;
 ]],
+    run = false,
     _ana = {
         acc = 1,
     },
@@ -24454,6 +24604,7 @@ with
 end;
 escape 0;
 ]],
+    run = false,
     _ana = {
         acc = 1,
     },
@@ -24467,6 +24618,7 @@ with
 end;
 escape 0;
 ]],
+    run = false,
     _ana = {
         acc = 1,
     },
@@ -24496,6 +24648,7 @@ end;
 escape 0;
 ]],
     --abrt = 1,
+    run = false,
     _ana = {
         acc = 1,
     },
@@ -24566,6 +24719,7 @@ with
 end;
 escape 0;
 ]],
+    run = false,
     _ana = {
         acc = 2, -- TODO: scope of v vs pa
     },
@@ -24580,6 +24734,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         acc = 1,
     },
@@ -24594,6 +24749,7 @@ with
 end;
 ]],
     --abrt = 2,
+    run = false,
     _ana = {
         acc = 2, -- TODO: $ret vs anything is DET
     },
@@ -24625,6 +24781,7 @@ with
 end;
 escape v1 + v2;
 ]],
+    run = false,
     _ana = {
         acc = 3,
     },
@@ -24641,6 +24798,7 @@ with
 end;
 escape v1 + v2;
 ]],
+    run = false,
     _ana = {
         acc = 3,     -- TODO: f2 is const
     },
@@ -24688,6 +24846,7 @@ with
 end;
 escape a+a;
 ]],
+    run = false,
     _ana = {
         acc = 2,
     },
@@ -24719,6 +24878,7 @@ with
 end;
 escape v1+v2;
 ]],
+    run = false,
     _ana = {
         acc = 3,
     },
@@ -24736,6 +24896,7 @@ with
 end;
 escape v1+v2;
 ]],
+    run = false,
     _ana = {
         acc = 1,
     },
@@ -24782,6 +24943,7 @@ with
 end
 escape _a;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 1,
@@ -24845,6 +25007,7 @@ with
     end
 end
 ]],
+    cc = '1: error: implicit declaration of function ‘digitalWrite’',
     _ana = {
         acc = true,
         isForever = true,
@@ -24878,6 +25041,7 @@ with
     end
 end
 ]],
+    cc = '1: error: implicit declaration of function ‘digitalWrite’',
     _ana = {
         acc = true,
         isForever = true,
@@ -25172,6 +25336,7 @@ with
 end;
 escape vs.a;
 ]],
+    cc = '1: error: unknown type name ‘s’',
     _ana = {
         acc = 1,
     },
@@ -25193,6 +25358,7 @@ with
 end;
 escape vs.a;
 ]],
+    cc = '1: error: unknown type name ‘s’',
     _ana = {
         acc = 1,     -- TODO: struct
     },
@@ -25218,6 +25384,7 @@ escape v.a;
 
 Test { [[
 ]],
+    run = false,
     _ana = {
         reachs = 1,
         isForever = true,
@@ -25539,6 +25706,7 @@ every key in SDL_KEYUP do
     end
 end
 ]],
+    cc = false,
     _ana = {
         isForever = true,
     },
@@ -25710,6 +25878,7 @@ end
 Test { [[
 var int a=0;
 ]],
+    run = false,
     _ana = {
         reachs = 1,
         isForever = true,
@@ -25722,6 +25891,7 @@ a = do/_
     var int b=0;
 end;
 ]],
+    run = false,
     _ana = {
         reachs = 1,
         unreachs = 1,
@@ -25738,6 +25908,7 @@ with
 end;
 escape a;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 1,
@@ -26048,7 +26219,7 @@ end
         acc = 3,
     },
     awaits = 0,
-    run = 0,
+    run = false,
 }
 
 Test { [[
@@ -26079,7 +26250,7 @@ end
         acc = 2,
     },
     awaits = 0,
-    run = 0
+    run = false,
 }
 
 Test { [[
@@ -26112,7 +26283,7 @@ end
         acc = 1,
     },
     awaits = 1,
-    run = 0,
+    run = false,
 }
 Test { [[
 event void e;
@@ -26131,7 +26302,7 @@ end
         acc = true,
     },
     awaits = 1,
-    run = 0,
+    run = false,
 }
 Test { [[
 event void e;
@@ -26152,7 +26323,7 @@ end
         acc = true,
     },
     awaits = 1,
-    run = 0,
+    run = false,
 }
 Test { [[
 event void e;
@@ -26169,7 +26340,7 @@ end
         acc = true,
     },
     awaits = 1,
-    run = 0,
+    run = false,
 }
 Test { [[
 var int ret = 0;
@@ -26191,7 +26362,8 @@ end
 escape ret;
 ]],
     _ana = { acc=true },
-    run = 3;
+    --run = 3;
+    run = 6;
 }
 
 do return end
@@ -27718,6 +27890,7 @@ with
 end;
 escape ret;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -28146,6 +28319,7 @@ with
 end;
 escape 0;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 1,
@@ -28161,6 +28335,7 @@ with
 end;
 escape 0;
 ]],
+    run = false,
     _ana = {
         acc = 1,
         abrt = 1,
@@ -30029,6 +30204,7 @@ end
 await FOREVER;
 ]],
     --run = 1,
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -31956,6 +32132,7 @@ loop do
     emit aa.go;
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -32656,6 +32833,7 @@ with
     end
 end
 ]],
+    run = false,
     _ana = {
         --acc = 2,      -- TODO
         reachs = 1,
@@ -43958,6 +44136,7 @@ end
     --env = 'line 11 : invalid attribution (void&& vs _vldoor_t&&)',
     --fin = 'line 11 : attribution to pointer with greater scope',
     --fin = 'line 9 : invalid block for awoken pointer "door"',
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -43980,6 +44159,7 @@ end
 ]],
     --fin = 'line 11 : attribution to pointer with greater scope',
     --fin = 'line 9 : invalid block for awoken pointer "door"',
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -44255,6 +44435,7 @@ every inc in RECEIVE do
     end;
 end
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -53637,6 +53818,7 @@ loop do
 end
 await FOREVER;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
@@ -55570,6 +55752,7 @@ do
 end
 await FOREVER;
 ]],
+    run = false,
     _ana = {
         isForever = true,
     },
