@@ -391,14 +391,12 @@ F = {
         local id = unpack(me)
 
         if id == 'every' then
-            local _, ID_ext, i = unpack(me)
-            assert(id == 'every')
-            AST.asr(ID_ext,'ID_ext')
-            do
-                local _, input = unpack(ID_ext.dcl)
+            local _, ID, i = unpack(me)
+            if ID.tag == 'ID_ext' then
+                local _, input = unpack(ID.dcl)
                 assert(input == 'input')
             end
-            local Typelist = AST.asr(unpack(ID_ext.dcl), 'Typelist')
+            local Typelist = AST.asr(unpack(ID.dcl), 'Typelist')
             local Type = Typelist[i]
             return AST.copy(Type)
 

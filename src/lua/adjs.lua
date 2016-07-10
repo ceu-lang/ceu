@@ -313,11 +313,23 @@ DBG('TODO: _Loop_Pool')
             end
             for i, ID_int in ipairs(to1) do
                 local id = unpack(ID_int)
-                local ID_ext = AST.asr(awt,'_Await_Until', 1,'Await_Ext', 1,'ID_ext')
-                local var = node('Var', me.ln,
-                                node('Ref', me.ln, 'every', ID_ext, i),
+                local ID = AST.get(awt,'_Await_Until', 1,'Await_Ext', 1,'ID_ext')
+                        or AST.get(awt,'_Await_Until', 1,'Await_Int', 1,'Exp_Name', 1,'ID_int')
+                local var do
+                    if ID then
+                        var = node('Var', me.ln,
+                                node('Ref', me.ln, 'every', ID, i),
                                 false,
                                 id)
+                    else
+                        AST.asr(awt,'Await_Wclock')
+                        var = node('Var', me.ln,
+                                node('Type', me.ln,
+                                    node('ID_prim', me.ln, 'int')),
+                                false,
+                                id)
+                    end
+                end
                 var.is_implicit = true
                 dcls[#dcls+1] = var
             end
@@ -342,7 +354,6 @@ DBG('TODO: _Loop_Pool')
                 set_awt = node('Set_Await_many', me.ln, awt, new)
             else
                 set_awt = node('Set_Await_one', me.ln, awt, new)
-error'TODO: luacov never executes this?'
             end
         else
             set_awt = awt

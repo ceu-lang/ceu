@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -4572,7 +4573,6 @@ escape 0;
     },
 }
 
---]===]
 Test { [[
 input int A;
 loop do
@@ -5902,6 +5902,20 @@ end;
 }
 
 Test { [[
+var int ret = 0;
+par/or do
+    every late in 9us do
+        ret = late;
+    end
+with
+    await 10us;
+end
+escape ret;
+]],
+    run = { ['~>10us']=1 };
+}
+
+Test { [[
 input void OS_START;
 event int a;
 var int aa = 3;
@@ -5910,8 +5924,7 @@ par do
     emit a => aa;      // 6
     escape aa;
 with
-    loop do
-        var int v = await a;
+    every v in a do
         aa = v+1;
     end;
 end;
@@ -6301,7 +6314,7 @@ end
 Test { [[
 native/pos do ##include <assert.h> end
 input void A;
-event void a, b, c, d;
+event void a;
 native _assert;
 var int v=0;
 par do
@@ -6311,10 +6324,10 @@ par do
         _assert(0);
     end
 with
-    loop do
+    //loop do
         await a;
         escape 1;       // kills emit a
-    end                 // unreach
+    //end                 // unreach
 end
 ]],
     _ana = {
@@ -6334,6 +6347,7 @@ every inc do
     nothing;
 end
 ]],
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     _ana = { isForever=true },
 }
 
@@ -6346,6 +6360,7 @@ with
 end;
 escape 0;
 ]],
+    tight_ = 'line 5 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     loop='tight loop',
     _ana = {
         isForever = true,
@@ -6545,6 +6560,7 @@ end
 end;
 escape a;
 ]],
+    wrn = true,
     _ana = {
         acc = 1,
         abrt = 3,
@@ -6570,6 +6586,7 @@ end
 end;
 escape a;
 ]],
+    wrn = true,
     _ana = {
         unreachs = 1,
         acc = 1,
@@ -6586,8 +6603,7 @@ par do
     emit c;
     escape 10;       // 35
 with
-    loop do
-        await c;
+    every c do
         emit d;
     end
 end
@@ -6650,6 +6666,7 @@ with
     end
 end
 ]],
+    wrn = true,
     _ana = {
         acc = true,
         unreachs = 1,
@@ -6681,7 +6698,7 @@ escape a;
 
 Test { [[
 input int B;
-event int a;
+//event int a;
 var int aa=0;
 par do
     await B;
@@ -6702,7 +6719,7 @@ end;
 }
 Test { [[
 input int B;
-event int a;
+//event int a;
 var int aa=0;
 par do
     await B;
@@ -6778,8 +6795,7 @@ input void OS_START;
 var int ret = 0 ;
 
 par/or do
-    loop do
-        await a;
+    every a do
         ret = ret + 1;
     end
 with
@@ -6802,7 +6818,7 @@ escape ret;
 -- internal glb awaits
 Test { [[
 input void OS_START;
-event void a;
+//event void a;
 native _ret_val, _ret_end;
 _ret_val = 0;
 par do
@@ -6834,7 +6850,7 @@ end
 
 Test { [[
 input void OS_START;
-event int a, x, y;
+event int x, y;
 var int ret = 0;
 par do
     par/and do
@@ -9333,7 +9349,7 @@ escape 1;
 
 Test { [[
 input void OS_START;
-event int a,b,c;
+event int b,c;
 var int cc = 1;
 par/and do
     await OS_START;
@@ -9876,6 +9892,7 @@ with
 end;
 escape x;
 ]],
+    wrn = true,
     _ana = {
         abrt = 5,
         acc = 1,
@@ -10814,6 +10831,7 @@ with
     emit a => aa;
 end;
 ]],
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     _ana = {
         abrt = 1,
         acc = 2,
@@ -10894,6 +10912,7 @@ with
     emit b => 1;
 end;
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
     },
@@ -10954,6 +10973,7 @@ with
 end;
 escape 0;
 ]],
+    wrn = true,
     _ana = {
         abrt = 5,
         --unreachs = 2,
@@ -11757,7 +11777,7 @@ end;
     run = 1,
 }
 Test { [[
-input int B,Z;
+input int B;
 event int a;
 var int aa=0;
 par/or do
@@ -11778,7 +11798,7 @@ escape aa;
     },
 }
 Test { [[
-input int B,Z;
+input int B;
 event int a;
 var int aa=0;
 par/or do
@@ -12010,7 +12030,6 @@ escape 1;
 }
 
 Test { [[
-input int A;
 loop do
     par/or do
         break;
@@ -12508,6 +12527,7 @@ with
 end;
 escape aa;
 ]],
+    wrn = true,
     _ana = {
         --nd_esc = 1,
         --unreachs = 1,
@@ -12530,6 +12550,7 @@ with
 end;
 escape aa;
 ]],
+    wrn = true,
     safety = 2,
     _ana = {
         --nd_esc = 1,
@@ -13868,6 +13889,7 @@ with
     escape v;
 end;
 ]],
+    wrn = true,
     _ana = {
         unreachs = 2,
         acc = 1,
@@ -14101,8 +14123,7 @@ par/and do
         counter = counter + 1;
     end;
 with
-    loop do
-        await c;
+    every c do
         // unreachable
         if counter == 200 then
             counter = 0;
@@ -14127,8 +14148,7 @@ par/and do
         counter = counter + 1;
     end;
 with
-    loop do
-        await c;
+    every c do
         // unreachable
         if counter == 200 then
             counter = 0;
@@ -14159,8 +14179,7 @@ event int a;
 par/and do
     emit a => 9;
 with
-    loop do
-        await a;
+    every a do
     end;
 end;
 ]],
@@ -14182,11 +14201,39 @@ with
     end;
 end;
 ]],
+    wrn = true,
     _ana = {
         acc = 1,
         isForever = true,
         unreachs = 1,
     },
+}
+
+Test { [[
+event int a,b;
+    loop do
+        par/or do
+            await a;
+        with
+            await b;
+        end;
+    end;
+escape 0;
+]],
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+}
+Test { [[
+event int a,b;
+    loop do
+        par/and do
+            await a;
+        with
+            await b;
+        end;
+    end;
+escape 0;
+]],
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -14212,6 +14259,7 @@ with
 end;
 escape v;
 ]],
+    wrn = true,
     _ana = {
         abrt = 2,
     },
@@ -14249,6 +14297,7 @@ with
     escape c;
 end;
 ]],
+    wrn = true,
     _ana = {
         abrt = 2,
         unreachs = 1,
@@ -14289,6 +14338,7 @@ with
     escape c;
 end;
 ]],
+    wrn = true,
     safety = 2,
     _ana = {
         abrt = 2,
@@ -14402,6 +14452,7 @@ with
     escape bb;       // 18
 end;
 ]],
+    wrn = true,
     _ana = {
         --nd_esc = 2,
         unreachs = 4,
@@ -14433,6 +14484,7 @@ with
     escape bb;       // 18
 end;
 ]],
+    wrn = true,
     safety = 2,
     _ana = {
         acc = 4,
@@ -14467,6 +14519,7 @@ with
     escape bb;
 end;
 ]],
+    wrn = true,
     _ana = {
         --nd_esc = 1,
     unreachs = 4,
@@ -14550,6 +14603,7 @@ with
     escape cc;
 end;
 ]],
+    wrn = true,
     _ana = {
         unreachs = 1,
     },
@@ -14577,6 +14631,7 @@ with
     end;
 end;
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         unreachs = 1,
@@ -15127,6 +15182,7 @@ with
     escape v;
 end;
 ]],
+    wrn = true,
     _ana = {
         unreachs = 1,
     },
@@ -15149,6 +15205,7 @@ with
     escape v;
 end;
 ]],
+    wrn = true,
     run = 1,
     _ana = {
         unreachs = 1,
@@ -15235,6 +15292,7 @@ with
 end;
 escape 10;
 ]],
+    wrn = true,
     --nd_esc = 1,
     --run = { ['~>A;~>A'] = 1 },
     run = { ['~>A;~>A'] = 4 },
@@ -15574,6 +15632,7 @@ with
     end;
 end;
 ]],
+    wrn = true,
     _ana = {
         unreachs = 1,
         acc = 3,
@@ -15628,6 +15687,7 @@ with
     end;
 end;
 ]],
+    wrn = true,
     safety = 2,
     _ana = {
         unreachs = 1,
@@ -15642,14 +15702,14 @@ input void OS_START;
 event int a, b;
 var int v=0;
 par/or do
-    loop do
-        await a;
+    every a do
+        //await a;
         emit b => 1;
         v = 4;
     end;
 with
-    loop do
-        await b;
+    every b do
+        //await b;
         v = 3;
     end;
 with
@@ -15826,8 +15886,8 @@ input void OS_START, A;
 event int a, b;
 var int bb=0;
 par/or do
-    loop do
-        bb=await b;
+    every x in b do
+        bb=x;
         bb = bb + 1;
     end;
 with
@@ -15934,8 +15994,8 @@ par do
         emit c => cc;
     end;
 with
-    loop do
-        cc = await c;
+    every x in c do
+        cc = x;
         cc = cc + 1;
     end;
 with
@@ -16005,6 +16065,7 @@ with
     escape v1 + v2;
 end;
 ]],
+    wrn = true,
     _ana = {
         --nd_esc = 1,
         unreachs = 2,
@@ -16017,8 +16078,8 @@ input int A;
 event int c;
 var int a=0;
 par/or do
-    loop do
-        a = await c;
+    every x in c do
+        a = x;
     end;
 with
     await A;
@@ -16035,14 +16096,14 @@ Test { [[
 event int b, c;
 var int a=0;
 par/or do
-    loop do
-        var int cc = await c;        // 4
+    every cc in c do
+        //var int cc = await c;        // 4
         emit b => cc+1;     // 5
         a = cc+1;
     end;
 with
-    loop do
-        var int bb = await b;        // 10
+    every bb in b do
+        //var int bb = await b;        // 10
         a = bb + 1;
     end;
 with
@@ -16113,11 +16174,11 @@ par do
 with
     loop do
         par/or do
-            var int xx = await x;
-            a = a + xx;
+            var int xxx = await x;
+            a = a + xxx;
         with
-            var int yy = await y;
-            b = b + yy;
+            var int yyy = await y;
+            b = b + yyy;
         end;
         c = a + b;
     end;
@@ -16126,6 +16187,7 @@ with
     escape c;
 end;
 ]],
+    wrn = true,
     _ana = {
         abrt = 2,
     },
@@ -16155,11 +16217,11 @@ par do
 with
     loop do
         par/or do
-            var int xx = await x;
-            a = a + xx;
+            var int xxx = await x;
+            a = a + xxx;
         with
-            var int yy = await y;
-            b = b + yy;
+            var int yyy = await y;
+            b = b + yyy;
         end;
         c = a + b;
     end;
@@ -16168,6 +16230,7 @@ with
     escape c;
 end;
 ]],
+    wrn = true,
     safety = 2,
     _ana = {
         acc = 1,
@@ -16234,11 +16297,11 @@ par do
 with
     loop do
         par/or do
-            var int xx = await x;
-            a = xx + a;
+            var int xxx = await x;
+            a = xxx + a;
         with
-            var int yy = await y;
-            b = yy + b;
+            var int yyy = await y;
+            b = yyy + b;
         end;
         c = a + b + c;
     end;
@@ -16247,6 +16310,7 @@ with
     escape c;
 end;
 ]],
+    wrn = true,
     _ana = {
         abrt = 2,
     },
@@ -16324,8 +16388,8 @@ input void OS_START;
 event int a, b;
 var int aa=0;
 par/or do
-    loop do
-        await a;
+    every a do
+        //await a;
         emit b => 1;
     end;
 with
@@ -16375,8 +16439,8 @@ par do
     emit a => 2;
     escape x;
 with
-    loop do
-        await a;
+    every a do
+        //await a;
         x = x + 1;
     end
 end
@@ -16437,8 +16501,8 @@ par do
     emit a  =>  1;
     escape x;
 with
-    loop do
-        await a;
+    every a do
+        //await a;
         x = x + 1;
     end
 end
@@ -16531,6 +16595,7 @@ with
     await FOREVER;
 end;
 ]],
+    wrn = true,
     _ana = {
         --acc = 1,
         acc = 6,     -- TODO: not checked
@@ -16568,6 +16633,7 @@ with
 end;
 escape ret;
 ]],
+    wrn = true,
     _ana = {
         abrt = 1,
         acc = 5,
@@ -16642,6 +16708,7 @@ with
     await FOREVER;
 end;
 ]],
+    wrn = true,
     _ana = {
         acc = 6,
         --trig_wo = 2,
@@ -16688,6 +16755,7 @@ with
     escape aa+xx+yy+zz+ww;
 end;
 ]],
+    wrn = true,
     _ana = {
         abrt = 1,        -- false positive
         --trig_wo = 2,
@@ -16968,6 +17036,7 @@ with
 end;
 escape aa;
 ]],
+    wrn = true,
     _ana = {
     abrt = 1,
         --nd_esc = 2,
@@ -19225,7 +19294,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B, Z;
+input void A, B;
 event void a;
 var int ret = 1;
 par/or do
@@ -19244,8 +19313,8 @@ with
         await B;
     end
 with
-    loop do
-        await a;
+    every a do
+        //await a;
         ret = ret + 1;
     end
 end
@@ -19261,7 +19330,7 @@ escape ret;
 }
 
 Test { [[
-input void A, B, Z;
+input void A, B;
 event void a;
 var int ret = 1;
 par/or do
@@ -19280,8 +19349,8 @@ with
         await B;
     end
 with
-    loop do
-        await a;
+    every a do
+        //await a;
         ret = ret + 1;
     end
 end
@@ -19533,14 +19602,14 @@ escape ret;
 
 Test { [[
 var int ret = do/_
-    var int ret = 0;
+    var int ret1 = 0;
     loop do
         do/_
             await 1s;
-            ret = ret + 1;
-            do/_ escape ret * 2; end
+            ret1 = ret1 + 1;
+            do/_ escape ret1 * 2; end
             do finalize with
-                ret = ret + 4;  // executed after `escape´ assigns to outer `ret´
+                ret1 = ret1 + 4;  // executed after `escape´ assigns to outer `ret1´
     end
         end
     end
@@ -19555,15 +19624,15 @@ escape ret;
 
 Test { [[
 var int ret = do/_
-    var int ret = 0;
+    var int ret2 = 0;
     loop do
         do/_
             await 1s;
-            ret = ret + 1;
+            ret2 = ret2 + 1;
             do finalize with
-                ret = ret + 4;  // executed after `escape´ assigns to outer `ret´
+                ret2 = ret2 + 4;  // executed after `escape´ assigns to outer `ret´
     end
-            escape ret * 2;
+            escape ret2 * 2;
         end
     end
 end;
@@ -20841,7 +20910,8 @@ loop do
 end;
 escape 0;
 ]],
-    props='`break´ without loop'
+    props_ = 'line 3 : invalid `break´ : unexpected enclosing `async´',
+    --props='`break´ without loop'
 }
 
 Test { [[
@@ -20924,7 +20994,7 @@ escape _a + _b;
 }
 
 Test { [[
-native _a,_b;
+native _a;
 native/pos do
     int a = 1;
 end
@@ -25817,6 +25887,7 @@ with
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = 3,
@@ -25847,6 +25918,7 @@ with
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = 3,
@@ -25877,6 +25949,7 @@ with
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = 2,
@@ -25908,6 +25981,7 @@ with
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = 1,
@@ -25937,6 +26011,7 @@ with
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = 3,
@@ -25967,6 +26042,7 @@ with
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = 3,
@@ -25997,6 +26073,7 @@ with
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = 2,
@@ -26029,6 +26106,7 @@ with
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = 1,
@@ -26047,6 +26125,7 @@ loop do
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = true,
@@ -26067,6 +26146,7 @@ loop do
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = true,
@@ -26083,6 +26163,7 @@ loop do
     end
 end
 ]],
+    wrn = true,
     _ana = {
         isForever = true,
         acc = true,
@@ -26094,8 +26175,8 @@ Test { [[
 var int ret = 0;
 event void e;
 par/or do
-    loop do
-        await e;
+    every e do
+        //await e;
         ret = ret + 1;
     end
 with

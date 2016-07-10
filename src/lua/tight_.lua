@@ -9,14 +9,19 @@ local awaits = {
     Await_Forever = true,
 }
 
-local function run (me)
+local function run (me, Loop)
     assert(AST.is_node(me))
 
     if awaits[me.tag] then
         return 'awaits'
 
-    elseif me.tag == 'Break' then
-        return 'breaks'
+    elseif me.tag=='Break' or me.tag=='Escape' then
+        if Loop.__depth >= me.outer.__depth then
+            return 'breaks'
+else
+DBG(Loop.__depth, me.outer.__depth)
+error'TODO'
+        end
 
     elseif me.tag=='If' or me.tag=='Par_Or' then
         local T do
@@ -29,7 +34,7 @@ local function run (me)
         end
         local awaits = true
         for _,sub in ipairs(T) do
-            local ret = run(sub)
+            local ret = run(sub, Loop)
             if ret == 'tight' then
                 return 'tight'              -- "tight" if found at least one tight
             elseif ret == 'breaks' then
@@ -54,7 +59,7 @@ local function run (me)
     else
         for _, child in ipairs(me) do
             if AST.is_node(child) then
-                local ret = run(child)
+                local ret = run(child, Loop)
                 if ret ~= 'tight' then
                     return ret
                 end
@@ -75,7 +80,7 @@ F = {
         elseif ok then
             -- ok
         else
-            me.tight = run(body)
+            me.tight = run(body, me)
             WRN(me.tight~='tight', me, 'invalid tight `loop´ : unbounded number of non-awaiting iterations')
         end
     end,
