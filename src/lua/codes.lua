@@ -31,7 +31,8 @@ local function CASE (me, lbl)
 end
 
 local function CLEAR (me)
-    LINE(me, [[
+    if me.trails_n > 1 then
+        LINE(me, [[
 {
     CEU_STK_BCAST_ABORT(_ceu_stk, _ceu_trl,
                         CEU_INPUT__CLEAR, NULL,]]..
@@ -40,6 +41,7 @@ local function CLEAR (me)
                                     &CEU_APP.trails[]]..me.trails[2]..[[]);
 }
 ]])
+    end
 end
 
 local function HALT (me, t)
@@ -58,39 +60,34 @@ end
 
 F = {
     ROOT = CONC_ALL,
+    Block = CONC_ALL,
     Stmts = CONC_ALL,
     Await_Until = CONC_ALL,
 
     Node__PRE = function (me)
         me.code = ''
+--[=[
         LINE(me, [[
+/* PRE */
 ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..me.trails[1]..[[], "bug found : unexpected trail");
 ]])
+]=]
     end,
+--[=[
     Node__POS = function (me)
+        local trl = me.trails[1]
+        if me.tag == 'Finalize' then
+            trl = trl + 1
+        end
         LINE(me, [[
-ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..me.trails[1]..[[], "bug found : unexpected trail");
+/* POS */
+ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..trl..[[], "bug found : unexpected trail");
 ]])
     end,
+]=]
 
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
-    end,
-
-    Block = function (me)
-        if me.fins_n > 0 then
-            -- skip the finalizes "mark" trail
-            LINE(me, [[
-_ceu_trl = &CEU_APP.trails[]]..(me.trails[1]+1)..[[];
-]])
-        end
-        CONC_ALL(me)
-        if me.fins_n > 0 then
-            -- returns to [1]
-            LINE(me, [[
-_ceu_trl = &CEU_APP.trails[]]..(me.trails[1]+0)..[[];
-]])
-        end
     end,
 
     Nat_Block = function (me)
@@ -121,7 +118,6 @@ if (]]..V(c)..[[) {
 CEU_APP.trails[]]..later.trails[1]..[[].evt = CEU_INPUT__CLEAR;
 CEU_APP.trails[]]..later.trails[1]..[[].lbl = ]]..me.lbl_in.id..[[;
 CEU_APP.trails[]]..later.trails[1]..[[].stk = NULL;
-CEU_APP.trails[]]..later.trails[1]..[[].clr_trl = ]]..me.blk.trails[1]..[[;
 if (0) {
 ]])
         CASE(me, me.lbl_in)
@@ -133,6 +129,9 @@ if (0) {
         if now then
             CONC(me, now)
         end
+        LINE(me, [[
+_ceu_trl++;
+]])
     end,
 
     ---------------------------------------------------------------------------

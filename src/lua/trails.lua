@@ -24,8 +24,7 @@ F = {
     Block = function (me)
         MAX_all(me)
         if me.fins_n > 0 then
-            me.trails_n = me.trails_n + 1   -- single mark/id for all fins
-                                      + me.fins_n
+            me.trails_n = me.trails_n + me.fins_n
         end
     end,
 
@@ -59,25 +58,14 @@ G = {
         end
     end,
 
-    Block__PRE = function (me)
-        if me.fins_n > 0 then
-            local Stmts = unpack(me)
-            Stmts.trails = { unpack(me.trails) }
-            Stmts.trails[1] = Stmts.trails[1] + 1; -- Stmts don't see trails[1]
+    Stmts__BEF = function (me, sub, i)
+        if i > 1 then
+            local prv = me[i-1]
+            sub.trails = { unpack(prv.trails) }
+            if prv.tag=='Finalize' then
+                sub.trails[1] = sub.trails[1] + 1
+            end
         end
-    end,
-
-    Stmts__POS = function (me)
-        if me.__trl_fins then
-            me.trails[2] = me.trails[2] + me.__trl_fins
-        end
-    end,
-    Finalize__PRE = function (me)
-        local _,_,later = unpack(me)
-        local Stmts = AST.asr(me.__par,'Stmts')
-        Stmts.__trl_fins = (Stmts.__trl_fins or 0) + 1
-        local trl = Stmts.trails[1] + Stmts.__trl_fins
-        later.trails = { trl, trl }
     end,
 
     Par_Or__PRE  = 'Par__PRE',

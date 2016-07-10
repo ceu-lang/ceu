@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -19353,34 +19354,6 @@ escape ret;
     run = { ['~>A']=22 },
 }
 
---]===]
-Test { [[
-input void A, B;
-var int ret = 1;
-par/or do
-    do
-        do finalize with
-            ret = ret + 5;
-        end
-        ret = ret + 1;
-        do
-            do finalize with
-                ret = ret * 3;
-            end
-            await A;
-            ret = ret * 100;
-        end
-    end
-with
-    await B;
-    ret = ret * 2;
-end
-escape ret;
-]],
-    run = { ['~>B']=17 },
-}
-do return end
-
 Test { [[
 input void A, B;
 var int ret = 1;
@@ -19433,33 +19406,6 @@ escape 1;
 ]],
     run = 0,
 }
-
-Test { [[
-input void A,B;
-var int ret = 1;
-native _printf, __ceu_trl;
-loop do
-_printf("1 %p\n", __ceu_trl);
-    do finalize with
-_printf("f %p\n", __ceu_trl);
-        ret = ret + 4;
-    end
-    par/or do
-        await B;
-_printf("2\n");
-    with
-        await A;
-        break;
-    end
-_printf("3\n");
-end
-escape ret;
-]],
-    run = {
-        ['~>B;~>B;~>A'] = 17,
-    },
-}
-do return end
 
 Test { [[
 input void A,B;

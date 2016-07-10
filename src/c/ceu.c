@@ -74,9 +74,6 @@ typedef struct tceu_trl {
     tceu_nlbl lbl;
 
     struct tceu_stk* stk;
-
-    /* CLEAR */
-    tceu_ntrl clr_trl;
 } tceu_trl;
 
 typedef struct tceu_app {
@@ -202,8 +199,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 #endif
         /* IN__CLEAR and "finalize" clause */
         int matches_clear = (evt->id==CEU_INPUT__CLEAR &&
-                             trl->evt==CEU_INPUT__CLEAR &&
-                             trl->clr_trl>=trl0 && trl->clr_trl<=trlF);
+                             trl->evt==CEU_INPUT__CLEAR);
 
         /* evt->id matches awaiting trail */
         int matches_await = (trl->evt==evt->id);
