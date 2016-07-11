@@ -39,8 +39,10 @@ F = {
     end,
 
     Code = function (me)
-        local _,_,id = unpack(me)
-        me.lbl_in = new{'Code_'..id}
+        local _,_,id,_,_,body = unpack(me)
+        if body then
+            me.lbl_in = new{'Code_'..id}
+        end
     end,
 
     ---------------------------------------------------------------------------

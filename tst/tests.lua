@@ -26823,7 +26823,8 @@ end
 
 --<<< PAUSE
 
--->>> FUNCTIONS
+--]===]
+-->>> CODE/ INSTANTANEOUS / FUNCTIONS
 
 Test { [[
 code/instantaneous Code (var int)=>void
@@ -27250,55 +27251,6 @@ escape call Fff(x);
 ]],
     run = 12,
 }
-Test { [[
-output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
-code/instantaneous/recursive Load (var int&& l)=>void do
-    loop i do
-    end
-end
-call/recursive Load(null);
-
-escape 1;
-]],
-    wrn = true,
-    tight = 'tight loop',
-    --run = 1,
-}
-
-Test { [[
-native _ceu_out_log;
-native/pos do
-    ##define ceu_out_call_LUA_GETGLOBAL
-end
-
-output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
-code/instantaneous/recursive Load (var int&& l)=>void do
-    // TODO: load file
-    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
-    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
-    loop i do
-        var int has = 1;
-        if has==0 then
-            break;                                  // [ apps ]
-        end
-        _ceu_out_log("oi");
-    end
-
-    /*
-    var int len = (call LUA_OBJLEN => (l, -1));     // [ apps ]
-    loop i in [0->len[ do
-        call LUA_RAWGETI => (l, -1);                // [ apps | apps[i] ]
-    end
-    */
-end
-call/recursive Load(null);
-
-escape 1;
-]],
-    tight_ = 'line 11 : invalid tight `loop´ :',
-    --tight = 'tight loop',
-    run = 1,
-}
 
 Test { [[
 escape 1;
@@ -27479,9 +27431,175 @@ escape 1;
     run = 1,
 }
 
---<<< FUNCTIONS
+Test { [[
+code/instantaneous get (void)=>int&& do
+    var int x;
+    escape &&x;
+end
+escape 10;
+]],
+    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´ or abstraction identifier',
+    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
+}
 
--->>> RECURSIVE / FUNCTIONS
+Test { [[
+code/instantaneous Fx.Fx (void)=>void do
+end
+]],
+    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int&& do
+    var int x;
+    //escape &&x;
+end
+escape 10;
+]],
+    wrn = true,
+    inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (/tmp/tmp.ceu:5)',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int&& do
+    var int x;
+    escape null;
+end
+escape 10;
+]],
+    wrn = true,
+    inits = 'line 2 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int&& do
+    var int x=0;
+    escape &&x;
+end
+escape 10;
+]],
+    wrn = true,
+    scopes = 'line 3 : invalid `escape´ : incompatible scopes',
+    --fins = 'line 3 : invalid escape value : local reference',
+    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
+}
+
+Test { [[
+code/instantaneous Get (void)=>int& do
+    var int x=1;
+    escape &x;
+end
+escape 10;
+]],
+    wrn = true,
+    parser = 'line 1 : after `int´ : expected type modifier or `;´ or `do´',
+    --env = 'line 3 : invalid escape value : local reference',
+    --ref = 'line 3 : attribution to reference with greater scope',
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
+end
+
+escape Fx(&str);
+]],
+    parser = 'line 7 : after `escape´ : expected expression or `;´',
+}
+
+Test { [[
+code/instantaneous Ff (var void&& p1, var void&& p2)=>void do
+end
+var int x = 0;
+do
+    var int y = 0;
+    call Ff(&&x, &&y);
+end
+escape 0;
+]],
+    wrn = true,
+    tmp = 'TODO: incomp. scopes',
+}
+
+Test { [[
+code/instantaneous GetVS (var void&& && o1, var  void&& && o2)=>int do
+    if (*o1!=null) then
+        escape 1;
+    else/if (*o2!=null) then
+        var void&& tmp = *o1;
+        *o1 = *o2;
+        do
+            *o2 = tmp;
+        finalize (tmp) with
+        end
+            // tmp is an alias to "o1"
+        escape 1;
+    else
+        //*o1 = NULL;
+        //*o2 = NULL;
+        escape 0;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+code/instantaneous Fx (var int a, var  void b)=>int do
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+}
+
+Test { [[
+code/instantaneous Fx (var void, var int)=>int do
+end
+escape 1;
+]],
+    parser = 'line 1 : after `int´ : expected type modifier or `;´',
+}
+
+Test { [[
+code/instantaneous Fx (var void a, var  int v)=>int do
+end
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+}
+
+Test { [[
+code/instantaneous Fx (var u8 v)=>int do
+    escape v as int;
+end
+var s8 i = 0;
+escape call Fx(i);
+]],
+    stmts = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
+}
+
+Test { [[
+native/pos do
+    int V;
+end
+native _V;
+code/instantaneous Fx (var int v)=>void do
+    _V = v;
+end
+var void&& x=null;
+call Fx(5);
+escape (_V==5) as int;
+]],
+    run = 1,
+}
+
+-->>> RECURSIVE
 
 Test { [[
 code/instantaneous/recursive Fx (void)=>void;
@@ -27546,10 +27664,29 @@ call Fa();
 
 escape 1;
 ]],
+    tight_ = 'line 4 : invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body (/tmp/tmp.ceu:7)',
+}
+
+Test { [[
+//var int x;
+
+code/instantaneous Fa (void)=>void;
+code/instantaneous Fb (void)=>void;
+
+code/instantaneous Fb (void)=>void do
+end
+
+code/instantaneous Fa (void)=>void do
+    call Fb();
+end
+
+call Fa();
+
+escape 1;
+]],
     run = 1,
 }
 
---]===]
 Test { [[
 //var int x;
 
@@ -27596,7 +27733,84 @@ escape 1;
     --tight = 'line 3 : function must be annotated as `@rec´ (recursive)',
 }
 
---<<< RECURSIVE / FUNCTIONS
+Test { [[
+code/instantaneous/recursive Fx (var int v)=>int;
+code/instantaneous Fx (var int v)=>int do
+    if v == 0 then
+        escape 1;
+    end
+    escape v*call Fx(v-1);
+end
+escape call Fx(5);
+]],
+    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
+    --env = 'line 2 : function declaration does not match the one at "/tmp/tmp.ceu:1"',
+    --run = 120,
+}
+Test { [[
+code/instantaneous/recursive Fx (var int v)=>int;
+code/instantaneous/recursive Fx (var int v)=>int do
+    if v == 0 then
+        escape 1;
+    end
+    escape v*call Fx(v-1);
+end
+escape call Fx(5);
+]],
+    tight_ = 'line 6 : invalid `call´ : expected `/recursive´ : `call´ to unknown body',
+    --tight = 'line 6 : `call/recursive´ is required for "Fx"',
+    --run = 120,
+}
+Test { [[
+call 1;
+]],
+    parser = 'line 1 : after `call´ : expected external identifier or name expression',
+    --env = 'TODO: not a call',
+    --ast = 'line 1 : invalid call',
+    --env = 'TODO: 1 not func',
+    --parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
+}
+
+Test { [[
+code/instantaneous/recursive Fx (var int v)=>int;
+code/instantaneous/recursive Fx (var int v)=>int do
+    if v == 0 then
+        escape 1;
+    end
+    escape v * (call/recursive Fx(v-1));
+end
+escape call Fx(5);
+]],
+    tight_ = 'line 8 : invalid `call´ : expected `/recursive´',
+    --tight = 'line 8 : `call/recursive´ is required for "Fx"',
+}
+Test { [[
+code/instantaneous Fx (var int v)=>int do
+    escape v + 1;
+end
+escape call/recursive Fx(5);
+]],
+    tight_ = 'line 4 : invalid `call´ : unexpected `/recursive´',
+    --tight = 'line 8 : `call/recursive´ is required for "Fx"',
+}
+Test { [[
+code/instantaneous/recursive Fx (var int v)=>int;
+code/instantaneous/recursive Fx (var int v)=>int do
+    if v == 0 then
+        escape 1;
+    end
+    escape v * call/recursive Fx(v-1);
+end
+escape call/recursive Fx(5);
+]],
+    run = 120,
+}
+
+--<<< RECURSIVE
+
+--<<< CODE / INSTANTANEOUS / FUNCTIONS
+
+do return end
 
 -->>> CLASSES, ORGS, ORGANISMS
 
@@ -43809,21 +44023,6 @@ escape (_V==(5 as void&&)) as int;
 }
 
 Test { [[
-native/pos do
-    int V;
-end
-native _V;
-code/instantaneous Fx (var int v)=>void do
-    _V = v;
-end
-var void&& x=null;
-call Fx(5);
-escape (_V==5) as int;
-]],
-    run = 1,
-}
-
-Test { [[
 interface I with
     code/instantaneous Fx (void)=>void;
 end
@@ -44147,68 +44346,6 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
-}
-
-Test { [[
-code/instantaneous/recursive Fx (var int v)=>int;
-code/instantaneous Fx (var int v)=>int do
-    if v == 0 then
-        escape 1;
-    end
-    escape v*call Fx(v-1);
-end
-escape call Fx(5);
-]],
-    dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
-    --env = 'line 2 : function declaration does not match the one at "/tmp/tmp.ceu:1"',
-    --run = 120,
-}
-Test { [[
-code/instantaneous/recursive Fx (var int v)=>int;
-code/instantaneous/recursive Fx (var int v)=>int do
-    if v == 0 then
-        escape 1;
-    end
-    escape v*call Fx(v-1);
-end
-escape call Fx(5);
-]],
-    tight = 'line 6 : `call/recursive´ is required for "Fx"',
-    --run = 120,
-}
-Test { [[
-call 1;
-]],
-    parser = 'line 1 : after `call´ : expected external identifier or name expression',
-    --env = 'TODO: not a call',
-    --ast = 'line 1 : invalid call',
-    --env = 'TODO: 1 not func',
-    --parser = 'line 1 : after `1´ : expected <h,min,s,ms,us>',
-}
-
-Test { [[
-code/instantaneous/recursive Fx (var int v)=>int;
-code/instantaneous/recursive Fx (var int v)=>int do
-    if v == 0 then
-        escape 1;
-    end
-    escape v * (call/recursive Fx(v-1));
-end
-escape call Fx(5);
-]],
-    tight = 'line 8 : `call/recursive´ is required for "Fx"',
-}
-Test { [[
-code/instantaneous/recursive Fx (var int v)=>int;
-code/instantaneous/recursive Fx (var int v)=>int do
-    if v == 0 then
-        escape 1;
-    end
-    escape v * call/recursive Fx(v-1);
-end
-escape call/recursive Fx(5);
-]],
-    run = 120,
 }
 
 Test { [[
@@ -46701,267 +46838,6 @@ escape _strlen((&&str[0]) as _char&&);
 
 -- TODO: dropped support for returning alias, is this a problem?
 
--->>> CODE/INSTANTANEOUS
-
-Test { [[
-code/instantaneous get (void)=>int&& do
-    var int x;
-    escape &&x;
-end
-escape 10;
-]],
-    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´ or abstraction identifier',
-    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
-}
-
-Test { [[
-code/instantaneous Fx.Fx (void)=>void do
-end
-]],
-    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´',
-}
-
-Test { [[
-code/instantaneous Get (void)=>int&& do
-    var int x;
-    //escape &&x;
-end
-escape 10;
-]],
-    wrn = true,
-    inits = 'line 2 : uninitialized variable "x" : reached `end of code´ (/tmp/tmp.ceu:5)',
-}
-
-Test { [[
-code/instantaneous Get (void)=>int&& do
-    var int x;
-    escape null;
-end
-escape 10;
-]],
-    wrn = true,
-    inits = 'line 2 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
-}
-
-Test { [[
-code/instantaneous Get (void)=>int&& do
-    var int x=0;
-    escape &&x;
-end
-escape 10;
-]],
-    wrn = true,
-    scopes = 'line 3 : invalid `escape´ : incompatible scopes',
-    --fins = 'line 3 : invalid escape value : local reference',
-    --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
-}
-
-Test { [[
-code/instantaneous Get (void)=>int& do
-    var int x=1;
-    escape &x;
-end
-escape 10;
-]],
-    wrn = true,
-    parser = 'line 1 : after `int´ : expected type modifier or `;´ or `do´',
-    --env = 'line 3 : invalid escape value : local reference',
-    --ref = 'line 3 : attribution to reference with greater scope',
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1];
-end
-
-escape Fx(&str);
-]],
-    parser = 'line 7 : after `escape´ : expected expression or `;´',
-}
-
-Test { [[
-code/instantaneous Ff (var void&& p1, var void&& p2)=>void do
-end
-var int x = 0;
-do
-    var int y = 0;
-    call Ff(&&x, &&y);
-end
-escape 0;
-]],
-    wrn = true,
-    tmp = 'TODO: incomp. scopes',
-}
-
-Test { [[
-code/instantaneous GetVS (var void&& && o1, var  void&& && o2)=>int do
-    if (*o1!=null) then
-        escape 1;
-    else/if (*o2!=null) then
-        var void&& tmp = *o1;
-        *o1 = *o2;
-        do
-            *o2 = tmp;
-        finalize (tmp) with
-        end
-            // tmp is an alias to "o1"
-        escape 1;
-    else
-        //*o1 = NULL;
-        //*o2 = NULL;
-        escape 0;
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-code/delayed Fx (event int e)=>void do
-end
-escape 0;
-]],
-    parser = 'line 1 : after `event´ : expected `&´',
-}
-Test { [[
-code/delayed Fx (event& int e)=>void do
-    await e;
-end
-escape 0;
-]],
-    wrn = true,
-    run = 'TODO',
-}
-Test { [[
-code/instantaneous Fx (var int a, var  void b)=>int do
-end
-escape 1;
-]],
-    wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-}
-
-Test { [[
-code/instantaneous Fx (var void, var int)=>int do
-end
-escape 1;
-]],
-    parser = 'line 1 : after `int´ : expected type modifier or `;´',
-}
-
-Test { [[
-code/instantaneous Fx (var void a, var  int v)=>int do
-end
-escape 1;
-]],
-    wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-}
-
-Test { [[
-code/instantaneous Fx (var u8 v)=>int do
-    escape v as int;
-end
-var s8 i = 0;
-escape call Fx(i);
-]],
-    stmts = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-
-escape ref[1];
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 1,
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-ref = [3, 4, 5];
-
-escape str[1];
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 4,
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-ref = [] .. "ola";
-
-escape str[1] == 'l';
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 1,
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-native/pos do
-    byte* g () {
-        escape "ola";
-    }
-end
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-native _char;
-ref = [] .. ({g}() as _char&&) .. "ola";
-
-escape str[3] == 'o';
-]],
-    --run = 1,
-    parser = 'line 9 : after `byte´ : expected type modifier or `;´ or `do´',
-}
-
-Test { [[
-vector[] byte str;
-
-code/instantaneous Fa (void)=>byte[]& do
-    escape &this.str;
-end
-
-code/instantaneous Fb (void)=>void do
-    vector&[] byte ref = &f1();
-    ref = [] .. "ola" .. "mundo";
-end
-
-f2();
-
-escape str[4] == 'u';
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 1,
-}
-
 Test { [[
 native/pos do
     ##define ID(x) x
@@ -47000,44 +46876,6 @@ Test { [[
 vector[] u8 str = [].."Ola Mundo!";
 ]],
     stmts = 'line 1 : invalid constructor : item #2 : types mismatch : "u8" <= "byte"',
-}
-
-Test { [[
-native/pure _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(str);
-end
-
-vector[] byte str = [].."Ola Mundo!";
-escape call Strlen(&&str[0]);
-]],
-    --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
-    run = 10,
-}
-
-Test { [[
-native _char, _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(str[0]);
-end
-
-vector[] byte str = [].."Ola Mundo!";
-escape call Strlen((&&str[0]) as _char&&);
-]],
-    names = 'line 3 : invalid vector : unexpected context for variable "str"',
-    --run = 10,
-}
-
-Test { [[
-native _char, _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(*str);
-end
-
-vector[] byte str = [].."Ola Mundo!";
-escape call Strlen((&&str[0]) as _char&&);
-]],
-    run = 10,
 }
 
 Test { [[
@@ -47901,6 +47739,134 @@ escape 1;
     wrn = true,
     parser = 'line 1 : after `vector´ : expected `&´',
     --env = 'line 1 : wrong argument #1 : vectors are not supported',
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+
+escape ref[1];
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 1,
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+ref = [3, 4, 5];
+
+escape str[1];
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 4,
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+ref = [] .. "ola";
+
+escape str[1] == 'l';
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 1,
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+native/pos do
+    byte* g () {
+        escape "ola";
+    }
+end
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+native _char;
+ref = [] .. ({g}() as _char&&) .. "ola";
+
+escape str[3] == 'o';
+]],
+    --run = 1,
+    parser = 'line 9 : after `byte´ : expected type modifier or `;´ or `do´',
+}
+
+Test { [[
+vector[] byte str;
+
+code/instantaneous Fa (void)=>byte[]& do
+    escape &this.str;
+end
+
+code/instantaneous Fb (void)=>void do
+    vector&[] byte ref = &f1();
+    ref = [] .. "ola" .. "mundo";
+end
+
+f2();
+
+escape str[4] == 'u';
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 1,
+}
+
+Test { [[
+native/pure _strlen;
+code/instantaneous Strlen (var byte&& str)=>int do
+    escape _strlen(str);
+end
+
+vector[] byte str = [].."Ola Mundo!";
+escape call Strlen(&&str[0]);
+]],
+    --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
+    run = 10,
+}
+
+Test { [[
+native _char, _strlen;
+code/instantaneous Strlen (var byte&& str)=>int do
+    escape _strlen(str[0]);
+end
+
+vector[] byte str = [].."Ola Mundo!";
+escape call Strlen((&&str[0]) as _char&&);
+]],
+    names = 'line 3 : invalid vector : unexpected context for variable "str"',
+    --run = 10,
+}
+
+Test { [[
+native _char, _strlen;
+code/instantaneous Strlen (var byte&& str)=>int do
+    escape _strlen(*str);
+end
+
+vector[] byte str = [].."Ola Mundo!";
+escape call Strlen((&&str[0]) as _char&&);
+]],
+    run = 10,
 }
 
 --<<< VECTORS / STRINGS
@@ -55206,6 +55172,22 @@ escape 1;
     run = 'SEGFAULT',
 }
 
+Test { [[
+code/delayed Fx (event int e)=>void do
+end
+escape 0;
+]],
+    parser = 'line 1 : after `event´ : expected `&´',
+}
+Test { [[
+code/delayed Fx (event& int e)=>void do
+    await e;
+end
+escape 0;
+]],
+    wrn = true,
+    run = 'TODO',
+}
 --<<< CLASSES, ORGS, ORGANISMS
 
 -->>> INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
@@ -55775,6 +55757,56 @@ native _char;
 escape _strlen(&&t.name as _char&&);
 ]],
     run = 2,
+}
+
+Test { [[
+output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
+code/instantaneous/recursive Load (var int&& l)=>void do
+    loop i do
+    end
+end
+call/recursive Load(null);
+
+escape 1;
+]],
+    wrn = true,
+    tight = 'tight loop',
+    --run = 1,
+}
+
+Test { [[
+native _ceu_out_log;
+native/pos do
+    ##define ceu_out_call_LUA_GETGLOBAL
+end
+
+output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
+code/instantaneous/recursive Load (var int&& l)=>void do
+    // TODO: load file
+    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
+    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
+    loop i do
+        var int has = 1;
+        if has==0 then
+            break;                                  // [ apps ]
+        end
+        _ceu_out_log("oi");
+    end
+
+    /*
+    var int len = (call LUA_OBJLEN => (l, -1));     // [ apps ]
+    loop i in [0->len[ do
+        call LUA_RAWGETI => (l, -1);                // [ apps | apps[i] ]
+    end
+    */
+end
+call/recursive Load(null);
+
+escape 1;
+]],
+    tight_ = 'line 11 : invalid tight `loop´ :',
+    --tight = 'tight loop',
+    run = 1,
 }
 
 --<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT

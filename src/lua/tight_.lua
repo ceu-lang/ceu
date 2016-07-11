@@ -95,29 +95,39 @@ AST.visit(F)
 
 G = {
     Code = function (me)
-        local _,is_rec,_,_,_,body = unpack(me)
-        if body then
-            me.is_rec = is_rec
-        end
+        local _,_,_,_,_,body = unpack(me)
+        me.has_body = me.has_body or body
     end,
 
     Abs_Call = function (me)
         local mod, Abs_Cons = unpack(me)
         local Code = AST.asr(Abs_Cons,'', 1,'ID_abs').dcl
 
+        -- calling known Code
+        if Code.has_body then
+            if mod == 'call/recursive' then
+                ASR(Code[2], me,
+                    'invalid `call´ : unexpected `/recursive´')
+            else
+                ASR(not Code[2], me,
+                    'invalid `call´ : expected `/recursive´')
+            end
+
         -- calling unknown Code
-        if Code.is_rec == nil then
+        else
             -- Code must be '/recursive'
             ASR(Code[2], Code,
                 'invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body ('..me.ln[1]..':'..me.ln[2]..')')
 
             -- Call must be '/recursive'
             ASR(mod == 'call/recursive', me,
-                'invalid `call´ : expected `/recursive´ : `call´ to unknown body ('..me.ln[1]..':'..me.ln[2]..')')
+                'invalid `call´ : expected `/recursive´ : `call´ to unknown body')
         end
 
+        -- calling from Par code with '/recursive'
         local Par = AST.par(me,'Code')
         if Par and mod=='call/recursive' then
+            -- Par must be '/recursive'
             local _,is_rec = unpack(Par)
             ASR(is_rec, Par,
                 'invalid `code´ declaration : expected `/recursive´ : nested `call/recursive´ ('..me.ln[1]..':'..me.ln[2]..')')
