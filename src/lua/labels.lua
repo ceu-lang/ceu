@@ -38,6 +38,10 @@ F = {
         end
     end,
 
+    Code = function (me)
+        local _,_,id = unpack(me)
+        me.lbl_in = new{'Code_'..id}
+    end,
 
     ---------------------------------------------------------------------------
 

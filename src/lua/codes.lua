@@ -115,6 +115,35 @@ if (]]..V(c)..[[) {
 ]])
     end,
 
+    ---------------------------------------------------------------------------
+
+    Code = function (me)
+        local _,_,id,Typepars_ids,_,body = unpack(me)
+
+        LINE(me, 'if (0) {')    -- do not enter from outside
+
+        CASE(me, me.lbl_in)
+
+        local vars = AST.asr(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
+                                    1,'Stmts', 2,'Stmts')
+        for i,Typepars_ids_item in ipairs(Typepars_ids) do
+            local a,b,c,Type,id2 = unpack(Typepars_ids_item)
+            assert(a=='var' and b==false and c==false)
+            LINE(me, [[
+]]..V(vars[i])..[[ = ((tceu_code_]]..id..[[*)_ceu_evt)->]]..id2..[[;
+]])
+        end
+
+        CONC(me, body)
+        LINE(me, [[
+return;
+]])
+
+        LINE(me, '}')           -- do not enter from outside
+    end,
+
+    ---------------------------------------------------------------------------
+
     Finalize = function (me)
         local now,_,later = unpack(me)
         LINE(me, [[
@@ -411,12 +440,19 @@ if (! CEU_APP.data.__and_]]..me.n..'_'..i..[[) {
         local fr, to = unpack(me)
 
         if to.info.dcl.id == '_ret' then
-            LINE(me, [[
+            local code = AST.par(me, 'Code')
+            if code then
+                LINE(me, [[
+((tceu_code_]]..code.id..[[*) _ceu_evt)->_ret = ]]..V(fr)..[[;
+]])
+            else
+                LINE(me, [[
 {
     int __ceu_ret = ]]..V(fr)..[[;
     ceu_callback(CEU_CALLBACK_TERMINATING, __ceu_ret, NULL);
 }
 ]])
+            end
         else
             LINE(me, [[
 ]]..V(to)..' = '..V(fr)..[[;
@@ -642,6 +678,7 @@ local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== DATA ===',             MEMS.data)
 local c = SUB(c, '=== EXTS_TYPES ===',       MEMS.exts.types)
 local c = SUB(c, '=== EVTS_TYPES ===',       MEMS.evts.types)
+local c = SUB(c, '=== CODES_TYPES ===',      MEMS.codes.types)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
 local c = SUB(c, '=== EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
 local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
@@ -650,7 +687,8 @@ local c = SUB(c, '=== TCEU_NTRL ===',        TYPES.n2uint(AST.root.trails_n))
 local c = SUB(c, '=== TCEU_NLBL ===',        TYPES.n2uint(#LABELS.list))
 local c = SUB(c, '=== LABELS ===',           labels)
 local c = SUB(c, '=== NATIVE_POS ===',       CODES.native.pos)
-local c = SUB(c, '=== CODE ===',             AST.root.code)
+local c = SUB(c, '=== CODES_WRAPPERS ===',   MEMS.codes.wrappers)
+local c = SUB(c, '=== CODES ===',            AST.root.code)
 C:write('\n\n/* CEU_C */\n\n'..c)
 
 H:close()

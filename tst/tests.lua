@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -26824,7 +26823,6 @@ end
 
 --<<< PAUSE
 
-do return end
 -->>> FUNCTIONS
 
 Test { [[
@@ -26941,6 +26939,20 @@ escape 1;
     parser = 'line 1 : after `(´ : expected `vector´ or `pool´ or `event´ or `var´',
 }
 
+--]===]
+Test { [[
+code/instantaneous Code (var int x) => int
+do
+    x = x + 1;
+    escape x;
+end
+var int a = call Code(1);
+var int b = call Code(a+10);
+escape b;
+]],
+    run = 13,
+}
+
 Test { [[
 code/instantaneous Code (var int x) => int
 do
@@ -26951,6 +26963,18 @@ var int a = call Code(1);
 escape call Code(a+10);
 ]],
     run = 13,
+}
+
+Test { [[
+code/instantaneous Code (var int x) => int
+do
+    x = x + 1;
+    escape x;
+end
+var int a = call Code(1) + call Code(2);
+escape call Code(a+10) + call Code(1);
+]],
+    run = 18,
 }
 
 Test { [[

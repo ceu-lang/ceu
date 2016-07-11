@@ -56,6 +56,7 @@ typedef u8 tceu_nevt;   /* TODO */
 === DATA ===
 === EXTS_TYPES ===
 === EVTS_TYPES ===
+=== CODES_TYPES ===
 
 typedef === TCEU_NTRL === tceu_ntrl;
 typedef === TCEU_NLBL === tceu_nlbl;
@@ -164,6 +165,7 @@ static int ceu_wclock (s32 dt, s32* set, s32* sub)
 
 static void ceu_go_bcast (tceu_stk* stk, tceu_evt* evt, tceu_ntrl trl0, tceu_ntrl trlF);
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
+static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_trl* _ceu_trl, tceu_nlbl _ceu_lbl, tceu_evt* _ceu_evt);
 
 /*****************************************************************************/
 
@@ -189,10 +191,12 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
     }                                                           \
 }
 
+=== CODES_WRAPPERS ===
+
 static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_trl* _ceu_trl, tceu_nlbl _ceu_lbl, tceu_evt* _ceu_evt)
 {
     switch (_ceu_lbl) {
-        === CODE ===
+        === CODES ===
     }
 }
 

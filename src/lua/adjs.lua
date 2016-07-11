@@ -160,29 +160,33 @@ error'TODO: luacov never executes this?'
 
         AST.asr(ins,'Typepars_ids')
         local dcls = node('Stmts', me.ln)
+        local vars = node('Stmts', me.ln)
         for _, v in ipairs(ins) do
             if v ~= 'void' then
                 AST.asr(v,'Typepars_ids_item')
                 local pre,is_alias = unpack(v)
+                local _,dim,hold,tp,ID
                 if pre == 'var' then
-                    local _,_,hold,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Var', me.ln, AST.copy(tp), is_alias, id)
+                    _,_,hold,tp,ID = unpack(v)
+                    dcls[#dcls+1] = node('Var', me.ln, AST.copy(tp), is_alias, ID)
                 elseif pre == 'vector' then
-                    local _,_,dim,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Vec', me.ln, AST.copy(tp), is_alias, dim, id)
+                    _,_,dim,tp,ID = unpack(v)
+                    dcls[#dcls+1] = node('Vec', me.ln, AST.copy(tp), is_alias, dim, ID)
                 elseif pre == 'pool' then
 error'TODO: luacov never executes this?'
-                    local _,_,dim,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Pool', me.ln, AST.copy(tp), is_alias, dim, id)
+                    _,_,dim,tp,ID = unpack(v)
+                    dcls[#dcls+1] = node('Pool', me.ln, AST.copy(tp), is_alias, dim, ID)
                 elseif pre == 'event' then
-                    local _,_,tp,id = unpack(v)
-                    dcls[#dcls+1] = node('Evt', me.ln, AST.copy(tp), is_alias, id)
+                    _,_,tp,ID = unpack(v)
+                    dcls[#dcls+1] = node('Evt', me.ln, AST.copy(tp), is_alias, ID)
                 else
                     error'TODO'
                 end
+                vars[#vars+1] = node('ID_int', me.ln, ID)
                 dcls[#dcls].is_param = true
             end
         end
+        table.insert(stmts_old, 1, vars)
         table.insert(stmts_old, 1, dcls)
     end,
 

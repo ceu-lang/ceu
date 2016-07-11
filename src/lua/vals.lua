@@ -68,6 +68,20 @@ F = {
         return V(e)..'('..table.concat(V(ps),',')..')'
     end,
 
+    Abs_Call = function (me)
+        local _, Abs_Cons = unpack(me)
+        local ID_abs, Abslist = unpack(Abs_Cons)
+        local mod = unpack(ID_abs.dcl)
+        assert(mod == 'code/instantaneous')
+        Abslist = table.concat(V(Abslist),',')
+        return [[
+CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trl,
+                               ]]..ID_abs.dcl.lbl_in.id..[[,
+                               ]]..Abslist..[[)
+]]
+    end,
+
+    Abslist = 'Explist',
     Explist = function (me)
         local vs = {}
         for i, p in ipairs(me) do

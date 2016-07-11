@@ -9,6 +9,10 @@ MEMS = {
         types = '',
         enum  = '',
     },
+    codes = {
+        types    = '',
+        wrappers = '',
+    },
 }
 
 F = {
@@ -60,6 +64,48 @@ typedef struct CEU_DATA_ROOT {
             end
         end
         MEMS.data = MEMS.data..table.concat(data)
+    end,
+
+    Code = function (me)
+        local mod,_,id,Typepars_ids, Type = unpack(me)
+        assert(mod == 'code/instantaneous')
+
+        -- type
+        local data = 'typedef struct tceu_code_'..id..' {\n'
+        data = data..'    '..TYPES.toc(Type)..' _ret;\n'
+
+        -- wrapper
+        local args, ps = {}, {}
+
+        for _,Typepars_ids_item in ipairs(Typepars_ids) do
+            local a,b,c,Type,id2 = unpack(Typepars_ids_item)
+            assert(a=='var' and b==false and c==false)
+
+            -- type
+            data = data..'    '..TYPES.toc(Type)..' '..id2..';\n'
+
+            -- wrapper
+            args[#args+1] = TYPES.toc(Type)..' '..id2
+            ps[#ps+1]     = id2
+        end
+
+        -- type
+        data = data..'} tceu_code_'..id..';\n'
+        MEMS.codes.types = MEMS.codes.types..data
+
+        -- wrapper
+        args = table.concat(args,', ')
+        ps   = table.concat(ps,', ')
+        MEMS.codes.wrappers = MEMS.codes.wrappers..[[
+static ]]..TYPES.toc(Type)..[[ 
+CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl, ]]..args..[[)
+{
+    tceu_code_]]..id..[[ ps =
+        (struct tceu_code_]]..id..[[) {0, ]]..ps..[[};
+    CEU_STK_LBL(stk, trl, lbl, (tceu_evt*)&ps);
+    return ps._ret;
+}
+]]
     end,
 
     Par_And = function (me)
