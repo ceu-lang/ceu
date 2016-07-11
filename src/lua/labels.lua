@@ -8,9 +8,11 @@ local function new (lbl)
     else
         lbl.id = 'CEU_LABEL_'..lbl[1]..'_'..#LABELS.list
     end
-    LABELS.list[lbl] = true
-    lbl.n = #LABELS.list                   -- starts from 0
-    LABELS.list[#LABELS.list+1] = lbl
+    if not LABELS.list[lbl.id] then
+        LABELS.list[lbl.id] = true
+        lbl.n = #LABELS.list                   -- starts from 0
+        LABELS.list[#LABELS.list+1] = lbl
+    end
 
     return lbl
 end
@@ -40,9 +42,7 @@ F = {
 
     Code = function (me)
         local _,_,id,_,_,body = unpack(me)
-        if body then
-            me.lbl_in = new{'Code_'..id}
-        end
+        me.lbl_in = new{'Code_'..id, true}
     end,
 
     ---------------------------------------------------------------------------

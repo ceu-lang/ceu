@@ -281,6 +281,8 @@ F = {
         blk.dcls[#blk.dcls+1] = me
         blk.dcls[me.id] = me
         me.is_used = (old and old.is_used)
+
+        assert(me == dcls_get(AST.par(me,'Block'),me.id,true))
     end,
 
     Data = function (me)
