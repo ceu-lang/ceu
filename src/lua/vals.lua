@@ -12,7 +12,13 @@ function V (me, ctx)
         f = assert(F[f], 'bug found : V('..me.tag..')')
     end
 
-    return f(me, ctx)
+    local ret = f(me, ctx)
+
+    if type(ret) == 'string' then
+        return string.gsub(ret, '%(%&%(%*', '((')
+    end
+
+    return ret
 end
 
 F = {

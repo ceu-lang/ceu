@@ -24,6 +24,24 @@ typedef struct CEU_DATA_ROOT {
 ]]
     end,
 
+    Stmts__PRE = function (me)
+        MEMS.data = MEMS.data..'union {\n'
+    end,
+    Stmts__POS = function (me)
+        MEMS.data = MEMS.data..'};\n'
+    end,
+
+    Par_Or__PRE  = 'Par__PRE',
+    Par_And__PRE = 'Par__PRE',
+    Par__PRE = function (me)
+        MEMS.data = MEMS.data..'struct {\n'
+    end,
+    Par_Or__POS  = 'Par__POS',
+    Par_And__POS = 'Par__POS',
+    Par__POS = function (me)
+        MEMS.data = MEMS.data..'};\n'
+    end,
+
     Block__PRE = function (me)
         local data = {}
         for _, dcl in ipairs(me.dcls)
@@ -63,7 +81,10 @@ typedef struct CEU_DATA_ROOT {
                 dcl.id_ = string.upper('CEU_'..inout..'_'..id)
             end
         end
-        MEMS.data = MEMS.data..table.concat(data)
+        MEMS.data = MEMS.data..'struct {\n'..table.concat(data)
+    end,
+    Block__POS = function (me)
+        MEMS.data = MEMS.data..'};\n'
     end,
 
     Code = function (me)
@@ -138,6 +159,15 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[
 
     Await_Wclock = function (me)
         MEMS.data = MEMS.data..'s32 __wclk_'..me.n..';\n'
+    end,
+
+    Loop_Num__PRE = 'Loop__PRE',
+    Loop__PRE = function (me)
+        MEMS.data = MEMS.data..'struct {\n'
+    end,
+    Loop_Num__POS = 'Loop__POS',
+    Loop__POS = function (me)
+        MEMS.data = MEMS.data..'};\n'
     end,
 
     Loop = function (me)

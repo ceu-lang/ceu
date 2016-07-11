@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -26842,7 +26843,6 @@ end
 --<<< PAUSE
 
 -->>> CODE/ INSTANTANEOUS / FUNCTIONS
---]===]
 
 Test { [[
 code/instantaneous Code (var int)=>void
