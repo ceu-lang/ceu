@@ -72,7 +72,7 @@ typedef struct CEU_DATA_ROOT {
         assert(mod == 'code/instantaneous')
 
         -- type
-        local data = 'typedef struct tceu_code_'..id..' {\n'
+        local data = 'typedef struct tceu_code_args_'..id..' {\n'
         if not TYPES.check(Type,'void') then
             data = data..'    '..TYPES.toc(Type)..' _ret;\n'
         end
@@ -94,7 +94,7 @@ typedef struct CEU_DATA_ROOT {
         end
 
         -- type
-        data = data..'} tceu_code_'..id..';\n'
+        data = data..'} tceu_code_args_'..id..';\n'
         MEMS.codes.types = MEMS.codes.types..data
 
         -- wrapper
@@ -109,7 +109,7 @@ typedef struct CEU_DATA_ROOT {
 static ]]..TYPES.toc(Type)..[[ 
 CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[)
 {
-    tceu_code_]]..id..[[ ps;
+    tceu_code_args_]]..id..[[ ps;
 ]]
         if ps ~= '' then
             wrapper = wrapper..ps

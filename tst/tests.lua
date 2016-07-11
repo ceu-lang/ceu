@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -18750,6 +18749,24 @@ escape 1;
     parser = 'line 1 : after `int´ : expected type modifier or internal identifier',
     --env = 'line 1 : invalid type modifier : `&&´',
 }
+
+-- REFS: void&
+Test { [[
+var int v = 10;
+var& void p = &v;
+escape *((&&p) as int&&);
+]],
+    parser = 'line 3 : after `(´ : expected name expression',
+}
+Test { [[
+var int v = 10;
+var& void p = &v;
+var void&& p1 = &&p;
+escape *((p1 as int&&));
+]],
+    run = 10,
+}
+
 --<<< ALIASES / REFERENCES / REFS / &
 
 Test { [[
@@ -26825,6 +26842,7 @@ end
 --<<< PAUSE
 
 -->>> CODE/ INSTANTANEOUS / FUNCTIONS
+--]===]
 
 Test { [[
 code/instantaneous Code (var int)=>void
@@ -27812,7 +27830,7 @@ escape call/recursive Fx(5);
 
 do return end
 
--->>> CLASSES, ORGS, ORGANISMS
+-->>> CODE / DELAYED
 
 Test { [[
 code/delayed F (void)=>void
@@ -27844,7 +27862,7 @@ do
 end
 escape 1;
 ]],
-    wrn = true,
+    --wrn = true,
     cc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
 }
 Test { [[
@@ -28106,22 +28124,6 @@ escape a;
     run = {['~>1s']=11 },
 }
 
--- REFS: void&
-Test { [[
-var int v = 10;
-var& void p = &v;
-escape *((&&p) as int&&);
-]],
-    parser = 'line 3 : after `(´ : expected name expression',
-}
-Test { [[
-var int v = 10;
-var& void p = &v;
-var void&& p1 = &&p;
-escape *((p1 as int&&));
-]],
-    run = 10,
-}
 Test { [[
 code/delayed Tx (var& void p)=>int do
     var void&& p1 = ((&&p) as int&&);
@@ -28306,6 +28308,12 @@ escape _V;
 ]],
     run = 10,
 }
+
+--<<< CODE / DELAYED / FUNCTIONS
+
+do return end
+
+-->>> CLASSES, ORGS, ORGANISMS
 
 Test { [[
 class J with

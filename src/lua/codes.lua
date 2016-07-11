@@ -131,7 +131,7 @@ if (]]..V(c)..[[) {
             local a,_,c,Type,id2 = unpack(Typepars_ids_item)
             assert(a=='var' and c==false)
             LINE(me, [[
-]]..V(vars[i],{is_bind=true})..[[ = ((tceu_code_]]..id..[[*)_ceu_evt)->]]..id2..[[;
+]]..V(vars[i],{is_bind=true})..[[ = ((tceu_code_args_]]..id..[[*)_ceu_evt)->]]..id2..[[;
 ]])
         end
 
@@ -444,7 +444,7 @@ if (! CEU_APP.data.__and_]]..me.n..'_'..i..[[) {
             local code = AST.par(me, 'Code')
             if code then
                 LINE(me, [[
-((tceu_code_]]..code.id..[[*) _ceu_evt)->_ret = ]]..V(fr)..[[;
+((tceu_code_args_]]..code.id..[[*) _ceu_evt)->_ret = ]]..V(fr)..[[;
 ]])
             else
                 LINE(me, [[
