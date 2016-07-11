@@ -217,8 +217,27 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
 
 -- AWAITS
 
+    __await_ext_err = function (ID_ext, inout_expected)
+        if ID_ext.tag ~= 'ID_ext' then
+            return false, 'expected external identifier'
+        end
+
+        local _,inout_have = unpack(ID_ext.dcl)
+
+        if inout_have == inout_expected then
+            return true
+        else
+            return false, 'expected `'..inout_expected..'´ external identifier'
+        end
+    end,
+
     Await_Ext = function (me)
         local ID_ext = unpack(me)
+
+        -- ctx
+        local ok, msg = F.__await_ext_err(ID_ext, 'input')
+        ASR(ok, me, msg and 'invalid `await´ : '..msg)
+
         me.tp = unpack(ID_ext.dcl)
     end,
 
@@ -252,14 +271,17 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
         end
     end,
 
-    _Pause = function (me)
+    Pause_If = function (me)
         local e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Evt'}, 'invalid `pause/if´')
+        local ok, msg = F.__await_ext_err(e, 'input')
+        if not ok then
+            INFO.asr_tag(e, {'Evt'}, 'invalid `pause/if´')
+        end
 
         -- tp
-        local Typelist = AST.asr(e.info.tp,'Typelist')
+        local Typelist = AST.asr((e.dcl and e.dcl[1]) or e.info.tp,'Typelist')
         ASR(#Typelist==1 and TYPES.check(Typelist[1],'bool'), me,
             'invalid `pause/if´ : expected event of type `bool´')
     end,

@@ -78,6 +78,10 @@ F = {
 
     ---------------------------------------------------------------------------
 
+    ID_ext = function (me)
+        return me.dcl.id_
+    end,
+
     ID_nat = function (me)
         local v1,v2 = unpack(me)
         if v1 == '_{}' then

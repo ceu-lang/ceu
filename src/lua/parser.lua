@@ -432,13 +432,13 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
               + V'_Spawn_Block'
               + V'Finalize'
               + V'Par_Or' + V'Par_And' + V'_Watching'
-              + V'_Pause'
+              + V'Pause_If'
               + V'Async' + V'_Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'
               + V'_Lua'
 
 
-    , _Pause   = K'pause/if' * V'Exp_Name' * V'__Do'
+    , Pause_If = K'pause/if' * (V'Exp_Name'+V'ID_ext') * V'__Do'
 
 -- ASYNCHRONOUS
 
@@ -849,7 +849,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
               + V'_Spawn_Block'
               + V'Finalize'
               + V'Par_Or' + V'Par_And' + V'_Watching'
-              + V'_Pause'
+              + V'Pause_If'
               + V'Async' + V'_Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'
               + V'_Lua'

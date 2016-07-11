@@ -137,6 +137,18 @@ _ceu_trl++;
 ]])
     end,
 
+    Pause_If = function (me)
+        local e, body = unpack(me)
+        LINE(me, [[
+CEU_APP.trails[]]..me.trails[1]..[[].evt        = CEU_INPUT__PAUSE;
+CEU_APP.trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
+CEU_APP.trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
+CEU_APP.trails[]]..me.trails[1]..[[].pse_paused = 0;
+_ceu_trl++;
+]])
+        CONC(me, body)
+    end,
+
     ---------------------------------------------------------------------------
 
     Do = function (me)
@@ -458,7 +470,7 @@ assert(fr.tag == 'Await_Wclock')
     Await_Ext = function (me)
         local ID_ext = unpack(me)
         HALT(me, {
-            evt = ID_ext.dcl.id_,
+            evt = V(ID_ext),
             lbl = me.lbl_out.id,
         })
     end,
@@ -494,7 +506,7 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',
 ]])
             end
             LINE(me, [[
-    ceu_callback(CEU_CALLBACK_OUTPUT, ]]..ID_ext.dcl.id_..', '..ps..[[);
+    ceu_callback(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[);
 ]])
         else
             LINE(me, [[
@@ -504,7 +516,7 @@ _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
 _ceu_trl->stk = NULL;
 ]])
             LINE(me, [[
-    ceu_go_ext(]]..ID_ext.dcl.id_..', '..ps..[[);
+    ceu_go_ext(]]..V(ID_ext)..', '..ps..[[);
 return;
 case ]]..me.lbl_out.id..[[:;
 ]])

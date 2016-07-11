@@ -37,6 +37,7 @@ enum {
 enum {
     CEU_INPUT__NONE = 0,
     CEU_INPUT__CLEAR,
+    CEU_INPUT__PAUSE,
     CEU_INPUT__ASYNC,
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
@@ -70,10 +71,23 @@ typedef struct tceu_evt {
 
 struct tceu_stk;
 typedef struct tceu_trl {
-    tceu_nevt evt;
-    tceu_nlbl lbl;
+    union {
+        tceu_nevt evt;
 
-    struct tceu_stk* stk;
+        struct {
+            tceu_nevt        _1_evt;
+            tceu_nlbl        lbl;
+            struct tceu_stk* stk;
+        };
+
+        /* PAUSE */
+        struct {
+            tceu_nevt _2_evt;
+            tceu_nevt pse_evt;
+            tceu_ntrl pse_skip;
+            u8        pse_paused;
+        };
+    };
 } tceu_trl;
 
 typedef struct tceu_app {
@@ -187,6 +201,8 @@ static void ceu_go_bcast (tceu_stk* stk, tceu_evt* evt, tceu_ntrl trl0, tceu_ntr
     tceu_ntrl trlK;
     tceu_trl* trl;
 
+    /* MARK TRAILS TO EXECUTE */
+
     for (trlK=trl0, trl=&CEU_APP.trails[trlK];
          trlK<=trlF;
          trlK++, trl++)
@@ -205,13 +221,23 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 
         if (matches_clear || matches_await) {
             trl->stk = stk;             /* awake only at this level again */
-        } else {
-            if (evt->id==CEU_INPUT__CLEAR) {
-                trl->evt = CEU_INPUT__NONE;
-                trl->stk = NULL;
+        } else if (trl->evt == CEU_INPUT__PAUSE) {
+            u8 was_paused = trl->pse_paused;
+            if (evt->id == trl->pse_evt) {
+                trl->pse_paused = *((u8*)evt->params);
             }
+            /* don't skip if pausing now */
+            if (was_paused) {
+                trl += trl->pse_skip;
+            }
+
+        } else if (evt->id == CEU_INPUT__CLEAR) {
+            trl->evt = CEU_INPUT__NONE;
+            trl->stk = NULL;
         }
     }
+
+    /* EXECUTE TRAILS */
 
     /* CLEAR: inverse execution order */
     if (evt->id == CEU_INPUT__CLEAR) {
@@ -222,7 +248,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 
     for (trlK=trl0, trl=&CEU_APP.trails[trlK]; ;)
     {
-        if (trl->stk==stk) {
+        if (trl->stk==stk && trl->evt!=CEU_INPUT__PAUSE) {
             trl->evt = CEU_INPUT__NONE;
             trl->stk = NULL;
             CEU_STK_LBL(stk, trl, trl->lbl, evt);

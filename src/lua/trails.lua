@@ -28,6 +28,11 @@ F = {
         end
     end,
 
+    Pause_If = function (me)
+        local _, body = unpack(me)
+        me.trails_n = 1 + body.trails_n
+    end,
+
     If = function (me)
         local c, t, f = unpack(me)
         MAX_all(me, {t,f})
@@ -66,6 +71,12 @@ G = {
                 sub.trails[1] = sub.trails[1] + 1
             end
         end
+    end,
+
+    Pause_If = function (me)
+        local _,body = unpack(me)
+        body.trails = { unpack(me.trails) }
+        body.trails[1] = body.trails[1] + 1
     end,
 
     Par_Or__PRE  = 'Par__PRE',

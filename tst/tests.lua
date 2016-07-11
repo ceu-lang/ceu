@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -576,6 +575,14 @@ escape a as int;
 ]],
     wrn = true,
     run = 1,
+}
+
+Test { [[
+output void O;
+await O;
+escape 1;
+]],
+    stmts = 'line 2 : invalid `await´ : expected `input´ external identifier',
 }
 
 Test { [[
@@ -26035,6 +26042,50 @@ loop i in [0->v[ do end
     --tight = 'line 2 : tight loop',
 }
 
+Test { [[
+loop do
+    loop do
+        break;
+    end
+end
+escape 1;
+]],
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+}
+
+Test { [[
+loop i in [0->1] do
+    loop do
+        break/i;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+loop i in [0->1] do
+    loop do
+        break;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+loop do
+    par/and do
+    with
+    end
+end
+escape 1;
+]],
+    tight_ = 'line 1 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+}
+
 -- INFINITE LOOP/EXECUTION
 Test { [[
 event void e, f;
@@ -26366,8 +26417,6 @@ escape ret;
     run = 6;
 }
 
-do return end
-
 -->>> PAUSE
 
 Test { [[
@@ -26394,9 +26443,16 @@ pause/if A do
 end
 escape 0;
 ]],
-    --adj = 'line 2 : invalid expression',
-    parser = 'line 2 : after `pause/if´ : expected name expression',
-    --parser = 'line 2 : after `A´ : expected `(´',
+    stmts = 'line 2 : invalid `pause/if´ : expected event of type `bool´',
+}
+
+Test { [[
+input bool A;
+pause/if A do
+end
+escape 1;
+]],
+    run = 1,
 }
 
 Test { [[
@@ -26472,6 +26528,29 @@ end
     },
 }
 
+Test { [[
+input bool A;
+input int  B;
+pause/if A do
+    var int v = await B;
+    escape v;
+end
+]],
+    _ana = {
+        unreachs = 1,
+    },
+    run = {
+        ['1~>B'] = 1,
+        ['false~>A ; 1~>B'] = 1,
+        ['true~>A ; 1~>B ; false~>A ; 3~>B'] = 3,
+        ['true~>A ; true~>A ; 1~>B ; false~>A ; 3~>B'] = 3,
+        ['true~>A ; 1~>B ; 1~>B ; false~>A ; 3~>B'] = 3,
+        ['true~>A ; 1~>B ; false~>A ; true~>A ; 2~>B ; false~>A ; 3~>B'] = 3,
+        ['true~>A ; 1~>B ; false~>A ; true~>A ; false~>A ; 3~>B'] = 3,
+        ['true~>A ; 1~>B ; true~>A ; 2~>B ; false~>A ; 3~>B'] = 3,
+    },
+}
+
 -- TODO: nesting with same event
 Test { [[
 input int A,B;
@@ -26495,6 +26574,7 @@ escape ret;
     stmts = 'line 7 : invalid `emit´ : types mismatch : "(bool)" <= "(int)"',
 }
 
+--]===]
 Test { [[
 input int A,B;
 event bool a;

@@ -67,6 +67,8 @@ end
 ]]
         for input, ret in pairs(T.run) do
             input = string.gsub(input, '([^;]*)~>(%d[^;]*);?', 'emit %2;')
+            input = string.gsub(input, '[ ]*true[ ]*~>([^;]*);?', 'emit %1=>true;')
+            input = string.gsub(input, '[ ]*false[ ]*~>([^;]*);?', 'emit %1=>false;')
             input = string.gsub(input, '[ ]*(%d+)[ ]*~>([^;]*);?', 'emit %2=>%1;')
             input = string.gsub(input, '~>([^;]*);?', 'emit %1;')
             T[1] = string.gsub(src, '`EVTS', input)
@@ -478,7 +480,7 @@ STATS = {
 # luacov
 
 1. Set `RUNTESTS.luacov=true`
-2. Run `run_tests.lua`
+2. Run `run.lua`
     - It will generate `luacov.stats.out`
 3. Run `luacov` in the same directory
     - It will generate `luacov.report.out`
