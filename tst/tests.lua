@@ -27568,7 +27568,8 @@ call Fa();
 
 escape 1;
 ]],
-    tight = 'line 10 : function must be annotated as `@rec´ (recursive)',
+    tight_ = 'line 4 : invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body (/tmp/tmp.ceu:7)',
+    --tight = 'line 10 : function must be annotated as `@rec´ (recursive)',
 }
 
 Test { [[
@@ -27591,7 +27592,8 @@ call Fa();
 
 escape 1;
 ]],
-    tight = 'line 3 : function must be annotated as `@rec´ (recursive)',
+    tight_ = 'line 6 : invalid `code´ declaration : expected `/recursive´ : nested `call/recursive´ (/tmp/tmp.ceu:8)',
+    --tight = 'line 3 : function must be annotated as `@rec´ (recursive)',
 }
 
 --<<< RECURSIVE / FUNCTIONS
