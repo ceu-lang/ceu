@@ -67,13 +67,13 @@ G = {
         if i > 1 then
             local prv = me[i-1]
             sub.trails = { unpack(prv.trails) }
-            if prv.tag=='Finalize' then
+            if prv.tag == 'Finalize' then
                 sub.trails[1] = sub.trails[1] + 1
             end
         end
     end,
 
-    Pause_If = function (me)
+    Pause_If__PRE = function (me)
         local _,body = unpack(me)
         body.trails = { unpack(me.trails) }
         body.trails[1] = body.trails[1] + 1

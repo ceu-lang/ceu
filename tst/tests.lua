@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -26574,33 +26575,24 @@ escape ret;
     stmts = 'line 7 : invalid `emit´ : types mismatch : "(bool)" <= "(int)"',
 }
 
---]===]
 Test { [[
-input int A,B;
-event bool a;
+input bool A;
+input int  B;
 var int ret = 0;
-par/or do
-    loop do
-        var int v = await A;
-        emit a => v as bool;
-    end
-with
-
-    pause/if a do
-        pause/if a do
+    pause/if A do
+        pause/if A do
             ret = await B;
         end
     end
-end
 escape ret;
 ]],
     run = {
         ['1~>B;1~>B'] = 1,
-        ['0~>A ; 1~>B'] = 1,
-        ['1~>A ; 1~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 2~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 0~>A ; 1~>A ; 0~>A ; 0~>A ; 3~>B'] = 3,
-        ['1~>A ; 1~>B ; 1~>A ; 2~>B ; 0~>A ; 0~>A ; 3~>B'] = 3,
+        ['false~>A ; 1~>B'] = 1,
+        ['true~>A ; 1~>B ; false~>A ; false~>A ; 3~>B'] = 3,
+        ['true~>A ; 1~>B ; false~>A ; true~>A ; 2~>B ; false~>A ; false~>A ; 3~>B'] = 3,
+        ['true~>A ; 1~>B ; false~>A ; true~>A ; false~>A ; false~>A ; 3~>B'] = 3,
+        ['true~>A ; 1~>B ; true~>A ; 2~>B ; false~>A ; false~>A ; 3~>B'] = 3,
     },
 }
 
