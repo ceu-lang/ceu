@@ -128,10 +128,10 @@ if (]]..V(c)..[[) {
         local vars = AST.get(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
                                     1,'Stmts', 2,'Stmts')
         for i,Typepars_ids_item in ipairs(Typepars_ids) do
-            local a,b,c,Type,id2 = unpack(Typepars_ids_item)
-            assert(a=='var' and b==false and c==false)
+            local a,_,c,Type,id2 = unpack(Typepars_ids_item)
+            assert(a=='var' and c==false)
             LINE(me, [[
-]]..V(vars[i])..[[ = ((tceu_code_]]..id..[[*)_ceu_evt)->]]..id2..[[;
+]]..V(vars[i],{is_bind=true})..[[ = ((tceu_code_]]..id..[[*)_ceu_evt)->]]..id2..[[;
 ]])
         end
 

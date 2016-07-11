@@ -81,15 +81,16 @@ typedef struct CEU_DATA_ROOT {
         local args, ps = {}, {}
 
         for _,Typepars_ids_item in ipairs(Typepars_ids) do
-            local a,b,c,Type,id2 = unpack(Typepars_ids_item)
-            assert(a=='var' and b==false and c==false)
+            local a,is_alias,c,Type,id2 = unpack(Typepars_ids_item)
+            assert(a=='var' and c==false)
+            local ptr = (is_alias and '*' or '')
 
             -- type
-            data = data..'    '..TYPES.toc(Type)..' '..id2..';\n'
+            data = data..'    '..TYPES.toc(Type)..ptr..' '..id2..';\n'
 
             -- wrapper
-            args[#args+1] = TYPES.toc(Type)..' '..id2
-            ps[#ps+1]     = id2
+            args[#args+1] = TYPES.toc(Type)..ptr..' '..id2
+            ps[#ps+1]     = 'ps.'..id2..' = '..id2..';'
         end
 
         -- type
@@ -99,24 +100,19 @@ typedef struct CEU_DATA_ROOT {
         -- wrapper
         if #args > 0 then
             args = ','..table.concat(args,', ')
-            ps   = table.concat(ps,', ')
+            ps   = table.concat(ps,'\n')..'\n'
         else
             args = ''
+            ps   = ''
         end
         local wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
 CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[)
 {
-]]
-        if args ~= '' then
-            wrapper = wrapper..[[
-    tceu_code_]]..id..[[ ps =
-        (struct tceu_code_]]..id..[[) {0, ]]..ps..[[};
-]]
-        else
-            wrapper = wrapper..[[
     tceu_code_]]..id..[[ ps;
 ]]
+        if ps ~= '' then
+            wrapper = wrapper..ps
         end
         wrapper = wrapper..[[
     CEU_STK_LBL(stk, trl, lbl, (tceu_evt*)&ps);

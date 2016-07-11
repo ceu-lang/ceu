@@ -136,11 +136,13 @@ error'TODO: luacov never executes this?'
         local Type = AST.asr(out,'Type')
         local ID_prim,mod = unpack(Type)
         local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
+        local do_ = node('Do', me.ln,
+                        true,
+                        node('Block', me.ln,
+                            stmts_old))
         if is_void then
-            stmts_new[1] = node('Do', me.ln,
-                            true,
-                            node('Block', me.ln,
-                                stmts_old))
+            stmts_new[1] = node('Nothing', me.ln)
+            stmts_new[2] = do_
         else
             stmts_new[1] = node('Var', me.ln,
                             AST.copy(out),
@@ -150,10 +152,7 @@ error'TODO: luacov never executes this?'
                             node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, '_ret')),
                             node('_Set_Do', me.ln,
-                                node('Do', me.ln,
-                                    true,
-                                    node('Block', me.ln,
-                                        stmts_old))))
+                                do_))
         end
 
         -- insert int "stmts" all parameters "ins"

@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -26892,8 +26891,8 @@ Test { [[
 code/instantaneous Code (var int a)=>void;
 code/instantaneous Code (var int a)=>void
 do
-    native/nohold ___ceu_nothing;
-    ___ceu_nothing(&&a);
+    //native/nohold ___ceu_nothing;
+    //___ceu_nothing(&&a);
 end
 escape 1;
 ]],
@@ -27372,17 +27371,6 @@ escape v as int;
 }
 
 Test { [[
-code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
-    buf = [] .. buf .. [3];
-end
-vector[10] u8 buffer;
-call FillBuffer(&buffer);
-escape buffer[0] as int;
-]],
-    run = 3,
-}
-
-Test { [[
 code/instantaneous Ff (var& int a)=>void do
     a = 1;
 end
@@ -27391,63 +27379,6 @@ call Ff(v);
 escape v;
 ]],
     tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
-}
-
-Test { [[
-code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
-    buf = [] .. buf .. [3];
-end
-vector[10] u8 buffer;
-call FillBuffer(&buffer);
-escape buffer[0] as int;
-]],
-    tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
-}
-
-Test { [[
-code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
-    buf = [] .. buf .. [2,3,4];
-end
-vector[3] u8 buffer = [1];
-call FillBuffer(&buffer);
-escape buffer[0] as int;
-]],
-    run = '2] runtime error: access out of bounds',
-}
-
--- TODO: dropped support for pointers to vectors
-Test { [[
-code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
-    *buf = [] .. *buf .. [3];
-end
-vector[10] u8 buffer;
-call FillBuffer(&&buffer);
-escape buffer[0] as int;
-]],
-    run = 3,
-    todo = 'no pointers to vectors',
-}
-
-Test { [[
-code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
-    *buf = [] .. *buf .. [2,3,4];
-end
-vector[3] u8 buffer = [1];
-call FillBuffer(&&buffer);
-escape buffer[0] as int;
-]],
-    run = '2] runtime error: access out of bounds',
-    todo = 'no pointers to vectors',
-}
-
-Test { [[
-code/instantaneous Build (vector[] u8 bytes)=>void do
-end
-escape 1;
-]],
-    wrn = true,
-    parser = 'line 1 : after `vector´ : expected `&´',
-    --env = 'line 1 : wrong argument #1 : vectors are not supported',
 }
 
 Test { [[
@@ -27618,6 +27549,7 @@ escape 1;
     run = 1,
 }
 
+--]===]
 Test { [[
 //var int x;
 
@@ -47899,6 +47831,74 @@ escape call Fx(str);
     parser = 'line 3 : after `vector´ : expected `&´',
     --env = 'line 3 : wrong argument #2 : vectors are not supported',
     --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
+    buf = [] .. buf .. [3];
+end
+vector[10] u8 buffer;
+call FillBuffer(&buffer);
+escape buffer[0] as int;
+]],
+    run = 3,
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
+    buf = [] .. buf .. [3];
+end
+vector[10] u8 buffer;
+call FillBuffer(&buffer);
+escape buffer[0] as int;
+]],
+    tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
+    buf = [] .. buf .. [2,3,4];
+end
+vector[3] u8 buffer = [1];
+call FillBuffer(&buffer);
+escape buffer[0] as int;
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+-- TODO: dropped support for pointers to vectors
+Test { [[
+code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
+    *buf = [] .. *buf .. [3];
+end
+vector[10] u8 buffer;
+call FillBuffer(&&buffer);
+escape buffer[0] as int;
+]],
+    run = 3,
+    todo = 'no pointers to vectors',
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
+    *buf = [] .. *buf .. [2,3,4];
+end
+vector[3] u8 buffer = [1];
+call FillBuffer(&&buffer);
+escape buffer[0] as int;
+]],
+    run = '2] runtime error: access out of bounds',
+    todo = 'no pointers to vectors',
+}
+
+Test { [[
+code/instantaneous Build (vector[] u8 bytes)=>void do
+end
+escape 1;
+]],
+    wrn = true,
+    parser = 'line 1 : after `vector´ : expected `&´',
+    --env = 'line 1 : wrong argument #1 : vectors are not supported',
 }
 
 --<<< VECTORS / STRINGS
