@@ -119,12 +119,13 @@ if (]]..V(c)..[[) {
 
     Code = function (me)
         local _,_,id,Typepars_ids,_,body = unpack(me)
+        if not body then return end
 
         LINE(me, 'if (0) {')    -- do not enter from outside
 
         CASE(me, me.lbl_in)
 
-        local vars = AST.asr(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
+        local vars = AST.get(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
                                     1,'Stmts', 2,'Stmts')
         for i,Typepars_ids_item in ipairs(Typepars_ids) do
             local a,b,c,Type,id2 = unpack(Typepars_ids_item)

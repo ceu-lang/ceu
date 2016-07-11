@@ -67,12 +67,15 @@ typedef struct CEU_DATA_ROOT {
     end,
 
     Code = function (me)
-        local mod,_,id,Typepars_ids, Type = unpack(me)
+        local mod,_,id,Typepars_ids, Type, body = unpack(me)
+        if not body then return end
         assert(mod == 'code/instantaneous')
 
         -- type
         local data = 'typedef struct tceu_code_'..id..' {\n'
-        data = data..'    '..TYPES.toc(Type)..' _ret;\n'
+        if not TYPES.check(Type,'void') then
+            data = data..'    '..TYPES.toc(Type)..' _ret;\n'
+        end
 
         -- wrapper
         local args, ps = {}, {}
@@ -94,18 +97,39 @@ typedef struct CEU_DATA_ROOT {
         MEMS.codes.types = MEMS.codes.types..data
 
         -- wrapper
-        args = table.concat(args,', ')
-        ps   = table.concat(ps,', ')
-        MEMS.codes.wrappers = MEMS.codes.wrappers..[[
+        if #args > 0 then
+            args = ','..table.concat(args,', ')
+            ps   = table.concat(ps,', ')
+        else
+            args = ''
+        end
+        local wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
-CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl, ]]..args..[[)
+CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[)
 {
+]]
+        if args ~= '' then
+            wrapper = wrapper..[[
     tceu_code_]]..id..[[ ps =
         (struct tceu_code_]]..id..[[) {0, ]]..ps..[[};
+]]
+        else
+            wrapper = wrapper..[[
+    tceu_code_]]..id..[[ ps;
+]]
+        end
+        wrapper = wrapper..[[
     CEU_STK_LBL(stk, trl, lbl, (tceu_evt*)&ps);
+]]
+        if not TYPES.check(Type,'void') then
+            wrapper = wrapper..[[
     return ps._ret;
+]]
+        end
+        wrapper = wrapper..[[
 }
 ]]
+        MEMS.codes.wrappers = MEMS.codes.wrappers..wrapper
     end,
 
     Par_And = function (me)

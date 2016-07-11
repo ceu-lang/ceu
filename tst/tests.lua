@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -26939,7 +26940,6 @@ escape 1;
     parser = 'line 1 : after `(´ : expected `vector´ or `pool´ or `event´ or `var´',
 }
 
---]===]
 Test { [[
 code/instantaneous Code (var int x) => int
 do
