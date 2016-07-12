@@ -44,18 +44,27 @@ local function CLEAR (me)
     end
 end
 
-local function HALT (me, t)
-    if not t then
-        LINE(me, 'return;')
-        return
+local function HALT (me, T)
+    T = T or {}
+    for _, t in ipairs(T) do
+        local id, val = next(t)
+        LINE(me, [[
+_ceu_trl->]]..id..' = '..val..[[;
+]])
+    end
+    if T.exec then
+        LINE(me, [[
+]]..T.exec..[[
+]])
     end
     LINE(me, [[
-_ceu_trl->evt = ]]..t.evt..[[;
-_ceu_trl->lbl = ]]..t.lbl..[[;
-_ceu_trl->stk = NULL;
 return;
-case ]]..t.lbl..[[:;
 ]])
+    if T.lbl then
+        LINE(me, [[
+case ]]..T.lbl..[[:;
+]])
+    end
 end
 
 F = {
@@ -147,8 +156,8 @@ if (0)
         end
 
         CONC(me, body)
+        HALT(me)
         LINE(me, [[
-        return;
     }
 }
 ]])
@@ -166,8 +175,8 @@ if (0) {
 ]])
         CASE(me, me.lbl_in)
         CONC(me, later)
+        HALT(me)
         LINE(me, [[
-    return;
 }
 ]])
         if now then
@@ -209,8 +218,8 @@ ceu_out_assert_msg(0, "reached end of `do´");
         LINE(me, [[
 CEU_STK_LBL(NULL, _ceu_stk,
             _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
-return;
 ]])
+        HALT(me)
     end,
 
     ---------------------------------------------------------------------------
@@ -256,7 +265,9 @@ while (1) {
 ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 ]])
             HALT(me, {
-                evt = 'CEU_INPUT__ASYNC',
+                { evt = 'CEU_INPUT__ASYNC' },
+                { lbl = me.lbl_asy.id },
+                { stk = 'NULL'} ,
                 lbl = me.lbl_asy.id,
             })
         end
@@ -346,15 +357,15 @@ while (1) {
         LINE(me, [[
 CEU_STK_LBL(NULL, _ceu_stk,
             _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
-return;
 ]])
+        HALT(me)
     end,
     Continue = function (me)
         LINE(me, [[
 CEU_STK_LBL(NULL, _ceu_stk,
             _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
-return;
 ]])
+        HALT(me)
     end,
 
     Stmt_Call = function (me)
@@ -397,9 +408,7 @@ CEU_STK_LBL(NULL, _ceu_stk,
 ]])
             end
         end
-        LINE(me, [[
-return;
-]])
+        HALT(me)
 
         -- code for each branch
         for i, sub in ipairs(me) do
@@ -407,9 +416,7 @@ return;
             CONC(me, sub)
 
             if me.tag == 'Par' then
-                LINE(me, [[
-return;
-]])
+                HALT(me)
             else
                 -- Par_And: open gates
                 if me.tag == 'Par_And' then
@@ -420,8 +427,8 @@ return;
                 LINE(me, [[
 CEU_STK_LBL(NULL, _ceu_stk,
             _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
-return;
 ]])
+                HALT(me)
             end
         end
 
@@ -435,7 +442,9 @@ return;
             for i, sub in ipairs(me) do
                 LINE(me, [[
 if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
-    return;
+]])
+                HALT(me)
+                LINE(me, [[
 }
 ]])
             end
@@ -482,7 +491,7 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
     Set_Await_one = function (me)
         local fr, to = unpack(me)
         CONC_ALL(me)
-assert(fr.tag == 'Await_Wclock')
+DBG(fr.tag == 'Await_Wclock', 'TODO')
         LINE(me, [[
 ]]..V(to)..[[ = CEU_APP.wclk_late;
 ]])
@@ -515,18 +524,26 @@ assert(fr.tag == 'Await_Wclock')
         HALT(me)
     end,
 
-    Await_Ext = function (me)
-        local ID_ext = unpack(me)
+    Abs_Await = function (me)
         HALT(me, {
-            evt = V(ID_ext),
+            { evt = 'CEU_INPUT__CODE' },
+            { lbl = me.lbl_out.id },
+            { code_mem = '&'..CUR('__mem_'..me.n) },
             lbl = me.lbl_out.id,
+            exec = [[
+TODO
+]],
         })
     end,
 
-    Await_Int = function (me)
-        local Exp_Name = unpack(me)
+    ---------------------------------------------------------------------------
+
+    Await_Ext = function (me)
+        local ID_ext = unpack(me)
         HALT(me, {
-            evt = V(Exp_Name),
+            { evt = V(ID_ext) },
+            { lbl = me.lbl_out.id },
+            { stk = 'NULL'} ,
             lbl = me.lbl_out.id,
         })
     end,
@@ -565,14 +582,27 @@ _ceu_trl->stk = NULL;
 ]])
             LINE(me, [[
     ceu_go_ext(]]..V(ID_ext)..', '..ps..[[);
-return;
-case ]]..me.lbl_out.id..[[:;
 ]])
+            HALT(me, {
+                lbl = me.lbl_out.id,
+            })
         end
 
         LINE(me, [[
 }
 ]])
+    end,
+
+    ---------------------------------------------------------------------------
+
+    Await_Int = function (me)
+        local Exp_Name = unpack(me)
+        HALT(me, {
+            { evt = V(Exp_Name) },
+            { lbl = me.lbl_out.id },
+            { stk = 'NULL'} ,
+            lbl = me.lbl_out.id,
+        })
     end,
 
     Emit_Evt = function (me)
@@ -598,6 +628,8 @@ case ]]..me.lbl_out.id..[[:;
 ]])
     end,
 
+    ---------------------------------------------------------------------------
+
     Await_Wclock = function (me)
         local e = unpack(me)
 
@@ -609,7 +641,9 @@ ceu_wclock(]]..V(e)..', &'..wclk..[[, NULL);
 _CEU_HALT_]]..me.n..[[_:
 ]])
         HALT(me, {
-            evt = 'CEU_INPUT__WCLOCK',
+            { evt = 'CEU_INPUT__WCLOCK' },
+            { lbl = me.lbl_out.id },
+            { stk = 'NULL'} ,
             lbl = me.lbl_out.id,
         })
         LINE(me, [[
@@ -625,12 +659,14 @@ _CEU_HALT_]]..me.n..[[_:
 
     Emit_Wclock = function (me)
         local e = unpack(me)
-        LINE(me, [[
-ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-_ceu_trl->evt = CEU_INPUT__ASYNC;
-_ceu_trl->lbl = ]]..me.lbl_out.id..[[;
-_ceu_trl->stk = NULL;
+        HALT(me, {
+            { evt = 'CEU_INPUT__ASYNC' },
+            { lbl = me.lbl_out.id },
+            { stk = 'NULL' },
+            lbl = me.lbl_out.id,
+            exec = [[
 {
+    ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
         ceu_go_ext(CEU_INPUT__WCLOCK, &__ceu_dt);
@@ -640,10 +676,11 @@ _ceu_trl->stk = NULL;
         __ceu_dt = 0;
     } while (CEU_APP.wclk_min_set <= 0);
 }
-return;
-case ]]..me.lbl_out.id..[[:;
-]])
+]],
+        })
     end,
+
+    ---------------------------------------------------------------------------
 
     Async = function (me)
         local _,blk = unpack(me)
@@ -651,7 +688,9 @@ case ]]..me.lbl_out.id..[[:;
 ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 ]])
         HALT(me, {
-            evt = 'CEU_INPUT__ASYNC',
+            { evt = 'CEU_INPUT__ASYNC' },
+            { lbl = me.lbl_in.id },
+            { stk = 'NULL'} ,
             lbl = me.lbl_in.id,
         })
         CONC(me, blk)
