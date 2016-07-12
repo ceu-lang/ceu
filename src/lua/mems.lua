@@ -100,15 +100,16 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
         end
         me.mems.wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
-CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[)
+CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK, tceu_nlbl lbl ]]..args..[[)
 {
+    tceu_code_mem_]]..id..[[ mem;
     tceu_code_args_]]..id..[[ ps;
 ]]
         if ps ~= '' then
             me.mems.wrapper = me.mems.wrapper..ps
         end
         me.mems.wrapper = me.mems.wrapper..[[
-    CEU_STK_LBL(stk, trl, lbl, (tceu_evt*)&ps);
+    CEU_STK_LBL((tceu_evt*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
 ]]
         if not TYPES.check(Type,'void') then
             me.mems.wrapper = me.mems.wrapper..[[

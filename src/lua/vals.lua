@@ -9,7 +9,7 @@ function CUR (field)
     local Code = AST.iter'Code'()
     local data do
         if Code then
-            data = '((tceu_code_mem_'..Code.id..'*)_ceu_mem)'
+            data = '(*((tceu_code_mem_'..Code.id..'*)_ceu_mem))'
         else
             data = 'CEU_APP.root'
         end
@@ -99,7 +99,7 @@ F = {
         end
 
         return [[
-CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trl,
+CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
                                ]]..ID_abs.dcl.lbl_in.id..[[
                                ]]..Abslist..[[)
 ]]
