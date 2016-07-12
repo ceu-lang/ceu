@@ -9,12 +9,12 @@ MEMS = {
         enum  = '',
     },
     codes = {
-        datas    = '',
+        mems     = '',
         wrappers = '',
         args     = '',
 --[[
         [1] = {
-            data    = '',
+            mem     = '',
             wrapper = '',
             args    = '',
         }
@@ -28,12 +28,12 @@ end
 
 F = {
     ROOT__PRE = function (me)
-        me.mems = { data='' }
+        me.mems = { mem='' }
     end,
     ROOT__POS = function (me)
-        me.mems.data = [[
+        me.mems.mem = [[
 typedef struct tceu_code_mem_ROOT {
-    ]]..me.mems.data..[[
+    ]]..me.mems.mem..[[
 } tceu_code_mem_ROOT;
 ]]..'\n'
         MEMS.codes[#MEMS.codes+1] = me.mems
@@ -42,15 +42,15 @@ typedef struct tceu_code_mem_ROOT {
     Code__PRE = function (me)
         local _,_,_,_,_,body = unpack(me)
         if body then
-            me.mems = { data='' }
+            me.mems = { mem='' }
         end
     end,
     Code__POS = function (me)
         local _,_,_,_,_,body = unpack(me)
         if body then
-            me.mems.data = [[
+            me.mems.mem = [[
 typedef struct tceu_code_mem_]]..me.id..[[ {
-    ]]..me.mems.data..[[
+    ]]..me.mems.mem..[[
 } tceu_code_mem_]]..me.id..[[;
 ]]..'\n'
             MEMS.codes[#MEMS.codes+1] = me.mems
@@ -119,14 +119,14 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[
     ---------------------------------------------------------------------------
 
     Stmts__PRE = function (me)
-        CUR().data = CUR().data..'union {\n'
+        CUR().mem = CUR().mem..'union {\n'
     end,
     Stmts__POS = function (me)
-        CUR().data = CUR().data..'};\n'
+        CUR().mem = CUR().mem..'};\n'
     end,
 
     Await_Wclock = function (me)
-        CUR().data = CUR().data..'s32 __wclk_'..me.n..';\n'
+        CUR().mem = CUR().mem..'s32 __wclk_'..me.n..';\n'
     end,
 
     ---------------------------------------------------------------------------
@@ -134,17 +134,17 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[
     Par_Or__PRE  = 'Par__PRE',
     Par_And__PRE = 'Par__PRE',
     Par__PRE = function (me)
-        CUR().data = CUR().data..'struct {\n'
+        CUR().mem = CUR().mem..'struct {\n'
     end,
     Par_Or__POS  = 'Par__POS',
     Par_And__POS = 'Par__POS',
     Par__POS = function (me)
-        CUR().data = CUR().data..'};\n'
+        CUR().mem = CUR().mem..'};\n'
     end,
 
     Par_And = function (me)
         for i=1, #me do
-            CUR().data = CUR().data..'u8 __and_'..me.n..'_'..i..': 1;\n'
+            CUR().mem = CUR().mem..'u8 __and_'..me.n..'_'..i..': 1;\n'
         end
     end,
 
@@ -152,31 +152,31 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[
 
     Loop_Num__PRE = 'Loop__PRE',
     Loop__PRE = function (me)
-        CUR().data = CUR().data..'struct {\n'
+        CUR().mem = CUR().mem..'struct {\n'
     end,
     Loop_Num__POS = 'Loop__POS',
     Loop__POS = function (me)
-        CUR().data = CUR().data..'};\n'
+        CUR().mem = CUR().mem..'};\n'
     end,
 
     Loop = function (me)
         local max = unpack(me)
         if max then
-            CUR().data = CUR().data..'int __max_'..me.n..';\n'
+            CUR().mem = CUR().mem..'int __max_'..me.n..';\n'
         end
     end,
     Loop_Num = function (me)
         local max, i, fr, dir, to, step, body = unpack(me)
         F.Loop(me)  -- max
         if to.tag ~= 'ID_any' then
-            CUR().data = CUR().data..'int __lim_'..me.n..';\n'
+            CUR().mem = CUR().mem..'int __lim_'..me.n..';\n'
         end
     end,
 
     ---------------------------------------------------------------------------
 
     Block__PRE = function (me)
-        local data = {}
+        local mem = {}
         for _, dcl in ipairs(me.dcls)
         do
             -- VAR
@@ -185,7 +185,7 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[
                     dcl.id_ = dcl.id..'_'..dcl.n
                     local tp, is_alias = unpack(dcl)
                     local ptr = (is_alias and '*' or '')
-                    data[#data+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
+                    mem[#mem+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
                 end
 
             -- EVT
@@ -195,7 +195,7 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[
 -- TODO: per Code evts
                     MEMS.evts[#MEMS.evts+1] = dcl
                     dcl.id_ = dcl.id..'_'..dcl.n
-                    data[#data+1] = 'tceu_nevt '..dcl.id_..';\n'
+                    mem[#mem+1] = 'tceu_nevt '..dcl.id_..';\n'
                 else
                     MEMS.evts[#MEMS.evts+1] = dcl
                     dcl.id_ = string.upper('CEU_EVENT_'..dcl.id..'_'..dcl.n)
@@ -206,7 +206,7 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[
                 local tp, is_alias, dim = unpack(dcl)
                 dcl.id_ = dcl.id..'_'..dcl.n
                 local ptr = (is_alias and '*' or '')
-                data[#data+1] = TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..'];\n'
+                mem[#mem+1] = TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..'];\n'
 
             -- EXT
             elseif dcl.tag == 'Ext' then
@@ -215,10 +215,10 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_trl* trl, tceu_nlbl lbl ]]..args..[[
                 dcl.id_ = string.upper('CEU_'..inout..'_'..id)
             end
         end
-        CUR().data = CUR().data..'struct {\n'..table.concat(data)
+        CUR().mem = CUR().mem..'struct {\n'..table.concat(mem)
     end,
     Block__POS = function (me)
-        CUR().data = CUR().data..'};\n'
+        CUR().mem = CUR().mem..'};\n'
     end,
 }
 
@@ -235,13 +235,13 @@ for _, dcl in ipairs(MEMS.exts) do
     end
 
     -- type
-    local data = 'typedef struct tceu_'..inout..'_'..dcl.id..' {\n'
+    local mem = 'typedef struct tceu_'..inout..'_'..dcl.id..' {\n'
     for i,Type in ipairs(Typelist) do
-        data = data..'    '..TYPES.toc(Type)..' _'..i..';\n'
+        mem = mem..'    '..TYPES.toc(Type)..' _'..i..';\n'
     end
-    data = data..'} tceu_'..inout..'_'..dcl.id..';\n'
+    mem = mem..'} tceu_'..inout..'_'..dcl.id..';\n'
 
-    MEMS.exts.types = MEMS.exts.types..data
+    MEMS.exts.types = MEMS.exts.types..mem
 end
 
 for _, dcl in ipairs(MEMS.evts) do
@@ -254,16 +254,16 @@ for _, dcl in ipairs(MEMS.evts) do
     end
 
     -- type
-    local data = 'typedef struct tceu_event_'..dcl.id..'_'..dcl.n..' {\n'
+    local mem = 'typedef struct tceu_event_'..dcl.id..'_'..dcl.n..' {\n'
     for i,Type in ipairs(Typelist) do
-        data = data..'    '..TYPES.toc(Type)..' _'..i..';\n'
+        mem = mem..'    '..TYPES.toc(Type)..' _'..i..';\n'
     end
-    data = data..'} tceu_event_'..dcl.id..'_'..dcl.n..';\n'
-    MEMS.evts.types = MEMS.evts.types..data
+    mem = mem..'} tceu_event_'..dcl.id..'_'..dcl.n..';\n'
+    MEMS.evts.types = MEMS.evts.types..mem
 end
 
 for i, code in ipairs(MEMS.codes) do
-    MEMS.codes.datas = MEMS.codes.datas..code.data
+    MEMS.codes.mems = MEMS.codes.mems..code.mem
     if i < #MEMS.codes then
         MEMS.codes.args = MEMS.codes.args..code.args
         if code.wrapper then

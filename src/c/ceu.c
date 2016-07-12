@@ -53,7 +53,7 @@ enum {
 
 typedef u8 tceu_nevt;   /* TODO */
 
-=== CODES_DATAS ===
+=== CODES_MEMS ===
 === CODES_ARGS ===
 
 === EXTS_TYPES ===
@@ -226,6 +226,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 
         if (matches_clear || matches_await) {
             trl->stk = stk;             /* awake only at this level again */
+
         } else if (trl->evt == CEU_INPUT__PAUSE) {
             u8 was_paused = trl->pse_paused;
             if (evt->id == trl->pse_evt) {
