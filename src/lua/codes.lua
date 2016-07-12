@@ -35,10 +35,11 @@ local function CLEAR (me)
         LINE(me, [[
 {
     CEU_STK_BCAST_ABORT(_ceu_stk, _ceu_trl,
-                        CEU_INPUT__CLEAR, NULL,]]..
-                        me.trails[1]..', '..me.trails[2]..[[);
-    ceu_stack_clear(_ceu_stk->down, &CEU_APP.trails[]]..me.trails[1]..[[],
-                                    &CEU_APP.trails[]]..me.trails[2]..[[]);
+                        _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[,
+                        CEU_INPUT__CLEAR, NULL);
+/* TODO */
+    ceu_stack_clear(_ceu_stk->down, &CEU_APP.root.mem.trails[]]..me.trails[1]..[[],
+                                    &CEU_APP.root.mem.trails[]]..me.trails[2]..[[]);
 }
 ]])
     end
@@ -88,6 +89,10 @@ ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..trl..[[], "bug found : unexpected
 
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
+        LINE(me, [[
+_ceu_mem->trails_n = ]]..AST.root.trails_n..[[;
+memset(&_ceu_mem->trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
+]])
     end,
 
     Nat_Block = function (me)
@@ -155,9 +160,9 @@ if (0)
     Finalize = function (me)
         local now,_,later = unpack(me)
         LINE(me, [[
-CEU_APP.trails[]]..later.trails[1]..[[].evt = CEU_INPUT__CLEAR;
-CEU_APP.trails[]]..later.trails[1]..[[].lbl = ]]..me.lbl_in.id..[[;
-CEU_APP.trails[]]..later.trails[1]..[[].stk = NULL;
+_ceu_mem->trails[]]..later.trails[1]..[[].evt = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..later.trails[1]..[[].lbl = ]]..me.lbl_in.id..[[;
+_ceu_mem->trails[]]..later.trails[1]..[[].stk = NULL;
 if (0) {
 ]])
         CASE(me, me.lbl_in)
@@ -177,10 +182,10 @@ _ceu_trl++;
     Pause_If = function (me)
         local e, body = unpack(me)
         LINE(me, [[
-CEU_APP.trails[]]..me.trails[1]..[[].evt        = CEU_INPUT__PAUSE;
-CEU_APP.trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
-CEU_APP.trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
-CEU_APP.trails[]]..me.trails[1]..[[].pse_paused = 0;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt        = CEU_INPUT__PAUSE;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
 _ceu_trl++;
 ]])
         CONC(me, body)
@@ -203,7 +208,9 @@ ceu_out_assert_msg(0, "reached end of `do´");
 
     Escape = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk, &CEU_APP.trails[]]..me.outer.trails[1]..'], '..me.outer.lbl_out.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk,
+            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[,
+            NULL);
 return;
 ]])
     end,
@@ -339,13 +346,17 @@ while (1) {
 
     Break = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk, &CEU_APP.trails[]]..me.outer.trails[1]..'], '..me.outer.lbl_out.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk,
+            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[,
+            NULL);
 return;
 ]])
     end,
     Continue = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk, &CEU_APP.trails[]]..me.outer.trails[1]..'], '..me.outer.lbl_cnt.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk,
+            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[,
+            NULL);
 return;
 ]])
     end,
@@ -379,17 +390,15 @@ CEU_APP.root.__and_]]..me.n..'_'..i..[[ = 0;
             if i < #me then
                 LINE(me, [[
 CEU_STK_LBL_ABORT(_ceu_stk,
-                  &CEU_APP.trails[]]..me[i+1].trails[1]..[[],
-                  &CEU_APP.trails[]]..sub.trails[1]..[[],
-                  ]]..me.lbls_in[i].id..[[,
+                  &_ceu_mem->trails[]]..me[i+1].trails[1]..[[],
+                  _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[,
                   NULL);
 ]])
             else
                 -- no need to abort since there's a "return" below
                 LINE(me, [[
 CEU_STK_LBL(_ceu_stk,
-            &CEU_APP.trails[]]..sub.trails[1]..[[],
-            ]]..me.lbls_in[i].id..[[,
+            _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[,
             NULL);
 ]])
             end
@@ -415,7 +424,9 @@ CEU_APP.root.__and_]]..me.n..'_'..i..[[ = 1;
 ]])
                 end
                 LINE(me, [[
-CEU_STK_LBL(_ceu_stk, &CEU_APP.trails[]]..me.trails[1]..'], '..me.lbl_out.id..[[, NULL);
+CEU_STK_LBL(_ceu_stk,
+            _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[,
+            NULL);
 return;
 ]])
             end
@@ -589,8 +600,8 @@ case ]]..me.lbl_out.id..[[:;
         end
         LINE(me, [[
     CEU_STK_BCAST_ABORT(_ceu_stk, _ceu_trl,
-                        ]]..V(Exp_Name)..[[, &__ceu_ps,
-                        0, CEU_TRAILS_N);
+                        &CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1,
+                        ]]..V(Exp_Name)..[[, &__ceu_ps);
 }
 ]])
     end,
@@ -690,7 +701,6 @@ local c = SUB(c, '=== EVTS_TYPES ===',       MEMS.evts.types)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
 local c = SUB(c, '=== EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
 local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
-local c = SUB(c, '=== TRAILS_N ===',         AST.root.trails_n)
 local c = SUB(c, '=== TCEU_NTRL ===',        TYPES.n2uint(AST.root.trails_n))
 local c = SUB(c, '=== TCEU_NLBL ===',        TYPES.n2uint(#LABELS.list))
 local c = SUB(c, '=== LABELS ===',           labels)

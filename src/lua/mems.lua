@@ -33,6 +33,8 @@ F = {
     ROOT__POS = function (me)
         me.mems.mem = [[
 typedef struct tceu_code_mem_ROOT {
+    tceu_code_mem mem;
+    tceu_trl      trails[]]..me.trails_n..[[];
     ]]..me.mems.mem..[[
 } tceu_code_mem_ROOT;
 ]]..'\n'
@@ -50,6 +52,8 @@ typedef struct tceu_code_mem_ROOT {
         if body then
             me.mems.mem = [[
 typedef struct tceu_code_mem_]]..me.id..[[ {
+    tceu_code_mem mem;
+    tceu_trl      trails[]]..me.trails_n..[[];
     ]]..me.mems.mem..[[
 } tceu_code_mem_]]..me.id..[[;
 ]]..'\n'

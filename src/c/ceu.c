@@ -49,22 +49,9 @@ enum {
     === EXTS_ENUM_OUTPUT ===
 };
 
-#define CEU_TRAILS_N (=== TRAILS_N ===)
-
 typedef u8 tceu_nevt;   /* TODO */
-
-=== CODES_MEMS ===
-=== CODES_ARGS ===
-
-=== EXTS_TYPES ===
-=== EVTS_TYPES ===
-
 typedef === TCEU_NTRL === tceu_ntrl;
 typedef === TCEU_NLBL === tceu_nlbl;
-
-enum {
-    === LABELS ===
-};
 
 typedef struct tceu_evt {
     tceu_nevt id;
@@ -92,6 +79,21 @@ typedef struct tceu_trl {
     };
 } tceu_trl;
 
+typedef struct tceu_code_mem {
+    tceu_ntrl trails_n;
+    tceu_trl  trails[0];
+} tceu_code_mem;
+
+=== CODES_MEMS ===
+=== CODES_ARGS ===
+
+=== EXTS_TYPES ===
+=== EVTS_TYPES ===
+
+enum {
+    === LABELS ===
+};
+
 typedef struct tceu_app {
 
     /* WCLOCK */
@@ -100,7 +102,6 @@ typedef struct tceu_app {
     s32 wclk_min_cmp;
 
     tceu_code_mem_ROOT root;
-    tceu_trl trails[CEU_TRAILS_N];
 } tceu_app;
 
 static tceu_app CEU_APP;
@@ -164,51 +165,56 @@ static int ceu_wclock (s32 dt, s32* set, s32* sub)
 
 /*****************************************************************************/
 
-static void ceu_go_bcast (tceu_stk* stk, tceu_evt* evt, tceu_ntrl trl0, tceu_ntrl trlF);
+static void ceu_go_bcast (tceu_stk* stk, tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF, tceu_evt* evt);
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
-static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_trl* _ceu_trl, tceu_nlbl _ceu_lbl, tceu_evt* _ceu_evt);
+static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl, tceu_evt* _ceu_evt);
 
 /*****************************************************************************/
 
-#define CEU_STK_LBL(stk_old,trl_exe,lbl,evt) {      \
-    tceu_stk __ceu_stk = { stk_old, NULL, 1 };      \
-    ceu_go_lbl(&__ceu_stk, trl_exe, lbl, evt);     \
+#define CEU_STK_LBL(stk_old, exe_mem,exe_trl,exe_lbl, evt) {    \
+    tceu_stk __ceu_stk = { stk_old, NULL, 1 };                  \
+    ceu_go_lbl(&__ceu_stk, exe_mem, exe_trl, exe_lbl, evt);     \
 }
 
-#define CEU_STK_LBL_ABORT(stk_old,trl_abort,trl_exe,lbl,evt) {  \
-    tceu_stk __ceu_stk = { stk_old, trl_abort, 1 };             \
-    ceu_go_lbl(&__ceu_stk, trl_exe, lbl, evt);                  \
-    if (!__ceu_stk.is_alive) {                                  \
-        return;                                                 \
-    }                                                           \
+#define CEU_STK_LBL_ABORT(stk_old, trl_abort,               \
+                          exe_mem, exe_trl, exe_lbl,        \
+                          evt) {                            \
+    tceu_stk __ceu_stk = { stk_old, trl_abort, 1 };         \
+    ceu_go_lbl(&__ceu_stk, exe_mem,exe_trl,exe_lbl, evt);   \
+    if (!__ceu_stk.is_alive) {                              \
+        return;                                             \
+    }                                                       \
 }
 
-#define CEU_STK_BCAST_ABORT(stk_old,trl_abort,evt_id,evt_ps,trl0,trlF) {  \
-    tceu_stk __ceu_stk = { stk_old, trl_abort, 1 };             \
-    tceu_evt __ceu_evt = { evt_id, evt_ps };                    \
-    ceu_go_bcast(&__ceu_stk, &__ceu_evt, trl0, trlF);           \
-    if (!__ceu_stk.is_alive) {                                  \
-        return;                                                 \
-    }                                                           \
+#define CEU_STK_BCAST_ABORT(stk_old, trl_abort,                         \
+                            exe_mem, exe_trl0, exe_trlF,                \
+                            evt_id, evt_ps) {                           \
+    tceu_stk __ceu_stk = { stk_old, trl_abort, 1 };                     \
+    tceu_evt __ceu_evt = { evt_id, evt_ps };                            \
+    ceu_go_bcast(&__ceu_stk, exe_mem,exe_trl0,exe_trlF, &__ceu_evt);    \
+    if (!__ceu_stk.is_alive) {                                          \
+        return;                                                         \
+    }                                                                   \
 }
 
 === CODES_WRAPPERS ===
 
-static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_trl* _ceu_trl, tceu_nlbl _ceu_lbl, tceu_evt* _ceu_evt)
+static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl, tceu_evt* _ceu_evt)
 {
+    tceu_trl* _ceu_trl = &_ceu_mem->trails[_ceu_trlK];
     switch (_ceu_lbl) {
         === CODES ===
     }
 }
 
-static void ceu_go_bcast (tceu_stk* stk, tceu_evt* evt, tceu_ntrl trl0, tceu_ntrl trlF)
+static void ceu_go_bcast (tceu_stk* stk, tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF, tceu_evt* evt)
 {
     tceu_ntrl trlK;
     tceu_trl* trl;
 
     /* MARK TRAILS TO EXECUTE */
 
-    for (trlK=trl0, trl=&CEU_APP.trails[trlK];
+    for (trlK=trl0, trl=&mem->trails[trlK];
          trlK<=trlF;
          trlK++, trl++)
     {
@@ -252,12 +258,12 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
         trlF = tmp;
     }
 
-    for (trlK=trl0, trl=&CEU_APP.trails[trlK]; ;)
+    for (trlK=trl0, trl=&mem->trails[trlK]; ;)
     {
         if (trl->stk==stk && trl->evt!=CEU_INPUT__PAUSE) {
             trl->evt = CEU_INPUT__NONE;
             trl->stk = NULL;
-            CEU_STK_LBL(stk, trl, trl->lbl, evt);
+            CEU_STK_LBL(stk, mem, trlK, trl->lbl, evt);
         }
 
         if (trlK == trlF) {
@@ -284,7 +290,9 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
             break;
         }
     }
-    ceu_go_bcast(&CEU_STK_BASE, &evt, 0, CEU_TRAILS_N);
+    ceu_go_bcast(&CEU_STK_BASE,
+                (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1,
+                &evt);
 }
 
 /*****************************************************************************/
@@ -311,8 +319,7 @@ int ceu_go_all (void)
     CEU_APP.wclk_late = 0;
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
-    memset(&CEU_APP.trails, 0, CEU_TRAILS_N*sizeof(tceu_trl));
-    CEU_STK_LBL(&CEU_STK_BASE, &CEU_APP.trails[0], CEU_LABEL_ROOT, NULL);
+    CEU_STK_LBL(&CEU_STK_BASE, (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT, NULL);
 
     while (!ceu_cb_terminating && ceu_cb_pending_async) {
         ceu_cb_pending_async = 0;

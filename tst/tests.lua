@@ -670,11 +670,8 @@ escape (int) __;
     --run = 3,
 }
 
--->>> OS_START / ANY
-
 Test { [[
 native _f,_int;
-input void OS_START;
 native/pos do
     int f () { return 1; }
 end
@@ -685,7 +682,6 @@ escape x;
     run = 1,
 }
 Test { [[
-input void OS_START;
 native _int;
 native/pure _f;
 native/pos do
@@ -698,7 +694,6 @@ escape x;
     run = 1,
 }
 Test { [[
-input void OS_START;
 native _int, _f;
 native/pos do
     int f () { return 1; }
@@ -710,7 +705,6 @@ escape x;
     run = 1,
 }
 Test { [[
-input void OS_START;
 native _f;
 native/pos do
     void* V;
@@ -724,7 +718,6 @@ escape x;
     run = 1,
 }
 Test { [[
-input void OS_START;
 native _f;
 native/pos do
     void* V;
@@ -737,68 +730,6 @@ escape x;
     wrn = true,
     run = 1,
 }
-
-Test { [[
-input void ANY;
-await ANY;
-escape 1;
-]],
-    todo = 'ANY',
-    run = { ['~>1s']=1 },
-}
-
-Test { [[
-input void OS_START;
-input void A, B;
-input void ANY;
-var int ret = 0;
-await OS_START;
-par/or do
-    await B;
-with
-    every ANY do
-        ret = ret + 1;
-    end
-end
-escape ret;
-]],
-    todo = 'ANY',
-    wrn = true,
-    run = { ['~>1s;~>A;~>B']=5 },
-}
-
-Test { [[
-input void ANY;
-var int ret = 0;
-par/or do
-    every ANY do
-        ret = ret + 1;
-    end
-with
-    every 1ms do
-    end
-with
-    await 1ms;
-end
-escape ret;
-]],
-    todo = 'ANY',
-    run = { ['~>1s']=1001 },
-}
-
-Test { [[
-native _f;
-native/pos do
-    int f;
-end
-input int A;
-_f = await A;
-escape _f;
-]],
-    run = {['1~>A']=1},
-}
-
---<<< OS_START / ANY
 
 Test { [[
 native/pos do
@@ -1964,6 +1895,23 @@ end
         abrt = 4,
     },
     run = { ['~>2s']=1 }
+}
+
+Test { [[
+    input void A;
+    var int v1=4,v2=4;
+    par/or do
+        await A;
+        v1 = 1;
+    with
+        await A;
+        v2 = 2;
+    end
+    escape v1 + v2;
+]],
+    run = { ['~>A']=5 },
+    --run = 3,
+    --todo = 'nd excpt',
 }
 
 Test { [[
@@ -3540,23 +3488,6 @@ end
 escape 0;
 ]],
     tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
-}
-
-Test { [[
-input void OS_START;
-var int v = 1;
-loop do
-    loop i in [0->v[ do
-        await OS_START;
-        escape 2;
-    end
-end
-escape 1;
-]],
-    wrn = true,
-    ana = 'line 4 : `loop´ iteration is not reachable',
-    --ana = 'line 4 : statement is not reachable',    -- TODO: should be line 7
-    run = 2,
 }
 
 Test { [[
@@ -5442,6 +5373,73 @@ end
     run = 1,
 }
 
+-->>> OS_START / ANY
+
+Test { [[
+input void ANY;
+await ANY;
+escape 1;
+]],
+    todo = 'ANY',
+    run = { ['~>1s']=1 },
+}
+
+Test { [[
+input void OS_START;
+input void A, B;
+input void ANY;
+var int ret = 0;
+await OS_START;
+par/or do
+    await B;
+with
+    every ANY do
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    todo = 'ANY',
+    wrn = true,
+    run = { ['~>1s;~>A;~>B']=5 },
+}
+
+Test { [[
+input void ANY;
+var int ret = 0;
+par/or do
+    every ANY do
+        ret = ret + 1;
+    end
+with
+    every 1ms do
+    end
+with
+    await 1ms;
+end
+escape ret;
+]],
+    todo = 'ANY',
+    run = { ['~>1s']=1001 },
+}
+
+Test { [[
+input void OS_START;
+var int v = 1;
+loop do
+    loop i in [0->v[ do
+        await OS_START;
+        escape 2;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    ana = 'line 4 : `loop´ iteration is not reachable',
+    --ana = 'line 4 : statement is not reachable',    -- TODO: should be line 7
+    run = 2,
+}
+
 Test { [[
 input void OS_START;
 event int a;
@@ -5767,6 +5765,20 @@ with
 end
 ]],
     run = 111,
+}
+
+--<<< OS_START / ANY
+
+Test { [[
+native _f;
+native/pos do
+    int f;
+end
+input int A;
+_f = await A;
+escape _f;
+]],
+    run = {['1~>A']=1},
 }
 
 Test { [[
