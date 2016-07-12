@@ -130,7 +130,7 @@ if (0)
         LINE(me, [[
     /* memory local to Code */
     {
-        tceu_code_data_]]..id..[[ _ceu_data;
+        tceu_code_mem_]]..id..[[ _ceu_data;
 ]])
         local vars = AST.get(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
                                     1,'Stmts', 2,'Stmts')

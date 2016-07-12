@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -27953,7 +27954,6 @@ escape 1;
     run = 1,
 }
 
---]===]
 Test { [[
 code/delayed Tx (void)=>int do
     escape 10;

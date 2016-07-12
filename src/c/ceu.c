@@ -99,7 +99,7 @@ typedef struct tceu_app {
     s32 wclk_min_set;
     s32 wclk_min_cmp;
 
-    tceu_code_data_ROOT root;
+    tceu_code_mem_ROOT root;
     tceu_trl trails[CEU_TRAILS_N];
 } tceu_app;
 

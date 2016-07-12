@@ -32,9 +32,9 @@ F = {
     end,
     ROOT__POS = function (me)
         me.mems.data = [[
-typedef struct tceu_code_data_ROOT {
+typedef struct tceu_code_mem_ROOT {
     ]]..me.mems.data..[[
-} tceu_code_data_ROOT;
+} tceu_code_mem_ROOT;
 ]]..'\n'
         MEMS.codes[#MEMS.codes+1] = me.mems
     end,
@@ -49,9 +49,9 @@ typedef struct tceu_code_data_ROOT {
         local _,_,_,_,_,body = unpack(me)
         if body then
             me.mems.data = [[
-typedef struct tceu_code_data_]]..me.id..[[ {
+typedef struct tceu_code_mem_]]..me.id..[[ {
     ]]..me.mems.data..[[
-} tceu_code_data_]]..me.id..[[;
+} tceu_code_mem_]]..me.id..[[;
 ]]..'\n'
             MEMS.codes[#MEMS.codes+1] = me.mems
         end
