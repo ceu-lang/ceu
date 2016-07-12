@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -27861,7 +27860,8 @@ end
 escape 1;
 ]],
     --wrn = true,
-    cc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
+    --cc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
+    run = 1,
 }
 Test { [[
 code/delayed Tx (var int x)=>void
@@ -27942,15 +27942,35 @@ code/delayed Tx (void)=>void do end
 call Tx();
 escape 1;
 ]],
-    run = 1,
+    exps = 'line 2 : invalid call : expected `code/instantaneous´ : got `code/delayed´ (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
 code/delayed Tx (void)=>void do end
+await Tx();
+escape 1;
+]],
+    run = 1,
+}
+
+--]===]
+Test { [[
+code/delayed Tx (void)=>int do
+    escape 10;
+end
+var int ret = await Tx();
+escape ret;
+]],
+    run = 10,
+}
+do return end
+
+Test { [[
+code/delayed Tx (void)=>void do end
 par/or do
-    call Tx();
+    await Tx();
 with
-    call Tx();
+    await Tx();
 end
 
 input void OS_START;

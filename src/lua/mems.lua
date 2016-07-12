@@ -60,34 +60,33 @@ typedef struct tceu_code_data_]]..me.id..[[ {
     Code = function (me)
         local mod,_,id,Typepars_ids, Type, body = unpack(me)
         if not body then return end
-        assert(mod == 'code/instantaneous')
 
         -- args
         me.mems.args = 'typedef struct tceu_code_args_'..id..' {\n'
         if not TYPES.check(Type,'void') then
             me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..' _ret;\n'
         end
-
-        -- wrapper
-        local args, ps = {}, {}
-
         for _,Typepars_ids_item in ipairs(Typepars_ids) do
             local a,is_alias,c,Type,id2 = unpack(Typepars_ids_item)
             assert(a=='var' and c==false)
             local ptr = (is_alias and '*' or '')
-
-            -- args
             me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..ptr..' '..id2..';\n'
+        end
+        me.mems.args = me.mems.args..'} tceu_code_args_'..id..';\n'
 
-            -- wrapper
+        if mod == 'code/delayed' then
+            return
+        end
+
+        -- wrapper
+        local args, ps = {}, {}
+        for _,Typepars_ids_item in ipairs(Typepars_ids) do
+            local a,is_alias,c,Type,id2 = unpack(Typepars_ids_item)
+            assert(a=='var' and c==false)
+            local ptr = (is_alias and '*' or '')
             args[#args+1] = TYPES.toc(Type)..ptr..' '..id2
             ps[#ps+1] = 'ps.'..id2..' = '..id2..';'
         end
-
-        -- args
-        me.mems.args = me.mems.args..'} tceu_code_args_'..id..';\n'
-
-        -- wrapper
         if #args > 0 then
             args = ','..table.concat(args,', ')
             ps   = table.concat(ps,'\n')..'\n'
@@ -266,7 +265,9 @@ end
 for i, code in ipairs(MEMS.codes) do
     MEMS.codes.datas = MEMS.codes.datas..code.data
     if i < #MEMS.codes then
-        MEMS.codes.wrappers = MEMS.codes.wrappers..code.wrapper
-        MEMS.codes.args     = MEMS.codes.args..code.args
+        MEMS.codes.args = MEMS.codes.args..code.args
+        if code.wrapper then
+            MEMS.codes.wrappers = MEMS.codes.wrappers..code.wrapper
+        end
     end
 end

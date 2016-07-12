@@ -63,12 +63,16 @@ F = {
 
     Abs_Call = function (me)
         local ID_abs = AST.asr(me,'', 2,'Abs_Cons', 1,'ID_abs')
+        local mod = unpack(ID_abs.dcl)
 
         -- ctx
         ASR(ID_abs.dcl.tag=='Code', me,
                 'invalid call : '..
                 'unexpected context for '..AST.tag2id[ID_abs.dcl.tag]
                                          ..' "'..ID_abs.dcl.id..'"')
+        ASR(mod == 'code/instantaneous', me,
+                'invalid call : '..
+                'expected `code/instantaneous´ : got `code/delayed´ ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
 
         -- info
         local _,_,_,_,out = unpack(ID_abs.dcl)
