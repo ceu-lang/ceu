@@ -165,33 +165,33 @@ static int ceu_wclock (s32 dt, s32* set, s32* sub)
 
 /*****************************************************************************/
 
-static void ceu_go_bcast (tceu_stk* stk, tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF, tceu_evt* evt);
+static void ceu_go_bcast (tceu_evt* evt, tceu_stk* stk,
+                          tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF);
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
-static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl, tceu_evt* _ceu_evt);
+static void ceu_go_lbl (tceu_evt* _ceu_evt, tceu_stk* _ceu_stk,
+                        tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
 
 /*****************************************************************************/
 
-#define CEU_STK_LBL(stk_old, exe_mem,exe_trl,exe_lbl, evt) {    \
+#define CEU_STK_LBL(evt, stk_old, exe_mem,exe_trl,exe_lbl) {    \
     tceu_stk __ceu_stk = { stk_old, NULL, 1 };                  \
-    ceu_go_lbl(&__ceu_stk, exe_mem, exe_trl, exe_lbl, evt);     \
+    ceu_go_lbl(evt, &__ceu_stk, exe_mem, exe_trl, exe_lbl);     \
 }
 
-#define CEU_STK_LBL_ABORT(stk_old, trl_abort,               \
-                          exe_mem, exe_trl, exe_lbl,        \
-                          evt) {                            \
+#define CEU_STK_LBL_ABORT(evt, stk_old, trl_abort,          \
+                          exe_mem, exe_trl, exe_lbl) {      \
     tceu_stk __ceu_stk = { stk_old, trl_abort, 1 };         \
-    ceu_go_lbl(&__ceu_stk, exe_mem,exe_trl,exe_lbl, evt);   \
+    ceu_go_lbl(evt, &__ceu_stk, exe_mem,exe_trl,exe_lbl);   \
     if (!__ceu_stk.is_alive) {                              \
         return;                                             \
     }                                                       \
 }
 
-#define CEU_STK_BCAST_ABORT(stk_old, trl_abort,                         \
-                            exe_mem, exe_trl0, exe_trlF,                \
-                            evt_id, evt_ps) {                           \
+#define CEU_STK_BCAST_ABORT(evt_id, evt_ps, stk_old, trl_abort,         \
+                            exe_mem, exe_trl0, exe_trlF) {              \
     tceu_stk __ceu_stk = { stk_old, trl_abort, 1 };                     \
     tceu_evt __ceu_evt = { evt_id, evt_ps };                            \
-    ceu_go_bcast(&__ceu_stk, exe_mem,exe_trl0,exe_trlF, &__ceu_evt);    \
+    ceu_go_bcast(&__ceu_evt, &__ceu_stk, exe_mem,exe_trl0,exe_trlF);    \
     if (!__ceu_stk.is_alive) {                                          \
         return;                                                         \
     }                                                                   \
@@ -199,7 +199,8 @@ static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_ntrl _
 
 === CODES_WRAPPERS ===
 
-static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl, tceu_evt* _ceu_evt)
+static void ceu_go_lbl (tceu_evt* _ceu_evt, tceu_stk* _ceu_stk,
+                        tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl)
 {
     tceu_trl* _ceu_trl = &_ceu_mem->trails[_ceu_trlK];
     switch (_ceu_lbl) {
@@ -207,7 +208,8 @@ static void ceu_go_lbl (tceu_stk* _ceu_stk, tceu_code_mem* _ceu_mem, tceu_ntrl _
     }
 }
 
-static void ceu_go_bcast (tceu_stk* stk, tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF, tceu_evt* evt)
+static void ceu_go_bcast (tceu_evt* evt, tceu_stk* stk,
+                          tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF)
 {
     tceu_ntrl trlK;
     tceu_trl* trl;
@@ -263,7 +265,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
         if (trl->stk==stk && trl->evt!=CEU_INPUT__PAUSE) {
             trl->evt = CEU_INPUT__NONE;
             trl->stk = NULL;
-            CEU_STK_LBL(stk, mem, trlK, trl->lbl, evt);
+            CEU_STK_LBL(evt, stk, mem, trlK, trl->lbl);
         }
 
         if (trlK == trlF) {
@@ -290,9 +292,8 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
             break;
         }
     }
-    ceu_go_bcast(&CEU_STK_BASE,
-                (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1,
-                &evt);
+    ceu_go_bcast(&evt, &CEU_STK_BASE,
+                (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
 }
 
 /*****************************************************************************/
@@ -319,7 +320,8 @@ int ceu_go_all (void)
     CEU_APP.wclk_late = 0;
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
-    CEU_STK_LBL(&CEU_STK_BASE, (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT, NULL);
+    CEU_STK_LBL(NULL, &CEU_STK_BASE,
+                (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
 
     while (!ceu_cb_terminating && ceu_cb_pending_async) {
         ceu_cb_pending_async = 0;

@@ -34,9 +34,8 @@ local function CLEAR (me)
     if me.trails_n > 1 then
         LINE(me, [[
 {
-    CEU_STK_BCAST_ABORT(_ceu_stk, _ceu_trl,
-                        _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[,
-                        CEU_INPUT__CLEAR, NULL);
+    CEU_STK_BCAST_ABORT(CEU_INPUT__CLEAR, NULL, _ceu_stk, _ceu_trl,
+                        _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
 /* TODO */
     ceu_stack_clear(_ceu_stk->down, &CEU_APP.root.mem.trails[]]..me.trails[1]..[[],
                                     &CEU_APP.root.mem.trails[]]..me.trails[2]..[[]);
@@ -208,9 +207,8 @@ ceu_out_assert_msg(0, "reached end of `do´");
 
     Escape = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk,
-            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[,
-            NULL);
+CEU_STK_LBL(NULL, _ceu_stk,
+            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 return;
 ]])
     end,
@@ -346,17 +344,15 @@ while (1) {
 
     Break = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk,
-            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[,
-            NULL);
+CEU_STK_LBL(NULL, _ceu_stk,
+            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 return;
 ]])
     end,
     Continue = function (me)
         LINE(me, [[
-CEU_STK_LBL(_ceu_stk,
-            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[,
-            NULL);
+CEU_STK_LBL(NULL, _ceu_stk,
+            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
 return;
 ]])
     end,
@@ -389,17 +385,15 @@ CEU_APP.root.__and_]]..me.n..'_'..i..[[ = 0;
         for i, sub in ipairs(me) do
             if i < #me then
                 LINE(me, [[
-CEU_STK_LBL_ABORT(_ceu_stk,
+CEU_STK_LBL_ABORT(NULL, _ceu_stk,
                   &_ceu_mem->trails[]]..me[i+1].trails[1]..[[],
-                  _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[,
-                  NULL);
+                  _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[);
 ]])
             else
                 -- no need to abort since there's a "return" below
                 LINE(me, [[
-CEU_STK_LBL(_ceu_stk,
-            _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[,
-            NULL);
+CEU_STK_LBL(NULL, _ceu_stk,
+            _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
 ]])
             end
         end
@@ -424,9 +418,8 @@ CEU_APP.root.__and_]]..me.n..'_'..i..[[ = 1;
 ]])
                 end
                 LINE(me, [[
-CEU_STK_LBL(_ceu_stk,
-            _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[,
-            NULL);
+CEU_STK_LBL(NULL, _ceu_stk,
+            _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
 return;
 ]])
             end
@@ -599,9 +592,8 @@ case ]]..me.lbl_out.id..[[:;
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    CEU_STK_BCAST_ABORT(_ceu_stk, _ceu_trl,
-                        &CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1,
-                        ]]..V(Exp_Name)..[[, &__ceu_ps);
+    CEU_STK_BCAST_ABORT(]]..V(Exp_Name)..[[, &__ceu_ps, _ceu_stk, _ceu_trl,
+                        (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
 }
 ]])
     end,
