@@ -5,6 +5,11 @@ end
 
 local F
 
+function CUR (field)
+    local data = (AST.iter'Code'() and '_ceu_data') or 'CEU_APP.root'
+    return '('..data..'.'..field..')'
+end
+
 function V (me, ctx)
     ctx = ctx or {}
     local f = assert(F[me.tag], 'bug found : V('..me.tag..')')
@@ -123,7 +128,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trl,
         local _, is_alias = unpack(me.dcl)
         if me.dcl.tag == 'Evt' then
             if is_alias then
-                return '(CEU_APP.data.'..me.dcl.id_..')'
+                return CUR(me.dcl.id_)
             else
                 return me.dcl.id_
             end
@@ -132,7 +137,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trl,
             if is_alias and (not ctx.is_bind) then
                 ptr = '*'
             end
-            return '('..ptr..'CEU_APP.data.'..me.dcl.id_..')'
+            return '('..ptr..CUR(me.dcl.id_)..')'
         end
     end,
 

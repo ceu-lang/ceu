@@ -121,10 +121,17 @@ if (]]..V(c)..[[) {
         local _,_,id,Typepars_ids,_,body = unpack(me)
         if not body then return end
 
-        LINE(me, 'if (0) {')    -- do not enter from outside
-
+LINE(me, [[
+/* do not enter from outside */
+if (0)
+{
+]])
         CASE(me, me.lbl_in)
-
+        LINE(me, [[
+    /* memory local to Code */
+    {
+        tceu_code_data_]]..id..[[ _ceu_data;
+]])
         local vars = AST.get(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
                                     1,'Stmts', 2,'Stmts')
         for i,Typepars_ids_item in ipairs(Typepars_ids) do
@@ -137,10 +144,10 @@ if (]]..V(c)..[[) {
 
         CONC(me, body)
         LINE(me, [[
-return;
+        return;
+    }
+}
 ]])
-
-        LINE(me, '}')           -- do not enter from outside
     end,
 
     ---------------------------------------------------------------------------
@@ -210,13 +217,13 @@ return;
                 -- ensures that max is constant
                 ini = [[
 { char __]]..me.n..'['..V(max)..'/'..V(max)..[[ ] = {0}; }
-CEU_APP.data.__max_]]..me.n..[[ = 0;
+]]..CUR('__max_'..me.n)..[[ = 0;
 ]],
                 chk = [[
-ceu_out_assert_msg(CEU_APP.data.__max_]]..me.n..' < '..V(max)..[[, "`loop´ overflow");
+ceu_out_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ overflow");
 ]],
                 inc = [[
-CEU_APP.data.__max_]]..me.n..[[++;
+]]..CUR('__max_'..me.n)..[[++;
 ]],
             }
         else
@@ -297,7 +304,7 @@ while (1) {
 
         if to.tag ~= 'ID_any' then
             LINE(me, [[
-CEU_APP.data.__lim_]]..me.n..' = '..V(to)..[[;
+]]..CUR('__lim_'..me.n)..' = '..V(to)..[[;
 ]])
         end
 
@@ -309,7 +316,7 @@ while (1) {
 ]])
         if to.tag ~= 'ID_any' then
             LINE(me, [[
-    if (]]..V(i)..' '..op..' CEU_APP.data.__lim_'..me.n..[[) {
+    if (]]..V(i)..' '..op..' '..CUR('__lim_'..me.n)..[[) {
         break;
     }
 ]])
@@ -353,7 +360,7 @@ return;
     ---------------------------------------------------------------------------
 
     __par_and = function (me, i)
-        return '(CEU_APP.data.__and_'..me.n..'_'..i..')'
+        return '(CEU_APP.root.__and_'..me.n..'_'..i..')'
     end,
     Par_Or  = 'Par',
     Par_And = 'Par',
@@ -362,7 +369,7 @@ return;
         if me.tag == 'Par_And' then
             for i, sub in ipairs(me) do
                 LINE(me, [[
-CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 0;
+CEU_APP.root.__and_]]..me.n..'_'..i..[[ = 0;
 ]])
             end
         end
@@ -404,7 +411,7 @@ return;
                 -- Par_And: open gates
                 if me.tag == 'Par_And' then
                     LINE(me, [[
-CEU_APP.data.__and_]]..me.n..'_'..i..[[ = 1;
+CEU_APP.root.__and_]]..me.n..'_'..i..[[ = 1;
 ]])
                 end
                 LINE(me, [[
@@ -423,7 +430,7 @@ return;
         if me.tag == 'Par_And' then
             for i, sub in ipairs(me) do
                 LINE(me, [[
-if (! CEU_APP.data.__and_]]..me.n..'_'..i..[[) {
+if (! CEU_APP.root.__and_]]..me.n..'_'..i..[[) {
     return;
 }
 ]])
@@ -591,7 +598,7 @@ case ]]..me.lbl_out.id..[[:;
     Await_Wclock = function (me)
         local e = unpack(me)
 
-        local wclk = 'CEU_APP.data.__wclk_'..me.n
+        local wclk = 'CEU_APP.root.__wclk_'..me.n
 
         LINE(me, [[
 ceu_wclock(]]..V(e)..', &'..wclk..[[, NULL);
@@ -676,10 +683,10 @@ end
 -- CEU.C
 local c = PAK.files.ceu_c
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
-local c = SUB(c, '=== DATA ===',             MEMS.data)
+local c = SUB(c, '=== CODES_DATAS ===',      MEMS.codes.datas)
+local c = SUB(c, '=== CODES_ARGS ===',       MEMS.codes.args)
 local c = SUB(c, '=== EXTS_TYPES ===',       MEMS.exts.types)
 local c = SUB(c, '=== EVTS_TYPES ===',       MEMS.evts.types)
-local c = SUB(c, '=== CODES_TYPES ===',      MEMS.codes.types)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
 local c = SUB(c, '=== EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
 local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)

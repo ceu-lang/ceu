@@ -53,10 +53,11 @@ enum {
 
 typedef u8 tceu_nevt;   /* TODO */
 
-=== DATA ===
+=== CODES_DATAS ===
+=== CODES_ARGS ===
+
 === EXTS_TYPES ===
 === EVTS_TYPES ===
-=== CODES_TYPES ===
 
 typedef === TCEU_NTRL === tceu_ntrl;
 typedef === TCEU_NLBL === tceu_nlbl;
@@ -98,7 +99,7 @@ typedef struct tceu_app {
     s32 wclk_min_set;
     s32 wclk_min_cmp;
 
-    CEU_DATA_ROOT data;
+    tceu_code_data_ROOT root;
     tceu_trl trails[CEU_TRAILS_N];
 } tceu_app;
 

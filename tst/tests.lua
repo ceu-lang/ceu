@@ -27828,8 +27828,6 @@ escape call/recursive Fx(5);
 
 --<<< CODE / INSTANTANEOUS / FUNCTIONS
 
-do return end
-
 -->>> CODE / DELAYED
 
 Test { [[
