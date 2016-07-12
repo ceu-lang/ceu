@@ -6,7 +6,14 @@ end
 local F
 
 function CUR (field)
-    local data = (AST.iter'Code'() and '_ceu_data') or 'CEU_APP.root'
+    local Code = AST.iter'Code'()
+    local data do
+        if Code then
+            data = '((tceu_code_mem_'..Code.id..'*)_ceu_mem)'
+        else
+            data = 'CEU_APP.root'
+        end
+    end
     return '('..data..'.'..field..')'
 end
 

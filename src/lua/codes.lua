@@ -37,8 +37,8 @@ local function CLEAR (me)
     CEU_STK_BCAST_ABORT(CEU_INPUT__CLEAR, NULL, _ceu_stk, _ceu_trl,
                         _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
 /* TODO */
-    ceu_stack_clear(_ceu_stk->down, &CEU_APP.root.mem.trails[]]..me.trails[1]..[[],
-                                    &CEU_APP.root.mem.trails[]]..me.trails[2]..[[]);
+    ceu_stack_clear(_ceu_stk->down, &_ceu_mem->trails[]]..me.trails[1]..[[],
+                                    &_ceu_mem->trails[]]..me.trails[2]..[[]);
 }
 ]])
     end
@@ -367,7 +367,7 @@ return;
     ---------------------------------------------------------------------------
 
     __par_and = function (me, i)
-        return '(CEU_APP.root.__and_'..me.n..'_'..i..')'
+        return CUR('__and_'..me.n..'_'..i)
     end,
     Par_Or  = 'Par',
     Par_And = 'Par',
@@ -376,7 +376,7 @@ return;
         if me.tag == 'Par_And' then
             for i, sub in ipairs(me) do
                 LINE(me, [[
-CEU_APP.root.__and_]]..me.n..'_'..i..[[ = 0;
+]]..CUR('__and_'..me.n..'_'..i)..[[ = 0;
 ]])
             end
         end
@@ -414,7 +414,7 @@ return;
                 -- Par_And: open gates
                 if me.tag == 'Par_And' then
                     LINE(me, [[
-CEU_APP.root.__and_]]..me.n..'_'..i..[[ = 1;
+]]..CUR('__and_'..me.n..'_'..i)..[[ = 1;
 ]])
                 end
                 LINE(me, [[
@@ -434,7 +434,7 @@ return;
         if me.tag == 'Par_And' then
             for i, sub in ipairs(me) do
                 LINE(me, [[
-if (! CEU_APP.root.__and_]]..me.n..'_'..i..[[) {
+if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
     return;
 }
 ]])
@@ -601,7 +601,7 @@ case ]]..me.lbl_out.id..[[:;
     Await_Wclock = function (me)
         local e = unpack(me)
 
-        local wclk = 'CEU_APP.root.__wclk_'..me.n
+        local wclk = CUR('__wclk_'..me.n)
 
         LINE(me, [[
 ceu_wclock(]]..V(e)..', &'..wclk..[[, NULL);
