@@ -113,9 +113,9 @@ end
             ceu_output_c = '/tmp/tmp.ceu.c',
 
             env          = true,
-            env_header   = '../arch/ceu.h',
+            env_header   = '../arch/env-header.h',
             env_ceu      = '/tmp/tmp.ceu.c',
-            env_main     = '../arch/main.c',
+            env_main     = '../arch/env-main.c',
             env_output   = '/tmp/tmp.c',
 
             cc           = true,
@@ -166,7 +166,6 @@ end
     if not check(T,'exps')   then return end
     if not check(T,'consts') then return end
     if not check(T,'stmts')  then return end
---AST.dump(AST.root)
     if not check(T,'inits')  then return end
     if not check(T,'scopes') then return end
     if not check(T,'tight_') then return end
@@ -177,6 +176,7 @@ end
     if not check(T,'mems')   then return end
 --do return end
     if not check(T,'codes')  then return end
+--AST.dump(AST.root)
 
 if T.ana or T.tmp or T.props then return end
 
@@ -207,7 +207,7 @@ if T.ana or T.tmp or T.props then return end
         assert(out == '', 'code with output')
         assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
     else
-        assert(type(T.run) == 'string')
+        assert(type(T.run) == 'string', 'missing run value')
         assert(string.find(out, T.run, nil, true), out)
     end
 

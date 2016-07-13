@@ -23,7 +23,11 @@
 
 #define ceu_dbg_assert(v,msg) ceu_out_assert_msg(v,msg)
 
+/* NATIVE_PRE */
 === NATIVE_PRE ===
+
+/* DATAS_MEMS */
+=== DATAS_MEMS ===
 
 enum {
     CEU_CALLBACK_ABORT,

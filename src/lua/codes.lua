@@ -584,6 +584,15 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
 
     Set_Emit_Ext_emit = CONC_ALL,   -- see Emit_Ext_emit
 
+    Set_Abs_Val = function (me)
+        local fr, to = unpack(me)
+        local ID_abs, Abslist = unpack(AST.asr(fr,'Abs_Val', 2,'Abs_Cons'))
+        Abslist = '{'..table.concat(V(Abslist),',')..'}'
+        LINE(me, [[
+]]..V(to)..[[ = (struct tceu_data_]]..ID_abs.dcl.id..')'..Abslist..[[;
+]])
+    end,
+
     ---------------------------------------------------------------------------
 
     Await_Forever = function (me)
@@ -779,6 +788,7 @@ end
 -- CEU.C
 local c = PAK.files.ceu_c
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
+local c = SUB(c, '=== DATAS_MEMS ===',       MEMS.datas.mems)
 local c = SUB(c, '=== CODES_MEMS ===',       MEMS.codes.mems)
 local c = SUB(c, '=== CODES_ARGS ===',       MEMS.codes.args)
 local c = SUB(c, '=== EXTS_TYPES ===',       MEMS.exts.types)

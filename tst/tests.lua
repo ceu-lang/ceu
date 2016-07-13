@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -28218,6 +28217,7 @@ escape v;
 }
 
 -->>> CODE / DELAYED / SPAWN
+--[==[
 
 Test { [[
 code/delayed Tx (var& int a)=>void do
@@ -57077,7 +57077,9 @@ escape _V;
 }
 
 --<<< REQUESTS
+--]==]
 
+--]===]
 -->>> DATA INI
 -- HERE:
 
@@ -57139,7 +57141,6 @@ end
 
 --[==[
 -- HERE:
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -57226,6 +57227,7 @@ data Ax;
 escape 1;
 ]],
     wrn = true,
+    run = 1,
 }
 
 Test { [[
@@ -57307,91 +57309,6 @@ escape 1;
     --dcls = 'line 2 : abstraction "Opt_" is not declared',
 }
 
--- recursive ADTs must have a base case
-Test { [[
-data Opt;
-data Opt.OptPTR with
-    var void&& v;
-end
-escape 1;
-]],
-    wrn = true,
-    adt = 'line 1 : invalid recursive base case : no parameters allowed',
-}
-
--- the base case must appear first
-Test { [[
-data Opt;
-data Opt.OptPTR with
-    var void&& v;
-end
-data Opt.OptNIL;
-escape 1;
-]],
-    wrn = true,
-    adt = 'line 1 : invalid recursive base case : no parameters allowed',
-}
-
--- the base must not have fields
-Test { [[
-data Opt;
-data Opt.OptNIL with
-    var int x;
-end
-data Opt.OptPTR with
-    var void&& v;
-end
-escape 1;
-]],
-    wrn = true,
-    adt = 'line 1 : invalid recursive base case : no parameters allowed',
-}
-
-Test { [[
-data Opt;
-data Opt.Nothing;
-
-data Opt1;
-data Opt1.Nothing;
-
-escape 1;
-]],
-    wrn = true,
-    --dcls = 'line 5 : identifier "Nothing" is already declared (/tmp/tmp.ceu : line 2)',
-    --dcls = 'line 5 : declaration of "Nothing" hides previous declaration (/tmp/tmp.ceu : line 2)',
-}
-
--->>> DATA/EVENTS
-
-Test { [[
-var Ddd d = Ddd(1);
-]],
-    parser = 'line 1 : after `=´ : expected expression',
-}
-
-Test { [[
-data Ddd with
-    var int xxx;
-    event void e;
-end
-
-var Ddd d = val Ddd(1,_);
-
-par/and do
-    await d.e;
-with
-    await 1s;
-    emit d.e;
-end
-
-d.xxx = d.xxx + 2;
-escape d.xxx;
-]],
-    run = { ['~>1s']=3 },
-}
-
---<<< DATA/EVENTS
-
 -->>> MISC
 
 Test { [[
@@ -57443,7 +57360,7 @@ var Ball ball = val Ball(130,130,8);
 native _add;
 native/pos do
     int add (s16 a, s16 b, s16 c) {
-        escape a + b + c;
+        return a + b + c;
     }
 end
 
@@ -57481,7 +57398,7 @@ escape 1;
 Test { [[
 native/pos do
     int add (int a, int b, int c) {
-        escape a + b + c;
+        return a + b + c;
     }
 end
 native _add;
@@ -57529,6 +57446,7 @@ escape t.x;
     run = 10,
 }
 
+]==]
 Test { [[
 data List;
 data List.Nil;
@@ -58726,6 +58644,91 @@ escape 0;
 }
 
 -- << ADT : MISC
+
+-->>> DATA/EVENTS
+
+Test { [[
+var Ddd d = Ddd(1);
+]],
+    parser = 'line 1 : after `=´ : expected expression',
+}
+
+Test { [[
+data Ddd with
+    var int xxx;
+    event void e;
+end
+
+var Ddd d = val Ddd(1,_);
+
+par/and do
+    await d.e;
+with
+    await 1s;
+    emit d.e;
+end
+
+d.xxx = d.xxx + 2;
+escape d.xxx;
+]],
+    run = { ['~>1s']=3 },
+}
+
+--<<< DATA/EVENTS
+
+-- recursive ADTs must have a base case
+Test { [[
+data Opt;
+data Opt.OptPTR with
+    var void&& v;
+end
+escape 1;
+]],
+    wrn = true,
+    adt = 'line 1 : invalid recursive base case : no parameters allowed',
+}
+
+-- the base case must appear first
+Test { [[
+data Opt;
+data Opt.OptPTR with
+    var void&& v;
+end
+data Opt.OptNIL;
+escape 1;
+]],
+    wrn = true,
+    adt = 'line 1 : invalid recursive base case : no parameters allowed',
+}
+
+-- the base must not have fields
+Test { [[
+data Opt;
+data Opt.OptNIL with
+    var int x;
+end
+data Opt.OptPTR with
+    var void&& v;
+end
+escape 1;
+]],
+    wrn = true,
+    adt = 'line 1 : invalid recursive base case : no parameters allowed',
+}
+
+Test { [[
+data Opt;
+data Opt.Nothing;
+
+data Opt1;
+data Opt1.Nothing;
+
+escape 1;
+]],
+    wrn = true,
+    --dcls = 'line 5 : identifier "Nothing" is already declared (/tmp/tmp.ceu : line 2)',
+    --dcls = 'line 5 : declaration of "Nothing" hides previous declaration (/tmp/tmp.ceu : line 2)',
+}
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")
 

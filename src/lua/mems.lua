@@ -20,10 +20,13 @@ MEMS = {
         }
 ]]
     },
+    datas = {
+        mems = '',
+    },
 }
 
 local function CUR ()
-    return (AST.iter'Code'() or AST.root).mems
+    return (AST.iter'Code'() or AST.iter'Data'() or AST.root).mems
 end
 
 F = {
@@ -40,6 +43,8 @@ typedef struct tceu_code_mem_ROOT {
 ]]..'\n'
         MEMS.codes[#MEMS.codes+1] = me.mems
     end,
+
+    ---------------------------------------------------------------------------
 
     Code__PRE = function (me)
         local _,_,_,_,_,body = unpack(me)
@@ -124,11 +129,29 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK, tceu_nlbl lbl ]]..args..[
 
     ---------------------------------------------------------------------------
 
+    Data__PRE = function (me)
+        me.mems = { mem='' }
+    end,
+    Data__POS = function (me)
+        me.mems.mem = [[
+typedef struct tceu_data_]]..me.id..[[ {
+    ]]..me.mems.mem..[[
+} tceu_data_]]..me.id..[[;
+]]..'\n'
+        MEMS.datas[#MEMS.datas+1] = me.mems
+    end,
+
+    ---------------------------------------------------------------------------
+
     Stmts__PRE = function (me)
-        CUR().mem = CUR().mem..'union {\n'
+        if not AST.par(me,'Data') then
+            CUR().mem = CUR().mem..'union {\n'
+        end
     end,
     Stmts__POS = function (me)
-        CUR().mem = CUR().mem..'};\n'
+        if not AST.par(me,'Data') then
+            CUR().mem = CUR().mem..'};\n'
+        end
     end,
 
     Await_Wclock = function (me)
@@ -193,7 +216,10 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK, tceu_nlbl lbl ]]..args..[
             -- VAR
             if dcl.tag == 'Var' then
                 if dcl.id ~= '_ret' then
-                    dcl.id_ = dcl.id..'_'..dcl.n
+                    dcl.id_ = dcl.id
+                    if not AST.par(me,'Data') then
+                        dcl.id_ = dcl.id_..'_'..dcl.n
+                    end
                     local tp, is_alias = unpack(dcl)
                     local ptr = (is_alias and '*' or '')
                     mem[#mem+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
@@ -226,10 +252,16 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK, tceu_nlbl lbl ]]..args..[
                 dcl.id_ = string.upper('CEU_'..inout..'_'..id)
             end
         end
-        CUR().mem = CUR().mem..'struct {\n'..table.concat(mem)
+        if AST.par(me,'Data') then
+            CUR().mem = CUR().mem..table.concat(mem)
+        else
+            CUR().mem = CUR().mem..'struct {\n'..table.concat(mem)
+        end
     end,
     Block__POS = function (me)
-        CUR().mem = CUR().mem..'};\n'
+        if not AST.par(me,'Data') then
+            CUR().mem = CUR().mem..'};\n'
+        end
     end,
 }
 
@@ -281,4 +313,8 @@ for i, code in ipairs(MEMS.codes) do
             MEMS.codes.wrappers = MEMS.codes.wrappers..code.wrapper
         end
     end
+end
+
+for i, data in ipairs(MEMS.datas) do
+    MEMS.datas.mems = MEMS.datas.mems..data.mem
 end

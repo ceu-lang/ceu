@@ -35,6 +35,12 @@ end
 
 function TYPES.toc (tp)
     assert(tp.tag == 'Type')
+    local ID = unpack(tp)
+
+    local pre = ''
+    if ID.tag == 'ID_abs' then
+        pre = 'tceu_data_'
+    end
 
     local id = TYPES.id(tp)
     id = string.gsub(id,'^_', '')
@@ -48,7 +54,7 @@ function TYPES.toc (tp)
         mods[i-1] = mod
     end
 
-    return id..table.concat(mods)
+    return pre..id..table.concat(mods)
 end
 
 function TYPES.new (me, id, ...)
