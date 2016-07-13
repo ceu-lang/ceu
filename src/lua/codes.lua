@@ -34,11 +34,11 @@ local function CLEAR (me)
     if me.trails_n > 1 then
         LINE(me, [[
 {
-    CEU_STK_BCAST_ABORT(CEU_INPUT__CLEAR, NULL, _ceu_stk, _ceu_trl,
+    CEU_STK_BCAST_ABORT(CEU_INPUT__CLEAR, NULL, _ceu_stk, _ceu_trlK,
                         _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
 /* TODO */
-    ceu_stack_clear(_ceu_stk->down, &_ceu_mem->trails[]]..me.trails[1]..[[],
-                                    &_ceu_mem->trails[]]..me.trails[2]..[[]);
+    ceu_stack_clear(_ceu_stk->down, _ceu_mem,
+                    ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 }
 ]])
     end
@@ -98,6 +98,7 @@ ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..trl..[[], "bug found : unexpected
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
         LINE(me, [[
+_ceu_mem->up_mem = NULL;
 _ceu_mem->trails_n = ]]..AST.root.trails_n..[[;
 memset(&_ceu_mem->trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
 ]])
@@ -173,7 +174,7 @@ if (0)
     {
         /* _ceu_evt holds __ceu_ret (see Escape) */
         tceu_evt_params_code ps = { _ceu_mem, _ceu_evt };
-        CEU_STK_BCAST_ABORT(CEU_INPUT__CODE, &ps, _ceu_stk, _ceu_trl,
+        CEU_STK_BCAST_ABORT(CEU_INPUT__CODE, &ps, _ceu_stk, _ceu_trlK,
                             (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
     }
 ]])
@@ -197,6 +198,8 @@ if (0)
 {
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
         {]]..table.concat(V(Abslist),',')..[[ };
+    ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
+    ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
     CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
                 (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..', 0, '..ID_abs.dcl.lbl_in.id..[[);
 }
@@ -446,7 +449,7 @@ CEU_STK_LBL(NULL, _ceu_stk,
             if i < #me then
                 LINE(me, [[
 CEU_STK_LBL_ABORT(NULL, _ceu_stk,
-                  &_ceu_mem->trails[]]..me[i+1].trails[1]..[[],
+                  ]]..me[i+1].trails[1]..[[,
                   _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[);
 ]])
             else
@@ -673,7 +676,7 @@ _ceu_trl->stk = NULL;
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    CEU_STK_BCAST_ABORT(]]..V(Exp_Name)..[[, &__ceu_ps, _ceu_stk, _ceu_trl,
+    CEU_STK_BCAST_ABORT(]]..V(Exp_Name)..[[, &__ceu_ps, _ceu_stk, _ceu_trlK,
                         (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
 }
 ]])

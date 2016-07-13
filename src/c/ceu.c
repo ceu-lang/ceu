@@ -94,6 +94,8 @@ typedef struct tceu_trl {
 } tceu_trl;
 
 typedef struct tceu_code_mem {
+    struct tceu_code_mem* up_mem;
+    tceu_ntrl up_trl;
     tceu_ntrl trails_n;
     tceu_trl  trails[0];
 } tceu_code_mem;
@@ -126,18 +128,44 @@ static tceu_app CEU_APP;
 
 typedef struct tceu_stk {
     struct tceu_stk* down;
-    tceu_trl* trl;
-    u8        is_alive : 1;
+    tceu_code_mem*   mem;
+    tceu_ntrl        trl;
+    u8               is_alive : 1;
 } tceu_stk;
 
 static tceu_stk CEU_STK_BASE;
 
-static void ceu_stack_clear (tceu_stk* stk, tceu_trl* trl1, tceu_trl* trl2) {
+static int ceu_mem_is_child (tceu_code_mem* me, tceu_code_mem* par_mem,
+                             tceu_ntrl par_trl1, tceu_ntrl par_trl2)
+{
+    if (me == par_mem) {
+ceu_out_assert_msg(0, "TODO");
+        return (par_trl1==0 && par_trl2==me->trails_n-1);
+    }
+
+    tceu_code_mem* cur_mem;
+    for (cur_mem=me; cur_mem!=NULL; cur_mem=cur_mem->up_mem) {
+        if (cur_mem->up_mem == par_mem) {
+            if (cur_mem->up_trl>=par_trl1 && cur_mem->up_trl<=par_trl2) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static void ceu_stack_clear (tceu_stk* stk, tceu_code_mem* mem,
+                             tceu_ntrl trl1, tceu_ntrl trl2) {
     for (; stk!=&CEU_STK_BASE; stk=stk->down) {
         if (!stk->is_alive) {
             continue;
         }
-        if (trl1<=stk->trl && stk->trl<=trl2) {  /* [trl1,trl2] */
+        if (stk->mem != mem) {
+            /* check if "stk->mem" is child of "mem" in between "[trl1,trl2]" */
+            if (ceu_mem_is_child(stk->mem, mem, trl1, trl2)) {
+                stk->is_alive = 0;
+            }
+        } else if (trl1<=stk->trl && stk->trl<=trl2) {  /* [trl1,trl2] */
             stk->is_alive = 0;
         }
     }
@@ -188,22 +216,22 @@ static void ceu_go_lbl (tceu_evt* _ceu_evt, tceu_stk* _ceu_stk,
 /*****************************************************************************/
 
 #define CEU_STK_LBL(evt, stk_old, exe_mem,exe_trl,exe_lbl) {    \
-    tceu_stk __ceu_stk = { stk_old, NULL, 1 };                  \
+    tceu_stk __ceu_stk = { stk_old, exe_mem, 0, 1 };            \
     ceu_go_lbl(evt, &__ceu_stk, exe_mem, exe_trl, exe_lbl);     \
 }
 
-#define CEU_STK_LBL_ABORT(evt, stk_old, trl_abort,          \
-                          exe_mem, exe_trl, exe_lbl) {      \
-    tceu_stk __ceu_stk = { stk_old, trl_abort, 1 };         \
-    ceu_go_lbl(evt, &__ceu_stk, exe_mem,exe_trl,exe_lbl);   \
-    if (!__ceu_stk.is_alive) {                              \
-        return;                                             \
-    }                                                       \
+#define CEU_STK_LBL_ABORT(evt, stk_old, trl_abort,              \
+                          exe_mem, exe_trl, exe_lbl) {          \
+    tceu_stk __ceu_stk = { stk_old, exe_mem, trl_abort, 1 };    \
+    ceu_go_lbl(evt, &__ceu_stk, exe_mem,exe_trl,exe_lbl);       \
+    if (!__ceu_stk.is_alive) {                                  \
+        return;                                                 \
+    }                                                           \
 }
 
 #define CEU_STK_BCAST_ABORT(evt_id, evt_ps, stk_old, trl_abort,         \
                             exe_mem, exe_trl0, exe_trlF) {              \
-    tceu_stk __ceu_stk = { stk_old, trl_abort, 1 };                     \
+    tceu_stk __ceu_stk = { stk_old, exe_mem, trl_abort, 1 };            \
     tceu_evt __ceu_evt = { evt_id, evt_ps };                            \
     ceu_go_bcast(&__ceu_evt, &__ceu_stk, exe_mem,exe_trl0,exe_trlF);    \
     if (!__ceu_stk.is_alive) {                                          \
@@ -302,7 +330,7 @@ static void ceu_go_bcast_2 (tceu_evt* evt, tceu_stk* stk,
     {
         /* propagate "evt" to nested "code" */
         if (trl->evt == CEU_INPUT__CODE) {
-            CEU_STK_BCAST_ABORT(evt->id,evt->params, stk, trl, trl->code_mem,
+            CEU_STK_BCAST_ABORT(evt->id,evt->params, stk, trlK, trl->code_mem,
                                 0, (((tceu_code_mem*)trl->code_mem)->trails_n-1));
         }
 
