@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -27966,7 +27965,11 @@ escape 1;
     run = 1,
 }
 
+--]===]
 Test { [[
+native/pre do
+    ##include <stdio.h>
+end
 code/delayed Tx (void)=>int do
     escape 10;
 end
@@ -27975,7 +27978,6 @@ escape ret;
 ]],
     run = 10,
 }
-do return end
 
 Test { [[
 code/delayed Tx (void)=>void do end
@@ -28003,7 +28005,7 @@ end
 await FOREVER;
 ]],
     --run = 1,
-    run = false,
+    cc = '1: error: unknown type name ‘SDL_MouseButtonEvent’',
     _ana = {
         isForever = true,
     },

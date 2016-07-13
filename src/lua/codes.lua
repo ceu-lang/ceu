@@ -131,7 +131,7 @@ if (]]..V(c)..[[) {
     ---------------------------------------------------------------------------
 
     Code = function (me)
-        local _,_,id,Typepars_ids,_,body = unpack(me)
+        local mod,_,id,Typepars_ids,_,body = unpack(me)
         if not body then return end
 
 LINE(me, [[
@@ -140,27 +140,63 @@ if (0)
 {
 ]])
         CASE(me, me.lbl_in)
-        LINE(me, [[
-    /* memory local to Code */
-    {
-        tceu_code_mem_]]..id..[[ _ceu_data;
-]])
-        local vars = AST.get(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
-                                    1,'Stmts', 2,'Stmts')
-        for i,Typepars_ids_item in ipairs(Typepars_ids) do
-            local a,_,c,Type,id2 = unpack(Typepars_ids_item)
-            assert(a=='var' and c==false)
+
+        -- CODE/DELAYED
+        if mod == 'code/delayed' then
             LINE(me, [[
+    _ceu_mem->trails_n = ]]..me.trails_n..[[;
+    memset(&_ceu_mem->trails, 0, ]]..me.trails_n..[[*sizeof(tceu_trl));
+    int __ceu_ret_]]..me.n..[[;
+]])
+        -- CODE/INSTANTANEOUS
+        else
+            LINE(me, [[
+    tceu_code_mem_]]..id..[[ _ceu_data;
+]])
+            local vars = AST.get(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
+                                        1,'Stmts', 2,'Stmts')
+            for i,Typepars_ids_item in ipairs(Typepars_ids) do
+                local a,_,c,Type,id2 = unpack(Typepars_ids_item)
+                assert(a=='var' and c==false)
+                LINE(me, [[
 ]]..V(vars[i],{is_bind=true})..[[ = ((tceu_code_args_]]..id..[[*)_ceu_evt)->]]..id2..[[;
 ]])
+            end
+
         end
 
         CONC(me, body)
+
+        -- CODE/DELAYED
+        if mod == 'code/delayed' then
+            LINE(me, [[
+    {
+        /* _ceu_evt holds __ceu_ret (see Escape) */
+        tceu_evt_params_code ps = { _ceu_mem, _ceu_evt };
+        CEU_STK_BCAST_ABORT(CEU_INPUT__CODE, &ps, _ceu_stk, _ceu_trl,
+                            (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
+    }
+]])
+        end
+
         HALT(me)
         LINE(me, [[
-    }
 }
 ]])
+    end,
+
+    Abs_Await = function (me)
+        local dcl = AST.asr(me,'', 1,'Abs_Cons', 1,'ID_abs').dcl
+        HALT(me, {
+            { evt = 'CEU_INPUT__CODE' },
+            { lbl = me.lbl_out.id },
+            { code_mem = '&'..CUR('__mem_'..me.n) },
+            lbl = me.lbl_out.id,
+            exec = [[
+CEU_STK_LBL(NULL, _ceu_stk,
+            (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..', 0, '..dcl.lbl_in.id..[[);
+]],
+        })
     end,
 
     ---------------------------------------------------------------------------
@@ -215,8 +251,16 @@ ceu_out_assert_msg(0, "reached end of `do´");
     end,
 
     Escape = function (me)
+        local code = AST.par(me, 'Code')
+        local evt do
+            if code and code[1]=='code/delayed' then
+                evt = '(tceu_evt*) &__ceu_ret_'..code.n
+            else
+                evt = 'NULL'
+            end
+        end
         LINE(me, [[
-CEU_STK_LBL(NULL, _ceu_stk,
+CEU_STK_LBL(]]..evt..[[, _ceu_stk,
             _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
         HALT(me)
@@ -463,9 +507,16 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
         if to.info.dcl.id == '_ret' then
             local code = AST.par(me, 'Code')
             if code then
-                LINE(me, [[
+                local mod = unpack(code)
+                if mod == 'code/instantaneous' then
+                    LINE(me, [[
 ((tceu_code_args_]]..code.id..[[*) _ceu_evt)->_ret = ]]..V(fr)..[[;
 ]])
+                else
+                    LINE(me, [[
+__ceu_ret_]]..code.n..' = '..V(fr)..[[;
+]])
+                end
             else
                 LINE(me, [[
 {
@@ -491,10 +542,17 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
     Set_Await_one = function (me)
         local fr, to = unpack(me)
         CONC_ALL(me)
-DBG(fr.tag == 'Await_Wclock', 'TODO')
-        LINE(me, [[
+        if fr.tag == 'Await_Wclock' then
+            LINE(me, [[
 ]]..V(to)..[[ = CEU_APP.wclk_late;
 ]])
+        else
+            assert(fr.tag == 'Abs_Await')
+            -- see "Set_Exp: _ret"
+            LINE(me, [[
+]]..V(to)..[[ = *((int*) ((tceu_evt_params_code*)_ceu_evt->params)->ret);
+]])
+        end
     end,
     Set_Await_many = function (me)
         local Await_Until, Namelist = unpack(me)
@@ -522,18 +580,6 @@ DBG(fr.tag == 'Await_Wclock', 'TODO')
 
     Await_Forever = function (me)
         HALT(me)
-    end,
-
-    Abs_Await = function (me)
-        HALT(me, {
-            { evt = 'CEU_INPUT__CODE' },
-            { lbl = me.lbl_out.id },
-            { code_mem = '&'..CUR('__mem_'..me.n) },
-            lbl = me.lbl_out.id,
-            exec = [[
-TODO
-]],
-        })
     end,
 
     ---------------------------------------------------------------------------

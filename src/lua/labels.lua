@@ -61,6 +61,9 @@ F = {
 
     ---------------------------------------------------------------------------
 
+    Abs_Await = function (me)
+        me.lbl_out = new{'Await_Abs__OUT'}
+    end,
     Await_Wclock = function (me)
         me.lbl_out = new{'Await_Wclock__OUT'}
     end,

@@ -134,6 +134,11 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK, tceu_nlbl lbl ]]..args..[
         CUR().mem = CUR().mem..'s32 __wclk_'..me.n..';\n'
     end,
 
+    Abs_Await = function (me)
+        local dcl = AST.asr(me,'', 1,'Abs_Cons', 1,'ID_abs').dcl
+        CUR().mem = CUR().mem..'tceu_code_mem_'..dcl.id..' __mem_'..me.n..';\n'
+    end,
+
     ---------------------------------------------------------------------------
 
     Par_Or__PRE  = 'Par__PRE',

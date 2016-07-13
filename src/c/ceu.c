@@ -38,6 +38,7 @@ enum {
     CEU_INPUT__NONE = 0,
     CEU_INPUT__CLEAR,
     CEU_INPUT__PAUSE,
+    CEU_INPUT__CODE,
     CEU_INPUT__ASYNC,
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
@@ -58,6 +59,11 @@ typedef struct tceu_evt {
     void*     params;
 } tceu_evt;
 
+typedef struct tceu_evt_params_code {
+    void* mem;
+    void* ret;
+} tceu_evt_params_code;
+
 struct tceu_stk;
 typedef struct tceu_trl {
     union {
@@ -75,6 +81,13 @@ typedef struct tceu_trl {
             tceu_nevt pse_evt;
             tceu_ntrl pse_skip;
             u8        pse_paused;
+        };
+
+        /* CODE */
+        struct {
+            tceu_nevt _3_evt;
+            void*     code_mem;
+            void*     code_ret;
         };
     };
 } tceu_trl;
@@ -231,6 +244,12 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 
         /* evt->id matches awaiting trail */
         int matches_await = (trl->evt==evt->id);
+        if (matches_await) {
+            if (trl->evt == CEU_INPUT__CODE) {
+                matches_await = ( ((tceu_evt_params_code*)evt->params)->mem ==
+                                  trl->code_mem );
+            }
+        }
 
         if (matches_clear || matches_await) {
             trl->stk = stk;             /* awake only at this level again */
