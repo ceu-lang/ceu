@@ -589,7 +589,7 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
         local ID_abs, Abslist = unpack(AST.asr(fr,'Abs_Val', 2,'Abs_Cons'))
         Abslist = '{'..table.concat(V(Abslist),',')..'}'
         LINE(me, [[
-]]..V(to)..[[ = (struct tceu_data_]]..ID_abs.dcl.id..')'..Abslist..[[;
+]]..V(to)..[[ = (struct ]]..ID_abs.dcl.id_..')'..Abslist..[[;
 ]])
     end,
 

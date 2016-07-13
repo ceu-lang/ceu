@@ -44,6 +44,7 @@ function TYPES.toc (tp)
 
     local id = TYPES.id(tp)
     id = string.gsub(id,'^_', '')
+    id = string.gsub(id,'%.', '_')   -- data A.B -> A_B
 
     local mods = {}
     for i=2, #tp do

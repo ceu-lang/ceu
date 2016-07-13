@@ -10,6 +10,7 @@ end
 
 --[===[
 do return end -- OK
+--]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -28217,7 +28218,8 @@ escape v;
 }
 
 -->>> CODE / DELAYED / SPAWN
---[==[
+--[===[
+-- TODO: SKIP
 
 Test { [[
 code/delayed Tx (var& int a)=>void do
@@ -57077,9 +57079,9 @@ escape _V;
 }
 
 --<<< REQUESTS
---]==]
-
 --]===]
+-- TODO: SKIP
+
 -->>> DATA INI
 -- HERE:
 
@@ -57141,6 +57143,7 @@ end
 
 --[==[
 -- HERE:
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -57446,438 +57449,7 @@ escape t.x;
     run = 10,
 }
 
-]==]
-Test { [[
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-    --env = 'line 6 : undeclared type `List´',
-}
-
-Test { [[
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-var List l = val List.Cons(1,
-               List.Cons(2,
-                   List.Nil()));
-escape 1;//((l as List.Cons).tail) as List.Cons).@head@;
-]],
-    adt = 'line 9 : invalid constructor : recursive data must use `new´',
-    --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
-}
-
-Test { [[
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-var List l = new List.Cons(1,
-                  List.Cons(2,
-                   List.Nil()));
-escape 1;//(((l as List.Cons).tail) as List.Cons).@head@;
-]],
-    --exps = 'line 7 : invalid constructor : unexpected context for variable "l"',
-    --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
-    --adt = 'line 9 : invalid attribution : must assign to recursive field',
-    adt = 'line 7 : invalid attribution : not a pool',
-}
-
-Test { [[
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-var List&& l = val List.Cons(1,
-                List.Cons(2,
-                    List.Nil()));
-escape 1;//((l as List.Cons).tail) as List.Cons).@head@;
-]],
-    --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
-    adt = 'line 7 : invalid constructor : recursive data must use `new´',
-}
-
-Test { [[
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-
-var List&& l = new List.Cons(1,
-                   List.Cons(2,
-                    List.Nil()));
-escape 0;//((l as List.Cons).tail) as List.Cons).@head@;
-]],
-    --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
-    --adt = 'line 9 : invalid constructor : recursive data must use `new´',
-    --adt = 'line 9 : invalid attribution : must assign to recursive field',
-    adt = 'line 8 : invalid attribution : not a pool',
-    --exps = 'line 8 : invalid constructor : unexpected context for variable "l"',
-}
-
-Test { [[
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-
-pool[10] List l;
-l = val List.Cons(1,
-        List.Cons(2,
-            List.Nil()));
-
-escape 0;//((l as List.Cons).tail) as List.Cons).@head@;
-]],
-    stmts = 'line 9 : invalid constructor : unexpected context for pool "l"',
-    --adt = 'line 9 : invalid constructor : recursive data must use `new´',
-}
-
-Test { [[
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-
-pool[10] List lll;
-escape (lll is List.Nil) as int;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-
-pool[10] List lll;
-escape ((lll is List.Cons) as int) + 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    ##ifndef CEU_ADTS_NEWS_POOL
-    ##error bug found
-    ##endif
-end
-
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-
-pool[10] List lll = new List.Cons(1, List.Nil());
-escape (lll as List.Cons).head;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    ##ifndef CEU_ADTS_NEWS_POOL
-    ##error bug found
-    ##endif
-end
-
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-
-pool[10] List lll = new List.Cons(1, List.Nil());
-escape lll.head;
-]],
-    names = 'line 15 : invalid member access : "lll" has no member "head" : `data´ "List" (/tmp/tmp.ceu:7)',
-    --env = 'TODO: no head in lll',
-}
-
-Test { [[
-data List;
-data List.Nil;
-data List.Cons with
-    var int  head;
-    var List tail;
-end
-
-pool[10] List lll;
-lll = new List.Cons(1,
-            List.Cons(2,
-                List.Nil()));
-escape ((lll as List.Cons).tail as List.Cons).head;
-]],
-    run = 2,
-}
-
-Test { [[
-data Stack;
-data Stack.Empty;
-data Stack.NonEmpty with
-    var Stack&& nxt;
-end
-
-pool[] Stack xxx = new Stack.NonEmpty(
-                    Stack.NonEmpty(xxx));
-
-escape 1;
-]],
-    stmts = 'line 8 : invalid constructor : argument #1 : unexpected context for pool "xxx"',
-    wrn = true,
-    --env = 'line 10 : invalid constructor : recursive field "NONEMPTY" must be new data',
-}
-
-Test { [[
-data Split;
-data Split.Horizontal;
-data Split.Vertical  ;
-
-data Grid;
-data Grid.Empty;
-data Grid.Split with
-    var Split dir;
-    var Grid  one;
-    var Grid  two;
-end
-
-pool[] Grid g;
-g = new Grid.Split(Split.Horizontal(), Grid.Empty(), Grid.Empty());
-
-escape (((g as Grid.Split).one is Grid.Empty) as int) + (((g as Grid.Split).two is Grid.Empty) as int) + (((g as Grid.Split).dir is Split.Horizontal) as int);
-]],
-    wrn = true,
-    run = 3,
-}
-
-Test { [[
-data Split;
-data Split.Horizontal;
-data Split.Vertical  ;
-
-data Grid with
-    var Split dir;
-end
-
-var Grid g1 = val Grid(Split.Horizontal());
-var Grid g2 = val Grid(Split.Vertical());
-
-escape ((g1.dir is Split.Horizontal) as int) + ((g2.dir is Split.Vertical) as int);
-]],
-    run = 2,
-}
-
-Test { [[
-data Split;
-data Split.Horizontal;
-data Split.Vertical  ;
-
-data Grid;
-data Grid.Empty;
-data Grid.Split with
-    var Split dir;
-    var Grid  one;
-    var Grid  two;
-end
-
-pool[5] Grid g = new Grid.Split(
-                    Split.Horizontal(),
-                    Grid.Split(
-                        Split.Vertical(),
-                        Grid.Empty(),
-                        Grid.Empty()));
-
-escape 1;
-]],
-    stmts = 'line 13 : invalid constructor : expected 3 argument(s)',
-}
-
-Test { [[
-data Split;
-data Split.Horizontal;
-data Split.Vertical  ;
-
-data Grid;
-data GridEmpty;
-data GridSplit with
-    var Split dir;
-    var Grid  one;
-    var Grid  two;
-end
-
-pool[5] Grid g;
-g = new GridSplit(
-            Split.Horizontal(),
-            GridSplit(
-                Split.Vertical(),
-                GridEmpty(),
-                GridEmpty()),
-            GridEmpty());
-
-escape 1;
-]],
-    stmts = 'line 16 : invalid constructor : argument #2 : types mismatch : "Grid" <= "GridEmpty"',
-}
-
-Test { [[
-data Split;
-data Split.Horizontal;
-data Split.Vertical  ;
-
-data Grid;
-data Grid.Empty;
-data Grid.Split with
-    var Split dir;
-    var Grid  one;
-    var Grid  two;
-end
-
-pool[5] Grid g;
-g = new Grid.Split(
-            Split.Horizontal(),
-            Grid.Split(
-                Split.Vertical(),
-                Grid.Empty(),
-                Grid.Empty()),
-            Grid.Empty());
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-data Split;
-data Split.Horizontal;
-data Split.Vertical  ;
-
-data Grid;
-data Grid.Empty;
-data Grid.Split with
-    var Split dir;
-    var Grid  one;
-    var Grid  two;
-end
-
-pool[] Grid g = new Grid.Split(
-                    Split.Horizontal(),
-                    Grid.Empty(),
-                    Grid.Empty());
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Dx with
-    var int x;
-end
-class C with
-    var Dx d = val Dx(200);
-do
-end
-var C c;
-escape c.d.x;
-]],
-    run = 200,
-}
-
-Test { [[
-class Tx with
-    var& float v;
-do
-    await FOREVER;
-end
-
-data Dx with
-    var float v;
-end
-
-var Dx d;
-var Tx t with
-    this.v = &d.v;   // 13
-end;
-d = val Dx(1);
-
-escape t.v;
-]],
-    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
-    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
-}
-
-Test { [[
-class Tx with
-    var& float v;
-do
-    await FOREVER;
-end
-
-data Dx with
-    var float v;
-end
-
-var Dx d;
-var Tx _ with
-    this.v = &d.v;   // 13
-end;
-
-escape 1;
-]],
-    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
-    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
-}
-
-Test { [[
-class Tx with
-    var& float v;
-do
-    await FOREVER;
-end
-
-data Dx with
-    var float v;
-end
-
-var Tx _ with
-    var Dx d = val Dx(1);
-    this.v = &d.v;
-end;
-
-escape 1;
-]],
-    --ref = 'line 13 : attribution to reference with greater scope',
-    tmp = 'line 13 : invalid attribution : variable "d" has narrower scope than its destination',
-}
+-->>> DATA / HIERARCHY / SUB-DATA / SUB-TYPES
 
 Test { [[
 data Ee;
@@ -58072,6 +57644,89 @@ escape x;
 ]],
     wrn = true,
     run = 10,
+}
+
+--<<< DATA / HIERARCHY / SUB-DATA / SUB-TYPES
+
+Test { [[
+data Dx with
+    var int x;
+end
+class C with
+    var Dx d = val Dx(200);
+do
+end
+var C c;
+escape c.d.x;
+]],
+    run = 200,
+}
+
+Test { [[
+class Tx with
+    var& float v;
+do
+    await FOREVER;
+end
+
+data Dx with
+    var float v;
+end
+
+var Dx d;
+var Tx t with
+    this.v = &d.v;   // 13
+end;
+d = val Dx(1);
+
+escape t.v;
+]],
+    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
+    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+}
+
+Test { [[
+class Tx with
+    var& float v;
+do
+    await FOREVER;
+end
+
+data Dx with
+    var float v;
+end
+
+var Dx d;
+var Tx _ with
+    this.v = &d.v;   // 13
+end;
+
+escape 1;
+]],
+    --ref = 'line 11 : uninitialized variable "d" crossing compound statement (/tmp/tmp.ceu:12)',
+    tmp = 'line 13 : invalid access to uninitialized variable "d" (declared at /tmp/tmp.ceu:11)',
+}
+
+Test { [[
+class Tx with
+    var& float v;
+do
+    await FOREVER;
+end
+
+data Dx with
+    var float v;
+end
+
+var Tx _ with
+    var Dx d = val Dx(1);
+    this.v = &d.v;
+end;
+
+escape 1;
+]],
+    --ref = 'line 13 : attribution to reference with greater scope',
+    tmp = 'line 13 : invalid attribution : variable "d" has narrower scope than its destination',
 }
 
 Test { [[
@@ -58674,7 +58329,9 @@ escape d.xxx;
     run = { ['~>1s']=3 },
 }
 
---<<< DATA/EVENTS
+--<<< DATA / EVENTS
+
+-->>> DATA / RECURSIVE
 
 -- recursive ADTs must have a base case
 Test { [[
@@ -58729,6 +58386,359 @@ escape 1;
     --dcls = 'line 5 : identifier "Nothing" is already declared (/tmp/tmp.ceu : line 2)',
     --dcls = 'line 5 : declaration of "Nothing" hides previous declaration (/tmp/tmp.ceu : line 2)',
 }
+
+Test { [[
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+    --env = 'line 6 : undeclared type `List´',
+}
+
+Test { [[
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+var List l = val List.Cons(1,
+               List.Cons(2,
+                   List.Nil()));
+escape 1;//((l as List.Cons).tail) as List.Cons).@head@;
+]],
+    adt = 'line 9 : invalid constructor : recursive data must use `new´',
+    --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
+}
+
+Test { [[
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+var List l = new List.Cons(1,
+                  List.Cons(2,
+                   List.Nil()));
+escape 1;//(((l as List.Cons).tail) as List.Cons).@head@;
+]],
+    --exps = 'line 7 : invalid constructor : unexpected context for variable "l"',
+    --env = 'line 9 : types mismatch (`List´ <= `List&&´)',
+    --adt = 'line 9 : invalid attribution : must assign to recursive field',
+    adt = 'line 7 : invalid attribution : not a pool',
+}
+
+Test { [[
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+var List&& l = val List.Cons(1,
+                List.Cons(2,
+                    List.Nil()));
+escape 1;//((l as List.Cons).tail) as List.Cons).@head@;
+]],
+    --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
+    adt = 'line 7 : invalid constructor : recursive data must use `new´',
+}
+
+Test { [[
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+
+var List&& l = new List.Cons(1,
+                   List.Cons(2,
+                    List.Nil()));
+escape 0;//((l as List.Cons).tail) as List.Cons).@head@;
+]],
+    --env = 'line 9 : types mismatch (`List&&´ <= `List´)',
+    --adt = 'line 9 : invalid constructor : recursive data must use `new´',
+    --adt = 'line 9 : invalid attribution : must assign to recursive field',
+    adt = 'line 8 : invalid attribution : not a pool',
+    --exps = 'line 8 : invalid constructor : unexpected context for variable "l"',
+}
+
+Test { [[
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+
+pool[10] List l;
+l = val List.Cons(1,
+        List.Cons(2,
+            List.Nil()));
+
+escape 0;//((l as List.Cons).tail) as List.Cons).@head@;
+]],
+    stmts = 'line 9 : invalid constructor : unexpected context for pool "l"',
+    --adt = 'line 9 : invalid constructor : recursive data must use `new´',
+}
+
+Test { [[
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+
+pool[10] List lll;
+escape (lll is List.Nil) as int;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+
+pool[10] List lll;
+escape ((lll is List.Cons) as int) + 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    ##ifndef CEU_ADTS_NEWS_POOL
+    ##error bug found
+    ##endif
+end
+
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+
+pool[10] List lll = new List.Cons(1, List.Nil());
+escape (lll as List.Cons).head;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    ##ifndef CEU_ADTS_NEWS_POOL
+    ##error bug found
+    ##endif
+end
+
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+
+pool[10] List lll = new List.Cons(1, List.Nil());
+escape lll.head;
+]],
+    names = 'line 15 : invalid member access : "lll" has no member "head" : `data´ "List" (/tmp/tmp.ceu:7)',
+    --env = 'TODO: no head in lll',
+}
+
+Test { [[
+data List;
+data List.Nil;
+data List.Cons with
+    var int  head;
+    var List tail;
+end
+
+pool[10] List lll;
+lll = new List.Cons(1,
+            List.Cons(2,
+                List.Nil()));
+escape ((lll as List.Cons).tail as List.Cons).head;
+]],
+    run = 2,
+}
+
+Test { [[
+data Stack;
+data Stack.Empty;
+data Stack.NonEmpty with
+    var Stack&& nxt;
+end
+
+pool[] Stack xxx = new Stack.NonEmpty(
+                    Stack.NonEmpty(xxx));
+
+escape 1;
+]],
+    stmts = 'line 8 : invalid constructor : argument #1 : unexpected context for pool "xxx"',
+    wrn = true,
+    --env = 'line 10 : invalid constructor : recursive field "NONEMPTY" must be new data',
+}
+
+Test { [[
+data Split;
+data Split.Horizontal;
+data Split.Vertical  ;
+
+data Grid;
+data Grid.Empty;
+data Grid.Split with
+    var Split dir;
+    var Grid  one;
+    var Grid  two;
+end
+
+pool[] Grid g;
+g = new Grid.Split(Split.Horizontal(), Grid.Empty(), Grid.Empty());
+
+escape (((g as Grid.Split).one is Grid.Empty) as int) + (((g as Grid.Split).two is Grid.Empty) as int) + (((g as Grid.Split).dir is Split.Horizontal) as int);
+]],
+    wrn = true,
+    run = 3,
+}
+
+Test { [[
+data Split;
+data Split.Horizontal;
+data Split.Vertical  ;
+
+data Grid with
+    var Split dir;
+end
+
+var Grid g1 = val Grid(Split.Horizontal());
+var Grid g2 = val Grid(Split.Vertical());
+
+escape ((g1.dir is Split.Horizontal) as int) + ((g2.dir is Split.Vertical) as int);
+]],
+    run = 2,
+}
+
+Test { [[
+data Split;
+data Split.Horizontal;
+data Split.Vertical  ;
+
+data Grid;
+data Grid.Empty;
+data Grid.Split with
+    var Split dir;
+    var Grid  one;
+    var Grid  two;
+end
+
+pool[5] Grid g = new Grid.Split(
+                    Split.Horizontal(),
+                    Grid.Split(
+                        Split.Vertical(),
+                        Grid.Empty(),
+                        Grid.Empty()));
+
+escape 1;
+]],
+    stmts = 'line 13 : invalid constructor : expected 3 argument(s)',
+}
+
+Test { [[
+data Split;
+data Split.Horizontal;
+data Split.Vertical  ;
+
+data Grid;
+data GridEmpty;
+data GridSplit with
+    var Split dir;
+    var Grid  one;
+    var Grid  two;
+end
+
+pool[5] Grid g;
+g = new GridSplit(
+            Split.Horizontal(),
+            GridSplit(
+                Split.Vertical(),
+                GridEmpty(),
+                GridEmpty()),
+            GridEmpty());
+
+escape 1;
+]],
+    stmts = 'line 16 : invalid constructor : argument #2 : types mismatch : "Grid" <= "GridEmpty"',
+}
+
+Test { [[
+data Split;
+data Split.Horizontal;
+data Split.Vertical  ;
+
+data Grid;
+data Grid.Empty;
+data Grid.Split with
+    var Split dir;
+    var Grid  one;
+    var Grid  two;
+end
+
+pool[5] Grid g;
+g = new Grid.Split(
+            Split.Horizontal(),
+            Grid.Split(
+                Split.Vertical(),
+                Grid.Empty(),
+                Grid.Empty()),
+            Grid.Empty());
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data Split;
+data Split.Horizontal;
+data Split.Vertical  ;
+
+data Grid;
+data Grid.Empty;
+data Grid.Split with
+    var Split dir;
+    var Grid  one;
+    var Grid  two;
+end
+
+pool[] Grid g = new Grid.Split(
+                    Split.Horizontal(),
+                    Grid.Empty(),
+                    Grid.Empty());
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+--<<< DATA / RECURSIVE
 
 -- USE DATATYPES DEFINED ABOVE ("DATA")
 

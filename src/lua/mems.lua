@@ -130,13 +130,14 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK, tceu_nlbl lbl ]]..args..[
     ---------------------------------------------------------------------------
 
     Data__PRE = function (me)
+        me.id_ = 'tceu_data_'..string.gsub(me.id,'%.','_')
         me.mems = { mem='' }
     end,
     Data__POS = function (me)
         me.mems.mem = [[
-typedef struct tceu_data_]]..me.id..[[ {
+typedef struct ]]..me.id_..[[ {
     ]]..me.mems.mem..[[
-} tceu_data_]]..me.id..[[;
+} ]]..me.id_..[[;
 ]]..'\n'
         MEMS.datas[#MEMS.datas+1] = me.mems
     end,
