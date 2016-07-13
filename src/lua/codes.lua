@@ -153,16 +153,16 @@ if (0)
             LINE(me, [[
     tceu_code_mem_]]..id..[[ _ceu_data;
 ]])
-            local vars = AST.get(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
-                                        1,'Stmts', 2,'Stmts')
-            for i,Typepars_ids_item in ipairs(Typepars_ids) do
-                local a,_,c,Type,id2 = unpack(Typepars_ids_item)
-                assert(a=='var' and c==false)
-                LINE(me, [[
+        end
+
+        local vars = AST.get(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
+                                    1,'Stmts', 2,'Stmts')
+        for i,Typepars_ids_item in ipairs(Typepars_ids) do
+            local a,_,c,Type,id2 = unpack(Typepars_ids_item)
+            assert(a=='var' and c==false)
+            LINE(me, [[
 ]]..V(vars[i],{is_bind=true})..[[ = ((tceu_code_args_]]..id..[[*)_ceu_evt)->]]..id2..[[;
 ]])
-            end
-
         end
 
         CONC(me, body)
@@ -186,15 +186,20 @@ if (0)
     end,
 
     Abs_Await = function (me)
-        local dcl = AST.asr(me,'', 1,'Abs_Cons', 1,'ID_abs').dcl
+        local Abs_Cons = unpack(me)
+        local ID_abs, Abslist = unpack(Abs_Cons)
         HALT(me, {
             { evt = 'CEU_INPUT__CODE' },
             { lbl = me.lbl_out.id },
             { code_mem = '&'..CUR('__mem_'..me.n) },
             lbl = me.lbl_out.id,
             exec = [[
-CEU_STK_LBL(NULL, _ceu_stk,
-            (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..', 0, '..dcl.lbl_in.id..[[);
+{
+    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
+        {]]..table.concat(V(Abslist),',')..[[ };
+    CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
+                (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..', 0, '..ID_abs.dcl.lbl_in.id..[[);
+}
 ]],
         })
     end,

@@ -67,7 +67,8 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
         -- args
         me.mems.args = 'typedef struct tceu_code_args_'..id..' {\n'
-        if not TYPES.check(Type,'void') then
+        if mod=='code/instantaneous' and (not TYPES.check(Type,'void')) then
+            -- returns immediatelly, uses an extra field for the return value
             me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..' _ret;\n'
         end
         for _,Typepars_ids_item in ipairs(Typepars_ids) do
