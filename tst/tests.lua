@@ -5876,6 +5876,9 @@ end
 -- EMIT / SELF-ABORT
 Test { [[
 native _assert;
+native/pre do
+    ##include <assert.h>
+end
 input void I;
 event void e, f;
 par do
@@ -5890,7 +5893,7 @@ with
     await f;            // 2
     emit e;             // 4, aborted on 5
     //_assert(0);         // never executes
-    escape -42;
+    escape 99;
 with
     async do
         emit I;
@@ -5898,7 +5901,8 @@ with
     end
 end
 ]],
-    run = 42,
+    run = 99,
+    --run = 42,
 }
 
 --<<< INTERNAL EVENTS
@@ -28127,12 +28131,12 @@ do
     await 1s;
     escape x;
 end
-var int a =
-    watching Code(111) do
-        escape 99;
-    end;
-
-escape a;
+par do
+    var int a = await Code(111);
+    escape a;
+with
+    escape 99;
+end
 ]],
     _ana = {acc=1},
     run = 99,
@@ -28145,13 +28149,13 @@ do
     await 1s;
     escape x;
 end
-var int a =
-    watching Code(10) do
-        await 5s;
-        escape 1;
-    end;
-
-escape a;
+par do
+    var int a = await Code(10);
+    escape a;
+with
+    await 5s;
+    escape 1;
+end
 ]],
     run = {['~>1s']=11 },
 }
@@ -28194,6 +28198,26 @@ escape 0;
 ]],
     dcls = 'line 2 : abstraction "Tx" is not declared',
 }
+
+Test { [[
+input void OS_START;
+
+code/delayed Tx (var& int a)=>void do
+    await FOREVER;
+end
+
+var int v = 0;
+watching Tx(&v) do
+    v = 5;
+    await OS_START;
+end
+escape v;
+]],
+    wrn = true,
+    run = 5,
+}
+
+-->>> CODE / DELAYED / SPAWN
 
 Test { [[
 code/delayed Tx (var& int a)=>void do
@@ -28244,24 +28268,6 @@ var int a = 0;
 spawn Tx(&a);
 escape a;
 ]],
-    run = 5,
-}
-
-Test { [[
-input void OS_START;
-
-code/delayed Tx (var& int a)=>void do
-    await FOREVER;
-end
-
-var int v = 0;
-watching Tx(&v) do
-    v = 5;
-    await OS_START;
-end
-escape v;
-]],
-    wrn = true,
     run = 5,
 }
 
@@ -51179,6 +51185,42 @@ escape ret;
         ['100~>I; ~>1s'] = -5,
         ['1000~>I; ~>1s'] = 5,
     }
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    x = x + 222;
+    await 1s;
+    escape x;
+end
+var int a =
+    watching Code(111) do
+        escape 99;
+    end;
+
+escape a;
+]],
+    _ana = {acc=1},
+    run = 99,
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    x = x + 1;
+    await 1s;
+    escape x;
+end
+var int a =
+    watching Code(10) do
+        await 5s;
+        escape 1;
+    end;
+
+escape a;
+]],
+    run = {['~>1s']=11 },
 }
 
 Test { [[
