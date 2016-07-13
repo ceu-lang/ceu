@@ -69,25 +69,26 @@ typedef struct tceu_trl {
     union {
         tceu_nevt evt;
 
+        /* NORMAL, INPUT__CODE */
         struct {
-            tceu_nevt        _1_evt;
-            tceu_nlbl        lbl;
-            struct tceu_stk* stk;
+            tceu_nevt _1_evt;
+            tceu_nlbl lbl;
+
+            union {
+                /* NORMAL */
+                struct tceu_stk* stk;
+
+                /* INPUT__CODE */
+                void* code_mem;
+            };
         };
 
-        /* PAUSE */
+        /* INPUT__PAUSE */
         struct {
             tceu_nevt _2_evt;
             tceu_nevt pse_evt;
             tceu_ntrl pse_skip;
             u8        pse_paused;
-        };
-
-        /* CODE */
-        struct {
-            tceu_nevt _3_evt;
-            void*     code_mem;
-            void*     code_ret;
         };
     };
 } tceu_trl;
@@ -221,8 +222,8 @@ static void ceu_go_lbl (tceu_evt* _ceu_evt, tceu_stk* _ceu_stk,
     }
 }
 
-static void ceu_go_bcast (tceu_evt* evt, tceu_stk* stk,
-                          tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF)
+static void ceu_go_bcast_1 (tceu_evt* evt, tceu_stk* stk,
+                            tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF)
 {
     tceu_ntrl trlK;
     tceu_trl* trl;
@@ -252,7 +253,17 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
         }
 
         if (matches_clear || matches_await) {
-            trl->stk = stk;             /* awake only at this level again */
+            if (trl->evt == CEU_INPUT__CODE) {
+                /* don't nest terminated code again */
+                /* also unshadows "trl->stk" below */
+                trl->evt = CEU_INPUT__NONE;
+            }
+            trl->stk = stk;     /* awake only at this level again */
+
+        /* propagate "evt" to nested "code" */
+        } else if (trl->evt == CEU_INPUT__CODE) {
+            ceu_go_bcast_1(evt, stk, trl->code_mem,
+                           0, (((tceu_code_mem*)trl->code_mem)->trails_n-1));
 
         } else if (trl->evt == CEU_INPUT__PAUSE) {
             u8 was_paused = trl->pse_paused;
@@ -261,7 +272,8 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
             }
             /* don't skip if pausing now */
             if (was_paused) {
-                trl += trl->pse_skip;
+                trlK += trl->pse_skip;
+                trl  += trl->pse_skip;
             }
 
         } else if (evt->id == CEU_INPUT__CLEAR) {
@@ -269,6 +281,13 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
             trl->stk = NULL;
         }
     }
+}
+
+static void ceu_go_bcast_2 (tceu_evt* evt, tceu_stk* stk,
+                           tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF)
+{
+    tceu_ntrl trlK;
+    tceu_trl* trl;
 
     /* EXECUTE TRAILS */
 
@@ -281,7 +300,23 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 
     for (trlK=trl0, trl=&mem->trails[trlK]; ;)
     {
-        if (trl->stk==stk && trl->evt!=CEU_INPUT__PAUSE) {
+        /* propagate "evt" to nested "code" */
+        if (trl->evt == CEU_INPUT__CODE) {
+            CEU_STK_BCAST_ABORT(evt->id,evt->params, stk, trl, trl->code_mem,
+                                0, (((tceu_code_mem*)trl->code_mem)->trails_n-1));
+        }
+
+        /* skip */
+        else if (trl->evt == CEU_INPUT__PAUSE) {
+            /* only necessary to avoid INPUT__CODE propagation */
+            if (evt->id!=CEU_INPUT__CLEAR && trl->pse_paused) {
+                trlK += trl->pse_skip;
+                trl  += trl->pse_skip;
+            }
+
+        /* execute */
+        } else if (trl->stk == stk) {
+            /* trl->evt must be != CODE/PAUSE */
             trl->evt = CEU_INPUT__NONE;
             trl->stk = NULL;
             CEU_STK_LBL(evt, stk, mem, trlK, trl->lbl);
@@ -295,6 +330,13 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
             trlK++; trl++;
         }
     }
+}
+
+static void ceu_go_bcast (tceu_evt* evt, tceu_stk* stk,
+                          tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF)
+{
+    ceu_go_bcast_1(evt, stk, mem, trl0, trlF);
+    ceu_go_bcast_2(evt, stk, mem, trl0, trlF);
 }
 
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
