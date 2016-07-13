@@ -28123,19 +28123,19 @@ escape _X;
 Test { [[
 code/delayed Code (var int x) => int
 do
-    x = x + 1;
+    x = x + 222;
     await 1s;
     escape x;
 end
 var int a =
-    watching Code(10) do
-        escape 1;
+    watching Code(111) do
+        escape 99;
     end;
 
 escape a;
 ]],
     _ana = {acc=1},
-    run = 1,
+    run = 99,
 }
 
 Test { [[
@@ -51051,25 +51051,6 @@ end
 }
 
 Test { [[
-class Tx with
-    event int e;
-do
-    await 1s;
-    escape 10;
-end
-
-var Tx t;
-var int n =
-    watching t do
-        await FOREVER;
-    end;
-
-escape n;
-]],
-    run = { ['~>1001ms'] = 10 },
-}
-
-Test { [[
 var int n =
     watching 1s do
         escape 1;
@@ -51115,6 +51096,108 @@ end
 ]],
     _ana = { acc=1 },
     run = { ['~>1001ms'] = 1 },
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+watching I do
+    await 1s;
+    ret = 5;
+end
+escape ret;
+]],
+    run = {
+        ['100~>I; ~>1s'] = -5,
+        ['~>1s; 100~>I'] = 5,
+    }
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+var int v=
+watching I do
+    await 1s;
+    ret = 5;
+end;
+escape ret+v;
+]],
+    run = {
+        ['100~>I; ~>1s'] = 95,
+        ['~>1s; 100~>I'] = 5,
+    }
+}
+
+Test { [[
+watching (10)ms do
+end
+escape 1;
+]],
+    run = {
+        ['~>1s'] = 1,
+    }
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+var int dt = await I;
+watching (dt)ms do
+    await 1s;
+    ret = 5;
+end
+escape ret;
+]],
+    run = {
+        ['100~>I; ~>1s'] = -5,
+        ['1000~>I; ~>1s'] = -5,
+        ['1001~>I; ~>1s'] = 5,
+    }
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+event void e;
+par/or do
+    loop do
+        var int dt = await I;
+        if dt == 100 then
+            emit e;
+        end
+    end
+with
+    watching e do
+        await 1s;
+        ret = 5;
+    end
+end
+escape ret;
+]],
+    run = {
+        ['100~>I; ~>1s'] = -5,
+        ['1000~>I; ~>1s'] = 5,
+    }
+}
+
+Test { [[
+class Tx with
+    event int e;
+do
+    await 1s;
+    escape 10;
+end
+
+var Tx t;
+var int n =
+    watching t do
+        await FOREVER;
+    end;
+
+escape n;
+]],
+    run = { ['~>1001ms'] = 10 },
 }
 
 Test { [[
@@ -51224,89 +51307,6 @@ end
 escape 1;
 ]],
     run = 1,
-}
-
-Test { [[
-input int I;
-var int ret = -5;
-watching I do
-    await 1s;
-    ret = 5;
-end
-escape ret;
-]],
-    run = {
-        ['100~>I; ~>1s'] = -5,
-        ['~>1s; 100~>I'] = 5,
-    }
-}
-
-Test { [[
-input int I;
-var int ret = -5;
-var int v=
-watching I do
-    await 1s;
-    ret = 5;
-end;
-escape ret+v;
-]],
-    run = {
-        ['100~>I; ~>1s'] = 95,
-        ['~>1s; 100~>I'] = 5,
-    }
-}
-
-Test { [[
-watching (10)ms do
-end
-escape 1;
-]],
-    run = {
-        ['~>1s'] = 1,
-    }
-}
-
-Test { [[
-input int I;
-var int ret = -5;
-var int dt = await I;
-watching (dt)ms do
-    await 1s;
-    ret = 5;
-end
-escape ret;
-]],
-    run = {
-        ['100~>I; ~>1s'] = -5,
-        ['1000~>I; ~>1s'] = -5,
-        ['1001~>I; ~>1s'] = 5,
-    }
-}
-
-Test { [[
-input int I;
-var int ret = -5;
-event void e;
-par/or do
-    loop do
-        var int dt = await I;
-        if dt == 100 then
-            emit e;
-        end
-    end
-with
-    watching e do
-        await 1s;
-        ret = 5;
-    end
-end
-escape ret;
-]],
-    run = {
-        ['100~>I; ~>1s'] = -5,
-        ['1000~>I; ~>1s'] = 5,
-    }
 }
 
 -- TODO: "e" has type "Tx*"

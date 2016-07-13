@@ -447,6 +447,15 @@ DBG('TODO: _Loop_Pool')
         return node('Stmts', me.ln, set, me)
     end,
 
+    _Watching__PRE = function (me)
+        local watch, block = unpack(me)
+        return node('Par_Or', me.ln,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        watch)),
+                block)
+    end,
+
 -------------------------------------------------------------------------------
 
     -- single declaration with multiple ids

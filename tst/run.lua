@@ -166,6 +166,7 @@ end
     if not check(T,'exps')   then return end
     if not check(T,'consts') then return end
     if not check(T,'stmts')  then return end
+--AST.dump(AST.root)
     if not check(T,'inits')  then return end
     if not check(T,'scopes') then return end
     if not check(T,'tight_') then return end
@@ -173,7 +174,6 @@ end
     if not check(T,'trails') then return end
     if not check(T,'labels') then return end
     dofile(DIR..'vals.lua')
---AST.dump(AST.root)
     if not check(T,'mems')   then return end
 --do return end
     if not check(T,'codes')  then return end
