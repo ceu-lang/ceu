@@ -8,8 +8,9 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[===[
+--[=====[
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -57164,6 +57165,7 @@ end
 
 --[==[
 -- HERE:
+]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -57603,7 +57605,6 @@ escape ex.d.x;
     run = 10,
 }
 
-]==]
 Test { [[
 data Dx with
     var int x;
