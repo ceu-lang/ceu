@@ -57635,7 +57635,6 @@ escape (d as Ex).x;
     names = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
 }
 
---]=====]
 Test { [[
 data Dx with
     var int x;
@@ -57689,7 +57688,7 @@ data Ee.Xx with
     var& Dx d;
 end
 
-var Ee e;    // TODO: should bind here
+var& Ee e;    // TODO: should bind here
 do
     var Dx d = val Dx(1);
     (e as Ee.Xx).d = &d;
@@ -57703,6 +57702,64 @@ escape 1;//e.Xx.d.x;
     --inits = 'line 11 : uninitialized variable "e" : reached read access (/tmp/tmp.ceu:14)',
     --ref = 'line 11 : uninitialized variable "e" crossing compound statement (/tmp/tmp.ceu:14)',
 }
+
+--]=====]
+Test { [[
+data Ee;
+data Ee.Xx with
+    var int x;
+end
+
+var Ee.Xx e1 = val Ee.Xx(10);
+var& Ee e = &e1;
+if e is Ee.Xx then
+    escape (e as Ee.Xx).x;
+else
+    escape 0;
+end
+]],
+    run = 10,
+}
+
+Test { [[
+data Ee;
+data Ee.Xx with
+    var int x;
+end
+
+var Ee e1 = val Ee(&d);
+var& Ee e = &e1;
+if e is Ee.Xx then
+    escape 0;
+else
+    escape 1;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+data Dx with
+    var int x;
+end
+
+data Ee;
+data Ee.Xx with
+    var& Dx d;
+end
+
+    var Dx d = val Dx(1);
+    var Ee.Xx e1 = val Ee.Xx(&d);
+    var& Ee e = &e1;
+// TODO: run-time check
+    (e as Ee.Xx).d.x = 10;
+
+escape (e as Ee.Xx).d.x;
+]],
+    wrn = true,
+    run = 1,
+}
+
 Test { [[
 data Dx with
     var int x;
@@ -57715,14 +57772,19 @@ data Ee.Xx with
 end
 
     var Dx d = val Dx(1);
-var Ee e = val Ee.Xx(&d);
+    var Ee e1 = val Ee();
+    var& Ee e = &e1;
+// TODO: run-time check
     (e as Ee.Xx).d.x = 10;
 
 escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
-    run = 1,
+    run = 'TODO: error',
 }
+
+do return end
+
 Test { [[
 data Dx with
     var int x;
