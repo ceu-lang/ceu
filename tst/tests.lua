@@ -10,6 +10,7 @@ end
 
 --[=====[
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -57703,7 +57704,6 @@ escape 1;//e.Xx.d.x;
     --ref = 'line 11 : uninitialized variable "e" crossing compound statement (/tmp/tmp.ceu:14)',
 }
 
---]=====]
 Test { [[
 data Ee;
 data Ee.Xx with

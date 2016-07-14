@@ -78,7 +78,7 @@ F = {
             TYPES.tostring(e.info.tp)..'"')
 
         local plain = TYPES.ID_plain(e.info.tp)
-        if plain and plain.dcl.tag=='Data' then
+        if plain and plain.dcl and plain.dcl.tag=='Data' then
             -- NO:
             --  var Dx d = ...;
             --  (d as Ex)...
