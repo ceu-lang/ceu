@@ -10,7 +10,6 @@ end
 
 --[=====[
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -57621,6 +57620,20 @@ escape ex.d.x;
 ]],
     wrn = true,
     run = 10,
+}
+
+--]=====]
+Test { [[
+data Dx with
+    var int x;
+end
+data Ex with
+    var int x;
+end
+var Dx d = val Dx(10);
+escape (d as Ex).x;
+]],
+    names = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
 }
 
 Test { [[

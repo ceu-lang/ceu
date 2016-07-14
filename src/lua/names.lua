@@ -77,6 +77,20 @@ F = {
             'invalid operand to `'..op..'´ : unexpected option type : got "'..
             TYPES.tostring(e.info.tp)..'"')
 
+        local plain = TYPES.ID_plain(e.info.tp)
+        if plain and plain.dcl.tag=='Data' then
+            -- NO:
+            --  var Dx d = ...;
+            --  (d as Ex)...
+            -- YES:
+            --  var Dx& d = ...;
+            --  (d as Ex)...
+            local _,is_alias = unpack(e.info.dcl)
+            ASR(is_alias, me,
+                'invalid operand to `'..op..'´ : unexpected plain `data´ : got "'..
+                TYPES.tostring(e.info.tp)..'"')
+        end
+
         -- info
         me.info = INFO.copy(e.info)
         if AST.is_node(Type) then

@@ -12,7 +12,7 @@ function TYPES.n2uint (n)
     error'out of bounds'
 end
 
-function TYPES.id (tp)
+local function types_id (tp)
     local ID = unpack(tp)
     local id = unpack(ID)
     return id
@@ -26,7 +26,7 @@ function TYPES.tostring (tp)
         end
         return '('..table.concat(ret,',')..')'
     end
-    return TYPES.id(tp) .. table.concat(tp,'',2)
+    return types_id(tp) .. table.concat(tp,'',2)
 end
 
 function TYPES.dump (tp)
@@ -42,7 +42,7 @@ function TYPES.toc (tp)
         pre = 'tceu_data_'
     end
 
-    local id = TYPES.id(tp)
+    local id = types_id(tp)
     id = string.gsub(id,'^_', '')
     id = string.gsub(id,'%.', '_')   -- data A.B -> A_B
 
@@ -127,19 +127,19 @@ end
 
 function TYPES.is_num (tp)
     assert(tp.tag == 'Type')
-    local dcl = DCLS.asr(AST.iter()(), AST.iter'Block'(), TYPES.id(tp), true)
+    local dcl = DCLS.asr(AST.iter()(), AST.iter'Block'(), types_id(tp), true)
     return TYPES.is_nat(tp)
         or (dcl.prim and dcl.prim.is_num and TYPES.check(tp,dcl.id))
 end
 function TYPES.is_int (tp)
     assert(tp.tag == 'Type')
-    local dcl = DCLS.asr(AST.iter()(), AST.iter'Block'(), TYPES.id(tp), true)
+    local dcl = DCLS.asr(AST.iter()(), AST.iter'Block'(), types_id(tp), true)
     return TYPES.is_nat(tp)
         or (dcl.prim and dcl.prim.is_int and TYPES.check(tp,dcl.id))
 end
 function TYPES.is_nat (tp,blk)
     assert(tp.tag == 'Type')
-    local dcl = DCLS.asr(AST.iter()(), blk or AST.iter'Block'(), TYPES.id(tp), true)
+    local dcl = DCLS.asr(AST.iter()(), blk or AST.iter'Block'(), types_id(tp), true)
     return dcl and (dcl.tag=='Nat' or dcl.id=='_') and TYPES.check(tp,dcl.id)
         -- _char    yes
         -- _char&&  no
@@ -244,7 +244,7 @@ do
             if TYPES.is_nat(tp1) or TYPES.is_nat(tp2) then
                 return true
             end
-            return contains_num(TYPES.id(tp1),TYPES.id(tp2))
+            return contains_num(types_id(tp1),types_id(tp2))
 
 -- POINTER TYPES
         elseif (TYPES.check(tp1,'&&') or tp1_is_nat) and
