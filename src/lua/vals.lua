@@ -266,7 +266,13 @@ assert(TYPES.is_nat(e.info.tp))
     Exp_as = function (me)
         local _, e, Type = unpack(me)
         if Type.tag == 'Type' then
-            local ret = '(('..TYPES.toc(Type)..')'..V(e)..')'
+            local ret do
+                if Type[1].tag=='ID_abs' and Type[1].dcl.tag=='Data' then
+                    ret = '(*(('..TYPES.toc(Type)..'*)&'..V(e)..'))'
+                else
+                    ret = '(('..TYPES.toc(Type)..')'..V(e)..')'
+                end
+            end
             if TYPES.check(Type,'bool') then
                 ret = '('..ret..'? 1 : 0)'
             end

@@ -57622,7 +57622,6 @@ escape ex.d.x;
     run = 10,
 }
 
---]=====]
 Test { [[
 data Dx with
     var int x;
@@ -57634,6 +57633,28 @@ var Dx d = val Dx(10);
 escape (d as Ex).x;
 ]],
     names = 'line 8 : invalid operand to `as´ : unexpected plain `data´ : got "Dx"',
+}
+
+--]=====]
+Test { [[
+data Dx with
+    var int x;
+end
+
+data Ee;
+data Ee.Nothing;
+data Ee.Xx with
+    var& Dx d;
+end
+
+var Dx d = val Dx(10);
+var Ee.Xx ex = val Ee.Xx(&d);
+var Ee&& e = &&ex;
+
+escape (e as Ee.Xx&&):d.x;
+]],
+    wrn = true,
+    run = 10,
 }
 
 Test { [[

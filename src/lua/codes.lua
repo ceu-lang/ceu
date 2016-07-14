@@ -534,16 +534,24 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
 ]])
             end
         else
+            -- var Ee.Xx ex = ...;
+            -- var&& Ee = &&ex;
+            local cast = '('..TYPES.toc(to.info.tp)..')'
             LINE(me, [[
-]]..V(to)..' = '..V(fr)..[[;
+]]..V(to)..' = '..cast..V(fr)..[[;
 ]])
         end
     end,
 
     Set_Alias = function (me)
         local fr, to = unpack(me)
+
+        -- var Ee.Xx ex = ...;
+        -- var& Ee = &ex;
+        local cast = '('..TYPES.toc(to.info.tp)..'*)'
+
         LINE(me, [[
-]]..V(to, {is_bind=true})..' = '..V(fr)..[[;
+]]..V(to, {is_bind=true})..' = '..cast..V(fr)..[[;
 ]])
     end,
 
