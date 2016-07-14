@@ -536,7 +536,10 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
         else
             -- var Ee.Xx ex = ...;
             -- var&& Ee = &&ex;
-            local cast = '('..TYPES.toc(to.info.tp)..')'
+            local cast = ''
+            if not TYPES.is_nat(TYPES.get(to.info.tp,1)) then
+                cast = '('..TYPES.toc(to.info.tp)..')'
+            end
             LINE(me, [[
 ]]..V(to)..' = '..cast..V(fr)..[[;
 ]])

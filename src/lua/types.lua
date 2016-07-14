@@ -67,6 +67,15 @@ function TYPES.new (me, id, ...)
             ...)
 end
 
+function TYPES.get (tp, n)
+    assert(tp.tag == 'Type')
+    tp = AST.copy(tp)
+    for i=n+1, #tp do
+        tp[i] = nil
+    end
+    return tp
+end
+
 function TYPES.pop (tp, mod)
     assert(tp.tag == 'Type')
     local v = tp[#tp]
