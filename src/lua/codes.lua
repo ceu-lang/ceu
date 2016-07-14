@@ -586,10 +586,9 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
 
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)
-        local ID_abs, Abslist = unpack(AST.asr(fr,'Abs_Val', 2,'Abs_Cons'))
-        Abslist = '{'..table.concat(V(Abslist),',')..'}'
+        local _,Abs_Cons = unpack(fr)
         LINE(me, [[
-]]..V(to)..[[ = (struct ]]..ID_abs.dcl.id_..')'..Abslist..[[;
+]]..V(to)..' = '..V(Abs_Cons)..[[;
 ]])
     end,
 

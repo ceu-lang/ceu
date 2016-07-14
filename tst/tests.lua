@@ -57449,6 +57449,26 @@ escape t.x;
     run = 10,
 }
 
+Test { [[
+data Ee;
+var int x = 0;
+var Ee e = val x;
+escape 1;
+]],
+    parser = 'line 3 : after `val´ : expected abstraction identifier',
+}
+
+Test { [[
+code/instantaneous Fx (void)=>void do end;
+data Ee;
+var int x = 0;
+var Ee e = val Fx();
+
+escape 1;
+]],
+    stmts = 'line 4 : invalid constructor : expected `data´ abstraction : got `code´ "Fx" (/tmp/tmp.ceu:1)',
+}
+
 -->>> DATA / HIERARCHY / SUB-DATA / SUB-TYPES
 
 Test { [[
@@ -57462,9 +57482,122 @@ var Ee e = val Ee(1);
 
 escape 1;
 ]],
-    wrn = true,
     --env = 'line 7 : union data constructor requires a tag',
     stmts = 'line 7 : invalid constructor : expected 0 argument(s)',
+}
+
+Test { [[
+data Ee;
+data Ee.Nothing;
+var Ee e = val Ee.Nothing();
+escape 0;
+]],
+    stmts = 'line 3 : invalid constructor : types mismatch : "Ee" <= "Ee.Nothing"',
+}
+
+Test { [[
+data Dx with
+    var int x;
+end
+
+data Ee with
+    var Dx d;
+end
+
+var Dx d = val Dx(10);
+var Ee e = val Ee(d);
+escape e.d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dx with
+    var int x;
+end
+
+data Ee with
+    var Dx d;
+end
+
+var Ee e = val Ee(Dx(10));
+escape e.d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dx with
+    var int x;
+end
+data Ee with
+    var& Dx d;
+end
+var int x = 0;
+var Ee ex = val Ee(&x);
+escape 1;
+]],
+    stmts = 'line 8 : invalid constructor : argument #1 : types mismatch : "Dx" <= "int"',
+}
+
+Test { [[
+data Dx with
+    var int x;
+end
+do
+    var Dx dx = val Dx(10);
+end
+do/_
+    var Dx dx = val Dx(_);
+    escape dx.x+1;
+end
+]],
+    run = 1,
+}
+
+Test { [[
+data Dx with
+    var int x;
+end
+data Ee with
+    var& Dx d;
+end
+var Ee ex = val Ee(_);
+escape 1;
+]],
+    exps = 'line 7 : invalid constructor : argument #1 : unexpected `_´',
+}
+
+Test { [[
+data Dx with
+    var int x;
+end
+data Ee with
+    var& Dx d;
+end
+var Dx d = val Dx(10);
+var Ee ex = val Ee(&d);
+escape ex.d.x;
+]],
+    run = 10,
+}
+
+Test { [[
+data Dx with
+    var int x;
+end
+
+data Ee;
+data Ee.Xx with
+    var& Dx d;
+end
+
+var Dx d = val Dx(10);
+var Ee.Xx ex = val Ee.Xx(&d);
+escape 1;
+]],
+    wrn = true,
+    run = 10,
 }
 
 Test { [[
@@ -57479,7 +57612,8 @@ data Ee.Xx with
 end
 
 var Dx d = val Dx(10);
-var Ee e = val Ee.Xx(&d);
+var Ee.Xx ex = val Ee.Xx(&d);
+var Ee& e = &ex;
 
 escape (e as Ee.Xx).d.x;
 ]],

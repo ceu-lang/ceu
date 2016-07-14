@@ -105,6 +105,28 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 ]]
     end,
 
+    Abs_Cons = function (me)
+        local ID_abs, Abslist = unpack(me)
+        assert(ID_abs.dcl.tag == 'Data', 'bug found')
+
+        local ps = AST.copy(Abslist)
+        for i=#Abslist, 1, -1 do
+            if Abslist[i].tag == 'ID_any' then
+                table.remove(ps, i)
+            end
+        end
+        ps = V(ps)
+
+        local vars = AST.asr(ID_abs.dcl,'Data', 2,'Block', 1,'Stmts', 1,'Stmts')
+        for i, v in ipairs(ps) do
+            local _,_,id = unpack(vars[i])
+            ps[i] = '.'..id..'='..v
+        end
+
+        return '(struct '..ID_abs.dcl.id_..')'..
+                    '{'..table.concat(ps,',')..'}'
+    end,
+
     Abslist = 'Explist',
     Explist = function (me)
         local vs = {}

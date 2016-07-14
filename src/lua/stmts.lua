@@ -126,10 +126,24 @@ DBG('TODO: _Lua')
 -- ABS
 
     Set_Abs_Val = function (me)
-        local _, Exp_Name = unpack(me)
+        local fr, to = unpack(me)
+        local Abs_Cons = AST.asr(fr,'Abs_Val', 2,'Abs_Cons')
+        local ID_abs = unpack(Abs_Cons)
 
         -- ctx
-        INFO.asr_tag(Exp_Name, {'Var'}, 'invalid constructor')
+        INFO.asr_tag(to, {'Var'}, 'invalid constructor')
+        ASR(ID_abs.dcl.tag == 'Data', me,
+            'invalid constructor : expected `data´ abstraction : got `code´ "'..
+            ID_abs.dcl.id..'" ('..ID_abs.dcl.ln[1]..':'..ID_abs.dcl.ln[2]..')')
+
+        -- tp
+        check_tp(me, to.info.tp, Abs_Cons.info.tp, 'invalid constructor')
+
+        -- exact match on constructor
+        local to_str = TYPES.tostring(to.info.tp)
+        local fr_str = TYPES.tostring(Abs_Cons.info.tp)
+        ASR(to_str==fr_str, me,
+            'invalid constructor : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
     end,
     Set_Abs_New = function (me)
         local _, Exp_Name = unpack(me)

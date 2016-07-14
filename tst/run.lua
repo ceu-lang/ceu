@@ -208,7 +208,7 @@ if T.ana or T.tmp or T.props then return end
         assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
     else
         assert(type(T.run) == 'string', 'missing run value')
-        assert(string.find(out, T.run, nil, true), out)
+        assert(string.find(out, T.run, nil, true), '>>> ERROR : run : expected "'..T.run..'" : got "'..out..'"')
     end
 
 do return end

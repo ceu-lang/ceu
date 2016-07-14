@@ -79,6 +79,27 @@ F = {
         me.info = INFO.new(me, 'Val', nil, AST.copy(out))
     end,
 
+    Abs_Cons = function (me)
+        local ID_abs, Abslist = unpack(me)
+
+        local vars do
+            if ID_abs.dcl.tag then
+                vars = AST.asr(ID_abs.dcl,'Data', 2,'Block', 1,'Stmts', 1,'Stmts')
+            else
+error'oi'
+                vars = AST.get(ID_abs.dcl,'Code', 6,'Block', 1,'Stmts', 2,'Do',
+                                                  2,'Block', 1,'Stmts', 2,'Stmts')
+            end
+        end
+        for i, dcl in ipairs(vars) do
+            local _,is_alias = unpack(dcl)
+            if is_alias then
+                ASR(Abslist[i].tag ~= 'ID_any', me,
+                    'invalid constructor : argument #'..i..' : unexpected `_´')
+            end
+        end
+    end,
+
 -- BIND
 
     ['Exp_1&'] = function (me)
