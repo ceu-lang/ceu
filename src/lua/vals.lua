@@ -218,7 +218,14 @@ assert(TYPES.is_nat(e.info.tp))
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
         member = string.gsub(member, '^_', '')  -- _nat._data (data is a keyword)
-        return '('..V(e)..'.'..member..')'
+
+        local _,is_alias = unpack(me.info.dcl)
+        local ptr = ''
+        if is_alias then
+            ptr = '*'
+        end
+
+        return '('..ptr..'('..V(e)..'.'..member..'))'
     end,
 
 -- UNARY

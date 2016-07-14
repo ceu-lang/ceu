@@ -26858,7 +26858,6 @@ end
 --<<< PAUSE
 
 -->>> CODE/ INSTANTANEOUS / FUNCTIONS
---]===]
 
 Test { [[
 code/instantaneous Code (var int)=>void
@@ -57165,7 +57164,6 @@ end
 
 --[==[
 -- HERE:
-]==]
 
 -- data type identifiers must start with an uppercase
 Test { [[
@@ -57504,6 +57502,7 @@ var Ee e = val Ee(1);
 
 escape 1;
 ]],
+    wrn = true,
     --env = 'line 7 : union data constructor requires a tag',
     exps = 'line 7 : invalid constructor : expected 0 argument(s)',
 }
@@ -57559,7 +57558,7 @@ var int x = 0;
 var Ee ex = val Ee(&x);
 escape 1;
 ]],
-    stmts = 'line 8 : invalid constructor : argument #1 : types mismatch : "Dx" <= "int"',
+    exps = 'line 8 : invalid constructor : argument #1 : types mismatch : "Dx" <= "int"',
 }
 
 Test { [[
@@ -57604,6 +57603,7 @@ escape ex.d.x;
     run = 10,
 }
 
+]==]
 Test { [[
 data Dx with
     var int x;
@@ -57616,7 +57616,7 @@ end
 
 var Dx d = val Dx(10);
 var Ee.Xx ex = val Ee.Xx(&d);
-escape 1;
+escape ex.d.x;
 ]],
     wrn = true,
     run = 10,
@@ -57635,7 +57635,7 @@ end
 
 var Dx d = val Dx(10);
 var Ee.Xx ex = val Ee.Xx(&d);
-var Ee& e = &ex;
+var& Ee e = &ex;
 
 escape (e as Ee.Xx).d.x;
 ]],
@@ -58840,7 +58840,7 @@ g = new GridSplit(
 
 escape 1;
 ]],
-    stmts = 'line 16 : invalid constructor : argument #2 : types mismatch : "Grid" <= "GridEmpty"',
+    exps = 'line 16 : invalid constructor : argument #2 : types mismatch : "Grid" <= "GridEmpty"',
 }
 
 Test { [[
@@ -58998,7 +58998,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 51 : wrong argument #2',
-    stmts = 'line 51 : invalid constructor : argument #2 : types mismatch : "int" <= "null&&"',
+    exps = 'line 51 : invalid constructor : argument #2 : types mismatch : "int" <= "null&&"',
 }
 Test { DATA..[[
 var Opt o1 = val Opt.Nothing(1);       /* expected (void) */
