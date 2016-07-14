@@ -88,26 +88,35 @@ F = {
 
     Abs_Call = function (me)
         local _, Abs_Cons = unpack(me)
-        local ID_abs, Abslist = unpack(Abs_Cons)
-        local mod = unpack(ID_abs.dcl)
+        local ID_abs, _ = unpack(Abs_Cons)
+        local mod,_,_,Typepars_ids = unpack(ID_abs.dcl)
         assert(mod == 'code/instantaneous')
 
-        if #Abslist > 0 then
-            Abslist = ','..table.concat(V(Abslist),',')
-        else
-            Abslist = ''
+        -- wrapper
+        local args, ps = {}, {}
+        for _,Typepars_ids_item in ipairs(Typepars_ids) do
+            local a,is_alias,c,Type,id2 = unpack(Typepars_ids_item)
+            assert(a=='var' and c==false)
+            local ptr = (is_alias and '*' or '')
+            args[#args+1] = TYPES.toc(Type)..ptr..' '..id2
+            ps[#ps+1] = 'ps.'..id2..' = '..id2..';'
         end
-
+        if #args > 0 then
+            args = ','..table.concat(args,', ')
+            ps   = table.concat(ps,'\n')..'\n'
+        else
+            args = ''
+            ps   = ''
+        end
         return [[
 CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
-                               ]]..ID_abs.dcl.lbl_in.id..[[
-                               ]]..Abslist..[[)
+                               ]]..ID_abs.dcl.lbl_in.id..[[,
+                               ]]..V(Abs_Cons)..[[)
 ]]
     end,
 
     Abs_Cons = function (me)
         local ID_abs, Abslist = unpack(me)
-        assert(ID_abs.dcl.tag == 'Data', 'bug found')
 
         local ps = AST.copy(Abslist)
         for i=#Abslist, 1, -1 do
@@ -117,13 +126,25 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         end
         ps = V(ps)
 
-        local vars = AST.asr(ID_abs.dcl,'Data', 2,'Block', 1,'Stmts', 1,'Stmts')
-        for i, v in ipairs(ps) do
-            local _,_,id = unpack(vars[i])
-            ps[i] = '.'..id..'='..v
+        local id_struct
+        local id_i
+        local vars do
+            if ID_abs.dcl.tag == 'Data' then
+                vars = AST.asr(ID_abs.dcl,'Data', 2,'Block').dcls
+                id_i = 3
+                id_struct = ID_abs.dcl.id_
+            else
+                vars = AST.get(ID_abs.dcl,'Code', 4,'Typepars_ids')
+                id_i = 5
+                id_struct = 'tceu_code_args_'..ID_abs.dcl.id
+            end
         end
 
-        return '(struct '..ID_abs.dcl.id_..')'..
+        for i, v in ipairs(ps) do
+            ps[i] = '.'..vars[i][id_i]..'='..v
+        end
+
+        return '(struct '..id_struct..')'..
                     '{'..table.concat(ps,',')..'}'
     end,
 

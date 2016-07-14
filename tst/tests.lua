@@ -10,7 +10,6 @@ end
 
 --[===[
 do return end -- OK
---]===]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -26859,6 +26858,7 @@ end
 --<<< PAUSE
 
 -->>> CODE/ INSTANTANEOUS / FUNCTIONS
+--]===]
 
 Test { [[
 code/instantaneous Code (var int)=>void
@@ -27017,7 +27017,7 @@ code/instantaneous Fx (var int v)=>int do
 end
 escape call Fx();
 ]],
-    stmts = 'line 4 : invalid call : expected 1 argument(s)',
+    exps = 'line 4 : invalid call : expected 1 argument(s)',
 }
 
 Test { [[
@@ -27027,7 +27027,7 @@ end
 var int&& ptr;
 escape call Fx(ptr);
 ]],
-    stmts = 'line 5 : invalid call : argument #1 : types mismatch : "int" <= "int&&"',
+    exps= 'line 5 : invalid call : argument #1 : types mismatch : "int" <= "int&&"',
 }
 
 Test { [[
@@ -27349,11 +27349,33 @@ Test { [[
 code/instantaneous Set (var& u8 v)=>void do
     v = 3;
 end
-var u8 v = 0;
+var u8 v = _;
 call Set(&v);
 escape v as int;
 ]],
+    wrn = true,
     run = 3,
+}
+
+Test { [[
+code/instantaneous Set (var u8 v)=>int do
+    escape 3;
+end
+var u8 v = call Set(_);
+escape v as int;
+]],
+    run = 3,
+}
+
+Test { [[
+code/instantaneous Set (var& u8 v)=>void do
+    v = 3;
+end
+var u8 v = 0;
+call Set(_);
+escape v as int;
+]],
+    exps = 'line 5 : invalid constructor : argument #1 : unexpected `_´',
 }
 
 Test { [[
@@ -27615,7 +27637,7 @@ end
 var s8 i = 0;
 escape call Fx(i);
 ]],
-    stmts = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
+    exps = 'line 5 : invalid call : argument #1 : types mismatch : "u8" <= "s8"',
 }
 
 Test { [[
@@ -57483,7 +57505,7 @@ var Ee e = val Ee(1);
 escape 1;
 ]],
     --env = 'line 7 : union data constructor requires a tag',
-    stmts = 'line 7 : invalid constructor : expected 0 argument(s)',
+    exps = 'line 7 : invalid constructor : expected 0 argument(s)',
 }
 
 Test { [[
@@ -58059,7 +58081,7 @@ var Test t = val Test();
 escape t.v[0];
 ]],
     --env = 'line 4 : arity mismatch',
-    stmts = 'line 5 : invalid constructor : expected 1 argument(s)',
+    exps = 'line 5 : invalid constructor : expected 1 argument(s)',
 }
 
 Test { [[
@@ -58791,7 +58813,7 @@ pool[5] Grid g = new Grid.Split(
 
 escape 1;
 ]],
-    stmts = 'line 13 : invalid constructor : expected 3 argument(s)',
+    exps = 'line 13 : invalid constructor : expected 3 argument(s)',
 }
 
 Test { [[
@@ -58968,7 +58990,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 51 : arity mismatch',
-    stmts = 'line 51 : invalid constructor : expected 2 argument(s)',
+    exps = 'line 51 : invalid constructor : expected 2 argument(s)',
 }
 Test { DATA..[[
 var Pair p1 = val Pair(1,null);     /* expected (int,int) */
@@ -58984,7 +59006,7 @@ escape 1;
 ]],
     wrn = true,
     --env = 'line 51 : arity mismatch',
-    stmts = 'line 51 : invalid constructor : expected 0 argument(s)',
+    exps = 'line 51 : invalid constructor : expected 0 argument(s)',
 }
 
 -- constructors are not expressions...

@@ -48,6 +48,7 @@ typedef struct tceu_code_mem_ROOT {
 
     Code__PRE = function (me)
         local _,_,_,_,_,body = unpack(me)
+        me.id_ = 'tceu_code_mem_'..me.id
         if body then
             me.mems = { mem='' }
         end
@@ -88,33 +89,12 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
             return
         end
 
-        -- wrapper
-        local args, ps = {}, {}
-        for _,Typepars_ids_item in ipairs(Typepars_ids) do
-            local a,is_alias,c,Type,id2 = unpack(Typepars_ids_item)
-            assert(a=='var' and c==false)
-            local ptr = (is_alias and '*' or '')
-            args[#args+1] = TYPES.toc(Type)..ptr..' '..id2
-            ps[#ps+1] = 'ps.'..id2..' = '..id2..';'
-        end
-        if #args > 0 then
-            args = ','..table.concat(args,', ')
-            ps   = table.concat(ps,'\n')..'\n'
-        else
-            args = ''
-            ps   = ''
-        end
         me.mems.wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
-CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK, tceu_nlbl lbl ]]..args..[[)
+CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK,
+                        tceu_nlbl lbl, tceu_code_args_]]..id..[[ ps)
 {
     tceu_code_mem_]]..id..[[ mem;
-    tceu_code_args_]]..id..[[ ps;
-]]
-        if ps ~= '' then
-            me.mems.wrapper = me.mems.wrapper..ps
-        end
-        me.mems.wrapper = me.mems.wrapper..[[
     CEU_STK_LBL((tceu_evt*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
 ]]
         if not TYPES.check(Type,'void') then

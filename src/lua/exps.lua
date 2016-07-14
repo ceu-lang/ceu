@@ -1,3 +1,12 @@
+EXPS = {}
+
+function EXPS.check_tp (me, to_tp, fr_tp, err_msg)
+    local to_str = TYPES.tostring(to_tp)
+    local fr_str = TYPES.tostring(fr_tp)
+    ASR(TYPES.contains(to_tp,fr_tp), me,
+        err_msg..' : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
+end
+
 local F_Exp_as  = F.Exp_as
 local F_Exp_len = F['Exp_$']
 
@@ -82,22 +91,47 @@ F = {
     Abs_Cons = function (me)
         local ID_abs, Abslist = unpack(me)
 
+        local err_str
+        local tp_i
         local vars do
-            if ID_abs.dcl.tag then
-                vars = AST.asr(ID_abs.dcl,'Data', 2,'Block', 1,'Stmts', 1,'Stmts')
+            if ID_abs.dcl.tag == 'Data' then
+                vars = AST.asr(ID_abs.dcl,'Data', 2,'Block').dcls
+                err_str = 'invalid constructor'
+                tp_i = 1
             else
-error'oi'
-                vars = AST.get(ID_abs.dcl,'Code', 6,'Block', 1,'Stmts', 2,'Do',
-                                                  2,'Block', 1,'Stmts', 2,'Stmts')
+                vars = AST.get(ID_abs.dcl,'Code', 4,'Typepars_ids')
+                err_str = 'invalid call'
+                tp_i = 4
             end
         end
+
+        ASR(#vars == #Abslist, me, err_str..' : expected '..#vars..' argument(s)')
+
         for i, dcl in ipairs(vars) do
-            local _,is_alias = unpack(dcl)
-            if is_alias then
-                ASR(Abslist[i].tag ~= 'ID_any', me,
+            local arg = Abslist[i]
+
+            if arg.tag == 'ID_any' then
+                -- ok: ignore _
+                -- Data(1,_)
+-- TODO: check default, check event/vector
+                local _,is_alias = unpack(dcl)
+                ASR(not is_alias, me,
                     'invalid constructor : argument #'..i..' : unexpected `_´')
+
+            elseif arg.tag == 'Vec_Cons' then
+assert(ID_abs.dcl.tag == 'Data', 'TODO')
+                F.__set_vec(arg, dcl)
+
+            else
+                -- ctx
+                INFO.asr_tag(arg, {'Alias','Val','Nat','Var'}, err_str..' : argument #'..i)
+
+                -- tp
+                EXPS.check_tp(me, dcl[tp_i], arg.info.tp, err_str..' : argument #'..i)
             end
         end
+
+        me.info = INFO.new(me, 'Val', nil, ID_abs[1])
     end,
 
 -- BIND
