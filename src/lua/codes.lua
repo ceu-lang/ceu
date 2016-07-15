@@ -551,7 +551,10 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
 
         -- var Ee.Xx ex = ...;
         -- var& Ee = &ex;
-        local cast = '('..TYPES.toc(to.info.tp)..'*)'
+        local cast = ''
+        if to.info.dcl.tag ~= 'Evt' then
+            cast = '('..TYPES.toc(to.info.tp)..'*)'
+        end
 
         LINE(me, [[
 ]]..V(to, {is_bind=true})..' = '..cast..V(fr)..[[;
