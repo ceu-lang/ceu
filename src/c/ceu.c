@@ -26,9 +26,6 @@
 /* NATIVE_PRE */
 === NATIVE_PRE ===
 
-/* DATAS_MEMS */
-=== DATAS_MEMS ===
-
 enum {
     CEU_CALLBACK_ABORT,
     CEU_CALLBACK_LOG,
@@ -49,12 +46,31 @@ enum {
     === EVTS_ENUM ===
 };
 
+/*****************************************************************************/
+
+/* DATAS_ENUM */
+enum {
+    CEU_DATA__NONE = 0,
+    === DATAS_ENUM ===
+};
+
+typedef u16 tceu_ndata;  /* TODO */
+
+typedef struct tceu_data {
+    tceu_ndata id;
+} tceu_data;
+
+/* DATAS_MEMS */
+=== DATAS_MEMS ===
+
+/*****************************************************************************/
+
 enum {
     CEU_OUTPUT__NONE = 0,
     === EXTS_ENUM_OUTPUT ===
 };
 
-typedef u8 tceu_nevt;   /* TODO */
+typedef u16 tceu_nevt;   /* TODO */
 typedef === TCEU_NTRL === tceu_ntrl;
 typedef === TCEU_NLBL === tceu_nlbl;
 

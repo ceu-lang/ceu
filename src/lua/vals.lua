@@ -132,7 +132,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
             if ID_abs.dcl.tag == 'Data' then
                 vars = AST.asr(ID_abs.dcl,'Data', 2,'Block').dcls
                 id_i = 3
-                id_struct = ID_abs.dcl.id_
+                id_struct = 'tceu_data_'..ID_abs.dcl.id_
             else
                 vars = AST.get(ID_abs.dcl,'Code', 4,'Typepars_ids')
                 id_i = 5
@@ -142,6 +142,10 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 
         for i, v in ipairs(ps) do
             ps[i] = '.'..vars[i][id_i]..'='..v
+        end
+
+        if ID_abs.dcl.tag == 'Data' then
+            table.insert(ps, 1, '.data.id = CEU_DATA_'..ID_abs.dcl.id_)
         end
 
         return '(struct '..id_struct..')'..

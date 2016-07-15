@@ -22,6 +22,7 @@ MEMS = {
     },
     datas = {
         mems = '',
+        enum = '',
     },
 }
 
@@ -48,7 +49,6 @@ typedef struct tceu_code_mem_ROOT {
 
     Code__PRE = function (me)
         local _,_,_,_,_,body = unpack(me)
-        me.id_ = 'tceu_code_mem_'..me.id
         if body then
             me.mems = { mem='' }
         end
@@ -110,16 +110,18 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK,
     ---------------------------------------------------------------------------
 
     Data__PRE = function (me)
-        me.id_ = 'tceu_data_'..string.gsub(me.id,'%.','_')
+        me.id_ = string.gsub(me.id,'%.','_')
         me.mems = { mem='' }
     end,
     Data__POS = function (me)
         me.mems.mem = [[
-typedef struct ]]..me.id_..[[ {
+typedef struct tceu_data_]]..me.id_..[[ {
+    tceu_data data;
     ]]..me.mems.mem..[[
-} ]]..me.id_..[[;
+} tceu_data_]]..me.id_..[[;
 ]]..'\n'
-        MEMS.datas[#MEMS.datas+1] = me.mems
+        MEMS.datas.mems = MEMS.datas.mems..me.mems.mem
+        MEMS.datas.enum = MEMS.datas.enum..'CEU_DATA_'..me.id_..',\n'
     end,
 
     ---------------------------------------------------------------------------
@@ -294,8 +296,4 @@ for i, code in ipairs(MEMS.codes) do
             MEMS.codes.wrappers = MEMS.codes.wrappers..code.wrapper
         end
     end
-end
-
-for i, data in ipairs(MEMS.datas) do
-    MEMS.datas.mems = MEMS.datas.mems..data.mem
 end

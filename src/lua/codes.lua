@@ -801,6 +801,7 @@ end
 -- CEU.C
 local c = PAK.files.ceu_c
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
+local c = SUB(c, '=== DATAS_ENUM ===',       MEMS.datas.enum)
 local c = SUB(c, '=== DATAS_MEMS ===',       MEMS.datas.mems)
 local c = SUB(c, '=== CODES_MEMS ===',       MEMS.codes.mems)
 local c = SUB(c, '=== CODES_ARGS ===',       MEMS.codes.args)
