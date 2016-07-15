@@ -58157,7 +58157,7 @@ data Tx with
     vector[255] _char str;
     var int x;
 end
-var Tx t = val Tx([], 1);
+var Tx t = val Tx(_, 1);
 t.str[0] = {'\0'};
 escape t.x;
 ]],
@@ -58186,72 +58186,6 @@ var Tx t = val Tx("oioioi");
 escape _strlen(&&t.xxxx[0]);
 ]],
     run = 6,
-}
-
-Test { [[
-data SDL_Rect with
-    var int x;
-end
-vector[] SDL_Rect cell_rects;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data SDL_Rect with
-    var int x;
-end
-var SDL_Rect r1 = val SDL_Rect(10);
-vector[] SDL_Rect cell_rects = [r1];
-escape cell_rects[0].x;
-]],
-    run = 10,
-}
-
-Test { [[
-data SDL_Rect with
-    var int x;
-end
-vector[1] SDL_Rect rcs;
-var SDL_Rect ri;
-ri = val SDL_Rect(10);
-rcs[0] = ri;
-escape rcs[0].x;
-]],
-    run = '7] runtime error: access out of bounds',
-}
-
-Test { [[
-data SDL_Rect with
-    var int x;
-end
-var SDL_Rect ri;
-ri = val SDL_Rect(10);
-vector[1] SDL_Rect rcs = [ri];
-escape rcs[0].x;
-]],
-    run = 10,
-}
-
-Test { [[
-native/pure _f;
-native/pos do
-    int f (int* rect) {
-        escape *rect;
-    }
-end
-
-data SDL_Rect with
-    var int x;
-end
-var SDL_Rect ri;
-ri = val SDL_Rect(10);
-vector[1] SDL_Rect rcs = [ri];
-escape _f((&&rcs[0]) as int&&);
-]],
-    run = 10,
 }
 
 Test { [[
@@ -62663,6 +62597,72 @@ v[0].b = 36; // invalid attribution : missing alias operator `&´
 escape b as int;
 ]],
     run = 36,
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+vector[] SDL_Rect cell_rects;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect r1 = val SDL_Rect(10);
+vector[] SDL_Rect cell_rects = [r1];
+escape cell_rects[0].x;
+]],
+    run = 10,
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+vector[1] SDL_Rect rcs;
+var SDL_Rect ri;
+ri = val SDL_Rect(10);
+rcs[0] = ri;
+escape rcs[0].x;
+]],
+    run = '7] runtime error: access out of bounds',
+}
+
+Test { [[
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect ri;
+ri = val SDL_Rect(10);
+vector[1] SDL_Rect rcs = [ri];
+escape rcs[0].x;
+]],
+    run = 10,
+}
+
+Test { [[
+native/pure _f;
+native/pos do
+    int f (int* rect) {
+        escape *rect;
+    }
+end
+
+data SDL_Rect with
+    var int x;
+end
+var SDL_Rect ri;
+ri = val SDL_Rect(10);
+vector[1] SDL_Rect rcs = [ri];
+escape _f((&&rcs[0]) as int&&);
+]],
+    run = 10,
 }
 
 --<<< DATA + VECTORS

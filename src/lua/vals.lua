@@ -119,15 +119,12 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         local ID_abs, Abslist = unpack(me)
 
         local id_struct
-        local id_i
         local vars do
             if ID_abs.dcl.tag == 'Data' then
                 vars = AST.asr(ID_abs.dcl,'Data', 2,'Block').dcls
-                id_i = 3
                 id_struct = 'tceu_data_'..ID_abs.dcl.id_
             else
                 vars = AST.get(ID_abs.dcl,'Code', 4,'Typepars_ids')
-                id_i = 5
                 id_struct = 'tceu_code_args_'..ID_abs.dcl.id
             end
         end
@@ -140,7 +137,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 
         for i, v in ipairs(Abslist) do
             if v.tag ~= 'ID_any' then
-                ps[#ps+1] = '.'..vars[i][id_i]..'='..V(v)
+                ps[#ps+1] = '.'..(vars[i].id or vars[i][5])..'='..V(v)
             end
         end
 
