@@ -57639,6 +57639,19 @@ escape (d as Ex).x;
 }
 
 Test { [[
+data Ee;
+data Ee.Xx with
+    var int x;
+end
+var Ee ex = val Ee();
+var Ee&& e = &&ex;
+escape (e as Ee.Xx&&):x;
+]],
+    wrn = true,
+    run = '7] runtime error: invalid cast `as´',
+}
+
+Test { [[
 data Dx with
     var int x;
 end

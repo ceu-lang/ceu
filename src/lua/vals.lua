@@ -270,13 +270,19 @@ assert(TYPES.is_nat(e.info.tp))
 
     Exp_as = function (me)
         local _, e, Type = unpack(me)
+
         if Type.tag == 'Type' then
             local ret do
                 if Type[1].tag=='ID_abs' and Type[1].dcl.tag=='Data' then
+                    local ptr1,ptr2 = '*', '&'
+                    if TYPES.check(Type,'&&') then
+                        ptr1, ptr2 = '', ''
+                    end
+
                     ret = [[
-(*(
-    (]]..TYPES.toc(Type)..[[*)
-    ceu_data_as((tceu_data*)&]]..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
+(]]..ptr1..[[(
+    (]]..TYPES.toc(Type)..ptr1..[[)
+    ceu_data_as((tceu_data*)]]..ptr2..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
                 __FILE__, (__LINE__-3))
 ))
 ]]
