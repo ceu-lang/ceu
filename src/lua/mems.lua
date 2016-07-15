@@ -21,8 +21,10 @@ MEMS = {
 ]]
     },
     datas = {
-        mems = '',
-        enum = '',
+        id     = 1,
+        mems   = '',
+        enum   = '',
+        supers = '',
     },
 }
 
@@ -111,7 +113,12 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 
     Data__PRE = function (me)
         me.id_ = string.gsub(me.id,'%.','_')
-        me.mems = { mem='' }
+        me.mems = {
+            mem   = '',
+            id    = MEMS.datas.id,
+            super = (me.super and me.super.mems.id) or 'CEU_DATA__NONE',
+        }
+        MEMS.datas.id = MEMS.datas.id + 1
     end,
     Data__POS = function (me)
         me.mems.mem = [[
@@ -120,8 +127,9 @@ typedef struct tceu_data_]]..me.id_..[[ {
     ]]..me.mems.mem..[[
 } tceu_data_]]..me.id_..[[;
 ]]..'\n'
-        MEMS.datas.mems = MEMS.datas.mems..me.mems.mem
-        MEMS.datas.enum = MEMS.datas.enum..'CEU_DATA_'..me.id_..',\n'
+        MEMS.datas.mems   = MEMS.datas.mems..me.mems.mem
+        MEMS.datas.enum   = MEMS.datas.enum..'CEU_DATA_'..me.id_..',\n'
+        MEMS.datas.supers = MEMS.datas.supers..me.mems.super..',\n'
     end,
 
     ---------------------------------------------------------------------------
@@ -214,7 +222,10 @@ typedef struct tceu_data_]]..me.id_..[[ {
                 if is_alias then
 -- TODO: per Code evts
                     MEMS.evts[#MEMS.evts+1] = dcl
-                    dcl.id_ = dcl.id..'_'..dcl.n
+                    dcl.id_ = dcl.id
+                    if not AST.par(me,'Data') then
+                        dcl.id_ = dcl.id..'_'..dcl.n
+                    end
                     mem[#mem+1] = 'tceu_nevt '..dcl.id_..';\n'
                 else
                     MEMS.evts[#MEMS.evts+1] = dcl
@@ -224,7 +235,10 @@ typedef struct tceu_data_]]..me.id_..[[ {
             -- VEC
             elseif dcl.tag == 'Vec' then
                 local tp, is_alias, dim = unpack(dcl)
-                dcl.id_ = dcl.id..'_'..dcl.n
+                dcl.id_ = dcl.id
+                if not AST.par(me,'Data') then
+                    dcl.id_ = dcl.id..'_'..dcl.n
+                end
                 local ptr = (is_alias and '*' or '')
                 mem[#mem+1] = TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..'];\n'
 

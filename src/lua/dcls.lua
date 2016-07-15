@@ -294,6 +294,7 @@ F = {
             local dcl = dcls_get(AST.par(me,'Block'), super, true)
             ASR(dcl, me,
                 'invalid declaration : abstraction "'..super..'" is not declared')
+            me.super = dcl
         end
 
         dcls_new(AST.par(me,'Block'), me)

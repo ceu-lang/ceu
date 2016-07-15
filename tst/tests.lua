@@ -57729,7 +57729,56 @@ data Ee.Xx with
     var int x;
 end
 
-var Ee e1 = val Ee(&d);
+var Ee.Xx e1 = val Ee.Xx(10);
+var& Ee e = &e1;
+if e is Ee then
+    escape (e as Ee.Xx).x;
+else
+    escape 0;
+end
+]],
+    run = 10,
+}
+
+Test { [[
+data Dx with
+    var int x;
+end
+data Ee;
+data Ee.Nothing;
+data Ee.Xx with
+    var& Dx d;
+end
+var Dx d = val Dx(1);
+var Ee e1 = val Ee();
+var& Ee e = &e1;
+(e as Ee.Xx).d.x = 10;
+escape (e as Ee.Xx).d.x;
+]],
+    wrn = true,
+    run = '12] runtime error: invalid cast `as´',
+}
+
+Test { [[
+data Ee;
+data Ee.Xx with
+    var int x;
+end
+
+var Ee e1 = val Ee();
+var& Ee e = &e1;
+escape (e as Ee.Xx).x;
+]],
+    run = '8] runtime error: invalid cast `as´',
+}
+
+Test { [[
+data Ee;
+data Ee.Xx with
+    var int x;
+end
+
+var Ee e1 = val Ee();
 var& Ee e = &e1;
 if e is Ee.Xx then
     escape 0;
@@ -57754,12 +57803,12 @@ end
     var Ee.Xx e1 = val Ee.Xx(&d);
     var& Ee e = &e1;
 // TODO: run-time check
-    (e as Ee.Xx).d.x = 10;
+    d.x = 10;
 
 escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
-    run = 1,
+    run = 10,
 }
 
 Test { [[
@@ -57774,39 +57823,15 @@ data Ee.Xx with
 end
 
     var Dx d = val Dx(1);
-    var Ee e1 = val Ee();
-    var& Ee e = &e1;
-// TODO: run-time check
-    (e as Ee.Xx).d.x = 10;
-
-escape (e as Ee.Xx).d.x;
-]],
-    wrn = true,
-    run = 'TODO: error',
-}
-
-do return end
-
-Test { [[
-data Dx with
-    var int x;
-end
-
-data Ee;
-data Ee.Nothing;
-data Ee.Xx with
-    var& Dx d;
-end
-
-    var Dx d = val Dx(1);
-var Ee e = val Ee.Xx(&d);
+var Ee.Xx ex = val Ee.Xx(&d);
+var& Ee e = &ex;
     (e as Ee.Xx).d = &d;
 
 escape (e as Ee.Xx).d.x;
 ]],
     wrn = true,
     --stmts = 'line 13 : invalid binding : expected declaration with `&´',
-    stmts = 'line 13 : invalid binding : unexpected context for operator `.´',
+    stmts = 'line 14 : invalid binding : unexpected context for operator `.´',
     --run = 1,
 }
 Test { [[
@@ -57820,7 +57845,8 @@ data Ee.Xx with
     var Dx&& d;
 end
 
-var Ee e = val Ee.Xx(null);
+var Ee.Xx ex = val Ee.Xx(null);
+var& Ee e = &ex;
     var Dx d = val Dx(10);
     (e as Ee.Xx).d = &&d;
 
@@ -57985,84 +58011,6 @@ escape 1;
 }
 
 Test { [[
-data Dx;
-data Dx.Nil;
-data Dx.Rec with
-    var Dx r1;
-    var Dx r2;
-end
-
-pool[] Dx ds = new Dx.Rec(
-                    Dx.Rec(Dx.Nil(),Dx.Nil()),
-                    Dx.Nil());
-
-par/or do
-    await (ds as Dx.Rec).r1;
-with
-    (ds as Dx.Rec).r1 = new Dx.Nil();
-end
-
-escape 1;
-]],
-    _ana = {acc=true},
-    run = 1,
-}
-
-Test { [[
-data Tree;
-data Tree.Nil;
-data Tree.Node with
-    var int   v;
-    var Tree  left;
-    var Tree  right;
-end
-
-pool[3] Tree tree;
-tree = new Tree.Node(1,
-            Tree.Node(2, Tree.Nil(), Tree.Nil()),
-            Tree.Node(3, Tree.Nil(), Tree.Nil()));
-
-class Sum with
-    var int&& v;
-do
-    await FOREVER;
-end
-
-class Body with
-    pool&[]  Body bodies;
-    var   Tree&&   n;
-    var&   Sum    sum;
-do
-    watching *n do
-        if *n is Tree.Node then
-            *this.sum.v = *this.sum.v + (*n as Tree.Node).v;
-            spawn Body in this.bodies with
-                this.bodies = &bodies;
-                this.n      = && (*n as Tree.Node).left;
-                this.sum    = &sum;
-            end;
-        end
-    end
-end
-
-var int v = 0;
-var Sum sum with
-    this.v = &&v;
-end;
-
-pool[7] Body bodies;
-do Body with
-    this.bodies = &bodies;
-    this.n      = &&tree;
-    this.sum    = &sum;
-end;
-
-escape v;
-]],
-    fin = 'line 29 : unsafe access to pointer "v" across `class´ (/tmp/tmp.ceu : 22)',
-}
-
-Test { [[
 data Vector3f with
     var float x, y, z;
 end
@@ -58152,26 +58100,6 @@ escape v1.v+v2.v+v3.v;
 }
 
 Test { [[
-data Test with
-    var& u8 b;
-end
-
-var u8 b = 7;
-vector[3] Test v;
-var Test t = val Test(&b);
-v = [] .. v .. [t];
-
-// reassignments
-b = 10;
-t.b = 88;
-v[0].b = 36; // invalid attribution : missing alias operator `&´
-
-escape b as int;
-]],
-    run = 36,
-}
-
-Test { [[
 native _u8;
 data Test with
   vector[10] _u8 v;
@@ -58188,7 +58116,7 @@ native _u8;
 data Test with
   vector[10] _u8 v;
 end
-var Test t = val Test([]);
+var Test t = val Test(_);
 t.v[9] = 10;
 escape t.v[9];
 ]],
@@ -58202,7 +58130,7 @@ data Test with
     vector[10] _u8 v;
     var int b;
 end
-var Test t = val Test(1, [], 1);
+var Test t = val Test(1, _, 1);
 t.v[0] = 10;
 escape t.v[0];
 ]],
@@ -58991,6 +58919,84 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
+}
+
+Test { [[
+data Dx;
+data Dx.Nil;
+data Dx.Rec with
+    var Dx r1;
+    var Dx r2;
+end
+
+pool[] Dx ds = new Dx.Rec(
+                    Dx.Rec(Dx.Nil(),Dx.Nil()),
+                    Dx.Nil());
+
+par/or do
+    await (ds as Dx.Rec).r1;
+with
+    (ds as Dx.Rec).r1 = new Dx.Nil();
+end
+
+escape 1;
+]],
+    _ana = {acc=true},
+    run = 1,
+}
+
+Test { [[
+data Tree;
+data Tree.Nil;
+data Tree.Node with
+    var int   v;
+    var Tree  left;
+    var Tree  right;
+end
+
+pool[3] Tree tree;
+tree = new Tree.Node(1,
+            Tree.Node(2, Tree.Nil(), Tree.Nil()),
+            Tree.Node(3, Tree.Nil(), Tree.Nil()));
+
+class Sum with
+    var int&& v;
+do
+    await FOREVER;
+end
+
+class Body with
+    pool&[]  Body bodies;
+    var   Tree&&   n;
+    var&   Sum    sum;
+do
+    watching *n do
+        if *n is Tree.Node then
+            *this.sum.v = *this.sum.v + (*n as Tree.Node).v;
+            spawn Body in this.bodies with
+                this.bodies = &bodies;
+                this.n      = && (*n as Tree.Node).left;
+                this.sum    = &sum;
+            end;
+        end
+    end
+end
+
+var int v = 0;
+var Sum sum with
+    this.v = &&v;
+end;
+
+pool[7] Body bodies;
+do Body with
+    this.bodies = &bodies;
+    this.n      = &&tree;
+    this.sum    = &sum;
+end;
+
+escape v;
+]],
+    fin = 'line 29 : unsafe access to pointer "v" across `class´ (/tmp/tmp.ceu : 22)',
 }
 
 --<<< DATA / RECURSIVE
@@ -62624,6 +62630,26 @@ var Dx d = val Dx(&s);
 escape $d.str as int;
 ]],
     run = 2,
+}
+
+Test { [[
+data Test with
+    var& u8 b;
+end
+
+var u8 b = 7;
+vector[3] Test v;
+var Test t = val Test(&b);
+v = [] .. v .. [t];
+
+// reassignments
+b = 10;
+t.b = 88;
+v[0].b = 36; // invalid attribution : missing alias operator `&´
+
+escape b as int;
+]],
+    run = 36,
 }
 
 --<<< DATA + VECTORS

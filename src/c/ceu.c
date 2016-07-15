@@ -11,7 +11,7 @@
             ceu_callback(CEU_CALLBACK_LOG, 0, (void*)"[");               \
             ceu_callback(CEU_CALLBACK_LOG, 0, (void*)(file));            \
             ceu_callback(CEU_CALLBACK_LOG, 0, (void*)":");               \
-            ceu_callback(CEU_CALLBACK_LOG, 2, (void*)line);              \
+            ceu_callback(CEU_CALLBACK_LOG, 2, (void*)(long)line);        \
             ceu_callback(CEU_CALLBACK_LOG, 0, (void*)"] ");              \
             ceu_callback(CEU_CALLBACK_LOG, 0, (void*)"runtime error: "); \
             ceu_callback(CEU_CALLBACK_LOG, 0, (void*)(msg));             \
@@ -62,6 +62,26 @@ typedef struct tceu_data {
 
 /* DATAS_MEMS */
 === DATAS_MEMS ===
+
+/* DATAS_SUPERS */
+int CEU_DATA_SUPERS[] = {
+    CEU_DATA__NONE,
+    === DATAS_SUPERS ===
+};
+
+static int ceu_data_is (tceu_ndata me, tceu_ndata cmp) {
+    if (me == CEU_DATA__NONE) {
+        return 0;
+    } else {
+        return (me==cmp || ceu_data_is(CEU_DATA_SUPERS[me],cmp));
+    }
+}
+
+static void* ceu_data_as (tceu_data* me, tceu_ndata cmp, char* file, int line) {
+    ceu_out_assert_msg_ex(ceu_data_is(me->id, cmp), "invalid cast `as´",
+                          file, line);
+    return me;
+}
 
 /*****************************************************************************/
 

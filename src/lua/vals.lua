@@ -118,14 +118,6 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
     Abs_Cons = function (me)
         local ID_abs, Abslist = unpack(me)
 
-        local ps = AST.copy(Abslist)
-        for i=#Abslist, 1, -1 do
-            if Abslist[i].tag == 'ID_any' then
-                table.remove(ps, i)
-            end
-        end
-        ps = V(ps)
-
         local id_struct
         local id_i
         local vars do
@@ -140,12 +132,16 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
             end
         end
 
-        for i, v in ipairs(ps) do
-            ps[i] = '.'..vars[i][id_i]..'='..v
-        end
+        local ps = {}
 
         if ID_abs.dcl.tag == 'Data' then
-            table.insert(ps, 1, '.data.id = CEU_DATA_'..ID_abs.dcl.id_)
+            ps[1] = '.data.id = CEU_DATA_'..ID_abs.dcl.id_
+        end
+
+        for i, v in ipairs(Abslist) do
+            if v.tag ~= 'ID_any' then
+                ps[#ps+1] = '.'..vars[i][id_i]..'='..V(v)
+            end
         end
 
         return '(struct '..id_struct..')'..
@@ -267,14 +263,27 @@ assert(TYPES.is_nat(e.info.tp))
 
 -- IS, AS/CAST
 
+    Exp_is = function (me)
+        local _, e, Type = unpack(me)
+        return 'ceu_data_is('..V(e)..'.data.id, CEU_DATA_'..Type[1].dcl.id_..')'
+    end,
+
     Exp_as = function (me)
         local _, e, Type = unpack(me)
         if Type.tag == 'Type' then
             local ret do
                 if Type[1].tag=='ID_abs' and Type[1].dcl.tag=='Data' then
-                    ret = '(*(('..TYPES.toc(Type)..'*)&'..V(e)..'))'
+                    ret = [[
+(*(
+    (]]..TYPES.toc(Type)..[[*)
+    ceu_data_as((tceu_data*)&]]..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
+                __FILE__, (__LINE__-3))
+))
+]]
                 else
-                    ret = '(('..TYPES.toc(Type)..')'..V(e)..')'
+                    ret = [[
+((]]..TYPES.toc(Type)..')'..V(e)..[[)
+]]
                 end
             end
             if TYPES.check(Type,'bool') then

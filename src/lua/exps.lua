@@ -389,8 +389,9 @@ error'TODO: luacov never executes this?'
         INFO.asr_tag(e, {'Val','Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(not TYPES.check(e.info.tp,'?'), me,
-            'invalid operand to `'..op..'´ : unexpected option type')
+        local plain = TYPES.ID_plain(e.info.tp)
+        ASR(plain and plain.dcl.tag=='Data', me,
+            'invalid operand to `'..op..'´ : expected plain `data´ type : got "'..TYPES.tostring(e.info.tp)..'"')
 
         -- info
         me.info = INFO.new(me, 'Val', nil, 'bool')
