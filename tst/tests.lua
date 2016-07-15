@@ -24000,7 +24000,8 @@ end
 var int v = _A();
 escape v;
 ]],
-    cc = 'error: void value not ignored as it ought to be',
+    cc = '1: error: invalid use of void expression',
+    --cc = 'error: void value not ignored as it ought to be',
 }
 
 Test { [[emit A => 10; escape 0;]],
@@ -24066,7 +24067,8 @@ end
 var int ret = _VD(10);
 escape ret;
 ]],
-    cc = 'error: void value not ignored as it ought to be',
+    cc = '1: error: invalid use of void expression',
+    --cc = 'error: void value not ignored as it ought to be',
 }
 
 Test { [[
