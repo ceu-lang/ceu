@@ -10,6 +10,7 @@ end
 
 --[=====[
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -399,7 +400,7 @@ Test { [[var int a=1,a=0; escape a;]],
 }
 Test { [[var int a; a = b = 1]],
     --parser = "line 1 : after `b´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `;´",
-    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
+    parser = 'line 1 : after `b´ : expected `[´ or `:´ or `.´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `..´ or `;´',
 }
 Test { [[var int a = b; escape 0;]],
     dcls = 'internal identifier "b" is not declared',
@@ -23408,17 +23409,13 @@ Test { [[vector[2] int v; escape v;]],
     stmts = 'line 1 : invalid `escape´ : unexpected context for vector "v"',
     --env = 'types mismatch'
 }
-Test { [[native _u8; vector[2] _u8 v; escape &&v;]],
-    exps = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
+Test { [[native _u8; vector[2] _u8 v=_; escape (&&v==&&v) as int;]],
+    wrn = true,
+    run = 1,
+    --exps = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
     --env = 'line 1 : types mismatch (`int´ <= `_u8[]&&´)',
     --env = 'invalid operand to unary "&&"',
 }
-Test { [[vector[2] u8 v; escape &&v;]],
-    exps = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
-    --env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
-    --env = 'invalid operand to unary "&&"',
-}
-
 Test { [[native _u8; var _u8[2] v; escape &&v;]],
     parser = 'line 1 : after `_u8´ : expected type modifier or internal identifier',
 }
@@ -23447,26 +23444,28 @@ vector[10] void a;
 
 Test { [[
 native _int;
-vector[2] _int v = [];
+vector[2] _int v = _;
 v[0] = 5;
 escape v[0];
 ]],
+    wrn = true,
     run = 5
 }
 
 Test { [[
 native _int;
-vector[2] _int v = [];
+vector[2] _int v = _;
 v[0] = 1;
 v[1] = 1;
 escape v[0] + v[1];
 ]],
+    wrn = true,
     run = 2,
 }
 
 Test { [[
 native _int;
-vector[2] _int v = [];
+vector[2] _int v = _;
 var int i;
 v[0] = 0;
 v[1] = 5;
@@ -23474,6 +23473,7 @@ v[0] = 0;
 i = 0;
 escape v[i+1];
 ]],
+    wrn = true,
     run = 5
 }
 
@@ -23493,13 +23493,14 @@ native/pre do
 end
 native _Tx ;
 
-vector[10] _Tx vec = [];
+vector[10] _Tx vec = _;
 var int i = 110;
 
 vec[3].v[5] = 10;
 vec[9].c = 100;
 escape i + vec[9].c + vec[3].v[5];
 ]],
+    wrn = true,
     run = 220,
 }
 
@@ -23528,15 +23529,17 @@ native _u8, _V;
 vector[10] _u8 v = [_V];
 escape v[0];
 ]],
-    tmp = 'invalid attribution : external vectors accept only empty initialization `[]´',
+    stmts = 'line 2 : invalid constructor : expected internal type : got "_u8"',
+    --tmp = 'invalid attribution : external vectors accept only empty initialization `[]´',
 }
 
 Test { [[
 native _u8;
-vector[10] _u8 vvv = [];
+vector[10] _u8 vvv = _;
 vvv[9] = 1;
 escape vvv[9];
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -23611,7 +23614,7 @@ native/pos do
         *p = 1;
     }
 end
-vector[2] _int a = [];
+vector[2] _int a = _;
 var int b=0;
 par/and do
     b = 2;
@@ -23620,6 +23623,7 @@ with
 end
 escape a[0] + b;
 ]],
+    wrn = true,
     run = 3,
 }
 
@@ -23631,7 +23635,7 @@ native/pos do
     }
 end
 native/plain _int;
-vector[2] _int a = [];
+vector[2] _int a = _;
 a[0] = 0;
 a[1] = 0;
 var int b=0;
@@ -23642,6 +23646,7 @@ with
 end
 escape a[0] + b;
 ]],
+    wrn = true,
     _ana = {
         abrt = 1,
     },
@@ -23658,7 +23663,7 @@ native/pos do
     }
 end
 native/plain _int;
-vector[2] _int a = [];
+vector[2] _int a = _;
 a[0] = 0;
 a[1] = 0;
 var int b=0;
@@ -23669,6 +23674,7 @@ with
 end
 escape a[0] + b;
 ]],
+    wrn = true,
     _ana = {
         abrt = 1,
     },
@@ -23725,10 +23731,11 @@ native/pos do
     }
 end
 native _int;
-vector[2] _int v = [];
+vector[2] _int v = _;
 v[0] = 10;
 escape _f(&&v[0]);
 ]],
+    wrn = true,
     run = 10,
 }
 
@@ -23737,7 +23744,7 @@ native _ceu_uv_read_start, _assert;
 input void UV_READ;
 native/plain _char, _uv_buf_t, _uv_stream_t;
 native/nohold _uv_buf_init, _uv_read_stop;
-vector[3] _char buf_ = [];
+vector[3] _char buf_ = _;
 var _uv_buf_t buf = _uv_buf_init(&&buf_[0], 1);
 var _uv_stream_t client = _uv_stream_t();
 var int ret;
@@ -24148,11 +24155,12 @@ native/pos do
     }
 end
 native _u8;
-vector[2] _u8 v = [];
+vector[2] _u8 v = _;
 v[0] = 8;
 v[1] = 5;
 escape _f2(&&v[0],&&v[1]) + _f1(&&v[0]) + _f1(&&v[0]);
 ]],
+    wrn = true,
     run = 39,
 }
 
@@ -24361,12 +24369,13 @@ native/pos do
         return 1;
     }
 end
-vector[2] _int v = [];
+vector[2] _int v = _;
 v[0] = 0;
 v[1] = 1;
 v[_f()] = 2;
 escape v[1];
 ]],
+    wrn = true,
     run = 2,
 }
 
@@ -25161,11 +25170,12 @@ _printf("END: 1%d%d 0\n",2,3); escape 0;]],
 Test { [[
 native/nohold _strncpy, _printf, _strlen;
 native _char ;
-vector[10] _char str = [];
+vector[10] _char str = _;
 _strncpy(&&str[0], "123", 4);
 _printf("END: %d %s\n", _strlen(&&str[0]) as int, &&str[0]);
 escape 0;
 ]],
+    wrn = true,
     todo = 'END for tests is not used anymore',
     run = '3 123'
 }
@@ -25173,10 +25183,10 @@ escape 0;
 Test { [[
 native/nohold _printf, _strlen, _strcpy;
 native _char;
-vector[6] _char a=[]; _strcpy(&&a[0], "Hello");
-vector[2] _char b=[]; _strcpy(&&b[0], " ");
-vector[7] _char c=[]; _strcpy(&&c[0], "World!");
-vector[30] _char d=[];
+vector[6] _char a=_; _strcpy(&&a[0], "Hello");
+vector[2] _char b=_; _strcpy(&&b[0], " ");
+vector[7] _char c=_; _strcpy(&&c[0], "World!");
+vector[30] _char d=_;
 
 var int len = 0;
 _strcpy(&&d[0],&&a[0]);
@@ -25185,6 +25195,7 @@ _strcpy(&&d[_strlen(&&d[0])], &&c[0]);
 _printf("END: %d %s\n", _strlen(&&d[0]) as int, &&d[0]);
 escape 0;
 ]],
+    wrn = true,
     todo = 'END for tests is not used anymore',
     run = '12 Hello World!'
 }
@@ -25567,7 +25578,7 @@ escape (ptr == null) as int;
 }
 Test { [[
 native _int;
-vector[1] _int i=[];
+vector[1] _int i=_;
 await 1s;
 var _int&& u = _;
 u = &&i[0];
@@ -25579,7 +25590,7 @@ escape 1;
 }
 Test { [[
 native/plain _int;
-vector[1] _int i=[];
+vector[1] _int i=_;
 await 1s;
 var _int&& u = _;
 u = &&i[0];
@@ -25691,10 +25702,11 @@ native/pre do
     #define N 1
 end
 native _u8;
-vector[_N] _u8 vec = [];
+vector[_N] _u8 vec = _;
 vec[0] = 10;
 escape vec[_N-1];
 ]],
+    wrn = true,
     run = 10,
 }
 
@@ -25703,10 +25715,11 @@ native/pre do
     #define N 1
 end
 native _u8;
-vector[N] _u8 vec = [];
+vector[N] _u8 vec = _;
 vec[0] = 10;
 escape vec[N-1];
 ]],
+    wrn = true,
     opts_pre = true,
     run = 10,
 }
@@ -25716,10 +25729,11 @@ native/pre do
     #define N 1
 end
 native _u8;
-vector[N+1] _u8 vec = [];
+vector[N+1] _u8 vec = _;
 vec[1] = 10;
 escape vec[1];
 ]],
+    wrn = true,
     opts_pre = true,
     run = 10,
 }
@@ -25727,10 +25741,11 @@ escape vec[1];
 Test { [[
 #define N 1
 native _u8;
-vector[N+1] _u8 vec = [];
+vector[N+1] _u8 vec = _;
 vec[1] = 10;
 escape vec[1];
 ]],
+    wrn = true,
     opts_pre = true,
     run = 10,
 }
@@ -25741,7 +25756,7 @@ native/pre do
     #define N 5
 end
 native/plain _int;
-vector[_N] _int vec = [];
+vector[_N] _int vec = _;
 loop i in [0 -> _N[ do
     vec[i] = i;
 end
@@ -27292,7 +27307,6 @@ escape ($v + 1) as int;
 ]],
     run = 1,
 }
---]=====]
 Test { [[
 native/pos do
     byte* f (void) {
@@ -27341,6 +27355,13 @@ vector[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
 escape (str[4]=={'i'}) as int;
 ]],
     run = 1,
+}
+
+Test { [[vector[2] u8 v; escape (&&v==&&v) as int;]],
+    run = 1,
+    --exps = 'line 1 : invalid operand to `&&´ : unexpected context for vector "v"',
+    --env = 'line 1 : types mismatch (`int´ <= `u8[]&&´)',
+    --env = 'invalid operand to unary "&&"',
 }
 
 -->> VECTOR / ALIAS
