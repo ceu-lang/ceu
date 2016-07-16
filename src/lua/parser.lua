@@ -674,7 +674,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , _Set_Async_Thread   = #K'async/thread'  * V'_Async_Thread'
     , _Set_Lua            = #V'__lua_pre'     * V'_Lua'
-    , _Set_Vec            = #V'__vec_pre'     * V'Vec_Cons'
+    , _Set_Vec            =                     V'Vec_Cons'
 
     , _Set_Emit_Wclock    = #K'emit'          * V'Emit_Wclock'
     , _Set_Emit_Ext_emit  = #K'emit'          * V'Emit_Ext_emit'
@@ -692,8 +692,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __lua_pre     = KK'[' * (P'='^0) * '['
     , __vec_pre     = KK'[' - V'__lua_pre'
 
+    , __vec_concat = KK'..' * (V'__Exp' + V'_Lua' + #KK'['*V'Vec_Tup')
     , Vec_Tup  = V'__vec_pre' * OPT(V'Explist') * KK']'
-    , Vec_Cons = V'Vec_Tup' * (KK'..' * (V'__Exp' + V'_Lua' + #KK'['*V'Vec_Tup'))^0
+    , Vec_Cons = V'__Exp'   * V'__vec_concat'^1
+               + V'Vec_Tup' * V'__vec_concat'^0
 
 -- IDS
 

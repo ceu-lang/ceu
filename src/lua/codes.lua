@@ -136,12 +136,12 @@ if (]]..V(c)..[[) {
                 local tp, is_alias, dim = unpack(dcl)
                 if dim.is_const then
                     LINE(me, [[
-ceu_vector_init(]]..'&'..CUR(dcl.id_)..','..V(dim)..',sizeof('..TYPES.toc(tp)..[[),
+ceu_vector_init(]]..'&'..CUR(dcl.id_)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
                 (byte*)&]]..CUR(dcl.id_..'_buf')..[[);
 ]])
                 else
                     LINE(me, [[
-ceu_vector_init(]]..'&'..CUR(dcl.id_)..', 0, sizeof('..TYPES.toc(tp)..[[), NULL);
+ceu_vector_init(]]..'&'..CUR(dcl.id_)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 ]])
                     if dim ~= '[]' then
 AST.dump(dim)
@@ -559,7 +559,7 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
             -- $vec = ...
             local _,vec = unpack(to[1])
             LINE(me, [[
-ceu_cb_assert_msg(ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0), "invalid attribution : out of bounds");
+ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 ]])
 
         else
@@ -637,38 +637,76 @@ ceu_cb_assert_msg(ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0), "invalid at
 
     Set_Vec = function (me)
         local Vec_Cons, to = unpack(me)
+
+        -- ceu_vector_setlen(<Vec_Cons>)
         LINE(me, [[
-ceu_dbg_assert(ceu_vector_setlen(&]]..V(to)..[[, 0, 0) );
-]])
-        local I = 0
-        for _, fr in ipairs(Vec_Cons) do
-assert(fr.tag == 'Vec_Tup', 'TODO')
-            local Explist = unpack(fr)
-            if Explist then
-                LINE(me, [[
-#line ]]..Vec_Cons.ln[2]..' "'..Vec_Cons.ln[1]..[["
-ceu_cb_assert_msg(
-    ceu_vector_setlen(&]]..V(to)..[[,
-                      ceu_vector_getlen(&]]..V(to)..[[) + ]]..(#Explist)..[[,
-                      1),
-    "access out of bounds"
-);
-]])
-                for _, e in ipairs(Explist) do
-                    LINE(me, [[
 {
-    ]]..TYPES.toc(to.info.tp)..[[ __ceu_p = ]]..V(e)..[[;
-#line ]]..e.ln[2]..' "'..e.ln[1]..[["
-    ceu_cb_assert_msg(
-        ceu_vector_seti(&]]..V(to)..[[, ]]..I..[[, (byte*)&__ceu_p),
-        "access out of bounds"
-    );
-}
+    usize __ceu_len = 0;
+    usize __ceu_nxt = 0;
 ]])
-                    I = I + 1
+
+        for i, fr in ipairs(Vec_Cons) do
+            if fr.tag == 'Exp_Name' then
+                LINE(me, [[
+    __ceu_len += ]]..V(fr)..[[.len;
+]])
+                if i == 1 then
+                    LINE(me, [[
+    __ceu_nxt += ]]..V(fr)..[[.len;
+]])
                 end
+            elseif fr.tag == 'Vec_Tup' then
+                local Explist = unpack(fr)
+                if Explist then
+                    LINE(me, [[
+    __ceu_len += ]]..#Explist..[[;
+]])
+                end
+            else
+error'TODO: lua'
             end
         end
+        LINE(me, [[
+    ceu_vector_setlen(&]]..V(to)..[[, __ceu_len, 1);
+]])
+
+        for i, fr in ipairs(Vec_Cons) do
+            if fr.tag == 'Exp_Name' then
+                if i > 1 then
+                    -- NO:
+                    -- vector&[] v2 = &v1;
+                    -- v1 = []..v2;
+                    LINE(me, [[
+    ceu_cb_assert_msg(&]]..V(fr)..' != &'..V(to)..[[ "source is the same as destination");
+    ceu_vector_buf_set(]]..V(to)..[[,
+                      __ceu_nxt,
+                      ]]..V(fr)..[[.buf,
+                      ceu_vector_buf_len(]]..V(fr)..[[));
+    __ceu_nxt += ]]..V(fr)..[[.len;
+]])
+                else
+                    -- v1 = v1....
+                    -- nothing to to
+                end
+            elseif fr.tag == 'Vec_Tup' then
+                local Explist = unpack(fr)
+                if Explist then
+                    for _, e in ipairs(Explist) do
+                        LINE(me, [[
+    *((]]..TYPES.toc(to.info.tp)..[[*)
+        ceu_vector_buf_get(]]..V(to)..[[, __ceu_nxt)) = ]]..V(e)..[[;
+    __ceu_nxt++;
+]])
+                    end
+                end
+            else
+error'TODO: lua'
+            end
+        end
+
+        LINE(me, [[
+}
+]])
     end,
 
     ---------------------------------------------------------------------------

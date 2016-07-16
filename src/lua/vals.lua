@@ -211,8 +211,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         else
             local args = {  }
             return [[
-(*(]]..TYPES.toc(me.info.tp)..[[*) ceu_vector_geti_ex(&]]..V(arr)..','..V(idx)..[[, __FILE__, __LINE__)
-)
+(*(]]..TYPES.toc(me.info.tp)..[[*) ceu_vector_geti(&]]..V(arr)..','..V(idx)..[[))
 ]]
         end
     end,
@@ -236,11 +235,11 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 
     ['Exp_$$'] = function (me)
         local _, e = unpack(me)
-        return 'ceu_vector_getmax(&'..V(e)..')'
+        return '('..V(e)..'.max)'
     end,
     ['Exp_$'] = function (me)
         local _, e = unpack(me)
-        return 'ceu_vector_getlen(&'..V(e)..')'
+        return '('..V(e)..'.len)'
     end,
 
 -- UNARY

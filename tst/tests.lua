@@ -26780,7 +26780,6 @@ end
 --<<< PAUSE
 
 -->>> VECTORS / STRINGS
---]=====]
 
 Test { [[
 var u8 v;
@@ -26954,7 +26953,8 @@ Test { [[
 vector[] u8 vec = [1,2,3];
 escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
 ]],
-    run = 6,
+    run = 12,
+    --run = 6,
 }
 
 Test { [[
@@ -26978,24 +26978,26 @@ vector[2] int vec;
 $vec = 1;
 escape 1;
 ]],
-    run = '2] runtime error: invalid attribution : out of bounds',
+    run = '2] runtime error: access out of bounds',
 }
 
 Test { [[
 vector[] byte bs;
 native/nohold _ceu_vector_setlen;
-escape _ceu_vector_setlen(&&bs,1,0) + 1 + $bs;
+_ceu_vector_setlen(&&bs,1,0);
+escape 1 + ($bs as int);
 ]],
-    run = 1,
+    run = '3] runtime error: access out of bounds',
 }
 
 Test { [[
 native/nohold _ceu_vector_setlen;
 vector[] byte bs;
 _ceu_vector_setlen(&&bs, 1, 1);
-escape _ceu_vector_setlen(&&bs,1,0) + 1 + $bs;
+_ceu_vector_setlen(&&bs, 1, 0);
+escape 1 + ($bs as int);
 ]],
-    run = 3,
+    run = 2,
 }
 
 Test { [[
@@ -27010,9 +27012,10 @@ escape ($bs) as int;
 Test { [[
 native/nohold _ceu_vector_setlen;
 vector[10] byte bs;
-escape _ceu_vector_setlen(&&bs, 11, 1) + 1 + $bs;
+_ceu_vector_setlen(&&bs, 11, 1);
+escape 0;
 ]],
-    run = 1,
+    run = '3] runtime error: access out of bounds',
 }
 
 Test { [[
@@ -27028,10 +27031,62 @@ Test { [[
 vector[] byte v1, v2, v3;
 v1 = v2;
 v1 = v2..v3;
-escape 1;
+escape $v1+1;
 ]],
-    parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
+    stmts = 'line 2 : invalid assignment : unexpected context for vector "v1"',
+    --parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
     --parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `;´',
+}
+
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+v1 = v1 .. [4];
+escape v1[3] as int;
+]],
+    run = 4,
+}
+
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+v1 = v1..v1;    // only first can be v1
+escape v1[3];
+]],
+    stmts = 'line 2 : invalid constructor : item #2 : unexpected destination as source',
+}
+
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+v1 = v1;    // not a vector constructor
+escape v1[3];
+]],
+    stmts = 'line 2 : invalid assignment : unexpected context for vector "v1"',
+}
+
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+v1 = []..v1;    // cant concat itself
+escape v1[3];
+]],
+    stmts = 'line 2 : invalid constructor : item #2 : unexpected destination as source',
+}
+
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+vector&[10] u8 v2 = &v1;
+v1 = v2..[];    // v1=v2 must be the same
+escape 0;
+]],
+    stmts = 'line 3 : invalid constructor : item #1 : expected destination as source',
+}
+
+--]=====]
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+vector&[10] u8 v2 = &v1;
+v1 = []..v2;    // v1=v2 same address
+escape 0;
+]],
+    run = 'TODO: error',
 }
 
 Test { [[

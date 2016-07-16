@@ -74,6 +74,23 @@ DBG('TODO: _Lua')
 
         ASR(not TYPES.is_nat(TYPES.get(to.info.tp,1)), me,
             'invalid constructor : expected internal type : got "'..TYPES.tostring(to.info.tp)..'"')
+
+        for i, e in ipairs(fr) do
+            if e.tag == 'Exp_Name' then
+                -- OK: v1 = v1 ..
+                -- NO: v1 = v2 ..
+                -- NO: v1 = .. v1
+                if i == 1 then
+                    ASR(AST.is_equal(to,e), me,
+                            'invalid constructor : item #'..i..' : '..
+                            'expected destination as source')
+                else
+                    ASR(not AST.is_equal(to,e), me,
+                            'invalid constructor : item #'..i..' : '..
+                            'unexpected destination as source')
+                end
+            end
+        end
     end,
 
     __dim_cmp = function (to, fr)
