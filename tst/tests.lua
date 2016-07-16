@@ -26780,6 +26780,7 @@ end
 --<<< PAUSE
 
 -->>> VECTORS / STRINGS
+--]=====]
 
 Test { [[
 var u8 v;
@@ -27072,25 +27073,6 @@ escape v1[3];
 
 Test { [[
 vector[10] u8 v1 = [1,2,3];
-vector&[10] u8 v2 = &v1;
-v1 = v2..[];    // v1=v2 must be the same
-escape 0;
-]],
-    stmts = 'line 3 : invalid constructor : item #1 : expected destination as source',
-}
-
---]=====]
-Test { [[
-vector[10] u8 v1 = [1,2,3];
-vector&[10] u8 v2 = &v1;
-v1 = []..v2;    // v1=v2 same address
-escape 0;
-]],
-    run = 'TODO: error',
-}
-
-Test { [[
-vector[10] u8 v1 = [1,2,3];
 vector[20] u8 v2 = []..v1;
 escape (v2[0] + v2[1] + v2[2]) as int;
 ]],
@@ -27123,56 +27105,6 @@ vector[2] byte v2 = []..v1;
 escape v2[0] + v2[1] + v2[2];
 ]],
     run = '2] runtime error: access out of bounds',
-}
-
-Test { [[
-vector[10] byte vec = [1,2,3];
-vector&[] byte  ref = &vec;
-escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
-]],
-    run = 19,
-}
-
-Test { [[
-var int n = 10;
-vector[n] byte vec = [1,2,3];
-vector&[] byte ref = &vec;
-]],
-    run = 19,
-}
-Test { [[
-var int n = 10;
-vector[n] byte vec = [1,2,3];
-vector&[n] byte ref = &vec;
-]],
-    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
-}
-
-Test { [[
-var int n = 10;
-vector[] byte vec = [1,2,3];
-vector&[n] byte ref = &vec;
-]],
-    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
-}
-
-Test { [[
-vector[10] byte  vec = [1,2,3];
-vector&[11] byte ref = &vec;
-escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
-]],
-    run = 1,
-    stmts = 'line 2 : invalid binding : dimension mismatch',
-    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
-}
-
-Test { [[
-vector[10] byte vec = [1,2,3];
-vector&[9] byte ref = &vec;
-escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
-]],
-    stmts = 'line 2 : invalid binding : dimension mismatch',
-    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
 Test { [[
@@ -27233,32 +27165,6 @@ escape b[0] + b[1];
 ]],
     --env = 'line 10 : invalid type cast',
     run = 5,
-}
-
-Test { [[
-native/nohold _f;
-native/pos do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
-native _int;
-_f((&&b[0]) as _int&&);
-escape b[0] + b[1];
-]],
-    run = 5,
-}
-
-Test { [[
-vector[] byte bs = [ 1, 2, 3 ];
-var int idx = 1;
-var& int i = &idx;
-escape bs[i];
-]],
-    run = 2,
 }
 
 Test { [[
@@ -27456,6 +27362,102 @@ vector[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
 escape (str[4]=={'i'}) as int;
 ]],
     run = 1,
+}
+
+-->> VECTOR / ALIAS
+
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+vector&[10] u8 v2 = &v1;
+v1 = v2..[];    // v1=v2 must be the same
+escape 0;
+]],
+    stmts = 'line 3 : invalid constructor : item #1 : expected destination as source',
+}
+
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+vector&[10] u8 v2 = &v1;
+v1 = []..v2;    // v1=v2 same address
+escape 0;
+]],
+    run = '3] runtime error: source is the same as destination',
+}
+
+Test { [[
+vector[10] byte vec = [1,2,3];
+vector&[] byte  ref = &vec;
+escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
+]],
+    run = 19,
+}
+
+Test { [[
+var int n = 10;
+vector[n] byte vec = [1,2,3];
+vector&[] byte ref = &vec;
+]],
+    run = 19,
+}
+Test { [[
+var int n = 10;
+vector[n] byte vec = [1,2,3];
+vector&[n] byte ref = &vec;
+]],
+    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+}
+
+Test { [[
+var int n = 10;
+vector[] byte vec = [1,2,3];
+vector&[n] byte ref = &vec;
+]],
+    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+}
+
+Test { [[
+vector[10] byte  vec = [1,2,3];
+vector&[11] byte ref = &vec;
+escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
+]],
+    run = 1,
+    stmts = 'line 2 : invalid binding : dimension mismatch',
+    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+}
+
+Test { [[
+vector[10] byte vec = [1,2,3];
+vector&[9] byte ref = &vec;
+escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
+]],
+    stmts = 'line 2 : invalid binding : dimension mismatch',
+    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+}
+
+Test { [[
+native/nohold _f;
+native/pos do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+vector[2] int a  = [1,2];
+vector&[2] int b = &a;
+native _int;
+_f((&&b[0]) as _int&&);
+escape b[0] + b[1];
+]],
+    run = 5,
+}
+
+Test { [[
+vector[] byte bs = [ 1, 2, 3 ];
+var int idx = 1;
+var& int i = &idx;
+escape bs[i];
+]],
+    run = 2,
 }
 
 Test { [[

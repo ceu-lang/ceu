@@ -134,18 +134,20 @@ if (]]..V(c)..[[) {
             local tp = unpack(dcl)
             if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1),me)) then
                 local tp, is_alias, dim = unpack(dcl)
-                if dim.is_const then
-                    LINE(me, [[
+                if not is_alias then
+                    if dim.is_const then
+                        LINE(me, [[
 ceu_vector_init(]]..'&'..CUR(dcl.id_)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
                 (byte*)&]]..CUR(dcl.id_..'_buf')..[[);
 ]])
-                else
-                    LINE(me, [[
+                    else
+                        LINE(me, [[
 ceu_vector_init(]]..'&'..CUR(dcl.id_)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 ]])
-                    if dim ~= '[]' then
+                        if dim ~= '[]' then
 AST.dump(dim)
 error'oi'
+                        end
                     end
                 end
             end
@@ -581,7 +583,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         -- var Ee.Xx ex = ...;
         -- var& Ee = &ex;
         local cast = ''
-        if to.info.dcl.tag ~= 'Evt' then
+        if to.info.dcl.tag == 'Var' then
             cast = '('..TYPES.toc(to.info.tp)..'*)'
         end
 
@@ -677,7 +679,7 @@ error'TODO: lua'
                     -- vector&[] v2 = &v1;
                     -- v1 = []..v2;
                     LINE(me, [[
-    ceu_cb_assert_msg(&]]..V(fr)..' != &'..V(to)..[[ "source is the same as destination");
+    ceu_cb_assert_msg(&]]..V(fr)..' != &'..V(to)..[[, "source is the same as destination");
     ceu_vector_buf_set(]]..V(to)..[[,
                       __ceu_nxt,
                       ]]..V(fr)..[[.buf,
