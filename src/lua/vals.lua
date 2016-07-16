@@ -206,8 +206,14 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 
     ['Exp_idx'] = function (me)
         local _,e,idx = unpack(me)
-assert(TYPES.is_nat(e.info.tp))
-        return '('..V(e)..'['..V(idx)..'])'
+        if TYPES.is_nat(e.info.tp) then
+            return '('..V(e)..'['..V(idx)..'])'
+        else
+            local args = { '&'..V(arr), V(idx), '__FILE__', '__LINE__' }
+            return [[
+(*(]]..TP.toc(me.tp)..[[*)ceu_vector_geti_ex(]]..table.concat(args,',')..[[))
+]]
+        end
     end,
 
 -- MEMBER: .
@@ -229,11 +235,11 @@ assert(TYPES.is_nat(e.info.tp))
 
     ['Exp_$$'] = function (me)
         local _, e = unpack(me)
-        return 'ceu_vector_getmax('..V(e)..')'
+        return 'ceu_vector_getmax(&'..V(e)..')'
     end,
     ['Exp_$'] = function (me)
         local _, e = unpack(me)
-        return 'ceu_vector_getlen('..V(e)..')'
+        return 'ceu_vector_getlen(&'..V(e)..')'
     end,
 
 -- UNARY

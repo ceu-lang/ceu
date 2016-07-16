@@ -1,4 +1,5 @@
 #include <stdlib.h>     /* NULL */
+#include <string.h>     /* memcpy */
 
 typedef struct {
     int   max;
@@ -150,7 +151,7 @@ bool ceu_vector_concat (tceu_vector* to, tceu_vector* fr) {
 }
 
 bool ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n, bool force) {
-    ceu_out_assert_msg((n % to->unit) == 0, "bug found");
+    ceu_cb_assert_msg((n % to->unit) == 0, "bug found");
     int len = idx + n/to->unit;
     if (ceu_vector_getlen(to)<len && !ceu_vector_setlen(to,len,force)) {
         return 0;

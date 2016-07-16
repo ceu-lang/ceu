@@ -3,7 +3,7 @@
 RUNTESTS = {
     --luacov = 'lua5.3 -lluacov'
 -- Execution option for the tests:
---VALGRIND = true
+    valgrind = true
 --REENTRANT = true
 --COMPLETE = true
 --[[
@@ -200,7 +200,15 @@ if T.ana or T.tmp or T.props then return end
         return
     end
 
-    local f = io.popen(CEU.opts.cc_output..' 2>&1')
+    -- EXECUTE
+
+    local exe = CEU.opts.cc_output..' 2>&1'
+
+    if RUNTESTS.valgrind then
+        exe = 'valgrind -q --leak-check=full '..exe
+    end
+
+    local f = io.popen(exe)
     local out = f:read'*a'
     local _1,_,ret = f:close()
 

@@ -129,6 +129,24 @@ if (]]..V(c)..[[) {
 ]])
     end,
 
+    Block__PRE = function (me)
+        for _, dcl in ipairs(me.dcls) do
+            local tp = unpack(dcl)
+            if dcl.tag=='Vec' and (not TYPES.is_nat(tp,me)) then
+                local tp, is_alias, dim = unpack(dcl)
+                local max = (dim~='[]' and dim.is_const and V(dim)) or '0'
+                LINE(me, [[
+ceu_vector_init(]]..'&'..CUR(dcl.id_)..','..max..',sizeof('..TYPES.toc(tp)..[[),
+                (byte*)]]..CUR(dcl.id_..'_buf')..[[);
+]])
+                if not (dim=='[]' or dim.is_const) then
+AST.dump(dim)
+error'oi'
+                end
+            end
+        end
+    end,
+
     ---------------------------------------------------------------------------
 
     Code = function (me)

@@ -26834,7 +26834,6 @@ end
 --<<< PAUSE
 
 -->>> VECTORS / STRINGS
---]=====]
 
 Test { [[
 var u8 v;
@@ -26955,6 +26954,7 @@ escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
     exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "usize" vs "u8"',
 }
+--]=====]
 Test { [[
 vector[10] u8 vec = [1,2,3];
 escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
