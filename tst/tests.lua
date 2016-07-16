@@ -23405,11 +23405,6 @@ Test { [[input int[1] E; escape 0;]],
     --env = 'invalid event type',
     parser = 'line 1 : after `int´ : expected type modifier or external identifier',
 }
-Test { [[vector[0] int v; escape 0;]],
-    wrn = true,
-    run = 0,
-    --env='invalid dimension'
-}
 Test { [[vector[2] int v; escape v;]],
     stmts = 'line 1 : invalid `escape´ : unexpected context for vector "v"',
     --env = 'types mismatch'
@@ -23507,17 +23502,6 @@ vec[9].c = 100;
 escape i + vec[9].c + vec[3].v[5];
 ]],
     run = 220,
-}
-
-Test { [[
-var int i = do/_
-    vector[5] byte abcd;
-    escape 1;
-end;
-escape i;
-]],
-    wrn = true,
-    run = 1,
 }
 
 Test { [[
@@ -23690,16 +23674,6 @@ escape a[0] + b;
         abrt = 1,
     },
     run = 2,
-}
-
-Test { [[
-vector[255] u8 vec;
-event void  e;
-escape 1;
-]],
-    wrn = true,
-    --mem = 'too many events',    -- TODO
-    run = 1,
 }
 
 local evts = ''
@@ -27803,6 +27777,34 @@ escape *b;
 ]],
     cc = 'error: pointer targets in assignment differ',
 }
+
+Test { [[
+var int i = do/_
+    vector[5] byte abcd;
+    escape 1;
+end;
+escape i;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[vector[0] int v; escape 0;]],
+    wrn = true,
+    run = 0,
+    --env='invalid dimension'
+}
+
+Test { [[
+vector[255] u8 vec;
+event void  e;
+escape 1;
+]],
+    wrn = true,
+    --mem = 'too many events',    -- TODO
+    run = 1,
+}
+
 --<< VECTORS
 
 -- STRINGS

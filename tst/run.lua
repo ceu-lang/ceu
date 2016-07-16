@@ -101,7 +101,8 @@ end
         ceu_ver = '?',
         ceu_git = '?',
         files = {
-            ceu_c = assert(io.open'../src/c/ceu.c'):read'*a',
+            ceu_c = assert(io.open'../src/c/ceu_vector.c'):read'*a'..
+                    assert(io.open'../src/c/ceu.c'):read'*a',
         }
     }
     CEU = {

@@ -225,6 +225,17 @@ assert(TYPES.is_nat(e.info.tp))
         return '('..ptr..'('..V(e)..'.'..member..'))'
     end,
 
+-- VECTOR LENGTH: $, $$
+
+    ['Exp_$$'] = function (me)
+        local _, e = unpack(me)
+        return 'ceu_vector_getmax('..V(e)..')'
+    end,
+    ['Exp_$'] = function (me)
+        local _, e = unpack(me)
+        return 'ceu_vector_getlen('..V(e)..')'
+    end,
+
 -- UNARY
 
     ['Exp_1*']  = 'Exp_1',
