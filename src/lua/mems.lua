@@ -235,19 +235,23 @@ typedef struct tceu_data_]]..me.id_..[[ {
             -- VEC
             elseif dcl.tag == 'Vec' then
                 local tp, is_alias, dim = unpack(dcl)
+                local ptr = (is_alias and '*' or '')
                 dcl.id_ = dcl.id
                 if not AST.par(me,'Data') then
                     dcl.id_ = dcl.id..'_'..dcl.n
                 end
-                if TYPES.is_nat(tp, me) then
-                    local ptr = (is_alias and '*' or '')
+                if TYPES.is_nat(TYPES.get(tp,1),me) then
                     mem[#mem+1] = [[
 ]]..TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..[[];
 ]]
                 else
-                    local max = (dim.is_const and V(dim) or '0')
+                    if dim.is_const then
+                        mem[#mem+1] = [[
+]]..TYPES.toc(tp)..' '..dcl.id_..'_buf['..V(dim)..[[];
+]]
+                    end
                     mem[#mem+1] = [[
-CEU_VECTOR_DCL(]]..dcl.id_..','..TYPES.tostring(tp)..','..max..[[)
+tceu_vector]]..ptr..' '..dcl.id_..[[;
 ]]
                 end
 

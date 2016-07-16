@@ -26,6 +26,7 @@ typedef double   f64;
 typedef union tceu_callback_arg {
     void* ptr;
     int   num;
+    usize size;
 } tceu_callback_arg;
 
 #define ceu_callback_num_ptr(cmd,p1,p2)             \
@@ -37,32 +38,29 @@ typedef union tceu_callback_arg {
 #define ceu_callback_ptr_num(cmd,p1,p2)             \
         callback(cmd, (tceu_callback_arg){.ptr=p1}, \
                       (tceu_callback_arg){.num=p2})
+#define ceu_callback_ptr_size(cmd,p1,p2)            \
+        callback(cmd, (tceu_callback_arg){.ptr=p1}, \
+                      (tceu_callback_arg){.size=p2})
 
 tceu_callback_arg callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2);
 
-#if ! (defined(ceu_callback_num_ptr) && \
-       defined(ceu_callback_num_num) && \
-       defined(ceu_callback_ptr_num))
-    #error "Missing definition for macros \"ceu_callback_*\"."
-#endif
-
-#define ceu_cb_assert_msg_ex(v,cmd,file,line)                                    \
+#define ceu_cb_assert_msg_ex(v,msg,file,line)                                    \
     if (!(v)) {                                                                  \
-        if ((cmd)!=NULL) {                                                       \
+        if ((msg)!=NULL) {                                                       \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");               \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(file));            \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");               \
             ceu_callback_num_num(CEU_CALLBACK_LOG, 2, line);                     \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"] ");              \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"runtime error: "); \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(cmd));             \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));             \
             ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");              \
         }                                                                        \
         ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
     }
-#define ceu_cb_assert_msg(v,cmd) ceu_cb_assert_msg_ex((v),(cmd),__FILE__,__LINE__)
+#define ceu_cb_assert_msg(v,msg) ceu_cb_assert_msg_ex((v),(msg),__FILE__,__LINE__)
 
-#define ceu_dbg_assert(v,cmd) ceu_cb_assert_msg(v,cmd)
+#define ceu_dbg_assert(v) ceu_cb_assert_msg(v,"bug found")
 
 enum {
     CEU_CALLBACK_ABORT,

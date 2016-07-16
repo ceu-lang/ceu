@@ -3,38 +3,34 @@
 
 typedef struct {
     int   max;
-    int   nxt;
+    int   len;
     int   unit;
     byte* buf;
 } tceu_vector;
 
-#define CEU_VECTOR_DCL(name, type, max)  \
-    type        name##_buf[max+1];       \
-    tceu_vector name;
-                /* [STRING] max+1: extra space for '\0' */
-
-#define ceu_vector_getlen(vec) ((vec)->nxt)
 #define ceu_vector_getmax(vec) ((vec)->max)
+#define ceu_vector_getlen(vec) ((vec)->len)
 
-void  ceu_vector_init   (tceu_vector* vector, int max, int unit, byte* buf);
-byte* ceu_vector_setmax (tceu_vector* vector, int len, bool freeze);
-bool  ceu_vector_setlen (tceu_vector* vector, int nxt, bool force);
-byte* ceu_vector_geti   (tceu_vector* vector, int idx);
+void  ceu_vector_init    (tceu_vector* vector, int max, int unit, byte* buf);
+byte* ceu_vector_setmax  (tceu_vector* vector, int len, bool freeze);
+bool  ceu_vector_setlen  (tceu_vector* vector, int len, bool grow);
+byte* ceu_vector_geti    (tceu_vector* vector, int idx);
+byte* ceu_vector_geti_ex (tceu_vector* vector, int idx, char* file, int line);
+bool  ceu_vector_seti    (tceu_vector* vector, int idx, byte* v);
+
+#if 0
 bool  ceu_vector_seti   (tceu_vector* vector, int idx, byte* v);
 bool  ceu_vector_push   (tceu_vector* vector, byte* v);
 bool  ceu_vector_concat (tceu_vector* to, tceu_vector* fr);
 bool  ceu_vector_copy_buffer (tceu_vector* to, int idx, const byte* fr, int n, bool force);
 char* ceu_vector_tochar (tceu_vector* vector);
+#endif
 
 void ceu_vector_init (tceu_vector* vector, int max, int unit, byte* buf) {
-    vector->nxt  = 0;
+    vector->len  = 0;
     vector->max  = max;
     vector->unit = unit;
-    if (max==0) {
-        vector->buf = NULL;
-    } else {
-        vector->buf = buf;
-    }
+    vector->buf = buf;
 
     /* [STRING] */
     if (vector->buf != NULL) {
@@ -43,9 +39,7 @@ void ceu_vector_init (tceu_vector* vector, int max, int unit, byte* buf) {
 }
 
 byte* ceu_vector_setmax (tceu_vector* vector, int len, bool freeze) {
-    if (vector->max > 0) {
-        return NULL;    /* "cannot resize vector" */
-    }
+    ceu_dbg_assert(vector->max <= 0);
 
     if (len == 0) {
         /* free */
@@ -70,46 +64,58 @@ byte* ceu_vector_setmax (tceu_vector* vector, int len, bool freeze) {
     return vector->buf;
 }
 
-bool ceu_vector_setlen (tceu_vector* vector, int nxt, bool force) {
-    if (nxt<=vector->nxt || force)
-    {
-        if (vector->max <= 0) {
-            if (ceu_vector_setmax(vector,nxt,0)==NULL && nxt>0) {
-                return 0;
-            }
-        }
-        else
-        {
-            if (nxt > vector->max) {
-                return 0;
-            }
-        }
-
-        /* [STRING] */
-        if (vector->buf != NULL) {
-            vector->buf[nxt*vector->unit] = '\0';
-        }
-    } else {
-        /* can only decrease vector->nxt */
-        return 0;
+bool ceu_vector_setlen (tceu_vector* vector, int len, bool grow)
+{
+    if (!grow && len>ceu_vector_getlen(vector)) {
+        return 0;       /* not supposed to grow */
     }
 
-    vector->nxt = nxt;
+    /* fixed size */
+    if (vector->max > 0) {
+        if (len <= vector->max) {
+            /* ok */    /* len already within limits */
+        } else {
+            return 0;   /* cannot grow vector */
+        }
+
+    /* variable size */
+    } else {
+        if (len <= -vector->max) {
+            /* ok */    /* len already within limits */
+/* TODO: shrink memory */
+        } else {
+            /* grow vector */
+            if (ceu_vector_setmax(vector,len,0)==NULL && len>0) {
+                return 0;
+            }
+        }
+    }
+
+    /* [STRING] */
+    if (vector->buf != NULL) {
+        vector->buf[len*vector->unit] = '\0';
+    }
+    vector->len = len;
     return 1;
 }
 
-/* can only get within idx < vector->nxt */
+/* can only get within idx < vector->len */
 byte* ceu_vector_geti (tceu_vector* vector, int idx) {
-    if (idx >= vector->nxt) {
+    if (idx >= vector->len) {
         return NULL;
     } else {
         return &vector->buf[idx*vector->unit];
     }
 }
+byte* ceu_vector_geti_ex (tceu_vector* vector, int idx, char* file, int line) {
+    byte* ret = ceu_vector_geti(vector, idx);
+    ceu_cb_assert_msg_ex(ret!=NULL, "access out of bounds", file, line);
+    return ret;
+}
 
-/* can only set within idx < vector->nxt */
-bool  ceu_vector_seti (tceu_vector* vector, int idx, byte* v) {
-    if (idx >= vector->nxt) {
+/* can only set within idx < vector->len */
+bool ceu_vector_seti (tceu_vector* vector, int idx, byte* v) {
+    if (idx >= vector->len) {
         return 0;
     } else {
         memcpy(&vector->buf[idx*vector->unit], v, vector->unit);
@@ -117,22 +123,51 @@ bool  ceu_vector_seti (tceu_vector* vector, int idx, byte* v) {
     }
 }
 
-/* can only push within nxt < vector->max */
-bool ceu_vector_push (tceu_vector* vector, byte* v) {
-    /* grow malloc'ed arrays */
-    if (vector->max <= 0) {
-        while (vector->nxt >= -vector->max) {
-            if (ceu_vector_setmax(vector,vector->nxt+1,0) == NULL) {
+#if 0
+bool ceu_vector_setlen (tceu_vector* vector, int len, bool force) {
+    if (len<=vector->len || force)
+    {
+        if (vector->max <= 0) {
+            if (ceu_vector_setmax(vector,len,0)==NULL && len>0) {
                 return 0;
             }
         }
-    } else if (vector->nxt >= vector->max) {
+        else
+        {
+            if (len > vector->max) {
+                return 0;
+            }
+        }
+
+        /* [STRING] */
+        if (vector->buf != NULL) {
+            vector->buf[len*vector->unit] = '\0';
+        }
+    } else {
+        /* can only decrease vector->len */
         return 0;
     }
 
-    memcpy(&vector->buf[vector->nxt*vector->unit], v, vector->unit);
-    vector->nxt++;
-    vector->buf[vector->nxt*vector->unit] = '\0';    /* [STRING] */
+    vector->len = len;
+    return 1;
+}
+
+/* can only push within len < vector->max */
+bool ceu_vector_push (tceu_vector* vector, byte* v) {
+    /* grow malloc'ed arrays */
+    if (vector->max <= 0) {
+        while (vector->len >= -vector->max) {
+            if (ceu_vector_setmax(vector,vector->len+1,0) == NULL) {
+                return 0;
+            }
+        }
+    } else if (vector->len >= vector->max) {
+        return 0;
+    }
+
+    memcpy(&vector->buf[vector->len*vector->unit], v, vector->unit);
+    vector->len++;
+    vector->buf[vector->len*vector->unit] = '\0';    /* [STRING] */
     return 1;
 }
 
@@ -168,3 +203,4 @@ char* ceu_vector_tochar (tceu_vector* vector) {
         return (char*)vector->buf;
     }
 }
+#endif

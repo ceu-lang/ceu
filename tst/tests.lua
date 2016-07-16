@@ -26834,6 +26834,7 @@ end
 --<<< PAUSE
 
 -->>> VECTORS / STRINGS
+--]=====]
 
 Test { [[
 var u8 v;
@@ -26906,11 +26907,18 @@ escape 1;
 }
 Test { [[
 native _int;
+vector[1] _int&& vec = [];
+escape 1;
+]],
+    stmts = 'line 2 : invalid constructor : expected internal type : got "_int&&"',
+}
+
+Test { [[
+native _int;
 vector[1] _int vec = [];
 escape 1;
 ]],
-    --env = 'line 1 : invalid attribution : destination is not a vector',
-    run = 1,
+    stmts = 'line 2 : invalid constructor : expected internal type : got "_int"',
 }
 
 Test { [[
@@ -26954,7 +26962,6 @@ escape $$vec + $vec + vec[0] + vec[1] + vec[2];
 ]],
     exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "usize" vs "u8"',
 }
---]=====]
 Test { [[
 vector[10] u8 vec = [1,2,3];
 escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
@@ -27030,12 +27037,20 @@ escape 1;
 
 Test { [[
 vector[] byte bs;
-$bs := 1;
+_ceu_vector_setlen(&&bs, 1, 0);
 escape ($bs) as int;
 ]],
-    todo = '$vec := n',
     run = 1,
 }
+
+Test { [[
+vector[] byte bs;
+_ceu_vector_setlen(&&bs, 1, 1);
+escape ($bs) as int;
+]],
+    run = 1,
+}
+do return end
 
 Test { [[
 vector[10] byte bs;

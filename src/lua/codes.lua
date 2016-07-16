@@ -132,16 +132,21 @@ if (]]..V(c)..[[) {
     Block__PRE = function (me)
         for _, dcl in ipairs(me.dcls) do
             local tp = unpack(dcl)
-            if dcl.tag=='Vec' and (not TYPES.is_nat(tp,me)) then
+            if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1),me)) then
                 local tp, is_alias, dim = unpack(dcl)
-                local max = (dim~='[]' and dim.is_const and V(dim)) or '0'
-                LINE(me, [[
-ceu_vector_init(]]..'&'..CUR(dcl.id_)..','..max..',sizeof('..TYPES.toc(tp)..[[),
-                (byte*)]]..CUR(dcl.id_..'_buf')..[[);
+                if dim.is_const then
+                    LINE(me, [[
+ceu_vector_init(]]..'&'..CUR(dcl.id_)..','..V(dim)..',sizeof('..TYPES.toc(tp)..[[),
+                (byte*)&]]..CUR(dcl.id_..'_buf')..[[);
 ]])
-                if not (dim=='[]' or dim.is_const) then
+                else
+                    LINE(me, [[
+ceu_vector_init(]]..'&'..CUR(dcl.id_)..', 0, sizeof('..TYPES.toc(tp)..[[), NULL);
+]])
+                    if dim ~= '[]' then
 AST.dump(dim)
 error'oi'
+                    end
                 end
             end
         end
@@ -550,6 +555,13 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
 }
 ]])
             end
+        elseif AST.get(to,'Exp_Name',1,'Exp_$') then
+            -- $vec = ...
+            local _,vec = unpack(to[1])
+            LINE(me, [[
+ceu_cb_assert_msg(ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0), "invalid attribution : out of bounds");
+]])
+
         else
             -- var Ee.Xx ex = ...;
             -- var&& Ee = &&ex;
@@ -621,6 +633,42 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
         LINE(me, [[
 ]]..V(to)..' = '..V(Abs_Cons)..[[;
 ]])
+    end,
+
+    Set_Vec = function (me)
+        local Vec_Cons, to = unpack(me)
+        LINE(me, [[
+ceu_dbg_assert(ceu_vector_setlen(&]]..V(to)..[[, 0) );
+]])
+        local I = 0
+        for _, fr in ipairs(Vec_Cons) do
+assert(fr.tag == 'Vec_Tup', 'TODO')
+            local Explist = unpack(fr)
+            if Explist then
+                LINE(me, [[
+#line ]]..Vec_Cons.ln[2]..' "'..Vec_Cons.ln[1]..[["
+ceu_cb_assert_msg(
+    ceu_vector_setlen(&]]..V(to)..[[,
+                      ceu_vector_getlen(&]]..V(to)..[[) + ]]..(#Explist)..[[,
+                      1),
+    "access out of bounds"
+);
+]])
+                for _, e in ipairs(Explist) do
+                    LINE(me, [[
+{
+    ]]..TYPES.toc(to.info.tp)..[[ __ceu_p = ]]..V(e)..[[;
+#line ]]..e.ln[2]..' "'..e.ln[1]..[["
+    ceu_cb_assert_msg(
+        ceu_vector_seti(&]]..V(to)..[[, ]]..I..[[, (byte*)&__ceu_p),
+        "access out of bounds"
+    );
+}
+]])
+                    I = I + 1
+                end
+            end
+        end
     end,
 
     ---------------------------------------------------------------------------

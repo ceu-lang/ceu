@@ -24,6 +24,8 @@ tceu_callback_arg callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2)
             return (tceu_callback_arg){ .num=ceu_callback_output(p1, p2) };
 #endif
             break;
+        case CEU_CALLBACK_REALLOC:
+            return (tceu_callback_arg){ .ptr = realloc(p1.ptr, p2.size) };
     }
     ceu_callback_go_all(cmd, p1, p2);
     return (tceu_callback_arg){ .num=0 };

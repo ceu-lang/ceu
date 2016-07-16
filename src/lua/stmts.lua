@@ -71,6 +71,9 @@ DBG('TODO: _Lua')
         local fr, to = unpack(me)
         INFO.asr_tag(to, {'Vec'}, 'invalid constructor')
         F.__set_vec(fr, to.info)
+
+        ASR(not TYPES.is_nat(TYPES.get(to.info.tp,1)), me,
+            'invalid constructor : expected internal type : got "'..TYPES.tostring(to.info.tp)..'"')
     end,
 
     __dim_cmp = function (to, fr)
