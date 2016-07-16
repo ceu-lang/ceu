@@ -26780,7 +26780,6 @@ end
 --<<< PAUSE
 
 -->>> VECTORS / STRINGS
---]=====]
 
 Test { [[
 var u8 v;
@@ -27134,40 +27133,6 @@ escape a[0] + a[1];
 }
 
 Test { [[
-native/nohold _f;
-native/pos do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
-_f((&&b[0]) as byte&&);
-escape b[0] + b[1];
-]],
-    --env = 'line 10 : invalid type cast',
-    run = 5,
-}
-
-Test { [[
-native/nohold _f;
-native/pos do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
-_f((&&b[0]) as int&&);
-escape b[0] + b[1];
-]],
-    --env = 'line 10 : invalid type cast',
-    run = 5,
-}
-
-Test { [[
 vector[5] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
 loop i in [0 -> ($foo) as int[ do
@@ -27222,7 +27187,8 @@ end
 escape tot+1;
 ]],
     wrn = true,
-    run = 1,
+    --run = 1,
+    run = 16,
 }
 
 Test { [[
@@ -27281,7 +27247,7 @@ escape v1[0]+v1[1]+v1[2];
 Test { [[
 vector[] int v1 = [1,2,3];
 vector[] int v2 = [7,8,9];
-v1 = [] .. v1 .. [4,5,6] .. v2;
+v1 = v1 .. [4,5,6] .. v2;
 var int ret = 0;
 loop i in [0 -> 9[ do
     ret = ret + v1[i];
@@ -27293,10 +27259,11 @@ escape ret;
 
 Test { [[
 vector[] int v = [1,2,3];
-v = [] .. v .. v;
+v = v .. v;
 escape ($v + v[5]) as int;
 ]],
-    run = 9,
+    stmts = 'line 2 : invalid constructor : item #2 : unexpected destination as source',
+    --run = 9,
 }
 
 Test { [[
@@ -27304,7 +27271,18 @@ vector[] int v = [1,2,3];
 v = [1] .. v;
 escape ($v + v[1]) as int;
 ]],
-    run = 3,
+    stmts = 'line 2 : invalid constructor : item #2 : unexpected destination as source',
+    --run = 3,
+}
+
+Test { [[
+vector[] int v = [1,2,3];
+vector[] int v1 = []..v;
+v = [1] .. v1;
+escape ($v + v[1]) as int;
+]],
+    run = 5,
+    --run = 3,
 }
 
 Test { [[
@@ -27314,6 +27292,7 @@ escape ($v + 1) as int;
 ]],
     run = 1,
 }
+--]=====]
 Test { [[
 native/pos do
     byte* f (void) {
@@ -27475,6 +27454,42 @@ escape _strlen((&&str[0]) as _char&&);
 ]],
     run = 5,
 }
+
+Test { [[
+native/nohold _f;
+native/pos do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+vector[2] int a  = [1,2];
+vector&[2] int b = &a;
+_f((&&b[0]) as byte&&);
+escape b[0] + b[1];
+]],
+    --env = 'line 10 : invalid type cast',
+    run = 5,
+}
+
+Test { [[
+native/nohold _f;
+native/pos do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+vector[2] int a  = [1,2];
+vector&[2] int b = &a;
+_f((&&b[0]) as int&&);
+escape b[0] + b[1];
+]],
+    --env = 'line 10 : invalid type cast',
+    run = 5,
+}
+
+--<< VECTOR / ALIAS
 
 -- TODO: dropped support for returning alias, is this a problem?
 
