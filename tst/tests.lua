@@ -25509,19 +25509,6 @@ escape 1;
     run = 1,
 }
 Test { [[
-var int a := 1;
-escape 1;
-]],
-    todo = 'line 1 : wrong operator',
-}
-Test { [[
-var int a;
-a := 1;
-escape 1;
-]],
-    todo = 'line 2 : wrong operator',
-}
-Test { [[
 var int a;
 do a = 1;
 finalize with
@@ -25531,19 +25518,6 @@ escape 1;
 ]],
     scopes = 'line 2 : invalid `finalize´ : nothing to finalize',
     --fin = 'line 3 : attribution does not require `finalize´',
-}
-Test { [[
-var int&& a := null;
-escape 1;
-]],
-    todo = 'line 1 : wrong operator',
-}
-Test { [[
-var int&& a;
-a := null;
-escape 1;
-]],
-    todo = 'line 2 : wrong operator',
 }
 Test { [[
 var int&& a;
@@ -25557,24 +25531,6 @@ escape 1;
     --fin = 'line 3 : attribution does not require `finalize´',
 }
 Test { [[
-code/instantaneous Faca (void)=>void do
-    var int&& a;
-    a := null;
-end
-escape 1;
-]],
-    wrn = true,
-    todo = 'line 3 : wrong operator',
-}
-Test { [[
-var int a=0;
-var int&& pa := &&a;
-escape 1;
-]],
-    todo = 'line 2 : wrong operator',
-    run = 1,
-}
-Test { [[
 var int a=0;
 var int&& pa;
 do pa = &&a;
@@ -25585,16 +25541,6 @@ escape 1;
 ]],
     scopes = 'line 3 : invalid `finalize´ : nothing to finalize',
     --fin = 'line 4 : attribution does not require `finalize´',
-}
-Test { [[
-code/instantaneous Fx (var void&& o1)=>void do
-    var void&& tmp := o1;
-end
-escape 1;
-]],
-    wrn = true,
-    todo = 'line 2 : wrong operator',
-    --fin = 'line 2 : pointer access across `await´',
 }
 
 Test { [[
@@ -27037,37 +26983,36 @@ escape 1;
 
 Test { [[
 vector[] byte bs;
-_ceu_vector_setlen(&&bs, 1, 0);
-escape ($bs) as int;
+native/nohold _ceu_vector_setlen;
+escape _ceu_vector_setlen(&&bs,1,0) + 1 + $bs;
 ]],
     run = 1,
 }
 
 Test { [[
+native/nohold _ceu_vector_setlen;
 vector[] byte bs;
 _ceu_vector_setlen(&&bs, 1, 1);
-escape ($bs) as int;
+escape _ceu_vector_setlen(&&bs,1,0) + 1 + $bs;
 ]],
-    run = 1,
+    run = 3,
 }
-do return end
 
 Test { [[
+native/nohold _ceu_vector_setlen;
 vector[10] byte bs;
-$bs := 10;
+_ceu_vector_setlen(&&bs, 10, 1);
 escape ($bs) as int;
 ]],
-    todo = '$vec := n',
     run = 10,
 }
 
 Test { [[
+native/nohold _ceu_vector_setlen;
 vector[10] byte bs;
-$bs := 11;
-escape ($bs) as int;
+escape _ceu_vector_setlen(&&bs, 11, 1) + 1 + $bs;
 ]],
-    todo = '$vec := n',
-    run = '2] runtime error: invalid attribution : out of bounds',
+    run = 1,
 }
 
 Test { [[
@@ -27941,34 +27886,41 @@ escape 1;
 Test { [[
 var int nnn = 10;
 vector[nnn] byte xxx;
-$xxx := nnn;
+native/nohold _ceu_vector_setlen;
+_ceu_vector_setlen(&&xxx,nnn,1);
 xxx[0] = 10;
 xxx[9] = 1;
 escape xxx[0]+xxx[9];
 ]],
-    todo = '$vec := n',
     run = 11,
 }
 
 Test { [[
 var int nnn = 10;
 vector[nnn] byte xxx;
-$xxx := nnn+1;
+native/nohold _ceu_vector_setlen;
+escape 1 + _ceu_vector_setlen(&&xxx,nnn+1,1);
+]],
+    run = 1,
+}
+
+Test { [[
+var int n = 10;
+vector[n] byte us;
+$us = 20;
 escape 1;
 ]],
-    todo = '$vec := n',
     run = ':3] runtime error: invalid attribution : out of bounds',
 }
 
 Test { [[
 var int n = 10;
 vector[n] byte us;
-$us := n;
-$us = 20;
-escape 1;
+native/nohold _ceu_vector_setlen;
+_ceu_vector_setlen(&&us,n,1);
+escape $us;
 ]],
-    todo = '$vec := n',
-    run = ':4] runtime error: invalid attribution : out of bounds',
+    run = 10,
 }
 
 Test { [[
@@ -27983,11 +27935,11 @@ escape 1;
 Test { [[
 var int n = 10;
 vector[] byte us;
-$us := n;
-escape 1;
+native/nohold _ceu_vector_setlen;
+_ceu_vector_setlen(&&us,n,1);
+escape $us;
 ]],
-    todo = '$vec := n',
-    run = 1,
+    run = 10,
 }
 
 Test { [[
@@ -71494,4 +71446,58 @@ escape ret;
     run = 1,
 }
 
+Test { [[
+var int a := 1;
+escape 1;
+]],
+    todo = 'line 1 : wrong operator',
+}
+Test { [[
+var int a;
+a := 1;
+escape 1;
+]],
+    todo = 'line 2 : wrong operator',
+}
+Test { [[
+var int&& a := null;
+escape 1;
+]],
+    todo = 'line 1 : wrong operator',
+}
+Test { [[
+var int&& a;
+a := null;
+escape 1;
+]],
+    todo = 'line 2 : wrong operator',
+}
+Test { [[
+code/instantaneous Faca (void)=>void do
+    var int&& a;
+    a := null;
+end
+escape 1;
+]],
+    wrn = true,
+    todo = 'line 3 : wrong operator',
+}
+Test { [[
+var int a=0;
+var int&& pa := &&a;
+escape 1;
+]],
+    todo = 'line 2 : wrong operator',
+    run = 1,
+}
+Test { [[
+code/instantaneous Fx (var void&& o1)=>void do
+    var void&& tmp := o1;
+end
+escape 1;
+]],
+    wrn = true,
+    todo = 'line 2 : wrong operator',
+    --fin = 'line 2 : pointer access across `await´',
+}
 --]=====]

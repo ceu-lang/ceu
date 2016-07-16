@@ -171,7 +171,7 @@ assert(ID_abs.dcl.tag == 'Data', 'TODO')
         local op, e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Nat','Var','Pool','Vec'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR(not TYPES.check(e.info.tp,'?'), me,

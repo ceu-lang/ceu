@@ -638,7 +638,7 @@ ceu_cb_assert_msg(ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0), "invalid at
     Set_Vec = function (me)
         local Vec_Cons, to = unpack(me)
         LINE(me, [[
-ceu_dbg_assert(ceu_vector_setlen(&]]..V(to)..[[, 0) );
+ceu_dbg_assert(ceu_vector_setlen(&]]..V(to)..[[, 0, 0) );
 ]])
         local I = 0
         for _, fr in ipairs(Vec_Cons) do
