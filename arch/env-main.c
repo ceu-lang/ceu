@@ -1,20 +1,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int callback (int msg, int p1, void* p2) {
+tceu_callback_arg callback (int msg, tceu_callback_arg p1, tceu_callback_arg p2) {
     switch (msg) {
         case CEU_CALLBACK_ABORT:
             abort();
         case CEU_CALLBACK_LOG: {
-            switch (p1) {
+            switch (p1.num) {
                 case 0:
-                    printf("%s", (char*)p2);
+                    printf("%s", (char*)p2.ptr);
                     break;
                 case 1:
-                    printf("%p", p2);
+                    printf("%p", p2.ptr);
                     break;
                 case 2:
-                    printf("%ld", (long)p2);
+                    printf("%d", p2.num);
                     break;
             }
             break;
@@ -25,8 +25,8 @@ int callback (int msg, int p1, void* p2) {
 #endif
             break;
     }
-    ceu_callback_go_all(msg, p1, NULL);
-    return 0;
+    ceu_callback_go_all(msg, p1, p2);
+    return (tceu_callback_arg){ .num=0 };
 }
 
 int main (int argc, char *argv[])

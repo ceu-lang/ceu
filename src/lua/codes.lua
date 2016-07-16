@@ -314,7 +314,7 @@ while (1) {
         local async = AST.par(me, 'Async')
         if async then
             LINE(me, [[
-ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 ]])
             HALT(me, {
                 { evt = 'CEU_INPUT__ASYNC' },
@@ -528,7 +528,7 @@ __ceu_ret_]]..code.n..' = '..V(fr)..[[;
             else
                 LINE(me, [[
 {   int __ceu_ret = ]]..V(fr)..[[;
-    ceu_callback(CEU_CALLBACK_TERMINATING, __ceu_ret, NULL);
+    ceu_callback_num_ptr(CEU_CALLBACK_TERMINATING, __ceu_ret, NULL);
 }
 ]])
             end
@@ -646,11 +646,11 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',
 ]])
             end
             LINE(me, [[
-    ceu_callback(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[);
+    ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[);
 ]])
         else
             LINE(me, [[
-ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 _ceu_trl->evt = CEU_INPUT__ASYNC;
 _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
 _ceu_trl->stk = NULL;
@@ -741,7 +741,7 @@ _CEU_HALT_]]..me.n..[[_:
             lbl = me.lbl_out.id,
             exec = [[
 {
-    ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+    ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
         ceu_go_ext(CEU_INPUT__WCLOCK, &__ceu_dt);
@@ -760,7 +760,7 @@ _CEU_HALT_]]..me.n..[[_:
     Async = function (me)
         local _,blk = unpack(me)
         LINE(me, [[
-ceu_callback(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 ]])
         HALT(me, {
             { evt = 'CEU_INPUT__ASYNC' },

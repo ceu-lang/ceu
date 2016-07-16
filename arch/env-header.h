@@ -23,5 +23,17 @@ typedef uint64_t u64;
 typedef float    f32;
 typedef double   f64;
 
-#define ceu_callback(msg,p1,p2) callback(msg,p1,p2)
-int callback (int msg, int p1, void* p2);
+typedef union tceu_callback_arg {
+    void* ptr;
+    int   num;
+} tceu_callback_arg;
+
+#define ceu_callback_num_ptr(msg,p1,p2)                   \
+        callback(msg, (tceu_callback_arg){.num=p1}, \
+                      (tceu_callback_arg){.ptr=p2})
+
+#define ceu_callback_num_num(msg,p1,p2)                   \
+        callback(msg, (tceu_callback_arg){.num=p1}, \
+                      (tceu_callback_arg){.num=p2})
+
+tceu_callback_arg callback (int msg, tceu_callback_arg p1, tceu_callback_arg p2);

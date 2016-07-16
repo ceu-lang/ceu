@@ -1,23 +1,23 @@
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset */
 
-#ifndef ceu_callback
-    #error "Missing definition for macro \"ceu_callback\"."
+#if ! (defined(ceu_callback_num_ptr) && defined(ceu_callback_num_num))
+    #error "Missing definition for macros \"ceu_callback_num_ptr\" or \"ceu_callback_num_num\"."
 #endif
 
-#define ceu_cb_assert_msg_ex(v,msg,file,line)                           \
-    if (!(v)) {                                                          \
-        if ((msg)!=NULL) {                                               \
-            ceu_callback(CEU_CALLBACK_LOG, 0, (void*)"[");               \
-            ceu_callback(CEU_CALLBACK_LOG, 0, (void*)(file));            \
-            ceu_callback(CEU_CALLBACK_LOG, 0, (void*)":");               \
-            ceu_callback(CEU_CALLBACK_LOG, 2, (void*)(long)line);        \
-            ceu_callback(CEU_CALLBACK_LOG, 0, (void*)"] ");              \
-            ceu_callback(CEU_CALLBACK_LOG, 0, (void*)"runtime error: "); \
-            ceu_callback(CEU_CALLBACK_LOG, 0, (void*)(msg));             \
-            ceu_callback(CEU_CALLBACK_LOG, 0, (void*)"\n");              \
-        }                                                                \
-        ceu_callback(CEU_CALLBACK_ABORT, 0, NULL);                       \
+#define ceu_cb_assert_msg_ex(v,msg,file,line)                                    \
+    if (!(v)) {                                                                  \
+        if ((msg)!=NULL) {                                                       \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");               \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(file));            \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");               \
+            ceu_callback_num_num(CEU_CALLBACK_LOG, 2, line);                     \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"] ");              \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"runtime error: "); \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));             \
+            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");              \
+        }                                                                        \
+        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
     }
 #define ceu_cb_assert_msg(v,msg) ceu_cb_assert_msg_ex((v),(msg),__FILE__,__LINE__)
 
@@ -240,7 +240,7 @@ static int ceu_wclock (s32 dt, s32* set, s32* sub)
     /* didn't awake, but can be the smallest wclk */
     if ( (!ret) && (CEU_APP.wclk_min_set > t) ) {
         CEU_APP.wclk_min_set = t;
-        ceu_callback(CEU_CALLBACK_WCLOCK_MIN, t, NULL);
+        ceu_callback_num_ptr(CEU_CALLBACK_WCLOCK_MIN, t, NULL);
     }
 
     return ret;
@@ -432,11 +432,11 @@ static int ceu_cb_terminating = 0;
 static int ceu_cb_terminating_ret;
 static int ceu_cb_pending_async = 0;
 
-static void ceu_callback_go_all (int msg, int p1, void* p2) {
+static void ceu_callback_go_all (int msg, tceu_callback_arg p1, tceu_callback_arg p2) {
     switch (msg) {
         case CEU_CALLBACK_TERMINATING:
             ceu_cb_terminating     = 1;
-            ceu_cb_terminating_ret = p1;
+            ceu_cb_terminating_ret = p1.num;
             break;
         case CEU_CALLBACK_PENDING_ASYNC:
             ceu_cb_pending_async = 1;
