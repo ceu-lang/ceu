@@ -10,7 +10,6 @@ end
 
 --[=====[
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -21944,7 +21943,7 @@ escape v.a + v.b;
 
 Test { [[
 native/pre do
-    ##define ceu_callback_output(evt,params) Fa(evt,params)
+    ##define ceu_callback_output(evt,params) Fa(evt.num,params.ptr)
     ##include <assert.h>
     typedef struct t {
         int a;
@@ -21984,7 +21983,7 @@ native/pre do
     } t;
 end
 native/pos do
-    ##define ceu_callback_output(evt,params) Fa(evt,params)
+    ##define ceu_callback_output(evt,params) Fa(evt.num,params.ptr)
     int Fa (int evt, void* v) {
         if (evt == CEU_OUTPUT_A) {
             t x = ((tceu_output_A*)v)->_1;
@@ -22114,7 +22113,7 @@ escape 1;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_output(evt,params) Fx(params)
+    ##define ceu_callback_output(evt,params) Fx(params.ptr)
     int Fx (void* p) {
         tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p;
         *(v->_1) = 1;
@@ -22134,7 +22133,7 @@ escape a + b;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_output(evt,params) Fx(evt,params)
+    ##define ceu_callback_output(evt,params) Fx(evt.num,params.ptr)
     int Fx (int evt, void* p) {
         tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p;
         *(v->_1) = (evt == CEU_OUTPUT_RADIO_SEND);
@@ -22465,7 +22464,7 @@ escape ret;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_output(a,b) Z(a,b)
+    ##define ceu_callback_output(a,b) Z(a.num,b.ptr)
     int Z (tceu_nevt evt, void* p) {
         return (evt==CEU_OUTPUT_Z && p==NULL);
     }
@@ -26831,11 +26830,11 @@ end
     _ana = {acc=true},
     run = {['~>2s']=-1},
 }
-do return end
 
 --<<< PAUSE
 
 -->>> VECTORS / STRINGS
+--]=====]
 
 Test { [[
 var u8 v;

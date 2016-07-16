@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-tceu_callback_arg callback (int msg, tceu_callback_arg p1, tceu_callback_arg p2) {
-    switch (msg) {
+tceu_callback_arg callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    switch (cmd) {
         case CEU_CALLBACK_ABORT:
             abort();
         case CEU_CALLBACK_LOG: {
@@ -21,11 +21,11 @@ tceu_callback_arg callback (int msg, tceu_callback_arg p1, tceu_callback_arg p2)
         }
         case CEU_CALLBACK_OUTPUT:
 #ifdef ceu_callback_output
-            return ceu_callback_output(p1, p2);
+            return (tceu_callback_arg){ .num=ceu_callback_output(p1, p2) };
 #endif
             break;
     }
-    ceu_callback_go_all(msg, p1, p2);
+    ceu_callback_go_all(cmd, p1, p2);
     return (tceu_callback_arg){ .num=0 };
 }
 

@@ -646,7 +646,7 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',
 ]])
             end
             LINE(me, [[
-    ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[);
+    ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[).num;
 ]])
         else
             LINE(me, [[

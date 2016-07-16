@@ -1,40 +1,8 @@
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset */
 
-#if ! (defined(ceu_callback_num_ptr) && defined(ceu_callback_num_num))
-    #error "Missing definition for macros \"ceu_callback_num_ptr\" or \"ceu_callback_num_num\"."
-#endif
-
-#define ceu_cb_assert_msg_ex(v,msg,file,line)                                    \
-    if (!(v)) {                                                                  \
-        if ((msg)!=NULL) {                                                       \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"[");               \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(file));            \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)":");               \
-            ceu_callback_num_num(CEU_CALLBACK_LOG, 2, line);                     \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"] ");              \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"runtime error: "); \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)(msg));             \
-            ceu_callback_num_ptr(CEU_CALLBACK_LOG, 0, (void*)"\n");              \
-        }                                                                        \
-        ceu_callback_num_ptr(CEU_CALLBACK_ABORT, 0, NULL);                       \
-    }
-#define ceu_cb_assert_msg(v,msg) ceu_cb_assert_msg_ex((v),(msg),__FILE__,__LINE__)
-
-#define ceu_dbg_assert(v,msg) ceu_cb_assert_msg(v,msg)
-
 /* NATIVE_PRE */
 === NATIVE_PRE ===
-
-enum {
-    CEU_CALLBACK_ABORT,
-    CEU_CALLBACK_LOG,
-    CEU_CALLBACK_TERMINATING,
-    CEU_CALLBACK_PENDING_ASYNC,
-    CEU_CALLBACK_WCLOCK_MIN,
-    CEU_CALLBACK_OUTPUT,
-    CEU_CALLBACK_REALLOC,
-};
 
 enum {
     CEU_INPUT__NONE = 0,
@@ -432,8 +400,8 @@ static int ceu_cb_terminating = 0;
 static int ceu_cb_terminating_ret;
 static int ceu_cb_pending_async = 0;
 
-static void ceu_callback_go_all (int msg, tceu_callback_arg p1, tceu_callback_arg p2) {
-    switch (msg) {
+static void ceu_callback_go_all (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    switch (cmd) {
         case CEU_CALLBACK_TERMINATING:
             ceu_cb_terminating     = 1;
             ceu_cb_terminating_ret = p1.num;
