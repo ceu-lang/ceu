@@ -6256,7 +6256,7 @@ loop do
         with
             await OS_START;
             emit a;
-            _ceu_out_assert_msg(0, "err");
+            _ceu_cb_assert_msg(0, "err");
         end
     else
         await OS_START;
@@ -26857,8 +26857,1669 @@ end
     _ana = {acc=true},
     run = {['~>2s']=-1},
 }
+do return end
 
 --<<< PAUSE
+
+-->>> VECTORS / STRINGS
+
+Test { [[
+var u8 v;
+escape ($$v) as int;
+]],
+    exps = 'line 2 : invalid operand to `$$´ : unexpected context for variable "v"',
+    --env = 'line 2 : invalid operand to unary "$$" : vector expected',
+}
+Test { [[
+var u8 v;
+escape ($v) as int;
+]],
+    names = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
+}
+
+Test { [[
+vector[10] u8 vec;
+escape ($$vec + $vec) as int;
+]],
+    run = 10,
+}
+
+Test { [[
+vector[] u8 vec;
+escape ($$vec + $vec + 1) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+vector[] int c;
+escape [];
+]],
+    parser = 'line 2 : after `escape´ : expected expression',
+    --env = 'line 2 : invalid attribution : destination is not a vector',
+    --env = 'line 2 : types mismatch (`int´ <= `any[]´)',
+}
+
+Test { [[
+vector[] int c;
+escape [1]..[]..c;
+]],
+    parser = 'line 2 : after `escape´ : expected expression',
+    --env = 'line 2 : invalid attribution : destination is not a vector',
+    --env = 'line 2 : types mismatch (`int´ <= `int[]´)',
+}
+
+Test { [[
+vector[10] u8 vec = [ [1,2,3] ];
+escape 1;
+]],
+    parser = 'line 1 : after `[´ : expected `]´',
+    --parser = 'line 1 : after `[´ : expected `]´',
+    --env = 'line 1 : wrong argument #1 : arity mismatch',
+    --env = 'line 1 : types mismatch (`u8[]´ <= `int[][]´)',
+    --env = 'line 1 : wrong argument #1 : types mismatch (`u8´ <= `int[]..´)',
+}
+Test { [[
+vector[10] u8 vec = (1,2,3);
+escape 1;
+]],
+    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator',
+}
+Test { [[
+vector[10] u8 vec = (1);
+escape 1;
+]],
+    --env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
+    stmts = 'line 1 : invalid assignment : unexpected context for vector "vec"',
+}
+Test { [[
+native _int;
+vector[1] _int vec = [];
+escape 1;
+]],
+    --env = 'line 1 : invalid attribution : destination is not a vector',
+    run = 1,
+}
+
+Test { [[
+event void e;
+vector[10] u8 vec = [ e ];
+escape 1;
+]],
+    stmts = 'line 2 : invalid expression list : item #1 : unexpected context for event "e"',
+}
+
+Test { [[
+var int x;
+vector[10] u8 vec = [ &&x ];
+escape 1;
+]],
+    --env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int&&´)',
+    stmts = 'line 2 : invalid constructor : item #1 : invalid expression list : item #1 : types mismatch : "u8" <= "int&&"',
+}
+
+Test { [[
+vector[] int v = [] ..;
+escape 1;
+]],
+    --parser = 'line 1 : after `..´ : expected item',
+    --parser = 'line 1 : after `..´ : invalid constructor syntax',
+    parser = 'line 1 : after `..´ : expected expression or `[´',
+}
+
+Test { [[
+vector[] int&& v1;
+vector[] int  v2 = []..v1;
+escape 1;
+]],
+    stmts = 'line 2 : invalid constructor : item #2 : types mismatch : "int" <= "int&&"',
+    --env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int&&´)',
+}
+
+Test { [[
+vector[10] u8 vec = [1,2,3];
+escape $$vec + $vec + vec[0] + vec[1] + vec[2];
+]],
+    exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "usize" vs "u8"',
+}
+Test { [[
+vector[10] u8 vec = [1,2,3];
+escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
+]],
+    run = 19,
+}
+
+Test { [[
+vector[10] u8 vec = [1,2,3];
+vec[0] = 4;
+vec[1] = 5;
+vec[2] = 6;
+escape ((($$vec) as int) + (($vec )as int) + vec[0] + vec[1] + vec[2]) as int;
+]],
+    run = 28,
+}
+
+Test { [[
+vector[10] int vec = [1,2,3];
+vec[0] = 4;
+vec[1] = 5;
+vec[2] = 6;
+escape (($$vec )as int) + (($vec) as int) + vec[0] + vec[1] + vec[2];
+]],
+    run = 28,
+}
+
+Test { [[
+vector[10] u8 vec;
+vec[0] = 1;
+escape 1;
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+vector[10] u8 vec;
+escape vec[0] as int;
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+vector[] u8 vec = [1,2,3];
+escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
+]],
+    run = 6,
+}
+
+Test { [[
+vector[10] u8 vec = [1,2,3];
+$$vec = 0;
+escape vec[0] as int;
+]],
+    parser = 'line 1 : after `;´ : expected statement',
+    --env = 'line 2 : invalid attribution',
+}
+Test { [[
+vector[10] u8 vec = [1,2,3];
+$vec = 0;
+escape vec[0] as int;
+]],
+    run = '3] runtime error: access out of bounds',
+}
+
+Test { [[
+vector[2] int vec;
+$vec = 1;
+escape 1;
+]],
+    run = '2] runtime error: invalid attribution : out of bounds',
+}
+
+Test { [[
+vector[] byte bs;
+$bs := 1;
+escape ($bs) as int;
+]],
+    todo = '$vec := n',
+    run = 1,
+}
+
+Test { [[
+vector[10] byte bs;
+$bs := 10;
+escape ($bs) as int;
+]],
+    todo = '$vec := n',
+    run = 10,
+}
+
+Test { [[
+vector[10] byte bs;
+$bs := 11;
+escape ($bs) as int;
+]],
+    todo = '$vec := n',
+    run = '2] runtime error: invalid attribution : out of bounds',
+}
+
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+vector[20] u8 v2 = v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    stmts = 'line 2 : invalid assignment : unexpected context for vector "v2"',
+    --env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
+}
+
+Test { [[
+vector[] byte v1, v2, v3;
+v1 = v2;
+v1 = v2..v3;
+escape 1;
+]],
+    parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
+    --parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `;´',
+}
+
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+vector[20] u8 v2 = []..v1;
+escape (v2[0] + v2[1] + v2[2]) as int;
+]],
+    run = 6,
+}
+Test { [[
+vector[20] u8 v1 = [1,2,3];
+vector[10] u8 v2 = []..v1;
+escape (v2[0] + v2[1] + v2[2]) as int;
+]],
+    run = 6,
+}
+Test { [[
+vector[] u8 v1   = [1,2,3];
+vector[10] u8 v2 = []..v1;
+escape (v2[0] + v2[1] + v2[2]) as int;
+]],
+    run = 6,
+}
+Test { [[
+vector[10] byte v1 = [1,2,3];
+vector[] byte   v2 = []..v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = 6,
+}
+Test { [[
+vector[3] byte v1 = [1,2,3];
+vector[2] byte v2 = []..v1;
+escape v2[0] + v2[1] + v2[2];
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+vector[10] byte vec = [1,2,3];
+vector&[] byte  ref = &vec;
+escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
+]],
+    run = 19,
+}
+
+Test { [[
+var int n = 10;
+vector[n] byte vec = [1,2,3];
+vector&[] byte ref = &vec;
+]],
+    run = 19,
+}
+Test { [[
+var int n = 10;
+vector[n] byte vec = [1,2,3];
+vector&[n] byte ref = &vec;
+]],
+    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+}
+
+Test { [[
+var int n = 10;
+vector[] byte vec = [1,2,3];
+vector&[n] byte ref = &vec;
+]],
+    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+}
+
+Test { [[
+vector[10] byte  vec = [1,2,3];
+vector&[11] byte ref = &vec;
+escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
+]],
+    run = 1,
+    stmts = 'line 2 : invalid binding : dimension mismatch',
+    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+}
+
+Test { [[
+vector[10] byte vec = [1,2,3];
+vector&[9] byte ref = &vec;
+escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
+]],
+    stmts = 'line 2 : invalid binding : dimension mismatch',
+    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+}
+
+Test { [[
+vector[2] int v ;
+escape v == &&v[0] ;
+]],
+    --exps = 'line 2 : invalid operand to `==´ : expected the same type',
+    --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
+    --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
+    exps = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
+}
+
+Test { [[
+native/nohold _f;
+native/pos do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+vector[2] int a = [1,2];
+native _int;
+_f((&&a[0]) as _int&&);
+escape a[0] + a[1];
+]],
+    run = 5,
+}
+
+Test { [[
+native/nohold _f;
+native/pos do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+vector[2] int a  = [1,2];
+vector&[2] int b = &a;
+_f((&&b[0]) as byte&&);
+escape b[0] + b[1];
+]],
+    --env = 'line 10 : invalid type cast',
+    run = 5,
+}
+
+Test { [[
+native/nohold _f;
+native/pos do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+vector[2] int a  = [1,2];
+vector&[2] int b = &a;
+_f((&&b[0]) as int&&);
+escape b[0] + b[1];
+]],
+    --env = 'line 10 : invalid type cast',
+    run = 5,
+}
+
+Test { [[
+native/nohold _f;
+native/pos do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+vector[2] int a  = [1,2];
+vector&[2] int b = &a;
+native _int;
+_f((&&b[0]) as _int&&);
+escape b[0] + b[1];
+]],
+    run = 5,
+}
+
+Test { [[
+vector[] byte bs = [ 1, 2, 3 ];
+var int idx = 1;
+var& int i = &idx;
+escape bs[i];
+]],
+    run = 2,
+}
+
+Test { [[
+vector[5] byte foo = [1, 2, 3, 4, 5];
+var int tot = 0;
+loop i in [0 -> ($foo) as int[ do
+    tot = tot + foo[i];
+end
+escape tot;
+]],
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    --tight = 'line 3 : tight loop',
+}
+Test { [[
+vector[5] byte foo = [1, 2, 3, 4, 5];
+var int tot = 0;
+loop i in [0 -> ($foo) as int[ do
+    tot = tot + foo[i];
+end
+escape tot;
+]],
+    loop = true,
+    wrn = true,
+    run = 15,
+}
+
+Test { [[
+vector[5] byte foo = [1, 2, 3, 4, 5];
+var int tot = 0;
+loop i in [0 -> ($$foo) as int[ do
+    tot = tot + foo[i];
+end
+escape tot;
+]],
+    run = 15,
+}
+
+Test { [[
+vector[] byte foo = [1, 2, 3, 4, 5];
+var int tot = 0;
+loop i in [0 -> ($$foo) as int[ do
+    tot = tot + foo[i];
+end
+escape tot+1;
+]],
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+}
+
+Test { [[
+vector[] byte foo = [1, 2, 3, 4, 5];
+var int tot = 0;
+loop i in [0 -> ($$foo) as int[ do
+    tot = tot + foo[i];
+end
+escape tot+1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+escape 1..2;
+]],
+    --parser = 'line 1 : after `..´ : invalid constructor syntax',
+    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
+}
+Test { [[
+escape 1 .. 2;
+]],
+    --parser = 'line 1 : after `..´ : invalid constructor syntax',
+    --parser = 'line 1 : after `1´ : expected `;´',
+    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
+}
+Test { [[
+vector[] int x = [1]..2;
+escape 1;
+]],
+    stmts = 'line 1 : invalid constructor : unexpected context for value "2"',
+    --stmts = 'line 1 : invalid constructor : expected name expression',
+    --env = 'line 1 : wrong argument #2 : source is not a vector',
+}
+
+Test { [[
+escape [1]..[2];
+]],
+    parser = 'line 1 : after `escape´ : expected expression',
+    --env = 'line 1 : invalid attribution : destination is not a vector',
+}
+
+Test { [[
+escape [1]..[&&this];
+]],
+    --env = 'line 1 : invalid attribution : destination is not a vector',
+    parser = 'line 1 : after `escape´ : expected expression',
+}
+
+Test { [[
+vector[] int v1;
+vector[] int v2;
+v1 = [1] .. v2;
+v1 = [] .. v2 .. [1];
+escape v1[0];
+]],
+    run = 1;
+}
+
+Test { [[
+vector[] int v1 = [1]..[2]..[3];
+escape v1[0]+v1[1]+v1[2];
+]],
+    run = 6;
+}
+
+Test { [[
+vector[] int v1 = [1,2,3];
+vector[] int v2 = [7,8,9];
+v1 = [] .. v1 .. [4,5,6] .. v2;
+var int ret = 0;
+loop i in [0 -> 9[ do
+    ret = ret + v1[i];
+end
+escape ret;
+]],
+    run = 45;
+}
+
+Test { [[
+vector[] int v = [1,2,3];
+v = [] .. v .. v;
+escape ($v + v[5]) as int;
+]],
+    run = 9,
+}
+
+Test { [[
+vector[] int v = [1,2,3];
+v = [1] .. v;
+escape ($v + v[1]) as int;
+]],
+    run = 3,
+}
+
+Test { [[
+vector[] int v;
+$v = 0;
+escape ($v + 1) as int;
+]],
+    run = 1,
+}
+Test { [[
+native/pos do
+    byte* f (void) {
+        escape "ola";
+    }
+    typedef struct {
+        byte* (*f) (void);
+    } tp;
+    tp Tx = { f };
+end
+vector[] byte str = [] .. "oi";
+escape (str[1]=={'i'}) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    byte* f (void) {
+        escape "ola";
+    }
+    typedef struct {
+        byte* (*f) (void);
+    } tp;
+    tp Tx = { f };
+end
+native _char, _Tx;
+vector[] byte str = [] .. (_Tx.f() as _char&&);
+escape (str[2]=={'a'}) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    byte* f (void) {
+        escape "ola";
+    }
+    typedef struct {
+        byte* (*f) (void);
+    } tp;
+    tp Tx = { f };
+end
+native _char, _Tx;
+vector[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
+escape (str[4]=={'i'}) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    byte* f (void) {
+        escape "ola";
+    }
+end
+vector[] byte  str;
+vector&[] byte ref = &str;
+native _char;
+ref = [] .. ({f}() as _char&&) .. "oi";
+native/pure _strlen;
+escape _strlen((&&str[0]) as _char&&);
+]],
+    run = 5,
+}
+
+-- TODO: dropped support for returning alias, is this a problem?
+
+Test { [[
+native/pos do
+    ##define ID(x) x
+end
+native/pure _ID, _strlen;
+native _char;
+vector[] byte str = [] .. "abc"
+                    .. (_ID("def") as _char&&);
+var byte&& str2 = _ID((&&str[0]) as _char&&);
+escape _strlen((&&str[0]) as _char&&) + _strlen(str2);
+]],
+    run = 12,
+}
+
+Test { [[
+vector[] byte str;
+vector[] byte str;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+
+Test { [[
+native/pure _strcmp;
+vector[] byte str1;
+vector[] byte str2 = [].."";
+native _char;
+escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+vector[] u8 str = [].."Ola Mundo!";
+]],
+    stmts = 'line 1 : invalid constructor : item #2 : types mismatch : "u8" <= "byte"',
+}
+
+Test { [[
+vector[3] u8 bytes;
+
+bytes = [] .. bytes .. [5];
+
+escape bytes[0] as int;
+]],
+    run = 5,
+}
+
+Test { [[
+native/nohold _ceu_vector_copy_buffer;
+vector[] byte v = [1,2,0,4,5];
+var byte c = 3;
+_ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 1);
+escape v[2] + (($v) as int);
+]],
+    run = 8,
+}
+
+Test { [[
+native/nohold _ceu_vector_copy_buffer;
+vector[5] byte v = [1,2,0,4,5];
+var byte c = 3;
+var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 1);
+escape v[2] + (($v) as int) + ok;
+]],
+    run = 9,
+}
+
+Test { [[
+native/nohold _ceu_vector_copy_buffer;
+vector[5] byte v = [1,2,1,4,5];
+var byte c = 3;
+var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 8, 1);
+escape v[2] + (($v) as int) + ok;
+]],
+    run = 6,
+}
+
+Test { [[
+native/nohold _ceu_vector_copy_buffer;
+vector[] byte v = [1,2,0,4,5];
+var byte c = 3;
+_ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 0);
+escape v[2] + (($v) as int);
+]],
+    run = 8,
+}
+
+Test { [[
+native/nohold _ceu_vector_copy_buffer;
+vector[5] byte v = [1,2,0,4,5];
+var byte c = 3;
+var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 0);
+escape v[2] + (($v) as int) + ok;
+]],
+    run = 9,
+}
+
+Test { [[
+native/nohold _ceu_vector_copy_buffer;
+vector[] byte v = [1,2,1,4,5];
+var byte c = 3;
+var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 8, 0);
+escape v[2] + (($v) as int) + ok;
+]],
+    run = 6,
+}
+
+Test { [[
+vector[] int v;
+escape v > 0;
+]],
+    exps = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
+}
+Test { [[
+vector[] int v;
+escape v?;
+]],
+    exps = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
+}
+Test { [[
+vector[] int v;
+escape v!;
+]],
+    names = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
+}
+Test { [[
+vector[] int v;
+escape ~v;
+]],
+    exps = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
+}
+
+Test { [[
+vector[] int v;
+v[true] = 1;
+]],
+    exps = 'line 2 : invalid index : expected integer type',
+}
+
+Test { [[
+native/const _X;
+native/pos do
+    ##define X 1;
+end
+vector&[-_X] int iis;
+escape 1;
+]],
+    wrn = true,
+    inits = 'line 5 : uninitialized vector "iis" : reached `escape´ (/tmp/tmp.ceu:6)',
+    --run = 1,
+}
+
+Test { [[
+native/const _X;
+native/pos do
+    ##define X 1;
+end
+vector[-_X] int vvs;
+vector&[-_X] int iis = &vvs;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+vector int[1][1] v;
+escape 1;
+]],
+    --adj = 'line 1 : not implemented : multiple `[]´',
+    --env = 'line 1 : invalid type modifier : `[][]´',
+    parser = 'line 1 : after `vector´ : expected `&´ or `[´',
+}
+Test { [[
+vector[1][1] int v;
+escape 1;
+]],
+    --adj = 'line 1 : not implemented : multiple `[]´',
+    --env = 'line 1 : invalid type modifier : `[][]´',
+    parser = 'line 1 : after `]´ : expected type',
+}
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    dcls = 'line 1 : vector "v" declared but not used',
+    --env = 'line 1 : invalid type modifier : `[]?´',
+}
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    wrn = true,
+    tmp = 'line 1 : `data´ fields do not support vectors yet',
+    --env = 'line 1 : invalid type modifier : `[]?´',
+}
+
+Test { [[
+vector[2] int v;
+v[0] = 1;
+var int ret=0;
+par/or do
+    ret = v[0];
+with
+    ret = v[1];
+end;
+escape ret;
+]],
+    run = false,
+    _ana = {
+        acc = 1,
+        abrt = 3,
+    },
+}
+
+Test { [[
+vector&[] int v;
+escape 1;
+]],
+    inits = 'line 1 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:2)',
+    wrn = true,
+    --run = 1,
+}
+Test { [[
+vector[] int vv;
+vector&[] int v = &vv;;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+vector[] int v;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+native _enqueue;
+vector[255] byte buf;
+_enqueue(&&buf[0]);
+escape 1;
+]],
+    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "buf"',
+    --fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
+native _enqueue;
+vector[255] byte buf;
+_enqueue(buf);
+escape 1;
+]],
+    stmts = 'line 3 : invalid expression list : item #1 : unexpected context for vector "buf"',
+    --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
+    --fin = 'line 2 : call requires `finalize´',
+}
+Test { [[
+native _enqueue;
+vector[255] byte buf;
+_enqueue(&&buf);
+escape 1;
+]],
+    exps = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
+    --fin = 'line 2 : call requires `finalize´',
+}
+
+Test { [[
+native/pure _strlen;
+
+native _char;
+vector[255] _char str;
+str = [].."oioioi";
+
+escape _strlen(&&str[0]);
+]],
+    --dcls = 'line 5 : invalid use of `vector´ "str"',
+    cc = '4:34: error: assignment to expression with array type',
+}
+
+Test { [[
+var byte b = 1;
+var byte c = 2;
+b = (c as byte);
+escape b;
+]],
+    run = 2,
+}
+Test { [[
+vector[] byte c = [1];
+vector&[] byte b = &c;
+escape b[0];
+]],
+    run = 1,
+}
+Test { [[
+var byte  c = 2;
+var& byte b = &c;
+escape b;
+]],
+    cc = 'error: pointer targets in assignment differ',
+}
+Test { [[
+var byte   c = 2;
+var byte&& b = &&c;
+escape *b;
+]],
+    cc = 'error: pointer targets in assignment differ',
+}
+--<< VECTORS
+
+-- STRINGS
+
+Test { [[
+native/nohold _strlen;
+vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
+native _char;
+escape _strlen((&&v[0]) as _char&&);
+]],
+    run = 3,
+}
+Test { [[
+native/nohold _strlen;
+vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
+native _char;
+escape _strlen((&&v[0]) as _char&&);
+]],
+    run = 3,
+}
+
+Test { [[
+native/pure _strlen;
+native/nohold _garbage;
+native/pos do
+    void garbage (byte* v) {
+        int i = 0;
+        for (; i<20; i++) {
+            v[i] = i;
+        }
+    }
+end
+
+vector[10] byte v;
+vector[10] byte v_;
+native _char;
+_garbage((&&v[0]) as _char&&);
+v = [{'a'},{'b'},{'c'}];
+escape _strlen((&&v[0]) as _char&&);
+]],
+    wrn = true,
+    run = 3,
+}
+
+Test { [[
+_f([1]);
+escape 1;
+]],
+    --env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
+    --parser = 'line 1 : after `(´ : expected `)´',
+    parser = 'line 1 : after `(´ : expected expression',
+    --run = 1,
+}
+Test { [[
+_f([1]..[2]);
+escape 1;
+]],
+    --env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
+    --parser = 'line 1 : after `(´ : expected `)´',
+    parser = 'line 1 : after `(´ : expected expression',
+    --run = 1,
+}
+Test { [[
+vector[] int v;
+_f([1]..v);
+escape 1;
+]],
+    --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
+    parser = 'line 2 : after `(´ : expected expression',
+    --parser = 'line 2 : after `(´ : expected `)´',
+    --run = 1,
+}
+Test { [[
+vector[] int v;
+_f(v..[1]);
+escape 1;
+]],
+    --parser = 'line 2 : after `..´ : invalid constructor syntax',
+    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `,´ or `)´',
+    --run = 1,
+}
+
+Test { [[
+native/nohold _strlen;
+vector[] byte v = [].."abc";
+native _char;
+escape _strlen(v as _char&&);
+]],
+    exps = 'line 4 : invalid operand to `as´ : unexpected context for vector "v"',
+    --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
+    --run = 3,
+}
+Test { [[
+native/nohold _strlen;
+vector[] byte v = [].."abc";
+native _char;
+escape _strlen((&&v[0]) as _char&&);
+]],
+    run = 3,
+}
+Test { [[
+native/nohold _strlen;
+vector[] byte v = [].."abc";
+v = [] .. v .. "def";
+native _char;
+escape _strlen((&&v[0]) as _char&&);
+]],
+    run = 6,
+}
+
+Test { [[
+var int nnn = 10;
+vector[nnn] u8 xxx;
+xxx[0] = 10;
+escape 1;
+]],
+    run = ':3] runtime error: access out of bounds',
+}
+
+Test { [[
+var int nnn = 10;
+vector[nnn] byte xxx;
+$xxx := nnn;
+xxx[0] = 10;
+xxx[9] = 1;
+escape xxx[0]+xxx[9];
+]],
+    todo = '$vec := n',
+    run = 11,
+}
+
+Test { [[
+var int nnn = 10;
+vector[nnn] byte xxx;
+$xxx := nnn+1;
+escape 1;
+]],
+    todo = '$vec := n',
+    run = ':3] runtime error: invalid attribution : out of bounds',
+}
+
+Test { [[
+var int n = 10;
+vector[n] byte us;
+$us := n;
+$us = 20;
+escape 1;
+]],
+    todo = '$vec := n',
+    run = ':4] runtime error: invalid attribution : out of bounds',
+}
+
+Test { [[
+var int n = 10;
+vector[] byte us;
+$us = n;
+escape 1;
+]],
+    run = ':3] runtime error: invalid attribution : out of bounds',
+}
+
+Test { [[
+var int n = 10;
+vector[] byte us;
+$us := n;
+escape 1;
+]],
+    todo = '$vec := n',
+    run = 1,
+}
+
+Test { [[
+var int n = 10;
+vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
+us[n] = 10;
+escape us[0]+us[9];
+]],
+    run = ':3] runtime error: access out of bounds',
+}
+
+Test { [[
+var int n = 10;
+vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
+us[n-1] = 1;
+escape us[0]+us[9];
+]],
+    run = 1,
+}
+
+
+Test { [[
+vector[1.5] u8 us = [];
+]],
+    consts = 'line 1 : invalid declaration : vector dimension must be an integer',
+    --env = 'line 2 : dimension must be constant',
+}
+
+Test { [[
+native _u8;
+native/const _U8_MAX;
+vector[_U8_MAX] _u8 us = [];
+escape 1;
+]],
+    run = 1,
+    --env = 'line 2 : dimension must be constant',
+}
+
+Test { [[
+native _u8;
+native/const _U8_MAX;
+var int n = 10;
+vector[_U8_MAX] _u8 us = [];
+us[_U8_MAX-1] = 10;
+us[0] = 1;
+escape us[0]+us[_U8_MAX-1];
+]],
+    run = 'TODO: error',
+}
+
+Test { [[
+native _t_vec;
+native/pos do
+    typedef int t_vec[10];
+end
+var _t_vec us = _;
+us[9] = 10;
+us[0] =  1;
+escape us[0]+us[9];
+]],
+    wrn = true,
+    run = 11,
+}
+
+Test { [[
+native _u8;
+native/const _N;
+native/pre do
+    int N = 10;
+end
+vector&[_N] _u8 xxxx = [];
+escape 1;
+]],
+    inits = 'line 6 : invalid binding : unexpected statement in the right side',
+    --gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
+}
+
+Test { [[
+native _u8;
+native/const _N;
+native/pre do
+    int N = 10;
+end
+vector[_N] _u8 xxx = [];
+escape 1;
+]],
+    cc = '6:26: error: variably modified ‘xxxx’ at file scope',
+}
+
+Test { [[
+#define HASH_BYTES 32
+vector[HASH_BYTES+sizeof(u32)] byte bs;
+escape ($$bs) as int;
+]],
+    opts_pre = true,
+    run = 36,
+}
+
+Test { [[
+var int n = 32;
+vector[n] byte bs;
+escape ($$bs) as int;
+]],
+    run = 32,
+}
+
+Test { [[
+code/instantaneous Fx (void)=>void do
+    var int x = 0;
+
+    vector[10] byte cs;
+end
+escape 1;
+]],
+    wrn = true,
+    props = 'line 4 : not permitted inside `function´',
+}
+
+Test { [[
+code/instantaneous Fx (vector&[] byte cs)=>void do
+    cs[0] = 10;
+end
+vector[] byte cs = [0];
+call Fx(&cs);
+escape cs[0];
+]],
+    run = 10,
+}
+
+Test { [=[
+var int r1 = [1,2,3];
+escape 1;
+]=],
+    stmts = 'line 1 : invalid constructor : unexpected context for variable "r1"',
+}
+
+Test { [[
+native _char;
+vector[10] _char a;
+a = [].."oioioi";
+escape 1;
+]],
+    cc = '2:32: error: assignment to expression with array type',
+    --env = 'line 2 : types mismatch (`_char[]´ <= `_char&&´)',
+    --env = 'line 2 : invalid attribution',
+}
+
+Test { [[
+vector[2] int v;
+par/or do
+    v[0] = 1;
+with
+    v[1] = 2;
+end;
+escape 0;
+]],
+    run = false,
+    _ana = {
+        acc = 1,
+        abrt = 1,
+    },
+}
+Test { [[
+vector[2] int v;
+var int i=0,j=0;
+par/or do
+    v[j] = 1;
+with
+    v[i+1] = 2;
+end;
+escape 0;
+]],
+    run = false,
+    _ana = {
+        acc = 1,
+        abrt = 1,
+    },
+}
+
+Test { [[
+vector[10] byte v2 = [];
+if false then
+    escape 1;
+end
+escape v2[0][0];
+]],
+    names = 'line 5 : invalid vector : unexpected context for variable "v2"',
+    --exps = 'line 5 : invalid vector : expected name expression',
+}
+
+Test { [[
+vector[10] byte v2 = [];
+
+var int ret = (v2[0] as int);
+
+escape ret;
+]],
+    --loop = 1,
+    run = 45,
+}
+
+Test { [[
+native/plain _char;
+native/plain _u8;
+vector[10] _u8 v1 = [];
+vector[10] byte v2 = [];
+
+loop i in [0 -> 10[ do
+    v1[i] = i;
+    v2[i] = ((i*2) as byte);
+end
+
+var int ret = 0;
+loop i in [0 -> 10[ do
+    ret = ret + (v2[i] as int) - v1[i];
+end
+
+escape ret;
+]],
+    --loop = 1,
+    run = 45,
+}
+
+Test { [[
+var u8 cnt;
+vector[3] u8 v;
+
+v = [] .. v .. [17];
+v = [] .. v .. [9];
+
+cnt = #v;
+_printf("oi\n");
+escape cnt;
+]],
+    parser = 'line 7 : after `=´ : expected expression',
+}
+
+Test { [[
+#define _OBJ_N + 2
+vector[_OBJ_N] void&& objs;
+escape 1;
+]],
+    opts_pre = true,
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+#define _OBJ_N + 2 \
+               + 1
+vector[_OBJ_N] void&& objs;
+escape 1;
+]],
+    opts_pre = true,
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
+    run = 1,
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1] as int;
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] int vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] int vec)=>bool do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(str);
+]],
+    wrn = true,
+    --ref = 'line 7 : invalid attribution : missing alias operator `&´',
+    stmts = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[] do
+    escape &this.str;
+end
+
+vector&[] byte ref = &call Fx();
+
+escape ref[1];
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
+}
+
+-- vectors as argument (NO)
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(str);
+]],
+    parser = 'line 3 : after `vector´ : expected `&´',
+    --env = 'line 3 : wrong argument #2 : vectors are not supported',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
+    buf = [] .. buf .. [3];
+end
+vector[10] u8 buffer;
+call FillBuffer(&buffer);
+escape buffer[0] as int;
+]],
+    run = 3,
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
+    buf = [] .. buf .. [3];
+end
+vector[10] u8 buffer;
+call FillBuffer(&buffer);
+escape buffer[0] as int;
+]],
+    tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
+    buf = [] .. buf .. [2,3,4];
+end
+vector[3] u8 buffer = [1];
+call FillBuffer(&buffer);
+escape buffer[0] as int;
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+-- TODO: dropped support for pointers to vectors
+Test { [[
+code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
+    *buf = [] .. *buf .. [3];
+end
+vector[10] u8 buffer;
+call FillBuffer(&&buffer);
+escape buffer[0] as int;
+]],
+    run = 3,
+    todo = 'no pointers to vectors',
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
+    *buf = [] .. *buf .. [2,3,4];
+end
+vector[3] u8 buffer = [1];
+call FillBuffer(&&buffer);
+escape buffer[0] as int;
+]],
+    run = '2] runtime error: access out of bounds',
+    todo = 'no pointers to vectors',
+}
+
+Test { [[
+code/instantaneous Build (vector[] u8 bytes)=>void do
+end
+escape 1;
+]],
+    wrn = true,
+    parser = 'line 1 : after `vector´ : expected `&´',
+    --env = 'line 1 : wrong argument #1 : vectors are not supported',
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+
+escape ref[1];
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 1,
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+ref = [3, 4, 5];
+
+escape str[1];
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 4,
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+ref = [] .. "ola";
+
+escape str[1] == 'l';
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 1,
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+native/pos do
+    byte* g () {
+        escape "ola";
+    }
+end
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+native _char;
+ref = [] .. ({g}() as _char&&) .. "ola";
+
+escape str[3] == 'o';
+]],
+    --run = 1,
+    parser = 'line 9 : after `byte´ : expected type modifier or `;´ or `do´',
+}
+
+Test { [[
+vector[] byte str;
+
+code/instantaneous Fa (void)=>byte[]& do
+    escape &this.str;
+end
+
+code/instantaneous Fb (void)=>void do
+    vector&[] byte ref = &f1();
+    ref = [] .. "ola" .. "mundo";
+end
+
+f2();
+
+escape str[4] == 'u';
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 1,
+}
+
+Test { [[
+native/pure _strlen;
+code/instantaneous Strlen (var byte&& str)=>int do
+    escape _strlen(str);
+end
+
+vector[] byte str = [].."Ola Mundo!";
+escape call Strlen(&&str[0]);
+]],
+    --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
+    run = 10,
+}
+
+Test { [[
+native _char, _strlen;
+code/instantaneous Strlen (var byte&& str)=>int do
+    escape _strlen(str[0]);
+end
+
+vector[] byte str = [].."Ola Mundo!";
+escape call Strlen((&&str[0]) as _char&&);
+]],
+    names = 'line 3 : invalid vector : unexpected context for variable "str"',
+    --run = 10,
+}
+
+Test { [[
+native _char, _strlen;
+code/instantaneous Strlen (var byte&& str)=>int do
+    escape _strlen(*str);
+end
+
+vector[] byte str = [].."Ola Mundo!";
+escape call Strlen((&&str[0]) as _char&&);
+]],
+    run = 10,
+}
+
+--<<< VECTORS / STRINGS
 
 -->>> CODE/ INSTANTANEOUS / FUNCTIONS
 
@@ -46283,1666 +47944,6 @@ escape ret;
 
 --<<< CLASS-VECTORS-FOR-POINTERS-TO-ORGS
 
--->>> VECTORS / STRINGS
-
-Test { [[
-var u8 v;
-escape ($$v) as int;
-]],
-    exps = 'line 2 : invalid operand to `$$´ : unexpected context for variable "v"',
-    --env = 'line 2 : invalid operand to unary "$$" : vector expected',
-}
-Test { [[
-var u8 v;
-escape ($v) as int;
-]],
-    names = 'line 2 : invalid operand to `$´ : unexpected context for variable "v"',
-}
-
-Test { [[
-vector[10] u8 vec;
-escape ($$vec + $vec) as int;
-]],
-    run = 10,
-}
-
-Test { [[
-vector[] u8 vec;
-escape ($$vec + $vec + 1) as int;
-]],
-    run = 1,
-}
-
-Test { [[
-vector[] int c;
-escape [];
-]],
-    parser = 'line 2 : after `escape´ : expected expression',
-    --env = 'line 2 : invalid attribution : destination is not a vector',
-    --env = 'line 2 : types mismatch (`int´ <= `any[]´)',
-}
-
-Test { [[
-vector[] int c;
-escape [1]..[]..c;
-]],
-    parser = 'line 2 : after `escape´ : expected expression',
-    --env = 'line 2 : invalid attribution : destination is not a vector',
-    --env = 'line 2 : types mismatch (`int´ <= `int[]´)',
-}
-
-Test { [[
-vector[10] u8 vec = [ [1,2,3] ];
-escape 1;
-]],
-    parser = 'line 1 : after `[´ : expected `]´',
-    --parser = 'line 1 : after `[´ : expected `]´',
-    --env = 'line 1 : wrong argument #1 : arity mismatch',
-    --env = 'line 1 : types mismatch (`u8[]´ <= `int[][]´)',
-    --env = 'line 1 : wrong argument #1 : types mismatch (`u8´ <= `int[]..´)',
-}
-Test { [[
-vector[10] u8 vec = (1,2,3);
-escape 1;
-]],
-    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator',
-}
-Test { [[
-vector[10] u8 vec = (1);
-escape 1;
-]],
-    --env = 'line 1 : types mismatch (`u8[]´ <= `int´)',
-    stmts = 'line 1 : invalid assignment : unexpected context for vector "vec"',
-}
-Test { [[
-native _int;
-vector[1] _int vec = [];
-escape 1;
-]],
-    --env = 'line 1 : invalid attribution : destination is not a vector',
-    run = 1,
-}
-
-Test { [[
-event void e;
-vector[10] u8 vec = [ e ];
-escape 1;
-]],
-    stmts = 'line 2 : invalid expression list : item #1 : unexpected context for event "e"',
-}
-
-Test { [[
-var int x;
-vector[10] u8 vec = [ &&x ];
-escape 1;
-]],
-    --env = 'line 2 : wrong argument #1 : types mismatch (`u8´ <= `int&&´)',
-    stmts = 'line 2 : invalid constructor : item #1 : invalid expression list : item #1 : types mismatch : "u8" <= "int&&"',
-}
-
-Test { [[
-vector[] int v = [] ..;
-escape 1;
-]],
-    --parser = 'line 1 : after `..´ : expected item',
-    --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    parser = 'line 1 : after `..´ : expected expression or `[´',
-}
-
-Test { [[
-vector[] int&& v1;
-vector[] int  v2 = []..v1;
-escape 1;
-]],
-    stmts = 'line 2 : invalid constructor : item #2 : types mismatch : "int" <= "int&&"',
-    --env = 'line 2 : wrong argument #2 : types mismatch (`int´ <= `int&&´)',
-}
-
-Test { [[
-vector[10] u8 vec = [1,2,3];
-escape $$vec + $vec + vec[0] + vec[1] + vec[2];
-]],
-    exps = 'line 2 : invalid operands to `+´ : incompatible numeric types : "usize" vs "u8"',
-}
-Test { [[
-vector[10] u8 vec = [1,2,3];
-escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
-]],
-    run = 19,
-}
-
-Test { [[
-vector[10] u8 vec = [1,2,3];
-vec[0] = 4;
-vec[1] = 5;
-vec[2] = 6;
-escape ((($$vec) as int) + (($vec )as int) + vec[0] + vec[1] + vec[2]) as int;
-]],
-    run = 28,
-}
-
-Test { [[
-vector[10] int vec = [1,2,3];
-vec[0] = 4;
-vec[1] = 5;
-vec[2] = 6;
-escape (($$vec )as int) + (($vec) as int) + vec[0] + vec[1] + vec[2];
-]],
-    run = 28,
-}
-
-Test { [[
-vector[10] u8 vec;
-vec[0] = 1;
-escape 1;
-]],
-    run = '2] runtime error: access out of bounds',
-}
-
-Test { [[
-vector[10] u8 vec;
-escape vec[0] as int;
-]],
-    run = '2] runtime error: access out of bounds',
-}
-
-Test { [[
-vector[] u8 vec = [1,2,3];
-escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
-]],
-    run = 6,
-}
-
-Test { [[
-vector[10] u8 vec = [1,2,3];
-$$vec = 0;
-escape vec[0] as int;
-]],
-    parser = 'line 1 : after `;´ : expected statement',
-    --env = 'line 2 : invalid attribution',
-}
-Test { [[
-vector[10] u8 vec = [1,2,3];
-$vec = 0;
-escape vec[0] as int;
-]],
-    run = '3] runtime error: access out of bounds',
-}
-
-Test { [[
-vector[2] int vec;
-$vec = 1;
-escape 1;
-]],
-    run = '2] runtime error: invalid attribution : out of bounds',
-}
-
-Test { [[
-vector[] byte bs;
-$bs := 1;
-escape ($bs) as int;
-]],
-    todo = '$vec := n',
-    run = 1,
-}
-
-Test { [[
-vector[10] byte bs;
-$bs := 10;
-escape ($bs) as int;
-]],
-    todo = '$vec := n',
-    run = 10,
-}
-
-Test { [[
-vector[10] byte bs;
-$bs := 11;
-escape ($bs) as int;
-]],
-    todo = '$vec := n',
-    run = '2] runtime error: invalid attribution : out of bounds',
-}
-
-Test { [[
-vector[10] u8 v1 = [1,2,3];
-vector[20] u8 v2 = v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    stmts = 'line 2 : invalid assignment : unexpected context for vector "v2"',
-    --env = 'line 2 : types mismatch (`u8[]´ <= `u8[]´)',
-}
-
-Test { [[
-vector[] byte v1, v2, v3;
-v1 = v2;
-v1 = v2..v3;
-escape 1;
-]],
-    parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `;´',
-    --parser = 'line 3 : after `v2´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or binary operator or `is´ or `as´ or `;´',
-}
-
-Test { [[
-vector[10] u8 v1 = [1,2,3];
-vector[20] u8 v2 = []..v1;
-escape (v2[0] + v2[1] + v2[2]) as int;
-]],
-    run = 6,
-}
-Test { [[
-vector[20] u8 v1 = [1,2,3];
-vector[10] u8 v2 = []..v1;
-escape (v2[0] + v2[1] + v2[2]) as int;
-]],
-    run = 6,
-}
-Test { [[
-vector[] u8 v1   = [1,2,3];
-vector[10] u8 v2 = []..v1;
-escape (v2[0] + v2[1] + v2[2]) as int;
-]],
-    run = 6,
-}
-Test { [[
-vector[10] byte v1 = [1,2,3];
-vector[] byte   v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    run = 6,
-}
-Test { [[
-vector[3] byte v1 = [1,2,3];
-vector[2] byte v2 = []..v1;
-escape v2[0] + v2[1] + v2[2];
-]],
-    run = '2] runtime error: access out of bounds',
-}
-
-Test { [[
-vector[10] byte vec = [1,2,3];
-vector&[] byte  ref = &vec;
-escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
-]],
-    run = 19,
-}
-
-Test { [[
-var int n = 10;
-vector[n] byte vec = [1,2,3];
-vector&[] byte ref = &vec;
-]],
-    run = 19,
-}
-Test { [[
-var int n = 10;
-vector[n] byte vec = [1,2,3];
-vector&[n] byte ref = &vec;
-]],
-    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
-}
-
-Test { [[
-var int n = 10;
-vector[] byte vec = [1,2,3];
-vector&[n] byte ref = &vec;
-]],
-    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
-}
-
-Test { [[
-vector[10] byte  vec = [1,2,3];
-vector&[11] byte ref = &vec;
-escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
-]],
-    run = 1,
-    stmts = 'line 2 : invalid binding : dimension mismatch',
-    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
-}
-
-Test { [[
-vector[10] byte vec = [1,2,3];
-vector&[9] byte ref = &vec;
-escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
-]],
-    stmts = 'line 2 : invalid binding : dimension mismatch',
-    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
-}
-
-Test { [[
-vector[2] int v ;
-escape v == &&v[0] ;
-]],
-    --exps = 'line 2 : invalid operand to `==´ : expected the same type',
-    --env = 'line 2 : invalid operand to unary "&&" : vector elements are not addressable',
-    --exps = 'line 2 : invalid expression : operand to `&&´ must be a name',
-    exps = 'line 2 : invalid operand to `==´ : unexpected context for vector "v"',
-}
-
-Test { [[
-native/nohold _f;
-native/pos do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-vector[2] int a = [1,2];
-native _int;
-_f((&&a[0]) as _int&&);
-escape a[0] + a[1];
-]],
-    run = 5,
-}
-
-Test { [[
-native/nohold _f;
-native/pos do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
-_f((&&b[0]) as byte&&);
-escape b[0] + b[1];
-]],
-    --env = 'line 10 : invalid type cast',
-    run = 5,
-}
-
-Test { [[
-native/nohold _f;
-native/pos do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
-_f((&&b[0]) as int&&);
-escape b[0] + b[1];
-]],
-    --env = 'line 10 : invalid type cast',
-    run = 5,
-}
-
-Test { [[
-native/nohold _f;
-native/pos do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
-native _int;
-_f((&&b[0]) as _int&&);
-escape b[0] + b[1];
-]],
-    run = 5,
-}
-
-Test { [[
-vector[] byte bs = [ 1, 2, 3 ];
-var int idx = 1;
-var& int i = &idx;
-escape bs[i];
-]],
-    run = 2,
-}
-
-Test { [[
-vector[5] byte foo = [1, 2, 3, 4, 5];
-var int tot = 0;
-loop i in [0 -> ($foo) as int[ do
-    tot = tot + foo[i];
-end
-escape tot;
-]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
-    --tight = 'line 3 : tight loop',
-}
-Test { [[
-vector[5] byte foo = [1, 2, 3, 4, 5];
-var int tot = 0;
-loop i in [0 -> ($foo) as int[ do
-    tot = tot + foo[i];
-end
-escape tot;
-]],
-    loop = true,
-    wrn = true,
-    run = 15,
-}
-
-Test { [[
-vector[5] byte foo = [1, 2, 3, 4, 5];
-var int tot = 0;
-loop i in [0 -> ($$foo) as int[ do
-    tot = tot + foo[i];
-end
-escape tot;
-]],
-    run = 15,
-}
-
-Test { [[
-vector[] byte foo = [1, 2, 3, 4, 5];
-var int tot = 0;
-loop i in [0 -> ($$foo) as int[ do
-    tot = tot + foo[i];
-end
-escape tot+1;
-]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
-}
-
-Test { [[
-vector[] byte foo = [1, 2, 3, 4, 5];
-var int tot = 0;
-loop i in [0 -> ($$foo) as int[ do
-    tot = tot + foo[i];
-end
-escape tot+1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-escape 1..2;
-]],
-    --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
-}
-Test { [[
-escape 1 .. 2;
-]],
-    --parser = 'line 1 : after `..´ : invalid constructor syntax',
-    --parser = 'line 1 : after `1´ : expected `;´',
-    parser = 'line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
-}
-Test { [[
-vector[] int x = [1]..2;
-escape 1;
-]],
-    stmts = 'line 1 : invalid constructor : unexpected context for value "2"',
-    --stmts = 'line 1 : invalid constructor : expected name expression',
-    --env = 'line 1 : wrong argument #2 : source is not a vector',
-}
-
-Test { [[
-escape [1]..[2];
-]],
-    parser = 'line 1 : after `escape´ : expected expression',
-    --env = 'line 1 : invalid attribution : destination is not a vector',
-}
-
-Test { [[
-escape [1]..[&&this];
-]],
-    --env = 'line 1 : invalid attribution : destination is not a vector',
-    parser = 'line 1 : after `escape´ : expected expression',
-}
-
-Test { [[
-vector[] int v1;
-vector[] int v2;
-v1 = [1] .. v2;
-v1 = [] .. v2 .. [1];
-escape v1[0];
-]],
-    run = 1;
-}
-
-Test { [[
-vector[] int v1 = [1]..[2]..[3];
-escape v1[0]+v1[1]+v1[2];
-]],
-    run = 6;
-}
-
-Test { [[
-vector[] int v1 = [1,2,3];
-vector[] int v2 = [7,8,9];
-v1 = [] .. v1 .. [4,5,6] .. v2;
-var int ret = 0;
-loop i in [0 -> 9[ do
-    ret = ret + v1[i];
-end
-escape ret;
-]],
-    run = 45;
-}
-
-Test { [[
-vector[] int v = [1,2,3];
-v = [] .. v .. v;
-escape ($v + v[5]) as int;
-]],
-    run = 9,
-}
-
-Test { [[
-vector[] int v = [1,2,3];
-v = [1] .. v;
-escape ($v + v[1]) as int;
-]],
-    run = 3,
-}
-
-Test { [[
-vector[] int v;
-$v = 0;
-escape ($v + 1) as int;
-]],
-    run = 1,
-}
-Test { [[
-native/pos do
-    byte* f (void) {
-        escape "ola";
-    }
-    typedef struct {
-        byte* (*f) (void);
-    } tp;
-    tp Tx = { f };
-end
-vector[] byte str = [] .. "oi";
-escape (str[1]=={'i'}) as int;
-]],
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    byte* f (void) {
-        escape "ola";
-    }
-    typedef struct {
-        byte* (*f) (void);
-    } tp;
-    tp Tx = { f };
-end
-native _char, _Tx;
-vector[] byte str = [] .. (_Tx.f() as _char&&);
-escape (str[2]=={'a'}) as int;
-]],
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    byte* f (void) {
-        escape "ola";
-    }
-    typedef struct {
-        byte* (*f) (void);
-    } tp;
-    tp Tx = { f };
-end
-native _char, _Tx;
-vector[] byte str = [] .. (_Tx.f() as _char&&) .. "oi";
-escape (str[4]=={'i'}) as int;
-]],
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    byte* f (void) {
-        escape "ola";
-    }
-end
-vector[] byte  str;
-vector&[] byte ref = &str;
-native _char;
-ref = [] .. ({f}() as _char&&) .. "oi";
-native/pure _strlen;
-escape _strlen((&&str[0]) as _char&&);
-]],
-    run = 5,
-}
-
--- TODO: dropped support for returning alias, is this a problem?
-
-Test { [[
-native/pos do
-    ##define ID(x) x
-end
-native/pure _ID, _strlen;
-native _char;
-vector[] byte str = [] .. "abc"
-                    .. (_ID("def") as _char&&);
-var byte&& str2 = _ID((&&str[0]) as _char&&);
-escape _strlen((&&str[0]) as _char&&) + _strlen(str2);
-]],
-    run = 12,
-}
-
-Test { [[
-vector[] byte str;
-vector[] byte str;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-
-Test { [[
-native/pure _strcmp;
-vector[] byte str1;
-vector[] byte str2 = [].."";
-native _char;
-escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
-]],
-    run = 1,
-}
-
-Test { [[
-vector[] u8 str = [].."Ola Mundo!";
-]],
-    stmts = 'line 1 : invalid constructor : item #2 : types mismatch : "u8" <= "byte"',
-}
-
-Test { [[
-vector[3] u8 bytes;
-
-bytes = [] .. bytes .. [5];
-
-escape bytes[0] as int;
-]],
-    run = 5,
-}
-
-Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[] byte v = [1,2,0,4,5];
-var byte c = 3;
-_ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 1);
-escape v[2] + (($v) as int);
-]],
-    run = 8,
-}
-
-Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[5] byte v = [1,2,0,4,5];
-var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 1);
-escape v[2] + (($v) as int) + ok;
-]],
-    run = 9,
-}
-
-Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[5] byte v = [1,2,1,4,5];
-var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 8, 1);
-escape v[2] + (($v) as int) + ok;
-]],
-    run = 6,
-}
-
-Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[] byte v = [1,2,0,4,5];
-var byte c = 3;
-_ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 0);
-escape v[2] + (($v) as int);
-]],
-    run = 8,
-}
-
-Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[5] byte v = [1,2,0,4,5];
-var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 0);
-escape v[2] + (($v) as int) + ok;
-]],
-    run = 9,
-}
-
-Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[] byte v = [1,2,1,4,5];
-var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 8, 0);
-escape v[2] + (($v) as int) + ok;
-]],
-    run = 6,
-}
-
-Test { [[
-vector[] int v;
-escape v > 0;
-]],
-    exps = 'line 2 : invalid operand to `>´ : unexpected context for vector "v"',
-}
-Test { [[
-vector[] int v;
-escape v?;
-]],
-    exps = 'line 2 : invalid operand to `?´ : unexpected context for vector "v"',
-}
-Test { [[
-vector[] int v;
-escape v!;
-]],
-    names = 'line 2 : invalid operand to `!´ : unexpected context for vector "v"',
-}
-Test { [[
-vector[] int v;
-escape ~v;
-]],
-    exps = 'line 2 : invalid operand to `~´ : unexpected context for vector "v"',
-}
-
-Test { [[
-vector[] int v;
-v[true] = 1;
-]],
-    exps = 'line 2 : invalid index : expected integer type',
-}
-
-Test { [[
-native/const _X;
-native/pos do
-    ##define X 1;
-end
-vector&[-_X] int iis;
-escape 1;
-]],
-    wrn = true,
-    inits = 'line 5 : uninitialized vector "iis" : reached `escape´ (/tmp/tmp.ceu:6)',
-    --run = 1,
-}
-
-Test { [[
-native/const _X;
-native/pos do
-    ##define X 1;
-end
-vector[-_X] int vvs;
-vector&[-_X] int iis = &vvs;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-vector int[1][1] v;
-escape 1;
-]],
-    --adj = 'line 1 : not implemented : multiple `[]´',
-    --env = 'line 1 : invalid type modifier : `[][]´',
-    parser = 'line 1 : after `vector´ : expected `&´ or `[´',
-}
-Test { [[
-vector[1][1] int v;
-escape 1;
-]],
-    --adj = 'line 1 : not implemented : multiple `[]´',
-    --env = 'line 1 : invalid type modifier : `[][]´',
-    parser = 'line 1 : after `]´ : expected type',
-}
-Test { [[
-vector[1] int? v;
-escape 1;
-]],
-    dcls = 'line 1 : vector "v" declared but not used',
-    --env = 'line 1 : invalid type modifier : `[]?´',
-}
-Test { [[
-vector[1] int? v;
-escape 1;
-]],
-    wrn = true,
-    tmp = 'line 1 : `data´ fields do not support vectors yet',
-    --env = 'line 1 : invalid type modifier : `[]?´',
-}
-
-Test { [[
-vector[2] int v;
-v[0] = 1;
-var int ret=0;
-par/or do
-    ret = v[0];
-with
-    ret = v[1];
-end;
-escape ret;
-]],
-    run = false,
-    _ana = {
-        acc = 1,
-        abrt = 3,
-    },
-}
-
-Test { [[
-vector&[] int v;
-escape 1;
-]],
-    inits = 'line 1 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:2)',
-    wrn = true,
-    --run = 1,
-}
-Test { [[
-vector[] int vv;
-vector&[] int v = &vv;;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-vector[] int v;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-native _enqueue;
-vector[255] byte buf;
-_enqueue(&&buf[0]);
-escape 1;
-]],
-    scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "buf"',
-    --fin = 'line 2 : call requires `finalize´',
-}
-
-Test { [[
-native _enqueue;
-vector[255] byte buf;
-_enqueue(buf);
-escape 1;
-]],
-    stmts = 'line 3 : invalid expression list : item #1 : unexpected context for vector "buf"',
-    --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --fin = 'line 2 : call requires `finalize´',
-}
-Test { [[
-native _enqueue;
-vector[255] byte buf;
-_enqueue(&&buf);
-escape 1;
-]],
-    exps = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
-    --fin = 'line 2 : call requires `finalize´',
-}
-
-Test { [[
-native/pure _strlen;
-
-native _char;
-vector[255] _char str;
-str = [].."oioioi";
-
-escape _strlen(&&str[0]);
-]],
-    --dcls = 'line 5 : invalid use of `vector´ "str"',
-    cc = '4:34: error: assignment to expression with array type',
-}
-
-Test { [[
-var byte b = 1;
-var byte c = 2;
-b = (c as byte);
-escape b;
-]],
-    run = 2,
-}
-Test { [[
-vector[] byte c = [1];
-vector&[] byte b = &c;
-escape b[0];
-]],
-    run = 1,
-}
-Test { [[
-var byte  c = 2;
-var& byte b = &c;
-escape b;
-]],
-    cc = 'error: pointer targets in assignment differ',
-}
-Test { [[
-var byte   c = 2;
-var byte&& b = &&c;
-escape *b;
-]],
-    cc = 'error: pointer targets in assignment differ',
-}
---<< VECTORS
-
--- STRINGS
-
-Test { [[
-native/nohold _strlen;
-vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
-native _char;
-escape _strlen((&&v[0]) as _char&&);
-]],
-    run = 3,
-}
-Test { [[
-native/nohold _strlen;
-vector[] byte v = [{'a'},{'b'},{'c'},{'\0'}];
-native _char;
-escape _strlen((&&v[0]) as _char&&);
-]],
-    run = 3,
-}
-
-Test { [[
-native/pure _strlen;
-native/nohold _garbage;
-native/pos do
-    void garbage (byte* v) {
-        int i = 0;
-        for (; i<20; i++) {
-            v[i] = i;
-        }
-    }
-end
-
-vector[10] byte v;
-vector[10] byte v_;
-native _char;
-_garbage((&&v[0]) as _char&&);
-v = [{'a'},{'b'},{'c'}];
-escape _strlen((&&v[0]) as _char&&);
-]],
-    wrn = true,
-    run = 3,
-}
-
-Test { [[
-_f([1]);
-escape 1;
-]],
-    --env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --parser = 'line 1 : after `(´ : expected `)´',
-    parser = 'line 1 : after `(´ : expected expression',
-    --run = 1,
-}
-Test { [[
-_f([1]..[2]);
-escape 1;
-]],
-    --env = 'line 1 : wrong argument #1 : cannot pass plain vectors to native calls',
-    --parser = 'line 1 : after `(´ : expected `)´',
-    parser = 'line 1 : after `(´ : expected expression',
-    --run = 1,
-}
-Test { [[
-vector[] int v;
-_f([1]..v);
-escape 1;
-]],
-    --env = 'line 2 : wrong argument #1 : cannot pass plain vectors to native calls',
-    parser = 'line 2 : after `(´ : expected expression',
-    --parser = 'line 2 : after `(´ : expected `)´',
-    --run = 1,
-}
-Test { [[
-vector[] int v;
-_f(v..[1]);
-escape 1;
-]],
-    --parser = 'line 2 : after `..´ : invalid constructor syntax',
-    parser = 'line 2 : after `v´ : expected `[´ or `:´ or `!´ or `(´ or `?´ or `is´ or `as´ or binary operator or `,´ or `)´',
-    --run = 1,
-}
-
-Test { [[
-native/nohold _strlen;
-vector[] byte v = [].."abc";
-native _char;
-escape _strlen(v as _char&&);
-]],
-    exps = 'line 4 : invalid operand to `as´ : unexpected context for vector "v"',
-    --env = 'line 2 : types mismatch (`byte[]´ <= `_char&&´)',
-    --run = 3,
-}
-Test { [[
-native/nohold _strlen;
-vector[] byte v = [].."abc";
-native _char;
-escape _strlen((&&v[0]) as _char&&);
-]],
-    run = 3,
-}
-Test { [[
-native/nohold _strlen;
-vector[] byte v = [].."abc";
-v = [] .. v .. "def";
-native _char;
-escape _strlen((&&v[0]) as _char&&);
-]],
-    run = 6,
-}
-
-Test { [[
-var int nnn = 10;
-vector[nnn] u8 xxx;
-xxx[0] = 10;
-escape 1;
-]],
-    run = ':3] runtime error: access out of bounds',
-}
-
-Test { [[
-var int nnn = 10;
-vector[nnn] byte xxx;
-$xxx := nnn;
-xxx[0] = 10;
-xxx[9] = 1;
-escape xxx[0]+xxx[9];
-]],
-    todo = '$vec := n',
-    run = 11,
-}
-
-Test { [[
-var int nnn = 10;
-vector[nnn] byte xxx;
-$xxx := nnn+1;
-escape 1;
-]],
-    todo = '$vec := n',
-    run = ':3] runtime error: invalid attribution : out of bounds',
-}
-
-Test { [[
-var int n = 10;
-vector[n] byte us;
-$us := n;
-$us = 20;
-escape 1;
-]],
-    todo = '$vec := n',
-    run = ':4] runtime error: invalid attribution : out of bounds',
-}
-
-Test { [[
-var int n = 10;
-vector[] byte us;
-$us = n;
-escape 1;
-]],
-    run = ':3] runtime error: invalid attribution : out of bounds',
-}
-
-Test { [[
-var int n = 10;
-vector[] byte us;
-$us := n;
-escape 1;
-]],
-    todo = '$vec := n',
-    run = 1,
-}
-
-Test { [[
-var int n = 10;
-vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
-us[n] = 10;
-escape us[0]+us[9];
-]],
-    run = ':3] runtime error: access out of bounds',
-}
-
-Test { [[
-var int n = 10;
-vector[n] byte us = [0,1,2,3,4,5,6,7,8,9];
-us[n-1] = 1;
-escape us[0]+us[9];
-]],
-    run = 1,
-}
-
-
-Test { [[
-vector[1.5] u8 us = [];
-]],
-    consts = 'line 1 : invalid declaration : vector dimension must be an integer',
-    --env = 'line 2 : dimension must be constant',
-}
-
-Test { [[
-native _u8;
-native/const _U8_MAX;
-vector[_U8_MAX] _u8 us = [];
-escape 1;
-]],
-    run = 1,
-    --env = 'line 2 : dimension must be constant',
-}
-
-Test { [[
-native _u8;
-native/const _U8_MAX;
-var int n = 10;
-vector[_U8_MAX] _u8 us = [];
-us[_U8_MAX-1] = 10;
-us[0] = 1;
-escape us[0]+us[_U8_MAX-1];
-]],
-    run = 'TODO: error',
-}
-
-Test { [[
-native _t_vec;
-native/pos do
-    typedef int t_vec[10];
-end
-var _t_vec us = _;
-us[9] = 10;
-us[0] =  1;
-escape us[0]+us[9];
-]],
-    wrn = true,
-    run = 11,
-}
-
-Test { [[
-native _u8;
-native/const _N;
-native/pre do
-    int N = 10;
-end
-vector&[_N] _u8 xxxx = [];
-escape 1;
-]],
-    inits = 'line 6 : invalid binding : unexpected statement in the right side',
-    --gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
-}
-
-Test { [[
-native _u8;
-native/const _N;
-native/pre do
-    int N = 10;
-end
-vector[_N] _u8 xxx = [];
-escape 1;
-]],
-    cc = '6:26: error: variably modified ‘xxxx’ at file scope',
-}
-
-Test { [[
-#define HASH_BYTES 32
-vector[HASH_BYTES+sizeof(u32)] byte bs;
-escape ($$bs) as int;
-]],
-    opts_pre = true,
-    run = 36,
-}
-
-Test { [[
-var int n = 32;
-vector[n] byte bs;
-escape ($$bs) as int;
-]],
-    run = 32,
-}
-
-Test { [[
-code/instantaneous Fx (void)=>void do
-    var int x = 0;
-
-    vector[10] byte cs;
-end
-escape 1;
-]],
-    wrn = true,
-    props = 'line 4 : not permitted inside `function´',
-}
-
-Test { [[
-code/instantaneous Fx (vector&[] byte cs)=>void do
-    cs[0] = 10;
-end
-vector[] byte cs = [0];
-call Fx(&cs);
-escape cs[0];
-]],
-    run = 10,
-}
-
-Test { [=[
-var int r1 = [1,2,3];
-escape 1;
-]=],
-    stmts = 'line 1 : invalid constructor : unexpected context for variable "r1"',
-}
-
-Test { [[
-native _char;
-vector[10] _char a;
-a = [].."oioioi";
-escape 1;
-]],
-    cc = '2:32: error: assignment to expression with array type',
-    --env = 'line 2 : types mismatch (`_char[]´ <= `_char&&´)',
-    --env = 'line 2 : invalid attribution',
-}
-
-Test { [[
-vector[2] int v;
-par/or do
-    v[0] = 1;
-with
-    v[1] = 2;
-end;
-escape 0;
-]],
-    run = false,
-    _ana = {
-        acc = 1,
-        abrt = 1,
-    },
-}
-Test { [[
-vector[2] int v;
-var int i=0,j=0;
-par/or do
-    v[j] = 1;
-with
-    v[i+1] = 2;
-end;
-escape 0;
-]],
-    run = false,
-    _ana = {
-        acc = 1,
-        abrt = 1,
-    },
-}
-
-Test { [[
-vector[10] byte v2 = [];
-if false then
-    escape 1;
-end
-escape v2[0][0];
-]],
-    names = 'line 5 : invalid vector : unexpected context for variable "v2"',
-    --exps = 'line 5 : invalid vector : expected name expression',
-}
-
-Test { [[
-vector[10] byte v2 = [];
-
-var int ret = (v2[0] as int);
-
-escape ret;
-]],
-    --loop = 1,
-    run = 45,
-}
-
-Test { [[
-native/plain _char;
-native/plain _u8;
-vector[10] _u8 v1 = [];
-vector[10] byte v2 = [];
-
-loop i in [0 -> 10[ do
-    v1[i] = i;
-    v2[i] = ((i*2) as byte);
-end
-
-var int ret = 0;
-loop i in [0 -> 10[ do
-    ret = ret + (v2[i] as int) - v1[i];
-end
-
-escape ret;
-]],
-    --loop = 1,
-    run = 45,
-}
-
-Test { [[
-var u8 cnt;
-vector[3] u8 v;
-
-v = [] .. v .. [17];
-v = [] .. v .. [9];
-
-cnt = #v;
-_printf("oi\n");
-escape cnt;
-]],
-    parser = 'line 7 : after `=´ : expected expression',
-}
-
-Test { [[
-#define _OBJ_N + 2
-vector[_OBJ_N] void&& objs;
-escape 1;
-]],
-    opts_pre = true,
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-#define _OBJ_N + 2 \
-               + 1
-vector[_OBJ_N] void&& objs;
-escape 1;
-]],
-    opts_pre = true,
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
-    run = 1,
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1] as int;
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] int vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] int vec)=>bool do
-    escape vec[1];
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(str);
-]],
-    wrn = true,
-    --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    stmts = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[] do
-    escape &this.str;
-end
-
-vector&[] byte ref = &call Fx();
-
-escape ref[1];
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
-}
-
--- vectors as argument (NO)
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(str);
-]],
-    parser = 'line 3 : after `vector´ : expected `&´',
-    --env = 'line 3 : wrong argument #2 : vectors are not supported',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
-}
-
-Test { [[
-code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
-    buf = [] .. buf .. [3];
-end
-vector[10] u8 buffer;
-call FillBuffer(&buffer);
-escape buffer[0] as int;
-]],
-    run = 3,
-}
-
-Test { [[
-code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
-    buf = [] .. buf .. [3];
-end
-vector[10] u8 buffer;
-call FillBuffer(&buffer);
-escape buffer[0] as int;
-]],
-    tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
-}
-
-Test { [[
-code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
-    buf = [] .. buf .. [2,3,4];
-end
-vector[3] u8 buffer = [1];
-call FillBuffer(&buffer);
-escape buffer[0] as int;
-]],
-    run = '2] runtime error: access out of bounds',
-}
-
--- TODO: dropped support for pointers to vectors
-Test { [[
-code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
-    *buf = [] .. *buf .. [3];
-end
-vector[10] u8 buffer;
-call FillBuffer(&&buffer);
-escape buffer[0] as int;
-]],
-    run = 3,
-    todo = 'no pointers to vectors',
-}
-
-Test { [[
-code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
-    *buf = [] .. *buf .. [2,3,4];
-end
-vector[3] u8 buffer = [1];
-call FillBuffer(&&buffer);
-escape buffer[0] as int;
-]],
-    run = '2] runtime error: access out of bounds',
-    todo = 'no pointers to vectors',
-}
-
-Test { [[
-code/instantaneous Build (vector[] u8 bytes)=>void do
-end
-escape 1;
-]],
-    wrn = true,
-    parser = 'line 1 : after `vector´ : expected `&´',
-    --env = 'line 1 : wrong argument #1 : vectors are not supported',
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-
-escape ref[1];
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 1,
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-ref = [3, 4, 5];
-
-escape str[1];
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 4,
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-ref = [] .. "ola";
-
-escape str[1] == 'l';
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 1,
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-native/pos do
-    byte* g () {
-        escape "ola";
-    }
-end
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-native _char;
-ref = [] .. ({g}() as _char&&) .. "ola";
-
-escape str[3] == 'o';
-]],
-    --run = 1,
-    parser = 'line 9 : after `byte´ : expected type modifier or `;´ or `do´',
-}
-
-Test { [[
-vector[] byte str;
-
-code/instantaneous Fa (void)=>byte[]& do
-    escape &this.str;
-end
-
-code/instantaneous Fb (void)=>void do
-    vector&[] byte ref = &f1();
-    ref = [] .. "ola" .. "mundo";
-end
-
-f2();
-
-escape str[4] == 'u';
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 1,
-}
-
-Test { [[
-native/pure _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(str);
-end
-
-vector[] byte str = [].."Ola Mundo!";
-escape call Strlen(&&str[0]);
-]],
-    --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
-    run = 10,
-}
-
-Test { [[
-native _char, _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(str[0]);
-end
-
-vector[] byte str = [].."Ola Mundo!";
-escape call Strlen((&&str[0]) as _char&&);
-]],
-    names = 'line 3 : invalid vector : unexpected context for variable "str"',
-    --run = 10,
-}
-
-Test { [[
-native _char, _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(*str);
-end
-
-vector[] byte str = [].."Ola Mundo!";
-escape call Strlen((&&str[0]) as _char&&);
-]],
-    run = 10,
-}
-
---<<< VECTORS / STRINGS
-
 -->>> DONT CARE, NONE
 
 Test { [[
@@ -59855,12 +59856,12 @@ escape ((l as List.Cons).head);
 -- 1-2-3-Nil => 1-2-Nil (3 fails)
 -- 4-5-6-Nil => Nil     (all fail)
 Test { DATA..[[
-native _ceu_out_assert_msg;
+native _ceu_cb_assert_msg;
 pool[2] List l = new List.Cons(1, List.Cons(2, List.Cons(3, List.Nil())));   // 3 fails
-_ceu_out_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "1");
+_ceu_cb_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "1");
 l = new List.Nil();
 l = new List.Cons(4, List.Cons(5, List.Cons(6, List.Nil())));   // 6 fails
-_ceu_out_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "2");
+_ceu_cb_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "2");
 escape (((l as List.Cons).tail) as List.Cons).head;
 ]],
     wrn = true,
@@ -59869,8 +59870,8 @@ escape (((l as List.Cons).tail) as List.Cons).head;
 
 Test { DATA..[[
 pool[2] List l = new List.Cons(1, List.Cons(2, List.Cons(3, List.Nil())));   // 3 fails
-native _ceu_out_assert_msg;
-_ceu_out_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "1");
+native _ceu_cb_assert_msg;
+_ceu_cb_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "1");
 l = new List.Cons(4, List.Cons(5, List.Cons(6, List.Nil())));   // all fail
 escape (l is List.Nil) as int;
 ]],
@@ -64392,14 +64393,14 @@ par/and do
     sum = sum - 1;
 with
     await 1s;
-native _ceu_out_assert_msg;
-    _ceu_out_assert_msg(sum == 1, "1");
+native _ceu_cb_assert_msg;
+    _ceu_cb_assert_msg(sum == 1, "1");
     await 1s;
-    _ceu_out_assert_msg(sum == 4, "2");
+    _ceu_cb_assert_msg(sum == 4, "2");
     await 1s;
-    _ceu_out_assert_msg(sum == 5, "3");
+    _ceu_cb_assert_msg(sum == 5, "3");
     tree = new Tree.Nil();
-    _ceu_out_assert_msg(sum == 4, "4");
+    _ceu_cb_assert_msg(sum == 4, "4");
 end
 
 escape sum;
@@ -64550,8 +64551,8 @@ do
             end;
 
         else
-native _ceu_out_assert_msg;
-            _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+            _ceu_cb_assert_msg(0, "not implemented");
         end
     end
 end
@@ -64590,8 +64591,8 @@ do
             end;
 
         else
-native _ceu_out_assert_msg;
-            _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+            _ceu_cb_assert_msg(0, "not implemented");
         end
     end
 end
@@ -64632,8 +64633,8 @@ do
             end;
 
         else
-native _ceu_out_assert_msg;
-            _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+            _ceu_cb_assert_msg(0, "not implemented");
         end
     end
 end
@@ -64675,8 +64676,8 @@ do
             end;
 
         else
-native _ceu_out_assert_msg;
-            _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+            _ceu_cb_assert_msg(0, "not implemented");
         end
     end
 end
@@ -64716,8 +64717,8 @@ do
             end;
 
         else
-native _ceu_out_assert_msg;
-            _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+            _ceu_cb_assert_msg(0, "not implemented");
         end
     end
 end
@@ -64777,36 +64778,36 @@ l = new List.Cons(1,
 
 var int ret = 0;
 
-native _ceu_out_assert_msg;
+native _ceu_cb_assert_msg;
 par/or do
     await (((l as List.Cons).tail) as List.Cons).tail;
     ret = ret + ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head;    // 0+4
-    _ceu_out_assert_msg(ret == 4, "1");
+    _ceu_cb_assert_msg(ret == 4, "1");
     (((l as List.Cons).tail) as List.Cons).tail = ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).tail;
     ret = ret + ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head;    // 0+4+5
-    _ceu_out_assert_msg(ret == 9, "2");
+    _ceu_cb_assert_msg(ret == 9, "2");
 
     await (((l as List.Cons).tail) as List.Cons).tail;
     ret = ret + (((((l as List.Cons).tail) as List.Cons).tail is List.Nil)as int);          // 0+4+5+5+1
-    _ceu_out_assert_msg(ret == 15, "4");
+    _ceu_cb_assert_msg(ret == 15, "4");
     await FOREVER;
 with
     await (((l as List.Cons).tail) as List.Cons).tail;
-    _ceu_out_assert_msg(ret == 9, "3");
+    _ceu_cb_assert_msg(ret == 9, "3");
     ret = ret + ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head;    // 0+4+5+5
     (((l as List.Cons).tail) as List.Cons).tail = new List.Nil();
 
-    _ceu_out_assert_msg(ret == 15, "5");
+    _ceu_cb_assert_msg(ret == 15, "5");
     await (((l as List.Cons).tail) as List.Cons).tail;
     // never reached
-    _ceu_out_assert_msg(ret == 15, "6");
+    _ceu_cb_assert_msg(ret == 15, "6");
     await FOREVER;
 with
     await (((l as List.Cons).tail) as List.Cons).tail;
     ret = ret + (((((l as List.Cons).tail) as List.Cons).tail is List.Nil)as int);          // 0+4+5+5+1+1
 
     await (((l as List.Cons).tail) as List.Cons).tail;
-    _ceu_out_assert_msg(ret == 16, "7");
+    _ceu_cb_assert_msg(ret == 16, "7");
     await FOREVER;
 with
     (((l as List.Cons).tail) as List.Cons).tail = ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).tail;
@@ -64857,8 +64858,8 @@ with
                     escape v1 + v2;
 
                 else
-native _ceu_out_assert_msg;
-                    _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+                    _ceu_cb_assert_msg(0, "not implemented");
                 end
             end
             escape 0;
@@ -64917,8 +64918,8 @@ with
                 end
 
             else
-native _ceu_out_assert_msg;
-                _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+                _ceu_cb_assert_msg(0, "not implemented");
             end
         end
     end
@@ -64953,11 +64954,11 @@ par/or do
             else/if (*e is List.Cons) then
                 loop do
                     traverse &&(*e as List.Cons).tail;
-native _ceu_out_assert_msg;
-                    _ceu_out_assert_msg(0, "0");
+native _ceu_cb_assert_msg;
+                    _ceu_cb_assert_msg(0, "0");
                 end
             else
-                _ceu_out_assert_msg(0, "1");
+                _ceu_cb_assert_msg(0, "1");
             end
         end
     end
@@ -65020,8 +65021,8 @@ end
                 end
 
             else
-native _ceu_out_assert_msg;
-                _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+                _ceu_cb_assert_msg(0, "not implemented");
             end
         end
     end
@@ -65082,8 +65083,8 @@ end
                 end
 
             else
-native _ceu_out_assert_msg;
-                _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+                _ceu_cb_assert_msg(0, "not implemented");
             end
         end
     end
@@ -65132,8 +65133,8 @@ par/or do
                             this.param = param + 1;
                         end;
 if ((*widget is Seq).w1 is List.Nil) then
-native _ceu_out_assert_msg;
-_ceu_out_assert_msg(0, "ok\n");
+native _ceu_cb_assert_msg;
+_ceu_cb_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     with
@@ -65141,14 +65142,14 @@ end
                             this.param = param + 1;
                         end;
 if ((*widget is Seq).w2 is List.Nil) then
-_ceu_out_assert_msg(0, "ok\n");
+_ceu_cb_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     end
                 end
 
             else
-                _ceu_out_assert_msg(0, "not implemented");
+                _ceu_cb_assert_msg(0, "not implemented");
             end
         end
     end
@@ -65196,8 +65197,8 @@ par/or do
                             this.param = param + 1;
                         end;
 if ((*widget is Seq).w1 is List.Nil) then
-native _ceu_out_assert_msg;
-_ceu_out_assert_msg(0, "ok\n");
+native _ceu_cb_assert_msg;
+_ceu_cb_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     with
@@ -65205,14 +65206,14 @@ end
                             this.param = param + 1;
                         end;
 if ((*widget is Seq).w2 is List.Nil) then
-_ceu_out_assert_msg(0, "ok\n");
+_ceu_cb_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     end
                 end
 
             else
-                _ceu_out_assert_msg(0, "not implemented");
+                _ceu_cb_assert_msg(0, "not implemented");
             end
         end
     end
@@ -65366,8 +65367,8 @@ with
 
             else/if (*cmd is Command.Sequence) then
                 traverse &&(*cmd as Command.Sequence).one;
-native _ceu_out_assert_msg;
-                _ceu_out_assert_msg(0, "bug found"); // cmds has to die entirely before children
+native _ceu_cb_assert_msg;
+                _ceu_cb_assert_msg(0, "bug found"); // cmds has to die entirely before children
                 traverse &&(*cmd as Command.Sequence).two;
             end
         end
@@ -65451,8 +65452,8 @@ traverse cmd in &&cmds do
             traverse &&(*cmd as Repeat).command;
 
         else
-native _ceu_out_assert_msg;
-            _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+            _ceu_cb_assert_msg(0, "not implemented");
         end
     end
 end
@@ -65559,8 +65560,8 @@ do
     else
         inc = -1;
     end
-native _ceu_out_assert_msg;
-    _ceu_out_assert_msg(this.pixels > 0, "pixels");
+native _ceu_cb_assert_msg;
+    _ceu_cb_assert_msg(this.pixels > 0, "pixels");
 
     var float sum = 0;
     var float x = turtle.pos_x;
@@ -65629,7 +65630,7 @@ with
                 end
 
             else
-                _ceu_out_assert_msg(0, "not implemented");
+                _ceu_cb_assert_msg(0, "not implemented");
             end
         end
     end
@@ -65688,8 +65689,8 @@ traverse cmd in &&cmds do
             end
 
         else
-native _ceu_out_assert_msg;
-            _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+            _ceu_cb_assert_msg(0, "not implemented");
         end
     end
 end
@@ -65751,8 +65752,8 @@ traverse cmd in &&cmds do
             end
 
         else
-native _ceu_out_assert_msg;
-            _ceu_out_assert_msg(0, "not implemented");
+native _ceu_cb_assert_msg;
+            _ceu_cb_assert_msg(0, "not implemented");
         end
     end
 end

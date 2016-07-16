@@ -251,7 +251,7 @@ _ceu_trl++;
         local _,_,set = unpack(me)
         if set then
             LINE(me, [[
-ceu_out_assert_msg(0, "reached end of `do´");
+ceu_cb_assert_msg(0, "reached end of `do´");
 ]])
         end
         CASE(me, me.lbl_out)
@@ -286,7 +286,7 @@ CEU_STK_LBL(]]..evt..[[, _ceu_stk,
 ]]..CUR('__max_'..me.n)..[[ = 0;
 ]],
                 chk = [[
-ceu_out_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ overflow");
+ceu_cb_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ overflow");
 ]],
                 inc = [[
 ]]..CUR('__max_'..me.n)..[[++;
@@ -378,7 +378,7 @@ while (1) {
 
         LINE(me, [[
 ]]..max.ini..[[
-ceu_out_assert_msg(]]..V(step)..' '..op..[[ 0, "invalid `loop´ step : expected positive number");
+ceu_cb_assert_msg(]]..V(step)..' '..op..[[ 0, "invalid `loop´ step : expected positive number");
 ]]..V(i)..' = '..V(fr)..[[;
 while (1) {
 ]])

@@ -5,7 +5,7 @@
     #error "Missing definition for macro \"ceu_callback\"."
 #endif
 
-#define ceu_out_assert_msg_ex(v,msg,file,line)                           \
+#define ceu_cb_assert_msg_ex(v,msg,file,line)                           \
     if (!(v)) {                                                          \
         if ((msg)!=NULL) {                                               \
             ceu_callback(CEU_CALLBACK_LOG, 0, (void*)"[");               \
@@ -19,9 +19,9 @@
         }                                                                \
         ceu_callback(CEU_CALLBACK_ABORT, 0, NULL);                       \
     }
-#define ceu_out_assert_msg(v,msg) ceu_out_assert_msg_ex((v),(msg),__FILE__,__LINE__)
+#define ceu_cb_assert_msg(v,msg) ceu_cb_assert_msg_ex((v),(msg),__FILE__,__LINE__)
 
-#define ceu_dbg_assert(v,msg) ceu_out_assert_msg(v,msg)
+#define ceu_dbg_assert(v,msg) ceu_cb_assert_msg(v,msg)
 
 /* NATIVE_PRE */
 === NATIVE_PRE ===
@@ -33,6 +33,7 @@ enum {
     CEU_CALLBACK_PENDING_ASYNC,
     CEU_CALLBACK_WCLOCK_MIN,
     CEU_CALLBACK_OUTPUT,
+    CEU_CALLBACK_REALLOC,
 };
 
 enum {
@@ -78,7 +79,7 @@ static int ceu_data_is (tceu_ndata me, tceu_ndata cmp) {
 }
 
 static void* ceu_data_as (tceu_data* me, tceu_ndata cmp, char* file, int line) {
-    ceu_out_assert_msg_ex(ceu_data_is(me->id, cmp), "invalid cast `as´",
+    ceu_cb_assert_msg_ex(ceu_data_is(me->id, cmp), "invalid cast `as´",
                           file, line);
     return me;
 }
@@ -179,7 +180,7 @@ static int ceu_mem_is_child (tceu_code_mem* me, tceu_code_mem* par_mem,
                              tceu_ntrl par_trl1, tceu_ntrl par_trl2)
 {
     if (me == par_mem) {
-ceu_out_assert_msg(0, "TODO");
+ceu_cb_assert_msg(0, "TODO");
         return (par_trl1==0 && par_trl2==me->trails_n-1);
     }
 
