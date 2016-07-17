@@ -27378,7 +27378,7 @@ native _char;
 vector[] byte str = [] .. "abc"
                     .. (_ID("def") as _char&&);
 var byte&& str2 = _ID((&&str[0]) as _char&&);
-escape _strlen((&&str[0]) as _char&&) + _strlen(str2);
+escape _strlen((&&str[0]) as _char&&) + _strlen(str2 as _char&&);
 ]],
     run = 12,
 }
@@ -27392,11 +27392,34 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+vector[] byte str1;
+escape (&&str1[0] == &&str1[0]) as int;
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+Test { [[
+vector[] byte str1 = [].."";
+escape (&&str1[0] == &&str1[0]) as int;
+]],
+    run = '2] runtime error: access out of bounds',
+}
 
 Test { [[
 native/pure _strcmp;
 vector[] byte str1;
 vector[] byte str2 = [].."";
+native _char;
+escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
+]],
+    run = '5] runtime error: access out of bounds',
+}
+
+Test { [[
+native/pure _strcmp;
+vector[] byte str1 = [0];
+vector[] byte str2 = [0];
 native _char;
 escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
 ]],
@@ -27412,7 +27435,7 @@ vector[] u8 str = [].."Ola Mundo!";
 Test { [[
 vector[3] u8 bytes;
 
-bytes = [] .. bytes .. [5];
+bytes = bytes .. [5];
 
 escape bytes[0] as int;
 ]],
@@ -27420,10 +27443,10 @@ escape bytes[0] as int;
 }
 
 Test { [[
-native/nohold _ceu_vector_copy_buffer;
+native/nohold _ceu_vector_buf_set;
 vector[] byte v = [1,2,0,4,5];
 var byte c = 3;
-_ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 1);
+_ceu_vector_buf_set(&&v,2, &&c, 1);
 escape v[2] + (($v) as int);
 ]],
     run = 8,

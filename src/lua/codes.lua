@@ -710,10 +710,10 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
     ceu_cb_assert_msg(&]]..V(fr)..' != &'..V(to)..[[, "source is the same as destination");
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
     ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..V(fr)..[[.len), 1);
-    ceu_vector_buf_set(]]..V(to)..[[,
+    ceu_vector_buf_set(&]]..V(to)..[[,
                        __ceu_nxt,
                        ]]..V(fr)..[[.buf,
-                       ceu_vector_buf_len(]]..V(fr)..[[));
+                       ceu_vector_buf_len(&]]..V(fr)..[[));
 ]])
                 else
                     -- v1 = v1....
@@ -733,7 +733,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
                     for _, e in ipairs(Explist) do
                         LINE(me, [[
     *((]]..TYPES.toc(to.info.tp)..[[*)
-        ceu_vector_buf_get(]]..V(to)..[[, __ceu_nxt++)) = ]]..V(e)..[[;
+        ceu_vector_buf_get(&]]..V(to)..[[, __ceu_nxt++)) = ]]..V(e)..[[;
 ]])
                     end
                     LINE(me, [[
@@ -747,7 +747,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         char* __ceu_str = ]]..V(fr)..[[;
         usize __ceu_len = strlen(__ceu_str);
         ceu_vector_setlen(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1);
-        ceu_vector_buf_set(]]..V(to)..[[,
+        ceu_vector_buf_set(&]]..V(to)..[[,
                            __ceu_nxt,
                            __ceu_str,
                            __ceu_len);

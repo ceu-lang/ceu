@@ -9,8 +9,8 @@ typedef struct {
     byte* buf;
 } tceu_vector;
 
-#define ceu_vector_buf_len(vec)           ((vec).len * (vec).unit)
-#define ceu_vector_buf_get(vec,idx)       (&(vec).buf[(idx)*(vec).unit])
+#define ceu_vector_buf_len(vec)           ((vec)->len * (vec)->unit)
+#define ceu_vector_buf_get(vec,idx)       (&(vec)->buf[(idx)*(vec)->unit])
 #define ceu_vector_buf_set(vec,idx,buf,n) memcpy(ceu_vector_buf_get((vec),(idx)),(buf),(n))
 
 #define ceu_vector_setlen(a,b,c) ceu_vector_setlen_ex(a,b,c,__FILE__,__LINE__)
@@ -104,7 +104,7 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
 
 byte* ceu_vector_geti_ex (tceu_vector* vector, usize idx, char* file, int line) {
     ceu_cb_assert_msg_ex(idx < vector->len, "access out of bounds", file, line);
-    return ceu_vector_buf_get(*vector, idx);
+    return ceu_vector_buf_get(vector, idx);
 }
 
 #if 0

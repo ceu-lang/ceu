@@ -209,7 +209,6 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         if TYPES.is_nat(TYPES.get(arr.info.tp,1)) then
             return '('..V(arr)..'['..V(idx)..'])'
         else
-            local args = {  }
             return [[
 (*(]]..TYPES.toc(me.info.tp)..[[*) ceu_vector_geti(&]]..V(arr)..','..V(idx)..[[))
 ]]
