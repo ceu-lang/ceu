@@ -137,17 +137,13 @@ if (]]..V(c)..[[) {
                 if not is_alias then
                     if dim.is_const then
                         LINE(me, [[
-ceu_vector_init(]]..'&'..CUR(dcl.id_)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
+ceu_vector_init(&]]..CUR(dcl.id_)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
                 (byte*)&]]..CUR(dcl.id_..'_buf')..[[);
 ]])
                     else
                         LINE(me, [[
-ceu_vector_init(]]..'&'..CUR(dcl.id_)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
+ceu_vector_init(&]]..CUR(dcl.id_)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 ]])
-                        if dim ~= '[]' then
-AST.dump(dim)
-error'oi'
-                        end
                     end
                 end
             end
@@ -178,6 +174,21 @@ if (0) {
 }
 _ceu_trl++;
 ]])
+        end
+    end,
+
+    Vec = function (me)
+        -- setmax (n)
+        -- vector[n] int vec;
+        local tp, is_alias, dim = unpack(me)
+        if (not TYPES.is_nat(TYPES.get(tp,1))) then
+            if not (is_alias or dim.is_const) then
+                if dim ~= '[]' then
+                    LINE(me, [[
+ceu_vector_setmax(&]]..CUR(me.id_)..', '..V(dim)..[[, 1);
+]])
+                end
+            end
         end
     end,
 
