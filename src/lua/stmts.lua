@@ -27,22 +27,21 @@ F = {
     end,
 
     __set_vec = function (fr, to_info)
+        AST.asr(fr, 'Vec_Cons')
+
         -- ctx
-        if fr.tag == 'Vec_Cons' then
-            for _, e in ipairs(fr) do
-                if e.tag=='Vec_Tup' or e.tag=='STRING' or
-                   e.tag=='Exp_as'  or e.tag=='_Lua'
-                then
+        for _, e in ipairs(fr) do
+            if e.tag=='Vec_Tup' or e.tag=='STRING' or
+               e.tag=='Exp_as'  or e.tag=='_Lua'
+            then
 DBG('TODO: _Lua')
-                    -- ok
-                else
-                    INFO.asr_tag(e, {'Vec'}, 'invalid constructor')
-                end
+                -- ok
+            else
+                INFO.asr_tag(e, {'Vec'}, 'invalid constructor')
             end
         end
 
         -- tp
-        AST.asr(fr, 'Vec_Cons')
         for i, e in ipairs(fr) do
             if e.tag == 'Vec_Tup' then
                 local ps = unpack(e)

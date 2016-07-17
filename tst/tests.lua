@@ -29301,6 +29301,17 @@ escape call Fx(&str);
 Test { [[
 vector[1] byte str = [0,1,2];
 
+code/instantaneous Fx (vector&[2] byte&& vec)=>int do
+    escape vec[1] as int;
+end
+
+escape call Fx(&&str);
+]],
+    todo = 'vector args with wrong len',
+}
+Test { [[
+vector[1] byte str = [0,1,2];
+
 code/instantaneous Fx (vector&[2] byte vec)=>int do
     escape vec[1] as int;
 end

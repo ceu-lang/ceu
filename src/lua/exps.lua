@@ -120,6 +120,7 @@ F = {
 
             elseif arg.tag == 'Vec_Cons' then
 assert(ID_abs.dcl.tag == 'Data', 'TODO')
+error'TODO: remove below'
                 F.__set_vec(arg, dcl)
 
             else
