@@ -51310,6 +51310,70 @@ escape a;
 }
 
 Test { [[
+data Data with
+    var int v;
+end
+
+code/delayed Code (var& Data d, var  int ini) => int
+do
+    d.v = ini;
+    every 1s do
+        d.v = d.v + 1;
+    end
+end
+
+var Data d = val Data(0);
+
+var int a =
+    watching Code(&d, 10) do
+        var int ret = 0;
+        watching 5s do
+            every 1s do
+                ret = ret + d.v;
+            end
+        end
+        escape ret;
+    end;
+
+escape a;
+]],
+    run = {['~>10s']=50 },
+}
+
+Test { [[
+data Data with
+    var& int v;
+end
+
+code/delayed Code (var& Data d, var  int ini) => int
+do
+    var int v = ini;
+    d.v = &v;
+    every 1s do
+        v = v + 1;
+    end
+end
+
+var Data d = val Data(0);
+
+var int a =
+    watching Code(&d, 10) do
+        var int ret = 0;
+        watching 5s do
+            every 1s do
+                ret = ret + d.v;
+            end
+        end
+        escape ret;
+    end;
+
+escape a;
+]],
+    todo = '&&',
+    run = {['~>10s']=50 },
+}
+
+Test { [[
 class Tx with
     event int e;
 do
@@ -58249,68 +58313,47 @@ escape _strlen(&&t.xxxx[0]);
 }
 
 Test { [[
-data Data with
-    var int v;
-end
-
-code/delayed Code (var& Data d, var  int ini) => int
-do
-    d.v = ini;
-    every 1s do
-        d.v = d.v + 1;
-    end
-end
-
-var Data d = val Data(0);
-
-var int a =
-    watching Code(&d, 10) do
-        var int ret = 0;
-        watching 5s do
-            every 1s do
-                ret = ret + d.v;
-            end
-        end
-        escape ret;
-    end;
-
-escape a;
+data Tx;
+event Tx a;
+escape 0;
 ]],
-    run = {['~>10s']=50 },
+    dcls = 'line 2 : invalid event type : must be primitive',
+}
+
+-- << ADT : MISC
+
+-->>> DATA/EVENTS
+
+Test { [[
+var Ddd d = Ddd(1);
+]],
+    parser = 'line 1 : after `=´ : expected expression',
 }
 
 Test { [[
-data Data with
-    var& int v;
+data Ddd with
+    var int xxx;
+    event void e;
 end
 
-code/delayed Code (var& Data d, var  int ini) => int
-do
-    var int v = ini;
-    d.v = &v;
-    every 1s do
-        v = v + 1;
-    end
+var Ddd d = val Ddd(1,_);
+
+par/and do
+    await d.e;
+with
+    await 1s;
+    emit d.e;
 end
 
-var Data d = val Data(0);
-
-var int a =
-    watching Code(&d, 10) do
-        var int ret = 0;
-        watching 5s do
-            every 1s do
-                ret = ret + d.v;
-            end
-        end
-        escape ret;
-    end;
-
-escape a;
+d.xxx = d.xxx + 2;
+escape d.xxx;
 ]],
-    todo = '&&',
-    run = {['~>10s']=50 },
+    run = { ['~>1s']=3 },
 }
+
+--<<< DATA / EVENTS
+
+-->> DATA / VECTOR
 
 Test { [[
 data Tt with
@@ -58480,46 +58523,7 @@ end
     consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
 }
 
-Test { [[
-data Tx;
-event Tx a;
-escape 0;
-]],
-    dcls = 'line 2 : invalid event type : must be primitive',
-}
-
--- << ADT : MISC
-
--->>> DATA/EVENTS
-
-Test { [[
-var Ddd d = Ddd(1);
-]],
-    parser = 'line 1 : after `=´ : expected expression',
-}
-
-Test { [[
-data Ddd with
-    var int xxx;
-    event void e;
-end
-
-var Ddd d = val Ddd(1,_);
-
-par/and do
-    await d.e;
-with
-    await 1s;
-    emit d.e;
-end
-
-d.xxx = d.xxx + 2;
-escape d.xxx;
-]],
-    run = { ['~>1s']=3 },
-}
-
---<<< DATA / EVENTS
+--<< DATA / VECTOR
 
 -->>> DATA / RECURSIVE
 
