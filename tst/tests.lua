@@ -26794,6 +26794,7 @@ end
 --<<< PAUSE
 
 -->>> VECTORS / STRINGS
+--]=====]
 
 Test { [[
 var u8 v;
@@ -26963,7 +26964,6 @@ escape vec[0] as int;
     run = '2] runtime error: access out of bounds',
 }
 
---]=====]
 Test { [[
 vector[] u8 vec = [1,2,3];
 escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;
@@ -27307,13 +27307,16 @@ escape ($v + 1) as int;
 ]],
     run = 1,
 }
+
+-->> VECTOR / _CHAR*
+
 Test { [[
 native/pos do
-    byte* f (void) {
-        escape "ola";
+    char* f (void) {
+        return "ola";
     }
     typedef struct {
-        byte* (*f) (void);
+        char* (*f) (void);
     } tp;
     tp Tx = { f };
 end
@@ -27325,11 +27328,11 @@ escape (str[1]=={'i'}) as int;
 
 Test { [[
 native/pos do
-    byte* f (void) {
-        escape "ola";
+    char* f (void) {
+        return "ola";
     }
     typedef struct {
-        byte* (*f) (void);
+        char* (*f) (void);
     } tp;
     tp Tx = { f };
 end
@@ -27342,11 +27345,11 @@ escape (str[2]=={'a'}) as int;
 
 Test { [[
 native/pos do
-    byte* f (void) {
-        escape "ola";
+    char* f (void) {
+        return "ola";
     }
     typedef struct {
-        byte* (*f) (void);
+        char* (*f) (void);
     } tp;
     tp Tx = { f };
 end

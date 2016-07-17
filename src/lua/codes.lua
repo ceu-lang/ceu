@@ -667,39 +667,29 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
     Set_Vec = function (me)
         local Vec_Cons, to = unpack(me)
 
-        -- ceu_vector_setlen(<Vec_Cons>)
         LINE(me, [[
 {
-    usize __ceu_len = 0;
-    usize __ceu_nxt = 0;
+    usize __ceu_nxt;
 ]])
 
         for i, fr in ipairs(Vec_Cons) do
-            if fr.tag == 'Exp_Name' then
-                LINE(me, [[
-    __ceu_len += ]]..V(fr)..[[.len;
-]])
-                if i == 1 then
+            -- concat or set?
+            if i == 1 then
+                if fr.tag == 'Exp_Name' then
+                    -- vec = vec..
                     LINE(me, [[
-    __ceu_nxt += ]]..V(fr)..[[.len;
+    __ceu_nxt = ]]..V(to)..[[.len;
+]])
+                else
+                    -- vec = []..
+                    LINE(me, [[
+    ceu_vector_setlen(&]]..V(to)..[[, 0, 0);
+    __ceu_nxt = 0;
 ]])
                 end
-            elseif fr.tag == 'Vec_Tup' then
-                local Explist = unpack(fr)
-                if Explist then
-                    LINE(me, [[
-    __ceu_len += ]]..#Explist..[[;
-]])
-                end
-            else
-error'TODO: lua'
             end
-        end
-        LINE(me, [[
-    ceu_vector_setlen(&]]..V(to)..[[, __ceu_len, 1);
-]])
 
-        for i, fr in ipairs(Vec_Cons) do
+            -- vec1 = ..vec2
             if fr.tag == 'Exp_Name' then
                 if i > 1 then
                     -- NO:
@@ -707,27 +697,52 @@ error'TODO: lua'
                     -- v1 = []..v2;
                     LINE(me, [[
     ceu_cb_assert_msg(&]]..V(fr)..' != &'..V(to)..[[, "source is the same as destination");
+#line ]]..me.ln[2]..' "'..me.ln[1]..[["
+    ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..V(fr)..[[.len), 1);
     ceu_vector_buf_set(]]..V(to)..[[,
-                      __ceu_nxt,
-                      ]]..V(fr)..[[.buf,
-                      ceu_vector_buf_len(]]..V(fr)..[[));
-    __ceu_nxt += ]]..V(fr)..[[.len;
+                       __ceu_nxt,
+                       ]]..V(fr)..[[.buf,
+                       ceu_vector_buf_len(]]..V(fr)..[[));
 ]])
                 else
                     -- v1 = v1....
                     -- nothing to to
                 end
+                LINE(me, [[
+    __ceu_nxt = ]]..V(to)..[[.len;
+]])
+
+            -- vec1 = ..[a,b,c]
             elseif fr.tag == 'Vec_Tup' then
                 local Explist = unpack(fr)
                 if Explist then
+                    LINE(me, [[
+    ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..#Explist..[[), 1);
+]])
                     for _, e in ipairs(Explist) do
                         LINE(me, [[
     *((]]..TYPES.toc(to.info.tp)..[[*)
-        ceu_vector_buf_get(]]..V(to)..[[, __ceu_nxt)) = ]]..V(e)..[[;
-    __ceu_nxt++;
+        ceu_vector_buf_get(]]..V(to)..[[, __ceu_nxt++)) = ]]..V(e)..[[;
 ]])
                     end
+                    LINE(me, [[
+]])
                 end
+
+            -- vec1 = .."string"
+            elseif TYPES.check(fr.info.tp, '_char', '&&') then
+                LINE(me, [[
+    {
+        char* __ceu_str = ]]..V(fr)..[[;
+        usize __ceu_len = strlen(__ceu_str);
+        ceu_vector_setlen(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1);
+        ceu_vector_buf_set(]]..V(to)..[[,
+                           __ceu_nxt,
+                           __ceu_str,
+                           __ceu_len);
+        __ceu_nxt += __ceu_len;
+    }
+]])
             else
 error'TODO: lua'
             end

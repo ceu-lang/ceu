@@ -1,5 +1,5 @@
 #include <stdlib.h>     /* NULL */
-#include <string.h>     /* memset */
+#include <string.h>     /* memset, strlen */
 
 /* NATIVE_PRE */
 === NATIVE_PRE ===
