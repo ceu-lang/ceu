@@ -1,6 +1,22 @@
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset, strlen */
 
+#define S8_MIN   -127
+#define S8_MAX    127
+#define U8_MAX    255
+
+#define S16_MIN  -32767
+#define S16_MAX   32767
+#define U16_MAX   65535
+
+#define S32_MIN  -2147483647
+#define S32_MAX   2147483647
+#define U32_MAX   4294967295
+
+#define S64_MIN  -9223372036854775807
+#define S64_MAX   9223372036854775807
+#define U64_MAX   18446744073709551615
+
 /* NATIVE_PRE */
 === NATIVE_PRE ===
 

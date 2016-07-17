@@ -202,8 +202,13 @@ typedef struct tceu_data_]]..me.id_..[[ {
 
     Block__PRE = function (me)
         local mem = {}
-        for _, dcl in ipairs(me.dcls)
-        do
+        for _, dcl in ipairs(me.dcls) do
+            if dcl.ln then
+                mem[#mem+1] = [[
+#line ]]..dcl.ln[2]..' "'..dcl.ln[1]..[["
+]]
+            end
+
             -- VAR
             if dcl.tag == 'Var' then
                 if dcl.id ~= '_ret' then

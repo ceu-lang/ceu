@@ -10,6 +10,7 @@ end
 
 --[=====[
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -26794,7 +26795,6 @@ end
 --<<< PAUSE
 
 -->>> VECTORS / STRINGS
---]=====]
 
 Test { [[
 var u8 v;
@@ -27453,56 +27453,6 @@ escape v[2] + (($v) as int);
 }
 
 Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[5] byte v = [1,2,0,4,5];
-var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 1);
-escape v[2] + (($v) as int) + ok;
-]],
-    run = 9,
-}
-
-Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[5] byte v = [1,2,1,4,5];
-var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 8, 1);
-escape v[2] + (($v) as int) + ok;
-]],
-    run = 6,
-}
-
-Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[] byte v = [1,2,0,4,5];
-var byte c = 3;
-_ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 0);
-escape v[2] + (($v) as int);
-]],
-    run = 8,
-}
-
-Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[5] byte v = [1,2,0,4,5];
-var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 1, 0);
-escape v[2] + (($v) as int) + ok;
-]],
-    run = 9,
-}
-
-Test { [[
-native/nohold _ceu_vector_copy_buffer;
-vector[] byte v = [1,2,1,4,5];
-var byte c = 3;
-var int ok = _ceu_vector_copy_buffer(&&v[0], 2, &&c, 8, 0);
-escape v[2] + (($v) as int) + ok;
-]],
-    run = 6,
-}
-
-Test { [[
 vector[] int v;
 escape v > 0;
 ]],
@@ -27598,12 +27548,16 @@ escape 1;
     --fin = 'line 2 : call requires `finalize´',
 }
 Test { [[
-native _enqueue;
+native/pure _enqueue;
+native/pos do
+    ##define enqueue(x)
+end
 vector[255] byte buf;
 _enqueue(&&buf);
 escape 1;
 ]],
-    exps = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
+    run = 1,
+    --exps = 'line 3 : invalid operand to `&&´ : unexpected context for vector "buf"',
     --fin = 'line 2 : call requires `finalize´',
 }
 
@@ -27616,8 +27570,9 @@ str = [].."oioioi";
 
 escape _strlen(&&str[0]);
 ]],
+    stmts = 'line 5 : invalid constructor : expected internal type : got "_char"',
     --dcls = 'line 5 : invalid use of `vector´ "str"',
-    cc = '4:34: error: assignment to expression with array type',
+    --cc = '4:34: error: assignment to expression with array type',
 }
 
 Test { [[
@@ -27688,10 +27643,10 @@ native/pos do
     }
 end
 
-vector[10] byte v;
+vector[10] byte v = [0];
 vector[10] byte v_;
 native _char;
-_garbage((&&v[0]) as _char&&);
+_garbage((&&v[0]));
 v = [{'a'},{'b'},{'c'}];
 escape _strlen((&&v[0]) as _char&&);
 ]],
@@ -27758,7 +27713,7 @@ escape _strlen((&&v[0]) as _char&&);
 Test { [[
 native/nohold _strlen;
 vector[] byte v = [].."abc";
-v = [] .. v .. "def";
+v = v .. "def";
 native _char;
 escape _strlen((&&v[0]) as _char&&);
 ]],
@@ -27790,9 +27745,10 @@ Test { [[
 var int nnn = 10;
 vector[nnn] byte xxx;
 native/nohold _ceu_vector_setlen;
-escape 1 + _ceu_vector_setlen(&&xxx,nnn+1,1);
+_ceu_vector_setlen(&&xxx,nnn+1,1);
+escape 1;
 ]],
-    run = 1,
+    run = '4] runtime error: access out of bounds',
 }
 
 Test { [[
@@ -27801,7 +27757,7 @@ vector[n] byte us;
 $us = 20;
 escape 1;
 ]],
-    run = ':3] runtime error: invalid attribution : out of bounds',
+    run = ':3] runtime error: access out of bounds',
 }
 
 Test { [[
@@ -27809,7 +27765,7 @@ var int n = 10;
 vector[n] byte us;
 native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&us,n,1);
-escape $us;
+escape $us as int;
 ]],
     run = 10,
 }
@@ -27820,7 +27776,7 @@ vector[] byte us;
 $us = n;
 escape 1;
 ]],
-    run = ':3] runtime error: invalid attribution : out of bounds',
+    run = ':3] runtime error: access out of bounds',
 }
 
 Test { [[
@@ -27828,7 +27784,7 @@ var int n = 10;
 vector[] byte us;
 native/nohold _ceu_vector_setlen;
 _ceu_vector_setlen(&&us,n,1);
-escape $us;
+escape $us as int;
 ]],
     run = 10,
 }
@@ -27862,9 +27818,10 @@ vector[1.5] u8 us = [];
 Test { [[
 native _u8;
 native/const _U8_MAX;
-vector[_U8_MAX] _u8 us = [];
+vector[_U8_MAX] _u8 us = _;
 escape 1;
 ]],
+    wrn = true,
     run = 1,
     --env = 'line 2 : dimension must be constant',
 }
@@ -27873,17 +27830,31 @@ Test { [[
 native _u8;
 native/const _U8_MAX;
 var int n = 10;
-vector[_U8_MAX] _u8 us = [];
+vector[_U8_MAX] _u8 us = _;
 us[_U8_MAX-1] = 10;
 us[0] = 1;
-escape us[0]+us[_U8_MAX-1];
+escape (us[0]+us[_U8_MAX-1]) as int;
 ]],
-    run = 'TODO: error',
+    wrn = true,
+    run = 11,
+}
+
+Test { [[
+native _u8;
+native/const _U8_MAX;
+var int n = 10;
+vector[_U8_MAX] u8 us = _;
+us[_U8_MAX-1] = 10;
+us[0] = 1;
+escape (us[0]+us[_U8_MAX-1]) as int;
+]],
+    wrn = true,
+    run = '5] runtime error: access out of bounds',
 }
 
 Test { [[
 native _t_vec;
-native/pos do
+native/pre do
     typedef int t_vec[10];
 end
 var _t_vec us = _;
@@ -27901,23 +27872,11 @@ native/const _N;
 native/pre do
     int N = 10;
 end
-vector&[_N] _u8 xxxx = [];
+vector[_N] _u8 xxx = _;
 escape 1;
 ]],
-    inits = 'line 6 : invalid binding : unexpected statement in the right side',
-    --gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
-}
-
-Test { [[
-native _u8;
-native/const _N;
-native/pre do
-    int N = 10;
-end
-vector[_N] _u8 xxx = [];
-escape 1;
-]],
-    cc = '6:26: error: variably modified ‘xxxx’ at file scope',
+    wrn = true,
+    cc = '6:5: error: variably modified ‘xxx_53’ at file scope',
 }
 
 Test { [[
@@ -27937,29 +27896,6 @@ escape ($$bs) as int;
     run = 32,
 }
 
-Test { [[
-code/instantaneous Fx (void)=>void do
-    var int x = 0;
-
-    vector[10] byte cs;
-end
-escape 1;
-]],
-    wrn = true,
-    props = 'line 4 : not permitted inside `function´',
-}
-
-Test { [[
-code/instantaneous Fx (vector&[] byte cs)=>void do
-    cs[0] = 10;
-end
-vector[] byte cs = [0];
-call Fx(&cs);
-escape cs[0];
-]],
-    run = 10,
-}
-
 Test { [=[
 var int r1 = [1,2,3];
 escape 1;
@@ -27973,7 +27909,8 @@ vector[10] _char a;
 a = [].."oioioi";
 escape 1;
 ]],
-    cc = '2:32: error: assignment to expression with array type',
+    stmts = 'line 3 : invalid constructor : expected internal type : got "_char"',
+    --cc = '2:32: error: assignment to expression with array type',
     --env = 'line 2 : types mismatch (`_char[]´ <= `_char&&´)',
     --env = 'line 2 : invalid attribution',
 }
@@ -28022,7 +27959,7 @@ escape v2[0][0];
 }
 
 Test { [[
-vector[10] byte v2 = [];
+vector[10] byte v2 = [45];
 
 var int ret = (v2[0] as int);
 
@@ -28035,12 +27972,12 @@ escape ret;
 Test { [[
 native/plain _char;
 native/plain _u8;
-vector[10] _u8 v1 = [];
+vector[10] _u8 v1 = _;
 vector[10] byte v2 = [];
 
 loop i in [0 -> 10[ do
     v1[i] = i;
-    v2[i] = ((i*2) as byte);
+    v2 = v2..[((i*2) as byte)];
 end
 
 var int ret = 0;
@@ -28050,6 +27987,7 @@ end
 
 escape ret;
 ]],
+    wrn = true,
     --loop = 1,
     run = 45,
 }
@@ -28189,7 +28127,7 @@ escape bs[i];
 Test { [[
 native/pos do
     byte* f (void) {
-        escape "ola";
+        return (byte*)"ola";
     }
 end
 vector[] byte  str;
@@ -28212,7 +28150,7 @@ native/pos do
 end
 vector[2] int a  = [1,2];
 vector&[2] int b = &a;
-_f((&&b[0]) as byte&&);
+_f((&&b[0]));
 escape b[0] + b[1];
 ]],
     --env = 'line 10 : invalid type cast',
@@ -28239,7 +28177,7 @@ escape b[0] + b[1];
 Test { [[
 native/const _X;
 native/pos do
-    ##define X 1;
+    ##define X 1
 end
 vector&[-_X] int iis;
 escape 1;
@@ -28251,8 +28189,20 @@ escape 1;
 
 Test { [[
 native/const _X;
-native/pos do
-    ##define X 1;
+native/pre do
+    ##define X 1
+end
+vector[-_X] int vvs;
+vector&[-_X] int iis = &vvs;
+escape 1;
+]],
+    cc = '5:5: error: size of array ‘vvs_56_buf’ is negative',
+}
+
+Test { [[
+native/const _X;
+native/pre do
+    ##define X -1
 end
 vector[-_X] int vvs;
 vector&[-_X] int iis = &vvs;
@@ -28286,19 +28236,18 @@ escape b[0];
 ]],
     run = 1,
 }
+
 Test { [[
-var byte  c = 2;
-var& byte b = &c;
-escape b;
+native _u8;
+native/const _N;
+native/pre do
+    int N = 10;
+end
+vector&[_N] _u8 xxxx = _;
+escape 1;
 ]],
-    cc = 'error: pointer targets in assignment differ',
-}
-Test { [[
-var byte   c = 2;
-var byte&& b = &&c;
-escape *b;
-]],
-    cc = 'error: pointer targets in assignment differ',
+    inits = 'line 6 : invalid binding : unexpected statement in the right side',
+    --gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
 }
 
 --<< VECTOR / ALIAS
@@ -29601,6 +29550,31 @@ escape call Strlen((&&str[0]) as _char&&);
 ]],
     run = 10,
 }
+
+Test { [[
+code/instantaneous Fx (void)=>void do
+    var int x = 0;
+
+    vector[10] byte cs;
+end
+escape 1;
+]],
+    wrn = true,
+    props = 'line 4 : not permitted inside `function´',
+}
+
+Test { [[
+code/instantaneous Fx (vector&[] byte cs)=>void do
+    cs[0] = 10;
+end
+vector[] byte cs = [0];
+call Fx(&cs);
+escape cs[0];
+]],
+    run = 10,
+}
+
+--<< VECTOR / CODE
 
 --<<< CODE / INSTANTANEOUS / FUNCTIONS
 

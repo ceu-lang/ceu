@@ -4,7 +4,8 @@
 typedef struct {
     usize max;
     usize len;
-    bool  is_dyn;
+    u8    is_dyn:     1;
+    u8    is_freezed: 1;
     int   unit;
     byte* buf;
 } tceu_vector;
@@ -29,11 +30,12 @@ char* ceu_vector_tochar (tceu_vector* vector);
 #endif
 
 void ceu_vector_init (tceu_vector* vector, usize max, bool is_dyn, int unit, byte* buf) {
-    vector->len    = 0;
-    vector->max    = max;
-    vector->is_dyn = is_dyn;
-    vector->unit   = unit;
-    vector->buf    = buf;
+    vector->len        = 0;
+    vector->max        = max;
+    vector->is_dyn     = is_dyn;
+    vector->is_freezed = 0;
+    vector->unit       = unit;
+    vector->buf        = buf;
 
     /* [STRING] */
     if (vector->buf != NULL) {
@@ -61,7 +63,7 @@ byte* ceu_vector_setmax (tceu_vector* vector, usize len, bool freeze) {
     }
 
     if (freeze) {
-        vector->is_dyn = 0;
+        vector->is_freezed = 1;
     }
 
     return vector->buf;
@@ -77,7 +79,7 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
     }
 
     /* fixed size */
-    if (! vector->is_dyn) {
+    if (!vector->is_dyn || vector->is_freezed) {
         ceu_cb_assert_msg_ex(len <= vector->max, "access out of bounds",
                              file, line);
 
