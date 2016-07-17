@@ -92,16 +92,6 @@ DBG('TODO: _Lua')
         end
     end,
 
-    __dim_cmp = function (to, fr)
-        if to == '[]' then
-            return true
-        elseif AST.is_equal(fr,to) then
-            return true
-        else
-            return false
-        end
-    end,
-
     Set_Alias = function (me)
         local fr, to = unpack(me)
 
@@ -119,13 +109,13 @@ DBG('TODO: _Lua')
         ASR(ID_int.dcl[2]=='&', me, 'invalid binding : expected declaration with `&´')
 
         -- tp
-        EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding')
+        EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)
 
         -- dim
         if to.info.tag == 'Vec' then
             local _,_,to_dim = unpack(to.info.dcl)
             local _,_,fr_dim = unpack(fr.info.dcl)
-            ASR(F.__dim_cmp(to_dim,fr_dim), me,
+            ASR(EXPS.check_dim(to_dim,fr_dim), me,
                 'invalid binding : dimension mismatch')
         end
     end,

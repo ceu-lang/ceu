@@ -28771,7 +28771,8 @@ var u8 v = 0;
 call Set(_);
 escape v as int;
 ]],
-    exps = 'line 5 : invalid constructor : argument #1 : unexpected `_´',
+    exps = 'line 5 : invalid call : invalid binding : argument #1 : expected name expression',
+    --exps = 'line 5 : invalid constructor : argument #1 : unexpected `_´',
 }
 
 Test { [[
@@ -29307,7 +29308,7 @@ end
 
 escape call Fx(&&str);
 ]],
-    todo = 'vector args with wrong len',
+    exps = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for value "str"',
 }
 Test { [[
 vector[1] byte str = [0,1,2];
@@ -29318,7 +29319,25 @@ end
 
 escape call Fx(&str);
 ]],
-    todo = 'vector args with wrong len',
+    exps = 'line 7 : invalid call : invalid binding : argument #1 : dimension mismatch',
+}
+Test { [[
+var  byte v1 = 0;
+var& int v2;
+v2 = &v1;
+escape v2;
+]],
+    stmts = 'line 3 : invalid binding : types mismatch : "int" <= "byte"',
+    --run = 1,
+}
+Test { [[
+vector[]  byte v1 = [0,1,2];
+vector&[] int v2;
+v2 = &v1;
+escape v2[1];
+]],
+    stmts = 'line 3 : invalid binding : types mismatch : "int" <= "byte"',
+    --run = 1,
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -29329,20 +29348,20 @@ end
 
 escape call Fx(&str);
 ]],
-    todo = 'vector args with wrong type',
-    run = 1,
+    exps = 'line 7 : invalid call : argument #1 : types mismatch : "int" <= "byte"',
+    --run = 1,
 }
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (vector&[] int vec)=>bool do
+code/instantaneous Fx (vector&[] byte vec)=>bool do
     escape vec[1];
 end
 
 escape call Fx(&str);
 ]],
     wrn = true,
-    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
+    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "byte"',
     --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
 }
 Test { [[
@@ -29356,7 +29375,7 @@ escape call Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    exps = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
+    exps = 'line 7 : invalid call : invalid binding : argument #1 : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -29407,7 +29426,8 @@ vector[10] u8 buffer;
 call FillBuffer(&buffer);
 escape buffer[0] as int;
 ]],
-    tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+    exps = 'line 5 : invalid call : invalid binding : argument #1 : dimension mismatch',
+    --tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
 Test { [[
@@ -57725,7 +57745,8 @@ end
 var Ee ex = val Ee(_);
 escape 1;
 ]],
-    exps = 'line 7 : invalid constructor : argument #1 : unexpected `_´',
+    exps = 'line 7 : invalid constructor : invalid binding : argument #1 : expected name expression',
+    --exps = 'line 7 : invalid constructor : argument #1 : unexpected `_´',
 }
 
 Test { [[

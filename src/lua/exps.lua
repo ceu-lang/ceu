@@ -1,10 +1,20 @@
 EXPS = {}
 
-function EXPS.check_tp (me, to_tp, fr_tp, err_msg)
+function EXPS.check_tp (me, to_tp, fr_tp, err_msg, is_alias)
     local to_str = TYPES.tostring(to_tp)
     local fr_str = TYPES.tostring(fr_tp)
-    ASR(TYPES.contains(to_tp,fr_tp), me,
+    ASR(TYPES.contains(to_tp,fr_tp,is_alias), me,
         err_msg..' : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
+end
+
+function EXPS.check_dim (to, fr)
+    if to == '[]' then
+        return true
+    elseif AST.is_equal(fr,to) then
+        return true
+    else
+        return false
+    end
 end
 
 local F_Exp_as  = F.Exp_as
@@ -92,16 +102,16 @@ F = {
         local ID_abs, Abslist = unpack(me)
 
         local err_str
-        local tp_i
+        local i_tp, i_alias, i_dim
         local vars do
             if ID_abs.dcl.tag == 'Data' then
                 vars = AST.asr(ID_abs.dcl,'Data', 2,'Block').dcls
                 err_str = 'invalid constructor'
-                tp_i = 1
+                i_tp, i_alias, i_dim = 1,2,3
             else
                 vars = AST.get(ID_abs.dcl,'Code', 4,'Typepars_ids')
                 err_str = 'invalid call'
-                tp_i = 4
+                i_tp, i_alias, i_dim = 4,2,3
             end
         end
 
@@ -109,14 +119,27 @@ F = {
 
         for i, dcl in ipairs(vars) do
             local arg = Abslist[i]
+            local is_alias = dcl[i_alias]
+
+            if is_alias then
+                INFO.asr_tag(arg, {'Alias'},
+                    err_str..' : invalid binding : '..'argument #'..i)
+
+                -- dim
+                if dcl.tag=='Vec' or dcl[1]=='vector' then
+                    local _,_,fr_dim = unpack(arg.info.dcl)
+                    ASR(EXPS.check_dim(dcl[i_dim],fr_dim), me,
+                        err_str..' : invalid binding : argument #'..i..' : dimension mismatch')
+                end
+            end
 
             if arg.tag == 'ID_any' then
                 -- ok: ignore _
                 -- Data(1,_)
 -- TODO: check default, check event/vector
-                local _,is_alias = unpack(dcl)
-                ASR(not is_alias, me,
-                    'invalid constructor : argument #'..i..' : unexpected `_´')
+                --local _,is_alias = unpack(dcl)
+                --ASR(not is_alias, me,
+                    --'invalid constructor : argument #'..i..' : unexpected `_´')
 
             elseif arg.tag == 'Vec_Cons' then
 assert(ID_abs.dcl.tag == 'Data', 'TODO')
@@ -128,7 +151,7 @@ error'TODO: remove below'
                 INFO.asr_tag(arg, {'Alias','Val','Nat','Var'}, err_str..' : argument #'..i)
 
                 -- tp
-                EXPS.check_tp(me, dcl[tp_i], arg.info.tp, err_str..' : argument #'..i)
+                EXPS.check_tp(me, dcl[i_tp], arg.info.tp, err_str..' : argument #'..i,is_alias)
             end
         end
 

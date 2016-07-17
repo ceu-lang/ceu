@@ -204,12 +204,12 @@ do
         return (string.find(id2..'.',id1..'.',1,true) == 1)
     end
 
-    function TYPES.contains (tp1, tp2)
+    function TYPES.contains (tp1, tp2, is_alias)
         if tp1.tag=='Typelist' or tp2.tag=='Typelist' then
             if tp1.tag=='Typelist' and tp2.tag=='Typelist' then
                 if #tp1 == #tp2 then
                     for i=1, #tp1 do
-                        if not TYPES.contains(tp1[i],tp2[i]) then
+                        if not TYPES.contains(tp1[i],tp2[i],is_alias) then
                             return false
                         end
                     end
@@ -250,10 +250,14 @@ do
 
 -- NUMERIC TYPES
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
-            if TYPES.is_nat(tp1) or TYPES.is_nat(tp2) then
-                return true
+            if is_alias then
+                return false
+            else
+                if TYPES.is_nat(tp1) or TYPES.is_nat(tp2) then
+                    return true
+                end
+                return contains_num(types_id(tp1),types_id(tp2))
             end
-            return contains_num(types_id(tp1),types_id(tp2))
 
 -- POINTER TYPES
         elseif (TYPES.check(tp1,'&&') or tp1_is_nat) and
