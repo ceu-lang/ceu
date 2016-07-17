@@ -27367,154 +27367,6 @@ Test { [[vector[2] u8 v; escape (&&v==&&v) as int;]],
     --env = 'invalid operand to unary "&&"',
 }
 
--->> VECTOR / ALIAS
-
-Test { [[
-vector[10] u8 v1 = [1,2,3];
-vector&[10] u8 v2 = &v1;
-v1 = v2..[];    // v1=v2 must be the same
-escape 0;
-]],
-    stmts = 'line 3 : invalid constructor : item #1 : expected destination as source',
-}
-
-Test { [[
-vector[10] u8 v1 = [1,2,3];
-vector&[10] u8 v2 = &v1;
-v1 = []..v2;    // v1=v2 same address
-escape 0;
-]],
-    run = '3] runtime error: source is the same as destination',
-}
-
-Test { [[
-vector[10] byte vec = [1,2,3];
-vector&[] byte  ref = &vec;
-escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
-]],
-    run = 19,
-}
-
-Test { [[
-var int n = 10;
-vector[n] byte vec = [1,2,3];
-vector&[] byte ref = &vec;
-]],
-    run = 19,
-}
-Test { [[
-var int n = 10;
-vector[n] byte vec = [1,2,3];
-vector&[n] byte ref = &vec;
-]],
-    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
-}
-
-Test { [[
-var int n = 10;
-vector[] byte vec = [1,2,3];
-vector&[n] byte ref = &vec;
-]],
-    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
-}
-
-Test { [[
-vector[10] byte  vec = [1,2,3];
-vector&[11] byte ref = &vec;
-escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
-]],
-    run = 1,
-    stmts = 'line 2 : invalid binding : dimension mismatch',
-    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
-}
-
-Test { [[
-vector[10] byte vec = [1,2,3];
-vector&[9] byte ref = &vec;
-escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
-]],
-    stmts = 'line 2 : invalid binding : dimension mismatch',
-    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
-}
-
-Test { [[
-native/nohold _f;
-native/pos do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
-native _int;
-_f((&&b[0]) as _int&&);
-escape b[0] + b[1];
-]],
-    run = 5,
-}
-
-Test { [[
-vector[] byte bs = [ 1, 2, 3 ];
-var int idx = 1;
-var& int i = &idx;
-escape bs[i];
-]],
-    run = 2,
-}
-
-Test { [[
-native/pos do
-    byte* f (void) {
-        escape "ola";
-    }
-end
-vector[] byte  str;
-vector&[] byte ref = &str;
-native _char;
-ref = [] .. ({f}() as _char&&) .. "oi";
-native/pure _strlen;
-escape _strlen((&&str[0]) as _char&&);
-]],
-    run = 5,
-}
-
-Test { [[
-native/nohold _f;
-native/pos do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
-_f((&&b[0]) as byte&&);
-escape b[0] + b[1];
-]],
-    --env = 'line 10 : invalid type cast',
-    run = 5,
-}
-
-Test { [[
-native/nohold _f;
-native/pos do
-    void f (int* v) {
-        v[0]++;
-        v[1]++;
-    }
-end
-vector[2] int a  = [1,2];
-vector&[2] int b = &a;
-_f((&&b[0]) as int&&);
-escape b[0] + b[1];
-]],
-    --env = 'line 10 : invalid type cast',
-    run = 5,
-}
-
---<< VECTOR / ALIAS
-
 -- TODO: dropped support for returning alias, is this a problem?
 
 Test { [[
@@ -27660,32 +27512,6 @@ v[true] = 1;
 }
 
 Test { [[
-native/const _X;
-native/pos do
-    ##define X 1;
-end
-vector&[-_X] int iis;
-escape 1;
-]],
-    wrn = true,
-    inits = 'line 5 : uninitialized vector "iis" : reached `escape´ (/tmp/tmp.ceu:6)',
-    --run = 1,
-}
-
-Test { [[
-native/const _X;
-native/pos do
-    ##define X 1;
-end
-vector[-_X] int vvs;
-vector&[-_X] int iis = &vvs;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
 vector int[1][1] v;
 escape 1;
 ]],
@@ -27700,21 +27526,6 @@ escape 1;
     --adj = 'line 1 : not implemented : multiple `[]´',
     --env = 'line 1 : invalid type modifier : `[][]´',
     parser = 'line 1 : after `]´ : expected type',
-}
-Test { [[
-vector[1] int? v;
-escape 1;
-]],
-    dcls = 'line 1 : vector "v" declared but not used',
-    --env = 'line 1 : invalid type modifier : `[]?´',
-}
-Test { [[
-vector[1] int? v;
-escape 1;
-]],
-    wrn = true,
-    tmp = 'line 1 : `data´ fields do not support vectors yet',
-    --env = 'line 1 : invalid type modifier : `[]?´',
 }
 
 Test { [[
@@ -27733,23 +27544,6 @@ escape ret;
         acc = 1,
         abrt = 3,
     },
-}
-
-Test { [[
-vector&[] int v;
-escape 1;
-]],
-    inits = 'line 1 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:2)',
-    wrn = true,
-    --run = 1,
-}
-Test { [[
-vector[] int vv;
-vector&[] int v = &vv;;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
 }
 
 Test { [[
@@ -27811,28 +27605,6 @@ escape b;
 ]],
     run = 2,
 }
-Test { [[
-vector[] byte c = [1];
-vector&[] byte b = &c;
-escape b[0];
-]],
-    run = 1,
-}
-Test { [[
-var byte  c = 2;
-var& byte b = &c;
-escape b;
-]],
-    cc = 'error: pointer targets in assignment differ',
-}
-Test { [[
-var byte   c = 2;
-var byte&& b = &&c;
-escape *b;
-]],
-    cc = 'error: pointer targets in assignment differ',
-}
-
 Test { [[
 var int i = do/_
     vector[5] byte abcd;
@@ -28294,298 +28066,223 @@ escape 1;
     run = 1,
 }
 
+-->> VECTOR / ALIAS
+
 Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(&str);
+vector[10] u8 v1 = [1,2,3];
+vector&[10] u8 v2 = &v1;
+v1 = v2..[];    // v1=v2 must be the same
+escape 0;
 ]],
-    wrn = true,
-    --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
+    stmts = 'line 3 : invalid constructor : item #1 : expected destination as source',
+}
+
+Test { [[
+vector[10] u8 v1 = [1,2,3];
+vector&[10] u8 v2 = &v1;
+v1 = []..v2;    // v1=v2 same address
+escape 0;
+]],
+    run = '3] runtime error: source is the same as destination',
+}
+
+Test { [[
+vector[10] byte vec = [1,2,3];
+vector&[] byte  ref = &vec;
+escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
+]],
+    run = 19,
+}
+
+Test { [[
+var int n = 10;
+vector[n] byte vec = [1,2,3];
+vector&[] byte ref = &vec;
+escape ($ref + $$ref) as int;
+]],
+    run = 13,
+}
+Test { [[
+var int n = 10;
+vector[n] byte vec = [1,2,3];
+vector&[n] byte ref = &vec;
+]],
+    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+}
+
+Test { [[
+var int n = 10;
+vector[] byte vec = [1,2,3];
+vector&[n] byte ref = &vec;
+]],
+    consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
+}
+
+Test { [[
+vector[10] byte  vec = [1,2,3];
+vector&[11] byte ref = &vec;
+escape( ($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
+]],
     run = 1,
+    stmts = 'line 2 : invalid binding : dimension mismatch',
+    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
+
 Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1] as int;
-end
-
-escape call Fx(&str);
+vector[10] byte vec = [1,2,3];
+vector&[9] byte ref = &vec;
+escape (($$ref) as int) + (($ref) as int) + ref[0] + ref[1] + ref[2];
 ]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] int vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    run = 1,
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] int vec)=>bool do
-    escape vec[1];
-end
-
-escape call Fx(&str);
-]],
-    wrn = true,
-    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (vector&[] byte vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(str);
-]],
-    wrn = true,
-    --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    stmts = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
-}
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[] do
-    escape &this.str;
-end
-
-vector&[] byte ref = &call Fx();
-
-escape ref[1];
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
-}
-
--- vectors as argument (NO)
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
-    escape vec[1];
-end
-
-escape call Fx(str);
-]],
-    parser = 'line 3 : after `vector´ : expected `&´',
-    --env = 'line 3 : wrong argument #2 : vectors are not supported',
-    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
+    stmts = 'line 2 : invalid binding : dimension mismatch',
+    --env = 'line 2 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
 }
 
 Test { [[
-code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
-    buf = [] .. buf .. [3];
-end
-vector[10] u8 buffer;
-call FillBuffer(&buffer);
-escape buffer[0] as int;
-]],
-    run = 3,
-}
-
-Test { [[
-code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
-    buf = [] .. buf .. [3];
-end
-vector[10] u8 buffer;
-call FillBuffer(&buffer);
-escape buffer[0] as int;
-]],
-    tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
-}
-
-Test { [[
-code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
-    buf = [] .. buf .. [2,3,4];
-end
-vector[3] u8 buffer = [1];
-call FillBuffer(&buffer);
-escape buffer[0] as int;
-]],
-    run = '2] runtime error: access out of bounds',
-}
-
--- TODO: dropped support for pointers to vectors
-Test { [[
-code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
-    *buf = [] .. *buf .. [3];
-end
-vector[10] u8 buffer;
-call FillBuffer(&&buffer);
-escape buffer[0] as int;
-]],
-    run = 3,
-    todo = 'no pointers to vectors',
-}
-
-Test { [[
-code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
-    *buf = [] .. *buf .. [2,3,4];
-end
-vector[3] u8 buffer = [1];
-call FillBuffer(&&buffer);
-escape buffer[0] as int;
-]],
-    run = '2] runtime error: access out of bounds',
-    todo = 'no pointers to vectors',
-}
-
-Test { [[
-code/instantaneous Build (vector[] u8 bytes)=>void do
-end
-escape 1;
-]],
-    wrn = true,
-    parser = 'line 1 : after `vector´ : expected `&´',
-    --env = 'line 1 : wrong argument #1 : vectors are not supported',
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-
-escape ref[1];
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 1,
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-ref = [3, 4, 5];
-
-escape str[1];
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 4,
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
-ref = [] .. "ola";
-
-escape str[1] == 'l';
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 1,
-}
-
-Test { [[
-vector[] byte str = [0,1,2];
-
+native/nohold _f;
 native/pos do
-    byte* g () {
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
+end
+vector[2] int a  = [1,2];
+vector&[2] int b = &a;
+native _int;
+_f((&&b[0]) as _int&&);
+escape b[0] + b[1];
+]],
+    run = 5,
+}
+
+Test { [[
+vector[] byte bs = [ 1, 2, 3 ];
+var int idx = 1;
+var& int i = &idx;
+escape bs[i];
+]],
+    run = 2,
+}
+
+Test { [[
+native/pos do
+    byte* f (void) {
         escape "ola";
     }
 end
-
-code/instantaneous Fx (void) => byte[]& do
-    escape &this.str;
-end
-
-vector&[] byte ref = &f();
+vector[] byte  str;
+vector&[] byte ref = &str;
 native _char;
-ref = [] .. ({g}() as _char&&) .. "ola";
-
-escape str[3] == 'o';
-]],
-    --run = 1,
-    parser = 'line 9 : after `byte´ : expected type modifier or `;´ or `do´',
-}
-
-Test { [[
-vector[] byte str;
-
-code/instantaneous Fa (void)=>byte[]& do
-    escape &this.str;
-end
-
-code/instantaneous Fb (void)=>void do
-    vector&[] byte ref = &f1();
-    ref = [] .. "ola" .. "mundo";
-end
-
-f2();
-
-escape str[4] == 'u';
-]],
-    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
-    --run = 1,
-}
-
-Test { [[
+ref = [] .. ({f}() as _char&&) .. "oi";
 native/pure _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(str);
-end
-
-vector[] byte str = [].."Ola Mundo!";
-escape call Strlen(&&str[0]);
+escape _strlen((&&str[0]) as _char&&);
 ]],
-    --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
-    run = 10,
+    run = 5,
 }
 
 Test { [[
-native _char, _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(str[0]);
+native/nohold _f;
+native/pos do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
 end
-
-vector[] byte str = [].."Ola Mundo!";
-escape call Strlen((&&str[0]) as _char&&);
+vector[2] int a  = [1,2];
+vector&[2] int b = &a;
+_f((&&b[0]) as byte&&);
+escape b[0] + b[1];
 ]],
-    names = 'line 3 : invalid vector : unexpected context for variable "str"',
-    --run = 10,
+    --env = 'line 10 : invalid type cast',
+    run = 5,
 }
 
 Test { [[
-native _char, _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(*str);
+native/nohold _f;
+native/pos do
+    void f (int* v) {
+        v[0]++;
+        v[1]++;
+    }
 end
-
-vector[] byte str = [].."Ola Mundo!";
-escape call Strlen((&&str[0]) as _char&&);
+vector[2] int a  = [1,2];
+vector&[2] int b = &a;
+_f((&&b[0]) as int&&);
+escape b[0] + b[1];
 ]],
-    run = 10,
+    --env = 'line 10 : invalid type cast',
+    run = 5,
 }
+
+Test { [[
+native/const _X;
+native/pos do
+    ##define X 1;
+end
+vector&[-_X] int iis;
+escape 1;
+]],
+    wrn = true,
+    inits = 'line 5 : uninitialized vector "iis" : reached `escape´ (/tmp/tmp.ceu:6)',
+    --run = 1,
+}
+
+Test { [[
+native/const _X;
+native/pos do
+    ##define X 1;
+end
+vector[-_X] int vvs;
+vector&[-_X] int iis = &vvs;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+vector&[] int v;
+escape 1;
+]],
+    inits = 'line 1 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:2)',
+    wrn = true,
+    --run = 1,
+}
+Test { [[
+vector[] int vv;
+vector&[] int v = &vv;;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+vector[] byte c = [1];
+vector&[] byte b = &c;
+escape b[0];
+]],
+    run = 1,
+}
+Test { [[
+var byte  c = 2;
+var& byte b = &c;
+escape b;
+]],
+    cc = 'error: pointer targets in assignment differ',
+}
+Test { [[
+var byte   c = 2;
+var byte&& b = &&c;
+escape *b;
+]],
+    cc = 'error: pointer targets in assignment differ',
+}
+
+--<< VECTOR / ALIAS
 
 --<<< VECTORS / STRINGS
 
--->>> CODE/ INSTANTANEOUS / FUNCTIONS
+-->>> CODE / INSTANTANEOUS / FUNCTIONS
 
 Test { [[
 code/instantaneous Code (var int)=>void
@@ -29590,6 +29287,297 @@ escape call/recursive Fx(5);
 }
 
 --<<< RECURSIVE
+
+-->> VECTOR / CODE
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    --stmts = 'line 4 : invalid assignment : types mismatch : "int" <= "byte"',
+    run = 1,
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1] as int;
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] int vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] int vec)=>bool do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
+    wrn = true,
+    stmts = 'line 4 : invalid `escape´ : types mismatch : "bool" <= "int"',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int´ <= `byte´)',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[] byte vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(str);
+]],
+    wrn = true,
+    --ref = 'line 7 : invalid attribution : missing alias operator `&´',
+    stmts = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[] do
+    escape &this.str;
+end
+
+vector&[] byte ref = &call Fx();
+
+escape ref[1];
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --env = 'line 4 : invalid escape value : types mismatch (`byte[]´ <= `byte[]&´)',
+}
+
+-- vectors as argument (NO)
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(str);
+]],
+    parser = 'line 3 : after `vector´ : expected `&´',
+    --env = 'line 3 : wrong argument #2 : vectors are not supported',
+    --env = 'line 7 : wrong argument #1 : types mismatch (`int[]´ <= `byte[]´)',
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
+    buf = [] .. buf .. [3];
+end
+vector[10] u8 buffer;
+call FillBuffer(&buffer);
+escape buffer[0] as int;
+]],
+    run = 3,
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
+    buf = [] .. buf .. [3];
+end
+vector[10] u8 buffer;
+call FillBuffer(&buffer);
+escape buffer[0] as int;
+]],
+    tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
+    buf = [] .. buf .. [2,3,4];
+end
+vector[3] u8 buffer = [1];
+call FillBuffer(&buffer);
+escape buffer[0] as int;
+]],
+    run = '2] runtime error: access out of bounds',
+}
+
+-- TODO: dropped support for pointers to vectors
+Test { [[
+code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
+    *buf = [] .. *buf .. [3];
+end
+vector[10] u8 buffer;
+call FillBuffer(&&buffer);
+escape buffer[0] as int;
+]],
+    run = 3,
+    todo = 'no pointers to vectors',
+}
+
+Test { [[
+code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
+    *buf = [] .. *buf .. [2,3,4];
+end
+vector[3] u8 buffer = [1];
+call FillBuffer(&&buffer);
+escape buffer[0] as int;
+]],
+    run = '2] runtime error: access out of bounds',
+    todo = 'no pointers to vectors',
+}
+
+Test { [[
+code/instantaneous Build (vector[] u8 bytes)=>void do
+end
+escape 1;
+]],
+    wrn = true,
+    parser = 'line 1 : after `vector´ : expected `&´',
+    --env = 'line 1 : wrong argument #1 : vectors are not supported',
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+
+escape ref[1];
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 1,
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+ref = [3, 4, 5];
+
+escape str[1];
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 4,
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+ref = [] .. "ola";
+
+escape str[1] == 'l';
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 1,
+}
+
+Test { [[
+vector[] byte str = [0,1,2];
+
+native/pos do
+    byte* g () {
+        escape "ola";
+    }
+end
+
+code/instantaneous Fx (void) => byte[]& do
+    escape &this.str;
+end
+
+vector&[] byte ref = &f();
+native _char;
+ref = [] .. ({g}() as _char&&) .. "ola";
+
+escape str[3] == 'o';
+]],
+    --run = 1,
+    parser = 'line 9 : after `byte´ : expected type modifier or `;´ or `do´',
+}
+
+Test { [[
+vector[] byte str;
+
+code/instantaneous Fa (void)=>byte[]& do
+    escape &this.str;
+end
+
+code/instantaneous Fb (void)=>void do
+    vector&[] byte ref = &f1();
+    ref = [] .. "ola" .. "mundo";
+end
+
+f2();
+
+escape str[4] == 'u';
+]],
+    parser = 'line 3 : after `byte´ : expected type modifier or `;´ or `do´',
+    --run = 1,
+}
+
+Test { [[
+native/pure _strlen;
+code/instantaneous Strlen (var byte&& str)=>int do
+    escape _strlen(str);
+end
+
+vector[] byte str = [].."Ola Mundo!";
+escape call Strlen(&&str[0]);
+]],
+    --env = 'line 6 : wrong argument #1 : types mismatch (`byte&&´ <= `byte[]&&´)',
+    run = 10,
+}
+
+Test { [[
+native _char, _strlen;
+code/instantaneous Strlen (var byte&& str)=>int do
+    escape _strlen(str[0]);
+end
+
+vector[] byte str = [].."Ola Mundo!";
+escape call Strlen((&&str[0]) as _char&&);
+]],
+    names = 'line 3 : invalid vector : unexpected context for variable "str"',
+    --run = 10,
+}
+
+Test { [[
+native _char, _strlen;
+code/instantaneous Strlen (var byte&& str)=>int do
+    escape _strlen(*str);
+end
+
+vector[] byte str = [].."Ola Mundo!";
+escape call Strlen((&&str[0]) as _char&&);
+]],
+    run = 10,
+}
 
 --<<< CODE / INSTANTANEOUS / FUNCTIONS
 
@@ -60796,6 +60784,21 @@ escape 1;
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
 
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    dcls = 'line 1 : vector "v" declared but not used',
+    --env = 'line 1 : invalid type modifier : `[]?´',
+}
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    wrn = true,
+    tmp = 'line 1 : `data´ fields do not support vectors yet',
+    --env = 'line 1 : invalid type modifier : `[]?´',
+}
 -->>> FINALIZE / OPTION
 
 Test { [[
