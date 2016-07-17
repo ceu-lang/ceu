@@ -95,8 +95,8 @@ F = {
         -- wrapper
         local args, ps = {}, {}
         for _,Typepars_ids_item in ipairs(Typepars_ids) do
-            local a,is_alias,c,Type,id2 = unpack(Typepars_ids_item)
-            assert(a=='var' and c==false)
+            local kind,is_alias,c,Type,id2 = unpack(Typepars_ids_item)
+            assert(kind=='var' or kind=='vector')
             local ptr = (is_alias and '*' or '')
             args[#args+1] = TYPES.toc(Type)..ptr..' '..id2
             ps[#ps+1] = 'ps.'..id2..' = '..id2..';'

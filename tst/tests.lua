@@ -29265,6 +29265,17 @@ escape call/recursive Fx(5);
 Test { [[
 vector[] byte str = [0,1,2];
 
+code/instantaneous Fx (vector[] byte vec)=>int do
+    escape vec[1];
+end
+
+escape call Fx(&str);
+]],
+    parser = 'line 3 : after `vector´ : expected `&´',
+}
+Test { [[
+vector[] byte str = [0,1,2];
+
 code/instantaneous Fx (vector&[] byte vec)=>int do
     escape vec[1];
 end
@@ -29288,6 +29299,17 @@ escape call Fx(&str);
     run = 1,
 }
 Test { [[
+vector[1] byte str = [0,1,2];
+
+code/instantaneous Fx (vector&[2] byte vec)=>int do
+    escape vec[1] as int;
+end
+
+escape call Fx(&str);
+]],
+    todo = 'vector args with wrong len',
+}
+Test { [[
 vector[] byte str = [0,1,2];
 
 code/instantaneous Fx (vector&[] int vec)=>int do
@@ -29296,7 +29318,7 @@ end
 
 escape call Fx(&str);
 ]],
-    wrn = true,
+    todo = 'vector args with wrong type',
     run = 1,
 }
 Test { [[
@@ -29323,7 +29345,7 @@ escape call Fx(str);
 ]],
     wrn = true,
     --ref = 'line 7 : invalid attribution : missing alias operator `&´',
-    stmts = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
+    exps = 'line 7 : invalid call : argument #1 : unexpected context for vector "str"',
 }
 Test { [[
 vector[] byte str = [0,1,2];
@@ -29357,7 +29379,7 @@ escape call Fx(str);
 
 Test { [[
 code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
-    buf = [] .. buf .. [3];
+    buf = buf .. [3];
 end
 vector[10] u8 buffer;
 call FillBuffer(&buffer);
@@ -29368,7 +29390,7 @@ escape buffer[0] as int;
 
 Test { [[
 code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
-    buf = [] .. buf .. [3];
+    buf = buf .. [3];
 end
 vector[10] u8 buffer;
 call FillBuffer(&buffer);
@@ -29379,7 +29401,7 @@ escape buffer[0] as int;
 
 Test { [[
 code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
-    buf = [] .. buf .. [2,3,4];
+    buf = buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
 call FillBuffer(&buffer);
@@ -29391,7 +29413,7 @@ escape buffer[0] as int;
 -- TODO: dropped support for pointers to vectors
 Test { [[
 code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
-    *buf = [] .. *buf .. [3];
+    *buf = *buf .. [3];
 end
 vector[10] u8 buffer;
 call FillBuffer(&&buffer);
@@ -29403,7 +29425,7 @@ escape buffer[0] as int;
 
 Test { [[
 code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
-    *buf = [] .. *buf .. [2,3,4];
+    *buf = *buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
 call FillBuffer(&&buffer);
@@ -29516,7 +29538,7 @@ escape str[4] == 'u';
 Test { [[
 native/pure _strlen;
 code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(str);
+    escape _strlen(str as _char&&);
 end
 
 vector[] byte str = [].."Ola Mundo!";
@@ -29537,18 +29559,6 @@ escape call Strlen((&&str[0]) as _char&&);
 ]],
     names = 'line 3 : invalid vector : unexpected context for variable "str"',
     --run = 10,
-}
-
-Test { [[
-native _char, _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
-    escape _strlen(*str);
-end
-
-vector[] byte str = [].."Ola Mundo!";
-escape call Strlen((&&str[0]) as _char&&);
-]],
-    run = 10,
 }
 
 Test { [[

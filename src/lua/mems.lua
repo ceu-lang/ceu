@@ -80,10 +80,31 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
             me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..' _ret;\n'
         end
         for _,Typepars_ids_item in ipairs(Typepars_ids) do
-            local a,is_alias,c,Type,id2 = unpack(Typepars_ids_item)
-            assert(a=='var' and c==false)
+            local kind,is_alias,dim,Type,id2 = unpack(Typepars_ids_item)
             local ptr = (is_alias and '*' or '')
-            me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..ptr..' '..id2..';\n'
+            if kind == 'var' then
+                assert(dim == false)
+                me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..ptr..' '..id2..';\n'
+            elseif kind == 'vector' then
+                assert(is_alias)
+                if TYPES.is_nat(TYPES.get(Type,1)) then
+                    me.mems.args = me.mems.args .. [[
+]]..TYPES.toc(Type)..' ('..ptr..id2..')['..V(dim)..[[];
+]]
+                else
+                    if dim.is_const then
+                        me.mems.args = me.mems.args .. [[
+]]..TYPES.toc(Type)..' '..id2..'_buf['..V(dim)..[[];
+]]
+                    end
+                    me.mems.args = me.mems.args .. [[
+tceu_vector]]..ptr..' '..id2..[[;
+]]
+                end
+
+            else
+                error'bug found'
+            end
         end
         me.mems.args = me.mems.args..'} tceu_code_args_'..id..';\n'
 
@@ -130,72 +151,6 @@ typedef struct tceu_data_]]..me.id_..[[ {
         MEMS.datas.mems   = MEMS.datas.mems..me.mems.mem
         MEMS.datas.enum   = MEMS.datas.enum..'CEU_DATA_'..me.id_..',\n'
         MEMS.datas.supers = MEMS.datas.supers..me.mems.super..',\n'
-    end,
-
-    ---------------------------------------------------------------------------
-
-    Stmts__PRE = function (me)
-        if not AST.par(me,'Data') then
-            CUR().mem = CUR().mem..'union {\n'
-        end
-    end,
-    Stmts__POS = function (me)
-        if not AST.par(me,'Data') then
-            CUR().mem = CUR().mem..'};\n'
-        end
-    end,
-
-    Await_Wclock = function (me)
-        CUR().mem = CUR().mem..'s32 __wclk_'..me.n..';\n'
-    end,
-
-    Abs_Await = function (me)
-        local dcl = AST.asr(me,'', 1,'Abs_Cons', 1,'ID_abs').dcl
-        CUR().mem = CUR().mem..'tceu_code_mem_'..dcl.id..' __mem_'..me.n..';\n'
-    end,
-
-    ---------------------------------------------------------------------------
-
-    Par_Or__PRE  = 'Par__PRE',
-    Par_And__PRE = 'Par__PRE',
-    Par__PRE = function (me)
-        CUR().mem = CUR().mem..'struct {\n'
-    end,
-    Par_Or__POS  = 'Par__POS',
-    Par_And__POS = 'Par__POS',
-    Par__POS = function (me)
-        CUR().mem = CUR().mem..'};\n'
-    end,
-
-    Par_And = function (me)
-        for i=1, #me do
-            CUR().mem = CUR().mem..'u8 __and_'..me.n..'_'..i..': 1;\n'
-        end
-    end,
-
-    ---------------------------------------------------------------------------
-
-    Loop_Num__PRE = 'Loop__PRE',
-    Loop__PRE = function (me)
-        CUR().mem = CUR().mem..'struct {\n'
-    end,
-    Loop_Num__POS = 'Loop__POS',
-    Loop__POS = function (me)
-        CUR().mem = CUR().mem..'};\n'
-    end,
-
-    Loop = function (me)
-        local max = unpack(me)
-        if max then
-            CUR().mem = CUR().mem..'int __max_'..me.n..';\n'
-        end
-    end,
-    Loop_Num = function (me)
-        local max, i, fr, dir, to, step, body = unpack(me)
-        F.Loop(me)  -- max
-        if to.tag ~= 'ID_any' then
-            CUR().mem = CUR().mem..'int __lim_'..me.n..';\n'
-        end
     end,
 
     ---------------------------------------------------------------------------
@@ -276,6 +231,72 @@ tceu_vector]]..ptr..' '..dcl.id_..[[;
     Block__POS = function (me)
         if not AST.par(me,'Data') then
             CUR().mem = CUR().mem..'};\n'
+        end
+    end,
+
+    ---------------------------------------------------------------------------
+
+    Stmts__PRE = function (me)
+        if not AST.par(me,'Data') then
+            CUR().mem = CUR().mem..'union {\n'
+        end
+    end,
+    Stmts__POS = function (me)
+        if not AST.par(me,'Data') then
+            CUR().mem = CUR().mem..'};\n'
+        end
+    end,
+
+    Await_Wclock = function (me)
+        CUR().mem = CUR().mem..'s32 __wclk_'..me.n..';\n'
+    end,
+
+    Abs_Await = function (me)
+        local dcl = AST.asr(me,'', 1,'Abs_Cons', 1,'ID_abs').dcl
+        CUR().mem = CUR().mem..'tceu_code_mem_'..dcl.id..' __mem_'..me.n..';\n'
+    end,
+
+    ---------------------------------------------------------------------------
+
+    Par_Or__PRE  = 'Par__PRE',
+    Par_And__PRE = 'Par__PRE',
+    Par__PRE = function (me)
+        CUR().mem = CUR().mem..'struct {\n'
+    end,
+    Par_Or__POS  = 'Par__POS',
+    Par_And__POS = 'Par__POS',
+    Par__POS = function (me)
+        CUR().mem = CUR().mem..'};\n'
+    end,
+
+    Par_And = function (me)
+        for i=1, #me do
+            CUR().mem = CUR().mem..'u8 __and_'..me.n..'_'..i..': 1;\n'
+        end
+    end,
+
+    ---------------------------------------------------------------------------
+
+    Loop_Num__PRE = 'Loop__PRE',
+    Loop__PRE = function (me)
+        CUR().mem = CUR().mem..'struct {\n'
+    end,
+    Loop_Num__POS = 'Loop__POS',
+    Loop__POS = function (me)
+        CUR().mem = CUR().mem..'};\n'
+    end,
+
+    Loop = function (me)
+        local max = unpack(me)
+        if max then
+            CUR().mem = CUR().mem..'int __max_'..me.n..';\n'
+        end
+    end,
+    Loop_Num = function (me)
+        local max, i, fr, dir, to, step, body = unpack(me)
+        F.Loop(me)  -- max
+        if to.tag ~= 'ID_any' then
+            CUR().mem = CUR().mem..'int __lim_'..me.n..';\n'
         end
     end,
 }
