@@ -3,7 +3,7 @@
 RUNTESTS = {
     --luacov = 'lua5.3 -lluacov'
 -- Execution option for the tests:
-    --valgrind = true
+    valgrind = true
 --REENTRANT = true
 --COMPLETE = true
 --[[
@@ -205,7 +205,7 @@ if T.ana or T.tmp or T.props then return end
     local exe = CEU.opts.cc_output..' 2>&1'
 
     if RUNTESTS.valgrind then
-        exe = 'valgrind -q --leak-check=full '..exe
+        exe = 'valgrind -q --leak-check=full --show-leak-kinds=all '..exe
     end
 
     local f = io.popen(exe)

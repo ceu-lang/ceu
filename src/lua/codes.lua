@@ -152,6 +152,33 @@ error'oi'
                 end
             end
         end
+        if me.has_dyn_vecs then
+            LINE(me, [[
+_ceu_mem->trails[]]..me.trails[1]..[[].evt = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl_dyn_vecs.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].stk = NULL;
+if (0) {
+]])
+            CASE(me, me.lbl_dyn_vecs)
+            for _, dcl in ipairs(me.dcls) do
+                local tp = unpack(dcl)
+                if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1),me)) then
+                    local tp, is_alias, dim = unpack(dcl)
+                    if not (is_alias or dim.is_const) then
+                        LINE(me, [[
+    ceu_vector_setmax(&]]..CUR(dcl.id_)..[[, 0, 0);
+]])
+                    end
+                end
+            end
+            LINE(me, [[
+]])
+            HALT(me)
+            LINE(me, [[
+}
+_ceu_trl++;
+]])
+        end
     end,
 
     ---------------------------------------------------------------------------

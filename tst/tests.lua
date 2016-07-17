@@ -10,7 +10,6 @@ end
 
 --[=====[
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -26964,6 +26963,7 @@ escape vec[0] as int;
     run = '2] runtime error: access out of bounds',
 }
 
+--]=====]
 Test { [[
 vector[] u8 vec = [1,2,3];
 escape ((($$vec) as int) + (($vec) as int) + vec[0] + vec[1] + vec[2]) as int;

@@ -23,8 +23,20 @@ F = {
 
     Block = function (me)
         MAX_all(me)
+        if me.has_dyn_vecs then
+            me.trails_n = me.trails_n + 1
+        end
         if me.fins_n > 0 then
             me.trails_n = me.trails_n + me.fins_n
+        end
+    end,
+
+    Vec = function (me)
+        local tp, is_alias, dim = unpack(me)
+        if (not TYPES.is_nat(TYPES.get(tp,1))) then
+            if not (is_alias or dim.is_const) then
+                AST.par(me,'Block').has_dyn_vecs = true
+            end
         end
     end,
 

@@ -27,6 +27,12 @@ F = {
         me.lbl_out = new{'Do__OUT'}
     end,
 
+    Block = function (me)
+        if me.has_dyn_vecs then
+            me.lbl_dyn_vecs = new{'Block__VECS'}
+        end
+    end,
+
     Finalize = function (me)
         me.lbl_in = new{'Finalize__IN'}
     end,
