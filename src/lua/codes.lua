@@ -212,12 +212,6 @@ if (0)
     memset(&_ceu_mem->trails, 0, ]]..me.trails_n..[[*sizeof(tceu_trl));
     int __ceu_ret_]]..me.n..[[;
 ]])
-        -- CODE/INSTANTANEOUS
-        else
-            LINE(me, [[
-    tceu_code_mem_]]..id..[[ _ceu_data;
-    tceu_code_mem* _ceu_mem = (tceu_code_mem*) &_ceu_data;
-]])
         end
 
         local vars = AST.get(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
