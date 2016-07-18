@@ -221,10 +221,12 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         local _, e, member = unpack(me)
         member = string.gsub(member, '^_', '')  -- _nat._data (data is a keyword)
 
-        local _,is_alias = unpack(me.info.dcl)
         local ptr = ''
-        if is_alias then
-            ptr = '*'
+        if not TYPES.is_nat(e.info.tp) then
+            local _,is_alias = unpack(me.info.dcl)
+            if is_alias then
+                ptr = '*'
+            end
         end
 
         return '('..ptr..'('..V(e)..'.'..member..'))'

@@ -10,6 +10,7 @@ end
 
 --[=====[
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -18781,6 +18782,20 @@ var void&& p1 = &&p;
 escape *((p1 as int&&));
 ]],
     run = 10,
+}
+
+Test { [[
+native/pre do
+    typedef struct {
+        int x;
+    } t;
+end
+native/plain _t;
+var _t t = { (t){11} };
+var& _t t_ = &t;
+escape t_.x;
+]],
+    run = 11,
 }
 
 --<<< ALIASES / REFERENCES / REFS / &
@@ -60283,7 +60298,6 @@ escape 1;
     inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
 }
 
---]=====]
 Test { [[
 native/pre do
     typedef struct {
@@ -60296,7 +60310,7 @@ end
 native/pure _id;
 
 native/plain _t;
-var _t t = _t(11);
+var _t t = { (t){11} };
 
 var& _t? t_ = &t;
 
