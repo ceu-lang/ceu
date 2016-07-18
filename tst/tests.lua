@@ -60342,52 +60342,61 @@ escape 1;
 }
 
 Test { [[
-native/pos do
-    ##define UNSAFE_POINTER_TO_REFERENCE(ptr) ptr
+var& int? v1;
+native _fff;
+do
+    v1 = &_fff(1);
+finalize(v1) with
+    nothing;
 end
-native/nohold _UNSAFE_POINTER_TO_REFERENCE;
+]],
+    stmts = 'line 4 : invalid binding : types mismatch : "int?" <= "_"',
+}
 
-native/pos do
+Test { [[
+native/nohold _UNSAFE_POINTER_TO_REFERENCE;
+native _int_ptr, _fff;
+native/pre do
+    ##define UNSAFE_POINTER_TO_REFERENCE(ptr) ptr
+    typedef int* int_ptr;
     int v2 = 10;
     int* V1 = NULL;
     int* V2 = &v2;
     int* fff (int i) {
         if (i == 1) {
-            escape NULL;
+            return NULL;
         } else {
-            escape V2;
+            return V2;
         }
     }
 end
 
-var& int? v1;
-native _fff;
+var& _int_ptr? v1;
         do v1 = &_fff(1);
     finalize(v1) with
         nothing;
     end
 
-var& int? v2;
+var& _int_ptr? v2;
         do v2 = &_fff(2);
     finalize(v2) with
         nothing;
     end
 
-var& int? v3;
+var& _int_ptr? v3;
 native _V1, _V2;
         do v3 = &_UNSAFE_POINTER_TO_REFERENCE(_V1);
     finalize(v3) with
         nothing;
     end
 
-var& int? v4;
+var& _int_ptr? v4;
         do v4 = &_UNSAFE_POINTER_TO_REFERENCE(_V2);
     finalize(v4) with
         nothing;
     end
 
-escape ((not v1?)as int) + ((not v3?) as int) + (v2? as int) + (v4? as int) + ((&&v2! ==_V2)as int) + ((&&v4! ==_V2) as int) + v2!  
-+ v4!;
+escape ((not v1?)as int) + ((not v3?) as int) + (v2? as int) + (v4? as int) + ((v2! ==_V2)as int) + ((v4! ==_V2) as int) + *(v2!) + *(v4!);
 ]],
     run = 26,
 }

@@ -173,7 +173,7 @@ typedef struct tceu_data_]]..me.id_..[[ {
                         dcl.id_ = dcl.id_..'_'..dcl.n
                     end
                     local tp, is_alias = unpack(dcl)
-                    local ptr = (is_alias and '*' or '')
+                    local ptr = (is_alias and (not TYPES.is_opt_ext(tp)) and '*' or '')
                     mem[#mem+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
                 end
 
