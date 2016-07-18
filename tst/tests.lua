@@ -60162,7 +60162,6 @@ escape (not i?) as int;
     --run = 1,
 }
 
---]=====]
 Test { [[
 var int v = 10;
 var& int? i = &v;
@@ -60250,12 +60249,15 @@ escape v1! + v2 + ret;
     run = 21,
 }
 
+-->> OPTION / NATIVE
+
 Test { [[
 native _SDL_Texture;
 native/nohold _g;
 var& _SDL_Texture? t_enemy_1;
 native _f;
-    do t_enemy_1 = &_f();
+do
+    t_enemy_1 = &_f();
 finalize(t_enemy_1) with
     _g(&&t_enemy_1!);
 end
@@ -60281,13 +60283,14 @@ escape 1;
     inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
 }
 
+--]=====]
 Test { [[
 native/pre do
     typedef struct {
         int x;
     } t;
     int id (int v) {
-        escape v;
+        return v;
     }
 end
 native/pure _id;

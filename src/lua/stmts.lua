@@ -111,13 +111,21 @@ DBG('TODO: _Lua')
         -- tp
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)
 
-        -- NO:
-        -- var  int  x;
-        -- var& int? i = &x;
+        -- option type
         if TYPES.check(to.info.tp,'?') then
-            ASR(TYPES.check(fr.info.tp,'?'), me,
-                'invalid binding : types mismatch : "'..TYPES.tostring(to.info.tp)..
-                                              '" <= "'..TYPES.tostring(fr.info.tp)..'"')
+            if TYPES.is_nat((TYPES.pop(to.info.tp,'?'))) and
+               TYPES.is_nat(fr.info.tp)
+            then
+                -- OK:
+                --  var& _TP? = _f();
+            else
+                -- NO:
+                -- var  int  x;
+                -- var& int? i = &x;
+                ASR(TYPES.check(fr.info.tp,'?'), me,
+                    'invalid binding : types mismatch : "'..TYPES.tostring(to.info.tp)..
+                                                  '" <= "'..TYPES.tostring(fr.info.tp)..'"')
+            end
         end
 
         -- dim
