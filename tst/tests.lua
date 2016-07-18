@@ -60105,7 +60105,6 @@ escape ret;
     run = 18,
 }
 
---]=====]
 Test { [[
 var int? i;
 if i? then end;
@@ -60163,8 +60162,18 @@ escape (not i?) as int;
     --run = 1,
 }
 
+--]=====]
 Test { [[
 var int v = 10;
+var& int? i = &v;
+escape i!;
+]],
+    stmts = 'line 2 : invalid binding : types mismatch : "int?" <= "int"',
+    --run = 10,
+}
+
+Test { [[
+var int? v = 10;
 var& int? i = &v;
 escape i!;
 ]],
@@ -60172,31 +60181,31 @@ escape i!;
 }
 
 Test { [[
-var int v1 = 0;
+var int? v1 = 0;
 var int v2 = 1;
 var& int? i = &v1;
 i! = v2;
-escape v1;
+escape v1!;
 ]],
     run = 1,
     --code = 'line 4 : invalid operand in assignment',
 }
 
 Test { [[
-var int v1 = 0;
+var int? v1 = 0;
 var int v2 = 1;
 var& int? i = &v1;
 i = v2;
-escape v1;
+escape v1!;
 ]],
     tmp = 'line 4 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
 }
 Test { [[
-var int v1 = 0;
-var int v2 = 1;
+var int? v1 = 0;
+var int? v2 = 1;
 var& int? i = &v1;
 i = &v2;
-escape v1;
+escape v1!;
 ]],
     inits = 'line 4 : invalid binding : variable "i" is already bound (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "i" is already bound',
@@ -60204,11 +60213,11 @@ escape v1;
 }
 
 Test { [[
-var int v1 = 0;
+var int? v1 = 0;
 var int v2 = 1;
 var& int? i = &v1;
 i! = v2;
-escape v1;
+escape v1!;
 ]],
     run = 1,
 }
@@ -60222,110 +60231,23 @@ escape v + i;
 }
 
 Test { [[
-var int v = 10;
+var int? v = 10;
 var& int? i = &v;
-escape v + i!;
+escape v! + i!;
 ]],
     run = 20,
 }
 
 Test { [[
-var int v1 = 10;
+var int? v1 = 10;
 var int v2 =  1;
 var& int? i = &v1;
 i! = v2;
 i! = 10;
 var int ret = i!;
-escape v1 + v2 + ret;
+escape v1! + v2 + ret;
 ]],
     run = 21,
-}
-
-Test { [[
-class Tx with
-    var& int? i;
-do
-    var int v = 10;
-    this.i! = v;
-end
-var Tx t;
-escape t.i!;
-]],
-    asr = ':5] runtime error: invalid tag',
-    --run = 10,
-}
-Test { [[
-class Tx with
-    var& int? i;
-do
-    var int v = 10;
-    this.i! = v;
-end
-var int i = 0;
-var Tx t with
-    this.i = &i;
-end;
-escape t.i!;
-]],
-    --code = 'line 5 : invalid operand in assignment',
-    --asr = ':5] runtime error: invalid tag',
-    run = 10,
-}
-Test { [[
-var int v = 10;
-class Tx with
-    var& int? i;
-do
-    var int v = 10;
-    if v!=0 then end;
-end
-var Tx t with
-    this.i = &v;
-end;
-v = v / 2;
-escape t.i? + t.i! + 1;
-]],
-    run = 7,
-}
-Test { [[
-class Tx with
-    var& int? i;
-do
-    var int v = 10;
-    if v!=0 then end;
-end
-var Tx t;
-escape t.i? + 1;
-]],
-    run = 1,
-}
-Test { [[
-class Tx with
-    var& int? i;
-do
-    var int v = 10;
-    if v!=0 then end;
-end
-var Tx t;
-escape t.i!;
-]],
-    asr = true,
-}
-Test { [[
-class Tx with
-    var& int? i;
-do
-    var int v = 10;
-    if v!=0 then end;
-end
-var int v = 1;
-var Tx t with
-    this.i = &v;
-end;
-v = 11;
-escape t.i!;
-]],
-    run = 11,
 }
 
 Test { [[
@@ -60381,18 +60303,6 @@ t_!.x = 100;
 escape ret + _id(t_!.x) + t.x;
 ]],
     run = 211,
-}
-
-Test { [[
-class Tx with
-    var& int? v;
-do
-    if v? then end;
-end
-var Tx t;
-escape 1;
-]],
-    run = 1,
 }
 
 Test { [[
@@ -60538,42 +60448,6 @@ escape bg_clr!.v;
 }
 
 Test { [[
-data SDL_Color with
-    var int v;
-end
-class UI with
-    var SDL_Color? bg_clr;
-do
-end
-var UI ui with
-    this.bg_clr = val SDL_Color(10);
-end;
-escape ui.bg_clr!.v;
-]],
-    run = 10,
-}
-
-Test { [[
-native/pos do
-    ##define fff(id) id
-end
-data SDL_Color with
-    var int v;
-end
-class UI with
-    var SDL_Color? bg_clr;
-do
-end
-var UI ui with
-    this.bg_clr = val SDL_Color(10);
-end;
-native _fff;
-escape _fff(ui.bg_clr!).v;
-]],
-    run = 10,
-}
-
-Test { [[
 var int ret=0;
 var& int? p = &ret;
 p! = p!;
@@ -60638,62 +60512,6 @@ v1 = v2;
 escape ret+(v1? as int)+1;
 ]],
     run = 12;
-}
-
-Test { [[
-native/pos do
-    int V = 10;
-    int* getV (void) {
-        escape &V;
-    }
-end
-
-var& int? v;
-    do v = &_getV();
-finalize with
-    nothing;
-end
-
-class Tx with
-    var& int? v;
-do
-    v! = 20;
-end
-do Tx with
-    this.v = &v;
-end;
-
-escape v!;
-]],
-    tmp = 'line 21 : invalid operand to unary "&" : cannot be aliased',
-}
-
-Test { [[
-native/pos do
-    int V = 10;
-    int* getV (void) {
-        escape &V;
-    }
-end
-
-var& int? v;
-    do v = &_getV();
-finalize with
-    nothing;
-end
-
-class Tx with
-    var& int? v;
-do
-    v! = 20;
-end
-do Tx with
-    this.v = &v!;
-end;
-
-escape v!;
-]],
-    run = 20,
 }
 
 Test { [[
@@ -60842,6 +60660,199 @@ escape 1;
     tmp = 'line 1 : `data´ fields do not support vectors yet',
     --env = 'line 1 : invalid type modifier : `[]?´',
 }
+
+Test { [[
+class Tx with
+    var& int? i;
+do
+    var int v = 10;
+    this.i! = v;
+end
+var Tx t;
+escape t.i!;
+]],
+    asr = ':5] runtime error: invalid tag',
+    --run = 10,
+}
+Test { [[
+class Tx with
+    var& int? i;
+do
+    var int v = 10;
+    this.i! = v;
+end
+var int i = 0;
+var Tx t with
+    this.i = &i;
+end;
+escape t.i!;
+]],
+    --code = 'line 5 : invalid operand in assignment',
+    --asr = ':5] runtime error: invalid tag',
+    run = 10,
+}
+Test { [[
+var int v = 10;
+class Tx with
+    var& int? i;
+do
+    var int v = 10;
+    if v!=0 then end;
+end
+var Tx t with
+    this.i = &v;
+end;
+v = v / 2;
+escape t.i? + t.i! + 1;
+]],
+    run = 7,
+}
+Test { [[
+class Tx with
+    var& int? i;
+do
+    var int v = 10;
+    if v!=0 then end;
+end
+var Tx t;
+escape t.i? + 1;
+]],
+    run = 1,
+}
+Test { [[
+class Tx with
+    var& int? i;
+do
+    var int v = 10;
+    if v!=0 then end;
+end
+var Tx t;
+escape t.i!;
+]],
+    asr = true,
+}
+Test { [[
+class Tx with
+    var& int? i;
+do
+    var int v = 10;
+    if v!=0 then end;
+end
+var int v = 1;
+var Tx t with
+    this.i = &v;
+end;
+v = 11;
+escape t.i!;
+]],
+    run = 11,
+}
+
+Test { [[
+class Tx with
+    var& int? v;
+do
+    if v? then end;
+end
+var Tx t;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data SDL_Color with
+    var int v;
+end
+class UI with
+    var SDL_Color? bg_clr;
+do
+end
+var UI ui with
+    this.bg_clr = val SDL_Color(10);
+end;
+escape ui.bg_clr!.v;
+]],
+    run = 10,
+}
+
+Test { [[
+native/pos do
+    ##define fff(id) id
+end
+data SDL_Color with
+    var int v;
+end
+class UI with
+    var SDL_Color? bg_clr;
+do
+end
+var UI ui with
+    this.bg_clr = val SDL_Color(10);
+end;
+native _fff;
+escape _fff(ui.bg_clr!).v;
+]],
+    run = 10,
+}
+
+Test { [[
+native/pos do
+    int V = 10;
+    int* getV (void) {
+        escape &V;
+    }
+end
+
+var& int? v;
+    do v = &_getV();
+finalize with
+    nothing;
+end
+
+class Tx with
+    var& int? v;
+do
+    v! = 20;
+end
+do Tx with
+    this.v = &v;
+end;
+
+escape v!;
+]],
+    tmp = 'line 21 : invalid operand to unary "&" : cannot be aliased',
+}
+
+Test { [[
+native/pos do
+    int V = 10;
+    int* getV (void) {
+        escape &V;
+    }
+end
+
+var& int? v;
+    do v = &_getV();
+finalize with
+    nothing;
+end
+
+class Tx with
+    var& int? v;
+do
+    v! = 20;
+end
+do Tx with
+    this.v = &v!;
+end;
+
+escape v!;
+]],
+    run = 20,
+}
+
+
 -->>> FINALIZE / OPTION
 
 Test { [[

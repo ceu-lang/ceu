@@ -230,6 +230,18 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         return '('..ptr..'('..V(e)..'.'..member..'))'
     end,
 
+-- OPTION: ?, !
+
+    ['Exp_?'] = function (me)
+        local _, e = unpack(me)
+        return '('..V(e)..'.is_set)'
+    end,
+
+    ['Exp_!'] = function (me)
+        local _, e = unpack(me)
+        return '('..V(e)..'.value)'
+    end,
+
 -- VECTOR LENGTH: $, $$
 
     ['Exp_$$'] = function (me)

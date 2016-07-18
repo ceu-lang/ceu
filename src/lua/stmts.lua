@@ -111,6 +111,15 @@ DBG('TODO: _Lua')
         -- tp
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)
 
+        -- NO:
+        -- var  int  x;
+        -- var& int? i = &x;
+        if TYPES.check(to.info.tp,'?') then
+            ASR(TYPES.check(fr.info.tp,'?'), me,
+                'invalid binding : types mismatch : "'..TYPES.tostring(to.info.tp)..
+                                              '" <= "'..TYPES.tostring(fr.info.tp)..'"')
+        end
+
         -- dim
         if to.info.tag == 'Vec' then
             local _,_,to_dim = unpack(to.info.dcl)

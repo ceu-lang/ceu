@@ -26,6 +26,7 @@ MEMS = {
         enum   = '',
         supers = '',
     },
+    opts = {},
 }
 
 local function CUR ()
@@ -174,6 +175,16 @@ typedef struct tceu_data_]]..me.id_..[[ {
                     local tp, is_alias = unpack(dcl)
                     local ptr = (is_alias and '*' or '')
                     mem[#mem+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
+                end
+
+                -- new `?´ type
+                local tp = unpack(dcl)
+                if TYPES.check(tp,'?') then
+                    local str = TYPES.tostring(tp)
+                    if not MEMS.opts[str] then
+                        MEMS.opts[str] = true
+                        MEMS.opts[#MEMS.opts+1] = tp
+                    end
                 end
 
             -- EVT
@@ -350,3 +361,16 @@ for i, code in ipairs(MEMS.codes) do
         end
     end
 end
+
+local opts = ''
+for _, tp in ipairs(MEMS.opts) do
+    local c  = TYPES.toc(TYPES.pop(tp,'?'))
+    local cc = TYPES.toc(tp)
+    opts = opts..[[
+typedef struct ]]..cc..[[ {
+    bool      is_set;
+    ]]..c..[[ value;
+} ]]..cc..[[;
+]]
+end
+MEMS.opts = opts

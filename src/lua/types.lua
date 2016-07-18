@@ -38,7 +38,9 @@ function TYPES.toc (tp)
     local ID = unpack(tp)
 
     local pre = ''
-    if ID.tag == 'ID_abs' then
+    if TYPES.check(tp,'?') then
+        pre = 'tceu_opt_'
+    elseif ID.tag == 'ID_abs' then
         pre = 'tceu_data_'
     end
 
@@ -50,7 +52,13 @@ function TYPES.toc (tp)
     for i=2, #tp do
         local mod = tp[i]
         if mod == '&&' then
-            mod = '*'
+            if TYPES.check(tp,'?') then
+                mod = '_ptr_'
+            else
+                mod = '*'
+            end
+        elseif mod == '?' then
+            mod = ''
         end
         mods[i-1] = mod
     end

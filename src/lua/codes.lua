@@ -131,6 +131,18 @@ if (]]..V(c)..[[) {
 
     Block__PRE = function (me)
 
+        -- initialize opts
+        for _, dcl in ipairs(me.dcls) do
+            if dcl.tag == 'Var' then
+                local tp, is_alias = unpack(dcl)
+                if TYPES.check(tp,'?') and (not is_alias) then
+                    LINE(me, [[
+]]..CUR(dcl.id_)..[[.is_set = 0;
+]])
+                end
+            end
+        end
+
         -- initialize vectors
         for _, dcl in ipairs(me.dcls) do
             local tp = unpack(dcl)
@@ -605,12 +617,20 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
             -- var Ee.Xx ex = ...;
             -- var&& Ee = &&ex;
             local cast = ''
-            if not TYPES.is_nat(TYPES.get(to.info.tp,1)) then
+            if to.info.tp[1].tag == 'ID_abs' then
                 cast = '('..TYPES.toc(to.info.tp)..')'
             end
-            LINE(me, [[
+
+            if TYPES.check(to.info.tp,'?') then
+                LINE(me, [[
+]]..V(to)..[[.is_set = 1;
+]]..V(to)..'.value  = '..cast..V(fr)..[[;
+]])
+            else
+                LINE(me, [[
 ]]..V(to)..' = '..cast..V(fr)..[[;
 ]])
+            end
         end
     end,
 
@@ -958,18 +978,19 @@ end
 -- CEU.C
 local c = PAK.files.ceu_c
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
+local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
+local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
+local c = SUB(c, '=== OPTS ===',             MEMS.opts)
 local c = SUB(c, '=== DATAS_ENUM ===',       MEMS.datas.enum)
 local c = SUB(c, '=== DATAS_MEMS ===',       MEMS.datas.mems)
 local c = SUB(c, '=== DATAS_SUPERS ===',     MEMS.datas.supers)
+local c = SUB(c, '=== EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
+local c = SUB(c, '=== TCEU_NTRL ===',        TYPES.n2uint(AST.root.trails_n))
+local c = SUB(c, '=== TCEU_NLBL ===',        TYPES.n2uint(#LABELS.list))
 local c = SUB(c, '=== CODES_MEMS ===',       MEMS.codes.mems)
 local c = SUB(c, '=== CODES_ARGS ===',       MEMS.codes.args)
 local c = SUB(c, '=== EXTS_TYPES ===',       MEMS.exts.types)
 local c = SUB(c, '=== EVTS_TYPES ===',       MEMS.evts.types)
-local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
-local c = SUB(c, '=== EXTS_ENUM_OUTPUT ===', MEMS.exts.enum_output)
-local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
-local c = SUB(c, '=== TCEU_NTRL ===',        TYPES.n2uint(AST.root.trails_n))
-local c = SUB(c, '=== TCEU_NLBL ===',        TYPES.n2uint(#LABELS.list))
 local c = SUB(c, '=== LABELS ===',           labels)
 local c = SUB(c, '=== NATIVE_POS ===',       CODES.native.pos)
 local c = SUB(c, '=== CODES_WRAPPERS ===',   MEMS.codes.wrappers)
