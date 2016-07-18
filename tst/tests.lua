@@ -17697,168 +17697,6 @@ escape v;
 }
 
 Test { [[
-var int v = 10;
-loop do
-    var& int? i = &v;
-    i = i + 1;
-    break;
-end
-escape v;
-]],
-    wrn = true,
-    --env = 'line 4 : invalid operands to binary "+"',
-    exps = 'line 4 : invalid operand to `+´ : expected numeric type',
-}
-
-Test { [[
-var int v = 10;
-escape v!;
-]],
-    names = 'line 2 : invalid operand to `!´ : expected option type',
-}
-
-Test { [[
-var int v = 10;
-var& int? i;
-i = &v;
-i = &v;
-escape i!;
-]],
-    inits = 'line 4 : invalid binding : variable "i" is already bound (/tmp/tmp.ceu:3)',
-    --ref = 'line 4 : invalid attribution : variable "i" is already bound',
-}
-
-Test { [[
-var int v = 10;
-var& int? i;
-loop do
-    i = &v;
-    i! = i! + 1;
-    break;
-end
-escape v;
-]],
-    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
-    --ref = 'line 4 : invalid attribution : variable "i" is already bound',
-}
-Test { [[
-var int v = 10;
-var& int? i;
-i! = &v;
-escape i!;
-]],
-    --stmts = 'line 3 : invalid binding : expected declaration with `&´',
-    stmts = 'line 3 : invalid binding : unexpected context for operator `!´',
-    --inits = 'line 2 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:3)',
-    --ref = 'line 3 : invalid attribution : cannot bind with operator `!´',
-}
-
-Test { [[
-var int v = 10;
-var& int? i;
-loop do
-    i! = &v;
-    i! = i! + 1;
-    if true then
-        break;
-    else
-        await 1s;
-    end
-end
-escape v;
-]],
-    --stmts = 'line 4 : invalid binding : expected declaration with `&´',
-    stmts = 'line 4 : invalid binding : unexpected context for operator `!´',
-    --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
-    --ref = 'line 4 : invalid attribution : variable "i" is already bound',
-    --run = 11,
-    --ref = 'reference declaration and first binding cannot be separated by loops',
-    --ref = 'line 2 : uninitialized variable "i" crossing compound statement (/tmp/tmp.ceu:3)',
-}
-
-Test { [[
-do
-    sfc = &_TTF_RenderText_Blended();
-finalize () with
-    _SDL_FreeSurface(&&(sfc!));
-end
-]],
-    parser = 'line 3 : after `(´ : expected name expression',
-}
-
-Test { [[
-do
-    nothing;
-finalize with
-    nothing;
-end
-escape 0;
-]],
-    scopes = 'line 2 : invalid `finalize´ : unexpected `nothing´',
-}
-
-Test { [[
-native _SDL_Surface, _TTF_RenderText_Blended, _SDL_FreeSurface;
-var& _SDL_Surface? sfc;
-every 1s do
-    do
-        sfc = &_TTF_RenderText_Blended();
-    finalize (sfc) with
-        _SDL_FreeSurface(&&(sfc!));
-    end
-end
-escape 1;
-]],
-    inits = 'line 2 : uninitialized variable "sfc" : reached `every´ (/tmp/tmp.ceu:3)',
-    --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
-    --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
-    --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (/tmp/tmp.ceu:2)',
-}
-
-Test { [[
-native _fff;
-native/pos do
-    int V = 10;
-    int* fff (int v) {
-        V += v;
-        escape &V;
-    }
-end
-var int   v = 1;
-var int&& p = &&v;
-var& int? r;
-do r = &_fff(*p);
-finalize (r) with
-    nothing;
-end
-escape r;
-]],
-    stmts = 'line 16 : invalid `escape´ : types mismatch : "int" <= "int?"',
-    --env = 'line 16 : types mismatch (`int´ <= `int&?´)',
-}
-
-Test { [[
-event int e;
-var int x;
-do
-    x = await e;
-finalize (x) with
-    nothing;
-end
-escape 0;
-]],
-    scopes = 'line 4 : invalid `finalize´ : unexpected `await´',
-}
-
-Test { [[
-native _f;
-var& int? v = &_f();
-escape 0;
-]],
-    scopes = 'line 2 : invalid binding : expected `finalize´',
-}
-
-Test { [[
 var& int v;
 if true then
     var int x=0;
@@ -17883,6 +17721,27 @@ end
 escape v;
 ]],
     run = 100,
+}
+
+Test { [[
+do
+    sfc = &_TTF_RenderText_Blended();
+finalize () with
+    _SDL_FreeSurface(&&(sfc!));
+end
+]],
+    parser = 'line 3 : after `(´ : expected name expression',
+}
+
+Test { [[
+do
+    nothing;
+finalize with
+    nothing;
+end
+escape 0;
+]],
+    scopes = 'line 2 : invalid `finalize´ : unexpected `nothing´',
 }
 
 Test { [[
@@ -18036,48 +17895,6 @@ end
 escape (_f == (&&_f as int&&)) as int;
 ]],
     run = 1,
-}
-
-Test { [[
-native _f;
-do
-    var& int? a;
-    do
-        a = &_f();
-    finalize (a) with
-        do await FOREVER; end;
-    end
-end
-]],
-    props = "line 7 : not permitted inside `finalize´",
-}
-
-Test { [[
-native _f;
-do
-    var& int? a;
-    do a = &_f();
-    finalize (a) with
-        async do
-        end;
-    end
-end
-]],
-    props = "line 7 : not permitted inside `finalize´",
-}
-
-Test { [[
-native _f;
-do/_
-    var& int? a;
-    do a = &_f();
-    finalize (a) with
-        do/_ escape 0; end;
-    end
-end
-]],
-    props_ = 'line 6 : invalid `escape´ : unexpected enclosing `finalize´',
-    --props = "line 7 : not permitted inside `finalize´",
 }
 
 Test { [[
@@ -23994,8 +23811,8 @@ end
 var int v = _A();
 escape v;
 ]],
-    cc = '1: error: invalid use of void expression',
-    --cc = 'error: void value not ignored as it ought to be',
+    --cc = '1: error: invalid use of void expression',
+    cc = 'error: void value not ignored as it ought to be',
 }
 
 Test { [[emit A => 10; escape 0;]],
@@ -24061,8 +23878,8 @@ end
 var int ret = _VD(10);
 escape ret;
 ]],
-    cc = '1: error: invalid use of void expression',
-    --cc = 'error: void value not ignored as it ought to be',
+    --cc = '1: error: invalid use of void expression',
+    cc = 'error: void value not ignored as it ought to be',
 }
 
 Test { [[
@@ -27391,7 +27208,7 @@ native/pure _ID, _strlen;
 native _char;
 vector[] byte str = [] .. "abc"
                     .. (_ID("def") as _char&&);
-var byte&& str2 = _ID((&&str[0]) as _char&&);
+var byte&& str2 = _ID((&&str[0]));
 escape _strlen((&&str[0]) as _char&&) + _strlen(str2 as _char&&);
 ]],
     run = 12,
@@ -60083,8 +59900,6 @@ escape 1;
     stmts = 'line 53 : invalid assignment : unexpected context for pool "l"',
 }
 
--->>> OPTION TYPES
-
 Test { [[
 data OptionInt;
 data OptionInt.Nil1;
@@ -60119,6 +59934,8 @@ escape ret;
 ]],
     run = 18,
 }
+
+-->>> OPTION TYPES
 
 Test { [[
 var int? i;
@@ -60264,12 +60081,112 @@ escape v1! + v2 + ret;
     run = 21,
 }
 
+Test { [[
+var int v = 10;
+loop do
+    var& int? i = &v;
+    i = i + 1;
+    break;
+end
+escape v;
+]],
+    wrn = true,
+    --env = 'line 4 : invalid operands to binary "+"',
+    exps = 'line 4 : invalid operand to `+´ : expected numeric type',
+}
+
+Test { [[
+var int v = 10;
+escape v!;
+]],
+    names = 'line 2 : invalid operand to `!´ : expected option type',
+}
+
+Test { [[
+var int? v = 10;
+var& int? i;
+i = &v;
+i = &v;
+escape i!;
+]],
+    inits = 'line 4 : invalid binding : variable "i" is already bound (/tmp/tmp.ceu:3)',
+    --ref = 'line 4 : invalid attribution : variable "i" is already bound',
+}
+
+Test { [[
+var int? v = 10;
+var& int? i;
+loop do
+    i = &v;
+    i! = i! + 1;
+    break;
+end
+escape v!;
+]],
+    inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
+    --ref = 'line 4 : invalid attribution : variable "i" is already bound',
+}
+Test { [[
+var int? v = 10;
+var& int? i;
+i! = &v;
+escape i!;
+]],
+    --stmts = 'line 3 : invalid binding : expected declaration with `&´',
+    stmts = 'line 3 : invalid binding : unexpected context for operator `!´',
+    --inits = 'line 2 : uninitialized variable "i" : reached read access (/tmp/tmp.ceu:3)',
+    --ref = 'line 3 : invalid attribution : cannot bind with operator `!´',
+}
+
+Test { [[
+var int? v = 10;
+var& int? i;
+loop do
+    i! = &v;
+    i! = i! + 1;
+    if true then
+        break;
+    else
+        await 1s;
+    end
+end
+escape v!;
+]],
+    --stmts = 'line 4 : invalid binding : expected declaration with `&´',
+    stmts = 'line 4 : invalid binding : unexpected context for operator `!´',
+    --inits = 'line 2 : uninitialized variable "i" : reached `loop´ (/tmp/tmp.ceu:3)',
+    --ref = 'line 4 : invalid attribution : variable "i" is already bound',
+    --run = 11,
+    --ref = 'reference declaration and first binding cannot be separated by loops',
+    --ref = 'line 2 : uninitialized variable "i" crossing compound statement (/tmp/tmp.ceu:3)',
+}
+
+Test { [[
+event int e;
+var int x;
+do
+    x = await e;
+finalize (x) with
+    nothing;
+end
+escape 0;
+]],
+    scopes = 'line 4 : invalid `finalize´ : unexpected `await´',
+}
+
+Test { [[
+var int? x;
+escape x!;
+]],
+    run = '2] runtime error: value is not set',
+}
+
 -->> OPTION / NATIVE
 
 Test { [[
-native _SDL_Texture;
+native _SDL_Texture_ptr;
 native/nohold _g;
-var& _SDL_Texture? t_enemy_1;
+var& _SDL_Texture_ptr? t_enemy_1;
 native _f;
 do
     t_enemy_1 = &_f();
@@ -60279,13 +60196,13 @@ end
 escape 1;
 ]],
     wrn = true,
-    cc = 'error: unknown type name ‘SDL_Texture’',
+    cc = 'error: unknown type name ‘SDL_Texture_ptr’',
 }
 
 Test { [[
-native _SDL_Texture;
+native _SDL_Texture_ptr;
 native/nohold _g;
-var& _SDL_Texture? t_enemy_0, t_enemy_1;
+var& _SDL_Texture_ptr? t_enemy_0, t_enemy_1;
 native _f;
     do t_enemy_1 = &_f();
 finalize with
@@ -60296,6 +60213,16 @@ escape 1;
     wrn = true,
     --gcc = 'error: unknown type name ‘SDL_Texture’',
     inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
+}
+
+Test { [[
+native/plain _t;
+var _t ttt = { (t){11} };
+var& _t? kkk = &ttt;
+escape 0;
+]],
+    stmts = 'line 3 : invalid binding : types mismatch : "_t?" <= "_t"',
+    --run = 211,
 }
 
 Test { [[
@@ -60310,56 +60237,87 @@ end
 native/pure _id;
 
 native/plain _t;
-var _t t = { (t){11} };
+var _t? ttt = { (t){11} };
 
-var& _t? t_ = &t;
+var& _t? kkk = &ttt;
 
-var int ret = t_!.x;
-t_!.x = 100;
+var int ret = kkk!.x;
+kkk!.x = 100;
 
-escape ret + _id(t_!.x) + t.x;
+escape ret + _id(kkk!.x) + ttt!.x;
 ]],
     run = 211,
 }
 
 Test { [[
-native _myalloc;
-native/pos do
+native _void_ptr, _myalloc;
+native/pre do
+    typedef void* void_ptr;
     void* myalloc (void) {
-        escape NULL;
+        return NULL;
     }
     void myfree (void* v) {
     }
 end
 native/nohold _myfree;
 
-var& void? v;
-    do v = &_myalloc();
-finalize(v) with
-    _myfree(&&v!);
+var& _void_ptr? vvv;
+do
+    vvv = &_myalloc();
+finalize(vvv) with
+    _myfree(vvv!);
 end
 
 escape 1;
 ]],
-    asr = true,
+    run = '16] runtime error: value is not set',
 }
 
 Test { [[
-native _myalloc;
-native/pos do
+native _void_ptr;
+native/pre do
+    typedef void* void_ptr;
+end
+var _void_ptr x = null;
+var& _void_ptr v = &x;
+v = null;
+escape (x == null) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+native _void_ptr;
+native/pre do
+    typedef void* void_ptr;
+end
+var _void_ptr? x = null;
+var& _void_ptr? v = &x;
+v! = null;
+escape (x! == null) as int;
+]],
+    run = 1,
+}
+do return end
+
+Test { [[
+native _void_ptr, _myalloc;
+native/pre do
+    typedef void* void_ptr;
     void* myalloc (void) {
-        escape NULL;
+        return NULL;
     }
     void myfree (void* v) {
     }
 end
 native/nohold _myfree;
 
-var& void? v;
-    do v = &_myalloc();
+var& _void_ptr? v;
+do
+    v = &_myalloc();
 finalize(v) with
     if v? then
-        _myfree(&&v!);
+        _myfree(v!);
     end
 end
 
@@ -60465,6 +60423,54 @@ escape bg_clr!.v;
 }
 
 Test { [[
+native _SDL_Surface, _TTF_RenderText_Blended, _SDL_FreeSurface;
+var& _SDL_Surface? sfc;
+every 1s do
+    do
+        sfc = &_TTF_RenderText_Blended();
+    finalize (sfc) with
+        _SDL_FreeSurface(&&(sfc!));
+    end
+end
+escape 1;
+]],
+    inits = 'line 2 : uninitialized variable "sfc" : reached `every´ (/tmp/tmp.ceu:3)',
+    --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
+    --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
+    --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (/tmp/tmp.ceu:2)',
+}
+
+Test { [[
+native _fff;
+native/pos do
+    int V = 10;
+    int* fff (int v) {
+        V += v;
+        escape &V;
+    }
+end
+var int   v = 1;
+var int&& p = &&v;
+var& int? r;
+do r = &_fff(*p);
+finalize (r) with
+    nothing;
+end
+escape r;
+]],
+    stmts = 'line 16 : invalid `escape´ : types mismatch : "int" <= "int?"',
+    --env = 'line 16 : types mismatch (`int´ <= `int&?´)',
+}
+
+Test { [[
+native _f;
+var& int? v = &_f();
+escape 0;
+]],
+    scopes = 'line 2 : invalid binding : expected `finalize´',
+}
+
+Test { [[
 var int ret=0;
 var& int? p = &ret;
 p! = p!;
@@ -60472,6 +60478,50 @@ escape 1;
 ]],
     run = 1,
 }
+
+Test { [[
+native _f;
+do
+    var& int? a;
+    do
+        a = &_f();
+    finalize (a) with
+        do await FOREVER; end;
+    end
+end
+]],
+    props = "line 7 : not permitted inside `finalize´",
+}
+
+Test { [[
+native _f;
+do
+    var& int? a;
+    do a = &_f();
+    finalize (a) with
+        async do
+        end;
+    end
+end
+]],
+    props = "line 7 : not permitted inside `finalize´",
+}
+
+Test { [[
+native _f;
+do/_
+    var& int? a;
+    do a = &_f();
+    finalize (a) with
+        do/_ escape 0; end;
+    end
+end
+]],
+    props_ = 'line 6 : invalid `escape´ : unexpected enclosing `finalize´',
+    --props = "line 7 : not permitted inside `finalize´",
+}
+
+--<< OPTION / NATIVE
 
 Test { [[
 data OptionInt;

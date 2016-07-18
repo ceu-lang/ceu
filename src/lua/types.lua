@@ -37,8 +37,10 @@ function TYPES.toc (tp)
     assert(tp.tag == 'Type')
     local ID = unpack(tp)
 
+    local is_int_opt = TYPES.check(tp,'?') and (not TYPES.is_opt_ext(tp))
+
     local pre = ''
-    if TYPES.check(tp,'?') then
+    if is_int_opt then
         pre = 'tceu_opt_'
     elseif ID.tag == 'ID_abs' then
         pre = 'tceu_data_'
@@ -52,7 +54,7 @@ function TYPES.toc (tp)
     for i=2, #tp do
         local mod = tp[i]
         if mod == '&&' then
-            if TYPES.check(tp,'?') then
+            if is_int_opt then
                 mod = '_ptr_'
             else
                 mod = '*'
@@ -179,6 +181,10 @@ function TYPES.is_nat_not_plain (tp)
     return true
 end
 
+function TYPES.is_opt_ext (tp)
+    return TYPES.check(tp,'?') and TYPES.is_nat_not_plain(TYPES.pop(tp,'?'))
+end
+
 function TYPES.ID_plain (tp)
     return #tp==1 and tp[1]
 end
@@ -230,18 +236,18 @@ do
             return false
         end
 
-        local tp1_is_nat = TYPES.is_nat(tp1)
-        local tp2_is_nat = TYPES.is_nat(tp2)
-
-        local tp1_ID = TYPES.ID_plain(tp1)
-        local tp2_ID = TYPES.ID_plain(tp2)
-
         if TYPES.check(tp1,'?') then
             tp1 = TYPES.pop(tp1)
             if TYPES.check(tp2,'?') then
                 tp2 = TYPES.pop(tp2)
             end
         end
+
+        local tp1_is_nat = TYPES.is_nat(tp1)
+        local tp2_is_nat = TYPES.is_nat(tp2)
+
+        local tp1_ID = TYPES.ID_plain(tp1)
+        local tp2_ID = TYPES.ID_plain(tp2)
 
 -- EQUAL TYPES
         if TYPES.is_equal(tp1, tp2) then
@@ -252,12 +258,6 @@ do
                tp2_ID and tp2_ID.tag=='ID_abs'
         then
             return contains_data(tp1_ID, tp2_ID)
-
--- VOID <- _
-        -- var& void ptr = &_f()
-        -- var& void p = &v;
-        elseif TYPES.check(tp1,'void') and tp2_ID then
-            return true
 
 -- NUMERIC TYPES
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then

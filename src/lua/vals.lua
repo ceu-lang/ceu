@@ -181,7 +181,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
             end
         else
             local ptr = ''
-            if is_alias and (not ctx.is_bind) then
+            if is_alias and (not ctx.is_bind) and (not TYPES.is_opt_ext(me.dcl[1])) then
                 ptr = '*'
             end
             return '('..ptr..CUR(me.dcl.id_)..')'
@@ -197,6 +197,8 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         local dcl = e.info.dcl
         if dcl.tag == 'Evt' then
             return dcl.id_
+        elseif e.tag == 'Exp_Call' then
+            return V(e)
         else
             return '(&'..V(e)..')'
         end
@@ -236,12 +238,20 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 
     ['Exp_?'] = function (me)
         local _, e = unpack(me)
-        return '('..V(e)..'.is_set)'
+        if TYPES.is_opt_ext(e.info.tp) then
+            return '('..V(e)..' != NULL)'
+        else
+            return '('..V(e)..'.is_set)'
+        end
     end,
 
     ['Exp_!'] = function (me)
         local _, e = unpack(me)
-        return '('..V(e)..'.value)'
+        if TYPES.is_opt_ext(e.info.tp) then
+            return 'CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)'
+        else
+            return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)->value)'
+        end
     end,
 
 -- VECTOR LENGTH: $, $$

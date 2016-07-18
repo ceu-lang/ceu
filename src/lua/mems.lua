@@ -211,7 +211,7 @@ typedef struct tceu_data_]]..me.id_..[[ {
                 if not AST.par(me,'Data') then
                     dcl.id_ = dcl.id..'_'..dcl.n
                 end
-                if TYPES.is_nat(TYPES.get(tp,1),me) then
+                if TYPES.is_nat(TYPES.get(tp,1)) then
                     mem[#mem+1] = [[
 ]]..TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..[[];
 ]]
@@ -364,13 +364,27 @@ end
 
 local opts = ''
 for _, tp in ipairs(MEMS.opts) do
-    local c  = TYPES.toc(TYPES.pop(tp,'?'))
     local cc = TYPES.toc(tp)
-    opts = opts..[[
+    local c = TYPES.toc(TYPES.pop(tp,'?'))
+    if TYPES.is_opt_ext(tp) then
+        opts = opts..[[
+static ]]..cc..' CEU_OPTION_'..cc..' ('..cc..[[ opt, char* file, int line) {
+    ceu_cb_assert_msg_ex(opt != NULL, "value is not set", file, line);
+    return opt;
+}
+]]
+    else
+        opts = opts..[[
 typedef struct ]]..cc..[[ {
     bool      is_set;
     ]]..c..[[ value;
 } ]]..cc..[[;
+
+static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
+    ceu_cb_assert_msg_ex(opt->is_set, "value is not set", file, line);
+    return opt;
+}
 ]]
+    end
 end
 MEMS.opts = opts
