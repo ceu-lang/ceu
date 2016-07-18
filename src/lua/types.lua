@@ -250,12 +250,11 @@ do
 
 -- NUMERIC TYPES
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
-            if is_alias then
+            if TYPES.is_nat(tp1) or TYPES.is_nat(tp2) then
+                return true
+            elseif is_alias then
                 return false
             else
-                if TYPES.is_nat(tp1) or TYPES.is_nat(tp2) then
-                    return true
-                end
                 return contains_num(types_id(tp1),types_id(tp2))
             end
 

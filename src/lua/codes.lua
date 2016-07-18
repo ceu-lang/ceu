@@ -130,6 +130,8 @@ if (]]..V(c)..[[) {
     end,
 
     Block__PRE = function (me)
+
+        -- initialize vectors
         for _, dcl in ipairs(me.dcls) do
             local tp = unpack(dcl)
             if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1),me)) then
@@ -148,6 +150,8 @@ ceu_vector_init(&]]..CUR(dcl.id_)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
                 end
             end
         end
+
+        -- free vectors
         if me.has_dyn_vecs then
             LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt = CEU_INPUT__CLEAR;

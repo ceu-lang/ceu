@@ -10,7 +10,6 @@ end
 
 --[=====[
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -28783,7 +28782,7 @@ var int v = 0;
 call Ff(v);
 escape v;
 ]],
-    tmp = 'line 5 : wrong argument #1 : types mismatch (`u8[]&´ <= `u8[]&´) : dimension mismatch',
+    exps = 'line 5 : invalid call : invalid binding : argument #1 : unexpected context for variable "v"',
 }
 
 Test { [[
@@ -60106,6 +60105,7 @@ escape ret;
     run = 18,
 }
 
+--]=====]
 Test { [[
 var int? i;
 if i? then end;
