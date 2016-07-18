@@ -26,7 +26,7 @@ F = {
         local fr, to = unpack(me)
         local to_ptr = TYPES.check(TYPES.pop(to.info.tp,'?'),'&&')
         local fr_ptr = TYPES.check(fr.info.tp,'&&')
-        local to_nat = TYPES.is_nat(to.info.tp)
+        local to_nat = TYPES.is_nat(TYPES.pop(to.info.tp,'?'))
 
         -- ptr = _f()
         if fr.tag=='Exp_Call' and (to_ptr or to_nat) then

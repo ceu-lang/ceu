@@ -248,7 +248,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
     ['Exp_!'] = function (me)
         local _, e = unpack(me)
         if TYPES.is_opt_ext(e.info.tp) then
-            return 'CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)'
+            return 'CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', __FILE__, __LINE__)'
         else
             return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)->value)'
         end

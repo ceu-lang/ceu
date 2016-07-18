@@ -60296,9 +60296,24 @@ var& _void_ptr? v = &x;
 v! = null;
 escape (x! == null) as int;
 ]],
-    run = 1,
+    dcls = 'line 5 : invalid declaration : expected `&´',
+    --run = 1,
 }
-do return end
+Test { [[
+native _void_ptr, _f;
+native/pre do
+    typedef void* void_ptr;
+end
+var& _void_ptr? x = &_f()
+    finalize (x) with
+        nothing;
+    end;
+var& _void_ptr? v = &x;
+v! = null;
+escape (x! == null) as int;
+]],
+    stmts = 'line 10 : invalid assignment : read-only variable "v"',
+}
 
 Test { [[
 native _void_ptr, _myalloc;
