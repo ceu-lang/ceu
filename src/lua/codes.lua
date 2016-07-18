@@ -146,7 +146,7 @@ if (]]..V(c)..[[) {
         -- initialize vectors
         for _, dcl in ipairs(me.dcls) do
             local tp = unpack(dcl)
-            if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1),me)) then
+            if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1))) then
                 local tp, is_alias, dim = unpack(dcl)
                 if not is_alias then
                     if dim.is_const then
@@ -174,7 +174,7 @@ if (0) {
             CASE(me, me.lbl_dyn_vecs)
             for _, dcl in ipairs(me.dcls) do
                 local tp = unpack(dcl)
-                if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1),me)) then
+                if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1))) then
                     local tp, is_alias, dim = unpack(dcl)
                     if not (is_alias or dim.is_const) then
                         LINE(me, [[
@@ -640,7 +640,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         -- var Ee.Xx ex = ...;
         -- var& Ee = &ex;
         local cast = ''
-        if to.info.dcl.tag == 'Var' then
+        if to.info.tp.tag=='Type' and to.info.tp[1].tag == 'ID_abs' then
             cast = '('..TYPES.toc(to.info.tp)..'*)'
         end
 

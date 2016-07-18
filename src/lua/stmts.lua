@@ -113,8 +113,9 @@ DBG('TODO: _Lua')
 
         -- option type
         if TYPES.check(to.info.tp,'?') then
-            if TYPES.is_nat((TYPES.pop(to.info.tp,'?'))) and
-               TYPES.is_nat(fr.info.tp)
+            if TYPES.check(fr.info.tp,'_') and
+                (TYPES.is_nat(TYPES.pop(to.info.tp,'?')) or
+                 TYPES.check(to.info.tp,'void','?'))
             then
                 -- OK:
                 --  var& _TP? = _f();
