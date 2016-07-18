@@ -229,7 +229,8 @@ F = {
         local _,mod,id = unpack(me)
         me.id = id
         me.is_read_only = (mod == 'const')
-        dcls_new(AST.par(me,'Block'), me)
+        local blk = AST.asr(AST.root,'', 1,'Block')
+        dcls_new(blk, me)
 
         ASR(not native_end, me,
             'native declarations are disabled')
@@ -277,27 +278,29 @@ F = {
                 '(vs. '..ins2.ln[1]..':'..ins2.ln[2]..')')
         end
 
-        local blk = AST.par(me,'Block')
+        --local blk = AST.par(me,'Block')
+        local blk = AST.asr(AST.root,'', 1,'Block')
         blk.dcls[#blk.dcls+1] = me
         blk.dcls[me.id] = me
         me.is_used = (old and old.is_used)
 
-        assert(me == dcls_get(AST.par(me,'Block'),me.id,true))
+        assert(me == dcls_get(blk,me.id,true))
     end,
 
     Data = function (me)
         me.id = unpack(me)
+        local blk = AST.asr(AST.root,'', 1,'Block')
 
         -- check "super" path
         local super,_ = string.match(me.id, '(.*)%.(.*)')
         if super then
-            local dcl = dcls_get(AST.par(me,'Block'), super, true)
+            local dcl = dcls_get(blk, super, true)
             ASR(dcl, me,
                 'invalid declaration : abstraction "'..super..'" is not declared')
             me.super = dcl
         end
 
-        dcls_new(AST.par(me,'Block'), me)
+        dcls_new(blk, me)
     end,
 
     -- Typelists

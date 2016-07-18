@@ -88,11 +88,11 @@ function TYPES.pop (tp, mod)
     assert(tp.tag == 'Type')
     local v = tp[#tp]
     if mod and v~=mod then
-        return tp, nil
+        return tp
     end
     tp = AST.copy(tp)
     tp[#tp] = nil
-    return tp, v
+    return tp
 end
 
 function TYPES.push (tp,v)
@@ -144,19 +144,22 @@ end
 
 function TYPES.is_num (tp)
     assert(tp.tag == 'Type')
-    local dcl = DCLS.asr(AST.iter()(), AST.iter'Block'(), types_id(tp), true)
+    local blk = AST.asr(AST.root,'', 1,'Block')
+    local dcl = DCLS.asr(AST.iter()(), blk, types_id(tp), true)
     return TYPES.is_nat(tp)
         or (dcl.prim and dcl.prim.is_num and TYPES.check(tp,dcl.id))
 end
 function TYPES.is_int (tp)
     assert(tp.tag == 'Type')
-    local dcl = DCLS.asr(AST.iter()(), AST.iter'Block'(), types_id(tp), true)
+    local blk = AST.asr(AST.root,'', 1,'Block')
+    local dcl = DCLS.asr(AST.iter()(), blk, types_id(tp), true)
     return TYPES.is_nat(tp)
         or (dcl.prim and dcl.prim.is_int and TYPES.check(tp,dcl.id))
 end
-function TYPES.is_nat (tp,blk)
+function TYPES.is_nat (tp)
     assert(tp.tag == 'Type')
-    local dcl = DCLS.asr(AST.iter()(), blk or AST.iter'Block'(), types_id(tp), true)
+    local blk = AST.asr(AST.root,'', 1,'Block')
+    local dcl = DCLS.asr(AST.iter()(), blk, types_id(tp), true)
     return dcl and (dcl.tag=='Nat' or dcl.id=='_') and TYPES.check(tp,dcl.id)
         -- _char    yes
         -- _char&&  no
