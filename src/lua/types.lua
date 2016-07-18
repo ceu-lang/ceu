@@ -259,6 +259,12 @@ do
         then
             return contains_data(tp1_ID, tp2_ID)
 
+-- VOID <- _
+        -- var& void ptr = &_f()
+        -- var& void p = &v;
+        elseif TYPES.check(tp1,'void') and tp2_ID then
+            return true
+
 -- NUMERIC TYPES
         elseif TYPES.is_num(tp1) and TYPES.is_num(tp2) then
             if TYPES.is_nat(tp1) or TYPES.is_nat(tp2) then
