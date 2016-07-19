@@ -155,12 +155,19 @@ error'TODO: luacov never executes this?'
                                 do_))
         end
 
-        -- insert int "stmts" all parameters "ins"
+        -- insert in "stmts" all parameters "ins"/"mid"
+        local ins_mid = {} do
+            AST.asr(ins,'Typepars_ids')
+            for _, v in ipairs(ins) do ins_mid[#ins_mid+1]=v end
+            if mid then
+                AST.asr(mid,'Typepars_ids')
+                for _, v in ipairs(mid) do ins_mid[#ins_mid+1]=v end
+            end
+        end
 
-        AST.asr(ins,'Typepars_ids')
         local dcls = node('Stmts', me.ln)
         local vars = node('Stmts', me.ln)
-        for _, v in ipairs(ins) do
+        for i, v in ipairs(ins_mid) do
             if v ~= 'void' then
                 AST.asr(v,'Typepars_ids_item')
                 local pre,is_alias = unpack(v)
@@ -181,8 +188,14 @@ error'TODO: luacov never executes this?'
                 else
                     error'TODO'
                 end
-                vars[#vars+1] = node('ID_int', me.ln, ID)
-                dcls[#dcls].is_param = true
+
+                -- mid's are not params
+                if i <= #ins then
+                    vars[#vars+1] = node('ID_int', me.ln, ID)
+                    dcls[#dcls].is_param = true
+                else
+                    dcls[#dcls].is_mid = true
+                end
             end
         end
         table.insert(stmts_old, 1, vars)
@@ -450,14 +463,24 @@ DBG('TODO: _Loop_Pool')
 
     _Watching__PRE = function (me)
         local watch, mid, block = unpack(me)
+
+        local ref = node('Nothing', me.ln)
         if mid then
-            watch[#watch+1] = mid
+            local Abs_Await = AST.asr(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
+            local ID_abs = AST.asr(Abs_Await,'', 1,'Abs_Cons', 1,'ID_abs')
+            Abs_Await[#Abs_Await+1] = mid
+            ref = node('Ref', me.ln, 'watching', ID_abs)
+            ref.varlist = mid
         end
-        return node('Par_Or', me.ln,
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        watch)),
-                block)
+
+        return node('Block', me.ln,
+                node('Stmts', me.ln,
+                    ref,
+                    node('Par_Or', me.ln,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                watch)),
+                        block)))
     end,
 
 -------------------------------------------------------------------------------

@@ -71,7 +71,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     end,
 
     Code = function (me)
-        local mod,_,id,Typepars_ids, _, Type, body = unpack(me)
+        local mod,_,id, ins, mid, Type, body = unpack(me)
         if not body then return end
 
         -- args
@@ -80,9 +80,23 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
             -- returns immediatelly, uses an extra field for the return value
             me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..' _ret;\n'
         end
-        for _,Typepars_ids_item in ipairs(Typepars_ids) do
-            local kind,is_alias,dim,Type,id2 = unpack(Typepars_ids_item)
+
+        -- insert in "stmts" all parameters "ins"/"mid"
+        local ins_mid = {} do
+            AST.asr(ins,'Typepars_ids')
+            for _, v in ipairs(ins) do ins_mid[#ins_mid+1]=v end
+            if mid then
+                AST.asr(mid,'Typepars_ids')
+                for _, v in ipairs(mid) do ins_mid[#ins_mid+1]=v end
+            end
+        end
+
+        for i,item in ipairs(ins_mid) do
+            local kind,is_alias,dim,Type,id2 = unpack(item)
             local ptr = (is_alias and '*' or '')
+            if i > #ins then
+                ptr = ptr..'*'  -- extra indirection for mid's
+            end
             if kind == 'var' then
                 assert(dim == false)
                 me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..ptr..' '..id2..';\n'

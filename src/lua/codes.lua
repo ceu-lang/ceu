@@ -284,8 +284,20 @@ if (0)
     end,
 
     Abs_Await = function (me)
-        local Abs_Cons = unpack(me)
+        local Abs_Cons, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
+
+        if mid then
+            local v = {}
+            for _, var in ipairs(mid) do
+                -- extra indirection for mid's
+                v[#v+1] = '&'..V(var,{is_bind=true})
+            end
+            mid = ','..table.concat(v)
+        else
+            mid = ''
+        end
+
         HALT(me, {
             { evt = 'CEU_INPUT__CODE' },
             { lbl = me.lbl_out.id },
@@ -294,7 +306,7 @@ if (0)
             exec = [[
 {
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
-        {]]..table.concat(V(Abslist),',')..[[ };
+        {]]..table.concat(V(Abslist),',')..mid..[[ };
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
     CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
@@ -659,6 +671,12 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         LINE(me, [[
 ]]..V(to, {is_bind=true})..' = '..cast..V(fr)..[[;
 ]])
+
+        if to.info.dcl.is_mid then
+            LINE(me, [[
+*(((tceu_code_args_Code*)_ceu_evt)->]]..to.info.dcl.id..[[) = ]]..V(to, {is_bind=true})..[[;
+]])
+        end
     end,
 
     Set_Await_one = function (me)

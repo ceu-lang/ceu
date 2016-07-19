@@ -411,6 +411,21 @@ F = {
             local Type = Typelist[i]
             return AST.copy(Type)
 
+        elseif id == 'watching' then
+            local _, ID_abs = unpack(me)
+            local pars = AST.get(ID_abs.dcl,'Code', 5,'Typepars_ids')
+assert(pars and #pars==#me.varlist, 'TODO')
+            local dcls = AST.node('Stmts', me.ln)
+            for i, var in ipairs(AST.asr(me.varlist,'Varlist')) do
+                local item = AST.asr(pars,'', i,'Typepars_ids_item')
+                local mod, is_alias, _, Type, _ = unpack(item)
+assert(mod=='var' and is_alias, 'TODO')
+                local id = unpack(AST.asr(var,'ID_int'))
+                dcls[#dcls+1] = AST.node('Var', var.ln, AST.copy(Type), '&', id)
+                dcls[#dcls].is_param = true
+            end
+            return dcls
+
         elseif id == 'escape' then
             local _, esc = unpack(me)
             local id_int1 = (esc[1]==true) or esc[1][1]

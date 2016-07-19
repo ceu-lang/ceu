@@ -610,7 +610,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , __watch = (V'_Await_Until' + V'Await_Wclock' + V'Abs_Await')
     , _Watching = K'watching' * V'__watch' *
-                    OPT(KK'=>' * PARENS(V'Varlist'))
+                    OPT(KK'=>' * PARENS(OPT(V'Varlist')))
                 * V'__Do'
 
     , __num = CKK(m.R'09'^1,'number') / tonumber
