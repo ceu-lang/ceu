@@ -985,9 +985,6 @@ local function SUB (str, from, to)
     end
 end
 
-local H = ASR(io.open(CEU.opts.ceu_output_h,'w'))
-local C = ASR(io.open(CEU.opts.ceu_output_c,'w'))
-
 AST.visit(F)
 
 local labels do
@@ -1017,7 +1014,11 @@ local c = SUB(c, '=== LABELS ===',           labels)
 local c = SUB(c, '=== NATIVE_POS ===',       CODES.native.pos)
 local c = SUB(c, '=== CODES_WRAPPERS ===',   MEMS.codes.wrappers)
 local c = SUB(c, '=== CODES ===',            AST.root.code)
-C:write('\n\n/* CEU_C */\n\n'..c)
 
-H:close()
-C:close()
+if CEU.opts.ceu_output == '-' then
+    print('\n\n/* CEU_C */\n\n'..c)
+else
+    local C = ASR(io.open(CEU.opts.ceu_output,'w'))
+    C:write('\n\n/* CEU_C */\n\n'..c)
+    C:close()
+end

@@ -24,8 +24,7 @@ Options:
 
     --ceu                       Céu phase: compiles Céu into C
     --ceu-input=FILE                input file to compile (Céu source)
-    --ceu-output-h=FILE             output header file to generate (C source)
-    --ceu-output-c=FILE             output source file to generate (C source)
+    --ceu-output=FILE               output source file to generate (C source)
     --ceu-line-directives=BOOL      insert `#line´ directives in the C output
 
 
@@ -88,11 +87,16 @@ local function check_no (pre)
     end
 end
 
+if not (CEU.opts.pre or CEU.opts.ceu or CEU.opts.env or CEU.opts.cc) then
+    DBG(CEU.help)
+    ASR(false, 'expected some option')
+end
+
 if CEU.opts.pre then
     CEU.opts.pre_exe  = CEU.opts.pre_exe  or 'cpp'
     CEU.opts.pre_args = CEU.opts.pre_args or ''
-    ASR(CEU.opts.pre_input,  'pre_input')
-    ASR(CEU.opts.pre_output, 'pre_output')
+    ASR(CEU.opts.pre_input, 'expected option `pre-input´')
+    CEU.opts.pre_output = CEU.opts.pre_output or '-'
 else
     check_no('pre')
 end
@@ -104,25 +108,73 @@ if CEU.opts.ceu then
     end
     CEU.opts.ceu_line_directives = (lines == 'true')
 
-    ASR(CEU.opts.ceu_input,    'ceu_input')
-    ASR(CEU.opts.ceu_output_h, 'ceu_output_h')
-    ASR(CEU.opts.ceu_output_c, 'ceu_output_c')
+    if CEU.opts.pre then
+        if CEU.opts.ceu_input then
+            ASR(CEU.opts.ceu_input == CEU.opts.pre_output,
+                "`pre-output´ and `ceu-input´ don't match")
+        else
+            if CEU.opts.pre_output == '-' then
+                CEU.opts.pre_output = os.tmpname()
+            end
+            CEU.opts.ceu_input = CEU.opts.pre_output
+        end
+    end
+    ASR(CEU.opts.ceu_input, 'expected option `ceu-input´')
+
+    CEU.opts.ceu_output = CEU.opts.ceu_output or '-'
 else
     check_no('ceu')
 end
 
 if CEU.opts.env then
-    ASR(CEU.opts.env_header, 'env_header')
-    ASR(CEU.opts.env_ceu,    'env_ceu')
-    ASR(CEU.opts.env_main,   'env_main')
-    ASR(CEU.opts.env_output, 'env_output')
+    if not CEU.opts.ceu then
+        ASR(not CEU.opts.pre, 'expected option `ceu´')
+    end
+
+    ASR(CEU.opts.env_header, 'expected option `env-header´')
+    ASR(CEU.opts.env_main,   'expected option `env-main´')
+
+    if CEU.opts.ceu then
+        if CEU.opts.env_ceu then
+            ASR(CEU.opts.env_ceu == CEU.opts.ceu_output,
+                "`ceu-output´ and `env-ceu´ don't match")
+        else
+            if CEU.opts.ceu_output == '-' then
+                CEU.opts.ceu_output = os.tmpname()
+            end
+            CEU.opts.env_ceu = CEU.opts.ceu_output
+        end
+    end
+    ASR(CEU.opts.env_ceu, 'expected option `env-ceu´')
+
+    CEU.opts.env_output = CEU.opts.env_output or '-'
 else
     check_no('env')
 end
 
 if CEU.opts.cc then
+    if not CEU.opts.env then
+        ASR(not CEU.opts.pre, 'expected option `env´')
+        ASR(not CEU.opts.ceu, 'expected option `env´')
+    end
+
     CEU.opts.cc_exe  = CEU.opts.cc_exe  or 'gcc'
     CEU.opts.cc_args = CEU.opts.cc_args or ''
+
+    if CEU.opts.env then
+        if CEU.opts.cc_input then
+            ASR(CEU.opts.cc_input == CEU.opts.env_output,
+                "`env-output´ and `cc-input´ don't match")
+        else
+            if CEU.opts.env_output == '-' then
+                CEU.opts.env_output = os.tmpname()
+            end
+            CEU.opts.cc_input = CEU.opts.env_output
+        end
+    end
+    ASR(CEU.opts.cc_input, 'expected option `cc-input´')
+
+    ASR(CEU.opts.cc_output, 'expected option `cc-output´')
 else
     check_no('cc')
 end

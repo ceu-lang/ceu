@@ -1,6 +1,7 @@
 #!/usr/bin/env lua5.3
 
 RUNTESTS = {
+    cmd = true,
     --luacov = 'lua5.3 -lluacov'
 -- Execution option for the tests:
     --valgrind = true
@@ -21,6 +22,107 @@ if RUNTESTS.luacov then
     require 'luacov'
     os.remove('luacov.stats.out')
     os.remove('luacov.report.out')
+end
+
+if RUNTESTS.cmd then
+    os.execute('cd ../src/lua/ && lua5.3 pak.lua lua5.3 && cp ceu /usr/local/bin/')
+
+    local tmp1 = os.tmpname()
+    local f = assert(io.open(tmp1,'w'))
+    f:write('escape 10;')
+    f:close()
+
+    --$ ceu
+    -->>> ERROR : expected some option
+
+    local f = assert(io.popen('ceu 2>&1'))
+    local out = f:read'*a'
+    local ok,mode,status = f:close()
+    assert(ok==nil and mode=='exit' and status==1 and
+           string.find(out, '^ceu 0%.20.*Usage:.*Options:.*>>> ERROR : expected some option'))
+
+    --$ ceu --pre
+    -->>> ERROR : expected option `pre-input´
+
+    local f = assert(io.popen('ceu --pre 2>&1'))
+    local out = f:read'*a'
+    local ok,mode,status = f:close()
+    assert(ok==nil and mode=='exit' and status==1 and
+           string.find(out, '^>>> ERROR : expected option `pre%-input´'))
+
+    --$ ceu --pre --pre-input=/tmp/xxx.ceu
+    -- OK
+
+    local tmp = os.tmpname()
+    local f = assert(io.open(tmp,'w'))
+    f:write('escape 10;')
+    f:close()
+
+    local f = assert(io.popen('ceu --pre --pre-input='..tmp))
+    local out = f:read'*a'
+    local ok,mode,status = f:close()
+    assert(ok==true and mode=='exit' and status==0 and
+           string.find(out, '^# 1 "'..tmp..'".*escape 10;'))
+
+    --$ ceu --pre --pre-input=/tmp/xxx.ceu --pre-output=/tmp/yyy.ceu
+    --      --ceu --ceu-input=x
+    -->>> ERROR : don't match
+
+    local tmp2 = os.tmpname()
+    local f = assert(io.popen('ceu --pre --pre-input='..tmp1..' '..
+                                        '--pre-output='..tmp2..' '..
+                                  '--ceu --ceu-input=x 2>&1'))
+    local out = f:read'*a'
+    local ok,mode,status = f:close()
+    assert(ok==nil and mode=='exit' and status==1 and
+           string.find(out, "^>>> ERROR : `pre%-output´ and `ceu%-input´ don't match"))
+
+    --$ ceu --pre --pre-input=/tmp/xxx.ceu --ceu
+    -- OK
+
+    local f = assert(io.popen('ceu --pre --pre-input='..tmp1..' '..
+                                  '--ceu'))
+    local out = f:read'*a'
+    local ok,mode,status = f:close()
+    assert(ok==true and mode=='exit' and status==0 and
+           string.find(out, 'CEU_C.*ceu_vector.*tceu_app CEU_APP.*ceu_go_bcast.*ceu_go_all'))
+
+    --$ ceu --pre --pre-input=/tmp/xxx.ceu --env
+    -->>> ERROR
+
+    local f = assert(io.popen('ceu --pre --pre-input=x --env 2>&1'))
+    local out = f:read'*a'
+    local ok,mode,status = f:close()
+    assert(ok==nil and mode=='exit' and status==1 and
+           string.find(out, '>>> ERROR : expected option `ceu´'))
+
+    --$ ceu --pre --pre-input=/tmp/xxx.ceu --ceu --env
+    -- OK
+
+    local f = assert(io.popen('ceu --pre --pre-input='..tmp1..' '..
+                                  '--ceu '..
+                                  '--env --env-header=../arch/env-header.h '..
+                                        '--env-main=../arch/env-main.c'))
+    local out = f:read'*a'
+    local ok,mode,status = f:close()
+    assert(ok==true and mode=='exit' and status==0 and
+           string.find(out, 'This file is.*typedef uint32_t u32.*CEU_C.*ceu_vector.*tceu_app CEU_APP.*ceu_go_bcast.*ceu_go_all.*int main'))
+
+    --$ ceu --pre --pre-input=/tmp/xxx.ceu --ceu --env --cc --cc-output=/tmp/xxx.exe
+    -- OK
+
+    local tmp2 = os.tmpname()
+    local f = assert(io.popen('ceu --pre --pre-input='..tmp1..' '..
+                                  '--ceu '..
+                                  '--env --env-header=../arch/env-header.h '..
+                                        '--env-main=../arch/env-main.c '..
+                                  '--cc --cc-output='..tmp2))
+    local out = f:read'*a'
+    local ok,mode,status = f:close()
+    assert(ok==true and mode=='exit' and status==0)
+
+    local ok, mode, status = os.execute(tmp2)
+    assert(ok==nil and mode=='exit' and status==10)
 end
 
 function check (T, mod)
@@ -110,8 +212,7 @@ end
         opts = T.opts or {
             ceu          = true,
             ceu_input    = '/tmp/tmp.ceu',
-            ceu_output_h = '/tmp/tmp.ceu.h',
-            ceu_output_c = '/tmp/tmp.ceu.c',
+            ceu_output   = '/tmp/tmp.ceu.c',
 
             env          = true,
             env_header   = '../arch/env-header.h',

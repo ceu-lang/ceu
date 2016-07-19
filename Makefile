@@ -87,9 +87,10 @@ all: ceu c
 	cd $(OUT_DIR) && ./$(OUT_EXE)
 
 compiler:
-	cd $(CEU_DIR)/src/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE)
-	mv $(CEU_DIR)/src/lua/ceu $(CEU_EXE)
-	$(CEU_EXE) --dump
+	cd $(CEU_DIR)/src/lua/ && $(LUA_EXE) pak.lua $(LUA_EXE) && ./ceu --version
+
+install:
+	cp $(CEU_DIR)/src/lua/ceu $(CEU_EXE)
 
 ceu:
 	mkdir -p $(OUT_DIR)

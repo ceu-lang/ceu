@@ -6,11 +6,11 @@ dofile 'cmd.lua'
 if CEU.opts.pre then
     dofile 'pre.lua'
 end
-DBG,ASR = DBG2,ASR2
 if CEU.opts.ceu then
     dofile 'lines.lua'
     dofile 'parser.lua'
     dofile 'ast.lua'
+    DBG,ASR = DBG2,ASR2
     dofile 'adjs.lua'
     dofile 'types.lua'
     dofile 'dcls.lua'
@@ -20,9 +20,12 @@ if CEU.opts.ceu then
     dofile 'stmts.lua'
     dofile 'inits.lua'
     dofile 'scopes.lua'
+    dofile 'tight_.lua'
+    dofile 'props_.lua'
+    dofile 'trails.lua'
     dofile 'labels.lua'
-    dofile 'mems.lua'
     dofile 'vals.lua'
+    dofile 'mems.lua'
     dofile 'codes.lua'
 end
 DBG,ASR = DBG1,ASR1
