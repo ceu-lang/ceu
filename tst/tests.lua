@@ -29999,6 +29999,17 @@ escape bg_clr!.v;
 -->>> WATCHING
 
 Test { [[
+input int&& E;
+var int e =
+    watching E do
+        await FOREVER;
+    end;
+escape 0;
+]],
+    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "(int&&)"',
+}
+
+Test { [[
 var int ret = 1;
 watching 1s do
     every 100ms do
@@ -30050,7 +30061,6 @@ escape 1;
     run = 1,
 }
 
---]=====]
 Test { [[
 input (int,int) E;
 var int n =
@@ -30266,7 +30276,6 @@ escape ret;
         ['1000~>I; ~>1s'] = 5,
     }
 }
-do return end
 
 --<<< WATCHING
 
@@ -32680,6 +32689,76 @@ escape 1;
     --tight = 'tight loop',
     run = 1,
 }
+
+-->> CODE / DELAYED / WATCHING
+--]=====]
+
+Test { [[
+code/delayed Code (var int x) => int do
+    escape 0;
+end
+var int&& a =
+    watching Code(111) do
+        await FOREVER;
+    end;
+
+escape 0;
+]],
+    stmts = 'line 4 : invalid assignment : types mismatch : "int&&" <= "int"',
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    x = x + 222;
+    await 1s;
+    escape x;
+end
+var int? a =
+    watching Code(111) do
+        escape 99;
+    end;
+
+escape a!+1;
+]],
+    run = 99,
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    escape x;
+end
+var int? a =
+    watching Code(111) do
+        escape 99;
+    end;
+
+escape a!+1;
+]],
+    run = 112,
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    x = x + 1;
+    await 1s;
+    escape x;
+end
+var int? a =
+    watching Code(10) do
+        await 5s;
+        escape 1;
+    end;
+
+escape a!;
+]],
+    run = {['~>1s']=11 },
+}
+
+
+do return end
 
 --<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 
@@ -53826,42 +53905,6 @@ escape 1;
 }
 
 -- TRACKING / WATCHING
-
-Test { [[
-code/delayed Code (var int x) => int
-do
-    x = x + 222;
-    await 1s;
-    escape x;
-end
-var int a =
-    watching Code(111) do
-        escape 99;
-    end;
-
-escape a;
-]],
-    _ana = {acc=1},
-    run = 99,
-}
-
-Test { [[
-code/delayed Code (var int x) => int
-do
-    x = x + 1;
-    await 1s;
-    escape x;
-end
-var int a =
-    watching Code(10) do
-        await 5s;
-        escape 1;
-    end;
-
-escape a;
-]],
-    run = {['~>1s']=11 },
-}
 
 Test { [[
 data Data with
