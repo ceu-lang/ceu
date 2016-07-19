@@ -399,6 +399,7 @@ DBG('TODO: _Loop_Pool')
                 end
             end
             me[2] = node(tag, me.ln, awt)
+            me[2].__adjs_is_watching = true
             watching[1] = me
             return watching
         end

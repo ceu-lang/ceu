@@ -187,6 +187,12 @@ DBG('TODO: _Lua')
         local fr, to = unpack(me)
         assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Await' or fr.tag=='Await_Int')
         EXPS.check_tp(me, to.info.tp, fr.tp or fr.info.tp, 'invalid assignment')
+
+        if me.__adjs_is_watching then
+            -- var int? us = watching 1s do ... end
+            ASR(TYPES.check(to.info.tp,'?'), me,
+                'invalid `watching´ assignment : expected option type `?´ : got "'..TYPES.tostring(to.info.tp)..'"')
+        end
     end,
 
     Set_Await_many = function (me)
@@ -200,6 +206,14 @@ DBG('TODO: _Lua')
         -- tp
         local awt = unpack(AST.asr(fr,'Await_Until'))
         EXPS.check_tp(me, to.tp, awt.tp, 'invalid assignment')
+
+        if me.__adjs_is_watching then
+            for _, e in ipairs(to) do
+                -- var int? us = watching 1s do ... end
+                ASR(TYPES.check(e.info.tp,'?'), me,
+                    'invalid `watching´ assignment : expected option type `?´ : got "'..TYPES.tostring(e.info.tp)..'"')
+            end
+        end
     end,
 
 -- AWAITS

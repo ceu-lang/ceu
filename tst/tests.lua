@@ -10,7 +10,6 @@ end
 
 --[=====[
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -30012,18 +30011,20 @@ escape ret;
 }
 
 Test { [[
-var s32? n =
+var int n =
     watching 1s do
         await FOREVER;
     end;
-escape (n! as int)/10;
+escape n/10;
 ]],
-    run = { ['~>1001ms'] = 100 },
+    stmts = 'line 1 : invalid `watching´ assignment : expected option type `?´ : got "int"',
+    --run = { ['~>1001ms'] = 100 },
 }
 
 Test { [[
-var int n? =
+var int? n =
     watching 1s do
+        await FOREVER;
     end;
 escape n!/10;
 ]],
@@ -30031,13 +30032,12 @@ escape n!/10;
 }
 
 Test { [[
-var int n? =
+var int? n =
     watching 1s do
-        await FOREVER;
     end;
-escape n/10;
+escape n!/10;
 ]],
-    run = { ['~>1001ms'] = 100 },
+    run = '4] runtime error: value is not set',
 }
 
 Test { [[
@@ -30050,14 +30050,80 @@ escape 1;
     run = 1,
 }
 
+--]=====]
+Test { [[
+input (int,int) E;
+var int n =
+    watching E do
+        await FOREVER;
+    end;
+escape n;
+]],
+    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "(int,int)"',
+}
+
+Test { [[
+input (int,int) E;
+var int a,b;
+(a,b) =
+    watching E do
+        await FOREVER;
+    end;
+escape a+b;
+]],
+    stmts = 'line 3 : invalid `watching´ assignment : expected option type `?´ : got "int"',
+}
+
+Test { [[
+input (int,int) E;
+var int? a;
+var int  b;
+(a,b) =
+    watching E do
+        await FOREVER;
+    end;
+escape a!+b;
+]],
+    stmts = 'line 4 : invalid `watching´ assignment : expected option type `?´ : got "int"',
+}
+
+Test { [[
+input (int,int) E;
+var int? a,b;
+(a,b) =
+    watching E do
+    end;
+escape (a? as int) + (b? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+par/or do
+    input (int,int) E;
+    var int? a,b;
+    (a,b) =
+        watching E do
+            await FOREVER;
+        end;
+    escape a!+b!;
+with
+    async do
+        emit E => (10,20);
+    end
+end
+]],
+    run = 30,
+}
+
 Test { [[
 event int e;
 par do
-    var int n =
+    var int? n =
         watching e do
             await FOREVER;
         end;
-    escape n;
+    escape n!;
 with
     await 1s;
     emit e => 10;
@@ -30068,11 +30134,11 @@ end
 }
 
 Test { [[
-var int n =
+var int? n =
     watching 1s do
         escape 1;
     end;
-escape n;
+escape n!;
 ]],
     run = { ['~>1001ms'] = 1 },
 }
@@ -30081,12 +30147,12 @@ Test { [[
 input void E;
 event int e;
 par do
-    var int n =
+    var int? n =
         watching e do
             await 300ms;
             escape 1;
         end;
-    escape n;
+    escape n!;
 with
     await E;
     emit e => 10;
@@ -30099,12 +30165,12 @@ end
 Test { [[
 event int e;
 par do
-    var int n =
+    var int? n =
         watching e do
             await 300ms;
             escape 1;
         end;
-    escape n;
+    escape n!;
 with
     await 1s;
     emit e => 10;
@@ -30133,12 +30199,15 @@ escape ret;
 Test { [[
 input int I;
 var int ret = -5;
-var int v=
-watching I do
-    await 1s;
-    ret = 5;
-end;
-escape ret+v;
+var int? v =
+    watching I do
+        await 1s;
+        ret = 5;
+    end;
+if v? then
+    ret = ret + v!;
+end
+escape ret;
 ]],
     run = {
         ['100~>I; ~>1s'] = 95,
