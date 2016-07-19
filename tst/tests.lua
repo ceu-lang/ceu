@@ -29969,7 +29969,7 @@ var int e =
     end;
 escape 0;
 ]],
-    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "(int&&)"',
+    adjs = 'line 3 : unexpected `=>´',
 }
 
 Test { [[
