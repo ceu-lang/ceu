@@ -67,6 +67,29 @@ case ]]..T.lbl..[[:;
     end
 end
 
+function SET (me, to, fr, fr_ok)
+    if not fr_ok then
+        -- var Ee.Xx ex = ...;
+        -- var&& Ee = &&ex;
+        local cast = ''
+        if to.info.tp[1].tag == 'ID_abs' then
+            cast = '('..TYPES.toc(to.info.tp)..')'
+        end
+        fr = cast..V(fr)
+    end
+
+    if TYPES.check(to.info.tp,'?') then
+        LINE(me, [[
+]]..V(to)..[[.is_set = 1;
+]]..V(to)..'.value  = '..fr..[[;
+]])
+    else
+        LINE(me, [[
+]]..V(to)..' = '..fr..[[;
+]])
+    end
+end
+
 F = {
     ROOT = CONC_ALL,
     Block = CONC_ALL,
@@ -619,23 +642,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 ]])
 
         else
-            -- var Ee.Xx ex = ...;
-            -- var&& Ee = &&ex;
-            local cast = ''
-            if to.info.tp[1].tag == 'ID_abs' then
-                cast = '('..TYPES.toc(to.info.tp)..')'
-            end
-
-            if TYPES.check(to.info.tp,'?') then
-                LINE(me, [[
-]]..V(to)..[[.is_set = 1;
-]]..V(to)..'.value  = '..cast..V(fr)..[[;
-]])
-            else
-                LINE(me, [[
-]]..V(to)..' = '..cast..V(fr)..[[;
-]])
-            end
+            SET(me, to, fr)
         end
     end,
 
@@ -658,15 +665,11 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         local fr, to = unpack(me)
         CONC_ALL(me)
         if fr.tag == 'Await_Wclock' then
-            LINE(me, [[
-]]..V(to)..[[ = CEU_APP.wclk_late;
-]])
+            SET(me, to, 'CEU_APP.wclk_late', true)
         else
             assert(fr.tag == 'Abs_Await')
             -- see "Set_Exp: _ret"
-            LINE(me, [[
-]]..V(to)..[[ = *((int*) ((tceu_evt_params_code*)_ceu_evt->params)->ret);
-]])
+            SET(me, to, '*((int*) ((tceu_evt_params_code*)_ceu_evt->params)->ret)' ,true)
         end
     end,
     Set_Await_many = function (me)
@@ -683,9 +686,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         CONC(me, Await_Until)
         for i, name in ipairs(Namelist) do
             local ps = '(('..id..'*)(_ceu_evt->params))'
-            LINE(me, [[
-]]..V(name)..' = '..ps..'->_'..i..[[;
-]])
+            SET(me, name, ps..'->_'..i, true)
         end
     end,
 
@@ -694,9 +695,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)
         local _,Abs_Cons = unpack(fr)
-        LINE(me, [[
-]]..V(to)..' = '..V(Abs_Cons)..[[;
-]])
+        SET(me, to, Abs_Cons)
     end,
 
     Set_Vec = function (me)
@@ -822,15 +821,15 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',
 
         if inout == 'output' then
             local set = AST.par(me,'Set_Emit_Ext_emit')
+            local cb = [[
+ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[).num;
+]]
             if set then
                 local _, to = unpack(set)
-                LINE(me, [[
-]]..V(to)..[[ =
-]])
+                SET(me, to, cb, true)
+            else
+                LINE(me, cb)
             end
-            LINE(me, [[
-    ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[).num;
-]])
         else
             LINE(me, [[
 ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);

@@ -167,6 +167,7 @@ end
     if not check(T,'exps')   then return end
     if not check(T,'consts') then return end
     if not check(T,'stmts')  then return end
+--AST.dump(AST.root)
     if not check(T,'inits')  then return end
     if not check(T,'scopes') then return end
     if not check(T,'tight_') then return end
@@ -177,9 +178,8 @@ end
     if not check(T,'mems')   then return end
 --do return end
     if not check(T,'codes')  then return end
---AST.dump(AST.root)
 
-if T.ana or T.tmp or T.props then return end
+if T.ana or T.tmp or T.props or T.mode then return end
 
     DBG,ASR = DBG1,ASR1
     if CEU.opts.env then

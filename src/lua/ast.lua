@@ -118,6 +118,18 @@ error'TODO: luacov never executes this?'
     end
 end
 
+--[[
+function AST.idx (par, me)
+    assert(AST.is_node(par))
+    for i, sub in ipairs(par) do
+        if sub == me then
+            return i
+        end
+    end
+    error'bug found'
+end
+]]
+
 function AST.get (me, tag, ...)
     local idx, tag2 = ...
 

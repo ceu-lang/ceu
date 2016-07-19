@@ -29997,6 +29997,210 @@ escape bg_clr!.v;
 
 --<<< OPTION TYPES
 
+-->>> WATCHING
+
+Test { [[
+var int ret = 1;
+watching 1s do
+    every 100ms do
+        ret = ret + 1;
+    end
+end;
+escape ret;
+]],
+    run = { ['~>1s'] = 10 },
+}
+
+Test { [[
+var s32? n =
+    watching 1s do
+        await FOREVER;
+    end;
+escape (n! as int)/10;
+]],
+    run = { ['~>1001ms'] = 100 },
+}
+
+Test { [[
+var int n? =
+    watching 1s do
+    end;
+escape n!/10;
+]],
+    run = { ['~>1001ms'] = 100 },
+}
+
+Test { [[
+var int n? =
+    watching 1s do
+        await FOREVER;
+    end;
+escape n/10;
+]],
+    run = { ['~>1001ms'] = 100 },
+}
+
+Test { [[
+input void OS_START;
+watching OS_START do
+    await FOREVER;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+event int e;
+par do
+    var int n =
+        watching e do
+            await FOREVER;
+        end;
+    escape n;
+with
+    await 1s;
+    emit e => 10;
+    await FOREVER;
+end
+]],
+    run = { ['~>1001ms'] = 10 },
+}
+
+Test { [[
+var int n =
+    watching 1s do
+        escape 1;
+    end;
+escape n;
+]],
+    run = { ['~>1001ms'] = 1 },
+}
+
+Test { [[
+input void E;
+event int e;
+par do
+    var int n =
+        watching e do
+            await 300ms;
+            escape 1;
+        end;
+    escape n;
+with
+    await E;
+    emit e => 10;
+    await FOREVER;
+end
+]],
+    run = { ['~>1001ms'] = 1 },
+}
+
+Test { [[
+event int e;
+par do
+    var int n =
+        watching e do
+            await 300ms;
+            escape 1;
+        end;
+    escape n;
+with
+    await 1s;
+    emit e => 10;
+    await FOREVER;
+end
+]],
+    _ana = { acc=1 },
+    run = { ['~>1001ms'] = 1 },
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+watching I do
+    await 1s;
+    ret = 5;
+end
+escape ret;
+]],
+    run = {
+        ['100~>I; ~>1s'] = -5,
+        ['~>1s; 100~>I'] = 5,
+    }
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+var int v=
+watching I do
+    await 1s;
+    ret = 5;
+end;
+escape ret+v;
+]],
+    run = {
+        ['100~>I; ~>1s'] = 95,
+        ['~>1s; 100~>I'] = 5,
+    }
+}
+
+Test { [[
+watching (10)ms do
+end
+escape 1;
+]],
+    run = {
+        ['~>1s'] = 1,
+    }
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+var int dt = await I;
+watching (dt)ms do
+    await 1s;
+    ret = 5;
+end
+escape ret;
+]],
+    run = {
+        ['100~>I; ~>1s'] = -5,
+        ['1000~>I; ~>1s'] = -5,
+        ['1001~>I; ~>1s'] = 5,
+    }
+}
+
+Test { [[
+input int I;
+var int ret = -5;
+event void e;
+par/or do
+    loop do
+        var int dt = await I;
+        if dt == 100 then
+            emit e;
+        end
+    end
+with
+    watching e do
+        await 1s;
+        ret = 5;
+    end
+end
+escape ret;
+]],
+    run = {
+        ['100~>I; ~>1s'] = -5,
+        ['1000~>I; ~>1s'] = 5,
+    }
+}
+do return end
+
+--<<< WATCHING
+
 -->>> CODE / INSTANTANEOUS / FUNCTIONS
 
 Test { [[
@@ -31734,6 +31938,681 @@ escape v;
     wrn = true,
     run = 5,
 }
+
+-->>> INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
+
+Test { [[
+code/instantaneous Fx (var& int x) => void do
+    x = 10;
+end
+var int x;
+call Fx(&x);
+escape x;
+]],
+    todo = 'check if code initializes & arg',
+    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
+}
+Test { [[
+code/delayed Fx (var& int x) => void do
+    x = 10;
+end
+var int x;
+await Fx(&x);
+escape x;
+]],
+    todo = 'check if code initializes & arg',
+    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
+}
+Test { [[
+code/instantaneous Fx (var& int x) => void do
+end
+var int x;
+call Fx(&x);
+escape x;
+]],
+    todo = 'check if code initializes & arg',
+    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
+}
+Test { [[
+code/delayed Fx (var& int x) => void do
+    await 1s;
+    x = 1;
+end
+var int x;
+await Fx(&x);
+escape x;
+]],
+    todo = 'check if code initializes & arg',
+    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
+}
+Test { [[
+code/instantaneous Fx (var& int x) => void do
+    var int y = x;
+end
+var int x;
+call Fx(&x);
+escape x;
+]],
+    todo = 'check if code initializes & arg',
+    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
+}
+Test { [[
+code/delayed Fx (var& int x) => void do
+    var int y = x;
+end
+var int x;
+await Fx(&x);
+escape x;
+]],
+    todo = 'check if code initializes & arg',
+    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
+}
+
+Test { [[
+class Tx with
+    output:
+        var int o;
+do
+end
+var Tx t with
+    this.o  = 1;
+end;
+escape 1;
+]],
+    mode = 'line 7 : cannot write to field with mode `output´',
+}
+
+Test { [[
+class Tx with
+    output:
+        var int o;
+do
+end
+var Tx t;
+t.o = 1;
+escape 1;
+]],
+    mode = 'line 7 : cannot write to field with mode `output´',
+}
+
+Test { [[
+class Tx with
+    input:
+        var int i;
+do
+    i  = 1;
+end
+escape 1;
+]],
+    mode = 'line 5 : cannot write to field with mode `input´',
+}
+Test { [[
+class Tx with
+    input:
+        var int i;
+do
+    this.i  = 1;
+end
+escape 1;
+]],
+    mode = 'line 5 : cannot write to field with mode `input´',
+}
+
+Test { [[
+code/delayed Fx (var& int i, var& int io) => (var& int o, var& int oi) => void
+do
+    var int o_ = 1;
+    o  = &o_;
+    io = 1;
+    oi = &io;
+    await FOREVER;
+end
+
+watching Fx => (&o, &oi) do
+
+var Tx t with
+    this.i  = 1;
+    this.io = 1;
+    this.oi = 1;
+end;
+t.i  = 1;
+t.io = 1;
+t.oi = 1;
+escape t.o+t.io+t.oi;
+]],
+    run = 3,
+}
+Test { [[
+class Tx with
+    input:
+        var int i;
+
+    output:
+        var int o;
+
+    input/output:
+        var int io;
+
+    output/input:
+        var int oi;
+do
+    this.o  = 1;
+    this.io = 1;
+    this.oi = 1;
+end
+var Tx t with
+    this.i  = 1;
+    this.io = 1;
+    this.oi = 1;
+end;
+t.i  = 1;
+t.io = 1;
+t.oi = 1;
+escape t.o+t.io+t.oi;
+]],
+    run = 3,
+}
+
+Test { [[
+class Tx with
+    input/output:
+        var& int io;
+do
+    var int io_ = 1;
+    io = &io_;
+end
+escape 1;
+]],
+    tmp = 'line 6 : invalid attribution : variable "io" is already bound',
+}
+Test { [[
+class Tx with
+    input/output:
+        var& int io;
+do
+    var int io_ = 1;
+    this.io = &io_;
+end
+escape 1;
+]],
+    tmp = 'line 6 : invalid attribution : variable "io" is already bound',
+}
+
+Test { [[
+class Tx with
+    output/input:
+        var& int oi;
+do
+    var int oi_=0;
+    oi = &oi_;
+end
+
+var int oi = 1;
+var Tx t with
+    this.oi = &oi;
+end;
+escape 1;
+]],
+    tmp = 'line 11 : invalid attribution : variable "oi" is already bound',
+}
+Test { [[
+class Tx with
+    output/input:
+        var& int oi;
+do
+    var int oi_=0;
+    this.oi = &oi_;
+end
+
+var int oi = 1;
+var Tx t with
+    this.oi = &oi;
+end;
+escape 1;
+]],
+    tmp = 'line 11 : invalid attribution : variable "oi" is already bound',
+}
+
+Test { [[
+class Tx with
+    input:
+        var& int i;
+
+    output:
+        var& int o;
+
+    input/output:
+        var& int io;
+
+    output/input:
+        var& int oi;
+do
+    var int o_  = 1;
+    var int io_ = 1;
+    var int oi_ = 1;
+
+    o  = &o_;
+    oi = &oi_;
+
+    o  = 1;
+    io = 1;
+    oi = 1;
+
+    if io_ and o and io and oi then end;
+    if this.o and this.io and this.oi then end;
+end
+
+var int i  = 1;
+var int io = 1;
+var int oi = 1;
+var Tx t with
+    this.i  = &i;
+    this.io = &io;
+end;
+t.i  = 1;
+t.io = 1;
+t.oi = 1;
+escape t.o+t.io+t.oi;
+]],
+    run = 3,
+}
+Test { [[
+class Tx with
+    input:
+        var& int i;
+
+    output:
+        var& int o;
+
+    input/output:
+        var& int io;
+
+    output/input:
+        var& int oi;
+do
+    var int o_  = 1; if o_ then end;
+    var int io_ = 1; if io_ then end;
+    var int oi_ = 1;
+
+    this.o  = &o_;
+    this.oi = &oi_;
+
+    this.o  = 1;
+    this.io = 1;
+    this.oi = 1;
+end
+
+var int i  = 1;
+var int io = 1;
+var int oi = 1;
+var Tx t with
+    this.i  = &i;
+    this.io = &io;
+end;
+t.i  = 1;
+t.io = 1;
+t.oi = 1;
+escape t.o+t.io+t.oi;
+]],
+    run = 3,
+}
+
+Test { [[
+class Tx with
+    input:
+        var int i=1;
+
+    output:
+        var int o=1;
+
+    input/output:
+        var int io=1;
+
+    output/input:
+        var int oi=1;
+do
+end
+var Tx t with
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class Tx with
+    input/output:
+        var int io;
+do
+end
+var Tx t with
+end;
+escape 1;
+]],
+    tmp = 'line 7 : missing initialization for field "io" (declared in /tmp/tmp.ceu:3)',
+}
+
+Test { [[
+class Tx with
+    input:
+        var int i;
+do
+end
+var Tx t with
+end;
+escape 1;
+]],
+    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+}
+
+Test { [[
+class Tx with
+    input:
+        var int i;
+
+    output:
+        var int o;
+
+    input/output:
+        var int io;
+
+    output/input:
+        var int oi;
+do
+    this.o  = 1;
+    this.oi = 1;
+end
+var Tx t with
+    this.i  = 1;
+    this.io = 1;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class Tx with
+    input:
+        var& int i;
+do
+end
+var Tx t with
+end;
+escape 1;
+]],
+    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+}
+
+Test { [[
+class Tx with
+    input:
+        var& int io;
+do
+end
+var Tx t with
+end;
+escape 1;
+]],
+    tmp = 'line 7 : missing initialization for field "io" (declared in /tmp/tmp.ceu:3)',
+}
+
+Test { [[
+class Tx with
+    output:
+        var& int o;
+do
+end
+escape 1;
+]],
+    tmp = 'line 3 : uninitialized variable "o" crossing compound statement (/tmp/tmp.ceu:1)',
+}
+
+Test { [[
+class Tx with
+    output/input:
+        var& int oi;
+do
+end
+escape 1;
+]],
+    tmp = 'line 3 : uninitialized variable "oi" crossing compound statement (/tmp/tmp.ceu:1)',
+}
+
+Test { [[
+class Tx with
+    input:
+        var& int i;
+
+    output:
+        var& int o;
+
+    input/output:
+        var& int io;
+
+    output/input:
+        var& int oi;
+do
+    var int o_ = 1;
+    o  = &o_;
+    oi = &o_;
+end
+var int i=0;
+var Tx t with
+    this.i  = &i;
+    this.io = &i;
+end;
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+class Tx with
+    input:
+        var& int i;
+
+    output:
+        var& int o;
+
+    input/output:
+        var& int io;
+
+    output/input:
+        var& int oi;
+do
+    var int o_ = 1;
+    this.o  = &o_;
+    this.oi = &o_;
+end
+var int i=0;
+var Tx t with
+    this.i  = &i;
+    this.io = &i;
+end;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class SDL with
+    input:
+        var int w;
+do
+    var int x = w;
+    if x!=0 then end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class SDL with
+    input:
+        var int w;
+do
+native _f;
+    _f(this.w);
+end
+escape 1;
+]],
+    cc = 'implicit declaration of function ‘f’',
+}
+
+Test { [[
+class Tx with
+    input:
+        var int v;
+    code/instantaneous Build (var int v)=>Tx;
+do
+    code/instantaneous Build (var int v)=>Tx do
+        this.v = v;
+    end
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class Tx with
+    var int i;
+do
+end
+var Tx t with
+    var int i  = this.i;
+end;
+escape 1;
+]],
+    tmp = 'line 6 : invalid access to uninitialized variable "i" (declared at /tmp/tmp.ceu:2)',
+    --mode = ' line 6 : cannot read field inside the constructor',
+}
+
+Test { [[
+interface I with
+output:
+    var& int v;
+end
+
+class Bridger with
+    var& I i;
+do
+    var& int v = &this.i.v;
+    if v!=0 then end;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+class Tx with
+    output:
+        vector&[] byte name;
+do
+    vector[] byte name_ = [].."oi";
+    this.name = &name_;
+    await FOREVER;
+end
+
+var Tx t;
+native/nohold _strlen;
+native _char;
+escape _strlen(&&t.name as _char&&);
+]],
+    run = 2,
+}
+
+Test { [[
+interface I with
+    output:
+        vector&[] byte name;
+end
+
+class Tx with
+    interface I;
+do
+    vector[] byte name_ = [].."oi";
+    this.name = &name_;
+    await FOREVER;
+end
+
+class U with
+    var& Tx t;
+do
+    vector&[] byte name = &this.t.name;
+end
+
+var Tx t;
+var U u with
+    this.t = &t;
+end;
+
+native/nohold _strlen;
+native _char;
+escape _strlen(&&t.name as _char&&);
+]],
+    run = 2,
+}
+
+Test { [[
+output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
+code/instantaneous/recursive Load (var int&& l)=>void do
+    loop i do
+    end
+end
+call/recursive Load(null);
+
+escape 1;
+]],
+    wrn = true,
+    tight = 'tight loop',
+    --run = 1,
+}
+
+Test { [[
+native _ceu_out_log;
+native/pos do
+    ##define ceu_out_call_LUA_GETGLOBAL
+end
+
+output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
+code/instantaneous/recursive Load (var int&& l)=>void do
+    // TODO: load file
+    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
+    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
+    loop i do
+        var int has = 1;
+        if has==0 then
+            break;                                  // [ apps ]
+        end
+        _ceu_out_log("oi");
+    end
+
+    /*
+    var int len = (call LUA_OBJLEN => (l, -1));     // [ apps ]
+    loop i in [0->len[ do
+        call LUA_RAWGETI => (l, -1);                // [ apps | apps[i] ]
+    end
+    */
+end
+call/recursive Load(null);
+
+escape 1;
+]],
+    tight_ = 'line 11 : invalid tight `loop´ :',
+    --tight = 'tight loop',
+    run = 1,
+}
+
+--<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 
 -->>> CODE / DELAYED / SPAWN
 --[===[
@@ -52880,174 +53759,6 @@ escape 1;
 -- TRACKING / WATCHING
 
 Test { [[
-var int n =
-    watching 1s do
-        await FOREVER;
-    end;
-escape n;
-]],
-    run = { ['~>1001ms'] = 1000 },
-}
-
-Test { [[
-input void OS_START;
-watching OS_START do
-    await FOREVER;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-event int e;
-par do
-    var int n =
-        watching e do
-            await FOREVER;
-        end;
-    escape n;
-with
-    await 1s;
-    emit e => 10;
-    await FOREVER;
-end
-]],
-    run = { ['~>1001ms'] = 10 },
-}
-
-Test { [[
-var int n =
-    watching 1s do
-        escape 1;
-    end;
-escape n;
-]],
-    run = { ['~>1001ms'] = 1 },
-}
-
-Test { [[
-input void E;
-event int e;
-par do
-    var int n =
-        watching e do
-            await 300ms;
-            escape 1;
-        end;
-    escape n;
-with
-    await E;
-    emit e => 10;
-    await FOREVER;
-end
-]],
-    run = { ['~>1001ms'] = 1 },
-}
-
-Test { [[
-event int e;
-par do
-    var int n =
-        watching e do
-            await 300ms;
-            escape 1;
-        end;
-    escape n;
-with
-    await 1s;
-    emit e => 10;
-    await FOREVER;
-end
-]],
-    _ana = { acc=1 },
-    run = { ['~>1001ms'] = 1 },
-}
-
-Test { [[
-input int I;
-var int ret = -5;
-watching I do
-    await 1s;
-    ret = 5;
-end
-escape ret;
-]],
-    run = {
-        ['100~>I; ~>1s'] = -5,
-        ['~>1s; 100~>I'] = 5,
-    }
-}
-
-Test { [[
-input int I;
-var int ret = -5;
-var int v=
-watching I do
-    await 1s;
-    ret = 5;
-end;
-escape ret+v;
-]],
-    run = {
-        ['100~>I; ~>1s'] = 95,
-        ['~>1s; 100~>I'] = 5,
-    }
-}
-
-Test { [[
-watching (10)ms do
-end
-escape 1;
-]],
-    run = {
-        ['~>1s'] = 1,
-    }
-}
-
-Test { [[
-input int I;
-var int ret = -5;
-var int dt = await I;
-watching (dt)ms do
-    await 1s;
-    ret = 5;
-end
-escape ret;
-]],
-    run = {
-        ['100~>I; ~>1s'] = -5,
-        ['1000~>I; ~>1s'] = -5,
-        ['1001~>I; ~>1s'] = 5,
-    }
-}
-
-Test { [[
-input int I;
-var int ret = -5;
-event void e;
-par/or do
-    loop do
-        var int dt = await I;
-        if dt == 100 then
-            emit e;
-        end
-    end
-with
-    watching e do
-        await 1s;
-        ret = 5;
-    end
-end
-escape ret;
-]],
-    run = {
-        ['100~>I; ~>1s'] = -5,
-        ['1000~>I; ~>1s'] = 5,
-    }
-}
-
-Test { [[
 code/delayed Code (var int x) => int
 do
     x = x + 222;
@@ -57195,627 +57906,6 @@ escape 0;
     run = 'TODO',
 }
 --<<< CLASSES, ORGS, ORGANISMS
-
--->>> INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
-
-Test { [[
-class Tx with
-    input:
-        var int i;
-do
-end
-var Tx t;
-escape t.i;
-]],
-    tmp = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
-}
-
-Test { [[
-class Tx with
-    output:
-        var int o;
-do
-end
-var Tx t with
-    this.o  = 1;
-end;
-escape 1;
-]],
-    mode = 'line 7 : cannot write to field with mode `output´',
-}
-
-Test { [[
-class Tx with
-    output:
-        var int o;
-do
-end
-var Tx t;
-t.o = 1;
-escape 1;
-]],
-    mode = 'line 7 : cannot write to field with mode `output´',
-}
-
-Test { [[
-class Tx with
-    input:
-        var int i;
-do
-    i  = 1;
-end
-escape 1;
-]],
-    mode = 'line 5 : cannot write to field with mode `input´',
-}
-Test { [[
-class Tx with
-    input:
-        var int i;
-do
-    this.i  = 1;
-end
-escape 1;
-]],
-    mode = 'line 5 : cannot write to field with mode `input´',
-}
-
-Test { [[
-class Tx with
-    input:
-        var int i;
-
-    output:
-        var int o;
-
-    input/output:
-        var int io;
-
-    output/input:
-        var int oi;
-do
-    o  = 1;
-    io = 1;
-    oi = 1;
-end
-var Tx t with
-    this.i  = 1;
-    this.io = 1;
-    this.oi = 1;
-end;
-t.i  = 1;
-t.io = 1;
-t.oi = 1;
-escape t.o+t.io+t.oi;
-]],
-    run = 3,
-}
-Test { [[
-class Tx with
-    input:
-        var int i;
-
-    output:
-        var int o;
-
-    input/output:
-        var int io;
-
-    output/input:
-        var int oi;
-do
-    this.o  = 1;
-    this.io = 1;
-    this.oi = 1;
-end
-var Tx t with
-    this.i  = 1;
-    this.io = 1;
-    this.oi = 1;
-end;
-t.i  = 1;
-t.io = 1;
-t.oi = 1;
-escape t.o+t.io+t.oi;
-]],
-    run = 3,
-}
-
-Test { [[
-class Tx with
-    input/output:
-        var& int io;
-do
-    var int io_ = 1;
-    io = &io_;
-end
-escape 1;
-]],
-    tmp = 'line 6 : invalid attribution : variable "io" is already bound',
-}
-Test { [[
-class Tx with
-    input/output:
-        var& int io;
-do
-    var int io_ = 1;
-    this.io = &io_;
-end
-escape 1;
-]],
-    tmp = 'line 6 : invalid attribution : variable "io" is already bound',
-}
-
-Test { [[
-class Tx with
-    output/input:
-        var& int oi;
-do
-    var int oi_=0;
-    oi = &oi_;
-end
-
-var int oi = 1;
-var Tx t with
-    this.oi = &oi;
-end;
-escape 1;
-]],
-    tmp = 'line 11 : invalid attribution : variable "oi" is already bound',
-}
-Test { [[
-class Tx with
-    output/input:
-        var& int oi;
-do
-    var int oi_=0;
-    this.oi = &oi_;
-end
-
-var int oi = 1;
-var Tx t with
-    this.oi = &oi;
-end;
-escape 1;
-]],
-    tmp = 'line 11 : invalid attribution : variable "oi" is already bound',
-}
-
-Test { [[
-class Tx with
-    input:
-        var& int i;
-
-    output:
-        var& int o;
-
-    input/output:
-        var& int io;
-
-    output/input:
-        var& int oi;
-do
-    var int o_  = 1;
-    var int io_ = 1;
-    var int oi_ = 1;
-
-    o  = &o_;
-    oi = &oi_;
-
-    o  = 1;
-    io = 1;
-    oi = 1;
-
-    if io_ and o and io and oi then end;
-    if this.o and this.io and this.oi then end;
-end
-
-var int i  = 1;
-var int io = 1;
-var int oi = 1;
-var Tx t with
-    this.i  = &i;
-    this.io = &io;
-end;
-t.i  = 1;
-t.io = 1;
-t.oi = 1;
-escape t.o+t.io+t.oi;
-]],
-    run = 3,
-}
-Test { [[
-class Tx with
-    input:
-        var& int i;
-
-    output:
-        var& int o;
-
-    input/output:
-        var& int io;
-
-    output/input:
-        var& int oi;
-do
-    var int o_  = 1; if o_ then end;
-    var int io_ = 1; if io_ then end;
-    var int oi_ = 1;
-
-    this.o  = &o_;
-    this.oi = &oi_;
-
-    this.o  = 1;
-    this.io = 1;
-    this.oi = 1;
-end
-
-var int i  = 1;
-var int io = 1;
-var int oi = 1;
-var Tx t with
-    this.i  = &i;
-    this.io = &io;
-end;
-t.i  = 1;
-t.io = 1;
-t.oi = 1;
-escape t.o+t.io+t.oi;
-]],
-    run = 3,
-}
-
-Test { [[
-class Tx with
-    input:
-        var int i=1;
-
-    output:
-        var int o=1;
-
-    input/output:
-        var int io=1;
-
-    output/input:
-        var int oi=1;
-do
-end
-var Tx t with
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class Tx with
-    input/output:
-        var int io;
-do
-end
-var Tx t with
-end;
-escape 1;
-]],
-    tmp = 'line 7 : missing initialization for field "io" (declared in /tmp/tmp.ceu:3)',
-}
-
-Test { [[
-class Tx with
-    input:
-        var int i;
-do
-end
-var Tx t with
-end;
-escape 1;
-]],
-    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-}
-
-Test { [[
-class Tx with
-    input:
-        var int i;
-
-    output:
-        var int o;
-
-    input/output:
-        var int io;
-
-    output/input:
-        var int oi;
-do
-    this.o  = 1;
-    this.oi = 1;
-end
-var Tx t with
-    this.i  = 1;
-    this.io = 1;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class Tx with
-    input:
-        var& int i;
-do
-end
-var Tx t with
-end;
-escape 1;
-]],
-    tmp = 'line 7 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-}
-
-Test { [[
-class Tx with
-    input:
-        var& int io;
-do
-end
-var Tx t with
-end;
-escape 1;
-]],
-    tmp = 'line 7 : missing initialization for field "io" (declared in /tmp/tmp.ceu:3)',
-}
-
-Test { [[
-class Tx with
-    output:
-        var& int o;
-do
-end
-escape 1;
-]],
-    tmp = 'line 3 : uninitialized variable "o" crossing compound statement (/tmp/tmp.ceu:1)',
-}
-
-Test { [[
-class Tx with
-    output/input:
-        var& int oi;
-do
-end
-escape 1;
-]],
-    tmp = 'line 3 : uninitialized variable "oi" crossing compound statement (/tmp/tmp.ceu:1)',
-}
-
-Test { [[
-class Tx with
-    input:
-        var& int i;
-
-    output:
-        var& int o;
-
-    input/output:
-        var& int io;
-
-    output/input:
-        var& int oi;
-do
-    var int o_ = 1;
-    o  = &o_;
-    oi = &o_;
-end
-var int i=0;
-var Tx t with
-    this.i  = &i;
-    this.io = &i;
-end;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-class Tx with
-    input:
-        var& int i;
-
-    output:
-        var& int o;
-
-    input/output:
-        var& int io;
-
-    output/input:
-        var& int oi;
-do
-    var int o_ = 1;
-    this.o  = &o_;
-    this.oi = &o_;
-end
-var int i=0;
-var Tx t with
-    this.i  = &i;
-    this.io = &i;
-end;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class SDL with
-    input:
-        var int w;
-do
-    var int x = w;
-    if x!=0 then end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class SDL with
-    input:
-        var int w;
-do
-native _f;
-    _f(this.w);
-end
-escape 1;
-]],
-    cc = 'implicit declaration of function ‘f’',
-}
-
-Test { [[
-class Tx with
-    input:
-        var int v;
-    code/instantaneous Build (var int v)=>Tx;
-do
-    code/instantaneous Build (var int v)=>Tx do
-        this.v = v;
-    end
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class Tx with
-    var int i;
-do
-end
-var Tx t with
-    var int i  = this.i;
-end;
-escape 1;
-]],
-    tmp = 'line 6 : invalid access to uninitialized variable "i" (declared at /tmp/tmp.ceu:2)',
-    --mode = ' line 6 : cannot read field inside the constructor',
-}
-
-Test { [[
-interface I with
-output:
-    var& int v;
-end
-
-class Bridger with
-    var& I i;
-do
-    var& int v = &this.i.v;
-    if v!=0 then end;
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class Tx with
-    output:
-        vector&[] byte name;
-do
-    vector[] byte name_ = [].."oi";
-    this.name = &name_;
-    await FOREVER;
-end
-
-var Tx t;
-native/nohold _strlen;
-native _char;
-escape _strlen(&&t.name as _char&&);
-]],
-    run = 2,
-}
-
-Test { [[
-interface I with
-    output:
-        vector&[] byte name;
-end
-
-class Tx with
-    interface I;
-do
-    vector[] byte name_ = [].."oi";
-    this.name = &name_;
-    await FOREVER;
-end
-
-class U with
-    var& Tx t;
-do
-    vector&[] byte name = &this.t.name;
-end
-
-var Tx t;
-var U u with
-    this.t = &t;
-end;
-
-native/nohold _strlen;
-native _char;
-escape _strlen(&&t.name as _char&&);
-]],
-    run = 2,
-}
-
-Test { [[
-output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
-code/instantaneous/recursive Load (var int&& l)=>void do
-    loop i do
-    end
-end
-call/recursive Load(null);
-
-escape 1;
-]],
-    wrn = true,
-    tight = 'tight loop',
-    --run = 1,
-}
-
-Test { [[
-native _ceu_out_log;
-native/pos do
-    ##define ceu_out_call_LUA_GETGLOBAL
-end
-
-output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
-code/instantaneous/recursive Load (var int&& l)=>void do
-    // TODO: load file
-    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
-    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
-    loop i do
-        var int has = 1;
-        if has==0 then
-            break;                                  // [ apps ]
-        end
-        _ceu_out_log("oi");
-    end
-
-    /*
-    var int len = (call LUA_OBJLEN => (l, -1));     // [ apps ]
-    loop i in [0->len[ do
-        call LUA_RAWGETI => (l, -1);                // [ apps | apps[i] ]
-    end
-    */
-end
-call/recursive Load(null);
-
-escape 1;
-]],
-    tight_ = 'line 11 : invalid tight `loop´ :',
-    --tight = 'tight loop',
-    run = 1,
-}
-
---<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 
 -->>> REQUESTS
 

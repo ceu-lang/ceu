@@ -50,6 +50,25 @@ local function run_inits (par, i, Dcl, stop)
         if me.__par.tag == 'Do' then
             -- ok: do/a end
         elseif me.dcl == Dcl then
+
+--[[
+            local Alias = AST.get(me.__par.__par,'Exp_1&')
+            if Alias and AST.get(Alias,'', 2,'Exp_Name', 1,'ID_int')==me then
+                local Abs_Call = AST.get(Alias.__par.__par.__par, 'Abs_Call')
+                if Abs_Call then
+                    local _,Abs_Cons = unpack(Abs_Call)
+                    local ID_abs, Abslist = unpack(Abs_Cons)
+                    local _,_,_,Typepars_ids = unpack(ID_abs.dcl)
+
+                    local idx = AST.idx(Abslist, Alias)
+                    local Item = AST.asr(Typepars_ids,'', idx,'Typepars_ids_item')
+DBG('>>>', idx)
+--AST.dump(ID_abs.dcl)
+AST.dump(Item)
+                end
+            end
+]]
+
             ASR(false, Dcl,
                 'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                 'reached read access '..
