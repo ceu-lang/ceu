@@ -29943,6 +29943,8 @@ escape a;
 --<< OPTION / NATIVE
 
 -->> OPTION / VECTOR
+--[===[
+-- TODO: SKIP
 
 Test { [[
 vector[1] int? v;
@@ -29990,6 +29992,8 @@ escape bg_clr!.v;
 }
 
 --<< OPTION / VECTOR
+--]===]
+-- TODO: SKIP
 
 --<<< OPTION TYPES
 
