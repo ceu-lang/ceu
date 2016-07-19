@@ -60181,6 +60181,149 @@ escape x!;
     run = '2] runtime error: value is not set',
 }
 
+Test { [[
+var int? v1 = 10;
+var int? v2 = v1;
+escape v2!;
+]],
+    stmts = 'line 2 : invalid assignment : expected operator `!´',
+    --run = 10;
+}
+
+Test { [[
+var int? v1 = 10;
+var int? v2;
+var int ret = (v1? as int) + v1!;
+v1 = v2;
+escape ret+(v1? as int)+1;
+]],
+    todo = 'v1 = v2 would fail now',
+    run = 12;
+}
+
+Test { [[
+var int? i = 10;
+var& int? ai = &i;
+escape ai!;
+]],
+    run = 10,
+}
+Test { [[
+var int? i;
+var& int? ai = &i;
+i = 10;
+escape ai!;
+]],
+    run = 10,
+}
+Test { [[
+var int? i;
+var& int? ai = &i;
+escape 1 + (ai? as int);
+]],
+    run = 1,
+}
+
+Test { [[
+var int? i;
+escape i as int;
+]],
+    exps = 'line 2 : invalid operand to `as´ : unexpected option type',
+}
+Test { [[
+var int? i;
+escape i is int;
+]],
+    --exps = 'line 2 : invalid operand to `is´ : unexpected option type',
+    exps = 'line 2 : invalid operand to `is´ : expected plain `data´ type : got "int?"',
+}
+Test { [[
+var int? i = 10;
+escape (i! as int) as int;
+]],
+    run = 10,
+}
+Test { [[
+var int? i = 10;
+escape (i! as int);
+]],
+    run = 10,
+}
+
+Test { [[
+escape 1?;
+]],
+    parser = 'ERR : /tmp/tmp.ceu : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
+}
+Test { [[
+var int i;
+escape i?;
+]],
+    exps = 'line 2 : invalid operand to `?´ : expected option type',
+}
+Test { [[
+var int? i = 1;
+escape i? as int;
+]],
+    run=1,
+}
+Test { [[
+var int? i;
+escape (i? as int)+1;
+]],
+    run=1,
+}
+
+Test { [[
+var int?&& v;
+escape 1;
+]],
+    parser = 'line 1 : after `?´ : expected internal identifier',
+    --env = 'line 1 : invalid type modifier : `?&&´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var& int? v;
+escape 1;
+]],
+    wrn = true,
+    --run = 1,
+    inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:2)',
+    --env = 'line 1 : invalid type modifier : `?&´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+var int? k;
+var& int? v = &k;
+escape 1 + (v? as int);
+]],
+    run = 1,
+}
+Test { [[
+var int? k;
+var& int? v = &k;
+v = 10;
+escape k!;
+]],
+    run = 10,
+}
+Test { [[
+var int? k;
+k = 10;
+var& int? v = &k;
+escape v!;
+]],
+    run = 10,
+}
+Test { [[
+var int?? v;
+escape 1;
+]],
+    parser = 'line 1 : after `?´ : expected internal identifier',
+    --env = 'line 1 : invalid type modifier : `??´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+
 -->> OPTION / NATIVE
 
 Test { [[
@@ -60427,6 +60570,1256 @@ escape bg_clr.v;
 }
 
 Test { [[
+native _SDL_Surface, _TTF_RenderText_Blended, _SDL_FreeSurface;
+var& _SDL_Surface? sfc;
+every 1s do
+    do
+        sfc = &_TTF_RenderText_Blended();
+    finalize (sfc) with
+        _SDL_FreeSurface(&&(sfc!));
+    end
+end
+escape 1;
+]],
+    inits = 'line 2 : uninitialized variable "sfc" : reached `every´ (/tmp/tmp.ceu:3)',
+    --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
+    --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
+    --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (/tmp/tmp.ceu:2)',
+}
+
+Test { [[
+native _fff, _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+    int V = 10;
+    int* fff (int v) {
+        V += v;
+        escape &V;
+    }
+end
+var int   v = 1;
+var int&& p = &&v;
+var& _int_ptr? r;
+do r = &_fff(*p);
+finalize (r) with
+    nothing;
+end
+escape r;
+]],
+    stmts = 'line 17 : invalid `escape´ : types mismatch : "int" <= "_int_ptr?"',
+    --env = 'line 16 : types mismatch (`int´ <= `int&?´)',
+}
+
+Test { [[
+native _f, _int_ptr;
+var& _int_ptr? v = &_f();
+escape 0;
+]],
+    scopes = 'line 2 : invalid binding : expected `finalize´',
+}
+
+Test { [[
+var int? ret=0;
+var& int? p = &ret;
+p! = p!;
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _f, _int_ptr;
+do
+    var& _int_ptr? a;
+    do
+        a = &_f();
+    finalize (a) with
+        do await FOREVER; end;
+    end
+end
+]],
+    props = "line 7 : not permitted inside `finalize´",
+}
+
+Test { [[
+native _f, _int_ptr;
+do
+    var& _int_ptr? a;
+    do a = &_f();
+    finalize (a) with
+        async do
+        end;
+    end
+end
+]],
+    props = "line 7 : not permitted inside `finalize´",
+}
+
+Test { [[
+native _f, _int_ptr;
+do/_
+    var& _int_ptr? a;
+    do a = &_f();
+    finalize (a) with
+        do/_ escape 0; end;
+    end
+end
+]],
+    props_ = 'line 6 : invalid `escape´ : unexpected enclosing `finalize´',
+    --props = "line 7 : not permitted inside `finalize´",
+}
+
+-->> OPTION / NATIVE / FINALIZE
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+
+native _fff;
+native/pre do
+    int V = 10;
+    int* fff (int v) {
+        V += v;
+        return &V;
+    }
+end
+var int   v = 1;
+var int&& p = &&v;
+var& _int_ptr? r;
+do
+    r = &_fff(*p);
+finalize (r) with
+    nothing;
+end
+escape *r!;
+]],
+    run = 11,
+}
+
+Test { [[
+native _SDL_Renderer, _f;
+native/nohold _g;
+
+var& _SDL_Renderer? ren;
+    do ren = &_f();
+    finalize (ren) with
+    end
+
+await 1s;
+_g(&&(ren!));
+
+escape 1;
+]],
+    cc = 'error: unknown type name ‘SDL_Renderer’',
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _f;
+input void E;
+var& _int_ptr? n;
+do n = &_f();
+finalize (n) with
+end
+await E;
+escape n!;
+]],
+    cc = 'error: implicit declaration of function ‘f’',
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _f;
+native/pos do
+    int* f (void) {
+        return NULL;
+    }
+end
+var int r = 0;
+do/_
+    var& _int_ptr? a;
+    do a = &_f();
+    finalize (a) with
+        var int b = do escape 2; end;
+    end
+    r = 1;
+end
+escape r;
+]],
+    --props = "line 8 : not permitted inside `finalize´",
+    --cc = '9:27: error: variable ‘__ceu_a_3’ set but not used [-Werror=unused-but-set-variable]',
+    run = 1,
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _f;
+native/pos do
+    int* f (void) {
+        return NULL;
+    }
+end
+var int r = 0;
+do/_
+    var& _int_ptr? a;
+    do a = &_f();
+    finalize (a) with
+        if a? then end
+        var int b = do escape 2; end;
+    end
+    r = 1;
+end
+escape r;
+]],
+    --props = "line 8 : not permitted inside `finalize´",
+    run = 1,
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _getV;
+native/pos do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var& _int_ptr? v;
+do
+    v = &_getV();
+finalize (v)
+with
+    nothing;
+end
+
+escape *v!;
+]],
+    run = 10,
+}
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _V, _getV;
+native/pos do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var& _int_ptr? v1;
+do v1 = &_getV();
+finalize (v1) with
+    nothing;
+end
+*v1! = 20;
+
+var& _int_ptr? v2;
+do v2 = &_getV();
+finalize (v2) with
+    nothing;
+end
+
+escape *v1!+*v2!+_V;
+]],
+    todo = 'opt-ro',
+    --env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    run = 60,
+}
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _V, _getV;
+native/pos do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
+end
+
+var& _int_ptr? v1;
+do
+    v1 = &_getV();
+finalize (v1)
+with
+    nothing;
+end
+*v1! = 20;
+
+var& _int_ptr? v2;
+do
+    v2 = &_getV();
+finalize (v2)
+with
+    nothing;
+end
+
+escape v1!+v2!+_V;
+]],
+    todo = 'opt-ro',
+    run = 60,
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _f;
+native/pre do
+    int* f (int* ptr) { return ptr; }
+end
+
+var int ret = 0;
+do
+var int v = 2;
+var& _int_ptr? p = &_f(&&v)
+                finalize (p,v) with
+                    ret = 5;
+                end;
+end
+escape ret;
+]],
+    run = 5,
+}
+
+Test { [[
+native _f;
+native/pos do
+    int f (int* p) { return *p+1; }
+end
+var int x = 1;
+var int r;
+do
+    r = _f(&&x);
+finalize (x) with
+    nothing;
+end
+escape r;
+]],
+    run = 2,
+}
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _f;
+var int x = 0;
+var& _int_ptr? r;
+do
+    r = &_f(&&x);
+finalize (x) with
+    nothing;
+end
+escape 0;
+]],
+    scopes = 'line 10 : invalid `finalize´ : unmatching identifiers : expected "r" (vs. /tmp/tmp.ceu:9)',
+}
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _f;
+var int x = 0;
+var& _int_ptr? r;
+do
+    r = &_f(&&x);
+finalize (r) with
+    nothing;
+end
+escape 0;
+]],
+    scopes = 'line 10 : invalid `finalize´ : unmatching identifiers : expected "x" (vs. /tmp/tmp.ceu:9)',
+}
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+    int* f(int* x) { return x; }
+end
+native _f;
+var int x = 0;
+var& _int_ptr? r;
+do
+    r = &_f(&&x);
+finalize (r,x) with
+    nothing;
+end
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _f;
+var int x = 0;
+do
+    var& _int_ptr? r;
+    do
+        r = &_f(&&x);
+    finalize (r,x) with
+        nothing;
+    end
+end
+escape 1;
+]],
+    scopes = 'line 10 : invalid `finalize´ : incompatible scopes',
+}
+Test { [[
+native _f;
+var int x = 0;
+do
+    var int y = 0;
+    do
+        _f(&&x,&&y);
+    finalize with
+        nothing;
+    end
+end
+escape 1;
+]],
+    scopes = 'line 6 : invalid `finalize´ : incompatible scopes',
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _alloc;
+native/pos do
+    int V;
+    int* alloc (int ok) {
+        return &V;
+    }
+    void dealloc (int* ptr) {
+    }
+end
+native/nohold _dealloc;
+
+var& _int_ptr? tex;
+do tex = &_alloc(1);    // v=2
+finalize (tex) with
+    _dealloc(&&tex);
+end
+
+escape 1;
+]],
+    exps = 'line 19 : invalid operand to `&&´ : unexpected option type',
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _alloc;
+native/pos do
+    int V;
+    int* alloc (int ok) {
+        return &V;
+    }
+    void dealloc (int* ptr) {
+    }
+end
+native/nohold _dealloc;
+
+var& _int_ptr? tex;
+do tex = &_alloc(1);    // v=2
+finalize (tex) with
+    _dealloc(tex!);
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _alloc;
+native/pos do
+    int* alloc (int ok) {
+        return NULL;
+    }
+    void dealloc (int* ptr) {
+    }
+end
+native/nohold _dealloc;
+
+var& _int_ptr? tex;
+do
+    tex = &_alloc(1);    // v=2
+finalize (tex)
+with
+    _dealloc(tex!);
+end
+
+escape 1;
+]],
+    run = '20] runtime error: value is not set',
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _alloc, _V;
+native/pos do
+    int* alloc (int ok) {
+        return NULL;
+    }
+    int V = 0;
+    void dealloc (int* ptr) {
+        if (ptr == NULL) {
+            V = 1;
+        }
+    }
+end
+native/nohold _dealloc;
+
+do
+    var& _int_ptr? tex;
+do tex = &_alloc(1);
+    finalize (tex) with
+        _dealloc(tex);
+    end
+end
+
+escape _V;
+]],
+    stmts = 'line 23 : invalid call : unexpected context for operator `?´',
+    --env = 'line 19 : wrong argument #1 : cannot pass option values to native calls',
+    --run = 1,
+}
+
+Test { [[
+native _f;
+event int e;
+_f(e);
+escape 0;
+]],
+    stmts = 'line 3 : invalid expression list : item #1 : unexpected context for event "e"',
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native _alloc, _V;
+native/pos do
+    int* alloc (int ok) {
+        return NULL;
+    }
+    int V = 0;
+    void dealloc (int* ptr) {
+        if (ptr == NULL) {
+            V = 1;
+        }
+    }
+end
+native/nohold _dealloc;
+
+do
+    var& _int_ptr? tex;
+    do tex = &_alloc(1);
+    finalize (tex) with
+        _dealloc(&tex!);
+    end
+end
+
+escape _V;
+]],
+    stmts = 'line 23 : invalid expression list : item #1 : unexpected context for alias "tex"',
+    --stmts = 'line 19 : invalid call : unexpected context for operator `&´',
+    --env = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
+    --run = '19] runtime error: invalid tag',
+}
+
+Test { [[
+native _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+end
+native/pos do
+    int* alloc (int ok) {
+        return NULL;
+    }
+    int V = 0;
+    void dealloc (int* ptr) {
+        if (ptr == NULL) {
+            V = 1;
+        }
+    }
+end
+native _alloc, _V;
+native/nohold _dealloc;
+
+do
+    var& _int_ptr? tex;
+    do tex = &_alloc(1);
+    finalize (tex) with
+        _dealloc(tex!);
+    end
+end
+
+escape _V;
+]],
+    --env = 'line 19 : wrong argument #1 : cannot pass option type',
+    run = '23] runtime error: value is not set',
+}
+
+Test { [[
+native/pre do
+    struct Tx;
+    typedef struct Tx* t;
+    int V = 1;
+    t alloc (int ok) {
+        if (ok) {
+            V++;
+            return (t) &V;
+        } else {
+            return NULL;
+        }
+    }
+    void dealloc (t ptr) {
+        if (ptr != NULL) {
+            V *= 2;
+        }
+    }
+end
+native _alloc, _V, _t;
+native/nohold _dealloc;
+
+var int ret = _V;           // v=1, ret=1
+
+do
+    var& _t? tex;
+do
+        tex = &_alloc(1);    // v=2
+    finalize (tex)
+    with
+        _dealloc(tex!);
+    end
+    ret = ret + _V;         // ret=3
+    if not tex? then
+        ret = 0;
+    end
+end                         // v=4
+
+ret = ret + _V;             // ret=7
+
+do
+    var& _t? tex;
+do
+        tex = &_alloc(0);    // v=4
+    finalize (tex)
+    with
+        if tex? then
+            _dealloc(tex!);
+        end
+    end
+    ret = ret + _V;         // ret=11
+    if not tex? then
+        ret = ret + 1;      // ret=12
+    end
+end                         // v=4
+
+ret = ret + _V;             // ret=16
+
+escape ret;
+]],
+    run = 16,
+}
+
+Test { [[
+native _f;
+native/pos do
+    void* f () {
+        return NULL;
+    }
+end
+
+var& void? ptr;
+do ptr = &_f();
+finalize (ptr) with
+    nothing;
+end
+
+escape &ptr! == &ptr!;  // ptr.SOME fails
+]],
+    exps = 'line 14 : invalid expression : unexpected context for operation `&´',
+    --env = 'line 14 : invalid use of operator "&" : not a binding assignment',
+}
+
+Test { [[
+native _f;
+native/pos do
+    void* f () {
+        return NULL;
+    }
+end
+
+var& void? ptr;
+do
+    ptr = &_f();
+finalize (ptr)
+with
+    nothing;
+end
+
+escape (ptr! == ptr!) as int;  // ptr.SOME fails
+]],
+    stmts = 'line 10 : invalid binding : types mismatch : "void?" <= "_"',
+}
+
+Test { [[
+native _f, _void_ptr;
+native/pre do
+    typedef void* void_ptr;
+    void* f () {
+        return NULL;
+    }
+end
+
+var& _void_ptr? ptr;
+do
+    ptr = &_f();
+finalize (ptr)
+with
+    nothing;
+end
+
+escape (ptr! == ptr!) as int;  // ptr.SOME fails
+]],
+    run = '17] runtime error: value is not set',
+}
+
+Test { [[
+native _f, _void_ptr;
+native/pre do
+    typedef void* void_ptr;
+    void* f () {
+        return NULL;
+    }
+end
+
+var& _void_ptr? ptr;
+do
+    ptr = &_f();
+finalize (ptr)
+with
+    nothing;
+end
+
+escape (not ptr? )as int;
+]],
+    run = 1,
+}
+
+Test { [[
+native _f, _void_ptr;
+native/pre do
+    typedef void* void_ptr;
+    void* f () {
+        return NULL;
+    }
+    void g (void* g) {
+    }
+end
+native/nohold _g;
+
+var& _void_ptr? ptr;
+do
+    ptr = &_f();
+finalize (ptr)
+with
+    _g(ptr!);    // error (ptr is Nil)
+end
+
+escape (not ptr? )as int;
+]],
+    run = '17] runtime error: value is not set',
+}
+
+Test { [[
+native _f, _void_ptr;
+native/pre do
+    typedef void* void_ptr;
+    void* f () {
+        return NULL;
+    }
+    void g (void* g) {
+    }
+end
+native/nohold _g;
+
+var int ret = 0;
+
+do
+    var& _void_ptr? ptr;
+do
+        ptr = &_f();
+    finalize (ptr)
+    with
+        if ptr? then
+            _g(ptr!);
+        else
+            ret = ret + 1;
+        end
+    end
+    ret = ret + ((not ptr?) as int);
+end
+
+escape ret;
+]],
+    run = 2,
+}
+
+Test { [[
+native _alloc, _V;
+native/pos do
+    int V = 1;
+    int* alloc () {
+        return &V;
+    }
+end
+
+var& int? tex1;
+do tex1 = &_alloc(1);
+finalize (tex1) with
+    nothing;
+end
+
+var& int tex2 = tex1;
+
+escape &tex2==&_V;
+]],
+    exps = 'line 17 : invalid expression : unexpected context for operation `&´',
+    --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
+    --run = 1,
+}
+
+Test { [[
+native _alloc, _V;
+native/pos do
+    int V = 1;
+    int* alloc () {
+        return NULL;
+    }
+end
+
+var& int? tex1;
+do tex1 = &_alloc(1);
+finalize (tex1) with
+    nothing;
+end
+
+var& int tex2 = tex1;
+
+escape &tex2==&_V;
+]],
+    exps = 'line 17 : invalid expression : unexpected context for operation `&´',
+    --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
+    --asr = true,
+}
+
+Test { [[
+native _V, _t, _alloc;
+native/pre do
+    struct Tx;
+    typedef struct Tx* t;
+    int V = 1;
+    t alloc (int ok) {
+        if (ok) {
+            V++;
+            return (t) &V;
+        } else {
+            return NULL;
+        }
+    }
+    void dealloc (t ptr) {
+        if (ptr != NULL) {
+            V *= 2;
+        }
+    }
+end
+native/nohold _dealloc;
+
+var int ret = _V;           // v=1, ret=1
+
+do
+    var& _t? tex;
+do
+        tex = &_alloc(1);    // v=2
+    finalize (tex)
+    with
+        _dealloc(tex!);
+    end
+    ret = ret + _V;         // ret=3
+    if not tex? then
+        ret = 0;
+    end
+end                         // v=4
+
+ret = ret + _V;             // ret=7
+
+do
+    var& _t? tex;
+do
+        tex = &_alloc(0);    // v=4
+    finalize (tex)
+    with
+        if tex? then
+            _dealloc(tex!);
+        end
+    end
+    ret = ret + _V;         // ret=11
+    if not tex? then
+        ret = ret + 1;      // ret=12
+    end
+end                         // v=4
+
+ret = ret + _V;             // ret=16
+
+escape ret;
+]],
+    run = 16,
+}
+
+Test { [[
+native _SDL_Window, _SDL_CreateWindow, _SDL_WINDOW_SHOWN;
+//native/nohold _SDL_DestroyWindow;
+
+var& _SDL_Window win =
+    &_SDL_CreateWindow("UI - Texture", 500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
+escape 0;
+]],
+    scopes = 'line 5 : invalid binding : expected option type `?´ as destination : got "_SDL_Window"',
+    --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
+}
+Test { [[
+native _SDL_Window, _SDL_CreateWindow, _SDL_WINDOW_SHOWN;
+//native/nohold _SDL_DestroyWindow;
+
+var& _SDL_Window win =
+    &_SDL_CreateWindow("UI - Texture", 500, 1300, 800, 480, _SDL_WINDOW_SHOWN)
+        finalize (win) with
+            //_SDL_DestroyWindow(win);
+        end
+escape 0;
+]],
+    scopes = 'line 4 : invalid binding : expected option type `?´ as destination : got "_SDL_Window"',
+    --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
+}
+
+Test { [[
+native _my_alloc, _void_ptr;
+native/pre do
+    typedef void* void_ptr;
+    void* my_alloc (void) {
+        return NULL;
+    }
+end
+
+input void SDL_REDRAW;
+
+par/or do
+    await 1s;
+with
+    loop do
+        await SDL_REDRAW;
+        var& _void_ptr? srf = &_my_alloc()
+            finalize (srf) with end;
+    end
+end
+escape 1;
+]],
+    wrn = true,
+    run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=1 },
+}
+
+Test { [[
+native _my_alloc, _void_ptr;
+native/pre do
+    typedef void* void_ptr;
+    void* my_alloc (void) {
+        return NULL;
+    }
+end
+
+input void SDL_REDRAW;
+
+par/or do
+    await 1s;
+with
+    every SDL_REDRAW do
+        var& _void_ptr? srf = &_my_alloc()
+            finalize (srf) with end;
+    end
+end
+escape 1;
+]],
+    props_ = 'line 15 : invalid `finalize´ : unexpected enclosing `every´',
+    wrn = true,
+    run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=114 },
+}
+
+Test { [[
+native _V, _my_alloc, _my_free, _void_ptr;
+native/pre do
+    int V = 0;
+    typedef void* void_ptr;
+    void* my_alloc (void) {
+        V += 1;
+        return NULL;
+    }
+    void my_free () {
+        V *= 2;
+    }
+end
+
+input void SDL_REDRAW;
+
+par/or do
+    await 1s;
+    _V = _V + 100;
+with
+    loop do
+        await SDL_REDRAW;
+        var& _void_ptr? srf;
+        do
+            srf = &_my_alloc();
+        finalize (srf) with
+            if srf? then
+            end;
+            _my_free();
+        end
+    end
+end
+escape _V+1;
+]],
+    run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=115 },
+}
+
+Test { [[
+native _f;
+native/pos do
+    int* f () {
+        int a = 10;
+        escape &a;
+    }
+end
+var& int? p = _f();
+escape 0;
+]],
+    --stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
+    --inits = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
+    inits = 'line 8 : invalid binding : expected operator `&´ in the right side',
+}
+
+Test { [[
+native _f, _int_ptr;
+native/pre do
+    typedef int* int_ptr;
+    int* f () {
+        int a = 10;
+        escape &a;
+    }
+end
+var& _int_ptr? p = &_f();
+escape p;
+]],
+    stmts = 'line 10 : invalid `escape´ : types mismatch : "int" <= "_int_ptr?"',
+    --env = 'line 9 : types mismatch (`int´ <= `int&?´)',
+}
+
+Test { [[
+native _f,_int_ptr;
+native/pre do
+    typedef int* int_ptr;
+    int* f () {
+        int a = 10;
+        escape &a;
+    }
+end
+var& _int_ptr? p = &_f();
+escape p!;
+]],
+    scopes = 'line 9 : invalid binding : expected `finalize´',
+    --fin = 'line 8 : attribution requires `finalize´',
+}
+
+Test { [[
+native _int_ptr, _f;
+native/pre do
+    typedef int* int_ptr;
+    int a;
+    int* f () {
+        a = 10;
+        return &a;
+    }
+end
+var& _int_ptr? p;
+do
+    p = &_f();
+finalize (p)
+with
+    nothing;
+end
+escape *p!;
+]],
+    run = 10,
+}
+Test { [[
+native _int_ptr, _f;
+native/pre do
+    typedef int* int_ptr;
+    int a;
+    int* f () {
+        a = 10;
+        return &a;
+    }
+end
+var& _int_ptr? p;
+do
+    p = &_f();
+finalize (p)
+with
+    nothing;
+end
+escape *p!;
+]],
+    run = 10,
+}
+Test { [[
+native/pure _f;    // its actually impure
+native/pre do
+    typedef int* int_ptr;
+    int a;
+    int* f () {
+        a = 10;
+        return &a;
+    }
+end
+var int&& p;
+    p = _f();
+escape *p;
+]],
+    run = 10,
+}
+Test { [[
+native _int_ptr, _f;
+native/pre do
+    typedef int* int_ptr;
+    int A = 10;
+    int* f () {
+        return &A;
+    }
+end
+var int a=0;
+do
+    var& _int_ptr? p;
+do
+        p = &_f();
+    finalize (p)
+    with
+        a = *p!;
+end
+end
+escape a;
+]],
+    run = 10,
+}
+
+Test { [[
+native _int_ptr, _f;
+native/pre do
+    typedef int* int_ptr;
+    int A = 10;
+    int* f () {
+        return &A;
+    }
+end
+var int a = 10;
+do
+    var& _int_ptr? p;
+    //do
+do
+            p = &_f();
+        finalize (p)
+        with
+            a = a + *p!;
+        end
+    //end
+    a = 0;
+end
+escape a;
+]],
+    run = 10,
+}
+
+--<< OPTION / NATIVE / FINALIZE
+
+--<< OPTION / NATIVE
+
+-->> OPTION / VECTOR
+
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+    --env = 'line 1 : invalid type modifier : `?[]´',
+    --adj = 'line 1 : not implemented : `?´ must be last modifier',
+}
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    dcls = 'line 1 : vector "v" declared but not used',
+    --env = 'line 1 : invalid type modifier : `[]?´',
+}
+Test { [[
+vector[1] int? v;
+escape 1;
+]],
+    wrn = true,
+    tmp = 'line 1 : `data´ fields do not support vectors yet',
+    --env = 'line 1 : invalid type modifier : `[]?´',
+}
+
+Test { [[
 data SDL_Color with
     var int v;
 end
@@ -60446,106 +61839,9 @@ escape bg_clr!.v;
     run = 10,
 }
 
-Test { [[
-native _SDL_Surface, _TTF_RenderText_Blended, _SDL_FreeSurface;
-var& _SDL_Surface? sfc;
-every 1s do
-    do
-        sfc = &_TTF_RenderText_Blended();
-    finalize (sfc) with
-        _SDL_FreeSurface(&&(sfc!));
-    end
-end
-escape 1;
-]],
-    inits = 'line 2 : uninitialized variable "sfc" : reached `every´ (/tmp/tmp.ceu:3)',
-    --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
-    --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
-    --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (/tmp/tmp.ceu:2)',
-}
+--<< OPTION / VECTOR
 
-Test { [[
-native _fff;
-native/pos do
-    int V = 10;
-    int* fff (int v) {
-        V += v;
-        escape &V;
-    }
-end
-var int   v = 1;
-var int&& p = &&v;
-var& int? r;
-do r = &_fff(*p);
-finalize (r) with
-    nothing;
-end
-escape r;
-]],
-    stmts = 'line 16 : invalid `escape´ : types mismatch : "int" <= "int?"',
-    --env = 'line 16 : types mismatch (`int´ <= `int&?´)',
-}
-
-Test { [[
-native _f;
-var& int? v = &_f();
-escape 0;
-]],
-    scopes = 'line 2 : invalid binding : expected `finalize´',
-}
-
-Test { [[
-var int ret=0;
-var& int? p = &ret;
-p! = p!;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native _f;
-do
-    var& int? a;
-    do
-        a = &_f();
-    finalize (a) with
-        do await FOREVER; end;
-    end
-end
-]],
-    props = "line 7 : not permitted inside `finalize´",
-}
-
-Test { [[
-native _f;
-do
-    var& int? a;
-    do a = &_f();
-    finalize (a) with
-        async do
-        end;
-    end
-end
-]],
-    props = "line 7 : not permitted inside `finalize´",
-}
-
-Test { [[
-native _f;
-do/_
-    var& int? a;
-    do a = &_f();
-    finalize (a) with
-        do/_ escape 0; end;
-    end
-end
-]],
-    props_ = 'line 6 : invalid `escape´ : unexpected enclosing `finalize´',
-    --props = "line 7 : not permitted inside `finalize´",
-}
-
---<< OPTION / NATIVE
+-->> OPTION / DATA
 
 Test { [[
 data OptionInt;
@@ -60585,171 +61881,6 @@ escape ret;
 ]],
     wrn = true,
     run = 21,
-}
-
-Test { [[
-var int? v1 = 10;
-var int? v2 = v1;
-escape v2!;
-]],
-    run = 10;
-}
-
-Test { [[
-var int? v1 = 10;
-var int? v2;
-var int ret = (v1? as int) + v1!;
-v1 = v2;
-escape ret+(v1? as int)+1;
-]],
-    run = 12;
-}
-
-Test { [[
-var int? i = 10;
-var& int? ai = &i;
-escape ai!;
-]],
-    run = 10,
-}
-Test { [[
-var int? i;
-var& int? ai = &i;
-i = 10;
-escape ai!;
-]],
-    run = 10,
-}
-Test { [[
-var int? i;
-var& int? ai = &i;
-escape 1 + (ai? as int);
-]],
-    run = 1,
-}
-
-Test { [[
-var int? i;
-escape i as int;
-]],
-    exps = 'line 2 : invalid operand to `as´ : unexpected option type',
-}
-Test { [[
-var int? i;
-escape i is int;
-]],
-    exps = 'line 2 : invalid operand to `is´ : unexpected option type',
-}
-Test { [[
-var int? i = 10;
-escape (i! is int) as int;
-]],
-    run = 1,
-}
-Test { [[
-var int? i = 10;
-escape (i! as int);
-]],
-    run = 10,
-}
-
-Test { [[
-escape 1?;
-]],
-    parser = 'ERR : /tmp/tmp.ceu : line 1 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
-}
-Test { [[
-var int i;
-escape i?;
-]],
-    exps = 'line 2 : invalid operand to `?´ : expected option type',
-}
-Test { [[
-var int? i = 1;
-escape i? as int;
-]],
-    run=1,
-}
-Test { [[
-var int? i;
-escape (i? as int)+1;
-]],
-    run=1,
-}
-
-Test { [[
-var int?&& v;
-escape 1;
-]],
-    parser = 'line 1 : after `?´ : expected internal identifier',
-    --env = 'line 1 : invalid type modifier : `?&&´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-Test { [[
-vector[1] int? v;
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-    --env = 'line 1 : invalid type modifier : `?[]´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-Test { [[
-var& int? v;
-escape 1;
-]],
-    wrn = true,
-    --run = 1,
-    inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:2)',
-    --env = 'line 1 : invalid type modifier : `?&´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-Test { [[
-var int? k;
-var& int? v = &k;
-escape 1 + (v? as int);
-]],
-    run = 1,
-}
-Test { [[
-var int? k;
-var& int? v = &k;
-v = 10;
-escape k!;
-]],
-    run = 10,
-}
-Test { [[
-var int? k;
-k = 10;
-var& int? v = &k;
-escape v!;
-]],
-    run = 10,
-}
-Test { [[
-var int?? v;
-escape 1;
-]],
-    parser = 'line 1 : after `?´ : expected internal identifier',
-    --env = 'line 1 : invalid type modifier : `??´',
-    --adj = 'line 1 : not implemented : `?´ must be last modifier',
-}
-
-Test { [[
-vector[1] int? v;
-escape 1;
-]],
-    dcls = 'line 1 : vector "v" declared but not used',
-    --env = 'line 1 : invalid type modifier : `[]?´',
-}
-Test { [[
-vector[1] int? v;
-escape 1;
-]],
-    wrn = true,
-    tmp = 'line 1 : `data´ fields do not support vectors yet',
-    --env = 'line 1 : invalid type modifier : `[]?´',
 }
 
 Test { [[
@@ -60943,975 +62074,7 @@ escape v!;
     run = 20,
 }
 
-
--->>> FINALIZE / OPTION
-
-Test { [[
-native _fff;
-native/pos do
-    int V = 10;
-    int* fff (int v) {
-        V += v;
-        escape &V;
-    }
-end
-var int   v = 1;
-var int&& p = &&v;
-var& int? r;
-do
-    r = &_fff(*p);
-finalize (r) with
-    nothing;
-end
-escape r!;
-]],
-    run = 11,
-}
-
-Test { [[
-native _SDL_Renderer, _f;
-native/nohold _g;
-
-var& _SDL_Renderer? ren;
-    do ren = &_f();
-    finalize (ren) with
-    end
-
-await 1s;
-_g(&&(ren!));
-
-escape 1;
-]],
-    cc = 'error: unknown type name ‘SDL_Renderer’',
-}
-
-Test { [[
-native _f;
-input void E;
-var& int? n;
-do n = &_f();
-finalize (n) with
-end
-await E;
-escape n!;
-]],
-    cc = 'error: implicit declaration of function ‘f’',
-}
-
-Test { [[
-native _f;
-native/pos do
-    int* f (void) {
-        escape NULL;
-    }
-end
-var int r = 0;
-do/_
-    var& int? a;
-    do a = &_f();
-    finalize (a) with
-        var int b = do/_ escape 2; end;
-    end
-    r = 1;
-end
-escape r;
-]],
-    --props = "line 8 : not permitted inside `finalize´",
-    cc = '9:27: error: variable ‘__ceu_a_3’ set but not used [-Werror=unused-but-set-variable]',
-}
-
-Test { [[
-native _f;
-native/pos do
-    int* f (void) {
-        escape NULL;
-    }
-end
-var int r = 0;
-do/_
-    var& int? a;
-    do a = &_f();
-    finalize (a) with
-        if a? then end
-        var int b = do/_ escape 2; end;
-    end
-    r = 1;
-end
-escape r;
-]],
-    --props = "line 8 : not permitted inside `finalize´",
-    run = 1,
-}
-
-Test { [[
-native _getV;
-native/pos do
-    int V = 10;
-    int* getV (void) {
-        escape &V;
-    }
-end
-
-var& int? v;
-do
-    v = &_getV();
-finalize (v)
-with
-    nothing;
-end
-
-escape v!;
-]],
-    run = 10,
-}
-Test { [[
-native _V, _getV;
-native/pos do
-    int V = 10;
-    int* getV (void) {
-        escape &V;
-    }
-end
-
-var& int? v1;
-do v1 = &_getV();
-finalize (v1) with
-    nothing;
-end
-v1 = 20;
-
-var& int? v2;
-do v2 = &_getV();
-finalize (v2) with
-    nothing;
-end
-
-escape v1!+v2!+_V;
-]],
-    --env = 'line 14 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    run = 60,
-}
-Test { [[
-native _V, _getV;
-native/pos do
-    int V = 10;
-    int* getV (void) {
-        escape &V;
-    }
-end
-
-var& int? v1;
-do
-    v1 = &_getV();
-finalize (v1)
-with
-    nothing;
-end
-v1! = 20;
-
-var& int? v2;
-do
-    v2 = &_getV();
-finalize (v2)
-with
-    nothing;
-end
-
-escape v1!+v2!+_V;
-]],
-    run = 60,
-}
-
-Test { [[
-native _int, _f;
-native/pre do
-    int* f (int* ptr) { return ptr }
-end
-var int v = 2;
-var& _int? p = &_f(&&v)
-                finalize (p,v) with
-                    v = 5;
-                end;
-escape p!;
-]],
-    run = 5,
-}
-
-Test { [[
-native _int, _f;
-native/pre do
-    int* f (int* ptr) { return ptr }
-end
-var int v = 2;
-var& _int? p = &_f(&&v)
-                finalize (p,v) with
-                    v = 5;
-                end
-escape p!;
-]],
-    run = 5,
-}
-
-Test { [[
-native _f;
-native/pos do
-    int f (int* p) { return *p+1; }
-end
-var int x = 1;
-var int r;
-do
-    r = _f(&&x);
-finalize (x) with
-    nothing;
-end
-escape r;
-]],
-    run = 2,
-}
-Test { [[
-native _f;
-var int x = 0;
-var& int? r;
-do
-    r = &_f(&&x);
-finalize (x) with
-    nothing;
-end
-escape 0;
-]],
-    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "r" (vs. /tmp/tmp.ceu:5)',
-}
-Test { [[
-native _f;
-var int x = 0;
-var& int? r;
-do
-    r = &_f(&&x);
-finalize (r) with
-    nothing;
-end
-escape 0;
-]],
-    scopes = 'line 6 : invalid `finalize´ : unmatching identifiers : expected "x" (vs. /tmp/tmp.ceu:5)',
-}
-Test { [[
-native _f;
-var int x = 0;
-var& int? r;
-do
-    r = &_f(&&x);
-finalize (r,x) with
-    nothing;
-end
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-native _f;
-var int x = 0;
-do
-    var& int? r;
-    do
-        r = &_f(&&x);
-    finalize (r,x) with
-        nothing;
-    end
-end
-escape 1;
-]],
-    scopes = 'line 6 : invalid `finalize´ : incompatible scopes',
-}
-Test { [[
-native _f;
-var int x = 0;
-do
-    var int y = 0;
-    do
-        _f(&&x,&&y);
-    finalize with
-        nothing;
-    end
-end
-escape 1;
-]],
-    scopes = 'line 6 : invalid `finalize´ : incompatible scopes',
-}
-
-Test { [[
-native _alloc;
-native/pos do
-    int V;
-    int* alloc (int ok) {
-        escape &V;
-    }
-    void dealloc (int* ptr) {
-    }
-end
-native/nohold _dealloc;
-
-var& int? tex;
-do tex = &_alloc(1);    // v=2
-finalize (tex) with
-    _dealloc(&&tex);
-end
-
-escape 1;
-]],
-    exps = 'line 15 : invalid operand to `&&´ : unexpected option type',
-}
-
-Test { [[
-native _alloc;
-native/pos do
-    int V;
-    int* alloc (int ok) {
-        escape &V;
-    }
-    void dealloc (int* ptr) {
-    }
-end
-native/nohold _dealloc;
-
-var& int? tex;
-do tex = &_alloc(1);    // v=2
-finalize (tex) with
-    _dealloc(&&tex!);
-end
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native _alloc;
-native/pos do
-    int* alloc (int ok) {
-        escape NULL;
-    }
-    void dealloc (int* ptr) {
-    }
-end
-native/nohold _dealloc;
-
-var& int? tex;
-do
-    tex = &_alloc(1);    // v=2
-finalize (tex)
-with
-    _dealloc(&&tex!);
-end
-
-escape 1;
-]],
-    asr = true,
-}
-
-Test { [[
-native _alloc, _V;
-native/pos do
-    int* alloc (int ok) {
-        escape NULL;
-    }
-    int V = 0;
-    void dealloc (int* ptr) {
-        if (ptr == NULL) {
-            V = 1;
-        }
-    }
-end
-native/nohold _dealloc;
-
-do
-    var& int? tex;
-do tex = &_alloc(1);
-    finalize (tex) with
-        _dealloc(tex);
-    end
-end
-
-escape _V;
-]],
-    stmts = 'line 19 : invalid call : unexpected context for operator `?´',
-    --env = 'line 19 : wrong argument #1 : cannot pass option values to native calls',
-    --run = 1,
-}
-
-Test { [[
-native _f;
-event int e;
-_f(e);
-escape 0;
-]],
-    stmts = 'line 3 : invalid expression list : item #1 : unexpected context for event "e"',
-}
-
-Test { [[
-native _alloc, _V;
-native/pos do
-    int* alloc (int ok) {
-        escape NULL;
-    }
-    int V = 0;
-    void dealloc (int* ptr) {
-        if (ptr == NULL) {
-            V = 1;
-        }
-    }
-end
-native/nohold _dealloc;
-
-do
-    var& int? tex;
-    do tex = &_alloc(1);
-    finalize (tex) with
-        _dealloc(&tex!);
-    end
-end
-
-escape _V;
-]],
-    stmts = 'line 19 : invalid expression list : item #1 : unexpected context for alias "tex"',
-    --stmts = 'line 19 : invalid call : unexpected context for operator `&´',
-    --env = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
-    --run = '19] runtime error: invalid tag',
-}
-
-Test { [[
-native/pos do
-    int* alloc (int ok) {
-        escape NULL;
-    }
-    int V = 0;
-    void dealloc (int* ptr) {
-        if (ptr == NULL) {
-            V = 1;
-        }
-    }
-end
-native _alloc, _V;
-native/nohold _dealloc;
-
-do
-    var& int? tex;
-    do tex = &_alloc(1);
-    finalize (tex) with
-        _dealloc(&&tex!);
-    end
-end
-
-escape _V;
-]],
-    --env = 'line 19 : wrong argument #1 : cannot pass option type',
-    run = '19] runtime error: invalid tag',
-}
-
-Test { [[
-native/pre do
-    struct Tx;
-    typedef struct Tx t;
-    int V = 1;
-    t* alloc (int ok) {
-        if (ok) {
-            V++;
-            escape (t*) &V;
-        } else {
-            escape NULL;
-        }
-    }
-    void dealloc (t* ptr) {
-        if (ptr != NULL) {
-            V *= 2;
-        }
-    }
-end
-native _alloc, _V, _t;
-native/nohold _dealloc;
-
-var int ret = _V;           // v=1, ret=1
-
-do
-    var& _t? tex;
-do
-        tex = &_alloc(1);    // v=2
-    finalize (tex)
-    with
-        _dealloc(&&tex!);
-    end
-    ret = ret + _V;         // ret=3
-    if not tex? then
-        ret = 0;
-    end
-end                         // v=4
-
-ret = ret + _V;             // ret=7
-
-do
-    var& _t? tex;
-do
-        tex = &_alloc(0);    // v=4
-    finalize (tex)
-    with
-        if tex? then
-            _dealloc(&&tex!);
-        end
-    end
-    ret = ret + _V;         // ret=11
-    if not tex? then
-        ret = ret + 1;      // ret=12
-    end
-end                         // v=4
-
-ret = ret + _V;             // ret=16
-
-escape ret;
-]],
-    run = 16,
-}
-
-Test { [[
-native _f;
-native/pos do
-    void* f () {
-        escape NULL;
-    }
-end
-
-var& void? ptr;
-do ptr = &_f();
-finalize (ptr) with
-    nothing;
-end
-
-escape &ptr! == &ptr!;  // ptr.SOME fails
-]],
-    exps = 'line 14 : invalid expression : unexpected context for operation `&´',
-    --env = 'line 14 : invalid use of operator "&" : not a binding assignment',
-}
-
-Test { [[
-native _f;
-native/pos do
-    void* f () {
-        escape NULL;
-    }
-end
-
-var& void? ptr;
-do
-    ptr = &_f();
-finalize (ptr)
-with
-    nothing;
-end
-
-escape (&&ptr! == &&ptr!) as int;  // ptr.SOME fails
-]],
-    asr = true,
-}
-
-Test { [[
-native _f;
-native/pos do
-    void* f () {
-        escape NULL;
-    }
-end
-
-var& void? ptr;
-do
-    ptr = &_f();
-finalize (ptr)
-with
-    nothing;
-end
-
-escape (not ptr? )as int;
-]],
-    run = 1,
-}
-
-Test { [[
-native _f;
-native/pos do
-    void* f () {
-        escape NULL;
-    }
-    void g (void* g) {
-    }
-end
-native/nohold _g;
-
-var& void? ptr;
-do
-    ptr = &_f();
-finalize (ptr)
-with
-    _g(&&ptr!);    // error (ptr is Nil)
-end
-
-escape (not ptr? )as int;
-]],
-    asr = true
-}
-
-Test { [[
-native _f;
-native/pos do
-    void* f () {
-        escape NULL;
-    }
-    void g (void* g) {
-    }
-end
-native/nohold _g;
-
-var int ret = 0;
-
-do
-    var& void? ptr;
-do
-        ptr = &_f();
-    finalize (ptr)
-    with
-        if ptr? then
-            _g(&&ptr!);
-        else
-            ret = ret + 1;
-        end
-    end
-    ret = ret + ((not ptr?) as int);
-end
-
-escape ret;
-]],
-    run = 2,
-}
-
-Test { [[
-native _alloc, _V;
-native/pos do
-    int V = 1;
-    int* alloc () {
-        escape &V;
-    }
-end
-
-var& int? tex1;
-do tex1 = &_alloc(1);
-finalize (tex1) with
-    nothing;
-end
-
-var& int tex2 = tex1;
-
-escape &tex2==&_V;
-]],
-    exps = 'line 17 : invalid expression : unexpected context for operation `&´',
-    --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
-    --run = 1,
-}
-
-Test { [[
-native _alloc, _V;
-native/pos do
-    int V = 1;
-    int* alloc () {
-        escape NULL;
-    }
-end
-
-var& int? tex1;
-do tex1 = &_alloc(1);
-finalize (tex1) with
-    nothing;
-end
-
-var& int tex2 = tex1;
-
-escape &tex2==&_V;
-]],
-    exps = 'line 17 : invalid expression : unexpected context for operation `&´',
-    --env = 'line 15 : types mismatch (`int&´ <= `int&?´)',
-    --asr = true,
-}
-
-Test { [[
-native _V, _t, _alloc;
-native/pre do
-    struct Tx;
-    typedef struct Tx t;
-    int V = 1;
-    t* alloc (int ok) {
-        if (ok) {
-            V++;
-            escape (t*) &V;
-        } else {
-            escape NULL;
-        }
-    }
-    void dealloc (t* ptr) {
-        if (ptr != NULL) {
-            V *= 2;
-        }
-    }
-end
-native/nohold _dealloc;
-
-var int ret = _V;           // v=1, ret=1
-
-do
-    var& _t? tex;
-do
-        tex = &_alloc(1);    // v=2
-    finalize (tex)
-    with
-        _dealloc(&&tex!);
-    end
-    ret = ret + _V;         // ret=3
-    if not tex? then
-        ret = 0;
-    end
-end                         // v=4
-
-ret = ret + _V;             // ret=7
-
-do
-    var& _t? tex;
-do
-        tex = &_alloc(0);    // v=4
-    finalize (tex)
-    with
-        if tex? then
-            _dealloc(&&tex!);
-        end
-    end
-    ret = ret + _V;         // ret=11
-    if not tex? then
-        ret = ret + 1;      // ret=12
-    end
-end                         // v=4
-
-ret = ret + _V;             // ret=16
-
-escape ret;
-]],
-    run = 16,
-}
-
-Test { [[
-native _SDL_Window, _SDL_CreateWindow, _SDL_WINDOW_SHOWN;
-//native/nohold _SDL_DestroyWindow;
-
-var& _SDL_Window win =
-    &_SDL_CreateWindow("UI - Texture", 500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
-escape 0;
-]],
-    scopes = 'line 5 : invalid binding : expected option type `?´ as destination : got "_SDL_Window"',
-    --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
-}
-Test { [[
-native _SDL_Window, _SDL_CreateWindow, _SDL_WINDOW_SHOWN;
-//native/nohold _SDL_DestroyWindow;
-
-var& _SDL_Window win =
-    &_SDL_CreateWindow("UI - Texture", 500, 1300, 800, 480, _SDL_WINDOW_SHOWN)
-        finalize (win) with
-            //_SDL_DestroyWindow(win);
-        end
-escape 0;
-]],
-    scopes = 'line 4 : invalid binding : expected option type `?´ as destination : got "_SDL_Window"',
-    --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
-}
-
-Test { [[
-native _V, _my_alloc, _my_free;
-native/pos do
-    int V = 0;
-    void* my_alloc (void) {
-        V += 1;
-        escape NULL;
-    }
-    void my_free () {
-        V *= 2;
-    }
-end
-
-input void SDL_REDRAW;
-
-par/or do
-    await 1s;
-    _V = _V + 100;
-with
-    every SDL_REDRAW do
-        var& void? srf;
-do
-            srf = &_my_alloc();
-        finalize (srf)
-        with
-            if srf? then end;
-            _my_free();
-        end
-    end
-end
-escape _V;
-]],
-    run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=114 },
-}
-
-Test { [[
-native _f;
-native/pos do
-    int* f () {
-        int a = 10;
-        escape &a;
-    }
-end
-var& int? p = _f();
-escape 0;
-]],
-    --stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
-    --inits = 'line 8 : invalid attribution : missing `!´ (in the left) or `&´ (in the right)',
-    inits = 'line 8 : invalid binding : expected operator `&´ in the right side',
-}
-
-Test { [[
-native _f;
-native/pos do
-    int* f () {
-        int a = 10;
-        escape &a;
-    }
-end
-var& int? p = &_f();
-escape p;
-]],
-    stmts = 'line 9 : invalid `escape´ : types mismatch : "int" <= "int?"',
-    --env = 'line 9 : types mismatch (`int´ <= `int&?´)',
-}
-
-Test { [[
-native _f;
-native/pos do
-    int* f () {
-        int a = 10;
-        escape &a;
-    }
-end
-var& int? p = &_f();
-escape p!;
-]],
-    scopes = 'line 8 : invalid binding : expected `finalize´',
-    --fin = 'line 8 : attribution requires `finalize´',
-}
-
-Test { [[
-native _f;
-native/pos do
-    int a;
-    int* f () {
-        a = 10;
-        escape &a;
-    }
-end
-var& int? p;
-do
-    p = &_f();
-finalize (p)
-with
-    nothing;
-end
-escape p!;
-]],
-    run = 10,
-}
-Test { [[
-native _f;
-native/pos do
-    int a;
-    int* f () {
-        a = 10;
-        escape &a;
-    }
-end
-var& int? p;
-do
-    p = &_f();
-finalize (p)
-with
-    nothing;
-end
-escape p!;
-]],
-    run = 10,
-}
-Test { [[
-native/pure _f;    // its actually impure
-native/pos do
-    int a;
-    int* f () {
-        a = 10;
-        escape &a;
-    }
-end
-var int&& p;
-    p = _f();
-escape *p;
-]],
-    run = 10,
-}
-Test { [[
-native _f;
-native/pos do
-    int A = 10;
-    int* f () {
-        escape &A;
-    }
-end
-var int a=0;
-do
-    var& int? p;
-do
-        p = &_f();
-    finalize (p)
-    with
-        a = p!;
-end
-end
-escape a;
-]],
-    run = 10,
-}
-
-Test { [[
-native _f;
-native/pos do
-    int A = 10;
-    int* f () {
-        escape &A;
-    }
-end
-var int a = 10;
-do
-    var& int? p;
-    //do
-do
-            p = &_f();
-        finalize (p)
-        with
-            a = a + p!;
-        end
-    //end
-    a = 0;
-end
-escape a;
-]],
-    run = 10,
-}
-
---<<< FINALIZE / OPTION
+--<< OPTION / DATA
 
 --<<< OPTION TYPES
 

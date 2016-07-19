@@ -1,6 +1,6 @@
 local NO_every = {
     Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
-    Every=true,
+    Every=true, Finalize=true,
 }
 
 F = {

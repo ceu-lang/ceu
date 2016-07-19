@@ -406,11 +406,14 @@ ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
         LINE(me, [[
 ]]..max.ini..[[
 while (1) {
+    _ceu_trl = &_ceu_mem->trails[]]..me.trails[1]..[[];
     ]]..max.chk..[[
     ]]..body.code..[[
 ]])
         CASE(me, me.lbl_cnt)
-        CLEAR(body)
+        CLEAR(me);
+            --CLEAR(body);
+            assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
         F.__loop_async(me)
         LINE(me, [[
     ]]..max.inc..[[
@@ -468,7 +471,9 @@ while (1) {
     ]]..body.code..[[
 ]])
         CASE(me, me.lbl_cnt)
-        CLEAR(body)
+        CLEAR(me);
+            --CLEAR(body);
+            assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
         F.__loop_async(me)
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;

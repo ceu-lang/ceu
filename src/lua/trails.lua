@@ -31,6 +31,11 @@ F = {
         end
     end,
 
+    Every = function (me)
+        local body = unpack(me)
+        assert(body.trails_n == 1)
+    end,
+
     Vec = function (me)
         local tp, is_alias, dim = unpack(me)
         if (not TYPES.is_nat(TYPES.get(tp,1))) then

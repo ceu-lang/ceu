@@ -24,6 +24,9 @@ F = {
 
         -- tp
         EXPS.check_tp(me, to.info.tp, fr.info.tp, err)
+
+        ASR(not TYPES.check(fr.info.tp,'?'), me,
+            'invalid assignment : expected operator `!´')
     end,
 
     __set_vec = function (fr, to_info)
@@ -114,8 +117,7 @@ DBG('TODO: _Lua')
         -- option type
         if TYPES.check(to.info.tp,'?') then
             if TYPES.check(fr.info.tp,'_') and
-                (TYPES.is_nat(TYPES.pop(to.info.tp,'?')) or
-                 TYPES.check(to.info.tp,'void','?'))
+               TYPES.is_nat(TYPES.pop(to.info.tp,'?'))
             then
                 -- OK:
                 --  var& _TP? = _f();
