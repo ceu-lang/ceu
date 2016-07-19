@@ -51,13 +51,13 @@ typedef struct tceu_code_mem_ROOT {
     ---------------------------------------------------------------------------
 
     Code__PRE = function (me)
-        local _,_,_,_,_,body = unpack(me)
+        local _,_,_,_,_,_,body = unpack(me)
         if body then
             me.mems = { mem='' }
         end
     end,
     Code__POS = function (me)
-        local _,_,_,_,_,body = unpack(me)
+        local _,_,_,_,_,_,body = unpack(me)
         if body then
             me.mems.mem = [[
 typedef struct tceu_code_mem_]]..me.id..[[ {
@@ -71,7 +71,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     end,
 
     Code = function (me)
-        local mod,_,id,Typepars_ids, Type, body = unpack(me)
+        local mod,_,id,Typepars_ids, _, Type, body = unpack(me)
         if not body then return end
 
         -- args

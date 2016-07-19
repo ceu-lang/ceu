@@ -94,7 +94,7 @@ F = {
                 'expected `code/instantaneous´ : got `code/delayed´ ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
 
         -- info
-        local _,_,_,_,out = unpack(ID_abs.dcl)
+        local _,_,_,_,_,out = unpack(ID_abs.dcl)
         me.info = INFO.new(me, 'Val', nil, AST.copy(out))
     end,
 

@@ -95,7 +95,7 @@ AST.visit(F)
 
 G = {
     Code = function (me)
-        local _,_,_,_,_,body = unpack(me)
+        local _,_,_,_,_,_,body = unpack(me)
         me.has_body = me.has_body or body
     end,
 

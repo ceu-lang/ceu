@@ -10,6 +10,7 @@ end
 
 --[=====[
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -5870,38 +5871,6 @@ with
 end
 ]],
     run = {['~>1s']=2},
-}
-
--- EMIT / SELF-ABORT
-Test { [[
-native _assert;
-native/pre do
-    ##include <assert.h>
-end
-input void I;
-event void e, f;
-par do
-    watching e do       // 5
-        await I;        // 1
-        emit f;         // 3, aborted on 5
-        _assert(0);     // never executes
-    end
-    await I;
-    escape 42;
-with
-    await f;            // 2
-    emit e;             // 4, aborted on 5
-    //_assert(0);         // never executes
-    escape 99;
-with
-    async do
-        emit I;
-        emit I;
-    end
-end
-]],
-    run = 99,
-    --run = 42,
 }
 
 --<<< INTERNAL EVENTS
@@ -26178,23 +26147,6 @@ end
     run = false,
 }
 Test { [[
-event void e;
-loop do
-    watching e do
-        emit e;
-        await FOREVER;
-    end
-end
-]],
-    wrn = true,
-    _ana = {
-        isForever = true,
-        acc = true,
-    },
-    awaits = 1,
-    run = false,
-}
-Test { [[
 var int ret = 0;
 event void e;
 par/or do
@@ -30010,6 +29962,17 @@ escape 0;
 }
 
 Test { [[
+input int&& E;
+var int e =
+    watching E => (a) do
+        await FOREVER;
+    end;
+escape 0;
+]],
+    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "(int&&)"',
+}
+
+Test { [[
 var int ret = 1;
 watching 1s do
     every 100ms do
@@ -30275,6 +30238,56 @@ escape ret;
         ['100~>I; ~>1s'] = -5,
         ['1000~>I; ~>1s'] = 5,
     }
+}
+
+-- EMIT / SELF-ABORT
+Test { [[
+native _assert;
+native/pre do
+    ##include <assert.h>
+end
+input void I;
+event void e, f;
+par do
+    watching e do       // 5
+        await I;        // 1
+        emit f;         // 3, aborted on 5
+        _assert(0);     // never executes
+    end
+    await I;
+    escape 42;
+with
+    await f;            // 2
+    emit e;             // 4, aborted on 5
+    //_assert(0);         // never executes
+    escape 99;
+with
+    async do
+        emit I;
+        emit I;
+    end
+end
+]],
+    run = 99,
+    --run = 42,
+}
+
+Test { [[
+event void e;
+loop do
+    watching e do
+        emit e;
+        await FOREVER;
+    end
+end
+]],
+    wrn = true,
+    _ana = {
+        isForever = true,
+        acc = true,
+    },
+    awaits = 1,
+    run = false,
 }
 
 --<<< WATCHING
@@ -32017,6 +32030,97 @@ escape v;
     run = 5,
 }
 
+-->> CODE / DELAYED / WATCHING
+
+Test { [[
+code/delayed Code (var int x) => int do
+    escape 0;
+end
+var int&& a =
+    watching Code(111) do
+        await FOREVER;
+    end;
+
+escape 0;
+]],
+    stmts = 'line 4 : invalid assignment : types mismatch : "int&&" <= "int"',
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    x = x + 222;
+    await 1s;
+    escape x;
+end
+var int? a =
+    watching Code(111) do
+        escape 99;
+    end;
+
+escape a!+1;
+]],
+    run = 99,
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    escape x;
+end
+var int? a =
+    watching Code(111) do
+        escape 99;
+    end;
+
+escape a!+1;
+]],
+    run = 112,
+}
+
+Test { [[
+code/delayed Code (var int x) => int
+do
+    x = x + 1;
+    await 1s;
+    escape x;
+end
+var int? a =
+    watching Code(10) do
+        await 5s;
+        escape 1;
+    end;
+
+escape a!;
+]],
+    run = {['~>1s']=11 },
+}
+
+Test { [[
+code/delayed Code (var& int x) => (var& int y) => int
+do
+    y = &x;
+    x = x + 1;
+    await 1s;
+    escape y;
+end
+var int x = 10;
+var int? a =
+    watching Code(&x) => (y) do
+        y = y + 1;
+        await 5s;
+        escape 1;
+    end;
+
+escape a! + x;
+]],
+    run = {['~>1s']=24 },
+}
+
+--<< CODE / DELAYED / WATCHING
+
+do return end
+
 -->>> INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 
 Test { [[
@@ -32689,76 +32793,6 @@ escape 1;
     --tight = 'tight loop',
     run = 1,
 }
-
--->> CODE / DELAYED / WATCHING
---]=====]
-
-Test { [[
-code/delayed Code (var int x) => int do
-    escape 0;
-end
-var int&& a =
-    watching Code(111) do
-        await FOREVER;
-    end;
-
-escape 0;
-]],
-    stmts = 'line 4 : invalid assignment : types mismatch : "int&&" <= "int"',
-}
-
-Test { [[
-code/delayed Code (var int x) => int
-do
-    x = x + 222;
-    await 1s;
-    escape x;
-end
-var int? a =
-    watching Code(111) do
-        escape 99;
-    end;
-
-escape a!+1;
-]],
-    run = 99,
-}
-
-Test { [[
-code/delayed Code (var int x) => int
-do
-    escape x;
-end
-var int? a =
-    watching Code(111) do
-        escape 99;
-    end;
-
-escape a!+1;
-]],
-    run = 112,
-}
-
-Test { [[
-code/delayed Code (var int x) => int
-do
-    x = x + 1;
-    await 1s;
-    escape x;
-end
-var int? a =
-    watching Code(10) do
-        await 5s;
-        escape 1;
-    end;
-
-escape a!;
-]],
-    run = {['~>1s']=11 },
-}
-
-
-do return end
 
 --<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 

@@ -248,7 +248,7 @@ DBG('TODO: _Lua')
 
     Abs_Await = function (me)
         local ID_abs = AST.asr(me,'', 1,'Abs_Cons', 1,'ID_abs')
-        local Type = AST.asr(ID_abs.dcl,'Code', 5,'Type')
+        local Type = AST.asr(ID_abs.dcl,'Code', 6,'Type')
         me.tp = AST.copy(Type)
     end,
 

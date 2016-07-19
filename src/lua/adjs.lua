@@ -124,7 +124,7 @@ error'TODO: luacov never executes this?'
     _Ext_Req_impl__PRE  = '_Code_impl__PRE',
     _Ext_Code_impl__PRE = '_Code_impl__PRE',
     _Code_impl__PRE = function (me)
-        local pre, is_rec, id, ins, out, blk = unpack(me)
+        local pre, is_rec, id, ins, mid, out, blk = unpack(me)
         me.tag = string.match(me.tag,'_(.*)_impl')
 
         -- enclose "blk" with "_ret = do ... end"
@@ -449,7 +449,10 @@ DBG('TODO: _Loop_Pool')
     end,
 
     _Watching__PRE = function (me)
-        local watch, block = unpack(me)
+        local watch, mid, block = unpack(me)
+        if mid then
+            watch[#watch+1] = mid
+        end
         return node('Par_Or', me.ln,
                 node('Block', me.ln,
                     node('Stmts', me.ln,

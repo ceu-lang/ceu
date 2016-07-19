@@ -234,7 +234,7 @@ ceu_vector_setmax(&]]..CUR(me.id_)..', '..V(dim)..[[, 1);
     ---------------------------------------------------------------------------
 
     Code = function (me)
-        local mod,_,id,Typepars_ids,_,body = unpack(me)
+        local mod,_,id,Typepars_ids,_,_,body = unpack(me)
         if not body then return end
 
 LINE(me, [[
@@ -253,8 +253,8 @@ if (0)
 ]])
         end
 
-        local vars = AST.get(me,'', 6,'Block', 1,'Stmts', 2,'Do', 2,'Block',
-                                    1,'Stmts', 2,'Stmts')
+        local vars = AST.get(body,'Block', 1,'Stmts', 2,'Do', 2,'Block',
+                                           1,'Stmts', 2,'Stmts')
         for i,Typepars_ids_item in ipairs(Typepars_ids) do
             local kind,_,c,Type,id2 = unpack(Typepars_ids_item)
             assert(kind=='var' or kind=='vector')

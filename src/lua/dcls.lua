@@ -259,12 +259,12 @@ F = {
     -- CODE / DATA
 
     Code = function (me)
-        local _,mod1,id,ins1,_,blk1 = unpack(me)
+        local _,mod1,id,ins1,_,_,blk1 = unpack(me)
         me.id = id
 
         local old = dcls_get(AST.par(me,'Block'), me.id, true)
         if old then
-            local _,mod2,_,ins2,_,blk2 = unpack(old)
+            local _,mod2,_,ins2,_,_,blk2 = unpack(old)
             ASR(not (blk1 and blk2), me, 'invalid `code´ declaration : body for "'..id..'" already exists')
 
             local ok = (mod1==mod2 and #ins1==#ins2)

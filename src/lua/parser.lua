@@ -462,10 +462,12 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __code = (CK'code/instantaneous' + CK'code/delayed')
                 * OPT(CK'/recursive')
                 * (V'__ID_abs'-V'__id_data')
-    , _Code_proto = V'__code' * (V'Typepars_ids'+V'Typepars_anon') *
-                                    KK'=>' * V'Type'
-    , _Code_impl  = V'__code' * V'Typepars_ids' *
-                                    KK'=>' * V'Type' *
+    , _Code_proto = V'__code' * (V'Typepars_ids'+V'Typepars_anon') * KK'=>' *
+                                OPT((V'Typepars_ids'+V'Typepars_anon') * KK'=>') *
+                                V'Type'
+    , _Code_impl  = V'__code' * V'Typepars_ids' * KK'=>' *
+                                OPT(V'Typepars_ids' * KK'=>') *
+                                V'Type' *
                     V'__Do' * V'EOC'
 
     , _Spawn_Block = K'spawn' * V'__Do'
@@ -607,7 +609,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
     , __watch = (V'_Await_Until' + V'Await_Wclock' + V'Abs_Await')
-    , _Watching = K'watching' * V'__watch' * V'__Do'
+    , _Watching = K'watching' * V'__watch' *
+                    OPT(KK'=>' * PARENS(V'Varlist'))
+                * V'__Do'
 
     , __num = CKK(m.R'09'^1,'number') / tonumber
     , WCLOCKK = #V'__num' *
