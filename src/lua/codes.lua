@@ -360,7 +360,7 @@ _ceu_trl++;
         local _,_,set = unpack(me)
         if set then
             LINE(me, [[
-ceu_cb_assert_msg(0, "reached end of `do´");
+ceu_callback_assert_msg(0, "reached end of `do´");
 ]])
         end
         CASE(me, me.lbl_out)
@@ -395,7 +395,7 @@ CEU_STK_LBL(]]..evt..[[, _ceu_stk,
 ]]..CUR('__max_'..me.n)..[[ = 0;
 ]],
                 chk = [[
-ceu_cb_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ overflow");
+ceu_callback_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ overflow");
 ]],
                 inc = [[
 ]]..CUR('__max_'..me.n)..[[++;
@@ -490,7 +490,7 @@ while (1) {
 
         LINE(me, [[
 ]]..max.ini..[[
-ceu_cb_assert_msg(]]..V(step)..' '..op..[[ 0, "invalid `loop´ step : expected positive number");
+ceu_callback_assert_msg(]]..V(step)..' '..op..[[ 0, "invalid `loop´ step : expected positive number");
 ]]..V(i)..' = '..V(fr)..[[;
 while (1) {
 ]])
@@ -749,7 +749,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
                     -- vector&[] v2 = &v1;
                     -- v1 = []..v2;
                     LINE(me, [[
-    ceu_cb_assert_msg(&]]..V(fr)..' != &'..V(to)..[[, "source is the same as destination");
+    ceu_callback_assert_msg(&]]..V(fr)..' != &'..V(to)..[[, "source is the same as destination");
 #line ]]..me.ln[2]..' "'..me.ln[1]..[["
     ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..V(fr)..[[.len), 1);
     ceu_vector_buf_set(&]]..V(to)..[[,

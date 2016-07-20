@@ -383,7 +383,7 @@ for _, tp in ipairs(MEMS.opts) do
     if TYPES.is_nat_not_plain(TYPES.pop(tp,'?')) then
         opts = opts..[[
 static ]]..cc..' CEU_OPTION_'..cc..' ('..cc..[[ opt, char* file, int line) {
-    ceu_cb_assert_msg_ex(opt != NULL, "value is not set", file, line);
+    ceu_callback_assert_msg_ex(opt != NULL, "value is not set", file, line);
     return opt;
 }
 ]]
@@ -395,7 +395,7 @@ typedef struct ]]..cc..[[ {
 } ]]..cc..[[;
 
 static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
-    ceu_cb_assert_msg_ex(opt->is_set, "value is not set", file, line);
+    ceu_callback_assert_msg_ex(opt->is_set, "value is not set", file, line);
     return opt;
 }
 ]]

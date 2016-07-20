@@ -6224,7 +6224,7 @@ loop do
         with
             await OS_START;
             emit a;
-            _ceu_cb_assert_msg(0, "err");
+            _ceu_callback_assert_msg(0, "err");
         end
     else
         await OS_START;
@@ -62165,12 +62165,12 @@ escape ((l as List.Cons).head);
 -- 1-2-3-Nil => 1-2-Nil (3 fails)
 -- 4-5-6-Nil => Nil     (all fail)
 Test { DATA..[[
-native _ceu_cb_assert_msg;
+native _ceu_callback_assert_msg;
 pool[2] List l = new List.Cons(1, List.Cons(2, List.Cons(3, List.Nil())));   // 3 fails
-_ceu_cb_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "1");
+_ceu_callback_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "1");
 l = new List.Nil();
 l = new List.Cons(4, List.Cons(5, List.Cons(6, List.Nil())));   // 6 fails
-_ceu_cb_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "2");
+_ceu_callback_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "2");
 escape (((l as List.Cons).tail) as List.Cons).head;
 ]],
     wrn = true,
@@ -62179,8 +62179,8 @@ escape (((l as List.Cons).tail) as List.Cons).head;
 
 Test { DATA..[[
 pool[2] List l = new List.Cons(1, List.Cons(2, List.Cons(3, List.Nil())));   // 3 fails
-native _ceu_cb_assert_msg;
-_ceu_cb_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "1");
+native _ceu_callback_assert_msg;
+_ceu_callback_assert_msg((((l as List.Cons).tail) as List.Cons).tail is List.Nil, "1");
 l = new List.Cons(4, List.Cons(5, List.Cons(6, List.Nil())));   // all fail
 escape (l is List.Nil) as int;
 ]],
@@ -65243,14 +65243,14 @@ par/and do
     sum = sum - 1;
 with
     await 1s;
-native _ceu_cb_assert_msg;
-    _ceu_cb_assert_msg(sum == 1, "1");
+native _ceu_callback_assert_msg;
+    _ceu_callback_assert_msg(sum == 1, "1");
     await 1s;
-    _ceu_cb_assert_msg(sum == 4, "2");
+    _ceu_callback_assert_msg(sum == 4, "2");
     await 1s;
-    _ceu_cb_assert_msg(sum == 5, "3");
+    _ceu_callback_assert_msg(sum == 5, "3");
     tree = new Tree.Nil();
-    _ceu_cb_assert_msg(sum == 4, "4");
+    _ceu_callback_assert_msg(sum == 4, "4");
 end
 
 escape sum;
@@ -65401,8 +65401,8 @@ do
             end;
 
         else
-native _ceu_cb_assert_msg;
-            _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+            _ceu_callback_assert_msg(0, "not implemented");
         end
     end
 end
@@ -65441,8 +65441,8 @@ do
             end;
 
         else
-native _ceu_cb_assert_msg;
-            _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+            _ceu_callback_assert_msg(0, "not implemented");
         end
     end
 end
@@ -65483,8 +65483,8 @@ do
             end;
 
         else
-native _ceu_cb_assert_msg;
-            _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+            _ceu_callback_assert_msg(0, "not implemented");
         end
     end
 end
@@ -65526,8 +65526,8 @@ do
             end;
 
         else
-native _ceu_cb_assert_msg;
-            _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+            _ceu_callback_assert_msg(0, "not implemented");
         end
     end
 end
@@ -65567,8 +65567,8 @@ do
             end;
 
         else
-native _ceu_cb_assert_msg;
-            _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+            _ceu_callback_assert_msg(0, "not implemented");
         end
     end
 end
@@ -65628,36 +65628,36 @@ l = new List.Cons(1,
 
 var int ret = 0;
 
-native _ceu_cb_assert_msg;
+native _ceu_callback_assert_msg;
 par/or do
     await (((l as List.Cons).tail) as List.Cons).tail;
     ret = ret + ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head;    // 0+4
-    _ceu_cb_assert_msg(ret == 4, "1");
+    _ceu_callback_assert_msg(ret == 4, "1");
     (((l as List.Cons).tail) as List.Cons).tail = ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).tail;
     ret = ret + ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head;    // 0+4+5
-    _ceu_cb_assert_msg(ret == 9, "2");
+    _ceu_callback_assert_msg(ret == 9, "2");
 
     await (((l as List.Cons).tail) as List.Cons).tail;
     ret = ret + (((((l as List.Cons).tail) as List.Cons).tail is List.Nil)as int);          // 0+4+5+5+1
-    _ceu_cb_assert_msg(ret == 15, "4");
+    _ceu_callback_assert_msg(ret == 15, "4");
     await FOREVER;
 with
     await (((l as List.Cons).tail) as List.Cons).tail;
-    _ceu_cb_assert_msg(ret == 9, "3");
+    _ceu_callback_assert_msg(ret == 9, "3");
     ret = ret + ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).head;    // 0+4+5+5
     (((l as List.Cons).tail) as List.Cons).tail = new List.Nil();
 
-    _ceu_cb_assert_msg(ret == 15, "5");
+    _ceu_callback_assert_msg(ret == 15, "5");
     await (((l as List.Cons).tail) as List.Cons).tail;
     // never reached
-    _ceu_cb_assert_msg(ret == 15, "6");
+    _ceu_callback_assert_msg(ret == 15, "6");
     await FOREVER;
 with
     await (((l as List.Cons).tail) as List.Cons).tail;
     ret = ret + (((((l as List.Cons).tail) as List.Cons).tail is List.Nil)as int);          // 0+4+5+5+1+1
 
     await (((l as List.Cons).tail) as List.Cons).tail;
-    _ceu_cb_assert_msg(ret == 16, "7");
+    _ceu_callback_assert_msg(ret == 16, "7");
     await FOREVER;
 with
     (((l as List.Cons).tail) as List.Cons).tail = ((((l as List.Cons).tail) as List.Cons).tail as List.Cons).tail;
@@ -65708,8 +65708,8 @@ with
                     escape v1 + v2;
 
                 else
-native _ceu_cb_assert_msg;
-                    _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+                    _ceu_callback_assert_msg(0, "not implemented");
                 end
             end
             escape 0;
@@ -65768,8 +65768,8 @@ with
                 end
 
             else
-native _ceu_cb_assert_msg;
-                _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+                _ceu_callback_assert_msg(0, "not implemented");
             end
         end
     end
@@ -65804,11 +65804,11 @@ par/or do
             else/if (*e is List.Cons) then
                 loop do
                     traverse &&(*e as List.Cons).tail;
-native _ceu_cb_assert_msg;
-                    _ceu_cb_assert_msg(0, "0");
+native _ceu_callback_assert_msg;
+                    _ceu_callback_assert_msg(0, "0");
                 end
             else
-                _ceu_cb_assert_msg(0, "1");
+                _ceu_callback_assert_msg(0, "1");
             end
         end
     end
@@ -65871,8 +65871,8 @@ end
                 end
 
             else
-native _ceu_cb_assert_msg;
-                _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+                _ceu_callback_assert_msg(0, "not implemented");
             end
         end
     end
@@ -65933,8 +65933,8 @@ end
                 end
 
             else
-native _ceu_cb_assert_msg;
-                _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+                _ceu_callback_assert_msg(0, "not implemented");
             end
         end
     end
@@ -65983,8 +65983,8 @@ par/or do
                             this.param = param + 1;
                         end;
 if ((*widget is Seq).w1 is List.Nil) then
-native _ceu_cb_assert_msg;
-_ceu_cb_assert_msg(0, "ok\n");
+native _ceu_callback_assert_msg;
+_ceu_callback_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     with
@@ -65992,14 +65992,14 @@ end
                             this.param = param + 1;
                         end;
 if ((*widget is Seq).w2 is List.Nil) then
-_ceu_cb_assert_msg(0, "ok\n");
+_ceu_callback_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     end
                 end
 
             else
-                _ceu_cb_assert_msg(0, "not implemented");
+                _ceu_callback_assert_msg(0, "not implemented");
             end
         end
     end
@@ -66047,8 +66047,8 @@ par/or do
                             this.param = param + 1;
                         end;
 if ((*widget is Seq).w1 is List.Nil) then
-native _ceu_cb_assert_msg;
-_ceu_cb_assert_msg(0, "ok\n");
+native _ceu_callback_assert_msg;
+_ceu_callback_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     with
@@ -66056,14 +66056,14 @@ end
                             this.param = param + 1;
                         end;
 if ((*widget is Seq).w2 is List.Nil) then
-_ceu_cb_assert_msg(0, "ok\n");
+_ceu_callback_assert_msg(0, "ok\n");
     await FOREVER;
 end
                     end
                 end
 
             else
-                _ceu_cb_assert_msg(0, "not implemented");
+                _ceu_callback_assert_msg(0, "not implemented");
             end
         end
     end
@@ -66217,8 +66217,8 @@ with
 
             else/if (*cmd is Command.Sequence) then
                 traverse &&(*cmd as Command.Sequence).one;
-native _ceu_cb_assert_msg;
-                _ceu_cb_assert_msg(0, "bug found"); // cmds has to die entirely before children
+native _ceu_callback_assert_msg;
+                _ceu_callback_assert_msg(0, "bug found"); // cmds has to die entirely before children
                 traverse &&(*cmd as Command.Sequence).two;
             end
         end
@@ -66302,8 +66302,8 @@ traverse cmd in &&cmds do
             traverse &&(*cmd as Repeat).command;
 
         else
-native _ceu_cb_assert_msg;
-            _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+            _ceu_callback_assert_msg(0, "not implemented");
         end
     end
 end
@@ -66410,8 +66410,8 @@ do
     else
         inc = -1;
     end
-native _ceu_cb_assert_msg;
-    _ceu_cb_assert_msg(this.pixels > 0, "pixels");
+native _ceu_callback_assert_msg;
+    _ceu_callback_assert_msg(this.pixels > 0, "pixels");
 
     var float sum = 0;
     var float x = turtle.pos_x;
@@ -66480,7 +66480,7 @@ with
                 end
 
             else
-                _ceu_cb_assert_msg(0, "not implemented");
+                _ceu_callback_assert_msg(0, "not implemented");
             end
         end
     end
@@ -66539,8 +66539,8 @@ traverse cmd in &&cmds do
             end
 
         else
-native _ceu_cb_assert_msg;
-            _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+            _ceu_callback_assert_msg(0, "not implemented");
         end
     end
 end
@@ -66602,8 +66602,8 @@ traverse cmd in &&cmds do
             end
 
         else
-native _ceu_cb_assert_msg;
-            _ceu_cb_assert_msg(0, "not implemented");
+native _ceu_callback_assert_msg;
+            _ceu_callback_assert_msg(0, "not implemented");
         end
     end
 end

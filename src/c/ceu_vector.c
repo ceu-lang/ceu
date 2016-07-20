@@ -74,13 +74,13 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
 {
     /* must fit w/o growing */
     if (!grow) {
-        ceu_cb_assert_msg_ex(len <= vector->len, "access out of bounds",
+        ceu_callback_assert_msg_ex(len <= vector->len, "access out of bounds",
                              file, line);
     }
 
     /* fixed size */
     if (!vector->is_dyn || vector->is_freezed) {
-        ceu_cb_assert_msg_ex(len <= vector->max, "access out of bounds",
+        ceu_callback_assert_msg_ex(len <= vector->max, "access out of bounds",
                              file, line);
 
     /* variable size */
@@ -91,7 +91,7 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
         } else {
             /* grow vector */
             if (ceu_vector_setmax(vector,len,0) == NULL) {
-                ceu_cb_assert_msg_ex(len==0, "access out of bounds",
+                ceu_callback_assert_msg_ex(len==0, "access out of bounds",
                                      file, line);
             }
         }
@@ -105,7 +105,7 @@ void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
 }
 
 byte* ceu_vector_geti_ex (tceu_vector* vector, usize idx, char* file, int line) {
-    ceu_cb_assert_msg_ex(idx < vector->len, "access out of bounds", file, line);
+    ceu_callback_assert_msg_ex(idx < vector->len, "access out of bounds", file, line);
     return ceu_vector_buf_get(vector, idx);
 }
 

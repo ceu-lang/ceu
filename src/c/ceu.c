@@ -66,7 +66,7 @@ static int ceu_data_is (tceu_ndata me, tceu_ndata cmp) {
 }
 
 static void* ceu_data_as (tceu_data* me, tceu_ndata cmp, char* file, int line) {
-    ceu_cb_assert_msg_ex(ceu_data_is(me->id, cmp), "invalid cast `as´",
+    ceu_callback_assert_msg_ex(ceu_data_is(me->id, cmp), "invalid cast `as´",
                           file, line);
     return me;
 }
@@ -167,7 +167,7 @@ static int ceu_mem_is_child (tceu_code_mem* me, tceu_code_mem* par_mem,
                              tceu_ntrl par_trl1, tceu_ntrl par_trl2)
 {
     if (me == par_mem) {
-ceu_cb_assert_msg(0, "TODO");
+ceu_callback_assert_msg(0, "TODO");
         return (par_trl1==0 && par_trl2==me->trails_n-1);
     }
 
