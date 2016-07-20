@@ -157,10 +157,17 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK,
         MEMS.datas.id = MEMS.datas.id + 1
     end,
     Data__POS = function (me)
+        local mem = me.mems.mem
         me.mems.mem = [[
 typedef struct tceu_data_]]..me.id_..[[ {
+]]
+        if me.in_hier then
+            me.mems.mem = me.mems.mem..[[
     tceu_data data;
-    ]]..me.mems.mem..[[
+]]
+        end
+        me.mems.mem = me.mems.mem..[[
+    ]]..mem..[[
 } tceu_data_]]..me.id_..[[;
 ]]..'\n'
         MEMS.datas.mems   = MEMS.datas.mems..me.mems.mem

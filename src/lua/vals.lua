@@ -132,7 +132,9 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         local ps = {}
 
         if ID_abs.dcl.tag == 'Data' then
-            ps[1] = '.data.id = CEU_DATA_'..ID_abs.dcl.id_
+            if ID_abs.dcl.in_hier then
+                ps[1] = '.data.id = CEU_DATA_'..ID_abs.dcl.id_
+            end
         end
 
         for i, v in ipairs(Abslist) do

@@ -309,6 +309,8 @@ F = {
             local dcl = dcls_get(blk, super, true)
             ASR(dcl, me,
                 'invalid declaration : abstraction "'..super..'" is not declared')
+            dcl.in_hier = true
+            me.in_hier = true
             me.super = dcl
         end
 

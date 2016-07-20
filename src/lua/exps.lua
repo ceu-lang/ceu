@@ -416,6 +416,8 @@ error'TODO: luacov never executes this?'
         local plain = TYPES.ID_plain(e.info.tp)
         ASR(plain and plain.dcl.tag=='Data', me,
             'invalid operand to `'..op..'´ : expected plain `data´ type : got "'..TYPES.tostring(e.info.tp)..'"')
+        ASR(plain and plain.dcl.in_hier, me,
+            'invalid operand to `'..op..'´ : expected `data´ type in some hierarchy : got "'..TYPES.tostring(e.info.tp)..'"')
 
         -- info
         me.info = INFO.new(me, 'Val', nil, 'bool')

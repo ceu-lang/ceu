@@ -60310,6 +60310,42 @@ escape x;
     run = 10,
 }
 
+Test { [[
+native _t;
+native/nohold _f;
+native/pre do
+    typedef struct t {
+        int x;
+    } t;
+    int f (t* v) {
+        return v->x;
+    }
+end
+
+data Data with
+    var int x;
+end
+
+var Data d = val Data(10);
+
+escape _f(&&d as _t&&);
+]],
+    run = 10,
+}
+
+Test { [[
+data Data with
+    var int x;
+end
+
+var Data d = val Data(10);
+var& Data dd = &d;
+
+escape (dd is Data) as int;
+]],
+    exps = 'line 8 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Data"',
+}
+
 --<<< DATA / HIERARCHY / SUB-DATA / SUB-TYPES
 
 Test { [[
