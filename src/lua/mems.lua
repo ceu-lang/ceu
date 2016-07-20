@@ -174,9 +174,11 @@ typedef struct tceu_data_]]..me.id_..[[ {
         local mem = {}
         for _, dcl in ipairs(me.dcls) do
             if dcl.ln then
-                mem[#mem+1] = [[
+                if CEU.opts.ceu_line_directives then
+                    mem[#mem+1] = [[
 #line ]]..dcl.ln[2]..' "'..dcl.ln[1]..[["
 ]]
+                end
             end
 
             -- VAR

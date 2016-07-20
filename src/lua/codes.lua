@@ -2,14 +2,22 @@ CODES = {
     native = { pre='', pos='' }
 }
 
+local function LINE_DIRECTIVE (me)
+    if CEU.opts.ceu_line_directives then
+        return [[
+#line ]]..me.ln[2]..' "'..me.ln[1]..[["
+]]
+    else
+        return ''
+    end
+end
+
 local function LINE (me, line)
     me.code = me.code..'\n'..[[
 /* ]]..me.tag..' (n='..me.n..', ln='..me.ln[2]..[[) */
 ]]
     if CEU.opts.ceu_line_directives then
-        me.code = me.code..'\n'..[[
-#line ]]..me.ln[2]..' "'..me.ln[1]..[["
-]]
+        me.code = me.code..'\n'..LINE_DIRECTIVE(me)
     end
     me.code = me.code..line
 end
@@ -750,7 +758,9 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
                     -- v1 = []..v2;
                     LINE(me, [[
     ceu_callback_assert_msg(&]]..V(fr)..' != &'..V(to)..[[, "source is the same as destination");
-#line ]]..me.ln[2]..' "'..me.ln[1]..[["
+]])
+                    LINE_DIRECTIVE(me)
+                    LINE(me, [[
     ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..V(fr)..[[.len), 1);
     ceu_vector_buf_set(&]]..V(to)..[[,
                        __ceu_nxt,
