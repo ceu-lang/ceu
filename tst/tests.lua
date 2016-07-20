@@ -32402,13 +32402,11 @@ escape x;
 }
 
 Test { [[
-native _int_ptr, _myalloc, _printf;
+native _int_ptr, _myalloc;
 native/pre do
-#include <stdio.h>
     typedef int* int_ptr;
     int V = 10;
     void* myalloc (void) {
-printf("malloc %p\n", &V);
         return &V;
     }
     void myfree (void* v) {
@@ -32417,7 +32415,6 @@ end
 native/nohold _myfree;
 
 code/delayed Fy (var& _int_ptr x) => int do
-_printf(">3> %p\n", x);
     escape *x + 1;
 end
 
@@ -32430,11 +32427,9 @@ code/delayed Fx (void) => (var& _int_ptr vv) => int do
             _myfree(v!);
         end
     end
-_printf(">1> %p\n", v!);
 
     vv = &v!;
     var int x = await Fy(&v!);
-_printf(">4> %d\n", x);
     escape x + 1;
 end
 
@@ -32442,17 +32437,16 @@ var int x = await Fx();
 
 escape x;
 ]],
-    run = 1,
+    run = 12,
 }
 
 Test { [[
-native _int_ptr, _myalloc, _printf;
+native _int_ptr, _myalloc;
 native/pre do
 #include <stdio.h>
     typedef int* int_ptr;
     int V = 10;
     void* myalloc (void) {
-printf("malloc %p\n", &V);
         return &V;
     }
     void myfree (void* v) {
@@ -32461,7 +32455,7 @@ end
 native/nohold _myfree;
 
 code/delayed Fy (var& _int_ptr x) => int do
-_printf(">3> %p\n", x);
+    await 1s;
     escape *x + 1;
 end
 
@@ -32474,23 +32468,22 @@ code/delayed Fx (void) => (var& _int_ptr vv) => int do
             _myfree(v!);
         end
     end
-_printf(">1> %p\n", v!);
 
     vv = &v!;
     var int x = await Fy(&v!);
-_printf(">4> %d\n", x);
     escape x + 1;
 end
 
 var int ret = 0;
-var int x =
+var int? x =
     watching Fx() => (vvv) do
         ret = ret + *vvv;
+        await 1s;
     end;
 
-escape ret+x;
+escape ret+x!;
 ]],
-    run = 1,
+    run = { ['~>1s']=22 },
 }
 
 --<< CODE / DELAYED / WATCHING

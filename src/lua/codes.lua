@@ -301,7 +301,7 @@ if (0)
                 -- extra indirection for mid's
                 v[#v+1] = '&'..V(var,{is_bind=true})
             end
-            mid = ','..table.concat(v,',')
+            mid = (#Abslist>0 and ',' or '')..table.concat(v,',')
         else
             mid = ''
         end
