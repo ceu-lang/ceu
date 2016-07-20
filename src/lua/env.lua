@@ -26,6 +26,9 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
 #define ceu_callback_void_void(cmd)                     \
         ceu_callback(cmd, (tceu_callback_arg){},        \
                           (tceu_callback_arg){})
+#define ceu_callback_num_void(cmd,p1)                   \
+        ceu_callback(cmd, (tceu_callback_arg){.num=p1}, \
+                          (tceu_callback_arg){})
 #define ceu_callback_num_ptr(cmd,p1,p2)                 \
         ceu_callback(cmd, (tceu_callback_arg){.num=p1}, \
                           (tceu_callback_arg){.ptr=p2})
