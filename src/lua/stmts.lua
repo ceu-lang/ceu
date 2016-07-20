@@ -114,6 +114,10 @@ DBG('TODO: _Lua')
         -- tp
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)
 
+        -- NO: ... = &_V        // native ID
+        ASR(fr.info.dcl.tag~='Nat' or fr[2].tag=='Exp_Call', me,
+            'invalid binding : unexpected native identifier')
+
         -- option type
         if TYPES.check(to.info.tp,'?') then
             if TYPES.check(fr.info.tp,'_') and

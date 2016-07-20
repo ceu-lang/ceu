@@ -17358,8 +17358,9 @@ end
 var& int v = &_V;
 escape v;
 ]],
+    stmts = 'line 5 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
-    run = 10;
+    --run = 10;
 }
 
 Test { [[
@@ -17404,9 +17405,10 @@ var& int v;
 v = &_V;
 escape v;
 ]],
+    stmts = 'line 6 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
     --env = 'line 5 : invalid attribution (int& vs _&&)',
-    run = 10;
+    --run = 10;
 }
 
 Test { [[
@@ -17455,8 +17457,9 @@ var& int v;
 v = &_V;
 escape v;
 ]],
+    stmts = 'line 6 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
-    run = 10;
+    --run = 10;
 }
 
 Test { [[
@@ -17567,8 +17570,9 @@ end
 v = 1;
 escape _V1+_V2;
 ]],
+    stmts = 'line 8 : invalid binding : unexpected native identifier',
     --gcc = 'error: assignment makes pointer from integer without a cast',
-    run = 6,
+    --run = 6,
 }
 
 Test { [[
