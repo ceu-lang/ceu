@@ -150,8 +150,6 @@ typedef struct tceu_app {
 
 static tceu_app CEU_APP;
 
-=== NATIVE_POS ===
-
 /*****************************************************************************/
 
 typedef struct tceu_stk {
@@ -241,8 +239,6 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 static void ceu_go_lbl (tceu_evt* _ceu_evt, tceu_stk* _ceu_stk,
                         tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
 
-/*****************************************************************************/
-
 #define CEU_STK_LBL(evt, stk_old, exe_mem,exe_trl,exe_lbl) {    \
     tceu_stk __ceu_stk = { stk_old, exe_mem, 0, 1 };            \
     ceu_go_lbl(evt, &__ceu_stk, exe_mem, exe_trl, exe_lbl);     \
@@ -267,7 +263,11 @@ static void ceu_go_lbl (tceu_evt* _ceu_evt, tceu_stk* _ceu_stk,
     }                                                                   \
 }
 
+=== NATIVE_POS ===
+
 === CODES_WRAPPERS ===
+
+/*****************************************************************************/
 
 static void ceu_go_lbl (tceu_evt* _ceu_evt, tceu_stk* _ceu_stk,
                         tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl)
