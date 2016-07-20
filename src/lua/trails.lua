@@ -73,6 +73,7 @@ G = {
     ROOT__PRE = function (me)
         me.trails = { 0, me.trails_n-1 }     -- [0, N]
     end,
+    Code__PRE = 'ROOT__PRE',
 
     Node__PRE = function (me)
         if (not me.trails) and me.__par then

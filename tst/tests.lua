@@ -32193,6 +32193,34 @@ escape v;
     run = 5,
 }
 
+Test { [[
+input void A;
+
+code/delayed Rect (void) => void do
+    par/or do
+        await A;
+    with
+        await FOREVER;
+    end
+end
+
+par/or do
+    async do
+        emit A;
+    end
+with
+    await Rect();
+with
+    await Rect();
+with
+    await A;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 -->> CODE / DELAYED / WATCHING
 
 Test { [[

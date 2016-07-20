@@ -425,7 +425,7 @@ static int ceu_cb_terminating_ret;
 static int ceu_cb_pending_async = 0;
 
 static tceu_callback_ret ceu_callback_go_all (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
-    tceu_callback_ret ret;
+    tceu_callback_ret ret = { .is_handled=1 };
     switch (cmd) {
         case CEU_CALLBACK_STEP:
             if (!p1.num) {
@@ -433,12 +433,10 @@ static tceu_callback_ret ceu_callback_go_all (int cmd, tceu_callback_arg p1, tce
             }
             break;
         case CEU_CALLBACK_TERMINATING:
-            ret.is_handled = 1;
             ceu_cb_terminating = 1;
             ceu_cb_terminating_ret = p1.num;
             break;
         case CEU_CALLBACK_PENDING_ASYNC:
-            ret.is_handled = 1;
             ceu_cb_pending_async = 1;
             break;
         default:
