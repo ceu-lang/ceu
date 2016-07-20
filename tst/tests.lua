@@ -32214,6 +32214,28 @@ escape a! + x;
 }
 
 Test { [[
+code/delayed Code (var& int x) => (var& int y, var& int z) => int
+do
+    y = &x;
+    z = &y;
+    x = x + 1;
+    await 1s;
+    escape y+z;
+end
+var int x = 10;
+var int? a =
+    watching Code(&x) => (y,z) do
+        y = y + 1;
+        await 5s;
+        escape 1;
+    end;
+
+escape a! + x;
+]],
+    run = {['~>1s']=36 },
+}
+
+Test { [[
 code/delayed Code (var& int x) => (var& int y) => int
 do
     y = &x;
@@ -32252,6 +32274,36 @@ end
 escape 0;
 ]],
     cc = '8: error: unknown type name ‘SDL_Window_ptr’',
+}
+
+Test { [[
+native _int_ptr, _myalloc;
+native/pre do
+    typedef void* int_ptr;
+    void* myalloc (void) {
+        return NULL;
+    }
+    void myfree (void* v) {
+    }
+end
+native/nohold _myfree;
+
+code/delayed Fx (void) => (var& _int_ptr vv) => void do
+    var& _int_ptr? v;
+    do
+        v = &_myalloc();
+    finalize(v) with
+        if v? then
+            _myfree(v!);
+        end
+    end
+
+    vv = &v!;
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 --<< CODE / DELAYED / WATCHING

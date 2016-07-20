@@ -293,7 +293,7 @@ if (0)
                 -- extra indirection for mid's
                 v[#v+1] = '&'..V(var,{is_bind=true})
             end
-            mid = ','..table.concat(v)
+            mid = ','..table.concat(v,',')
         else
             mid = ''
         end
@@ -673,8 +673,9 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 ]])
 
         if to.info.dcl.is_mid then
+            local Code = AST.par(me,'Code')
             LINE(me, [[
-*(((tceu_code_args_Code*)_ceu_evt)->]]..to.info.dcl.id..[[) = ]]..V(to, {is_bind=true})..[[;
+*(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..to.info.dcl.id..[[) = ]]..V(to, {is_bind=true})..[[;
 ]])
         end
     end,

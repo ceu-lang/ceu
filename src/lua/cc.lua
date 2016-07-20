@@ -6,3 +6,4 @@ local f = io.popen(cc)
 local err = f:read'*a'
 local ok = f:close()
 ASR(ok, err)
+DBG(err)
