@@ -23,18 +23,21 @@ typedef struct tceu_callback_ret {
 
 tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2);
 
+#define ceu_callback_void_void(cmd)                     \
+        ceu_callback(cmd, (tceu_callback_arg){},        \
+                          (tceu_callback_arg){})
 #define ceu_callback_num_ptr(cmd,p1,p2)                 \
         ceu_callback(cmd, (tceu_callback_arg){.num=p1}, \
-                      (tceu_callback_arg){.ptr=p2})
+                          (tceu_callback_arg){.ptr=p2})
 #define ceu_callback_num_num(cmd,p1,p2)                 \
         ceu_callback(cmd, (tceu_callback_arg){.num=p1}, \
-                      (tceu_callback_arg){.num=p2})
+                          (tceu_callback_arg){.num=p2})
 #define ceu_callback_ptr_num(cmd,p1,p2)                 \
         ceu_callback(cmd, (tceu_callback_arg){.ptr=p1}, \
-                      (tceu_callback_arg){.num=p2})
+                          (tceu_callback_arg){.num=p2})
 #define ceu_callback_ptr_size(cmd,p1,p2)                \
         ceu_callback(cmd, (tceu_callback_arg){.ptr=p1}, \
-                      (tceu_callback_arg){.size=p2})
+                          (tceu_callback_arg){.size=p2})
 
 #define ceu_callback_assert_msg_ex(v,msg,file,line)                              \
     if (!(v)) {                                                                  \
@@ -55,6 +58,8 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
 #define ceu_dbg_assert(v) ceu_callback_assert_msg(v,"bug found")
 
 enum {
+    CEU_CALLBACK_INIT,
+    CEU_CALLBACK_STEP,
     CEU_CALLBACK_ABORT,
     CEU_CALLBACK_LOG,
     CEU_CALLBACK_TERMINATING,

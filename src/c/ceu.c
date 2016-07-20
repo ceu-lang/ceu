@@ -446,9 +446,14 @@ int ceu_go_all (void)
     CEU_STK_LBL(NULL, &CEU_STK_BASE,
                 (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
 
-    while (!ceu_cb_terminating && ceu_cb_pending_async) {
-        ceu_cb_pending_async = 0;
-        ceu_go_ext(CEU_INPUT__ASYNC, NULL);
+    ceu_callback_void_void(CEU_CALLBACK_INIT);
+
+    while (!ceu_cb_terminating) {
+        ceu_callback_void_void(CEU_CALLBACK_STEP);
+        if (ceu_cb_pending_async) {
+            ceu_cb_pending_async = 0;
+            ceu_go_ext(CEU_INPUT__ASYNC, NULL);
+        }
     }
 
     return ceu_cb_terminating_ret;
