@@ -177,7 +177,7 @@ F = {
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
 
-        if TYPES.is_opt_ext(Type) then
+        if TYPES.check(Type,'?') and TYPES.is_nat_not_plain(TYPES.pop(Type,'?')) then
             ASR(is_alias, me, 'invalid declaration : expected `&´')
             me.is_read_only = true
         end

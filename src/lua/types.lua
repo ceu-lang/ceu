@@ -37,7 +37,7 @@ function TYPES.toc (tp)
     assert(tp.tag == 'Type')
     local ID = unpack(tp)
 
-    local is_int_opt = TYPES.check(tp,'?') and (not TYPES.is_opt_ext(tp))
+    local is_int_opt = TYPES.check(tp,'?') and (not TYPES.is_nat_not_plain(TYPES.pop(tp,'?')))
 
     local pre = ''
     if is_int_opt then
@@ -179,10 +179,6 @@ function TYPES.is_nat_not_plain (tp)
         end
     end
     return true
-end
-
-function TYPES.is_opt_ext (tp)
-    return TYPES.check(tp,'?') and TYPES.is_nat_not_plain(TYPES.pop(tp,'?'))
 end
 
 function TYPES.ID_plain (tp)

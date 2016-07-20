@@ -93,7 +93,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
         for i,item in ipairs(ins_mid) do
             local kind,is_alias,dim,Type,id2 = unpack(item)
-            local ptr = (is_alias and (not TYPES.is_opt_ext(Type)) and (not TYPES.is_nat_not_plain(Type)) and '*' or '')
+            local ptr = (is_alias and (not TYPES.is_nat_not_plain(TYPES.pop(Type,'?'))) and '*' or '')
             if i > #ins then
                 ptr = ptr..'*'  -- extra indirection for mid's
             end
@@ -187,7 +187,7 @@ typedef struct tceu_data_]]..me.id_..[[ {
                         dcl.id_ = dcl.id_..'_'..dcl.n
                     end
                     local tp, is_alias = unpack(dcl)
-                    local ptr = (is_alias and (not TYPES.is_opt_ext(tp)) and (not TYPES.is_nat_not_plain(tp)) and '*' or '')
+                    local ptr = (is_alias and (not TYPES.is_nat_not_plain(TYPES.pop(tp,'?'))) and '*' or '')
                     mem[#mem+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
                 end
 
@@ -380,7 +380,7 @@ local opts = ''
 for _, tp in ipairs(MEMS.opts) do
     local cc = TYPES.toc(tp)
     local c = TYPES.toc(TYPES.pop(tp,'?'))
-    if TYPES.is_opt_ext(tp) then
+    if TYPES.is_nat_not_plain(TYPES.pop(tp,'?')) then
         opts = opts..[[
 static ]]..cc..' CEU_OPTION_'..cc..' ('..cc..[[ opt, char* file, int line) {
     ceu_cb_assert_msg_ex(opt != NULL, "value is not set", file, line);

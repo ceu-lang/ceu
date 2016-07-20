@@ -182,8 +182,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         else
             local ptr = ''
             if is_alias and (not ctx.is_bind) and
-                (not TYPES.is_opt_ext(me.dcl[1])) and
-                (not TYPES.is_nat_not_plain(me.dcl[1]))
+                (not TYPES.is_nat_not_plain(TYPES.pop(me.dcl[1],'?')))
                     --  var& _t_ptr? x = &_f(); ... x!
                     --  var& _t_ptr xx = &x!;   ... xx
             then
@@ -245,7 +244,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 
     ['Exp_?'] = function (me)
         local _, e = unpack(me)
-        if TYPES.is_opt_ext(e.info.tp) then
+        if TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?')) then
             return '('..V(e)..' != NULL)'
         else
             return '('..V(e)..'.is_set)'
@@ -254,7 +253,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 
     ['Exp_!'] = function (me)
         local _, e = unpack(me)
-        if TYPES.is_opt_ext(e.info.tp) then
+        if TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?')) then
             return 'CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', __FILE__, __LINE__)'
         else
             return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)->value)'
