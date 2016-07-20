@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-tceu_callback_arg callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+tceu_callback_arg ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
     switch (cmd) {
         case CEU_CALLBACK_ABORT:
             abort();
