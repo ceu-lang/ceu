@@ -185,7 +185,6 @@ local function run_ptrs (par, i, Dcl, stop)
         if set then
             local _,to = unpack(set)
             if to.tag ~= 'Namelist' then
-error'TODO: luacov never executes this?'
                 to = { to }
             end
             for _, v in ipairs(to) do

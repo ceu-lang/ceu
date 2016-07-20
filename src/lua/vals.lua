@@ -203,9 +203,12 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         local dcl = e.info.dcl
         if dcl.tag == 'Evt' then
             return dcl.id_
-        elseif e.tag=='Exp_Call' or AST.get(e,'Exp_Name',1,'Exp_!') then
+        elseif e.tag=='Exp_Call' or AST.get(e,'Exp_Name',1,'Exp_!')
+                or TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?'))
+        then
             -- x = &_f();
             -- y = &x!;
+            -- var& _void_ptr x; y=&x;
             return V(e)
         else
             return '(&'..V(e)..')'

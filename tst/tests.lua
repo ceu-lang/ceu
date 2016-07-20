@@ -32033,6 +32033,23 @@ escape a;
 }
 
 Test { [[
+code/delayed Fy (var int x) => int do
+    escape x + 1;
+end
+
+code/delayed Fx (var int x) => int do
+    var int y = await Fy(x);
+    escape y + 1;
+end
+
+var int x = await Fx(10);
+
+escape x;
+]],
+    run = 12,
+}
+
+Test { [[
 every Code(1) do
 end
 ]],
@@ -32244,7 +32261,7 @@ do
     y = &x;
     x = x + 1;
     await 1s;
-    escape y;
+    escape x;
 end
 var int x = 10;
 var int? a =
@@ -32263,10 +32280,10 @@ Test { [[
 code/delayed Code (var& int x) => (var& int y, var& int z) => int
 do
     y = &x;
-    z = &y;
+    z = &x;
     x = x + 1;
     await 1s;
-    escape y+z;
+    escape x+x;
 end
 var int x = 10;
 var int? a =
@@ -32287,7 +32304,7 @@ do
     y = &x;
     x = x + 1;
     await 10s;
-    escape y;
+    escape x;
 end
 var int x = 10;
 watching Code(&x) => (y) do
@@ -32348,6 +32365,126 @@ code/delayed Fx (void) => (var& _int_ptr vv) => void do
 end
 
 escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _int_ptr, _myalloc;
+native/pre do
+    typedef int* int_ptr;
+    int V = 10;
+    void* myalloc (void) {
+        return &V;
+    }
+end
+
+code/delayed Fx (void) => (var& _int_ptr vv) => int do
+    var& _int_ptr? v;
+    do
+        v = &_myalloc();
+    finalize(v) with
+    end
+
+    vv = &v!;
+    escape *vv;
+end
+
+var int x = await Fx();
+
+escape x;
+]],
+    exps = 'line 18 : invalid access to output variable "vv"',
+}
+
+Test { [[
+native _int_ptr, _myalloc, _printf;
+native/pre do
+#include <stdio.h>
+    typedef int* int_ptr;
+    int V = 10;
+    void* myalloc (void) {
+printf("malloc %p\n", &V);
+        return &V;
+    }
+    void myfree (void* v) {
+    }
+end
+native/nohold _myfree;
+
+code/delayed Fy (var& _int_ptr x) => int do
+_printf(">3> %p\n", x);
+    escape *x + 1;
+end
+
+code/delayed Fx (void) => (var& _int_ptr vv) => int do
+    var& _int_ptr? v;
+    do
+        v = &_myalloc();
+    finalize(v) with
+        if v? then
+            _myfree(v!);
+        end
+    end
+_printf(">1> %p\n", v!);
+
+    vv = &v!;
+    var int x = await Fy(&v!);
+_printf(">4> %d\n", x);
+    escape x + 1;
+end
+
+var int x = await Fx();
+
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+native _int_ptr, _myalloc, _printf;
+native/pre do
+#include <stdio.h>
+    typedef int* int_ptr;
+    int V = 10;
+    void* myalloc (void) {
+printf("malloc %p\n", &V);
+        return &V;
+    }
+    void myfree (void* v) {
+    }
+end
+native/nohold _myfree;
+
+code/delayed Fy (var& _int_ptr x) => int do
+_printf(">3> %p\n", x);
+    escape *x + 1;
+end
+
+code/delayed Fx (void) => (var& _int_ptr vv) => int do
+    var& _int_ptr? v;
+    do
+        v = &_myalloc();
+    finalize(v) with
+        if v? then
+            _myfree(v!);
+        end
+    end
+_printf(">1> %p\n", v!);
+
+    vv = &v!;
+    var int x = await Fy(&v!);
+_printf(">4> %d\n", x);
+    escape x + 1;
+end
+
+var int ret = 0;
+var int x =
+    watching Fx() => (vvv) do
+        ret = ret + *vvv;
+    end;
+
+escape ret+x;
 ]],
     run = 1,
 }

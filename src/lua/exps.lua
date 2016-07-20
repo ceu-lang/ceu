@@ -25,6 +25,13 @@ F = {
         local e = unpack(me)
         me.info = e.info
     end,
+    ID_int = function (me)
+        if me.dcl.is_mid then
+            local Set_Alias = AST.get(me.__par.__par,'Set_Alias')
+            ASR(Set_Alias and AST.get(Set_Alias,'',2,'Exp_Name',1,'ID_int')==me, me,
+                'invalid access to output variable "'..me.dcl.id..'"')
+        end
+    end,
 
 -- PRIMITIVES
 
