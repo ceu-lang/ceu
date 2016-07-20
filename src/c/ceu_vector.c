@@ -59,7 +59,7 @@ byte* ceu_vector_setmax (tceu_vector* vector, usize len, bool freeze) {
                                 CEU_CALLBACK_REALLOC,
                                 vector->buf,
                                 len*vector->unit + 1    /* [STRING] +1 */
-                              ).ptr;
+                              ).value.ptr;
     }
 
     if (freeze) {

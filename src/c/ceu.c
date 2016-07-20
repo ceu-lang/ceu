@@ -419,16 +419,22 @@ static int ceu_cb_terminating = 0;
 static int ceu_cb_terminating_ret;
 static int ceu_cb_pending_async = 0;
 
-static void ceu_callback_go_all (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+static tceu_callback_ret ceu_callback_go_all (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret ret;
     switch (cmd) {
         case CEU_CALLBACK_TERMINATING:
-            ceu_cb_terminating     = 1;
+            ret.is_handled = 1;
+            ceu_cb_terminating = 1;
             ceu_cb_terminating_ret = p1.num;
             break;
         case CEU_CALLBACK_PENDING_ASYNC:
+            ret.is_handled = 1;
             ceu_cb_pending_async = 1;
             break;
+        default:
+            ret.is_handled = 0;
     }
+    return ret;
 }
 
 int ceu_go_all (void)

@@ -21753,7 +21753,7 @@ escape v.a + v.b;
 
 Test { [[
 native/pre do
-    ##define ceu_callback_output(evt,params) Fa(evt.num,params.ptr)
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
     ##include <assert.h>
     typedef struct t {
         int a;
@@ -21761,13 +21761,20 @@ native/pre do
     } t;
 end
 native/pos do
-    int Fa (int evt, void* v) {
-        if (evt == CEU_OUTPUT_A) {
-            t* x = ((tceu_output_A*)v)->_1;
-            return x->a + x->b;
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret;
+        if (cmd != CEU_CALLBACK_OUTPUT) {
+            ret.is_handled = 0;
         } else {
-            return *((int*)v);
+            ret.is_handled = 1;
+            if (p1.num == CEU_OUTPUT_A) {
+                t* x = ((tceu_output_A*)p2.ptr)->_1;
+                ret.value.num = x->a + x->b;
+            } else {
+                ret.value.num = *((int*)p2.ptr);
+            }
         }
+        return ret;
     }
 end
 native/plain _t;
@@ -21786,6 +21793,7 @@ escape a + b;
 
 Test { [[
 native/pre do
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
     ##include <assert.h>
     typedef struct t {
         int a;
@@ -21793,14 +21801,20 @@ native/pre do
     } t;
 end
 native/pos do
-    ##define ceu_callback_output(evt,params) Fa(evt.num,params.ptr)
-    int Fa (int evt, void* v) {
-        if (evt == CEU_OUTPUT_A) {
-            t x = ((tceu_output_A*)v)->_1;
-            return x.a + x.b;
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret;
+        if (cmd != CEU_CALLBACK_OUTPUT) {
+            ret.is_handled = 0;
         } else {
-            return *((int*)v);
+            ret.is_handled = 1;
+            if (p1.num == CEU_OUTPUT_A) {
+                t x = ((tceu_output_A*)p2.ptr)->_1;
+                ret.value.num = x.a + x.b;
+            } else {
+                ret.value.num = *((int*)p2.ptr);
+            }
         }
+        return ret;
     }
 end
 native/plain _t;
@@ -21923,12 +21937,20 @@ escape 1;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_output(evt,params) Fx(params.ptr)
-    int Fx (void* p) {
-        tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p;
-        *(v->_1) = 1;
-        *(v->_2) = 2;
-        return 0;
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret;
+        if (cmd != CEU_CALLBACK_OUTPUT) {
+            ret.is_handled = 0;
+        } else {
+            ret.is_handled = 1;
+
+            tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p2.ptr;
+            *(v->_1) = 1;
+            *(v->_2) = 2;
+            ret.value.num = 0;
+        }
+        return ret;
     }
 end
 
@@ -21943,12 +21965,20 @@ escape a + b;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_output(evt,params) Fx(evt.num,params.ptr)
-    int Fx (int evt, void* p) {
-        tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p;
-        *(v->_1) = (evt == CEU_OUTPUT_RADIO_SEND);
-        *(v->_2) = 2;
-        return 0;
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret;
+        if (cmd != CEU_CALLBACK_OUTPUT) {
+            ret.is_handled = 0;
+        } else {
+            ret.is_handled = 1;
+
+            tceu_output_RADIO_SEND* v = (tceu_output_RADIO_SEND*) p2.ptr;
+            *(v->_1) = (p1.num == CEU_OUTPUT_RADIO_SEND);
+            *(v->_2) = 2;
+            ret.value.num = 0;
+        }
+        return ret;
     }
 end
 
@@ -22274,11 +22304,19 @@ escape ret;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_output(a,b) Z(a.num,b.ptr)
-    int Z (tceu_nevt evt, void* p) {
-        return (evt==CEU_OUTPUT_Z && p==NULL);
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret;
+        if (cmd != CEU_CALLBACK_OUTPUT) {
+            ret.is_handled = 0;
+        } else {
+            ret.is_handled = 1;
+            ret.value.num = (p1.num == CEU_OUTPUT_Z && p2.ptr==NULL);
+        }
+        return ret;
     }
 end
+
 output void Z;
 var int ret = (emit Z);
 escape ret;
@@ -22288,11 +22326,19 @@ escape ret;
 
 Test { [[
 native/pos do
-    ##define ceu_callback_output(a,b) Z()
-    int Z () {
-        return 1;
+    ##define ceu_callback_env(cmd,evt,params) CB(cmd,evt,params)
+    tceu_callback_ret CB (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+        tceu_callback_ret ret;
+        if (cmd != CEU_CALLBACK_OUTPUT) {
+            ret.is_handled = 0;
+        } else {
+            ret.is_handled = 1;
+            ret.value.num = 1;
+        }
+        return ret;
     }
 end
+
 output void Z;
 var int ret = (emit Z);
 escape ret;

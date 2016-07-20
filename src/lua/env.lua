@@ -16,7 +16,12 @@ typedef union tceu_callback_arg {
     usize size;
 } tceu_callback_arg;
 
-tceu_callback_arg ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2);
+typedef struct tceu_callback_ret {
+    bool is_handled;
+    tceu_callback_arg value;
+} tceu_callback_ret;
+
+tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2);
 
 #define ceu_callback_num_ptr(cmd,p1,p2)                 \
         ceu_callback(cmd, (tceu_callback_arg){.num=p1}, \

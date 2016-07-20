@@ -1,11 +1,27 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-tceu_callback_arg ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
+    tceu_callback_ret ret;
+
+#ifdef ceu_callback_env
+    ret = ceu_callback_env(cmd, p1, p2);
+    if (ret.is_handled) {
+        return ret;
+    }
+#endif
+
+    ret = ceu_callback_go_all(cmd, p1, p2);
+    if (ret.is_handled) {
+        return ret;
+    }
+
     switch (cmd) {
         case CEU_CALLBACK_ABORT:
+            ret.is_handled = 1;
             abort();
         case CEU_CALLBACK_LOG: {
+            ret.is_handled = 1;
             switch (p1.num) {
                 case 0:
                     printf("%s", (char*)p2.ptr);
@@ -19,16 +35,13 @@ tceu_callback_arg ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
             }
             break;
         }
-        case CEU_CALLBACK_OUTPUT:
-#ifdef ceu_callback_output
-            return (tceu_callback_arg){ .num=ceu_callback_output(p1, p2) };
-#endif
-            break;
         case CEU_CALLBACK_REALLOC:
-            return (tceu_callback_arg){ .ptr = realloc(p1.ptr, p2.size) };
+            ret.is_handled = 1;
+            ret.value.ptr = realloc(p1.ptr, p2.size);
+        default:
+            ret.is_handled = 0;
     }
-    ceu_callback_go_all(cmd, p1, p2);
-    return (tceu_callback_arg){ .num=0 };
+    return ret;
 }
 
 int main (int argc, char *argv[])

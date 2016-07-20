@@ -841,7 +841,7 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',
         if inout == 'output' then
             local set = AST.par(me,'Set_Emit_Ext_emit')
             local cb = [[
-ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[).num;
+ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[).value.num;
 ]]
             if set then
                 local _, to = unpack(set)
