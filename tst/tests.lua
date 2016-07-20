@@ -18504,7 +18504,7 @@ escape 1;
     parser = 'after `int´ : expected type modifier or internal identifier',
 }
 Test { [[
-var& int&& v;
+var& int v;
 escape 1;
 ]],
     dcls = 'line 1 : variable "v" declared but not used',
@@ -18514,10 +18514,11 @@ var& int&& v;
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "v"',
+    --inits = 'line 1 : uninitialized variable "v"',
+    dcls = 'line 1 : invalid declaration : unexpected `&&´ : cannot alias a pointer',
 }
 Test { [[
-var& int&&  v;
+var& int  v;
 escape 1;
 ]],
     wrn = true,
@@ -18542,6 +18543,7 @@ var int&& p = null;
 var& int&&  v = &p;
 escape 1;
 ]],
+    todo = 'removed support for pointer alias',
     run = 1,
 }
 Test { [[
@@ -18581,6 +18583,14 @@ var& _t t_ = &t;
 escape t_.x;
 ]],
     run = 11,
+}
+
+Test { [[
+var int&& x = null;
+var& int&& y = &x;
+escape 0;
+]],
+    dcls = 'line 2 : invalid declaration : unexpected `&&´ : cannot alias a pointer',
 }
 
 --<<< ALIASES / REFERENCES / REFS / &
@@ -28770,6 +28780,63 @@ end
     --props = "line 7 : not permitted inside `finalize´",
 }
 
+Test { [[
+native _void_ptr, _myalloc;
+native/pre do
+    typedef void* void_ptr;
+    void* myalloc (void) {
+        return NULL;
+    }
+    void myfree (void* v) {
+    }
+end
+native/nohold _myfree;
+
+var& _void_ptr? v;
+do
+    v = &_myalloc();
+finalize(v) with
+    if v? then
+        _myfree(v!);
+    end
+end
+
+var& _void_ptr vv = &v!;
+
+escape 1;
+]],
+    run = '21] runtime error: value is not set',
+}
+
+Test { [[
+native _void_ptr, _myalloc, _V;
+native/pre do
+    typedef void* void_ptr;
+    int V;
+    void* myalloc (void) {
+        return &V;
+    }
+    void myfree (void* v) {
+    }
+end
+native/nohold _myfree;
+
+var& _void_ptr? v;
+do
+    v = &_myalloc();
+finalize(v) with
+    if v? then
+        _myfree(v!);
+    end
+end
+
+var& _void_ptr vv = &v!;
+
+escape (vv==(&&_V as _void_ptr)) as int;
+]],
+    run = 1,
+}
+
 -->> OPTION / NATIVE / FINALIZE
 
 Test { [[
@@ -29887,6 +29954,35 @@ end
 escape a;
 ]],
     run = 10,
+}
+
+Test { [[
+native _int_ptr, _f;
+native/pre do
+    typedef int* int_ptr;
+    int A = 10;
+    int* f () {
+        return &A;
+    }
+end
+var int a = 10;
+do
+    var& _int_ptr? p;
+    //do
+do
+            p = &_f();
+        finalize (p)
+        with
+            a = a + *p!;
+        end
+    //end
+    a = 0;
+    await 1s;
+    a = *p!;
+end
+escape a;
+]],
+    run = { ['~>1s']=20 },
 }
 
 --<< OPTION / NATIVE / FINALIZE
@@ -32115,6 +32211,47 @@ var int? a =
 escape a! + x;
 ]],
     run = {['~>1s']=24 },
+}
+
+Test { [[
+code/delayed Code (var& int x) => (var& int y) => int
+do
+    y = &x;
+    x = x + 1;
+    await 10s;
+    escape y;
+end
+var int x = 10;
+watching Code(&x) => (y) do
+    y = y + 1;
+    await 5s;
+    escape y;
+end;
+
+escape x;
+]],
+    run = {['~>5s']=12 },
+}
+
+Test { [[
+native/nohold _SDL_CreateWindow;
+
+native _SDL_Window_ptr, _printf;
+
+code/delayed SDL_Go (void) => (var& _SDL_Window_ptr win) => void
+do
+    var& _SDL_Window_ptr? win_ = &_SDL_CreateWindow() finalize (win_) with end
+    win = &win_!;
+end
+
+watching SDL_Go() => (win) do
+    await 1s;
+    _printf("%p\n", win);
+end
+
+escape 0;
+]],
+    cc = '8: error: unknown type name ‘SDL_Window_ptr’',
 }
 
 --<< CODE / DELAYED / WATCHING

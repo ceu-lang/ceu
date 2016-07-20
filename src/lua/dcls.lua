@@ -182,6 +182,13 @@ F = {
             me.is_read_only = true
         end
 
+        -- NO: alias to pointer
+        --  var& int&& x = ...;
+        if is_alias then
+            ASR(not TYPES.check(Type,'&&'), me,
+                'invalid declaration : unexpected `&&´ : cannot alias a pointer')
+        end
+
         local ID_prim,mod = unpack(Type)
         if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
             ASR(is_alias, me,

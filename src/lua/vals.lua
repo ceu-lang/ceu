@@ -181,7 +181,12 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
             end
         else
             local ptr = ''
-            if is_alias and (not ctx.is_bind) and (not TYPES.is_opt_ext(me.dcl[1])) then
+            if is_alias and (not ctx.is_bind) and
+                (not TYPES.is_opt_ext(me.dcl[1])) and
+                (not TYPES.is_nat_not_plain(me.dcl[1]))
+                    --  var& _t_ptr? x = &_f(); ... x!
+                    --  var& _t_ptr xx = &x!;   ... xx
+            then
                 ptr = '*'
             end
             return '('..ptr..CUR(me.dcl.id_)..')'
@@ -197,7 +202,9 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         local dcl = e.info.dcl
         if dcl.tag == 'Evt' then
             return dcl.id_
-        elseif e.tag == 'Exp_Call' then
+        elseif e.tag=='Exp_Call' or AST.get(e,'Exp_Name',1,'Exp_!') then
+            -- x = &_f();
+            -- y = &x!;
             return V(e)
         else
             return '(&'..V(e)..')'

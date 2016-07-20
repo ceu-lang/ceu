@@ -295,6 +295,11 @@ error'TODO: luacov never executes this?'
         if me.dcl.tag=='Evt' or me.dcl.tag=='Pool' then
             return
         end
+        local _, is_alias = unpack(me.dcl)
+        if is_alias then
+            return
+        end
+
         local is_ptr = TYPES.check(me.dcl[1],'&&') or TYPES.is_nat_not_plain(me.dcl[1])
         if is_ptr then
             local yield = me.dcl.__run_ptrs_yield

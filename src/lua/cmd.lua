@@ -81,8 +81,9 @@ end
 
 local function check_no (pre)
     for k,v in pairs(CEU.opts) do
+        local kk = string.gsub(k,'_','-')
         ASR(not string.find(k, '^'..pre..'_'),
-            'invalid option "'..k..'" : '..
+            'invalid option "'..kk..'" : '..
             'expected option "'..pre..'"')
     end
 end

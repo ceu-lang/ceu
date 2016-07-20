@@ -466,7 +466,8 @@ DBG('TODO: _Loop_Pool')
 
         local ref = node('Nothing', me.ln)
         if mid then
-            local Abs_Await = AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
+            local Abs_Await = AST.get(watch,'Abs_Await') or
+                              AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
             ASR(Abs_Await, me, 'unexpected `=>´')
             local ID_abs = AST.asr(Abs_Await,'', 1,'Abs_Cons', 1,'ID_abs')
             Abs_Await[#Abs_Await+1] = mid
