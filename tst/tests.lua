@@ -32137,19 +32137,6 @@ end
 }
 
 Test { [[
-code/delayed Tx (var& void p)=>int do
-    var void&& p1 = ((&&p) as int&&);
-    escape *((p1) as int&&);
-end
-
-var int v = 10;
-var int ret = await Tx(&v);
-escape ret;
-]],
-    run = 10,
-}
-
-Test { [[
 code/delayed Tx (void)=>void do
 end
 event Tx a;
@@ -32173,24 +32160,6 @@ end
 escape 0;
 ]],
     dcls = 'line 2 : abstraction "Tx" is not declared',
-}
-
-Test { [[
-input void OS_START;
-
-code/delayed Tx (var& int a)=>void do
-    await FOREVER;
-end
-
-var int v = 0;
-watching Tx(&v) do
-    v = 5;
-    await OS_START;
-end
-escape v;
-]],
-    wrn = true,
-    run = 5,
 }
 
 Test { [[
@@ -32219,6 +32188,88 @@ end
 escape 1;
 ]],
     run = 1,
+}
+
+-- CODE / ALIAS
+
+Test { [[
+code/delayed Tx (var& void p)=>int do
+    var void&& p1 = ((&&p) as int&&);
+    escape *((p1) as int&&);
+end
+
+var int v = 10;
+var int ret = await Tx(&v);
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+input void OS_START;
+
+code/delayed Tx (var& int a)=>void do
+    await FOREVER;
+end
+
+var int v = 0;
+watching Tx(&v) do
+    v = 5;
+    await OS_START;
+end
+escape v;
+]],
+    wrn = true,
+    run = 5,
+}
+
+Test { [[
+code/instantaneous Fx (var& int x) => void do
+    x = 10;
+end
+var int x;
+call Fx(&x);
+escape x;
+]],
+    inits = 'line 4 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:5)',
+    --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
+}
+Test { [[
+code/delayed Fx (var& int x) => void do
+    x = 10;
+end
+var int x;
+await Fx(&x);
+escape x;
+]],
+    inits = 'line 4 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:5)',
+    --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
+}
+Test { [[
+code/instantaneous Fx (var& int x) => void do
+end
+var int x;
+call Fx(&x);
+escape x;
+]],
+    inits = 'line 3 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
+    --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
+}
+Test { [[
+code/delayed Fx (var& int x) => void do
+    await 1s;
+    x = 1;
+end
+var int x;
+await Fx(&x);
+escape x;
+]],
+    inits = 'line 5 : uninitialized variable "x" : reached `await´ (/tmp/tmp.ceu:6)',
+    --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
+    --mode = 'line 7 : cannot read field with mode `input´',
 }
 
 -->> CODE / DELAYED / WATCHING
@@ -32519,79 +32570,6 @@ escape ret+x!;
 do return end
 
 -->>> INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
-
-Test { [[
-code/instantaneous Fx (var& int x) => void do
-    x = 10;
-end
-var int x;
-call Fx(&x);
-escape x;
-]],
-    todo = 'check if code initializes & arg',
-    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
-}
-Test { [[
-code/delayed Fx (var& int x) => void do
-    x = 10;
-end
-var int x;
-await Fx(&x);
-escape x;
-]],
-    todo = 'check if code initializes & arg',
-    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
-}
-Test { [[
-code/instantaneous Fx (var& int x) => void do
-end
-var int x;
-call Fx(&x);
-escape x;
-]],
-    todo = 'check if code initializes & arg',
-    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
-}
-Test { [[
-code/delayed Fx (var& int x) => void do
-    await 1s;
-    x = 1;
-end
-var int x;
-await Fx(&x);
-escape x;
-]],
-    todo = 'check if code initializes & arg',
-    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
-}
-Test { [[
-code/instantaneous Fx (var& int x) => void do
-    var int y = x;
-end
-var int x;
-call Fx(&x);
-escape x;
-]],
-    todo = 'check if code initializes & arg',
-    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
-}
-Test { [[
-code/delayed Fx (var& int x) => void do
-    var int y = x;
-end
-var int x;
-await Fx(&x);
-escape x;
-]],
-    todo = 'check if code initializes & arg',
-    run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
-    --mode = 'line 7 : cannot read field with mode `input´',
-}
 
 Test { [[
 class Tx with
