@@ -110,7 +110,7 @@ typedef struct tceu_trl {
     union {
         tceu_nevt evt;
 
-        /* NORMAL, INPUT__CODE */
+        /* NORMAL, CEU_INPUT__CODE, CEU_EVENT__MIN */
         struct {
             tceu_nevt _1_evt;
             tceu_nlbl lbl;
@@ -121,10 +121,10 @@ typedef struct tceu_trl {
 
                 /* CEU_INPUT__CODE */
                 struct tceu_code_mem* code_mem;
-            };
 
                 /* CEU_EVENT__MIN */
                 struct tceu_code_mem* int_mem;
+            };
         };
 
         /* CEU_INPUT__CODE_POOL */
@@ -350,11 +350,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
         }
 
         if (matches_clear || matches_await) {
-            if (trl->evt == CEU_INPUT__CODE) {
-                /* don't nest terminated code again */
-                /* also unshadows "trl->stk" below */
-                trl->evt = CEU_INPUT__NONE;
-            }
+            trl->evt = CEU_INPUT__NONE;
             trl->stk = stk;     /* awake only at this level again */
 
         /* propagate "evt" to nested "code" */
@@ -439,9 +435,7 @@ static void ceu_go_bcast_2 (tceu_evt* evt, tceu_stk* stk,
             }
 
         /* execute */
-        } else if (trl->stk == stk) {
-            /* trl->evt must be != CODE/PAUSE */
-            trl->evt = CEU_INPUT__NONE;
+        } else if (trl->evt==CEU_INPUT__NONE && trl->stk==stk) {
             trl->stk = NULL;
             CEU_STK_LBL(evt, stk, mem, trlK, trl->lbl);
         }

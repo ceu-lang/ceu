@@ -199,7 +199,6 @@ ceu_vector_init(&]]..CUR(dcl.id_)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
             LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt = CEU_INPUT__CLEAR;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl_dyn_vecs.id..[[;
-_ceu_mem->trails[]]..me.trails[1]..[[].stk = NULL;
 if (0) {
 ]])
             CASE(me, me.lbl_dyn_vecs)
@@ -402,7 +401,6 @@ if (0)
         LINE(me, [[
 _ceu_mem->trails[]]..later.trails[1]..[[].evt = CEU_INPUT__CLEAR;
 _ceu_mem->trails[]]..later.trails[1]..[[].lbl = ]]..me.lbl_in.id..[[;
-_ceu_mem->trails[]]..later.trails[1]..[[].stk = NULL;
 if (0) {
 ]])
         CASE(me, me.lbl_in)
@@ -507,7 +505,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
             HALT(me, {
                 { evt = 'CEU_INPUT__ASYNC' },
                 { lbl = me.lbl_asy.id },
-                { stk = 'NULL'} ,
                 lbl = me.lbl_asy.id,
             })
         end
@@ -902,7 +899,6 @@ error'TODO: lua'
         HALT(me, {
             { evt = V(ID_ext) },
             { lbl = me.lbl_out.id },
-            { stk = 'NULL'} ,
             lbl = me.lbl_out.id,
         })
     end,
@@ -937,7 +933,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[).value.num
 ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 _ceu_trl->evt = CEU_INPUT__ASYNC;
 _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
-_ceu_trl->stk = NULL;
 ]])
             LINE(me, [[
     ceu_go_ext(]]..V(ID_ext)..', '..ps..[[);
@@ -960,7 +955,6 @@ _ceu_trl->stk = NULL;
             { evt     = V(Exp_Name) },
             { lbl     = me.lbl_out.id },
             { int_mem = '_ceu_mem'} ,
-            { stk     = 'NULL'} ,
             lbl = me.lbl_out.id,
         })
     end,
@@ -1003,7 +997,6 @@ _CEU_HALT_]]..me.n..[[_:
         HALT(me, {
             { evt = 'CEU_INPUT__WCLOCK' },
             { lbl = me.lbl_out.id },
-            { stk = 'NULL'} ,
             lbl = me.lbl_out.id,
         })
         LINE(me, [[
@@ -1022,7 +1015,6 @@ _CEU_HALT_]]..me.n..[[_:
         HALT(me, {
             { evt = 'CEU_INPUT__ASYNC' },
             { lbl = me.lbl_out.id },
-            { stk = 'NULL' },
             lbl = me.lbl_out.id,
             exec = [[
 {
@@ -1050,7 +1042,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
         HALT(me, {
             { evt = 'CEU_INPUT__ASYNC' },
             { lbl = me.lbl_in.id },
-            { stk = 'NULL'} ,
             lbl = me.lbl_in.id,
         })
         CONC(me, blk)
