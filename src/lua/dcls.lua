@@ -164,10 +164,10 @@ F = {
 
     -- LOC
 
-    Type = function (me)
-        local ID = unpack(me)
+    __no_abs = function (tp, no_what)
+        local ID = unpack(tp)
         if ID.tag == 'ID_abs' then
-            ASR(ID.dcl.tag ~= 'Code', me,
+            ASR(no_what and ID.dcl.tag~=no_what, tp,
                 'invalid declaration : unexpected context for `code´ "'..ID.dcl.id..'"')
         end
     end,
@@ -176,6 +176,8 @@ F = {
         local Type,is_alias,id = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
+
+        F.__no_abs(Type, 'Code')
 
         if TYPES.check(Type,'?') and TYPES.is_nat_not_plain(TYPES.pop(Type,'?')) then
             ASR(is_alias, me, 'invalid declaration : expected `&´')
@@ -201,6 +203,8 @@ F = {
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
 
+        F.__no_abs(Type, 'Code')
+
         -- vector[] void vec;
         local ID_prim,mod = unpack(Type)
         if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
@@ -221,6 +225,8 @@ F = {
 
         -- no modifiers allowed
         for _, Type in ipairs(Typelist) do
+            F.__no_abs(Type)
+
             local id, mod = unpack(Type)
             assert(id.dcl,'bug found')
             ASR(id.dcl.tag=='Prim', me,

@@ -33172,20 +33172,28 @@ escape 1;
 --<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 
 -->>> CODE / DELAYED / SPAWN
---[===[
--- TODO: SKIP
 
 Test { [[
-code/delayed Tx (var& int a)=>void do
+code/delayed Tx (var& int a)=>int do
     a = 5;
+    escape 1;
 end
 var int a = 0;
-spawn Tx(&a);
+
+do end
+do
+    pool[1] Tx ts;
+    spawn Tx(&a) in ts;
+end
+
 escape a;
 ]],
     run = 5,
 }
+do return end
 
+-- TODO: SKIP
+--[===[
 Test { [[
 native/pos do
     int V = 10;
