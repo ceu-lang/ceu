@@ -327,7 +327,7 @@ if (0)
         HALT(me, {
             { evt = 'CEU_INPUT__CODE' },
             { lbl = me.lbl_out.id },
-            { code_mem = '&'..CUR('__mem_'..me.n) },
+            { code_mem = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
             lbl = me.lbl_out.id,
             exec = [[
 {

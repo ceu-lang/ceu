@@ -391,7 +391,7 @@ static void ceu_go_bcast_2 (tceu_evt* evt, tceu_stk* stk,
         /* propagate "evt" to nested "code" */
         if (trl->evt == CEU_INPUT__CODE) {
 #if 1
-            ceu_go_bcast(evt, stk, trl->code_mem, 0, trl->code_mem->trails_n-1);
+            ceu_go_bcast_2(evt, stk, trl->code_mem, 0, trl->code_mem->trails_n-1);
 #else
             CEU_STK_BCAST_ABORT(evt->id,evt->params, stk, trlK, trl->code_mem,
                                 0, (((tceu_code_mem*)trl->code_mem)->trails_n-1));
@@ -399,7 +399,7 @@ static void ceu_go_bcast_2 (tceu_evt* evt, tceu_stk* stk,
         } else if (trl->evt == CEU_INPUT__CODE_POOL) {
             tceu_code_mem_dyn* cur = trl->pool_first->nxt;
             while (cur != trl->pool_first) {
-                ceu_go_bcast(evt, stk, &cur->mem[0],
+                ceu_go_bcast_2(evt, stk, &cur->mem[0],
                                     0, (&cur->mem[0])->trails_n-1);
                 cur = cur->nxt;
             }
