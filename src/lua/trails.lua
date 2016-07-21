@@ -45,6 +45,13 @@ F = {
         end
     end,
 
+    Pool__PRE = function (me)
+        local Type = unpack(me)
+        if Type[1].dcl.tag == 'Code' then
+            me.trails_n = 2
+        end
+    end,
+
     Pause_If = function (me)
         local _, body = unpack(me)
         me.trails_n = 1 + body.trails_n
@@ -77,17 +84,23 @@ G = {
 
     Node__PRE = function (me)
         if (not me.trails) and me.__par then
-            me.trails = me.__par.trails
+            me.trails = { unpack(me.__par.trails) }
         end
     end,
 
     Stmts__BEF = function (me, sub, i)
-        if i > 1 then
-            local prv = me[i-1]
-            sub.trails = { unpack(prv.trails) }
-            if prv.tag == 'Finalize' then
-                sub.trails[1] = sub.trails[1] + 1
-            end
+        if i == 1 then
+            me._trails = { unpack(me.trails) }
+        end
+        if sub.tag == 'Code' then
+            return
+        end
+
+        sub.trails = { unpack(me._trails) }
+
+        local abs = AST.get(sub,'Pool',1,'Type',1,'ID_abs')
+        if sub.tag=='Finalize' or (abs and abs.tag=='Code') then
+            me._trails[1] = me._trails[1] + 1
         end
     end,
 

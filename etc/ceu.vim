@@ -21,9 +21,10 @@ syn keyword cType       ssize
 syn keyword cType       u16 u32 u64 u8
 syn keyword cType       uint usize void
 syn keyword cType       const nohold recursive plain pure hold
+syn keyword cType       delayed
 syn keyword	cStatement  as async await break native continue data deterministic do else emit end
-syn keyword cStatement  event every finalize FOREVER global if input loop nothing
-syn keyword cStatement  output pre par pause return then until var vector with
+syn keyword cStatement  code event every finalize FOREVER global if input loop nothing
+syn keyword cStatement  output pre par pause return then until var val vector with
 syn keyword cStatement  include kill spawn thread
 syn keyword cStatement  escape call isr atomic request in is
 syn keyword cStatement  watching new pool
@@ -122,8 +123,8 @@ else
   syn match	cErrInParen	display contained "[\]{}]\|<%\|%>"
   syn region	cBracket	transparent start='\[\|<::\@!' end=']\|:>' contains=ALLBUT,@cParenGroup,cErrInParen,cCppParen,cCppBracket,cCppString,@Spell
   " cCppBracket: same as cParen but ends at end-of-line; used in cDefine
-  syn region	cCppBracket	transparent start='\[\|<::\@!' skip='\\$' excludenl end=']\|:>' end='$' contained contains=ALLBUT,@cParenGroup,cErrInParen,cParen,cBracket,cString,@Spell
-  syn match	cErrInBracket	display contained "[);{}]\|<%\|%>"
+  "syn region	cCppBracket	transparent start='\[\|<::\@!' skip='\\$' excludenl end=']\|:>' end='$' contained contains=ALLBUT,@cParenGroup,cErrInParen,cParen,cBracket,cString,@Spell
+  "syn match	cErrInBracket	display contained "[);{}]\|<%\|%>"
 endif
 
 "integer number, or floating point number without a dot and with "f".

@@ -4,9 +4,9 @@
 typedef struct {
     usize max;
     usize len;
+    usize unit;
     u8    is_dyn:     1;
     u8    is_freezed: 1;
-    int   unit;
     byte* buf;
 } tceu_vector;
 
@@ -18,7 +18,7 @@ typedef struct {
 #define ceu_vector_geti(a,b)     ceu_vector_geti_ex(a,b,__FILE__,__LINE__)
 
 void  ceu_vector_init      (tceu_vector* vector, usize max, bool is_dyn,
-                            int unit, byte* buf);
+                            usize unit, byte* buf);
 byte* ceu_vector_setmax    (tceu_vector* vector, usize len, bool freeze);
 void  ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
                             char* file, int line);
@@ -29,12 +29,12 @@ byte* ceu_vector_geti_ex   (tceu_vector* vector, usize idx,
 char* ceu_vector_tochar (tceu_vector* vector);
 #endif
 
-void ceu_vector_init (tceu_vector* vector, usize max, bool is_dyn, int unit, byte* buf) {
+void ceu_vector_init (tceu_vector* vector, usize max, bool is_dyn, usize unit, byte* buf) {
     vector->len        = 0;
     vector->max        = max;
+    vector->unit       = unit;
     vector->is_dyn     = is_dyn;
     vector->is_freezed = 0;
-    vector->unit       = unit;
     vector->buf        = buf;
 
     /* [STRING] */

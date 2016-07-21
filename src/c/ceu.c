@@ -25,6 +25,7 @@ enum {
     CEU_INPUT__CLEAR,
     CEU_INPUT__PAUSE,
     CEU_INPUT__CODE,
+    CEU_INPUT__CODE_POOL,
     CEU_INPUT__ASYNC,
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
@@ -93,6 +94,9 @@ typedef struct tceu_evt_params_code {
 } tceu_evt_params_code;
 
 struct tceu_stk;
+struct tceu_code_mem;
+struct tceu_code_mem_dyn;
+
 typedef struct tceu_trl {
     union {
         tceu_nevt evt;
@@ -107,13 +111,19 @@ typedef struct tceu_trl {
                 struct tceu_stk* stk;
 
                 /* INPUT__CODE */
-                void* code_mem;
+                struct tceu_code_mem* code_mem;
             };
+        };
+
+        /* INPUT__CODE_POOL */
+        struct {
+            tceu_nevt                 _2_evt;
+            struct tceu_code_mem_dyn* pool_first;
         };
 
         /* INPUT__PAUSE */
         struct {
-            tceu_nevt _2_evt;
+            tceu_nevt _3_evt;
             tceu_nevt pse_evt;
             tceu_ntrl pse_skip;
             u8        pse_paused;
@@ -124,9 +134,21 @@ typedef struct tceu_trl {
 typedef struct tceu_code_mem {
     struct tceu_code_mem* up_mem;
     tceu_ntrl up_trl;
+    u8        is_dyn : 1;
     tceu_ntrl trails_n;
     tceu_trl  trails[0];
 } tceu_code_mem;
+
+typedef struct tceu_code_mem_dyn {
+    struct tceu_code_mem_dyn* nxt;
+    struct tceu_code_mem_dyn* prv;
+    tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
+} tceu_code_mem_dyn;
+
+typedef struct tceu_pool_pak {
+    tceu_pool         pool;
+    tceu_code_mem_dyn first;
+} tceu_pool_pak;
 
 === CODES_MEMS ===
 === CODES_ARGS ===
@@ -318,8 +340,18 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 
         /* propagate "evt" to nested "code" */
         } else if (trl->evt == CEU_INPUT__CODE) {
-            ceu_go_bcast_1(evt, stk, trl->code_mem,
-                           0, (((tceu_code_mem*)trl->code_mem)->trails_n-1));
+            ceu_go_bcast_1(evt, stk, trl->code_mem, 0, trl->code_mem->trails_n-1);
+        } else if (trl->evt == CEU_INPUT__CODE_POOL) {
+            tceu_code_mem_dyn* cur = trl->pool_first->nxt;
+#if 0
+printf(">>> BCAST[%p]:\n", trl->pool_first);
+printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
+#endif
+            while (cur != trl->pool_first) {
+                ceu_go_bcast_1(evt, stk, &cur->mem[0],
+                               0, ((&cur->mem[0])->trails_n-1));
+                cur = cur->nxt;
+            }
 
         } else if (trl->evt == CEU_INPUT__PAUSE) {
             u8 was_paused = trl->pse_paused;
@@ -359,12 +391,18 @@ static void ceu_go_bcast_2 (tceu_evt* evt, tceu_stk* stk,
         /* propagate "evt" to nested "code" */
         if (trl->evt == CEU_INPUT__CODE) {
 #if 1
-            ceu_go_bcast(evt, stk, trl->code_mem,
-                                0, (((tceu_code_mem*)trl->code_mem)->trails_n-1));
+            ceu_go_bcast(evt, stk, trl->code_mem, 0, trl->code_mem->trails_n-1);
 #else
             CEU_STK_BCAST_ABORT(evt->id,evt->params, stk, trlK, trl->code_mem,
                                 0, (((tceu_code_mem*)trl->code_mem)->trails_n-1));
 #endif
+        } else if (trl->evt == CEU_INPUT__CODE_POOL) {
+            tceu_code_mem_dyn* cur = trl->pool_first->nxt;
+            while (cur != trl->pool_first) {
+                ceu_go_bcast(evt, stk, &cur->mem[0],
+                                    0, (&cur->mem[0])->trails_n-1);
+                cur = cur->nxt;
+            }
         }
 
         /* skip */

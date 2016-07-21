@@ -640,7 +640,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Abs_Val   = CK'val' * V'Abs_Cons'
     , Abs_New   = CK'new' * V'Abs_Cons'
     , Abs_Await = V'__Abs_Cons_Code'
-    , Abs_Spawn = K'spawn' * V'__Abs_Cons_Code'
+    , Abs_Spawn = K'spawn' * V'__Abs_Cons_Code' * OPT(KK'in' * V'Exp_Name')
 
     , __Abs_Cons_Code = V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))

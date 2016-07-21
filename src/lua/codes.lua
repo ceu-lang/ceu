@@ -239,6 +239,24 @@ ceu_vector_setmax(&]]..CUR(me.id_)..', '..V(dim)..[[, 1);
         end
     end,
 
+    Pool = function (me)
+        local tp, is_alias, dim = unpack(me)
+assert(not is_alias)
+        LINE(me, [[
+{
+    /* first.nxt = first.prv = &first; */
+    tceu_code_mem_dyn* __ceu_dyn = &]]..CUR(me.id_)..[[.first;
+    ]]..CUR(me.id_)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn, {} };
+};
+ceu_pool_init(&]]..CUR(me.id_)..'.pool, '..V(dim)..[[,
+              sizeof(tceu_code_mem_dyn)+sizeof(]]..TYPES.toc(tp)..[[),
+              (byte**)&]]..CUR(me.id_..'_queue')..', (byte*)&'..CUR(me.id_..'_buf')..[[);
+_ceu_mem->trails[]]..me.trails[1]..[[].evt        = CEU_INPUT__CODE_POOL;
+_ceu_mem->trails[]]..me.trails[1]..[[].pool_first = &]]..CUR(me.id_)..[[.first;
+_ceu_trl++;
+]])
+    end,
+
     ---------------------------------------------------------------------------
 
     Code = function (me)
@@ -315,13 +333,46 @@ if (0)
 {
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
         {]]..table.concat(V(Abslist),',')..mid..[[ };
+
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
+    ]]..CUR(' __mem_'..me.n)..[[.mem.is_dyn = 0;
+
     CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
                 (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..', 0, '..ID_abs.dcl.lbl_in.id..[[);
 }
 ]],
         })
+    end,
+
+    Abs_Spawn = function (me)
+        local Abs_Cons, pool = unpack(me)
+        local ID_abs, Abslist = unpack(Abs_Cons)
+
+        LINE(me, [[
+{
+    tceu_code_mem_dyn* __ceu_new =
+        (tceu_code_mem_dyn*) ceu_pool_alloc(&]]..V(pool)..[[.pool);
+    tceu_code_mem_dyn* __ceu_prv = ]]..V(pool)..[[.first.prv;
+    __ceu_new->prv = __ceu_prv;
+    __ceu_prv->nxt = __ceu_new;
+    __ceu_new->nxt = &]]..V(pool)..[[.first;
+
+    tceu_code_mem* __ceu_new_mem = &__ceu_new->mem[0];
+    __ceu_new_mem->up_mem = _ceu_mem;
+    __ceu_new_mem->up_trl = _ceu_trlK;
+    __ceu_new_mem->is_dyn = 1;
+#if 0
+printf(">>> SPAWN[%p]: %p / %p\n", &]]..V(pool)..[[.first, __ceu_new, __ceu_new_mem);
+#endif
+
+    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
+        {]]..table.concat(V(Abslist),',')..[[ };
+
+    CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
+                __ceu_new_mem, 0, ]]..ID_abs.dcl.lbl_in.id..[[);
+}
+]])
     end,
 
     ---------------------------------------------------------------------------

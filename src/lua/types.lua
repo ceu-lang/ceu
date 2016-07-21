@@ -43,7 +43,11 @@ function TYPES.toc (tp)
     if is_int_opt then
         pre = 'tceu_opt_'
     elseif ID.tag == 'ID_abs' then
-        pre = 'tceu_data_'
+        if ID.dcl.tag == 'Data' then
+            pre = 'tceu_data_'
+        else
+            pre = 'tceu_code_mem_'
+        end
     end
 
     local id = types_id(tp)

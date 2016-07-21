@@ -239,7 +239,7 @@ typedef struct tceu_data_]]..me.id_..[[ {
 ]]..TYPES.toc(tp)..' ('..ptr..dcl.id_..')['..V(dim)..[[];
 ]]
                 else
-                    if dim.is_const then
+                    if dim.is_const and (not is_alias) then
                         mem[#mem+1] = [[
 ]]..TYPES.toc(tp)..' '..dcl.id_..'_buf['..V(dim)..[[];
 ]]
@@ -248,6 +248,24 @@ typedef struct tceu_data_]]..me.id_..[[ {
 tceu_vector]]..ptr..' '..dcl.id_..[[;
 ]]
                 end
+
+            -- POOL
+            elseif dcl.tag == 'Pool' then
+                local tp, is_alias, dim = unpack(dcl)
+                local ptr = (is_alias and '*' or '')
+                dcl.id_ = dcl.id
+                if not AST.par(me,'Data') then
+                    dcl.id_ = dcl.id..'_'..dcl.n
+                end
+                if dim.is_const and (not is_alias) then
+                    mem[#mem+1] = [[
+]]..TYPES.toc(tp)..'* '..dcl.id_..'_queue['..V(dim)..[[];
+]]..TYPES.toc(tp)..'  '..dcl.id_..'_buf['..V(dim)..[[];
+]]
+                end
+                mem[#mem+1] = [[
+tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
+]]
 
             -- EXT
             elseif dcl.tag == 'Ext' then

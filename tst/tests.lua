@@ -33190,22 +33190,18 @@ escape a;
 ]],
     run = 5,
 }
-do return end
 
--- TODO: SKIP
---[===[
 Test { [[
 native/pos do
     int V = 10;
 end
 code/delayed Tx (void)=>void do
-native _V;
     _V = 100;
 end
 spawn Tx();
 escape _V;
 ]],
-    dcls = 'line 9 : native identifier "_V" is not declared',
+    dcls = 'line 5 : native identifier "_V" is not declared',
 }
 
 Test { [[
@@ -33216,7 +33212,8 @@ native _V;
 code/delayed Tx (void)=>void do
     _V = 100;
 end
-spawn Tx();
+pool[1] Tx ts;
+spawn Tx() in ts;
 escape _V;
 ]],
     run = 100,
@@ -33229,12 +33226,31 @@ code/delayed Tx (var& int a)=>void do
         end;
 end
 var int a = 0;
-spawn Tx(&a);
+pool[1] Tx ts;
+spawn Tx(&a) in ts;
 escape a;
 ]],
     run = 5,
 }
 
+Test { [[
+code/delayed Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = 5;
+end
+var int a = 0;
+pool[1] Tx ts;
+spawn Tx(&a) in ts;
+await 1s;
+escape a;
+]],
+    run = { ['~>1s']=5 },
+}
+
+do return end
+
+-- TODO: SKIP
+--[===[
 Test { [[
 native _V;
 native/pos do
