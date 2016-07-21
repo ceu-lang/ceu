@@ -97,6 +97,11 @@ typedef struct tceu_evt_params_code {
     void* ret;
 } tceu_evt_params_code;
 
+typedef struct tceu_evt_params_int {
+    void* mem;
+    u8    pse;
+} tceu_evt_params_int;
+
 struct tceu_stk;
 struct tceu_code_mem;
 struct tceu_code_mem_dyn;
@@ -339,7 +344,8 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
                 matches_await = ( ((tceu_evt_params_code*)evt->params)->mem ==
                                   trl->code_mem );
             } else if (trl->evt > CEU_EVENT__MIN) {
-                matches_await = (trl->int_mem == *(tceu_code_mem**)evt->params);
+                matches_await =
+                    (trl->int_mem == ((tceu_evt_params_int*)evt->params)->mem);
             }
         }
 
@@ -369,7 +375,12 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
         } else if (trl->evt == CEU_INPUT__PAUSE) {
             u8 was_paused = trl->pse_paused;
             if (evt->id == trl->pse_evt) {
-                trl->pse_paused = *((u8*)evt->params);
+/* TODO: need to distinguish between EXT/INT because INT has "mem" in the first position */
+                if (evt->id > CEU_EVENT__MIN) {
+                    trl->pse_paused = ((tceu_evt_params_int*)evt->params)->pse;
+                } else {
+                    trl->pse_paused = *((u8*)evt->params);
+                }
             }
             /* don't skip if pausing now */
             if (was_paused) {
