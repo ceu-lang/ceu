@@ -139,6 +139,7 @@ typedef struct tceu_trl {
             tceu_nevt pse_evt;
             tceu_ntrl pse_skip;
             u8        pse_paused;
+            struct tceu_code_mem* pse_mem;
         };
     };
 } tceu_trl;
@@ -373,7 +374,10 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
             if (evt->id == trl->pse_evt) {
 /* TODO: need to distinguish between EXT/INT because INT has "mem" in the first position */
                 if (evt->id > CEU_EVENT__MIN) {
-                    trl->pse_paused = ((tceu_evt_params_int*)evt->params)->pse;
+                    tceu_evt_params_int* p = (tceu_evt_params_int*)evt->params;
+                    if (trl->pse_mem == p->mem) {
+                        trl->pse_paused = p->pse;
+                    }
                 } else {
                     trl->pse_paused = *((u8*)evt->params);
                 }
