@@ -10,7 +10,6 @@ end
 
 --[=====[
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -33247,10 +33246,94 @@ escape a;
     run = { ['~>1s']=5 },
 }
 
-do return end
+Test { [[
+code/delayed Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = aaa + 5;
+    await 1s;
+    aaa = aaa + 5;
+    await FOREVER;
+end
+var int a = 0;
+pool[2] Tx ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+await 2s;
+escape a;
+]],
+    run = { ['~>2s']=20 },
+}
 
--- TODO: SKIP
---[===[
+Test { [[
+code/delayed Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = aaa + 5;
+    await 1s;
+    aaa = aaa + 5;
+end
+var int a = 0;
+pool[2] Tx ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+await 2s;
+escape a;
+]],
+    run = { ['~>2s']=20 },
+}
+
+--]=====]
+Test { [[
+code/delayed Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = aaa + 5;
+    await 1s;
+    aaa = aaa + 5;
+    await FOREVER;
+end
+var int a = 0;
+pool[2] Tx ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+await 2s;
+escape a;
+]],
+    run = { ['~>2s']=20 },
+}
+
+Test { [[
+code/delayed Tx (var& int aaa)=>void do
+    aaa = aaa + 5;
+end
+var int a = 0;
+pool[1] Tx ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+escape a;
+]],
+    run = 20,
+}
+
+Test { [[
+code/delayed Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = aaa + 5;
+    await 1s;
+    aaa = aaa + 5;
+end
+var int a = 0;
+pool[2] Tx ts;
+spawn Tx(&a) in ts;
+await 1s;
+spawn Tx(&a) in ts;
+await 2s;
+escape a;
+]],
+    run = { ['~>3s']=20 },
+}
+
 Test { [[
 native _V;
 native/pos do
@@ -33262,15 +33345,18 @@ code/delayed Jj (void)=>void do
 end
 
 code/delayed Tx (void)=>void do
-    spawn Jj();
+    pool[1] Jj js;
+    spawn Jj() in js;
     _V = _V + 1;
 end
 
-spawn Tx();
+pool[3] Tx ts;
+
+spawn Tx() in ts;
 _V = _V*3;
-spawn Tx();
+spawn Tx() in ts;
 _V = _V*3;
-spawn Tx();
+spawn Tx() in ts;
 _V = _V*3;
 escape _V;
 ]],
@@ -33288,17 +33374,19 @@ code/delayed Jj (void)=>void do
 end
 
 code/delayed Tx (void)=>void do
-    spawn Jj();
+    pool[1] Jj js;
+    spawn Jj() in js;
     _V = _V + 1;
 end
 
 input void OS_START;
 
-spawn Tx();
+pool[3] Tx ts;
+spawn Tx() in ts;
 _V = _V*3;
-spawn Tx();
+spawn Tx() in ts;
 _V = _V*3;
-spawn Tx();
+spawn Tx() in ts;
 _V = _V*3;
 
 await OS_START;
@@ -33319,8 +33407,9 @@ code/delayed Tx (void)=>void do
     _V = 10;
 end
 
+pool[3] Tx ts;
 do
-    spawn Tx();
+    spawn Tx() in ts;
 end
 escape _V;
 ]],
@@ -33330,6 +33419,9 @@ escape _V;
 --<<< CODE / DELAYED / FUNCTIONS
 
 do return end
+
+-- TODO: SKIP
+--[===[
 
 -->>> CLASSES, ORGS, ORGANISMS
 
@@ -60763,7 +60855,8 @@ data Tx;
 event Tx a;
 escape 0;
 ]],
-    dcls = 'line 2 : invalid event type : must be primitive',
+    dcls = 'line 2 : invalid declaration : unexpected context for `code´ "Tx"',
+    --dcls = 'line 2 : invalid event type : must be primitive',
 }
 
 -- << ADT : MISC

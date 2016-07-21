@@ -259,8 +259,10 @@ tceu_vector]]..ptr..' '..dcl.id_..[[;
                 end
                 if dim.is_const and (not is_alias) then
                     mem[#mem+1] = [[
-]]..TYPES.toc(tp)..'* '..dcl.id_..'_queue['..V(dim)..[[];
-]]..TYPES.toc(tp)..'  '..dcl.id_..'_buf['..V(dim)..[[];
+tceu_code_mem_dyn* ]]..dcl.id_..'_queue['..V(dim)..[[];
+byte ]]..dcl.id_..[[_buf[
+    (sizeof(tceu_code_mem_dyn)+sizeof(]]..TYPES.toc(tp)..')) * '..V(dim)..[[
+];
 ]]
                 end
                 mem[#mem+1] = [[

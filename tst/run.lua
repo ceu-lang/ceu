@@ -3,7 +3,6 @@
 RUNTESTS = {
     --cmd = true,
     --luacov = 'lua5.3 -lluacov'
--- Execution option for the tests:
     --valgrind = true
 --REENTRANT = true
 --COMPLETE = true

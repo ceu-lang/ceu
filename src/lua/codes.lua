@@ -353,24 +353,23 @@ if (0)
 {
     tceu_code_mem_dyn* __ceu_new =
         (tceu_code_mem_dyn*) ceu_pool_alloc(&]]..V(pool)..[[.pool);
-    tceu_code_mem_dyn* __ceu_prv = ]]..V(pool)..[[.first.prv;
-    __ceu_new->prv = __ceu_prv;
-    __ceu_prv->nxt = __ceu_new;
-    __ceu_new->nxt = &]]..V(pool)..[[.first;
+    if (__ceu_new != NULL) {
+        __ceu_new->nxt = &]]..V(pool)..[[.first;
+        ]]..V(pool)..[[.first.prv->nxt = __ceu_new;
+        __ceu_new->prv = ]]..V(pool)..[[.first.prv;
+        ]]..V(pool)..[[.first.prv = __ceu_new;
 
-    tceu_code_mem* __ceu_new_mem = &__ceu_new->mem[0];
-    __ceu_new_mem->up_mem = _ceu_mem;
-    __ceu_new_mem->up_trl = _ceu_trlK;
-    __ceu_new_mem->is_dyn = 1;
-#if 0
-printf(">>> SPAWN[%p]: %p / %p\n", &]]..V(pool)..[[.first, __ceu_new, __ceu_new_mem);
-#endif
+        tceu_code_mem* __ceu_new_mem = &__ceu_new->mem[0];
+        __ceu_new_mem->up_mem = _ceu_mem;
+        __ceu_new_mem->up_trl = _ceu_trlK;
+        __ceu_new_mem->is_dyn = 1;
 
-    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
-        {]]..table.concat(V(Abslist),',')..[[ };
+        tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
+            {]]..table.concat(V(Abslist),',')..[[ };
 
-    CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
-                __ceu_new_mem, 0, ]]..ID_abs.dcl.lbl_in.id..[[);
+        CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
+                    __ceu_new_mem, 0, ]]..ID_abs.dcl.lbl_in.id..[[);
+    }
 }
 ]])
     end,

@@ -140,8 +140,8 @@ typedef struct tceu_code_mem {
 } tceu_code_mem;
 
 typedef struct tceu_code_mem_dyn {
-    struct tceu_code_mem_dyn* nxt;
     struct tceu_code_mem_dyn* prv;
+    struct tceu_code_mem_dyn* nxt;
     tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
 } tceu_code_mem_dyn;
 
