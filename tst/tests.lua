@@ -33281,7 +33281,6 @@ escape a;
     run = { ['~>2s']=20 },
 }
 
---]=====]
 Test { [[
 code/delayed Tx (var& int aaa)=>void do
     await 1s;
@@ -33301,6 +33300,7 @@ escape a;
     run = { ['~>2s']=20 },
 }
 
+--]=====]
 Test { [[
 code/delayed Tx (var& int aaa)=>void do
     aaa = aaa + 5;

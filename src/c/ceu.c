@@ -131,10 +131,11 @@ typedef struct tceu_trl {
     };
 } tceu_trl;
 
+struct tceu_pool_pak;
 typedef struct tceu_code_mem {
+    struct tceu_pool_pak* pak;
     struct tceu_code_mem* up_mem;
     tceu_ntrl up_trl;
-    u8        is_dyn : 1;
     tceu_ntrl trails_n;
     tceu_trl  trails[0];
 } tceu_code_mem;

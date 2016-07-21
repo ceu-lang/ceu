@@ -4,28 +4,23 @@ typedef struct {
     byte**  queue;
                     /* queue is in the next offset to distinguish dynamic(NULL)
                        from static pools(any-address) */
-    usize   size;
+    usize   len;
     usize   free;
     usize   index;
     usize   unit;
     byte*   buf;
 } tceu_pool;
 
-#define CEU_POOL_DCL(name, type, size) \
-    type*     name##_queue[size];      \
-    type      name##_mem[size];        \
-    tceu_pool name;
-
-void ceu_pool_init (tceu_pool* pool, usize size, usize unit, byte** queue, byte* buf)
+void ceu_pool_init (tceu_pool* pool, usize len, usize unit, byte** queue, byte* buf)
 {
     usize i;
-    pool->size  = size;
-    pool->free  = size;
+    pool->len   = len;
+    pool->free  = len;
     pool->index = 0;
     pool->unit  = unit;
     pool->queue = queue;
     pool->buf   = buf;
-    for (i=0; i<size; i++) {
+    for (i=0; i<len; i++) {
         queue[i] = &buf[i*unit];
     }
 }
@@ -40,7 +35,7 @@ byte* ceu_pool_alloc (tceu_pool* pool) {
     pool->free--;
     ret = pool->queue[pool->index];
     pool->queue[pool->index++] = NULL;
-    if (pool->index == pool->size) {
+    if (pool->index == pool->len) {
         pool->index = 0;
     }
     return ret;
@@ -48,8 +43,8 @@ byte* ceu_pool_alloc (tceu_pool* pool) {
 
 void ceu_pool_free (tceu_pool* pool, byte* val) {
     usize empty = pool->index + pool->free;
-    if (empty >= pool->size) {
-        empty -= pool->size;
+    if (empty >= pool->len) {
+        empty -= pool->len;
     }
     pool->queue[empty] = val;
     pool->free++;

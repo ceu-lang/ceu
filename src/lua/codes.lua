@@ -129,7 +129,7 @@ ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..trl..[[], "bug found : unexpected
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)
         LINE(me, [[
-_ceu_mem->up_mem = NULL;
+_ceu_mem->up_mem   = NULL;
 _ceu_mem->trails_n = ]]..AST.root.trails_n..[[;
 memset(&_ceu_mem->trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
 ]])
@@ -293,12 +293,33 @@ if (0)
 
         -- CODE/DELAYED
         if mod == 'code/delayed' then
+            local free = [[
+    if (_ceu_mem->pak != NULL) {
+        tceu_code_mem_dyn* __ceu_dyn =
+            (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
+        __ceu_dyn->nxt->prv = __ceu_dyn->prv;
+        __ceu_dyn->prv->nxt = __ceu_dyn->nxt;
+        ceu_pool_free(&_ceu_mem->pak->pool, (byte*)__ceu_dyn);
+    }
+]]
             LINE(me, [[
     {
         /* _ceu_evt holds __ceu_ret (see Escape) */
         tceu_evt_params_code ps = { _ceu_mem, _ceu_evt };
+#if 0
         CEU_STK_BCAST_ABORT(CEU_INPUT__CODE, &ps, _ceu_stk, _ceu_trlK,
                             (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
+#else
+        tceu_stk __ceu_stk = { _ceu_stk, (tceu_code_mem*)&CEU_APP.root, _ceu_trlK, 1 };
+        tceu_evt __ceu_evt = { CEU_INPUT__CODE, &ps };
+        ceu_go_bcast(&__ceu_evt, &__ceu_stk,
+                     (tceu_code_mem*)&CEU_APP.root,
+                     0, CEU_APP.root.mem.trails_n-1);
+        ]]..free..[[
+        if (!__ceu_stk.is_alive) {
+            return;
+        }
+#endif
     }
 ]])
         end
@@ -334,9 +355,9 @@ if (0)
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
         {]]..table.concat(V(Abslist),',')..mid..[[ };
 
+    ]]..CUR(' __mem_'..me.n)..[[.mem.pak = NULL;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
-    ]]..CUR(' __mem_'..me.n)..[[.mem.is_dyn = 0;
 
     CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
                 (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..', 0, '..ID_abs.dcl.lbl_in.id..[[);
@@ -360,9 +381,9 @@ if (0)
         ]]..V(pool)..[[.first.prv = __ceu_new;
 
         tceu_code_mem* __ceu_new_mem = &__ceu_new->mem[0];
+        __ceu_new_mem->pak = &]]..V(pool)..[[;
         __ceu_new_mem->up_mem = _ceu_mem;
         __ceu_new_mem->up_trl = _ceu_trlK;
-        __ceu_new_mem->is_dyn = 1;
 
         tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
             {]]..table.concat(V(Abslist),',')..[[ };
