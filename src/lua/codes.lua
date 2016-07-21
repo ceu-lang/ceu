@@ -957,9 +957,10 @@ _ceu_trl->stk = NULL;
     Await_Int = function (me)
         local Exp_Name = unpack(me)
         HALT(me, {
-            { evt = V(Exp_Name) },
-            { lbl = me.lbl_out.id },
-            { stk = 'NULL'} ,
+            { evt     = V(Exp_Name) },
+            { lbl     = me.lbl_out.id },
+            { int_mem = '_ceu_mem'} ,
+            { stk     = 'NULL'} ,
             lbl = me.lbl_out.id,
         })
     end,
@@ -976,7 +977,7 @@ _ceu_trl->stk = NULL;
         if Explist then
             LINE(me, [[
     tceu_event_]]..Exp_Name.info.dcl.id..'_'..Exp_Name.info.dcl.n..[[
-        __ceu_ps = { ]]..table.concat(V(Explist),',')..[[ };
+        __ceu_ps = { _ceu_mem, ]]..table.concat(V(Explist),',')..[[ };
 ]])
             ps = '&__ceu_ps'
         end

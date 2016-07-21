@@ -10,6 +10,7 @@ end
 
 --[=====[
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -33300,7 +33301,6 @@ escape a;
     run = { ['~>2s']=20 },
 }
 
---]=====]
 Test { [[
 code/delayed Tx (var& int aaa)=>void do
     aaa = aaa + 5;
@@ -33415,6 +33415,89 @@ escape _V;
 ]],
     run = 10,
 }
+
+Test { [[
+native _V;
+native/pos do
+    int V = 1;
+end;
+
+code/delayed Tx (void)=>void do
+    await 1s;
+    _V = 10;
+end
+
+do
+    pool[3] Tx ts;
+    spawn Tx() in ts;
+end
+escape _V;
+]],
+    run = 1,
+}
+
+-->> CODE / DELAYED / EMIT-INTERNAL
+
+Test { [[
+code/delayed Tx (var& int ret, var int x)=>void do
+    event int e;
+    par do
+        var int v = await e;
+        ret = ret + v;
+        await FOREVER;
+    with
+        await 1s;
+        emit e => x;
+        await FOREVER;
+    end
+end
+
+var int ret = 0;
+
+par/or do
+    await Tx(&ret, 1);
+with
+    await Tx(&ret, 2);
+with
+    await Tx(&ret, 3);
+with
+    await 1s;
+end
+
+escape ret;
+]],
+    run = { ['~>1s']=6 },
+}
+
+Test { [[
+code/delayed Tx (var& int ret, var int x)=>void do
+    event int e;
+    await 1s;
+    par do
+        var int v = await e;
+        ret = ret + v;
+        await FOREVER;
+    with
+        emit e => x;
+        await FOREVER;
+    end
+end
+
+var int ret = 0;
+
+pool[3] Tx ts;
+spawn Tx(&ret, 1) in ts;
+spawn Tx(&ret, 2) in ts;
+spawn Tx(&ret, 3) in ts;
+
+await 1s;
+
+escape ret;
+]],
+    run = { ['~>1s']=6 },
+}
+
+-->> CODE / DELAYED / EMIT-INTERNAL
 
 --<<< CODE / DELAYED / FUNCTIONS
 

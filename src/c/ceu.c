@@ -20,6 +20,8 @@
 /* NATIVE_PRE */
 === NATIVE_PRE ===
 
+/* EVENTS_ENUM */
+
 enum {
     CEU_INPUT__NONE = 0,
     CEU_INPUT__CLEAR,
@@ -29,6 +31,8 @@ enum {
     CEU_INPUT__ASYNC,
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
+
+    CEU_EVENT__MIN,
     === EVTS_ENUM ===
 };
 
@@ -110,18 +114,21 @@ typedef struct tceu_trl {
                 /* NORMAL */
                 struct tceu_stk* stk;
 
-                /* INPUT__CODE */
+                /* CEU_INPUT__CODE */
                 struct tceu_code_mem* code_mem;
             };
+
+                /* CEU_EVENT__MIN */
+                struct tceu_code_mem* int_mem;
         };
 
-        /* INPUT__CODE_POOL */
+        /* CEU_INPUT__CODE_POOL */
         struct {
             tceu_nevt                 _2_evt;
             struct tceu_code_mem_dyn* pool_first;
         };
 
-        /* INPUT__PAUSE */
+        /* CEU_INPUT__PAUSE */
         struct {
             tceu_nevt _3_evt;
             tceu_nevt pse_evt;
@@ -309,13 +316,16 @@ static void ceu_go_bcast_1 (tceu_evt* evt, tceu_stk* stk,
 
     /* MARK TRAILS TO EXECUTE */
 
+#if 0
+#include <stdio.h>
+printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, evt->id, trl0, trlF);
+#endif
+
     for (trlK=trl0, trl=&mem->trails[trlK];
          trlK<=trlF;
          trlK++, trl++)
     {
 #if 0
-#include <stdio.h>
-printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, evt->id, trl0, trlF);
 printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 #endif
         /* IN__CLEAR and "finalize" clause */
@@ -328,6 +338,8 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
             if (trl->evt == CEU_INPUT__CODE) {
                 matches_await = ( ((tceu_evt_params_code*)evt->params)->mem ==
                                   trl->code_mem );
+            } else if (trl->evt > CEU_EVENT__MIN) {
+                matches_await = (trl->int_mem == *(tceu_code_mem**)evt->params);
             }
         }
 
@@ -398,6 +410,7 @@ static void ceu_go_bcast_2 (tceu_evt* evt, tceu_stk* stk,
                                 0, (((tceu_code_mem*)trl->code_mem)->trails_n-1));
 #endif
         } else if (trl->evt == CEU_INPUT__CODE_POOL) {
+/* TODO: inverse order for FINS */
             tceu_code_mem_dyn* cur = trl->pool_first->nxt;
             while (cur != trl->pool_first) {
                 ceu_go_bcast_2(evt, stk, &cur->mem[0],

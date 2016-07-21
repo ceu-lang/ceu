@@ -387,11 +387,16 @@ for _, dcl in ipairs(MEMS.evts) do
     end
 
     -- type
-    local mem = 'typedef struct tceu_event_'..dcl.id..'_'..dcl.n..' {\n'
+    local mem = [[
+typedef struct tceu_event_]]..dcl.id..'_'..dcl.n..[[ {
+    tceu_code_mem* mem;
+]]
     for i,Type in ipairs(Typelist) do
         mem = mem..'    '..TYPES.toc(Type)..' _'..i..';\n'
     end
-    mem = mem..'} tceu_event_'..dcl.id..'_'..dcl.n..';\n'
+    mem = mem..[[
+} tceu_event_]]..dcl.id..'_'..dcl.n..[[;
+]]
     MEMS.evts.types = MEMS.evts.types..mem
 end
 
