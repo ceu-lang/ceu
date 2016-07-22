@@ -3755,7 +3755,7 @@ escape 0;
     dcls = 'line 2 : implicit declaration of "i" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 
--- EVERY
+-->>> EVERY
 
 Test { [[
 par/or do
@@ -3829,6 +3829,41 @@ end
     props_ = 'line 3 : invalid `await´ : unexpected enclosing `every´',
     --props = 'line 3 : `every´ cannot contain `await´',
 }
+
+Test { [[
+input void X;
+every x in X do
+    x = 1;
+end
+]],
+    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "()"',
+}
+Test { [[
+input void X;
+every (x,y) in X do
+    x = 1;
+end
+]],
+    stmts = 'line 2 : invalid assignment : types mismatch : "(int,int)" <= "()"',
+}
+Test { [[
+input int X;
+every (x,y) in X do
+    x = 1;
+end
+]],
+    stmts = 'line 2 : invalid assignment : types mismatch : "(int,int)" <= "(int)"',
+}
+Test { [[
+input (int,int) X;
+every x in X do
+    x = 1;
+end
+]],
+    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "(int,int)"',
+}
+
+--<<< EVERY
 
 Test { [[
 var int ret = 0;

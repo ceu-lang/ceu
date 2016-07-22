@@ -423,8 +423,10 @@ F = {
                 assert(input == 'input')
             end
             local Typelist = AST.asr(unpack(ID.dcl), 'Typelist')
-            local Type = Typelist[i]
-            return AST.copy(Type)
+            local Type = AST.get(Typelist,'', i,'Type')
+            return (Type and AST.copy(Type)) or
+                    AST.node('Type', me.ln,
+                        AST.node('ID_prim', me.ln, 'int'))
 
         elseif id == 'watching' then
             local _, ID_abs = unpack(me)
