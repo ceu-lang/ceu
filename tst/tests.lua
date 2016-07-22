@@ -10,7 +10,33 @@ end
 
 --[=====[
 do return end -- OK
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight Ff (var& Aa a) => int do
+    escape a.a;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight Ff (var& Aa.Bb b) => int do
+    escape b.b;
+end
+
+var Aa.Bb b = val Aa.Bb(10,20);
+
+escape (call Ff(&b));
+]],
+    run = 10,
+}
+
+do return end
 --]=====]
+
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -22171,7 +22197,7 @@ escape call Z=>1;
 }
 
 Test { [[
-output/input/instantaneous Z  (var int)=>int;
+output/input/tight Z  (var int)=>int;
 escape call Z=>1;
 ]],
     parser = 'line 2 : after `call´ : expected name expression',
@@ -22181,7 +22207,7 @@ escape call Z=>1;
 }
 
 Test { [[
-output/input/instantaneous Z  (var int)=>int;
+output/input/tight Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
@@ -22189,7 +22215,7 @@ escape 1;
 }
 
 Test { [[
-output/input/instantaneous Z  (var int)=>int;
+output/input/tight Z  (var int)=>int;
 emit Z=>1;
 escape 1;
 ]],
@@ -22204,7 +22230,7 @@ native/pos do
         escape v+1;
     }
 end
-output/input/instantaneous Z  (var int)=>int;
+output/input/tight Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
@@ -22219,7 +22245,7 @@ native/pos do
         escape *v+1;
     }
 end
-output/input/instantaneous Z  (var int)=>int;
+output/input/tight Z  (var int)=>int;
 call Z=>1;
 escape 1;
 ]],
@@ -22233,7 +22259,7 @@ native/pos do
         escape *v+1;
     }
 end
-output/input/instantaneous Z  (var int)=>int;
+output/input/tight Z  (var int)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
@@ -22247,7 +22273,7 @@ native/pos do
         escape v+1;
     }
 end
-output/input/instantaneous Z  (var int)=>int;
+output/input/tight Z  (var int)=>int;
 var int ret = call Z=>(1,2);
 escape ret;
 ]],
@@ -22315,7 +22341,7 @@ native/pos do
         escape p->_1 + p->_2;
     }
 end
-output/input/instantaneous Z  (var int, var int)=>int;
+output/input/tight Z  (var int, var int)=>int;
 var int ret = call Z=>(1,2);
 escape ret;
 ]],
@@ -22335,7 +22361,7 @@ native/pos do
         escape (evt == CEU_OUTPUT_Z) + *p;
     }
 end
-output/input/instantaneous Z  (var int)=>int;
+output/input/tight Z  (var int)=>int;
 var int ret = (call Z=>2);
 escape ret;
 ]],
@@ -22414,7 +22440,7 @@ native/pos do
         return (evt == CEU_OUTPUT_Z) + *p;
     }
 end
-output/input/instantaneous Z  (var int)=>int;
+output/input/tight Z  (var int)=>int;
 par/and do
     call Z=>1;
 with
@@ -22429,7 +22455,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous Z,W  (var int a)=>int do
+input/output/tight Z,W  (var int a)=>int do
     escape a + 1;
 end
 ]],
@@ -22438,10 +22464,10 @@ end
 }
 
 Test { [[
-input/output/instantaneous Z  (var int a)=>int do
+input/output/tight Z  (var int a)=>int do
     escape a + 1;
 end
-input/output/instantaneous W  (var int a)=>int;
+input/output/tight W  (var int a)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
@@ -22449,10 +22475,10 @@ escape ret;
 }
 
 Test { [[
-input/output/instantaneous Z  (var int a)=>int do
+input/output/tight Z  (var int a)=>int do
     escape a + 1;
 end
-input/output/instantaneous W  (var int a)=>int;
+input/output/tight W  (var int a)=>int;
 var int ret = call Z=>1;
 escape ret;
 ]],
@@ -22462,7 +22488,7 @@ escape ret;
 }
 
 Test { [[
-input/output/instantaneous Z  (var int a)=>void do
+input/output/tight Z  (var int a)=>void do
     v = a;
 end
 var int v = 0;
@@ -22476,7 +22502,7 @@ escape v;
 Test { [[
 native/nohold _fprintf, _stderr;
 var int v = 0;
-input/output/instantaneous Z  (var int a)=>void do
+input/output/tight Z  (var int a)=>void do
     this.v = a;
     _fprintf(_stderr,"a=%d v=%d\n", a, v);
 end
@@ -22491,10 +22517,10 @@ escape this.v;
 
 Test { [[
 var int v = 0;
-input/output/instantaneous W  (var int a)=>int do
+input/output/tight W  (var int a)=>int do
     escape a + 1;
 end
-input/output/instantaneous Z  (var int a)=>void do
+input/output/tight Z  (var int a)=>void do
     this.v = call W=>a;
 end
 call Z=>1;
@@ -22530,7 +22556,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous A  (void)=>void do
+input/output/tight A  (void)=>void do
 end
 escape 1;
 ]],
@@ -22539,7 +22565,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous A  (var u8 a, var  int a)=>void do
+input/output/tight A  (var u8 a, var  int a)=>void do
     v = 1;
 end
 call A => ();
@@ -22549,7 +22575,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous A  (var void a, var  int v)=>void do
+input/output/tight A  (var void a, var  int v)=>void do
     v = 1;
 end
 escape 1;
@@ -22561,7 +22587,7 @@ escape 1;
 Test { [[
 input void OS_START;
 var int v = 0;
-input/output/instantaneous A  (void)=>void do
+input/output/tight A  (void)=>void do
     v = 1;
 end
 call A;
@@ -22572,7 +22598,7 @@ escape v;
 }
 
 Test { [[
-input/output/instantaneous WRITE  (var int c)=>int do
+input/output/tight WRITE  (var int c)=>int do
     escape c + 1;
 end
 var byte b = 1;
@@ -22584,7 +22610,7 @@ escape ret;
 
 Test { [[
 native ___ceu_nothing;
-input/output/instantaneous IB  (var int c)=>void do
+input/output/tight IB  (var int c)=>void do
     ___ceu_nothing(&&c);
 end
 call IB => 0;
@@ -22594,10 +22620,10 @@ escape 0;
 }
 Test { [[
 native/pure ___ceu_nothing;
-input/output/instantaneous IA  (var int c)=>int do
+input/output/tight IA  (var int c)=>int do
     escape c + 1;
 end
-input/output/instantaneous IB  (var int c)=>void do
+input/output/tight IB  (var int c)=>void do
     ___ceu_nothing(&&c);
 end
 call IB => 0;
@@ -24309,7 +24335,7 @@ escape ({(CEU_Main*)(_ceu_app->_data)}):xxx;
 -- NATIVE/PRE
 
 Test { [[
-input/output/instantaneous OPEN  (var byte&& path, var byte mode)=>void do
+input/output/tight OPEN  (var byte&& path, var byte mode)=>void do
 end
 
 escape 1;
@@ -24330,23 +24356,23 @@ native/pos do
 end
 
 native/pure ___ceu_nothing;
-input/output/instantaneous OPEN  (var byte&& path, var  byte&& mode)=>_Fx&& do
+input/output/tight OPEN  (var byte&& path, var  byte&& mode)=>_Fx&& do
     ___ceu_nothing(path);
     ___ceu_nothing(mode);
     escape _fff;
 end
 
-input/output/instantaneous CLOSE  (var _Fx&& f)=>int do
+input/output/tight CLOSE  (var _Fx&& f)=>int do
     ___ceu_nothing(f);
     escape 1;
 end
 
-input/output/instantaneous SIZE  (var _Fx&& f)=>int do
+input/output/tight SIZE  (var _Fx&& f)=>int do
     ___ceu_nothing(f);
     escape 1;
 end
 
-input/output/instantaneous READ  (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)=>int do
+input/output/tight READ  (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)=>int do
     ___ceu_nothing(ptr);
     ___ceu_nothing(&&size);
     ___ceu_nothing(&&nmemb);
@@ -24372,7 +24398,7 @@ end
 
 native/pure ___ceu_nothing;
 native/plain _draw_string_t;
-input/output/instantaneous DRAW_STRING  (var _draw_string_t&& ptr)=>void do
+input/output/tight DRAW_STRING  (var _draw_string_t&& ptr)=>void do
     ___ceu_nothing(ptr);
 end
 
@@ -33226,7 +33252,7 @@ escape _strlen(&&t.name as _char&&);
 }
 
 Test { [[
-output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
+output/input/tight LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
 code/tight/recursive Load (var int&& l)=>void do
     loop i do
     end
@@ -33246,7 +33272,7 @@ native/pos do
     ##define ceu_out_call_LUA_GETGLOBAL
 end
 
-output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
+output/input/tight LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
 code/tight/recursive Load (var int&& l)=>void do
     // TODO: load file
     call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
@@ -58737,7 +58763,7 @@ escape 0;
 -->>> REQUESTS
 
 Test { [[
-output/input/delayed X (var int max)=>void;
+output/input/await X (var int max)=>void;
 escape 1;
 ]],
     run = 1,
@@ -58747,7 +58773,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-input/output/delayed X (var int max)=>void do
+input/output/await X (var int max)=>void do
     if max then end;
     escape;
 end
@@ -58757,7 +58783,7 @@ escape 1;
 }
 
 Test { [[
-input/output/delayed [10] LINE (var int max)=>byte&&;
+input/output/await [10] LINE (var int max)=>byte&&;
 request LINE;
 escape 1;
 ]],
@@ -58766,7 +58792,7 @@ escape 1;
 }
 
 Test { [[
-input/output/delayed [10] LINE (var int max)=>byte&&;
+input/output/await [10] LINE (var int max)=>byte&&;
 request LINE => "oi";
 escape 1;
 ]],
@@ -58774,7 +58800,7 @@ escape 1;
 }
 
 Test { [[
-input/output/delayed [10] LINE (var int max)=>byte&&;
+input/output/await [10] LINE (var int max)=>byte&&;
 request LINE => 10;
 escape 1;
 ]],
@@ -58785,7 +58811,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input/delayed [10] LINE (var int max)=>byte&&;
+output/input/await [10] LINE (var int max)=>byte&&;
 par/or do
     request LINE => 10;
 with
@@ -58859,7 +58885,7 @@ escape v!;
 }
 
 Test { [[
-output/input/delayed [10] LINE (var int max)=>byte&&;
+output/input/await [10] LINE (var int max)=>byte&&;
 var byte&& ret = null;
 par/or do
     var byte&&? ret1;
@@ -58876,7 +58902,7 @@ escape *ret;
 }
 
 Test { [[
-output/input/delayed [10] LINE (var int max)=>byte&&;
+output/input/await [10] LINE (var int max)=>byte&&;
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
@@ -58892,7 +58918,7 @@ escape 1;
 }
 
 Test { [[
-output/input/delayed [10] LINE (var int max)=>byte&&;
+output/input/await [10] LINE (var int max)=>byte&&;
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
@@ -58909,7 +58935,7 @@ escape 1;
 }
 
 Test { [[
-input/output/delayed [10] LINE (var int max)=>byte&&;
+input/output/await [10] LINE (var int max)=>byte&&;
 request LINE;
 escape 1;
 ]],
@@ -58918,7 +58944,7 @@ escape 1;
 }
 
 Test { [[
-input/output/delayed [10] LINE (var int max)=>byte&&;
+input/output/await [10] LINE (var int max)=>byte&&;
 request LINE => "oi";
 escape 1;
 ]],
@@ -58926,7 +58952,7 @@ escape 1;
 }
 
 Test { [[
-input/output/delayed [10] LINE (var int max)=>byte&&;
+input/output/await [10] LINE (var int max)=>byte&&;
 request LINE => 10;
 escape 1;
 ]],
@@ -58937,7 +58963,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input/delayed [10] LINE (var int max)=>byte&&;
+output/input/await [10] LINE (var int max)=>byte&&;
 par/or do
     request LINE => 10;
 with
@@ -58969,7 +58995,7 @@ escape 1;
 }
 
 Test { [[
-output/input/delayed [10] LINE (var int max)=>byte&&;
+output/input/await [10] LINE (var int max)=>byte&&;
 var u8 err;
 var u8? ret;
 (err, ret) = request LINE => 10;
@@ -58983,7 +59009,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input/delayed [10] LINE (var int max)=>int;
+output/input/await [10] LINE (var int max)=>int;
 par/or do
     var u8 err;
     var int? ret;
@@ -59000,7 +59026,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input/delayed [10] LINE (var int)=>int do
+output/input/await [10] LINE (var int)=>int do
     escape 1;     // missing <int "id">
 end
 par/or do
@@ -59018,7 +59044,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input/delayed [10] LINE (var int max)=>int do
+output/input/await [10] LINE (var int max)=>int do
     escape 1;
 end
 par/or do
@@ -59036,7 +59062,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-input/output/delayed [10] LINE (var int max)=>int do
+input/output/await [10] LINE (var int max)=>int do
     escape 1;
 end
 par/or do
@@ -59054,7 +59080,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-input/output/delayed [10] LINE (var int max)=>int do
+input/output/await [10] LINE (var int max)=>int do
     escape 1;
 end
 escape 1;
@@ -59067,7 +59093,7 @@ native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
 var int ret = 0;
-input/output/delayed [10] LINE (var int max)=>int do
+input/output/await [10] LINE (var int max)=>int do
     ret = 1;
 end
 escape ret;
@@ -59083,7 +59109,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [10] LINE (var int max)=>int do
+    input/output/await [10] LINE (var int max)=>int do
         _V = 10;
         escape 1;
     end
@@ -59106,7 +59132,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [10] LINE (var int max)=>int do
+    input/output/await [10] LINE (var int max)=>int do
 native _V;
         _V = max;
     end
@@ -59128,7 +59154,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [10] LINE (var int max)=>int do
+    input/output/await [10] LINE (var int max)=>int do
 native _V;
         _V = _V + max;
     end
@@ -59151,7 +59177,7 @@ par do
     native/pos do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
     end
-    input/output/delayed [2] LINE (var int max)=>int do
+    input/output/await [2] LINE (var int max)=>int do
         await 1s;
     end
     await 1s;
@@ -59172,7 +59198,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed LINE (var int max)=>int do
+    input/output/await LINE (var int max)=>int do
         await 1s;
 native _V;
         _V = _V + max;
@@ -59198,7 +59224,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [2] LINE (var int max)=>int do
+    input/output/await [2] LINE (var int max)=>int do
         await 1s;
 native _V;
         _V = _V + max;
@@ -59226,7 +59252,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [2] LINE (var int max)=>int do
+    input/output/await [2] LINE (var int max)=>int do
         await 1s;
 native _V;
         _V = _V + max;
@@ -59254,7 +59280,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [2] LINE (var int max)=>int do
+    input/output/await [2] LINE (var int max)=>int do
         await 1s;
 native _V;
         _V = _V + max;
@@ -59286,7 +59312,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [1] LINE (var int max)=>int do
+    input/output/await [1] LINE (var int max)=>int do
         await 1s;
 native _V;
         _V = _V + max;
@@ -59318,7 +59344,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [0] LINE (var int max)=>int do
+    input/output/await [0] LINE (var int max)=>int do
         await 1s;
 native _V;
         _V = _V + max;
@@ -59350,7 +59376,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [10] LINE (var int max)=>int do
+    input/output/await [10] LINE (var int max)=>int do
         await 1s;
 native _V;
         _V = _V + max;
@@ -59377,7 +59403,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [10] LINE (var int max)=>int do
+    input/output/await [10] LINE (var int max)=>int do
         await 1s;
 native _V;
         _V = _V + max;
@@ -59404,7 +59430,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
         int V = 0;
     end
-    input/output/delayed [10] LINE (var int max)=>int do
+    input/output/await [10] LINE (var int max)=>int do
         await 1s;
 native _V;
         _V = _V + max;
@@ -59431,7 +59457,7 @@ native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
     int V = 0;
 end
-output/input/delayed LINE (var int max)=>int;
+output/input/await LINE (var int max)=>int;
 var int? v   = 0;
 var int err = 0;
 (err,v) = request LINE=>10;
@@ -59446,7 +59472,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
-    output/input/delayed LINE (var int max)=>int;
+    output/input/await LINE (var int max)=>int;
     var int? v  = 0;
     var int err = 0;
     (err,v) = request LINE=>10;
@@ -59466,7 +59492,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
-    output/input/delayed LINE (var int max)=>int;
+    output/input/await LINE (var int max)=>int;
     var int? v;
     var int err = 0;
     (err,v) = request LINE=>10;
@@ -59486,7 +59512,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
-    output/input/delayed LINE (var int max)=>int;
+    output/input/await LINE (var int max)=>int;
     var int? v  = 0;
     var int err = 0;
     par/or do
@@ -59512,7 +59538,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
-    output/input/delayed LINE (var int max)=>int;
+    output/input/await LINE (var int max)=>int;
     var int? v  = 0;
     var int err = 0;
     par/or do
@@ -59538,7 +59564,7 @@ par do
         ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
         int V = 0;
     end
-    output/input/delayed LINE (var int max)=>int;
+    output/input/await LINE (var int max)=>int;
     var int? v  = 0;
     var int err = 0;
     par/or do
@@ -59706,7 +59732,7 @@ escape ret;
 }
 
 Test { [[
-output/input/delayed SERIAL_CHAR (void)=>byte;
+output/input/await SERIAL_CHAR (void)=>byte;
 escape 1;
 ]],
     run = 1,
@@ -59718,7 +59744,7 @@ native/pos do
 end
 
 input void OS_START;
-output/input/delayed SERIAL_CHAR (void)=>byte;
+output/input/await SERIAL_CHAR (void)=>byte;
 
 par/or do
     var int err;
@@ -59737,7 +59763,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,0)
 end
-input/output/delayed SERIAL_CHAR (void)=>byte do
+input/output/await SERIAL_CHAR (void)=>byte do
     escape 'a';
 end
 escape 1;
@@ -59761,7 +59787,7 @@ native/pos do
     }
 end
 
-input/output/delayed PING_PONG (var int x)=>byte[]&& do
+input/output/await PING_PONG (var int x)=>byte[]&& do
     vector[] byte ret = [].."Pong ";
     native/nohold _printf;
 native _char;
@@ -59780,7 +59806,7 @@ escape _V;
 }
 
 Test { [[
-output/input/delayed PING_PONG (var int x)=>byte[]&&;
+output/input/await PING_PONG (var int x)=>byte[]&&;
 vector[] byte&&? ret;
 par/and do
     var int i,err;
@@ -59825,7 +59851,7 @@ native/pos do
     }
 end
 
-input/output/delayed [10] TEST (var u16 t)=>_info&& do
+input/output/await [10] TEST (var u16 t)=>_info&& do
     var _info i = _info(42,89);
     escape &&i;
 end
@@ -59864,7 +59890,7 @@ printf("RET %p %d\n", evt_buf, k->_2);
     }
 end
 
-input/output/delayed [10] TEST (var u16 t)=>_info&& do
+input/output/await [10] TEST (var u16 t)=>_info&& do
     var _info i = _info(42,89);
     await 1s;
     escape &&i;
@@ -59903,7 +59929,7 @@ var Test t with
 end;
 var Test&&? ptr = &&t;
 
-input/output/delayed RESOURCE [10] (void)=>void do
+input/output/await RESOURCE [10] (void)=>void do
 native _V;
     _V = global:ptr!:k;
 end
@@ -70388,7 +70414,7 @@ Test { [[
 native/pos do
     ##define ceu_out_emit(a,b,c,d) __ceu_nothing_int(d,1)
 end
-output/input/delayed LINE [10] (var int max)=>int;
+output/input/await LINE [10] (var int max)=>int;
 par/or do
     var u8 err;
     var u8? ret;
@@ -71710,7 +71736,7 @@ end
 -- PROCURAR XXX e recolocar tudo ate o ok la
 
 Test { [[
-input/output/instantaneous B  (var int a)=>int do
+input/output/tight B  (var int a)=>int do
     escape a + 1;
 end
 var int ret = call B=>1;
@@ -71720,7 +71746,7 @@ escape ret;
 }
 
 Test { [[
-input/output/instantaneous WRITE  (var int c)=>int do
+input/output/tight WRITE  (var int c)=>int do
     escape c + 1;
 end
 var byte b = 1;
@@ -71731,7 +71757,7 @@ escape ret;
 }
 
 Test { [[
-input/output/instantaneous B  (var int a, var  int b)=>int do
+input/output/tight B  (var int a, var  int b)=>int do
     escape a + b;
 end
 var int ret = call B=>(1,2);
@@ -71746,7 +71772,7 @@ native/pre do
     void lua_pushnil (lua_State* l) {}
 end
 
-input/output/instantaneous PUSHNIL  (var _lua_State* l)=>void do
+input/output/tight PUSHNIL  (var _lua_State* l)=>void do
     _lua_pushnil(l);
 end
 escape 1;
@@ -71755,7 +71781,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous DRAW_STRING  (var byte* str, var int len, var int x, var  int y)=>int do
+input/output/tight DRAW_STRING  (var byte* str, var int len, var int x, var  int y)=>int do
     escape x + y + len;
 end
 
@@ -71767,21 +71793,21 @@ escape ret;
 }
 
 Test { [[
-input/output/instantaneous MALLOC  (void)=>void*;
+input/output/tight MALLOC  (void)=>void*;
 var void* ptr = (call MALLOC);
 ]],
     fin = 'line 2 : destination pointer must be declared with the `[]´ buffer modifier',
 }
 
 Test { [[
-input/output/instantaneous MALLOC  (void)=>void*;
+input/output/tight MALLOC  (void)=>void*;
 vector[] void ptr = (call MALLOC);
 ]],
     fin = 'line 2 : attribution requires `finalize´',
 }
 
 Test { [[
-input/output/instantaneous MALLOC  (void)=>void*;
+input/output/tight MALLOC  (void)=>void*;
 vector[] void ptr;
     do ptr = (call MALLOC);
 finalize with
@@ -71792,7 +71818,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous MALLOC  (var int, var int)=>void*;
+input/output/tight MALLOC  (var int, var int)=>void*;
 vector[] void ptr;
     do ptr = (call MALLOC=>(1,1));
 finalize with
@@ -71803,7 +71829,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous MALLOC  (var int, var int)=>int;
+input/output/tight MALLOC  (var int, var int)=>int;
 var int v;
     do v = (call MALLOC=>(1,1));
 finalize with
@@ -71814,7 +71840,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous MALLOC  (var int a, var int b, var  void* ptr)=>void* do
+input/output/tight MALLOC  (var int a, var int b, var  void* ptr)=>void* do
     if a+b == 11 then
         escape ptr;
     else
@@ -71832,7 +71858,7 @@ escape ptr==&i;
     run = 1,
 }
 Test { [[
-input/output/instantaneous MALLOC  (var int a, var int b, var  void* ptr)=>void* do
+input/output/tight MALLOC  (var int a, var int b, var  void* ptr)=>void* do
     if a+b == 11 then
         escape ptr;
     else
@@ -71851,7 +71877,7 @@ escape ptr==null;
 }
 
 Test { [[
-input/output/instantaneous MALLOC  (void)=>void*;
+input/output/tight MALLOC  (void)=>void*;
 native _f;
 do
     var void* a;
@@ -71865,7 +71891,7 @@ end
 }
 
 Test { [[
-input/output/instantaneous B  (var void* v)=>void do
+input/output/tight B  (var void* v)=>void do
     _V = v;
 end
 escape 1;
@@ -71874,7 +71900,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous B  (var void* v)=>void do
+input/output/tight B  (var void* v)=>void do
     _V := v;
 end
 escape 1;
@@ -71886,7 +71912,7 @@ Test { [[
 native/pos do
     void* V;
 end
-input/output/instantaneous B  (var/hold void* v)=>void do
+input/output/tight B  (var/hold void* v)=>void do
     _V = v;
 end
 escape 1;
@@ -71895,7 +71921,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous B  (var byte* buf)=>void do
+input/output/tight B  (var byte* buf)=>void do
 end;
 var byte* buf;
 call B => (buf);
@@ -71905,7 +71931,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous B  (var byte* buf, var  int i)=>void do
+input/output/tight B  (var byte* buf, var  int i)=>void do
 end;
 var byte* buf;
 call B => (buf, 1);
@@ -71915,7 +71941,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous B  (void)=>void do
+input/output/tight B  (void)=>void do
 end;
 var byte* buf;
 call B;
@@ -71925,7 +71951,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous B  (var byte* buf)=>void do
+input/output/tight B  (var byte* buf)=>void do
 end;
 var byte* buf;
 call B => buf;
@@ -71935,7 +71961,7 @@ escape 1;
 }
 
 Test { [[
-input/output/instantaneous B  (var/hold byte* buf)=>void do
+input/output/tight B  (var/hold byte* buf)=>void do
 end;
 var byte* buf;
 call B => buf;
@@ -72031,7 +72057,7 @@ escape _f(&v) == _V;
 }
 
 Test { [[
-input/output/instantaneous B  (var int* p1, var  int* p2)=>void;
+input/output/tight B  (var int* p1, var  int* p2)=>void;
 do
     var int* p1 = null;
     do
@@ -72050,7 +72076,7 @@ native/pos do
     #define ceu_out_call_VVV(x) x
 end
 
-output/input/instantaneous VVV  (var int n)=>int;
+output/input/tight VVV  (var int n)=>int;
 var int v;
     do v = (call VVV => 10);
 finalize with
@@ -72067,7 +72093,7 @@ native/pos do
     #define ceu_out_call_MALLOC(x) NULL
 end
 
-output/input/instantaneous MALLOC  (var int n)=>void*;
+output/input/tight MALLOC  (var int n)=>void*;
 var byte* buf;
 buf = (call MALLOC => 10);
 escape 1;
@@ -72081,7 +72107,7 @@ native/pos do
     #define ceu_out_call_SEND(x) 0
 end
 
-output/input/instantaneous SEND  (var byte* buf)=>void;
+output/input/tight SEND  (var byte* buf)=>void;
 vector[255] byte buf;
 call SEND => buf;
 escape 1;
@@ -72100,7 +72126,7 @@ native/pos do
     Fx* f;
     #define ceu_out_call_OPEN(x) f
 end
-output/input/instantaneous OPEN  (var byte* path, var  byte* mode)=>_Fx*;
+output/input/tight OPEN  (var byte* path, var  byte* mode)=>_Fx*;
 
 // Default device
 vector[] _Fx f;
@@ -72111,10 +72137,10 @@ escape 1;
 }
 
 Test { [[
-output/input/instantaneous OPEN  (var byte* path, var  byte* mode)=>_Fx*;
-output/input/instantaneous CLOSE  (var _Fx* f)=>int;
-output/input/instantaneous SIZE  (var _Fx* f)=>int;
-output/input/instantaneous READ  (var void* ptr, var int size, var int nmemb, var  _Fx* f)=>int;
+output/input/tight OPEN  (var byte* path, var  byte* mode)=>_Fx*;
+output/input/tight CLOSE  (var _Fx* f)=>int;
+output/input/tight SIZE  (var _Fx* f)=>int;
+output/input/tight READ  (var void* ptr, var int size, var int nmemb, var  _Fx* f)=>int;
 
 // Default device
 vector[] _Fx f;
