@@ -122,11 +122,12 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 
         for i, v in ipairs(Abslist) do
             local var = vars[i]
-            local var_tp, var_id, _
+            local _, var_tp, var_id, is_alias
             if vars.tag == 'Typepars_ids' then
                 _,is_alias,_,var_tp,var_id = unpack(var)
             else
-                var_tp, is_alias, var_id = unpack(var)
+                var_tp, is_alias = unpack(var)
+                var_id = var.id
             end
 
             -- var Ee.Xx ex = ...;
