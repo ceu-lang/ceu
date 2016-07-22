@@ -323,7 +323,8 @@ F = {
             -- copy all super vars to myself
             table.insert(AST.asr(me,'', 2,'Block', 1,'Stmts'),
                          1,
-                         AST.copy(AST.asr(dcl,'', 2,'Block', 1,'Stmts')))
+                         AST.asr(dcl,'', 2,'Block', 1,'Stmts'))
+                         --AST.copy(AST.asr(dcl,'', 2,'Block', 1,'Stmts')))
         end
 
         dcls_new(root, me)

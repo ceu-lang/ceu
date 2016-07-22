@@ -91,23 +91,6 @@ F = {
         local ID_abs, _ = unpack(Abs_Cons)
         local mod,_,_,Typepars_ids = unpack(ID_abs.dcl)
         assert(mod == 'code/instantaneous')
-
-        -- wrapper
-        local args, ps = {}, {}
-        for _,Typepars_ids_item in ipairs(Typepars_ids) do
-            local kind,is_alias,c,Type,id2 = unpack(Typepars_ids_item)
-            assert(kind=='var' or kind=='vector')
-            local ptr = (is_alias and '*' or '')
-            args[#args+1] = TYPES.toc(Type)..ptr..' '..id2
-            ps[#ps+1] = 'ps.'..id2..' = '..id2..';'
-        end
-        if #args > 0 then
-            args = ','..table.concat(args,', ')
-            ps   = table.concat(ps,'\n')..'\n'
-        else
-            args = ''
-            ps   = ''
-        end
         return [[
 CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
                                ]]..ID_abs.dcl.lbl_in.id..[[,
@@ -141,9 +124,21 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
             local var = vars[i]
             local var_tp, var_id, _
             if vars.tag == 'Typepars_ids' then
-                _,_,_,var_tp,var_id = unpack(var)
+                _,is_alias,_,var_tp,var_id = unpack(var)
             else
-                var_tp, var_id = var[1], var.id
+                var_tp, is_alias, var_id = unpack(var)
+            end
+
+            -- var Ee.Xx ex = ...;
+            -- code Ff (var& Ee e)
+            -- Ff(&ex)
+            local cast = ''
+            if var_tp.tag=='Type' and var_tp[1].tag == 'ID_abs' then
+                if TYPES.check(var_tp,'&&') then
+                    cast = '('..TYPES.toc(var_tp)..')'
+                elseif is_alias then
+                    cast = '('..TYPES.toc(var_tp)..'*)'
+                end
             end
 
             if TYPES.check(var_tp,'?') then
@@ -154,7 +149,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
                 end
             else
                 if v.tag ~= 'ID_any' then
-                    ps[#ps+1] = '.'..var_id..'='..V(v)
+                    ps[#ps+1] = '.'..var_id..'='..cast..V(v)
                 end
             end
         end

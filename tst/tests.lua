@@ -60847,6 +60847,46 @@ escape a.a + b.a + b.b + b.c;
     names = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
 }
 
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/instantaneous Ff (var& Aa a) => int do
+    escape a.a;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+var Aa.Bb b = val Aa.Bb(10,20);
+
+escape (call Ff(&b));
+]],
+    run = 10,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/instantaneous Ff (var Aa&& a) => int do
+    escape a:a;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+var Aa.Bb b = val Aa.Bb(10,20);
+
+escape (call Ff(&&b));
+]],
+    run = 10,
+}
+
 --<<< DATA / HIERARCHY / SUB-DATA / SUB-TYPES / INHERITANCE
 
 Test { [[
@@ -61181,6 +61221,27 @@ escape 1;
 ]],
     run = 1,
 }
+
+Test { [[
+data Aa with
+    event void e;
+end
+data Aa.Bb;
+
+var Aa.Bb b = val Aa.Bb(_);
+var& Aa a = &b;
+
+par/and do
+    await a.e;
+with
+    emit b.e;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 --<<< DATA / EVENTS
 
 error'22/07/2016'

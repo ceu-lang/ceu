@@ -252,8 +252,25 @@ return opt;
                     end
                     mem[#mem+1] = 'tceu_nevt '..dcl.id_..';\n'
                 else
-                    MEMS.evts[#MEMS.evts+1] = dcl
-                    dcl.id_ = string.upper('CEU_EVENT_'..dcl.id..'_'..dcl.n)
+                    local data = AST.par(me,'Data')
+                    if data then
+                        -- same name for all class hierarchy
+                        while true do
+                            if not data.super then
+                                break
+                            else
+                                data = data.super
+                            end
+                        end
+                        dcl.id_ = string.upper('CEU_EVENT'..'_'..data.id..'_'..dcl.id)
+                        if data == AST.par(me,'Data') then
+                            -- avoids duplication with super
+                            MEMS.evts[#MEMS.evts+1] = dcl
+                        end
+                    else
+                        dcl.id_ = string.upper('CEU_EVENT_'..dcl.id..'_'..dcl.n)
+                        MEMS.evts[#MEMS.evts+1] = dcl
+                    end
                 end
 
             -- VEC
