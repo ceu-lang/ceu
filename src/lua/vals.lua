@@ -197,12 +197,8 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 
     ID_int = function (me, ctx)
         local _, is_alias = unpack(me.dcl)
-        if me.dcl.tag == 'Evt' then
-            if is_alias then
-                return CUR(me.dcl.id_)
-            else
-                return me.dcl.id_
-            end
+        if me.dcl.tag=='Evt' and (not is_alias) then
+            return me.dcl.id_
         else
             local ptr = ''
             if is_alias and (not ctx.is_bind) and
@@ -217,6 +213,30 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
     end,
 
     ---------------------------------------------------------------------------
+
+-- MEMBER: .
+
+    ['Exp_.'] = function (me)
+        local _, e, member = unpack(me)
+        member = string.gsub(member, '^_', '')  -- _nat._data (data is a keyword)
+
+        local _,is_alias = unpack(me.info.dcl)
+
+        if me.info.dcl.tag=='Evt' and (not is_alias) then
+            return { '((void*) &'..V(e)..')', me.info.dcl.id_ }
+        else
+            local ptr = ''
+            if not TYPES.is_nat(e.info.tp) then
+                if is_alias and
+                    (not TYPES.is_nat_not_plain(TYPES.pop(me.info.tp,'?')))
+                then
+                    ptr = '*'
+                end
+            end
+
+            return '('..ptr..'('..V(e)..'.'..member..'))'
+        end
+    end,
 
 -- BIND
 
@@ -248,25 +268,6 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 (*(]]..TYPES.toc(me.info.tp)..[[*) ceu_vector_geti(&]]..V(arr)..','..V(idx)..[[))
 ]]
         end
-    end,
-
--- MEMBER: .
-
-    ['Exp_.'] = function (me)
-        local _, e, member = unpack(me)
-        member = string.gsub(member, '^_', '')  -- _nat._data (data is a keyword)
-
-        local ptr = ''
-        if not TYPES.is_nat(e.info.tp) then
-            local _,is_alias = unpack(me.info.dcl)
-            if is_alias and
-                (not TYPES.is_nat_not_plain(TYPES.pop(me.info.tp,'?')))
-            then
-                ptr = '*'
-            end
-        end
-
-        return '('..ptr..'('..V(e)..'.'..member..'))'
     end,
 
 -- OPTION: ?, !

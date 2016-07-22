@@ -941,10 +941,22 @@ _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
 
     Await_Int = function (me)
         local Exp_Name = unpack(me)
+
+        local v = V(Exp_Name)
+        local evt, int_data_or_code do
+            if type(v) == 'table' then
+                -- await d.e;
+                int_data_or_code, evt = unpack(v)
+            else
+                -- await e;
+                int_data_or_code, evt = '_ceu_mem', v
+            end
+        end
+
         HALT(me, {
-            { evt = V(Exp_Name) },
+            { evt = evt },
             { lbl = me.lbl_out.id },
-            { int_data_or_code = '_ceu_mem'} ,
+            { int_data_or_code = int_data_or_code },
             lbl = me.lbl_out.id,
         })
     end,
@@ -952,6 +964,17 @@ _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
     Emit_Evt = function (me)
         local Exp_Name, Explist = unpack(me)
         local Typelist = unpack(Exp_Name.info.dcl)
+
+        local v = V(Exp_Name)
+        local evt, int_data_or_code do
+            if type(v) == 'table' then
+                -- await d.e;
+                int_data_or_code, evt = unpack(v)
+            else
+                -- await e;
+                int_data_or_code, evt = '_ceu_mem', v
+            end
+        end
 
         LINE(me, [[
 {
@@ -961,12 +984,12 @@ _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
         if Explist then
             LINE(me, [[
     tceu_event_]]..Exp_Name.info.dcl.id..'_'..Exp_Name.info.dcl.n..[[
-        __ceu_ps = { _ceu_mem, ]]..table.concat(V(Explist),',')..[[ };
+        __ceu_ps = { ]]..int_data_or_code..', '..table.concat(V(Explist),',')..[[ };
 ]])
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    CEU_STK_BCAST_ABORT(]]..V(Exp_Name)..[[, &__ceu_ps, _ceu_stk, _ceu_trlK,
+    CEU_STK_BCAST_ABORT(]]..evt..[[, &__ceu_ps, _ceu_stk, _ceu_trlK,
                         (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
 }
 ]])

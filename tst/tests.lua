@@ -61091,8 +61091,6 @@ escape (d.ptr == &&_V) as int;
 
 -- << ADT : MISC
 
-error'22/07/2016'
-
 -->>> DATA/EVENTS
 
 Test { [[
@@ -61123,6 +61121,9 @@ escape d.xxx;
 }
 
 --<<< DATA / EVENTS
+
+error'22/07/2016'
+do return end
 
 -->> DATA / VECTOR
 
