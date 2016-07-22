@@ -81,7 +81,9 @@ function SET (me, to, fr, fr_ok)
         -- var&& Ee = &&ex;
         local cast = ''
         if to.info.tp[1].tag == 'ID_abs' then
-            cast = '('..TYPES.toc(to.info.tp)..')'
+            if TYPES.check(to.info.tp,'&&') then
+                cast = '('..TYPES.toc(to.info.tp)..')'
+            end
         end
         fr = cast..V(fr)
     end
@@ -166,7 +168,7 @@ if (]]..V(c)..[[) {
         for _, dcl in ipairs(me.dcls) do
             if dcl.tag == 'Var' then
                 local tp, is_alias = unpack(dcl)
-                if TYPES.check(tp,'?') and (not is_alias) then
+                if TYPES.check(tp,'?') and (not is_alias) and (not dcl.is_param) then
                     LINE(me, [[
 ]]..CUR(dcl.id_)..[[.is_set = 0;
 ]])
@@ -333,17 +335,6 @@ if (0)
         local Abs_Cons, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
-        if mid then
-            local v = {}
-            for _, var in ipairs(mid) do
-                -- extra indirection for mid's
-                v[#v+1] = '&'..V(var,{is_bind=true})
-            end
-            mid = (#Abslist>0 and ',' or '')..table.concat(v,',')
-        else
-            mid = ''
-        end
-
         HALT(me, {
             { evt = 'CEU_INPUT__CODE' },
             { lbl = me.lbl_out.id },
@@ -351,8 +342,7 @@ if (0)
             lbl = me.lbl_out.id,
             exec = [[
 {
-    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
-        {]]..table.concat(V(Abslist),',')..mid..[[ };
+    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,mid)..[[;
 
     ]]..CUR(' __mem_'..me.n)..[[.mem.pak = NULL;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
@@ -384,8 +374,7 @@ if (0)
         __ceu_new_mem->up_mem = _ceu_mem;
         __ceu_new_mem->up_trl = _ceu_trlK;
 
-        tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps =
-            {]]..table.concat(V(Abslist),',')..[[ };
+        tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
 
         CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
                     __ceu_new_mem, 0, ]]..ID_abs.dcl.lbl_in.id..[[);
@@ -1076,7 +1065,6 @@ local c = PAK.files.ceu_c
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
 local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
-local c = SUB(c, '=== OPTS ===',             MEMS.opts)
 local c = SUB(c, '=== DATAS_ENUM ===',       MEMS.datas.enum)
 local c = SUB(c, '=== DATAS_MEMS ===',       MEMS.datas.mems)
 local c = SUB(c, '=== DATAS_SUPERS ===',     MEMS.datas.supers)

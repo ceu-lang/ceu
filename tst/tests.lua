@@ -8,36 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-data Dd with
-    var int x;
-end
-
-var Dd d = val Dd(10);
-
-var Dd? d1, d2;
-
-d2 = d;
-
-var int ret = 0;
-
-if d1? then
-    ret = ret + d1!.x;
-else
-    ret = ret + 1;
-end
-
-if d2? then
-    ret = ret + d2!.x;
-else
-    ret = ret + 1;
-end
-
-escape ret;
-]],
-    run = 11,
-}
-
 --[=====[
 do return end -- OK
 --]=====]
@@ -30105,6 +30075,75 @@ escape a;
 
 --<< OPTION / NATIVE
 
+-->> OPTION / CODE
+
+Test { [[
+code/instantaneous Fx (var int? x) => int do
+    if x? then
+        escape x! + 1;
+    else
+        escape 1;
+    end
+end
+
+escape (call Fx(_)) + (call Fx(10));
+]],
+    run = 12,
+}
+
+Test { [[
+code/delayed Fx (var int? x) => int do
+    if x? then
+        escape x! + 1;
+    else
+        escape 1;
+    end
+end
+
+var int v1 = await Fx(10);
+var int v2 = await Fx(_);
+
+escape v1+v2;
+]],
+    run = 12,
+}
+
+--<< OPTION / CODE
+
+-->> OPTION / DATA
+
+Test { [[
+data Dd with
+    var int x;
+end
+
+var Dd d = val Dd(10);
+
+var Dd? d1, d2;
+
+d2 = d;
+
+var int ret = 0;
+
+if d1? then
+    ret = ret + d1!.x;
+else
+    ret = ret + 1;
+end
+
+if d2? then
+    ret = ret + d2!.x;
+else
+    ret = ret + 1;
+end
+
+escape ret;
+]],
+    run = 11,
+}
+
+--<< OPTION / DATA
+
 -->> OPTION / VECTOR
 --[===[
 -- TODO: SKIP
@@ -32633,7 +32672,8 @@ escape ret+x!;
 
 --<< CODE / DELAYED / WATCHING
 
-do return end
+-- TODO: SKIP
+--[===[
 
 -->>> INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 
@@ -33237,6 +33277,9 @@ escape 1;
 
 --<<< INTERFACE / BLOCKI / INPUT / OUTPUT / INPUT/OUTPUT / OUTPUT/INPUT
 
+-- TODO: SKIP
+--]===]
+
 -->>> CODE / DELAYED / SPAWN
 
 Test { [[
@@ -33566,8 +33609,6 @@ escape ret;
 -->> CODE / DELAYED / EMIT-INTERNAL
 
 --<<< CODE / DELAYED / FUNCTIONS
-
-do return end
 
 -- TODO: SKIP
 --[===[
@@ -61009,6 +61050,8 @@ escape 0;
 }
 
 -- << ADT : MISC
+
+do return end   -- 22/07/2016
 
 -->>> DATA/EVENTS
 

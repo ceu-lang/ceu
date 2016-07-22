@@ -115,7 +115,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 ]]
     end,
 
-    Abs_Cons = function (me)
+    Abs_Cons = function (me, mid)
         local ID_abs, Abslist = unpack(me)
 
         local id_struct
@@ -138,8 +138,31 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         end
 
         for i, v in ipairs(Abslist) do
-            if v.tag ~= 'ID_any' then
-                ps[#ps+1] = '.'..(vars[i].id or vars[i][5])..'='..V(v)
+            local var = vars[i]
+            local var_tp, var_id, _
+            if vars.tag == 'Typepars_ids' then
+                _,_,_,var_tp,var_id = unpack(var)
+            else
+                var_tp, var_id = var[1], var.id
+            end
+
+            if TYPES.check(var_tp,'?') then
+                if v.tag == 'ID_any' then
+                    ps[#ps+1] = '.'..var_id..'= { .is_set=0 }'
+                else
+                    ps[#ps+1] = '.'..var_id..'= { .is_set=1, .value='..V(v)..'}'
+                end
+            else
+                if v.tag ~= 'ID_any' then
+                    ps[#ps+1] = '.'..var_id..'='..V(v)
+                end
+            end
+        end
+
+        if mid then
+            for _, var in ipairs(mid) do
+                -- extra indirection for mid's
+                ps[#ps+1] = '&'..V(var,{is_bind=true})
             end
         end
 
@@ -147,7 +170,6 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
                     '{'..table.concat(ps,',')..'}'
     end,
 
-    Abslist = 'Explist',
     Explist = function (me)
         local vs = {}
         for i, p in ipairs(me) do
