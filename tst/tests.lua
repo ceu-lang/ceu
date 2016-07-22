@@ -102,6 +102,7 @@ escape 1 or false;
     exps = 'line 1 : invalid operand to `or´ : expected boolean type',
 }
 
+Test { [[escape (1 >= 0) as int;]], run=1 }
 Test { [[escape 1+2*3;]], run=7 }
 Test { [[escape(4/2*3);]], run=6 }
 Test { [[escape 2-1;]], run=1 }

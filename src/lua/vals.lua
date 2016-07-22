@@ -304,6 +304,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
     ['Exp_>']   = 'Exp_2',
     ['Exp_<']   = 'Exp_2',
     ['Exp_<=']  = 'Exp_2',
+    ['Exp_>=']  = 'Exp_2',
     Exp_2 = function (me)
         local op,e1,e2 = unpack(me)
         return '('..V(e1)..ceu2c(op)..V(e2)..')'
