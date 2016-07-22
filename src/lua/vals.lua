@@ -259,7 +259,9 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         local ptr = ''
         if not TYPES.is_nat(e.info.tp) then
             local _,is_alias = unpack(me.info.dcl)
-            if is_alias then
+            if is_alias and
+                (not TYPES.is_nat_not_plain(TYPES.pop(me.info.tp,'?')))
+            then
                 ptr = '*'
             end
         end

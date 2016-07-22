@@ -61049,9 +61049,38 @@ escape 0;
     --dcls = 'line 2 : invalid event type : must be primitive',
 }
 
+-->> DATA / ALIAS
+
+Test { [[
+native _void_ptr, _V, _f;
+native/pre do
+    typedef void* void_ptr;
+    int V = 10;
+    void* f() {
+        return &V;
+    }
+end
+
+data Dd with
+    var& _void_ptr ptr;
+end
+
+var& _void_ptr? ptr = &_f()
+    finalize (ptr) with
+    end
+
+var Dd d = val Dd(&ptr!);
+
+escape (d.ptr == &&_V) as int;
+]],
+    run = 1,
+}
+
+--<< DATA / ALIAS
+
 -- << ADT : MISC
 
-do return end   -- 22/07/2016
+error'22/07/2016'
 
 -->>> DATA/EVENTS
 
