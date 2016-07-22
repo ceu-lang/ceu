@@ -308,20 +308,25 @@ F = {
 
     Data__PRE = function (me)
         me.id = unpack(me)
-        local blk = AST.asr(AST.root,'', 1,'Block')
+        local root = AST.asr(AST.root,'', 1,'Block')
 
         -- check "super" path
         local super,_ = string.match(me.id, '(.*)%.(.*)')
         if super then
-            local dcl = dcls_get(blk, super, true)
+            local dcl = dcls_get(root, super, true)
             ASR(dcl, me,
                 'invalid declaration : abstraction "'..super..'" is not declared')
             dcl.in_hier = true
             me.in_hier = true
             me.super = dcl
+
+            -- copy all super vars to myself
+            table.insert(AST.asr(me,'', 2,'Block', 1,'Stmts'),
+                         1,
+                         AST.asr(dcl,'', 2,'Block', 1,'Stmts'))
         end
 
-        dcls_new(blk, me)
+        dcls_new(root, me)
     end,
 
     -- Typelists

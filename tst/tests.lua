@@ -60803,6 +60803,50 @@ escape (dd is Data) as int;
     exps = 'line 8 : invalid operand to `is´ : expected `data´ type in some hierarchy : got "Data"',
 }
 
+Test { [[
+data Aa with
+    var int a;
+end
+
+var Aa a = val Aa(10);
+
+escape a.a + a.b;
+]],
+    names = 'line 7 : invalid member access : "a" has no member "b" : `data´ "Aa" (/tmp/tmp.ceu:1)',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+data Aa.Bb with
+    var int b;
+end
+
+var Aa    a = val Aa(10);
+var Aa.Bb b = val Aa.Bb(10,20);
+
+escape a.a + b.a + b.b;
+]],
+    run = 40,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+data Aa.Bb with
+    var int b;
+end
+
+var Aa    a = val Aa(10);
+var Aa.Bb b = val Aa.Bb(10,20);
+
+escape a.a + b.a + b.b + b.c;
+]],
+    names = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
+}
+
 --<<< DATA / HIERARCHY / SUB-DATA / SUB-TYPES
 
 Test { [[
