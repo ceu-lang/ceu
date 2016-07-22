@@ -192,8 +192,12 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
 
     ID_int = function (me, ctx)
         local _, is_alias = unpack(me.dcl)
-        if me.dcl.tag=='Evt' and (not is_alias) then
-            return me.dcl.id_
+        if me.dcl.tag == 'Evt' then
+            if is_alias then
+                return CUR(me.dcl.id_)
+            else
+                return me.dcl.id_
+            end
         else
             local ptr = ''
             if is_alias and (not ctx.is_bind) and
