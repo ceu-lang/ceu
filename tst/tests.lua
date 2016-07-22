@@ -30078,7 +30078,7 @@ escape a;
 -->> OPTION / CODE
 
 Test { [[
-code/instantaneous Fx (var int? x) => int do
+code/tight Fx (var int? x) => int do
     if x? then
         escape x! + 1;
     else
@@ -30092,7 +30092,7 @@ escape (call Fx(_)) + (call Fx(10));
 }
 
 Test { [[
-code/delayed Fx (var int? x) => int do
+code/await Fx (var int? x) => int do
     if x? then
         escape x! + 1;
     else
@@ -30546,7 +30546,7 @@ end
 -->>> CODE / INSTANTANEOUS / FUNCTIONS
 
 Test { [[
-code/instantaneous Code (var int)=>void
+code/tight Code (var int)=>void
 do
 end
 escape 1;
@@ -30557,7 +30557,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code (var int x, var  int)=>void
+code/tight Code (var int x, var  int)=>void
 do
 end
 escape 1;
@@ -30566,7 +30566,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code (var void, var  int x) => void
+code/tight Code (var void, var  int x) => void
 do
 end
 escape 1;
@@ -30576,7 +30576,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code (var void, var  int) => void
+code/tight Code (var void, var  int) => void
 do
 end
 escape 1;
@@ -30587,7 +30587,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code (var void a, var  int b) => void
+code/tight Code (var void a, var  int b) => void
 do
 end
 escape 1;
@@ -30598,7 +30598,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code (var int a)=>void
+code/tight Code (var int a)=>void
     __ceu_nothing(&&a);
 do
 end
@@ -30608,8 +30608,8 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code (var int a)=>void;
-code/instantaneous Code (var int a)=>void
+code/tight Code (var int a)=>void;
+code/tight Code (var int a)=>void
 do
     //native/nohold ___ceu_nothing;
     //___ceu_nothing(&&a);
@@ -30621,7 +30621,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code (var void a)=>void
+code/tight Code (var void a)=>void
 do
 end
 escape 1;
@@ -30631,7 +30631,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code (var void a)=>void
+code/tight Code (var void a)=>void
 do
 end
 escape 1;
@@ -30641,7 +30641,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code (void)=>void
+code/tight Code (void)=>void
 do
 end
 escape 1;
@@ -30651,7 +30651,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code ()=>void
+code/tight Code ()=>void
 do
 end
 escape 1;
@@ -30660,7 +30660,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Code (var int x) => int
+code/tight Code (var int x) => int
 do
     x = x + 1;
     escape x;
@@ -30673,7 +30673,7 @@ escape b;
 }
 
 Test { [[
-code/instantaneous Code (var int x) => int
+code/tight Code (var int x) => int
 do
     x = x + 1;
     escape x;
@@ -30685,7 +30685,7 @@ escape call Code(a+10);
 }
 
 Test { [[
-code/instantaneous Code (var int x) => int
+code/tight Code (var int x) => int
 do
     x = x + 1;
     escape x;
@@ -30697,7 +30697,7 @@ escape call Code(a+10) + call Code(1);
 }
 
 Test { [[
-code/instantaneous Fx (var int v)=>int do
+code/tight Fx (var int v)=>int do
     escape v+1;
 end
 escape call Fx();
@@ -30706,7 +30706,7 @@ escape call Fx();
 }
 
 Test { [[
-code/instantaneous Fx (var int v)=>int do
+code/tight Fx (var int v)=>int do
     escape v+1;
 end
 var int&& ptr;
@@ -30716,7 +30716,7 @@ escape call Fx(ptr);
 }
 
 Test { [[
-code/instantaneous Fx (var int v)=>int do
+code/tight Fx (var int v)=>int do
     escape v+1;
 end
 escape call Fx(1);
@@ -30725,21 +30725,21 @@ escape call Fx(1);
 }
 
 Test { [[
-code/instantaneous Fx (void);
+code/tight Fx (void);
 escape 1;
 ]],
     parser = 'line 1 : after `)´ : expected `=>´',
 }
 
 Test { [[
-code/instantaneous Fx (void) => void
+code/tight Fx (void) => void
 escape 1;
 ]],
     parser = 'line 1 : after `void´ : expected type modifier or `;´ or `do´'
 }
 
 Test { [[
-code/instantaneous Fx (void) => void;
+code/tight Fx (void) => void;
 escape 1;
 ]],
     wrn = true,
@@ -30747,7 +30747,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx void => (void);
+code/tight Fx void => (void);
 escape 1;
 ]],
     wrn = true,
@@ -30757,7 +30757,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (void) => void;
+code/tight Fx (void) => void;
 escape 1;
 ]],
     wrn = true,
@@ -30765,7 +30765,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (var int) => void do
+code/tight Fx (var int) => void do
     escape 1;
 end
 escape 1;
@@ -30776,7 +30776,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (void) => void do
+code/tight Fx (void) => void do
     event void i;
     emit i;
     await i;
@@ -30788,7 +30788,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (void) => void do
+code/tight Fx (void) => void do
     var int a = 1;
     if a!=0 then end;
 end
@@ -30799,7 +30799,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (void) => void do
+code/tight Fx (void) => void do
     escape;
 end
 escape 1;
@@ -30809,7 +30809,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (void) => void do
+code/tight Fx (void) => void do
     escape 1;
 end
 escape 1;
@@ -30821,7 +30821,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (void) => void do
+code/tight Fx (void) => void do
     escape;
 end
 escape 1;
@@ -30849,7 +30849,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (void)=>int do
+code/tight Fx (void)=>int do
     escape 1;
 end
 escape call Fx();
@@ -30858,7 +30858,7 @@ escape call Fx();
 }
 
 Test { [[
-code/instantaneous Fx (void)=>int do
+code/tight Fx (void)=>int do
     escape 1;
 end
 escape call Fx();
@@ -30868,8 +30868,8 @@ escape call Fx();
 }
 
 Test { [[
-code/instantaneous Fx (void) => int;
-code/instantaneous Fx (var int x)  => int do end
+code/tight Fx (void) => int;
+code/tight Fx (var int x)  => int do end
 escape 1;
 ]],
     dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
@@ -30878,8 +30878,8 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (void) => int;
-code/instantaneous Fx (var int)  => int;
+code/tight Fx (void) => int;
+code/tight Fx (var int)  => int;
 escape 1;
 ]],
     wrn = true,
@@ -30889,8 +30889,8 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (void) => int;
-code/instantaneous Fx (void) => int do escape 1; end
+code/tight Fx (void) => int;
+code/tight Fx (void) => int do escape 1; end
 escape 1;
 ]],
     wrn = true,
@@ -30898,14 +30898,14 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (var void, var int) => int;
+code/tight Fx (var void, var int) => int;
 escape 1;
 ]],
     dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 
 Test { [[
-code/instantaneous Fx (var int) => void;
+code/tight Fx (var int) => void;
 escape 1;
 ]],
     wrn = true,
@@ -30913,8 +30913,8 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (var int, var int) => int;
-code/instantaneous Fx (var int a, var  int b) => int do
+code/tight Fx (var int, var int) => int;
+code/tight Fx (var int a, var  int b) => int do
     escape a + b;
 end
 escape 1;
@@ -30924,8 +30924,8 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (var int, var int) => int;
-code/instantaneous Fx (var int a, var  u8 b) => int do
+code/tight Fx (var int, var int) => int;
+code/tight Fx (var int a, var  u8 b) => int do
     escape a + b;
 end
 escape 1;
@@ -30934,8 +30934,8 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (var int, var int) => int;
-code/instantaneous Fx (var int a, var  int b) => int do
+code/tight Fx (var int, var int) => int;
+code/tight Fx (var int a, var  int b) => int do
     escape a + b;
 end
 escape call Fx(1,2);
@@ -30944,11 +30944,11 @@ escape call Fx(1,2);
 }
 
 Test { [[
-code/instantaneous Fx (var int, var int) => int;
-code/instantaneous Fx (var int a, var  int b) => int do
+code/tight Fx (var int, var int) => int;
+code/tight Fx (var int a, var  int b) => int do
     escape a + b;
 end
-code/instantaneous Fx (var int a, var  int b) => int do
+code/tight Fx (var int a, var  int b) => int do
     escape a + b;
 end
 escape call Fx(1,2);
@@ -30957,7 +30957,7 @@ escape call Fx(1,2);
 }
 
 Test { [[
-code/instantaneous Fff (var int x)=>int do
+code/tight Fff (var int x)=>int do
     escape x + 1;
 end
 
@@ -30973,7 +30973,7 @@ escape call Fff(x);
 
 Test { [[
 escape 1;
-code/instantaneous Fx (var int x)=>int do
+code/tight Fx (var int x)=>int do
     if x!=0 then end;
     loop i in [0 -> 10[ do
     end
@@ -30987,8 +30987,8 @@ end
 Test { [[
 class Tx with
 do
-    code/instantaneous Fx (var int)=>int;
-    code/instantaneous Fx (var int x)=>int do
+    code/tight Fx (var int)=>int;
+    code/tight Fx (var int x)=>int do
         escape x;
     end
     escape call Fx(10);
@@ -31001,7 +31001,7 @@ escape x;
 
 Test { [[
 escape 1;
-code/instantaneous Fx (void) => int do
+code/tight Fx (void) => int do
     escape 1;
 end
 ]],
@@ -31010,7 +31010,7 @@ end
 }
 
 Test { [[
-code/instantaneous Fx (void) => int do
+code/tight Fx (void) => int do
     escape 1;
 end
 escape 1;
@@ -31020,7 +31020,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Set (var u8&& v)=>void do
+code/tight Set (var u8&& v)=>void do
     *v = 3;
 end
 var u8 v = 0;
@@ -31031,7 +31031,7 @@ escape v as int;
 }
 
 Test { [[
-code/instantaneous Set (var& u8 v)=>void do
+code/tight Set (var& u8 v)=>void do
     v = 3;
 end
 var u8 v = _;
@@ -31043,7 +31043,7 @@ escape v as int;
 }
 
 Test { [[
-code/instantaneous Set (var u8 v)=>int do
+code/tight Set (var u8 v)=>int do
     escape 3;
 end
 var u8 v = call Set(_);
@@ -31053,7 +31053,7 @@ escape v as int;
 }
 
 Test { [[
-code/instantaneous Set (var& u8 v)=>void do
+code/tight Set (var& u8 v)=>void do
     v = 3;
 end
 var u8 v = 0;
@@ -31065,7 +31065,7 @@ escape v as int;
 }
 
 Test { [[
-code/instantaneous Ff (var& int a)=>void do
+code/tight Ff (var& int a)=>void do
     a = 1;
 end
 var int v = 0;
@@ -31076,7 +31076,7 @@ escape v;
 }
 
 Test { [[
-code/instantaneous Fx (var int x)=>int do
+code/tight Fx (var int x)=>int do
     escape x + 1;
 end
 
@@ -31097,7 +31097,7 @@ end
 
 var Tx t;
 
-code/instantaneous Fx (void)=>Tx&& do
+code/tight Fx (void)=>Tx&& do
     escape &&t;
 end
 
@@ -31115,7 +31115,7 @@ end
 
 var Tx t;
 
-code/instantaneous Fx (void)=>Tx&& do
+code/tight Fx (void)=>Tx&& do
     var Tx&& p = &&t;
     escape p;
 end
@@ -31134,7 +31134,7 @@ end
 
 var Tx t;
 
-code/instantaneous Fx (void)=>Tx&& do
+code/tight Fx (void)=>Tx&& do
     var Tx&& p = &&t;
     escape p;
 end
@@ -31148,9 +31148,9 @@ escape p:v;
 }
 
 Test { [[
-code/instantaneous Fx (var int x)=>int;
+code/tight Fx (var int x)=>int;
 var int x = 0;
-code/instantaneous Fx (var int x)=>int do
+code/tight Fx (var int x)=>int do
     this.x = x;
     escape 2;
 end
@@ -31161,8 +31161,8 @@ escape call Fx(1) + this.x;
 }
 
 Test { [[
-code/instantaneous Code (var int)=>void;
-code/instantaneous Code (var int a)=>void
+code/tight Code (var int)=>void;
+code/tight Code (var int a)=>void
 do
     escape 1;
 end
@@ -31174,25 +31174,25 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous get (void)=>int&& do
+code/tight get (void)=>int&& do
     var int x;
     escape &&x;
 end
 escape 10;
 ]],
-    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´ or abstraction identifier',
+    parser = 'line 1 : after `code/tight´ : expected `/recursive´ or abstraction identifier',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
 }
 
 Test { [[
-code/instantaneous Fx.Fx (void)=>void do
+code/tight Fx.Fx (void)=>void do
 end
 ]],
-    parser = 'line 1 : after `code/instantaneous´ : expected `/recursive´',
+    parser = 'line 1 : after `code/tight´ : expected `/recursive´',
 }
 
 Test { [[
-code/instantaneous Get (void)=>int&& do
+code/tight Get (void)=>int&& do
     var int x;
     //escape &&x;
 end
@@ -31203,7 +31203,7 @@ escape 10;
 }
 
 Test { [[
-code/instantaneous Get (void)=>int&& do
+code/tight Get (void)=>int&& do
     var int x;
     escape null;
 end
@@ -31214,7 +31214,7 @@ escape 10;
 }
 
 Test { [[
-code/instantaneous Get (void)=>int&& do
+code/tight Get (void)=>int&& do
     var int x=0;
     escape &&x;
 end
@@ -31227,7 +31227,7 @@ escape 10;
 }
 
 Test { [[
-code/instantaneous Get (void)=>int& do
+code/tight Get (void)=>int& do
     var int x=1;
     escape &x;
 end
@@ -31242,7 +31242,7 @@ escape 10;
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (vector&[] byte vec)=>int do
+code/tight Fx (vector&[] byte vec)=>int do
     escape vec[1];
 end
 
@@ -31252,7 +31252,7 @@ escape Fx(&str);
 }
 
 Test { [[
-code/instantaneous Ff (var void&& p1, var void&& p2)=>void do
+code/tight Ff (var void&& p1, var void&& p2)=>void do
 end
 var int x = 0;
 do
@@ -31266,7 +31266,7 @@ escape 0;
 }
 
 Test { [[
-code/instantaneous GetVS (var void&& && o1, var  void&& && o2)=>int do
+code/tight GetVS (var void&& && o1, var  void&& && o2)=>int do
     if (*o1!=null) then
         escape 1;
     else/if (*o2!=null) then
@@ -31291,7 +31291,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (var int a, var  void b)=>int do
+code/tight Fx (var int a, var  void b)=>int do
 end
 escape 1;
 ]],
@@ -31300,7 +31300,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (var void, var int)=>int do
+code/tight Fx (var void, var int)=>int do
 end
 escape 1;
 ]],
@@ -31308,7 +31308,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (var void a, var  int v)=>int do
+code/tight Fx (var void a, var  int v)=>int do
 end
 escape 1;
 ]],
@@ -31317,7 +31317,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (var u8 v)=>int do
+code/tight Fx (var u8 v)=>int do
     escape v as int;
 end
 var s8 i = 0;
@@ -31331,7 +31331,7 @@ native/pos do
     int V;
 end
 native _V;
-code/instantaneous Fx (var int v)=>void do
+code/tight Fx (var int v)=>void do
     _V = v;
 end
 var void&& x=null;
@@ -31344,10 +31344,10 @@ escape (_V==5) as int;
 -->>> RECURSIVE
 
 Test { [[
-code/instantaneous/recursive Fx (void)=>void;
-code/instantaneous/recursive Fx (void)=>void do end
-code/instantaneous Gx      (void)=>void;
-code/instantaneous/recursive Gx (void)=>void do end
+code/tight/recursive Fx (void)=>void;
+code/tight/recursive Fx (void)=>void do end
+code/tight Gx      (void)=>void;
+code/tight/recursive Gx (void)=>void do end
 escape 1;
 ]],
     wrn = true,
@@ -31355,10 +31355,10 @@ escape 1;
     dcls = 'line 4 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:3)',
 }
 Test { [[
-code/instantaneous/recursive Fx (void)=>void;
-code/instantaneous/recursive Fx (void)=>void do end
-code/instantaneous/recursive Gx (void)=>void;
-code/instantaneous Gx      (void)=>void do end
+code/tight/recursive Fx (void)=>void;
+code/tight/recursive Fx (void)=>void do end
+code/tight/recursive Gx (void)=>void;
+code/tight Gx      (void)=>void do end
 escape 1;
 ]],
     wrn = true,
@@ -31368,16 +31368,16 @@ escape 1;
 Test { [[
 //var int x;
 
-code/instantaneous/recursive Fa (void)=>void;
-code/instantaneous/recursive Fb (void)=>void;
+code/tight/recursive Fa (void)=>void;
+code/tight/recursive Fb (void)=>void;
 
-code/instantaneous/recursive Fa (void)=>void do
+code/tight/recursive Fa (void)=>void do
     if false then
         call/recursive Fb();
     end
 end
 
-code/instantaneous/recursive Fb (void)=>void do
+code/tight/recursive Fb (void)=>void do
     call/recursive Fa();
 end
 
@@ -31392,14 +31392,14 @@ escape 1;
 Test { [[
 //var int x;
 
-code/instantaneous Fa (void)=>void;
-code/instantaneous Fb (void)=>void;
+code/tight Fa (void)=>void;
+code/tight Fb (void)=>void;
 
-code/instantaneous Fa (void)=>void do
+code/tight Fa (void)=>void do
     call Fb();
 end
 
-code/instantaneous Fb (void)=>void do
+code/tight Fb (void)=>void do
 end
 
 call Fa();
@@ -31412,13 +31412,13 @@ escape 1;
 Test { [[
 //var int x;
 
-code/instantaneous Fa (void)=>void;
-code/instantaneous Fb (void)=>void;
+code/tight Fa (void)=>void;
+code/tight Fb (void)=>void;
 
-code/instantaneous Fb (void)=>void do
+code/tight Fb (void)=>void do
 end
 
-code/instantaneous Fa (void)=>void do
+code/tight Fa (void)=>void do
     call Fb();
 end
 
@@ -31432,14 +31432,14 @@ escape 1;
 Test { [[
 //var int x;
 
-code/instantaneous Fa (void)=>void;
-code/instantaneous Fb (void)=>void;
+code/tight Fa (void)=>void;
+code/tight Fb (void)=>void;
 
-code/instantaneous Fa (void)=>void do
+code/tight Fa (void)=>void do
     call Fb();
 end
 
-code/instantaneous Fb (void)=>void do
+code/tight Fb (void)=>void do
     call Fa();
 end
 
@@ -31454,16 +31454,16 @@ escape 1;
 Test { [[
 //var int x;
 
-code/instantaneous Fa (void)=>void;
-code/instantaneous/recursive Fb (void)=>void;
+code/tight Fa (void)=>void;
+code/tight/recursive Fb (void)=>void;
 
-code/instantaneous Fa (void)=>void do
+code/tight Fa (void)=>void do
     if false then
         call/recursive Fb();
     end
 end
 
-code/instantaneous/recursive Fb (void)=>void do
+code/tight/recursive Fb (void)=>void do
     call Fa();
 end
 
@@ -31476,8 +31476,8 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous/recursive Fx (var int v)=>int;
-code/instantaneous Fx (var int v)=>int do
+code/tight/recursive Fx (var int v)=>int;
+code/tight Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
@@ -31490,8 +31490,8 @@ escape call Fx(5);
     --run = 120,
 }
 Test { [[
-code/instantaneous/recursive Fx (var int v)=>int;
-code/instantaneous/recursive Fx (var int v)=>int do
+code/tight/recursive Fx (var int v)=>int;
+code/tight/recursive Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
@@ -31514,8 +31514,8 @@ call 1;
 }
 
 Test { [[
-code/instantaneous/recursive Fx (var int v)=>int;
-code/instantaneous/recursive Fx (var int v)=>int do
+code/tight/recursive Fx (var int v)=>int;
+code/tight/recursive Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
@@ -31527,7 +31527,7 @@ escape call Fx(5);
     --tight = 'line 8 : `call/recursive´ is required for "Fx"',
 }
 Test { [[
-code/instantaneous Fx (var int v)=>int do
+code/tight Fx (var int v)=>int do
     escape v + 1;
 end
 escape call/recursive Fx(5);
@@ -31536,8 +31536,8 @@ escape call/recursive Fx(5);
     --tight = 'line 8 : `call/recursive´ is required for "Fx"',
 }
 Test { [[
-code/instantaneous/recursive Fx (var int v)=>int;
-code/instantaneous/recursive Fx (var int v)=>int do
+code/tight/recursive Fx (var int v)=>int;
+code/tight/recursive Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
@@ -31555,7 +31555,7 @@ escape call/recursive Fx(5);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (vector[] byte vec)=>int do
+code/tight Fx (vector[] byte vec)=>int do
     escape vec[1];
 end
 
@@ -31566,7 +31566,7 @@ escape call Fx(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (vector&[] byte vec)=>int do
+code/tight Fx (vector&[] byte vec)=>int do
     escape vec[1];
 end
 
@@ -31579,7 +31579,7 @@ escape call Fx(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (vector&[] byte vec)=>int do
+code/tight Fx (vector&[] byte vec)=>int do
     escape vec[1] as int;
 end
 
@@ -31591,7 +31591,7 @@ escape call Fx(&str);
 Test { [[
 vector[1] byte str = [0,1,2];
 
-code/instantaneous Fx (vector&[2] byte&& vec)=>int do
+code/tight Fx (vector&[2] byte&& vec)=>int do
     escape vec[1] as int;
 end
 
@@ -31602,7 +31602,7 @@ escape call Fx(&&str);
 Test { [[
 vector[1] byte str = [0,1,2];
 
-code/instantaneous Fx (vector&[2] byte vec)=>int do
+code/tight Fx (vector&[2] byte vec)=>int do
     escape vec[1] as int;
 end
 
@@ -31631,7 +31631,7 @@ escape v2[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (vector&[] int vec)=>int do
+code/tight Fx (vector&[] int vec)=>int do
     escape vec[1];
 end
 
@@ -31643,7 +31643,7 @@ escape call Fx(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (vector&[] byte vec)=>bool do
+code/tight Fx (vector&[] byte vec)=>bool do
     escape vec[1];
 end
 
@@ -31656,7 +31656,7 @@ escape call Fx(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (vector&[] byte vec)=>int do
+code/tight Fx (vector&[] byte vec)=>int do
     escape vec[1];
 end
 
@@ -31669,7 +31669,7 @@ escape call Fx(str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (void) => byte[] do
+code/tight Fx (void) => byte[] do
     escape &this.str;
 end
 
@@ -31685,7 +31685,7 @@ escape ref[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (var void&& x, vector[] int vec)=>int do
+code/tight Fx (var void&& x, vector[] int vec)=>int do
     escape vec[1];
 end
 
@@ -31697,7 +31697,7 @@ escape call Fx(str);
 }
 
 Test { [[
-code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
+code/tight FillBuffer (vector&[] u8 buf)=>void do
     buf = buf .. [3];
 end
 vector[10] u8 buffer;
@@ -31708,7 +31708,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/instantaneous FillBuffer (vector&[20] u8 buf)=>void do
+code/tight FillBuffer (vector&[20] u8 buf)=>void do
     buf = buf .. [3];
 end
 vector[10] u8 buffer;
@@ -31720,7 +31720,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/instantaneous FillBuffer (vector&[3] u8 buf)=>void do
+code/tight FillBuffer (vector&[3] u8 buf)=>void do
     buf = buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
@@ -31732,7 +31732,7 @@ escape buffer[0] as int;
 
 -- TODO: dropped support for pointers to vectors
 Test { [[
-code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
+code/tight FillBuffer (vector[]&& u8 buf)=>void do
     *buf = *buf .. [3];
 end
 vector[10] u8 buffer;
@@ -31744,7 +31744,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/instantaneous FillBuffer (vector[3]&& u8 buf)=>void do
+code/tight FillBuffer (vector[3]&& u8 buf)=>void do
     *buf = *buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
@@ -31756,7 +31756,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/instantaneous Build (vector[] u8 bytes)=>void do
+code/tight Build (vector[] u8 bytes)=>void do
 end
 escape 1;
 ]],
@@ -31768,7 +31768,7 @@ escape 1;
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (void) => byte[]& do
+code/tight Fx (void) => byte[]& do
     escape &this.str;
 end
 
@@ -31783,7 +31783,7 @@ escape ref[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (void) => byte[]& do
+code/tight Fx (void) => byte[]& do
     escape &this.str;
 end
 
@@ -31799,7 +31799,7 @@ escape str[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/instantaneous Fx (void) => byte[]& do
+code/tight Fx (void) => byte[]& do
     escape &this.str;
 end
 
@@ -31821,7 +31821,7 @@ native/pos do
     }
 end
 
-code/instantaneous Fx (void) => byte[]& do
+code/tight Fx (void) => byte[]& do
     escape &this.str;
 end
 
@@ -31838,11 +31838,11 @@ escape str[3] == 'o';
 Test { [[
 vector[] byte str;
 
-code/instantaneous Fa (void)=>byte[]& do
+code/tight Fa (void)=>byte[]& do
     escape &this.str;
 end
 
-code/instantaneous Fb (void)=>void do
+code/tight Fb (void)=>void do
     vector&[] byte ref = &f1();
     ref = [] .. "ola" .. "mundo";
 end
@@ -31857,7 +31857,7 @@ escape str[4] == 'u';
 
 Test { [[
 native/pure _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
+code/tight Strlen (var byte&& str)=>int do
     escape _strlen(str as _char&&);
 end
 
@@ -31870,7 +31870,7 @@ escape call Strlen(&&str[0]);
 
 Test { [[
 native _char, _strlen;
-code/instantaneous Strlen (var byte&& str)=>int do
+code/tight Strlen (var byte&& str)=>int do
     escape _strlen(str[0]);
 end
 
@@ -31882,7 +31882,7 @@ escape call Strlen((&&str[0]) as _char&&);
 }
 
 Test { [[
-code/instantaneous Fx (void)=>void do
+code/tight Fx (void)=>void do
     var int x = 0;
 
     vector[10] byte cs;
@@ -31894,7 +31894,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (vector&[] byte cs)=>void do
+code/tight Fx (vector&[] byte cs)=>void do
     cs[0] = 10;
 end
 vector[] byte cs = [0];
@@ -31911,17 +31911,17 @@ escape cs[0];
 -->>> CODE / DELAYED
 
 Test { [[
-code/delayed F (void)=>void
+code/await F (void)=>void
 do
     escape 1;
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `code/delayed´ : expected `/recursive´ or abstraction identifier',
+    parser = 'line 1 : after `code/await´ : expected `/recursive´ or abstraction identifier',
 }
 
 Test { [[
-code/delayed Fx (void)=>void
+code/await Fx (void)=>void
 do
     escape 1;
 end
@@ -31935,7 +31935,7 @@ escape 1;
 }
 
 Test { [[
-code/delayed Tx (var int x)=>void
+code/await Tx (var int x)=>void
 do
 end
 escape 1;
@@ -31945,7 +31945,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/delayed Tx (var int x)=>void
+code/await Tx (var int x)=>void
 do
     if x!=0 then end;
 end
@@ -31955,7 +31955,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/delayed Tx (var int x)=>void
+code/await Tx (var int x)=>void
 do
     var int v;
 end
@@ -31973,7 +31973,7 @@ escape _V;
 }
 
 Test { [[
-code/delayed Tx (void)=>void do end
+code/await Tx (void)=>void do end
 escape 1;
 ]],
     wrn = true,
@@ -31981,7 +31981,7 @@ escape 1;
 }
 
 Test { [[
-code/delayed Tx (var int x)=>void
+code/await Tx (var int x)=>void
 do
     var int v;
 end
@@ -31997,7 +31997,7 @@ escape _V;
 }
 
 Test { [[
-code/delayed Tx (var int a)=>void
+code/await Tx (var int a)=>void
 do
 end
 
@@ -32019,15 +32019,15 @@ escape 0;
 }
 
 Test { [[
-code/delayed Tx (void)=>void do end
+code/await Tx (void)=>void do end
 call Tx();
 escape 1;
 ]],
-    exps = 'line 2 : invalid call : expected `code/instantaneous´ : got `code/delayed´ (/tmp/tmp.ceu:2)',
+    exps = 'line 2 : invalid call : expected `code/tight´ : got `code/await´ (/tmp/tmp.ceu:2)',
 }
 
 Test { [[
-code/delayed Tx (void)=>void do end
+code/await Tx (void)=>void do end
 await Tx();
 escape 1;
 ]],
@@ -32038,7 +32038,7 @@ Test { [[
 native/pre do
     ##include <stdio.h>
 end
-code/delayed Tx (void)=>int do
+code/await Tx (void)=>int do
     escape 10;
 end
 var int ret = await Tx();
@@ -32048,7 +32048,7 @@ escape ret;
 }
 
 Test { [[
-code/delayed Tx (void)=>void do end
+code/await Tx (void)=>void do end
 par/or do
     await Tx();
 with
@@ -32067,7 +32067,7 @@ escape 1;
 Test { [[
 native _SDL_MouseButtonEvent;
 input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
-code/delayed Tx (void)=>void do
+code/await Tx (void)=>void do
     var _SDL_MouseButtonEvent&& but = await SDL_MOUSEBUTTONUP;
 end
 await FOREVER;
@@ -32080,7 +32080,7 @@ await FOREVER;
 }
 
 Test { [[
-code/delayed Tx (void)=>void do
+code/await Tx (void)=>void do
     await FOREVER;
 end
 
@@ -32101,7 +32101,7 @@ native/pos do
 end
 native _V;
 
-code/delayed Xx (void)=>void do
+code/await Xx (void)=>void do
     every 1s do
         _V = _V + 1;
     end
@@ -32128,7 +32128,7 @@ escape _V;
 }
 
 Test { [[
-code/delayed Code (var int x) => int
+code/await Code (var int x) => int
 do
     x = x + 1;
     await 1s;
@@ -32142,11 +32142,11 @@ escape a;
 }
 
 Test { [[
-code/delayed Fy (var int x) => int do
+code/await Fy (var int x) => int do
     escape x + 1;
 end
 
-code/delayed Fx (var int x) => int do
+code/await Fx (var int x) => int do
     var int y = await Fy(x);
     escape y + 1;
 end
@@ -32165,7 +32165,7 @@ end
     parser = 'line 1 : after `every´ : expected internal identifier or `(´',
 }
 Test { [[
-code/delayed Code (void)=>void;
+code/await Code (void)=>void;
 await Code(1) until true;
 ]],
     parser = 'line 2 : after `)´ : expected `;´',
@@ -32176,7 +32176,7 @@ await 1s until true;
     parser = 'line 1 : after `s´ : expected number or `/_´ or `;´',
 }
 Test { [[
-code/delayed Code (var int x) => int
+code/await Code (var int x) => int
 do
     var int xx = x + 1;
     await 1s;
@@ -32192,7 +32192,7 @@ native _X;
 native/pos do
     int X = 0;
 end
-code/delayed Code (var int x) => int
+code/await Code (var int x) => int
 do
     var int xx = x + 1;
     await 1s;
@@ -32206,7 +32206,7 @@ escape _X;
 }
 
 Test { [[
-code/delayed Code (var int x) => int
+code/await Code (var int x) => int
 do
     x = x + 222;
     await 1s;
@@ -32224,7 +32224,7 @@ end
 }
 
 Test { [[
-code/delayed Code (var int x) => int
+code/await Code (var int x) => int
 do
     x = x + 1;
     await 1s;
@@ -32242,7 +32242,7 @@ end
 }
 
 Test { [[
-code/delayed Tx (void)=>void do
+code/await Tx (void)=>void do
 end
 event Tx a;
 escape 0;
@@ -32251,7 +32251,7 @@ escape 0;
 }
 
 Test { [[
-code/delayed Tx (void)=>void do end
+code/await Tx (void)=>void do end
 var Tx a = 1;
 escape 0;
 ]],
@@ -32259,7 +32259,7 @@ escape 0;
 }
 
 Test { [[
-code/delayed Tx (void)=>void do
+code/await Tx (void)=>void do
     await Tx();
 end
 escape 0;
@@ -32270,7 +32270,7 @@ escape 0;
 Test { [[
 input void A;
 
-code/delayed Rect (void) => void do
+code/await Rect (void) => void do
     par/or do
         await A;
     with
@@ -32298,7 +32298,7 @@ escape 1;
 -- CODE / ALIAS
 
 Test { [[
-code/delayed Tx (var& void p)=>int do
+code/await Tx (var& void p)=>int do
     var void&& p1 = ((&&p) as int&&);
     escape *((p1) as int&&);
 end
@@ -32313,7 +32313,7 @@ escape ret;
 Test { [[
 input void OS_START;
 
-code/delayed Tx (var& int a)=>void do
+code/await Tx (var& int a)=>void do
     await FOREVER;
 end
 
@@ -32329,7 +32329,7 @@ escape v;
 }
 
 Test { [[
-code/instantaneous Fx (var& int x) => void do
+code/tight Fx (var& int x) => void do
     x = 10;
 end
 var int x;
@@ -32341,7 +32341,7 @@ escape x;
     --mode = 'line 7 : cannot read field with mode `input´',
 }
 Test { [[
-code/delayed Fx (var& int x) => void do
+code/await Fx (var& int x) => void do
     x = 10;
 end
 var int x;
@@ -32353,7 +32353,7 @@ escape x;
     --mode = 'line 7 : cannot read field with mode `input´',
 }
 Test { [[
-code/instantaneous Fx (var& int x) => void do
+code/tight Fx (var& int x) => void do
 end
 var int x;
 call Fx(&x);
@@ -32364,7 +32364,7 @@ escape x;
     --mode = 'line 7 : cannot read field with mode `input´',
 }
 Test { [[
-code/delayed Fx (var& int x) => void do
+code/await Fx (var& int x) => void do
     await 1s;
     x = 1;
 end
@@ -32380,7 +32380,7 @@ escape x;
 -->> CODE / DELAYED / WATCHING
 
 Test { [[
-code/delayed Code (var int x) => int do
+code/await Code (var int x) => int do
     escape 0;
 end
 var int&& a =
@@ -32394,7 +32394,7 @@ escape 0;
 }
 
 Test { [[
-code/delayed Code (var int x) => int
+code/await Code (var int x) => int
 do
     x = x + 222;
     await 1s;
@@ -32411,7 +32411,7 @@ escape a!+1;
 }
 
 Test { [[
-code/delayed Code (var int x) => int
+code/await Code (var int x) => int
 do
     escape x;
 end
@@ -32426,7 +32426,7 @@ escape a!+1;
 }
 
 Test { [[
-code/delayed Code (var int x) => int
+code/await Code (var int x) => int
 do
     x = x + 1;
     await 1s;
@@ -32444,7 +32444,7 @@ escape a!;
 }
 
 Test { [[
-code/delayed Code (var& int x) => (var& int y) => int
+code/await Code (var& int x) => (var& int y) => int
 do
     y = &x;
     x = x + 1;
@@ -32465,7 +32465,7 @@ escape a! + x;
 }
 
 Test { [[
-code/delayed Code (var& int x) => (var& int y, var& int z) => int
+code/await Code (var& int x) => (var& int y, var& int z) => int
 do
     y = &x;
     z = &x;
@@ -32487,7 +32487,7 @@ escape a! + x;
 }
 
 Test { [[
-code/delayed Code (var& int x) => (var& int y) => int
+code/await Code (var& int x) => (var& int y) => int
 do
     y = &x;
     x = x + 1;
@@ -32511,7 +32511,7 @@ native/nohold _SDL_CreateWindow;
 
 native _SDL_Window_ptr, _printf;
 
-code/delayed SDL_Go (void) => (var& _SDL_Window_ptr win) => void
+code/await SDL_Go (void) => (var& _SDL_Window_ptr win) => void
 do
     var& _SDL_Window_ptr? win_ = &_SDL_CreateWindow() finalize (win_) with end
     win = &win_!;
@@ -32539,7 +32539,7 @@ native/pre do
 end
 native/nohold _myfree;
 
-code/delayed Fx (void) => (var& _int_ptr vv) => void do
+code/await Fx (void) => (var& _int_ptr vv) => void do
     var& _int_ptr? v;
     do
         v = &_myalloc();
@@ -32567,7 +32567,7 @@ native/pre do
     }
 end
 
-code/delayed Fx (void) => (var& _int_ptr vv) => int do
+code/await Fx (void) => (var& _int_ptr vv) => int do
     var& _int_ptr? v;
     do
         v = &_myalloc();
@@ -32598,11 +32598,11 @@ native/pre do
 end
 native/nohold _myfree;
 
-code/delayed Fy (var& _int_ptr x) => int do
+code/await Fy (var& _int_ptr x) => int do
     escape *x + 1;
 end
 
-code/delayed Fx (void) => (var& _int_ptr vv) => int do
+code/await Fx (void) => (var& _int_ptr vv) => int do
     var& _int_ptr? v;
     do
         v = &_myalloc();
@@ -32638,12 +32638,12 @@ native/pre do
 end
 native/nohold _myfree;
 
-code/delayed Fy (var& _int_ptr x) => int do
+code/await Fy (var& _int_ptr x) => int do
     await 1s;
     escape *x + 1;
 end
 
-code/delayed Fx (void) => (var& _int_ptr vv) => int do
+code/await Fx (void) => (var& _int_ptr vv) => int do
     var& _int_ptr? v;
     do
         v = &_myalloc();
@@ -32728,7 +32728,7 @@ escape 1;
 }
 
 Test { [[
-code/delayed Fx (var& int i, var& int io) => (var& int o, var& int oi) => void
+code/await Fx (var& int i, var& int io) => (var& int o, var& int oi) => void
 do
     var int o_ = 1;
     o  = &o_;
@@ -33133,9 +33133,9 @@ Test { [[
 class Tx with
     input:
         var int v;
-    code/instantaneous Build (var int v)=>Tx;
+    code/tight Build (var int v)=>Tx;
 do
-    code/instantaneous Build (var int v)=>Tx do
+    code/tight Build (var int v)=>Tx do
         this.v = v;
     end
 end
@@ -33227,7 +33227,7 @@ escape _strlen(&&t.name as _char&&);
 
 Test { [[
 output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
-code/instantaneous/recursive Load (var int&& l)=>void do
+code/tight/recursive Load (var int&& l)=>void do
     loop i do
     end
 end
@@ -33247,7 +33247,7 @@ native/pos do
 end
 
 output/input/instantaneous LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
-code/instantaneous/recursive Load (var int&& l)=>void do
+code/tight/recursive Load (var int&& l)=>void do
     // TODO: load file
     call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
     call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
@@ -33283,7 +33283,7 @@ escape 1;
 -->>> CODE / DELAYED / SPAWN
 
 Test { [[
-code/delayed Tx (var& int a)=>int do
+code/await Tx (var& int a)=>int do
     a = 5;
     escape 1;
 end
@@ -33304,7 +33304,7 @@ Test { [[
 native/pos do
     int V = 10;
 end
-code/delayed Tx (void)=>void do
+code/await Tx (void)=>void do
     _V = 100;
 end
 spawn Tx();
@@ -33318,7 +33318,7 @@ native/pos do
     int V = 10;
 end
 native _V;
-code/delayed Tx (void)=>void do
+code/await Tx (void)=>void do
     _V = 100;
 end
 pool[1] Tx ts;
@@ -33329,7 +33329,7 @@ escape _V;
 }
 
 Test { [[
-code/delayed Tx (var& int a)=>void do
+code/await Tx (var& int a)=>void do
     a = do
             escape 5;
         end;
@@ -33343,7 +33343,7 @@ escape a;
 }
 
 Test { [[
-code/delayed Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)=>void do
     await 1s;
     aaa = 5;
 end
@@ -33357,7 +33357,7 @@ escape a;
 }
 
 Test { [[
-code/delayed Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)=>void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -33375,7 +33375,7 @@ escape a;
 }
 
 Test { [[
-code/delayed Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)=>void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -33392,7 +33392,7 @@ escape a;
 }
 
 Test { [[
-code/delayed Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)=>void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -33411,7 +33411,7 @@ escape a;
 }
 
 Test { [[
-code/delayed Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)=>void do
     aaa = aaa + 5;
 end
 var int a = 0;
@@ -33426,7 +33426,7 @@ escape a;
 }
 
 Test { [[
-code/delayed Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)=>void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -33449,11 +33449,11 @@ native/pos do
     int V = 1;
 end
 
-code/delayed Jj (void)=>void do
+code/await Jj (void)=>void do
     _V = _V * 2;
 end
 
-code/delayed Tx (void)=>void do
+code/await Tx (void)=>void do
     pool[1] Jj js;
     spawn Jj() in js;
     _V = _V + 1;
@@ -33478,11 +33478,11 @@ native/pos do
     int V = 1;
 end
 
-code/delayed Jj (void)=>void do
+code/await Jj (void)=>void do
     _V = _V * 2;
 end
 
-code/delayed Tx (void)=>void do
+code/await Tx (void)=>void do
     pool[1] Jj js;
     spawn Jj() in js;
     _V = _V + 1;
@@ -33510,7 +33510,7 @@ native/pos do
     int V = 1;
 end;
 
-code/delayed Tx (void)=>void do
+code/await Tx (void)=>void do
     event void e;
     emit e;
     _V = 10;
@@ -33531,7 +33531,7 @@ native/pos do
     int V = 1;
 end;
 
-code/delayed Tx (void)=>void do
+code/await Tx (void)=>void do
     await 1s;
     _V = 10;
 end
@@ -33548,7 +33548,7 @@ escape _V;
 -->> CODE / DELAYED / EMIT-INTERNAL
 
 Test { [[
-code/delayed Tx (var& int ret, var int x)=>void do
+code/await Tx (var& int ret, var int x)=>void do
     event int e;
     par do
         var int v = await e;
@@ -33579,7 +33579,7 @@ escape ret;
 }
 
 Test { [[
-code/delayed Tx (var& int ret, var int x)=>void do
+code/await Tx (var& int ret, var int x)=>void do
     event int e;
     await 1s;
     par do
@@ -33887,7 +33887,7 @@ class Tx with
 do
 end
 ]],
-    parser = 'line 3 : after `;´ : expected `var´ or `vector´ or `pool´ or `event´ or `code/instantaneous´ or `code/delayed´ or `interface´ or `input/output´ or `output/input´ or `input´ or `output´ or `do´',
+    parser = 'line 3 : after `;´ : expected `var´ or `vector´ or `pool´ or `event´ or `code/tight´ or `code/await´ or `interface´ or `input/output´ or `output/input´ or `input´ or `output´ or `do´',
 }
 
 Test { [[
@@ -38323,9 +38323,9 @@ escape 1;
 Test { [[
 class Tx with
     var int size;
-    code/instantaneous Run (var int size)=>Tx;
+    code/tight Run (var int size)=>Tx;
 do
-    code/instantaneous Run (var int size)=>Tx do
+    code/tight Run (var int size)=>Tx do
         this.size = size;
     end
     await 1s;
@@ -38365,9 +38365,9 @@ escape 1;
 Test { [[
 class Tx with
     var int size;
-    code/instantaneous Run (var int size)=>Tx;
+    code/tight Run (var int size)=>Tx;
 do
-    code/instantaneous Run (var int size)=>Tx do
+    code/tight Run (var int size)=>Tx do
         this.size = size;
     end
     await 1s;
@@ -38405,9 +38405,9 @@ escape 1;
 Test { [[
 class Tx with
     var int size;
-    code/instantaneous Run (var int size)=>Tx;
+    code/tight Run (var int size)=>Tx;
 do
-    code/instantaneous Run (var int size)=>Tx do
+    code/tight Run (var int size)=>Tx do
         this.size = size;
     end
     await 1s;
@@ -38850,7 +38850,7 @@ end
 
 Test { [[
 class Tx with do end
-code/instantaneous Fff (void)=>void do
+code/tight Fff (void)=>void do
     spawn Tx;
 end
 escape 1;
@@ -46616,14 +46616,14 @@ native/pure _fff, _iii, _vvv;
 
 interface III with
     var int vvv;
-    code/instantaneous Fff (var int)=>int;
+    code/tight Fff (var int)=>int;
 end
 
 class Tx with
     var int vvv;
-    code/instantaneous Fff (var int)=>int;
+    code/tight Fff (var int)=>int;
 do
-    code/instantaneous Fff (var int v)=>int do
+    code/tight Fff (var int v)=>int do
         escape this.vvv + v;
     end
     await FOREVER;
@@ -47465,9 +47465,9 @@ native/pos do
     void* V;
 end
 class Tx with
-    code/instantaneous Fx (var void&& v)=>void;
+    code/tight Fx (var void&& v)=>void;
 do
-    code/instantaneous Fx (var void&& v)=>void do
+    code/tight Fx (var void&& v)=>void do
         _V = v;
     end
 end
@@ -48216,10 +48216,10 @@ escape 1;
 Test { [[
 class Tx with
     var int a;
-    code/instantaneous Fx (void)=>int;
+    code/tight Fx (void)=>int;
 do
     var int b;
-    code/instantaneous Fx (void)=>int do
+    code/tight Fx (void)=>int do
         escape b;
     end
     a = 1;
@@ -48234,10 +48234,10 @@ escape t.a + t.f();
 Test { [[
 class Tx with
     var int a=0;
-    code/instantaneous Fx (void)=>int;
+    code/tight Fx (void)=>int;
 do
     var int b=0;
-    code/instantaneous Fx (void)=>int do
+    code/tight Fx (void)=>int do
         escape b;
     end
     a = 1;
@@ -48257,7 +48257,7 @@ interface I with
 end
 escape 10;
 ]],
-    parser = 'line 2 : after `;´ : expected `var´ or `vector´ or `pool´ or `event´ or `code/instantaneous´ or `code/delayed´ or `interface´ or `input/output´ or `output/input´ or `input´ or `output´ or `end´',
+    parser = 'line 2 : after `;´ : expected `var´ or `vector´ or `pool´ or `event´ or `code/tight´ or `code/await´ or `interface´ or `input/output´ or `output/input´ or `input´ or `output´ or `end´',
     --run = 10,
 }
 
@@ -48280,7 +48280,7 @@ escape _V;
 Test { [[
 class Tx with do end;
 
-code/instantaneous Fff (void)=>void do
+code/tight Fff (void)=>void do
     var Tx&& ttt = null;
     if ttt==null then end;
 end
@@ -48299,7 +48299,7 @@ native/pos do
     int V = 0;
 end
 class Tx with
-    code/instantaneous Fx (var int a, var  int b)=>int do
+    code/tight Fx (var int a, var  int b)=>int do
         escape a + b;
     end
 do
@@ -48317,7 +48317,7 @@ native/pos do
 end
 class Tx with
 do
-    code/instantaneous Fx (var int a, var  int b)=>int do
+    code/tight Fx (var int a, var  int b)=>int do
         escape a + b;
     end
     _V = _V + f(1,2) + this.f(3,4);
@@ -48335,7 +48335,7 @@ end
 class Tx with
 do
     var int v=0;
-    code/instantaneous Fx (var int a, var  int b)=>void do
+    code/tight Fx (var int a, var  int b)=>void do
         this.v = this.v + a + b;
     end
     f(1,2);
@@ -48351,10 +48351,10 @@ escape _V;
 Test { [[
 class Tx with
     var int a=0;
-    code/instantaneous Fx (void)=>int;
+    code/tight Fx (void)=>int;
 do
     var int b=0;
-    code/instantaneous Fx (void)=>int do
+    code/tight Fx (void)=>int do
         escape this.b;
     end
     a = 1;
@@ -48369,7 +48369,7 @@ escape t.a + t.f();
 Test { [[
 class Tx with
     var int a=0;
-    code/instantaneous Fx (void)=>int do
+    code/tight Fx (void)=>int do
         escape this.b;
     end
 do
@@ -48387,7 +48387,7 @@ escape t.a + t.f();
 Test { [[
 interface I with
     var int v;
-    code/instantaneous Fx (void)=>void;
+    code/tight Fx (void)=>void;
 end
 escape 10;
 ]],
@@ -48397,12 +48397,12 @@ escape 10;
 Test { [[
 class Tx with
     var int v=0;
-    code/instantaneous Fx (var int)=>void;
+    code/tight Fx (var int)=>void;
 do
     v = 50;
     this.f(10);
 
-    code/instantaneous Fx (var int v)=>int do
+    code/tight Fx (var int v)=>int do
         this.v = this.v + v;
         escape this.v;
     end
@@ -48420,12 +48420,12 @@ escape t.v + t.f(20) + t.v;
 Test { [[
 class Tx with
     var int v=0;
-    code/instantaneous Fx (var int)=>int;
+    code/tight Fx (var int)=>int;
 do
     v = 50;
     this.f(10);
 
-    code/instantaneous Fx (var int v)=>int do
+    code/tight Fx (var int v)=>int do
         this.v = this.v + v;
         escape this.v;
     end
@@ -48442,17 +48442,17 @@ escape t.v + t.f(20) + t.v;
 
 Test { [[
 interface I with
-    code/instantaneous Fx (void)=>int;
-    code/instantaneous Fa (void)=>int;
+    code/tight Fx (void)=>int;
+    code/tight Fa (void)=>int;
 end
 
 class Tx with
     interface I;
 do
-    code/instantaneous Fx (void)=>int do
+    code/tight Fx (void)=>int do
         escape this.f1();
     end
-    code/instantaneous Fa (void)=>int do
+    code/tight Fa (void)=>int do
         escape 1;
     end
 end
@@ -48466,17 +48466,17 @@ escape t.f() + i:f();
 
 Test { [[
 interface I with
-    code/instantaneous Fa (void)=>int;
-    code/instantaneous Fx (void)=>int;
+    code/tight Fa (void)=>int;
+    code/tight Fx (void)=>int;
 end
 
 class Tx with
     interface I;
 do
-    code/instantaneous Fa (void)=>int do
+    code/tight Fa (void)=>int do
         escape 1;
     end
-    code/instantaneous Fx (void)=>int do
+    code/tight Fx (void)=>int do
         escape this.f1();
     end
 end
@@ -48490,14 +48490,14 @@ escape t.f() + i:f();
 
 Test { [[
 interface I with
-    code/instantaneous Gx (var int)=>int;
+    code/tight Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous Gx (var int v)=>int do
+    code/tight Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -48516,14 +48516,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Gx (var int)=>int;
+    code/tight/recursive Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i;
 do
-    code/instantaneous Gx (var int v)=>int do
+    code/tight Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -48542,14 +48542,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous Gx (var int)=>int;
+    code/tight Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i;
 do
-    code/instantaneous/recursive Gx (var int v)=>int do
+    code/tight/recursive Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -48568,14 +48568,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous Gx (var int)=>int;
+    code/tight Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous Gx (var int v)=>int do
+    code/tight Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -48594,14 +48594,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Gx (var int)=>int;
+    code/tight/recursive Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive Gx (var int v)=>int do
+    code/tight/recursive Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -48619,14 +48619,14 @@ escape call/recursive i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Gx (var int)=>int;
+    code/tight/recursive Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive Gx (var int v)=>int do
+    code/tight/recursive Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -48645,14 +48645,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Gx (var int)=>int;
+    code/tight/recursive Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive Gx (var int v)=>int do
+    code/tight/recursive Gx (var int v)=>int do
         escape 1;
     end
 end
@@ -48667,14 +48667,14 @@ escape i:g(5);
 }
 Test { [[
 interface I with
-    code/instantaneous/recursive Gx (var int)=>int;
+    code/tight/recursive Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive Gx (var int v)=>int do
+    code/tight/recursive Gx (var int v)=>int do
         escape 1;
     end
 end
@@ -48690,14 +48690,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Gx (var int)=>int;
+    code/tight/recursive Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive Gx (var int v)=>int do
+    code/tight/recursive Gx (var int v)=>int do
         escape v;
     end
 end
@@ -48716,14 +48716,14 @@ escape call/recursive i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Gx (var int)=>int;
+    code/tight/recursive Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive Gx (var int v)=>int do
+    code/tight/recursive Gx (var int v)=>int do
         escape v;
     end
 end
@@ -48741,14 +48741,14 @@ escape call/recursive i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous Gx (var int)=>int;
+    code/tight Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous Gx (var int v)=>int do
+    code/tight Gx (var int v)=>int do
         escape v;
     end
 end
@@ -48765,14 +48765,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous Gx (var int)=>int;
+    code/tight Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous Gx (var int v)=>int do
+    code/tight Gx (var int v)=>int do
         escape v;
     end
 end
@@ -48788,14 +48788,14 @@ escape i:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous Gx (var int)=>int;
+    code/tight Gx (var int)=>int;
 end
 
 class U with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous Gx (var int v)=>int do
+    code/tight Gx (var int v)=>int do
         escape 1;
     end
 end
@@ -48804,7 +48804,7 @@ class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous Gx (var int v)=>int do
+    code/tight Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -48828,14 +48828,14 @@ escape i1:g(5) + i2:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous Gx (var int)=>int;
+    code/tight Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive Gx (var int v)=>int do
+    code/tight/recursive Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -48851,14 +48851,14 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous Gx (var int)=>int;
+    code/tight Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous Gx (var int v)=>int do
+    code/tight Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -48870,7 +48870,7 @@ class U with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous Gx (var int v)=>int do
+    code/tight Gx (var int v)=>int do
         escape 1;
     end
 end
@@ -48892,14 +48892,14 @@ escape i1:g(5) + i2:g(5);
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Gx (var int)=>int;
+    code/tight/recursive Gx (var int)=>int;
 end
 
 class Tx with
     interface I;
     var I&& i=null;
 do
-    code/instantaneous/recursive Gx (var int v)=>int do
+    code/tight/recursive Gx (var int v)=>int do
         if (v == 1) then
             escape 1;
         end
@@ -48923,7 +48923,7 @@ end
 
 class Tx with
     var int ret1=0, ret2=0;
-    code/instantaneous Fa (var int)=>int;
+    code/tight Fa (var int)=>int;
     var _f_t f2;
 do
     native/pos do
@@ -48932,7 +48932,7 @@ do
         }
     end
 
-    code/instantaneous Fa (var int v)=>int do
+    code/tight Fa (var int v)=>int do
         escape v;
     end
 
@@ -48956,7 +48956,7 @@ end
 
 class Tx with
     var int ret1=0, ret2=0;
-    code/instantaneous Fa (var int)=>int;
+    code/tight Fa (var int)=>int;
     var _f_t f2;
 do
     native/pos do
@@ -48965,7 +48965,7 @@ do
         }
     end
 
-    code/instantaneous Fa (var int v)=>int do
+    code/tight Fa (var int v)=>int do
         escape v;
     end
 
@@ -48984,7 +48984,7 @@ escape t.ret1 + t.ret2;
 Test { [[
 interface I with
     var int v;
-    code/instantaneous Ins (void)=>void;
+    code/tight Ins (void)=>void;
 end
 
 class Tx with
@@ -49004,7 +49004,7 @@ escape i:_ins() + t._ins();;
 Test { [[
 interface I with
     var int v;
-    code/instantaneous Ins (void)=>int;
+    code/tight Ins (void)=>int;
 end
 
 class Tx with
@@ -49012,7 +49012,7 @@ class Tx with
     var int v=0;
     //native/nohold _ins;
 do
-    code/instantaneous Ins (void)=>int do
+    code/tight Ins (void)=>int do
         escape v;
     end
 end
@@ -49027,7 +49027,7 @@ escape i:ins() + t.ins();
 
 Test { [[
 interface Fx with
-    code/instantaneous Fx (void)=>void;
+    code/tight Fx (void)=>void;
     var int i=10;
 end
 ]],
@@ -49037,7 +49037,7 @@ end
 Test { [[
 interface Fx with
     var int i;
-    code/instantaneous Fx (var int i)=>void;
+    code/tight Fx (var int i)=>void;
 end
 
 class Tx with
@@ -49045,7 +49045,7 @@ class Tx with
     interface Fx;
 do
     this.f(1);
-    code/instantaneous Fx (var int i)=>void do
+    code/tight Fx (var int i)=>void do
         this.i = this.i + i;
     end
 end
@@ -49064,7 +49064,7 @@ escape t1.i + f:i;
 Test { [[
 interface Fx with
     var int i;
-    code/instantaneous Fx (var int)=>void;
+    code/tight Fx (var int)=>void;
 end
 
 class Tx with
@@ -49072,7 +49072,7 @@ class Tx with
     var int i=10;   // 2
 do
     this.f(1);
-    code/instantaneous Fx (var int i)=>void do
+    code/tight Fx (var int i)=>void do
         this.i = this.i + i;
     end
 end
@@ -49093,7 +49093,7 @@ native _V;
 native/pos do
     void* V;
 end
-code/instantaneous Fx (var void&& v)=>void do
+code/tight Fx (var void&& v)=>void do
     _V = v;
 end
 escape 1;
@@ -49108,7 +49108,7 @@ Test { [[
 native/pos do
     void* V;
 end
-code/instantaneous Fx (var void&& v)=>void do
+code/tight Fx (var void&& v)=>void do
     if v!=null then end;
 end
 escape 1;
@@ -49123,9 +49123,9 @@ native/pos do
     void* V;
 end
 class Tx with
-    code/instantaneous Fx (var void&& v)=>void;
+    code/tight Fx (var void&& v)=>void;
 do
-    code/instantaneous Fx (var void&& v)=>void do
+    code/tight Fx (var void&& v)=>void do
 native _V;
         _V = v;
     end
@@ -49140,9 +49140,9 @@ escape 1;
 Test { [[
 class Tx with
     var void&& v=null;
-    code/instantaneous Fx (var void&& v)=>void;
+    code/tight Fx (var void&& v)=>void;
 do
-    code/instantaneous Fx (var void&& v)=>void do
+    code/tight Fx (var void&& v)=>void do
         if v!=0 then end;
     end
 end
@@ -49158,9 +49158,9 @@ escape 1;
 Test { [[
 class Tx with
     var void&& a=null;
-    code/instantaneous Fx (var void&& v)=>void;
+    code/tight Fx (var void&& v)=>void;
 do
-    code/instantaneous Fx (var void&& v)=>void do
+    code/tight Fx (var void&& v)=>void do
         var void&& a = v;
         if a!=0 then end;
     end
@@ -49174,9 +49174,9 @@ escape 1;
 Test { [[
 class Tx with
     var void&& a=null;
-    code/instantaneous Fx (void)=>void;
+    code/tight Fx (void)=>void;
 do
-    code/instantaneous Fx (void)=>void do
+    code/tight Fx (void)=>void do
         var void&& v=null;
         a = v;
     end
@@ -49189,9 +49189,9 @@ escape 1;
 Test { [[
 class Tx with
     var void&& a=null;
-    code/instantaneous Fx (var void&& v)=>void;
+    code/tight Fx (var void&& v)=>void;
 do
-    code/instantaneous Fx (var void&& v)=>void do
+    code/tight Fx (var void&& v)=>void do
         a = v;
     end
 end
@@ -49204,9 +49204,9 @@ escape 1;
 Test { [[
 class Tx with
     var void&& a=null;
-    code/instantaneous Fx (var void&& v)=>void;
+    code/tight Fx (var void&& v)=>void;
 do
-    code/instantaneous Fx (var void&& v)=>void do
+    code/tight Fx (var void&& v)=>void do
         a := v;
     end
 end
@@ -49218,9 +49218,9 @@ escape 1;
 Test { [[
 class Tx with
     var void&& a=null;
-    code/instantaneous Fx (var/hold void&& v)=>void;
+    code/tight Fx (var/hold void&& v)=>void;
 do
-    code/instantaneous Fx (var/hold void&& v)=>void do
+    code/tight Fx (var/hold void&& v)=>void do
         a := v;
     end
 end
@@ -49232,9 +49232,9 @@ escape 1;
 Test { [[
 class Tx with
     var void&& v=null;
-    code/instantaneous Fx (var void&& v)=>void;
+    code/tight Fx (var void&& v)=>void;
 do
-    code/instantaneous Fx (var/hold void&& v)=>void do
+    code/tight Fx (var/hold void&& v)=>void do
         this.v = v;
     end
 end
@@ -49247,9 +49247,9 @@ escape 1;
 Test { [[
 class Tx with
     var void&& v=null;
-    code/instantaneous Fx (var/hold void&& v)=>void;
+    code/tight Fx (var/hold void&& v)=>void;
 do
-    code/instantaneous Fx (var/hold void&& v)=>void do
+    code/tight Fx (var/hold void&& v)=>void do
         this.v := v;
     end
 end
@@ -49272,9 +49272,9 @@ escape 1;
 Test { [[
 class Tx with
     var void&& v=null;
-    code/instantaneous Fx (var/hold void&& v)=>void;
+    code/tight Fx (var/hold void&& v)=>void;
 do
-    code/instantaneous Fx (var/hold void&& v)=>void do
+    code/tight Fx (var/hold void&& v)=>void do
         this.v := v;
     end
 end
@@ -49302,7 +49302,7 @@ native/pos do
     void* V;
 end
 native _V;
-code/instantaneous Fx (var void&& v)=>void do
+code/tight Fx (var void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
@@ -49319,7 +49319,7 @@ native/pos do
     void* V;
 end
 native _V;
-code/instantaneous Fx (var/hold void&& v)=>void do
+code/tight Fx (var/hold void&& v)=>void do
     _V := v;
 end
 var void&& x=null;
@@ -49332,14 +49332,14 @@ escape (_V==(5 as void&&)) as int;
 
 Test { [[
 interface I with
-    code/instantaneous Fx (void)=>void;
+    code/tight Fx (void)=>void;
 end
 
 class Tx with
     interface I;
-    code/instantaneous/recursive Fx (void)=>void;
+    code/tight/recursive Fx (void)=>void;
 do
-    code/instantaneous/recursive Fx (void)=>void do
+    code/tight/recursive Fx (void)=>void do
         if false then
             call/recursive this.Fx();
         end
@@ -49360,14 +49360,14 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Fx (void)=>void;
+    code/tight/recursive Fx (void)=>void;
 end
 
 class Tx with
     interface I;
-    code/instantaneous/recursive Fx (void)=>void;
+    code/tight/recursive Fx (void)=>void;
 do
-    code/instantaneous/recursive Fx (void)=>void do
+    code/tight/recursive Fx (void)=>void do
         if false then
             call/recursive this.Fx();
         end
@@ -49387,14 +49387,14 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Fx (void)=>void;
+    code/tight/recursive Fx (void)=>void;
 end
 
 class Tx with
     interface I;
-    code/instantaneous/recursive Fx (void)=>void;
+    code/tight/recursive Fx (void)=>void;
 do
-    code/instantaneous/recursive Fx (void)=>void do
+    code/tight/recursive Fx (void)=>void do
         if false then
             call/recursive this.Fx();
         end
@@ -49414,14 +49414,14 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Fx (void)=>void;
+    code/tight/recursive Fx (void)=>void;
 end
 
 class Tx with
     interface I;
-    code/instantaneous Fx (void)=>void; // ignored
+    code/tight Fx (void)=>void; // ignored
 do
-    code/instantaneous Fx (void)=>void do
+    code/tight Fx (void)=>void do
     end
 end
 
@@ -49438,14 +49438,14 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous Fx (void)=>void;
+    code/tight Fx (void)=>void;
 end
 
 class Tx with
     interface I;
-    code/instantaneous Fx (void)=>void; // ignored
+    code/tight Fx (void)=>void; // ignored
 do
-    code/instantaneous Fx (void)=>void do
+    code/tight Fx (void)=>void do
     end
 end
 
@@ -49462,14 +49462,14 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous Fx (void)=>void;
+    code/tight Fx (void)=>void;
 end
 
 class Tx with
     interface I;
-    code/instantaneous Fx (void)=>void; // ignored
+    code/tight Fx (void)=>void; // ignored
 do
-    code/instantaneous Fx (void)=>void do
+    code/tight Fx (void)=>void do
     end
 end
 
@@ -49488,14 +49488,14 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Fx (void)=>void;
+    code/tight/recursive Fx (void)=>void;
 end
 
 class Tx with
     interface I;
-    code/instantaneous/recursive Fx (void)=>void; // ignored
+    code/tight/recursive Fx (void)=>void; // ignored
 do
-    code/instantaneous/recursive Fx (void)=>void do
+    code/tight/recursive Fx (void)=>void do
     end
 end
 
@@ -49514,14 +49514,14 @@ escape 1;
 
 Test { [[
 interface I with
-    code/instantaneous/recursive Fx (void)=>void;
+    code/tight/recursive Fx (void)=>void;
 end
 
 class Tx with
-    code/instantaneous/recursive Fx (void)=>void;
+    code/tight/recursive Fx (void)=>void;
     interface I;
 do
-    code/instantaneous/recursive Fx (void)=>void do
+    code/tight/recursive Fx (void)=>void do
     end
 end
 
@@ -49538,8 +49538,8 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (var int v)=>int;
-code/instantaneous Fx (var int v)=>int do
+code/tight Fx (var int v)=>int;
+code/tight Fx (var int v)=>int do
     if v == 0 then
         escape 1;
     end
@@ -49553,24 +49553,24 @@ escape call Fx(5);
 
 Test { [[
 interface I with
-    code/instantaneous Fx (void)=>void;
+    code/tight Fx (void)=>void;
 end
 
 class Tx with
     interface I;
 do
-    code/instantaneous Fx (void)=>void do
+    code/tight Fx (void)=>void do
     end
 end
 
 var Tx t;
 var& I i = &t;
 
-code/instantaneous Gx (void)=>void do
+code/tight Gx (void)=>void do
     i.Fx();
 end
 
-code/instantaneous H (void)=>void do
+code/tight H (void)=>void do
     this.g();
 end
 
@@ -49580,35 +49580,35 @@ escape 1;
 }
 Test { [[
 interface I with
-    code/instantaneous Fx (void)=>void;
+    code/tight Fx (void)=>void;
 end
 
 class Tx with
     interface I;
 do
-    code/instantaneous Fx (void)=>void do
+    code/tight Fx (void)=>void do
     end
 end
 
 var Tx t;
 var& I i = &t;
 
-code/instantaneous Gx (void)=>void do
+code/tight Gx (void)=>void do
     i.Fx();
 end
 
-code/instantaneous H (void)=>void do
+code/tight H (void)=>void do
     this.g();
 end
 
 class U with
     interface I;
-    code/instantaneous Gx (void)=>void;
+    code/tight Gx (void)=>void;
 do
-    code/instantaneous Fx (void)=>void do
+    code/tight Fx (void)=>void do
         this.g();
     end
-    code/instantaneous Gx (void)=>void do
+    code/tight Gx (void)=>void do
     end
 end
 
@@ -49618,35 +49618,35 @@ escape 1;
 }
 Test { [[
 interface I with
-    code/instantaneous/recursive Fx (void)=>void;
+    code/tight/recursive Fx (void)=>void;
 end
 
 class Tx with
     interface I;
 do
-    code/instantaneous/recursive Fx (void)=>void do
+    code/tight/recursive Fx (void)=>void do
     end
 end
 
 var Tx t;
 var& I i = &t;
 
-code/instantaneous Gx (void)=>void do
+code/tight Gx (void)=>void do
     call/recursive i.Fx();
 end
 
-code/instantaneous H (void)=>void do
+code/tight H (void)=>void do
     this.g();
 end
 
 class U with
     interface I;
-    code/instantaneous Gx (void)=>void;
+    code/tight Gx (void)=>void;
 do
-    code/instantaneous/recursive Fx (void)=>void do
+    code/tight/recursive Fx (void)=>void do
         this.g();
     end
-    code/instantaneous Gx (void)=>void do
+    code/tight Gx (void)=>void do
     end
 end
 
@@ -49658,7 +49658,7 @@ escape 1;
 
 Test { [[
 interface IWorld with
-    code/instantaneous Get_pingus (var PinguHolder&&) => PinguHolder&&;
+    code/tight Get_pingus (var PinguHolder&&) => PinguHolder&&;
 end
 
 class PinguHolder with
@@ -49677,7 +49677,7 @@ escape 1;
 
 Test { [[
 interface IWorld with
-    code/instantaneous Get_pingus (void) => PinguHolder&&;
+    code/tight Get_pingus (void) => PinguHolder&&;
 end
 
 class PinguHolder with
@@ -49696,7 +49696,7 @@ escape 1;
 
 Test { [[
 interface IWorld with
-    code/instantaneous Get_pingus (var PinguHolder&&) => void;
+    code/tight Get_pingus (var PinguHolder&&) => void;
 end
 
 class PinguHolder with
@@ -49718,7 +49718,7 @@ class PinguHolder with
 do end
 
 interface IWorld with
-    code/instantaneous Get_pingus (var PinguHolder&&) => PinguHolder&&;
+    code/tight Get_pingus (var PinguHolder&&) => PinguHolder&&;
 end
 
 class World with
@@ -49771,7 +49771,7 @@ escape w:x;     // escapes with "10"
 }
 
 Test { [[
-code/instantaneous Fx (void)=>int&& do
+code/tight Fx (void)=>int&& do
     escape 1;
 end
 escape 10;
@@ -49786,7 +49786,7 @@ escape 10;
 Test { [[
 var int x = 10;
 
-code/instantaneous Fx (void)=>int& do
+code/tight Fx (void)=>int& do
     escape &this.x;
 end
 
@@ -49797,10 +49797,10 @@ escape call Fx();
 }
 Test { [[
 class Tx with
-    code/instantaneous Fx (void)=>int&;
+    code/tight Fx (void)=>int&;
 do
     var int x = 10;
-    code/instantaneous Fx (void)=>int& do
+    code/tight Fx (void)=>int& do
         escape &this.x;
     end
 end
@@ -49816,7 +49816,7 @@ escape t.Fx();
 Test { [[
 var int x = 10;
 
-code/instantaneous Fx (void)=>int& do
+code/tight Fx (void)=>int& do
     escape &&this.x;
 end
 
@@ -49827,10 +49827,10 @@ escape call Fx();
 }
 Test { [[
 class Tx with
-    code/instantaneous Fx (void)=>int&&;
+    code/tight Fx (void)=>int&&;
 do
     var int x = 10;
-    code/instantaneous Fx (void)=>int&& do
+    code/tight Fx (void)=>int&& do
         escape &this.x;
     end
 end
@@ -49844,9 +49844,9 @@ escape t.Fx();
 
 Test { [[
 class Test with
-    code/instantaneous FillBuffer (vector&[] u8 buf)=>void;
+    code/tight FillBuffer (vector&[] u8 buf)=>void;
 do
-    code/instantaneous FillBuffer (vector&[] u8 buf)=>void do
+    code/tight FillBuffer (vector&[] u8 buf)=>void do
         buf = [] .. buf .. [3];
     end
 end
@@ -49863,9 +49863,9 @@ escape buffer[0];
 
 Test { [[
 class Test with
-    code/instantaneous FillBuffer (vector[]&& u8 buf)=>void;
+    code/tight FillBuffer (vector[]&& u8 buf)=>void;
 do
-    code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
+    code/tight FillBuffer (vector[]&& u8 buf)=>void do
         *buf = [] .. *buf .. [3];
     end
 end
@@ -49887,7 +49887,7 @@ class Tx with
 do
 end
 
-code/instantaneous Fx (var& Tx t)=>int do
+code/tight Fx (var& Tx t)=>int do
     escape t.v * 2;
 end
 
@@ -49910,7 +49910,7 @@ class Tx with
 do
 end
 
-code/instantaneous Fx (var& Tx t)=>int do
+code/tight Fx (var& Tx t)=>int do
     escape t.v * 2;
 end
 
@@ -49936,7 +49936,7 @@ class Tx with
 do
 end
 
-code/instantaneous Fx (var Tx&& t)=>int do
+code/tight Fx (var Tx&& t)=>int do
     escape t:v * 2;
 end
 
@@ -49957,19 +49957,19 @@ escape ret;
 
 Test { [[
 interface Human with
-    code/instantaneous Walk (void)=>int;
-    code/instantaneous Breath (void)=>int;
+    code/tight Walk (void)=>int;
+    code/tight Breath (void)=>int;
     var int n;
 end
 
 class CommonThings with
-    code/instantaneous Walk (var& Human h)=>int;
-    code/instantaneous Breath (var& Human h)=>int;
+    code/tight Walk (var& Human h)=>int;
+    code/tight Breath (var& Human h)=>int;
 do
-    code/instantaneous Walk (var& Human h)=>int do
+    code/tight Walk (var& Human h)=>int do
         escape h.n;
     end
-    code/instantaneous Breath (var& Human h)=>int do
+    code/tight Breath (var& Human h)=>int do
         escape h.n;
     end
     await FOREVER;
@@ -49980,10 +49980,10 @@ class Man with
     var& CommonThings ct;
     var int n = 100;
 do
-    code/instantaneous Walk (void)=>int do
+    code/tight Walk (void)=>int do
         escape 200; // override
     end
-    code/instantaneous Breath (void)=>int do
+    code/tight Breath (void)=>int do
         escape this.ct.breath(&this); // delegate
     end
 end
@@ -50097,7 +50097,7 @@ class Dir with
 do
 end
 interface IPingu with
-    code/instantaneous Get (void)=>Dir&;
+    code/tight Get (void)=>Dir&;
 end
 class Pingu with
     interface IPingu;
@@ -50105,7 +50105,7 @@ do
     var Dir dir with
         this.value = 10;
     end;
-    code/instantaneous Get (void)=>Dir& do
+    code/tight Get (void)=>Dir& do
         escape &&dir;
     end
 end
@@ -50122,7 +50122,7 @@ class Dir with
 do
 end
 interface IPingu with
-    code/instantaneous Get (void)=>Dir&;
+    code/tight Get (void)=>Dir&;
 end
 class Pingu with
     interface IPingu;
@@ -50130,7 +50130,7 @@ do
     var Dir dir with
         this.value = 10;
     end;
-    code/instantaneous Get (void)=>Dir& do
+    code/tight Get (void)=>Dir& do
         escape &dir;
     end
 end
@@ -50183,9 +50183,9 @@ interface I with end;
 
 class Tx with
     interface I;
-    code/instantaneous Fx (void)=>I&&;
+    code/tight Fx (void)=>I&&;
 do
-    code/instantaneous Fx (void)=>I&& do
+    code/tight Fx (void)=>I&& do
         var I&& i = &&this;
         escape i;
     end
@@ -50200,10 +50200,10 @@ escape p==&&t;
 
 Test { [[
 class Tx with
-    code/instantaneous Fx (void)=>int&&;
+    code/tight Fx (void)=>int&&;
 do
     var int x = 1;
-    code/instantaneous Fx (void)=>int&& do
+    code/tight Fx (void)=>int&& do
         escape &&this.x;
     end
 end
@@ -50219,9 +50219,9 @@ interface I with end;
 
 class Tx with
     interface I;
-    code/instantaneous Fx (void)=>I&&;
+    code/tight Fx (void)=>I&&;
 do
-    code/instantaneous Fx (void)=>I&& do
+    code/tight Fx (void)=>I&& do
         escape &&this;
     end
 end
@@ -50236,9 +50236,9 @@ escape 1;
 Test { [[
 class Tx with
     var int xxx2=0;
-    code/instantaneous Fff (var int xxx3)=>void;
+    code/tight Fff (var int xxx3)=>void;
 do
-    code/instantaneous Fff (var int xxx3)=>void do
+    code/tight Fff (var int xxx3)=>void do
         this.xxx2 = xxx3;
     end
     this.xxx2 = 1;
@@ -50254,9 +50254,9 @@ escape ttt.xxx2;
 Test { [[
 class Tx with
     var int xxx2=0;
-    code/instantaneous Fff (var& int xxx3)=>void;
+    code/tight Fff (var& int xxx3)=>void;
 do
-    code/instantaneous Fff (var& int xxx3)=>void do
+    code/tight Fff (var& int xxx3)=>void do
         var& int xxx4 = &xxx3;
         this.xxx2 = xxx4;
     end
@@ -50275,10 +50275,10 @@ Test { [[
 class U with do end
 
 class Tx with
-    code/instantaneous Fx (var int x)=>Tx;
+    code/tight Fx (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fx (var int x)=>Tx do
+    code/tight Fx (var int x)=>Tx do
         this.x = 1;
     end
 end
@@ -50291,11 +50291,11 @@ escape t.x;
 
 Test { [[
 class Tx with
-    code/instantaneous Fx (var int x)=>Tx;
+    code/tight Fx (var int x)=>Tx;
 do
     var int x = 0;
 
-    code/instantaneous Fx (var int x)=>Tx do
+    code/tight Fx (var int x)=>Tx do
         this.x = 1;
     end
 end
@@ -50312,10 +50312,10 @@ escape t.x;
 
 Test { [[
 class Tx with
-    code/instantaneous Fff (var int x)=>Tx;
+    code/tight Fff (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fff (var int x)=>Tx do
+    code/tight Fff (var int x)=>Tx do
         this.x = x;
     end
 end
@@ -50328,10 +50328,10 @@ escape ttt.x;
 
 Test { [[
 class Tx with
-    code/instantaneous Fff (var int x)=>Tx;
+    code/tight Fff (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fff (var int x)=>Tx do
+    code/tight Fff (var int x)=>Tx do
         this.x = x;
     end
 end
@@ -50344,10 +50344,10 @@ escape ttt.x;
 }
 Test { [[
 class Tx with
-    code/instantaneous Fff (var int x)=>Tx;
+    code/tight Fff (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fff (var int x)=>Tx do
+    code/tight Fff (var int x)=>Tx do
         this.x = x;
     end
 end
@@ -50362,10 +50362,10 @@ escape ttt.x;
 
 Test { [[
 class Tx with
-    code/instantaneous Fff (var int x)=>Tx;
+    code/tight Fff (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fff (var int x)=>Tx do
+    code/tight Fff (var int x)=>Tx do
         this.x = x;
     end
     this.x = 1;
@@ -50379,14 +50379,14 @@ escape ttt.x;
 
 Test { [[
 class Tx with
-    code/instantaneous Fa (var int x)=>Tx;
-    code/instantaneous Fb (var int x)=>Tx;
+    code/tight Fa (var int x)=>Tx;
+    code/tight Fb (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fa (var int x)=>Tx do
+    code/tight Fa (var int x)=>Tx do
         this.x = x;
     end
-    code/instantaneous Fb (var int x)=>Tx do
+    code/tight Fb (var int x)=>Tx do
         this.f1(x);
     end
 end
@@ -50399,14 +50399,14 @@ escape ttt.x;
 
 Test { [[
 class Tx with
-    code/instantaneous Fa (var int x)=>Tx;
-    code/instantaneous Fb (var int x)=>Tx;
+    code/tight Fa (var int x)=>Tx;
+    code/tight Fb (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fa (var int x)=>Tx do
+    code/tight Fa (var int x)=>Tx do
         this.x = x;
     end
-    code/instantaneous Fb (var int x)=>Tx do
+    code/tight Fb (var int x)=>Tx do
         this.f1(x);
     end
     await FOREVER;
@@ -50427,14 +50427,14 @@ escape ret;
 
 Test { [[
 class Tx with
-    code/instantaneous Fa (var int x)=>Tx;
-    code/instantaneous Fb (var int x)=>Tx;
+    code/tight Fa (var int x)=>Tx;
+    code/tight Fb (var int x)=>Tx;
     var int x = 0;
 do
-    code/instantaneous Fa (var int x)=>Tx do
+    code/tight Fa (var int x)=>Tx do
         this.x = x;
     end
-    code/instantaneous Fb (var int x)=>Tx do
+    code/tight Fb (var int x)=>Tx do
         this.f1(x);
     end
     escape this.x;
@@ -50449,9 +50449,9 @@ escape ret;
 Test { [[
 class Tx with
     var& int x;
-    code/instantaneous Fff (var& int x)=>Tx;
+    code/tight Fff (var& int x)=>Tx;
 do
-    code/instantaneous Fff (var& int x)=>Tx do
+    code/tight Fff (var& int x)=>Tx do
         this.x = x;
     end
     this.x = 1;
@@ -50467,9 +50467,9 @@ escape x;
 Test { [[
 class Tx with
     var& int x;
-    code/instantaneous Fff (var& int x)=>Tx;
+    code/tight Fff (var& int x)=>Tx;
 do
-    code/instantaneous Fff (var& int x)=>Tx do
+    code/tight Fff (var& int x)=>Tx do
     end
 end
 escape 1;
@@ -50480,10 +50480,10 @@ escape 1;
 Test { [[
 class Tx with
     var& int x;
-    code/instantaneous Fff (var& int x)=>Tx;
+    code/tight Fff (var& int x)=>Tx;
 do
     this.x = 1;
-    code/instantaneous Fff (var& int x)=>Tx do
+    code/tight Fff (var& int x)=>Tx do
     end
 end
 escape 1;
@@ -50494,9 +50494,9 @@ escape 1;
 Test { [[
 class Tx with
     var int xxx2;
-    code/instantaneous Fff (var& int xxx3)=>Tx;
+    code/tight Fff (var& int xxx3)=>Tx;
 do
-    code/instantaneous Fff (var& int xxx3)=>Tx do
+    code/tight Fff (var& int xxx3)=>Tx do
         this.xxx2 = xxx3;
     end
     this.xxx2 = 1;
@@ -50512,9 +50512,9 @@ escape ttt.xxx2;
 Test { [[
 class Tx with
     var& int xxx2;
-    code/instantaneous Fff (var& int xxx3)=>Tx;
+    code/tight Fff (var& int xxx3)=>Tx;
 do
-    code/instantaneous Fff (var& int xxx3)=>Tx do
+    code/tight Fff (var& int xxx3)=>Tx do
         this.xxx2 = &xxx3;
     end
     this.xxx2 = 1;
@@ -50546,12 +50546,12 @@ escape vvv;
 }
 Test { [[
 class TimeDisplay with
-    code/instantaneous Build (var& int vvv)=>TimeDisplay;
+    code/tight Build (var& int vvv)=>TimeDisplay;
 do
     var int x = 0;
     var& int vvv = &x;
 
-    code/instantaneous Build (var& int vvv)=>TimeDisplay do
+    code/tight Build (var& int vvv)=>TimeDisplay do
         this.vvv = &vvv;
     end
 end
@@ -50562,12 +50562,12 @@ escape 1;
 
 Test { [[
 class TimeDisplay with
-    code/instantaneous Build (var& int vvv)=>TimeDisplay;
+    code/tight Build (var& int vvv)=>TimeDisplay;
 do
     var int x = 0;
     var& int vvv;
 
-    code/instantaneous Build (var& int vvv)=>TimeDisplay do
+    code/tight Build (var& int vvv)=>TimeDisplay do
         //this.vvv = &vvv;
         if vvv then end;
     end
@@ -50727,7 +50727,7 @@ native/pos do
         escape NULL;
     }
 end
-    code/instantaneous Parse_file (void) => void do
+    code/tight Parse_file (void) => void do
             var& int? intro_story_str;
             if intro_story_str? then end;
                 do intro_story_str = &_new_Int();
@@ -51358,9 +51358,9 @@ class U with do end;
 
 class Tx with
     vector&[] U&&  us;
-    code/instantaneous Build (vector&[] U&& us)=>Tx;
+    code/tight Build (vector&[] U&& us)=>Tx;
 do
-    code/instantaneous Build (vector&[] U&& us)=>Tx do
+    code/tight Build (vector&[] U&& us)=>Tx do
         this.us = &us;
     end
 end
@@ -51378,9 +51378,9 @@ class U with do end;
 
 class Tx with
     vector&[] U&&  us;
-    code/instantaneous Build (vector&[] U&& us)=>Tx;
+    code/tight Build (vector&[] U&& us)=>Tx;
 do
-    code/instantaneous Build (vector&[] U&& us)=>Tx do
+    code/tight Build (vector&[] U&& us)=>Tx do
         this.us = &us;
     end
 end
@@ -51401,9 +51401,9 @@ class U with do end;
 
 class Tx with
     vector&[] U&&? us;
-    code/instantaneous Build (vector&[] U&&? us)=>Tx;
+    code/tight Build (vector&[] U&&? us)=>Tx;
 do
-    code/instantaneous Build (vector&[] U&&? us)=>Tx do
+    code/tight Build (vector&[] U&&? us)=>Tx do
         this.us = &us;
     end
 end
@@ -51429,9 +51429,9 @@ end;
 
 class Tx with
     vector&[] U&&? us;
-    code/instantaneous Build (vector&[] U&&? us)=>Tx;
+    code/tight Build (vector&[] U&&? us)=>Tx;
 do
-    code/instantaneous Build (vector&[] U&&? us)=>Tx do
+    code/tight Build (vector&[] U&&? us)=>Tx do
         this.us = &us;
     end
 end
@@ -51457,9 +51457,9 @@ end;
 
 class Tx with
     vector&[] U&&? us;
-    code/instantaneous Build (vector&[] U&&? us)=>Tx;
+    code/tight Build (vector&[] U&&? us)=>Tx;
 do
-    code/instantaneous Build (vector&[] U&&? us)=>Tx do
+    code/tight Build (vector&[] U&&? us)=>Tx do
         this.us = &us;
     end
 end
@@ -51481,9 +51481,9 @@ escape us[0]?+1;
 Test { [[
 class Tx with
     var& int i;
-    code/instantaneous Build (var& int i)=>Tx;
+    code/tight Build (var& int i)=>Tx;
 do
-    code/instantaneous Build (var& int i)=>Tx do
+    code/tight Build (var& int i)=>Tx do
         this.i = &i;
     end
     escape this.i;
@@ -51502,9 +51502,9 @@ end
 native/pure _ID;
 class Tx with
     var& int i;
-    code/instantaneous Build (var& int i)=>Tx;
+    code/tight Build (var& int i)=>Tx;
 do
-    code/instantaneous Build (var& int i)=>Tx do
+    code/tight Build (var& int i)=>Tx do
         this.i = &i;
     end
     escape this.i;
@@ -53019,7 +53019,7 @@ escape (is_int as int)+(is_float as int);
 }
 
 Test { [=[
-code/instantaneous Fx (void)=>int do
+code/tight Fx (void)=>int do
     var int v = [[ 1 ]];
     escape v;
 end
@@ -53135,7 +53135,7 @@ escape 1;
 }
 
 Test { PRE_ISR..[[
-code/instantaneous Fx (void)=>void do end
+code/tight Fx (void)=>void do end
 atomic do
     call Fx();
 end
@@ -53486,7 +53486,7 @@ escape 1;
 }
 
 Test { PRE_ISR..[[
-code/instantaneous Fx (void)=>int do
+code/tight Fx (void)=>int do
     escape 2;
 end
 var int v = call Fx();
@@ -53504,7 +53504,7 @@ escape v;
 }
 
 Test { PRE_ISR..[[
-code/instantaneous Fx (void)=>int do
+code/tight Fx (void)=>int do
     escape 2;
 end
 var int v = call Fx();
@@ -53914,7 +53914,7 @@ class UIGrid with
     interface UI;
     pool[]  UIGridItem uis;
 do
-    code/instantaneous Go (void)=>void do
+    code/tight Go (void)=>void do
         loop item in this.uis do
 native _f;
             _f(item:ui);
@@ -54626,7 +54626,7 @@ data Data with
     var int v;
 end
 
-code/delayed Code (var& Data d, var  int ini) => int
+code/await Code (var& Data d, var  int ini) => int
 do
     d.v = ini;
     every 1s do
@@ -54657,7 +54657,7 @@ data Data with
     var& int v;
 end
 
-code/delayed Code (var& Data d, var  int ini) => int
+code/await Code (var& Data d, var  int ini) => int
 do
     var int v = ini;
     d.v = &v;
@@ -56838,17 +56838,17 @@ end
 
 interface I with
     var int v;
-    code/instantaneous Fx (var int)=>void;
+    code/tight Fx (var int)=>void;
 end
 
 class Tx with
     var int v=0;
-    code/instantaneous Fx (var int)=>void;
+    code/tight Fx (var int)=>void;
 do
     v = 50;
     this.Fx(10);
 
-    code/instantaneous Fx (var int v)=>void do
+    code/tight Fx (var int v)=>void do
         this.v = this.v + v;
     end
     await FOREVER;
@@ -56878,7 +56878,7 @@ end
 
 interface I with
     var int v;
-    code/instantaneous Fx (var int)=>void;
+    code/tight Fx (var int)=>void;
 end
 
 class Tx with
@@ -56888,7 +56888,7 @@ do
     v = 50;
     this.Fx(10);
 
-    code/instantaneous Fx (var int a)=>void do
+    code/tight Fx (var int a)=>void do
         v = v + a;
     end
     await FOREVER;
@@ -56913,18 +56913,18 @@ escape _V+1;
 Test { [[
 interface I with
     var int v;
-    code/instantaneous Get (void)=>int;
-    code/instantaneous Set (var int)=>void;
+    code/tight Get (void)=>int;
+    code/tight Set (var int)=>void;
 end
 
 class Tx with
     interface I;
     var int v = 50;
 do
-    code/instantaneous Get (void)=>int do
+    code/tight Get (void)=>int do
         escape v;
     end
-    code/instantaneous Set (var int v)=>void do
+    code/tight Set (var int v)=>void do
         this.v= v;
     end
     await FOREVER;
@@ -56947,7 +56947,7 @@ end
 
 interface I with
     var int v;
-    code/instantaneous Fx (var int)=>void;
+    code/tight Fx (var int)=>void;
 end
 
 class Tx with
@@ -56957,7 +56957,7 @@ do
     v = 50;
     this.Fx(10);
 
-    code/instantaneous Fx (var int v)=>void do
+    code/tight Fx (var int v)=>void do
         this.v = this.v + v;
     end
     await FOREVER;
@@ -56970,7 +56970,7 @@ do
     v = 50;
     this.Fx(10);
 
-    code/instantaneous Fx (var int v)=>void do
+    code/tight Fx (var int v)=>void do
         this.v = this.v + 2*v;
     end
     await FOREVER;
@@ -58669,9 +58669,9 @@ class Parser with
 do end;
 
 class Frame with
-    code/instantaneous RawWriteByte (var int)=>void;
+    code/tight RawWriteByte (var int)=>void;
 do
-    code/instantaneous RawWriteByte (var int v)=>void do if v!=0 then end end;
+    code/tight RawWriteByte (var int v)=>void do if v!=0 then end end;
 end;
 
 class Receiver with
@@ -58717,14 +58717,14 @@ escape 1;
 }
 
 Test { [[
-code/delayed Fx (event int e)=>void do
+code/await Fx (event int e)=>void do
 end
 escape 0;
 ]],
     parser = 'line 1 : after `event´ : expected `&´',
 }
 Test { [[
-code/delayed Fx (event& int e)=>void do
+code/await Fx (event& int e)=>void do
     await e;
 end
 escape 0;
@@ -60276,7 +60276,7 @@ data Tx with
     var int x;
 end
 
-code/instantaneous Fx (void)=>Tx do
+code/tight Fx (void)=>Tx do
     var Tx t = val Tx(10);
     escape t;
 end
@@ -60298,7 +60298,7 @@ escape 1;
 }
 
 Test { [[
-code/instantaneous Fx (void)=>void do end;
+code/tight Fx (void)=>void do end;
 data Ee;
 var int x = 0;
 var Ee e = val Fx();
@@ -60852,7 +60852,7 @@ data Aa with
     var int a;
 end
 
-code/instantaneous Ff (var& Aa a) => int do
+code/tight Ff (var& Aa a) => int do
     escape a.a;
 end
 
@@ -60872,7 +60872,7 @@ data Aa with
     var int a;
 end
 
-code/instantaneous Ff (var Aa&& a) => int do
+code/tight Ff (var Aa&& a) => int do
     escape a:a;
 end
 
@@ -60978,7 +60978,7 @@ end
 class SurfaceBackground with
     var& _WorldObjs__SurfaceBackground me;
 do
-    code/instantaneous Set_pos (var _Vector3f&& p)=>void do
+    code/tight Set_pos (var _Vector3f&& p)=>void do
         this.me.pos = Vector3f(p:x, p:y, p:z);
     end
 end
@@ -70134,9 +70134,9 @@ escape sizeof(buf_);
 -- BUG: bad message, I want to say that you cannot copy vectors in a single stmt
 Test { [[
 class Test with
-    code/instantaneous FillBuffer (vector[]&& u8 buf)=>void;
+    code/tight FillBuffer (vector[]&& u8 buf)=>void;
 do
-    code/instantaneous FillBuffer (vector[]&& u8 buf)=>void do
+    code/tight FillBuffer (vector[]&& u8 buf)=>void do
         vector[] u8 b = *buf;
         b = b .. [3];
     end
@@ -70154,7 +70154,7 @@ escape buffer[0];
 
 -- BUG: doesn't check dimension of pointer to vector
 Test { [[
-code/instantaneous FillBuffer (vector[20]&& u8 buf)=>void do
+code/tight FillBuffer (vector[20]&& u8 buf)=>void do
     *buf = *buf .. [3];
 end
 vector[10] u8 buffer;
@@ -70166,7 +70166,7 @@ escape buffer[0];
 
 --cbuffer "attr to greater scope"
 Test { [[
-    code/instantaneous/recursive Update_surface (void)=>void do
+    code/tight/recursive Update_surface (void)=>void do
         var _CollisionMap&& colmap = _XXX_PURE(global:world!:get_colmap());
 
         this.me.colmap_serial = colmap:get_serial();
@@ -70184,9 +70184,9 @@ end
 var int i = 1;
 
 class Tx with
-    code/instantaneous Get (void)=>int;
+    code/tight Get (void)=>int;
 do
-    code/instantaneous Get (void)=>int do
+    code/tight Get (void)=>int do
         escape global:i;
     end
 end
@@ -70298,9 +70298,9 @@ escape 1;
 Test { [[
 class Tx with
     var int xxx2=0;
-    code/instantaneous Fff (var int xxx3)=>void;
+    code/tight Fff (var int xxx3)=>void;
 do
-    code/instantaneous Fff (var int xxx3)=>void do
+    code/tight Fff (var int xxx3)=>void do
         var int xxx4 = xxx3;
         this.xxx2 = xxx4;
     end
@@ -70316,12 +70316,12 @@ escape ttt.xxx2;
 }
 Test { [[
 class TimeDisplay with
-    code/instantaneous Build (var& int vvv)=>TimeDisplay;
+    code/tight Build (var& int vvv)=>TimeDisplay;
 do
     var int x = 0;
     var& int vvv;
 
-    code/instantaneous Build (var& int vvv)=>TimeDisplay do
+    code/tight Build (var& int vvv)=>TimeDisplay do
         this.vvv = &vvv;
     end
 
@@ -70334,11 +70334,11 @@ escape 1;
 
 Test { [[
 class TimeDisplay with
-    code/instantaneous Build (var& int vvv)=>TimeDisplay;
+    code/tight Build (var& int vvv)=>TimeDisplay;
 do
     var& int vvv;
 
-    code/instantaneous Build (var& int vvv)=>TimeDisplay do
+    code/tight Build (var& int vvv)=>TimeDisplay do
         this.vvv = &vvv;
     end
 end
@@ -70352,7 +70352,7 @@ escape 1;
 
     var byte&&                  name    = null;
 
-    code/instantaneous Name (var @hold byte&& name)=>Surface;
+    code/tight Name (var @hold byte&& name)=>Surface;
 
 ---
 
@@ -70478,9 +70478,9 @@ escape _strlen((byte&&)&&t.name);
 Test { [[
 class Tx with
     var& void p;
-    code/instantaneous Build (var& void p)=>Tx;
+    code/tight Build (var& void p)=>Tx;
 do
-    code/instantaneous Build (var& void p)=>Tx do
+    code/tight Build (var& void p)=>Tx do
         this.p = &p;
     end
     escape *(&&this.p as int&&);
@@ -71079,7 +71079,7 @@ escape _V;
 }
 
 Test { [[
-code/instantaneous Fx () => void;
+code/tight Fx () => void;
 escape 1;
 ]],
     run = 1,
@@ -73003,7 +73003,7 @@ escape 1;
     todo = 'line 2 : wrong operator',
 }
 Test { [[
-code/instantaneous Faca (void)=>void do
+code/tight Faca (void)=>void do
     var int&& a;
     a := null;
 end
@@ -73021,7 +73021,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/instantaneous Fx (var void&& o1)=>void do
+code/tight Fx (var void&& o1)=>void do
     var void&& tmp := o1;
 end
 escape 1;

@@ -57,15 +57,15 @@ local T = {
     },
 
     {
-        '`native´ or `code/instantaneous´ or `code/delayed´ or end of file',
+        '`native´ or `code/tight´ or `code/await´ or end of file',
         'end of file'
     },
     {
-        '`;´ or `native´ or `code/instantaneous´ or `code/delayed´ or `with´',
+        '`;´ or `native´ or `code/tight´ or `code/await´ or `with´',
         '`with´'
     },
     {
-        '`native´ or `code/instantaneous´ or `code/delayed´ or `end´',
+        '`native´ or `code/tight´ or `code/await´ or `end´',
         '`end´'
     },
 
@@ -108,15 +108,15 @@ local T = {
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/tight´ or `code/await´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/tight´ or `code/await´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/instantaneous´ or `code/delayed´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/tight´ or `code/await´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
 }
@@ -459,7 +459,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     -- CODE
 
-    , __code = (CK'code/instantaneous' + CK'code/delayed')
+    , __code = (CK'code/tight' + CK'code/await')
                 * OPT(CK'/recursive')
                 * (V'__ID_abs'-V'__id_data')
     , _Code_proto = V'__code' * (V'Typepars_ids'+V'Typepars_anon') * KK'=>' *
@@ -475,7 +475,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     -- EXTS
 
     -- call
-    , __extcode = (CK'input/output' + CK'output/input') * K'/instantaneous'
+    , __extcode = (CK'input/output' + CK'output/input') * K'/tight'
                     * OPT(CK'/recursive')
                     * V'__ID_ext'
 * EE'TODO-PARSER: extcode'
@@ -486,7 +486,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                        V'__Do'
 
     -- req
-    , __extreq = (CK'input/output' + CK'output/input') * K'/delayed'
+    , __extreq = (CK'input/output' + CK'output/input') * K'/await'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
                    * V'__ID_ext'
 * EE'TODO-PARSER: request'
