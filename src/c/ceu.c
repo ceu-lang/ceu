@@ -95,7 +95,7 @@ typedef struct tceu_evt_params_code {
 } tceu_evt_params_code;
 
 typedef struct tceu_evt_params_int {
-    void* mem;
+    void* data_or_code;
     u8    pse;
 } tceu_evt_params_int;
 
@@ -120,7 +120,7 @@ typedef struct tceu_trl {
                 struct tceu_code_mem* code_mem;
 
                 /* CEU_EVENT__MIN */
-                struct tceu_code_mem* int_mem;
+                void* int_data_or_code;
             };
         };
 
@@ -136,7 +136,7 @@ typedef struct tceu_trl {
             tceu_nevt pse_evt;
             tceu_ntrl pse_skip;
             u8        pse_paused;
-            struct tceu_code_mem* pse_mem;
+            void*     pse_data_or_code;
         };
     };
 } tceu_trl;
@@ -343,7 +343,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
                                   trl->code_mem );
             } else if (trl->evt > CEU_EVENT__MIN) {
                 matches_await =
-                    (trl->int_mem == ((tceu_evt_params_int*)evt->params)->mem);
+                    (trl->int_data_or_code == ((tceu_evt_params_int*)evt->params)->data_or_code);
             }
         }
 
@@ -372,7 +372,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 /* TODO: need to distinguish between EXT/INT because INT has "mem" in the first position */
                 if (evt->id > CEU_EVENT__MIN) {
                     tceu_evt_params_int* p = (tceu_evt_params_int*)evt->params;
-                    if (trl->pse_mem == p->mem) {
+                    if (trl->pse_data_or_code == p->data_or_code) {
                         trl->pse_paused = p->pse;
                     }
                 } else {

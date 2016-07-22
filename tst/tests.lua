@@ -60308,6 +60308,17 @@ escape 1;
     stmts = 'line 4 : invalid constructor : expected `data´ abstraction : got `code´ "Fx" (/tmp/tmp.ceu:1)',
 }
 
+Test { [[
+data Ui with
+    event void       ok_clicked;
+    var   SDL_Rect   rect;
+    var   SDL_Color? bg_clr;
+end
+escape 1;
+]],
+    dcls = 'line 3 : abstraction "SDL_Rect" is not declared',
+}
+
 -->>> DATA / HIERARCHY / SUB-DATA / SUB-TYPES
 
 Test { [[

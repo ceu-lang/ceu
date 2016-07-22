@@ -54,12 +54,13 @@ function dcls_get (blk, id, can_cross)
     return nil
 end
 
-function DCLS.asr (me, blk, id, can_cross, err)
+function DCLS.asr (me, blk_or_data, id, can_cross, err)
+    local data = AST.get(blk_or_data, 'Data')
+    local blk = (data and AST.asr(data,'',2,'Block')) or blk_or_data
     local ret = dcls_get(blk, id, can_cross)
     if ret then
         return ret
     else
-        local data = AST.par(blk, 'Data')
         if data then
             ASR(false, me, 
                 'invalid member access : "'..
@@ -305,7 +306,7 @@ F = {
         assert(me == dcls_get(blk,me.id,true))
     end,
 
-    Data = function (me)
+    Data__PRE = function (me)
         me.id = unpack(me)
         local blk = AST.asr(AST.root,'', 1,'Block')
 

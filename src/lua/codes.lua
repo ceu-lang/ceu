@@ -413,7 +413,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt        = CEU_INPUT__PAUSE;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
-_ceu_mem->trails[]]..me.trails[1]..[[].pse_mem    = _ceu_mem;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_data_or_code = _ceu_mem;
 _ceu_trl++;
 ]])
         CONC(me, body)
@@ -942,9 +942,9 @@ _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
     Await_Int = function (me)
         local Exp_Name = unpack(me)
         HALT(me, {
-            { evt     = V(Exp_Name) },
-            { lbl     = me.lbl_out.id },
-            { int_mem = '_ceu_mem'} ,
+            { evt = V(Exp_Name) },
+            { lbl = me.lbl_out.id },
+            { int_data_or_code = '_ceu_mem'} ,
             lbl = me.lbl_out.id,
         })
     end,
