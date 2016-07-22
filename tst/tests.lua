@@ -60847,7 +60847,7 @@ escape a.a + b.a + b.b + b.c;
     names = 'line 11 : invalid member access : "b" has no member "c" : `data´ "Aa.Bb" (/tmp/tmp.ceu:4)',
 }
 
---<<< DATA / HIERARCHY / SUB-DATA / SUB-TYPES
+--<<< DATA / HIERARCHY / SUB-DATA / SUB-TYPES / INHERITANCE
 
 Test { [[
 data Dx with
@@ -61164,6 +61164,23 @@ escape d.xxx;
     run = { ['~>1s']=3 },
 }
 
+Test { [[
+data Aa with
+    event void e;
+end
+data Aa.Bb;
+
+var Aa.Bb b = val Aa.Bb(_);
+par/and do
+    await b.e;
+with
+    emit b.e;
+end
+
+escape 1;
+]],
+    run = 1,
+}
 --<<< DATA / EVENTS
 
 error'22/07/2016'
