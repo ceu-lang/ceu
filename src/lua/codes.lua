@@ -272,7 +272,7 @@ if (0)
         CASE(me, me.lbl_in)
 
         -- CODE/DELAYED
-        if mod == 'code/delayed' then
+        if mod == 'code/await' then
             LINE(me, [[
     _ceu_mem->trails_n = ]]..me.trails_n..[[;
     memset(&_ceu_mem->trails, 0, ]]..me.trails_n..[[*sizeof(tceu_trl));
@@ -293,7 +293,7 @@ if (0)
         CONC(me, body)
 
         -- CODE/DELAYED
-        if mod == 'code/delayed' then
+        if mod == 'code/await' then
             local free = [[
     if (_ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
@@ -437,7 +437,7 @@ ceu_callback_assert_msg(0, "reached end of `do´");
     Escape = function (me)
         local code = AST.par(me, 'Code')
         local evt do
-            if code and code[1]=='code/delayed' then
+            if code and code[1]=='code/await' then
                 evt = '(tceu_evt*) &__ceu_ret_'..code.n
             else
                 evt = 'NULL'
@@ -696,7 +696,7 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
             local code = AST.par(me, 'Code')
             if code then
                 local mod = unpack(code)
-                if mod == 'code/instantaneous' then
+                if mod == 'code/tight' then
                     LINE(me, [[
 ((tceu_code_args_]]..code.id..[[*) _ceu_evt)->_ret = ]]..V(fr)..[[;
 ]])

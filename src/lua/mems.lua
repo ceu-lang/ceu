@@ -79,7 +79,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
         -- args
         me.mems.args = 'typedef struct tceu_code_args_'..id..' {\n'
-        if mod=='code/instantaneous' and (not TYPES.check(Type,'void')) then
+        if mod=='code/tight' and (not TYPES.check(Type,'void')) then
             -- returns immediatelly, uses an extra field for the return value
             me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..' _ret;\n'
         end
@@ -126,7 +126,7 @@ tceu_vector]]..ptr..' '..id2..[[;
         end
         me.mems.args = me.mems.args..'} tceu_code_args_'..id..';\n'
 
-        if mod == 'code/delayed' then
+        if mod == 'code/await' then
             return
         end
 

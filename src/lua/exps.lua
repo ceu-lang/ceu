@@ -96,9 +96,9 @@ F = {
                 'invalid call : '..
                 'unexpected context for '..AST.tag2id[ID_abs.dcl.tag]
                                          ..' "'..ID_abs.dcl.id..'"')
-        ASR(mod == 'code/instantaneous', me,
+        ASR(mod == 'code/tight', me,
                 'invalid call : '..
-                'expected `code/instantaneous´ : got `code/delayed´ ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
+                'expected `code/tight´ : got `code/await´ ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
 
         -- info
         local _,_,_,_,_,out = unpack(ID_abs.dcl)
