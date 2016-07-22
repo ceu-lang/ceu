@@ -26,7 +26,10 @@ MEMS = {
         enum   = '',
         supers = '',
     },
-    opts = {},
+    opts = {
+        -- avoids duplications
+        --[TYPES.tostring(tp)] = true,
+    },
 }
 
 local function CUR ()
@@ -175,6 +178,43 @@ typedef struct tceu_data_]]..me.id_..[[ {
         MEMS.datas.supers = MEMS.datas.supers..me.mems.super..',\n'
     end,
 
+    Var = function (me)
+        -- new `?´ type
+        local tp = unpack(me)
+        if not TYPES.check(tp,'?') then
+            return
+        end
+
+        local str = TYPES.tostring(tp)
+        if not MEMS.opts[str] then
+            MEMS.opts[str] = true
+            local cc = TYPES.toc(tp)
+            local c = TYPES.toc(TYPES.pop(tp,'?'))
+            local opt = ''
+            if TYPES.is_nat_not_plain(TYPES.pop(tp,'?')) then
+                opt = opt..[[
+static ]]..cc..' CEU_OPTION_'..cc..' ('..cc..[[ opt, char* file, int line) {
+ceu_callback_assert_msg_ex(opt != NULL, "value is not set", file, line);
+return opt;
+}
+]]
+            else
+                opt = opt..[[
+typedef struct ]]..cc..[[ {
+bool      is_set;
+]]..c..[[ value;
+} ]]..cc..[[;
+
+static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
+ceu_callback_assert_msg_ex(opt->is_set, "value is not set", file, line);
+return opt;
+}
+]]
+            end
+            MEMS.datas.mems = MEMS.datas.mems..opt
+        end
+    end,
+
     ---------------------------------------------------------------------------
 
     Block__PRE = function (me)
@@ -198,16 +238,6 @@ typedef struct tceu_data_]]..me.id_..[[ {
                     local tp, is_alias = unpack(dcl)
                     local ptr = (is_alias and (not TYPES.is_nat_not_plain(TYPES.pop(tp,'?'))) and '*' or '')
                     mem[#mem+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
-                end
-
-                -- new `?´ type
-                local tp = unpack(dcl)
-                if TYPES.check(tp,'?') then
-                    local str = TYPES.tostring(tp)
-                    if not MEMS.opts[str] then
-                        MEMS.opts[str] = true
-                        MEMS.opts[#MEMS.opts+1] = tp
-                    end
                 end
 
             -- EVT
@@ -409,30 +439,3 @@ for i, code in ipairs(MEMS.codes) do
         end
     end
 end
-
-local opts = ''
-for _, tp in ipairs(MEMS.opts) do
-    local cc = TYPES.toc(tp)
-    local c = TYPES.toc(TYPES.pop(tp,'?'))
-    if TYPES.is_nat_not_plain(TYPES.pop(tp,'?')) then
-        opts = opts..[[
-static ]]..cc..' CEU_OPTION_'..cc..' ('..cc..[[ opt, char* file, int line) {
-    ceu_callback_assert_msg_ex(opt != NULL, "value is not set", file, line);
-    return opt;
-}
-]]
-    else
-        opts = opts..[[
-typedef struct ]]..cc..[[ {
-    bool      is_set;
-    ]]..c..[[ value;
-} ]]..cc..[[;
-
-static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
-    ceu_callback_assert_msg_ex(opt->is_set, "value is not set", file, line);
-    return opt;
-}
-]]
-    end
-end
-MEMS.opts = opts

@@ -8,6 +8,36 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+data Dd with
+    var int x;
+end
+
+var Dd d = val Dd(10);
+
+var Dd? d1, d2;
+
+d2 = d;
+
+var int ret = 0;
+
+if d1? then
+    ret = ret + d1!.x;
+else
+    ret = ret + 1;
+end
+
+if d2? then
+    ret = ret + d2!.x;
+else
+    ret = ret + 1;
+end
+
+escape ret;
+]],
+    run = 11,
+}
+
 --[=====[
 do return end -- OK
 --]=====]
