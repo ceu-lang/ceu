@@ -58,10 +58,10 @@ local function run_inits (par, i, Dcl, stop)
                 if Abs_Call then
                     local _,Abs_Cons = unpack(Abs_Call)
                     local ID_abs, Abslist = unpack(Abs_Cons)
-                    local _,_,_,Typepars_ids = unpack(ID_abs.dcl)
+                    local _,_,_,Code_Pars = unpack(ID_abs.dcl)
 
                     local idx = AST.idx(Abslist, Alias)
-                    local Item = AST.asr(Typepars_ids,'', idx,'Typepars_ids_item')
+                    local Item = AST.asr(Code_Pars,'', idx,'Code_Pars_Item')
 DBG('>>>', idx)
 --AST.dump(ID_abs.dcl)
 AST.dump(Item)

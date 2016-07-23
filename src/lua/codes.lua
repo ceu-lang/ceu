@@ -261,7 +261,7 @@ _ceu_trl++;
     ---------------------------------------------------------------------------
 
     Code = function (me)
-        local mod,_,_,Typepars_ids,_,_,body = unpack(me)
+        local mod,_,_,Code_Pars,_,_,body = unpack(me)
         if not body then return end
 
 LINE(me, [[
@@ -282,8 +282,8 @@ if (0)
 
         local vars = AST.get(body,'Block', 1,'Stmts', 2,'Do', 2,'Block',
                                            1,'Stmts', 2,'Stmts')
-        for i,Typepars_ids_item in ipairs(Typepars_ids) do
-            local kind,_,c,Type,id2 = unpack(Typepars_ids_item)
+        for i,Code_Pars_Item in ipairs(Code_Pars) do
+            local kind,_,c,Type,id2 = unpack(Code_Pars_Item)
             assert(kind=='var' or kind=='vector')
             LINE(me, [[
 ]]..V(vars[i],{is_bind=true})..[[ = ((tceu_code_args_]]..me.id..[[*)_ceu_evt)->]]..id2..[[;

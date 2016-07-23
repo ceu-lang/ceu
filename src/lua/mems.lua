@@ -86,10 +86,10 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
         -- insert in "stmts" all parameters "ins"/"mid"
         local ins_mid = {} do
-            AST.asr(ins,'Typepars_ids')
+            AST.asr(ins,'Code_Pars')
             for _, v in ipairs(ins) do ins_mid[#ins_mid+1]=v end
             if mid then
-                AST.asr(mid,'Typepars_ids')
+                AST.asr(mid,'Code_Pars')
                 for _, v in ipairs(mid) do ins_mid[#ins_mid+1]=v end
             end
         end
@@ -131,13 +131,18 @@ tceu_vector]]..ptr..' '..id2..[[;
         end
 
 --[[
-        if me.is_dyn then
+DBG('>>>', 'code', me.id)
+        do
             local t = {}
             for _, item in ipairs(ins) do
                 local _,_,_,Type,id = unpack(item)
 AST.dump(item)
                 if item.is_dyn then
                     local data = Type[1].dcl
+                    for _, sub in ipairs(data.hier.down) do
+DBG('>>>', sub.id)
+error'aaa'
+                    end
                     t[#t+1] = item.dyn
                 end
             end

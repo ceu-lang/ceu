@@ -89,7 +89,7 @@ F = {
     Abs_Call = function (me)
         local _, Abs_Cons = unpack(me)
         local ID_abs, _ = unpack(Abs_Cons)
-        local mod,_,_,Typepars_ids = unpack(ID_abs.dcl)
+        local mod,_,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mod == 'code/tight')
         return [[
 CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
@@ -105,7 +105,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                 vars = AST.asr(ID_abs.dcl,'Data', 2,'Block').dcls
                 id_struct = 'tceu_data_'..ID_abs.dcl.id_
             else
-                vars = AST.get(ID_abs.dcl,'Code', 4,'Typepars_ids')
+                vars = AST.get(ID_abs.dcl,'Code', 4,'Code_Pars')
                 id_struct = 'tceu_code_args_'..ID_abs.dcl.id
             end
         end
@@ -121,7 +121,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         for i, v in ipairs(Abslist) do
             local var = vars[i]
             local _, var_tp, var_id, is_alias
-            if vars.tag == 'Typepars_ids' then
+            if vars.tag == 'Code_Pars' then
                 _,is_alias,_,var_tp,var_id = unpack(var)
             else
                 var_tp, is_alias = unpack(var)

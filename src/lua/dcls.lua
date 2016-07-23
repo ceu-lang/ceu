@@ -272,31 +272,49 @@ F = {
 
     -- CODE / DATA
 
-    Typepars_ids = function (me)
-        -- multi-methods: change "me.id" or Code
-        me.dyn = ''
-        for i, item in ipairs(me) do
-            local kind,is_alias,_,Type,_ = unpack(item)
-            if Type[1].tag=='ID_abs' and Type[1].dcl.hier then
-                item.dyn = '_'..i..'_'..kind..
-                           '_'..(is_alias and 'y' or 'n')..
-                           '_'..TYPES.tostring(Type)
-                item.dyn = TYPES.noc(item.dyn)
-                me.dyn = me.dyn..item.dyn
-                item.is_dyn = true
-                me.__par.is_dyn = true
+    Code_Pars = function (me)
+        local body = AST.get(me.__par,'Code', 7,'Block')
+        if body then
+            for i, item in ipairs(me) do
+                local _,_,_,_,id = unpack(item)
+                ASR(id, me,
+                    'invalid declaration : parameter #'..i..' : expected identifier')
             end
         end
+
+        local t = AST.node('Typelist',me.ln)
+        for i, item in ipairs(me) do
+            local _,_,_,Type = unpack(item)
+            t[i] = Type
+        end
+        F.Typelist(t)
+--[[
+
+        -- multi-methods: change "me.id" or Code
+        me.ids = ''
+        for i, item in ipairs(me) do
+            local kind,is_alias,_,Type,_ = unpack(item)
+            if Type[1].tag == 'ID_abs' then
+                item.id = '_'..i..'_'..kind..
+                          '_'..(is_alias and 'y' or 'n')..
+                          '_'..TYPES.tostring(Type)
+                item.id = TYPES.noc(item.id)
+                me.ids = me.ids..item.id
+            end
+        end
+]]
     end,
 
     Code = function (me)
         local _,mod1,id,ins1,_,_,blk1 = unpack(me)
 
-        if ins1.tag == 'Typepars_ids' then
-            me.id = id..ins1.dyn
-        else
-            me.id = id
+        me.id = id
+
+--[[
+        if ins1.tag == 'Code_Pars' then
+            me.id = id..ins1.ids
         end
+]]
 
         local old = dcls_get(AST.par(me,'Block'), me.id, true)
         if old then
@@ -365,15 +383,6 @@ F = {
                     'invalid declaration : unexpected type `void´')
             end
         end
-    end,
-
-    Typepars_anon = function (me)
-        local t = AST.node('Typelist',me.ln)
-        for i, item in ipairs(me) do
-            local _,_,_,Type = unpack(item)
-            t[i] = Type
-        end
-        F.Typelist(t)
     end,
 
     ---------------------------------------------------------------------------
@@ -459,11 +468,11 @@ F = {
 
         elseif id == 'watching' then
             local _, ID_abs = unpack(me)
-            local pars = AST.get(ID_abs.dcl,'Code', 5,'Typepars_ids')
+            local pars = AST.get(ID_abs.dcl,'Code', 5,'Code_Pars')
 assert(pars and #pars==#me.varlist, 'TODO')
             local dcls = AST.node('Stmts', me.ln)
             for i, var in ipairs(AST.asr(me.varlist,'Varlist')) do
-                local item = AST.asr(pars,'', i,'Typepars_ids_item')
+                local item = AST.asr(pars,'', i,'Code_Pars_Item')
                 local mod, is_alias, _, Type, _ = unpack(item)
 assert(mod=='var' and is_alias, 'TODO')
                 local id = unpack(AST.asr(var,'ID_int'))

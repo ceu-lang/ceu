@@ -459,16 +459,13 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     -- CODE
 
-    , __code = (CK'code/tight' + CK'code/await')
-                * OPT(CK'/recursive')
-                * (V'__ID_abs'-V'__id_data')
-    , _Code_proto = V'__code' * (V'Typepars_ids'+V'Typepars_anon') * KK'=>' *
-                                OPT((V'Typepars_ids'+V'Typepars_anon') * KK'=>') *
-                                V'Type'
-    , _Code_impl  = V'__code' * V'Typepars_ids' * KK'=>' *
-                                OPT(V'Typepars_ids' * KK'=>') *
-                                V'Type' *
-                    V'__Do' * V'EOC'
+    , __code = (CK'code/tight' + CK'code/await') * OPT(CK'/recursive') *
+                (V'__ID_abs'-V'__id_data') *
+                    V'Code_Pars' * KK'=>' *
+                        OPT(V'Code_Pars' * KK'=>') *
+                            V'Type'
+    , _Code_proto = V'__code'
+    , _Code_impl  = V'__code' * V'__Do' * V'EOC'
 
     , _Spawn_Block = K'spawn' * V'__Do'
 
@@ -477,24 +474,18 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     -- call
     , __extcode = (CK'input/output' + CK'output/input') * K'/tight'
                     * OPT(CK'/recursive')
-                    * V'__ID_ext'
+                    * V'__ID_ext' * V'Code_Pars' * KK'=>' * V'Type'
 * EE'TODO-PARSER: extcode'
-    , _Ext_Code_proto  = V'__extcode' * (V'Typepars_ids'+V'Typepars_anon') *
-                                        KK'=>' * V'Type'
-    , _Ext_Code_impl  = V'__extcode' * V'Typepars_ids' *
-                                        KK'=>' * V'Type' *
-                       V'__Do'
+    , _Ext_Code_proto = V'__extcode'
+    , _Ext_Code_impl  = V'__extcode' * V'__Do'
 
     -- req
     , __extreq = (CK'input/output' + CK'output/input') * K'/await'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
-                   * V'__ID_ext'
+                   * V'__ID_ext' * V'Code_Pars' * KK'=>' * V'Type'
 * EE'TODO-PARSER: request'
-    , _Ext_Req_proto = V'__extreq' * (V'Typepars_ids'+V'Typepars_anon') *
-                                        KK'=>' * V'Type'
-    , _Ext_Req_impl  = V'__extreq' * V'Typepars_ids' *
-                                        KK'=>' * V'Type' *
-                      V'__Do'
+    , _Ext_Req_proto = V'__extreq'
+    , _Ext_Req_impl  = V'__extreq' * V'__Do'
 
     -- TYPEPARS
 
@@ -505,16 +496,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                      + CK'event'  * CKK'&'
                      + CK'var'   * OPT(CKK'&') * OPT(KK'/'*CK'hold')
 
-    , Typepars_ids_item  = V'__typepars_pre' * V'Type' * V'__ID_int'
-    , Typepars_anon_item = V'__typepars_pre' * V'Type'
+    , Code_Pars_Item  = V'__typepars_pre' * V'Type' * OPT(V'__ID_int')
 
-    , Typepars_ids = #KK'(' * (
+    , Code_Pars = #KK'(' * (
                     PARENS(P'void') +
-                    PARENS(V'Typepars_ids_item'   * (KK','*V'Typepars_ids_item')^0)
-                  )
-    , Typepars_anon = #KK'(' * (
-                    PARENS(P'void') +
-                    PARENS(V'Typepars_anon_item' * (KK','*V'Typepars_anon_item')^0)
+                    PARENS(V'Code_Pars_Item' * (KK','*V'Code_Pars_Item')^0)
                   )
 
 -- DATA

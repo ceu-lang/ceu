@@ -8,6 +8,7 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--[=====[
 Test { [[
 data Aa with
     var int a;
@@ -32,9 +33,7 @@ escape (call Ff(&b, 222));
     run = 232,
 }
 
---[=====[
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -30577,7 +30576,7 @@ escape 1;
 ]],
     --wrn = true,
     --adj = 'line 1 : missing parameter identifier',
-    parser = 'line 1 : after `void´ : expected type modifier or `;´',
+    dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
 Test { [[
@@ -30586,7 +30585,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `int´ : expected type modifier or internal identifier'
+    dcls = 'line 1 : invalid declaration : parameter #2 : expected identifier',
 }
 
 Test { [[
@@ -30595,7 +30594,8 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `int´ : expected type modifier or `,´ or `)´',
+    dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    --parser = 'line 1 : after `int´ : expected type modifier or `,´ or `)´',
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
 }
 
@@ -30607,9 +30607,11 @@ escape 1;
 ]],
     --wrn = true,
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
-    parser = 'line 1 : after `void´ : expected type modifier or `;´',
+    --parser = 'line 1 : after `void´ : expected type modifier or `;´',
+    dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
+--]=====]
 Test { [[
 code/tight Code (var void a, var  int b) => void
 do
@@ -30618,7 +30620,8 @@ escape 1;
 ]],
     wrn = true,
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    --dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 
 Test { [[
@@ -30796,7 +30799,8 @@ escape 1;
 ]],
     --wrn = true,
     --env = 'line 1 : missing parameter identifier',
-    parser = 'line 1 : after `void´ : expected type modifier or `;´',
+    --parser = 'line 1 : after `void´ : expected type modifier or `;´',
+    dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
 Test { [[
@@ -31320,7 +31324,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    --dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 
 Test { [[
@@ -31328,7 +31333,8 @@ code/tight Fx (var void, var int)=>int do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `int´ : expected type modifier or `;´',
+    --parser = 'line 1 : after `int´ : expected type modifier or `;´',
+    dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
 Test { [[
@@ -31337,7 +31343,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    --dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 
 Test { [[

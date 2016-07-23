@@ -157,10 +157,10 @@ error'TODO: luacov never executes this?'
 
         -- insert in "stmts" all parameters "ins"/"mid"
         local ins_mid = {} do
-            AST.asr(ins,'Typepars_ids')
+            AST.asr(ins,'Code_Pars')
             for _, v in ipairs(ins) do ins_mid[#ins_mid+1]=v end
             if mid then
-                AST.asr(mid,'Typepars_ids')
+                AST.asr(mid,'Code_Pars')
                 for _, v in ipairs(mid) do ins_mid[#ins_mid+1]=v end
             end
         end
@@ -169,7 +169,7 @@ error'TODO: luacov never executes this?'
         local vars = node('Stmts', me.ln)
         for i, v in ipairs(ins_mid) do
             if v ~= 'void' then
-                AST.asr(v,'Typepars_ids_item')
+                AST.asr(v,'Code_Pars_Item')
                 local pre,is_alias = unpack(v)
                 local _,dim,hold,tp,ID
                 if pre == 'var' then

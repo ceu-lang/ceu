@@ -116,7 +116,7 @@ F = {
                 err_str = 'invalid constructor'
                 i_tp, i_alias, i_dim = 1,2,3
             else
-                vars = AST.get(ID_abs.dcl,'Code', 4,'Typepars_ids')
+                vars = AST.get(ID_abs.dcl,'Code', 4,'Code_Pars')
                 err_str = 'invalid call'
                 i_tp, i_alias, i_dim = 4,2,3
             end
