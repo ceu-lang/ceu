@@ -58,8 +58,7 @@ var Aa.Bb b = val Aa.Bb(2,3);
 
 escape (call Ff(&b,22,&b)) + (call Ff(&a,33,&a));
 ]],
-    --run = 58,
-    run = 59,
+    run = 63,
 }
 
 do return end -- OK

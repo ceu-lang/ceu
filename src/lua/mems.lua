@@ -188,30 +188,44 @@ CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
     end,
 
-    __multimethods = function (T, ID, i, lbl)
-        i = i or 1
+    __multimethods = function (T, ID, I, lbl)
+        I = I or 1
         lbl = lbl or ''
-        local t = T[i]
+        local t = T[I]
         if not t then
-            return [[
+            local has = DCLS.get(AST.asr(AST.root,'',1,'Block'), ID..lbl)
+            if has then
+                return [[
 lbl = CEU_LABEL_Code_]]..ID..lbl..[[;
+break;
 ]]
+            else
+                return [[ 
+]]
+            end
         end
 
         local switch = [[
 switch (ps.]]..t.id..[[->data.id) {
 ]]
-        for _,v in ipairs(t) do
+        for i=#t, 1, -1 do
+            local v = t[i]
             local id, f = unpack(v)
             switch = switch .. [[
     case ]]..id..[[:
-        ]]..F.__multimethods(T,ID,i+1,lbl..f)..[[
-        break;
+        ]]..F.__multimethods(T,ID,I+1,lbl..f)..[[
 ]]
         end
         switch = switch .. [[
+    default:
+        ceu_dbg_assert(0);  /* TODO: runtime error message */
 }
 ]]
+        if I > 1 then
+            switch = switch .. [[
+    break;
+]]
+        end
 
         return switch
     end,

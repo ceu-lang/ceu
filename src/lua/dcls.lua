@@ -42,7 +42,7 @@ local function iter_boundary (cur, id, can_cross)
     end
 end
 
-function dcls_get (blk, id, can_cross)
+function DCLS.get (blk, id, can_cross)
     AST.asr(blk, 'Block')
     for blk in iter_boundary(blk,id,can_cross) do
         local dcl = blk.dcls[id]
@@ -57,7 +57,7 @@ end
 function DCLS.asr (me, blk_or_data, id, can_cross, err)
     local data = AST.get(blk_or_data, 'Data')
     local blk = (data and AST.asr(data,'',2,'Block')) or blk_or_data
-    local ret = dcls_get(blk, id, can_cross)
+    local ret = DCLS.get(blk, id, can_cross)
     if ret then
         return ret
     else
@@ -77,7 +77,7 @@ end
 local function dcls_new (blk, me, can_cross)
     AST.asr(blk, 'Block')
 
-    local old = dcls_get(blk, me.id, can_cross)
+    local old = DCLS.get(blk, me.id, can_cross)
     local implicit = (me.is_implicit and 'implicit ') or ''
     if old and (not old.is_predefined) then
         local F do
@@ -307,7 +307,7 @@ F = {
         local _,mod1,id,ins1,_,_,blk1 = unpack(me)
         me.id = id..ins1.ids
 
-        local old = dcls_get(AST.par(me,'Block'), me.id, true)
+        local old = DCLS.get(AST.par(me,'Block'), me.id, true)
         if old then
             local _,mod2,_,ins2,_,_,blk2 = unpack(old)
             ASR(not (blk1 and blk2), me, 'invalid `code´ declaration : body for "'..id..'" already exists')
@@ -341,7 +341,7 @@ F = {
         blk.dcls[me.id] = me
         me.is_used = (old and old.is_used)
 
-        assert(me == dcls_get(blk,me.id,true))
+        assert(me == DCLS.get(blk,me.id,true))
     end,
 
     Data__PRE = function (me)
@@ -351,7 +351,7 @@ F = {
         -- check "super" path
         local super,_ = string.match(me.id, '(.*)%.(.*)')
         if super then
-            local dcl = dcls_get(root, super, true)
+            local dcl = DCLS.get(root, super, true)
             ASR(dcl, me,
                 'invalid declaration : abstraction "'..super..'" is not declared')
             dcl.hier = dcl.hier or { down={} }
@@ -405,7 +405,6 @@ F = {
     ID_abs = function (me)
         local id = unpack(me)
         me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'abstraction')
-DBG('ID_abs', id, me.dcl.id)
     end,
 
     ID_int = function (me)
