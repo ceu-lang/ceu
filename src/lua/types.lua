@@ -2,7 +2,9 @@ TYPES = {
 }
 
 function TYPES.noc (str)
-    return string.gsub(str, '%.', '_dot_')
+    str = string.gsub(str, '%.',  '_dot_')
+    str = string.gsub(str, '%&&', '_ptr_')
+    return str
 end
 
 function TYPES.n2uint (n)
