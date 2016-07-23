@@ -130,17 +130,30 @@ tceu_vector]]..ptr..' '..id2..[[;
             return
         end
 
+--[[
+        if me.is_dyn then
+            local t = {}
+            for _, item in ipairs(ins) do
+                local _,_,_,Type,id = unpack(item)
+AST.dump(item)
+                if item.is_dyn then
+                    local data = Type[1].dcl
+                    t[#t+1] = item.dyn
+                end
+            end
+for _,v in ipairs(t) do
+    DBG('>>>', v)
+end
+error'oi'
+        end
+]]
+
         me.mems.wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
 CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
                            tceu_code_args_]]..me.id..[[ ps)
 {
     tceu_code_mem_]]..me.id..[[ mem;
-]]
-        if me.is_dyn then
-            --error'oi'
-        end
-        me.mems.wrapper = me.mems.wrapper .. [[
     CEU_STK_LBL((tceu_evt*)&ps, stk, (tceu_code_mem*)&mem, trlK, ]]..me.lbl_in.id..[[);
 ]]
         if not TYPES.check(Type,'void') then
@@ -160,7 +173,7 @@ CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
         me.mems = {
             mem   = '',
             id    = MEMS.datas.id,
-            super = (me.super and me.super.mems.id) or 'CEU_DATA__NONE',
+            super = (me.hier and me.hier.up and me.hier.up.mems.id) or 'CEU_DATA__NONE',
         }
         MEMS.datas.id = MEMS.datas.id + 1
     end,
@@ -169,7 +182,7 @@ CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
         me.mems.mem = [[
 typedef struct tceu_data_]]..me.id_..[[ {
 ]]
-        if me.in_hier then
+        if me.hier then
             me.mems.mem = me.mems.mem..[[
     tceu_data data;
 ]]
@@ -261,10 +274,10 @@ return opt;
                     if data then
                         -- same name for all class hierarchy
                         while true do
-                            if not data.super then
+                            if not (data.hier and data.hier.up) then
                                 break
                             else
-                                data = data.super
+                                data = data.hier.up
                             end
                         end
                         dcl.id_ = string.upper('CEU_EVENT'..'_'..data.id..'_'..dcl.id)

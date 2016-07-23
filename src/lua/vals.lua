@@ -113,7 +113,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local ps = {}
 
         if ID_abs.dcl.tag == 'Data' then
-            if ID_abs.dcl.in_hier then
+            if ID_abs.dcl.hier then
                 ps[1] = '.data.id = CEU_DATA_'..ID_abs.dcl.id_
             end
         end
