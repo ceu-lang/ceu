@@ -130,8 +130,6 @@ tceu_vector]]..ptr..' '..id2..[[;
             return
         end
 
-DBG('>>>', 'code', me.id)
-        local switch = ''
         local T = {}
         do
             for _, item in ipairs(ins) do
@@ -139,42 +137,24 @@ DBG('>>>', 'code', me.id)
                 local data = AST.get(Type,'',1,'ID_abs')
                 if data and data.dcl.hier then
                     local t = {id=id}
-                    T[#T+1] = t
                     local id_super = TYPES.noc(data.dcl.id)
                     t[#t+1] = {
                         'CEU_DATA_'..TYPES.noc(id_super),
-                        ID..item.id,
+                        item.id,
                     }
                     for _, sub in ipairs(data.dcl.hier.down) do
                         t[#t+1] = {
                             'CEU_DATA_'..TYPES.noc(sub.id),
-                            ID..string.gsub(item.id,
+                            string.gsub(item.id,
                                         '_'..id_super..'$',
                                         '_'..TYPES.noc(sub.id))
                         }
                     end
+                    if #t > 1 then
+                        T[#T+1] = t
+                    end
                 end
             end
-
-            for _,t in ipairs(T) do
-                DBG('>>> '..t.id)
-                switch = switch .. [[
-switch (ps.]]..t.id..[[->data.id) {
-]]
-                for _,v in ipairs(t) do
-                    local id, f = unpack(v)
-                    DBG('', unpack(v))
-                    switch = switch .. [[
-    case ]]..id..[[:
-        lbl = CEU_LABEL_Code_]]..f..[[;
-        break;
-]]
-                end
-                switch = switch .. [[
-}
-]]
-            end
-            DBG(switch)
         end
 
         me.mems.wrapper = [[
@@ -187,10 +167,11 @@ CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
 
         if #T > 0 then
+            local switch = F.__multimethods(T,ID)
             me.mems.wrapper = me.mems.wrapper .. switch
         else
             me.mems.wrapper = me.mems.wrapper .. [[
-    lbl = me.lbl_in.id
+    lbl = ]]..me.lbl_in.id..[[;
 ]]
         end
 
@@ -205,6 +186,34 @@ CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
         me.mems.wrapper = me.mems.wrapper..[[
 }
 ]]
+    end,
+
+    __multimethods = function (T, ID, i, lbl)
+        i = i or 1
+        lbl = lbl or ''
+        local t = T[i]
+        if not t then
+            return [[
+lbl = CEU_LABEL_Code_]]..ID..lbl..[[;
+]]
+        end
+
+        local switch = [[
+switch (ps.]]..t.id..[[->data.id) {
+]]
+        for _,v in ipairs(t) do
+            local id, f = unpack(v)
+            switch = switch .. [[
+    case ]]..id..[[:
+        ]]..F.__multimethods(T,ID,i+1,lbl..f)..[[
+        break;
+]]
+        end
+        switch = switch .. [[
+}
+]]
+
+        return switch
     end,
 
     ---------------------------------------------------------------------------
