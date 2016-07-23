@@ -9,6 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+--]=====]
 Test { [[
 data Aa with
     var int a;
@@ -62,12 +63,35 @@ escape (call Ff(&b,22,&b)) + (call Ff(&a,33,&a));
     run = 63,
 }
 
-- TODO:
-    - mm p/ code/await
-    - mm p/ X as Y
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight Ff (var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight Ff (var& Aa.Bb b, var int yyy) => int do
+    escape b.b + (call Ff(&b as Aa,11)) + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call Ff(&b,22)) + (call Ff(&a,33));
+]],
+    run = 72,
+}
+
+-- TODO:
+    -- mm p/ code/await
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested

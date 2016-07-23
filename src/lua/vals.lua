@@ -138,17 +138,25 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                 elseif is_alias then
                     cast = '('..TYPES.toc(var_tp)..'*)'
                 end
+
+                if var_tp[1].dcl.hier then
+                    if v.tag == 'Exp_as' then
+                        ps[#ps+1] = '._data_'..i..' = '..'CEU_DATA_'..v.info.tp[1].dcl.id
+                    else
+                        ps[#ps+1] = '._data_'..i..' = 0'
+                    end
+                end
             end
 
             if TYPES.check(var_tp,'?') then
                 if v.tag == 'ID_any' then
-                    ps[#ps+1] = '.'..var_id..'= { .is_set=0 }'
+                    ps[#ps+1] = '.'..var_id..' = { .is_set=0 }'
                 else
-                    ps[#ps+1] = '.'..var_id..'= { .is_set=1, .value='..V(v)..'}'
+                    ps[#ps+1] = '.'..var_id..' = { .is_set=1, .value='..V(v)..'}'
                 end
             else
                 if v.tag ~= 'ID_any' then
-                    ps[#ps+1] = '.'..var_id..'='..cast..V(v)
+                    ps[#ps+1] = '.'..var_id..' = '..cast..V(v)
                 end
             end
         end
@@ -161,7 +169,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         end
 
         return '(struct '..id_struct..')'..
-                    '{'..table.concat(ps,',')..'}'
+                    '{\n'..table.concat(ps,',\n')..'\n}'
     end,
 
     Explist = function (me)

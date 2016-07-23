@@ -124,19 +124,14 @@ tceu_vector]]..ptr..' '..id2..[[;
                 error'bug found'
             end
         end
-        me.mems.args = me.mems.args..'} tceu_code_args_'..me.id..';\n'
-
-        if mod == 'code/await' then
-            return
-        end
 
         local T = {}
         do
-            for _, item in ipairs(ins) do
+            for i, item in ipairs(ins) do
                 local _,_,_,Type,id = unpack(item)
                 local data = AST.get(Type,'',1,'ID_abs')
                 if data and data.dcl.hier then
-                    local t = {id=id}
+                    local t = {id=id, i=i}
                     local id_super = TYPES.noc(data.dcl.id)
                     t[#t+1] = {
                         'CEU_DATA_'..TYPES.noc(id_super),
@@ -152,9 +147,18 @@ tceu_vector]]..ptr..' '..id2..[[;
                     end
                     if #t > 1 then
                         T[#T+1] = t
+                        me.mems.args = me.mems.args .. [[
+tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
+]]
                     end
                 end
             end
+        end
+
+        me.mems.args = me.mems.args..'} tceu_code_args_'..me.id..';\n'
+
+        if mod == 'code/await' then
+            return
         end
 
         me.mems.wrapper = [[
@@ -206,26 +210,33 @@ break;
         end
 
         local switch = [[
-switch (ps.]]..t.id..[[->data.id) {
+{
+    tceu_ndata data_]]..t.i..[[ = ((ps._data_]]..t.i..[[ == CEU_DATA__NONE) ?
+                                    ps.]]..t.id..[[->data.id :
+                                    ps._data_]]..t.i..[[);
+    switch (data_]]..t.i..[[) {
 ]]
         for i=#t, 1, -1 do
             local v = t[i]
             local id, f = unpack(v)
             switch = switch .. [[
-    case ]]..id..[[:
+        case ]]..id..[[:
         ]]..F.__multimethods(T,ID,I+1,lbl..f)..[[
 ]]
         end
         switch = switch .. [[
-    default:
-        ceu_dbg_assert(0);  /* TODO: runtime error message */
-}
+        default:
+            ceu_dbg_assert(0);  /* TODO: runtime error message */
+    }
 ]]
         if I > 1 then
             switch = switch .. [[
     break;
 ]]
         end
+        switch = switch .. [[
+}
+]]
 
         return switch
     end,
