@@ -13,23 +13,23 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var& Aa a) => int do
-    escape a.a;
+code/tight Ff (var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
 end
 
 data Aa.Bb with
     var int b;
 end
 
-code/tight Ff (var& Aa.Bb b) => int do
-    escape b.b + (call Ff(&b as Aa));
+code/tight Ff (var& Aa.Bb b, var int yyy) => int do
+    escape b.b + (call Ff(&b as Aa, 111)) + yyy;
 end
 
 var Aa.Bb b = val Aa.Bb(10,20);
 
-escape (call Ff(&b));
+escape (call Ff(&b, 222));
 ]],
-    run = 10,
+    run = 232,
 }
 
 --[=====[

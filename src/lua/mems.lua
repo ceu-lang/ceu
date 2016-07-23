@@ -133,10 +133,15 @@ tceu_vector]]..ptr..' '..id2..[[;
         me.mems.wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
 CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
-                        tceu_nlbl lbl, tceu_code_args_]]..me.id..[[ ps)
+                           tceu_code_args_]]..me.id..[[ ps)
 {
     tceu_code_mem_]]..me.id..[[ mem;
-    CEU_STK_LBL((tceu_evt*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
+]]
+        if me.is_dyn then
+            --error'oi'
+        end
+        me.mems.wrapper = me.mems.wrapper .. [[
+    CEU_STK_LBL((tceu_evt*)&ps, stk, (tceu_code_mem*)&mem, trlK, ]]..me.lbl_in.id..[[);
 ]]
         if not TYPES.check(Type,'void') then
             me.mems.wrapper = me.mems.wrapper..[[

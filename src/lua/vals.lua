@@ -92,9 +92,7 @@ F = {
         local mod,_,_,Typepars_ids = unpack(ID_abs.dcl)
         assert(mod == 'code/tight')
         return [[
-CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
-                               ]]..ID_abs.dcl.lbl_in.id..[[,
-                               ]]..V(Abs_Cons)..[[)
+CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 ]]
     end,
 

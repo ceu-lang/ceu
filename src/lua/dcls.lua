@@ -281,6 +281,7 @@ F = {
                 me.dyns = me.dyns..'_'..i..'_'..kind..
                                    '_'..(is_alias and 'y' or 'n')..
                                    '_'..TYPES.tostring(Type)
+                me.__par.is_dyn = true
             end
         end
         me.dyns = TYPES.noc(me.dyns)
