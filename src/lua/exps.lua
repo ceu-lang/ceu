@@ -172,6 +172,10 @@ error'TODO: remove below'
 
         -- ctx
         local par = me.__par
+        if par.tag == 'Exp_as' then
+            -- &y as X; (y is X.Y)
+            par = par.__par
+        end
         ASR(par.tag=='Set_Alias' or par.tag=='Explist' or par.tag=='Abslist', me,
             'invalid expression : unexpected context for operation `&´')
 

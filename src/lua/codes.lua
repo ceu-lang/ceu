@@ -261,7 +261,7 @@ _ceu_trl++;
     ---------------------------------------------------------------------------
 
     Code = function (me)
-        local mod,_,id,Typepars_ids,_,_,body = unpack(me)
+        local mod,_,_,Typepars_ids,_,_,body = unpack(me)
         if not body then return end
 
 LINE(me, [[
@@ -286,7 +286,7 @@ if (0)
             local kind,_,c,Type,id2 = unpack(Typepars_ids_item)
             assert(kind=='var' or kind=='vector')
             LINE(me, [[
-]]..V(vars[i],{is_bind=true})..[[ = ((tceu_code_args_]]..id..[[*)_ceu_evt)->]]..id2..[[;
+]]..V(vars[i],{is_bind=true})..[[ = ((tceu_code_args_]]..me.id..[[*)_ceu_evt)->]]..id2..[[;
 ]])
         end
 

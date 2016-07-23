@@ -8,7 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[=====[
 Test { [[
 data Aa with
     var int a;
@@ -23,7 +22,7 @@ data Aa.Bb with
 end
 
 code/tight Ff (var& Aa.Bb b) => int do
-    escape b.b;
+    escape b.b + (call Ff(&b as Aa));
 end
 
 var Aa.Bb b = val Aa.Bb(10,20);
@@ -33,6 +32,7 @@ escape (call Ff(&b));
     run = 10,
 }
 
+--[=====[
 do return end -- OK
 --]=====]
 

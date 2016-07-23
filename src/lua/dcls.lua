@@ -272,9 +272,28 @@ F = {
 
     -- CODE / DATA
 
+    Typepars_ids = function (me)
+        -- multi-methods: change "me.id" or Code
+        me.dyns = ''
+        for i, item in ipairs(me) do
+            local kind,is_alias,_,Type,_ = unpack(item)
+            if Type[1].tag=='ID_abs' and Type[1].dcl.in_hier then
+                me.dyns = me.dyns..'_'..i..'_'..kind..
+                                   '_'..(is_alias and 'y' or 'n')..
+                                   '_'..TYPES.tostring(Type)
+            end
+        end
+        me.dyns = TYPES.noc(me.dyns)
+    end,
+
     Code = function (me)
         local _,mod1,id,ins1,_,_,blk1 = unpack(me)
-        me.id = id
+
+        if ins1.tag == 'Typepars_ids' then
+            me.id = id..ins1.dyns
+        else
+            me.id = id
+        end
 
         local old = dcls_get(AST.par(me,'Block'), me.id, true)
         if old then

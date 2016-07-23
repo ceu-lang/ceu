@@ -74,11 +74,11 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     end,
 
     Code = function (me)
-        local mod,_,id, ins, mid, Type, body = unpack(me)
+        local mod,_,_, ins, mid, Type, body = unpack(me)
         if not body then return end
 
         -- args
-        me.mems.args = 'typedef struct tceu_code_args_'..id..' {\n'
+        me.mems.args = 'typedef struct tceu_code_args_'..me.id..' {\n'
         if mod=='code/tight' and (not TYPES.check(Type,'void')) then
             -- returns immediatelly, uses an extra field for the return value
             me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..' _ret;\n'
@@ -124,7 +124,7 @@ tceu_vector]]..ptr..' '..id2..[[;
                 error'bug found'
             end
         end
-        me.mems.args = me.mems.args..'} tceu_code_args_'..id..';\n'
+        me.mems.args = me.mems.args..'} tceu_code_args_'..me.id..';\n'
 
         if mod == 'code/await' then
             return
@@ -132,10 +132,10 @@ tceu_vector]]..ptr..' '..id2..[[;
 
         me.mems.wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
-CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK,
-                        tceu_nlbl lbl, tceu_code_args_]]..id..[[ ps)
+CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
+                        tceu_nlbl lbl, tceu_code_args_]]..me.id..[[ ps)
 {
-    tceu_code_mem_]]..id..[[ mem;
+    tceu_code_mem_]]..me.id..[[ mem;
     CEU_STK_LBL((tceu_evt*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
 ]]
         if not TYPES.check(Type,'void') then
@@ -151,7 +151,7 @@ CEU_WRAPPER_]]..id..[[ (tceu_stk* stk, tceu_ntrl trlK,
     ---------------------------------------------------------------------------
 
     Data__PRE = function (me)
-        me.id_ = string.gsub(me.id,'%.','_')
+        me.id_ = TYPES.noc(me.id)
         me.mems = {
             mem   = '',
             id    = MEMS.datas.id,

@@ -90,7 +90,7 @@ F = {
         local _, Abs_Cons = unpack(me)
         local ID_abs, _ = unpack(Abs_Cons)
         local mod,_,_,Typepars_ids = unpack(ID_abs.dcl)
-        assert(mod == 'code/instantaneous')
+        assert(mod == 'code/tight')
         return [[
 CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
                                ]]..ID_abs.dcl.lbl_in.id..[[,
@@ -348,15 +348,17 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
         if Type.tag == 'Type' then
             local ret do
                 if Type[1].tag=='ID_abs' and Type[1].dcl.tag=='Data' then
-                    local ptr1,ptr2 = '*', '&'
+                    local ptr1,ptr2,ptr3 = '*', '*', '&'
                     if TYPES.check(Type,'&&') then
-                        ptr1, ptr2 = '', ''
+                        ptr1, ptr2, ptr3 = '', '', ''
+                    elseif e.info.tag == 'Alias' then
+                        ptr1, ptr2, ptr3 = '', '*', ''
                     end
 
                     ret = [[
 (]]..ptr1..[[(
-    (]]..TYPES.toc(Type)..ptr1..[[)
-    ceu_data_as((tceu_data*)]]..ptr2..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
+    (]]..TYPES.toc(Type)..ptr2..[[)
+    ceu_data_as((tceu_data*)]]..ptr3..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
                 __FILE__, (__LINE__-3))
 ))
 ]]

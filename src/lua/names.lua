@@ -70,7 +70,8 @@ F = {
         if not e.info then return end   -- see EXPS below
 
         -- ctx
-        INFO.asr_tag(e, {'Val','Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Alias','Val','Nat','Var','Pool'},
+                     'invalid operand to `'..op..'´')
 
         -- tp
         ASR(not TYPES.check(e.info.tp,'?'), me,

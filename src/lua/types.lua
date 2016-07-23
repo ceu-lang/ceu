@@ -1,6 +1,10 @@
 TYPES = {
 }
 
+function TYPES.noc (str)
+    return string.gsub(str, '%.', '_dot_')
+end
+
 function TYPES.n2uint (n)
     if n < 2^8 then
         return 'u8'
@@ -52,7 +56,7 @@ function TYPES.toc (tp)
 
     local id = types_id(tp)
     id = string.gsub(id,'^_', '')
-    id = string.gsub(id,'%.', '_')   -- data A.B -> A_B
+    id = TYPES.noc(id) -- data A.B -> A_B
 
     local mods = {}
     for i=2, #tp do
