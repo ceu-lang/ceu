@@ -22,7 +22,8 @@ data Aa.Bb with
 end
 
 code/tight Ff (var& Aa.Bb b, var int yyy) => int do
-    escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
 end
 
 var Aa    a = val Aa(1);
@@ -30,7 +31,8 @@ var Aa.Bb b = val Aa.Bb(2,3);
 
 escape (call Ff(&b,22)) + (call Ff(&a,33));
 ]],
-    run = 58,
+    --run = 58,
+    run = 59,
 }
 
 do return end -- OK

@@ -355,7 +355,7 @@ F = {
             ASR(dcl, me,
                 'invalid declaration : abstraction "'..super..'" is not declared')
             dcl.hier = dcl.hier or { down={} }
-            dcl.hier[#dcl.hier+1] = me
+            dcl.hier.down[#dcl.hier.down+1] = me
             me.hier = { up=dcl, down={} }
 
             -- copy all super vars to myself

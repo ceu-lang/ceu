@@ -74,7 +74,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     end,
 
     Code = function (me)
-        local mod,_,_, ins, mid, Type, body = unpack(me)
+        local mod,_,ID, ins, mid, Type, body = unpack(me)
         if not body then return end
 
         -- args
@@ -130,28 +130,52 @@ tceu_vector]]..ptr..' '..id2..[[;
             return
         end
 
---[[
 DBG('>>>', 'code', me.id)
+        local switch = ''
+        local T = {}
         do
-            local t = {}
             for _, item in ipairs(ins) do
                 local _,_,_,Type,id = unpack(item)
-AST.dump(item)
-                if item.is_dyn then
-                    local data = Type[1].dcl
-                    for _, sub in ipairs(data.hier.down) do
-DBG('>>>', sub.id)
-error'aaa'
+                local data = AST.get(Type,'',1,'ID_abs')
+                if data and data.dcl.hier then
+                    local t = {id=id}
+                    T[#T+1] = t
+                    local id_super = TYPES.noc(data.dcl.id)
+                    t[#t+1] = {
+                        'CEU_DATA_'..TYPES.noc(id_super),
+                        ID..item.id,
+                    }
+                    for _, sub in ipairs(data.dcl.hier.down) do
+                        t[#t+1] = {
+                            'CEU_DATA_'..TYPES.noc(sub.id),
+                            ID..string.gsub(item.id,
+                                        '_'..id_super..'$',
+                                        '_'..TYPES.noc(sub.id))
+                        }
                     end
-                    t[#t+1] = item.dyn
                 end
             end
-for _,v in ipairs(t) do
-    DBG('>>>', v)
-end
-error'oi'
-        end
+
+            for _,t in ipairs(T) do
+                DBG('>>> '..t.id)
+                switch = switch .. [[
+switch (ps.]]..t.id..[[->data.id) {
 ]]
+                for _,v in ipairs(t) do
+                    local id, f = unpack(v)
+                    DBG('', unpack(v))
+                    switch = switch .. [[
+    case ]]..id..[[:
+        lbl = CEU_LABEL_Code_]]..f..[[;
+        break;
+]]
+                end
+                switch = switch .. [[
+}
+]]
+            end
+            DBG(switch)
+        end
 
         me.mems.wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
@@ -159,7 +183,19 @@ CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
                            tceu_code_args_]]..me.id..[[ ps)
 {
     tceu_code_mem_]]..me.id..[[ mem;
-    CEU_STK_LBL((tceu_evt*)&ps, stk, (tceu_code_mem*)&mem, trlK, ]]..me.lbl_in.id..[[);
+    tceu_nlbl lbl;
+]]
+
+        if #T > 0 then
+            me.mems.wrapper = me.mems.wrapper .. switch
+        else
+            me.mems.wrapper = me.mems.wrapper .. [[
+    lbl = me.lbl_in.id
+]]
+        end
+
+        me.mems.wrapper = me.mems.wrapper .. [[
+    CEU_STK_LBL((tceu_evt*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
 ]]
         if not TYPES.check(Type,'void') then
             me.mems.wrapper = me.mems.wrapper..[[
