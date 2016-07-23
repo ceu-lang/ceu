@@ -8,7 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[=====[
 Test { [[
 data Aa with
     var int a;
@@ -23,17 +22,20 @@ data Aa.Bb with
 end
 
 code/tight Ff (var& Aa.Bb b, var int yyy) => int do
-    escape b.b + (call Ff(&b as Aa, 111)) + yyy;
+    escape b.b + (call Ff(&b as Aa, 11)) + yyy;
 end
 
-var Aa.Bb b = val Aa.Bb(10,20);
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
 
-escape (call Ff(&b, 222));
+escape (call Ff(&b,22)) + (call Ff(&a,33));
 ]],
-    run = 232,
+    run = 58,
 }
 
 do return end -- OK
+--[=====[
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -30611,7 +30613,6 @@ escape 1;
     dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
---]=====]
 Test { [[
 code/tight Code (var void a, var  int b) => void
 do

@@ -91,6 +91,7 @@ F = {
         local ID_abs, _ = unpack(Abs_Cons)
         local mod,_,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mod == 'code/tight')
+DBG('>>>', ID_abs.dcl.id, me.ln[2])
         return [[
 CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 ]]

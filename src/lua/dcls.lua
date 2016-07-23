@@ -288,9 +288,8 @@ F = {
             t[i] = Type
         end
         F.Typelist(t)
---[[
 
-        -- multi-methods: change "me.id" or Code
+        -- multi-methods: changes "me.id" on Code
         me.ids = ''
         for i, item in ipairs(me) do
             local kind,is_alias,_,Type,_ = unpack(item)
@@ -302,19 +301,11 @@ F = {
                 me.ids = me.ids..item.id
             end
         end
-]]
     end,
 
     Code = function (me)
         local _,mod1,id,ins1,_,_,blk1 = unpack(me)
-
-        me.id = id
-
---[[
-        if ins1.tag == 'Code_Pars' then
-            me.id = id..ins1.ids
-        end
-]]
+        me.id = id..ins1.ids
 
         local old = dcls_get(AST.par(me,'Block'), me.id, true)
         if old then
@@ -337,8 +328,15 @@ F = {
                 '(vs. '..ins2.ln[1]..':'..ins2.ln[2]..')')
         end
 
-        --local blk = AST.par(me,'Block')
+        -- base multimethod
         local blk = AST.asr(AST.root,'', 1,'Block')
+        if ins1.ids ~= '' and (not blk.dcls[id]) then
+            blk.dcls[#blk.dcls+1] = me
+            blk.dcls[id] = me
+            me.is_used = (old and old.is_used)
+        end
+
+        --local blk = AST.par(me,'Block')
         blk.dcls[#blk.dcls+1] = me
         blk.dcls[me.id] = me
         me.is_used = (old and old.is_used)
@@ -407,6 +405,7 @@ F = {
     ID_abs = function (me)
         local id = unpack(me)
         me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'abstraction')
+DBG('ID_abs', id, me.dcl.id)
     end,
 
     ID_int = function (me)
