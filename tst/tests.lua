@@ -61320,6 +61320,25 @@ escape 0;
     --dcls = 'line 2 : invalid event type : must be primitive',
 }
 
+Test { [[
+data Dd with
+    var int x;
+end
+
+code/tight Fx (var Dd? d) => int do
+    if d? then
+        escape d!.x + 1;
+    else
+        escape 1;
+    end
+end
+escape (call Fx(Dd(1))) + (call Fx(_));
+]],
+    run = 3,
+}
+
+-- << ADT : MISC
+
 -->> DATA / ALIAS
 
 Test { [[
@@ -61348,8 +61367,6 @@ escape (d.ptr == &&_V) as int;
 }
 
 --<< DATA / ALIAS
-
--- << ADT : MISC
 
 -->>> DATA/EVENTS
 

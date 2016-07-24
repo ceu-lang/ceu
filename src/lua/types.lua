@@ -3,6 +3,7 @@ TYPES = {
 
 function TYPES.noc (str)
     str = string.gsub(str, '%.',  '_dot_')
+    str = string.gsub(str, '%?',  '_ask_')
     str = string.gsub(str, '%&&', '_ptr_')
     return str
 end
