@@ -9,89 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
---]=====]
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight Ff (var& Aa a, var int xxx) => int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight Ff (var& Aa.Bb b, var int yyy) => int do
-    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
-    escape b.b + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call Ff(&b,22)) + (call Ff(&a,33));
-]],
-    --run = 58,
-    run = 59,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight Ff (var& Aa a1, var int xxx, var& Aa a2) => int do
-    escape a1.a + xxx + a2.a;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight Ff (var& Aa.Bb b1, var int yyy, var& Aa.Bb b2) => int do
-    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
-    escape b1.b + yyy + b2.b;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call Ff(&b,22,&b)) + (call Ff(&a,33,&a));
-]],
-    run = 63,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/tight Ff (var& Aa a, var int xxx) => int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight Ff (var& Aa.Bb b, var int yyy) => int do
-    escape b.b + (call Ff(&b as Aa,11)) + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call Ff(&b,22)) + (call Ff(&a,33));
-]],
-    run = 72,
-}
-
--- TODO:
-    -- mm p/ code/await
-
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -30624,7 +30543,7 @@ end
 
 --<<< WATCHING
 
--->>> CODE / INSTANTANEOUS / FUNCTIONS
+-->>> CODE / TIGHT / FUNCTIONS
 
 Test { [[
 code/tight Code (var int)=>void
@@ -31994,9 +31913,9 @@ escape cs[0];
 
 --<< VECTOR / CODE
 
---<<< CODE / INSTANTANEOUS / FUNCTIONS
+--<<< CODE / TIGHT / FUNCTIONS
 
--->>> CODE / DELAYED
+-->>> CODE / AWAIT
 
 Test { [[
 code/await F (void)=>void
@@ -32465,7 +32384,7 @@ escape x;
     --mode = 'line 7 : cannot read field with mode `input´',
 }
 
--->> CODE / DELAYED / WATCHING
+-->> CODE / AWAIT / WATCHING
 
 Test { [[
 code/await Code (var int x) => int do
@@ -32758,7 +32677,7 @@ escape ret+x!;
     run = { ['~>1s']=22 },
 }
 
---<< CODE / DELAYED / WATCHING
+--<< CODE / AWAIT / WATCHING
 
 -- TODO: SKIP
 --[===[
@@ -33368,7 +33287,7 @@ escape 1;
 -- TODO: SKIP
 --]===]
 
--->>> CODE / DELAYED / SPAWN
+-->>> CODE / AWAIT / SPAWN
 
 Test { [[
 code/await Tx (var& int a)=>int do
@@ -33633,7 +33552,7 @@ escape _V;
     run = 1,
 }
 
--->> CODE / DELAYED / EMIT-INTERNAL
+-->> CODE / AWAIT / EMIT-INTERNAL
 
 Test { [[
 code/await Tx (var& int ret, var int x)=>void do
@@ -33694,9 +33613,178 @@ escape ret;
     run = { ['~>1s']=6 },
 }
 
--->> CODE / DELAYED / EMIT-INTERNAL
+-->> CODE / AWAIT / EMIT-INTERNAL
 
---<<< CODE / DELAYED / FUNCTIONS
+-->> CODE / TIGHT / AWAIT / MULTIMETHODS
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight Ff (var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight Ff (var& Aa.Bb b, var int yyy) => int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call Ff(&b,22)) + (call Ff(&a,33));
+]],
+    --run = 58,
+    run = 59,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight Ff (var& Aa a1, var int xxx, var& Aa a2) => int do
+    escape a1.a + xxx + a2.a;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight Ff (var& Aa.Bb b1, var int yyy, var& Aa.Bb b2) => int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b1.b + yyy + b2.b;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call Ff(&b,22,&b)) + (call Ff(&a,33,&a));
+]],
+    run = 63,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight Ff (var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight Ff (var& Aa.Bb b, var int yyy) => int do
+    escape b.b + (call Ff(&b as Aa,11)) + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call Ff(&b,22)) + (call Ff(&a,33));
+]],
+    run = 72,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await Ff (var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await Ff (var& Aa.Bb b, var int yyy) => int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await Ff(&b,22);
+var int v2 = await Ff(&a,33);
+escape v1 + v2;
+]],
+    --run = 58,
+    run = 59,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await Ff (var& Aa a1, var int xxx, var& Aa a2) => int do
+    escape a1.a + xxx + a2.a;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await Ff (var& Aa.Bb b1, var int yyy, var& Aa.Bb b2) => int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b1.b + yyy + b2.b;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await Ff(&b,22,&b);
+var int v2 = await Ff(&a,33,&a);
+
+escape v1 + v2;
+]],
+    run = 63,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await Ff (var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await Ff (var& Aa.Bb b, var int yyy) => int do
+    var int v = await Ff(&b as Aa,11);
+    escape b.b + v + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+var int v1 = await Ff(&b,22);
+var int v2 = await Ff(&a,33);
+
+escape v1 + v2;
+]],
+    run = 72,
+}
+
+--<< CODE / TIGHT / AWAIT / MULTIMETHODS
+
+--<<< CODE / AWAIT / FUNCTIONS
 
 -- TODO: SKIP
 --[===[

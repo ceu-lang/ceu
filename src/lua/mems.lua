@@ -157,11 +157,8 @@ tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
 
         me.mems.args = me.mems.args..'} tceu_code_args_'..me.id..';\n'
 
-        if mod == 'code/await' then
-            return
-        end
-
-        me.mems.wrapper = [[
+        if mod == 'code/tight' then
+            me.mems.wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
 CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
                            tceu_code_args_]]..me.id..[[ ps)
@@ -169,27 +166,46 @@ CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
     tceu_code_mem_]]..me.id..[[ mem;
     tceu_nlbl lbl;
 ]]
-
-        if #T > 0 then
-            local switch = F.__multimethods(T,ID)
-            me.mems.wrapper = me.mems.wrapper .. switch
-        else
-            me.mems.wrapper = me.mems.wrapper .. [[
+            if #T > 0 then
+                local switch = F.__multimethods(T,ID)
+                me.mems.wrapper = me.mems.wrapper .. switch
+            else
+                me.mems.wrapper = me.mems.wrapper .. [[
     lbl = ]]..me.lbl_in.id..[[;
 ]]
-        end
-
-        me.mems.wrapper = me.mems.wrapper .. [[
+            end
+            me.mems.wrapper = me.mems.wrapper .. [[
     CEU_STK_LBL((tceu_evt*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
 ]]
-        if not TYPES.check(Type,'void') then
-            me.mems.wrapper = me.mems.wrapper..[[
+            if not TYPES.check(Type,'void') then
+                me.mems.wrapper = me.mems.wrapper..[[
     return ps._ret;
 ]]
         end
-        me.mems.wrapper = me.mems.wrapper..[[
+            me.mems.wrapper = me.mems.wrapper..[[
 }
 ]]
+        else
+            me.mems.wrapper = [[
+static void CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
+                                       tceu_code_args_]]..me.id..[[ ps,
+                                       tceu_code_mem* mem)
+{
+    tceu_nlbl lbl;
+]]
+            if #T > 0 then
+                local switch = F.__multimethods(T,ID)
+                me.mems.wrapper = me.mems.wrapper .. switch
+            else
+                me.mems.wrapper = me.mems.wrapper .. [[
+    lbl = ]]..me.lbl_in.id..[[;
+]]
+            end
+            me.mems.wrapper = me.mems.wrapper .. [[
+    CEU_STK_LBL((tceu_evt*)&ps, stk, mem, trlK, lbl);
+}
+]]
+        end
     end,
 
     __multimethods = function (T, ID, I, lbl)

@@ -348,8 +348,8 @@ if (0)
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
 
-    CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
-                (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..', 0, '..ID_abs.dcl.lbl_in.id..[[);
+    CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
+                                      (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
 }
 ]],
         })
