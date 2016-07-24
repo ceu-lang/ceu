@@ -294,11 +294,14 @@ F = {
         for i, item in ipairs(me) do
             local kind,is_alias,_,Type,_ = unpack(item)
             if Type[1].tag == 'ID_abs' then
+F.ID_abs(Type[1])
+if Type[1].dcl.hier then
                 item.id = '_'..i..'_'..kind..
                           '_'..(is_alias and 'y' or 'n')..
                           '_'..TYPES.tostring(Type)
                 item.id = TYPES.noc(item.id)
                 me.ids = me.ids..item.id
+end
             end
         end
     end,
@@ -345,8 +348,10 @@ F = {
         if not me.is_multi_base then
             me.id = id..ins1.ids
             me.is_multi = (ins1.ids ~= '')
-            me.multi_base = DCLS.asr(me,blk,id,true,'TODO')
-            me.multi_base.multi_last = me
+            if me.is_multi then
+                me.multi_base = DCLS.asr(me,blk,id,true,'TODO')
+                me.multi_base.multi_last = me
+            end
         end
 
         local old = DCLS.get(blk, me.id)

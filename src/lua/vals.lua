@@ -99,6 +99,9 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     Abs_Cons = function (me, mid)
         local ID_abs, Abslist = unpack(me)
 
+        me.is_dyn = false
+        me.static = ''
+
         local id_struct
         local vars do
             if ID_abs.dcl.tag == 'Data' then
@@ -146,8 +149,10 @@ error'TODO'
 
                 if var_tp[1].dcl.hier then
                     if v.tag == 'Exp_as' then
-                        ps[#ps+1] = '._data_'..i..' = '..'CEU_DATA_'..v.info.tp[1].dcl.id
+                        ps[#ps+1] = '._data_'..i..' = CEU_DATA_'..v.info.tp[1].dcl.id
+                        me.static = me.static..var.id
                     else
+                        me.is_dyn = true
                         ps[#ps+1] = '._data_'..i..' = 0'
                     end
                 end

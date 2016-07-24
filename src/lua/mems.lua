@@ -479,8 +479,11 @@ tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
     end,
 
     Abs_Await = function (me)
-        local dcl = AST.asr(me,'', 1,'Abs_Cons', 1,'ID_abs').dcl
-        CUR().mem = CUR().mem..'tceu_code_mem_'..dcl.id..' __mem_'..me.n..';\n'
+        local Abs_Cons = unpack(me)
+        local ID_abs = unpack(Abs_Cons)
+        V(Abs_Cons) -- compute "is_dyn"
+        local id = ID_abs.dcl.id..(Abs_Cons.is_dyn and '' or Abs_Cons.static)
+        CUR().mem = CUR().mem..'tceu_code_mem_'..id..' __mem_'..me.n..';\n'
     end,
 
     ---------------------------------------------------------------------------
