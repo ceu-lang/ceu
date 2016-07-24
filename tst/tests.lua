@@ -10,7 +10,6 @@ end
 
 --[=====[
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -33753,6 +33752,7 @@ escape v1 + v2;
     run = 63,
 }
 
+--]=====]
 Test { [[
 data Aa with
     var int a;
@@ -33782,6 +33782,7 @@ escape v1 + v2;
     run = 72,
 }
 
+do return end
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS
 
 --<<< CODE / AWAIT / FUNCTIONS

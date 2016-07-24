@@ -303,14 +303,57 @@ F = {
         end
     end,
 
-    Code = function (me)
-        local _,mod1,id,ins1,_,_,blk1 = unpack(me)
-        me.id = id..ins1.ids
+    -- detect "base" multimethod: create dummy copy with plain "id"
+    Code__PRE = function (me)
+        local _,_,id,ins,_,_,body = unpack(me)
+        F.Code_Pars(ins)
+        if ins.ids == '' then
+            return
+        end
 
-        local old = DCLS.get(AST.par(me,'Block'), me.id, true)
+        local blk = AST.asr(AST.root,'', 1,'Block')
+        local old = DCLS.get(blk, id)
         if old then
-            local _,mod2,_,ins2,_,_,blk2 = unpack(old)
-            ASR(not (blk1 and blk2), me, 'invalid `code´ declaration : body for "'..id..'" already exists')
+            return
+        end
+
+        if me.is_multi_base then
+            return
+        end
+
+        local orig
+        if body then
+            orig = body[1]
+            body[1] = AST.node('Stmts', me.ln)
+        end
+        local new = AST.copy(me)
+        if body then
+            body[1] = orig
+        end
+
+        new.id = id
+        new.is_multi_base = true
+
+        return AST.node('Stmts', me.ln, new, me)
+    end,
+
+    Code = function (me)
+        local _,mod1,id,ins1,_,_,body1 = unpack(me)
+
+        local blk = AST.asr(AST.root,'', 1,'Block')
+
+        if not me.is_multi_base then
+            me.id = id..ins1.ids
+            me.is_multi = (ins1.ids ~= '')
+            me.multi_base = DCLS.asr(me,blk,id,true,'TODO')
+            me.multi_base.multi_last = me
+        end
+
+        local old = DCLS.get(blk, me.id)
+        if old then
+            local _,mod2,_,ins2,_,_,body2 = unpack(old)
+            ASR(not (body1 and body2), me,
+                'invalid `code´ declaration : body for "'..id..'" already exists')
 
             local ok = (mod1==mod2 and #ins1==#ins2)
             if ok then
@@ -326,14 +369,6 @@ F = {
             ASR(ok, me,
                 'invalid `code´ declaration : unmatching prototypes '..
                 '(vs. '..ins2.ln[1]..':'..ins2.ln[2]..')')
-        end
-
-        -- base multimethod
-        local blk = AST.asr(AST.root,'', 1,'Block')
-        if ins1.ids ~= '' and (not blk.dcls[id]) then
-            blk.dcls[#blk.dcls+1] = me
-            blk.dcls[id] = me
-            me.is_used = (old and old.is_used)
         end
 
         --local blk = AST.par(me,'Block')

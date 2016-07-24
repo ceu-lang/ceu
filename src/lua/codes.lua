@@ -263,6 +263,7 @@ _ceu_trl++;
     Code = function (me)
         local mod,_,_,Code_Pars,_,_,body = unpack(me)
         if not body then return end
+        if me.is_multi_base then return end
 
 LINE(me, [[
 /* do not enter from outside */
@@ -280,13 +281,31 @@ if (0)
 ]])
         end
 
+        local args_id        = me.id
+        local args_Code_Pars = Code_Pars
+
+        if me.multi_base then
+            args_id = me.multi_base.id
+            _,_,_,args_Code_Pars = unpack(me.multi_base)
+        end
+
         local vars = AST.get(body,'Block', 1,'Stmts', 2,'Do', 2,'Block',
                                            1,'Stmts', 2,'Stmts')
         for i,Code_Pars_Item in ipairs(Code_Pars) do
             local kind,_,c,Type,id2 = unpack(Code_Pars_Item)
+
+            local cast = ''
+            if me.multi_base then
+                _,is_alias,_,Type2,id2 = unpack(args_Code_Pars[i])
+                if not AST.is_equal(Type,Type2) then
+                    cast = '('..TYPES.toc(Type)..(is_alias and '*' or '')..')'
+                end
+            end
+
             assert(kind=='var' or kind=='vector')
             LINE(me, [[
-]]..V(vars[i],{is_bind=true})..[[ = ((tceu_code_args_]]..me.id..[[*)_ceu_evt)->]]..id2..[[;
+]]..V(vars[i],{is_bind=true})..[[ =
+    ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_evt)->]]..id2..[[;
 ]])
         end
 
@@ -335,6 +354,12 @@ if (0)
         local Abs_Cons, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
+        local dcl = ID_abs.dcl
+        if dcl.multi_base then
+error'TODO'
+            dcl = dcl.multi_base
+        end
+
         HALT(me, {
             { evt = 'CEU_INPUT__CODE' },
             { lbl = me.lbl_out.id },
@@ -342,14 +367,14 @@ if (0)
             lbl = me.lbl_out.id,
             exec = [[
 {
-    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,mid)..[[;
+    tceu_code_args_]]..dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,mid)..[[;
 
     ]]..CUR(' __mem_'..me.n)..[[.mem.pak = NULL;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
 
-    CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
-                                      (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
+    CEU_WRAPPER_]]..dcl.id..[[(_ceu_stk, 0, __ceu_ps,
+                               (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
 }
 ]],
         })
@@ -358,6 +383,12 @@ if (0)
     Abs_Spawn = function (me)
         local Abs_Cons, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
+
+        local dcl = ID_abs.dcl
+        if dcl.multi_base then
+error'TODO'
+            dcl = dcl.multi_base
+        end
 
         LINE(me, [[
 {
@@ -374,10 +405,10 @@ if (0)
         __ceu_new_mem->up_mem = _ceu_mem;
         __ceu_new_mem->up_trl = _ceu_trlK;
 
-        tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
+        tceu_code_args_]]..dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
 
         CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
-                    __ceu_new_mem, 0, ]]..ID_abs.dcl.lbl_in.id..[[);
+                    __ceu_new_mem, 0, ]]..dcl.lbl_in.id..[[);
     }
 }
 ]])
@@ -697,6 +728,9 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
             if code then
                 local mod = unpack(code)
                 if mod == 'code/tight' then
+                    if code.multi_base then
+                        code = code.multi_base
+                    end
                     LINE(me, [[
 ((tceu_code_args_]]..code.id..[[*) _ceu_evt)->_ret = ]]..V(fr)..[[;
 ]])
@@ -740,6 +774,10 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 
         if to.info.dcl.is_mid then
             local Code = AST.par(me,'Code')
+            if Code.multi_base then
+                Code = Code.multi_base
+error'TODO'
+            end
             LINE(me, [[
 if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..to.info.dcl.id..[[ != NULL) {
     *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..to.info.dcl.id..[[) = ]]..V(to, {is_bind=true})..[[;

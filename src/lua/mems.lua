@@ -14,6 +14,7 @@ MEMS = {
         args     = '',
 --[[
         [1] = {
+            is_multi = ...,     -- dont generate wrapper/args
             mem     = '',
             wrapper = '',
             args    = '',
@@ -56,26 +57,42 @@ typedef struct tceu_code_mem_ROOT {
     Code__PRE = function (me)
         local _,_,_,_,_,_,body = unpack(me)
         if body then
-            me.mems = { mem='' }
+            me.mems = { me=me, mem='' }
         end
     end,
     Code__POS = function (me)
-        local _,_,_,_,_,_,body = unpack(me)
-        if body then
+        local _,_,id,_,_,_,body = unpack(me)
+        if not body then
+            return
+        end
+
+        if me.is_multi_base then
+            me.multis = {}
+            me.mems.mem = ''
+        else
+            if me.is_multi then
+                local t = me.multi_base.multis
+                t[#t+1] = me.id
+            end
+
             me.mems.mem = [[
 typedef struct tceu_code_mem_]]..me.id..[[ {
     tceu_code_mem mem;
     tceu_trl      trails[]]..me.trails_n..[[];
     ]]..me.mems.mem..[[
 } tceu_code_mem_]]..me.id..[[;
-]]..'\n'
-            MEMS.codes[#MEMS.codes+1] = me.mems
+]]
         end
+
+        MEMS.codes[#MEMS.codes+1] = me.mems
     end,
 
     Code = function (me)
         local mod,_,ID, ins, mid, Type, body = unpack(me)
-        if not body then return end
+
+        if (not body) or me.is_multi then
+            return
+        end
 
         -- args
         me.mems.args = 'typedef struct tceu_code_args_'..me.id..' {\n'
@@ -558,10 +575,25 @@ end
 
 for i, code in ipairs(MEMS.codes) do
     MEMS.codes.mems = MEMS.codes.mems..code.mem
-    if i < #MEMS.codes then
+    if i<#MEMS.codes and (not code.me.is_multi) then
         MEMS.codes.args = MEMS.codes.args..code.args
         if code.wrapper then
             MEMS.codes.wrappers = MEMS.codes.wrappers..code.wrapper
         end
+    end
+
+    if code.me and code.me.multi_base and code.me.multi_base.multi_last==code.me then
+        MEMS.codes.mems = MEMS.codes.mems..[[
+typedef union {
+    tceu_code_mem mem;
+]]
+        for i, id2 in ipairs(code.me.multi_base.multis) do
+            MEMS.codes.mems = MEMS.codes.mems..[[
+    struct tceu_code_mem_]]..id2..' _'..i..[[;
+]]
+        end
+        MEMS.codes.mems = MEMS.codes.mems..[[
+} tceu_code_mem_]]..code.me.multi_base.id..[[;
+]]
     end
 end
