@@ -169,7 +169,11 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         if mid then
             for _, var in ipairs(mid) do
                 -- extra indirection for mid's
-                ps[#ps+1] = '&'..V(var,{is_bind=true})
+                if var.tag == 'ID_any' then
+                    ps[#ps+1] = 'NULL'
+                else
+                    ps[#ps+1] = '&'..V(var,{is_bind=true})
+                end
             end
         end
 

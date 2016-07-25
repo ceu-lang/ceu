@@ -9,6 +9,27 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+Test { [[
+var int x;
+code/tight Ff (void)=>void do
+end
+x = 1;
+escape x;
+]],
+    inits = 'line 1 : uninitialized variable "x" : reached `code´ (/tmp/tmp.ceu:2)',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)=>void do
+    outer.x = 1;
+end
+call Ff();
+escape x;
+]],
+    run = 1,
+}
+
 do return end -- OK
 --]=====]
 
@@ -32675,6 +32696,66 @@ var int? x =
 escape ret+x!;
 ]],
     run = { ['~>1s']=22 },
+}
+
+Test { [[
+code/await Ff (void) => (var int x) => void do
+    x = 1;
+    await FOREVER;
+end
+
+watching Ff() => (a) do
+    escape a + 1;
+end
+
+escape 0;
+]],
+    dcls = 'line 1 : invalid `code´ declaration : `watching´ parameter #1 : expected `&´',
+}
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int xx = 0;
+    x = &xx;
+    await FOREVER;
+end
+
+watching Ff() => (a,b) do
+end
+
+escape 0;
+]],
+    dcls = 'line 7 : invalid `watching´ : expected 1 argument(s)',
+}
+Test { [[
+code/await Ff (void) => (var& int x, var& int y) => void do
+    var int xx = 0;
+    x = &xx;
+    y = &xx;
+    await FOREVER;
+end
+
+watching Ff() => (a) do
+end
+
+escape 0;
+]],
+    dcls = 'line 8 : invalid `watching´ : expected 2 argument(s)',
+}
+Test { [[
+code/await Ff (void) => (var& int x, var& int y) => void do
+    var int xx = 10;
+    x = &xx;
+    y = &xx;
+    await FOREVER;
+end
+
+watching Ff() => (_,a) do
+    escape a + 1;
+end
+
+escape 0;
+]],
+    run = 11,
 }
 
 --<< CODE / AWAIT / WATCHING

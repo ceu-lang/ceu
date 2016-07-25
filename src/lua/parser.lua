@@ -599,7 +599,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , __watch = (V'_Await_Until' + V'Await_Wclock' + V'Abs_Await')
     , _Watching = K'watching' * V'__watch' *
-                    OPT(KK'=>' * PARENS(OPT(V'Varlist')))
+                    OPT(KK'=>' * PARENS(OPT(V'List_Var_Any')))
                 * V'__Do'
 
     , __num = CKK(m.R'09'^1,'number') / tonumber
@@ -723,8 +723,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -- LISTS
 
+-- TODO: rename List_*
     , Namelist = V'Exp_Name' * (KK',' * V'Exp_Name')^0
     , Varlist  = V'ID_int'   * (KK',' * V'ID_int')^0
+    , List_Var_Any = (V'ID_int' + V'ID_any') * (KK',' * (V'ID_int' + V'ID_any'))^0
     , Explist  = V'__Exp'    * (KK',' * V'__Exp')^0
 
  --<<<

@@ -472,7 +472,7 @@ DBG('TODO: _Loop_Pool')
             local ID_abs = AST.asr(Abs_Await,'', 1,'Abs_Cons', 1,'ID_abs')
             Abs_Await[#Abs_Await+1] = mid
             ref = node('Ref', me.ln, 'watching', ID_abs)
-            ref.varlist = mid
+            ref.list_var_any = mid
         end
 
         return node('Block', me.ln,

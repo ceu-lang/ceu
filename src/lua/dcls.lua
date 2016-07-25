@@ -338,7 +338,7 @@ F = {
     end,
 
     Code = function (me)
-        local mods1,id,ins1,_,_,body1 = unpack(me)
+        local mods1,id,ins1,mid,_,body1 = unpack(me)
 
         local blk = AST.asr(AST.root,'', 1,'Block')
 
@@ -349,6 +349,16 @@ F = {
                 me.dyn_base.dyn_last = me
             else
                 me.id = id
+            end
+        end
+
+        -- check if all mid's are "&" aliases
+        if mid then
+            for i, item in ipairs(AST.asr(mid,'Code_Pars')) do
+                local mod, is_alias, _, Type, _ = unpack(item)
+                ASR(is_alias, item,
+                    'invalid `code´ declaration : `watching´ parameter #'..i..' : expected `&´')
+assert(mod=='var', 'TODO')
             end
         end
 
@@ -523,15 +533,19 @@ F = {
         elseif id == 'watching' then
             local _, ID_abs = unpack(me)
             local pars = AST.get(ID_abs.dcl,'Code', 4,'Code_Pars')
-assert(pars and #pars==#me.varlist, 'TODO')
+            ASR(pars and #pars==#me.list_var_any, me,
+                'invalid `watching´ : expected '..#pars..' argument(s)')
             local dcls = AST.node('Stmts', me.ln)
-            for i, var in ipairs(AST.asr(me.varlist,'Varlist')) do
-                local item = AST.asr(pars,'', i,'Code_Pars_Item')
-                local mod, is_alias, _, Type, _ = unpack(item)
-assert(mod=='var' and is_alias, 'TODO')
-                local id = unpack(AST.asr(var,'ID_int'))
-                dcls[#dcls+1] = AST.node('Var', var.ln, AST.copy(Type), '&', id)
-                dcls[#dcls].is_param = true
+            for i, var in ipairs(AST.asr(me.list_var_any,'List_Var_Any')) do
+                local Type = AST.get(pars,'', i,'Code_Pars_Item',4,'Type')
+                if var.tag=='ID_int' and Type then
+                    local id = unpack(var)
+                    dcls[#dcls+1] = AST.node('Var', var.ln,
+                                        AST.copy(Type),
+                                        '&',
+                                        id)
+                    dcls[#dcls].is_param = true
+                end
             end
             return dcls
 
