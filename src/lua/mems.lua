@@ -230,7 +230,7 @@ static void CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
         lbl = lbl or ''
         local t = T[I]
         if not t then
-            local has = DCLS.get(AST.asr(AST.root,'',1,'Block'), ID..lbl)
+            local has = DCLS.get(AST.par(AST.iter()(),'Block'), ID..lbl)
             if has then
                 return [[
 lbl = CEU_LABEL_Code_]]..ID..lbl..[[;

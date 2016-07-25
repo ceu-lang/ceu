@@ -175,25 +175,30 @@ DBG('TODO: remove pool')
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
 
-        ASR(TYPES.ID_plain(e.info.tp), me,
-            'invalid operand to `.´ : expected plain type : got "'..
-            TYPES.tostring(e.info.tp)..'"')
-
-        local ID_abs = unpack(e.info.tp)
-        if ID_abs and ID_abs.dcl.tag=='Data' then
-            -- data.member
-            local data = AST.asr(ID_abs.dcl,'Data')
-            local Dcl = DCLS.asr(me,data,member,false,e.info.id)
-            me.info = {
-                id  = e.info.id..'.'..member,
-                tag = Dcl.tag,
-                tp  = Dcl[1],
-                dcl = Dcl,
-                dcl_obj = e.info.dcl,
-            }
+        if e.tag == 'Outer' then
+            assert(me.dcl)
+            me.info = INFO.copy(me.dcl.info)
         else
-            me.info = INFO.copy(e.info)
-            me.info.id = e.info.id..'.'..member
+            ASR(TYPES.ID_plain(e.info.tp), me,
+                'invalid operand to `.´ : expected plain type : got "'..
+                TYPES.tostring(e.info.tp)..'"')
+
+            local ID_abs = unpack(e.info.tp)
+            if ID_abs and ID_abs.dcl.tag=='Data' then
+                -- data.member
+                local data = AST.asr(ID_abs.dcl,'Data')
+                local Dcl = DCLS.asr(me,data,member,false,e.info.id)
+                me.info = {
+                    id  = e.info.id..'.'..member,
+                    tag = Dcl.tag,
+                    tp  = Dcl[1],
+                    dcl = Dcl,
+                    dcl_obj = e.info.dcl,
+                }
+            else
+                me.info = INFO.copy(e.info)
+                me.info.id = e.info.id..'.'..member
+            end
         end
     end,
 

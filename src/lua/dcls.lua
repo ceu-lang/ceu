@@ -310,8 +310,7 @@ F = {
             return  -- not dynamic code
         end
 
-        local blk = AST.asr(AST.root,'', 1,'Block')
-        local old = DCLS.get(blk, id)
+        local old = DCLS.get(AST.par(me,'Block'), id)
         if old then
             return  -- not first appearence
         end
@@ -340,12 +339,12 @@ F = {
     Code = function (me)
         local mods1,id,ins1,mid,_,body1 = unpack(me)
 
-        local blk = AST.asr(AST.root,'', 1,'Block')
+        local blk = AST.par(me, 'Block')
 
         if not me.is_dyn_base then
             if mods1.dynamic then
                 me.id = id..ins1.ids
-                me.dyn_base = DCLS.asr(me,blk,id,true,'TODO')
+                me.dyn_base = DCLS.asr(me,blk,id)
                 me.dyn_base.dyn_last = me
             else
                 me.id = id
@@ -407,17 +406,17 @@ assert(mod=='var', 'TODO')
         blk.dcls[me.id] = me
         me.is_used = (old and old.is_used)
 
-        assert(me == DCLS.get(blk,me.id,true))
+        assert(me == DCLS.get(blk,me.id))
     end,
 
     Data__PRE = function (me)
         me.id = unpack(me)
-        local root = AST.asr(AST.root,'', 1,'Block')
+        local blk = AST.par(me, 'Block')
 
         -- check "super" path
         local super,_ = string.match(me.id, '(.*)%.(.*)')
         if super then
-            local dcl = DCLS.get(root, super, true)
+            local dcl = DCLS.get(blk, super, true)
             ASR(dcl, me,
                 'invalid declaration : abstraction "'..super..'" is not declared')
             dcl.hier = dcl.hier or { down={} }
@@ -431,7 +430,7 @@ assert(mod=='var', 'TODO')
                          --AST.copy(AST.asr(dcl,'', 2,'Block', 1,'Stmts')))
         end
 
-        dcls_new(root, me)
+        dcls_new(blk, me)
     end,
 
     -- Typelists
@@ -470,7 +469,13 @@ assert(mod=='var', 'TODO')
 
     ID_abs = function (me)
         local id = unpack(me)
-        me.dcl = DCLS.asr(me, AST.par(me,'Block'), id, true, 'abstraction')
+
+        -- search outside current "code/data"
+        local code_or_data = AST.par(me,'Code') or AST.par(me,'Data')
+        local blk = (code_or_data and AST.par(code_or_data,'Block'))
+                        or AST.par(me,'Block')
+
+        me.dcl = DCLS.asr(me, blk, id, false, 'abstraction')
     end,
 
     ID_int = function (me)
@@ -485,6 +490,14 @@ assert(mod=='var', 'TODO')
             end
         end
         me.dcl = DCLS.asr(me, blk, id, false, 'internal identifier')
+    end,
+
+    ['Exp_.'] = function (me)
+        local _, e, member = unpack(me)
+        if e.tag == 'Outer' then
+            me.dcl = DCLS.asr(me, AST.par(AST.par(me,'Code'),'Block'),
+                              member, false, 'internal identifier')
+        end
     end,
 
     ---------------------------------------------------------------------------

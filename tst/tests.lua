@@ -22,10 +22,53 @@ escape x;
 Test { [[
 var int x = 0;
 code/tight Ff (void)=>void do
+    outer.y = 1;
+end
+var int y = 10;
+call Ff();
+escape x;
+]],
+    dcls = 'line 3 : internal identifier "y" is not declared',
+}
+
+Test { [[
+var int ret = 0;
+do
+    var int x = 0;
+    code/tight Ff (void)=>void do
+        outer.x = 1;
+    end
+    call Ff();
+    ret = x;
+end
+call Ff();
+escape ret;
+]],
+    dcls = 'line 10 : abstraction "Ff" is not declared',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)=>void do
     outer.x = 1;
 end
 call Ff();
 escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret = 0;
+do
+    var int x = 0;
+    code/tight Ff (void)=>void do
+        outer.x = 1;
+    end
+    call Ff();
+    ret = x;
+end
+escape ret;
 ]],
     run = 1,
 }
