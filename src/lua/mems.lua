@@ -14,7 +14,6 @@ MEMS = {
         args     = '',
 --[[
         [1] = {
-            is_multi = ...,     -- dont generate wrapper/args
             mem     = '',
             wrapper = '',
             args    = '',
@@ -61,17 +60,17 @@ typedef struct tceu_code_mem_ROOT {
         end
     end,
     Code__POS = function (me)
-        local _,id,_,_,_,body = unpack(me)
+        local mods,id,_,_,_,body = unpack(me)
         if not body then
             return
         end
 
-        if me.is_multi_base then
-            me.multis = {}
+        if me.is_dyn_base then
+            me.dyns = {}
             me.mems.mem = ''
         else
-            if me.is_multi then
-                local t = me.multi_base.multis
+            if mods.dynamic then
+                local t = me.dyn_base.dyns
                 t[#t+1] = me.id
             end
 
@@ -90,7 +89,9 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     Code = function (me)
         local mods,ID, ins, mid, Type, body = unpack(me)
 
-        if (not body) or me.is_multi then
+        if (not body) or (mods.dynamic and (not me.is_dyn_base)) then
+            me.mems.args    = ''
+            me.mems.wrapper = ''
             return
         end
 
@@ -143,7 +144,7 @@ tceu_vector]]..ptr..' '..id2..[[;
         end
 
         local T = {}
-        do
+        if mods.dynamic then
             for i, item in ipairs(ins) do
                 local _,_,_,Type,id = unpack(item)
                 local data = AST.get(Type,'',1,'ID_abs')
@@ -154,10 +155,7 @@ tceu_vector]]..ptr..' '..id2..[[;
                         'CEU_DATA_'..TYPES.noc(id_super),
                         item.id,
                     }
-DBG('<<<', item, item.n, item.tag, item.ln[2])
-AST.dump(item)
                     for _, sub in ipairs(data.dcl.hier.down) do
-DBG(_, sub, sub.id, item.id, id)
                         t[#t+1] = {
                             'CEU_DATA_'..TYPES.noc(sub.id),
                             string.gsub(item.id,
@@ -173,6 +171,7 @@ tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
                     end
                 end
             end
+            assert(#T > 0, 'TODO')
         end
 
         me.mems.args = me.mems.args..'} tceu_code_args_'..me.id..';\n'
@@ -186,7 +185,7 @@ CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
     tceu_code_mem_]]..me.id..[[ mem;
     tceu_nlbl lbl;
 ]]
-            if #T > 0 then
+            if mods.dynamic then
                 local switch = F.__multimethods(T,ID)
                 me.mems.wrapper = me.mems.wrapper .. switch
             else
@@ -213,7 +212,7 @@ static void CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 {
     tceu_nlbl lbl;
 ]]
-            if #T > 0 then
+            if mods.dynamic then
                 local switch = F.__multimethods(T,ID)
                 me.mems.wrapper = me.mems.wrapper .. switch
             else
@@ -580,26 +579,29 @@ typedef struct tceu_event_]]..dcl.id..'_'..dcl.n..[[ {
 end
 
 for i, code in ipairs(MEMS.codes) do
+    local me = code.me
+    local mods = me and unpack(me)
+
     MEMS.codes.mems = MEMS.codes.mems..code.mem
-    if i<#MEMS.codes and (not code.me.is_multi) then
+    if i < #MEMS.codes then
         MEMS.codes.args = MEMS.codes.args..code.args
         if code.wrapper then
             MEMS.codes.wrappers = MEMS.codes.wrappers..code.wrapper
         end
     end
 
-    if code.me and code.me.multi_base and code.me.multi_base.multi_last==code.me then
+    if code.me and code.me.dyn_base and code.me.dyn_base.dyn_last==code.me then
         MEMS.codes.mems = MEMS.codes.mems..[[
 typedef union {
     tceu_code_mem mem;
 ]]
-        for i, id2 in ipairs(code.me.multi_base.multis) do
+        for i, id2 in ipairs(code.me.dyn_base.dyns) do
             MEMS.codes.mems = MEMS.codes.mems..[[
     struct tceu_code_mem_]]..id2..' _'..i..[[;
 ]]
         end
         MEMS.codes.mems = MEMS.codes.mems..[[
-} tceu_code_mem_]]..code.me.multi_base.id..[[;
+} tceu_code_mem_]]..code.me.dyn_base.id..[[;
 ]]
     end
 end

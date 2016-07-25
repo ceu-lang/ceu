@@ -263,7 +263,7 @@ _ceu_trl++;
     Code = function (me)
         local mods,_,Code_Pars,_,_,body = unpack(me)
         if not body then return end
-        if me.is_multi_base then return end
+        if me.is_dyn_base then return end
 
 LINE(me, [[
 /* do not enter from outside */
@@ -284,9 +284,9 @@ if (0)
         local args_id        = me.id
         local args_Code_Pars = Code_Pars
 
-        if me.multi_base then
-            args_id = me.multi_base.id
-            _,_,_,args_Code_Pars = unpack(me.multi_base)
+        if me.dyn_base then
+            args_id = me.dyn_base.id
+            _,_,args_Code_Pars = unpack(me.dyn_base)
         end
 
         local vars = AST.get(body,'Block', 1,'Stmts', 2,'Do', 2,'Block',
@@ -295,7 +295,7 @@ if (0)
             local kind,_,c,Type,id2 = unpack(Code_Pars_Item)
 
             local cast = ''
-            if me.multi_base then
+            if me.dyn_base then
                 _,is_alias,_,Type2,id2 = unpack(args_Code_Pars[i])
                 if not AST.is_equal(Type,Type2) then
                     cast = '('..TYPES.toc(Type)..(is_alias and '*' or '')..')'
@@ -355,9 +355,9 @@ if (0)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
         local dcl = ID_abs.dcl
-        if dcl.multi_base then
+        if dcl.dyn_base then
 error'TODO'
-            dcl = dcl.multi_base
+            dcl = dcl.dyn_base
         end
 
         HALT(me, {
@@ -385,9 +385,9 @@ error'TODO'
         local ID_abs, Abslist = unpack(Abs_Cons)
 
         local dcl = ID_abs.dcl
-        if dcl.multi_base then
+        if dcl.dyn_base then
 error'TODO'
-            dcl = dcl.multi_base
+            dcl = dcl.dyn_base
         end
 
         LINE(me, [[
@@ -729,8 +729,8 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
             if code then
                 local mods = unpack(code)
                 if mods.tight then
-                    if code.multi_base then
-                        code = code.multi_base
+                    if code.dyn_base then
+                        code = code.dyn_base
                     end
                     LINE(me, [[
 ((tceu_code_args_]]..code.id..[[*) _ceu_evt)->_ret = ]]..V(fr)..[[;
@@ -775,8 +775,8 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 
         if to.info.dcl.is_mid then
             local Code = AST.par(me,'Code')
-            if Code.multi_base then
-                Code = Code.multi_base
+            if Code.dyn_base then
+                Code = Code.dyn_base
 error'TODO'
             end
             LINE(me, [[

@@ -294,35 +294,30 @@ F = {
         for i, item in ipairs(me) do
             local kind,is_alias,_,Type,_ = unpack(item)
             if Type[1].tag == 'ID_abs' then
-F.ID_abs(Type[1])
-if Type[1].dcl.hier then
-DBG('>>>', item, item.n, item.tag, item.ln[2])
                 item.id = '_'..i..'_'..kind..
                           '_'..(is_alias and 'y' or 'n')..
                           '_'..TYPES.tostring(Type)
                 item.id = TYPES.noc(item.id)
                 me.ids = me.ids..item.id
-end
             end
         end
     end,
 
-    -- detect "base" multimethod: create dummy copy with plain "id"
+    -- detect "base" dynamic multimethod: create dummy copy with plain "id"
     Code__PRE = function (me)
-        local _,id,ins,_,_,body = unpack(me)
-        F.Code_Pars(ins)
-        if ins.ids == '' then
-            return
+        local mods,id,ins,_,_,body = unpack(me)
+        if not mods.dynamic then
+            return  -- not dynamic code
         end
 
         local blk = AST.asr(AST.root,'', 1,'Block')
         local old = DCLS.get(blk, id)
         if old then
-            return
+            return  -- not first appearence
         end
 
-        if me.is_multi_base then
-            return
+        if me.is_dyn_base then
+            return  -- not first appearence
         end
 
         local orig
@@ -335,8 +330,9 @@ end
             body[1] = orig
         end
 
+        -- "base" method with plain "id"
         new.id = id
-        new.is_multi_base = true
+        new.is_dyn_base = true
 
         return AST.node('Stmts', me.ln, new, me)
     end,
@@ -346,12 +342,13 @@ end
 
         local blk = AST.asr(AST.root,'', 1,'Block')
 
-        if not me.is_multi_base then
-            me.id = id..ins1.ids
-            me.is_multi = (ins1.ids ~= '')
-            if me.is_multi then
-                me.multi_base = DCLS.asr(me,blk,id,true,'TODO')
-                me.multi_base.multi_last = me
+        if not me.is_dyn_base then
+            if mods1.dynamic then
+                me.id = id..ins1.ids
+                me.dyn_base = DCLS.asr(me,blk,id,true,'TODO')
+                me.dyn_base.dyn_last = me
+            else
+                me.id = id
             end
         end
 

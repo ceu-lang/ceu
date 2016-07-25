@@ -109,9 +109,9 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                 id_struct = 'tceu_data_'..ID_abs.dcl.id_
             else
                 local dcl = AST.get(ID_abs.dcl,'Code')
-                if dcl.multi_base then
+                if dcl.dyn_base then
 error'TODO'
-                    dcl = dcl.multi_base
+                    dcl = dcl.dyn_base
                 end
                 vars = AST.get(dcl,'Code', 3,'Code_Pars')
                 id_struct = 'tceu_code_args_'..dcl.id
@@ -147,7 +147,8 @@ error'TODO'
                     cast = '('..TYPES.toc(var_tp)..'*)'
                 end
 
-                if var_tp[1].dcl.hier then
+                local mods = unpack(ID_abs.dcl)
+                if mods.dynamic then
                     if v.tag == 'Exp_as' then
                         ps[#ps+1] = '._data_'..i..' = CEU_DATA_'..v.info.tp[1].dcl.id
                         me.static = me.static..var.id

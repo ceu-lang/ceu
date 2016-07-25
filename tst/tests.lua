@@ -33622,8 +33622,28 @@ data Aa with
     var int a;
 end
 
+code/tight Ff (var& Aa a, var int xxx) => int;
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight Ff (var& Aa.Bb b, var int yyy) => int do
+    escape 0;
+end
+
+escape 0;
+]],
+    dcls = 'line 11 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:5)',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
 code/tight Ff (var& Aa a, var int xxx) => int do
-    escape a.a + xxx;
+    escape 0;
 end
 
 data Aa.Bb with
@@ -33631,6 +33651,28 @@ data Aa.Bb with
 end
 
 code/tight Ff (var& Aa.Bb b, var int yyy) => int do
+    escape 0;
+end
+
+escape 0;
+]],
+    dcls = 'line 13 : invalid `code´ declaration : body for "Ff" already exists',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var& Aa.Bb b, var int yyy) => int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b.b + yyy;
 end
@@ -33649,7 +33691,7 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var& Aa a1, var int xxx, var& Aa a2) => int do
+code/tight/dynamic Ff (var& Aa a1, var int xxx, var& Aa a2) => int do
     escape a1.a + xxx + a2.a;
 end
 
@@ -33657,7 +33699,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight Ff (var& Aa.Bb b1, var int yyy, var& Aa.Bb b2) => int do
+code/tight/dynamic Ff (var& Aa.Bb b1, var int yyy, var& Aa.Bb b2) => int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b1.b + yyy + b2.b;
 end
@@ -33675,7 +33717,7 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var& Aa a, var int xxx) => int do
+code/tight/dynamic Ff (var& Aa a, var int xxx) => int do
     escape a.a + xxx;
 end
 
@@ -33683,7 +33725,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight Ff (var& Aa.Bb b, var int yyy) => int do
+code/tight/dynamic Ff (var& Aa.Bb b, var int yyy) => int do
     escape b.b + (call Ff(&b as Aa,11)) + yyy;
 end
 
@@ -33700,7 +33742,7 @@ data Aa with
     var int a;
 end
 
-code/await Ff (var& Aa a, var int xxx) => int do
+code/await/dynamic Ff (var& Aa a, var int xxx) => int do
     escape a.a + xxx;
 end
 
@@ -33708,7 +33750,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await Ff (var& Aa.Bb b, var int yyy) => int do
+code/await/dynamic Ff (var& Aa.Bb b, var int yyy) => int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b.b + yyy;
 end
@@ -33729,7 +33771,7 @@ data Aa with
     var int a;
 end
 
-code/await Ff (var& Aa a1, var int xxx, var& Aa a2) => int do
+code/await/dynamic Ff (var& Aa a1, var int xxx, var& Aa a2) => int do
     escape a1.a + xxx + a2.a;
 end
 
@@ -33737,7 +33779,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await Ff (var& Aa.Bb b1, var int yyy, var& Aa.Bb b2) => int do
+code/await/dynamic Ff (var& Aa.Bb b1, var int yyy, var& Aa.Bb b2) => int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b1.b + yyy + b2.b;
 end
@@ -33758,7 +33800,7 @@ data Aa with
     var int a;
 end
 
-code/await Ff (var& Aa a, var int xxx) => int do
+code/await/dynamic Ff (var& Aa a, var int xxx) => int do
     escape a.a + xxx;
 end
 
@@ -33766,7 +33808,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await Ff (var& Aa.Bb b, var int yyy) => int do
+code/await/dynamic Ff (var& Aa.Bb b, var int yyy) => int do
     var int v = await Ff(&b as Aa,11);
     escape b.b + v + yyy;
 end
