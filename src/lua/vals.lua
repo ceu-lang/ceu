@@ -105,13 +105,8 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                 vars = AST.asr(ID_abs.dcl,'Data', 2,'Block').dcls
                 id_struct = 'tceu_data_'..ID_abs.dcl.id_
             else
-                local dcl = AST.get(ID_abs.dcl,'Code')
-                if dcl.dyn_base then
-error'TODO'
-                    dcl = dcl.dyn_base
-                end
-                vars = AST.get(dcl,'Code', 3,'Code_Pars')
-                id_struct = 'tceu_code_args_'..dcl.id
+                vars = AST.get(ID_abs.dcl,'Code', 3,'Code_Pars')
+                id_struct = 'tceu_code_args_'..ID_abs.dcl.id
             end
         end
 

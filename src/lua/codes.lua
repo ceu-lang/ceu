@@ -354,12 +354,6 @@ if (0)
         local Abs_Cons, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
-        local dcl = ID_abs.dcl
-        if dcl.dyn_base then
-error'TODO'
-            dcl = dcl.dyn_base
-        end
-
         HALT(me, {
             { evt = 'CEU_INPUT__CODE' },
             { lbl = me.lbl_out.id },
@@ -367,14 +361,14 @@ error'TODO'
             lbl = me.lbl_out.id,
             exec = [[
 {
-    tceu_code_args_]]..dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,mid)..[[;
+    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,mid)..[[;
 
     ]]..CUR(' __mem_'..me.n)..[[.mem.pak = NULL;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
 
-    CEU_WRAPPER_]]..dcl.id..[[(_ceu_stk, 0, __ceu_ps,
-                               (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
+    CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
+                                     (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
 }
 ]],
         })
@@ -383,12 +377,6 @@ error'TODO'
     Abs_Spawn = function (me)
         local Abs_Cons, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
-
-        local dcl = ID_abs.dcl
-        if dcl.dyn_base then
-error'TODO'
-            dcl = dcl.dyn_base
-        end
 
         LINE(me, [[
 {
@@ -405,10 +393,10 @@ error'TODO'
         __ceu_new_mem->up_mem = _ceu_mem;
         __ceu_new_mem->up_trl = _ceu_trlK;
 
-        tceu_code_args_]]..dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
+        tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
 
         CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
-                    __ceu_new_mem, 0, ]]..dcl.lbl_in.id..[[);
+                    __ceu_new_mem, 0, ]]..ID_abs.dcl.lbl_in.id..[[);
     }
 }
 ]])
@@ -775,10 +763,6 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 
         if to.info.dcl.is_mid then
             local Code = AST.par(me,'Code')
-            if Code.dyn_base then
-                Code = Code.dyn_base
-error'TODO'
-            end
             LINE(me, [[
 if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..to.info.dcl.id..[[ != NULL) {
     *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..to.info.dcl.id..[[) = ]]..V(to, {is_bind=true})..[[;
