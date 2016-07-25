@@ -89,20 +89,19 @@ F = {
 
     Abs_Call = function (me)
         local ID_abs = AST.asr(me,'', 2,'Abs_Cons', 1,'ID_abs')
-        local mod = unpack(ID_abs.dcl)
+        local mods = unpack(ID_abs.dcl)
 
         -- ctx
         ASR(ID_abs.dcl.tag=='Code', me,
                 'invalid call : '..
                 'unexpected context for '..AST.tag2id[ID_abs.dcl.tag]
                                          ..' "'..ID_abs.dcl.id..'"')
-        ASR(mod == 'code/tight', me,
+        ASR(mods.tight, me,
                 'invalid call : '..
                 'expected `code/tight´ : got `code/await´ ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
 
         -- info
-        local _,_,_,_,_,out = unpack(ID_abs.dcl)
-        me.info = INFO.new(me, 'Val', nil, AST.copy(out))
+        me.info = INFO.new(me, 'Val', nil, AST.copy(AST.asr(ID_abs.dcl,'Code',5,'Type')))
     end,
 
     Abs_Cons = function (me)
@@ -116,7 +115,7 @@ F = {
                 err_str = 'invalid constructor'
                 i_tp, i_alias, i_dim = 1,2,3
             else
-                vars = AST.get(ID_abs.dcl,'Code', 4,'Code_Pars')
+                vars = AST.get(ID_abs.dcl,'Code', 3,'Code_Pars')
                 err_str = 'invalid call'
                 i_tp, i_alias, i_dim = 4,2,3
             end

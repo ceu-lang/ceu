@@ -273,7 +273,7 @@ F = {
     -- CODE / DATA
 
     Code_Pars = function (me)
-        local body = AST.get(me.__par,'Code', 7,'Block')
+        local body = AST.get(me.__par,'Code', 6,'Block')
         if body then
             for i, item in ipairs(me) do
                 local _,_,_,_,id = unpack(item)
@@ -296,6 +296,7 @@ F = {
             if Type[1].tag == 'ID_abs' then
 F.ID_abs(Type[1])
 if Type[1].dcl.hier then
+DBG('>>>', item, item.n, item.tag, item.ln[2])
                 item.id = '_'..i..'_'..kind..
                           '_'..(is_alias and 'y' or 'n')..
                           '_'..TYPES.tostring(Type)
@@ -308,7 +309,7 @@ end
 
     -- detect "base" multimethod: create dummy copy with plain "id"
     Code__PRE = function (me)
-        local _,_,id,ins,_,_,body = unpack(me)
+        local _,id,ins,_,_,body = unpack(me)
         F.Code_Pars(ins)
         if ins.ids == '' then
             return
@@ -341,7 +342,7 @@ end
     end,
 
     Code = function (me)
-        local _,mod1,id,ins1,_,_,body1 = unpack(me)
+        local mods1,id,ins1,_,_,body1 = unpack(me)
 
         local blk = AST.asr(AST.root,'', 1,'Block')
 
@@ -356,11 +357,12 @@ end
 
         local old = DCLS.get(blk, me.id)
         if old then
-            local _,mod2,_,ins2,_,_,body2 = unpack(old)
+            local mods2,_,ins2,_,_,body2 = unpack(old)
             ASR(not (body1 and body2), me,
                 'invalid `code´ declaration : body for "'..id..'" already exists')
 
-            local ok = (mod1==mod2 and #ins1==#ins2)
+            -- compare ins
+            local ok = (#ins1==#ins2)
             if ok then
                 for i=1, #ins1 do
                     local Type1 = AST.asr(ins1[i],'', 4,'Type')
@@ -371,6 +373,23 @@ end
                     end
                 end
             end
+
+            -- compare mods
+            do
+                for k,v in pairs(mods1) do
+                    if mods2[k] ~= v then
+                        ok = false
+                        break
+                    end
+                end
+                for k,v in pairs(mods2) do
+                    if mods1[k] ~= v then
+                        ok = false
+                        break
+                    end
+                end
+            end
+
             ASR(ok, me,
                 'invalid `code´ declaration : unmatching prototypes '..
                 '(vs. '..ins2.ln[1]..':'..ins2.ln[2]..')')
@@ -506,7 +525,7 @@ end
 
         elseif id == 'watching' then
             local _, ID_abs = unpack(me)
-            local pars = AST.get(ID_abs.dcl,'Code', 5,'Code_Pars')
+            local pars = AST.get(ID_abs.dcl,'Code', 4,'Code_Pars')
 assert(pars and #pars==#me.varlist, 'TODO')
             local dcls = AST.node('Stmts', me.ln)
             for i, var in ipairs(AST.asr(me.varlist,'Varlist')) do

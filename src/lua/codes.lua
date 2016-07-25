@@ -261,7 +261,7 @@ _ceu_trl++;
     ---------------------------------------------------------------------------
 
     Code = function (me)
-        local mod,_,_,Code_Pars,_,_,body = unpack(me)
+        local mods,_,Code_Pars,_,_,body = unpack(me)
         if not body then return end
         if me.is_multi_base then return end
 
@@ -273,7 +273,7 @@ if (0)
         CASE(me, me.lbl_in)
 
         -- CODE/DELAYED
-        if mod == 'code/await' then
+        if mods.await then
             LINE(me, [[
     _ceu_mem->trails_n = ]]..me.trails_n..[[;
     memset(&_ceu_mem->trails, 0, ]]..me.trails_n..[[*sizeof(tceu_trl));
@@ -312,7 +312,7 @@ if (0)
         CONC(me, body)
 
         -- CODE/DELAYED
-        if mod == 'code/await' then
+        if mods.await then
             local free = [[
     if (_ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
@@ -467,8 +467,9 @@ ceu_callback_assert_msg(0, "reached end of `do´");
 
     Escape = function (me)
         local code = AST.par(me, 'Code')
+        local mods = code and unpack(code)
         local evt do
-            if code and code[1]=='code/await' then
+            if code and mods.await then
                 evt = '(tceu_evt*) &__ceu_ret_'..code.n
             else
                 evt = 'NULL'
@@ -726,8 +727,8 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
         if to.info.dcl.id == '_ret' then
             local code = AST.par(me, 'Code')
             if code then
-                local mod = unpack(code)
-                if mod == 'code/tight' then
+                local mods = unpack(code)
+                if mods.tight then
                     if code.multi_base then
                         code = code.multi_base
                     end

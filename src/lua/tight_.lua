@@ -95,28 +95,29 @@ AST.visit(F)
 
 G = {
     Code = function (me)
-        local _,_,_,_,_,_,body = unpack(me)
+        local _,_,_,_,_,body = unpack(me)
         me.has_body = me.has_body or body
     end,
 
     Abs_Call = function (me)
         local mod, Abs_Cons = unpack(me)
         local Code = AST.asr(Abs_Cons,'', 1,'ID_abs').dcl
+        local mods = unpack(Code)
 
         -- calling known Code
         if Code.has_body then
             if mod == 'call/recursive' then
-                ASR(Code[2], me,
+                ASR(mods.recursive, me,
                     'invalid `call´ : unexpected `/recursive´')
             else
-                ASR(not Code[2], me,
+                ASR(not mods.recursive, me,
                     'invalid `call´ : expected `/recursive´')
             end
 
         -- calling unknown Code
         else
             -- Code must be '/recursive'
-            ASR(Code[2], Code,
+            ASR(mods.recursive, Code,
                 'invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body ('..me.ln[1]..':'..me.ln[2]..')')
 
             -- Call must be '/recursive'
@@ -128,8 +129,8 @@ G = {
         local Par = AST.par(me,'Code')
         if Par and mod=='call/recursive' then
             -- Par must be '/recursive'
-            local _,is_rec = unpack(Par)
-            ASR(is_rec, Par,
+            local mods = unpack(Par)
+            ASR(mods.recursive, Par,
                 'invalid `code´ declaration : expected `/recursive´ : nested `call/recursive´ ('..me.ln[1]..':'..me.ln[2]..')')
         end
     end,

@@ -89,8 +89,8 @@ F = {
     Abs_Call = function (me)
         local _, Abs_Cons = unpack(me)
         local ID_abs, _ = unpack(Abs_Cons)
-        local mod,_,_,Code_Pars = unpack(ID_abs.dcl)
-        assert(mod == 'code/tight')
+        local mods,_,Code_Pars = unpack(ID_abs.dcl)
+        assert(mods.tight)
         return [[
 CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 ]]
@@ -113,7 +113,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 error'TODO'
                     dcl = dcl.multi_base
                 end
-                vars = AST.get(dcl,'', 4,'Code_Pars')
+                vars = AST.get(dcl,'Code', 3,'Code_Pars')
                 id_struct = 'tceu_code_args_'..dcl.id
             end
         end

@@ -30075,41 +30075,6 @@ escape a;
 
 --<< OPTION / NATIVE
 
--->> OPTION / CODE
-
-Test { [[
-code/tight Fx (var int? x) => int do
-    if x? then
-        escape x! + 1;
-    else
-        escape 1;
-    end
-end
-
-escape (call Fx(_)) + (call Fx(10));
-]],
-    run = 12,
-}
-
-Test { [[
-code/await Fx (var int? x) => int do
-    if x? then
-        escape x! + 1;
-    else
-        escape 1;
-    end
-end
-
-var int v1 = await Fx(10);
-var int v2 = await Fx(_);
-
-escape v1+v2;
-]],
-    run = 12,
-}
-
---<< OPTION / CODE
-
 -->> OPTION / DATA
 
 Test { [[
@@ -31184,7 +31149,7 @@ code/tight get (void)=>int&& do
 end
 escape 10;
 ]],
-    parser = 'line 1 : after `code/tight´ : expected `/recursive´ or abstraction identifier',
+    parser = 'line 1 : after `/tight´ : expected `/dynamic´ or `/recursive´ or abstraction identifier',
     --ref = 'line 3 : invalid access to uninitialized variable "x" (declared at /tmp/tmp.ceu:2)',
 }
 
@@ -31192,7 +31157,7 @@ Test { [[
 code/tight Fx.Fx (void)=>void do
 end
 ]],
-    parser = 'line 1 : after `code/tight´ : expected `/recursive´',
+    parser = 'line 1 : after `/tight´ : expected `/dynamic´ or `/recursive´',
 }
 
 Test { [[
@@ -31924,7 +31889,7 @@ do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `code/await´ : expected `/recursive´ or abstraction identifier',
+    parser = 'line 1 : after `/await´ : expected `/dynamic´ or `/recursive´ or abstraction identifier',
 }
 
 Test { [[
@@ -32383,6 +32348,41 @@ escape x;
     --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --mode = 'line 7 : cannot read field with mode `input´',
 }
+
+-->> CODE / OPTION
+
+Test { [[
+code/tight Fx (var int? x) => int do
+    if x? then
+        escape x! + 1;
+    else
+        escape 1;
+    end
+end
+
+escape (call Fx(_)) + (call Fx(10));
+]],
+    run = 12,
+}
+
+Test { [[
+code/await Fx (var int? x) => int do
+    if x? then
+        escape x! + 1;
+    else
+        escape 1;
+    end
+end
+
+var int v1 = await Fx(10);
+var int v2 = await Fx(_);
+
+escape v1+v2;
+]],
+    run = 12,
+}
+
+--<< CODE / OPTION
 
 -->> CODE / AWAIT / WATCHING
 

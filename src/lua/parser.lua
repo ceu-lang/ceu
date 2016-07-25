@@ -1,4 +1,4 @@
-local P, C, V, S, Cc, Ct = m.P, m.C, m.V, m.S, m.Cc, m.Ct
+local P, C, V, S, Cc, Ct, Cg = m.P, m.C, m.V, m.S, m.Cc, m.Ct, m.Cg
 
 --local __debug = true
 local spc = 0
@@ -57,15 +57,15 @@ local T = {
     },
 
     {
-        '`native´ or `code/tight´ or `code/await´ or end of file',
+        '`native´ or `code´ or end of file',
         'end of file'
     },
     {
-        '`;´ or `native´ or `code/tight´ or `code/await´ or `with´',
+        '`;´ or `native´ or `code´ or `with´',
         '`with´'
     },
     {
-        '`native´ or `code/tight´ or `code/await´ or `end´',
+        '`native´ or `code´ or `end´',
         '`end´'
     },
 
@@ -108,15 +108,15 @@ local T = {
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/tight´ or `code/await´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/tight´ or `code/await´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code/tight´ or `code/await´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/thread´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
 }
@@ -459,7 +459,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     -- CODE
 
-    , __code = (CK'code/tight' + CK'code/await') * OPT(CK'/recursive') *
+    , __code = K'code' * Ct( (Cg(K'/tight'*Cc'tight','tight') +
+                              Cg(K'/await'*Cc'await','await')) *
+                             Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
+                             Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
                     V'Code_Pars' * KK'=>' *
                         OPT(V'Code_Pars' * KK'=>') *

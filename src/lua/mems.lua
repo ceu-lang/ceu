@@ -55,13 +55,13 @@ typedef struct tceu_code_mem_ROOT {
     ---------------------------------------------------------------------------
 
     Code__PRE = function (me)
-        local _,_,_,_,_,_,body = unpack(me)
+        local _,_,_,_,_,body = unpack(me)
         if body then
             me.mems = { me=me, mem='' }
         end
     end,
     Code__POS = function (me)
-        local _,_,id,_,_,_,body = unpack(me)
+        local _,id,_,_,_,body = unpack(me)
         if not body then
             return
         end
@@ -88,7 +88,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     end,
 
     Code = function (me)
-        local mod,_,ID, ins, mid, Type, body = unpack(me)
+        local mods,ID, ins, mid, Type, body = unpack(me)
 
         if (not body) or me.is_multi then
             return
@@ -96,7 +96,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
         -- args
         me.mems.args = 'typedef struct tceu_code_args_'..me.id..' {\n'
-        if mod=='code/tight' and (not TYPES.check(Type,'void')) then
+        if mods.tight and (not TYPES.check(Type,'void')) then
             -- returns immediatelly, uses an extra field for the return value
             me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..' _ret;\n'
         end
@@ -154,7 +154,10 @@ tceu_vector]]..ptr..' '..id2..[[;
                         'CEU_DATA_'..TYPES.noc(id_super),
                         item.id,
                     }
+DBG('<<<', item, item.n, item.tag, item.ln[2])
+AST.dump(item)
                     for _, sub in ipairs(data.dcl.hier.down) do
+DBG(_, sub, sub.id, item.id, id)
                         t[#t+1] = {
                             'CEU_DATA_'..TYPES.noc(sub.id),
                             string.gsub(item.id,
@@ -174,7 +177,7 @@ tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
 
         me.mems.args = me.mems.args..'} tceu_code_args_'..me.id..';\n'
 
-        if mod == 'code/tight' then
+        if mods.tight then
             me.mems.wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
 CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,

@@ -124,7 +124,7 @@ error'TODO: luacov never executes this?'
     _Ext_Req_impl__PRE  = '_Code_impl__PRE',
     _Ext_Code_impl__PRE = '_Code_impl__PRE',
     _Code_impl__PRE = function (me)
-        local pre, is_rec, id, ins, mid, out, blk = unpack(me)
+        local mods, id, ins, mid, out, blk = unpack(me)
         me.tag = string.match(me.tag,'_(.*)_impl')
 
         -- enclose "blk" with "_ret = do ... end"
