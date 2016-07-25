@@ -118,6 +118,8 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
             end
         end
 
+        local mods = (ID_abs.dcl.tag=='Code' and unpack(ID_abs.dcl))
+
         assert(#vars == #Abslist)
         for i=1, #vars do
             local var = vars[i]
@@ -142,8 +144,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                     cast = '('..TYPES.toc(var_tp)..'*)'
                 end
 
-                local mods = unpack(ID_abs.dcl)
-                if mods.dynamic then
+                if mods and mods.dynamic and var_tp[1].dcl.hier then
                     if val.tag == 'Exp_as' then
                         ps[#ps+1] = '._data_'..i..' = CEU_DATA_'..val.info.tp[1].dcl.id
                     else

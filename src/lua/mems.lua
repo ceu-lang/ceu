@@ -146,30 +146,30 @@ tceu_vector]]..ptr..' '..id2..[[;
             for i, item in ipairs(ins) do
                 local _,_,_,Type,id = unpack(item)
                 local data = AST.get(Type,'',1,'ID_abs')
-                if data and data.dcl.hier then
+                if data then
                     local t = {id=id, i=i}
                     local id_super = TYPES.noc(data.dcl.id)
                     t[#t+1] = {
                         'CEU_DATA_'..TYPES.noc(id_super),
                         item.id,
                     }
-                    for _, sub in ipairs(data.dcl.hier.down) do
-                        t[#t+1] = {
-                            'CEU_DATA_'..TYPES.noc(sub.id),
-                            string.gsub(item.id,
-                                        '_'..id_super..'$',
-                                        '_'..TYPES.noc(sub.id))
-                        }
+                    if data.dcl.hier then
+                        for _, sub in ipairs(data.dcl.hier.down) do
+                            t[#t+1] = {
+                                'CEU_DATA_'..TYPES.noc(sub.id),
+                                string.gsub(item.id,
+                                            '_'..id_super..'$',
+                                            '_'..TYPES.noc(sub.id))
+                                }
+                        end
                     end
-                    if #t > 1 then
-                        T[#T+1] = t
-                        me.mems.args = me.mems.args .. [[
+                    T[#T+1] = t
+                    me.mems.args = me.mems.args .. [[
 tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
 ]]
-                    end
                 end
             end
-            assert(#T > 0, 'TODO')
+            --assert(#T > 0, 'TODO')
         end
 
         me.mems.args = me.mems.args..'} tceu_code_args_'..me.id..';\n'
@@ -234,44 +234,49 @@ static void CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
             if has then
                 return [[
 lbl = CEU_LABEL_Code_]]..ID..lbl..[[;
-break;
-]]
+]], true
             else
-                return [[ 
-]]
+                return '', false
             end
-        end
-
-        local switch = [[
+        elseif #t == 1 then
+            return F.__multimethods(T,ID,I+1,lbl..t[1][2])
+        else
+            local switch = [[
 {
     tceu_ndata data_]]..t.i..[[ = ((ps._data_]]..t.i..[[ == CEU_DATA__NONE) ?
                                     ps.]]..t.id..[[->data.id :
                                     ps._data_]]..t.i..[[);
     switch (data_]]..t.i..[[) {
 ]]
-        for i=#t, 1, -1 do
-            local v = t[i]
-            local id, f = unpack(v)
-            switch = switch .. [[
+            for i=#t, 1, -1 do
+                local v = t[i]
+                local id, f = unpack(v)
+                local code,has = F.__multimethods(T,ID,I+1,lbl..f)
+                switch = switch .. [[
         case ]]..id..[[:
-        ]]..F.__multimethods(T,ID,I+1,lbl..f)..[[
+            ]]..code
+                if has then
+                    switch = switch ..[[
+            break;
 ]]
-        end
-        switch = switch .. [[
+                end
+            end
+            switch = switch .. [[
         default:
             ceu_dbg_assert(0);  /* TODO: runtime error message */
     }
 ]]
-        if I > 1 then
-            switch = switch .. [[
+            if I > 1 then
+                switch = switch .. [[
     break;
 ]]
-        end
-        switch = switch .. [[
+            end
+            switch = switch .. [[
 }
 ]]
 
-        return switch
+            return switch
+        end
     end,
 
     ---------------------------------------------------------------------------

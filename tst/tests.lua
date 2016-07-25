@@ -33660,6 +33660,22 @@ escape 0;
 }
 
 Test { [[
+data Ui with
+    var int x;
+end
+
+code/await/dynamic Ui_go (var& Ui ui) => void do
+end
+
+var Ui ui = val Ui(10);
+await Ui_go(&ui);
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
 data Aa with
     var int a;
 end

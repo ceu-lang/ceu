@@ -142,10 +142,10 @@ F = {
                 var_id = var.id
             end
 
-            if mods and mods.dynamic and (not is_dyn) then
+            if mods and mods.dynamic and var_tp[1].dcl.hier and (not is_dyn) then
                 if var_tp.tag=='Type' and var_tp[1].tag == 'ID_abs' then
                     if val.tag == 'Exp_as' then
-                        me.id = me.id..dcl.id
+                        me.id = me.id..var.id
                     else
                         is_dyn = true
                         me.id = ID_abs.dcl.id
@@ -158,7 +158,7 @@ F = {
                     err_str..' : invalid binding : '..'argument #'..i)
 
                 -- dim
-                if dcl.tag=='Vec' or dcl[1]=='vector' then
+                if var.tag=='Vec' or var[1]=='vector' then
                     local _,_,fr_dim = unpack(val.info.dcl)
                     ASR(EXPS.check_dim(var_dim,fr_dim), me,
                         err_str..' : invalid binding : argument #'..i..' : dimension mismatch')
@@ -176,7 +176,7 @@ F = {
             elseif val.tag == 'Vec_Cons' then
 assert(ID_abs.dcl.tag == 'Data', 'TODO')
 error'TODO: remove below'
-                F.__set_vec(val, dcl)
+                F.__set_vec(val, var)
 
             else
                 -- ctx
