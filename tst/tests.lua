@@ -9,70 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-Test { [[
-var int x;
-code/tight Ff (void)=>void do
-end
-x = 1;
-escape x;
-]],
-    inits = 'line 1 : uninitialized variable "x" : reached `code´ (/tmp/tmp.ceu:2)',
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)=>void do
-    outer.y = 1;
-end
-var int y = 10;
-call Ff();
-escape x;
-]],
-    dcls = 'line 3 : internal identifier "y" is not declared',
-}
-
-Test { [[
-var int ret = 0;
-do
-    var int x = 0;
-    code/tight Ff (void)=>void do
-        outer.x = 1;
-    end
-    call Ff();
-    ret = x;
-end
-call Ff();
-escape ret;
-]],
-    dcls = 'line 10 : abstraction "Ff" is not declared',
-}
-
-Test { [[
-var int x = 0;
-code/tight Ff (void)=>void do
-    outer.x = 1;
-end
-call Ff();
-escape x;
-]],
-    run = 1,
-}
-
-Test { [[
-var int ret = 0;
-do
-    var int x = 0;
-    code/tight Ff (void)=>void do
-        outer.x = 1;
-    end
-    call Ff();
-    ret = x;
-end
-escape ret;
-]],
-    run = 1,
-}
-
 do return end -- OK
 --]=====]
 
@@ -31941,6 +31877,108 @@ escape cs[0];
 }
 
 --<< VECTOR / CODE
+
+-->> CODE / TIGHT / OUTER
+
+Test { [[
+var int x;
+code/tight Ff (void)=>void do
+end
+x = 1;
+escape x;
+]],
+    inits = 'line 1 : uninitialized variable "x" : reached `code´ (/tmp/tmp.ceu:2)',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)=>void do
+    outer.y = 1;
+end
+var int y = 10;
+call Ff();
+escape x;
+]],
+    dcls = 'line 3 : internal identifier "y" is not declared',
+}
+
+Test { [[
+var int ret = 0;
+do
+    var int x = 0;
+    code/tight Ff (void)=>void do
+        outer.x = 1;
+    end
+    call Ff();
+    ret = x;
+end
+call Ff();
+escape ret;
+]],
+    dcls = 'line 10 : abstraction "Ff" is not declared',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)=>void do
+    code/tight Gg (void)=>void do end
+    outer.x = 1;
+end
+call Ff();
+escape x;
+]],
+    dcls = 'line 3 : invalid `code´ declaration : nesting is not allowed',
+}
+Test { [[
+var int x = 0;
+data Dd with
+    code/tight Ff (void)=>void do
+        outer.x = 1;
+    end
+end
+call Ff();
+escape x;
+]],
+    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
+}
+Test { [[
+var int x = 0;
+data Dd with
+    data Ee;
+end
+call Ff();
+escape x;
+]],
+    parser = 'line 2 : after `with´ : expected `var´ or `vector´ or `pool´ or `event´',
+}
+
+Test { [[
+var int x = 0;
+code/tight Ff (void)=>void do
+    outer.x = 1;
+end
+call Ff();
+escape x;
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret = 0;
+do
+    var int x = 0;
+    code/tight Ff (void)=>void do
+        outer.x = 1;
+    end
+    call Ff();
+    ret = x;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+--<< CODE / TIGHT / OUTER
 
 --<<< CODE / TIGHT / FUNCTIONS
 

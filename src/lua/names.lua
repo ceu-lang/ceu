@@ -176,8 +176,8 @@ DBG('TODO: remove pool')
         local _, e, member = unpack(me)
 
         if e.tag == 'Outer' then
-            assert(me.dcl)
-            me.info = INFO.copy(me.dcl.info)
+            F.ID_int(me)
+            me.info.id = 'outer.'..member
         else
             ASR(TYPES.ID_plain(e.info.tp), me,
                 'invalid operand to `.´ : expected plain type : got "'..

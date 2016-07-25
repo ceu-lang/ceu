@@ -339,6 +339,9 @@ F = {
     Code = function (me)
         local mods1,id,ins1,mid,_,body1 = unpack(me)
 
+        ASR(not AST.par(me,'Code'), me,
+            'invalid `code´ declaration : nesting is not allowed')
+
         local blk = AST.par(me, 'Block')
 
         if not me.is_dyn_base then

@@ -5,10 +5,10 @@ end
 
 local F
 
-function CUR (field)
+function CUR (field, ctx)
     local Code = AST.iter'Code'()
     local data do
-        if Code then
+        if Code and (not ctx.is_outer) then
             data = '(*((tceu_code_mem_'..Code.id..'*)_ceu_mem))'
         else
             data = 'CEU_APP.root'
@@ -210,7 +210,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local _, is_alias = unpack(me.dcl)
         if me.dcl.tag == 'Evt' then
             if is_alias then
-                return CUR(me.dcl.id_)
+                return CUR(me.dcl.id_,ctx)
             else
                 return me.dcl.id_
             end
@@ -223,7 +223,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
             then
                 ptr = '*'
             end
-            return '('..ptr..CUR(me.dcl.id_)..')'
+            return '('..ptr..CUR(me.dcl.id_,ctx)..')'
         end
     end,
 
@@ -239,6 +239,8 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 
         if me.info.dcl.tag=='Evt' and (not is_alias) then
             return { '((void*) &'..V(e)..')', me.info.dcl.id_ }
+        elseif e.tag == 'Outer' then
+            return F.ID_int(me,{is_outer=true})
         else
             local ptr = ''
             if not TYPES.is_nat(e.info.tp) then
