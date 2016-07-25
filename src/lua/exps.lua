@@ -108,38 +108,64 @@ F = {
         local ID_abs, Abslist = unpack(me)
 
         local err_str
-        local i_tp, i_alias, i_dim
         local vars do
             if ID_abs.dcl.tag == 'Data' then
                 vars = AST.asr(ID_abs.dcl,'Data', 2,'Block').dcls
                 err_str = 'invalid constructor'
-                i_tp, i_alias, i_dim = 1,2,3
             else
                 vars = AST.get(ID_abs.dcl,'Code', 3,'Code_Pars')
                 err_str = 'invalid call'
-                i_tp, i_alias, i_dim = 4,2,3
             end
         end
 
         ASR(#vars == #Abslist, me, err_str..' : expected '..#vars..' argument(s)')
 
-        for i, dcl in ipairs(vars) do
-            local arg = Abslist[i]
-            local is_alias = dcl[i_alias]
+        -- check if dyn call is actually static (with "as")
+        me.id = ID_abs.dcl.id
+        local mods = (ID_abs.dcl.tag=='Code' and unpack(ID_abs.dcl))
+        local is_dyn do
+            if mods and mods.dynamic then
+                is_dyn = false
+            end
+        end
 
-            if is_alias then
-                INFO.asr_tag(arg, {'Alias'},
+        assert(#vars == #Abslist)
+        for i=1, #vars do
+            local var = vars[i]
+            local val = Abslist[i]
+
+            local _, var_tp, var_id, var_is_alias, var_dim
+            if vars.tag == 'Code_Pars' then
+                _,var_is_alias,var_dim,var_tp,var_id = unpack(var)
+            else
+                var_tp, var_is_alias, var_dim = unpack(var)
+                var_id = var.id
+            end
+
+            if mods and mods.dynamic and (not is_dyn) then
+                if var_tp.tag=='Type' and var_tp[1].tag == 'ID_abs' then
+                    if val.tag == 'Exp_as' then
+                        me.id = me.id..dcl.id
+                    else
+                        is_dyn = true
+                        me.id = ID_abs.dcl.id
+                    end
+                end
+            end
+
+            if var_is_alias then
+                INFO.asr_tag(val, {'Alias'},
                     err_str..' : invalid binding : '..'argument #'..i)
 
                 -- dim
                 if dcl.tag=='Vec' or dcl[1]=='vector' then
-                    local _,_,fr_dim = unpack(arg.info.dcl)
-                    ASR(EXPS.check_dim(dcl[i_dim],fr_dim), me,
+                    local _,_,fr_dim = unpack(val.info.dcl)
+                    ASR(EXPS.check_dim(var_dim,fr_dim), me,
                         err_str..' : invalid binding : argument #'..i..' : dimension mismatch')
                 end
             end
 
-            if arg.tag == 'ID_any' then
+            if val.tag == 'ID_any' then
                 -- ok: ignore _
                 -- Data(1,_)
 -- TODO: check default, check event/vector
@@ -147,17 +173,17 @@ F = {
                 --ASR(not is_alias, me,
                     --'invalid constructor : argument #'..i..' : unexpected `_´')
 
-            elseif arg.tag == 'Vec_Cons' then
+            elseif val.tag == 'Vec_Cons' then
 assert(ID_abs.dcl.tag == 'Data', 'TODO')
 error'TODO: remove below'
-                F.__set_vec(arg, dcl)
+                F.__set_vec(val, dcl)
 
             else
                 -- ctx
-                INFO.asr_tag(arg, {'Alias','Val','Nat','Var'}, err_str..' : argument #'..i)
+                INFO.asr_tag(val, {'Alias','Val','Nat','Var'}, err_str..' : argument #'..i)
 
                 -- tp
-                EXPS.check_tp(me, dcl[i_tp], arg.info.tp, err_str..' : argument #'..i,is_alias)
+                EXPS.check_tp(me, var_tp, val.info.tp, err_str..' : argument #'..i,var_is_alias)
             end
         end
 

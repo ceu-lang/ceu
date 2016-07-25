@@ -99,9 +99,6 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     Abs_Cons = function (me, mid)
         local ID_abs, Abslist = unpack(me)
 
-        me.is_dyn = false
-        me.static = ''
-
         local id_struct
         local vars do
             if ID_abs.dcl.tag == 'Data' then
@@ -126,13 +123,16 @@ error'TODO'
             end
         end
 
-        for i, v in ipairs(Abslist) do
+        assert(#vars == #Abslist)
+        for i=1, #vars do
             local var = vars[i]
+            local val = Abslist[i]
+
             local _, var_tp, var_id, is_alias
             if vars.tag == 'Code_Pars' then
-                _,is_alias,_,var_tp,var_id = unpack(var)
+                _,var_is_alias,_,var_tp,var_id = unpack(var)
             else
-                var_tp, is_alias = unpack(var)
+                var_tp, var_is_alias = unpack(var)
                 var_id = var.id
             end
 
@@ -143,31 +143,29 @@ error'TODO'
             if var_tp.tag=='Type' and var_tp[1].tag == 'ID_abs' then
                 if TYPES.check(var_tp,'&&') then
                     cast = '('..TYPES.toc(var_tp)..')'
-                elseif is_alias then
+                elseif var_is_alias then
                     cast = '('..TYPES.toc(var_tp)..'*)'
                 end
 
                 local mods = unpack(ID_abs.dcl)
                 if mods.dynamic then
-                    if v.tag == 'Exp_as' then
-                        ps[#ps+1] = '._data_'..i..' = CEU_DATA_'..v.info.tp[1].dcl.id
-                        me.static = me.static..var.id
+                    if val.tag == 'Exp_as' then
+                        ps[#ps+1] = '._data_'..i..' = CEU_DATA_'..val.info.tp[1].dcl.id
                     else
-                        me.is_dyn = true
                         ps[#ps+1] = '._data_'..i..' = 0'
                     end
                 end
             end
 
             if TYPES.check(var_tp,'?') then
-                if v.tag == 'ID_any' then
+                if val.tag == 'ID_any' then
                     ps[#ps+1] = '.'..var_id..' = { .is_set=0 }'
                 else
-                    ps[#ps+1] = '.'..var_id..' = { .is_set=1, .value='..V(v)..'}'
+                    ps[#ps+1] = '.'..var_id..' = { .is_set=1, .value='..V(val)..'}'
                 end
             else
-                if v.tag ~= 'ID_any' then
-                    ps[#ps+1] = '.'..var_id..' = '..cast..V(v)
+                if val.tag ~= 'ID_any' then
+                    ps[#ps+1] = '.'..var_id..' = '..cast..V(val)
                 end
             end
         end

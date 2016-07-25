@@ -55,9 +55,7 @@ typedef struct tceu_code_mem_ROOT {
 
     Code__PRE = function (me)
         local _,_,_,_,_,body = unpack(me)
-        if body then
-            me.mems = { me=me, mem='' }
-        end
+        me.mems = { me=me, mem='' }
     end,
     Code__POS = function (me)
         local mods,id,_,_,_,body = unpack(me)
@@ -482,10 +480,7 @@ tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
 
     Abs_Await = function (me)
         local Abs_Cons = unpack(me)
-        local ID_abs = unpack(Abs_Cons)
-        V(Abs_Cons) -- compute "is_dyn"
-        local id = ID_abs.dcl.id..(Abs_Cons.is_dyn and '' or Abs_Cons.static)
-        CUR().mem = CUR().mem..'tceu_code_mem_'..id..' __mem_'..me.n..';\n'
+        CUR().mem = CUR().mem..'tceu_code_mem_'..Abs_Cons.id..' __mem_'..me.n..';\n'
     end,
 
     ---------------------------------------------------------------------------
