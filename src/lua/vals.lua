@@ -8,7 +8,7 @@ local F
 function CUR (field, ctx)
     local Code = AST.iter'Code'()
     local data do
-        if Code and (not ctx.is_outer) then
+        if Code and (not (ctx and ctx.is_outer)) then
             data = '(*((tceu_code_mem_'..Code.id..'*)_ceu_mem))'
         else
             data = 'CEU_APP.root'

@@ -8,8 +8,35 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[=====[
+Test { [[
+code/await Ff (void) => (vector&[1] int vec) => void do
+    vector[1] int vec_ = [10];
+    vec = &vec_;
+    await FOREVER;
+end
+watching Ff() => (vec) do
+    escape vec[0];
+end
+escape 0;
+]],
+    run = 10,
+}
+
+Test { [[
+code/tight Fx (void) => (var& int a, vector&[10] int b) => void
+do
+    var int x;
+    a = &x;
+end
+
+escape 0;
+]],
+    wrn = true,
+    inits = 'line 1 : uninitialized vector "b" : reached `end of code´ (/tmp/tmp.ceu:7)',
+}
+
 do return end -- OK
+--[=====[
 --]=====]
 
 ----------------------------------------------------------------------------

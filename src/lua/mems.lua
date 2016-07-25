@@ -118,7 +118,9 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
             end
             if kind == 'var' then
                 assert(dim == false)
-                me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..ptr..' '..id2..';\n'
+                me.mems.args = me.mems.args..[[
+]]..TYPES.toc(Type)..ptr..' '..id2..[[;
+]]
             elseif kind == 'vector' then
                 assert(is_alias)
                 if TYPES.is_nat(TYPES.get(Type,1)) then
@@ -126,11 +128,6 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 ]]..TYPES.toc(Type)..' ('..ptr..id2..')['..V(dim)..[[];
 ]]
                 else
-                    if dim.is_const then
-                        me.mems.args = me.mems.args .. [[
-]]..TYPES.toc(Type)..' '..id2..'_buf['..V(dim)..[[];
-]]
-                    end
                     me.mems.args = me.mems.args .. [[
 tceu_vector]]..ptr..' '..id2..[[;
 ]]

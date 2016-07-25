@@ -26,6 +26,8 @@ local yields = {
     Kill          = true,
 }
 
+--local __detect_cycles = {}
+
 local function run_inits (par, i, Dcl, stop)
     local me = par[i]
     if me == nil then
@@ -37,6 +39,8 @@ local function run_inits (par, i, Dcl, stop)
     elseif not AST.is_node(me) then
         return run_inits(par, i+1, Dcl, stop)
     end
+    --assert(not __detect_cycles[me], me.n)
+    --__detect_cycles[me] = true
 
     -- error: yielding statement
     if yields[me.tag] then
@@ -254,6 +258,7 @@ F = {
             then
                 -- var x = ...
                 -- event& e = ...
+                --__detect_cycles = {}
                 run_inits(me, #me+1, me)
             end
         end

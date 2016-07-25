@@ -360,7 +360,7 @@ F = {
                 local mod, is_alias, _, Type, _ = unpack(item)
                 ASR(is_alias, item,
                     'invalid `code´ declaration : `watching´ parameter #'..i..' : expected `&´')
-assert(mod=='var', 'TODO')
+assert(mod=='var' or mod=='vector', 'TODO')
             end
         end
 
@@ -553,13 +553,24 @@ assert(mod=='var', 'TODO')
                 'invalid `watching´ : expected '..#pars..' argument(s)')
             local dcls = AST.node('Stmts', me.ln)
             for i, var in ipairs(AST.asr(me.list_var_any,'List_Var_Any')) do
-                local Type = AST.get(pars,'', i,'Code_Pars_Item',4,'Type')
+                local item = AST.get(pars,'', i,'Code_Pars_Item')
+                local kind,_,dim,Type = unpack(item)
                 if var.tag=='ID_int' and Type then
                     local id = unpack(var)
-                    dcls[#dcls+1] = AST.node('Var', var.ln,
-                                        AST.copy(Type),
-                                        '&',
-                                        id)
+                    if kind == 'var' then
+                        dcls[#dcls+1] = AST.node('Var', var.ln,
+                                            AST.copy(Type),
+                                            '&',
+                                            id)
+                    elseif kind == 'vector' then
+                        dcls[#dcls+1] = AST.node('Vec', var.ln,
+                                            AST.copy(Type),
+                                            '&',
+                                            AST.copy(dim),
+                                            id)
+                    else
+error'TODO'
+                    end
                     dcls[#dcls].is_param = true
                 end
             end

@@ -201,7 +201,22 @@ function AST.iter (pred, inc)
     end
 end
 
-function AST.dump (me, spc, lvl)
+local __detect_same
+function AST.check (me, not_first)
+    if not_first == nil then
+        __detect_same = {}
+    end
+    assert(not __detect_same[me], 'AST.check fail: '..me.tag)
+    __detect_same[me] = true
+
+    for i, sub in ipairs(me) do
+        if AST.is_node(sub) then
+            AST.check(sub, true)
+        end
+    end
+end
+
+function AST.dump (me, spc, lvl, __notfirst)
     if lvl and lvl==0 then
         return
     end

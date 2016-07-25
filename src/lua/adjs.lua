@@ -177,11 +177,11 @@ error'TODO: luacov never executes this?'
                     dcls[#dcls+1] = node('Var', me.ln, AST.copy(tp), is_alias, ID)
                 elseif pre == 'vector' then
                     _,_,dim,tp,ID = unpack(v)
-                    dcls[#dcls+1] = node('Vec', me.ln, AST.copy(tp), is_alias, dim, ID)
+                    dcls[#dcls+1] = node('Vec', me.ln, AST.copy(tp), is_alias, AST.copy(dim), ID)
                 elseif pre == 'pool' then
 error'TODO: luacov never executes this?'
                     _,_,dim,tp,ID = unpack(v)
-                    dcls[#dcls+1] = node('Pool', me.ln, AST.copy(tp), is_alias, dim, ID)
+                    dcls[#dcls+1] = node('Pool', me.ln, AST.copy(tp), is_alias, AST.copy(dim), ID)
                 elseif pre == 'event' then
                     _,_,tp,ID = unpack(v)
                     dcls[#dcls+1] = node('Evt', me.ln, AST.copy(tp), is_alias, ID)
