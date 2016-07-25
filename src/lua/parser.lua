@@ -70,7 +70,7 @@ local T = {
     },
 
     {
-        '`%(´ or internal identifier or native identifier or `global´ or `this´ or `outer´ or `{´',
+        '`%(´ or internal identifier or native identifier or `outer´ or `{´',
         'name expression'
     },
     {
@@ -78,7 +78,7 @@ local T = {
         'name expression'
     },
     {
-        '`%*´ or `%$´ or internal identifier or native identifier or `global´ or `this´ or `outer´',
+        '`%*´ or `%$´ or internal identifier or native identifier or `outer´',
         'name expression'
     },
     {
@@ -276,7 +276,6 @@ KEYS = P
 'val' +
 'until' +
 'true' +
-'this' +
 'then' +
 'spawn' +
 'sizeof' +
@@ -305,7 +304,6 @@ KEYS = P
 'input' +
 'in' +
 'if' +
-'global' +
 'FOREVER' +
 'finalize' +
 'false' +
@@ -754,7 +752,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     (CK'as' * (V'Type' + KK'/'*(CK'nohold'+CK'plain'+CK'pure')))^-1
                    )
                  + V'ID_int'  + V'ID_nat'
-                 + V'Global'  + V'This'   + V'Outer'
+                 + V'Outer'
                  + V'_Nat_Exp'
 
     -- Exp
@@ -800,8 +798,6 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , STRING = CKK( CKK'"' * (P(1)-'"'-'\n')^0 * K'"', 'string literal' )
     , NULL   = CK'null'     -- TODO: the idea is to get rid of this
 
-    , Global  = K'global'
-    , This    = K'this' * Cc(false)
     , Outer   = K'outer'
 
     , __exp_call = (CK'call/recursive' + CK'call' + Cc'call')

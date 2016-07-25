@@ -11,7 +11,7 @@ endif
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 syn match	Macro	"\<_\w*\>"
-syn keyword	cConstant   this null true false _
+syn keyword	cConstant   null true false _
 syn keyword	cOperator   not or and sizeof
 syn keyword cType       bool byte
 syn keyword cType       f32 f64 float
@@ -23,7 +23,7 @@ syn keyword cType       uint usize void
 syn keyword cType       const nohold recursive plain pure hold
 syn keyword cType       tight dynamic
 syn keyword	cStatement  as async await break native continue data deterministic do else emit end
-syn keyword cStatement  code event every finalize FOREVER global if input loop nothing
+syn keyword cStatement  code event every finalize FOREVER outer if input loop nothing
 syn keyword cStatement  output pre par pause return then until var val vector with
 syn keyword cStatement  include kill spawn thread
 syn keyword cStatement  escape call isr atomic request in is
