@@ -32839,6 +32839,27 @@ escape 0;
     run = 11,
 }
 
+Test { [[
+data Int with
+    var int x;
+end
+
+code/await Texs (void) => (vector&[10] Int nums) => void
+do
+    vector[10] Int nums_ = [ ];
+    nums = &nums_;
+    await FOREVER;
+end
+
+watching Texs() => (nums) do
+    vector&[10] Int nums_ = &nums;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 -->> CODE / WATCHING / SCOPES
 
 Test { [[

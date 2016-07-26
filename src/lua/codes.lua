@@ -753,7 +753,9 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         -- var Ee.Xx ex = ...;
         -- var& Ee = &ex;
         local cast = ''
-        if to.info.tp.tag=='Type' and to.info.tp[1].tag == 'ID_abs' then
+        if to.info.dcl.tag=='Var' and to.info.tp.tag=='Type'
+            and to.info.tp[1].tag == 'ID_abs'
+        then
             cast = '('..TYPES.toc(to.info.tp)..'*)'
         end
 
