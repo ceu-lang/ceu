@@ -238,7 +238,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local _,is_alias = unpack(me.info.dcl)
 
         if me.info.dcl.tag=='Evt' and (not is_alias) then
-            return { '((void*) &'..V(e)..')', me.info.dcl.id_ }
+            return '((tceu_evt){ '..me.info.dcl.id_..', {&'..V(e)..'} })'
         elseif e.tag == 'Outer' then
             return F.ID_int(me,{is_outer=true})
         else
