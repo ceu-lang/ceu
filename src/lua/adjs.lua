@@ -183,7 +183,7 @@ error'TODO: luacov never executes this?'
                     _,_,dim,tp,ID = unpack(v)
                     dcls[#dcls+1] = node('Pool', me.ln, AST.copy(tp), is_alias, AST.copy(dim), ID)
                 elseif pre == 'event' then
-                    _,_,tp,ID = unpack(v)
+                    _,_,_,tp,ID = unpack(v)
                     dcls[#dcls+1] = node('Evt', me.ln, AST.copy(tp), is_alias, ID)
                 else
                     error'TODO'
@@ -463,6 +463,15 @@ DBG('TODO: _Loop_Pool')
 
     _Watching__PRE = function (me)
         local watch, mid, block = unpack(me)
+
+        -- watching Ff()=>(), Gg()=>(), ...
+        if block.tag ~= 'Block' then
+            return node('_Watching', me.ln, watch, mid,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('_Watching', me.ln,
+                                unpack(me,3)))))
+        end
 
         local ref = node('Nothing', me.ln)
         if mid then

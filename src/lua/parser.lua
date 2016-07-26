@@ -494,7 +494,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     -- (var& int v, var/nohold void&& ptr)
     , __typepars_pre = CK'vector' * CKK'&' * V'__Dim'
                      + CK'pool'   * CKK'&' * V'__Dim'
-                     + CK'event'  * CKK'&'
+                     + CK'event'  * CKK'&' * Cc(false)
                      + CK'var'   * OPT(CKK'&') * OPT(KK'/'*CK'hold')
 
     , Code_Pars_Item  = V'__typepars_pre' * V'Type' * OPT(V'__ID_int')
@@ -596,8 +596,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
     , __watch = (V'_Await_Until' + V'Await_Wclock' + V'Abs_Await')
-    , _Watching = K'watching' * V'__watch' *
-                    OPT(KK'=>' * PARENS(OPT(V'List_Var_Any')))
+                    * OPT(KK'=>' * PARENS(OPT(V'List_Var_Any')))
+    , _Watching = K'watching'
+                    * V'__watch' * (KK',' * V'__watch')^0
                 * V'__Do'
 
     , __num = CKK(m.R'09'^1,'number') / tonumber

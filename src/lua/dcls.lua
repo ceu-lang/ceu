@@ -276,7 +276,7 @@ F = {
         local body = AST.get(me.__par,'Code', 6,'Block')
         if body then
             for i, item in ipairs(me) do
-                local _,_,_,_,id = unpack(item)
+                local kind,_,_,_,id = unpack(item)
                 ASR(id, me,
                     'invalid declaration : parameter #'..i..' : expected identifier')
             end
@@ -360,7 +360,7 @@ F = {
                 local mod, is_alias, _, Type, _ = unpack(item)
                 ASR(is_alias, item,
                     'invalid `code´ declaration : `watching´ parameter #'..i..' : expected `&´')
-assert(mod=='var' or mod=='vector', 'TODO')
+assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
             end
         end
 
@@ -567,6 +567,12 @@ assert(mod=='var' or mod=='vector', 'TODO')
                                             AST.copy(Type),
                                             '&',
                                             AST.copy(dim),
+                                            id)
+                    elseif kind == 'event' then
+                        dcls[#dcls+1] = AST.node('Evt', var.ln,
+                                            AST.node('Typelist', me.ln,
+                                                AST.copy(Type)),
+                                            '&',
                                             id)
                     else
 error'TODO'

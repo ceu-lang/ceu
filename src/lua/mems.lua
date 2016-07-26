@@ -113,7 +113,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
         for i,item in ipairs(ins_mid) do
             local kind,is_alias,dim,Type,id2 = unpack(item)
             local ptr = (is_alias and (not TYPES.is_nat_not_plain(TYPES.pop(Type,'?'))) and '*' or '')
-            if i > #ins then
+            if i>#ins and (kind~='event') then
                 ptr = ptr..'*'  -- extra indirection for mid's
             end
             if kind == 'var' then
@@ -133,6 +133,11 @@ tceu_vector]]..ptr..' '..id2..[[;
 ]]
                 end
 
+            elseif kind == 'event' then
+-- TODO: per Code evts
+                    me.mems.args = me.mems.args .. [[
+tceu_evt_ref]]..ptr..' '..id2..[[;
+]]
             else
                 error'bug found'
             end
@@ -189,7 +194,7 @@ CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
-    CEU_STK_LBL((tceu_evt*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
+    CEU_STK_LBL((tceu_evt_occ*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
 ]]
             if not TYPES.check(Type,'void') then
                 me.mems.wrapper = me.mems.wrapper..[[
@@ -216,7 +221,7 @@ static void CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
-    CEU_STK_LBL((tceu_evt*)&ps, stk, mem, trlK, lbl);
+    CEU_STK_LBL((tceu_evt_occ*)&ps, stk, mem, trlK, lbl);
 }
 ]]
         end
@@ -378,7 +383,7 @@ return opt;
                     if not AST.par(me,'Data') then
                         dcl.id_ = dcl.id..'_'..dcl.n
                     end
-                    mem[#mem+1] = 'tceu_nevt '..dcl.id_..';\n'
+                    mem[#mem+1] = 'tceu_evt_ref '..dcl.id_..';\n'
                 else
                     local data = AST.par(me,'Data')
                     if data then
@@ -564,7 +569,6 @@ for _, dcl in ipairs(MEMS.evts) do
     -- type
     local mem = [[
 typedef struct tceu_event_]]..dcl.id..'_'..dcl.n..[[ {
-    tceu_code_mem* mem;
 ]]
     for i,Type in ipairs(Typelist) do
         mem = mem..'    '..TYPES.toc(Type)..' _'..i..';\n'

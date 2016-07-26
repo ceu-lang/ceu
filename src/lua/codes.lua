@@ -42,7 +42,8 @@ local function CLEAR (me)
     if me.trails_n > 1 then
         LINE(me, [[
 {
-    CEU_STK_BCAST_ABORT(CEU_INPUT__CLEAR, NULL, _ceu_stk, _ceu_trlK,
+    tceu_evt_occ __ceu_evt = { {CEU_INPUT__CLEAR,{NULL}}, NULL };
+    CEU_STK_BCAST_ABORT(__ceu_evt, _ceu_stk, _ceu_trlK,
                         _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
 /* TODO */
     ceu_stack_clear(_ceu_stk->down, _ceu_mem,
@@ -199,8 +200,8 @@ ceu_vector_init(&]]..CUR(dcl.id_)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
         -- free vectors
         if me.has_dyn_vecs then
             LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt = CEU_INPUT__CLEAR;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl_dyn_vecs.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_dyn_vecs.id..[[;
 if (0) {
 ]])
             CASE(me, me.lbl_dyn_vecs)
@@ -252,8 +253,8 @@ assert(not is_alias)
 ceu_pool_init(&]]..CUR(me.id_)..'.pool, '..V(dim)..[[,
               sizeof(tceu_code_mem_dyn)+sizeof(]]..TYPES.toc(tp)..[[),
               (byte**)&]]..CUR(me.id_..'_queue')..', (byte*)&'..CUR(me.id_..'_buf')..[[);
-_ceu_mem->trails[]]..me.trails[1]..[[].evt        = CEU_INPUT__CODE_POOL;
-_ceu_mem->trails[]]..me.trails[1]..[[].pool_first = &]]..CUR(me.id_)..[[.first;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id         = CEU_INPUT__CODE_POOL;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..CUR(me.id_)..[[.first;
 _ceu_trl++;
 ]])
     end,
@@ -324,14 +325,13 @@ if (0)
 ]]
             LINE(me, [[
     {
-        /* _ceu_evt holds __ceu_ret (see Escape) */
-        tceu_evt_params_code ps = { _ceu_mem, _ceu_evt };
 #if 0
         CEU_STK_BCAST_ABORT(CEU_INPUT__CODE, &ps, _ceu_stk, _ceu_trlK,
                             (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
 #else
+        /* _ceu_evt holds __ceu_ret (see Escape) */
         tceu_stk __ceu_stk = { _ceu_stk, (tceu_code_mem*)&CEU_APP.root, _ceu_trlK, 1 };
-        tceu_evt __ceu_evt = { CEU_INPUT__CODE, &ps };
+        tceu_evt_occ __ceu_evt = { {CEU_INPUT__CODE,{_ceu_mem}}, _ceu_evt };
         ceu_go_bcast(&__ceu_evt, &__ceu_stk,
                      (tceu_code_mem*)&CEU_APP.root,
                      0, CEU_APP.root.mem.trails_n-1);
@@ -355,9 +355,9 @@ if (0)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
         HALT(me, {
-            { evt = 'CEU_INPUT__CODE' },
+            { ['evt.id']  = 'CEU_INPUT__CODE' },
+            { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
             { lbl = me.lbl_out.id },
-            { code_mem = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
             lbl = me.lbl_out.id,
             exec = [[
 {
@@ -395,7 +395,7 @@ if (0)
 
         tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
 
-        CEU_STK_LBL((tceu_evt*)&__ceu_ps, _ceu_stk,
+        CEU_STK_LBL((tceu_evt_occ*)&__ceu_ps, _ceu_stk,
                     __ceu_new_mem, 0, ]]..ID_abs.dcl.lbl_in.id..[[);
     }
 }
@@ -407,8 +407,8 @@ if (0)
     Finalize = function (me)
         local now,_,later = unpack(me)
         LINE(me, [[
-_ceu_mem->trails[]]..later.trails[1]..[[].evt = CEU_INPUT__CLEAR;
-_ceu_mem->trails[]]..later.trails[1]..[[].lbl = ]]..me.lbl_in.id..[[;
+_ceu_mem->trails[]]..later.trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..later.trails[1]..[[].lbl    = ]]..me.lbl_in.id..[[;
 if (0) {
 ]])
         CASE(me, me.lbl_in)
@@ -428,11 +428,11 @@ _ceu_trl++;
     Pause_If = function (me)
         local e, body = unpack(me)
         LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt        = CEU_INPUT__PAUSE;
-_ceu_mem->trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
-_ceu_mem->trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
-_ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
-_ceu_mem->trails[]]..me.trails[1]..[[].pse_data_or_code = _ceu_mem;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id      = CEU_INPUT__PAUSE;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_evt.id  = ]]..V(e)..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_evt.mem = _ceu_mem;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_skip    = ]]..body.trails_n..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_paused  = 0;
 _ceu_trl++;
 ]])
         CONC(me, body)
@@ -458,7 +458,7 @@ ceu_callback_assert_msg(0, "reached end of `do´");
         local mods = code and unpack(code)
         local evt do
             if code and mods.await then
-                evt = '(tceu_evt*) &__ceu_ret_'..code.n
+                evt = '(tceu_evt_occ*) &__ceu_ret_'..code.n
             else
                 evt = 'NULL'
             end
@@ -513,8 +513,8 @@ while (1) {
 ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 ]])
             HALT(me, {
-                { evt = 'CEU_INPUT__ASYNC' },
-                { lbl = me.lbl_asy.id },
+                { ['evt.id'] = 'CEU_INPUT__ASYNC' },
+                { lbl        = me.lbl_asy.id },
                 lbl = me.lbl_asy.id,
             })
         end
@@ -781,7 +781,7 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..to.info.dcl.id..[[ != NULL)
         else
             assert(fr.tag == 'Abs_Await')
             -- see "Set_Exp: _ret"
-            SET(me, to, '*((int*) ((tceu_evt_params_code*)_ceu_evt->params)->ret)' ,true)
+            SET(me, to, '*((int*)_ceu_evt->params)' ,true)
         end
     end,
     Set_Await_many = function (me)
@@ -912,8 +912,8 @@ error'TODO: lua'
     Await_Ext = function (me)
         local ID_ext = unpack(me)
         HALT(me, {
-            { evt = V(ID_ext) },
-            { lbl = me.lbl_out.id },
+            { ['evt.id'] = V(ID_ext) },
+            { lbl        = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
     end,
@@ -946,8 +946,8 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[).value.num
         else
             LINE(me, [[
 ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-_ceu_trl->evt = CEU_INPUT__ASYNC;
-_ceu_trl->lbl = ]]..me.lbl_out.id..[[;
+_ceu_trl->evt.id = CEU_INPUT__ASYNC;
+_ceu_trl->lbl    = ]]..me.lbl_out.id..[[;
 ]])
             LINE(me, [[
     ceu_go_ext(]]..V(ID_ext)..', '..ps..[[);
@@ -979,9 +979,9 @@ _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
         end
 
         HALT(me, {
-            { evt = evt },
+            { ['evt.id']  = evt },
+            { ['evt.mem'] = int_data_or_code },
             { lbl = me.lbl_out.id },
-            { int_data_or_code = int_data_or_code },
             lbl = me.lbl_out.id,
         })
     end,
@@ -1004,17 +1004,17 @@ _ceu_trl->lbl = ]]..me.lbl_out.id..[[;
         LINE(me, [[
 {
 ]])
-
         local ps = 'NULL'
         if Explist then
             LINE(me, [[
     tceu_event_]]..Exp_Name.info.dcl.id..'_'..Exp_Name.info.dcl.n..[[
-        __ceu_ps = { ]]..int_data_or_code..', '..table.concat(V(Explist),',')..[[ };
+        __ceu_ps = { ]]..table.concat(V(Explist),',')..[[ };
 ]])
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    CEU_STK_BCAST_ABORT(]]..evt..[[, &__ceu_ps, _ceu_stk, _ceu_trlK,
+    tceu_evt_occ __ceu_evt_occ = { {]]..evt..',{'..int_data_or_code..[[}}, &__ceu_ps };
+    CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk, _ceu_trlK,
                         (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
 }
 ]])
@@ -1033,8 +1033,8 @@ ceu_wclock(]]..V(e)..', &'..wclk..[[, NULL);
 _CEU_HALT_]]..me.n..[[_:
 ]])
         HALT(me, {
-            { evt = 'CEU_INPUT__WCLOCK' },
-            { lbl = me.lbl_out.id },
+            { ['evt.id'] = 'CEU_INPUT__WCLOCK' },
+            { lbl        = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
         LINE(me, [[
@@ -1051,8 +1051,8 @@ _CEU_HALT_]]..me.n..[[_:
     Emit_Wclock = function (me)
         local e = unpack(me)
         HALT(me, {
-            { evt = 'CEU_INPUT__ASYNC' },
-            { lbl = me.lbl_out.id },
+            { ['evt.id'] = 'CEU_INPUT__ASYNC' },
+            { lbl        = me.lbl_out.id },
             lbl = me.lbl_out.id,
             exec = [[
 {
@@ -1078,8 +1078,8 @@ _CEU_HALT_]]..me.n..[[_:
 ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 ]])
         HALT(me, {
-            { evt = 'CEU_INPUT__ASYNC' },
-            { lbl = me.lbl_in.id },
+            { ['evt.id'] = 'CEU_INPUT__ASYNC' },
+            { lbl        = me.lbl_in.id },
             lbl = me.lbl_in.id,
         })
         CONC(me, blk)
