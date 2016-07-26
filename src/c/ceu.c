@@ -17,69 +17,6 @@
 #define S64_MAX   9223372036854775807
 #define U64_MAX   18446744073709551615
 
-/* NATIVE_PRE */
-=== NATIVE_PRE ===
-
-/* EVENTS_ENUM */
-
-enum {
-    CEU_INPUT__NONE = 0,
-    CEU_INPUT__CLEAR,
-    CEU_INPUT__PAUSE,
-    CEU_INPUT__CODE,
-    CEU_INPUT__CODE_POOL,
-    CEU_INPUT__ASYNC,
-    CEU_INPUT__WCLOCK,
-    === EXTS_ENUM_INPUT ===
-
-    CEU_EVENT__MIN,
-    === EVTS_ENUM ===
-};
-
-/*****************************************************************************/
-
-/* DATAS_ENUM */
-enum {
-    CEU_DATA__NONE = 0,
-    === DATAS_ENUM ===
-};
-
-typedef u16 tceu_ndata;  /* TODO */
-
-typedef struct tceu_data {
-    tceu_ndata id;
-} tceu_data;
-
-/* DATAS_MEMS */
-=== DATAS_MEMS ===
-
-/* DATAS_SUPERS */
-int CEU_DATA_SUPERS[] = {
-    CEU_DATA__NONE,
-    === DATAS_SUPERS ===
-};
-
-static int ceu_data_is (tceu_ndata me, tceu_ndata cmp) {
-    if (me == CEU_DATA__NONE) {
-        return 0;
-    } else {
-        return (me==cmp || ceu_data_is(CEU_DATA_SUPERS[me],cmp));
-    }
-}
-
-static void* ceu_data_as (tceu_data* me, tceu_ndata cmp, char* file, int line) {
-    ceu_callback_assert_msg_ex(ceu_data_is(me->id, cmp), "invalid cast `as´",
-                          file, line);
-    return me;
-}
-
-/*****************************************************************************/
-
-enum {
-    CEU_OUTPUT__NONE = 0,
-    === EXTS_ENUM_OUTPUT ===
-};
-
 typedef u16 tceu_nevt;   /* TODO */
 typedef === TCEU_NTRL === tceu_ntrl;
 typedef === TCEU_NLBL === tceu_nlbl;
@@ -141,6 +78,69 @@ typedef struct tceu_pool_pak {
     tceu_pool         pool;
     tceu_code_mem_dyn first;
 } tceu_pool_pak;
+
+/*****************************************************************************/
+
+/* NATIVE_PRE */
+=== NATIVE_PRE ===
+
+/* EVENTS_ENUM */
+
+enum {
+    CEU_INPUT__NONE = 0,
+    CEU_INPUT__CLEAR,
+    CEU_INPUT__PAUSE,
+    CEU_INPUT__CODE,
+    CEU_INPUT__CODE_POOL,
+    CEU_INPUT__ASYNC,
+    CEU_INPUT__WCLOCK,
+    === EXTS_ENUM_INPUT ===
+
+    CEU_EVENT__MIN,
+    === EVTS_ENUM ===
+};
+
+enum {
+    CEU_OUTPUT__NONE = 0,
+    === EXTS_ENUM_OUTPUT ===
+};
+
+/* DATAS_ENUM */
+enum {
+    CEU_DATA__NONE = 0,
+    === DATAS_ENUM ===
+};
+
+typedef u16 tceu_ndata;  /* TODO */
+
+typedef struct tceu_data {
+    tceu_ndata id;
+} tceu_data;
+
+/* DATAS_MEMS */
+=== DATAS_MEMS ===
+
+/* DATAS_SUPERS */
+int CEU_DATA_SUPERS[] = {
+    CEU_DATA__NONE,
+    === DATAS_SUPERS ===
+};
+
+static int ceu_data_is (tceu_ndata me, tceu_ndata cmp) {
+    if (me == CEU_DATA__NONE) {
+        return 0;
+    } else {
+        return (me==cmp || ceu_data_is(CEU_DATA_SUPERS[me],cmp));
+    }
+}
+
+static void* ceu_data_as (tceu_data* me, tceu_ndata cmp, char* file, int line) {
+    ceu_callback_assert_msg_ex(ceu_data_is(me->id, cmp), "invalid cast `as´",
+                          file, line);
+    return me;
+}
+
+/*****************************************************************************/
 
 === CODES_MEMS ===
 === CODES_ARGS ===

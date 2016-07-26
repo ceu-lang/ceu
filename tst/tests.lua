@@ -62070,6 +62070,45 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+data IPoints with
+    var&   int  cur;
+    event& void inc;
+end
+
+var int cur = 0;
+event void inc;
+
+var IPoints me_ = val IPoints(&cur,&inc);   
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+data IPoints with
+    var&   int  cur;
+    event& void inc;
+end
+
+code/await Points (void) => (var& IPoints me) => void do
+    var int cur = 0;
+    event void inc;
+
+    var IPoints me_ = val IPoints(&cur,&inc);   
+    me = &me_;
+end
+
+watching Points() => (points) do
+    emit points.inc;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 --<<< DATA / EVENTS
 
 error'22/07/2016'
