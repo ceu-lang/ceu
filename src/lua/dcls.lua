@@ -293,7 +293,7 @@ F = {
         me.ids = ''
         for i, item in ipairs(me) do
             local kind,is_alias,_,Type,_ = unpack(item)
-            if Type[1].tag == 'ID_abs' then
+            if kind~='event' and Type[1].tag=='ID_abs' then
                 item.id = '_'..i..'_'..kind..
                           '_'..(is_alias and 'y' or 'n')..
                           '_'..TYPES.tostring(Type)
@@ -443,10 +443,12 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
             return
         end
         for _, Type in ipairs(me) do
-            local ID_prim,mod = unpack(Type)
-            if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
-                ASR(is_alias, me,
-                    'invalid declaration : unexpected type `void´')
+            if Type.tag == 'Type' then
+                local ID_prim,mod = unpack(Type)
+                if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
+                    ASR(is_alias, me,
+                        'invalid declaration : unexpected type `void´')
+                end
             end
         end
     end,

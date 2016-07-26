@@ -33194,6 +33194,27 @@ escape ret!;
 }
 
 Test { [[
+code/await Ff (var int x) => (event& void e, var& int v) => int do
+    event void e_;
+    var int v_ = 10;
+    e = &e_;
+    v = &v_;
+    await e_;
+    escape x;
+end
+
+var int? ret =
+    watching Ff(10) => (e,v) do
+        emit e;
+        escape 0;
+    end;
+
+escape ret!;
+]],
+    run = 10,
+}
+
+Test { [[
 code/await Ff (var int x, event& int fff) => int do
     var int v = await fff;
     escape v + x;
