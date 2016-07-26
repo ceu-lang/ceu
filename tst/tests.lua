@@ -18467,8 +18467,8 @@ escape x;
 }
 
 Test { [[
-event void a;
-event& void b = &a;
+event void aaa;
+event& void bbb = &aaa;
 escape 1;
 ]],
     run = 1,
@@ -33134,6 +33134,101 @@ end
 escape 0;
 ]],
     scopes = 'line 11 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (var int x) => (var& int y) => void do
+    var int yy = 10+x;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) => (var& int x) => void do
+    watching Gg(1) => (y1)
+           , Gg(2) => (y2)
+           , Gg(3) => (y3)
+    do
+        var int v = y1+y2+y3;
+        x = &v;
+        await FOREVER;
+    end
+end
+
+watching Ff() => (x) do
+    escape x;
+end
+
+escape 0;
+]],
+    run = 36,
+}
+
+Test { [[
+code/await Ff (var int x) => (event& int e) => void do
+    event int e_;
+    e = &e_;
+    await e;
+end
+escape 0;
+]],
+    exps = 'line 4 : invalid access to output variable "e"',
+}
+
+Test { [[
+code/await Ff (var int x) => (event& int e) => int do
+    event int e_;
+    e = &e_;
+    var int v = await e_;
+    escape v + x;
+end
+
+var int? ret =
+    watching Ff(10) => (e) do
+        emit e => 100;
+        escape 0;
+    end;
+
+escape ret!;
+]],
+    run = 110,
+}
+
+Test { [[
+code/await Ff (var int x, event& int fff) => int do
+    var int v = await fff;
+    escape v + x;
+end
+
+event int eee;
+
+var int? ret =
+    watching Ff(10, &eee) do
+        emit eee => 100;
+        escape 0;
+    end;
+
+escape ret!;
+]],
+    run = 110,
+}
+
+Test { [[
+code/await Ff (var int x, event& (int) e) => int do
+    var int v = await e;
+    escape v + x;
+end
+
+event int e;
+
+var int? ret =
+    watching Ff(10, &e) do
+        emit e => 100;
+        escape 0;
+    end;
+
+escape ret!;
+]],
+    run = 110,
 }
 
 --<< CODE / WATCHING / SCOPES

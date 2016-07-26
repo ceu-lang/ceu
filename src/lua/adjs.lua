@@ -184,6 +184,10 @@ error'TODO: luacov never executes this?'
                     dcls[#dcls+1] = node('Pool', me.ln, AST.copy(tp), is_alias, AST.copy(dim), ID)
                 elseif pre == 'event' then
                     _,_,_,tp,ID = unpack(v)
+                    if tp.tag == 'Type' then
+                        tp = node('Typelist', me.ln, tp)
+                        v[4] = tp
+                    end
                     dcls[#dcls+1] = node('Evt', me.ln, AST.copy(tp), is_alias, ID)
                 else
                     error'TODO'

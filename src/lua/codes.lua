@@ -303,7 +303,7 @@ if (0)
                 end
             end
 
-            assert(kind=='var' or kind=='vector')
+            assert(kind=='var' or kind=='vector' or kind=='event')
             LINE(me, [[
 ]]..V(vars[i],{is_bind=true})..[[ =
     ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_evt)->]]..id2..[[;
@@ -428,11 +428,10 @@ _ceu_trl++;
     Pause_If = function (me)
         local e, body = unpack(me)
         LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id      = CEU_INPUT__PAUSE;
-_ceu_mem->trails[]]..me.trails[1]..[[].pse_evt.id  = ]]..V(e)..[[;
-_ceu_mem->trails[]]..me.trails[1]..[[].pse_evt.mem = _ceu_mem;
-_ceu_mem->trails[]]..me.trails[1]..[[].pse_skip    = ]]..body.trails_n..[[;
-_ceu_mem->trails[]]..me.trails[1]..[[].pse_paused  = 0;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id     = CEU_INPUT__PAUSE;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
 _ceu_trl++;
 ]])
         CONC(me, body)
@@ -912,8 +911,8 @@ error'TODO: lua'
     Await_Ext = function (me)
         local ID_ext = unpack(me)
         HALT(me, {
-            { ['evt.id'] = V(ID_ext) },
-            { lbl        = me.lbl_out.id },
+            { evt = V(ID_ext) },
+            { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
     end,
@@ -935,7 +934,7 @@ tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',
         if inout == 'output' then
             local set = AST.par(me,'Set_Emit_Ext_emit')
             local cb = [[
-ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..', '..ps..[[).value.num;
+ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.num;
 ]]
             if set then
                 local _, to = unpack(set)
@@ -950,7 +949,7 @@ _ceu_trl->evt.id = CEU_INPUT__ASYNC;
 _ceu_trl->lbl    = ]]..me.lbl_out.id..[[;
 ]])
             LINE(me, [[
-    ceu_go_ext(]]..V(ID_ext)..', '..ps..[[);
+    ceu_go_ext(]]..V(ID_ext)..'.id, '..ps..[[);
 ]])
             HALT(me, {
                 lbl = me.lbl_out.id,
@@ -966,21 +965,8 @@ _ceu_trl->lbl    = ]]..me.lbl_out.id..[[;
 
     Await_Int = function (me)
         local Exp_Name = unpack(me)
-
-        local v = V(Exp_Name)
-        local evt, int_data_or_code do
-            if type(v) == 'table' then
-                -- await d.e;
-                int_data_or_code, evt = unpack(v)
-            else
-                -- await e;
-                int_data_or_code, evt = '_ceu_mem', v
-            end
-        end
-
         HALT(me, {
-            { ['evt.id']  = evt },
-            { ['evt.mem'] = int_data_or_code },
+            { evt = V(Exp_Name) },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
         })
@@ -989,18 +975,6 @@ _ceu_trl->lbl    = ]]..me.lbl_out.id..[[;
     Emit_Evt = function (me)
         local Exp_Name, Explist = unpack(me)
         local Typelist = unpack(Exp_Name.info.dcl)
-
-        local v = V(Exp_Name)
-        local evt, int_data_or_code do
-            if type(v) == 'table' then
-                -- await d.e;
-                int_data_or_code, evt = unpack(v)
-            else
-                -- await e;
-                int_data_or_code, evt = '_ceu_mem', v
-            end
-        end
-
         LINE(me, [[
 {
 ]])
@@ -1013,7 +987,7 @@ _ceu_trl->lbl    = ]]..me.lbl_out.id..[[;
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    tceu_evt_occ __ceu_evt_occ = { {]]..evt..',{'..int_data_or_code..[[}}, &__ceu_ps };
+    tceu_evt_occ __ceu_evt_occ = { ]]..V(Exp_Name)..[[, &__ceu_ps };
     CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk, _ceu_trlK,
                         (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
 }

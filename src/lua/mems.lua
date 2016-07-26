@@ -112,10 +112,18 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
         for i,item in ipairs(ins_mid) do
             local kind,is_alias,dim,Type,id2 = unpack(item)
-            local ptr = (is_alias and (not TYPES.is_nat_not_plain(TYPES.pop(Type,'?'))) and '*' or '')
-            if i>#ins and (kind~='event') then
-                ptr = ptr..'*'  -- extra indirection for mid's
+
+            local ptr = '' do
+                if is_alias then
+                    if (kind~='event') and (not TYPES.is_nat_not_plain(TYPES.pop(Type,'?'))) then
+                        ptr = ptr..'*'
+                    end
+                    if i > #ins then
+                        ptr = ptr..'*'  -- extra indirection for mid's
+                    end
+                end
             end
+
             if kind == 'var' then
                 assert(dim == false)
                 me.mems.args = me.mems.args..[[
@@ -136,7 +144,7 @@ tceu_vector]]..ptr..' '..id2..[[;
             elseif kind == 'event' then
 -- TODO: per Code evts
                     me.mems.args = me.mems.args .. [[
-tceu_evt_ref]]..ptr..' '..id2..[[;
+tceu_evt]]..ptr..' '..id2..[[;
 ]]
             else
                 error'bug found'
@@ -383,7 +391,7 @@ return opt;
                     if not AST.par(me,'Data') then
                         dcl.id_ = dcl.id..'_'..dcl.n
                     end
-                    mem[#mem+1] = 'tceu_evt_ref '..dcl.id_..';\n'
+                    mem[#mem+1] = 'tceu_evt '..dcl.id_..';\n'
                 else
                     local data = AST.par(me,'Data')
                     if data then

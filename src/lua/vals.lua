@@ -192,7 +192,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     ---------------------------------------------------------------------------
 
     ID_ext = function (me)
-        return me.dcl.id_
+        return '((tceu_evt){'..me.dcl.id_..',{NULL}})'
     end,
 
     ID_nat = function (me)
@@ -210,9 +210,9 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local _, is_alias = unpack(me.dcl)
         if me.dcl.tag == 'Evt' then
             if is_alias then
-                return '((tceu_evt_ref){ '..CUR(me.dcl.id_,ctx)..', (void*)_ceu_mem })'
+                return CUR(me.dcl.id_,ctx)
             else
-                return me.dcl.id_
+                return '((tceu_evt){'..me.dcl.id_..',{_ceu_mem}})'
             end
         else
             local ptr = ''
@@ -261,7 +261,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local _, e = unpack(me)
         local dcl = e.info.dcl
         if dcl.tag == 'Evt' then
-            return dcl.id_
+            return V(e)
         elseif e.tag=='Exp_Call' or AST.get(e,'Exp_Name',1,'Exp_!')
                 or TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?'))
         then

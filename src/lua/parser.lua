@@ -492,12 +492,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     -- (var& int, var/nohold void&&)
     -- (var& int v, var/nohold void&& ptr)
-    , __typepars_pre = CK'vector' * CKK'&' * V'__Dim'
-                     + CK'pool'   * CKK'&' * V'__Dim'
-                     + CK'event'  * CKK'&' * Cc(false)
-                     + CK'var'   * OPT(CKK'&') * OPT(KK'/'*CK'hold')
-
-    , Code_Pars_Item  = V'__typepars_pre' * V'Type' * OPT(V'__ID_int')
+    , __typepars_pre = CK'vector' * CKK'&' * V'__Dim' * V'Type'
+                     + CK'pool'   * CKK'&' * V'__Dim' * V'Type'
+                     + CK'event'  * CKK'&' * Cc(false) * (PARENS(V'Typelist') + V'Type')
+                     + CK'var'   * OPT(CKK'&') * OPT(KK'/'*CK'hold') * V'Type'
+    , Code_Pars_Item  = V'__typepars_pre' * OPT(V'__ID_int')
 
     , Code_Pars = #KK'(' * (
                     PARENS(P'void') +

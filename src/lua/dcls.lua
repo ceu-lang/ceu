@@ -570,8 +570,7 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
                                             id)
                     elseif kind == 'event' then
                         dcls[#dcls+1] = AST.node('Evt', var.ln,
-                                            AST.node('Typelist', me.ln,
-                                                AST.copy(Type)),
+                                            AST.copy(Type),
                                             '&',
                                             id)
                     else
