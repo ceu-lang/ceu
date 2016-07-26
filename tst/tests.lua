@@ -8,35 +8,8 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-code/await Ff (void) => (vector&[1] int vec) => void do
-    vector[1] int vec_ = [10];
-    vec = &vec_;
-    await FOREVER;
-end
-watching Ff() => (vec) do
-    escape vec[0];
-end
-escape 0;
-]],
-    run = 10,
-}
-
-Test { [[
-code/tight Fx (void) => (var& int a, vector&[10] int b) => void
-do
-    var int x;
-    a = &x;
-end
-
-escape 0;
-]],
-    wrn = true,
-    inits = 'line 1 : uninitialized vector "b" : reached `end of code´ (/tmp/tmp.ceu:7)',
-}
-
-do return end -- OK
 --[=====[
+do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -32865,6 +32838,237 @@ escape 0;
 ]],
     run = 11,
 }
+
+-->> CODE / WATCHING / SCOPES
+
+Test { [[
+code/await Ff (void) => (vector&[1] int vec) => void do
+    vector[1] int vec_ = [10];
+    vec = &vec_;
+    await FOREVER;
+end
+watching Ff() => (vec) do
+    escape vec[0];
+end
+escape 0;
+]],
+    run = 10,
+}
+
+Test { [[
+code/tight Fx (void) => (var& int a, vector&[10] int b) => void
+do
+    var int x;
+    a = &x;
+end
+
+escape 0;
+]],
+    wrn = true,
+    inits = 'line 1 : uninitialized vector "b" : reached `end of code´ (/tmp/tmp.ceu:7)',
+}
+
+Test { [[
+var int ret = 0;
+var int x;
+watching 1s do
+    ret = x;
+end
+escape ret;
+]],
+    inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
+}
+
+Test { [[
+var int ret = 0;
+var int x;
+watching 1s do
+    x = 10;
+end
+ret = x;
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Gg (void) => (var& int y) => void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (var int v) => (var& int x) => void do
+    watching Gg() => (y) do
+        x = &y;
+        await FOREVER;
+    end
+end
+
+var int x1;
+watching Ff(x1) => (x) do
+    escape x;
+end
+
+escape 0;
+]],
+    inits = 'line 14 : uninitialized variable "x1" : reached read access (/tmp/tmp.ceu:15)',
+}
+
+Test { [[
+code/await Gg (void) => (var& int y) => void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) => (var& int x) => void do
+    watching Gg() => (y) do
+        x = &y;
+        await FOREVER;
+    end
+    await 1s;
+end
+
+watching Ff() => (x) do
+    escape x;
+end
+
+escape 0;
+]],
+    scopes = 'line 9 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (void) => (var& int y) => void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) => (var& int x) => void do
+    watching Gg() => (y) do
+        x = &y;
+        await FOREVER;
+    end
+end
+
+watching Ff() => (x) do
+    escape x;
+end
+
+escape 0;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Gg (void) => (var& int y) => void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) => (var& int x) => void do
+    nothing;
+    watching Gg() => (y) do
+        x = &y;
+        await FOREVER;
+    end
+end
+
+watching Ff() => (x) do
+    escape x;
+end
+
+escape 0;
+]],
+    scopes = 'line 10 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (var int x) => (var& int y) => void do
+    var int yy = 10+x;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) => (var& int x) => void do
+    watching Gg(1) => (y1) do
+        watching Gg(2) => (y2) do
+            watching Gg(3) => (y3) do
+                var int v = y1+y2+y3;
+                x = &v;
+                await FOREVER;
+            end
+        end
+    end
+end
+
+watching Ff() => (x) do
+    escape x;
+end
+
+escape 0;
+]],
+    run = 36,
+}
+
+Test { [[
+code/await Gg (var int x) => (var& int y) => void do
+    var int yy = 10+x;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) => (var& int x) => void do
+    watching Gg(1) => (y1) do
+        nothing;
+        watching Gg(2) => (y2) do
+            var int v = y1+y2;
+            x = &v;
+            await FOREVER;
+        end
+    end
+end
+
+watching Ff() => (x) do
+    escape x;
+end
+
+escape 0;
+]],
+    scopes = 'line 12 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Gg (var int x) => (var& int y) => void do
+    var int yy = 10+x;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) => (var& int x) => void do
+    watching Gg(1) => (y1) do
+        watching Gg(2) => (y2) do
+            var int v = y1+y2;
+            x = &v;
+            await FOREVER;
+        end
+        nothing;
+    end
+end
+
+watching Ff() => (x) do
+    escape x;
+end
+
+escape 0;
+]],
+    scopes = 'line 11 : invalid binding : incompatible scopes',
+}
+
+--<< CODE / WATCHING / SCOPES
 
 --<< CODE / AWAIT / WATCHING
 

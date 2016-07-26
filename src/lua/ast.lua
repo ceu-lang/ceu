@@ -133,6 +133,19 @@ end
 function AST.get (me, tag, ...)
     local idx, tag2 = ...
 
+    if type(tag) == 'number' then
+        if tag > 0 then
+            if me.__par then
+                return AST.get(me.__par, tag-1, ...)
+            else
+                return nil
+            end
+        else
+            assert(tag == 0)
+            return AST.get(me, ...)
+        end
+    end
+
     if not (AST.is_node(me) and (me.tag==tag or tag=='')) then
         return nil, tag, ((AST.is_node(me) and me.tag) or 'none')
     end
@@ -201,12 +214,15 @@ function AST.iter (pred, inc)
     end
 end
 
+--[[
+-- doesnt pass b/c of data inheritance
 local __detect_same
 function AST.check (me, not_first)
     if not_first == nil then
         __detect_same = {}
     end
-    assert(not __detect_same[me], 'AST.check fail: '..me.tag)
+--AST.dump(AST.root)
+    assert(not __detect_same[me], 'AST.check fail: '..me.n..' : '..me.tag)
     __detect_same[me] = true
 
     for i, sub in ipairs(me) do
@@ -215,6 +231,7 @@ function AST.check (me, not_first)
         end
     end
 end
+]]
 
 function AST.dump (me, spc, lvl, __notfirst)
     if lvl and lvl==0 then

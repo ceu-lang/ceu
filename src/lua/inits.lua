@@ -42,8 +42,15 @@ local function run_inits (par, i, Dcl, stop)
     --assert(not __detect_cycles[me], me.n)
     --__detect_cycles[me] = true
 
+    -- must be before "yields[me.tag]" below
+    if me.tag=='Par_Or' and me.is_watching then
+        local watch = AST.asr(me,'',1,'Block',1,'Stmts',1,'')
+        local ok1 = run_inits(watch, 1, Dcl, watch)
+        assert(ok1 == false)
+        return run_inits(me[2], 1, Dcl, stop)
+
     -- error: yielding statement
-    if yields[me.tag] then
+    elseif yields[me.tag] then
         ASR(false, Dcl,
             'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
             'reached `'..AST.tag2id[me.tag]..'´ '..

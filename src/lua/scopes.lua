@@ -75,6 +75,44 @@ F = {
     Set_Alias = function (me)
         local fr, to = unpack(me)
         local ok = check_blk(to.info.dcl.blk, fr.info.dcl.blk)
+
+        --  code/await Ff (void) => (var& int a, b) => void do
+        --      nothing;                -- no statments here
+        --      watching Gg() => (y) do
+        --          nothing;            -- no statments here
+        --          watching Hh() => (z) do
+        --              a = &y;         -- consider "y" top-level
+        --              b = &z;         -- consider "z" top-level
+        --          end
+        --      end
+        --      nothing;                -- no statments here
+        --  end
+
+        if not ok then
+            local code = AST.par(me, 'Code')
+            if code then
+                local stmts = AST.get(code,'', 6,'Block', 1,'Stmts', 2,'Do',
+                                               2,'Block', 1,'Stmts')
+                local paror = AST.get(stmts,'', 3,'Block', 1,'Stmts', 2,'Par_Or')
+                if stmts and #stmts==3 and paror and paror.is_watching then
+                    while true do
+                        local s = AST.get(paror,'', 2,'Block', 1,'Stmts')
+                        local p = AST.get(s,'', 1,'Block', 1,'Stmts', 2,'Par_Or')
+                        if s and #s==1 and p and p.is_watching then
+                            paror = p
+                        else
+                            break
+                        end
+                    end
+                    if fr.info.dcl.blk==AST.par(paror,'Block') or
+                       fr.info.dcl.blk==AST.asr(paror,'',2,'Block')
+                    then
+                        ok = check_blk(to.info.dcl.blk, AST.asr(code,'', 6,'Block'))
+                    end
+                end
+            end
+        end
+
         ASR(ok, me, 'invalid binding : incompatible scopes')
 
         local _, call = unpack(fr)

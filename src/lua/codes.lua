@@ -648,14 +648,14 @@ CEU_STK_LBL(NULL, _ceu_stk,
         for i, sub in ipairs(me) do
             if i < #me then
                 LINE(me, [[
-CEU_STK_LBL_ABORT(NULL, _ceu_stk,
+CEU_STK_LBL_ABORT(_ceu_evt, _ceu_stk,
                   ]]..me[i+1].trails[1]..[[,
                   _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[);
 ]])
             else
                 -- no need to abort since there's a "return" below
                 LINE(me, [[
-CEU_STK_LBL(NULL, _ceu_stk,
+CEU_STK_LBL(_ceu_evt, _ceu_stk,
             _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
 ]])
             end

@@ -475,14 +475,17 @@ DBG('TODO: _Loop_Pool')
             ref.list_var_any = mid
         end
 
-        return node('Block', me.ln,
-                node('Stmts', me.ln,
-                    ref,
-                    node('Par_Or', me.ln,
+        local paror = node('Par_Or', me.ln,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 watch)),
-                        block)))
+                        block)
+        paror.is_watching = true
+
+        return node('Block', me.ln,
+                node('Stmts', me.ln,
+                    ref,
+                    paror))
     end,
 
 -------------------------------------------------------------------------------
