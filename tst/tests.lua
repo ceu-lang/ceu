@@ -32961,6 +32961,53 @@ escape 0;
 ]],
     run = 10,
 }
+Test { [[
+code/await Gg (void) => (var& int y) => void do
+    var int yy = 10;
+    y = &yy;
+    await FOREVER;
+end
+
+code/await Ff (void) => (var& int x, var& int y) => void do
+    watching Gg() => (a) do
+        x = &a;
+        y = &a;
+        await FOREVER;
+    end
+end
+
+watching Ff() => (x,y) do
+    escape x+y;
+end
+
+escape 0;
+]],
+    run = 20,
+}
+Test { [[
+code/await Gg (void) => (var& int a) => void do
+    var int v = 10;
+    a = &v;
+    await FOREVER;
+end
+
+code/await Ff (void) => (var& int x) => void do
+    watching Gg() => (a1) do
+        watching Gg() => (a2) do
+            x = &a1;
+            await FOREVER;
+        end
+    end
+end
+
+watching Ff() => (x) do
+    escape x;
+end
+
+escape 0;
+]],
+    run = 10,
+}
 
 Test { [[
 code/await Gg (void) => (var& int y) => void do
