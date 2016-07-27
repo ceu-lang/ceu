@@ -32860,6 +32860,39 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+code/await Ff (void) => void do
+end
+
+watching Ff() do
+    var int xxx = 0;
+end
+
+await 1s;
+
+escape 1;
+]],
+    run = {['~>1s']=1},
+}
+
+-->> CODE / WATCHING / SPAWN
+
+Test { [[
+code/await Ff (void) => (var& int x) => void
+do
+    var int x_ = 10;
+    x = &x_;
+    await FOREVER;
+end
+
+spawn Ff() => (x);
+escape x;
+]],
+    run = 10,
+}
+
+--<< CODE / WATCHING / SPAWN
+
 -->> CODE / WATCHING / SCOPES
 
 Test { [[

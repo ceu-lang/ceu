@@ -465,6 +465,24 @@ DBG('TODO: _Loop_Pool')
         return node('Stmts', me.ln, set, me)
     end,
 
+    _Abs_Back__PRE = function (me)
+        local Abs_Cons = unpack(me)
+
+        -- all statements after myself
+        local par_stmts = AST.asr(me.__par, 'Stmts')
+        local cnt_stmts = { unpack(par_stmts, me.__idx+1) }
+        for i=me.__idx, #par_stmts do
+            par_stmts[i] = nil
+        end
+
+        return node('_Watching', me.ln,
+                    node('Abs_Await', me.ln, Abs_Cons),
+                    unpack(me,2),
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            unpack(cnt_stmts))))
+    end,
+
     _Watching__PRE = function (me)
         local watch, mid, block = unpack(me)
 
