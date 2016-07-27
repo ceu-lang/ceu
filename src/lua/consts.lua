@@ -102,6 +102,14 @@ error'TODO: luacov never executes this?'
                 'invalid `loop´ : limit must be an integer constant')
         end
     end,
+
+    Data = function (me)
+        local _, enum = unpack(me)
+        if enum then
+            ASR(enum.is_const=='int' or enum.is_const==true, enum,
+                'invalid `data´ declaration : after `is´ : expected integer constant')
+        end
+    end,
 }
 
 AST.visit(F)

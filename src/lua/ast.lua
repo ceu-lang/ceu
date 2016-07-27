@@ -25,7 +25,6 @@ AST.tag2id = {
     Code            = 'code',
     Continue        = 'continue',
     Data            = 'data',
-    Data            = 'data',
     Emit_Evt        = 'emit',
     Emit_ext_req    = 'request',
     EOC             = 'end of code',

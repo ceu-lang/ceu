@@ -111,11 +111,7 @@ enum {
     === DATAS_ENUM ===
 };
 
-typedef u16 tceu_ndata;  /* TODO */
-
-typedef struct tceu_data {
-    tceu_ndata id;
-} tceu_data;
+typedef s16 tceu_ndata;  /* TODO */
 
 /* DATAS_MEMS */
 === DATAS_MEMS ===
@@ -134,8 +130,8 @@ static int ceu_data_is (tceu_ndata me, tceu_ndata cmp) {
     }
 }
 
-static void* ceu_data_as (tceu_data* me, tceu_ndata cmp, char* file, int line) {
-    ceu_callback_assert_msg_ex(ceu_data_is(me->id, cmp), "invalid cast `as´",
+static void* ceu_data_as (tceu_ndata* me, tceu_ndata cmp, char* file, int line) {
+    ceu_callback_assert_msg_ex(ceu_data_is(*me, cmp), "invalid cast `as´",
                           file, line);
     return me;
 }

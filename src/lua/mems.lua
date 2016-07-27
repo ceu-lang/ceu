@@ -254,7 +254,7 @@ lbl = CEU_LABEL_Code_]]..ID..lbl..[[;
             local switch = [[
 {
     tceu_ndata data_]]..t.i..[[ = ((ps._data_]]..t.i..[[ == CEU_DATA__NONE) ?
-                                    ps.]]..t.id..[[->data.id :
+                                    ps.]]..t.id..[[->_enum :
                                     ps._data_]]..t.i..[[);
     switch (data_]]..t.i..[[) {
 ]]
@@ -301,21 +301,26 @@ lbl = CEU_LABEL_Code_]]..ID..lbl..[[;
         MEMS.datas.id = MEMS.datas.id + 1
     end,
     Data__POS = function (me)
+        local _,enum = unpack(me)
         local mem = me.mems.mem
         me.mems.mem = [[
 typedef struct tceu_data_]]..me.id_..[[ {
 ]]
-        if me.hier then
+        if me.hier or enum then
             me.mems.mem = me.mems.mem..[[
-    tceu_data data;
+    tceu_ndata _enum;
 ]]
         end
         me.mems.mem = me.mems.mem..[[
     ]]..mem..[[
 } tceu_data_]]..me.id_..[[;
 ]]..'\n'
+
+        enum = (enum and ' = '..V(enum)) or ''
+
+
         MEMS.datas.mems   = MEMS.datas.mems..me.mems.mem
-        MEMS.datas.enum   = MEMS.datas.enum..'CEU_DATA_'..me.id_..',\n'
+        MEMS.datas.enum   = MEMS.datas.enum..'CEU_DATA_'..me.id_..enum..',\n'
         MEMS.datas.supers = MEMS.datas.supers..me.mems.super..',\n'
     end,
 

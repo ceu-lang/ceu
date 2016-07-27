@@ -96,25 +96,28 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 ]]
     end,
 
-    Abs_Cons = function (me, mid)
+    Abs_Cons = function (me, ctx)
         local ID_abs, Abslist = unpack(me)
 
-        local id_struct
-        local vars do
+        local vars, id_struct do
             if ID_abs.dcl.tag == 'Data' then
-                vars = AST.asr(ID_abs.dcl,'Data', 2,'Block').dcls
+                vars = AST.asr(ID_abs.dcl,'Data', 3,'Block').dcls
                 id_struct = 'tceu_data_'..ID_abs.dcl.id_
             else
                 vars = AST.get(ID_abs.dcl,'Code', 3,'Code_Pars')
                 id_struct = 'tceu_code_args_'..ID_abs.dcl.id
+            end
+            if ctx.to_tp then
+                id_struct = ctx.to_tp
             end
         end
 
         local ps = {}
 
         if ID_abs.dcl.tag == 'Data' then
-            if ID_abs.dcl.hier then
-                ps[1] = '.data.id = CEU_DATA_'..ID_abs.dcl.id_
+            local _, enum = unpack(ID_abs.dcl)
+            if ID_abs.dcl.hier or enum then
+                ps[1] = '._enum = CEU_DATA_'..ID_abs.dcl.id_
             end
         end
 
@@ -161,13 +164,18 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                 end
             else
                 if val.tag ~= 'ID_any' then
-                    ps[#ps+1] = '.'..var_id..' = '..cast..V(val)
+                    local ctx = {}
+                    if val.tag == 'Abs_Cons' then
+                        -- typecast: "val Xx = val Xx.Yy();"
+                        ctx.to_tp = TYPES.toc(var_tp)
+                    end
+                    ps[#ps+1] = '.'..var_id..' = '..cast..V(val,ctx)
                 end
             end
         end
 
-        if mid then
-            for _, var in ipairs(mid) do
+        if ctx.mid then
+            for _, var in ipairs(ctx.mid) do
                 -- extra indirection for mid's
                 if var.tag == 'ID_any' then
                     ps[#ps+1] = 'NULL'
@@ -356,41 +364,49 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 
     Exp_is = function (me)
         local _, e, Type = unpack(me)
-        return 'ceu_data_is('..V(e)..'.data.id, CEU_DATA_'..Type[1].dcl.id_..')'
+        return 'ceu_data_is('..V(e)..'._enum, CEU_DATA_'..Type[1].dcl.id_..')'
     end,
 
     Exp_as = function (me)
         local _, e, Type = unpack(me)
 
-        if Type.tag == 'Type' then
-            local ret do
-                if Type[1].tag=='ID_abs' and Type[1].dcl.tag=='Data' then
-                    local ptr1,ptr2,ptr3 = '*', '*', '&'
-                    if TYPES.check(Type,'&&') then
-                        ptr1, ptr2, ptr3 = '', '', ''
-                    elseif e.info.tag == 'Alias' then
-                        ptr1, ptr2, ptr3 = '', '*', ''
-                    end
-
-                    ret = [[
-(]]..ptr1..[[(
-    (]]..TYPES.toc(Type)..ptr2..[[)
-    ceu_data_as((tceu_data*)]]..ptr3..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
-                __FILE__, (__LINE__-3))
-))
-]]
-                else
-                    ret = [[
-((]]..TYPES.toc(Type)..')'..V(e)..[[)
-]]
-                end
-            end
-            if TYPES.check(Type,'bool') then
-                ret = '('..ret..'? 1 : 0)'
-            end
-            return ret
-        else
+        if Type.tag ~= 'Type' then
             return V(e)
         end
+
+        -- data Xx=1; (x as int);
+        local plain = TYPES.ID_plain(e.info.tp)
+        if plain and plain.dcl and plain.dcl.tag=='Data'
+            and TYPES.check(Type,'int')
+        then
+            return '('..V(e)..'._enum)'
+        end
+
+        local ret do
+            if Type[1].tag=='ID_abs' and Type[1].dcl.tag=='Data' then
+                local ptr1,ptr2,ptr3 = '*', '*', '&'
+                if TYPES.check(Type,'&&') then
+                    ptr1, ptr2, ptr3 = '', '', ''
+                elseif e.info.tag == 'Alias' then
+                    ptr1, ptr2, ptr3 = '', '*', ''
+                end
+
+                ret = [[
+(]]..ptr1..[[(
+(]]..TYPES.toc(Type)..ptr2..[[)
+ceu_data_as((tceu_ndata*)]]..ptr3..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
+            __FILE__, (__LINE__-3))
+))
+]]
+            else
+                ret = [[
+((]]..TYPES.toc(Type)..')'..V(e)..[[)
+]]
+            end
+        end
+        if TYPES.check(Type,'bool') then
+            ret = '('..ret..'? 1 : 0)'
+        end
+        return ret
     end,
 }

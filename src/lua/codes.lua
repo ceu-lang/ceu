@@ -366,7 +366,7 @@ if (0)
             lbl = me.lbl_out.id,
             exec = [[
 {
-    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,mid)..[[;
+    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
 
     ]]..CUR(' __mem_'..me.n)..[[.mem.pak = NULL;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
@@ -811,7 +811,11 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..to.info.dcl.id..[[ != NULL)
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)
         local _,Abs_Cons = unpack(fr)
-        SET(me, to, Abs_Cons)
+
+        -- typecast: "val Xx = val Xx.Yy();"
+        LINE(me, [[
+]]..V(to)..' = '..V(Abs_Cons,{to_tp=TYPES.toc(to.info.tp)})..[[;
+]])
     end,
 
     Set_Vec = function (me)

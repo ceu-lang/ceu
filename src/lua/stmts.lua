@@ -165,11 +165,25 @@ DBG('TODO: _Lua')
         -- tp
         EXPS.check_tp(me, to.info.tp, Abs_Cons.info.tp, 'invalid constructor')
 
+--[[
+        -- NO: abstract abs
+        --  var Dd d;   // where "D" is abstract
+        me.is_abstract = ((not enum) and #AST.asr(blk,'',1,'Stmts')==0)
+        ASR(not ID_abs.dcl.is_abstract, me,
+            'invalid declaration : cannot instantiate abstract `data´ "'..ID_abs.dcl.id..'"')
+]]
+
         -- exact match on constructor
         local to_str = TYPES.tostring(to.info.tp)
         local fr_str = TYPES.tostring(Abs_Cons.info.tp)
-        ASR(to_str==fr_str, me,
-            'invalid constructor : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
+        if to_str ~= fr_str then
+            local _,enum,blk = unpack(ID_abs.dcl)
+            -- or source is enum with size=0
+            ASR(enum and #AST.asr(blk,'',1,'Stmts')==0, me,
+                'invalid constructor : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
+        end
+        --ASR(to_str==fr_str, me,
+            --'invalid constructor : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
     end,
     Set_Abs_New = function (me)
         local _, Exp_Name = unpack(me)

@@ -110,7 +110,7 @@ F = {
         local err_str
         local vars do
             if ID_abs.dcl.tag == 'Data' then
-                vars = AST.asr(ID_abs.dcl,'Data', 2,'Block').dcls
+                vars = AST.asr(ID_abs.dcl,'Data', 3,'Block').dcls
                 err_str = 'invalid constructor'
             else
                 vars = AST.get(ID_abs.dcl,'Code', 3,'Code_Pars')

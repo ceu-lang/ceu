@@ -60985,7 +60985,7 @@ escape 1;
 Test { [[
 data OptNIL.;
 ]],
-    parser = 'line 1 : after `OptNIL´ : expected `;´ or `with´',
+    parser = 'line 1 : after `OptNIL´ : expected `is´ or `;´ or `with´',
     --parser = 'line 1 : after `is´ : expected abstraction identifier',
 }
 
@@ -60993,7 +60993,7 @@ Test { [[
 data OptNIL. with
 end
 ]],
-    parser = 'line 1 : after `OptNIL´ : expected `;´ or `with´',
+    parser = 'line 1 : after `OptNIL´ : expected `is´ or `;´ or `with´',
     --parser = 'line 1 : after `is´ : expected abstraction identifier',
 }
 
@@ -61748,6 +61748,102 @@ escape (call Ff(&&b));
 ]],
     run = 10,
 }
+
+-->> DATA / HIER / ENUM
+
+Test { [[
+data Xx;
+var Xx x = val Xx();
+escape 1;
+]],
+    wrn = true,
+    --stmts = 'line 2 : invalid declaration : cannot instantiate abstract `data´ "Xx"',
+    run = 1,
+}
+
+Test { [[
+data Xx is 1;
+data Yy is 1;
+var  Xx x_ = _;
+var& Xx x  = &x_;
+escape (x as Yy) as int;
+]],
+    wrn = true,
+    names = 'line 5 : invalid operand to `as´ : unmatching `data´ abstractions',
+}
+
+Test { [[
+data Xx is 1;
+var  Xx x_ = val Xx();
+var& Xx xxx  = &x_;
+escape xxx as int;
+]],
+    wrn = true,
+    run = 1;
+}
+
+Test { [[
+data Xx is 1;
+var  Xx x = val Xx();
+escape x as int;
+]],
+    wrn = true,
+    run = 1;
+}
+
+Test { [[
+var int a = 0;
+data Xx is a;
+var Xx x = _;
+escape x as int;
+]],
+    wrn = true,
+    consts = 'line 2 : invalid `data´ declaration : after `is´ : expected integer constant',
+}
+
+Test { [[
+native/const _LEFT, _RIGHT;
+native/pre do
+    enum {
+        LEFT  =  10,
+        RIGHT = -1,
+    };
+end
+
+data Xx;
+data Xx.Left  is _LEFT;
+data Xx.Right is _RIGHT;
+
+var Xx x1 = val Xx.Left();
+var Xx x2 = val Xx.Right();
+
+escape (x1 as int) + (x2 as int);
+]],
+    run = 9;
+}
+
+Test { [[
+data Xx;
+data Xx.Yy is 1;
+
+code/tight Ff (var Xx x) => int do
+    escape x as int;
+end
+
+escape call Ff(Xx.Yy());
+]],
+    run = 1,
+}
+
+Test { [[
+data Xx is -1;
+var Xx x = val Xx();
+escape ((x as int) == -1) as int;
+]],
+    run = 1,
+}
+
+--<< DATA / HIER / ENUM
 
 --<<< DATA / HIERARCHY / SUB-DATA / SUB-TYPES / INHERITANCE
 

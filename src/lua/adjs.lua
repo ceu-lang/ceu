@@ -107,12 +107,12 @@ error'TODO: luacov never executes this?'
 
     _Data_simple__PRE = '_Data_block__PRE',
     _Data_block__PRE = function (me)
-        local id = unpack(me)
+        local id, enum = unpack(me)
         return node('Data', me.ln,
-                id,
+                id, enum,
                 node('Block', me.ln,
                     node('Stmts', me.ln,
-                        unpack(me, 2))))
+                        unpack(me, 3))))
     end,
 
     _Ext_Req_proto  = '_Code_proto',

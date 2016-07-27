@@ -56,7 +56,7 @@ end
 
 function DCLS.asr (me, blk_or_data, id, can_cross, err)
     local data = AST.get(blk_or_data, 'Data')
-    local blk = (data and AST.asr(data,'',2,'Block')) or blk_or_data
+    local blk = (data and AST.asr(data,'',3,'Block')) or blk_or_data
     local ret = DCLS.get(blk, id, can_cross)
     if ret then
         return ret
@@ -98,6 +98,17 @@ local function dcls_new (blk, me, can_cross)
     blk.dcls[me.id] = me
     me.blk = blk
     return me
+end
+
+function DCLS.is_super (super, sub)
+    assert(super.hier and sub.hier)
+    if super == sub then
+        return true
+    elseif sub.hier.up then
+        return DCLS.is_super(super, sub.hier.up)
+    else
+        return false
+    end
 end
 
 -- native declarations are allowed until `native/end´
@@ -185,9 +196,9 @@ F = {
             me.is_read_only = true
         end
 
-        -- NO: alias to pointer
-        --  var& int&& x = ...;
         if is_alias then
+            -- NO: alias to pointer
+            --  var& int&& x = ...;
             ASR(not TYPES.check(Type,'&&'), me,
                 'invalid declaration : unexpected `&&´ : cannot alias a pointer')
         end
@@ -413,13 +424,14 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
     end,
 
     Data__PRE = function (me)
-        me.id = unpack(me)
-        local blk = AST.par(me, 'Block')
+        local id, enum, blk = unpack(me)
+        me.id = id
+        local par = AST.par(me, 'Block')
 
         -- check "super" path
         local super,_ = string.match(me.id, '(.*)%.(.*)')
         if super then
-            local dcl = DCLS.get(blk, super, true)
+            local dcl = DCLS.get(par, super, true)
             ASR(dcl, me,
                 'invalid declaration : abstraction "'..super..'" is not declared')
             dcl.hier = dcl.hier or { down={} }
@@ -427,13 +439,15 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
             me.hier = { up=dcl, down={} }
 
             -- copy all super vars to myself
-            table.insert(AST.asr(me,'', 2,'Block', 1,'Stmts'),
-                         1,
-                         AST.asr(dcl,'', 2,'Block', 1,'Stmts'))
-                         --AST.copy(AST.asr(dcl,'', 2,'Block', 1,'Stmts')))
+            -- (avoid inserting empty additional Stmts to break "empty-data-dcl" detection)
+            local vars = AST.asr(dcl,'', 3,'Block', 1,'Stmts')
+            if #vars > 0 then
+                table.insert(AST.asr(me,'',3,'Block',1,'Stmts'), 1, vars)
+                             --AST.copy(AST.asr(dcl,'', 2,'Block', 1,'Stmts')))
+            end
         end
 
-        dcls_new(blk, me)
+        dcls_new(par, me)
     end,
 
     -- Typelists
