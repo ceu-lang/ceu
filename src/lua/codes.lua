@@ -38,8 +38,9 @@ local function CASE (me, lbl)
     LINE(me, 'case '..lbl.id..':;')
 end
 
+-- TODO: always clearing, even for blocks with 1 trail!
 local function CLEAR (me)
-    if me.trails_n > 1 then
+    --if me.trails_n > 1 then
         LINE(me, [[
 {
     tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{NULL}}, NULL };
@@ -51,7 +52,7 @@ local function CLEAR (me)
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 }
 ]])
-    end
+    --end
 end
 
 local function HALT (me, T)
