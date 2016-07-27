@@ -241,6 +241,10 @@ local PARENS = function (patt)
     return KK'(' * patt * KK')'
 end
 
+local function LIST (patt)
+    return patt * (KK','*patt)^0 * KK','^-1
+end
+
 local E = function (msg)
     return m.Cmt(P'',
             function (_,i)
@@ -500,7 +504,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Code_Pars = #KK'(' * (
                     PARENS(P'void') +
-                    PARENS(V'Code_Pars_Item' * (KK','*V'Code_Pars_Item')^0)
+                    PARENS(LIST(V'Code_Pars_Item'))
                   )
 
 -- DATA
@@ -518,7 +522,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , _Nats  = K'native' *
                     OPT(KK'/'*(CK'pure'+CK'const'+CK'nohold'+CK'plain')) *
-                        V'__ID_nat' * (KK',' * V'__ID_nat')^0
+                        LIST(V'__ID_nat')
         --> Nat+
 
     , Nat_End = K'native' * KK'/' * K'end'
@@ -547,29 +551,29 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __vars_set  = V'__ID_int' * OPT(Ct(V'__Sets_one'+V'__Sets_many'))
 
     , _Vars_set  = K'var' * OPT(CKK'&') * V'Type' *
-                    V'__vars_set' * (KK','*V'__vars_set')^0
+                    LIST(V'__vars_set')
     , _Vars      = K'var' * OPT(CKK'&') * V'Type' *
-                    V'__ID_int' * (KK','*V'__ID_int')^0
+                    LIST(V'__ID_int')
 
     , _Vecs_set  = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
-                    V'__vars_set' * (KK','*V'__vars_set')^0
+                    LIST(V'__vars_set')
                         -- TODO: only vec constr
     , _Vecs      = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
-                    V'__ID_int' * (KK','*V'__ID_int')^0
+                    LIST(V'__ID_int')
 
     , _Pools_set = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
-                    V'__vars_set' * (KK','*V'__vars_set')^0
+                    LIST(V'__vars_set')
     , _Pools     = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
-                    V'__ID_int' * (KK','*V'__ID_int')^0
+                    LIST(V'__ID_int')
 
     , _Evts_set  = K'event' * OPT(CKK'&') * (PARENS(V'Typelist')+V'Type') *
-                    V'__vars_set' * (KK','*V'__vars_set')^0
+                    LIST(V'__vars_set')
     , _Evts      = K'event' * OPT(CKK'&') * (PARENS(V'Typelist')+V'Type') *
-                    V'__ID_int' * (KK','*V'__ID_int')^0
+                    LIST(V'__ID_int')
 
     , _Exts      = (CK'input'+CK'output') * (PARENS(V'Typelist')+V'Type') *
-                    V'__ID_ext' * (KK','*V'__ID_ext')^0
-    , Typelist   = V'Type'   * (KK',' * V'Type')^0
+                    LIST(V'__ID_ext')
+    , Typelist   = LIST(V'Type')
 
 -- AWAIT, EMIT
 
@@ -597,7 +601,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __watch = (V'_Await_Until' + V'Await_Wclock' + V'Abs_Await')
                     * OPT(KK'=>' * PARENS(OPT(V'List_Var_Any')))
     , _Watching = K'watching'
-                    * V'__watch' * (KK',' * V'__watch')^0
+                    * LIST(V'__watch')
                 * V'__Do'
 
     , __num = CKK(m.R'09'^1,'number') / tonumber
@@ -617,7 +621,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , __det_id = V'ID_ext' + V'ID_int' + V'ID_nat'
     , Deterministic = K'deterministic' * V'__det_id' * (
-                        K'with' * V'__det_id' * (KK',' * V'__det_id')^0
+                        K'with' * LIST(V'__det_id')
                       )^-1
 
 -- ABS
@@ -634,7 +638,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , __Abs_Cons_Code = V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
-    , Abslist    = ( V'__abs_item'*(KK','*V'__abs_item')^0 )^-1
+    , Abslist    = LIST(V'__abs_item')^-1
     , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp' + V'ID_any')
 
 
@@ -725,10 +729,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- LISTS
 
 -- TODO: rename List_*
-    , Namelist = V'Exp_Name' * (KK',' * V'Exp_Name')^0
-    , Varlist  = V'ID_int'   * (KK',' * V'ID_int')^0
-    , List_Var_Any = (V'ID_int' + V'ID_any') * (KK',' * (V'ID_int' + V'ID_any'))^0
-    , Explist  = V'__Exp'    * (KK',' * V'__Exp')^0
+    , Namelist = LIST(V'Exp_Name')
+    , Varlist  = LIST(V'ID_int')
+    , Explist  = LIST(V'__Exp')
+    , List_Var_Any = LIST((V'ID_int' + V'ID_any'))
 
  --<<<
 
