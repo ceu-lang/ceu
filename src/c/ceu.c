@@ -211,6 +211,14 @@ static void ceu_stack_clear (tceu_stk* stk, tceu_code_mem* mem,
     }
 }
 
+#if 0
+static void ceu_stack_dump (tceu_stk* stk) {
+    for (; stk!=&CEU_STK_BASE; stk=stk->down) {
+        printf("stk=%p mem=%p\n", stk, stk->mem);
+    }
+}
+#endif
+
 /*****************************************************************************/
 
 #define CEU_WCLOCK_INACTIVE INT32_MAX
@@ -258,18 +266,20 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
     ceu_go_lbl(occ, &__ceu_stk, exe_mem, exe_trl, exe_lbl);     \
 }
 
-#define CEU_STK_LBL_ABORT(occ, stk_old, trl_abort,              \
+#define CEU_STK_LBL_ABORT(occ, stk_old,                         \
+                          abt_mem, abt_trl,                     \
                           exe_mem, exe_trl, exe_lbl) {          \
-    tceu_stk __ceu_stk = { stk_old, exe_mem, trl_abort, 1 };    \
+    tceu_stk __ceu_stk = { stk_old, abt_mem, abt_trl, 1 };      \
     ceu_go_lbl(occ, &__ceu_stk, exe_mem,exe_trl,exe_lbl);       \
     if (!__ceu_stk.is_alive) {                                  \
         return;                                                 \
     }                                                           \
 }
 
-#define CEU_STK_BCAST_ABORT(occ, stk_old, trl_abort,            \
+#define CEU_STK_BCAST_ABORT(occ, stk_old,                       \
+                            abt_mem, abt_trl,                   \
                             exe_mem, exe_trl0, exe_trlF) {      \
-    tceu_stk __ceu_stk = { stk_old, exe_mem, trl_abort, 1 };    \
+    tceu_stk __ceu_stk = { stk_old, abt_mem, abt_trl, 1 };      \
     ceu_go_bcast(&occ, &__ceu_stk, exe_mem,exe_trl0,exe_trlF);  \
     if (!__ceu_stk.is_alive) {                                  \
         return;                                                 \

@@ -32875,6 +32875,24 @@ escape 1;
     run = {['~>1s']=1},
 }
 
+Test { [[
+code/await Ff (void) => void do
+end
+
+code/await Gg (void) => void do
+    watching Ff() do
+        var int xxx = 0;
+    end
+    await 1s;
+end
+
+await Gg();
+
+escape 1;
+]],
+    run = {['~>1s']=1},
+}
+
 -->> CODE / WATCHING / SPAWN
 
 Test { [[
