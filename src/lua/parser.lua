@@ -589,7 +589,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Await_Forever = K'await' * K'FOREVER'
 
-    , _Emit_ps = OPT(KK'=>' * (V'__Exp' + PARENS(OPT(V'Explist'))))
+    , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'Explist')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
     , Emit_Ext_emit = K'emit'                     * V'ID_ext' * V'_Emit_ps'
     , Emit_Ext_call = (K'call/recursive'+K'call') * V'ID_ext' * V'_Emit_ps'
@@ -736,7 +736,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
  --<<<
 
-    , Kill  = K'kill' * V'Exp_Name' * OPT(KK'=>'*V'__Exp')
+    , Kill  = K'kill' * V'Exp_Name' * OPT(PARENS(V'__Exp'))
 
 -- Types
 

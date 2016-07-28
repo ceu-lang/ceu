@@ -1358,7 +1358,7 @@ par/or do
     await A;
 with
     async do
-        emit A=>10;
+        emit A(10);
     end
 end;
 escape 10;
@@ -1393,7 +1393,7 @@ par/or do
     ret = await A;
 with
     async do
-        emit A => 10;
+        emit A(10);
     end;
 end
 escape ret;
@@ -1408,7 +1408,7 @@ par/or do
     ret = await A;
 with
     async do
-        emit A => 10;
+        emit A(10);
     end;
 end
 escape ret;
@@ -1422,7 +1422,7 @@ par/and do
     await A;
 with
     async do
-        emit A => 10;
+        emit A(10);
     end;
 end;
 escape A;
@@ -1439,7 +1439,7 @@ par/and do
     v = await A;
 with
     async do
-        emit A => 10;
+        emit A(10);
     end;
 end;
 escape v;
@@ -1468,13 +1468,13 @@ Test { [[var int a = a+1; escape a;]],
     --run = 100,
 }
 
-Test { [[var int a; a = emit a => 1; escape a;]],
+Test { [[var int a; a = emit a(1; escape a);]],
     --parser = 'line 1 : after `=´ : expected expression',
     parser = "line 1 : after `emit´ : expected number or `(´ or external identifier",
     --trig_wo = 1,
 }
 
-Test { [[var int a; emit a => 1; escape a;]],
+Test { [[var int a; emit a(1); escape a;]],
     stmts = 'line 1 : invalid `emit´ : unexpected context for variable "a"',
     --env = 'line 1 : identifier "a" is not an event (/tmp/tmp.ceu : line 1)',
     --trig_wo = 1,
@@ -3916,7 +3916,7 @@ with
     escape 1;
 with
     async do
-        emit A => (1,1);
+        emit A(1,1);
     end
 end
 ]],
@@ -3939,7 +3939,7 @@ end
 Test { [[
 input (int,int) A;
 async do
-    emit A => (1,3);
+    emit A(1,3);
 end
 escape 1;
 ]],
@@ -3956,7 +3956,7 @@ par do
     end
 with
     async do
-        emit A => (1,3);
+        emit A(1,3);
     end
 end
 ]],
@@ -3973,7 +3973,7 @@ par do
     end
 with
     async do
-        emit A => (1,3);
+        emit A(1,3);
     end
 end
 ]],
@@ -3991,7 +3991,7 @@ par do
     end
 with
     async do
-        emit A => (1,3);
+        emit A(1,3);
     end
 end
 ]],
@@ -4054,7 +4054,7 @@ par do
     end
 with
     async do
-        emit A => (1,3);
+        emit A(1,3);
     end
 end
 ]],
@@ -4071,7 +4071,7 @@ par do
     end
 with
     async do
-        emit A => (1,3);
+        emit A(1,3);
     end
 end
 ]],
@@ -4088,7 +4088,7 @@ par do
     end
 with
     async do
-        emit A => (1,3);
+        emit A(1,3);
     end
 end
 ]],
@@ -4106,7 +4106,7 @@ par do
     end
 with
     async do
-        emit A => (1,3);
+        emit A(1,3);
     end
 end
 ]],
@@ -5270,7 +5270,7 @@ event u8&& a;  // allowed by compiler
 
 var u8 k = 5;
 
-emit a => &&k; // leads to compiler error
+emit a(&&k); // leads to compiler error
 ]],
     dcls = 'line 1 : invalid event type : cannot use `&&´'
 }
@@ -5295,7 +5295,7 @@ escape 1;
 
 Test { [[
 event int c;
-emit c => 10;
+emit c(10);
 await c;
 escape 0;
 ]],
@@ -5310,8 +5310,8 @@ escape 0;
 -- EX.06: 2 triggers
 Test { [[
 event int c;
-emit c => 10;
-emit c => 10;
+emit c(10);
+emit c(10);
 escape c;
 ]],
     stmts = 'line 4 : invalid `escape´ : unexpected context for event "c"',
@@ -5321,8 +5321,8 @@ escape c;
 
 Test { [[
 event int c;
-emit c => 10;
-emit c => 10;
+emit c(10);
+emit c(10);
 escape 10;
 ]],
     run = 10,
@@ -5333,7 +5333,7 @@ Test { [[
 event int b;
 var   int a;
 a = 1;
-emit b => a;
+emit b(a);
 escape a;
 ]],
     run = 1,
@@ -5346,7 +5346,7 @@ var int ret = 0;
 par/and do
     ret = await a;
 with
-    emit a => 1;
+    emit a(1);
 end
 escape ret;
 ]],
@@ -5359,7 +5359,7 @@ var int ret = 0;
 par/or do
     ret = await a;
 with
-    emit a => 1;
+    emit a(1);
 end
 escape ret;
 ]],
@@ -5373,7 +5373,7 @@ var int ret = 0;
 par/or do
     ret = await a;
 with
-    emit a => 1;
+    emit a(1);
 end
 par/or do
     await FOREVER;
@@ -5381,7 +5381,7 @@ with
     await FOREVER;
 with
     await 1s;
-    emit a => 2;
+    emit a(2);
 with
     ret = await a;
 end
@@ -5482,7 +5482,7 @@ event int a;
 var int ret = 0;
 par/or do
     await OS_START;
-    emit a => 1;
+    emit a(1);
 with
     ret = await a;
 end
@@ -5608,7 +5608,7 @@ par/and do
     ret = await x;
 with
     await OS_START;
-    emit x => 1.1;
+    emit x(1.1);
 end
 escape (ret>1.0 and ret<1.2) as int;
 ]],
@@ -5622,7 +5622,7 @@ par/and do
     ret = await X;
 with
     async do
-        emit X => 1.1;
+        emit X(1.1);
     end
 end
 escape( ret>1.0 and ret<1.2 )as int;
@@ -5636,11 +5636,11 @@ input void OS_START;
 event int e;
 par do
     await OS_START;
-    emit e => 1;
+    emit e(1);
     escape 10;
 with
     await e;
-    emit e => 2;
+    emit e(2);
     escape 20;
 with
     var int v = await e;
@@ -5656,11 +5656,11 @@ input void OS_START;
 event int e;
 par do
     await OS_START;
-    emit e => 1;
+    emit e(1);
     escape -1;
 with
     await e;
-    emit e => 2;
+    emit e(2);
     await FOREVER;
 with
     var int v = await e;
@@ -5683,12 +5683,12 @@ var int ret = 0;
 
 par/or do
     await OS_START;
-    emit e => 2;
+    emit e(2);
     escape -1;
 with
     par/or do
         await e;
-        emit e => 3;
+        emit e(3);
         escape 20;
     with
         var int v = await e;
@@ -5718,12 +5718,12 @@ var int ret = 0;
 
 par/or do
     await OS_START;
-    emit e => 2;
+    emit e(2);
     escape -1;
 with
     par/or do
         await e;
-        emit e => 3;
+        emit e(3);
         await FOREVER;
     with
         var int v = await e;
@@ -5757,7 +5757,7 @@ par/or do
         var int i = 10;
         par/or do
             await OS_START;
-            emit e => &&i;           // stacked
+            emit e(&&i);           // stacked
         with
             var int&& pi = await e;
             ret = *pi;
@@ -5869,13 +5869,13 @@ par do
     do
         par/or do
             await OS_START;
-            emit e => (1,2);
+            emit e(1,2);
         with
             await e;
         end
     end
     do
-        emit e => (3,4);
+        emit e(3,4);
     end
 with
     var int a,b;
@@ -5930,7 +5930,7 @@ event int a;
 var int aa = 3;
 par do
     await OS_START;
-    emit a => aa;      // 6
+    emit a(aa);      // 6
     escape aa;
 with
     loop do
@@ -5963,7 +5963,7 @@ event int a;
 var int aa = 3;
 par do
     await OS_START;
-    emit a => aa;      // 6
+    emit a(aa);      // 6
     escape aa;
 with
     every v in a do
@@ -5985,7 +5985,7 @@ event int a;
 var int aa = 3;
 par do
     await OS_START;
-    emit a => aa;
+    emit a(aa);
     escape aa;
 with
     loop do
@@ -6025,7 +6025,7 @@ par/or do
 with
     ret = 5;        // 8
 end
-emit a => 1;
+emit a(1);
 escape ret;
 ]],
     _ana = {
@@ -6058,14 +6058,14 @@ var _abc a = _;
     tmp = 'line 3 : cannot instantiate type "_abc"',
 }
 
-Test { [[event int a=0; emit a => 1; escape a;]],
+Test { [[event int a=0; emit a(1); escape a;]],
     stmts = 'line 1 : invalid assignment : unexpected context for event "a"',
     --parser = 'line 1 : after `a´ : expected `;´',
     --trig_wo = 1,
 }
 Test { [[
 event int a;
-emit a => 1;
+emit a(1);
 escape a;
 ]],
     stmts = 'line 3 : invalid `escape´ : unexpected context for event "a"',
@@ -6903,8 +6903,8 @@ var int ret = 0;
 par do
     par/and do
         await OS_START;
-        emit x => 1;   // 7
-        emit y => 1;   // 8
+        emit x(1);   // 7
+        emit y(1);   // 8
     with
         par/or do
             await y;
@@ -6916,8 +6916,8 @@ par do
     end;
 with
     await OS_START;
-    emit x => 1;       // 20
-    emit y => 1;       // 21
+    emit x(1);       // 20
+    emit y(1);       // 21
 end
 ]],
     _ana = {
@@ -6998,7 +6998,7 @@ par/or do
         var int x = 2;
         par/or do
             await OS_START;
-            emit e => x;
+            emit e(x);
         with
             await e;
         end
@@ -8517,7 +8517,7 @@ event int a;
 var int ret = 1;
 par/or do
     await OS_START;
-    emit a => 10;
+    emit a(10);
 with
     ret = await a;
 end;
@@ -8533,7 +8533,7 @@ Test { [[
 event int a;
 var int ret = 1;
 par/or do
-    emit a => 10;
+    emit a(10);
 with
     ret = await a;
 end;
@@ -8552,7 +8552,7 @@ event int a;
 var int ret = 1;
 par/and do
     await OS_START;
-    emit a => 10;
+    emit a(10);
 with
     ret = await a;
 end;
@@ -8569,7 +8569,7 @@ event int a;
 par/and do
     await a;
 with
-    emit a => 1;
+    emit a(1);
 end;
 escape 10;
 ]],
@@ -8585,13 +8585,13 @@ input int A;
 event int b, c;
 par do
     await A;
-    emit b => 1;
+    emit b(1);
     await c;        // 6
     escape 10;      // 7
 with
     await b;
     await A;
-    emit c => 10;      // 11
+    emit c(10);      // 11
 end;
 ]],
     _ana = {
@@ -8610,13 +8610,13 @@ input int A;
 event int b, c;
 par do
     await A;
-    emit b => 1;
+    emit b(1);
     await c;        // 6
     escape 10;      // 7
 with
     await b;
     await A;
-    emit c => 10;      // 11
+    emit c(10);      // 11
     // unreachable
     await c;
     // unreachable
@@ -8657,7 +8657,7 @@ event int a;
 par/or do
     escape 1;       // TODO: [false]=true
 with
-    emit a => 1;       // TODO: elimina o [false]
+    emit a(1);       // TODO: elimina o [false]
     // unreachable
 end;
 // unreachable
@@ -8676,7 +8676,7 @@ Test { [[
 event int a;
 par/or do
 with
-    emit a => 1;
+    emit a(1);
     // unreachable
 end;
 // unreachable
@@ -8698,7 +8698,7 @@ event int a;
 par do
     escape 1;
 with
-    emit a => 1;
+    emit a(1);
     // unreachable
 end;
 ]],
@@ -8713,7 +8713,7 @@ end;
 Test { [[
 event int a;
 par do
-    emit a => 1;
+    emit a(1);
     escape 1;
 with
     escape 2;
@@ -8730,7 +8730,7 @@ end;
 Test { [[
 event int a;
 par/or do
-    emit a => 1;
+    emit a(1);
 with
 end;
 await a;
@@ -8807,7 +8807,7 @@ Test { [[
 event int a;
 var int v1=0,v2=0;
 par/or do
-    emit a => 2;
+    emit a(2);
     v1 = 3;
 with
     v2 = 2;
@@ -8827,7 +8827,7 @@ Test { [[
 event int a;
 var int v1=0,v2=0,v3=0;
 par/or do
-    emit a => 2;
+    emit a(2);
     v1 = 2;
 with
     v2 = 2;
@@ -8850,7 +8850,7 @@ Test { [[
 event int a;
 var int v1=0,v2=0,v3=0;
 par/or do
-    emit a => 2;
+    emit a(2);
     v1 = 2;
 with
     await a;
@@ -8892,7 +8892,7 @@ event int a;
 var int ret=9;
 par/or do
     par/or do
-        emit a => 2;
+        emit a(2);
     with
         ret = 3;
     end;
@@ -8921,7 +8921,7 @@ par/or do
     ret = aa + 2;
 with
     par/or do
-        emit a => 2;
+        emit a(2);
     with
         ret = 3;
     end;
@@ -9432,8 +9432,8 @@ event int b,c;
 var int cc = 1;
 par/and do
     await OS_START;
-    emit b => 1;
-    emit c => 1;
+    emit b(1);
+    emit c(1);
 with
     await b;
     par/or do
@@ -9907,11 +9907,11 @@ par/or do
     x = 0;
 with
     var int bb = await b;   // 8
-    emit a => bb;              // 9
+    emit a(bb);              // 9
     await 10ms;
     x = 1;
 with
-    emit b => 1;       // 13
+    emit b(1);       // 13
     x = 2;
     await FOREVER;
 end;
@@ -9939,8 +9939,8 @@ with
     await 10ms;
     x = 1;
 with
-    emit b => 1;
-    emit a => bb;
+    emit b(1);
+    emit a(bb);
     x = 2;
     await FOREVER;
 end;
@@ -10862,7 +10862,7 @@ event int a;
 loop do
     par/and do
         await A;
-        emit a => 1;
+        emit a(1);
     with
         await a;
     end;
@@ -10932,14 +10932,14 @@ event int a;
 par do
     loop do
         par/or do
-            emit a => 1;
+            emit a(1);
         with
             await a;
         end;
     end;
 with
     var int aa = await a;
-    emit a => aa;
+    emit a(aa);
 end;
 ]],
     tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
@@ -10957,13 +10957,13 @@ event int a, i, j;
 var int dd=0, ee=0;
 par/and do
     await A;
-    emit a => 1;
+    emit a(1);
 with
     dd = await a;
-    emit i => 5;
+    emit i(5);
 with
     ee = await a;
-    emit j => 6;
+    emit j(6);
 end;
 escape dd + ee;
 ]],
@@ -10977,7 +10977,7 @@ Test { [[
 event int a;
 var int aa=0;
 par do
-    emit a => 1;
+    emit a(1);
     aa = 1;
 with
     escape aa;
@@ -11022,7 +11022,7 @@ par do
     end;
 with
     await A;
-    emit b => 1;
+    emit b(1);
 end;
 ]],
     wrn = true,
@@ -11037,7 +11037,7 @@ event int a;
 par do
     par do
         await A;
-        emit a => 1;
+        emit a(1);
     with
         await a;
         await a;
@@ -11064,7 +11064,7 @@ par/or do
     b = await a;
 with
     await OS_START;
-    emit a => 3;
+    emit a(3);
 end;
 escape b+b;
 ]],
@@ -11081,7 +11081,7 @@ var int b=0;
 par/or do
     b = await a;        // 4
 with
-    emit a => 3;           // 6
+    emit a(3);           // 6
 with
     var int a = b;
 end;
@@ -11103,7 +11103,7 @@ event int b;
 var int i=0;
 par/or do
     await OS_START;
-    emit b => 1;
+    emit b(1);
     i = 2;
 with
     await b;
@@ -11123,12 +11123,12 @@ event int b,c;
 var int cc=0;
 par/or do
     await OS_START;
-    emit b => 1;
+    emit b(1);
     cc = await c;
 with
     await b;
     cc = 5;
-    emit c => 5;
+    emit c(5);
 end;
 escape cc;
 ]],
@@ -11227,7 +11227,7 @@ loop do
     if v==2 then
         escape aa;
     end;
-    emit a => v;
+    emit a(v);
     aa = v;
 end;
 ]],
@@ -11252,7 +11252,7 @@ loop do
             break;
         end;
     end;
-    emit a => v;
+    emit a(v);
     aa = v;
 end;
 escape aa-1;
@@ -11860,7 +11860,7 @@ input int Z;
 event int a;
 var int aa=0;
 par do
-    emit a => 1;       // 5
+    emit a(1);       // 5
     aa = 1;
     escape 10;
 with
@@ -11886,7 +11886,7 @@ input void OS_START;
 event int a;
 par do
     await OS_START;
-    emit a => 1;
+    emit a(1);
 with
     var int aa = await a;
     escape aa;
@@ -11904,7 +11904,7 @@ event int a;
 var int aa=0;
 par/or do
     await B;
-    emit a => 5;
+    emit a(5);
 with
     aa = await a;
     aa = aa + 1;
@@ -11925,7 +11925,7 @@ event int a;
 var int aa=0;
 par/or do
     await B;
-    emit a => 5;
+    emit a(5);
 with
     par/and do
         aa = await a;   // 9
@@ -11951,7 +11951,7 @@ event int a;
 var int aa=0;
 par/or do
     await B;        // 5
-    emit a => 5;
+    emit a(5);
     aa = 5;
 with
     par/and do      // 9
@@ -11980,7 +11980,7 @@ event int a;
 var int aa=5;
 par/or do
     await B;
-    emit a => 5;
+    emit a(5);
 with
     par/and do
         aa = await a;
@@ -12005,7 +12005,7 @@ Test { [[
 event int a;
 var int aa = 1;
 par do
-    emit a => 0;
+    emit a(0);
     escape aa;  // 5
 with
     par/and do  // 7
@@ -12027,7 +12027,7 @@ input int Z;
 event int a;
 var int aa = 0;
 par do
-    emit a => 1;
+    emit a(1);
     aa = 1;
     escape aa;
 with
@@ -12052,7 +12052,7 @@ input int Z;
 event int a;
 var int aa = 0;
 par do
-    emit a => 1;
+    emit a(1);
     aa = 1;
     escape aa;
 with
@@ -12444,7 +12444,7 @@ var int aa=10;
 par/or do
     await a;
 with
-    emit a => 1;
+    emit a(1);
     aa = 1;
 end;
 escape aa;
@@ -12461,9 +12461,9 @@ escape aa;
 Test { [[
 event int a;
 par/or do
-    emit a => 1;
+    emit a(1);
 with
-    emit a => 1;
+    emit a(1);
 end;
 escape 1;
 ]],
@@ -12477,10 +12477,10 @@ Test { [[
 event int a,b;
 var int aa=2,bb=2;
 par/or do
-    emit a => 1;
+    emit a(1);
     aa = 2;
 with
-    emit b => 1;
+    emit b(1);
     bb = 5;
 end;
 escape aa+bb;
@@ -12511,14 +12511,14 @@ Test { [[
 event int a;
 var int aa=0;
 var int v = do/_ par do
-    emit a => 1;
+    emit a(1);
     aa = 1;
     escape aa;
 with
-    emit a => 1;
+    emit a(1);
     escape aa;
 with
-    emit a => 1;
+    emit a(1);
     escape aa;
 end
 end;
@@ -12589,9 +12589,9 @@ Test { [[
 input int A;
 event int a;
 await A;
-emit a => 1;
+emit a(1);
 await A;
-emit a => 1;
+emit a(1);
 escape 1;
 ]],
 --~A;1~>a;~A;1~>a]],
@@ -12608,7 +12608,7 @@ var int ret=0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v;
+        emit a(v);
     end;
 with
     await A;
@@ -12628,7 +12628,7 @@ input void OS_START;
 event int a;
 par do
     await OS_START;
-    emit a => 1;
+    emit a(1);
     escape 1;
 with
     var int aa = await a;
@@ -12650,7 +12650,7 @@ Test { [[
 event int a;
 var int aa=0;
 par/or do
-    emit a => 1;
+    emit a(1);
     aa = 1;
 with
     aa = await a;
@@ -12674,7 +12674,7 @@ Test { [[
 event int a;
 var int aa=0;
 par/or do
-    emit a => 1;
+    emit a(1);
     aa = 1;
 with
     aa = await a;
@@ -12880,16 +12880,16 @@ par/or do
     await dd;
 with
     par/or do
-        emit bb => 1;
+        emit bb(1);
         b=1;
     with
-        emit aa => 2;
+        emit aa(2);
         a=2;
     with
-        emit cc => 3;
+        emit cc(3);
         c=3;
     end;
-    emit dd => 4;
+    emit dd(4);
     d=4;
 end;
 escape a+b+c+d;
@@ -12916,13 +12916,13 @@ par/or do
     end;
 with
     par/or do
-        emit a => 10;
+        emit a(10);
         aa=10;
     with
-        emit b => 20;
+        emit b(20);
         bb=20;
     with
-        emit c => 30;
+        emit c(30);
         cc=30;
     end;
 end;
@@ -12948,11 +12948,11 @@ par/or do
     end;
 with
     par/or do
-        emit a => 10;
+        emit a(10);
     with
-        emit b => 20;
+        emit b(20);
     with
-        emit c => 30;
+        emit c(30);
     end;
 end;
 escape 10;
@@ -12969,9 +12969,9 @@ escape 10;
 Test { [[
 event int a;
 par/or do
-    emit a => 1;
+    emit a(1);
 with
-    emit a => 1;
+    emit a(1);
     await a;
 end;
 escape 0;
@@ -12987,10 +12987,10 @@ escape 0;
 Test { [[
 event int a;
 par/or do
-    emit a => 1;
+    emit a(1);
     await a;
 with
-    emit a => 1;
+    emit a(1);
 end;
 escape 0;
 ]],
@@ -13005,9 +13005,9 @@ escape 0;
 Test { [[
 event int a;
 par do
-    emit a => 1;
+    emit a(1);
 with
-    emit a => 1;
+    emit a(1);
     await a;
 end;
 ]],
@@ -14245,9 +14245,9 @@ escape c;
 Test { [[
 event int a,b;
 par/or do
-    emit a => 2;
+    emit a(2);
 with
-    emit b => 5;
+    emit b(5);
 end;
 escape 2;
 ]],
@@ -14316,7 +14316,7 @@ end;
 
 Test { [[
 event int a;
-emit a => 8;
+emit a(8);
 escape 8;
 ]],
     run = 8,
@@ -14326,7 +14326,7 @@ escape 8;
 Test { [[
 event int a;
 par/and do
-    emit a => 9;
+    emit a(9);
 with
     every a do
     end;
@@ -14344,7 +14344,7 @@ end;
 Test { [[
 event int a;
 par/and do
-    emit a => 9;
+    emit a(9);
 with
     loop do
         await a;
@@ -14394,9 +14394,9 @@ var int v=0;
 par/or do
     v = await A;
     par/or do
-        emit a => 1;
+        emit a(1);
     with
-        emit b => 1;
+        emit b(1);
     end;
     v = await A;
 with
@@ -14426,9 +14426,9 @@ var int c=0;
 par/or do
     await X;
     par/or do
-        emit a => 8;
+        emit a(8);
     with
-        emit b => 5;
+        emit b(5);
     end;
     var int v = await X;
     escape v;
@@ -14467,9 +14467,9 @@ var int c=0;
 par/or do
     await X;
     par/or do
-        emit a => 8;
+        emit a(8);
     with
-        emit b => 5;
+        emit b(5);
     end;
     var int v = await X;
     escape v;
@@ -14563,10 +14563,10 @@ var int v;
 par/or do
     par/and do
         var int v = await A;
-        emit a => v;
+        emit a(v);
     with
         await B;
-        emit b => 1;
+        emit b(1);
     end;
     escape v;
 with
@@ -14589,10 +14589,10 @@ var int v=0;
 par/or do
     par/and do
         var int v = await A;
-        emit a => v;
+        emit a(v);
     with
         await B;
-        emit b => 1;
+        emit b(1);
     end;
     escape v;
 with
@@ -14621,10 +14621,10 @@ var int v=0;
 par/or do
     par/and do
         var int v = await A;
-        emit a => v;
+        emit a(v);
     with
         await B;
-        emit b => 1;
+        emit b(1);
     end;
     escape v;
 with
@@ -14659,7 +14659,7 @@ par/or do
         escape v;
     with
         await B;
-        emit b => 1;
+        emit b(1);
         escape v;
     end;
 with
@@ -14713,7 +14713,7 @@ input int X;
 event int a;
 loop do
     var int v = await X;
-    emit a => v;
+    emit a(v);
 end;
 ]],
     run = false,
@@ -14730,14 +14730,14 @@ var int cc=0;                   // 0: cc=0
 par/or do
     loop do
         var int v = await A;
-        emit a => v;
+        emit a(v);
     end;
 with
     var int bb = 0;             // 0: cc=0/bb=0
     loop do
         var int v = await X;    // 1: v=1
         bb = v + bb;            // 1: bb=2
-        emit b => bb;
+        emit b(bb);
     end;
 with
     cc = 0;
@@ -14749,7 +14749,7 @@ with
             bb = await b;       // bb=2
         end;
         cc = aa+bb;             // cc=3
-        emit c => cc;
+        emit c(cc);
     end;
 with
     await E;
@@ -14773,14 +14773,14 @@ event int b, d, e;
 par/and do
     loop do
         await A;
-        emit b => 0;
+        emit b(0);
         var int v = await Z;
-        emit d => v;
+        emit d(v);
     end;
 with
     loop do
         var int dd = await d;
-        emit e => dd;
+        emit e(dd);
     end;
 end;
 ]],
@@ -14893,7 +14893,7 @@ event int a;
 var int aa=0;
 par/and do
     await A;
-    emit a => 1;
+    emit a(1);
 with
     aa = await a;   // 8
 with
@@ -14916,10 +14916,10 @@ event int a;
 var int aa=0;
 par/and do
     await A;
-    emit a => 1;
+    emit a(1);
 with
     aa = await a;
-    emit a => aa;
+    emit a(aa);
 end;
 escape aa;
 ]],
@@ -14933,7 +14933,7 @@ input int A;
 event int a;
 par/and do
     await A;
-    emit a => 1;
+    emit a(1);
 with
     await a;
     await a;
@@ -14953,9 +14953,9 @@ event int a, b;
 par/and do
     await A;
     par/or do
-        emit a => 1;
+        emit a(1);
     with
-        emit b => 1;
+        emit b(1);
     end;
 with
     par/or do
@@ -14990,9 +14990,9 @@ event int a,b;
 par/and do
     await A;
     par/or do
-        emit a => 1;
+        emit a(1);
     with
-        emit b => 1;
+        emit b(1);
     end;
 with
     par/and do
@@ -15025,7 +15025,7 @@ input int A;
 event int a;
 par/and do
     await A;
-    emit a => 1;
+    emit a(1);
 with
     await a;
     await a;
@@ -15051,9 +15051,9 @@ event int a;
 var int aa=3;
 par/and do
     await A;
-    emit a => 1;
+    emit a(1);
     aa=1;
-    emit a => 3;
+    emit a(3);
     aa=3;
 with
     aa = await a;
@@ -15070,8 +15070,8 @@ event int a;
 var int aa=0;
 par/or do
     await A;
-    emit a => 1;
-    emit a => 3;
+    emit a(1);
+    emit a(3);
     aa = 3;
 with
     await a;
@@ -15116,7 +15116,7 @@ input int A;
 event int a;
 par/and do
     await A;
-    emit a => 8;
+    emit a(8);
 with
     await a;
     await a;
@@ -15142,7 +15142,7 @@ par/and do
         await B;
     end;
     await B;
-    emit a => 1;
+    emit a(1);
 with
     par/and do
     with
@@ -15171,7 +15171,7 @@ par/and do
         await B;
     end;
     await B;
-    emit a => 10;
+    emit a(10);
 with
     par/or do
         await Z;
@@ -15199,7 +15199,7 @@ par/and do
         await B;
     end;
     await B;
-    emit a => 10;
+    emit a(10);
 with
     par/or do
         await Z;
@@ -15221,9 +15221,9 @@ input void A;
 event int a,b;
 par/and do
     await A;
-    emit a => 1;
+    emit a(1);
     await A;
-    emit b => 1;
+    emit b(1);
 with
     await a;
     await b;
@@ -15266,7 +15266,7 @@ event int a;
 var int aa=0;
 par/and do
     await OS_START;
-    emit a => 1;
+    emit a(1);
 with
     par/or do
     with
@@ -15284,7 +15284,7 @@ escape aa;
 Test { [[
 event int a;
 par/and do
-    emit a => 1;
+    emit a(1);
 with
     par/or do
     with
@@ -15356,12 +15356,12 @@ event int a, b;
 par/or do
     loop do
         var int aa = await a;
-        emit b => aa;
+        emit b(aa);
         v = v + 1;
     end
 with
     await OS_START;
-    emit a => 1;
+    emit a(1);
     escape v;
 end;
 ]],
@@ -15404,7 +15404,7 @@ par/or do
     loop do
         par/or do
             var int aa = await a;
-            emit b => aa;
+            emit b(aa);
         with
             var int bb = await b;
             if bb != 0 then end;
@@ -15412,7 +15412,7 @@ par/or do
     end;
 with
     await OS_START;
-    emit a => 1;
+    emit a(1);
 end;
 escape 10;
 ]],
@@ -15429,7 +15429,7 @@ par/or do
     loop do
         par/or do
             var int aa = await a;
-            emit b => aa;
+            emit b(aa);
             v = v + 1;
         with
             loop do
@@ -15443,11 +15443,11 @@ par/or do
     end;
 with
     await OS_START;
-    emit a => 1;
+    emit a(1);
     await A;
-    emit a => 1;
+    emit a(1);
     await A;
-    emit a => 0;
+    emit a(0);
     escape v+x;
 end;
 escape 10;
@@ -15667,14 +15667,14 @@ par do
     end;
 with
     async do
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 1;
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(1);
     end;
     await FOREVER;      // TODO: ele acha que o async termina
 end;
@@ -15782,14 +15782,14 @@ with
     with
         loop do
             await 100ms;
-            emit draw => 1;
+            emit draw(1);
         end;
     with
         loop do
             await 100ms;
-            emit sleeping => 1;
+            emit sleeping(1);
             await 100ms;
-            emit occurring => 1;
+            emit occurring(1);
         end;
     end;
 end;
@@ -15837,14 +15837,14 @@ with
     with
         loop do
             await 100ms;
-            emit draw => 1;
+            emit draw(1);
         end;
     with
         loop do
             await 100ms;
-            emit sleeping => 1;
+            emit sleeping(1);
             await 100ms;
-            emit occurring => 1;
+            emit occurring(1);
         end;
     end;
 end;
@@ -15866,7 +15866,7 @@ var int v=0;
 par/or do
     every a do
         //await a;
-        emit b => 1;
+        emit b(1);
         v = 4;
     end;
 with
@@ -15876,7 +15876,7 @@ with
     end;
 with
     await OS_START;
-    emit a => 1;
+    emit a(1);
     escape v;
 end;
 // unreachable
@@ -15970,7 +15970,7 @@ var int v1=0, v2=0;
 par/and do
     par/or do
         await OS_START;
-        emit a => 10;
+        emit a(10);
         v1=10;
     with
         await FOREVER;
@@ -16000,12 +16000,12 @@ par/or do
     end;
 with
     await OS_START;
-    emit a => 1;
-    emit a => aa;
-    emit a => aa;
-    emit a => aa;
-    emit a => aa;
-    emit a => aa;
+    emit a(1);
+    emit a(aa);
+    emit a(aa);
+    emit a(aa);
+    emit a(aa);
+    emit a(aa);
 end;
 escape aa;
 ]],
@@ -16025,17 +16025,17 @@ par/or do
     end;
 with
     await OS_START;
-    emit a => 1;
+    emit a(1);
     await A;
-    emit a => aa;
+    emit a(aa);
     await A;
-    emit a => aa;
+    emit a(aa);
     await A;
-    emit a => aa;
+    emit a(aa);
     await A;
-    emit a => aa;
+    emit a(aa);
     await A;
-    emit a => aa;
+    emit a(aa);
 end;
 escape aa;
 ]],
@@ -16054,22 +16054,22 @@ par/or do
     end;
 with
     await a;
-    emit b => 1;
+    emit b(1);
     await A;
-    emit b => bb;
+    emit b(bb);
     await A;
-    emit b => bb;
+    emit b(bb);
     await A;
-    emit b => bb;
+    emit b(bb);
     await A;
-    emit b => bb;
+    emit b(bb);
     await A;
-    emit b => bb;
+    emit b(bb);
     await A;
-    emit b => bb;
+    emit b(bb);
 with
     await OS_START;
-    emit a => 1;
+    emit a(1);
     bb = 0;
 end;
 escape bb;
@@ -16087,11 +16087,11 @@ event int a;
 var int aa=0;
 par/or do
     await OS_START;
-    emit a => 0;
+    emit a(0);
 with
     aa = await a;
     aa= aa+1;
-    emit a => aa;
+    emit a(aa);
     await FOREVER;
 end;
 escape aa;
@@ -16105,11 +16105,11 @@ event int a,b;
 var int aa=0;
 par/or do
     await OS_START;
-    emit a => 0;
+    emit a(0);
 with
     aa=await a;
     aa=aa+1;
-    emit b => aa;
+    emit b(aa);
     aa = aa + 1;
     await FOREVER;
 with
@@ -16129,7 +16129,7 @@ var int cc = 0;
 par do
     loop do
         await A;
-        emit c => cc;
+        emit c(cc);
     end;
 with
     loop do
@@ -16153,7 +16153,7 @@ var int cc = 0;
 par do
     loop do
         await A;
-        emit c => cc;
+        emit c(cc);
     end;
 with
     every x in c do
@@ -16178,8 +16178,8 @@ event int a;
 par do
     loop do
         await OS_START;
-        emit a => 0;
-        emit a => 1;
+        emit a(0);
+        emit a(1);
         await 10s;
     end;
 with
@@ -16215,9 +16215,9 @@ event int a;
 par do
     loop do
         await OS_START;
-        emit a => 0;
+        emit a(0);
         await A;
-    emit a => 1;
+    emit a(1);
         await 10s;
     end;
 with
@@ -16245,7 +16245,7 @@ par/or do
     end;
 with
     await A;
-    emit c => 1;
+    emit c(1);
     a = 1;
 end;
 escape a;
@@ -16260,7 +16260,7 @@ var int a=0;
 par/or do
     every cc in c do
         //var int cc = await c;        // 4
-        emit b => cc+1;     // 5
+        emit b(cc+1);     // 5
         a = cc+1;
     end;
 with
@@ -16269,7 +16269,7 @@ with
         a = bb + 1;
     end;
 with
-    emit c => 1;           // 14
+    emit c(1);           // 14
     a = 1;
 end;
 escape a;
@@ -16288,19 +16288,19 @@ par do
     par do
         loop do
             var int v = await A;
-            emit a => v;
+            emit a(v);
         end;
     with
         loop do
             var int aa = await a;
-            emit b => aa;
+            emit b(aa);
             var int aa = await a;
-            emit b => aa;
+            emit b(aa);
         end;
     with
         loop do
             var int bb = await b;
-            emit a => bb;
+            emit a(bb);
             i = i + 1;
         end;
     end;
@@ -16327,10 +16327,10 @@ par do
         await 100ms;
         par/or do
             xx = xx + 1;
-            emit x => xx;
+            emit x(xx);
         with
             yy = yy + 1;
-            emit y => yy;
+            emit y(yy);
         end;
     end;
 with
@@ -16370,10 +16370,10 @@ par do
         await 100ms;
         par/or do
             xx = xx + 1;
-            emit x => xx;
+            emit x(xx);
         with
             yy = yy + 1;
-            emit y => yy;
+            emit y(yy);
         end;
     end;
 with
@@ -16408,14 +16408,14 @@ var int x = 0;
 var int y = 0;
 par/or do
     await OS_START;
-    emit a => 0;
+    emit a(0);
 with
     await b;
-    emit c => 0;
+    emit c(0);
 with
     par/or do
         await a;
-        emit b => 0;
+        emit b(0);
     with
         par/or do
             await b;    // 17
@@ -16449,10 +16449,10 @@ par do
         await 100ms;
         par/or do
             xx = xx + 1;
-            emit x => xx;
+            emit x(xx);
         with
             yy=yy+1;
-            emit y => yy;
+            emit y(yy);
         end;
         c = c + 1;
     end;
@@ -16493,7 +16493,7 @@ event int a;
 var int b=0;
 par/and do
     await OS_START;
-    emit a => 1;
+    emit a(1);
     b = 1;
 with
     var int aa = await a;
@@ -16509,7 +16509,7 @@ event int a;
 var int b=0;
 par/or do
     await OS_START;
-    emit a => 1;
+    emit a(1);
     b = 1;
 with
     var int aa =await a;
@@ -16529,11 +16529,11 @@ input void OS_START;
 event int a;
 par do
     var int aa = await a;
-    emit a => 1;
+    emit a(1);
     escape aa;
 with
     await OS_START;
-    emit a => 2;
+    emit a(2);
     escape 0;
 end;
 ]],
@@ -16552,14 +16552,14 @@ var int aa=0;
 par/or do
     every a do
         //await a;
-        emit b => 1;
+        emit b(1);
     end;
 with
     await OS_START;
-    emit a => 1;
+    emit a(1);
 with
     await b;
-    emit a => 2;
+    emit a(2);
     aa = 2;
 end;
 escape aa;
@@ -16579,8 +16579,8 @@ event int a;
 var int x = 0;
 par do
     await OS_START;
-    emit a => 1;
-    emit a => 2;
+    emit a(1);
+    emit a(2);
     escape x;
 with
     every a do
@@ -16597,8 +16597,8 @@ event int a;
 var int x = 0;
 par do
     await OS_START;
-    emit a => 1;
-    emit a => 2;
+    emit a(1);
+    emit a(2);
     escape x;
 with
     every a do
@@ -16620,9 +16620,9 @@ event int a;
 var int x = 0;
 par do
     await OS_START;
-    emit a => 1;
+    emit a(1);
     await A;
-    emit a => 2;
+    emit a(2);
     escape x;
 with
     await a;
@@ -16639,9 +16639,9 @@ event int a;
 var int x = 0;
 par do
     await OS_START;
-    emit a => 1;
+    emit a(1);
     await A;
-    emit a => 2;
+    emit a(2);
     escape x;
 with
     await a;
@@ -16660,7 +16660,7 @@ Test { [[
 event int a;
 var int x = 0;
 par do
-    emit a  =>  1;
+    emit a(1);
     escape x;
 with
     every a do
@@ -16682,7 +16682,7 @@ event void a;
 var int x = 0;
 par/or do
     await OS_START;
-    emit a =>  1;
+    emit a(1);
     // unreachable
 with
     await a;
@@ -16712,7 +16712,7 @@ event int a;
 var int x = 0;
 par/or do
     await OS_START;
-    emit a =>  1;
+    emit a(1);
     // unreachable
 with
     await a;
@@ -16721,7 +16721,7 @@ with
     x = x + 1;
 with
     await a;
-    emit a => 1;         // 15
+    emit a(1);         // 15
     // unreachable
 end
 escape x;
@@ -16739,8 +16739,8 @@ Test { [[
 event int a, x, y, vis;
 par/or do
     par/and do
-        emit x => 1;
-        emit y => 1;
+        emit x(1);
+        emit y(1);
     with
         loop do
             par/or do
@@ -16751,10 +16751,10 @@ par/or do
         end;
     end;
 with
-    emit a => 1;
-    emit x => 0;
-    emit y => 0;
-    emit vis => 1;
+    emit a(1);
+    emit x(0);
+    emit y(0);
+    emit vis(1);
     await FOREVER;
 end;
 ]],
@@ -16816,8 +16816,8 @@ var int ret = 0;
 par do
     par/and do
         await OS_START;
-        emit x => 1;           // 7
-        emit y => 1;           // 8
+        emit x(1);           // 7
+        emit y(1);           // 8
     with
         par/or do
             await x;
@@ -16830,11 +16830,11 @@ par do
 with
     await OS_START;
     ret = ret + 1;
-    emit a => 1;
+    emit a(1);
     ret = ret * 2;
-    emit x => 0;               // 7
+    emit x(0);               // 7
     ret = ret + 1;
-    emit y => 0;               // 25
+    emit y(0);               // 25
     ret = ret * 2;
     escape ret;
 end;
@@ -16853,8 +16853,8 @@ Test { [[
 event int a, x, y, vis;
 par/or do
     par/and do
-        emit x => 1;
-        emit y => 1;
+        emit x(1);
+        emit y(1);
     with
         loop do
             par/or do
@@ -16865,10 +16865,10 @@ par/or do
         end;
     end;
 with
-    emit a => 1;
-    emit x => 0;
-    emit y => 0;
-    emit vis => 1;
+    emit a(1);
+    emit x(0);
+    emit y(0);
+    emit vis(1);
     await FOREVER;
 end;
 ]],
@@ -16908,13 +16908,13 @@ par do
 with
     await OS_START;
     aa=1;
-    emit a => aa;
+    emit a(aa);
     yy=1;
-    emit y => yy;
+    emit y(yy);
     zz=1;
-    emit z => zz;
+    emit z(zz);
     vvis=1;
-    emit vis => vvis;
+    emit vis(vvis);
 with
     await Z;
     escape aa+xx+yy+zz+ww;
@@ -17097,7 +17097,7 @@ par/or do
         var int a = 0;
         par/or do
             par/or do
-                emit a => 40;
+                emit a(40);
             with
             end;
         with
@@ -17188,7 +17188,7 @@ par/or do
         event int aa;
         par/or do
             par/or do
-                emit aa => 1;  // 9
+                emit aa(1);  // 9
             with
             end;
         with
@@ -17221,7 +17221,7 @@ par/or do
     event int a;
     par/or do
         await OS_START;
-        emit a => 5;
+        emit a(5);
         // unreachable
     with
         ret =await a;
@@ -18507,7 +18507,7 @@ par/and do
 with
     await b;
 with
-    emit b=>10;
+    emit b(10);
 end
 escape ret;
 ]],
@@ -20097,8 +20097,8 @@ par/or do
 with
     async do
         var int v = 10;
-        emit A => &&v;
-        emit A => null;
+        emit A(&&v);
+        emit A(null);
     end
 end
 escape v;
@@ -20119,8 +20119,8 @@ par/or do
 with
     async do
         var int v = 10;
-        emit A => &&v;
-        emit A => null;
+        emit A(&&v);
+        emit A(null);
     end
 end
 escape v;
@@ -20156,8 +20156,8 @@ par/or do
 with
     async do
         var int v = 10;
-        emit A => ((&&v) as void&&);
-        emit A => null;
+        emit A((&&v) as void&&);
+        emit A(null);
     end
 end
 escape v;
@@ -20187,7 +20187,7 @@ do
         await OS_START;
         var int i = 1;
         async (i) do
-            emit E => i;
+            emit E(i);
         end
     end
 end;
@@ -20219,7 +20219,7 @@ do
         await OS_START;
         var int i = 1;
         async (i) do
-            emit E => &&i;
+            emit E(&&i);
         end
     end
 end;
@@ -20249,7 +20249,7 @@ do
         await OS_START;
         var int i = 1;
         async (i) do
-            emit E => &&i;
+            emit E(&&i);
         end
     end
 end
@@ -20307,7 +20307,7 @@ do/_
         with
             await OS_START;
             async do
-                emit PTR => (1, null);
+                emit PTR(1, null);
             end
         end
     end
@@ -20336,7 +20336,7 @@ var int&& p = null;
         await OS_START;
         async do
             var int i = 1;
-            emit E => &&i;
+            emit E(&&i);
         end
     end
 end
@@ -20361,7 +20361,7 @@ var int&& p = null;
         await OS_START;
         async do
             var int i = 1;
-            emit E => &&i;
+            emit E(&&i);
         end
     end
 end
@@ -20384,7 +20384,7 @@ var int ret=0;
 event (bool,int) ok;
 par/or do
     await OS_START;
-    emit ok => (true,10);
+    emit ok(true,10);
 with
     var bool b;
     (b,ret) = await ok;
@@ -20405,7 +20405,7 @@ var void&& p=null;
 with
     await OS_START;
     async do
-        emit PTR => (1, null);
+        emit PTR(1, null);
     end
 end
 escape i;
@@ -20427,7 +20427,7 @@ par/or do
 with
     await OS_START;
     async do
-        emit PTR => (1, null);
+        emit PTR(1, null);
     end
 end
 escape i;
@@ -20461,7 +20461,7 @@ var void&& p = null;
 with
     await OS_START;
     async do
-        emit PTR => (1, null);
+        emit PTR(1, null);
     end
 end
 await 1s;
@@ -20483,7 +20483,7 @@ var void&& p = null;
     with
         await OS_START;
         async do
-            emit PTR => (1, null);
+            emit PTR(1, null);
         end
     end
 end
@@ -20508,7 +20508,7 @@ var void&& p = null;
     with
         await OS_START;
         async do
-            emit PTR => (1, null);
+            emit PTR(1, null);
         end
     end
 end
@@ -20523,8 +20523,7 @@ escape i;
 Test { [[
 input (int,int,int&&) A;
 async do
-    emit A =>
-        (1, 1, null);
+    emit A(1, 1, null);
 end
 escape 1;
 ]],
@@ -20841,7 +20840,7 @@ input int A;
 var int a;
 async do
     a = 1;
-    emit A => a;
+    emit A(a);
 end;
 escape a;
 ]],
@@ -20875,7 +20874,7 @@ escape 1;
 Test { [[
 input void A;
 async do
-    emit A=>1;
+    emit A(1);
 end;
 escape 1;
 ]],
@@ -20885,7 +20884,7 @@ escape 1;
 Test { [[
 event int a;
 async do
-    emit a => 1;
+    emit a(1);
 end;
 escape 0;
 ]],
@@ -20911,9 +20910,9 @@ escape 0;
 Test { [[
 input int X;
 async do
-    emit X => 1;
+    emit X(1);
 end;
-emit X => 1;
+emit X(1);
 escape 0;
 ]],
     stmts = 'line 5 : invalid `emit´ : unexpected context for external `input´ "X"',
@@ -21423,7 +21422,7 @@ Test { [[
 input int A;
 par do
     async do
-        emit A => 1;
+        emit A(1);
     end;
     escape 0;
 with
@@ -21456,7 +21455,7 @@ Test { [[
 input int A;
 par/or do
     async do
-        emit A => 4;
+        emit A(4);
     end;
 with
 end;
@@ -21516,7 +21515,7 @@ input _tceu_queue&& GO;
 every qu_ in GO do
     var _tceu_queue qu = * qu_;
     async(qu) do
-        emit E => qu.param.ptr;
+        emit E(qu.param.ptr);
     end
 end
 ]],
@@ -21533,7 +21532,7 @@ input _tceu_queue&& GO;
 every qu_ in GO do
     var _tceu_queue qu = * qu_;
     async(qu) do
-        emit E => qu.param.ptr;
+        emit E(qu.param.ptr);
     end
 end
 ]],
@@ -21600,14 +21599,14 @@ native/pos do
     /*__ceu_nothing(d)*/
 end
 output int A;
-emit A => 111;
+emit A(111);
 escape(1);
 ]],
     run=1
 }
 Test { [[
 output int A;
-if emit A => 1 then
+if emit A(1) then
     escape 0;
 end
 escape(1);
@@ -21619,7 +21618,7 @@ native/pos do
     #define ceu_out_emit(a,b,c,d) 1
 end
 output int A;
-if emit A => 1 then
+if emit A(1) then
     escape 0;
 end
 escape(1);
@@ -21629,14 +21628,14 @@ escape(1);
 
 Test { [[
 output t A;
-emit A => 1;
+emit A(1);
 escape(1);
 ]],
     parser = 'after `output´ : expected `(´ or type',
 }
 Test { [[
 output t A;
-emit A => 1;
+emit A(1);
 escape(1);
 ]],
     parser = 'after `output´ : expected `(´ or type',
@@ -21644,7 +21643,7 @@ escape(1);
 Test { [[
 native _t;
 output _t&& A;
-emit A => 1;
+emit A(1);
 escape(1);
 ]],
     stmts = 'line 3 : invalid `emit´ : types mismatch : "(_t&&)" <= "(int)"',
@@ -21654,7 +21653,7 @@ Test { [[
 native _t;
 output int A;
 var _t v=1;
-emit A => v;
+emit A(v);
 escape(1);
 ]],
     --env = 'line 2 : undeclared type `_t´',
@@ -21672,7 +21671,7 @@ native/pre do
     typedef int t;
 end
 var _t v=1;
-emit A => v;
+emit A(v);
 escape(1);
 ]],
     --env = 'line 2 : undeclared type `_t´',
@@ -21682,7 +21681,7 @@ escape(1);
 Test { [[
 output int A;
 var int a;
-emit A => &&a;
+emit A(&&a);
 escape(1);
 ]],
     stmts = 'line 3 : invalid `emit´ : types mismatch : "(int)" <= "(int&&)"',
@@ -21691,7 +21690,7 @@ escape(1);
 Test { [[
 output int A;
 var int a;
-if emit A => &&a then
+if emit A(&&a) then
     escape 0;
 end
 escape(1);
@@ -21823,8 +21822,8 @@ output int B;
 var int a, b;
 
 var _t v = { (struct t){1,-1} };
-a = emit A => &&v;
-b = emit B => 5;
+a = emit A(&&v);
+b = emit B(5);
 escape a + b;
 ]],
     run = 5,
@@ -21863,8 +21862,8 @@ output int B;
 var int a, b;
 
 var _t v = { (struct t){1,-1} };
-a = emit A => v;
-b = emit B => 5;
+a = emit A(v);
+b = emit B(5);
 escape a + b;
 ]],
     run = 5,
@@ -21877,7 +21876,7 @@ output void A;
 native/pos do
     void A (int v) {}
 end
-var _cahr v = emit A => 1;
+var _cahr v = emit A(1);
 escape 0;
 ]],
     stmts = 'line 6 : invalid `emit´ : types mismatch : "()" <= "(int)"',
@@ -21889,10 +21888,10 @@ escape 0;
 Test { [[
 native _char;
 output void A;
-var _char v = emit A => ;
+var _char v = emit A(;
 escape v;
 ]],
-    parser = 'line 3 : after `=>´ : expected expression',
+    parser = 'line 3 : after `(´ : expected expression',
     --parser = 'line 3 : before `=>´ : expected `;´',
     --env = 'line 3 : invalid attribution',
 }
@@ -21902,7 +21901,7 @@ native/pos do
     void A (int v) {}
 end
 native _char;
-var _char v = emit A => 1;
+var _char v = emit A(1);
 escape 0;
 ]],
     --parser = 'line 6 : after `=´ : expected expression',
@@ -21915,7 +21914,7 @@ Test { [[
 native/pos do
     void A (int v) {}
 end
-emit A => 1;
+emit A(1);
 escape 0;
 ]],
     dcls = 'external identifier "A" is not declared',
@@ -21996,7 +21995,7 @@ end
 
 output (int&&,  int&&) RADIO_SEND;
 var int a=1,b=1;
-emit RADIO_SEND => (&&a,&&b);
+emit RADIO_SEND(&&a,&&b);
 
 escape a + b;
 ]],
@@ -22024,7 +22023,7 @@ end
 
 output (int&&,  int&&) RADIO_SEND;
 var int a=1,b=1;
-emit RADIO_SEND => (&&a,&&b);
+emit RADIO_SEND(&&a,&&b);
 
 escape a + b;
 ]],
@@ -22040,7 +22039,7 @@ end
 par do
     _Fx();
 with
-    emit Z => 1;
+    emit Z(1);
 end
 ]],
     cc = '1: error: implicit declaration of function ‘Fx’',
@@ -22060,9 +22059,9 @@ end
 par do
     _Fx();
 with
-    emit Z => 1;
+    emit Z(1);
 with
-    emit W => 0;
+    emit W(0);
 end
 ]],
     cc = '1: error: implicit declaration of function ‘Fx’',
@@ -22083,9 +22082,9 @@ end
 par do
     _Fx();
 with
-    emit Z => 1;
+    emit Z(1);
 with
-    emit W => 0;
+    emit W(0);
 end
 ]],
     todo = true,
@@ -22107,9 +22106,9 @@ end
 par do
     _Fx(&&a);
 with
-    emit Z => b;
+    emit Z(b);
 with
-    emit W => &&a;
+    emit W(&&a);
 end
 ]],
     todo = true,
@@ -22131,9 +22130,9 @@ end
 par do
     _Fx(&&a);
 with
-    emit Z => b;
+    emit Z(b);
 with
-    emit W => &&a;
+    emit W(&&a);
 end
 ]],
     todo = true,
@@ -22162,7 +22161,7 @@ end
 
 Test { [[
 output Z  (var int)=>int;
-escape call Z=>1;
+escape call Z(1);
 ]],
     parser = 'line 1 : after `output´ : expected `(´ or type',
     --parser = 'line 2 : after `call´ : expected expression',
@@ -22172,7 +22171,7 @@ escape call Z=>1;
 
 Test { [[
 output/input/tight Z  (var int)=>int;
-escape call Z=>1;
+escape call Z(1);
 ]],
     parser = 'line 2 : after `call´ : expected name expression',
     --parser = 'line 2 : after `call´ : expected expression',
@@ -22182,7 +22181,7 @@ escape call Z=>1;
 
 Test { [[
 output/input/tight Z  (var int)=>int;
-call Z=>1;
+call Z(1);
 escape 1;
 ]],
     cc = 'error: #error ceu_out_call_* is not defined',
@@ -22190,7 +22189,7 @@ escape 1;
 
 Test { [[
 output/input/tight Z  (var int)=>int;
-emit Z=>1;
+emit Z(1);
 escape 1;
 ]],
     stmts = 'line 2 : invalid `emit´ : unexpected context for external code',
@@ -22205,7 +22204,7 @@ native/pos do
     }
 end
 output/input/tight Z  (var int)=>int;
-call Z=>1;
+call Z(1);
 escape 1;
 ]],
     cc = 'error: #error ceu_out_call_* is not defined',
@@ -22220,7 +22219,7 @@ native/pos do
     }
 end
 output/input/tight Z  (var int)=>int;
-call Z=>1;
+call Z(1);
 escape 1;
 ]],
     run = 1,
@@ -22234,7 +22233,7 @@ native/pos do
     }
 end
 output/input/tight Z  (var int)=>int;
-var int ret = call Z=>1;
+var int ret = call Z(1);
 escape ret;
 ]],
     run = 2,
@@ -22248,7 +22247,7 @@ native/pos do
     }
 end
 output/input/tight Z  (var int)=>int;
-var int ret = call Z=>(1,2);
+var int ret = call Z(1,2);
 escape ret;
 ]],
     stmts = 'line 8 : invalid call : types mismatch : "(int)" <= "(int,int)"',
@@ -22259,7 +22258,7 @@ escape ret;
 
 Test { [[
 output int E;
-emit E=>(1,2);
+emit E(1,2);
 escape 1;
 ]],
     stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "(int,int)"',
@@ -22268,7 +22267,7 @@ escape 1;
 
 Test { [[
 event (int) e;
-emit e=>(1,2);
+emit e(1,2);
 escape 1;
 ]],
     stmts = 'line 2 : invalid `emit´ : types mismatch : "(int)" <= "(int,int)"',
@@ -22293,7 +22292,7 @@ escape 1;
 
 Test { [[
 output (int,int) E;
-emit E=>1;
+emit E(1);
 escape 1;
 ]],
     stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int)"',
@@ -22302,7 +22301,7 @@ escape 1;
 
 Test { [[
 event (int,int) e;
-emit e=>(1);
+emit e(1);
 escape 1;
 ]],
     stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int)"',
@@ -22316,14 +22315,14 @@ native/pos do
     }
 end
 output/input/tight Z  (var int, var int)=>int;
-var int ret = call Z=>(1,2);
+var int ret = call Z(1,2);
 escape ret;
 ]],
     run = 3,
 }
 
 Test { [[
-var int ret = (call Z=>2);
+var int ret = (call Z(2));
 ]],
     dcls = 'line 1 : external identifier "Z" is not declared',
 }
@@ -22336,7 +22335,7 @@ native/pos do
     }
 end
 output/input/tight Z  (var int)=>int;
-var int ret = (call Z=>2);
+var int ret = (call Z(2));
 escape ret;
 ]],
     run = 3,
@@ -22395,9 +22394,9 @@ native/pos do
 end
 output int Z;
 par/and do
-    emit Z=>1;
+    emit Z(1);
 with
-    emit Z=>1;
+    emit Z(1);
 end
 escape 1;
 ]],
@@ -22416,9 +22415,9 @@ native/pos do
 end
 output/input/tight Z  (var int)=>int;
 par/and do
-    call Z=>1;
+    call Z(1);
 with
-    call Z=>1;
+    call Z(1);
 end
 escape 1;
 ]],
@@ -22442,7 +22441,7 @@ input/output/tight Z  (var int a)=>int do
     escape a + 1;
 end
 input/output/tight W  (var int a)=>int;
-var int ret = call Z=>1;
+var int ret = call Z(1);
 escape ret;
 ]],
     dcls = 'line 4 : external code "W" declared but not used',
@@ -22453,7 +22452,7 @@ input/output/tight Z  (var int a)=>int do
     escape a + 1;
 end
 input/output/tight W  (var int a)=>int;
-var int ret = call Z=>1;
+var int ret = call Z(1);
 escape ret;
 ]],
     wrn = true,
@@ -22466,7 +22465,7 @@ input/output/tight Z  (var int a)=>void do
     v = a;
 end
 var int v = 0;
-call Z=>1;
+call Z(1);
 escape v;
 ]],
     todo = 'globals',
@@ -22481,7 +22480,7 @@ input/output/tight Z  (var int a)=>void do
     _fprintf(_stderr,"a=%d v=%d\n", a, v);
 end
 _fprintf(_stderr,"v=%d\n", v);
-call Z=>1;
+call Z(1);
 _fprintf(_stderr,"v=%d\n", v);
 escape this.v;
 ]],
@@ -22495,9 +22494,9 @@ input/output/tight W  (var int a)=>int do
     escape a + 1;
 end
 input/output/tight Z  (var int a)=>void do
-    this.v = call W=>a;
+    this.v = call W(a);
 end
-call Z=>1;
+call Z(1);
 escape this.v;
 ]],
     todo = 'globals',
@@ -22542,7 +22541,7 @@ Test { [[
 input/output/tight A  (var u8 a, var  int a)=>void do
     v = 1;
 end
-call A => ();
+call A(());
 escape 1;
 ]],
     dcls = 'line 1 : declaration of "a" hides previous declaration (/tmp/tmp.ceu : line 1)',
@@ -22576,7 +22575,7 @@ input/output/tight WRITE  (var int c)=>int do
     escape c + 1;
 end
 var byte b = 1;
-var int ret = call WRITE => b;
+var int ret = call WRITE(b);
 escape ret;
 ]],
     run = 2,
@@ -22587,7 +22586,7 @@ native ___ceu_nothing;
 input/output/tight IB  (var int c)=>void do
     ___ceu_nothing(&&c);
 end
-call IB => 0;
+call IB(0);
 escape 0;
 ]],
     scopes = 'line 3 : invalid `call´ : expected `finalize´ for variable "c"',
@@ -22600,8 +22599,8 @@ end
 input/output/tight IB  (var int c)=>void do
     ___ceu_nothing(&&c);
 end
-call IB => 0;
-var int ret = call IA => 1;
+call IB(0);
+var int ret = call IA(1);
 escape ret;
 ]],
     run = 2,
@@ -23879,7 +23878,7 @@ escape v;
     cc = 'error: void value not ignored as it ought to be',
 }
 
-Test { [[emit A => 10; escape 0;]],
+Test { [[emit A(10); escape 0;]],
     dcls = 'external identifier "A" is not declared'
 }
 
@@ -24381,7 +24380,7 @@ var _draw_string_t v = _draw_string_t(
     20,
     100,
     100);
-call DRAW_STRING => &&v;
+call DRAW_STRING(&&v);
 
 escape 1;
 ]],
@@ -25558,7 +25557,7 @@ par/or do
     if key==null then end;
 with
     async do
-        emit SDL_KEYUP => null;
+        emit SDL_KEYUP(null);
     end
 end
 escape 1;
@@ -25861,7 +25860,7 @@ with
             key = read1;
             if key != 1 then
                 async (read1) do
-                    emit KEY => read1;
+                    emit KEY(read1);
                 end
             end
         end
@@ -26335,7 +26334,7 @@ event bool a;
 par/or do
     loop do
         var int v = await A;
-        emit a => v;
+        emit a(v);
     end
 with
     pause/if a do
@@ -26353,7 +26352,7 @@ event bool a;
 par/or do
     loop do
         var int v = await A;
-        emit a => v as bool;
+        emit a(v as bool);
     end
 with
     pause/if a do
@@ -26408,7 +26407,7 @@ var int ret = 0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v;
+        emit a(v);
     end
 with
 
@@ -26451,12 +26450,12 @@ var int ret = 0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v as bool;
+        emit a(v as bool);
     end
 with
     loop do
         var int v = await B;
-        emit b => v as bool;
+        emit b(v as bool);
     end
 with
     pause/if a do
@@ -26483,7 +26482,7 @@ var int ret = 0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v as bool;
+        emit a(v as bool);
     end
 with
     pause/if a do
@@ -26507,7 +26506,7 @@ input void Z;
 event bool a;
 var int ret = 0;
 par/or do
-    emit a => true;
+    emit a(true);
     await A;
 with
     pause/if a do
@@ -26534,7 +26533,7 @@ var int ret = 0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v as bool;
+        emit a(v as bool);
     end
 with
     pause/if a do
@@ -26562,7 +26561,7 @@ var int ret = 50;
 par/or do
     loop do
         var int v = await A;
-        emit a => v as bool;
+        emit a(v as bool);
     end
 with
     pause/if a do
@@ -26598,7 +26597,7 @@ var int ret = 0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v as bool;
+        emit a(v as bool);
     end
 with
     pause/if a do
@@ -26636,7 +26635,7 @@ par/or do
             await 1s;
         end
     with
-        emit e => true;
+        emit e(true);
     end
     escape -1;
 with
@@ -26657,8 +26656,8 @@ par/or do
             await 1s;
         end
     with
-        emit e => true;
-        emit e => false;
+        emit e(true);
+        emit e(false);
     end
     escape -1;
 with
@@ -30298,7 +30297,7 @@ par/or do
     escape a!+b!;
 with
     async do
-        emit E => (10,20);
+        emit E(10,20);
     end
 end
 ]],
@@ -30315,7 +30314,7 @@ par do
     escape n!;
 with
     await 1s;
-    emit e => 10;
+    emit e(10);
     await FOREVER;
 end
 ]],
@@ -30344,7 +30343,7 @@ par do
     escape n!;
 with
     await E;
-    emit e => 10;
+    emit e(10);
     await FOREVER;
 end
 ]],
@@ -30362,7 +30361,7 @@ par do
     escape n!;
 with
     await 1s;
-    emit e => 10;
+    emit e(10);
     await FOREVER;
 end
 ]],
@@ -32191,7 +32190,7 @@ par/or do
         end
     end
 with
-    emit pse=>true;
+    emit pse(true);
     await 5s;
 end
 
@@ -33247,7 +33246,7 @@ end
 
 var int? ret =
     watching Ff(10) => (e) do
-        emit e => 100;
+        emit e(100);
         escape 0;
     end;
 
@@ -33287,7 +33286,7 @@ event int eee;
 
 var int? ret =
     watching Ff(10, &eee) do
-        emit eee => 100;
+        emit eee(100);
         escape 0;
     end;
 
@@ -33306,7 +33305,7 @@ event int e;
 
 var int? ret =
     watching Ff(10, &e) do
-        emit e => 100;
+        emit e(100);
         escape 0;
     end;
 
@@ -33896,8 +33895,8 @@ end
 output/input/tight LUA_GETGLOBAL  (var int&&, var byte&&)=>void;
 code/tight/recursive Load (var int&& l)=>void do
     // TODO: load file
-    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
-    call LUA_GETGLOBAL => (l, "apps");              // [ apps ]
+    call LUA_GETGLOBAL((l, "apps"));              // [ apps ]
+    call LUA_GETGLOBAL((l, "apps"));              // [ apps ]
     loop i do
         var int has = 1;
         if has==0 then
@@ -33907,9 +33906,9 @@ code/tight/recursive Load (var int&& l)=>void do
     end
 
     /*
-    var int len = (call LUA_OBJLEN => (l, -1));     // [ apps ]
+    var int len = (call LUA_OBJLEN((l, -1)));     // [ apps ]
     loop i in [0->len[ do
-        call LUA_RAWGETI => (l, -1);                // [ apps | apps[i] ]
+        call LUA_RAWGETI((l, -1));                // [ apps | apps[i] ]
     end
     */
 end
@@ -34203,7 +34202,7 @@ code/await Tx (var& int ret, var int x)=>void do
         await FOREVER;
     with
         await 1s;
-        emit e => x;
+        emit e(x);
         await FOREVER;
     end
 end
@@ -34234,7 +34233,7 @@ code/await Tx (var& int ret, var int x)=>void do
         ret = ret + v;
         await FOREVER;
     with
-        emit e => x;
+        emit e(x);
         await FOREVER;
     end
 end
@@ -35652,14 +35651,14 @@ class Tx with
     var int aa=0;
 do
     await go;
-    emit a => 100;
+    emit a(100);
     aa = 5;
-    emit ok => 1;
+    emit ok(1);
 end
 var Tx aa;
     par/or do
         await OS_START;
-        emit aa.go => 1;
+        emit aa.go(1);
     with
         await aa.ok;
     end
@@ -36782,13 +36781,13 @@ class Tx with
 do
     par/or do
         await A;
-        emit a => 10;
+        emit a(10);
         this.aa = 5;
     with
         aa = await a;
         aa = 7;
     end
-    emit ok => 1;
+    emit ok(1);
 end
 var Tx aa;
 par/and do
@@ -36810,13 +36809,13 @@ class Tx with
 do
     par/or do
         await A;
-        emit a => 10;
+        emit a(10);
         this.aa = 5;
     with
         aa = await a;
         aa = 7;
     end
-    emit ok => 1;
+    emit ok(1);
 end
 var Tx aa;
 par/and do
@@ -36840,7 +36839,7 @@ class Tx with
     var int aa=0;
 do
     par/and do
-        emit this.a => 10; // 6
+        emit this.a(10); // 6
         aa = 5;
     with
         await a;        // 9
@@ -37349,31 +37348,31 @@ native _assert;
     _assert(rs[0].x==20 and rs[0].y==50 and rs[1].x==110 and rs[1].y==300);
 
     async do
-        emit BUTTON => 0;
+        emit BUTTON(0);
         emit 100ms;
     end
     _assert(rs[0].x==20 and rs[0].y==60 and rs[1].x==120 and rs[1].y==300);
 
     async do
-        emit BUTTON => 1;
+        emit BUTTON(1);
         emit 100ms;
     end
     _assert(rs[0].x==20 and rs[0].y==70 and rs[1].x==120 and rs[1].y==310);
 
     async do
-        emit BUTTON => 1;
+        emit BUTTON(1);
         emit 100ms;
     end
     _assert(rs[0].x==20 and rs[0].y==80 and rs[1].x==110 and rs[1].y==310);
 
     async do
-        emit BUTTON => 1;
+        emit BUTTON(1);
         emit 99ms;
     end
     _assert(rs[0].x==20 and rs[0].y==89 and rs[1].x==110 and rs[1].y==301);
 
     async do
-        emit BUTTON => 0;
+        emit BUTTON(0);
         emit 1ms;
     end
     _assert(rs[0].x==20 and rs[0].y==89 and rs[1].x==110 and rs[1].y==300);
@@ -37384,8 +37383,8 @@ native _assert;
     _assert(rs[0].x==19 and rs[0].y==89 and rs[1].x==110 and rs[1].y==299);
 
     async do
-        emit BUTTON => 0;
-        emit BUTTON => 1;
+        emit BUTTON(0);
+        emit BUTTON(1);
         emit 1s;
     end
     _assert(rs[0].x==19 and rs[0].y==-11 and rs[1].x==210 and rs[1].y==299);
@@ -37403,7 +37402,7 @@ class Tx with
     var int aa=0;
 do
     par/or do
-        emit a => 10;      // 5
+        emit a(10);      // 5
         aa = 5;
     with
         await this.a;   // 8
@@ -37413,7 +37412,7 @@ end
 var Tx aa;
 par/or do
     par/and do
-        emit aa.go => 1;
+        emit aa.go(1);
     with
         await aa.ok;
     end
@@ -37434,13 +37433,13 @@ class Tx with
     event int a, ok, go;
     var int aa=0;
 do
-    emit a => 10;
+    emit a(10);
     aa = 5;
 end
 var Tx aa;
 par/or do
     par/and do
-        emit aa.go => 1;
+        emit aa.go(1);
     with
         await aa.ok;
     end
@@ -42073,7 +42072,7 @@ do
         spawn X in bodies with
         end;
     sum = sum + 1;
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 pool[1] X bodies;
@@ -42101,7 +42100,7 @@ do
         spawn X in bodies with
         end;
     sum = sum + 1;
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 pool[1] X bodies;
@@ -42139,7 +42138,7 @@ do
         spawn X in bodies with
         end;
     sum = sum + 1;
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 pool[] X bodies;
@@ -42367,7 +42366,7 @@ do
         end
     end
     sum = sum + 1;
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 pool[4] Body bodies;
@@ -42727,7 +42726,7 @@ event Tx&& e;
 par/or do
     await OS_START;
     var Tx a;
-    emit e => &&a;
+    emit e(&&a);
     await FOREVER;
 with
     var Tx&& pa = await e;
@@ -42764,7 +42763,7 @@ with
     await OS_START;
     do
         var Tx a;
-        emit e => &&a;
+        emit e(&&a);
     end
     await 2s;
     escape 1;
@@ -42945,7 +42944,7 @@ var int ret = 2;
 par/and do
     await OS_START;
     var Tx&&? t = spawn Tx;
-    emit e => t!;
+    emit e(t!);
     ret = ret + t!:v;
 with
     var Tx&& t1 = await e;
@@ -42976,7 +42975,7 @@ par/and do
     await OS_START;
     var Tx&&? t = spawn Tx;
     watching *t! do
-        emit e => t!;
+        emit e(t!);
         ret = ret + t!:v;
         await *t!;
         ret = ret + 1;
@@ -43027,7 +43026,7 @@ par/and do
     var Tx&&? t = spawn Tx;
     ret = ret * 2;
     watching *t! do
-        emit e => t!;
+        emit e(t!);
         ret = ret + t!:v;
         await *t!;
         ret = -1;
@@ -43609,7 +43608,7 @@ class Tx with
     event int ok;
 do
     await OS_START;
-    emit ok => 1;
+    emit ok(1);
 end
 do Tx;
 escape 1;
@@ -46166,7 +46165,7 @@ do
 end
 
 var Game game;
-emit game.go => (1, 1, null);
+emit game.go(1, 1, null);
 escape 1;
 ]],
     tmp = 'line 2 : invalid event type',
@@ -46185,7 +46184,7 @@ do
     u = &&unit;
     await 1min;
 end
-emit u:move => 0;
+emit u:move(0);
 escape 2;
 ]],
     --fin = 'line 8 : attribution requires `finalize´',
@@ -46204,7 +46203,7 @@ do
     u = spawn Unit in units;  // deveria falhar aqui!
     await 1min;
 end
-emit u!:move => 0;
+emit u!:move(0);
 escape 2;
 ]],
     run = {['~>1min']='12] runtime error: invalid tag'},
@@ -46231,7 +46230,7 @@ class Tx with
     event int e;
 do
     var int v = await A;
-    emit e => v;
+    emit e(v);
 end
 
 event int a;
@@ -46244,9 +46243,9 @@ par/or do
     end
 with
     await OS_START;
-    emit a => 1;
+    emit a(1);
     await B;
-    emit a => 0;
+    emit a(0);
     await FOREVER;
 end
 escape ret;
@@ -46288,9 +46287,9 @@ par/or do
     end
 with
     await OS_START;
-    emit a => 1;
+    emit a(1);
     await X;
-    emit a => 0;
+    emit a(0);
     ret = 10;
     await FOREVER;
 end
@@ -46370,7 +46369,7 @@ par/or do
 with
     loop do
         var int v = await P;
-        emit pse  =>  v;
+        emit pse(v);
     end
 with
     await 5s;
@@ -46415,7 +46414,7 @@ par/or do
 with
     loop do
         var int v = await P;
-        emit pse  =>  v;
+        emit pse(v);
     end
 with
     await 5s;
@@ -46460,7 +46459,7 @@ par/or do
 with
     loop do
         var int v = await P;
-        emit pse  =>  v;
+        emit pse(v);
     end
 with
     await 5s;   // terminates before first spawn
@@ -46506,7 +46505,7 @@ par/or do
 with
     loop do
         var int v = await P;
-        emit pse  =>  v;
+        emit pse(v);
     end
 with
     await 5s;   // terminates before first spawn
@@ -46552,7 +46551,7 @@ par/or do
 with
     loop do
         var int v = await P;
-        emit pse  =>  v;
+        emit pse(v);
     end
 with
     await 6s;
@@ -46597,7 +46596,7 @@ par/or do
 with
     loop do
         var int v = await P;
-        emit pse  =>  v;
+        emit pse(v);
     end
 with
     await 5s;
@@ -46637,8 +46636,8 @@ with
     loop do
         await 1s;
         pse_ = not pse_;
-        emit a => pse_;
-        emit t.a => pse_;
+        emit a(pse_);
+        emit t.a(pse_);
     end
 with
     await A;
@@ -47137,7 +47136,7 @@ class Tx with
     var Global&& g;
 do
     await OS_START;
-    emit g:a_  =>  10;
+    emit g:a_(10);
 end
 var U u;
 var Global&& g = &&u;
@@ -47242,7 +47241,7 @@ class Tx with
     event int a;
 do
     await OS_START;
-    emit global:a  =>  10;
+    emit global:a(10);
 end
 var Tx t;
 var int v = await a;
@@ -47266,7 +47265,7 @@ do
 end
 var Tx t;
 await OS_START;
-emit a  =>  10;
+emit a(10);
 escape t.aa;
 ]],
     run = 10,
@@ -50957,7 +50956,7 @@ var _t&& ptr = &&t;
 
 ptr:xxx = &c;
 
-emit (ptr:xxx as C&&):e => 1;
+emit (ptr:xxx as C&&):e (1);
 
 escape (ptr:xxx as C&&):v;
 ]],
@@ -52316,7 +52315,7 @@ vector[] U&&? us = [&&u1];
 await 1s;
 
 var Tx t = Tx.build(&us);
-emit us[0]!:go => true;
+emit us[0]!:go(true);
 
 escape us[0]?+1;
 ]],
@@ -52345,7 +52344,7 @@ vector&[] U&&? xx = &us;
 await 1s;
 
 var Tx t = Tx.build(&us);
-emit xx[0]!:go => true;
+emit xx[0]!:go(true);
 
 escape us[0]?+1;
 ]],
@@ -52423,7 +52422,7 @@ input int E,C;
 
 par do
     async do
-        emit E => 10;
+        emit E(10);
     end
     await FOREVER;
 with
@@ -52930,7 +52929,7 @@ par/or do
     await A;
 with
     async/thread do
-        emit A=>10;
+        emit A(10);
     end
 end;
 escape 10;
@@ -52949,7 +52948,7 @@ par/or do
     await A;
 with
     async do
-        emit A=>10;
+        emit A(10);
     end
 end;
 escape 10;
@@ -53186,14 +53185,14 @@ par do
     end;
 with
     async/thread do
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 1;
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(1);
     end;
     await FOREVER;      // TODO: ele acha que o async termina
 end;
@@ -53218,14 +53217,14 @@ par do
     end;
 with
     async do
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 0;
-        emit P2 => 1;
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(1);
     end;
     await FOREVER;      // TODO: ele acha que o async termina
 end;
@@ -54626,7 +54625,7 @@ end
 par/or do
     async/isr [1] do
         var int x = 111;
-        emit A => 1;
+        emit A(1);
         x = 222;
     end
     await FOREVER;
@@ -54677,7 +54676,7 @@ native _digitalRead, _digitalWrite;
 input int PIN02;
 par/or do
     async/isr [1] do
-        emit PIN02 => _digitalRead(2);
+        emit PIN02(_digitalRead(2));
     end
     await FOREVER;
 with
@@ -54696,7 +54695,7 @@ native _digitalWrite;
 par/or do
     var int i = 0;
     async/isr [1] do
-        emit PIN02 => i;
+        emit PIN02(i);
     end
     await FOREVER;
 with
@@ -54713,7 +54712,7 @@ input int PIN02;
 par/or do
     var int i = 0;
     async/isr [1] (i) do
-        emit PIN02 => i;
+        emit PIN02(i);
     end
     await FOREVER;
 with
@@ -55854,7 +55853,7 @@ par/or do
         this.v = 10;
     end;
     async do end;
-    emit e => &&t;
+    emit e(&&t);
 with
     var Tx&& p = await e;
     ret = p:v;
@@ -55881,7 +55880,7 @@ par/or do
         this.v = 10;
     end;
     async do end;
-    emit e => &&t;
+    emit e(&&t);
 with
     var Tx&& p = await e;
     ret = p:v;
@@ -55909,7 +55908,7 @@ par/or do
         this.v = 10;
     end;
     async do end;
-    emit e => &&t;
+    emit e(&&t);
 with
     var Tx&& p = await e;
     async do end;
@@ -55941,7 +55940,7 @@ par/or do
         this.v = 10;
     end;
     async do end;
-    emit e => &&t;
+    emit e(&&t);
 with
     var I&& p = await e;
     async do end;
@@ -56190,7 +56189,7 @@ do
 end
 if u? then
     watching *u! do
-        emit u!:move => 0;
+        emit u!:move(0);
     end
 end
 escape 2;
@@ -56209,7 +56208,7 @@ do
     await 1min;
 end
 watching *u! do
-    emit u!:move => 0;
+    emit u!:move(0);
 end
 escape 2;
 ]],
@@ -56364,7 +56363,7 @@ par/and do
     var Tx t with
         this.v = 10;
     end;
-    emit e => &&t;
+    emit e(&&t);
     await 1s;
 with
     var Tx&& p = await e;
@@ -56400,7 +56399,7 @@ par/and do
     var Tx t with
         this.v = 10;
     end;
-    emit e => &&t;
+    emit e(&&t);
     await 1s;
 with
     var Tx&& p = await e;
@@ -56437,7 +56436,7 @@ par/and do
     var Tx t with
         this.v = 10;
     end;
-    emit e => &&t;
+    emit e(&&t);
 with
     var Tx&& p = await e;
     watching *p do
@@ -56473,7 +56472,7 @@ par/and do
     var Tx t with
         this.v = 10;
     end;
-    emit e => &&t;
+    emit e(&&t);
     await 6s;
 with
     var Tx&& p = await e;
@@ -56510,7 +56509,7 @@ par/and do
     var Tx t with
         this.v = 10;
     end;
-    emit e => &&t;
+    emit e(&&t);
     await 6s;
 with
     var Tx&& p = await e;
@@ -56547,7 +56546,7 @@ par/and do
     var Tx t with
         this.v = 10;
     end;
-    emit e => &&t;
+    emit e(&&t);
     await 6s;
 with
     var Tx&& p = await e;
@@ -56576,7 +56575,7 @@ do
 end
 
 event Tx&& e;
-emit e => null;
+emit e(null);
 escape 1;
 ]],
     tmp = 'line 6 : invalid event type',
@@ -56600,7 +56599,7 @@ par/and do
     var Tx&&? t = spawn Tx in ts with
         this.v = 10;
     end;
-    emit e => t!;
+    emit e(t!);
     await 1s;
 with
     var Tx&& p = await e;
@@ -56638,7 +56637,7 @@ par/and do
     var Tx&&? t = spawn Tx in ts with
         this.v = 10;
     end;
-    emit e => t!;
+    emit e(t!);
 with
     var Tx&& p = await e;
     watching *p do
@@ -56675,7 +56674,7 @@ par/and do
     var Tx&&? t = spawn Tx in ts with
         this.v = 10;
     end;
-    emit e => t!;
+    emit e(t!);
     await 6s;
 with
     var Tx&& p = await e;
@@ -56713,7 +56712,7 @@ par/and do
     var Tx&&? t = spawn Tx in ts with
         this.v = 10;
     end;
-    emit e => t!;
+    emit e(t!);
     await 6s;
 with
     var Tx&& p = await e;
@@ -56751,7 +56750,7 @@ par/and do
     var Tx&&? t = spawn Tx in ts with
         this.v = 10;
     end;
-    emit e => t!;
+    emit e(t!);
 with
     var Tx&& p = await e;
     watching *p do
@@ -57017,7 +57016,7 @@ pool[] Unit units;
 u = spawn Unit in units;
 await 2s;
 watching *u! do
-    emit u!:move => 0;
+    emit u!:move(0);
 end
 escape 2;
 ]],
@@ -57034,7 +57033,7 @@ var Unit&&? u;
 pool[] Unit units;
 u = spawn Unit in units;
 watching *u! do
-    emit u!:move => 0;
+    emit u!:move(0);
 end
 escape 2;
 ]],
@@ -57072,7 +57071,7 @@ do
         pos = u:pos;
     end
     await 1s;
-    emit ok => pos;
+    emit ok(pos);
 end
 
 var Tx t;
@@ -57082,7 +57081,7 @@ do
     var Unit u with
         this.pos = 10;
     end;
-    emit t.org => &&u;
+    emit t.org(&&u);
 end
 
 var int v = await t.ok;
@@ -57270,14 +57269,14 @@ class Tx with
     event (int,int) ok_game;
 do
     await 1s;
-    emit this.ok_game => (1,2);
+    emit this.ok_game(1,2);
 end
 var Tx t;
 var Tx&& i = &&t;
 var int a,b;
 watching *i do
     (a,b) = await i:ok_game;
-    emit i:ok_game => (a,b);
+    emit i:ok_game(a,b);
 end
 escape a+b;
 ]],
@@ -57624,7 +57623,7 @@ class Tx with
 do
     var int v = await e;
     vv = v;
-    emit f => v;
+    emit f(v);
     await FOREVER;
 end
 
@@ -57635,7 +57634,7 @@ watching *i1 do
     var int ret = 0;
     par/and do
         await OS_START;
-        emit i1:e => 99;            // 21
+        emit i1:e(99);            // 21
     with
         var int v = await i1:f;
         ret = ret + v;
@@ -57667,7 +57666,7 @@ class Tx with
     event int e, f;
 do
     var int v = await e;
-    emit f => v;
+    emit f(v);
     await FOREVER;
 end
 
@@ -57680,13 +57679,13 @@ watching *i1 do
         var int ret = 0;
         par/and do
             await OS_START;
-            emit i1:e => 99;            // 21
+            emit i1:e(99);            // 21
         with
             var int v = await i1:f;
             ret = ret + v;
         with
             await OS_START;
-            emit i2:e => 66;            // 27
+            emit i2:e(66);            // 27
         with
             var int v = await i2:f;
             ret = ret + v;
@@ -58221,8 +58220,8 @@ with
     await 2s;
 with
     async do
-        emit I => (1,2);
-        emit I => (1,2);
+        emit I(1,2);
+        emit I(1,2);
         emit 5s;
     end
 end
@@ -58672,7 +58671,7 @@ par/or do
     escape 1;
 with
     async do
-        emit A => (1,2);
+        emit A(1,2);
     end
 end
 escape 1;
@@ -58690,7 +58689,7 @@ par/or do
     escape a + b;
 with
     async do
-        //emit A => (1,null);
+        //emit A(1,null);
     end
 end
 escape 1;
@@ -58706,7 +58705,7 @@ par/or do
     escape a + b;
 with
     async do
-        emit A => (1,2);
+        emit A(1,2);
     end
 end
 escape 1;
@@ -58722,7 +58721,7 @@ par/or do
     escape a + b;
 with
     async do
-        emit A => (1,2);
+        emit A(1,2);
     end
 end
 escape 1;
@@ -58738,7 +58737,7 @@ par/or do
     escape a + b;
 with
     async (a) do
-        emit a => (1,2);
+        emit a(1,2);
     end
 end
 escape 1;
@@ -58757,7 +58756,7 @@ par/or do
     escape c + d;
 with
     await OS_START;
-    emit a => (1,2);
+    emit a(1,2);
 end
 escape 1;
 ]],
@@ -58766,7 +58765,7 @@ escape 1;
 
 Test { [[
 event (int,int) e;
-emit e => (1,2,3);
+emit e(1,2,3);
 escape 1;
 ]],
     stmts = 'line 2 : invalid `emit´ : types mismatch : "(int,int)" <= "(int,int,int)"',
@@ -59128,7 +59127,7 @@ do
             p = ret;
         end
     end
-    emit ok => v;
+    emit ok(v);
 end
 
 var Tx t1, t2;
@@ -59168,7 +59167,7 @@ par/and do
    do
       await 1s;
       var Tx t;
-      emit e => t;
+      emit e(t);
    end
    var U u;
 with
@@ -59193,7 +59192,7 @@ par/and do
    do
       await 1s;
       var Tx t;
-      emit e => (t,1);
+      emit e(t,1);
    end
    var U u;
 with
@@ -59369,7 +59368,7 @@ end
 
 var Map m1;
 var Map&& m=&&m1;
-emit m:go_xy => (1,1);
+emit m:go_xy(1,1);
 
 escape 1;
 ]],
@@ -59386,7 +59385,7 @@ par do
 with
     await OS_START;
     var int b = 10;
-    emit e => b;
+    emit e(b);
     escape b;
 end
 ]],
@@ -59407,7 +59406,7 @@ par do
 with
     await OS_START;
     var int b = 10;
-    emit e => (4,b);
+    emit e(4,b);
     escape b;
 end
 ]],
@@ -59702,7 +59701,7 @@ par do
     escape (not ret?) as int;
 with
     async do
-        emit LINE => (1,null);
+        emit LINE(1,null);
     end
 end
 ]],
@@ -59965,7 +59964,7 @@ par do
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST(1,10);
         emit 1s;
     end
 end
@@ -59988,7 +59987,7 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST(1,10);
         emit 1s;
     end
 end
@@ -60010,9 +60009,9 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,10);
-        emit LINE_REQUEST => (2,20);
-        emit LINE_REQUEST => (3,30);
+        emit LINE_REQUEST(1,10);
+        emit LINE_REQUEST(2,20);
+        emit LINE_REQUEST(3,30);
         emit 1s;
     end
 end
@@ -60032,8 +60031,8 @@ par do
     escape 1;
 with
     async do
-        emit LINE_REQUEST => (1,10);
-        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST(1,10);
+        emit LINE_REQUEST(1,10);
         emit 1s;
     end
 end
@@ -60055,8 +60054,8 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,10);
-        emit LINE_REQUEST => (1,10);
+        emit LINE_REQUEST(1,10);
+        emit LINE_REQUEST(1,10);
         emit 1s;
     end
 end
@@ -60081,9 +60080,9 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,10);
-        emit LINE_REQUEST => (2,20);
-        emit LINE_REQUEST => (3,30);
+        emit LINE_REQUEST(1,10);
+        emit LINE_REQUEST(2,20);
+        emit LINE_REQUEST(3,30);
         emit 1s;
     end
 end
@@ -60109,9 +60108,9 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,10);
-        emit LINE_REQUEST => (2,20);
-        emit LINE_REQUEST => (3,30);
+        emit LINE_REQUEST(1,10);
+        emit LINE_REQUEST(2,20);
+        emit LINE_REQUEST(3,30);
         emit 2s;
     end
 end
@@ -60137,13 +60136,13 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_REQUEST => (3,30);
+        emit LINE_REQUEST(1,11);
+        emit LINE_REQUEST(2,22);
+        emit LINE_REQUEST(3,30);
         emit 1s;
-        emit LINE_REQUEST => (4,13);
-        emit LINE_REQUEST => (5,24);
-        emit LINE_REQUEST => (6,30);
+        emit LINE_REQUEST(4,13);
+        emit LINE_REQUEST(5,24);
+        emit LINE_REQUEST(6,30);
         emit 2s;
     end
 end
@@ -60169,13 +60168,13 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_REQUEST => (3,30);
+        emit LINE_REQUEST(1,11);
+        emit LINE_REQUEST(2,22);
+        emit LINE_REQUEST(3,30);
         emit 1s;
-        emit LINE_REQUEST => (4,13);
-        emit LINE_REQUEST => (5,24);
-        emit LINE_REQUEST => (6,30);
+        emit LINE_REQUEST(4,13);
+        emit LINE_REQUEST(5,24);
+        emit LINE_REQUEST(6,30);
         emit 2s;
     end
 end
@@ -60201,13 +60200,13 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_REQUEST => (3,30);
+        emit LINE_REQUEST(1,11);
+        emit LINE_REQUEST(2,22);
+        emit LINE_REQUEST(3,30);
         emit 1s;
-        emit LINE_REQUEST => (4,13);
-        emit LINE_REQUEST => (5,24);
-        emit LINE_REQUEST => (6,30);
+        emit LINE_REQUEST(4,13);
+        emit LINE_REQUEST(5,24);
+        emit LINE_REQUEST(6,30);
         emit 2s;
     end
 end
@@ -60234,9 +60233,9 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_CANCEL => 1;
+        emit LINE_REQUEST(1,11);
+        emit LINE_REQUEST(2,22);
+        emit LINE_CANCEL(1);
         emit 3s;
         emit A;
     end
@@ -60261,9 +60260,9 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_CANCEL => 2;
+        emit LINE_REQUEST(1,11);
+        emit LINE_REQUEST(2,22);
+        emit LINE_CANCEL(2);
         emit 3s;
         emit A;
     end
@@ -60288,10 +60287,10 @@ native _V;
     escape _V+1;
 with
     async do
-        emit LINE_REQUEST => (1,11);
-        emit LINE_REQUEST => (2,22);
-        emit LINE_CANCEL => 2;
-        emit LINE_CANCEL => 1;
+        emit LINE_REQUEST(1,11);
+        emit LINE_REQUEST(2,22);
+        emit LINE_CANCEL(2);
+        emit LINE_CANCEL(1);
         emit 3s;
         emit A;
     end
@@ -60327,7 +60326,7 @@ par do
     escape v!+err;
 with
     async do
-        emit LINE_RETURN => (1,1,10);
+        emit LINE_RETURN(1,1,10);
     end
 end
 ]],
@@ -60347,7 +60346,7 @@ par do
     escape v!+err;
 with
     async do
-        emit LINE_RETURN => (1,1,10);
+        emit LINE_RETURN(1,1,10);
     end
 end
 ]],
@@ -60372,7 +60371,7 @@ par do
     escape v!+err;
 with
     async do
-        emit LINE_RETURN => (1,1,10);
+        emit LINE_RETURN(1,1,10);
         emit 5s;
     end
 end
@@ -60398,7 +60397,7 @@ par do
     escape v!+err;
 with
     async do
-        emit LINE_RETURN => (2,1,10);
+        emit LINE_RETURN(2,1,10);
         emit 5s;
     end
 end
@@ -60424,9 +60423,9 @@ par do
     escape v!+err;
 with
     async do
-        emit LINE_RETURN => (2,1,10);
+        emit LINE_RETURN(2,1,10);
         emit 4s;
-        emit LINE_RETURN => (1,0,-1);
+        emit LINE_RETURN(1,0,-1);
         emit 1s;
     end
 end
@@ -60437,7 +60436,7 @@ end
 Test { [[
 output byte[] OUT;
 vector[] byte xxx = [] .. "1234567890";
-emit OUT => []..xxx;
+emit OUT([]..xxx);
 escape 1;
 ]],
     parser = 'line 1 : after `byte´ : expected type modifier or external identifier',
@@ -60480,7 +60479,7 @@ par/and do
 with
     async do
         vector[] byte vec = [1,2,3,4,5];
-        emit IN => &&vec;
+        emit IN(&&vec);
     end
 end
 escape $vec;
@@ -60495,7 +60494,7 @@ native/pos do
 end
 output int[]&& OUT;
 vector[] int xxx = [1,2,3,4,5];
-var int ret = emit OUT => &&xxx;
+var int ret = emit OUT(&&xxx);
 escape ret;
 ]],
     run = 5,
@@ -60508,7 +60507,7 @@ native/pos do
 end
 output byte[]&& OUT;
 vector[] byte xxx = [] .. "1234567890";
-var int ret = emit OUT => &&xxx;
+var int ret = emit OUT(&&xxx);
 escape ret;
 ]],
     run = 10,
@@ -60524,7 +60523,7 @@ par/and do
 with
     async do
         vector[] byte vec = [1,2,3,4,5];
-        emit IN => &&vec;
+        emit IN(&&vec);
     end
 end
 escape ret;
@@ -60539,7 +60538,7 @@ native/pos do
 end
 output (int,int[]&&,int) OUT;
 vector[] int xxx = [1,2,3,4,5];
-var int ret = emit OUT => (0,&&xxx,1);
+var int ret = emit OUT(0,&&xxx,1);
 escape ret;
 ]],
     tmp = 'line 4 : invalid event type : vector only as the last argument',
@@ -60552,7 +60551,7 @@ native/pos do
 end
 output (int,int,int[]&&) OUT;
 vector[] int xxx = [1,2,3,4,5];
-var int ret = emit OUT => (0,1,&&xxx);
+var int ret = emit OUT(0,1,&&xxx);
 escape ret;
 ]],
     opts = '--tuple-vector',
@@ -60571,7 +60570,7 @@ native/pos do
 end
 output (int,int,int[]&&) OUT;
 vector[] int xxx = [1,2,3,4,5];
-var int ret = emit OUT => (0,1,&&xxx);
+var int ret = emit OUT(0,1,&&xxx);
 escape ret;
 ]],
     opts = '--tuple-vector',
@@ -60643,7 +60642,7 @@ native _char;
     escape &&ret;
 end
 async do
-    emit PING_PONG_REQUEST => (0,1);
+    emit PING_PONG_REQUEST(0,1);
 end
 native _V;
 escape _V;
@@ -60666,7 +60665,7 @@ native _char;
 with
     async do
         vector[] byte str = [].."END: 10 0";
-        emit PING_PONG_RETURN => (0,0,&&str);
+        emit PING_PONG_RETURN(0,0,&&str);
     end
 end
 escape 1;
@@ -60705,7 +60704,7 @@ input/output/await [10] TEST (var u16 t)=>_info&& do
 end
 
 async do
-    emit TEST_REQUEST => (0,0);
+    emit TEST_REQUEST(0,0);
 end
 
 native _V;
@@ -60745,7 +60744,7 @@ input/output/await [10] TEST (var u16 t)=>_info&& do
 end
 
 async do
-    emit TEST_REQUEST => (0,0);
+    emit TEST_REQUEST(0,0);
 end
 
 await 2s;
@@ -60783,7 +60782,7 @@ native _V;
 end
 
 async do
-    emit RESOURCE_REQUEST => 0;
+    emit RESOURCE_REQUEST(0);
 end
 
 escape _V;
@@ -62313,7 +62312,7 @@ var int x = t.x;
 t.v = [1,2,3];
 x = t.v[0];
 
-emit t.e => 1;
+emit t.e(1);
 var int k = await t.e;
 
 escape 1;
@@ -62376,7 +62375,7 @@ var int x = b.a.x;
 b.a.v = [1,2,3];
 x = b.a.v[0];
 
-emit b.a.e=>0;
+emit b.a.e(0);
 await b.a.e;
 
 escape 1;
@@ -62403,7 +62402,7 @@ var int x = b.a.x;
 b.a.v = [1,2,3];
 x = b.a.v[0];
 
-emit b.a.e=>0;
+emit b.a.e(0);
 await b.a.e;
 
 escape 1;
@@ -65211,7 +65210,7 @@ par do
             await OS_START;
             pool[1] Tx ts;
             var Tx&&? ptr = spawn Tx in ts;
-            emit e => ptr!;
+            emit e(ptr!);
         with
             var Tx&& t = await e;
         end
@@ -65341,7 +65340,7 @@ do
     end
     await 1s;
     sum = sum + 1;
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 
@@ -65379,7 +65378,7 @@ do
     end
     await 1s;
     sum = sum + 1;
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 
@@ -65417,7 +65416,7 @@ do
     end
     await 1s;
     sum = sum + 1;
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 
@@ -65523,7 +65522,7 @@ do
         end
     end
     await 1s;
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 var int sum = 0;
@@ -65592,7 +65591,7 @@ do
         end
     end
     await 1s;
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 var int sum = 0;
@@ -65663,7 +65662,7 @@ do
         end
     end
     await 1s;
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 var int sum = 0;
@@ -70363,59 +70362,59 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => tm.time_total;
+    emit tm.go_seek(tm.time_total);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 3);
 
-    emit tm.go_seek => 0;
+    emit tm.go_seek(0);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    emit tm.go_seek => 500;
+    emit tm.go_seek(500);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    emit tm.go_seek => 1000;
+    emit tm.go_seek(1000);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
 
-    emit tm.go_seek => 1500;
+    emit tm.go_seek(1500);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
 
-    emit tm.go_seek => 2000;
+    emit tm.go_seek(2000);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
 
-    emit tm.go_seek => 2500;
+    emit tm.go_seek(2500);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
 
-    emit tm.go_seek => 3000;
+    emit tm.go_seek(3000);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 3);
 
-    emit tm.go_seek => 2500;
+    emit tm.go_seek(2500);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
 
-    emit tm.go_seek => 2000;
+    emit tm.go_seek(2000);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 2);
 
-    emit tm.go_seek => 1500;
+    emit tm.go_seek(1500);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
 
-    emit tm.go_seek => 1000;
+    emit tm.go_seek(1000);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 1);
 
-    emit tm.go_seek => 500;
+    emit tm.go_seek(500);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    emit tm.go_seek => 0;
+    emit tm.go_seek(0);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
@@ -70427,7 +70426,7 @@ with
         loop do
             if not _CEU_TIMEMACHINE_ON then
                 emit 50ms;
-                emit DT => 50;
+                emit DT(50);
             end
 
             // TODO: forces this async to be slower
@@ -70508,17 +70507,17 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => tm.time_total;
+    emit tm.go_seek(tm.time_total);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 3);
 
     ///////////////////////////////
 
-    emit tm.go_seek => 0;
+    emit tm.go_seek(0);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    emit tm.go_forward => 1;
+    emit tm.go_forward(1);
     _assert(tm_app.v == 0);
 
     await 1ms/_;
@@ -70531,11 +70530,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => 0;
+    emit tm.go_seek(0);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    emit tm.go_forward => 1;
+    emit tm.go_forward(1);
     _assert(tm_app.v == 0);
 
     await 1ms/_;
@@ -70554,11 +70553,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => 0;
+    emit tm.go_seek(0);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    emit tm.go_forward => 2;
+    emit tm.go_forward(2);
     _assert(tm_app.v == 0);
 
     await 1ms/_;
@@ -70577,11 +70576,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => 0;
+    emit tm.go_seek(0);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    emit tm.go_forward => 5;
+    emit tm.go_forward(5);
     _assert(tm_app.v == 0);
 
     await 1ms/_;
@@ -70594,11 +70593,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => 0;
+    emit tm.go_seek(0);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    emit tm.go_forward => -2;
+    emit tm.go_forward(-2);
     _assert(tm_app.v == 0);
 
     await 1ms/_;
@@ -70611,11 +70610,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => 0;
+    emit tm.go_seek(0);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
-    emit tm.go_forward => -5;
+    emit tm.go_forward(-5);
     _assert(tm_app.v == 0);
 
     await 1ms/_;
@@ -70638,7 +70637,7 @@ with
         loop do
             if not _CEU_TIMEMACHINE_ON then
                 emit 50ms;
-                emit DT => 50;
+                emit DT(50);
             end
 
             // TODO: forces this async to be slower
@@ -70720,11 +70719,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => tm.time_total;
+    emit tm.go_seek(tm.time_total);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 3);
 
-    emit tm.go_backward => 1;
+    emit tm.go_backward(1);
     _assert(tm_app.v == 3);
 
     await 1000ms/_;
@@ -70739,11 +70738,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => tm.time_total;
+    emit tm.go_seek(tm.time_total);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 3);
 
-    emit tm.go_backward => 1;
+    emit tm.go_backward(1);
     _assert(tm_app.v == 3);
 
     loop i in [0 -> 20[ do
@@ -70764,11 +70763,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => tm.time_total;
+    emit tm.go_seek(tm.time_total);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 3);
 
-    emit tm.go_backward => 2;
+    emit tm.go_backward(2);
     _assert(tm_app.v == 3);
 
     loop i in [0 -> 10[ do
@@ -70789,11 +70788,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => tm.time_total;
+    emit tm.go_seek(tm.time_total);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 3);
 
-    emit tm.go_backward => 5;
+    emit tm.go_backward(5);
     _assert(tm_app.v == 3);
 
     await 200ms/_;
@@ -70808,11 +70807,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => tm.time_total;
+    emit tm.go_seek(tm.time_total);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 3);
 
-    emit tm.go_backward => -2;
+    emit tm.go_backward(-2);
     _assert(tm_app.v == 3);
 
     await 2000ms/_;
@@ -70827,11 +70826,11 @@ par/or do
 
     ///////////////////////////////
 
-    emit tm.go_seek => tm.time_total;
+    emit tm.go_seek(tm.time_total);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 3);
 
-    emit tm.go_backward => -5;
+    emit tm.go_backward(-5);
     _assert(tm_app.v == 3);
 
     loop i in [0 -> 100[ do
@@ -70857,7 +70856,7 @@ with
         loop do
             if not _CEU_TIMEMACHINE_ON then
                 emit 10ms;
-                emit DT => 10;
+                emit DT(10);
             end
 
             // TODO: forces this async to be slower
@@ -70937,22 +70936,22 @@ par/or do
     emit tm.go_on;
 
     await 1s/_;
-    emit tm.go_seek => 0;
+    emit tm.go_seek(0);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 0);
 
     await 1s/_;
-    emit tm.go_forward => 2;
+    emit tm.go_forward(2);
     _assert(tm_app.v == 0);
 
     await 1s400ms/_;
     _assert(tm_app.v == 2);
 
-    emit tm.go_seek => tm.time_total;
+    emit tm.go_seek(tm.time_total);
     TM_AWAIT_SEEK(tm);
     _assert(tm_app.v == 3);
 
-    emit tm.go_backward => 2;
+    emit tm.go_backward(2);
     _assert(tm_app.v == 3);
 
     await 1s1ms/_;
@@ -70964,7 +70963,7 @@ with
         loop do
             if not _CEU_TIMEMACHINE_ON then
                 emit 10ms;
-                emit DT => 10;
+                emit DT(10);
             end
 
             // TODO: forces this async to be slower
@@ -71057,7 +71056,7 @@ do
             var int v = *(_QU:buf);
             if _QU:evt == _CEU_IN_KEY then
                 async(v) do
-                    emit KEY => &&v;
+                    emit KEY(&&v);
                 end
             else
                 _assert(0);
@@ -71079,19 +71078,19 @@ par/or do
     async do
         loop i in [0 -> 300[ do
             emit 10ms;
-            emit DT => 10;
+            emit DT(10);
         end
         var int v = 1;
-        emit KEY => &&v;
+        emit KEY(&&v);
         loop i in [0 -> 300[ do
             emit 10ms;
-            emit DT => 10;
+            emit DT(10);
         end
         v = 2;
-        emit KEY => &&v;
+        emit KEY(&&v);
         loop i in [0 -> 300[ do
             emit 10ms;
-            emit DT => 10;
+            emit DT(10);
         end
     end
     _assert(tm_app.v == 25);
@@ -71099,10 +71098,10 @@ par/or do
     emit tm.go_on;
     await 1s/_;
 
-    emit tm.go_seek => 0;
+    emit tm.go_seek(0);
     TM_AWAIT_SEEK(tm);
 
-    emit tm.go_forward => 1;
+    emit tm.go_forward(1);
     await 3s1ms/_;
     _assert(tm_app.v == 7);
     await 2s/_;
@@ -71829,7 +71828,7 @@ par/or do
         var int x = 2;
         par/or do
             await OS_START;
-            emit e => &x;
+            emit e(&x);
         with
             await e;
         end
@@ -71908,8 +71907,8 @@ par do
     end;
 with
     await OS_START;
-    emit x => 1;       // in seq
-    emit y => 1;       // in seq
+    emit x(1);       // in seq
+    emit y(1);       // in seq
 end
 ]],
     _ana = {
@@ -71950,7 +71949,7 @@ var int ret = 0;
 par/or do
     loop do
         var int v = await A;
-        emit a => v;
+        emit a(v);
     end
 with
     pause/if a do
@@ -72074,14 +72073,14 @@ with
     do
         var int b = 1;
         await OS_START;
-        emit ptr => (1, &b);
+        emit ptr(1, &b);
     end
 end
 escape 1;
 ]],
     run = 1,
     -- e depois outro exemplo com fin apropriado
-    -- BUG: precisa transformar emit x=>1 em p=1;emit x
+    -- BUG: precisa transformar emit x(1 em p=1);emit x
 }
 
 Test { [[
@@ -72547,9 +72546,9 @@ par do
     escape 10;
 with
     await OS_START;
-    emit v => 0;
-    emit v => 1;
-    emit v => 10;
+    emit v(0);
+    emit v(1);
+    emit v(10);
     await FOREVER;
 end
 ]],
@@ -72639,9 +72638,9 @@ with
 with
     async do
         var int i = 2;
-        emit A => &i;
+        emit A(&i);
         i = 1;
-        emit A => &i;
+        emit A(&i);
     end
 end
 escape 0;
@@ -72739,7 +72738,7 @@ Test { [[
 input/output/tight B  (var int a)=>int do
     escape a + 1;
 end
-var int ret = call B=>1;
+var int ret = call B(1);
 escape ret;
 ]],
     run = 2,
@@ -72750,7 +72749,7 @@ input/output/tight WRITE  (var int c)=>int do
     escape c + 1;
 end
 var byte b = 1;
-var int ret = call WRITE => b;
+var int ret = call WRITE(b);
 escape ret;
 ]],
     run = 2,
@@ -72760,7 +72759,7 @@ Test { [[
 input/output/tight B  (var int a, var  int b)=>int do
     escape a + b;
 end
-var int ret = call B=>(1,2);
+var int ret = call B(1,2);
 escape ret;
 ]],
     run = 3,
@@ -72785,7 +72784,7 @@ input/output/tight DRAW_STRING  (var byte* str, var int len, var int x, var  int
     escape x + y + len;
 end
 
-var int ret = call DRAW_STRING => ("Welcome to Ceu/OS!\n", 20, 100, 100);
+var int ret = call DRAW_STRING(("Welcome to Ceu/OS!\n", 20, 100, 100));
 
 escape ret;
 ]],
@@ -72820,7 +72819,7 @@ escape 1;
 Test { [[
 input/output/tight MALLOC  (var int, var int)=>void*;
 vector[] void ptr;
-    do ptr = (call MALLOC=>(1,1));
+    do ptr = (call MALLOC(1,1));
 finalize with
 end
 escape 1;
@@ -72831,7 +72830,7 @@ escape 1;
 Test { [[
 input/output/tight MALLOC  (var int, var int)=>int;
 var int v;
-    do v = (call MALLOC=>(1,1));
+    do v = (call MALLOC(1,1));
 finalize with
 end
 escape 1;
@@ -72850,7 +72849,7 @@ end
 
 var int i;
 vector[] void ptr;
-    do ptr = (call MALLOC=>(10,1, &i));
+    do ptr = (call MALLOC(10,1, &i));
 finalize with
 end
 escape ptr==&i;
@@ -72868,7 +72867,7 @@ end
 
 var int i;
 vector[] void ptr;
-    do ptr = (call MALLOC=>(1,1, &i));
+    do ptr = (call MALLOC(1,1, &i));
 finalize with
 end
 escape ptr==null;
@@ -72924,7 +72923,7 @@ Test { [[
 input/output/tight B  (var byte* buf)=>void do
 end;
 var byte* buf;
-call B => (buf);
+call B((buf));
 escape 1;
 ]],
     run = 1,
@@ -72934,7 +72933,7 @@ Test { [[
 input/output/tight B  (var byte* buf, var  int i)=>void do
 end;
 var byte* buf;
-call B => (buf, 1);
+call B((buf, 1));
 escape 1;
 ]],
     run = 1,
@@ -72954,7 +72953,7 @@ Test { [[
 input/output/tight B  (var byte* buf)=>void do
 end;
 var byte* buf;
-call B => buf;
+call B(buf);
 escape 1;
 ]],
     run = 1,
@@ -72964,7 +72963,7 @@ Test { [[
 input/output/tight B  (var/hold byte* buf)=>void do
 end;
 var byte* buf;
-call B => buf;
+call B(buf);
 escape 1;
 ]],
     fin = 'line 2 : call requires `finalize´',
@@ -73062,7 +73061,7 @@ do
     var int* p1 = null;
     do
         var int* p2 = null;
-        call B => (p1, p2);
+        call B((p1, p2));
     end
 end
 escape 1;
@@ -73078,7 +73077,7 @@ end
 
 output/input/tight VVV  (var int n)=>int;
 var int v;
-    do v = (call VVV => 10);
+    do v = (call VVV(10));
 finalize with
     nothing;
 end
@@ -73095,7 +73094,7 @@ end
 
 output/input/tight MALLOC  (var int n)=>void*;
 var byte* buf;
-buf = (call MALLOC => 10);
+buf = (call MALLOC(10));
 escape 1;
 ]],
     run = 1,
@@ -73109,7 +73108,7 @@ end
 
 output/input/tight SEND  (var byte* buf)=>void;
 vector[255] byte buf;
-call SEND => buf;
+call SEND(buf);
 escape 1;
 ]],
     run = 1,
@@ -73130,7 +73129,7 @@ output/input/tight OPEN  (var byte* path, var  byte* mode)=>_Fx*;
 
 // Default device
 vector[] _Fx f;
-    f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
+    f = (call OPEN(("/boot/rpi-boot.cfg", "r")));
 escape 1;
 ]],
     run = 1,
@@ -73144,20 +73143,20 @@ output/input/tight READ  (var void* ptr, var int size, var int nmemb, var  _Fx* 
 
 // Default device
 vector[] _Fx f;
-    do f = (call OPEN => ("/boot/rpi-boot.cfg", "r"));
+    do f = (call OPEN(("/boot/rpi-boot.cfg", "r")));
 finalize with
-    call CLOSE => f;
+    call CLOSE(f);
 end
 
 if f == null then
     await FOREVER;
 end
 
-var int flen = (call SIZE => f);
+var int flen = (call SIZE(f));
 //byte *buf = (byte *)malloc(flen+1);
 vector[255] byte buf;
 buf[flen] = 0;
-call READ => (buf, 1, flen, f);
+call READ((buf, 1, flen, f));
 
 #define GPFSEL1 ((uint*)0x20200004)
 #define GPSET0  ((uint*)0x2020001C)
@@ -73356,7 +73355,7 @@ do
         end
         sum = sum + 1;
     end
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 pool[2] Body bodies;
@@ -73428,7 +73427,7 @@ do
             //end;
         end
     //end
-    emit this.ok => 1;
+    emit this.ok(1);
 end
 
 var int sum = 0;
