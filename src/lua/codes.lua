@@ -38,21 +38,19 @@ local function CASE (me, lbl)
     LINE(me, 'case '..lbl.id..':;')
 end
 
--- TODO: always clearing, even for blocks with 1 trail!
 local function CLEAR (me)
-    --if me.trails_n > 1 then
+    if me.trails_n > 1 then
         LINE(me, [[
 {
     tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{NULL}}, NULL };
     CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk,
                         _ceu_mem, _ceu_trlK,
                         _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
-/* TODO */
     ceu_stack_clear(_ceu_stk->down, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 }
 ]])
-    --end
+    end
 end
 
 local function HALT (me, T)
@@ -378,6 +376,10 @@ if (0)
 }
 ]],
         })
+        LINE(me, [[
+ceu_stack_clear(_ceu_stk->down, _ceu_mem,
+                ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
+]])
     end,
 
     Abs_Spawn = function (me)

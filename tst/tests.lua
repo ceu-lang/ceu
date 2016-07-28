@@ -32369,6 +32369,18 @@ escape 1;
     run = 1,
 }
 
+Test { [[
+code/await Ff (void) => void do
+end
+loop i in [0 -> 10[ do
+    await Ff();
+    await 1s;
+end
+escape 1;
+]],
+    run = { ['~>100s'] = 1 },
+}
+
 -- CODE / ALIAS
 
 Test { [[
