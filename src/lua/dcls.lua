@@ -550,6 +550,7 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
     Ref__POS = function (me)
         local id = unpack(me)
 
+--[[
         if id == 'every' then
             local _, ID, i = unpack(me)
             if ID.tag == 'ID_ext' then
@@ -561,8 +562,9 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
             return (Type and AST.copy(Type)) or
                     AST.node('Type', me.ln,
                         AST.node('ID_prim', me.ln, 'int'))
+]]
 
-        elseif id == 'escape' then
+        if id == 'escape' then
             local _, esc = unpack(me)
             local id_int1 = (esc[1]==true) or esc[1][1]
             local do_ = nil

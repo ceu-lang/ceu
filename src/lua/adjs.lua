@@ -322,10 +322,11 @@ DBG('TODO: _Loop_Pool')
         --[[
         --      every a=EXT do ... end
         -- becomes
-        --      loop do var t a; a=await EXT; ... end
+        --      loop a=await EXT; ... end
         --]]
 
         local dcls = node('Stmts', me.ln)
+--[[
         if to then
             local to1 = to
             if to1.tag ~= 'Varlist' then
@@ -354,6 +355,7 @@ DBG('TODO: _Loop_Pool')
                 dcls[#dcls+1] = var
             end
         end
+]]
 
         local set_awt
         if to then

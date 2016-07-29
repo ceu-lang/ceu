@@ -8,9 +8,18 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+input int X;
+var int x;
+every x in X do
+end
+escape 0;
+]],
+    run = false,
+}
+
 --[=====[
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3791,7 +3800,8 @@ every x in E do
 end
 escape 1;
 ]],
-    dcls = 'line 3 : implicit declaration of "x" hides previous declaration',
+    --dcls = 'line 3 : implicit declaration of "x" hides previous declaration',
+    run = false,
 }
 Test { [[
 input int E;
@@ -3799,7 +3809,8 @@ every x in E do
 end
 escape 1;
 ]],
-    run = 0,
+    dcls = 'line 2 : internal identifier "x" is not declared',
+    --run = 0,
 }
 
 Test { [[
@@ -3830,6 +3841,7 @@ end
     --props = 'line 3 : `every´ cannot contain `await´',
 }
 
+--]=====]
 Test { [[
 input void X;
 every x in X do
