@@ -45,6 +45,7 @@ AST.tag2id = {
     Par_And         = 'par/and',
     Par_Or          = 'par/or',
     Par             = 'par',
+    Watching        = 'watching',
     Pool            = 'pool',
     Prim            = 'primitive',
     Set_Await_many  = 'await',

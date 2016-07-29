@@ -265,10 +265,18 @@ DBG('TODO: _Lua')
     end,
 
     Abs_Await = function (me)
-        local ID_abs = AST.asr(me,'', 1,'Abs_Cons', 1,'ID_abs')
+        local Abs_Cons,mid = unpack(me)
+
+        local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
         local Type = AST.asr(ID_abs.dcl,'Code', 5,'Type')
         me.tp = AST.copy(Type)
-    end,
+
+        if mid then
+            local pars = AST.get(ID_abs.dcl,'Code', 4,'Code_Pars')
+            ASR(pars and #pars==#mid, me,
+                'invalid `watching´ : expected '..#pars..' argument(s)')
+        end
+     end,
 
     Await_Int = function (me, tag)
         local e = unpack(me)

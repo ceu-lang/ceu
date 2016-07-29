@@ -75,51 +75,18 @@ F = {
     Set_Alias = function (me)
         local fr, to = unpack(me)
         local ok = check_blk(to.info.dcl.blk, fr.info.dcl.blk)
-
-        --  code/await Ff (void) => (var& int a, b) => void do
-        --      nothing;                -- no statments here
-        --      watching Gg() => (y) do
-        --          nothing;            -- no statments here
-        --          watching Hh() => (z) do
-        --              a = &y;         -- consider "y" top-level
-        --              b = &z;         -- consider "z" top-level
-        --          end
-        --      end
-        --      nothing;                -- no statments here
-        --  end
-
         if not ok then
-            local code = AST.par(me, 'Code')
-            if code then
-                local stmts = AST.get(code,'', 6,'Block', 1,'Stmts', 2,'Do',
-                                               2,'Block', 1,'Stmts')
-                local paror = AST.get(stmts,'', 3,'Block', 1,'Stmts', 2,'Par_Or')
-                if stmts and #stmts==3 and paror and paror.is_watching then
-                    local blks = { AST.par(paror,'Block') }
-                    while true do
-                        local s = AST.get(paror,'', 2,'Block', 1,'Stmts')
-                        local p = AST.get(s,'', 1,'Block', 1,'Stmts', 2,'Par_Or')
-                        if s and #s==1 and p and p.is_watching then
-                            paror = p
-                            blks[#blks+1] = AST.par(paror,'Block')
-                        else
-                            break
-                        end
-                    end
-                    ok = (fr.info.dcl.blk == AST.asr(paror,'',2,'Block'))
-                    if not ok then
-                        for _, blk in ipairs(blks) do
-                            if fr.info.dcl.blk == blk then
-                                ok = true
-                                break
-                            end
-                        end
-                    end
-                    ok = ok and check_blk(to.info.dcl.blk, AST.asr(code,'', 6,'Block'))
+            if to.info.dcl.is_mid then
+                local watch = AST.par(me, 'Watching')
+                if watch then
+                    --  code/await Ff (void) => (Dcl) => void do
+                    --      watching Gg(1) => (y1) do
+                    --          var int v = ...
+                    --          Dcl = &v;   // OK
+                    ok = (fr.info.dcl.blk == AST.asr(watch,'',1,'Par_Or',2,'Block'))
                 end
             end
         end
-
         ASR(ok, me, 'invalid binding : incompatible scopes')
 
         local _, call = unpack(fr)

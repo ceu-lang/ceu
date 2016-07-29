@@ -28,6 +28,49 @@ local yields = {
 
 --local __detect_cycles = {}
 
+local function run_watch (par, i, stop)
+    local me = par[i]
+    if me == nil then
+        if par == stop then
+            return true -- no yield found
+        else
+            return run_watch(par.__par, par.__i+1, stop)
+        end
+    elseif not AST.is_node(me) then
+        return run_watch(par, i+1, stop)
+    elseif me == stop then
+        return true
+    end
+
+    if me.tag == 'Escape' then
+        local blk = AST.asr(me.outer,2,'Block')
+        if blk.__depth <= stop.__depth then
+            return true
+        end
+    end
+
+    if yields[me.tag] then
+        return false, me
+
+    elseif me.tag == 'If' then
+        local c, t, f = unpack(me)
+
+        local ok1, yield1 = run_watch(t, 1, t)
+        if not ok1 then
+            return false, yield1
+        end
+
+        local ok2, yield2 = run_watch(f, 1, f)
+        if not ok2 then
+            return false, yield2
+        end
+
+        return run_watch(me, #me, stop)   -- continue with pointer accesses
+    end
+
+    return run_watch(me, 1, stop)
+end
+
 local function run_inits (par, i, Dcl, stop)
     local me = par[i]
     if me == nil then
@@ -42,15 +85,8 @@ local function run_inits (par, i, Dcl, stop)
     --assert(not __detect_cycles[me], me.n)
     --__detect_cycles[me] = true
 
-    -- must be before "yields[me.tag]" below
-    if me.tag=='Par_Or' and me.is_watching then
-        local watch = AST.asr(me,'',1,'Block',1,'Stmts',1,'')
-        local ok1 = run_inits(watch, 1, Dcl, watch)
-        assert(ok1 == false)
-        return run_inits(me[2], 1, Dcl, stop)
-
     -- error: yielding statement
-    elseif yields[me.tag] then
+    if yields[me.tag] then
         ASR(false, Dcl,
             'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
             'reached `'..AST.tag2id[me.tag]..'´ '..
@@ -61,25 +97,6 @@ local function run_inits (par, i, Dcl, stop)
         if me.__par.tag == 'Do' then
             -- ok: do/a end
         elseif me.dcl == Dcl then
-
---[[
-            local Alias = AST.get(me.__par.__par,'Exp_1&')
-            if Alias and AST.get(Alias,'', 2,'Exp_Name', 1,'ID_int')==me then
-                local Abs_Call = AST.get(Alias.__par.__par.__par, 'Abs_Call')
-                if Abs_Call then
-                    local _,Abs_Cons = unpack(Abs_Call)
-                    local ID_abs, Abslist = unpack(Abs_Cons)
-                    local _,_,_,Code_Pars = unpack(ID_abs.dcl)
-
-                    local idx = AST.idx(Abslist, Alias)
-                    local Item = AST.asr(Code_Pars,'', idx,'Code_Pars_Item')
-DBG('>>>', idx)
---AST.dump(ID_abs.dcl)
-AST.dump(Item)
-                end
-            end
-]]
-
             ASR(false, Dcl,
                 'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
                 'reached read access '..
@@ -96,6 +113,36 @@ AST.dump(Item)
                 'reached end of `if´ '..
                 '('..me.ln[1]..':'..me.ln[2]..')')
             return true                         -- stop, found init
+        end
+
+    elseif me.tag == 'Watching' then
+        local list = AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Set_Await_one',
+                                   1,'Abs_Await',2,'List_Var_Any')
+                  or AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
+                                   1,'Abs_Await',2,'List_Var_Any')
+        local ok = list and run_inits(list.__par, 1, Dcl)
+        ASR(ok, Dcl,
+            'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
+            'reached `'..AST.tag2id[me.tag]..'´ '..
+            '('..me.ln[1]..':'..me.ln[2]..')')
+
+        local ok, yield = run_watch(me, #me+1, Dcl.blk)
+        ASR(ok, me, yield and
+            'invalid binding : reached yielding `'..
+            AST.tag2id[yield.tag]..'´ '..
+            '('..yield.ln[1]..':'..yield.ln[2]..')')
+
+        return true
+
+
+    -- ok: found assignment
+    elseif me.tag == 'List_Var_Any' then
+        for _,ID_int in ipairs(me) do
+            if ID_int.dcl == Dcl then
+                ID_int.dcl.inits = {me}
+                ID_int.is_init = true       -- refuse all others
+                return true
+            end
         end
 
     -- ok: found assignment
@@ -324,28 +371,45 @@ error'TODO: luacov never executes this?'
     Set_Alias = function (me)
         local fr,to = unpack(me)
         if me.is_init then
-            return
+            return  -- I'm the one who created the binding
         end
 
         -- NO: multiple bindings
         --  x=&a; x=&b
         local inits do
-            if me.is_init then
-                inits = ''
-error'TODO: luacov never executes this?'
-            else
-                inits = {}
-                for i, init in ipairs(to.info.dcl.inits) do
-                    inits[i] = init.ln[1]..':'..init.ln[2]
-                end
-                inits = table.concat(inits,',')
+            inits = {}
+            for i, init in ipairs(to.info.dcl.inits) do
+                inits[i] = init.ln[1]..':'..init.ln[2]
             end
+            inits = table.concat(inits,',')
         end
-        ASR(me.is_init, me,
+        ASR(false, me,
             'invalid binding : '..
             AST.tag2id[to.info.dcl.tag]..
             ' "'..to.info.dcl.id..'" is already bound ('..
             inits..')')
+    end,
+    List_Var_Any = function (me)
+        for _, to in ipairs(me) do
+            if to.is_init then
+                -- I'm the one who created the binding
+            elseif to.tag ~= 'ID_any' then
+                -- NO: multiple bindings
+                --  x=&a; x=&b
+                local inits do
+                    inits = {}
+                    for i, init in ipairs(to.dcl.inits) do
+                        inits[i] = init.ln[1]..':'..init.ln[2]
+                    end
+                    inits = table.concat(inits,',')
+                end
+                ASR(me.is_init, me,
+                    'invalid binding : '..
+                    AST.tag2id[to.dcl.tag]..
+                    ' "'..to.dcl.id..'" is already bound ('..
+                    inits..')')
+            end
+        end
     end,
 
     -- NO: a = do ... a ... end

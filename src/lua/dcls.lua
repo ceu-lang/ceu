@@ -562,41 +562,6 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
                     AST.node('Type', me.ln,
                         AST.node('ID_prim', me.ln, 'int'))
 
-        elseif id == 'watching' then
-            local _, ID_abs = unpack(me)
-            local pars = AST.get(ID_abs.dcl,'Code', 4,'Code_Pars')
-            ASR(pars and #pars==#me.list_var_any, me,
-                'invalid `watching´ : expected '..#pars..' argument(s)')
-            local dcls = AST.node('Stmts', me.ln)
-            for i, var in ipairs(AST.asr(me.list_var_any,'List_Var_Any')) do
-                local item = AST.get(pars,'', i,'Code_Pars_Item')
-                local kind,_,dim,Type = unpack(item)
-                if var.tag=='ID_int' and Type then
-                    local id = unpack(var)
-                    if kind == 'var' then
-                        dcls[#dcls+1] = AST.node('Var', var.ln,
-                                            AST.copy(Type),
-                                            '&',
-                                            id)
-                    elseif kind == 'vector' then
-                        dcls[#dcls+1] = AST.node('Vec', var.ln,
-                                            AST.copy(Type),
-                                            '&',
-                                            AST.copy(dim),
-                                            id)
-                    elseif kind == 'event' then
-                        dcls[#dcls+1] = AST.node('Evt', var.ln,
-                                            AST.copy(Type),
-                                            '&',
-                                            id)
-                    else
-error'TODO'
-                    end
-                    dcls[#dcls].is_param = true
-                end
-            end
-            return dcls
-
         elseif id == 'escape' then
             local _, esc = unpack(me)
             local id_int1 = (esc[1]==true) or esc[1][1]

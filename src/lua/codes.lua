@@ -106,6 +106,7 @@ F = {
     Block = CONC_ALL,
     Stmts = CONC_ALL,
     Await_Until = CONC_ALL,
+    Watching = CONC_ALL,
 
     Node__PRE = function (me)
         me.code = ''
@@ -358,6 +359,33 @@ if (0)
         local Abs_Cons, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
+        -- Passing "x" from "code" mid to "watching":
+        --  code Ff (...) => (var& int x) => ... do
+        --      watching Gg() => (x) do ...
+        local watch = AST.par(me, 'Watching')
+        local watch_code = ''
+        if watch then
+            local Abs_Await = AST.get(watch,'',1,'Par_Or',1,'Block',1,'Stmts',
+                                               1,'Set_Await_one', 1,'Abs_Await')
+                           or AST.get(watch,'',1,'Par_Or',1,'Block',1,'Stmts',
+                                               1,'Abs_Await')
+            if Abs_Await == me then
+                local list = Abs_Await and AST.get(Abs_Await,'', 2,'List_Var_Any')
+                if list then
+                    for _, ID_int in ipairs(list) do
+                        if ID_int.tag~='ID_any' and ID_int.dcl.is_mid then
+                            local Code = AST.par(me,'Code')
+                            watch_code = watch_code .. [[
+if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..ID_int.dcl.id..[[ != NULL) {
+    *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..ID_int.dcl.id..[[) = ]]..V(ID_int, {is_bind=true})..[[;
+}
+]]
+                        end
+                    end
+                end
+            end
+        end
+
         HALT(me, {
             { ['evt.id']  = 'CEU_INPUT__CODE' },
             { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
@@ -373,6 +401,7 @@ if (0)
 
     CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
                                      (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
+    ]]..watch_code..[[
 }
 ]],
         })

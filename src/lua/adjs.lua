@@ -495,28 +495,20 @@ DBG('TODO: _Loop_Pool')
                                 unpack(me,3)))))
         end
 
-        local ref = node('Nothing', me.ln)
         if mid then
             local Abs_Await = AST.get(watch,'Abs_Await') or
                               AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
             ASR(Abs_Await, me, 'unexpected `=>´')
             local ID_abs = AST.asr(Abs_Await,'', 1,'Abs_Cons', 1,'ID_abs')
             Abs_Await[#Abs_Await+1] = mid
-            ref = node('Ref', me.ln, 'watching', ID_abs)
-            ref.list_var_any = mid
         end
 
-        local paror = node('Par_Or', me.ln,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                watch)),
-                        block)
-        paror.is_watching = true
-
-        return node('Block', me.ln,
-                node('Stmts', me.ln,
-                    ref,
-                    paror))
+        return node('Watching', me.ln,
+                node('Par_Or', me.ln,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            watch)),
+                    block))
     end,
 
 -------------------------------------------------------------------------------
