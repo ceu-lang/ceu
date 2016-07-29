@@ -116,11 +116,12 @@ local function run_inits (par, i, Dcl, stop)
         end
 
     elseif me.tag == 'Watching' then
-        local list = AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',1,'Set_Await_one',
-                                   1,'Abs_Await',2,'List_Var_Any')
-                  or AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
-                                   1,'Abs_Await',2,'List_Var_Any')
-        local ok = list and run_inits(list.__par, 1, Dcl)
+        local await = AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
+                                    1,'Set_Await_one', 1,'Abs_Await')
+                   or AST.asr(me,'',1,'Par_Or',1,'Block',1,'Stmts',
+                                    1,'Abs_Await')
+        local list = AST.get(await,'', 2,'List_Var_Any')
+        local ok = run_inits(await, 1, Dcl)
         ASR(ok, Dcl,
             'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
             'reached `'..AST.tag2id[me.tag]..'´ '..

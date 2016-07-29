@@ -33504,6 +33504,53 @@ escape ret!;
     run = 110,
 }
 
+Test { [[
+code/await Ff (var int v) => (var& int x) => void do
+    x = &v;
+    await FOREVER;
+end
+
+code/await Gg (void) => void do
+    await FOREVER;
+end
+
+var& int ctrl1, ctrl2;
+
+watching Ff(2) => (ctrl1) do
+    watching Gg() do
+        watching Ff(1) => (ctrl2) do
+            escape ctrl1+ctrl2;
+        end
+    end
+end
+
+escape 0;
+]],
+    wrn = true,
+    run = 3,
+}
+
+Test { [[
+code/await Ff (var int v) => (var& int x) => void do
+    x = &v;
+    await FOREVER;
+end
+
+code/await Gg (void) => void do
+    await FOREVER;
+end
+
+var& int ctrl1, ctrl2;
+
+spawn Ff(1) => (ctrl1);
+spawn Gg();
+spawn Ff(2) => (ctrl2);
+
+escape ctrl1+ctrl2;
+]],
+    run = 3,
+}
+
 --<< CODE / WATCHING / SCOPES
 
 --<< CODE / AWAIT / WATCHING
