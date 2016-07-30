@@ -53,7 +53,7 @@ error'TODO: luacov never executes this?'
 
     ['Exp_$$'] = function (me)
         local dcl = AST.asr(me,'', 2,'Exp_Name').info.dcl
-        local _,_,len = unpack(dcl)
+        local _,_,_,len = unpack(dcl)
         me.is_const = (len ~= '[]' and 'int')
     end,
 

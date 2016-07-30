@@ -113,18 +113,15 @@ F = {
         local ID_abs, Abslist = unpack(me)
 
         local err_str
-        local vars do
-            if ID_abs.dcl.tag == 'Data' then
-                vars = AST.asr(ID_abs.dcl,'Data', 3,'Block').dcls
-                err_str = 'invalid constructor'
-            else
-                vars = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
-                                                  1,'Stmts', 1,'Code_Pars')
-                err_str = 'invalid call'
-            end
+        if ID_abs.dcl.tag == 'Data' then
+            me.vars = AST.asr(ID_abs.dcl,'Data', 3,'Block').dcls
+            err_str = 'invalid constructor'
+        else
+            me.vars = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                                              1,'Stmts', 1,'Code_Pars')
+            err_str = 'invalid call'
         end
-
-        ASR(#vars == #Abslist, me, err_str..' : expected '..#vars..' argument(s)')
+        ASR(#me.vars == #Abslist, me, err_str..' : expected '..#me.vars..' argument(s)')
 
         -- check if dyn call is actually static (with "as")
         me.id = ID_abs.dcl.id
@@ -135,8 +132,8 @@ F = {
             end
         end
 
-        for i=1, #vars do
-            local var = vars[i]
+        for i=1, #me.vars do
+            local var = me.vars[i]
             local val = Abslist[i]
 
             local var_is_alias, var_tp, var_id, var_dim = unpack(var)

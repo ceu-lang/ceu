@@ -54,12 +54,11 @@ typedef struct tceu_code_mem_ROOT {
     ---------------------------------------------------------------------------
 
     Code__PRE = function (me)
-        local _,_,_,_,_,body = unpack(me)
         me.mems = { me=me, mem='' }
     end,
     Code__POS = function (me)
-        local mods,id,_,_,_,body = unpack(me)
-        if not body then
+        local mods,id = unpack(me)
+        if not me.is_impl then
             return
         end
 
@@ -85,9 +84,13 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     end,
 
     Code = function (me)
-        local mods,ID, ins, mid, Type, body = unpack(me)
+        local mods, ID, body = unpack(me)
 
-        if (not body) or (mods.dynamic and (not me.is_dyn_base)) then
+        local Type = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
+        local ins  = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+        local mid  = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 2,'Code_Pars')
+
+        if (not me.is_impl) or (mods.dynamic and (not me.is_dyn_base)) then
             me.mems.args    = ''
             me.mems.wrapper = ''
             return
@@ -95,27 +98,13 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
         -- args
         me.mems.args = 'typedef struct tceu_code_args_'..me.id..' {\n'
-        if mods.tight and (not TYPES.check(Type,'void')) then
-            -- returns immediatelly, uses an extra field for the return value
-            me.mems.args = me.mems.args..'    '..TYPES.toc(Type)..' _ret;\n'
-        end
 
-        -- insert in "stmts" all parameters "ins"/"mid"
-        local ins_mid = {} do
-            AST.asr(ins,'Code_Pars')
-            for _, v in ipairs(ins) do ins_mid[#ins_mid+1]=v end
-            if mid then
-                AST.asr(mid,'Code_Pars')
-                for _, v in ipairs(mid) do ins_mid[#ins_mid+1]=v end
-            end
-        end
-
-        for i,item in ipairs(ins_mid) do
-            local kind,is_alias,dim,Type,id2 = unpack(item)
+        for i,dcl in ipairs(body.dcls) do
+            local is_alias,Type,id2,dim = unpack(dcl)
 
             local ptr = '' do
                 if is_alias then
-                    if (kind~='event') and (not TYPES.is_nat_not_plain(TYPES.pop(Type,'?'))) then
+                    if (dcl.tag~='Evt') and (not TYPES.is_nat_not_plain(TYPES.pop(Type,'?'))) then
                         ptr = ptr..'*'
                     end
                     if i > #ins then
@@ -124,12 +113,13 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
                 end
             end
 
-            if kind == 'var' then
-                assert(dim == false)
-                me.mems.args = me.mems.args..[[
+            if dcl.tag == 'Var' then
+                if dcl.id~='_ret' or mods.tight then
+                    me.mems.args = me.mems.args..[[
 ]]..TYPES.toc(Type)..ptr..' '..id2..[[;
 ]]
-            elseif kind == 'vector' then
+                end
+            elseif dcl.tag == 'Vec' then
                 assert(is_alias)
                 if TYPES.is_nat(TYPES.get(Type,1)) then
                     me.mems.args = me.mems.args .. [[
@@ -141,7 +131,7 @@ tceu_vector]]..ptr..' '..id2..[[;
 ]]
                 end
 
-            elseif kind == 'event' then
+            elseif dcl.tag == 'Evt' then
 -- TODO: per Code evts
                     me.mems.args = me.mems.args .. [[
 tceu_evt]]..ptr..' '..id2..[[;
@@ -326,7 +316,7 @@ typedef struct tceu_data_]]..me.id_..[[ {
 
     Var = function (me)
         -- new `?´ type
-        local tp = unpack(me)
+        local _,tp = unpack(me)
         if not TYPES.check(tp,'?') then
             return
         end
@@ -376,19 +366,19 @@ return opt;
 
             -- VAR
             if dcl.tag == 'Var' then
+                dcl.id_ = dcl.id
                 if dcl.id ~= '_ret' then
-                    dcl.id_ = dcl.id
                     if not AST.par(me,'Data') then
                         dcl.id_ = dcl.id_..'_'..dcl.n
                     end
-                    local tp, is_alias = unpack(dcl)
+                    local is_alias, tp = unpack(dcl)
                     local ptr = (is_alias and (not TYPES.is_nat_not_plain(TYPES.pop(tp,'?'))) and '*' or '')
                     mem[#mem+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
                 end
 
             -- EVT
             elseif dcl.tag == 'Evt' then
-                local _, is_alias = unpack(dcl)
+                local is_alias = unpack(dcl)
                 if is_alias then
 -- TODO: per Code evts
                     MEMS.evts[#MEMS.evts+1] = dcl
@@ -421,7 +411,7 @@ return opt;
 
             -- VEC
             elseif dcl.tag == 'Vec' then
-                local tp, is_alias, dim = unpack(dcl)
+                local is_alias, tp, _, dim = unpack(dcl)
                 local ptr = (is_alias and '*' or '')
                 dcl.id_ = dcl.id
                 if not AST.par(me,'Data') then
@@ -444,7 +434,7 @@ tceu_vector]]..ptr..' '..dcl.id_..[[;
 
             -- POOL
             elseif dcl.tag == 'Pool' then
-                local tp, is_alias, dim = unpack(dcl)
+                local is_alias, tp, _, dim = unpack(dcl)
                 local ptr = (is_alias and '*' or '')
                 dcl.id_ = dcl.id
                 if not AST.par(me,'Data') then
@@ -464,7 +454,7 @@ tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
 
             -- EXT
             elseif dcl.tag == 'Ext' then
-                local _, inout, id = unpack(dcl)
+                local inout, _, id = unpack(dcl)
                 MEMS.exts[#MEMS.exts+1] = dcl
                 dcl.id_ = string.upper('CEU_'..inout..'_'..id)
             end
@@ -552,7 +542,7 @@ tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
 AST.visit(F)
 
 for _, dcl in ipairs(MEMS.exts) do
-    local Typelist, inout = unpack(dcl)
+    local inout, Typelist = unpack(dcl)
 
     -- enum
     if inout == 'input' then
@@ -572,10 +562,9 @@ for _, dcl in ipairs(MEMS.exts) do
 end
 
 for _, dcl in ipairs(MEMS.evts) do
-    local Typelist = unpack(dcl)
+    local is_alias,Typelist = unpack(dcl)
 
     -- enum
-    local _,is_alias = unpack(dcl)
     if not is_alias then
         MEMS.evts.enum = MEMS.evts.enum..dcl.id_..',\n'
     end

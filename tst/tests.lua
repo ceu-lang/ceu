@@ -30985,7 +30985,7 @@ escape 1;
 
 Test { [[
 code/tight Fx (void) => int;
-code/tight Fx (void) => int do escape 1; end
+code/tight Fx (void) => int do escape 111; end
 escape 1;
 ]],
     wrn = true,
@@ -34680,6 +34680,7 @@ escape 0;
     dcls = 'line 13 : invalid `code´ declaration : body for "Ff" already exists',
 }
 
+--]=====]
 Test { [[
 data Ui with
     var int x;

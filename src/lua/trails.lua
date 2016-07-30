@@ -37,7 +37,7 @@ F = {
     end,
 
     Vec = function (me)
-        local tp, is_alias, dim = unpack(me)
+        local is_alias, tp, _, dim = unpack(me)
         if (not TYPES.is_nat(TYPES.get(tp,1))) then
             if not (is_alias or dim.is_const) then
                 AST.par(me,'Block').has_dyn_vecs = true
@@ -46,7 +46,7 @@ F = {
     end,
 
     Pool__PRE = function (me)
-        local Type = unpack(me)
+        local _, Type = unpack(me)
         if Type[1].dcl.tag == 'Code' then
             me.trails_n = 2
         end

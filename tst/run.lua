@@ -263,14 +263,13 @@ end
     if not check(T,'ast')    then return end
     if not check(T,'adjs')   then return end
     dofile(DIR..'types.lua')
---AST.dump(AST.root)
     if not check(T,'dcls')   then return end
     if not check(T,'names')  then return end
     if not check(T,'exps')   then return end
-do return end
+--do return end
     if not check(T,'consts') then return end
     if not check(T,'stmts')  then return end
-    --AST.check(AST.root)
+--AST.dump(AST.root)
     if not check(T,'inits')  then return end
     if not check(T,'scopes') then return end
     if not check(T,'tight_') then return end

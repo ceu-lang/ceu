@@ -155,7 +155,8 @@ error'TODO: luacov never executes this?'
     end,
 
     _Code__PRE = function (me)
-        local mods, id, ins, mid, out, blk = unpack(me)
+        local mods, id, ins, mid, out, blk, eoc = unpack(me)
+        mid = mid or AST.node('Code_Pars', me.ln)
 
         local Type = AST.asr(out,'Type')
         local ID_prim,mod = unpack(Type)
@@ -171,14 +172,16 @@ error'TODO: luacov never executes this?'
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Stmts', me.ln, ins, mid, out),
-                                (blk or node('Stmts',me.ln)))))
+                                (blk or node('Stmts',me.ln)))),
+                        eoc)
         ret.is_impl = (blk ~= false)
         return ret
     end,
 
-    Code_Pars = function (me)
+    Code_Pars__PRE = function (me)
         local Code = AST.par(me,'Code')
-        local is_mid = (AST.asr(me,1,'Stmts')[2] == me)
+        local is_param = (AST.asr(me,1,'Stmts')[1] == me)
+        local is_mid   = (AST.asr(me,1,'Stmts')[2] == me)
 
         for i, v in ipairs(me) do
             if v == 'void' then
@@ -212,7 +215,8 @@ error'TODO: luacov never executes this?'
                 else
                     error'TODO'
                 end
-                me[i].is_mid = is_mid
+                me[i].is_param = is_param
+                me[i].is_mid   = is_mid
                 if Code.is_impl then
                     ASR(id ~= '_anon_'..i, me,
                         'invalid declaration : parameter #'..i..' : expected identifier')

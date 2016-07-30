@@ -1,6 +1,10 @@
+--  NO: big = &&small
 local function check_blk (to_blk, fr_blk)
-    --  NO: big = &&small
-    if to_blk.__depth >= fr_blk.__depth then
+    local Code = AST.par(fr_blk,'Code')
+    local Stmts = Code and AST.get(Code,'',3,'Block',1,'Stmts',2,'Block',1,'Stmts')
+    if Stmts and AST.get(Stmts,'',1,'Do', 2,'Block')==fr_blk then
+        return true
+    elseif to_blk.__depth >= fr_blk.__depth then
         assert(AST.is_par(fr_blk,to_blk), 'bug found')
         return true
     else
@@ -16,7 +20,7 @@ local function f2mod (f)
         local _,_,mod = unpack(Node)
         return mod
     else
-        local _,mod = unpack(AST.asr(Exp_Name.info.dcl,'Nat'))
+        local mod = unpack(AST.asr(Exp_Name.info.dcl,'Nat'))
         return mod
     end
 end

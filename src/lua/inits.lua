@@ -163,7 +163,7 @@ local function run_inits (par, i, Dcl, stop)
                 -- input would be inside async, which is catched elsewhere
                 local ID_ext = AST.asr(fr,'Emit_Ext_emit', 1,'ID_ext')
                 local dcl = AST.asr(ID_ext.dcl,'Ext')
-                assert(dcl[2] == 'output')
+                assert(dcl[1] == 'output')
             end
         end
 
@@ -174,7 +174,7 @@ local function run_inits (par, i, Dcl, stop)
 
         for _, sub in ipairs(to) do
             -- NO: var& int x = ... (w/o &)
-            local _,is_alias = unpack(sub.info.dcl)
+            local is_alias = unpack(sub.info.dcl)
             if is_alias and (me.tag~='Set_Alias') then
                 if me.tag == 'Set_Exp' then
                     ASR(false, me,
@@ -300,7 +300,12 @@ F = {
     Vec  = 'Var',
     Evt  = 'Var',
     Var  = function (me)
-        local tp,is_alias = unpack(me)
+        local is_alias,tp = unpack(me)
+
+        local Code = AST.par(me, 'Code')
+        if Code and (not Code.is_impl) then
+            return
+        end
 
         -- RUN_INITS
         if me.is_implicit       or                  -- compiler defined
@@ -327,7 +332,7 @@ F = {
         end
         local is_ptr = TYPES.check(tp,'&&') or TYPES.is_nat_not_plain(tp)
         if is_ptr then
-            local stmts = AST.asr(me.__par,'Stmts')
+            local stmts = AST.get(me,2,'Stmts') or AST.asr(me,1,'Stmts')
             local Var,Do = unpack(stmts)
             if me==Var and Do and Do.tag=='Do' and
                AST.asr(Do,'',3,'Exp_Name').dcl==me
@@ -357,7 +362,7 @@ error'TODO: luacov never executes this?'
         if me.dcl.tag=='Evt' or me.dcl.tag=='Pool' then
             return
         end
-        local _, is_alias = unpack(me.dcl)
+        local is_alias = unpack(me.dcl)
         if is_alias then
             return
         end
@@ -367,7 +372,7 @@ error'TODO: luacov never executes this?'
             return
         end
 
-        local is_ptr = TYPES.check(me.dcl[1],'&&') or TYPES.is_nat_not_plain(me.dcl[1])
+        local is_ptr = TYPES.check(me.dcl[2],'&&') or TYPES.is_nat_not_plain(me.dcl[2])
         if is_ptr then
             local yield = me.dcl.__run_ptrs_yield
             ASR(me.__run_ptrs_ok, me,

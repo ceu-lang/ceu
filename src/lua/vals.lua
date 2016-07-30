@@ -99,12 +99,10 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     Abs_Cons = function (me, ctx)
         local ID_abs, Abslist = unpack(me)
 
-        local vars, id_struct do
+        local id_struct do
             if ID_abs.dcl.tag == 'Data' then
-                vars = AST.asr(ID_abs.dcl,'Data', 3,'Block').dcls
                 id_struct = 'tceu_data_'..ID_abs.dcl.id_
             else
-                vars = AST.get(ID_abs.dcl,'Code', 3,'Code_Pars')
                 id_struct = 'tceu_code_args_'..ID_abs.dcl.id
             end
             if ctx.to_tp then
@@ -123,18 +121,12 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 
         local mods = (ID_abs.dcl.tag=='Code' and unpack(ID_abs.dcl))
 
-        assert(#vars == #Abslist)
-        for i=1, #vars do
-            local var = vars[i]
+        assert(#me.vars == #Abslist)
+        for i=1, #me.vars do
+            local var = me.vars[i]
             local val = Abslist[i]
 
-            local _, var_tp, var_id, is_alias
-            if vars.tag == 'Code_Pars' then
-                _,var_is_alias,_,var_tp,var_id = unpack(var)
-            else
-                var_tp, var_is_alias = unpack(var)
-                var_id = var.id
-            end
+            local var_is_alias, var_tp, var_id, var_dim = unpack(var)
 
             -- var Ee.Xx ex = ...;
             -- code Ff (var& Ee e)
@@ -214,25 +206,36 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         end
     end,
 
-    ID_int = function (me, ctx)
-        local _, is_alias = unpack(me.dcl)
-        if me.dcl.tag == 'Evt' then
-            if is_alias then
-                return CUR(me.dcl.id_,ctx)
-            else
-                return '((tceu_evt){'..me.dcl.id_..',{_ceu_mem}})'
-            end
+    Evt = function (me, ctx)
+        local is_alias = unpack(me)
+        if is_alias then
+            return CUR(me.id_,ctx)
         else
-            local ptr = ''
-            if is_alias and (not ctx.is_bind) and
-                (not TYPES.is_nat_not_plain(TYPES.pop(me.dcl[1],'?')))
-                    --  var& _t_ptr? x = &_f(); ... x!
-                    --  var& _t_ptr xx = &x!;   ... xx
-            then
-                ptr = '*'
-            end
-            return '('..ptr..CUR(me.dcl.id_,ctx)..')'
+            return '((tceu_evt){'..me.id_..',{_ceu_mem}})'
         end
+    end,
+
+    Pool = 'Var',
+    Vec = 'Var',
+    Var = function (me, ctx)
+        local is_alias, tp = unpack(me)
+        local ptr = ''
+        if is_alias and (not ctx.is_bind) and
+            (not TYPES.is_nat_not_plain(TYPES.pop(tp,'?')))
+                --  var& _t_ptr? x = &_f(); ... x!
+                --  var& _t_ptr xx = &x!;   ... xx
+        then
+            ptr = '*'
+        end
+        return '('..ptr..CUR(me.id_,ctx)..')'
+    end,
+
+    ID_int = function (me, ctx)
+        local f = F[me.dcl.tag]
+        if type(f) == 'string' then
+            f = F[f]
+        end
+        return f(me.dcl, ctx)
     end,
 
     ---------------------------------------------------------------------------
@@ -243,7 +246,7 @@ CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local _, e, member = unpack(me)
         member = string.gsub(member, '^_', '')  -- _nat._data (data is a keyword)
 
-        local _,is_alias = unpack(me.info.dcl)
+        local is_alias = unpack(me.info.dcl)
 
         if me.info.dcl.tag=='Evt' and (not is_alias) then
             return '((tceu_evt){ '..me.info.dcl.id_..', {&'..V(e)..'} })'

@@ -102,11 +102,11 @@ function SET (me, to, fr, fr_ok)
 end
 
 F = {
-    ROOT = CONC_ALL,
-    Block = CONC_ALL,
-    Stmts = CONC_ALL,
+    ROOT        = CONC_ALL,
+    Block       = CONC_ALL,
+    Stmts       = CONC_ALL,
     Await_Until = CONC_ALL,
-    Watching = CONC_ALL,
+    Watching    = CONC_ALL,
 
     Node__PRE = function (me)
         me.code = ''
@@ -169,7 +169,7 @@ if (]]..V(c)..[[) {
         -- initialize opts
         for _, dcl in ipairs(me.dcls) do
             if dcl.tag == 'Var' then
-                local tp, is_alias = unpack(dcl)
+                local is_alias, tp = unpack(dcl)
                 if TYPES.check(tp,'?') and (not is_alias) and (not dcl.is_param) then
                     LINE(me, [[
 ]]..CUR(dcl.id_)..[[.is_set = 0;
@@ -180,9 +180,9 @@ if (]]..V(c)..[[) {
 
         -- initialize vectors
         for _, dcl in ipairs(me.dcls) do
-            local tp = unpack(dcl)
+            local _,tp = unpack(dcl)
             if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1))) then
-                local tp, is_alias, dim = unpack(dcl)
+                local is_alias, tp, _, dim = unpack(dcl)
                 if not is_alias then
                     if dim.is_const then
                         LINE(me, [[
@@ -207,9 +207,9 @@ if (0) {
 ]])
             CASE(me, me.lbl_dyn_vecs)
             for _, dcl in ipairs(me.dcls) do
-                local tp = unpack(dcl)
+                local _,tp = unpack(dcl)
                 if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1))) then
-                    local tp, is_alias, dim = unpack(dcl)
+                    local is_alias, tp, _, dim = unpack(dcl)
                     if not (is_alias or dim.is_const) then
                         LINE(me, [[
     ceu_vector_setmax(&]]..CUR(dcl.id_)..[[, 0, 0);
@@ -230,7 +230,7 @@ _ceu_trl++;
     Vec = function (me)
         -- setmax (n)
         -- vector[n] int vec;
-        local tp, is_alias, dim = unpack(me)
+        local is_alias, tp, _, dim = unpack(me)
         if (not TYPES.is_nat(TYPES.get(tp,1))) then
             if not (is_alias or dim.is_const) then
                 if dim ~= '[]' then
@@ -243,7 +243,7 @@ ceu_vector_setmax(&]]..CUR(me.id_)..', '..V(dim)..[[, 1);
     end,
 
     Pool = function (me)
-        local tp, is_alias, dim = unpack(me)
+        local is_alias, tp, _, dim = unpack(me)
 assert(not is_alias)
         LINE(me, [[
 {
@@ -263,8 +263,8 @@ _ceu_trl++;
     ---------------------------------------------------------------------------
 
     Code = function (me)
-        local mods,_,Code_Pars,_,_,body = unpack(me)
-        if not body then return end
+        local mods,_,body = unpack(me)
+        if not me.is_impl then return end
         if me.is_dyn_base then return end
 
 LINE(me, [[
@@ -293,22 +293,25 @@ if (0)
 
         local vars = AST.get(body,'Block', 1,'Stmts', 2,'Do', 2,'Block',
                                            1,'Stmts', 2,'Stmts')
-        for i,Code_Pars_Item in ipairs(Code_Pars) do
-            local kind,_,c,Type,id2 = unpack(Code_Pars_Item)
+        for i,dcl in ipairs(body.dcls) do
+            if dcl.is_param then
+                assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt')
+                local _,Type1,id1 = unpack(dcl)
 
-            local cast = ''
-            if me.dyn_base then
-                _,is_alias,_,Type2,id2 = unpack(args_Code_Pars[i])
-                if not AST.is_equal(Type,Type2) then
-                    cast = '('..TYPES.toc(Type)..(is_alias and '*' or '')..')'
+                local cast = ''
+                if me.dyn_base then
+error'oi'
+                    _,is_alias2,_,Type2,id2 = unpack(args_Code_Pars[i])
+                    if not AST.is_equal(Type1,Type2) then
+                        cast = '('..TYPES.toc(Type1)..(is_alias2 and '*' or '')..')'
+                    end
                 end
-            end
 
-            assert(kind=='var' or kind=='vector' or kind=='event')
-            LINE(me, [[
-]]..V(vars[i],{is_bind=true})..[[ =
-    ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_evt)->]]..id2..[[;
+                LINE(me, [[
+]]..V(dcl,{is_bind=true})..[[ =
+    ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_evt)->]]..id1..[[;
 ]])
+            end
         end
 
         CONC(me, body)
@@ -961,7 +964,7 @@ error'TODO: lua'
 
     Emit_Ext_emit = function (me)
         local ID_ext, Explist = unpack(me)
-        local Typelist, inout = unpack(ID_ext.dcl)
+        local inout, Typelist = unpack(ID_ext.dcl)
         LINE(me, [[
 {
 ]])

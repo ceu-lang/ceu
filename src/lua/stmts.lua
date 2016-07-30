@@ -109,7 +109,7 @@ DBG('TODO: _Lua')
         local ID_int = AST.get(Exp_Name,'', 1,'ID_int')
         local op = unpack(Exp_Name[1])
         ASR(ID_int, me, 'invalid binding : unexpected context for operator `'..op..'´')
-        ASR(ID_int.dcl[2]=='&', me, 'invalid binding : expected declaration with `&´')
+        ASR(ID_int.dcl[1]=='&', me, 'invalid binding : expected declaration with `&´')
 
         -- tp
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)
@@ -196,7 +196,7 @@ DBG('TODO: _Lua')
 
     Set_Emit_Ext_emit = function (me)
         local ID_ext = AST.asr(me,'', 1,'Emit_Ext_emit', 1,'ID_ext')
-        local _,io = unpack(ID_ext.dcl)
+        local io,_ = unpack(ID_ext.dcl)
         ASR(io=='output', me,
             'invalid assignment : `input´')
     end,
@@ -241,7 +241,7 @@ DBG('TODO: _Lua')
             return false, 'expected external identifier'
         end
 
-        local _,inout_have = unpack(ID_ext.dcl)
+        local inout_have = unpack(ID_ext.dcl)
 
         if inout_have == inout_expected then
             return true
@@ -266,17 +266,19 @@ DBG('TODO: _Lua')
 
     Abs_Await = function (me)
         local Abs_Cons,list = unpack(me)
-
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
-        local Type = AST.asr(ID_abs.dcl,'Code', 5,'Type')
-        me.tp = AST.copy(Type)
+
+        local ret = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                                               1,'Stmts', 3,'', 2,'Type')
+        me.tp = AST.copy(ret)
 
         if list then
-            local pars = AST.get(ID_abs.dcl,'Code', 4,'Code_Pars')
+            local pars = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                                                    1,'Stmts', 2,'Code_Pars')
             ASR(pars and #pars==#list, me,
                 'invalid `watching´ : expected '..#pars..' argument(s)')
             for i, par in ipairs(pars) do
-                local kind,is_alias,_,par_tp = unpack(par)
+                local is_alias,par_tp = unpack(par)
                 assert(is_alias)
                 local arg = list[i]
                 if arg.tag ~= 'ID_any' then
@@ -320,7 +322,7 @@ DBG('TODO: _Lua')
         end
 
         -- tp
-        local Typelist = AST.asr((e.dcl and e.dcl[1]) or e.info.tp,'Typelist')
+        local Typelist = AST.asr((e.dcl and e.dcl[2]) or e.info.tp,'Typelist')
         ASR(#Typelist==1 and TYPES.check(Typelist[1],'bool'), me,
             'invalid `pause/if´ : expected event of type `bool´')
     end,
@@ -366,14 +368,7 @@ DBG('TODO: _Lua')
         local ID_ext, ps = unpack(me)
 
         -- ctx
-        local _,have do
-            if ID_ext.dcl.tag == 'Ext' then
-                _,have = unpack(ID_ext.dcl)
-            else
-                have = unpack(ID_ext.dcl)
-            end
-        end
-
+        local have = unpack(ID_ext.dcl)
         local expects do
             if ID_ext.dcl.tag ~= 'Ext' then
                 expects = 'error'
@@ -391,7 +386,7 @@ DBG'TODO: _Async_Isr'
             have..'´ "'..ID_ext.dcl.id..'"')
 
         -- tp
-        EXPS.check_tp(me, ID_ext.dcl[1], ps.tp, 'invalid `emit´')
+        EXPS.check_tp(me, ID_ext.dcl[2], ps.tp, 'invalid `emit´')
     end,
 
     Emit_Ext_call = function (me)
