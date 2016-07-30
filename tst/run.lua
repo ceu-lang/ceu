@@ -265,9 +265,9 @@ end
     dofile(DIR..'types.lua')
 --AST.dump(AST.root)
     if not check(T,'dcls')   then return end
-do return end
     if not check(T,'names')  then return end
     if not check(T,'exps')   then return end
+do return end
     if not check(T,'consts') then return end
     if not check(T,'stmts')  then return end
     --AST.check(AST.root)
@@ -279,7 +279,6 @@ do return end
     if not check(T,'labels') then return end
     dofile(DIR..'vals.lua')
     if not check(T,'mems')   then return end
---do return end
     if not check(T,'codes')  then return end
 
 if T.ana or T.tmp or T.props or T.mode then return end

@@ -22,7 +22,6 @@ AST.tag2id = {
     Await_Wclock    = 'await',
     Break           = 'break',
     Code            = 'code',
-    Code            = 'code',
     Continue        = 'continue',
     Data            = 'data',
     Emit_Evt        = 'emit',

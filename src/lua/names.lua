@@ -48,7 +48,7 @@ F = {
         me.info = {
             id  = id,
             tag = me.dcl.tag,
-            tp  = me.dcl[1],
+            tp  = me.dcl[2],
             dcl = me.dcl,
         }
     end,
@@ -58,7 +58,7 @@ F = {
         me.info = {
             id  = id,
             tag = me.dcl.tag,
-            tp  = me.dcl[1],
+            tp  = me.dcl[2],
             dcl = me.dcl,
         }
     end,
@@ -86,7 +86,7 @@ F = {
                 -- NO:
                 --  var Dx d = ...;
                 --  (d as Ex)...
-                local _,is_alias = unpack(e.info.dcl)
+                local is_alias = unpack(e.info.dcl)
                 ASR(is_alias, me,
                     'invalid operand to `'..op..'´ : unexpected plain `data´ : got "'..
                     TYPES.tostring(e.info.tp)..'"')
@@ -207,7 +207,7 @@ DBG('TODO: remove pool')
                 me.info = {
                     id  = e.info.id..'.'..member,
                     tag = Dcl.tag,
-                    tp  = Dcl[1],
+                    tp  = Dcl[2],
                     dcl = Dcl,
                     dcl_obj = e.info.dcl,
                 }

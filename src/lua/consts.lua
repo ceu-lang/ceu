@@ -18,7 +18,7 @@ F = {
     end,
 
     ID_nat = function (me)
-        local _,mod = unpack(me.dcl)
+        local mod = unpack(me.dcl)
         me.is_const = (mod == 'const')
     end,
 
@@ -78,7 +78,7 @@ error'TODO: luacov never executes this?'
     end,
 
     Vec = function (me)
-        local _,is_alias,dim = unpack(me)
+        local is_alias,_,_,dim = unpack(me)
         if dim == '[]' then
             return
         end

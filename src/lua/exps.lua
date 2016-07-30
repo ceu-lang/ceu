@@ -102,7 +102,11 @@ F = {
                 'expected `code/tight´ : got `code/await´ ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
 
         -- info
-        me.info = INFO.new(me, 'Val', nil, AST.copy(AST.asr(ID_abs.dcl,'Code',5,'Type')))
+        me.info = INFO.new(me, 'Val', nil,
+                    AST.copy(AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                                                        1,'Stmts', 3,'',
+                                                                    -- TODO: HACK_1
+                                                        2,'Type')))
     end,
 
     Abs_Cons = function (me)
@@ -114,7 +118,8 @@ F = {
                 vars = AST.asr(ID_abs.dcl,'Data', 3,'Block').dcls
                 err_str = 'invalid constructor'
             else
-                vars = AST.get(ID_abs.dcl,'Code', 3,'Code_Pars')
+                vars = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                                                  1,'Stmts', 1,'Code_Pars')
                 err_str = 'invalid call'
             end
         end
@@ -123,25 +128,18 @@ F = {
 
         -- check if dyn call is actually static (with "as")
         me.id = ID_abs.dcl.id
-        local mods = (ID_abs.dcl.tag=='Code' and unpack(ID_abs.dcl))
+        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[2])
         local is_dyn do
             if mods and mods.dynamic then
                 is_dyn = false
             end
         end
 
-        assert(#vars == #Abslist)
         for i=1, #vars do
             local var = vars[i]
             local val = Abslist[i]
 
-            local _, var_tp, var_id, var_is_alias, var_dim
-            if vars.tag == 'Code_Pars' then
-                _,var_is_alias,var_dim,var_tp,var_id = unpack(var)
-            else
-                var_tp, var_is_alias, var_dim = unpack(var)
-                var_id = var.id
-            end
+            local var_is_alias, var_tp, var_id, var_dim = unpack(var)
 
             if mods and mods.dynamic and var_tp[1].dcl.hier and (not is_dyn) then
                 if var_tp.tag=='Type' and var_tp[1].tag == 'ID_abs' then
@@ -156,11 +154,11 @@ F = {
 
             if var_is_alias then
                 INFO.asr_tag(val, {'Alias'},
-                    err_str..' : invalid binding : '..'argument #'..i)
+                    err_str..' : invalid binding : argument #'..i)
 
                 -- dim
                 if var.tag=='Vec' or var[1]=='vector' then
-                    local _,_,fr_dim = unpack(val.info.dcl)
+                    local _,_,_,fr_dim = unpack(val.info.dcl)
                     ASR(EXPS.check_dim(var_dim,fr_dim), me,
                         err_str..' : invalid binding : argument #'..i..' : dimension mismatch')
                 end
@@ -168,12 +166,6 @@ F = {
 
             if val.tag == 'ID_any' then
                 -- ok: ignore _
-                -- Data(1,_)
--- TODO: check default, check event/vector
-                --local _,is_alias = unpack(dcl)
-                --ASR(not is_alias, me,
-                    --'invalid constructor : argument #'..i..' : unexpected `_´')
-
             elseif val.tag == 'Vec_Cons' then
 assert(ID_abs.dcl.tag == 'Data', 'TODO')
 error'TODO: remove below'

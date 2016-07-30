@@ -160,7 +160,7 @@ F = {
             return
         end
         local Code = AST.par(me,'Code')
-        if Code and Code[1]==false then
+        if Code and ((not Code.is_impl) or Code.is_dyn_base) then
             return
         end
 
@@ -320,7 +320,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     -- detect "base" dynamic multimethod: create dummy copy with plain "id"
     Code__PRE = function (me)
-        local is_impl,mods,id,body = unpack(me)
+        local mods,id = unpack(me)
         if not mods.dynamic then
             return  -- not dynamic code
         end
@@ -334,14 +334,15 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             return  -- not first appearence
         end
 
+        local proto_body = AST.asr(me,'', 3,'Block', 1,'Stmts')
         local orig
-        if is_impl then
-            orig = body[1]
-            body[1] = AST.node('Stmts', me.ln)
+        if me.is_impl then
+            orig = proto_body[2]
+            proto_body[2] = AST.node('Stmts', me.ln)
         end
         local new = AST.copy(me)
-        if is_impl then
-            body[1] = orig
+        if me.is_impl then
+            proto_body[2] = orig
         end
 
         -- "base" method with plain "id"
@@ -357,7 +358,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     end,
 
     Code = function (me)
-        local is_impl1,mods1,id,body1 = unpack(me)
+        local mods1,id,body1 = unpack(me)
 
         ASR(not AST.par(me,'Code'), me,
             'invalid `code´ declaration : nesting is not allowed')
@@ -377,8 +378,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         local old = DCLS.get(blk, me.id)
         if old then
-            local is_impl2,mods2,_,body2 = unpack(old)
-            ASR(not (is_impl1 and is_impl2), me,
+            local mods2,_,body2 = unpack(old)
+            ASR(not (me.is_impl and old.is_impl), me,
                 'invalid `code´ declaration : body for "'..id..'" already exists')
 
             -- compare ins

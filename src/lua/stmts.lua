@@ -137,8 +137,8 @@ DBG('TODO: _Lua')
 
         -- dim
         if to.info.tag == 'Vec' then
-            local _,_,to_dim = unpack(to.info.dcl)
-            local _,_,fr_dim = unpack(fr.info.dcl)
+            local _,_,_,to_dim = unpack(to.info.dcl)
+            local _,_,_,fr_dim = unpack(fr.info.dcl)
             ASR(EXPS.check_dim(to_dim,fr_dim), me,
                 'invalid binding : dimension mismatch')
         end
@@ -257,7 +257,7 @@ DBG('TODO: _Lua')
         local ok, msg = F.__await_ext_err(ID_ext, 'input')
         ASR(ok, me, msg and 'invalid `await´ : '..msg)
 
-        me.tp = unpack(ID_ext.dcl)
+        me.tp = ID_ext.dcl[2]
     end,
 
     Await_Wclock = function (me)
@@ -280,7 +280,7 @@ DBG('TODO: _Lua')
                 assert(is_alias)
                 local arg = list[i]
                 if arg.tag ~= 'ID_any' then
-                    local arg_tp,is_alias = unpack(arg.dcl)
+                    local is_alias,arg_tp = unpack(arg.dcl)
                     ASR(is_alias, me,
                         'invalid binding : argument #'..i..' : expected alias `&´ declaration')
                     EXPS.check_tp(me, par_tp, arg_tp,
@@ -417,7 +417,7 @@ DBG'TODO: _Async_Isr'
                 'invalid call : unexpected context for operator `?´')
 
             if p.info.tag ~= 'Nat' then
-                local _,is_alias = unpack(p.info)
+                local is_alias = unpack(p.info)
                 ASR(not is_alias, me,
                     'invalid call : unexpected context for operator `&´')
             end

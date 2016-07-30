@@ -156,26 +156,29 @@ error'TODO: luacov never executes this?'
 
     _Code__PRE = function (me)
         local mods, id, ins, mid, out, blk = unpack(me)
-        local is_impl = (blk ~= false)
 
         local Type = AST.asr(out,'Type')
         local ID_prim,mod = unpack(Type)
         local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
         if is_void then
-            out = node('Nothing', me.ln)
+            out = node('Var_', me.ln, false, AST.copy(out), '_ret')
+                -- TODO: HACK_1
         else
             out = node('Var', me.ln, false, AST.copy(out), '_ret')
         end
 
-        return node('Code', me.ln, is_impl, mods, id,
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        node('Stmts', me.ln, ins, mid, out),
-                        (blk or node('Stmts',me.ln)))))
+        local ret = node('Code', me.ln, mods, id,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Stmts', me.ln, ins, mid, out),
+                                (blk or node('Stmts',me.ln)))))
+        ret.is_impl = (blk ~= false)
+        return ret
     end,
 
     Code_Pars = function (me)
-        local is_impl = unpack(AST.par(me,'Code'))
+        local Code = AST.par(me,'Code')
+        local is_mid = (AST.asr(me,1,'Stmts')[2] == me)
 
         for i, v in ipairs(me) do
             if v == 'void' then
@@ -209,7 +212,8 @@ error'TODO: luacov never executes this?'
                 else
                     error'TODO'
                 end
-                if is_impl then
+                me[i].is_mid = is_mid
+                if Code.is_impl then
                     ASR(id ~= '_anon_'..i, me,
                         'invalid declaration : parameter #'..i..' : expected identifier')
                 end
