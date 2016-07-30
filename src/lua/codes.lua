@@ -581,7 +581,8 @@ while (1) {
     end,
 
     Loop_Num = function (me)
-        local _, i, fr, dir, to, step, body = unpack(me)
+        local _, i, range, body = unpack(me)
+        local fr, dir, to, step = unpack(range)
         local max = F.__loop_max(me)
         local op = (dir=='->' and '>' or '<')
 

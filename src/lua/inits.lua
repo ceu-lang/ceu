@@ -362,6 +362,11 @@ error'TODO: luacov never executes this?'
             return
         end
 
+        -- loop <NO> in <OK> do <NO> end
+        if AST.par(me, 'Loop_Num_Range') then
+            return
+        end
+
         local is_ptr = TYPES.check(me.dcl[1],'&&') or TYPES.is_nat_not_plain(me.dcl[1])
         if is_ptr then
             local yield = me.dcl.__run_ptrs_yield

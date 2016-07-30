@@ -265,16 +265,28 @@ DBG('TODO: _Lua')
     end,
 
     Abs_Await = function (me)
-        local Abs_Cons,mid = unpack(me)
+        local Abs_Cons,list = unpack(me)
 
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
         local Type = AST.asr(ID_abs.dcl,'Code', 5,'Type')
         me.tp = AST.copy(Type)
 
-        if mid then
+        if list then
             local pars = AST.get(ID_abs.dcl,'Code', 4,'Code_Pars')
-            ASR(pars and #pars==#mid, me,
+            ASR(pars and #pars==#list, me,
                 'invalid `watching´ : expected '..#pars..' argument(s)')
+            for i, par in ipairs(pars) do
+                local kind,is_alias,_,par_tp = unpack(par)
+                assert(is_alias)
+                local arg = list[i]
+                if arg.tag ~= 'ID_any' then
+                    local arg_tp,is_alias = unpack(arg.dcl)
+                    ASR(is_alias, me,
+                        'invalid binding : argument #'..i..' : expected alias `&´ declaration')
+                    EXPS.check_tp(me, par_tp, arg_tp,
+                        'invalid binding : argument #'..i)
+                end
+            end
         end
      end,
 
@@ -324,6 +336,18 @@ DBG('TODO: _Lua')
         local cnd = unpack(me)
         ASR(TYPES.check(cnd.info.tp,'bool'), me,
             'invalid `if´ condition : expected boolean type')
+    end,
+
+    Loop_Pool = function (me)
+        local _,list,pool = unpack(me)
+
+        -- ctx
+        INFO.asr_tag(pool, {'Pool'}, 'invalid `pool´ iterator')
+
+        if list then
+            local Code = AST.asr(pool.info.tp[1].dcl, 'Code')
+            local _,_,_,pars = unpack(Code)
+        end
     end,
 
 -- CALL, EMIT

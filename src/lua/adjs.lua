@@ -243,19 +243,20 @@ error'TODO: luacov never executes this?'
                     node('Loop', me.ln, max, body)))
     end,
     _Loop_Num__PRE = function (me)
-        local max, i, lb, fr, dir, to, rb, step, body = unpack(me)
+        local max, i, range, body = unpack(me)
 
         -- loop i do end
         -- loop i in [0 -> _] do end
-        if #me == 4 then
-            max, i, _, body = unpack(me)
-            lb   = '['
-            fr   = node('NUMBER', me.ln, 0)
-            dir  = '->'
-            to   = node('ID_any', me.ln)
-            rb   = ']'
-            step = false
+        if not range then
+            range = node('Loop_Num_Rage', me.ln,
+                        '[',
+                        node('NUMBER', me.ln, 0),
+                        '->',
+                        node('ID_any', me.ln),
+                        ']',
+                        false)
         end
+        local lb, fr, dir, to, rb, step = unpack(range)
 
         -- loop i in ]0 ...] do end
         -- loop i in [0+1 ...] do end
@@ -307,10 +308,14 @@ error'TODO: luacov never executes this?'
                 node('Stmts', me.ln,
                     AST.copy(i_dcl),
                     node('Loop_Num', me.ln,
-                        max, i, fr, dir, to, step, body)))
+                        max,
+                        i,
+                        node('Loop_Num_Range', me.ln, fr, dir, to, step),
+                        body)))
     end,
 
     _Loop_Pool__PRE = function (me)
+        me.tag = 'Loop_Pool'
 -- TODO
 DBG('TODO: _Loop_Pool')
         return node('Nothing', me.ln)

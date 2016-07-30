@@ -521,7 +521,9 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
 
     ---------------------------------------------------------------------------
 
-    __loop = function (me) return me.tag=='Loop' or me.tag=='Loop_Num' end,
+    __loop = function (me)
+        return me.tag=='Loop' or me.tag=='Loop_Num' or me.tag=='Loop_Pool'
+    end,
     __outer = function (me)
         local lbl = unpack(me)
         for loop in AST.iter(F.__loop) do

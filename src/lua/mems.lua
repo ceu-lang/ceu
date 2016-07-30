@@ -540,7 +540,8 @@ tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
         end
     end,
     Loop_Num = function (me)
-        local max, i, fr, dir, to, step, body = unpack(me)
+        local max, i, range, body = unpack(me)
+        local fr, dir, to, step = unpack(range)
         F.Loop(me)  -- max
         if to.tag ~= 'ID_any' then
             CUR().mem = CUR().mem..'int __lim_'..me.n..';\n'

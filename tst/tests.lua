@@ -9,6 +9,101 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int v = 0;
+    x = &v;
+end
+
+var int x;
+spawn Ff() => (x);
+
+escape 0;
+]],
+    stmts = 'line 7 : invalid binding : argument #1 : expected alias `&´ declaration',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int v = 0;
+    x = &v;
+end
+
+var& bool x;
+spawn Ff() => (x);
+
+escape 0;
+]],
+    stmts = 'line 7 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int v = 0;
+    x = &v;
+end
+
+vector&[] int x;
+spawn Ff() => (x);
+
+escape 0;
+]],
+    stmts = 'line 7 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+}
+
+do return end
+
+Test { [[
+var int ts = _;
+loop t in ts do
+end
+escape 1;
+]],
+    parser = 'line 2 : after `in´ : expected `[´ or `]´',
+}
+
+Test { [[
+var int ts = _;
+loop in ts do
+end
+escape 1;
+]],
+    wrn = true,
+    stmts = 'line 2 : invalid `pool´ iterator : unexpected context for variable "ts"',
+}
+
+Test { [[
+code/await Ff (void) => void do
+end
+
+pool[1] Ff fs;
+
+var int n = 0;
+loop (n) in fs do
+end
+
+escape n+1;
+]],
+    --fin = 'line 14 : pointer access across `await´',
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) => void do
+end
+
+pool[1] Ff fs;
+
+var int n = 0;
+loop f in fs do
+end
+
+escape n+1;
+]],
+    --fin = 'line 14 : pointer access across `await´',
+    run = 1,
+}
+
 do return end -- OK
 --]=====]
 
@@ -2888,7 +2983,7 @@ loop i in 10 do
 end
 escape 1;
 ]],
-    parser = 'line 1 : after `in´ : expected `[´ or `]´ or name expression',
+    parser = 'line 1 : after `in´ : expected `[´ or `]´',
     --env = 'TODO: not a pool',
 }
 
@@ -18000,12 +18095,26 @@ escape v;
 Test { [[
 var int v = 1;
 var int&& x = &&v;
-loop i in *x do
+loop i in [0 -> *x[ do
     await 1s;
+    v = v + 1;
 end
 escape v;
 ]],
-    run = { ['~>1s']=1 },
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+}
+
+Test { [[
+var int v = 1;
+var int&& x = &&v;
+loop i in [0 -> *x[ do
+    await 1s;
+    v = v + 1;
+end
+escape v;
+]],
+    wrn = true,
+    run = { ['~>1s']=2 },
 }
 
 Test { [[
@@ -40200,35 +40309,8 @@ escape sum;
     run = 1,
 }
 
--- POOL ITERATORS
+-->>> POOL ITERATORS
 
-Test { [[
-class Tx with
-    var int v = 0;
-do
-end
-var Tx ts;
-loop t in ts do
-end
-escape 1;
-]],
-    --fin = 'line 14 : pointer access across `await´',
-    tmp = 'line 6 : invalid pool',
-    --run = 1,
-}
-Test { [[
-class Tx with
-    var int v = 0;
-do
-end
-pool[1] Tx ts;
-loop t in ts do
-end
-escape 1;
-]],
-    --fin = 'line 14 : pointer access across `await´',
-    run = 1,
-}
 Test { [[
 class Tx with
     var int v = 0;

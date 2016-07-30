@@ -394,19 +394,20 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
             OPT(K'else' * V'Block') *
             K'end'
 
-    , Loop       = K'loop' * OPT('/'*V'__Exp') *
-                   V'__Do'
+    , _Loop_Num_Range = (CKK'[' + CKK']') * (
+                            V'__Exp' * CKK'->' * (V'ID_any' + V'__Exp') +
+                            (V'ID_any' + V'__Exp') * CKK'<-' * V'__Exp'
+                          ) * (CKK'[' + CKK']') *
+                          OPT(KK',' * V'__Exp')
+
     , _Loop_Num  = K'loop' * OPT('/'*V'__Exp') *
-                    (V'__ID_int'+V'ID_any') * OPT(
-                        K'in' * (CKK'[' + CKK']') * (
-                                    V'__Exp' * CKK'->' * (V'ID_any' + V'__Exp') +
-                                    (V'ID_any' + V'__Exp') * CKK'<-' * V'__Exp'
-                                ) * (CKK'[' + CKK']') *
-                                OPT(KK',' * V'__Exp')
-                    ) *
+                    (V'__ID_int'+V'ID_any') * OPT(K'in' * V'_Loop_Num_Range') *
                    V'__Do'
     , _Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                    (V'ID_int'+V'ID_any') * K'in' * V'Exp_Name' *
+                        OPT(PARENS(V'List_Var_Any')) *
+                            K'in' * V'Exp_Name' *
+                   V'__Do'
+    , Loop       = K'loop' * OPT('/'*V'__Exp') *
                    V'__Do'
 
     , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
@@ -599,7 +600,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
     , __watch = (V'_Await_Until' + V'Await_Wclock' + V'Abs_Await')
-                    * OPT(KK'=>' * PARENS(OPT(V'List_Var_Any')))
+                    * OPT(KK'=>' * PARENS(V'List_Var_Any'))
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -634,7 +635,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Abs_Spawn = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Exp_Name'
     , _Abs_Back = K'spawn' * V'__Abs_Cons_Code' * (-KK'in')
-                    * OPT(KK'=>' * PARENS(OPT(V'List_Var_Any')))
+                    * OPT(KK'=>' * PARENS(V'List_Var_Any'))
 
     , __Abs_Cons_Code = V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))

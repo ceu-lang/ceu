@@ -86,7 +86,8 @@ F = {
     end,
 
     Loop_Num = function (me)
-        local _, _, fr, _, to, _, body = unpack(me)
+        local _, _, range, _ = unpack(me)
+        local fr,_,to,_ = unpack(range)
         F.Loop(me, (fr.is_const and to.is_const))
     end,
 }
