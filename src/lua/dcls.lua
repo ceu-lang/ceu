@@ -549,61 +549,42 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
 
     Ref__POS = function (me)
         local id = unpack(me)
-
---[[
-        if id == 'every' then
-            local _, ID, i = unpack(me)
-            if ID.tag == 'ID_ext' then
-                local _, input = unpack(ID.dcl)
-                assert(input == 'input')
+        assert(id == 'escape')
+        local _, esc = unpack(me)
+        local id_int1 = (esc[1]==true) or esc[1][1]
+        local do_ = nil
+        for n in AST.iter() do
+            if n.tag=='Async' or string.sub(n.tag,1,7)=='_Async' or
+               n.tag=='Data'  or n.tag=='Code_impl' or
+               n.tag=='Ext_Code_impl' or n.tag=='Ext_Req_impl'
+            then
+                break
             end
-            local Typelist = AST.asr(unpack(ID.dcl), 'Typelist')
-            local Type = AST.get(Typelist,'', i,'Type')
-            return (Type and AST.copy(Type)) or
-                    AST.node('Type', me.ln,
-                        AST.node('ID_prim', me.ln, 'int'))
-]]
-
-        if id == 'escape' then
-            local _, esc = unpack(me)
-            local id_int1 = (esc[1]==true) or esc[1][1]
-            local do_ = nil
-            for n in AST.iter() do
-                if n.tag=='Async' or string.sub(n.tag,1,7)=='_Async' or
-                   n.tag=='Data'  or n.tag=='Code_impl' or
-                   n.tag=='Ext_Code_impl' or n.tag=='Ext_Req_impl'
-                then
+            if n.tag == 'Do' then
+                local id_int2 = (n[1]==true) or n[1][1]
+                if id_int1 == id_int2 then
+                    do_ = n
                     break
                 end
-                if n.tag == 'Do' then
-                    local id_int2 = (n[1]==true) or n[1][1]
-                    if id_int1 == id_int2 then
-                        do_ = n
-                        break
-                    end
-                end
             end
-            ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
-            esc.outer = do_
-            local _,_,to,op = unpack(do_)
-            local set = AST.asr(me.__par,'Set_Exp')
-            set.__dcls_is_escape = true
-            local fr = unpack(set)
-            if to and type(to)~='boolean' then
-                ASR(type(fr)~='boolean', me,
-                    'invalid `escape´ : expected expression')
-                set[3] = op
-                to.__dcls_is_escape = true
-                return AST.copy(to)
-            else
-                ASR(type(fr)=='boolean', me,
-                    'invalid `escape´ : unexpected expression')
-                set.tag = 'Nothing'
-                return AST.node('Nothing', me.ln)
-            end
+        end
+        ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
+        esc.outer = do_
+        local _,_,to,op = unpack(do_)
+        local set = AST.asr(me.__par,'Set_Exp')
+        set.__dcls_is_escape = true
+        local fr = unpack(set)
+        if to and type(to)~='boolean' then
+            ASR(type(fr)~='boolean', me,
+                'invalid `escape´ : expected expression')
+            set[3] = op
+            to.__dcls_is_escape = true
+            return AST.copy(to)
         else
-AST.dump(me)
-error'TODO'
+            ASR(type(fr)=='boolean', me,
+                'invalid `escape´ : unexpected expression')
+            set.tag = 'Nothing'
+            return AST.node('Nothing', me.ln)
         end
     end,
 }

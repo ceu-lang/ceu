@@ -326,37 +326,6 @@ DBG('TODO: _Loop_Pool')
         --]]
 
         local dcls = node('Stmts', me.ln)
---[[
-        if to then
-            local to1 = to
-            if to1.tag ~= 'Varlist' then
-                to1 = { to1 }
-            end
-            for i, ID_int in ipairs(to1) do
-                local id = unpack(ID_int)
-                local ID = AST.get(awt,'_Await_Until', 1,'Await_Ext', 1,'ID_ext')
-                        or AST.get(awt,'_Await_Until', 1,'Await_Int', 1,'Exp_Name', 1,'ID_int')
-                local var do
-                    if ID then
-                        var = node('Var', me.ln,
-                                node('Ref', me.ln, 'every', ID, i),
-                                false,
-                                id)
-                    else
-                        AST.asr(awt,'Await_Wclock')
-                        var = node('Var', me.ln,
-                                node('Type', me.ln,
-                                    node('ID_prim', me.ln, 'int')),
-                                false,
-                                id)
-                    end
-                end
-                var.is_implicit = true
-                dcls[#dcls+1] = var
-            end
-        end
-]]
-
         local set_awt
         if to then
             local new do
