@@ -8,18 +8,9 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-input int X;
-var int x;
-every x in X do
-end
-escape 0;
-]],
-    run = false,
-}
-
 --[=====[
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3841,38 +3832,41 @@ end
     --props = 'line 3 : `every´ cannot contain `await´',
 }
 
---]=====]
 Test { [[
 input void X;
+var int x;
 every x in X do
     x = 1;
 end
 ]],
-    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "()"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "(int)" <= "()"',
 }
 Test { [[
 input void X;
+var int x,y;
 every (x,y) in X do
     x = 1;
 end
 ]],
-    stmts = 'line 2 : invalid assignment : types mismatch : "(int,int)" <= "()"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "(int,int)" <= "()"',
 }
 Test { [[
 input int X;
+var int x,y;
 every (x,y) in X do
     x = 1;
 end
 ]],
-    stmts = 'line 2 : invalid assignment : types mismatch : "(int,int)" <= "(int)"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "(int,int)" <= "(int)"',
 }
 Test { [[
 input (int,int) X;
+var int x;
 every x in X do
     x = 1;
 end
 ]],
-    stmts = 'line 2 : invalid assignment : types mismatch : "(int)" <= "(int,int)"',
+    stmts = 'line 3 : invalid assignment : types mismatch : "(int)" <= "(int,int)"',
 }
 
 --<<< EVERY
@@ -4007,7 +4001,8 @@ with
     end
 end
 ]],
-    dcls = 'line 4 : implicit declaration of "a" hides previous declaration',
+    props_ = 'line 5 : invalid `escape´ : unexpected enclosing `every´',
+    --dcls = 'line 4 : implicit declaration of "a" hides previous declaration',
 }
 Test { [[
 input (int,int) A;
@@ -4061,6 +4056,7 @@ await B;
 Test { [[
 input (int,int) A;
 par do
+    var int a,b;
     every (a,b) in A do
         escape a+b;
     end
@@ -4070,7 +4066,7 @@ with
     end
 end
 ]],
-    props_ = 'line 4 : invalid `escape´ : unexpected enclosing `every´',
+    props_ = 'line 5 : invalid `escape´ : unexpected enclosing `every´',
     --props = 'line 4 : not permitted inside `every´',
 }
 Test { [[
@@ -5958,6 +5954,7 @@ end;
 Test { [[
 var int ret = 0;
 par/or do
+    var int late;
     every late in 9us do
         ret = late;
     end
@@ -5978,6 +5975,7 @@ par do
     emit a(aa);      // 6
     escape aa;
 with
+    var int v;
     every v in a do
         aa = v+1;
     end;
@@ -16060,6 +16058,7 @@ input void OS_START, A;
 event int a, b;
 var int bb=0;
 par/or do
+    var int x;
     every x in b do
         bb=x;
         bb = bb + 1;
@@ -16168,6 +16167,7 @@ par do
         emit c(cc);
     end;
 with
+    var int x;
     every x in c do
         cc = x;
         cc = cc + 1;
@@ -16252,6 +16252,7 @@ input int A;
 event int c;
 var int a=0;
 par/or do
+    var int x;
     every x in c do
         a = x;
     end;
@@ -16270,12 +16271,14 @@ Test { [[
 event int b, c;
 var int a=0;
 par/or do
+    var int cc;
     every cc in c do
         //var int cc = await c;        // 4
         emit b(cc+1);     // 5
         a = cc+1;
     end;
 with
+    var int bb;
     every bb in b do
         //var int bb = await b;        // 10
         a = bb + 1;
@@ -21524,6 +21527,7 @@ Test { [[
 native _tceu_queue;
 input void&& E;
 input _tceu_queue&& GO;
+var _tceu_queue&& qu_;
 every qu_ in GO do
     var _tceu_queue qu = * qu_;
     async(qu) do
@@ -21531,7 +21535,7 @@ every qu_ in GO do
     end
 end
 ]],
-    inits = 'line 6 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:6)',
+    inits = 'line 7 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:7)',
     --fin = 'line 5 : unsafe access to pointer "qu" across `async´',
     --_ana = { isForever=true },
     --run = 1,
@@ -21541,6 +21545,7 @@ Test { [[
 input void&& E;
 native/plain _tceu_queue;
 input _tceu_queue&& GO;
+var _tceu_queue&& qu_;
 every qu_ in GO do
     var _tceu_queue qu = * qu_;
     async(qu) do
@@ -25580,6 +25585,7 @@ escape 1;
 Test { [[
 native _SDL_KeyboardEvent;
 input _SDL_KeyboardEvent&& SDL_KEYUP;
+var _SDL_KeyboardEvent&& key;
 every key in SDL_KEYUP do
     if key:keysym.sym == 1 then
     else/if key:keysym.sym == 1 then
@@ -28789,7 +28795,7 @@ every 1s do
 end
 escape 1;
 ]],
-    inits = 'line 2 : uninitialized variable "sfc" : reached `every´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "sfc" : reached `await´ (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
     --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
     --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (/tmp/tmp.ceu:2)',
