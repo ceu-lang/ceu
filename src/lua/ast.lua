@@ -98,19 +98,20 @@ function AST.copy (node, ln)
     return ret
 end
 
-function AST.is_equal (n1, n2)
-    if n1 == n2 then
+function AST.is_equal (n1, n2, ignore)
+    if ignore and ignore(n1,n2) then
+        return true
+    elseif n1 == n2 then
         return true
     elseif AST.is_node(n1) and AST.is_node(n2) then
         if n1.tag==n2.tag and #n1==#n2 then
             for i, v in ipairs(n1) do
-                if not AST.is_equal(n1[i],n2[i]) then
+                if not AST.is_equal(n1[i],n2[i],ignore) then
                     return false
                 end
             end
             return true
         else
-error'TODO: luacov never executes this?'
             return false
         end
     else

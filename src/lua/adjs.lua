@@ -30,25 +30,25 @@ F = {
 
         local nats = node('Stmts', me.ln,
                         node('Nat', me.ln,
+                            false,
                             node('Type', me.ln,
                                 node('ID_prim', me.ln, '_')),
-                            false,
                             '_{}'),
                         node('Nat', me.ln,
                             false,
                             'plain',
                             '_char'),
                         node('Nat', me.ln,
+                            'nohold',
                             node('Type', me.ln,
                                 node('ID_prim', me.ln, '_')),
-                            'nohold',
                             '_ceu_callback_assert_msg'))
         nats[3].is_predefined = true
 
         local ret = node('Var', me.ln,
+                        false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
-                        false,
                         '_ret')
         ret.is_implicit = true
 
@@ -115,17 +115,17 @@ error'TODO: luacov never executes this?'
                         unpack(me, 3))))
     end,
 
-    _Ext_Req_proto  = '_Code_proto',
-    _Ext_Code_proto = '_Code_proto',
-    _Code_proto = function (me)
-        me.tag = string.match(me.tag,'_(.*)_proto')
+    _Ext_Req_proto__PRE  = '_Code_proto__PRE',
+    _Ext_Code_proto__PRE = '_Code_proto__PRE',
+    _Code_proto__PRE = function (me)
+        local tag = string.match(me.tag,'(.*)_proto')
+        return node(tag, me.ln, unpack(me))
     end,
 
     _Ext_Req_impl__PRE  = '_Code_impl__PRE',
     _Ext_Code_impl__PRE = '_Code_impl__PRE',
     _Code_impl__PRE = function (me)
-        local mods, id, ins, mid, out, blk = unpack(me)
-        me.tag = string.match(me.tag,'_(.*)_impl')
+        local _,_,_,_,out,blk = unpack(me)
 
         -- enclose "blk" with "_ret = do ... end"
 
@@ -141,69 +141,80 @@ error'TODO: luacov never executes this?'
                         node('Block', me.ln,
                             stmts_old))
         if is_void then
-            stmts_new[1] = node('Nothing', me.ln)
-            stmts_new[2] = do_
+            stmts_new[1] = do_
         else
-            stmts_new[1] = node('Var', me.ln,
-                            AST.copy(out),
-                            false,
-                            '_ret')
-            stmts_new[2] = node('_Set', me.ln,
+            stmts_new[1] = node('_Set', me.ln,
                             node('Exp_Name', me.ln,
                                 node('ID_int', me.ln, '_ret')),
                             node('_Set_Do', me.ln,
                                 do_))
         end
 
-        -- insert in "stmts" all parameters "ins"/"mid"
-        local ins_mid = {} do
-            AST.asr(ins,'Code_Pars')
-            for _, v in ipairs(ins) do ins_mid[#ins_mid+1]=v end
-            if mid then
-                AST.asr(mid,'Code_Pars')
-                for _, v in ipairs(mid) do ins_mid[#ins_mid+1]=v end
-            end
+        local tag = string.match(me.tag,'(.*)_impl')
+        return node(tag, me.ln, unpack(me))
+    end,
+
+    _Code__PRE = function (me)
+        local mods, id, ins, mid, out, blk = unpack(me)
+        local is_impl = (blk ~= false)
+
+        local Type = AST.asr(out,'Type')
+        local ID_prim,mod = unpack(Type)
+        local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
+        if is_void then
+            out = node('Nothing', me.ln)
+        else
+            out = node('Var', me.ln, false, AST.copy(out), '_ret')
         end
 
-        local dcls = node('Stmts', me.ln)
-        local vars = node('Stmts', me.ln)
-        for i, v in ipairs(ins_mid) do
-            if v ~= 'void' then
-                AST.asr(v,'Code_Pars_Item')
+        return node('Code', me.ln, is_impl, mods, id,
+                node('Block', me.ln,
+                    node('Stmts', me.ln,
+                        node('Stmts', me.ln, ins, mid, out),
+                        (blk or node('Stmts',me.ln)))))
+    end,
+
+    Code_Pars = function (me)
+        local is_impl = unpack(AST.par(me,'Code'))
+
+        for i, v in ipairs(me) do
+            if v == 'void' then
+error'TODO'
+            else
+                AST.asr(v,'_Code_Pars_Item')
                 local pre,is_alias = unpack(v)
-                local _,dim,hold,tp,ID
+                local _,dim,hold,tp,id
+                local dcl
                 if pre == 'var' then
-                    _,_,hold,tp,ID = unpack(v)
-                    dcls[#dcls+1] = node('Var', me.ln, AST.copy(tp), is_alias, ID)
+                    _,_,hold,tp,id = unpack(v)
+                    id = id or '_anon_'..i
+                    me[i] = node('Var', me.ln, is_alias, AST.copy(tp), id)
                 elseif pre == 'vector' then
-                    _,_,dim,tp,ID = unpack(v)
-                    dcls[#dcls+1] = node('Vec', me.ln, AST.copy(tp), is_alias, AST.copy(dim), ID)
+                    _,_,dim,tp,id = unpack(v)
+                    id = id or '_anon_'..i
+                    me[i] = node('Vec', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
                 elseif pre == 'pool' then
 error'TODO: luacov never executes this?'
-                    _,_,dim,tp,ID = unpack(v)
-                    dcls[#dcls+1] = node('Pool', me.ln, AST.copy(tp), is_alias, AST.copy(dim), ID)
+                    _,_,dim,tp,id = unpack(v)
+                    id = id or '_anon_'..i
+                    me[i] = node('Pool', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
                 elseif pre == 'event' then
-                    _,_,_,tp,ID = unpack(v)
+                    _,_,_,tp,id = unpack(v)
+                    id = id or '_anon_'..i
                     if tp.tag == 'Type' then
                         tp = node('Typelist', me.ln, tp)
                         v[4] = tp
                     end
-                    dcls[#dcls+1] = node('Evt', me.ln, AST.copy(tp), is_alias, ID)
+                    me[i] = node('Evt', me.ln, is_alias, AST.copy(tp), id)
                 else
                     error'TODO'
                 end
-
-                -- mid's are not params
-                if i <= #ins then
-                    vars[#vars+1] = node('ID_int', me.ln, ID)
-                    dcls[#dcls].is_param = true
-                else
-                    dcls[#dcls].is_mid = true
+                if is_impl then
+                    ASR(id ~= '_anon_'..i, me,
+                        'invalid declaration : parameter #'..i..' : expected identifier')
                 end
             end
         end
-        table.insert(stmts_old, 1, vars)
-        table.insert(stmts_old, 1, dcls)
     end,
 
 -------------------------------------------------------------------------------
@@ -295,9 +306,9 @@ error'TODO: luacov never executes this?'
         end
 
         local i_dcl = node('Var', me.ln,
+                        false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
-                        false,
                         i)
         i_dcl.is_implicit = true
         i_dcl.is_read_only = true
@@ -490,71 +501,80 @@ DBG('TODO: _Loop_Pool')
 -------------------------------------------------------------------------------
 
     -- single declaration with multiple ids
-    --      => multiple declarations with single id
+    --      => multiple declarations with single ids
 
-    __dcls__PRE = function (me, tag, idx)
+    __dcls__PRE = function (me)
+        local is_alias, dim, tp
+        local tag = string.sub(me.tag,2,-2)
+        local idx do
+            if tag=='Pool' or tag=='Vec' then
+                idx = 3
+                is_alias, dim, tp = unpack(me)
+            else
+                idx = 2
+                is_alias, tp = unpack(me)
+            end
+        end
+
         local ids = { unpack(me, idx+1) }
         local ret = node('Stmts', me.ln)
         for _,id in ipairs(ids) do
-            local t = {}
-            for i=1, idx do
-                t[i] = AST.copy(me[i])
+            if tag=='Pool' or tag=='Vec' then
+                ret[#ret+1] = node(tag, me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
+            else
+                ret[#ret+1] = node(tag, me.ln, is_alias, AST.copy(tp), id)
             end
-            t[#t+1] = id
-            ret[#ret+1] = node(tag, me.ln, unpack(t))
         end
         return ret
     end,
-    _Vars__PRE = function (me)
-        local tp = table.remove(me,2)
-        table.insert(me,1,tp)
-        return F.__dcls__PRE(me, 'Var', 2)
-    end,
-    _Vecs__PRE = function (me)
-        local tp = table.remove(me,3)
-        table.insert(me,1,tp)
-        return F.__dcls__PRE(me, 'Vec', 3)
-    end,
-    _Pools__PRE = function (me)
-        local tp = table.remove(me,3)
-        table.insert(me,1,tp)
-error'TODO: luacov never executes this?'
-        return F.__dcls__PRE(me, 'Pool', 3)
-    end,
+    _Vars__PRE = '__dcls__PRE',
+    _Vecs__PRE = '__dcls__PRE',
+    _Pools__PRE = '__dcls__PRE',
     _Evts__PRE = function (me)
-        local tp = table.remove(me,2)
+        local _,tp = unpack(me)
         if tp.tag == 'Type' then
-            tp = node('Typelist', me.ln, tp)
+            me[2] = node('Typelist', me.ln, tp)
         end
-        table.insert(me,1,tp)
-        return F.__dcls__PRE(me, 'Evt', 2)
+        return F.__dcls__PRE(me)
     end,
     _Exts__PRE = function (me)
-        local tp = table.remove(me,2)
+        local _,tp = unpack(me)
         if tp.tag == 'Type' then
-            tp = node('Typelist', me.ln, tp)
+            me[2] = node('Typelist', me.ln, tp)
         end
-        table.insert(me,1,tp)
-        return F.__dcls__PRE(me, 'Ext', 2)
+        return F.__dcls__PRE(me)
     end,
     _Nats__PRE = function (me)
-        table.insert(me, 1,
+        table.insert(me, 2,
             node('Type', me.ln,
                 node('ID_prim', me.ln, '_')))
-        return F.__dcls__PRE(me, 'Nat', 2)
+        return F.__dcls__PRE(me)
     end,
 
     __dcls_set__PRE = function (me, tag, idx)
-        local sets = { unpack(me, idx+1) }
+        local is_alias, dim, tp, id
+        local tag = string.sub(me.tag,2,-6)
+        local idx do
+            if tag=='Pool' or tag=='Vec' then
+                idx = 3
+                is_alias, dim, tp, id = unpack(me)
+            else
+                idx = 2
+                is_alias, tp, id = unpack(me)
+            end
+        end
+
         local ret = node('Stmts', me.ln)
+        local sets = { unpack(me, idx+1) }
         for i=1, #sets, 2 do
             local id, set = unpack(sets,i)
-            local t = {}
-            for i=1, idx do
-                t[i] = AST.copy(me[i])
+
+            if tag=='Pool' or tag=='Vec' then
+                ret[#ret+1] = node(tag, me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
+            else
+                ret[#ret+1] = node(tag, me.ln, is_alias, AST.copy(tp), id)
             end
-            t[#t+1] = id
-            ret[#ret+1] = node(tag, me.ln, unpack(t))
+
             if set then
                 local _,v = unpack(set)
                 local to = node('Exp_Name', me.ln,
@@ -567,28 +587,15 @@ error'TODO: luacov never executes this?'
         return ret
     end,
 
-    _Vars_set__PRE = function (me)
-        local tp = table.remove(me,2)
-        table.insert(me,1,tp)
-        return F.__dcls_set__PRE(me, 'Var', 2)
-    end,
-    _Vecs_set__PRE = function (me)
-        local tp = table.remove(me,3)
-        table.insert(me,1,tp)
-        return F.__dcls_set__PRE(me, 'Vec', 3)
-    end,
-    _Pools_set__PRE = function (me)
-        local tp = table.remove(me,3)
-        table.insert(me,1,tp)
-        return F.__dcls_set__PRE(me, 'Pool', 3)
-    end,
+    _Vars_set__PRE = '__dcls_set__PRE',
+    _Vecs_set__PRE = '__dcls_set__PRE',
+    _Pools_set__PRE = '__dcls_set__PRE',
     _Evts_set__PRE = function (me)
-        local tp = table.remove(me,2)
+        local _,tp = unpack(me)
         if tp.tag == 'Type' then
             tp = node('Typelist', me.ln, tp)
         end
-        table.insert(me,1,tp)
-        return F.__dcls_set__PRE(me, 'Evt', 2)
+        return F.__dcls_set__PRE(me)
     end,
 
 -------------------------------------------------------------------------------
@@ -607,8 +614,8 @@ error'TODO: luacov never executes this?'
 
         return node('Stmts', me.ln,
                 node('Var', me.ln,
-                    Type,
                     '&',
+                    Type,
                     __ID_int),
                 node('Finalize', me.ln,
                     node('Set_Alias', me.ln,
@@ -626,18 +633,9 @@ error'TODO: luacov never executes this?'
     -- input void X => input () X;
     Ext__PRE = 'Evt__PRE',
     Evt__PRE = function (me)
-        local Type = unpack(me)
-        if Type.tag == 'Typelist' then
-            return
-        end
-
-        me[1] = node('Typelist',me.ln)
-
-        local ID, mod = unpack(Type)
-        if ID.tag=='ID_prim' and (not mod) and ID[1]=='void' then
-            -- void: no elements
-        else
-            me[1][1] = Type
+        local _,Type = unpack(me)
+        if Type.tag == 'Type' then
+            me[2] = node('Typelist', me.ln, Type)
         end
     end,
 

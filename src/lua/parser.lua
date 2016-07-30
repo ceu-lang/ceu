@@ -470,7 +470,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     V'Code_Pars' * KK'=>' *
                         OPT(V'Code_Pars' * KK'=>') *
                             V'Type'
-    , _Code_proto = V'__code'
+    , _Code_proto = V'__code' * Cc(false)
     , _Code_impl  = V'__code' * V'__Do' * V'EOC'
 
     , _Spawn_Block = K'spawn' * V'__Do'
@@ -501,11 +501,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                      + CK'pool'   * CKK'&' * V'__Dim' * V'Type'
                      + CK'event'  * CKK'&' * Cc(false) * (PARENS(V'Typelist') + V'Type')
                      + CK'var'   * OPT(CKK'&') * OPT(KK'/'*CK'hold') * V'Type'
-    , Code_Pars_Item  = V'__typepars_pre' * OPT(V'__ID_int')
+    , _Code_Pars_Item  = V'__typepars_pre' * OPT(V'__ID_int')
 
     , Code_Pars = #KK'(' * (
                     PARENS(P'void') +
-                    PARENS(LIST(V'Code_Pars_Item'))
+                    PARENS(LIST(V'_Code_Pars_Item'))
                   )
 
 -- DATA

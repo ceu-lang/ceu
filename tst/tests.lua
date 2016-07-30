@@ -30644,7 +30644,7 @@ escape 1;
 ]],
     --wrn = true,
     --adj = 'line 1 : missing parameter identifier',
-    dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
 Test { [[
@@ -30653,7 +30653,7 @@ do
 end
 escape 1;
 ]],
-    dcls = 'line 1 : invalid declaration : parameter #2 : expected identifier',
+    adjs = 'line 1 : invalid declaration : parameter #2 : expected identifier',
 }
 
 Test { [[
@@ -30662,7 +30662,7 @@ do
 end
 escape 1;
 ]],
-    dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
     --parser = 'line 1 : after `int´ : expected type modifier or `,´ or `)´',
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
 }
@@ -30676,7 +30676,7 @@ escape 1;
     --wrn = true,
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
     --parser = 'line 1 : after `void´ : expected type modifier or `;´',
-    dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
 Test { [[
@@ -30687,8 +30687,8 @@ escape 1;
 ]],
     wrn = true,
     --adj = 'line 1 : wrong argument #1 : cannot be `void´',
-    --dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-    dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    --dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 
 Test { [[
@@ -30754,10 +30754,10 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var int x) => int
+code/tight Code (var int xxx) => int
 do
-    x = x + 1;
-    escape x;
+    xxx = xxx + 1;
+    escape xxx;
 end
 var int a = call Code(1);
 var int b = call Code(a+10);
@@ -30867,7 +30867,7 @@ escape 1;
     --wrn = true,
     --env = 'line 1 : missing parameter identifier',
     --parser = 'line 1 : after `void´ : expected type modifier or `;´',
-    dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
 Test { [[
@@ -30996,7 +30996,8 @@ Test { [[
 code/tight Fx (var void, var int) => int;
 escape 1;
 ]],
-    dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    --dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 
 Test { [[
@@ -31144,6 +31145,17 @@ end
 var u8 v = call Set(_);
 escape v as int;
 ]],
+    dcls = 'line 1 : variable "v" declared but not used',
+}
+
+Test { [[
+code/tight Set (var u8 v)=>int do
+    escape 3;
+end
+var u8 v = call Set(_);
+escape v as int;
+]],
+    wrn = true,
     run = 3,
 }
 
@@ -31391,8 +31403,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    --dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-    dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    --dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 
 Test { [[
@@ -31401,7 +31413,7 @@ end
 escape 1;
 ]],
     --parser = 'line 1 : after `int´ : expected type modifier or `;´',
-    dcls = 'line 1 : invalid declaration : parameter #1 : expected identifier',
+    adjs = 'line 1 : invalid declaration : parameter #1 : expected identifier',
 }
 
 Test { [[
@@ -31410,8 +31422,8 @@ end
 escape 1;
 ]],
     wrn = true,
-    --dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
-    dcls = 'line 1 : invalid declaration : unexpected type `void´',
+    dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
+    --dcls = 'line 1 : invalid declaration : unexpected type `void´',
 }
 
 Test { [[
@@ -32140,7 +32152,7 @@ do
 end
 escape 1;
 ]],
-    --wrn = true,
+    wrn = true,
     --cc = '1:9: error: unused variable ‘__ceu_x_1’ [-Werror=unused-variable]',
     run = 1,
 }
@@ -32571,6 +32583,7 @@ var int x;
 call Fx(&x);
 escape x;
 ]],
+    wrn = true,
     inits = 'line 3 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
     --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --mode = 'line 7 : cannot read field with mode `input´',
@@ -32637,6 +32650,7 @@ var int&& a =
 
 escape 0;
 ]],
+    wrn = true,
     stmts = 'line 4 : invalid assignment : types mismatch : "int&&" <= "int"',
 }
 
@@ -33207,6 +33221,7 @@ end
 
 escape 0;
 ]],
+    wrn = true,
     inits = 'line 16 : uninitialized variable "x1" : reached read access (/tmp/tmp.ceu:17)',
 }
 
@@ -33547,6 +33562,7 @@ code/await Ff (var int x) => (event& int e) => void do
 end
 escape 0;
 ]],
+    wrn = true,
     exps = 'line 4 : invalid access to output variable "e"',
 }
 
@@ -34637,6 +34653,7 @@ end
 
 escape 0;
 ]],
+    wrn = true,
     dcls = 'line 11 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:5)',
 }
 
@@ -34659,6 +34676,7 @@ end
 
 escape 0;
 ]],
+    wrn = true,
     dcls = 'line 13 : invalid `code´ declaration : body for "Ff" already exists',
 }
 
@@ -34675,6 +34693,7 @@ await Ui_go(&ui);
 
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 

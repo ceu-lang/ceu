@@ -159,6 +159,10 @@ F = {
         if AST.par(me,'Data') then
             return
         end
+        local Code = AST.par(me,'Code')
+        if Code and Code[1]==false then
+            return
+        end
 
         for _, dcl in pairs(me.dcls) do
             if dcl.tag=='Data' and string.sub(dcl.id,1,1)=='_' then
@@ -185,10 +189,9 @@ F = {
     end,
 
     Var = function (me)
-        local Type,is_alias,id = unpack(me)
+        local is_alias,Type,id = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
-
         F.__no_abs(Type, 'Code')
 
         if TYPES.check(Type,'?') and TYPES.is_nat_not_plain(TYPES.pop(Type,'?')) then
@@ -211,10 +214,9 @@ F = {
     end,
 
     Vec = function (me)
-        local Type,_,dim,id = unpack(me)
+        local _,Type,id,dim = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
-
         F.__no_abs(Type, 'Code')
 
         -- vector[] void vec;
@@ -226,13 +228,13 @@ F = {
     end,
 
     Pool = function (me)
-        local _,_,_,id = unpack(me)
+        local _,_,id,_ = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
     end,
 
     Evt = function (me)
-        local Typelist,_,id = unpack(me)
+        local _,Typelist,id = unpack(me)
         me.id = id
 
         -- no modifiers allowed
@@ -256,7 +258,7 @@ F = {
         native_end = true
     end,
     Nat__PRE = function (me)
-        local _,mod,id = unpack(me)
+        local mod,_,id = unpack(me)
         me.id = id
         me.is_read_only = (mod == 'const')
         local blk = AST.asr(AST.root,'', 1,'Block')
@@ -273,7 +275,7 @@ F = {
     -- EXT
 
     Ext = function (me)
-        local _, grp, id = unpack(me)
+        local _, _, id = unpack(me)
         me.id = id
         local blk = AST.asr(AST.root,'', 1,'Block')
         dcls_new(blk, me)
@@ -284,39 +286,41 @@ F = {
     -- CODE / DATA
 
     Code_Pars = function (me)
-        local body = AST.get(me.__par,'Code', 6,'Block')
-        if body then
-            for i, item in ipairs(me) do
-                local kind,_,_,_,id = unpack(item)
-                ASR(id, me,
-                    'invalid declaration : parameter #'..i..' : expected identifier')
+        local Code = AST.asr(me,4,'Code')
+
+        local tps = AST.node('Typelist',me.ln)
+        for i, dcl in ipairs(me) do
+            tps[i] = dcl[2]
+        end
+        F.Typelist(tps)
+
+        -- check if all mid's are "&" aliases
+        if AST.asr(me,1,'Stmts')[2] == me then
+            for i, dcl in ipairs(me) do
+                local is_alias, Type = unpack(dcl)
+                ASR(is_alias, dcl,
+                    'invalid `code´ declaration : `watching´ parameter #'..i..' : expected `&´')
+assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             end
         end
 
-        local t = AST.node('Typelist',me.ln)
-        for i, item in ipairs(me) do
-            local _,_,_,Type = unpack(item)
-            t[i] = Type
-        end
-        F.Typelist(t)
-
         -- multi-methods: changes "me.id" on Code
-        me.ids = ''
-        for i, item in ipairs(me) do
-            local kind,is_alias,_,Type,_ = unpack(item)
-            if kind~='event' and Type[1].tag=='ID_abs' then
-                item.id = '_'..i..'_'..kind..
-                          '_'..(is_alias and 'y' or 'n')..
-                          '_'..TYPES.tostring(Type)
-                item.id = TYPES.noc(item.id)
-                me.ids = me.ids..item.id
+        me.ids_dyn = ''
+        for i, dcl in ipairs(me) do
+            local is_alias,Type = unpack(dcl)
+            if dcl.tag~='Evt' and Type[1].tag=='ID_abs' then
+                dcl.id_dyn = '_'..i..'_'..dcl.tag..
+                             '_'..(is_alias and 'y' or 'n')..
+                             '_'..TYPES.tostring(Type)
+                dcl.id_dyn = TYPES.noc(dcl.id_dyn)
+                me.ids_dyn = me.ids_dyn..dcl.id_dyn
             end
         end
     end,
 
     -- detect "base" dynamic multimethod: create dummy copy with plain "id"
     Code__PRE = function (me)
-        local mods,id,ins,_,_,body = unpack(me)
+        local is_impl,mods,id,body = unpack(me)
         if not mods.dynamic then
             return  -- not dynamic code
         end
@@ -331,12 +335,12 @@ F = {
         end
 
         local orig
-        if body then
+        if is_impl then
             orig = body[1]
             body[1] = AST.node('Stmts', me.ln)
         end
         local new = AST.copy(me)
-        if body then
+        if is_impl then
             body[1] = orig
         end
 
@@ -347,8 +351,13 @@ F = {
         return AST.node('Stmts', me.ln, new, me)
     end,
 
+    __proto_ignore = function (id1, id2)
+        return (type(id1)=='string' and string.sub(id1,1,6)=='_anon_')
+            or (type(id2)=='string' and string.sub(id2,1,6)=='_anon_')
+    end,
+
     Code = function (me)
-        local mods1,id,ins1,mid,_,body1 = unpack(me)
+        local is_impl1,mods1,id,body1 = unpack(me)
 
         ASR(not AST.par(me,'Code'), me,
             'invalid `code´ declaration : nesting is not allowed')
@@ -357,7 +366,8 @@ F = {
 
         if not me.is_dyn_base then
             if mods1.dynamic then
-                me.id = id..ins1.ids
+                local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+                me.id = id..ins1.ids_dyn
                 me.dyn_base = DCLS.asr(me,blk,id)
                 me.dyn_base.dyn_last = me
             else
@@ -365,34 +375,16 @@ F = {
             end
         end
 
-        -- check if all mid's are "&" aliases
-        if mid then
-            for i, item in ipairs(AST.asr(mid,'Code_Pars')) do
-                local mod, is_alias, _, Type, _ = unpack(item)
-                ASR(is_alias, item,
-                    'invalid `code´ declaration : `watching´ parameter #'..i..' : expected `&´')
-assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
-            end
-        end
-
         local old = DCLS.get(blk, me.id)
         if old then
-            local mods2,_,ins2,_,_,body2 = unpack(old)
-            ASR(not (body1 and body2), me,
+            local is_impl2,mods2,_,body2 = unpack(old)
+            ASR(not (is_impl1 and is_impl2), me,
                 'invalid `code´ declaration : body for "'..id..'" already exists')
 
             -- compare ins
-            local ok = (#ins1==#ins2)
-            if ok then
-                for i=1, #ins1 do
-                    local Type1 = AST.asr(ins1[i],'', 4,'Type')
-                    local Type2 = AST.asr(ins2[i],'', 4,'Type')
-                    if not TYPES.is_equal(Type1,Type2) then
-                        ok = false
-                        break
-                    end
-                end
-            end
+            local proto1 = AST.asr(body1,'Block',1,'Stmts',1,'Stmts')
+            local proto2 = AST.asr(body2,'Block',1,'Stmts',1,'Stmts')
+            local ok = AST.is_equal(proto1, proto2, F.__proto_ignore)
 
             -- compare mods
             do
@@ -412,7 +404,7 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
 
             ASR(ok, me,
                 'invalid `code´ declaration : unmatching prototypes '..
-                '(vs. '..ins2.ln[1]..':'..ins2.ln[2]..')')
+                '(vs. '..proto1.ln[1]..':'..proto2.ln[2]..')')
         end
 
         --local blk = AST.par(me,'Block')
@@ -460,7 +452,7 @@ assert(mod=='var' or mod=='vector' or mod=='event', 'TODO')
             if Type.tag == 'Type' then
                 local ID_prim,mod = unpack(Type)
                 if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
-                    ASR(is_alias, me,
+                    ASR(false, me,
                         'invalid declaration : unexpected type `void´')
                 end
             end

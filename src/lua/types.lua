@@ -184,7 +184,7 @@ function TYPES.is_nat_not_plain (tp)
     end
     local ID_nat = AST.get(tp,'', 1,'ID_nat')
     if ID_nat then
-        local _,mod = unpack(ID_nat.dcl)
+        local mod = unpack(ID_nat.dcl)
         if mod == 'plain' then
             return false
         end
