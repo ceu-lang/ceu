@@ -122,7 +122,7 @@ local function run_inits (par, i, Dcl, stop)
                    or AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
                                     1,'Abs_Await')
         if await then
-            local list = AST.get(await,'', 2,'List_Var_Any')
+            local list = AST.get(await,'', 2,'List_Watching')
             ok = run_inits(await, 1, Dcl)
         end
         ASR(ok, Dcl,
@@ -140,7 +140,7 @@ local function run_inits (par, i, Dcl, stop)
 
 
     -- ok: found assignment
-    elseif me.tag == 'List_Var_Any' then
+    elseif me.tag == 'List_Watching' then
         for _,ID_int in ipairs(me) do
             if ID_int.dcl == Dcl then
                 ID_int.dcl.inits = {me}
@@ -407,7 +407,7 @@ error'TODO: luacov never executes this?'
             ' "'..to.info.dcl.id..'" is already bound ('..
             inits..')')
     end,
-    List_Var_Any = function (me)
+    List_Watching = function (me)
         for _, to in ipairs(me) do
             if to.is_init then
                 -- I'm the one who created the binding

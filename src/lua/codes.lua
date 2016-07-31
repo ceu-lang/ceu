@@ -372,7 +372,7 @@ if (0)
                            or AST.get(watch,'',1,'Par_Or',1,'Block',1,'Stmts',
                                                1,'Abs_Await')
             if Abs_Await == me then
-                local list = Abs_Await and AST.get(Abs_Await,'', 2,'List_Var_Any')
+                local list = Abs_Await and AST.get(Abs_Await,'', 2,'List_Watching')
                 if list then
                     for _, ID_int in ipairs(list) do
                         if ID_int.tag~='ID_any' and ID_int.dcl.is_mid then
@@ -436,6 +436,21 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
 
         CEU_STK_LBL((tceu_evt_occ*)&__ceu_ps, _ceu_stk,
                     __ceu_new_mem, 0, ]]..ID_abs.dcl.lbl_in.id..[[);
+    }
+}
+]])
+    end,
+
+    Loop_Pool = function (me)
+        local _,_,pool,body = unpack(me)
+        LINE(me, [[
+{
+    tceu_code_mem_dyn* __ceu_cur = ]]..V(pool)..[[.first.nxt;
+    while (__ceu_cur != &]]..V(pool)..[[.first) {
+]])
+        CONC(me, body)
+        LINE(me, [[
+        __ceu_cur = __ceu_cur->nxt;
     }
 }
 ]])

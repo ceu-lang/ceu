@@ -404,7 +404,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     (V'__ID_int'+V'ID_any') * OPT(K'in' * V'_Loop_Num_Range') *
                    V'__Do'
     , _Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                        OPT(PARENS(V'List_Var_Any')) *
+                        OPT(PARENS(V'List_Watching')) *
                             K'in' * V'Exp_Name' *
                    V'__Do'
     , Loop       = K'loop' * OPT('/'*V'__Exp') *
@@ -600,7 +600,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
     , __watch = (V'_Await_Until' + V'Await_Wclock' + V'Abs_Await')
-                    * OPT(KK'=>' * PARENS(V'List_Var_Any'))
+                    * OPT(KK'=>' * PARENS(V'List_Watching'))
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -635,7 +635,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Abs_Spawn = K'spawn' * V'__Abs_Cons_Code' * KK'in' * V'Exp_Name'
     , _Abs_Back = K'spawn' * V'__Abs_Cons_Code' * (-KK'in')
-                    * OPT(KK'=>' * PARENS(V'List_Var_Any'))
+                    * OPT(KK'=>' * PARENS(V'List_Watching'))
 
     , __Abs_Cons_Code = V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
@@ -733,7 +733,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Namelist = LIST(V'Exp_Name')
     , Varlist  = LIST(V'ID_int')
     , Explist  = LIST(V'__Exp')
-    , List_Var_Any = LIST((V'ID_int' + V'ID_any'))
+    , List_Watching = LIST((V'ID_int' + V'ID_any'))
 
  --<<<
 

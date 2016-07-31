@@ -338,7 +338,7 @@ error'TODO: luacov never executes this?'
         me.tag = 'Loop_Pool'
 -- TODO
 DBG('TODO: _Loop_Pool')
-        return node('Nothing', me.ln)
+        --return node('Nothing', me.ln)
     end,
 
     _Every__PRE = function (me)

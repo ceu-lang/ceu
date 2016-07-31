@@ -46,7 +46,7 @@ F = {
         end
     end,
 
-    List_Var_Any = function (me)
+    List_Watching = function (me)
         local watch = AST.par(me, 'Watching')
         for _, ID in ipairs(me) do
             if ID.tag ~= 'ID_any' then
