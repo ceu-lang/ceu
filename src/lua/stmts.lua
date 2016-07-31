@@ -112,6 +112,7 @@ DBG('TODO: _Lua')
         ASR(ID_int.dcl[1]=='&', me, 'invalid binding : expected declaration with `&´')
 
         -- tp
+        EXPS.check_tag(me, to.info.tag, fr.info.dcl.tag, 'invalid binding')
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)
 
         -- NO: ... = &_V        // native ID
@@ -165,14 +166,6 @@ DBG('TODO: _Lua')
         -- tp
         EXPS.check_tp(me, to.info.tp, Abs_Cons.info.tp, 'invalid constructor')
 
---[[
-        -- NO: abstract abs
-        --  var Dd d;   // where "D" is abstract
-        me.is_abstract = ((not enum) and #AST.asr(blk,'',1,'Stmts')==0)
-        ASR(not ID_abs.dcl.is_abstract, me,
-            'invalid declaration : cannot instantiate abstract `data´ "'..ID_abs.dcl.id..'"')
-]]
-
         -- exact match on constructor
         local to_str = TYPES.tostring(to.info.tp)
         local fr_str = TYPES.tostring(Abs_Cons.info.tp)
@@ -182,8 +175,6 @@ DBG('TODO: _Lua')
             ASR(enum and #AST.asr(blk,'',1,'Stmts')==0, me,
                 'invalid constructor : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
         end
-        --ASR(to_str==fr_str, me,
-            --'invalid constructor : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
     end,
     Set_Abs_New = function (me)
         local _, Exp_Name = unpack(me)
@@ -285,6 +276,7 @@ DBG('TODO: _Lua')
                     local is_alias,arg_tp = unpack(arg.dcl)
                     ASR(is_alias, me,
                         'invalid binding : argument #'..i..' : expected alias `&´ declaration')
+                    EXPS.check_tag(me, par.tag, arg.info.dcl.tag, 'invalid binding')
                     EXPS.check_tp(me, par_tp, arg_tp,
                         'invalid binding : argument #'..i)
                 end

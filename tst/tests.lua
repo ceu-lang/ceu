@@ -10,50 +10,6 @@ end
 
 --[=====[
 Test { [[
-code/await Ff (void) => (var& int x) => void do
-    var int v = 0;
-    x = &v;
-end
-
-var int x;
-spawn Ff() => (x);
-
-escape 0;
-]],
-    stmts = 'line 7 : invalid binding : argument #1 : expected alias `&´ declaration',
-}
-
-Test { [[
-code/await Ff (void) => (var& int x) => void do
-    var int v = 0;
-    x = &v;
-end
-
-var& bool x;
-spawn Ff() => (x);
-
-escape 0;
-]],
-    stmts = 'line 7 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
-}
-
-Test { [[
-code/await Ff (void) => (var& int x) => void do
-    var int v = 0;
-    x = &v;
-end
-
-vector&[] int x;
-spawn Ff() => (x);
-
-escape 0;
-]],
-    stmts = 'line 7 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
-}
-
-do return end
-
-Test { [[
 var int ts = _;
 loop t in ts do
 end
@@ -32519,7 +32475,7 @@ escape 1;
     run = { ['~>100s'] = 1 },
 }
 
--- CODE / ALIAS
+-->> CODE / ALIAS
 
 Test { [[
 code/await Tx (var& void p)=>int do
@@ -32601,6 +32557,85 @@ escape x;
     --run = 'line 6 : missing initialization for field "i" (declared in /tmp/tmp.ceu:3)',
     --mode = 'line 7 : cannot read field with mode `input´',
 }
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int v = 0;
+    x = &v;
+end
+
+var int x;
+spawn Ff() => (x);
+
+escape 0;
+]],
+    stmts = 'line 7 : invalid binding : argument #1 : expected alias `&´ declaration',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int v = 0;
+    x = &v;
+end
+
+var& bool x;
+spawn Ff() => (x);
+
+escape 0;
+]],
+    stmts = 'line 7 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+}
+
+Test { [[
+code/tight Ff (var& int x) => void do
+    var int v = 0;
+    x = &v;
+end
+
+var& int x;
+call Ff(&x);
+
+escape 0;
+]],
+    inits = 'line 3 : invalid binding : variable "x" is already bound',
+}
+
+Test { [[
+vector[] int x;
+var& int xx = &x;
+escape 0;
+]],
+    stmts = 'line 2 : invalid binding : types mismatch : "Var" <= "Vec"',
+}
+
+Test { [[
+code/await Ff (var& int x) => int do
+    escape x;
+end
+
+vector[] int x;
+spawn Ff(&x);
+
+escape 0;
+]],
+    exps = 'line 6 : invalid binding : types mismatch : "Var" <= "Vec"',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int v = 0;
+    x = &v;
+end
+
+vector&[] int x;
+spawn Ff() => (x);
+
+escape 0;
+]],
+    stmts = 'line 7 : invalid binding : types mismatch : "Var" <= "Vec"',
+}
+
+--<< CODE / ALIAS
 
 -->> CODE / OPTION
 

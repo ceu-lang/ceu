@@ -388,6 +388,10 @@ error'TODO: luacov never executes this?'
             return  -- I'm the one who created the binding
         end
 
+        ASR(not AST.par(me,'Code'), me,
+            'invalid binding : '..AST.tag2id[to.info.dcl.tag]..
+            ' "'..to.info.dcl.id..'" is already bound')
+
         -- NO: multiple bindings
         --  x=&a; x=&b
         local inits do

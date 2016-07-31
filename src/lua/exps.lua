@@ -7,6 +7,11 @@ function EXPS.check_tp (me, to_tp, fr_tp, err_msg, is_alias)
         err_msg..' : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
 end
 
+function EXPS.check_tag (me, to_tag, fr_tag, err_msg)
+    ASR(to_tag==fr_tag or (to_tag=='Var' and fr_tag=='Val'), me,
+        err_msg..' : types mismatch : "'..to_tag..'" <= "'..fr_tag..'"')
+end
+
 function EXPS.check_dim (to, fr)
     if to == '[]' then
         return true
@@ -173,6 +178,7 @@ error'TODO: remove below'
                 INFO.asr_tag(val, {'Alias','Val','Nat','Var'}, err_str..' : argument #'..i)
 
                 -- tp
+                EXPS.check_tag(me, var.tag, val.info.dcl.tag, 'invalid binding')
                 EXPS.check_tp(me, var_tp, val.info.tp, err_str..' : argument #'..i,var_is_alias)
             end
         end
