@@ -401,8 +401,8 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..ID_int.dcl.id..[[ != NULL) 
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
     ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
 
-    CEU_WRAPPER_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
-                                     (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
+    CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
+                                   (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
     ]]..watch_code..[[
 }
 ]],

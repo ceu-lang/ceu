@@ -178,7 +178,7 @@ tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
         if mods.tight then
             me.mems.wrapper = [[
 static ]]..TYPES.toc(Type)..[[ 
-CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
+CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
                            tceu_code_args_]]..me.id..[[ ps)
 {
     tceu_code_mem_]]..me.id..[[ mem;
@@ -205,7 +205,7 @@ CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
         else
             me.mems.wrapper = [[
-static void CEU_WRAPPER_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
+static void CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
                                        tceu_code_args_]]..me.id..[[ ps,
                                        tceu_code_mem* mem)
 {
