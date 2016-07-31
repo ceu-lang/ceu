@@ -54,7 +54,7 @@ typedef struct tceu_code_mem_ROOT {
     ---------------------------------------------------------------------------
 
     Code__PRE = function (me)
-        me.mems = { me=me, mem='' }
+        me.mems = { me=me, mem='', watch='' }
     end,
     Code__POS = function (me)
         local mods,id = unpack(me)
@@ -91,7 +91,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
         local mid  = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 2,'Code_Pars')
 
         if (not me.is_impl) or (mods.dynamic and (not me.is_dyn_base)) then
-            me.mems.args    = ''
+            me.mems.args = ''
             me.mems.wrapper = ''
             return
         end
@@ -175,8 +175,23 @@ tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
 
         me.mems.args = me.mems.args..'} tceu_code_args_'..me.id..';\n'
 
+        me.mems.wrapper = ''
+
+        -- CEU_CODE_WATCH_xxx
+        if me.mems.watch ~= '' then
+            me.mems.wrapper = me.mems.wrapper .. [[
+static void CEU_CODE_WATCH_]]..me.id..[[ (tceu_code_mem* _ceu_mem,
+                                          tceu_code_args_]]..me.id..[[* args)
+{
+    ]]..me.mems.watch..[[
+}
+]]
+        end
+
+        -- CEU_CODE_xxx
+
         if mods.tight then
-            me.mems.wrapper = [[
+            me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(Type)..[[ 
 CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
                            tceu_code_args_]]..me.id..[[ ps)
@@ -204,7 +219,7 @@ CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 }
 ]]
         else
-            me.mems.wrapper = [[
+            me.mems.wrapper = me.mems.wrapper .. [[
 static void CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
                                        tceu_code_args_]]..me.id..[[ ps,
                                        tceu_code_mem* mem)
@@ -221,6 +236,26 @@ static void CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
             end
             me.mems.wrapper = me.mems.wrapper .. [[
     CEU_STK_LBL((tceu_evt_occ*)&ps, stk, mem, trlK, lbl);
+]]
+            if me.mems.watch ~= '' then
+                me.mems.wrapper = me.mems.wrapper .. [[
+    CEU_CODE_WATCH_]]..me.id..[[(mem, &ps);
+]]
+            end
+            me.mems.wrapper = me.mems.wrapper .. [[
+}
+]]
+        end
+    end,
+
+    Set_Alias = function (me)
+        local fr, to = unpack(me)
+
+        if to.info.dcl.is_mid then
+            local Code = AST.par(me,'Code')
+            Code.mems.watch = Code.mems.watch .. [[
+if (args->]]..to.info.dcl.id..[[ != NULL) {
+    *(args->]]..to.info.dcl.id..[[) = ]]..V(to, {is_bind=true})..[[;
 }
 ]]
         end

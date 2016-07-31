@@ -167,7 +167,6 @@ escape ret;
 }
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -32779,6 +32778,7 @@ escape v1+v2;
 --<< CODE / OPTION
 
 -->> CODE / AWAIT / WATCHING
+--]=====]
 
 Test { [[
 code/await Code (var int x) => int do

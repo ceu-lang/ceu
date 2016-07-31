@@ -820,15 +820,6 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         LINE(me, [[
 ]]..V(to, {is_bind=true})..' = '..cast..V(fr)..[[;
 ]])
-
-        if to.info.dcl.is_mid then
-            local Code = AST.par(me,'Code')
-            LINE(me, [[
-if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..to.info.dcl.id..[[ != NULL) {
-    *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..to.info.dcl.id..[[) = ]]..V(to, {is_bind=true})..[[;
-}
-]])
-        end
     end,
 
     Set_Await_one = function (me)
