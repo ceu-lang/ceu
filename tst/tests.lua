@@ -10,188 +10,39 @@ end
 
 --[=====[
 --]=====]
-
 Test { [[
-var int ts = _;
-loop t in ts do
-end
-escape 1;
+vector[] int xs;
+var& int x = &xs[0];
+escape 0;
 ]],
-    parser = 'line 2 : after `in´ : expected `[´ or `]´',
+    stmts = 'line 2 : invalid binding : types mismatch : "Var" <= "Vec"',
 }
 
 Test { [[
-var int ts = _;
-loop in ts do
+native _V;
+native/pos do
+    int V = 0;
 end
-escape 1;
-]],
-    wrn = true,
-    stmts = 'line 2 : invalid `pool´ iterator : unexpected context for variable "ts"',
-}
 
-Test { [[
 code/await Ff (void) => void do
-    await FOREVER;
-end
-
-pool[5] Ff fs;
-
-var int n = 0;
-loop in fs do
-    n = n + 1;
-end
-
-escape n+1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/await Ff (void) => void do
-    await FOREVER;
-end
-
-pool[5] Ff fs;
-
-loop i in [0 -> 10] do
-    spawn Ff() in fs;
-end
-
-var int n = 0;
-loop in fs do
-    n = n + 1;
-end
-
-escape n;
-]],
-    run = 5,
-}
-
-Test { [[
-code/await Ff (var int x) => void do
-    if x == 1 then
-        await FOREVER;
+    every 1s do
+        _V = _V + 1;
     end
 end
 
-pool[5] Ff fs;
-
-loop i in [0 -> 8] do
-    spawn Ff(i%2) in fs;
+pool[1] Ff fff;
+spawn Ff() in fff;
+par/and do
+with
 end
+await 10s;
+escape _V;
 
-var int n = 0;
-loop in fs do
-    n = n + 1;
-end
-
-escape n;
 ]],
-    run = 4,
+    run = { ['~>10s'] = 10 },
 }
 
-Test { [[
-code/await Ff (void) => void do
-end
-
-pool[1] Ff fs;
-
-var int n = 0;
-loop (n) in fs do
-end
-
-escape n+1;
-]],
-    stmts = 'line 7 : invalid `loop´ : expected 0 argument(s)',
-}
-
-Test { [[
-code/await Ff (void) => (var& int x) => void do
-    var int xx = 10;
-    x = &xx;
-    await FOREVER;
-end
-
-pool[1] Ff fs;
-
-var int n = 0;
-loop (n) in fs do
-end
-
-escape n+1;
-]],
-    stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
-}
-
-Test { [[
-code/await Ff (void) => (var& int x) => void do
-    var int xx = 10;
-    x = &xx;
-    await FOREVER;
-end
-
-pool[1] Ff fs;
-
-var& int n;
-loop (n) in fs do
-end
-
-escape n+1;
-]],
-    props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
-}
-
-Test { [[
-code/await Ff (var int x) => (var& int y) => void do
-    y = &x;
-    if x == 1 then
-        await FOREVER;
-    end
-end
-
-pool[5] Ff fs;
-
-loop i in [0 -> 8] do
-    spawn Ff(i%2) in fs;
-end
-
-var int ret = 0;
-var& bool n;
-loop (n) in fs do
-end
-
-escape ret;
-]],
-    stmts = 'line 16 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
-}
-
-Test { [[
-code/await Ff (var int x) => (var& int y) => void do
-    y = &x;
-    if x%2 == 1 then
-        await FOREVER;
-    end
-end
-
-pool[5] Ff fs;
-
-loop i in [0 -> 8] do
-    spawn Ff(i) in fs;
-end
-
-var int ret = 0;
-var& int n;
-loop (n) in fs do
-    ret = ret + n;
-end
-
-escape ret;
-]],
-    run = 16,
-}
-
-do return end -- OK
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -40530,6 +40381,186 @@ escape sum;
 }
 
 -->>> POOL ITERATORS
+
+Test { [[
+var int ts = _;
+loop t in ts do
+end
+escape 1;
+]],
+    parser = 'line 2 : after `in´ : expected `[´ or `]´',
+}
+
+Test { [[
+var int ts = _;
+loop in ts do
+end
+escape 1;
+]],
+    wrn = true,
+    stmts = 'line 2 : invalid `pool´ iterator : unexpected context for variable "ts"',
+}
+
+Test { [[
+code/await Ff (void) => void do
+    await FOREVER;
+end
+
+pool[5] Ff fs;
+
+var int n = 0;
+loop in fs do
+    n = n + 1;
+end
+
+escape n+1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) => void do
+    await FOREVER;
+end
+
+pool[5] Ff fs;
+
+loop i in [0 -> 10] do
+    spawn Ff() in fs;
+end
+
+var int n = 0;
+loop in fs do
+    n = n + 1;
+end
+
+escape n;
+]],
+    run = 5,
+}
+
+Test { [[
+code/await Ff (var int x) => void do
+    if x == 1 then
+        await FOREVER;
+    end
+end
+
+pool[5] Ff fs;
+
+loop i in [0 -> 8] do
+    spawn Ff(i%2) in fs;
+end
+
+var int n = 0;
+loop in fs do
+    n = n + 1;
+end
+
+escape n;
+]],
+    run = 4,
+}
+
+Test { [[
+code/await Ff (void) => void do
+end
+
+pool[1] Ff fs;
+
+var int n = 0;
+loop (n) in fs do
+end
+
+escape n+1;
+]],
+    stmts = 'line 7 : invalid `loop´ : expected 0 argument(s)',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int xx = 10;
+    x = &xx;
+    await FOREVER;
+end
+
+pool[1] Ff fs;
+
+var int n = 0;
+loop (n) in fs do
+end
+
+escape n+1;
+]],
+    stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int xx = 10;
+    x = &xx;
+    await FOREVER;
+end
+
+pool[1] Ff fs;
+
+var& int n;
+loop (n) in fs do
+end
+
+escape n+1;
+]],
+    props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
+}
+
+Test { [[
+code/await Ff (var int x) => (var& int y) => void do
+    y = &x;
+    if x == 1 then
+        await FOREVER;
+    end
+end
+
+pool[5] Ff fs;
+
+loop i in [0 -> 8] do
+    spawn Ff(i%2) in fs;
+end
+
+var int ret = 0;
+var& bool n;
+loop (n) in fs do
+end
+
+escape ret;
+]],
+    stmts = 'line 16 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+}
+
+Test { [[
+code/await Ff (var int x) => (var& int y) => void do
+    y = &x;
+    if x%2 == 1 then
+        await FOREVER;
+    end
+end
+
+pool[5] Ff fs;
+
+loop i in [0 -> 8] do
+    spawn Ff(i) in fs;
+end
+
+var int ret = 0;
+var& int n;
+loop (n) in fs do
+    ret = ret + n;
+end
+
+escape ret;
+]],
+    run = 16,
+}
 
 Test { [[
 class Tx with

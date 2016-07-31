@@ -98,9 +98,15 @@ G = {
 
         sub.trails = { unpack(me._trails) }
 
-        local abs = AST.get(sub,'Pool',1,'Type',1,'ID_abs')
-        if sub.tag=='Finalize' or (abs and abs.tag=='Code') then
-            me._trails[1] = me._trails[1] + 1
+        local abs = AST.get(sub,'Pool',2,'Type',1,'ID_abs')
+        if sub.tag=='Finalize' or (abs and abs.dcl.tag=='Code') then
+            for stmts in AST.iter() do
+                if stmts.tag == 'Stmts' then
+                    stmts._trails[1] = stmts._trails[1] + 1
+                else
+                    break
+                end
+            end
         end
     end,
 
