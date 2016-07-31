@@ -9,6 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+
 Test { [[
 var int ts = _;
 loop t in ts do
@@ -30,6 +31,67 @@ escape 1;
 
 Test { [[
 code/await Ff (void) => void do
+    await FOREVER;
+end
+
+pool[5] Ff fs;
+
+var int n = 0;
+loop in fs do
+    n = n + 1;
+end
+
+escape n+1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) => void do
+    await FOREVER;
+end
+
+pool[5] Ff fs;
+
+loop i in [0 -> 10] do
+    spawn Ff() in fs;
+end
+
+var int n = 0;
+loop in fs do
+    n = n + 1;
+end
+
+escape n;
+]],
+    run = 5,
+}
+
+Test { [[
+code/await Ff (var int x) => void do
+    if x == 1 then
+        await FOREVER;
+    end
+end
+
+pool[5] Ff fs;
+
+loop i in [0 -> 8] do
+    spawn Ff(i%2) in fs;
+end
+
+var int n = 0;
+loop in fs do
+    n = n + 1;
+end
+
+escape n;
+]],
+    run = 4,
+}
+
+Test { [[
+code/await Ff (void) => void do
 end
 
 pool[1] Ff fs;
@@ -40,24 +102,43 @@ end
 
 escape n+1;
 ]],
-    --fin = 'line 14 : pointer access across `await´',
-    run = 1,
+    stmts = 'line 7 : invalid `loop´ : expected 0 argument(s)',
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) => (var& int x) => void do
+    var int xx = 10;
+    x = &xx;
+    await FOREVER;
 end
 
 pool[1] Ff fs;
 
 var int n = 0;
-loop f in fs do
+loop (n) in fs do
 end
 
 escape n+1;
 ]],
-    --fin = 'line 14 : pointer access across `await´',
-    run = 1,
+    stmts = 'line 10 : invalid binding : argument #1 : expected alias `&´ declaration',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int xx = 10;
+    x = &xx;
+    await FOREVER;
+end
+
+pool[1] Ff fs;
+
+var& int n;
+loop (n) in fs do
+end
+
+escape n+1;
+]],
+    run = 0,
 }
 
 do return end -- OK
@@ -32740,6 +32821,22 @@ escape a!;
 }
 
 Test { [[
+code/await Code (void) => (var& int y) => void do
+    var int x = 0;
+    y = &x;
+end
+
+var int y;
+watching Code() => (y) do
+    escape 1;
+end
+
+escape 0;
+]],
+    stmts = 'line 7 : invalid binding : argument #1 : expected alias `&´ declaration',
+}
+
+Test { [[
 code/await Code (var& int x) => (var& int y) => int
 do
     y = &x;
@@ -32760,6 +32857,26 @@ var int? a =
 escape a! + x;
 ]],
     run = {['~>1s']=24 },
+}
+
+Test { [[
+code/await Code (void) => (var& int y) => void do
+    var int x = 10;
+    y = &x;
+end
+
+var& int y;
+do
+    watching Code() => (y) do
+    end
+end
+do
+    vector[10] int x = [];
+end
+
+escape y;
+]],
+    props_ = 'line 15 : invalid access to internal identifier "y" : crossed `Watching´ (/tmp/tmp.ceu:8)',
 }
 
 Test { [[

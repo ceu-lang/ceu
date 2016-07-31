@@ -45,6 +45,24 @@ F = {
             end
         end
     end,
+
+    List_Var_Any = function (me)
+        local watch = AST.par(me, 'Watching')
+        for _, ID in ipairs(me) do
+            if ID.tag ~= 'ID_any' then
+                ID.dcl.__no_access = watch  -- no access outside watch
+            end
+        end
+    end,
+    ID_int = function (me)
+        local no = me.dcl.__no_access
+        if no then
+            ASR(AST.is_par(no, me), me,
+                'invalid access to internal identifier "'..me.dcl.id..'"'..
+                ' : crossed `'..no.tag..'´'..
+                ' ('..no.ln[1]..':'..no.ln[2]..')')
+        end
+    end,
 }
 
 AST.visit(F)

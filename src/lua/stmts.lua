@@ -255,6 +255,24 @@ DBG('TODO: _Lua')
         me.tp = TYPES.new(me, 'int')
     end,
 
+    __check_watching_list = function (me, pars, list, tag)
+        ASR(pars and #pars==#list, me,
+            'invalid `'..tag..'´ : expected '..#pars..' argument(s)')
+        for i, par in ipairs(pars) do
+            local is_alias,par_tp = unpack(par)
+            assert(is_alias)
+            local arg = list[i]
+            if arg.tag ~= 'ID_any' then
+                local is_alias,arg_tp = unpack(arg.dcl)
+                ASR(is_alias, me,
+                    'invalid binding : argument #'..i..' : expected alias `&´ declaration')
+                EXPS.check_tag(me, par.tag, arg.info.dcl.tag, 'invalid binding')
+                EXPS.check_tp(me, par_tp, arg_tp,
+                    'invalid binding : argument #'..i)
+            end
+        end
+    end,
+
     Abs_Await = function (me)
         local Abs_Cons,list = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
@@ -266,21 +284,7 @@ DBG('TODO: _Lua')
         if list then
             local pars = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
                                                     1,'Stmts', 2,'Code_Pars')
-            ASR(pars and #pars==#list, me,
-                'invalid `watching´ : expected '..#pars..' argument(s)')
-            for i, par in ipairs(pars) do
-                local is_alias,par_tp = unpack(par)
-                assert(is_alias)
-                local arg = list[i]
-                if arg.tag ~= 'ID_any' then
-                    local is_alias,arg_tp = unpack(arg.dcl)
-                    ASR(is_alias, me,
-                        'invalid binding : argument #'..i..' : expected alias `&´ declaration')
-                    EXPS.check_tag(me, par.tag, arg.info.dcl.tag, 'invalid binding')
-                    EXPS.check_tp(me, par_tp, arg_tp,
-                        'invalid binding : argument #'..i)
-                end
-            end
+            F.__check_watching_list(me, pars, list, 'watching')
         end
      end,
 
@@ -340,7 +344,9 @@ DBG('TODO: _Lua')
 
         if list then
             local Code = AST.asr(pool.info.tp[1].dcl, 'Code')
-            local _,_,_,pars = unpack(Code)
+            local pars = AST.asr(Code,'', 3,'Block', 1,'Stmts',
+                                          1,'Stmts', 2,'Code_Pars')
+            F.__check_watching_list(me, pars, list, 'loop')
         end
     end,
 
