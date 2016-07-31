@@ -9,6 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+--]=====]
 
 Test { [[
 var int ts = _;
@@ -156,6 +157,30 @@ loop i in [0 -> 8] do
 end
 
 var int ret = 0;
+var& bool n;
+loop (n) in fs do
+end
+
+escape ret;
+]],
+    stmts = 'line 16 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+}
+
+Test { [[
+code/await Ff (var int x) => (var& int y) => void do
+    y = &x;
+    if x%2 == 1 then
+        await FOREVER;
+    end
+end
+
+pool[5] Ff fs;
+
+loop i in [0 -> 8] do
+    spawn Ff(i) in fs;
+end
+
+var int ret = 0;
 var& int n;
 loop (n) in fs do
     ret = ret + n;
@@ -163,7 +188,7 @@ end
 
 escape ret;
 ]],
-    run = 4,
+    run = 16,
 }
 
 do return end -- OK
@@ -32778,7 +32803,6 @@ escape v1+v2;
 --<< CODE / OPTION
 
 -->> CODE / AWAIT / WATCHING
---]=====]
 
 Test { [[
 code/await Code (var int x) => int do

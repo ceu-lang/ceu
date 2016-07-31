@@ -288,6 +288,16 @@ DBG('TODO: _Lua')
         end
      end,
 
+    Loop_Pool = function (me)
+        local _,list,pool = unpack(me)
+        if list then
+            local Code = pool.info.dcl[2][1].dcl
+            local pars = AST.asr(Code,'Code', 3,'Block', 1,'Stmts',
+                                              1,'Stmts', 2,'Code_Pars')
+            F.__check_watching_list(me, pars, list, 'watching')
+        end
+    end,
+
     Await_Int = function (me, tag)
         local e = unpack(me)
 

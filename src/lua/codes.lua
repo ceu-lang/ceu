@@ -443,14 +443,26 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
 
     Loop_Pool = function (me)
         local _,list,pool,body = unpack(me)
+        local Code = pool.info.dcl[2][1].dcl
         LINE(me, [[
 {
     tceu_code_mem_dyn* __ceu_cur = ]]..V(pool)..[[.first.nxt;
     while (__ceu_cur != &]]..V(pool)..[[.first) {
 ]])
         if list then
-AST.dump(list)
-error'oi'
+            local pars = AST.asr(Code,'Code', 3,'Block', 1,'Stmts',
+                                              1,'Stmts', 2,'Code_Pars')
+            local ps = {}
+            for i, arg in ipairs(list) do
+                if arg.tag ~= 'ID_any' then
+                    local par = pars[i]
+                    ps[#ps+1] = '.'..par.id..' = &'..V(arg,{is_bind=true})
+                end
+            end
+            LINE(me, [[
+        tceu_code_args_]]..Code.id..[[ __ceu_ps = { ]]..table.concat(ps,',').. [[};
+        CEU_CODE_WATCH_]]..Code.id..[[(__ceu_cur->mem, &__ceu_ps);
+]])
         end
         CONC(me, body)
         LINE(me, [[
