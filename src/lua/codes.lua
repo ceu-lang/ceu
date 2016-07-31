@@ -442,12 +442,16 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
     end,
 
     Loop_Pool = function (me)
-        local _,_,pool,body = unpack(me)
+        local _,list,pool,body = unpack(me)
         LINE(me, [[
 {
     tceu_code_mem_dyn* __ceu_cur = ]]..V(pool)..[[.first.nxt;
     while (__ceu_cur != &]]..V(pool)..[[.first) {
 ]])
+        if list then
+AST.dump(list)
+error'oi'
+        end
         CONC(me, body)
         LINE(me, [[
         __ceu_cur = __ceu_cur->nxt;

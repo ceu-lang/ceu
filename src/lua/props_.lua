@@ -47,7 +47,7 @@ F = {
     end,
 
     List_Watching = function (me)
-        local watch = AST.par(me, 'Watching')
+        local watch = AST.par(me,'Loop_Pool') or AST.par(me,'Watching')
         for _, ID in ipairs(me) do
             if ID.tag ~= 'ID_any' then
                 ID.dcl.__no_access = watch  -- no access outside watch
@@ -59,7 +59,7 @@ F = {
         if no then
             ASR(AST.is_par(no, me), me,
                 'invalid access to internal identifier "'..me.dcl.id..'"'..
-                ' : crossed `'..no.tag..'´'..
+                ' : crossed `'..AST.tag2id[no.tag]..'´'..
                 ' ('..no.ln[1]..':'..no.ln[2]..')')
         end
     end,

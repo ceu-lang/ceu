@@ -138,7 +138,32 @@ end
 
 escape n+1;
 ]],
-    run = 0,
+    props_ = 'line 13 : invalid access to internal identifier "n" : crossed `loop´ (/tmp/tmp.ceu:10)',
+}
+
+Test { [[
+code/await Ff (var int x) => (var& int y) => void do
+    y = &x;
+    if x == 1 then
+        await FOREVER;
+    end
+end
+
+pool[5] Ff fs;
+
+loop i in [0 -> 8] do
+    spawn Ff(i%2) in fs;
+end
+
+var int ret = 0;
+var& int n;
+loop (n) in fs do
+    ret = ret + n;
+end
+
+escape ret;
+]],
+    run = 4,
 }
 
 do return end -- OK
@@ -32876,7 +32901,7 @@ end
 
 escape y;
 ]],
-    props_ = 'line 15 : invalid access to internal identifier "y" : crossed `Watching´ (/tmp/tmp.ceu:8)',
+    props_ = 'line 15 : invalid access to internal identifier "y" : crossed `watching´ (/tmp/tmp.ceu:8)',
 }
 
 Test { [[

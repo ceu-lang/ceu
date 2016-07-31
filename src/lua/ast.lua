@@ -38,6 +38,7 @@ AST.tag2id = {
     Kill            = 'kill',
     Loop            = 'loop',
     Loop_Num        = 'loop',
+    Loop_Pool       = 'loop',
     Nat_Block       = 'native block',
     Nat             = 'native',
     Nothing         = 'nothing',
