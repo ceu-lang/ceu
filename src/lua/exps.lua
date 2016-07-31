@@ -118,14 +118,14 @@ F = {
             err_str = 'invalid constructor'
         else
             me.vars = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
-                                              1,'Stmts', 1,'Code_Pars')
+                                                 1,'Stmts', 1,'Code_Pars')
             err_str = 'invalid call'
         end
         ASR(#me.vars == #Abslist, me, err_str..' : expected '..#me.vars..' argument(s)')
 
         -- check if dyn call is actually static (with "as")
         me.id = ID_abs.dcl.id
-        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[2])
+        local mods = (ID_abs.dcl.tag=='Code' and ID_abs.dcl[1])
         local is_dyn do
             if mods and mods.dynamic then
                 is_dyn = false
@@ -141,7 +141,7 @@ F = {
             if mods and mods.dynamic and var_tp[1].dcl.hier and (not is_dyn) then
                 if var_tp.tag=='Type' and var_tp[1].tag == 'ID_abs' then
                     if val.tag == 'Exp_as' then
-                        me.id = me.id..var.id
+                        me.id = me.id..var.id_dyn
                     else
                         is_dyn = true
                         me.id = ID_abs.dcl.id

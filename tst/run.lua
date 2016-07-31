@@ -225,7 +225,8 @@ end
             cc_output    = '/tmp/tmp.exe',
             cc_args      = '-Wall -Wextra -Werror'
                             -- TODO: remove all "-Wno-*"
-                            ..' -Wno-unused',
+                            ..' -Wno-unused'
+                            ..' -Wno-missing-field-initializers',
 
             ceu_line_directives = 'true',
             --ceu_line_directives = 'false',

@@ -34680,7 +34680,6 @@ escape 0;
     dcls = 'line 13 : invalid `code´ declaration : body for "Ff" already exists',
 }
 
---]=====]
 Test { [[
 data Ui with
     var int x;
@@ -62191,6 +62190,21 @@ escape (x1 as int) + (x2 as int);
 }
 
 Test { [[
+data Xx is 0;
+data Xx.Yy is 1;
+
+code/tight Ff (var int x) => int do
+    escape 111;
+end
+
+var int rrr = call Ff(999);
+escape rrr;
+]],
+    wrn = true,
+    run = 111,
+}
+
+Test { [[
 data Xx;
 data Xx.Yy is 1;
 
@@ -62198,7 +62212,8 @@ code/tight Ff (var Xx x) => int do
     escape x as int;
 end
 
-escape call Ff(Xx.Yy());
+var int rrr = call Ff(Xx.Yy());
+escape rrr;
 ]],
     run = 1,
 }

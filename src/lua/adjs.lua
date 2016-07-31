@@ -167,6 +167,7 @@ error'TODO: luacov never executes this?'
         else
             out = node('Var', me.ln, false, AST.copy(out), '_ret')
         end
+        out.is_implicit = true
 
         local ret = node('Code', me.ln, mods, id,
                         node('Block', me.ln,

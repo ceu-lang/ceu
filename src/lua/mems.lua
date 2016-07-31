@@ -143,21 +143,22 @@ tceu_evt]]..ptr..' '..id2..[[;
 
         local T = {}
         if mods.dynamic then
-            for i, item in ipairs(ins) do
-                local _,_,_,Type,id = unpack(item)
+            local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+            for i, dcl in ipairs(Code_Pars) do
+                local _,Type,id = unpack(dcl)
                 local data = AST.get(Type,'',1,'ID_abs')
                 if data then
                     local t = {id=id, i=i}
                     local id_super = TYPES.noc(data.dcl.id)
                     t[#t+1] = {
                         'CEU_DATA_'..TYPES.noc(id_super),
-                        item.id,
+                        dcl.id_dyn,
                     }
                     if data.dcl.hier then
                         for _, sub in ipairs(data.dcl.hier.down) do
                             t[#t+1] = {
                                 'CEU_DATA_'..TYPES.noc(sub.id),
-                                string.gsub(item.id,
+                                string.gsub(dcl.id_dyn,
                                             '_'..id_super..'$',
                                             '_'..TYPES.noc(sub.id))
                                 }

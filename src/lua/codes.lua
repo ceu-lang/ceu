@@ -284,24 +284,23 @@ if (0)
         end
 
         local args_id        = me.id
-        local args_Code_Pars = Code_Pars
-
+        local args_Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
         if me.dyn_base then
             args_id = me.dyn_base.id
-            _,_,args_Code_Pars = unpack(me.dyn_base)
+            args_Code_Pars = AST.asr(me.dyn_base,'Code', 3,'Block', 1,'Stmts',
+                                                         1,'Stmts', 1,'Code_Pars')
         end
 
-        local vars = AST.get(body,'Block', 1,'Stmts', 2,'Do', 2,'Block',
-                                           1,'Stmts', 2,'Stmts')
         for i,dcl in ipairs(body.dcls) do
             if dcl.is_param then
                 assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt')
                 local _,Type1,id1 = unpack(dcl)
 
+                local id = id1
                 local cast = ''
                 if me.dyn_base then
-error'oi'
-                    _,is_alias2,_,Type2,id2 = unpack(args_Code_Pars[i])
+                    local is_alias2,Type2,id2 = unpack(args_Code_Pars[i])
+                    id = id2
                     if not AST.is_equal(Type1,Type2) then
                         cast = '('..TYPES.toc(Type1)..(is_alias2 and '*' or '')..')'
                     end
@@ -309,7 +308,7 @@ error'oi'
 
                 LINE(me, [[
 ]]..V(dcl,{is_bind=true})..[[ =
-    ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_evt)->]]..id1..[[;
+    ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_evt)->]]..id..[[;
 ]])
             end
         end
