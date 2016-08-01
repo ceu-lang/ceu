@@ -157,7 +157,7 @@ DBG'TODO: type annotation'
         -- info
         me.info = INFO.copy(vec.info)
         me.info.tag = 'Var'
-        if TYPES.check(vec.info.tp,'&&') then
+        if me.info.dcl.tag=='Nat' and TYPES.check(vec.info.tp,'&&') then
             me.info.tp = TYPES.pop(vec.info.tp)
         end
     end,
