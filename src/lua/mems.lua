@@ -113,12 +113,23 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
                 end
             end
 
+            -- VAR
             if dcl.tag == 'Var' then
                 if dcl.id~='_ret' or mods.tight then
                     me.mems.args = me.mems.args..[[
 ]]..TYPES.toc(Type)..ptr..' '..id2..[[;
 ]]
                 end
+
+            -- EVT
+            elseif dcl.tag == 'Evt' then
+                assert(is_alias)
+-- TODO: per Code evts
+                me.mems.args = me.mems.args .. [[
+tceu_evt]]..ptr..' '..id2..[[;
+]]
+
+            -- VEC
             elseif dcl.tag == 'Vec' then
                 assert(is_alias)
                 if TYPES.is_nat(TYPES.get(Type,1)) then
@@ -131,11 +142,13 @@ tceu_vector]]..ptr..' '..id2..[[;
 ]]
                 end
 
-            elseif dcl.tag == 'Evt' then
--- TODO: per Code evts
-                    me.mems.args = me.mems.args .. [[
-tceu_evt]]..ptr..' '..id2..[[;
+            -- POOL
+            elseif dcl.tag == 'Pool' then
+                assert(is_alias)
+                me.mems.args = me.mems.args .. [[
+tceu_pool_pak]]..ptr..' '..id2..[[;
 ]]
+
             else
                 error'bug found'
             end

@@ -201,7 +201,6 @@ error'TODO'
                     id = id or '_anon_'..i
                     me[i] = node('Vec', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
                 elseif pre == 'pool' then
-error'TODO: luacov never executes this?'
                     _,_,dim,tp,id = unpack(v)
                     id = id or '_anon_'..i
                     me[i] = node('Pool', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))

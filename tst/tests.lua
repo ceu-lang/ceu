@@ -10,13 +10,75 @@ end
 
 --[=====[
 --]=====]
+
 Test { [[
-vector[] int xs;
-var& int x = &xs[0];
-escape 0;
+code/await Gg (void) => void do
+    await FOREVER;
+end
+
+pool[3] Gg gs;
+spawn Gg() in gs;
+
+pool&[3] Gg gs_ = &gs;
+
+var int ret = 0;
+loop in gs_ do
+    ret = ret + 1;
+end
+
+spawn Gg() in gs_;
+
+loop in gs do
+    ret = ret + 1;
+end
+
+escape ret;
 ]],
-    stmts = 'line 2 : invalid binding : types mismatch : "Var" <= "Vec"',
+    wrn = true,
+    run = 3,
 }
+
+Test { [[
+code/await Gg (void) => void do
+    await FOREVER;
+end
+
+code/await Ff (pool&[4] Gg gs, var& int ret) => void do
+    loop in gs do
+        ret = ret + 1;
+    end
+    spawn Gg() in gs;
+end
+
+pool[4] Gg gs;
+spawn Gg() in gs;
+
+pool&[3] Gg gs_ = &gs;
+
+var int ret = 0;
+loop in gs_ do
+    ret = ret + 1;
+end
+
+spawn Gg() in gs_;
+
+loop in gs do
+    ret = ret + 1;
+end
+
+await Ff(&gs_, &ret);
+
+loop in gs_ do
+    ret = ret + 1;
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = 8,
+}
+
+--do return end
 
 Test { [[
 native _V;
@@ -59,66 +121,6 @@ escape nn;
 ]],
     --inits = 'line 8 : uninitialized variable "nn" : reached `loop´',
     props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
-}
-Test { [[
-code/await Ff (var int x) => (var& int y) => void do
-    y = &x;
-    if x%2 == 1 then
-        await FOREVER;
-    end
-end
-
-var int ret = 0;
-var& int nn;
-var& int n;
-watching Ff(10) => (n) do
-    ret = ret + n;
-    nn = &n;
-end
-
-escape nn;
-]],
-    props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
-}
-
-Test { [[
-data Dd with
-    var& int v;
-end
-
-var Dd d1;
-do
-    var int v = 10;
-    var Dd d2 = val Dd(&v);
-    d1 = d2;
-end
-do
-    vector[10] int x = [];
-end
-
-escape d1.v;
-]],
-    scopes = 'line 9 : invalid assignment : incompatible scopes : `data´ "Dd" is not plain',
-}
-
-Test { [[
-data Dd with
-    var int&& v;
-end
-
-var Dd d1;
-do
-    var int v = 10;
-    var Dd d2 = val Dd(&&v);
-    d1 = d2;
-end
-do
-    vector[10] int x = [];
-end
-
-escape *d1.v;
-]],
-    scopes = 'line 9 : invalid assignment : incompatible scopes : `data´ "Dd" is not plain',
 }
 
 --do return end -- OK
@@ -28270,6 +28272,14 @@ escape 1;
     --gcc = '6:26: error: variably modified ‘xxxx’ at file scope',
 }
 
+Test { [[
+vector[] int xs;
+var& int x = &xs[0];
+escape 0;
+]],
+    stmts = 'line 2 : invalid binding : types mismatch : "Var" <= "Vec"',
+}
+
 --<< VECTOR / ALIAS
 
 --<<< VECTORS / STRINGS
@@ -33823,6 +33833,27 @@ spawn Ff(2) => (ctrl2);
 escape ctrl1+ctrl2;
 ]],
     run = 3,
+}
+
+Test { [[
+code/await Ff (var int x) => (var& int y) => void do
+    y = &x;
+    if x%2 == 1 then
+        await FOREVER;
+    end
+end
+
+var int ret = 0;
+var& int nn;
+var& int n;
+watching Ff(10) => (n) do
+    ret = ret + n;
+    nn = &n;
+end
+
+escape nn;
+]],
+    props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
 }
 
 --<< CODE / WATCHING / SCOPES
@@ -62840,6 +62871,67 @@ var Dd d = val Dd(&ptr!);
 escape (d.ptr == &&_V) as int;
 ]],
     run = 1,
+}
+
+Test { [[
+data Dd with
+    var& int v;
+end
+
+var Dd d1;
+do
+    var int v = 10;
+    var Dd d2 = val Dd(&v);
+    d1 = d2;
+end
+do
+    vector[10] int x = [];
+end
+
+escape d1.v;
+]],
+    scopes = 'line 9 : invalid assignment : incompatible scopes : `data´ "Dd" is not plain',
+}
+
+Test { [[
+data Dd with
+    var int&& v;
+end
+
+var Dd d1;
+do
+    var int v = 10;
+    var Dd d2 = val Dd(&&v);
+    d1 = d2;
+end
+do
+    vector[10] int x = [];
+end
+
+escape *d1.v;
+]],
+    scopes = 'line 9 : invalid assignment : incompatible scopes : `data´ "Dd" is not plain',
+}
+
+Test { [[
+data Dd with
+    var int&& v;
+end
+
+var int v = 10;
+var Dd d2 = val Dd(&&v);
+do
+    var Dd d1;
+    d1 = d2;
+    *d1.v = 100;
+end
+do
+    vector[10] int x = [];
+end
+
+escape *d2.v;
+]],
+    run = 100,
 }
 
 --<< DATA / ALIAS

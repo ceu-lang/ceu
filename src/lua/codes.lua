@@ -244,7 +244,9 @@ ceu_vector_setmax(&]]..CUR(me.id_)..', '..V(dim)..[[, 1);
 
     Pool = function (me)
         local is_alias, tp, _, dim = unpack(me)
-assert(not is_alias)
+        if is_alias then
+            return
+        end
         LINE(me, [[
 {
     /* first.nxt = first.prv = &first; */
@@ -293,7 +295,6 @@ if (0)
 
         for i,dcl in ipairs(body.dcls) do
             if dcl.is_param then
-                assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt')
                 local _,Type1,id1 = unpack(dcl)
 
                 local id = id1

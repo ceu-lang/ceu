@@ -132,7 +132,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
             -- code Ff (var& Ee e)
             -- Ff(&ex)
             local cast = ''
-            if var_tp.tag=='Type' and var_tp[1].tag == 'ID_abs' then
+            if var_tp.tag=='Type' and var_tp[1].tag=='ID_abs' and var_tp[1].dcl.tag=='Data' then
                 if TYPES.check(var_tp,'&&') then
                     cast = '('..TYPES.toc(var_tp)..')'
                 elseif var_is_alias then
