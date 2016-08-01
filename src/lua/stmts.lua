@@ -170,9 +170,13 @@ DBG('TODO: _Lua')
         local to_str = TYPES.tostring(to.info.tp)
         local fr_str = TYPES.tostring(Abs_Cons.info.tp)
         if to_str ~= fr_str then
-            local _,enum,blk = unpack(ID_abs.dcl)
-            -- or source is enum with size=0
-            ASR(enum and #AST.asr(blk,'',1,'Stmts')==0, me,
+            local _,_,blk = unpack(ID_abs.dcl)
+            -- or source has no extra fields
+            local super = to.info.tp[1]
+            DBG(#AST.asr(ID_abs.dcl,'Data',3,'Block').dcls,
+                #AST.asr(super.dcl ,'Data',3,'Block').dcls)
+            ASR(#AST.asr(ID_abs.dcl,'Data',3,'Block').dcls ==
+                #AST.asr(super.dcl ,'Data',3,'Block').dcls, me,
                 'invalid constructor : types mismatch : "'..to_str..'" <= "'..fr_str..'"')
         end
     end,
