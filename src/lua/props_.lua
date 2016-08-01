@@ -54,6 +54,13 @@ F = {
             end
         end
     end,
+    Set_Alias = function (me)
+        local to, fr = unpack(me)
+        local watch = AST.par(me,'Loop_Pool') or AST.par(me,'Watching')
+        if watch then
+            fr.info.dcl.__no_access = watch -- no access outside watch
+        end
+    end,
     ID_int = function (me)
         local no = me.dcl.__no_access
         if no then

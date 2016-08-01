@@ -442,6 +442,16 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         dcls_new(par, me)
     end,
+    Data = function (me)
+        me.is_plain = true
+        for _, dcl in ipairs(AST.asr(me,'',3,'Block').dcls) do
+            local is_alias, tp = unpack(dcl)
+            if is_alias or TYPES.check(tp,'&&') then
+                me.is_plain = false
+                break
+            end
+        end
+    end,
 
     -- Typelists
 

@@ -37,9 +37,88 @@ with
 end
 await 10s;
 escape _V;
-
 ]],
     run = { ['~>10s'] = 10 },
+}
+
+Test { [[
+code/await Ff (void) => (var& int y) => void do
+    var int x = 0;
+    y = &x;
+end
+
+pool[5] Ff fs;
+
+var& int nn;
+var& int n;
+loop (n) in fs do
+    nn = &n;
+end
+
+escape nn;
+]],
+    --inits = 'line 8 : uninitialized variable "nn" : reached `loop´',
+    props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
+}
+Test { [[
+code/await Ff (var int x) => (var& int y) => void do
+    y = &x;
+    if x%2 == 1 then
+        await FOREVER;
+    end
+end
+
+var int ret = 0;
+var& int nn;
+var& int n;
+watching Ff(10) => (n) do
+    ret = ret + n;
+    nn = &n;
+end
+
+escape nn;
+]],
+    props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
+}
+
+Test { [[
+data Dd with
+    var& int v;
+end
+
+var Dd d1;
+do
+    var int v = 10;
+    var Dd d2 = val Dd(&v);
+    d1 = d2;
+end
+do
+    vector[10] int x = [];
+end
+
+escape d1.v;
+]],
+    scopes = 'line 9 : invalid assignment : incompatible scopes : `data´ "Dd" is not plain',
+}
+
+Test { [[
+data Dd with
+    var int&& v;
+end
+
+var Dd d1;
+do
+    var int v = 10;
+    var Dd d2 = val Dd(&&v);
+    d1 = d2;
+end
+do
+    vector[10] int x = [];
+end
+
+escape *d1.v;
+]],
+    scopes = 'line 9 : invalid assignment : incompatible scopes : `data´ "Dd" is not plain',
 }
 
 --do return end -- OK
