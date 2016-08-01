@@ -171,9 +171,9 @@ tceu_pool_pak]]..ptr..' '..id2..[[;
                         for _, sub in ipairs(data.dcl.hier.down) do
                             t[#t+1] = {
                                 'CEU_DATA_'..TYPES.noc(sub.id),
-                                string.gsub(dcl.id_dyn,
-                                            '_'..id_super..'$',
-                                            '_'..TYPES.noc(sub.id))
+                                (string.gsub(dcl.id_dyn,
+                                            '_'..id_super,
+                                            '_'..TYPES.noc(sub.id)))
                                 }
                         end
                     end
