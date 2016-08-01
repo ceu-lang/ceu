@@ -111,6 +111,15 @@ function DCLS.is_super (super, sub)
     end
 end
 
+function DCLS.base (data)
+    assert(data.hier)
+    if data.hier.up then
+        return DCLS.base(data.hier.up)
+    else
+        return data
+    end
+end
+
 -- native declarations are allowed until `native/end´
 local native_end = false
 
@@ -417,7 +426,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     end,
 
     Data__PRE = function (me)
-        local id, enum, blk = unpack(me)
+        local id, num, blk = unpack(me)
         me.id = id
         local par = AST.par(me, 'Block')
 

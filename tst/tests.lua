@@ -34766,6 +34766,7 @@ await Ui_go(&ui);
 
 escape 1;
 ]],
+    props_ = 'line 5 : invalid `dynamic´ declaration : expected dynamic parameter',
     wrn = true,
     run = 1,
 }
@@ -35009,6 +35010,8 @@ escape call Ff(&b, &a);
 Test { [[
 data Aa;
 data Aa.Bb;
+data Aa.Bb.Xx;
+data Aa.Cc;
 
 code/tight/dynamic Ff (var& Aa v1, var& Aa v2, var& Aa v3) => int do
     escape 1;
@@ -35019,14 +35022,19 @@ end
 code/tight/dynamic Ff (var& Aa.Bb v1, var& Aa.Bb v2, var& Aa.Bb v3) => int do
     escape 4;
 end
+code/tight/dynamic Ff (var& Aa.Bb v1, var& Aa.Bb.Xx v2, var& Aa.Bb v3) => int do
+    escape 8;
+end
 
 var Aa a = val Aa();
 var Aa b = val Aa.Bb();
+var Aa c = val Aa.Bb.Xx();
 
-escape (call Ff(&b,&b,&b)) + (call Ff(&b,&a,&a)) + (call Ff(&b,&a,&b));
+escape (call Ff(&b,&a,&a)) + (call Ff(&b,&a,&b)) +
+       (call Ff(&b,&b,&b)) + (call Ff(&b,&c,&b));
 ]],
     wrn = true,
-    run = 7,
+    run = 15,
 }
 
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
@@ -62606,11 +62614,45 @@ var& Xx xxx  = &x_;
 escape xxx as int;
 ]],
     wrn = true,
+    props_ = 'line 1 : invalid `is´ declaration : expected `data´ hierarchy',
+}
+
+Test { [[
+data Xx is 1;
+data Xx.Yy;
+var  Xx x_ = val Xx();
+var& Xx xxx  = &x_;
+escape xxx as int;
+]],
+    wrn = true,
+    props_ = 'line 2 : invalid `data´ declaration : missing `is´',
+}
+
+Test { [[
+data Xx;
+data Xx.Yy is 1;
+var  Xx x_ = val Xx();
+var& Xx xxx  = &x_;
+escape xxx as int;
+]],
+    wrn = true,
+    props_ = 'line 1 : invalid `data´ declaration : missing `is´',
+}
+
+Test { [[
+data Xx is 1;
+data Xx.Yy is 2;
+var  Xx x_ = val Xx();
+var& Xx xxx  = &x_;
+escape xxx as int;
+]],
+    wrn = true,
     run = 1;
 }
 
 Test { [[
 data Xx is 1;
+data Xx.Yy is 1;
 var  Xx x = val Xx();
 escape x as int;
 ]],
@@ -62637,7 +62679,7 @@ native/pre do
     };
 end
 
-data Xx;
+data Xx is 0;
 data Xx.Left  is _LEFT;
 data Xx.Right is _RIGHT;
 
@@ -62665,7 +62707,7 @@ escape rrr;
 }
 
 Test { [[
-data Xx;
+data Xx is 0;
 data Xx.Yy is 1;
 
 code/tight Ff (var Xx x) => int do
@@ -62680,9 +62722,11 @@ escape rrr;
 
 Test { [[
 data Xx is -1;
+data Xx.Yy is 0;
 var Xx x = val Xx();
 escape ((x as int) == -1) as int;
 ]],
+    wrn = true,
     run = 1,
 }
 

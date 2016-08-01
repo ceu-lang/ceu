@@ -70,6 +70,40 @@ F = {
                 ' ('..no.ln[1]..':'..no.ln[2]..')')
         end
     end,
+
+    --------------------------------------------------------------------------
+
+    Code = function (me)
+        local mods,_,body = unpack(me)
+        if mods.dynamic and body then
+            local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
+            for i, dcl in ipairs(Code_Pars) do
+                local _,Type,id = unpack(dcl)
+                local data = AST.get(Type,'',1,'ID_abs')
+                if data and data.dcl.hier then
+                    return
+                end
+            end
+            ASR(false, me,
+                'invalid `dynamic´ declaration : expected dynamic parameter')
+        end
+    end,
+
+    __check = function (me)
+        local _,num = unpack(me)
+        ASR(num, me, 'invalid `data´ declaration : missing `is´')
+        for _, sub in ipairs(me.hier.down) do
+            F.__check(sub)
+        end
+    end,
+
+    Data = function (me)
+        local _,num = unpack(me)
+        if num then
+            ASR(me.hier, me, 'invalid `is´ declaration : expected `data´ hierarchy')
+            F.__check(DCLS.base(me))
+        end
+    end,
 }
 
 AST.visit(F)

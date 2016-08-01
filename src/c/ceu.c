@@ -105,36 +105,26 @@ enum {
     === EXTS_ENUM_OUTPUT ===
 };
 
-/* DATAS_ENUM */
-enum {
-    CEU_DATA__NONE = 0,
-    === DATAS_ENUM ===
-};
+/* DATAS_HIERS */
 
 typedef s16 tceu_ndata;  /* TODO */
 
-/* DATAS_MEMS */
-=== DATAS_MEMS ===
+=== DATAS_HIERS ===
 
-/* DATAS_SUPERS */
-int CEU_DATA_SUPERS[] = {
-    CEU_DATA__NONE,
-    === DATAS_SUPERS ===
-};
-
-static int ceu_data_is (tceu_ndata me, tceu_ndata cmp) {
-    if (me == CEU_DATA__NONE) {
-        return 0;
-    } else {
-        return (me==cmp || ceu_data_is(CEU_DATA_SUPERS[me],cmp));
-    }
+static int ceu_data_is (tceu_ndata* supers, tceu_ndata me, tceu_ndata cmp) {
+    return (me==cmp || (me!=0 && ceu_data_is(supers,supers[me],cmp)));
 }
 
-static void* ceu_data_as (tceu_ndata* me, tceu_ndata cmp, char* file, int line) {
-    ceu_callback_assert_msg_ex(ceu_data_is(*me, cmp), "invalid cast `as´",
-                          file, line);
+static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
+                          char* file, int line) {
+    ceu_callback_assert_msg_ex(ceu_data_is(supers, *me, cmp),
+                               "invalid cast `as´", file, line);
     return me;
 }
+
+/* DATAS_MEMS */
+
+=== DATAS_MEMS ===
 
 /*****************************************************************************/
 

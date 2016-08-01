@@ -113,8 +113,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local ps = {}
 
         if ID_abs.dcl.tag == 'Data' then
-            local _, enum = unpack(ID_abs.dcl)
-            if ID_abs.dcl.hier or enum then
+            if ID_abs.dcl.hier then
                 ps[1] = '._enum = CEU_DATA_'..ID_abs.dcl.id_
             end
         end
@@ -143,7 +142,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                     if val.tag == 'Exp_as' then
                         ps[#ps+1] = '._data_'..i..' = CEU_DATA_'..val.info.tp[1].dcl.id
                     else
-                        ps[#ps+1] = '._data_'..i..' = 0'
+                        ps[#ps+1] = '._data_'..i..' = '..V(val,ctx)..'->_enum'
                     end
                 end
             end
@@ -367,7 +366,9 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 
     Exp_is = function (me)
         local _, e, Type = unpack(me)
-        return 'ceu_data_is('..V(e)..'._enum, CEU_DATA_'..Type[1].dcl.id_..')'
+        local base = DCLS.base(Type[1].dcl)
+        return 'ceu_data_is(CEU_DATA_SUPERS_'..base.id_..','..
+                            V(e)..'._enum, CEU_DATA_'..Type[1].dcl.id_..')'
     end,
 
     Exp_as = function (me)
@@ -382,7 +383,8 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         if plain and plain.dcl and plain.dcl.tag=='Data'
             and TYPES.check(Type,'int')
         then
-            return '('..V(e)..'._enum)'
+
+            return '(CEU_DATA_NUMS_'..plain.dcl.id_..'['..V(e)..'._enum])'
         end
 
         local ret do
@@ -394,11 +396,13 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                     ptr1, ptr2, ptr3 = '', '*', ''
                 end
 
+                local base = DCLS.base(Type[1].dcl)
                 ret = [[
 (]]..ptr1..[[(
 (]]..TYPES.toc(Type)..ptr2..[[)
-ceu_data_as((tceu_ndata*)]]..ptr3..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
-            __FILE__, (__LINE__-3))
+ceu_data_as(CEU_DATA_SUPERS_]]..base.id_..[[,
+            (tceu_ndata*)]]..ptr3..V(e)..', CEU_DATA_'..Type[1].dcl.id_..[[,
+            __FILE__, (__LINE__-4))
 ))
 ]]
             else

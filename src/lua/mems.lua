@@ -21,10 +21,10 @@ MEMS = {
 ]]
     },
     datas = {
-        id     = 1,
-        mems   = '',
-        enum   = '',
-        supers = '',
+        id    = 1,
+        mems  = '',
+        hiers = '',
+        bases = {},
     },
     opts = {
         -- avoids duplications
@@ -84,7 +84,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     end,
 
     Code = function (me)
-        local mods, ID, body = unpack(me)
+        local mods, _, body = unpack(me)
 
         local Type = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
         local ins  = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
@@ -154,36 +154,40 @@ tceu_pool_pak]]..ptr..' '..id2..[[;
             end
         end
 
-        local T = {}
+        local multis = {}
         if mods.dynamic then
             local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(Code_Pars) do
                 local _,Type,id = unpack(dcl)
                 local data = AST.get(Type,'',1,'ID_abs')
-                if data then
-                    local t = {id=id, i=i}
-                    local id_super = TYPES.noc(data.dcl.id)
-                    t[#t+1] = {
-                        'CEU_DATA_'..TYPES.noc(id_super),
-                        dcl.id_dyn,
-                    }
-                    if data.dcl.hier then
-                        for _, sub in ipairs(data.dcl.hier.down) do
-                            t[#t+1] = {
-                                'CEU_DATA_'..TYPES.noc(sub.id),
-                                (string.gsub(dcl.id_dyn,
-                                            '_'..id_super,
-                                            '_'..TYPES.noc(sub.id)))
-                                }
-                        end
-                    end
-                    T[#T+1] = t
+                if data and data.dcl.hier then
+                    assert(not data.dcl.hier.up)
                     me.mems.args = me.mems.args .. [[
 tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
 ]]
+
+                    -- arg "i" is dynamic:
+                    multis[#multis+1] = {
+                        base = data.dcl,    -- datatype for the argument
+                        dyn  = dcl.id_dyn,  -- identifier considering the "base" value
+                        id   = id,          -- argument identifier
+                        i    = i,           -- position in the parameter list
+                    }
                 end
             end
-            --assert(#T > 0, 'TODO')
+            assert(#multis > 0)
+
+            local dims, constr = MULTIS.tostring(me, multis);
+            multis.code = [[
+static tceu_ndata multis]]..dims..[[ = {
+]] .. constr .. [[
+};
+tceu_nlbl lbl = multis
+]]
+            for _, t in ipairs(multis) do
+                multis.code = multis.code..'[ ps._data_'..t.i..' ]'
+            end
+            multis.code = multis.code..';\n'
         end
 
         me.mems.args = me.mems.args..'} tceu_code_args_'..me.id..';\n'
@@ -210,14 +214,12 @@ CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
                            tceu_code_args_]]..me.id..[[ ps)
 {
     tceu_code_mem_]]..me.id..[[ mem;
-    tceu_nlbl lbl;
 ]]
             if mods.dynamic then
-                local switch = F.__multimethods(T,ID)
-                me.mems.wrapper = me.mems.wrapper .. switch
+                me.mems.wrapper = me.mems.wrapper .. multis.code
             else
                 me.mems.wrapper = me.mems.wrapper .. [[
-    lbl = ]]..me.lbl_in.id..[[;
+    tceu_nlbl lbl = ]]..me.lbl_in.id..[[;
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
@@ -237,14 +239,12 @@ static void CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
                                        tceu_code_args_]]..me.id..[[ ps,
                                        tceu_code_mem* mem)
 {
-    tceu_nlbl lbl;
 ]]
             if mods.dynamic then
-                local switch = F.__multimethods(T,ID)
-                me.mems.wrapper = me.mems.wrapper .. switch
+                me.mems.wrapper = me.mems.wrapper .. multis.code
             else
                 me.mems.wrapper = me.mems.wrapper .. [[
-    lbl = ]]..me.lbl_in.id..[[;
+    tceu_nlbl lbl = ]]..me.lbl_in.id..[[;
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
@@ -274,78 +274,23 @@ if (args->]]..to.info.dcl.id..[[ != NULL) {
         end
     end,
 
-    __multimethods = function (T, ID, I, lbl)
-        I = I or 1
-        lbl = lbl or ''
-        local t = T[I]
-        if not t then
-            local has = DCLS.get(AST.par(AST.iter()(),'Block'), ID..lbl)
-            if has then
-                return [[
-lbl = CEU_LABEL_Code_]]..ID..lbl..[[;
-]], true
-            else
-                return '', false
-            end
-        elseif #t == 1 then
-            return F.__multimethods(T,ID,I+1,lbl..t[1][2])
-        else
-            local switch = [[
-{
-    tceu_ndata data_]]..t.i..[[ = ((ps._data_]]..t.i..[[ == CEU_DATA__NONE) ?
-                                    ps.]]..t.id..[[->_enum :
-                                    ps._data_]]..t.i..[[);
-    switch (data_]]..t.i..[[) {
-]]
-            for i=#t, 1, -1 do
-                local v = t[i]
-                local id, f = unpack(v)
-                local code,has = F.__multimethods(T,ID,I+1,lbl..f)
-                switch = switch .. [[
-        case ]]..id..[[:
-            ]]..code
-                if has then
-                    switch = switch ..[[
-            break;
-]]
-                end
-            end
-            switch = switch .. [[
-        default:
-            ceu_dbg_assert(0);  /* TODO: runtime error message */
-    }
-]]
-            if I > 1 then
-                switch = switch .. [[
-    break;
-]]
-            end
-            switch = switch .. [[
-}
-]]
-
-            return switch
-        end
-    end,
-
     ---------------------------------------------------------------------------
 
     Data__PRE = function (me)
         me.id_ = TYPES.noc(me.id)
         me.mems = {
-            mem   = '',
-            id    = MEMS.datas.id,
-            super = (me.hier and me.hier.up and me.hier.up.mems.id) or 'CEU_DATA__NONE',
+            mem  = '',
+            hier = nil, -- only for base class
         }
-        MEMS.datas.id = MEMS.datas.id + 1
     end,
     Data__POS = function (me)
-        local _,enum = unpack(me)
+        local _,num = unpack(me)
         local mem = me.mems.mem
         me.mems.mem = [[
 typedef struct tceu_data_]]..me.id_..[[ {
 ]]
-        if me.hier or enum then
+        if me.hier or num then
+assert(me.hier)
             me.mems.mem = me.mems.mem..[[
     tceu_ndata _enum;
 ]]
@@ -355,12 +300,11 @@ typedef struct tceu_data_]]..me.id_..[[ {
 } tceu_data_]]..me.id_..[[;
 ]]..'\n'
 
-        enum = (enum and ' = '..V(enum)) or ''
+        MEMS.datas.mems = MEMS.datas.mems..me.mems.mem
 
-
-        MEMS.datas.mems   = MEMS.datas.mems..me.mems.mem
-        MEMS.datas.enum   = MEMS.datas.enum..'CEU_DATA_'..me.id_..enum..',\n'
-        MEMS.datas.supers = MEMS.datas.supers..me.mems.super..',\n'
+        if me.hier and (not me.hier.up) then
+            MEMS.datas.bases[#MEMS.datas.bases+1] = me
+        end
     end,
 
     Var = function (me)
@@ -440,12 +384,8 @@ return opt;
                     local data = AST.par(me,'Data')
                     if data then
                         -- same name for all class hierarchy
-                        while true do
-                            if not (data.hier and data.hier.up) then
-                                break
-                            else
-                                data = data.hier.up
-                            end
+                        if data.hier then
+                            data = DCLS.base(data)
                         end
                         dcl.id_ = string.upper('CEU_EVENT'..'_'..data.id..'_'..dcl.id)
                         if data == AST.par(me,'Data') then
@@ -655,6 +595,66 @@ typedef union {
         end
         MEMS.codes.mems = MEMS.codes.mems..[[
 } tceu_code_mem_]]..code.me.dyn_base.id..[[;
+]]
+    end
+end
+
+local function ids_supers_enums (dcl)
+    local _, num = unpack(dcl)
+    local t = {
+        ids    = '',
+        supers = '',
+        nums  = '',
+    }
+
+    if dcl.hier.up then
+        t.ids = t.ids .. [[
+    CEU_DATA_]]..dcl.id_..[[,
+]]
+        t.supers = t.supers .. [[
+    CEU_DATA_]]..dcl.hier.up.id_..[[,
+]]
+    else
+        t.ids = t.ids .. [[
+    CEU_DATA_]]..dcl.id_..[[ = 0,
+]]
+        t.supers = t.supers .. [[
+    0,
+]]
+    end
+
+    if num then
+        t.nums = t.nums .. [[
+    ]]..V(num)..[[,
+]]
+    end
+
+    for _, sub in ipairs(dcl.hier.down) do
+        local tt = ids_supers_enums(sub)
+        t.ids    = t.ids    .. tt.ids
+        t.supers = t.supers .. tt.supers
+        t.nums   = t.nums   .. tt.nums
+    end
+
+    return t
+end
+
+for _, base in ipairs(MEMS.datas.bases) do
+    local t = ids_supers_enums(base)
+    MEMS.datas.hiers = MEMS.datas.hiers .. [[
+enum {
+    ]]..t.ids..[[
+};
+
+tceu_ndata CEU_DATA_SUPERS_]]..base.id_..[[ [] = {
+    ]]..t.supers..[[
+};
+]]
+    if t.nums ~= '' then
+        MEMS.datas.hiers = MEMS.datas.hiers .. [[
+tceu_ndata CEU_DATA_NUMS_]]..base.id_..[[ [] = {
+    ]]..t.nums..[[
+};
 ]]
     end
 end

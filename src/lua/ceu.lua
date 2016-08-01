@@ -25,6 +25,7 @@ if CEU.opts.ceu then
     dofile 'trails.lua'
     dofile 'labels.lua'
     dofile 'vals.lua'
+    dofile 'multis.lua'
     dofile 'mems.lua'
     dofile 'codes.lua'
 end

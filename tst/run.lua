@@ -278,6 +278,7 @@ end
     if not check(T,'trails') then return end
     if not check(T,'labels') then return end
     dofile(DIR..'vals.lua')
+    dofile(DIR..'multis.lua')
     if not check(T,'mems')   then return end
     if not check(T,'codes')  then return end
 
