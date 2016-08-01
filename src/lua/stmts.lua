@@ -173,8 +173,6 @@ DBG('TODO: _Lua')
             local _,_,blk = unpack(ID_abs.dcl)
             -- or source has no extra fields
             local super = to.info.tp[1]
-            DBG(#AST.asr(ID_abs.dcl,'Data',3,'Block').dcls,
-                #AST.asr(super.dcl ,'Data',3,'Block').dcls)
             ASR(#AST.asr(ID_abs.dcl,'Data',3,'Block').dcls ==
                 #AST.asr(super.dcl ,'Data',3,'Block').dcls, me,
                 'invalid constructor : types mismatch : "'..to_str..'" <= "'..fr_str..'"')

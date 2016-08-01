@@ -239,8 +239,11 @@ local function run_ptrs (par, i, Dcl, stop)
         return run_ptrs(par, i+1, Dcl, stop)
     end
 
+    if (me.tag=='Loop' or me.tag=='Loop_Num') and (me.tight ~= 'awaits') then
+        -- ok, continue
+
     -- yielding statement: stop?
-    if yields[me.tag] then
+    elseif yields[me.tag] then
         local set = AST.par(me,__is_set)
         local ok = false
         if set then

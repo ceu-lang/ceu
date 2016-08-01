@@ -70,25 +70,33 @@ error'TODO'
 end
 
 F = {
-    Loop = function (me, ok)
-        local max, body = unpack(me)
+    __loop = function (me, body, is_bounded)
+        me.tight = run(body, me)
 
-        if AST.par(me,'Async') or AST.par(me,'Async_Thread') or AST.par(me,'Async_Isr') then
-            -- ok
-        elseif max then
-            -- ok
-        elseif ok then
-            -- ok
-        else
-            me.tight = run(body, me)
-            WRN(me.tight~='tight', me, 'invalid tight `loop´ : unbounded number of non-awaiting iterations')
+        if me.tight == 'tight' then
+            if is_bounded or max then
+                me.tight = 'bounded'
+            end
         end
+        if me.tight ~= 'tight' then
+            return
+        end
+
+        local in_async = AST.par(me,'Async') or AST.par(me,'Async_Thread')
+                            or AST.par(me,'Async_Isr')
+        WRN(in_async, me,
+            'invalid tight `loop´ : unbounded number of non-awaiting iterations')
+    end,
+
+    Loop = function (me)
+        local max, body = unpack(me)
+        F.__loop(me, body, max)
     end,
 
     Loop_Num = function (me)
-        local _, _, range, _ = unpack(me)
+        local max, _, range, body = unpack(me)
         local fr,_,to,_ = unpack(range)
-        F.Loop(me, (fr.is_const and to.is_const))
+        F.__loop(me, body, max or (fr.is_const and to.is_const))
     end,
 }
 

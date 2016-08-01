@@ -9,121 +9,10 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+ptrs cruzando loop/tight
+data c/ ptrs cruzando loop/await
+do return end -- OK
 --]=====]
-
-Test { [[
-code/await Gg (void) => void do
-    await FOREVER;
-end
-
-pool[3] Gg gs;
-spawn Gg() in gs;
-
-pool&[3] Gg gs_ = &gs;
-
-var int ret = 0;
-loop in gs_ do
-    ret = ret + 1;
-end
-
-spawn Gg() in gs_;
-
-loop in gs do
-    ret = ret + 1;
-end
-
-escape ret;
-]],
-    wrn = true,
-    run = 3,
-}
-
-Test { [[
-code/await Gg (void) => void do
-    await FOREVER;
-end
-
-code/await Ff (pool&[4] Gg gs, var& int ret) => void do
-    loop in gs do
-        ret = ret + 1;
-    end
-    spawn Gg() in gs;
-end
-
-pool[4] Gg gs;
-spawn Gg() in gs;
-
-pool&[3] Gg gs_ = &gs;
-
-var int ret = 0;
-loop in gs_ do
-    ret = ret + 1;
-end
-
-spawn Gg() in gs_;
-
-loop in gs do
-    ret = ret + 1;
-end
-
-await Ff(&gs_, &ret);
-
-loop in gs_ do
-    ret = ret + 1;
-end
-
-escape ret;
-]],
-    wrn = true,
-    run = 8,
-}
-
---do return end
-
-Test { [[
-native _V;
-native/pos do
-    int V = 0;
-end
-
-code/await Ff (void) => void do
-    every 1s do
-        _V = _V + 1;
-    end
-end
-
-pool[1] Ff fff;
-spawn Ff() in fff;
-par/and do
-with
-end
-await 10s;
-escape _V;
-]],
-    run = { ['~>10s'] = 10 },
-}
-
-Test { [[
-code/await Ff (void) => (var& int y) => void do
-    var int x = 0;
-    y = &x;
-end
-
-pool[5] Ff fs;
-
-var& int nn;
-var& int n;
-loop (n) in fs do
-    nn = &n;
-end
-
-escape nn;
-]],
-    --inits = 'line 8 : uninitialized variable "nn" : reached `loop´',
-    props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
-}
-
---do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -3441,6 +3330,7 @@ var int a;
 loop do a=1; end;
 escape a;
 ]],
+    wrn = true,
     inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
@@ -3589,7 +3479,8 @@ loop do
 end
 escape 0;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    run = { ['~>1s']=2 },
+    --tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -3601,7 +3492,8 @@ loop do
 end
 escape 0;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    run = { ['~>1s']=2 },
+    --tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -5128,6 +5020,17 @@ end
 escape sum;
 ]],
     run = {['~>A;~>B;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;~>A;']=10},
+}
+
+Test { [[
+var int v = 10;
+var int&& x = &&v;
+loop i in [0 -> 10[ do
+    *x = *x + 1;
+end
+escape v;
+]],
+    run = 20,
 }
 
 --<<< LOOP
@@ -18106,7 +18009,8 @@ loop i in [0 -> 10[ do
 end
 escape v;
 ]],
-    inits = 'line 5 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:4)',
+    run = 11,
+    --inits = 'line 5 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:4)',
     --fin = 'line 5 : unsafe access to pointer "x" across `loop´ (/tmp/tmp.ceu : 4)',
 }
 
@@ -18119,7 +18023,8 @@ loop i in [0 -> *x[ do
 end
 escape v;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    run = { ['~>20s']=2 },
+    --tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
@@ -28282,6 +28187,14 @@ escape 0;
 
 --<< VECTOR / ALIAS
 
+Test { [[
+var int x=1, y=2, z=3;
+vector[10] int&& v = [ &&x, &&y, &&z ];
+escape *v[0] + *v[1] + *v[2];
+]],
+    run = 6,
+}
+
 --<<< VECTORS / STRINGS
 
 -->>> OPTION TYPES
@@ -34796,7 +34709,7 @@ escape ret;
 
 -->> CODE / AWAIT / EMIT-INTERNAL
 
--->> CODE / TIGHT / AWAIT / MULTIMETHODS
+-->> CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 Test { [[
 data Aa with
@@ -34881,6 +34794,57 @@ var Aa    a = val Aa(1);
 var Aa.Bb b = val Aa.Bb(2,3);
 
 escape (call Ff(&b,22)) + (call Ff(&a,33));
+]],
+    --run = 58,
+    run = 59,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var Aa&& a, var int xxx) => int do
+    escape a:a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var Aa.Bb&& b, var int yyy) => int do
+    escape b:b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call Ff(&&b,22)) + (call Ff(&&a,33));
+]],
+    --run = 58,
+    run = 59,
+}
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var int xxx, var Aa&& a) => int do
+    escape a:a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var int yyy, var Aa.Bb&& b) => int do
+    escape b:b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call Ff(22,&&b)) + (call Ff(33,&&a));
 ]],
     --run = 58,
     run = 59,
@@ -35024,7 +34988,7 @@ escape v1 + v2;
     run = 72,
 }
 
---<< CODE / TIGHT / AWAIT / MULTIMETHODS
+--<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 --<<< CODE / AWAIT / FUNCTIONS
 
@@ -40671,6 +40635,118 @@ escape ret;
 ]],
     run = 16,
 }
+
+Test { [[
+code/await Gg (void) => void do
+    await FOREVER;
+end
+
+pool[3] Gg gs;
+spawn Gg() in gs;
+
+pool&[3] Gg gs_ = &gs;
+
+var int ret = 0;
+loop in gs_ do
+    ret = ret + 1;
+end
+
+spawn Gg() in gs_;
+
+loop in gs do
+    ret = ret + 1;
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = 3,
+}
+
+Test { [[
+code/await Gg (void) => void do
+    await FOREVER;
+end
+
+code/await Ff (pool&[4] Gg gs, var& int ret) => void do
+    loop in gs do
+        ret = ret + 1;
+    end
+    spawn Gg() in gs;
+end
+
+pool[4] Gg gs;
+spawn Gg() in gs;
+
+pool&[3] Gg gs_ = &gs;
+
+var int ret = 0;
+loop in gs_ do
+    ret = ret + 1;
+end
+
+spawn Gg() in gs_;
+
+loop in gs do
+    ret = ret + 1;
+end
+
+await Ff(&gs_, &ret);
+
+loop in gs_ do
+    ret = ret + 1;
+end
+
+escape ret;
+]],
+    wrn = true,
+    run = 8,
+}
+
+Test { [[
+native _V;
+native/pos do
+    int V = 0;
+end
+
+code/await Ff (void) => void do
+    every 1s do
+        _V = _V + 1;
+    end
+end
+
+pool[1] Ff fff;
+spawn Ff() in fff;
+par/and do
+with
+end
+await 10s;
+escape _V;
+]],
+    run = { ['~>10s'] = 10 },
+}
+
+Test { [[
+code/await Ff (void) => (var& int y) => void do
+    var int x = 0;
+    y = &x;
+end
+
+pool[5] Ff fs;
+
+var& int nn;
+var& int n;
+loop (n) in fs do
+    nn = &n;
+end
+
+escape nn;
+]],
+    --inits = 'line 8 : uninitialized variable "nn" : reached `loop´',
+    props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
+}
+
+--||| TODO: POOL ITERATORS
 
 Test { [[
 class Tx with
@@ -61912,9 +61988,10 @@ Test { [[
 data Ee;
 data Ee.Nothing;
 var Ee e = val Ee.Nothing();
-escape 0;
+escape (e is Ee.Nothing) as int;
 ]],
-    stmts = 'line 3 : invalid constructor : types mismatch : "Ee" <= "Ee.Nothing"',
+    run = 1,
+    --stmts = 'line 3 : invalid constructor : types mismatch : "Ee" <= "Ee.Nothing"',
 }
 
 Test { [[
