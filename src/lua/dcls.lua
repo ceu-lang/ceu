@@ -449,6 +449,14 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             if is_alias or TYPES.check(tp,'&&') then
                 me.is_plain = false
                 break
+            else
+                local ID = TYPES.ID_plain(tp)
+                if ID and ID.tag=='ID_abs' and ID.dcl.tag=='Data'
+                        and (not ID.dcl.is_plain)
+                then
+                    me.is_plain = false
+                    break
+                end
             end
         end
     end,

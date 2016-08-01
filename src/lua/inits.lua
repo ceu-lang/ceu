@@ -329,10 +329,18 @@ F = {
         end
 
         -- RUN_PTRS
+
         if me.tag=='Evt' or me.tag=='Pool' then
             return
         end
+
         local is_ptr = TYPES.check(tp,'&&') or TYPES.is_nat_not_plain(tp)
+        if not is_ptr then
+            local ID = TYPES.ID_plain(tp)
+            is_ptr = ID and ID.tag=='ID_abs' and
+                        ID.dcl.tag=='Data' and (not ID.dcl.is_plain)
+        end
+
         if is_ptr then
             local stmts = AST.get(me,2,'Stmts') or AST.asr(me,1,'Stmts')
             local Var,Do = unpack(stmts)
@@ -374,7 +382,14 @@ error'TODO: luacov never executes this?'
             return
         end
 
-        local is_ptr = TYPES.check(me.dcl[2],'&&') or TYPES.is_nat_not_plain(me.dcl[2])
+        local tp = me.dcl[2]
+        local is_ptr = TYPES.check(tp,'&&') or TYPES.is_nat_not_plain(tp)
+        if not is_ptr then
+            local ID = TYPES.ID_plain(tp)
+            is_ptr = ID and ID.tag=='ID_abs' and
+                        ID.dcl.tag=='Data' and (not ID.dcl.is_plain)
+        end
+
         if is_ptr then
             local yield = me.dcl.__run_ptrs_yield
             ASR(me.__run_ptrs_ok, me,

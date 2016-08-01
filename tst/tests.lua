@@ -9,8 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-ptrs cruzando loop/tight
-data c/ ptrs cruzando loop/await
 do return end -- OK
 --]=====]
 
@@ -34988,6 +34986,49 @@ escape v1 + v2;
     run = 72,
 }
 
+Test { [[
+data Aa;
+data Aa.Bb;
+
+code/tight/dynamic Ff (var& Aa v1, var& Aa v2) => int do
+    escape 1;
+end
+code/tight/dynamic Ff (var& Aa.Bb v1, var& Aa.Bb v2) => int do
+    escape 2;
+end
+
+var Aa a = val Aa();
+var Aa b = val Aa.Bb();
+
+escape call Ff(&b, &a);
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Aa.Bb;
+
+code/tight/dynamic Ff (var& Aa v1, var& Aa v2, var& Aa v3) => int do
+    escape 1;
+end
+code/tight/dynamic Ff (var& Aa.Bb v1, var& Aa v2, var& Aa.Bb v3) => int do
+    escape 2;
+end
+code/tight/dynamic Ff (var& Aa.Bb v1, var& Aa.Bb v2, var& Aa.Bb v3) => int do
+    escape 4;
+end
+
+var Aa a = val Aa();
+var Aa b = val Aa.Bb();
+
+escape (call Ff(&b,&b,&b)) + (call Ff(&b,&a,&a)) + (call Ff(&b,&a,&b));
+]],
+    wrn = true,
+    run = 7,
+}
+
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
 
 --<<< CODE / AWAIT / FUNCTIONS
@@ -62923,7 +62964,7 @@ escape (call Fx(Dd(1))) + (call Fx(_));
 
 -- << ADT : MISC
 
--->> DATA / ALIAS
+-->> DATA / ALIAS / POINTER
 
 Test { [[
 native _void_ptr, _V, _f;
@@ -63011,7 +63052,40 @@ escape *d2.v;
     run = 100,
 }
 
---<< DATA / ALIAS
+Test { [[
+data Dd with
+    var int&& x;
+end
+
+var int x = 10;
+var Dd dd = val Dd(&&x);
+await 1s;
+escape *dd.x;
+
+]],
+    inits = 'line 8 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:7)',
+    --run = { ['~>1s']=1 },
+}
+
+Test { [[
+data Dd with
+    var int&& x;
+end
+data Ee with
+    var Dd dd;
+end
+
+var int x = 10;
+var Ee ee = val Ee(Dd(&&x));
+await 1s;
+escape *ee.dd.x;
+
+]],
+    inits = 'line 11 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
+    --run = { ['~>1s']=1 },
+}
+
+--<< DATA / ALIAS / POINTER
 
 -->>> DATA/EVENTS
 
