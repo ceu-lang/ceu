@@ -29,6 +29,16 @@ F = {
         if me.fins_n > 0 then
             me.trails_n = me.trails_n + me.fins_n
         end
+
+        -- +1 for each pool
+        for _, dcl in ipairs(me.dcls) do
+            if dcl.tag == 'Pool' then
+                local is_alias, Type = unpack(dcl)
+                if (not is_alias) and Type[1].dcl.tag=='Code' then
+                    me.trails_n = me.trails_n + 1
+                end
+            end
+        end
     end,
 
     Every = function (me)
@@ -42,13 +52,6 @@ F = {
             if not (is_alias or dim.is_const) then
                 AST.par(me,'Block').has_dyn_vecs = true
             end
-        end
-    end,
-
-    Pool__PRE = function (me)
-        local _, Type = unpack(me)
-        if Type[1].dcl.tag == 'Code' then
-            me.trails_n = 2
         end
     end,
 
