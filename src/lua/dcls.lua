@@ -451,20 +451,25 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         dcls_new(par, me)
     end,
+
     Data = function (me)
-        me.is_plain = true
+        me.weaker = 'plain'
         for _, dcl in ipairs(AST.asr(me,'',3,'Block').dcls) do
             local is_alias, tp = unpack(dcl)
-            if is_alias or TYPES.check(tp,'&&') then
-                me.is_plain = false
-                break
+            if TYPES.check(tp,'&&') then
+                me.weaker = 'pointer'
+                break   -- can't be worse
+            elseif is_alias then
+                me.weaker = 'alias'
             else
                 local ID = TYPES.ID_plain(tp)
-                if ID and ID.tag=='ID_abs' and ID.dcl.tag=='Data'
-                        and (not ID.dcl.is_plain)
-                then
-                    me.is_plain = false
-                    break
+                if ID and ID.tag=='ID_abs' and ID.dcl.tag=='Data' then
+                    if ID.dcl.weaker == 'pointer' then
+                        me.weaker = 'pointer'
+                        break   -- can't be worse
+                    elseif ID.dcl.weaker == 'alias' then
+                        me.weaker = 'alias'
+                    end
                 end
             end
         end

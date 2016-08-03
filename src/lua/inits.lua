@@ -338,7 +338,7 @@ F = {
         if not is_ptr then
             local ID = TYPES.ID_plain(tp)
             is_ptr = ID and ID.tag=='ID_abs' and
-                        ID.dcl.tag=='Data' and (not ID.dcl.is_plain)
+                        ID.dcl.tag=='Data' and ID.dcl.weaker=='pointer'
         end
 
         if is_ptr then
@@ -387,7 +387,7 @@ error'TODO: luacov never executes this?'
         if not is_ptr then
             local ID = TYPES.ID_plain(tp)
             is_ptr = ID and ID.tag=='ID_abs' and
-                        ID.dcl.tag=='Data' and (not ID.dcl.is_plain)
+                        ID.dcl.tag=='Data' and ID.dcl.weaker=='pointer'
         end
 
         if is_ptr then

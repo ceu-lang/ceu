@@ -37,7 +37,7 @@ F = {
         --  d1; do d2=d1 end;   // d1>d2 and d1-has-pointers
         local ID = TYPES.ID_plain(fr.info.tp)
         local fr_data_ptr = ID and ID.tag=='ID_abs' and
-                                ID.dcl.tag=='Data' and (not ID.dcl.is_plain)
+                                ID.dcl.tag=='Data' and ID.dcl.weaker~='plain'
 
         -- ptr = _f()
         if fr.tag=='Exp_Call' and (to_ptr or to_nat) then

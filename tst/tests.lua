@@ -9,7 +9,54 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
---do return end -- OK
+Test { [[
+code/tight Ff (void) => FOREVER do
+end
+]],
+    run = 'error',
+}
+
+Test { [[
+code/delayed Ff (void) => FOREVER do
+    escape 0;
+end
+]],
+    run = 'error',
+}
+
+Test { [[
+code/delayed Ff (void) => FOREVER do
+    do finalize with
+        _ceu_dbg_assert(0);
+    end
+    escape;
+end
+par/or do
+    await Ff();
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/delayed Ff (void) => FOREVER do
+    do finalize with
+        _ceu_dbg_assert(0);
+    end
+    escape;
+end
+par/or do
+    await Ff();
+with
+end
+escape 1;
+]],
+    run = 'error',
+}
+
+do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -63321,6 +63368,29 @@ escape *ee.dd.x;
 ]],
     inits = 'line 11 : invalid pointer access : crossed `await´ (/tmp/tmp.ceu:10)',
     --run = { ['~>1s']=1 },
+}
+
+Test { [[
+native _void_ptr, _alloc;
+native/pre do
+    typedef void* void_ptr;
+end
+
+data Dd with
+    var& _void_ptr h;
+end
+
+var& _void_ptr? ptr = &_alloc()
+    finalize (ptr) with
+    end;
+
+var Dd dd = val Dd(&ptr!);
+
+await 1s;
+
+escape (dd.h != null) as int;
+]],
+    cc = 'error: implicit declaration of function ‘alloc’',
 }
 
 --<< DATA / ALIAS / POINTER
