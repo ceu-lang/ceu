@@ -411,7 +411,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                    V'__Do'
 
     , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
-                    (V'_Await_Until'+V'Await_Wclock') *
+                    (V'Await_Ext' + V'Await_Int' + V'Await_Wclock') *
                 V'__Do'
 
     , Stmt_Call = V'Abs_Call' + V'Exp_Call'
@@ -582,7 +582,6 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __Awaits_many = K'await' * V'Await_Until'
 
     , Await_Until  = (V'Await_Ext' + V'Await_Int') * OPT(K'until'*V'__Exp')
-    , _Await_Until = (V'Await_Ext' + V'Await_Int') * Cc(false)
 
     , Await_Ext    = V'ID_ext' -I(V'Abs_Await') -- TODO: rem
     , Await_Int    = V'Exp_Name' -I(V'Await_Wclock'+V'Abs_Await') -- TODO: rem
@@ -599,7 +598,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
-    , __watch = (V'_Await_Until' + V'Await_Wclock' + V'Abs_Await')
+    , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
                     * OPT(KK'=>' * PARENS(V'List_Watching'))
     , _Watching = K'watching'
                     * LIST(V'__watch')

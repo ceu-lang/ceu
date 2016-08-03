@@ -16,6 +16,7 @@ AST.tag2id = {
     Async           = 'async',
     _Async_Isr      = 'async/isr',
     _Async_Thread   = 'async/thread',
+    Await_Until     = 'await',
     Await_Ext       = 'await',
     Await_Forever   = 'await',
     Await_Int       = 'await',

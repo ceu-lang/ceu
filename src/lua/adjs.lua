@@ -365,7 +365,7 @@ DBG('TODO: _Loop_Pool')
                     new = node('Exp_Name', to.ln, to)
                 end
             end
-            if awt.tag == '_Await_Until' then
+            if awt.tag=='Await_Ext' or awt.tag=='Await_Int' then
                 set_awt = node('Set_Await_many', me.ln, awt, new)
             else
                 set_awt = node('Set_Await_one', me.ln, awt, new)
@@ -404,7 +404,7 @@ DBG('TODO: _Loop_Pool')
             local watching = AST.asr(unpack(set),'_Watching')
             local awt = unpack(watching)
             local tag do
-                if awt.tag=='Await_Until' or awt.tag=='_Await_Until' then
+                if awt.tag=='Await_Ext' or awt.tag=='Await_Int' then
                     tag = '_Set_Await_many'
                 else
                     tag = '_Set_Await_one'
@@ -414,6 +414,15 @@ DBG('TODO: _Loop_Pool')
             me[2].__adjs_is_watching = true
             watching[1] = me
             return watching
+
+        elseif set.tag == '_Set_Await_many' then
+            local unt = unpack(set)
+            if unt.tag == 'Await_Until' then
+                local awt = unpack(unt)
+                unt[1] = me
+                set[1] = awt
+                return unt
+            end
         end
 
         -----------------------------------------------------------------------
@@ -444,10 +453,6 @@ DBG('TODO: _Loop_Pool')
 
             return set
         end
-    end,
-
-    _Await_Until = function (me)
-        me.tag = 'Await_Until'
     end,
 
     _Escape__PRE = function (me)

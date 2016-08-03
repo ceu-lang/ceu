@@ -35,6 +35,7 @@ native
     _assert,
     _ceu_dbg_assert,
     _malloc,
+    _ntohs,
     _rand,
     _sqrt,
     _srand,

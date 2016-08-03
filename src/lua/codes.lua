@@ -105,7 +105,6 @@ F = {
     ROOT        = CONC_ALL,
     Block       = CONC_ALL,
     Stmts       = CONC_ALL,
-    Await_Until = CONC_ALL,
     Watching    = CONC_ALL,
 
     Node__PRE = function (me)
@@ -847,17 +846,17 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         end
     end,
     Set_Await_many = function (me)
-        local Await_Until, Namelist = unpack(me)
+        local Await, Namelist = unpack(me)
         local id do
-            local ID_ext = AST.get(Await_Until,'', 1,'Await_Ext', 1,'ID_ext')
+            local ID_ext = AST.get(Await,'Await_Ext', 1,'ID_ext')
             if ID_ext then
                 id = 'tceu_input_'..ID_ext.dcl.id
             else
-                local Exp_Name = AST.asr(Await_Until,'', 1,'Await_Int', 1,'Exp_Name')
+                local Exp_Name = AST.asr(Await,'Await_Int', 1,'Exp_Name')
                 id = 'tceu_event_'..Exp_Name.info.dcl.id..'_'..Exp_Name.info.dcl.n
             end
         end
-        CONC(me, Await_Until)
+        CONC(me, Await)
         for i, name in ipairs(Namelist) do
             local ps = '(('..id..'*)(_ceu_evt->params))'
             SET(me, name, ps..'->_'..i, true)
@@ -971,6 +970,21 @@ error'TODO: lua'
 
     Await_Forever = function (me)
         HALT(me)
+    end,
+
+    Await_Until = function (me)
+        local awt, cnd = unpack(me)
+        if cnd then
+            LINE(me, [[
+do {
+]])
+            CONC(me, awt)
+            LINE(me, [[
+} while (!]]..V(cnd)..[[);
+]])
+        else
+            CONC(me, awt)
+        end
     end,
 
     ---------------------------------------------------------------------------
