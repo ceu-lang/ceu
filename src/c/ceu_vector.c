@@ -17,13 +17,14 @@ typedef struct {
 #define ceu_vector_setlen(a,b,c) ceu_vector_setlen_ex(a,b,c,__FILE__,__LINE__)
 #define ceu_vector_geti(a,b)     ceu_vector_geti_ex(a,b,__FILE__,__LINE__)
 
-void  ceu_vector_init      (tceu_vector* vector, usize max, bool is_dyn,
-                            usize unit, byte* buf);
-byte* ceu_vector_setmax    (tceu_vector* vector, usize len, bool freeze);
-void  ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
-                            char* file, int line);
-byte* ceu_vector_geti_ex   (tceu_vector* vector, usize idx,
-                            char* file, int line);
+void  ceu_vector_init         (tceu_vector* vector, usize max, bool is_dyn,
+                               usize unit, byte* buf);
+byte* ceu_vector_setmax       (tceu_vector* vector, usize len, bool freeze);
+int   ceu_vector_setlen_could (tceu_vector* vector, usize len, bool grow);
+void  ceu_vector_setlen_ex    (tceu_vector* vector, usize len, bool grow,
+                               char* file, int line);
+byte* ceu_vector_geti_ex      (tceu_vector* vector, usize idx,
+                               char* file, int line);
 
 #if 0
 char* ceu_vector_tochar (tceu_vector* vector);
@@ -67,6 +68,38 @@ byte* ceu_vector_setmax (tceu_vector* vector, usize len, bool freeze) {
     }
 
     return vector->buf;
+}
+
+int ceu_vector_setlen_could (tceu_vector* vector, usize len, bool grow)
+{
+    /* must fit w/o growing */
+    if (!grow) {
+        if (len > vector->len) {
+            return 0;
+        }
+    }
+
+    /* fixed size */
+    if (!vector->is_dyn || vector->is_freezed) {
+        if (len > vector->max) {
+            return 0;
+        }
+
+    /* variable size */
+    } else {
+        if (len <= vector->max) {
+            /* ok */    /* len already within limits */
+        } else {
+            /* grow vector */
+            if (ceu_vector_setmax(vector,len,0) == NULL) {
+                if (len != 0) {
+                    return 0;
+                }
+            }
+        }
+    }
+
+    return 1;
 }
 
 void ceu_vector_setlen_ex (tceu_vector* vector, usize len, bool grow,
