@@ -126,7 +126,7 @@ local function run_inits (par, i, Dcl, stop)
         end
         return run_inits(me, #me, Dcl, stop)
 
-    elseif me.tag == 'Watching' then
+    elseif Dcl[1] and me.tag=='Watching' then
         local ok = false
         local await = AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
                                     1,'Set_Await_one', 1,'Abs_Await')

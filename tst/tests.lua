@@ -8,94 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[=[
-Test { [[
-code/tight Ff (void) => FOREVER do
-end
-]],
-    run = 'error',
-}
-
-Test { [[
-code/delayed Ff (void) => FOREVER do
-    escape 0;
-end
-]],
-    run = 'error',
-}
-
-Test { [[
-code/delayed Ff (void) => FOREVER do
-    do finalize with
-        _ceu_dbg_assert(0);
-    end
-    escape;
-end
-par/or do
-    await Ff();
-with
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-code/delayed Ff (void) => FOREVER do
-    do finalize with
-        _ceu_dbg_assert(0);
-    end
-    escape;
-end
-par/or do
-    await Ff();
-with
-end
-escape 1;
-]],
-    run = 'error',
-}
---]=]
-
-Test { [[
-var int x;
-if false then
-    escape 1;
-end
-x = 10;
-escape x;
-]],
-    run = 10,
-}
-
-Test { [[
-var int x;
-if false then
-    escape 1;
-else
-    escape x;
-end
-x = 10;
-escape x;
-]],
-    inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:5)',
-}
-
-Test { [[
-code/await UV_TCP_Open (void) => (var& int v) => void
-do
-    if false then
-        escape;
-    end
-
-    var int vv = 10;
-    v = &vv;
-end
-escape 1;
-]],
-    run = 1,
-}
-
 --[=====[
 do return end -- OK
 --]=====]
@@ -1349,6 +1261,30 @@ end
 escape a;
 ]],
     run = 0,
+}
+
+Test { [[
+var int x;
+if false then
+    escape 1;
+end
+x = 10;
+escape x;
+]],
+    run = 10,
+}
+
+Test { [[
+var int x;
+if false then
+    escape 1;
+else
+    escape x;
+end
+x = 10;
+escape x;
+]],
+    inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:5)',
 }
 
     -- EVENTS
@@ -32723,6 +32659,21 @@ escape 1;
     run = { ['~>100s'] = 1 },
 }
 
+Test { [[
+code/await UV_TCP_Open (void) => (var& int v) => void
+do
+    if false then
+        escape;
+    end
+
+    var int vv = 10;
+    v = &vv;
+end
+escape 1;
+]],
+    run = 1,
+}
+
 -->> CODE / ALIAS
 
 Test { [[
@@ -33375,6 +33326,21 @@ escape 1;
     run = {['~>1s']=1},
 }
 
+Test { [[
+code/await Ff (void) => void do
+end
+
+var int ret;
+watching Ff() do
+    ret = 0;
+end
+
+await 1s;
+escape ret;
+]],
+    inits = 'line 4 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:5)',
+}
+
 -->> CODE / WATCHING / SPAWN
 
 Test { [[
@@ -33501,7 +33467,8 @@ watching 1s do
 end
 escape ret;
 ]],
-    inits = 'line 2 : uninitialized variable "x" : reached `watching´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached `watching´ (/tmp/tmp.ceu:3)',
     --inits = 'line 2 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:4)',
 }
 
@@ -33514,7 +33481,7 @@ end
 ret = x;
 escape ret;
 ]],
-    inits = 'line 2 : uninitialized variable "x" : reached `watching´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "x" : reached `par/or´ (/tmp/tmp.ceu:3)',
     --run = 10,
 }
 
@@ -33542,7 +33509,8 @@ end
 escape 0;
 ]],
     wrn = true,
-    inits = 'line 16 : uninitialized variable "x1" : reached read access (/tmp/tmp.ceu:17)',
+    --inits = 'line 16 : uninitialized variable "x1" : reached read access (/tmp/tmp.ceu:17)',
+    inits = 'line 16 : uninitialized variable "x1" : reached `par/or´ (/tmp/tmp.ceu:17)',
 }
 
 Test { [[
@@ -72424,6 +72392,55 @@ do return end
 -------------------------------------------------------------------------------
 -- BUGS & INCOMPLETNESS
 -------------------------------------------------------------------------------
+--[=[
+Test { [[
+code/tight Ff (void) => FOREVER do
+end
+]],
+    run = 'error',
+}
+
+Test { [[
+code/delayed Ff (void) => FOREVER do
+    escape 0;
+end
+]],
+    run = 'error',
+}
+
+Test { [[
+code/delayed Ff (void) => FOREVER do
+    do finalize with
+        _ceu_dbg_assert(0);
+    end
+    escape;
+end
+par/or do
+    await Ff();
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/delayed Ff (void) => FOREVER do
+    do finalize with
+        _ceu_dbg_assert(0);
+    end
+    escape;
+end
+par/or do
+    await Ff();
+with
+end
+escape 1;
+]],
+    run = 'error',
+}
+--]=]
+
 --[=====[
 
 -- TODO: should accept
