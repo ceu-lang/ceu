@@ -84,6 +84,17 @@ local function run_inits (par, i, Dcl, stop)
     --assert(not __detect_cycles[me], me.n)
     --__detect_cycles[me] = true
 
+    if me.tag == 'Escape' then
+        local blk = AST.asr(me.outer,'',2,'Block')
+        local depth = Dcl.blk.__depth
+        if Dcl.is_mid then
+            depth = depth + 5
+        end
+        if blk.__depth <= depth then
+            return false
+        end
+    end
+
     -- error: yielding statement
     if yields[me.tag] then
         ASR(false, Dcl,
@@ -113,6 +124,7 @@ local function run_inits (par, i, Dcl, stop)
                 '('..me.ln[1]..':'..me.ln[2]..')')
             return true                         -- stop, found init
         end
+        return run_inits(me, #me, Dcl, stop)
 
     elseif me.tag == 'Watching' then
         local ok = false

@@ -8,7 +8,7 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[=====[
+--[=[
 Test { [[
 code/tight Ff (void) => FOREVER do
 end
@@ -55,7 +55,48 @@ escape 1;
 ]],
     run = 'error',
 }
+--]=]
 
+Test { [[
+var int x;
+if false then
+    escape 1;
+end
+x = 10;
+escape x;
+]],
+    run = 10,
+}
+
+Test { [[
+var int x;
+if false then
+    escape 1;
+else
+    escape x;
+end
+x = 10;
+escape x;
+]],
+    inits = 'line 1 : uninitialized variable "x" : reached read access (/tmp/tmp.ceu:5)',
+}
+
+Test { [[
+code/await UV_TCP_Open (void) => (var& int v) => void
+do
+    if false then
+        escape;
+    end
+
+    var int vv = 10;
+    v = &vv;
+end
+escape 1;
+]],
+    run = 1,
+}
+
+--[=====[
 do return end -- OK
 --]=====]
 
@@ -1275,7 +1316,8 @@ else
     a=1;a=2; escape 3;
 end;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
+    inits = 'line 1 : uninitialized variable "a" : reached end of `if´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
     --ref = 'line 5 : invalid extra access to variable "a" inside the initializing `if-then-else´ (/tmp/tmp.ceu:2)',
 }
 Test { [[
@@ -5439,7 +5481,8 @@ event (int,int) e;
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 1 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+    run = 1,
 }
 
 Test { [[
@@ -18797,7 +18840,8 @@ var& int  v;
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "v"',
+    --inits = 'line 1 : uninitialized variable "v"',
+    run = 1,
 }
 Test { [[
 var int i;
@@ -23641,9 +23685,9 @@ vector[1] _int v;
 escape 1;
 ]],
     wrn = true,
-    --run = 1,
+    run = 1,
     --cval = 'line 1 : invalid dimension',
-    inits = 'line 2 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:3)',
 }
 Test { [[
 native _int;
@@ -28319,8 +28363,8 @@ vector&[-_X] int iis;
 escape 1;
 ]],
     wrn = true,
-    inits = 'line 5 : uninitialized vector "iis" : reached `escape´ (/tmp/tmp.ceu:6)',
-    --run = 1,
+    --inits = 'line 5 : uninitialized vector "iis" : reached `escape´ (/tmp/tmp.ceu:6)',
+    run = 1,
 }
 
 Test { [[
@@ -28352,9 +28396,9 @@ Test { [[
 vector&[] int v;
 escape 1;
 ]],
-    inits = 'line 1 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:2)',
+    --inits = 'line 1 : uninitialized vector "v" : reached `escape´ (/tmp/tmp.ceu:2)',
     wrn = true,
-    --run = 1,
+    run = 1,
 }
 Test { [[
 vector[] int vv;
@@ -28758,8 +28802,8 @@ var& int? v;
 escape 1;
 ]],
     wrn = true,
-    --run = 1,
-    inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:2)',
+    run = 1,
+    --inits = 'line 1 : uninitialized variable "v" : reached `escape´ (/tmp/tmp.ceu:2)',
     --env = 'line 1 : invalid type modifier : `?&´',
     --adj = 'line 1 : not implemented : `?´ must be last modifier',
 }
@@ -28819,14 +28863,14 @@ native/nohold _g;
 var& _SDL_Texture_ptr? t_enemy_0, t_enemy_1;
 native _f;
     do t_enemy_1 = &_f();
-finalize with
+finalize (t_enemy_1) with
     _g(&&t_enemy_1!);
 end
 escape 1;
 ]],
     wrn = true,
-    --gcc = 'error: unknown type name ‘SDL_Texture’',
-    inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
+    cc = 'error: unknown type name ‘SDL_Texture_ptr’',
+    --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
 }
 
 Test { [[
@@ -31465,7 +31509,8 @@ end
 escape 10;
 ]],
     wrn = true,
-    inits = 'line 2 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "x" : reached `escape´ (/tmp/tmp.ceu:3)',
+    run = 10,
 }
 
 Test { [[
