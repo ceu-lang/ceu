@@ -147,7 +147,7 @@ memset(&_ceu_mem->trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
         code = string.gsub(code, '^%s*##',  '#')
         code = string.gsub(code, '\n%s*##', '\n#')
 
-        CODES.native[pre_pos] = CODES.native[pre_pos]..code
+        CODES.native[pre_pos] = CODES.native[pre_pos]..code..'\n'
     end,
     Nat_Stmt = function (me)
         LINE(me, unpack(me))

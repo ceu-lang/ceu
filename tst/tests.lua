@@ -9,6 +9,79 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+Test { [[
+#include "c.ceu"
+escape _strlen("oioi");
+]],
+    wrn = true,
+    opts_pre = true,
+    run = 4,
+}
+
+Test { [[
+native/pre do
+    ##include <stdio.h>
+end
+native/pre do
+    ##include <stdio.h>
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    ##include <stdio.h>
+end
+native/pos do
+    ##include <stdio.h>
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/const _A, _B;
+native/pos do
+    ##define A 0
+    ##define B 1
+end
+escape _A | _B;
+]],
+    run = 1,
+}
+
+Test { [[
+code/tight Rect (var& _SDL_Renderer_ptr ren, var SDL_Rect rect, var int speed)
+                    => void
+do
+                    await Rect(&ren, SDL_Rect(100,100,20,20), 25);
+end
+
+escape 0;
+]],
+    run = 'todo',
+}
+
+Test { [[
+var ssize n = 10;
+    if n == 0 then
+    end
+]],
+    run = 'todo',
+}
+
+Test { [[
+native _int;
+vector[10] _int x = _;
+escape sizeof(x) as int;
+]],
+    wrn = true,
+    run = 40,
+}
+
 do return end -- OK
 --]=====]
 
@@ -34642,6 +34715,34 @@ end
 escape _V;
 ]],
     run = 1,
+}
+
+Test { [[
+native _V;
+native/pos do
+    int V = 1;
+end
+
+watching 1s do
+    await 500ms;
+
+    code/await Fire (void) => void do end
+
+    watching 1ms do
+        pool[0] Fire rocks;
+        par do
+        with
+            await 10ms;
+            _V = 99;
+        end
+    end
+    await FOREVER;
+end
+
+escape _V;
+]],
+    wrn = true,
+    run = { ['~>1s'] = 1 },
 }
 
 -->> CODE / AWAIT / EMIT-INTERNAL

@@ -36,7 +36,6 @@ error'TODO: luacov never executes this?'
             elseif e1.is_const=='int' or e2.is_const=='int' then
                 me.is_const = 'int'
             else
-error'TODO: luacov never executes this?'
                 assert(e1.is_const==true and e2.is_const==true)
                 me.is_const = true
             end

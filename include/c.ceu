@@ -1,0 +1,41 @@
+#ifndef _C_CEU
+#define _C_CEU
+
+native/const
+    _stderr,
+;
+
+native/pure
+    _abs,
+    _memcmp,
+    _PURIFY,
+    _strcmp,
+    _strlen,
+;
+
+native/nohold
+    _ceu_vector_setlen,
+    _fprintf,
+    _free,
+    _memcpy,
+    _printf,
+    _sprintf,
+    _sscanf,
+    _strcpy,
+    _strncpy,
+;
+
+native
+    _assert,
+    _ceu_dbg_assert,
+    _malloc,
+    _rand,
+    _sqrt,
+    _srand,
+;
+
+native/pos do
+    ##define PURIFY(e) e
+end
+
+#endif

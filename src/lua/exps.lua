@@ -69,7 +69,11 @@ F = {
 
         -- ctx
         if e.tag ~= 'Type' then
-            INFO.asr_tag(e, {'Val','Nat','Var'}, 'invalid operand to `sizeof´')
+            if e.info.dcl.tag~='Evt' and TYPES.is_nat(TYPES.get(e.info.tp,1)) then
+                INFO.asr_tag(e, {'Val','Nat','Var','Vec'}, 'invalid operand to `sizeof´')
+            else
+                INFO.asr_tag(e, {'Val','Nat','Var'}, 'invalid operand to `sizeof´')
+            end
         end
 
         -- tp

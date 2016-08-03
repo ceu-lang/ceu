@@ -475,14 +475,15 @@ static tceu_callback_ret ceu_callback_go_all (int cmd, tceu_callback_arg p1, tce
 
 int ceu_go_all (void)
 {
+    ceu_callback_void_void(CEU_CALLBACK_INIT);
+
     /* TODO: INIT */
     CEU_APP.wclk_late = 0;
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
+
     CEU_STK_LBL(NULL, &CEU_STK_BASE,
                 (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
-
-    ceu_callback_void_void(CEU_CALLBACK_INIT);
 
     while (!ceu_cb_terminating) {
         ceu_callback_num_void(CEU_CALLBACK_STEP, ceu_cb_pending_async);

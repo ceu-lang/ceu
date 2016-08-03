@@ -1,7 +1,7 @@
 #!/usr/bin/env lua5.3
 
 RUNTESTS = {
-    --cmd = true,
+    cmd = true,
     --luacov = 'lua5.3 -lluacov'
     --valgrind = true
 --REENTRANT = true
@@ -24,6 +24,7 @@ if RUNTESTS.luacov then
 end
 
 if RUNTESTS.cmd then
+    print '>>> CMDS'
     os.execute('cd ../src/lua/ && lua5.3 pak.lua lua5.3 && cp ceu /usr/local/bin/')
 
     local tmp1 = os.tmpname()
@@ -100,8 +101,8 @@ if RUNTESTS.cmd then
 
     local f = assert(io.popen('ceu --pre --pre-input='..tmp1..' '..
                                   '--ceu '..
-                                  '--env --env-header=../arch/env-header.h '..
-                                        '--env-main=../arch/env-main.c'))
+                                  '--env --env-header=../env/header.h '..
+                                        '--env-main=../env/main.c'))
     local out = f:read'*a'
     local ok,mode,status = f:close()
     assert(ok==true and mode=='exit' and status==0 and
@@ -113,8 +114,8 @@ if RUNTESTS.cmd then
     local tmp2 = os.tmpname()
     local f = assert(io.popen('ceu --pre --pre-input='..tmp1..' '..
                                   '--ceu '..
-                                  '--env --env-header=../arch/env-header.h '..
-                                        '--env-main=../arch/env-main.c '..
+                                  '--env --env-header=../env/header.h '..
+                                        '--env-main=../env/main.c '..
                                   '--cc --cc-output='..tmp2))
     local out = f:read'*a'
     local ok,mode,status = f:close()
@@ -215,9 +216,9 @@ end
             ceu_output   = '/tmp/tmp.ceu.c',
 
             env          = true,
-            env_header   = '../arch/env-header.h',
+            env_header   = '../env/header.h',
             env_ceu      = '/tmp/tmp.ceu.c',
-            env_main     = '../arch/env-main.c',
+            env_main     = '../env/main.c',
             env_output   = '/tmp/tmp.c',
 
             cc           = true,
@@ -234,6 +235,7 @@ end
     }
     if T.opts_pre then
         CEU.opts.pre          = true
+        CEU.opts.pre_args     = '-I ../include'
         CEU.opts.pre_input    = '/tmp/tmp.ceu'
         CEU.opts.pre_output   = '/tmp/tmp.ceu.cpp'
         CEU.opts.ceu_input    = '/tmp/tmp.ceu.cpp'
