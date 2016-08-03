@@ -215,8 +215,7 @@ DBG('TODO: _Lua')
         end
 
         -- tp
-        local awt = unpack(AST.asr(fr,'Await_Until'))
-        EXPS.check_tp(me, to.tp, awt.tp, 'invalid assignment')
+        EXPS.check_tp(me, to.tp, fr.tp, 'invalid assignment')
 
         if me.__adjs_is_watching then
             for _, e in ipairs(to) do
@@ -279,13 +278,19 @@ DBG('TODO: _Lua')
         local Abs_Cons,list = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
 
-        local ret = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
-                                               1,'Stmts', 3,'', 2,'Type')
+        local Code = AST.asr(ID_abs.dcl,'Code')
+        local mods = unpack(Code)
+        ASR(mods.await, me,
+            'invalid `await´ : expected `code/await´ declaration '..
+                '('..Code.ln[1]..':'..Code.ln[2]..')')
+
+        local ret = AST.asr(Code,'', 3,'Block', 1,'Stmts',
+                                     1,'Stmts', 3,'', 2,'Type')
         me.tp = AST.copy(ret)
 
         if list then
-            local pars = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
-                                                    1,'Stmts', 2,'Code_Pars')
+            local pars = AST.asr(Code,'', 3,'Block', 1,'Stmts',
+                                          1,'Stmts', 2,'Code_Pars')
             F.__check_watching_list(me, pars, list, 'watching')
         end
      end,

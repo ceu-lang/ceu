@@ -8,92 +8,8 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
-Test { [[
-vector[] int x;
-escape (&&x[0] == &&x[0]) as int;
-]],
-    run = 1,
-}
-
 --[=====[
-ptr
-var int ret = _ceu_uv_read_start(client);
-devia reclamar de fin
-
-Test { [[
-#include "c.ceu"
-escape _strlen("oioi");
-]],
-    wrn = true,
-    opts_pre = true,
-    run = 4,
-}
-
-Test { [[
-native/pre do
-    ##include <stdio.h>
-end
-native/pre do
-    ##include <stdio.h>
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native/pos do
-    ##include <stdio.h>
-end
-native/pos do
-    ##include <stdio.h>
-end
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native/const _A, _B;
-native/pos do
-    ##define A 0
-    ##define B 1
-end
-escape _A | _B;
-]],
-    run = 1,
-}
-
-Test { [[
-code/tight Rect (var& _SDL_Renderer_ptr ren, var SDL_Rect rect, var int speed)
-                    => void
-do
-                    await Rect(&ren, SDL_Rect(100,100,20,20), 25);
-end
-
-escape 0;
-]],
-    run = 'todo',
-}
-
-Test { [[
-var ssize n = 10;
-    if n == 0 then
-    end
-]],
-    run = 'todo',
-}
-
-Test { [[
-native _int;
-vector[10] _int x = _;
-escape sizeof(x) as int;
-]],
-    wrn = true,
-    run = 40,
-}
-
-do return end -- OK
+--do return end -- OK
 --]=====]
 
 ----------------------------------------------------------------------------
@@ -239,6 +155,26 @@ Test { [[escape 1<2>3;]],
 Test { [[escape (((1<2) as int)<3) as int;]], run=1 }
 
 Test { [[
+var ssize n = 10;
+    if n == 0 then
+        escape 0;
+    else
+        escape n as int;
+    end
+]],
+    run = 10,
+}
+
+Test { [[
+native _int;
+vector[10] _int x = _;
+escape sizeof(x) as int;
+]],
+    wrn = true,
+    run = 40,
+}
+
+Test { [[
 var uint x = 1.5;
 escape x + 0.5;
 ]],
@@ -351,6 +287,17 @@ escape (not false) as int;
     run = 1,
 }
 
+Test { [[
+native/const _A, _B;
+native/pos do
+    ##define A 0
+    ##define B 1
+end
+escape _A | _B;
+]],
+    run = 1,
+}
+
 --<<< EXPS / EXPRESSIONS
 
 -->>> NATIVE
@@ -391,6 +338,30 @@ native _g;
 escape 0;
 ]],
     dcls = 'line 3 : native declarations are disabled',
+}
+
+Test { [[
+native/pre do
+    ##include <stdio.h>
+end
+native/pre do
+    ##include <stdio.h>
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native/pos do
+    ##include <stdio.h>
+end
+native/pos do
+    ##include <stdio.h>
+end
+escape 1;
+]],
+    run = 1,
 }
 
 --<<< NATIVE
@@ -3667,6 +3638,16 @@ escape 1;
 ]],
     run = '1] runtime error: `loop´ overflow',
 }
+
+Test { [[
+#include "c.ceu"
+escape _strlen("oioi");
+]],
+    wrn = true,
+    opts_pre = true,
+    run = 4,
+}
+
 Test { [[
 native/const _A;
 native/pos do
@@ -5305,6 +5286,30 @@ escape a+f;
 ]],
     run = { ['1~>A;5~>A;1~>C'] = 2 },
 }
+
+-->> AWAIT / UNTIL
+
+Test { [[
+input int A;
+var int x;
+x = await A until x>10;
+escape x;
+]],
+    run = {
+        ['1~>A; 0~>A; 10~>A; 11~>A'] = 11,
+    },
+}
+Test { [[
+input int A;
+var int x = await A until x>10;
+escape x;
+]],
+    run = {
+        ['1~>A; 0~>A; 10~>A; 11~>A'] = 11,
+    },
+}
+
+--<< AWAIT / UNTIL
 
 -->>> INTERNAL EVENTS
 
@@ -18494,6 +18499,60 @@ escape ret;
     run = { ['~>OS_START; ~>10s; ~>OS_STOP']=9 },
 }
 
+Test { [[
+native _void_ptr, _alloc, _hold;
+native/pre do
+    typedef void* void_ptr;
+end
+
+var& _void_ptr? tcp = &_alloc(1)
+        finalize (tcp) with
+        end;
+_hold(tcp!);
+
+escape 0;
+]],
+    scopes = 'line 9 : invalid `call´ : expected `finalize´ for variable "tcp"',
+}
+
+Test { [[
+native _V, _void_ptr, _alloc, _hold;
+native/nohold _free, _unhold;
+native/pre do
+    int V = 2;
+    void* alloc () {
+        V++;
+        return &V;
+    }
+    void free (void* x) {
+        V*=2;
+    }
+    void hold (void* x) {
+        V*=2;
+    }
+    void unhold (void* x) {
+        V++;
+    }
+    typedef void* void_ptr;
+end
+
+do
+    var& _void_ptr? tcp = &_alloc()
+            finalize (tcp) with
+                _free(tcp!);
+            end;
+    do
+        _hold(tcp!);
+    finalize (tcp) with
+        _unhold(tcp!);
+    end
+end
+
+escape _V;
+]],
+    run = 14,
+}
+
 --<<< FINALLY / FINALIZE
 
 Test { [[
@@ -27402,27 +27461,48 @@ escape 1;
 }
 
 Test { [[
+vector[] int x;
+escape (&&x[0] == &&x[0]) as int;
+]],
+    run = 1,
+}
+
+Test { [[
 vector[] byte str1;
 escape (&&str1[0] == &&str1[0]) as int;
 ]],
-    run = '2] runtime error: access out of bounds',
+    run = 1,
+    --run = '2] runtime error: access out of bounds',
 }
 
 Test { [[
 vector[] byte str1 = [].."";
 escape (&&str1[0] == &&str1[0]) as int;
 ]],
-    run = '2] runtime error: access out of bounds',
+    run = 1,
+    --run = '2] runtime error: access out of bounds',
 }
 
 Test { [[
 native/pure _strcmp;
-vector[] byte str1;
-vector[] byte str2 = [].."";
+vector[] byte str1 = [].."";    // TODO: still points to NULL as
+vector[] byte str2 = [].."";    //  len=0
 native _char;
 escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
 ]],
-    run = '5] runtime error: access out of bounds',
+    -- TODO:
+    run = 'Segmentation fault',
+}
+
+Test { [[
+native/pure _strcmp;
+vector[0] byte str1;
+vector[1] byte str2;
+native _char;
+escape (_strcmp((&&str1[0]) as _char&&,"")==0 and _strcmp((&&str2[0]) as _char&&,"")==0) as int;
+]],
+    run = 1,
+    --run = '5] runtime error: access out of bounds',
 }
 
 Test { [[
@@ -32139,6 +32219,17 @@ escape ret;
 
 --<< CODE / TIGHT / OUTER
 
+Test { [[
+code/tight Rect (void) => void
+do
+end
+await Rect();
+
+escape 0;
+]],
+    stmts = 'line 4 : invalid `await´ : expected `code/await´ declaration (/tmp/tmp.ceu:1)',
+}
+
 --<<< CODE / TIGHT / FUNCTIONS
 
 -->>> CODE / AWAIT
@@ -32910,7 +33001,8 @@ escape x;
 Test { [[
 native/nohold _SDL_CreateWindow;
 
-native _SDL_Window_ptr, _printf;
+native _SDL_Window_ptr;
+native/nohold _printf;
 
 code/await SDL_Go (void) => (var& _SDL_Window_ptr win) => void
 do
@@ -58942,16 +59034,6 @@ escape ptr!:v;
 }
 
 -- UNTIL
-
-Test { [[
-input int A;
-var int x = await A until x>10;
-escape x;
-]],
-    run = {
-        ['1~>A; 0~>A; 10~>A; 11~>A'] = 11,
-    },
-}
 
 Test { [[
 native/pos do

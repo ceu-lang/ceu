@@ -202,6 +202,7 @@ do
         { 'f64','f32','float','int' },
         { 'u64','u32','u16','u8','int' },
         { 'usize','uint','int' },
+        { 'ssize','int' },
         { 's64','s32','s16','s8','int' },
         { 'int','byte','int' },
     }

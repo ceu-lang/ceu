@@ -143,8 +143,9 @@ F = {
         end
 
         for _, p in ipairs(ps) do
-            if p.info.dcl and TYPES.check(p.info.tp,'&&')   -- NO: _f(&&v)
-                          and (p.info.dcl.tag ~= 'Nat')     -- OK: _f(&&_V)
+            if p.info.dcl and (p.info.dcl.tag ~= 'Nat') -- OK: _f(&&_V)
+                and (TYPES.check(p.info.tp,'&&') or     -- NO: _f(&&v)
+                     TYPES.is_nat_not_plain(p.info.tp)) -- NO: _f(&ptr)
             then
                 local fin = AST.par(me, 'Finalize')
                 local ok = fin and (
