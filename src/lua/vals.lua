@@ -290,6 +290,10 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local _,arr,idx = unpack(me)
         if TYPES.is_nat(TYPES.get(arr.info.tp,1)) then
             return '('..V(arr)..'['..V(idx)..'])'
+        elseif AST.get(me,2,'Exp_&&',2,'Exp_Name',1,'')==me then
+            return [[
+(*(]]..TYPES.toc(me.info.tp)..[[*) ceu_vector_buf_get(&]]..V(arr)..','..V(idx)..[[))
+]]
         else
             return [[
 (*(]]..TYPES.toc(me.info.tp)..[[*) ceu_vector_geti(&]]..V(arr)..','..V(idx)..[[))

@@ -5,6 +5,12 @@ native/const
     _stderr,
 ;
 
+native/plain
+    _sockaddr,
+    _sockaddr_in,
+    _sockaddr_storage,
+;
+
 native/pure
     _abs,
     _memcmp,
@@ -33,6 +39,12 @@ native
     _sqrt,
     _srand,
 ;
+
+native/pre do
+    typedef struct sockaddr         sockaddr;
+    typedef struct sockaddr_in      sockaddr_in;
+    typedef struct sockaddr_storage sockaddr_storage;
+end
 
 native/pos do
     ##define PURIFY(e) e

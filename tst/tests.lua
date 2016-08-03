@@ -8,7 +8,18 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+vector[] int x;
+escape (&&x[0] == &&x[0]) as int;
+]],
+    run = 1,
+}
+
 --[=====[
+ptr
+var int ret = _ceu_uv_read_start(client);
+devia reclamar de fin
+
 Test { [[
 #include "c.ceu"
 escape _strlen("oioi");
