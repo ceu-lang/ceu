@@ -206,7 +206,8 @@ escape 0x1 + 0X1 + 0a01;
 Test { [[
 escape 1.;
 ]],
-    run = 1,
+    stmts = 'line 1 : invalid `escape´ : types mismatch : "int" <= "float"',
+    --run = 1,
 }
 
 Test { [[
@@ -18553,14 +18554,14 @@ escape 0;
 
 Test { [[
 native _V, _void_ptr, _alloc, _hold;
-native/nohold _free, _unhold;
+native/nohold _dealloc, _unhold;
 native/pre do
     int V = 2;
     void* alloc () {
         V++;
         return &V;
     }
-    void free (void* x) {
+    void dealloc (void* x) {
         V*=2;
     }
     void hold (void* x) {
@@ -18575,7 +18576,7 @@ end
 do
     var& _void_ptr? tcp = &_alloc()
             finalize (tcp) with
-                _free(tcp!);
+                _dealloc(tcp!);
             end;
     do
         _hold(tcp!);
