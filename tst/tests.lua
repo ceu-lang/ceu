@@ -9,16 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-Test { [[
-loop i in [0 -> 10[ do
-    await 1s;
-    vector[] byte string = [] .. "Alo mundo!\n";
-end
-escape 1;
-]],
-    run = { ['~>20s']=1 },
-}
-
 do return end -- OK
 --]=====]
 
@@ -27735,6 +27725,16 @@ escape 1;
     wrn = true,
     --mem = 'too many events',    -- TODO
     run = 1,
+}
+
+Test { [[
+loop i in [0 -> 10[ do
+    await 1s;
+    vector[] byte string = [] .. "Alo mundo!\n";
+end
+escape 1;
+]],
+    run = { ['~>20s']=1 },
 }
 
 --<< VECTORS
