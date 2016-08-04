@@ -42,9 +42,14 @@ local function run_watch (par, i, stop)
     end
 
     if me.tag == 'Escape' then
-        local blk = AST.asr(me.outer,2,'Block')
+        local blk = AST.asr(me.outer,'',2,'Block')
         if blk.__depth <= stop.__depth then
             return true
+        end
+        if stop.__par.tag=='Code' and
+           AST.par(AST.par(me.outer,'Block'),'Block')==stop
+        then
+            return true     -- both are top-level in the "code"
         end
     end
 

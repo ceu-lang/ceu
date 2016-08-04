@@ -9,6 +9,17 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+Test { [[
+loop i in [0 -> 10[ do
+    await 1s;
+    vector[] byte string = [] .. "Alo mundo!\n";
+end
+escape 1;
+]],
+    run = { ['~>20s']=1 },
+}
+do return end
+
 do return end -- OK
 --]=====]
 
@@ -34001,6 +34012,31 @@ end
 escape nn;
 ]],
     props_ = 'line 16 : invalid access to internal identifier "nn" : crossed `watching´ (/tmp/tmp.ceu:11)',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => int
+do
+    var int xx = 10;
+    x = &xx;
+    escape 10;
+end
+
+code/await Gg (void) => (var& int x) => int
+do
+    var& int xx;
+    var int? ret =
+        watching Ff() => (xx) do
+            x = &xx;
+        end;
+    escape ret!;
+end
+
+var int ret = await Gg();
+
+escape ret;
+]],
+    run = 10,
 }
 
 --<< CODE / WATCHING / SCOPES
