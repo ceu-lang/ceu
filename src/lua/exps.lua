@@ -47,10 +47,10 @@ F = {
 
     NUMBER = function (me)
         local v = unpack(me)
-        if math.floor(v) == tonumber(v) then
-            me.info = INFO.new(me, 'Val', v, 'int')
-        else
+        if math.type(tonumber(v)) == 'float' then
             me.info = INFO.new(me, 'Val', v, 'float')
+        else
+            me.info = INFO.new(me, 'Val', v, 'int')
         end
     end,
 

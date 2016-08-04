@@ -35,9 +35,8 @@ F = {
         -- ctx
         for _, e in ipairs(fr) do
             if e.tag=='Vec_Tup' or e.tag=='STRING' or
-               e.tag=='Exp_as'  or e.tag=='_Lua'
+               e.tag=='Exp_as'  or e.tag=='Lua'
             then
-DBG('TODO: _Lua')
                 -- ok
             else
                 INFO.asr_tag(e, {'Vec'}, 'invalid constructor')
@@ -60,7 +59,7 @@ DBG('TODO: _Lua')
                 local tp = TYPES.new(e, 'byte')
                 EXPS.check_tp(fr, to_info.tp, tp,
                     'invalid constructor : item #'..i)
-            elseif e.tag == '_Lua' then
+            elseif e.tag == 'Lua' then
             elseif e.tag == 'Exp_as' then
             else
                 assert(e.info and e.info.tag == 'Vec')

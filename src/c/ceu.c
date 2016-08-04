@@ -1,6 +1,10 @@
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset, strlen */
 
+#include <lua5.3/lua.h>
+#include <lua5.3/lauxlib.h>
+#include <lua5.3/lualib.h>
+
 #define S8_MIN   -127
 #define S8_MAX    127
 #define U8_MAX    255
@@ -145,6 +149,8 @@ typedef struct tceu_app {
     s32 wclk_min_set;
     s32 wclk_min_cmp;
 
+    lua_State* lua;
+
     tceu_code_mem_ROOT root;
 } tceu_app;
 
@@ -237,6 +243,15 @@ static int ceu_wclock (s32 dt, s32* set, s32* sub)
     }
 
     return ret;
+}
+
+/*****************************************************************************/
+
+int ceu_lua_atpanic (lua_State* lua) {
+    const char* msg = lua_tostring(lua,-1);
+    ceu_dbg_assert(msg != NULL);
+    ceu_callback_assert_msg(0, msg);
+    return 0;
 }
 
 /*****************************************************************************/
@@ -463,6 +478,9 @@ static tceu_callback_ret ceu_callback_go_all (int cmd, tceu_callback_arg p1, tce
         case CEU_CALLBACK_TERMINATING:
             ceu_cb_terminating = 1;
             ceu_cb_terminating_ret = p1.num;
+
+/* TODO: CLOSE */
+            lua_close(CEU_APP.lua);
             break;
         case CEU_CALLBACK_PENDING_ASYNC:
             ceu_cb_pending_async = 1;
@@ -478,9 +496,15 @@ int ceu_go_all (void)
     ceu_callback_void_void(CEU_CALLBACK_INIT);
 
     /* TODO: INIT */
+
     CEU_APP.wclk_late = 0;
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
+
+    CEU_APP.lua = luaL_newstate();
+    ceu_dbg_assert(CEU_APP.lua != NULL);
+    luaL_openlibs(CEU_APP.lua);
+    lua_atpanic(CEU_APP.lua, ceu_lua_atpanic);
 
     CEU_STK_LBL(NULL, &CEU_STK_BASE,
                 (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);

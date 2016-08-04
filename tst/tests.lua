@@ -18,7 +18,6 @@ escape 1;
 ]],
     run = { ['~>20s']=1 },
 }
-do return end
 
 do return end -- OK
 --]=====]
@@ -54680,14 +54679,17 @@ Test { [=[
 --<<< ASYNCS / THREADS
 
 --do return end
+--]===]
+-- TODO: SKIP
+
 -->>> LUA
 
 Test { [==[
 [[
-    a = 1
+    aaa = 1
 ]]
-var int a = [[a]];
-escape a;
+var int bbb = [[aaa]];
+escape bbb;
 ]==],
     run = 1,
 }
@@ -54700,7 +54702,7 @@ Test { [==[
 var int a = [[a]];
 escape a;
 ]==],
-    parser = 'line 3 : after `1´ : expected `is´ or `as´ or binary operator or `;´',
+    parser = 'line 3 : after `1´ : expected `is´ or `as´ or binary operator or `..´ or `;´',
 }
 
 Test { [==[
@@ -54823,7 +54825,7 @@ escape ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&));
 Test { [=[
 native _char;
 native/nohold _strcmp;
-var byte&& str = "oioioi";
+var _char&& str = "oioioi";
 [[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy = [].. [[ str ]];
@@ -54850,7 +54852,7 @@ escape ret and (0 == _strcmp(&&str[0],&&cpy[0]));
 Test { [=[
 native/nohold _strcmp;
 vector[10] byte str = [] .. "oioioi";
-[[ str = @&&str[0] ]]
+[[ str = @str ]]
 var bool ret = [[ str == 'oioioi' ]];
 vector[10] byte cpy;
 vector&[10] byte ptr = &cpy;
@@ -54927,12 +54929,12 @@ var int v_from_ceu = [[v_from_lua]];
 str_from_lua = 'string from lua'
 ]]
 vector[100] byte str_from_ceu = [].. [[str_from_lua]];
-native _assert;
+native _ceu_dbg_assert;
 native _char;
-_assert(0==_strcmp((&&str_from_ceu[0]) as _char&&, "string from lua"));
+_ceu_dbg_assert(0==_strcmp((&&str_from_ceu[0]) as _char&&, "string from lua"));
 
 [[
-print(@v_from_ceu)
+--print(@v_from_ceu)
 v_from_lua = v_from_lua + @v_from_ceu
 ]]
 
@@ -54966,6 +54968,21 @@ var bool b1_ = [[b1]];
 var bool b2_ = [[b2]];
 escape ret + (b1_ as int) + (b2_ as int);
 ]=],
+    run = '3] lua error : number expected',
+}
+
+Test { [=[
+var bool b1 = true;
+var bool b2 = false;
+var bool ret = [[ @b1==true and @b2==false ]];
+[[
+    b1 = @b1
+    b2 = @b2
+]];
+var bool b1_ = [[b1]];
+var bool b2_ = [[b2]];
+escape (ret as int) + (b1_ as int) + (b2_ as int);
+]=],
     run = 2,
 }
 
@@ -54992,7 +55009,7 @@ escape ret;
 
 Test { [=[
 do
-    var f32 f = 0;
+    var f32 f = 10;
     [[assert(math.type(@f)=='float')]];
 end
 do
@@ -55051,14 +55068,16 @@ escape ok as int;
 Test { [=[
 vector[] byte str = [].."12345";
 vector[] byte bts = [1,2,3,4,5];
-var int r1 = [[ string.len(@&&str[0]) ]];
-var int r2 = [[ string.len(@&&bts[0]) ]];
+var int r1 = [[ string.len(@str) ]];
+var int r2 = [[ string.len(@bts) ]];
 escape r1+r2;
 ]=],
     run = 10,
 }
-
 --<<< LUA
+
+-- TODO: SKIP
+--[===[
 
 -->>> ISR / ATOMIC
 

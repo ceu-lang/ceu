@@ -227,7 +227,9 @@ end
             cc_args      = '-Wall -Wextra -Werror'
                             -- TODO: remove all "-Wno-*"
                             ..' -Wno-unused'
-                            ..' -Wno-missing-field-initializers',
+                            ..' -Wno-missing-field-initializers'
+                            ..' -llua5.3'
+                         ,
 
             ceu_line_directives = 'true',
             --ceu_line_directives = 'false',

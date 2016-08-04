@@ -537,7 +537,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     -- Lua
 
-    , _Lua     = KK'[' * m.Cg(P'='^0,'lua') * KK'[' *
+    , _Lua     = KK'[' * m.Cg(P'='^0,'lua') * KK('[',nil,true) *
                  ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
                   * (V'__luacl'/function()end) *x
     , __luaext = P'@' * V'__Exp'
