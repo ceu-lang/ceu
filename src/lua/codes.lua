@@ -171,7 +171,7 @@ if (]]..V(c)..[[) {
                 local is_alias, tp = unpack(dcl)
                 if TYPES.check(tp,'?') and (not is_alias) and (not dcl.is_param) then
                     LINE(me, [[
-]]..CUR(dcl.id_)..[[.is_set = 0;
+]]..V(dcl)..[[.is_set = 0;
 ]])
                 end
             end
@@ -185,12 +185,12 @@ if (]]..V(c)..[[) {
                 if not is_alias then
                     if dim.is_const then
                         LINE(me, [[
-ceu_vector_init(&]]..CUR(dcl.id_)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
+ceu_vector_init(&]]..V(dcl)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
                 (byte*)&]]..CUR(dcl.id_..'_buf')..[[);
 ]])
                     else
                         LINE(me, [[
-ceu_vector_init(&]]..CUR(dcl.id_)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
+ceu_vector_init(&]]..V(dcl)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 ]])
                     end
                 end
@@ -211,7 +211,7 @@ if (0) {
                     local is_alias, tp, _, dim = unpack(dcl)
                     if not (is_alias or dim.is_const) then
                         LINE(me, [[
-    ceu_vector_setmax(&]]..CUR(dcl.id_)..[[, 0, 0);
+    ceu_vector_setmax(&]]..V(dcl)..[[, 0, 0);
 ]])
                     end
                 end
@@ -234,7 +234,7 @@ _ceu_trl++;
             if not (is_alias or dim.is_const) then
                 if dim ~= '[]' then
                     LINE(me, [[
-ceu_vector_setmax(&]]..CUR(me.id_)..', '..V(dim)..[[, 1);
+ceu_vector_setmax(&]]..V(me)..', '..V(dim)..[[, 1);
 ]])
                 end
             end
@@ -249,14 +249,14 @@ ceu_vector_setmax(&]]..CUR(me.id_)..', '..V(dim)..[[, 1);
         LINE(me, [[
 {
     /* first.nxt = first.prv = &first; */
-    tceu_code_mem_dyn* __ceu_dyn = &]]..CUR(me.id_)..[[.first;
-    ]]..CUR(me.id_)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn, {} };
+    tceu_code_mem_dyn* __ceu_dyn = &]]..V(me)..[[.first;
+    ]]..V(me)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn, {} };
 };
-ceu_pool_init(&]]..CUR(me.id_)..'.pool, '..V(dim)..[[,
+ceu_pool_init(&]]..V(me)..'.pool, '..V(dim)..[[,
               sizeof(tceu_code_mem_dyn)+sizeof(]]..TYPES.toc(tp)..[[),
               (byte**)&]]..CUR(me.id_..'_queue')..', (byte*)&'..CUR(me.id_..'_buf')..[[);
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id         = CEU_INPUT__CODE_POOL;
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..CUR(me.id_)..[[.first;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
 _ceu_trl++;
 ]])
     end,
