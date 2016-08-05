@@ -184,48 +184,50 @@ local function run_inits (par, i, Dcl, stop)
         end
 
         -- equalize all with Set_Await_many
-        if to.tag ~= 'Namelist' then
+        if to.tag ~= 'List_Name_Any' then
             to = { to }
         end
 
         for _, sub in ipairs(to) do
-            -- NO: var& int x = ... (w/o &)
-            local is_alias = unpack(sub.info.dcl)
-            if is_alias and (me.tag~='Set_Alias') then
-                if me.tag == 'Set_Exp' then
-                    ASR(false, me,
-                        'invalid binding : expected operator `&´ in the right side')
-                else
-                    ASR(false, me,
-                        'invalid binding : unexpected statement in the right side')
+            if sub.tag ~= 'ID_any' then
+                -- NO: var& int x = ... (w/o &)
+                local is_alias = unpack(sub.info.dcl)
+                if is_alias and (me.tag~='Set_Alias') then
+                    if me.tag == 'Set_Exp' then
+                        ASR(false, me,
+                            'invalid binding : expected operator `&´ in the right side')
+                    else
+                        ASR(false, me,
+                            'invalid binding : unexpected statement in the right side')
+                    end
                 end
-            end
 
-            if sub[1].tag ~= 'ID_int' then
-                -- ID.field = ...;  // ERR: counts as read, not write
-                if sub.info.dcl == Dcl then
-                    ASR(false, Dcl,
-                        'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
-                        'reached read access '..
-                        '('..sub.ln[1]..':'..sub.ln[2]..')')
-                end
-            else
-                -- ID = ...;
-                local ID_int = AST.asr(sub,'Exp_Name', 1,'ID_int')
-                if ID_int.dcl == Dcl then
-                    if me.tag == 'Set_Any' then
-                        WRN(false, Dcl,
-                            'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'"')
+                if sub[1].tag ~= 'ID_int' then
+                    -- ID.field = ...;  // ERR: counts as read, not write
+                    if sub.info.dcl == Dcl then
+                        ASR(false, Dcl,
+                            'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
+                            'reached read access '..
+                            '('..sub.ln[1]..':'..sub.ln[2]..')')
                     end
-                    if me.tag == 'Set_Alias' then
-                        me.is_init = true       -- refuse all others
-                        if ID_int.dcl.inits then
-                            ID_int.dcl.inits[#ID_int.dcl.inits+1] = me
-                        else
-                            ID_int.dcl.inits = {me}
+                else
+                    -- ID = ...;
+                    local ID_int = AST.asr(sub,'Exp_Name', 1,'ID_int')
+                    if ID_int.dcl == Dcl then
+                        if me.tag == 'Set_Any' then
+                            WRN(false, Dcl,
+                                'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'"')
                         end
+                        if me.tag == 'Set_Alias' then
+                            me.is_init = true       -- refuse all others
+                            if ID_int.dcl.inits then
+                                ID_int.dcl.inits[#ID_int.dcl.inits+1] = me
+                            else
+                                ID_int.dcl.inits = {me}
+                            end
+                        end
+                        return true                 -- stop, found init
                     end
-                    return true                 -- stop, found init
                 end
             end
         end
@@ -265,7 +267,7 @@ local function run_ptrs (par, i, Dcl, stop)
         local ok = false
         if set then
             local _,to = unpack(set)
-            if to.tag ~= 'Namelist' then
+            if to.tag ~= 'List_Name_Any' then
                 to = { to }
             end
             for _, v in ipairs(to) do

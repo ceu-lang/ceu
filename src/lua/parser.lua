@@ -410,7 +410,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Loop       = K'loop' * OPT('/'*V'__Exp') *
                    V'__Do'
 
-    , _Every  = K'every' * OPT((V'ID_int'+PARENS(V'Varlist')) * K'in') *
+    , _Every  = K'every' * OPT((V'Exp_Name'+PARENS(V'List_Name_Any')) * K'in') *
                     (V'Await_Ext' + V'Await_Int' + V'Await_Wclock') *
                 V'__Do'
 
@@ -645,7 +645,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- SETS
 
     , _Set = V'Exp_Name' * V'__Sets_one'
-           + (V'Exp_Name' + PARENS(V'Namelist')) * V'__Sets_many'
+           + (V'Exp_Name' + PARENS(V'List_Name_Any')) * V'__Sets_many'
 
     , __Sets_one  = (KK'='-'==') * (V'__sets_one'  + PARENS(V'__sets_one'))
     , __Sets_many = (KK'='-'==') * (V'__sets_many' + PARENS(V'__sets_many'))
@@ -729,6 +729,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- LISTS
 
 -- TODO: rename List_*
+    , List_Name_Any = LIST(V'Exp_Name' + V'ID_any')
     , Namelist = LIST(V'Exp_Name')
     , Varlist  = LIST(V'ID_int')
     , Explist  = LIST(V'__Exp')

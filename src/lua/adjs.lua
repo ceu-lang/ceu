@@ -385,23 +385,10 @@ DBG('TODO: _Loop_Pool')
         local dcls = node('Stmts', me.ln)
         local set_awt
         if to then
-            local new do
-                --  (ID_int,ID_int) = ...
-                -->>>
-                --  (Exp_Name,Exp_Name) = ...
-                if to.tag == 'Varlist' then
-                    new = node('Namelist', to.ln)
-                    for i, var in ipairs(to) do
-                        new[i] = node('Exp_Name', var.ln, var)
-                    end
-                else
-                    new = node('Exp_Name', to.ln, to)
-                end
-            end
             if awt.tag=='Await_Ext' or awt.tag=='Await_Int' then
-                set_awt = node('Set_Await_many', me.ln, awt, new)
+                set_awt = node('Set_Await_many', me.ln, awt, to)
             else
-                set_awt = node('Set_Await_one', me.ln, awt, new)
+                set_awt = node('Set_Await_one', me.ln, awt, to)
             end
         else
             set_awt = awt
@@ -753,7 +740,7 @@ error'TODO: luacov never executes this?'
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
         if var.tag == 'Exp_Name' then
-            me[2] = node('Namelist', var.ln, var)
+            me[2] = node('List_Name_Any', var.ln, var)
         end
     end,
 

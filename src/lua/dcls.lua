@@ -229,7 +229,8 @@ F = {
         F.__no_abs(Type, 'Code')
 
         if AST.par(me, 'Data') then
-            ASR(is_alias, me,
+            local is_nat = TYPES.is_nat(TYPES.get(Type,1))
+            ASR(is_alias or is_nat, me,
                 'invalid declaration : not implemented (plain vectors)')
         end
 

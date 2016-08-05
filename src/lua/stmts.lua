@@ -210,7 +210,9 @@ F = {
 
         -- ctx
         for _, Exp_Name in ipairs(to) do
-            INFO.asr_tag(Exp_Name, {'Nat','Var'}, 'invalid assignment')
+            if Exp_Name.tag ~= 'ID_any' then
+                INFO.asr_tag(Exp_Name, {'Nat','Var'}, 'invalid assignment')
+            end
         end
 
         -- tp
@@ -445,6 +447,26 @@ DBG'TODO: _Async_Isr'
 
             -- info
             Typelist[i] = AST.copy(e.info.tp)
+        end
+        me.tp = Typelist
+    end,
+
+    List_Name_Any = function (me)
+        -- ctx
+        for _, var in ipairs(me) do
+            if var.tag ~= 'ID_any' then
+                INFO.asr_tag(var, {'Nat','Var'}, 'invalid variable')
+            end
+        end
+
+        -- info
+        local Typelist = AST.node('Typelist', me.ln)
+        for i, var in ipairs(me) do
+            if var.tag == 'ID_any' then
+                Typelist[i] = true
+            else
+                Typelist[i] = AST.copy(var.info.tp)
+            end
         end
         me.tp = Typelist
     end,

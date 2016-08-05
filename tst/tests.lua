@@ -9,8 +9,31 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
---]=====]
+Test { [[
+data IPlay with
+end
 
+data Media with
+    var int x;
+end
+data Media.Video with
+    var int y;
+end
+
+code/tight/dynamic Play_Set_Properties (var& IPlay play, var& Media media)
+                                            => void
+do
+end
+
+code/tight/dynamic Play_Set_Properties (var& IPlay play, var& Media.Video video)
+                                            => void
+do
+end
+]],
+    run = 1,
+}
+
+do return end
 Test { [[
 data Dd with
     vector[] int x;
@@ -82,6 +105,7 @@ escape 1;
 }
 
 --do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -4034,6 +4058,36 @@ end
     stmts = 'line 3 : invalid assignment : types mismatch : "(int)" <= "(int,int)"',
 }
 
+Test { [[
+input (int,int) B;
+var int ret = 0;
+par/or do
+    every (_,_) in B do
+    end
+with
+    var int x;
+    every (x,_) in B do
+        ret = ret + x;
+    end
+with
+    var int x;
+    every (_,x) in B do
+        ret = ret + x;
+    end
+with
+    await B;
+    await B;
+with
+    async do
+        emit B(1,2);
+        emit B(10,20);
+    end
+end
+escape ret;
+]],
+    run = 33,
+}
+
 --<<< EVERY
 
 Test { [[
@@ -5383,6 +5437,37 @@ escape a+f;
 ]],
     run = { ['1~>A;5~>A;1~>C'] = 2 },
 }
+
+-->> AWAIT / ID_any
+
+Test { [[
+input int A;
+_ = await A;
+escape 0;
+]],
+    parser = 'line 1 : after `;´ : expected statement',
+}
+
+Test { [[
+input (int,int) B;
+var int x1=0, x2=0;
+par/and do
+    (_,_) = await B;
+    (x1,_) = await B;
+    (_,x2) = await B;
+with
+    async do
+        emit B(10,10);
+        emit B(1,10);
+        emit B(10,2);
+    end
+end
+escape x1+x2;
+]],
+    run = 3,
+}
+
+--<< AWAIT / ID_any
 
 -->> AWAIT / UNTIL
 
@@ -32583,10 +32668,16 @@ escape x;
 }
 
 Test { [[
+every do
+end
+]],
+    parser = 'line 1 : after `every´ : expected name expression or external identifier or number',
+}
+Test { [[
 every Code(1) do
 end
 ]],
-    parser = 'line 1 : after `every´ : expected internal identifier or `(´',
+    parser = 'line 1 : after `every´ : expected name expression or number',
 }
 Test { [[
 code/await Code (void)=>void;

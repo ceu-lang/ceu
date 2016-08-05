@@ -831,7 +831,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         end
     end,
     Set_Await_many = function (me)
-        local Await, Namelist = unpack(me)
+        local Await, List = unpack(me)
         local id do
             local ID_ext = AST.get(Await,'Await_Ext', 1,'ID_ext')
             if ID_ext then
@@ -842,9 +842,11 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
             end
         end
         CONC(me, Await)
-        for i, name in ipairs(Namelist) do
-            local ps = '(('..id..'*)(_ceu_evt->params))'
-            SET(me, name, ps..'->_'..i, true)
+        for i, name in ipairs(List) do
+            if name.tag ~= 'ID_any' then
+                local ps = '(('..id..'*)(_ceu_evt->params))'
+                SET(me, name, ps..'->_'..i, true)
+            end
         end
     end,
 

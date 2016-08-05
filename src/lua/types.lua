@@ -26,7 +26,9 @@ local function types_id (tp)
 end
 
 function TYPES.tostring (tp)
-    if tp.tag == 'Typelist' then
+    if tp == true then
+        return '*'
+    elseif tp.tag == 'Typelist' then
         local ret = {}
         for i, tp in ipairs(tp) do
             ret[i] = TYPES.tostring(tp)
@@ -244,6 +246,10 @@ do
     end
 
     function TYPES.contains (tp1, tp2, is_alias)
+        if tp1 == true then
+            return true
+        end
+
         if tp1.tag=='Typelist' or tp2.tag=='Typelist' then
             if tp1.tag=='Typelist' and tp2.tag=='Typelist' then
                 if #tp1 == #tp2 then
