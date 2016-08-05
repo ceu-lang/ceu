@@ -571,6 +571,7 @@ ceu_callback_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ ove
         local body = unpack(me)
         LINE(me, [[
 while (1) {
+    _ceu_trl = &_ceu_mem->trails[]]..me.trails[1]..[[];
     ]]..body.code..[[
 }
 ]])
