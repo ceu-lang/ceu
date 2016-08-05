@@ -252,7 +252,7 @@ F = {
 
             local id, mod = unpack(Type)
             assert(id.dcl,'bug found')
-            ASR(id.dcl.tag=='Prim', me,
+            ASR(id.dcl.tag=='Prim' or TYPES.is_nat_plain(Type), me,
                 'invalid event type : must be primitive')
             ASR(not mod, me,
                 mod and 'invalid event type : cannot use `'..mod..'´')
