@@ -103,6 +103,39 @@ error'TODO: luacov never executes this?'
         end
     end,
 
+    _Spawn_Block__PRE = function (me)
+        local blk = unpack(me)
+
+        -- all statements after myself
+        local par_stmts = AST.asr(me.__par, 'Stmts')
+        local cnt_stmts = { unpack(par_stmts, me.__idx+1) }
+        for i=me.__idx, #par_stmts do
+            par_stmts[i] = nil
+        end
+
+        local awaitN = node('Await_Forever', me.ln)
+-- TODO
+        awaitN.__adj_no_not_reachable_warning = true
+
+        local orig = AST.asr(blk,'Block', 1,'Stmts')
+-- TODO
+        orig.__adj_is_spawnanon = true
+        orig.ln = me.ln
+        blk[1] = node('Stmts', me.ln,
+                    blk[1],
+                    awaitN)
+
+        local ret = node('Par_Or', me.ln,
+                        blk,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                unpack(cnt_stmts))))
+-- TODO
+        ret.__adj_no_should_terminate_warning = true
+        return ret
+    end,
+
+
 -------------------------------------------------------------------------------
 
     _Data_simple__PRE = '_Data_block__PRE',
