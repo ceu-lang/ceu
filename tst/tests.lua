@@ -12,6 +12,26 @@ end
 --]=====]
 
 Test { [[
+data Dd with
+    vector[] int x;
+end
+escape 0;
+]],
+    dcls = 'line 2 : invalid declaration : not implemented (plain vectors)',
+}
+
+Test { [[
+var int ret = 0;
+spawn do
+    ret = 1;
+    await FOREVER;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
 native/plain _char_ptr_ext;
 native/pure _strlen;
 native/pre do
@@ -29,8 +49,8 @@ escape ret;
 ]],
     run = 3,
 }
-do return end
 
+-- TODO: investigate bug on uv/6/7/8/9
 Test { [[
 loop i in [0 -> 10[ do
     await 1s;
@@ -61,7 +81,7 @@ escape 1;
     run = { ['~>20s']=1 },
 }
 
-do return end -- OK
+--do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested

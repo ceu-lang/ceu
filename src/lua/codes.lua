@@ -109,25 +109,7 @@ F = {
 
     Node__PRE = function (me)
         me.code = ''
---[=[
-        LINE(me, [[
-/* PRE */
-ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..me.trails[1]..[[], "bug found : unexpected trail");
-]])
-]=]
     end,
---[=[
-    Node__POS = function (me)
-        local trl = me.trails[1]
-        if me.tag == 'Finalize' then
-            trl = trl + 1
-        end
-        LINE(me, [[
-/* POS */
-ceu_dbg_assert(_ceu_trl == &CEU_APP.trails[]]..trl..[[], "bug found : unexpected trail");
-]])
-    end,
-]=]
 
     ROOT__PRE = function (me)
         CASE(me, me.lbl_in)

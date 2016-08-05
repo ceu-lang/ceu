@@ -223,10 +223,15 @@ F = {
     end,
 
     Vec = function (me)
-        local _,Type,id,dim = unpack(me)
+        local is_alias,Type,id,dim = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
         F.__no_abs(Type, 'Code')
+
+        if AST.par(me, 'Data') then
+            ASR(is_alias, me,
+                'invalid declaration : not implemented (plain vectors)')
+        end
 
         -- vector[] void vec;
         local ID_prim,mod = unpack(Type)
