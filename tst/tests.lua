@@ -9,6 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+--]=====]
+
 Test { [[
 data Aa;
 data Bb with
@@ -184,8 +186,7 @@ escape 1;
     run = { ['~>20s']=1 },
 }
 
---do return end -- OK
---]=====]
+do return end -- OK
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35334,7 +35335,7 @@ await/dynamic Ui_go(&ui);
 
 escape 1;
 ]],
-    props_ = 'line 5 : invalid `dynamic´ declaration : expected dynamic parameter',
+    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
     wrn = true,
     run = 1,
 }
