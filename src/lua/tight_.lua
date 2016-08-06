@@ -104,37 +104,37 @@ AST.visit(F)
 
 G = {
     Abs_Call = function (me)
-        local mod, Abs_Cons = unpack(me)
+        local mods_call, Abs_Cons = unpack(me)
         local Code = AST.asr(Abs_Cons,'', 1,'ID_abs').dcl
-        local mods = unpack(Code)
+        local mods_dcl = unpack(Code)
 
         -- calling known Code
         if Code.is_impl then
-            if mod == 'call/recursive' then
-                ASR(mods.recursive, me,
+            if mods_call.recursive then
+                ASR(mods_dcl.recursive, me,
                     'invalid `call´ : unexpected `/recursive´')
             else
-                ASR(not mods.recursive, me,
+                ASR(not mods_dcl.recursive, me,
                     'invalid `call´ : expected `/recursive´')
             end
 
         -- calling unknown Code
         else
             -- Code must be '/recursive'
-            ASR(mods.recursive, Code,
+            ASR(mods_dcl.recursive, Code,
                 'invalid `code´ declaration : expected `/recursive´ : `call´ to unknown body ('..me.ln[1]..':'..me.ln[2]..')')
 
             -- Call must be '/recursive'
-            ASR(mod == 'call/recursive', me,
+            ASR(mods_call.recursive, me,
                 'invalid `call´ : expected `/recursive´ : `call´ to unknown body')
         end
 
         -- calling from Par code with '/recursive'
         local Par = AST.par(me,'Code')
-        if Par and mod=='call/recursive' then
+        if Par and mods_call.recursive then
             -- Par must be '/recursive'
-            local mods = unpack(Par)
-            ASR(mods.recursive, Par,
+            local mods_dcl = unpack(Par)
+            ASR(mods_dcl.recursive, Par,
                 'invalid `code´ declaration : expected `/recursive´ : nested `call/recursive´ ('..me.ln[1]..':'..me.ln[2]..')')
         end
     end,

@@ -99,14 +99,24 @@ F = {
 
     Abs_Call = function (me)
         local ID_abs = AST.asr(me,'', 2,'Abs_Cons', 1,'ID_abs')
-        local mods = unpack(ID_abs.dcl)
+        local mods_dcl  = unpack(ID_abs.dcl)
+        local mods_call = unpack(me)
+
+        if mods_dcl.dynamic then
+            ASR(mods_call.dynamic or mods_call.static, me,
+                'invalid call : expected `/dynamic´ or `/static´ modifier')
+        else
+            local mod = (mods_call.dynamic or mods_call.static)
+            ASR(not mod, me, mod and
+                'invalid call : unexpected `/'..mod..'´ modifier')
+        end
 
         -- ctx
         ASR(ID_abs.dcl.tag=='Code', me,
                 'invalid call : '..
                 'unexpected context for '..AST.tag2id[ID_abs.dcl.tag]
                                          ..' "'..ID_abs.dcl.id..'"')
-        ASR(mods.tight, me,
+        ASR(mods_dcl.tight, me,
                 'invalid call : '..
                 'expected `code/tight´ : got `code/await´ ('..ID_abs.dcl.ln[1]..':'..ID_abs.ln[2]..')')
 

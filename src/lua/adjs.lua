@@ -222,23 +222,23 @@ error'TODO: luacov never executes this?'
 error'TODO'
             else
                 AST.asr(v,'_Code_Pars_Item')
-                local pre,is_alias = unpack(v)
+                local mods,pre,is_alias = unpack(v)
                 local _,dim,hold,tp,id
                 local dcl
                 if pre == 'var' then
-                    _,_,hold,tp,id = unpack(v)
+                    _,_,_,hold,tp,id = unpack(v)
                     id = id or '_anon_'..i
                     me[i] = node('Var', me.ln, is_alias, AST.copy(tp), id)
                 elseif pre == 'vector' then
-                    _,_,dim,tp,id = unpack(v)
+                    _,_,_,dim,tp,id = unpack(v)
                     id = id or '_anon_'..i
                     me[i] = node('Vec', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
                 elseif pre == 'pool' then
-                    _,_,dim,tp,id = unpack(v)
+                    _,_,_,dim,tp,id = unpack(v)
                     id = id or '_anon_'..i
                     me[i] = node('Pool', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
                 elseif pre == 'event' then
-                    _,_,_,tp,id = unpack(v)
+                    _,_,_,_,tp,id = unpack(v)
                     id = id or '_anon_'..i
                     if tp.tag == 'Type' then
                         tp = node('Typelist', me.ln, tp)
@@ -250,6 +250,7 @@ error'TODO'
                 end
                 me[i].is_param = is_param
                 me[i].is_mid   = is_mid
+                me[i].mods     = mods
                 if Code.is_impl then
                     ASR(id ~= '_anon_'..i, me,
                         'invalid declaration : parameter #'..i..' : expected identifier')

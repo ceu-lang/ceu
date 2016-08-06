@@ -70,6 +70,15 @@ local T = {
     },
 
     {
+        '`dynamic´ or `vector´ or `pool´ or `event´ or `var´',
+        '`vector´ or `pool´ or `event´ or `var´',
+    },
+    {
+        ' or `/dynamic´ or `/static´ or `/recursive´',
+        '',
+    },
+
+    {
         '`%(´ or internal identifier or native identifier or `outer´ or `{´',
         'name expression'
     },
@@ -501,7 +510,8 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                      + CK'pool'   * CKK'&' * V'__Dim' * V'Type'
                      + CK'event'  * CKK'&' * Cc(false) * (PARENS(V'Typelist') + V'Type')
                      + CK'var'   * OPT(CKK'&') * OPT(KK'/'*CK'hold') * V'Type'
-    , _Code_Pars_Item  = V'__typepars_pre' * OPT(V'__ID_int')
+    , _Code_Pars_Item  = Ct( Cg(K'dynamic','dynamic')^-1 )
+                            * V'__typepars_pre' * OPT(V'__ID_int')
 
     , Code_Pars = #KK'(' * (
                     PARENS(P'void') +
@@ -625,9 +635,12 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                       )^-1
 
 -- ABS
-
-    , __abs_call = (CK'call/recursive' + CK'call')
-    , Abs_Call  = V'__abs_call' * V'__Abs_Cons_Code'
+    , __call_mods = Ct ( (
+                            Cg(K'/dynamic'*Cc'dynamic','dynamic') +
+                            Cg(K'/static' *Cc'static', 'static')
+                         )^-1 *
+                         Cg(K'/recursive'*Cc'recursive','recursive')^-1 )
+    , Abs_Call  = K'call' * V'__call_mods' * V'__Abs_Cons_Code'
     , Abs_Val   = CK'val' * V'Abs_Cons'
     , Abs_New   = CK'new' * V'Abs_Cons'
     , Abs_Await = V'__Abs_Cons_Code'

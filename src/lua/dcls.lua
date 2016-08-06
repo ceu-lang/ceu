@@ -302,6 +302,7 @@ F = {
 
     Code_Pars = function (me)
         local Code = AST.asr(me,4,'Code')
+        local mods = unpack(Code)
 
         local tps = AST.node('Typelist',me.ln)
         for i, dcl in ipairs(me) do
@@ -324,12 +325,20 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         for i, dcl in ipairs(me) do
             local is_alias,Type = unpack(dcl)
             if dcl.tag~='Evt' and Type[1].tag=='ID_abs' then
-                dcl.id_dyn = '_'..i..'_'..dcl.tag..
-                             '_'..(is_alias and 'y' or 'n')..
-                             '_'..TYPES.tostring(Type)
-                dcl.id_dyn = TYPES.noc(dcl.id_dyn)
-                me.ids_dyn = me.ids_dyn..dcl.id_dyn
+                if is_alias or Type[2] then
+--'invalid `dynamic´ declaration : parameter #'..i..' : unexpected plain `data´'
+                    dcl.id_dyn = '_'..i..'_'..dcl.tag..
+                                 '_'..(is_alias and 'y' or 'n')..
+                                 '_'..TYPES.tostring(Type)
+                    dcl.id_dyn = TYPES.noc(dcl.id_dyn)
+                    me.ids_dyn = me.ids_dyn..dcl.id_dyn
+                end
             end
+        end
+
+        if mods.dynamic and #me>0 then
+            ASR(me.ids_dyn ~= '', me,
+                'invalid `dynamic´ declaration : expected dynamic parameters')
         end
     end,
 

@@ -10,28 +10,108 @@ end
 
 --[=====[
 Test { [[
-data IPlay with
-end
-
-data Media with
+data Aa;
+data Bb with
     var int x;
 end
-data Media.Video with
-    var int y;
+data Bb.Cc;
+
+code/tight/dynamic Ff (var Bb b, var Aa a) => void do
 end
 
-code/tight/dynamic Play_Set_Properties (var& IPlay play, var& Media media)
-                                            => void
-do
-end
-
-code/tight/dynamic Play_Set_Properties (var& IPlay play, var& Media.Video video)
-                                            => void
-do
+code/tight/dynamic Ff (var Bb.Cc c, var Aa a) => void do
 end
 ]],
+    dcls = 'line 7 : invalid `dynamic´ declaration : expected dynamic parameters',
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var& Bb b, var Aa a) => void do
+end
+
+code/tight/dynamic Ff (var& Bb.Cc c, var Aa a) => void do
+end
+
+escape 1;
+]],
+    wrn = true,
     run = 1,
 }
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var Aa a, var& Bb b) => void do
+end
+
+code/tight/dynamic Ff (var Aa a, var& Bb.Cc c) => void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var& Aa a, var& Bb b, var Aa a2, var& Bb b2, var Aa a3) => void do
+end
+
+code/tight/dynamic Ff (var& Aa a, var& Bb.Cc c, var Aa a2, var& Bb.Cc c2, var Aa a3) => void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var& Bb b,    var& Aa a) => void do
+end
+
+code/tight/dynamic Ff (var& Bb.Cc c, var& Aa a) => void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd with
+    event void ok;      // copy event??
+end
+var Dd dd = val Dd(_);
+var Dd ee = dd;
+escape 1;
+]],
+    run = 'error',
+}
+do return end
 
 do return end
 Test { [[
@@ -105,7 +185,6 @@ escape 1;
 }
 
 --do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -30920,6 +30999,7 @@ end
 --<<< WATCHING
 
 -->>> CODE / TIGHT / FUNCTIONS
+--]=====]
 
 Test { [[
 code/tight Code (var int)=>void
@@ -35224,30 +35304,12 @@ escape 1;
 }
 
 Test { [[
-data Aa with
-    var int a;
+code/tight Ff (void) => void do
 end
 
-code/tight/dynamic Ff (var& Aa a, var int xxx) => int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/tight/dynamic Ff (var& Aa.Bb b, var int yyy) => int do
-    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
-    escape b.b + yyy;
-end
-
-var Aa    a = val Aa(1);
-var Aa.Bb b = val Aa.Bb(2,3);
-
-escape (call Ff(&b,22)) + (call Ff(&a,33));
+escape call/dynamic Ff();
 ]],
-    --run = 58,
-    run = 59,
+    exps = 'line 4 : invalid call : unexpected `/dynamic´ modifier',
 }
 
 Test { [[
@@ -35272,6 +35334,30 @@ var Aa.Bb b = val Aa.Bb(2,3);
 
 escape (call Ff(&&b,22)) + (call Ff(&&a,33));
 ]],
+    exps = 'line 20 : invalid call : expected `/dynamic´ or `/static´ modifier',
+}
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/tight/dynamic Ff (var Aa&& a, var int xxx) => int do
+    escape a:a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/tight/dynamic Ff (var Aa.Bb&& b, var int yyy) => int do
+    escape b:b + yyy;
+end
+
+var Aa    a = val Aa(1);
+var Aa.Bb b = val Aa.Bb(2,3);
+
+escape (call/dynamic Ff(&&b,22)) + (call/dynamic Ff(&&a,33));
+]],
     --run = 58,
     run = 59,
 }
@@ -35295,7 +35381,7 @@ end
 var Aa    a = val Aa(1);
 var Aa.Bb b = val Aa.Bb(2,3);
 
-escape (call Ff(22,&&b)) + (call Ff(33,&&a));
+escape (call/dynamic Ff(22,&&b)) + (call/dynamic Ff(33,&&a));
 ]],
     --run = 58,
     run = 59,
@@ -35322,7 +35408,7 @@ end
 var Aa    a = val Aa(1);
 var Aa.Bb b = val Aa.Bb(2,3);
 
-escape (call Ff(&b,22,&b)) + (call Ff(&a,33,&a));
+escape (call/dynamic Ff(&b,22,&b)) + (call/dynamic Ff(&a,33,&a));
 ]],
     run = 63,
 }
@@ -35341,13 +35427,13 @@ data Aa.Bb with
 end
 
 code/tight/dynamic Ff (var& Aa.Bb b, var int yyy) => int do
-    escape b.b + (call Ff(&b as Aa,11)) + yyy;
+    escape b.b + (call/static Ff(&b as Aa,11)) + yyy;
 end
 
 var Aa    a = val Aa(1);
 var Aa.Bb b = val Aa.Bb(2,3);
 
-escape (call Ff(&b,22)) + (call Ff(&a,33));
+escape (call/dynamic Ff(&b,22)) + (call/dynamic Ff(&a,33));
 ]],
     run = 72,
 }
@@ -35453,7 +35539,7 @@ end
 var Aa a = val Aa();
 var Aa b = val Aa.Bb();
 
-escape call Ff(&b, &a);
+escape call/dynamic Ff(&b, &a);
 ]],
     wrn = true,
     run = 1,
@@ -35482,8 +35568,8 @@ var Aa a = val Aa();
 var Aa b = val Aa.Bb();
 var Aa c = val Aa.Bb.Xx();
 
-escape (call Ff(&b,&a,&a)) + (call Ff(&b,&a,&b)) +
-       (call Ff(&b,&b,&b)) + (call Ff(&b,&c,&b));
+escape (call/dynamic Ff(&b,&a,&a)) + (call/dynamic Ff(&b,&a,&b)) +
+       (call/dynamic Ff(&b,&b,&b)) + (call/dynamic Ff(&b,&c,&b));
 ]],
     wrn = true,
     run = 15,
