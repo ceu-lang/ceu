@@ -51,8 +51,8 @@ function dump (ret, spc)
             dyn = ret.left.dyn..dyn
             ret = ret.left
         end
-        local has = DCLS.get(AST.par(AST.iter()(),'Block'), ID..dyn)
-        print(spc..ID..dyn)
+        local has = DCLS.get(AST.par(AST.iter()(),'Block'), dyn)
+        print(spc..dyn)
         print(spc..'('..tostring(has)..')')
     else
         for i, t in ipairs(ret) do
@@ -89,6 +89,7 @@ function get (Code, ret, goleft)
             return dcl
         end
     end
+--DBG('>>>', dyn)
 
     if goleft then
 --DBG'left'
@@ -110,6 +111,7 @@ function get (Code, ret, goleft)
     end
 end
 
+--[[
 function dump2 (Code, ret, spc)
     spc = spc or ''
     if #ret == 0 then
@@ -130,6 +132,7 @@ function dump2 (Code, ret, spc)
         return str
     end
 end
+]]
 
 function dump3 (Code, ret, spc)
     spc = spc or ''

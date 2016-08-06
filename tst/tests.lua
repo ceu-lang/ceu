@@ -9,99 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
---]=====]
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (var Bb b, var Aa a) => void do
-end
-
-code/tight/dynamic Ff (var Bb.Cc c, var Aa a) => void do
-end
-]],
-    dcls = 'line 7 : invalid `dynamic´ declaration : expected dynamic parameters',
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (var& Bb b, var Aa a) => void do
-end
-
-code/tight/dynamic Ff (var& Bb.Cc c, var Aa a) => void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (var Aa a, var& Bb b) => void do
-end
-
-code/tight/dynamic Ff (var Aa a, var& Bb.Cc c) => void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (var& Aa a, var& Bb b, var Aa a2, var& Bb b2, var Aa a3) => void do
-end
-
-code/tight/dynamic Ff (var& Aa a, var& Bb.Cc c, var Aa a2, var& Bb.Cc c2, var Aa a3) => void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Aa;
-data Bb with
-    var int x;
-end
-data Bb.Cc;
-
-code/tight/dynamic Ff (var& Bb b,    var& Aa a) => void do
-end
-
-code/tight/dynamic Ff (var& Bb.Cc c, var& Aa a) => void do
-end
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
 
 Test { [[
 data Dd with
@@ -187,6 +94,7 @@ escape 1;
 }
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -35656,6 +35564,118 @@ escape (call/dynamic Ff(&b,&a,&a)) + (call/dynamic Ff(&b,&a,&b)) +
 ]],
     wrn = true,
     run = 15,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var Bb b, var Aa a) => void do
+end
+
+code/tight/dynamic Ff (var Bb.Cc c, var Aa a) => void do
+end
+]],
+    dcls = 'line 7 : invalid `dynamic´ declaration : expected dynamic parameters',
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (dynamic var& Bb b, dynamic var Aa a) => void do
+end
+
+code/tight/dynamic Ff (dynamic var& Bb.Cc c, dynamic var Aa a) => void do
+end
+
+escape 1;
+]],
+    dcls = 'line 7 : invalid `dynamic´ declaration : parameter #2 : unexpected plain `data´',
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (dynamic var& Bb b, var Aa a) => void do
+end
+
+code/tight/dynamic Ff (dynamic var& Bb.Cc c, var Aa a) => void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var Aa a, dynamic var& Bb b) => void do
+end
+
+code/tight/dynamic Ff (var Aa a, dynamic var& Bb.Cc c) => void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (var& Aa a, dynamic var& Bb b,
+                       var Aa a2, dynamic var& Bb b2, var Aa a3) => void do
+end
+
+code/tight/dynamic Ff (var& Aa a, dynamic var& Bb.Cc c,
+                       var Aa a2, dynamic var& Bb.Cc c2, var Aa a3) => void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Aa;
+data Bb with
+    var int x;
+end
+data Bb.Cc;
+
+code/tight/dynamic Ff (dynamic var& Bb b,    var& Aa a) => void do
+end
+
+code/tight/dynamic Ff (dynamic var& Bb.Cc c, var& Aa a) => void do
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
 }
 
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC

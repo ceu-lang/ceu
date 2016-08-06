@@ -158,10 +158,10 @@ tceu_pool_pak]]..ptr..' '..id2..[[;
         if mods.dynamic then
             local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(Code_Pars) do
-                local _,Type,id = unpack(dcl)
-                local data = AST.get(Type,'',1,'ID_abs')
-                if data and data.dcl.hier then
-                    assert(not data.dcl.hier.up)
+                if dcl.mods.dynamic then
+                    local _,Type,id = unpack(dcl)
+                    local data = AST.asr(Type,'',1,'ID_abs')
+                    assert(data.dcl.hier and (not data.dcl.hier.up))
                     me.mems.args = me.mems.args .. [[
 tceu_ndata _data_]]..i..[[;     /* force multimethod arg data id */
 ]]
@@ -478,7 +478,7 @@ tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
     end,
 
     Abs_Await = function (me)
-        local Abs_Cons = unpack(me)
+        local _,Abs_Cons = unpack(me)
         CUR().mem = CUR().mem..'tceu_code_mem_'..Abs_Cons.id..' __mem_'..me.n..';\n'
     end,
 
