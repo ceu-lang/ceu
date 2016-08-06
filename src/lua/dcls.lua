@@ -323,16 +323,17 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         -- multi-methods: changes "me.id" on Code
         me.ids_dyn = ''
         for i, dcl in ipairs(me) do
-            local is_alias,Type = unpack(dcl)
-            if dcl.tag~='Evt' and Type[1].tag=='ID_abs' then
-                if is_alias or Type[2] then
---'invalid `dynamic´ declaration : parameter #'..i..' : unexpected plain `data´'
-                    dcl.id_dyn = '_'..i..'_'..dcl.tag..
-                                 '_'..(is_alias and 'y' or 'n')..
-                                 '_'..TYPES.tostring(Type)
-                    dcl.id_dyn = TYPES.noc(dcl.id_dyn)
-                    me.ids_dyn = me.ids_dyn..dcl.id_dyn
-                end
+            if dcl.mods.dynamic then
+                local is_alias,Type = unpack(dcl)
+                ASR(dcl.tag~='Evt' and Type[1].tag=='ID_abs' and
+                    (is_alias or Type[2]), me,
+                    'invalid `dynamic´ declaration : parameter #'..i..
+                    ' : unexpected plain `data´')
+                dcl.id_dyn = '_'..i..'_'..dcl.tag..
+                             '_'..(is_alias and 'y' or 'n')..
+                             '_'..TYPES.tostring(Type)
+                dcl.id_dyn = TYPES.noc(dcl.id_dyn)
+                me.ids_dyn = me.ids_dyn..dcl.id_dyn
             end
         end
 
