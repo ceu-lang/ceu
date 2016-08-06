@@ -276,14 +276,23 @@ F = {
     end,
 
     Abs_Await = function (me)
-        local Abs_Cons,list = unpack(me)
+        local mods_call,Abs_Cons,list = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
 
         local Code = AST.asr(ID_abs.dcl,'Code')
-        local mods = unpack(Code)
-        ASR(mods.await, me,
+        local mods_dcl = unpack(Code)
+        ASR(mods_dcl.await, me,
             'invalid `await´ : expected `code/await´ declaration '..
                 '('..Code.ln[1]..':'..Code.ln[2]..')')
+
+        if mods_dcl.dynamic then
+            ASR(mods_call.dynamic or mods_call.static, me,
+                'invalid `await´ : expected `/dynamic´ or `/static´ modifier')
+        else
+            local mod = (mods_call.dynamic or mods_call.static)
+            ASR(not mod, me, mod and
+                'invalid `await´ : unexpected `/'..mod..'´ modifier')
+        end
 
         local ret = AST.asr(Code,'', 3,'Block', 1,'Stmts',
                                      1,'Stmts', 3,'', 2,'Type')

@@ -635,12 +635,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                       )^-1
 
 -- ABS
-    , __call_mods = Ct ( (
-                            Cg(K'/dynamic'*Cc'dynamic','dynamic') +
-                            Cg(K'/static' *Cc'static', 'static')
-                         )^-1 *
+    , __abs_mods = Ct ( (Cg(K'/dynamic'*Cc'dynamic','dynamic') +
+                         Cg(K'/static' *Cc'static', 'static'))^-1 *
                          Cg(K'/recursive'*Cc'recursive','recursive')^-1 )
-    , Abs_Call  = K'call' * V'__call_mods' * V'__Abs_Cons_Code'
+    , Abs_Call  = K'call' * V'__Abs_Cons_Code'
     , Abs_Val   = CK'val' * V'Abs_Cons'
     , Abs_New   = CK'new' * V'Abs_Cons'
     , Abs_Await = V'__Abs_Cons_Code'
@@ -649,7 +647,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , _Abs_Back = K'spawn' * V'__Abs_Cons_Code' * (-KK'in')
                     * OPT(KK'=>' * PARENS(V'List_Watching'))
 
-    , __Abs_Cons_Code = V'Abs_Cons' -I(V'__id_data')
+    , __Abs_Cons_Code = V'__abs_mods' * V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
     , Abslist    = LIST(V'__abs_item')^-1
     , __abs_item = (V'Abs_Cons' + V'Vec_Cons' + V'__Exp' + V'ID_any')

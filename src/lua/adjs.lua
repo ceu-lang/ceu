@@ -487,7 +487,7 @@ DBG('TODO: _Loop_Pool')
     end,
 
     _Abs_Back__PRE = function (me)
-        local Abs_Cons = unpack(me)
+        local mods, Abs_Cons = unpack(me)
 
         -- all statements after myself
         local par_stmts = AST.asr(me.__par, 'Stmts')
@@ -497,8 +497,8 @@ DBG('TODO: _Loop_Pool')
         end
 
         return node('_Watching', me.ln,
-                    node('Abs_Await', me.ln, Abs_Cons),
-                    unpack(me,2),
+                    node('Abs_Await', me.ln, mods, Abs_Cons),
+                    unpack(me,3),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             unpack(cnt_stmts))))
@@ -520,7 +520,7 @@ DBG('TODO: _Loop_Pool')
             local Abs_Await = AST.get(watch,'Abs_Await') or
                               AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
             ASR(Abs_Await, me, 'unexpected `=>´')
-            local ID_abs = AST.asr(Abs_Await,'', 1,'Abs_Cons', 1,'ID_abs')
+            local ID_abs = AST.asr(Abs_Await,'', 2,'Abs_Cons', 1,'ID_abs')
             Abs_Await[#Abs_Await+1] = mid
         end
 

@@ -35316,6 +35316,24 @@ await Ui_go(&ui);
 
 escape 1;
 ]],
+    stmts = 'line 9 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Ui with
+    var int x;
+end
+
+code/await/dynamic Ui_go (dynamic var& Ui ui) => void do
+end
+
+var Ui ui = val Ui(10);
+await/dynamic Ui_go(&ui);
+
+escape 1;
+]],
     props_ = 'line 5 : invalid `dynamic´ declaration : expected dynamic parameter',
     wrn = true,
     run = 1,
@@ -35477,8 +35495,8 @@ end
 var Aa    a = val Aa(1);
 var Aa.Bb b = val Aa.Bb(2,3);
 
-var int v1 = await Ff(&b,22);
-var int v2 = await Ff(&a,33);
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
 escape v1 + v2;
 ]],
     --run = 58,
@@ -35506,8 +35524,8 @@ end
 var Aa    a = val Aa(1);
 var Aa.Bb b = val Aa.Bb(2,3);
 
-var int v1 = await Ff(&b,22,&b);
-var int v2 = await Ff(&a,33,&a);
+var int v1 = await/dynamic Ff(&b,22,&b);
+var int v2 = await/dynamic Ff(&a,33,&a);
 
 escape v1 + v2;
 ]],
@@ -35528,15 +35546,15 @@ data Aa.Bb with
 end
 
 code/await/dynamic Ff (dynamic var& Aa.Bb b, dynamic var int yyy) => int do
-    var int v = await Ff(&b as Aa,11);
+    var int v = await/static Ff(&b as Aa,11);
     escape b.b + v + yyy;
 end
 
 var Aa    a = val Aa(1);
 var Aa.Bb b = val Aa.Bb(2,3);
 
-var int v1 = await Ff(&b,22);
-var int v2 = await Ff(&a,33);
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
 
 escape v1 + v2;
 ]],
@@ -35557,15 +35575,15 @@ data Aa.Bb with
 end
 
 code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) => int do
-    var int v = await Ff(&b as Aa,11);
+    var int v = await/static Ff(&b as Aa,11);
     escape b.b + v + yyy;
 end
 
 var Aa    a = val Aa(1);
 var Aa.Bb b = val Aa.Bb(2,3);
 
-var int v1 = await Ff(&b,22);
-var int v2 = await Ff(&a,33);
+var int v1 = await/dynamic Ff(&b,22);
+var int v2 = await/dynamic Ff(&a,33);
 
 escape v1 + v2;
 ]],

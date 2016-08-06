@@ -340,7 +340,7 @@ if (0)
     end,
 
     Abs_Await = function (me)
-        local Abs_Cons, mid = unpack(me)
+        local _, Abs_Cons, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
         -- Passing "x" from "code" mid to "watching":
@@ -354,7 +354,7 @@ if (0)
                            or AST.get(watch,'',1,'Par_Or',1,'Block',1,'Stmts',
                                                1,'Abs_Await')
             if Abs_Await == me then
-                local list = Abs_Await and AST.get(Abs_Await,'', 2,'List_Watching')
+                local list = Abs_Await and AST.get(Abs_Await,'', 3,'List_Watching')
                 if list then
                     for _, ID_int in ipairs(list) do
                         if ID_int.tag~='ID_any' and ID_int.dcl.is_mid then
@@ -396,7 +396,7 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
     end,
 
     Abs_Spawn = function (me)
-        local Abs_Cons, pool = unpack(me)
+        local _, Abs_Cons, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
         LINE(me, [[
