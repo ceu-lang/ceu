@@ -35483,6 +35483,23 @@ code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
     escape a.a + xxx;
 end
 
+var Aa a = val Aa(1);
+var int v2 = await/dynamic Ff(&a,33);
+escape v2;
+]],
+    --run = 58,
+    props_ = 'line 5 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
+end
+
 data Aa.Bb with
     var int b;
 end

@@ -78,14 +78,14 @@ F = {
         if mods.dynamic and body then
             local Code_Pars = AST.asr(body,'', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
             for i, dcl in ipairs(Code_Pars) do
-                local _,Type,id = unpack(dcl)
-                local data = AST.get(Type,'',1,'ID_abs')
-                if data and data.dcl.hier then
-                    return
+                if dcl.mods.dynamic then
+                    local _,Type,id = unpack(dcl)
+                    local data = AST.get(Type,'',1,'ID_abs')
+                    ASR(data and data.dcl.hier, me,
+                        'invalid `dynamic´ declaration : parameter #'..i..
+                        ' : expected `data´ in hierarchy')
                 end
             end
-            ASR(false, me,
-                'invalid `dynamic´ declaration : expected dynamic parameter')
         end
     end,
 
