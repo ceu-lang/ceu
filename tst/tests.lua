@@ -30507,6 +30507,24 @@ escape ret;
     run = 11,
 }
 
+Test { [[
+data Dd with
+    var& int? x;
+end
+
+var int? x1;
+var int? x2;
+
+var Dd d1 = val Dd(&x1);
+var Dd d2 = val Dd(&x2);
+
+x2 = 10;
+
+escape (d1.x? as int) + d2.x! + 1;
+]],
+    run = 11,
+}
+
 --<< OPTION / DATA
 
 -->> OPTION / VECTOR
