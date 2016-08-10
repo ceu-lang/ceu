@@ -9,6 +9,8 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+do return end
+
 
 Test { [[
 data Dd with
@@ -32421,6 +32423,98 @@ escape 0;
 ]],
     stmts = 'line 4 : invalid `await´ : expected `code/await´ declaration (/tmp/tmp.ceu:1)',
 }
+
+-->> CODE / ALIAS / FINALIZE
+
+Test { [[
+native _void_ptr;
+code/tight Ff (void) => void do
+end
+var& _void_ptr? ptr = & call Ff()
+        finalize (ptr) with
+        end;
+escape 0;
+]],
+    stmts = 'line 4 : invalid binding : types mismatch : "_void_ptr?" <= "void"',
+}
+
+Test { [[
+native _void_ptr, _f;
+native/pre do
+    typedef void* void_ptr;
+    int V;
+
+    void* f (int x) {
+        if (x) {
+            return &V;
+        } else {
+            return NULL;
+        }
+    }
+end
+
+var int ret = 1;
+
+do
+    var& _void_ptr? ptr = & _f(true)
+            finalize (ptr) with
+                ret = ret * 2;
+            end;
+    ret = ret + (ptr? as int);
+end
+
+do
+    var& _void_ptr? ptr = & _f(false)
+            finalize (ptr) with
+                ret = ret + 3;
+            end;
+    ret = ret + (ptr? as int);
+end
+
+escape ret;
+]],
+    run = 7,
+}
+
+Test { [[
+native _V, _void_ptr;
+native/pre do
+    typedef void* void_ptr;
+    int V;
+end
+
+code/tight Ff (var bool x) => _void_ptr do
+    if x then
+        escape &&_V;
+    else
+        escape null;
+    end
+end
+
+var int ret = 1;
+
+do
+    var& _void_ptr? ptr = & call Ff(true)
+            finalize (ptr) with
+                ret = ret * 2;
+            end;
+    ret = ret + (ptr? as int);
+end
+
+do
+    var& _void_ptr? ptr = & call Ff(false)
+            finalize (ptr) with
+                ret = ret + 3;
+            end;
+    ret = ret + (ptr? as int);
+end
+
+escape ret;
+]],
+    run = 7,
+}
+
+--<< CODE / ALIAS / FINALIZE
 
 --<<< CODE / TIGHT / FUNCTIONS
 

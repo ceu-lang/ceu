@@ -111,20 +111,38 @@ F = {
         ASR(ID_int.dcl[1]=='&', me, 'invalid binding : expected declaration with `&´')
 
         -- tp
-        EXPS.check_tag(me, to.info.tag, fr.info.dcl.tag, 'invalid binding')
+
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)
 
-        -- NO: ... = &_V        // native ID
-        ASR(fr.info.dcl.tag~='Nat' or fr[2].tag=='Exp_Call', me,
-            'invalid binding : unexpected native identifier')
+        local is_call = false
+        if fr[2].tag=='Exp_Call' or fr[2].tag=='Abs_Call' then
+            is_call = true
+            if fr[2].tag == 'Exp_Call' then
+                assert(fr.info.dcl and fr.info.dcl.tag=='Nat')
+            else
+                local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
+                                              1,'ID_abs')
+                local tp = AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
+                                                      1,'Stmts', 3,'', 2,'Type')
+                EXPS.check_tp(me, to.info.tp, tp, 'invalid binding', true)
+            end
+        else
+            EXPS.check_tag(me, to.info.tag, fr.info.dcl.tag, 'invalid binding')
+
+            -- NO: ... = &_V        // native ID
+            ASR(fr.info.dcl.tag~='Nat', me,
+                'invalid binding : unexpected native identifier')
+        end
 
         -- option type
         if TYPES.check(to.info.tp,'?') then
-            if TYPES.check(fr.info.tp,'_') and
-               TYPES.is_nat(TYPES.pop(to.info.tp,'?'))
-            then
+            --if TYPES.check(fr.info.tp,'_') and
+               --TYPES.is_nat(TYPES.pop(to.info.tp,'?'))
+            --then
+            if is_call and TYPES.is_nat(TYPES.pop(to.info.tp,'?')) then
                 -- OK:
-                --  var& _TP? = _f();
+                --  var& _TP? = &_f();
+                --  var& _TP? = &Ff();
             else
                 -- NO:
                 -- var  int  x;

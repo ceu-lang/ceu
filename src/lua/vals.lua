@@ -270,7 +270,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     ['Exp_1&'] = function (me)
         local _, e = unpack(me)
         local dcl = e.info.dcl
-        if dcl.tag == 'Evt' then
+        if dcl and dcl.tag == 'Evt' then
             return V(e)
         elseif e.tag=='Exp_Call' or AST.get(e,'Exp_Name',1,'Exp_!')
                 or TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?'))

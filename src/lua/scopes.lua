@@ -92,44 +92,43 @@ F = {
 
     Set_Alias = function (me)
         local fr, to = unpack(me)
-        local ok = check_blk(to.info.dcl.blk, fr.info.dcl.blk)
-        if not ok then
-            if to.info.dcl.is_mid then
-                local watch = AST.par(me, 'Watching')
-                if watch then
-                    --  code/await Ff (void) => (Dcl) => void do
-                    --      watching Gg(1) => (y1) do
-                    --          var int v = ...
-                    --          Dcl = &v;   // OK
-                    ok = (fr.info.dcl.blk == AST.asr(watch,'',1,'Par_Or',2,'Block'))
-                end
-            end
-        end
-        ASR(ok, me, 'invalid binding : incompatible scopes')
 
         local _, call = unpack(fr)
-        if call.tag ~= 'Exp_Call' then
-            return
-        end
+        if (call.tag=='Exp_Call' or call.tag=='Abs_Call') then
+            ASR(TYPES.check(to.info.tp,'?'), me,
+                'invalid binding : expected option type `?´ as destination : got "'
+                ..TYPES.tostring(to.info.tp)..'"')
 
-        ASR(TYPES.check(to.info.tp,'?'), me,
-            'invalid binding : expected option type `?´ as destination : got "'
-            ..TYPES.tostring(to.info.tp)..'"')
+            local fin = AST.par(me, 'Finalize')
+            ASR(fin, me,
+                'invalid binding : expected `finalize´')
 
-        local fin = AST.par(me, 'Finalize')
-        ASR(fin, me,
-            'invalid binding : expected `finalize´')
+            -- all finalization vars must be in the same block
+            local blk = to.info.dcl_obj and to.info.dcl_obj.blk or
+                            to.info.dcl.blk
 
-        -- all finalization vars must be in the same block
-        local blk = to.info.dcl_obj and to.info.dcl_obj.blk or
-                        to.info.dcl.blk
-
-        if fin.__fin_vars then
-            ASR(blk == fin.__fin_vars.blk, me,
-                'invalid `finalize´ : incompatible scopes')
-            fin.__fin_vars[#fin.__fin_vars+1] = assert(to.info.dcl)
+            if fin.__fin_vars then
+                ASR(blk == fin.__fin_vars.blk, me,
+                    'invalid `finalize´ : incompatible scopes')
+                fin.__fin_vars[#fin.__fin_vars+1] = assert(to.info.dcl)
+            else
+                fin.__fin_vars = { blk=blk, assert(to.info.dcl) }
+            end
         else
-            fin.__fin_vars = { blk=blk, assert(to.info.dcl) }
+            local ok = is_call or check_blk(to.info.dcl.blk, fr.info.dcl.blk)
+            if not ok then
+                if to.info.dcl.is_mid then
+                    local watch = AST.par(me, 'Watching')
+                    if watch then
+                        --  code/await Ff (void) => (Dcl) => void do
+                        --      watching Gg(1) => (y1) do
+                        --          var int v = ...
+                        --          Dcl = &v;   // OK
+                        ok = (fr.info.dcl.blk == AST.asr(watch,'',1,'Par_Or',2,'Block'))
+                    end
+                end
+            end
+            ASR(ok, me, 'invalid binding : incompatible scopes')
         end
     end,
 
