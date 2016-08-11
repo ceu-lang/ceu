@@ -433,12 +433,17 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
                 '(vs. '..proto1.ln[1]..':'..proto2.ln[2]..')')
         end
 
-        --local blk = AST.par(me,'Block')
-        blk.dcls[#blk.dcls+1] = me
-        blk.dcls[me.id] = me
-        me.is_used = (old and old.is_used)
+        if (not old) or me.is_impl then
+            blk.dcls[me.id] = me
+            assert(me == DCLS.get(blk,me.id))
 
-        assert(me == DCLS.get(blk,me.id))
+            if not mods1.dynamic then
+                blk.dcls[id] = me
+                assert(me == DCLS.get(blk,id))
+            end
+        end
+        me.is_used = (old and old.is_used)
+                        or (mods1.dynamic and (not me.is_dyn_base))
     end,
 
     Data__PRE = function (me)

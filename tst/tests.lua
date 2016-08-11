@@ -9,6 +9,63 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/tight Play_New (var& Dd d) => void;
+code/tight Play_New (var& Dd d) => void do
+end
+code/tight Play_New (var& Dd d) => void;
+
+var Dd d = _;
+
+call Play_New(&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/tight/dynamic Play_New (dynamic var& Dd d) => void;
+code/tight/dynamic Play_New (dynamic var& Dd d) => void do
+end
+code/tight/dynamic Play_New (dynamic var& Dd d) => void;
+
+var Dd d = _;
+
+call/dynamic Play_New(&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+//code/tight/dynamic Play_New (dynamic var& Dd d) => void;
+code/tight/dynamic Play_New (dynamic var& Dd d) => void do
+end
+
+var Dd d = _;
+
+call/dynamic Play_New(&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
 do return end
 
 
@@ -32320,6 +32377,7 @@ end
 x = 1;
 escape x;
 ]],
+    wrn = true,
     inits = 'line 1 : uninitialized variable "x" : reached `code´ (/tmp/tmp.ceu:2)',
 }
 
@@ -32682,7 +32740,19 @@ code/await Tx (void)=>void do
 end
 await FOREVER;
 ]],
+    dcls = 'line 3 : code "Tx" declared but not used',
+}
+
+Test { [[
+native _SDL_MouseButtonEvent;
+input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
+code/await Tx (void)=>void do
+    var _SDL_MouseButtonEvent&& but = await SDL_MOUSEBUTTONUP;
+end
+await FOREVER;
+]],
     --run = 1,
+    wrn = true,
     cc = '1: error: unknown type name ‘SDL_MouseButtonEvent’',
     _ana = {
         isForever = true,
@@ -32935,6 +33005,7 @@ do
 end
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
@@ -33355,6 +33426,7 @@ end
 
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
