@@ -33,10 +33,9 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-code/tight/dynamic Play_New (dynamic var& Dd d) => void;
+//code/tight/dynamic Play_New (dynamic var& Dd d) => void;
 code/tight/dynamic Play_New (dynamic var& Dd d) => void do
 end
-code/tight/dynamic Play_New (dynamic var& Dd d) => void;
 
 var Dd d = _;
 
@@ -52,9 +51,10 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-//code/tight/dynamic Play_New (dynamic var& Dd d) => void;
+code/tight/dynamic Play_New (dynamic var& Dd d) => void;
 code/tight/dynamic Play_New (dynamic var& Dd d) => void do
 end
+code/tight/dynamic Play_New (dynamic var& Dd d) => void;
 
 var Dd d = _;
 

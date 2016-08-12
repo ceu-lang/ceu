@@ -276,13 +276,11 @@ if (0)
 
         for i,dcl in ipairs(body.dcls) do
             if dcl.is_param then
-                local _,Type1,id1 = unpack(dcl)
+                local _,Type1,_ = unpack(dcl)
 
-                local id = id1
                 local cast = ''
                 if me.dyn_base then
-                    local is_alias2,Type2,id2 = unpack(args_Code_Pars[i])
-                    id = id2
+                    local is_alias2,Type2,_ = unpack(args_Code_Pars[i])
                     if not AST.is_equal(Type1,Type2) then
                         cast = '('..TYPES.toc(Type1)..(is_alias2 and '*' or '')..')'
                     end
@@ -290,7 +288,7 @@ if (0)
 
                 LINE(me, [[
 ]]..V(dcl,{is_bind=true})..[[ =
-    ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_evt)->]]..id..[[;
+    ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_evt)->_]]..i..[[;
 ]])
             end
         end
@@ -357,11 +355,11 @@ if (0)
                 local list = Abs_Await and AST.get(Abs_Await,'', 3,'List_Watching')
                 if list then
                     for _, ID_int in ipairs(list) do
-                        if ID_int.tag~='ID_any' and ID_int.dcl.is_mid then
+                        if ID_int.tag~='ID_any' and ID_int.dcl.is_mid_idx then
                             local Code = AST.par(me,'Code')
                             watch_code = watch_code .. [[
-if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..ID_int.dcl.id..[[ != NULL) {
-    *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->]]..ID_int.dcl.id..[[) = ]]..V(ID_int, {is_bind=true})..[[;
+if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ != NULL) {
+    *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[) = ]]..V(ID_int, {is_bind=true})..[[;
 }
 ]]
                         end

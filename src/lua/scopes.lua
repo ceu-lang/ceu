@@ -117,7 +117,7 @@ F = {
         else
             local ok = is_call or check_blk(to.info.dcl.blk, fr.info.dcl.blk)
             if not ok then
-                if to.info.dcl.is_mid then
+                if to.info.dcl.is_mid_idx then
                     local watch = AST.par(me, 'Watching')
                     if watch then
                         --  code/await Ff (void) => (Dcl) => void do

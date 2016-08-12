@@ -126,6 +126,9 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
             local val = Abslist[i]
 
             local var_is_alias, var_tp, var_id, var_dim = unpack(var)
+            if ID_abs.dcl.tag == 'Code' then
+                var_id = '_'..i
+            end
 
             -- var Ee.Xx ex = ...;
             -- code Ff (var& Ee e)

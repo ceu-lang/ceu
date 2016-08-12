@@ -404,8 +404,11 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         local old = DCLS.get(blk, me.id)
         if old then
             local mods2,_,body2 = unpack(old)
-            ASR(not (me.is_impl and old.is_impl), me,
-                'invalid `code´ declaration : body for "'..id..'" already exists')
+            if me.is_impl then
+                ASR(not (old.is_impl or old.__impl), me,
+                    'invalid `code´ declaration : body for "'..id..'" already exists')
+                old.__impl = true
+            end
 
             -- compare ins
             local proto1 = AST.asr(body1,'Block',1,'Stmts',1,'Stmts')
@@ -431,9 +434,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             ASR(ok, me,
                 'invalid `code´ declaration : unmatching prototypes '..
                 '(vs. '..proto1.ln[1]..':'..proto2.ln[2]..')')
-        end
-
-        if (not old) or me.is_impl then
+        else
             blk.dcls[me.id] = me
             assert(me == DCLS.get(blk,me.id))
 

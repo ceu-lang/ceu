@@ -92,7 +92,7 @@ local function run_inits (par, i, Dcl, stop)
     if me.tag == 'Escape' then
         local blk = AST.asr(me.outer,'',2,'Block')
         local depth = Dcl.blk.__depth
-        if Dcl.is_mid then
+        if Dcl.is_mid_idx then
             depth = depth + 5
         end
         if blk.__depth <= depth then

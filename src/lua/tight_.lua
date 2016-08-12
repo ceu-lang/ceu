@@ -102,14 +102,26 @@ F = {
 
 AST.visit(F)
 
+local impls = {}
+
 G = {
+    Code = function (me)
+        if not me.is_impl then
+            return
+        end
+        local _, id = unpack(me)
+        local blk = AST.par(me, 'Block')
+        local old = DCLS.get(blk, id)
+        impls[old] = true
+    end,
+
     Abs_Call = function (me)
         local mods_call, Abs_Cons = unpack(me)
         local Code = AST.asr(Abs_Cons,'', 1,'ID_abs').dcl
         local mods_dcl = unpack(Code)
 
         -- calling known Code
-        if Code.is_impl then
+        if impls[Code] then
             if mods_call.recursive then
                 ASR(mods_dcl.recursive, me,
                     'invalid `call´ : unexpected `/recursive´')

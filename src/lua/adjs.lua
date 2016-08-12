@@ -214,8 +214,11 @@ error'TODO: luacov never executes this?'
 
     Code_Pars__PRE = function (me)
         local Code = AST.par(me,'Code')
-        local is_param = (AST.asr(me,1,'Stmts')[1] == me)
-        local is_mid   = (AST.asr(me,1,'Stmts')[2] == me)
+
+        local params, mids = unpack(AST.asr(me,1,'Stmts'))
+
+        local is_param = (params == me)
+        local is_mid   = (mids == me)
 
         for i, v in ipairs(me) do
             if v == 'void' then
@@ -248,9 +251,9 @@ error'TODO'
                 else
                     error'TODO'
                 end
-                me[i].is_param = is_param
-                me[i].is_mid   = is_mid
-                me[i].mods     = mods
+                me[i].is_param   = is_param
+                me[i].is_mid_idx = is_mid and ((params and #params or 0) + i)
+                me[i].mods       = mods
                 if Code.is_impl then
                     ASR(id ~= '_anon_'..i, me,
                         'invalid declaration : parameter #'..i..' : expected identifier')

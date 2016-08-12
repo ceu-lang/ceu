@@ -86,10 +86,6 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     Code = function (me)
         local mods, _, body = unpack(me)
 
-        local Type = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
-        local ins  = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
-        local mid  = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 2,'Code_Pars')
-
         if (not me.is_impl) or (mods.dynamic and (not me.is_dyn_base)) then
             me.mems.args = ''
             me.mems.wrapper = ''
@@ -101,13 +97,16 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
         for i,dcl in ipairs(body.dcls) do
             local is_alias,Type,id2,dim = unpack(dcl)
+            if id2 ~= '_ret' then
+                id2 = '_'..i
+            end
 
             local ptr = '' do
                 if is_alias then
                     if (dcl.tag~='Evt') and (not TYPES.is_nat_not_plain(TYPES.pop(Type,'?'))) then
                         ptr = ptr..'*'
                     end
-                    if i > #ins then
+                    if dcl.is_mid_idx then
                         ptr = ptr..'*'  -- extra indirection for mid's
                     end
                 end
@@ -207,6 +206,7 @@ static void CEU_CODE_WATCH_]]..me.id..[[ (tceu_code_mem* _ceu_mem,
 
         -- CEU_CODE_xxx
 
+        local Type = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
         if mods.tight then
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(Type)..[[ 
@@ -264,11 +264,12 @@ static void CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
     Set_Alias = function (me)
         local fr, to = unpack(me)
 
-        if to.info.dcl.is_mid then
+        local idx = to.info.dcl.is_mid_idx
+        if idx then
             local Code = AST.par(me,'Code')
             Code.mems.watch = Code.mems.watch .. [[
-if (args->]]..to.info.dcl.id..[[ != NULL) {
-    *(args->]]..to.info.dcl.id..[[) = ]]..V(to, {is_bind=true})..[[;
+if (args->_]]..idx..[[ != NULL) {
+    *(args->_]]..idx..[[) = ]]..V(to, {is_bind=true})..[[;
 }
 ]]
         end
