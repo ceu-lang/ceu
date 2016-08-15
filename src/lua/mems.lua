@@ -58,14 +58,14 @@ typedef struct tceu_code_mem_ROOT {
     end,
     Code__POS = function (me)
         local mods,id = unpack(me)
-        if not me.is_impl then
-            return
-        end
 
         if me.is_dyn_base then
             me.dyns = {}
             me.mems.mem = ''
         else
+            if not me.is_impl then
+                return
+            end
             if mods.dynamic then
                 local t = me.dyn_base.dyns
                 t[#t+1] = me.id
@@ -86,7 +86,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
     Code = function (me)
         local mods, _, body = unpack(me)
 
-        if (not me.is_impl) or (mods.dynamic and (not me.is_dyn_base)) then
+        if (not me.is_dyn_base) and ((not me.is_impl) or mods.dynamic) then
             me.mems.args = ''
             me.mems.wrapper = ''
             return

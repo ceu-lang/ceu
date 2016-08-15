@@ -359,16 +359,18 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             return  -- not first appearence
         end
 
+        if not me.is_impl then
+            -- "base" method with plain "id"
+            me.id = id
+            me.is_dyn_base = true
+            return
+        end
+
         local proto_body = AST.asr(me,'', 3,'Block', 1,'Stmts')
-        local orig
-        if me.is_impl then
-            orig = proto_body[2]
-            proto_body[2] = AST.node('Stmts', me.ln)
-        end
+        local orig = proto_body[2]
+        proto_body[2] = AST.node('Stmts', me.ln)
         local new = AST.copy(me)
-        if me.is_impl then
-            proto_body[2] = orig
-        end
+        proto_body[2] = orig
 
         -- "base" method with plain "id"
         new.id = id
@@ -391,7 +393,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         local blk = AST.par(me, 'Block')
 
         if not me.is_dyn_base then
-            if mods1.dynamic then
+            if mods1.dynamic and me.is_impl then
                 local ins1 = AST.asr(body1,'Block', 1,'Stmts', 1,'Stmts', 1,'Code_Pars')
                 me.id = id..ins1.ids_dyn
                 me.dyn_base = DCLS.asr(me,blk,id)
