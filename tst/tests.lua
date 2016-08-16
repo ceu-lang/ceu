@@ -40,56 +40,6 @@ escape ret;
     run = 1,
 }
 
-Test { [[
-native/plain _char_ptr_ext;
-native/pure _strlen;
-native/pre do
-    typedef char* char_ptr_ext;
-end
-event _char_ptr_ext e;
-var int ret = 0;
-par/and do
-    var _char_ptr_ext ptr = await e;
-    ret = _strlen(ptr);
-with
-    emit e("ola");
-end
-escape ret;
-]],
-    run = 3,
-}
-
--- TODO: investigate bug on uv/6/7/8/9
-Test { [[
-loop i in [0 -> 10[ do
-    await 1s;
-    vector[] byte string = [] .. "Alo mundo!\n";
-end
-escape 1;
-]],
-    run = { ['~>20s']=1 },
-}
-
-Test { [[
-code/await Ff (void)=>void do
-    par/and do
-    with
-    with
-    with
-    with
-    end
-end
-
-loop i in [0 -> 10[ do
-    await 1s;
-    vector[] byte string = [] .. "Alo mundo!\n";
-    await Ff();
-end
-escape 1;
-]],
-    run = { ['~>20s']=1 },
-}
-
 do return end -- OK
 --]=====]
 
@@ -6189,6 +6139,24 @@ end
     run = {['~>1s']=2},
 }
 
+Test { [[
+native/plain _char_ptr_ext;
+native/pure _strlen;
+native/pre do
+    typedef char* char_ptr_ext;
+end
+event _char_ptr_ext e;
+var int ret = 0;
+par/and do
+    var _char_ptr_ext ptr = await e;
+    ret = _strlen(ptr);
+with
+    emit e("ola");
+end
+escape ret;
+]],
+    run = 3,
+}
 --<<< INTERNAL EVENTS
 
 -- ParOr
@@ -28284,6 +28252,36 @@ escape 1;
     opts_pre = true,
     wrn = true,
     run = 1,
+}
+
+Test { [[
+loop i in [0 -> 10[ do
+    await 1s;
+    vector[] byte string = [] .. "Alo mundo!\n";
+end
+escape 1;
+]],
+    run = { ['~>20s']=1 },
+}
+
+Test { [[
+code/await Ff (void)=>void do
+    par/and do
+    with
+    with
+    with
+    with
+    end
+end
+
+loop i in [0 -> 10[ do
+    await 1s;
+    vector[] byte string = [] .. "Alo mundo!\n";
+    await Ff();
+end
+escape 1;
+]],
+    run = { ['~>20s']=1 },
 }
 
 -->> VECTOR / ALIAS
