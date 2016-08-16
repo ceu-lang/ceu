@@ -19,9 +19,7 @@ escape 1;
 ]],
     run = 'error',
 }
-do return end
 
-do return end
 Test { [[
 data Dd with
     vector[] int x;
@@ -33680,6 +33678,24 @@ await 1s;
 escape ret;
 ]],
     inits = 'line 4 : uninitialized variable "ret" : reached `par/or´ (/tmp/tmp.ceu:5)',
+}
+
+Test { [[
+code/await Ff (var _char&& path) => void do
+end
+
+code/await Gg (var _char&& path) => void
+do
+    watching Ff(path) do
+    end
+end
+
+await Gg("aaa");
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
 }
 
 -->> CODE / WATCHING / SPAWN

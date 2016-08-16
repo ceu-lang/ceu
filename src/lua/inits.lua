@@ -261,6 +261,15 @@ local function run_ptrs (par, i, Dcl, stop)
     if (me.tag=='Loop' or me.tag=='Loop_Num') and (me.tight ~= 'awaits') then
         -- ok, continue
 
+    elseif me.tag == 'Watching' then
+        local awt = AST.get(me,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Abs_Await')
+        if awt then
+            -- OK:  watching Code(<ptr>)
+            run_ptrs(awt, 1, Dcl, awt) -- mark ptr access as safe
+        end
+        local snd = AST.asr(me,'', 1,'Par_Or', 2,'Block')
+        return run_ptrs(snd, 1, Dcl, stop)
+
     -- yielding statement: stop?
     elseif yields[me.tag] then
         local set = AST.par(me,__is_set)
