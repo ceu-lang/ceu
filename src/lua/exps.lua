@@ -178,6 +178,9 @@ F = {
                     ASR(EXPS.check_dim(var_dim,fr_dim), me,
                         err_str..' : invalid binding : argument #'..i..' : dimension mismatch')
                 end
+            else
+                ASR(val.tag=='ID_any' or val.info.tag~='Alias', me,
+                    'invalid binding : argument #'..i..' : expected declaration with `&´')
             end
 
             if val.tag == 'ID_any' then

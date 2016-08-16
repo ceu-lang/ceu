@@ -10,76 +10,6 @@ end
 
 --[=====[
 Test { [[
-code/tight Ff (var int x) => void do
-end
-
-var usize off = 0;
-call Ff(&off);
-escape 0;
-]],
-    run = 1,
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-
-code/tight Play_New (var& Dd d) => void;
-code/tight Play_New (var& Dd d) => void do
-end
-code/tight Play_New (var& Dd d) => void;
-
-var Dd d = _;
-
-call Play_New(&d);
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-
-//code/tight/dynamic Play_New (dynamic var& Dd d) => void;
-code/tight/dynamic Play_New (dynamic var& Dd d) => void do
-end
-
-var Dd d = _;
-
-call/dynamic Play_New(&d);
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-
-code/tight/dynamic Play_New (dynamic var& Dd d) => void;
-code/tight/dynamic Play_New (dynamic var& Dd d) => void do
-end
-code/tight/dynamic Play_New (dynamic var& Dd d) => void;
-
-var Dd d = _;
-
-call/dynamic Play_New(&d);
-
-escape 1;
-]],
-    wrn = true,
-    run = 1,
-}
-
-do return end
-
-
-Test { [[
 data Dd with
     event void ok;      // copy event??
 end
@@ -33231,6 +33161,19 @@ escape 0;
     stmts = 'line 7 : invalid binding : types mismatch : "Var" <= "Vec"',
 }
 
+Test { [[
+code/tight Ff (var int x) => void do
+end
+
+var int off = 0;
+var int a = &off;
+call Ff(&off);
+escape 0;
+]],
+    exps = 'line 6 : invalid binding : argument #1 : expected declaration with `&´',
+    wrn = true,
+}
+
 --<< CODE / ALIAS
 
 -->> CODE / OPTION
@@ -35917,6 +35860,62 @@ end
 
 code/tight/dynamic Ff (dynamic var& Bb.Cc c, var& Aa a) => void do
 end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/tight Play_New (var& Dd d) => void;
+code/tight Play_New (var& Dd d) => void do
+end
+code/tight Play_New (var& Dd d) => void;
+
+var Dd d = _;
+
+call Play_New(&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+//code/tight/dynamic Play_New (dynamic var& Dd d) => void;
+code/tight/dynamic Play_New (dynamic var& Dd d) => void do
+end
+
+var Dd d = _;
+
+call/dynamic Play_New(&d);
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/tight/dynamic Play_New (dynamic var& Dd d) => void;
+code/tight/dynamic Play_New (dynamic var& Dd d) => void do
+end
+code/tight/dynamic Play_New (dynamic var& Dd d) => void;
+
+var Dd d = _;
+
+call/dynamic Play_New(&d);
 
 escape 1;
 ]],
