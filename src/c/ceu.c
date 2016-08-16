@@ -312,7 +312,7 @@ static void ceu_go_bcast_1 (tceu_evt_occ* occ, tceu_stk* stk,
 
 #if 0
 #include <stdio.h>
-printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, evt->id, trl0, trlF);
+printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, occ->evt.id, trl0, trlF);
 #endif
 
     for (trlK=trl0, trl=&mem->trails[trlK];
@@ -395,13 +395,14 @@ static void ceu_go_bcast_2 (tceu_evt_occ* occ, tceu_stk* stk,
     {
         /* propagate "occ" to nested "code" */
         if (trl->evt.id == CEU_INPUT__CODE) {
-#if 1
             ceu_go_bcast_2(occ, stk, (tceu_code_mem*)trl->evt.mem,
                            0, ((tceu_code_mem*)trl->evt.mem)->trails_n-1);
-#else
-            CEU_STK_BCAST_ABORT(occ->evt.id,evt->params, stk, trlK, trl->code_mem,
-                                0, (((tceu_code_mem*)trl->code_mem)->trails_n-1));
-#endif
+
+            /* clear after propagating */
+            if (occ->evt.id == CEU_INPUT__CLEAR) {
+                trl->evt.id  = CEU_INPUT__NONE;
+                trl->evt.stk = NULL;
+            }
         } else if (trl->evt.id == CEU_INPUT__CODE_POOL) {
 /* TODO: inverse order for FINS */
             tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;

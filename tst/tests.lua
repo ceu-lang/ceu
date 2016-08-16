@@ -9,10 +9,16 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-    var usize off = 0;
-    loop do
-        vector[] byte line;
-        var ssize n = await UV_FS_ReadLine(&file,&line,&off);
+Test { [[
+code/tight Ff (var int x) => void do
+end
+
+var usize off = 0;
+call Ff(&off);
+escape 0;
+]],
+    run = 1,
+}
 
 Test { [[
 data Dd;
@@ -33011,6 +33017,58 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
+}
+
+Test { [[
+code/await Play (void) => void do
+    await 1s;
+end
+
+par/or do
+    await 1s;
+with
+    await Play();
+end
+
+await Play();
+
+escape 1;
+]],
+    run = { ['~>2s']=1 },
+}
+
+Test { [[
+code/await Scene (void) => void
+do
+    par do
+        async do
+            loop do
+            end
+        end
+    with
+        await FOREVER;
+    end
+end
+
+code/await Play (void) => void
+do
+    await 1s;
+end
+
+watching Scene() do
+    watching 1s do
+        par/or do
+            await Play();
+        with
+            await 100ms;
+        end
+    end
+    await Play();
+end
+
+escape 1;
+]],
+    run = { ['~>10s']=1 },
 }
 
 -->> CODE / ALIAS
