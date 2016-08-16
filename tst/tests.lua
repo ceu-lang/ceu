@@ -9,6 +9,10 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+    var usize off = 0;
+    loop do
+        vector[] byte line;
+        var ssize n = await UV_FS_ReadLine(&file,&line,&off);
 
 Test { [[
 data Dd;

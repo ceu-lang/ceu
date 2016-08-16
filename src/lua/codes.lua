@@ -147,6 +147,10 @@ if (]]..V(c)..[[) {
 
     Block__PRE = function (me)
 
+        LINE(me, [[
+_ceu_trl = &_ceu_mem->trails[]]..me.trails[1]..[[];
+]])
+
         -- initialize opts
         for _, dcl in ipairs(me.dcls) do
             if dcl.tag == 'Var' then
@@ -428,7 +432,6 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
 {
     tceu_code_mem_dyn* __ceu_cur = ]]..V(pool)..[[.first.nxt;
     while (__ceu_cur != &]]..V(pool)..[[.first) {
-        _ceu_trl = &_ceu_mem->trails[]]..me.trails[1]..[[];
 ]])
         if list then
             local pars = AST.asr(Code,'Code', 3,'Block', 1,'Stmts',
@@ -551,7 +554,6 @@ ceu_callback_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ ove
         local body = unpack(me)
         LINE(me, [[
 while (1) {
-    _ceu_trl = &_ceu_mem->trails[]]..me.trails[1]..[[];
     ]]..body.code..[[
 }
 ]])
@@ -578,7 +580,6 @@ ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
         LINE(me, [[
 ]]..max.ini..[[
 while (1) {
-    _ceu_trl = &_ceu_mem->trails[]]..me.trails[1]..[[];
     ]]..max.chk..[[
     ]]..body.code..[[
 ]])
@@ -631,7 +632,6 @@ while (1) {
 ceu_callback_assert_msg(]]..V(step)..' '..op..[[ 0, "invalid `loop´ step : expected positive number");
 ]]..V(i)..' = '..V(fr)..[[;
 while (1) {
-    _ceu_trl = &_ceu_mem->trails[]]..me.trails[1]..[[];
 ]])
         if to.tag ~= 'ID_any' then
             LINE(me, [[
