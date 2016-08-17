@@ -23,7 +23,7 @@ F = {
 
     Block = function (me)
         MAX_all(me)
-        if me.has_dyn_vecs then
+        if me.has_dyns then
             me.trails_n = me.trails_n + 1
         end
         if me.fins_n > 0 then
@@ -50,8 +50,14 @@ F = {
         local is_alias, tp, _, dim = unpack(me)
         if (not TYPES.is_nat(TYPES.get(tp,1))) then
             if not (is_alias or dim.is_const) then
-                AST.par(me,'Block').has_dyn_vecs = true
+                AST.par(me,'Block').has_dyns = true
             end
+        end
+    end,
+    Pool = function (me)
+        local is_alias, _, _, dim = unpack(me)
+        if not (is_alias or dim~='[]') then
+            AST.par(me,'Block').has_dyns = true
         end
     end,
 
@@ -94,6 +100,9 @@ G = {
     Stmts__BEF = function (me, sub, i)
         if i == 1 then
             me._trails = { unpack(me.trails) }
+            if me.__par.tag=='Block' and me.__par.has_dyns then
+                me._trails[1] = me._trails[1]+1
+            end
         end
         if sub.tag == 'Code' then
             return
@@ -101,8 +110,16 @@ G = {
 
         sub.trails = { unpack(me._trails) }
 
-        local abs = AST.get(sub,'Pool',2,'Type',1,'ID_abs')
-        if sub.tag=='Finalize' or (abs and abs.dcl.tag=='Code') then
+        local is_pool do
+            local pool = AST.get(sub, 'Pool')
+            if pool then
+                local is_alias, tp = unpack(pool)
+                local abs = AST.get(tp,'Type',1,'ID_abs')
+                is_pool = (not is_alias) and abs and abs.dcl.tag=='Code'
+            end
+        end
+
+        if sub.tag=='Finalize' or is_pool then
             for stmts in AST.iter() do
                 if stmts.tag == 'Stmts' then
                     stmts._trails[1] = stmts._trails[1] + 1

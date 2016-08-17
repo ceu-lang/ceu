@@ -397,19 +397,14 @@ static void ceu_go_bcast_2 (tceu_evt_occ* occ, tceu_stk* stk,
         if (trl->evt.id == CEU_INPUT__CODE) {
             ceu_go_bcast_2(occ, stk, (tceu_code_mem*)trl->evt.mem,
                            0, ((tceu_code_mem*)trl->evt.mem)->trails_n-1);
-
-            /* clear after propagating */
-            if (occ->evt.id == CEU_INPUT__CLEAR) {
-                trl->evt.id  = CEU_INPUT__NONE;
-                trl->evt.stk = NULL;
-            }
         } else if (trl->evt.id == CEU_INPUT__CODE_POOL) {
 /* TODO: inverse order for FINS */
             tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
             while (cur != trl->evt.pool_first) {
+                tceu_code_mem_dyn* nxt = cur->nxt;
                 ceu_go_bcast_2(occ, stk, &cur->mem[0],
                                     0, (&cur->mem[0])->trails_n-1);
-                cur = cur->nxt;
+                cur = nxt;
             }
         }
 
@@ -425,6 +420,16 @@ static void ceu_go_bcast_2 (tceu_evt_occ* occ, tceu_stk* stk,
         } else if (trl->evt.id==CEU_INPUT__NONE && trl->evt.stk==stk) {
             trl->evt.stk = NULL;
             CEU_STK_LBL(occ, stk, mem, trlK, trl->lbl);
+        }
+
+        /* clear after propagating */
+        if (occ->evt.id == CEU_INPUT__CLEAR) {
+            /* only possible for CODE/CODE_POOL */
+            ceu_dbg_assert(trl->evt.id==CEU_INPUT__NONE ||
+                           trl->evt.id==CEU_INPUT__CODE ||
+                           trl->evt.id==CEU_INPUT__CODE_POOL);
+            trl->evt.id  = CEU_INPUT__NONE;
+            trl->evt.stk = NULL;
         }
 
         if (trlK == trlF) {

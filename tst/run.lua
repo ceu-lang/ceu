@@ -3,7 +3,7 @@
 RUNTESTS = {
     --cmd = true,
     --luacov = 'lua5.3 -lluacov'
-    --valgrind = true
+    valgrind = true
 --REENTRANT = true
 --COMPLETE = true
 --[[
@@ -198,6 +198,11 @@ end
     f:write(T[1])
     f:close()
 
+    local defines = ''
+    for k,v in pairs(T.defines or {}) do
+        defines = defines..' -D'..k..'='..v
+    end
+
     PAK = {
         lua_exe = '?',
         ceu_ver = '?',
@@ -228,7 +233,7 @@ end
                             -- TODO: remove all "-Wno-*"
                             ..' -Wno-unused'
                             ..' -Wno-missing-field-initializers'
-                            ..' -llua5.3'
+                            ..' -llua5.3'..defines
                          ,
 
             ceu_line_directives = 'true',

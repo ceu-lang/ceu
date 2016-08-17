@@ -36,6 +36,21 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
             break;
         }
         case CEU_CALLBACK_REALLOC:
+#ifdef CEU_TESTS_REALLOC
+        {
+            static int ceu_tests_realloc = 0;
+            if (p2.size == 0) {
+                ceu_tests_realloc--;
+            } else {
+                if (ceu_tests_realloc >= CEU_TESTS_REALLOC) {
+                    ret.is_handled = 1;
+                    ret.value.ptr = NULL;
+                    return ret;
+                }
+                ceu_tests_realloc++;
+            }
+        }
+#endif
             ret.is_handled = 1;
             ret.value.ptr = realloc(p1.ptr, p2.size);
         default:

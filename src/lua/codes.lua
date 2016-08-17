@@ -184,22 +184,33 @@ ceu_vector_init(&]]..V(dcl)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
         end
 
         -- free vectors
-        if me.has_dyn_vecs then
+        if me.has_dyns then
             LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_dyn_vecs.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_dyns.id..[[;
 if (0) {
 ]])
-            CASE(me, me.lbl_dyn_vecs)
+            CASE(me, me.lbl_dyns)
             for _, dcl in ipairs(me.dcls) do
-                local _,tp = unpack(dcl)
+                local is_alias,tp,_,dim = unpack(dcl)
                 if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1))) then
-                    local is_alias, tp, _, dim = unpack(dcl)
                     if not (is_alias or dim.is_const) then
                         LINE(me, [[
     ceu_vector_setmax(&]]..V(dcl)..[[, 0, 0);
 ]])
                     end
+                elseif dcl.tag=='Pool' and (not (is_alias or dim~='[]')) then
+                    LINE(me, [[
+    ceu_dbg_assert(]]..V(dcl)..[[.pool.queue == NULL);
+    {
+        tceu_code_mem_dyn* __ceu_cur = ]]..V(dcl)..[[.first.nxt;
+        while (__ceu_cur != &]]..V(dcl)..[[.first) {
+            tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
+            ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_cur, 0);
+            __ceu_cur = __ceu_nxt;
+        }
+    }
+]])
                 end
             end
             LINE(me, [[
@@ -238,9 +249,19 @@ ceu_vector_setmax(&]]..V(me)..', '..V(dim)..[[, 1);
     tceu_code_mem_dyn* __ceu_dyn = &]]..V(me)..[[.first;
     ]]..V(me)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn, {} };
 };
+]])
+        if dim == '[]' then
+            LINE(me, [[
+]]..V(me)..[[.pool.queue = NULL;
+]])
+        else
+            LINE(me, [[
 ceu_pool_init(&]]..V(me)..'.pool, '..V(dim)..[[,
               sizeof(tceu_code_mem_dyn)+sizeof(]]..TYPES.toc(tp)..[[),
               (byte**)&]]..CUR(me.id_..'_queue')..', (byte*)&'..CUR(me.id_..'_buf')..[[);
+]])
+        end
+        LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id         = CEU_INPUT__CODE_POOL;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
 _ceu_trl++;
@@ -307,7 +328,14 @@ if (0)
             (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
         __ceu_dyn->nxt->prv = __ceu_dyn->prv;
         __ceu_dyn->prv->nxt = __ceu_dyn->nxt;
-        ceu_pool_free(&_ceu_mem->pak->pool, (byte*)__ceu_dyn);
+
+        if (_ceu_mem->pak->pool.queue == NULL) {
+            /* dynamic pool */
+            ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_dyn, 0);
+        } else {
+            /* static pool */
+            ceu_pool_free(&_ceu_mem->pak->pool, (byte*)__ceu_dyn);
+        }
     }
 ]]
             LINE(me, [[
@@ -400,11 +428,25 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
     Abs_Spawn = function (me)
         local _, Abs_Cons, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
+        local _,tp,_,dim = unpack(pool.info.dcl)
 
         LINE(me, [[
 {
     tceu_code_mem_dyn* __ceu_new =
+]])
+        if dim == '[]' then
+            LINE(me, [[(tceu_code_mem_dyn*) ceu_callback_ptr_num(
+                            CEU_CALLBACK_REALLOC,
+                            NULL,
+                            sizeof(tceu_code_mem_dyn) + sizeof(]]..TYPES.toc(tp)..[[)
+                       ).value.ptr;
+]])
+        else
+            LINE(me, [[
         (tceu_code_mem_dyn*) ceu_pool_alloc(&]]..V(pool)..[[.pool);
+]])
+        end
+        LINE(me, [[
     if (__ceu_new != NULL) {
         __ceu_new->nxt = &]]..V(pool)..[[.first;
         ]]..V(pool)..[[.first.prv->nxt = __ceu_new;

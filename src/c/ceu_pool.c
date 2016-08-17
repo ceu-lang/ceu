@@ -1,14 +1,12 @@
 #include <stdlib.h>     /* NULL */
 
 typedef struct {
-    byte**  queue;
-                    /* queue is in the next offset to distinguish dynamic(NULL)
-                       from static pools(any-address) */
     usize   len;
     usize   free;
     usize   index;
     usize   unit;
     byte*   buf;
+    byte**  queue; /* NULL on dynamic pools */
 } tceu_pool;
 
 void ceu_pool_init (tceu_pool* pool, usize len, usize unit, byte** queue, byte* buf)

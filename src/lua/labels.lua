@@ -30,8 +30,8 @@ F = {
     end,
 
     Block = function (me)
-        if me.has_dyn_vecs then
-            me.lbl_dyn_vecs = new{'Block__VECS'}
+        if me.has_dyns then
+            me.lbl_dyns = new{'Block__DYNS'}
         end
     end,
 

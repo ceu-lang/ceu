@@ -40,6 +40,29 @@ escape ret;
     run = 1,
 }
 
+Test { [[
+data Dd;
+data Dd.Ee;
+
+code/tight/dynamic Ff (dynamic var& Dd d) => int do
+    escape 10;      // should call this
+end
+code/tight/dynamic Ff (dynamic var& Dd.Ee e) => int do
+    escape 100;     // not this
+end
+
+code/tight/dynamic Gg (dynamic var& Dd d) => int do
+    escape call/dynamic Ff(&d);
+end
+
+var Dd.Ee e = val Dd.Ee();
+
+escape call/dynamic Gg(&e);
+]],
+    wrn = true,
+    run = 10,       -- todo: fragile base problem
+}
+
 do return end -- OK
 --]=====]
 
@@ -35273,6 +35296,318 @@ watching 1s do
 
     watching 1ms do
         pool[0] Fire rocks;
+        par do
+        with
+            await 10ms;
+            _V = 99;
+        end
+    end
+    await FOREVER;
+end
+
+escape _V;
+]],
+    wrn = true,
+    run = { ['~>1s'] = 1 },
+}
+
+Test { [[
+code/await Tx (var& int a)=>int do
+    a = 5;
+    escape 1;
+end
+var int a = 0;
+
+do end
+do
+    pool[] Tx ts;
+    spawn Tx(&a) in ts;
+end
+
+escape a;
+]],
+    run = 5,
+}
+
+Test { [[
+native/pos do
+    int V = 10;
+end
+native _V;
+code/await Tx (void)=>void do
+    _V = 100;
+end
+pool[] Tx ts;
+spawn Tx() in ts;
+escape _V;
+]],
+    run = 100,
+}
+
+Test { [[
+code/await Tx (var& int a)=>void do
+    a = do
+            escape 5;
+        end;
+end
+var int a = 0;
+pool[] Tx ts;
+spawn Tx(&a) in ts;
+escape a;
+]],
+    run = 5,
+}
+
+Test { [[
+code/await Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = 5;
+end
+var int a = 0;
+pool[] Tx ts;
+spawn Tx(&a) in ts;
+await 1s;
+escape a;
+]],
+    run = { ['~>1s']=5 },
+}
+
+Test { [[
+code/await Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = aaa + 5;
+    await 1s;
+    aaa = aaa + 5;
+    await FOREVER;
+end
+var int a = 0;
+pool[] Tx ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+await 2s;
+escape a;
+]],
+    run = { ['~>2s']=20 },
+}
+
+Test { [[
+code/await Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = aaa + 5;
+    await 1s;
+    aaa = aaa + 5;
+    await FOREVER;
+end
+var int a = 0;
+pool[] Tx ts1;
+pool[] Tx ts2;
+spawn Tx(&a) in ts1;
+spawn Tx(&a) in ts2;
+await 2s;
+escape a;
+]],
+    run = { ['~>2s']=20 },
+}
+
+Test { [[
+code/await Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = aaa + 5;
+    await 1s;
+    aaa = aaa + 5;
+end
+var int a = 0;
+pool[] Tx ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+await 2s;
+escape a;
+]],
+    run = { ['~>2s']=20 },
+}
+
+Test { [[
+code/await Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = aaa + 5;
+    await 1s;
+    aaa = aaa + 5;
+    await FOREVER;
+end
+var int a = 0;
+pool[] Tx ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+await 2s;
+escape a;
+]],
+    defines = {
+        CEU_TESTS_REALLOC = 2,
+    },
+    run = { ['~>2s']=20 },
+}
+
+Test { [[
+code/await Tx (var& int aaa)=>void do
+    aaa = aaa + 5;
+end
+var int a = 0;
+pool[] Tx ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+escape a;
+]],
+    defines = {
+        CEU_TESTS_REALLOC = 1,
+    },
+    run = 20,
+}
+
+Test { [[
+code/await Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = aaa + 5;
+    await 1s;
+    aaa = aaa + 5;
+end
+var int a = 0;
+pool[] Tx ts;
+spawn Tx(&a) in ts;
+await 1s;
+spawn Tx(&a) in ts;
+await 2s;
+escape a;
+]],
+    defines = {
+        CEU_TESTS_REALLOC = 2,
+    },
+    run = { ['~>3s']=20 },
+}
+
+Test { [[
+native _V;
+native/pos do
+    int V = 1;
+end
+
+code/await Jj (void)=>void do
+    _V = _V * 2;
+end
+
+code/await Tx (void)=>void do
+    pool[1] Jj js;
+    spawn Jj() in js;
+    _V = _V + 1;
+end
+
+pool[] Tx ts;
+
+spawn Tx() in ts;
+_V = _V*3;
+spawn Tx() in ts;
+_V = _V*3;
+spawn Tx() in ts;
+_V = _V*3;
+escape _V;
+]],
+    defines = {
+        CEU_TESTS_REALLOC = 3,
+    },
+    run = 345;
+}
+
+Test { [[
+native _V;
+native/pos do
+    int V = 1;
+end
+
+code/await Jj (void)=>void do
+    _V = _V * 2;
+end
+
+code/await Tx (void)=>void do
+    pool[1] Jj js;
+    spawn Jj() in js;
+    _V = _V + 1;
+end
+
+input void OS_START;
+
+pool[] Tx ts;
+spawn Tx() in ts;
+_V = _V*3;
+spawn Tx() in ts;
+_V = _V*3;
+spawn Tx() in ts;
+_V = _V*3;
+
+await OS_START;
+escape _V;
+]],
+    defines = {
+        CEU_TESTS_REALLOC = 3,
+    },
+    run = 345;
+}
+
+Test { [[
+native _V;
+native/pos do
+    int V = 1;
+end;
+
+code/await Tx (void)=>void do
+    event void e;
+    emit e;
+    _V = 10;
+end
+
+pool[] Tx ts;
+do
+    spawn Tx() in ts;
+end
+escape _V;
+]],
+    run = 10,
+}
+
+Test { [[
+native _VVV;
+native/pos do
+    int VVV = 1;
+end;
+
+code/await Tx (void)=>void do
+    await 1s;
+    _VVV = 10;
+end
+
+do
+    pool[] Tx ts;
+    spawn Tx() in ts;
+end
+escape _VVV;
+]],
+    run = 1,
+}
+
+Test { [[
+native _V;
+native/pos do
+    int V = 1;
+end
+
+watching 1s do
+    await 500ms;
+
+    code/await Fire (void) => void do end
+
+    watching 1ms do
+        pool[] Fire rocks;
         par do
         with
             await 10ms;
