@@ -424,10 +424,6 @@ static void ceu_go_bcast_2 (tceu_evt_occ* occ, tceu_stk* stk,
 
         /* clear after propagating */
         if (occ->evt.id == CEU_INPUT__CLEAR) {
-            /* only possible for CODE/CODE_POOL */
-            ceu_dbg_assert(trl->evt.id==CEU_INPUT__NONE ||
-                           trl->evt.id==CEU_INPUT__CODE ||
-                           trl->evt.id==CEU_INPUT__CODE_POOL);
             trl->evt.id  = CEU_INPUT__NONE;
             trl->evt.stk = NULL;
         }

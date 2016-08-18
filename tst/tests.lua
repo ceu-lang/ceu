@@ -64,7 +64,6 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -26906,6 +26905,7 @@ escape ret;
     },
 }
 
+--]=====]
 Test { [[
 input int  A,B,C;
 event bool a;
