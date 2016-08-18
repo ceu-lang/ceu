@@ -31,7 +31,6 @@ F = {
         local _, e1, e2 = unpack(me)
         if e1.is_const and e2.is_const then
             if e1.is_const=='float' or e2.is_const=='float' then
-error'TODO: luacov never executes this?'
                 me.is_const = 'float'
             elseif e1.is_const=='int' or e2.is_const=='int' then
                 me.is_const = 'int'

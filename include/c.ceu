@@ -34,11 +34,14 @@ native/nohold
 native
     _assert,
     _ceu_dbg_assert,
+    _cos,
     _malloc,
     _ntohs,
     _rand,
+    _sin,
     _sqrt,
     _srand,
+    _pow,
 ;
 
 native/pre do

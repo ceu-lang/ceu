@@ -9,6 +9,30 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+            var& int dps_cloud;
+            loop (dps_cloud) in clouds do
+                if _rand()%3 == 0 then
+                    continue;
+                end
+
+every/continue
+
+Test { [[
+var float esp = 2 * 3.1415;
+escape esp as int;
+]],
+    run = 6,
+}
+
+do return end
+var& _SDL_Renderer_ptr ren;
+watching SDL_go("Storm", WIN_W/1000, WIN_H/1000,
+                SDL_Color(0x21,0x2c,0x34,0x00))
+            => (ren)
+do
+    await FOREVER;
+end
+
 Test { [[
 data Dd with
     event void ok;      // copy event??
@@ -64,6 +88,7 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -26905,7 +26930,6 @@ escape ret;
     },
 }
 
---]=====]
 Test { [[
 input int  A,B,C;
 event bool a;
@@ -41737,6 +41761,8 @@ escape sum;
 ]],
     run = 1,
 }
+-- TODO: SKIP
+--]===]
 
 -->>> POOL ITERATORS
 
@@ -42031,6 +42057,9 @@ escape nn;
 }
 
 --||| TODO: POOL ITERATORS
+
+-- TODO: SKIP
+--[===[
 
 Test { [[
 class Tx with
