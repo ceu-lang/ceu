@@ -476,13 +476,13 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
     while (__ceu_cur != &]]..V(pool)..[[.first) {
 ]])
         if list then
-            local pars = AST.asr(Code,'Code', 3,'Block', 1,'Stmts',
+            local mids = AST.asr(Code,'Code', 3,'Block', 1,'Stmts',
                                               1,'Stmts', 2,'Code_Pars')
             local ps = {}
             for i, arg in ipairs(list) do
                 if arg.tag ~= 'ID_any' then
-                    local par = pars[i]
-                    ps[#ps+1] = '.'..par.id..' = &'..V(arg,{is_bind=true})
+                    local par = mids[i]
+                    ps[#ps+1] = '._'..par.is_mid_idx..' = &'..V(arg,{is_bind=true})
                 end
             end
             LINE(me, [[
