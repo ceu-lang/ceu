@@ -102,10 +102,11 @@ function SET (me, to, fr, fr_ok)
 end
 
 F = {
-    ROOT        = CONC_ALL,
-    Block       = CONC_ALL,
-    Stmts       = CONC_ALL,
-    Watching    = CONC_ALL,
+    ROOT     = CONC_ALL,
+    Block    = CONC_ALL,
+    Stmts    = CONC_ALL,
+    Watching = CONC_ALL,
+    Every    = CONC_ALL,
 
     Node__PRE = function (me)
         me.code = ''
@@ -590,15 +591,6 @@ ceu_callback_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ ove
                 inc = '',
             }
         end
-    end,
-
-    Every = function (me)
-        local body = unpack(me)
-        LINE(me, [[
-while (1) {
-    ]]..body.code..[[
-}
-]])
     end,
 
     __loop_async = function (me)

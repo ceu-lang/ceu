@@ -9,23 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-Test { [[
-var int ret = 0;
-watching 10s do
-    var bool x = true;
-    every 1s do
-        if x then
-            continue;
-        end
-        x = not x;
-        ret = ret + 1;
-    end
-end
-escape ret;
-]],
-    run = { ['~>10s']=5 },
-}
-
 do return end
 
             var& int dps_cloud;
@@ -3506,8 +3489,8 @@ var int a;
 loop do a=1; end;
 escape a;
 ]],
-    wrn = true,
-    inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
+    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    --inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -3971,7 +3954,8 @@ every A do
     end
 end
 ]],
-    props_ = 'line 6 : invalid `escape´ : unexpected enclosing `every´',
+    run = { ['~>A; ~>A; ~>A'] = 3 },
+    --props_ = 'line 6 : invalid `escape´ : unexpected enclosing `every´',
     --props = 'line 6 : not permitted inside `every´',
 }
 
@@ -4088,6 +4072,23 @@ end
 escape ret;
 ]],
     run = 33,
+}
+
+Test { [[
+var int ret = 0;
+watching 10s do
+    var bool x = true;
+    every 1s do
+        x = not x;
+        if x then
+            continue;
+        end
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    run = { ['~>10s']=5 },
 }
 
 --<<< EVERY
@@ -4222,7 +4223,8 @@ with
     end
 end
 ]],
-    props_ = 'line 5 : invalid `escape´ : unexpected enclosing `every´',
+    run = 4,
+    --props_ = 'line 5 : invalid `escape´ : unexpected enclosing `every´',
     --dcls = 'line 4 : implicit declaration of "a" hides previous declaration',
 }
 Test { [[
@@ -4287,7 +4289,8 @@ with
     end
 end
 ]],
-    props_ = 'line 5 : invalid `escape´ : unexpected enclosing `every´',
+    run = 4,
+    --props_ = 'line 5 : invalid `escape´ : unexpected enclosing `every´',
     --props = 'line 4 : not permitted inside `every´',
 }
 Test { [[
@@ -4321,7 +4324,8 @@ with
     end
 end
 ]],
-    inits = 'line 3 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:4)',
+    run = 4,
+    --inits = 'line 3 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:4)',
     --ref = 'line 3 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:4)',
 }
 
@@ -4373,17 +4377,21 @@ loop do
     every 1s do
         break;
     end
+    escape 1;
 end
 ]],
-    props_ = 'line 3 : invalid `break´ : unexpected enclosing `every´',
+    run = { ['~>1s']=1 },
+    --props_ = 'line 3 : invalid `break´ : unexpected enclosing `every´',
     --props = 'line 2 : not permitted inside `every´',
 }
 Test { [[
 every 1s do
     break;
 end
+escape 1;
 ]],
-    dcls = 'line 2 : invalid `break´ : expected matching enclosing `loop´',
+    run = { ['~>1s']=1 },
+    --dcls = 'line 2 : invalid `break´ : expected matching enclosing `loop´',
     --props = 'line 2 : not permitted inside `every´',
 }
 Test { [[
@@ -4393,7 +4401,8 @@ loop do
     end
 end
 ]],
-    props_ = 'line 3 : invalid `continue´ : unexpected enclosing `every´',
+    run = 0,
+    --props_ = 'line 3 : invalid `continue´ : unexpected enclosing `every´',
     --props = 'line 2 : not permitted inside `every´',
 }
 Test { [[
@@ -4401,7 +4410,8 @@ every 1s do
     continue;
 end
 ]],
-    dcls = 'line 2 : invalid `continue´ : expected matching enclosing `loop´',
+    run = 0,
+    --dcls = 'line 2 : invalid `continue´ : expected matching enclosing `loop´',
     --props = 'line 2 : not permitted inside `every´',
 }
 
@@ -4410,7 +4420,8 @@ every 1s do
     escape 1;
 end
 ]],
-    props_ = 'line 2 : invalid `escape´ : unexpected enclosing `every´',
+    run = { ['~>1s']=1 },
+    --props_ = 'line 2 : invalid `escape´ : unexpected enclosing `every´',
     --props = 'line 2 : not permitted inside `every´',
 }
 
@@ -4541,7 +4552,8 @@ every 1s do
     end
 end
 ]],
-    dcls = 'line 3 : invalid `continue´ : expected matching enclosing `loop´',
+    run = 0,
+    --dcls = 'line 3 : invalid `continue´ : expected matching enclosing `loop´',
     _ana = {
         isForever = true,
     },
@@ -6234,7 +6246,8 @@ loop do
 end;
 escape 0;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    run = 0,
+    --tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     --run = 4,
 }
 
@@ -6706,7 +6719,8 @@ every inc do
     nothing;
 end
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    run = 0,
+    --tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     _ana = { isForever=true },
 }
 
@@ -14856,7 +14870,8 @@ end
 escape a;
 ]],
     wrn = true,
-    inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
+    inits = 'line 1 : uninitialized variable "a" : reached `break´ (/tmp/tmp.ceu:6)',
+    --inits = 'line 1 : uninitialized variable "a" : reached `loop´ (/tmp/tmp.ceu:2)',
     --ref = 'line 1 : uninitialized variable "a" crossing compound statement (/tmp/tmp.ceu:2)',
 }
 
@@ -29239,7 +29254,8 @@ every 1s do
 end
 escape 1;
 ]],
-    inits = 'line 2 : uninitialized variable "sfc" : reached `await´ (/tmp/tmp.ceu:3)',
+    inits = 'line 2 : uninitialized variable "sfc" : reached `loop´ (/tmp/tmp.ceu:3)',
+    --inits = 'line 2 : uninitialized variable "sfc" : reached `await´ (/tmp/tmp.ceu:3)',
     --ref = 'line 4 : invalid attribution : variable "sfc" is already bound',
     --ref = 'line 4 : reference declaration and first binding cannot be separated by loops',
     --ref = 'line 1 : uninitialized variable "sfc" crossing compound statement (/tmp/tmp.ceu:2)',

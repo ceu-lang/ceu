@@ -5,8 +5,7 @@ local yields = {
     Par_And       = true,
     Par_Or        = true,
     Escape        = true,
-    Loop          = true,
-    Loop_Num      = true,
+    Break         = true,
     Async         = true,
     _Async_Thread = true,
     _Async_Isr    = true,
@@ -75,6 +74,10 @@ local function run_watch (par, i, stop)
     return run_watch(me, 1, stop)
 end
 
+local function is_loop (me)
+    return me.tag=='Loop' or me.tag=='Loop_Num'
+end
+
 local function run_inits (par, i, Dcl, stop)
     local me = par[i]
     if me == nil then
@@ -100,8 +103,10 @@ local function run_inits (par, i, Dcl, stop)
         end
     end
 
+    local is_alias = unpack(Dcl)
+
     -- error: yielding statement
-    if yields[me.tag] then
+    if yields[me.tag] or (is_loop(me) and is_alias) then
         ASR(false, Dcl,
             'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
             'reached `'..AST.tag2id[me.tag]..'´ '..
@@ -258,7 +263,7 @@ local function run_ptrs (par, i, Dcl, stop)
         return run_ptrs(par, i+1, Dcl, stop)
     end
 
-    if (me.tag=='Loop' or me.tag=='Loop_Num') and (me.tight ~= 'awaits') then
+    if is_loop(me) and (me.tight ~= 'awaits') then
         -- ok, continue
 
     elseif me.tag == 'Watching' then
@@ -271,7 +276,7 @@ local function run_ptrs (par, i, Dcl, stop)
         return run_ptrs(snd, 1, Dcl, stop)
 
     -- yielding statement: stop?
-    elseif yields[me.tag] then
+    elseif yields[me.tag] or (is_loop(me) and me.__par.tag~='Every') then
         local set = AST.par(me,__is_set)
         local ok = false
         if set then

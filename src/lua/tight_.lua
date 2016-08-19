@@ -1,6 +1,5 @@
 local awaits = {
     Par           = true,
-    Every         = true,
     Async         = true,
     _Async_Thread = true,
     _Async_Isr    = true,
@@ -12,7 +11,29 @@ local awaits = {
 local function run (me, Loop)
     assert(AST.is_node(me))
 
-    if awaits[me.tag] then
+    local int_await do
+        if me.tag == 'Await_Int' then
+            local parand = AST.par(me, 'Par_And')
+            local paror  = AST.par(me, 'Par_Or')
+            if parand and parand.__depth>Loop.__depth or
+               paror  and paror.__depth>Loop.__depth
+            then
+                -- TIGHT
+                --  loop do
+                --      par/and do
+                --          await int;
+                --      with
+                --          ... // possibly "emit int"
+                --      end
+                --  end
+                int_await = false
+            else
+                int_await = true
+            end
+        end
+    end
+
+    if awaits[me.tag] or int_await or (me.tag=='Loop' and me.tight=='awaits') then
         return 'awaits'
 
     elseif me.tag=='Break' or me.tag=='Escape' then

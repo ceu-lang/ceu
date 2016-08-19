@@ -8,7 +8,7 @@ F = {
         if NO_every[me.tag] then
             local Every = AST.par(me,'Every')
             if Every then
-                local _,Await = unpack(AST.asr(Every,'', 1,'Block', 1,'Stmts'))
+                local _,Await = unpack(AST.asr(Every,'', 1,'Loop', 2,'Block', 1,'Stmts'))
                 ASR(AST.is_par(Await,me), me,
                     'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `every´')
             end
@@ -30,11 +30,13 @@ F = {
                 'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `async´')
         end
 
+--[[
         local Every = AST.par(me,'Every')
         if Every then
             ASR(me.outer.__depth > Every.__depth, me,
                 'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `every´')
         end
+]]
 
         local Finalize = AST.par(me,'Finalize')
         if Finalize then

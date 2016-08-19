@@ -399,11 +399,13 @@ DBG('TODO: _Loop_Pool')
         end
 
         return node('Every', me.ln,
-                node('Block', me.ln,
-                    node('Stmts', me.ln,
-                        dcls,
-                        set_awt,
-                        body)))
+                node('Loop', me.ln,
+                    false,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            dcls,
+                            set_awt,
+                            body))))
     end,
 
 -------------------------------------------------------------------------------
