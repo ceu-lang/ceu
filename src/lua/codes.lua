@@ -401,12 +401,7 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ 
             end
         end
 
-        HALT(me, {
-            { ['evt.id']  = 'CEU_INPUT__CODE' },
-            { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
-            { lbl = me.lbl_out.id },
-            lbl = me.lbl_out.id,
-            exec = [[
+        local exec = [[
 {
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
 
@@ -418,8 +413,22 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ 
                                    (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
     ]]..watch_code..[[
 }
-]],
-        })
+]]
+
+        if me.is_spawn then
+            -- TODO: HACK_2 : spawn is simpler than await
+            LINE(me, exec)
+            HALT(me)
+        else
+            HALT(me, {
+                { ['evt.id']  = 'CEU_INPUT__CODE' },
+                { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
+                { lbl = me.lbl_out.id },
+                lbl = me.lbl_out.id,
+                exec = exec,
+            })
+        end
+
         LINE(me, [[
 ceu_stack_clear(_ceu_stk->down, _ceu_mem,
                 ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);

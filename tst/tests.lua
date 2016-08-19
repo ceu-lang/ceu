@@ -10,11 +10,6 @@ end
 
 --[=====[
 
--- todo: dynamic/mid
--- bug spawn, reached
--- pool/list de orgs alive
--- static call to dynamic code
-
 Test { [[
 data Aa;
 data Aa.Bb;

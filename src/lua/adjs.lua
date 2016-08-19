@@ -501,24 +501,17 @@ DBG('TODO: _Loop_Pool')
             par_stmts[i] = nil
         end
 
-        if list then
-DBG'TODO: must be => FOREVER'
-            return node('_Watching', me.ln,
-                        node('Abs_Await', me.ln, mods, Abs_Cons),
-                        list,
-                        node('Block', me.ln,
-                            node('Stmts', me.ln,
-                                unpack(cnt_stmts))))
-        else
-            return node('Par_Or', me.ln,
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            node('Abs_Await', me.ln, mods, Abs_Cons),
-                            node('Await_Forever', me.ln))),
+        -- TODO: HACK_2 : spawn is simpler than await
+        -- await should be in terms of spawn, not the contrary
+        local Await = node('Abs_Await', me.ln, mods, Abs_Cons)
+        Await.is_spawn = (not list)
+
+        return node('_Watching', me.ln,
+                    Await,
+                    list,
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             unpack(cnt_stmts))))
-        end
     end,
 
     _Watching__PRE = function (me)
@@ -534,6 +527,7 @@ DBG'TODO: must be => FOREVER'
         end
 
         if mid then
+DBG('TODO: must be "=> FOREVER"')
             local Abs_Await = AST.get(watch,'Abs_Await') or
                               AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
             ASR(Abs_Await, me, 'unexpected `=>´')
