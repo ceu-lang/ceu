@@ -10,6 +10,45 @@ end
 
 --[=====[
 Test { [[
+data Aa;
+data Aa.Bb;
+data Aa.Bb.Xx;
+data Aa.Cc;
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3);
+pool[] Ff ffs;
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) => int do
+    ret = ret + 1;
+end
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) => int do
+    ret = ret + 2;
+end
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) => int do
+    ret = ret + 4;
+end
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) => int do
+    ret = ret + 8;
+end
+
+var Aa a = val Aa();
+var Aa b = val Aa.Bb();
+var Aa c = val Aa.Bb.Xx();
+
+var int ret = 0;
+
+spawn/dynamic Ff(&ret,&b,&a,&a)) in ffs;
+spawn/dynamic Ff(&ret,&b,&a,&b)) in ffs;
+spawn/dynamic Ff(&ret,&b,&b,&b)) in ffs;
+spawn/dynamic Ff(&ret,&b,&c,&b)) in ffs;
+
+escape ret;
+]],
+    wrn = true,
+    run = 15,
+}
+
+Test { [[
 data Dd with
     event void ok;      // copy event??
 end
@@ -42182,6 +42221,25 @@ end
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int v = 10;
+    x = &v;
+    await FOREVER;
+end
+
+pool[] Ff ffs;
+
+var& int x;
+loop (x) in ffs do
+    await 1s;
+end
+
+escape 1;
+]],
+    props_ = 'line 11 : invalid `await´ : unexpected enclosing `loop´',
 }
 
 --||| TODO: POOL ITERATORS

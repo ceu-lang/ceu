@@ -1,16 +1,30 @@
-local NO_every = {
-    Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
-    Every=true, Finalize=true,
+local NO = {
+    Every = {
+        Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
+        Abs_Await=true, Every=true, Finalize=true,
+    },
+    Loop_Pool = {
+        Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
+        Abs_Await=true, Abs_Spawn=true, Emit_Int=true,
+        Every=true, Finalize=true,
+    },
 }
 
 F = {
     Node = function (me)
-        if NO_every[me.tag] then
-            local Every = AST.par(me,'Every')
-            if Every then
-                local _,Await = unpack(AST.asr(Every,'', 1,'Loop', 2,'Block', 1,'Stmts'))
-                ASR(AST.is_par(Await,me), me,
-                    'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `every´')
+        for k, t in pairs(NO) do
+            local par = AST.par(me,k)
+            if par and t[me.tag] then
+                local sub = par
+                if par.tag == 'Every' then
+                    local _,Await = unpack(AST.asr(par,'', 1,'Loop', 2,'Block', 1,'Stmts'))
+                    if AST.is_par(Await,me) then
+                        return -- ok
+                    end
+                end
+                ASR(false, me,
+                    'invalid `'..AST.tag2id[me.tag]..
+                    '´ : unexpected enclosing `'..AST.tag2id[par.tag]..'´')
             end
         end
     end,
