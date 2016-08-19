@@ -9,6 +9,25 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+Test { [[
+var int ret = 0;
+watching 10s do
+    var bool x = true;
+    every 1s do
+        if x then
+            continue;
+        end
+        x = not x;
+        ret = ret + 1;
+    end
+end
+escape ret;
+]],
+    run = { ['~>10s']=5 },
+}
+
+do return end
+
             var& int dps_cloud;
             loop (dps_cloud) in clouds do
                 if _rand()%3 == 0 then
@@ -16,13 +35,6 @@ end
                 end
 
 every/continue
-
-Test { [[
-var float esp = 2 * 3.1415;
-escape esp as int;
-]],
-    run = 6,
-}
 
 do return end
 var& _SDL_Renderer_ptr ren;
@@ -375,6 +387,13 @@ end
 escape _A | _B;
 ]],
     run = 1,
+}
+
+Test { [[
+var float esp = 2 * 3.1415;
+escape esp as int;
+]],
+    run = 6,
 }
 
 --<<< EXPS / EXPRESSIONS
@@ -32933,7 +32952,17 @@ code/await Tx (void)=>void do
 end
 escape 0;
 ]],
-    dcls = 'line 2 : abstraction "Tx" is not declared',
+    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    --dcls = 'line 2 : abstraction "Tx" is not declared',
+}
+Test { [[
+code/await Tx (void)=>void do
+    spawn Tx();
+end
+escape 0;
+]],
+    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 
 Test { [[
@@ -36297,6 +36326,68 @@ escape 1;
 }
 
 --<< CODE / TIGHT / AWAIT / MULTIMETHODS / DYNAMIC
+
+-->> CODE / AWAIT / RECURSIVE
+
+Test { [[
+native _V;
+native/pos do
+    int V = 0;
+end
+
+code/await Tx (pool&[] Tx txs) => void;
+
+code/await Tx (pool&[] Tx txs) => void do
+    _V = _V + 1;
+    spawn Tx(&txs) in txs;
+end
+
+pool[] Tx txs;
+await Tx(&txs);
+
+escape _V;
+]],
+    defines = {
+        CEU_TESTS_REALLOC = 100,
+    },
+    --wrn = 'line 7 : unbounded recursive spawn',
+    run = 101,  -- tests force 100 allocations at most
+    --asr = 'runtime error: stack overflow',
+}
+Test { [[
+native _V;
+native/pos do
+    int V = 0;
+end
+
+code/await Tx (void) => void;
+
+code/await Tx (void) => void do
+    pool[] Tx ts;
+    _V = _V + 1;
+    spawn Tx() in ts;
+end
+
+await Tx();
+
+escape _V;
+]],
+    defines = {
+        CEU_TESTS_REALLOC = 100,
+    },
+    --wrn = 'line 7 : unbounded recursive spawn',
+    run = 101,  -- tests force 100 allocations at most
+    --asr = 'runtime error: stack overflow',
+}
+
+Test { [[
+code/await Tx (var& Tx txs) => void;
+escape 0;
+]],
+    dcls = 'line 1 : invalid declaration : unexpected context for `code´ "Tx"',
+}
+
+--<< CODE / AWAIT / RECURSIVE
 
 --<<< CODE / AWAIT / FUNCTIONS
 
@@ -44404,22 +44495,6 @@ escape _V;
     run = 10,
 }
 
-Test { [[
-native/pos do
-    int V = 0;
-end
-class Tx with
-do
-    _V = _V + 1;
-    spawn Tx;
-end
-var Tx t;
-escape _V;
-]],
-    wrn = 'line 7 : unbounded recursive spawn',
-    run = 101,  -- tests force 100 allocations at most
-    --asr = 'runtime error: stack overflow',
-}
 Test { [[
 native/pos do
     int V = 0;

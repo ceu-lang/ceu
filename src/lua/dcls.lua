@@ -68,8 +68,13 @@ function DCLS.asr (me, blk_or_data, id, can_cross, err)
                 '`data´ "'..data.id..
                 '" ('..data.ln[1]..':'..  data.ln[2]..')')
         else
-            ASR(false, me,
-                err..' "'..id..'" is not declared')
+            local par = AST.par(me,'Code')
+            if par and par[2]==id then
+                return par
+            else
+                ASR(false, me,
+                    err..' "'..id..'" is not declared')
+            end
         end
     end
 end
@@ -193,7 +198,8 @@ F = {
         local ID = unpack(tp)
         if ID.tag == 'ID_abs' then
             ASR(no_what and ID.dcl.tag~=no_what, tp,
-                'invalid declaration : unexpected context for `code´ "'..ID.dcl.id..'"')
+                'invalid declaration : unexpected context for `code´ "'..
+                    (ID.dcl.id or ID.dcl[2])..'"')
         end
     end,
 

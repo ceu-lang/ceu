@@ -37,11 +37,12 @@ native
     _cos,
     _malloc,
     _ntohs,
+    _pow,
     _rand,
     _sin,
     _sqrt,
     _srand,
-    _pow,
+    _time,
 ;
 
 native/pre do
