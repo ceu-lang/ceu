@@ -36348,12 +36348,20 @@ escape 1;
 -->> CODE / AWAIT / RECURSIVE
 
 Test { [[
+code/await Tx (void) => void do
+    await Tx();
+end
+escape 0;
+]],
+    wrn = true,
+    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+}
+
+Test { [[
 native _V;
 native/pos do
     int V = 0;
 end
-
-code/await Tx (pool&[] Tx txs) => void;
 
 code/await Tx (pool&[] Tx txs) => void do
     _V = _V + 1;
@@ -36377,8 +36385,6 @@ native _V;
 native/pos do
     int V = 0;
 end
-
-code/await Tx (void) => void;
 
 code/await Tx (void) => void do
     pool[] Tx ts;

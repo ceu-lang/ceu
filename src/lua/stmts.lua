@@ -297,17 +297,16 @@ F = {
         local mods_call,Abs_Cons,list = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
         local Code = AST.asr(ID_abs.dcl,'Code')
-        ASR(AST.par(me,'Code') ~= Code, me,
-            'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')
     end,
 
     Abs_Await = function (me)
         local mods_call,Abs_Cons,list = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
-
-        F.Abs_Spawn(me)
-
         local Code = AST.asr(ID_abs.dcl,'Code')
+
+        ASR(AST.par(me,'Code') ~= Code, me,
+            'invalid `await´ : unexpected recursive invocation')
+
         local mods_dcl = unpack(Code)
         ASR(mods_dcl.await, me,
             'invalid `await´ : expected `code/await´ declaration '..
