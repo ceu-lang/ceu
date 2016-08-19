@@ -492,7 +492,7 @@ DBG('TODO: _Loop_Pool')
     end,
 
     _Abs_Back__PRE = function (me)
-        local mods, Abs_Cons = unpack(me)
+        local mods, Abs_Cons, list = unpack(me)
 
         -- all statements after myself
         local par_stmts = AST.asr(me.__par, 'Stmts')
@@ -501,12 +501,24 @@ DBG('TODO: _Loop_Pool')
             par_stmts[i] = nil
         end
 
-        return node('_Watching', me.ln,
-                    node('Abs_Await', me.ln, mods, Abs_Cons),
-                    unpack(me,3),
+        if list then
+DBG'TODO: must be => FOREVER'
+            return node('_Watching', me.ln,
+                        node('Abs_Await', me.ln, mods, Abs_Cons),
+                        list,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                unpack(cnt_stmts))))
+        else
+            return node('Par_Or', me.ln,
+                    node('Block', me.ln,
+                        node('Stmts', me.ln,
+                            node('Abs_Await', me.ln, mods, Abs_Cons),
+                            node('Await_Forever', me.ln))),
                     node('Block', me.ln,
                         node('Stmts', me.ln,
                             unpack(cnt_stmts))))
+        end
     end,
 
     _Watching__PRE = function (me)

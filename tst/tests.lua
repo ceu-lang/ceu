@@ -9,25 +9,32 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+
+-- todo: dynamic/mid
+-- bug spawn, reached
+-- pool/list de orgs alive
+-- static call to dynamic code
+
 Test { [[
 data Aa;
 data Aa.Bb;
 data Aa.Bb.Xx;
 data Aa.Cc;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3);
-pool[] Ff ffs;
+code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) => void;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) => int do
+pool[10] Ff ffs;
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) => void do
     ret = ret + 1;
 end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) => int do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) => void do
     ret = ret + 2;
 end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) => int do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) => void do
     ret = ret + 4;
 end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) => int do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) => void do
     ret = ret + 8;
 end
 
@@ -37,15 +44,117 @@ var Aa c = val Aa.Bb.Xx();
 
 var int ret = 0;
 
-spawn/dynamic Ff(&ret,&b,&a,&a)) in ffs;
-spawn/dynamic Ff(&ret,&b,&a,&b)) in ffs;
-spawn/dynamic Ff(&ret,&b,&b,&b)) in ffs;
-spawn/dynamic Ff(&ret,&b,&c,&b)) in ffs;
+spawn Ff(&ret,&b,&a,&a) in ffs;
+spawn/dynamic Ff(&ret,&b,&a,&b) in ffs;
+spawn/dynamic Ff(&ret,&b,&b,&b) in ffs;
+spawn/dynamic Ff(&ret,&b,&c,&b) in ffs;
 
 escape ret;
 ]],
     wrn = true,
     run = 15,
+}
+Test { [[
+data Aa;
+data Aa.Bb;
+data Aa.Bb.Xx;
+data Aa.Cc;
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) => void;
+
+pool[10] Ff ffs;
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) => void do
+    ret = ret + 1;
+end
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) => void do
+    ret = ret + 2;
+end
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) => void do
+    ret = ret + 4;
+end
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) => void do
+    ret = ret + 8;
+end
+
+var Aa a = val Aa();
+var Aa b = val Aa.Bb();
+var Aa c = val Aa.Bb.Xx();
+
+var int ret = 0;
+
+spawn Ff(&ret,&b,&a,&a) in ffs;
+spawn/dynamic Ff(&ret,&b,&a,&b) in ffs;
+spawn/dynamic Ff(&ret,&b,&b,&b) in ffs;
+spawn/dynamic Ff(&ret,&b,&c,&b) in ffs;
+
+escape ret;
+]],
+    wrn = true,
+    run = 15,
+}
+do return end
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) => int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
+end
+
+var  Aa    a = val Aa(1);
+var  Aa.Bb b = val Aa.Bb(2,3);
+var& Aa    c = &b;
+
+var int v1 = await/static Ff(&a,1);     // 1+1
+var int v2 = await/static Ff(&b,2);     // 3+2
+var int v3 = await/static Ff(&c,3);     // 1+3  // err 3+3
+
+escape v1+v2+v3;
+]],
+    run = 11,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) => void do
+    ret = ret + a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) => void do
+    ret = ret + b.b + yyy;
+end
+
+var  Aa    a = val Aa(1);
+var  Aa.Bb b = val Aa.Bb(2,3);
+var& Aa    c = &b;
+
+var int ret = 0;
+spawn/static Ff(&ret,&a,1);     // 1+1
+spawn/static Ff(&ret,&b,2);     // 3+2
+spawn/static Ff(&ret,&c,3);     // 1+3  // err 3+3
+
+escape ret;
+]],
+    run = 11,
 }
 
 Test { [[
@@ -36044,6 +36153,140 @@ escape v2;
 ]],
     --run = 58,
     props_ = 'line 5 : invalid `dynamic´ declaration : parameter #1 : expected `data´ in hierarchy',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) => int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
+end
+
+var Aa a = val Aa(1);
+
+await Ff(&a,22);
+escape 0;
+]],
+    stmts = 'line 20 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
+    escape a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) => int do
+    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
+    escape b.b + yyy;
+end
+
+var Aa a = val Aa(1);
+
+spawn Ff(&a,22);
+escape 0;
+]],
+    stmts = 'line 20 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
+}
+
+Test { [[
+code/await Ff (void) => void do
+end
+spawn Ff();
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var& int ret) => void do
+    ret = 1;
+end
+var int ret = 0;
+spawn Ff(&ret);
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) => void do
+    ret = ret + a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) => void do
+    ret = ret + b.b + yyy;
+end
+
+var  Aa    a = val Aa(1);
+var  Aa.Bb b = val Aa.Bb(2,3);
+var& Aa    c = &b;
+
+var int zzz = 0;
+spawn/dynamic Ff(&zzz,&a,1);     // 1+1
+spawn/dynamic Ff(&zzz,&b,2);     // 3+2
+spawn/dynamic Ff(&zzz,&c,3);     // 3+3
+
+escape zzz;
+]],
+    run = 13,
+}
+
+Test { [[
+data Aa with
+    var int a;
+end
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) => void do
+    ret = ret + a.a + xxx;
+end
+
+data Aa.Bb with
+    var int b;
+end
+
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) => void do
+    ret = ret + b.b + yyy;
+end
+
+var  Aa    a = val Aa(1);
+var  Aa.Bb b = val Aa.Bb(2,3);
+var& Aa    c = &b;
+
+var int ret = 0;
+spawn/dynamic Ff(&ret,&a,1);     // 1+1
+spawn/dynamic Ff(&ret,&b,2);     // 3+2
+spawn/dynamic Ff(&ret,&c,3);     // 3+3
+
+escape ret;
+]],
+    run = 13,
 }
 
 Test { [[

@@ -279,7 +279,6 @@ end
 --do return end
     if not check(T,'consts') then return end
     if not check(T,'stmts')  then return end
---AST.dump(AST.root)
     if not check(T,'tight_') then return end
     if not check(T,'inits')  then return end
     if not check(T,'scopes') then return end
@@ -290,6 +289,7 @@ end
     dofile(DIR..'multis.lua')
     if not check(T,'mems')   then return end
     if not check(T,'codes')  then return end
+--AST.dump(AST.root)
 
 if T.ana or T.tmp or T.props or T.mode then return end
 
