@@ -9,15 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-do return end
-
-            var& int dps_cloud;
-            loop (dps_cloud) in clouds do
-                if _rand()%3 == 0 then
-                    continue;
-                end
-
-every/continue
 
 do return end
 var& _SDL_Renderer_ptr ren;
@@ -42169,6 +42160,21 @@ escape nn;
 ]],
     --inits = 'line 8 : uninitialized variable "nn" : reached `loop´',
     props_ = 'line 14 : invalid access to internal identifier "nn" : crossed `loop´ (/tmp/tmp.ceu:10)',
+}
+
+Test { [[
+code/await Ff (void) => void do
+end
+
+pool[] Ff ffs;
+
+loop in ffs do
+    continue;
+end
+
+escape 1;
+]],
+    run = 1,
 }
 
 --||| TODO: POOL ITERATORS
