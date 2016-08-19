@@ -9,16 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-
-do return end
-var& _SDL_Renderer_ptr ren;
-watching SDL_go("Storm", WIN_W/1000, WIN_H/1000,
-                SDL_Color(0x21,0x2c,0x34,0x00))
-            => (ren)
-do
-    await FOREVER;
-end
-
 Test { [[
 data Dd with
     event void ok;      // copy event??
@@ -33974,8 +33964,25 @@ end
 
 escape 0;
 ]],
-    inits = 'line 8 : invalid binding : reached yielding `await´ (/tmp/tmp.ceu:11)',
+    inits = 'line 8 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:11)',
     --scopes = 'line 8 : invalid binding : incompatible scopes',
+}
+
+Test { [[
+code/await Ff (void) => (var& int v) => void do
+    var int x = 10;
+    v = &x;
+end
+
+var& int v;
+watching Ff() => (v)
+do
+    await FOREVER;
+end
+
+await 1s;
+]],
+    inits = 'line 7 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:12)',
 }
 
 Test { [[
@@ -34250,7 +34257,7 @@ end
 
 escape 0;
 ]],
-    inits = 'line 10 : invalid binding : reached yielding `await´ (/tmp/tmp.ceu:15)',
+    inits = 'line 10 : invalid binding : active scope reached yielding `await´ (/tmp/tmp.ceu:15)',
 }
 
 Test { [[

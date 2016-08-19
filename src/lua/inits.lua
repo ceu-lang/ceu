@@ -153,7 +153,7 @@ local function run_inits (par, i, Dcl, stop)
 
         local ok, yield = run_watch(me, #me+1, Dcl.blk)
         ASR(ok, me, yield and
-            'invalid binding : reached yielding `'..
+            'invalid binding : active scope reached yielding `'..
             AST.tag2id[yield.tag]..'´ '..
             '('..yield.ln[1]..':'..yield.ln[2]..')')
 
