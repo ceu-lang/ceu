@@ -32952,6 +32952,7 @@ code/await Tx (void)=>void do
 end
 escape 0;
 ]],
+    wrn = true,
     stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
@@ -32961,6 +32962,7 @@ code/await Tx (void)=>void do
 end
 escape 0;
 ]],
+    wrn = true,
     stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
