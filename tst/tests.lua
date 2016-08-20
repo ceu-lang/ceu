@@ -8,6 +8,48 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+var int ret = 0;
+var&? int p;
+do
+    var int x = 10;
+    p = &x;
+    ret = p!;
+end
+ret = ret + (p? as int);
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+var int ret = 0;
+var&? int? p;
+do
+    var int x = 10;
+    p = &x;     // err
+    ret = p!;
+end
+ret = ret + (p? as int);
+escape ret;
+]],
+    run = 'err',
+}
+
+Test { [[
+var int ret = 0;
+var&? int? p;
+do
+    var int? x = 10;
+    p = &x;
+    ret = p!!;
+end
+ret = ret + (p? as int);
+escape ret;
+]],
+    run = 'err',
+}
+
 --[=====[
 Test { [[
 data Aa with

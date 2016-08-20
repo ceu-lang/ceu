@@ -127,13 +127,18 @@ DBG'TODO: type annotation'
         INFO.asr_tag(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.check(e.info.tp,'?'), me,
+        ASR((e.info.dcl[1]=='&?') or TYPES.check(e.info.tp,'?'), me,
             'invalid operand to `'..op..'´ : expected option type : got "'..
             TYPES.tostring(e.info.tp)..'"')
 
         -- info
         me.info = INFO.copy(e.info)
-        me.info.tp = TYPES.pop(e.info.tp)
+        if e.info.dcl[1] == '&?' then
+            me.info.dcl = AST.copy(e.info.dcl)
+            me.info.dcl[1] = '&'
+        else
+            me.info.tp = TYPES.pop(e.info.tp)
+        end
     end,
 
 -- INDEX

@@ -310,8 +310,8 @@ assert(me.hier)
 
     Var = function (me)
         -- new `?´ type
-        local _,tp = unpack(me)
-        if not TYPES.check(tp,'?') then
+        local alias,tp = unpack(me)
+        if not (alias=='&?' or TYPES.check(tp,'?')) then
             return
         end
 
@@ -321,23 +321,27 @@ assert(me.hier)
             local cc = TYPES.toc(tp)
             local c = TYPES.toc(TYPES.pop(tp,'?'))
             local opt = ''
-            if TYPES.is_nat_not_plain(TYPES.pop(tp,'?')) then
+            if alias=='&?' or TYPES.is_nat_not_plain(TYPES.pop(tp,'?')) then
+local ccc = cc
+if alias=='&?' then
+    ccc = ccc..'*'
+end
                 opt = opt..[[
-static ]]..cc..' CEU_OPTION_'..cc..' ('..cc..[[ opt, char* file, int line) {
-ceu_callback_assert_msg_ex(opt != NULL, "value is not set", file, line);
-return opt;
+static ]]..ccc..' CEU_OPTION_'..cc..' ('..ccc..[[ opt, char* file, int line) {
+    ceu_callback_assert_msg_ex(opt != NULL, "value is not set", file, line);
+    return opt;
 }
 ]]
             else
                 opt = opt..[[
 typedef struct ]]..cc..[[ {
-bool      is_set;
-]]..c..[[ value;
+    bool      is_set;
+    ]]..c..[[ value;
 } ]]..cc..[[;
 
 static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
-ceu_callback_assert_msg_ex(opt->is_set, "value is not set", file, line);
-return opt;
+    ceu_callback_assert_msg_ex(opt->is_set, "value is not set", file, line);
+    return opt;
 }
 ]]
             end

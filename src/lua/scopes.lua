@@ -128,6 +128,9 @@ F = {
                     end
                 end
             end
+            if not ok then
+                ok = (to.info.dcl[1] == '&?')
+            end
             ASR(ok, me, 'invalid binding : incompatible scopes')
         end
     end,

@@ -308,7 +308,9 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 
     ['Exp_?'] = function (me)
         local _, e = unpack(me)
-        if TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?')) then
+        if e.info.dcl[1] == '&?' then
+            return '(&'..V(e)..' != NULL)'
+        elseif TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?')) then
             return '('..V(e)..' != NULL)'
         else
             return '('..V(e)..'.is_set)'
@@ -317,7 +319,9 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 
     ['Exp_!'] = function (me)
         local _, e = unpack(me)
-        if TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?')) then
+        if e.info.dcl[1] == '&?' then
+            return '*CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)'
+        elseif TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?')) then
             return 'CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', __FILE__, __LINE__)'
         else
             return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)->value)'

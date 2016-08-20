@@ -563,9 +563,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , __vars_set  = V'__ID_int' * OPT(Ct(V'__Sets_one'+V'__Sets_many'))
 
-    , _Vars_set  = K'var' * OPT(CKK'&') * V'Type' *
+    , _Vars_set  = K'var' * OPT(CKK'&?'+CKK'&') * V'Type' *
                     LIST(V'__vars_set')
-    , _Vars      = K'var' * OPT(CKK'&') * V'Type' *
+    , _Vars      = K'var' * OPT(CKK'&?'+CKK'&') * V'Type' *
                     LIST(V'__ID_int')
 
     , _Vecs_set  = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *

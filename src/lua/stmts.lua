@@ -108,7 +108,7 @@ F = {
         local ID_int = AST.get(Exp_Name,'', 1,'ID_int')
         local op = unpack(Exp_Name[1])
         ASR(ID_int, me, 'invalid binding : unexpected context for operator `'..op..'´')
-        ASR(ID_int.dcl[1]=='&', me, 'invalid binding : expected declaration with `&´')
+        ASR(ID_int.dcl[1], me, 'invalid binding : expected declaration with `&´')
 
         -- tp
 

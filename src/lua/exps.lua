@@ -267,7 +267,7 @@ error'TODO: remove below'
         INFO.asr_tag(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
 
         -- tp
-        ASR(TYPES.check(e.info.tp,'?'), me,
+        ASR((e.info.dcl[1]=='&?') or TYPES.check(e.info.tp,'?'), me,
             'invalid operand to `'..op..'´ : expected option type')
 
         -- info
