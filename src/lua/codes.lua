@@ -469,9 +469,7 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
         __ceu_new_mem->up_trl = _ceu_trlK;
 
         tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
-
-        CEU_STK_LBL((tceu_evt_occ*)&__ceu_ps, _ceu_stk,
-                    __ceu_new_mem, 0, ]]..ID_abs.dcl.lbl_in.id..[[);
+        CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps, __ceu_new_mem);
     }
 }
 ]])
