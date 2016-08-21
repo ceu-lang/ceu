@@ -415,19 +415,13 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ 
 }
 ]]
 
-        if me.is_spawn then
-            -- TODO: HACK_2 : spawn is simpler than await
-            LINE(me, exec)
-            HALT(me)
-        else
-            HALT(me, {
-                { ['evt.id']  = 'CEU_INPUT__CODE' },
-                { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
-                { lbl = me.lbl_out.id },
-                lbl = me.lbl_out.id,
-                exec = exec,
-            })
-        end
+        HALT(me, {
+            { ['evt.id']  = 'CEU_INPUT__CODE' },
+            { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
+            { lbl = me.lbl_out.id },
+            lbl = me.lbl_out.id,
+            exec = exec,
+        })
 
         LINE(me, [[
 ceu_stack_clear(_ceu_stk->down, _ceu_mem,

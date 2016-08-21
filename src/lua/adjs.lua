@@ -501,13 +501,8 @@ DBG('TODO: _Loop_Pool')
             par_stmts[i] = nil
         end
 
-        -- TODO: HACK_2 : spawn is simpler than await
-        -- await should be in terms of spawn, not the contrary
-        local Await = node('Abs_Await', me.ln, mods, Abs_Cons)
-        Await.is_spawn = (not list)
-
         return node('_Watching', me.ln,
-                    Await,
+                    node('Abs_Await', me.ln, mods, Abs_Cons),
                     list,
                     node('Block', me.ln,
                         node('Stmts', me.ln,

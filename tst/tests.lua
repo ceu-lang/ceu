@@ -33914,6 +33914,23 @@ escape x;
     run = 10,
 }
 
+Test { [[
+native _V;
+native/pos do
+    int V = 0;
+end
+code/await Ff (void) => void do
+    every 1s do
+        _V = _V + 1;
+    end
+end
+spawn Ff();
+await 10s;
+escape _V;
+]],
+    run = { ['~>10s']=10 },
+}
+
 --<< CODE / WATCHING / SPAWN
 
 -->> CODE / WATCHING / SCOPES
