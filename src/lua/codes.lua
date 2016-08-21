@@ -423,6 +423,12 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ 
             exec = exec,
         })
 
+        -- TODO: HACK_2 : spawn is simpler than await
+        -- await should be in terms of spawn, not the contrary
+        if me.is_spawn then
+            HALT(me)
+        end
+
         LINE(me, [[
 ceu_stack_clear(_ceu_stk->down, _ceu_mem,
                 ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
