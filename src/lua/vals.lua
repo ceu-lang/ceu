@@ -220,13 +220,11 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     Pool = 'Var',
     Vec = 'Var',
     Var = function (me, ctx)
-        local is_alias, tp = unpack(me)
+        local alias, tp = unpack(me)
         local ptr = ''
-        if is_alias and (not ctx.is_bind) and
-            (not TYPES.is_nat_not_plain(TYPES.pop(tp,'?')))
-                --  var& _t_ptr? x = &_f(); ... x!
-                --  var& _t_ptr xx = &x!;   ... xx
-        then
+        if (alias == '&') and (not ctx.is_bind) then
+            --  var&? _t_ptr x = &_f(); ... x!
+            --  var& _t_ptr xx = &x!;   ... xx
             ptr = '*'
         end
         return '('..ptr..CUR(me.id_,ctx)..')'
@@ -275,12 +273,8 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local dcl = e.info.dcl
         if dcl and dcl.tag == 'Evt' then
             return V(e)
-        elseif e.tag=='Exp_Call' or AST.get(e,'Exp_Name',1,'Exp_!')
-                or TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?'))
-        then
+        elseif e.tag=='Exp_Call' or e.tag=='Abs_Call' then
             -- x = &_f();
-            -- y = &x!;
-            -- var& _void_ptr x; y=&x;
             return V(e)
         else
             return '(&'..V(e)..')'
@@ -309,8 +303,6 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     ['Exp_?'] = function (me)
         local _, e = unpack(me)
         if e.info.dcl[1] == '&?' then
-            return '(&'..V(e)..' != NULL)'
-        elseif TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?')) then
             return '('..V(e)..' != NULL)'
         else
             return '('..V(e)..'.is_set)'
@@ -320,9 +312,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     ['Exp_!'] = function (me)
         local _, e = unpack(me)
         if e.info.dcl[1] == '&?' then
-            return '*CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)'
-        elseif TYPES.is_nat_not_plain(TYPES.pop(e.info.tp,'?')) then
-            return 'CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', __FILE__, __LINE__)'
+            return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', __FILE__, __LINE__))'
         else
             return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)->value)'
         end

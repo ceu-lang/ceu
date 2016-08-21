@@ -700,7 +700,7 @@ DBG('TODO: must be "=> FOREVER"')
 
         return node('Stmts', me.ln,
                 node('Var', me.ln,
-                    '&',
+                    '&?',
                     Type,
                     __ID_int),
                 node('Finalize', me.ln,

@@ -136,6 +136,7 @@ DBG'TODO: type annotation'
         if e.info.dcl[1] == '&?' then
             me.info.dcl = AST.copy(e.info.dcl)
             me.info.dcl[1] = '&'
+            me.info.dcl.orig = e.info.dcl.orig or e.info.dcl   -- TODO: HACK_3
         else
             me.info.tp = TYPES.pop(e.info.tp)
         end

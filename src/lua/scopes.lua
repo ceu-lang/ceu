@@ -95,8 +95,8 @@ F = {
 
         local _, call = unpack(fr)
         if (call.tag=='Exp_Call' or call.tag=='Abs_Call') then
-            ASR(TYPES.check(to.info.tp,'?'), me,
-                'invalid binding : expected option type `?´ as destination : got "'
+            ASR(to.info.dcl[1] == '&?', me,
+                'invalid binding : expected option alias `&?´ as destination : got "'
                 ..TYPES.tostring(to.info.tp)..'"')
 
             local fin = AST.par(me, 'Finalize')
@@ -147,7 +147,7 @@ F = {
         for _, p in ipairs(ps) do
             if p.info.dcl and (p.info.dcl.tag ~= 'Nat') -- OK: _f(&&_V)
                 and (TYPES.check(p.info.tp,'&&') or     -- NO: _f(&&v)
-                     TYPES.is_nat_not_plain(p.info.tp)) -- NO: _f(&ptr)
+                     TYPES.is_nat_not_plain(p.info.tp)) -- NO: _f(_ptr)
             then
                 local fin = AST.par(me, 'Finalize')
                 local ok = fin and (
@@ -211,7 +211,8 @@ F = {
 
             local ok = false
             for _, v2 in ipairs(Namelist) do
-                if v2.info.dcl == v1 then
+                if v2.info.dcl==v1 or v2.info.dcl==v1.orig then
+                                        -- TODO: HACK_3
                     ok = true
                     break
                 end

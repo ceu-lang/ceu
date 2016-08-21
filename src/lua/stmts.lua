@@ -21,6 +21,8 @@ F = {
         -- ctx
         INFO.asr_tag(to, {'Nat','Var','Pool'}, err)
         INFO.asr_tag(fr, {'Val','Nat','Var'}, err)
+        ASR((not fr.info.dcl) or (fr.info.dcl[1]~='&?'), me,
+            err..' : expected operator `!´')
 
         -- tp
         EXPS.check_tp(me, to.info.tp, fr.info.tp, err)
@@ -452,7 +454,8 @@ DBG'TODO: _Async_Isr'
         -- tp
         for _,p in ipairs(ps) do
             -- tp
-            ASR(not TYPES.check(p.info.tp,'?'), me,
+            local is_opt = (p.info.dcl and p.info.dcl[1]=='&?')
+            ASR(not (is_opt or TYPES.check(p.info.tp,'?')), me,
                 'invalid call : unexpected context for operator `?´')
 
             if p.info.tag ~= 'Nat' then

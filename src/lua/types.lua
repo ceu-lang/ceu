@@ -2,9 +2,9 @@ TYPES = {
 }
 
 function TYPES.noc (str)
-    str = string.gsub(str, '%.',  '_dot_')
-    str = string.gsub(str, '%?',  '_ask_')
-    str = string.gsub(str, '%&&', '_ptr_')
+    str = string.gsub(str, '%.',  '__dot__')
+    str = string.gsub(str, '%?',  '__ask__')
+    str = string.gsub(str, '%&&', '__ptr__')
     return str
 end
 
@@ -46,10 +46,8 @@ function TYPES.toc (tp)
     assert(tp.tag == 'Type')
     local ID = unpack(tp)
 
-    local is_int_opt = TYPES.check(tp,'?') and (not TYPES.is_nat_not_plain(TYPES.pop(tp,'?')))
-
     local pre = ''
-    if is_int_opt then
+    if TYPES.check(tp,'?') then
         pre = 'tceu_opt_'
     elseif ID.tag == 'ID_abs' then
         if ID.dcl.tag == 'Data' then
@@ -67,8 +65,8 @@ function TYPES.toc (tp)
     for i=2, #tp do
         local mod = tp[i]
         if mod == '&&' then
-            if is_int_opt then
-                mod = '_ptr_'
+            if TYPES.check(tp,'?') then
+                mod = '__ptr__'
             else
                 mod = '*'
             end

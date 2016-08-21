@@ -204,17 +204,16 @@ F = {
     end,
 
     Var = function (me)
-        local is_alias,Type,id = unpack(me)
+        local alias,Type,id = unpack(me)
         me.id = id
         dcls_new(AST.par(me,'Block'), me)
         F.__no_abs(Type, 'Code')
 
-        if TYPES.check(Type,'?') and TYPES.is_nat_not_plain(TYPES.pop(Type,'?')) then
-            ASR(is_alias, me, 'invalid declaration : expected `&´')
+        if alias == '&?' then
             me.is_read_only = true
         end
 
-        if is_alias then
+        if alias then
             -- NO: alias to pointer
             --  var& int&& x = ...;
             ASR(not TYPES.check(Type,'&&'), me,
@@ -223,7 +222,7 @@ F = {
 
         local ID_prim,mod = unpack(Type)
         if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then
-            ASR(is_alias, me,
+            ASR(alias, me,
                 'invalid declaration : variable cannot be of type `void´') 
         end
     end,

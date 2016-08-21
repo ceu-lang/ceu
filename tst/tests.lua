@@ -8,6 +8,7 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--[=====[
 Test { [[
 var int ret = 0;
 var&? int p;
@@ -50,7 +51,6 @@ escape ret;
     run = 'err',
 }
 
---[=====[
 Test { [[
 data Aa with
     var int a;
@@ -18682,7 +18682,7 @@ end
 Test { [[
 native _int, _f;
 var int v = 2;
-var& _int? p = &_f(&&v)
+var&? _int p = &_f(&&v)
                 finalize (v) with
                     v = 5;
                 end;
@@ -18803,23 +18803,61 @@ escape ret;
 }
 
 Test { [[
-native _void_ptr, _alloc, _hold;
-native/pre do
-    typedef void* void_ptr;
-end
-
-var& _void_ptr? tcp = &_alloc(1)
+native _void, _alloc, _hold;
+var&? _void tcp = &_alloc(1)
         finalize (tcp) with
         end;
 _hold(tcp!);
 
 escape 0;
 ]],
-    scopes = 'line 9 : invalid `call´ : expected `finalize´ for variable "tcp"',
+    scopes = 'line 5 : invalid `call´ : expected `finalize´ for variable "tcp"',
 }
 
 Test { [[
 native _V, _void_ptr, _alloc, _hold;
+native/nohold _dealloc, _unhold;
+native/pre do
+    typedef void* void_ptr;
+    int V = 2;
+    int* P = &V;
+    void** alloc () {
+        V++;
+        return (void**)&P;
+    }
+    void dealloc (void* x) {
+        ceu_dbg_assert(x == &V);
+        V*=2;
+    }
+    void hold (void* x) {
+        ceu_dbg_assert(x == &V);
+        V*=2;
+    }
+    void unhold (void* x) {
+        ceu_dbg_assert(x == &V);
+        V++;
+    }
+end
+
+do
+    var&? _void_ptr tcp = &_alloc()
+            finalize (tcp) with
+                _dealloc(tcp!);
+            end;
+    do
+        _hold(tcp!);
+    finalize (tcp) with
+        _unhold(tcp!);
+    end
+end
+
+escape _V;
+]],
+    run = 14,
+}
+
+Test { [[
+native _V, _void, _alloc, _hold;
 native/nohold _dealloc, _unhold;
 native/pre do
     int V = 2;
@@ -18836,18 +18874,17 @@ native/pre do
     void unhold (void* x) {
         V++;
     }
-    typedef void* void_ptr;
 end
 
 do
-    var& _void_ptr? tcp = &_alloc()
+    var&? _void tcp = &_alloc()
             finalize (tcp) with
-                _dealloc(tcp!);
+                _dealloc(&&tcp!);
             end;
     do
-        _hold(tcp!);
+        _hold(&&tcp!);
     finalize (tcp) with
-        _unhold(tcp!);
+        _unhold(&&tcp!);
     end
 end
 
@@ -29085,9 +29122,9 @@ escape 1;
 -->> OPTION / NATIVE
 
 Test { [[
-native _SDL_Texture_ptr;
+native _SDL_Texture;
 native/nohold _g;
-var& _SDL_Texture_ptr? t_enemy_1;
+var& _SDL_Texture? t_enemy_1;
 native _f;
 do
     t_enemy_1 = &_f();
@@ -29097,13 +29134,29 @@ end
 escape 1;
 ]],
     wrn = true,
-    cc = 'error: unknown type name ‘SDL_Texture_ptr’',
+    scopes = 'line 6 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Texture?"',
 }
 
 Test { [[
-native _SDL_Texture_ptr;
+native _SDL_Texture;
 native/nohold _g;
-var& _SDL_Texture_ptr? t_enemy_0, t_enemy_1;
+var&? _SDL_Texture t_enemy_1;
+native _f;
+do
+    t_enemy_1 = &_f();
+finalize(t_enemy_1) with
+    _g(&&t_enemy_1!);
+end
+escape 1;
+]],
+    wrn = true,
+    cc = 'error: unknown type name ‘SDL_Texture’',
+}
+
+Test { [[
+native _SDL_Texture;
+native/nohold _g;
+var&? _SDL_Texture t_enemy_0, t_enemy_1;
 native _f;
     do t_enemy_1 = &_f();
 finalize (t_enemy_1) with
@@ -29112,7 +29165,7 @@ end
 escape 1;
 ]],
     wrn = true,
-    cc = 'error: unknown type name ‘SDL_Texture_ptr’',
+    cc = 'error: unknown type name ‘SDL_Texture’',
     --inits = 'line 3 : uninitialized variable "t_enemy_0" : reached `escape´ (/tmp/tmp.ceu:9)',
 }
 
@@ -29151,9 +29204,8 @@ escape ret + _id(kkk!.x) + ttt!.x;
 }
 
 Test { [[
-native _void_ptr, _myalloc;
+native _void, _myalloc;
 native/pre do
-    typedef void* void_ptr;
     void* myalloc (void) {
         return NULL;
     }
@@ -29162,16 +29214,16 @@ native/pre do
 end
 native/nohold _myfree;
 
-var& _void_ptr? vvv;
+var&? _void vvv;
 do
     vvv = &_myalloc();
 finalize(vvv) with
-    _myfree(vvv!);
+    _myfree(&&vvv!);
 end
 
 escape 1;
 ]],
-    run = '16] runtime error: value is not set',
+    run = '15] runtime error: value is not set',
 }
 
 Test { [[
@@ -29197,29 +29249,50 @@ var& _void_ptr? v = &x;
 v! = null;
 escape (x! == null) as int;
 ]],
-    dcls = 'line 5 : invalid declaration : expected `&´',
-    --run = 1,
+    --dcls = 'line 5 : invalid declaration : expected `&´',
+    run = 1,
 }
 Test { [[
-native _void_ptr, _f;
-native/pre do
-    typedef void* void_ptr;
-end
-var& _void_ptr? x = &_f()
+native _void;
+native _f;
+var&? _void x = &_f()
     finalize (x) with
         nothing;
     end;
-var& _void_ptr? v = &x;
-v! = null;
-escape (x! == null) as int;
+x = null;
+escape 0;
 ]],
-    stmts = 'line 10 : invalid assignment : read-only variable "v"',
+    stmts = 'line 7 : invalid assignment : read-only variable "x"',
 }
 
 Test { [[
-native _void_ptr, _myalloc;
+native _void, _f;
+var&? _void x = &_f()
+    finalize (x) with
+        nothing;
+    end;
+x! = null;
+escape 0;
+]],
+    stmts = 'line 6 : invalid assignment : read-only variable "x"',
+}
+
+Test { [[
+native _void, _f;
+var&? _void x = &_f()
+    finalize (x) with
+        nothing;
+    end;
+var&? _void v = &x;
+v! = null;
+escape (x! == null) as int;
+]],
+    stmts = 'line 7 : invalid assignment : read-only variable "v"',
+}
+
+Test { [[
+native _void, _myalloc;
 native/pre do
-    typedef void* void_ptr;
     void* myalloc (void) {
         return NULL;
     }
@@ -29228,12 +29301,12 @@ native/pre do
 end
 native/nohold _myfree;
 
-var& _void_ptr? v;
+var&? _void v;
 do
     v = &_myalloc();
 finalize(v) with
     if v? then
-        _myfree(v!);
+        _myfree(&&v!);
     end
 end
 
@@ -29243,7 +29316,7 @@ escape 1;
 }
 
 Test { [[
-var& int? v1;
+var&? int v1;
 native _fff;
 do
     v1 = &_fff(1);
@@ -29251,15 +29324,15 @@ finalize(v1) with
     nothing;
 end
 ]],
-    stmts = 'line 4 : invalid binding : types mismatch : "int?" <= "_"',
+    cc = 'error: implicit declaration of function ‘fff’',
+    --stmts = 'line 4 : invalid binding : types mismatch : "int?" <= "_"',
 }
 
 Test { [[
 native/nohold _UNSAFE_POINTER_TO_REFERENCE;
-native _int_ptr, _fff;
+native _int, _fff;
 native/pre do
     ##define UNSAFE_POINTER_TO_REFERENCE(ptr) ptr
-    typedef int* int_ptr;
     int v2 = 10;
     int* V1 = NULL;
     int* V2 = &v2;
@@ -29272,32 +29345,32 @@ native/pre do
     }
 end
 
-var& _int_ptr? v1;
+var&? _int v1;
         do v1 = &_fff(1);
     finalize(v1) with
         nothing;
     end
 
-var& _int_ptr? v2;
+var&? _int v2;
         do v2 = &_fff(2);
     finalize(v2) with
         nothing;
     end
 
-var& _int_ptr? v3;
+var&? _int v3;
 native _V1, _V2;
         do v3 = &_UNSAFE_POINTER_TO_REFERENCE(_V1);
     finalize(v3) with
         nothing;
     end
 
-var& _int_ptr? v4;
+var&? _int v4;
         do v4 = &_UNSAFE_POINTER_TO_REFERENCE(_V2);
     finalize(v4) with
         nothing;
     end
 
-escape ((not v1?)as int) + ((not v3?) as int) + (v2? as int) + (v4? as int) + ((v2! ==_V2)as int) + ((v4! ==_V2) as int) + *(v2!) + *(v4!);
+escape ((not v1?)as int) + ((not v3?) as int) + (v2? as int) + (v4? as int) + ((&&v2! ==_V2)as int) + ((&&v4! ==_V2) as int) + (v2!) + (v4!);
 ]],
     run = 26,
 }
@@ -29347,9 +29420,8 @@ escape 1;
 }
 
 Test { [[
-native _fff, _int_ptr;
+native _fff, _int;
 native/pre do
-    typedef int* int_ptr;
     int V = 10;
     int* fff (int v) {
         V += v;
@@ -29358,20 +29430,21 @@ native/pre do
 end
 var int   v = 1;
 var int&& p = &&v;
-var& _int_ptr? r;
+var&? _int r;
 do r = &_fff(*p);
 finalize (r) with
     nothing;
 end
 escape r;
 ]],
-    stmts = 'line 17 : invalid `escape´ : types mismatch : "int" <= "_int_ptr?"',
+    stmts = 'line 16 : invalid `escape´ : expected operator `!´',
+    --stmts = 'line 17 : invalid `escape´ : types mismatch : "int" <= "_int?"',
     --env = 'line 16 : types mismatch (`int´ <= `int&?´)',
 }
 
 Test { [[
-native _f, _int_ptr;
-var& _int_ptr? v = &_f();
+native _f, _int;
+var&? _int v = &_f();
 escape 0;
 ]],
     scopes = 'line 2 : invalid binding : expected `finalize´',
@@ -29387,9 +29460,9 @@ escape 1;
 }
 
 Test { [[
-native _f, _int_ptr;
+native _f, _int;
 do
-    var& _int_ptr? a;
+    var&? _int a;
     do
         a = &_f();
     finalize (a) with
@@ -29401,9 +29474,9 @@ end
 }
 
 Test { [[
-native _f, _int_ptr;
+native _f, _int;
 do
-    var& _int_ptr? a;
+    var&? _int a;
     do a = &_f();
     finalize (a) with
         async do
@@ -29415,9 +29488,9 @@ end
 }
 
 Test { [[
-native _f, _int_ptr;
+native _f, _int;
 do/_
-    var& _int_ptr? a;
+    var&? _int a;
     do a = &_f();
     finalize (a) with
         do/_ escape 0; end;
@@ -29429,9 +29502,8 @@ end
 }
 
 Test { [[
-native _void_ptr, _myalloc;
+native _void, _myalloc;
 native/pre do
-    typedef void* void_ptr;
     void* myalloc (void) {
         return NULL;
     }
@@ -29440,26 +29512,25 @@ native/pre do
 end
 native/nohold _myfree;
 
-var& _void_ptr? v;
+var&? _void v;
 do
     v = &_myalloc();
 finalize(v) with
     if v? then
-        _myfree(v!);
+        _myfree(&&v!);
     end
 end
 
-var& _void_ptr vv = &v!;
+var& _void vv = &v!;
 
 escape 1;
 ]],
-    run = '21] runtime error: value is not set',
+    run = '20] runtime error: value is not set',
 }
 
 Test { [[
-native _void_ptr, _myalloc, _V;
+native _void, _myalloc, _V;
 native/pre do
-    typedef void* void_ptr;
     int V;
     void* myalloc (void) {
         return &V;
@@ -29469,18 +29540,18 @@ native/pre do
 end
 native/nohold _myfree;
 
-var& _void_ptr? v;
+var&? _void v;
 do
     v = &_myalloc();
 finalize(v) with
     if v? then
-        _myfree(v!);
+        _myfree(&&v!);
     end
 end
 
-var& _void_ptr vv = &v!;
+var& _void vv = &v!;
 
-escape (vv==(&&_V as _void_ptr)) as int;
+escape (&&vv==(&&_V as _void&&) and (&&_V as _void&&)==&&v!) as int;
 ]],
     run = 1,
 }
@@ -29488,10 +29559,7 @@ escape (vv==(&&_V as _void_ptr)) as int;
 -->> OPTION / NATIVE / FINALIZE
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 
 native _fff;
 native/pre do
@@ -29503,13 +29571,13 @@ native/pre do
 end
 var int   v = 1;
 var int&& p = &&v;
-var& _int_ptr? r;
+var&? _int r;
 do
     r = &_fff(*p);
 finalize (r) with
     nothing;
 end
-escape *r!;
+escape r!;
 ]],
     run = 11,
 }
@@ -29518,7 +29586,7 @@ Test { [[
 native _SDL_Renderer, _f;
 native/nohold _g;
 
-var& _SDL_Renderer? ren;
+var&? _SDL_Renderer ren;
     do ren = &_f();
     finalize (ren) with
     end
@@ -29532,13 +29600,10 @@ escape 1;
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _f;
 input void E;
-var& _int_ptr? n;
+var&? _int n;
 do n = &_f();
 finalize (n) with
 end
@@ -29549,10 +29614,7 @@ escape n!;
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _f;
 native/pos do
     int* f (void) {
@@ -29561,7 +29623,7 @@ native/pos do
 end
 var int r = 0;
 do/_
-    var& _int_ptr? a;
+    var&? _int a;
     do a = &_f();
     finalize (a) with
         var int b = do escape 2; end;
@@ -29576,10 +29638,7 @@ escape r;
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _f;
 native/pos do
     int* f (void) {
@@ -29588,7 +29647,7 @@ native/pos do
 end
 var int r = 0;
 do/_
-    var& _int_ptr? a;
+    var&? _int a;
     do a = &_f();
     finalize (a) with
         if a? then end
@@ -29603,10 +29662,7 @@ escape r;
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _getV;
 native/pos do
     int V = 10;
@@ -29615,7 +29671,7 @@ native/pos do
     }
 end
 
-var& _int_ptr? v;
+var&? _int v;
 do
     v = &_getV();
 finalize (v)
@@ -29623,15 +29679,33 @@ with
     nothing;
 end
 
-escape *v!;
+escape v!;
 ]],
     run = 10,
 }
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
+native _getV;
+native/pos do
+    int V = 10;
+    int* getV (void) {
+        return &V;
+    }
 end
+
+var&? int v;
+do
+    v = &_getV();
+finalize (v)
+with
+    nothing;
+end
+
+escape v!;
+]],
+    run = 10,
+}
+Test { [[
+native _int;
 native _V, _getV;
 native/pos do
     int V = 10;
@@ -29640,14 +29714,14 @@ native/pos do
     }
 end
 
-var& _int_ptr? v1;
+var&? _int v1;
 do v1 = &_getV();
 finalize (v1) with
     nothing;
 end
 *v1! = 20;
 
-var& _int_ptr? v2;
+var&? _int v2;
 do v2 = &_getV();
 finalize (v2) with
     nothing;
@@ -29660,10 +29734,7 @@ escape *v1!+*v2!+_V;
     run = 60,
 }
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _V, _getV;
 native/pos do
     int V = 10;
@@ -29672,7 +29743,7 @@ native/pos do
     }
 end
 
-var& _int_ptr? v1;
+var&? _int v1;
 do
     v1 = &_getV();
 finalize (v1)
@@ -29681,7 +29752,7 @@ with
 end
 *v1! = 20;
 
-var& _int_ptr? v2;
+var&? _int v2;
 do
     v2 = &_getV();
 finalize (v2)
@@ -29696,10 +29767,7 @@ escape v1!+v2!+_V;
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _f;
 native/pre do
     int* f (int* ptr) { return ptr; }
@@ -29708,7 +29776,7 @@ end
 var int ret = 0;
 do
 var int v = 2;
-var& _int_ptr? p = &_f(&&v)
+var&? _int p = &_f(&&v)
                 finalize (p,v) with
                     ret = 5;
                 end;
@@ -29735,13 +29803,10 @@ escape r;
     run = 2,
 }
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _f;
 var int x = 0;
-var& _int_ptr? r;
+var&? _int r;
 do
     r = &_f(&&x);
 finalize (x) with
@@ -29749,16 +29814,13 @@ finalize (x) with
 end
 escape 0;
 ]],
-    scopes = 'line 10 : invalid `finalize´ : unmatching identifiers : expected "r" (vs. /tmp/tmp.ceu:9)',
+    scopes = 'line 7 : invalid `finalize´ : unmatching identifiers : expected "r" (vs. /tmp/tmp.ceu:6)',
 }
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _f;
 var int x = 0;
-var& _int_ptr? r;
+var&? _int r;
 do
     r = &_f(&&x);
 finalize (r) with
@@ -29766,17 +29828,16 @@ finalize (r) with
 end
 escape 0;
 ]],
-    scopes = 'line 10 : invalid `finalize´ : unmatching identifiers : expected "x" (vs. /tmp/tmp.ceu:9)',
+    scopes = 'line 7 : invalid `finalize´ : unmatching identifiers : expected "x" (vs. /tmp/tmp.ceu:6)',
 }
 Test { [[
-native _int_ptr;
+native _int;
 native/pre do
-    typedef int* int_ptr;
     int* f(int* x) { return x; }
 end
 native _f;
 var int x = 0;
-var& _int_ptr? r;
+var&? _int r;
 do
     r = &_f(&&x);
 finalize (r,x) with
@@ -29787,14 +29848,11 @@ escape 1;
     run = 1,
 }
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _f;
 var int x = 0;
 do
-    var& _int_ptr? r;
+    var&? _int r;
     do
         r = &_f(&&x);
     finalize (r,x) with
@@ -29803,7 +29861,7 @@ do
 end
 escape 1;
 ]],
-    scopes = 'line 10 : invalid `finalize´ : incompatible scopes',
+    scopes = 'line 7 : invalid `finalize´ : incompatible scopes',
 }
 Test { [[
 native _f;
@@ -29822,10 +29880,7 @@ escape 1;
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _alloc;
 native/pos do
     int V;
@@ -29837,7 +29892,7 @@ native/pos do
 end
 native/nohold _dealloc;
 
-var& _int_ptr? tex;
+var&? _int tex;
 do tex = &_alloc(1);    // v=2
 finalize (tex) with
     _dealloc(&&tex);
@@ -29845,14 +29900,11 @@ end
 
 escape 1;
 ]],
-    exps = 'line 19 : invalid operand to `&&´ : unexpected option type',
+    exps = 'line 16 : invalid operand to `&&´ : unexpected option type',
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _alloc;
 native/pos do
     int V;
@@ -29864,10 +29916,10 @@ native/pos do
 end
 native/nohold _dealloc;
 
-var& _int_ptr? tex;
+var&? _int tex;
 do tex = &_alloc(1);    // v=2
 finalize (tex) with
-    _dealloc(tex!);
+    _dealloc(&&tex!);
 end
 
 escape 1;
@@ -29876,10 +29928,7 @@ escape 1;
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _alloc;
 native/pos do
     int* alloc (int ok) {
@@ -29890,24 +29939,21 @@ native/pos do
 end
 native/nohold _dealloc;
 
-var& _int_ptr? tex;
+var&? _int tex;
 do
     tex = &_alloc(1);    // v=2
 finalize (tex)
 with
-    _dealloc(tex!);
+    _dealloc(&&tex!);
 end
 
 escape 1;
 ]],
-    run = '20] runtime error: value is not set',
+    run = '17] runtime error: value is not set',
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _alloc, _V;
 native/pos do
     int* alloc (int ok) {
@@ -29923,7 +29969,7 @@ end
 native/nohold _dealloc;
 
 do
-    var& _int_ptr? tex;
+    var&? _int tex;
 do tex = &_alloc(1);
     finalize (tex) with
         _dealloc(tex);
@@ -29932,7 +29978,7 @@ end
 
 escape _V;
 ]],
-    stmts = 'line 23 : invalid call : unexpected context for operator `?´',
+    stmts = 'line 20 : invalid call : unexpected context for operator `?´',
     --env = 'line 19 : wrong argument #1 : cannot pass option values to native calls',
     --run = 1,
 }
@@ -29947,10 +29993,7 @@ escape 0;
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native _alloc, _V;
 native/pos do
     int* alloc (int ok) {
@@ -29966,7 +30009,7 @@ end
 native/nohold _dealloc;
 
 do
-    var& _int_ptr? tex;
+    var&? _int tex;
     do tex = &_alloc(1);
     finalize (tex) with
         _dealloc(&tex!);
@@ -29975,17 +30018,14 @@ end
 
 escape _V;
 ]],
-    stmts = 'line 23 : invalid expression list : item #1 : unexpected context for alias "tex"',
+    stmts = 'line 20 : invalid expression list : item #1 : unexpected context for alias "tex"',
     --stmts = 'line 19 : invalid call : unexpected context for operator `&´',
     --env = 'line 19 : wrong argument #1 : cannot pass aliases to native calls',
     --run = '19] runtime error: invalid tag',
 }
 
 Test { [[
-native _int_ptr;
-native/pre do
-    typedef int* int_ptr;
-end
+native _int;
 native/pos do
     int* alloc (int ok) {
         return NULL;
@@ -30001,17 +30041,17 @@ native _alloc, _V;
 native/nohold _dealloc;
 
 do
-    var& _int_ptr? tex;
+    var&? _int tex;
     do tex = &_alloc(1);
     finalize (tex) with
-        _dealloc(tex!);
+        _dealloc(&&tex!);
     end
 end
 
 escape _V;
 ]],
     --env = 'line 19 : wrong argument #1 : cannot pass option type',
-    run = '23] runtime error: value is not set',
+    run = '20] runtime error: value is not set',
 }
 
 Test { [[
@@ -30019,15 +30059,15 @@ native/pre do
     struct Tx;
     typedef struct Tx* t;
     int V = 1;
-    t alloc (int ok) {
+    t* alloc (int ok) {
         if (ok) {
             V++;
-            return (t) &V;
+            return (t*) &V;
         } else {
             return NULL;
         }
     }
-    void dealloc (t ptr) {
+    void dealloc (t* ptr) {
         if (ptr != NULL) {
             V *= 2;
         }
@@ -30039,12 +30079,12 @@ native/nohold _dealloc;
 var int ret = _V;           // v=1, ret=1
 
 do
-    var& _t? tex;
+    var&? _t tex;
 do
         tex = &_alloc(1);    // v=2
     finalize (tex)
     with
-        _dealloc(tex!);
+        _dealloc(&&tex!);
     end
     ret = ret + _V;         // ret=3
     if not tex? then
@@ -30055,13 +30095,13 @@ end                         // v=4
 ret = ret + _V;             // ret=7
 
 do
-    var& _t? tex;
+    var&? _t tex;
 do
         tex = &_alloc(0);    // v=4
     finalize (tex)
     with
         if tex? then
-            _dealloc(tex!);
+            _dealloc(&&tex!);
         end
     end
     ret = ret + _V;         // ret=11
@@ -30085,7 +30125,7 @@ native/pos do
     }
 end
 
-var& void? ptr;
+var&? void ptr;
 do ptr = &_f();
 finalize (ptr) with
     nothing;
@@ -30105,7 +30145,7 @@ native/pos do
     }
 end
 
-var& void? ptr;
+var&? void ptr;
 do
     ptr = &_f();
 finalize (ptr)
@@ -30113,21 +30153,21 @@ with
     nothing;
 end
 
-escape (ptr! == ptr!) as int;  // ptr.SOME fails
+escape (&&ptr! == &&ptr!) as int;  // ptr.SOME fails
 ]],
-    stmts = 'line 10 : invalid binding : types mismatch : "void?" <= "_"',
+    run = '16] runtime error: value is not set',
+    --stmts = 'line 10 : invalid binding : types mismatch : "void" <= "_"',
 }
 
 Test { [[
-native _f, _void_ptr;
+native _f, _void;
 native/pre do
-    typedef void* void_ptr;
     void* f () {
         return NULL;
     }
 end
 
-var& _void_ptr? ptr;
+var&? _void ptr;
 do
     ptr = &_f();
 finalize (ptr)
@@ -30135,21 +30175,20 @@ with
     nothing;
 end
 
-escape (ptr! == ptr!) as int;  // ptr.SOME fails
+escape (&&ptr! == &&ptr!) as int;  // ptr.SOME fails
 ]],
-    run = '17] runtime error: value is not set',
+    run = '16] runtime error: value is not set',
 }
 
 Test { [[
-native _f, _void_ptr;
+native _f, _void;
 native/pre do
-    typedef void* void_ptr;
     void* f () {
         return NULL;
     }
 end
 
-var& _void_ptr? ptr;
+var&? _void ptr;
 do
     ptr = &_f();
 finalize (ptr)
@@ -30163,9 +30202,8 @@ escape (not ptr? )as int;
 }
 
 Test { [[
-native _f, _void_ptr;
+native _f, _void;
 native/pre do
-    typedef void* void_ptr;
     void* f () {
         return NULL;
     }
@@ -30174,23 +30212,22 @@ native/pre do
 end
 native/nohold _g;
 
-var& _void_ptr? ptr;
+var&? _void ptr;
 do
     ptr = &_f();
 finalize (ptr)
 with
-    _g(ptr!);    // error (ptr is Nil)
+    _g(&&ptr!);    // error (ptr is Nil)
 end
 
 escape (not ptr? )as int;
 ]],
-    run = '17] runtime error: value is not set',
+    run = '16] runtime error: value is not set',
 }
 
 Test { [[
-native _f, _void_ptr;
+native _f, _void;
 native/pre do
-    typedef void* void_ptr;
     void* f () {
         return NULL;
     }
@@ -30202,13 +30239,13 @@ native/nohold _g;
 var int ret = 0;
 
 do
-    var& _void_ptr? ptr;
+    var&? _void ptr;
 do
         ptr = &_f();
     finalize (ptr)
     with
         if ptr? then
-            _g(ptr!);
+            _g(&&ptr!);
         else
             ret = ret + 1;
         end
@@ -30273,17 +30310,17 @@ Test { [[
 native _V, _t, _alloc;
 native/pre do
     struct Tx;
-    typedef struct Tx* t;
+    typedef struct Tx t;
     int V = 1;
-    t alloc (int ok) {
+    t* alloc (int ok) {
         if (ok) {
             V++;
-            return (t) &V;
+            return (t*) &V;
         } else {
             return NULL;
         }
     }
-    void dealloc (t ptr) {
+    void dealloc (t* ptr) {
         if (ptr != NULL) {
             V *= 2;
         }
@@ -30294,12 +30331,12 @@ native/nohold _dealloc;
 var int ret = _V;           // v=1, ret=1
 
 do
-    var& _t? tex;
+    var&? _t tex;
 do
         tex = &_alloc(1);    // v=2
     finalize (tex)
     with
-        _dealloc(tex!);
+        _dealloc(&&tex!);
     end
     ret = ret + _V;         // ret=3
     if not tex? then
@@ -30310,13 +30347,13 @@ end                         // v=4
 ret = ret + _V;             // ret=7
 
 do
-    var& _t? tex;
+    var&? _t tex;
 do
         tex = &_alloc(0);    // v=4
     finalize (tex)
     with
         if tex? then
-            _dealloc(tex!);
+            _dealloc(&&tex!);
         end
     end
     ret = ret + _V;         // ret=11
@@ -30340,7 +30377,7 @@ var& _SDL_Window win =
     &_SDL_CreateWindow("UI - Texture", 500, 1300, 800, 480, _SDL_WINDOW_SHOWN);
 escape 0;
 ]],
-    scopes = 'line 5 : invalid binding : expected option type `?´ as destination : got "_SDL_Window"',
+    scopes = 'line 5 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
     --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
 }
 Test { [[
@@ -30354,14 +30391,14 @@ var& _SDL_Window win =
         end
 escape 0;
 ]],
-    scopes = 'line 4 : invalid binding : expected option type `?´ as destination : got "_SDL_Window"',
+    parser = 'line 5 : after `)´ : expected `is´ or `as´ or binary operator or `..´ or `,´ or `;´',
+    --scopes = 'line 4 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Window"',
     --fin = 'line 6 : must assign to a option reference (declared with `&?´)',
 }
 
 Test { [[
-native _my_alloc, _void_ptr;
+native _my_alloc, _void;
 native/pre do
-    typedef void* void_ptr;
     void* my_alloc (void) {
         return NULL;
     }
@@ -30374,7 +30411,7 @@ par/or do
 with
     loop do
         await SDL_REDRAW;
-        var& _void_ptr? srf = &_my_alloc()
+        var&? _void srf = &_my_alloc()
             finalize (srf) with end;
     end
 end
@@ -30385,9 +30422,8 @@ escape 1;
 }
 
 Test { [[
-native _my_alloc, _void_ptr;
+native _my_alloc, _void;
 native/pre do
-    typedef void* void_ptr;
     void* my_alloc (void) {
         return NULL;
     }
@@ -30399,22 +30435,21 @@ par/or do
     await 1s;
 with
     every SDL_REDRAW do
-        var& _void_ptr? srf = &_my_alloc()
+        var&? _void srf = &_my_alloc()
             finalize (srf) with end;
     end
 end
 escape 1;
 ]],
-    props_ = 'line 15 : invalid `finalize´ : unexpected enclosing `every´',
+    props_ = 'line 14 : invalid `finalize´ : unexpected enclosing `every´',
     wrn = true,
     run = { ['~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>SDL_REDRAW;~>1s']=114 },
 }
 
 Test { [[
-native _V, _my_alloc, _my_free, _void_ptr;
+native _V, _my_alloc, _my_free, _void;
 native/pre do
     int V = 0;
-    typedef void* void_ptr;
     void* my_alloc (void) {
         V += 1;
         return NULL;
@@ -30432,7 +30467,7 @@ par/or do
 with
     loop do
         await SDL_REDRAW;
-        var& _void_ptr? srf;
+        var&? _void srf;
         do
             srf = &_my_alloc();
         finalize (srf) with
@@ -30464,83 +30499,79 @@ escape 0;
 }
 
 Test { [[
-native _f, _int_ptr;
+native _f, _int;
 native/pre do
-    typedef int* int_ptr;
     int* f () {
         int a = 10;
         escape &a;
     }
 end
-var& _int_ptr? p = &_f();
+var&? _int p = &_f();
 escape p;
 ]],
-    stmts = 'line 10 : invalid `escape´ : types mismatch : "int" <= "_int_ptr?"',
+    stmts = 'line 9 : invalid `escape´ : expected operator `!´',
+    --stmts = 'line 10 : invalid `escape´ : types mismatch : "int" <= "_int?"',
     --env = 'line 9 : types mismatch (`int´ <= `int&?´)',
 }
 
 Test { [[
-native _f,_int_ptr;
+native _f,_int;
 native/pre do
-    typedef int* int_ptr;
     int* f () {
         int a = 10;
         escape &a;
     }
 end
-var& _int_ptr? p = &_f();
+var&? _int p = &_f();
 escape p!;
 ]],
-    scopes = 'line 9 : invalid binding : expected `finalize´',
+    scopes = 'line 8 : invalid binding : expected `finalize´',
     --fin = 'line 8 : attribution requires `finalize´',
 }
 
 Test { [[
-native _int_ptr, _f;
+native _int, _f;
 native/pre do
-    typedef int* int_ptr;
     int a;
     int* f () {
         a = 10;
         return &a;
     }
 end
-var& _int_ptr? p;
+var&? _int p;
 do
     p = &_f();
 finalize (p)
 with
     nothing;
 end
-escape *p!;
+escape p!;
 ]],
     run = 10,
 }
 Test { [[
-native _int_ptr, _f;
+native _int, _f;
 native/pre do
-    typedef int* int_ptr;
     int a;
     int* f () {
         a = 10;
         return &a;
     }
 end
-var& _int_ptr? p;
+var&? _int p;
 do
     p = &_f();
 finalize (p)
 with
     nothing;
 end
-escape *p!;
+escape p!;
 ]],
     run = 10,
 }
 Test { [[
 native/pure _f;    // its actually impure
 native/pre do
-    typedef int* int_ptr;
     int a;
     int* f () {
         a = 10;
@@ -30554,9 +30585,8 @@ escape *p;
     run = 10,
 }
 Test { [[
-native _int_ptr, _f;
+native _int, _f;
 native/pre do
-    typedef int* int_ptr;
     int A = 10;
     int* f () {
         return &A;
@@ -30564,12 +30594,12 @@ native/pre do
 end
 var int a=0;
 do
-    var& _int_ptr? p;
+    var&? _int p;
 do
         p = &_f();
     finalize (p)
     with
-        a = *p!;
+        a = p!;
 end
 end
 escape a;
@@ -30578,9 +30608,8 @@ escape a;
 }
 
 Test { [[
-native _int_ptr, _f;
+native _int, _f;
 native/pre do
-    typedef int* int_ptr;
     int A = 10;
     int* f () {
         return &A;
@@ -30588,13 +30617,13 @@ native/pre do
 end
 var int a = 10;
 do
-    var& _int_ptr? p;
+    var&? _int p;
     //do
 do
             p = &_f();
         finalize (p)
         with
-            a = a + *p!;
+            a = a + p!;
         end
     //end
     a = 0;
@@ -30605,9 +30634,8 @@ escape a;
 }
 
 Test { [[
-native _int_ptr, _f;
+native _int, _f;
 native/pre do
-    typedef int* int_ptr;
     int A = 10;
     int* f () {
         return &A;
@@ -30615,18 +30643,18 @@ native/pre do
 end
 var int a = 10;
 do
-    var& _int_ptr? p;
+    var&? _int p;
     //do
 do
             p = &_f();
         finalize (p)
         with
-            a = a + *p!;
+            a = a + p!;
         end
     //end
     a = 0;
     await 1s;
-    a = *p!;
+    a = p!;
 end
 escape a;
 ]],
@@ -32588,21 +32616,20 @@ escape 0;
 -->> CODE / ALIAS / FINALIZE
 
 Test { [[
-native _void_ptr;
+native _void;
 code/tight Ff (void) => void do
 end
-var& _void_ptr? ptr = & call Ff()
+var&? _void ptr = & call Ff()
         finalize (ptr) with
         end;
 escape 0;
 ]],
-    stmts = 'line 4 : invalid binding : types mismatch : "_void_ptr?" <= "void"',
+    stmts = 'line 4 : invalid binding : types mismatch : "_void" <= "void"',
 }
 
 Test { [[
-native _void_ptr, _f;
+native _void, _f;
 native/pre do
-    typedef void* void_ptr;
     int V;
 
     void* f (int x) {
@@ -32617,7 +32644,7 @@ end
 var int ret = 1;
 
 do
-    var& _void_ptr? ptr = & _f(true)
+    var&? _void ptr = & _f(true)
             finalize (ptr) with
                 ret = ret * 2;
             end;
@@ -32625,7 +32652,7 @@ do
 end
 
 do
-    var& _void_ptr? ptr = & _f(false)
+    var&? _void ptr = & _f(false)
             finalize (ptr) with
                 ret = ret + 3;
             end;
@@ -32638,13 +32665,12 @@ escape ret;
 }
 
 Test { [[
-native _V, _void_ptr;
+native _V, _void;
 native/pre do
-    typedef void* void_ptr;
     int V;
 end
 
-code/tight Ff (var bool x) => _void_ptr do
+code/tight Ff (var bool x) => _void&& do
     if x then
         escape &&_V;
     else
@@ -32655,7 +32681,7 @@ end
 var int ret = 1;
 
 do
-    var& _void_ptr? ptr = & call Ff(true)
+    var&? _void ptr = & call Ff(true)
             finalize (ptr) with
                 ret = ret * 2;
             end;
@@ -32663,7 +32689,7 @@ do
 end
 
 do
-    var& _void_ptr? ptr = & call Ff(false)
+    var&? _void ptr = & call Ff(false)
             finalize (ptr) with
                 ret = ret + 3;
             end;
@@ -33559,16 +33585,16 @@ escape x;
 Test { [[
 native/nohold _SDL_CreateWindow;
 
-native _SDL_Window_ptr;
+native _SDL_Window;
 native/nohold _printf;
 
-code/await SDL_Go (void) => (var& _SDL_Window_ptr win) => void
+code/await SDL_Go (void) => (var& _SDL_Window win) => void
 do
-    var& _SDL_Window_ptr? win_ = &_SDL_CreateWindow() finalize (win_) with end
+    var&? _SDL_Window win_ = &_SDL_CreateWindow() finalize (win_) with end
     win = &win_!;
 end
 
-var& _SDL_Window_ptr win;
+var& _SDL_Window win;
 watching SDL_Go() => (win) do
     await 1s;
     _printf("%p\n", win);
@@ -33576,13 +33602,12 @@ end
 
 escape 0;
 ]],
-    cc = '8: error: unknown type name ‘SDL_Window_ptr’',
+    cc = '8: error: unknown type name ‘SDL_Window’',
 }
 
 Test { [[
-native _int_ptr, _myalloc;
+native _int, _myalloc;
 native/pre do
-    typedef void* int_ptr;
     void* myalloc (void) {
         return NULL;
     }
@@ -33591,13 +33616,13 @@ native/pre do
 end
 native/nohold _myfree;
 
-code/await Fx (void) => (var& _int_ptr vv) => void do
-    var& _int_ptr? v;
+code/await Fx (void) => (var& _int vv) => void do
+    var&? _int v;
     do
         v = &_myalloc();
     finalize(v) with
         if v? then
-            _myfree(v!);
+            _myfree(&&v!);
         end
     end
 
@@ -33611,37 +33636,35 @@ escape 1;
 }
 
 Test { [[
-native _int_ptr, _myalloc;
+native _int, _myalloc;
 native/pre do
-    typedef int* int_ptr;
     int V = 10;
     void* myalloc (void) {
         return &V;
     }
 end
 
-code/await Fx (void) => (var& _int_ptr vv) => int do
-    var& _int_ptr? v;
+code/await Fx (void) => (var& _int vv) => int do
+    var&? _int v;
     do
         v = &_myalloc();
     finalize(v) with
     end
 
     vv = &v!;
-    escape *vv;
+    escape vv;
 end
 
 var int x = await Fx();
 
 escape x;
 ]],
-    exps = 'line 18 : invalid access to output variable "vv"',
+    exps = 'line 17 : invalid access to output variable "vv"',
 }
 
 Test { [[
-native _int_ptr, _myalloc;
+native _int, _myalloc;
 native/pre do
-    typedef int* int_ptr;
     int V = 10;
     void* myalloc (void) {
         return &V;
@@ -33651,17 +33674,17 @@ native/pre do
 end
 native/nohold _myfree;
 
-code/await Fy (var& _int_ptr x) => int do
-    escape *x + 1;
+code/await Fy (var& _int x) => int do
+    escape x + 1;
 end
 
-code/await Fx (void) => (var& _int_ptr vv) => int do
-    var& _int_ptr? v;
+code/await Fx (void) => (var& _int vv) => int do
+    var&? _int v;
     do
         v = &_myalloc();
     finalize(v) with
         if v? then
-            _myfree(v!);
+            _myfree(&&v!);
         end
     end
 
@@ -33678,10 +33701,9 @@ escape x;
 }
 
 Test { [[
-native _int_ptr, _myalloc;
+native _int, _myalloc;
 native/pre do
 #include <stdio.h>
-    typedef int* int_ptr;
     int V = 10;
     void* myalloc (void) {
         return &V;
@@ -33691,18 +33713,18 @@ native/pre do
 end
 native/nohold _myfree;
 
-code/await Fy (var& _int_ptr x) => int do
+code/await Fy (var& _int x) => int do
     await 1s;
-    escape *x + 1;
+    escape x + 1;
 end
 
-code/await Fx (void) => (var& _int_ptr vv) => int do
-    var& _int_ptr? v;
+code/await Fx (void) => (var& _int vv) => int do
+    var&? _int v;
     do
         v = &_myalloc();
     finalize(v) with
         if v? then
-            _myfree(v!);
+            _myfree(&&v!);
         end
     end
 
@@ -33712,10 +33734,10 @@ code/await Fx (void) => (var& _int_ptr vv) => int do
 end
 
 var int ret = 0;
-var& _int_ptr vvv;
+var& _int vvv;
 var int? x =
     watching Fx() => (vvv) do
-        ret = ret + *vvv;
+        ret = ret + vvv;
         await 1s;
     end;
 
@@ -37726,7 +37748,7 @@ escape *(t.x);
 
 Test { [[
 native _t;
-var& _t? t;
+var&? _t t;
 do
     t = &_t(null);
 finalize with
@@ -37747,7 +37769,7 @@ native/pre do
 end
 native _t;
 var int v = 10;
-var& _t? t;
+var&? _t t;
 do
     t = &_t(&&v);
 finalize(t,v) with
@@ -64726,13 +64748,37 @@ data Dd with
     var& _void_ptr ptr;
 end
 
-var& _void_ptr? ptr = &_f()
+var&? _void_ptr ptr = &_f()
     finalize (ptr) with
     end
 
 var Dd d = val Dd(&ptr!);
 
-escape (d.ptr == &&_V) as int;
+escape (d.ptr == (&&_V as void&&)) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+native _void, _V, _f;
+native/pre do
+    int V = 10;
+    void* f() {
+        return &V;
+    }
+end
+
+data Dd with
+    var& _void ptr;
+end
+
+var&? _void ptr = &_f()
+    finalize (ptr) with
+    end
+
+var Dd d = val Dd(&ptr!);
+
+escape (d.ptr == (&&_V as void&&)) as int;
 ]],
     run = 1,
 }
@@ -64841,7 +64887,7 @@ data Dd with
     var& _void_ptr h;
 end
 
-var& _void_ptr? ptr = &_alloc()
+var&? _void_ptr ptr = &_alloc()
     finalize (ptr) with
     end;
 

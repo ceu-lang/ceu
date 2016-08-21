@@ -96,14 +96,14 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
         me.mems.args = 'typedef struct tceu_code_args_'..me.id..' {\n'
 
         for i,dcl in ipairs(body.dcls) do
-            local is_alias,Type,id2,dim = unpack(dcl)
+            local alias,Type,id2,dim = unpack(dcl)
             if id2 ~= '_ret' then
                 id2 = '_'..i
             end
 
             local ptr = '' do
-                if is_alias then
-                    if (dcl.tag~='Evt') and (not TYPES.is_nat_not_plain(TYPES.pop(Type,'?'))) then
+                if alias then
+                    if (dcl.tag ~= 'Evt') and (alias == '&') then
                         ptr = ptr..'*'
                     end
                     if dcl.is_mid_idx then
@@ -122,7 +122,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
             -- EVT
             elseif dcl.tag == 'Evt' then
-                assert(is_alias)
+                assert(alias)
 -- TODO: per Code evts
                 me.mems.args = me.mems.args .. [[
 tceu_evt]]..ptr..' '..id2..[[;
@@ -130,7 +130,7 @@ tceu_evt]]..ptr..' '..id2..[[;
 
             -- VEC
             elseif dcl.tag == 'Vec' then
-                assert(is_alias)
+                assert(alias)
                 if TYPES.is_nat(TYPES.get(Type,1)) then
                     me.mems.args = me.mems.args .. [[
 ]]..TYPES.toc(Type)..' ('..ptr..id2..')['..V(dim)..[[];
@@ -143,7 +143,7 @@ tceu_vector]]..ptr..' '..id2..[[;
 
             -- POOL
             elseif dcl.tag == 'Pool' then
-                assert(is_alias)
+                assert(alias)
                 me.mems.args = me.mems.args .. [[
 tceu_pool_pak]]..ptr..' '..id2..[[;
 ]]
@@ -321,13 +321,9 @@ assert(me.hier)
             local cc = TYPES.toc(tp)
             local c = TYPES.toc(TYPES.pop(tp,'?'))
             local opt = ''
-            if alias=='&?' or TYPES.is_nat_not_plain(TYPES.pop(tp,'?')) then
-local ccc = cc
-if alias=='&?' then
-    ccc = ccc..'*'
-end
+            if alias == '&?' then
                 opt = opt..[[
-static ]]..ccc..' CEU_OPTION_'..cc..' ('..ccc..[[ opt, char* file, int line) {
+static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
     ceu_callback_assert_msg_ex(opt != NULL, "value is not set", file, line);
     return opt;
 }
@@ -370,7 +366,7 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
                         dcl.id_ = dcl.id_..'_'..dcl.n
                     end
                     local is_alias, tp = unpack(dcl)
-                    local ptr = (is_alias and (not TYPES.is_nat_not_plain(TYPES.pop(tp,'?'))) and '*' or '')
+                    local ptr = (is_alias and '*') or ''
                     mem[#mem+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
                 end
 
