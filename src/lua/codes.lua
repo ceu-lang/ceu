@@ -399,38 +399,11 @@ if (0)
 ]])
     end,
 
-    Abs_Await = function (me)
+    __abs = function (me)
         local _, Abs_Cons, _, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
-        -- Passing "x" from "code" mid to "watching":
-        --  code Ff (...) => (var& int x) => ... do
-        --      watching Gg() => (x) do ...
-        local watch = AST.par(me, 'Watching')
-        local watch_code = ''
-        if watch then
-            local Abs_Await = AST.get(watch,'',1,'Par_Or',1,'Block',1,'Stmts',
-                                               1,'Set_Await_one', 1,'Abs_Await')
-                           or AST.get(watch,'',1,'Par_Or',1,'Block',1,'Stmts',
-                                               1,'Abs_Await')
-            if Abs_Await == me then
-                local list = Abs_Await and AST.get(Abs_Await,'', 4,'List_Watching')
-                if list then
-                    for _, ID_int in ipairs(list) do
-                        if ID_int.tag~='ID_any' and ID_int.dcl.is_mid_idx then
-                            local Code = AST.par(me,'Code')
-                            watch_code = watch_code .. [[
-if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ != NULL) {
-    *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[) = ]]..V(ID_int, {is_bind=true})..[[;
-}
-]]
-                        end
-                    end
-                end
-            end
-        end
-
-        local exec = [[
+        local ret = [[
 {
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
 
@@ -440,23 +413,35 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ 
 
     CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
                                    (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
-    ]]..watch_code..[[
 }
 ]]
 
+        -- Passing "x" from "code" mid to "spawn":
+        --  code Ff (...) => (var& int x) => ... do
+        if mid then
+            for _, ID_int in ipairs(mid) do
+                if ID_int.tag~='ID_any' and ID_int.dcl.is_mid_idx then
+                    local Code = AST.par(me,'Code')
+                    ret = ret .. [[
+if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ != NULL) {
+    *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[) = ]]..V(ID_int, {is_bind=true})..[[;
+}
+]]
+                end
+            end
+        end
+
+        return ret
+    end,
+
+    Abs_Await = function (me)
         HALT(me, {
             { ['evt.id']  = 'CEU_INPUT__CODE' },
             { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
-            exec = exec,
+            exec = F.__abs(me),
         })
-
-        -- TODO: HACK_2 : spawn is simpler than await
-        -- await should be in terms of spawn, not the contrary
-        if me.is_spawn then
-            HALT(me)
-        end
 
         LINE(me, [[
 ceu_stack_clear(_ceu_stk->down, _ceu_mem,
@@ -465,41 +450,13 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
     end,
 
     Abs_Spawn_Single = function (me)
-        local _, Abs_Cons, _, mid = unpack(me)
-        local ID_abs, Abslist = unpack(Abs_Cons)
-
         LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CODE;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.mem = (tceu_code_mem*) &]]..CUR('__mem_'..me.n)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl     = CEU_LABEL_NONE;  /* no awake in spawn */
-
-{
-    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
-
-    ]]..CUR(' __mem_'..me.n)..[[.mem.pak = NULL;
-    ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
-    ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
-
-    CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
-                                   (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
 /* TODO: check stack!!! */
-}
 ]])
-        -- Passing "x" from "code" mid to "spawn":
-        --  code Ff (...) => (var& int x) => ... do
-        if mid then
-            for _, ID_int in ipairs(mid) do
-                if ID_int.tag~='ID_any' and ID_int.dcl.is_mid_idx then
-                    local Code = AST.par(me,'Code')
-                    LINE(me, [[
-if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ != NULL) {
-    *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[) = ]]..V(ID_int, {is_bind=true})..[[;
-}
-]])
-                end
-            end
-        end
-
+        LINE(me, F.__abs(me))
     end,
 
 -- TODO: exemplo com =>(list)
@@ -1219,11 +1176,7 @@ _CEU_HALT_]]..me.n..[[_:
 
     Emit_Wclock = function (me)
         local e = unpack(me)
-        HALT(me, {
-            { ['evt.id'] = 'CEU_INPUT__ASYNC' },
-            { lbl        = me.lbl_out.id },
-            lbl = me.lbl_out.id,
-            exec = [[
+        LINE(me, [[
 {
     ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
     s32 __ceu_dt = ]]..V(e)..[[;
@@ -1235,7 +1188,11 @@ _CEU_HALT_]]..me.n..[[_:
         __ceu_dt = 0;
     } while (CEU_APP.wclk_min_set <= 0);
 }
-]],
+]])
+        HALT(me, {
+            { ['evt.id'] = 'CEU_INPUT__ASYNC' },
+            { lbl        = me.lbl_out.id },
+            lbl = me.lbl_out.id,
         })
     end,
 
