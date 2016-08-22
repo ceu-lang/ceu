@@ -8,6 +8,8 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+-->>> REACTIVE / VAR / OPT / ALIAS
+
 Test { [[
 var int ret = 0;
 var&? int p;
@@ -48,8 +50,40 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    run = 'err',
+    run = 10,
 }
+
+Test { [[
+var int ret = 0;
+var&? int p;
+par/or do
+    var int x = 10;
+    p = &x;
+    ret = p!;
+with
+    await p;
+end
+ret = ret + (p? as int);
+escape ret;
+]],
+    run = 'err init',
+}
+
+Test { [[
+code/await Ff (void) => (var& Dd d) => void do
+    await 1s;
+end
+
+var&? Dd d;
+spawn Ff() => d;
+await d;
+escape 10;
+]],
+    run = { ['~>1s'] = 10 },
+}
+
+--<<< REACTIVE / VAR / OPT / ALIAS
+do return end
 
 Test { [[
 data Aa with
@@ -29134,7 +29168,24 @@ end
 escape 1;
 ]],
     wrn = true,
-    scopes = 'line 6 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Texture?"',
+    stmts = 'line 6 : invalid binding : expected `native´ type',
+    --scopes = 'line 6 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Texture?"',
+}
+
+Test { [[
+native _SDL_Texture;
+native/nohold _g;
+var& _SDL_Texture t_enemy_1;
+native _f;
+do
+    t_enemy_1 = &_f();
+finalize(t_enemy_1) with
+    _g(&&t_enemy_1);
+end
+escape 1;
+]],
+    wrn = true,
+    scopes = 'line 6 : invalid binding : expected option alias `&?´ as destination : got "_SDL_Texture"',
 }
 
 Test { [[
