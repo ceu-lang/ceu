@@ -34269,7 +34269,7 @@ escape 0;
 }
 
 Test { [[
-code/tight Fx (void) => (var& int a, vector&[10] int b) => void
+code/await Fx (void) => (var& int a, vector&[10] int b) => void
 do
     var int x;
     a = &x;
