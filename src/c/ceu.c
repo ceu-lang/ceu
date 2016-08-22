@@ -141,6 +141,7 @@ static void* ceu_data_as (tceu_ndata* supers, tceu_ndata* me, tceu_ndata cmp,
 === EVTS_TYPES ===
 
 enum {
+    CEU_LABEL_NONE = 0,
     === LABELS ===
 };
 
@@ -307,6 +308,8 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
 {
     tceu_trl* _ceu_trl = &_ceu_mem->trails[_ceu_trlK];
     switch (_ceu_lbl) {
+        CEU_LABEL_NONE:
+            break;
         === CODES ===
     }
 }

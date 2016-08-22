@@ -491,29 +491,6 @@ DBG('TODO: _Loop_Pool')
         return node('Stmts', me.ln, set, me)
     end,
 
-    _Abs_Back__PRE = function (me)
-        local mods, Abs_Cons, list = unpack(me)
-
-        -- all statements after myself
-        local par_stmts = AST.asr(me.__par, 'Stmts')
-        local cnt_stmts = { unpack(par_stmts, me.__idx+1) }
-        for i=me.__idx, #par_stmts do
-            par_stmts[i] = nil
-        end
-
-        -- TODO: HACK_2 : spawn is simpler than await
-        -- await should be in terms of spawn, not the contrary
-        local Await = node('Abs_Await', me.ln, mods, Abs_Cons)
-        Await.is_spawn = (not list)
-
-        return node('_Watching', me.ln,
-                    Await,
-                    list,
-                    node('Block', me.ln,
-                        node('Stmts', me.ln,
-                            unpack(cnt_stmts))))
-    end,
-
     _Watching__PRE = function (me)
         local watch, mid, block = unpack(me)
 
@@ -532,6 +509,7 @@ DBG('TODO: must be "=> FOREVER"')
                               AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
             ASR(Abs_Await, me, 'unexpected `=>´')
             local ID_abs = AST.asr(Abs_Await,'', 2,'Abs_Cons', 1,'ID_abs')
+            Abs_Await[#Abs_Await+1] = false  -- pool
             Abs_Await[#Abs_Await+1] = mid
         end
 

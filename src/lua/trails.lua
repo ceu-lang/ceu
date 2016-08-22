@@ -21,6 +21,9 @@ F = {
         end
     end,
 
+    Block__PRE = function (me)
+        me.spawns = {}
+    end,
     Block = function (me)
         MAX_all(me)
         if me.has_fin then
@@ -29,6 +32,7 @@ F = {
         if me.fins_n > 0 then
             me.trails_n = me.trails_n + me.fins_n
         end
+        me.trails_n = me.trails_n + #me.spawns
 
         for _, dcl in ipairs(me.dcls) do
             local alias, Type = unpack(dcl)
@@ -73,6 +77,11 @@ F = {
         if me.has_opt_alias then
             AST.par(me,'Block').has_fin = true
         end
+    end,
+
+    Abs_Spawn_Single = function (me)
+        local blk = AST.par(me,'Block')
+        blk.spawns[#blk.spawns+1] = me
     end,
 
     Pause_If = function (me)
@@ -124,11 +133,12 @@ G = {
 
         sub.trails = { unpack(me._trails) }
 
-        local pool = AST.get(sub, 'Pool')
-        local var  = AST.get(sub, 'Var')
+        local spawn = AST.get(sub, 'Abs_Spawn_Single')
+        local pool  = AST.get(sub, 'Pool')
+        local var   = AST.get(sub, 'Var')
 
-        if sub.tag=='Finalize' or (pool and pool.has_trail)
-                               or (var and var.has_trail)
+        if sub.tag=='Finalize' or spawn
+            or (pool and pool.has_trail) or (var and var.has_trail)
         then
             for stmts in AST.iter() do
                 if stmts.tag == 'Stmts' then

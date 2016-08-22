@@ -320,6 +320,7 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -33273,7 +33274,7 @@ end
 escape 0;
 ]],
     wrn = true,
-    stmts = 'line 2 : invalid `await´ : unexpected recursive invocation',
+    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 
@@ -33974,7 +33975,6 @@ escape 0;
 ]],
     stmts = 'line 9 : invalid `watching´ : expected 2 argument(s)',
 }
---]=====]
 Test { [[
 code/await Ff (void) => (var& int x, var& int y) => void do
     var int xx = 10;
@@ -36383,7 +36383,7 @@ var Aa a = val Aa(1);
 spawn Ff(&a,22);
 escape 0;
 ]],
-    stmts = 'line 20 : invalid `await´ : expected `/dynamic´ or `/static´ modifier',
+    stmts = 'line 20 : invalid `spawn´ : expected `/dynamic´ or `/static´ modifier',
 }
 
 Test { [[

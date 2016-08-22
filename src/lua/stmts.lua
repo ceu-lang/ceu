@@ -299,15 +299,15 @@ F = {
         end
     end,
 
-    Abs_Spawn = function (me)
-        local mods_call,Abs_Cons,list = unpack(me)
+    Abs_Spawn_Pool = function (me)
+        local mods_call,Abs_Cons,_,list = unpack(me)
         local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
-        local Code = AST.asr(ID_abs.dcl,'Code')
+        me.__code = AST.asr(ID_abs.dcl,'Code')
 
-        local mods_dcl = unpack(Code)
+        local mods_dcl = unpack(me.__code)
         ASR(mods_dcl.await, me,
             'invalid `'..AST.tag2id[me.tag]..'´ : expected `code/await´ declaration '..
-                '('..Code.ln[1]..':'..Code.ln[2]..')')
+                '('..me.__code.ln[1]..':'..me.__code.ln[2]..')')
 
         if mods_dcl.dynamic then
             ASR(mods_call.dynamic or mods_call.static, me,
@@ -317,27 +317,25 @@ F = {
             ASR(not mod, me, mod and
                 'invalid `'..AST.tag2id[me.tag]..'´ : unexpected `/'..mod..'´ modifier')
         end
-    end,
-
-    Abs_Await = function (me)
-        F.Abs_Spawn(me)
-
-        local mods_call,Abs_Cons,list = unpack(me)
-        local ID_abs = AST.asr(Abs_Cons,'Abs_Cons', 1,'ID_abs')
-        local Code = AST.asr(ID_abs.dcl,'Code')
-
-        ASR(AST.par(me,'Code') ~= Code, me,
-            'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')
-
-        local ret = AST.asr(Code,'', 3,'Block', 1,'Stmts',
-                                     1,'Stmts', 3,'', 2,'Type')
-        me.tp = AST.copy(ret)
 
         if list then
-            local pars = AST.asr(Code,'', 3,'Block', 1,'Stmts',
+            local pars = AST.asr(me.__code,'', 3,'Block', 1,'Stmts',
                                           1,'Stmts', 2,'Code_Pars')
             F.__check_watching_list(me, pars, list, 'watching')
         end
+    end,
+
+    Abs_Spawn_Single = function (me)
+        F.Abs_Spawn_Pool(me)
+        ASR(AST.par(me,'Code') ~= me.__code, me,
+            'invalid `'..AST.tag2id[me.tag]..'´ : unexpected recursive invocation')
+     end,
+
+    Abs_Await = function (me)
+        F.Abs_Spawn_Single(me)
+        local ret = AST.asr(me.__code,'', 3,'Block', 1,'Stmts',
+                                          1,'Stmts', 3,'', 2,'Type')
+        me.tp = AST.copy(ret)
      end,
 
     Await_Int = function (me, tag)

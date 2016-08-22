@@ -1,27 +1,28 @@
 local yields = {
-    EOF           = true,
-    EOC           = true,
-    Par           = true,
-    Par_And       = true,
-    Par_Or        = true,
-    Escape        = true,
-    Break         = true,
-    Async         = true,
-    _Async_Thread = true,
-    _Async_Isr    = true,
-    Code          = true,
-    Ext_Code      = true,
-    Data          = true,
-    Nat_Block     = true,
-    Await_Ext     = true,
-    Await_Int     = true,
-    Await_Wclock  = true,
-    Await_Forever = true,
-    Emit_ext_req  = true,
-    Emit_Evt      = true,
-    Abs_Await     = true,
-    Abs_Spawn     = true,
-    Kill          = true,
+    EOF              = true,
+    EOC              = true,
+    Par              = true,
+    Par_And          = true,
+    Par_Or           = true,
+    Escape           = true,
+    Break            = true,
+    Async            = true,
+    _Async_Thread    = true,
+    _Async_Isr       = true,
+    Code             = true,
+    Ext_Code         = true,
+    Data             = true,
+    Nat_Block        = true,
+    Await_Ext        = true,
+    Await_Int        = true,
+    Await_Wclock     = true,
+    Await_Forever    = true,
+    Emit_ext_req     = true,
+    Emit_Evt         = true,
+    Abs_Await        = true,
+    Abs_Spawn_Single = true,
+    Abs_Spawn_Pool   = true,
+    Kill             = true,
 }
 
 --local __detect_cycles = {}
@@ -105,6 +106,36 @@ local function run_inits (par, i, Dcl, stop)
 
     local is_alias = unpack(Dcl)
 
+    if is_alias then
+        local stmt
+        if me.tag == 'Watching' then
+            stmt = AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
+                                 1,'Set_Await_one', 1,'Abs_Await')
+                or AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
+                                 1,'Abs_Await')
+
+            local ok, yield = run_watch(me, #me+1, Dcl.blk)
+            ASR(ok, me, yield and
+                'invalid binding : active scope reached yielding `'..
+                AST.tag2id[yield.tag]..'´ '..
+                '('..yield.ln[1]..':'..yield.ln[2]..')')
+
+        elseif me.tag=='Abs_Await' or me.tag=='Abs_Spawn_Single'
+                                   or me.tag=='Abs_Spawn_Pool'
+        then
+            stmt = me
+        end
+
+        if stmt then
+            local ok = run_inits(stmt, 1, Dcl)
+            ASR(ok, Dcl,
+                'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
+                'reached `'..AST.tag2id[me.tag]..'´ '..
+                '('..me.ln[1]..':'..me.ln[2]..')')
+            return true
+        end
+    end
+
     -- error: yielding statement
     if yields[me.tag] or (is_loop(me) and is_alias) then
         ASR(false, Dcl,
@@ -135,30 +166,6 @@ local function run_inits (par, i, Dcl, stop)
             return true                         -- stop, found init
         end
         return run_inits(me, #me, Dcl, stop)
-
-    elseif Dcl[1] and me.tag=='Watching' then
-        local ok = false
-        local await = AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
-                                    1,'Set_Await_one', 1,'Abs_Await')
-                   or AST.get(me,'',1,'Par_Or',1,'Block',1,'Stmts',
-                                    1,'Abs_Await')
-        if await then
-            local list = AST.get(await,'', 2,'List_Watching')
-            ok = run_inits(await, 1, Dcl)
-        end
-        ASR(ok, Dcl,
-            'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
-            'reached `'..AST.tag2id[me.tag]..'´ '..
-            '('..me.ln[1]..':'..me.ln[2]..')')
-
-        local ok, yield = run_watch(me, #me+1, Dcl.blk)
-        ASR(ok, me, yield and
-            'invalid binding : active scope reached yielding `'..
-            AST.tag2id[yield.tag]..'´ '..
-            '('..yield.ln[1]..':'..yield.ln[2]..')')
-
-        return true
-
 
     -- ok: found assignment
     elseif me.tag == 'List_Watching' then

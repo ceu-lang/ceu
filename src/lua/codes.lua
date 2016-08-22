@@ -58,7 +58,7 @@ local function HALT (me, T)
     for _, t in ipairs(T) do
         local id, val = next(t)
         LINE(me, [[
-_ceu_trl->]]..id..' = '..val..[[;
+_ceu_mem->trails[]]..me.trails[1]..'].'..id..' = '..val..[[;
 ]])
     end
     if T.exec then
@@ -410,7 +410,7 @@ if (0)
     end,
 
     Abs_Await = function (me)
-        local _, Abs_Cons, mid = unpack(me)
+        local _, Abs_Cons, _, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
         -- Passing "x" from "code" mid to "watching":
@@ -424,7 +424,7 @@ if (0)
                            or AST.get(watch,'',1,'Par_Or',1,'Block',1,'Stmts',
                                                1,'Abs_Await')
             if Abs_Await == me then
-                local list = Abs_Await and AST.get(Abs_Await,'', 3,'List_Watching')
+                local list = Abs_Await and AST.get(Abs_Await,'', 4,'List_Watching')
                 if list then
                     for _, ID_int in ipairs(list) do
                         if ID_int.tag~='ID_any' and ID_int.dcl.is_mid_idx then
@@ -474,7 +474,47 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
 ]])
     end,
 
-    Abs_Spawn = function (me)
+    Abs_Spawn_Single = function (me)
+        local _, Abs_Cons, _, mid = unpack(me)
+        local ID_abs, Abslist = unpack(Abs_Cons)
+
+        LINE(me, [[
+_ceu_trl->evt.id  = CEU_INPUT__CODE;
+_ceu_trl->evt.mem = (tceu_code_mem*) &]]..CUR('__mem_'..me.n)..[[;
+_ceu_trl->lbl     = CEU_LABEL_NONE;  /* no awake in spawn */
+_ceu_trl++;
+
+{
+    tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
+
+    ]]..CUR(' __mem_'..me.n)..[[.mem.pak = NULL;
+    ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
+    ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
+
+    CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
+                                   (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
+/* TODO: check stack!!! */
+}
+]])
+        -- Passing "x" from "code" mid to "spawn":
+        --  code Ff (...) => (var& int x) => ... do
+        if mid then
+            for _, ID_int in ipairs(mid) do
+                if ID_int.tag~='ID_any' and ID_int.dcl.is_mid_idx then
+                    local Code = AST.par(me,'Code')
+                    LINE(me, [[
+if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ != NULL) {
+    *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[) = ]]..V(ID_int, {is_bind=true})..[[;
+}
+]])
+                end
+            end
+        end
+
+    end,
+
+-- TODO: exemplo com =>(list)
+    Abs_Spawn_Pool = function (me)
         local _, Abs_Cons, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
         local _,tp,_,dim = unpack(pool.info.dcl)
@@ -509,6 +549,7 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
 
         tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
         CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps, __ceu_new_mem);
+/* TODO: check stack!!! */
     }
 }
 ]])

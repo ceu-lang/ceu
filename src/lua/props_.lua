@@ -5,8 +5,8 @@ local NO = {
     },
     Loop_Pool = {
         Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
-        Abs_Await=true, Abs_Spawn=true, Emit_Int=true,
-        Every=true, Finalize=true,
+        Abs_Await=true, Abs_Spawn_Single=true, Abs_Spawn_Pool=true,
+        Emit_Int=true, Every=true, Finalize=true,
     },
 }
 
