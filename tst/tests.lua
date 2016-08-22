@@ -8,7 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[=====[
 Test { [[
 var int ret = 0;
 var&? int p;
@@ -23,6 +22,7 @@ escape ret;
     run = 10,
 }
 
+--[=====[
 Test { [[
 var int ret = 0;
 var&? int? p;
@@ -29324,6 +29324,21 @@ finalize(v1) with
     nothing;
 end
 ]],
+    stmts = 'line 4 : invalid binding : expected `native´ type',
+    --cc = 'error: implicit declaration of function ‘fff’',
+    --stmts = 'line 4 : invalid binding : types mismatch : "int?" <= "_"',
+}
+
+Test { [[
+native _int;
+var&? _int v1;
+native _fff;
+do
+    v1 = &_fff(1);
+finalize(v1) with
+    nothing;
+end
+]],
     cc = 'error: implicit declaration of function ‘fff’',
     --stmts = 'line 4 : invalid binding : types mismatch : "int?" <= "_"',
 }
@@ -29402,12 +29417,12 @@ escape bg_clr.v;
 
 Test { [[
 native _SDL_Surface, _TTF_RenderText_Blended, _SDL_FreeSurface;
-var& _SDL_Surface? sfc;
+var& _SDL_Surface sfc;
 every 1s do
     do
         sfc = &_TTF_RenderText_Blended();
     finalize (sfc) with
-        _SDL_FreeSurface(&&(sfc!));
+        _SDL_FreeSurface(&&sfc);
     end
 end
 escape 1;
@@ -29684,7 +29699,7 @@ escape v!;
     run = 10,
 }
 Test { [[
-native _getV;
+native _getV, _int;
 native/pos do
     int V = 10;
     int* getV (void) {
@@ -29692,7 +29707,7 @@ native/pos do
     }
 end
 
-var&? int v;
+var&? _int v;
 do
     v = &_getV();
 finalize (v)
@@ -30138,14 +30153,14 @@ escape &ptr! == &ptr!;  // ptr.SOME fails
 }
 
 Test { [[
-native _f;
+native _f, _void;
 native/pos do
     void* f () {
         return NULL;
     }
 end
 
-var&? void ptr;
+var&? _void ptr;
 do
     ptr = &_f();
 finalize (ptr)

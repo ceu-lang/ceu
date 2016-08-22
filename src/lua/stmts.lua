@@ -121,6 +121,8 @@ F = {
             is_call = true
             if fr[2].tag == 'Exp_Call' then
                 assert(fr.info.dcl and fr.info.dcl.tag=='Nat')
+                ASR(TYPES.is_nat(to.info.tp), me,
+                    'invalid binding : expected `native´ type')
             else
                 local ID_abs = AST.asr(fr,'', 2,'Abs_Call', 2,'Abs_Cons',
                                               1,'ID_abs')

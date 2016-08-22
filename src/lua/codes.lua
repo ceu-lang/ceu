@@ -184,14 +184,15 @@ ceu_vector_init(&]]..V(dcl)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
             end
         end
 
-        -- free vectors
-        if me.has_dyns then
+        -- free vectors/pools
+        -- notify var out-of-scope
+        if me.has_fin then
             LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_dyns.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
 if (0) {
 ]])
-            CASE(me, me.lbl_dyns)
+            CASE(me, me.lbl_fin)
             for _, dcl in ipairs(me.dcls) do
                 local is_alias,tp,_,dim = unpack(dcl)
                 if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1))) then
@@ -210,6 +211,15 @@ if (0) {
             ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_cur, 0);
             __ceu_cur = __ceu_nxt;
         }
+    }
+]])
+                elseif dcl.tag=='Var' and dcl.has_opt_alias then
+                    LINE(me, [[
+    {
+        tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__VAR,{&]]..V(dcl)..[[}}, NULL };
+        CEU_STK_BCAST(__ceu_evt_occ, _ceu_stk,
+                      _ceu_mem, _ceu_trlK,
+                      (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
     }
 ]])
                 end
@@ -240,8 +250,8 @@ ceu_vector_setmax(&]]..V(me)..', '..V(dim)..[[, 1);
     end,
 
     Pool = function (me)
-        local is_alias, tp, _, dim = unpack(me)
-        if is_alias then
+        local _, tp, _, dim = unpack(me)
+        if not me.has_trail then
             return
         end
         LINE(me, [[
@@ -266,6 +276,29 @@ ceu_pool_init(&]]..V(me)..'.pool, '..V(dim)..[[,
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id         = CEU_INPUT__CODE_POOL;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
 _ceu_trl++;
+]])
+    end,
+
+    Var = function (me)
+        local alias, tp, _, dim = unpack(me)
+        if not me.has_trail then
+            return
+        end
+        LINE(me, [[
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__VAR;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.var = ]]..V(me.opt_alias)..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl.id..[[;
+_ceu_trl++;
+
+/* do not enter from outside */
+if (0)
+{
+]])
+        CASE(me, me.lbl)
+        LINE(me, [[
+    ]]..V(me)..[[ = NULL;   /* set it to null when alias goes out of scope */
+    return;
+}
 ]])
     end,
 

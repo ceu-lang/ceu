@@ -30,8 +30,8 @@ F = {
     end,
 
     Block = function (me)
-        if me.has_dyns then
-            me.lbl_dyns = new{'Block__DYNS'}
+        if me.has_fin then
+            me.lbl_fin = new{'Block__FIN'}
         end
     end,
 
@@ -51,6 +51,10 @@ F = {
 
     Code = function (me)
         me.lbl_in = new{'Code_'..me.id, true}
+    end,
+
+    Var = function (me)
+        me.lbl = new{'Var_'..me.id}
     end,
 
     ---------------------------------------------------------------------------

@@ -31,6 +31,7 @@ typedef struct tceu_evt {
         void* mem;                              /* CEU_INPUT__CODE, CEU_EVENT__MIN */
         struct tceu_stk* stk;                   /* OCCURRING */
         struct tceu_code_mem_dyn* pool_first;   /* CEU_INPUT__CODE_POOL */
+        void* var;                              /* CEU_INPUT__VAR */
     };
 } tceu_evt;
 
@@ -94,6 +95,7 @@ enum {
     CEU_INPUT__NONE = 0,
     CEU_INPUT__CLEAR,
     CEU_INPUT__PAUSE,
+    CEU_INPUT__VAR,
     CEU_INPUT__CODE,
     CEU_INPUT__CODE_POOL,
     CEU_INPUT__ASYNC,
@@ -277,6 +279,13 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
     }                                                           \
 }
 
+#define CEU_STK_BCAST(occ, stk_old,                             \
+                      abt_mem, abt_trl,                         \
+                      exe_mem, exe_trl0, exe_trlF) {            \
+    tceu_stk __ceu_stk = { stk_old, abt_mem, abt_trl, 1 };      \
+    ceu_go_bcast(&occ, &__ceu_stk, exe_mem,exe_trl0,exe_trlF);  \
+}
+
 #define CEU_STK_BCAST_ABORT(occ, stk_old,                       \
                             abt_mem, abt_trl,                   \
                             exe_mem, exe_trl0, exe_trlF) {      \
@@ -331,6 +340,8 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
         if (matches_await) {
             if (trl->evt.id == CEU_INPUT__CODE) {
                 matches_await = (occ->evt.mem == trl->evt.mem);
+            } else if (trl->evt.id == CEU_INPUT__VAR) {
+                matches_await = (trl->evt.var == occ->evt.var);
             } else if (trl->evt.id > CEU_EVENT__MIN) {
                 matches_await = (trl->evt.mem == occ->evt.mem);
             }

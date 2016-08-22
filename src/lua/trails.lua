@@ -23,18 +23,27 @@ F = {
 
     Block = function (me)
         MAX_all(me)
-        if me.has_dyns then
+        if me.has_fin then
             me.trails_n = me.trails_n + 1
         end
         if me.fins_n > 0 then
             me.trails_n = me.trails_n + me.fins_n
         end
 
-        -- +1 for each pool
         for _, dcl in ipairs(me.dcls) do
+            local alias, Type = unpack(dcl)
+
+            -- +1 for each pool
             if dcl.tag == 'Pool' then
-                local is_alias, Type = unpack(dcl)
-                if (not is_alias) and Type[1].dcl.tag=='Code' then
+                if (not alias) and Type[1].dcl.tag=='Code' then
+                    dcl.has_trail = true
+                    me.trails_n = me.trails_n + 1
+                end
+
+            -- +1 for each "var&? ..."
+            elseif dcl.tag == 'Var' then
+                if alias=='&?' and (not TYPES.is_nat(Type)) then
+                    dcl.has_trail = true
                     me.trails_n = me.trails_n + 1
                 end
             end
@@ -50,14 +59,19 @@ F = {
         local is_alias, tp, _, dim = unpack(me)
         if (not TYPES.is_nat(TYPES.get(tp,1))) then
             if not (is_alias or dim.is_const) then
-                AST.par(me,'Block').has_dyns = true
+                AST.par(me,'Block').has_fin = true
             end
         end
     end,
     Pool = function (me)
         local is_alias, _, _, dim = unpack(me)
         if not (is_alias or dim~='[]') then
-            AST.par(me,'Block').has_dyns = true
+            AST.par(me,'Block').has_fin = true
+        end
+    end,
+    Var = function (me)
+        if me.has_opt_alias then
+            AST.par(me,'Block').has_fin = true
         end
     end,
 
@@ -100,7 +114,7 @@ G = {
     Stmts__BEF = function (me, sub, i)
         if i == 1 then
             me._trails = { unpack(me.trails) }
-            if me.__par.tag=='Block' and me.__par.has_dyns then
+            if me.__par.tag=='Block' and me.__par.has_fin then
                 me._trails[1] = me._trails[1]+1
             end
         end
@@ -110,16 +124,12 @@ G = {
 
         sub.trails = { unpack(me._trails) }
 
-        local is_pool do
-            local pool = AST.get(sub, 'Pool')
-            if pool then
-                local is_alias, tp = unpack(pool)
-                local abs = AST.get(tp,'Type',1,'ID_abs')
-                is_pool = (not is_alias) and abs and abs.dcl.tag=='Code'
-            end
-        end
+        local pool = AST.get(sub, 'Pool')
+        local var  = AST.get(sub, 'Var')
 
-        if sub.tag=='Finalize' or is_pool then
+        if sub.tag=='Finalize' or (pool and pool.has_trail)
+                               or (var and var.has_trail)
+        then
             for stmts in AST.iter() do
                 if stmts.tag == 'Stmts' then
                     stmts._trails[1] = stmts._trails[1] + 1

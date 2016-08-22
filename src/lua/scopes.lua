@@ -129,7 +129,11 @@ F = {
                 end
             end
             if not ok then
-                ok = (to.info.dcl[1] == '&?')
+                if to.info.dcl[1] == '&?' then
+                    ok = true
+                    to.info.dcl.opt_alias = fr
+                    fr.info.dcl.has_opt_alias = true
+                end
             end
             ASR(ok, me, 'invalid binding : incompatible scopes')
         end
