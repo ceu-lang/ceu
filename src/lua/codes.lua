@@ -147,11 +147,6 @@ if (]]..V(c)..[[) {
     end,
 
     Block__PRE = function (me)
-
-        LINE(me, [[
-_ceu_trl = &_ceu_mem->trails[]]..me.trails[1]..[[];
-]])
-
         -- initialize opts
         for _, dcl in ipairs(me.dcls) do
             if dcl.tag == 'Var' then
@@ -225,11 +220,8 @@ if (0) {
                 end
             end
             LINE(me, [[
-]])
-            HALT(me)
-            LINE(me, [[
+    return;
 }
-_ceu_trl++;
 ]])
         end
     end,
@@ -275,7 +267,6 @@ ceu_pool_init(&]]..V(me)..'.pool, '..V(dim)..[[,
         LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id         = CEU_INPUT__CODE_POOL;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
-_ceu_trl++;
 ]])
     end,
 
@@ -294,7 +285,6 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.var = ]]..V(me.opt_alias)..[[;
         LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__VAR;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl.id..[[;
-_ceu_trl++;
 
 /* do not enter from outside */
 if (0)
@@ -479,10 +469,9 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
         local ID_abs, Abslist = unpack(Abs_Cons)
 
         LINE(me, [[
-_ceu_trl->evt.id  = CEU_INPUT__CODE;
-_ceu_trl->evt.mem = (tceu_code_mem*) &]]..CUR('__mem_'..me.n)..[[;
-_ceu_trl->lbl     = CEU_LABEL_NONE;  /* no awake in spawn */
-_ceu_trl++;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CODE;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.mem = (tceu_code_mem*) &]]..CUR('__mem_'..me.n)..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl     = CEU_LABEL_NONE;  /* no awake in spawn */
 
 {
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
@@ -604,9 +593,6 @@ if (0) {
         if now then
             CONC(me, now)
         end
-        LINE(me, [[
-_ceu_trl++;
-]])
     end,
 
     Pause_If = function (me)
@@ -616,7 +602,6 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.id     = CEU_INPUT__PAUSE;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_evt    = ]]..V(e)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_skip   = ]]..body.trails_n..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
-_ceu_trl++;
 ]])
         CONC(me, body)
     end,
@@ -1154,8 +1139,8 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.
         else
             LINE(me, [[
 ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
-_ceu_trl->evt.id = CEU_INPUT__ASYNC;
-_ceu_trl->lbl    = ]]..me.lbl_out.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 ]])
             LINE(me, [[
     ceu_go_ext(]]..V(ID_ext)..'.id, '..ps..[[);

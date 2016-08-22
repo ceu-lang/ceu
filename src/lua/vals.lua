@@ -181,7 +181,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                         if var.tag == 'ID_any' then
                             ps[#ps+1] = 'NULL'
                         else
-                            ps[#ps+1] = '_ceu_trl-1'
+                            ps[#ps+1] = '&_ceu_mem->trails[]]..me.trails[1]..[[-1]'
                         end
                     end
                 end

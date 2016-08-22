@@ -10,7 +10,6 @@ end
 
 -->>> REACTIVE / VAR / OPT / ALIAS
 
---[=====[
 Test { [[
 var int ret = 0;
 var&? int p;
@@ -87,6 +86,7 @@ escape ret;
     inits = 'line 2 : uninitialized variable "p" : reached `par/or´ (/tmp/tmp.ceu:3)',
 }
 
+--[=====[
 Test { [[
 code/await Ff (void) => (var& int xxx) => void do
     var int v = 10;

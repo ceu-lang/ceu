@@ -306,7 +306,6 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
 static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
                         tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl)
 {
-    tceu_trl* _ceu_trl = &_ceu_mem->trails[_ceu_trlK];
     switch (_ceu_lbl) {
         CEU_LABEL_NONE:
             break;
