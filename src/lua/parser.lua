@@ -473,14 +473,21 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     -- CODE
 
-    , __code = K'code' * Ct( (Cg(K'/tight'*Cc'tight','tight') +
-                              Cg(K'/await'*Cc'await','await')) *
+    , __code = K'code' * Ct( Cg(K'/tight'*Cc'tight','tight') *
+                             Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
+                             Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
+                (V'__ID_abs'-V'__id_data') *
+                    V'Code_Pars' * KK'=>' *
+                        Cc(false) *
+                            V'Type'
+             + K'code' * Ct( Cg(K'/await'*Cc'await','await') *
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
                     V'Code_Pars' * KK'=>' *
                         OPT(V'Code_Pars' * KK'=>') *
-                            V'Type'
+                            (V'Type' + CK'FOREVER')
+
     , _Code_proto = V'__code' * Cc(false)
     , _Code_impl  = V'__code' * V'__Do' * V'EOC'
 

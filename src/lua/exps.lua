@@ -124,7 +124,7 @@ F = {
         me.info = INFO.new(me, 'Val', nil,
                     AST.copy(AST.asr(ID_abs.dcl,'Code', 3,'Block', 1,'Stmts',
                                                         1,'Stmts', 3,'',
-                                                                    -- TODO: HACK_1
+                                                                    -- TODO: HACK_5
                                                         2,'Type')))
     end,
 

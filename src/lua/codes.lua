@@ -350,6 +350,13 @@ if (0)
 
         CONC(me, body)
 
+        local Type = AST.get(me,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
+        if not Type then
+            LINE(me, [[
+ceu_callback_assert_msg(0, "reached end of `code´");
+]])
+        end
+
         -- CODE/DELAYED
         if mods.await then
             local free = [[
@@ -392,7 +399,6 @@ if (0)
     }
 ]])
         end
-
         HALT(me)
         LINE(me, [[
 }

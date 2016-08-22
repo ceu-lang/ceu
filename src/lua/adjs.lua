@@ -160,27 +160,31 @@ error'TODO: luacov never executes this?'
     _Code_impl__PRE = function (me)
         local _,_,_,_,out,blk = unpack(me)
 
-        -- enclose "blk" with "_ret = do ... end"
+        local Type = AST.get(out,'Type')
+        if Type then
+            -- enclose "blk" with "_ret = do ... end"
 
-        local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
-        local stmts_new = node('Stmts', me.ln)
-        blk[1] = stmts_new
+            local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
+            local stmts_new = node('Stmts', me.ln)
+            blk[1] = stmts_new
 
-        local Type = AST.asr(out,'Type')
-        local ID_prim,mod = unpack(Type)
-        local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
-        local do_ = node('Do', me.ln,
-                        true,
-                        node('Block', me.ln,
-                            stmts_old))
-        if is_void then
-            stmts_new[1] = do_
+            local ID_prim,mod = unpack(Type)
+            local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
+            local do_ = node('Do', me.ln,
+                            true,
+                            node('Block', me.ln,
+                                stmts_old))
+            if is_void then
+                stmts_new[1] = do_
+            else
+                stmts_new[1] = node('_Set', me.ln,
+                                node('Exp_Name', me.ln,
+                                    node('ID_int', me.ln, '_ret')),
+                                node('_Set_Do', me.ln,
+                                    do_))
+            end
         else
-            stmts_new[1] = node('_Set', me.ln,
-                            node('Exp_Name', me.ln,
-                                node('ID_int', me.ln, '_ret')),
-                            node('_Set_Do', me.ln,
-                                do_))
+            -- ok
         end
 
         local tag = string.match(me.tag,'(.*)_impl')
@@ -191,16 +195,20 @@ error'TODO: luacov never executes this?'
         local mods, id, ins, mid, out, blk, eoc = unpack(me)
         mid = mid or AST.node('Code_Pars', me.ln)
 
-        local Type = AST.asr(out,'Type')
-        local ID_prim,mod = unpack(Type)
-        local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
-        if is_void then
-            out = node('Var_', me.ln, false, AST.copy(out), '_ret')
-                -- TODO: HACK_1
+        local Type = AST.get(out,'Type')
+        if Type then
+            local ID_prim,mod = unpack(Type)
+            local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
+            if is_void then
+                out = node('Var_', me.ln, false, AST.copy(out), '_ret')
+                    -- TODO: HACK_5
+            else
+                out = node('Var', me.ln, false, AST.copy(out), '_ret')
+            end
+            out.is_implicit = true
         else
-            out = node('Var', me.ln, false, AST.copy(out), '_ret')
+            out = node('Nothing', me.ln)
         end
-        out.is_implicit = true
 
         local ret = node('Code', me.ln, mods, id,
                         node('Block', me.ln,

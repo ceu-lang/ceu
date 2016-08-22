@@ -613,7 +613,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         local do_ = nil
         for n in AST.iter() do
             if n.tag=='Async' or string.sub(n.tag,1,7)=='_Async' or
-               n.tag=='Data'  or n.tag=='Code_impl' or
+               n.tag=='Data'  or n.tag=='Code' or
                n.tag=='Ext_Code_impl' or n.tag=='Ext_Req_impl'
             then
                 break

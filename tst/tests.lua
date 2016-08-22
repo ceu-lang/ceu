@@ -8,6 +8,68 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+code/tight Ff (void) => (var& int x) => void do
+end
+]],
+    parser = 'line 1 : after `=>´ : expected type',
+}
+Test { [[
+code/tight Ff (void) => FOREVER do
+end
+]],
+    parser = 'line 1 : after `=>´ : expected type',
+}
+
+Test { [[
+code/await Ff (void) => FOREVER do
+    escape 1;
+end
+]],
+    dcls = 'line 2 : invalid `escape´ : no matching enclosing `do´',
+}
+Test { [[
+code/await Ff (void) => FOREVER do
+    escape;
+end
+]],
+    dcls = 'line 2 : invalid `escape´ : no matching enclosing `do´',
+}
+
+Test { [[
+code/await Ff (void) => FOREVER do
+    await FOREVER;
+end
+var int ret = await Ff();
+escape 1;
+]],
+    stmts = 'line 4 : invalid assignment : `code´ executes forever',
+}
+
+Test { [[
+code/await Ff (void) => FOREVER do
+    await FOREVER;
+end
+par/or do
+    await Ff();
+with
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) => FOREVER do
+    // err must have non-term stmt
+end
+spawn Ff();
+escape 1;
+]],
+    run = '1] runtime error: reached end of `code´',
+}
+do return end
+
 -->>> REACTIVE / VAR / OPT / ALIAS
 
 Test { [[

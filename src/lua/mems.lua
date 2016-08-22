@@ -212,10 +212,10 @@ static void CEU_CODE_WATCH_]]..me.id..[[ (tceu_code_mem* _ceu_mem,
 
         -- CEU_CODE_xxx
 
-        local Type = AST.asr(body,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
+        local Type = AST.get(body,'Block', 1,'Stmts', 1,'Stmts', 3,'', 2,'Type')
         if mods.tight then
             me.mems.wrapper = me.mems.wrapper .. [[
-static ]]..TYPES.toc(Type)..[[ 
+static ]]..TYPES.toc(assert(Type))..[[
 CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
                            tceu_code_args_]]..me.id..[[ ps)
 {
@@ -231,7 +231,7 @@ CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
             me.mems.wrapper = me.mems.wrapper .. [[
     CEU_STK_LBL((tceu_evt_occ*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
 ]]
-            if not TYPES.check(Type,'void') then
+            if Type and (not TYPES.check(Type,'void')) then
                 me.mems.wrapper = me.mems.wrapper..[[
     return ps._ret;
 ]]

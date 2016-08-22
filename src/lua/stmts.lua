@@ -218,6 +218,12 @@ F = {
     Set_Await_one = function (me)
         local fr, to = unpack(me)
         assert(fr.tag=='Await_Wclock' or fr.tag=='Abs_Await' or fr.tag=='Await_Int')
+
+        if fr.tag == 'Abs_Await' then
+            ASR(fr.tp, me,
+                'invalid assignment : `code´ executes forever')
+        end
+
         EXPS.check_tp(me, to.info.tp, fr.tp or fr.info.tp, 'invalid assignment')
 
         if me.__adjs_is_watching then
@@ -333,9 +339,9 @@ F = {
 
     Abs_Await = function (me)
         F.Abs_Spawn_Single(me)
-        local ret = AST.asr(me.__code,'', 3,'Block', 1,'Stmts',
+        local ret = AST.get(me.__code,'', 3,'Block', 1,'Stmts',
                                           1,'Stmts', 3,'', 2,'Type')
-        me.tp = AST.copy(ret)
+        me.tp = ret and AST.copy(ret)
      end,
 
     Await_Int = function (me, tag)
