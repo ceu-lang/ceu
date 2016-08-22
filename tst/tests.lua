@@ -10,6 +10,7 @@ end
 
 -->>> REACTIVE / VAR / OPT / ALIAS
 
+--[=====[
 Test { [[
 var int ret = 0;
 var&? int p;
@@ -24,7 +25,6 @@ escape ret;
     run = 10,
 }
 
---[=====[
 Test { [[
 var int ret = 0;
 var&? int? p;
@@ -36,7 +36,8 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    run = 'err',
+    dcls = 'line 2 : invalid declaration : option type : not implemented',
+    --stmts = 'line 5 : invalid binding : types mismatch : "int?" <= "int"',
 }
 
 Test { [[
@@ -50,7 +51,24 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    run = 10,
+    dcls = 'line 2 : invalid declaration : option type : not implemented',
+    --run = 10,
+}
+
+Test { [[
+var int ret = 0;
+var&? int? p;
+do
+    var int? x;
+    p = &x;
+    var int? y = p!;
+    ret = p!!;
+end
+ret = ret + (p? as int);
+escape ret;
+]],
+    dcls = 'line 2 : invalid declaration : option type : not implemented',
+    --run = 'err acc to p!!',
 }
 
 Test { [[
@@ -66,20 +84,120 @@ end
 ret = ret + (p? as int);
 escape ret;
 ]],
-    run = 'err init',
+    inits = 'line 2 : uninitialized variable "p" : reached `par/or´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
-code/await Ff (void) => (var& Dd d) => void do
+code/await Ff (void) => (var& int xxx) => void do
+    var int v = 10;
+    xxx = &v;
+end
+
+var int ret = 0;
+
+var& int x;
+spawn Ff() => (x);
+
+escape 0;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+                        // err
+    var int v = 10;
+    x = &v;
     await 1s;
 end
 
-var&? Dd d;
-spawn Ff() => d;
-await d;
-escape 10;
+var int ret = 0;
+
+var&? int x;
+spawn Ff() => (x);
+
+ret = x!;
+await x!;
+ret = ret + (x? as int) + 1;
+
+escape x!;
 ]],
-    run = { ['~>1s'] = 10 },
+    stmts = 'line 11 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+    await FOREVER;
+end
+
+var int ret = 0;
+
+var&? int x;
+spawn Ff() => (x);
+
+escape x!;
+]],
+    run = 10,
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+end
+
+var int ret = 0;
+
+var&? int x;
+spawn Ff() => (x);
+
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+
+var int ret = 0;
+
+var&? int x;
+spawn Ff() => (x);
+
+ret = x!;
+await x;    // err
+ret = ret + (x? as int) + 1;
+
+escape x!;
+]],
+    run = 'err await',
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+
+var int ret = 0;
+
+var&? int x;
+spawn Ff() => (x);
+
+ret = x!;
+await x!;
+ret = ret + (x? as int) + 1;
+
+escape x!;
+]],
+    run = { ['~>1s'] = 11 },
 }
 
 --<<< REACTIVE / VAR / OPT / ALIAS
@@ -202,7 +320,6 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -33857,6 +33974,7 @@ escape 0;
 ]],
     stmts = 'line 9 : invalid `watching´ : expected 2 argument(s)',
 }
+--]=====]
 Test { [[
 code/await Ff (void) => (var& int x, var& int y) => void do
     var int xx = 10;

@@ -103,7 +103,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
             local ptr = '' do
                 if alias then
-                    if (dcl.tag ~= 'Evt') and (alias == '&') then
+                    if (dcl.tag ~= 'Evt') and alias then
                         ptr = ptr..'*'
                     end
                     if dcl.is_mid_idx then
@@ -118,6 +118,12 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
                     me.mems.args = me.mems.args..[[
 ]]..TYPES.toc(Type)..ptr..' '..id2..[[;
 ]]
+                    if dcl.is_mid_idx and alias=='&?' then
+                        -- HACK_4
+                        me.mems.args = me.mems.args..[[
+tceu_trl* ]]..id2..[[_trl;
+]]
+                    end
                 end
 
             -- EVT
@@ -272,6 +278,14 @@ if (args->_]]..idx..[[ != NULL) {
     *(args->_]]..idx..[[) = ]]..V(to, {is_bind=true})..[[;
 }
 ]]
+            -- HACK_4
+            if to.info.dcl[1] == '&?' then
+                Code.mems.watch = Code.mems.watch .. [[
+if (args->_]]..idx..[[_trl != NULL) {
+    args->_]]..idx..[[_trl->evt.var = ]]..V(to, {is_bind=true})..[[;
+}
+]]
+            end
         end
     end,
 

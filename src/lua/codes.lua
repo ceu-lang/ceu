@@ -284,9 +284,15 @@ _ceu_trl++;
         if not me.has_trail then
             return
         end
+        if me.opt_alias then
+            LINE(me, [[
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.var = ]]..V(me.opt_alias)..[[;
+]])
+        else
+            -- HACK_4
+        end
         LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__VAR;
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.var = ]]..V(me.opt_alias)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl.id..[[;
 _ceu_trl++;
 

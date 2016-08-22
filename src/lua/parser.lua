@@ -511,7 +511,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __typepars_pre = CK'vector' * CKK'&' * V'__Dim' * V'Type'
                      + CK'pool'   * CKK'&' * V'__Dim' * V'Type'
                      + CK'event'  * CKK'&' * Cc(false) * (PARENS(V'Typelist') + V'Type')
-                     + CK'var'   * OPT(CKK'&') * OPT(KK'/'*CK'hold') * V'Type'
+                     + CK'var'   * OPT(CKK'&?' + CKK'&') * OPT(KK'/'*CK'hold') * V'Type'
     , _Code_Pars_Item  = Ct( Cg(K'dynamic','dynamic')^-1 )
                             * V'__typepars_pre' * OPT(V'__ID_int')
 

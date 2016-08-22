@@ -283,13 +283,15 @@ F = {
         ASR(pars and #pars==#list, me,
             'invalid `'..tag..'´ : expected '..#pars..' argument(s)')
         for i, par in ipairs(pars) do
-            local is_alias,par_tp = unpack(par)
-            assert(is_alias)
+            local par_alias,par_tp = unpack(par)
+            assert(par_alias)
             local arg = list[i]
             if arg.tag ~= 'ID_any' then
-                local is_alias,arg_tp = unpack(arg.dcl)
-                ASR(is_alias, me,
+                local arg_alias,arg_tp = unpack(arg.dcl)
+                ASR(arg_alias, me,
                     'invalid binding : argument #'..i..' : expected alias `&´ declaration')
+                ASR(arg_alias == par_alias, me,
+                    'invalid binding : argument #'..i..' : unmatching alias `&´ declaration')
                 EXPS.check_tag(me, par.tag, arg.info.dcl.tag, 'invalid binding')
                 EXPS.check_tp(me, par_tp, arg_tp,
                     'invalid binding : argument #'..i)

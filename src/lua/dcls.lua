@@ -211,6 +211,8 @@ F = {
 
         if alias == '&?' then
             me.is_read_only = true
+            ASR(not TYPES.check(Type,'?'), me,
+                'invalid declaration : option type : not implemented')
         end
 
         if alias then
