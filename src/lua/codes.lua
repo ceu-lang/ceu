@@ -457,6 +457,11 @@ _ceu_mem->trails[]]..me.trails[1]..[[].lbl     = CEU_LABEL_NONE;  /* no awake in
 /* TODO: check stack!!! */
 ]])
         LINE(me, F.__abs(me))
+        LINE(me, [[
+if (!_ceu_stk->is_alive) {
+    return;
+}
+]])
     end,
 
 -- TODO: exemplo com =>(list)
@@ -495,7 +500,9 @@ _ceu_mem->trails[]]..me.trails[1]..[[].lbl     = CEU_LABEL_NONE;  /* no awake in
 
         tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
         CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps, __ceu_new_mem);
-/* TODO: check stack!!! */
+        if (!_ceu_stk->is_alive) {
+            return;
+        }
     }
 }
 ]])

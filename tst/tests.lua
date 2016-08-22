@@ -36019,6 +36019,63 @@ escape _V;
     run = { ['~>1s'] = 1 },
 }
 
+-- spawn killing itself
+
+Test { [[
+event void e;
+
+code/await Ff (event& void e) => void do
+    emit e;
+end
+
+watching e do
+    spawn Ff(&e);
+    native _ceu_dbg_assert;
+    _ceu_dbg_assert(0);
+end
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+event void e;
+
+code/await Ff (event& void e) => void do
+    emit e;
+end
+
+pool[] Ff ffs;
+
+watching e do
+    spawn Ff(&e) in ffs;
+    native _ceu_dbg_assert;
+    _ceu_dbg_assert(0);
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+event void e;
+
+code/await Ff (void) => void do
+    emit outer.e;
+end
+
+watching e do
+    spawn Ff();
+    native _ceu_dbg_assert;
+    _ceu_dbg_assert(0);
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
 -->> CODE / AWAIT / EMIT-INTERNAL
 
 Test { [[
