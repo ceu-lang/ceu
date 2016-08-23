@@ -7,7 +7,51 @@ end
 ----------------------------------------------------------------------------
 -- NO: testing
 ----------------------------------------------------------------------------
+
+Test { [[
+native _V;
+native/pos do
+    int V = 0;
+end
+
+code/await Gg (void) => FOREVER do
+    _V = _V + 1;
+    await FOREVER;
+end
+
+code/await Ff (pool&[] Gg ggs) => void do
+    spawn Gg() in ggs;
+    spawn Gg() in ggs;
+end
+
+pool[1] Gg ggs;
+await Ff(&ggs);
+
+escape _V;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (var int x) => (var& int y) => FOREVER do
+    y = &x;
+    do
+        do finalize with end
+    end
+    await FOREVER;
+end
+
+var int x = 10;
+var& int y;
+spawn Ff(x) => (y);
+
+escape y;
+]],
+    run = 10,
+}
+
 --[=====[
+do return end
 
 ----------------------------
 Test { [[

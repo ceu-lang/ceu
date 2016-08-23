@@ -254,8 +254,8 @@ static void CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
-    CEU_STK_LBL_ABORT((tceu_evt_occ*)&ps, stk, mem, trlK, mem, trlK, lbl);
-        /* maybe skip WATCH below */
+    CEU_STK_LBL_ABORT((tceu_evt_occ*)&ps, stk, mem, ]]..me.trails_n..[[, mem, trlK, lbl);
+        /* HACK_7: maybe skip WATCH below */
 ]]
             if me.mems.watch ~= '' then
                 me.mems.wrapper = me.mems.wrapper .. [[

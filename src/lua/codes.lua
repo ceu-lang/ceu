@@ -46,7 +46,7 @@ local function CLEAR (me)
     CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk,
                         _ceu_mem, _ceu_trlK,
                         _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
-    ceu_stack_clear(_ceu_stk, _ceu_mem,
+    ceu_stack_clear(_ceu_stk->down, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 }
 ]])
@@ -380,30 +380,21 @@ ceu_callback_assert_msg(0, "reached end of `code´");
 ]]
             LINE(me, [[
     {
-#if 1
         /* _ceu_evt holds __ceu_ret (see Escape) */
         tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CODE,{_ceu_mem}}, _ceu_evt };
         CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk,
                             _ceu_mem, _ceu_trlK,
                             (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
         ]]..free..[[
-#else
-        /* _ceu_evt holds __ceu_ret (see Escape) */
-        tceu_stk __ceu_stk = { _ceu_stk, (tceu_code_mem*)&CEU_APP.root, _ceu_trlK, 1 };
-        tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CODE,{_ceu_mem}}, _ceu_evt };
-        ceu_go_bcast(&__ceu_evt_occ, &__ceu_stk,
-                     (tceu_code_mem*)&CEU_APP.root,
-                     0, CEU_APP.root.mem.trails_n-1);
-        ]]..free..[[
-        if (!__ceu_stk.is_alive) {
-            return;
-        }
-#endif
     }
 ]])
         end
-        HALT(me)
         LINE(me, [[
+    /* HACK_7 */
+    ceu_dbg_assert(_ceu_stk->mem == _ceu_mem);
+    _ceu_stk->is_alive = 0;
+
+    return; /* HALT(me) */
 }
 ]])
     end,
@@ -455,7 +446,7 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ 
         })
 
         LINE(me, [[
-ceu_stack_clear(_ceu_stk, _ceu_mem,
+ceu_stack_clear(_ceu_stk->down, _ceu_mem,
                 ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 ]])
     end,
@@ -477,23 +468,36 @@ if (!_ceu_stk->is_alive) {
     Abs_Spawn_Pool = function (me)
         local _, Abs_Cons, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
-        local _,tp,_,dim = unpack(pool.info.dcl)
+        local alias,tp,_,dim = unpack(pool.info.dcl)
 
         local code = F.__abs(me, '__ceu_new_mem', '&'..V(pool))
         LINE(me, [[
 {
-    tceu_code_mem_dyn* __ceu_new =
+    tceu_code_mem_dyn* __ceu_new;
 ]])
-        if dim == '[]' then
-            LINE(me, [[(tceu_code_mem_dyn*) ceu_callback_ptr_num(
-                            CEU_CALLBACK_REALLOC,
-                            NULL,
-                            sizeof(tceu_code_mem_dyn) + sizeof(]]..TYPES.toc(tp)..[[)
-                       ).value.ptr;
+        if alias then
+            LINE(me, [[
+    if (]]..V(pool)..[[.pool.queue == NULL) {
+        __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ptr_num(
+                                            CEU_CALLBACK_REALLOC,
+                                            NULL,
+                                            sizeof(tceu_code_mem_dyn) + sizeof(]]..TYPES.toc(tp)..[[)
+                                         ).value.ptr;
+    } else {
+        __ceu_new = (tceu_code_mem_dyn*) ceu_pool_alloc(&]]..V(pool)..[[.pool);
+    }
+]])
+        elseif dim == '[]' then
+            LINE(me, [[
+    __ceu_new = (tceu_code_mem_dyn*) ceu_callback_ptr_num(
+                                        CEU_CALLBACK_REALLOC,
+                                        NULL,
+                                        sizeof(tceu_code_mem_dyn) + sizeof(]]..TYPES.toc(tp)..[[)
+                                     ).value.ptr;
 ]])
         else
             LINE(me, [[
-        (tceu_code_mem_dyn*) ceu_pool_alloc(&]]..V(pool)..[[.pool);
+    __ceu_new = (tceu_code_mem_dyn*) ceu_pool_alloc(&]]..V(pool)..[[.pool);
 ]])
         end
         LINE(me, [[

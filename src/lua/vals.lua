@@ -169,19 +169,20 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         end
 
         if ctx.mid then
-            for _, var in ipairs(ctx.mid) do
+            for i, var in ipairs(ctx.mid) do
                 -- extra indirection for mid's
                 if var.tag == 'ID_any' then
-                    ps[#ps+1] = 'NULL'
+                    ps[#ps+1] = '._'..(i+#me.vars)..' = NULL'
                 else
-                    ps[#ps+1] = '&'..V(var,{is_bind=true})
+                    ps[#ps+1] = '._'..(i+#me.vars)..' = &'..V(var,{is_bind=true})
 
                     -- HACK_4
                     if var.dcl[1] == '&?' then
                         if var.tag == 'ID_any' then
-                            ps[#ps+1] = 'NULL'
+                            ps[#ps+1] = '._'..(i+#me.vars)..'_trl = NULL'
                         else
-                            ps[#ps+1] = '&_ceu_mem->trails['..(me.trails[1]-1)..']'
+                            ps[#ps+1] = '._'..(i+#me.vars)..'_trl = '
+                                            ..'&_ceu_mem->trails['..(me.trails[1]-1)..']'
                         end
                     end
                 end
