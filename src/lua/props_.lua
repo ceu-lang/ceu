@@ -1,7 +1,7 @@
 local NO = {
     Every = {
         Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
-        Abs_Await=true, Every=true, Finalize=true,
+        Abs_Await=true, Abs_Spawn_Single=true, Every=true, Finalize=true,
     },
     Loop_Pool = {
         Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,

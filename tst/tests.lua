@@ -9,6 +9,17 @@ end
 ----------------------------------------------------------------------------
 
 Test { [[
+code/await Ff (void) => void do
+end
+every 1s do
+    spawn Ff();
+end
+escape 0;
+]],
+    props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
+}
+
+Test { [[
 native _V;
 native/pos do
     int V = 0;
