@@ -8,8 +8,6 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
---[=====[
-
 Test { [[
 code/await Ff (void) => FOREVER do
 end
@@ -106,6 +104,33 @@ escape (x? as int) + 1;
 }
 
 Test { [[
+code/await Ff (void) => (var& int x) => FOREVER do
+    var int v = 10;
+    x = &v;
+    await FOREVER;
+end
+var& int x;
+spawn Ff() => (x);
+escape x + 1;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => FOREVER do
+    var int v = 10;
+    x = &v;
+    await FOREVER;
+end
+pool[] Ff ffs;
+var& int x;
+spawn Ff() in ffs => (x);
+escape x + 1;
+]],
+    run = 11,
+}
+
+Test { [[
 code/await Ff (void) => (var&? int x) => void do
     var int v = 10;
     x = &v;
@@ -118,8 +143,6 @@ escape x! + 1;
 ]],
     run = 11,
 }
-
-do return end
 
 -->>> REACTIVE / VAR / OPT / ALIAS
 
@@ -199,23 +222,6 @@ escape ret;
     inits = 'line 2 : uninitialized variable "p" : reached `par/or´ (/tmp/tmp.ceu:3)',
 }
 
-----------------------------
-Test { [[
-code/await Ff (void) => (var& int xxx) => void do
-    var int v = 10;
-    xxx = &v;
-end
-
-var int ret = 0;
-
-var& int x;
-spawn Ff() => (x);
-
-escape 0;
-]],
-    run = 1,
-}
-
 Test { [[
 code/await Ff (void) => (var& int x) => void do
                         // err
@@ -271,6 +277,7 @@ escape (x? as int) + 1;
     run = 1,
 }
 
+--[=====[
 Test { [[
 code/await Ff (void) => (var&? int x) => void do
     var int v = 10;
@@ -284,7 +291,7 @@ var&? int x;
 spawn Ff() => (x);
 
 ret = x!;
-await x;    // err
+await x!;    // err
 ret = ret + (x? as int) + 1;
 
 escape x!;
@@ -305,7 +312,7 @@ var&? int x;
 spawn Ff() => (x);
 
 ret = x!;
-await x!;
+await x;
 ret = ret + (x? as int) + 1;
 
 escape x!;
@@ -316,6 +323,7 @@ escape x!;
 --<<< REACTIVE / VAR / OPT / ALIAS
 do return end
 
+----------------------------
 Test { [[
 data Aa with
     var int a;

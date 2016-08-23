@@ -408,7 +408,9 @@ ceu_callback_assert_msg(0, "reached end of `code´");
 ]])
     end,
 
-    __abs = function (me)
+    --------------------------------------------------------------------------
+
+    __abs = function (me, mem, pak)
         local _, Abs_Cons, _, mid = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
 
@@ -416,12 +418,12 @@ ceu_callback_assert_msg(0, "reached end of `code´");
 {
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
 
-    ]]..CUR(' __mem_'..me.n)..[[.mem.pak = NULL;
-    ]]..CUR(' __mem_'..me.n)..[[.mem.up_mem = _ceu_mem;
-    ]]..CUR(' __mem_'..me.n)..[[.mem.up_trl = _ceu_trlK;
+    ]]..mem..[[->pak = ]]..pak..[[;
+    ]]..mem..[[->up_mem = _ceu_mem;
+    ]]..mem..[[->up_trl = _ceu_trlK;
 
     CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
-                                   (tceu_code_mem*)&]]..CUR(' __mem_'..me.n)..[[);
+                                   (tceu_code_mem*)]]..mem..[[);
 }
 ]]
 
@@ -449,7 +451,7 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ 
             { ['evt.mem'] = '(tceu_code_mem*) &'..CUR('__mem_'..me.n) },
             { lbl = me.lbl_out.id },
             lbl = me.lbl_out.id,
-            exec = F.__abs(me),
+            exec = F.__abs(me, '(&'..CUR(' __mem_'..me.n)..'.mem)', 'NULL'),
         })
 
         LINE(me, [[
@@ -464,7 +466,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CODE;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.mem = (tceu_code_mem*) &]]..CUR('__mem_'..me.n)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl     = CEU_LABEL_NONE;  /* no awake in spawn */
 ]])
-        LINE(me, F.__abs(me))
+        LINE(me, F.__abs(me, '(&'..CUR(' __mem_'..me.n)..'.mem)', 'NULL'))
         LINE(me, [[
 if (!_ceu_stk->is_alive) {
     return;
@@ -472,12 +474,12 @@ if (!_ceu_stk->is_alive) {
 ]])
     end,
 
--- TODO: exemplo com =>(list)
     Abs_Spawn_Pool = function (me)
         local _, Abs_Cons, pool = unpack(me)
         local ID_abs, Abslist = unpack(Abs_Cons)
         local _,tp,_,dim = unpack(pool.info.dcl)
 
+        local code = F.__abs(me, '__ceu_new_mem', '&'..V(pool))
         LINE(me, [[
 {
     tceu_code_mem_dyn* __ceu_new =
@@ -502,12 +504,7 @@ if (!_ceu_stk->is_alive) {
         ]]..V(pool)..[[.first.prv = __ceu_new;
 
         tceu_code_mem* __ceu_new_mem = &__ceu_new->mem[0];
-        __ceu_new_mem->pak = &]]..V(pool)..[[;
-        __ceu_new_mem->up_mem = _ceu_mem;
-        __ceu_new_mem->up_trl = _ceu_trlK;
-
-        tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons)..[[;
-        CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps, __ceu_new_mem);
+        ]]..code..[[
         if (!_ceu_stk->is_alive) {
             return;
         }
@@ -515,6 +512,8 @@ if (!_ceu_stk->is_alive) {
 }
 ]])
     end,
+
+    --------------------------------------------------------------------------
 
     Loop_Pool = function (me)
         local _,list,pool,body = unpack(me)
