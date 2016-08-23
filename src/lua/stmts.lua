@@ -285,22 +285,28 @@ F = {
         me.tp = TYPES.new(me, 'int')
     end,
 
-    __check_watching_list = function (me, pars, list, tag)
+    __check_watching_list = function (me, pars, list, must_be_opt)
+        local tag = (me.tag=='Abs_Await' and 'Watching') or me.tag
         ASR(pars and #pars==#list, me,
-            'invalid `'..tag..'´ : expected '..#pars..' argument(s)')
+            'invalid `'..AST.tag2id[tag]..'´ : expected '..#pars..' argument(s)')
         for i, par in ipairs(pars) do
             local par_alias,par_tp = unpack(par)
             assert(par_alias)
             local arg = list[i]
             if arg.tag ~= 'ID_any' then
                 local arg_alias,arg_tp = unpack(arg.dcl)
+                local err = 'invalid binding : argument #'..i
                 ASR(arg_alias, me,
-                    'invalid binding : argument #'..i..' : expected alias `&´ declaration')
+                    err..' : expected alias `&´ declaration')
                 ASR(arg_alias == par_alias, me,
-                    'invalid binding : argument #'..i..' : unmatching alias `&´ declaration')
-                EXPS.check_tag(me, par.tag, arg.info.dcl.tag, 'invalid binding')
-                EXPS.check_tp(me, par_tp, arg_tp,
-                    'invalid binding : argument #'..i)
+                    err..' : unmatching alias `&´ declaration')
+                EXPS.check_tag(me, par.tag, arg.info.dcl.tag, err)
+                EXPS.check_tp(me, par_tp, arg_tp, err)
+
+                if must_be_opt then
+                    ASR(arg_alias=='&?', me,
+                        err..' : terminating `code´ : expected alias `&?´ declaration')
+                end
             end
         end
     end,
@@ -325,9 +331,13 @@ F = {
         end
 
         if list then
+            local must_be_opt = (me.tag ~= 'Abs_Await') and
+                                 AST.get(me.__code,'', 3,'Block', 1,'Stmts',
+                                                       1,'Stmts', 3,'', 2,'Type')
+
             local pars = AST.asr(me.__code,'', 3,'Block', 1,'Stmts',
-                                          1,'Stmts', 2,'Code_Pars')
-            F.__check_watching_list(me, pars, list, 'watching')
+                                               1,'Stmts', 2,'Code_Pars')
+            F.__check_watching_list(me, pars, list, must_be_opt)
         end
     end,
 
@@ -342,6 +352,12 @@ F = {
         local ret = AST.get(me.__code,'', 3,'Block', 1,'Stmts',
                                           1,'Stmts', 3,'', 2,'Type')
         me.tp = ret and AST.copy(ret)
+
+        local watch = AST.par(me, 'Watching')
+        local me1 = AST.get(watch,'', 1,'Par_Or', 1,'Block', 1,'Stmts', 1,'Abs_Await')
+        if me1 == me then
+            ASR(ret, watch, 'invalid `watching´ : `code´ executes forever')
+        end
      end,
 
     Await_Int = function (me, tag)
@@ -402,7 +418,7 @@ F = {
             local Code = AST.asr(pool.info.tp[1].dcl, 'Code')
             local pars = AST.asr(Code,'', 3,'Block', 1,'Stmts',
                                           1,'Stmts', 2,'Code_Pars')
-            F.__check_watching_list(me, pars, list, 'loop')
+            F.__check_watching_list(me, pars, list)
         end
     end,
 

@@ -8,6 +8,119 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--[=====[
+
+Test { [[
+code/await Ff (void) => FOREVER do
+end
+var int? x = watching Ff() do
+end;
+escape 0;
+]],
+    stmts = 'line 3 : invalid assignment : `code´ executes forever',
+}
+
+Test { [[
+code/await Ff (void) => FOREVER do
+end
+watching Ff() do
+end
+escape 0;
+]],
+    stmts = 'line 3 : invalid `watching´ : `code´ executes forever',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int v = 10;
+    x = &v;
+end
+var& int x;
+spawn Ff() => (x);
+escape 0;
+]],
+    stmts = 'line 6 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int v = 10;
+    x = &v;
+end
+pool[] Ff ffs;
+var& int x;
+spawn Ff() in ffs => (x);
+escape 0;
+]],
+    stmts = 'line 7 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+    var int v = 10;
+    x = &v;
+end
+var&? int x;
+spawn Ff() => (x);
+escape 0;
+]],
+    stmts = 'line 6 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+end
+var&? int x;
+spawn Ff() => (x);
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+var&? int x;
+spawn Ff() => (x);
+escape x! + 1;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+end
+pool[] Ff ffs;
+var&? int x;
+spawn Ff() in ffs => (x);
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+pool[] Ff ffs;
+var&? int x;
+spawn Ff() in ffs => (x);
+escape x! + 1;
+]],
+    run = 11,
+}
+
+do return end
+
 -->>> REACTIVE / VAR / OPT / ALIAS
 
 Test { [[
@@ -86,7 +199,7 @@ escape ret;
     inits = 'line 2 : uninitialized variable "p" : reached `par/or´ (/tmp/tmp.ceu:3)',
 }
 
---[=====[
+----------------------------
 Test { [[
 code/await Ff (void) => (var& int xxx) => void do
     var int v = 10;
@@ -33543,7 +33656,7 @@ spawn Ff() => (x);
 
 escape 0;
 ]],
-    stmts = 'line 7 : invalid binding : types mismatch : "Var" <= "Vec"',
+    stmts = 'line 7 : invalid binding : argument #1 : types mismatch : "Var" <= "Vec"',
 }
 
 Test { [[
@@ -34160,7 +34273,37 @@ var& int x;
 spawn Ff() => (x);
 escape x;
 ]],
+    stmts = 'line 9 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+}
+Test { [[
+code/await Ff (void) => (var& int x) => FOREVER
+do
+    var int x_ = 10;
+    x = &x_;
+    await FOREVER;
+end
+
+var& int x;
+spawn Ff() => (x);
+escape x;
+]],
     run = 10,
+}
+
+Test { [[
+code/await Ff (void) => (var& int x) => FOREVER
+do
+    var int x_ = 10;
+    x = &x_;
+    await FOREVER;
+end
+
+var& int x;
+spawn Ff() => (x);
+await 1s;
+escape x;
+]],
+    run = { ['~>1s']=10 },
 }
 
 Test { [[
@@ -34802,6 +34945,26 @@ escape 0;
 
 Test { [[
 code/await Ff (var int v) => (var& int x) => void do
+    x = &v;
+    await FOREVER;
+end
+
+code/await Gg (void) => void do
+    await FOREVER;
+end
+
+var& int ctrl1, ctrl2;
+
+spawn Ff(1) => (ctrl1);
+spawn Gg();
+spawn Ff(2) => (ctrl2);
+
+escape ctrl1+ctrl2;
+]],
+    stmts = 'line 12 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
+}
+Test { [[
+code/await Ff (var int v) => (var& int x) => FOREVER do
     x = &v;
     await FOREVER;
 end

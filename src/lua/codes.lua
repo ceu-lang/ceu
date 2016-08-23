@@ -46,7 +46,7 @@ local function CLEAR (me)
     CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk,
                         _ceu_mem, _ceu_trlK,
                         _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
-    ceu_stack_clear(_ceu_stk->down, _ceu_mem,
+    ceu_stack_clear(_ceu_stk, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 }
 ]])
@@ -281,6 +281,9 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.var = ]]..V(me.opt_alias)..[[;
 ]])
         else
             -- HACK_4
+            LINE(me, [[
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.var = NULL; /* not yet bound */
+]])
         end
         LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__VAR;
@@ -450,7 +453,7 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ 
         })
 
         LINE(me, [[
-ceu_stack_clear(_ceu_stk->down, _ceu_mem,
+ceu_stack_clear(_ceu_stk, _ceu_mem,
                 ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 ]])
     end,
@@ -460,7 +463,6 @@ ceu_stack_clear(_ceu_stk->down, _ceu_mem,
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CODE;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.mem = (tceu_code_mem*) &]]..CUR('__mem_'..me.n)..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl     = CEU_LABEL_NONE;  /* no awake in spawn */
-/* TODO: check stack!!! */
 ]])
         LINE(me, F.__abs(me))
         LINE(me, [[

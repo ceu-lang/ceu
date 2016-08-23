@@ -343,7 +343,8 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
             if (trl->evt.id == CEU_INPUT__CODE) {
                 matches_await = (occ->evt.mem == trl->evt.mem);
             } else if (trl->evt.id == CEU_INPUT__VAR) {
-                matches_await = (trl->evt.var == occ->evt.var);
+                matches_await = (trl->evt.var==occ->evt.var || trl->evt.var==NULL);
+                                                                /* HACK_4 */
             } else if (trl->evt.id > CEU_EVENT__MIN) {
                 matches_await = (trl->evt.mem == occ->evt.mem);
             }

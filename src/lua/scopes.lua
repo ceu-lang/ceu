@@ -5,7 +5,11 @@ local function check_blk (to_blk, fr_blk)
     if to_blk.__depth >= fr_blk.__depth then
         assert(AST.is_par(fr_blk,to_blk), 'bug found')
         return true
-    elseif Stmts and AST.get(Stmts,'',1,'Do', 2,'Block')==fr_blk then
+    elseif Stmts and (
+                AST.get(Stmts,'',1,'Do', 2,'Block')==fr_blk -- code ... => ...
+            or
+                Stmts.__par==fr_blk                         -- code ... => FOREVER
+            ) then
         return 'maybe'
     else
         assert(AST.is_par(to_blk,fr_blk), 'bug found')
@@ -128,12 +132,10 @@ F = {
                     end
                 end
             end
-            if not ok then
-                if to.info.dcl[1] == '&?' then
-                    ok = true
-                    to.info.dcl.opt_alias = fr
-                    fr.info.dcl.has_opt_alias = true
-                end
+            if to.info.dcl[1] == '&?' then
+                ok = true
+                to.info.dcl.opt_alias = fr
+                fr.info.dcl.has_opt_alias = true
             end
             ASR(ok, me, 'invalid binding : incompatible scopes')
         end
