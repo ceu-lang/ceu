@@ -365,6 +365,10 @@ F = {
 
         -- ctx
         INFO.asr_tag(e, {'Var','Evt','Pool'}, 'invalid `await´')
+        if e.info.tag == 'Var' then
+            ASR(e.info.dcl[1] == '&?', me,
+                'invalid `await´ : expected `var´ with `&?´ modifier')
+        end
 
         -- tp
         me.tp = e.info.tp

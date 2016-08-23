@@ -1130,11 +1130,26 @@ _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 
     Await_Int = function (me)
         local Exp_Name = unpack(me)
-        HALT(me, {
-            { evt = V(Exp_Name) },
-            { lbl = me.lbl_out.id },
-            lbl = me.lbl_out.id,
-        })
+        if Exp_Name.info.dcl[1] == '&?' then
+            LINE(me, [[
+if (]]..V(Exp_Name)..[[ != NULL) {
+]])
+            HALT(me, {
+                { ['evt.id']  = 'CEU_INPUT__VAR' },
+                { ['evt.var'] = V(Exp_Name) },
+                { lbl = me.lbl_out.id },
+                lbl = me.lbl_out.id,
+            })
+            LINE(me, [[
+}
+]])
+        else
+            HALT(me, {
+                { evt = V(Exp_Name) },
+                { lbl = me.lbl_out.id },
+                lbl = me.lbl_out.id,
+            })
+        end
     end,
 
     Emit_Evt = function (me)
