@@ -39,8 +39,10 @@ F = {
         me.lbl_in = new{'Finalize__IN'}
     end,
 
-    Loop_Num  = 'Loop',
-    Loop_Pool = 'Loop',
+    Loop_Pool = function (me)
+        F.Loop(me)
+        me.lbl_clr = new{'Loop_Pool__CLR'}
+    end,
     Loop = function (me)
         me.lbl_cnt = new{'Loop_Continue__CNT'}
         me.lbl_out = new{'Loop_Break__OUT'}
@@ -48,6 +50,7 @@ F = {
             me.lbl_asy = new{'Loop_Async__CNT'}
         end
     end,
+    Loop_Num = 'Loop',
 
     Code = function (me)
         me.lbl_in = new{'Code_'..me.id, true}

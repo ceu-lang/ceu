@@ -54,11 +54,6 @@ F = {
         end
     end,
 
-    Every = function (me)
-        local body = unpack(me)
-        assert(body.trails_n == 1)
-    end,
-
     Vec = function (me)
         local is_alias, tp, _, dim = unpack(me)
         if (not TYPES.is_nat(TYPES.get(tp,1))) then
@@ -82,6 +77,11 @@ F = {
     Abs_Spawn_Single = function (me)
         local blk = AST.par(me,'Block')
         blk.spawns[#blk.spawns+1] = me
+    end,
+
+    Loop_Pool = function (me)
+        local _, _, _, body = unpack(me)
+        me.trails_n = body.trails_n + 1
     end,
 
     Pause_If = function (me)
@@ -148,6 +148,12 @@ G = {
                 end
             end
         end
+    end,
+
+    Loop_Pool__PRE = function (me)
+        local _, _, _, body = unpack(me)
+        body.trails = { unpack(me.trails) }
+        body.trails[1] = body.trails[1] + 1
     end,
 
     Pause_If__PRE = function (me)

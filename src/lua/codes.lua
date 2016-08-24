@@ -250,7 +250,8 @@ ceu_vector_setmax(&]]..V(me)..', '..V(dim)..[[, 1);
 {
     /* first.nxt = first.prv = &first; */
     tceu_code_mem_dyn* __ceu_dyn = &]]..V(me)..[[.first;
-    ]]..V(me)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn, {} };
+    ]]..V(me)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn,
+                                                CEU_CODE_MEM_DYN_STATE_NONE, {} };
 };
 ]])
         if dim == '[]' then
@@ -367,15 +368,11 @@ ceu_callback_assert_msg(0, "reached end of `code´");
         tceu_code_mem_dyn* __ceu_dyn =
             (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
 
-        __ceu_dyn->nxt->prv = __ceu_dyn->prv;
-        __ceu_dyn->prv->nxt = __ceu_dyn->nxt;
-
-        if (_ceu_mem->pak->pool.queue == NULL) {
-            /* dynamic pool */
-            ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_dyn, 0);
+        ceu_dbg_assert(__ceu_dyn->state != CEU_CODE_MEM_DYN_STATE_DELETE);
+        if (__ceu_dyn->state == CEU_CODE_MEM_DYN_STATE_TRAVERSING) {
+           __ceu_dyn->state = CEU_CODE_MEM_DYN_STATE_DELETE;
         } else {
-            /* static pool */
-            ceu_pool_free(&_ceu_mem->pak->pool, (byte*)__ceu_dyn);
+            ceu_code_mem_dyn_free(&_ceu_mem->pak->pool, __ceu_dyn);
         }
     }
 ]]
@@ -501,8 +498,16 @@ if (!_ceu_stk->is_alive) {
     __ceu_new = (tceu_code_mem_dyn*) ceu_pool_alloc(&]]..V(pool)..[[.pool);
 ]])
         end
+
+        local set = AST.par(me,'Set_Abs_Spawn_Pool')
+        if set then
+            local _, to = unpack(set)
+            SET(me, to, '(__ceu_new != NULL)', true)
+        end
+
         LINE(me, [[
     if (__ceu_new != NULL) {
+        __ceu_new->state = CEU_CODE_MEM_DYN_STATE_NONE;
         __ceu_new->nxt = &]]..V(pool)..[[.first;
         ]]..V(pool)..[[.first.prv->nxt = __ceu_new;
         __ceu_new->prv = ]]..V(pool)..[[.first.prv;
@@ -524,10 +529,34 @@ if (!_ceu_stk->is_alive) {
         local _,list,pool,body = unpack(me)
         local Code = pool.info.dcl[2][1].dcl
         LINE(me, [[
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.mem = _ceu_mem;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl_clr.id..[[;
+]]..CUR('__dyn_'..me.n)..[[ = NULL;
+if (0) {
+    case ]]..me.lbl_clr.id..[[:
+        if (]]..CUR('__dyn_'..me.n)..[[ != NULL) {
+            if (]]..CUR('__dyn_'..me.n)..[[->state==CEU_CODE_MEM_DYN_STATE_DELETE) {
+                ceu_code_mem_dyn_free(&]]..V(pool)..[[.pool, ]]..CUR('__dyn_'..me.n)..[[);
+            } else {
+               ]]..CUR('__dyn_'..me.n)..[[->state = CEU_CODE_MEM_DYN_STATE_NONE;
+            }
+        }
+        return;
+}
 {
     tceu_code_mem_dyn* __ceu_cur = ]]..V(pool)..[[.first.nxt;
     while (__ceu_cur != &]]..V(pool)..[[.first)
     {
+        if (__ceu_cur->state == CEU_CODE_MEM_DYN_STATE_NONE) {
+            __ceu_cur->state = CEU_CODE_MEM_DYN_STATE_TRAVERSING;
+            ]]..CUR('__dyn_'..me.n)..[[ = __ceu_cur;
+        } else if (__ceu_cur->state == CEU_CODE_MEM_DYN_STATE_DELETE) {
+            __ceu_cur = __ceu_cur->nxt;
+            continue;
+        } else {
+            ]]..CUR('__dyn_'..me.n)..[[ = NULL;
+        }
 ]])
         if list then
             local mids = AST.asr(Code,'Code', 3,'Block', 1,'Stmts',
@@ -546,7 +575,22 @@ if (!_ceu_stk->is_alive) {
         end
         CONC(me, body)
         LINE(me, [[
-        __ceu_cur = __ceu_cur->nxt;
+        {
+            tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
+
+            ceu_dbg_assert(__ceu_cur->state != CEU_CODE_MEM_DYN_STATE_NONE);
+            if (]]..CUR('__dyn_'..me.n)..[[ != NULL) {
+                ceu_dbg_assert(__ceu_cur == ]]..CUR('__dyn_'..me.n)..[[);
+                if (__ceu_cur->state==CEU_CODE_MEM_DYN_STATE_DELETE) {
+                    ceu_code_mem_dyn_free(&]]..V(pool)..[[.pool, __ceu_cur);
+                } else {
+                   __ceu_cur->state = CEU_CODE_MEM_DYN_STATE_NONE;
+                }
+                ]]..CUR('__dyn_'..me.n)..[[ = NULL;
+            }
+
+            __ceu_cur = __ceu_nxt;
+        }
     }
 }
 ]])
@@ -931,7 +975,8 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         end
     end,
 
-    Set_Emit_Ext_emit = CONC_ALL,   -- see Emit_Ext_emit
+    Set_Emit_Ext_emit  = CONC_ALL,   -- see Emit_Ext_emit
+    Set_Abs_Spawn_Pool = CONC_ALL,   -- see Abs_Spawn_Pool
 
     Set_Abs_Val = function (me)
         local fr, to = unpack(me)

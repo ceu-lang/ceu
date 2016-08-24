@@ -73,9 +73,16 @@ typedef struct tceu_code_mem {
     tceu_trl  trails[0];
 } tceu_code_mem;
 
+typedef enum tceu_code_mem_dyn_state {
+    CEU_CODE_MEM_DYN_STATE_NONE,
+    CEU_CODE_MEM_DYN_STATE_TRAVERSING,
+    CEU_CODE_MEM_DYN_STATE_DELETE,
+} tceu_code_mem_dyn_state;
+
 typedef struct tceu_code_mem_dyn {
     struct tceu_code_mem_dyn* prv;
     struct tceu_code_mem_dyn* nxt;
+    u8 state;
     tceu_code_mem mem[0];   /* actual tceu_code_mem is in sequence */
 } tceu_code_mem_dyn;
 
@@ -246,6 +253,21 @@ static int ceu_wclock (s32 dt, s32* set, s32* sub)
     }
 
     return ret;
+}
+
+/*****************************************************************************/
+
+void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
+    cur->nxt->prv = cur->prv;
+    cur->prv->nxt = cur->nxt;
+
+    if (pool->queue == NULL) {
+        /* dynamic pool */
+        ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, cur, 0);
+    } else {
+        /* static pool */
+        ceu_pool_free(pool, (byte*)cur);
+    }
 }
 
 /*****************************************************************************/

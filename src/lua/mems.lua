@@ -525,21 +525,21 @@ tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
 
     ---------------------------------------------------------------------------
 
-    Loop_Num__PRE = 'Loop__PRE',
     Loop__PRE = function (me)
         CUR().mem = CUR().mem..'struct {\n'
     end,
-    Loop_Num__POS = 'Loop__POS',
     Loop__POS = function (me)
         CUR().mem = CUR().mem..'};\n'
     end,
-
     Loop = function (me)
         local max = unpack(me)
         if max then
             CUR().mem = CUR().mem..'int __max_'..me.n..';\n'
         end
     end,
+
+    Loop_Num__PRE = 'Loop__PRE',
+    Loop_Num__POS = 'Loop__POS',
     Loop_Num = function (me)
         local max, i, range, body = unpack(me)
         local fr, dir, to, step = unpack(range)
@@ -547,6 +547,12 @@ tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
         if to.tag ~= 'ID_any' then
             CUR().mem = CUR().mem..'int __lim_'..me.n..';\n'
         end
+    end,
+
+    Loop_Pool__PRE = 'Loop__PRE',
+    Loop_Pool__POS = 'Loop__POS',
+    Loop_Pool = function (me)
+        CUR().mem = CUR().mem..'tceu_code_mem_dyn* __dyn_'..me.n..';\n'
     end,
 }
 
