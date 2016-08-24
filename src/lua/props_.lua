@@ -72,7 +72,10 @@ F = {
     end,
     Set_Alias = function (me)
         local fr, to = unpack(me)
-        local watch = AST.par(to.info.dcl,'Loop_Pool') or AST.par(to.info.dcl,'Watching')
+        if to.info.dcl[1] == '&?' then
+            return  -- ok
+        end
+        local watch = AST.par(me,'Loop_Pool') or AST.par(me,'Watching')
         if watch then
             to.info.dcl.__no_access = watch -- no access outside watch
         end
