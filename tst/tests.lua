@@ -34,7 +34,19 @@ escape 1;
     run = 1,
 }
 
-do return end
+Test { [[
+code/await Ff (event& void e) => void do
+    async do end
+    emit e;
+end
+
+event void e;
+spawn Ff(&e);
+await e;
+escape 1;
+]],
+    run = 1,
+}
 
 Test { [[
 code/await Ff (void) => (var& int x) => void do
@@ -137,12 +149,10 @@ escape xxx!;
     run = 10,
 }
 Test { [[
-native _printf;
 code/await Ff (void) => (var&? int x) => void do
     var int v = 10;
     x = &v;
     await 1s;
-_printf(">>>\n");
 end
 
 pool[] Ff ffs;
@@ -157,17 +167,14 @@ end;
 var int ret = x!;
 watching x do
     every 100ms do
-_printf(".\n");
         ret = ret + 1;
     end
 end
-_printf("<<< %d\n", ret);
 
 escape ret;
 ]],
     run = { ['~>1s']=19 },
 }
-do return end
 
 Test { [[
 var int? x = do
@@ -6442,7 +6449,7 @@ var int ret = 0;
 par/or do
     await OS_START;
     emit e(2);
-    escape -1;
+    escape 99;
 with
     par/or do
         await e;
