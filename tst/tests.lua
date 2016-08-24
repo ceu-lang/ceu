@@ -16,6 +16,159 @@ end
 -- exemplo que dentro de um iter de um spawn para algo que tenha maior
     -- escopo que o 1o iter e o segundo mata o 1o que vai deletar alguem
 
+-- tem um TODO ali embaixo!
+
+--[=====[
+Test { [[
+code/await Ff (event& void e) => void do
+    async do end
+    emit e;
+end
+
+event void e;
+pool[] Ff ffs;
+spawn Ff(&e) in ffs;
+await e;
+escape 1;
+]],
+    run = 1,
+}
+
+do return end
+
+Test { [[
+code/await Ff (void) => (var& int x) => void do
+                        // error
+    var int v = 10;
+    x = &v;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? int x = do
+    var&? int x_;
+    loop (x_) in ffs do
+        escape &x_;
+    end
+end;
+
+escape (x? as int) + 1;
+]],
+    stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
+}
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? int x = do
+    var& int x_;
+    loop (x_) in ffs do
+        escape &x_;
+    end
+end;
+
+escape (x? as int) + 1;
+]],
+    stmts = 'line 12 : invalid binding : unmatching alias `&´ declaration',
+}
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? int x;
+loop (x) in ffs do
+    break;
+end
+
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? int x = do
+    var&? int x_;
+    loop (x_) in ffs do
+        escape &x_;
+    end
+end;
+
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? int xxx = do
+    var&? int x_;
+    loop (x_) in ffs do
+        escape &x_;
+    end
+end;
+
+escape xxx!;
+]],
+    run = 10,
+}
+Test { [[
+native _printf;
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+_printf(">>>\n");
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? int x = do
+    var&? int x_;
+    loop (x_) in ffs do
+        escape &x_;
+    end
+end;
+var int ret = x!;
+watching x do
+    every 100ms do
+_printf(".\n");
+        ret = ret + 1;
+    end
+end
+_printf("<<< %d\n", ret);
+
+escape ret;
+]],
+    run = { ['~>1s']=19 },
+}
+do return end
+
 Test { [[
 var int? x = do
     escape 1;
@@ -223,7 +376,6 @@ escape y;
     run = 10,
 }
 
---[=====[
 do return end
 
 ----------------------------

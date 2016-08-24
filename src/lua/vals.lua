@@ -232,7 +232,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     Var = function (me, ctx)
         local alias, tp = unpack(me)
         local ptr = ''
-        if (alias == '&') and (not ctx.is_bind) then
+        if alias and (not ctx.is_bind) then
             --  var&? _t_ptr x = &_f(); ... x!
             --  var& _t_ptr xx = &x!;   ... xx
             ptr = '*'
@@ -317,7 +317,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     ['Exp_?'] = function (me)
         local _, e = unpack(me)
         if e.info.dcl[1] == '&?' then
-            return '('..V(e)..' != NULL)'
+            return '('..V(e,{is_bind=true})..' != NULL)'
         else
             return '('..V(e)..'.is_set)'
         end
@@ -326,7 +326,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     ['Exp_!'] = function (me)
         local _, e = unpack(me)
         if e.info.dcl[1] == '&?' then
-            return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..', __FILE__, __LINE__))'
+            return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e,{is_bind=true})..', __FILE__, __LINE__))'
         else
             return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)->value)'
         end

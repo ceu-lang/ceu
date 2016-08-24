@@ -42,12 +42,12 @@ local function CLEAR (me)
     if me.trails_n > 1 then
         LINE(me, [[
 {
+    ceu_stack_clear(_ceu_stk->down, _ceu_mem,
+                    ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
     tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{NULL}}, NULL };
     CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk,
                         _ceu_mem, _ceu_trlK,
                         _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
-    ceu_stack_clear(_ceu_stk->down, _ceu_mem,
-                    ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 }
 ]])
     end
@@ -277,7 +277,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
         end
         if me.opt_alias then
             LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.var = ]]..V(me.opt_alias)..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.var = ]]..V(me.opt_alias,{is_bind=true})..[[;
 ]])
         else
             -- HACK_4
@@ -295,7 +295,7 @@ if (0)
 ]])
         CASE(me, me.lbl)
         LINE(me, [[
-    ]]..V(me)..[[ = NULL;   /* set it to null when alias goes out of scope */
+    ]]..V(me,{is_bind=true})..[[ = NULL;   /* set it to null when alias goes out of scope */
     return;
 }
 ]])
@@ -366,6 +366,7 @@ ceu_callback_assert_msg(0, "reached end of `code´");
     if (_ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
             (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
+
         __ceu_dyn->nxt->prv = __ceu_dyn->prv;
         __ceu_dyn->prv->nxt = __ceu_dyn->nxt;
 
@@ -525,7 +526,8 @@ if (!_ceu_stk->is_alive) {
         LINE(me, [[
 {
     tceu_code_mem_dyn* __ceu_cur = ]]..V(pool)..[[.first.nxt;
-    while (__ceu_cur != &]]..V(pool)..[[.first) {
+    while (__ceu_cur != &]]..V(pool)..[[.first)
+    {
 ]])
         if list then
             local mids = AST.asr(Code,'Code', 3,'Block', 1,'Stmts',
@@ -587,7 +589,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
         CONC_ALL(me)
 
         local _,_,set = unpack(me)
-        if set then
+        if set and set.info.dcl[1]~='&?' and (not TYPES.check(set.info.tp,'?')) then
             LINE(me, [[
 ceu_callback_assert_msg(0, "reached end of `do´");
 ]])
@@ -1136,11 +1138,11 @@ _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
         local Exp_Name = unpack(me)
         if Exp_Name.info.dcl[1] == '&?' then
             LINE(me, [[
-if (]]..V(Exp_Name)..[[ != NULL) {
+if (]]..V(Exp_Name,{is_bind=true})..[[ != NULL) {
 ]])
             HALT(me, {
                 { ['evt.id']  = 'CEU_INPUT__VAR' },
-                { ['evt.var'] = V(Exp_Name) },
+                { ['evt.var'] = V(Exp_Name,{is_bind=true}) },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })

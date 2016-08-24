@@ -140,6 +140,11 @@ F = {
             -- NO: ... = &_V        // native ID
             ASR(fr.info.dcl.tag~='Nat', me,
                 'invalid binding : unexpected native identifier')
+
+            if fr.info.dcl[1] then
+                ASR(to.info.dcl[1] == fr.info.dcl[1], me,
+                    'invalid binding : unmatching alias `&´ declaration')
+            end
         end
 
         -- option type
