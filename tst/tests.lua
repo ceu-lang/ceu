@@ -32814,6 +32814,15 @@ escape ret;
     run = 1,
 }
 
+Test { [[
+native _int, _f;
+var& _int ren;
+_f(&&outer.ren);
+escape 0;
+]],
+    dcls = 'line 3 : invalid `outer´ : expected enclosing `code´ declaration',
+}
+
 --<< CODE / TIGHT / OUTER
 
 Test { [[

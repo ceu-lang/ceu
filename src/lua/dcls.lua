@@ -570,7 +570,9 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     ['Exp_.'] = function (me)
         local _, e, member = unpack(me)
         if e.tag == 'Outer' then
-            me.dcl = DCLS.asr(me, AST.par(AST.par(me,'Code'),'Block'),
+            local Code = ASR(AST.par(me,'Code'), me,
+                            'invalid `outer´ : expected enclosing `code´ declaration')
+            me.dcl = DCLS.asr(me, AST.par(Code,'Block'),
                               member, false, 'internal identifier')
         end
     end,
