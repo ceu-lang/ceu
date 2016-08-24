@@ -75,8 +75,6 @@ escape (x? as int) + 1;
     run = 1,
 }
 
---do return end
-
 Test { [[
 code/await Ff (void) => (var& int x, event& void e) => void do
     var int x_ = 0;
@@ -171,8 +169,6 @@ escape 1;
     run = { ['~>A']=1 },
     todo = 'TODO!!!',
 }
-
---do return end
 
 Test { [[
 code/await Ff (void) => void do
