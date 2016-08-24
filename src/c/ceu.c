@@ -418,6 +418,9 @@ static void ceu_go_bcast_2 (tceu_evt_occ* occ, tceu_stk* stk,
                 tceu_code_mem_dyn* nxt = cur->nxt;
                 ceu_go_bcast_2(occ, stk, &cur->mem[0],
                                     0, (&cur->mem[0])->trails_n-1);
+                if (!stk->is_alive) {
+                    break;
+                }
                 cur = nxt;
             }
         }
