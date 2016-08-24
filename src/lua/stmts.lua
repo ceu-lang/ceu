@@ -112,6 +112,10 @@ F = {
         ASR(ID_int, me, 'invalid binding : unexpected context for operator `'..op..'´')
         ASR(ID_int.dcl[1], me, 'invalid binding : expected declaration with `&´')
 
+        if to.__dcls_is_escape then
+            ASR(to.info.dcl[1] == '&?', to, 'invalid binding : expected `&?´ modifier')
+        end
+
         -- tp
 
         EXPS.check_tp(me, to.info.tp, fr.info.tp, 'invalid binding', true)

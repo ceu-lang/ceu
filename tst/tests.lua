@@ -8,6 +8,172 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+-- tudo errado:
+    -- mesmo sem apagar org, memoria interna por "malloc" ja pode ter sido perdida
+    -- pois o outermost bloco deu o clear
+
+-- exemplo que mate o loop mas nao o pool
+-- exemplo que dentro de um iter de um spawn para algo que tenha maior
+    -- escopo que o 1o iter e o segundo mata o 1o que vai deletar alguem
+
+Test { [[
+var int? x = do
+    escape 1;
+end;
+escape x!;
+]],
+    run = 1,
+}
+
+Test { [[
+var int? x = do
+    if true then
+        escape 1;
+    end
+end;
+escape x!;
+]],
+    run = 1,
+}
+
+Test { [[
+var int? x = do
+    if false then
+        escape 1;
+    end
+end;
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var& int x = do
+    var int y = 10;
+    escape &y;          // err scope
+end;
+escape x;
+]],
+    stmts = 'line 1 : invalid binding : expected `&?´ modifier',
+}
+
+Test { [[
+var&? int x = do
+    var int y = 10;
+    escape &y;
+end;
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+var int? x = do
+end;
+escape (x? as int) + 1;
+]],
+    run = 1,
+}
+
+--do return end
+
+Test { [[
+code/await Ff (void) => (var& int x, event& void e) => void do
+    var int x_ = 0;
+    x = &x_;
+    event void e_;
+    e = &e_;
+    await e_;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var& int x;
+event& void e;
+loop (x,e) in ffs do
+    emit e;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void A;
+
+code/await Ff (void) => (var& int x, event& void e) => void do
+    var int x_ = 0;
+    x = &x_;
+    event void e_;
+    e = &e_;
+    par/or do
+        await e_;
+    with
+        var int y = 0;
+        every A do
+            y = y + 1;
+        end
+    end
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+spawn Ff() in ffs;
+spawn Ff() in ffs;
+
+await A;
+
+var& int x1;
+event& void e1;
+loop (x1,e1) in ffs do
+    var& int x2;
+    event& void e2;
+    loop (x2,e2) in ffs do
+        emit e1;
+        emit e2;
+    end
+end
+
+escape 1;
+]],
+    run = { ['~>A']=1 },
+}
+
+Test { [[
+input void A;
+
+code/await Ff (void) => (event& void e) => void do
+    event void e_;
+    e = &e_;
+    await e_;
+end
+
+event void g;
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+watching g do
+    event& void e;
+    loop (e) in ffs do
+        emit e; // kill 1st, but don't delete
+        emit g; // kill iterator
+    end
+end
+
+loop in ffs do
+    escape 99;  // nooo
+end
+
+escape 1;
+]],
+    run = { ['~>A']=1 },
+    todo = 'TODO!!!',
+}
+
+--do return end
+
 Test { [[
 code/await Ff (void) => void do
 end
@@ -2351,7 +2517,8 @@ end
 a = 1;
 escape a;
 ]],
-    inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
+    run = 1,
+    --inits = 'line 1 : uninitialized variable "a" : reached `escape´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -2428,22 +2595,23 @@ escape 1;
 Test { [[
 var int a = do
 end;
-escape 1;
+escape a;
 ]],
+    --inits = 'line 1 : uninitialized variable "a" : reached end of `do´ (/tmp/tmp.ceu:1)',
     run = '1] runtime error: reached end of `do´',
 }
 
 Test { [[
 var int a = do
     var int a = do/a
-        escape/a 1;
+        escape/a 10;
     end;
     escape a;
 end;
-escape a;
+escape a-1;
 ]],
     wrn = true,
-    run = 1
+    run = 9,
 }
 
 Test { [[
@@ -2453,7 +2621,7 @@ var int a = do/a
     end;
     escape a;
 end;
-escape a;
+escape a+1;
 ]],
     wrn = true,
     run = 1

@@ -4,7 +4,7 @@ local yields = {
     Par              = true,
     Par_And          = true,
     Par_Or           = true,
-    Escape           = true,
+    --Escape           = true,
     Break            = true,
     Async            = true,
     _Async_Thread    = true,
@@ -101,6 +101,8 @@ local function run_inits (par, i, Dcl, stop)
         end
         if blk.__depth <= depth then
             return false
+        else
+            return run_inits(blk, #blk+1, Dcl, stop)
         end
     end
 
@@ -245,10 +247,20 @@ local function run_inits (par, i, Dcl, stop)
         end
     elseif me.tag == 'Do' then
         -- a = do ... end
-        local _,_,Exp_Name = unpack(me)
+        local _,body,Exp_Name = unpack(me)
         if Exp_Name then
             local ID_int = AST.asr(Exp_Name,'Exp_Name', 1,'ID_int')
             if ID_int.dcl == Dcl then
+--[[
+-- TODO-DO:
+should run_inits inside the `do´, but the check is different b/c
+it can cross yielding stmts w/o problems
+                local ok = run_inits(body, 1, Dcl, body)
+                ASR(ok, Dcl,
+                    'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'" : '..
+                    'reached end of `do´ '..
+                    '('..me.ln[1]..':'..me.ln[2]..')')
+]]
                 return true                     -- stop, found init
             end
         end
@@ -441,7 +453,7 @@ error'TODO: luacov never executes this?'
 
     Set_Alias = function (me)
         local fr,to = unpack(me)
-        if me.is_init then
+        if me.is_init or to.__dcls_is_escape then
             return  -- I'm the one who created the binding
         end
 

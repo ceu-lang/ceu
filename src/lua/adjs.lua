@@ -491,9 +491,15 @@ DBG('TODO: _Loop_Pool')
 
     _Escape__PRE = function (me)
         local _, fr = unpack(me)
+
         local set = node('Set_Exp', me.ln,
                         fr,
                         node('Ref', me.ln, 'escape', me))   -- see dcls.lua
+        -- a = &b   (Set_Exp->Set_Alias)
+        if fr and fr.tag=='Exp_1&' then
+            set.tag = 'Set_Alias'
+        end
+
         me.tag = 'Escape'
         me[2] = nil
         return node('Stmts', me.ln, set, me)

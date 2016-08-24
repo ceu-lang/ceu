@@ -629,7 +629,7 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
         esc.outer = do_
         local _,_,to,op = unpack(do_)
-        local set = AST.asr(me.__par,'Set_Exp')
+        local set = AST.get(me.__par,'Set_Exp') or AST.asr(me.__par,'Set_Alias')
         set.__dcls_is_escape = true
         local fr = unpack(set)
         if to and type(to)~='boolean' then
