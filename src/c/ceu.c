@@ -25,6 +25,9 @@ typedef u16 tceu_nevt;   /* TODO */
 typedef === TCEU_NTRL === tceu_ntrl;
 typedef === TCEU_NLBL === tceu_nlbl;
 
+struct tceu_stk;
+struct tceu_code_mem;
+struct tceu_code_mem_dyn;
 struct tceu_evt_occ;
 
 typedef struct tceu_evt {
@@ -37,14 +40,17 @@ typedef struct tceu_evt {
     };
 } tceu_evt;
 
-typedef struct tceu_evt_occ {
-    tceu_evt evt;
-    void*    params;
-} tceu_evt_occ;
+typedef struct tceu_evt_occ_range {
+    struct tceu_code_mem* mem;
+    tceu_ntrl             trl0;
+    tceu_ntrl             trlF;
+} tceu_evt_occ_range;
 
-struct tceu_stk;
-struct tceu_code_mem;
-struct tceu_code_mem_dyn;
+typedef struct tceu_evt_occ {
+    tceu_evt           evt;
+    void*              params;
+    tceu_evt_occ_range range;
+} tceu_evt_occ;
 
 typedef struct tceu_trl {
     union {
@@ -339,21 +345,21 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
     }
 }
 
-static void ceu_go_bcast_1 (tceu_evt_occ* occ,
-                            tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF)
+static void ceu_go_bcast_1 (tceu_evt_occ* occ)
 {
     tceu_ntrl trlK;
     tceu_trl* trl;
+    tceu_evt_occ_range range = occ->range;
 
     /* MARK TRAILS TO EXECUTE */
 
 #if 0
 #include <stdio.h>
-printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, occ->evt.id, trl0, trlF);
+printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, occ->evt.id, occ->trl0, occ->trlF);
 #endif
 
-    for (trlK=trl0, trl=&mem->trails[trlK];
-         trlK<=trlF;
+    for (trlK=range.trl0, trl=&range.mem->trails[trlK];
+         trlK<=range.trlF;
          trlK++, trl++)
     {
 #if 0
@@ -382,8 +388,10 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 
         /* propagate "evt" to nested "code" */
         } else if (trl->evt.id == CEU_INPUT__CODE) {
-            ceu_go_bcast_1(occ, (tceu_code_mem*)trl->evt.mem,
-                           0, ((tceu_code_mem*)trl->evt.mem)->trails_n-1);
+            tceu_evt_occ_range _range = { (tceu_code_mem*)trl->evt.mem,
+                                          0, ((tceu_code_mem*)trl->evt.mem)->trails_n-1 };
+            occ->range = _range;
+            ceu_go_bcast_1(occ);
         } else if (trl->evt.id == CEU_INPUT__CODE_POOL) {
             tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
 #if 0
@@ -391,8 +399,10 @@ printf(">>> BCAST[%p]:\n", trl->pool_first);
 printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 #endif
             while (cur != trl->evt.pool_first) {
-                ceu_go_bcast_1(occ, &cur->mem[0],
-                               0, ((&cur->mem[0])->trails_n-1));
+                tceu_evt_occ_range _range = { &cur->mem[0],
+                                              0, ((&cur->mem[0])->trails_n-1) };
+                occ->range = _range;
+                ceu_go_bcast_1(occ);
                 cur = cur->nxt;
             }
 
@@ -520,13 +530,16 @@ fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, stk->mem, trl0, trlF);
 
 static void ceu_go_bcast (tceu_evt_occ* occ, tceu_stk* stk)
 {
-    ceu_go_bcast_1(occ, stk->mem, stk->trl0, stk->trlF);
+    ceu_go_bcast_1(occ);
     ceu_go_bcast_2(occ, stk);
 }
 
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
 {
-    tceu_evt_occ occ = { {evt_id,{NULL}}, evt_params };
+    tceu_evt_occ occ = { {evt_id,{NULL}}, evt_params,
+                         {(tceu_code_mem*)&CEU_APP.root,
+                          0, CEU_APP.root.mem.trails_n-1}
+                       };
     switch (evt_id)
     {
         case CEU_INPUT__WCLOCK: {

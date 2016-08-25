@@ -44,10 +44,21 @@ local function CLEAR (me)
 {
     ceu_stack_clear(_ceu_stk->down, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
-    tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{NULL}}, NULL };
+    tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{NULL}}, NULL,
+                                   { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ }
+                                 };
     CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk,
                         _ceu_mem, _ceu_trlK,
                         _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
+
+#if 0
+    tceu_stk __ceu_stk = {  1,_ceu_stk, &__ceu_stk,
+                           _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
+    ceu_go_bcast(&occ, &__ceu_stk);
+    if (!__ceu_stk.is_alive) {
+        return;
+    }
+#endif
 }
 ]])
     end
@@ -211,7 +222,10 @@ if (0) {
                 elseif dcl.tag=='Var' and dcl.has_opt_alias then
                     LINE(me, [[
     {
-        tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__VAR,{&]]..V(dcl)..[[}}, NULL };
+        tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__VAR,{&]]..V(dcl)..[[}}, NULL,
+                                       {(tceu_code_mem*)&CEU_APP.root,
+                                        0, CEU_APP.root.mem.trails_n-1}
+                                     };
         CEU_STK_BCAST(__ceu_evt_occ, _ceu_stk,
                       _ceu_mem, _ceu_trlK,
                       (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
@@ -379,7 +393,10 @@ ceu_callback_assert_msg(0, "reached end of `code´");
             LINE(me, [[
     {
         /* _ceu_evt holds __ceu_ret (see Escape) */
-        tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CODE,{_ceu_mem}}, _ceu_evt };
+        tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CODE,{_ceu_mem}}, _ceu_evt,
+                                       {(tceu_code_mem*)&CEU_APP.root,
+                                        0, CEU_APP.root.mem.trails_n-1}
+                                     };
         CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk,
                             _ceu_mem, _ceu_trlK,
                             (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
@@ -1245,7 +1262,10 @@ if (]]..V(Exp_Name,{is_bind=true})..[[ != NULL) {
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    tceu_evt_occ __ceu_evt_occ = { ]]..V(Exp_Name)..[[, &__ceu_ps };
+    tceu_evt_occ __ceu_evt_occ = { ]]..V(Exp_Name)..[[, &__ceu_ps,
+                                   {(tceu_code_mem*)&CEU_APP.root,
+                                    0, CEU_APP.root.mem.trails_n-1}
+                                 };
     CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk,
                         _ceu_mem, _ceu_trlK,
                         (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
