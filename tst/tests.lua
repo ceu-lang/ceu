@@ -17,7 +17,6 @@ end
 
 -- tem um TODO ali embaixo!
 
---[=====[
 -- Cases for loop:
 --  - never awaiting stmts
 --  - if code=>FOREVER
@@ -71,6 +70,7 @@ end
     --run = 7,
     run = 3,
 }
+--[=====[
 do return end
 
 Test { [[
