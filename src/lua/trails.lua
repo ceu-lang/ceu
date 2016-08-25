@@ -47,8 +47,10 @@ F = {
             -- +1 for each "var&? ..."
             elseif dcl.tag == 'Var' then
                 if alias=='&?' and (not TYPES.is_nat(Type)) then
-                    dcl.has_trail = true
-                    me.trails_n = me.trails_n + 1
+                    if not AST.par(dcl, 'Code_Pars') then
+                        dcl.has_trail = true
+                        me.trails_n = me.trails_n + 1
+                    end
                 end
             end
         end
@@ -81,7 +83,9 @@ F = {
 
     Loop_Pool = function (me)
         local _, _, _, body = unpack(me)
-        me.trails_n = body.trails_n + 1
+        if me.yields then
+            me.trails_n = body.trails_n + 1
+        end
     end,
 
     Pause_If = function (me)

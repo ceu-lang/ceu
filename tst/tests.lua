@@ -8,12 +8,16 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+-- detectar necessidade de &? p/ !FOREVER
+-- resolver valgrind
+
 -- exemplo que mate o loop mas nao o pool
 -- exemplo que dentro de um iter de um spawn para algo que tenha maior
     -- escopo que o 1o iter e o segundo mata o 1o que vai deletar alguem
 
 -- tem um TODO ali embaixo!
 
+--[=====[
 -- Cases for loop:
 --  - never awaiting stmts
 --  - if code=>FOREVER
@@ -189,6 +193,35 @@ end
 escape ret;
 ]],
     run = { ['~>1s']=19 },
+}
+
+Test { [[
+code/await Ff (var& int ret) => (var& int x, event& void e) => FOREVER do
+    var int x_ = 0;
+    x = &x_;
+    event void e_;
+    e = &e_;
+    await e_;
+    ret = ret + x_;
+    await FOREVER;
+end
+
+var int ret = 5;
+
+pool[] Ff ffs;
+spawn Ff(&ret) in ffs;
+spawn Ff(&ret) in ffs;
+
+var& int x;
+event& void e;
+loop (x,e) in ffs do
+    x = ret;
+    emit e;
+end
+
+escape ret;
+]],
+    run = 20,
 }
 
 Test { [[
@@ -393,7 +426,6 @@ escape 1;
     run = { ['~>A']=1 },
 }
 
---[=====[
 do return end
 --<< POOL / LOOP
 
@@ -658,7 +690,6 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -31641,6 +31672,7 @@ end
 --<<< WATCHING
 
 -->>> CODE / TIGHT / FUNCTIONS
+--]=====]
 
 Test { [[
 code/tight Code (var int)=>void

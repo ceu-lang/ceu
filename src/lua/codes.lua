@@ -528,7 +528,9 @@ if (!_ceu_stk->is_alive) {
     Loop_Pool = function (me)
         local _,list,pool,body = unpack(me)
         local Code = pool.info.dcl[2][1].dcl
-        LINE(me, [[
+
+        if me.yields then
+            LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CLEAR;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.mem = _ceu_mem;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl_clr.id..[[;
@@ -544,11 +546,19 @@ if (0) {
         }
         return;
 }
+]])
+        end
+
+        LINE(me, [[
 {
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     tceu_code_mem_dyn* __ceu_cur = ]]..V(pool)..[[.first.nxt;
     while (__ceu_cur != &]]..V(pool)..[[.first)
     {
+]])
+
+        if me.yields then
+            LINE(me, [[
         if (__ceu_cur->state == CEU_CODE_MEM_DYN_STATE_NONE) {
             __ceu_cur->state = CEU_CODE_MEM_DYN_STATE_TRAVERSING;
             ]]..CUR('__dyn_'..me.n)..[[ = __ceu_cur;
@@ -559,6 +569,8 @@ if (0) {
             ]]..CUR('__dyn_'..me.n)..[[ = NULL;
         }
 ]])
+        end
+
         if list then
             local mids = AST.asr(Code,'Code', 3,'Block', 1,'Stmts',
                                               1,'Stmts', 2,'Code_Pars')
@@ -574,9 +586,12 @@ if (0) {
         CEU_CODE_WATCH_]]..Code.id..[[(__ceu_cur->mem, &__ceu_ps);
 ]])
         end
+
         CONC(me, body)
         CASE(me, me.lbl_cnt)
-        LINE(me, [[
+
+        if me.yields then
+            LINE(me, [[
         {
             tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
 
@@ -593,6 +608,14 @@ if (0) {
 
             __ceu_cur = __ceu_nxt;
         }
+]])
+        else
+            LINE(me, [[
+            __ceu_cur = __ceu_cur->nxt;
+]])
+        end
+
+        LINE(me, [[
     }
 }
 ]])

@@ -5,8 +5,7 @@ local NO = {
     },
     Loop_Pool = {
         Await_Forever=true, Await_Ext=true, Await_Int=true, Await_Wclock=true,
-        Abs_Await=true, Abs_Spawn_Single=true, Abs_Spawn_Pool=true,
-        Emit_Int=true, Every=true, Finalize=true,
+        Abs_Await=true, Every=true, Finalize=true,
     },
 }
 
@@ -118,6 +117,19 @@ F = {
         if num then
             ASR(me.hier, me, 'invalid `is´ declaration : expected `data´ hierarchy')
             F.__check(DCLS.base(me))
+        end
+    end,
+
+    --------------------------------------------------------------------------
+
+    Abs_Spawn_Single = '_in_loop_pool',
+    Abs_Spawn_Pool   = '_in_loop_pool',
+    Emit_Evt         = '_in_loop_pool',
+    _in_loop_pool = function (me)
+        for n in AST.iter() do
+            if n.tag == 'Loop_Pool' then
+                n.yields = true
+            end
         end
     end,
 }
