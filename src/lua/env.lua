@@ -42,6 +42,7 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
         ceu_callback(cmd, (tceu_callback_arg){.ptr=p1}, \
                           (tceu_callback_arg){.size=p2})
 
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #define ceu_callback_assert_msg_ex(v,msg,file,line)                              \
     if (!(v)) {                                                                  \
         if ((msg)!=NULL) {                                                       \

@@ -14,8 +14,6 @@ end
 
 -- tem um TODO ali embaixo!
 
---[=====[
---]=====]
 -- Cases for loop:
 --  - never awaiting stmts
 --  - if code=>FOREVER
@@ -126,6 +124,45 @@ escape xxx!;
 ]],
     run = 10,
 }
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+var&? int x_;
+loop (x_) in ffs do
+    break;
+end
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+
+code/await Ff (void) => (var&? int xxx) => void do
+    var int v = 10;
+    xxx = &v;
+    async do end;
+end
+
+pool[] Ff ffs;
+var&? int x_;
+spawn Ff() in ffs => (x_);
+
+await x_;
+
+escape 1;
+]],
+    run = 1,
+}
+
 Test { [[
 code/await Ff (void) => (var&? int x) => void do
     var int v = 10;
@@ -356,6 +393,7 @@ escape 1;
     run = { ['~>A']=1 },
 }
 
+--[=====[
 do return end
 --<< POOL / LOOP
 
@@ -620,6 +658,7 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested

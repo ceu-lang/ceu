@@ -545,6 +545,7 @@ if (0) {
         return;
 }
 {
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
     tceu_code_mem_dyn* __ceu_cur = ]]..V(pool)..[[.first.nxt;
     while (__ceu_cur != &]]..V(pool)..[[.first)
     {
@@ -574,6 +575,7 @@ if (0) {
 ]])
         end
         CONC(me, body)
+        CASE(me, me.lbl_cnt)
         LINE(me, [[
         {
             tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
@@ -594,6 +596,8 @@ if (0) {
     }
 }
 ]])
+        CASE(me, me.lbl_out)
+        CLEAR(me)
     end,
 
     ---------------------------------------------------------------------------
