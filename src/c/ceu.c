@@ -200,7 +200,7 @@ ceu_callback_assert_msg(0, "TODO");
 
 static void ceu_stack_clear (tceu_stk* stk, tceu_code_mem* mem,
                              tceu_ntrl trl1, tceu_ntrl trl2) {
-    for (; stk!=&CEU_STK_BASE; stk=stk->down) {
+    for (; stk!=NULL; stk=stk->down) {
         if (!stk->is_alive) {
             continue;
         }
@@ -283,8 +283,7 @@ int ceu_lua_atpanic (lua_State* lua) {
 
 /*****************************************************************************/
 
-static void ceu_go_bcast (tceu_evt_occ* occ, tceu_stk* stk,
-                          tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF);
+static void ceu_go_bcast (tceu_evt_occ* occ, tceu_stk* stk);
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
                         tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
@@ -307,15 +306,17 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
 #define CEU_STK_BCAST(occ, stk_old,                             \
                       abt_mem, abt_trl,                         \
                       exe_mem, exe_trl0, exe_trlF) {            \
-    tceu_stk __ceu_stk = { 1, stk_old, NULL, abt_mem, abt_trl,abt_trl };      \
-    ceu_go_bcast(&occ, &__ceu_stk, exe_mem,exe_trl0,exe_trlF);  \
+    tceu_stk __ceu_stk  = { 1, stk_old,    &__ceu_stk, abt_mem, abt_trl, abt_trl };      \
+    tceu_stk ___ceu_stk = { 1, &__ceu_stk, &__ceu_stk, exe_mem, exe_trl0,exe_trlF };      \
+    ceu_go_bcast(&occ, &___ceu_stk); \
 }
 
 #define CEU_STK_BCAST_ABORT(occ, stk_old,                       \
                             abt_mem, abt_trl,                   \
                             exe_mem, exe_trl0, exe_trlF) {      \
-    tceu_stk __ceu_stk = { 1, stk_old, NULL, abt_mem, abt_trl,abt_trl };      \
-    ceu_go_bcast(&occ, &__ceu_stk, exe_mem,exe_trl0,exe_trlF);  \
+    tceu_stk __ceu_stk  = { 1, stk_old,    &__ceu_stk, abt_mem, abt_trl,abt_trl };      \
+    tceu_stk ___ceu_stk = { 1, &__ceu_stk, &__ceu_stk, exe_mem, exe_trl0,exe_trlF };      \
+    ceu_go_bcast(&occ, &___ceu_stk); \
     if (!__ceu_stk.is_alive) {                                  \
         return;                                                 \
     }                                                           \
@@ -452,6 +453,7 @@ for (int i=0; i<xxx; i++) {
 }
 fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, stk->is_alive, occ->evt.id, stk->mem, trl0, trlF);
 #endif
+
         /* propagate "occ" to nested "code" */
         if (trl->evt.id == CEU_INPUT__CODE) {
             tceu_stk _stk = { 1, stk, stk->lvl,
@@ -505,6 +507,7 @@ fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, stk->is_alive, occ->evt.id
             trlK++; trl++;
         }
     }
+
 #ifdef _CEU_DEBUG
 xxx -= 4;
 for (int i=0; i<xxx; i++) {
@@ -512,16 +515,12 @@ for (int i=0; i<xxx; i++) {
 }
 fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, stk->mem, trl0, trlF);
 #endif
-
 }
 
-static void ceu_go_bcast (tceu_evt_occ* occ, tceu_stk* stk,
-                          tceu_code_mem* mem, tceu_ntrl trl0, tceu_ntrl trlF)
+static void ceu_go_bcast (tceu_evt_occ* occ, tceu_stk* stk)
 {
-    ceu_go_bcast_1(occ, stk, mem, trl0, trlF);
-
-    tceu_stk _stk = { 1, stk, stk, mem, trl0, trlF };
-    ceu_go_bcast_2(occ, &_stk);
+    ceu_go_bcast_1(occ, stk->lvl, stk->mem, stk->trl0, stk->trlF);
+    ceu_go_bcast_2(occ, stk);
 }
 
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
@@ -538,8 +537,7 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
             break;
         }
     }
-    ceu_go_bcast(&occ, &CEU_STK_BASE,
-                (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1);
+    ceu_go_bcast(&occ, &CEU_STK_BASE);
 }
 
 /*****************************************************************************/
@@ -589,6 +587,10 @@ int ceu_go_all (void)
 
     CEU_STK_LBL(NULL, &CEU_STK_BASE,
                 (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
+
+    tceu_stk base = { 1, NULL, &CEU_STK_BASE,
+                      (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1 };
+    CEU_STK_BASE = base;
 
     while (!ceu_cb_terminating) {
         ceu_callback_num_void(CEU_CALLBACK_STEP, ceu_cb_pending_async);
