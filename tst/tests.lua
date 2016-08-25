@@ -28,6 +28,51 @@ end
 
 -->> POOL / LOOP
 
+-- valgrind fails
+Test { [[
+code/await Ff (void) => (var&? int xxx) => void do
+    var int v = 10;
+    xxx = &v;
+    async do end;
+end
+
+pool[] Ff ffs;
+var&? int x_;
+spawn Ff() in ffs => (x_);
+
+await x_;
+
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+event (int,int) e;
+par do
+    do
+        par/or do
+            await OS_START;
+            emit e(1,2);
+        with
+            await e;
+        end
+    end
+    do
+        emit e(3,4);
+    end
+with
+    var int a,b;
+    (a,b) = await e;
+    escape a+b;
+end
+]],
+    --run = 7,
+    run = 3,
+}
+do return end
+
 Test { [[
 code/await Ff (void) => (var& int x) => void do
                         // error
@@ -149,25 +194,6 @@ escape 1;
 }
 
 Test { [[
-
-code/await Ff (void) => (var&? int xxx) => void do
-    var int v = 10;
-    xxx = &v;
-    async do end;
-end
-
-pool[] Ff ffs;
-var&? int x_;
-spawn Ff() in ffs => (x_);
-
-await x_;
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
 code/await Ff (void) => (var&? int x) => void do
     var int v = 10;
     x = &v;
@@ -244,13 +270,13 @@ end
 
 escape 1;
 ]],
-    run = 1,
+    props_ = 'line 14 : invalid declaration : expected `&?´ modifier : yielding `loop´',
 }
 
 Test { [[
 input void A;
 
-code/await Ff (void) => (event& void e) => void do
+code/await Ff (void) => (event&? void e) => void do
     event void e_;
     e = &e_;
     await e_;
@@ -261,7 +287,7 @@ pool[] Ff ffs;
 spawn Ff() in ffs;
 
 watching g do
-    event& void e;
+    event&? void e;
     loop (e) in ffs do
         emit g; // kill iterator
     end
@@ -424,6 +450,49 @@ end
 escape 1;
 ]],
     run = { ['~>A']=1 },
+}
+
+-- TODO: event&?
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+    async do end
+end
+
+pool[] Ff ffs;
+
+var&? int x;
+spawn Ff() in ffs => (x);
+escape x!;
+]],
+    run = 10,
+}
+Test { [[
+code/await Ff (void) => (var&? int x, event&? int e) => void do
+    var int v = 10;
+    x = &v;
+
+    event int e_;
+    e = &e_;
+    var int vv = await e_;
+
+    v = v + vv;
+    async do end
+end
+
+pool[] Ff ffs;
+
+var&?   int x;
+event&? int e;
+
+spawn Ff() in ffs => (x,e);
+
+emit e(20);
+
+escape x!;
+]],
+    run = 30,
 }
 
 do return end
@@ -690,6 +759,7 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -31672,7 +31742,6 @@ end
 --<<< WATCHING
 
 -->>> CODE / TIGHT / FUNCTIONS
---]=====]
 
 Test { [[
 code/tight Code (var int)=>void
@@ -33499,6 +33568,18 @@ escape _V;
 ]],
     _ana = {acc=true},
     run = {['~>5s']=1},
+}
+
+Test { [[
+code/await Code (var int x) => int
+do
+    async do end;
+    escape x;
+end
+var int a = await Code(1);
+escape a;
+]],
+    run = 1,
 }
 
 Test { [[

@@ -527,7 +527,7 @@ if (!_ceu_stk->is_alive) {
 
     Loop_Pool = function (me)
         local _,list,pool,body = unpack(me)
-        local Code = pool.info.dcl[2][1].dcl
+        local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
 
         if me.yields then
             LINE(me, [[
