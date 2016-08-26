@@ -422,8 +422,12 @@ ceu_callback_assert_msg(0, "reached end of `code´");
     ]]..mem..[[->up_mem = _ceu_mem;
     ]]..mem..[[->up_trl = _ceu_trlK;
 
-    CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, 0, __ceu_ps,
+    tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
+    CEU_CODE_]]..ID_abs.dcl.id..[[(&__ceu_stk, 0, __ceu_ps,
                                    (tceu_code_mem*)]]..mem..[[);
+    if (!__ceu_stk.is_alive) {
+        return;
+    }
 }
 ]]
 
