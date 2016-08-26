@@ -204,17 +204,17 @@ ceu_callback_assert_msg(0, "TODO");
 }
 
 static void ceu_stack_clear (tceu_stk* stk, tceu_code_mem* mem,
-                             tceu_ntrl trl1, tceu_ntrl trl2) {
+                             tceu_ntrl trl0, tceu_ntrl trlF) {
     for (; stk!=NULL; stk=stk->down) {
         if (!stk->is_alive) {
             continue;
         }
         if (stk->mem != mem) {
-            /* check if "stk->mem" is child of "mem" in between "[trl1,trl2]" */
-            if (ceu_mem_is_child(stk->mem, mem, trl1, trl2)) {
+            /* check if "stk->mem" is child of "mem" in between "[trl0,trlF]" */
+            if (ceu_mem_is_child(stk->mem, mem, trl0, trlF)) {
                 stk->is_alive = 0;
             }
-        } else if (trl1<=stk->trl0 && stk->trlF<=trl2) {  /* [trl1,trl2] */
+        } else if (trl0<=stk->trl0 && stk->trlF<=trlF) {  /* [trl0,trlF] */
             stk->is_alive = 0;
         }
     }
@@ -309,18 +309,16 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
 }
 
 #define CEU_STK_BCAST(occ, stk_old,                             \
-                      abt_mem, abt_trl,                         \
-                      exe_mem, exe_trl0, exe_trlF) {            \
+                      abt_mem, abt_trl) {            \
     tceu_stk __ceu_stk  = { 1, stk_old,    abt_mem, abt_trl, abt_trl };      \
-    tceu_stk ___ceu_stk = { 1, &__ceu_stk, exe_mem, exe_trl0,exe_trlF };      \
+    tceu_stk ___ceu_stk = { 1, &__ceu_stk, NULL, 0,0 };      \
     ceu_go_bcast(&occ, &___ceu_stk); \
 }
 
 #define CEU_STK_BCAST_ABORT(occ, stk_old,                       \
-                            abt_mem, abt_trl,                   \
-                            exe_mem, exe_trl0, exe_trlF) {      \
+                            abt_mem, abt_trl) {      \
     tceu_stk __ceu_stk  = { 1, stk_old,    abt_mem, abt_trl,abt_trl };      \
-    tceu_stk ___ceu_stk = { 1, &__ceu_stk, exe_mem, exe_trl0,exe_trlF };      \
+    tceu_stk ___ceu_stk = { 1, &__ceu_stk, NULL, 0,0 };      \
     ceu_go_bcast(&occ, &___ceu_stk); \
     if (!__ceu_stk.is_alive) {                                  \
         return;                                                 \
