@@ -301,16 +301,6 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
     }                                                           \
 }
 
-#define CEU_STK_BCAST_ABORT(occ, stk_old,                       \
-                            abt_mem, abt_trl) {      \
-    tceu_stk __ceu_stk  = { 1, stk_old, { abt_mem, abt_trl,abt_trl} };      \
-    tceu_stk ___ceu_stk = { 1, &__ceu_stk, {NULL, 0,0} };      \
-    ceu_go_bcast(&occ, &___ceu_stk); \
-    if (!__ceu_stk.is_alive) {                                  \
-        return;                                                 \
-    }                                                           \
-}
-
 === NATIVE_POS ===
 
 === CODES_WRAPPERS ===

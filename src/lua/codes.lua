@@ -47,16 +47,11 @@ local function CLEAR (me)
     tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{NULL}}, NULL,
                                    { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ }
                                  };
-    CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk, _ceu_mem, _ceu_trlK);
-
-#if 0
-    tceu_stk __ceu_stk = {  1,_ceu_stk, &__ceu_stk,
-                           _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[);
-    ceu_go_bcast(&occ, &__ceu_stk);
+    tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
+    ceu_go_bcast(&__ceu_evt_occ, &__ceu_stk);
     if (!__ceu_stk.is_alive) {
         return;
     }
-#endif
 }
 ]])
     end
@@ -224,7 +219,11 @@ if (0) {
                                        {(tceu_code_mem*)&CEU_APP.root,
                                         0, CEU_APP.root.mem.trails_n-1}
                                      };
-        CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk, _ceu_mem, _ceu_trlK);
+        tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
+        ceu_go_bcast(&__ceu_evt_occ, &__ceu_stk);
+        if (!__ceu_stk.is_alive) {
+            return;
+        }
     }
 ]])
                 end
@@ -393,7 +392,12 @@ ceu_callback_assert_msg(0, "reached end of `code´");
                                        {(tceu_code_mem*)&CEU_APP.root,
                                         0, CEU_APP.root.mem.trails_n-1}
                                      };
-        CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk, _ceu_mem, _ceu_trlK);
+        tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
+        ceu_go_bcast(&__ceu_evt_occ, &__ceu_stk);
+        if (!__ceu_stk.is_alive) {
+            return;
+        }
+
         ]]..free..[[
     }
     /* HACK_7 */
