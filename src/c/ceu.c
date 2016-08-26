@@ -291,11 +291,6 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
                         tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
 
-#define CEU_STK_LBL(occ, stk_old, exe_mem,exe_trl,exe_lbl) {    \
-    tceu_stk __ceu_stk = { 1, stk_old, {exe_mem, 0,0} };          \
-    ceu_go_lbl(occ, &__ceu_stk, exe_mem, exe_trl, exe_lbl);     \
-}
-
 #define CEU_STK_LBL_ABORT(occ, stk_old,                         \
                           abt_mem, abt_trl,                     \
                           exe_mem, exe_trl, exe_lbl) {          \
@@ -304,13 +299,6 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
     if (!__ceu_stk.is_alive) {                                  \
         return;                                                 \
     }                                                           \
-}
-
-#define CEU_STK_BCAST(occ, stk_old,                             \
-                      abt_mem, abt_trl) {            \
-    tceu_stk __ceu_stk  = { 1, stk_old, {abt_mem, abt_trl, abt_trl} };      \
-    tceu_stk ___ceu_stk = { 1, &__ceu_stk, {NULL, 0,0} };      \
-    ceu_go_bcast(&occ, &___ceu_stk); \
 }
 
 #define CEU_STK_BCAST_ABORT(occ, stk_old,                       \
@@ -611,7 +599,7 @@ int ceu_go_all (void)
     tceu_stk stk = { 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
                        0, CEU_APP.root.mem.trails_n-1 } };
-    CEU_STK_LBL(NULL, &stk,
+    ceu_go_lbl(NULL, &stk,
                 (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
 
     while (!ceu_cb_terminating) {

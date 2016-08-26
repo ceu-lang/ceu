@@ -229,7 +229,7 @@ CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
 ]]
             end
             me.mems.wrapper = me.mems.wrapper .. [[
-    CEU_STK_LBL((tceu_evt_occ*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
+    ceu_go_lbl((tceu_evt_occ*)&ps, stk, (tceu_code_mem*)&mem, trlK, lbl);
 ]]
             if Type and (not TYPES.check(Type,'void')) then
                 me.mems.wrapper = me.mems.wrapper..[[
