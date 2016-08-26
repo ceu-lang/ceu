@@ -400,9 +400,6 @@ ceu_callback_assert_msg(0, "reached end of `code´");
 
         ]]..free..[[
     }
-    /* HACK_7 */
-    ceu_dbg_assert(_ceu_stk->range.mem == _ceu_mem);
-    _ceu_stk->is_alive = 0;
 ]])
         end
         LINE(me, [[
