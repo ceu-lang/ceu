@@ -177,11 +177,9 @@ static tceu_app CEU_APP;
 /*****************************************************************************/
 
 typedef struct tceu_stk {
-    u8               is_alive : 1;
-    struct tceu_stk* down;
-    tceu_code_mem*   mem;
-    tceu_ntrl        trl0;
-    tceu_ntrl        trlF;
+    u8                 is_alive : 1;
+    struct tceu_stk*   down;
+    tceu_evt_occ_range range;
 } tceu_stk;
 
 static int ceu_mem_is_child (tceu_code_mem* me, tceu_code_mem* par_mem,
@@ -209,12 +207,12 @@ static void ceu_stack_clear (tceu_stk* stk, tceu_code_mem* mem,
         if (!stk->is_alive) {
             continue;
         }
-        if (stk->mem != mem) {
-            /* check if "stk->mem" is child of "mem" in between "[trl0,trlF]" */
-            if (ceu_mem_is_child(stk->mem, mem, trl0, trlF)) {
+        if (stk->range.mem != mem) {
+            /* check if "stk->range.mem" is child of "mem" in between "[trl0,trlF]" */
+            if (ceu_mem_is_child(stk->range.mem, mem, trl0, trlF)) {
                 stk->is_alive = 0;
             }
-        } else if (trl0<=stk->trl0 && stk->trlF<=trlF) {  /* [trl0,trlF] */
+        } else if (trl0<=stk->range.trl0 && stk->range.trlF<=trlF) {  /* [trl0,trlF] */
             stk->is_alive = 0;
         }
     }
@@ -294,14 +292,14 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
                         tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
 
 #define CEU_STK_LBL(occ, stk_old, exe_mem,exe_trl,exe_lbl) {    \
-    tceu_stk __ceu_stk = { 1, stk_old, exe_mem, 0,0 };          \
+    tceu_stk __ceu_stk = { 1, stk_old, {exe_mem, 0,0} };          \
     ceu_go_lbl(occ, &__ceu_stk, exe_mem, exe_trl, exe_lbl);     \
 }
 
 #define CEU_STK_LBL_ABORT(occ, stk_old,                         \
                           abt_mem, abt_trl,                     \
                           exe_mem, exe_trl, exe_lbl) {          \
-    tceu_stk __ceu_stk = { 1, stk_old, abt_mem, abt_trl,abt_trl };      \
+    tceu_stk __ceu_stk = { 1, stk_old, {abt_mem, abt_trl,abt_trl} };      \
     ceu_go_lbl(occ, &__ceu_stk, exe_mem,exe_trl,exe_lbl);       \
     if (!__ceu_stk.is_alive) {                                  \
         return;                                                 \
@@ -310,15 +308,15 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
 
 #define CEU_STK_BCAST(occ, stk_old,                             \
                       abt_mem, abt_trl) {            \
-    tceu_stk __ceu_stk  = { 1, stk_old,    abt_mem, abt_trl, abt_trl };      \
-    tceu_stk ___ceu_stk = { 1, &__ceu_stk, NULL, 0,0 };      \
+    tceu_stk __ceu_stk  = { 1, stk_old, {abt_mem, abt_trl, abt_trl} };      \
+    tceu_stk ___ceu_stk = { 1, &__ceu_stk, {NULL, 0,0} };      \
     ceu_go_bcast(&occ, &___ceu_stk); \
 }
 
 #define CEU_STK_BCAST_ABORT(occ, stk_old,                       \
                             abt_mem, abt_trl) {      \
-    tceu_stk __ceu_stk  = { 1, stk_old,    abt_mem, abt_trl,abt_trl };      \
-    tceu_stk ___ceu_stk = { 1, &__ceu_stk, NULL, 0,0 };      \
+    tceu_stk __ceu_stk  = { 1, stk_old, { abt_mem, abt_trl,abt_trl} };      \
+    tceu_stk ___ceu_stk = { 1, &__ceu_stk, {NULL, 0,0} };      \
     ceu_go_bcast(&occ, &___ceu_stk); \
     if (!__ceu_stk.is_alive) {                                  \
         return;                                                 \
@@ -341,7 +339,7 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
     }
 }
 
-static void ceu_go_bcast_1 (tceu_evt_occ* occ)
+static void ceu_go_bcast_mark (tceu_evt_occ* occ)
 {
     tceu_ntrl trlK;
     tceu_trl* trl;
@@ -387,7 +385,7 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
             tceu_evt_occ_range _range = { (tceu_code_mem*)trl->evt.mem,
                                           0, ((tceu_code_mem*)trl->evt.mem)->trails_n-1 };
             occ->range = _range;
-            ceu_go_bcast_1(occ);
+            ceu_go_bcast_mark(occ);
         } else if (trl->evt.id == CEU_INPUT__CODE_POOL) {
             tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
 #if 0
@@ -398,7 +396,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 tceu_evt_occ_range _range = { &cur->mem[0],
                                               0, ((&cur->mem[0])->trails_n-1) };
                 occ->range = _range;
-                ceu_go_bcast_1(occ);
+                ceu_go_bcast_mark(occ);
                 cur = cur->nxt;
             }
 
@@ -429,17 +427,24 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 static int xxx = 0;
 #endif
 
-static void ceu_go_bcast_2 (tceu_evt_occ* occ, tceu_stk* stk)
+static void ceu_go_bcast_exec (tceu_evt_occ* occ, tceu_stk* stk)
 {
     tceu_ntrl trlK;
     tceu_trl* trl;
     tceu_evt_occ_range range = occ->range;
 
+#if 0
+stk->range vs mem/trl0/trlF
+criar stk corrente beaseado em range que representa o "current traversal"
+can be aborted from a nested traversal which when returns must abort that
+#endif
+    tceu_stk _stk = { 1, stk, occ->range };
+
 #ifdef _CEU_DEBUG
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
-fprintf(stderr, ">>> %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, range.trlF);
+fprintf(stderr, ">>> %d [%p] %d->%d stk=%p\n", occ->evt.id, range.mem, range.trl0, range.trlF, &_stk);
 xxx += 4;
 #endif
 
@@ -458,7 +463,7 @@ xxx += 4;
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
-fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, stk->is_alive, occ->evt.id, range.mem, range.trl0, range.trlF);
+fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, _stk.is_alive, occ->evt.id, range.mem, range.trl0, range.trlF);
 #endif
 
         /* propagate "occ" to nested "code" */
@@ -466,7 +471,7 @@ fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, stk->is_alive, occ->evt.id
             tceu_evt_occ_range range = { (tceu_code_mem*)trl->evt.mem, 0,
                                          ((tceu_code_mem*)trl->evt.mem)->trails_n-1 };
             occ->range = range;
-            ceu_go_bcast_2(occ, stk);
+            ceu_go_bcast_exec(occ, &_stk);
         } else if (trl->evt.id == CEU_INPUT__CODE_POOL) {
 /* TODO: inverse order for FINS */
             tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
@@ -474,8 +479,8 @@ fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, stk->is_alive, occ->evt.id
                 tceu_code_mem_dyn* nxt = cur->nxt;
                 tceu_evt_occ_range range = { &cur->mem[0], 0, (&cur->mem[0])->trails_n-1 };
                 occ->range = range;
-                ceu_go_bcast_2(occ, stk);
-                if (!stk->is_alive) {
+                ceu_go_bcast_exec(occ, &_stk);
+                if (!_stk.is_alive) {
                     break;  /* bcast_2 killed myself */
                 }
                 cur = nxt;
@@ -499,10 +504,10 @@ for (int i=0; i<xxx+4; i++) {
 fprintf(stderr, "+++ %d\n", trl->lbl);
 #endif
             trl->evt.awk = NULL;
-            CEU_STK_LBL(occ, stk, range.mem, trlK, trl->lbl);
+            CEU_STK_LBL(occ, &_stk, range.mem, trlK, trl->lbl);
         }
 
-        if (!stk->is_alive) {
+        if (!_stk.is_alive) {
             break;
         }
 
@@ -532,8 +537,8 @@ fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, rang
 
 static void ceu_go_bcast (tceu_evt_occ* occ, tceu_stk* stk)
 {
-    ceu_go_bcast_1(occ);
-    ceu_go_bcast_2(occ, stk);
+    ceu_go_bcast_mark(occ);
+    ceu_go_bcast_exec(occ, stk);
 }
 
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
@@ -555,7 +560,8 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
     }
 
     tceu_stk stk = { 1, NULL,
-                     (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1 };
+                     { (tceu_code_mem*)&CEU_APP.root,
+                       0, CEU_APP.root.mem.trails_n-1 } };
     ceu_go_bcast(&occ, &stk);
 }
 
@@ -605,7 +611,8 @@ int ceu_go_all (void)
     lua_atpanic(CEU_APP.lua, ceu_lua_atpanic);
 
     tceu_stk stk = { 1, NULL,
-                     (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1 };
+                     { (tceu_code_mem*)&CEU_APP.root,
+                       0, CEU_APP.root.mem.trails_n-1 } };
     CEU_STK_LBL(NULL, &stk,
                 (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
 

@@ -400,7 +400,7 @@ ceu_callback_assert_msg(0, "reached end of `code´");
         end
         LINE(me, [[
     /* HACK_7 */
-    ceu_dbg_assert(_ceu_stk->mem == _ceu_mem);
+    ceu_dbg_assert(_ceu_stk->range.mem == _ceu_mem);
     _ceu_stk->is_alive = 0;
 
     return; /* HALT(me) */
@@ -1260,7 +1260,11 @@ if (]]..V(Exp_Name,{is_bind=true})..[[ != NULL) {
                                    {(tceu_code_mem*)&CEU_APP.root,
                                     0, CEU_APP.root.mem.trails_n-1}
                                  };
-    CEU_STK_BCAST_ABORT(__ceu_evt_occ, _ceu_stk, _ceu_mem, _ceu_trlK);
+    tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
+    ceu_go_bcast(&__ceu_evt_occ, &__ceu_stk);
+    if (!__ceu_stk.is_alive) {
+        return;
+    }
 }
 ]])
     end,
