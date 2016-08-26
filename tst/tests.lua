@@ -27,7 +27,7 @@ end
 
 -->> POOL / LOOP
 
--- valgrind fails
+-- test valgrind fail
 Test { [[
 code/await Ff (void) => (var&? int xxx) => void do
     var int v = 10;
@@ -36405,6 +36405,21 @@ escape a;
     run = { ['~>1s']=5 },
 }
 
+Test { [[
+code/await Tx (var& int aaa)=>void do
+    await 1s;
+    aaa = aaa + 5;
+    await FOREVER;
+end
+var int a = 0;
+pool[2] Tx ts;
+spawn Tx(&a) in ts;
+spawn Tx(&a) in ts;
+await 2s;
+escape a;
+]],
+    run = { ['~>2s']=10 },
+}
 Test { [[
 code/await Tx (var& int aaa)=>void do
     await 1s;

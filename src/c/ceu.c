@@ -433,12 +433,7 @@ static void ceu_go_bcast_exec (tceu_evt_occ* occ, tceu_stk* stk)
     tceu_trl* trl;
     tceu_evt_occ_range range = occ->range;
 
-#if 0
-stk->range vs mem/trl0/trlF
-criar stk corrente beaseado em range que representa o "current traversal"
-can be aborted from a nested traversal which when returns must abort that
-#endif
-    tceu_stk _stk = { 1, stk, occ->range };
+    tceu_stk _stk = { 1, stk, occ->range }; /* maybe nested bcast aborts it */
 
 #ifdef _CEU_DEBUG
 for (int i=0; i<xxx; i++) {
@@ -504,10 +499,13 @@ for (int i=0; i<xxx+4; i++) {
 fprintf(stderr, "+++ %d\n", trl->lbl);
 #endif
             trl->evt.awk = NULL;
-            CEU_STK_LBL(occ, &_stk, range.mem, trlK, trl->lbl);
+            ceu_go_lbl(occ, &_stk, range.mem, trlK, trl->lbl);
         }
 
         if (!_stk.is_alive) {
+#ifdef _CEU_DEBUG
+fprintf(stderr, "break\n");
+#endif
             break;
         }
 

@@ -42,7 +42,7 @@ local function CLEAR (me)
     if me.trails_n > 1 then
         LINE(me, [[
 {
-    ceu_stack_clear(_ceu_stk->down, _ceu_mem,
+    ceu_stack_clear(_ceu_stk, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
     tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{NULL}}, NULL,
                                    { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ }
@@ -455,7 +455,7 @@ if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ 
         })
 
         LINE(me, [[
-ceu_stack_clear(_ceu_stk->down, _ceu_mem,
+ceu_stack_clear(_ceu_stk, _ceu_mem,
                 ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
 ]])
     end,
@@ -691,8 +691,8 @@ ceu_callback_assert_msg(0, "reached end of `do´");
             end
         end
         LINE(me, [[
-CEU_STK_LBL(]]..evt..[[, _ceu_stk,
-            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
+ceu_go_lbl(]]..evt..[[, _ceu_stk,
+           _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
         HALT(me)
     end,
@@ -825,15 +825,15 @@ while (1) {
 
     Break = function (me)
         LINE(me, [[
-CEU_STK_LBL(NULL, _ceu_stk,
-            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
+ceu_go_lbl(NULL, _ceu_stk,
+           _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
         HALT(me)
     end,
     Continue = function (me)
         LINE(me, [[
-CEU_STK_LBL(NULL, _ceu_stk,
-            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
+ceu_go_lbl(NULL, _ceu_stk,
+           _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
 ]])
         HALT(me)
     end,
@@ -873,8 +873,8 @@ CEU_STK_LBL_ABORT(_ceu_evt, _ceu_stk,
             else
                 -- no need to abort since there's a "return" below
                 LINE(me, [[
-CEU_STK_LBL(_ceu_evt, _ceu_stk,
-            _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
+ceu_go_lbl(_ceu_evt, _ceu_stk,
+           _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
 ]])
             end
         end
@@ -895,8 +895,8 @@ CEU_STK_LBL(_ceu_evt, _ceu_stk,
 ]])
                 end
                 LINE(me, [[
-CEU_STK_LBL(NULL, _ceu_stk,
-            _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
+ceu_go_lbl(NULL, _ceu_stk,
+           _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
 ]])
                 HALT(me)
             end
