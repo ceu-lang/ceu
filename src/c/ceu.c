@@ -184,8 +184,6 @@ typedef struct tceu_stk {
     tceu_ntrl        trlF;
 } tceu_stk;
 
-static tceu_stk CEU_STK_BASE;
-
 static int ceu_mem_is_child (tceu_code_mem* me, tceu_code_mem* par_mem,
                              tceu_ntrl par_trl1, tceu_ntrl par_trl2)
 {
@@ -424,6 +422,8 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
             trl->evt.awk = NULL;
         }
     }
+
+    occ->range = range;
 }
 
 #ifdef _CEU_DEBUG
@@ -435,15 +435,13 @@ static void ceu_go_bcast_2 (tceu_evt_occ* occ, tceu_stk* stk)
 {
     tceu_ntrl trlK;
     tceu_trl* trl;
-
-    tceu_ntrl trl0 = stk->trl0;
-    tceu_ntrl trlF = stk->trlF;
+    tceu_evt_occ_range range = occ->range;
 
 #ifdef _CEU_DEBUG
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
-fprintf(stderr, ">>> %d [%p] %d->%d\n", occ->evt.id, stk->mem, trl0, trlF);
+fprintf(stderr, ">>> %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, range.trlF);
 xxx += 4;
 #endif
 
@@ -451,34 +449,34 @@ xxx += 4;
 
     /* CLEAR: inverse execution order */
     if (occ->evt.id == CEU_INPUT__CLEAR) {
-        tceu_ntrl tmp = trl0;
-        trl0 = trlF;
-        trlF = tmp;
+        tceu_ntrl tmp = range.trl0;
+        range.trl0 = range.trlF;
+        range.trlF = tmp;
     }
 
-    for (trlK=trl0, trl=&stk->mem->trails[trlK]; ;)
+    for (trlK=range.trl0, trl=&range.mem->trails[trlK]; ;)
     {
 #ifdef _CEU_DEBUG
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
-fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, stk->is_alive, occ->evt.id, stk->mem, trl0, trlF);
+fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, stk->is_alive, occ->evt.id, range.mem, range.trl0, range.trlF);
 #endif
 
         /* propagate "occ" to nested "code" */
         if (trl->evt.id == CEU_INPUT__CODE) {
-            tceu_stk _stk = { 1, stk,
-                              (tceu_code_mem*)trl->evt.mem, 0,
-                              ((tceu_code_mem*)trl->evt.mem)->trails_n-1 };
-            ceu_go_bcast_2(occ, &_stk);
+            tceu_evt_occ_range range = { (tceu_code_mem*)trl->evt.mem, 0,
+                                         ((tceu_code_mem*)trl->evt.mem)->trails_n-1 };
+            occ->range = range;
+            ceu_go_bcast_2(occ, stk);
         } else if (trl->evt.id == CEU_INPUT__CODE_POOL) {
 /* TODO: inverse order for FINS */
             tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
             while (cur != trl->evt.pool_first) {
                 tceu_code_mem_dyn* nxt = cur->nxt;
-                tceu_stk _stk = { 1, stk,
-                                  &cur->mem[0], 0, (&cur->mem[0])->trails_n-1 };
-                ceu_go_bcast_2(occ, &_stk);
+                tceu_evt_occ_range range = { &cur->mem[0], 0, (&cur->mem[0])->trails_n-1 };
+                occ->range = range;
+                ceu_go_bcast_2(occ, stk);
                 if (!stk->is_alive) {
                     break;  /* bcast_2 killed myself */
                 }
@@ -496,8 +494,14 @@ fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, stk->is_alive, occ->evt.id
 
         /* execute */
         } else if (trl->evt.id==CEU_INPUT__NONE && trl->evt.awk==occ) {
+#ifdef _CEU_DEBUG
+for (int i=0; i<xxx+4; i++) {
+    fprintf(stderr, " ");
+}
+fprintf(stderr, "+++ %d\n", trl->lbl);
+#endif
             trl->evt.awk = NULL;
-            CEU_STK_LBL(occ, stk, stk->mem, trlK, trl->lbl);
+            CEU_STK_LBL(occ, stk, range.mem, trlK, trl->lbl);
         }
 
         if (!stk->is_alive) {
@@ -510,7 +514,7 @@ fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, stk->is_alive, occ->evt.id
             trl->evt.awk = NULL;
         }
 
-        if (trlK == trlF) {
+        if (trlK == range.trlF) {
             break;
         } else if (occ->evt.id == CEU_INPUT__CLEAR) {
             trlK--; trl--;
@@ -524,7 +528,7 @@ xxx -= 4;
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
-fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, stk->mem, trl0, trlF);
+fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, range.trlF);
 #endif
 }
 
@@ -551,7 +555,10 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
             break;
         }
     }
-    ceu_go_bcast(&occ, &CEU_STK_BASE);
+
+    tceu_stk stk = { 1, NULL,
+                     (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1 };
+    ceu_go_bcast(&occ, &stk);
 }
 
 /*****************************************************************************/
@@ -599,12 +606,10 @@ int ceu_go_all (void)
     luaL_openlibs(CEU_APP.lua);
     lua_atpanic(CEU_APP.lua, ceu_lua_atpanic);
 
-    CEU_STK_LBL(NULL, &CEU_STK_BASE,
+    tceu_stk stk = { 1, NULL,
+                     (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1 };
+    CEU_STK_LBL(NULL, &stk,
                 (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
-
-    tceu_stk base = { 1, NULL,
-                      (tceu_code_mem*)&CEU_APP.root, 0, CEU_APP.root.mem.trails_n-1 };
-    CEU_STK_BASE = base;
 
     while (!ceu_cb_terminating) {
         ceu_callback_num_void(CEU_CALLBACK_STEP, ceu_cb_pending_async);
