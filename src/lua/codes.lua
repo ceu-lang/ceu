@@ -872,10 +872,16 @@ ceu_go_lbl(NULL, _ceu_stk,
         -- call each branch
         for i, sub in ipairs(me) do
             if i < #me then
+                local abt = me[i+1].trails[1]
                 LINE(me, [[
-CEU_STK_LBL_ABORT(_ceu_evt, _ceu_stk,
-                  _ceu_mem, ]]..me[i+1].trails[1]..[[,
-                  _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[);
+{
+    tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,]]..abt..','..abt..[[} };
+    ceu_go_lbl(_ceu_evt, &__ceu_stk,
+               _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[);
+    if (!__ceu_stk.is_alive) {
+        return;
+    }
+}
 ]])
             else
                 -- no need to abort since there's a "return" below
