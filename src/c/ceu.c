@@ -291,16 +291,6 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
 static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
                         tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
 
-#define CEU_STK_LBL_ABORT(occ, stk_old,                         \
-                          abt_mem, abt_trl,                     \
-                          exe_mem, exe_trl, exe_lbl) {          \
-    tceu_stk __ceu_stk = { 1, stk_old, {abt_mem, abt_trl,abt_trl} };      \
-    ceu_go_lbl(occ, &__ceu_stk, exe_mem,exe_trl,exe_lbl);       \
-    if (!__ceu_stk.is_alive) {                                  \
-        return;                                                 \
-    }                                                           \
-}
-
 === NATIVE_POS ===
 
 === CODES_WRAPPERS ===
