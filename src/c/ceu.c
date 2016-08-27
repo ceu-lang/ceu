@@ -53,21 +53,26 @@ typedef struct tceu_evt_occ {
 } tceu_evt_occ;
 
 typedef struct tceu_trl {
-    union {
+    struct {
         tceu_evt evt;
+        union {
+            /* NORMAL, CEU_INPUT__CODE, CEU_EVENT__MIN */
+            struct {
+                tceu_nlbl lbl;
 
-        /* NORMAL, CEU_INPUT__CODE, CEU_EVENT__MIN */
-        struct {
-            tceu_evt _1_evt;
-            tceu_nlbl lbl;
-        };
+                /* CEU_INPUT__CLEAR */
+                union {
+                    tceu_ntrl trl0;
+                    tceu_ntrl trlF;
+                };
+            };
 
-        /* CEU_INPUT__PAUSE */
-        struct {
-            tceu_evt  _2_evt;
-            tceu_evt  pse_evt;
-            tceu_ntrl pse_skip;
-            u8        pse_paused;
+            /* CEU_INPUT__PAUSE */
+            struct {
+                tceu_evt  pse_evt;
+                tceu_ntrl pse_skip;
+                u8        pse_paused;
+            };
         };
     };
 } tceu_trl;
