@@ -46,8 +46,8 @@ local function CLEAR (me)
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
     tceu_evt_occ_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
 
-    /* HACK_8: _ceu_evt holds __ceu_ret */
-    tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{_ceu_evt}}, &__ceu_range,
+    /* HACK_8: _ceu_occ holds __ceu_ret */
+    tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{_ceu_occ}}, &__ceu_range,
                                    {(tceu_code_mem*)&CEU_APP.root,
                                     0, CEU_APP.root.mem.trails_n-1}
                                  };
@@ -364,7 +364,7 @@ if (0)
 
                 LINE(me, [[
 ]]..V(dcl,{is_bind=true})..[[ =
-    ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_evt)->_]]..i..[[;
+    ]]..cast..[[((tceu_code_args_]]..args_id..[[*)_ceu_occ)->_]]..i..[[;
 ]])
             end
         end
@@ -432,8 +432,8 @@ CLEAR(me) -- TODO-NOW
                 if ID_int.tag~='ID_any' and ID_int.dcl.is_mid_idx then
                     local Code = AST.par(me,'Code')
                     ret = ret .. [[
-if (((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[ != NULL) {
-    *(((tceu_code_args_]]..Code.id..[[*)_ceu_evt)->_]]..ID_int.dcl.is_mid_idx..[[) = ]]..V(ID_int, {is_bind=true})..[[;
+if (((tceu_code_args_]]..Code.id..[[*)_ceu_occ)->_]]..ID_int.dcl.is_mid_idx..[[ != NULL) {
+    *(((tceu_code_args_]]..Code.id..[[*)_ceu_occ)->_]]..ID_int.dcl.is_mid_idx..[[) = ]]..V(ID_int, {is_bind=true})..[[;
 }
 ]]
                 end
@@ -874,7 +874,7 @@ ceu_go_lbl(NULL, _ceu_stk,
                 LINE(me, [[
 {
     tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,]]..abt..','..abt..[[} };
-    ceu_go_lbl(_ceu_evt, &__ceu_stk,
+    ceu_go_lbl(_ceu_occ, &__ceu_stk,
                _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[);
     if (!__ceu_stk.is_alive) {
         return;
@@ -884,7 +884,7 @@ ceu_go_lbl(NULL, _ceu_stk,
             else
                 -- no need to abort since there's a "return" below
                 LINE(me, [[
-ceu_go_lbl(_ceu_evt, _ceu_stk,
+ceu_go_lbl(_ceu_occ, _ceu_stk,
            _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
 ]])
             end
@@ -910,7 +910,7 @@ ceu_go_lbl(_ceu_evt, _ceu_stk,
 HACK_8
 ceu_go_lbl(NULL, _ceu_stk,
 */
-ceu_go_lbl(_ceu_evt, _ceu_stk,
+ceu_go_lbl(_ceu_occ, _ceu_stk,
            _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
 ]])
                 HALT(me)
@@ -954,7 +954,7 @@ if (! ]]..CUR('__and_'..me.n..'_'..i)..[[) {
                         code = code.dyn_base
                     end
                     LINE(me, [[
-((tceu_code_args_]]..code.id..[[*) _ceu_evt)->_ret = ]]..V(fr)..[[;
+((tceu_code_args_]]..code.id..[[*) _ceu_occ)->_ret = ]]..V(fr)..[[;
 ]])
                 else
                     LINE(me, [[
@@ -1006,7 +1006,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
             assert(fr.tag == 'Abs_Await')
             -- see "Set_Exp: _ret"
             -- HACK_8
-            SET(me, to, '*((int*)_ceu_evt->evt.mem)' ,true)
+            SET(me, to, '*((int*)_ceu_occ->evt.mem)' ,true)
         end
     end,
     Set_Await_many = function (me)
@@ -1023,7 +1023,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         CONC(me, Await)
         for i, name in ipairs(List) do
             if name.tag ~= 'ID_any' then
-                local ps = '(('..id..'*)(_ceu_evt->params))'
+                local ps = '(('..id..'*)(_ceu_occ->params))'
                 SET(me, name, ps..'->_'..i, true)
             end
         end
@@ -1305,7 +1305,7 @@ _CEU_HALT_]]..me.n..[[_:
         LINE(me, [[
 /* subtract time and check if I have to awake */
 {
-    s32* dt = (s32*)_ceu_evt->params;
+    s32* dt = (s32*)_ceu_occ->params;
     if (!ceu_wclock(*dt, NULL, &]]..wclk..[[) ) {
         goto _CEU_HALT_]]..me.n..[[_;
     }

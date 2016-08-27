@@ -294,7 +294,7 @@ int ceu_lua_atpanic (lua_State* lua) {
 
 static void ceu_go_bcast (tceu_evt_occ* occ, tceu_stk* stk);
 static void ceu_go_ext (tceu_nevt evt_id, void* evt_params);
-static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
+static void ceu_go_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
                         tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
 
 === NATIVE_POS ===
@@ -303,7 +303,7 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
 
 /*****************************************************************************/
 
-static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
+static void ceu_go_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
                         tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl)
 {
     switch (_ceu_lbl) {
