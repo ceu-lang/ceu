@@ -45,7 +45,9 @@ local function CLEAR (me)
     ceu_stack_clear(_ceu_stk, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
     tceu_evt_occ_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
-    tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{NULL}}, &__ceu_range,
+
+    /* HACK_8: _ceu_evt holds __ceu_ret */
+    tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{_ceu_evt}}, &__ceu_range,
                                    {(tceu_code_mem*)&CEU_APP.root,
                                     0, CEU_APP.root.mem.trails_n-1}
                                  };
@@ -377,24 +379,9 @@ ceu_callback_assert_msg(0, "reached end of `code´");
         end
 
         -- CODE/DELAYED
+CLEAR(me) -- TODO-NOW
         if mods.await then
             LINE(me, [[
-/* TODO: remove */
-#if 1
-    {
-        /* _ceu_evt holds __ceu_ret (see Escape) */
-        tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CODE,{_ceu_mem}}, _ceu_evt,
-                                       {(tceu_code_mem*)&CEU_APP.root,
-                                        0, CEU_APP.root.mem.trails_n-1}
-                                     };
-        tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-        ceu_go_bcast(&__ceu_evt_occ, &__ceu_stk);
-        if (!__ceu_stk.is_alive) {
-            return;
-        }
-    }
-#endif
-
     /* free */
     if (_ceu_mem->pak != NULL) {
         tceu_code_mem_dyn* __ceu_dyn =
@@ -702,6 +689,7 @@ ceu_callback_assert_msg(0, "reached end of `do´");
         local mods = code and unpack(code)
         local evt do
             if code and mods.await then
+                -- HACK_8
                 evt = '(tceu_evt_occ*) &__ceu_ret_'..code.n
             else
                 evt = 'NULL'
@@ -918,7 +906,11 @@ ceu_go_lbl(_ceu_evt, _ceu_stk,
 ]])
                 end
                 LINE(me, [[
+/*
+HACK_8
 ceu_go_lbl(NULL, _ceu_stk,
+*/
+ceu_go_lbl(_ceu_evt, _ceu_stk,
            _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
 ]])
                 HALT(me)
@@ -1013,7 +1005,8 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         else
             assert(fr.tag == 'Abs_Await')
             -- see "Set_Exp: _ret"
-            SET(me, to, '*((int*)_ceu_evt->params)' ,true)
+            -- HACK_8
+            SET(me, to, '*((int*)_ceu_evt->evt.mem)' ,true)
         end
     end,
     Set_Await_many = function (me)

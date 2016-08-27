@@ -29080,26 +29080,6 @@ escape 1;
     run = { ['~>20s']=1 },
 }
 
-Test { [[
-code/await Ff (void)=>void do
-    par/and do
-    with
-    with
-    with
-    with
-    end
-end
-
-loop i in [0 -> 10[ do
-    await 1s;
-    vector[] byte string = [] .. "Alo mundo!\n";
-    await Ff();
-end
-escape 1;
-]],
-    run = { ['~>20s']=1 },
-}
-
 -->> VECTOR / ALIAS
 
 Test { [[
@@ -33920,6 +33900,26 @@ end
 escape 1;
 ]],
     run = { ['~>10s']=1 },
+}
+
+Test { [[
+code/await Ff (void)=>void do
+    par/and do
+    with
+    with
+    with
+    with
+    end
+end
+
+loop i in [0 -> 10[ do
+    await 1s;
+    vector[] byte string = [] .. "Alo mundo!\n";
+    await Ff();
+end
+escape 1;
+]],
+    run = { ['~>20s']=1 },
 }
 
 -->> CODE / ALIAS

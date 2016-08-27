@@ -12,8 +12,8 @@ local function new (lbl)
     end
     if not LABELS.list[lbl.id] then
         LABELS.list[lbl.id] = true
-        lbl.n = #LABELS.list                   -- starts from 0
         LABELS.list[#LABELS.list+1] = lbl
+        lbl.n = #LABELS.list                   -- starts from 1
     end
 
     return lbl

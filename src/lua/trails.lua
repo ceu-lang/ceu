@@ -19,6 +19,10 @@ F = {
         if not F[me.tag] then
             MAX_all(me)
         end
+
+        if me.tag == 'Code' then
+            me.trails_n = me.trails_n + 1   -- TODO-NOW
+        end
     end,
 
     Block__PRE = function (me)
@@ -121,6 +125,9 @@ G = {
     Node__PRE = function (me)
         if (not me.trails) and me.__par then
             me.trails = { unpack(me.__par.trails) }
+        end
+        if me.__par and me.__par.tag == 'Code' then
+            me.trails[2] = me.trails[2] + 1 -- TODO-NOW
         end
     end,
 

@@ -193,7 +193,6 @@ static int ceu_mem_is_child (tceu_code_mem* me, tceu_code_mem* par_mem,
                              tceu_ntrl par_trl1, tceu_ntrl par_trl2)
 {
     if (me == par_mem) {
-ceu_callback_assert_msg(0, "TODO");
         return (par_trl1==0 && par_trl2==me->trails_n-1);
     }
 
@@ -314,6 +313,14 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_evt, tceu_stk* _ceu_stk,
     }
 }
 
+#ifdef _CEU_DEBUG_MARK
+#define _CEU_DEBUG_MARK
+static int xxx = 0;
+#endif
+#ifdef _CEU_DEBUG_EXEC
+static int xxx = 0;
+#endif
+
 static void ceu_go_bcast_mark (tceu_evt_occ* occ)
 {
     tceu_ntrl trlK;
@@ -322,9 +329,12 @@ static void ceu_go_bcast_mark (tceu_evt_occ* occ)
 
     /* MARK TRAILS TO EXECUTE */
 
-#if 0
-#include <stdio.h>
-printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, occ->evt.id, occ->trl0, occ->trlF);
+#ifdef _CEU_DEBUG_MARK
+for (int i=0; i<xxx; i++) {
+    fprintf(stderr, " ");
+}
+fprintf(stderr, ">>> %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, range.trlF);
+xxx += 4;
 #endif
 
     /* CLEAR: inverse execution order */
@@ -338,8 +348,11 @@ printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, occ->evt.id, occ->trl0,
 
     for (trlK=trl0, trl=&range.mem->trails[trlK]; ;)
     {
-#if 0
-printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
+#ifdef _CEU_DEBUG_MARK
+for (int i=0; i<xxx; i++) {
+    fprintf(stderr, " ");
+}
+fprintf(stderr, "??? trlK=%d, evt=%d\n", trlK, trl->evt.id);
 #endif
         int matches = 0;
 
@@ -357,14 +370,9 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
                     /* CLEAR only awakes on "exec" */
                     matches = 1;
                 }
-            } else if (trl->evt.id == CEU_INPUT__CODE) {
-/* TODO */
             }
         } else if (trl->evt.id == occ->evt.id) {
             switch (trl->evt.id) {
-                case CEU_INPUT__CODE:
-                    matches = (occ->evt.mem == trl->evt.mem);
-                    break;
                 case CEU_INPUT__VAR:
                     matches = (trl->evt.var==occ->evt.var || trl->evt.var==NULL);
                     break;
@@ -387,6 +395,14 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
                                           0, ((tceu_code_mem*)trl->evt.mem)->trails_n-1 };
             occ->range = _range;
             ceu_go_bcast_mark(occ);
+
+            if (occ->evt.id == CEU_INPUT__CLEAR) {
+                tceu_evt_occ_range* occ_range = (tceu_evt_occ_range*) occ->params;
+                if (ceu_mem_is_child(trl->evt.mem, occ_range->mem, occ_range->trl0, occ_range->trlF)) {
+                    trl->evt.id  = CEU_INPUT__NONE;
+                    trl->evt.awk = occ;     /* awake only at this level again */
+                }
+            }
         } else if (trl->evt.id == CEU_INPUT__CODE_POOL) {
             tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
 #if 0
@@ -414,10 +430,12 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 trl  += trl->pse_skip;
             }
 
-        } else if (occ->evt.id == CEU_INPUT__CLEAR) {
+        }
+
+        if (occ->evt.id == CEU_INPUT__CLEAR) {
             tceu_evt_occ_range* occ_range = (tceu_evt_occ_range*) occ->params;
             int matches = (occ_range->mem  == range.mem  &&
-                           occ_range->trl0 <= trlK &&
+                           occ_range->trl0 <= trlK       &&
                            occ_range->trlF >= trlK);
             if (matches) {
                 trl->evt.id  = CEU_INPUT__NONE;
@@ -437,11 +455,6 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
     occ->range = range;
 }
 
-#ifdef _CEU_DEBUG
-#define _CEU_DEBUG
-static int xxx = 0;
-#endif
-
 static void ceu_go_bcast_exec (tceu_evt_occ* occ, tceu_stk* stk)
 {
     tceu_ntrl trlK;
@@ -450,7 +463,7 @@ static void ceu_go_bcast_exec (tceu_evt_occ* occ, tceu_stk* stk)
 
     tceu_stk _stk = { 1, stk, occ->range }; /* maybe nested bcast aborts it */
 
-#ifdef _CEU_DEBUG
+#ifdef _CEU_DEBUG_EXEC
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
@@ -464,7 +477,7 @@ xxx += 4;
          trlK<=range.trlF;
          trlK++, trl++)
     {
-#ifdef _CEU_DEBUG
+#ifdef _CEU_DEBUG_EXEC
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
@@ -502,7 +515,7 @@ fprintf(stderr, "??? trlK=%d, stk=%d evt=%d\n", trlK, _stk.is_alive, trl->evt.id
 
         /* execute */
         } else if (trl->evt.id==CEU_INPUT__NONE && trl->evt.awk==occ) {
-#ifdef _CEU_DEBUG
+#ifdef _CEU_DEBUG_EXEC
 for (int i=0; i<xxx+4; i++) {
     fprintf(stderr, " ");
 }
@@ -513,7 +526,7 @@ fprintf(stderr, "+++ %d\n", trl->lbl);
         }
 
         if (!_stk.is_alive) {
-#ifdef _CEU_DEBUG
+#ifdef _CEU_DEBUG_EXEC
 fprintf(stderr, "break\n");
 #endif
             break;
@@ -532,7 +545,7 @@ fprintf(stderr, "break\n");
         }
     }
 
-#ifdef _CEU_DEBUG
+#ifdef _CEU_DEBUG_EXEC
 xxx -= 4;
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
