@@ -56,7 +56,7 @@ typedef struct tceu_trl {
     struct {
         tceu_evt evt;
         union {
-            /* NORMAL, CEU_INPUT__CODE, CEU_EVENT__MIN */
+            /* NORMAL, CEU_EVENT__MIN */
             struct {
                 tceu_nlbl lbl;
                 union {
@@ -110,13 +110,16 @@ typedef struct tceu_pool_pak {
 /* EVENTS_ENUM */
 
 enum {
+    /* non-emitable */
     CEU_INPUT__NONE = 0,
-    CEU_INPUT__CLEAR,
     CEU_INPUT__FINALIZE,
     CEU_INPUT__PAUSE,
-    CEU_INPUT__VAR,
     CEU_INPUT__CODE,
     CEU_INPUT__CODE_POOL,
+
+    /* emitable */
+    CEU_INPUT__VAR,     /* TODO: remove */
+    CEU_INPUT__CLEAR,
     CEU_INPUT__ASYNC,
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
@@ -354,6 +357,8 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
                     /* CLEAR only awakes on "exec" */
                     matches = 1;
                 }
+            } else if (trl->evt.id == CEU_INPUT__CODE) {
+/* TODO */
             }
         } else if (trl->evt.id == occ->evt.id) {
             switch (trl->evt.id) {
@@ -404,7 +409,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 trl->pse_paused = *((u8*)occ->params);
             }
             /* don't skip if pausing now */
-            if (was_paused) {
+            if (was_paused && occ->evt.id!=CEU_INPUT__CLEAR) {
                 trlK += trl->pse_skip;
                 trl  += trl->pse_skip;
             }

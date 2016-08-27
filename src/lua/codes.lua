@@ -379,6 +379,8 @@ ceu_callback_assert_msg(0, "reached end of `code´");
         -- CODE/DELAYED
         if mods.await then
             LINE(me, [[
+/* TODO: remove */
+#if 1
     {
         /* _ceu_evt holds __ceu_ret (see Escape) */
         tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CODE,{_ceu_mem}}, _ceu_evt,
@@ -391,6 +393,7 @@ ceu_callback_assert_msg(0, "reached end of `code´");
             return;
         }
     }
+#endif
 
     /* free */
     if (_ceu_mem->pak != NULL) {
