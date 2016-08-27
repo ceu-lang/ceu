@@ -25,6 +25,27 @@ end
 --      - if yielding stmts
 --          - loop requires a "&?" var and a watching
 
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+
+    vector[] byte c = [1,2,3];
+
+    async do end;
+end
+
+var&? int x;
+spawn Ff() => (x);
+await x;
+
+escape 1;
+]],
+    todo = 'oi',
+    run = 1,
+}
+--do return end
+
 -->> POOL / LOOP
 
 -- test valgrind fail

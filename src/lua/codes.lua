@@ -44,8 +44,10 @@ local function CLEAR (me)
 {
     ceu_stack_clear(_ceu_stk, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
-    tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{NULL}}, NULL,
-                                   { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ }
+    tceu_evt_occ_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
+    tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{NULL}}, &__ceu_range,
+                                   {(tceu_code_mem*)&CEU_APP.root,
+                                    0, CEU_APP.root.mem.trails_n-1}
                                  };
     tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     ceu_go_bcast(&__ceu_evt_occ, &__ceu_stk);
@@ -187,8 +189,11 @@ ceu_vector_init(&]]..V(dcl)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
         -- notify var out-of-scope
         if me.has_fin then
             LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_fin.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
+    (tceu_evt_occ_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
+
 if (0) {
 ]])
             CASE(me, me.lbl_fin)
@@ -372,19 +377,6 @@ ceu_callback_assert_msg(0, "reached end of `code´");
 
         -- CODE/DELAYED
         if mods.await then
-            local free = [[
-    if (_ceu_mem->pak != NULL) {
-        tceu_code_mem_dyn* __ceu_dyn =
-            (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
-
-        ceu_dbg_assert(__ceu_dyn->state != CEU_CODE_MEM_DYN_STATE_DELETE);
-        if (__ceu_dyn->state == CEU_CODE_MEM_DYN_STATE_TRAVERSING) {
-           __ceu_dyn->state = CEU_CODE_MEM_DYN_STATE_DELETE;
-        } else {
-            ceu_code_mem_dyn_free(&_ceu_mem->pak->pool, __ceu_dyn);
-        }
-    }
-]]
             LINE(me, [[
     {
         /* _ceu_evt holds __ceu_ret (see Escape) */
@@ -397,8 +389,19 @@ ceu_callback_assert_msg(0, "reached end of `code´");
         if (!__ceu_stk.is_alive) {
             return;
         }
+    }
 
-        ]]..free..[[
+    /* free */
+    if (_ceu_mem->pak != NULL) {
+        tceu_code_mem_dyn* __ceu_dyn =
+            (tceu_code_mem_dyn*)(((byte*)(_ceu_mem)) - sizeof(tceu_code_mem_dyn));
+
+        ceu_dbg_assert(__ceu_dyn->state != CEU_CODE_MEM_DYN_STATE_DELETE);
+        if (__ceu_dyn->state == CEU_CODE_MEM_DYN_STATE_TRAVERSING) {
+           __ceu_dyn->state = CEU_CODE_MEM_DYN_STATE_DELETE;
+        } else {
+            ceu_code_mem_dyn_free(&_ceu_mem->pak->pool, __ceu_dyn);
+        }
     }
 ]])
         end
@@ -546,9 +549,12 @@ if (!_ceu_stk->is_alive) {
 
         if me.yields then
             LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CLEAR;
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.mem = _ceu_mem;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl_clr.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.mem   = _ceu_mem;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_clr.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
+    (tceu_evt_occ_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
+
 ]]..CUR('__dyn_'..me.n)..[[ = NULL;
 if (0) {
     case ]]..me.lbl_clr.id..[[:
@@ -645,6 +651,9 @@ if (0) {
         LINE(me, [[
 _ceu_mem->trails[]]..later.trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
 _ceu_mem->trails[]]..later.trails[1]..[[].lbl    = ]]..me.lbl_in.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
+    (tceu_evt_occ_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
+
 if (0) {
 ]])
         CASE(me, me.lbl_in)

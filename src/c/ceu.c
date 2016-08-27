@@ -59,11 +59,9 @@ typedef struct tceu_trl {
             /* NORMAL, CEU_INPUT__CODE, CEU_EVENT__MIN */
             struct {
                 tceu_nlbl lbl;
-
-                /* CEU_INPUT__CLEAR */
                 union {
-                    tceu_ntrl trl0;
-                    tceu_ntrl trlF;
+                    /* CEU_INPUT__CLEAR */
+                    tceu_evt_occ_range clr_range;
                 };
             };
 
@@ -332,24 +330,31 @@ printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, occ->evt.id, occ->trl0,
 #if 0
 printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 #endif
-        /* IN__CLEAR and "finalize" clause */
-        int matches_clear = (occ->evt.id==CEU_INPUT__CLEAR &&
-                             trl->evt.id==CEU_INPUT__CLEAR);
-
-        /* occ->evt.id matches awaiting trail */
-        int matches_await = (trl->evt.id==occ->evt.id);
-        if (matches_await) {
-            if (trl->evt.id == CEU_INPUT__CODE) {
-                matches_await = (occ->evt.mem == trl->evt.mem);
-            } else if (trl->evt.id == CEU_INPUT__VAR) {
-                matches_await = (trl->evt.var==occ->evt.var || trl->evt.var==NULL);
-                                                                /* HACK_4 */
-            } else if (trl->evt.id > CEU_EVENT__MIN) {
-                matches_await = (trl->evt.mem == occ->evt.mem);
+        /* occurring "occ->evt.id" matches awaiting trail "trl->evt.id" */
+        int matches = (trl->evt.id==occ->evt.id);
+        if (matches) {
+            switch (trl->evt.id) {
+                case CEU_INPUT__CLEAR: {
+                    tceu_evt_occ_range* occ_range = (tceu_evt_occ_range*) occ->params;
+                    matches = (occ_range->mem  == trl->clr_range.mem  &&
+                               occ_range->trl0 <= trl->clr_range.trl0 &&
+                               occ_range->trlF >= trl->clr_range.trlF);
+                    break;
+                }
+                case CEU_INPUT__CODE:
+                    matches = (occ->evt.mem == trl->evt.mem);
+                    break;
+                case CEU_INPUT__VAR:
+                    matches = (trl->evt.var==occ->evt.var || trl->evt.var==NULL);
+                    break;
+                default:
+                    if (trl->evt.id > CEU_EVENT__MIN) {
+                        matches = (trl->evt.mem == occ->evt.mem);
+                    }
             }
         }
 
-        if (matches_clear || matches_await) {
+        if (matches) {
             trl->evt.id  = CEU_INPUT__NONE;
             trl->evt.awk = occ;     /* awake only at this level again */
 
@@ -387,8 +392,14 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
             }
 
         } else if (occ->evt.id == CEU_INPUT__CLEAR) {
-            trl->evt.id  = CEU_INPUT__NONE;
-            trl->evt.awk = NULL;
+            tceu_evt_occ_range* occ_range = (tceu_evt_occ_range*) occ->params;
+            int matches = (occ_range->mem  == range.mem  &&
+                           occ_range->trl0 <= trlK &&
+                           occ_range->trlF >= trlK);
+            if (matches) {
+                trl->evt.id  = CEU_INPUT__NONE;
+                trl->evt.awk = NULL;
+            }
         }
     }
 
@@ -484,8 +495,14 @@ fprintf(stderr, "break\n");
 
         /* clear after propagating */
         if (occ->evt.id == CEU_INPUT__CLEAR) {
-            trl->evt.id  = CEU_INPUT__NONE;
-            trl->evt.awk = NULL;
+            tceu_evt_occ_range* occ_range = (tceu_evt_occ_range*) occ->params;
+            int matches = (occ_range->mem  == range.mem  &&
+                           occ_range->trl0 <= trlK &&
+                           occ_range->trlF >= trlK);
+            if (matches) {
+                trl->evt.id  = CEU_INPUT__NONE;
+                trl->evt.awk = NULL;
+            }
         }
 
         if (trlK == range.trlF) {
