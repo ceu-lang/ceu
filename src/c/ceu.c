@@ -112,6 +112,7 @@ typedef struct tceu_pool_pak {
 enum {
     CEU_INPUT__NONE = 0,
     CEU_INPUT__CLEAR,
+    CEU_INPUT__FINALIZE,
     CEU_INPUT__PAUSE,
     CEU_INPUT__VAR,
     CEU_INPUT__CODE,
@@ -323,24 +324,39 @@ static void ceu_go_bcast_mark (tceu_evt_occ* occ)
 printf("BCAST: stk=%p, evt=%d, trl0=%d, trlF=%d\n", stk, occ->evt.id, occ->trl0, occ->trlF);
 #endif
 
-    for (trlK=range.trl0, trl=&range.mem->trails[trlK];
-         trlK<=range.trlF;
-         trlK++, trl++)
+    /* CLEAR: inverse execution order */
+    tceu_ntrl trl0 = range.trl0;
+    tceu_ntrl trlF = range.trlF;
+    if (occ->evt.id == CEU_INPUT__CLEAR) {
+        tceu_ntrl tmp = trl0;
+        trl0 = trlF;
+        trlF = tmp;
+    }
+
+    for (trlK=trl0, trl=&range.mem->trails[trlK]; ;)
     {
 #if 0
 printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
 #endif
-        /* occurring "occ->evt.id" matches awaiting trail "trl->evt.id" */
-        int matches = (trl->evt.id==occ->evt.id);
-        if (matches) {
-            switch (trl->evt.id) {
-                case CEU_INPUT__CLEAR: {
-                    tceu_evt_occ_range* occ_range = (tceu_evt_occ_range*) occ->params;
-                    matches = (occ_range->mem  == trl->clr_range.mem  &&
-                               occ_range->trl0 <= trl->clr_range.trl0 &&
-                               occ_range->trlF >= trl->clr_range.trlF);
-                    break;
+        int matches = 0;
+
+        if (occ->evt.id == CEU_INPUT__CLEAR) {
+            tceu_evt_occ_range* occ_range = (tceu_evt_occ_range*) occ->params;
+            if (occ_range->mem  == trl->clr_range.mem  &&
+                occ_range->trl0 <= trl->clr_range.trl0 &&
+                occ_range->trlF >= trl->clr_range.trlF) {
+                if (trl->evt.id == CEU_INPUT__FINALIZE) {
+                    /* FINALIZE already awakes on "mark" */
+                    ceu_go_lbl(occ, NULL, range.mem, trlK, trl->lbl);
+                    trl->evt.id  = CEU_INPUT__NONE;
+                    trl->evt.awk = NULL;
+                } else if (trl->evt.id == CEU_INPUT__CLEAR) {
+                    /* CLEAR only awakes on "exec" */
+                    matches = 1;
                 }
+            }
+        } else if (trl->evt.id == occ->evt.id) {
+            switch (trl->evt.id) {
                 case CEU_INPUT__CODE:
                     matches = (occ->evt.mem == trl->evt.mem);
                     break;
@@ -350,6 +366,8 @@ printf("\ttrlI=%d, trl=%p, lbl=%d evt=%d\n", trlK, trl, trl->lbl, trl->evt);
                 default:
                     if (trl->evt.id > CEU_EVENT__MIN) {
                         matches = (trl->evt.mem == occ->evt.mem);
+                    } else {
+                        matches = 1;
                     }
             }
         }
@@ -401,6 +419,14 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 trl->evt.awk = NULL;
             }
         }
+
+        if (trlK == trlF) {
+            break;
+        } else if (occ->evt.id == CEU_INPUT__CLEAR) {
+            trlK--; trl--;
+        } else {
+            trlK++; trl++;
+        }
     }
 
     occ->range = range;
@@ -429,20 +455,15 @@ xxx += 4;
 
     /* EXECUTE TRAILS */
 
-    /* CLEAR: inverse execution order */
-    if (occ->evt.id == CEU_INPUT__CLEAR) {
-        tceu_ntrl tmp = range.trl0;
-        range.trl0 = range.trlF;
-        range.trlF = tmp;
-    }
-
-    for (trlK=range.trl0, trl=&range.mem->trails[trlK]; ;)
+    for (trlK=range.trl0, trl=&range.mem->trails[trlK];
+         trlK<=range.trlF;
+         trlK++, trl++)
     {
 #ifdef _CEU_DEBUG
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
 }
-fprintf(stderr, "||| [%d]=%d %d [%p] %d->%d\n", trlK, _stk.is_alive, occ->evt.id, range.mem, range.trl0, range.trlF);
+fprintf(stderr, "??? trlK=%d, stk=%d evt=%d\n", trlK, _stk.is_alive, trl->evt.id);
 #endif
 
         /* propagate "occ" to nested "code" */
@@ -503,14 +524,6 @@ fprintf(stderr, "break\n");
                 trl->evt.id  = CEU_INPUT__NONE;
                 trl->evt.awk = NULL;
             }
-        }
-
-        if (trlK == range.trlF) {
-            break;
-        } else if (occ->evt.id == CEU_INPUT__CLEAR) {
-            trlK--; trl--;
-        } else {
-            trlK++; trl++;
         }
     }
 

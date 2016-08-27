@@ -9,7 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 -- detectar necessidade de &? p/ !FOREVER
--- resolver valgrind
 
 -- exemplo que mate o loop mas nao o pool
 -- exemplo que dentro de um iter de um spawn para algo que tenha maior
@@ -25,6 +24,8 @@ end
 --      - if yielding stmts
 --          - loop requires a "&?" var and a watching
 
+--[=====[
+-- novo CLEAR vai resolver
 Test { [[
 code/await Ff (void) => (var&? int x) => void do
     var int v = 10;
@@ -41,10 +42,9 @@ await x;
 
 escape 1;
 ]],
-    todo = 'oi',
     run = 1,
 }
---do return end
+do return end
 
 -->> POOL / LOOP
 
@@ -91,7 +91,6 @@ end
     --run = 7,
     run = 3,
 }
---[=====[
 do return end
 
 Test { [[
@@ -33815,6 +33814,60 @@ escape 1;
 ]],
     wrn = true,
     run = 1,
+}
+
+Test { [[
+code/await Play (void) => void do
+    async do end;
+end
+
+par/or do
+    async do end;
+with
+    await Play();
+end
+
+await Play();
+
+escape 1;
+]],
+    run = { ['~>2s']=1 },
+}
+
+Test { [[
+input void A;
+
+code/await Play (void) => void do
+    await A;
+end
+
+par/or do
+    await A;
+with
+    await Play();
+end
+
+await Play();
+
+escape 1;
+]],
+    run = { ['~>A;~>A']=1 },
+}
+
+Test { [[
+code/await Play (void) => void do
+    await 1s;
+end
+
+par/or do
+    await 1s;
+with
+    await Play();
+end
+
+escape 1;
+]],
+    run = { ['~>1s']=1 },
 }
 
 Test { [[

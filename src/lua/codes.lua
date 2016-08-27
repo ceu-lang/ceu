@@ -186,10 +186,9 @@ ceu_vector_init(&]]..V(dcl)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
         end
 
         -- free vectors/pools
-        -- notify var out-of-scope
         if me.has_fin then
             LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_fin.id..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
     (tceu_evt_occ_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
@@ -219,6 +218,7 @@ if (0) {
 ]])
                 elseif dcl.tag=='Var' and dcl.has_opt_alias then
                     LINE(me, [[
+#if 0
     {
         tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__VAR,{&]]..V(dcl)..[[}}, NULL,
                                        {(tceu_code_mem*)&CEU_APP.root,
@@ -230,6 +230,7 @@ if (0) {
             return;
         }
     }
+#endif
 ]])
                 end
             end
@@ -549,7 +550,7 @@ if (!_ceu_stk->is_alive) {
 
         if me.yields then
             LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.mem   = _ceu_mem;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_clr.id..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
@@ -649,7 +650,7 @@ if (0) {
     Finalize = function (me)
         local now,_,later = unpack(me)
         LINE(me, [[
-_ceu_mem->trails[]]..later.trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..later.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
 _ceu_mem->trails[]]..later.trails[1]..[[].lbl    = ]]..me.lbl_in.id..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
     (tceu_evt_occ_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
