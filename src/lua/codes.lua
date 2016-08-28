@@ -986,7 +986,7 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
             end
             if not AST.par(to.info.dcl, 'Code_Pars') then
                 if to.info.dcl.is_local_set_alias then
-                    local trails = to.info.dcl.blk.trails
+                    local trails = to.info.dcl.trails
                     LINE(me, [[
 _ceu_mem->trails[]]..trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
 _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;

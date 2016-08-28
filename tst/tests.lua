@@ -27,6 +27,8 @@ end
 -->> POOL / LOOP
 
 --[=====[
+--]=====]
+
 Test { [[
 code/await Ff (void) => (var& int x) => void do
                         // error
@@ -164,6 +166,32 @@ end
 escape 1;
 ]],
     run = 1,
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+    await 1s;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+    var&? int x_;
+    loop (x_) in ffs do
+        break;
+    end
+var int ret = x_!;
+watching x_ do
+    every 100ms do
+        ret = ret + 1;
+    end
+end
+
+escape ret;
+]],
+    run = { ['~>1s']=19 },
 }
 
 Test { [[
@@ -732,7 +760,6 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
