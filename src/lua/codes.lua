@@ -44,7 +44,7 @@ local function CLEAR (me)
 {
     ceu_stack_clear(_ceu_stk, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
-    tceu_evt_occ_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
+    tceu_evt_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
 
     /* HACK_8: _ceu_occ holds __ceu_ret */
     tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{_ceu_occ}}, &__ceu_range,
@@ -193,7 +193,7 @@ ceu_vector_init(&]]..V(dcl)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_fin.id..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_evt_occ_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
+    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
 
 if (0) {
 ]])
@@ -531,7 +531,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.mem   = _ceu_mem;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_clr.id..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_evt_occ_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
+    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
 
 ]]..CUR('__dyn_'..me.n)..[[ = NULL;
 if (0) {
@@ -630,7 +630,7 @@ if (0) {
 _ceu_mem->trails[]]..later.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
 _ceu_mem->trails[]]..later.trails[1]..[[].lbl    = ]]..me.lbl_in.id..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_evt_occ_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
+    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
 
 if (0) {
 ]])

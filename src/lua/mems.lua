@@ -287,7 +287,7 @@ if (args->_]]..idx..[[ != NULL) {
                 Code.mems.watch = Code.mems.watch .. [[
 if (args->_]]..idx..[[_trl != NULL) {
     args->_]]..idx..[[_trl->clr_range =
-        (tceu_evt_occ_range) { _ceu_mem, 0, (_ceu_mem->trails_n-1) };
+        (tceu_evt_range) { _ceu_mem, 0, (_ceu_mem->trails_n-1) };
 }
 ]]
             end
@@ -393,6 +393,8 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
                     local is_alias, tp = unpack(dcl)
                     local ptr = (is_alias and '*') or ''
                     mem[#mem+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
+
+
                 end
 
             -- EVT
