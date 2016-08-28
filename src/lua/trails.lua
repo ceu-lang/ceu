@@ -74,11 +74,6 @@ F = {
             AST.par(me,'Block').has_fin = true
         end
     end,
-    Var = function (me)
-        if me.has_opt_alias then
-            AST.par(me,'Block').has_fin = true
-        end
-    end,
 
     Abs_Spawn_Single = function (me)
         local blk = AST.par(me,'Block')

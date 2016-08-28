@@ -286,7 +286,8 @@ if (args->_]]..idx..[[ != NULL) {
             if to.info.dcl[1] == '&?' then
                 Code.mems.watch = Code.mems.watch .. [[
 if (args->_]]..idx..[[_trl != NULL) {
-    args->_]]..idx..[[_trl->evt.var = ]]..V(to, {is_bind=true})..[[;
+    args->_]]..idx..[[_trl->clr_range =
+        (tceu_evt_occ_range) { _ceu_mem, 0, (_ceu_mem->trails_n-1) };
 }
 ]]
             end

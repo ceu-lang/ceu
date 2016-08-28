@@ -36,7 +36,6 @@ typedef struct tceu_evt {
         void* mem;                              /* CEU_INPUT__CODE, CEU_EVENT__MIN */
         struct tceu_evt_occ* awk;               /* OCCURRING */
         struct tceu_code_mem_dyn* pool_first;   /* CEU_INPUT__CODE_POOL */
-        void* var;                              /* CEU_INPUT__VAR */
     };
 } tceu_evt;
 
@@ -118,7 +117,6 @@ enum {
     CEU_INPUT__CODE_POOL,
 
     /* emitable */
-    CEU_INPUT__VAR,     /* TODO: remove */
     CEU_INPUT__CLEAR,
     CEU_INPUT__ASYNC,
     CEU_INPUT__WCLOCK,
@@ -373,9 +371,6 @@ fprintf(stderr, "??? trlK=%d, evt=%d\n", trlK, trl->evt.id);
             }
         } else if (trl->evt.id == occ->evt.id) {
             switch (trl->evt.id) {
-                case CEU_INPUT__VAR:
-                    matches = (trl->evt.var==occ->evt.var || trl->evt.var==NULL);
-                    break;
                 default:
                     if (trl->evt.id > CEU_EVENT__MIN) {
                         matches = (trl->evt.mem == occ->evt.mem);

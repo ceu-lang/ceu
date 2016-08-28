@@ -218,22 +218,6 @@ if (0) {
         }
     }
 ]])
-                elseif dcl.tag=='Var' and dcl.has_opt_alias then
-                    LINE(me, [[
-#if 0
-    {
-        tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__VAR,{&]]..V(dcl)..[[}}, NULL,
-                                       {(tceu_code_mem*)&CEU_APP.root,
-                                        0, CEU_APP.root.mem.trails_n-1}
-                                     };
-        tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-        ceu_go_bcast(&__ceu_evt_occ, &__ceu_stk);
-        if (!__ceu_stk.is_alive) {
-            return;
-        }
-    }
-#endif
-]])
                 end
             end
             LINE(me, [[
@@ -294,17 +278,20 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
             return
         end
         if me.opt_alias then
+error'TODO'
             LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.var = ]]..V(me.opt_alias,{is_bind=true})..[[;
 ]])
         else
             -- HACK_4
             LINE(me, [[
+#if 0
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.var = NULL; /* not yet bound */
+#endif
 ]])
         end
         LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__VAR;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CLEAR;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl.id..[[;
 
 /* do not enter from outside */
