@@ -24,74 +24,9 @@ end
 --      - if yielding stmts
 --          - loop requires a "&?" var and a watching
 
--- novo CLEAR vai resolver
-Test { [[
-code/await Ff (void) => (var&? int x) => void do
-    var int v = 10;
-    x = &v;
-
-    vector[] byte c = [1,2,3];
-
-    async do end;
-end
-
-var&? int x;
-spawn Ff() => (x);
-await x;
-
-escape 1;
-]],
-    run = 1,
-}
-
 -->> POOL / LOOP
 
--- test valgrind fail
-Test { [[
-code/await Ff (void) => (var&? int xxx) => void do
-    var int v = 10;
-    xxx = &v;
-    async do end;
-end
-
-pool[] Ff ffs;
-var&? int x_;
-spawn Ff() in ffs => (x_);
-
-await x_;
-
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-event (int,int) e;
-par do
-    do
-        par/or do
-            await OS_START;
-            emit e(1,2);
-        with
-            await e;
-        end
-    end
-    do
-        emit e(3,4);
-    end
-with
-    var int a,b;
-    (a,b) = await e;
-    escape a+b;
-end
-]],
-    --run = 7,
-    run = 3,
-}
 --[=====[
-do return end
-
 Test { [[
 code/await Ff (void) => (var& int x) => void do
                         // error
@@ -170,6 +105,25 @@ end;
 escape (x? as int) + 1;
 ]],
     run = 1,
+}
+Test { [[
+code/await Ff (void) => (var&? int yyy) => void do
+    var int v = 10;
+    yyy = &v;
+    await 1s;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+    var&? int xxx;
+    loop (xxx) in ffs do
+        break;
+    end
+
+escape xxx!;
+]],
+    run = 10,
 }
 Test { [[
 code/await Ff (void) => (var&? int x) => void do
@@ -34287,6 +34241,44 @@ pool[] Ff ffs;
 var&? int x;
 spawn Ff() in ffs => (x);
 escape (x? as int) + 1;
+]],
+    run = 1,
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
+
+    vector[] byte c = [1,2,3];
+
+    async do end;
+end
+
+var&? int x;
+spawn Ff() => (x);
+await x;
+
+escape 1;
+]],
+    run = 1,
+}
+
+-- test valgrind used to fail
+Test { [[
+code/await Ff (void) => (var&? int xxx) => void do
+    var int v = 10;
+    xxx = &v;
+    async do end;
+end
+
+pool[] Ff ffs;
+var&? int x_;
+spawn Ff() in ffs => (x_);
+
+await x_;
+
+escape 1;
 ]],
     run = 1,
 }

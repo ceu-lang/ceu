@@ -280,6 +280,8 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         elseif e.tag=='Exp_Call' or e.tag=='Abs_Call' then
             -- x = &_f();
             return V(e)
+        elseif dcl[1] == '&?' then
+            return V(e)
         else
             return '(&'..V(e)..')'
         end

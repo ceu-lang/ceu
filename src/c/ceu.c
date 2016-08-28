@@ -407,15 +407,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 
         /* normal trails: check if awakes */
 
-        if (trl->evt.id == occ->evt.id) {
-            if (trl->evt.id > CEU_EVENT__MIN) {
-                if (trl->evt.mem == occ->evt.mem) {
-                    goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
-                }
-            } else {
-                goto _CEU_AWAKE_YES_;       /* external event matches */
-            }
-        } else if (occ->evt.id == CEU_INPUT__CLEAR) {
+        if (occ->evt.id == CEU_INPUT__CLEAR) {
             tceu_evt_range* occ_range = (tceu_evt_range*) occ->params;
 
             int matches_clear_vs_trail = (occ_range->mem  == range.mem  &&
@@ -448,6 +440,14 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
                 {
                     goto _CEU_AWAKE_YES_;
                 }
+            }
+        } else if (trl->evt.id == occ->evt.id) {
+            if (trl->evt.id > CEU_EVENT__MIN) {
+                if (trl->evt.mem == occ->evt.mem) {
+                    goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
+                }
+            } else {
+                goto _CEU_AWAKE_YES_;       /* external event matches */
             }
         }
 
@@ -545,18 +545,6 @@ fprintf(stderr, "+++ %d\n", trl->lbl);
 fprintf(stderr, "break\n");
 #endif
             break;
-        }
-
-        /* clear after propagating */
-        if (occ->evt.id == CEU_INPUT__CLEAR) {
-            tceu_evt_range* occ_range = (tceu_evt_range*) occ->params;
-            int matches = (occ_range->mem  == range.mem  &&
-                           occ_range->trl0 <= trlK &&
-                           occ_range->trlF >= trlK);
-            if (matches) {
-                trl->evt.id  = CEU_INPUT__NONE;
-                trl->evt.awk = NULL;
-            }
         }
     }
 

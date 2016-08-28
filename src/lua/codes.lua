@@ -291,7 +291,8 @@ _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
         else
             -- HACK_4
             LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__NONE;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__NONE;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.awk = NULL;
 ]]..V(me)..[[.range.mem = (void*) &_ceu_mem->trails[]]..me.trails[1]..[[];
 ]])
         end
@@ -977,12 +978,17 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
 
         local alias, tp = unpack(to.info.dcl)
         if (alias == '&?') and (not TYPES.is_nat(tp)) then
-            assert(fr.info.dcl[1] ~= '&?')
-            local trails = fr.info.dcl.blk.trails
-            LINE(me, [[
-]]..V(to, {is_bind=true})..[[ = (tceu_opt_alias)
+            if fr.info.dcl[1] == '&?' then
+                LINE(me, [[
+]]..V(to)..' = '..V(fr)..[[;
+]])
+            else
+                local trails = fr.info.dcl.blk.trails
+                LINE(me, [[
+]]..V(to)..[[ = (tceu_opt_alias)
     { ]]..V(fr)..[[, {_ceu_mem,]]..trails[1]..','..trails[2]..[[} };
 ]])
+            end
         else
             -- var Ee.Xx ex = ...;
             -- var& Ee = &ex;
