@@ -984,12 +984,14 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
     { ]]..V(fr)..[[, {_ceu_mem,]]..trails[1]..','..trails[2]..[[} };
 ]])
             end
-            if to.info.dcl.is_local_set_alias then
-                local trails = to.info.dcl.blk.trails
-                LINE(me, [[
+            if not AST.par(to.info.dcl, 'Code_Pars') then
+                if to.info.dcl.is_local_set_alias then
+                    local trails = to.info.dcl.blk.trails
+                    LINE(me, [[
 _ceu_mem->trails[]]..trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
 _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
 ]])
+                end
             end
         else
             -- var Ee.Xx ex = ...;

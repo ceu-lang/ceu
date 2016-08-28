@@ -27,7 +27,6 @@ end
 -->> POOL / LOOP
 
 --[=====[
---]=====]
 Test { [[
 code/await Ff (void) => (var& int x) => void do
                         // error
@@ -733,6 +732,7 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested

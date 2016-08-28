@@ -8,7 +8,7 @@ local function new (lbl)
     else
         local Code = AST.iter'Code'()
         Code = (Code and Code.id..'_') or ''
-        lbl.id = 'CEU_LABEL_'..Code..lbl[1]..'_'..#LABELS.list
+        lbl.id = 'CEU_LABEL_'..Code..lbl[1]..'_'..(#LABELS.list+1)
     end
     if not LABELS.list[lbl.id] then
         LABELS.list[lbl.id] = true

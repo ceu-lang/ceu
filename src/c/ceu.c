@@ -122,7 +122,7 @@ enum {
     CEU_INPUT__CODE_POOL,
 
     /* emitable */
-    CEU_INPUT__CLEAR,
+    CEU_INPUT__CLEAR,           /* 5 */
     CEU_INPUT__ASYNC,
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
@@ -408,11 +408,11 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
         /* normal trails: check if awakes */
 
         if (occ->evt.id == CEU_INPUT__CLEAR) {
-            tceu_evt_range* occ_range = (tceu_evt_range*) occ->params;
+            tceu_evt_range* clr_range = (tceu_evt_range*) occ->params;
 
-            int matches_clear_vs_trail = (occ_range->mem  == range.mem  &&
-                                          occ_range->trl0 <= trlK       &&
-                                          occ_range->trlF >= trlK);
+            int matches_clear_vs_trail = (clr_range->mem  == range.mem  &&
+                                          clr_range->trl0 <= trlK       &&
+                                          clr_range->trlF >= trlK);
 
             /* clearing this trail? */
             if (matches_clear_vs_trail) {
@@ -426,17 +426,17 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
             /* clear matches CLEAR? */
             } else if (trl->evt.id == CEU_INPUT__CLEAR) {
                 int matches_clear_vs_clear =
-                        (occ_range->mem  == trl->clr_range.mem  &&
-                         occ_range->trl0 <= trl->clr_range.trl0 &&
-                         occ_range->trlF >= trl->clr_range.trlF);
+                        (clr_range->mem  == trl->clr_range.mem  &&
+                         clr_range->trl0 <= trl->clr_range.trl0 &&
+                         clr_range->trlF >= trl->clr_range.trlF);
                 if (matches_clear_vs_clear) {
                     goto _CEU_AWAKE_YES_;
                 }
 
             /* clear matches CODE? */
             } else if (trl->evt.id == CEU_INPUT__CODE) {
-                if (ceu_mem_is_child(trl->evt.mem, occ_range->mem,
-                                     occ_range->trl0, occ_range->trlF))
+                if (ceu_mem_is_child(trl->evt.mem, clr_range->mem,
+                                     clr_range->trl0, clr_range->trlF))
                 {
                     goto _CEU_AWAKE_YES_;
                 }
