@@ -24,7 +24,6 @@ end
 --      - if yielding stmts
 --          - loop requires a "&?" var and a watching
 
---[=====[
 -- novo CLEAR vai resolver
 Test { [[
 code/await Ff (void) => (var&? int x) => void do
@@ -44,7 +43,6 @@ escape 1;
 ]],
     run = 1,
 }
-do return end
 
 -->> POOL / LOOP
 
@@ -91,6 +89,7 @@ end
     --run = 7,
     run = 3,
 }
+--[=====[
 do return end
 
 Test { [[

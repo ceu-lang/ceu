@@ -39,8 +39,15 @@ local function CASE (me, lbl)
 end
 
 local function CLEAR (me)
-    if me.trails_n > 1 then
-        LINE(me, [[
+    local fin = AST.par(me, 'Finalize')
+    if fin and AST.is_par(AST.asr(fin,'',3,'Block'), me) then
+        --  do ... finalize with
+        --      <...>;  // no clear
+        --  end
+        return
+    end
+
+    LINE(me, [[
 {
     ceu_stack_clear(_ceu_stk, _ceu_mem,
                     ]]..me.trails[1]..[[, ]]..me.trails[2]..[[);
@@ -58,7 +65,6 @@ local function CLEAR (me)
     }
 }
 ]])
-    end
 end
 
 local function HALT (me, T)
@@ -631,7 +637,7 @@ if (0) {
 _ceu_mem->trails[]]..later.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
 _ceu_mem->trails[]]..later.trails[1]..[[].lbl    = ]]..me.lbl_in.id..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
+    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
 
 if (0) {
 ]])
