@@ -34454,6 +34454,24 @@ Test { [[
 code/await Ff (void) => (var&? int x) => void do
     var int v = 10;
     x = &v;
+    async do end;
+end
+
+var&? int x;
+spawn Ff() => (x);
+
+var int ret = x!;
+async do end;
+ret = ret + (x? as int) + 1;
+escape ret;
+]],
+    run = 11,
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x) => void do
+    var int v = 10;
+    x = &v;
 end
 
 var int ret = 0;

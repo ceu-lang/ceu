@@ -121,9 +121,6 @@ G = {
         if (not me.trails) and me.__par then
             me.trails = { unpack(me.__par.trails) }
         end
-        if me.__par and me.__par.tag == 'Code' then
-            me.trails[2] = me.trails[2] + 1 -- TODO-NOW
-        end
     end,
 
     Stmts__BEF = function (me, sub, i)

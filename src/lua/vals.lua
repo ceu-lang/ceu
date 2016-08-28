@@ -175,16 +175,6 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                     ps[#ps+1] = '._'..(i+#me.vars)..' = NULL'
                 else
                     ps[#ps+1] = '._'..(i+#me.vars)..' = &'..V(var,{is_bind=true})
-
-                    -- HACK_4
-                    if var.dcl[1] == '&?' then
-                        if var.tag == 'ID_any' then
-                            ps[#ps+1] = '._'..(i+#me.vars)..'_trl = NULL'
-                        else
-                            ps[#ps+1] = '._'..(i+#me.vars)..'_trl = '
-                                            ..'&_ceu_mem->trails['..(me.trails[1]-1)..']'
-                        end
-                    end
                 end
             end
         end
@@ -232,7 +222,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     Var = function (me, ctx)
         local alias, tp = unpack(me)
         local ptr = ''
-        if alias and (not ctx.is_bind) then
+        if alias=='&' and (not ctx.is_bind) then
             --  var&? _t_ptr x = &_f(); ... x!
             --  var& _t_ptr xx = &x!;   ... xx
             ptr = '*'
@@ -316,8 +306,13 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 
     ['Exp_?'] = function (me)
         local _, e = unpack(me)
-        if e.info.dcl[1] == '&?' then
-            return '('..V(e,{is_bind=true})..' != NULL)'
+        local alias, tp = unpack(e.info.dcl)
+        if alias == '&?' then
+            if TYPES.is_nat(tp) then
+                return '('..V(e)..' != NULL)'
+            else
+                return '('..V(e)..'.alias != NULL)'
+            end
         else
             return '('..V(e)..'.is_set)'
         end
@@ -325,8 +320,13 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
 
     ['Exp_!'] = function (me)
         local _, e = unpack(me)
-        if e.info.dcl[1] == '&?' then
-            return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e,{is_bind=true})..', __FILE__, __LINE__))'
+        local alias, tp = unpack(e.info.dcl)
+        if alias == '&?' then
+            if TYPES.is_nat(tp) then
+                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e,{is_bind=true})..', __FILE__, __LINE__))'
+            else
+                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..'.alias, __FILE__, __LINE__))'
+            end
         else
             return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)->value)'
         end

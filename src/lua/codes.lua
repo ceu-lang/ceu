@@ -285,14 +285,12 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.var = ]]..V(me.opt_alias,{is_bind=tru
         else
             -- HACK_4
             LINE(me, [[
-#if 0
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.var = NULL; /* not yet bound */
-#endif
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__NONE;
+]]..V(me)..[[.range.mem = (void*) &_ceu_mem->trails[]]..me.trails[1]..[[];
 ]])
         end
         LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id  = CEU_INPUT__CLEAR;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl     = ]]..me.lbl.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl.id..[[;
 
 /* do not enter from outside */
 if (0)
@@ -300,7 +298,7 @@ if (0)
 ]])
         CASE(me, me.lbl)
         LINE(me, [[
-    ]]..V(me,{is_bind=true})..[[ = NULL;   /* set it to null when alias goes out of scope */
+    ]]..V(me)..[[.alias = NULL;   /* set it to null when alias goes out of scope */
     return;
 }
 ]])
@@ -970,18 +968,27 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
     Set_Alias = function (me)
         local fr, to = unpack(me)
 
-        -- var Ee.Xx ex = ...;
-        -- var& Ee = &ex;
-        local cast = ''
-        if to.info.dcl.tag=='Var' and to.info.tp.tag=='Type'
-            and to.info.tp[1].tag == 'ID_abs'
-        then
-            cast = '('..TYPES.toc(to.info.tp)..'*)'
-        end
-
-        LINE(me, [[
+        local alias, tp = unpack(to.info.dcl)
+        if (alias == '&?') and (not TYPES.is_nat(tp)) then
+            assert(fr.info.dcl[1] ~= '&?')
+            local trails = fr.info.dcl.blk.trails
+            LINE(me, [[
+]]..V(to, {is_bind=true})..[[ = (tceu_opt_alias)
+    { ]]..V(fr)..[[, {_ceu_mem,]]..trails[1]..','..trails[2]..[[} };
+]])
+        else
+            -- var Ee.Xx ex = ...;
+            -- var& Ee = &ex;
+            local cast = ''
+            if to.info.dcl.tag=='Var' and to.info.tp.tag=='Type'
+                and to.info.tp[1].tag == 'ID_abs'
+            then
+                cast = '('..TYPES.toc(to.info.tp)..'*)'
+            end
+            LINE(me, [[
 ]]..V(to, {is_bind=true})..' = '..cast..V(fr)..[[;
 ]])
+        end
     end,
 
     Set_Await_one = function (me)
@@ -1222,13 +1229,15 @@ _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 
     Await_Int = function (me)
         local Exp_Name = unpack(me)
-        if Exp_Name.info.dcl[1] == '&?' then
+        local alias, tp = unpack(Exp_Name.info.dcl)
+        if alias == '&?' then
+            assert(not TYPES.is_nat(tp), 'bug found')
             LINE(me, [[
-if (]]..V(Exp_Name,{is_bind=true})..[[ != NULL) {
+if (]]..V(Exp_Name)..[[.alias != NULL) {
 ]])
             HALT(me, {
-                { ['evt.id']  = 'CEU_INPUT__VAR' },
-                { ['evt.var'] = V(Exp_Name,{is_bind=true}) },
+                { ['evt.id']  = 'CEU_INPUT__CLEAR' },
+                { ['clr_range'] = V(Exp_Name)..'.range' },
                 { lbl = me.lbl_out.id },
                 lbl = me.lbl_out.id,
             })

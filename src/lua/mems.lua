@@ -103,7 +103,7 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
 
             local ptr = '' do
                 if alias then
-                    if (dcl.tag ~= 'Evt') and alias then
+                    if (dcl.tag ~= 'Evt') and alias=='&' then
                         ptr = ptr..'*'
                     end
                     if dcl.is_mid_idx then
@@ -115,13 +115,13 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
             -- VAR
             if dcl.tag == 'Var' then
                 if dcl.id~='_ret' or mods.tight then
-                    me.mems.args = me.mems.args..[[
-]]..TYPES.toc(Type)..ptr..' '..id2..[[;
-]]
-                    if dcl.is_mid_idx and alias=='&?' then
-                        -- HACK_4
+                    if (alias == '&?') and (not TYPES.is_nat(Type)) then
                         me.mems.args = me.mems.args..[[
-tceu_trl* ]]..id2..[[_trl;
+tceu_opt_alias]]..ptr..' '..id2..[[;
+]]
+                    else
+                        me.mems.args = me.mems.args..[[
+]]..TYPES.toc(Type)..ptr..' '..id2..[[;
 ]]
                     end
                 end
@@ -277,17 +277,22 @@ static void CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
         local idx = to.info.dcl.is_mid_idx
         if idx then
             local Code = AST.par(me,'Code')
-            Code.mems.watch = Code.mems.watch .. [[
+            if to.info.dcl[1] == '&' then
+                Code.mems.watch = Code.mems.watch .. [[
 if (args->_]]..idx..[[ != NULL) {
     *(args->_]]..idx..[[) = ]]..V(to, {is_bind=true})..[[;
 }
 ]]
-            -- HACK_4
-            if to.info.dcl[1] == '&?' then
+            else
+                assert(to.info.dcl[1] == '&?')
                 Code.mems.watch = Code.mems.watch .. [[
-if (args->_]]..idx..[[_trl != NULL) {
-    args->_]]..idx..[[_trl->clr_range =
-        (tceu_evt_range) { _ceu_mem, 0, (_ceu_mem->trails_n-1) };
+if (args->_]]..idx..[[ != NULL) {
+    tceu_trl* trl = (tceu_trl*) args->_]]..idx..[[->range.mem;
+    *(args->_]]..idx..[[) = ]]..V(to, {is_bind=true})..[[;
+
+    /* HACK_4 */
+    trl->evt.id    = CEU_INPUT__CLEAR;
+    trl->clr_range = args->_]]..idx..[[->range;
 }
 ]]
             end
@@ -342,9 +347,9 @@ assert(me.hier)
             local opt = ''
             if alias == '&?' then
                 opt = opt..[[
-static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
-    ceu_callback_assert_msg_ex(opt != NULL, "value is not set", file, line);
-    return opt;
+static ]]..cc..'* CEU_OPTION_'..cc..[[ (]]..cc..[[* alias, char* file, int line) {
+    ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
+    return alias;
 }
 ]]
             else
@@ -390,11 +395,16 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
                     if not AST.par(me,'Data') then
                         dcl.id_ = dcl.id_..'_'..dcl.n
                     end
-                    local is_alias, tp = unpack(dcl)
-                    local ptr = (is_alias and '*') or ''
-                    mem[#mem+1] = TYPES.toc(tp)..ptr..' '..dcl.id_..';\n'
-
-
+                    local alias, tp = unpack(dcl)
+                    if alias then
+                        if (alias == '&?') and (not TYPES.is_nat(tp)) then
+                            mem[#mem+1] = 'tceu_opt_alias '..dcl.id_..';\n'
+                        else
+                            mem[#mem+1] = TYPES.toc(tp)..'* '..dcl.id_..';\n'
+                        end
+                    else
+                        mem[#mem+1] = TYPES.toc(tp)..'  '..dcl.id_..';\n'
+                    end
                 end
 
             -- EVT

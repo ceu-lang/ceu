@@ -101,6 +101,11 @@ typedef struct tceu_pool_pak {
     tceu_code_mem_dyn first;
 } tceu_pool_pak;
 
+typedef struct tceu_opt_alias {
+    void*          alias;
+    tceu_evt_range range;
+} tceu_opt_alias;
+
 /*****************************************************************************/
 
 /* NATIVE_PRE */
