@@ -54,12 +54,12 @@ local function CLEAR (me)
     tceu_evt_range __ceu_range = { _ceu_mem, ]]..me.trails[1]..', '..me.trails[2]..[[ };
 
     /* HACK_8: _ceu_occ holds __ceu_ret */
-    tceu_evt_occ __ceu_evt_occ = { {CEU_INPUT__CLEAR,{_ceu_occ}}, &__ceu_range,
-                                   {(tceu_code_mem*)&CEU_APP.root,
-                                    0, CEU_APP.root.mem.trails_n-1}
-                                 };
+    tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{_ceu_occ}}, &__ceu_range,
+                               {(tceu_code_mem*)&CEU_APP.root,
+                                0, CEU_APP.root.mem.trails_n-1}
+                             };
     tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    ceu_go_bcast(&__ceu_evt_occ, &__ceu_stk);
+    ceu_go_bcast(&__ceu_occ, &__ceu_stk);
     if (!__ceu_stk.is_alive) {
         return;
     }
@@ -281,13 +281,8 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
         if not me.has_trail then
             return
         end
-        if me.opt_alias then
-            local trails = me.opt_alias.info.dcl.blk.trails
-            LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
-_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_evt_range) { _ceu_mem, ]]..trails[1]..','..trails[2]..[[ };
-]])
+        if me.is_local_set_alias then
+            -- see Set_Alias
         else
             -- HACK_4
             LINE(me, [[
@@ -989,6 +984,13 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
     { ]]..V(fr)..[[, {_ceu_mem,]]..trails[1]..','..trails[2]..[[} };
 ]])
             end
+            if to.info.dcl.is_local_set_alias then
+                local trails = to.info.dcl.blk.trails
+                LINE(me, [[
+_ceu_mem->trails[]]..trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
+]])
+            end
         else
             -- var Ee.Xx ex = ...;
             -- var& Ee = &ex;
@@ -1281,12 +1283,12 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
             ps = '&__ceu_ps'
         end
         LINE(me, [[
-    tceu_evt_occ __ceu_evt_occ = { ]]..V(Exp_Name)..[[, &__ceu_ps,
-                                   {(tceu_code_mem*)&CEU_APP.root,
-                                    0, CEU_APP.root.mem.trails_n-1}
-                                 };
+    tceu_evt_occ __ceu_occ = { ]]..V(Exp_Name)..[[, &__ceu_ps,
+                               {(tceu_code_mem*)&CEU_APP.root,
+                                0, CEU_APP.root.mem.trails_n-1}
+                             };
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    ceu_go_bcast(&__ceu_evt_occ, &__ceu_stk);
+    ceu_go_bcast(&__ceu_occ, &__ceu_stk);
     if (!__ceu_stk.is_alive) {
         return;
     }

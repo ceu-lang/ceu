@@ -27,6 +27,7 @@ end
 -->> POOL / LOOP
 
 --[=====[
+--]=====]
 Test { [[
 code/await Ff (void) => (var& int x) => void do
                         // error
@@ -732,7 +733,6 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -34328,13 +34328,13 @@ escape x! + 1;
 
 Test { [[
 var int ret = 0;
-var&? int p;
+var&? int ppp;
 do
     var int x = 10;
-    p = &x;
-    ret = p!;
+    ppp = &x;
+    ret = ppp!;
 end
-ret = ret + (p? as int);
+ret = ret + (ppp? as int);
 escape ret;
 ]],
     run = 10,
