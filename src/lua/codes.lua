@@ -196,10 +196,8 @@ ceu_vector_init(&]]..V(dcl)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
         -- free vectors/pools
         if me.has_fin then
             LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
-_ceu_mem->trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_fin.id..[[;
-_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
-    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
 
 if (0) {
 ]])

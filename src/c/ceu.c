@@ -357,92 +357,107 @@ for (int i=0; i<xxx; i++) {
 }
 fprintf(stderr, "??? trlK=%d, evt=%d\n", trlK, trl->evt.id);
 #endif
-        int matches = 0;
 
-        if (occ->evt.id == CEU_INPUT__CLEAR) {
-            tceu_evt_range* occ_range = (tceu_evt_range*) occ->params;
-            if (occ_range->mem  == trl->clr_range.mem  &&
-                occ_range->trl0 <= trl->clr_range.trl0 &&
-                occ_range->trlF >= trl->clr_range.trlF) {
-                if (trl->evt.id == CEU_INPUT__FINALIZE) {
-                    /* FINALIZE already awakes on "mark" */
-                    ceu_go_lbl(occ, NULL, range.mem, trlK, trl->lbl);
-                    trl->evt.id  = CEU_INPUT__NONE;
-                    trl->evt.awk = NULL;
-                } else if (trl->evt.id == CEU_INPUT__CLEAR) {
-                    /* CLEAR only awakes on "exec" */
-                    matches = 1;
-                }
+        /* special trails: propagate, skip paused */
+
+        switch (trl->evt.id)
+        {
+            /* propagate "occ" to nested "code/pool" */
+            case CEU_INPUT__CODE: {
+                tceu_evt_range _range = { (tceu_code_mem*)trl->evt.mem,
+                                          0, ((tceu_code_mem*)trl->evt.mem)->trails_n-1 };
+                occ->range = _range;
+                ceu_go_bcast_mark(occ);
+                break;
             }
-        } else if (trl->evt.id == occ->evt.id) {
-            switch (trl->evt.id) {
-                default:
-                    if (trl->evt.id > CEU_EVENT__MIN) {
-                        matches = (trl->evt.mem == occ->evt.mem);
-                    } else {
-                        matches = 1;
-                    }
-            }
-        }
-
-        if (matches) {
-            trl->evt.id  = CEU_INPUT__NONE;
-            trl->evt.awk = occ;     /* awake only at this level again */
-
-        /* propagate "evt" to nested "code" */
-        } else if (trl->evt.id == CEU_INPUT__CODE) {
-            tceu_evt_range _range = { (tceu_code_mem*)trl->evt.mem,
-                                      0, ((tceu_code_mem*)trl->evt.mem)->trails_n-1 };
-            occ->range = _range;
-            ceu_go_bcast_mark(occ);
-
-            if (occ->evt.id == CEU_INPUT__CLEAR) {
-                tceu_evt_range* occ_range = (tceu_evt_range*) occ->params;
-                if (ceu_mem_is_child(trl->evt.mem, occ_range->mem, occ_range->trl0, occ_range->trlF)) {
-                    trl->evt.id  = CEU_INPUT__NONE;
-                    trl->evt.awk = occ;     /* awake only at this level again */
-                }
-            }
-        } else if (trl->evt.id == CEU_INPUT__CODE_POOL) {
-            tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
+            case CEU_INPUT__CODE_POOL: {
+                tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
 #if 0
 printf(">>> BCAST[%p]:\n", trl->pool_first);
 printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 #endif
-            while (cur != trl->evt.pool_first) {
-                tceu_evt_range _range = { &cur->mem[0],
-                                          0, ((&cur->mem[0])->trails_n-1) };
-                occ->range = _range;
-                ceu_go_bcast_mark(occ);
-                cur = cur->nxt;
+                while (cur != trl->evt.pool_first) {
+                    tceu_evt_range _range = { &cur->mem[0],
+                                              0, ((&cur->mem[0])->trails_n-1) };
+                    occ->range = _range;
+                    ceu_go_bcast_mark(occ);
+                    cur = cur->nxt;
+                }
+                break;
             }
 
-        } else if (trl->evt.id == CEU_INPUT__PAUSE) {
-            u8 was_paused = trl->pse_paused;
-            if (occ->evt.id==trl->pse_evt.id &&
-                (occ->evt.id<CEU_EVENT__MIN || occ->evt.mem==trl->pse_evt.mem))
-            {
-                trl->pse_paused = *((u8*)occ->params);
+            /* skip "paused" blocks || set "paused" block */
+            case CEU_INPUT__PAUSE: {
+                u8 was_paused = trl->pse_paused;
+                if (occ->evt.id==trl->pse_evt.id &&
+                    (occ->evt.id<CEU_EVENT__MIN || occ->evt.mem==trl->pse_evt.mem))
+                {
+                    trl->pse_paused = *((u8*)occ->params);
+                }
+                /* don't skip if pausing now */
+                if (was_paused && occ->evt.id!=CEU_INPUT__CLEAR) {
+                                  /* also don't skip on CLEAR (going reverse) */
+                    trlK += trl->pse_skip;
+                    trl  += trl->pse_skip;
+                    goto _CEU_AWAKE_NO_;
+                }
+                break;
             }
-            /* don't skip if pausing now */
-            if (was_paused && occ->evt.id!=CEU_INPUT__CLEAR) {
-                trlK += trl->pse_skip;
-                trl  += trl->pse_skip;
-            }
-
         }
 
-        if (occ->evt.id == CEU_INPUT__CLEAR) {
+        /* normal trails: check if awakes */
+
+        if (trl->evt.id == occ->evt.id) {
+            if (trl->evt.id > CEU_EVENT__MIN) {
+                if (trl->evt.mem == occ->evt.mem) {
+                    goto _CEU_AWAKE_YES_;   /* internal event matches "mem" */
+                }
+            } else {
+                goto _CEU_AWAKE_YES_;       /* external event matches */
+            }
+        } else if (occ->evt.id == CEU_INPUT__CLEAR) {
             tceu_evt_range* occ_range = (tceu_evt_range*) occ->params;
-            int matches = (occ_range->mem  == range.mem  &&
-                           occ_range->trl0 <= trlK       &&
-                           occ_range->trlF >= trlK);
-            if (matches) {
+
+            int matches_clear_vs_trail = (occ_range->mem  == range.mem  &&
+                                          occ_range->trl0 <= trlK       &&
+                                          occ_range->trlF >= trlK);
+
+            /* clearing this trail? */
+            if (matches_clear_vs_trail) {
+                if (trl->evt.id == CEU_INPUT__FINALIZE) {
+                    /* FINALIZE awakes now on "mark" */
+                    ceu_go_lbl(occ, NULL, range.mem, trlK, trl->lbl);
+                }
                 trl->evt.id  = CEU_INPUT__NONE;
                 trl->evt.awk = NULL;
+
+            /* clear matches CLEAR? */
+            } else if (trl->evt.id == CEU_INPUT__CLEAR) {
+                int matches_clear_vs_clear =
+                        (occ_range->mem  == trl->clr_range.mem  &&
+                         occ_range->trl0 <= trl->clr_range.trl0 &&
+                         occ_range->trlF >= trl->clr_range.trlF);
+                if (matches_clear_vs_clear) {
+                    goto _CEU_AWAKE_YES_;
+                }
+
+            /* clear matches CODE? */
+            } else if (trl->evt.id == CEU_INPUT__CODE) {
+                if (ceu_mem_is_child(trl->evt.mem, occ_range->mem,
+                                     occ_range->trl0, occ_range->trlF))
+                {
+                    goto _CEU_AWAKE_YES_;
+                }
             }
         }
 
+        goto _CEU_AWAKE_NO_;
+
+_CEU_AWAKE_YES_:
+        trl->evt.id  = CEU_INPUT__NONE;
+        trl->evt.awk = occ;     /* awake only at this level again */
+
+_CEU_AWAKE_NO_:
         if (trlK == trlF) {
             break;
         } else if (occ->evt.id == CEU_INPUT__CLEAR) {
