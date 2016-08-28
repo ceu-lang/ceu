@@ -121,6 +121,13 @@ G = {
         if (not me.trails) and me.__par then
             me.trails = { unpack(me.__par.trails) }
         end
+
+-- TODO-NOW
+if me.tag == 'Block' then
+    if AST.get(AST.par(me,'Code'),'',3,'Block') == me then
+        me.trails[2] = me.trails[2] - 1
+    end
+end
     end,
 
     Stmts__BEF = function (me, sub, i)
