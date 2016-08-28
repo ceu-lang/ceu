@@ -278,9 +278,11 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
             return
         end
         if me.opt_alias then
-error'TODO'
+            local trails = me.opt_alias.info.dcl.blk.trails
             LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..[[].evt.var = ]]..V(me.opt_alias,{is_bind=true})..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__CLEAR;
+_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
+    (tceu_evt_range) { _ceu_mem, ]]..trails[1]..','..trails[2]..[[ };
 ]])
         else
             -- HACK_4
@@ -290,6 +292,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__NONE;
 ]])
         end
         LINE(me, [[
+]]..V(me)..[[.alias = NULL;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl = ]]..me.lbl.id..[[;
 
 /* do not enter from outside */

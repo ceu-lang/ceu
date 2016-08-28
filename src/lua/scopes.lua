@@ -135,6 +135,8 @@ F = {
             if to.info.dcl[1] == '&?' then
                 ok = true
                 to.info.dcl.opt_alias = fr
+                assert(fr.info.dcl[1] ~= '&?', 'not implemented')
+                assert(AST.par(to.info.dcl,'Code') == AST.par(fr.info.dcl,'Code'), 'not implemented')
             end
             ASR(ok, me, 'invalid binding : incompatible scopes')
         end
