@@ -103,6 +103,7 @@ typedef struct tceu_pool_pak {
 
 typedef struct tceu_opt_alias {
     void*          alias;
+    tceu_evt       evt;     /* TODO: alias points to copied evt (extra space) */
     tceu_evt_range range;
 } tceu_opt_alias;
 
@@ -321,11 +322,9 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
     }
 }
 
-#ifdef _CEU_DEBUG_MARK
+#if defined(_CEU_DEBUG_MARK) || defined (_CEU_DEBUG_EXEC)
 #define _CEU_DEBUG_MARK
-static int xxx = 0;
-#endif
-#ifdef _CEU_DEBUG_EXEC
+#define _CEU_DEBUG_EXEC
 static int xxx = 0;
 #endif
 
@@ -473,6 +472,14 @@ _CEU_AWAKE_NO_:
     }
 
     occ->range = range;
+
+#ifdef _CEU_DEBUG_EXEC
+xxx -= 4;
+for (int i=0; i<xxx; i++) {
+    fprintf(stderr, " ");
+}
+fprintf(stderr, "<<< %d [%p] %d->%d\n", occ->evt.id, range.mem, range.trl0, range.trlF);
+#endif
 }
 
 static void ceu_go_bcast_exec (tceu_evt_occ* occ, tceu_stk* stk)
