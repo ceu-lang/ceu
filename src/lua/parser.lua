@@ -517,8 +517,8 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     -- (var& int v, var/nohold void&& ptr)
     , __typepars_pre = CK'vector' * CKK'&' * V'__Dim' * V'Type'
                      + CK'pool'   * CKK'&' * V'__Dim' * V'Type'
-                     + CK'event'  * CKK'&' * Cc(false) * (PARENS(V'Typelist') + V'Type')
-                     + CK'var'   * OPT(CKK'&?' + CKK'&') * OPT(KK'/'*CK'hold') * V'Type'
+                     + CK'event'  * OPT(V'__ALS') * Cc(false) * (PARENS(V'Typelist') + V'Type')
+                     + CK'var'    * OPT(V'__ALS') * OPT(KK'/'*CK'hold') * V'Type'
     , _Code_Pars_Item  = Ct( Cg(K'dynamic','dynamic')^-1 )
                             * V'__typepars_pre' * OPT(V'__ID_int')
 
@@ -568,11 +568,13 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     -- DECLARATIONS
 
+    , __ALS = (CKK'&?' + CKK'&')
+
     , __vars_set  = V'__ID_int' * OPT(Ct(V'__Sets_one'+V'__Sets_many'))
 
-    , _Vars_set  = K'var' * OPT(CKK'&?'+CKK'&') * V'Type' *
+    , _Vars_set  = K'var' * OPT(V'__ALS') * V'Type' *
                     LIST(V'__vars_set')
-    , _Vars      = K'var' * OPT(CKK'&?'+CKK'&') * V'Type' *
+    , _Vars      = K'var' * OPT(V'__ALS') * V'Type' *
                     LIST(V'__ID_int')
 
     , _Vecs_set  = K'vector' * OPT(CKK'&') * V'__Dim' * V'Type' *
@@ -586,9 +588,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , _Pools     = K'pool' * OPT(CKK'&') * V'__Dim' * V'Type' *
                     LIST(V'__ID_int')
 
-    , _Evts_set  = K'event' * OPT(CKK'&') * (PARENS(V'Typelist')+V'Type') *
+    , _Evts_set  = K'event' * OPT(V'__ALS') * (PARENS(V'Typelist')+V'Type') *
                     LIST(V'__vars_set')
-    , _Evts      = K'event' * OPT(CKK'&') * (PARENS(V'Typelist')+V'Type') *
+    , _Evts      = K'event' * OPT(V'__ALS') * (PARENS(V'Typelist')+V'Type') *
                     LIST(V'__ID_int')
 
     , _Exts      = (CK'input'+CK'output') * (PARENS(V'Typelist')+V'Type') *

@@ -75,21 +75,23 @@ function AST.node (tag, ln, ...)
     return me
 end
 
-function AST.copy (node, ln)
+function AST.copy (node, ln, keep_n)
     if not AST.is_node(node) then
         return node
     end
     assert(node.tag ~= 'Ref')
 
     local ret = setmetatable({}, MT)
-    local N = _N
-    _N = _N + 1
+    local N = (keep_n and node.n) or _N
+    if not keep_n then
+        _N = _N + 1
+    end
 
     for k, v in pairs(node) do
         if type(k) ~= 'number' then
             ret[k] = v
         else
-            ret[k] = AST.copy(v, ln)
+            ret[k] = AST.copy(v, ln, keep_n)
             if AST.is_node(v) then
                 ret[k].ln = ln or ret[k].ln
             end

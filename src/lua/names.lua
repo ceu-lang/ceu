@@ -124,7 +124,7 @@ DBG'TODO: type annotation'
         local op,e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Nat','Var','Evt'}, 'invalid operand to `'..op..'´')
 
         -- tp
         ASR((e.info.dcl[1]=='&?') or TYPES.check(e.info.tp,'?'), me,
@@ -134,7 +134,7 @@ DBG'TODO: type annotation'
         -- info
         me.info = INFO.copy(e.info)
         if e.info.dcl[1] == '&?' then
-            me.info.dcl = AST.copy(e.info.dcl)
+            me.info.dcl = AST.copy(e.info.dcl,nil,true)
             me.info.dcl[1] = '&'
             me.info.dcl.orig = e.info.dcl.orig or e.info.dcl   -- TODO: HACK_3
         else

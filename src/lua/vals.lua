@@ -324,10 +324,16 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local _, e = unpack(me)
         local alias, tp = unpack(e.info.dcl)
         if alias == '&?' then
-            if TYPES.is_nat(tp) then
-                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e,{is_bind=true})..', __FILE__, __LINE__))'
+            if e.info.dcl.tag == 'Var' then
+                if TYPES.is_nat(tp) then
+                    return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e,{is_bind=true})..', __FILE__, __LINE__))'
+                else
+                    return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..'.alias, __FILE__, __LINE__))'
+                end
+            elseif e.info.dcl.tag == 'Evt' then
+                return '(*CEU_OPTION_EVT('..V(e)..'.alias, __FILE__, __LINE__))'
             else
-                return '(*CEU_OPTION_'..TYPES.toc(e.info.tp)..'('..V(e)..'.alias, __FILE__, __LINE__))'
+                error 'not implemented'
             end
         else
             return '(CEU_OPTION_'..TYPES.toc(e.info.tp)..'(&'..V(e)..', __FILE__, __LINE__)->value)'

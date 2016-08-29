@@ -132,6 +132,24 @@ F = {
             end
         end
     end,
+
+    Loop_Pool = function (me)
+        local _,list,pool = unpack(me)
+        local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
+        local ret = AST.get(Code,'Code', 3,'Block', 1,'Stmts',
+                                         1,'Stmts', 3,'', 2,'Type')
+        me.yields = me.yields and ret
+            -- if "=>FOREVER" counts as not yielding
+
+        if me.yields then
+            for _,ID in ipairs(list) do
+                if ID.tag ~= 'ID_any' then
+                    ASR(ID.dcl[1] == '&?', me,
+                        'invalid declaration : expected `&?´ modifier : yielding `loop´')
+                end
+            end
+        end
+    end
 }
 
 AST.visit(F)

@@ -56,8 +56,11 @@ F = {
         me.lbl_in = new{'Code_'..me.id, true}
     end,
 
+    Evt = 'Var',
     Var = function (me)
-        me.lbl = new{'Var_'..me.id}
+        if me.has_trail then
+            me.lbl = new{'Var_'..me.id}
+        end
     end,
 
     ---------------------------------------------------------------------------

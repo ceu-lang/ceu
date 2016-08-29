@@ -106,6 +106,11 @@ typedef struct tceu_opt_alias {
     tceu_evt_range range;
 } tceu_opt_alias;
 
+static tceu_evt* CEU_OPTION_EVT (void* alias, char* file, int line) {
+    ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
+    return alias;
+}
+
 /*****************************************************************************/
 
 /* NATIVE_PRE */

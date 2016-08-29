@@ -112,18 +112,18 @@ typedef struct tceu_code_mem_]]..me.id..[[ {
                 end
             end
 
-            -- VAR
-            if dcl.tag == 'Var' then
-                if dcl.id~='_ret' or mods.tight then
-                    if (alias == '&?') and (not TYPES.is_nat(Type)) then
-                        me.mems.args = me.mems.args..[[
+            -- &?
+            if (alias == '&?') and (not (dcl.tag=='Var' and TYPES.is_nat(Type))) then
+                    me.mems.args = me.mems.args..[[
 tceu_opt_alias]]..ptr..' '..id2..[[;
 ]]
-                    else
-                        me.mems.args = me.mems.args..[[
+
+            -- VAR
+            elseif dcl.tag == 'Var' then
+                if dcl.id~='_ret' or mods.tight then
+                    me.mems.args = me.mems.args..[[
 ]]..TYPES.toc(Type)..ptr..' '..id2..[[;
 ]]
-                    end
                 end
 
             -- EVT
@@ -344,16 +344,15 @@ assert(me.hier)
             MEMS.opts[str] = true
             local cc = TYPES.toc(tp)
             local c = TYPES.toc(TYPES.pop(tp,'?'))
-            local opt = ''
             if alias == '&?' then
-                opt = opt..[[
+                MEMS.datas.mems = MEMS.datas.mems..[[
 static ]]..cc..'* CEU_OPTION_'..cc..[[ (]]..cc..[[* alias, char* file, int line) {
     ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
     return alias;
 }
 ]]
             else
-                opt = opt..[[
+                MEMS.datas.mems = MEMS.datas.mems..[[
 typedef struct ]]..cc..[[ {
     bool      is_set;
     ]]..c..[[ value;
@@ -365,7 +364,6 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
 }
 ]]
             end
-            MEMS.datas.mems = MEMS.datas.mems..opt
         end
     end,
 
@@ -380,6 +378,9 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
         end
 
         for _, dcl in ipairs(me.dcls) do
+if dcl.tag ~= 'Prim' then
+            local alias, Type = unpack(dcl)
+
             if dcl.ln then
                 if CEU.opts.ceu_line_directives then
                     mem[#mem+1] = [[
@@ -388,20 +389,28 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
                 end
             end
 
-            -- VAR
-            if dcl.tag == 'Var' then
+            if dcl.tag=='Var' or dcl.tag=='Evt' then
                 dcl.id_ = dcl.id
-                if dcl.id ~= '_ret' then
-                    if not AST.par(me,'Data') then
-                        dcl.id_ = dcl.id_..'_'..dcl.n
-                    end
+                if not AST.par(me,'Data') then
+                    dcl.id_ = dcl.id_..'_'..dcl.n
+                end
+            end
+
+            -- &?
+            if (alias == '&?') and (not (dcl.tag=='Var' and TYPES.is_nat(Type))) then
+                mem[#mem+1] = 'tceu_opt_alias '..dcl.id_..';\n'
+                if dcl.tag == 'Evt' then
+                    MEMS.evts[#MEMS.evts+1] = dcl
+                end
+
+            -- VAR
+            elseif dcl.tag == 'Var' then
+                if dcl.id == '_ret' then
+                    dcl.id_ = dcl.id
+                else
                     local alias, tp = unpack(dcl)
                     if alias then
-                        if (alias == '&?') and (not TYPES.is_nat(tp)) then
-                            mem[#mem+1] = 'tceu_opt_alias '..dcl.id_..';\n'
-                        else
-                            mem[#mem+1] = TYPES.toc(tp)..'* '..dcl.id_..';\n'
-                        end
+                        mem[#mem+1] = TYPES.toc(tp)..'* '..dcl.id_..';\n'
                     else
                         mem[#mem+1] = TYPES.toc(tp)..'  '..dcl.id_..';\n'
                     end
@@ -409,14 +418,10 @@ static ]]..cc..'* CEU_OPTION_'..cc..' ('..cc..[[* opt, char* file, int line) {
 
             -- EVT
             elseif dcl.tag == 'Evt' then
-                local is_alias = unpack(dcl)
-                if is_alias then
+                if alias then
 -- TODO: per Code evts
                     MEMS.evts[#MEMS.evts+1] = dcl
                     dcl.id_ = dcl.id
-                    if not AST.par(me,'Data') then
-                        dcl.id_ = dcl.id..'_'..dcl.n
-                    end
                     mem[#mem+1] = 'tceu_evt '..dcl.id_..';\n'
                 else
                     local data = AST.par(me,'Data')
@@ -485,6 +490,7 @@ tceu_pool_pak]]..ptr..' '..dcl.id_..[[;
                 MEMS.exts[#MEMS.exts+1] = dcl
                 dcl.id_ = string.upper('CEU_'..inout..'_'..id)
             end
+end
         end
         if AST.par(me,'Data') then
             CUR().mem = CUR().mem..table.concat(mem)

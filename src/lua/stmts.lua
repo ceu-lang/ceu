@@ -445,6 +445,9 @@ F = {
 
         -- tp
         EXPS.check_tp(me, e.info.tp, ps.tp, 'invalid `emit´')
+
+        ASR(e.info.dcl[1] ~= '&?', me,
+            'invalid `emit´ : unexpected `event´ with `&?´ modifier')
     end,
 
     Emit_Ext_emit = function (me)

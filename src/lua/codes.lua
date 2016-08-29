@@ -276,6 +276,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.pool_first = &]]..V(me)..[[.first;
 ]])
     end,
 
+    Evt = 'Var',
     Var = function (me)
         local alias, tp, _, dim = unpack(me)
         if not me.has_trail then
@@ -972,16 +973,17 @@ ceu_vector_setlen(&]]..V(vec)..','..V(fr)..[[, 0);
         local fr, to = unpack(me)
 
         local alias, tp = unpack(to.info.dcl)
-        if (alias == '&?') and (not TYPES.is_nat(tp)) then
+        if (alias == '&?') and (not (to.info.dcl.tag=='Var' and TYPES.is_nat(tp))) then
+            local ptr = (to.info.dcl.tag=='Evt' and '&') or ''
             if fr.info.dcl[1] == '&?' then
                 LINE(me, [[
-]]..V(to)..' = '..V(fr)..[[;
+]]..V(to)..' = '..ptr..V(fr)..[[;
 ]])
             else
                 local trails = fr.info.dcl.blk.trails
                 LINE(me, [[
 ]]..V(to)..[[ = (tceu_opt_alias)
-    { ]]..V(fr)..[[, {_ceu_mem,]]..trails[1]..','..trails[2]..[[} };
+    { ]]..ptr..V(fr)..[[, {_ceu_mem,]]..trails[1]..','..trails[2]..[[} };
 ]])
             end
             if not AST.par(to.info.dcl, 'Code_Pars') then
@@ -1248,7 +1250,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
         local Exp_Name = unpack(me)
         local alias, tp = unpack(Exp_Name.info.dcl)
         if alias == '&?' then
-            assert(not TYPES.is_nat(tp), 'bug found')
+            assert(not (Exp_Name.info.dcl.tag=='Var' and TYPES.is_nat(tp)), 'bug found')
             LINE(me, [[
 if (]]..V(Exp_Name)..[[.alias != NULL) {
 ]])

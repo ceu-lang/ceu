@@ -41,20 +41,18 @@ F = {
         for _, dcl in ipairs(me.dcls) do
             local alias, Type = unpack(dcl)
 
-            -- +1 for each pool
-            if dcl.tag == 'Pool' then
-                if (not alias) and Type[1].dcl.tag=='Code' then
+            -- +1 for each "var/event&? ..."
+            if (alias == '&?') and (not (dcl.tag=='Var' and TYPES.is_nat(Type))) then
+                if not AST.par(dcl, 'Code_Pars') then
                     dcl.has_trail = true
                     me.trails_n = me.trails_n + 1
                 end
 
-            -- +1 for each "var&? ..."
-            elseif dcl.tag == 'Var' then
-                if alias=='&?' and (not TYPES.is_nat(Type)) then
-                    if not AST.par(dcl, 'Code_Pars') then
-                        dcl.has_trail = true
-                        me.trails_n = me.trails_n + 1
-                    end
+            -- +1 for each pool
+            elseif dcl.tag == 'Pool' then
+                if (not alias) and Type[1].dcl.tag=='Code' then
+                    dcl.has_trail = true
+                    me.trails_n = me.trails_n + 1
                 end
             end
         end
@@ -146,9 +144,11 @@ end
         local spawn = AST.get(sub, 'Abs_Spawn_Single')
         local pool  = AST.get(sub, 'Pool')
         local var   = AST.get(sub, 'Var')
+        local evt   = AST.get(sub, 'Evt')
 
         if sub.tag=='Finalize' or spawn
             or (pool and pool.has_trail) or (var and var.has_trail)
+            or (evt and evt.has_trail)
         then
             for stmts in AST.iter() do
                 if stmts.tag == 'Stmts' then
