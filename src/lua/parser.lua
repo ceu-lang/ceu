@@ -48,7 +48,7 @@ local T = {
     },
 
     {
-        '`&´ or `%(´ or primitive type or abstraction identifier or native identifier',
+        '`&%?´ or `&´ or `%(´ or primitive type or abstraction identifier or native identifier',
         'type'
     },
     {
