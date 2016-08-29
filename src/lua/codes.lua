@@ -532,6 +532,9 @@ if (!_ceu_stk->is_alive) {
         local _,list,pool,body = unpack(me)
         local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
 
+        local cur = (me.yields and CUR('__cur_'..me.n)) or '__ceu_cur'
+        local dyn = CUR('__dyn_'..me.n)
+
         if me.yields then
             LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id    = CEU_INPUT__FINALIZE;
@@ -540,14 +543,14 @@ _ceu_mem->trails[]]..me.trails[1]..[[].lbl       = ]]..me.lbl_clr.id..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
     (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[1]..[[ };
 
-]]..CUR('__dyn_'..me.n)..[[ = NULL;
+]]..dyn..[[ = NULL;
 if (0) {
     case ]]..me.lbl_clr.id..[[:
-        if (]]..CUR('__dyn_'..me.n)..[[ != NULL) {
-            if (]]..CUR('__dyn_'..me.n)..[[->state==CEU_CODE_MEM_DYN_STATE_DELETE) {
-                ceu_code_mem_dyn_free(&]]..V(pool)..[[.pool, ]]..CUR('__dyn_'..me.n)..[[);
+        if (]]..dyn..[[ != NULL) {
+            if (]]..dyn..[[->state==CEU_CODE_MEM_DYN_STATE_DELETE) {
+                ceu_code_mem_dyn_free(&]]..V(pool)..[[.pool, ]]..dyn..[[);
             } else {
-               ]]..CUR('__dyn_'..me.n)..[[->state = CEU_CODE_MEM_DYN_STATE_NONE;
+               ]]..dyn..[[->state = CEU_CODE_MEM_DYN_STATE_NONE;
             }
         }
         return;
@@ -558,21 +561,22 @@ if (0) {
         LINE(me, [[
 {
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-    tceu_code_mem_dyn* __ceu_cur = ]]..V(pool)..[[.first.nxt;
-    while (__ceu_cur != &]]..V(pool)..[[.first)
+    ]]..(me.yields and '' or 'tceu_code_mem_dyn*')..[[
+        ]]..cur..[[ = ]]..V(pool)..[[.first.nxt;
+    while (]]..cur..[[ != &]]..V(pool)..[[.first)
     {
 ]])
 
         if me.yields then
             LINE(me, [[
-        if (__ceu_cur->state == CEU_CODE_MEM_DYN_STATE_NONE) {
-            __ceu_cur->state = CEU_CODE_MEM_DYN_STATE_TRAVERSING;
-            ]]..CUR('__dyn_'..me.n)..[[ = __ceu_cur;
-        } else if (__ceu_cur->state == CEU_CODE_MEM_DYN_STATE_DELETE) {
-            __ceu_cur = __ceu_cur->nxt;
+        if (]]..cur..[[->state == CEU_CODE_MEM_DYN_STATE_NONE) {
+            ]]..cur..[[->state = CEU_CODE_MEM_DYN_STATE_TRAVERSING;
+            ]]..dyn..[[ = ]]..cur..[[;
+        } else if (]]..cur..[[->state == CEU_CODE_MEM_DYN_STATE_DELETE) {
+            ]]..cur..[[ = ]]..cur..[[->nxt;
             continue;
         } else {
-            ]]..CUR('__dyn_'..me.n)..[[ = NULL;
+            ]]..dyn..[[ = NULL;
         }
 ]])
         end
@@ -590,7 +594,7 @@ if (0) {
             end
             LINE(me, [[
         tceu_code_args_]]..Code.id..[[ __ceu_ps = { ]]..table.concat(ps,',').. [[};
-        CEU_CODE_WATCH_]]..Code.id..[[(__ceu_cur->mem, &__ceu_ps);
+        CEU_CODE_WATCH_]]..Code.id..[[(]]..cur..[[->mem, &__ceu_ps);
 ]])
         end
 
@@ -600,25 +604,25 @@ if (0) {
         if me.yields then
             LINE(me, [[
         {
-            tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
+            tceu_code_mem_dyn* __ceu_nxt = ]]..cur..[[->nxt;
 
-            ceu_dbg_assert(__ceu_cur->state != CEU_CODE_MEM_DYN_STATE_NONE);
-            if (]]..CUR('__dyn_'..me.n)..[[ != NULL) {
-                ceu_dbg_assert(__ceu_cur == ]]..CUR('__dyn_'..me.n)..[[);
-                if (__ceu_cur->state==CEU_CODE_MEM_DYN_STATE_DELETE) {
-                    ceu_code_mem_dyn_free(&]]..V(pool)..[[.pool, __ceu_cur);
+            ceu_dbg_assert(]]..cur..[[->state != CEU_CODE_MEM_DYN_STATE_NONE);
+            if (]]..dyn..[[ != NULL) {
+                ceu_dbg_assert(]]..cur..[[ == ]]..dyn..[[);
+                if (]]..cur..[[->state==CEU_CODE_MEM_DYN_STATE_DELETE) {
+                    ceu_code_mem_dyn_free(&]]..V(pool)..[[.pool, ]]..cur..[[);
                 } else {
-                   __ceu_cur->state = CEU_CODE_MEM_DYN_STATE_NONE;
+                   ]]..cur..[[->state = CEU_CODE_MEM_DYN_STATE_NONE;
                 }
-                ]]..CUR('__dyn_'..me.n)..[[ = NULL;
+                ]]..dyn..[[ = NULL;
             }
 
-            __ceu_cur = __ceu_nxt;
+            ]]..cur..[[ = __ceu_nxt;
         }
 ]])
         else
             LINE(me, [[
-            __ceu_cur = __ceu_cur->nxt;
+            ]]..cur..[[ = ]]..cur..[[->nxt;
 ]])
         end
 

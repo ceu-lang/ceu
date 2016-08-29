@@ -3,7 +3,7 @@
 RUNTESTS = {
     --cmd = true,
     --luacov = 'lua5.3 -lluacov'
-    --valgrind = true
+    valgrind = true
 --REENTRANT = true
 --COMPLETE = true
 --[[
