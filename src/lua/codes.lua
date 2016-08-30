@@ -258,6 +258,8 @@ ceu_vector_setmax(&]]..V(me)..', '..V(dim)..[[, 1);
     ]]..V(me)..[[.first = (tceu_code_mem_dyn) { __ceu_dyn, __ceu_dyn,
                                                 CEU_CODE_MEM_DYN_STATE_NONE, {} };
 };
+]]..V(me)..[[.up_mem = _ceu_mem;
+]]..V(me)..[[.up_trl = _ceu_trlK;
 ]])
         if dim == '[]' then
             LINE(me, [[
@@ -407,8 +409,8 @@ CLEAR(me) -- TODO-NOW
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
 
     ]]..mem..[[->pak = ]]..pak..[[;
-    ]]..mem..[[->up_mem = _ceu_mem;
-    ]]..mem..[[->up_trl = _ceu_trlK;
+    ]]..mem..[[->up_mem = ]]..((pak=='NULL' and '_ceu_mem')  or (pak..'->up_mem'))..[[;
+    ]]..mem..[[->up_trl = ]]..((pak=='NULL' and '_ceu_trlK') or (pak..'->up_trl'))..[[;
 
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     CEU_CODE_]]..ID_abs.dcl.id..[[(&__ceu_stk, 0, __ceu_ps,
@@ -471,7 +473,7 @@ if (!_ceu_stk->is_alive) {
         local ID_abs, Abslist = unpack(Abs_Cons)
         local alias,tp,_,dim = unpack(pool.info.dcl)
 
-        local code = F.__abs(me, '__ceu_new_mem', '&'..V(pool))
+        local code = F.__abs(me, '__ceu_new_mem', '(&'..V(pool)..')')
         LINE(me, [[
 {
     tceu_code_mem_dyn* __ceu_new;
@@ -532,7 +534,7 @@ if (!_ceu_stk->is_alive) {
         local _,list,pool,body = unpack(me)
         local Code = AST.asr(pool.info.dcl,'Pool', 2,'Type', 1,'ID_abs').dcl
 
-        local cur = (me.yields and CUR('__cur_'..me.n)) or '__ceu_cur'
+        local cur = CUR('__cur_'..me.n)
         local dyn = CUR('__dyn_'..me.n)
 
         if me.yields then
@@ -561,8 +563,7 @@ if (0) {
         LINE(me, [[
 {
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-    ]]..(me.yields and '' or 'tceu_code_mem_dyn*')..[[
-        ]]..cur..[[ = ]]..V(pool)..[[.first.nxt;
+    ]]..cur..[[ = ]]..V(pool)..[[.first.nxt;
     while (]]..cur..[[ != &]]..V(pool)..[[.first)
     {
 ]])

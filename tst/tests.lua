@@ -8,6 +8,31 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+native _ceu_dbg_assert;
+input void A, B;
+
+code/await Ph (void) => void do
+    await B;
+    _ceu_dbg_assert(0);
+end
+
+code/await Drop (void) => FOREVER do
+    spawn Ph();
+    await FOREVER;
+end
+
+pool[] Drop  drops;
+
+await A;
+spawn Drop() in drops;
+do end
+
+await FOREVER;
+]],
+    run = { ['~>A;~>B'] = '6] runtime error: bug found' },
+}
+
 --[=====[
 do return end
 

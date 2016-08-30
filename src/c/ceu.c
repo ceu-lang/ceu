@@ -99,6 +99,8 @@ typedef struct tceu_code_mem_dyn {
 typedef struct tceu_pool_pak {
     tceu_pool         pool;
     tceu_code_mem_dyn first;
+    tceu_code_mem*    up_mem;
+    tceu_ntrl         up_trl;
 } tceu_pool_pak;
 
 typedef struct tceu_opt_alias {
@@ -473,7 +475,7 @@ _CEU_AWAKE_NO_:
 
     occ->range = range;
 
-#ifdef _CEU_DEBUG_EXEC
+#ifdef _CEU_DEBUG_MARK
 xxx -= 4;
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
