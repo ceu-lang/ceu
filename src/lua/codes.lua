@@ -46,6 +46,9 @@ local function CLEAR (me)
         --  end
         return
     end
+if me.trails_n == 1 then
+    --return
+end
 
     LINE(me, [[
 {
@@ -90,7 +93,8 @@ case ]]..T.lbl..[[:;
     end
 end
 
-function SET (me, to, fr, fr_ok)
+function SET (me, to, fr, fr_ok, fr_ctx)
+    local fr_val = fr
     if not fr_ok then
         -- var Ee.Xx ex = ...;
         -- var&& Ee = &&ex;
@@ -100,17 +104,17 @@ function SET (me, to, fr, fr_ok)
                 cast = '('..TYPES.toc(to.info.tp)..')'
             end
         end
-        fr = cast..V(fr)
+        fr_val = cast..V(fr,fr_ctx)
     end
 
-    if TYPES.check(to.info.tp,'?') then
+    if TYPES.check(to.info.tp,'?') and (not TYPES.check(fr.info.tp,'?')) then
         LINE(me, [[
 ]]..V(to)..[[.is_set = 1;
-]]..V(to)..'.value  = '..fr..[[;
+]]..V(to)..'.value  = '..fr_val..[[;
 ]])
     else
         LINE(me, [[
-]]..V(to)..' = '..fr..[[;
+]]..V(to)..' = '..fr_val..[[;
 ]])
     end
 end
@@ -1067,9 +1071,8 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
         local _,Abs_Cons = unpack(fr)
 
         -- typecast: "val Xx = val Xx.Yy();"
-        LINE(me, [[
-]]..V(to)..' = '..V(Abs_Cons,{to_tp=TYPES.toc(to.info.tp)})..[[;
-]])
+        local to_tp = TYPES.toc(TYPES.pop(to.info.tp,'?'))
+        SET(me, to, Abs_Cons, nil, {to_tp=to_tp})
     end,
 
     Set_Vec = function (me)

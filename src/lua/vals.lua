@@ -150,7 +150,9 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                 end
             end
 
-            if TYPES.check(var_tp,'?') and (not var_is_alias) then
+            if TYPES.check(var_tp,'?') and (not var_is_alias) and
+               (not (val.info and TYPES.check(val.info.tp,'?')))
+            then
                 if val.tag == 'ID_any' then
                     ps[#ps+1] = '.'..var_id..' = { .is_set=0 }'
                 else

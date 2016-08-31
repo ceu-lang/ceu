@@ -27,8 +27,10 @@ F = {
         -- tp
         EXPS.check_tp(me, to.info.tp, fr.info.tp, err)
 
-        ASR(not TYPES.check(fr.info.tp,'?'), me,
-            'invalid assignment : expected operator `!´')
+        if not TYPES.check(to.info.tp,'?') then
+            ASR(not TYPES.check(fr.info.tp,'?'), me,
+                'invalid assignment : expected operator `!´')
+        end
     end,
 
     __set_vec = function (fr, to_info)

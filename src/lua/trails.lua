@@ -20,7 +20,7 @@ F = {
             MAX_all(me)
         end
 
-        if me.tag == 'Code' then
+        if me.tag=='Code' and me[1].await then
             me.trails_n = me.trails_n + 1   -- TODO-NOW
         end
     end,
@@ -122,10 +122,15 @@ G = {
 
 -- TODO-NOW
 if me.tag == 'Block' then
-    if AST.get(AST.par(me,'Code'),'',3,'Block') == me then
+    local Code = AST.get(AST.par(me,'Code'))
+    if Code and Code[1]=='await' and AST.get(Code,'',3,'Block')==me then
         me.trails[2] = me.trails[2] - 1
     end
 end
+    end,
+
+    Node__POS = function (me)
+        --DBG(me.ln[2], me.tag, unpack(me.trails))
     end,
 
     Stmts__BEF = function (me, sub, i)
@@ -163,7 +168,9 @@ end
     Loop_Pool__PRE = function (me)
         local _, _, _, body = unpack(me)
         body.trails = { unpack(me.trails) }
-        body.trails[1] = body.trails[1] + 1
+        if me.yields then
+            body.trails[1] = body.trails[1] + 1
+        end
     end,
 
     Pause_If__PRE = function (me)

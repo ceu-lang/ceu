@@ -8,6 +8,79 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+--[=====[
+-- exemplos de atribuicao a data com valor "?"
+Test { [[
+data Dd with
+    var int? x;
+end
+var int? y;
+var int? z;
+z = y;
+var Dd d = val Dd(y);
+escape (d.x? as int) + 1;
+]],
+    run = 1,
+}
+Test { [[
+data Ee with
+    var int x;
+end
+data Dd with
+    var Ee? e;
+end
+var Dd d = _;
+
+d.e = val Ee(10);
+var int c = 0;
+
+escape d.e!.x;
+]],
+    wrn = true,
+    run = 10,
+}
+--do return end
+
+Test { [[
+native _V;
+native/pure _f;
+native/nohold _ceu_dbg_assert;
+native/pos do
+    ##define f(x) x
+    void* V;
+end
+
+data Ii;
+
+code/await Cloud (void) => (var& Ii i) => FOREVER do
+    var Ii i_ = val Ii();
+    i = &i_;
+    await FOREVER;
+end
+
+pool[] Cloud clouds;
+spawn Cloud() in clouds;
+spawn Cloud() in clouds;
+
+code/await Collides (void) => void do end
+
+code/await Collisions (void) => void do
+    var& Ii cloud1;
+    loop (cloud1) in outer.clouds do
+        var& Ii cloud2;
+        loop (cloud2) in outer.clouds do
+            _V = _f(&&cloud1);
+            spawn Collides();
+            _ceu_dbg_assert(_V == &&cloud1);
+        end
+    end
+end
+await Collisions();
+escape 1;
+]],
+    run = 1,
+}
+
 Test { [[
 native _ceu_dbg_assert;
 input void A, B;
@@ -33,7 +106,6 @@ await FOREVER;
     run = { ['~>A;~>B'] = '6] runtime error: bug found' },
 }
 
---[=====[
 do return end
 
 -- TODO-1
@@ -346,7 +418,6 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -29199,6 +29270,7 @@ escape x!;
     run = '2] runtime error: value is not set',
 }
 
+--]=====]
 Test { [[
 var int? v1 = 10;
 var int? v2 = v1;
