@@ -418,6 +418,7 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -29270,14 +29271,13 @@ escape x!;
     run = '2] runtime error: value is not set',
 }
 
---]=====]
 Test { [[
 var int? v1 = 10;
 var int? v2 = v1;
 escape v2!;
 ]],
-    stmts = 'line 2 : invalid assignment : expected operator `!´',
-    --run = 10;
+    --stmts = 'line 2 : invalid assignment : expected operator `!´',
+    run = 10;
 }
 
 Test { [[
@@ -33816,26 +33816,28 @@ code/await Ff (void) => void do
 end
 every 1s do
     spawn Ff();
+    escape 1;
 end
 escape 0;
 ]],
-    props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
+    --props_ = 'line 4 : invalid `spawn´ : unexpected enclosing `every´',
+    run = { ['~>1s']=1 },
 }
 
 Test { [[
-code/await Ff (var int x) => (var& int y) => FOREVER do
-    y = &x;
+code/await Ff (var int xxx) => (var& int yyy) => FOREVER do
+    yyy = &xxx;
     do
         do finalize with end
     end
     await FOREVER;
 end
 
-var int x = 10;
-var& int y;
-spawn Ff(x) => (y);
+var int aaa = 10;
+var& int bbb;
+spawn Ff(aaa) => (bbb);
 
-escape y;
+escape bbb;
 ]],
     run = 10,
 }

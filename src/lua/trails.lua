@@ -122,8 +122,8 @@ G = {
 
 -- TODO-NOW
 if me.tag == 'Block' then
-    local Code = AST.get(AST.par(me,'Code'))
-    if Code and Code[1]=='await' and AST.get(Code,'',3,'Block')==me then
+    local Code = AST.get(AST.par(me,'Code'),'')
+    if Code and Code[1].await and AST.get(Code,'',3,'Block')==me then
         me.trails[2] = me.trails[2] - 1
     end
 end

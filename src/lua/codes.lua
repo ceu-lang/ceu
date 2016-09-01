@@ -107,7 +107,7 @@ function SET (me, to, fr, fr_ok, fr_ctx)
         fr_val = cast..V(fr,fr_ctx)
     end
 
-    if TYPES.check(to.info.tp,'?') and (not TYPES.check(fr.info.tp,'?')) then
+    if TYPES.check(to.info.tp,'?') and (not (fr.info and TYPES.check(fr.info.tp,'?'))) then
         LINE(me, [[
 ]]..V(to)..[[.is_set = 1;
 ]]..V(to)..'.value  = '..fr_val..[[;
