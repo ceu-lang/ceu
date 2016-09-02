@@ -1,0 +1,19 @@
+par/or do
+    every 1s do
+        _printf("Hello World!\n");
+    end
+with
+    async do
+        emit 5s;
+    end
+end
+escape 0;
+
+#if 0
+#@ Description: Prints "Hello World" every second.
+#@ Features:
+#@  - `every`  to react to time
+#@  - `emit`   to simulate the passage of time
+#@  - `async`  to be able to call `emit`
+#@  - `par/or` to terminate after the `async` simulation
+#endif

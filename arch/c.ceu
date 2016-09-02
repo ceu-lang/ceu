@@ -1,0 +1,34 @@
+#ifndef _C_CEU
+#define _C_CEU
+
+native do
+    ##define UNSAFE_POINTER_TO_ALIAS(ptr) ptr
+end
+native @nohold _UNSAFE_POINTER_TO_ALIAS();
+
+native _assert(),
+       _malloc();
+
+native @plain _char, _byte;
+
+native @const _stderr;
+
+native @nohold
+        _ceu_vector_copy_buffer(),
+        _fprintf(),
+        _free(),
+        _printf(),
+        _memcpy(),
+        _sprintf(),
+        _srand(),
+        _sscanf(),
+        _strcpy();
+
+native @pure
+        _abs(),
+        _memcmp(),
+        _strcmp(),
+        _strncpy(),
+        _strlen();
+
+#endif

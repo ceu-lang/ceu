@@ -1,0 +1,7 @@
+#if 0
+#@ Description: Terminates immediatelly with an `escape`.
+#@ Features:
+#@  - `escape`
+#endif
+
+escape 0;
