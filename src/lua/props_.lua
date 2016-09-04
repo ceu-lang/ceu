@@ -141,7 +141,7 @@ F = {
         me.yields = me.yields and ret
             -- if "=>FOREVER" counts as not yielding
 
-        if me.yields then
+        if list and me.yields then
             for _,ID in ipairs(list) do
                 if ID.tag ~= 'ID_any' then
                     ASR(ID.dcl[1] == '&?', me,

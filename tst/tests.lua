@@ -9,293 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
--- exemplos de atribuicao a data com valor "?"
-Test { [[
-data Dd with
-    var int? x;
-end
-var int? y;
-var int? z;
-z = y;
-var Dd d = val Dd(y);
-escape (d.x? as int) + 1;
-]],
-    run = 1,
-}
-Test { [[
-data Ee with
-    var int x;
-end
-data Dd with
-    var Ee? e;
-end
-var Dd d = _;
-
-d.e = val Ee(10);
-var int c = 0;
-
-escape d.e!.x;
-]],
-    wrn = true,
-    run = 10,
-}
---do return end
-
-Test { [[
-native _V;
-native/pure _f;
-native/nohold _ceu_dbg_assert;
-native/pos do
-    ##define f(x) x
-    void* V;
-end
-
-data Ii;
-
-code/await Cloud (void) => (var& Ii i) => FOREVER do
-    var Ii i_ = val Ii();
-    i = &i_;
-    await FOREVER;
-end
-
-pool[] Cloud clouds;
-spawn Cloud() in clouds;
-spawn Cloud() in clouds;
-
-code/await Collides (void) => void do end
-
-code/await Collisions (void) => void do
-    var& Ii cloud1;
-    loop (cloud1) in outer.clouds do
-        var& Ii cloud2;
-        loop (cloud2) in outer.clouds do
-            _V = _f(&&cloud1);
-            spawn Collides();
-            _ceu_dbg_assert(_V == &&cloud1);
-        end
-    end
-end
-await Collisions();
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-native _ceu_dbg_assert;
-input void A, B;
-
-code/await Ph (void) => void do
-    await B;
-    _ceu_dbg_assert(0);
-end
-
-code/await Drop (void) => FOREVER do
-    spawn Ph();
-    await FOREVER;
-end
-
-pool[] Drop  drops;
-
-await A;
-spawn Drop() in drops;
-do end
-
-await FOREVER;
-]],
-    run = { ['~>A;~>B'] = '6] runtime error: bug found' },
-}
-
-do return end
-
--- TODO-1
--- valgrind fails
-Test { [[
-input void A;
-
-native _V, _ceu_dbg_assert;
-native/pos do
-    int V = 0;
-end
-
-code/await Ff (void) => (event&? void e) => void do
-    event void e_;
-    e = &e_;
-    await e_;
-    _ceu_dbg_assert(_V == 0);
-    _V = _V + 1;
-end
-
-event void g;
-pool[] Ff ffs;
-spawn Ff() in ffs;
-
-watching g do
-    event&? void e;
-    loop (e) in ffs do
-        emit e!; // kill 1st, but don't delete
-        emit g; // kill iterator
-    end
-end
-
-event&? void e;
-loop (e) in ffs do
-    emit e!;     // no awake!
-    escape 99;  // nooo
-end
-
-escape 1;
-]],
-    run = { ['~>A']=1 },
-}
-
-Test { [[
-code/await Ff (void) => (var&? int x, event&? void e) => void do
-    var int v = 10;
-    x = &v;
-    event void e_;
-    e = &e_;
-    await e_;
-end
-
-pool[] Ff ffs;
-spawn Ff() in ffs;
-spawn Ff() in ffs;
-
-var int ret = 0;
-var&? int x1;
-event&? void e1;
-loop (x1,e1) in ffs do
-    emit e1!;
-    var&? int x2;
-    event&? void e2;
-    loop (x2,e2) in ffs do
-        ret = ret + x2!;
-        emit e2!;
-    end
-end
-
-escape ret;
-]],
-    run = 10,
-}
-Test { [[
-code/await Ff (void) => (var&? int x, event&? void e) => void do
-    var int v = 10;
-    x = &v;
-    event void e_;
-    e = &e_;
-    await e_;
-end
-
-pool[2] Ff ffs;
-var bool b1 = spawn Ff() in ffs;
-var bool b2 = spawn Ff() in ffs;
-
-event void g;
-
-var int ret = 0;
-watching g do
-    var&? int x1;
-    event&? void e1;
-    loop (x1,e1) in ffs do
-        emit e1!;
-        var&? int x2;
-        event&? void e2;
-        loop (x2,e2) in ffs do
-            ret = ret + x2!;
-            emit e2!;
-            ret = ret + (x2? as int) + 1;
-            emit g;
-        end
-    end
-end
-
-var bool b3 = spawn Ff() in ffs;
-var bool b4 = spawn Ff() in ffs;
-
-escape ret + (b1 as int) + (b2 as int) + (b3 as int) + (b4 as int);
-]],
-    run = 15,
-}
-
-Test { [[
-input void A;
-
-code/await Ff (void) => (var&? int x, event&? void e) => void do
-    var int x_ = 0;
-    x = &x_;
-    event void e_;
-    e = &e_;
-    par/or do
-        await e_;
-    with
-        var int y = 0;
-        every A do
-            y = y + 1;
-        end
-    end
-end
-
-pool[] Ff ffs;
-spawn Ff() in ffs;
-spawn Ff() in ffs;
-spawn Ff() in ffs;
-
-await A;
-
-var&? int x1;
-event&? void e1;
-loop (x1,e1) in ffs do
-    var&? int x2;
-    event&? void e2;
-    loop (x2,e2) in ffs do
-        emit e1!;
-        emit e2!;
-    end
-end
-
-escape 1;
-]],
-    run = { ['~>A']=1 },
-}
-
-Test { [[
-code/await Ff (void) => (var&? int x, event&? int e) => void do
-    var int v = 10;
-    x = &v;
-
-    event int e_;
-    e = &e_;
-    var int vv = await e_;
-
-    v = v + vv;
-    async do end
-end
-
-pool[] Ff ffs;
-
-var&?   int x;
-event&? int e;
-
-spawn Ff() in ffs => (x,e);
-
-var int ret = 0;
-
-par/and do
-    await e;
-with
-    await x;
-with
-    emit e!(20);
-    ret = x!;
-end
-
-escape ret;
-]],
-    run = 30,
-}
-
 ----------------------------
 -- TODO
 ----------------------------
@@ -31042,6 +30755,37 @@ escape (d1.x? as int) + d2.x! + 1;
     run = 11,
 }
 
+-- exemplos de atribuicao a data com valor "?"
+Test { [[
+data Dd with
+    var int? x;
+end
+var int? y;
+var int? z;
+z = y;
+var Dd d = val Dd(y);
+escape (d.x? as int) + 1;
+]],
+    run = 1,
+}
+Test { [[
+data Ee with
+    var int x;
+end
+data Dd with
+    var Ee? e;
+end
+var Dd d = _;
+
+d.e = val Ee(10);
+var int c = 0;
+
+escape d.e!.x;
+]],
+    wrn = true,
+    run = 10,
+}
+
 --<< OPTION / DATA
 
 -->> OPTION / VECTOR
@@ -43921,7 +43665,217 @@ escape 0;
     stmts = 'line 11 : invalid `emit´ : unexpected `event´ with `&?´ modifier',
 }
 
--- TODO-1
+-- valgrind fails
+Test { [[
+input void A;
+
+native _V, _ceu_dbg_assert;
+native/pos do
+    int V = 0;
+end
+
+code/await Ff (void) => (event&? void e) => void do
+    event void e_;
+    e = &e_;
+    await e_;
+    _ceu_dbg_assert(_V == 0);
+    _V = _V + 1;
+end
+
+event void g;
+pool[] Ff ffs;
+spawn Ff() in ffs;
+
+watching g do
+    event&? void e;
+    loop (e) in ffs do
+        emit e!; // kill 1st, but don't delete
+        emit g; // kill iterator
+    end
+end
+
+event&? void e;
+loop (e) in ffs do
+    emit e!;     // no awake!
+    escape 99;  // nooo
+end
+
+escape 1;
+]],
+    run = { ['~>A']=1 },
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x, event&? void e) => void do
+    var int v = 10;
+    x = &v;
+    event void e_;
+    e = &e_;
+    await e_;
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+spawn Ff() in ffs;
+
+var int ret = 0;
+var&? int x1;
+event&? void e1;
+loop (x1,e1) in ffs do
+    emit e1!;
+    var&? int x2;
+    event&? void e2;
+    loop (x2,e2) in ffs do
+        ret = ret + x2!;
+        emit e2!;
+    end
+end
+
+escape ret;
+]],
+    run = 10,
+}
+Test { [[
+code/await Ff (void) => (var&? int x, event&? void e) => void do
+    var int v = 10;
+    x = &v;
+    event void e_;
+    e = &e_;
+    await e_;
+end
+
+pool[2] Ff ffs;
+var bool b1 = spawn Ff() in ffs;
+var bool b2 = spawn Ff() in ffs;
+
+event void g;
+
+var int ret = 0;
+watching g do
+    var&? int x1;
+    event&? void e1;
+    loop (x1,e1) in ffs do
+        emit e1!;
+        var&? int x2;
+        event&? void e2;
+        loop (x2,e2) in ffs do
+            ret = ret + x2!;
+            emit e2!;
+            ret = ret + (x2? as int) + 1;
+            emit g;
+        end
+    end
+end
+
+var bool b3 = spawn Ff() in ffs;
+var bool b4 = spawn Ff() in ffs;
+
+escape ret + (b1 as int) + (b2 as int) + (b3 as int) + (b4 as int);
+]],
+    run = 15,
+}
+
+Test { [[
+event& void e2;
+if e2? then
+    emit e2;
+end
+escape 1;
+]],
+    exps = 'line 2 : invalid operand to `?´ : unexpected context for event "e2"',
+}
+
+Test { [[
+event&? void e2;
+if e2? then
+    emit e2!;
+end
+escape 1;
+]],
+    inits = 'line 1 : uninitialized event "e2" : reached `emit´ (/tmp/tmp.ceu:3)',
+}
+
+Test { [[
+input void A;
+
+code/await Ff (void) => (var&? int x, event&? void e) => void do
+    var int x_ = 0;
+    x = &x_;
+    event void e_;
+    e = &e_;
+    par/or do
+        await e_;
+    with
+        var int y = 0;
+        every A do
+            y = y + 1;
+        end
+    end
+end
+
+pool[] Ff ffs;
+spawn Ff() in ffs;
+spawn Ff() in ffs;
+spawn Ff() in ffs;
+
+await A;
+
+var&? int x1;
+event&? void e1;
+loop (x1,e1) in ffs do
+    var&? int x2;
+    event&? void e2;
+    loop (x2,e2) in ffs do
+        if e1? then
+            emit e1!;
+        end
+        if e2? then
+            emit e2!;
+        end
+    end
+end
+
+escape 1;
+]],
+    run = { ['~>A']=1 },
+}
+
+Test { [[
+code/await Ff (void) => (var&? int x, event&? int e) => void do
+    var int v = 10;
+    x = &v;
+
+    event int e_;
+    e = &e_;
+    var int vv = await e_;
+
+    v = v + vv;
+    async do end
+end
+
+pool[] Ff ffs;
+
+var&?   int x;
+event&? int e;
+
+spawn Ff() in ffs => (x,e);
+
+var int ret = 0;
+
+par/and do
+    await e;
+with
+    await x;
+with
+    emit e!(20);
+    ret = x!;
+end
+
+escape ret;
+]],
+    run = 30,
+}
+
 
 Test { [[
 code/await Ff (void) => (var&? int x) => void do
@@ -44026,118 +43980,161 @@ escape _V;
     run = 2,
 }
 
+Test { [[
+native _V;
+native/pure _f;
+native/nohold _ceu_dbg_assert;
+native/pos do
+    ##define f(x) x
+    void* V;
+end
+
+data Ii;
+
+code/await Cloud (void) => (var& Ii i) => FOREVER do
+    var Ii i_ = val Ii();
+    i = &i_;
+    await FOREVER;
+end
+
+pool[] Cloud clouds;
+spawn Cloud() in clouds;
+spawn Cloud() in clouds;
+
+code/await Collides (void) => void do end
+
+code/await Collisions (void) => void do
+    var& Ii cloud1;
+    loop (cloud1) in outer.clouds do
+        var& Ii cloud2;
+        loop (cloud2) in outer.clouds do
+            _V = _f(&&cloud1);
+            spawn Collides();
+            _ceu_dbg_assert(_V == &&cloud1);
+        end
+    end
+end
+await Collisions();
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+native _ceu_dbg_assert;
+input void A, B;
+
+code/await Ph (void) => void do
+    await B;
+    _ceu_dbg_assert(0);
+end
+
+code/await Drop (void) => FOREVER do
+    spawn Ph();
+    await FOREVER;
+end
+
+pool[] Drop  drops;
+
+await A;
+spawn Drop() in drops;
+do end
+
+await FOREVER;
+]],
+    run = { ['~>A;~>B'] = '6] runtime error: bug found' },
+}
+
 --<< POOL / LOOP
 --||| TODO: POOL ITERATORS
 
--- TODO: SKIP
---[===[
-
 Test { [[
-class Tx with
-    var int v = 0;
-do
-end
-pool[1] Tx ts;
-var Tx&&?  ok1 = spawn Tx in ts with
-                this.v = 10;
-              end;
-var int ok2 = 0;// spawn Tx in ts;
-var int ret = 0;
 loop (Tx&&)t in ts do
     ret = ret + t:v;
 end
 escape (ok1?) + ok2 + ret;
 ]],
-    parser = 'line 11 : after `loop´ : expected internal identifier or `do´',
+    --parser = 'line 11 : after `loop´ : expected internal identifier or `do´',
+    parser = 'line 1 : after `(´ : expected internal identifier or `_´',
     --fin = 'line 14 : pointer access across `await´',
     --run = 1,
 }
+
 Test { [[
-class Tx with
-    var int v = 0;
-do
-end
-pool[1] Tx ts;
-var Tx&&?  ok1 = spawn Tx in ts with
-                this.v = 10;
-              end;
-var int ok2 = 0;// spawn Tx in ts;
-var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
-end
-escape (ok1?) + ok2 + ret + 1;
+code/await Tx (void) => void do end
+var bool ok1 = spawn Tx();
+escape 0;
 ]],
-    --fin = 'line 14 : pointer access across `await´',
-    run = 1,
+    parser = 'line 2 : after `)´ : expected `in´',
 }
 Test { [[
-class Tx with do await FOREVER; end;
-pool[] Tx ts;
-event void e;
-spawn Tx in ts;
+code/await Tx (void) => void do end
+pool[1] Tx ts;
+var Tx&&?  ok1 = spawn Tx() in ts;
+escape 0;
+]],
+    dcls = 'line 3 : invalid declaration : unexpected context for `code´ "Tx"',
+}
+Test { [[
+code/await Tx (void) => void do end
+pool[1] Tx ts;
+vector[] int ok1 = spawn Tx() in ts;
+escape 0;
+]],
+    stmts = 'line 3 : invalid constructor : unexpected context for vector "ok1"',
+}
+Test { [[
+code/await Tx (void) => void do end
+pool[1] Tx ts;
+var int ok1 = spawn Tx() in ts;
+escape 0;
+]],
+    stmts = 'line 3 : invalid constructor : expected `bool´ destination',
+}
+
+Test { [[
+code/await Tx (void)=>void do await FOREVER; end;
+pool[10] Tx ts;
+spawn Tx() in ts;
 var int ret = 0;
-loop t in ts do
+loop in ts do
     ret = ret + 1;
-    spawn Tx in ts;
+    spawn Tx() in ts;
 end
 escape ret;
 ]],
-    props = 'line 6 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
+    run = 10,
+    --props = 'line 6 : pool iterator cannot contain yielding statements (`await´, `emit´, `spawn´, `kill´)',
 }
 
 Test { [[
-class Tx with
-do
-end
+code/await Tx (void) => void do end
 pool[] Tx t;
-spawn Tx in t;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-class Tx with
-do
-end
-spawn Tx;
-escape 1;
-]],
-    run = 1,
-}
-Test { [[
-class Tx with
-do
-end
-pool[] Tx t;
-spawn Tx in t;
-spawn Tx;
+spawn Tx() in t;
+spawn Tx();
 escape 1;
 ]],
     run = 1,
 }
 
 Test { [[
+native _V;
 native/pos do
     int V = 0;
 end
-class Tx with
-    var int v = 0;
-do
+code/await Tx (var int v1)=>(var& int v2)=>void do
+    _V = _V + v1;
+    var int x = v1;
+    v2 = &x;
     async do end;
 end
 pool[] Tx ts;
-spawn Tx in ts with
-    this.v = 10;
-    _V = _V + 10;
-end;
-spawn Tx with
-    this.v = 20;
-    _V = _V + 20;
-end;
+spawn Tx(10) in ts;
+spawn Tx(20);
 var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
+var& int v;
+loop (v) in ts do
+    ret = ret + v;
 end
 escape ret + _V;
 ]],
@@ -44145,26 +44142,23 @@ escape ret + _V;
 }
 
 Test { [[
+native _V;
 native/pos do
     int V = 0;
 end
-class Tx with
-    var int v = 0;
-do
+code/await Tx (var int v1)=>(var& int v2)=>void do
+    _V = _V + v1;
+    var int x = v1;
+    v2 = &x;
     async do end;
 end
 pool[] Tx ts;
-spawn Tx with
-    this.v = 10;
-    _V = _V + 10;
-end;
-spawn Tx in ts with
-    this.v = 20;
-    _V = _V + 20;
-end;
+spawn Tx(10);
+spawn Tx(20) in ts;
 var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
+var& int v;
+loop (v) in ts do
+    ret = ret + v;
 end
 escape ret + _V;
 ]],
@@ -44172,14 +44166,13 @@ escape ret + _V;
 }
 
 Test { [[
-class Tx with
-do
+code/await Tx (void)=>void do
     await FOREVER;
 end
 
 pool[2] Tx ts;
-spawn Tx in ts;
-spawn Tx in ts;
+spawn Tx() in ts;
+spawn Tx() in ts;
 
 input void OS_START;
 await OS_START;
@@ -44188,30 +44181,20 @@ escape 60;
     run = 60,
 }
 Test { [[
-class Tx with
-do
-    await FOREVER;
-end
-
+code/await Tx (void)=>void do await FOREVER; end
 pool[] Tx ts;
-spawn Tx in ts;
-spawn Tx in ts;
-
+spawn Tx() in ts;
+spawn Tx() in ts;
 escape 60;
 ]],
     run = 60,
 }
 
 Test { [[
-class Tx with
-do
-    await FOREVER;
-end
-
+code/await Tx (void)=>void do await FOREVER; end
 pool[] Tx ts;
-spawn Tx in ts;
-spawn Tx in ts;
-
+spawn Tx() in ts;
+spawn Tx() in ts;
 input void OS_START;
 await OS_START;
 escape 60;
@@ -44220,26 +44203,23 @@ escape 60;
 }
 
 Test { [[
+native _V;
 native/pos do
     int V = 0;
 end
-class Tx with
-    var int v = 0;
-do
+code/await Tx (var int v1)=>(var& int v2)=>void do
+    _V = _V + v1;
+    var int x = v1;
+    v2 = &x;
     async do end;
 end
 pool[] Tx ts;
-spawn Tx in ts with
-    this.v = 10;
-    _V = _V + 10;
-end;
-spawn Tx in ts with
-    this.v = 20;
-    _V = _V + 20;
-end;
+spawn Tx(10) in ts;
+spawn Tx(20) in ts;
 var int ret = 0;
-loop t in ts do
-    ret = ret + t:v;
+var& int v;
+loop (v) in ts do
+    ret = ret + v;
 end
 escape ret + _V;
 ]],
@@ -44249,217 +44229,36 @@ escape ret + _V;
 -->> POOL/SPAWN/OPTION
 
 Test { [[
-class Tx with do end
-var Tx&& ok = spawn Tx;
-escape ok != null;
+code/await Tx (var int v1)=>(var&? int v2)=>void do
+    var int x = v1;
+    v2 = &x;
+end
+
+var&? int v;
+spawn Tx(10) => (v);
+escape v!;
 ]],
-    tmp = 'line 2 : must assign to option pointer',
-    --run = 1,
+    --asr = '7] runtime error: invalid tag',
+    run = '8] runtime error: value is not set',
 }
 
 Test { [[
-class U with do end
-class Tx with do end
-var U&&? ok = spawn Tx;
-escape ok != null;
+code/await Tx (var int v1)=>(var&? int v2)=>void do
+    var int x = v1;
+    v2 = &x;
+end
+
+var&? int v;
+spawn Tx(10) => (v);
+async do end
+escape v!;
 ]],
-    tmp = 'line 3 : types mismatch (`U&&?´ <= `Tx&&´)',
-    --run = 1,
+    --asr = '7] runtime error: invalid tag',
+    run = '9] runtime error: value is not set',
 }
 
 Test { [[
-class Tx with do end
-var Tx&&? ok = spawn Tx;
-escape &&(ok!) != null;
-]],
-    asr = '3] runtime error: invalid tag',
-    --run = 1,
-}
-
-Test { [[
-class Body with do end;
-var Body&&? tail = spawn Body;
-await *(tail!);
-escape 1;
-]],
-    asr = '3] runtime error: invalid tag',
-    run = 1,
-}
-
-Test { [[
-class Tx with do
-end
-var Tx&&? kkk;
-pool[] Tx ppp;
-spawn Tx in ppp;
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-class Tx with do end
-var bool ok_=true;
-do
-    var Tx&&? ok;
-    ok = spawn Tx;
-    ok_ = (ok?);
-end
-escape ok_+1;
-]],
-    run = 1,
-}
-
-Test { [[
-class Tx with do end
-var Tx&&? ok;
-var bool ok_=true;
-do
-    ok = spawn Tx;
-    ok_ = (ok?);
-end
-escape ok_+1;
-]],
-    run = 1,
-}
-
-Test { [[
-class Tx with do end
-var Tx&&? ok;
-do
-    ok = spawn Tx;
-end
-escape ok?+1;
-]],
-    --fin = 'line 6 : pointer access across `await´',
-    run = 1,
-}
-
-Test { [[
-class Tx with do
-    await FOREVER;
-end
-var Tx&&? ok;
-native _assert;
-do
-    loop i in [0 -> 5[ do
-        ok = spawn Tx;
-    end
-end
-escape ok?+1;
-]],
-    --loop = 1,
-    --fin = 'line 11 : pointer access across `await´',
-    run = 2,
-}
-Test { [[
-class Tx with do
-    await FOREVER;
-end
-var Tx&&? ok;
-var bool ok_=false;
-native _assert;
-do
-    loop i in [0 -> 5[ do
-        ok = spawn Tx;
-        ok_ = (ok?);
-    end
-end
-escape ok_+1;
-]],
-    --loop = 1,
-    run = 2,
-}
-
-Test { [[
-class Tx with do
-    await FOREVER;
-end
-var Tx&&? ok;
-var bool ok_=true;
-native _assert;
-do
-    loop i in [0 -> 100[ do
-        ok = spawn Tx;
-    end
-    var Tx&&? ok1 = spawn Tx;
-    ok_ = (ok1?);
-end
-escape ok_+1;
-]],
-    --loop = 1,
-    run = 1,
-}
-Test { [[
-class Tx with do
-    await FOREVER;
-end
-var Tx&&? ok;
-native _assert;
-do
-    loop i in [0 -> 100[ do
-        ok = spawn Tx;
-    end
-    ok = spawn Tx;
-end
-escape (ok?)+1;
-]],
-    --loop = 1,
-    --fin = 'line 10 : pointer access across `await´',
-    run = 1,
-}
-
-Test { [[
-class Tx with
-    var int a=0;
-do
-    this.a = 1;
-end
-var Tx&&? t = spawn Tx;
-escape t!:a;
-]],
-    asr = '7] runtime error: invalid tag',
-    --run = 1,
-}
-
-Test { [[
-input void OS_START;
-class Tx with
-    var int a=0;
-do
-    this.a = 1;
-end
-var Tx&&? t = spawn Tx;
-await OS_START;
-escape t!:a;
-]],
-    --fin = 'line 9 : unsafe access to pointer "t" across `await´',
-    run = '9] runtime error: invalid tag',
-}
-
-Test { [[
-class Tx with do end
-do
-    var Tx&&? t;
-    t = spawn Tx;
-end
-escape 10;
-]],
-    run = 10,
-}
-
-Test { [[
-class Tx with do end
-var Tx&&? t;
-t = spawn Tx;
-escape 10;
-]],
-    run = 10,
-}
-
-Test { [[
-class Tx with
-do
+code/await Tx (void) => void do
     par/or do
         await 10s;
     with
@@ -44468,18 +44267,17 @@ do
         await 10s;
     end
 end
-var Tx&&? t;
-    t = spawn Tx;
-    t = spawn Tx;
-    t = spawn Tx;
+pool[] Tx ts;
+    spawn Tx() in ts;
+    spawn Tx() in ts;
+    spawn Tx() in ts;
 escape 10;
 ]],
     run = 10;
 }
 
 Test { [[
-class Tx with
-do
+code/await Tx (void) => void do
     par/or do
         await 10s;
     with
@@ -44488,16 +44286,15 @@ do
         await 10s;
     end
 end
-var Tx&&? t;
+pool[] Tx ts;
 do
-    t = spawn Tx;
-    t = spawn Tx;
-    t = spawn Tx;
+    spawn Tx() in ts;
+    spawn Tx() in ts;
+    spawn Tx() in ts;
 end
 escape 10;
 ]],
-    --fin = 'line 13 : invalid block for awoken pointer "t"',
-    run = 10,
+    run = 10;
 }
 
 Test { [[
@@ -44505,6 +44302,7 @@ spawn i;
 ]],
     parser = 'line 1 : after `spawn´ : expected abstraction identifier or `do´',
 }
+
 Test { [[
 _f(spawn Tx);
 ]],
@@ -44513,102 +44311,50 @@ _f(spawn Tx);
 }
 
 Test { [[
-class Tx with do end
-var Tx&&? a;
-a = spawn U;
+spawn Uu();
 ]],
-    tmp = 'line 3 : undeclared type `U´',
+    dcls = 'line 1 : abstraction "Uu" is not declared',
 }
 
 Test { [[
-class Tx with do end
-do
-    var Tx&&? t;
-    t = spawn Tx;
+code/await Tx (void) => void do
+    spawn Tx();
 end
 escape 10;
 ]],
-    run = 10,
+    wrn = true,
+    stmts = 'line 2 : invalid `spawn´ : unexpected recursive invocation',
 }
 
 Test { [[
-class Tx with
-do
+code/await Tx (void)=>(event&? void e)=>void do
+    event void e_;
+    e = &e_;
 end
 
-var Tx&&? t = spawn Tx;
-if not t? then
-    escape 10;
-end
-
+event&? void e;
+spawn Tx() => (e);
+await e!;
 escape 1;
 ]],
-    run = 10,
+    wrn = true,
+    run = '8] runtime error: value is not set',
 }
 
 Test { [[
-class Tx with
-do
-    await FOREVER;
+code/await Tx (void)=>(event&? void e)=>void do
+    event void e_;
+    e = &e_;
+    async do end;
+    emit e_;
 end
 
-var Tx&&? t = spawn Tx;
-if not t? then
-    escape 10;
-end
-
+event&? void e;
+spawn Tx() => (e);
+await e!;
 escape 1;
 ]],
-    run = 1,
-}
-
-Test { [[
-class Tx with
-do
-end
-
-var Tx&&? t = spawn Tx;
-await *(t!);
-escape 1;
-]],
-    asr = 'runtime error: invalid tag',
-}
-
-Test { [[
-input void OS_START;
-
-class Tx with
-do
-    await OS_START;
-end
-pool[] Tx ts;
-
-var Tx&&? t = spawn Tx;
-await *(t!);
-escape 1;
-]],
-    run = 1,
-}
-
-Test { [[
-input void OS_START;
-
-class Tx with
-do
-    await FOREVER;
-end
-
-var Tx t;
-par/or do
-    await t;
-with
-    kill t;
-native _assert;
-    _assert(0);
-end
-
-escape 1;
-]],
+    wrn = true,
     run = 1,
 }
 
@@ -44616,127 +44362,126 @@ escape 1;
 Test { [[
 input void OS_START;
 
-class Tx with
-do
+code/await Tx (void) => void do
     await OS_START;
 end
 
 do
-    var Tx t;
-    await t;
+    await Tx();
 end
 do
 native _char;
-    vector[1000] _char v = [];
+    vector[1000] _char v = _;
     native/nohold _memset;
     _memset(&&v, 0, 1000);
 end
 
 escape 1;
 ]],
+    wrn = true,
     run = 1,
 }
 
 Test { [[
 input void A;
 
-class Tx with
-do
+code/await Tx (void)=>(var&? int x)=>void do
+    var int x_=_;
+    x = &x_;
     await A;
 end
 
-pool[] Tx ts;
+var&? int x1;
+spawn Tx() => (x1);
+await x1;
 
-var Tx&&? t1 = spawn Tx;
-await *(t1!);
-var Tx&&? t2 = spawn Tx;
-await *(t2!);
+var&? int x2;
+spawn Tx() => (x2);
+await x2;
 
 escape 1;
 ]],
+    wrn = true,
     run = { ['~>A;~>A']=1 },
 }
-Test { [[
-input void OS_START;
 
-class Tx with
-do
+Test { [[
+code/await Tx (void)=>(var&? int x)=>void do
+    var int x_=_;
+    x = &x_;
     await 1us;
 end
 
-pool[] Tx ts;
+var&? int x1;
+spawn Tx() => (x1);
+await x1;
 
-var Tx&&? t1 = spawn Tx;
-await *(t1!);
-var Tx&&? t2 = spawn Tx;
-await *(t2!);
+var&? int x2;
+spawn Tx() => (x2);
+await x2;
 
 escape 1;
 ]],
+    wrn = true,
     run = { ['~>2us']=1 },
 }
 
 Test { [[
-input void OS_START;
-
-class Tx with
-do
+code/await Tx (void)=>(var&? int x)=>void do
+    var int x_=_;
+    x = &x_;
     await 1us;
 end
-pool[] Tx ts;
 
-var Tx&&? t1 = spawn Tx;
-var Tx&&? t2 = spawn Tx;
-await *(t2!);
-var Tx&&? t3 = spawn Tx;
-await *(t3!);
+var&? int x1;
+spawn Tx() => (x1);
+spawn Tx();
+await x1;
+
+var&? int x2;
+spawn Tx() => (x2);
+await x2;
 
 escape 1;
 ]],
+    wrn = true,
     run = { ['~>2us']=1 },
 }
 
 -- group of tests fails w/o sudden death check while traversing children
 Test { [[
+native _V;
 input void OS_START;
 native/pos do
     int V = 0;
 end
 
-class Tx with
-    event void e;
-do
+code/await Tx (void)=>(event& void e)=>FOREVER do
+    event void e_;
+    e = &e_;
     await FOREVER;
 end
 
-class U with
-    var& Tx t;
-    var bool only_await;
-do
+code/await Ux (event& void e, var bool only_await) => void do
     par/or do
-        await t.e;
+        await e;
         _V = _V + 1;
     with
         if only_await then
             await FOREVER;
         end
         await OS_START;
-        emit t.e;
+        emit e;
     with
         await OS_START;
     end
 end
 
-var Tx t;
+event& void e;
+spawn Tx() => (e);
 
-var U _ with
-    this.t = &t;
-    this.only_await = true;
-end;
-var U _ with
-    this.t = &t;
-    this.only_await = false;
-end;
+spawn Ux(&e, true);
+spawn Ux(&e, false);
 
 await OS_START;
 
@@ -44744,31 +44489,24 @@ escape _V;
 ]],
     run = 1,
 }
+
 Test { [[
 input void OS_START;
+native _V;
 native/pos do
     int V = 0;
 end
 
-class Tx with
-    event void e;
-do
-    await FOREVER;
-end
-
-class U with
-    var& Tx t;
-    var bool only_await;
-do
+code/await Ux (event& void e, var bool only_await) => void do
     par/or do
-        await t.e;
+        await e;
         _V = _V + 1;
     with
         if only_await then
             await FOREVER;
         end
         await OS_START;
-        emit t.e;
+        emit e;
     with
         if only_await then
             await FOREVER;
@@ -44777,16 +44515,10 @@ do
     end
 end
 
-var Tx t;
+event void e;
 
-var U _ with
-    this.t = &t;
-    this.only_await = true;
-end;
-var U _ with
-    this.t = &t;
-    this.only_await = false;
-end;
+spawn Ux(&e, true);
+spawn Ux(&e, false);
 
 await OS_START;
 
@@ -44795,45 +44527,31 @@ escape _V;
     run = 2,
 }
 Test { [[
+native _V;
 input void OS_START;
 native/pos do
     int V = 0;
 end
 
-class Tx with
-    event void e;
-do
-    await FOREVER;
-end
-
-class U with
-    var& Tx t;
-    var bool only_await;
-do
+code/await Ux (event& void e, var bool only_await) => void do
     par/or do
-        await t.e;
+        await e;
         _V = _V + 1;
     with
         if only_await then
             await FOREVER;
         end
         await OS_START;
-        emit t.e;
+        emit e;
     with
         await OS_START;
     end
 end
 
-var Tx t;
+event void e;
 
-var U _ with
-    this.t = &t;
-    this.only_await = false;
-end;
-var U _ with
-    this.t = &t;
-    this.only_await = true;
-end;
+spawn Ux(&e, true);
+spawn Ux(&e, false);
 
 await OS_START;
 
@@ -44842,90 +44560,62 @@ escape _V;
     run = 1,
 }
 Test { [[
+native _V;
 input void OS_START;
 native/pos do
     int V = 0;
 end
 
-class Tx with
-    event void e;
-do
-    await FOREVER;
-end
-
-class U with
-    var& Tx t;
-    var bool only_await;
-do
+code/await Ux (event& void e, var bool only_await) => void do
     par/or do
-        await t.e;
+        await e;
         _V = _V + 1;
     with
         if only_await then
             await FOREVER;
         end
         await OS_START;
-        emit t.e;
+        emit e;
     with
         await OS_START;
     end
 end
 
-var Tx tt;
+event void e;
 
-spawn U with
-    this.t = &tt;
-    this.only_await = false;
-end;
-spawn U with
-    this.t = &tt;
-    this.only_await = true;
-end;
+spawn Ux(&e, false);
+spawn Ux(&e, true);
 
 await OS_START;
 
 escape _V;
 ]],
-    run = 1,
+    run = 2,
 }
 
 -- u1 doesn't die, kills u2, which becomes dangling
 Test { [[
+native _V;
 input void OS_START;
 native/pos do
     int V = 0;
 end
 
-class Tx with
-    event void e;
-do
-    await FOREVER;
-end
-
-class U with
-    var& Tx t;
-    var bool only_await;
-do
+code/await Ux (event& void e, var bool only_await) => void do
     if only_await then
-        await t.e;
+        await e;
         _V = 1;
     else
         await OS_START;
-        emit t.e;
+        emit e;
         await FOREVER;
     end
 end
 
-var Tx t;
+event void e;
 
-var U _ with
-    this.t = &t;
-    this.only_await = false;
-end;
-var U _ with
-    this.t = &t;
-    this.only_await = true;
-end;
+spawn Ux(&e, false);
+spawn Ux(&e, true);
 
 await OS_START;
 
@@ -44935,41 +44625,26 @@ escape _V;
 }
 
 Test { [[
+native _V;
 input void OS_START;
 native/pos do
     int V = 0;
 end
 
-class Tx with
-    event void e;
-do
-    await FOREVER;
-end
-
-class U with
-    var& Tx t;
-    var bool only_await;
-do
+code/await Ux (event& void e, var bool only_await) => void do
     if only_await then
-        await t.e;
+        await e;
         _V = 1;
     else
         await OS_START;
-        emit t.e;
+        emit e;
         await FOREVER;
     end
 end
 
-var Tx t;
-
-spawn U with
-    this.t = &t;
-    this.only_await = false;
-end;
-spawn U with
-    this.t = &t;
-    this.only_await = true;
-end;
+event void e;
+spawn Ux(&e, false);
+spawn Ux(&e, true);
 
 await OS_START;
 
@@ -44982,21 +44657,21 @@ escape _V;
 Test { [[
 input void OS_START;
 
-class U with
+code/await Ux (void)=>void
 do
     await 1us;
 end
 
-class Tx with
+code/await Tx (void)=>void
 do
-    do U;
+    await Ux();
 end
 
 do
     pool[] Tx ts;
-    spawn Tx in ts;
-    var Tx&&? t = spawn Tx in ts;
-    await *t!;
+    spawn Tx() in ts;
+    spawn Tx() in ts;
+    await 1us;
 end
 
 escape 1;
@@ -45004,50 +44679,37 @@ escape 1;
     run = { ['~>1us']=1 },
 }
 
+--[===[ -- TODO: SKIP
+
+-- nao suporto
+-- spawn Tx() => (x1) in ts;
+-- eh para suportar?
 Test { [[
 input void OS_START;
 
-class U with
+code/await Ux (void)=>void
 do
     await 1us;
 end
 
-class Tx with
+code/await Tx (void)=>(var&? int x)=>void
 do
-    do U;
+    var int v = 10;
+    x = &v;
+    await Ux();
 end
 
-do
-    pool[] Tx ts;
-    spawn Tx in ts;
-    var Tx&&? t = spawn Tx in ts;
-    await *t!;
-end
-
-escape 1;
-]],
-    run = { ['~>1us']=1 },
-}
-
-Test { [[
-input void OS_START;
-
-class U with
-do
-    await 1us;
-end
-
-class Tx with
-do
-    do U;
-end
 pool[] Tx ts;
 
-var Tx&&? t1 = spawn Tx;
-var Tx&&? t2 = spawn Tx;
-await *t2!;
-var Tx&&? t3 = spawn Tx;
-await *t3!;
+spawn Tx() in ts;
+
+var&? int x1;
+spawn Tx() => (x1) in ts;
+await x1;
+
+var&? int x2;
+spawn Tx() => (x2) in ts;
+await x1;
 
 escape 1;
 ]],
@@ -47266,6 +46928,28 @@ native _assert;
     end
     kill t;
 end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+input void OS_START;
+
+class Tx with
+do
+    await FOREVER;
+end
+
+var Tx t;
+par/or do
+    await t;
+with
+    kill t;
+native _assert;
+    _assert(0);
+end
+
 escape 1;
 ]],
     run = 1,

@@ -264,7 +264,11 @@ error'TODO: remove below'
         local op,e = unpack(me)
 
         -- ctx
-        INFO.asr_tag(e, {'Nat','Var'}, 'invalid operand to `'..op..'´')
+        INFO.asr_tag(e, {'Nat','Var','Evt'}, 'invalid operand to `'..op..'´')
+        if e.info.dcl.tag == 'Evt' then
+            ASR(e.info.dcl[1] == '&?', me,
+                'invalid operand to `?´ : unexpected context for event "'..e.info.dcl.id..'"')
+        end
 
         -- tp
         ASR((e.info.dcl[1]=='&?') or TYPES.check(e.info.tp,'?'), me,

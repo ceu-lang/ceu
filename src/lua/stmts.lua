@@ -211,10 +211,20 @@ F = {
         end
     end,
     Set_Abs_New = function (me)
-        local _, Exp_Name = unpack(me)
+        local _, to = unpack(me)
 
         -- ctx
-        INFO.asr_tag(Exp_Name, {'Var','Pool'}, 'invalid constructor')
+        INFO.asr_tag(to, {'Var','Pool'}, 'invalid constructor')
+    end,
+    Set_Abs_Spawn_Pool = function (me)
+        local _, to = unpack(me)
+
+        -- ctx
+        INFO.asr_tag(to, {'Var'}, 'invalid constructor')
+
+        -- tp
+        ASR(TYPES.check(to.info.tp,'bool'), me,
+            'invalid constructor : expected `bool´ destination')
     end,
 
 -- EMIT

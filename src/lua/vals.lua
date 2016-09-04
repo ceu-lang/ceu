@@ -312,7 +312,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         local _, e = unpack(me)
         local alias, tp = unpack(e.info.dcl)
         if alias == '&?' then
-            if TYPES.is_nat(tp) then
+            if e.info.dcl.tag=='Var' and TYPES.is_nat(tp) then
                 return '('..V(e)..' != NULL)'
             else
                 return '('..V(e)..'.alias != NULL)'

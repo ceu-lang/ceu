@@ -94,6 +94,10 @@ local T = {
         'abstraction identifier or name expression',
         'name expression'
     },
+    {
+        '`/dynamic´ or `/static´ or `/recursive´ or abstraction identifier',
+        'abstraction identifier'
+    },
 
     {
         '`do´ or `await´ or `async/thread´ or `%[´ or `call/recursive´ or `call´ or name expression or `&&´ or `&´ or `sizeof´ or `null´ or number or `false´ or `true´ or `"´ or string literal or `not´ or `%-´ or `%+´ or `~´ or `%$%$´ or `emit´ or `val´ or `new´ or `spawn´ or `_´ or `request´ or `watching´',
