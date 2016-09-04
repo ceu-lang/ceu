@@ -261,9 +261,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
         else
             local ptr = ''
             if not TYPES.is_nat(e.info.tp) then
-                if is_alias and me.info.dcl.tag~='Evt' and
-                    (not TYPES.is_nat_not_plain(TYPES.pop(me.info.tp,'?')))
-                then
+                if is_alias and me.info.dcl.tag~='Evt' then
                     ptr = '*'
                 end
             end

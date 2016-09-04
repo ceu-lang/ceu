@@ -40352,28 +40352,15 @@ escape (call Fx(Dd(1))) + (call Fx(_));
 -->> DATA / ALIAS / POINTER
 
 Test { [[
-native _void_ptr, _V, _f;
-native/pre do
-    typedef void* void_ptr;
-    int V = 10;
-    void* f() {
-        return &V;
-    }
-end
-
 data Dd with
-    var& _void_ptr ptr;
+    var& _char c;
 end
-
-var&? _void_ptr ptr = &_f()
-    finalize (ptr) with
-    end
-
-var Dd d = val Dd(&ptr!);
-
-escape (d.ptr == (&&_V as void&&)) as int;
+var  _char c = 65;
+var& _char p = &c;
+var Dd d = val Dd(&c);
+escape p + d.c;
 ]],
-    run = 1,
+    run = 130,
 }
 
 Test { [[
@@ -40395,7 +40382,7 @@ var&? _void ptr = &_f()
 
 var Dd d = val Dd(&ptr!);
 
-escape (d.ptr == (&&_V as void&&)) as int;
+escape (&&d.ptr == (&&_V as void&&)) as int;
 ]],
     run = 1,
 }
@@ -40627,9 +40614,6 @@ escape 1;
 }
 
 --<<< DATA / EVENTS
-
---error'22/07/2016'
---do return end
 
 -->> DATA / VECTOR
 
