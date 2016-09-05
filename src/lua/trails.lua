@@ -30,16 +30,20 @@ F = {
     end,
     Block = function (me)
         MAX_all(me)
-        if me.has_fin then
-            me.trails_n = me.trails_n + 1
-        end
-        if me.fins_n > 0 then
-            me.trails_n = me.trails_n + me.fins_n
-        end
-        me.trails_n = me.trails_n + #me.spawns
 
         for _, dcl in ipairs(me.dcls) do
             local alias, Type = unpack(dcl)
+
+            local ID_abs = AST.get(Type,'Type',1,'ID_abs')
+            if dcl.tag=='Var' and ID_abs and
+               TYPES.check(Type,ID_abs[1]) and ID_abs.dcl.tag=='Data'
+            then
+                me.has_fin = me.has_fin or ID_abs.dcl.has_fin
+                local data = AST.par(me,'Data')
+                if data then
+                    data.has_fin = me.has_fin
+                end
+            end
 
             -- +1 for each "var/event&? ..."
             if (alias == '&?') and (not (dcl.tag=='Var' and TYPES.is_nat(Type))) then
@@ -56,6 +60,14 @@ F = {
                 end
             end
         end
+
+        if me.has_fin then
+            me.trails_n = me.trails_n + 1
+        end
+        if me.fins_n > 0 then
+            me.trails_n = me.trails_n + me.fins_n
+        end
+        me.trails_n = me.trails_n + #me.spawns
     end,
 
     Vec = function (me)
@@ -63,6 +75,10 @@ F = {
         if (not TYPES.is_nat(TYPES.get(tp,1))) then
             if not (is_alias or dim.is_const) then
                 AST.par(me,'Block').has_fin = true
+                local data = AST.par(me,'Data')
+                if data then
+                    data.has_fin = true
+                end
             end
         end
     end,

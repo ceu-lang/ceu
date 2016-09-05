@@ -131,7 +131,6 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -40639,6 +40638,125 @@ escape 1;
 ]],
     stmts = 'line 15 : invalid `emit´ : types mismatch : "(int)" <= "()"',
 }
+
+Test { [[
+data Vv with
+    vector[] int xxx;
+end
+
+vector[] int vvv;
+
+var Vv yyy = val Vv(_);
+
+vvv = [1,2,3];
+yyy.xxx = [1,2,3];
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data Kk with
+    vector[] int xxx;
+end
+
+data Vv with
+    var Kk kkk;
+end
+
+vector[] int vvv;
+
+var Vv yyy = val Vv(Kk(_));
+
+vvv = [1,2,3];
+yyy.kkk.xxx = [1,2,3];
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data Kk with
+    vector[] int xxx;
+end
+
+data Vv with
+    var Kk kkk;
+end
+
+var Vv yyy = val Vv(Kk(_));
+yyy.kkk.xxx = [1,2,3];
+
+escape 1;
+]],
+    run = 1,
+}
+Test { [[
+data Kk with
+    vector[] int xxx;
+end
+
+data Vv with
+    var Kk kkk;
+end
+
+var Vv yyy = val Vv(Kk(_));
+
+yyy.kkk.xxx = [1,2,3];
+yyy.kkk.xxx[1] = yyy.kkk.xxx[0]+yyy.kkk.xxx[1]+yyy.kkk.xxx[2];
+
+escape yyy.kkk.xxx[1];
+]],
+    run = 6,
+}
+--]=====]
+Test { [[
+data Kk with
+    vector[] int xxx;
+end
+
+data Vv with
+    var Kk kkk;
+end
+
+var Vv yyy = val Vv(Kk([1,2,true]));
+
+escape yyy.kkk.xxx[1];
+]],
+    exps = 'line 9 : invalid constructor : item #1 : invalid expression list : item #3 : types mismatch : "int" <= "bool"',
+}
+Test { [[
+data Kk with
+    vector[] int xxx;
+end
+
+data Vv with
+    var Kk kkk;
+end
+
+var Vv yyy = val Vv(Kk([1,2,3]));
+
+escape yyy.kkk.xxx[1];
+]],
+    run = 2,
+}
+Test { [[
+data Kk with
+    vector[] byte xxx;
+end
+
+data Vv with
+    var Kk kkk;
+end
+
+var Vv yyy = val Vv(Kk([].."oi"));
+
+native/pure _strlen;
+escape _strlen(&&yyy.kkk.xxx[0]);
+]],
+    run = 2,
+}
+do return end
 
 Test { [[
 data Tt with

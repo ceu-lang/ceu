@@ -164,14 +164,31 @@ if (]]..V(c)..[[) {
 ]])
     end,
 
-    Block__PRE = function (me)
+    Block__PRE = function (me, par,base)
+        par = par or me
+        me.code_fin = ''
+        local ctx = { base=base }
+
+        -- recurse for "data" var
+        for _, dcl in ipairs(me.dcls) do
+            local alias, tp = unpack(dcl)
+            local ID_abs = AST.get(tp,'Type',1,'ID_abs')
+            if dcl.tag=='Var' and ID_abs and
+               TYPES.check(tp,ID_abs[1]) and ID_abs.dcl.tag=='Data'
+            then
+                local blk = AST.asr(ID_abs.dcl,'Data', 3,'Block')
+                F.Block__PRE(blk, par, (base and base..'.' or '')..dcl.id_)
+                par.code_fin = par.code_fin .. blk.code_fin
+            end
+        end
+
         -- initialize opts
         for _, dcl in ipairs(me.dcls) do
             if dcl.tag == 'Var' then
                 local is_alias, tp = unpack(dcl)
                 if TYPES.check(tp,'?') and (not is_alias) and (not dcl.is_param) then
-                    LINE(me, [[
-]]..V(dcl)..[[.is_set = 0;
+                    LINE(par, [[
+]]..V(dcl,ctx)..[[.is_set = 0;
 ]])
                 end
             end
@@ -184,13 +201,13 @@ if (]]..V(c)..[[) {
                 local is_alias, tp, _, dim = unpack(dcl)
                 if not is_alias then
                     if dim.is_const then
-                        LINE(me, [[
-ceu_vector_init(&]]..V(dcl)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
+                        LINE(par, [[
+ceu_vector_init(&]]..V(dcl,ctx)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
                 (byte*)&]]..CUR(dcl.id_..'_buf')..[[);
 ]])
                     else
-                        LINE(me, [[
-ceu_vector_init(&]]..V(dcl)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
+                        LINE(par, [[
+ceu_vector_init(&]]..V(dcl,ctx)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 ]])
                     end
                 end
@@ -199,39 +216,49 @@ ceu_vector_init(&]]..V(dcl)..', 0, 1, sizeof('..TYPES.toc(tp)..[[), NULL);
 
         -- free vectors/pools
         if me.has_fin then
-            LINE(me, [[
+            if me == par then
+                LINE(me, [[
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
 
 if (0) {
 ]])
-            CASE(me, me.lbl_fin)
+                CASE(me, me.lbl_fin)
+                LINE(me, me.code_fin)   -- all nested "data"
+            end
+
+            local fin = ''
             for _, dcl in ipairs(me.dcls) do
                 local is_alias,tp,_,dim = unpack(dcl)
                 if dcl.tag=='Vec' and (not TYPES.is_nat(TYPES.get(tp,1))) then
                     if not (is_alias or dim.is_const) then
-                        LINE(me, [[
-    ceu_vector_setmax(&]]..V(dcl)..[[, 0, 0);
-]])
+                        fin = fin..[[
+    ceu_vector_setmax(&]]..V(dcl,ctx)..[[, 0, 0);
+]]
                     end
                 elseif dcl.tag=='Pool' and (not (is_alias or dim~='[]')) then
-                    LINE(me, [[
-    ceu_dbg_assert(]]..V(dcl)..[[.pool.queue == NULL);
+                    fin = fin..[[
+    ceu_dbg_assert(]]..V(dcl,ctx)..[[.pool.queue == NULL);
     {
-        tceu_code_mem_dyn* __ceu_cur = ]]..V(dcl)..[[.first.nxt;
-        while (__ceu_cur != &]]..V(dcl)..[[.first) {
+        tceu_code_mem_dyn* __ceu_cur = ]]..V(dcl,ctx)..[[.first.nxt;
+        while (__ceu_cur != &]]..V(dcl,ctx)..[[.first) {
             tceu_code_mem_dyn* __ceu_nxt = __ceu_cur->nxt;
             ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, __ceu_cur, 0);
             __ceu_cur = __ceu_nxt;
         }
     }
-]])
+]]
                 end
             end
-            LINE(me, [[
+            me.code_fin = fin
+
+            if me == par then
+                LINE(me, fin)
+                LINE(me, [[
     return;
 }
 ]])
+            end
         end
     end,
 
@@ -1072,7 +1099,7 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
 
         -- typecast: "val Xx = val Xx.Yy();"
         local to_tp = TYPES.toc(TYPES.pop(to.info.tp,'?'))
-        SET(me, to, Abs_Cons, nil, {to_tp=to_tp})
+        SET(me, to, Abs_Cons, nil, {to_tp=to_tp, to_val=V(to)})
     end,
 
     Set_Vec = function (me)

@@ -14,7 +14,8 @@ function CUR (field, ctx)
             data = 'CEU_APP.root'
         end
     end
-    return '('..data..'.'..field..')'
+    local base = (ctx.base and ctx.base..'.') or ''
+    return '('..data..'.'..base..field..')'
 end
 
 function V (me, ctx)
@@ -159,11 +160,20 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                     ps[#ps+1] = '.'..var_id..' = { .is_set=1, .value='..V(val)..'}'
                 end
             else
-                if val.tag ~= 'ID_any' then
+                if val.tag == 'ID_any' then
+                    -- HACK_09: keep what is there
+                    --  data Dd with
+                    --      vector[] int x;
+                    --  end
+                    --  var Dd d = val Dd(_);   // x is implicitly init'd
+                    ps[#ps+1] = '.'..var_id..' = '..ctx.to_val..'.'..var_id
+                else
+                    local to_val = ctx.to_val
                     local ctx = {}
                     if val.tag == 'Abs_Cons' then
                         -- typecast: "val Xx = val Xx.Yy();"
-                        ctx.to_tp = TYPES.toc(var_tp)
+                        ctx.to_tp  = TYPES.toc(var_tp)
+                        ctx.to_val = '('..to_val..'.'..var_id..')'
                     end
                     ps[#ps+1] = '.'..var_id..' = '..cast..V(val,ctx)
                 end

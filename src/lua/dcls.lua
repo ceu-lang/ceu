@@ -235,12 +235,6 @@ F = {
         dcls_new(AST.par(me,'Block'), me)
         F.__no_abs(Type, 'Code')
 
-        if AST.par(me, 'Data') then
-            local is_nat = TYPES.is_nat(TYPES.get(Type,1))
-            ASR(is_alias or is_nat, me,
-                'invalid declaration : not implemented (plain vectors)')
-        end
-
         -- vector[] void vec;
         local ID_prim,mod = unpack(Type)
         if ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod) then

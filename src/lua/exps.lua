@@ -179,12 +179,13 @@ F = {
                         err_str..' : invalid binding : argument #'..i..' : dimension mismatch')
                 end
             else
-                ASR(val.tag=='ID_any' or val.info.tag~='Alias', me,
+                ASR(val.tag=='ID_any' or (not (val.info and val.info.tag=='Alias')), me,
                     'invalid binding : argument #'..i..' : expected declaration with `&´')
             end
 
             if val.tag == 'ID_any' then
                 -- ok: ignore _
+
             elseif val.tag == 'Vec_Cons' then
 assert(ID_abs.dcl.tag == 'Data', 'TODO')
 error'TODO: remove below'
