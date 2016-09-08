@@ -6,9 +6,10 @@ end
 local F
 
 function CUR (field, ctx)
+    ctx = ctx or {}
     local Code = AST.iter'Code'()
     local data do
-        if Code and (not (ctx and ctx.is_outer)) then
+        if Code and (not ctx.is_outer) then
             data = '(*((tceu_code_mem_'..Code.id..'*)_ceu_mem))'
         else
             data = 'CEU_APP.root'
@@ -160,20 +161,30 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
                     ps[#ps+1] = '.'..var_id..' = { .is_set=1, .value='..V(val)..'}'
                 end
             else
+                local to_val = ctx.to_val
                 if val.tag == 'ID_any' then
                     -- HACK_09: keep what is there
                     --  data Dd with
                     --      vector[] int x;
                     --  end
                     --  var Dd d = val Dd(_);   // x is implicitly init'd
-                    ps[#ps+1] = '.'..var_id..' = '..ctx.to_val..'.'..var_id
+                    if to_val then  -- only set for Set_Abs_Val ("data")
+                        if var.tag=='Evt' or var.tag=='Vec' and TYPES.is_nat(var_tp) then
+                            -- don't initialize
+                            --  event ...;
+                            --  vector[] _int x;
+                        else
+                            ps[#ps+1] = '.'..var_id..' = '..to_val..'.'..var_id
+                        end
+                    end
                 else
-                    local to_val = ctx.to_val
                     local ctx = {}
                     if val.tag == 'Abs_Cons' then
                         -- typecast: "val Xx = val Xx.Yy();"
                         ctx.to_tp  = TYPES.toc(var_tp)
-                        ctx.to_val = '('..to_val..'.'..var_id..')'
+                        if to_val then  -- only set for Set_Abs_Val ("data")
+                            ctx.to_val = '('..to_val..'.'..var_id..')'
+                        end
                     end
                     ps[#ps+1] = '.'..var_id..' = '..cast..V(val,ctx)
                 end
