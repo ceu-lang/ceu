@@ -173,7 +173,7 @@ if (]]..V(c)..[[) {
         for _, dcl in ipairs(me.dcls) do
             local alias, tp = unpack(dcl)
             local ID_abs = AST.get(tp,'Type',1,'ID_abs')
-            if dcl.tag=='Var' and ID_abs and
+            if (not alias) and dcl.tag=='Var' and ID_abs and
                TYPES.check(tp,ID_abs[1]) and ID_abs.dcl.tag=='Data'
             then
                 local blk = AST.asr(ID_abs.dcl,'Data', 3,'Block')

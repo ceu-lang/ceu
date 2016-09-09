@@ -34,7 +34,7 @@ F = {
         for _, dcl in ipairs(me.dcls) do
             local alias, Type = unpack(dcl)
 
-            local abs = Type and TYPES.abs_dcl(Type,'Data')
+            local abs = AST.get(Type,'Type') and TYPES.abs_dcl(Type,'Data')
             if dcl.tag=='Var' and abs then
                 me.has_fin = me.has_fin or abs.has_fin
                 local data = AST.par(me,'Data')

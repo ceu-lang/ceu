@@ -40983,6 +40983,24 @@ end
     consts = 'line 3 : invalid declaration : vector dimension must be an integer constant',
 }
 
+Test { [[
+native/pure _strlen;
+
+data Dd with
+    vector[] byte xxx;
+end
+
+code/tight Ff (var& Dd d) => int do
+    escape _strlen(&&d.xxx[0] as _char&&);
+end
+
+var Dd d = val Dd([].."oioi");
+
+escape call Ff(&d);
+]],
+    wrn = true,
+    run = 4,
+}
 --<< DATA / VECTOR
 
 -->>> DATA / RECURSIVE
