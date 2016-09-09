@@ -538,37 +538,41 @@ DBG('TODO: must be "=> FOREVER"')
 
 -------------------------------------------------------------------------------
 
---[[
     Vec_Cons__POS = function (me)
-        local up = AST.par(me,'Abs_Cons')
-        if not up then
+        local Set = AST.par(me,'Set_Abs_Val')
+        if not Set then
             return
         end
 
-        local base
-        do
-            local abs = up
-            while abs do
-                base = abs
-                abs = AST.par(abs,'Abs_Cons')
-            end
+        local T = { }
+
+        local old = me
+        local new = AST.par(me, 'Abs_Cons')
+
+        while new do
+            assert(AST.asr(new,'', 2,'Abslist', old.__i,'') == old)
+            table.insert(T, 1, old.__i)
+            old = new
+            new = AST.par(new, 'Abs_Cons')
         end
 
-        local Set   = base.__par.__par
-        local Stmts = Set.__par
-AST.dump(base)
-AST.dump(base.__par)
-AST.dump(base.__par.__par)
-AST.dump(base.__par.__par.__par)
-        table.insert(AST.asr(Stmts,'Stmts'),
-                     Set.__i,
-                     node('_Set', me.ln,
-                        node('Ref', me.ln, 'vec_cons', base),   -- see dcls.lua
-                        me))
+        Set.__adjs_sets = Set.__adjs_sets or node('Stmts', me.ln)
+
+        AST.insert(Set.__adjs_sets, #Set.__adjs_sets+1,
+                    node('Set_Vec', me.ln,
+                        me,                -- see dcls.lua
+                        node('Ref', me.ln, 'vec_cons', T)))
 
         return node('ID_any', me.ln)
     end,
-]]
+
+    Set_Abs_Val__POS = function (me)
+        if me.__adjs_sets then
+            local ret = node('Stmts', me.ln, me, me.__adjs_sets)
+            me.__adjs_sets = nil
+            return ret
+        end
+    end,
 
 -------------------------------------------------------------------------------
 

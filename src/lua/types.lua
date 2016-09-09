@@ -213,6 +213,11 @@ function TYPES.ID_plain (tp)
     return #tp==1 and tp[1]
 end
 
+function TYPES.abs_dcl (tp,kind)
+    local ID = TYPES.ID_plain(tp)
+    return ID and ID.dcl and ID.dcl.tag==kind and ID.dcl
+end
+
 do
     local __contains_num = {
         -- TODO: should 'int' be bottom?

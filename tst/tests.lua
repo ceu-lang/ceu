@@ -120,7 +120,6 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -40633,7 +40632,6 @@ escape 1;
 }
 
 --<<< DATA / EVENTS
-error'OK'
 
 -->> DATA / VECTOR
 
@@ -40731,19 +40729,41 @@ escape yyy.kkk.xxx[1];
     run = 6,
 }
 Test { [[
-data Kk with
+data Vv with
     vector[] int xxx;
 end
 
+var Vv yyy;
+yyy = val Vv([1,2,true]);
+
+escape yyy.xxx[1];
+]],
+    stmts = 'line 6 : invalid constructor : item #1 : invalid expression list : item #3 : types mismatch : "int" <= "bool"',
+}
+Test { [[
 data Vv with
-    var Kk kkk;
+    vector[] int xxx;
 end
 
-var Vv yyy = val Vv(Kk([1,2,true]));
+var Vv yyy;
+yyy = val Vv([1,2]);
 
-escape yyy.kkk.xxx[1];
+escape yyy.xxx[1];
 ]],
-    exps = 'line 9 : invalid constructor : item #1 : invalid expression list : item #3 : types mismatch : "int" <= "bool"',
+    run = 2,
+}
+Test { [[
+data Vv with
+    var int v;
+    vector[] int xxx;
+end
+
+var Vv yyy;
+yyy = val Vv(10,[1,2]);
+
+escape yyy.xxx[1] + yyy.v;
+]],
+    run = 12,
 }
 Test { [[
 data Kk with
@@ -40754,7 +40774,25 @@ data Vv with
     var Kk kkk;
 end
 
-var Vv yyy = val Vv(Kk([1,2,3]));
+var Vv yyy;
+yyy = val Vv(Kk([1,2,true]));
+
+escape yyy.kkk.xxx[1];
+]],
+    stmts = 'line 10 : invalid constructor : item #1 : invalid expression list : item #3 : types mismatch : "int" <= "bool"',
+}
+Test { [[
+data Kk with
+    var int aaa;
+    vector[] int xxx;
+end
+
+data Vv with
+    var int aaa;
+    var Kk kkk;
+end
+
+var Vv yyy = val Vv(_,Kk(_,[1,2,3]));
 
 escape yyy.kkk.xxx[1];
 ]],
@@ -40772,7 +40810,7 @@ end
 
 var Vv yyy = val Vv(Kk([1,2,3]), [4,5,6]);
 
-escape yyy.kkk.xxx[1]+ yy.kkk.zzz[2];
+escape yyy.kkk.xxx[1] + yyy.zzz[2];
 ]],
     run = 8,
 }
@@ -40788,12 +40826,12 @@ end
 var Vv yyy = val Vv(Kk([].."oi"));
 
 native/pure _strlen;
-escape _strlen(&&yyy.kkk.xxx[0]);
+escape _strlen(&&yyy.kkk.xxx[0] as _char&&);
 ]],
     run = 2,
 }
-do return end
 
+--]=====]
 Test { [[
 data Tt with
     var        int x;

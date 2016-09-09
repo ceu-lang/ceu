@@ -607,41 +607,64 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     Ref__POS = function (me)
         local id = unpack(me)
-        assert(id == 'escape')
-        local _, esc = unpack(me)
-        local id_int1 = (esc[1]==true) or esc[1][1]
-        local do_ = nil
-        for n in AST.iter() do
-            if n.tag=='Async' or string.sub(n.tag,1,7)=='_Async' or
-               n.tag=='Data'  or n.tag=='Code' or
-               n.tag=='Ext_Code_impl' or n.tag=='Ext_Req_impl'
-            then
-                break
-            end
-            if n.tag == 'Do' then
-                local id_int2 = (n[1]==true) or n[1][1]
-                if id_int1 == id_int2 then
-                    do_ = n
+        if id == 'escape' then
+            local _, esc = unpack(me)
+            local id_int1 = (esc[1]==true) or esc[1][1]
+            local do_ = nil
+            for n in AST.iter() do
+                if n.tag=='Async' or string.sub(n.tag,1,7)=='_Async' or
+                   n.tag=='Data'  or n.tag=='Code' or
+                   n.tag=='Ext_Code_impl' or n.tag=='Ext_Req_impl'
+                then
                     break
                 end
+                if n.tag == 'Do' then
+                    local id_int2 = (n[1]==true) or n[1][1]
+                    if id_int1 == id_int2 then
+                        do_ = n
+                        break
+                    end
+                end
             end
-        end
-        ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
-        esc.outer = do_
-        local _,_,to = unpack(do_)
-        local set = AST.get(me.__par,'Set_Exp') or AST.asr(me.__par,'Set_Alias')
-        set.__dcls_is_escape = true
-        local fr = unpack(set)
-        if to and type(to)~='boolean' then
-            ASR(type(fr)~='boolean', me,
-                'invalid `escape´ : expected expression')
-            to.__dcls_is_escape = true
-            return AST.copy(to)
+            ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
+            esc.outer = do_
+            local _,_,to = unpack(do_)
+            local set = AST.get(me.__par,'Set_Exp') or AST.asr(me.__par,'Set_Alias')
+            set.__dcls_is_escape = true
+            local fr = unpack(set)
+            if to and type(to)~='boolean' then
+                ASR(type(fr)~='boolean', me,
+                    'invalid `escape´ : expected expression')
+                to.__dcls_is_escape = true
+                return AST.copy(to)
+            else
+                ASR(type(fr)=='boolean', me,
+                    'invalid `escape´ : unexpected expression')
+                set.tag = 'Nothing'
+                return AST.node('Nothing', me.ln)
+            end
+        elseif id == 'vec_cons' then
+            local _, T = unpack(me)
+            local ID_int = AST.asr(me.__par.__par.__par,'Stmts',
+                                   1,'Set_Abs_Val', 2,'Exp_Name', 1,'ID_int')
+            local abs = TYPES.abs_dcl(ID_int.dcl[2], 'Data')
+            ASR(abs, me, 'invalid constructor : TODO')
+            local vars = AST.asr(abs,'Data', 3,'Block').dcls
+
+            local ret = AST.copy(ID_int)
+            for i, I in ipairs(T) do
+                local _,tp,id = unpack(vars[I])
+                ret = AST.node('Exp_.', me.ln, '.', ret, id)
+                if i < #T then
+                    local abs = TYPES.abs_dcl(tp, 'Data')
+                    ASR(abs, me, 'invalid constructor : TODO')
+                    vars = AST.asr(abs,'Data', 3,'Block').dcls
+                end
+            end
+
+            return AST.node('Exp_Name', me.ln, ret)
         else
-            ASR(type(fr)=='boolean', me,
-                'invalid `escape´ : unexpected expression')
-            set.tag = 'Nothing'
-            return AST.node('Nothing', me.ln)
+            error'bug found'
         end
     end,
 }
