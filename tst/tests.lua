@@ -97,17 +97,6 @@ escape 0;
 }
 
 Test { [[
-var int ret = 0;
-spawn do
-    ret = 1;
-    await FOREVER;
-end
-escape ret;
-]],
-    run = 1,
-}
-
-Test { [[
 data Dd;
 data Dd.Ee;
 
@@ -131,6 +120,7 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -2508,6 +2498,21 @@ var int a = do/a end;
 }
 
 --<<< DO/_, SETBLOCK, ESCAPE
+
+-->>> SPAWN / BLOCK
+
+Test { [[
+var int ret = 0;
+spawn do
+    ret = 1;
+    await FOREVER;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+--<<< SPAWN / BLOCK
 
 Test { [[
 input void A,B;
@@ -36146,6 +36151,20 @@ data Aa with
     var int a;
 end
 
+data Aa.Bb with
+    var int b;
+end
+
+escape 1;
+]],
+    wrn = true,
+    run = 1,
+}
+Test { [[
+data Aa with
+    var int a;
+end
+
 code/tight/dynamic Ff (dynamic var Aa&& a, var int xxx) => int do
     escape a:a + xxx;
 end
@@ -39440,7 +39459,8 @@ do/_
     escape dx.x+1;
 end
 ]],
-    run = 1,
+    run = false,
+    --run = 1,
 }
 
 Test { [[
@@ -40613,6 +40633,7 @@ escape 1;
 }
 
 --<<< DATA / EVENTS
+error'OK'
 
 -->> DATA / VECTOR
 
@@ -40709,7 +40730,6 @@ escape yyy.kkk.xxx[1];
 ]],
     run = 6,
 }
---]=====]
 Test { [[
 data Kk with
     vector[] int xxx;
@@ -40739,6 +40759,22 @@ var Vv yyy = val Vv(Kk([1,2,3]));
 escape yyy.kkk.xxx[1];
 ]],
     run = 2,
+}
+Test { [[
+data Kk with
+    vector[] int xxx;
+end
+
+data Vv with
+    var Kk kkk;
+    vector[] int zzz;
+end
+
+var Vv yyy = val Vv(Kk([1,2,3]), [4,5,6]);
+
+escape yyy.kkk.xxx[1]+ yy.kkk.zzz[2];
+]],
+    run = 8,
 }
 Test { [[
 data Kk with

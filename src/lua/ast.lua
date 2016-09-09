@@ -72,7 +72,23 @@ function AST.node (tag, ln, ...)
     me.ln  = ln
     --me.ln[2] = me.n
     me.tag = tag
+
+    for i,sub in ipairs(me) do
+        if AST.is_node(sub) then
+            sub.__par   = me
+            sub.__i     = i
+        end
+    end
+
     return me
+end
+
+function AST.depth (me)
+    if me.__par then
+        return 1 + AST.depth(me.__par)
+    else
+        return 1
+    end
 end
 
 function AST.copy (node, ln, keep_n)
@@ -91,9 +107,11 @@ function AST.copy (node, ln, keep_n)
         if type(k) ~= 'number' then
             ret[k] = v
         else
-            ret[k] = AST.copy(v, ln, keep_n)
             if AST.is_node(v) then
+                AST.set(ret, k, AST.copy(v, ln, keep_n))
                 ret[k].ln = ln or ret[k].ln
+            else
+                ret[k] = AST.copy(v, ln, keep_n)
             end
         end
     end
@@ -169,6 +187,32 @@ function AST.asr (me, tag, ...)
         error('bug (expected: '..tag1..' | found: '..tag2..')')
     end
     return ret
+end
+
+function AST.set (par, i, child)
+    assert(AST.is_node(child))
+    par[i] = child
+    child.__par = par
+    child.__i   = i
+end
+
+function AST.insert (par, i, child)
+    table.insert(par, i, {})
+    AST.set(par, i, child)
+    for i, sub in ipairs(par) do
+        if AST.is_node(sub) then
+            sub.__i = i
+        end
+    end
+end
+
+function AST.remove (par, i)
+    table.remove(par, i)
+    for i, sub in ipairs(par) do
+        if AST.is_node(sub) then
+            sub.__i = i
+        end
+    end
 end
 
 function AST.is_par (par, child)
@@ -256,6 +300,7 @@ function AST.dump (me, spc, lvl, __notfirst)
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
     --ks = table.concat(me.trails,'-')
 --
+--[[
 if me.ana and me.ana.pre and me.ana.pos then
     local f = function(v)
                 return type(v)=='table'
@@ -269,18 +314,18 @@ if me.ana and me.ana.pre and me.ana.pos then
     for k in pairs(me.ana.pos) do t[#t+1]=f(k) end
     ks = ks..'['..table.concat(t,',')..']'
 end
---[[
 ]]
 --
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
     local me_str  = string.gsub(tostring(me),       'table: ', '')
+--assert(me==AST.root or (me.__par and me.__i))
     local par_str = string.gsub(tostring(me.__par), 'table: ', '')
     DBG(string.rep(' ',spc)..me.tag..
         ' |'..me_str..'/'..par_str..'['..tostring(me.__i)..']|'..
 --[[
         '')
 ]]
-        ' (ln='..me.ln[2]..' n='..me.n..
+        ' (ln='..me.ln[2]..' n='..me.n..' d='..AST.depth(me)..
                            --' d='..(me.__depth or 0)..
                            --' p='..(me.__par and me.__par.n or '')..
                            ') '..ks)
@@ -305,38 +350,44 @@ local function FF (F, str)
     return f
 end
 
-local function visit_aux (F, me, I)
-    local _me = me
-    me.__par   = STACK[#STACK]
-    me.__i     = I or me.__i
-    me.__depth = (me.__par and me.__par.__depth+1) or 1
+local function from_to (old, new, t)
+    if new and new~=old then
+        new.__par = t[1]
+        new.__i   = t[2]
+        return true, new
+    else
+        return false, old
+    end
+end
 
+local function visit_aux (F, me, I)
     local pre, mid, pos = FF(F,me.tag..'__PRE'), FF(F,me.tag), FF(F,me.tag..'__POS')
     local bef, aft = FF(F,me.tag..'__BEF'), FF(F,me.tag..'__AFT')
 
+    local chg = false
+    local t   = { me.__par, me.__i }
+
     if F.Node__PRE then
-        me = F.Node__PRE(me) or me
-        if me ~= _me then
+        chg, me = from_to(me, F.Node__PRE(me), t)
+        if chg then
             return visit_aux(F, me)
         end
     end
     if pre then
-        me = pre(me) or me
-        if me ~= _me then
+        chg, me = from_to(me, pre(me), t)
+        if chg then
             return visit_aux(F, me)
         end
     end
 
     STACK[#STACK+1] = me
 
-    for i, sub in ipairs(me) do
-        if bef then assert(bef(me, sub, i)==nil) end
-        if AST.is_node(sub) then
-            sub.__idx = i
-            sub = visit_aux(F, sub, i)
-            me[i] = sub
+    for i, _ in ipairs(me) do
+        if bef then assert(bef(me,me[i],i)==nil) end
+        if AST.is_node(me[i]) then
+            me[i] = visit_aux(F, me[i], i)
         end
-        if aft then assert(aft(me, sub, i)==nil) end
+        if aft then assert(aft(me,me[i],i)==nil) end
     end
 
     if mid then
@@ -349,14 +400,14 @@ local function visit_aux (F, me, I)
     STACK[#STACK] = nil
 
     if pos then
-        me = pos(me) or me
-        if me ~= _me then
+        chg, me = from_to(me, pos(me), t)
+        if chg then
             return visit_aux(F, me)
         end
     end
      if F.Node__POS then
-        me = F.Node__POS(me) or me
-        if me ~= _me then
+        chg, me = from_to(me, F.Node__POS(me), t)
+        if chg then
             return visit_aux(F, me)
         end
     end

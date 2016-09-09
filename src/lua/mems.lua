@@ -32,6 +32,8 @@ MEMS = {
     },
 }
 
+local EVENT_SUFIX_EXISTS = {}
+
 local function CUR ()
     return (AST.iter'Code'() or AST.iter'Data'() or AST.root).mems
 end
@@ -612,16 +614,20 @@ for _, dcl in ipairs(MEMS.evts) do
     end
 
     -- type
-    local mem = [[
-typedef struct tceu_event_]]..dcl.id..'_'..dcl.n..[[ {
+    local sufix = TYPES.noc(TYPES.tostring(Typelist))
+    if not EVENT_SUFIX_EXISTS[sufix] then
+        EVENT_SUFIX_EXISTS[sufix] = true
+        local mem = [[
+typedef struct tceu_event_]]..sufix..[[ {
 ]]
-    for i,Type in ipairs(Typelist) do
-        mem = mem..'    '..TYPES.toc(Type)..' _'..i..';\n'
+        for i,Type in ipairs(Typelist) do
+            mem = mem..'    '..TYPES.toc(Type)..' _'..i..';\n'
+        end
+        mem = mem..[[
+} tceu_event_]]..sufix..[[;
+]]
+        MEMS.evts.types = MEMS.evts.types..mem
     end
-    mem = mem..[[
-} tceu_event_]]..dcl.id..'_'..dcl.n..[[;
-]]
-    MEMS.evts.types = MEMS.evts.types..mem
 end
 
 for i, code in ipairs(MEMS.codes) do

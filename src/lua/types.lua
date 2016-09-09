@@ -3,8 +3,11 @@ TYPES = {
 
 function TYPES.noc (str)
     str = string.gsub(str, '%.',  '__dot__')
+    str = string.gsub(str, '%,',  '__comma__')
     str = string.gsub(str, '%?',  '__ask__')
     str = string.gsub(str, '%&&', '__ptr__')
+    str = string.gsub(str, '%(',  '__lpar__')
+    str = string.gsub(str, '%)',  '__rpar__')
     return str
 end
 

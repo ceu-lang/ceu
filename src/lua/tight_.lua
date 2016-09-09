@@ -15,8 +15,8 @@ local function run (me, Loop)
         if me.tag == 'Await_Int' then
             local parand = AST.par(me, 'Par_And')
             local paror  = AST.par(me, 'Par_Or')
-            if parand and parand.__depth>Loop.__depth or
-               paror  and paror.__depth>Loop.__depth
+            if parand and AST.depth(parand)>AST.depth(Loop) or
+               paror  and AST.depth(paror)>AST.depth(Loop)
             then
                 -- TIGHT
                 --  loop do
@@ -37,10 +37,9 @@ local function run (me, Loop)
         return 'awaits'
 
     elseif me.tag=='Break' or me.tag=='Escape' then
-        if Loop.__depth >= me.outer.__depth then
+        if AST.depth(Loop) >= AST.depth(me.outer) then
             return 'breaks'
 else
-DBG(Loop.__depth, me.outer.__depth)
 error'TODO'
         end
 

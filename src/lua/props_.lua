@@ -39,7 +39,7 @@ F = {
 -- TODO: join all possibilities (thread/isr tb)
         local Async = AST.par(me,'Async')
         if Async then
-            ASR(me.outer.__depth > Async.__depth, me,
+            ASR(AST.depth(me.outer) > AST.depth(Async), me,
                 'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `async´')
         end
 
@@ -55,7 +55,7 @@ F = {
         if Finalize then
             local _,_,later = unpack(Finalize)
             if AST.is_par(later,me) then
-                ASR(me.outer.__depth > Finalize.__depth, me,
+                ASR(AST.depth(me.outer) > AST.depth(Finalize), me,
                     'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `finalize´')
             end
         end

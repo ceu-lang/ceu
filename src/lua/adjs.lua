@@ -9,7 +9,7 @@ F = {
     ['1__PRE'] = function (me)
         local stmts, eof = unpack(me)
         AST.asr(stmts, 'Stmts')
-        stmts[#stmts+1] = eof
+        AST.set(stmts, #stmts+1, eof)
 
         --  Stmts
         --      to
@@ -26,7 +26,7 @@ F = {
         --                          Stmts   -- orig
 
         Pre_Stmts = node('Stmts', me.ln)
-        table.insert(stmts, 1, Pre_Stmts)
+        AST.insert(stmts, 1, Pre_Stmts)
 
         local nats = node('Stmts', me.ln,
                         node('Nat', me.ln,
@@ -74,7 +74,7 @@ error'TODO: luacov never executes this?'
         return node('Stmts', me.ln, unpack(t))
     end,
     _Dopre__POS = function (me)
-        Pre_Stmts[#Pre_Stmts+1] = AST.asr(me,'', 1,'Block', 1,'Stmts')
+        AST.set(Pre_Stmts, #Pre_Stmts+1, AST.asr(me,'', 1,'Block', 1,'Stmts'))
         return AST.node('Nothing', me.ln)
     end,
 
@@ -87,8 +87,8 @@ error'TODO: luacov never executes this?'
             -- if <cond> then <t> else <f> end
             me.tag = 'If'
             if f_or_more == false then
-                me[3] = node('Block', me.ln,
-                            node('Stmts', me.ln))
+                AST.set(me, 3, node('Block', me.ln,
+                                node('Stmts', me.ln)))
             end
             return      -- has no "else/if" and has "else" clause
         else
@@ -108,8 +108,8 @@ error'TODO: luacov never executes this?'
 
         -- all statements after myself
         local par_stmts = AST.asr(me.__par, 'Stmts')
-        local cnt_stmts = { unpack(par_stmts, me.__idx+1) }
-        for i=me.__idx, #par_stmts do
+        local cnt_stmts = { unpack(par_stmts, me.__i+1) }
+        for i=me.__i, #par_stmts do
             par_stmts[i] = nil
         end
 
@@ -121,9 +121,7 @@ error'TODO: luacov never executes this?'
 -- TODO
         orig.__adj_is_spawnanon = true
         orig.ln = me.ln
-        blk[1] = node('Stmts', me.ln,
-                    blk[1],
-                    awaitN)
+        AST.set(blk, 1, node('Stmts', me.ln, blk[1], awaitN))
 
         local ret = node('Par_Or', me.ln,
                         blk,
@@ -166,7 +164,7 @@ error'TODO: luacov never executes this?'
 
             local stmts_old = AST.asr(blk,'Block', 1,'Stmts')
             local stmts_new = node('Stmts', me.ln)
-            blk[1] = stmts_new
+            AST.set(blk, 1, stmts_new)
 
             local ID_prim,mod = unpack(Type)
             local is_void = (ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod))
@@ -175,13 +173,14 @@ error'TODO: luacov never executes this?'
                             node('Block', me.ln,
                                 stmts_old))
             if is_void then
-                stmts_new[1] = do_
+                AST.set(stmts_new, 1, do_)
             else
-                stmts_new[1] = node('_Set', me.ln,
-                                node('Exp_Name', me.ln,
-                                    node('ID_int', me.ln, '_ret')),
-                                node('_Set_Do', me.ln,
-                                    do_))
+                AST.set(stmts_new, 1,
+                        node('_Set', me.ln,
+                            node('Exp_Name', me.ln,
+                                node('ID_int', me.ln, '_ret')),
+                            node('_Set_Do', me.ln,
+                                do_)))
             end
         else
             -- ok
@@ -239,23 +238,25 @@ error'TODO'
                 if pre == 'var' then
                     _,_,_,hold,tp,id = unpack(v)
                     id = id or '_anon_'..i
-                    me[i] = node('Var', me.ln, is_alias, AST.copy(tp), id)
+                    AST.set(me, i, node('Var', me.ln, is_alias, AST.copy(tp), id))
                 elseif pre == 'vector' then
                     _,_,_,dim,tp,id = unpack(v)
                     id = id or '_anon_'..i
-                    me[i] = node('Vec', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
+                    AST.set(me, i,
+                            node('Vec', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim)))
                 elseif pre == 'pool' then
                     _,_,_,dim,tp,id = unpack(v)
                     id = id or '_anon_'..i
-                    me[i] = node('Pool', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
+                    AST.set(me, i,
+                            node('Pool', me.ln, is_alias, AST.copy(tp), id, AST.copy(dim)))
                 elseif pre == 'event' then
                     _,_,_,_,tp,id = unpack(v)
                     id = id or '_anon_'..i
                     if tp.tag == 'Type' then
                         tp = node('Typelist', me.ln, tp)
-                        v[4] = tp
+                        AST.set(v, 4, tp)
                     end
-                    me[i] = node('Evt', me.ln, is_alias, AST.copy(tp), id)
+                    AST.set(me, i, node('Evt', me.ln, is_alias, AST.copy(tp), id))
                 else
                     error'TODO'
                 end
@@ -297,8 +298,8 @@ error'TODO'
 
         local Stmts = AST.asr(body,'Block', 1,'Stmts')
         local i = (from_loop_num and 2 or 1)  -- after lim_chk
-        table.insert(Stmts, i,        max_chk)
-        table.insert(Stmts, #Stmts+1, max_inc)
+        AST.insert(Stmts, i,        max_chk)
+        AST.insert(Stmts, #Stmts+1, max_inc)
 
         return node('Block', me.ln,
                 node('Stmts', me.ln,
@@ -444,17 +445,17 @@ DBG('TODO: _Loop_Pool')
                     tag = '_Set_Await_one'
                 end
             end
-            me[2] = node(tag, me.ln, awt)
+            AST.set(me, 2, node(tag, me.ln, awt))
             me[2].__adjs_is_watching = true
-            watching[1] = me
+            AST.set(watching, 1, me)
             return watching
 
         elseif set.tag == '_Set_Await_many' then
             local unt = unpack(set)
             if unt.tag == 'Await_Until' then
                 local awt = unpack(unt)
-                unt[1] = me
-                set[1] = awt
+                AST.set(unt, 1, me)
+                AST.set(set, 1, awt)
                 return unt
             end
         end
@@ -464,7 +465,7 @@ DBG('TODO: _Loop_Pool')
         if set.tag == '_Set_Do' then
             -- set to "to" happens on "escape"
             local do_ = unpack(set)
-            do_[#do_+1] = to
+            AST.set(do_, #do_+1, to)
             return do_
         else
             --  _Set
@@ -478,7 +479,7 @@ DBG('TODO: _Loop_Pool')
 
             assert(#set == 1, 'bug found')
             set.tag = string.sub(set.tag,2)
-            set[2] = to
+            AST.set(set, 2, to)
 
             -- a = &b   (Set_Exp->Set_Alias)
             if set.tag=='Set_Exp' and set[1].tag=='Exp_1&' then
@@ -524,7 +525,7 @@ DBG('TODO: must be "=> FOREVER"')
             ASR(Abs_Await, me, 'unexpected `=>´')
             local ID_abs = AST.asr(Abs_Await,'', 2,'Abs_Cons', 1,'ID_abs')
             Abs_Await[#Abs_Await+1] = false  -- pool
-            Abs_Await[#Abs_Await+1] = mid
+            AST.set(Abs_Await, #Abs_Await+1, mid)
         end
 
         return node('Watching', me.ln,
@@ -534,6 +535,40 @@ DBG('TODO: must be "=> FOREVER"')
                             watch)),
                     block))
     end,
+
+-------------------------------------------------------------------------------
+
+--[[
+    Vec_Cons__POS = function (me)
+        local up = AST.par(me,'Abs_Cons')
+        if not up then
+            return
+        end
+
+        local base
+        do
+            local abs = up
+            while abs do
+                base = abs
+                abs = AST.par(abs,'Abs_Cons')
+            end
+        end
+
+        local Set   = base.__par.__par
+        local Stmts = Set.__par
+AST.dump(base)
+AST.dump(base.__par)
+AST.dump(base.__par.__par)
+AST.dump(base.__par.__par.__par)
+        table.insert(AST.asr(Stmts,'Stmts'),
+                     Set.__i,
+                     node('_Set', me.ln,
+                        node('Ref', me.ln, 'vec_cons', base),   -- see dcls.lua
+                        me))
+
+        return node('ID_any', me.ln)
+    end,
+]]
 
 -------------------------------------------------------------------------------
 
@@ -598,9 +633,11 @@ DBG('TODO: must be "=> FOREVER"')
         local ret = node('Stmts', me.ln)
         for _,id in ipairs(ids) do
             if tag=='Pool' or tag=='Vec' then
-                ret[#ret+1] = node(tag, me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
+                AST.set(ret, #ret+1,
+                        node(tag, me.ln, is_alias, AST.copy(tp), id, AST.copy(dim)))
             else
-                ret[#ret+1] = node(tag, me.ln, is_alias, AST.copy(tp), id)
+                AST.set(ret, #ret+1,
+                        node(tag, me.ln, is_alias, AST.copy(tp), id))
             end
         end
         return ret
@@ -611,19 +648,19 @@ DBG('TODO: must be "=> FOREVER"')
     _Evts__PRE = function (me)
         local _,tp = unpack(me)
         if tp.tag == 'Type' then
-            me[2] = node('Typelist', me.ln, tp)
+            AST.set(me, 2, node('Typelist', me.ln, tp))
         end
         return F.__dcls__PRE(me)
     end,
     _Exts__PRE = function (me)
         local _,tp = unpack(me)
         if tp.tag == 'Type' then
-            me[2] = node('Typelist', me.ln, tp)
+            AST.set(me, 2, node('Typelist', me.ln, tp))
         end
         return F.__dcls__PRE(me)
     end,
     _Nats__PRE = function (me)
-        table.insert(me, 2,
+        AST.insert(me, 2,
             node('Type', me.ln,
                 node('ID_prim', me.ln, '_')))
         return F.__dcls__PRE(me)
@@ -648,18 +685,19 @@ DBG('TODO: must be "=> FOREVER"')
             local id, set = unpack(sets,i)
 
             if tag=='Pool' or tag=='Vec' then
-                ret[#ret+1] = node(tag, me.ln, is_alias, AST.copy(tp), id, AST.copy(dim))
+                AST.set(ret, #ret+1,
+                        node(tag, me.ln, is_alias, AST.copy(tp), id, AST.copy(dim)))
             else
-                ret[#ret+1] = node(tag, me.ln, is_alias, AST.copy(tp), id)
+                AST.set(ret, #ret+1,
+                        node(tag, me.ln, is_alias, AST.copy(tp), id))
             end
 
             if set then
                 local _,v = unpack(set)
                 local to = node('Exp_Name', me.ln,
                             node('ID_int', me.ln, id))
-                ret[#ret+1] = node('_Set', me.ln,
-                                to,
-                                unpack(set))
+                AST.set(ret, #ret+1,
+                        node('_Set', me.ln, to, unpack(set)))
             end
         end
         return ret
@@ -713,7 +751,7 @@ DBG('TODO: must be "=> FOREVER"')
     Evt__PRE = function (me)
         local _,Type = unpack(me)
         if Type.tag == 'Type' then
-            me[2] = node('Typelist', me.ln, Type)
+            AST.set(me, 2, node('Typelist', me.ln, Type))
         end
     end,
 
@@ -724,7 +762,7 @@ DBG('TODO: must be "=> FOREVER"')
         end
         local ret = node('Explist', me.ln)
         if exp then
-            ret[1] = exp
+            AST.set(ret, 1, exp)
         end
         return ret
     end,
@@ -733,9 +771,9 @@ DBG('TODO: must be "=> FOREVER"')
         if ps and ps.tag == 'Explist' then
             -- ok
         else
-            me[3] = node('Explist', me.ln)
+            AST.set(me, 3, node('Explist', me.ln))
             if ps then
-                me[3][1] = ps
+                AST.set(me[3], 1, ps)
 error'TODO: luacov never executes this?'
             end
         end
@@ -744,7 +782,7 @@ error'TODO: luacov never executes this?'
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
         if var.tag == 'Exp_Name' then
-            me[2] = node('List_Name_Any', var.ln, var)
+            AST.set(me, 2, node('List_Name_Any', var.ln, var))
         end
     end,
 
@@ -754,7 +792,7 @@ error'TODO: luacov never executes this?'
         if (not snd) and
            ID_prim.tag=='ID_prim' and ID_prim[1]=='void' and (not mod)
         then
-            table.remove(me,1)
+            AST.remove(me,1)
         end
     end,
 

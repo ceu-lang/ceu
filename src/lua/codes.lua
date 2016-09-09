@@ -1078,7 +1078,8 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
                 id = 'tceu_input_'..ID_ext.dcl.id
             else
                 local Exp_Name = AST.asr(Await,'Await_Int', 1,'Exp_Name')
-                id = 'tceu_event_'..Exp_Name.info.dcl.id..'_'..Exp_Name.info.dcl.n
+                local sufix = TYPES.noc(TYPES.tostring(Exp_Name.info.dcl[2]))
+                id = 'tceu_event_'..sufix
             end
         end
         CONC(me, Await)
@@ -1327,8 +1328,9 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
 ]])
         local ps = 'NULL'
         if Explist then
+            local sufix = TYPES.noc(TYPES.tostring(Exp_Name.info.dcl[2]))
             LINE(me, [[
-    tceu_event_]]..Exp_Name.info.dcl.id..'_'..Exp_Name.info.dcl.n..[[
+    tceu_event_]]..sufix..[[
         __ceu_ps = { ]]..table.concat(V(Explist),',')..[[ };
 ]])
             ps = '&__ceu_ps'

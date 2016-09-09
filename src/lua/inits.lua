@@ -43,7 +43,7 @@ local function run_watch (par, i, stop)
 
     if me.tag == 'Escape' then
         local blk = AST.asr(me.outer,'',2,'Block')
-        if blk.__depth <= stop.__depth then
+        if AST.depth(blk) <= AST.depth(stop) then
             return true
         end
         if stop.__par.tag=='Code' and
@@ -95,11 +95,11 @@ local function run_inits (par, i, Dcl, stop)
 
     if me.tag == 'Escape' then
         local blk = AST.asr(me.outer,'',2,'Block')
-        local depth = Dcl.blk.__depth
+        local depth = AST.depth(Dcl.blk)
         if Dcl.is_mid_idx then
             depth = depth + 5
         end
-        if blk.__depth <= depth then
+        if AST.depth(blk) <= depth then
             return false
         else
             return run_inits(blk, #blk+1, Dcl, stop)

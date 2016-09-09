@@ -305,11 +305,14 @@ F = {
         local Code = AST.asr(me,4,'Code')
         local mods = unpack(Code)
 
-        local tps = AST.node('Typelist',me.ln)
-        for i, dcl in ipairs(me) do
-            tps[i] = dcl[2]
+        -- check types only
+        do
+            local tps = AST.node('Typelist',me.ln)
+            for i, dcl in ipairs(me) do
+                tps[i] = dcl[2]
+            end
+            F.Typelist(tps)
         end
-        F.Typelist(tps)
 
         -- check if all mid's are "&" aliases
         if AST.asr(me,1,'Stmts')[2] == me then
@@ -369,15 +372,16 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
         local proto_body = AST.asr(me,'', 3,'Block', 1,'Stmts')
         local orig = proto_body[2]
-        proto_body[2] = AST.node('Stmts', me.ln)
+        AST.set(proto_body, 2, AST.node('Stmts', me.ln))
         local new = AST.copy(me)
-        proto_body[2] = orig
+        AST.set(proto_body, 2, orig)
 
         -- "base" method with plain "id"
         new.id = id
         new.is_dyn_base = true
 
-        return AST.node('Stmts', me.ln, new, me)
+        local s = AST.node('Stmts', me.ln, new, me)
+        return s
     end,
 
     __proto_ignore = function (id1, id2)
@@ -469,8 +473,8 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
             -- (avoid inserting empty additional Stmts to break "empty-data-dcl" detection)
             local vars = AST.asr(dcl,'', 3,'Block', 1,'Stmts')
             if #vars > 0 then
-                table.insert(AST.asr(me,'',3,'Block',1,'Stmts'), 1, vars)
-                             --AST.copy(AST.asr(dcl,'', 2,'Block', 1,'Stmts')))
+                AST.insert(AST.asr(me,'',3,'Block',1,'Stmts'), 1,
+                           AST.copy(vars))
             end
         end
 
@@ -624,14 +628,13 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
         end
         ASR(do_, esc, 'invalid `escape´ : no matching enclosing `do´')
         esc.outer = do_
-        local _,_,to,op = unpack(do_)
+        local _,_,to = unpack(do_)
         local set = AST.get(me.__par,'Set_Exp') or AST.asr(me.__par,'Set_Alias')
         set.__dcls_is_escape = true
         local fr = unpack(set)
         if to and type(to)~='boolean' then
             ASR(type(fr)~='boolean', me,
                 'invalid `escape´ : expected expression')
-            set[3] = op
             to.__dcls_is_escape = true
             return AST.copy(to)
         else
