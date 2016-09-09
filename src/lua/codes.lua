@@ -203,7 +203,7 @@ if (]]..V(c)..[[) {
                     if dim.is_const then
                         LINE(par, [[
 ceu_vector_init(&]]..V(dcl,ctx)..','..V(dim)..', 0, sizeof('..TYPES.toc(tp)..[[),
-                (byte*)&]]..CUR(dcl.id_..'_buf')..[[);
+                (byte*)&]]..V(dcl,{base=ctx.base,id_suf='_buf'})..[[);
 ]])
                     else
                         LINE(par, [[

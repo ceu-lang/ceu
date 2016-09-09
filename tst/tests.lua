@@ -120,6 +120,7 @@ escape call/dynamic Gg(&e);
 }
 
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -40831,7 +40832,6 @@ escape _strlen(&&yyy.kkk.xxx[0] as _char&&);
     run = 2,
 }
 
---]=====]
 Test { [[
 data Tt with
     var        int x;
@@ -40847,10 +40847,12 @@ var int x = t.x;
 t.v = [1,2,3];
 x = t.v[0];
 
-emit t.e(1);
-var int k = await t.e;
-
-escape 1;
+par do
+    var int k = await t.e;
+    escape k;
+with
+    emit t.e(1);
+end
 ]],
     run = 1,
 }
@@ -40910,10 +40912,12 @@ var int x = b.a.x;
 b.a.v = [1,2,3];
 x = b.a.v[0];
 
-emit b.a.e(0);
-await b.a.e;
-
-escape 1;
+par do
+    await b.a.e;
+    escape 1;
+with
+    emit b.a.e(0);
+end
 ]],
     run = 1,
 }
@@ -40937,10 +40941,12 @@ var int x = b.a.x;
 b.a.v = [1,2,3];
 x = b.a.v[0];
 
-emit b.a.e(0);
-await b.a.e;
-
-escape 1;
+par do
+    await b.a.e;
+    escape 1;
+with
+    emit b.a.e(0);
+end
 ]],
     run = 1,
 }
@@ -40981,6 +40987,7 @@ end
 
 -->>> DATA / RECURSIVE
 
+error'2016-09-09'
 -- recursive ADTs must have a base case
 Test { [[
 data Opt;

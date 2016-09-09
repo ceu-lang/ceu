@@ -243,6 +243,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
     Pool = 'Var',
     Vec = 'Var',
     Var = function (me, ctx)
+        local id_suf = (ctx and ctx.id_suf) or ''
         local alias, tp = unpack(me)
         local ptr = ''
         if alias=='&' and (not ctx.is_bind) then
@@ -250,7 +251,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
             --  var& _t_ptr xx = &x!;   ... xx
             ptr = '*'
         end
-        return '('..ptr..CUR(me.id_,ctx)..')'
+        return '('..ptr..CUR(me.id_..id_suf,ctx)..')'
     end,
 
     ID_int = function (me, ctx)
