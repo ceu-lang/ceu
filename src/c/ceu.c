@@ -357,6 +357,10 @@ xxx += 4;
 
     for (trlK=trl0, trl=&range.mem->trails[trlK]; ;)
     {
+#ifdef CEU_TESTS
+        _ceu_tests_trails_visited_++;
+#endif
+
 #ifdef _CEU_DEBUG_MARK
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
@@ -506,6 +510,10 @@ xxx += 4;
          trlK<=range.trlF;
          trlK++, trl++)
     {
+#ifdef CEU_TESTS
+        _ceu_tests_trails_visited_++;
+#endif
+
 #ifdef _CEU_DEBUG_EXEC
 for (int i=0; i<xxx; i++) {
     fprintf(stderr, " ");
@@ -659,6 +667,10 @@ int ceu_go_all (void)
             ceu_go_ext(CEU_INPUT__ASYNC, NULL);
         }
     }
+
+#ifdef CEU_TESTS
+    printf("_ceu_tests_trails_visited_ = %d\n", _ceu_tests_trails_visited_);
+#endif
 
     return ceu_cb_terminating_ret;
 }

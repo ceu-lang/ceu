@@ -10,7 +10,7 @@ TESTS = {
         count  = 0,
         trails = 0,
         bytes  = 0,
-        n_go   = 0,
+        visits = 0,
     }
 }
 
@@ -199,6 +199,7 @@ end
     for k,v in pairs(T.defines or {}) do
         defines = defines..' -D'..k..'='..v
     end
+    defines = defines..' -DCEU_TESTS'
 
     PAK = {
         lua_exe = '?',
@@ -330,7 +331,9 @@ if T.ana or T.tmp or T.props or T.mode then return end
     local _1,_,ret = f:close()
 
     if type(T.run) == 'number' then
-        assert(out == '', 'code with output')
+        local n = string.match(out, '_ceu_tests_trails_visited_ = (%d+)\n')
+        TESTS.stats.visits = TESTS.stats.visits + tonumber(n)
+        assert(out == '_ceu_tests_trails_visited_ = '..n..'\n', 'code with output')
         assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
     else
         assert(type(T.run) == 'string', 'missing run value')
@@ -560,10 +563,10 @@ print([[
 =====================================
 
 stats = {
-    count   = ]]..TESTS.stats.count  ..[[,
-    trails  = ]]..TESTS.stats.trails ..[[,
-    bytes   = ]]..TESTS.stats.bytes  ..[[,
-    n_go    = ]]..TESTS.stats.n_go   ..[[,
+    count  = ]]..TESTS.stats.count  ..[[,
+    trails = ]]..TESTS.stats.trails ..[[,
+    bytes  = ]]..TESTS.stats.bytes  ..[[,
+    visits = ]]..TESTS.stats.visits ..[[,
 }
 ]])
 

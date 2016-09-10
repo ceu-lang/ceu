@@ -75,6 +75,12 @@ enum {
 ]]
 end
 
+if TESTS then
+    c = c .. [[
+u32 _ceu_tests_trails_visited_ = 0;
+]]
+end
+
 --env-ceu
 do
     local f = ASR(io.open(CEU.opts.env_ceu))
