@@ -231,7 +231,7 @@ end
                             -- TODO: remove all "-Wno-*"
                             ..' -Wno-unused'
                             ..' -Wno-missing-field-initializers'
-                            ..' -llua5.3'..defines
+                            ..' -llua5.3 -lpthread '..defines
                          ,
 
             ceu_line_directives = 'true',

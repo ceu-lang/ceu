@@ -581,6 +581,18 @@ end
             CUR().mem = CUR().mem..'tceu_code_mem_dyn* __dyn_'..me.n..';\n'
         end
     end,
+
+    ---------------------------------------------------------------------------
+
+    Async_Thread__PRE = function (me)
+        CUR().mem = CUR().mem..'struct {\n'
+    end,
+    Async_Thread = function (me)
+        CUR().mem = CUR().mem..'tceu_threads_data* __thread_'..me.n..';\n'
+    end,
+    Async_Thread__POS = function (me)
+        CUR().mem = CUR().mem..'};\n'
+    end,
 }
 
 AST.visit(F)

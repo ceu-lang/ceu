@@ -114,6 +114,21 @@ static tceu_evt* CEU_OPTION_EVT (void* alias, char* file, int line) {
     return alias;
 }
 
+typedef struct tceu_threads_data {
+    CEU_THREADS_T id;
+    u8 has_started:    1;
+    u8 has_terminated: 1;
+    u8 has_aborted:    1;
+    u8 has_notified:   1;
+    u8 has_joined:     1;
+    struct tceu_threads_data* nxt;
+} tceu_threads_data;
+
+typedef struct {
+    tceu_code_mem*     mem;
+    tceu_threads_data* thread;
+} tceu_threads_param;
+
 /*****************************************************************************/
 
 /* NATIVE_PRE */
@@ -184,6 +199,9 @@ typedef struct tceu_app {
     s32 wclk_late;
     s32 wclk_min_set;
     s32 wclk_min_cmp;
+
+    CEU_THREADS_MUTEX_T threads_mutex;
+    tceu_threads_data*  threads_head;   /* linked list of threads alive */
 
     lua_State* lua;
 
@@ -309,6 +327,8 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
                         tceu_code_mem* _ceu_mem, tceu_ntrl _ceu_trlK, tceu_nlbl _ceu_lbl);
 
 === NATIVE_POS ===
+
+=== THREADS ===
 
 === CODES_WRAPPERS ===
 

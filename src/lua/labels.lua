@@ -105,6 +105,10 @@ F = {
     Async = function (me)
         me.lbl_in = new{'Async__IN'}
     end,
+
+    Async_Thread = function (me)
+        me.lbl_out = new{'Async_Thread__OUT'}
+    end,
 }
 
 AST.visit(F)

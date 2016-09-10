@@ -40892,7 +40892,6 @@ escape call Ff(&d);
 }
 --<< DATA / VECTOR
 
---]=====]
 -->>> ASYNCS // THREADS
 
 Test { [[
@@ -40903,6 +40902,16 @@ end
 escape a + b + p;
 ]],
     run = 20,
+}
+
+--]=====]
+Test { [[
+var bool ret =
+    async/thread do
+    end;
+escape ret as int;
+]],
+    run = 1,
 }
 
 Test { [[

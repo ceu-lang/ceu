@@ -1,5 +1,6 @@
 CODES = {
-    native = { pre='', pos='' }
+    native  = { pre='', pos='' },
+    threads = '',
 }
 
 local function LINE_DIRECTIVE (me)
@@ -45,6 +46,9 @@ local function CLEAR (me)
         --      <...>;  // no clear
         --  end
         return
+    end
+    if AST.par(me, 'Async_Thread') then
+        --return
     end
 if me.trails_n == 1 then
     --return
@@ -1416,6 +1420,79 @@ ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
 
     ---------------------------------------------------------------------------
 
+    Set_Async_Thread = function (me)
+        local thread, to = unpack(me)
+
+        local v   = CUR('__thread_'..thread.n)
+        local chk = '(('..v..' != NULL) && ('..v..'->has_started))'
+
+        CONC_ALL(me)
+        SET(me, to, chk, true)
+    end,
+
+    Async_Thread = function (me)
+        local _, blk = unpack(me)
+
+        local v = CUR('__thread_'..me.n)
+
+        -- thread spawn
+        LINE(me, [[
+]]..v..[[ = (tceu_threads_data*) ceu_callback_ptr_num(
+                                    CEU_CALLBACK_REALLOC,
+                                    NULL,
+                                    sizeof(tceu_threads_data)
+                                 ).value.ptr;
+if (]]..v..[[ != NULL)
+{
+    ]]..v..[[->nxt = CEU_APP.threads_head;
+    CEU_APP.threads_head = ]]..v..[[;
+
+    ]]..v..[[->has_started    = 0;
+    ]]..v..[[->has_terminated = 0;
+    ]]..v..[[->has_aborted    = 0;
+    ]]..v..[[->has_notified   = 0;
+    ]]..v..[[->has_joined     = 0;
+
+    tceu_threads_param p = { _ceu_mem, ]]..v..[[ };
+    int ret =
+        CEU_THREADS_CREATE(&]]..v..[[->id, _ceu_thread_]]..me.n..[[, &p);
+    if (ret == 0) {
+        while (! ]]..v..[[->has_started);   /* wait copy of "p" */
+    }
+}
+]])
+
+        -- thread function definition
+        CODES.threads = CODES.threads .. [[
+static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
+{
+    /* start thread */
+
+    /* copy param */
+    tceu_threads_param _ceu_p = *((tceu_threads_param*) __ceu_p);
+    tceu_code_mem* _ceu_mem = _ceu_p.mem;
+    _ceu_p.thread->has_started = 1;
+
+    /* body */
+    ]]..blk.code..[[
+#if 0
+    goto ]]..me.lbl_out.id..[[; /* avoids "not used" warning */
+#endif
+
+    /* goto from "atomic" and already terminated */
+]]..me.lbl_out.id..[[:
+
+    /* terminate thread */
+    CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+    _ceu_p.thread->has_terminated = 1;
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    CEU_THREADS_RETURN(NULL);
+}
+]]
+    end,
+
+    ---------------------------------------------------------------------------
+
     Set_Lua = function (me)
         local lua, to = unpack(me)
         local tp = to.info.tp
@@ -1588,6 +1665,7 @@ local c = SUB(c, '=== EXTS_TYPES ===',       MEMS.exts.types)
 local c = SUB(c, '=== EVTS_TYPES ===',       MEMS.evts.types)
 local c = SUB(c, '=== LABELS ===',           labels)
 local c = SUB(c, '=== NATIVE_POS ===',       CODES.native.pos)
+local c = SUB(c, '=== THREADS ===',          CODES.threads)
 local c = SUB(c, '=== CODES_WRAPPERS ===',   MEMS.codes.wrappers)
 local c = SUB(c, '=== CODES ===',            AST.root.code)
 
