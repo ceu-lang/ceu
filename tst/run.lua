@@ -3,7 +3,7 @@
 TESTS = {
     --cmd = true,
     --luacov = 'lua5.3 -lluacov'
-    --valgrind = true
+    --valgrind = true,
 --REENTRANT = true
 --COMPLETE = true
     stats = {
@@ -579,10 +579,26 @@ stats = {
 3. Run `luacov` in the same directory
     - It will generate `luacov.report.out`
 4. Edit `luacov.report.out` and look for lines starting with `*****0`
-===
+
+# time
+
+/usr/bin/time --format='(%C: %Us %Mk)' ./run.lua
+
+# results
+
+stats = {
+    count  = 2651,
+    trails = 4525,
+    bytes  = 41424496,
+    visits = 229135,
+}
+(./run.lua: 448.84s 35228k)
+(./run.lua: 1853.24s 46428k)    -- valgrind
+
+
+-------------------------------------------------------------------------------
 
 -- COMPLETE=false, VALGRIND=false
-> /usr/bin/time --format='(%C: %Us %Mk)' ./run_tests.lua
 
 STATS = {
     count   = 2780,
