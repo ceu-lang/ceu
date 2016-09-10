@@ -182,6 +182,17 @@ F = {
         INFO.asr_tag(to, {'Nat','Var'}, 'invalid Lua assignment')
     end,
 
+    Set_Async_Thread = function (me)
+        local _,to = unpack(me)
+
+        -- ctx
+        INFO.asr_tag(to, {'Nat','Var'}, 'invalid `async/thread´ assignment')
+
+        -- tp
+        ASR(TYPES.check(to.info.tp,'bool'), me,
+            'invalid `async/thread´ assignment : expected `bool´ destination')
+    end,
+
 -- ABS
 
     Set_Abs_Val = function (me)

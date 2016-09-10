@@ -40904,7 +40904,6 @@ escape a + b + p;
     run = 20,
 }
 
---]=====]
 Test { [[
 var bool ret =
     async/thread do
@@ -40915,14 +40914,24 @@ escape ret as int;
 }
 
 Test { [[
+event& void ret =
+    async/thread do
+    end;
+escape 0;
+]],
+    stmts = 'line 1 : invalid `async/thread´ assignment : unexpected context for event "ret"',
+}
+
+Test { [[
 var int ret =
     async/thread do
     end;
 escape (ret == 1) as int;
 ]],
-    run = 1,
+    stmts = 'line 2 : invalid `async/thread´ assignment : expected `bool´ destination',
 }
 
+--]=====]
 Test { [[
 var int  a=10, b=5;
 var& int p = &b;
