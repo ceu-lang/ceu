@@ -9,118 +9,7 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-----------------------------
--- TODO
-----------------------------
-do return end
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
-    escape a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) => int do
-    //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
-    escape b.b + yyy;
-end
-
-var  Aa    a = val Aa(1);
-var  Aa.Bb b = val Aa.Bb(2,3);
-var& Aa    c = &b;
-
-var int v1 = await/static Ff(&a,1);     // 1+1
-var int v2 = await/static Ff(&b,2);     // 3+2
-var int v3 = await/static Ff(&c,3);     // 1+3  // err 3+3
-
-escape v1+v2+v3;
-]],
-    run = 11,
-}
-
-Test { [[
-data Aa with
-    var int a;
-end
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) => void do
-    ret = ret + a.a + xxx;
-end
-
-data Aa.Bb with
-    var int b;
-end
-
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) => void do
-    ret = ret + b.b + yyy;
-end
-
-var  Aa    a = val Aa(1);
-var  Aa.Bb b = val Aa.Bb(2,3);
-var& Aa    c = &b;
-
-var int ret = 0;
-spawn/static Ff(&ret,&a,1);     // 1+1
-spawn/static Ff(&ret,&b,2);     // 3+2
-spawn/static Ff(&ret,&c,3);     // 1+3  // err 3+3
-
-escape ret;
-]],
-    run = 11,
-}
-
-Test { [[
-data Dd with
-    event void ok;      // copy event??
-end
-var Dd dd = val Dd(_);
-var Dd ee = dd;
-escape 1;
-]],
-    run = 'error',
-}
-
-Test { [[
-data Dd with
-    vector[] int x;
-end
-escape 0;
-]],
-    dcls = 'line 2 : invalid declaration : not implemented (plain vectors)',
-}
-
-Test { [[
-data Dd;
-data Dd.Ee;
-
-code/tight/dynamic Ff (dynamic var& Dd d) => int do
-    escape 10;      // should call this
-end
-code/tight/dynamic Ff (dynamic var& Dd.Ee e) => int do
-    escape 100;     // not this
-end
-
-code/tight/dynamic Gg (dynamic var& Dd d) => int do
-    escape call/dynamic Ff(&d);
-end
-
-var Dd.Ee e = val Dd.Ee();
-
-escape call/dynamic Gg(&e);
-]],
-    wrn = true,
-    run = 10,       -- todo: fragile base problem
-}
-
 do return end -- OK
---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -41002,3 +40891,1110 @@ escape call Ff(&d);
     run = 4,
 }
 --<< DATA / VECTOR
+
+--]=====]
+-->>> ASYNCS // THREADS
+
+Test { [[
+var int  a=10, b=5;
+var& int p = &b;
+async/thread do
+end
+escape a + b + p;
+]],
+    run = 20,
+}
+
+Test { [[
+var int ret =
+    async/thread do
+    end;
+escape (ret == 1) as int;
+]],
+    run = 1,
+}
+
+Test { [[
+var int  a=10, b=5;
+var& int p = &b;
+async/thread (a, p) do
+    a = a + p;
+    atomic do
+        p = a;
+    end
+end
+escape a + b + p;
+]],
+    run = 45,
+}
+
+Test { [[
+var int  a=10, b=5;
+var& int p = &b;
+var int ret =
+    async/thread (a, p) do
+        a = a + p;
+        atomic do
+            p = a;
+        end
+    end;
+escape ((ret==1) as int) + a + b + p;
+]],
+    run = 46,
+}
+
+Test { [[
+atomic do
+    escape 1;
+end
+]],
+    props = 'line 2 : not permitted inside `atomic´',
+}
+
+Test { [[
+native/pos do
+    ##define ceu_out_isr_on();
+    ##define ceu_out_isr_off();
+end
+async do
+    atomic do
+        nothing;
+    end
+end
+escape 1;
+]],
+    --props = 'line 2 : not permitted outside `thread´',
+    run = 1,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    var& int p = &x;
+    p = 2;
+    async/thread (p) do
+        p = 2;
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 4,
+    },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    var& int p = &x;
+    p = 2;
+    async/thread (p) do
+        atomic do
+            p = 2;
+        end
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 4,
+    },
+    run = 2,
+}
+
+Test { [[
+var int  a=10, b=5;
+var& int p = &b;
+async/thread (a, p) do
+    a = a + p;
+    p = a;
+end
+escape a + b + p;
+]],
+    run = 45,
+}
+
+Test { [[
+var int  a=10, b=5;
+var int&& p = &&b;
+async/thread (p) do
+    *p = 1;
+end
+escape 1;
+]],
+    inits = 'line 3 : invalid pointer access : crossed `async/thread´ (/tmp/tmp.ceu:3)',
+    --fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
+}
+
+Test { [[
+native _usleep;
+var int  a=10, b=5;
+var& int p = &b;
+par/and do
+    async/thread (a, p) do
+        _usleep(100);
+        a = a + p;
+        p = a;
+    end
+with
+    p = 2;
+end
+escape a + b + p;
+]],
+    _ana = {
+        acc = true,
+    },
+    run = 36,
+}
+
+Test { [[
+var int  a=10, b=5;
+var& int p = &b;
+async/thread (a, p) do
+    atomic do
+        a = a + p;
+        p = a;
+    end
+end
+escape a + b + p;
+]],
+    run = 45,
+}
+
+for i=1, 50 do
+    Test { [[
+native/pos do
+    ##include <unistd.h>
+end
+var int ret = 1;
+var& int p = &ret;
+par/or do
+    async/thread (p) do
+        atomic do
+            p = 2;
+        end
+    end
+with
+end
+native _usleep;
+_usleep(]]..i..[[);
+escape ret;
+]],
+        usleep = true,
+        run = 1,
+    }
+end
+
+for i=1, 50 do
+    Test { [[
+native _usleep;
+native/pos do
+    ##include <unistd.h>
+end
+var int ret = 0;
+var& int p = &ret;
+par/or do
+    async/thread (p) do
+native _usleep;
+        _usleep(]]..i..[[);
+        atomic do
+            p = 2;
+        end
+    end
+with
+    ret = 1;
+end
+_usleep(]]..i..[[+1);
+escape ret;
+]],
+        complete = (i>1),   -- run i=1 for sure
+        usleep = true,
+        run = 1,
+        _ana = { acc=1 },
+    }
+end
+
+Test { [[
+var int  v1=10, v2=5;
+var& int p1 = &v1;
+var& int p2 = &v2;
+
+par/and do
+    async/thread (v1, p1) do
+        atomic do
+            p1 = v1 + v1;
+        end
+    end
+with
+    async/thread (v2, p2) do
+        atomic do
+            p2 = v2 + v2;
+        end
+    end
+end
+escape v1+v2;
+]],
+    run = 30,
+}
+
+Test { [[
+var int  v1=0, v2=0;
+var& int p1 = &v1;
+var& int p2 = &v2;
+
+native _calc, _assert;
+native/pos do
+    int calc ()
+    {
+        int ret, i, j;
+        ret = 0;
+        for (i=0; i<10; i++) {
+            for (j=0; j<10; j++) {
+                ret = ret + i + j;
+            }
+        }
+        escape ret;
+    }
+end
+
+par/and do
+    async/thread (p1) do
+        var int ret = _calc();
+        atomic do
+            p1 = ret;
+        end
+    end
+with
+    async/thread (p2) do
+        var int ret = _calc();
+        atomic do
+            p2 = ret;
+        end
+    end
+end
+native/pos do ##include <assert.h> end
+_assert(v1 == v2);
+escape v1;
+]],
+    run = 900,
+}
+
+Test { [[
+native _assert;
+var int  v1=0, v2=0;
+var& int p1 = &v1;
+var& int p2 = &v2;
+
+par/and do
+    async/thread (p1) do
+        var int ret = 0;
+        loop i in [0 -> 10[ do
+            loop j in [0 -> 10[ do
+                ret = ret + i + j;
+            end
+        end
+        atomic do
+            p1 = ret;
+        end
+    end
+with
+    async/thread (p2) do
+        var int ret = 0;
+        loop i in [0 -> 10[ do
+            loop j in [0 -> 10[ do
+                ret = ret + i + j;
+            end
+        end
+        atomic do
+            p2 = ret;
+        end
+    end
+end
+native/pos do ##include <assert.h> end
+_assert(v1 == v2);
+escape v1;
+]],
+    run = 900,
+}
+
+Test { [[
+var int  v1=0, v2=0;
+var& int p1 = &v1;
+var& int p2 = &v2;
+
+native/pos do
+    int calc ()
+    {
+        int ret, i, j;
+        ret = 0;
+        for (i=0; i<50000; i++) {
+            for (j=0; j<50000; j++) {
+                ret = ret + i + j;
+            }
+        }
+        escape ret;
+    }
+end
+
+native _calc, _assert;
+par/and do
+    async/thread (p1) do
+        var int ret = _calc();
+        atomic do
+            p1 = ret;
+        end
+    end
+with
+    async/thread (p2) do
+        var int ret = _calc();
+        atomic do
+            p2 = ret;
+        end
+    end
+end
+native/pos do ##include <assert.h> end
+_assert(v1 == v2);
+escape v1;
+]],
+    --run = false,
+    run = 1066784512,
+}
+
+Test { [[
+native _assert;
+var int  v1=0, v2=0;
+var& int p1 = &v1;
+var& int p2 = &v2;
+
+par/and do
+    async/thread (p1) do
+        var int ret = 0;
+        loop i in [0 -> 50000[ do
+            loop j in [0 -> 50000[ do
+                ret = ret + i + j;
+            end
+        end
+        atomic do
+            p1 = ret;
+        end
+    end
+with
+    async/thread (p2) do
+        var int ret = 0;
+        loop i in [0 -> 50000[ do
+            loop j in [0 -> 50000[ do
+                ret = ret + i + j;
+            end
+        end
+        atomic do
+            p2 = ret;
+        end
+    end
+end
+native/pos do ##include <assert.h> end
+_assert(v1 == v2);
+escape v1;
+]],
+    run = 1066784512,
+    --run = false,
+-- thr.c
+--./a.out  17.41s user 0.00s system 180% cpu 9.629 total
+-- me (isTmp=true)
+--./a.out  16.80s user 0.02s system 176% cpu 9.525 total
+-- me (isTmp=false)
+--./a.out  30.36s user 0.04s system 173% cpu 17.476 total
+}
+
+Test { [[
+native/pre do
+    ##include <unistd.h>
+    int V = 0;
+end
+native _usleep;
+par/or do
+    async do
+        loop i in [0 -> 3[ do
+            _usleep(500);
+        end
+    end
+with
+    async/thread do
+        loop i in [0 -> 2[ do
+native _V;
+            _V = _V + 1;
+            _usleep(500);
+        end
+    end
+end
+escape _V;
+]],
+    dcls = 'line 21 : native identifier "_V" is not declared',
+}
+
+Test { [[
+native/pre do
+    ##include <unistd.h>
+    int V = 0;
+end
+native _usleep;
+native _V;
+par/or do
+    async do
+        loop i in [0 -> 3[ do
+            _usleep(500);
+        end
+    end
+with
+    async/thread do
+        loop i in [0 -> 2[ do
+            _V = _V + 1;
+            _usleep(500);
+        end
+    end
+end
+escape _V;
+]],
+    _ana = {acc=1},
+    usleep = true,
+    run = 2,
+}
+
+-- THREADS / EMITS
+
+Test { [[
+input int A;
+par/or do
+    await A;
+with
+    async/thread do
+        emit A(10);
+    end
+end;
+escape 10;
+]],
+    _ana = {
+        isForever = false,
+    },
+    --run = 10,
+    stmts = 'line 6 : invalid `emit´ : unexpected context for external `input´ "A"',
+    --props = 'not permitted inside `thread´',
+    --props = 'line 6 : invalid `emit´',
+}
+Test { [[
+input int A;
+par/or do
+    await A;
+with
+    async do
+        emit A(10);
+    end
+end;
+escape 10;
+]],
+    _ana = {
+        isForever = false,
+    },
+    run = 10,
+}
+
+Test { [[
+var int a=1;
+var& int pa = &a;
+async/thread (pa) do
+    emit 1min;
+    pa = 10;
+end;
+escape a + 1;
+]],
+    --run = 11,
+    props_ = 'line 4 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
+}
+Test { [[
+var int a=1;
+var& int pa = &a;
+async (pa) do
+    emit 1min;
+    pa = 10;
+end;
+escape a + 1;
+]],
+    run = 11,
+}
+
+Test { [[
+par do
+    var int v1=4,v2=4;
+    par/or do
+        await 10ms;
+        v1 = 1;
+    with
+        await 10ms;
+        v2 = 2;
+    end
+    escape v1 + v2;
+with
+    async/thread do
+        emit 5ms;
+        emit(5000)ms;
+    end
+end
+]],
+    _ana = {
+        isForever = false,
+        abrt = 3,
+    },
+    --run = 5,
+    --run = 3,
+    --todo = 'nd excpt',
+    props_ = 'line 13 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
+}
+Test { [[
+par do
+    var int v1=4,v2=4;
+    par/or do
+        await 10ms;
+        v1 = 1;
+    with
+        await 10ms;
+        v2 = 2;
+    end
+    escape v1 + v2;
+with
+    async do
+        emit 5ms;
+        emit(5000)ms;
+    end
+end
+]],
+    _ana = {
+        isForever = false,
+        abrt = 3,
+    },
+    run = 5,
+    --run = 3,
+    --todo = 'nd excpt',
+}
+
+Test { [[
+input int A;
+par do
+    async/thread do end
+with
+    await A;
+    escape 1;
+end
+]],
+    run = { ['1~>A']=1 },
+}
+
+Test { [[
+native/pos do ##include <assert.h> end
+native _assert;
+input void A;
+var int ret = 0;
+par/or do
+    loop do
+        var int late = await 10ms;
+        ret = ret + late;
+        _assert(late <= 10000);
+    end
+with
+    loop do
+        var int i = 0;
+        par/or do
+            var int t;
+            t = await 1s;
+        with
+            loop do
+                await A;
+                i = i + 1;
+            end
+        end
+    end
+with
+    async/thread do
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+    end
+end
+escape ret;
+]],
+    --run = 72000,
+    stmts = 'line 27 : invalid `emit´ : unexpected context for external `input´ "A"',
+}
+Test { [[
+native/pos do ##include <assert.h> end
+native _assert;
+input void A;
+var int ret = 0;
+par/or do
+    loop do
+        var int late = await 10ms;
+        ret = ret + late;
+        _assert(late <= 10000);
+    end
+with
+    loop do
+        var int i = 0;
+        par/or do
+            var int t;
+            t = await 1s;
+            if t!=0 then end;
+        with
+            loop do
+                await A;
+                i = i + 1;
+            end
+        end
+    end
+with
+    async do
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+        emit 12ms;
+        emit A;
+    end
+end
+escape ret;
+]],
+    run = 72000,
+}
+
+Test { [[
+input int P2;
+par do
+    loop do
+        par/or do
+            var int p2 = await P2;
+            if p2 == 1 then
+                escape 0;
+            end;
+        with
+            loop do
+                await 200ms;
+            end;
+        end;
+    end;
+with
+    async/thread do
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(1);
+    end;
+    await FOREVER;      // TODO: ele acha que o async termina
+end;
+]],
+    --run = 0,
+    stmts = 'line 17 : invalid `emit´ : unexpected context for external `input´ "P2"',
+}
+Test { [[
+input int P2;
+par do
+    loop do
+        par/or do
+            var int p2 = await P2;
+            if p2 == 1 then
+                escape 0;
+            end;
+        with
+            loop do
+                await 200ms;
+            end;
+        end;
+    end;
+with
+    async do
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(0);
+        emit P2(1);
+    end;
+    await FOREVER;      // TODO: ele acha que o async termina
+end;
+]],
+    run = 0,
+}
+
+Test { [[
+var int ret = 0;
+input void A;
+par/and do
+    await 1s;
+    ret = ret + 1;
+with
+    async do
+        emit 1s;
+    end
+    ret = ret + 1;
+with
+    async/thread do
+        atomic do
+        end
+    end
+    ret = ret + 1;
+with
+    async do
+        emit A;
+    end
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = { ['~>A;~>1s'] = 4 },
+}
+
+-- ASYNC/NONDET
+
+Test { [[
+native/plain _int;
+vector[2] _int v = [];
+par/and do
+    v[0] = 1;
+with
+var _int&& p = &&v[0];
+    p[1] = 2;
+end
+escape v[0] + v[1];
+]],
+    _ana = {
+        acc = 1,
+    },
+    --fin = 'line 6 : pointer access across `await´',
+    run = 3;
+}
+Test { [[
+native/plain _int;
+vector[2] _int v = [];
+par/and do
+    v[0] = 1;
+with
+    var _int&& p = &&v[0];
+    p[1] = 2;
+end
+escape v[0] + v[1];
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 3,
+}
+Test { [[
+vector[2] int v = [0,0];
+vector[2] int p = [0,0];
+par/and do
+    v[0] = 1;
+with
+    p[1] = 2;
+end
+escape v[0] + p[1];
+]],
+    run = 3,
+}
+
+Test { [[
+var int x = 0;
+async do
+    x = 2;
+end
+escape x;
+]],
+    dcls = 'line 3 : internal identifier "x" is not declared',
+}
+
+Test { [[
+var int x = 0;
+async/thread do
+    x = 2;
+end
+escape x;
+]],
+    dcls = 'line 3 : internal identifier "x" is not declared',
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async (x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    _ana = { acc=1 },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async/thread (x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    _ana = { acc=1 },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    x = 1;
+with
+    async/thread (x) do
+        x = 2;
+    end
+end
+escape x;
+]],
+    _ana = {
+        acc = 1,
+    },
+    run = 2,
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    await 1s;
+    x = 1;
+with
+    var int y = x;
+    async/thread (y) do
+        y = 2;
+native _usleep;
+        _usleep(50);
+    end
+    x = x + y;
+end
+escape x;
+]],
+    run = { ['~>1s']=3 },
+    _ana = {
+        acc = true,
+    },
+}
+
+Test { [[
+var int x = 0;
+par/and do
+    await 1s;
+    x = 1;
+with
+    var int y = x;
+    async/thread (y) do
+        y = 2;
+native _usleep;
+        _usleep(50);
+    end
+    x = x + y;
+end
+escape x;
+]],
+    run = { ['~>1s']=3 },
+    safety = 2,
+    _ana = {
+        acc = 3,
+    },
+}
+
+Test { [[
+var int x  = 0;
+par/and do
+var int&& p = &&x;
+    *p = 1;
+with
+    var int y = x;
+    async/thread (y) do
+        y = 2;
+    end
+    x = x + y;
+end
+escape x;
+]],
+    _ana = {
+        acc = 3,
+    },
+    run = 3,
+}
+
+Test { [[
+native/plain _int;
+vector[10] _int x = [];
+async/thread (x) do
+    x[0] = 2;
+end
+escape x[0];
+]],
+    run = 2,
+    --gcc = 'error: lvalue required as left operand of assignment',
+}
+
+Test { [[
+vector[10] int x = [0];
+async/thread (x) do
+    x[0] = 2;
+end
+escape x[0];
+]],
+    run = 2,
+    --gcc = 'error: lvalue required as left operand of assignment',
+}
+
+Test { [[
+vector[10] int x = [0,1];
+par/and do
+    async/thread (x) do
+native _usleep;
+        _usleep(100);
+        x[0] = x[1] + 2;
+    end
+with
+    x[1] = 5;
+end
+escape x[0];
+]],
+    run = 7,
+    _ana = {
+        acc = 2,
+    },
+    --gcc = 'error: lvalue required as left operand of assignment',
+}
+
+Test { [[
+var int v = 1;
+async (v) do
+    do finalize with
+        v = 2;
+    end
+end;
+escape v;
+]],
+    props = 'line 3 : not permitted inside `async´',
+}
+Test { [[
+var int v = 1;
+async/thread (v) do
+    do finalize with
+        v = 2;
+    end
+end;
+escape v;
+]],
+    props = 'line 3 : not permitted inside `thread´',
+}
+
+Test { [[
+native _f;
+native/pos do
+    int f (int v) {
+        escape v + 1;
+    }
+end
+var int a = 0;
+async/thread (a) do
+    a = _f(10);
+end
+escape a;
+]],
+    run = 11,
+}
+
+Test { [[
+var int ret = 0;
+async (ret) do
+    ret = do escape 1; end;
+end
+escape ret;
+]],
+    run = 1,
+}
+Test { [[
+var int ret = 0;
+async/thread (ret) do
+    ret = do escape 1; end;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [=[
+    async/thread do
+    end
+    loop i in [0 -> 100[ do
+        await 1s;
+    end
+    escape 1;
+]=],
+    run = {['~>100s;~>100s']=1},
+}
+--end
+--do return end
+--<<< THREADS / EMITS
+--<<< ASYNCS / THREADS
