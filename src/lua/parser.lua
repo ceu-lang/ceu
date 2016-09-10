@@ -129,8 +129,8 @@ local T = {
         'statement'
     },
 }
-if RUNTESTS then
-    RUNTESTS.parser_translate = RUNTESTS.parser_translate or { ok={}, original=T }
+if TESTS then
+    TESTS.parser_translate = TESTS.parser_translate or { ok={}, original=T }
 end
 
 -- ( ) . % + - * ? [ ] ^ $
@@ -139,9 +139,9 @@ local function translate (msg)
     for i,t in ipairs(T) do
         local fr,to = unpack(t)
         local new = string.gsub(msg, fr, to)
-        if RUNTESTS then
+        if TESTS then
             if msg ~= new then
-                RUNTESTS.parser_translate.ok[i] = true
+                TESTS.parser_translate.ok[i] = true
             end
         end
         msg = new
@@ -265,7 +265,7 @@ end
 local EE = function (msg)
     return m.Cmt(P'',
             function (_,i)
-                RUNTESTS_TODO = true
+                TESTS_TODO = true
                 return fail(i,msg)
             end)
 end
@@ -908,7 +908,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 }
 
-if RUNTESTS then
+if TESTS then
     assert(m.P(GG):match(CEU.source), ERR())
 else
     if not m.P(GG):match(CEU.source) then

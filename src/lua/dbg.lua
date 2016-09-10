@@ -19,7 +19,7 @@ function ASR1 (cond, msg)
     if cond then
         return cond
     end
-    if RUNTESTS then
+    if TESTS then
         return assert(false, msg)
                 -- TODO: error(msg) ???
     else
@@ -52,8 +52,8 @@ function WRN (cond, ln, code, msg)
     ln = (AST.is_node(ln) and ln.ln) or ln
     msg = 'WRN ['..code..'] : '..ln[1]..' : line '..ln[2]..' : '..msg
 
-    if RUNTESTS_file and tonumber(code)>1100 then
-        RUNTESTS_file:write([[
+    if TESTS_file and tonumber(code)>1100 then
+        TESTS_file:write([[
 ==============
 ]]..msg..[[
 
@@ -83,8 +83,8 @@ function ASR2 (cond, ln, code, msg, extra)
         msg = msg..'\n'..extra
     end
 
-    if RUNTESTS_file and tonumber(code)>1100 then
-        RUNTESTS_file:write([[
+    if TESTS_file and tonumber(code)>1100 then
+        TESTS_file:write([[
 ==============
 ]]..msg..[[
 
@@ -96,7 +96,7 @@ function ASR2 (cond, ln, code, msg, extra)
 ]])
     end
 
-    if RUNTESTS then
+    if TESTS then
         return assert(false, msg)
                 -- TODO: error(msg) ???
     else

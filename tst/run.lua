@@ -1,6 +1,6 @@
 #!/usr/bin/env lua5.3
 
-RUNTESTS = {
+TESTS = {
     --cmd = true,
     --luacov = 'lua5.3 -lluacov'
     --valgrind = true
@@ -14,13 +14,13 @@ RUNTESTS = {
     }
 }
 
-if RUNTESTS.luacov then
+if TESTS.luacov then
     require 'luacov'
     os.remove('luacov.stats.out')
     os.remove('luacov.report.out')
 end
 
-if RUNTESTS.cmd then
+if TESTS.cmd then
     print '>>> CMDS'
     os.execute('cd ../src/lua/ && lua5.3 pak.lua lua5.3 && cp ceu /usr/local/bin/')
 
@@ -245,7 +245,7 @@ end
         CEU.opts.ceu_input    = '/tmp/tmp.ceu.cpp'
     end
 
-    RUNTESTS.stats.count = RUNTESTS.stats.count + 1
+    TESTS.stats.count = TESTS.stats.count + 1
 
     local DIR = '../src/lua/'
 
@@ -283,7 +283,7 @@ end
     if not check(T,'props_') then return end
     if not check(T,'trails') then return end
 
-    RUNTESTS.stats.trails = RUNTESTS.stats.trails + AST.root.trails_n
+    TESTS.stats.trails = TESTS.stats.trails + AST.root.trails_n
 
     if not check(T,'labels') then return end
     dofile(DIR..'vals.lua')
@@ -308,7 +308,7 @@ if T.ana or T.tmp or T.props or T.mode then return end
 
         local f = io.popen('du -b '..CEU.opts.cc_output)
         local n = string.match(f:read'*a', '(%d+)')
-        RUNTESTS.stats.bytes = RUNTESTS.stats.bytes + n
+        TESTS.stats.bytes = TESTS.stats.bytes + tonumber(n)
         f:close()
     end
 
@@ -321,7 +321,7 @@ if T.ana or T.tmp or T.props or T.mode then return end
 
     local exe = CEU.opts.cc_output..' 2>&1'
 
-    if RUNTESTS.valgrind then
+    if TESTS.valgrind then
         exe = 'valgrind -q --leak-check=full --show-leak-kinds=all '..exe
     end
 
@@ -337,26 +337,7 @@ if T.ana or T.tmp or T.props or T.mode then return end
         assert(string.find(out, T.run, nil, true), '>>> ERROR : run : expected "'..T.run..'" : got "'..out..'"')
     end
 
-do return end
-    DBG,ASR = DBG1,ASR1
-    do
-        local ceu = [[
-./ceu --pre --pre-input=/tmp/tmp.ceu --pre-output=/tmp/tmp.ceu.cpp      \
-      --ceu --ceu-input=/tmp/tmp.ceu.cpp --ceu-output-h=/tmp/tmp.ceu.h  \
-                                         --ceu-output-c=/tmp/tmp.ceu.c  \
-      --env --env-header=../arch/ceu_header.h --env-ceu=/tmp/tmp.ceu.c  \
-            --env-main=../arch/ceu_main.c --env-output=/tmp/tmp.c       \
-      --cc --cc-input=/tmp/tmp.c --cc-output=/tmp/tmp.exe               \
-           --cc-args="-Wall -Wextra -Werror"                            \
-      --ceu-line-directives=true
-]]
-        os.execute(ceu)
-DBG(ceu)
-error'oi'
-        if RUNTESTS.luacov then
-            ceu = RUNTESTS.luacov..' '..ceu
-        end
-    end
+-------------------------------------------------------------------------------
 
 do return end
 AST.dump(AST.root)
@@ -473,9 +454,6 @@ end
     --os.execute('cat /tmp/line _ceu_app.c > /tmp/file')
     --os.execute('mv /tmp/file _ceu_app.c')
 
-    if RUNTESTS.luacov then
-        CEU = RUNTESTS.luacov..' '..CEU
-    end
     if PROPS.has_threads then
         GCC = GCC .. ' -lpthread'
     end
@@ -569,8 +547,8 @@ dofile 'tests.lua'
 -- check if all translation messages were used
 do
     local err = false
-    for i=1, #RUNTESTS.parser_translate.original do
-        if not RUNTESTS.parser_translate.ok[i] then
+    for i=1, #TESTS.parser_translate.original do
+        if not TESTS.parser_translate.ok[i] then
             DBG('parser translate '..i)
         end
     end
@@ -582,17 +560,17 @@ print([[
 =====================================
 
 stats = {
-    count   = ]]..RUNTESTS.stats.count  ..[[,
-    trails  = ]]..RUNTESTS.stats.trails ..[[,
-    bytes   = ]]..RUNTESTS.stats.bytes  ..[[,
-    n_go    = ]]..RUNTESTS.stats.n_go   ..[[,
+    count   = ]]..TESTS.stats.count  ..[[,
+    trails  = ]]..TESTS.stats.trails ..[[,
+    bytes   = ]]..TESTS.stats.bytes  ..[[,
+    n_go    = ]]..TESTS.stats.n_go   ..[[,
 }
 ]])
 
 --[[
 # luacov
 
-1. Set `RUNTESTS.luacov=true`
+1. Set `TESTS.luacov=true`
 2. Run `run.lua`
     - It will generate `luacov.stats.out`
 3. Run `luacov` in the same directory

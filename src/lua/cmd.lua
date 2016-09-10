@@ -3,7 +3,7 @@ PAK = PAK or {
     ceu_git = '?',
 }
 
-if not RUNTESTS then
+if not TESTS then
     CEU = {}
 
     local help = [[
