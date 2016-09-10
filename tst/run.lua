@@ -6,15 +6,12 @@ RUNTESTS = {
     --valgrind = true
 --REENTRANT = true
 --COMPLETE = true
---[[
-STATS = {
-    count   = 0,
-    mem     = 0,
-    trails  = 0,
-    bytes   = 0,
-    n_go    = 0,
-}
-]]
+    stats = {
+        count  = 0,
+        trails = 0,
+        bytes  = 0,
+        n_go   = 0,
+    }
 }
 
 if RUNTESTS.luacov then
@@ -248,7 +245,7 @@ end
         CEU.opts.ceu_input    = '/tmp/tmp.ceu.cpp'
     end
 
-    --STATS.count = STATS.count   + 1
+    RUNTESTS.stats.count = RUNTESTS.stats.count + 1
 
     local DIR = '../src/lua/'
 
@@ -285,6 +282,9 @@ end
     if not check(T,'scopes') then return end
     if not check(T,'props_') then return end
     if not check(T,'trails') then return end
+
+    RUNTESTS.stats.trails = RUNTESTS.stats.trails + AST.root.trails_n
+
     if not check(T,'labels') then return end
     dofile(DIR..'vals.lua')
     dofile(DIR..'multis.lua')
@@ -305,6 +305,11 @@ if T.ana or T.tmp or T.props or T.mode then return end
 
     if CEU.opts.cc then
         if not check(T,'cc') then return end
+
+        local f = io.popen('du -b '..CEU.opts.cc_output)
+        local n = string.match(f:read'*a', '(%d+)')
+        RUNTESTS.stats.bytes = RUNTESTS.stats.bytes + n
+        f:close()
     end
 
     if T.run == false then
@@ -369,9 +374,6 @@ AST.dump(AST.root)
     if (not T.wrn) and (not T._ana) then
         WRN = _WRN
     end
-
-    --STATS.mem     = STATS.mem     + AST.root.mem.max
-    STATS.trails  = STATS.trails  + AST.root.trails_n
 
     if T.tot then
         assert(T.tot==MEM.max, 'mem '..MEM.max)
@@ -560,13 +562,6 @@ end
             go(source, ret2)
         end
     end
-
-    if not T.gcc then
-        local f = io.popen('du -b '..OUT_DIR..'/ceu.exe')
-        local n = string.match(f:read'*a', '(%d+)')
-        STATS.bytes = STATS.bytes + n
-        f:close()
-    end
 end
 
 dofile 'tests.lua'
@@ -582,18 +577,15 @@ do
     assert(not err)
 end
 
-do return end
-
 print([[
 
 =====================================
 
-STATS = {
-    count   = ]]..STATS.count  ..[[,
-    mem     = ]]..STATS.mem    ..[[,
-    trails  = ]]..STATS.trails ..[[,
-    bytes   = ]]..STATS.bytes  ..[[,
-    n_go    = ]]..STATS.n_go   ..[[,
+stats = {
+    count   = ]]..RUNTESTS.stats.count  ..[[,
+    trails  = ]]..RUNTESTS.stats.trails ..[[,
+    bytes   = ]]..RUNTESTS.stats.bytes  ..[[,
+    n_go    = ]]..RUNTESTS.stats.n_go   ..[[,
 }
 ]])
 
