@@ -743,10 +743,6 @@ int ceu_go_all (void)
             CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
             ceu_threads_gc(0);
         }
-
-        if (!ceu_cb_pending_async && (CEU_APP.threads_head==NULL)) {
-            break;
-        };
     }
 
 /* >>> TODO: CLOSE */
