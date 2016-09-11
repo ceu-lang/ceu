@@ -399,8 +399,8 @@ ceu_callback_assert_msg(0, "reached end of `code´");
         end
 
         -- CODE/DELAYED
-CLEAR(me) -- TODO-NOW
         if mods.await then
+CLEAR(me) -- TODO-NOW
             LINE(me, [[
     /* free */
     if (_ceu_mem->pak != NULL) {
