@@ -1430,6 +1430,31 @@ ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
         SET(me, to, chk, true)
     end,
 
+    Atomic = function (me)
+        local thread = AST.par(me, 'Async_Thread')
+        if thread then
+            LINE(me, [[
+CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+if (_ceu_p.thread->has_aborted) {
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    goto ]]..thread.lbl_abt.id..[[;   /* exit if ended from "sync" */
+} else {                              /* othrewise, execute block */
+]])
+            CONC_ALL(me)
+            LINE(me, [[
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+}
+]])
+        else
+            DBG('TODO-ATOMIC-ISR')
+--[[
+            LINE(me, 'ceu_out_isr_off();')
+            CONC(me)
+            LINE(me, 'ceu_out_isr_on();')
+]]
+        end
+    end,
+
     Async_Thread = function (me)
         local _, blk = unpack(me)
 
@@ -1458,7 +1483,23 @@ if (]]..v..[[ != NULL)
         CEU_THREADS_CREATE(&]]..v..[[->id, _ceu_thread_]]..me.n..[[, &p);
     if (ret == 0) {
         while (! ]]..v..[[->has_started);   /* wait copy of "p" */
+        while (1) {
+]])
+        HALT(me, {
+            { ['evt.id'] = 'CEU_INPUT__THREAD' },
+            { lbl        = me.lbl_out.id },
+            lbl = me.lbl_out.id,
+        })
+        LINE(me, [[
+            {
+                CEU_THREADS_T** __ceu_casted = (CEU_THREADS_T**)_ceu_occ->params;
+                if (*(*(__ceu_casted)) == ]]..v..[[->id) {
+                    break; /* this thread is terminating */
+                }
+            }
+        }
     }
+    /* proceed with sync execution (already locked) */
 }
 ]])
 
@@ -1476,11 +1517,11 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     /* body */
     ]]..blk.code..[[
 #if 0
-    goto ]]..me.lbl_out.id..[[; /* avoids "not used" warning */
+    goto ]]..me.lbl_abt.id..[[; /* avoids "not used" warning */
 #endif
 
     /* goto from "atomic" and already terminated */
-]]..me.lbl_out.id..[[:
+]]..me.lbl_abt.id..[[:
 
     /* terminate thread */
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);

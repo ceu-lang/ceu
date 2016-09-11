@@ -147,6 +147,7 @@ enum {
     /* emitable */
     CEU_INPUT__CLEAR,           /* 5 */
     CEU_INPUT__ASYNC,
+    CEU_INPUT__THREAD,
     CEU_INPUT__WCLOCK,
     === EXTS_ENUM_INPUT ===
 
@@ -331,6 +332,52 @@ static void ceu_go_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 === THREADS ===
 
 === CODES_WRAPPERS ===
+
+/*****************************************************************************/
+
+int ceu_threads_gc (int force_join) {
+    int n_alive = 0;
+    tceu_threads_data** head_ = &CEU_APP.threads_head;
+    tceu_threads_data*  head  = *head_;
+    while (head != NULL) {
+        tceu_threads_data** nxt_ = &head->nxt;
+        if (head->has_terminated || head->has_aborted)
+        {
+            if (!head->has_notified) {
+                ceu_go_ext(CEU_INPUT__THREAD, &head->id);
+                head->has_notified = 1;
+            }
+
+            if (! head->has_joined) {
+                if (force_join || head->has_terminated) {
+                    CEU_THREADS_JOIN(head->id);
+                    head->has_joined = 1;
+                } else {
+                    /* possible with "CANCEL" which prevents setting "has_terminated" */
+                    head->has_joined = CEU_THREADS_JOIN_TRY(head->id);
+                }
+            }
+
+            if (head->has_aborted && head->has_joined) {
+                    /* HACK_2:
+                     *  A thread never terminates the program because we include an
+                     *  <async do end> after it to enforce terminating from the
+                     *  main program.
+                     */
+                *head_ = head->nxt;
+                nxt_ = head_;
+                ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, head, 0);
+            }
+        }
+        else
+        {
+            n_alive++;
+        }
+        head_ = nxt_;
+        head  = *head_;
+    }
+    return n_alive;
+}
 
 /*****************************************************************************/
 
@@ -631,24 +678,16 @@ static void ceu_go_ext (tceu_nevt evt_id, void* evt_params)
 
 /*****************************************************************************/
 
-static int ceu_cb_terminating = 0;
-static int ceu_cb_terminating_ret;
-static int ceu_cb_pending_async = 0;
+static int ceu_cb_terminating     = 0;
+static int ceu_cb_terminating_ret = 0;
+static int ceu_cb_pending_async   = 0;
 
 static tceu_callback_ret ceu_callback_go_all (int cmd, tceu_callback_arg p1, tceu_callback_arg p2) {
     tceu_callback_ret ret = { .is_handled=1 };
     switch (cmd) {
-        case CEU_CALLBACK_STEP:
-            if (!p1.num) {
-                ceu_callback_void_void(CEU_CALLBACK_TERMINATING);
-            }
-            break;
         case CEU_CALLBACK_TERMINATING:
             ceu_cb_terminating = 1;
             ceu_cb_terminating_ret = p1.num;
-
-/* TODO: CLOSE */
-            lua_close(CEU_APP.lua);
             break;
         case CEU_CALLBACK_PENDING_ASYNC:
             ceu_cb_pending_async = 1;
@@ -663,16 +702,28 @@ int ceu_go_all (void)
 {
     ceu_callback_void_void(CEU_CALLBACK_INIT);
 
-    /* TODO: INIT */
+/* >>> TODO: INIT */
 
     CEU_APP.wclk_late = 0;
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
 
+    pthread_mutex_init(&CEU_APP.threads_mutex, NULL);
+    CEU_APP.threads_head = NULL;
+
+    /* All code run atomically:
+     * - the program is always locked as a whole
+     * -    thread spawns will unlock => re-lock
+     * - but program will still run to completion
+     */
+    CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+
     CEU_APP.lua = luaL_newstate();
     ceu_dbg_assert(CEU_APP.lua != NULL);
     luaL_openlibs(CEU_APP.lua);
     lua_atpanic(CEU_APP.lua, ceu_lua_atpanic);
+
+/* <<< TODO: INIT */
 
     tceu_stk stk = { 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
@@ -681,12 +732,30 @@ int ceu_go_all (void)
                 (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
 
     while (!ceu_cb_terminating) {
-        ceu_callback_num_void(CEU_CALLBACK_STEP, ceu_cb_pending_async);
+        ceu_callback_void_void(CEU_CALLBACK_STEP);
         if (ceu_cb_pending_async) {
             ceu_cb_pending_async = 0;
             ceu_go_ext(CEU_INPUT__ASYNC, NULL);
         }
+        if (CEU_APP.threads_head != NULL) {
+            CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+            CEU_THREADS_SLEEP(100); /* allow threads to do "atomic" and "terminate" */
+            CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+            ceu_threads_gc(0);
+        }
+
+        if (!ceu_cb_pending_async && (CEU_APP.threads_head==NULL)) {
+            break;
+        };
     }
+
+/* >>> TODO: CLOSE */
+
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    ceu_dbg_assert(ceu_threads_gc(1) == 0); /* wait all terminate/free */
+    lua_close(CEU_APP.lua);
+
+/* <<< TODO: CLOSE */
 
 #ifdef CEU_TESTS
     printf("_ceu_tests_trails_visited_ = %d\n", _ceu_tests_trails_visited_);

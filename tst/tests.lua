@@ -40931,7 +40931,16 @@ escape (ret == 1) as int;
     stmts = 'line 2 : invalid `async/thread´ assignment : expected `bool´ destination',
 }
 
---]=====]
+Test { [[
+var int ret=1;
+async/thread (ret) do
+    ret = ret + 10;
+end
+escape ret;
+]],
+    run = 11,
+}
+
 Test { [[
 var int  a=10, b=5;
 var& int p = &b;
@@ -40949,14 +40958,14 @@ escape a + b + p;
 Test { [[
 var int  a=10, b=5;
 var& int p = &b;
-var int ret =
+var bool ret =
     async/thread (a, p) do
         a = a + p;
         atomic do
             p = a;
         end
     end;
-escape ((ret==1) as int) + a + b + p;
+escape (ret as int) + a + b + p;
 ]],
     run = 46,
 }
@@ -41037,6 +41046,7 @@ escape a + b + p;
     run = 45,
 }
 
+--]=====]
 Test { [[
 var int  a=10, b=5;
 var int&& p = &&b;
