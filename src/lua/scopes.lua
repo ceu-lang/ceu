@@ -110,6 +110,7 @@ F = {
             -- all finalization vars must be in the same block
             local blk = to.info.dcl_obj and to.info.dcl_obj.blk or
                             to.info.dcl.blk
+            blk.needs_clear = true
 
             if fin.__fin_vars then
                 ASR(blk == fin.__fin_vars.blk, me,
@@ -135,16 +136,7 @@ F = {
             if to.info.dcl[1] == '&?' then
                 ok = true
                 to.info.dcl.is_local_set_alias = true
-
-                local do_ = AST.get(fr.info.dcl.blk.__par,'Do')
-                if do_ then
-                    -- only goes out of scope through "do"
-                    -- no need for clear for "blk"
-                    do_.needs_clear = true
-                else
-                    fr.info.dcl.blk.needs_clear = true
-                end
-
+                fr.info.dcl.blk.needs_clear = true
                 assert(AST.par(to.info.dcl,'Code') == AST.par(fr.info.dcl,'Code'), 'not implemented')
             end
             ASR(ok, me, 'invalid binding : incompatible scopes')
@@ -206,6 +198,7 @@ F = {
                 'invalid `finalize´ : unexpected `varlist´')
             me.blk = AST.par(me, 'Block')
             me.blk.fins_n = me.blk.fins_n + 1
+            me.blk.needs_clear = true
             return
         end
         assert(Stmt)
@@ -240,6 +233,7 @@ F = {
 
         me.blk = assert(me.__fin_vars.blk)
         me.blk.fins_n = me.blk.fins_n + 1
+        me.blk.needs_clear = true
     end,
 }
 

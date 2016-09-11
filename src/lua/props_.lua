@@ -33,9 +33,7 @@ F = {
             'invalid `emit´ : expected enclosing `async´ or `async/isr´')
     end,
 
-    Escape = 'Continue',
-    Break  = 'Continue',
-    Continue = function (me)
+    __escape = function (me)
 -- TODO: join all possibilities (thread/isr tb)
         local Async = AST.par(me,'Async')
         if Async then
@@ -58,6 +56,24 @@ F = {
                 ASR(AST.depth(me.outer) > AST.depth(Finalize), me,
                     'invalid `'..AST.tag2id[me.tag]..'´ : unexpected enclosing `finalize´')
             end
+        end
+    end,
+    Break = function (me)
+        F.__escape(me)
+        if me.outer then
+            me.outer.has_break = true       -- avoids unnecessary CLEAR
+        end
+    end,
+    Continue = function (me)
+        F.__escape(me)
+        if me.outer then
+            me.outer.has_continue = true    -- avoids unnecessary CLEAR
+        end
+    end,
+    Escape = function (me)
+        F.__escape(me)
+        if me.outer then
+            me.outer.has_escape = true      -- avoids unnecessary CLEAR
         end
     end,
 

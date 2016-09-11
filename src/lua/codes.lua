@@ -40,26 +40,6 @@ local function CASE (me, lbl)
 end
 
 local function CLEAR (me)
---[[
-    local fin = AST.par(me, 'Finalize')
-    if fin and AST.is_par(AST.asr(fin,'',3,'Block'), me) then
-        --  do ... finalize with
-        --      <...>;  // no clear
-        --  end
-        return
-    end
-    if AST.par(me, 'Async_Thread') then
-        --return
-    end
-if me.trails_n == 1 then
-    --return
-end
-
-if not (me.needs_clear or me.trails_n>1) then
-    return
-end
-]]
-
     LINE(me, [[
 {
     ceu_stack_clear(_ceu_stk, _ceu_mem,
@@ -678,7 +658,6 @@ if (0) {
 }
 ]])
         CASE(me, me.lbl_out)
-        CLEAR(me)
     end,
 
     ---------------------------------------------------------------------------
@@ -728,7 +707,7 @@ ceu_callback_assert_msg(0, "reached end of `do´");
         end
         CASE(me, me.lbl_out)
 
-        if me.trails_n>1 or me.needs_clear then
+        if me.has_escape and (me.trails_n>1 or blk.needs_clear) then
             CLEAR(me)
         end
     end,
@@ -803,16 +782,23 @@ while (1) {
     ]]..body.code..[[
 ]])
         CASE(me, me.lbl_cnt)
-        CLEAR(me);
-            --CLEAR(body);
-            assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
+
+        if me.has_continue and me.trails_n>1 then
+            CLEAR(me)
+        end
+
+        assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
+
         F.__loop_async(me)
         LINE(me, [[
     ]]..max.inc..[[
 }
 ]])
         CASE(me, me.lbl_out)
-        CLEAR(me)
+
+        if me.has_break and me.trails_n>1 then
+            CLEAR(me)
+        end
     end,
 
     Loop_Num = function (me)
@@ -864,8 +850,6 @@ while (1) {
     ]]..body.code..[[
 ]])
         CASE(me, me.lbl_cnt)
-        CLEAR(me);
-            --CLEAR(body);
             assert(body.trails[1]==me.trails[1] and body.trails[2]==me.trails[2])
         F.__loop_async(me)
         LINE(me, [[
@@ -874,7 +858,6 @@ while (1) {
 }
 ]])
         CASE(me, me.lbl_out)
-        CLEAR(me)
     end,
 
     Break = function (me)
