@@ -113,7 +113,7 @@ if TESTS.cmd then
                                   '--ceu '..
                                   '--env --env-header=../env/header.h '..
                                         '--env-main=../env/main.c '..
-                                  '--cc --cc-args="-llua5.3" --cc-output='..tmp2))
+                                  '--cc --cc-args="-llua5.3 -lpthread" --cc-output='..tmp2))
     local out = f:read'*a'
     local ok,mode,status = f:close()
     assert(ok==true and mode=='exit' and status==0)
