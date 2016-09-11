@@ -40,6 +40,7 @@ local function CASE (me, lbl)
 end
 
 local function CLEAR (me)
+--[[
     local fin = AST.par(me, 'Finalize')
     if fin and AST.is_par(AST.asr(fin,'',3,'Block'), me) then
         --  do ... finalize with
@@ -53,6 +54,11 @@ local function CLEAR (me)
 if me.trails_n == 1 then
     --return
 end
+
+if not (me.needs_clear or me.trails_n>1) then
+    return
+end
+]]
 
     LINE(me, [[
 {
@@ -125,7 +131,6 @@ end
 
 F = {
     ROOT     = CONC_ALL,
-    Block    = CONC_ALL,
     Stmts    = CONC_ALL,
     Watching = CONC_ALL,
     Every    = CONC_ALL,
@@ -168,6 +173,12 @@ if (]]..V(c)..[[) {
 ]])
     end,
 
+    Block = function (me)
+        CONC_ALL(me)
+        if me.needs_clear then
+            CLEAR(me)
+        end
+    end,
     Block__PRE = function (me, par,base)
         par = par or me
         me.code_fin = ''
@@ -709,14 +720,17 @@ _ceu_mem->trails[]]..me.trails[1]..[[].pse_paused = 0;
     Do = function (me)
         CONC_ALL(me)
 
-        local _,_,set = unpack(me)
+        local _,blk,set = unpack(me)
         if set and set.info.dcl[1]~='&?' and (not TYPES.check(set.info.tp,'?')) then
             LINE(me, [[
 ceu_callback_assert_msg(0, "reached end of `do´");
 ]])
         end
         CASE(me, me.lbl_out)
-        CLEAR(me)
+
+        if me.trails_n>1 or me.needs_clear then
+            CLEAR(me)
+        end
     end,
 
     Escape = function (me)

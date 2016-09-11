@@ -10,6 +10,7 @@ end
 
 --[=====[
 do return end -- OK
+--]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -4344,7 +4345,7 @@ loop do
     end
 end
 ]],
-    run = 0,
+    run = false,
     --props_ = 'line 3 : invalid `continue´ : unexpected enclosing `every´',
     --props = 'line 2 : not permitted inside `every´',
 }
@@ -4353,7 +4354,7 @@ every 1s do
     continue;
 end
 ]],
-    run = 0,
+    run = false,
     --dcls = 'line 2 : invalid `continue´ : expected matching enclosing `loop´',
     --props = 'line 2 : not permitted inside `every´',
 }
@@ -4495,7 +4496,7 @@ every 1s do
     end
 end
 ]],
-    run = 0,
+    run = false,
     --dcls = 'line 3 : invalid `continue´ : expected matching enclosing `loop´',
     _ana = {
         isForever = true,
@@ -5134,10 +5135,10 @@ var int sum = 5050;
 loop i in [0 -> 100[ do
     sum = sum - (i+1);
 end
-escape sum;
+escape sum+1;
 ]],
     --loop = true,
-    run = 0,
+    run = 1,
 }
 Test { [[
 var int sum = 5050;
@@ -6189,7 +6190,7 @@ loop do
 end;
 escape 0;
 ]],
-    run = 0,
+    run = false,
     --tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     --run = 4,
 }
@@ -6662,7 +6663,7 @@ every inc do
     nothing;
 end
 ]],
-    run = 0,
+    run = false,
     --tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     _ana = { isForever=true },
 }
@@ -6996,7 +6997,7 @@ end
 
 Test { [[
 input int A;
-var int a = 0;
+var int a = 1;
 par/or do
     if true then
         a = await A;
@@ -7012,7 +7013,7 @@ escape a;
         acc  = 1,
         abrt  = 3,
     },
-    run = 0,
+    run = 1,
 }
 
 Test { [[
@@ -7930,9 +7931,9 @@ loop do
         await A;
     end
 end
-escape 0;
+escape 1;
 ]],
-    run = 0,
+    run = false,
 }
 Test { [[
 input void A,B;
@@ -9344,7 +9345,7 @@ escape 0;
     _ana = {
         abrt = 5,
     },
-    run = 0,
+    run = false,
 }
 
 Test { [[
@@ -10851,12 +10852,12 @@ par/or do
 with
     nothing;    // 6
 end
-escape 0;
+escape 1;
 ]],
     _ana = {
         abrt = 4,   -- TODO: break is inside par/or (should be 3)
     },
-    run = 0,
+    run = 1,
 }
 
 Test { [[
@@ -11161,7 +11162,7 @@ escape 0;
         acc = 1,
         abrt = 1,
     },
-    run = 0,
+    run = false,
 }
 
 Test { [[
@@ -15931,7 +15932,7 @@ par do
         par/or do
             var int p2 = await P2;
             if p2 == 1 then
-                escape 0;
+                escape 1;
             end;
         with
             loop do
@@ -15953,7 +15954,7 @@ with
     await FOREVER;      // TODO: ele acha que o async termina
 end;
 ]],
-    run = 0,
+    run = 1,
 }
 
     -- MISC
@@ -16345,7 +16346,7 @@ with
 with
     await OS_START;
     emit a(1);
-    bb = 0;
+    bb = 10;
 end;
 escape bb;
 ]],
@@ -16353,7 +16354,7 @@ escape bb;
         --nd_esc = 1,
         unreachs = 1,
     },
-    run = 0,
+    run = 10,
 }
 
 Test { [[
@@ -19932,28 +19933,32 @@ escape ret;
 Test { [[
 input void OS_START;
 await OS_START;
-par/or do
-    await OS_START;
-with
-    await OS_START;
+watching 1s do
+    par/or do
+        await OS_START;
+    with
+        await OS_START;
+    end
+    escape 10;
 end
 escape 1;
 ]],
-    run = 0,
+    run = {['~>1s']=1},
 }
 
 Test { [[
 input void OS_START;
 await OS_START;
-do
+watching 1s do
     do finalize with
         var int ret = 1;
     end
     await OS_START;
+    escape 10;
 end
 escape 1;
 ]],
-    run = 0,
+    run = {['~>1s']=1},
 }
 
 Test { [[
@@ -20382,7 +20387,7 @@ event int e;
 var int v = await e;
 escape 1;
 ]],
-    run = 0,
+    run = false,
 }
 
 Test { [[
@@ -20392,7 +20397,7 @@ await e;
 escape 1;
 ]],
     --fin = 'line 3 : cannot `await´ again on this block',
-    run = 0,
+    run = false,
 }
 
 Test { [[
@@ -20415,7 +20420,7 @@ do
 end
 escape 1;
 ]],
-    run = 0,
+    run = false,
     --fin = 'line 4 : invalid block for awoken pointer "p"',
 }
 
@@ -20499,7 +20504,7 @@ end
 await 1s;
 escape 1;
 ]],
-    run = 0,
+    run = false,
     --fin = 'line 4 : invalid block for pointer across `await´',
 }
 
@@ -20896,7 +20901,7 @@ await 1s;
 escape i;
 ]],
     --fin = 'line 5 : cannot `await´ again on this block',
-    run = 0,
+    run = false,
 }
 
 Test { [[
@@ -20918,7 +20923,7 @@ await 1s;
 escape i;
 ]],
     --env = 'line 11 : wrong argument #2 : cannot pass pointers',
-    run = 0,
+    run = false,
     --fin = 'line 6 : invalid block for awoken pointer "p"',
 }
 
@@ -26407,25 +26412,28 @@ escape 1;
 -- INFINITE LOOP/EXECUTION
 Test { [[
 event void e, f;
-par do
-    loop do
-        par/or do
-            emit f;         // 18
-        with
-            await f;        // 20
+watching 1s do
+    par do
+        loop do
+            par/or do
+                emit f;         // 18
+            with
+                await f;        // 20
+            end
+            await e;            // 23
         end
-        await e;            // 23
-    end
-with
-    loop do
-        par/or do
-            await f;        // 8
-        with
-            emit e;         // 11
-            await FOREVER;
+    with
+        loop do
+            par/or do
+                await f;        // 8
+            with
+                emit e;         // 11
+                await FOREVER;
+            end
         end
     end
 end
+escape 1;
 ]],
     wrn = true,
     _ana = {
@@ -26433,30 +26441,33 @@ end
         acc = 3,
     },
     awaits = 0,
-    run = 0,
+    run = {['~>1s']=1},
 }
 
 Test { [[
 event void e, f;
-par do
-    loop do
-        par/or do
-            await f;        // 8
-        with
-            emit e;         // 11
-            await FOREVER;
+watching 1s do
+    par do
+        loop do
+            par/or do
+                await f;        // 8
+            with
+                emit e;         // 11
+                await FOREVER;
+            end
         end
-    end
-with
-    loop do
-        par/or do
-            emit f;         // 18
-        with
-            await f;        // 20
+    with
+        loop do
+            par/or do
+                emit f;         // 18
+            with
+                await f;        // 20
+            end
+            await e;            // 23
         end
-        await e;            // 23
     end
 end
+escape 1;
 ]],
     wrn = true,
     _ana = {
@@ -26464,30 +26475,33 @@ end
         acc = 3,
     },
     awaits = 0,
-    run = 0,
+    run = {['~>1s']=1},
 }
 
 Test { [[
 event void e, f;
-par do
-    loop do
-        par/or do
-            emit e;     // 8
-            await FOREVER;
-        with
-            await f;
+watching 1s do
+    par do
+        loop do
+            par/or do
+                emit e;     // 8
+                await FOREVER;
+            with
+                await f;
+            end
         end
-    end
-with
-    loop do
-        await e;        // 17
-        par/or do
-            emit f;     // 20
-        with
-            await f;    // 22
+    with
+        loop do
+            await e;        // 17
+            par/or do
+                emit f;     // 20
+            with
+                await f;    // 22
+            end
         end
     end
 end
+escape 1;
 ]],
     wrn = true,
     _ana = {
@@ -26495,31 +26509,34 @@ end
         acc = 2,
     },
     awaits = 0,
-    run = 0
+    run = {['~>1s']=1},
 }
 
 Test { [[
 event void e, k1, k2;
-par do
-    loop do
-        par/or do
-            emit e;
-            await FOREVER;
-        with
-            await k1;
+watching 1s do
+    par do
+        loop do
+            par/or do
+                emit e;
+                await FOREVER;
+            with
+                await k1;
+            end
+            emit k2;
         end
-        emit k2;
-    end
-with
-    loop do
-        await e;
-        par/or do
-            emit k1;
-        with
-            await k2;
+    with
+        loop do
+            await e;
+            par/or do
+                emit k1;
+            with
+                await k2;
+            end
         end
     end
 end
+escape 1;
 ]],
     wrn = true,
     _ana = {
@@ -26527,29 +26544,32 @@ end
         acc = 1,
     },
     awaits = 1,
-    run = 0,
+    run = {['~>1s']=1},
 }
 Test { [[
 event void e, f;
-par do
-    loop do
-        par/or do
-            await f;        // 8
-        with
-            emit e;         // 11
-            await FOREVER;
+watching 1s do
+    par do
+        loop do
+            par/or do
+                await f;        // 8
+            with
+                emit e;         // 11
+                await FOREVER;
+            end
         end
-    end
-with
-    loop do
-        par/or do
-            await f;        // 20
-        with
-            emit f;         // 18
+    with
+        loop do
+            par/or do
+                await f;        // 20
+            with
+                emit f;         // 18
+            end
+            await e;            // 23
         end
-        await e;            // 23
     end
 end
+escape 1;
 ]],
     wrn = true,
     _ana = {
@@ -26557,7 +26577,7 @@ end
         acc = 3,
     },
     awaits = 0,
-    run = 0,
+    run = {['~>1s']=1},
 }
 
 Test { [[
@@ -40892,6 +40912,7 @@ escape call Ff(&d);
 }
 --<< DATA / VECTOR
 
+do return end
 -->>> ASYNCS // THREADS
 
 Test { [[
@@ -41046,7 +41067,6 @@ escape a + b + p;
     run = 45,
 }
 
---]=====]
 Test { [[
 var int  a=10, b=5;
 var int&& p = &&b;

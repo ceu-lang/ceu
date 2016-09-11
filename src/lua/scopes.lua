@@ -135,6 +135,16 @@ F = {
             if to.info.dcl[1] == '&?' then
                 ok = true
                 to.info.dcl.is_local_set_alias = true
+
+                local do_ = AST.get(fr.info.dcl.blk.__par,'Do')
+                if do_ then
+                    -- only goes out of scope through "do"
+                    -- no need for clear for "blk"
+                    do_.needs_clear = true
+                else
+                    fr.info.dcl.blk.needs_clear = true
+                end
+
                 assert(AST.par(to.info.dcl,'Code') == AST.par(fr.info.dcl,'Code'), 'not implemented')
             end
             ASR(ok, me, 'invalid binding : incompatible scopes')
