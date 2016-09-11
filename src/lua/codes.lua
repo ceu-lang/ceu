@@ -155,7 +155,7 @@ if (]]..V(c)..[[) {
 
     Block = function (me)
         CONC_ALL(me)
-        if me.needs_clear then
+        if me.needs_clear or me.has_fin then
             CLEAR(me)
         end
     end,
