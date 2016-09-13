@@ -120,7 +120,6 @@ typedef struct tceu_threads_data {
     u8 has_terminated: 1;
     u8 has_aborted:    1;
     u8 has_notified:   1;
-    u8 has_joined:     1;
     struct tceu_threads_data* nxt;
 } tceu_threads_data;
 
@@ -348,26 +347,18 @@ int ceu_threads_gc (int force_join) {
                 head->has_notified = 1;
             }
 
-            if (! head->has_joined) {
-                if (force_join || head->has_terminated) {
-                    CEU_THREADS_JOIN(head->id);
-                    head->has_joined = 1;
-                } else {
-                    /* possible with "CANCEL" which prevents setting "has_terminated" */
-                    head->has_joined = CEU_THREADS_JOIN_TRY(head->id);
+            /* remove from list if rejoined */
+            if (force_join || head->has_terminated) {
+                CEU_THREADS_JOIN(head->id);
+            } else {
+                /* possible with "CANCEL" which prevents setting "has_terminated" */
+                if (!CEU_THREADS_JOIN_TRY(head->id)) {
+                    continue;   /* don't remove from list yet */
                 }
             }
-
-            if (head->has_aborted && head->has_joined) {
-                    /* HACK_2:
-                     *  A thread never terminates the program because we include an
-                     *  <async do end> after it to enforce terminating from the
-                     *  main program.
-                     */
-                *head_ = head->nxt;
-                nxt_ = head_;
-                ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, head, 0);
-            }
+            *head_ = head->nxt;
+            nxt_ = head_;
+            ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, head, 0);
         }
         else
         {

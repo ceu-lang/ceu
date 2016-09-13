@@ -1516,7 +1516,6 @@ if (]]..v..[[ != NULL)
     ]]..v..[[->has_terminated = 0;
     ]]..v..[[->has_aborted    = 0;
     ]]..v..[[->has_notified   = 0;
-    ]]..v..[[->has_joined     = 0;
 
     tceu_threads_param p = { _ceu_mem, ]]..v..[[ };
     int ret =
