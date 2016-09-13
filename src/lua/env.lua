@@ -1,9 +1,16 @@
 local c = ''
 
---env-header
+--env-types
 do
-    local f = ASR(io.open(CEU.opts.env_header))
+    local f = ASR(io.open(CEU.opts.env_types))
     c = c..'\n\n/* ENV_HEADER */\n\n'..f:read'*a'
+    f:close()
+end
+
+--env-threads
+do
+    local f = ASR(io.open(CEU.opts.env_threads))
+    c = c..'\n\n/* ENV_THREADS */\n\n'..f:read'*a'
     f:close()
 end
 

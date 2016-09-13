@@ -4,7 +4,7 @@ par/or do
         _printf("[sync] hello\n");
     end
 with
-    async/thread do
+    await async/thread do
         loop do
             _sleep(1);
             _printf("[thread] world\n");

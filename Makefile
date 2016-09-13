@@ -20,16 +20,21 @@ samples:
 		echo;                                                               \
 		echo -n "#####################################";                    \
 		echo    "#####################################";                    \
-		echo File: "$$i";                                                   \
+		echo File: "$$i -> /tmp/$$(basename $$i .ceu)";	                    \
 		grep "#@" "$$i" | cut -f2- -d" ";                                   \
 		echo -n "#####################################";                    \
 		echo    "#####################################";                    \
 		echo -n "Press <enter> to start...";                                \
 		read _;                                                             \
+		echo ceu --ceu --ceu-input=$$i                                      \
+		    --env --env-types=env/types.h --env-threads=env/threads.h --env-main=env/main.c \
+            --cc --cc-args=\"-llua5.3 -lpthread\"                           \
+	             --cc-output=/tmp/$$(basename $$i .ceu);                    \
 		ceu --ceu --ceu-input=$$i                                           \
-		    --env --env-header=env/header.h --env-main=env/main.c           \
-            --cc --cc-args="-llua5.3 -lpthread" --cc-output=/tmp/ceu.exe;   \
-		/tmp/ceu.exe;                                                       \
+		    --env --env-types=env/types.h --env-threads=env/threads.h --env-main=env/main.c \
+            --cc --cc-args="-llua5.3 -lpthread"                             \
+	             --cc-output=/tmp/$$(basename $$i .ceu);                    \
+		/tmp/$$(basename $$i .ceu);	                                        \
 		echo ">>> OK";                                                      \
 		echo;                                                               \
 		echo;                                                               \

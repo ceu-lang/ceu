@@ -40,6 +40,7 @@ native
     _pow,
     _rand,
     _sin,
+    _sleep,
     _sqrt,
     _srand,
     _time,

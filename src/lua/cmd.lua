@@ -29,8 +29,9 @@ Options:
 
 
     --env                       Environment phase: packs all C files together
-    --env-header=FILE               header file with declarations (C source)
-    --env-ceu=FILE                  output from Céu phase (C source)
+    --env-types=FILE                header file with type declarations (C source)
+    --env-threads=FILE              header file with thread declarations (C source)
+    --env-ceu=FILE                  output file from Céu phase (C source)
     --env-main=FILE                 source file with main function (C source)
     --env-output=FILE               output file to generate (C source)
 
@@ -132,8 +133,9 @@ if CEU.opts.env then
         ASR(not CEU.opts.pre, 'expected option `ceu´')
     end
 
-    ASR(CEU.opts.env_header, 'expected option `env-header´')
-    ASR(CEU.opts.env_main,   'expected option `env-main´')
+    ASR(CEU.opts.env_types,   'expected option `env-types´')
+    ASR(CEU.opts.env_threads, 'expected option `env-threads´')
+    ASR(CEU.opts.env_main,    'expected option `env-main´')
 
     if CEU.opts.ceu then
         if CEU.opts.env_ceu then

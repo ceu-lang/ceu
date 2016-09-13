@@ -98,7 +98,8 @@ if TESTS.cmd then
 
     local f = assert(io.popen('ceu --pre --pre-input='..tmp1..' '..
                                   '--ceu '..
-                                  '--env --env-header=../env/header.h '..
+                                  '--env --env-types=../env/types.h '..
+                                        '--env-threads=../env/threads.h '..
                                         '--env-main=../env/main.c'))
     local out = f:read'*a'
     local ok,mode,status = f:close()
@@ -111,7 +112,8 @@ if TESTS.cmd then
     local tmp2 = os.tmpname()
     local f = assert(io.popen('ceu --pre --pre-input='..tmp1..' '..
                                   '--ceu '..
-                                  '--env --env-header=../env/header.h '..
+                                  '--env --env-types=../env/types.h '..
+                                        '--env-threads=../env/threads.h '..
                                         '--env-main=../env/main.c '..
                                   '--cc --cc-args="-llua5.3 -lpthread" --cc-output='..tmp2))
     local out = f:read'*a'
@@ -219,7 +221,8 @@ end
             ceu_output   = '/tmp/tmp.ceu.c',
 
             env          = true,
-            env_header   = '../env/header.h',
+            env_types    = '../env/types.h',
+            env_threads  = '../env/threads.h',
             env_ceu      = '/tmp/tmp.ceu.c',
             env_main     = '../env/main.c',
             env_output   = '/tmp/tmp.c',
@@ -596,6 +599,14 @@ stats = {
 (./run.lua: 484.69s 30840k)
 (./run.lua: 1963.78s 46936k)    -- valgrind
 
+stats = {
+    count  = 2757,
+    trails = 4809,
+    bytes  = 51486944,
+    visits = 171873,
+}
+(./run.lua: 635.04s 31648k)
+(./run.lua: 2584.87s 48656k)
 
 -------------------------------------------------------------------------------
 
