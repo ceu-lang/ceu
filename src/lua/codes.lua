@@ -36,7 +36,11 @@ local function CONC_ALL (me)
 end
 
 local function CASE (me, lbl)
-    LINE(me, 'case '..lbl.id..':;')
+    if AST.par(me, 'Async_Thread') then
+        LINE(me, lbl.id..':;\n')
+    else
+        LINE(me, 'case '..lbl.id..':;\n')
+    end
 end
 
 local function CLEAR (me)
@@ -65,7 +69,7 @@ local function HALT (me, T)
     for _, t in ipairs(T) do
         local id, val = next(t)
         LINE(me, [[
-_ceu_mem->trails[]]..me.trails[1]..'].'..id..' = '..val..[[;
+_ceu_mem->trails[]]..(T.trail or me.trails[1])..'].'..id..' = '..val..[[;
 ]])
     end
     if T.exec then
@@ -665,8 +669,8 @@ if (0) {
     Finalize = function (me)
         local now,_,later = unpack(me)
         LINE(me, [[
-_ceu_mem->trails[]]..later.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
-_ceu_mem->trails[]]..later.trails[1]..[[].lbl    = ]]..me.lbl_in.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_in.id..[[;
 _ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
     (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
 
@@ -723,11 +727,17 @@ ceu_callback_assert_msg(0, "reached end of `do´");
                 evt = 'NULL'
             end
         end
-        LINE(me, [[
+        if AST.par(me, 'Async_Thread') then
+            LINE(me, [[
+goto ]]..me.outer.lbl_out.id..[[;
+]])
+        else
+            LINE(me, [[
 ceu_go_lbl(]]..evt..[[, _ceu_stk,
            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
-        HALT(me)
+            HALT(me)
+        end
     end,
 
     ---------------------------------------------------------------------------
@@ -861,18 +871,30 @@ while (1) {
     end,
 
     Break = function (me)
-        LINE(me, [[
+        if AST.par(me, 'Async_Thread') then
+            LINE(me, [[
+goto ]]..me.outer.lbl_out.id..[[;
+]])
+        else
+            LINE(me, [[
 ceu_go_lbl(NULL, _ceu_stk,
            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
-        HALT(me)
+            HALT(me)
+        end
     end,
     Continue = function (me)
-        LINE(me, [[
+        if AST.par(me, 'Async_Thread') then
+            LINE(me, [[
+goto ]]..me.outer.lbl_out.id..[[;
+]])
+        else
+            LINE(me, [[
 ceu_go_lbl(NULL, _ceu_stk,
            _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
 ]])
-        HALT(me)
+            HALT(me)
+        end
     end,
 
     Stmt_Call = function (me)
@@ -1457,7 +1479,28 @@ if (_ceu_p.thread->has_aborted) {
 
         local v = CUR('__thread_'..me.n)
 
-        -- thread spawn
+        -- finalize
+        LINE(me, [[
+_ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__FINALIZE;
+_ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_fin.id..[[;
+_ceu_mem->trails[]]..me.trails[1]..[[].clr_range =
+    (tceu_evt_range) { _ceu_mem, ]]..me.trails[1]..','..me.trails[2]..[[ };
+
+if (0) {
+]])
+        CASE(me, me.lbl_fin)
+        LINE(me, [[
+    if (]]..v..[[ != NULL) {
+        ]]..v..[[->has_aborted = 1;
+        CEU_THREADS_CANCEL(]]..v..[[->id);
+    }
+]])
+        HALT(me)
+        LINE(me, [[
+}
+]])
+
+        -- spawn
         LINE(me, [[
 ]]..v..[[ = (tceu_threads_data*) ceu_callback_ptr_num(
                                     CEU_CALLBACK_REALLOC,
@@ -1483,6 +1526,7 @@ if (]]..v..[[ != NULL)
         while (1) {
 ]])
         HALT(me, {
+            trail = me.trails[1]+1,
             { ['evt.id'] = 'CEU_INPUT__THREAD' },
             { lbl        = me.lbl_out.id },
             lbl = me.lbl_out.id,
@@ -1500,7 +1544,7 @@ if (]]..v..[[ != NULL)
 }
 ]])
 
-        -- thread function definition
+        -- function definition
         CODES.threads = CODES.threads .. [[
 static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 {
@@ -1523,6 +1567,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
     /* terminate thread */
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
     _ceu_p.thread->has_terminated = 1;
+    _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__NONE;
     CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
     CEU_THREADS_RETURN(NULL);
 }

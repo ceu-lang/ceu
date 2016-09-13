@@ -331,10 +331,11 @@ if T.ana or T.tmp or T.props or T.mode then return end
     local _1,_,ret = f:close()
 
     if type(T.run) == 'number' then
+        assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
+
         local n = string.match(out, '_ceu_tests_trails_visited_ = (%d+)\n')
         TESTS.stats.visits = TESTS.stats.visits + tonumber(n)
         assert(out == '_ceu_tests_trails_visited_ = '..n..'\n', 'code with output')
-        assert(ret == T.run%256, '>>> ERROR : run : expected '..T.run..' : got '..ret)
     else
         assert(type(T.run) == 'string', 'missing run value')
         assert(string.find(out, T.run, nil, true), '>>> ERROR : run : expected "'..T.run..'" : got "'..out..'"')
@@ -588,20 +589,13 @@ stats = {
 
 stats = {
     count  = 2651,
-    trails = 4525,
-    bytes  = 41424496,
-    visits = 229135,
-}
-(./run.lua: 448.84s 35228k)
-(./run.lua: 1853.24s 46428k)    -- valgrind
-
-stats = {
-    count  = 2651,
     trails = 4537,
     bytes  = 48667016,
-    visits = 126884,
+    visits = 169126,
 }
-(./run.lua: 472.17s 31220k)
+(./run.lua: 484.69s 30840k)
+(./run.lua: 1963.78s 46936k)    -- valgrind
+
 
 -------------------------------------------------------------------------------
 

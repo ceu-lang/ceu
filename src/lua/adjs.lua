@@ -576,9 +576,20 @@ DBG('TODO: must be "=> FOREVER"')
 
 -------------------------------------------------------------------------------
 
-    _Async_Thread = function (me)
+--[=[
+    _Async_Thread__PRE = function (me)
         me.tag = 'Async_Thread'
+        return node('Stmts', me.ln,
+                me,
+                node('Async', me.ln,
+                    node('VarList', me.ln),
+                    node('Block', me.ln, node('Stmts', me.ln))))
+                    --[[ HACK_2:
+                    -- Include <async do end> after it to enforce terminating
+                    -- from the main program.
+                    --]]
     end,
+]=]
 
 -------------------------------------------------------------------------------
 

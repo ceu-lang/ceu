@@ -1581,14 +1581,14 @@ Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     --parser = 'line 1 : after `1´ : expected `;´',
     --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `until´ or `;´',
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `async/thread´ or `FOREVER´',
 }
 
 Test { [[await 1; escape 0;]],
     parser = 'line 1 : after `1´ : expected `h´ or `min´ or `s´ or `ms´ or `us´',
 }
 Test { [[await -1; escape 0;]],
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `async/thread´ or `FOREVER´',
     --env = 'line 1 : event "?" is not declared',
 }
 
@@ -24123,6 +24123,54 @@ escape _strlen(&&str[0]);
     stmts = 'line 5 : invalid assignment : unexpected context for vector "str"',
 }
 
+Test { [[
+native/plain _int;
+vector[2] _int v = _;
+par/and do
+    v[0] = 1;
+with
+var _int&& p = &&v[0];
+    p[1] = 2;
+end
+escape v[0] + v[1];
+]],
+    wrn = true,
+    _ana = {
+        acc = 1,
+    },
+    --fin = 'line 6 : pointer access across `await´',
+    run = 3;
+}
+Test { [[
+native/plain _int;
+vector[2] _int v = _;
+par/and do
+    v[0] = 1;
+with
+    var _int&& p = &&v[0];
+    p[1] = 2;
+end
+escape v[0] + v[1];
+]],
+    wrn = true,
+    _ana = {
+        acc = 1,
+    },
+    run = 3,
+}
+Test { [[
+vector[2] int v = [0,0];
+vector[2] int p = [0,0];
+par/and do
+    v[0] = 1;
+with
+    p[1] = 2;
+end
+escape v[0] + p[1];
+]],
+    run = 3,
+}
+
 --<<< NATIVE/POINTERS/VECTORS
 
     -- NATIVE C FUNCS BLOCK RAW
@@ -40912,13 +40960,12 @@ escape call Ff(&d);
 }
 --<< DATA / VECTOR
 
-do return end
 -->>> ASYNCS // THREADS
 
 Test { [[
 var int  a=10, b=5;
 var& int p = &b;
-async/thread do
+await async/thread do
 end
 escape a + b + p;
 ]],
@@ -40927,7 +40974,7 @@ escape a + b + p;
 
 Test { [[
 var bool ret =
-    async/thread do
+    await async/thread do
     end;
 escape ret as int;
 ]],
@@ -40936,7 +40983,7 @@ escape ret as int;
 
 Test { [[
 event& void ret =
-    async/thread do
+    await async/thread do
     end;
 escape 0;
 ]],
@@ -40945,7 +40992,7 @@ escape 0;
 
 Test { [[
 var int ret =
-    async/thread do
+    await async/thread do
     end;
 escape (ret == 1) as int;
 ]],
@@ -40954,7 +41001,7 @@ escape (ret == 1) as int;
 
 Test { [[
 var int ret=1;
-async/thread (ret) do
+await async/thread (ret) do
     ret = ret + 10;
 end
 escape ret;
@@ -40965,7 +41012,7 @@ escape ret;
 Test { [[
 var int  a=10, b=5;
 var& int p = &b;
-async/thread (a, p) do
+await async/thread (a, p) do
     a = a + p;
     atomic do
         p = a;
@@ -40980,7 +41027,7 @@ Test { [[
 var int  a=10, b=5;
 var& int p = &b;
 var bool ret =
-    async/thread (a, p) do
+    await async/thread (a, p) do
         a = a + p;
         atomic do
             p = a;
@@ -41022,7 +41069,7 @@ par/and do
 with
     var& int p = &x;
     p = 2;
-    async/thread (p) do
+    await async/thread (p) do
         p = 2;
     end
 end
@@ -41041,7 +41088,7 @@ par/and do
 with
     var& int p = &x;
     p = 2;
-    async/thread (p) do
+    await async/thread (p) do
         atomic do
             p = 2;
         end
@@ -41058,7 +41105,7 @@ escape x;
 Test { [[
 var int  a=10, b=5;
 var& int p = &b;
-async/thread (a, p) do
+await async/thread (a, p) do
     a = a + p;
     p = a;
 end
@@ -41070,7 +41117,7 @@ escape a + b + p;
 Test { [[
 var int  a=10, b=5;
 var int&& p = &&b;
-async/thread (p) do
+await async/thread (p) do
     *p = 1;
 end
 escape 1;
@@ -41084,7 +41131,7 @@ native _usleep;
 var int  a=10, b=5;
 var& int p = &b;
 par/and do
-    async/thread (a, p) do
+    await async/thread (a, p) do
         _usleep(100);
         a = a + p;
         p = a;
@@ -41103,7 +41150,7 @@ escape a + b + p;
 Test { [[
 var int  a=10, b=5;
 var& int p = &b;
-async/thread (a, p) do
+await async/thread (a, p) do
     atomic do
         a = a + p;
         p = a;
@@ -41122,7 +41169,7 @@ end
 var int ret = 1;
 var& int p = &ret;
 par/or do
-    async/thread (p) do
+    await async/thread (p) do
         atomic do
             p = 2;
         end
@@ -41144,21 +41191,20 @@ native _usleep;
 native/pos do
     ##include <unistd.h>
 end
-var int ret = 0;
-var& int p = &ret;
+var int rrr = 0;
+var& int ppp = &rrr;
 par/or do
-    async/thread (p) do
-native _usleep;
+    await async/thread (ppp) do
         _usleep(]]..i..[[);
         atomic do
-            p = 2;
+            ppp = 2;
         end
     end
 with
-    ret = 1;
+    rrr = 1;
 end
 _usleep(]]..i..[[+1);
-escape ret;
+escape rrr;
 ]],
         complete = (i>1),   -- run i=1 for sure
         usleep = true,
@@ -41173,13 +41219,13 @@ var& int p1 = &v1;
 var& int p2 = &v2;
 
 par/and do
-    async/thread (v1, p1) do
+    await async/thread (v1, p1) do
         atomic do
             p1 = v1 + v1;
         end
     end
 with
-    async/thread (v2, p2) do
+    await async/thread (v2, p2) do
         atomic do
             p2 = v2 + v2;
         end
@@ -41206,19 +41252,19 @@ native/pos do
                 ret = ret + i + j;
             }
         }
-        escape ret;
+        return ret;
     }
 end
 
 par/and do
-    async/thread (p1) do
+    await async/thread (p1) do
         var int ret = _calc();
         atomic do
             p1 = ret;
         end
     end
 with
-    async/thread (p2) do
+    await async/thread (p2) do
         var int ret = _calc();
         atomic do
             p2 = ret;
@@ -41239,7 +41285,7 @@ var& int p1 = &v1;
 var& int p2 = &v2;
 
 par/and do
-    async/thread (p1) do
+    await async/thread (p1) do
         var int ret = 0;
         loop i in [0 -> 10[ do
             loop j in [0 -> 10[ do
@@ -41251,7 +41297,7 @@ par/and do
         end
     end
 with
-    async/thread (p2) do
+    await async/thread (p2) do
         var int ret = 0;
         loop i in [0 -> 10[ do
             loop j in [0 -> 10[ do
@@ -41285,20 +41331,20 @@ native/pos do
                 ret = ret + i + j;
             }
         }
-        escape ret;
+        return ret;
     }
 end
 
 native _calc, _assert;
 par/and do
-    async/thread (p1) do
+    await async/thread (p1) do
         var int ret = _calc();
         atomic do
             p1 = ret;
         end
     end
 with
-    async/thread (p2) do
+    await async/thread (p2) do
         var int ret = _calc();
         atomic do
             p2 = ret;
@@ -41320,7 +41366,7 @@ var& int p1 = &v1;
 var& int p2 = &v2;
 
 par/and do
-    async/thread (p1) do
+    await async/thread (p1) do
         var int ret = 0;
         loop i in [0 -> 50000[ do
             loop j in [0 -> 50000[ do
@@ -41332,7 +41378,7 @@ par/and do
         end
     end
 with
-    async/thread (p2) do
+    await async/thread (p2) do
         var int ret = 0;
         loop i in [0 -> 50000[ do
             loop j in [0 -> 50000[ do
@@ -41371,9 +41417,8 @@ par/or do
         end
     end
 with
-    async/thread do
+    await async/thread do
         loop i in [0 -> 2[ do
-native _V;
             _V = _V + 1;
             _usleep(500);
         end
@@ -41381,7 +41426,7 @@ native _V;
 end
 escape _V;
 ]],
-    dcls = 'line 21 : native identifier "_V" is not declared',
+    dcls = 'line 15 : native identifier "_V" is not declared',
 }
 
 Test { [[
@@ -41398,7 +41443,7 @@ par/or do
         end
     end
 with
-    async/thread do
+    await async/thread do
         loop i in [0 -> 2[ do
             _V = _V + 1;
             _usleep(500);
@@ -41419,7 +41464,7 @@ input int A;
 par/or do
     await A;
 with
-    async/thread do
+    await async/thread do
         emit A(10);
     end
 end;
@@ -41453,7 +41498,7 @@ escape 10;
 Test { [[
 var int a=1;
 var& int pa = &a;
-async/thread (pa) do
+await async/thread (pa) do
     emit 1min;
     pa = 10;
 end;
@@ -41486,7 +41531,7 @@ par do
     end
     escape v1 + v2;
 with
-    async/thread do
+    await async/thread do
         emit 5ms;
         emit(5000)ms;
     end
@@ -41531,7 +41576,7 @@ end
 Test { [[
 input int A;
 par do
-    async/thread do end
+    await async/thread do end
 with
     await A;
     escape 1;
@@ -41565,7 +41610,7 @@ with
         end
     end
 with
-    async/thread do
+    await async/thread do
         emit 12ms;
         emit A;
         emit 12ms;
@@ -41675,7 +41720,7 @@ par do
         end;
     end;
 with
-    async/thread do
+    await async/thread do
         emit P2(0);
         emit P2(0);
         emit P2(0);
@@ -41735,7 +41780,7 @@ with
     end
     ret = ret + 1;
 with
-    async/thread do
+    await async/thread do
         atomic do
         end
     end
@@ -41754,52 +41799,6 @@ escape ret;
 -- ASYNC/NONDET
 
 Test { [[
-native/plain _int;
-vector[2] _int v = [];
-par/and do
-    v[0] = 1;
-with
-var _int&& p = &&v[0];
-    p[1] = 2;
-end
-escape v[0] + v[1];
-]],
-    _ana = {
-        acc = 1,
-    },
-    --fin = 'line 6 : pointer access across `await´',
-    run = 3;
-}
-Test { [[
-native/plain _int;
-vector[2] _int v = [];
-par/and do
-    v[0] = 1;
-with
-    var _int&& p = &&v[0];
-    p[1] = 2;
-end
-escape v[0] + v[1];
-]],
-    _ana = {
-        acc = 1,
-    },
-    run = 3,
-}
-Test { [[
-vector[2] int v = [0,0];
-vector[2] int p = [0,0];
-par/and do
-    v[0] = 1;
-with
-    p[1] = 2;
-end
-escape v[0] + p[1];
-]],
-    run = 3,
-}
-
-Test { [[
 var int x = 0;
 async do
     x = 2;
@@ -41811,7 +41810,7 @@ escape x;
 
 Test { [[
 var int x = 0;
-async/thread do
+await async/thread do
     x = 2;
 end
 escape x;
@@ -41839,7 +41838,7 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    async/thread (x) do
+    await async/thread (x) do
         x = 2;
     end
 end
@@ -41854,7 +41853,7 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    async/thread (x) do
+    await async/thread (x) do
         x = 2;
     end
 end
@@ -41873,7 +41872,7 @@ par/and do
     x = 1;
 with
     var int y = x;
-    async/thread (y) do
+    await async/thread (y) do
         y = 2;
 native _usleep;
         _usleep(50);
@@ -41895,7 +41894,7 @@ par/and do
     x = 1;
 with
     var int y = x;
-    async/thread (y) do
+    await async/thread (y) do
         y = 2;
 native _usleep;
         _usleep(50);
@@ -41918,7 +41917,7 @@ var int&& p = &&x;
     *p = 1;
 with
     var int y = x;
-    async/thread (y) do
+    await async/thread (y) do
         y = 2;
     end
     x = x + y;
@@ -41933,19 +41932,20 @@ escape x;
 
 Test { [[
 native/plain _int;
-vector[10] _int x = [];
-async/thread (x) do
+vector[10] _int x = _;
+await async/thread (x) do
     x[0] = 2;
 end
 escape x[0];
 ]],
+    wrn = true,
     run = 2,
     --gcc = 'error: lvalue required as left operand of assignment',
 }
 
 Test { [[
 vector[10] int x = [0];
-async/thread (x) do
+await async/thread (x) do
     x[0] = 2;
 end
 escape x[0];
@@ -41957,7 +41957,7 @@ escape x[0];
 Test { [[
 vector[10] int x = [0,1];
 par/and do
-    async/thread (x) do
+    await async/thread (x) do
 native _usleep;
         _usleep(100);
         x[0] = x[1] + 2;
@@ -41987,7 +41987,7 @@ escape v;
 }
 Test { [[
 var int v = 1;
-async/thread (v) do
+await async/thread (v) do
     do finalize with
         v = 2;
     end
@@ -42001,11 +42001,11 @@ Test { [[
 native _f;
 native/pos do
     int f (int v) {
-        escape v + 1;
+        return v + 1;
     }
 end
 var int a = 0;
-async/thread (a) do
+await async/thread (a) do
     a = _f(10);
 end
 escape a;
@@ -42024,7 +42024,7 @@ escape ret;
 }
 Test { [[
 var int ret = 0;
-async/thread (ret) do
+await async/thread (ret) do
     ret = do escape 1; end;
 end
 escape ret;
@@ -42033,7 +42033,16 @@ escape ret;
 }
 
 Test { [=[
-    async/thread do
+await async/thread do
+end
+await 1s;
+escape 1;
+]=],
+    run = {['~>1s; ~>1s']=1},
+}
+
+Test { [=[
+    await async/thread do
     end
     loop i in [0 -> 100[ do
         await 1s;
@@ -42042,7 +42051,6 @@ Test { [=[
 ]=],
     run = {['~>100s;~>100s']=1},
 }
---end
---do return end
+
 --<<< THREADS / EMITS
 --<<< ASYNCS / THREADS

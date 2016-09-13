@@ -1,7 +1,7 @@
 local awaits = {
     Par           = true,
     Async         = true,
-    _Async_Thread = true,
+    Async_Thread  = true,
     _Async_Isr    = true,
     Await_Ext     = true,
     Await_Wclock  = true,

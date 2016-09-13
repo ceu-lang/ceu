@@ -107,6 +107,7 @@ F = {
     end,
 
     Async_Thread = function (me)
+        me.lbl_fin = new{'Async_Thread__FIN'}
         me.lbl_abt = new{'Async_Thread__ABT'}
         me.lbl_out = new{'Async_Thread__OUT'}
     end,

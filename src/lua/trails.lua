@@ -104,6 +104,11 @@ F = {
         me.trails_n = 1 + body.trails_n
     end,
 
+    Async_Thread = function (me)
+        local _, body = unpack(me)
+        me.trails_n = 1 + body.trails_n
+    end,
+
     If = function (me)
         local c, t, f = unpack(me)
         MAX_all(me, {t,f})
@@ -166,6 +171,7 @@ end
         local evt   = AST.get(sub, 'Evt')
 
         if sub.tag=='Finalize' or spawn
+            or (sub.tag == 'Async_Thread')
             or (pool and pool.has_trail) or (var and var.has_trail)
             or (evt and evt.has_trail)
         then
