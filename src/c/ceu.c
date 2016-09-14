@@ -348,17 +348,21 @@ int ceu_threads_gc (int force_join) {
             }
 
             /* remove from list if rejoined */
-            if (force_join || head->has_terminated) {
-                CEU_THREADS_JOIN(head->id);
-            } else {
-                /* possible with "CANCEL" which prevents setting "has_terminated" */
-                if (!CEU_THREADS_JOIN_TRY(head->id)) {
-                    continue;   /* don't remove from list yet */
+            {
+                int has_joined;
+                if (force_join || head->has_terminated) {
+                    CEU_THREADS_JOIN(head->id);
+                    has_joined = 1;
+                } else {
+                    /* possible with "CANCEL" which prevents setting "has_terminated" */
+                    has_joined = CEU_THREADS_JOIN_TRY(head->id);
+                }
+                if (has_joined) {
+                    *head_ = head->nxt;
+                    nxt_ = head_;
+                    ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, head, 0);
                 }
             }
-            *head_ = head->nxt;
-            nxt_ = head_;
-            ceu_callback_ptr_num(CEU_CALLBACK_REALLOC, head, 0);
         }
         else
         {
