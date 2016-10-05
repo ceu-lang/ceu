@@ -56,7 +56,7 @@ local function CLEAR (me)
                                 0, CEU_APP.root.mem.trails_n-1}
                              };
     tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    ceu_go_bcast(&__ceu_occ, &__ceu_stk);
+    ceu_bcast(&__ceu_occ, &__ceu_stk);
     if (!__ceu_stk.is_alive) {
         return;
     }
@@ -745,8 +745,8 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-ceu_go_lbl(]]..evt..[[, _ceu_stk,
-           _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
+ceu_lbl(]]..evt..[[, _ceu_stk,
+        _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
             HALT(me)
         end
@@ -889,8 +889,8 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-ceu_go_lbl(NULL, _ceu_stk,
-           _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
+ceu_lbl(NULL, _ceu_stk,
+        _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_out.id..[[);
 ]])
             HALT(me)
         end
@@ -902,8 +902,8 @@ goto ]]..me.outer.lbl_out.id..[[;
 ]])
         else
             LINE(me, [[
-ceu_go_lbl(NULL, _ceu_stk,
-           _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
+ceu_lbl(NULL, _ceu_stk,
+        _ceu_mem, ]]..me.outer.trails[1]..','..me.outer.lbl_cnt.id..[[);
 ]])
             HALT(me)
         end
@@ -940,8 +940,8 @@ ceu_go_lbl(NULL, _ceu_stk,
                 LINE(me, [[
 {
     tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,]]..abt..','..abt..[[} };
-    ceu_go_lbl(_ceu_occ, &__ceu_stk,
-               _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[);
+    ceu_lbl(_ceu_occ, &__ceu_stk,
+            _ceu_mem, ]]..sub.trails[1]..[[, ]]..me.lbls_in[i].id..[[);
     if (!__ceu_stk.is_alive) {
         return;
     }
@@ -950,8 +950,8 @@ ceu_go_lbl(NULL, _ceu_stk,
             else
                 -- no need to abort since there's a "return" below
                 LINE(me, [[
-ceu_go_lbl(_ceu_occ, _ceu_stk,
-           _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
+ceu_lbl(_ceu_occ, _ceu_stk,
+        _ceu_mem, ]]..sub.trails[1]..','..me.lbls_in[i].id..[[);
 ]])
             end
         end
@@ -974,10 +974,10 @@ ceu_go_lbl(_ceu_occ, _ceu_stk,
                 LINE(me, [[
 /*
 HACK_8
-ceu_go_lbl(NULL, _ceu_stk,
+ceu_lbl(NULL, _ceu_stk,
 */
-ceu_go_lbl(_ceu_occ, _ceu_stk,
-           _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
+ceu_lbl(_ceu_occ, _ceu_stk,
+        _ceu_mem, ]]..me.trails[1]..','..me.lbl_out.id..[[);
 ]])
                 HALT(me)
             end
@@ -1315,7 +1315,7 @@ _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 ]])
             LINE(me, [[
-    ceu_go_ext(]]..V(ID_ext)..'.id, '..ps..[[);
+    ceu_input(]]..V(ID_ext)..'.id, '..ps..[[);
 ]])
             HALT(me, {
                 lbl = me.lbl_out.id,
@@ -1376,7 +1376,7 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
                                 0, CEU_APP.root.mem.trails_n-1}
                              };
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
-    ceu_go_bcast(&__ceu_occ, &__ceu_stk);
+    ceu_bcast(&__ceu_occ, &__ceu_stk);
     if (!__ceu_stk.is_alive) {
         return;
     }
@@ -1419,7 +1419,7 @@ _CEU_HALT_]]..me.n..[[_:
     ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
-        ceu_go_ext(CEU_INPUT__WCLOCK, &__ceu_dt);
+        ceu_input(CEU_INPUT__WCLOCK, &__ceu_dt);
         if (!_ceu_stk->is_alive) {
             return;
         }

@@ -82,7 +82,7 @@ if TESTS.cmd then
     local out = f:read'*a'
     local ok,mode,status = f:close()
     assert(ok==true and mode=='exit' and status==0 and
-           string.find(out, 'CEU_C.*ceu_vector.*tceu_app CEU_APP.*ceu_go_bcast.*ceu_go_all'))
+           string.find(out, 'CEU_C.*ceu_vector.*tceu_app CEU_APP.*ceu_bcast.*ceu_loop'))
 
     --$ ceu --pre --pre-input=/tmp/xxx.ceu --env
     -->>> ERROR
@@ -104,7 +104,7 @@ if TESTS.cmd then
     local out = f:read'*a'
     local ok,mode,status = f:close()
     assert(ok==true and mode=='exit' and status==0 and
-           string.find(out, 'This file is.*typedef uint32_t u32.*CEU_C.*ceu_vector.*tceu_app CEU_APP.*ceu_go_bcast.*ceu_go_all.*int main'))
+           string.find(out, 'This file is.*typedef uint32_t u32.*CEU_C.*ceu_vector.*tceu_app CEU_APP.*ceu_bcast.*ceu_loop.*int main'))
 
     --$ ceu --pre --pre-input=/tmp/xxx.ceu --ceu --env --cc --cc-output=/tmp/xxx.exe
     -- OK
@@ -593,10 +593,10 @@ stats = {
 stats = {
     count  = 2765,
     trails = 6766,
-    bytes  = 51779024,
-    visits = 193892,
+    bytes  = 51881568,
+    visits = 193896,
 }
-(./run.lua: 612.13s 30788k
+(./run.lua: 587.74s 29800k)
 (./run.lua: 2588.20s 48656k)
 
 -------------------------------------------------------------------------------

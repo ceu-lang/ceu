@@ -61,6 +61,6 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
 
 int main (int argc, char *argv[])
 {
-    int ret = ceu_go_all();
+    int ret = ceu_loop();
     return ret;
 }
