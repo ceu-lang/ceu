@@ -22,8 +22,9 @@ F = {
         --              Do
         --                  Block
         --                      Stmts
-        --                          Stmts   -- pre do (Pre_Stmts)
-        --                          Stmts   -- orig
+        --                          _Lua_Do
+        --                              Stmts   -- pre do (Pre_Stmts)
+        --                              Stmts   -- orig
 
         Pre_Stmts = node('Stmts', me.ln)
         AST.insert(stmts, 1, Pre_Stmts)
@@ -65,7 +66,11 @@ F = {
                                 node('Do', me.ln,
                                     true,
                                     node('Block', me.ln,
-                                        stmts)))))))
+                                        node('Stmts', me.ln,
+                                            node('_Lua_Do', me.ln,
+                                                '[]',
+                                                node('Block', me.ln,
+                                                    stmts))))))))))
         return AST.root
     end,
     _Stmts__PRE = function (me)
@@ -592,6 +597,20 @@ DBG('TODO: must be "=> FOREVER"')
 ]=]
 
 -------------------------------------------------------------------------------
+
+    _Lua_Do__PRE = function (me)
+        me.tag = 'Lua_Do'
+        return node('Block', me.ln,
+                node('Stmts', me.ln,
+                    node('Lua_Do_Open', me.ln, me.n),
+                    node('Finalize', me.ln,
+                        false,
+                        true,
+                        node('Block', me.ln,
+                            node('Stmts', me.ln,
+                                node('Lua_Do_Close', me.ln, me.n)))),
+                    me))
+    end,
 
     _Lua = function (me)
         --[[

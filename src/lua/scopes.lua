@@ -194,7 +194,7 @@ F = {
     Finalize = function (me)
         local Stmt, Namelist, Block = unpack(me)
         if not Stmt then
-            ASR(Namelist.tag=='Mark', me,
+            ASR(Namelist==true, me,
                 'invalid `finalize´ : unexpected `varlist´')
             me.blk = AST.par(me, 'Block')
             me.blk.fins_n = me.blk.fins_n + 1

@@ -94,7 +94,8 @@ F = {
         local mods,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mods.tight)
         return [[
-CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK, ]]..V(Abs_Cons)..[[)
+CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
+                            ]]..V(Abs_Cons)..[[, ]]..LUA(me)..[[)
 ]]
     end,
 

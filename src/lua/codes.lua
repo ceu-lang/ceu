@@ -113,6 +113,16 @@ function SET (me, to, fr, fr_ok, fr_ctx)
     end
 end
 
+function LUA (me)
+    local code = AST.par(me, 'Code')
+    local lua = AST.par(me, 'Lua_Do')
+    if (not code) or (AST.depth(lua) > AST.depth(code)) then
+        return CUR('__lua_'..lua.n)
+    else
+        return '(_ceu_mem->lua)'
+    end
+end
+
 F = {
     ROOT     = CONC_ALL,
     Stmts    = CONC_ALL,
@@ -127,6 +137,7 @@ F = {
         CASE(me, me.lbl_in)
         LINE(me, [[
 _ceu_mem->up_mem   = NULL;
+_ceu_mem->lua      = NULL;
 _ceu_mem->trails_n = ]]..AST.root.trails_n..[[;
 memset(&_ceu_mem->trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
 ]])
@@ -438,9 +449,10 @@ CLEAR(me) -- TODO-NOW
 {
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
 
-    ]]..mem..[[->pak = ]]..pak..[[;
+    ]]..mem..[[->pak    = ]]..pak..[[;
     ]]..mem..[[->up_mem = ]]..((pak=='NULL' and '_ceu_mem')  or (pak..'->up_mem'))..[[;
     ]]..mem..[[->up_trl = ]]..((pak=='NULL' and '_ceu_trlK') or (pak..'->up_trl'))..[[;
+    ]]..mem..[[->lua    = ]]..LUA(me)..[[;
 
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     CEU_CODE_]]..ID_abs.dcl.id..[[(&__ceu_stk, 0, __ceu_ps,
@@ -1197,9 +1209,9 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
             elseif fr.tag == 'Lua' then
                 CONC(me, fr)
                 LINE(me, [[
-    if (lua_isstring(CEU_APP.lua,-1)) {
-        const char* __ceu_str = lua_tostring(CEU_APP.lua, -1);
-        usize __ceu_len = lua_rawlen(CEU_APP.lua, -1);
+    if (lua_isstring(]]..LUA(me)..[[,-1)) {
+        const char* __ceu_str = lua_tostring(]]..LUA(me)..[[, -1);
+        usize __ceu_len = lua_rawlen(]]..LUA(me)..[[, -1);
         ceu_vector_setlen_ex(&]]..V(to)..', ('..V(to)..[[.len + __ceu_len), 1,
                              __FILE__, __LINE__-4);
         ceu_vector_buf_set(&]]..V(to)..[[,
@@ -1208,8 +1220,8 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
                            __ceu_len);
         __ceu_nxt += __ceu_len;
     } else {
-        lua_pop(CEU_APP.lua,1);
-        lua_pushstring(CEU_APP.lua, "not implemented [2]");
+        lua_pop(]]..LUA(me)..[[,1);
+        lua_pushstring(]]..LUA(me)..[[, "not implemented [2]");
         goto _CEU_LUA_ERR_]]..fr.n..[[;
     }
 ]])
@@ -1584,32 +1596,32 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
         -- bool
         if TYPES.check(tp,'bool') then
             LINE(me, [[
-]]..V(to)..[[ = lua_toboolean(CEU_APP.lua,-1);
+]]..V(to)..[[ = lua_toboolean(]]..LUA(me)..[[,-1);
 ]])
 
         -- num
         elseif TYPES.is_num(tp) then
             LINE(me, [[
-if (lua_isnumber(CEU_APP.lua,-1)) {
-    if (lua_isinteger(CEU_APP.lua,-1)) {
-        ]]..V(to)..[[ = lua_tointeger(CEU_APP.lua,-1);
+if (lua_isnumber(]]..LUA(me)..[[,-1)) {
+    if (lua_isinteger(]]..LUA(me)..[[,-1)) {
+        ]]..V(to)..[[ = lua_tointeger(]]..LUA(me)..[[,-1);
     } else {
-        ]]..V(to)..[[ = lua_tonumber(CEU_APP.lua,-1);
+        ]]..V(to)..[[ = lua_tonumber(]]..LUA(me)..[[,-1);
     }
 } else {
-    lua_pop(CEU_APP.lua,1);
-    lua_pushstring(CEU_APP.lua, "number expected");
+    lua_pop(]]..LUA(me)..[[,1);
+    lua_pushstring(]]..LUA(me)..[[, "number expected");
     goto _CEU_LUA_ERR_]]..lua.n..[[;
 }
 ]])
         elseif TYPES.check(tp,'&&') then
             LINE(me, [[
 {
-    if (lua_islightuserdata(CEU_APP.lua,-1)) {
-        ]]..V(to)..[[ = lua_touserdata(CEU_APP.lua,-1);
+    if (lua_islightuserdata(]]..LUA(me)..[[,-1)) {
+        ]]..V(to)..[[ = lua_touserdata(]]..LUA(me)..[[,-1);
     } else {
-        lua_pushstring(CEU_APP.lua, "not implemented [3]");
-        lua_pop(CEU_APP.lua,1);
+        lua_pushstring(]]..LUA(me)..[[, "not implemented [3]");
+        lua_pop(]]..LUA(me)..[[,1);
         goto _CEU_LUA_ERR_]]..lua.n..[[;
     }
 }
@@ -1619,6 +1631,23 @@ if (lua_isnumber(CEU_APP.lua,-1)) {
         end
 
         LINE(me, lua.code_after)
+    end,
+
+    Lua_Do = CONC_ALL,
+    Lua_Do_Open = function (me)
+        local n = unpack(me)
+        LINE(me, [[
+]]..CUR('__lua_'..n)..[[ = luaL_newstate();
+ceu_dbg_assert(]]..CUR('__lua_'..n)..[[ != NULL);
+luaL_openlibs(]]..CUR('__lua_'..n)..[[);
+lua_atpanic(]]..CUR('__lua_'..n)..[[, ceu_lua_atpanic);
+]])
+    end,
+    Lua_Do_Close = function (me)
+        local n = unpack(me)
+        LINE(me, [[
+lua_close(]]..CUR('__lua_'..n)..[[);
+]])
     end,
 
     Lua = function (me)
@@ -1634,24 +1663,24 @@ if (lua_isnumber(CEU_APP.lua,-1)) {
     if (0) {
 /* ERROR */
 _CEU_LUA_ERR_]]..me.n..[[:;
-        lua_concat(CEU_APP.lua, 6);
-        lua_error(CEU_APP.lua); /* TODO */
+        lua_concat(]]..LUA(me)..[[, 6);
+        lua_error(]]..LUA(me)..[[); /* TODO */
     }
 /* OK */
-    lua_pop(CEU_APP.lua, ]]..(is_set and 6 or 5)..[[);
+    lua_pop(]]..LUA(me)..[[, ]]..(is_set and 6 or 5)..[[);
 }
 ]]
 
         LINE(me, [[
 {
     int err_line = __LINE__ - 1;
-    lua_pushstring(CEU_APP.lua, "[");
-    lua_pushstring(CEU_APP.lua, __FILE__);
-    lua_pushstring(CEU_APP.lua, ":");
-    lua_pushinteger(CEU_APP.lua, err_line);
-    lua_pushstring(CEU_APP.lua, "] lua error : ");
+    lua_pushstring(]]..LUA(me)..[[, "[");
+    lua_pushstring(]]..LUA(me)..[[, __FILE__);
+    lua_pushstring(]]..LUA(me)..[[, ":");
+    lua_pushinteger(]]..LUA(me)..[[, err_line);
+    lua_pushstring(]]..LUA(me)..[[, "] lua error : ");
 
-    int err = luaL_loadstring(CEU_APP.lua, ]]..lua..[[);
+    int err = luaL_loadstring(]]..LUA(me)..[[, ]]..lua..[[);
     if (err) {
         goto _CEU_LUA_ERR_]]..me.n..[[;
     }
@@ -1663,33 +1692,33 @@ _CEU_LUA_ERR_]]..me.n..[[:;
             if p.info.dcl and p.info.dcl.tag=='Vec' then
                 if TYPES.check(tp,'byte') then
                     LINE(me, [[
-    lua_pushlstring(CEU_APP.lua,(char*)]]..V(p)..[[.buf,]]..V(p)..[[.len);
+    lua_pushlstring(]]..LUA(me)..[[,(char*)]]..V(p)..[[.buf,]]..V(p)..[[.len);
 ]])
                 else
                     error 'not implemented'
                 end
             elseif TYPES.check(tp,'bool') then
                 LINE(me, [[
-    lua_pushboolean(CEU_APP.lua,]]..V(p)..[[);
+    lua_pushboolean(]]..LUA(me)..[[,]]..V(p)..[[);
 ]])
             elseif TYPES.is_num(tp) then
                 local tp_id = unpack(TYPES.ID_plain(tp))
                 if tp_id=='float' or tp_id=='f32' or tp_id=='f64' then
                     LINE(me, [[
-    lua_pushnumber(CEU_APP.lua,]]..V(p)..[[);
+    lua_pushnumber(]]..LUA(me)..[[,]]..V(p)..[[);
 ]])
                 else
                     LINE(me, [[
-    lua_pushinteger(CEU_APP.lua,]]..V(p)..[[);
+    lua_pushinteger(]]..LUA(me)..[[,]]..V(p)..[[);
 ]])
                 end
             elseif TYPES.check(tp,'_char','&&') then
                 LINE(me, [[
-    lua_pushstring(CEU_APP.lua,]]..V(p)..[[);
+    lua_pushstring(]]..LUA(me)..[[,]]..V(p)..[[);
 ]])
             elseif TYPES.check(tp,'&&') then
                 LINE(me, [[
-    lua_pushlightuserdata(CEU_APP.lua,]]..V(p)..[[);
+    lua_pushlightuserdata(]]..LUA(me)..[[,]]..V(p)..[[);
 ]])
             else
                 error 'not implemented'
@@ -1697,7 +1726,7 @@ _CEU_LUA_ERR_]]..me.n..[[:;
         end
 
         LINE(me, [[
-    err = lua_pcall(CEU_APP.lua, ]]..nargs..','..nrets..[[, 0);
+    err = lua_pcall(]]..LUA(me)..[[, ]]..nargs..','..nrets..[[, 0);
     if (err) {
         goto _CEU_LUA_ERR_]]..me.n..[[;
     }

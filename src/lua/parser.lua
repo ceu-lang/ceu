@@ -117,15 +117,15 @@ local T = {
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
 }
@@ -308,6 +308,7 @@ KEYS = P
 'not' +
 'new' +
 'native' +
+'lua' +
 'loop' +
 'kill' +
 'is' +
@@ -425,13 +426,12 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Stmt_Call = V'Abs_Call' + V'Exp_Call'
 
-    , Mark = C''
     , __fin_stmt   = V'___fin_stmt' * V'__seqs'
     , ___fin_stmt  = V'Nothing'
                    + V'_Set'
                    + V'Emit_Ext_emit' + V'Emit_Ext_call'
                    + V'Stmt_Call'
-    , __finalize   = K'finalize' * (PARENS(V'Namelist') + V'Mark') * K'with' *
+    , __finalize   = K'finalize' * (PARENS(V'Namelist') + Cc(true)) * K'with' *
                      V'Block' *
                    K'end'
     , Finalize     = K'do' * OPT(V'__fin_stmt') * V'__finalize'
@@ -440,21 +440,6 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                    * (KK'='-'==') * KK'&'
                     * (V'Exp_Call' + V'Abs_Call')
                      * V'__finalize'
-
-    , __Stmt_Block = V'_Code_impl' + V'_Ext_Code_impl' + V'_Ext_Req_impl'
-              + V'_Data_block'
-              + V'Nat_Block'
-              + V'Do'    + V'_If'
-              + V'Loop' + V'_Loop_Num' + V'_Loop_Pool'
-              + V'_Every'
-              + V'_Spawn_Block'
-              + V'Finalize'
-              + V'Par_Or' + V'Par_And' + V'_Watching'
-              + V'Pause_If'
-              + V'Async' + V'Async_Thread' + V'_Async_Isr' + V'Atomic'
-              + V'_Dopre'
-              + V'_Lua'
-
 
     , Pause_If = K'pause/if' * (V'Exp_Name'+V'ID_ext') * V'__Do'
 
@@ -556,6 +541,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     -- Lua
 
+    , _Lua_Do  = K'lua' * V'__Dim' * V'__Do'
     , _Lua     = KK'[' * m.Cg(P'='^0,'lua') * KK('[',nil,true) *
                  ( V'__luaext' + C((P(1)-V'__luaext'-V'__luacmp')^1) )^0
                   * (V'__luacl'/function()end) *x
@@ -701,6 +687,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , _Set_Async_Thread   = #(K'await' * K'async/thread') * V'Async_Thread'
     , _Set_Lua            = #V'__lua_pre'     * V'_Lua'
+    , _Set_Lua_Do         =                     V'_Lua_Do'
     , _Set_Vec            =                     V'Vec_Cons'
 
     , _Set_Emit_Wclock    = #K'emit'          * V'Emit_Wclock'
@@ -882,7 +869,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
               + V'Pause_If'
               + V'Async' + V'Async_Thread' + V'_Async_Isr' + V'Atomic'
               + V'_Dopre'
-              + V'_Lua'
+              + V'_Lua' + V'_Lua_Do'
               + V'_Var_set_fin'
 
     --, _C = '/******/' * (P(1)-'/******/')^0 * '/******/'

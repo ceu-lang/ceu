@@ -591,22 +591,13 @@ stats = {
 # results
 
 stats = {
-    count  = 2651,
-    trails = 4537,
-    bytes  = 48667016,
-    visits = 169126,
+    count  = 2765,
+    trails = 6766,
+    bytes  = 51779024,
+    visits = 193892,
 }
-(./run.lua: 484.69s 30840k)
-(./run.lua: 1963.78s 46936k)    -- valgrind
-
-stats = {
-    count  = 2757,
-    trails = 4809,
-    bytes  = 51486944,
-    visits = 171873,
-}
-(./run.lua: 635.04s 31648k)
-(./run.lua: 2584.87s 48656k)
+(./run.lua: 612.13s 30788k
+--(./run.lua: 2584.87s 48656k)
 
 -------------------------------------------------------------------------------
 

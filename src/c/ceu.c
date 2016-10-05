@@ -78,9 +78,10 @@ struct tceu_pool_pak;
 typedef struct tceu_code_mem {
     struct tceu_pool_pak* pak;
     struct tceu_code_mem* up_mem;
-    tceu_ntrl up_trl;
-    tceu_ntrl trails_n;
-    tceu_trl  trails[0];
+    tceu_ntrl  up_trl;
+    lua_State* lua;
+    tceu_ntrl  trails_n;
+    tceu_trl   trails[0];
 } tceu_code_mem;
 
 typedef enum tceu_code_mem_dyn_state {
@@ -202,8 +203,6 @@ typedef struct tceu_app {
 
     CEU_THREADS_MUTEX_T threads_mutex;
     tceu_threads_data*  threads_head;   /* linked list of threads alive */
-
-    lua_State* lua;
 
     tceu_code_mem_ROOT root;
 } tceu_app;
@@ -698,26 +697,21 @@ int ceu_go_all (void)
     ceu_callback_void_void(CEU_CALLBACK_INIT);
 
 /* >>> TODO: INIT */
+    {
+        CEU_APP.wclk_late = 0;
+        CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
+        CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
 
-    CEU_APP.wclk_late = 0;
-    CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
-    CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
+        pthread_mutex_init(&CEU_APP.threads_mutex, NULL);
+        CEU_APP.threads_head = NULL;
 
-    pthread_mutex_init(&CEU_APP.threads_mutex, NULL);
-    CEU_APP.threads_head = NULL;
-
-    /* All code run atomically:
-     * - the program is always locked as a whole
-     * -    thread spawns will unlock => re-lock
-     * - but program will still run to completion
-     */
-    CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
-
-    CEU_APP.lua = luaL_newstate();
-    ceu_dbg_assert(CEU_APP.lua != NULL);
-    luaL_openlibs(CEU_APP.lua);
-    lua_atpanic(CEU_APP.lua, ceu_lua_atpanic);
-
+        /* All code run atomically:
+         * - the program is always locked as a whole
+         * -    thread spawns will unlock => re-lock
+         * - but program will still run to completion
+         */
+        CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+    }
 /* <<< TODO: INIT */
 
     tceu_stk stk = { 1, NULL,
@@ -741,11 +735,10 @@ int ceu_go_all (void)
     }
 
 /* >>> TODO: CLOSE */
-
-    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
-    ceu_dbg_assert(ceu_threads_gc(1) == 0); /* wait all terminate/free */
-    lua_close(CEU_APP.lua);
-
+    {
+        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+        ceu_dbg_assert(ceu_threads_gc(1) == 0); /* wait all terminate/free */
+    }
 /* <<< TODO: CLOSE */
 
 #ifdef CEU_TESTS

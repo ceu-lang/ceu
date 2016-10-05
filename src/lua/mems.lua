@@ -219,9 +219,11 @@ static void CEU_CODE_WATCH_]]..me.id..[[ (tceu_code_mem* _ceu_mem,
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
 CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
-                           tceu_code_args_]]..me.id..[[ ps)
+                        tceu_code_args_]]..me.id..[[ ps,
+                        lua_State* lua)
 {
     tceu_code_mem_]]..me.id..[[ mem;
+    mem.mem.lua = lua;
 ]]
             if mods.dynamic then
                 me.mems.wrapper = me.mems.wrapper .. multis.code
@@ -591,6 +593,18 @@ end
         CUR().mem = CUR().mem..'tceu_threads_data* __thread_'..me.n..';\n'
     end,
     Async_Thread__POS = function (me)
+        CUR().mem = CUR().mem..'};\n'
+    end,
+
+    ---------------------------------------------------------------------------
+
+    Lua_Do__PRE = function (me)
+        CUR().mem = CUR().mem..'struct {\n'
+    end,
+    Lua_Do = function (me)
+        CUR().mem = CUR().mem..'lua_State* __lua_'..me.n..';\n'
+    end,
+    Lua_Do__POS = function (me)
         CUR().mem = CUR().mem..'};\n'
     end,
 }

@@ -28295,7 +28295,7 @@ vector[_N] _u8 xxx = _;
 escape 1;
 ]],
     wrn = true,
-    cc = '6:5: error: variably modified ‘xxx_53’ at file scope',
+    cc = '6:5: error: variably modified ‘xxx_63’ at file scope',
 }
 
 Test { [[
@@ -28625,7 +28625,7 @@ vector[-_X] int vvs;
 vector&[-_X] int iis = &vvs;
 escape 1;
 ]],
-    cc = '5:5: error: size of array ‘vvs_56_buf’ is negative',
+    cc = '5:5: error: size of array ‘vvs_66_buf’ is negative',
 }
 
 Test { [[
@@ -38929,6 +38929,98 @@ escape r1+r2;
 ]=],
     run = 10,
 }
+
+Test { [[
+lua do
+    escape 1;
+end
+]],
+    parser = 'line 1 : after `lua´ : expected `[´',
+}
+
+Test { [[
+lua[] do
+    escape 1;
+end
+]],
+    run = 1,
+}
+
+Test { [=[
+lua[] do
+    var int ret = [[ 1 ]];
+    escape ret;
+end
+]=],
+    run = 1,
+}
+
+Test { [[
+watching 1s do
+    lua[] do
+        await FOREVER;
+    end
+end
+escape 1;
+]],
+    run = { ['~>1s']=1 },
+}
+
+Test { [=[
+[[ a = 1 ]];
+lua[] do
+    var int a = [[a or 10]];
+    escape a;
+end
+]=],
+    run = 10,
+}
+
+Test { [=[
+[[ a = 1 ]];
+lua[] do
+    var int a = [[a or 10]];
+end
+lua[] do
+    var int a = [[a or 11]];
+    escape a;
+end
+]=],
+    run = 11,
+}
+
+Test { [=[
+code/tight Ff (void) => int do
+    var int a = [[a or 3]];
+    escape a;
+end
+
+[[ a = 1 ]];
+lua[] do
+    [[ a = 2 ]];
+    var int x = call Ff();
+    escape x;
+end
+]=],
+    run = 2,
+}
+
+Test { [=[
+code/await Ff (void) => int do
+    var int a = [[a or 3]];
+    escape a;
+end
+
+[[ a = 1 ]];
+lua[] do
+    [[ a = 2 ]];
+    var int x = await Ff();
+    escape x;
+end
+]=],
+    run = 2,
+}
+
 --<<< LUA
 
 -- TODO: SKIP-05
