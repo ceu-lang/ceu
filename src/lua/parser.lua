@@ -431,7 +431,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                    + V'_Set'
                    + V'Emit_Ext_emit' + V'Emit_Ext_call'
                    + V'Stmt_Call'
-    , __finalize   = K'finalize' * (PARENS(V'Namelist') + Cc(true)) * K'with' *
+    , __finalize   = K'finalize' * (PARENS(V'Namelist') + Cc(false)) * K'with' *
                      V'Block' *
                    K'end'
     , Finalize     = K'do' * OPT(V'__fin_stmt') * V'__finalize'

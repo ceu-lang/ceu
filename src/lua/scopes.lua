@@ -194,7 +194,7 @@ F = {
     Finalize = function (me)
         local Stmt, Namelist, Block = unpack(me)
         if not Stmt then
-            ASR(Namelist==true, me,
+            ASR(Namelist==false, me,
                 'invalid `finalize´ : unexpected `varlist´')
             me.blk = AST.par(me, 'Block')
             me.blk.fins_n = me.blk.fins_n + 1
@@ -211,7 +211,7 @@ F = {
 
         ASR(me.__fin_vars, me,
             'invalid `finalize´ : nothing to finalize')
-        ASR(Namelist.tag=='Namelist', Namelist,
+        ASR(Namelist and Namelist.tag=='Namelist', Namelist or me,
             'invalid `finalize´ : expected `varlist´')
 
         for _, v1 in ipairs(me.__fin_vars) do

@@ -18539,6 +18539,18 @@ end
 }
 
 Test { [[
+native _t, _new;
+var&? _t conn_;
+do
+    conn_ = &_new();
+finalize with
+end
+escape 1;
+]],
+    scopes = 'line 3 : invalid `finalize´ : expected `varlist´',
+}
+
+Test { [[
 native _int, _f;
 var int v = 2;
 var&? _int p = &_f(&&v)

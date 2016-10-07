@@ -605,7 +605,7 @@ DBG('TODO: must be "=> FOREVER"')
                     node('Lua_Do_Open', me.ln, me.n),
                     node('Finalize', me.ln,
                         false,
-                        true,
+                        false,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Lua_Do_Close', me.ln, me.n)))),
