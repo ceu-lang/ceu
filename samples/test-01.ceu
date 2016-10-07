@@ -1,3 +1,4 @@
+native _printf;
 par/or do
     every 1s do
         _printf("Hello World!\n");

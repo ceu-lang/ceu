@@ -1,77 +1,62 @@
 LUA_EXE = ...
+CEU_VER = '0.20'
+CEU_GIT = ''
+    do
+        local f = assert(io.popen('git rev-parse HEAD'))
+        CEU_GIT = string.sub(f:read'*a',1,-2)
+        assert(f:close())
+    end
 
 if not LUA_EXE then
-    io.stderr:write('Usage: lua pak.lua <lua-exe>\n')
-    os.exit(1)
-end
-local fd = assert(io.popen(LUA_EXE..' -e "print(_VERSION)"'))
-local ver = fd:read("*a")
-fd:close()
-ver = tonumber(string.match(ver, 'Lua 5%.(.)'))
-if not (ver and ver>=1) then
-    io.stderr:write('Usage: lua pak.lua <lua-exe>\n')
-    io.stderr:write('       requires Lua >= 5.1\n')
+    io.stderr:write('Usage: <lua> pak.lua <lua>\n')
     os.exit(1)
 end
 
 local fout = assert(io.open('ceu','w'))
 local fin  = assert(io.open'ceu.lua'):read'*a'
 
-local function subst (name)
+local function subst (name, returns)
     local s, e = string.find(fin, "dofile '"..name.."'")
-    fin = string.sub(fin, 1, (s-1)) ..
-            '\ndo\n' ..
-                assert(io.open(name)):read'*a' ..
-            '\nend\n' ..
-          string.sub(fin, (e+1))
+    local src do
+        if returns then
+            src = '\n(function()\n' ..
+                    assert(io.open(name)):read'*a' ..
+                  '\nend)()\n'
+        else
+            src = '\ndo\n' ..
+                    assert(io.open(name)):read'*a' ..
+                  '\nend\n'
+        end
+    end
+    fin = string.sub(fin, 1, (s-1)) .. src .. string.sub(fin, (e+1))
 end
 
--- Lua 5.3
-unpack     = unpack     or table.unpack
-loadstring = loadstring or load
-
-subst 'tp.lua'
+subst('optparse.lua', true)
+subst 'dbg.lua'
+subst 'cmd.lua'
+subst 'pre.lua'
 subst 'lines.lua'
 subst 'parser.lua'
 subst 'ast.lua'
-subst 'adj.lua'
-subst 'sval.lua'
-subst 'env.lua'
-subst 'adt.lua'
-subst 'mode.lua'
-subst 'ref.lua'
-subst 'tight.lua'
-subst 'fin.lua'
-subst 'props.lua'
-subst 'ana.lua'
-subst 'acc.lua'
+subst 'adjs.lua'
+subst 'types.lua'
+subst 'dcls.lua'
+subst 'names.lua'
+subst 'exps.lua'
+subst 'consts.lua'
+subst 'stmts.lua'
+subst 'inits.lua'
+subst 'scopes.lua'
+subst 'tight_.lua'
+subst 'props_.lua'
 subst 'trails.lua'
 subst 'labels.lua'
-subst 'tmps.lua'
-subst 'mem.lua'
-subst 'val.lua'
-subst 'code.lua'
-
-fin = [[
-FILES = {
-    template_h =
-        [====[]]..'\n'..assert(io.open'../c/template.h'):read'*a'..[[]====],
-    template_c =
-        [====[]]..'\n'..assert(io.open'../c/template.c'):read'*a'..[[]====],
-    ceu_sys_h =
-        [====[]]..'\n'..assert(io.open'../c/ceu_sys.h'):read'*a'..[[]====],
-    ceu_sys_c =
-        [====[]]..'\n'..assert(io.open'../c/ceu_sys.c'):read'*a'..[[]====],
-    ceu_pool_h =
-        [====[]]..'\n'..assert(io.open'../c/ceu_pool.h'):read'*a'..[[]====],
-    ceu_pool_c =
-        [====[]]..'\n'..assert(io.open'../c/ceu_pool.c'):read'*a'..[[]====],
-    ceu_vector_h =
-        [====[]]..'\n'..assert(io.open'../c/ceu_vector.h'):read'*a'..[[]====],
-    ceu_vector_c =
-        [====[]]..'\n'..assert(io.open'../c/ceu_vector.c'):read'*a'..[[]====],
-}
-]]..fin
+subst 'vals.lua'
+subst 'multis.lua'
+subst 'mems.lua'
+subst 'codes.lua'
+subst 'env.lua'
+subst 'cc.lua'
 
 fout:write([=[
 #!/usr/bin/env ]=]..LUA_EXE..[=[
@@ -84,7 +69,7 @@ fout:write([=[
 -- Céu is distributed under the MIT License:
 --
 
-Copyright (C) 2012 Francisco Sant'Anna
+Copyright (C) 2012-2016 Francisco Sant'Anna
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -107,13 +92,18 @@ SOFTWARE.
 --
 --]]
 
--- Lua 5.3
-unpack     = unpack     or table.unpack
-loadstring = loadstring or load
-
-LUA_EXE  = ']=]..LUA_EXE..[=['
-
-]=] .. fin)
+PAK = {
+    lua_exe = ']=]..LUA_EXE..[=[',
+    ceu_ver = ']=]..CEU_VER..[=[',
+    ceu_git = ']=]..CEU_GIT..[=[',
+    files = {
+        ceu_c =
+            [====[]=]..'\n'..assert(io.open'../c/ceu_vector.c'):read'*a'..[=[]====]..
+            [====[]=]..'\n'..assert(io.open'../c/ceu_pool.c'):read'*a'..[=[]====]..
+            [====[]=]..'\n'..assert(io.open'../c/ceu.c'):read'*a'..[=[]====],
+    }
+}
+]=]..fin)
 
 fout:close()
 os.execute('chmod +x ceu')

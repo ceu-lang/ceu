@@ -1,10 +1,11 @@
+native _printf, _sleep;
 par/or do
     every 1s do
         _printf("Hello World!\n");
     end
 with
     async do
-        loop i in 5 do
+        loop i in [0->5[ do
             _sleep(1);
             emit 1s;
         end

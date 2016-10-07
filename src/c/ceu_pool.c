@@ -1,25 +1,25 @@
-/*
- * Ceu pool.c is based on Contiki and TinyOS pools:
- * https://github.com/contiki-os/contiki/blob/master/core/lib/memb.c
- * https://github.com/tinyos/tinyos-main/blob/master/tos/system/PoolP.nc
- */
-#ifndef _CEU_POOL_C
-#define _CEU_POOL_C
+#include <stdlib.h>     /* NULL */
 
-#include <stdlib.h>
-#include "ceu_pool.h"
+typedef struct {
+    usize   len;
+    usize   free;
+    usize   index;
+    usize   unit;
+    byte*   buf;
+    byte**  queue; /* NULL on dynamic pools */
+} tceu_pool;
 
-void ceu_pool_init (tceu_pool* pool, int size, int unit, byte** queue, byte* mem)
+void ceu_pool_init (tceu_pool* pool, usize len, usize unit, byte** queue, byte* buf)
 {
-    int i;
-    pool->size  = size;
-    pool->free  = size;
+    usize i;
+    pool->len   = len;
+    pool->free  = len;
     pool->index = 0;
     pool->unit  = unit;
     pool->queue = queue;
-    pool->mem   = mem;
-    for (i=0; i<size; i++) {
-        queue[i] = &mem[i*unit];
+    pool->buf   = buf;
+    for (i=0; i<len; i++) {
+        queue[i] = &buf[i*unit];
     }
 }
 
@@ -33,26 +33,17 @@ byte* ceu_pool_alloc (tceu_pool* pool) {
     pool->free--;
     ret = pool->queue[pool->index];
     pool->queue[pool->index++] = NULL;
-    if (pool->index == pool->size) {
+    if (pool->index == pool->len) {
         pool->index = 0;
     }
     return ret;
 }
 
 void ceu_pool_free (tceu_pool* pool, byte* val) {
-    int empty = pool->index + pool->free;
-    if (empty >= pool->size) {
-        empty -= pool->size;
+    usize empty = pool->index + pool->free;
+    if (empty >= pool->len) {
+        empty -= pool->len;
     }
     pool->queue[empty] = val;
     pool->free++;
 }
-
-/*
-int ceu_pool_inside (tceu_pool* pool, byte* val) {
-    return ((byte*)val >= pool->mem)
-        && ((byte*)val < pool->mem+(pool->size*pool->unit));
-}
-*/
-
-#endif

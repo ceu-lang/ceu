@@ -1,143 +1,115 @@
-LBLS = {
+LABELS = {
     list = {},      -- { [lbl]={}, [i]=lbl }
-    code_enum = '',
 }
 
-function new (lbl)
+local function new (lbl)
     if lbl[2] then
-        lbl.id = lbl[1]
+        lbl.id = 'CEU_LABEL_'..lbl[1]
     else
-        lbl.id = CLS().id..'_'..lbl[1]..'_'..#LBLS.list
+        local Code = AST.iter'Code'()
+        Code = (Code and Code.id..'_') or ''
+        lbl.id = 'CEU_LABEL_'..Code..lbl[1]..'_'..(#LABELS.list+1)
     end
-    lbl.id = string.gsub(lbl.id, '%*','')
-    lbl.id = string.gsub(lbl.id, '%.','')
-    lbl.id = string.gsub(lbl.id, '%$','')
-    lbl.id = string.gsub(lbl.id, '%%','')
-    LBLS.list[lbl] = true
-    lbl.n = #LBLS.list                   -- starts from 0
-    LBLS.list[#LBLS.list+1] = lbl
-
-    for n in AST.iter() do
-        if n.lbls_all then
-            n.lbls_all[lbl] = true
-        end
+    if not LABELS.list[lbl.id] then
+        LABELS.list[lbl.id] = true
+        LABELS.list[#LABELS.list+1] = lbl
+        lbl.n = #LABELS.list+1                   -- starts from 2
     end
 
     return lbl
 end
 
---new{'CEU_LBL__NONE', true}
-
 F = {
-    Node_pre = function (me)
-        me.lbls = { #LBLS.list }
-    end,
-    Node = function (me)
-        me.lbls[2] = #LBLS.list-1
+    ROOT__PRE = function (me)
+        me.lbl_in = new{'ROOT', true}
     end,
 
-    Root_pre = function (me)
-        --new{'CEU_INACTIVE', true}
-    end,
-    Root = function (me)
-        -- 0, 1,-1, tot,-tot
-        -- <0 = off (for internal events)
-        TP.types.tceu_nlbl.len  = TP.n2bytes(1+2 + #LBLS.list*2)
-
-        -- enum of labels
-        for i, lbl in ipairs(LBLS.list) do
-            LBLS.code_enum = LBLS.code_enum..'    '
-                                ..lbl.id..' = '..lbl.n..',\n'
-        end
+    Do = function (me)
+        local _,_,set = unpack(me)
+        me.lbl_out = new{'Do__OUT'}
     end,
 
     Block = function (me)
-        if me.fins then
-            me.lbl_fin = new{'Block__fin'}
-        end
-
-        for _, var in ipairs(me.vars) do
-            local is_arr_dyn = (TP.check(var.tp,'[]')           and
-                               (var.pre == 'var')               and
-                               (not TP.is_ext(var.tp,'_','@'))) and 
-                               (var.tp.arr and (var.tp.arr=='[]' or (not var.tp.arr.sval))) and
-                               (not var.cls)
-            if is_arr_dyn then
-                var.lbl_fin_free = new{'vector_fin_free'}
-            end
-
-            local tp_id = TP.id(var.tp)
-            if ENV.clss[tp_id] and TP.check(var.tp,tp_id,'&&','?','-[]') then
-                var.lbl_optorg_reset = new{'optorg_reset'}
-            elseif var.adt and var.pre=='pool' then
-                var.lbl_fin_kill_free = new{'adt_fin_kill_free'}
-            end
+        if me.has_fin then
+            me.lbl_fin = new{'Block__FIN'}
         end
     end,
 
-    Dcl_cls = function (me)
-        if me.is_ifc then
-            return
+    Finalize = function (me)
+        me.lbl_in = new{'Finalize__IN'}
+    end,
+
+    Loop_Pool = function (me)
+        F.Loop(me)
+        me.lbl_clr = new{'Loop_Pool__CLR'}
+    end,
+    Loop = function (me)
+        me.lbl_cnt = new{'Loop_Continue__CNT'}
+        me.lbl_out = new{'Loop_Break__OUT'}
+        if AST.par(me,'Async') then
+            me.lbl_asy = new{'Loop_Async__CNT'}
         end
+    end,
+    Loop_Num = 'Loop',
 
-        me.lbl = new{'Class_'..me.id, true}
+    Code = function (me)
+        me.lbl_in = new{'Code_'..me.id, true}
     end,
 
-    SetBlock_pre = function (me)
-        me.lbl_out = new{'Set_out'}
+    Evt = 'Var',
+    Var = function (me)
+        if me.has_trail then
+            me.lbl = new{'Var_'..me.id}
+        end
     end,
 
-    _Par_pre = function (me)
+    ---------------------------------------------------------------------------
+
+    Par_Or__PRE  = 'Par__PRE',
+    Par_And__PRE = 'Par__PRE',
+    Par__PRE = function (me)
         me.lbls_in = {}
         for i, sub in ipairs(me) do
-            if i < #me then
-                -- the last executes directly (no label needed)
-                me.lbls_in[i] = new{me.tag..'_sub_'..i}
-            end
+            me.lbls_in[i] = new{me.tag..'_sub_'..i..'_IN'}
+        end
+        if me.tag ~= 'Par' then
+            me.lbl_out = new{me.tag..'__OUT'}
         end
     end,
-    ParEver_pre = function (me)
-        F._Par_pre(me)
-        me.lbl_out = new{'ParEver_out'}
+
+    ---------------------------------------------------------------------------
+
+    Abs_Await = function (me)
+        me.lbl_out = new{'Await_Abs__OUT'}
     end,
-    ParOr_pre = function (me)
-        F._Par_pre(me)
-        me.lbl_out = new{'ParOr_out'}
+    Await_Wclock = function (me)
+        me.lbl_out = new{'Await_Wclock__OUT'}
     end,
-    ParAnd_pre = function (me)
-        F._Par_pre(me)
-        me.lbl_tst = new{'ParAnd_chk'}
-        me.lbl_out = new{'ParAnd_out'}
+    Await_Ext = function (me)
+        local ID_ext = unpack(me)
+        me.lbl_out = new{'Await_'..ID_ext.dcl.id..'__OUT'}
+    end,
+    Await_Int = function (me)
+        local Exp_Name = unpack(me)
+        me.lbl_out = new{'Await_'..Exp_Name.info.dcl.id..'__OUT'}
     end,
 
-    Thread = function (me)
-        me.lbl = new{'Thread'}
-        me.lbl_out = new{'Thread_out'}
+    Emit_Wclock = function (me)
+        me.lbl_out = new{'Emit_Wclock__OUT'}
     end,
+    Emit_Ext_emit = function (me)
+        local ID_ext = unpack(me)
+        me.lbl_out = new{'Emit_Ext_emit'..ID_ext.dcl.id..'__OUT'}
+    end,
+
     Async = function (me)
-        me.lbl = new{'Async'}
+        me.lbl_in = new{'Async__IN'}
     end,
 
-    Loop_pre = function (me)
-        if AST.iter'Async'() then
-            me.lbl_asy = new{'Async_cnt'}
-        end
-    end,
-
-    EmitExt = function (me)
-        -- only async needs to break up (avoids stack growth)
-        if AST.iter'Async'() then
-            me.lbl_cnt = new{'Async_cont'}
-        end
-    end,
-
-    Await = function (me)
-        local e, dt = unpack(me)
-        if dt then
-            me.lbl = new{'Awake_DT'}
-        else
-            me.lbl = new{'Awake_'..(e.evt or e.var.evt).id}
-        end
+    Async_Thread = function (me)
+        me.lbl_fin = new{'Async_Thread__FIN'}
+        me.lbl_abt = new{'Async_Thread__ABT'}
+        me.lbl_out = new{'Async_Thread__OUT'}
     end,
 }
 

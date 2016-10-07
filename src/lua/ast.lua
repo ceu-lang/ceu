@@ -2,34 +2,59 @@ AST = {
     root = nil,
 }
 
-local MT = {}
-
 local STACK = {}
 
-function AST.isNode (node)
+local MT = {}
+function AST.is_node (node)
     return (getmetatable(node) == MT) and node.tag
 end
 
 AST.tag2id = {
-    EmitInt = 'emit',
-    Spawn   = 'spawn',
-    Kill    = 'kill',
-    Await   = 'await',
-    AwaitN  = 'await',
-    Async   = 'async',
-    Thread  = 'async/thread',
-    ParOr   = 'par/or',
-    ParAnd  = 'par/and',
-    ParEver = 'par',
-    Loop    = 'loop',
-    Dcl_cls = 'class',
-    Set     = 'assignment',
+    Abs_Await        = 'await',
+    Abs_Spawn_Single = 'spawn',
+    Abs_Spawn_Pool   = 'spawn',
+    Alias            = 'alias',
+    Async            = 'async',
+    _Async_Isr       = 'async/isr',
+    Async_Thread     = 'async/thread',
+    Await_Until      = 'await',
+    Await_Ext        = 'await',
+    Await_Forever    = 'await',
+    Await_Int        = 'await',
+    Await_Wclock     = 'await',
+    Break            = 'break',
+    Code             = 'code',
+    Continue         = 'continue',
+    Data             = 'data',
+    Emit_Evt         = 'emit',
+    Emit_ext_req     = 'request',
+    EOC              = 'end of code',
+    EOF              = 'end of file',
+    Escape           = 'escape',
+    Every            = 'every',
+    Evt              = 'event',
+    Ext_Code         = 'external code',
+    Ext_Code         = 'external code',
+    Ext              = 'external',
+    Finalize         = 'finalize',
+    Kill             = 'kill',
+    Loop             = 'loop',
+    Loop_Num         = 'loop',
+    Loop_Pool        = 'loop',
+    Nat_Block        = 'native block',
+    Nat              = 'native',
+    Nothing          = 'nothing',
+    Par_And          = 'par/and',
+    Par_Or           = 'par/or',
+    Par              = 'par',
+    Watching         = 'watching',
+    Pool             = 'pool',
+    Prim             = 'primitive',
+    Set_Await_many   = 'await',
+    Val              = 'value',
+    Var              = 'variable',
+    Vec              = 'vector',
 }
-
-function AST.isParent (n1, n2)
-    return n1 == n2
-        or n2.__par and AST.isParent(n1, n2.__par)
-end
 
 local _N = 0
 function AST.node (tag, ln, ...)
@@ -47,25 +72,46 @@ function AST.node (tag, ln, ...)
     me.ln  = ln
     --me.ln[2] = me.n
     me.tag = tag
+
+    for i,sub in ipairs(me) do
+        if AST.is_node(sub) then
+            sub.__par   = me
+            sub.__i     = i
+        end
+    end
+
     return me
 end
 
-function AST.copy (node, ln)
-    if not AST.isNode(node) then
+function AST.depth (me)
+    if me.__par then
+        return 1 + AST.depth(me.__par)
+    else
+        return 1
+    end
+end
+
+function AST.copy (node, ln, keep_n)
+    if not AST.is_node(node) then
         return node
     end
+    assert(node.tag ~= 'Ref')
 
     local ret = setmetatable({}, MT)
-    local N = _N
-    _N = _N + 1
+    local N = (keep_n and node.n) or _N
+    if not keep_n then
+        _N = _N + 1
+    end
 
     for k, v in pairs(node) do
         if type(k) ~= 'number' then
             ret[k] = v
         else
-            ret[k] = AST.copy(v, ln)
-            if AST.isNode(v) then
+            if AST.is_node(v) then
+                AST.set(ret, k, AST.copy(v, ln, keep_n))
                 ret[k].ln = ln or ret[k].ln
+            else
+                ret[k] = AST.copy(v, ln, keep_n)
             end
         end
     end
@@ -74,11 +120,57 @@ function AST.copy (node, ln)
     return ret
 end
 
+function AST.is_equal (n1, n2, ignore)
+    if ignore and ignore(n1,n2) then
+        return true
+    elseif n1 == n2 then
+        return true
+    elseif AST.is_node(n1) and AST.is_node(n2) then
+        if n1.tag==n2.tag and #n1==#n2 then
+            for i, v in ipairs(n1) do
+                if not AST.is_equal(n1[i],n2[i],ignore) then
+                    return false
+                end
+            end
+            return true
+        else
+            return false
+        end
+    else
+        return false
+    end
+end
+
+--[[
+function AST.idx (par, me)
+    assert(AST.is_node(par))
+    for i, sub in ipairs(par) do
+        if sub == me then
+            return i
+        end
+    end
+    error'bug found'
+end
+]]
+
 function AST.get (me, tag, ...)
     local idx, tag2 = ...
 
-    if not (AST.isNode(me) and (me.tag==tag or tag=='')) then
-        return nil, tag, ((AST.isNode(me) and me.tag) or 'none')
+    if type(tag) == 'number' then
+        if tag > 0 then
+            if me.__par then
+                return AST.get(me.__par, tag-1, ...)
+            else
+                return nil
+            end
+        else
+            assert(tag == 0)
+            return AST.get(me, ...)
+        end
+    end
+
+    if not (AST.is_node(me) and (me.tag==tag or tag=='')) then
+        return nil, tag, ((AST.is_node(me) and me.tag) or 'none')
     end
 
     if idx then
@@ -97,19 +189,41 @@ function AST.asr (me, tag, ...)
     return ret
 end
 
-function AST.pred_async (me)
-    local tag = me.tag
-    return tag=='Async' or tag=='Thread'
+function AST.set (par, i, child)
+    assert(AST.is_node(child))
+    par[i] = child
+    child.__par = par
+    child.__i   = i
 end
-function AST.pred_par (me)
-    local tag = me.tag
-    return tag=='ParOr' or tag=='ParAnd' or tag=='ParEver'
+
+function AST.insert (par, i, child)
+    table.insert(par, i, {})
+    AST.set(par, i, child)
+    for i, sub in ipairs(par) do
+        if AST.is_node(sub) then
+            sub.__i = i
+        end
+    end
 end
-function AST.pred_aborts (me)
-    local tag = me.tag
-    return tag=='ParOr' or tag=='SetBlock' or tag=='Loop'
+
+function AST.remove (par, i)
+    table.remove(par, i)
+    for i, sub in ipairs(par) do
+        if AST.is_node(sub) then
+            sub.__i = i
+        end
+    end
 end
-function AST.pred_true (me) return true end
+
+function AST.is_par (par, child)
+    if par == child then
+        return true
+    elseif not child.__par then
+        return false
+    else
+        return AST.is_par(par, child.__par)
+    end
+end
 
 function AST.par (me, pred)
     if type(pred) == 'string' then
@@ -125,23 +239,7 @@ function AST.par (me, pred)
     end
 end
 
-function AST.child (me, pred)
-    if type(pred) == 'string' then
-        local tag = pred
-        pred = function(me) return me.tag==tag end
-    end
-    if pred(me) then
-        return me
-    end
-    for i, sub in ipairs(me) do
-        if AST.isNode(sub) then
-            local child = AST.child(sub,pred)
-            if child then
-                return child
-            end
-        end
-    end
-end
+function AST.pred_true (me) return true end
 
 function AST.iter (pred, inc)
     if pred == nil then
@@ -165,7 +263,26 @@ function AST.iter (pred, inc)
     end
 end
 
-function AST.dump (me, spc, lvl)
+--[[
+-- doesnt pass b/c of data inheritance
+local __detect_same
+function AST.check (me, not_first)
+    if not_first == nil then
+        __detect_same = {}
+    end
+--AST.dump(AST.root)
+    assert(not __detect_same[me], 'AST.check fail: '..me.n..' : '..me.tag)
+    __detect_same[me] = true
+
+    for i, sub in ipairs(me) do
+        if AST.is_node(sub) then
+            AST.check(sub, true)
+        end
+    end
+end
+]]
+
+function AST.dump (me, spc, lvl, __notfirst)
     if lvl and lvl==0 then
         return
     end
@@ -183,6 +300,7 @@ function AST.dump (me, spc, lvl)
     --ks = 'n='..(me.aw.n or '?')..',t='..t..',ever='..(me.aw.forever_ and 1 or 0)
     --ks = table.concat(me.trails,'-')
 --
+--[[
 if me.ana and me.ana.pre and me.ana.pos then
     local f = function(v)
                 return type(v)=='table'
@@ -196,15 +314,18 @@ if me.ana and me.ana.pre and me.ana.pos then
     for k in pairs(me.ana.pos) do t[#t+1]=f(k) end
     ks = ks..'['..table.concat(t,',')..']'
 end
---[[
 ]]
 --
     --ks = me.ns.trails..' / '..tostring(me.needs_clr)
+    local me_str  = string.gsub(tostring(me),       'table: ', '')
+--assert(me==AST.root or (me.__par and me.__i))
+    local par_str = string.gsub(tostring(me.__par), 'table: ', '')
     DBG(string.rep(' ',spc)..me.tag..
+        ' |'..me_str..'/'..par_str..'['..tostring(me.__i)..']|'..
 --[[
         '')
 ]]
-        ' (ln='..me.ln[2]..' n='..me.n..
+        ' (ln='..me.ln[2]..' n='..me.n..' d='..AST.depth(me)..
                            --' d='..(me.__depth or 0)..
                            --' p='..(me.__par and me.__par.n or '')..
                            ') '..ks)
@@ -212,7 +333,7 @@ end
 --DBG(me.xxx)
 --DBG'---'
     for i, sub in ipairs(me) do
-        if AST.isNode(sub) then
+        if AST.is_node(sub) then
             AST.dump(sub, spc+2, lvl and lvl-1)
         else
             DBG(string.rep(' ',spc+2) .. '['..tostring(sub)..']')
@@ -229,39 +350,44 @@ local function FF (F, str)
     return f
 end
 
-local function visit_aux (me, F)
-    local _me = me
-    me.__par   = STACK[#STACK]
-    me.__depth = (me.__par and me.__par.__depth+1) or 1
+local function from_to (old, new, t)
+    if new and new~=old then
+        new.__par = t[1]
+        new.__i   = t[2]
+        return true, new
+    else
+        return false, old
+    end
+end
 
-    local pre, mid, pos = FF(F,me.tag..'_pre'), FF(F,me.tag), FF(F,me.tag..'_pos')
-    local bef, aft = FF(F,me.tag..'_bef'), FF(F,me.tag..'_aft')
+local function visit_aux (F, me, I)
+    local pre, mid, pos = FF(F,me.tag..'__PRE'), FF(F,me.tag), FF(F,me.tag..'__POS')
+    local bef, aft = FF(F,me.tag..'__BEF'), FF(F,me.tag..'__AFT')
 
-    if F.Node_pre then
-        me = F.Node_pre(me) or me
-        if me ~= _me then
-            --DBG('Node_pre', me.tag, me)
-            return visit_aux(me, F)
+    local chg = false
+    local t   = { me.__par, me.__i }
+
+    if F.Node__PRE then
+        chg, me = from_to(me, F.Node__PRE(me), t)
+        if chg then
+            return visit_aux(F, me)
         end
     end
     if pre then
-        me = pre(me) or me
-        if me ~= _me then
-            --DBG('XXXX_pre', me.tag, me, _me.tag, _me)
-            return visit_aux(me, F)
+        chg, me = from_to(me, pre(me), t)
+        if chg then
+            return visit_aux(F, me)
         end
     end
 
     STACK[#STACK+1] = me
 
-    for i, sub in ipairs(me) do
-        if bef then assert(bef(me, sub, i)==nil) end
-        if AST.isNode(sub) then
-            sub.__idx = i
-            sub = visit_aux(sub, F)
-            me[i] = sub
+    for i, _ in ipairs(me) do
+        if bef then assert(bef(me,me[i],i)==nil) end
+        if AST.is_node(me[i]) then
+            me[i] = visit_aux(F, me[i], i)
         end
-        if aft then assert(aft(me, sub, i)==nil) end
+        if aft then assert(aft(me,me[i],i)==nil) end
     end
 
     if mid then
@@ -274,32 +400,30 @@ local function visit_aux (me, F)
     STACK[#STACK] = nil
 
     if pos then
-        me = pos(me) or me
-        if AST.isNode(me) then
-            me.__par = STACK[#STACK]
-            me.__depth = (me.__par and me.__par.__depth+1) or 0
+        chg, me = from_to(me, pos(me), t)
+        if chg then
+            return visit_aux(F, me)
         end
     end
-    if F.Node_pos then
-        me = F.Node_pos(me) or me
-        if AST.isNode(me) then
-            me.__par = STACK[#STACK]
-            me.__depth = (me.__par and me.__par.__depth+1) or 0
+     if F.Node__POS then
+        chg, me = from_to(me, F.Node__POS(me), t)
+        if chg then
+            return visit_aux(F, me)
         end
     end
 
-    return me
+   return me
 end
 AST.visit_aux = visit_aux
 
 function AST.visit (F, node)
     assert(AST)
     --STACK = {}
-    return visit_aux(node or AST.root, F)
+    return visit_aux(F, node or AST.root)
 end
 
 local function i2l (p)
-    return LINES.i2l[p]
+    return CEU.i2l[p]
 end
 
 for tag, patt in pairs(GG) do
@@ -308,43 +432,37 @@ for tag, patt in pairs(GG) do
     end
 end
 
-local function f (ln, v1, op, v2, v3, ...)
-    --DBG('2',ln[2],v1,op,v2,v3,...)
-    local ret
-    if not op then
-        ret = v1
-    elseif v1=='call' or v1=='call/rec' then
-        -- Prim call
-        ASR(op.tag=='Op2_call', ln, 'invalid call')
-        op[1] = v1  -- change modifier
-        ret = op
-    elseif v1 then
-        -- Op2_*
-        if op == 'call' then
-            ret = f(ln, AST.node('Op2_'..op,ln,op,v1,v2,v3), ...)
-        elseif op == '?' then
-            ret = f(ln, AST.node('Op1_'..op,ln,op,v1) ,v2, v3, ...)
-        elseif op == '!' then
-            ret = f(ln, AST.node('Op1_'..op,ln,op,v1) ,v2, v3, ...)
-        else
-            ret = f(ln, AST.node('Op2_'..op,ln,op,v1,v2), v3, ...)
+local function f (ln, v1, v2, v3, v4, ...)
+    --DBG('>>>',ln[2],v1,v2,v3,v4,...)
+    if v1 == 'pre' then
+        local x = ''
+        if v2=='+' or v2=='-' or v2=='&' or v2=='*' then
+            x = '1' -- unary +/-
         end
+        return AST.node('Exp_'..x..v2, ln, v2, f(ln,v3,v4,...))
+    elseif v2 == 'pos' then
+        return f(ln, AST.node('Exp_'..v3,ln,v3,v1,v4), ...)
+    elseif v2 then
+        -- binary
+        return f(ln, AST.node('Exp_'..v2,ln,v2,v1,v3), v4, ...)
     else
-        -- Op1_*
-        if op == 'cast' then
-            -- consume the type
-            ret = AST.node('Op1_'..op, ln, v2, f(ln,v3,...))
-        else
-            ret = AST.node('Op1_'..op, ln, op, f(ln,v2,v3,...))
+        -- primary
+        return v1
+    end
+end
+
+local __exps = { '', '_Name', '_Call' }
+for _, id in ipairs(__exps) do
+    for i=0, 12 do
+        if i < 10 then
+            i = '0'..i
+        end
+        local tag = '__'..i..id
+        if GG[tag] then
+            GG[tag] = (m.Cp()/i2l) * GG[tag] / f
         end
     end
-    return ret
 end
 
-for i=1, 12 do
-    local tag = '__'..i
-    GG[tag] = (m.Cp()/i2l) * GG[tag] / f
-end
-
-AST.root = m.P(GG):match(OPTS.source)
+AST.root = m.P(GG):match(CEU.source)
 AST.visit({})
