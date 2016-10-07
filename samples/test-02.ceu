@@ -1,0 +1,22 @@
+native _printf, _sleep;
+par/or do
+    every 1s do
+        _printf("Hello World!\n");
+    end
+with
+    async do
+        loop i in [0->5[ do
+            _sleep(1);
+            emit 1s;
+        end
+    end
+end
+escape 0;
+
+#if 0
+#@ Description: Prints "Hello World" every second.
+#@ Features:
+#@  - same as `test-01.ceu`
+#@  - `loop`   to simulate time as steps of `emit 1s`
+#@  - `_sleep` to respect the time from the world
+#endif

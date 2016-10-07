@@ -1,0 +1,47 @@
+native _printf, _sleep;
+par/or do
+    // global lua state
+    [[ v = 0 ]];
+    var int v = 0;
+    every 1s do
+        [[print('Lua 1', v, @v) ]];
+        v = v + 1;
+        [[ v = v + 1 ]];
+    end
+with
+    // local lua state
+    lua[] do
+        [[ v = 0 ]];
+        var int v = 0;
+        every 1s do
+            [[print('Lua 2', v, @v) ]];
+            v = v + 1;
+            [[ v = v + 1 ]];
+        end
+    end
+with
+    // local lua state
+    lua[] do
+        [[ v = 0 ]];
+        var int v = 0;
+        every 1s do
+            [[print('Lua 3', v, @v) ]];
+            v = v + 1;
+            [[ v = v + 1 ]];
+        end
+    end
+with
+    async do
+        loop i in [0->5[ do
+            _sleep(1);
+            emit 1s;
+        end
+    end
+end
+escape 0;
+
+#if 0
+#@ Description: Prints "Lua X" every second from three `lua` states.
+#@ Features:
+#@  - three `lua` states: one global and two local
+#endif
