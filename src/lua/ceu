@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '3328f34158a58be575fc0e7efdf4e299145b65d4',
+    ceu_git = '5a9c101eab24856178e8a9d7f570699b85e34514',
     files = {
         ceu_c =
             [====[
@@ -10145,8 +10145,7 @@ ceu_vector_setmax(&]]..V(me)..', '..V(dim)..[[, 1);
                                                 CEU_CODE_MEM_DYN_STATE_NONE, {} };
 };
 ]]..V(me)..[[.up_mem = _ceu_mem;
-ceu_dbg_assert(_ceu_trlK == ]]..me.trails[1]..[[);
-]]..V(me)..[[.up_trl = _ceu_trlK;
+]]..V(me)..[[.up_trl = ]]..me.trails[1]..[[;
 ]])
         if dim == '[]' then
             LINE(me, [[
