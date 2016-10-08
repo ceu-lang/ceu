@@ -300,7 +300,7 @@ ceu_vector_setmax(&]]..V(me)..', '..V(dim)..[[, 1);
                                                 CEU_CODE_MEM_DYN_STATE_NONE, {} };
 };
 ]]..V(me)..[[.up_mem = _ceu_mem;
-]]..V(me)..[[.up_trl = _ceu_trlK;
+]]..V(me)..[[.up_trl = ]]..me.trails[1]..[[;
 ]])
         if dim == '[]' then
             LINE(me, [[
@@ -450,8 +450,8 @@ CLEAR(me) -- TODO-NOW
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
 
     ]]..mem..[[->pak    = ]]..pak..[[;
-    ]]..mem..[[->up_mem = ]]..((pak=='NULL' and '_ceu_mem')  or (pak..'->up_mem'))..[[;
-    ]]..mem..[[->up_trl = ]]..((pak=='NULL' and '_ceu_trlK') or (pak..'->up_trl'))..[[;
+    ]]..mem..[[->up_mem = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
+    ]]..mem..[[->up_trl = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
     ]]..mem..[[->lua    = ]]..LUA(me)..[[;
 
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };

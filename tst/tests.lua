@@ -32819,6 +32819,26 @@ escape _V;
     run = { ['~>1s']=18 },
 }
 
+Test { [[
+native _V;
+native/pre do
+    int V = 1;
+end
+code/await Ff (void)=>void do
+    do finalize with
+        _V = _V * 2;
+    end
+    _V = _V + 1;
+    await FOREVER;
+end
+do
+    spawn Ff();
+end
+escape _V;
+]],
+    run = 4;
+}
+
 --<< CODE / AWAIT / FINALIZE
 
 -->>> CODE / AWAIT

@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '6d7038d2f7255f3c79367a6c81934cbabdd1613b',
+    ceu_git = '3328f34158a58be575fc0e7efdf4e299145b65d4',
     files = {
         ceu_c =
             [====[
@@ -10145,6 +10145,7 @@ ceu_vector_setmax(&]]..V(me)..', '..V(dim)..[[, 1);
                                                 CEU_CODE_MEM_DYN_STATE_NONE, {} };
 };
 ]]..V(me)..[[.up_mem = _ceu_mem;
+ceu_dbg_assert(_ceu_trlK == ]]..me.trails[1]..[[);
 ]]..V(me)..[[.up_trl = _ceu_trlK;
 ]])
         if dim == '[]' then
@@ -10295,8 +10296,8 @@ CLEAR(me) -- TODO-NOW
     tceu_code_args_]]..ID_abs.dcl.id..[[ __ceu_ps = ]]..V(Abs_Cons,{mid=mid})..[[;
 
     ]]..mem..[[->pak    = ]]..pak..[[;
-    ]]..mem..[[->up_mem = ]]..((pak=='NULL' and '_ceu_mem')  or (pak..'->up_mem'))..[[;
-    ]]..mem..[[->up_trl = ]]..((pak=='NULL' and '_ceu_trlK') or (pak..'->up_trl'))..[[;
+    ]]..mem..[[->up_mem = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
+    ]]..mem..[[->up_trl = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
     ]]..mem..[[->lua    = ]]..LUA(me)..[[;
 
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
