@@ -32707,6 +32707,120 @@ escape ret;
 
 --<<< CODE / TIGHT / FUNCTIONS
 
+-->> CODE / AWAIT / FINALIZE
+
+Test { [[
+native _V;
+native/pre do
+    int V = 0;
+end
+code/await Ff (void)=>void do
+    do finalize with
+        _V = _V + 1;
+    end
+    await FOREVER;
+end
+watching 1s do
+    do finalize with
+        _V = _V * 2;
+    end
+    await Ff();
+end
+await 1s;
+escape _V;
+]],
+    run = { ['~>2s']=2 },
+}
+
+Test { [[
+native _V;
+native/pre do
+    int V = 1;
+end
+code/await Ff (void)=>void do
+    do finalize with
+        _V = _V * 2;
+    end
+    await FOREVER;
+end
+do
+    spawn Ff();
+    do finalize with
+        _V = _V + 1;
+    end
+    await 1s;
+end
+await 1s;
+escape _V;
+]],
+    run = { ['~>2s']=4 },
+}
+
+Test { [[
+native _V;
+native/pre do
+    int V = 1;
+end
+code/await Gg (void)=>void do
+    do finalize with
+        _V = _V * 2;
+    end
+    await FOREVER;
+end
+code/await Ff (void)=>void do
+    do finalize with
+        _V = _V + 2;
+    end
+    await Gg();
+end
+watching 1s do
+    do finalize with
+        _V = _V * 3;
+    end
+    await Ff();
+    do finalize with
+        _V = _V + 1;
+    end
+end
+escape _V;
+]],
+    run = { ['~>1s']=12 },
+}
+
+Test { [[
+native _V;
+native/pre do
+    int V = 1;
+end
+code/await Gg (void)=>void do
+    do finalize with
+        _V = _V * 2;
+    end
+    await FOREVER;
+end
+code/await Ff (void)=>void do
+    do finalize with
+        _V = _V + 2;
+    end
+    await Gg();
+end
+watching 1s do
+    do finalize with
+        _V = _V * 3;
+    end
+    spawn Ff();
+    do finalize with
+        _V = _V + 1;
+    end
+    await FOREVER;
+end
+escape _V;
+]],
+    run = { ['~>1s']=18 },
+}
+
+--<< CODE / AWAIT / FINALIZE
+
 -->>> CODE / AWAIT
 
 Test { [[

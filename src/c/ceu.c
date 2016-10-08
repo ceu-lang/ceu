@@ -488,7 +488,11 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 
             int matches_clear_vs_trail = (clr_range->mem  == range.mem  &&
                                           clr_range->trl0 <= trlK       &&
-                                          clr_range->trlF >= trlK);
+                                          clr_range->trlF >= trlK)
+                                            || ceu_mem_is_child(range.mem,
+                                                    clr_range->mem,
+                                                    clr_range->trl0,
+                                                    clr_range->trlF);
 
             /* clearing this trail? */
             if (matches_clear_vs_trail) {

@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '0678d06a767477c20610d2759cf1596ca6abac38',
+    ceu_git = 'a490e064011f9ab2fe073c8781bf54df4270188a',
     files = {
         ceu_c =
             [====[
@@ -2659,7 +2659,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                    + V'_Set'
                    + V'Emit_Ext_emit' + V'Emit_Ext_call'
                    + V'Stmt_Call'
-    , __finalize   = K'finalize' * (PARENS(V'Namelist') + Cc(true)) * K'with' *
+    , __finalize   = K'finalize' * (PARENS(V'Namelist') + Cc(false)) * K'with' *
                      V'Block' *
                    K'end'
     , Finalize     = K'do' * OPT(V'__fin_stmt') * V'__finalize'
@@ -4218,7 +4218,7 @@ DBG('TODO: must be "=> FOREVER"')
                     node('Lua_Do_Open', me.ln, me.n),
                     node('Finalize', me.ln,
                         false,
-                        true,
+                        false,
                         node('Block', me.ln,
                             node('Stmts', me.ln,
                                 node('Lua_Do_Close', me.ln, me.n)))),
@@ -7696,7 +7696,7 @@ F = {
     Finalize = function (me)
         local Stmt, Namelist, Block = unpack(me)
         if not Stmt then
-            ASR(Namelist==true, me,
+            ASR(Namelist==false, me,
                 'invalid `finalize´ : unexpected `varlist´')
             me.blk = AST.par(me, 'Block')
             me.blk.fins_n = me.blk.fins_n + 1
@@ -7713,7 +7713,7 @@ F = {
 
         ASR(me.__fin_vars, me,
             'invalid `finalize´ : nothing to finalize')
-        ASR(Namelist.tag=='Namelist', Namelist,
+        ASR(Namelist and Namelist.tag=='Namelist', Namelist or me,
             'invalid `finalize´ : expected `varlist´')
 
         for _, v1 in ipairs(me.__fin_vars) do
