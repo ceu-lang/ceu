@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = 'a490e064011f9ab2fe073c8781bf54df4270188a',
+    ceu_git = 'a778e3c93d6f6230cddec79c62bcb439ceaf6143',
     files = {
         ceu_c =
             [====[
@@ -733,7 +733,11 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 
             int matches_clear_vs_trail = (clr_range->mem  == range.mem  &&
                                           clr_range->trl0 <= trlK       &&
-                                          clr_range->trlF >= trlK);
+                                          clr_range->trlF >= trlK)
+                                            || ceu_mem_is_child(range.mem,
+                                                    clr_range->mem,
+                                                    clr_range->trl0,
+                                                    clr_range->trlF);
 
             /* clearing this trail? */
             if (matches_clear_vs_trail) {
@@ -980,15 +984,16 @@ CEU_API int ceu_loop (void)
 
     while (!ceu_cb_terminating) {
         ceu_callback_void_void(CEU_CALLBACK_STEP);
-        if (ceu_cb_pending_async) {
-            ceu_cb_pending_async = 0;
-            ceu_input(CEU_INPUT__ASYNC, NULL);
-        }
         if (CEU_APP.threads_head != NULL) {
             CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+/* TODO: remove this!!! */
             CEU_THREADS_SLEEP(100); /* allow threads to do "atomic" and "terminate" */
             CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
             ceu_threads_gc(0);
+        }
+        if (ceu_cb_pending_async) {
+            ceu_cb_pending_async = 0;
+            ceu_input(CEU_INPUT__ASYNC, NULL);
         }
     }
 
@@ -10563,7 +10568,9 @@ ceu_callback_assert_msg(0, "reached end of `do´");
         end
         CASE(me, me.lbl_out)
 
-        if me.has_escape and (me.trails_n>1 or blk.needs_clear) then
+        if me.has_escape and (me.trails_n>1 or blk.needs_clear)
+        or #blk.spawns > 0
+        then
             CLEAR(me)
         end
     end,

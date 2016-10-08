@@ -723,7 +723,9 @@ ceu_callback_assert_msg(0, "reached end of `do´");
         end
         CASE(me, me.lbl_out)
 
-        if me.has_escape and (me.trails_n>1 or blk.needs_clear) then
+        if me.has_escape and (me.trails_n>1 or blk.needs_clear)
+        or #blk.spawns > 0
+        then
             CLEAR(me)
         end
     end,

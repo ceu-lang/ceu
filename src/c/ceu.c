@@ -739,15 +739,16 @@ CEU_API int ceu_loop (void)
 
     while (!ceu_cb_terminating) {
         ceu_callback_void_void(CEU_CALLBACK_STEP);
-        if (ceu_cb_pending_async) {
-            ceu_cb_pending_async = 0;
-            ceu_input(CEU_INPUT__ASYNC, NULL);
-        }
         if (CEU_APP.threads_head != NULL) {
             CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+/* TODO: remove this!!! */
             CEU_THREADS_SLEEP(100); /* allow threads to do "atomic" and "terminate" */
             CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
             ceu_threads_gc(0);
+        }
+        if (ceu_cb_pending_async) {
+            ceu_cb_pending_async = 0;
+            ceu_input(CEU_INPUT__ASYNC, NULL);
         }
     }
 

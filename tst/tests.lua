@@ -42093,7 +42093,7 @@ with
     await async/thread (y) do
         y = 2;
 native _usleep;
-        _usleep(50);
+        _usleep(150);   // forces "await 1s" awake before
     end
     x = x + y;
 end
@@ -42115,7 +42115,7 @@ with
     await async/thread (y) do
         y = 2;
 native _usleep;
-        _usleep(50);
+        _usleep(150);   // forces "await 1s" awake before
     end
     x = x + y;
 end
@@ -42271,4 +42271,51 @@ Test { [=[
 }
 
 --<<< THREADS / EMITS
+
+Test { [[
+native _V;
+native/pre do
+    int V = 1;
+end
+code/await Ff (void)=>void do
+    do finalize with
+        _V = _V + 10;
+    end
+    _V = _V + 1;
+    _V = _V * 2;
+    await FOREVER;
+end
+do
+    spawn Ff();
+    await 1s;
+end
+escape _V;
+]],
+    run = { ['~>1s']=14 },
+}
+
+Test { [[
+native _V;
+native/pre do
+    int V = 1;
+end
+code/await Ff (void)=>void do
+    do finalize with
+        _V = _V + 10;
+    end
+    await async/thread do
+        _V = _V + 1;
+    end
+    _V = _V * 2;
+    await FOREVER;
+end
+do
+    spawn Ff();
+    await 1s;
+end
+escape _V;
+]],
+    run = { ['~>1s']=14 },
+}
+
 --<<< ASYNCS / THREADS
