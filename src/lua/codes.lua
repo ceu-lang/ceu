@@ -785,7 +785,7 @@ ceu_callback_assert_msg(]]..CUR('__max_'..me.n)..' < '..V(max)..[[, "`loop´ ove
         local async = AST.par(me, 'Async')
         if async then
             LINE(me, [[
-ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
             HALT(me, {
                 { ['evt.id'] = 'CEU_INPUT__ASYNC' },
@@ -1312,7 +1312,7 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.
             end
         else
             LINE(me, [[
-ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__ASYNC;
 _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 ]])
@@ -1418,7 +1418,7 @@ _CEU_HALT_]]..me.n..[[_:
         local e = unpack(me)
         LINE(me, [[
 {
-    ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+    ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
     s32 __ceu_dt = ]]..V(e)..[[;
     do {
         ceu_input(CEU_INPUT__WCLOCK, &__ceu_dt);
@@ -1441,7 +1441,7 @@ _CEU_HALT_]]..me.n..[[_:
     Async = function (me)
         local _,blk = unpack(me)
         LINE(me, [[
-ceu_callback_num_ptr(CEU_CALLBACK_PENDING_ASYNC, 0, NULL);
+ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
 ]])
         HALT(me, {
             { ['evt.id'] = 'CEU_INPUT__ASYNC' },
@@ -1578,6 +1578,7 @@ static CEU_THREADS_PROTOTYPE(_ceu_thread_]]..me.n..[[,void* __ceu_p)
 ]]..me.lbl_abt.id..[[:
 
     /* terminate thread */
+    ceu_callback_void_void(CEU_CALLBACK_THREAD_TERMINATING);
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
     _ceu_p.thread->has_terminated = 1;
     _ceu_mem->trails[]]..me.trails[1]..[[].evt.id = CEU_INPUT__NONE;

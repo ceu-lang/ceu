@@ -723,7 +723,7 @@ static tceu_callback_ret ceu_callback_go_all (int cmd, tceu_callback_arg p1, tce
             ceu_cb_terminating = 1;
             ceu_cb_terminating_ret = p1.num;
             break;
-        case CEU_CALLBACK_PENDING_ASYNC:
+        case CEU_CALLBACK_ASYNC_PENDING:
             ceu_cb_pending_async = 1;
             break;
         default:
