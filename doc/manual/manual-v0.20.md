@@ -1,56 +1,28 @@
-<title>Céu 0.10 - Reference Manual - (warning, incomplete!)</title>
+<title>Céu 0.20 - Reference Manual</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></p>
 
 Introduction
 ============
 
-> *Warning:*
-*This manual is under a rewriting process and still mostly reflects version 0.8.*
-
-Céu is an imperative, concurrent and reactive language in which then lines of 
-execution, known as *trails*, react together continuously and in synchronous 
-steps to external input events from the environment.
+Céu provides *Structured Synchronous Reactive Programming* which supports
+safe and deterministic concurrency with side effects.
+The lines of execution in Céu, known as *trails*, react together continuously
+and in synchronous steps to external input events from the environment.
 Waiting for an event halts the running trail until that event occurs.
 The environment broadcasts an occurring event to all active trails, which share 
-a single global time reference (the event itself).
+a single global time reference.
 
-The synchronous concurrency model of Céu greatly diverges from conventional 
-multithreading (e.g. *pthreads* and *Java threads*) and the actor model
-(e.g.  *erlang* and *Go*).
-On the one hand, trails can share variables in a deterministic and seamless way 
-(e.g. no need for locks or semaphores).
-On the other hand, there is no real parallelism (e.g. multi-core execution) in 
-the standard synchronous execution mode of the language.
+The synchronous concurrency model of Céu diverges from multithreading and also
+from actor-based models (e.g. *pthreads* and *erlang*).
+On the one hand, there is no real parallelism at the synchronous kernel of the
+language (i.e., no multi-core execution).
+On the other hand, trails can share variables deterministically without
+synchronization primitives (i.e., no locks, semaphores, queues).
 
-Céu integrates well with C, being possible to define and call C functions from 
-within Céu programs.
+Céu integrates safely with C, and programs can define and make native calls
+seamlessly while avoiding memory leaks and dangling pointers.
 
 Céu is [free software](#license).
-
-<!--
-Céu is a language for real-time concurrency with complex control 
-specifications, but not for algorithm-intensive or distributed applications.
- "Structured Synchronous Reactive Programming"
-(safe and deterministic concurrency with side effects)
-Céu supports mutable data, with static memory and safe pointer manipulation.
-Céu is a programming language for reactive applications and intends to offer a 
-higher-level and safer alternative to C.
-The two main peculiarities of Céu are the [synchronous execution 
-model](#synchronous-execution-model) and the use of [organisms as 
-abstractions](#organisms-as-abstractions).
-Reactive applications interact in real time and continuously with external 
-stimuli from the environment.
-They represent a wide range of software areas and platforms: from games in 
-powerful desktops, *"apps"* in capable smart phones, to the emerging internet 
-of things in constrained embedded systems.
-Céu supports concurrent lines of execution---known as *trails*---that react 
-continuously to input events from the environment.
-Céu has a memory footprint of around 2Kb of ROM and 50b of RAM (on embedded 
-platform such as Arduino).
-For a gentle introduction about Céu, see the [interactive 
-tutorial](http://www.ceu-lang.org/try.php).
-See also the complete [Syntax](#syntax) of Céu.
--->
 
 Synchronous execution model
 ---------------------------
