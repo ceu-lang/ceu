@@ -482,7 +482,7 @@ F = {
             if ID_ext.dcl.tag ~= 'Ext' then
                 expects = 'error'
             elseif AST.par(me,'Async') or AST.par(me,'_Async_Isr') then
-DBG'TODO: _Async_Isr'
+--TODO: _Async_Isr
                 expects = 'input'
             else
                 expects = 'output'

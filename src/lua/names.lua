@@ -175,7 +175,7 @@ DBG'TODO: type annotation'
 
         -- ctx
         INFO.asr_tag(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
-DBG('TODO: remove pool')
+--DBG('TODO: remove pool')
 
         -- tp
         local _,mod = unpack(e.info.tp)

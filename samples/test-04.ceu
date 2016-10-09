@@ -1,4 +1,4 @@
-native _printf, _sleep;
+native _sleep;
 par/or do
     // global lua state
     [[ v = 0 ]];

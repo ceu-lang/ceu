@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '25be151d9fdb411050707d76ae22a06fb6b0a40e',
+    ceu_git = 'fc8dd9921366017e13b685b1449ba42b9cb8b123',
     files = {
         ceu_c =
             [====[
@@ -5709,7 +5709,7 @@ DBG'TODO: type annotation'
 
         -- ctx
         INFO.asr_tag(e, {'Nat','Var','Pool'}, 'invalid operand to `'..op..'´')
-DBG('TODO: remove pool')
+--DBG('TODO: remove pool')
 
         -- tp
         local _,mod = unpack(e.info.tp)
@@ -6872,7 +6872,7 @@ F = {
             if ID_ext.dcl.tag ~= 'Ext' then
                 expects = 'error'
             elseif AST.par(me,'Async') or AST.par(me,'_Async_Isr') then
-DBG'TODO: _Async_Isr'
+--TODO: _Async_Isr
                 expects = 'input'
             else
                 expects = 'output'
