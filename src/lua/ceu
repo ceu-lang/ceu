@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '61f030ac3a323af6fc34c6759134caca98f26e28',
+    ceu_git = '520c6038e931acdd9b86c2b76c304be9f5211fe9',
     files = {
         ceu_c =
             [====[
@@ -1974,6 +1974,17 @@ function ASR2 (cond, ln, code, msg, extra)
     end
 end
 
+local pass = function () end
+function ASR_WRN_PASS (v)
+    if v == 'error' then
+        return ASR
+    elseif v == 'warning' then
+        return WRN
+    else
+        assert(v == 'pass')
+        return pass
+    end
+end
 
 end
 
@@ -2008,9 +2019,10 @@ Options:
     --ceu-input=FILE                input file to compile (Céu source)
     --ceu-output=FILE               output source file to generate (C source)
     --ceu-line-directives=BOOL      insert `#line´ directives in the C output
-    --ceu-err-unused-native=OPT     error|warning|pass
-
-
+    --ceu-err-unused=OPT            Unused identifier: error|warning|pass
+    --ceu-err-unused-native=OPT         native identifier
+    --ceu-err-unused-code=OPT           code identifier
+    --ceu-err-uninitialized=OPT     Uninitialized variable: error|warning|pass
 
     --env                       Environment phase: packs all C files together
     --env-types=FILE                header file with type declarations (C source)
@@ -2110,7 +2122,6 @@ if CEU.opts.ceu then
     ASR(CEU.opts.ceu_input, 'expected option `ceu-input´')
 
     CEU.opts.ceu_output = CEU.opts.ceu_output or '-'
-    CEU.opts.ceu_err_unused_native = CEU.opts.ceu_err_unused_native or 'warning'
 else
     check_no('ceu')
 end
@@ -5021,15 +5032,13 @@ F = {
                 -- auto generated
             else
                 local f = WRN
-                if dcl.tag=='Nat' then
-                    if CEU.opts.ceu_err_unused_native == 'error' then
-                        f = ASR
-                    elseif CEU.opts.ceu_err_unused_native == 'warning' then
-                        f = WRN
-                    else
-                        assert(CEU.opts.ceu_err_unused_native == 'pass')
-                        f = F.__pass
-                    end
+                if CEU.opts.ceu_err_unused then
+                    f = ASR_WRN_PASS(CEU.opts.ceu_err_unused)
+                end
+                if dcl.tag=='Nat' and CEU.opts.ceu_err_unused_native then
+                    f = ASR_WRN_PASS(CEU.opts.ceu_err_unused_native)
+                elseif dcl.tag=='Code' and CEU.opts.ceu_err_unused_code then
+                    f = ASR_WRN_PASS(CEU.opts.ceu_err_unused_code)
                 end
                 f(dcl.is_used or dcl.is_predefined, dcl,
                   AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')
@@ -7213,8 +7222,12 @@ local function run_inits (par, i, Dcl, stop)
                     local ID_int = AST.asr(sub,'Exp_Name', 1,'ID_int')
                     if ID_int.dcl == Dcl then
                         if me.tag == 'Set_Any' then
-                            WRN(false, Dcl,
-                                'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'"')
+                            local f = WRN
+                            if CEU.opts.ceu_err_uninitialized then
+                                f = ASR_WRN_PASS(CEU.opts.ceu_err_uninitialized)
+                            end
+                            f(false, Dcl,
+                              'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'"')
                         end
                         if me.tag == 'Set_Alias' then
                             me.is_init = true       -- refuse all others

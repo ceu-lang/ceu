@@ -26,9 +26,10 @@ Options:
     --ceu-input=FILE                input file to compile (Céu source)
     --ceu-output=FILE               output source file to generate (C source)
     --ceu-line-directives=BOOL      insert `#line´ directives in the C output
-    --ceu-err-unused-native=OPT     error|warning|pass
-
-
+    --ceu-err-unused=OPT            Unused identifier: error|warning|pass
+    --ceu-err-unused-native=OPT         native identifier
+    --ceu-err-unused-code=OPT           code identifier
+    --ceu-err-uninitialized=OPT     Uninitialized variable: error|warning|pass
 
     --env                       Environment phase: packs all C files together
     --env-types=FILE                header file with type declarations (C source)
@@ -128,7 +129,6 @@ if CEU.opts.ceu then
     ASR(CEU.opts.ceu_input, 'expected option `ceu-input´')
 
     CEU.opts.ceu_output = CEU.opts.ceu_output or '-'
-    CEU.opts.ceu_err_unused_native = CEU.opts.ceu_err_unused_native or 'warning'
 else
     check_no('ceu')
 end

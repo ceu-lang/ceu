@@ -183,15 +183,13 @@ F = {
                 -- auto generated
             else
                 local f = WRN
-                if dcl.tag=='Nat' then
-                    if CEU.opts.ceu_err_unused_native == 'error' then
-                        f = ASR
-                    elseif CEU.opts.ceu_err_unused_native == 'warning' then
-                        f = WRN
-                    else
-                        assert(CEU.opts.ceu_err_unused_native == 'pass')
-                        f = F.__pass
-                    end
+                if CEU.opts.ceu_err_unused then
+                    f = ASR_WRN_PASS(CEU.opts.ceu_err_unused)
+                end
+                if dcl.tag=='Nat' and CEU.opts.ceu_err_unused_native then
+                    f = ASR_WRN_PASS(CEU.opts.ceu_err_unused_native)
+                elseif dcl.tag=='Code' and CEU.opts.ceu_err_unused_code then
+                    f = ASR_WRN_PASS(CEU.opts.ceu_err_unused_code)
                 end
                 f(dcl.is_used or dcl.is_predefined, dcl,
                   AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')

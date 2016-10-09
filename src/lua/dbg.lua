@@ -105,3 +105,14 @@ function ASR2 (cond, ln, code, msg, extra)
     end
 end
 
+local pass = function () end
+function ASR_WRN_PASS (v)
+    if v == 'error' then
+        return ASR
+    elseif v == 'warning' then
+        return WRN
+    else
+        assert(v == 'pass')
+        return pass
+    end
+end

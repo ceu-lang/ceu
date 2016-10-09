@@ -229,8 +229,12 @@ local function run_inits (par, i, Dcl, stop)
                     local ID_int = AST.asr(sub,'Exp_Name', 1,'ID_int')
                     if ID_int.dcl == Dcl then
                         if me.tag == 'Set_Any' then
-                            WRN(false, Dcl,
-                                'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'"')
+                            local f = WRN
+                            if CEU.opts.ceu_err_uninitialized then
+                                f = ASR_WRN_PASS(CEU.opts.ceu_err_uninitialized)
+                            end
+                            f(false, Dcl,
+                              'uninitialized '..AST.tag2id[Dcl.tag]..' "'..Dcl.id..'"')
                         end
                         if me.tag == 'Set_Alias' then
                             me.is_init = true       -- refuse all others
