@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = 'fc8dd9921366017e13b685b1449ba42b9cb8b123',
+    ceu_git = 'e2694ffbfa98f71b4f9f1d295ae23fc023154515',
     files = {
         ceu_c =
             [====[
@@ -2659,15 +2659,15 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                           ) * (CKK'[' + CKK']') *
                           OPT(KK',' * V'__Exp')
 
-    , _Loop_Num  = K'loop' * OPT('/'*V'__Exp') *
+    , _Loop_Num = K'loop' * OPT('/'*V'__Exp') *
                     (V'__ID_int'+V'ID_any') * OPT(K'in' * V'_Loop_Num_Range') *
-                   V'__Do'
-    , _Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                        OPT(PARENS(V'List_Watching')) *
-                            K'in' * V'Exp_Name' *
-                   V'__Do'
-    , Loop       = K'loop' * OPT('/'*V'__Exp') *
-                   V'__Do'
+                  V'__Do'
+    , Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
+                    OPT(PARENS(V'List_Watching')) *
+                        K'in' * V'Exp_Name' *
+                  V'__Do'
+    , Loop      = K'loop' * OPT('/'*V'__Exp') *
+                  V'__Do'
 
     , _Every  = K'every' * OPT((V'Exp_Name'+PARENS(V'List_Name_Any')) * K'in') *
                     (V'Await_Ext' + V'Await_Int' + V'Await_Wclock') *
@@ -3110,7 +3110,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
               + V'_Data_block'
               + V'Nat_Block'
               + V'Do'    + V'_If'
-              + V'Loop' + V'_Loop_Num' + V'_Loop_Pool'
+              + V'Loop' + V'_Loop_Num' + V'Loop_Pool'
               + V'_Every'
               + V'_Spawn_Block'
               + V'Finalize'
@@ -4016,13 +4016,6 @@ error'TODO'
                         i,
                         node('Loop_Num_Range', me.ln, fr, dir, to, step),
                         body)))
-    end,
-
-    _Loop_Pool__PRE = function (me)
-        me.tag = 'Loop_Pool'
--- TODO
-DBG('TODO: _Loop_Pool')
-        --return node('Nothing', me.ln)
     end,
 
     _Every__PRE = function (me)

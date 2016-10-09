@@ -410,15 +410,15 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                           ) * (CKK'[' + CKK']') *
                           OPT(KK',' * V'__Exp')
 
-    , _Loop_Num  = K'loop' * OPT('/'*V'__Exp') *
+    , _Loop_Num = K'loop' * OPT('/'*V'__Exp') *
                     (V'__ID_int'+V'ID_any') * OPT(K'in' * V'_Loop_Num_Range') *
-                   V'__Do'
-    , _Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                        OPT(PARENS(V'List_Watching')) *
-                            K'in' * V'Exp_Name' *
-                   V'__Do'
-    , Loop       = K'loop' * OPT('/'*V'__Exp') *
-                   V'__Do'
+                  V'__Do'
+    , Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
+                    OPT(PARENS(V'List_Watching')) *
+                        K'in' * V'Exp_Name' *
+                  V'__Do'
+    , Loop      = K'loop' * OPT('/'*V'__Exp') *
+                  V'__Do'
 
     , _Every  = K'every' * OPT((V'Exp_Name'+PARENS(V'List_Name_Any')) * K'in') *
                     (V'Await_Ext' + V'Await_Int' + V'Await_Wclock') *
@@ -861,7 +861,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
               + V'_Data_block'
               + V'Nat_Block'
               + V'Do'    + V'_If'
-              + V'Loop' + V'_Loop_Num' + V'_Loop_Pool'
+              + V'Loop' + V'_Loop_Num' + V'Loop_Pool'
               + V'_Every'
               + V'_Spawn_Block'
               + V'Finalize'
