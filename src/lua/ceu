@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = 'e2694ffbfa98f71b4f9f1d295ae23fc023154515',
+    ceu_git = '3b5ca11068e839920d007e454005f39f46866e84',
     files = {
         ceu_c =
             [====[
@@ -2366,11 +2366,11 @@ local T = {
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
         'statement'
     },
     {
@@ -2538,35 +2538,39 @@ KEYS = P
 'val' +
 'until' +
 'true' +
+'traverse' +
+'tight' +
+'thread' +
 'then' +
 'spawn' +
 'sizeof' +
 'request' +
+'recursive' +
+'pure' +
 'pre' +
+'pos' +
 'pool' +
-'pause/if' +
-'par/or' +
-'par/and' +
+'plain' +
+'pause' +
 'par' +
-'output/input' +
 'output' +
 'outer' +
 'or' +
 'null' +
 'nothing' +
 'not' +
+'nohold' +
 'new' +
 'native' +
 'lua' +
 'loop' +
 'kill' +
+'isr' +
 'is' +
--- TODO: remove class/interface
-'class' + 'interface' + 'traverse' +
-'input/output' +
 'input' +
 'in' +
 'if' +
+'hold' +
 'FOREVER' +
 'finalize' +
 'false' +
@@ -2575,20 +2579,18 @@ KEYS = P
 'escape' +
 'end' +
 'emit' +
-'else/if' +
 'else' +
+'dynamic' +
 'do' +
 'deterministic' +
 'data' +
 'continue' +
+'const' +
 'code' +
-'call/recursive' +
 'call' +
 'break' +
 'await' +
 'atomic' +
-'async/thread' +
-'async/isr' +
 'async' +
 'as' +
 'and' +
@@ -2694,11 +2696,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -- ASYNCHRONOUS
 
-    , Async   = K'async' * (-P'/thread'-'/isr') * OPT(PARENS(V'Varlist')) *
-                V'__Do'
-    , Async_Thread = K'await' * K'async/thread' * OPT(PARENS(V'Varlist')) * V'__Do'
-    , _Async_Isr   = K'async/isr'    *
-                        KK'[' * V'Explist' * KK']' *
+    , Async        = K'await' * K'async' * (-P'/thread'-'/isr') *
+                        OPT(PARENS(V'Varlist')) * V'__Do'
+    , Async_Thread = K'await' * K'async/thread' *
+                        OPT(PARENS(V'Varlist')) * V'__Do'
+    , _Async_Isr   = K'async/isr' * KK'[' * V'Explist' * KK']' *
                             OPT(PARENS(V'Varlist')) *
                       V'__Do'
     , Atomic  = K'atomic' * V'__Do'

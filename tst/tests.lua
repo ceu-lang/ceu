@@ -1385,11 +1385,18 @@ escape ret;
     run = 1,
 }
 Test { [[
+async do
+end
+escape 1;
+]],
+    parser = 'line 1 : after `begin of file´ : expected statement',
+}
+Test { [[
 input void A;
 par/or do
     await A;
 with
-    async do
+    await async do
         emit A;
     end
 end
@@ -1402,7 +1409,7 @@ input void A;
 par/or do
     await A;
 with
-    async do
+    await async do
         emit A;
     end
     await FOREVER;
@@ -1437,7 +1444,7 @@ par/or do
     await A;
     ret = 10;
 with
-    async do
+    await async do
         emit A;
     end
     await FOREVER;
@@ -1451,7 +1458,7 @@ input int A;
 par/or do
     await A;
 with
-    async do
+    await async do
         emit A(10);
     end
 end;
@@ -1486,7 +1493,7 @@ var int ret=0;
 par/or do
     ret = await A;
 with
-    async do
+    await async do
         emit A(10);
     end;
 end
@@ -1501,7 +1508,7 @@ var int ret;
 par/or do
     ret = await A;
 with
-    async do
+    await async do
         emit A(10);
     end;
 end
@@ -1515,7 +1522,7 @@ input int A;
 par/and do
     await A;
 with
-    async do
+    await async do
         emit A(10);
     end;
 end;
@@ -1532,7 +1539,7 @@ var int v=0;
 par/and do
     v = await A;
 with
-    async do
+    await async do
         emit A(10);
     end;
 end;
@@ -1587,14 +1594,14 @@ Test { [[await -1ms; escape 0;]],
     --ast = "line 1 : after `await´ : expected event",
     --parser = 'line 1 : after `1´ : expected `;´',
     --parser = 'line 1 : after `1´ : expected `(´ or `[´ or `:´ or `.´ or `?´ or `!´ or `is´ or `as´ or binary operator or `until´ or `;´',
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `async/thread´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `async´ or `async/thread´ or `FOREVER´',
 }
 
 Test { [[await 1; escape 0;]],
     parser = 'line 1 : after `1´ : expected `h´ or `min´ or `s´ or `ms´ or `us´',
 }
 Test { [[await -1; escape 0;]],
-    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `async/thread´ or `FOREVER´',
+    parser = 'line 1 : after `await´ : expected number or `(´ or abstraction identifier or external identifier or name expression or `{´ or `async´ or `async/thread´ or `FOREVER´',
     --env = 'line 1 : event "?" is not declared',
 }
 
@@ -1648,7 +1655,7 @@ escape a + 1;
 }
 
 Test { [[
-async do
+await async do
 end
 escape 10;
 ]],
@@ -1660,7 +1667,7 @@ escape 10;
 
 Test { [[
 var int a = 0;
-async do
+await async do
     emit 1min;
     escape 10;
 end;
@@ -1674,7 +1681,7 @@ escape a + 1;
 
 Test { [[
 var int a;
-async (a) do
+await async (a) do
     a = 1;
 end;
 escape a + 1;
@@ -1685,7 +1692,7 @@ escape a + 1;
 Test { [[
 var int a;
 var& int pa = &a;
-async (pa) do
+await async (pa) do
     emit 1min;
     pa = 10;
 end;
@@ -1697,7 +1704,7 @@ escape a + 1;
 Test { [[
 var int a = 0;
 var& int pa = &a;
-async (pa) do
+await async (pa) do
     emit 1min;
     pa = 10;
 end;
@@ -1745,7 +1752,7 @@ par do
     var int a = await 10us;
     escape a;
 with
-    async do
+    await async do
         emit 11us;
     end
 end
@@ -2021,7 +2028,7 @@ par do
     end
     escape v1 + v2;
 with
-    async do
+    await async do
         emit 5ms;
         emit(5000)ms;
     end
@@ -2465,7 +2472,7 @@ end
 Test { [[
 input int A;
 par do
-    async do end
+    await async do end
 with
     await A;
     escape 1;
@@ -2476,7 +2483,7 @@ end
 
 Test { [[
 par do
-    async do end
+    await async do end
 with
     escape 1;
 end
@@ -3409,7 +3416,7 @@ escape 1;   // unreachs
 
 Test { [[
 loop do
-    async do
+    await async do
         break;
     end;
 end;
@@ -4014,7 +4021,7 @@ with
     await B;
     await B;
 with
-    async do
+    await async do
         emit B(1,2);
         emit B(10,20);
     end
@@ -4093,7 +4100,7 @@ with
     await A;
     escape 1;
 with
-    async do
+    await async do
         emit A(1,1);
     end
 end
@@ -4116,7 +4123,7 @@ end
 
 Test { [[
 input (int,int) A;
-async do
+await async do
     emit A(1,3);
 end
 escape 1;
@@ -4133,7 +4140,7 @@ par do
         escape a+b;
     end
 with
-    async do
+    await async do
         emit A(1,3);
     end
 end
@@ -4150,7 +4157,7 @@ par do
         escape a+b;
     end
 with
-    async do
+    await async do
         emit A(1,3);
     end
 end
@@ -4168,7 +4175,7 @@ par do
         escape a+b;
     end
 with
-    async do
+    await async do
         emit A(1,3);
     end
 end
@@ -4234,7 +4241,7 @@ par do
         escape a+b;
     end
 with
-    async do
+    await async do
         emit A(1,3);
     end
 end
@@ -4252,7 +4259,7 @@ par do
         escape a+b;
     end
 with
-    async do
+    await async do
         emit A(1,3);
     end
 end
@@ -4269,7 +4276,7 @@ par do
         escape a+b;
     end
 with
-    async do
+    await async do
         emit A(1,3);
     end
 end
@@ -4288,7 +4295,7 @@ par do
         escape a+b;
     end
 with
-    async do
+    await async do
         emit A(1,3);
     end
 end
@@ -5038,7 +5045,7 @@ var int sum = 0;
 par/or do
     loop i in [0->1[ do    // 4
         await A;
-        async do
+        await async do
             var int a = 1;
             if a!=0 then end
         end
@@ -5063,7 +5070,7 @@ par/or do
     sum = 5;            // 4
     loop i in [0->10[ do       // 5
         await A;
-        async do
+        await async do
             var int a = 1;
             if a!=0 then end
         end
@@ -5071,7 +5078,7 @@ par/or do
     sum = 0;            // 11
 with
     loop i in [0 -> 2[ do        // 13
-        async do
+        await async do
             var int a = 1;
             if a!=0 then end
         end
@@ -5090,7 +5097,7 @@ par/or do
     sum = 5;            // 4
     loop i in [0 -> 10[ do       // 5
         await A;
-        async do
+        await async do
             var int a = 1;
             if a!=0 then end
         end
@@ -5098,7 +5105,7 @@ par/or do
     sum = 0;            // 11
 with
     loop i in [0 -> 2[ do        // 13
-        async do
+        await async do
             var int a = 1;
             if a!=0 then end
         end
@@ -5420,7 +5427,7 @@ par/and do
     (x1,_) = await B;
     (_,x2) = await B;
 with
-    async do
+    await async do
         emit B(10,10);
         emit B(1,10);
         emit B(10,2);
@@ -5879,7 +5886,7 @@ var float ret=0;
 par/and do
     ret = await X;
 with
-    async do
+    await async do
         emit X(1.1);
     end
 end
@@ -7849,7 +7856,7 @@ par do
 with
     loop do
         await 500ms;
-        async do
+        await async do
         end
     end
 end
@@ -7871,7 +7878,7 @@ par do
 with
     loop do
         await 1s;
-        async do
+        await async do
         end
     end
 end
@@ -8505,7 +8512,7 @@ end;
 
 Test { [[
 input int A;
-async do
+await async do
     emit A;
 end
 escape 1;
@@ -8757,7 +8764,7 @@ with
         if t!=0 then end;
     end
 with
-    async do
+    await async do
         emit 12ms;
         emit A;
         emit 12ms;
@@ -15745,7 +15752,7 @@ escape 10;
 
 Test { [[
 var int v1=0;
-async do
+await async do
     var int v = v1 + 1;
 end;
 escape 0;
@@ -15760,12 +15767,12 @@ par do
     loop do
         par/or do
             await B;
-            async do
+            await async do
                 var int v = v1 + 1;
             end;
         with
             await B;
-            async do
+            await async do
                 var int v = v2 + 1;
             end;
         with
@@ -15784,7 +15791,7 @@ end;
 
 Test { [[
 var int v=2;
-async (v) do
+await async (v) do
     var int a = v;
     if a!=0 then end;
 end;
@@ -15797,7 +15804,7 @@ Test { [[
 var int v=2;
 var int x=v;
 var& int px = &x;
-async (px, v) do
+await async (px, v) do
     px = v + 1;
 end;
 escape x + v;
@@ -15807,7 +15814,7 @@ escape x + v;
 
 Test { [[
 var int a = 0;
-async (a) do
+await async (a) do
     a = 1;
     do
     end
@@ -15819,7 +15826,7 @@ escape a;
 
 Test { [[
 var int a = 0;
-async (a) do
+await async (a) do
     a = 1;
     do
     end
@@ -15834,7 +15841,7 @@ input void Z;
 var int v=2;
 var int ret = 0;
 par/or do
-    async (ret,v) do        // nd
+    await async (ret,v) do        // nd
         ret = v + 1;
     end;
 with
@@ -15856,13 +15863,13 @@ par do
     loop do
         par/or do
             await B;
-            async (v1) do
+            await async (v1) do
                 var int v = v1 + 1;
                 if v!=0 then end
             end;
         with
             await B;
-            async (v2) do
+            await async (v2) do
                 var int v = v2 + 1;
                 if v!=0 then end
             end;
@@ -15887,12 +15894,12 @@ par do
     loop do
         par/or do
             await B;
-            async do
+            await async do
                 var int v = v1 + 1;
             end;
         with
             await B;
-            async do
+            await async do
                 var int v = v2 + 1;
             end;
         with
@@ -15947,7 +15954,7 @@ par do
         end;
     end;
 with
-    async do
+    await async do
         emit P2(0);
         emit P2(0);
         emit P2(0);
@@ -20568,7 +20575,7 @@ par/or do
     end
     await A;
 with
-    async do
+    await async do
         var int v = 10;
         emit A(&&v);
         emit A(null);
@@ -20590,7 +20597,7 @@ par/or do
     end
     await A;
 with
-    async do
+    await async do
         var int v = 10;
         emit A(&&v);
         emit A(null);
@@ -20627,7 +20634,7 @@ par/or do
     end
     await A;
 with
-    async do
+    await async do
         var int v = 10;
         emit A((&&v) as void&&);
         emit A(null);
@@ -20659,7 +20666,7 @@ do
     with
         await OS_START;
         var int i = 1;
-        async (i) do
+        await async (i) do
             emit E(i);
         end
     end
@@ -20691,7 +20698,7 @@ do
     with
         await OS_START;
         var int i = 1;
-        async (i) do
+        await async (i) do
             emit E(&&i);
         end
     end
@@ -20721,7 +20728,7 @@ do
     with
         await OS_START;
         var int i = 1;
-        async (i) do
+        await async (i) do
             emit E(&&i);
         end
     end
@@ -20737,7 +20744,7 @@ escape ret + *p;
 
 Test { [[
 var int&& p = null;
-async do end
+await async do end
 escape *p;
 ]],
     inits = 'line 3 : invalid pointer access : crossed `async´ (/tmp/tmp.ceu:2)',
@@ -20779,7 +20786,7 @@ do/_
             end
         with
             await OS_START;
-            async do
+            await async do
                 emit PTR(1, null);
             end
         end
@@ -20807,7 +20814,7 @@ var int&& p = null;
         ret = *p;
     with
         await OS_START;
-        async do
+        await async do
             var int i = 1;
             emit E(&&i);
         end
@@ -20832,7 +20839,7 @@ var int&& p = null;
         ret = *p;
     with
         await OS_START;
-        async do
+        await async do
             var int i = 1;
             emit E(&&i);
         end
@@ -20877,7 +20884,7 @@ var void&& p=null;
     (i,p) = await PTR;
 with
     await OS_START;
-    async do
+    await async do
         emit PTR(1, null);
     end
 end
@@ -20899,7 +20906,7 @@ par/or do
         p = p1;
 with
     await OS_START;
-    async do
+    await async do
         emit PTR(1, null);
     end
 end
@@ -20933,7 +20940,7 @@ var void&& p = null;
     p = p1;
 with
     await OS_START;
-    async do
+    await async do
         emit PTR(1, null);
     end
 end
@@ -20955,7 +20962,7 @@ var void&& p = null;
         (i,p) = await PTR;
     with
         await OS_START;
-        async do
+        await async do
             emit PTR(1, null);
         end
     end
@@ -20980,7 +20987,7 @@ var void&& p = null;
         p = p1;
     with
         await OS_START;
-        async do
+        await async do
             emit PTR(1, null);
         end
     end
@@ -20995,7 +21002,7 @@ escape i;
 
 Test { [[
 input (int,int,int&&) A;
-async do
+await async do
     emit A(1, 1, null);
 end
 escape 1;
@@ -21131,7 +21138,7 @@ input void A;
 var int ret=0;
 var& int pret = &ret;
 par/or do
-   async(pret) do
+   await async(pret) do
       pret=10;
     end;
 with
@@ -21148,7 +21155,7 @@ input void A;
 var int ret=0;
 var& int pret = &ret;
 par/or do
-   async(pret) do
+   await async(pret) do
       pret=10;
     end;
 with
@@ -21165,7 +21172,7 @@ escape ret;
 }
 
 Test { [[
-async do
+await async do
     escape 1;
 end;
 escape 0;
@@ -21186,7 +21193,7 @@ escape a;
 
 Test { [[
 var int a,b;
-async (b) do
+await async (b) do
     a = 1;
 end;
 escape a;
@@ -21197,7 +21204,7 @@ escape a;
 
 Test { [[
 var int a;
-async do
+await async do
     a = 1;
 end;
 escape a;
@@ -21208,7 +21215,7 @@ escape a;
 
 Test { [[
 par/and do
-    async do
+    await async do
         escape 1;
     end;
 with
@@ -21222,7 +21229,7 @@ end;
 
 Test { [[
 par/and do
-    async do
+    await async do
     end;
     escape 1;
 with
@@ -21238,7 +21245,7 @@ end;
 
 Test { [[
 par/and do
-    async do
+    await async do
     end;
     escape 1;
 with
@@ -21257,7 +21264,7 @@ end;
 Test { [[
 var int a;
 par/and do
-    async do
+    await async do
         a = 1;
     end;
 with
@@ -21272,7 +21279,7 @@ escape a;
 }
 
 Test { [[
-async do
+await async do
     escape 1+2;
 end;
 ]],
@@ -21284,7 +21291,7 @@ end;
 Test { [[
 var int a = 1;
 var& int pa = &a;
-async (a) do
+await async (a) do
     var int a = do
         escape 1;
     end;
@@ -21300,7 +21307,7 @@ escape a;
 
 Test { [[
 input void X;
-async do
+await async do
     emit X;
 end;
 escape 0;
@@ -21311,7 +21318,7 @@ escape 0;
 Test { [[
 input int A;
 var int a;
-async do
+await async do
     a = 1;
     emit A(a);
 end;
@@ -21324,7 +21331,7 @@ escape a;
 Test { [[
 input void A;
 var int a;
-async do
+await async do
     a = emit A;
 end;
 escape a;
@@ -21336,7 +21343,7 @@ escape a;
 
 Test { [[
 input void A;
-async do
+await async do
     var int a;
     a = emit A;
 end;
@@ -21346,7 +21353,7 @@ escape 1;
 }
 Test { [[
 input void A;
-async do
+await async do
     emit A(1);
 end;
 escape 1;
@@ -21356,7 +21363,7 @@ escape 1;
 
 Test { [[
 event int a;
-async do
+await async do
     emit a(1);
 end;
 escape 0;
@@ -21365,7 +21372,7 @@ escape 0;
 }
 Test { [[
 event int a;
-async do
+await async do
     await a;
 end;
 escape 0;
@@ -21373,7 +21380,7 @@ escape 0;
     dcls = 'line 3 : internal identifier "a" is not declared',
 }
 Test { [[
-async do
+await async do
     await 1ms;
 end;
 escape 0;
@@ -21382,7 +21389,7 @@ escape 0;
 }
 Test { [[
 input int X;
-async do
+await async do
     emit X(1);
 end;
 emit X(1);
@@ -21391,15 +21398,15 @@ escape 0;
     stmts = 'line 5 : invalid `emit´ : unexpected context for external `input´ "X"',
 }
 Test { [[
-async do
-    async do
+await async do
+    await async do
     end;
 end;
 ]],
     props='not permitted inside `async´'
 }
 Test { [[
-async do
+await async do
     par/or do
     with
     end;
@@ -21410,7 +21417,7 @@ end;
 
 Test { [[
 loop do
-    async do
+    await async do
         break;
     end;
 end;
@@ -21425,7 +21432,7 @@ native _a;
 native/pos do
     int a;
 end
-async do
+await async do
     _a = 1;
 end
 escape _a;
@@ -21439,11 +21446,11 @@ native/pos do
     int a, b;
 end
 par/and do
-    async do
+    await async do
         _a = 1;
     end
 with
-    async do
+    await async do
         _a = 1;
     end
 end
@@ -21465,11 +21472,11 @@ native/pos do
     int c;
 end
 par/and do
-    async do
+    await async do
         _b = 1;
     end
 with
-    async do
+    await async do
         _a = 1;
     end
 with
@@ -21545,11 +21552,11 @@ native/pos do
     int c;
 end
 par/and do
-    async do
+    await async do
         _b = 1;
     end
 with
-    async do
+    await async do
         _a = 1;
     end
 with
@@ -21565,7 +21572,7 @@ escape _a+_b+_c;
 
 Test { [[
 var int r=0;
-async(r) do
+await async(r) do
     var int i = 100;
     r = i;
 end;
@@ -21576,7 +21583,7 @@ escape r;
 
 Test { [[
 var int ret=0;
-async (ret) do
+await async (ret) do
     var int i = 100;
     var int sum = 10;
     sum = sum + i;
@@ -21623,7 +21630,7 @@ input int B;
 var int ret = 0;
 var int f=0;
 par/and do
-    async(ret) do
+    await async(ret) do
         var int sum = 0;
         var int i = 0;
         loop do
@@ -21649,7 +21656,7 @@ input int B;
 var int ret = 0;
 var int f=0;
 par/and do
-    async(ret) do
+    await async(ret) do
         var int sum = 0;
         var int i = 0;
         loop do
@@ -21676,7 +21683,7 @@ input int B;
 var int ret = 0;
 var int f=0;
 par/or do
-    async(ret) do
+    await async(ret) do
         var int sum = 0;
         var int i = 0;
         loop do
@@ -21703,7 +21710,7 @@ par do
     await B;
     escape 1;
 with
-    async do
+    await async do
         loop do
             if false then
                 break;
@@ -21721,7 +21728,7 @@ input int B;
 par/or do
     await B;
 with
-    async do
+    await async do
         loop do
         end;
     end;
@@ -21734,7 +21741,7 @@ escape 0;
 
 Test { [[
 var int ret=0;
-async (ret) do
+await async (ret) do
     var int i = 100;
     i = i - 1;
     ret = i;
@@ -21746,7 +21753,7 @@ escape ret;
 
 Test { [[
 var int ret=0;
-async(ret) do
+await async(ret) do
     var int i = 100;
     loop do
         break;
@@ -21763,7 +21770,7 @@ escape ret;
 
 Test { [[
 var int ret=0;
-async(ret) do
+await async(ret) do
     var int i = 0;
     if i!=0 then
         i = 1;
@@ -21780,7 +21787,7 @@ escape ret;
 Test { [[
 var int i=0;
 var& int pi=&i;
-async (pi) do
+await async (pi) do
     var int i = 10;
     loop do
         i = i - 1;
@@ -21799,7 +21806,7 @@ escape i;
 Test { [[
 var int i=0;
 var& int pi=&i;
-async (pi) do
+await async (pi) do
     var int i = 10;
     loop do
         i = i - 1;
@@ -21818,7 +21825,7 @@ escape i;
 Test { [[
 var int i=0;
 var& int pi = &i;
-async (pi) do
+await async (pi) do
     var int i = 10;
     loop do
         i = i - 1;
@@ -21856,7 +21863,7 @@ escape i;
 Test { [[
 var int i = 10;
 var& int pi = &i;
-async (pi) do
+await async (pi) do
     loop do
         i = i - 1;
         if not (i as bool) then
@@ -21873,7 +21880,7 @@ escape i;
 Test { [[
 var int sum=0;
 var& int p = &sum;
-async (p) do
+await async (p) do
     var int i = 10;
     var int sum = 0;
     loop do
@@ -21894,7 +21901,7 @@ escape sum;
 Test { [[
 input int A;
 par do
-    async do
+    await async do
         emit A(1);
     end;
     escape 0;
@@ -21910,7 +21917,7 @@ Test { [[
 input int A, B;
 var int a = 0;
 par/or do
-    async do
+    await async do
     end;
 with
     await B;
@@ -21927,7 +21934,7 @@ escape a;
 Test { [[
 input int A;
 par/or do
-    async do
+    await async do
         emit A(4);
     end;
 with
@@ -21946,7 +21953,7 @@ input void A;
 var int ret = 0;
 par/or do
     loop do
-        async do
+        await async do
             emit A;
         end
         ret = ret + 1;
@@ -21988,7 +21995,7 @@ input _tceu_queue&& GO;
 var _tceu_queue&& qu_;
 every qu_ in GO do
     var _tceu_queue qu = * qu_;
-    async(qu) do
+    await async(qu) do
         emit E(qu.param.ptr);
     end
 end
@@ -22006,7 +22013,7 @@ input _tceu_queue&& GO;
 var _tceu_queue&& qu_;
 every qu_ in GO do
     var _tceu_queue qu = * qu_;
-    async(qu) do
+    await async(qu) do
         emit E(qu.param.ptr);
     end
 end
@@ -24743,21 +24750,21 @@ end
 
 Test { [[
 native/plain _SDL_Rect, _SDL_Point;
-var _SDL_Point pos;
+var _SDL_Point p;
 
-var _SDL_Rect rect = _SDL_Rect(pos.x, pos.y);
+var _SDL_Rect rect = _SDL_Rect(p.x, p.y);
 await 1s;
 var _SDL_Rect r = rect;
 escape 1;
 ]],
-    inits = 'line 2 : uninitialized variable "pos" : reached read access (/tmp/tmp.ceu:4)',
-    --ref = 'line 4 : invalid access to uninitialized variable "pos" (declared at /tmp/tmp.ceu:2)',
+    inits = 'line 2 : uninitialized variable "p" : reached read access (/tmp/tmp.ceu:4)',
+    --ref = 'line 4 : invalid access to uninitialized variable "p" (declared at /tmp/tmp.ceu:2)',
 }
 Test { [[
 native/plain _SDL_Rect, _SDL_Point;
-var _SDL_Point pos = _SDL_Point(1,1);
+var _SDL_Point p = _SDL_Point(1,1);
 
-var _SDL_Rect rect = _SDL_Rect(pos.x, pos.y);
+var _SDL_Rect rect = _SDL_Rect(p.x, p.y);
 await 1s;
 var _SDL_Rect r = rect;
 escape 1;
@@ -24767,9 +24774,9 @@ escape 1;
 
 Test { [[
 native/plain _SDL_Rect, _SDL_Point;
-var _SDL_Point pos = _SDL_Point(1,1);
+var _SDL_Point p = _SDL_Point(1,1);
 
-var _SDL_Rect rect = _SDL_Rect(pos.x, pos.y);
+var _SDL_Rect rect = _SDL_Rect(p.x, p.y);
 await 1s;
 var _SDL_Rect r = rect;
     r.x = r.x - r.w/2;
@@ -26079,7 +26086,7 @@ par/or do
     key = await SDL_KEYUP;
     if key==null then end;
 with
-    async do
+    await async do
         emit SDL_KEYUP(null);
     end
 end
@@ -26218,14 +26225,14 @@ escape 1;
 Test { [[
 input void A;
 par/or do
-    async do
+    await async do
         emit A;
     end
     escape -1;
 with
     await A;
 end
-async do
+await async do
 end
 escape 1;
 ]],
@@ -26233,7 +26240,7 @@ escape 1;
 }
 
 Test { [[
-async do
+await async do
 
     par/or do
         var int a=0;
@@ -26245,7 +26252,7 @@ end
     props = "line 3 : not permitted inside `async´",
 }
 Test { [[
-async do
+await async do
 
 
     par/and do
@@ -26258,7 +26265,7 @@ end
     props = "line 4 : not permitted inside `async´",
 }
 Test { [[
-async do
+await async do
     par do
         var int a=0;
     with
@@ -26383,7 +26390,7 @@ with
         if read1==read2 and key!=read1 then
             key = read1;
             if key != 1 then
-                async (read1) do
+                await async (read1) do
                     emit KEY(read1);
                 end
             end
@@ -27155,7 +27162,7 @@ escape ret;
 Test { [[
 event bool in_tm;
 pause/if in_tm do
-    async do
+    await async do
         loop i in [0 -> 5[ do
         end
     end
@@ -29498,7 +29505,7 @@ do
     var&? _int a;
     do a = &_f();
     finalize (a) with
-        async do
+        await async do
         end;
     end
 end
@@ -30904,7 +30911,7 @@ par/or do
         end;
     escape a!+b!;
 with
-    async do
+    await async do
         emit E(10,20);
     end
 end
@@ -31085,7 +31092,7 @@ with
     //_assert(0);         // never executes
     escape 99;
 with
-    async do
+    await async do
         emit I;
         emit I;
     end
@@ -33081,7 +33088,7 @@ escape _V;
 Test { [[
 code/await Code (var int x) => int
 do
-    async do end;
+    await async do end;
     escape x;
 end
 var int a = await Code(1);
@@ -33260,7 +33267,7 @@ code/await Rect (void) => void do
 end
 
 par/or do
-    async do
+    await async do
         emit A;
     end
 with
@@ -33306,11 +33313,11 @@ escape 1;
 
 Test { [[
 code/await Play (void) => void do
-    async do end;
+    await async do end;
 end
 
 par/or do
-    async do end;
+    await async do end;
 with
     await Play();
 end
@@ -33380,7 +33387,7 @@ Test { [[
 code/await Scene (void) => void
 do
     par do
-        async do
+        await async do
             loop do
             end
         end
@@ -33605,7 +33612,7 @@ escape 0;
 
 Test { [[
 code/await Ff (event& void e) => void do
-    async do end
+    await async do end
     emit e;
 end
 
@@ -33852,7 +33859,7 @@ code/await Ff (void) => (var&? int x) => void do
 
     vector[] byte c = [1,2,3];
 
-    async do end;
+    await async do end;
 end
 
 var&? int x;
@@ -33869,7 +33876,7 @@ Test { [[
 code/await Ff (void) => (var&? int xxx) => void do
     var int v = 10;
     xxx = &v;
-    async do end;
+    await async do end;
 end
 
 pool[] Ff ffs;
@@ -34045,14 +34052,14 @@ Test { [[
 code/await Ff (void) => (var&? int x) => void do
     var int v = 10;
     x = &v;
-    async do end;
+    await async do end;
 end
 
 var&? int x;
 spawn Ff() => (x);
 
 var int ret = x!;
-async do end;
+await async do end;
 ret = ret + (x? as int) + 1;
 escape ret;
 ]],
@@ -37356,7 +37363,7 @@ escape 1;
 
 Test { [[
 code/await Ff (event& void e) => void do
-    async do end
+    await async do end
     emit e;
 end
 
@@ -37873,7 +37880,7 @@ code/await Ff (void) => (var&? int x, event&? int e) => void do
     var int vv = await e_;
 
     v = v + vv;
-    async do end
+    await async do end
 end
 
 pool[] Ff ffs;
@@ -37904,7 +37911,7 @@ Test { [[
 code/await Ff (void) => (var&? int x) => void do
     var int v = 10;
     x = &v;
-    async do end
+    await async do end
 end
 
 pool[] Ff ffs;
@@ -37939,7 +37946,7 @@ pool[5] Bird birds;
 spawn Bird() in birds;
 spawn Bird() in birds;
 
-async do end;
+await async do end;
 
 event&? void e;
 loop (e) in birds do
@@ -38149,7 +38156,7 @@ code/await Tx (var int v1)=>(var& int v2)=>void do
     _V = _V + v1;
     var int x = v1;
     v2 = &x;
-    async do end;
+    await async do end;
 end
 pool[] Tx ts;
 spawn Tx(10) in ts;
@@ -38173,7 +38180,7 @@ code/await Tx (var int v1)=>(var& int v2)=>void do
     _V = _V + v1;
     var int x = v1;
     v2 = &x;
-    async do end;
+    await async do end;
 end
 pool[] Tx ts;
 spawn Tx(10);
@@ -38234,7 +38241,7 @@ code/await Tx (var int v1)=>(var& int v2)=>void do
     _V = _V + v1;
     var int x = v1;
     v2 = &x;
-    async do end;
+    await async do end;
 end
 pool[] Tx ts;
 spawn Tx(10) in ts;
@@ -38273,7 +38280,7 @@ end
 
 var&? int v;
 spawn Tx(10) => (v);
-async do end
+await async do end
 escape v!;
 ]],
     --asr = '7] runtime error: invalid tag',
@@ -38368,7 +38375,7 @@ Test { [[
 code/await Tx (void)=>(event&? void e)=>void do
     event void e_;
     e = &e_;
-    async do end;
+    await async do end;
     emit e_;
 end
 
@@ -40400,7 +40407,7 @@ class SurfaceBackground with
     var& _WorldObjs__SurfaceBackground me;
 do
     code/tight Set_pos (var _Vector3f&& p)=>void do
-        this.me.pos = Vector3f(p:x, p:y, p:z);
+        this.me.p = Vector3f(p:x, p:y, p:z);
     end
 end
 ]],
@@ -41310,7 +41317,7 @@ native/pos do
     ##define ceu_out_isr_on();
     ##define ceu_out_isr_off();
 end
-async do
+await async do
     atomic do
         nothing;
     end
@@ -41670,7 +41677,7 @@ native/pre do
 end
 native _usleep;
 par/or do
-    async do
+    await async do
         loop i in [0 -> 3[ do
             _usleep(500);
         end
@@ -41696,7 +41703,7 @@ end
 native _usleep;
 native _V;
 par/or do
-    async do
+    await async do
         loop i in [0 -> 3[ do
             _usleep(500);
         end
@@ -41742,7 +41749,7 @@ input int A;
 par/or do
     await A;
 with
-    async do
+    await async do
         emit A(10);
     end
 end;
@@ -41769,7 +41776,7 @@ escape a + 1;
 Test { [[
 var int a=1;
 var& int pa = &a;
-async (pa) do
+await async (pa) do
     emit 1min;
     pa = 10;
 end;
@@ -41817,7 +41824,7 @@ par do
     end
     escape v1 + v2;
 with
-    async do
+    await async do
         emit 5ms;
         emit(5000)ms;
     end
@@ -41929,7 +41936,7 @@ with
         end
     end
 with
-    async do
+    await async do
         emit 12ms;
         emit A;
         emit 12ms;
@@ -42011,7 +42018,7 @@ par do
         end;
     end;
 with
-    async do
+    await async do
         emit P2(0);
         emit P2(0);
         emit P2(0);
@@ -42034,7 +42041,7 @@ par/and do
     await 1s;
     ret = ret + 1;
 with
-    async do
+    await async do
         emit 1s;
     end
     ret = ret + 1;
@@ -42045,7 +42052,7 @@ with
     end
     ret = ret + 1;
 with
-    async do
+    await async do
         emit A;
     end
     ret = ret + 1;
@@ -42059,7 +42066,7 @@ escape ret;
 
 Test { [[
 var int x = 0;
-async do
+await async do
     x = 2;
 end
 escape x;
@@ -42082,7 +42089,7 @@ var int x = 0;
 par/and do
     x = 1;
 with
-    async (x) do
+    await async (x) do
         x = 2;
     end
 end
@@ -42237,7 +42244,7 @@ escape x[0];
 
 Test { [[
 var int v = 1;
-async (v) do
+await async (v) do
     do finalize with
         v = 2;
     end
@@ -42276,7 +42283,7 @@ escape a;
 
 Test { [[
 var int ret = 0;
-async (ret) do
+await async (ret) do
     ret = do escape 1; end;
 end
 escape ret;

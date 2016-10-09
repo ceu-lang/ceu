@@ -4,7 +4,7 @@ par/or do
         _printf("Hello World!\n");
     end
 with
-    async do
+    await async do
         loop i in [0->5[ do
             _sleep(1);
             emit 1s;

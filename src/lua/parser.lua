@@ -117,15 +117,15 @@ local T = {
     },
 
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or `end´',
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
 }
@@ -282,69 +282,69 @@ local TYPES = P'bool' + 'byte'
 
 -- must be in reverse order (to count superstrings as keywords)
 KEYS = P
-'and' +
-'as' +
-'async' +
-'atomic' +
-'await' +
-'break' +
-'call' +
-'code' +
-'const' +
-'continue' +
-'data' +
-'deterministic' +
-'do' +
-'dynamic' +
-'else' +
-'emit' +
-'end' +
-'escape' +
-'event' +
-'every' +
-'false' +
-'finalize' +
-'FOREVER' +
-'hold' +
-'if' +
-'in' +
-'input' +
-'is' +
-'isr' +
-'kill' +
-'loop' +
-'lua' +
-'native' +
-'new' +
-'nohold' +
-'not' +
-'nothing' +
-'null' +
-'or' +
-'outer' +
-'output' +
-'par' +
-'pause' +
-'plain' +
-'pool' +
-'pos' +
-'pre' +
-'pure' +
-'recursive' +
-'request' +
-'sizeof' +
-'spawn' +
-'then' +
-'thread' +
-'tight' +
-'traverse' +
-'true' +
-'until' +
-'val' +
-'var' +
-'vector' +
-'watching' +
 'with' +
+'watching' +
+'vector' +
+'var' +
+'val' +
+'until' +
+'true' +
+'traverse' +
+'tight' +
+'thread' +
+'then' +
+'spawn' +
+'sizeof' +
+'request' +
+'recursive' +
+'pure' +
+'pre' +
+'pos' +
+'pool' +
+'plain' +
+'pause' +
+'par' +
+'output' +
+'outer' +
+'or' +
+'null' +
+'nothing' +
+'not' +
+'nohold' +
+'new' +
+'native' +
+'lua' +
+'loop' +
+'kill' +
+'isr' +
+'is' +
+'input' +
+'in' +
+'if' +
+'hold' +
+'FOREVER' +
+'finalize' +
+'false' +
+'every' +
+'event' +
+'escape' +
+'end' +
+'emit' +
+'else' +
+'dynamic' +
+'do' +
+'deterministic' +
+'data' +
+'continue' +
+'const' +
+'code' +
+'call' +
+'break' +
+'await' +
+'atomic' +
+'async' +
+'as' +
+'and' +
 TYPES
 
 KEYS = KEYS * -m.R('09','__','az','AZ','\127\255')
@@ -447,11 +447,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
 -- ASYNCHRONOUS
 
-    , Async   = K'async' * (-P'/thread'-'/isr') * OPT(PARENS(V'Varlist')) *
-                V'__Do'
-    , Async_Thread = K'await' * K'async/thread' * OPT(PARENS(V'Varlist')) * V'__Do'
-    , _Async_Isr   = K'async/isr'    *
-                        KK'[' * V'Explist' * KK']' *
+    , Async        = K'await' * K'async' * (-P'/thread'-'/isr') *
+                        OPT(PARENS(V'Varlist')) * V'__Do'
+    , Async_Thread = K'await' * K'async/thread' *
+                        OPT(PARENS(V'Varlist')) * V'__Do'
+    , _Async_Isr   = K'async/isr' * KK'[' * V'Explist' * KK']' *
                             OPT(PARENS(V'Varlist')) *
                       V'__Do'
     , Atomic  = K'atomic' * V'__Do'

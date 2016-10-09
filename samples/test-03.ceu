@@ -11,7 +11,7 @@ with
         end
     end
 with
-    async do
+    await async do
         loop i in [0->5[ do
             emit 1s;
             _sleep(1);
