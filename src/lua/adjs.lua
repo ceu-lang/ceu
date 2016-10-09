@@ -524,7 +524,6 @@ DBG('TODO: _Loop_Pool')
         end
 
         if mid then
-DBG('TODO: must be "=> FOREVER"')
             local Abs_Await = AST.get(watch,'Abs_Await') or
                               AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
             ASR(Abs_Await, me, 'unexpected `=>´')

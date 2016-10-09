@@ -34687,6 +34687,21 @@ escape _V;
     run = { ['~>10s']=10 },
 }
 
+Test { [[
+code/await Ff (void) => (var&? int x) => void
+do
+    var int x_ = 10;
+    x = &x_;
+end
+
+var&? int x;
+spawn Ff() => (x);
+await 1s;
+escape x!;
+]],
+    run = { ['~>1s']='10] runtime error: value is not set' },
+}
+
 --<< CODE / WATCHING / SPAWN
 
 -->> CODE / WATCHING / SCOPES
