@@ -229,89 +229,85 @@ Finally, the `par/and` rejoins and the program terminates.
 
 ------------------------------------------------------------------------------
 
-Lexical rules
+Lexical Rules
 =============
 
 Keywords
 --------
 
 Keywords in Céu are reserved names that cannot be used as identifiers (e.g., 
-variable and class names):
+variable names):
 
 <pre><code><b>
+    and             as              async           atomic          await           
 
-        and             async           async/thread    atomic          await
+    break           call            code            const           continue        
 
-        bool            break           byte            call            call/rec
+    data            deterministic   do              dynamic         else            
 
-        char            class           continue        data            do
+    emit            end             escape          event           every           
 
-        else            else/if         emit            end             escape
+    false           finalize        FOREVER         hold            if              
 
-        event           every           f32             f64             false
+    in              input           is              isr             kill            
 
-        finalize        float           FOREVER         function        global
+    loop            lua             native          new             nohold          
 
-        if              in              input           input/output    int
+    not             nothing         null            or              outer           
 
-        interface       interrupt       kill            loop            native
+    output          par             pause           plain           pool            
 
-        native/pre      new             not             nothing         null
+    pos             pre             pure            recursive       request         
 
-        or              outer           output          output/input    par
+    sizeof          spawn           then            thread          tight           
 
-        par/and         par/or          pause/if        pool            pre
+    traverse        true            until           val             var             
 
-        return          s16             s32             s64             s8
+    vector          watching        with            bool            byte            
 
-        request         sizeof          spawn           sync            tag
+    f32             f64             float           int             s16             
 
-        then            this            traverse        true            u16
+    s32             s64             s8              ssize           u16             
 
-        u32             u64             u8              uint            until
+    u32             u64             u8              uint            usize           
 
-        var             void            watching        with            word
-
-        @const          @hold           @nohold         @plain          @pure
-
-        @rec            @safe
+    void            
 
 </b></code></pre>
 
 Identifiers
 -----------
 
-Céu uses identifiers to refer to *variables*, *internal events*, *external 
-events*,  *classes/interfaces*, *data types*, *data tags*, *fields*, and 
-*native symbols*.
+Céu uses identifiers to refer to *types*, *variables*, *vectors*, *pools*,
+*internal events*, *external events*, *code abstractions*, *data abstractions*,
+*fields*, *native symbols*, and *block labels*.
 
-```
-ID       ::= <a-z, A-Z, 0-9, _>+
-ID_var   ::= `_´ | ID           // [variables and internal events] beginning with a lowercase letter
-ID_ext   ::= ID                 // [external events] all in uppercase, not beginning with a digit
-ID_cls   ::= ID                 // [classes and interfaces] beginning with an uppercase letter
-ID_data  ::= ID                 // [data types] beginning with an uppercase letter
-ID_tag   ::= ID                 // [data tags] all in uppercase, not beginning with a digit
-ID_field ::= ID                 // [fields] not beginning with a digit
-ID_nat   ::= ID                 // [native symbols] beginning with an underscore
-ID_type  ::= ( ID_nat | ID_cls  // [types]
-             | <b>bool</b>  | <b>byte</b>  | <b>char</b>  | <b>f32</b>   | <b>f64</b>   |
-             | <b>float</b> | <b>int</b>   | <b>s16</b>   | <b>s32</b>   | <b>s64</b>   |
-             | <b>s8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>   | <b>u8</b>    |
-             | <b>uint</b>  | <b>void</b>  | <b>word</b> )
-```
+<pre><code>
+ID       ::= [a-z, A-Z, 0-9, _]+
+ID_int   ::= ID (first is lowercase)                        // variables, vectors, pools, internal events, and block labels
+ID_ext   ::= ID (all in uppercase, first is not digit)      // external events
+ID_abs   ::= ID (first is uppercase, contains lowercase)    // data and code abstractions
+ID_field ::= ID (first is not digit)                        // fields
+ID_nat   ::= ID (first is underscore)                       // native symbols
+ID_type  ::= ( ID_nat | ID_abs                              // [types]
+             | <b>void</b>  | <b>bool</b>  | <b>byte</b>
+             | <b>f32</b>   | <b>f64</b>   | <b>float</b>
+             | <b>s8</b>    | <b>s16</b>   | <b>s32</b>   | <b>s64</b>
+             | <b>u8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>
+             | <b>int</b>   | <b>uint</b>  | <b>ssize</b> | <b>usize</b> )
+</code></pre>
 
-Class, interface, and data [declarations] create new [types] which can be used 
-as type identifiers.
+Declarations for `code` and `data` [abstractions] create new [types] which can
+be used as type identifiers.
 
 Examples:
 
 <pre><code><b>var int</b> a;                    // "a" is a variable, "int" is a type
 <b>emit</b> e;                       // "e" is an internal event
 <b>await</b> E;                      // "E" is an external input event
-<b>var</b> Sprite s;                 // "Sprite" is a class and a type
-<b>var</b> List l;                   // "List" is a data type and a type
-<b>return</b> list.CONS.head;        // "CONS" is a tag, "head" is a field
+<b>spawn</b> Move();                 // "Move" is a code abstraction and a type
+<b>var</b> Rect r;                   // "Rect" is a data abstraction and a type
+<b>return</b> r.width;               // "width" is a field
 _printf("hello world!\n");    // "_printf" is a native symbol
 </code></pre>
 
@@ -321,28 +317,22 @@ Literals
 
 ### Booleans
 
-Boolean types have the values `true` and `false`.
+The boolean type has two values, `true` and `false`.
 
 ### Integers
 
-Integer values can be written in different bases and also as ASCII characters:
+Integer values can be written in decimal and hexadecimal bases:
 
 * Decimals are written *as is*.
-* Octals are prefixed with <tt>0</tt>.
 * Hexadecimals are prefixed with <tt>0x</tt>.
-* ASCII characters and escape sequences are surrounded by apostrophes.
-* `TODO: "1e10"`
+* `TODO: "0b---", "0o---"`
 
 Examples:
 
 ```
-// all following are equal to the decimal 127
+// both are equal to the decimal 127
 v = 127;
-v = 0777;
 v = 0x7F;
-
-// newline ASCII character = decimal 10
-c = '\n';
 ```
 
 ### Floats
@@ -372,7 +362,8 @@ Céu provides C-style comments.
 Single-line comments begin with `//` and run to end of the line.
 
 Multi-line comments use `/*` and `*/` as delimiters.
-Multi-line comments can be nested by using a different number of `*` as delimiters.
+Multi-line comments can be nested by using a different number of `*` as
+delimiters.
 
 Examples:
 
@@ -394,7 +385,8 @@ a = 1;
 Types
 =====
 
-Céu is statically typed, requiring all variables and events to be declared before they are used.
+Céu is statically typed, requiring all variables and events to be declared
+before they are used.
 
 A type is composed of an identifier with a sequence of optional modifiers:
 
