@@ -188,6 +188,12 @@ escape 0x1 + 0X1 + 001;
 }
 
 Test { [[
+escape 077;
+]],
+    run = 77,
+}
+
+Test { [[
 escape 0x1 + 0X1 + 0a01;
 ]],
     adjs = 'line 1 : malformed number',
