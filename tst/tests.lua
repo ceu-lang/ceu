@@ -42119,6 +42119,7 @@ native _usleep;
 end
 escape x;
 ]],
+    valgrind = false,
     run = { ['~>1s']=3 },
     _ana = {
         acc = true,
@@ -42141,6 +42142,7 @@ native _usleep;
 end
 escape x;
 ]],
+    valgrind = false,
     run = { ['~>1s']=3 },
     safety = 2,
     _ana = {

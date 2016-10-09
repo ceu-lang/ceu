@@ -182,11 +182,23 @@ F = {
             if dcl.tag=='Data' and string.sub(dcl.id,1,1)=='_' then
                 -- auto generated
             else
-                WRN(dcl.is_used or dcl.is_predefined, dcl,
-                    AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')
+                local f = WRN
+                if dcl.tag=='Nat' then
+                    if CEU.opts.ceu_err_unused_native == 'error' then
+                        f = ASR
+                    elseif CEU.opts.ceu_err_unused_native == 'warning' then
+                        f = WRN
+                    else
+                        assert(CEU.opts.ceu_err_unused_native == 'pass')
+                        f = F.__pass
+                    end
+                end
+                f(dcl.is_used or dcl.is_predefined, dcl,
+                  AST.tag2id[dcl.tag]..' "'..dcl.id..'" declared but not used')
             end
         end
     end,
+    __pass = function () end,
 
     ---------------------------------------------------------------------------
 

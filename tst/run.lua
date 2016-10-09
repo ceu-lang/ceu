@@ -239,6 +239,7 @@ end
 
             ceu_line_directives = 'true',
             --ceu_line_directives = 'false',
+            --ceu_err_unused_native = 'pass'
         }
     }
     if T.opts_pre then
@@ -325,7 +326,7 @@ if T.ana or T.tmp or T.props or T.mode then return end
 
     local exe = CEU.opts.cc_output..' 2>&1'
 
-    if TESTS.valgrind then
+    if TESTS.valgrind and (T.valgrind ~= false) then
         exe = 'valgrind -q --leak-check=full --show-leak-kinds=all '..exe
     end
 

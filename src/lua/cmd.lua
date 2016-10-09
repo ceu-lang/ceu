@@ -26,6 +26,8 @@ Options:
     --ceu-input=FILE                input file to compile (Céu source)
     --ceu-output=FILE               output source file to generate (C source)
     --ceu-line-directives=BOOL      insert `#line´ directives in the C output
+    --ceu-err-unused-native=OPT     error|warning|pass
+
 
 
     --env                       Environment phase: packs all C files together
@@ -41,6 +43,12 @@ Options:
     --cc-input=FILE                 input file to compile (C source)
     --cc-output=FILE                output file to generate (binary)
 
+http://www.ceu-lang.org/
+
+Please report bugs at <http://github.com/fsantanna/ceu/issues>.
+]]
+
+--[[
   -b                       a short option with no long option
       --long               a long option with no short option
       --another-long       a long option with internal hypen
@@ -50,10 +58,6 @@ Options:
   -u, --name=USER          require an argument
   -o, --output=[FILE]      accept an optional argument
   --                       end of options
-
-http://www.ceu-lang.org/
-
-Please report bugs at <http://github.com/fsantanna/ceu/issues>.
 ]]
 
     local parser = optparse(help)
@@ -124,6 +128,7 @@ if CEU.opts.ceu then
     ASR(CEU.opts.ceu_input, 'expected option `ceu-input´')
 
     CEU.opts.ceu_output = CEU.opts.ceu_output or '-'
+    CEU.opts.ceu_err_unused_native = CEU.opts.ceu_err_unused_native or 'warning'
 else
     check_no('ceu')
 end
