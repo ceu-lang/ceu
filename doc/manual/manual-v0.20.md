@@ -289,7 +289,7 @@ ID_ext   ::= ID (all in uppercase, first is not digit)      // external events
 ID_abs   ::= ID (first is uppercase, contains lowercase)    // data and code abstractions
 ID_field ::= ID (first is not digit)                        // fields
 ID_nat   ::= ID (first is underscore)                       // native symbols
-ID_type  ::= ( ID_nat | ID_abs                              // [types]
+ID_type  ::= ( ID_nat | ID_abs                              // types
              | <b>void</b>  | <b>bool</b>  | <b>byte</b>
              | <b>f32</b>   | <b>f64</b>   | <b>float</b>
              | <b>s8</b>    | <b>s16</b>   | <b>s32</b>   | <b>s64</b>
@@ -297,7 +297,7 @@ ID_type  ::= ( ID_nat | ID_abs                              // [types]
              | <b>int</b>   | <b>uint</b>  | <b>ssize</b> | <b>usize</b> )
 </code></pre>
 
-Declarations for `code` and `data` [abstractions] create new [types] which can
+Declarations for `code` and `data` [TODO-abstractions] create new [types] which can
 be used as type identifiers.
 
 Examples:
@@ -388,40 +388,28 @@ Types
 Céu is statically typed, requiring all variables and events to be declared
 before they are used.
 
-A type is composed of an identifier with a sequence of optional modifiers:
+A type is composed of a [type identifier](#identifiers), followed by a sequence
+of optional *pointer* modifiers `&&`, and an optional *option* modifier `?`:
 
-<pre><code>Type ::= ID_type ( `&&´ | `&´ | `?´ | `[´ [NUM] `]´ )
-</code></pre>
-
-A type identifier can be a [native identifier](#identifiers), a [class 
-identifier](#identifiers), a [data type identifier](#identifiers) or one of the 
-primitive types:
-
-<pre><code>ID_type ::= ( ID_nat | ID_cls | ID_data
-              <b>bool</b>  | <b>byte</b>  | <b>char</b>  | <b>f32</b>   | <b>f64</b>   |
-              <b>float</b> | <b>int</b>   | <b>s16</b>   | <b>s32</b>   | <b>s64</b>   |
-              <b>s8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>   | <b>u8</b>    |
-              <b>uint</b>  | <b>void</b>  | <b>word</b> )
-</code></pre>
+```
+Type ::= ID_type {`&&´} [`?´]
+```
 
 Examples:
 
 <pre><code><b>var u8</b> v;       // "v" is of 8-bit unsigned integer type
 <b>var</b> _rect r;    // "r" is of external native type "rect"
-<b>var char</b>&& buf; // "buf" is a pointer to a "char"
-<b>var</b> Send s;     // "s" is an organism of class "Send"
+<b>var byte</b>&& buf; // "buf" is a pointer to a "byte"
 <b>var</b> Tree t;     // "t" is a data of type "Tree"
 </code></pre>
 
-Primitive types
+Primitive Types
 ---------------
 
 Céu has the following primitive types:
 
 <pre><code>    <b>void           </b>    // void type
-    <b>word           </b>    // type with the size of platform dependent word
     <b>bool           </b>    // boolean type
-    <b>char           </b>    // char type
     <b>byte           </b>    // 1-byte type
     <b>int      uint  </b>    // platform dependent signed and unsigned integer
     <b>s8       u8    </b>    // signed and unsigned  8-bit integer
@@ -430,11 +418,12 @@ Céu has the following primitive types:
     <b>s64      u64   </b>    // signed and unsigned 64-bit integer
     <b>float          </b>    // platform dependent float
     <b>f32      f64   </b>    // 32-bit and 64-bit floats
+    <b>ssize    usize </b>    // signed and unsigned size types
 </code></pre>
 
 See also the [literals](#literals) for these types.
 
-Native types
+Native Types
 ------------
 
 Types defined externally in C can be prefixed by `_` to be used in Céu programs.
@@ -444,49 +433,55 @@ Example:
 <pre><code><b>var</b> _message_t msg;      // "message_t" is a C type defined in an external library
 </code></pre>
 
-Native types support [annotations](#native-symbols) which provide additional 
-information to the compiler.
+Native types support [TODO-annotations] to provide additional information to
+the compiler.
 
-<!--
-The size of an external type must be explicitly [[#sec.stmts.decls.types|declared]].
-
-Example:
-
-    native _char = 1;  // declares the external native type `_char` of 1 byte
--->
-
-Class and Interface types
--------------------------
+Abstraction Types
+-----------------
 
 `TODO (brief description)`
 
-See [Classes and Interfaces](#classes-and-interfaces).
+See [TODO-Abstractions].
 
-Type modifiers
+Type Modifiers
 --------------
 
-Types can be suffixed with the following modifiers: `&`, `&&`, `?`, and `[N]`.
+Types can be suffixed with the following modifiers: `&&`, `?`.
 
-### References
+#### Pointer
 
-`TODO`
+`TODO (like C)`
+
+TODO: restrictions
+    - cannot cross yielding statements
+
+### Option
+
+`TODO (like Maybe)`
+
+------------------------------------------------------------------------------
+
+Storage
+=======
+
+<!--
+scope and lifetime
+
+- static: scope == lifetime
+- dyamic: scope >= lifetime
+
+- input
+- output
+- event
+- pool
+- var
+- vector
 
 Céu supports two forms of references: *aliases* and *pointers*.
 
 #### Alias
 
 `TODO (like C++ references)`
-
-#### Pointer
-
-`TODO (like C)`
-
-restrictions
-    - across yielding statements
-
-### Option
-
-`TODO (like Maybe)`
 
 ### Dimension
 
@@ -500,6 +495,7 @@ Example:
 
 <pre><code><b>var int</b>[2] v;       // declares a vector "v" of 2 integers
 </code></pre>
+-->
 
 ------------------------------------------------------------------------------
 
