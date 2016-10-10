@@ -28,6 +28,7 @@ Options:
     --ceu-line-directives=BOOL      insert `#line´ directives in the C output
 
     --ceu-features-lua=BOOL         enable `lua´ support
+    --ceu-features-thread=BOOL      enable `async/thread´ support
 
     --ceu-err-unused=OPT            effect for unused identifier: error|warning|pass
     --ceu-err-unused-native=OPT                unused native identifier
@@ -125,6 +126,7 @@ do
         ceu_output          = { tostring,  '-'    },
         ceu_line_directives = { toboolean, 'true' },
         ceu_features_lua    = { toboolean, 'true' },
+        ceu_features_thread = { toboolean, 'true' },
 
         env_output          = { tostring,  '-'    },
     }

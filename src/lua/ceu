@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '3b5ca11068e839920d007e454005f39f46866e84',
+    ceu_git = '883d8460f5aeefac3ab14a7420801ae24848a501',
     files = {
         ceu_c =
             [====[
@@ -243,12 +243,16 @@ void ceu_pool_free (tceu_pool* pool, byte* val) {
 }
 ]====]..
             [====[
+=== FEATURES ===        /* CEU_FEATURES */
+
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset, strlen */
 
+#ifdef CEU_FEATURES_LUA
 #include <lua5.3/lua.h>
 #include <lua5.3/lauxlib.h>
 #include <lua5.3/lualib.h>
+#endif
 
 #define S8_MIN   -127
 #define S8_MAX    127
@@ -330,7 +334,9 @@ typedef struct tceu_code_mem {
     struct tceu_pool_pak* pak;
     struct tceu_code_mem* up_mem;
     tceu_ntrl  up_trl;
+#ifdef CEU_FEATURES_LUA
     lua_State* lua;
+#endif
     tceu_ntrl  trails_n;
     tceu_trl   trails[0];
 } tceu_code_mem;
@@ -366,6 +372,7 @@ static tceu_evt* CEU_OPTION_EVT (void* alias, char* file, int line) {
     return alias;
 }
 
+#ifdef CEU_FEATURES_THREAD
 typedef struct tceu_threads_data {
     CEU_THREADS_T id;
     u8 has_started:    1;
@@ -379,6 +386,7 @@ typedef struct {
     tceu_code_mem*     mem;
     tceu_threads_data* thread;
 } tceu_threads_param;
+#endif
 
 /*****************************************************************************/
 
@@ -452,8 +460,10 @@ typedef struct tceu_app {
     s32 wclk_min_set;
     s32 wclk_min_cmp;
 
+#ifdef CEU_FEATURES_THREAD
     CEU_THREADS_MUTEX_T threads_mutex;
     tceu_threads_data*  threads_head;   /* linked list of threads alive */
+#endif
 
     tceu_code_mem_ROOT root;
 } tceu_app;
@@ -562,12 +572,14 @@ void ceu_code_mem_dyn_free (tceu_pool* pool, tceu_code_mem_dyn* cur) {
 
 /*****************************************************************************/
 
+#ifdef CEU_FEATURES_LUA
 int ceu_lua_atpanic (lua_State* lua) {
     const char* msg = lua_tostring(lua,-1);
     ceu_dbg_assert(msg != NULL);
     ceu_callback_assert_msg(0, msg);
     return 0;
 }
+#endif
 
 /*****************************************************************************/
 
@@ -583,6 +595,7 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 
 /*****************************************************************************/
 
+#ifdef CEU_FEATURES_THREAD
 int ceu_threads_gc (int force_join) {
     int n_alive = 0;
     tceu_threads_data** head_ = &CEU_APP.threads_head;
@@ -622,6 +635,7 @@ int ceu_threads_gc (int force_join) {
     }
     return n_alive;
 }
+#endif
 
 /*****************************************************************************/
 
@@ -929,6 +943,7 @@ CEU_API void ceu_start (void) {
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
 
+#ifdef CEU_FEATURES_THREAD
     pthread_mutex_init(&CEU_APP.threads_mutex, NULL);
     CEU_APP.threads_head = NULL;
 
@@ -938,6 +953,7 @@ CEU_API void ceu_start (void) {
      * - but program will still run to completion
      */
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+#endif
 
     tceu_stk stk = { 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
@@ -946,13 +962,10 @@ CEU_API void ceu_start (void) {
 }
 
 CEU_API void ceu_stop (void) {
-
-/* >>> TODO: CLOSE */
-    {
-        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
-        ceu_dbg_assert(ceu_threads_gc(1) == 0); /* wait all terminate/free */
-    }
-/* <<< TODO: CLOSE */
+#ifdef CEU_FEATURES_THREAD
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    ceu_dbg_assert(ceu_threads_gc(1) == 0); /* wait all terminate/free */
+#endif
 }
 
 /*****************************************************************************/
@@ -984,6 +997,7 @@ CEU_API int ceu_loop (void)
 
     while (!ceu_cb_terminating) {
         ceu_callback_void_void(CEU_CALLBACK_STEP);
+#ifdef CEU_FEATURES_THREAD
         if (CEU_APP.threads_head != NULL) {
             CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
 /* TODO: remove this!!! */
@@ -991,6 +1005,7 @@ CEU_API int ceu_loop (void)
             CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
             ceu_threads_gc(0);
         }
+#endif
         if (ceu_cb_pending_async) {
             ceu_cb_pending_async = 0;
             ceu_input(CEU_INPUT__ASYNC, NULL);
@@ -2019,10 +2034,14 @@ Options:
     --ceu-input=FILE                input file to compile (Céu source)
     --ceu-output=FILE               output source file to generate (C source)
     --ceu-line-directives=BOOL      insert `#line´ directives in the C output
-    --ceu-err-unused=OPT            Unused identifier: error|warning|pass
-    --ceu-err-unused-native=OPT         native identifier
-    --ceu-err-unused-code=OPT           code identifier
-    --ceu-err-uninitialized=OPT     Uninitialized variable: error|warning|pass
+
+    --ceu-features-lua=BOOL         enable `lua´ support
+    --ceu-features-thread=BOOL      enable `async/thread´ support
+
+    --ceu-err-unused=OPT            effect for unused identifier: error|warning|pass
+    --ceu-err-unused-native=OPT                unused native identifier
+    --ceu-err-unused-code=OPT                  unused code identifier
+    --ceu-err-uninitialized=OPT     effect for uninitialized variable: error|warning|pass
 
     --env                       Environment phase: packs all C files together
     --env-types=FILE                header file with type declarations (C source)
@@ -2101,13 +2120,37 @@ else
     check_no('pre')
 end
 
-if CEU.opts.ceu then
-    local lines = CEU.opts.ceu_line_directives or 'true'
-    if lines then
-        ASR(lines=='true' or lines=='false', 'ceu_line_directives')
+do
+    local function toboolean (v)
+        if v == 'true' then
+            return true
+        elseif v == 'false' then
+            return false
+        end
+        return nil
     end
-    CEU.opts.ceu_line_directives = (lines == 'true')
 
+    local T = {
+        ceu_output          = { tostring,  '-'    },
+        ceu_line_directives = { toboolean, 'true' },
+        ceu_features_lua    = { toboolean, 'true' },
+        ceu_features_thread = { toboolean, 'true' },
+
+        env_output          = { tostring,  '-'    },
+    }
+
+    for k, t in pairs(T) do
+        local tp, v = unpack(t)
+        local pre = string.match(k, '^(.-)_')
+        if CEU.opts[pre] then
+            v = tp(CEU.opts[k] or v)
+            ASR(v ~= nil, 'invalid value for option "'..k..'"')
+            CEU.opts[k] = v
+        end
+    end
+end
+
+if CEU.opts.ceu then
     if CEU.opts.pre then
         if CEU.opts.ceu_input then
             ASR(CEU.opts.ceu_input == CEU.opts.pre_output,
@@ -2120,8 +2163,6 @@ if CEU.opts.ceu then
         end
     end
     ASR(CEU.opts.ceu_input, 'expected option `ceu-input´')
-
-    CEU.opts.ceu_output = CEU.opts.ceu_output or '-'
 else
     check_no('ceu')
 end
@@ -2132,8 +2173,8 @@ if CEU.opts.env then
     end
 
     ASR(CEU.opts.env_types,   'expected option `env-types´')
-    ASR(CEU.opts.env_threads, 'expected option `env-threads´')
-    ASR(CEU.opts.env_main,    'expected option `env-main´')
+    --ASR(CEU.opts.env_threads, 'expected option `env-threads´')
+    --ASR(CEU.opts.env_main,    'expected option `env-main´')
 
     if CEU.opts.ceu then
         if CEU.opts.env_ceu then
@@ -2147,8 +2188,6 @@ if CEU.opts.env then
         end
     end
     ASR(CEU.opts.env_ceu, 'expected option `env-ceu´')
-
-    CEU.opts.env_output = CEU.opts.env_output or '-'
 else
     check_no('env')
 end
@@ -2374,7 +2413,7 @@ local T = {
         'statement'
     },
     {
-        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
+        '`nothing´ or `var´ or `vector´ or `pool´ or `event´ or `input´ or `output´ or `data´ or `code´ or `input/output´ or `output/input´ or `native´ or `deterministic´ or `%*´ or name expression or `await´ or `emit´ or `call/recursive´ or `call´ or `request´ or `spawn´ or `kill´ or `do´ or `if´ or `loop´ or `every´ or `par/or´ or `par/and´ or `watching´ or `pause/if´ or `async/isr´ or `atomic´ or `pre´ or `%[´ or `lua´ or `escape´ or `break´ or `continue´ or `par´ or end of file',
         'statement'
     },
 }
@@ -3689,6 +3728,18 @@ F = {
                         '_ret')
         ret.is_implicit = true
 
+        local lua do
+            if CEU.opts.ceu_features_lua then
+                lua = node('Stmts', me.ln,
+                        node('_Lua_Do', me.ln,
+                            '[]',
+                            node('Block', me.ln,
+                                stmts)))
+            else
+                lua = stmts
+            end
+        end
+
         AST.root =
             node('ROOT', me.ln,
                 node('Block', me.ln,
@@ -3701,12 +3752,7 @@ F = {
                             node('_Set_Do', me.ln,
                                 node('Do', me.ln,
                                     true,
-                                    node('Block', me.ln,
-                                        node('Stmts', me.ln,
-                                            node('_Lua_Do', me.ln,
-                                                '[]',
-                                                node('Block', me.ln,
-                                                    stmts))))))))))
+                                    node('Block', me.ln, lua)))))))
         return AST.root
     end,
     _Stmts__PRE = function (me)
@@ -8121,7 +8167,18 @@ F = {
                 end
             end
         end
-    end
+    end,
+
+    --------------------------------------------------------------------------
+
+    Lua_Do = 'Lua',
+    Lua = function (me)
+        ASR(CEU.opts.ceu_features_lua, me, '`lua´ support is disabled')
+    end,
+
+    Async_Thread = function (me)
+        ASR(CEU.opts.ceu_features_thread, me, '`async/thread´ support is disabled')
+    end,
 }
 
 AST.visit(F)
@@ -10006,7 +10063,9 @@ F = {
         CASE(me, me.lbl_in)
         LINE(me, [[
 _ceu_mem->up_mem   = NULL;
+#ifdef CEU_FEATURES_LUA
 _ceu_mem->lua      = NULL;
+#endif
 _ceu_mem->trails_n = ]]..AST.root.trails_n..[[;
 memset(&_ceu_mem->trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
 ]])
@@ -11632,8 +11691,20 @@ local labels do
     end
 end
 
+local features do
+    features = ''
+    for k,v in pairs(CEU.opts) do
+        if string.sub(k,1,13) == 'ceu_features_' then
+            if v then
+                features = features .. '#define '..string.upper(k)..'\n'
+            end
+        end
+    end
+end
+
 -- CEU.C
 local c = PAK.files.ceu_c
+local c = SUB(c, '=== FEATURES ===',         features)
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
 local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
@@ -11678,9 +11749,11 @@ end
 
 --env-threads
 do
-    local f = ASR(io.open(CEU.opts.env_threads))
-    c = c..'\n\n/* ENV_THREADS */\n\n'..f:read'*a'
-    f:close()
+    if CEU.opts.env_threads then
+        local f = ASR(io.open(CEU.opts.env_threads))
+        c = c..'\n\n/* ENV_THREADS */\n\n'..f:read'*a'
+        f:close()
+    end
 end
 
 -- callbacks
@@ -11767,9 +11840,11 @@ end
 
 --env-main
 do
-    local f = ASR(io.open(CEU.opts.env_main))
-    c = c..'\n\n/* ENV_MAIN */\n\n'..f:read'*a'
-    f:close()
+    if CEU.opts.env_main then
+        local f = ASR(io.open(CEU.opts.env_main))
+        c = c..'\n\n/* ENV_MAIN */\n\n'..f:read'*a'
+        f:close()
+    end
 end
 
 --env-output

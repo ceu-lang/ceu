@@ -173,6 +173,10 @@ F = {
     Lua = function (me)
         ASR(CEU.opts.ceu_features_lua, me, '`lua´ support is disabled')
     end,
+
+    Async_Thread = function (me)
+        ASR(CEU.opts.ceu_features_thread, me, '`async/thread´ support is disabled')
+    end,
 }
 
 AST.visit(F)

@@ -127,6 +127,7 @@ static tceu_evt* CEU_OPTION_EVT (void* alias, char* file, int line) {
     return alias;
 }
 
+#ifdef CEU_FEATURES_THREAD
 typedef struct tceu_threads_data {
     CEU_THREADS_T id;
     u8 has_started:    1;
@@ -140,6 +141,7 @@ typedef struct {
     tceu_code_mem*     mem;
     tceu_threads_data* thread;
 } tceu_threads_param;
+#endif
 
 /*****************************************************************************/
 
@@ -213,8 +215,10 @@ typedef struct tceu_app {
     s32 wclk_min_set;
     s32 wclk_min_cmp;
 
+#ifdef CEU_FEATURES_THREAD
     CEU_THREADS_MUTEX_T threads_mutex;
     tceu_threads_data*  threads_head;   /* linked list of threads alive */
+#endif
 
     tceu_code_mem_ROOT root;
 } tceu_app;
@@ -346,6 +350,7 @@ static void ceu_lbl (tceu_evt_occ* _ceu_occ, tceu_stk* _ceu_stk,
 
 /*****************************************************************************/
 
+#ifdef CEU_FEATURES_THREAD
 int ceu_threads_gc (int force_join) {
     int n_alive = 0;
     tceu_threads_data** head_ = &CEU_APP.threads_head;
@@ -385,6 +390,7 @@ int ceu_threads_gc (int force_join) {
     }
     return n_alive;
 }
+#endif
 
 /*****************************************************************************/
 
@@ -692,6 +698,7 @@ CEU_API void ceu_start (void) {
     CEU_APP.wclk_min_set = CEU_WCLOCK_INACTIVE;
     CEU_APP.wclk_min_cmp = CEU_WCLOCK_INACTIVE;
 
+#ifdef CEU_FEATURES_THREAD
     pthread_mutex_init(&CEU_APP.threads_mutex, NULL);
     CEU_APP.threads_head = NULL;
 
@@ -701,6 +708,7 @@ CEU_API void ceu_start (void) {
      * - but program will still run to completion
      */
     CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
+#endif
 
     tceu_stk stk = { 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
@@ -709,13 +717,10 @@ CEU_API void ceu_start (void) {
 }
 
 CEU_API void ceu_stop (void) {
-
-/* >>> TODO: CLOSE */
-    {
-        CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
-        ceu_dbg_assert(ceu_threads_gc(1) == 0); /* wait all terminate/free */
-    }
-/* <<< TODO: CLOSE */
+#ifdef CEU_FEATURES_THREAD
+    CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
+    ceu_dbg_assert(ceu_threads_gc(1) == 0); /* wait all terminate/free */
+#endif
 }
 
 /*****************************************************************************/
@@ -747,6 +752,7 @@ CEU_API int ceu_loop (void)
 
     while (!ceu_cb_terminating) {
         ceu_callback_void_void(CEU_CALLBACK_STEP);
+#ifdef CEU_FEATURES_THREAD
         if (CEU_APP.threads_head != NULL) {
             CEU_THREADS_MUTEX_UNLOCK(&CEU_APP.threads_mutex);
 /* TODO: remove this!!! */
@@ -754,6 +760,7 @@ CEU_API int ceu_loop (void)
             CEU_THREADS_MUTEX_LOCK(&CEU_APP.threads_mutex);
             ceu_threads_gc(0);
         }
+#endif
         if (ceu_cb_pending_async) {
             ceu_cb_pending_async = 0;
             ceu_input(CEU_INPUT__ASYNC, NULL);

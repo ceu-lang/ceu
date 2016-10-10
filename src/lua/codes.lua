@@ -137,7 +137,9 @@ F = {
         CASE(me, me.lbl_in)
         LINE(me, [[
 _ceu_mem->up_mem   = NULL;
+#ifdef CEU_FEATURES_LUA
 _ceu_mem->lua      = NULL;
+#endif
 _ceu_mem->trails_n = ]]..AST.root.trails_n..[[;
 memset(&_ceu_mem->trails, 0, ]]..AST.root.trails_n..[[*sizeof(tceu_trl));
 ]])
