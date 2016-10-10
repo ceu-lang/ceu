@@ -71,7 +71,8 @@ tceu_callback_ret ceu_callback (int cmd, tceu_callback_arg p1, tceu_callback_arg
 #define ceu_dbg_assert(v) ceu_callback_assert_msg(v,"bug found")
 
 enum {
-    CEU_CALLBACK_INIT,
+    CEU_CALLBACK_START,
+    CEU_CALLBACK_STOP,
     CEU_CALLBACK_STEP,
     CEU_CALLBACK_ABORT,
     CEU_CALLBACK_LOG,

@@ -752,7 +752,7 @@ static tceu_callback_ret ceu_callback_go_all (int cmd, tceu_callback_arg p1, tce
 
 CEU_API int ceu_loop (void)
 {
-    ceu_callback_void_void(CEU_CALLBACK_INIT);
+    ceu_callback_void_void(CEU_CALLBACK_START);
     ceu_start();
 
     while (!ceu_cb_terminating) {
@@ -773,6 +773,7 @@ CEU_API int ceu_loop (void)
     }
 
     ceu_stop();
+    ceu_callback_void_void(CEU_CALLBACK_STOP);
 
 #ifdef CEU_TESTS
     printf("_ceu_tests_trails_visited_ = %d\n", _ceu_tests_trails_visited_);
