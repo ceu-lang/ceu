@@ -165,7 +165,14 @@ F = {
                 end
             end
         end
-    end
+    end,
+
+    --------------------------------------------------------------------------
+
+    Lua_Do = 'Lua',
+    Lua = function (me)
+        ASR(CEU.opts.ceu_features_lua, me, '`lua´ support is disabled')
+    end,
 }
 
 AST.visit(F)

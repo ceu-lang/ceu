@@ -249,6 +249,11 @@ end
         CEU.opts.pre_output   = '/tmp/tmp.ceu.cpp'
         CEU.opts.ceu_input    = '/tmp/tmp.ceu.cpp'
     end
+    if T._opts then
+        for k,v in pairs(T._opts) do
+            CEU.opts[k] = v
+        end
+    end
 
     TESTS.stats.count = TESTS.stats.count + 1
 
@@ -256,7 +261,7 @@ end
 
     dofile(DIR..'dbg.lua')
     DBG,ASR = DBG1,ASR1
-    dofile(DIR..'cmd.lua')
+    if not check(T,'cmd') then return end
 
     if CEU.opts.pre then
         if not check(T,'pre') then return end

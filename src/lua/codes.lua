@@ -1763,8 +1763,20 @@ local labels do
     end
 end
 
+local features do
+    features = ''
+    for k,v in pairs(CEU.opts) do
+        if string.sub(k,1,13) == 'ceu_features_' then
+            if v then
+                features = features .. '#define '..string.upper(k)..'\n'
+            end
+        end
+    end
+end
+
 -- CEU.C
 local c = PAK.files.ceu_c
+local c = SUB(c, '=== FEATURES ===',         features)
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
 local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)

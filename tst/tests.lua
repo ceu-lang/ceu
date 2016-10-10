@@ -8,6 +8,58 @@ end
 -- NO: testing
 ----------------------------------------------------------------------------
 
+Test { [[
+lua[] do
+end
+escape 1;
+]],
+    _opts = {
+        ceu = true,
+        ceu_features_lua = 1,
+    },
+    cmd = 'invalid value for option "ceu_features_lua"',
+}
+
+Test { [[
+lua[] do
+end
+escape 1;
+]],
+    _opts = {
+        ceu = true,
+        ceu_features_lua = 'false',
+    },
+    props_ = 'line 1 : `lua´ support is disabled',
+}
+Test { [=[
+
+var int ret = [[1]];
+escape ret;
+]=],
+    _opts = {
+        ceu_features_lua = 'false',
+    },
+    props_ = 'line 2 : `lua´ support is disabled',
+}
+Test { [=[
+[[ ]];
+escape 1;
+]=],
+    _opts = {
+        ceu_features_lua = 'false',
+    },
+    props_ = 'line 1 : `lua´ support is disabled',
+}
+Test { [[
+await async/thread do end
+escape 1;
+]],
+    _opts = {
+        ceu_features_thread = 'false',
+    },
+    props_ = 'line 1 : `async/thread´ support is disabled',
+}
+
 --[=====[
 do return end -- OK
 --]=====]

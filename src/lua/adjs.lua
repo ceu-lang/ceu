@@ -53,6 +53,18 @@ F = {
                         '_ret')
         ret.is_implicit = true
 
+        local lua do
+            if CEU.opts.ceu_features_lua then
+                lua = node('Stmts', me.ln,
+                        node('_Lua_Do', me.ln,
+                            '[]',
+                            node('Block', me.ln,
+                                stmts)))
+            else
+                lua = stmts
+            end
+        end
+
         AST.root =
             node('ROOT', me.ln,
                 node('Block', me.ln,
@@ -65,12 +77,7 @@ F = {
                             node('_Set_Do', me.ln,
                                 node('Do', me.ln,
                                     true,
-                                    node('Block', me.ln,
-                                        node('Stmts', me.ln,
-                                            node('_Lua_Do', me.ln,
-                                                '[]',
-                                                node('Block', me.ln,
-                                                    stmts))))))))))
+                                    node('Block', me.ln, lua)))))))
         return AST.root
     end,
     _Stmts__PRE = function (me)

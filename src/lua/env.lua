@@ -9,9 +9,11 @@ end
 
 --env-threads
 do
-    local f = ASR(io.open(CEU.opts.env_threads))
-    c = c..'\n\n/* ENV_THREADS */\n\n'..f:read'*a'
-    f:close()
+    if CEU.opts.env_threads then
+        local f = ASR(io.open(CEU.opts.env_threads))
+        c = c..'\n\n/* ENV_THREADS */\n\n'..f:read'*a'
+        f:close()
+    end
 end
 
 -- callbacks
@@ -98,9 +100,11 @@ end
 
 --env-main
 do
-    local f = ASR(io.open(CEU.opts.env_main))
-    c = c..'\n\n/* ENV_MAIN */\n\n'..f:read'*a'
-    f:close()
+    if CEU.opts.env_main then
+        local f = ASR(io.open(CEU.opts.env_main))
+        c = c..'\n\n/* ENV_MAIN */\n\n'..f:read'*a'
+        f:close()
+    end
 end
 
 --env-output

@@ -26,10 +26,13 @@ Options:
     --ceu-input=FILE                input file to compile (Céu source)
     --ceu-output=FILE               output source file to generate (C source)
     --ceu-line-directives=BOOL      insert `#line´ directives in the C output
-    --ceu-err-unused=OPT            Unused identifier: error|warning|pass
-    --ceu-err-unused-native=OPT         native identifier
-    --ceu-err-unused-code=OPT           code identifier
-    --ceu-err-uninitialized=OPT     Uninitialized variable: error|warning|pass
+
+    --ceu-features-lua=BOOL         enable `lua´ support
+
+    --ceu-err-unused=OPT            effect for unused identifier: error|warning|pass
+    --ceu-err-unused-native=OPT                unused native identifier
+    --ceu-err-unused-code=OPT                  unused code identifier
+    --ceu-err-uninitialized=OPT     effect for uninitialized variable: error|warning|pass
 
     --env                       Environment phase: packs all C files together
     --env-types=FILE                header file with type declarations (C source)
@@ -108,13 +111,36 @@ else
     check_no('pre')
 end
 
-if CEU.opts.ceu then
-    local lines = CEU.opts.ceu_line_directives or 'true'
-    if lines then
-        ASR(lines=='true' or lines=='false', 'ceu_line_directives')
+do
+    local function toboolean (v)
+        if v == 'true' then
+            return true
+        elseif v == 'false' then
+            return false
+        end
+        return nil
     end
-    CEU.opts.ceu_line_directives = (lines == 'true')
 
+    local T = {
+        ceu_output          = { tostring,  '-'    },
+        ceu_line_directives = { toboolean, 'true' },
+        ceu_features_lua    = { toboolean, 'true' },
+
+        env_output          = { tostring,  '-'    },
+    }
+
+    for k, t in pairs(T) do
+        local tp, v = unpack(t)
+        local pre = string.match(k, '^(.-)_')
+        if CEU.opts[pre] then
+            v = tp(CEU.opts[k] or v)
+            ASR(v ~= nil, 'invalid value for option "'..k..'"')
+            CEU.opts[k] = v
+        end
+    end
+end
+
+if CEU.opts.ceu then
     if CEU.opts.pre then
         if CEU.opts.ceu_input then
             ASR(CEU.opts.ceu_input == CEU.opts.pre_output,
@@ -127,8 +153,6 @@ if CEU.opts.ceu then
         end
     end
     ASR(CEU.opts.ceu_input, 'expected option `ceu-input´')
-
-    CEU.opts.ceu_output = CEU.opts.ceu_output or '-'
 else
     check_no('ceu')
 end
@@ -139,8 +163,8 @@ if CEU.opts.env then
     end
 
     ASR(CEU.opts.env_types,   'expected option `env-types´')
-    ASR(CEU.opts.env_threads, 'expected option `env-threads´')
-    ASR(CEU.opts.env_main,    'expected option `env-main´')
+    --ASR(CEU.opts.env_threads, 'expected option `env-threads´')
+    --ASR(CEU.opts.env_main,    'expected option `env-main´')
 
     if CEU.opts.ceu then
         if CEU.opts.env_ceu then
@@ -154,8 +178,6 @@ if CEU.opts.env then
         end
     end
     ASR(CEU.opts.env_ceu, 'expected option `env-ceu´')
-
-    CEU.opts.env_output = CEU.opts.env_output or '-'
 else
     check_no('env')
 end
