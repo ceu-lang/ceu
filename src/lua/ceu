@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = 'b5868030b759abe56fc1cd8287d697774781f164',
+    ceu_git = '1179a9db3c83cacc86ace185166baa3e039d1fcd',
     files = {
         ceu_c =
             [====[
@@ -418,6 +418,10 @@ enum {
     CEU_OUTPUT__NONE = 0,
     === EXTS_ENUM_OUTPUT ===
 };
+
+/* EVENTS_DEFINES */
+
+=== EXTS_DEFINES_INPUT_OUTPUT ===
 
 /* DATAS_HIERS */
 
@@ -9180,6 +9184,7 @@ MEMS = {
         types       = '',
         enum_input  = '',
         enum_output = '',
+        defines_input_output = '',
     },
     evts = {
         types = '',
@@ -9797,6 +9802,8 @@ for _, dcl in ipairs(MEMS.exts) do
     else
         MEMS.exts.enum_output = MEMS.exts.enum_output..dcl.id_..',\n'
     end
+    MEMS.exts.defines_input_output = MEMS.exts.defines_input_output..
+                                        '#define _'..dcl.id_..'_\n'
 
     -- type
     local mem = 'typedef struct tceu_'..inout..'_'..dcl.id..' {\n'
@@ -11708,6 +11715,7 @@ local c = PAK.files.ceu_c
 local c = SUB(c, '=== FEATURES ===',         features)
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
+local c = SUB(c, '=== EXTS_DEFINES_INPUT_OUTPUT ===', MEMS.exts.defines_input_output)
 local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
 local c = SUB(c, '=== DATAS_HIERS ===',      MEMS.datas.hiers)
 local c = SUB(c, '=== DATAS_MEMS ===',       MEMS.datas.mems)

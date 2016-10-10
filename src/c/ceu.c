@@ -174,6 +174,10 @@ enum {
     === EXTS_ENUM_OUTPUT ===
 };
 
+/* EVENTS_DEFINES */
+
+=== EXTS_DEFINES_INPUT_OUTPUT ===
+
 /* DATAS_HIERS */
 
 typedef s16 tceu_ndata;  /* TODO */

@@ -3,6 +3,7 @@ MEMS = {
         types       = '',
         enum_input  = '',
         enum_output = '',
+        defines_input_output = '',
     },
     evts = {
         types = '',
@@ -620,6 +621,8 @@ for _, dcl in ipairs(MEMS.exts) do
     else
         MEMS.exts.enum_output = MEMS.exts.enum_output..dcl.id_..',\n'
     end
+    MEMS.exts.defines_input_output = MEMS.exts.defines_input_output..
+                                        '#define _'..dcl.id_..'_\n'
 
     -- type
     local mem = 'typedef struct tceu_'..inout..'_'..dcl.id..' {\n'

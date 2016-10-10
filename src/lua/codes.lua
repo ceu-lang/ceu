@@ -1781,6 +1781,7 @@ local c = PAK.files.ceu_c
 local c = SUB(c, '=== FEATURES ===',         features)
 local c = SUB(c, '=== NATIVE_PRE ===',       CODES.native.pre)
 local c = SUB(c, '=== EXTS_ENUM_INPUT ===',  MEMS.exts.enum_input)
+local c = SUB(c, '=== EXTS_DEFINES_INPUT_OUTPUT ===', MEMS.exts.defines_input_output)
 local c = SUB(c, '=== EVTS_ENUM ===',        MEMS.evts.enum)
 local c = SUB(c, '=== DATAS_HIERS ===',      MEMS.datas.hiers)
 local c = SUB(c, '=== DATAS_MEMS ===',       MEMS.datas.mems)
