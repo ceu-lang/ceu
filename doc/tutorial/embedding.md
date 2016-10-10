@@ -3,15 +3,15 @@
 
 # Embedding Céu in C
 
-Suppose you have an existing `main.c` in which you want to embed `app.ceu`.
+Suppose you have an existing `main.c` in which you want to embed an `app.ceu`.
 
 Adapt your `main.c` with the steps as follows:
 
 1. `#include` the generated `app.c` from your `app.ceu`.
 2. define a `ceu_callback` to receive runtime information from `app.c`.
 3. call `ceu_start` to start the boot reaction in `app.c`.
-4. call `ceu_input` continuously to feed `app.ceu` with events.
-5. call `ceu_stop` on termination of `app.c`.
+4. call `ceu_input` continuously to feed `app.c` with events.
+5. call `ceu_stop` after `app.c` terminates.
 
 ## Generate `app.c` from `app.ceu`
 
@@ -26,7 +26,7 @@ emit O(i);
 escape 0;
 ```
 
-The command below generates an `app.c` from `app.ceu`:
+This command generates an `app.c` from `app.ceu`:
 
 ```
 $ ceu --pre --pre-input=app.ceu \
