@@ -1312,6 +1312,9 @@ ceu_callback_num_ptr(CEU_CALLBACK_OUTPUT, ]]..V(ID_ext)..'.id, '..ps..[[).value.
             else
                 LINE(me, cb)
             end
+            LINE(me, [[
+}
+]])
         else
             LINE(me, [[
 ceu_callback_num_ptr(CEU_CALLBACK_ASYNC_PENDING, 0, NULL);
@@ -1320,15 +1323,12 @@ _ceu_mem->trails[]]..me.trails[1]..[[].lbl    = ]]..me.lbl_out.id..[[;
 ]])
             LINE(me, [[
     ceu_input(]]..V(ID_ext)..'.id, '..ps..[[);
+}
 ]])
             HALT(me, {
                 lbl = me.lbl_out.id,
             })
         end
-
-        LINE(me, [[
-}
-]])
     end,
 
     ---------------------------------------------------------------------------
