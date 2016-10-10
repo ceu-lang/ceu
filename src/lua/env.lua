@@ -21,7 +21,7 @@ do
     c = c..[[
 typedef union tceu_callback_arg {
     void* ptr;
-    int   num;
+    s32   num;
     usize size;
 } tceu_callback_arg;
 

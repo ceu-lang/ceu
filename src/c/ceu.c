@@ -122,7 +122,7 @@ typedef struct tceu_opt_alias {
     tceu_evt_range range;
 } tceu_opt_alias;
 
-static tceu_evt* CEU_OPTION_EVT (void* alias, char* file, int line) {
+static tceu_evt* CEU_OPTION_EVT (tceu_evt* alias, char* file, int line) {
     ceu_callback_assert_msg_ex(alias != NULL, "value is not set", file, line);
     return alias;
 }
@@ -455,7 +455,7 @@ fprintf(stderr, "??? trlK=%d, evt=%d\n", trlK, trl->evt.id);
             /* propagate "occ" to nested "code/pool" */
             case CEU_INPUT__CODE: {
                 tceu_evt_range _range = { (tceu_code_mem*)trl->evt.mem,
-                                          0, ((tceu_code_mem*)trl->evt.mem)->trails_n-1 };
+                                          0, (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1) };
                 occ->range = _range;
                 ceu_bcast_mark(occ);
                 break;
@@ -468,7 +468,7 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 #endif
                 while (cur != trl->evt.pool_first) {
                     tceu_evt_range _range = { &cur->mem[0],
-                                              0, ((&cur->mem[0])->trails_n-1) };
+                                              0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
                     occ->range = _range;
                     ceu_bcast_mark(occ);
                     cur = cur->nxt;
@@ -529,7 +529,8 @@ printf(">>> BCAST[%p]: %p / %p\n", trl->pool_first, cur, &cur->mem[0]);
 
             /* clear matches CODE? */
             } else if (trl->evt.id == CEU_INPUT__CODE) {
-                if (ceu_mem_is_child(trl->evt.mem, clr_range->mem,
+                if (ceu_mem_is_child((tceu_code_mem*)trl->evt.mem,
+                                     clr_range->mem,
                                      clr_range->trl0, clr_range->trlF))
                 {
                     goto _CEU_AWAKE_YES_;
@@ -608,7 +609,7 @@ fprintf(stderr, "??? trlK=%d, stk=%d evt=%d\n", trlK, _stk.is_alive, trl->evt.id
         /* propagate "occ" to nested "code" */
         if (trl->evt.id == CEU_INPUT__CODE) {
             tceu_evt_range range = { (tceu_code_mem*)trl->evt.mem, 0,
-                                     ((tceu_code_mem*)trl->evt.mem)->trails_n-1 };
+                                     (tceu_ntrl)(((tceu_code_mem*)trl->evt.mem)->trails_n-1) };
             occ->range = range;
             ceu_bcast_exec(occ, &_stk);
         } else if (trl->evt.id == CEU_INPUT__CODE_POOL) {
@@ -616,7 +617,7 @@ fprintf(stderr, "??? trlK=%d, stk=%d evt=%d\n", trlK, _stk.is_alive, trl->evt.id
             tceu_code_mem_dyn* cur = trl->evt.pool_first->nxt;
             while (cur != trl->evt.pool_first) {
                 tceu_code_mem_dyn* nxt = cur->nxt;
-                tceu_evt_range range = { &cur->mem[0], 0, (&cur->mem[0])->trails_n-1 };
+                tceu_evt_range range = { &cur->mem[0], 0, (tceu_ntrl)((&cur->mem[0])->trails_n-1) };
                 occ->range = range;
                 ceu_bcast_exec(occ, &_stk);
                 if (!_stk.is_alive) {
@@ -673,7 +674,7 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 {
     tceu_evt_occ occ = { {evt_id,{NULL}}, evt_params,
                          {(tceu_code_mem*)&CEU_APP.root,
-                          0, CEU_APP.root.mem.trails_n-1}
+                          0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1)}
                        };
     switch (evt_id)
     {
@@ -689,7 +690,7 @@ CEU_API void ceu_input (tceu_nevt evt_id, void* evt_params)
 
     tceu_stk stk = { 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
-                       0, CEU_APP.root.mem.trails_n-1 } };
+                       0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1) } };
     ceu_bcast(&occ, &stk);
 }
 
@@ -712,7 +713,7 @@ CEU_API void ceu_start (void) {
 
     tceu_stk stk = { 1, NULL,
                      { (tceu_code_mem*)&CEU_APP.root,
-                       0, CEU_APP.root.mem.trails_n-1 } };
+                       0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1) } };
     ceu_lbl(NULL, &stk, (tceu_code_mem*)&CEU_APP.root, 0, CEU_LABEL_ROOT);
 }
 

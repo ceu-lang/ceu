@@ -53,7 +53,7 @@ local function CLEAR (me)
     /* HACK_8: _ceu_occ holds __ceu_ret */
     tceu_evt_occ __ceu_occ = { {CEU_INPUT__CLEAR,{_ceu_occ}}, &__ceu_range,
                                {(tceu_code_mem*)&CEU_APP.root,
-                                0, CEU_APP.root.mem.trails_n-1}
+                                0, (tceu_ntrl)(CEU_APP.root.mem.trails_n-1)}
                              };
     tceu_stk __ceu_stk = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     ceu_bcast(&__ceu_occ, &__ceu_stk);

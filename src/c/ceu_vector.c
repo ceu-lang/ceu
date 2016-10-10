@@ -56,7 +56,7 @@ byte* ceu_vector_setmax (tceu_vector* vector, usize len, bool freeze) {
         }
     } else {
         vector->max = len;
-        vector->buf = (byte*) ceu_callback_ptr_num(
+        vector->buf = (byte*) ceu_callback_ptr_size(
                                 CEU_CALLBACK_REALLOC,
                                 vector->buf,
                                 len*vector->unit + 1    /* [STRING] +1 */
