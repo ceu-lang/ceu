@@ -1,15 +1,15 @@
 site_name: Céu v0.20 - Reference Manual
 pages:
-- Home:             index.md
-- Introduction:     010-introduction.md
-- Lexical Rules:    020-lexical_rules.md
-- Types:            030-types.md
+- Home:            index.md
+- Introduction:    010-introduction.md
+- Lexical Rules:   020-lexical_rules.md
+- Types:           030-types.md
 - Storage Classes: 040-storage_classes.md
-#- Statements:       050-statements.md
-#- Expressions:      060-expressions.md
-#- Static Analysis:  070-static_analysis.md
-#- Environment:      080-environment.md
-#- Errors:           090-errors.md
-#- Syntax:           syntax.md
-- License:          license.md
+- Statements:      050-statements.md
+- Expressions:     060-expressions.md
+- Static Analysis: 070-static_analysis.md
+- Environment:     080-environment.md
+- Errors:          090-errors.md
+- Syntax:          syntax.md
+- License:         license.md
 theme: readthedocs
