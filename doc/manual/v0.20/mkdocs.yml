@@ -1,4 +1,7 @@
 site_name: Céu v0.20 - Reference Manual
+theme:     readthedocs
+#site_dir:  site/v0.20
+
 pages:
 - Home:            index.md
 - Introduction:    010-introduction.md
@@ -12,4 +15,3 @@ pages:
 - Errors:          090-errors.md
 - Syntax:          syntax.md
 - License:         license.md
-theme: readthedocs

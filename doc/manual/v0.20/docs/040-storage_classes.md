@@ -61,8 +61,8 @@ Vectors
 
 In Céu, a vector is a dynamic and contiguous collection of elements of the same
 type.
-A vector [declaration](#TODO) specifies its type and maximum size (possibly
-unlimited).
+A vector [declaration](#TODO) specifies its type and maximum number of
+elements (possibly unlimited).
 The current size of a vector is dynamic and can be accessed through the
 [operator `$`](#TODO).
 Individual elements of a vector can be accessed through a
@@ -83,14 +83,11 @@ Events are the most fundamental concept of Céu, accounting for its reactive
 nature.
 Programs manipulate events through the `await` and `emit` [statements](#TODO).
 An `await` halts the running trail until that event occurs.
-An event occurrence is broadcast to all trails trails awaiting that event, 
-awaking them to resume execution.
+An event occurrence is broadcast to the whole program and awakes trails
+awaiting that event to resume execution.
 
-Céu supports external and internal events.
-External events are triggered by the [environment](#TODO), while 
-internal events, by the `emit` statement.
-See also [Synchronous execution model] for the differences between external and 
-internal reactions.
+As described in the [Introduction], Céu supports external and internal events
+with different behaviors.
 
 Unlike all other storage classes, the value of an event is ephemeral and does
 not persist after a reaction terminates.
@@ -100,15 +97,18 @@ A [declaration](#TODO) includes the type of value the occurring event carries.
 
 *Note: <tt>void</tt> is a valid type for signal-only internal events.*
 
-Examples:
+Example:
 
 ```ceu
-event int e;   // "e" is an internal event that carries values of type "int"
-par do
-    var int v = await e; // awaits "e" assigning the received value to "v"
-    escape v;            // terminates the program (yields 10)
+input  void I;           // "I" is an external input event that carries no valuess
+output int  O;           // "O" is an external output event that values of type "int"
+event  int  e;           // "e" is an internal event that carries values of type "int"
+par/and do
+    await I;             // awakes when "I" occurs
+    emit e(10);          // broadcasts "e" passing 10, awakes the "await" below
 with
-    emit e(10);          // broadcasts "e" passing 10, awakes the "await" above
+    var int v = await e; // awaits "e" assigning the received value to "v"
+    emit O(v);           // emits "O" back to the environment passing "v"
 end
 ```
 
@@ -130,41 +130,104 @@ external events at the platform level.
 
 As a reactive language, programs in Céu have input events as entry points in
 the code through [await statements](#TODO).
+Input events represent the notion of [logical time](#TODO) in Céu.
 
-<!--
-TODO: parei aqui
--->
+Only the [environment](#TODO) can emit inputs to the application.
+Programs can only `await` input events.
 
 #### External Output Events
 
+Output events communicate values from the program back to the
+[environment](#TODO).
+
+Programs can only `emit` output events.
+
 ### Internal Events
 
-<!--
-In contrast with external events, an internal event is for input and output at 
-the same time.
--->
+Internal events serve as signalling and communication mechanisms between
+trails in a program.
+
+Programs can `emit` and `await` internal events.
 
 Pools
 -----
 
-Aliases
--------
-
-Exceptions
-----------
-
-<!--
-
-### Dimension
-
-`TODO (vectors, pools)`
-
-One-dimensional vectors are declared by suffixing the variable type with the 
-vector length surrounded by `[` and `]`.
-The first index of a vector is zero.
+A pool is a dynamic container to hold running [code abstractions](#TODO).
+A pool [declaration](#TODO) specifies the type of the abstraction and maximum
+number of concurrent instances (possibly unlimited).
+Individual elements of a pool can only be accessed through [iterators](#TODO).
+New elements are created with `spawn` and are removed automatically when and
+only the code execution terminates.
 
 Example:
 
-<pre><code><b>var int</b>[2] v;       // declares a vector "v" of 2 integers
-</code></pre>
--->
+```ceu
+code/await Anim (void) => void do       // defines a code abstraction
+    ...
+end
+pool[] Anim ms;                         // declares an unlimited container for "Move" instances
+loop i in [0->10[ do
+    spawn Anim() in ms;                 // creates 10 instances of "Anim" into "ms"
+end
+```
+
+When a pool declaration goes out of scope, all running code abstractions are
+automatically aborted.
+
+References
+----------
+
+Céu supports *aliases* and *pointers* as references to entities
+(a.k.a. as *strong* and *weak* references, respectively).
+
+An alias is an alternate view for an entity---after the entity and alias are
+bounded, they are indistinguishable.
+A pointer is the address of an entity and provides indirect access to it.
+
+As an analogy with a person's identity,
+a family nickname used by her family to refer to her is an alias;
+a job position used by her company to refer to her is a pointer.
+
+### Aliases
+
+An alias is [declared](#TODO) by suffixing the storage class with the modifier
+`&` and is acquired by prefixing an entity with the operator `&`.
+
+Example:
+
+```
+var  int v = 0;
+var& int a = &v;        // "a" is an alias to "v"
+...
+a = 1;                  // "a" and "v" are indistinguishable
+_printf("%d\n", v);     // prints 1
+```
+
+An alias must have a narrower scope than the entity it refers to.
+The [binding](#TODO) to the alias is immutable and must occur between its
+declaration and first access or next [yielding statement](#TODO).
+It is not possible to acquire aliases to external events or to pointer types.
+
+### Pointers
+
+A pointer is [declared](#TODO) by suffixing the type with the modifier
+`&&` and is acquired by prefixing an entity with the operator `&&`.
+Applying the operator `&#42;` to a pointer provides indirect access to its
+referenced entity.
+
+Example:
+
+```
+var int   v = 0;
+var int&& p = &&v;      // "p" holds a pointer to "v"
+...
+*p = 1;                 // "p" provides indirect access to "v"
+_printf("%d\n", v);     // prints 1
+```
+
+Céu only supports pointers to [primitive](#TODO) and
+[data abstraction](#TODO) types.
+Also, it is only possible to acquire pointers to variables (not to events,
+vectors, or pools).
+However, a variable of a pointer type is only visible between its declaration
+and the next [yielding statement](#TODO).
