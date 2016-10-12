@@ -212,7 +212,7 @@ It is not possible to acquire aliases to external events or to pointer types.
 
 A pointer is [declared](#TODO) by suffixing the type with the modifier
 `&&` and is acquired by prefixing an entity with the operator `&&`.
-Applying the operator `&#42;` to a pointer provides indirect access to its
+Applying the operator `*` to a pointer provides indirect access to its
 referenced entity.
 
 Example:
