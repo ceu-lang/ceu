@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <title>Syntax - Céu v0.20 - Reference Manual</title>
+  
+
+  <link rel="shortcut icon" href="../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Syntax";
+    var mkdocs_page_input_path = "syntax.md";
+    var mkdocs_page_url = "/syntax/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script>
+  <script src="../js/theme.js"></script> 
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Céu v0.20 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../010-introduction/">Introduction</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../020-lexical_rules/">Lexical Rules</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../030-types/">Types</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../040-storage_classes/">Storage Classes</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../050-statements/">Statements</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../060-expressions/">Expressions</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../070-static_analysis/">Static Analysis</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../080-environment/">Environment</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../090-errors/">Errors</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Syntax</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#syntax">Syntax</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Céu v0.20 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Syntax</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="syntax">Syntax</h1>
+<pre><code>
+Stmt ::= &lt;empty-string&gt;
+      |  <b>nothing</b>
+      |  <b>escape</b> Exp
+      |  <b>return</b> [Exp]
+      |  <b>break</b>
+      |  <b>continue</b>
+
+  /* Declarations */
+
+      /* variables, organisms, pools, and internal events */
+      | <b>var</b> Type ID_var [`=´ &lt;Assignment&gt;] { `,´ ID_var [`=´ &lt;Assignment&gt;] }
+      | <b>var</b> Type ID_var <b>with</b>
+            Block
+        <b>end</b>
+      | <b>pool</b> Type ID_var [`=´ &lt;Assignment&gt;] { `,´ ID_var [`=´ &lt;Assignment&gt;] }
+      | <b>event</b> (Type | `(´ TypeList `)´) ID_var { `,´ ID_var }
+
+      /* internal functions */
+      | <b>function</b> [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var
+            [ `do´ Block `end´ ]
+
+      /* external functions */
+      | <b>output</b> [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var ID_ext { `,´ ID_ext }
+      | <b>input</b>  [<b>@rec</b>] `(´ParList`)´ `=>´ Type ID_var ID_ext { `,´ ID_ext }
+            [ `do´ Block `end´ ]
+
+      /* interrupts */
+      | <b>interrupt</b> `[´ NUM `]´ [<b>@rec</b>]
+            [ `do´ Block `end´ ]
+
+      /* external events */
+      | <b>output</b> (Type | `(´ TypeList `)´) ID_ext { `,´ ID_ext }
+      | <b>input</b>  (Type | `(´ TypeList `)´) ID_ext { `,´ ID_ext }
+
+      /* external requests */
+      | <b>output/input</b> `[´ [Exp] `]´ `(´ParList`)´ `=>´ Type ID_ext { `,´ ID_ext }
+      | <b>input/output</b> `[´ [Exp] `]´ `(´ParList`)´ `=>´ Type ID_ext { `,´ ID_ext }
+            [ `do´ Block `end´ ]
+
+      /* classes & interfaces */
+      | <b>class</b> ID_cls <b>with</b>
+            Dcls
+        <b>do</b>
+            Block
+        <b>end</b>
+      | <b>interface</b> ID_cls <b>with</b>
+            Dcls
+        <b>end</b>
+          <i>where</i>
+              Dcls   ::= { (&lt;var&gt; | &lt;event-int&gt; | &lt;pool&gt; | &lt;function&gt; | DclImp) `;´ }
+              DclImp ::= <b>interface</b> ID_cls { `,´ ID_cls }
+
+      /* data types */
+      | <b>data</b> ID_data <b>with</b>
+            (Struct | Union)
+        <b>end</b>
+          <i>where</i>
+              Struct ::= DclVar `;´ { DclVar `;´ }
+              Union  ::= DclTag { <b>or</b> DclTag }
+                  <i>where</i>
+                      DclVar ::= <b>var</b> Type ID_var { `,´ ID_var }
+                      DclTag ::= <b>tag</b> ID_tag <b>with</b>
+                                     DclVar `;´ { DclVar `;´ }
+                                 <b>end</b>
+
+      /* C integration */
+      | <b>native</b> [<b>@pure</b>|<b>@const</b>|<b>@nohold</b>|<b>@plain</b>] Nat_list
+          <i>where</i>
+              Nat_list  ::= (Nat_type|Nat_func|Nat_var) { `,` (Nat_type|Nat_func|Nat_var) }
+              Nat_type  ::= ID_nat `=´ NUM
+              Nat_func  ::= ID_nat `(´ `)´
+              Nat_var   ::= ID_nat
+      | (<b>native/pre</b> | <b>native</b>) <b>do</b>
+            <i>&lt;C code definitions&gt;</i>
+        <b>end</b>
+
+      /* deterministic annotations */
+      | <b>@safe</b> ID <b>with</b> ID { `,´ ID }
+
+  /* Assignments */
+
+      | (Exp | `(´VarList`)´) `=´
+          /* <i>Assignment</i> */
+          ( Exp
+          | AssignableBlock
+          | &lt;await&gt;
+          | ( [ `(´ ] &lt;emit-ext&gt
+                    | &lt;call-ext&gt;
+                    | &lt;request-ext&gt;
+              [ `)´ ] )
+          | [ `new´ ] Data
+          | &lt;traverse-loop&gt;
+          | &lt;traverse-rec&gt;
+          | Vector
+          | &lt;lua&gt;
+          | &lt;do-org&gt;
+          | &lt;spawn&gt;
+          | &lt;thread&gt;
+          )
+              <i>where</i>
+                  Data ::= ID_data [`.´ ID_tag] `(´ List `)´
+                  List ::= [ (Data|Exp) { `,´ (Data|Exp) } ]
+
+                  Vector ::= Item { `..´ Item }
+                  Item   ::= Exp | `[´ [ExpList] `]´
+
+                  AssignableBlock ::= &lt;do-end&gt; | &lt;if-then-else&gt; | &lt;loop&gt; | &lt;every&gt; | &lt;par&gt;
+
+  /* Function calls */
+
+      /* internal calls */
+      | [<b>call</b>|<b>call/rec</b>] Exp * `(´ [ExpList] `)´
+
+      /* external calls */
+      | (<b>call</b>+<b>call/rec</b>) ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
+
+  /* Event handling */
+
+      /* internal/external await */
+      | ( <b>await</b> ID_ext
+        | <b>await</b> Exp
+        | <b>await</b> (WCLOCKK|WCLOCKE)
+        ) [ <b>until</b> Exp ]
+      | <b>await</b> <b>FOREVER</b>
+
+      /* internal/external emit */
+      | <b>emit</b> Exp    [ `=>´ (Exp | `(´ [ExpList] `)´)
+      | <b>emit</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
+      | <b>emit</b> (WCLOCKK|WCLOCKE)
+
+      /* external request */
+      | <b>request</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
+
+  /* Organism instantiation */
+
+      /* do organism */
+      | <b>do</b> ID_cls <b>with</b>
+            Block
+        <b>end</b>
+
+      /* spawn */
+      | <b>spawn</b> * ID_cls * [<b>in</b> Exp]
+            [ <b>with</b> Block <b>end</b> ]
+
+      /* kill */
+      | <b>kill</b> * Exp * [ `=>´ Exp ]
+
+  /* Flow control */
+
+      /* explicit block */
+      |  <b>do</b> Block <b>end</b>
+
+      /* pre (top level) execution */
+      | <b>pre do</b>
+            Block
+        <b>end</b>
+
+      /* conditional */
+      | <b>if</b> Exp <b>then</b>
+            Block
+        { <b>else/if</b> Exp <b>then</b>
+            Block }
+        [ <b>else</b>
+            Block ]
+        <b>end</b>
+
+      /* loops */
+      | <b>loop</b>[`/´ Exp] [ ID_var [<b>in</b> Exp] ] <b>do</b>
+            Block
+        <b>end</b>
+      | <b>every</b> (Var | `(´VarList`)´) <b>in</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
+            Block
+        <b>end</b>
+
+      /* traverse */
+      | <b>traverse</b> ID_var <b>in</b> (`[´ Exp `]´ | Exp)
+            [ <b>with</b> Dcls <b>end</b> ]
+            <b>do</b>
+                Block
+            <b>end</b>
+      | <b>traverse</b>['/' NUM] Exp
+            [ <b>with</b> Block <b>end</b> ]
+
+      /* finalization */
+      | <b>finalize</b> [&lt;assignment&gt;] <b>with</b>
+            Block
+        <b>end</b>
+
+      /* parallel compositions */
+      | (<b>par/and</b>|<b>par/or</b>|<b>par</b>) <b>do</b>
+            Block
+        <b>with</b>
+            Block
+        { <b>with</b>
+            Block }
+         <b>end</b>
+      | <b>watching</b> [ (Var | `(´VarList`)´) <b>in</b> ] (WCLOCKK|WCLOCKE|ID_ext|Exp)
+        <b>do</b>
+            Block
+        <b>end</b>
+
+      /* pause */
+      | <b>pause/if</b> Exp <b>do</b>
+            Block
+        <b>end</b>
+
+      /* asynchronous execution */
+      | (<b>async</b> | [<b>async/thread</b>]) [ `(´VarList`)´ ] <b>do</b>
+            Block
+        <b>end</b>
+
+      /* synchronization */
+      | <b>sync do</b>
+            Block
+        <b>end</b>
+      | <b>atomic do</b>
+            Block
+        <b>end</b>
+
+  /* C integration */
+
+     | `{´ &lt;C code&gt; `}´
+
+  /* Lua integration */
+
+      | `[´ {`=´} `[´
+            { <i>&lt;lua code&gt;</i> | `@´ Exp }
+        `]´ {`=´} `]´
+
+/* Block */
+
+Block ::= { Stmt `;´ }
+
+/* Identifiers */
+
+ID       ::= &lt;a-z, A-Z, 0-9, _&gt; +
+ID_var   ::= `_´ | ID    // beginning with a lowercase letter
+ID_ext   ::= ID          // all in uppercase, not beginning with a digit
+ID_cls   ::= ID          // beginning with an uppercase letter
+ID_data  ::= ID          // beginning with an uppercase letter
+ID_tag   ::= ID          // all in uppercase, not beginning with a digit
+ID_field ::= ID          // not beginning with a digit
+ID_nat   ::= ID          // beginning with an underscore
+ID_type  ::= ( ID_nat | ID_cls | ID_data
+             | <b>bool</b>  | <b>byte</b>  | <b>char</b>  | <b>f32</b>   | <b>f64</b>   |
+             | <b>float</b> | <b>int</b>   | <b>s16</b>   | <b>s32</b>   | <b>s64</b>   |
+             | <b>s8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>   | <b>u8</b>    |
+             | <b>uint</b>  | <b>void</b>  | <b>word</b> )
+
+/* Types */
+
+Type ::= ID_type ( `&&´ | `&´ | `?´ | `[´ [NUM] `]´ )
+
+/* Lists */
+
+TypeList ::= Type    { `,´ Type    }
+ExpList  ::= Exp     { `,´ Exp     }
+VarList  ::= ID_var  { `,´ ID_var  }
+ParList  ::= ParItem { `,´ ParItem }
+                <i>where</i>
+                    ParItem ::= [<b>@hold</b>] Type [ID_var] 
+
+/* Wall-clock values */
+
+WCLOCKK ::= [NUM <b>h</b>] [NUM <b>min</b>] [NUM <b>s</b>] [NUM <b>ms</b>] [NUM <b>us</b>]
+WCLOCKE ::= `(´ Exp `)´ (<b>h</b>|<b>min</b>|<b>s</b>|<b>ms</b>|<b>us</b>)
+
+/* Expressions */
+
+Exp ::= Prim
+        |  (`$$´|`$´) Exp
+        |  Exp (`?´|`!´)
+        |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
+
+Prim ::= `(´ Exp `)´
+        |  ID_var | ID_nat
+        |  <b>null</b> | NUM | String
+        |  <b>true</b> | <b>false</b>
+        |  (<b>call</b> | <b>call/rec</b>) Exp
+        |  &lt;c-code&gt
+
+/* Operator precedence */
+
+    /* lowest priority */
+    <b>or</b>
+    <b>and</b>
+    !=    ==    &lt;=    &gt;=    &lt;     &gt;
+    |
+    ^
+    &
+    &gt;&gt;    &lt;&lt;
+    +     -
+    *     /     %
+    <b>not</b>    +    -    ~    *    &&    &    $$    $    (Type)
+    ()    []    :    .    ?    !
+    /* highest priority */
+
+/* Other */
+
+    // single-line comment
+
+    /** nested
+        /* multi-line */
+        comments **/
+
+    # preprocessor directive
+
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../license/" class="btn btn-neutral float-right" title="License">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../090-errors/" class="btn btn-neutral" title="Errors"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../090-errors/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../license/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  
+  <title>Expressions - Céu v0.20 - Reference Manual</title>
+  
+
+  <link rel="shortcut icon" href="../img/favicon.ico">
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../css/highlight.css">
+
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Expressions";
+    var mkdocs_page_input_path = "060-expressions.md";
+    var mkdocs_page_url = "/060-expressions/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js"></script>
+  <script src="../js/modernizr-2.8.3.min.js"></script>
+  <script type="text/javascript" src="../js/highlight.pack.js"></script>
+  <script src="../js/theme.js"></script> 
+
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Céu v0.20 - Reference Manual</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        <ul class="current">
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="..">Home</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../010-introduction/">Introduction</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../020-lexical_rules/">Lexical Rules</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../030-types/">Types</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../040-storage_classes/">Storage Classes</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../050-statements/">Statements</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 current">
+        <a class="current" href="./">Expressions</a>
+        
+            <ul>
+            
+                <li class="toctree-l3"><a href="#expressions">Expressions</a></li>
+                
+                    <li><a class="toctree-l4" href="#primary">Primary</a></li>
+                
+                    <li><a class="toctree-l4" href="#arithmetic">Arithmetic</a></li>
+                
+                    <li><a class="toctree-l4" href="#relational">Relational</a></li>
+                
+                    <li><a class="toctree-l4" href="#logical">Logical</a></li>
+                
+                    <li><a class="toctree-l4" href="#bitwise">Bitwise</a></li>
+                
+                    <li><a class="toctree-l4" href="#vector-indexing">Vector indexing</a></li>
+                
+                    <li><a class="toctree-l4" href="#references">References</a></li>
+                
+                    <li><a class="toctree-l4" href="#fields">Fields</a></li>
+                
+                    <li><a class="toctree-l4" href="#option">Option</a></li>
+                
+                    <li><a class="toctree-l4" href="#type-casting">Type casting</a></li>
+                
+                    <li><a class="toctree-l4" href="#sizeof">Sizeof</a></li>
+                
+                    <li><a class="toctree-l4" href="#precedence">Precedence</a></li>
+                
+                    <li><a class="toctree-l4" href="#assignable-expressions">Assignable expressions</a></li>
+                
+            
+            </ul>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../070-static_analysis/">Static Analysis</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../080-environment/">Environment</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../090-errors/">Errors</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../syntax/">Syntax</a>
+        
+    </li>
+<li>
+          
+            <li>
+    <li class="toctree-l1 ">
+        <a class="" href="../license/">License</a>
+        
+    </li>
+<li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Céu v0.20 - Reference Manual</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Expressions</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="expressions">Expressions</h1>
+<p>The syntax for expressions in Céu is as follows:</p>
+<pre><code>Exp ::= Prim
+        |  Exp <b>or</b> Exp
+        |  Exp <b>and</b> Exp
+        |  Exp (`!=´|`==´|`&lt;=´|`&lt;´|`&gt;´|`&gt;=´) Exp
+        |  Exp `|´ Exp
+        |  Exp `^´ Exp
+        |  Exp `&´ Exp
+        |  Exp (`&lt;&lt;´|`&gt;&gt;´) Exp
+        |  Exp (`+´|`-´) Exp
+        |  Exp (`*´|`/´|`%´) Exp
+        |  (<b>not</b>|`+´|`-´|`~´|`*´|`&&´|`&´|`$$´|`$´) Exp
+        |  `(´ Type `)´ Exp     /* same precedence as previous */
+        |  Exp `[´ Exp `]´      /* same precedence for all following */
+        |  Exp (`.´|`:´) (ID_field | ID_tag)
+        |  Exp (`?´|`!´)
+        |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
+
+Prim ::= `(´ Exp `)´
+        |  <b>sizeof</b> `(´ (Type|Exp) `)´
+        |  ID_var | ID_nat
+        |  <b>null</b> | NUM | String
+        |  <b>true</b> | <b>false</b>
+        |  <b>global</b> | <b>this</b> | <b>outer</b>
+        |  (<b>call</b> | <b>call/rec</b>) Exp
+        |  &lt;c-stat&gt
+</code></pre>
+
+<p><em>Note: assignments are not expressions in Céu.</em></p>
+<h2 id="primary">Primary</h2>
+<p><code>TODO: global, this, outer, ID_var, ID_nat, null, NUM, String, true, false, 
+call/call/rec/finalize, C, parens</code></p>
+<h2 id="arithmetic">Arithmetic</h2>
+<p>The arithmetic operators of Céu are</p>
+<pre><code>    +      -      %      *      /      +      -
+</code></pre>
+
+<p>which correspond to <em>addition</em>, <em>subtraction</em>, <em>modulo (remainder)</em>, <em>multiplication</em>, <em>division</em>, <em>unary-plus</em>, and <em>unary-minus</em>.
+<!-- *Note: Céu has no support for pointer arithmetic.* --></p>
+<h2 id="relational">Relational</h2>
+<p>The relational operators of Céu are</p>
+<pre><code>    ==      !=      &gt;      &lt;      &gt;=      &lt;=
+</code></pre>
+
+<p>which correspond to <em>equal-to</em>, <em>not-equal-to</em>, <em>greater-than</em>, <em>less-than</em>, <em>greater-than-or-equal-to</em>, and <em>less-than-or-equal-to</em>.</p>
+<p>Relational expressions evaluate to 1 (<em>true</em>) or 0 (<em>false</em>).</p>
+<h2 id="logical">Logical</h2>
+<p>The logical operators of Céu are</p>
+<pre><code>    <b>not      and      or</b>
+</code></pre>
+
+<!--
+which correspond to *not*, *and*, *or*.
+-->
+
+<h2 id="bitwise">Bitwise</h2>
+<p>The bitwise operators of Céu are</p>
+<pre><code>    ~      &amp;      |      ^      &lt;&lt;      &gt;&gt;
+</code></pre>
+
+<p>which correspond to <em>not</em>, <em>and</em>, <em>or</em>, <em>xor</em>, <em>left-shift</em>, and <em>right-shift</em>.</p>
+<h2 id="vector-indexing">Vector indexing</h2>
+<p>Céu uses square brackets to index <a href="#Vectors">vectors</a>:</p>
+<pre><code>Index ::= Exp `[´ Exp `]´
+</code></pre>
+
+<p>The expression on the left side is expected to evaluate to a vector.</p>
+<p>Vector indexes start at zero.
+<!-- TODO: limites e recolocar "pointer arith" --></p>
+<h2 id="references">References</h2>
+<p><code>TODO</code></p>
+<h3 id="aliasing">Aliasing</h3>
+<p><code>TODO</code></p>
+<pre><code>Alias ::= `&amp;´ Exp
+</code></pre>
+
+<p>The operand to <code>&amp;amp;</code> must be an [[#sec.exps.assignable|assignable 
+expression]].</p>
+<h3 id="pointer-referencing-and-dereferencing">Pointer referencing and dereferencing</h3>
+<hr />
+<p><code>TODO</code></p>
+<p>The operator <code>&amp;amp;&amp;amp;</code> returns the address of its operand, while the
+operator <code>*</code> dereferences its pointer operand.</p>
+<pre><code>Address ::= `&amp;&amp;´ Exp
+Deref   ::= `*´ Exp
+</code></pre>
+
+<p>The operand to <code>&amp;amp;&amp;amp;</code> must be an [[#sec.exps.assignable|assignable 
+expression]].</p>
+<h2 id="fields">Fields</h2>
+<p><code>TODO (tags,fields)</code></p>
+<h3 id="structs">Structs</h3>
+<p>The operators <code>.´ and</code>:´ access the fields of structs.</p>
+<pre><code>Dot   ::= Exp `.´ Exp
+Colon ::= Exp `:´ Exp
+</code></pre>
+
+<p>The operator <code>.</code> expects a <code>struct</code> as its left operand, while the operator <code>:</code> 
+expects a reference to a <code>struct</code>.</p>
+<p>Example:</p>
+<pre><code><b>native do</b>
+    typedef struct {
+        int v;
+    } mystruct;
+end
+<b>var</b> _mystruct s;
+<b>var</b> _mystruct* p = &s;
+s.v = 1;
+p:v = 0;
+</code></pre>
+
+<p><em>Note: <code>struct</code> must be declared in C, as Céu currently has no support for it.</em></p>
+<h3 id="organisms">Organisms</h3>
+<p><code>TODO</code></p>
+<p><code>TODO (index clash)</code></p>
+<h2 id="option">Option</h2>
+<p><code>TODO (?!)</code></p>
+<h2 id="type-casting">Type casting</h2>
+<p>Céu uses parenthesis for type casting:</p>
+<pre><code>Cast ::= `(´ ID_type `)´
+</code></pre>
+
+<h2 id="sizeof">Sizeof</h2>
+<p>A <code>sizeof</code> expression returns the size of a type or expression, in bytes:</p>
+<pre><code>Sizeof ::= <b>sizeof</b> `(´ (Type|Exp) `)´
+</code></pre>
+
+<!--
+The expression is evaluated at compile time.
+-->
+
+<h2 id="precedence">Precedence</h2>
+<p>Céu follows the same precedence of C operators:</p>
+<pre><code>    /* lowest priority */
+
+    <b>or</b>
+
+    <b>and</b>
+
+    !=    ==    &lt;=    &gt;=    &lt;     &gt;
+
+    |
+
+    ^
+
+    &
+
+    &gt;&gt;    &lt;&lt;
+
+    +     -
+
+    *     /     %
+
+    <b>not</b>    +    -    ~    *    &&    &    $$    $    (Type)
+
+    ()    []    :    .    ?    !
+
+    /* highest priority */
+</code></pre>
+
+<h2 id="assignable-expressions">Assignable expressions</h2>
+<p>An assignable expression (also known as an <em>l-value</em>) can be a variable, vector index, pointer dereference, or struct access.
+L-values are required in [[#sec.stmts.assignments|assignments]] and [[#sec.exps.pointers|references]].</p>
+<p>Examples:</p>
+<pre><code><b>var int</b> a;
+a = 1;
+
+<b>var int</b>[2] v;
+v[0] = 1;
+
+<b>var int</b>&& p;
+*p = 1;
+
+<b>var</b> _mystruct s;
+s.v = 1;
+
+<b>var</b> _mystruct&& ps;
+ps:v = 1;
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../070-static_analysis/" class="btn btn-neutral float-right" title="Static Analysis">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../050-statements/" class="btn btn-neutral" title="Statements"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href="../050-statements/" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../070-static_analysis/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+
+</body>
+</html>
