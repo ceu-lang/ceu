@@ -2,12 +2,12 @@
     "docs": [
         {
             "location": "/", 
-            "text": "C\u00e9u v0.20 - Reference Manual\n\n\n\n\nIntroduction\n\n\nLexical Rules\n\n\nTypes\n\n\nStorage Classes\n\n\nLicense", 
+            "text": "C\u00e9u v0.20 - Reference Manual\n\n\n\n\nIntroduction\n\n\nLexical Rules\n\n\nTypes\n\n\nStorage Classes\n\n\nStatements\n\n\nExpressions\n\n\nStatic Analsysis\n\n\nEnvironment\n\n\nErrors\n\n\nSyntax\n\n\nLicense", 
             "title": "Home"
         }, 
         {
             "location": "/#ceu-v020-reference-manual", 
-            "text": "Introduction  Lexical Rules  Types  Storage Classes  License", 
+            "text": "Introduction  Lexical Rules  Types  Storage Classes  Statements  Expressions  Static Analsysis  Environment  Errors  Syntax  License", 
             "title": "C\u00e9u v0.20 - Reference Manual"
         }, 
         {
@@ -199,6 +199,36 @@
             "location": "/040-storage_classes/#exceptions", 
             "text": "", 
             "title": "Exceptions"
+        }, 
+        {
+            "location": "/050-statements/", 
+            "text": "TODO", 
+            "title": "Statements"
+        }, 
+        {
+            "location": "/060-expressions/", 
+            "text": "TODO", 
+            "title": "Expressions"
+        }, 
+        {
+            "location": "/070-static_analysis/", 
+            "text": "TODO", 
+            "title": "Static Analysis"
+        }, 
+        {
+            "location": "/080-environment/", 
+            "text": "TODO", 
+            "title": "Environment"
+        }, 
+        {
+            "location": "/090-errors/", 
+            "text": "TODO", 
+            "title": "Errors"
+        }, 
+        {
+            "location": "/syntax/", 
+            "text": "TODO", 
+            "title": "Syntax"
         }, 
         {
             "location": "/license/", 
