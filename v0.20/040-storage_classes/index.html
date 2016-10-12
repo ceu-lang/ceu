@@ -98,7 +98,9 @@
                 
                     <li><a class="toctree-l4" href="#pools">Pools</a></li>
                 
-                    <li><a class="toctree-l4" href="#references">References</a></li>
+                    <li><a class="toctree-l4" href="#aliases">Aliases</a></li>
+                
+                    <li><a class="toctree-l4" href="#exceptions">Exceptions</a></li>
                 
             
             </ul>
@@ -236,8 +238,8 @@ escape v;       // read access (yields 2)
 <h2 id="vectors">Vectors</h2>
 <p>In Céu, a vector is a dynamic and contiguous collection of elements of the same
 type.
-A vector <a href="#TODO">declaration</a> specifies its type and maximum number of
-elements (possibly unlimited).
+A vector <a href="#TODO">declaration</a> specifies its type and maximum size (possibly
+unlimited).
 The current size of a vector is dynamic and can be accessed through the
 <a href="#TODO">operator <code>$</code></a>.
 Individual elements of a vector can be accessed through a
@@ -253,26 +255,26 @@ escape buf[1];                  // read access (yields 2)
 nature.
 Programs manipulate events through the <code>await</code> and <code>emit</code> <a href="#TODO">statements</a>.
 An <code>await</code> halts the running trail until that event occurs.
-An event occurrence is broadcast to the whole program and awakes trails
-awaiting that event to resume execution.</p>
-<p>As described in the [Introduction], Céu supports external and internal events
-with different behaviors.</p>
+An event occurrence is broadcast to all trails trails awaiting that event, 
+awaking them to resume execution.</p>
+<p>Céu supports external and internal events.
+External events are triggered by the <a href="#TODO">environment</a>, while 
+internal events, by the <code>emit</code> statement.
+See also [Synchronous execution model] for the differences between external and 
+internal reactions.</p>
 <p>Unlike all other storage classes, the value of an event is ephemeral and does
 not persist after a reaction terminates.
 For this reason, an event identifier is not a variable: values can only
 be communicated through <code>emit</code> and <code>await</code> statements.
 A <a href="#TODO">declaration</a> includes the type of value the occurring event carries.</p>
 <p><em>Note: <tt>void</tt> is a valid type for signal-only internal events.</em></p>
-<p>Example:</p>
-<pre><code class="ceu">input  void I;           // &quot;I&quot; is an external input event that carries no valuess
-output int  O;           // &quot;O&quot; is an external output event that values of type &quot;int&quot;
-event  int  e;           // &quot;e&quot; is an internal event that carries values of type &quot;int&quot;
-par/and do
-    await I;             // awakes when &quot;I&quot; occurs
-    emit e(10);          // broadcasts &quot;e&quot; passing 10, awakes the &quot;await&quot; below
-with
+<p>Examples:</p>
+<pre><code class="ceu">event int e;   // &quot;e&quot; is an internal event that carries values of type &quot;int&quot;
+par do
     var int v = await e; // awaits &quot;e&quot; assigning the received value to &quot;v&quot;
-    emit O(v);           // emits &quot;O&quot; back to the environment passing &quot;v&quot;
+    escape v;            // terminates the program (yields 10)
+with
+    emit e(10);          // broadcasts &quot;e&quot; passing 10, awakes the &quot;await&quot; above
 end
 </code></pre>
 
@@ -290,80 +292,36 @@ Refer to <a href="#TODO">Environment</a> for information about interfacing with
 external events at the platform level.</p>
 <h4 id="external-input-events">External Input Events</h4>
 <p>As a reactive language, programs in Céu have input events as entry points in
-the code through <a href="#TODO">await statements</a>.
-Input events represent the notion of <a href="#TODO">logical time</a> in Céu.</p>
-<p>Only the <a href="#TODO">environment</a> can emit inputs to the application.
-Programs can only <code>await</code> input events.</p>
+the code through <a href="#TODO">await statements</a>.</p>
+<!--
+TODO: parei aqui
+-->
+
 <h4 id="external-output-events">External Output Events</h4>
-<p>Output events communicate values from the program back to the
-<a href="#TODO">environment</a>.</p>
-<p>Programs can only <code>emit</code> output events.</p>
 <h3 id="internal-events">Internal Events</h3>
-<p>Internal events serve as signalling and communication mechanisms between
-trails in a program.</p>
-<p>Programs can <code>emit</code> and <code>await</code> internal events.</p>
+<!--
+In contrast with external events, an internal event is for input and output at 
+the same time.
+-->
+
 <h2 id="pools">Pools</h2>
-<p>A pool is a dynamic container to hold running <a href="#TODO">code abstractions</a>.
-A pool <a href="#TODO">declaration</a> specifies the type of the abstraction and maximum
-number of concurrent instances (possibly unlimited).
-Individual elements of a pool can only be accessed through <a href="#TODO">iterators</a>.
-New elements are created with <code>spawn</code> and are removed automatically when and
-only the code execution terminates.</p>
-<p>Example:</p>
-<pre><code class="ceu">code/await Anim (void) =&gt; void do       // defines a code abstraction
-    ...
-end
-pool[] Anim ms;                         // declares an unlimited container for &quot;Move&quot; instances
-loop i in [0-&gt;10[ do
-    spawn Anim() in ms;                 // creates 10 instances of &quot;Anim&quot; into &quot;ms&quot;
-end
-</code></pre>
+<h2 id="aliases">Aliases</h2>
+<h2 id="exceptions">Exceptions</h2>
+<!--
 
-<p>When a pool declaration goes out of scope, all running code abstractions are
-automatically aborted.</p>
-<h2 id="references">References</h2>
-<p>Céu supports <em>aliases</em> and <em>pointers</em> as references to entities
-(a.k.a. as <em>strong</em> and <em>weak</em> references, respectively).</p>
-<p>An alias is an alternate view for an entity---after the entity and alias are
-bounded, they are indistinguishable.
-A pointer is the address of an entity and provides indirect access to it.</p>
-<p>As an analogy with a person's identity,
-a family nickname used by her family to refer to her is an alias;
-a job position used by her company to refer to her is a pointer.</p>
-<h3 id="aliases">Aliases</h3>
-<p>An alias is <a href="#TODO">declared</a> by suffixing the storage class with the modifier
-<code>&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;</code>.</p>
-<p>Example:</p>
-<pre><code>var  int v = 0;
-var&amp; int a = &amp;v;        // &quot;a&quot; is an alias to &quot;v&quot;
-...
-a = 1;                  // &quot;a&quot; and &quot;v&quot; are indistinguishable
-_printf(&quot;%d\n&quot;, v);     // prints 1
-</code></pre>
+### Dimension
 
-<p>An alias must have a narrower scope than the entity it refers to.
-The <a href="#TODO">binding</a> to the alias is immutable and must occur between its
-declaration and first access or next <a href="#TODO">yielding statement</a>.
-It is not possible to acquire aliases to external events or to pointer types.</p>
-<h3 id="pointers">Pointers</h3>
-<p>A pointer is <a href="#TODO">declared</a> by suffixing the type with the modifier
-<code>&amp;&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;&amp;</code>.
-Applying the operator <code>&amp;#42;</code> to a pointer provides indirect access to its
-referenced entity.</p>
-<p>Example:</p>
-<pre><code>var int   v = 0;
-var int&amp;&amp; p = &amp;&amp;v;      // &quot;p&quot; holds a pointer to &quot;v&quot;
-...
-*p = 1;                 // &quot;p&quot; provides indirect access to &quot;v&quot;
-_printf(&quot;%d\n&quot;, v);     // prints 1
-</code></pre>
+`TODO (vectors, pools)`
 
-<p>Céu only supports pointers to <a href="#TODO">primitive</a> and
-<a href="#TODO">data abstraction</a> types.
-Also, it is only possible to acquire pointers to variables (not to events,
-vectors, or pools).
-However, a variable of a pointer type is only visible between its declaration
-and the next <a href="#TODO">yielding statement</a>.</p>
+One-dimensional vectors are declared by suffixing the variable type with the 
+vector length surrounded by `[` and `]`.
+The first index of a vector is zero.
+
+Example:
+
+<pre><code><b>var int</b>[2] v;       // declares a vector "v" of 2 integers
+</code></pre>
+-->
               
             </div>
           </div>
