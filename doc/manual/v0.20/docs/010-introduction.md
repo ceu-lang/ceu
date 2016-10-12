@@ -1,0 +1,232 @@
+Introduction
+============
+
+Céu provides *Structured Synchronous Reactive Programming* which supports
+safe and deterministic concurrency with side effects.
+The lines of execution in Céu, known as *trails*, react together continuously
+and in synchronous steps to external input events from the environment.
+Waiting for an event halts the running trail until that event occurs.
+The environment broadcasts an occurring event to all active trails, which share 
+a single global time reference.
+
+The synchronous concurrency model of Céu diverges from multithreading and also
+from actor-based models (e.g. *pthreads* and *erlang*).
+On the one hand, there is no real parallelism at the synchronous kernel of the
+language (i.e., no multi-core execution).
+On the other hand, trails can share variables deterministically without
+synchronization primitives (i.e., no *locks*, *semaphores*, or *queues*).
+
+Céu provides automatic memory management based on static lexical scopes (i.e.,
+no *free* or *delete*) and does not require runtime garbage collection.
+
+Céu integrates safely with C, and programs can define and make native calls
+seamlessly while avoiding memory leaks and dangling pointers.
+
+Céu is [free software](#TODO).
+
+Synchronous Execution Model
+---------------------------
+
+Céu is grounded on a precise definition of *logical time* (as opposed to
+*physical* or *wall-clock time*) as a discrete sequence of external input
+events:
+a sequence because only a single input event is handled at a logical time; 
+discrete because reactions to events are guaranteed to execute in bounded
+physical time (see [Bounded Execution](#bounded-execution)).
+
+The execution model for Céu programs is as follows:
+
+1. The program initiates the *boot reaction* from the first line of code in a
+      single trail.
+2. Active trails<sup>1</sup>, one after another, execute until they await or 
+      terminate.
+      This step is named a *reaction chain*, and always runs in bounded time.
+3. The program goes idle and the environment takes control.
+4. On the occurrence of a new external input event, the environment awakes 
+      *all* trails awaiting that event.
+      It then goes to step 2.
+
+(<sup>1</sup>
+*Trails can be created with [parallel 
+compositions](#parallel-compositions-and-abortion).*)
+
+The synchronous execution model of Céu is based on the hypothesis that reaction
+chains run *infinitely faster* in comparison to the rate of external events.
+A reaction chain is the set of computations that execute when an external 
+event occurs.
+Conceptually, a program takes no time on step 2 and is always idle on step 3.
+In practice, if a new external input event occurs while a reaction chain is 
+running (step 2), it is enqueued to run in the next reaction.
+When multiple trails are active at a logical time (i.e. awaking from the same 
+event), Céu schedules them in the order they appear in the program text.
+This policy is somewhat arbitrary, but provides a priority scheme for trails, 
+and also ensures deterministic and reproducible execution for programs.
+At any time, at most one trail is executing.
+
+The program and diagram below illustrate the behavior of the scheduler of Céu:
+
+```ceu
+ 1:  input void A, B, C;
+ 2:  par/and do           // A, B, and C are external input events
+ 3:      // trail 1
+ 4:      <...>            // <...> represents non-awaiting statements
+ 5:      await A;
+ 6:      <...>
+ 7:  with
+ 8:      // trail 2
+ 9:      <...>
+10:      await B;
+11:      <...>
+12:  with
+13:      // trail 3
+14:      <...>
+15:      await A;
+16:      <...>
+17:      await B;
+18:      par/and do
+19:          // trail 3
+20:          <...>
+21:      with
+22:          // trail 4
+23:          <...>
+24:      end
+25:  end
+```
+
+![](images/010-reaction.png)
+
+The program starts in the boot reaction and forks into three trails.
+Respecting the lexical order of declaration for the trails, they are scheduled
+as follows (*t0* in the diagram):
+
+- *trail-1* executes up to the `await A` (line 5);
+- *trail-2*, up to the `await B` (line 10);
+- *trail-3*, up to `await A` (line 15).
+
+As no other trails are pending, the reaction chain terminates and the scheduler 
+remains idle until the event `A` occurs (*t1* in the diagram):
+
+- *trail-1* awakes, executes and terminates (line 6);
+- *trail-2* remains suspended, as it is not awaiting `A`.
+- *trail-3* executes up to `await B` (line 17).
+
+During the reaction *t1*, new instances of events `A`, `B`, and `C` occur and
+are enqueued to be handled in the reactions in sequence.
+As `A` happened first, it is used in the next reaction.
+However, no trails are awaiting it, so an empty reaction chain takes place 
+(*t2* in the diagram).
+The next reaction dequeues the event `B` (*t3* in the diagram):
+
+- *trail-2* awakes, executes and terminates;
+- *trail-3* splits in two and they both terminate immediately.
+
+A `par/and` rejoins after all trails terminate.
+With all trails terminated, the program also terminates and does not react to 
+the pending event `C`.
+
+Note that each step in the logical time line (*t0*, *t1*, etc.) is identified 
+by the unique event it handles.
+Inside a reaction, trails only react to that identifying event (or remain 
+suspended).
+
+<!--
+A reaction chain may also contain emissions and reactions to internal events, 
+which are presented in Section~\ref{sec.ceu.ints}.
+-->
+
+Parallel Compositions and Abortion
+----------------------------------
+
+The use of trails in parallel allows programs to wait for multiple events at 
+the same time.
+Céu supports three kinds of parallel compositions that differ in how they
+rejoin and proceed to the statement in sequence:
+
+1. a `par/and` rejoins after all trails in parallel terminate;
+2. a `par/or` rejoins after any trail in parallel terminates, aborting all
+   other trails;
+3. a `par` never rejoins, even if all trails terminate.
+
+The termination of a trail inside a `par/or` aborts the other trails in 
+parallel which are necessarily idle
+(see [`rule 2` for external reactions](#synchronous-execution-model)).
+Before being aborted, a trail has a last opportunity to execute active 
+[finalization statements](#TODO).
+
+As mentioned in the introduction and emphasized in the execution model, trails
+in parallel do not execute with real parallelism.
+Therefore, parallel compositions should read as *awaiting in parallel*, rather
+than *executing in parallel*.
+
+Bounded Execution
+-----------------
+
+Reaction chains must run in bounded time to guarantee that programs are 
+responsive and can handle upcoming input events from the environment.
+For this reason, Céu requires every path inside the body of a `loop` statement
+to contain at least one `await` or `break` statement.
+This prevents *tight loops*, i.e., unbounded loops that do not await.
+
+In the example below, the true branch of the `if` may never execute, resulting
+in a tight loop when the condition is false:
+
+```ceu
+loop do
+    if <cond> then
+        break;
+    end
+end
+```
+
+Céu complains about tight loops in programs at compile time.
+For time-consuming algorithms that require unrestricted loops (e.g., 
+cryptography, image processing), Céu provides [Asynchronous 
+Execution](#TODO).
+
+Deterministic Execution
+-----------------------
+
+`TODO (shared memory + deterministic scheduler + optional static analysis)`
+
+Internal Reactions
+------------------
+
+Céu supports inter-trail communication through `await` and `emit` statements
+for *internal events*.
+A trail can `emit` an event which is broadcast to the program to awake trails
+in parallel that are blocked in an `await` statement for that same event.
+
+An `emit` starts a new *internal reaction* in the program relying on a
+runtime stack:
+
+1. An `emit` suspends the current trail and its continuation is pushed into the
+    stack (i.e., the statement in sequence with the `emit`).
+2. All trails awaiting the emitted event awake and execute
+    (see [`rule 2` for external reactions](#synchronous-execution-model)).
+3. The top of stack is popped and the last emitting trail resumes execution
+    from its continuation.
+
+Note that if an awaking trail emits another internal event (in `rule 2`), a
+nested internal reaction starts (in `rule 1`).
+Example:
+
+```ceu
+1:  par/and do
+2:      await e;
+3:      emit f;
+4:  with
+5:      await f;
+6:  with
+7:      ...
+8:      emit e;
+9:  end
+```
+
+The `emit e` in *trail-3* (line 8) starts an internal reaction that awakes the 
+`await e` in *trail-1* (line 2).
+Then, the `emit f` (line 3) starts another internal reaction that awakes the 
+`await f` in *trail-2* (line 5).
+*Trail-2* terminates and the `emit f` resumes in *trail-1*.
+*Trail-1* terminates and the `emit e` resumes in *trail-3*.
+*Trail-3* terminates.
+Finally, the `par/and` rejoins and the program terminates.
