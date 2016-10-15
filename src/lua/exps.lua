@@ -34,7 +34,7 @@ F = {
         if me.dcl.is_mid_idx then
             local Set_Alias = AST.get(me.__par.__par,'Set_Alias')
             local ok = Set_Alias and AST.get(Set_Alias,'',2,'Exp_Name',1,'ID_int')==me
-            ok = ok or AST.par(me, 'Varlist')
+            ok = ok or AST.par(me, 'List_Var')
             ASR(ok, me, 'invalid access to output variable "'..me.dcl.id..'"')
         end
     end,
@@ -217,7 +217,7 @@ error'TODO: remove below'
             -- &y as X; (y is X.Y)
             par = par.__par
         end
-        ASR(par.tag=='Set_Alias' or par.tag=='Explist' or par.tag=='Abslist', me,
+        ASR(par.tag=='Set_Alias' or par.tag=='List_Exp' or par.tag=='Abslist', me,
             'invalid expression : unexpected context for operation `&´')
 
         -- tp

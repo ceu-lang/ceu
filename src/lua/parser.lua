@@ -416,13 +416,13 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     (V'__ID_int'+V'ID_any') * OPT(K'in' * V'_Loop_Num_Range') *
                   V'__Do'
     , Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                    OPT(PARENS(V'Varlist')) *
+                    OPT(PARENS(V'List_Var')) *
                         K'in' * V'Exp_Name' *
                   V'__Do'
     , Loop      = K'loop' * OPT('/'*V'__Exp') *
                   V'__Do'
 
-    , _Every  = K'every' * OPT((V'Exp_Name'+PARENS(V'Namelist')) * K'in') *
+    , _Every  = K'every' * OPT((V'Exp_Name'+PARENS(V'List_Name')) * K'in') *
                     (V'Await_Ext' + V'Await_Int' + V'Await_Wclock') *
                 V'__Do'
 
@@ -433,7 +433,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                    + V'_Set'
                    + V'Emit_Ext_emit' + V'Emit_Ext_call'
                    + V'Stmt_Call'
-    , __finalize   = K'finalize' * (PARENS(V'Namelist') + Cc(false)) * K'with' *
+    , __finalize   = K'finalize' * (PARENS(V'List_Name') + Cc(false)) * K'with' *
                      V'Block' *
                    K'end'
     , Finalize     = K'do' * OPT(V'__fin_stmt') * V'__finalize'
@@ -448,11 +448,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- ASYNCHRONOUS
 
     , Async        = K'await' * K'async' * (-P'/thread'-'/isr') *
-                        OPT(PARENS(V'Varlist')) * V'__Do'
+                        OPT(PARENS(V'List_Var')) * V'__Do'
     , Async_Thread = K'await' * K'async/thread' *
-                        OPT(PARENS(V'Varlist')) * V'__Do'
-    , _Async_Isr   = K'async/isr' * KK'[' * V'Explist' * KK']' *
-                            OPT(PARENS(V'Varlist')) *
+                        OPT(PARENS(V'List_Var')) * V'__Do'
+    , _Async_Isr   = K'async/isr' * KK'[' * V'List_Exp' * KK']' *
+                            OPT(PARENS(V'List_Var')) *
                       V'__Do'
     , Atomic  = K'atomic' * V'__Do'
 
@@ -598,7 +598,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Await_Forever = K'await' * K'FOREVER'
 
-    , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'Explist')))
+    , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'List_Exp')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
     , Emit_Ext_emit = K'emit'                     * V'ID_ext' * V'_Emit_ps'
     , Emit_Ext_call = (K'call/recursive'+K'call') * V'ID_ext' * V'_Emit_ps'
@@ -608,7 +608,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
     , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
-                    * OPT(KK'=>' * PARENS(V'Varlist'))
+                    * OPT(KK'=>' * PARENS(V'List_Var'))
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -644,10 +644,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code'
                             * (-KK'in') * Cc(false)
-                                * OPT(KK'=>' * PARENS(V'Varlist'))
+                                * OPT(KK'=>' * PARENS(V'List_Var'))
     , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code'
                             * KK'in' * V'Exp_Name'
-                                * OPT(KK'=>' * PARENS(V'Varlist'))
+                                * OPT(KK'=>' * PARENS(V'List_Var'))
 
     , __Abs_Cons_Code = V'__abs_mods' * V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
@@ -658,7 +658,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- SETS
 
     , _Set = V'Exp_Name' * V'__Sets_one'
-           + (V'Exp_Name' + PARENS(V'Namelist')) * V'__Sets_many'
+           + (V'Exp_Name' + PARENS(V'List_Name')) * V'__Sets_many'
 
     , __Sets_one  = (KK'='-'==') * (V'__sets_one'  + PARENS(V'__sets_one'))
     , __Sets_many = (KK'='-'==') * (V'__sets_many' + PARENS(V'__sets_many'))
@@ -709,7 +709,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __vec_pre     = KK'[' - V'__lua_pre'
 
     , __vec_concat = KK'..' * (V'__Exp' + V'_Lua' + #KK'['*V'Vec_Tup')
-    , Vec_Tup  = V'__vec_pre' * OPT(V'Explist') * KK']'
+    , Vec_Tup  = V'__vec_pre' * OPT(V'List_Exp') * KK']'
     , Vec_Cons = V'__Exp'   * V'__vec_concat'^1
                + V'Vec_Tup' * V'__vec_concat'^0
 
@@ -743,9 +743,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- LISTS
 
 -- TODO: rename List_*
-    , Namelist = LIST(V'Exp_Name' + V'ID_any')
-    , Varlist  = LIST(V'ID_int' + V'ID_any')
-    , Explist  = LIST(V'__Exp')
+    , List_Name = LIST(V'Exp_Name' + V'ID_any')
+    , List_Var  = LIST(V'ID_int' + V'ID_any')
+    , List_Exp  = LIST(V'__Exp')
 
  --<<<
 
@@ -822,7 +822,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , __exp_call = (CK'call/recursive' + CK'call' + Cc'call')
     , Exp_Call = V'__exp_call' * (V'Exp_Name'+PARENS(V'__Exp')) *
-                                PARENS(OPT(V'Explist'))
+                                PARENS(OPT(V'List_Exp'))
 
 ---------
                 -- "Ct" as a special case to avoid "too many captures" (HACK_1)

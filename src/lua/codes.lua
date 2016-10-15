@@ -343,7 +343,7 @@ if (0)
 ]])
     end,
 
-    Varlist = function (me)
+    List_Var = function (me)
         for _,ID_int in ipairs(me) do
             if ID_int.tag~='ID_any' and ID_int.dcl.has_trail then
                 -- HACK_4
@@ -1194,12 +1194,12 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
 
             -- vec1 = ..[a,b,c]
             elseif fr.tag == 'Vec_Tup' then
-                local Explist = unpack(fr)
-                if Explist then
+                local List_Exp = unpack(fr)
+                if List_Exp then
                     LINE(me, [[
-    ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..#Explist..[[), 1);
+    ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..#List_Exp..[[), 1);
 ]])
-                    for _, e in ipairs(Explist) do
+                    for _, e in ipairs(List_Exp) do
                         LINE(me, [[
     *((]]..TYPES.toc(to.info.tp)..[[*)
         ceu_vector_buf_get(&]]..V(to)..[[, __ceu_nxt++)) = ]]..V(e)..[[;
@@ -1288,15 +1288,15 @@ do {
     end,
 
     Emit_Ext_emit = function (me)
-        local ID_ext, Explist = unpack(me)
+        local ID_ext, List_Exp = unpack(me)
         local inout, Typelist = unpack(ID_ext.dcl)
         LINE(me, [[
 {
 ]])
         local ps = 'NULL'
-        if #Explist > 0 then
+        if #List_Exp > 0 then
             LINE(me, [[
-tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',')..[[ };
+tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(List_Exp),',')..[[ };
 ]])
             ps = '&__ceu_ps'
         end
@@ -1360,17 +1360,17 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
     end,
 
     Emit_Evt = function (me)
-        local Exp_Name, Explist = unpack(me)
+        local Exp_Name, List_Exp = unpack(me)
         local Typelist = unpack(Exp_Name.info.dcl)
         LINE(me, [[
 {
 ]])
         local ps = 'NULL'
-        if Explist then
+        if List_Exp then
             local sufix = TYPES.noc(TYPES.tostring(Exp_Name.info.dcl[2]))
             LINE(me, [[
     tceu_event_]]..sufix..[[
-        __ceu_ps = { ]]..table.concat(V(Explist),',')..[[ };
+        __ceu_ps = { ]]..table.concat(V(List_Exp),',')..[[ };
 ]])
             ps = '&__ceu_ps'
         end

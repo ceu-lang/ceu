@@ -207,7 +207,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
                     '{\n'..table.concat(ps,',\n')..'\n}'
     end,
 
-    Explist = function (me)
+    List_Exp = function (me)
         local vs = {}
         for i, p in ipairs(me) do
             vs[i] = V(p)

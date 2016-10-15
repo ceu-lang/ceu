@@ -299,7 +299,7 @@ error'TODO'
                             node('Exp_Name', me.ln,
                                 node('ID_nat', me.ln,
                                     '_ceu_callback_assert_msg')),
-                            node('Explist', me.ln,
+                            node('List_Exp', me.ln,
                                 node('Exp_<', me.ln, '<',
                                     node('Exp_Name', me.ln,
                                         node('ID_int', me.ln, '__max_'..me.n)),
@@ -796,10 +796,10 @@ error'TODO'
 
     _Emit_ps__PRE = function (me)
         local exp = unpack(me)
-        if exp and exp.tag == 'Explist' then
+        if exp and exp.tag == 'List_Exp' then
             return exp
         end
-        local ret = node('Explist', me.ln)
+        local ret = node('List_Exp', me.ln)
         if exp then
             AST.set(ret, 1, exp)
         end
@@ -807,10 +807,10 @@ error'TODO'
     end,
     Exp_Call__PRE = function (me)
         local _,_, ps = unpack(me)
-        if ps and ps.tag == 'Explist' then
+        if ps and ps.tag == 'List_Exp' then
             -- ok
         else
-            AST.set(me, 3, node('Explist', me.ln))
+            AST.set(me, 3, node('List_Exp', me.ln))
             if ps then
                 AST.set(me[3], 1, ps)
 error'TODO: luacov never executes this?'
@@ -821,7 +821,7 @@ error'TODO: luacov never executes this?'
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
         if var.tag == 'Exp_Name' then
-            AST.set(me, 2, node('Namelist', var.ln, var))
+            AST.set(me, 2, node('List_Name', var.ln, var))
         end
     end,
 

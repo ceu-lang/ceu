@@ -52,7 +52,7 @@ F = {
             if e.tag == 'Vec_Tup' then
                 local ps = unpack(e)
                 if ps then
-                    AST.asr(ps,'Explist')
+                    AST.asr(ps,'List_Exp')
                     for j, p in ipairs(ps) do
                         EXPS.check_tp(fr, to_info.tp, p.info.tp,
                             'invalid constructor : item #'..i..' : '..
@@ -531,7 +531,7 @@ F = {
 
 -- VARLIST, EXPLIST
 
-    Explist = function (me)
+    List_Exp = function (me)
         local Typelist = AST.node('Typelist', me.ln)
         for i, e in ipairs(me) do
             -- ctx
@@ -545,7 +545,7 @@ F = {
         me.tp = Typelist
     end,
 
-    Namelist = function (me)
+    List_Name = function (me)
         -- ctx
         for _, var in ipairs(me) do
             if var.tag ~= 'ID_any' then
@@ -565,7 +565,7 @@ F = {
         me.tp = Typelist
     end,
 
-    Varlist = function (me)
+    List_Var = function (me)
         -- ctx
         for _, var in ipairs(me) do
             if var.tag ~= 'ID_any' then

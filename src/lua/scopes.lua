@@ -192,9 +192,9 @@ F = {
         me.fins_n = 0
     end,
     Finalize = function (me)
-        local Stmt, Namelist, Block = unpack(me)
+        local Stmt, List_Name, Block = unpack(me)
         if not Stmt then
-            ASR(Namelist==false, me,
+            ASR(List_Name==false, me,
                 'invalid `finalize´ : unexpected `varlist´')
             me.blk = AST.par(me, 'Block')
             me.blk.fins_n = me.blk.fins_n + 1
@@ -211,7 +211,7 @@ F = {
 
         ASR(me.__fin_vars, me,
             'invalid `finalize´ : nothing to finalize')
-        ASR(Namelist and Namelist.tag=='Namelist', Namelist or me,
+        ASR(List_Name and List_Name.tag=='List_Name', List_Name or me,
             'invalid `finalize´ : expected `varlist´')
 
         for _, v1 in ipairs(me.__fin_vars) do
@@ -219,14 +219,14 @@ F = {
                 'invalid `finalize´ : expected identifier : got "'..v1.id..'"')
 
             local ok = false
-            for _, v2 in ipairs(Namelist) do
+            for _, v2 in ipairs(List_Name) do
                 if v2.info.dcl==v1 or v2.info.dcl==v1.orig then
                                         -- TODO: HACK_3
                     ok = true
                     break
                 end
             end
-            ASR(ok, Namelist,
+            ASR(ok, List_Name,
                 'invalid `finalize´ : unmatching identifiers : expected "'..
                 v1.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
         end
