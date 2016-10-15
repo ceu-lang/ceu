@@ -545,7 +545,7 @@ F = {
         me.tp = Typelist
     end,
 
-    List_Name_Any = function (me)
+    Namelist = function (me)
         -- ctx
         for _, var in ipairs(me) do
             if var.tag ~= 'ID_any' then
@@ -565,30 +565,20 @@ F = {
         me.tp = Typelist
     end,
 
-    Namelist = function (me)
-        -- ctx
-        for _, var in ipairs(me) do
-            INFO.asr_tag(var, {'Nat','Var'}, 'invalid variable')
-        end
-
-        -- info
-        local Typelist = AST.node('Typelist', me.ln)
-        for i, var in ipairs(me) do
-            Typelist[i] = AST.copy(var.info.tp)
-        end
-        me.tp = Typelist
-    end,
-
     Varlist = function (me)
         -- ctx
         for _, var in ipairs(me) do
-            INFO.asr_tag(var, {'Var','Vec'}, 'invalid variable')
+            if var.tag ~= 'ID_any' then
+                INFO.asr_tag(var, {'Var','Vec','Evt'}, 'invalid variable')
+            end
         end
 
         -- info
         local Typelist = AST.node('Typelist', me.ln)
         for i, var in ipairs(me) do
-            Typelist[i] = AST.copy(var.info.tp)
+            if var.tag ~= 'ID_any' then
+                Typelist[i] = AST.copy(var.info.tp)
+            end
         end
         me.tp = Typelist
     end,

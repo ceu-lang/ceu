@@ -416,13 +416,13 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     (V'__ID_int'+V'ID_any') * OPT(K'in' * V'_Loop_Num_Range') *
                   V'__Do'
     , Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                    OPT(PARENS(V'List_Watching')) *
+                    OPT(PARENS(V'Varlist')) *
                         K'in' * V'Exp_Name' *
                   V'__Do'
     , Loop      = K'loop' * OPT('/'*V'__Exp') *
                   V'__Do'
 
-    , _Every  = K'every' * OPT((V'Exp_Name'+PARENS(V'List_Name_Any')) * K'in') *
+    , _Every  = K'every' * OPT((V'Exp_Name'+PARENS(V'Namelist')) * K'in') *
                     (V'Await_Ext' + V'Await_Int' + V'Await_Wclock') *
                 V'__Do'
 
@@ -608,7 +608,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
     , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
-                    * OPT(KK'=>' * PARENS(V'List_Watching'))
+                    * OPT(KK'=>' * PARENS(V'Varlist'))
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -644,10 +644,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code'
                             * (-KK'in') * Cc(false)
-                                * OPT(KK'=>' * PARENS(V'List_Watching'))
+                                * OPT(KK'=>' * PARENS(V'Varlist'))
     , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code'
                             * KK'in' * V'Exp_Name'
-                                * OPT(KK'=>' * PARENS(V'List_Watching'))
+                                * OPT(KK'=>' * PARENS(V'Varlist'))
 
     , __Abs_Cons_Code = V'__abs_mods' * V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
@@ -658,7 +658,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- SETS
 
     , _Set = V'Exp_Name' * V'__Sets_one'
-           + (V'Exp_Name' + PARENS(V'List_Name_Any')) * V'__Sets_many'
+           + (V'Exp_Name' + PARENS(V'Namelist')) * V'__Sets_many'
 
     , __Sets_one  = (KK'='-'==') * (V'__sets_one'  + PARENS(V'__sets_one'))
     , __Sets_many = (KK'='-'==') * (V'__sets_many' + PARENS(V'__sets_many'))
@@ -743,11 +743,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- LISTS
 
 -- TODO: rename List_*
-    , List_Name_Any = LIST(V'Exp_Name' + V'ID_any')
-    , Namelist = LIST(V'Exp_Name')
-    , Varlist  = LIST(V'ID_int')
+    , Namelist = LIST(V'Exp_Name' + V'ID_any')
+    , Varlist  = LIST(V'ID_int' + V'ID_any')
     , Explist  = LIST(V'__Exp')
-    , List_Watching = LIST((V'ID_int' + V'ID_any'))
 
  --<<<
 

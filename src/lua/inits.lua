@@ -170,7 +170,7 @@ local function run_inits (par, i, Dcl, stop)
         return run_inits(me, #me, Dcl, stop)
 
     -- ok: found assignment
-    elseif me.tag == 'List_Watching' then
+    elseif me.tag == 'Varlist' then
         for _,ID_int in ipairs(me) do
             if ID_int.dcl == Dcl then
                 ID_int.dcl.inits = {me}
@@ -198,7 +198,7 @@ local function run_inits (par, i, Dcl, stop)
         end
 
         -- equalize all with Set_Await_many
-        if to.tag ~= 'List_Name_Any' then
+        if to.tag ~= 'Namelist' then
             to = { to }
         end
 
@@ -304,7 +304,7 @@ local function run_ptrs (par, i, Dcl, stop)
         local ok = false
         if set then
             local _,to = unpack(set)
-            if to.tag ~= 'List_Name_Any' then
+            if to.tag ~= 'Namelist' then
                 to = { to }
             end
             for _, v in ipairs(to) do
@@ -480,7 +480,11 @@ error'TODO: luacov never executes this?'
             ' "'..to.info.dcl.id..'" is already bound ('..
             inits..')')
     end,
-    List_Watching = function (me)
+    Varlist = function (me)
+        if not (AST.par(me,'Abs_Await') or AST.par(me,'Abs_Spawn_Single')) then
+            return  -- only in watching
+        end
+
         for _, to in ipairs(me) do
             if to.is_init then
                 -- I'm the one who created the binding

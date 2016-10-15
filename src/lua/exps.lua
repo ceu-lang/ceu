@@ -34,7 +34,7 @@ F = {
         if me.dcl.is_mid_idx then
             local Set_Alias = AST.get(me.__par.__par,'Set_Alias')
             local ok = Set_Alias and AST.get(Set_Alias,'',2,'Exp_Name',1,'ID_int')==me
-            ok = ok or AST.par(me, 'List_Watching')
+            ok = ok or AST.par(me, 'Varlist')
             ASR(ok, me, 'invalid access to output variable "'..me.dcl.id..'"')
         end
     end,
