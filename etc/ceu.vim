@@ -24,8 +24,8 @@ syn keyword cType       const nohold recursive plain pure hold
 syn keyword cType       tight dynamic
 syn keyword	cStatement  as async await break native continue data deterministic do else emit end
 syn keyword cStatement  code event every finalize FOREVER outer if input loop nothing
-syn keyword cStatement  output pre par pause return then until var val vector with
-syn keyword cStatement  include kill spawn thread
+syn keyword cStatement  output pre pos par pause return then until var val vector with
+syn keyword cStatement  include kill spawn thread lua
 syn keyword cStatement  escape call isr atomic request in is
 syn keyword cStatement  watching new pool
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
