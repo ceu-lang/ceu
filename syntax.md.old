@@ -2,17 +2,9 @@ Syntax
 ======
 
 <pre><code>
-Stmt ::= &lt;empty-string&gt;
-      |  <b>nothing</b>
-      |  <b>escape</b> Exp
-      |  <b>return</b> [Exp]
-      |  <b>break</b>
-      |  <b>continue</b>
-
   /* Declarations */
 
       /* variables, organisms, pools, and internal events */
-      | <b>var</b> Type ID_var [`=´ &lt;Assignment&gt;] { `,´ ID_var [`=´ &lt;Assignment&gt;] }
       | <b>var</b> Type ID_var <b>with</b>
             Block
         <b>end</b>
@@ -67,17 +59,6 @@ Stmt ::= &lt;empty-string&gt;
                                      DclVar `;´ { DclVar `;´ }
                                  <b>end</b>
 
-      /* C integration */
-      | <b>native</b> [<b>@pure</b>|<b>@const</b>|<b>@nohold</b>|<b>@plain</b>] Nat_list
-          <i>where</i>
-              Nat_list  ::= (Nat_type|Nat_func|Nat_var) { `,` (Nat_type|Nat_func|Nat_var) }
-              Nat_type  ::= ID_nat `=´ NUM
-              Nat_func  ::= ID_nat `(´ `)´
-              Nat_var   ::= ID_nat
-      | (<b>native/pre</b> | <b>native</b>) <b>do</b>
-            <i>&lt;C code definitions&gt;</i>
-        <b>end</b>
-
       /* deterministic annotations */
       | <b>@safe</b> ID <b>with</b> ID { `,´ ID }
 
@@ -120,18 +101,6 @@ Stmt ::= &lt;empty-string&gt;
 
   /* Event handling */
 
-      /* internal/external await */
-      | ( <b>await</b> ID_ext
-        | <b>await</b> Exp
-        | <b>await</b> (WCLOCKK|WCLOCKE)
-        ) [ <b>until</b> Exp ]
-      | <b>await</b> <b>FOREVER</b>
-
-      /* internal/external emit */
-      | <b>emit</b> Exp    [ `=>´ (Exp | `(´ [ExpList] `)´)
-      | <b>emit</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
-      | <b>emit</b> (WCLOCKK|WCLOCKE)
-
       /* external request */
       | <b>request</b> ID_ext [ `=>´ (Exp | `(´ [ExpList] `)´)
 
@@ -151,31 +120,6 @@ Stmt ::= &lt;empty-string&gt;
 
   /* Flow control */
 
-      /* explicit block */
-      |  <b>do</b> Block <b>end</b>
-
-      /* pre (top level) execution */
-      | <b>pre do</b>
-            Block
-        <b>end</b>
-
-      /* conditional */
-      | <b>if</b> Exp <b>then</b>
-            Block
-        { <b>else/if</b> Exp <b>then</b>
-            Block }
-        [ <b>else</b>
-            Block ]
-        <b>end</b>
-
-      /* loops */
-      | <b>loop</b>[`/´ Exp] [ ID_var [<b>in</b> Exp] ] <b>do</b>
-            Block
-        <b>end</b>
-      | <b>every</b> (Var | `(´VarList`)´) <b>in</b> (WCLOCKK|WCLOCKE|ID_ext|Exp) <b>do</b>
-            Block
-        <b>end</b>
-
       /* traverse */
       | <b>traverse</b> ID_var <b>in</b> (`[´ Exp `]´ | Exp)
             [ <b>with</b> Dcls <b>end</b> ]
@@ -190,123 +134,10 @@ Stmt ::= &lt;empty-string&gt;
             Block
         <b>end</b>
 
-      /* parallel compositions */
-      | (<b>par/and</b>|<b>par/or</b>|<b>par</b>) <b>do</b>
-            Block
-        <b>with</b>
-            Block
-        { <b>with</b>
-            Block }
-         <b>end</b>
-      | <b>watching</b> [ (Var | `(´VarList`)´) <b>in</b> ] (WCLOCKK|WCLOCKE|ID_ext|Exp)
-        <b>do</b>
-            Block
-        <b>end</b>
-
-      /* pause */
-      | <b>pause/if</b> Exp <b>do</b>
-            Block
-        <b>end</b>
-
-      /* asynchronous execution */
-      | (<b>async</b> | [<b>async/thread</b>]) [ `(´VarList`)´ ] <b>do</b>
-            Block
-        <b>end</b>
-
-      /* synchronization */
-      | <b>sync do</b>
-            Block
-        <b>end</b>
-      | <b>atomic do</b>
-            Block
-        <b>end</b>
-
-  /* C integration */
-
-     | `{´ &lt;C code&gt; `}´
-
-  /* Lua integration */
-
-      | `[´ {`=´} `[´
-            { <i>&lt;lua code&gt;</i> | `@´ Exp }
-        `]´ {`=´} `]´
-
-/* Block */
-
-Block ::= { Stmt `;´ }
-
-/* Identifiers */
-
-ID       ::= &lt;a-z, A-Z, 0-9, _&gt; +
-ID_var   ::= `_´ | ID    // beginning with a lowercase letter
-ID_ext   ::= ID          // all in uppercase, not beginning with a digit
-ID_cls   ::= ID          // beginning with an uppercase letter
-ID_data  ::= ID          // beginning with an uppercase letter
-ID_tag   ::= ID          // all in uppercase, not beginning with a digit
-ID_field ::= ID          // not beginning with a digit
-ID_nat   ::= ID          // beginning with an underscore
-ID_type  ::= ( ID_nat | ID_cls | ID_data
-             | <b>bool</b>  | <b>byte</b>  | <b>char</b>  | <b>f32</b>   | <b>f64</b>   |
-             | <b>float</b> | <b>int</b>   | <b>s16</b>   | <b>s32</b>   | <b>s64</b>   |
-             | <b>s8</b>    | <b>u16</b>   | <b>u32</b>   | <b>u64</b>   | <b>u8</b>    |
-             | <b>uint</b>  | <b>void</b>  | <b>word</b> )
-
-/* Types */
-
-Type ::= ID_type ( `&&´ | `&´ | `?´ | `[´ [NUM] `]´ )
-
 /* Lists */
 
-TypeList ::= Type    { `,´ Type    }
-ExpList  ::= Exp     { `,´ Exp     }
-VarList  ::= ID_var  { `,´ ID_var  }
 ParList  ::= ParItem { `,´ ParItem }
                 <i>where</i>
                     ParItem ::= [<b>@hold</b>] Type [ID_var] 
-
-/* Wall-clock values */
-
-WCLOCKK ::= [NUM <b>h</b>] [NUM <b>min</b>] [NUM <b>s</b>] [NUM <b>ms</b>] [NUM <b>us</b>]
-WCLOCKE ::= `(´ Exp `)´ (<b>h</b>|<b>min</b>|<b>s</b>|<b>ms</b>|<b>us</b>)
-
-/* Expressions */
-
-Exp ::= Prim
-        |  (`$$´|`$´) Exp
-        |  Exp (`?´|`!´)
-        |  Exp `(´ [ExpList] `)´ [<b>finalize with</b> Block <b>end</b>]
-
-Prim ::= `(´ Exp `)´
-        |  ID_var | ID_nat
-        |  <b>null</b> | NUM | String
-        |  <b>true</b> | <b>false</b>
-        |  (<b>call</b> | <b>call/rec</b>) Exp
-        |  &lt;c-code&gt
-
-/* Operator precedence */
-
-    /* lowest priority */
-    <b>or</b>
-    <b>and</b>
-    !=    ==    &lt;=    &gt;=    &lt;     &gt;
-    |
-    ^
-    &
-    &gt;&gt;    &lt;&lt;
-    +     -
-    *     /     %
-    <b>not</b>    +    -    ~    *    &&    &    $$    $    (Type)
-    ()    []    :    .    ?    !
-    /* highest priority */
-
-/* Other */
-
-    // single-line comment
-
-    /** nested
-        /* multi-line */
-        comments **/
-
-    # preprocessor directive
 
 </code></pre>
