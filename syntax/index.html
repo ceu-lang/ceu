@@ -184,17 +184,17 @@
 <li><strong><code>a</code></strong> : terminal (in bold and lowercase)</li>
 <li><code>&grave;.&acute;</code> : terminal (non-alphanumeric characters)</li>
 <li><code>A ::= ...</code> : defines <code>A</code> as <code>...</code></li>
-<li><code>A B</code> : <code>A</code> in sequence with <code>B</code></li>
-<li><code>A|B</code> : <code>A</code> or <code>B</code></li>
-<li><code>{A}</code> : zero or more As</li>
-<li><code>[A]</code> : optional A</li>
-<li><code>LIST(A)</code> : expands to <code>A {&grave;,&acute; A} [&grave;,&acute;]</code></li>
+<li><code>x y</code> : <code>x</code> in sequence with <code>y</code></li>
+<li><code>x|y</code> : <code>x</code> or <code>y</code></li>
+<li><code>{x}</code> : zero or more xs</li>
+<li><code>[x]</code> : optional x</li>
+<li><code>LIST(x)</code> : expands to <code>x {&grave;,&acute; x} [&grave;,&acute;]</code></li>
 <li><code>(...)</code> : groups <code>...</code></li>
 <li><code>&lt;...&gt;</code> : special informal rule</li>
 </ul>
 <pre><code class="ceu">Program ::= Stmts
 
-Stmts ::= { Stmt `;´ {`;´} }
+Stmts ::= {Stmt `;´} {`;´}
 
 Stmt ::= nothing
 
