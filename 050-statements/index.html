@@ -232,50 +232,83 @@ and moved to the beginning of the top-level block, before all other statements.<
 <p>A declaration exposes a <a href="#TODO">storage entity</a> to the program.
 Its <a href="#TODO">scope</a> begins after the declaration and goes until the end of the
 enclosing <a href="#TODO">block</a>.</p>
+<p>See also <a href="#TODO">Storage Classes</a> for a general overview of storage entities.</p>
 <h3 id="variables">Variables</h3>
 <p>Variable declarations are as follows:</p>
 <pre><code class="ceu">var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Set])
 </code></pre>
 
-<p>A variable has an associated <a href="#TODO">type</a> and can be optionally initialized 
-(see <a href="#TODO">Assignments</a>).
+<p>A variable has an associated <a href="#TODO">type</a> and can be optionally
+<a href="#TODO">initialized</a>.
 A single statement can declare multiple variables of the same type.
-Variables can also be <a href="#TODO">aliases</a> or <a href="#TODO">option aliases</a>.</p>
+Declarations can also be <a href="#TODO">aliases</a> or <a href="#TODO">option aliases</a>.</p>
 <p>Examples:</p>
-<pre><code class="ceu">var int v = 10;     // declares and initializes integer variable &quot;v&quot;
-var int a=0, b=3;   // declares and initializes integer variables &quot;a&quot; and &quot;b&quot;
+<pre><code class="ceu">var  int v = 10;    // &quot;v&quot; is an integer variable initialized to 10
+var  int a=0, b=3;  // &quot;a&quot; and &quot;b&quot; are integer variables initialized to 0 and 3
+var&amp; int z = &amp;v;    // &quot;z&quot; is an alias to &quot;v&quot;
 </code></pre>
 
-<p>See also <a href="#TODO">Storage Classes</a>.</p>
 <h3 id="vectors">Vectors</h3>
 <p>Vector declarations are as follows:</p>
 <pre><code class="ceu">vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
 </code></pre>
 
 <p>A vector has a dimension, an associated <a href="#TODO">type</a> and can be optionally
-initialized (see <a href="#TODO">Assignments</a>).
+<a href="#TODO">initialized</a>.
 A single statement can declare multiple vectors of the same dimension and type.
-Vectors can also be <a href="#TODO">aliases</a>.</p>
+Declarations can also be <a href="#TODO">aliases</a>.</p>
 <p>The expression between the brackets specifies the dimension of the vector with
 the options that follow:</p>
 <ul>
-<li><em>constant expression</em>: Maximum number of elements is fixed and statically
-                         pre-allocated.</li>
-<li><em>variable expression</em>: Maximum number of elements is fixed but dynamically
-                         allocated. The expression is evaulated once at
-                         declaration time.</li>
-<li><em>omitted</em>: maximum number of elements is unbounded</li>
+<li><em>constant expression</em>: Maximum number of elements is fixed and space is
+                         statically pre-allocated.</li>
+<li><em>variable expression</em>: Maximum number of elements is fixed but space is
+                         dynamically allocated.
+                         The expression is evaulated once at declaration time.</li>
+<li><em>omitted</em>: Maximum number of elements is unbounded and space is dynamically
+             allocated.</li>
 </ul>
+<p>The space for dynamic vectors grow and shrink automatically.</p>
 <p>Examples:</p>
-<pre><code class="ceu">vector[10] int vs1 = [];  // &quot;vs1&quot; is a static vector of 10 elements max
-
-var int n = 10;
-vector[n] int vs2 = [];   // &quot;vs2&quot; is a dynamic vector of 10 elements max
-
-vector[] int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
+<pre><code class="ceu">var int n = 10;
+vector[10] int vs1 = [];    // &quot;vs1&quot; is a static vector of 10 elements max
+vector[n]  int vs2 = [];    // &quot;vs2&quot; is a dynamic vector of 10 elements max
+vector[]   int vs3 = [];    // &quot;vs3&quot; is an unbounded vector
+vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&quot;
 </code></pre>
 
-<p>See also <a href="#TODO">Storage Classes</a>.</p>
+<h3 id="events">Events</h3>
+<p>See also <a href="#TODO">Introduction</a> for a general overview of events.</p>
+<h4 id="external-events">External events</h4>
+<p>External event declarations are as follows:</p>
+<pre><code class="ceu">input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+</code></pre>
+
+<p>A declaration includes the <a href="#TODO">type</a> of the value the event carries.
+It can be also a list of types if the event communicates multiple values.
+A single statement can declare multiple events of the same type.</p>
+<p>Examples:</p>
+<pre><code class="ceu">input  void A,B;        // &quot;A&quot; and &quot;B&quot; are input events carrying no values
+output int  MY_EVT;     // &quot;MY_EVT&quot; is an output event carrying integer values
+input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an &quot;(int,byte&amp;&amp;)&quot; pair
+</code></pre>
+
+<h3 id="internal-events">Internal events</h3>
+<p>Internal event declarations are as follows:</p>
+<pre><code class="ceu">event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
+</code></pre>
+
+<p>A declaration includes the <a href="#TODO">type</a> of the value the event carries.
+It can be also a list of types if the event communicates multiple values.
+A single statement can declare multiple events of the same type.
+Declarations can also be <a href="#TODO">aliases</a> or <a href="#TODO">option aliases</a>.
+Only in this case they can contain an <a href="#TODO">initialization</a>.</p>
+<p>Examples:</p>
+<pre><code class="ceu">event  void a,b;        // &quot;a&quot; and &quot;b&quot; are internal events carrying no values
+event&amp; void z = &amp;a;     // &quot;z&quot; is an alias to event &quot;a&quot;
+event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(int,int)&quot; pair
+</code></pre>
               
             </div>
           </div>
