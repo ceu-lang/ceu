@@ -17,10 +17,23 @@ Follows the complete syntax of Céu in a BNF-like syntax:
 
 ```ceu
 Program ::= Stmts
-
-Stmts ::= {Stmt `;´} {`;´}
+Stmts   ::= {Stmt `;´} {`;´}
+Block   ::= Stmts
 
 Stmt ::= nothing
+
+  /* Blocks */
+
+      // Do ::=
+      |  do [`/´(`_´|ID_int)]
+             Block
+         end
+      |  escape [`/´ID_int] [Exp]
+
+      /* pre (top level) execution */
+      | pre do
+            Block
+        end
 
   /* Storage Classes */
 
@@ -48,23 +61,23 @@ Stmt ::= nothing
   /* Conditional */
 
       | if Exp then
-            Stmts
+            Block
         { else/if Exp then
-            Stmts }
+            Block }
         [ else
-            Stmts ]
+            Block ]
         end
 
   /* Loops */
 
       /* simple */
       | loop [`/´Exp] do
-            Stmts
+            Block
         end
 
       /* numeric iterator */
       | loop [`/´Exp] (`_´|ID_int) in Range do
-            Stmts
+            Block
         end
         // where
             Range ::= (`[´ | `]´)
@@ -74,12 +87,12 @@ Stmt ::= nothing
 
       /* pool iterator */
       | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Name do
-            Stmts
+            Block
         end
 
       /* event iterator */
       | every [(Name | `(´TODO/List_Name_Any`)´) in] (ID_ext|Name|WCLOCKK|WCLOCKE) do
-            Stmts
+            Block
         end
 
       |  break [`/´ID_int]
@@ -88,69 +101,45 @@ Stmt ::= nothing
   /* Pause */
 
       | pause/if (Name|ID_ext) do
-            Stmts
+            Block
         end
 
   /* Parallel Compositions */
 
       /* parallels */
       | (par | par/and | par/or) do
-            Stmts
+            Block
         with
-            Stmts
+            Block
         { with
-            Stmts }
+            Block }
          end
 
       /* watching */
       // Watching ::=
       | watching LIST((ID_ext|Name|WCLOCKK|WCLOCKE|Code) [`=>´ `(´ LIST(Var) `)´]) do
-            Stmts
+            Block
+        end
+
+      /* block spawn */
+      | spawn do
+            Block
         end
 
   /* Asynchronous Execution */
 
       | await async [ `(´LIST(Var)`)´ ] do
-            Stmts
+            Block
         end
 
       // Async_Thread ::=
       | await async/thread [ `(´LIST(Var)`)´ ] do
-            Stmts
+            Block
         end
 
       /* synchronization */
       | atomic do
-            Stmts
-        end
-
-  /* Blocks */
-
-      // Do ::=
-      |  do [`/´(`_´|ID_int)]
-             Stmts
-         end
-      |  escape [`/´ID_int] [Exp]
-
-      /* pre (top level) execution */
-      | pre do
-            Stmts
-        end
-
-      /* block spawn */
-      | spawn do
-            Stmts
-        end
-
-      /* finalization */
-      | do
-            Stmts
-        finalize `(´ LIST(Name) `)´ with
-            Stmts
-        end
-      | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code)
-        finalize `(´ LIST(Name) `)´ with
-            Stmts
+            Block
         end
 
   /* Abstractions */
@@ -178,7 +167,7 @@ Stmt ::= nothing
 
       /* code implementation */
       | (Code_Tight | Code_Await) do
-            Stmts
+            Block
         end
 
       /* code instantiation */
@@ -210,11 +199,22 @@ Stmt ::= nothing
       // Call_Nat ::=
       | call [`/´recursive] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
+      /* finalization */
+      | do
+            Block
+        finalize `(´ LIST(Name) `)´ with
+            Block
+        end
+      | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code)
+        finalize `(´ LIST(Name) `)´ with
+            Block
+        end
+
   /* Lua integration */
 
       // Lua ::=
       | lua `[´ [Exp] `]´ do
-            Stmts
+            Block
         end
       | `[´ {`=´} `[´
             { <code in Lua> | `@´ Exp }

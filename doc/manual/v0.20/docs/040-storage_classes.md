@@ -10,10 +10,10 @@ a [type](#TODO), and an [identifier](#TODO).
 Examples:
 
 ```ceu
-var       int    v;   // "v" is a variable of type "int"
-vector[9] byte   buf; // "buf" is a vector with at most 9 values of type "byte"
-input     void&& A;   // "A" is an external event that carries values of type "void&&"
-pool[]    Anim   ans; // "ans" is a dynamic "pool" for instances of type "Anim"
+var       int    v;     // "v" is a variable of type "int"
+vector[9] byte   buf;   // "buf" is a vector with at most 9 values of type "byte"
+input     void&& A;     // "A" is an external event that carries values of type "void&&"
+pool[]    Anim   anims; // "anims" is a dynamic "pool" for instances of type "Anim"
 ```
 
 A declaration binds the identifier with a memory location to hold values of the
