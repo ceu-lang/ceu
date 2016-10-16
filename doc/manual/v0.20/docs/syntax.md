@@ -16,9 +16,8 @@ Follows the complete syntax of Céu in a BNF-like syntax:
 - `<...>` : special informal rule
 
 ```ceu
-Program ::= Stmts
-Stmts   ::= {Stmt `;´} {`;´}
-Block   ::= Stmts
+Program ::= Block
+Block   ::= {Stmt `;´} {`;´}
 
 Stmt ::= nothing
 

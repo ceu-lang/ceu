@@ -18,8 +18,12 @@ pool[]    Anim   anims; // "anims" is a dynamic "pool" for instances of type "An
 
 A declaration binds the identifier with a memory location to hold values of the
 associated type.
-Entities have lexical scope, i.e., they are visible only in the [block](#TODO)
-in which they are declared.
+
+Lexical Scope
+-------------
+
+Storage entities have lexical scope, i.e., they are visible only in the
+[block](#TODO) in which they are declared.
 The lifetime of entities, (i.e., the period between allocation and deallocation
 in memory) is also limited to the scope of the enclosing block.
 However, individual elements inside *vector* and *pool* entities have dynamic
@@ -207,6 +211,8 @@ An alias must have a narrower scope than the entity it refers to.
 The [binding](#TODO) to the alias is immutable and must occur between its
 declaration and first access or next [yielding statement](#TODO).
 It is not possible to acquire aliases to external events or to pointer types.
+
+`TODO: &?`
 
 ### Pointers
 
