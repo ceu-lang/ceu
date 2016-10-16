@@ -90,6 +90,8 @@
             
                 <li class="toctree-l3"><a href="#storage-classes">Storage Classes</a></li>
                 
+                    <li><a class="toctree-l4" href="#lexical-scope">Lexical Scope</a></li>
+                
                     <li><a class="toctree-l4" href="#variables">Variables</a></li>
                 
                     <li><a class="toctree-l4" href="#vectors">Vectors</a></li>
@@ -194,16 +196,17 @@ Céu supports <em>variables</em>, <em>vectors</em>, <em>events</em> (external an
 An entity <a href="#TODO">declaration</a> consists of a storage class,
 a <a href="#TODO">type</a>, and an <a href="#TODO">identifier</a>.</p>
 <p>Examples:</p>
-<pre><code class="ceu">var       int    v;   // &quot;v&quot; is a variable of type &quot;int&quot;
-vector[9] byte   buf; // &quot;buf&quot; is a vector with at most 9 values of type &quot;byte&quot;
-input     void&amp;&amp; A;   // &quot;A&quot; is an external event that carries values of type &quot;void&amp;&amp;&quot;
-pool[]    Anim   ans; // &quot;ans&quot; is a dynamic &quot;pool&quot; for instances of type &quot;Anim&quot;
+<pre><code class="ceu">var       int    v;     // &quot;v&quot; is a variable of type &quot;int&quot;
+vector[9] byte   buf;   // &quot;buf&quot; is a vector with at most 9 values of type &quot;byte&quot;
+input     void&amp;&amp; A;     // &quot;A&quot; is an external event that carries values of type &quot;void&amp;&amp;&quot;
+pool[]    Anim   anims; // &quot;anims&quot; is a dynamic &quot;pool&quot; for instances of type &quot;Anim&quot;
 </code></pre>
 
 <p>A declaration binds the identifier with a memory location to hold values of the
-associated type.
-Entities have lexical scope, i.e., they are visible only in the <a href="#TODO">block</a>
-in which they are declared.
+associated type.</p>
+<h2 id="lexical-scope">Lexical Scope</h2>
+<p>Storage entities have lexical scope, i.e., they are visible only in the
+<a href="#TODO">block</a> in which they are declared.
 The lifetime of entities, (i.e., the period between allocation and deallocation
 in memory) is also limited to the scope of the enclosing block.
 However, individual elements inside <em>vector</em> and <em>pool</em> entities have dynamic
@@ -345,6 +348,7 @@ _printf(&quot;%d\n&quot;, v);     // prints 1
 The <a href="#TODO">binding</a> to the alias is immutable and must occur between its
 declaration and first access or next <a href="#TODO">yielding statement</a>.
 It is not possible to acquire aliases to external events or to pointer types.</p>
+<p><code>TODO: &amp;?</code></p>
 <h3 id="pointers">Pointers</h3>
 <p>A pointer is <a href="#TODO">declared</a> by suffixing the type with the modifier
 <code>&amp;&amp;</code> and is acquired by prefixing an entity with the operator <code>&amp;&amp;</code>.
