@@ -7,18 +7,18 @@ Follows the complete syntax of Céu in a BNF-like syntax:
 - **`a`** : terminal (in bold and lowercase)
 - <code>&grave;.&acute;</code> : terminal (non-alphanumeric characters)
 - `A ::= ...` : defines `A` as `...`
-- `A B` : `A` in sequence with `B`
-- `A|B` : `A` or `B`
-- `{A}` : zero or more As
-- `[A]` : optional A
-- `LIST(A)` : expands to <code>A {&grave;,&acute; A} [&grave;,&acute;]</code>
+- `x y` : `x` in sequence with `y`
+- `x|y` : `x` or `y`
+- `{x}` : zero or more xs
+- `[x]` : optional x
+- `LIST(x)` : expands to <code>x {&grave;,&acute; x} [&grave;,&acute;]</code>
 - `(...)` : groups `...`
 - `<...>` : special informal rule
 
 ```ceu
 Program ::= Stmts
 
-Stmts ::= { Stmt `;´ {`;´} }
+Stmts ::= {Stmt `;´} {`;´}
 
 Stmt ::= nothing
 
