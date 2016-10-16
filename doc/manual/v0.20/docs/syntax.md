@@ -39,9 +39,9 @@ Stmt ::= nothing
       | var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
       | vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
       | pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
-      | event [`&´|`&?´] (Type | `(´LIST(Type)`)´) LIST(ID_int [`=´ Set])
-      | input (Type | `(´LIST(Type)`)´) LIST(ID_ext)
-      | output (Type | `(´LIST(Type)`)´) LIST(ID_ext)
+      | event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
+      | input (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+      | output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
 
   /* Event handling */
 

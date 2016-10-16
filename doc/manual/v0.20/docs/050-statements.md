@@ -71,6 +71,8 @@ A declaration exposes a [storage entity](#TODO) to the program.
 Its [scope](#TODO) begins after the declaration and goes until the end of the
 enclosing [block](#TODO).
 
+See also [Storage Classes](#TODO) for a general overview of storage entities.
+
 ### Variables
 
 Variable declarations are as follows:
@@ -79,19 +81,18 @@ Variable declarations are as follows:
 var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
 ```
 
-A variable has an associated [type](#TODO) and can be optionally initialized 
-(see [Assignments](#TODO)).
+A variable has an associated [type](#TODO) and can be optionally
+[initialized](#TODO).
 A single statement can declare multiple variables of the same type.
-Variables can also be [aliases](#TODO) or [option aliases](#TODO).
+Declarations can also be [aliases](#TODO) or [option aliases](#TODO).
 
 Examples:
 
 ```ceu
-var int v = 10;     // declares and initializes integer variable "v"
-var int a=0, b=3;   // declares and initializes integer variables "a" and "b"
+var  int v = 10;    // "v" is an integer variable initialized to 10
+var  int a=0, b=3;  // "a" and "b" are integer variables initialized to 0 and 3
+var& int z = &v;    // "z" is an alias to "v"
 ```
-
-See also [Storage Classes](#TODO).
 
 ### Vectors
 
@@ -102,31 +103,76 @@ vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
 ```
 
 A vector has a dimension, an associated [type](#TODO) and can be optionally
-initialized (see [Assignments](#TODO)).
+[initialized](#TODO).
 A single statement can declare multiple vectors of the same dimension and type.
-Vectors can also be [aliases](#TODO).
+Declarations can also be [aliases](#TODO).
 
 The expression between the brackets specifies the dimension of the vector with
 the options that follow:
 
-- *constant expression*: Maximum number of elements is fixed and statically
-                         pre-allocated.
-- *variable expression*: Maximum number of elements is fixed but dynamically
-                         allocated. The expression is evaulated once at
-                         declaration time.
-- *omitted*: maximum number of elements is unbounded
+- *constant expression*: Maximum number of elements is fixed and space is
+                         statically pre-allocated.
+- *variable expression*: Maximum number of elements is fixed but space is
+                         dynamically allocated.
+                         The expression is evaulated once at declaration time.
+- *omitted*: Maximum number of elements is unbounded and space is dynamically
+             allocated.
+
+The space for dynamic vectors grow and shrink automatically.
 
 Examples:
 
 ```ceu
-vector[10] int vs1 = [];  // "vs1" is a static vector of 10 elements max
-
 var int n = 10;
-vector[n] int vs2 = [];   // "vs2" is a dynamic vector of 10 elements max
-
-vector[] int vs3 = [];    // "vs3" is an unbounded vector
+vector[10] int vs1 = [];    // "vs1" is a static vector of 10 elements max
+vector[n]  int vs2 = [];    // "vs2" is a dynamic vector of 10 elements max
+vector[]   int vs3 = [];    // "vs3" is an unbounded vector
+vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 ```
 
-See also [Storage Classes](#TODO).
+### Events
 
+See also [Introduction](#TODO) for a general overview of events.
 
+#### External events
+
+External event declarations are as follows:
+
+```ceu
+input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+```
+
+A declaration includes the [type](#TODO) of the value the event carries.
+It can be also a list of types if the event communicates multiple values.
+A single statement can declare multiple events of the same type.
+
+Examples:
+
+```ceu
+input  void A,B;        // "A" and "B" are input events carrying no values
+output int  MY_EVT;     // "MY_EVT" is an output event carrying integer values
+input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pair
+```
+
+### Internal events
+
+Internal event declarations are as follows:
+
+```ceu
+event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
+```
+
+A declaration includes the [type](#TODO) of the value the event carries.
+It can be also a list of types if the event communicates multiple values.
+A single statement can declare multiple events of the same type.
+Declarations can also be [aliases](#TODO) or [option aliases](#TODO).
+Only in this case they can contain an [initialization](#TODO).
+
+Examples:
+
+```ceu
+event  void a,b;        // "a" and "b" are internal events carrying no values
+event& void z = &a;     // "z" is an alias to event "a"
+event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
+```

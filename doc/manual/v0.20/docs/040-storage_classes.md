@@ -90,7 +90,7 @@ An `await` halts the running trail until that event occurs.
 An event occurrence is broadcast to the whole program and awakes trails
 awaiting that event to resume execution.
 
-As described in the [Introduction], Céu supports external and internal events
+As described in the [Introduction](#TODO), Céu supports external and internal events
 with different behaviors.
 
 Unlike all other storage classes, the value of an event is ephemeral and does
