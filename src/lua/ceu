@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = 'affcf3f8b9943ac5a382dcd96e8b73c019cfed69',
+    ceu_git = '3413426cf814018a9b4bed85fa01a5d2489e9246',
     files = {
         ceu_c =
             [====[
@@ -2710,13 +2710,13 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                     (V'__ID_int'+V'ID_any') * OPT(K'in' * V'_Loop_Num_Range') *
                   V'__Do'
     , Loop_Pool = K'loop' * OPT('/'*V'__Exp') *
-                    OPT(PARENS(V'List_Watching')) *
+                    OPT(PARENS(V'List_Var')) *
                         K'in' * V'Exp_Name' *
                   V'__Do'
     , Loop      = K'loop' * OPT('/'*V'__Exp') *
                   V'__Do'
 
-    , _Every  = K'every' * OPT((V'Exp_Name'+PARENS(V'List_Name_Any')) * K'in') *
+    , _Every  = K'every' * OPT((V'Exp_Name'+PARENS(V'List_Name')) * K'in') *
                     (V'Await_Ext' + V'Await_Int' + V'Await_Wclock') *
                 V'__Do'
 
@@ -2727,7 +2727,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                    + V'_Set'
                    + V'Emit_Ext_emit' + V'Emit_Ext_call'
                    + V'Stmt_Call'
-    , __finalize   = K'finalize' * (PARENS(V'Namelist') + Cc(false)) * K'with' *
+    , __finalize   = K'finalize' * (PARENS(V'List_Name') + Cc(false)) * K'with' *
                      V'Block' *
                    K'end'
     , Finalize     = K'do' * OPT(V'__fin_stmt') * V'__finalize'
@@ -2742,11 +2742,11 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- ASYNCHRONOUS
 
     , Async        = K'await' * K'async' * (-P'/thread'-'/isr') *
-                        OPT(PARENS(V'Varlist')) * V'__Do'
+                        OPT(PARENS(V'List_Var')) * V'__Do'
     , Async_Thread = K'await' * K'async/thread' *
-                        OPT(PARENS(V'Varlist')) * V'__Do'
-    , _Async_Isr   = K'async/isr' * KK'[' * V'Explist' * KK']' *
-                            OPT(PARENS(V'Varlist')) *
+                        OPT(PARENS(V'List_Var')) * V'__Do'
+    , _Async_Isr   = K'async/isr' * KK'[' * V'List_Exp' * KK']' *
+                            OPT(PARENS(V'List_Var')) *
                       V'__Do'
     , Atomic  = K'atomic' * V'__Do'
 
@@ -2892,7 +2892,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Await_Forever = K'await' * K'FOREVER'
 
-    , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'Explist')))
+    , _Emit_ps = OPT(V'__Exp' + PARENS(OPT(V'List_Exp')))
     , Emit_Wclock   = K'emit' * (V'WCLOCKK'+V'WCLOCKE')
     , Emit_Ext_emit = K'emit'                     * V'ID_ext' * V'_Emit_ps'
     , Emit_Ext_call = (K'call/recursive'+K'call') * V'ID_ext' * V'_Emit_ps'
@@ -2902,7 +2902,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
     , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
-                    * OPT(KK'=>' * PARENS(V'List_Watching'))
+                    * OPT(KK'=>' * PARENS(V'List_Var'))
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -2938,10 +2938,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code'
                             * (-KK'in') * Cc(false)
-                                * OPT(KK'=>' * PARENS(V'List_Watching'))
+                                * OPT(KK'=>' * PARENS(V'List_Var'))
     , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code'
                             * KK'in' * V'Exp_Name'
-                                * OPT(KK'=>' * PARENS(V'List_Watching'))
+                                * OPT(KK'=>' * PARENS(V'List_Var'))
 
     , __Abs_Cons_Code = V'__abs_mods' * V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))
@@ -2952,7 +2952,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- SETS
 
     , _Set = V'Exp_Name' * V'__Sets_one'
-           + (V'Exp_Name' + PARENS(V'List_Name_Any')) * V'__Sets_many'
+           + (V'Exp_Name' + PARENS(V'List_Name')) * V'__Sets_many'
 
     , __Sets_one  = (KK'='-'==') * (V'__sets_one'  + PARENS(V'__sets_one'))
     , __Sets_many = (KK'='-'==') * (V'__sets_many' + PARENS(V'__sets_many'))
@@ -3003,7 +3003,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , __vec_pre     = KK'[' - V'__lua_pre'
 
     , __vec_concat = KK'..' * (V'__Exp' + V'_Lua' + #KK'['*V'Vec_Tup')
-    , Vec_Tup  = V'__vec_pre' * OPT(V'Explist') * KK']'
+    , Vec_Tup  = V'__vec_pre' * OPT(V'List_Exp') * KK']'
     , Vec_Cons = V'__Exp'   * V'__vec_concat'^1
                + V'Vec_Tup' * V'__vec_concat'^0
 
@@ -3037,11 +3037,9 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 -- LISTS
 
 -- TODO: rename List_*
-    , List_Name_Any = LIST(V'Exp_Name' + V'ID_any')
-    , Namelist = LIST(V'Exp_Name')
-    , Varlist  = LIST(V'ID_int')
-    , Explist  = LIST(V'__Exp')
-    , List_Watching = LIST((V'ID_int' + V'ID_any'))
+    , List_Name = LIST(V'Exp_Name' + V'ID_any')
+    , List_Var  = LIST(V'ID_int' + V'ID_any')
+    , List_Exp  = LIST(V'__Exp')
 
  --<<<
 
@@ -3118,7 +3116,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , __exp_call = (CK'call/recursive' + CK'call' + Cc'call')
     , Exp_Call = V'__exp_call' * (V'Exp_Name'+PARENS(V'__Exp')) *
-                                PARENS(OPT(V'Explist'))
+                                PARENS(OPT(V'List_Exp'))
 
 ---------
                 -- "Ct" as a special case to avoid "too many captures" (HACK_1)
@@ -3980,7 +3978,7 @@ error'TODO'
                             node('Exp_Name', me.ln,
                                 node('ID_nat', me.ln,
                                     '_ceu_callback_assert_msg')),
-                            node('Explist', me.ln,
+                            node('List_Exp', me.ln,
                                 node('Exp_<', me.ln, '<',
                                     node('Exp_Name', me.ln,
                                         node('ID_int', me.ln, '__max_'..me.n)),
@@ -4477,10 +4475,10 @@ error'TODO'
 
     _Emit_ps__PRE = function (me)
         local exp = unpack(me)
-        if exp and exp.tag == 'Explist' then
+        if exp and exp.tag == 'List_Exp' then
             return exp
         end
-        local ret = node('Explist', me.ln)
+        local ret = node('List_Exp', me.ln)
         if exp then
             AST.set(ret, 1, exp)
         end
@@ -4488,10 +4486,10 @@ error'TODO'
     end,
     Exp_Call__PRE = function (me)
         local _,_, ps = unpack(me)
-        if ps and ps.tag == 'Explist' then
+        if ps and ps.tag == 'List_Exp' then
             -- ok
         else
-            AST.set(me, 3, node('Explist', me.ln))
+            AST.set(me, 3, node('List_Exp', me.ln))
             if ps then
                 AST.set(me[3], 1, ps)
 error'TODO: luacov never executes this?'
@@ -4502,7 +4500,7 @@ error'TODO: luacov never executes this?'
     Set_Await_many__PRE = function (me)
         local _,var,_ = unpack(me)
         if var.tag == 'Exp_Name' then
-            AST.set(me, 2, node('List_Name_Any', var.ln, var))
+            AST.set(me, 2, node('List_Name', var.ln, var))
         end
     end,
 
@@ -5865,7 +5863,7 @@ F = {
         if me.dcl.is_mid_idx then
             local Set_Alias = AST.get(me.__par.__par,'Set_Alias')
             local ok = Set_Alias and AST.get(Set_Alias,'',2,'Exp_Name',1,'ID_int')==me
-            ok = ok or AST.par(me, 'List_Watching')
+            ok = ok or AST.par(me, 'List_Var')
             ASR(ok, me, 'invalid access to output variable "'..me.dcl.id..'"')
         end
     end,
@@ -6048,7 +6046,7 @@ error'TODO: remove below'
             -- &y as X; (y is X.Y)
             par = par.__par
         end
-        ASR(par.tag=='Set_Alias' or par.tag=='Explist' or par.tag=='Abslist', me,
+        ASR(par.tag=='Set_Alias' or par.tag=='List_Exp' or par.tag=='Abslist', me,
             'invalid expression : unexpected context for operation `&´')
 
         -- tp
@@ -6489,7 +6487,7 @@ F = {
             if e.tag == 'Vec_Tup' then
                 local ps = unpack(e)
                 if ps then
-                    AST.asr(ps,'Explist')
+                    AST.asr(ps,'List_Exp')
                     for j, p in ipairs(ps) do
                         EXPS.check_tp(fr, to_info.tp, p.info.tp,
                             'invalid constructor : item #'..i..' : '..
@@ -6968,7 +6966,7 @@ F = {
 
 -- VARLIST, EXPLIST
 
-    Explist = function (me)
+    List_Exp = function (me)
         local Typelist = AST.node('Typelist', me.ln)
         for i, e in ipairs(me) do
             -- ctx
@@ -6982,7 +6980,7 @@ F = {
         me.tp = Typelist
     end,
 
-    List_Name_Any = function (me)
+    List_Name = function (me)
         -- ctx
         for _, var in ipairs(me) do
             if var.tag ~= 'ID_any' then
@@ -7002,30 +7000,20 @@ F = {
         me.tp = Typelist
     end,
 
-    Namelist = function (me)
+    List_Var = function (me)
         -- ctx
         for _, var in ipairs(me) do
-            INFO.asr_tag(var, {'Nat','Var'}, 'invalid variable')
+            if var.tag ~= 'ID_any' then
+                INFO.asr_tag(var, {'Var','Vec','Evt'}, 'invalid variable')
+            end
         end
 
         -- info
         local Typelist = AST.node('Typelist', me.ln)
         for i, var in ipairs(me) do
-            Typelist[i] = AST.copy(var.info.tp)
-        end
-        me.tp = Typelist
-    end,
-
-    Varlist = function (me)
-        -- ctx
-        for _, var in ipairs(me) do
-            INFO.asr_tag(var, {'Var','Vec'}, 'invalid variable')
-        end
-
-        -- info
-        local Typelist = AST.node('Typelist', me.ln)
-        for i, var in ipairs(me) do
-            Typelist[i] = AST.copy(var.info.tp)
+            if var.tag ~= 'ID_any' then
+                Typelist[i] = AST.copy(var.info.tp)
+            end
         end
         me.tp = Typelist
     end,
@@ -7209,7 +7197,7 @@ local function run_inits (par, i, Dcl, stop)
         return run_inits(me, #me, Dcl, stop)
 
     -- ok: found assignment
-    elseif me.tag == 'List_Watching' then
+    elseif me.tag == 'List_Var' then
         for _,ID_int in ipairs(me) do
             if ID_int.dcl == Dcl then
                 ID_int.dcl.inits = {me}
@@ -7237,7 +7225,7 @@ local function run_inits (par, i, Dcl, stop)
         end
 
         -- equalize all with Set_Await_many
-        if to.tag ~= 'List_Name_Any' then
+        if to.tag ~= 'List_Name' then
             to = { to }
         end
 
@@ -7343,7 +7331,7 @@ local function run_ptrs (par, i, Dcl, stop)
         local ok = false
         if set then
             local _,to = unpack(set)
-            if to.tag ~= 'List_Name_Any' then
+            if to.tag ~= 'List_Name' then
                 to = { to }
             end
             for _, v in ipairs(to) do
@@ -7519,7 +7507,11 @@ error'TODO: luacov never executes this?'
             ' "'..to.info.dcl.id..'" is already bound ('..
             inits..')')
     end,
-    List_Watching = function (me)
+    List_Var = function (me)
+        if not (AST.par(me,'Abs_Await') or AST.par(me,'Abs_Spawn_Single')) then
+            return  -- only in watching
+        end
+
         for _, to in ipairs(me) do
             if to.is_init then
                 -- I'm the one who created the binding
@@ -7775,9 +7767,9 @@ F = {
         me.fins_n = 0
     end,
     Finalize = function (me)
-        local Stmt, Namelist, Block = unpack(me)
+        local Stmt, List_Name, Block = unpack(me)
         if not Stmt then
-            ASR(Namelist==false, me,
+            ASR(List_Name==false, me,
                 'invalid `finalize´ : unexpected `varlist´')
             me.blk = AST.par(me, 'Block')
             me.blk.fins_n = me.blk.fins_n + 1
@@ -7794,7 +7786,7 @@ F = {
 
         ASR(me.__fin_vars, me,
             'invalid `finalize´ : nothing to finalize')
-        ASR(Namelist and Namelist.tag=='Namelist', Namelist or me,
+        ASR(List_Name and List_Name.tag=='List_Name', List_Name or me,
             'invalid `finalize´ : expected `varlist´')
 
         for _, v1 in ipairs(me.__fin_vars) do
@@ -7802,14 +7794,14 @@ F = {
                 'invalid `finalize´ : expected identifier : got "'..v1.id..'"')
 
             local ok = false
-            for _, v2 in ipairs(Namelist) do
+            for _, v2 in ipairs(List_Name) do
                 if v2.info.dcl==v1 or v2.info.dcl==v1.orig then
                                         -- TODO: HACK_3
                     ok = true
                     break
                 end
             end
-            ASR(ok, Namelist,
+            ASR(ok, List_Name,
                 'invalid `finalize´ : unmatching identifiers : expected "'..
                 v1.id..'" (vs. '..Stmt.ln[1]..':'..Stmt.ln[2]..')')
         end
@@ -8085,7 +8077,7 @@ F = {
         end
     end,
 
-    List_Watching = function (me)
+    List_Var = function (me)
         local watch = AST.par(me,'Loop_Pool') or AST.par(me,'Watching')
         for _, ID in ipairs(me) do
             if ID.tag ~= 'ID_any' then
@@ -8747,7 +8739,7 @@ CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
                     '{\n'..table.concat(ps,',\n')..'\n}'
     end,
 
-    Explist = function (me)
+    List_Exp = function (me)
         local vs = {}
         for i, p in ipairs(me) do
             vs[i] = V(p)
@@ -10278,7 +10270,7 @@ if (0)
 ]])
     end,
 
-    List_Watching = function (me)
+    List_Var = function (me)
         for _,ID_int in ipairs(me) do
             if ID_int.tag~='ID_any' and ID_int.dcl.has_trail then
                 -- HACK_4
@@ -11129,12 +11121,12 @@ _ceu_mem->trails[]]..trails[1]..[[].clr_range = ]]..V(to)..[[.range;
 
             -- vec1 = ..[a,b,c]
             elseif fr.tag == 'Vec_Tup' then
-                local Explist = unpack(fr)
-                if Explist then
+                local List_Exp = unpack(fr)
+                if List_Exp then
                     LINE(me, [[
-    ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..#Explist..[[), 1);
+    ceu_vector_setlen(&]]..V(to)..', ('..V(to)..'.len + '..#List_Exp..[[), 1);
 ]])
-                    for _, e in ipairs(Explist) do
+                    for _, e in ipairs(List_Exp) do
                         LINE(me, [[
     *((]]..TYPES.toc(to.info.tp)..[[*)
         ceu_vector_buf_get(&]]..V(to)..[[, __ceu_nxt++)) = ]]..V(e)..[[;
@@ -11223,15 +11215,15 @@ do {
     end,
 
     Emit_Ext_emit = function (me)
-        local ID_ext, Explist = unpack(me)
+        local ID_ext, List_Exp = unpack(me)
         local inout, Typelist = unpack(ID_ext.dcl)
         LINE(me, [[
 {
 ]])
         local ps = 'NULL'
-        if #Explist > 0 then
+        if #List_Exp > 0 then
             LINE(me, [[
-tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(Explist),',')..[[ };
+tceu_]]..inout..'_'..ID_ext.dcl.id..' __ceu_ps = { '..table.concat(V(List_Exp),',')..[[ };
 ]])
             ps = '&__ceu_ps'
         end
@@ -11295,17 +11287,17 @@ if (]]..V(Exp_Name)..[[.alias != NULL) {
     end,
 
     Emit_Evt = function (me)
-        local Exp_Name, Explist = unpack(me)
+        local Exp_Name, List_Exp = unpack(me)
         local Typelist = unpack(Exp_Name.info.dcl)
         LINE(me, [[
 {
 ]])
         local ps = 'NULL'
-        if Explist then
+        if List_Exp then
             local sufix = TYPES.noc(TYPES.tostring(Exp_Name.info.dcl[2]))
             LINE(me, [[
     tceu_event_]]..sufix..[[
-        __ceu_ps = { ]]..table.concat(V(Explist),',')..[[ };
+        __ceu_ps = { ]]..table.concat(V(List_Exp),',')..[[ };
 ]])
             ps = '&__ceu_ps'
         end

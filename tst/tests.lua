@@ -1956,6 +1956,26 @@ end
 }
 
 Test { [[
+input void HELLO;
+input void WORLD;
+par do      // par/and, par/or would behave the same
+    loop do
+        await HELLO;
+        _printf("Hello!\n");
+    end
+with
+    loop do
+        await WORLD;
+        _printf("World!\n");
+    end
+end
+
+escape 0;
+]],
+    parser = 'line 13 : after `end´ : expected `;´ or end of file',
+}
+
+Test { [[
 par do
     await FOREVER;
 with
@@ -22058,6 +22078,15 @@ escape 1;
     --dcls = 'line 2 : identifier "A" is already declared (/tmp/tmp.ceu : line 1)',
 }
 
+Test { [[
+input void TEST;
+output void TEST;
+escape 1;
+]],
+    wrn = true,
+    dcls = 'line 2 : declaration of "TEST" hides previous declaration (/tmp/tmp.ceu : line 1)',
+}
+
 --if not OS then
 
 -->>> OUTPUT
@@ -41194,6 +41223,15 @@ pool[] Dd dds;
 escape dds!;
 ]],
     names = 'line 3 : invalid operand to `!´ : unexpected context for pool "dds"',
+}
+
+Test { [[
+code/await Ff (void)=>void do end
+pool[5] Ff a;
+pool[5] Ff b = a;
+escape 1;
+]],
+    stmts = 'line 3 : invalid assignment : unexpected context for pool "a"',
 }
 
 Test { [[
