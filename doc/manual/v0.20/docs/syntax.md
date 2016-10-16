@@ -1,7 +1,7 @@
 Syntax
 ======
 
-Follows the complete syntax of Céu Lua in a BNF-like syntax:
+Follows the complete syntax of Céu in a BNF-like syntax:
 
 - `A` : non terminal (starting in uppercase)
 - **`a`** : terminal (in bold and lowercase)
