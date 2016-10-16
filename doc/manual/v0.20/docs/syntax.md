@@ -1,146 +1,156 @@
 Syntax
 ======
 
+Follows the complete syntax of Céu Lua in a BNF-like syntax:
+
+- `A` : non terminal (starting in uppercase)
+- **`a`** : terminal (in bold and lowercase)
+- <code>&grave;.&acute;</code> : terminal (non-alphanumeric characters)
+- `A ::= ...` : defines `A` as `...`
+- `A B` : `A` in sequence with `B`
+- `A|B` : `A` or `B`
+- `{A}` : zero or more As
+- `[A]` : optional A
+- `LIST(A)` : expands to <code>A {&grave;,&acute; A} [&grave;,&acute;]</code>
+- `(...)` : groups `...`
+- `<...>` : special informal rule
+
 ```ceu
+Program ::= Stmts
+
+Stmts ::= { Stmt `;´ {`;´} }
+
 Stmt ::= nothing
 
   /* Storage Classes */
 
-      | var    [`&´|`&?´] Type ID_int [`=´ <Set>] { `,´ ID_int [`=´ <Set>] } [`,´]
-      | vector [`&´] `[´ [Exp] `]´ Type ID_int { `,´ ID_int [`=´ <Set>] } [`,´]
-      | pool   [`&´] `[´ [Exp] `]´ Type ID_int { `,´ ID_int [`=´ <Set>] } [`,´]
-      | event  [`&´|`&?´] (Type | `(´List_Type`)´) ID_int { `,´ ID_int } [`,´]
-      | input (Type | `(´List_Type`)´) ID_ext { `,´ ID_ext } [`,´]
-      | output (Type | `(´List_Type`)´) ID_ext { `,´ ID_ext } [`,´]
+      | var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
+      | vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+      | pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+      | event [`&´|`&?´] (Type | `(´LIST(Type)`)´) LIST(ID_int [`=´ Set])
+      | input (Type | `(´LIST(Type)`)´) LIST(ID_ext)
+      | output (Type | `(´LIST(Type)`)´) LIST(ID_ext)
 
   /* Event handling */
 
-      /* Awaits */
+      // Await ::=
+      | await (ID_ext | Name) [until Exp]
+      | await (WCLOCKK|WCLOCKE)
+      //
       | await FOREVER
 
-      // Await ::=
-      | await (ID_ext | Name) [ until Exp ]
-      | await (WCLOCKK|WCLOCKE)
-
-      /* Emits */
-
-      | emit Name   [ `=>´ (Exp | `(´ [List_Exp] `)´)
-
       // Emit_Ext ::=
-      | emit ID_ext [ `=>´ (Exp | `(´ [List_Exp] `)´)
-
-      // Emit_Wclock ::=
+      | emit ID_ext [`=>´ (Exp | `(´ [LIST(Exp)] `)´)]
       | emit (WCLOCKK|WCLOCKE)
+      //
+      | emit Name [`=>´ (Exp | `(´ [LIST(Exp)] `)´)]
 
   /* Conditional */
 
       | if Exp then
-            Block
+            Stmts
         { else/if Exp then
-            Block }
+            Stmts }
         [ else
-            Block ]
+            Stmts ]
         end
 
   /* Loops */
 
       /* simple */
-      | loop [`/´ Exp] do
-            Block
+      | loop [`/´Exp] do
+            Stmts
         end
 
       /* numeric iterator */
-      | loop [`/´ Exp] (`_´|ID_int) in Range do
-            Block
+      | loop [`/´Exp] (`_´|ID_int) in Range do
+            Stmts
         end
         // where
             Range ::= (`[´ | `]´)
-                        ( Exp `->´ (`_´|Exp) |
-                          (`_´|Exp) `<-´ Exp )
+                        ( Exp `->´ (`_´|Exp)
+                        | (`_´|Exp) `<-´ Exp )
                       (`[´ | `]´) [`,´ Exp]
 
       /* pool iterator */
-      | loop [`/´ Exp] [ `(´ List_Var `)´ ] in Name do
-            Block
+      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Name do
+            Stmts
         end
 
       /* event iterator */
       | every [(Name | `(´TODO/List_Name_Any`)´) in] (ID_ext|Name|WCLOCKK|WCLOCKE) do
-            Block
+            Stmts
         end
 
-      |  break [`/´ ID_int]
-      |  continue [`/´ ID_int]
+      |  break [`/´ID_int]
+      |  continue [`/´ID_int]
 
   /* Pause */
 
       | pause/if (Name|ID_ext) do
-            Block
+            Stmts
         end
 
   /* Parallel Compositions */
 
       /* parallels */
       | (par | par/and | par/or) do
-            Block
+            Stmts
         with
-            Block
+            Stmts
         { with
-            Block }
+            Stmts }
          end
 
       /* watching */
       // Watching ::=
-      | watching [`=>´ `(´ List_Var `)´] do
-            Block
+      | watching LIST((ID_ext|Name|WCLOCKK|WCLOCKE|Code) [`=>´ `(´ LIST(Var) `)´]) do
+            Stmts
         end
-        // where
-            Watch_List ::= Watch {`,´ Watch } [`,´]
-            Watch ::= (ID_ext|Name|WCLOCKK|WCLOCKE|TODO/Abs_Await) [`=>´ `(´ List_Var `)´]
 
   /* Asynchronous Execution */
 
-      | await async [ `(´List_Var`)´ ] do
-            Block
+      | await async [ `(´LIST(Var)`)´ ] do
+            Stmts
         end
 
       // Async_Thread ::=
-      | await async/thread [ `(´List_Var`)´ ] do
-            Block
+      | await async/thread [ `(´LIST(Var)`)´ ] do
+            Stmts
         end
 
       /* synchronization */
       | atomic do
-            Block
+            Stmts
         end
 
   /* Blocks */
 
       // Do ::=
-      |  do [`/´ (`_´|ID_int)]
-             Block
+      |  do [`/´(`_´|ID_int)]
+             Stmts
          end
-      |  escape [`/´ ID_int] [Exp]
+      |  escape [`/´ID_int] [Exp]
 
       /* pre (top level) execution */
       | pre do
-            Block
+            Stmts
         end
 
       /* block spawn */
       | spawn do
-            Block
+            Stmts
         end
 
       /* finalization */
       | do
-            Block
-        finalize `(´ List_Name `)´ with
-            Block
+            Stmts
+        finalize `(´ LIST(Name) `)´ with
+            Stmts
         end
       | var `&?´ Type ID_int `=´ `&´ (Call_Nat | Call_Code)
-        finalize `(´ List_Name `)´ with
-            Block
+        finalize `(´ LIST(Name) `)´ with
+            Stmts
         end
 
   /* Abstractions */
@@ -160,16 +170,15 @@ Stmt ::= nothing
       // Code_Await ::=
       | code/await [`/´dynamic] [`/´recursive] ID_abs `(´ Params `)´ `=>´ [ `(´ Params `)´ `=>´ ] (Type | FOREVER)
         // where
-            Params ::= void | (Param { `,´ Param } [`,´])
-            Param ::= [dynamic] Class ID_int
+            Params ::= void | LIST([dynamic] Class ID_int)
             Class ::= var [`&´|`&?´] [`/´hold] * Type
                    |  vector `&´ `[´ [Exp] `]´ Type
                    |  pool `&´ `[´ [Exp] `]´ Type
-                   |  event [`&´|`&?´] (Type | `(´List_Type`)´)
+                   |  event [`&´|`&?´] (Type | `(´LIST(Type)`)´)
 
       /* code implementation */
       | (Code_Tight | Code_Await) do
-            Block
+            Stmts
         end
 
       /* code instantiation */
@@ -181,31 +190,31 @@ Stmt ::= nothing
       | await Mods Code
 
       // Spawn_Code ::=
-      | spawn Mods Code [in Name] [`=>´ `(´ List_Var `)´]
+      | spawn Mods Code [in Name] [`=>´ `(´ LIST(Var) `)´]
 
         // where
             Mods ::= [`/´dynamic | `/´static] [`/´recursive]
-            Code ::= ID_abs `(´ [List_Exp] `)´
+            Code ::= ID_abs `(´ [LIST(Exp)] `)´
 
   /* C integration */
 
       | native [`/´(pure|const|nohold|plain)] `(´ List_Nat `)´
         // where
-            List_Nat ::= ID_nat { `,´ ID_nat }
-      | native `/´ (pre|pos) do
+            List_Nat ::= LIST(ID_nat)
+      | native `/´(pre|pos) do
             <code definitions in C>
         end
       | native `/´ end
       | `{´ <code in C> `}´
 
       // Call_Nat ::=
-      | call [`/´recursive] (Name | `(´ Exp `)´)  `(´ [ List_Exp] `)´
+      | call [`/´recursive] (Name | `(´ Exp `)´)  `(´ [ LIST(Exp)] `)´
 
   /* Lua integration */
 
       // Lua ::=
       | lua `[´ [Exp] `]´ do
-            Block
+            Stmts
         end
       | `[´ {`=´} `[´
             { <code in Lua> | `@´ Exp }
@@ -213,11 +222,10 @@ Stmt ::= nothing
 
   /* Assignments */
 
-      | (Name | `(´ (List_Name|`_´) `)´) `=´ Set
+      | (Name | `(´ (LIST(Name)|`_´) `)´) `=´ Set
         // where
             Set ::= ( Await
                     | Emit_Ext
-                    | Emit_Wclock
                     | Watching
                     | Async_Thread
                     | Do
@@ -225,15 +233,11 @@ Stmt ::= nothing
                     | Await_Code
                     | Spawn_Code
                     | Lua
-                    | Vec
+                    | Vector
                     | `_´
                     | Exp )
-            Data ::= (val|new) ID_abs `(´ Params `)´ 
-            Vec ::= (Exp | `[´ [List_Exp] `]´) { `..´ (Exp | Lua | `[´ [List_Exp] `]´) }
-
-/* Block */
-
-Block ::= { Stmt `;´ {`;´} }
+            Data ::= (val|new) ID_abs `(´ LIST(Exp) `)´ 
+            Vector ::= (Exp | `[´ [LIST(Exp)] `]´) { `..´ (Exp | Lua | `[´ [LIST(Exp)] `]´) }
 
 /* Identifiers */
 
@@ -253,13 +257,6 @@ ID_type  ::= ( ID_nat | ID_abs
 /* Types */
 
 Type ::= ID_type { `&&´ } [`?´]
-
-/* Lists */
-
-List_Type ::= Type    { `,´ Type    } [`,´]
-List_Exp  ::= Exp     { `,´ Exp     } [`,´]
-List_Var  ::= ID_int  { `,´ ID_int  } [`,´]
-List_Name ::= (Name|`_´)  { `,´ (Name|`_´)  } [`,´]
 
 /* Wall-clock values */
 
