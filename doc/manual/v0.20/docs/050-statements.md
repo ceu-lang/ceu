@@ -191,9 +191,6 @@ a timer, or forever (i.e., never awake):
 Await ::= await (ID_ext | Name) [until Exp]
        |  await (WCLOCKK|WCLOCKE)
        |  await FOREVER
-
-WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
-WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
 ```
 
 Examples:
@@ -298,3 +295,64 @@ end
 ```
 
 ### Emit
+
+The `emit` statement broadcasts an event to the whole program.
+The event can be an [external event](#TODO), an [internal event](#TODO), or
+a timer:
+
+```ceu
+Emit ::= emit (ID_ext | Name) [`=>´ (Exp | `(´ [LIST(Exp)] `)´)]
+      |  emit (WCLOCKK|WCLOCKE)
+```
+
+Examples:
+
+```ceu
+emit A;         // emits the external event `A` of type "void"
+emit a(1);      // emits the internal event `a` of type "int"
+
+emit 1s;        // emits the specified time
+emit (t)ms;     // emits the current value of the variable `t` in milliseconds
+```
+
+#### Events
+
+The `emit` statement for events expects a specific number of arguments matching
+the event type (unless the event is of type `void`).
+
+- An `emit` to an external input or timer event can only occur inside
+  [asynchronous blocks](#TODO).
+- An `emit` to an external output event is also an expression that evaluates
+  to a value of type `s32` (its meaning is [platform dependent](#TODO)).
+- An `emit` to an internal event starts a new [internal reaction](#TODO).
+
+Examples:
+
+```ceu
+input int I;
+async do
+    emit I(10);         // broadcasts "I" to the application itself, passing "10"
+end
+
+output void O;
+var int ret = emit O(); // outputs "O" to the environment and captures the result
+
+event (int,int) e;
+emit e(1,2);            // broadcasts "e" passing a pair of "int" values
+```
+
+#### Timers
+
+The `emit` statement for timers expects an expression of time as described in
+[Await Timer](#TODO).
+
+Like input events, time can only be emitted inside [asynchronous 
+blocks](#asynchronous-blocks).
+
+Examples:
+
+```ceu
+async do
+    emit 1s;    // broadcasts "1s" to the application itself
+end
+```
