@@ -182,7 +182,8 @@ Event Handling
 
 ### Await
 
-The `await` statement halts the running trail until the referred event occurs.
+The `await` statement halts the running trail until the referred
+event occurs.
 The event can be an [external input event](#TODO), an [internal event](#TODO),
 a timer, or forever (i.e., never awake):
 
@@ -212,7 +213,7 @@ optional [assignment](#TODO).
 
 #### Events
 
-The `await` statement halts the running trail until the referred
+The `await` statement for events halts the running trail until the referred
 [external input event](#TODO) or  [internal event](#TODO) occurs:
 
 ```ceu
@@ -220,7 +221,7 @@ Await ::= await (ID_ext | Name) [until Exp]
        |  ...   // other awaits
 ```
 
-The `await` evaluates to the type of the event.
+The `await` evaluates to a value of the type of the event.
 
 The optional clause `until` tests an additional condition required to awake.
 The condition can use the returned value from the `await`.
@@ -249,8 +250,8 @@ var int  v2;
 
 #### Timers
 
-The `await` statement halts the running trail until the referred timer
-expires:
+The `await` statement for timers halts the running trail until the referred
+timer expires:
 
 ```ceu
 Await ::= await (WCLOCKK|WCLOCKE)
@@ -265,17 +266,17 @@ pairs.
 `WCLOCKE` specifies an expression in parenthesis followed by a single unit of
 time.
 
-The `await` evaluates to the *residual delta time (dt)* measured in
-microseconds, which is the difference between the *actual* elapsed time and the
-requested time.
+The `await` evaluates to a value of type `s32` and is the
+*residual delta time (dt)* measured in microseconds.
+Is is the difference between the actual elapsed time and the requested time.
 
 Examples:
 
 ```ceu
 var int t = <...>;
-await (t)ms;                // awakes after "t" milliseconds
+await (t)ms;                            // awakes after "t" milliseconds
 
-var int dt = await 1min10s30ms100us;    // if 31ms elapses, then dt=1000
+var int dt = await 1min10s30ms100us;    // if 1min10s31ms000us elapses, then dt=900
 ```
 
 *Note: The residual **dt** is always greater than or equal to 0.*
@@ -286,5 +287,14 @@ time.
 -->
 
 #### `FOREVER`
+
+The `await` statement for `FOREVER` halts the running trail forever.
+It cannot be used in assignments because it never evaluates to anything.
+
+```ceu
+if <cnd> then
+    await FOREVER;  // this trail never awakes if the condition is true
+end
+```
 
 ### Emit
