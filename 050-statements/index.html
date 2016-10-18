@@ -101,6 +101,8 @@
                 
                     <li><a class="toctree-l4" href="#declarations">Declarations</a></li>
                 
+                    <li><a class="toctree-l4" href="#event-handling">Event Handling</a></li>
+                
             
             </ul>
         
@@ -199,11 +201,11 @@ blocks and can be nested to an arbitrary level.</p>
 <p>The <code>do-end</code> statement creates an explicit block with an optional identifier.
 The <code>escape</code> statement aborts the deepest enclosing <code>do-end</code> matching its
 identifier:</p>
-<pre><code class="ceu">do [`/´ (`_´|ID_int)]
-    Block
-end
+<pre><code class="ceu">Do ::= do [`/´ (`_´|ID_int)]
+           Block
+       end
 
-escape [`/´ID_int] [Exp]
+Escape ::= escape [`/´ID_int] [Exp]
 </code></pre>
 
 <p>A <code>do-end</code> supports the identifier <code>_</code> which is guaranteed not to match any
@@ -221,9 +223,9 @@ end
 
 <h3 id="pre-do-end"><code>pre-do-end</code></h3>
 <p>A <code>pre-do-end</code> prepends its statements in the beginning of the program:</p>
-<pre><code class="ceu">pre do
-    Block
-end
+<pre><code class="ceu">Pre_Do ::= pre do
+               Block
+           end
 </code></pre>
 
 <p>All <code>pre-do-end</code> statements are concatenated together in the order they appear
@@ -235,7 +237,7 @@ enclosing <a href="#TODO">block</a>.</p>
 <p>See also <a href="#TODO">Storage Classes</a> for a general overview of storage entities.</p>
 <h3 id="variables">Variables</h3>
 <p>Variable declarations are as follows:</p>
-<pre><code class="ceu">var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Set])
+<pre><code class="ceu">Var ::= var [`&amp;´|`&amp;?´] Type LIST(ID_int [`=´ Set])
 </code></pre>
 
 <p>A variable has an associated <a href="#TODO">type</a> and can be optionally
@@ -250,7 +252,7 @@ var&amp; int z = &amp;v;    // &quot;z&quot; is an alias to &quot;v&quot;
 
 <h3 id="vectors">Vectors</h3>
 <p>Vector declarations are as follows:</p>
-<pre><code class="ceu">vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+<pre><code class="ceu">Vector ::= vector [`&amp;´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
 </code></pre>
 
 <p>A vector has a dimension, an associated <a href="#TODO">type</a> and can be optionally
@@ -281,8 +283,8 @@ vector&amp;[]  int vs4 = &amp;vs1;  // &quot;vs4&quot; is an alias to &quot;vs1&
 <p>See also <a href="#TODO">Introduction</a> for a general overview of events.</p>
 <h4 id="external-events">External events</h4>
 <p>External event declarations are as follows:</p>
-<pre><code class="ceu">input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+<pre><code class="ceu">Ext ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+     |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
 </code></pre>
 
 <p>A declaration includes the <a href="#TODO">type</a> of the value the event carries.
@@ -296,7 +298,7 @@ input (int,byte&amp;&amp;) BUF; // &quot;BUF&quot; is an input event carrying an
 
 <h3 id="internal-events">Internal events</h3>
 <p>Internal event declarations are as follows:</p>
-<pre><code class="ceu">event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
+<pre><code class="ceu">Int ::= event [`&amp;´|`&amp;?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
 </code></pre>
 
 <p>A declaration includes the <a href="#TODO">type</a> of the value the event carries.
@@ -309,6 +311,101 @@ Only in this case they can contain an <a href="#TODO">initialization</a>.</p>
 event&amp; void z = &amp;a;     // &quot;z&quot; is an alias to event &quot;a&quot;
 event (int,int) c;      // &quot;c&quot; is a internal event carrying an &quot;(int,int)&quot; pair
 </code></pre>
+
+<h2 id="event-handling">Event Handling</h2>
+<h3 id="await">Await</h3>
+<p>The <code>await</code> statement halts the running trail until the referred
+event occurs.
+The event can be an <a href="#TODO">external input event</a>, an <a href="#TODO">internal event</a>,
+a timer, or forever (i.e., never awake):</p>
+<pre><code class="ceu">Await ::= await (ID_ext | Name) [until Exp]
+       |  await (WCLOCKK|WCLOCKE)
+       |  await FOREVER
+
+WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
+WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
+</code></pre>
+
+<p>Examples:</p>
+<pre><code class="ceu">await A;                  // awaits the input event `A`
+await a;                  // awaits the internal event `a`
+
+await 10min3s5ms100us;    // awaits the specified time
+await (t)ms;              // awaits the current value of the variable `t` in milliseconds
+
+await FOREVER;            // awaits forever
+</code></pre>
+
+<p>An <code>await</code> evaluates to zero or more values which can be captured with an
+optional <a href="#TODO">assignment</a>.</p>
+<h4 id="events_1">Events</h4>
+<p>The <code>await</code> statement for events halts the running trail until the referred
+<a href="#TODO">external input event</a> or  <a href="#TODO">internal event</a> occurs:</p>
+<pre><code class="ceu">Await ::= await (ID_ext | Name) [until Exp]
+       |  ...   // other awaits
+</code></pre>
+
+<p>The <code>await</code> evaluates to a value of the type of the event.</p>
+<p>The optional clause <code>until</code> tests an additional condition required to awake.
+The condition can use the returned value from the <code>await</code>.
+It expands to the <code>loop</code> as follows:</p>
+<pre><code class="ceu">loop do
+    &lt;ret&gt; = await &lt;evt&gt;;
+    if &lt;Exp&gt; then   // &lt;Exp&gt; can use &lt;ret&gt;
+        break;
+    end
+end
+</code></pre>
+
+<p>Examples:</p>
+<pre><code class="ceu">input int E;                    // &quot;E&quot; is an external input event carrying &quot;int&quot; values
+var int v = await E until v&gt;10; // assigns occurring values of &quot;E&quot; to &quot;v&quot;, awaking when &quot;v&gt;10&quot;
+
+event (bool,int) e;             // &quot;e&quot; is an internal event carrying &quot;(bool,int)&quot; pairs
+var bool v1;
+var int  v2;
+(v1,v2) = await e;              // awakes on &quot;e&quot; and assigns its carrying values to &quot;v1&quot; and &quot;v2&quot;
+</code></pre>
+
+<h4 id="timers">Timers</h4>
+<p>The <code>await</code> statement for timers halts the running trail until the referred
+timer expires:</p>
+<pre><code class="ceu">Await ::= await (WCLOCKK|WCLOCKE)
+       |  ...   // other awaits
+
+WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
+WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
+</code></pre>
+
+<p><code>WCLOCKK</code> specifies a constant time expressed as a sequence of value/unit
+pairs.
+<code>WCLOCKE</code> specifies an expression in parenthesis followed by a single unit of
+time.</p>
+<p>The <code>await</code> evaluates to a value of type <code>s32</code> and is the
+<em>residual delta time (dt)</em> measured in microseconds.
+Is is the difference between the actual elapsed time and the requested time.</p>
+<p>Examples:</p>
+<pre><code class="ceu">var int t = &lt;...&gt;;
+await (t)ms;                            // awakes after &quot;t&quot; milliseconds
+
+var int dt = await 1min10s30ms100us;    // if 1min10s31ms000us elapses, then dt=900
+</code></pre>
+
+<p><em>Note: The residual <strong>dt</strong> is always greater than or equal to 0.</em></p>
+<!--
+Refer to [[#Environment]] for information about storage types for *wall-clock*
+time.
+-->
+
+<h4 id="forever"><code>FOREVER</code></h4>
+<p>The <code>await</code> statement for <code>FOREVER</code> halts the running trail forever.
+It cannot be used in assignments because it never evaluates to anything.</p>
+<pre><code class="ceu">if &lt;cnd&gt; then
+    await FOREVER;  // this trail never awakes if the condition is true
+end
+</code></pre>
+
+<h3 id="emit">Emit</h3>
               
             </div>
           </div>
