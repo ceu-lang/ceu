@@ -72,15 +72,20 @@ A declaration exposes a [storage entity](#TODO) to the program.
 Its [scope](#TODO) begins after the declaration and goes until the end of the
 enclosing [block](#TODO).
 
-See also [Storage Classes](#TODO) for a general overview of storage entities.
-
-### Variables
-
-Variable declarations are as follows:
+Céu supports variables, vectors, external events, internal events, and pools:
 
 ```ceu
-Var ::= var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
+Var    ::= var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
+Vector ::= vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+Ext    ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+        |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+Int    ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
+Pool   ::= pool [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
 ```
+
+See also [Storage Classes](#TODO) for an overview of storage entities.
+
+### Variables
 
 A variable has an associated [type](#TODO) and can be optionally
 [initialized](#TODO).
@@ -96,12 +101,6 @@ var& int z = &v;    // "z" is an alias to "v"
 ```
 
 ### Vectors
-
-Vector declarations are as follows:
-
-```ceu
-Vector ::= vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
-```
 
 A vector has a dimension, an associated [type](#TODO) and can be optionally
 [initialized](#TODO).
@@ -133,20 +132,13 @@ vector&[]  int vs4 = &vs1;  // "vs4" is an alias to "vs1"
 
 ### Events
 
+An event has a [type](#TODO) for the value it carries when occurring.
+It can be also a list of types if the event communicates multiple values.
+A single statement can declare multiple events of the same type.
+
 See also [Introduction](#TODO) for a general overview of events.
 
 #### External events
-
-External event declarations are as follows:
-
-```ceu
-Ext ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-     |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-```
-
-A declaration includes the [type](#TODO) of the value the event carries.
-It can be also a list of types if the event communicates multiple values.
-A single statement can declare multiple events of the same type.
 
 Examples:
 
@@ -158,16 +150,8 @@ input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pa
 
 ### Internal events
 
-Internal event declarations are as follows:
-
-```ceu
-Int ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
-```
-
-A declaration includes the [type](#TODO) of the value the event carries.
-It can be also a list of types if the event communicates multiple values.
-A single statement can declare multiple events of the same type.
-Declarations can also be [aliases](#TODO) or [option aliases](#TODO).
+Declarations for internal events can also be [aliases](#TODO) or
+[option aliases](#TODO).
 Only in this case they can contain an [initialization](#TODO).
 
 Examples:
@@ -177,6 +161,10 @@ event  void a,b;        // "a" and "b" are internal events carrying no values
 event& void z = &a;     // "z" is an alias to event "a"
 event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
 ```
+
+### Pools
+
+`TODO`
 
 Event Handling
 --------------
@@ -189,9 +177,9 @@ The event can be an [external input event](#TODO), an [internal event](#TODO),
 a timer, or forever (i.e., never awake):
 
 ```ceu
-Await ::= await (ID_ext | Name) [until Exp]
-       |  await (WCLOCKK|WCLOCKE)
-       |  await FOREVER
+Await ::= await (ID_ext | Name) [until Exp]     /* events */
+       |  await (WCLOCKK|WCLOCKE)               /* timers */
+       |  await FOREVER                         /* forever */
 ```
 
 Examples:
@@ -212,12 +200,7 @@ optional [assignment](#TODO).
 #### Events
 
 The `await` statement for events halts the running trail until the referred
-[external input event](#TODO) or  [internal event](#TODO) occurs:
-
-```ceu
-Await ::= await (ID_ext | Name) [until Exp]
-       |  ...   // other awaits
-```
+[external input event](#TODO) or  [internal event](#TODO) occurs.
 
 The `await` evaluates to a value of the type of the event.
 
@@ -238,26 +221,18 @@ Examples:
 
 ```ceu
 input int E;                    // "E" is an external input event carrying "int" values
-var int v = await E until v>10; // assigns occurring values of "E" to "v", awaking when "v>10"
+var int v = await E until v>10; // assigns occurring "E" to "v", awaking when "v>10"
 
 event (bool,int) e;             // "e" is an internal event carrying "(bool,int)" pairs
 var bool v1;
 var int  v2;
-(v1,v2) = await e;              // awakes on "e" and assigns its carrying values to "v1" and "v2"
+(v1,v2) = await e;              // awakes on "e" and assigns its values to "v1" and "v2"
 ```
 
 #### Timers
 
 The `await` statement for timers halts the running trail until the referred
-timer expires:
-
-```ceu
-Await ::= await (WCLOCKK|WCLOCKE)
-       |  ...   // other awaits
-
-WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
-WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
-```
+timer expires.
 
 `WCLOCKK` specifies a constant time expressed as a sequence of value/unit
 pairs.
@@ -381,3 +356,55 @@ If all conditions fail, the optional `else` clause executes.
 
 All conditions must evaluate to a value of type [`bool`](#TODO), which is
 checked at compile time.
+
+Loops
+-----
+
+Céu supports simple loops, numeric iterators, pool iterators, and event
+iterators:
+
+```ceu
+Loop ::=
+      /* simple loop */
+        loop [`/´Exp] do
+            Block
+        end
+
+      /* numeric iterator */
+      | loop [`/´Exp] (`_´|ID_int) in Range do
+            Block
+        end
+
+      /* pool iterator */
+      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Name do
+            Block
+        end
+
+      /* event iterator */
+      | every [(Name | `(´ LIST(Name|`_´) `)´) in] (ID_ext|Name|WCLOCKK|WCLOCKE) do
+            Block
+        end
+
+Range ::= (`[´ | `]´)
+            ( Exp `->´ (`_´|Exp)
+            | (`_´|Exp) `<-´ Exp )
+          (`[´ | `]´) [`,´ Exp]
+
+Break    ::= break [`/´ID_int]
+Continue ::= continue [`/´ID_int]
+```
+
+Except for the `every` iterator, all loops support an optional
+<code>&grave;/&acute;Exp</code> to limit the maximum number of iterations and
+avoid [infinite execution](#TODO).
+The expression must be a constant evaluated at compile time.
+
+The `break` statement aborts the deepest enclosing loop.
+The `continue` statement aborts the body of the deepest enclosing loop and
+restarts in the next iteration.
+The optional <code>&grave;/&acute;ID_int</code> only applies to
+[numeric iterators](#TODO).
+
+### Simple Loops
+
+

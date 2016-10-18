@@ -24,9 +24,9 @@ Stmt ::= nothing
   /* Blocks */
 
       // Do ::=
-      |  do [`/´(`_´|ID_int)]
-             Block
-         end
+      | do [`/´(`_´|ID_int)]
+            Block
+        end
       |  escape [`/´ID_int] [Exp]
 
       /* pre (top level) execution */
@@ -90,7 +90,7 @@ Stmt ::= nothing
         end
 
       /* event iterator */
-      | every [(Name | `(´TODO/List_Name_Any`)´) in] (ID_ext|Name|WCLOCKK|WCLOCKE) do
+      | every [(Name | `(´ LIST(Name|`_´) `)´) in] (ID_ext|Name|WCLOCKK|WCLOCKE) do
             Block
         end
 
@@ -221,7 +221,7 @@ Stmt ::= nothing
 
   /* Assignments */
 
-      | (Name | `(´ (LIST(Name)|`_´) `)´) `=´ Set
+      | (Name | `(´ LIST(Name|`_´) `)´) `=´ Set
         // where
             Set ::= ( Await
                     | Emit_Ext
