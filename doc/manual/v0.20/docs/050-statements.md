@@ -28,11 +28,11 @@ The `escape` statement aborts the deepest enclosing `do-end` matching its
 identifier:
 
 ```ceu
-do [`/´ (`_´|ID_int)]
-    Block
-end
+Do ::= do [`/´ (`_´|ID_int)]
+           Block
+       end
 
-escape [`/´ID_int] [Exp]
+Escape ::= escape [`/´ID_int] [Exp]
 ```
 
 A `do-end` supports the identifier `_` which is guaranteed not to match any
@@ -56,9 +56,9 @@ end
 A `pre-do-end` prepends its statements in the beginning of the program:
 
 ```ceu
-pre do
-    Block
-end
+Pre_Do ::= pre do
+               Block
+           end
 ```
 
 All `pre-do-end` statements are concatenated together in the order they appear
@@ -78,7 +78,7 @@ See also [Storage Classes](#TODO) for a general overview of storage entities.
 Variable declarations are as follows:
 
 ```ceu
-var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
+Var ::= var [`&´|`&?´] Type LIST(ID_int [`=´ Set])
 ```
 
 A variable has an associated [type](#TODO) and can be optionally
@@ -99,7 +99,7 @@ var& int z = &v;    // "z" is an alias to "v"
 Vector declarations are as follows:
 
 ```ceu
-vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
+Vector ::= vector [`&´] `[´ [Exp] `]´ Type LIST(ID_int [`=´ Set])
 ```
 
 A vector has a dimension, an associated [type](#TODO) and can be optionally
@@ -139,8 +139,8 @@ See also [Introduction](#TODO) for a general overview of events.
 External event declarations are as follows:
 
 ```ceu
-input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
-output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+Ext ::= input  (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
+     |  output (Type | `(´ LIST(Type) `)´) LIST(ID_ext)
 ```
 
 A declaration includes the [type](#TODO) of the value the event carries.
@@ -160,7 +160,7 @@ input (int,byte&&) BUF; // "BUF" is an input event carrying an "(int,byte&&)" pa
 Internal event declarations are as follows:
 
 ```ceu
-event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
+Int ::= event [`&´|`&?´] (Type | `(´ LIST(Type) `)´) LIST(ID_int [`=´ Set])
 ```
 
 A declaration includes the [type](#TODO) of the value the event carries.
@@ -176,3 +176,115 @@ event  void a,b;        // "a" and "b" are internal events carrying no values
 event& void z = &a;     // "z" is an alias to event "a"
 event (int,int) c;      // "c" is a internal event carrying an "(int,int)" pair
 ```
+
+Event Handling
+--------------
+
+### Await
+
+The `await` statement halts the running trail until the referred event occurs.
+The event can be an [external input event](#TODO), an [internal event](#TODO),
+a timer, or forever (i.e., never awake):
+
+```ceu
+Await ::= await (ID_ext | Name) [until Exp]
+       |  await (WCLOCKK|WCLOCKE)
+       |  await FOREVER
+
+WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
+WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
+```
+
+Examples:
+
+```ceu
+await A;                  // awaits the input event `A`
+await a;                  // awaits the internal event `a`
+
+await 10min3s5ms100us;    // awaits the specified time
+await (t)ms;              // awaits the current value of the variable `t` in milliseconds
+
+await FOREVER;            // awaits forever
+```
+
+An `await` evaluates to zero or more values which can be captured with an
+optional [assignment](#TODO).
+
+#### Events
+
+The `await` statement halts the running trail until the referred
+[external input event](#TODO) or  [internal event](#TODO) occurs:
+
+```ceu
+Await ::= await (ID_ext | Name) [until Exp]
+       |  ...   // other awaits
+```
+
+The `await` evaluates to the type of the event.
+
+The optional clause `until` tests an additional condition required to awake.
+The condition can use the returned value from the `await`.
+It expands to the `loop` as follows:
+
+```ceu
+loop do
+    <ret> = await <evt>;
+    if <Exp> then   // <Exp> can use <ret>
+        break;
+    end
+end
+```
+
+Examples:
+
+```ceu
+input int E;                    // "E" is an external input event carrying "int" values
+var int v = await E until v>10; // assigns occurring values of "E" to "v", awaking when "v>10"
+
+event (bool,int) e;             // "e" is an internal event carrying "(bool,int)" pairs
+var bool v1;
+var int  v2;
+(v1,v2) = await e;              // awakes on "e" and assigns its carrying values to "v1" and "v2"
+```
+
+#### Timers
+
+The `await` statement halts the running trail until the referred timer
+expires:
+
+```ceu
+Await ::= await (WCLOCKK|WCLOCKE)
+       |  ...   // other awaits
+
+WCLOCKK ::= [NUM h] [NUM min] [NUM s] [NUM ms] [NUM us]
+WCLOCKE ::= `(´ Exp `)´ (h|min|s|ms|us)
+```
+
+`WCLOCKK` specifies a constant time expressed as a sequence of value/unit
+pairs.
+`WCLOCKE` specifies an expression in parenthesis followed by a single unit of
+time.
+
+The `await` evaluates to the *residual delta time (dt)* measured in
+microseconds, which is the difference between the *actual* elapsed time and the
+requested time.
+
+Examples:
+
+```ceu
+var int t = <...>;
+await (t)ms;                // awakes after "t" milliseconds
+
+var int dt = await 1min10s30ms100us;    // if 31ms elapses, then dt=1000
+```
+
+*Note: The residual **dt** is always greater than or equal to 0.*
+
+<!--
+Refer to [[#Environment]] for information about storage types for *wall-clock*
+time.
+-->
+
+#### `FOREVER`
+
+### Emit
