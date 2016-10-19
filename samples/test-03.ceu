@@ -12,6 +12,7 @@ with
     end
 with
     await async do
+        var int i;
         loop i in [0->5[ do
             emit 1s;
             _sleep(1);

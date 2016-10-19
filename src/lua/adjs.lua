@@ -363,21 +363,19 @@ error'TODO'
             fr, to = to, fr
             step = node('Exp_1-', me.ln, '-', step)
         else
-            step = node('Exp_1+', me.ln, '+', step)
+            --step = node('Exp_1+', me.ln, '+', step)
         end
 
+        local i_dcl = node('Nothing', me.ln)
         if AST.is_node(i) then
             AST.asr(i, 'ID_any')
             i = '__i_'..me.n    -- invent an ID not referenceable
-        end
-
-        local i_dcl = node('Var', me.ln,
+            i_dcl = node('Var', me.ln,
                         false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
                         i)
-        i_dcl.is_implicit = true
-        i_dcl.is_read_only = true
+        end
 
         i = node('ID_int', me.ln, i)
 

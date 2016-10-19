@@ -587,6 +587,11 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
 
     ---------------------------------------------------------------------------
 
+    Loop_Num = function (me)
+        local _, i = unpack(me)
+        i.dcl.is_read_only = true
+    end,
+
     __loop = function (me)
         return me.tag=='Loop' or me.tag=='Loop_Num' or me.tag=='Loop_Pool'
     end,

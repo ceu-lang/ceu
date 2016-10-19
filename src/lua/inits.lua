@@ -180,6 +180,16 @@ local function run_inits (par, i, Dcl, stop)
         end
 
     -- ok: found assignment
+    elseif me.tag == 'Loop_Num' then
+        local _, i = unpack(me)
+        if i.dcl.inits then
+            i.dcl.inits[#i.dcl.inits+1] = me
+        else
+            i.dcl.inits = {me}
+        end
+        return true
+
+    -- ok: found assignment
     elseif string.sub(me.tag,1,4)=='Set_' then
         local fr, to = unpack(me)
         if me.tag == 'Set_Exp' then

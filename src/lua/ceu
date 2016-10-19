@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = 'aaa7ddd60789a2da597d7cc9080d8c338f31016b',
+    ceu_git = 'fd6d482f5bea05b1e85c53298449ed84a7c088dc',
     files = {
         ceu_c =
             [====[
@@ -4045,21 +4045,19 @@ error'TODO'
             fr, to = to, fr
             step = node('Exp_1-', me.ln, '-', step)
         else
-            step = node('Exp_1+', me.ln, '+', step)
+            --step = node('Exp_1+', me.ln, '+', step)
         end
 
+        local i_dcl = node('Nothing', me.ln)
         if AST.is_node(i) then
             AST.asr(i, 'ID_any')
             i = '__i_'..me.n    -- invent an ID not referenceable
-        end
-
-        local i_dcl = node('Var', me.ln,
+            i_dcl = node('Var', me.ln,
                         false,
                         node('Type', me.ln,
                             node('ID_prim', me.ln, 'int')),
                         i)
-        i_dcl.is_implicit = true
-        i_dcl.is_read_only = true
+        end
 
         i = node('ID_int', me.ln, i)
 
@@ -5482,6 +5480,11 @@ assert(dcl.tag=='Var' or dcl.tag=='Vec' or dcl.tag=='Evt', 'TODO')
     end,
 
     ---------------------------------------------------------------------------
+
+    Loop_Num = function (me)
+        local _, i = unpack(me)
+        i.dcl.is_read_only = true
+    end,
 
     __loop = function (me)
         return me.tag=='Loop' or me.tag=='Loop_Num' or me.tag=='Loop_Pool'
@@ -7210,6 +7213,16 @@ local function run_inits (par, i, Dcl, stop)
         end
 
     -- ok: found assignment
+    elseif me.tag == 'Loop_Num' then
+        local _, i = unpack(me)
+        if i.dcl.inits then
+            i.dcl.inits[#i.dcl.inits+1] = me
+        else
+            i.dcl.inits = {me}
+        end
+        return true
+
+    -- ok: found assignment
     elseif string.sub(me.tag,1,4)=='Set_' then
         local fr, to = unpack(me)
         if me.tag == 'Set_Exp' then
@@ -8628,10 +8641,17 @@ F = {
         local ID_abs, _ = unpack(Abs_Cons)
         local mods,_,Code_Pars = unpack(ID_abs.dcl)
         assert(mods.tight)
-        return [[
+        if CEU.opts.ceu_features_lua then
+            return [[
 CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
                             ]]..V(Abs_Cons)..[[, ]]..LUA(me)..[[)
 ]]
+        else
+            return [[
+CEU_CODE_]]..ID_abs.dcl.id..[[(_ceu_stk, _ceu_trlK,
+                            ]]..V(Abs_Cons)..[[)
+]]
+        end
     end,
 
     Abs_Cons = function (me, ctx)
@@ -9397,11 +9417,16 @@ static void CEU_CODE_WATCH_]]..me.id..[[ (tceu_code_mem* _ceu_mem,
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
 CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
-                        tceu_code_args_]]..me.id..[[ ps,
-                        lua_State* lua)
+                        tceu_code_args_]]..me.id..[[ ps
+#ifdef CEU_FEATURES_LUA
+                        , lua_State* lua
+#endif
+                       )
 {
     tceu_code_mem_]]..me.id..[[ mem;
+#ifdef CEU_FEATURES_LUA
     mem.mem.lua = lua;
+#endif
 ]]
             if mods.dynamic then
                 me.mems.wrapper = me.mems.wrapper .. multis.code
@@ -10776,12 +10801,14 @@ while (1) {
                 local ok, num = pcall(f)
                 num = tonumber(num)
                 if ok and num then
-                    if dir == '->' then
-                        ASR(num>0, me,
-                            'invalid `loop´ step : expected positive number : got "'..num..'"')
-                    else
-                        ASR(num<0, me,
-                            'invalid `loop´ step : expected positive number : got "-'..num..'"')
+                    if dir == '<-' then
+                        num = -num
+                    end
+                    ASR(num>0, me,
+                        'invalid `loop´ step : expected positive number : got "'..num..'"')
+                    if TYPES.is_int(i.info.tp) then
+                        ASR(num>=1, me,
+                        'invalid `loop´ step : expected positive number greater or equal to 1 : got "'..num..'"')
                     end
                 end
             end
@@ -10794,9 +10821,17 @@ while (1) {
 ]])
         end
 
+        local sig = (dir=='->' and '' or '-')
         LINE(me, [[
 ]]..max.ini..[[
-ceu_callback_assert_msg(]]..V(step)..' '..op..[[ 0, "invalid `loop´ step : expected positive number");
+ceu_callback_assert_msg(]]..sig..V(step)..[[> 0, "invalid `loop´ step : expected positive number");
+]])
+        if TYPES.is_int(i.info.tp) then
+            LINE(me, [[
+ceu_callback_assert_msg(]]..sig..V(step)..[[>= 1, "invalid `loop´ step : expected positive number greater or equal to 1");
+]])
+        end
+        LINE(me, [[
 ]]..V(i)..' = '..V(fr)..[[;
 while (1) {
 ]])

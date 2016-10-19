@@ -9,16 +9,6 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
-Test { [[
-native _printf;
-loop i in [1.1 -> 10], 1 do
-    _printf("%d\n", i);
-end
-escape 1;
-]],
-    run = 1,
-}
-
 do return end -- OK
 ---]=====]
 
@@ -3042,6 +3032,7 @@ escape 1;
 
 Test { [[
 var int ret = 0;
+var int i;
 loop i in [0 -> 256-1[ do
     ret = ret + 1;
 end
@@ -3052,6 +3043,7 @@ escape ret;
 
 Test { [[
 var int ret = 0;
+var int i;
 loop i in [1 -> 4] do
     ret = ret + i;
 end
@@ -3062,6 +3054,7 @@ escape ret;
 
 Test { [[
 var int ret = 0;
+var int i;
 loop i in [1->4], 2 do
     ret = ret + i;
 end
@@ -3072,28 +3065,31 @@ escape ret;
 
 Test { [[
 var int ret = 0;
+var int i;
 loop i in [1->4], -2 do
     ret = ret + i;
 end
 escape ret;
 ]],
-    run = '2] runtime error: invalid `loop´ step : expected positive number',
-    --codes = 'line 2 : invalid `loop´ step : expected positive number : got "-2"',
+    --run = '2] runtime error: invalid `loop´ step : expected positive number',
+    codes = 'line 3 : invalid `loop´ step : expected positive number : got "-2"',
 }
 
 Test { [[
 var int ret = 0;
 var int step = -2;
+var int i;
 loop i in [1->4], step do
     ret = ret + i;
 end
 escape ret;
 ]],
-    run = '3] runtime error: invalid `loop´ step : expected positive number',
+    run = '4] runtime error: invalid `loop´ step : expected positive number',
 }
 
 Test { [[
 var int ret = 1;
+var int i;
 loop i in [4->1] do
     ret = ret + i;
 end
@@ -3104,6 +3100,7 @@ escape ret;
 
 Test { [[
 var int ret = 1;
+var int i;
 loop i in ]-3->4[ do
     ret = ret + i;
 end
@@ -3114,6 +3111,7 @@ escape ret;
 
 Test { [[
 var int ret = 1;
+var int i;
 loop i in ]-3 <- 3] do
     ret = ret + i;
 end
@@ -3124,6 +3122,7 @@ escape ret;
 
 Test { [[
 var int sum = 0;
+var int i;
 loop i in [_->0] do
     if i == 10 then
         break;
@@ -3132,10 +3131,11 @@ loop i in [_->0] do
 end
 escape sum;
 ]],
-    parser = 'line 2 : after `_´ : expected `<-´',
+    parser = 'line 3 : after `_´ : expected `<-´',
 }
 Test { [[
 var int sum = 0;
+var int i;
 loop i in [0<-_] do
     if i == 10 then
         break;
@@ -3144,7 +3144,7 @@ loop i in [0<-_] do
 end
 escape sum;
 ]],
-    parser = 'line 2 : after `<-´ : expected expression',
+    parser = 'line 3 : after `<-´ : expected expression',
 }
 
 Test { [[
@@ -3156,6 +3156,7 @@ escape 0;
 
 Test { [[
 var int sum = 0;
+var int i;
 loop i in [0->_] do
     if i == 10 then
         break;
@@ -3164,11 +3165,12 @@ loop i in [0->_] do
 end
 escape sum;
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
 var int sum = 0;
+var int i;
 loop i in [0->_] do
     if i == 10 then
         break;
@@ -3183,17 +3185,19 @@ escape sum;
 
 Test { [[
 var int ret = 0;
+var int i;
 loop i in [1 <- 4], -1 do
     ret = ret + i;
 end
 escape ret;
 ]],
     --run = '2] runtime error: invalid `loop´ step : expected positive number',
-    codes = 'line 2 : invalid `loop´ step : expected positive number : got "-1"',
+    codes = 'line 3 : invalid `loop´ step : expected positive number : got "-1"',
 }
 
 Test { [[
 var int ret = 0;
+var int i;
 loop i in [1 <- 4] do
     ret = ret + i;
 end
@@ -3204,6 +3208,7 @@ escape ret;
 
 Test { [[
 var int ret = 0;
+var int i;
 loop i in [1<-4], 1 do
     ret = ret + i;
 end
@@ -3214,6 +3219,7 @@ escape ret;
 
 Test { [[
 var int ret = 0;
+var int i;
 loop i in [1<-4], 2 do
     ret = ret + i;
 end
@@ -3223,6 +3229,7 @@ escape ret;
 }
 Test { [[
 var int ret = 1;
+var int i;
 loop i in [4<-1] do
     ret = ret + i;
 end
@@ -3233,6 +3240,7 @@ escape ret;
 
 Test { [[
 var int ret = 1;
+var int i;
 loop i in [-10 <- -3[ do
     ret = ret + i;
 end
@@ -3243,6 +3251,7 @@ escape -ret;
 
 Test { [[
 var int sum = 0;
+var int i;
 loop i in [_<-0] do
     if i == -10 then
         break;
@@ -3256,6 +3265,7 @@ escape sum;
 }
 
 Test { [[
+var int i;
 loop i in [-1 <- 0] do
 end
 escape 1;
@@ -3266,17 +3276,19 @@ escape 1;
 Test { [[
 var int n = 10;
 var int sum = 0;
+var int i;
 loop i in [0->n[ do
     sum = sum + 1;
 end
 escape n;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 4 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
 var int n = 10;
 var int sum = 0;
+var int i;
 loop i in [0->n[ do
     sum = sum + 1;
 end
@@ -3288,6 +3300,7 @@ escape n;
 
 Test { [[
 var int sum = 0;
+var int i;
 loop i do
     if i == 10 then
         break;
@@ -3565,6 +3578,7 @@ end;
 }
 
 Test { [[
+var int i;
 loop i in [0 -> -1] do
 end
 escape 1;
@@ -3575,6 +3589,7 @@ escape 1;
     -- TODO: with consts -1 would be constant
 }
 Test { [[
+var int i;
 loop i in [0 -> 0] do
 end
 escape 1;
@@ -3597,6 +3612,7 @@ end
 Test { [[
 input void A;
 loop do
+var int i;
     loop i in [0->1[ do
         await A;
     end
@@ -3607,6 +3623,7 @@ end
 }
 
 Test { [[
+var int i;
 loop/1 i in [0->_[ do
     break;
 end
@@ -3618,6 +3635,7 @@ escape 1;
 Test { [[
 loop do
     var int v = 10;
+var int i;
     loop i in [0->v[ do
         await 1s;
         escape 2;
@@ -3631,6 +3649,7 @@ escape 0;
 
 Test { [[
 loop do
+var int i;
     loop i in [0->_[ do
         await 1s;
         escape 2;
@@ -3646,6 +3665,7 @@ Test { [[
 input void A;
 var int v = 1;
 loop do
+var int i;
     loop i in [0->v[ do
         await A;
         escape 2;
@@ -3655,6 +3675,63 @@ escape 1;
 ]],
     wrn = true,
     run = { ['~>A']=2 },
+}
+
+Test { [[
+loop i in [1.1 -> 10], 1 do
+end
+escape 1;
+]],
+    dcls = 'line 1 : internal identifier "i" is not declared',
+}
+
+Test { [[
+var int i;
+loop i in [1.1 -> 10], 0.9 do
+end
+escape 1;
+]],
+    codes = 'line 2 : invalid `loop´ step : expected positive number greater or equal to 1 : got "0.9"',
+}
+
+Test { [[
+var float step = 0.9;
+var int i;
+loop i in [1.1 -> 10], step do
+end
+escape 1;
+]],
+    run = '3] runtime error: invalid `loop´ step : expected positive number greater or equal to 1',
+}
+
+Test { [[
+var int i;
+loop i in [1.1 <- 10], 0.9 do
+end
+escape i;
+]],
+    codes = 'line 2 : invalid `loop´ step : expected positive number greater or equal to 1 : got "0.9"',
+}
+
+Test { [[
+var float i;
+var int ret = 0;
+loop i in [1.1 <- 2], 0.9 do
+    ret = ret + 1;
+end
+escape ret + (i as int);
+]],
+    run = 2,
+}
+
+Test { [[
+var int ret = 0;
+loop _ in [0 -> 50[ do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 50,
 }
 
 -- LOOP / BOUNDED
@@ -3692,6 +3769,7 @@ escape 1;
 }
 
 Test { [[
+var int i;
 loop/10000000 i in [0->0[ do
 end
 escape 1;
@@ -3709,6 +3787,7 @@ escape ret;
 }
 
 Test { [[
+var int i;
 loop/10 i in [0->10[ do
 end
 escape 1;
@@ -3717,19 +3796,21 @@ escape 1;
 }
 Test { [[
 var int a = 0;
+var int i;
 loop/a i do
 end
 escape 1;
 ]],
-    consts = 'line 2 : invalid `loop´ : limit must be an integer constant',
+    consts = 'line 3 : invalid `loop´ : limit must be an integer constant',
     --tight = '`loop´ bound must be constant',
 }
 Test { [[
+var int i;
 loop/10 i do
 end
 escape 1;
 ]],
-    run = '1] runtime error: `loop´ overflow',
+    run = '2] runtime error: `loop´ overflow',
 }
 
 Test { [[
@@ -3750,6 +3831,7 @@ end
 
 var int ret = 0;
 var int lim = 10 + 10 + _A + A;
+var int i;
 loop/(10+10+_A+A) i in [0->lim[ do
     ret = ret + 1;
 end
@@ -3761,17 +3843,19 @@ escape ret;
 
 Test { [[
 var int k = 5;
+var int i;
 loop/1 i in [0->k[ do
     var int x = i + 2;
 end
 escape 1;
 ]],
-    run = '2] runtime error: `loop´ overflow',
+    run = '3] runtime error: `loop´ overflow',
 }
 
 Test { [[
 //native _printf;
 var int k = 5;
+var int i;
 loop/10 i in [0->k[ do
     var int x = i + 2;
     //_printf("%d\n", x);
@@ -3905,15 +3989,6 @@ end;
     _ana = {
         isForever = true,
     },
-}
-
-Test { [[
-var int i;
-loop i do
-end
-escape 0;
-]],
-    dcls = 'line 2 : implicit declaration of "i" hides previous declaration (/tmp/tmp.ceu : line 1)',
 }
 
 -->>> EVERY
@@ -4455,6 +4530,7 @@ end
 
 Test { [[
 var int ret = 1;
+var int i;
 loop i in [0->10[ do
     if true then
         continue;
@@ -4519,6 +4595,7 @@ end
 
 Test { [[
 var int ret = 0;
+var int i;
 loop i in [0->10[ do
     if i%2 == 0 then
         ret = ret + 1;
@@ -4568,6 +4645,7 @@ escape 1;
 
 Test { [[
 var int x = 0;
+var int i;
 loop i in [0->10[ do
     x = x + 1;
     par/and do
@@ -4583,7 +4661,9 @@ escape x;
 
 Test { [[
 var int x = 0;
+var int i;
 loop i in [0->10[ do
+var int j;
     loop j in [0->10[ do
         x = x + 1;
         par/and do
@@ -4600,7 +4680,9 @@ escape x;
 
 Test { [[
 var int x = 0;
+var int i;
 loop i in [0->10[ do
+var int j;
     loop j in [0->10[ do
         x = x + 1;
         par/and do
@@ -4617,6 +4699,7 @@ escape x;
 
 Test { [[
 var int x = 0;
+var int i;
 loop i in [0 -> 10[ do
     x = x + 1;
     par/and do
@@ -4632,7 +4715,9 @@ escape x;
 
 Test { [[
 var int x = 0;
+var int i;
 loop i in [0->10[ do
+var int j;
     loop j in [0->10[ do
         x = x + 1;
         par/and do
@@ -4649,7 +4734,9 @@ escape x;
 
 Test { [[
 var int x = 0;
+var int i;
 loop i in [0->10[ do
+var int j;
     loop j in [0->10[ do
         x = x + 1;
         par/and do
@@ -4984,6 +5071,7 @@ Test { [[
 input int A;
 var int sum = 0;
 par/or do
+var int i;
     loop i in [0->1+1[ do
         await A;
     end
@@ -5004,6 +5092,7 @@ Test { [[
 input int A;
 var int sum = 0;
 par/or do
+var int i;
     loop i in [0->1[ do    // 4
         await A;
     end
@@ -5025,6 +5114,7 @@ input void A;
 var int sum = 0;
 var int ret = 0;
 par/or do
+var int i;
     loop i in [0->2[ do
         await A;
         ret = ret + 1;
@@ -5049,6 +5139,7 @@ input void A;
 var int sum = 0;
 var int ret = 0;
 par/or do
+var int i;
     loop i in [0->3[ do
         await A;
         ret = ret + 1;
@@ -5073,6 +5164,7 @@ Test { [[
 input int A;
 var int sum = 0;
 par/or do
+var int i;
     loop i in [0->1[ do    // 4
         await A;
         await async do
@@ -5098,6 +5190,7 @@ input int A;
 var int sum = 0;
 par/or do
     sum = 5;            // 4
+var int i;
     loop i in [0->10[ do       // 5
         await A;
         await async do
@@ -5107,6 +5200,7 @@ par/or do
     end
     sum = 0;            // 11
 with
+var int i;
     loop i in [0 -> 2[ do        // 13
         await async do
             var int a = 1;
@@ -5125,6 +5219,7 @@ input int A;
 var int sum = 0;
 par/or do
     sum = 5;            // 4
+var int i;
     loop i in [0 -> 10[ do       // 5
         await A;
         await async do
@@ -5134,6 +5229,7 @@ par/or do
     end
     sum = 0;            // 11
 with
+var int i;
     loop i in [0 -> 2[ do        // 13
         await async do
             var int a = 1;
@@ -5153,6 +5249,7 @@ escape sum;
 
 Test { [[
 var int sum = 0;
+var int i;
 loop i in [0 -> 100[ do
     sum = sum + (i+1);
 end
@@ -5175,6 +5272,7 @@ escape sum;
 }
 Test { [[
 var int sum = 5050;
+var int i;
 loop i in [0 -> 100[ do
     sum = sum - (i+1);
 end
@@ -5186,6 +5284,7 @@ escape sum+1;
 Test { [[
 var int sum = 5050;
 var int v = 0;
+var int i;
 loop i in [0 -> 100[ do
     v = i;
     if sum == 100 then
@@ -5202,6 +5301,7 @@ Test { [[
 input void A;
 var int sum = 0;
 var int v = 0;
+var int i;
 loop i in [0 -> 101[ do
     v = i;
     if sum == 6 then
@@ -5216,6 +5316,7 @@ escape v;
 }
 Test { [[
 var int sum = 4;
+var int i;
 loop i in [0 -> 0[ do
     sum = sum - i;
 end
@@ -5228,6 +5329,7 @@ escape sum;
 Test { [[
 input void A, B;
 var int sum = 0;
+var int i;
 loop i in [0 -> 10[ do
     await A;
     sum = sum + 1;
@@ -5240,6 +5342,7 @@ escape sum;
 Test { [[
 var int v = 10;
 var int&& x = &&v;
+var int i;
 loop i in [0 -> 10[ do
     *x = *x + 1;
 end
@@ -5758,6 +5861,7 @@ Test { [[
 input void OS_START;
 var int v = 1;
 loop do
+var int i;
     loop i in [0->v[ do
         await OS_START;
         escape 2;
@@ -6114,6 +6218,7 @@ escape _f;
 
 Test { [[
 event void e;
+var int i;
 loop i in [0 -> 1000[ do
     emit e;
 end
@@ -6129,6 +6234,7 @@ par/or do
         ret = ret + 1;
     end
 with
+var int i;
     loop i in [0 -> 2[ do
         emit e;
     end
@@ -6147,6 +6253,7 @@ par/or do
         ret = ret + 1;
     end
 with
+var int i;
     loop i in [0 -> 1000[ do
         emit e;
     end
@@ -6591,6 +6698,7 @@ Test { [[
 input void OS_START;
 event void e;
 every OS_START do
+var int i;
     loop i in [0->10[ do
         emit e;
     end
@@ -6606,6 +6714,7 @@ input void A;
 event void e;
 loop do
     await A;
+var int i;
     loop i in [0->10[ do
         emit e;
     end
@@ -18281,13 +18390,14 @@ escape 1;
 Test { [[
 var int v = 1;
 var int&& x = &&v;
+var int i;
 loop i in [0 -> 10[ do
     *x = *x + 1;
     await 1s;
 end
 escape v;
 ]],
-    inits = 'line 4 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:3)',
+    inits = 'line 5 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:4)',
     --fin = 'line 4 : unsafe access to pointer "x" across `loop´ (/tmp/tmp.ceu : 3)',
 }
 
@@ -18295,6 +18405,7 @@ Test { [[
 event void e;
 var int v = 1;
 var int&& x = &&v;
+var int i;
 loop i in [0 -> 10[ do
     *x = *x + 1;
     emit e;
@@ -18309,6 +18420,7 @@ escape v;
 Test { [[
 var int v = 1;
 var int&& x = &&v;
+var int i;
 loop i in [0 -> *x[ do
     await 1s;
     v = v + 1;
@@ -18322,6 +18434,7 @@ escape v;
 Test { [[
 var int v = 1;
 var int&& x = &&v;
+var int i;
 loop i in [0 -> *x[ do
     await 1s;
     v = v + 1;
@@ -18608,6 +18721,7 @@ escape p!;
 
 Test { [[
 var int&& ptr = null;
+var int i;
 loop i in [0 -> 100[ do
     await 1s;
     var int&& p = null;
@@ -18620,7 +18734,7 @@ escape 10;
 ]],
     --loop = true,
     --fin = 'line 5 : invalid pointer "ptr"',
-    inits = 'line 5 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:2)',
+    inits = 'line 6 : invalid pointer access : crossed `loop´ (/tmp/tmp.ceu:3)',
 }
 
 Test { [[
@@ -21992,6 +22106,7 @@ with
     par/and do
         var int v = async do
             var int v;
+var int i;
             loop i in [0 -> 5[ do
                 v = v + i;
             end
@@ -22001,6 +22116,7 @@ with
     with
         var int v = async do
             var int v;
+var int i;
             loop i in [0 -> 5[ do
                 v = v + i;
             end
@@ -23189,6 +23305,7 @@ input void OS_START;
 event void e;
 loop do
     await OS_START;
+var int i;
     loop i in [0 -> 10[ do
         emit e;
     end
@@ -26221,10 +26338,12 @@ native/pre do
 end
 native/plain _int;
 vector[_N] _int vec = _;
+var int i;
 loop i in [0 -> _N[ do
     vec[i] = i;
 end
 var int ret = 0;
+var int i;
 loop i in [0 -> _N[ do
     ret = ret + vec[i];
 end
@@ -26443,11 +26562,12 @@ end
 -- TIGHT LOOPS
 
 Test { [[
+var int i;
 loop i in [0 -> 10[ do
     i = 0;
 end
 ]],
-    stmts = 'line 2 : invalid assignment : read-only variable "i"',
+    stmts = 'line 3 : invalid assignment : read-only variable "i"',
     --env = 'line 2 : read-only variable',
 }
 
@@ -26458,12 +26578,14 @@ loop do end
     --tight = 'line 1 : tight loop',
 }
 Test { [[
+var int i;
 loop i do end
 ]],
-    tight_ = 'line 1 : invalid tight `loop´ :',
+    tight_ = 'line 2 : invalid tight `loop´ :',
     --tight = 'line 1 : tight loop',
 }
 Test { [[
+var int i;
 loop i in [0 -> 10[ do end
 escape 2;
 ]],
@@ -26471,9 +26593,10 @@ escape 2;
 }
 Test { [[
 var int v=1;
+var int i;
 loop i in [0->v[ do end
 ]],
-    tight_ = 'line 2 : invalid tight `loop´ :',
+    tight_ = 'line 3 : invalid tight `loop´ :',
     --tight = 'line 2 : tight loop',
 }
 
@@ -26489,6 +26612,7 @@ escape 1;
 }
 
 Test { [[
+var int i;
 loop i in [0->1] do
     loop do
         break/i;
@@ -26500,6 +26624,7 @@ escape 1;
 }
 
 Test { [[
+var int i;
 loop i in [0->1] do
     loop do
         break;
@@ -27202,6 +27327,7 @@ Test { [[
 event bool in_tm;
 pause/if in_tm do
     await async do
+var int i;
         loop i in [0 -> 5[ do
         end
     end
@@ -27612,17 +27738,19 @@ escape a[0] + a[1];
 Test { [[
 vector[5] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
+var int i;
 loop i in [0 -> ($foo) as int[ do
     tot = tot + foo[i];
 end
 escape tot;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 4 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
     --tight = 'line 3 : tight loop',
 }
 Test { [[
 vector[5] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
+var int i;
 loop i in [0 -> ($foo) as int[ do
     tot = tot + foo[i];
 end
@@ -27636,6 +27764,7 @@ escape tot;
 Test { [[
 vector[5] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
+var int i;
 loop i in [0 -> ($$foo) as int[ do
     tot = tot + foo[i];
 end
@@ -27647,17 +27776,19 @@ escape tot;
 Test { [[
 vector[] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
+var int i;
 loop i in [0 -> ($$foo) as int[ do
     tot = tot + foo[i];
 end
 escape tot+1;
 ]],
-    tight_ = 'line 3 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
+    tight_ = 'line 4 : invalid tight `loop´ : unbounded number of non-awaiting iterations',
 }
 
 Test { [[
 vector[] byte foo = [1, 2, 3, 4, 5];
 var int tot = 0;
+var int i;
 loop i in [0 -> ($$foo) as int[ do
     tot = tot + foo[i];
 end
@@ -27726,6 +27857,7 @@ vector[] int v1 = [1,2,3];
 vector[] int v2 = [7,8,9];
 v1 = v1 .. [4,5,6] .. v2;
 var int ret = 0;
+var int i;
 loop i in [0 -> 9[ do
     ret = ret + v1[i];
 end
@@ -27773,6 +27905,7 @@ escape ($v + 1) as int;
 Test { [[
 vector [] int vec = [1,2,3];
 var int ret = 0;
+var int i;
 loop i in [0 -> $vec[ do
     ret = ret + vec[i];
     if i == 1 then
@@ -28473,12 +28606,14 @@ native/plain _u8;
 vector[10] _u8 v1 = _;
 vector[10] byte v2 = [];
 
+var int i;
 loop i in [0 -> 10[ do
     v1[i] = i;
     v2 = v2..[((i*2) as byte)];
 end
 
 var int ret = 0;
+var int i;
 loop i in [0 -> 10[ do
     ret = ret + (v2[i] as int) - v1[i];
 end
@@ -28526,6 +28661,7 @@ escape 1;
 }
 
 Test { [[
+var int i;
 loop i in [0 -> 10[ do
     await 1s;
     vector[] byte string = [] .. "Alo mundo!\n";
@@ -31613,6 +31749,7 @@ Test { [[
 escape 1;
 code/tight Fx (var int x)->int do
     if x!=0 then end;
+var int i;
     loop i in [0 -> 10[ do
     end
     escape 1;
@@ -33340,6 +33477,7 @@ escape 1;
 Test { [[
 code/await Ff (void) -> void do
 end
+var int i;
 loop i in [0 -> 10[ do
     await Ff();
     await 1s;
@@ -33481,6 +33619,7 @@ code/await Ff (void)->void do
     end
 end
 
+var int i;
 loop i in [0 -> 10[ do
     await 1s;
     vector[] byte string = [] .. "Alo mundo!\n";
@@ -37134,6 +37273,7 @@ end
 
 pool[5] Ff fs;
 
+var int i;
 loop i in [0 -> 10] do
     spawn Ff() in fs;
 end
@@ -37157,6 +37297,7 @@ end
 
 pool[5] Ff fs;
 
+var int i;
 loop i in [0 -> 8] do
     spawn Ff(i%2) in fs;
 end
@@ -37232,6 +37373,7 @@ end
 
 pool[5] Ff fs;
 
+var int i;
 loop i in [0 -> 8] do
     spawn Ff(i%2) in fs;
 end
@@ -37243,7 +37385,7 @@ end
 
 escape ret;
 ]],
-    stmts = 'line 16 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
+    stmts = 'line 17 : invalid binding : argument #1 : types mismatch : "int" <= "bool"',
 }
 
 Test { [[
@@ -37256,6 +37398,7 @@ end
 
 pool[5] Ff fs;
 
+var int i;
 loop i in [0 -> 8] do
     spawn Ff(i) in fs;
 end
@@ -41689,7 +41832,9 @@ var& int p2 = &v2;
 par/and do
     await async/thread (p1) do
         var int ret = 0;
+var int i;
         loop i in [0 -> 10[ do
+var int j;
             loop j in [0 -> 10[ do
                 ret = ret + i + j;
             end
@@ -41701,7 +41846,9 @@ par/and do
 with
     await async/thread (p2) do
         var int ret = 0;
+var int i;
         loop i in [0 -> 10[ do
+var int j;
             loop j in [0 -> 10[ do
                 ret = ret + i + j;
             end
@@ -41772,7 +41919,9 @@ var& int p2 = &v2;
 par/and do
     await async/thread (p1) do
         var int ret = 0;
+var int i;
         loop i in [0 -> 50000[ do
+var int j;
             loop j in [0 -> 50000[ do
                 ret = ret + i + j;
             end
@@ -41784,7 +41933,9 @@ par/and do
 with
     await async/thread (p2) do
         var int ret = 0;
+var int i;
         loop i in [0 -> 50000[ do
+var int j;
             loop j in [0 -> 50000[ do
                 ret = ret + i + j;
             end
@@ -41817,12 +41968,14 @@ end
 native _usleep;
 par/or do
     await async do
+var int i;
         loop i in [0 -> 3[ do
             _usleep(500);
         end
     end
 with
     await async/thread do
+var int i;
         loop i in [0 -> 2[ do
             _V = _V + 1;
             _usleep(500);
@@ -41831,7 +41984,7 @@ with
 end
 escape _V;
 ]],
-    dcls = 'line 15 : native identifier "_V" is not declared',
+    dcls = 'line 17 : native identifier "_V" is not declared',
     _opts = opts_thread,
 }
 
@@ -41844,12 +41997,14 @@ native _usleep;
 native _V;
 par/or do
     await async do
+        var int i;
         loop i in [0 -> 3[ do
             _usleep(500);
         end
     end
 with
     await async/thread do
+        var int i;
         loop i in [0 -> 2[ do
             _V = _V + 1;
             _usleep(500);
@@ -42477,6 +42632,7 @@ escape 1;
 Test { [=[
     await async/thread do
     end
+var int i;
     loop i in [0 -> 100[ do
         await 1s;
     end

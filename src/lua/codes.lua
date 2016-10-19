@@ -846,12 +846,14 @@ while (1) {
                 local ok, num = pcall(f)
                 num = tonumber(num)
                 if ok and num then
-                    if dir == '->' then
-                        ASR(num>0, me,
-                            'invalid `loop´ step : expected positive number : got "'..num..'"')
-                    else
-                        ASR(num<0, me,
-                            'invalid `loop´ step : expected positive number : got "-'..num..'"')
+                    if dir == '<-' then
+                        num = -num
+                    end
+                    ASR(num>0, me,
+                        'invalid `loop´ step : expected positive number : got "'..num..'"')
+                    if TYPES.is_int(i.info.tp) then
+                        ASR(num>=1, me,
+                        'invalid `loop´ step : expected positive number greater or equal to 1 : got "'..num..'"')
                     end
                 end
             end
@@ -864,9 +866,17 @@ while (1) {
 ]])
         end
 
+        local sig = (dir=='->' and '' or '-')
         LINE(me, [[
 ]]..max.ini..[[
-ceu_callback_assert_msg(]]..V(step)..' '..op..[[ 0, "invalid `loop´ step : expected positive number");
+ceu_callback_assert_msg(]]..sig..V(step)..[[> 0, "invalid `loop´ step : expected positive number");
+]])
+        if TYPES.is_int(i.info.tp) then
+            LINE(me, [[
+ceu_callback_assert_msg(]]..sig..V(step)..[[>= 1, "invalid `loop´ step : expected positive number greater or equal to 1");
+]])
+        end
+        LINE(me, [[
 ]]..V(i)..' = '..V(fr)..[[;
 while (1) {
 ]])
