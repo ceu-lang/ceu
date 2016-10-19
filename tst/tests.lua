@@ -19,23 +19,8 @@ escape 1;
     run = 1,
 }
 
-Test { [[
-vector [] int vec = [1,2,3];
-var int ret = 0;
-loop i in [0 -> $vec[ do
-    ret = ret + vec[i];
-    if i == 1 then
-        break;
-    end
-end
-escape ret;
-]],
-    wrn = true,
-    run = 3,
-}
-
 do return end -- OK
---]=====]
+---]=====]
 
 ----------------------------------------------------------------------------
 -- OK: well tested
@@ -27785,6 +27770,21 @@ escape ($v + 1) as int;
     run = 1,
 }
 
+Test { [[
+vector [] int vec = [1,2,3];
+var int ret = 0;
+loop i in [0 -> $vec[ do
+    ret = ret + vec[i];
+    if i == 1 then
+        break;
+    end
+end
+escape ret;
+]],
+    wrn = true,
+    run = 3,
+}
+
 -->> VECTOR / _CHAR*
 
 Test { [[
@@ -28374,7 +28374,7 @@ vector[_N] _u8 xxx = _;
 escape 1;
 ]],
     wrn = true,
-    cc = '6:5: error: variably modified ‘xxx_63’ at file scope',
+    cc = '6:5: error: variably modified ‘xxx_53’ at file scope',
 }
 
 Test { [[
@@ -28704,7 +28704,7 @@ vector[-_X] int vvs;
 vector&[-_X] int iis = &vvs;
 escape 1;
 ]],
-    cc = '5:5: error: size of array ‘vvs_66_buf’ is negative',
+    cc = '5:5: error: size of array ‘vvs_56_buf’ is negative',
 }
 
 Test { [[
@@ -38767,6 +38767,11 @@ escape 1;
 
 -->>> LUA
 
+local opts_lua = {
+    ceu = true,
+    ceu_features_lua = 'true',
+}
+
 Test { [==[
 [[
     aaa = 1
@@ -38774,6 +38779,7 @@ Test { [==[
 var int bbb = [[aaa]];
 escape bbb;
 ]==],
+    _opts = opts_lua,
     run = 1,
 }
 
@@ -38785,6 +38791,7 @@ Test { [==[
 var int a = [[a]];
 escape a;
 ]==],
+    _opts = opts_lua,
     parser = 'line 3 : after `1´ : expected `is´ or `as´ or binary operator or `..´ or `;´',
 }
 
@@ -38797,6 +38804,7 @@ var int a = [[a]];
 escape a;
 ]==],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38804,6 +38812,7 @@ var bool v = [["ok" == 'ok']];
 escape v as int;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38811,6 +38820,7 @@ var bool v = [[true]];
 escape v as int;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38818,6 +38828,7 @@ var bool v = [[false]];
 escape v as int;
 ]=],
     run = 0,
+    _opts = opts_lua,
 }
 
 Test { [==[
@@ -38829,6 +38840,7 @@ escape v;
 ]==],
     todo = 'END for tests is not used anymore',
     run = 10,
+    _opts = opts_lua,
 }
 
 Test { [==[
@@ -38839,6 +38851,7 @@ escape 1;
 ]==],
     run = '1] lua error : [string "..."]:2: syntax error near \'$\'',
     --run = '2: \'=\' expected near \'$\'',
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38850,6 +38863,7 @@ var int ret = [[a]];
 escape ret;
 ]=],
     run = 2,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38862,6 +38876,7 @@ var int ret = [[a]];
 escape ret;
 ]=],
     run = 11,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38870,6 +38885,7 @@ Test { [=[
 escape 1;
 ]=],
     run = '2] lua error : [string " error\'oi\' "]:1: oi',
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38877,12 +38893,14 @@ var int ret = [[ true ]];
 escape ret;
 ]=],
     run = '1] lua error : number expected',
+    _opts = opts_lua,
 }
 Test { [=[
 var bool ret = [[ nil ]];
 escape (ret==false) as int;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 Test { [=[
 
@@ -38890,6 +38908,7 @@ var int ret = [[ nil ]];
 escape ret;
 ]=],
     run = '2] lua error : number expected',
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38903,6 +38922,7 @@ escape ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&));
 ]=],
     stmts = 'line 6 : invalid Lua assignment : unexpected context for vector "cpy"',
     --run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38915,6 +38935,7 @@ vector[10] byte cpy = [].. [[ str ]];
 escape (ret and (0 == _strcmp(str,(&&cpy[0]) as _char&&))) as int;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38930,6 +38951,7 @@ ptr = [[ str ]];
 escape ret and (0 == _strcmp(&&str[0],&&cpy[0]));
 ]=],
     stmts = 'line 8 : invalid assignment : unexpected context for vector "cpy"',
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38944,6 +38966,7 @@ native _char;
 escape (ret and (0 == _strcmp((&&str[0]) as _char&&,(&&cpy[0]) as _char&&))) as int;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38954,6 +38977,7 @@ native _char;
 escape (_strcmp((&&cpy[0]) as _char&&,"1") == 0) as int;
 ]=],
     run = '3] runtime error: access out of bounds',
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38968,6 +38992,7 @@ escape (0 == _strcmp((&&cpy[0]) as _char&&,"1234567890")) as int;
 ]=],
     wrn = true,
     run = '6] runtime error: access out of bounds',
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38982,6 +39007,7 @@ escape ret;
 ]=],
     todo = 'error: assign to @a',
     run = 11,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -38989,6 +39015,7 @@ Test { [=[
 escape 1;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 Test { [=[
 [[ ]]
@@ -38997,6 +39024,7 @@ Test { [=[
 escape 1;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 Test { [=[
 native/nohold _strcmp;
@@ -39027,6 +39055,7 @@ var int ret = [[v_from_lua]];
 escape ret;
 ]=],
     run = 200,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39037,6 +39066,7 @@ var void&& ptr2 = [[ ptr ]];
 escape (ptr2==&&a) as int;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39052,6 +39082,7 @@ var bool b2_ = [[b2]];
 escape ret + (b1_ as int) + (b2_ as int);
 ]=],
     run = '3] lua error : number expected',
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39067,6 +39098,7 @@ var bool b2_ = [[b2]];
 escape (ret as int) + (b1_ as int) + (b2_ as int);
 ]=],
     run = 2,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39077,6 +39109,7 @@ Test { [=[
 escape 1;
 ]=],
     run = '2: attempt to call a number value',
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39088,6 +39121,7 @@ escape ret;
 ]=],
     --run = 1,
     run = '2: attempt to call a number value',
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39112,6 +39146,7 @@ var bool is_float = [[math.type(@f)=='float']];
 escape (is_int as int)+(is_float as int);
 ]=],
     run = 2,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39122,6 +39157,7 @@ end
 escape call Fx();
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39130,6 +39166,7 @@ var float v2 = 0.5;
 escape (v1==v2) as int;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39138,6 +39175,7 @@ var bool ok = [[ 3.1<(@f) and 3.3>(@f) ]];
 escape ok as int;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39146,6 +39184,7 @@ var bool ok = [[ 3.0==@f ]];
 escape ok as int;
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39156,6 +39195,7 @@ var int r2 = [[ string.len(@bts) ]];
 escape r1+r2;
 ]=],
     run = 10,
+    _opts = opts_lua,
 }
 
 Test { [[
@@ -39164,6 +39204,7 @@ lua do
 end
 ]],
     parser = 'line 1 : after `lua´ : expected `[´',
+    _opts = opts_lua,
 }
 
 Test { [[
@@ -39172,6 +39213,7 @@ lua[] do
 end
 ]],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39181,6 +39223,7 @@ lua[] do
 end
 ]=],
     run = 1,
+    _opts = opts_lua,
 }
 
 Test { [[
@@ -39191,7 +39234,9 @@ watching 1s do
 end
 escape 1;
 ]],
+    _opts = opts_lua,
     run = { ['~>1s']=1 },
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39202,6 +39247,7 @@ lua[] do
 end
 ]=],
     run = 10,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39215,6 +39261,7 @@ lua[] do
 end
 ]=],
     run = 11,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39231,6 +39278,7 @@ lua[] do
 end
 ]=],
     run = 2,
+    _opts = opts_lua,
 }
 
 Test { [=[
@@ -39247,6 +39295,7 @@ lua[] do
 end
 ]=],
     run = 2,
+    _opts = opts_lua,
 }
 
 --<<< LUA
@@ -41291,6 +41340,11 @@ escape call Ff(&d);
 
 -->>> ASYNCS // THREADS
 
+local opts_thread = {
+    ceu = true,
+    ceu_features_thread = 'true',
+}
+
 Test { [[
 var int  a=10, b=5;
 var& int p = &b;
@@ -41299,6 +41353,7 @@ end
 escape a + b + p;
 ]],
     run = 20,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41308,6 +41363,7 @@ var bool ret =
 escape ret as int;
 ]],
     run = 1,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41317,6 +41373,7 @@ event& void ret =
 escape 0;
 ]],
     stmts = 'line 1 : invalid `async/thread´ assignment : unexpected context for event "ret"',
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41326,6 +41383,7 @@ var int ret =
 escape (ret == 1) as int;
 ]],
     stmts = 'line 2 : invalid `async/thread´ assignment : expected `bool´ destination',
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41336,6 +41394,7 @@ end
 escape ret;
 ]],
     run = 11,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41350,6 +41409,7 @@ end
 escape a + b + p;
 ]],
     run = 45,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41365,6 +41425,7 @@ var bool ret =
 escape (ret as int) + a + b + p;
 ]],
     run = 46,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41373,6 +41434,7 @@ atomic do
 end
 ]],
     props = 'line 2 : not permitted inside `atomic´',
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41389,6 +41451,7 @@ escape 1;
 ]],
     --props = 'line 2 : not permitted outside `thread´',
     run = 1,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41408,6 +41471,7 @@ escape x;
         acc = 4,
     },
     run = 2,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41429,6 +41493,7 @@ escape x;
         acc = 4,
     },
     run = 2,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41441,6 +41506,7 @@ end
 escape a + b + p;
 ]],
     run = 45,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41453,6 +41519,7 @@ escape 1;
 ]],
     inits = 'line 3 : invalid pointer access : crossed `async/thread´ (/tmp/tmp.ceu:3)',
     --fin = 'line 3 : unsafe access to pointer "p" across `async/thread´',
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41474,6 +41541,7 @@ escape a + b + p;
         acc = true,
     },
     run = 36,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41488,6 +41556,7 @@ end
 escape a + b + p;
 ]],
     run = 45,
+    _opts = opts_thread,
 }
 
 for i=1, 50 do
@@ -41511,6 +41580,7 @@ escape ret;
 ]],
         usleep = true,
         run = 1,
+    _opts = opts_thread,
     }
 end
 
@@ -41539,6 +41609,7 @@ escape rrr;
         usleep = true,
         run = 1,
         _ana = { acc=1 },
+    _opts = opts_thread,
     }
 end
 
@@ -41563,6 +41634,7 @@ end
 escape v1+v2;
 ]],
     run = 30,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41605,6 +41677,7 @@ _assert(v1 == v2);
 escape v1;
 ]],
     run = 900,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41643,6 +41716,7 @@ _assert(v1 == v2);
 escape v1;
 ]],
     run = 900,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41686,6 +41760,7 @@ escape v1;
 ]],
     --run = false,
     run = 1066784512,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41731,6 +41806,7 @@ escape v1;
 --./a.out  16.80s user 0.02s system 176% cpu 9.525 total
 -- me (isTmp=false)
 --./a.out  30.36s user 0.04s system 173% cpu 17.476 total
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41756,6 +41832,7 @@ end
 escape _V;
 ]],
     dcls = 'line 15 : native identifier "_V" is not declared',
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41784,6 +41861,7 @@ escape _V;
     _ana = {acc=1},
     usleep = true,
     run = 2,
+    _opts = opts_thread,
 }
 
 -- THREADS / EMITS
@@ -41806,6 +41884,7 @@ escape 10;
     stmts = 'line 6 : invalid `emit´ : unexpected context for external `input´ "A"',
     --props = 'not permitted inside `thread´',
     --props = 'line 6 : invalid `emit´',
+    _opts = opts_thread,
 }
 Test { [[
 input int A;
@@ -41835,6 +41914,7 @@ escape a + 1;
 ]],
     --run = 11,
     props_ = 'line 4 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
+    _opts = opts_thread,
 }
 Test { [[
 var int a=1;
@@ -41874,6 +41954,7 @@ end
     --run = 3,
     --todo = 'nd excpt',
     props_ = 'line 13 : invalid `emit´ : expected enclosing `async´ or `async/isr´',
+    _opts = opts_thread,
 }
 Test { [[
 par do
@@ -41912,6 +41993,7 @@ with
 end
 ]],
     run = { ['1~>A']=1 },
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -41972,6 +42054,7 @@ escape ret;
 ]],
     --run = 72000,
     stmts = 'line 27 : invalid `emit´ : unexpected context for external `input´ "A"',
+    _opts = opts_thread,
 }
 Test { [[
 native/pos do ##include <assert.h> end
@@ -42031,6 +42114,7 @@ end
 escape ret;
 ]],
     run = 72000,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42064,6 +42148,7 @@ end;
 ]],
     --run = 0,
     stmts = 'line 17 : invalid `emit´ : unexpected context for external `input´ "P2"',
+    _opts = opts_thread,
 }
 Test { [[
 input int P2;
@@ -42123,6 +42208,7 @@ end
 escape ret;
 ]],
     run = { ['~>A;~>1s'] = 4 },
+    _opts = opts_thread,
 }
 
 -- ASYNC/NONDET
@@ -42145,6 +42231,7 @@ end
 escape x;
 ]],
     dcls = 'line 3 : internal identifier "x" is not declared',
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42160,6 +42247,7 @@ escape x;
 ]],
     _ana = { acc=1 },
     run = 2,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42175,6 +42263,7 @@ escape x;
 ]],
     _ana = { acc=1 },
     run = 2,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42192,6 +42281,7 @@ escape x;
         acc = 1,
     },
     run = 2,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42215,6 +42305,7 @@ escape x;
     _ana = {
         acc = true,
     },
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42239,6 +42330,7 @@ escape x;
     _ana = {
         acc = 3,
     },
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42259,6 +42351,7 @@ escape x;
         acc = 3,
     },
     run = 3,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42272,6 +42365,7 @@ escape x[0];
     wrn = true,
     run = 2,
     --gcc = 'error: lvalue required as left operand of assignment',
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42283,6 +42377,7 @@ escape x[0];
 ]],
     run = 2,
     --gcc = 'error: lvalue required as left operand of assignment',
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42303,6 +42398,7 @@ escape x[0];
         acc = 2,
     },
     --gcc = 'error: lvalue required as left operand of assignment',
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42315,6 +42411,7 @@ end;
 escape v;
 ]],
     props = 'line 3 : not permitted inside `async´',
+    _opts = opts_thread,
 }
 Test { [[
 var int v = 1;
@@ -42326,6 +42423,7 @@ end;
 escape v;
 ]],
     props = 'line 3 : not permitted inside `thread´',
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42342,6 +42440,7 @@ end
 escape a;
 ]],
     run = 11,
+    _opts = opts_thread,
 }
 
 Test { [[
@@ -42352,6 +42451,7 @@ end
 escape ret;
 ]],
     run = 1,
+    _opts = opts_thread,
 }
 Test { [[
 var int ret = 0;
@@ -42361,6 +42461,7 @@ end
 escape ret;
 ]],
     run = 1,
+    _opts = opts_thread,
 }
 
 Test { [=[
@@ -42370,6 +42471,7 @@ await 1s;
 escape 1;
 ]=],
     run = {['~>1s; ~>1s']=1},
+    _opts = opts_thread,
 }
 
 Test { [=[
@@ -42381,6 +42483,7 @@ Test { [=[
     escape 1;
 ]=],
     run = {['~>100s;~>100s']=1},
+    _opts = opts_thread,
 }
 
 --<<< THREADS / EMITS
@@ -42429,6 +42532,7 @@ end
 escape _V;
 ]],
     run = { ['~>1s']=14 },
+    _opts = opts_thread,
 }
 
 --<<< ASYNCS / THREADS

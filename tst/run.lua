@@ -237,9 +237,9 @@ end
                             ..' -llua5.3 -lpthread '..defines
                          ,
 
-            ceu_features_lua    = 'true',
-            ceu_features_thread = 'true',
-            ceu_line_directives = 'true',
+            --ceu_features_lua    = 'true',
+            --ceu_features_thread = 'true',
+            --ceu_line_directives = 'true',
             --ceu_line_directives = 'false',
             --ceu_err_unused_native = 'pass'
         }

@@ -220,11 +220,16 @@ static void CEU_CODE_WATCH_]]..me.id..[[ (tceu_code_mem* _ceu_mem,
             me.mems.wrapper = me.mems.wrapper .. [[
 static ]]..TYPES.toc(assert(Type))..[[ /* space */
 CEU_CODE_]]..me.id..[[ (tceu_stk* stk, tceu_ntrl trlK,
-                        tceu_code_args_]]..me.id..[[ ps,
-                        lua_State* lua)
+                        tceu_code_args_]]..me.id..[[ ps
+#ifdef CEU_FEATURES_LUA
+                        , lua_State* lua
+#endif
+                       )
 {
     tceu_code_mem_]]..me.id..[[ mem;
+#ifdef CEU_FEATURES_LUA
     mem.mem.lua = lua;
+#endif
 ]]
             if mods.dynamic then
                 me.mems.wrapper = me.mems.wrapper .. multis.code
