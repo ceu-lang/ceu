@@ -514,7 +514,7 @@ error'TODO'
     _Watching__PRE = function (me)
         local watch, mid, block = unpack(me)
 
-        -- watching Ff()=>(), Gg()=>(), ...
+        -- watching Ff()->(), Gg()->(), ...
         if block.tag ~= 'Block' then
             return node('_Watching', me.ln, watch, mid,
                     node('Block', me.ln,
@@ -526,7 +526,7 @@ error'TODO'
         if mid then
             local Abs_Await = AST.get(watch,'Abs_Await') or
                               AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
-            ASR(Abs_Await, me, 'unexpected `=>´')
+            ASR(Abs_Await, me, 'unexpected `->´')
             local ID_abs = AST.asr(Abs_Await,'', 2,'Abs_Cons', 1,'ID_abs')
             Abs_Await[#Abs_Await+1] = false  -- pool
             AST.set(Abs_Await, #Abs_Await+1, mid)
@@ -653,7 +653,7 @@ error'TODO'
 -------------------------------------------------------------------------------
 
     -- single declaration with multiple ids
-    --      => multiple declarations with single ids
+    --      -> multiple declarations with single ids
 
     __dcls__PRE = function (me)
         local is_alias, dim, tp
@@ -783,9 +783,9 @@ error'TODO'
 
 -------------------------------------------------------------------------------
 
-    -- Type => Typelist
-    -- input int X  => input (int) X;
-    -- input void X => input () X;
+    -- Type -> Typelist
+    -- input int X  -> input (int) X;
+    -- input void X -> input () X;
     Ext__PRE = 'Evt__PRE',
     Evt__PRE = function (me)
         local _,Type = unpack(me)
