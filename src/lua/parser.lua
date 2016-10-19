@@ -464,15 +464,15 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
-                    V'Code_Pars' * KK'=>' *
+                    V'Code_Pars' * KK'->' *
                         Cc(false) *
                             V'Type'
              + K'code' * Ct( Cg(K'/await'*Cc'await','await') *
                              Cg(K'/dynamic'*Cc'dynamic','dynamic')^-1 *
                              Cg(K'/recursive'*Cc'recursive','recursive')^-1 ) *
                 (V'__ID_abs'-V'__id_data') *
-                    V'Code_Pars' * KK'=>' *
-                        OPT(V'Code_Pars' * KK'=>') *
+                    V'Code_Pars' * KK'->' *
+                        OPT(V'Code_Pars' * KK'->') *
                             (V'Type' + CK'FOREVER')
 
     , _Code_proto = V'__code' * Cc(false)
@@ -485,7 +485,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     -- call
     , __extcode = (CK'input/output' + CK'output/input') * K'/tight'
                     * OPT(CK'/recursive')
-                    * V'__ID_ext' * V'Code_Pars' * KK'=>' * V'Type'
+                    * V'__ID_ext' * V'Code_Pars' * KK'->' * V'Type'
 * EE'TODO-PARSER: extcode'
     , _Ext_Code_proto = V'__extcode'
     , _Ext_Code_impl  = V'__extcode' * V'__Do'
@@ -493,7 +493,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     -- req
     , __extreq = (CK'input/output' + CK'output/input') * K'/await'
                    * OPT('[' * (V'__Exp'+Cc(true)) * KK']')
-                   * V'__ID_ext' * V'Code_Pars' * KK'=>' * V'Type'
+                   * V'__ID_ext' * V'Code_Pars' * KK'->' * V'Type'
 * EE'TODO-PARSER: request'
     , _Ext_Req_proto = V'__extreq'
     , _Ext_Req_impl  = V'__extreq' * V'__Do'
@@ -608,7 +608,7 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
     , Emit_Evt = K'emit' * -#(V'WCLOCKK'+V'WCLOCKE') * V'Exp_Name' * V'_Emit_ps'
 
     , __watch = (V'Await_Ext' + V'Await_Int' + V'Await_Wclock' + V'Abs_Await')
-                    * OPT(KK'=>' * PARENS(V'List_Var'))
+                    * OPT(KK'->' * PARENS(V'List_Var'))
     , _Watching = K'watching'
                     * LIST(V'__watch')
                 * V'__Do'
@@ -644,10 +644,10 @@ GG = { [1] = x * V'_Stmts' * V'EOF' * (P(-1) + E('end of file'))
 
     , Abs_Spawn_Single = K'spawn' * V'__Abs_Cons_Code'
                             * (-KK'in') * Cc(false)
-                                * OPT(KK'=>' * PARENS(V'List_Var'))
+                                * OPT(KK'->' * PARENS(V'List_Var'))
     , Abs_Spawn_Pool   = K'spawn' * V'__Abs_Cons_Code'
                             * KK'in' * V'Exp_Name'
-                                * OPT(KK'=>' * PARENS(V'List_Var'))
+                                * OPT(KK'->' * PARENS(V'List_Var'))
 
     , __Abs_Cons_Code = V'__abs_mods' * V'Abs_Cons' -I(V'__id_data')
     , Abs_Cons   = V'ID_abs' * PARENS(OPT(V'Abslist'))

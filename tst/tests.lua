@@ -9,6 +9,34 @@ end
 ----------------------------------------------------------------------------
 
 --[=====[
+--->
+--->
+
+Test { [[
+native _printf;
+loop i in [1.1 -> 10], 1 do
+    _printf("%d\n", i);
+end
+escape 1;
+]],
+    run = 1,
+}
+
+Test { [[
+vector [] int vec = [1,2,3];
+var int ret = 0;
+loop i in [0 -> $vec[ do
+    ret = ret + vec[i];
+    if i == 1 then
+        break;
+    end
+end
+escape ret;
+]],
+    wrn = true,
+    run = 3,
+}
+
 do return end -- OK
 --]=====]
 
@@ -22403,7 +22431,7 @@ var _char v = emit A(;
 escape v;
 ]],
     parser = 'line 3 : after `(´ : expected expression',
-    --parser = 'line 3 : before `=>´ : expected `;´',
+    --parser = 'line 3 : before `->´ : expected `;´',
     --env = 'line 3 : invalid attribution',
 }
 Test { [[
@@ -22671,7 +22699,7 @@ end
 }
 
 Test { [[
-output Z  (var int)=>int;
+output Z  (var int)->int;
 escape call Z(1);
 ]],
     parser = 'line 1 : after `output´ : expected `(´ or type',
@@ -22681,7 +22709,7 @@ escape call Z(1);
 }
 
 Test { [[
-output/input/tight Z  (var int)=>int;
+output/input/tight Z  (var int)->int;
 escape call Z(1);
 ]],
     parser = 'line 2 : after `call´ : expected name expression',
@@ -22691,7 +22719,7 @@ escape call Z(1);
 }
 
 Test { [[
-output/input/tight Z  (var int)=>int;
+output/input/tight Z  (var int)->int;
 call Z(1);
 escape 1;
 ]],
@@ -22699,7 +22727,7 @@ escape 1;
 }
 
 Test { [[
-output/input/tight Z  (var int)=>int;
+output/input/tight Z  (var int)->int;
 emit Z(1);
 escape 1;
 ]],
@@ -22714,7 +22742,7 @@ native/pos do
         escape v+1;
     }
 end
-output/input/tight Z  (var int)=>int;
+output/input/tight Z  (var int)->int;
 call Z(1);
 escape 1;
 ]],
@@ -22729,7 +22757,7 @@ native/pos do
         escape *v+1;
     }
 end
-output/input/tight Z  (var int)=>int;
+output/input/tight Z  (var int)->int;
 call Z(1);
 escape 1;
 ]],
@@ -22743,7 +22771,7 @@ native/pos do
         escape *v+1;
     }
 end
-output/input/tight Z  (var int)=>int;
+output/input/tight Z  (var int)->int;
 var int ret = call Z(1);
 escape ret;
 ]],
@@ -22757,7 +22785,7 @@ native/pos do
         escape v+1;
     }
 end
-output/input/tight Z  (var int)=>int;
+output/input/tight Z  (var int)->int;
 var int ret = call Z(1,2);
 escape ret;
 ]],
@@ -22825,7 +22853,7 @@ native/pos do
         escape p->_1 + p->_2;
     }
 end
-output/input/tight Z  (var int, var int)=>int;
+output/input/tight Z  (var int, var int)->int;
 var int ret = call Z(1,2);
 escape ret;
 ]],
@@ -22845,7 +22873,7 @@ native/pos do
         escape (evt == CEU_OUTPUT_Z) + *p;
     }
 end
-output/input/tight Z  (var int)=>int;
+output/input/tight Z  (var int)->int;
 var int ret = (call Z(2));
 escape ret;
 ]],
@@ -22924,7 +22952,7 @@ native/pos do
         return (evt == CEU_OUTPUT_Z) + *p;
     }
 end
-output/input/tight Z  (var int)=>int;
+output/input/tight Z  (var int)->int;
 par/and do
     call Z(1);
 with
@@ -22939,7 +22967,7 @@ escape 1;
 }
 
 Test { [[
-input/output/tight Z,W  (var int a)=>int do
+input/output/tight Z,W  (var int a)->int do
     escape a + 1;
 end
 ]],
@@ -22948,10 +22976,10 @@ end
 }
 
 Test { [[
-input/output/tight Z  (var int a)=>int do
+input/output/tight Z  (var int a)->int do
     escape a + 1;
 end
-input/output/tight W  (var int a)=>int;
+input/output/tight W  (var int a)->int;
 var int ret = call Z(1);
 escape ret;
 ]],
@@ -22959,10 +22987,10 @@ escape ret;
 }
 
 Test { [[
-input/output/tight Z  (var int a)=>int do
+input/output/tight Z  (var int a)->int do
     escape a + 1;
 end
-input/output/tight W  (var int a)=>int;
+input/output/tight W  (var int a)->int;
 var int ret = call Z(1);
 escape ret;
 ]],
@@ -22972,7 +23000,7 @@ escape ret;
 }
 
 Test { [[
-input/output/tight Z  (var int a)=>void do
+input/output/tight Z  (var int a)->void do
     v = a;
 end
 var int v = 0;
@@ -22986,7 +23014,7 @@ escape v;
 Test { [[
 native/nohold _fprintf, _stderr;
 var int v = 0;
-input/output/tight Z  (var int a)=>void do
+input/output/tight Z  (var int a)->void do
     this.v = a;
     _fprintf(_stderr,"a=%d v=%d\n", a, v);
 end
@@ -23001,10 +23029,10 @@ escape this.v;
 
 Test { [[
 var int v = 0;
-input/output/tight W  (var int a)=>int do
+input/output/tight W  (var int a)->int do
     escape a + 1;
 end
-input/output/tight Z  (var int a)=>void do
+input/output/tight Z  (var int a)->void do
     this.v = call W(a);
 end
 call Z(1);
@@ -23040,7 +23068,7 @@ escape 1;
 }
 
 Test { [[
-input/output/tight A  (void)=>void do
+input/output/tight A  (void)->void do
 end
 escape 1;
 ]],
@@ -23049,7 +23077,7 @@ escape 1;
 }
 
 Test { [[
-input/output/tight A  (var u8 a, var  int a)=>void do
+input/output/tight A  (var u8 a, var  int a)->void do
     v = 1;
 end
 call A(());
@@ -23059,7 +23087,7 @@ escape 1;
 }
 
 Test { [[
-input/output/tight A  (var void a, var  int v)=>void do
+input/output/tight A  (var void a, var  int v)->void do
     v = 1;
 end
 escape 1;
@@ -23071,7 +23099,7 @@ escape 1;
 Test { [[
 input void OS_START;
 var int v = 0;
-input/output/tight A  (void)=>void do
+input/output/tight A  (void)->void do
     v = 1;
 end
 call A;
@@ -23082,7 +23110,7 @@ escape v;
 }
 
 Test { [[
-input/output/tight WRITE  (var int c)=>int do
+input/output/tight WRITE  (var int c)->int do
     escape c + 1;
 end
 var byte b = 1;
@@ -23094,7 +23122,7 @@ escape ret;
 
 Test { [[
 native ___ceu_nothing;
-input/output/tight IB  (var int c)=>void do
+input/output/tight IB  (var int c)->void do
     ___ceu_nothing(&&c);
 end
 call IB(0);
@@ -23104,10 +23132,10 @@ escape 0;
 }
 Test { [[
 native/pure ___ceu_nothing;
-input/output/tight IA  (var int c)=>int do
+input/output/tight IA  (var int c)->int do
     escape c + 1;
 end
-input/output/tight IB  (var int c)=>void do
+input/output/tight IB  (var int c)->void do
     ___ceu_nothing(&&c);
 end
 call IB(0);
@@ -24867,7 +24895,7 @@ escape ({(CEU_Main*)(_ceu_app->_data)}):xxx;
 -- NATIVE/PRE
 
 Test { [[
-input/output/tight OPEN  (var byte&& path, var byte mode)=>void do
+input/output/tight OPEN  (var byte&& path, var byte mode)->void do
 end
 
 escape 1;
@@ -24888,23 +24916,23 @@ native/pos do
 end
 
 native/pure ___ceu_nothing;
-input/output/tight OPEN  (var byte&& path, var  byte&& mode)=>_Fx&& do
+input/output/tight OPEN  (var byte&& path, var  byte&& mode)->_Fx&& do
     ___ceu_nothing(path);
     ___ceu_nothing(mode);
     escape _fff;
 end
 
-input/output/tight CLOSE  (var _Fx&& f)=>int do
+input/output/tight CLOSE  (var _Fx&& f)->int do
     ___ceu_nothing(f);
     escape 1;
 end
 
-input/output/tight SIZE  (var _Fx&& f)=>int do
+input/output/tight SIZE  (var _Fx&& f)->int do
     ___ceu_nothing(f);
     escape 1;
 end
 
-input/output/tight READ  (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)=>int do
+input/output/tight READ  (var void&& ptr, var int size, var int nmemb, var  _Fx&& f)->int do
     ___ceu_nothing(ptr);
     ___ceu_nothing(&&size);
     ___ceu_nothing(&&nmemb);
@@ -24930,7 +24958,7 @@ end
 
 native/pure ___ceu_nothing;
 native/plain _draw_string_t;
-input/output/tight DRAW_STRING  (var _draw_string_t&& ptr)=>void do
+input/output/tight DRAW_STRING  (var _draw_string_t&& ptr)->void do
     ___ceu_nothing(ptr);
 end
 
@@ -30823,12 +30851,12 @@ escape 0;
 Test { [[
 input int&& E;
 var int e =
-    watching E => (a) do
+    watching E -> (a) do
         await FOREVER;
     end;
 escape 0;
 ]],
-    adjs = 'line 3 : unexpected `=>´',
+    adjs = 'line 3 : unexpected `->´',
 }
 
 Test { [[
@@ -31154,7 +31182,7 @@ end
 -->>> CODE / TIGHT / FUNCTIONS
 
 Test { [[
-code/tight Code (var int)=>void
+code/tight Code (var int)->void
 do
 end
 escape 1;
@@ -31165,7 +31193,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var int x, var  int)=>void
+code/tight Code (var int x, var  int)->void
 do
 end
 escape 1;
@@ -31174,7 +31202,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var void, var  int x) => void
+code/tight Code (var void, var  int x) -> void
 do
 end
 escape 1;
@@ -31185,7 +31213,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var void, var  int) => void
+code/tight Code (var void, var  int) -> void
 do
 end
 escape 1;
@@ -31197,7 +31225,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var void a, var  int b) => void
+code/tight Code (var void a, var  int b) -> void
 do
 end
 escape 1;
@@ -31209,7 +31237,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var int a)=>void
+code/tight Code (var int a)->void
     __ceu_nothing(&&a);
 do
 end
@@ -31219,8 +31247,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var int a)=>void;
-code/tight Code (var int a)=>void
+code/tight Code (var int a)->void;
+code/tight Code (var int a)->void
 do
     //native/nohold ___ceu_nothing;
     //___ceu_nothing(&&a);
@@ -31232,7 +31260,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var void a)=>void
+code/tight Code (var void a)->void
 do
 end
 escape 1;
@@ -31242,7 +31270,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var void a)=>void
+code/tight Code (var void a)->void
 do
 end
 escape 1;
@@ -31252,7 +31280,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (void)=>void
+code/tight Code (void)->void
 do
 end
 escape 1;
@@ -31262,7 +31290,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code ()=>void
+code/tight Code ()->void
 do
 end
 escape 1;
@@ -31271,7 +31299,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Code (var int xxx) => int
+code/tight Code (var int xxx) -> int
 do
     xxx = xxx + 1;
     escape xxx;
@@ -31284,7 +31312,7 @@ escape b;
 }
 
 Test { [[
-code/tight Code (var int x) => int
+code/tight Code (var int x) -> int
 do
     x = x + 1;
     escape x;
@@ -31296,7 +31324,7 @@ escape call Code(a+10);
 }
 
 Test { [[
-code/tight Code (var int x) => int
+code/tight Code (var int x) -> int
 do
     x = x + 1;
     escape x;
@@ -31308,7 +31336,7 @@ escape call Code(a+10) + call Code(1);
 }
 
 Test { [[
-code/tight Fx (var int v)=>int do
+code/tight Fx (var int v)->int do
     escape v+1;
 end
 escape call Fx();
@@ -31317,7 +31345,7 @@ escape call Fx();
 }
 
 Test { [[
-code/tight Fx (var int v)=>int do
+code/tight Fx (var int v)->int do
     escape v+1;
 end
 var int&& ptr;
@@ -31327,7 +31355,7 @@ escape call Fx(ptr);
 }
 
 Test { [[
-code/tight Fx (var int v)=>int do
+code/tight Fx (var int v)->int do
     escape v+1;
 end
 escape call Fx(1);
@@ -31339,18 +31367,18 @@ Test { [[
 code/tight Fx (void);
 escape 1;
 ]],
-    parser = 'line 1 : after `)´ : expected `=>´',
+    parser = 'line 1 : after `)´ : expected `->´',
 }
 
 Test { [[
-code/tight Fx (void) => void
+code/tight Fx (void) -> void
 escape 1;
 ]],
     parser = 'line 1 : after `void´ : expected type modifier or `;´ or `do´'
 }
 
 Test { [[
-code/tight Fx (void) => void;
+code/tight Fx (void) -> void;
 escape 1;
 ]],
     wrn = true,
@@ -31358,17 +31386,17 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx void => (void);
+code/tight Fx void -> (void);
 escape 1;
 ]],
     wrn = true,
     parser = 'line 1 : after `Fx´ : expected `(´',
     --parser = 'line 1 : after `Fx´ : expected param list',
-    --parser = 'line 1 : after `=>´ : expected type',
+    --parser = 'line 1 : after `->´ : expected type',
 }
 
 Test { [[
-code/tight Fx (void) => void;
+code/tight Fx (void) -> void;
 escape 1;
 ]],
     wrn = true,
@@ -31376,7 +31404,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int) => void do
+code/tight Fx (var int) -> void do
     escape 1;
 end
 escape 1;
@@ -31388,7 +31416,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (void) => void do
+code/tight Fx (void) -> void do
     event void i;
     emit i;
     await i;
@@ -31400,7 +31428,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (void) => void do
+code/tight Fx (void) -> void do
     var int a = 1;
     if a!=0 then end;
 end
@@ -31411,7 +31439,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (void) => void do
+code/tight Fx (void) -> void do
     escape;
 end
 escape 1;
@@ -31421,7 +31449,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (void) => void do
+code/tight Fx (void) -> void do
     escape 1;
 end
 escape 1;
@@ -31433,7 +31461,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (void) => void do
+code/tight Fx (void) -> void do
     escape;
 end
 escape 1;
@@ -31461,7 +31489,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (void)=>int do
+code/tight Fx (void)->int do
     escape 1;
 end
 escape call Fx();
@@ -31470,7 +31498,7 @@ escape call Fx();
 }
 
 Test { [[
-code/tight Fx (void)=>int do
+code/tight Fx (void)->int do
     escape 1;
 end
 escape call Fx();
@@ -31480,8 +31508,8 @@ escape call Fx();
 }
 
 Test { [[
-code/tight Fx (void) => int;
-code/tight Fx (var int x)  => int do end
+code/tight Fx (void) -> int;
+code/tight Fx (var int x)  -> int do end
 escape 1;
 ]],
     dcls = 'line 2 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:1)',
@@ -31490,8 +31518,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (void) => int;
-code/tight Fx (var int)  => int;
+code/tight Fx (void) -> int;
+code/tight Fx (var int)  -> int;
 escape 1;
 ]],
     wrn = true,
@@ -31501,8 +31529,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (void) => int;
-code/tight Fx (void) => int do escape 111; end
+code/tight Fx (void) -> int;
+code/tight Fx (void) -> int do escape 111; end
 escape 1;
 ]],
     wrn = true,
@@ -31510,7 +31538,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var void, var int) => int;
+code/tight Fx (var void, var int) -> int;
 escape 1;
 ]],
     dcls = 'line 1 : invalid declaration : variable cannot be of type `void´',
@@ -31518,7 +31546,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int) => void;
+code/tight Fx (var int) -> void;
 escape 1;
 ]],
     wrn = true,
@@ -31526,8 +31554,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int, var int) => int;
-code/tight Fx (var int a, var  int b) => int do
+code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var  int b) -> int do
     escape a + b;
 end
 escape 1;
@@ -31537,8 +31565,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int, var int) => int;
-code/tight Fx (var int a, var  u8 b) => int do
+code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var  u8 b) -> int do
     escape a + b;
 end
 escape 1;
@@ -31547,8 +31575,8 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int, var int) => int;
-code/tight Fx (var int a, var  int b) => int do
+code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var  int b) -> int do
     escape a + b;
 end
 escape call Fx(1,2);
@@ -31557,11 +31585,11 @@ escape call Fx(1,2);
 }
 
 Test { [[
-code/tight Fx (var int, var int) => int;
-code/tight Fx (var int a, var  int b) => int do
+code/tight Fx (var int, var int) -> int;
+code/tight Fx (var int a, var  int b) -> int do
     escape a + b;
 end
-code/tight Fx (var int a, var  int b) => int do
+code/tight Fx (var int a, var  int b) -> int do
     escape a + b;
 end
 escape call Fx(1,2);
@@ -31570,7 +31598,7 @@ escape call Fx(1,2);
 }
 
 Test { [[
-code/tight Fff (var int x)=>int do
+code/tight Fff (var int x)->int do
     escape x + 1;
 end
 
@@ -31586,7 +31614,7 @@ escape call Fff(x);
 
 Test { [[
 escape 1;
-code/tight Fx (var int x)=>int do
+code/tight Fx (var int x)->int do
     if x!=0 then end;
     loop i in [0 -> 10[ do
     end
@@ -31600,8 +31628,8 @@ end
 Test { [[
 class Tx with
 do
-    code/tight Fx (var int)=>int;
-    code/tight Fx (var int x)=>int do
+    code/tight Fx (var int)->int;
+    code/tight Fx (var int x)->int do
         escape x;
     end
     escape call Fx(10);
@@ -31614,7 +31642,7 @@ escape x;
 
 Test { [[
 escape 1;
-code/tight Fx (void) => int do
+code/tight Fx (void) -> int do
     escape 1;
 end
 ]],
@@ -31623,7 +31651,7 @@ end
 }
 
 Test { [[
-code/tight Fx (void) => int do
+code/tight Fx (void) -> int do
     escape 1;
 end
 escape 1;
@@ -31633,7 +31661,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Set (var u8&& v)=>void do
+code/tight Set (var u8&& v)->void do
     *v = 3;
 end
 var u8 v = 0;
@@ -31644,7 +31672,7 @@ escape v as int;
 }
 
 Test { [[
-code/tight Set (var& u8 v)=>void do
+code/tight Set (var& u8 v)->void do
     v = 3;
 end
 var u8 v = _;
@@ -31656,7 +31684,7 @@ escape v as int;
 }
 
 Test { [[
-code/tight Set (var u8 v)=>int do
+code/tight Set (var u8 v)->int do
     escape 3;
 end
 var u8 v = call Set(_);
@@ -31666,7 +31694,7 @@ escape v as int;
 }
 
 Test { [[
-code/tight Set (var u8 v)=>int do
+code/tight Set (var u8 v)->int do
     escape 3;
 end
 var u8 v = call Set(_);
@@ -31677,7 +31705,7 @@ escape v as int;
 }
 
 Test { [[
-code/tight Set (var& u8 v)=>void do
+code/tight Set (var& u8 v)->void do
     v = 3;
 end
 var u8 v = 0;
@@ -31689,7 +31717,7 @@ escape v as int;
 }
 
 Test { [[
-code/tight Ff (var& int a)=>void do
+code/tight Ff (var& int a)->void do
     a = 1;
 end
 var int v = 0;
@@ -31700,7 +31728,7 @@ escape v;
 }
 
 Test { [[
-code/tight Fx (var int x)=>int do
+code/tight Fx (var int x)->int do
     escape x + 1;
 end
 
@@ -31721,7 +31749,7 @@ end
 
 var Tx t;
 
-code/tight Fx (void)=>Tx&& do
+code/tight Fx (void)->Tx&& do
     escape &&t;
 end
 
@@ -31739,7 +31767,7 @@ end
 
 var Tx t;
 
-code/tight Fx (void)=>Tx&& do
+code/tight Fx (void)->Tx&& do
     var Tx&& p = &&t;
     escape p;
 end
@@ -31758,7 +31786,7 @@ end
 
 var Tx t;
 
-code/tight Fx (void)=>Tx&& do
+code/tight Fx (void)->Tx&& do
     var Tx&& p = &&t;
     escape p;
 end
@@ -31772,9 +31800,9 @@ escape p:v;
 }
 
 Test { [[
-code/tight Fx (var int x)=>int;
+code/tight Fx (var int x)->int;
 var int x = 0;
-code/tight Fx (var int x)=>int do
+code/tight Fx (var int x)->int do
     this.x = x;
     escape 2;
 end
@@ -31785,8 +31813,8 @@ escape call Fx(1) + this.x;
 }
 
 Test { [[
-code/tight Code (var int)=>void;
-code/tight Code (var int a)=>void
+code/tight Code (var int)->void;
+code/tight Code (var int a)->void
 do
     escape 1;
 end
@@ -31798,7 +31826,7 @@ escape 1;
 }
 
 Test { [[
-code/tight get (void)=>int&& do
+code/tight get (void)->int&& do
     var int x;
     escape &&x;
 end
@@ -31809,14 +31837,14 @@ escape 10;
 }
 
 Test { [[
-code/tight Fx.Fx (void)=>void do
+code/tight Fx.Fx (void)->void do
 end
 ]],
     parser = 'line 1 : after `/tight´ : expected `/dynamic´ or `/recursive´',
 }
 
 Test { [[
-code/tight Get (void)=>int&& do
+code/tight Get (void)->int&& do
     var int x;
     //escape &&x;
 end
@@ -31827,7 +31855,7 @@ escape 10;
 }
 
 Test { [[
-code/tight Get (void)=>int&& do
+code/tight Get (void)->int&& do
     var int x;
     escape null;
 end
@@ -31839,7 +31867,7 @@ escape 10;
 }
 
 Test { [[
-code/tight Get (void)=>int&& do
+code/tight Get (void)->int&& do
     var int x=0;
     escape &&x;
 end
@@ -31852,7 +31880,7 @@ escape 10;
 }
 
 Test { [[
-code/tight Get (void)=>int& do
+code/tight Get (void)->int& do
     var int x=1;
     escape &x;
 end
@@ -31867,7 +31895,7 @@ escape 10;
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] byte vec)=>int do
+code/tight Fx (vector&[] byte vec)->int do
     escape vec[1];
 end
 
@@ -31877,7 +31905,7 @@ escape Fx(&str);
 }
 
 Test { [[
-code/tight Ff (var void&& p1, var void&& p2)=>void do
+code/tight Ff (var void&& p1, var void&& p2)->void do
 end
 var int x = 0;
 do
@@ -31891,7 +31919,7 @@ escape 0;
 }
 
 Test { [[
-code/tight GetVS (var void&& && o1, var  void&& && o2)=>int do
+code/tight GetVS (var void&& && o1, var  void&& && o2)->int do
     if (*o1!=null) then
         escape 1;
     else/if (*o2!=null) then
@@ -31916,7 +31944,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var int a, var  void b)=>int do
+code/tight Fx (var int a, var  void b)->int do
 end
 escape 1;
 ]],
@@ -31926,7 +31954,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var void, var int)=>int do
+code/tight Fx (var void, var int)->int do
 end
 escape 1;
 ]],
@@ -31935,7 +31963,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var void a, var  int v)=>int do
+code/tight Fx (var void a, var  int v)->int do
 end
 escape 1;
 ]],
@@ -31945,7 +31973,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (var u8 v)=>int do
+code/tight Fx (var u8 v)->int do
     escape v as int;
 end
 var s8 i = 0;
@@ -31959,7 +31987,7 @@ native/pos do
     int V;
 end
 native _V;
-code/tight Fx (var int v)=>void do
+code/tight Fx (var int v)->void do
     _V = v;
 end
 var void&& x=null;
@@ -31972,10 +32000,10 @@ escape (_V==5) as int;
 -->>> RECURSIVE
 
 Test { [[
-code/tight/recursive Fx (void)=>void;
-code/tight/recursive Fx (void)=>void do end
-code/tight Gx      (void)=>void;
-code/tight/recursive Gx (void)=>void do end
+code/tight/recursive Fx (void)->void;
+code/tight/recursive Fx (void)->void do end
+code/tight Gx      (void)->void;
+code/tight/recursive Gx (void)->void do end
 escape 1;
 ]],
     wrn = true,
@@ -31983,10 +32011,10 @@ escape 1;
     dcls = 'line 4 : invalid `code´ declaration : unmatching prototypes (vs. /tmp/tmp.ceu:3)',
 }
 Test { [[
-code/tight/recursive Fx (void)=>void;
-code/tight/recursive Fx (void)=>void do end
-code/tight/recursive Gx (void)=>void;
-code/tight Gx      (void)=>void do end
+code/tight/recursive Fx (void)->void;
+code/tight/recursive Fx (void)->void do end
+code/tight/recursive Gx (void)->void;
+code/tight Gx      (void)->void do end
 escape 1;
 ]],
     wrn = true,
@@ -31996,16 +32024,16 @@ escape 1;
 Test { [[
 //var int x;
 
-code/tight/recursive Fa (void)=>void;
-code/tight/recursive Fb (void)=>void;
+code/tight/recursive Fa (void)->void;
+code/tight/recursive Fb (void)->void;
 
-code/tight/recursive Fa (void)=>void do
+code/tight/recursive Fa (void)->void do
     if false then
         call/recursive Fb();
     end
 end
 
-code/tight/recursive Fb (void)=>void do
+code/tight/recursive Fb (void)->void do
     call/recursive Fa();
 end
 
@@ -32020,14 +32048,14 @@ escape 1;
 Test { [[
 //var int x;
 
-code/tight Fa (void)=>void;
-code/tight Fb (void)=>void;
+code/tight Fa (void)->void;
+code/tight Fb (void)->void;
 
-code/tight Fa (void)=>void do
+code/tight Fa (void)->void do
     call Fb();
 end
 
-code/tight Fb (void)=>void do
+code/tight Fb (void)->void do
 end
 
 call Fa();
@@ -32040,13 +32068,13 @@ escape 1;
 Test { [[
 //var int x;
 
-code/tight Fa (void)=>void;
-code/tight Fb (void)=>void;
+code/tight Fa (void)->void;
+code/tight Fb (void)->void;
 
-code/tight Fb (void)=>void do
+code/tight Fb (void)->void do
 end
 
-code/tight Fa (void)=>void do
+code/tight Fa (void)->void do
     call Fb();
 end
 
@@ -32060,14 +32088,14 @@ escape 1;
 Test { [[
 //var int x;
 
-code/tight Fa (void)=>void;
-code/tight Fb (void)=>void;
+code/tight Fa (void)->void;
+code/tight Fb (void)->void;
 
-code/tight Fa (void)=>void do
+code/tight Fa (void)->void do
     call Fb();
 end
 
-code/tight Fb (void)=>void do
+code/tight Fb (void)->void do
     call Fa();
 end
 
@@ -32082,16 +32110,16 @@ escape 1;
 Test { [[
 //var int x;
 
-code/tight Fa (void)=>void;
-code/tight/recursive Fb (void)=>void;
+code/tight Fa (void)->void;
+code/tight/recursive Fb (void)->void;
 
-code/tight Fa (void)=>void do
+code/tight Fa (void)->void do
     if false then
         call/recursive Fb();
     end
 end
 
-code/tight/recursive Fb (void)=>void do
+code/tight/recursive Fb (void)->void do
     call Fa();
 end
 
@@ -32104,8 +32132,8 @@ escape 1;
 }
 
 Test { [[
-code/tight/recursive Fx (var int v)=>int;
-code/tight Fx (var int v)=>int do
+code/tight/recursive Fx (var int v)->int;
+code/tight Fx (var int v)->int do
     if v == 0 then
         escape 1;
     end
@@ -32118,8 +32146,8 @@ escape call Fx(5);
     --run = 120,
 }
 Test { [[
-code/tight/recursive Fx (var int v)=>int;
-code/tight/recursive Fx (var int v)=>int do
+code/tight/recursive Fx (var int v)->int;
+code/tight/recursive Fx (var int v)->int do
     if v == 0 then
         escape 1;
     end
@@ -32142,8 +32170,8 @@ call 1;
 }
 
 Test { [[
-code/tight/recursive Fx (var int v)=>int;
-code/tight/recursive Fx (var int v)=>int do
+code/tight/recursive Fx (var int v)->int;
+code/tight/recursive Fx (var int v)->int do
     if v == 0 then
         escape 1;
     end
@@ -32155,7 +32183,7 @@ escape call Fx(5);
     --tight = 'line 8 : `call/recursive´ is required for "Fx"',
 }
 Test { [[
-code/tight Fx (var int v)=>int do
+code/tight Fx (var int v)->int do
     escape v + 1;
 end
 escape call/recursive Fx(5);
@@ -32164,8 +32192,8 @@ escape call/recursive Fx(5);
     --tight = 'line 8 : `call/recursive´ is required for "Fx"',
 }
 Test { [[
-code/tight/recursive Fx (var int v)=>int;
-code/tight/recursive Fx (var int v)=>int do
+code/tight/recursive Fx (var int v)->int;
+code/tight/recursive Fx (var int v)->int do
     if v == 0 then
         escape 1;
     end
@@ -32183,7 +32211,7 @@ escape call/recursive Fx(5);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (vector[] byte vec)=>int do
+code/tight Fx (vector[] byte vec)->int do
     escape vec[1];
 end
 
@@ -32194,7 +32222,7 @@ escape call Fx(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] byte vec)=>int do
+code/tight Fx (vector&[] byte vec)->int do
     escape vec[1];
 end
 
@@ -32207,7 +32235,7 @@ escape call Fx(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] byte vec)=>int do
+code/tight Fx (vector&[] byte vec)->int do
     escape vec[1] as int;
 end
 
@@ -32219,7 +32247,7 @@ escape call Fx(&str);
 Test { [[
 vector[1] byte str = [0,1,2];
 
-code/tight Fx (vector&[2] byte&& vec)=>int do
+code/tight Fx (vector&[2] byte&& vec)->int do
     escape vec[1] as int;
 end
 
@@ -32230,7 +32258,7 @@ escape call Fx(&&str);
 Test { [[
 vector[1] byte str = [0,1,2];
 
-code/tight Fx (vector&[2] byte vec)=>int do
+code/tight Fx (vector&[2] byte vec)->int do
     escape vec[1] as int;
 end
 
@@ -32259,7 +32287,7 @@ escape v2[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] int vec)=>int do
+code/tight Fx (vector&[] int vec)->int do
     escape vec[1];
 end
 
@@ -32271,7 +32299,7 @@ escape call Fx(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] byte vec)=>bool do
+code/tight Fx (vector&[] byte vec)->bool do
     escape vec[1];
 end
 
@@ -32284,7 +32312,7 @@ escape call Fx(&str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (vector&[] byte vec)=>int do
+code/tight Fx (vector&[] byte vec)->int do
     escape vec[1];
 end
 
@@ -32297,7 +32325,7 @@ escape call Fx(str);
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (void) => byte[] do
+code/tight Fx (void) -> byte[] do
     escape &this.str;
 end
 
@@ -32313,7 +32341,7 @@ escape ref[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (var void&& x, vector[] int vec)=>int do
+code/tight Fx (var void&& x, vector[] int vec)->int do
     escape vec[1];
 end
 
@@ -32325,7 +32353,7 @@ escape call Fx(str);
 }
 
 Test { [[
-code/tight FillBuffer (vector&[] u8 buf)=>void do
+code/tight FillBuffer (vector&[] u8 buf)->void do
     buf = buf .. [3];
 end
 vector[10] u8 buffer;
@@ -32336,7 +32364,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight FillBuffer (vector&[20] u8 buf)=>void do
+code/tight FillBuffer (vector&[20] u8 buf)->void do
     buf = buf .. [3];
 end
 vector[10] u8 buffer;
@@ -32348,7 +32376,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight FillBuffer (vector&[3] u8 buf)=>void do
+code/tight FillBuffer (vector&[3] u8 buf)->void do
     buf = buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
@@ -32360,7 +32388,7 @@ escape buffer[0] as int;
 
 -- TODO: dropped support for pointers to vectors
 Test { [[
-code/tight FillBuffer (vector[]&& u8 buf)=>void do
+code/tight FillBuffer (vector[]&& u8 buf)->void do
     *buf = *buf .. [3];
 end
 vector[10] u8 buffer;
@@ -32372,7 +32400,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight FillBuffer (vector[3]&& u8 buf)=>void do
+code/tight FillBuffer (vector[3]&& u8 buf)->void do
     *buf = *buf .. [2,3,4];
 end
 vector[3] u8 buffer = [1];
@@ -32384,7 +32412,7 @@ escape buffer[0] as int;
 }
 
 Test { [[
-code/tight Build (vector[] u8 bytes)=>void do
+code/tight Build (vector[] u8 bytes)->void do
 end
 escape 1;
 ]],
@@ -32396,7 +32424,7 @@ escape 1;
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (void) => byte[]& do
+code/tight Fx (void) -> byte[]& do
     escape &this.str;
 end
 
@@ -32411,7 +32439,7 @@ escape ref[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (void) => byte[]& do
+code/tight Fx (void) -> byte[]& do
     escape &this.str;
 end
 
@@ -32427,7 +32455,7 @@ escape str[1];
 Test { [[
 vector[] byte str = [0,1,2];
 
-code/tight Fx (void) => byte[]& do
+code/tight Fx (void) -> byte[]& do
     escape &this.str;
 end
 
@@ -32449,7 +32477,7 @@ native/pos do
     }
 end
 
-code/tight Fx (void) => byte[]& do
+code/tight Fx (void) -> byte[]& do
     escape &this.str;
 end
 
@@ -32466,11 +32494,11 @@ escape str[3] == 'o';
 Test { [[
 vector[] byte str;
 
-code/tight Fa (void)=>byte[]& do
+code/tight Fa (void)->byte[]& do
     escape &this.str;
 end
 
-code/tight Fb (void)=>void do
+code/tight Fb (void)->void do
     vector&[] byte ref = &f1();
     ref = [] .. "ola" .. "mundo";
 end
@@ -32485,7 +32513,7 @@ escape str[4] == 'u';
 
 Test { [[
 native/pure _strlen;
-code/tight Strlen (var byte&& str)=>int do
+code/tight Strlen (var byte&& str)->int do
     escape _strlen(str as _char&&);
 end
 
@@ -32498,7 +32526,7 @@ escape call Strlen(&&str[0]);
 
 Test { [[
 native _char, _strlen;
-code/tight Strlen (var byte&& str)=>int do
+code/tight Strlen (var byte&& str)->int do
     escape _strlen(str[0]);
 end
 
@@ -32510,7 +32538,7 @@ escape call Strlen((&&str[0]) as _char&&);
 }
 
 Test { [[
-code/tight Fx (void)=>void do
+code/tight Fx (void)->void do
     var int x = 0;
 
     vector[10] byte cs;
@@ -32522,7 +32550,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (vector&[] byte cs)=>void do
+code/tight Fx (vector&[] byte cs)->void do
     cs[0] = 10;
 end
 vector[] byte cs = [0];
@@ -32538,7 +32566,7 @@ escape cs[0];
 
 Test { [[
 var int x;
-code/tight Ff (void)=>void do
+code/tight Ff (void)->void do
 end
 x = 1;
 escape x;
@@ -32549,7 +32577,7 @@ escape x;
 
 Test { [[
 var int x = 0;
-code/tight Ff (void)=>void do
+code/tight Ff (void)->void do
     outer.y = 1;
 end
 var int y = 10;
@@ -32563,7 +32591,7 @@ Test { [[
 var int ret = 0;
 do
     var int x = 0;
-    code/tight Ff (void)=>void do
+    code/tight Ff (void)->void do
         outer.x = 1;
     end
     call Ff();
@@ -32577,8 +32605,8 @@ escape ret;
 
 Test { [[
 var int x = 0;
-code/tight Ff (void)=>void do
-    code/tight Gg (void)=>void do end
+code/tight Ff (void)->void do
+    code/tight Gg (void)->void do end
     outer.x = 1;
 end
 call Ff();
@@ -32589,7 +32617,7 @@ escape x;
 Test { [[
 var int x = 0;
 data Dd with
-    code/tight Ff (void)=>void do
+    code/tight Ff (void)->void do
         outer.x = 1;
     end
 end
@@ -32611,7 +32639,7 @@ escape x;
 
 Test { [[
 var int x = 0;
-code/tight Ff (void)=>void do
+code/tight Ff (void)->void do
     outer.x = 1;
 end
 call Ff();
@@ -32624,7 +32652,7 @@ Test { [[
 var int ret = 0;
 do
     var int x = 0;
-    code/tight Ff (void)=>void do
+    code/tight Ff (void)->void do
         outer.x = 1;
     end
     call Ff();
@@ -32647,7 +32675,7 @@ escape 0;
 --<< CODE / TIGHT / OUTER
 
 Test { [[
-code/tight Rect (void) => void
+code/tight Rect (void) -> void
 do
 end
 await Rect();
@@ -32661,7 +32689,7 @@ escape 0;
 
 Test { [[
 native _void;
-code/tight Ff (void) => void do
+code/tight Ff (void) -> void do
 end
 var&? _void ptr = & call Ff()
         finalize (ptr) with
@@ -32714,7 +32742,7 @@ native/pre do
     int V;
 end
 
-code/tight Ff (var bool x) => _void&& do
+code/tight Ff (var bool x) -> _void&& do
     if x then
         escape &&_V;
     else
@@ -32756,7 +32784,7 @@ native _V;
 native/pre do
     int V = 0;
 end
-code/await Ff (void)=>void do
+code/await Ff (void)->void do
     do finalize with
         _V = _V + 1;
     end
@@ -32779,7 +32807,7 @@ native _V;
 native/pre do
     int V = 1;
 end
-code/await Ff (void)=>void do
+code/await Ff (void)->void do
     do finalize with
         _V = _V * 2;
     end
@@ -32803,13 +32831,13 @@ native _V;
 native/pre do
     int V = 1;
 end
-code/await Gg (void)=>void do
+code/await Gg (void)->void do
     do finalize with
         _V = _V * 2;
     end
     await FOREVER;
 end
-code/await Ff (void)=>void do
+code/await Ff (void)->void do
     do finalize with
         _V = _V + 2;
     end
@@ -32834,13 +32862,13 @@ native _V;
 native/pre do
     int V = 1;
 end
-code/await Gg (void)=>void do
+code/await Gg (void)->void do
     do finalize with
         _V = _V * 2;
     end
     await FOREVER;
 end
-code/await Ff (void)=>void do
+code/await Ff (void)->void do
     do finalize with
         _V = _V + 2;
     end
@@ -32866,7 +32894,7 @@ native _V;
 native/pre do
     int V = 1;
 end
-code/await Ff (void)=>void do
+code/await Ff (void)->void do
     do finalize with
         _V = _V * 2;
     end
@@ -32886,7 +32914,7 @@ escape _V;
 -->>> CODE / AWAIT
 
 Test { [[
-code/await F (void)=>void
+code/await F (void)->void
 do
     escape 1;
 end
@@ -32896,7 +32924,7 @@ escape 1;
 }
 
 Test { [[
-code/await Fx (void)=>void
+code/await Fx (void)->void
 do
     escape 1;
 end
@@ -32910,7 +32938,7 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (var int x)=>void
+code/await Tx (var int x)->void
 do
 end
 escape 1;
@@ -32920,7 +32948,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/await Tx (var int x)=>void
+code/await Tx (var int x)->void
 do
     if x!=0 then end;
 end
@@ -32930,7 +32958,7 @@ escape 1;
     run = 1,
 }
 Test { [[
-code/await Tx (var int x)=>void
+code/await Tx (var int x)->void
 do
     var int v;
 end
@@ -32948,7 +32976,7 @@ escape _V;
 }
 
 Test { [[
-code/await Tx (void)=>void do end
+code/await Tx (void)->void do end
 escape 1;
 ]],
     wrn = true,
@@ -32956,7 +32984,7 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (var int x)=>void
+code/await Tx (var int x)->void
 do
     var int v;
 end
@@ -32972,7 +33000,7 @@ escape _V;
 }
 
 Test { [[
-code/await Tx (var int a)=>void
+code/await Tx (var int a)->void
 do
 end
 
@@ -32994,7 +33022,7 @@ escape 0;
 }
 
 Test { [[
-code/await Tx (void)=>void do end
+code/await Tx (void)->void do end
 call Tx();
 escape 1;
 ]],
@@ -33002,7 +33030,7 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)=>void do end
+code/await Tx (void)->void do end
 await Tx();
 escape 1;
 ]],
@@ -33013,7 +33041,7 @@ Test { [[
 native/pre do
     ##include <stdio.h>
 end
-code/await Tx (void)=>int do
+code/await Tx (void)->int do
     escape 10;
 end
 var int ret = await Tx();
@@ -33023,7 +33051,7 @@ escape ret;
 }
 
 Test { [[
-code/await Tx (void)=>void do end
+code/await Tx (void)->void do end
 par/or do
     await Tx();
 with
@@ -33042,7 +33070,7 @@ escape 1;
 Test { [[
 native _SDL_MouseButtonEvent;
 input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     var _SDL_MouseButtonEvent&& but = await SDL_MOUSEBUTTONUP;
 end
 await FOREVER;
@@ -33053,7 +33081,7 @@ await FOREVER;
 Test { [[
 native _SDL_MouseButtonEvent;
 input _SDL_MouseButtonEvent&& SDL_MOUSEBUTTONUP;
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     var _SDL_MouseButtonEvent&& but = await SDL_MOUSEBUTTONUP;
 end
 await FOREVER;
@@ -33067,7 +33095,7 @@ await FOREVER;
 }
 
 Test { [[
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     await FOREVER;
 end
 
@@ -33088,7 +33116,7 @@ native/pos do
 end
 native _V;
 
-code/await Xx (void)=>void do
+code/await Xx (void)->void do
     every 1s do
         _V = _V + 1;
     end
@@ -33115,7 +33143,7 @@ escape _V;
 }
 
 Test { [[
-code/await Code (var int x) => int
+code/await Code (var int x) -> int
 do
     await async do end;
     escape x;
@@ -33127,7 +33155,7 @@ escape a;
 }
 
 Test { [[
-code/await Code (var int x) => int
+code/await Code (var int x) -> int
 do
     x = x + 1;
     await 1s;
@@ -33141,11 +33169,11 @@ escape a;
 }
 
 Test { [[
-code/await Fy (var int x) => int do
+code/await Fy (var int x) -> int do
     escape x + 1;
 end
 
-code/await Fx (var int x) => int do
+code/await Fx (var int x) -> int do
     var int y = await Fy(x);
     escape y + 1;
 end
@@ -33170,7 +33198,7 @@ end
     parser = 'line 1 : after `every´ : expected name expression or number',
 }
 Test { [[
-code/await Code (void)=>void;
+code/await Code (void)->void;
 await Code(1) until true;
 ]],
     parser = 'line 2 : after `)´ : expected `;´',
@@ -33181,7 +33209,7 @@ await 1s until true;
     parser = 'line 1 : after `s´ : expected number or `/_´ or `;´',
 }
 Test { [[
-code/await Code (var int x) => int
+code/await Code (var int x) -> int
 do
     var int xx = x + 1;
     await 1s;
@@ -33197,7 +33225,7 @@ native _X;
 native/pos do
     int X = 0;
 end
-code/await Code (var int x) => int
+code/await Code (var int x) -> int
 do
     var int xx = x + 1;
     await 1s;
@@ -33211,7 +33239,7 @@ escape _X;
 }
 
 Test { [[
-code/await Code (var int x) => int
+code/await Code (var int x) -> int
 do
     x = x + 222;
     await 1s;
@@ -33229,7 +33257,7 @@ end
 }
 
 Test { [[
-code/await Code (var int x) => int
+code/await Code (var int x) -> int
 do
     x = x + 1;
     await 1s;
@@ -33247,7 +33275,7 @@ end
 }
 
 Test { [[
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
 end
 event Tx a;
 escape 0;
@@ -33256,7 +33284,7 @@ escape 0;
 }
 
 Test { [[
-code/await Tx (void)=>void do end
+code/await Tx (void)->void do end
 var Tx a = 1;
 escape 0;
 ]],
@@ -33264,7 +33292,7 @@ escape 0;
 }
 
 Test { [[
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     await Tx();
 end
 escape 0;
@@ -33274,7 +33302,7 @@ escape 0;
     --dcls = 'line 2 : abstraction "Tx" is not declared',
 }
 Test { [[
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     spawn Tx();
 end
 escape 0;
@@ -33287,7 +33315,7 @@ escape 0;
 Test { [[
 input void A;
 
-code/await Rect (void) => void do
+code/await Rect (void) -> void do
     par/or do
         await A;
     with
@@ -33313,7 +33341,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
 end
 loop i in [0 -> 10[ do
     await Ff();
@@ -33325,7 +33353,7 @@ escape 1;
 }
 
 Test { [[
-code/await UV_TCP_Open (void) => (var& int v) => void
+code/await UV_TCP_Open (void) -> (var& int v) -> void
 do
     if false then
         escape;
@@ -33341,7 +33369,7 @@ escape 1;
 }
 
 Test { [[
-code/await Play (void) => void do
+code/await Play (void) -> void do
     await async do end;
 end
 
@@ -33361,7 +33389,7 @@ escape 1;
 Test { [[
 input void A;
 
-code/await Play (void) => void do
+code/await Play (void) -> void do
     await A;
 end
 
@@ -33379,7 +33407,7 @@ escape 1;
 }
 
 Test { [[
-code/await Play (void) => void do
+code/await Play (void) -> void do
     await 1s;
 end
 
@@ -33395,7 +33423,7 @@ escape 1;
 }
 
 Test { [[
-code/await Play (void) => void do
+code/await Play (void) -> void do
     await 1s;
 end
 
@@ -33413,7 +33441,7 @@ escape 1;
 }
 
 Test { [[
-code/await Scene (void) => void
+code/await Scene (void) -> void
 do
     par do
         await async do
@@ -33425,7 +33453,7 @@ do
     end
 end
 
-code/await Play (void) => void
+code/await Play (void) -> void
 do
     await 1s;
 end
@@ -33447,7 +33475,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void)=>void do
+code/await Ff (void)->void do
     par/and do
     with
     with
@@ -33469,7 +33497,7 @@ escape 1;
 -->> CODE / ALIAS
 
 Test { [[
-code/await Tx (var& void p)=>int do
+code/await Tx (var& void p)->int do
     var void&& p1 = ((&&p) as int&&);
     escape *((p1) as int&&);
 end
@@ -33484,7 +33512,7 @@ escape ret;
 Test { [[
 input void OS_START;
 
-code/await Tx (var& int a)=>void do
+code/await Tx (var& int a)->void do
     await FOREVER;
 end
 
@@ -33500,7 +33528,7 @@ escape v;
 }
 
 Test { [[
-code/tight Fx (var& int x) => void do
+code/tight Fx (var& int x) -> void do
     x = 10;
 end
 var int x;
@@ -33512,7 +33540,7 @@ escape x;
     --mode = 'line 7 : cannot read field with mode `input´',
 }
 Test { [[
-code/await Fx (var& int x) => void do
+code/await Fx (var& int x) -> void do
     x = 10;
 end
 var int x;
@@ -33524,7 +33552,7 @@ escape x;
     --mode = 'line 7 : cannot read field with mode `input´',
 }
 Test { [[
-code/tight Fx (var& int x) => void do
+code/tight Fx (var& int x) -> void do
 end
 var int x;
 call Fx(&x);
@@ -33536,7 +33564,7 @@ escape x;
     --mode = 'line 7 : cannot read field with mode `input´',
 }
 Test { [[
-code/await Fx (var& int x) => void do
+code/await Fx (var& int x) -> void do
     await 1s;
     x = 1;
 end
@@ -33550,13 +33578,13 @@ escape x;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 0;
     x = &v;
 end
 
 var int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 
 escape 0;
 ]],
@@ -33564,13 +33592,13 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 0;
     x = &v;
 end
 
 var& bool x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 
 escape 0;
 ]],
@@ -33578,7 +33606,7 @@ escape 0;
 }
 
 Test { [[
-code/tight Ff (var& int x) => void do
+code/tight Ff (var& int x) -> void do
     var int v = 0;
     x = &v;
 end
@@ -33600,7 +33628,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (var& int x) => int do
+code/await Ff (var& int x) -> int do
     escape x;
 end
 
@@ -33613,13 +33641,13 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 0;
     x = &v;
 end
 
 vector&[] int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 
 escape 0;
 ]],
@@ -33627,7 +33655,7 @@ escape 0;
 }
 
 Test { [[
-code/tight Ff (var int x) => void do
+code/tight Ff (var int x) -> void do
 end
 
 var int off = 0;
@@ -33640,7 +33668,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (event& void e) => void do
+code/await Ff (event& void e) -> void do
     await async do end
     emit e;
 end
@@ -33654,7 +33682,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
 end
 every 1s do
     spawn Ff();
@@ -33667,7 +33695,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (var int xxx) => (var& int yyy) => FOREVER do
+code/await Ff (var int xxx) -> (var& int yyy) -> FOREVER do
     yyy = &xxx;
     do
         do finalize with end
@@ -33677,7 +33705,7 @@ end
 
 var int aaa = 10;
 var& int bbb;
-spawn Ff(aaa) => (bbb);
+spawn Ff(aaa) -> (bbb);
 
 escape bbb;
 ]],
@@ -33689,7 +33717,7 @@ escape bbb;
 -->> CODE / OPTION
 
 Test { [[
-code/tight Fx (var int? x) => int do
+code/tight Fx (var int? x) -> int do
     if x? then
         escape x! + 1;
     else
@@ -33703,7 +33731,7 @@ escape (call Fx(_)) + (call Fx(10));
 }
 
 Test { [[
-code/await Fx (var int? x) => int do
+code/await Fx (var int? x) -> int do
     if x? then
         escape x! + 1;
     else
@@ -33724,27 +33752,27 @@ escape v1+v2;
 -->> CODE / AWAIT / FOREVER
 
 Test { [[
-code/tight Ff (void) => (var& int x) => void do
+code/tight Ff (void) -> (var& int x) -> void do
 end
 ]],
-    parser = 'line 1 : after `=>´ : expected type',
+    parser = 'line 1 : after `->´ : expected type',
 }
 Test { [[
-code/tight Ff (void) => FOREVER do
+code/tight Ff (void) -> FOREVER do
 end
 ]],
-    parser = 'line 1 : after `=>´ : expected type',
+    parser = 'line 1 : after `->´ : expected type',
 }
 
 Test { [[
-code/await Ff (void) => FOREVER do
+code/await Ff (void) -> FOREVER do
     escape 1;
 end
 ]],
     dcls = 'line 2 : invalid `escape´ : no matching enclosing `do´',
 }
 Test { [[
-code/await Ff (void) => FOREVER do
+code/await Ff (void) -> FOREVER do
     escape;
 end
 ]],
@@ -33752,7 +33780,7 @@ end
 }
 
 Test { [[
-code/await Ff (void) => FOREVER do
+code/await Ff (void) -> FOREVER do
     await FOREVER;
 end
 var int ret = await Ff();
@@ -33762,7 +33790,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => FOREVER do
+code/await Ff (void) -> FOREVER do
     await FOREVER;
 end
 par/or do
@@ -33775,7 +33803,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => FOREVER do
+code/await Ff (void) -> FOREVER do
     // err must have non-term stmt
 end
 spawn Ff();
@@ -33787,7 +33815,7 @@ escape 1;
 --<< CODE / AWAIT / FOREVER
 
 Test { [[
-code/await Ff (void) => FOREVER do
+code/await Ff (void) -> FOREVER do
 end
 var int? x = watching Ff() do
 end;
@@ -33797,7 +33825,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) => FOREVER do
+code/await Ff (void) -> FOREVER do
 end
 watching Ff() do
 end
@@ -33807,82 +33835,82 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
 var& int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 escape 0;
 ]],
     stmts = 'line 6 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
 pool[] Ff ffs;
 var& int x;
-spawn Ff() in ffs => (x);
+spawn Ff() in ffs -> (x);
 escape 0;
 ]],
     stmts = 'line 7 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
 end
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 escape 0;
 ]],
     stmts = 'line 6 : invalid binding : argument #1 : unmatching alias `&´ declaration',
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
 end
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 escape (x? as int) + 1;
 ]],
     run = 1,
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
 end
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 escape x! + 1;
 ]],
     run = 11,
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
 end
 pool[] Ff ffs;
 var&? int x;
-spawn Ff() in ffs => (x);
+spawn Ff() in ffs -> (x);
 escape (x? as int) + 1;
 ]],
     run = 1,
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
 
@@ -33892,7 +33920,7 @@ code/await Ff (void) => (var&? int x) => void do
 end
 
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 await x;
 
 escape 1;
@@ -33902,7 +33930,7 @@ escape 1;
 
 -- test valgrind used to fail
 Test { [[
-code/await Ff (void) => (var&? int xxx) => void do
+code/await Ff (void) -> (var&? int xxx) -> void do
     var int v = 10;
     xxx = &v;
     await async do end;
@@ -33910,7 +33938,7 @@ end
 
 pool[] Ff ffs;
 var&? int x_;
-spawn Ff() in ffs => (x_);
+spawn Ff() in ffs -> (x_);
 
 await x_;
 
@@ -33920,41 +33948,41 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => FOREVER do
+code/await Ff (void) -> (var& int x) -> FOREVER do
     var int v = 10;
     x = &v;
     await FOREVER;
 end
 var& int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 escape x + 1;
 ]],
     run = 11,
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => FOREVER do
+code/await Ff (void) -> (var& int x) -> FOREVER do
     var int v = 10;
     x = &v;
     await FOREVER;
 end
 pool[] Ff ffs;
 var& int x;
-spawn Ff() in ffs => (x);
+spawn Ff() in ffs -> (x);
 escape x + 1;
 ]],
     run = 11,
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
 end
 pool[] Ff ffs;
 var&? int x;
-spawn Ff() in ffs => (x);
+spawn Ff() in ffs -> (x);
 escape x! + 1;
 ]],
     run = 11,
@@ -34039,7 +34067,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
                         // err
     var int v = 10;
     x = &v;
@@ -34049,7 +34077,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 
 ret = x!;
 await x!;
@@ -34061,7 +34089,7 @@ escape x!;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await FOREVER;
@@ -34070,7 +34098,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 
 escape x!;
 ]],
@@ -34078,14 +34106,14 @@ escape x!;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await async do end;
 end
 
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 
 var int ret = x!;
 await async do end;
@@ -34096,7 +34124,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
 end
@@ -34104,7 +34132,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 
 escape (x? as int) + 1;
 ]],
@@ -34120,7 +34148,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -34129,7 +34157,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 
 ret = x!;
 await x!;    // err
@@ -34141,7 +34169,7 @@ escape x!;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -34150,7 +34178,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 
 ret = x!;
 await x;
@@ -34162,7 +34190,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
 end
@@ -34170,7 +34198,7 @@ end
 var int ret = 0;
 
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 await x;
 ret = ret + (x? as int) + 1;
 
@@ -34183,7 +34211,7 @@ escape ret;
 -->> CODE / AWAIT / WATCHING
 
 Test { [[
-code/await Code (var int x) => int do
+code/await Code (var int x) -> int do
     escape 0;
 end
 var int&& a =
@@ -34198,7 +34226,7 @@ escape 0;
 }
 
 Test { [[
-code/await Code (var int x) => int
+code/await Code (var int x) -> int
 do
     x = x + 222;
     await 1s;
@@ -34215,7 +34243,7 @@ escape a!+1;
 }
 
 Test { [[
-code/await Code (var int x) => int
+code/await Code (var int x) -> int
 do
     escape x;
 end
@@ -34230,7 +34258,7 @@ escape a!+1;
 }
 
 Test { [[
-code/await Code (var int x) => int
+code/await Code (var int x) -> int
 do
     x = x + 1;
     await 1s;
@@ -34248,13 +34276,13 @@ escape a!;
 }
 
 Test { [[
-code/await Code (void) => (var& int y) => void do
+code/await Code (void) -> (var& int y) -> void do
     var int x = 0;
     y = &x;
 end
 
 var int y;
-watching Code() => (y) do
+watching Code() -> (y) do
     escape 1;
 end
 
@@ -34264,7 +34292,7 @@ escape 0;
 }
 
 Test { [[
-code/await Code (var& int x) => (var& int y) => int
+code/await Code (var& int x) -> (var& int y) -> int
 do
     y = &x;
     x = x + 1;
@@ -34275,7 +34303,7 @@ end
 var& int y;
 var int x = 10;
 var int? a =
-    watching Code(&x) => (y) do
+    watching Code(&x) -> (y) do
         y = y + 1;
         await 5s;
         escape 1;
@@ -34287,14 +34315,14 @@ escape a! + x;
 }
 
 Test { [[
-code/await Code (void) => (var& int y) => void do
+code/await Code (void) -> (var& int y) -> void do
     var int x = 10;
     y = &x;
 end
 
 var& int y;
 do
-    watching Code() => (y) do
+    watching Code() -> (y) do
     end
 end
 do
@@ -34307,7 +34335,7 @@ escape y;
 }
 
 Test { [[
-code/await Code (var& int x) => (var& int y, var& int z) => int
+code/await Code (var& int x) -> (var& int y, var& int z) -> int
 do
     y = &x;
     z = &x;
@@ -34318,7 +34346,7 @@ end
 var& int y, z;
 var int x = 10;
 var int? a =
-    watching Code(&x) => (y,z) do
+    watching Code(&x) -> (y,z) do
         y = y + 1;
         await 5s;
         escape 1;
@@ -34330,7 +34358,7 @@ escape a! + x;
 }
 
 Test { [[
-code/await Code (var& int x) => (var& int y) => int
+code/await Code (var& int x) -> (var& int y) -> int
 do
     y = &x;
     x = x + 1;
@@ -34339,7 +34367,7 @@ do
 end
 var& int y;
 var int x = 10;
-watching Code(&x) => (y) do
+watching Code(&x) -> (y) do
     y = y + 1;
     await 5s;
     escape y;
@@ -34356,14 +34384,14 @@ native/nohold _SDL_CreateWindow;
 native _SDL_Window;
 native/nohold _printf;
 
-code/await SDL_Go (void) => (var& _SDL_Window win) => void
+code/await SDL_Go (void) -> (var& _SDL_Window win) -> void
 do
     var&? _SDL_Window win_ = &_SDL_CreateWindow() finalize (win_) with end
     win = &win_!;
 end
 
 var& _SDL_Window win;
-watching SDL_Go() => (win) do
+watching SDL_Go() -> (win) do
     await 1s;
     _printf("%p\n", win);
 end
@@ -34384,7 +34412,7 @@ native/pre do
 end
 native/nohold _myfree;
 
-code/await Fx (void) => (var& _int vv) => void do
+code/await Fx (void) -> (var& _int vv) -> void do
     var&? _int v;
     do
         v = &_myalloc();
@@ -34412,7 +34440,7 @@ native/pre do
     }
 end
 
-code/await Fx (void) => (var& _int vv) => int do
+code/await Fx (void) -> (var& _int vv) -> int do
     var&? _int v;
     do
         v = &_myalloc();
@@ -34442,11 +34470,11 @@ native/pre do
 end
 native/nohold _myfree;
 
-code/await Fy (var& _int x) => int do
+code/await Fy (var& _int x) -> int do
     escape x + 1;
 end
 
-code/await Fx (void) => (var& _int vv) => int do
+code/await Fx (void) -> (var& _int vv) -> int do
     var&? _int v;
     do
         v = &_myalloc();
@@ -34481,12 +34509,12 @@ native/pre do
 end
 native/nohold _myfree;
 
-code/await Fy (var& _int x) => int do
+code/await Fy (var& _int x) -> int do
     await 1s;
     escape x + 1;
 end
 
-code/await Fx (void) => (var& _int vv) => int do
+code/await Fx (void) -> (var& _int vv) -> int do
     var&? _int v;
     do
         v = &_myalloc();
@@ -34504,7 +34532,7 @@ end
 var int ret = 0;
 var& _int vvv;
 var int? x =
-    watching Fx() => (vvv) do
+    watching Fx() -> (vvv) do
         ret = ret + vvv;
         await 1s;
     end;
@@ -34515,12 +34543,12 @@ escape ret+x!;
 }
 
 Test { [[
-code/await Ff (void) => (var int x) => void do
+code/await Ff (void) -> (var int x) -> void do
     x = 1;
     await FOREVER;
 end
 
-watching Ff() => (a) do
+watching Ff() -> (a) do
     escape a + 1;
 end
 
@@ -34529,14 +34557,14 @@ escape 0;
     dcls = 'line 1 : invalid `code´ declaration : `watching´ parameter #1 : expected `&´',
 }
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var int xx = 0;
     x = &xx;
     await FOREVER;
 end
 
 var& int a,b;
-watching Ff() => (a,b) do
+watching Ff() -> (a,b) do
 end
 
 escape 0;
@@ -34544,7 +34572,7 @@ escape 0;
     stmts = 'line 8 : invalid `watching´ : expected 1 argument(s)',
 }
 Test { [[
-code/await Ff (void) => (var& int x, var& int y) => void do
+code/await Ff (void) -> (var& int x, var& int y) -> void do
     var int xx = 0;
     x = &xx;
     y = &xx;
@@ -34552,7 +34580,7 @@ code/await Ff (void) => (var& int x, var& int y) => void do
 end
 
 var& int a;
-watching Ff() => (a) do
+watching Ff() -> (a) do
 end
 
 escape 0;
@@ -34560,7 +34588,7 @@ escape 0;
     stmts = 'line 9 : invalid `watching´ : expected 2 argument(s)',
 }
 Test { [[
-code/await Ff (void) => (var& int x, var& int y) => void do
+code/await Ff (void) -> (var& int x, var& int y) -> void do
     var int xx = 10;
     x = &xx;
     y = &xx;
@@ -34568,7 +34596,7 @@ code/await Ff (void) => (var& int x, var& int y) => void do
 end
 
 var& int a;
-watching Ff() => (_,a) do
+watching Ff() -> (_,a) do
     escape a + 1;
 end
 
@@ -34582,7 +34610,7 @@ data Int with
     var int x;
 end
 
-code/await Texs (void) => (vector&[10] Int nums) => void
+code/await Texs (void) -> (vector&[10] Int nums) -> void
 do
     vector[10] Int nums_ = [ ];
     nums = &nums_;
@@ -34590,7 +34618,7 @@ do
 end
 
 vector&[10] Int nums;
-watching Texs() => (nums) do
+watching Texs() -> (nums) do
     vector&[10] Int nums_ = &nums;
 end
 
@@ -34600,7 +34628,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
 end
 
 watching Ff() do
@@ -34615,10 +34643,10 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
 end
 
-code/await Gg (void) => void do
+code/await Gg (void) -> void do
     watching Ff() do
         var int xxx = 0;
     end
@@ -34633,7 +34661,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
 end
 
 var int ret;
@@ -34648,10 +34676,10 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (var _char&& path) => void do
+code/await Ff (var _char&& path) -> void do
 end
 
-code/await Gg (var _char&& path) => void
+code/await Gg (var _char&& path) -> void
 do
     watching Ff(path) do
     end
@@ -34668,7 +34696,7 @@ escape 1;
 -->> CODE / WATCHING / SPAWN
 
 Test { [[
-code/await Ff (void) => (var& int x) => void
+code/await Ff (void) -> (var& int x) -> void
 do
     var int x_ = 10;
     x = &x_;
@@ -34676,13 +34704,13 @@ do
 end
 
 var& int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 escape x;
 ]],
     stmts = 'line 9 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
 }
 Test { [[
-code/await Ff (void) => (var& int x) => FOREVER
+code/await Ff (void) -> (var& int x) -> FOREVER
 do
     var int x_ = 10;
     x = &x_;
@@ -34690,14 +34718,14 @@ do
 end
 
 var& int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 escape x;
 ]],
     run = 10,
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => FOREVER
+code/await Ff (void) -> (var& int x) -> FOREVER
 do
     var int x_ = 10;
     x = &x_;
@@ -34705,7 +34733,7 @@ do
 end
 
 var& int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 await 1s;
 escape x;
 ]],
@@ -34717,7 +34745,7 @@ native _V;
 native/pos do
     int V = 0;
 end
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
     every 1s do
         _V = _V + 1;
     end
@@ -34730,14 +34758,14 @@ escape _V;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void
+code/await Ff (void) -> (var&? int x) -> void
 do
     var int x_ = 10;
     x = &x_;
 end
 
 var&? int x;
-spawn Ff() => (x);
+spawn Ff() -> (x);
 await 1s;
 escape x!;
 ]],
@@ -34749,7 +34777,7 @@ escape x!;
 -->> CODE / WATCHING / SCOPES
 
 Test { [[
-code/await Ff (void) => (var& int v) => void do
+code/await Ff (void) -> (var& int v) -> void do
     var int vv = 0;
     v = &vv;
     await FOREVER;
@@ -34757,7 +34785,7 @@ end
 
 var  int vv = 0;
 var& int v;
-watching Ff() => (v) do
+watching Ff() -> (v) do
     v = &vv;
     escape v;
 end
@@ -34766,7 +34794,7 @@ escape 0;
     inits = 'line 10 : invalid binding : variable "v" is already bound (/tmp/tmp.ceu:9)',
 }
 Test { [[
-code/await Ff (void) => (var& int v) => void do
+code/await Ff (void) -> (var& int v) -> void do
     var int vv = 0;
     v = &vv;
     await FOREVER;
@@ -34774,7 +34802,7 @@ end
 
 var  int vv = 0;
 var& int v  = &vv;
-watching Ff() => (v) do
+watching Ff() -> (v) do
     escape v;
 end
 escape 0;
@@ -34783,7 +34811,7 @@ escape 0;
 
 }
 Test { [[
-code/await Ff (void) => (var& int v1, var& int v2) => void do
+code/await Ff (void) -> (var& int v1, var& int v2) -> void do
     var int vv = 10;
     v1 = &vv;
     v2 = &vv;
@@ -34791,7 +34819,7 @@ code/await Ff (void) => (var& int v1, var& int v2) => void do
 end
 
 var& int v;
-watching Ff() => (v,v) do
+watching Ff() -> (v,v) do
     escape v;
 end
 escape 0;
@@ -34800,14 +34828,14 @@ escape 0;
 
 }
 Test { [[
-code/await Ff (void) => (var& int v) => void do
+code/await Ff (void) -> (var& int v) -> void do
     var int vv = 10;
     v = &vv;
     await FOREVER;
 end
 
 var& int v;
-watching Ff() => (v) do
+watching Ff() -> (v) do
     escape v;
 end
 escape 0;
@@ -34817,14 +34845,14 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) => (vector&[1] int vec) => void do
+code/await Ff (void) -> (vector&[1] int vec) -> void do
     vector[1] int vec_ = [10];
     vec = &vec_;
     await FOREVER;
 end
 
 vector&[1] int vec;
-watching Ff() => (vec) do
+watching Ff() -> (vec) do
     escape vec[0];
 end
 escape 0;
@@ -34833,7 +34861,7 @@ escape 0;
 }
 
 Test { [[
-code/await Fx (void) => (var& int a, vector&[10] int b) => void
+code/await Fx (void) -> (var& int a, vector&[10] int b) -> void
 do
     var int x;
     a = &x;
@@ -34872,15 +34900,15 @@ escape ret;
 }
 
 Test { [[
-code/await Gg (void) => (var& int y) => void do
+code/await Gg (void) -> (var& int y) -> void do
     var int yy = 10;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (var int v) => (var& int x) => void do
+code/await Ff (var int v) -> (var& int x) -> void do
     var& int y;
-    watching Gg() => (y) do
+    watching Gg() -> (y) do
         x = &y;
         await FOREVER;
     end
@@ -34888,7 +34916,7 @@ end
 
 var& int x;
 var int x1;
-watching Ff(x1) => (x) do
+watching Ff(x1) -> (x) do
     escape x;
 end
 
@@ -34900,21 +34928,21 @@ escape 0;
 }
 
 Test { [[
-code/await Gg (void) => (var& int y) => void do
+code/await Gg (void) -> (var& int y) -> void do
     var int yy = 10;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x) => void do
-    watching Gg() => (x) do
+code/await Ff (void) -> (var& int x) -> void do
+    watching Gg() -> (x) do
         await FOREVER;
     end
     await 1s;
 end
 
 var& int x;
-watching Ff() => (x) do
+watching Ff() -> (x) do
     escape x;
 end
 
@@ -34925,13 +34953,13 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) => (var& int v) => void do
+code/await Ff (void) -> (var& int v) -> void do
     var int x = 10;
     v = &x;
 end
 
 var& int v;
-watching Ff() => (v)
+watching Ff() -> (v)
 do
     await FOREVER;
 end
@@ -34942,20 +34970,20 @@ await 1s;
 }
 
 Test { [[
-code/await Gg (void) => (var& int y) => void do
+code/await Gg (void) -> (var& int y) -> void do
     var int yy = 10;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int kkk) => void do
-    watching Gg() => (kkk) do
+code/await Ff (void) -> (var& int kkk) -> void do
+    watching Gg() -> (kkk) do
         await FOREVER;
     end
 end
 
 var& int xxx;
-watching Ff() => (xxx) do
+watching Ff() -> (xxx) do
     escape xxx;
 end
 
@@ -34964,15 +34992,15 @@ escape 0;
     run = 10,
 }
 Test { [[
-code/await Gg (void) => (var& int y) => void do
+code/await Gg (void) -> (var& int y) -> void do
     var int yy = 10;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x, var& int y) => void do
+code/await Ff (void) -> (var& int x, var& int y) -> void do
     var& int a;
-    watching Gg() => (a) do
+    watching Gg() -> (a) do
         x = &a;
         y = &a;
         await FOREVER;
@@ -34980,7 +35008,7 @@ code/await Ff (void) => (var& int x, var& int y) => void do
 end
 
 var& int x,y;
-watching Ff() => (x,y) do
+watching Ff() -> (x,y) do
     escape x+y;
 end
 
@@ -34989,17 +35017,17 @@ escape 0;
     run = 20,
 }
 Test { [[
-code/await Gg (void) => (var& int a) => void do
+code/await Gg (void) -> (var& int a) -> void do
     var int v = 10;
     a = &v;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var& int a1;
-    watching Gg() => (a1) do
+    watching Gg() -> (a1) do
         var& int a2;
-        watching Gg() => (a2) do
+        watching Gg() -> (a2) do
             x = &a1;
             await FOREVER;
         end
@@ -35007,7 +35035,7 @@ code/await Ff (void) => (var& int x) => void do
 end
 
 var& int x;
-watching Ff() => (x) do
+watching Ff() -> (x) do
     escape x;
 end
 
@@ -35017,23 +35045,23 @@ escape 0;
 }
 
 Test { [[
-code/await Gg (void) => (var& int y) => void do
+code/await Gg (void) -> (var& int y) -> void do
     var int yy = 10;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     nothing;
     var& int y;
-    watching Gg() => (y) do
+    watching Gg() -> (y) do
         x = &y;
         await FOREVER;
     end
 end
 
 var& int x;
-watching Ff() => (x) do
+watching Ff() -> (x) do
     escape x;
 end
 
@@ -35044,17 +35072,17 @@ escape 0;
 }
 
 Test { [[
-code/await Gg (var int x) => (var& int y) => void do
+code/await Gg (var int x) -> (var& int y) -> void do
     var int yy = 10+x;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var& int y1,y2,y3;
-    watching Gg(1) => (y1) do
-        watching Gg(2) => (y2) do
-            watching Gg(3) => (y3) do
+    watching Gg(1) -> (y1) do
+        watching Gg(2) -> (y2) do
+            watching Gg(3) -> (y3) do
                 var int v = y1+y2+y3;
                 x = &v;
                 await FOREVER;
@@ -35064,7 +35092,7 @@ code/await Ff (void) => (var& int x) => void do
 end
 
 var& int x;
-watching Ff() => (x) do
+watching Ff() -> (x) do
     escape x;
 end
 
@@ -35074,14 +35102,14 @@ escape 0;
 }
 
 Test { [[
-code/await Gg (var int x) => (var& int y) => void do
+code/await Gg (var int x) -> (var& int y) -> void do
     y = &x;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var& int y1;
-    watching Gg(1) => (y1) do
+    watching Gg(1) -> (y1) do
         do
             var int v = y1;
             x = &v;
@@ -35097,17 +35125,17 @@ escape 0;
 }
 
 Test { [[
-code/await Gg (var int x) => (var& int y) => void do
+code/await Gg (var int x) -> (var& int y) -> void do
     var int yy = 10+x;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var& int y1,y2;
-    watching Gg(1) => (y1) do
+    watching Gg(1) -> (y1) do
         nothing;
-        watching Gg(2) => (y2) do
+        watching Gg(2) -> (y2) do
             var int v = y1+y2;
             x = &v;
             await FOREVER;
@@ -35116,7 +35144,7 @@ code/await Ff (void) => (var& int x) => void do
 end
 
 var& int x;
-watching Ff() => (x) do
+watching Ff() -> (x) do
     escape x;
 end
 
@@ -35127,17 +35155,17 @@ escape 0;
 }
 
 Test { [[
-code/await Gg (var int x) => (var& int y) => void do
+code/await Gg (var int x) -> (var& int y) -> void do
     var int yy = 10+x;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var& int y1,y2;
-    watching Gg(1) => (y1) do
+    watching Gg(1) -> (y1) do
         await 1s;
-        watching Gg(2) => (y2) do
+        watching Gg(2) -> (y2) do
             var int v = y1+y2;
             x = &v;
             await FOREVER;
@@ -35146,7 +35174,7 @@ code/await Ff (void) => (var& int x) => void do
 end
 
 var& int x;
-watching Ff() => (x) do
+watching Ff() -> (x) do
     escape x;
 end
 
@@ -35158,16 +35186,16 @@ escape 0;
 }
 
 Test { [[
-code/await Gg (var int x) => (var& int y) => void do
+code/await Gg (var int x) -> (var& int y) -> void do
     var int yy = 10+x;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var& int y1, y2;
-    watching Gg(1) => (y1) do
-        watching Gg(2) => (y2) do
+    watching Gg(1) -> (y1) do
+        watching Gg(2) -> (y2) do
             var int v = y1+y2;
             x = &v;
             await FOREVER;
@@ -35177,7 +35205,7 @@ code/await Ff (void) => (var& int x) => void do
 end
 
 var& int x;
-watching Ff() => (x) do
+watching Ff() -> (x) do
     escape x;
 end
 
@@ -35188,16 +35216,16 @@ escape 0;
 }
 
 Test { [[
-code/await Gg (var int x) => (var& int y) => void do
+code/await Gg (var int x) -> (var& int y) -> void do
     var int yy = 10+x;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var& int y1, y2;
-    watching Gg(1) => (y1) do
-        watching Gg(2) => (y2) do
+    watching Gg(1) -> (y1) do
+        watching Gg(2) -> (y2) do
             var int v = y1+y2;
             x = &v;
             await FOREVER;
@@ -35207,7 +35235,7 @@ code/await Ff (void) => (var& int x) => void do
 end
 
 var& int x;
-watching Ff() => (x) do
+watching Ff() -> (x) do
     escape x;
 end
 
@@ -35217,17 +35245,17 @@ escape 0;
 }
 
 Test { [[
-code/await Gg (var int x) => (var& int y) => void do
+code/await Gg (var int x) -> (var& int y) -> void do
     var int yy = 10+x;
     y = &yy;
     await FOREVER;
 end
 
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var& int y1, y2, y3;
-    watching Gg(1) => (y1)
-           , Gg(2) => (y2)
-           , Gg(3) => (y3)
+    watching Gg(1) -> (y1)
+           , Gg(2) -> (y2)
+           , Gg(3) -> (y3)
     do
         var int v = y1+y2+y3;
         x = &v;
@@ -35236,7 +35264,7 @@ code/await Ff (void) => (var& int x) => void do
 end
 
 var& int x;
-watching Ff() => (x) do
+watching Ff() -> (x) do
     escape x;
 end
 
@@ -35246,7 +35274,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (var int x) => (event& int e) => void do
+code/await Ff (var int x) -> (event& int e) -> void do
     event int e_;
     e = &e_;
     await e;
@@ -35258,7 +35286,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (var int x) => (event& int e) => int do
+code/await Ff (var int x) -> (event& int e) -> int do
     event int e_;
     e = &e_;
     var int v = await e_;
@@ -35267,7 +35295,7 @@ end
 
 event& int e;
 var int? ret =
-    watching Ff(10) => (e) do
+    watching Ff(10) -> (e) do
         emit e(100);
         escape 0;
     end;
@@ -35278,7 +35306,7 @@ escape ret!;
 }
 
 Test { [[
-code/await Ff (var int x) => (event& void e, var& int v) => int do
+code/await Ff (var int x) -> (event& void e, var& int v) -> int do
     event void e_;
     var int v_ = 10;
     e = &e_;
@@ -35290,7 +35318,7 @@ end
 event& void e;
 var& int v;
 var int? ret =
-    watching Ff(10) => (e,v) do
+    watching Ff(10) -> (e,v) do
         emit e;
         escape 0;
     end;
@@ -35301,7 +35329,7 @@ escape ret!;
 }
 
 Test { [[
-code/await Ff (var int x, event& int fff) => int do
+code/await Ff (var int x, event& int fff) -> int do
     var int v = await fff;
     escape v + x;
 end
@@ -35320,7 +35348,7 @@ escape ret!;
 }
 
 Test { [[
-code/await Ff (var int x, event& (int) e) => int do
+code/await Ff (var int x, event& (int) e) -> int do
     var int v = await e;
     escape v + x;
 end
@@ -35339,20 +35367,20 @@ escape ret!;
 }
 
 Test { [[
-code/await Ff (var int v) => (var& int x) => void do
+code/await Ff (var int v) -> (var& int x) -> void do
     x = &v;
     await FOREVER;
 end
 
-code/await Gg (void) => void do
+code/await Gg (void) -> void do
     await FOREVER;
 end
 
 var& int ctrl1, ctrl2;
 
-watching Ff(2) => (ctrl1) do
+watching Ff(2) -> (ctrl1) do
     watching Gg() do
-        watching Ff(1) => (ctrl2) do
+        watching Ff(1) -> (ctrl2) do
             escape ctrl1+ctrl2;
         end
     end
@@ -35365,40 +35393,40 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (var int v) => (var& int x) => void do
+code/await Ff (var int v) -> (var& int x) -> void do
     x = &v;
     await FOREVER;
 end
 
-code/await Gg (void) => void do
+code/await Gg (void) -> void do
     await FOREVER;
 end
 
 var& int ctrl1, ctrl2;
 
-spawn Ff(1) => (ctrl1);
+spawn Ff(1) -> (ctrl1);
 spawn Gg();
-spawn Ff(2) => (ctrl2);
+spawn Ff(2) -> (ctrl2);
 
 escape ctrl1+ctrl2;
 ]],
     stmts = 'line 12 : invalid binding : argument #1 : terminating `code´ : expected alias `&?´ declaration',
 }
 Test { [[
-code/await Ff (var int v) => (var& int x) => FOREVER do
+code/await Ff (var int v) -> (var& int x) -> FOREVER do
     x = &v;
     await FOREVER;
 end
 
-code/await Gg (void) => void do
+code/await Gg (void) -> void do
     await FOREVER;
 end
 
 var& int ctrl1, ctrl2;
 
-spawn Ff(1) => (ctrl1);
+spawn Ff(1) -> (ctrl1);
 spawn Gg();
-spawn Ff(2) => (ctrl2);
+spawn Ff(2) -> (ctrl2);
 
 escape ctrl1+ctrl2;
 ]],
@@ -35406,7 +35434,7 @@ escape ctrl1+ctrl2;
 }
 
 Test { [[
-code/await Ff (var int x) => (var& int y) => void do
+code/await Ff (var int x) -> (var& int y) -> void do
     y = &x;
     if x%2 == 1 then
         await FOREVER;
@@ -35416,7 +35444,7 @@ end
 var int ret = 0;
 var& int nn;
 var& int n;
-watching Ff(10) => (n) do
+watching Ff(10) -> (n) do
     ret = ret + n;
     nn = &n;
 end
@@ -35427,18 +35455,18 @@ escape nn;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => int
+code/await Ff (void) -> (var& int x) -> int
 do
     var int xx = 10;
     x = &xx;
     escape 10;
 end
 
-code/await Gg (void) => (var& int x) => int
+code/await Gg (void) -> (var& int x) -> int
 do
     var& int xx;
     var int? ret =
-        watching Ff() => (xx) do
+        watching Ff() -> (xx) do
             x = &xx;
         end;
     escape ret!;
@@ -35460,7 +35488,7 @@ escape ret;
 -->>> CODE / AWAIT / SPAWN
 
 Test { [[
-code/await Tx (var& int a)=>int do
+code/await Tx (var& int a)->int do
     a = 5;
     escape 1;
 end
@@ -35481,7 +35509,7 @@ Test { [[
 native/pos do
     int V = 10;
 end
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     _V = 100;
 end
 spawn Tx();
@@ -35495,7 +35523,7 @@ native/pos do
     int V = 10;
 end
 native _V;
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     _V = 100;
 end
 pool[1] Tx ts;
@@ -35506,7 +35534,7 @@ escape _V;
 }
 
 Test { [[
-code/await Tx (var& int a)=>void do
+code/await Tx (var& int a)->void do
     a = do
             escape 5;
         end;
@@ -35520,7 +35548,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = 5;
 end
@@ -35534,7 +35562,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = aaa + 5;
     await FOREVER;
@@ -35549,7 +35577,7 @@ escape a;
     run = { ['~>2s']=10 },
 }
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -35567,7 +35595,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -35584,7 +35612,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -35603,7 +35631,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     aaa = aaa + 5;
 end
 var int a = 0;
@@ -35618,7 +35646,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -35641,11 +35669,11 @@ native/pos do
     int V = 1;
 end
 
-code/await Jj (void)=>void do
+code/await Jj (void)->void do
     _V = _V * 2;
 end
 
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     pool[1] Jj js;
     spawn Jj() in js;
     _V = _V + 1;
@@ -35670,11 +35698,11 @@ native/pos do
     int V = 1;
 end
 
-code/await Jj (void)=>void do
+code/await Jj (void)->void do
     _V = _V * 2;
 end
 
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     pool[1] Jj js;
     spawn Jj() in js;
     _V = _V + 1;
@@ -35702,7 +35730,7 @@ native/pos do
     int V = 1;
 end;
 
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     event void e;
     emit e;
     _V = 10;
@@ -35723,7 +35751,7 @@ native/pos do
     int V = 1;
 end;
 
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     await 1s;
     _V = 10;
 end
@@ -35746,7 +35774,7 @@ end
 watching 1s do
     await 500ms;
 
-    code/await Fire (void) => void do end
+    code/await Fire (void) -> void do end
 
     watching 1ms do
         pool[0] Fire rocks;
@@ -35766,7 +35794,7 @@ escape _V;
 }
 
 Test { [[
-code/await Tx (var& int a)=>int do
+code/await Tx (var& int a)->int do
     a = 5;
     escape 1;
 end
@@ -35788,7 +35816,7 @@ native/pos do
     int V = 10;
 end
 native _V;
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     _V = 100;
 end
 pool[] Tx ts;
@@ -35799,7 +35827,7 @@ escape _V;
 }
 
 Test { [[
-code/await Tx (var& int a)=>void do
+code/await Tx (var& int a)->void do
     a = do
             escape 5;
         end;
@@ -35813,7 +35841,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = 5;
 end
@@ -35827,7 +35855,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -35845,7 +35873,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -35864,7 +35892,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -35881,7 +35909,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -35903,7 +35931,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     aaa = aaa + 5;
 end
 var int a = 0;
@@ -35921,7 +35949,7 @@ escape a;
 }
 
 Test { [[
-code/await Tx (var& int aaa)=>void do
+code/await Tx (var& int aaa)->void do
     await 1s;
     aaa = aaa + 5;
     await 1s;
@@ -35947,11 +35975,11 @@ native/pos do
     int V = 1;
 end
 
-code/await Jj (void)=>void do
+code/await Jj (void)->void do
     _V = _V * 2;
 end
 
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     pool[1] Jj js;
     spawn Jj() in js;
     _V = _V + 1;
@@ -35979,11 +36007,11 @@ native/pos do
     int V = 1;
 end
 
-code/await Jj (void)=>void do
+code/await Jj (void)->void do
     _V = _V * 2;
 end
 
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     pool[1] Jj js;
     spawn Jj() in js;
     _V = _V + 1;
@@ -36014,7 +36042,7 @@ native/pos do
     int V = 1;
 end;
 
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     event void e;
     emit e;
     _V = 10;
@@ -36035,7 +36063,7 @@ native/pos do
     int VVV = 1;
 end;
 
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     await 1s;
     _VVV = 10;
 end
@@ -36058,7 +36086,7 @@ end
 watching 1s do
     await 500ms;
 
-    code/await Fire (void) => void do end
+    code/await Fire (void) -> void do end
 
     watching 1ms do
         pool[] Fire rocks;
@@ -36082,7 +36110,7 @@ escape _V;
 Test { [[
 event void e;
 
-code/await Ff (event& void e) => void do
+code/await Ff (event& void e) -> void do
     emit e;
 end
 
@@ -36099,7 +36127,7 @@ escape 1;
 Test { [[
 event void e;
 
-code/await Ff (event& void e) => void do
+code/await Ff (event& void e) -> void do
     emit e;
 end
 
@@ -36119,7 +36147,7 @@ escape 1;
 Test { [[
 event void e;
 
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
     emit outer.e;
 end
 
@@ -36137,7 +36165,7 @@ escape 1;
 -->> CODE / AWAIT / EMIT-INTERNAL
 
 Test { [[
-code/await Tx (var& int ret, var int x)=>void do
+code/await Tx (var& int ret, var int x)->void do
     event int e;
     par do
         var int v = await e;
@@ -36168,7 +36196,7 @@ escape ret;
 }
 
 Test { [[
-code/await Tx (var& int ret, var int x)=>void do
+code/await Tx (var& int ret, var int x)->void do
     event int e;
     await 1s;
     par do
@@ -36204,13 +36232,13 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var& Aa a, var int xxx) => int;
+code/tight Ff (var& Aa a, var int xxx) -> int;
 
 data Aa.Bb with
     var int b;
 end
 
-code/tight Ff (var& Aa.Bb b, var int yyy) => int do
+code/tight Ff (var& Aa.Bb b, var int yyy) -> int do
     escape 0;
 end
 
@@ -36225,7 +36253,7 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var& Aa a, var int xxx) => int do
+code/tight Ff (var& Aa a, var int xxx) -> int do
     escape 0;
 end
 
@@ -36233,7 +36261,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight Ff (var& Aa.Bb b, var int yyy) => int do
+code/tight Ff (var& Aa.Bb b, var int yyy) -> int do
     escape 0;
 end
 
@@ -36248,7 +36276,7 @@ data Ui with
     var int x;
 end
 
-code/await/dynamic Ui_go (var& Ui ui) => void do
+code/await/dynamic Ui_go (var& Ui ui) -> void do
 end
 
 var Ui ui = val Ui(10);
@@ -36266,7 +36294,7 @@ data Ui with
     var int x;
 end
 
-code/await/dynamic Ui_go (dynamic var& Ui ui) => void do
+code/await/dynamic Ui_go (dynamic var& Ui ui) -> void do
 end
 
 var Ui ui = val Ui(10);
@@ -36284,7 +36312,7 @@ data Ui with
     var int x;
 end
 
-code/await/dynamic Ui_go (dynamic var& Ui ui) => void do
+code/await/dynamic Ui_go (dynamic var& Ui ui) -> void do
 end
 
 var Ui ui = val Ui(10);
@@ -36298,7 +36326,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Ff (void) => void do
+code/tight Ff (void) -> void do
 end
 
 escape call/dynamic Ff();
@@ -36325,7 +36353,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (dynamic var Aa&& a, var int xxx) => int do
+code/tight/dynamic Ff (dynamic var Aa&& a, var int xxx) -> int do
     escape a:a + xxx;
 end
 
@@ -36333,7 +36361,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (dynamic var Aa.Bb&& b, var int yyy) => int do
+code/tight/dynamic Ff (dynamic var Aa.Bb&& b, var int yyy) -> int do
     escape b:b + yyy;
 end
 
@@ -36349,7 +36377,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (dynamic var Aa&& a, var int xxx) => int do
+code/tight/dynamic Ff (dynamic var Aa&& a, var int xxx) -> int do
     escape a:a + xxx;
 end
 
@@ -36357,7 +36385,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (dynamic var Aa.Bb&& b, var int yyy) => int do
+code/tight/dynamic Ff (dynamic var Aa.Bb&& b, var int yyy) -> int do
     escape b:b + yyy;
 end
 
@@ -36374,7 +36402,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (var int xxx, dynamic var Aa&& a) => int do
+code/tight/dynamic Ff (var int xxx, dynamic var Aa&& a) -> int do
     escape a:a + xxx;
 end
 
@@ -36382,7 +36410,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (var int yyy, dynamic var Aa.Bb&& b) => int do
+code/tight/dynamic Ff (var int yyy, dynamic var Aa.Bb&& b) -> int do
     escape b:b + yyy;
 end
 
@@ -36400,7 +36428,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (dynamic var& Aa a1, var int xxx, dynamic var& Aa a2) => int do
+code/tight/dynamic Ff (dynamic var& Aa a1, var int xxx, dynamic var& Aa a2) -> int do
     escape a1.a + xxx + a2.a;
 end
 
@@ -36408,7 +36436,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (dynamic var& Aa.Bb b1, var int yyy, dynamic var& Aa.Bb b2) => int do
+code/tight/dynamic Ff (dynamic var& Aa.Bb b1, var int yyy, dynamic var& Aa.Bb b2) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b1.b + yyy + b2.b;
 end
@@ -36426,7 +36454,7 @@ data Aa with
     var int a;
 end
 
-code/tight/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
+code/tight/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -36434,7 +36462,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/tight/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) => int do
+code/tight/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
     escape b.b + (call/static Ff(&b as Aa,11)) + yyy;
 end
 
@@ -36451,7 +36479,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
+code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -36468,7 +36496,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
+code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -36476,7 +36504,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) => int do
+code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b.b + yyy;
 end
@@ -36494,7 +36522,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
+code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -36502,7 +36530,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) => int do
+code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b.b + yyy;
 end
@@ -36516,7 +36544,7 @@ escape 0;
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
 end
 spawn Ff();
 escape 1;
@@ -36525,7 +36553,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (var& int ret) => void do
+code/await Ff (var& int ret) -> void do
     ret = 1;
 end
 var int ret = 0;
@@ -36540,7 +36568,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) => void do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) -> void do
     ret = ret + a.a + xxx;
 end
 
@@ -36548,7 +36576,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) => void do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) -> void do
     ret = ret + b.b + yyy;
 end
 
@@ -36571,7 +36599,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) => void do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa a, var int xxx) -> void do
     ret = ret + a.a + xxx;
 end
 
@@ -36579,7 +36607,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) => void do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb b, var int yyy) -> void do
     ret = ret + b.b + yyy;
 end
 
@@ -36602,7 +36630,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
+code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -36610,7 +36638,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) => int do
+code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b.b + yyy;
 end
@@ -36631,7 +36659,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a1, var int xxx, dynamic var& Aa a2) => int do
+code/await/dynamic Ff (dynamic var& Aa a1, var int xxx, dynamic var& Aa a2) -> int do
     escape a1.a + xxx + a2.a;
 end
 
@@ -36639,7 +36667,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b1, var int yyy, dynamic var& Aa.Bb b2) => int do
+code/await/dynamic Ff (dynamic var& Aa.Bb b1, var int yyy, dynamic var& Aa.Bb b2) -> int do
     //escape b.b + (call Ff(&b as Aa, 11)) + yyy;
     escape b1.b + yyy + b2.b;
 end
@@ -36660,7 +36688,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, dynamic var int xxx) => int do
+code/await/dynamic Ff (dynamic var& Aa a, dynamic var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -36668,7 +36696,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b, dynamic var int yyy) => int do
+code/await/dynamic Ff (dynamic var& Aa.Bb b, dynamic var int yyy) -> int do
     var int v = await/static Ff(&b as Aa,11);
     escape b.b + v + yyy;
 end
@@ -36689,7 +36717,7 @@ data Aa with
     var int a;
 end
 
-code/await/dynamic Ff (dynamic var& Aa a, var int xxx) => int do
+code/await/dynamic Ff (dynamic var& Aa a, var int xxx) -> int do
     escape a.a + xxx;
 end
 
@@ -36697,7 +36725,7 @@ data Aa.Bb with
     var int b;
 end
 
-code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) => int do
+code/await/dynamic Ff (dynamic var& Aa.Bb b, var int yyy) -> int do
     var int v = await/static Ff(&b as Aa,11);
     escape b.b + v + yyy;
 end
@@ -36717,10 +36745,10 @@ Test { [[
 data Aa;
 data Aa.Bb;
 
-code/tight/dynamic Ff (dynamic var& Aa v1, dynamic var& Aa v2) => int do
+code/tight/dynamic Ff (dynamic var& Aa v1, dynamic var& Aa v2) -> int do
     escape 1;
 end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2) => int do
+code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2) -> int do
     escape 2;
 end
 
@@ -36739,16 +36767,16 @@ data Aa.Bb;
 data Aa.Bb.Xx;
 data Aa.Cc;
 
-code/tight/dynamic Ff (dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) => int do
+code/tight/dynamic Ff (dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) -> int do
     escape 1;
 end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) => int do
+code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) -> int do
     escape 2;
 end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) => int do
+code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) -> int do
     escape 4;
 end
-code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) => int do
+code/tight/dynamic Ff (dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) -> int do
     escape 8;
 end
 
@@ -36770,10 +36798,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (var Bb b, var Aa a) => void do
+code/tight/dynamic Ff (var Bb b, var Aa a) -> void do
 end
 
-code/tight/dynamic Ff (var Bb.Cc c, var Aa a) => void do
+code/tight/dynamic Ff (var Bb.Cc c, var Aa a) -> void do
 end
 ]],
     dcls = 'line 7 : invalid `dynamic´ declaration : expected dynamic parameters',
@@ -36786,10 +36814,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (dynamic var& Bb b, dynamic var Aa a) => void do
+code/tight/dynamic Ff (dynamic var& Bb b, dynamic var Aa a) -> void do
 end
 
-code/tight/dynamic Ff (dynamic var& Bb.Cc c, dynamic var Aa a) => void do
+code/tight/dynamic Ff (dynamic var& Bb.Cc c, dynamic var Aa a) -> void do
 end
 
 escape 1;
@@ -36804,10 +36832,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (dynamic var& Bb b, var Aa a) => void do
+code/tight/dynamic Ff (dynamic var& Bb b, var Aa a) -> void do
 end
 
-code/tight/dynamic Ff (dynamic var& Bb.Cc c, var Aa a) => void do
+code/tight/dynamic Ff (dynamic var& Bb.Cc c, var Aa a) -> void do
 end
 
 escape 1;
@@ -36823,10 +36851,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (var Aa a, dynamic var& Bb b) => void do
+code/tight/dynamic Ff (var Aa a, dynamic var& Bb b) -> void do
 end
 
-code/tight/dynamic Ff (var Aa a, dynamic var& Bb.Cc c) => void do
+code/tight/dynamic Ff (var Aa a, dynamic var& Bb.Cc c) -> void do
 end
 
 escape 1;
@@ -36843,11 +36871,11 @@ end
 data Bb.Cc;
 
 code/tight/dynamic Ff (var& Aa a, dynamic var& Bb b,
-                       var Aa a2, dynamic var& Bb b2, var Aa a3) => void do
+                       var Aa a2, dynamic var& Bb b2, var Aa a3) -> void do
 end
 
 code/tight/dynamic Ff (var& Aa a, dynamic var& Bb.Cc c,
-                       var Aa a2, dynamic var& Bb.Cc c2, var Aa a3) => void do
+                       var Aa a2, dynamic var& Bb.Cc c2, var Aa a3) -> void do
 end
 
 escape 1;
@@ -36863,10 +36891,10 @@ data Bb with
 end
 data Bb.Cc;
 
-code/tight/dynamic Ff (dynamic var& Bb b,    var& Aa a) => void do
+code/tight/dynamic Ff (dynamic var& Bb b,    var& Aa a) -> void do
 end
 
-code/tight/dynamic Ff (dynamic var& Bb.Cc c, var& Aa a) => void do
+code/tight/dynamic Ff (dynamic var& Bb.Cc c, var& Aa a) -> void do
 end
 
 escape 1;
@@ -36879,10 +36907,10 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-code/tight Play_New (var& Dd d) => void;
-code/tight Play_New (var& Dd d) => void do
+code/tight Play_New (var& Dd d) -> void;
+code/tight Play_New (var& Dd d) -> void do
 end
-code/tight Play_New (var& Dd d) => void;
+code/tight Play_New (var& Dd d) -> void;
 
 var Dd d = _;
 
@@ -36898,8 +36926,8 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-//code/tight/dynamic Play_New (dynamic var& Dd d) => void;
-code/tight/dynamic Play_New (dynamic var& Dd d) => void do
+//code/tight/dynamic Play_New (dynamic var& Dd d) -> void;
+code/tight/dynamic Play_New (dynamic var& Dd d) -> void do
 end
 
 var Dd d = _;
@@ -36916,10 +36944,10 @@ Test { [[
 data Dd;
 data Dd.Ee;
 
-code/tight/dynamic Play_New (dynamic var& Dd d) => void;
-code/tight/dynamic Play_New (dynamic var& Dd d) => void do
+code/tight/dynamic Play_New (dynamic var& Dd d) -> void;
+code/tight/dynamic Play_New (dynamic var& Dd d) -> void do
 end
-code/tight/dynamic Play_New (dynamic var& Dd d) => void;
+code/tight/dynamic Play_New (dynamic var& Dd d) -> void;
 
 var Dd d = _;
 
@@ -36935,7 +36963,7 @@ Test { [[
 data Aa;
 data Aa.Bb;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) => void do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa v1) -> void do
     ret = ret + 15;
 end
 
@@ -36957,20 +36985,20 @@ data Aa.Bb;
 data Aa.Bb.Xx;
 data Aa.Cc;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) => void;
+code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) -> void;
 
 pool[10] Ff ffs;
 
-code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) => void do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa v1, dynamic var& Aa v2, dynamic var& Aa v3) -> void do
     ret = ret + 1;
 end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) => void do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa v2, dynamic var& Aa.Bb v3) -> void do
     ret = ret + 2;
 end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) => void do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb v2, dynamic var& Aa.Bb v3) -> void do
     ret = ret + 4;
 end
-code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) => void do
+code/await/dynamic Ff (var& int ret, dynamic var& Aa.Bb v1, dynamic var& Aa.Bb.Xx v2, dynamic var& Aa.Bb v3) -> void do
     ret = ret + 8;
 end
 
@@ -36995,7 +37023,7 @@ escape ret;
 -->> CODE / AWAIT / RECURSIVE
 
 Test { [[
-code/await Tx (void) => void do
+code/await Tx (void) -> void do
     await Tx();
 end
 escape 0;
@@ -37010,7 +37038,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Tx (pool&[] Tx txs) => void do
+code/await Tx (pool&[] Tx txs) -> void do
     _V = _V + 1;
     spawn Tx(&txs) in txs;
 end
@@ -37033,7 +37061,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Tx (void) => void do
+code/await Tx (void) -> void do
     pool[] Tx ts;
     _V = _V + 1;
     spawn Tx() in ts;
@@ -37052,7 +37080,7 @@ escape _V;
 }
 
 Test { [[
-code/await Tx (var& Tx txs) => void;
+code/await Tx (var& Tx txs) -> void;
 escape 0;
 ]],
     dcls = 'line 1 : invalid declaration : unexpected context for `code´ "Tx"',
@@ -37086,7 +37114,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
     await FOREVER;
 end
 
@@ -37103,7 +37131,7 @@ escape n+1;
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
     await FOREVER;
 end
 
@@ -37124,7 +37152,7 @@ escape n;
 }
 
 Test { [[
-code/await Ff (var int x) => void do
+code/await Ff (var int x) -> void do
     if x == 1 then
         await FOREVER;
     end
@@ -37147,7 +37175,7 @@ escape n;
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
 end
 
 pool[1] Ff fs;
@@ -37162,7 +37190,7 @@ escape n+1;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var int xx = 10;
     x = &xx;
     await FOREVER;
@@ -37180,7 +37208,7 @@ escape n+1;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var int xx = 10;
     x = &xx;
     await FOREVER;
@@ -37198,7 +37226,7 @@ escape n+1;
 }
 
 Test { [[
-code/await Ff (var int x) => (var& int y) => void do
+code/await Ff (var int x) -> (var& int y) -> void do
     y = &x;
     if x == 1 then
         await FOREVER;
@@ -37222,7 +37250,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (var int x) => (var& int y) => void do
+code/await Ff (var int x) -> (var& int y) -> void do
     y = &x;
     if x%2 == 1 then
         await FOREVER;
@@ -37247,7 +37275,7 @@ escape ret;
 }
 
 Test { [[
-code/await Gg (void) => void do
+code/await Gg (void) -> void do
     await FOREVER;
 end
 
@@ -37274,11 +37302,11 @@ escape ret;
 }
 
 Test { [[
-code/await Gg (void) => void do
+code/await Gg (void) -> void do
     await FOREVER;
 end
 
-code/await Ff (pool&[4] Gg gs, var& int ret) => void do
+code/await Ff (pool&[4] Gg gs, var& int ret) -> void do
     loop in gs do
         ret = ret + 1;
     end
@@ -37319,7 +37347,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
     every 1s do
         _V = _V + 1;
     end
@@ -37337,7 +37365,7 @@ escape _V;
 }
 
 Test { [[
-code/await Ff (void) => (var& int y) => void do
+code/await Ff (void) -> (var& int y) -> void do
     var int x = 0;
     y = &x;
 end
@@ -37357,7 +37385,7 @@ escape nn;
 }
 
 Test { [[
-code/await Ff (void) => void do
+code/await Ff (void) -> void do
 end
 
 pool[] Ff ffs;
@@ -37372,7 +37400,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
     var int v = 10;
     x = &v;
     await FOREVER;
@@ -37391,7 +37419,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (event& void e) => void do
+code/await Ff (event& void e) -> void do
     await async do end
     emit e;
 end
@@ -37411,12 +37439,12 @@ native/pos do
     int V = 0;
 end
 
-code/await Gg (void) => FOREVER do
+code/await Gg (void) -> FOREVER do
     _V = _V + 1;
     await FOREVER;
 end
 
-code/await Ff (pool&[] Gg ggs) => void do
+code/await Ff (pool&[] Gg ggs) -> void do
     spawn Gg() in ggs;
     spawn Gg() in ggs;
 end
@@ -37432,7 +37460,7 @@ escape _V;
 -->> POOL / LOOP
 
 Test { [[
-code/await Ff (void) => (var& int x) => void do
+code/await Ff (void) -> (var& int x) -> void do
                         // error
     var int v = 10;
     x = &v;
@@ -37453,7 +37481,7 @@ escape (x? as int) + 1;
     stmts = 'line 12 : invalid binding : argument #1 : unmatching alias `&´ declaration',
 }
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
 end
@@ -37473,7 +37501,7 @@ escape (x? as int) + 1;
     stmts = 'line 12 : invalid binding : unmatching alias `&´ declaration',
 }
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
 end
@@ -37491,7 +37519,7 @@ escape (x? as int) + 1;
     run = 1,
 }
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
 end
@@ -37511,7 +37539,7 @@ escape (x? as int) + 1;
     run = 1,
 }
 Test { [[
-code/await Ff (void) => (var&? int yyy) => void do
+code/await Ff (void) -> (var&? int yyy) -> void do
     var int v = 10;
     yyy = &v;
     await 1s;
@@ -37530,7 +37558,7 @@ escape xxx!;
     run = 10,
 }
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -37551,7 +37579,7 @@ escape xxx!;
     run = 10,
 }
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -37571,7 +37599,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -37597,7 +37625,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await 1s;
@@ -37625,7 +37653,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (var& int ret) => (var& int x, event& void e) => FOREVER do
+code/await Ff (var& int ret) -> (var& int x, event& void e) -> FOREVER do
     var int x_ = 0;
     x = &x_;
     event void e_;
@@ -37654,7 +37682,7 @@ escape ret;
 }
 
 Test { [[
-code/await Ff (void) => (var& int x, event& void e) => void do
+code/await Ff (void) -> (var& int x, event& void e) -> void do
     var int x_ = 0;
     x = &x_;
     event void e_;
@@ -37679,7 +37707,7 @@ escape 1;
 Test { [[
 input void A;
 
-code/await Ff (void) => (event&? void eee) => void do
+code/await Ff (void) -> (event&? void eee) -> void do
     event void eee_;
     eee = &eee_;
     await eee_;
@@ -37706,7 +37734,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => (event&? void e) => void do
+code/await Ff (void) -> (event&? void e) -> void do
     event void e_;
     e = &e_;
     await e_;
@@ -37733,7 +37761,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Ff (void) => (event&? void e) => void do
+code/await Ff (void) -> (event&? void e) -> void do
     event void e_;
     e = &e_;
     await e_;
@@ -37765,7 +37793,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x, event&? void e) => void do
+code/await Ff (void) -> (var&? int x, event&? void e) -> void do
     var int v = 10;
     x = &v;
     event void e_;
@@ -37795,7 +37823,7 @@ escape ret;
     run = 10,
 }
 Test { [[
-code/await Ff (void) => (var&? int x, event&? void e) => void do
+code/await Ff (void) -> (var&? int x, event&? void e) -> void do
     var int v = 10;
     x = &v;
     event void e_;
@@ -37857,7 +37885,7 @@ escape 1;
 Test { [[
 input void A;
 
-code/await Ff (void) => (var&? int x, event&? void e) => void do
+code/await Ff (void) -> (var&? int x, event&? void e) -> void do
     var int x_ = 0;
     x = &x_;
     event void e_;
@@ -37900,7 +37928,7 @@ escape 1;
 }
 
 Test { [[
-code/await Ff (void) => (var&? int x, event&? int e) => void do
+code/await Ff (void) -> (var&? int x, event&? int e) -> void do
     var int v = 10;
     x = &v;
 
@@ -37917,7 +37945,7 @@ pool[] Ff ffs;
 var&?   int x;
 event&? int e;
 
-spawn Ff() in ffs => (x,e);
+spawn Ff() in ffs -> (x,e);
 
 var int ret = 0;
 
@@ -37937,7 +37965,7 @@ escape ret;
 
 
 Test { [[
-code/await Ff (void) => (var&? int x) => void do
+code/await Ff (void) -> (var&? int x) -> void do
     var int v = 10;
     x = &v;
     await async do end
@@ -37946,7 +37974,7 @@ end
 pool[] Ff ffs;
 
 var&? int x;
-spawn Ff() in ffs => (x);
+spawn Ff() in ffs -> (x);
 escape x!;
 ]],
     run = 10,
@@ -37959,7 +37987,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Bird (void) => (event&? void e) => FOREVER
+code/await Bird (void) -> (event&? void e) -> FOREVER
 do
     event void e_;
     e = &e_;
@@ -38000,7 +38028,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Bird (void) => (event&? void e) => void
+code/await Bird (void) -> (event&? void e) -> void
 do
     event void e_;
     e = &e_;
@@ -38050,7 +38078,7 @@ end
 
 data Ii;
 
-code/await Cloud (void) => (var& Ii i) => FOREVER do
+code/await Cloud (void) -> (var& Ii i) -> FOREVER do
     var Ii i_ = val Ii();
     i = &i_;
     await FOREVER;
@@ -38060,9 +38088,9 @@ pool[] Cloud clouds;
 spawn Cloud() in clouds;
 spawn Cloud() in clouds;
 
-code/await Collides (void) => void do end
+code/await Collides (void) -> void do end
 
-code/await Collisions (void) => void do
+code/await Collisions (void) -> void do
     var& Ii cloud1;
     loop (cloud1) in outer.clouds do
         var& Ii cloud2;
@@ -38083,12 +38111,12 @@ Test { [[
 native _ceu_dbg_assert;
 input void A, B;
 
-code/await Ph (void) => void do
+code/await Ph (void) -> void do
     await B;
     _ceu_dbg_assert(0);
 end
 
-code/await Drop (void) => FOREVER do
+code/await Drop (void) -> FOREVER do
     spawn Ph();
     await FOREVER;
 end
@@ -38120,14 +38148,14 @@ escape (ok1?) + ok2 + ret;
 }
 
 Test { [[
-code/await Tx (void) => void do end
+code/await Tx (void) -> void do end
 var bool ok1 = spawn Tx();
 escape 0;
 ]],
     parser = 'line 2 : after `)´ : expected `in´',
 }
 Test { [[
-code/await Tx (void) => void do end
+code/await Tx (void) -> void do end
 pool[1] Tx ts;
 var Tx&&?  ok1 = spawn Tx() in ts;
 escape 0;
@@ -38135,7 +38163,7 @@ escape 0;
     dcls = 'line 3 : invalid declaration : unexpected context for `code´ "Tx"',
 }
 Test { [[
-code/await Tx (void) => void do end
+code/await Tx (void) -> void do end
 pool[1] Tx ts;
 vector[] int ok1 = spawn Tx() in ts;
 escape 0;
@@ -38143,7 +38171,7 @@ escape 0;
     stmts = 'line 3 : invalid constructor : unexpected context for vector "ok1"',
 }
 Test { [[
-code/await Tx (void) => void do end
+code/await Tx (void) -> void do end
 pool[1] Tx ts;
 var int ok1 = spawn Tx() in ts;
 escape 0;
@@ -38152,7 +38180,7 @@ escape 0;
 }
 
 Test { [[
-code/await Tx (void)=>void do await FOREVER; end;
+code/await Tx (void)->void do await FOREVER; end;
 pool[10] Tx ts;
 spawn Tx() in ts;
 var int ret = 0;
@@ -38167,7 +38195,7 @@ escape ret;
 }
 
 Test { [[
-code/await Tx (void) => void do end
+code/await Tx (void) -> void do end
 pool[] Tx t;
 spawn Tx() in t;
 spawn Tx();
@@ -38181,7 +38209,7 @@ native _V;
 native/pos do
     int V = 0;
 end
-code/await Tx (var int v1)=>(var& int v2)=>void do
+code/await Tx (var int v1)->(var& int v2)->void do
     _V = _V + v1;
     var int x = v1;
     v2 = &x;
@@ -38205,7 +38233,7 @@ native _V;
 native/pos do
     int V = 0;
 end
-code/await Tx (var int v1)=>(var& int v2)=>void do
+code/await Tx (var int v1)->(var& int v2)->void do
     _V = _V + v1;
     var int x = v1;
     v2 = &x;
@@ -38225,7 +38253,7 @@ escape ret + _V;
 }
 
 Test { [[
-code/await Tx (void)=>void do
+code/await Tx (void)->void do
     await FOREVER;
 end
 
@@ -38240,7 +38268,7 @@ escape 60;
     run = 60,
 }
 Test { [[
-code/await Tx (void)=>void do await FOREVER; end
+code/await Tx (void)->void do await FOREVER; end
 pool[] Tx ts;
 spawn Tx() in ts;
 spawn Tx() in ts;
@@ -38250,7 +38278,7 @@ escape 60;
 }
 
 Test { [[
-code/await Tx (void)=>void do await FOREVER; end
+code/await Tx (void)->void do await FOREVER; end
 pool[] Tx ts;
 spawn Tx() in ts;
 spawn Tx() in ts;
@@ -38266,7 +38294,7 @@ native _V;
 native/pos do
     int V = 0;
 end
-code/await Tx (var int v1)=>(var& int v2)=>void do
+code/await Tx (var int v1)->(var& int v2)->void do
     _V = _V + v1;
     var int x = v1;
     v2 = &x;
@@ -38288,13 +38316,13 @@ escape ret + _V;
 -->> POOL/SPAWN/OPTION
 
 Test { [[
-code/await Tx (var int v1)=>(var&? int v2)=>void do
+code/await Tx (var int v1)->(var&? int v2)->void do
     var int x = v1;
     v2 = &x;
 end
 
 var&? int v;
-spawn Tx(10) => (v);
+spawn Tx(10) -> (v);
 escape v!;
 ]],
     --asr = '7] runtime error: invalid tag',
@@ -38302,13 +38330,13 @@ escape v!;
 }
 
 Test { [[
-code/await Tx (var int v1)=>(var&? int v2)=>void do
+code/await Tx (var int v1)->(var&? int v2)->void do
     var int x = v1;
     v2 = &x;
 end
 
 var&? int v;
-spawn Tx(10) => (v);
+spawn Tx(10) -> (v);
 await async do end
 escape v!;
 ]],
@@ -38317,7 +38345,7 @@ escape v!;
 }
 
 Test { [[
-code/await Tx (void) => void do
+code/await Tx (void) -> void do
     par/or do
         await 10s;
     with
@@ -38336,7 +38364,7 @@ escape 10;
 }
 
 Test { [[
-code/await Tx (void) => void do
+code/await Tx (void) -> void do
     par/or do
         await 10s;
     with
@@ -38376,7 +38404,7 @@ spawn Uu();
 }
 
 Test { [[
-code/await Tx (void) => void do
+code/await Tx (void) -> void do
     spawn Tx();
 end
 escape 10;
@@ -38386,13 +38414,13 @@ escape 10;
 }
 
 Test { [[
-code/await Tx (void)=>(event&? void e)=>void do
+code/await Tx (void)->(event&? void e)->void do
     event void e_;
     e = &e_;
 end
 
 event&? void e;
-spawn Tx() => (e);
+spawn Tx() -> (e);
 await e!;
 escape 1;
 ]],
@@ -38401,7 +38429,7 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)=>(event&? void e)=>void do
+code/await Tx (void)->(event&? void e)->void do
     event void e_;
     e = &e_;
     await async do end;
@@ -38409,7 +38437,7 @@ code/await Tx (void)=>(event&? void e)=>void do
 end
 
 event&? void e;
-spawn Tx() => (e);
+spawn Tx() -> (e);
 await e!;
 escape 1;
 ]],
@@ -38421,7 +38449,7 @@ escape 1;
 Test { [[
 input void OS_START;
 
-code/await Tx (void) => void do
+code/await Tx (void) -> void do
     await OS_START;
 end
 
@@ -38444,18 +38472,18 @@ escape 1;
 Test { [[
 input void A;
 
-code/await Tx (void)=>(var&? int x)=>void do
+code/await Tx (void)->(var&? int x)->void do
     var int x_=_;
     x = &x_;
     await A;
 end
 
 var&? int x1;
-spawn Tx() => (x1);
+spawn Tx() -> (x1);
 await x1;
 
 var&? int x2;
-spawn Tx() => (x2);
+spawn Tx() -> (x2);
 await x2;
 
 escape 1;
@@ -38465,18 +38493,18 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)=>(var&? int x)=>void do
+code/await Tx (void)->(var&? int x)->void do
     var int x_=_;
     x = &x_;
     await 1us;
 end
 
 var&? int x1;
-spawn Tx() => (x1);
+spawn Tx() -> (x1);
 await x1;
 
 var&? int x2;
-spawn Tx() => (x2);
+spawn Tx() -> (x2);
 await x2;
 
 escape 1;
@@ -38486,19 +38514,19 @@ escape 1;
 }
 
 Test { [[
-code/await Tx (void)=>(var&? int x)=>void do
+code/await Tx (void)->(var&? int x)->void do
     var int x_=_;
     x = &x_;
     await 1us;
 end
 
 var&? int x1;
-spawn Tx() => (x1);
+spawn Tx() -> (x1);
 spawn Tx();
 await x1;
 
 var&? int x2;
-spawn Tx() => (x2);
+spawn Tx() -> (x2);
 await x2;
 
 escape 1;
@@ -38515,13 +38543,13 @@ native/pos do
     int V = 0;
 end
 
-code/await Tx (void)=>(event& void e)=>FOREVER do
+code/await Tx (void)->(event& void e)->FOREVER do
     event void e_;
     e = &e_;
     await FOREVER;
 end
 
-code/await Ux (event& void e, var bool only_await) => void do
+code/await Ux (event& void e, var bool only_await) -> void do
     par/or do
         await e;
         _V = _V + 1;
@@ -38537,7 +38565,7 @@ code/await Ux (event& void e, var bool only_await) => void do
 end
 
 event& void e;
-spawn Tx() => (e);
+spawn Tx() -> (e);
 
 spawn Ux(&e, true);
 spawn Ux(&e, false);
@@ -38556,7 +38584,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Ux (event& void e, var bool only_await) => void do
+code/await Ux (event& void e, var bool only_await) -> void do
     par/or do
         await e;
         _V = _V + 1;
@@ -38592,7 +38620,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Ux (event& void e, var bool only_await) => void do
+code/await Ux (event& void e, var bool only_await) -> void do
     par/or do
         await e;
         _V = _V + 1;
@@ -38625,7 +38653,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Ux (event& void e, var bool only_await) => void do
+code/await Ux (event& void e, var bool only_await) -> void do
     par/or do
         await e;
         _V = _V + 1;
@@ -38660,7 +38688,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Ux (event& void e, var bool only_await) => void do
+code/await Ux (event& void e, var bool only_await) -> void do
     if only_await then
         await e;
         _V = 1;
@@ -38690,7 +38718,7 @@ native/pos do
     int V = 0;
 end
 
-code/await Ux (event& void e, var bool only_await) => void do
+code/await Ux (event& void e, var bool only_await) -> void do
     if only_await then
         await e;
         _V = 1;
@@ -38716,12 +38744,12 @@ escape _V;
 Test { [[
 input void OS_START;
 
-code/await Ux (void)=>void
+code/await Ux (void)->void
 do
     await 1us;
 end
 
-code/await Tx (void)=>void
+code/await Tx (void)->void
 do
     await Ux();
 end
@@ -39090,7 +39118,7 @@ escape (is_int as int)+(is_float as int);
 }
 
 Test { [=[
-code/tight Fx (void)=>int do
+code/tight Fx (void)->int do
     var int v = [[ 1 ]];
     escape v;
 end
@@ -39193,7 +39221,7 @@ end
 }
 
 Test { [=[
-code/tight Ff (void) => int do
+code/tight Ff (void) -> int do
     var int a = [[a or 3]];
     escape a;
 end
@@ -39209,7 +39237,7 @@ end
 }
 
 Test { [=[
-code/await Ff (void) => int do
+code/await Ff (void) -> int do
     var int a = [[a or 3]];
     escape a;
 end
@@ -39583,7 +39611,7 @@ data Tx with
     var int x;
 end
 
-code/tight Fx (void)=>Tx do
+code/tight Fx (void)->Tx do
     var Tx t = val Tx(10);
     escape t;
 end
@@ -39605,7 +39633,7 @@ escape 1;
 }
 
 Test { [[
-code/tight Fx (void)=>void do end;
+code/tight Fx (void)->void do end;
 data Ee;
 var int x = 0;
 var Ee e = val Fx();
@@ -40161,7 +40189,7 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var& Aa a) => int do
+code/tight Ff (var& Aa a) -> int do
     escape a.a;
 end
 
@@ -40181,7 +40209,7 @@ data Aa with
     var int a;
 end
 
-code/tight Ff (var Aa&& a) => int do
+code/tight Ff (var Aa&& a) -> int do
     escape a:a;
 end
 
@@ -40307,7 +40335,7 @@ Test { [[
 data Xx is 0;
 data Xx.Yy is 1;
 
-code/tight Ff (var int x) => int do
+code/tight Ff (var int x) -> int do
     escape 111;
 end
 
@@ -40322,7 +40350,7 @@ Test { [[
 data Xx is 0;
 data Xx.Yy is 1;
 
-code/tight Ff (var Xx x) => int do
+code/tight Ff (var Xx x) -> int do
     escape x as int;
 end
 
@@ -40435,7 +40463,7 @@ end
 class SurfaceBackground with
     var& _WorldObjs__SurfaceBackground me;
 do
-    code/tight Set_pos (var _Vector3f&& p)=>void do
+    code/tight Set_pos (var _Vector3f&& p)->void do
         this.me.p = Vector3f(p:x, p:y, p:z);
     end
 end
@@ -40606,7 +40634,7 @@ data Dd with
     var int x;
 end
 
-code/tight Fx (var Dd? d) => int do
+code/tight Fx (var Dd? d) -> int do
     if d? then
         escape d!.x + 1;
     else
@@ -40866,7 +40894,7 @@ data IPoints with
     event& void inc;
 end
 
-code/await Points (void) => (var& IPoints me) => void do
+code/await Points (void) -> (var& IPoints me) -> void do
     var int cur = 0;
     event void inc;
 
@@ -40875,7 +40903,7 @@ code/await Points (void) => (var& IPoints me) => void do
 end
 
 var& IPoints points;
-watching Points() => (points) do
+watching Points() -> (points) do
     emit points.inc;
 end
 
@@ -41226,7 +41254,7 @@ escape dds!;
 }
 
 Test { [[
-code/await Ff (void)=>void do end
+code/await Ff (void)->void do end
 pool[5] Ff a;
 pool[5] Ff b = a;
 escape 1;
@@ -41251,7 +41279,7 @@ data Dd with
     vector[] byte xxx;
 end
 
-code/tight Ff (var& Dd d) => int do
+code/tight Ff (var& Dd d) -> int do
     escape _strlen(&&d.xxx[0] as _char&&);
 end
 
@@ -42365,7 +42393,7 @@ native _V;
 native/pre do
     int V = 1;
 end
-code/await Ff (void)=>void do
+code/await Ff (void)->void do
     do finalize with
         _V = _V + 10;
     end
@@ -42387,7 +42415,7 @@ native _V;
 native/pre do
     int V = 1;
 end
-code/await Ff (void)=>void do
+code/await Ff (void)->void do
     do finalize with
         _V = _V + 10;
     end
