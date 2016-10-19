@@ -2,6 +2,9 @@
 
 #include <stdlib.h>     /* NULL */
 #include <string.h>     /* memset, strlen */
+#ifdef CEU_TESTS
+#include <stdio.h>
+#endif
 
 #ifdef CEU_FEATURES_LUA
 #include <lua5.3/lua.h>

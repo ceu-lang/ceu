@@ -47,6 +47,7 @@ native
 ;
 
 native/pre do
+    ##include <stdio.h>
     typedef struct sockaddr         sockaddr;
     typedef struct sockaddr_in      sockaddr_in;
     typedef struct sockaddr_storage sockaddr_storage;

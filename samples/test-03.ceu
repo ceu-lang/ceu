@@ -1,4 +1,4 @@
-native _printf, _sleep;
+#include <c.ceu>
 par/or do
     every 1s do
         _printf("[sync] hello\n");

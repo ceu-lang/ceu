@@ -123,12 +123,12 @@ do
     end
 
     local T = {
-        ceu_output          = { tostring,  '-'    },
-        ceu_line_directives = { toboolean, 'true' },
-        ceu_features_lua    = { toboolean, 'true' },
-        ceu_features_thread = { toboolean, 'true' },
+        ceu_output          = { tostring,  '-'     },
+        ceu_line_directives = { toboolean, 'true'  },
+        ceu_features_lua    = { toboolean, 'false' },
+        ceu_features_thread = { toboolean, 'false' },
 
-        env_output          = { tostring,  '-'    },
+        env_output          = { tostring,  '-'     },
     }
 
     for k, t in pairs(T) do

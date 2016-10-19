@@ -1,4 +1,4 @@
-native _sleep;
+#include <c.ceu>
 par/or do
     // global lua state
     [[ v = 0 ]];
