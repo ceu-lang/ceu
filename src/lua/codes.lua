@@ -114,6 +114,7 @@ function SET (me, to, fr, fr_ok, fr_ctx)
 end
 
 function LUA (me)
+    assert(CEU.opts.ceu_features_lua, 'bug found')
     local code = AST.par(me, 'Code')
     local lua = AST.par(me, 'Lua_Do')
     if (not code) or (AST.depth(lua) > AST.depth(code)) then
@@ -454,8 +455,13 @@ CLEAR(me) -- TODO-NOW
     ]]..mem..[[->pak    = ]]..pak..[[;
     ]]..mem..[[->up_mem = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
     ]]..mem..[[->up_trl = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
+]]
+        if CEU.opts.ceu_features_lua then
+            ret = ret .. [[
     ]]..mem..[[->lua    = ]]..LUA(me)..[[;
-
+]]
+        end
+        ret = ret .. [[
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     CEU_CODE_]]..ID_abs.dcl.id..[[(&__ceu_stk, 0, __ceu_ps,
                                    (tceu_code_mem*)]]..mem..[[);

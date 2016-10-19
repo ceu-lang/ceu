@@ -33,7 +33,7 @@ SOFTWARE.
 PAK = {
     lua_exe = 'lua5.3',
     ceu_ver = '0.20',
-    ceu_git = '29ce0e56d001a293d12c8c4747c5342cf9e5a92a',
+    ceu_git = 'aaa7ddd60789a2da597d7cc9080d8c338f31016b',
     files = {
         ceu_c =
             [====[
@@ -4196,7 +4196,7 @@ error'TODO'
     _Watching__PRE = function (me)
         local watch, mid, block = unpack(me)
 
-        -- watching Ff()=>(), Gg()=>(), ...
+        -- watching Ff()->(), Gg()->(), ...
         if block.tag ~= 'Block' then
             return node('_Watching', me.ln, watch, mid,
                     node('Block', me.ln,
@@ -4208,7 +4208,7 @@ error'TODO'
         if mid then
             local Abs_Await = AST.get(watch,'Abs_Await') or
                               AST.get(watch,'_Set', 2,'_Set_Await_one', 1,'Abs_Await')
-            ASR(Abs_Await, me, 'unexpected `=>´')
+            ASR(Abs_Await, me, 'unexpected `->´')
             local ID_abs = AST.asr(Abs_Await,'', 2,'Abs_Cons', 1,'ID_abs')
             Abs_Await[#Abs_Await+1] = false  -- pool
             AST.set(Abs_Await, #Abs_Await+1, mid)
@@ -4335,7 +4335,7 @@ error'TODO'
 -------------------------------------------------------------------------------
 
     -- single declaration with multiple ids
-    --      => multiple declarations with single ids
+    --      -> multiple declarations with single ids
 
     __dcls__PRE = function (me)
         local is_alias, dim, tp
@@ -4465,9 +4465,9 @@ error'TODO'
 
 -------------------------------------------------------------------------------
 
-    -- Type => Typelist
-    -- input int X  => input (int) X;
-    -- input void X => input () X;
+    -- Type -> Typelist
+    -- input int X  -> input (int) X;
+    -- input void X -> input () X;
     Ext__PRE = 'Evt__PRE',
     Evt__PRE = function (me)
         local _,Type = unpack(me)
@@ -10044,6 +10044,7 @@ function SET (me, to, fr, fr_ok, fr_ctx)
 end
 
 function LUA (me)
+    assert(CEU.opts.ceu_features_lua, 'bug found')
     local code = AST.par(me, 'Code')
     local lua = AST.par(me, 'Lua_Do')
     if (not code) or (AST.depth(lua) > AST.depth(code)) then
@@ -10384,8 +10385,13 @@ CLEAR(me) -- TODO-NOW
     ]]..mem..[[->pak    = ]]..pak..[[;
     ]]..mem..[[->up_mem = ]]..((pak=='NULL' and '_ceu_mem')   or (pak..'->up_mem'))..[[;
     ]]..mem..[[->up_trl = ]]..((pak=='NULL' and me.trails[1]) or (pak..'->up_trl'))..[[;
+]]
+        if CEU.opts.ceu_features_lua then
+            ret = ret .. [[
     ]]..mem..[[->lua    = ]]..LUA(me)..[[;
-
+]]
+        end
+        ret = ret .. [[
     tceu_stk __ceu_stk  = { 1, _ceu_stk, {_ceu_mem,_ceu_trlK,_ceu_trlK} };
     CEU_CODE_]]..ID_abs.dcl.id..[[(&__ceu_stk, 0, __ceu_ps,
                                    (tceu_code_mem*)]]..mem..[[);
