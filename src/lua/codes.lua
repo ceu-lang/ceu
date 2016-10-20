@@ -837,7 +837,6 @@ while (1) {
         local _, i, range, body = unpack(me)
         local fr, dir, to, step = unpack(range)
         local max = F.__loop_max(me)
-        local op = (dir=='->' and '>' or '<')
 
         -- check if step is positive (static)
         if step then
@@ -862,7 +861,7 @@ while (1) {
 
         if to.tag ~= 'ID_any' then
             LINE(me, [[
-]]..CUR('__lim_'..me.n)..' = '..V(to)..[[;
+]]..CUR('__lim_'..me.n)..' = '..V(to)..' + ('..V(step)..'*'..to.__adj_step_mul..[[*-1);
 ]])
         end
 
@@ -876,11 +875,16 @@ ceu_callback_assert_msg(]]..sig..V(step)..[[> 0, "invalid `loop´ step : expecte
 ceu_callback_assert_msg(]]..sig..V(step)..[[>= 1, "invalid `loop´ step : expected positive number greater or equal to 1");
 ]])
         end
+        local op = (dir=='->' and '>' or '<')
         LINE(me, [[
-]]..V(i)..' = '..V(fr)..[[;
+]]..CUR('__fr_'..me.n)..' = '..V(fr)..[[;
+]]..V(i)..' = '..V(fr)..' + '..V(step)..' * '..fr.__adj_step_mul..[[;
+ceu_callback_assert_msg_ex(]]..V(i)..(op..'=')..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
+    "control variable overflow", __FILE__, __LINE__-3);
 while (1) {
 ]])
         if to.tag ~= 'ID_any' then
+            local op = (dir=='->' and '>' or '<')
             LINE(me, [[
     if (]]..V(i)..' '..op..' '..CUR('__lim_'..me.n)..[[) {
         break;
@@ -896,6 +900,8 @@ while (1) {
         F.__loop_async(me)
         LINE(me, [[
     ]]..V(i)..' = '..V(i)..' + '..V(step)..[[;
+    ceu_callback_assert_msg_ex(]]..V(i)..op..'('..TYPES.toc(i.info.tp)..')'..CUR('__fr_'..me.n)..[[,
+        "control variable overflow", __FILE__, __LINE__-2);
     ]]..max.inc..[[
 }
 ]])

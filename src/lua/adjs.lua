@@ -335,35 +335,40 @@ error'TODO'
         end
         local lb, fr, dir, to, rb, step = unpack(range)
 
-        -- loop i in ]0 ...] do end
-        -- loop i in [0+1 ...] do end
-        if lb == ']' then
-            if fr.tag ~= 'ID_any' then
-                fr = node('Exp_+', me.ln, '+', fr, node('NUMBER',me.ln,1))
-            end
-        end
-
-        -- loop i in [... 10[ do end
-        -- loop i in [... 10-1] do end
-        if rb == '[' then
-            if to.tag ~= 'ID_any' then
-                to = node('Exp_-', me.ln, '-', to, node('NUMBER',me.ln,1))
-            end
-        end
-
         -- loop i in [...] do end
         -- loop i in [...], 1 do end
         if step == false then
             step = node('NUMBER', me.ln, 1)
         end
 
+        fr.__adj_step_mul = 0
+        to.__adj_step_mul = 0
+
         -- loop i in [0 <- 10], 1 do end
         -- loop i in [10 -> 1], -1 do end
         if dir == '<-' then
             fr, to = to, fr
             step = node('Exp_1-', me.ln, '-', step)
+
+            -- loop i in [... 10[ do end
+            -- loop i in [... 10-1] do end
+            if rb == '[' then
+                fr.__adj_step_mul = 1
+            end
+            if lb == ']' then
+                to.__adj_step_mul = 1
+            end
         else
             --step = node('Exp_1+', me.ln, '+', step)
+
+            -- loop i in ]0 ...] do end
+            -- loop i in [0+1 ...] do end
+            if lb == ']' then
+                fr.__adj_step_mul = 1
+            end
+            if rb == '[' then
+                to.__adj_step_mul = 1
+            end
         end
 
         local i_dcl = node('Nothing', me.ln)
@@ -498,7 +503,7 @@ error'TODO'
 
         local set = node('Set_Exp', me.ln,
                         fr,
-                        node('Ref', me.ln, 'escape', me))   -- see dcls.lua
+                        node('TODO', me.ln, 'escape', me))   -- see dcls.lua
         -- a = &b   (Set_Exp->Set_Alias)
         if fr and fr.tag=='Exp_1&' then
             set.tag = 'Set_Alias'
@@ -566,7 +571,7 @@ error'TODO'
         AST.insert(Set.__adjs_sets, #Set.__adjs_sets+1,
                     node('Set_Vec', me.ln,
                         me,                -- see dcls.lua
-                        node('Ref', me.ln, 'vec_cons', T)))
+                        node('TODO', me.ln, 'vec_cons', T)))
 
         return node('ID_any', me.ln)
     end,

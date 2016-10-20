@@ -3033,6 +3033,19 @@ escape 1;
 Test { [[
 var int ret = 0;
 var int i;
+loop i in [0 -> 10[ do
+//native _printf;
+//_printf(">>> %d\n", i);
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 10,
+}
+
+Test { [[
+var int ret = 0;
+var int i;
 loop i in [0 -> 256-1[ do
     ret = ret + 1;
 end
@@ -3686,31 +3699,35 @@ escape 1;
 }
 
 Test { [[
-var int i;
-loop i in [1.1 -> 10], 0.9 do
+var float i;
+var int ret = 0;
+loop i in [1.1 -> 2], 0.1 do
+    ret = ret + 1;
 end
-escape 1;
+escape ret;
 ]],
-    codes = 'line 2 : invalid `loop´ step : expected positive number greater or equal to 1 : got "0.9"',
+    run = 9,
 }
 
 Test { [[
 var float step = 0.9;
-var int i;
+var float i;
 loop i in [1.1 -> 10], step do
 end
-escape 1;
+escape i as int;
 ]],
-    run = '3] runtime error: invalid `loop´ step : expected positive number greater or equal to 1',
+    run = 10,
 }
 
 Test { [[
-var int i;
-loop i in [1.1 <- 10], 0.9 do
+var f64 i;
+var int ret = 0;
+loop i in [1.3 <- 2], 0.2 do
+    ret = ret + 1;
 end
-escape i;
+escape ((i<1.3) as int) + ret;
 ]],
-    codes = 'line 2 : invalid `loop´ step : expected positive number greater or equal to 1 : got "0.9"',
+    run = 5,
 }
 
 Test { [[
@@ -3732,6 +3749,144 @@ end
 escape ret;
 ]],
     run = 50,
+}
+
+Test { [[
+var bool x;
+loop x do
+    await 1s;
+end
+]],
+    stmts = 'line 2 : invalid `loop´ : expected numeric variable',
+}
+
+Test { [[
+var float x=1.1;
+var int ret = 1;
+loop/10 _ in ]x -> 2[ do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    stmts = 'line 3 : invalid control variable : types mismatch : "int" <= "float"',
+}
+
+Test { [[
+var float x=1.1;
+var int ret = 1;
+loop/10 _ in ]2 -> x[ do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    stmts = 'line 3 : invalid control variable : types mismatch : "int" <= "float"',
+}
+
+Test { [[
+var float x=1.1;
+var int ret = 1;
+loop/10 _ in ]2 -> 3[, 0.1 do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    stmts = 'line 3 : invalid control variable : types mismatch : "int" <= "float"',
+}
+
+Test { [[
+var float x=1.1;
+var float i;
+var int ret = 1;
+loop/10 i in ]0 <- x[ do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+var float i;
+var float x=1.1;
+var int ret = 1;
+loop/10 i in ]x -> 10[ do
+    ret = ret + 1;
+    x = 10;
+end
+escape ret;
+]],
+    run = 8,
+}
+
+Test { [[
+var float x=5.1;
+var int ret = 1;
+var float i;
+loop/10 i in ]3 <- x[, 2 do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+var float x=2.1;
+var int ret = 1;
+var float i;
+loop/10 i in ]0 <- x[, 2 do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret = 0;
+loop/10 _ in [0 <- 3[, 2 do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    run = 1,
+}
+
+Test { [[
+var int ret = 0;
+var uint i;
+loop i in [0 <- 1[, 2 do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    wrn = true,
+    run = '3] runtime error: control variable overflow',
+}
+
+Test { [[
+var int ret = 0;
+var uint i;
+loop i in [0 <- 3[, 2 do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    wrn = true,
+    run = '3] runtime error: control variable overflow',
+}
+
+Test { [[
+var int ret = 0;
+var byte x = 254;
+var byte i;
+loop i in [x -> 255], 2 do
+    ret = ret + 1;
+end
+escape ret;
+]],
+    wrn = true,
+    run = '4] runtime error: control variable overflow',
 }
 
 -- LOOP / BOUNDED

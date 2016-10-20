@@ -576,8 +576,9 @@ end
         local max, i, range, body = unpack(me)
         local fr, dir, to, step = unpack(range)
         F.Loop(me)  -- max
+        CUR().mem = CUR().mem..TYPES.toc(fr.info.tp)..' __fr_'..me.n..';\n'
         if to.tag ~= 'ID_any' then
-            CUR().mem = CUR().mem..'int __lim_'..me.n..';\n'
+            CUR().mem = CUR().mem..TYPES.toc(i.info.tp)..' __lim_'..me.n..';\n'
         end
     end,
 

@@ -444,6 +444,22 @@ F = {
             'invalid `if´ condition : expected boolean type')
     end,
 
+    Loop_Num = function (me)
+        local _, i, range = unpack(me)
+        local fr,_,to,step = unpack(range)
+        local i_tp, fr_tp, to_tp, s_tp = i.info.tp,
+                                         fr.info.tp,
+                                         (to.info and to.info.tp or step.info.tp),
+                                         step.info.tp
+        ASR(TYPES.is_num(i_tp), me, 'invalid `loop´ : expected numeric variable')
+        ASR(TYPES.contains(i_tp,fr_tp), me,
+            'invalid control variable : types mismatch : "'..TYPES.tostring(i_tp)..'" <= "'..TYPES.tostring(fr_tp)..'"')
+        ASR(TYPES.contains(i_tp,to_tp), me,
+            'invalid control variable : types mismatch : "'..TYPES.tostring(i_tp)..'" <= "'..TYPES.tostring(to_tp)..'"')
+        ASR(TYPES.contains(i_tp,s_tp), me,
+            'invalid control variable : types mismatch : "'..TYPES.tostring(i_tp)..'" <= "'..TYPES.tostring(s_tp)..'"')
+    end,
+
     Loop_Pool = function (me)
         local _,list,pool = unpack(me)
 
