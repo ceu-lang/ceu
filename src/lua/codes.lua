@@ -850,10 +850,6 @@ while (1) {
                     end
                     ASR(num>0, me,
                         'invalid `loop´ step : expected positive number : got "'..num..'"')
-                    if TYPES.is_int(i.info.tp) then
-                        ASR(num>=1, me,
-                        'invalid `loop´ step : expected positive number greater or equal to 1 : got "'..num..'"')
-                    end
                 end
             end
         end
@@ -870,11 +866,6 @@ while (1) {
 ]]..max.ini..[[
 ceu_callback_assert_msg(]]..sig..V(step)..[[> 0, "invalid `loop´ step : expected positive number");
 ]])
-        if TYPES.is_int(i.info.tp) then
-            LINE(me, [[
-ceu_callback_assert_msg(]]..sig..V(step)..[[>= 1, "invalid `loop´ step : expected positive number greater or equal to 1");
-]])
-        end
         local op = (dir=='->' and '>' or '<')
         LINE(me, [[
 ]]..CUR('__fr_'..me.n)..' = '..V(fr)..[[;

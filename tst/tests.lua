@@ -3889,6 +3889,14 @@ escape ret;
     run = '4] runtime error: control variable overflow',
 }
 
+Test { [[
+loop _ in [0 -> 1], 0.1 do
+end
+escape 1;
+]],
+    stmts = 'line 1 : invalid control variable : types mismatch : "int" <= "float"',
+}
+
 -- LOOP / BOUNDED
 
 Test { [[
@@ -28060,7 +28068,7 @@ escape ($v + 1) as int;
 Test { [[
 vector [] int vec = [1,2,3];
 var int ret = 0;
-var int i;
+var usize i;
 loop i in [0 -> $vec[ do
     ret = ret + vec[i];
     if i == 1 then
