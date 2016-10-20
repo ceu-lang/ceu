@@ -75,13 +75,13 @@ Stmt ::= nothing
         end
 
       /* numeric iterator */
-      | loop [`/´Exp] (`_´|ID_int) in Range do
+      | loop [`/´Exp] (`_´|ID_int) in [Range] do
             Block
         end
         // where
             Range ::= (`[´ | `]´)
-                        ( Exp `->´ (`_´|Exp)
-                        | (`_´|Exp) `<-´ Exp )
+                        ( (      Exp `->´ (`_´|Exp))
+                        | ((`_´|Exp) `<-´ Exp      ) )
                       (`[´ | `]´) [`,´ Exp]
 
       /* pool iterator */

@@ -206,7 +206,7 @@ The `await` evaluates to a value of the type of the event.
 
 The optional clause `until` tests an additional condition required to awake.
 The condition can use the returned value from the `await`.
-It expands to the `loop` as follows:
+It expands to a [`loop`](#TODO) as follows:
 
 ```ceu
 loop do
@@ -360,7 +360,7 @@ checked at compile time.
 Loops
 -----
 
-Céu supports simple loops, numeric iterators, pool iterators, and event
+Céu supports simple loops, numeric iterators, event iterators, and pool
 iterators:
 
 ```ceu
@@ -371,12 +371,7 @@ Loop ::=
         end
 
       /* numeric iterator */
-      | loop [`/´Exp] (`_´|ID_int) in Range do
-            Block
-        end
-
-      /* pool iterator */
-      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Name do
+      | loop [`/´Exp] Numeric do    /* Numeric ::= (see "Numeric Iterators") */
             Block
         end
 
@@ -385,26 +380,129 @@ Loop ::=
             Block
         end
 
-Range ::= (`[´ | `]´)
-            ( Exp `->´ (`_´|Exp)
-            | (`_´|Exp) `<-´ Exp )
-          (`[´ | `]´) [`,´ Exp]
+      /* pool iterator */
+      | loop [`/´Exp] [ `(´ LIST(Var) `)´ ] in Name do
+            Block
+        end
 
 Break    ::= break [`/´ID_int]
 Continue ::= continue [`/´ID_int]
 ```
+
+The `Block` body of a loop executes an arbitrary number of times, depending on
+the conditions imposed by each kind of loop.
 
 Except for the `every` iterator, all loops support an optional
 <code>&grave;/&acute;Exp</code> to limit the maximum number of iterations and
 avoid [infinite execution](#TODO).
 The expression must be a constant evaluated at compile time.
 
+### `break` and `continue`
+
 The `break` statement aborts the deepest enclosing loop.
+
 The `continue` statement aborts the body of the deepest enclosing loop and
 restarts in the next iteration.
-The optional <code>&grave;/&acute;ID_int</code> only applies to
-[numeric iterators](#TODO).
+
+The optional <code>&grave;/&acute;ID_int</code> in both statements only applies
+to [numeric iterators](#TODO).
 
 ### Simple Loops
 
+A simple loop executes its body continually and forever.
 
+Examples:
+
+```ceu
+loop do     // blinks a LED with a frequency of 1s forever
+    emit LED(1);
+    await 1s;
+    emit LED(0);
+    await 1s;
+end
+```
+
+```ceu
+loop do
+    <...>
+    loop do
+        <...>
+        if <cnd-1> then
+            break;      // aborts the loop at line 3 if <cnd-1> is satisfied
+        end
+        <...>
+    end
+    <...>
+    if <cnd-2> then
+        continue;       // restarts the loop at line 1 if <cnd-2> is satisfied
+    end
+    <...>
+end
+```
+
+### Numeric Iterators
+
+The numeric loop modifies the value of a control variable on each iteration
+according to the specification of an optional interval as follows:
+
+```ceu
+Numeric ::= (`_´|ID_int) in [ (`[´ | `]´)
+                                  ( (     Exp `->´ (`_´|Exp))
+                                  | (`_´|Exp) `<-´ Exp      ) )
+                              (`[´ | `]´) [`,´ Exp] ]
+```
+
+The control variable assumes the values specified in the interval, one by one,
+for each iteration of the loop body:
+
+- **control variable:**
+    `ID_int` is a variable of a [numeric type](#TODO).
+    Alternatively, the special anonymous identifier `_` can be used if the body
+    of the loop does not access the variable.
+    The control variable is marked as `read-only` and cannot be changed
+    explicitly.
+- **interval:**
+    Specifies a direction, endpoints with open or closed modifiers, and a step.
+    - **direction**:
+        - `->`: Starts from the endpoint `Exp` on the left increasing towards `Exp` on the right.
+        - `<-`: Starts from the endpoint `Exp` on the right decreasing towards `Exp` on the left.
+        Typically, the value on the left should always be smaller or equal to
+        the value on the right.
+    - **endpoints**:
+        `[Exp` and `Exp]` are closed intervals which include `Exp` as the
+        endpoints;
+        `]Exp` and `Exp[` are open intervals which exclude `Exp` as the
+        endpoints.
+        Alternatively, the finishing endpoint may be `_` which means that the
+        interval goes towards infinite.
+    - **step**:
+        An optional positive number added or subtracted towards the limit.
+        If the step is omitted, it assumes the value `1`.
+        If the direction is `->`, the step is added, otherwise it is subtracted.
+    If the interval is not specified, it assumes the default `[0 -> _]`.
+
+The execution of the numeric iterator is as follows:
+
+- **initialization:**
+    The starting endpoint is assigned to the control variable.
+    If the starting enpoint is open, the control variable accumulates a step.
+- **iteration:**
+    1. **limits test:**
+        If the control variable crossed the finishing endpoint, the loop
+        terminates.
+    2. **body execution:**
+        The loop body executes.
+    3. **step**
+        Applies a step to the control variable. Goto step `1`.
+
+Examples:
+
+```ceu
+var int i;
+loop i do
+    _printf("i=%d\n", i);   // prints "i=0", "i=1", ...
+end
+```
+
+*Note : the runtime asserts that the step is a positive number and that the control
+variable does not overflow.*
